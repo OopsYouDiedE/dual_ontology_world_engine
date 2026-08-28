@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from ..foundation.failures import CoreError
 from ..world.versions import WorldState
+from ..world.channels import validate_channel_leases
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +76,7 @@ def validate_world_invariants(state: WorldState, *, branch_id: str) -> None:
             for grant in state.permissions
             if grant.actor_ref not in state.subjects
             or state.identity_epochs.get(grant.actor_ref) != grant.identity_epoch
+            or state.permission_epochs.get(grant.grant_id,0) != grant.permission_epoch
         )
     )
     if invalid_permissions:
@@ -113,3 +115,92 @@ def validate_world_invariants(state: WorldState, *, branch_id: str) -> None:
         raise InvariantViolation(
             InvariantWitness("obligation-bearer-not-in-world", unknown_obligation_bearers)
         )
+
+    invalid_events = tuple(
+        sorted(
+            event.event_id
+            for event in state.scheduled_events.values()
+            if event.branch_id != branch_id
+        )
+    )
+    if invalid_events:
+        raise InvariantViolation(
+            InvariantWitness("scheduled-event-branch-mismatch", invalid_events)
+        )
+
+    invalid_claims = tuple(
+        sorted(
+            claim_id
+            for claim_id, claim in state.claims.items()
+            if getattr(claim, "branch_id", branch_id) != branch_id
+            or getattr(claim, "bearer_ref", None) not in state.subjects
+            or getattr(claim, "benefit_burden_pair_id", None) not in state.benefit_burden_pairs
+            or getattr(claim, "due_event_ref", None) not in state.scheduled_events
+            or (
+                getattr(claim, "beneficiary_or_sink_ref", None) is not None
+                and claim.beneficiary_or_sink_ref not in state.subjects
+                and claim.beneficiary_or_sink_ref not in state.entities
+            )
+            or (
+                getattr(claim, "due_event_ref", None) in state.scheduled_events
+                and state.scheduled_events[claim.due_event_ref].benefit_burden_pair_id
+                != getattr(claim, "benefit_burden_pair_id", None)
+            )
+            or (
+                getattr(claim, "benefit_burden_pair_id", None) in state.benefit_burden_pairs
+                and state.benefit_burden_pairs[claim.benefit_burden_pair_id].bearer_ref
+                != getattr(claim, "bearer_ref", None)
+            )
+        )
+    )
+    if invalid_claims:
+        raise InvariantViolation(
+            InvariantWitness("deferred-claim-owner-or-branch-invalid", invalid_claims)
+        )
+
+    invalid_pairs = tuple(
+        sorted(
+            pair_id
+            for pair_id, pair in state.benefit_burden_pairs.items()
+            if getattr(pair, "branch_id", branch_id) != branch_id
+            or getattr(pair, "bearer_ref", None) not in state.subjects
+            or (
+                getattr(pair, "beneficiary_ref", None) is not None
+                and pair.beneficiary_ref not in state.subjects
+                and pair.beneficiary_ref not in state.entities
+            )
+        )
+    )
+    if invalid_pairs:
+        raise InvariantViolation(
+            InvariantWitness("benefit-burden-pair-invalid", invalid_pairs)
+        )
+
+    unbound_events = tuple(
+        sorted(
+            event.event_id
+            for event in state.scheduled_events.values()
+            if event.benefit_burden_pair_id is not None
+            and event.benefit_burden_pair_id not in state.benefit_burden_pairs
+        )
+    )
+    if unbound_events:
+        raise InvariantViolation(
+            InvariantWitness("scheduled-event-burden-pair-missing", unbound_events)
+        )
+
+    invalid_lease_holders = tuple(
+        sorted(
+            lease.lease_id
+            for lease in state.leases.values()
+            if lease.holder_ref not in state.subjects and lease.holder_ref not in state.entities
+        )
+    )
+    if invalid_lease_holders:
+        raise InvariantViolation(
+            InvariantWitness("channel-lease-holder-invalid", invalid_lease_holders)
+        )
+    try:
+        validate_channel_leases(dict(state.channels),tuple(state.leases.values()))
+    except ValueError as exc:
+        raise InvariantViolation(InvariantWitness("channel-lease-invariant",(str(exc),))) from exc

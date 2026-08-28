@@ -9,3 +9,4 @@ from .settlement import *
 from .claims import *
 from .solver import *
 from .estimation import *
+from .allocation import *

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-from ..foundation.budgets import BudgetMeter, BudgetProfile
+from ..foundation.budgets import BudgetExceeded, BudgetMeter, BudgetProfile
 from ..foundation.codec import content_id
 from ..foundation.failures import FailureCertificate, FailureKind
 from ..foundation.provenance import make_provenance
@@ -14,7 +14,7 @@ from ..world.entities import Fact
 from ..world.versions import WorldVersion
 from ..world.scopes import resolve_scope
 from .commit import CommitResult, Kernel
-from .intents import Intent
+from .intents import Intent,make_intent
 from .proposals import (
     OperationKind,
     PointRead,
@@ -33,6 +33,7 @@ class IntentExecutionResult:
     closure: ClosureResult | None
     trace: TraceDag
     follow_up_rule_ids: tuple[str, ...] = ()
+    follow_up_intents: tuple[Intent, ...] = ()
 
     @property
     def committed(self) -> bool:
@@ -57,6 +58,9 @@ def _failure(base: WorldVersion, intent: Intent, code: str, *witnesses: str) -> 
         str(base.version_id),
         subject_ref=intent.actor_ref,
         witness_refs=tuple(witnesses),
+        ruleset_hash=base.ruleset_hash,
+        input_id=intent.intent_id,
+        state_digest=base.state.root_hash,
     )
 
 
@@ -105,6 +109,9 @@ def execute_intent(
             "intent-version-mismatch",
             str(base.version_id),
             subject_ref=intent.actor_ref,
+            ruleset_hash=base.ruleset_hash,
+            input_id=intent.intent_id,
+            state_digest=base.state.root_hash,
         )
         return IntentExecutionResult(intent.intent_id, None, failure, None, TraceDag(tuple(nodes)))
     subject = base.state.subjects.get(intent.actor_ref)
@@ -114,6 +121,9 @@ def execute_intent(
             "intent-actor-or-epoch-invalid",
             str(base.version_id),
             subject_ref=intent.actor_ref,
+            ruleset_hash=base.ruleset_hash,
+            input_id=intent.intent_id,
+            state_digest=base.state.root_hash,
         )
         return IntentExecutionResult(intent.intent_id, None, failure, None, TraceDag(tuple(nodes)))
 
@@ -125,6 +135,9 @@ def execute_intent(
     meter = BudgetMeter(budget or BudgetProfile())
     try:
         scope = resolve_scope(base.state, intent.scope, meter)
+    except BudgetExceeded as exc:
+        failure = FailureCertificate(FailureKind.BUDGET_EXHAUSTED,"scope-budget",str(base.version_id),subject_ref=intent.actor_ref,witness_refs=(str(exc),),ruleset_hash=base.ruleset_hash,input_id=intent.intent_id,budget_usage=(("instructions",meter.used_instructions),("nodes",meter.used_nodes),("proposals",meter.used_proposals)),state_digest=base.state.root_hash)
+        return IntentExecutionResult(intent.intent_id, None, failure, None, TraceDag(tuple(nodes)))
     except (ValueError, TypeError) as exc:
         failure = _failure(base, intent, "scope-resolution-failed", str(exc))
         return IntentExecutionResult(intent.intent_id, None, failure, None, TraceDag(tuple(nodes)))
@@ -177,7 +190,17 @@ def execute_intent(
             )
         )
     if closure.failure is not None:
-        return IntentExecutionResult(intent.intent_id, None, closure.failure, closure, TraceDag(tuple(nodes)))
+        failure=replace(
+            closure.failure,
+            subject_ref=intent.actor_ref,
+            ruleset_hash=base.ruleset_hash,
+            input_id=intent.intent_id,
+            reaction_keys=tuple(content_id(key) for key in closure.fired_reaction_keys),
+            budget_usage=(("instructions",closure.meter.used_instructions),("nodes",closure.meter.used_nodes),("proposals",closure.meter.used_proposals)),
+            state_digest=base.state.root_hash,
+        )
+        closure=replace(closure,failure=failure)
+        return IntentExecutionResult(intent.intent_id, None, failure, closure, TraceDag(tuple(nodes)))
 
     parameters = dict(intent.parameters)
     known_refs = {entity.ref for entity in base.state.entities.values()} | {
@@ -272,11 +295,9 @@ def execute_intent(
         objective_only=True,
     )
     nodes.append(commit_node)
-    follow_up = tuple(
-        rule.rule_id
-        for rule in selected_rules
-        if commit.committed and rule.rule_id in fired_ids and rule.phase is RulePhase.POST_COMMIT
-    )
+    follow_up_rules=tuple(rule for rule in selected_rules if commit.committed and rule.rule_id in fired_ids and rule.phase is RulePhase.POST_COMMIT)
+    follow_up_intents=tuple(make_intent(branch_id=intent.branch_id,based_on_version=str(commit.version.version_id),actor_ref=intent.actor_ref,actor_identity_epoch=intent.actor_identity_epoch,action=rule.follow_up_action,scope=intent.scope,ability_source=intent.ability_source,parameters=intent.parameters,proof_hints=(rule.rule_id,intent.intent_id)) for rule in follow_up_rules)
+    follow_up=tuple(rule.rule_id for rule in follow_up_rules)
     return IntentExecutionResult(
         intent.intent_id,
         commit,
@@ -284,4 +305,5 @@ def execute_intent(
         closure,
         TraceDag(tuple(nodes)),
         follow_up,
+        follow_up_intents,
     )

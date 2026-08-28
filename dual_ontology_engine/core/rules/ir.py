@@ -53,6 +53,7 @@ class RuleIR:
     effects: tuple[FactEffect, ...]
     permission_action: str
     monotone: bool = True
+    follow_up_action: str | None = None
 
     def __post_init__(self) -> None:
         if not self.rule_id or not self.action or not self.permission_action:
@@ -61,3 +62,7 @@ class RuleIR:
             raise ValueError("duplicate rule dependency key")
         if self.phase is RulePhase.POST_COMMIT and self.effects:
             raise ValueError("POST_COMMIT rules generate a later intent, not current effects")
+        if self.phase is RulePhase.POST_COMMIT and not self.follow_up_action:
+            raise ValueError("POST_COMMIT rule requires a follow-up action")
+        if self.phase is RulePhase.PRE_COMMIT and self.follow_up_action is not None:
+            raise ValueError("PRE_COMMIT rule cannot declare a follow-up action")

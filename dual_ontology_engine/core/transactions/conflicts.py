@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..foundation.codec import content_id
+from ..world.channels import ChannelDefinition,ChannelLease,validate_channel_leases
 from .proposals import ConflictRank, ConflictStrategy, Proposal
 
 
@@ -37,7 +38,7 @@ def _operation_payloads(proposals: tuple[Proposal, ...]) -> dict[str, frozenset[
     return {address: frozenset(values) for address, values in result.items()}
 
 
-def _groups_conflict(left: tuple[Proposal, ...], right: tuple[Proposal, ...]) -> tuple[str, ...]:
+def _groups_conflict(left: tuple[Proposal, ...], right: tuple[Proposal, ...],*,channels:dict[str,ChannelDefinition]|None=None,existing_leases:tuple[ChannelLease,...]=()) -> tuple[str, ...]:
     left_payloads = _operation_payloads(left)
     right_payloads = _operation_payloads(right)
     addresses = []
@@ -52,6 +53,14 @@ def _groups_conflict(left: tuple[Proposal, ...], right: tuple[Proposal, ...]) ->
         group.charge_key.key_id for proposal in right for group in proposal.charge_groups
     }
     addresses.extend(f"charge:{key}" for key in sorted(left_charges & right_charges))
+    if channels:
+        left_leases=tuple(op.value for proposal in left for op in proposal.operations if op.kind.value=="acquire_lease")
+        right_leases=tuple(op.value for proposal in right for op in proposal.operations if op.kind.value=="acquire_lease")
+        common_channels=sorted({lease.channel_id for lease in left_leases}&{lease.channel_id for lease in right_leases})
+        for channel_id in common_channels:
+            candidates=existing_leases+tuple(lease for lease in left_leases+right_leases if lease.channel_id==channel_id)
+            try:validate_channel_leases(channels,candidates)
+            except ValueError:addresses.append(f"channel:{channel_id}")
     return tuple(addresses)
 
 
@@ -63,7 +72,7 @@ def _group_policy(group: tuple[Proposal, ...]) -> tuple[ConflictStrategy, Confli
     return next(iter(strategies)), next(iter(ranks))
 
 
-def resolve_conflicts(proposals: tuple[Proposal, ...]) -> ConflictResolution:
+def resolve_conflicts(proposals: tuple[Proposal, ...],*,channels:dict[str,ChannelDefinition]|None=None,existing_leases:tuple[ChannelLease,...]=()) -> ConflictResolution:
     """构造原子组冲突图，并按连通分量进行排列不变的求解。"""
 
     if len({proposal.proposal_id for proposal in proposals}) != len(proposals):
@@ -119,7 +128,7 @@ def resolve_conflicts(proposals: tuple[Proposal, ...]) -> ConflictResolution:
     edge_addresses: dict[tuple[str, str], tuple[str, ...]] = {}
     for index, left_id in enumerate(resolvable_group_ids):
         for right_id in resolvable_group_ids[index + 1 :]:
-            addresses = _groups_conflict(groups[left_id], groups[right_id])
+            addresses = _groups_conflict(groups[left_id], groups[right_id],channels=channels,existing_leases=existing_leases)
             if not addresses:
                 continue
             adjacency[left_id].add(right_id)

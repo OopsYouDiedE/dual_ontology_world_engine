@@ -41,6 +41,11 @@ class CostAtom:
         if self.atom_id!=expected: raise ValueError("cost atom id not content-bound")
 
 
+def make_cost_atom(*,kind:str,plane:CostPlane,dimension:str,bearer_ref:str,beneficiary_refs:tuple[str,...],imposed_by_refs:tuple[str,...],onset:str,duration:str,magnitude:Fraction,reversibility:Reversibility,observability_id:str,causal_event_id:str,allocation_rule_id:str,settlement_timing:SettlementTiming,is_projection:bool=False,is_settlement:bool=False)->CostAtom:
+    values=(kind,plane,dimension,bearer_ref,beneficiary_refs,imposed_by_refs,onset,duration,magnitude,reversibility,observability_id,causal_event_id,allocation_rule_id,settlement_timing,is_projection,is_settlement)
+    return CostAtom(content_id(values),*values)
+
+
 @dataclass(frozen=True, slots=True)
 class CostComponent:
     component_id: str

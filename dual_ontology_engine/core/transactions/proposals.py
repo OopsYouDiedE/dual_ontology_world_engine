@@ -4,15 +4,17 @@ from enum import Enum
 from fractions import Fraction
 from ..foundation.codec import canonical_bytes, content_id
 from ..foundation.provenance import Provenance
-from ..world.entities import Entity, Fact
+from ..world.entities import Entity, EntityDeletion, Fact, PermissionGrant, PermissionRevocation
 from ..world.relations import Relation
 from ..world.obligations import Obligation
 from ..world.identity import IdentityTransitionPlan
+from ..world.events import ScheduledEvent
+from ..world.channels import ChannelLease,LeaseRelease
 
 class OperationKind(str,Enum):
-    SET_FACT="set_fact"; DELETE_FACT="delete_fact"; CREATE_ENTITY="create_entity"; CREATE_RELATION="create_relation"; SET_OBLIGATION="set_obligation"; IDENTITY_TRANSITION="identity_transition"; SET_CLAIM="set_claim"
+    SET_FACT="set_fact"; DELETE_FACT="delete_fact"; CREATE_ENTITY="create_entity"; DELETE_ENTITY="delete_entity"; CREATE_RELATION="create_relation"; SET_PERMISSION="set_permission"; REVOKE_PERMISSION="revoke_permission"; SET_OBLIGATION="set_obligation"; IDENTITY_TRANSITION="identity_transition"; SET_CLAIM="set_claim"; SET_BENEFIT_BURDEN_PAIR="set_benefit_burden_pair"; SET_SCHEDULED_EVENT="set_scheduled_event"; ACQUIRE_LEASE="acquire_lease"; RELEASE_LEASE="release_lease"
 
-_EXPECTED={OperationKind.SET_FACT:Fact,OperationKind.DELETE_FACT:type(None),OperationKind.CREATE_ENTITY:Entity,OperationKind.CREATE_RELATION:Relation,OperationKind.SET_OBLIGATION:Obligation,OperationKind.IDENTITY_TRANSITION:IdentityTransitionPlan}
+_EXPECTED={OperationKind.SET_FACT:Fact,OperationKind.DELETE_FACT:type(None),OperationKind.CREATE_ENTITY:Entity,OperationKind.DELETE_ENTITY:EntityDeletion,OperationKind.CREATE_RELATION:Relation,OperationKind.SET_PERMISSION:PermissionGrant,OperationKind.REVOKE_PERMISSION:PermissionRevocation,OperationKind.SET_OBLIGATION:Obligation,OperationKind.IDENTITY_TRANSITION:IdentityTransitionPlan,OperationKind.SET_SCHEDULED_EVENT:ScheduledEvent,OperationKind.ACQUIRE_LEASE:ChannelLease,OperationKind.RELEASE_LEASE:LeaseRelease}
 
 
 class ConflictStrategy(str, Enum):
@@ -48,7 +50,11 @@ class StateOperation:
     def __post_init__(self)->None:
         if not isinstance(self.kind,OperationKind) or not self.address: raise ValueError("closed operation kind/address required")
         if self.kind is OperationKind.SET_CLAIM:
-            raise NotImplementedError("UNSUPPORTED: delayed claim persistence is fail-closed")
+            from ..costs.claims import DeferredCostClaim
+            if type(self.value) is not DeferredCostClaim: raise TypeError("invalid delayed claim payload")
+        elif self.kind is OperationKind.SET_BENEFIT_BURDEN_PAIR:
+            from ..costs.claims import BenefitBurdenPair
+            if type(self.value) is not BenefitBurdenPair: raise TypeError("invalid benefit/burden pair payload")
         elif type(self.value) is not _EXPECTED[self.kind]: raise TypeError(f"invalid payload for {self.kind.value}")
         canonical_bytes(self.value)
 

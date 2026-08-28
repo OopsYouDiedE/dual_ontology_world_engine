@@ -23,6 +23,8 @@ class FormulaExpr:
             raise ValueError("leaf formula requires a literal")
         if self.op == "MUL_CONST" and self.args[1].op != "CONST":
             raise ValueError("MUL_CONST requires a literal constant multiplier")
+        if self.op == "FINITE_SUM" and not isinstance(self.literal,str):
+            raise ValueError("FINITE_SUM requires a frozen collection key")
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +43,50 @@ class FormulaContext:
         if any(not isinstance(v,Fraction) for v in tuple(self.parameters.values())+tuple(self.facts.values())+tuple(x for values in self.finite_sets.values() for x in values)): raise TypeError("formula context requires Fraction")
 
 
+@dataclass(frozen=True,slots=True)
+class FormulaAnalysis:
+    node_count:int
+    parameter_keys:tuple[str,...]
+    fact_keys:tuple[str,...]
+    finite_set_keys:tuple[str,...]
+    monotone:bool
+
+
+_FORBIDDEN_INPUTS=frozenset({"$selected","$final_quote","$current_candidate","$release_score"})
+
+
+def analyze_formula(expr:FormulaExpr,*,max_nodes:int=256,allowed_parameters:frozenset[str]|None=None,allowed_facts:frozenset[str]|None=None,allowed_finite_sets:frozenset[str]|None=None,require_monotone:bool=False)->FormulaAnalysis:
+    """静态登记依赖、拒绝对象环和选择/报价自指。"""
+    active:set[int]=set();seen:set[int]=set();parameters=set();facts=set();finite_sets=set();monotone_by_id={}
+    def visit(node:FormulaExpr)->bool:
+        identity=id(node)
+        if identity in active:raise ValueError("formula object cycle")
+        if identity in seen:return monotone_by_id[identity]
+        active.add(identity);seen.add(identity)
+        if len(seen)>max_nodes:raise ValueError("formula node budget exceeded")
+        child_monotone=tuple(visit(child) for child in node.args)
+        if node.op=="PARAM":parameters.add(str(node.literal))
+        elif node.op=="FACT" and node.literal!="$item":facts.add(str(node.literal))
+        elif node.op=="FINITE_SUM":finite_sets.add(str(node.literal))
+        if node.op in {"CONST","PARAM","FACT"}:monotone=True
+        elif node.op in {"ADD","MIN","MAX","FINITE_SUM"}:monotone=all(child_monotone)
+        elif node.op=="MUL_CONST":monotone=all(child_monotone) and isinstance(node.args[1].literal,Fraction) and node.args[1].literal>=0
+        elif node.op=="CLAMP":monotone=all(child_monotone)
+        else:monotone=False
+        active.remove(identity);monotone_by_id[identity]=monotone;return monotone
+    monotone=visit(expr)
+    all_inputs=parameters|facts|finite_sets
+    forbidden=all_inputs&_FORBIDDEN_INPUTS
+    if forbidden:raise ValueError(f"formula reads forbidden self-reference:{','.join(sorted(forbidden))}")
+    if allowed_parameters is not None and not parameters.issubset(allowed_parameters):raise ValueError("formula reads undeclared parameter")
+    if allowed_facts is not None and not facts.issubset(allowed_facts):raise ValueError("formula reads undeclared fact")
+    if allowed_finite_sets is not None and not finite_sets.issubset(allowed_finite_sets):raise ValueError("formula reads undeclared finite set")
+    if require_monotone and not monotone:raise ValueError("formula lacks required monotonicity proof")
+    return FormulaAnalysis(len(seen),tuple(sorted(parameters)),tuple(sorted(facts)),tuple(sorted(finite_sets)),monotone)
+
+
 def evaluate(expr: FormulaExpr, context: FormulaContext) -> Fraction:
+    analyze_formula(expr,max_nodes=context.max_nodes,allowed_parameters=frozenset(context.parameters),allowed_facts=frozenset(context.facts),allowed_finite_sets=frozenset(context.finite_sets))
     used = 0
 
     def ev(node: FormulaExpr, bound: Fraction | None = None) -> Fraction:

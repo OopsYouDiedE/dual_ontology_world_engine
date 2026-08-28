@@ -33,6 +33,19 @@ class PermissionGrant:
     target_prefix: str
     identity_epoch: int
     provenance_id: str
+    permission_epoch: int = 0
+
+    def __post_init__(self) -> None:
+        if self.identity_epoch<0 or self.permission_epoch<0:raise ValueError("permission epochs cannot be negative")
+
+
+@dataclass(frozen=True, slots=True)
+class PermissionRevocation:
+    grant_id: str
+    expected_permission_epoch: int
+
+    def __post_init__(self) -> None:
+        if not self.grant_id or self.expected_permission_epoch<0:raise ValueError("invalid permission revocation")
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,3 +62,11 @@ class Fact:
     predicate: str
     value: str
     provenance_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class EntityDeletion:
+    """实体删除命令；事实级联必须由调用规则显式声明。"""
+
+    ref: WorldRef
+    cascade_facts: bool = False
