@@ -36,7 +36,6 @@ from dataclasses import dataclass
 from math import inf
 from typing import Any, TypeAlias
 
-
 Tags: TypeAlias = Mapping[str, int]
 Properties: TypeAlias = Mapping[str, Any]
 Context: TypeAlias = Mapping[str, Any]
@@ -47,9 +46,20 @@ AspectProjection: TypeAlias = tuple[tuple[str, int, int], ...]
 
 # 只有这些 Tag 会被当成可叠加的原理强度。其他 Tag 只是分类或功能标记。
 ASPECTS: tuple[str, ...] = (
-    "Form", "Name", "Law", "Mind", "Bond", "Threshold",
-    "Transmutation", "Preservation", "Death", "Desire", "Strife", "Vestige",
+    "Form",
+    "Name",
+    "Law",
+    "Mind",
+    "Bond",
+    "Threshold",
+    "Transmutation",
+    "Preservation",
+    "Death",
+    "Desire",
+    "Strife",
+    "Vestige",
 )
+
 
 @dataclass(frozen=True, slots=True)
 class Facet:
@@ -71,6 +81,7 @@ class Facet:
     strength: int = 1
     when: FacetCondition | None = None
     source: object | None = None
+
 
 # 具体性质到 Aspect 的默认投影。内容层可以增删规则，不必增加物品类。
 # 每项为 (Aspect, 乘数, 除数)。
@@ -149,6 +160,11 @@ class TreeMember:
         properties: Properties | None = None,
         facets: Iterable[Facet] | None = None,
     ) -> None:
+        """初始化树成员，并在给出 parent 时立即占用一个子节点槽位。
+
+        Tag 保存整数强度，properties 保存对象自身数据；对象关系和条件语义
+        使用 Facet，以保留目标、条件与来源。
+        """
         self.name = name
         self.parent: TreeMember | None = None
         self.tags: dict[str, int] = dict(tags or {})
@@ -158,9 +174,7 @@ class TreeMember:
         if parent is not None:
             self.reparent(parent, position)
 
-    def reparent(
-        self, parent: TreeMember | None, position: int = 0
-    ) -> TreeMember:
+    def reparent(self, parent: TreeMember | None, position: int = 0) -> TreeMember:
         """把对象移动到新的父节点，并自动寻找未占用的整数槽位。"""
         if self.parent is not None:
             self.parent.children.pop(self, None)
@@ -187,6 +201,7 @@ class TreeMember:
         return max(0, value)
 
     def has(self, name: str) -> bool:
+        """判断指定 Tag 的当前强度是否大于零。"""
         return self.tag(name) > 0
 
     def get(self, name: str, default: Any = None) -> Any:
@@ -216,7 +231,8 @@ class TreeMember:
     ) -> tuple[Facet, ...]:
         """移除匹配的 Facet；省略 value/source 表示不按该字段筛选。"""
         removed = tuple(
-            facet for facet in self.facets
+            facet
+            for facet in self.facets
             if facet.key == key
             and (value is None or facet.value is value or facet.value == value)
             and (source is None or facet.source is source)
@@ -231,7 +247,8 @@ class TreeMember:
         """返回在当前上下文中生效的 Facet。"""
         context = context or {}
         return tuple(
-            facet for facet in self.facets
+            facet
+            for facet in self.facets
             if (key is None or facet.key == key)
             and (facet.when is None or facet.when(self, context))
         )
@@ -255,7 +272,8 @@ class TreeMember:
     ) -> tuple[Facet, ...]:
         """查询指定类型、目标和上下文下成立的关系。"""
         return tuple(
-            facet for facet in self.entries(kind, context)
+            facet
+            for facet in self.entries(kind, context)
             if target is None or facet.value is target
         )
 
@@ -283,7 +301,11 @@ class TreeMember:
     def designation(self, context: Context | None = None) -> str:
         """选择当前条件下优先级最高的名称，找不到时返回 name。"""
         choices = self.entries("Designation", context)
-        return max(choices, key=lambda facet: facet.strength).value if choices else self.name
+        return (
+            max(choices, key=lambda facet: facet.strength).value
+            if choices
+            else self.name
+        )
 
 
 class Entity(TreeMember):
@@ -359,12 +381,14 @@ class Entity(TreeMember):
             if target is None or facet.value is not target:
                 continue
             for aspect, multiplier in RELATION_ASPECTS.get(facet.key, {}).items():
-                contributions.append((
-                    facet.source or facet.value,
-                    f"relation:{facet.key}",
-                    aspect,
-                    facet.strength * multiplier,
-                ))
+                contributions.append(
+                    (
+                        facet.source or facet.value,
+                        f"relation:{facet.key}",
+                        aspect,
+                        facet.strength * multiplier,
+                    )
+                )
 
         # 同一来源、同一规则、同一 Aspect 在一次查询中只计算一次，避免
         # 通过别名或重复挂载取得无限强度。
@@ -399,20 +423,26 @@ class Entity(TreeMember):
         通常由 Soul 调用，但核心不硬编码 Soul 类型。subject 是认知所指向
         的真实对象或认知指代对象；claims 可以正确，也可以错误。
         """
-        knowledge = next((
-            child for child in self.children
-            if child.has("Knowledge")
-            and child.get("subject") is subject
-            and child.get("source") is source
-        ), None)
+        knowledge = next(
+            (
+                child
+                for child in self.children
+                if child.has("Knowledge")
+                and child.get("subject") is subject
+                and child.get("source") is source
+            ),
+            None,
+        )
         if knowledge is None:
             knowledge = Entity(
                 name or f"关于{subject.name}的认知",
                 self,
                 {"Knowledge": 1},
                 properties={
-                    "subject": subject, "source": source,
-                    "confidence": confidence, "stage": stage,
+                    "subject": subject,
+                    "source": source,
+                    "confidence": confidence,
+                    "stage": stage,
                 },
             )
         elif STAGES.get(stage, 0) > STAGES.get(knowledge.get("stage"), 0):
@@ -422,6 +452,9 @@ class Entity(TreeMember):
         for claim in claims:
             if claim not in existing:
                 knowledge.attach("Claim", claim, confidence, source=source)
+        if stage == "accepted":
+            knowledge.tags["Accepted"] = 1
+            knowledge.tags.pop("Rejected", None)
         return knowledge
 
     def knowledge_of(
@@ -430,7 +463,8 @@ class Entity(TreeMember):
         """返回达到指定认知阶段、且指向 subject 的知识条目。"""
         required = STAGES.get(stage, 0)
         return tuple(
-            child for child in self.children
+            child
+            for child in self.children
             if child.has("Knowledge")
             and child.get("subject") is subject
             and STAGES.get(child.get("stage"), 0) >= required
@@ -447,6 +481,51 @@ class Entity(TreeMember):
             any(facet.value == claim for facet in entry.entries("Claim"))
             for entry in entries
         )
+
+    def claims_about(
+        self,
+        subject: Entity,
+        *,
+        stage: str = "observed",
+        source: object | None = None,
+        accepted: bool | None = None,
+    ) -> tuple[tuple[Entity, Facet], ...]:
+        """查询关于 subject 的声明，同时保留知识载体与来源。
+
+        accepted 为 ``True`` 时只返回已采信知识，为 ``False`` 时只返回
+        尚未采信或已拒绝的知识，省略时不按立场筛选。该查询不判断声明
+        是否符合客观事实。
+        """
+        found: list[tuple[Entity, Facet]] = []
+        for knowledge in self.knowledge_of(subject, stage):
+            if source is not None and knowledge.get("source") is not source:
+                continue
+            adopted = knowledge.has("Accepted") or knowledge.get("stage") == "accepted"
+            if accepted is not None and adopted is not accepted:
+                continue
+            found.extend((knowledge, claim) for claim in knowledge.entries("Claim"))
+        return tuple(found)
+
+    def set_knowledge_stance(self, knowledge: Entity, stance: str) -> Entity:
+        """设置普通知识的采信立场，不删除声明或来源历史。
+
+        ``accepted`` 使其中声明进入认知环境；``rejected`` 表示理解但拒绝；
+        ``withheld`` 表示理解后暂不判断。其他阶段名称只更新认知深度。
+        """
+        stance = stance.casefold()
+        knowledge.tags.pop("Accepted", None)
+        knowledge.tags.pop("Rejected", None)
+        if stance == "accepted":
+            knowledge.change("Accepted", 1)
+            knowledge.set("stage", "accepted")
+        elif stance == "rejected":
+            knowledge.change("Rejected", 1)
+            knowledge.set("stage", "understood")
+        elif stance == "withheld":
+            knowledge.set("stage", "understood")
+        else:
+            knowledge.set("stage", stance)
+        return knowledge
 
     def observe(
         self,
@@ -465,16 +544,16 @@ class Entity(TreeMember):
             observer.learn(self, claims, source=self)
         return {"subject": self, "name": self.designation(context), "claims": claims}
 
-    def read(
-        self, observer: Entity, context: Context | None = None
-    ) -> tuple[Any, ...]:
+    def read(self, observer: Entity, context: Context | None = None) -> tuple[Any, ...]:
         """读取 Record 携带的声明和 Knowledge。
 
         language 若是 Entity，观察者必须至少达到 understood 阶段。阅读
         只改变观察者认知，不会把载体声明写入客观世界。
         """
         language = self.get("language")
-        if isinstance(language, Entity) and not observer.knows(language, stage="understood"):
+        if isinstance(language, Entity) and not observer.knows(
+            language, stage="understood"
+        ):
             return ()
         claims = [facet.value for facet in self.entries("Claim", context)]
         observer.learn(self, claims, source=self, stage="understood")
@@ -482,7 +561,9 @@ class Entity(TreeMember):
             knowledge = carried.value
             if not isinstance(knowledge, Entity):
                 continue
-            learned = tuple(facet.value for facet in knowledge.entries("Claim", context))
+            learned = tuple(
+                facet.value for facet in knowledge.entries("Claim", context)
+            )
             observer.learn(
                 knowledge.get("subject") or knowledge,
                 learned,
@@ -527,9 +608,8 @@ class Entity(TreeMember):
     def accessible(self, context: Context | None = None) -> bool:
         """判断容器或门在当前上下文中是否已打开且未上锁。"""
         return (
-            (not self.has("Openable") or self.get("opened", False))
-            and not self.locked(context)
-        )
+            not self.has("Openable") or self.get("opened", False)
+        ) and not self.locked(context)
 
     def open(self, context: Context | None = None) -> bool:
         """在当前方向没有有效锁时打开对象。"""
@@ -560,8 +640,10 @@ class Entity(TreeMember):
 
     @property
     def items(self) -> tuple[TreeMember, ...]:
+        """按槽位顺序返回直接子节点快照，不递归展开后代。"""
         return tuple(
-            child for child, _ in sorted(self.children.items(), key=lambda item: item[1])
+            child
+            for child, _ in sorted(self.children.items(), key=lambda item: item[1])
         )
 
     def put(
@@ -638,11 +720,23 @@ class Passage(TreeMember):
         condition: Callable[[Entity, Entity | None, object | None], bool] | None = None,
         designations: Mapping[Entity, str] | None = None,
     ) -> None:
+        """创建两个 Scene 之间的拓扑通道。
+
+        Passage 进入世界树以便统一管理，但不是可拾取或消耗的 Entity；方向、
+        代价和通行条件只描述跨场景连接，不处理场景内部几何。
+        """
         super().__init__(
-            name, parent, {"Passage": 1, "Threshold": 1, **(tags or {})}, position,
+            name,
+            parent,
+            {"Passage": 1, "Threshold": 1, **(tags or {})},
+            position,
             properties={
-                "left": left, "right": right,
-                "costs": {left: cost, right: cost if reverse_cost is None else reverse_cost},
+                "left": left,
+                "right": right,
+                "costs": {
+                    left: cost,
+                    right: cost if reverse_cost is None else reverse_cost,
+                },
                 "condition": condition,
             },
         )
@@ -654,23 +748,30 @@ class Passage(TreeMember):
 
     @property
     def left(self) -> Entity:
+        """返回通道声明时的左端场景。"""
         return self.get("left")
 
     @property
     def right(self) -> Entity:
+        """返回通道声明时的右端场景。"""
         return self.get("right")
 
     @property
     def endpoints(self) -> tuple[Entity, Entity]:
+        """按声明顺序返回通道两端。"""
         return self.left, self.right
 
     def other(self, scene: Entity) -> Entity | None:
         """给定一端，返回另一端；scene 不是端点时返回 None。"""
-        return self.right if scene is self.left else self.left if scene is self.right else None
+        return (
+            self.right
+            if scene is self.left
+            else self.left
+            if scene is self.right
+            else None
+        )
 
-    def designation_from(
-        self, scene: Entity, observer: Entity | None = None
-    ) -> str:
+    def designation_from(self, scene: Entity, observer: Entity | None = None) -> str:
         """按进入方向和观察者知识解析通道名称。"""
         return self.designation({"from_scene": scene, "observer": observer})
 
@@ -704,12 +805,14 @@ def add_temp_entity(
     parent: TreeMember,
     delete_time: int | float = 60,
 ) -> Entity:
+    """创建临时 Entity，并在指定行动值后将其移出世界树。"""
     entity = Entity(name, parent, tags)
     timeline.schedule(delete_time, name, lambda: remove_entity(entity))
     return entity
 
 
 def remove_entity(entity: TreeMember) -> dict[Any, Any]:
+    """将对象移出世界树；返回值保留给统一效果回调协议。"""
     entity.reparent(None)
     return {}
 
@@ -720,6 +823,7 @@ def transfer_entity(
     l_items: Mapping[int, TreeMember] | None = None,
     r_items: Mapping[int, TreeMember] | None = None,
 ) -> dict[Any, Any]:
+    """把两组对象分别转移到指定父节点和槽位。"""
     for position, entity in (l_items or {}).items():
         entity.reparent(left, position)
     for position, entity in (r_items or {}).items():
@@ -733,6 +837,7 @@ def change_and_remake(
     keep_items: Iterable[TreeMember],
     generate_items: Iterable[Callable[..., TreeMember]],
 ) -> dict[Any, Any]:
+    """在同一父节点下完成销毁、保留和生成的组合变换。"""
     for entity in destroy_items:
         remove_entity(entity)
     for entity in keep_items:
@@ -745,6 +850,7 @@ def change_and_remake(
 def change_to_entity(
     entity: TreeMember, new_item_factory: Callable[..., TreeMember]
 ) -> dict[Any, Any]:
+    """以工厂生成的新对象替换原对象，并保持其父节点和槽位。"""
     parent = entity.parent
     if parent is None:
         return {}
@@ -812,8 +918,11 @@ def Door(
 ) -> Entity:
     """创建安装在 Passage 下的 Door Entity。locks 使用 ``场景: 强度``。"""
     door = Entity(
-        name, passage, {"Door": 1, "Tool": 1, "Openable": 1, **(tags or {})},
-        position, {"opened": opened},
+        name,
+        passage,
+        {"Door": 1, "Tool": 1, "Openable": 1, **(tags or {})},
+        position,
+        {"opened": opened},
     )
     for scene, strength in (locks or {}).items():
         door.lock(strength, scene)
@@ -830,8 +939,11 @@ def Container(
 ) -> Entity:
     """创建可开合、可上锁且能收纳子 Entity 的容器。"""
     container = Entity(
-        name, parent, {"Container": 1, "Openable": 1, **(tags or {})},
-        position, {"opened": opened},
+        name,
+        parent,
+        {"Container": 1, "Openable": 1, **(tags or {})},
+        position,
+        {"opened": opened},
     )
     if lock_strength > 0:
         container.lock(lock_strength)
@@ -863,7 +975,10 @@ def Knowledge(
 ) -> Entity:
     """创建知识对象；content 是声明内容，不自动成为客观事实。"""
     knowledge = Entity(
-        name, parent, {"Knowledge": 1, **(tags or {})}, position,
+        name,
+        parent,
+        {"Knowledge": 1, **(tags or {})},
+        position,
         {"content": content, "subject": subject, "source": source},
     )
     if content is not None:
@@ -883,9 +998,11 @@ def InformationCarrier(
 ) -> Entity:
     """创建信息载体；若 content 是 Knowledge，则建立 Carries 关系。"""
     carrier = Entity(
-        name, parent,
+        name,
+        parent,
         {"InformationCarrier": 1, "Record": 1, medium: 1, **(tags or {})},
-        position, {"medium": medium, "content": content},
+        position,
+        {"medium": medium, "content": content},
     )
     if creator is not None:
         carrier.relate("MadeBy", creator)
@@ -934,9 +1051,7 @@ def IdentityProof(
     proof = InformationCarrier(
         name, "IdentityProof", parent, content, issuer, claims, tags, position
     )
-    proof.properties.update(
-        language=language, expires_at=expires_at, revoked=revoked
-    )
+    proof.properties.update(language=language, expires_at=expires_at, revoked=revoked)
     # 证件只作出声明；真实身份与签发关系必须由客观世界另行确认。
     proof.attach("Claim", ("Subject", subject), source=issuer)
     proof.attach("Claim", ("IssuedBy", issuer), source=issuer)
@@ -973,9 +1088,7 @@ def Vehicle(
     position: int = 0,
 ) -> Entity:
     """创建能够收纳乘员或货物的交通载体。移动由行动系统处理。"""
-    return Container(
-        name, parent, opened, 0, {"Vehicle": 1, **(tags or {})}, position
-    )
+    return Container(name, parent, opened, 0, {"Vehicle": 1, **(tags or {})}, position)
 
 
 def Potion(
@@ -989,9 +1102,11 @@ def Potion(
 ) -> Entity:
     """创建具有剂量与 Effect Facet 的消耗性药剂。"""
     potion = Entity(
-        name, parent,
+        name,
+        parent,
         {"Potion": 1, "Reagent": 1, "Consumable": 1, **(tags or {})},
-        position, {"recipe": recipe, "doses": doses},
+        position,
+        {"recipe": recipe, "doses": doses},
     )
     for effect in effects or ():
         potion.attach("Effect", effect, source=recipe)
@@ -1012,8 +1127,13 @@ def TrueName(
     它不会自行建立客观 TrueNameOf 关系；真实绑定必须由世界事实核验。
     """
     knowledge = Knowledge(
-        name, parent, ("TrueNameOf", target, expression), target, source,
-        {"TrueNameClaim": 1, "Naming": 1, **(tags or {})}, position,
+        name,
+        parent,
+        ("TrueNameOf", target, expression),
+        target,
+        source,
+        {"TrueNameClaim": 1, "Naming": 1, **(tags or {})},
+        position,
     )
     knowledge.set("expression", expression)
     return knowledge
@@ -1029,8 +1149,13 @@ def RitualKnowledge(
 ) -> Entity:
     """创建指向具体仪式配方的知识对象。"""
     knowledge = Knowledge(
-        name, parent, recipe, recipe, source,
-        {"RitualKnowledge": 1, "Invocation": 1, **(tags or {})}, position,
+        name,
+        parent,
+        recipe,
+        recipe,
+        source,
+        {"RitualKnowledge": 1, "Invocation": 1, **(tags or {})},
+        position,
     )
     knowledge.set("recipe", recipe)
     return knowledge
@@ -1056,10 +1181,16 @@ def Influence(
     persistence、decay 与时间字段共同区分短期情绪和长期情感。
     """
     influence = Entity(
-        name, parent, {"Influence": 1, emotion: intensity, **(tags or {})},
+        name,
+        parent,
+        {"Influence": 1, emotion: intensity, **(tags or {})},
         properties={
-            "emotion": emotion, "intensity": intensity, "mode": mode,
-            "persistence": persistence, "decay": decay, "started_at": started_at,
+            "emotion": emotion,
+            "intensity": intensity,
+            "mode": mode,
+            "persistence": persistence,
+            "decay": decay,
+            "started_at": started_at,
             "expires_at": expires_at,
         },
     )

@@ -15,7 +15,6 @@ from typing import Any, TypeAlias
 
 from .entity_system import Entity, Facet, Knowledge
 
-
 Number: TypeAlias = int | float
 Context: TypeAlias = Mapping[str, Any]
 
@@ -48,15 +47,32 @@ def F(op: str, *args: Any) -> Effect:
 
 class Mode(Enum):
     """规则指令对匹配行动施加的规范模式。"""
+
     REQUIRE = auto()
     FORBID = auto()
     PERMIT = auto()
     PREFER = auto()
 
 
+class ResponseMode(str, Enum):
+    """Intent 可选的通用应对方向；不替代具体 Effect。"""
+
+    VERIFY = "verify"
+    NEGOTIATE = "negotiate"
+    COOPERATE = "cooperate"
+    RESTRAIN = "restrain"
+    PROTECT = "protect"
+    AVOID = "avoid"
+    CONCEAL = "conceal"
+
+
+ResponseToken: TypeAlias = ResponseMode | str | Entity
+
+
 @dataclass(frozen=True, slots=True)
 class Directive:
     """一条规范模式与其目标效果。"""
+
     mode: Mode
     effect: Effect
 
@@ -64,6 +80,7 @@ class Directive:
 @dataclass(frozen=True, slots=True)
 class Rule:
     """仅在 condition 成立时参与评价的一组指令。"""
+
     condition: Expr
     directives: tuple[Directive, ...]
     source: str = ""
@@ -71,6 +88,7 @@ class Rule:
 
 class CognitiveStage(Enum):
     """Soul 对规则发布物的认知立场。"""
+
     RECEIVED = auto()
     UNDERSTOOD = auto()
     ACCEPTED = auto()
@@ -110,6 +128,7 @@ def RulePublication(
 
 
 def _always() -> bool:
+    """作为 Intent 客观校验器的默认恒真实现。"""
     return True
 
 
@@ -124,11 +143,13 @@ class Intent:
     resolve: Callable[[], Any]
     label: str = ""
     validate: Callable[[], bool] = _always
+    response_mode: ResponseToken | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class Decision:
     """规则系统对候选效果的评价结果及其主要依据。"""
+
     intent: Effect
     complies: bool
     score: Number
@@ -136,10 +157,29 @@ class Decision:
     reason: str
     action: Intent | None = None
     pressures: tuple[tuple[Number, Entity, Directive, bool], ...] = ()
+    preferences: tuple[tuple[Number, object], ...] = ()
 
 
 StepResult: TypeAlias = Intent | Iterable[Intent] | None
 Step: TypeAlias = Callable[["Soul", Entity, "RuleEnvironment", Context], StepResult]
+Preference: TypeAlias = Callable[["Soul", Intent, "RuleEnvironment", Context], Number]
+
+
+def Disposition(
+    name: str,
+    parent: Entity | None = None,
+    source: object | None = None,
+    tags: Mapping[str, int] | None = None,
+) -> Entity:
+    """创建一项稳定人格倾向；具体含义由内容提供。"""
+    disposition = Entity(
+        name,
+        parent,
+        {"Disposition": 1, "Personality": 1, **(tags or {})},
+    )
+    if source is not None:
+        disposition.relate("Source", source)
+    return disposition
 
 
 class Character(Entity):
@@ -152,13 +192,15 @@ class Character(Entity):
         tags: Mapping[str, int] | None = None,
         position: int = 0,
     ) -> None:
+        """创建承担现实行动的身体；认知状态由绑定的 Soul 持有。"""
         super().__init__(name, parent, {"Character": 1, **(tags or {})}, position)
 
     @property
     def souls(self) -> tuple[Soul, ...]:
         """返回当前与角色绑定的全部 Soul。"""
         return tuple(
-            facet.value for facet in self.entries("Soul")
+            facet.value
+            for facet in self.entries("Soul")
             if isinstance(facet.value, Soul)
         )
 
@@ -185,13 +227,15 @@ class Soul(Entity):
         tags: Mapping[str, int] | None = None,
         position: int = 0,
     ) -> None:
+        """创建独立认知主体，不复制所绑定 Character 的身体状态。"""
         super().__init__(name, parent, {"Soul": 1, **(tags or {})}, position)
 
     @property
     def characters(self) -> tuple[Character, ...]:
         """返回该认知主体目前能够驱动的角色。"""
         return tuple(
-            facet.value for facet in self.entries("Character")
+            facet.value
+            for facet in self.entries("Character")
             if isinstance(facet.value, Character)
         )
 
@@ -209,6 +253,11 @@ class Soul(Entity):
     def decisions(self) -> tuple[Decision, ...]:
         """返回已记录的决策结果。"""
         return tuple(facet.value for facet in self.entries("Decision"))
+
+    @property
+    def dispositions(self) -> tuple[Entity, ...]:
+        """返回直接属于该 Soul 的稳定人格倾向实体。"""
+        return tuple(child for child in self.children if child.has("Disposition"))
 
     def bind(self, character: Character) -> None:
         """委托 Character 建立双向绑定。"""
@@ -238,19 +287,20 @@ class Soul(Entity):
         for knowledge in self.children:
             if not knowledge.has("Knowledge"):
                 continue
+            if not (knowledge.has("Accepted") or knowledge.get("stage") == "accepted"):
+                continue
             for claim in knowledge.entries("Claim"):
                 if isinstance(claim.value, Expr):
                     view.assert_fact(claim.value)
         return view
 
-    def receive(
-        self, publication: Entity, confidence: int = 1
-    ) -> Entity:
+    def receive(self, publication: Entity, confidence: int = 1) -> Entity:
         """接收规则发布物，并建立尚未理解的个体信念。"""
         rule = publication.get("rule")
         if found := next(
             (
-                belief for belief in self.beliefs
+                belief
+                for belief in self.beliefs
                 if belief.get("publication") is publication
             ),
             None,
@@ -276,6 +326,7 @@ class Soul(Entity):
 
     @staticmethod
     def _stance(belief: Entity, stance: CognitiveStage) -> Entity:
+        """切换规则信念立场，并保留理解深度与采信态度的区别。"""
         for tag in ("Received", "Understood", "Accepted", "Rejected"):
             belief.tags.pop(tag, None)
         belief.change(stance.name.title(), 1)
@@ -304,7 +355,8 @@ class Soul(Entity):
         """依据置信度和发行者保证强度决定接受或拒绝规则。"""
         publication = next(
             (
-                child for child in source.children
+                child
+                for child in source.children
                 if child.has("RulePublication") and child.get("rule") is rule
             ),
             None,
@@ -347,6 +399,42 @@ class Soul(Entity):
         """移除同一来源安装的全部决策分支。"""
         return self.detach("Step", source=source)
 
+    def install_preference(
+        self,
+        preference: Preference,
+        strength: int = 1,
+        when: Callable[[Entity, Context], bool] | None = None,
+        source: object | None = None,
+    ) -> Facet:
+        """安装一项有来源的人格偏好；它只能评价已有 Intent。"""
+        return self.attach("Preference", preference, strength, when, source)
+
+    def uninstall_preferences(self, source: object) -> tuple[Facet, ...]:
+        """移除同一来源安装的全部人格偏好。"""
+        return self.detach("Preference", source=source)
+
+    def preference_pressures(
+        self,
+        action: Intent,
+        world: RuleEnvironment,
+        context: Context | None = None,
+    ) -> tuple[tuple[Number, object], ...]:
+        """使用主体认知评价已有候选，并保留每项人格贡献来源。"""
+        cognitive = self.cognitive_environment(world)
+        local = {
+            **(context or {}),
+            "actor": action.actor,
+            "intent": action,
+            "soul": self,
+            "env": cognitive,
+        }
+        pressures: list[tuple[Number, object]] = []
+        for facet in self.entries("Preference", local):
+            amount = facet.value(self, action, cognitive, local) * facet.strength
+            if amount:
+                pressures.append((amount, facet.source or facet))
+        return tuple(pressures)
+
     def choices(
         self,
         actor: Entity,
@@ -374,14 +462,26 @@ class Soul(Entity):
         rules: RuleSystem,
         world: RuleEnvironment,
         utility: Callable[[Intent], Number] = lambda _: 0,
+        context: Context | None = None,
     ) -> tuple[Decision, ...]:
-        """在 Soul 的认知环境中评价候选行动并按分数降序排列。"""
+        """汇总认知规则、人格偏好和局部效用，并保留分项来源。"""
         cognitive = self.cognitive_environment(world)
-        assessed = (
-            replace(decision, action=action, score=decision.score + utility(action))
-            for action in candidates
-            for decision in (rules.evaluate(self, action.effect, cognitive),)
-        )
+        assessed: list[Decision] = []
+        for action in candidates:
+            decision = rules.evaluate(self, action.effect, cognitive)
+            preferences = self.preference_pressures(action, world, context)
+            assessed.append(
+                replace(
+                    decision,
+                    action=action,
+                    score=(
+                        decision.score
+                        + sum(amount for amount, _ in preferences)
+                        + utility(action)
+                    ),
+                    preferences=preferences,
+                )
+            )
         return tuple(sorted(assessed, key=lambda item: item.score, reverse=True))
 
     def step(
@@ -396,12 +496,13 @@ class Soul(Entity):
     ) -> Intent | None:
         """生成、筛选并选择一次行动，同时记录对应 Decision。"""
         candidates = tuple(
-            action for action in self.choices(actor, world, context)
+            action
+            for action in self.choices(actor, world, context)
             if action.validate() and allows(action)
         )
         if not candidates:
             return None
-        decisions = self.assess(candidates, rules, world, utility)
+        decisions = self.assess(candidates, rules, world, utility, context)
         action = chooser(decisions) if chooser else decisions[0].action
         chosen = next(item for item in decisions if item.action is action)
         self.attach("Decision", chosen, source=(context or {}).get("source"))
@@ -424,6 +525,7 @@ class RuleEnvironment:
     """保存可解析别名和当前事实的轻量规则求值环境。"""
 
     def __init__(self) -> None:
+        """创建空规则视图；别名用于寻址，facts 保存可见命题。"""
         self.aliases: dict[str, Any] = {}
         self.facts: list[Expr] = []
         self.version = 0
@@ -438,9 +540,7 @@ class RuleEnvironment:
         """登记不区分大小写的名称到运行时对象映射。"""
         self.aliases[name.casefold()] = value
 
-    def resolve(
-        self, value: Any, bindings: Mapping[str, Any] | None = None
-    ) -> Any:
+    def resolve(self, value: Any, bindings: Mapping[str, Any] | None = None) -> Any:
         """优先用局部绑定解析字符串，再查询环境别名。"""
         if not isinstance(value, str):
             return value
@@ -456,7 +556,11 @@ class RuleEnvironment:
             return self.effect_matches(left, right)
         if isinstance(left, str) and isinstance(right, str):
             return left.casefold() == right.casefold()
-        return left is right if isinstance(left, Entity) or isinstance(right, Entity) else left == right
+        return (
+            left is right
+            if isinstance(left, Entity) or isinstance(right, Entity)
+            else left == right
+        )
 
     def matches(self, fact: Expr, query: Expr) -> bool:
         """判断事实与查询表达式的操作符和参数是否匹配。"""
@@ -471,7 +575,8 @@ class RuleEnvironment:
         if pattern.op == "sequence":
             return any(
                 self.effect_matches(item, candidate)
-                for item in pattern.args if isinstance(item, Effect)
+                for item in pattern.args
+                if isinstance(item, Effect)
             )
         return (
             pattern.op.casefold() == candidate.op.casefold()
@@ -489,7 +594,9 @@ class RuleEnvironment:
 
     def retract(self, fact: Expr) -> bool:
         """移除第一条匹配事实，并在成功时递增环境版本。"""
-        if found := next((item for item in self.facts if self.matches(item, fact)), None):
+        if found := next(
+            (item for item in self.facts if self.matches(item, fact)), None
+        ):
             self.facts.remove(found)
             self.version += 1
             return True
@@ -501,18 +608,32 @@ class RuleEnvironment:
             case Expr("true", _):
                 return True
             case Expr("all", args):
-                return all(self.evaluate(item) for item in args if isinstance(item, Expr))
+                return all(
+                    self.evaluate(item) for item in args if isinstance(item, Expr)
+                )
             case Expr("any", args):
-                return any(self.evaluate(item) for item in args if isinstance(item, Expr))
+                return any(
+                    self.evaluate(item) for item in args if isinstance(item, Expr)
+                )
             case Expr("not", (Expr() as inner,)):
                 return not self.evaluate(inner)
-            case Expr("state", (subject, str() as state)) if isinstance(self.resolve(subject), Entity):
-                return self.resolve(subject).has(state) or any(self.matches(item, expression) for item in self.facts)
-            case Expr("parent", (child, parent)) if isinstance(self.resolve(child), Entity):
+            case Expr("state", (subject, str() as state)) if isinstance(
+                self.resolve(subject), Entity
+            ):
+                return self.resolve(subject).has(state) or any(
+                    self.matches(item, expression) for item in self.facts
+                )
+            case Expr("parent", (child, parent)) if isinstance(
+                self.resolve(child), Entity
+            ):
                 return self.resolve(child).parent is self.resolve(parent)
-            case Expr("related", (subject, str() as kind, target)) if isinstance(self.resolve(subject), Entity):
+            case Expr("related", (subject, str() as kind, target)) if isinstance(
+                self.resolve(subject), Entity
+            ):
                 return bool(self.resolve(subject).related(kind, self.resolve(target)))
-            case Expr("tag_at_least", (subject, str() as tag, Real() as amount)) if isinstance(self.resolve(subject), Entity):
+            case Expr("tag_at_least", (subject, str() as tag, Real() as amount)) if (
+                isinstance(self.resolve(subject), Entity)
+            ):
                 return self.resolve(subject).tag(tag) >= amount
             case _:
                 return any(self.matches(item, expression) for item in self.facts)
@@ -520,7 +641,11 @@ class RuleEnvironment:
     def effect_is_fact(self, effect: Effect) -> bool:
         """检查效果描述的状态是否已经在环境中成立。"""
         if effect.op == "sequence":
-            return all(self.effect_is_fact(item) for item in effect.args if isinstance(item, Effect))
+            return all(
+                self.effect_is_fact(item)
+                for item in effect.args
+                if isinstance(item, Effect)
+            )
         return self.evaluate(E(effect.op, *effect.args))
 
     def assert_effect(self, effect: Effect) -> None:
@@ -552,6 +677,7 @@ class RuleSystem:
     """评价 Soul 的主观规范，并检查客观 RulePatch 约束。"""
 
     def _expanded(self, rule: Rule, env: RuleEnvironment) -> Iterator[Directive]:
+        """展开当前条件成立的嵌套指令，不修改原始 Rule。"""
         for directive in rule.directives:
             match directive.effect:
                 case Effect("when", (Expr() as condition, Effect() as nested)):
@@ -581,9 +707,7 @@ class RuleSystem:
             if belief.has("Accepted") and env.evaluate(rule.condition):
                 yield from ((belief, item) for item in self._expanded(rule, env))
 
-    def evaluate(
-        self, soul: Soul, intent: Effect, env: RuleEnvironment
-    ) -> Decision:
+    def evaluate(self, soul: Soul, intent: Effect, env: RuleEnvironment) -> Decision:
         """汇总所有主观规范压力，生成候选效果的评价结果。"""
         pressures: list[tuple[Number, Entity, Directive, bool]] = []
         for belief, directive in self.active(soul, env):
@@ -614,7 +738,9 @@ class RuleSystem:
             if directive.mode is Mode.REQUIRE and not matched
             else f"{directive.mode.name}：{issuer.name}"
         )
-        return Decision(intent, complies, score, belief, reason, pressures=tuple(pressures))
+        return Decision(
+            intent, complies, score, belief, reason, pressures=tuple(pressures)
+        )
 
     def decide(
         self,
@@ -638,10 +764,7 @@ class RuleSystem:
         env: RuleEnvironment,
     ) -> bool:
         """检查候选效果是否满足全部客观规则。"""
-        return all(
-            self.objective_complies(intent, rule, env)
-            for rule in constraints
-        )
+        return all(self.objective_complies(intent, rule, env) for rule in constraints)
 
     def objective_complies(
         self, intent: Effect, rule: Rule, env: RuleEnvironment
@@ -753,7 +876,27 @@ def Event(
 
 
 __all__ = [
-    "Number", "Expr", "Effect", "E", "F", "Mode", "Directive", "Rule",
-    "CognitiveStage", "RulePublication", "Intent", "Decision", "Step",
-    "Character", "Soul", "RuleEnvironment", "RuleSystem", "RulePatch", "Event",
+    "Number",
+    "Expr",
+    "Effect",
+    "E",
+    "F",
+    "Mode",
+    "Directive",
+    "Rule",
+    "ResponseMode",
+    "ResponseToken",
+    "CognitiveStage",
+    "RulePublication",
+    "Intent",
+    "Decision",
+    "Step",
+    "Preference",
+    "Disposition",
+    "Character",
+    "Soul",
+    "RuleEnvironment",
+    "RuleSystem",
+    "RulePatch",
+    "Event",
 ]

@@ -12,7 +12,18 @@ from numbers import Real
 from typing import Any
 
 from .entity_system import ASPECTS, Entity
-from .soul import Directive, E, F, Effect, Expr, Intent, Rule, RuleEnvironment, RuleSystem, Soul
+from .soul import (
+    Directive,
+    E,
+    Effect,
+    Expr,
+    F,
+    Intent,
+    Rule,
+    RuleEnvironment,
+    RuleSystem,
+    Soul,
+)
 
 
 def Recipe(
@@ -98,7 +109,9 @@ def aggregate_aspects(
     """跨全部明确投入按贡献来源去重，防止共享材料或关系重复供能。"""
     contributions: dict[tuple[int, str, str], int] = {}
     for entity in dict.fromkeys(inputs):
-        for source, rule, aspect, strength in entity.aspect_contributions(target, context):
+        for source, rule, aspect, strength in entity.aspect_contributions(
+            target, context
+        ):
             token = (id(source), rule, aspect)
             contributions[token] = max(strength, contributions.get(token, 0))
     totals: dict[str, int] = {}
@@ -114,7 +127,15 @@ class KotodamaSystem:
         """绑定规则环境并注册核心 Effect 处理器。"""
         self.env = env
         self.rules = rules
-        self.handlers: dict[str, tuple[Callable[[Effect], bool], Callable[[Effect], Any], str, Mapping[str, int]]] = {}
+        self.handlers: dict[
+            str,
+            tuple[
+                Callable[[Effect], bool],
+                Callable[[Effect], Any],
+                str,
+                Mapping[str, int],
+            ],
+        ] = {}
         self.rites: list[Entity] = []
         self.contracts: list[Entity] = []
         self.constraint_checks = 0
@@ -133,7 +154,12 @@ class KotodamaSystem:
         minimum: Mapping[str, int] | None = None,
     ) -> None:
         """登记唯一合法的 Effect 作用路径及其本体层和最低门槛。"""
-        self.handlers[operation.casefold()] = validate, apply, layer, dict(minimum or {})
+        self.handlers[operation.casefold()] = (
+            validate,
+            apply,
+            layer,
+            dict(minimum or {}),
+        )
 
     def _register_core_effects(self) -> None:
         """登记核心支持的语义与物理效果；未知操作始终拒绝。"""
@@ -150,13 +176,18 @@ class KotodamaSystem:
         self.register("change", self._validate_change, self._apply_change)
         self.register("spend", self._validate_spend, self._apply_spend)
         self.register("move", self._validate_move, self._apply_move, layer="physical")
-        self.register("remove", self._validate_remove, self._apply_remove, layer="physical")
-        self.register("consume", self._validate_consume, self._apply_consume, layer="physical")
+        self.register(
+            "remove", self._validate_remove, self._apply_remove, layer="physical"
+        )
+        self.register(
+            "consume", self._validate_consume, self._apply_consume, layer="physical"
+        )
         self.register("relate", self._validate_relate, self._apply_relate)
         self.register("detach_relation", self._validate_detach, self._apply_detach)
 
     @staticmethod
     def _validate_change(effect: Effect) -> bool:
+        """确认 Tag 数值变更不会产生负强度。"""
         return (
             len(effect.args) == 3
             and isinstance(effect.args[0], Entity)
@@ -167,12 +198,14 @@ class KotodamaSystem:
 
     @staticmethod
     def _apply_change(effect: Effect) -> tuple[Entity, ...]:
+        """应用已验证的 Tag 增减，并返回受影响对象。"""
         subject, tag, amount = effect.args
         subject.change(tag, amount)
         return (subject,)
 
     @staticmethod
     def _validate_spend(effect: Effect) -> bool:
+        """确认支付量为正，且支付后不会低于保留额度。"""
         if not (
             3 <= len(effect.args) <= 4
             and isinstance(effect.args[0], Entity)
@@ -187,6 +220,7 @@ class KotodamaSystem:
 
     @staticmethod
     def _apply_spend(effect: Effect) -> tuple[Entity, ...] | None:
+        """实际扣除同质资源；校验失败时不产生部分修改。"""
         if not KotodamaSystem._validate_spend(effect):
             return None
         subject, tag, amount = effect.args[:3]
@@ -195,22 +229,32 @@ class KotodamaSystem:
 
     @staticmethod
     def _validate_move(effect: Effect) -> bool:
-        return 2 <= len(effect.args) <= 3 and isinstance(effect.args[0], Entity) and (
-            effect.args[1] is None or isinstance(effect.args[1], Entity)
+        """确认移动效果提供了实体和合法的新父节点。"""
+        return (
+            2 <= len(effect.args) <= 3
+            and isinstance(effect.args[0], Entity)
+            and (effect.args[1] is None or isinstance(effect.args[1], Entity))
         )
 
     @staticmethod
     def _apply_move(effect: Effect) -> tuple[Entity, ...]:
+        """通过世界树重挂载完成移动。"""
         entity, parent = effect.args[:2]
         entity.reparent(parent, effect.args[2] if len(effect.args) == 3 else 0)
         return (entity,)
 
     @staticmethod
     def _validate_remove(effect: Effect) -> bool:
-        return len(effect.args) == 1 and isinstance(effect.args[0], Entity) and effect.args[0].parent is not None
+        """只允许移除当前仍位于世界树中的 Entity。"""
+        return (
+            len(effect.args) == 1
+            and isinstance(effect.args[0], Entity)
+            and effect.args[0].parent is not None
+        )
 
     @staticmethod
     def _apply_remove(effect: Effect) -> tuple[Entity, ...] | None:
+        """把对象从世界树摘除；对象引用仍可用于事件审计。"""
         if not KotodamaSystem._validate_remove(effect):
             return None
         entity = effect.args[0]
@@ -219,6 +263,7 @@ class KotodamaSystem:
 
     @staticmethod
     def _validate_consume(effect: Effect) -> bool:
+        """确认具象资源存在且尚未登记到其他支付关系。"""
         return (
             len(effect.args) == 1
             and isinstance(effect.args[0], Entity)
@@ -228,6 +273,7 @@ class KotodamaSystem:
 
     @staticmethod
     def _apply_consume(effect: Effect) -> tuple[Entity, ...] | None:
+        """消耗具象资源，将其从当前容器或场景移除。"""
         if not KotodamaSystem._validate_consume(effect):
             return None
         entity = effect.args[0]
@@ -236,20 +282,32 @@ class KotodamaSystem:
 
     @staticmethod
     def _validate_relate(effect: Effect) -> bool:
-        return 3 <= len(effect.args) <= 4 and isinstance(effect.args[0], Entity) and isinstance(effect.args[1], str)
+        """确认关系效果至少包含来源、关系名和目标。"""
+        return (
+            3 <= len(effect.args) <= 4
+            and isinstance(effect.args[0], Entity)
+            and isinstance(effect.args[1], str)
+        )
 
     @staticmethod
     def _apply_relate(effect: Effect) -> tuple[Entity, ...]:
+        """在来源对象上附加指向目标的关系 Facet。"""
         source, kind, target = effect.args[:3]
         source.relate(kind, target, effect.args[3] if len(effect.args) == 4 else 1)
         return (source,)
 
     @staticmethod
     def _validate_detach(effect: Effect) -> bool:
-        return 2 <= len(effect.args) <= 3 and isinstance(effect.args[0], Entity) and isinstance(effect.args[1], str)
+        """确认关系移除效果包含来源对象和关系名。"""
+        return (
+            2 <= len(effect.args) <= 3
+            and isinstance(effect.args[0], Entity)
+            and isinstance(effect.args[1], str)
+        )
 
     @staticmethod
     def _apply_detach(effect: Effect) -> tuple[Entity, ...]:
+        """移除指定类型及可选目标的关系 Facet。"""
         source, kind = effect.args[:2]
         source.detach(kind, effect.args[2] if len(effect.args) == 3 else None)
         return (source,)
@@ -274,16 +332,22 @@ class KotodamaSystem:
         if effect.op == "sequence":
             return all(
                 self.validate_effect(item, cost=cost)
-                for item in effect.args if isinstance(item, Effect)
+                for item in effect.args
+                if isinstance(item, Effect)
             )
         if effect.op == "when" and len(effect.args) == 2:
             condition, nested = effect.args
             return (
                 isinstance(condition, Expr)
                 and isinstance(nested, Effect)
-                and (not self.env.evaluate(condition) or self.validate_effect(nested, cost=cost))
+                and (
+                    not self.env.evaluate(condition)
+                    or self.validate_effect(nested, cost=cost)
+                )
             )
-        return effect.op.casefold() in self.handlers and self.handlers[effect.op.casefold()][0](effect)
+        return effect.op.casefold() in self.handlers and self.handlers[
+            effect.op.casefold()
+        ][0](effect)
 
     def apply(self, effect: Effect) -> tuple[Entity, ...] | None:
         """执行已登记效果；None 表示失败，空 tuple 表示成功但无实体差分。"""
@@ -306,7 +370,11 @@ class KotodamaSystem:
         if handler is None or not handler[0](effect):
             return None
         result = handler[1](effect)
-        if result is False or result is None and effect.op.casefold() not in {"assert", "retract"}:
+        if (
+            result is False
+            or result is None
+            and effect.op.casefold() not in {"assert", "retract"}
+        ):
             return None
         if isinstance(result, Entity):
             return (result,)
@@ -315,7 +383,10 @@ class KotodamaSystem:
         return ()
 
     @staticmethod
-    def _entities(inputs: Mapping[str, Entity | Iterable[Entity]]) -> tuple[Entity, ...]:
+    def _entities(
+        inputs: Mapping[str, Entity | Iterable[Entity]],
+    ) -> tuple[Entity, ...]:
+        """展平投入槽位，并按对象身份保持首次出现顺序去重。"""
         found: list[Entity] = []
         for value in inputs.values():
             if isinstance(value, Entity):
@@ -331,6 +402,7 @@ class KotodamaSystem:
         value: Entity | Iterable[Entity] | None,
         bindings: Mapping[str, Any],
     ) -> bool:
+        """检查单个投入槽位的数量、Tag、持有者和目标关系要求。"""
         entities = (value,) if isinstance(value, Entity) else tuple(value or ())
         if not entities:
             return bool(spec.get("optional"))
@@ -342,12 +414,22 @@ class KotodamaSystem:
             for tag, amount in spec.get("tags", {}).items()
         ):
             return False
-        holder = bindings.get(spec.get("holder", "holder")) if spec.get("held", False) else None
-        if holder is not None and any(entity.parent is not holder for entity in entities):
+        holder = (
+            bindings.get(spec.get("holder", "holder"))
+            if spec.get("held", False)
+            else None
+        )
+        if holder is not None and any(
+            entity.parent is not holder for entity in entities
+        ):
             return False
         relation = spec.get("relation")
         target = bindings.get(spec.get("target", "target"))
-        return not relation or target is not None and all(entity.related(relation, target) for entity in entities)
+        return (
+            not relation
+            or target is not None
+            and all(entity.related(relation, target) for entity in entities)
+        )
 
     def signature(
         self,
@@ -381,8 +463,14 @@ class KotodamaSystem:
         values = self.signature(recipe, speaker, inputs, bindings)
         required = dict(recipe.get("thresholds", {}))
         for facet in recipe.entries("Effect"):
-            for effect in (facet.value.args if isinstance(facet.value, Effect) and facet.value.op == "sequence" else (facet.value,)):
-                if isinstance(effect, Effect) and (handler := self.handlers.get(effect.op.casefold())):
+            for effect in (
+                facet.value.args
+                if isinstance(facet.value, Effect) and facet.value.op == "sequence"
+                else (facet.value,)
+            ):
+                if isinstance(effect, Effect) and (
+                    handler := self.handlers.get(effect.op.casefold())
+                ):
                     for key, amount in handler[3].items():
                         required[key] = max(amount, required.get(key, 0))
         for key, amount in required.items():
@@ -394,12 +482,19 @@ class KotodamaSystem:
                 missing.append(f"门槛:{key} {actual}/{amount}")
         for facet in recipe.entries("Requirement"):
             requirement = facet.value
-            valid = requirement(bindings) if callable(requirement) else self.env.evaluate(
-                self.env.materialize(requirement, bindings)  # type: ignore[arg-type]
+            valid = (
+                requirement(bindings)
+                if callable(requirement)
+                else self.env.evaluate(
+                    self.env.materialize(requirement, bindings)  # type: ignore[arg-type]
+                )
             )
             if not valid:
                 missing.append("条件")
-        ambiguity = sum(item.tag("Ambiguity") + item.tag("Tainted") for item in self._entities(inputs))
+        ambiguity = sum(
+            item.tag("Ambiguity") + item.tag("Tainted")
+            for item in self._entities(inputs)
+        )
         purification = sum(item.tag("Purification") for item in self._entities(inputs))
         if recipe.get("unique_target", target is not None) and target is None:
             missing.append("目标")
@@ -421,10 +516,13 @@ class KotodamaSystem:
             value = inputs[role]
             entities = (value,) if isinstance(value, Entity) else tuple(value)
             for entity in entities:
-                groups.append({
-                    facet.value for facet in entity.related(relation)
-                    if isinstance(facet.value, Entity)
-                })
+                groups.append(
+                    {
+                        facet.value
+                        for facet in entity.related(relation)
+                        if isinstance(facet.value, Entity)
+                    }
+                )
         if not groups:
             return ()
         candidates = set.intersection(*groups)
@@ -450,7 +548,9 @@ class KotodamaSystem:
                 self.last_failure = "无法唯一寻址" if not candidates else "目标存在歧义"
                 return None
             target = candidates[0]
-        if missing := self.check(recipe, speaker, inputs, target=target, context=context):
+        if missing := self.check(
+            recipe, speaker, inputs, target=target, context=context
+        ):
             self.last_failure = "、".join(missing)
             return None
         parent = (context or {}).get("world") or speaker.parent
@@ -472,18 +572,25 @@ class KotodamaSystem:
         if target is not None:
             rite.relate("Target", target)
         for role, value in inputs.items():
-            for entity in ((value,) if isinstance(value, Entity) else value):
+            for entity in (value,) if isinstance(value, Entity) else value:
                 rite.attach(role, entity)
                 rite.relate("Input", entity)
-        rite.set("signature", self.signature(recipe, speaker, inputs, {
-            **dict(context or {}), **inputs, "speaker": speaker, "target": target
-        }))
+        rite.set(
+            "signature",
+            self.signature(
+                recipe,
+                speaker,
+                inputs,
+                {**dict(context or {}), **inputs, "speaker": speaker, "target": target},
+            ),
+        )
         self.rites.append(rite)
         return rite
 
     def _pay(
         self, owner: Entity, costs: Iterable[Effect], bindings: Mapping[str, Any]
     ) -> bool:
+        """先验证整组代价，再逐项核销并建立 Paid/PaidFor 审计关系。"""
         materialized = tuple(self.materialize(effect, bindings) for effect in costs)
         if not all(self.validate_effect(effect, cost=True) for effect in materialized):
             self.last_failure = "代价不可支付"
@@ -503,14 +610,24 @@ class KotodamaSystem:
         recipe = rite.get("recipe")
         inputs = rite.get("inputs")
         context = rite.get("context")
-        bindings = {**context, **inputs, "speaker": rite.get("speaker"), "target": rite.get("target"), "rite": rite}
+        bindings = {
+            **context,
+            **inputs,
+            "speaker": rite.get("speaker"),
+            "target": rite.get("target"),
+            "rite": rite,
+        }
         steps = recipe.get("steps", ())
         index = rite.get("step", 0)
         if index < len(steps):
             step = steps[index]
             requirements = step.get("requirements", ())
             if any(
-                not (item(bindings) if callable(item) else self.env.evaluate(self.env.materialize(item, bindings)))
+                not (
+                    item(bindings)
+                    if callable(item)
+                    else self.env.evaluate(self.env.materialize(item, bindings))
+                )
                 for item in requirements
             ):
                 self.last_failure = f"步骤:{step.get('name', index)}"
@@ -529,8 +646,11 @@ class KotodamaSystem:
         return self._complete(rite, bindings)
 
     def _complete(self, rite: Entity, bindings: Mapping[str, Any]) -> Entity | None:
+        """完成 Rite：即时配方应用效果，持续配方生成 Covenant。"""
         recipe = rite.get("recipe")
-        if not self._pay(rite, (item.value for item in recipe.entries("Cost")), bindings):
+        if not self._pay(
+            rite, (item.value for item in recipe.entries("Cost")), bindings
+        ):
             rite.set("phase", "interrupted")
             return None
         persistent = bool(
@@ -543,10 +663,25 @@ class KotodamaSystem:
             contract = Entity(
                 recipe.name,
                 rite.parent,
-                {"Covenant": 1, "Active": 1, **{
-                    tag: value for tag, value in recipe.tags.items()
-                    if tag in {"Promise", "Oath", "Geas", "Curse", "Blessing", "DyingWord", "Contingency", "Supernatural"}
-                }},
+                {
+                    "Covenant": 1,
+                    "Active": 1,
+                    **{
+                        tag: value
+                        for tag, value in recipe.tags.items()
+                        if tag
+                        in {
+                            "Promise",
+                            "Oath",
+                            "Geas",
+                            "Curse",
+                            "Blessing",
+                            "DyingWord",
+                            "Contingency",
+                            "Supernatural",
+                        }
+                    },
+                },
                 properties={
                     "recipe": recipe,
                     "speaker": rite.get("speaker"),
@@ -556,7 +691,14 @@ class KotodamaSystem:
                     "fired": False,
                 },
             )
-            for key in ("Trigger", "HardConstraint", "Obligation", "Breach", "Exception", "Effect"):
+            for key in (
+                "Trigger",
+                "HardConstraint",
+                "Obligation",
+                "Breach",
+                "Exception",
+                "Effect",
+            ):
                 for facet in recipe.entries(key):
                     value = (
                         self.materialize_rule(facet.value, bindings)
@@ -597,6 +739,7 @@ class KotodamaSystem:
         return self.advance(rite) if rite is not None else None
 
     def _excepted(self, contract: Entity) -> bool:
+        """判断契约是否因任一当前成立的 Exception 而暂不生效。"""
         return any(
             isinstance(item.value, Expr) and self.env.evaluate(item.value)
             for item in contract.entries("Exception")
@@ -613,7 +756,9 @@ class KotodamaSystem:
                 self.env,
             )
             for contract in self.contracts
-            if contract.get("active", True) and contract.has("Active") and not self._excepted(contract)
+            if contract.get("active", True)
+            and contract.has("Active")
+            and not self._excepted(contract)
         )
         self.blocked_intents += int(not allowed)
         return allowed
@@ -652,7 +797,9 @@ class KotodamaSystem:
             ):
                 continue
             triggers = tuple(item.value for item in contract.entries("Trigger"))
-            if triggers and not all(self.rules.activation_satisfied(rule, self.env) for rule in triggers):
+            if triggers and not all(
+                self.rules.activation_satisfied(rule, self.env) for rule in triggers
+            ):
                 continue
             contract.change("Firing", 1)
             self._trigger_stack.append(contract)
@@ -667,7 +814,9 @@ class KotodamaSystem:
                 continue
             contract.change("Fired", 1)
             contract.set("fired", True)
-            if not contract.entries("HardConstraint") and not contract.entries("Obligation"):
+            if not contract.entries("HardConstraint") and not contract.entries(
+                "Obligation"
+            ):
                 contract.tags.pop("Active", None)
                 contract.set("active", False)
             fired.append(contract)
@@ -681,5 +830,8 @@ class KotodamaSystem:
 
 
 __all__ = [
-    "Recipe", "WordSpirit", "aggregate_aspects", "KotodamaSystem",
+    "Recipe",
+    "WordSpirit",
+    "aggregate_aspects",
+    "KotodamaSystem",
 ]

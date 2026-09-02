@@ -49,12 +49,14 @@ Entity
 客观 properties / facets / tags
   → observe: 结合观察者状态与条件生成有限 Claim
   → 存入观察者子树中的 Knowledge Entity
-  → Soul 经过 receive -> understand -> accept/reject 形成信念
+  → Soul 经过 receive/observe -> understand -> accept/reject 形成个体立场
   → 影响估计、命名与决策
 ```
 
 - **`Reveal` Facet**：定义对象的可见性条件。未满足条件时，观察者仅获得公开名称，无法穿透读取内部性质。
 - **`Claim` Facet**：记录知识载体声称的命题。错误知识可以被主体理解并相信，但不会写入客观世界事实（`RuleEnvironment.facts`）。
+- **采信门控**：只有标记为 `Accepted` 的历史 Knowledge 才进入 `Soul.cognitive_environment()`；当前 Observation 仍直接参与。拒绝或暂存只改变立场，不删除声明与来源。
+- **定向查询**：`claims_about(subject, accepted=...)` 返回 Knowledge 与 Claim Facet，保留认知主体、目标、来源、置信度和阶段。A 对 B 的知识不会自动成为 B 对 A 的知识。
 
 ---
 
@@ -88,6 +90,12 @@ Influence Entity
 - **情感种类**：`Love`, `Hatred`, `Fear`, `Anger`, `Joy`, `Sorrow`, `Hope`, `Despair`, `Remorse`, `Devotion`, `Obsession`, `Serenity`。
 - **规则作用**：情感贡献天然 Aspect，影响 Soul 决策权重与自我稳定计算，但不能作为凭空创生的超自然能量。
 - **状态统一**：伤势、污染、专注与祝福共用 `Influence` 生命周期，无需单独建立数据类。
+
+### 稳定人格与临时状态
+
+稳定人格使用 Soul 下的普通 `Disposition` Entity 表达。Disposition 作为有来源的 Step 与 `Preference` Facet 的来源：Step 生成主体已经有能力执行的 Intent，Preference 只调整这些候选的排序。
+
+人格贡献不会写入客观事实，也不能绕过 Intent 验证、RulePatch 或 Covenant。每项贡献在 Decision 中保留来源。恐惧、疲劳、药物与临时职责继续使用 Influence，不直接改写稳定 Disposition。
 
 ---
 

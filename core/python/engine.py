@@ -15,6 +15,7 @@ from typing import Any
 
 from .entity_system import *
 from .kotodama import *
+from .social import *
 from .soul import *
 
 
@@ -125,6 +126,11 @@ class RuntimePolicy:
 
 
 TimelineCallback = Callable[[], Number | None]
+EventCheck = Callable[[Entity, Mapping[str, Any]], bool | Mapping[str, object]]
+EventOffer = Callable[
+    [Entity, Entity | None, Mapping[str, Any]], Intent | Iterable[Intent] | None
+]
+EventListener = Callable[[Entity, Mapping[str, Any]], None]
 
 
 class Timeline:
@@ -134,6 +140,10 @@ class Timeline:
     """
 
     def __init__(self) -> None:
+        """创建从行动值零开始的稳定优先队列。
+
+        ``_order`` 保证相同行动值按登记顺序串行结算，也避免比较回调对象。
+        """
         self.now: Number = 0
         self._queue: list[tuple[Number, int, str, TimelineCallback]] = []
         self._order = count()
@@ -162,6 +172,202 @@ class Timeline:
         return tuple(sorted(self._queue))
 
 
+def _event_true(_node: Entity, _context: Mapping[str, Any]) -> bool:
+    """作为触发和持续条件的默认恒真回调。"""
+    return True
+
+
+def _event_false(_node: Entity, _context: Mapping[str, Any]) -> bool:
+    """作为失效和完成条件的默认恒假回调。"""
+    return False
+
+
+def _event_no_offer(
+    _node: Entity, _actor: Entity | None, _context: Mapping[str, Any]
+) -> tuple[Intent, ...]:
+    """作为节点候选提供器的默认空结果。"""
+    return ()
+
+
+def EventNode(
+    name: str,
+    parent: Entity | None = None,
+    *,
+    trigger: EventCheck = _event_true,
+    preserve: EventCheck = _event_true,
+    invalidate: EventCheck = _event_false,
+    complete: EventCheck = _event_false,
+    offer: EventOffer = _event_no_offer,
+    priority: int = 0,
+    state: str = "dormant",
+    tags: Mapping[str, int] | None = None,
+) -> Entity:
+    """创建尚未发生的条件机会节点。
+
+    节点只提供 Intent 候选和生命周期，不直接修改世界，也不替 Soul 选择
+    行动。参与者、后继和来源继续使用 Facet 保存实际对象引用。
+    """
+    return Entity(
+        name,
+        parent,
+        {"EventNode": 1, **(tags or {})},
+        properties={
+            "state": state,
+            "result": None,
+            "trigger": trigger,
+            "preserve": preserve,
+            "invalidate": invalidate,
+            "complete": complete,
+            "offer": offer,
+            "priority": priority,
+            "bindings": {},
+        },
+    )
+
+
+class EventDirector:
+    """检查条件机会节点，但不执行动作或解释剧情语义。"""
+
+    def __init__(self, nodes: Iterable[Entity] = ()) -> None:
+        """登记待检查节点；列表只保存运行时对象引用。"""
+        self.nodes: list[Entity] = list(nodes)
+
+    def add(self, node: Entity) -> Entity:
+        """登记节点对象引用；同一对象只登记一次。"""
+        if node not in self.nodes:
+            self.nodes.append(node)
+        return node
+
+    def open(self, node: Entity, source: object | None = None) -> Entity:
+        """把锁定节点开放为潜伏状态。"""
+        self.add(node)
+        if node.get("state") == "finished":
+            return node
+        if node.get("state") == "locked":
+            node.set("state", "dormant")
+        if source is not None and not node.related("Source", source):
+            node.relate("Source", source)
+        return node
+
+    def cancel(
+        self, node: Entity, source: object | None = None, reason: str = ""
+    ) -> Entity:
+        """永久取消尚未发生的节点，并保留失效来源。"""
+        node.set("state", "finished")
+        node.set("result", "cancelled")
+        node.set("bindings", {})
+        if reason:
+            node.set("reason", reason)
+        if source is not None and not node.related("InvalidatedBy", source):
+            node.relate("InvalidatedBy", source)
+        return node
+
+    def finish(
+        self,
+        node: Entity,
+        source: object | None = None,
+        result: str = "completed",
+        context: Mapping[str, Any] | None = None,
+    ) -> Entity:
+        """完成节点，并按真实结果一次性开放满足条件的后继。"""
+        context = {"source": source, "result": result, **(context or {})}
+        node.set("state", "finished")
+        node.set("result", result)
+        if source is not None and not node.related("ResolvedBy", source):
+            node.relate("ResolvedBy", source)
+        for relation in node.entries("Next", context):
+            successor = relation.value
+            if isinstance(successor, Entity) and successor.has("EventNode"):
+                self.open(successor, source or node)
+        return node
+
+    @staticmethod
+    def _check(
+        node: Entity, name: str, context: Mapping[str, Any]
+    ) -> bool | Mapping[str, object]:
+        """调用节点条件，并保留条件可能返回的上下文绑定表。"""
+        return node.get(name)(node, context)
+
+    def inspect(self, node: Entity, context: Mapping[str, Any] | None = None) -> str:
+        """刷新一个节点，返回刷新后的状态。"""
+        context = context or {}
+        state = node.get("state", "dormant")
+        if state in ("locked", "finished"):
+            return state
+        invalidated = self._check(node, "invalidate", context)
+        if invalidated:
+            source = (
+                invalidated
+                if isinstance(invalidated, Entity)
+                else context.get("source")
+            )
+            self.cancel(node, source, "失效条件成立")
+            return "finished"
+        if not self._check(node, "preserve", context):
+            self.cancel(node, context.get("source"), "持续条件不再成立")
+            return "finished"
+        bindings = self._check(node, "trigger", context)
+        if bindings is False or bindings is None:
+            node.set("state", "dormant")
+            node.set("bindings", {})
+            return "dormant"
+        node.set("state", "offered")
+        node.set("bindings", dict(bindings) if isinstance(bindings, Mapping) else {})
+        return "offered"
+
+    def refresh(self, context: Mapping[str, Any] | None = None) -> tuple[Entity, ...]:
+        """以节点快照刷新状态；本轮新开放的后继留到下一轮检查。"""
+        context = context or {}
+        snapshot = tuple(
+            sorted(
+                self.nodes,
+                key=lambda item: item.get("priority", 0),
+                reverse=True,
+            )
+        )
+        for node in snapshot:
+            self.inspect(node, context)
+        return tuple(node for node in snapshot if node.get("state") == "offered")
+
+    def offers_for(
+        self, actor: Entity | None, context: Mapping[str, Any] | None = None
+    ) -> tuple[Intent, ...]:
+        """收集当前节点为 actor 提供的完整 Intent，不执行或评分。"""
+        context = {"actor": actor, **(context or {})}
+        offered: list[Intent] = []
+        for node in self.refresh(context):
+            local = {**context, **node.get("bindings", {}), "event_node": node}
+            result = node.get("offer")(node, actor, local)
+            if result is None:
+                continue
+            if isinstance(result, Intent):
+                offered.append(result)
+            else:
+                offered.extend(result)
+        return tuple(dict.fromkeys(offered))
+
+    def observe(self, event: Entity, context: Mapping[str, Any] | None = None) -> None:
+        """在已发生事件完成传播后，结算节点完成条件并刷新其余节点。"""
+        event_context = {**(context or {}), "event": event, "source": event}
+        for node in tuple(self.nodes):
+            if node.get("state") in ("locked", "finished"):
+                continue
+            completed = self._check(node, "complete", event_context)
+            if completed:
+                result = (
+                    completed.get("result", "completed")
+                    if isinstance(completed, Mapping)
+                    else "completed"
+                )
+                self.finish(node, event, str(result), event_context)
+            else:
+                self.inspect(node, event_context)
+
+    def __call__(self, event: Entity, context: Mapping[str, Any] | None = None) -> None:
+        """允许实例直接注册为 ActionRuntime 的事件监听器。"""
+        self.observe(event, context)
+
+
 class ActionRuntime:
     """人物、异常和反应共用的嵌套行动结算入口。"""
 
@@ -173,8 +379,13 @@ class ActionRuntime:
         kotodama: KotodamaSystem | None = None,
         *,
         event_parent: Entity | None = None,
-        reactors: Callable[[Intent, Mapping[str, Any]], Iterable[Intent]] = lambda _intent, _context: (),
-        witnesses: Callable[[Entity, Mapping[str, Any]], Iterable[Soul]] = lambda _event, _context: (),
+        reactors: Callable[
+            [Intent, Mapping[str, Any]], Iterable[Intent]
+        ] = lambda _intent, _context: (),
+        witnesses: Callable[
+            [Entity, Mapping[str, Any]], Iterable[Soul]
+        ] = lambda _event, _context: (),
+        listeners: Iterable[EventListener] = (),
     ) -> None:
         """组合时间线、规则、言灵以及游戏层提供的反应与见证者查询。"""
         self.timeline = timeline
@@ -184,6 +395,7 @@ class ActionRuntime:
         self.event_parent = event_parent
         self.reactors = reactors
         self.witnesses = witnesses
+        self.listeners = tuple(listeners)
         self.patches: list[Entity] = []
         self.events: list[Entity] = []
 
@@ -199,14 +411,14 @@ class ActionRuntime:
         objective = intent.validate() and self.rules.patch_allows(
             intent.effect, self.patches, self.env, context
         )
-        allowed = bound and objective and (
-            self.kotodama is None or self.kotodama.allows(intent)
+        allowed = (
+            bound
+            and objective
+            and (self.kotodama is None or self.kotodama.allows(intent))
         )
         return allowed, decision
 
-    def resolve(
-        self, intent: Intent, context: Mapping[str, Any] | None = None
-    ) -> bool:
+    def resolve(self, intent: Intent, context: Mapping[str, Any] | None = None) -> bool:
         """结算一个完整行动，并依次处理反应、事件、契约和观察。"""
         context = {"phase": "main", **(context or {})}
         allowed, _ = self.review(intent, context)
@@ -238,7 +450,15 @@ class ActionRuntime:
             self.kotodama.trigger()
         for soul in self.witnesses(event, context):
             soul.observe(E("event", event), source=event)
+            soul.learn(
+                event,
+                (E("event", event),),
+                source=event,
+                stage="accepted",
+            )
             event.relate("ObservedBy", soul)
+        for listener in self.listeners:
+            listener(event, context)
         return True
 
     def submit(
@@ -260,6 +480,7 @@ class ActionRuntime:
         done = False
 
         def settle() -> None:
+            """结算队列中的一次性行动，并向同步等待者报告完成。"""
             nonlocal done
             result = self.resolve(intent, context)
             done = True
@@ -289,6 +510,7 @@ class ActionRuntime:
         context = dict(context or {})
 
         def take_turn() -> Number | None:
+            """执行一个循环行动槽，并返回再次登记所需的行动值。"""
             action = soul.step(
                 actor,
                 self.rules,

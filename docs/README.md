@@ -9,13 +9,8 @@
 
 ---
 
-## 2. 调研与设计依据（Research & Background）
+## 2. 测试主题：异常感知学园（Academy Test Theme）
 
-- [游戏与文学机制调研](./game-and-literary-research-zh.md)：《咒术回战》《诡秘之主》《魔法少女小圆》、规则怪谈、全局回合与《枪弹辩驳》机制迁移依据。
-
----
-
-## 3. 测试主题：异常感知学园（Academy Test Theme）
-
-- [异常感知学园游戏设计书](./academy-game-design-zh.md)：近代学园、十六项职业、教师契约、记忆材料、恶魔游戏与胜负条件。
 - [异常感知学园内容层设计](./academy-content-design-zh.md)：人物羁绊、历史记忆、运行时表达、决策树、规则设立与最终封印流程。
+- [异常感知学园群像认知与相遇事件](./academy-ensemble-200av-design-zh.md)：定向认知关系、性格反应、规则决策树、强制睡眠与前二十天条件事件链。
+- [异常感知学园前五日剧情规则树](./academy-first-five-days-rule-tree-zh.md)：从醒来到第五日的节点池、摩擦种子、分支取消、有限修复与行动值约束。

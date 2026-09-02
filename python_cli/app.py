@@ -1,7 +1,6 @@
 import argparse
 
-from .academy import AcademyGame
-from .game import ArchiveNightGame
+from .academy_game import AcademyGame
 from .ui import TerminalUI
 
 
@@ -156,54 +155,7 @@ class GameCLI:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="《异常感知学园：灰潮禁闭》Python 终端版")
-    parser.add_argument("--smoke", action="store_true", help="运行正式学园完整机制冒烟流程")
-    parser.add_argument("--archive-smoke", action="store_true", help="运行保留的抄名室旧原型冒烟流程")
-    parser.add_argument(
-        "--simulate", nargs="?", const="docs/simulations/academy-prologue-20-days.md",
-        help="运行当前正式的第1—20日初期篇并导出完整决策轨迹",
-    )
-    parser.add_argument(
-        "--simulate-prologue", nargs="?", const="docs/simulations/academy-prologue-20-days.md",
-        help="运行第1—20日初期篇并导出完整候选、决策与事件轨迹",
-    )
-    parser.add_argument(
-        "--simulate-seal-legacy", nargs="?", const="docs/simulations/academy-simulation.md",
-        help="运行保留的旧版封印冲刺模拟",
-    )
     parser.add_argument("--no-color", action="store_true", help="关闭 ANSI 颜色")
     parser.add_argument("--no-clear", action="store_true", help="不清屏")
     args = parser.parse_args(argv)
-    if args.smoke:
-        print(AcademyGame(autonomous=False).smoke())
-        return 0
-    if args.archive_smoke:
-        print(ArchiveNightGame().smoke())
-        return 0
-    if args.simulate:
-        from .prologue_simulation import run_prologue_simulation
-
-        simulation, paths = run_prologue_simulation(args.simulate)
-        print(
-            f"PROLOGUE_SIMULATION_PASS days={simulation.game.day} "
-            f"events={len(simulation.game.runtime.events)} markdown={paths[0]} jsonl={paths[1]}"
-        )
-        return 0
-    if args.simulate_prologue:
-        from .prologue_simulation import run_prologue_simulation
-
-        simulation, paths = run_prologue_simulation(args.simulate_prologue)
-        print(
-            f"PROLOGUE_SIMULATION_PASS days={simulation.game.day} "
-            f"events={len(simulation.game.runtime.events)} markdown={paths[0]} jsonl={paths[1]}"
-        )
-        return 0
-    if args.simulate_seal_legacy:
-        from .simulation import run_simulation
-
-        simulation, paths = run_simulation(args.simulate_seal_legacy)
-        print(
-            f"LEGACY_SEAL_SIMULATION_PASS events={len(simulation.game.runtime.events)} "
-            f"markdown={paths[0]} jsonl={paths[1]}"
-        )
-        return 0
     return GameCLI(TerminalUI(not args.no_color, not args.no_clear)).run()
