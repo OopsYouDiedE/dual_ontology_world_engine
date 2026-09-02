@@ -6,6 +6,7 @@
 
 from .engine import *
 from .entity_system import *
+from .incident import *
 from .kotodama import *
 from .social import *
 from .soul import *

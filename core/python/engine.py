@@ -14,6 +14,7 @@ from math import inf
 from typing import Any
 
 from .entity_system import *
+from .incident import *
 from .kotodama import *
 from .social import *
 from .soul import *
