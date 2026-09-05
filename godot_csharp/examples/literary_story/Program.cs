@@ -51,41 +51,23 @@ internal static class Program
         foreach (var actor in game.Characters)
         {
             game.Perceive(actor);
-            InstallPreference(actor.Mind!, ruleActive);
+
         }
 
         game.Start();
         var steps = game.Run(45, maxSteps: 180);
-        var events = game.Session.Runtime.Events.Where(e => e.Get<bool>("succeeded")).ToList();
+        var events = game.Session.Runtime.Events.Where(e => e.Get<bool>("succeeded") && e.Get<Intent>("intent")?.Effect.Op != "wait").ToList();
         if (print)
         {
             Console.WriteLine();
             Console.WriteLine($"【{game.World.Name}】自主运行 {steps} 步");
             foreach (var ev in events)
-                Console.WriteLine($"  {ev.Get<double>("time"),5:0.0}  {LiteraryDialogue.Describe(ev)}");
+                Console.WriteLine($"  {ev.Get<double>("time"),5:0.0}  {ev.Get<Intent>("intent")!.Actor.Name} → {ev.Get<Intent>("intent")!.Target?.Name ?? "自身"}：{LiteraryDialogue.Describe(ev)}");
             Console.WriteLine($"  结局：门.opened={door.Get<bool>("opened")}, 门.protected={door.Get<bool>("protected")}, 符余量={talisman.Get<double>("charges")}");
         }
 
         return new RunResult(game.World.Name, steps, door.Get<bool>("opened"),
             events.Select(e => e.Get<Intent>("intent")?.Effect.Op ?? "?").ToArray());
-    }
-
-    private static void InstallPreference(Soul mind, bool ruleActive)
-    {
-        mind.InstallPreference((_, intent, _, _) => intent.Effect.Op switch
-        {
-            // 守则存在时，护符和有来源的交涉比徒劳开门更有吸引力。
-            "protect" when ruleActive => 90,
-            "state_claim" when ruleActive => 80,
-            "show_evidence" when ruleActive => 75,
-            "challenge" when ruleActive => 70,
-            "ask" when ruleActive => 65,
-            "open" when !ruleActive => 100,
-            "state_claim" => 35,
-            "show_evidence" => 30,
-            "ask" => 25,
-            _ => 0
-        }, source: "literary-story-preference");
     }
 
     private static void PrintCounterfactual(RunResult withRule, RunResult withoutRule)
@@ -125,24 +107,15 @@ internal static class Program
         foreach (var actor in game.Characters)
         {
             game.Perceive(actor);
-            actor.Mind!.InstallPreference((_, intent, _, _) => intent.Effect.Op switch
-            {
-                "state_claim" => 85,
-                "show_evidence" => 80,
-                "challenge" => 75,
-                "ask" => 65,
-                "request_help" => 15,
-                _ => 0
-            }, source: "testimony-preference");
         }
 
         game.Start();
-        var steps = game.Run(55, maxSteps: 220);
-        var events = game.Session.Runtime.Events.Where(e => e.Get<bool>("succeeded")).ToList();
+        var steps = game.Run(95, maxSteps: 220);
+        var events = game.Session.Runtime.Events.Where(e => e.Get<bool>("succeeded") && e.Get<Intent>("intent")?.Effect.Op != "wait").ToList();
         Console.WriteLine();
         Console.WriteLine($"【{game.World.Name}】自主运行 {steps} 步");
         foreach (var ev in events)
-            Console.WriteLine($"  {ev.Get<double>("time"),5:0.0}  {LiteraryDialogue.Describe(ev)}");
+            Console.WriteLine($"  {ev.Get<double>("time"),5:0.0}  {ev.Get<Intent>("intent")!.Actor.Name} → {ev.Get<Intent>("intent")!.Target?.Name ?? "自身"}：{LiteraryDialogue.Describe(ev)}");
         Console.WriteLine($"  结局：钥匙位置={key.Get<string>("location")}, 照片被出示={photo.Related("ShownTo").Count() > 0}");
     }
 }

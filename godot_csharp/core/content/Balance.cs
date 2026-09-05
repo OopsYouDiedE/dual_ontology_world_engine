@@ -16,6 +16,15 @@ public enum PersonalityProfile
 
 public static class Balance
 {
+    /// <summary>默认条款后果预算。数值效力按绝对变化量收费，其他世界变化每项 1 Q。</summary>
+    public static double ConsequenceBudget(IEnumerable<DualOntologyWorldEngine.Core.Rules.Effect> effects) => effects.Sum(effect => effect.Op switch
+    {
+        "sequence" => ConsequenceBudget(effect.Args.OfType<DualOntologyWorldEngine.Core.Rules.Effect>()),
+        "when" => ConsequenceBudget(effect.Args.OfType<DualOntologyWorldEngine.Core.Rules.Effect>()),
+        "change" when effect.Args.Length > 2 && effect.Args[2] is IConvertible amount => Math.Max(1, Math.Abs(Convert.ToDouble(amount))),
+        "require" => 0,
+        _ => 1d
+    });
     public const double BasicActionAv = 10.0;
     public const double BriefResponseAv = 5.0;
     public const double InvestigationAv = 20.0;

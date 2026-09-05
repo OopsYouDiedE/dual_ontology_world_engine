@@ -20,6 +20,7 @@ public sealed class LiterarySimulation : IDisposable
     {
         World = new Entity(name);
         Session = new SimulationSession(World);
+        Session.Runtime.DeclarativeOnly = true;
         Rules = new PatternBook(Session);
         _cleanup.Add(HauntedItems.Install(Session));
         Session.Runtime.WitnessesCollector = (ev, _) =>
@@ -47,14 +48,17 @@ public sealed class LiterarySimulation : IDisposable
         return anchor;
     }
     public Character Person(string name, Entity scene, Entity goal, string field, object value,
-        PersonalityProfile personality = PersonalityProfile.Cautious, Entity? attachment = null, Expr? secret = null, string tone = "克制")
+        PersonalityProfile personality = PersonalityProfile.Cautious, Entity? attachment = null, Expr? secret = null, string tone = "克制", bool guardSecret = false)
     {
         var actor = new Character(name, scene);
         var mind = new Soul(name + "的心智"); actor.Bind(mind);
         actor.Set("personality", personality); actor.Set("goal_target", goal); actor.Set("goal_field", field); actor.Set("goal_value", value);
         actor.Set("attachment", attachment!); actor.Set("secret", secret!); actor.Set("tone", tone);
+        actor.Set("guard_secret", guardSecret);
         actor.Set("marked", false); actor.Set("charges", Balance.OccultAnchorCapacity);
         actor.Set("public_fields", new[] { "marked", "statement", "strain" });
+        if (secret?.Op == "eq" && secret.Args is [Expr { Op: "value", Args: [Entity subject, string beliefField] }, var believed])
+            StateView.Learn(mind, subject, beliefField, believed, actor);
         Characters.Add(actor);
         mind.InstallStep((soul, body, env, context) =>
         {
@@ -66,12 +70,13 @@ public sealed class LiterarySimulation : IDisposable
         });
         Perceive(actor); return actor;
     }
-    public Entity Object(string name, Entity scene, bool sealedState = false, string? evidence = null)
+    public Entity Object(string name, Entity scene, bool sealedState = false, string? evidence = null, bool occultEvidence = false)
     {
         return new Entity(name, scene, properties: new Dictionary<string, object>
         {
             ["sealed"] = sealedState, ["opened"] = false, ["danger"] = 0d, ["marked"] = false,
-            ["evidence"] = evidence!, ["public_fields"] = new[] { "sealed", "opened", "danger", "marked" }
+            ["evidence"] = evidence!, ["occult_evidence"] = occultEvidence,
+            ["public_fields"] = new[] { "sealed", "opened", "danger", "marked", "protected", "warded", "illuminated", "revealed", "occult_evidence" }
         });
     }
     public void Start()
@@ -104,7 +109,8 @@ public sealed class LiterarySimulation : IDisposable
                 label: $"打开《{target.Name}》", requirements: [E("eq", E("value", target, "sealed"), false), E("eq", E("value", target, "opened"), false)]);
             yield return new Intent(actor, mind, F("inspect", actor, target),
                 [F("observe", mind, target, "evidence"), F("relate", actor, "Examined", target)], 20,
-                $"调查《{target.Name}》", [E("not", E("contains", E("value", actor, "rel:Examined"), target))]);
+                $"调查《{target.Name}》", [E("not", E("contains", E("value", actor, "rel:Examined"), target)),
+                    E("any", E("eq", E("value", target, "occult_evidence"), false), E("eq", E("value", target, "illuminated"), true), E("eq", E("value", target, "revealed"), true))]);
         }
         yield return new Intent(actor, mind, F("rest", actor), [F("spend", actor, "strain", 1d)], 20, "暂且坐下，整理呼吸",
             [E("gte", E("value", actor, "strain"), 1d)]);
@@ -120,21 +126,33 @@ public sealed class LiterarySimulation : IDisposable
         var view = new StateView(action.Mind);
         var plan = Rules.ForecastConsequences(action, Session.Runtime.Prepare(action, view));
         if (!plan.Succeeded) return -1000;
-        var knownBlock = Rules.Guard(action, view);
-        if (knownBlock != null) return -100;
-        var score = Value(action.Actor, plan) - action.MotionCost / 20d + Rules.Pressure(action);
-        if (action.Effect.Op is "inspect" or "reveal" && plan.Uncertain)
-            score += Balance.PersonalityWeights[action.Actor.Get<PersonalityProfile>("personality")]["truth"];
+        var score = ImmediateValue(action, plan);
         // 只查看一步准备后的下一行动。复用相同效果，不在分支调用真实闭包或世界 RNG。
         var future = 0d;
         foreach (var next in _candidates.GetValueOrDefault(action.Actor, []).Take(64))
         {
             if (next == action) continue;
             var following = Rules.ForecastConsequences(next, Session.Runtime.Prepare(next, plan.View));
-            if (following.Succeeded && Rules.Guard(next, plan.View) == null)
-                future = Math.Max(future, Value(action.Actor, following) - next.MotionCost / 20d);
+            if (following.Succeeded)
+                future = Math.Max(future, ImmediateValue(next, following));
         }
-        return (float)(score + .65 * future - (plan.Uncertain ? .5 : 0));
+        return (float)(score + .65 * future);
+    }
+    private double ImmediateValue(Intent action, EffectPlan plan)
+    {
+        if (action.Effect.Op == "wait") return 0;
+        var score = Value(action.Actor, plan) - action.MotionCost / 20d + Rules.Pressure(action);
+        var weights = Balance.PersonalityWeights[action.Actor.Get<PersonalityProfile>("personality")];
+        if (action.Effect.Op == "state_claim")
+            score += action.Actor.Get<bool>("guard_secret") ? -weights["safety"] * 2 : weights["truth"] + weights["image"] * .25;
+        if (action.Effect.Op == "challenge") score += weights["truth"] + weights["autonomy"] * .5;
+        if (action.Effect.Op == "ask") score += weights["truth"];
+        if (action.Effect.Op is "silence" or "conceal") score += action.Actor.Get<bool>("guard_secret") ? weights["safety"] : weights["autonomy"] * .25;
+        if (action.Effect.Op == "retract") score += weights["safety"] - weights["image"] * .5;
+        if (action.Claim != null && action.Actor.Get<bool>("guard_secret")) score -= weights["safety"] * 3;
+        if (action.Effect.Op is "inspect" or "reveal" && plan.Uncertain)
+            score += Balance.PersonalityWeights[action.Actor.Get<PersonalityProfile>("personality")]["truth"] * 2;
+        return score - (plan.Uncertain ? .5 : 0);
     }
     private static double Value(Entity actor, EffectPlan plan)
     {
@@ -145,8 +163,8 @@ public sealed class LiterarySimulation : IDisposable
         double value = 0;
         foreach (var c in plan.Changes)
         {
-            if (c.Before == StateView.Unknown || c.After == StateView.Unknown) continue;
             if (c.Subject == goal && c.Field == field && StateView.Same(c.After, desired) && !StateView.Same(c.Before, desired)) value += weights["goal"] * 3;
+            if (c.Before == StateView.Unknown || c.After == StateView.Unknown) continue;
             if (c.Field == "KnownState" && c.After is Dictionary<(Entity, string), object?> known)
             {
                 var previous = c.Before as Dictionary<(Entity, string), object?> ?? new();
@@ -168,43 +186,66 @@ public sealed class LiterarySimulation : IDisposable
     }
     private IReadOnlyList<Effect> Deflect(Intent intent, StateView view, IReadOnlyList<Effect> changes)
     {
+        view = view.Fork();
         var result = new List<Effect>();
-        foreach (var effect in changes)
+        IEnumerable<Effect> Expand(IEnumerable<Effect> input)
         {
-            if (effect.Op == "sequence")
+            foreach (var effect in input)
             {
-                result.Add(F("sequence", Deflect(intent, view, effect.Args.Cast<Effect>().ToArray()).Cast<object>().ToArray())); continue;
+                if (effect.Op == "sequence")
+                    foreach (var nested in Expand(effect.Args.Cast<Effect>())) yield return nested;
+                else if (effect.Op == "when" && Equals(view.Value(effect.Args[0]), true))
+                    foreach (var nested in Expand([(Effect)effect.Args[1]])) yield return nested;
+                else yield return effect;
             }
-            if (effect.Op == "when")
-            {
-                result.Add(F("when", effect.Args[0], F("sequence", Deflect(intent, view, [(Effect)effect.Args[1]]).Cast<object>().ToArray()))); continue;
-            }
+        }
+        IReadOnlyList<Effect> Rewrite(Effect effect)
+        {
             if (effect.Op == "set" && effect.Args is [Entity marked, "marked", true] && Equals(view.Read(marked, "warded"), true))
+                return [F("set", marked, "warded", false), F("set", marked, "warded_by", null!)];
+            if (effect.Op != "change" || effect.Args is not [Entity victim, "strain", var raw] || Convert.ToDouble(raw) <= 0)
+                return [effect];
+            var amount = Convert.ToDouble(raw);
+            var replacement = new List<Effect>();
+            if (Equals(view.Read(victim, "protected"), true))
             {
-                result.Add(F("set", marked, "warded", false)); result.Add(F("set", marked, "warded_by", null!)); continue;
+                replacement.Add(F("set", victim, "protected", false)); replacement.Add(F("set", victim, "protected_by", null!));
+                amount = Math.Max(0, amount - 1);
+                if (amount == 0) return replacement;
             }
-            if (effect.Op == "change" && effect.Args is [Entity victim, "strain", var raw] && Convert.ToDouble(raw) > 0)
+            if (view.Read(victim, "substitute") is Entity effigy && view.Number(effigy, "charges") >= amount && view.Read(effigy, "$parent") == victim)
             {
-                var amount = Convert.ToDouble(raw);
-                if (Equals(view.Read(victim, "protected"), true))
-                {
-                    result.Add(F("set", victim, "protected", false)); result.Add(F("set", victim, "protected_by", null!));
-                    amount = Math.Max(0, amount - 1);
-                    if (amount == 0) continue;
-                }
-                if (view.Read(victim, "substitute") is Entity effigy && view.Number(effigy, "charges") >= amount && view.Read(effigy, "$parent") == victim)
-                {
-                    result.Add(F("spend", effigy, "charges", amount));
-                    result.Add(F("set", victim, "substitute", null!)); continue;
-                }
-                if (view.Read(victim, "mirror") is Entity mirror && view.Number(mirror, "integrity") >= amount && view.Read(mirror, "$parent") == victim
-                    && view.Read(mirror, "target") == intent.Actor)
-                {
-                    result.Add(F("spend", mirror, "integrity", amount)); result.Add(F("change", intent.Actor, "strain", amount)); continue;
-                }
-                result.Add(F("change", victim, "strain", amount)); continue;
+                replacement.Add(F("spend", effigy, "charges", amount)); replacement.Add(F("set", victim, "substitute", null!));
             }
-            result.Add(effect);
+            else if (view.Read(victim, "mirror") is Entity mirror && view.Number(mirror, "integrity") >= amount
+                && view.Read(mirror, "$parent") == victim && view.Read(mirror, "target") == intent.Actor)
+            {
+                replacement.Add(F("spend", mirror, "integrity", amount)); replacement.Add(F("change", intent.Actor, "strain", amount));
+            }
+            else
+            {
+                var thread = victim.Items.OfType<Entity>().FirstOrDefault(item =>
+                    item.Get<object>("item_kind") is HauntedItem.RedThread && Equals(view.Read(item, "linked"), true)
+                    && view.Read(item, "endpoint_a") == victim && view.Read(item, "endpoint_b") is Character
+                    && view.Number(item, "charges") >= 1);
+                if (thread != null)
+                {
+                    var shared = Math.Min(1, amount);
+                    replacement.Add(F("spend", thread, "charges", 1d));
+                    replacement.Add(F("set", thread, "linked", false));
+                    replacement.Add(F("change", (Entity)view.Read(thread, "endpoint_b")!, "strain", shared));
+                    amount -= shared;
+                }
+                if (amount > 0) replacement.Add(F("change", victim, "strain", amount));
+            }
+            return replacement;
+        }
+        foreach (var effect in Expand(changes))
+        {
+            var rewritten = Rewrite(effect);
+            result.AddRange(rewritten);
+            var shadow = Session.Runtime.Effects.Prepare(rewritten, view);
+            if (shadow.Succeeded) view = shadow.View;
         }
         return result;
     }

@@ -183,7 +183,6 @@ public class KotodamaSystem
     public EffectExecutor Effects { get; } = new();
     private readonly List<Entity> _rites = new();
     private readonly List<Entity> _contracts = new();
-    private readonly List<Entity> _triggerStack = new();
 
     /// <summary>当前世界上处于准备或施行阶段的仪式实体列表（Rite）。</summary>
     public IReadOnlyList<Entity> Rites => _rites;
@@ -230,12 +229,14 @@ public class KotodamaSystem
             var fact = (Expr)effect.Args[0];
             if (!facts.Contains(fact)) facts.Add(fact);
             plan.Write(_env.State, "facts", facts);
+            plan.Write(_env.State, "version", Convert.ToInt32(plan.View.Read(_env.State, "version")) + 1);
         });
         Register("retract", (plan, effect) =>
         {
             var facts = ((IEnumerable<Expr>?)plan.View.Read(_env.State, "facts") ?? []).ToList();
             facts.Remove((Expr)effect.Args[0]);
             plan.Write(_env.State, "facts", facts);
+            plan.Write(_env.State, "version", Convert.ToInt32(plan.View.Read(_env.State, "version")) + 1);
         });
     }
 
@@ -294,9 +295,9 @@ public class KotodamaSystem
     /// <returns>true 表示效果参数完备且前置检查通过。</returns>
     public bool ValidateEffect(Effect effect, bool cost = false) => Effects.Prepare([BoundEffect(effect)]).Succeeded;
 
-    public IReadOnlyList<Entity>? Apply(Effect effect)
+    public IReadOnlyList<Entity>? Apply(params Effect[] effects)
     {
-        var plan = Effects.Prepare([BoundEffect(effect)]);
+        var plan = Effects.Prepare(effects.Select(BoundEffect));
         var result = plan.Commit();
         return result.Succeeded ? plan.Changes.Select(c => c.Subject).Distinct().ToArray() : null;
     }
@@ -538,23 +539,6 @@ public class KotodamaSystem
         return rite;
     }
 
-    private bool Pay(Entity owner, IEnumerable<Effect> costs, IReadOnlyDictionary<string, object> bindings)
-    {
-        var materialized = costs.Select(c => Materialize(c, bindings)).ToList();
-        var plan = Effects.Prepare(materialized.Select(BoundEffect));
-        if (!plan.Commit().Succeeded)
-        {
-            LastFailure = plan.Reason.Length > 0 ? plan.Reason : "代价不可支付";
-            return false;
-        }
-        foreach (var change in plan.Changes)
-        {
-            owner.Attach("Paid", change, source: change.Subject);
-            change.Subject.Relate("PaidFor", owner);
-        }
-        return true;
-    }
-
     /// <summary>
     /// 推进仪式完成阶段，扣除代价并结算产出效果或生成持久 Covenant 契约实体。
     /// </summary>
@@ -713,13 +697,7 @@ public class KotodamaSystem
 
             contract.Change("Breached", 1);
             breached.Add(contract);
-            foreach (var consequence in contract.Entries("Breach"))
-            {
-                if (consequence.Value is Effect eff)
-                {
-                    Apply(eff);
-                }
-            }
+            Apply(contract.Entries("Breach").Select(f => f.Value).OfType<Effect>().ToArray());
         }
         return breached;
     }
@@ -733,8 +711,7 @@ public class KotodamaSystem
         var fired = new List<Entity>();
         foreach (var contract in _contracts.ToList())
         {
-            if (!contract.Has("Active") || contract.Has("Firing") || contract.Get<bool>("fired", false) ||
-                _triggerStack.Contains(contract) || Excepted(contract))
+            if (!contract.Has("Active") || contract.Has("Firing") || contract.Get<bool>("fired", false) || Excepted(contract))
             {
                 continue;
             }
@@ -746,20 +723,9 @@ public class KotodamaSystem
             }
 
             contract.Change("Firing", 1);
-            _triggerStack.Add(contract);
-            bool succeeded = true;
-
-            foreach (var item in contract.Entries("Effect"))
-            {
-                if (item.Value is Effect eff && Apply(eff) == null)
-                {
-                    succeeded = false;
-                    break;
-                }
-            }
-
-            _triggerStack.Remove(contract);
-            contract.Tags.Remove("Firing");
+            bool succeeded;
+            try { succeeded = Apply(contract.Entries("Effect").Select(f => f.Value).OfType<Effect>().ToArray()) != null; }
+            finally { contract.Tags.Remove("Firing"); }
 
             if (!succeeded) continue;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DualOntologyWorldEngine.Core;
@@ -251,7 +251,7 @@ public partial class AcademySimulation
                 var hazardEntity = sceneEntities.FirstOrDefault(e => e.Has("Hazard"));
                 if (hazardEntity != null)
                 {
-                    choices.Add(new PhysicalActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("disarm_hazard", actor, hazardEntity),
@@ -273,7 +273,7 @@ public partial class AcademySimulation
                 if (evidenceHeld != null && containers.Count > 0)
                 {
                     var targetBox = containers[0];
-                    choices.Add(new PhysicalActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("stow_evidence", actor, evidenceHeld, targetBox),
@@ -295,7 +295,7 @@ public partial class AcademySimulation
                 var canReinforce = prof is "建筑师" or "机械工程师" or "神射手" || actor.Children.Keys.OfType<Entity>().Any(e => e.Has("Repair") || e.Has("Tool") || e.Has("Survey")) || scene.Tag("Hazard") > 0;
                 if (entrance != null && canReinforce)
                 {
-                    choices.Add(new PhysicalActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("reinforce_door", actor, entrance),
@@ -315,7 +315,7 @@ public partial class AcademySimulation
                 // 1.10 痕迹追踪勘查 (track_trace - 天国/刑侦追踪)
                 if (!s.Observations.Any(o => o.Op == "traces_tracked" && Equals(o.Args.FirstOrDefault(), scene)))
                 {
-                    choices.Add(new EpistemicActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("track_trace", actor, scene),
@@ -341,7 +341,7 @@ public partial class AcademySimulation
                     var clueB = evidenceDocs[1];
                     if (!s.Observations.Any(o => o.Op == "clues_cross_examined" && Equals(o.Args.FirstOrDefault(), clueA)))
                     {
-                        choices.Add(new EpistemicActionIntent(
+                        choices.Add(new Intent(
                             actor,
                             s,
                             AST.F("cross_examine", actor, clueA, clueB),
@@ -363,7 +363,7 @@ public partial class AcademySimulation
                 var cipherTarget = sceneEntities.FirstOrDefault(e => (e.Has("Cipher") || e.Has("AncientRune") || (e.Has("Book") && e.Has("Vestige"))) && !e.Has("Decoded"));
                 if (canDecode && cipherTarget != null)
                 {
-                    choices.Add(new EpistemicActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("decode_cipher", actor, cipherTarget),
@@ -458,7 +458,7 @@ public partial class AcademySimulation
                 var activePact = scene.Children.Keys.OfType<Entity>().Concat(actor.Children.Keys.OfType<Entity>()).FirstOrDefault(e => e.Has("Pact") || e.Has("Temptation"));
                 if (demonHere && activePact != null)
                 {
-                    choices.Add(new CovenantActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("counter_demon_bargain", actor, Demon),
@@ -698,7 +698,7 @@ public partial class AcademySimulation
                 if (peers.Count > 0)
                 {
                     var subject = peers[0];
-                    choices.Add(new SocialActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("interrogate_motive", actor, subject),
@@ -720,7 +720,7 @@ public partial class AcademySimulation
                 if (peers.Count > 0 && clueHeld != null)
                 {
                     var listener = peers[0];
-                    choices.Add(new SocialActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("exchange_testimony", actor, listener),
@@ -744,7 +744,7 @@ public partial class AcademySimulation
                     var evidence = actor.Children.Keys.OfType<Entity>().FirstOrDefault(e => e.Has("Document") || e.Has("Book") || e.Has("Tool"));
                     if (contradictoryPeer != null && evidence != null)
                     {
-                        choices.Add(new SocialActionIntent(
+                        choices.Add(new Intent(
                             actor,
                             s,
                             AST.F("expose_contradiction", actor, contradictoryPeer),
@@ -1223,7 +1223,7 @@ public partial class AcademySimulation
                     .FirstOrDefault(e => (e.Has("Herb") || e.Has("Specimen") || e.Has("Medical") || e.Has("Consumable")) && !e.Has("Facility") && !e.Has("Table") && !e.Has("Shelf") && !e.Has("Bed"));
                 if (canBrew && brewFacility != null && herbOrMedicine != null)
                 {
-                    choices.Add(new PhysiologicalActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("brew_tonic", actor, brewFacility),
@@ -1244,7 +1244,7 @@ public partial class AcademySimulation
                 if (bandageItem != null && peers.Count > 0)
                 {
                     var injuredPeer = peers[0];
-                    choices.Add(new PhysiologicalActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("bandage_wound", actor, injuredPeer),
@@ -1267,7 +1267,7 @@ public partial class AcademySimulation
                 var wardTarget = scene.Children.Keys.OfType<Entity>().FirstOrDefault(e => (e.Has("Boundary") || e.Has("Sanctuary") || e.Has("Facility")) && !e.Has("Warded") && (scene.Tag("Hazard") > 0 || s.EmotionIntensities.GetValueOrDefault(Emotion.Fear, 0f) >= 1.0f || prof == "诗人"));
                 if (isMysticProf && talismanMat != null && wardTarget != null)
                 {
-                    choices.Add(new CovenantActionIntent(
+                    choices.Add(new Intent(
                         actor,
                         s,
                         AST.F("inscribe_talisman", actor, wardTarget),
@@ -1538,7 +1538,7 @@ public partial class AcademySimulation
             bool hasDemonCipher = scene.Children.Keys.OfType<Entity>().Any(e => e.Has("DemonCipher"));
             if (!hasDemonCipher)
             {
-                choices.Add(new CovenantActionIntent(
+                choices.Add(new Intent(
                     Demon,
                     s,
                     AST.F("demon_inscribe_cipher", Demon, scene),
@@ -1563,7 +1563,7 @@ public partial class AcademySimulation
             if (nonHazardMech.Count > 0)
             {
                 var targetMech = nonHazardMech[0];
-                choices.Add(new PhysicalActionIntent(
+                choices.Add(new Intent(
                     Demon,
                     s,
                     AST.F("demon_tamper_hazard", Demon, targetMech),

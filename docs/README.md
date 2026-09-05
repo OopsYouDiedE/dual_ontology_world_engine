@@ -2,9 +2,11 @@
 
 ## 1. 核心规范（Engine Specifications）
 
-- [文学范式、灵异物品与人物模拟设计](./literary-simulation-design-zh.md)：本轮最新设计，确定十二范式、十二物品、默认数值、人物交互和 AI 推演；不考虑旧接口兼容，尚待实现及校准。
+- [C# 文学模拟实现与使用规范](./literary-simulation-implementation-zh.md)：当前可运行入口、效果契约、人物交互和验证边界。
 
-- [面向低配置涌现的核心改进方案](./emergence-core-plan-zh.md)：已敲定的下一轮方案，规定效果共用、规则与言灵协作、认知决策、表现及阶段验收；新增接口尚待实现。
+- [文学范式、灵异物品与人物模拟设计](./literary-simulation-design-zh.md)：本轮最新设计，确定十二范式、十二物品、默认数值、人物交互和 AI 推演；新入口已实现，长期数值待校准。
+
+- [面向低配置涌现的核心改进方案](./emergence-core-plan-zh.md)：已敲定的下一轮方案，规定效果共用、规则与言灵协作、认知决策、表现及阶段验收；具体落地以文学模拟实现规范为准。
 
 - [引擎公理设定](./engine-axioms-zh.md)：物理—语义—认知底层公理、言灵、规则、理智、异常与身份定理。
 - [Entity System 统一模型](./entity-system-model-zh.md)：Entity/Facet 架构、基础属性、Knowledge 观察采信、Aspect 投影与词表。

@@ -30,7 +30,7 @@ public class RuleEnvironment
     public IReadOnlyList<Expr> Facts => _facts;
 
     /// <summary>环境版本号。每次断言或撤销事实时单调递增，用于缓存失效检测。</summary>
-    public int Version { get; private set; }
+    public int Version { get => State.Get<int>("version"); private set => State.Set("version", value); }
 
     /// <summary>
     /// 清空所有符号别名与已断言事实，将环境重置为初始状态。
@@ -38,8 +38,8 @@ public class RuleEnvironment
     public void Clear()
     {
         _aliases.Clear();
-        _facts.Clear();
-        Version = 0;
+        State.Set("facts", new List<Expr>());
+        Version++;
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public class RuleEnvironment
     public bool AssertFact(Expr fact)
     {
         if (_facts.Any(f => Matches(f, fact))) return false;
-        _facts.Add(fact);
+        State.Set("facts", _facts.Append(fact).ToList());
         Version++;
         return true;
     }
@@ -175,7 +175,7 @@ public class RuleEnvironment
         var found = _facts.FirstOrDefault(f => Matches(f, fact));
         if (found != null)
         {
-            _facts.Remove(found);
+            State.Set("facts", _facts.Where(f => f != found).ToList());
             Version++;
             return true;
         }

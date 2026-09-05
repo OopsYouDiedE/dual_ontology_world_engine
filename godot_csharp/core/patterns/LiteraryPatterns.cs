@@ -12,77 +12,54 @@ public enum LiteraryPattern { Prohibition, Permission, Deadline, Trigger, Exchan
 /// <summary>文学句式是执行定义的视图；改台词不会改权限或客观事实。</summary>
 public static class Patterns
 {
-    private static Entity Make(LiteraryPattern kind, string name, Entity issuer, Entity? subject, Entity? target = null)
+    private static Entity Make(LiteraryPattern kind, string name, Entity issuer, Entity? subject, Entity? target = null, params (string Field, object? Value)[] fields)
     {
-        return new Entity(name, issuer.Parent, properties: new Dictionary<string, object>
+        var clause = new Entity(name, issuer.Parent, properties: new Dictionary<string, object>
         {
             ["pattern"] = kind, ["issuer"] = issuer, ["subject"] = subject!, ["target"] = target!,
             ["active"] = true, ["completed"] = false, ["accepted"] = false, ["hard"] = false,
             ["public_fields"] = new[] { "active", "completed", "accepted", "granted", "text" },
             ["text"] = name, ["granted"] = false
         });
+        foreach (var (field, value) in fields) clause.Set(field, value!);
+        return clause;
     }
     public static Entity Prohibit(Entity issuer, Entity subject, string operation, Entity? target = null,
         bool hard = false, IEnumerable<Effect>? breach = null)
-    {
-        var rule = Make(LiteraryPattern.Prohibition, $"不得{operation}《{target?.Name ?? "指定对象"}》", issuer, subject, target);
-        rule.Set("operation", operation); rule.Set("hard", hard);
-        rule.Set("breach", breach?.ToArray() ?? []); return rule;
-    }
+        => Make(LiteraryPattern.Prohibition, $"不得{operation}《{target?.Name ?? "指定对象"}》", issuer, subject, target,
+            ("operation", operation), ("hard", hard), ("breach", breach?.ToArray() ?? []));
     public static Entity Permission(Entity issuer, Entity subject, Entity target, string operation = "open")
-    {
-        var rule = Make(LiteraryPattern.Permission, $"经{issuer.Name}许可，才可{operation}《{target.Name}》", issuer, subject, target);
-        rule.Set("operation", operation); rule.Set("hard", true); return rule;
-    }
+        => Make(LiteraryPattern.Permission, $"经{issuer.Name}许可，才可{operation}《{target.Name}》", issuer, subject, target,
+            ("operation", operation), ("hard", true));
     public static Entity Deadline(Entity issuer, Entity subject, Entity target, string operation, double due, params Effect[] breach)
-    {
-        var rule = Make(LiteraryPattern.Deadline, $"在{due:g} AV前{operation}《{target.Name}》", issuer, subject, target);
-        rule.Set("operation", operation); rule.Set("due", due); rule.Set("breach", breach); return rule;
-    }
+        => Make(LiteraryPattern.Deadline, $"在{due:g} AV前{operation}《{target.Name}》", issuer, subject, target,
+            ("operation", operation), ("due", due), ("breach", breach));
     public static Entity Trigger(Entity issuer, string operation, Entity? target, params Effect[] consequences)
-    {
-        var rule = Make(LiteraryPattern.Trigger, $"一旦{operation}《{target?.Name ?? "对象"}》，约定便应验", issuer, null, target);
-        rule.Set("operation", operation); rule.Set("breach", consequences); return rule;
-    }
+        => Make(LiteraryPattern.Trigger, $"一旦{operation}《{target?.Name ?? "对象"}》，约定便应验", issuer, null, target,
+            ("operation", operation), ("breach", consequences));
     public static Entity Exchange(Entity issuer, Entity subject, Entity offered, Entity requested)
-    {
-        var rule = Make(LiteraryPattern.Exchange, $"以《{offered.Name}》交换《{requested.Name}》", issuer, subject, offered);
-        rule.Set("requested", requested); return rule;
-    }
+        => Make(LiteraryPattern.Exchange, $"以《{offered.Name}》交换《{requested.Name}》", issuer, subject, offered,
+            ("requested", requested));
     public static Entity Except(Entity original, Expr until)
-    {
-        var rule = Make(LiteraryPattern.Exception, $"满足约定条件，解除《{original.Name}》", original.Get<Entity>("issuer")!, original.Get<Entity>("subject"), original);
-        rule.Set("condition", until); return rule;
-    }
+        => Make(LiteraryPattern.Exception, $"满足约定条件，解除《{original.Name}》", original.Get<Entity>("issuer")!, original.Get<Entity>("subject"), original,
+            ("condition", until));
     public static Entity TrueName(Entity issuer, Entity subject, Entity referent, Entity nameSlip)
-    {
-        var word = Make(LiteraryPattern.TrueName, $"以《{nameSlip.Name}》指认《{referent.Name}》", issuer, subject, referent);
-        word.Set("medium", nameSlip); return word;
-    }
+        => Make(LiteraryPattern.TrueName, $"以《{nameSlip.Name}》指认《{referent.Name}》", issuer, subject, referent,
+            ("medium", nameSlip));
     public static Entity Truth(Entity issuer, Entity subject, Expr proposition, bool secrecy = false, Entity? allowedListener = null)
-    {
-        var rule = Make(LiteraryPattern.Truth, secrecy ? "不得向约定之外的人泄露此事" : "就此命题，不得说谎", issuer, subject, allowedListener);
-        rule.Set("proposition", proposition); rule.Set("secrecy", secrecy); rule.Set("hard", true); return rule;
-    }
+        => Make(LiteraryPattern.Truth, secrecy ? "不得向约定之外的人泄露此事" : "就此命题，不得说谎", issuer, subject, allowedListener,
+            ("proposition", proposition), ("secrecy", secrecy), ("hard", true));
     public static Entity SelfBinding(Entity issuer, Entity subject, string forbiddenOperation)
-    {
-        var rule = Make(LiteraryPattern.SelfBinding, $"我放弃{forbiddenOperation}，换取有限增幅", issuer, subject);
-        rule.Set("operation", forbiddenOperation); return rule;
-    }
+        => Make(LiteraryPattern.SelfBinding, $"我放弃{forbiddenOperation}，换取有限增幅", issuer, subject, null,
+            ("operation", forbiddenOperation));
     public static Entity Substitute(Entity issuer, Entity subject, Entity effigy)
-    {
-        var word = Make(LiteraryPattern.Substitute, $"以《{effigy.Name}》承担我的负荷", issuer, subject, effigy); return word;
-    }
+        => Make(LiteraryPattern.Substitute, $"以《{effigy.Name}》承担我的负荷", issuer, subject, effigy);
     public static Entity Seal(Entity issuer, Entity subject, Entity target, Entity medium, bool release = false, double strength = 1)
-    {
-        var word = Make(LiteraryPattern.Seal, $"以《{medium.Name}》{(release ? "解开" : "封存")}《{target.Name}》", issuer, subject, target);
-        word.Set("medium", medium); word.Set("release", release); word.Set("strength", strength); return word;
-    }
+        => Make(LiteraryPattern.Seal, $"以《{medium.Name}》{(release ? "解开" : "封存")}《{target.Name}》", issuer, subject, target,
+            ("medium", medium), ("release", release), ("strength", strength));
     public static Entity Testimony(Entity issuer, Entity listener, Expr proposition, Entity evidence)
-    {
-        var rule = Make(LiteraryPattern.Testimony, $"以《{evidence.Name}》支持我的陈述", issuer, listener, evidence);
-        rule.Set("proposition", proposition); return rule;
-    }
+        => Make(LiteraryPattern.Testimony, $"以《{evidence.Name}》支持我的陈述", issuer, listener, evidence,
+            ("proposition", proposition));
 }
 
 /// <summary>条款、期限、见证及反制共用现有运行时；后果也必须支付并生成因果事件。</summary>
@@ -121,7 +98,7 @@ public sealed class PatternBook : IDisposable
     private static bool Matches(Entity c, Intent i) => (c.Get<Entity>("subject") is not { } s || s == i.Actor)
         && (c.Get<Entity>("target") is not { } t || t == i.Target)
         && (c.Get<string>("operation") is not { } op || op == i.Effect.Op);
-    public string? Guard(Intent intent, StateView view)
+    private string? Guard(Intent intent, StateView view, EffectPlan plan)
     {
         foreach (var clause in Clauses)
         {
@@ -145,7 +122,7 @@ public sealed class PatternBook : IDisposable
         }
         // 约束也检查言灵内部的实际变化，不能以 invoke 名称绕开 open。
         if (intent.Changes != null && intent.Effect.Op != "consequence")
-            foreach (var change in _session.Runtime.Prepare(intent, view).Changes)
+            foreach (var change in plan.Changes)
                 if ((change.Field == "sealed" && Equals(change.After, false)) || (change.Field == "opened" && Equals(change.After, true)))
                     foreach (var c in Clauses.Where(c => c.Get<bool>("hard") && Active(c, view)
                         && (view.Observer == null || StateView.Knowledge(view.Observer).ContainsKey((c, "text")))
@@ -260,18 +237,20 @@ public sealed class PatternBook : IDisposable
             return;
         }
         var issuer = c.Get<Entity>("issuer")!;
-        var changes = new List<Effect> { F("spend", issuer, "charges", 1d) };
+        var changes = new List<Effect> { F("spend", issuer, "charges", Math.Max(1, Balance.ConsequenceBudget(effects))) };
         changes.AddRange(effects);
         if (c.Get<LiteraryPattern>("pattern") == LiteraryPattern.Deadline) changes.Add(F("set", c, "active", false));
-        Resolve(c, cause, changes, text);
+        var result = Resolve(c, cause, changes, text);
+        if (result.Result?.Succeeded != true && c.Get<LiteraryPattern>("pattern") == LiteraryPattern.Deadline)
+            Resolve(c, cause, [F("set", c, "active", false)], "期限结束，后果因预算不足未能生效");
     }
-    private void Resolve(Entity c, Entity? cause, IEnumerable<Effect> changes, string text)
+    private DualOntologyWorldEngine.Core.Timeline.ActionResolution Resolve(Entity c, Entity? cause, IEnumerable<Effect> changes, string text)
     {
         _triggered.Add(c);
         var issuer = c.Get<Entity>("issuer")!;
         var mind = issuer is Character ch ? ch.Mind! : issuer.Get<Soul>("mind")!;
         var intent = new Intent(issuer, mind, F("consequence", issuer, c), changes, 1, text) { Definition = c };
-        _session.Runtime.ResolveDetailed(intent, new Dictionary<string, object> { ["cause"] = cause ?? c });
+        return _session.Runtime.ResolveDetailed(intent, new Dictionary<string, object> { ["cause"] = cause ?? c });
     }
     public float Pressure(Intent intent)
     {
@@ -286,7 +265,8 @@ public sealed class PatternBook : IDisposable
             && c.Get<LiteraryPattern>("pattern") is LiteraryPattern.Prohibition or LiteraryPattern.Trigger))
         {
             var issuer = clause.Get<Entity>("issuer")!;
-            var effects = new[] { F("spend", issuer, "charges", 1d) }.Concat(clause.Get<Effect[]>("breach") ?? []);
+            var breach = clause.Get<Effect[]>("breach") ?? [];
+            var effects = new[] { F("spend", issuer, "charges", Math.Max(1, Balance.ConsequenceBudget(breach))) }.Concat(breach);
             var consequence = new Intent(issuer, intent.Mind, F("consequence", issuer, clause), effects);
             var next = _session.Runtime.Prepare(consequence, plan.View);
             if (!next.Succeeded) continue;

@@ -32,7 +32,8 @@ public sealed class StateView
     {
         var key = (entity, field);
         if (_values.TryGetValue(key, out var value)) return value;
-        if (Observer == null || entity == Observer || Observer.Characters.Contains(entity)) value = Actual(entity, field);
+        if (Observer == null || entity == Observer || Observer.Characters.Contains(entity)
+            || entity.Parent is Character owner && Observer.Characters.Contains(owner)) value = Actual(entity, field);
         else value = Knowledge(Observer).GetValueOrDefault(key, Unknown);
         _reads.TryAdd(key, value);
         return value;

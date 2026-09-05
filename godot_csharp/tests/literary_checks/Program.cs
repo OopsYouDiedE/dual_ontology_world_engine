@@ -35,6 +35,12 @@ sealed class LiteraryChecks
         Check("Seal 持续消耗后耗尽释放", SealMaintenanceExhausts);
         Check("LiterarySimulation 反制只消耗有限资源", LiteraryDeflection);
         Check("已知禁令预测违约后果，未知规则不暴露", ConsequenceForecasting);
+        Check("人物自主质疑与撤回，保密性格改变回应", AutonomousCharacterExpression);
+        Check("真名提供远端作用域且不绕硬禁令", TrueNameScope);
+        Check("自主准备烛火后调查，红线转移不复制负荷", OccultItemsCompose);
+        Check("审查复用准备结果，前置反应后重新准备", PreparedPlanReuse);
+        Check("契约触发批量失败不残留部分支付", TriggerBatchAtomicity);
+        Check("大量同刻任务取消后仍稳定排序", StableTimelineQueue);
         Console.WriteLine($"通过项: {_passed}; 失败项: {Failed}; 总计: {_passed + Failed}");
     }
 
@@ -292,6 +298,117 @@ sealed class LiteraryChecks
         Assert(victim.Mind!.Fatigue == 0 && effigy.Get<double>("charges") == 1, "纸人应只消耗有限次数且不复制伤害");
     }
 
+    private static void PreparedPlanReuse()
+    {
+        var (world, actor, soul, session) = Setup();
+        using (session)
+        {
+            var target = new Entity("Target", world, properties: new Dictionary<string, object> { ["enabled"] = true });
+            var prepares = 0; var guards = 0;
+            session.Runtime.EffectTransforms.Add((intent, view, effects) => { if (intent.Actor == actor) prepares++; return effects; });
+            session.Runtime.Guards.Add((intent, view, plan) => { guards++; return plan.Changes.Count == 0 ? "缺少实际变化" : null; });
+            var main = new Intent(actor, soul, F("open", actor, target), [F("set", target, "opened", true)],
+                requirements: [E("eq", E("value", target, "enabled"), true)]);
+            Assert(session.Runtime.ResolveDetailed(main).Result?.Succeeded == true && prepares == 1 && guards == 1,
+                "一次正常结算只准备一次，Guard 应读取同一份差分");
+            target.Set("opened", false); prepares = 0;
+            var other = new Character("Other", world); var otherMind = new Soul("OtherMind"); other.Bind(otherMind);
+            var reaction = new Intent(other, otherMind, F("disable", other, target), [F("set", target, "enabled", false)]);
+            session.Runtime.BeforeReactions = (intent, context) => intent == main ? [reaction] : [];
+            var blocked = session.Runtime.ResolveDetailed(main);
+            Assert(!blocked.Allowed && prepares == 2 && !target.Get<bool>("opened"), "反应后必须丢弃旧计划，重新校验条件");
+        }
+    }
+    private static void TriggerBatchAtomicity()
+    {
+        var (world, actor, soul, session) = Setup();
+        using (session)
+        {
+            var recipe = KotodamaFactory.CreateRecipe("批量触发", tags: new Dictionary<string, int> { ["Covenant"] = 1 },
+                effects: [F("spend", actor, "charges", 2d), F("unknown_output", actor)]);
+            var contract = session.Runtime.Words.Invoke(recipe, soul, new Dictionary<string, object>())!;
+            Assert(session.Runtime.Words.Trigger().Count == 0 && actor.Get<double>("charges") == 12,
+                "未知后果不能留下前一项支付");
+            Assert(!contract.Has("Firing") && !contract.Get<bool>("fired"), "失败后不能遗留重入标记或错误完成状态");
+        }
+    }
+    private static void StableTimelineQueue()
+    {
+        var timeline = new DualOntologyWorldEngine.Core.Timeline.Timeline();
+        var actual = new List<int>();
+        for (var n = 0; n < 2048; n++)
+        {
+            var item = n;
+            timeline.Schedule(n % 7, n.ToString(), () => { actual.Add(item); return null; });
+        }
+        Assert(timeline.Cancel(task => int.Parse(task.Label) % 3 == 0) == 683, "取消应删除且仅删除匹配任务");
+        var expected = Enumerable.Range(0, 2048).Where(n => n % 3 != 0).OrderBy(n => n % 7).ThenBy(n => n).ToArray();
+        Assert(timeline.Queue.Select(task => int.Parse(task.Label)).SequenceEqual(expected), "快照应保持时间与登记顺序");
+        timeline.RunUntil(7, 9);
+        Assert(actual.SequenceEqual(expected.Take(9)) && timeline.Now == 0, "步数耗尽不能跨过未执行任务");
+        timeline.RunUntil(7, 2048);
+        Assert(actual.SequenceEqual(expected), "堆调度仍须稳定执行同刻任务");
+    }
+    private static void OccultItemsCompose()
+    {
+        using var sim = new LiterarySimulation("灵异物品组合");
+        var room = sim.Scene("暗室");
+        var clue = sim.Object("隐字", room, true, "名单上多了一个人", occultEvidence: true);
+        var actor = sim.Person("求真者", room, clue, "sealed", true, PersonalityProfile.TruthSeeking);
+        HauntedItems.Create(HauntedItem.Candle, "烛", actor);
+        sim.Start(); sim.Run(60);
+        var actions = sim.Session.Runtime.Events.Select(e => e.Get<Intent>("intent")!.Effect.Op).ToList();
+        Assert(actions.IndexOf("light") >= 0 && actions.IndexOf("inspect") > actions.IndexOf("light"), "求真人物应自行发现先照亮再调查的两步路径");
+        Assert(StateView.Knowledge(actor.Mind!).GetValueOrDefault((clue, "evidence")) as string == "名单上多了一个人", "调查应得到真实线索");
+        var partner = sim.Person("另一端", room, clue, "sealed", true);
+        var thread = HauntedItems.Create(HauntedItem.RedThread, "红线", actor);
+        thread.Set("linked", true); thread.Set("endpoint_a", actor); thread.Set("endpoint_b", partner); thread.Set("charges", 1d);
+        var hit = new Intent(partner, partner.Mind!, F("hurt", partner, actor), [F("change", actor, "strain", 2d)]);
+        Assert(sim.Session.Runtime.ResolveDetailed(hit).Result?.Succeeded == true, "联结后果必须结算");
+        Assert(actor.Mind!.Fatigue == 1 && partner.Mind!.Fatigue == 1 && thread.Get<double>("charges") == 0 && !thread.Get<bool>("linked"), "红线只转交一点，不制造额外负荷，且耗尽断开");
+    }
+    private static void AutonomousCharacterExpression()
+    {
+        foreach (var guarded in new[] { false, true })
+        {
+            using var sim = new LiterarySimulation("群像");
+            var scene = sim.Scene("审理室");
+            var key = sim.Object("钥匙", scene, true); key.Set("location", "档案室");
+            var alice = sim.Person("证人", scene, key, "location", "档案室", secret: E("eq", E("value", key, "location"), "档案室"));
+            var bob = sim.Person("当事人", scene, key, "location", "钟楼", secret: E("eq", E("value", key, "location"), "钟楼"), guardSecret: guarded);
+            sim.Start(); sim.Run(80);
+            var actions = sim.Session.Runtime.Events.Select(e => e.Get<Intent>("intent")!).ToArray();
+            Assert(key.Get<string>("location") == "档案室", "争议不能重写钥匙真相");
+            if (guarded)
+            {
+                Assert(actions.Any(i => i.Actor == bob && i.Effect.Op is "conceal" or "silence"), "保密人物应回应问询而非泄密：" + string.Join(",", actions.Select(i => i.Actor.Name + ":" + i.Effect.Op)));
+                Assert(!actions.Any(i => i.Actor == bob && i.Effect.Op == "state_claim"), "保密性格不应主动说出秘密");
+            }
+            else
+            {
+                Assert(actions.Any(i => i.Effect.Op == "challenge") && actions.Any(i => i.Effect.Op == "retract"), "矛盾陈述应自主形成质疑和撤回");
+                Assert(actions.Where(i => i.Speech != null).All(i => !i.Speech!.Contains("value") && !i.Speech.Contains("learned")), "表达不能泄露内部表达式名称");
+            }
+        }
+    }
+    private static void TrueNameScope()
+    {
+        using var sim = new LiterarySimulation("远端指认");
+        var room = sim.Scene("室内"); var remote = sim.Scene("远端");
+        var target = sim.Object("封印", remote, true);
+        var actor = sim.Person("施术者", room, target, "sealed", false);
+        var slip = HauntedItems.Create(HauntedItem.NameSlip, "真名纸", actor, target);
+        var medium = HauntedItems.Create(HauntedItem.Talisman, "墨符", actor);
+        sim.Rules.Add(Patterns.TrueName(actor, actor, target, slip));
+        var release = sim.Rules.Add(Patterns.Seal(actor, actor, target, medium, release: true));
+        sim.Perceive(actor);
+        var invoke = sim.Rules.Offers(actor.Mind!, actor).Single(i => i.Definition == release);
+        Assert(!sim.Session.Runtime.ResolveDetailed(invoke).Allowed, "未指认不得远端作用");
+        var name = sim.Rules.Offers(actor.Mind!, actor).Single(i => i.Effect.Op == "name");
+        Assert(sim.Session.Runtime.ResolveDetailed(name).Result?.Succeeded == true, "真名建立指称");
+        sim.Rules.Add(Patterns.Prohibit(actor, actor, "open", target, hard: true));
+        Assert(!sim.Session.Runtime.ResolveDetailed(invoke).Allowed && target.Get<bool>("sealed"), "远端言灵仍受硬禁令约束");
+    }
     private static void ConsequenceForecasting()
     {
         using var sim = new LiterarySimulation("Forecast");

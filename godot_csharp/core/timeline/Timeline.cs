@@ -19,11 +19,15 @@ public record ScheduledTask(double Time, long Sequence, string Label, Func<doubl
 /// </summary>
 public class Timeline
 {
-    private readonly List<ScheduledTask> _queue = new();
+    private readonly PriorityQueue<ScheduledTask, (double Time, long Sequence)> _queue = new();
     private long _nextSequence;
 
     /// <summary>当前队列的稳定只读快照。</summary>
-    public IReadOnlyList<ScheduledTask> Queue => _queue.ToArray();
+    public IReadOnlyList<ScheduledTask> Queue => _queue.UnorderedItems
+        .OrderBy(item => item.Priority.Time)
+        .ThenBy(item => item.Priority.Sequence)
+        .Select(item => item.Element)
+        .ToArray();
     /// <summary>当前全局行动值时刻。</summary>
     public double Now { get; private set; }
 
@@ -38,7 +42,14 @@ public class Timeline
         Advanced?.Invoke(elapsed);
     }
 
-    public int Cancel(Func<ScheduledTask, bool> predicate) => _queue.RemoveAll(task => predicate(task));
+    public int Cancel(Func<ScheduledTask, bool> predicate)
+    {
+        var remaining = _queue.UnorderedItems.Where(item => !predicate(item.Element)).ToArray();
+        var removed = _queue.Count - remaining.Length;
+        _queue.Clear();
+        _queue.EnqueueRange(remaining);
+        return removed;
+    }
 
     /// <summary>
     /// 从当前时刻登记任务。priority 仅为旧调用兼容参数，不参与调度顺序。
@@ -48,12 +59,8 @@ public class Timeline
         if (!double.IsFinite(delay) || delay < 0)
             throw new ArgumentOutOfRangeException(nameof(delay), "行动值延迟必须是有限非负数。");
 
-        _queue.Add(new ScheduledTask(Now + delay, _nextSequence++, label, action));
-        _queue.Sort((left, right) =>
-        {
-            var byTime = left.Time.CompareTo(right.Time);
-            return byTime != 0 ? byTime : left.Sequence.CompareTo(right.Sequence);
-        });
+        var task = new ScheduledTask(Now + delay, _nextSequence++, label, action);
+        _queue.Enqueue(task, (task.Time, task.Sequence));
     }
 
     /// <summary>登记当前时刻的任务；其顺序仍由登记先后决定。</summary>
@@ -63,10 +70,7 @@ public class Timeline
     /// <summary>执行队首任务，并在回调给出延迟时登记下一次行动槽。</summary>
     public bool Step()
     {
-        if (_queue.Count == 0) return false;
-
-        var task = _queue[0];
-        _queue.RemoveAt(0);
+        if (!_queue.TryDequeue(out var task, out _)) return false;
         AdvanceTo(task.Time);
         var nextDelay = task.Action();
         if (nextDelay.HasValue)
@@ -81,13 +85,13 @@ public class Timeline
             throw new ArgumentOutOfRangeException(nameof(targetTime), "目标行动值必须是有限数。");
 
         var steps = 0;
-        while (_queue.Count > 0 && _queue[0].Time <= targetTime && steps < maxSteps)
+        while (_queue.TryPeek(out _, out var priority) && priority.Time <= targetTime && steps < maxSteps)
         {
             Step();
             steps++;
         }
         // 步数预算耗尽时保留真实进度，不能跳过尚待执行的历史任务。
-        if (_queue.Count == 0 || _queue[0].Time > targetTime)
+        if (!_queue.TryPeek(out _, out var nextPriority) || nextPriority.Time > targetTime)
             AdvanceTo(targetTime);
         return steps;
     }
@@ -109,15 +113,22 @@ public sealed record ActionResolution(
 /// </summary>
 public class ActionRuntime
 {
+    public bool DeclarativeOnly { get; set; }
+    private int _chainDepth;
+    private readonly HashSet<Entity> _reacted = new();
     public EffectExecutor Effects { get; }
-    public List<Func<Intent, StateView, string?>> Guards { get; } = new();
+    public List<Func<Intent, StateView, EffectPlan, string?>> Guards { get; } = new();
     public List<Func<Intent, StateView, IReadOnlyList<Effect>, IReadOnlyList<Effect>>> EffectTransforms { get; } = new();
     public EffectPlan Prepare(Intent intent, StateView? view = null)
     {
         var changes = intent.Changes ?? throw new InvalidOperationException("行动未声明变化");
         view ??= new StateView();
         foreach (var transform in EffectTransforms) changes = transform(intent, view, changes);
-        return Effects.Prepare(changes, view, intent.Requirements);
+        var plan = Effects.Prepare(changes, view, intent.Requirements);
+        if (plan.Succeeded)
+            foreach (var guard in Guards)
+                if (guard(intent, view, plan) is { } reason) { plan.Reason = reason; break; }
+        return plan;
     }
     public Timeline Timeline { get; }
     public RuleEnvironment Env { get; }
@@ -151,8 +162,12 @@ public class ActionRuntime
     }
 
     /// <summary>验证绑定、前置条件、契约和客观规则补丁。</summary>
-    public ReviewResult Review(Intent intent, IReadOnlyDictionary<string, object>? context = null)
+    public ReviewResult Review(Intent intent, IReadOnlyDictionary<string, object>? context = null) => Review(intent, context, out _);
+
+    private ReviewResult Review(Intent intent, IReadOnlyDictionary<string, object>? context, out EffectPlan? plan)
     {
+        plan = null;
+        if (DeclarativeOnly && intent.Changes == null) return new(false, "文学模拟只接受声明式效果");
         if (!double.IsFinite(intent.MotionCost) || intent.MotionCost <= 0)
             return new ReviewResult(false, "行动值代价必须是有限正数");
         if (intent.Actor is Character character && !character.Souls.Any(soul => ReferenceEquals(soul, intent.Mind)))
@@ -160,19 +175,24 @@ public class ActionRuntime
         if (!intent.Validate()) return new ReviewResult(false, "行动客观前置条件不满足");
         if (intent.Changes != null)
         {
-            var prepared = Prepare(intent);
-            if (!prepared.Succeeded) return new(false, prepared.Reason);
+            plan = Prepare(intent);
+            if (!plan.Succeeded) return new(false, plan.Reason);
         }
-        foreach (var guard in Guards)
-            if (guard(intent, new StateView()) is { } reason) return new(false, reason);
+        else
+            foreach (var guard in Guards)
+                if (guard(intent, new StateView(), Effects.Prepare([])) is { } reason) return new(false, reason);
         if (!Words.Allows(intent.Effect)) return new ReviewResult(false, "契约硬约束阻止");
         if (!Rules.PatchAllows(intent.Effect, Patches, Env, context)) return new ReviewResult(false, "客观规则补丁阻止");
         return new ReviewResult(true, "允许执行");
     }
 
     /// <summary>返回完整审计结果的标准结算入口。</summary>
-    public ActionResolution ResolveDetailed(Intent intent, IReadOnlyDictionary<string, object>? context = null) =>
-        ResolveDetailed(intent, context ?? new Dictionary<string, object>(), cause: context?.GetValueOrDefault("cause"), phase: "Main", reactionDepth: 0);
+    public ActionResolution ResolveDetailed(Intent intent, IReadOnlyDictionary<string, object>? context = null)
+    {
+        _chainDepth++;
+        try { return ResolveDetailed(intent, context ?? new Dictionary<string, object>(), cause: context?.GetValueOrDefault("cause"), phase: "Main", reactionDepth: 0); }
+        finally { if (--_chainDepth == 0) _reacted.Clear(); }
+    }
 
     private ActionResolution ResolveDetailed(
         Intent intent,
@@ -182,7 +202,7 @@ public class ActionRuntime
         int reactionDepth)
     {
         var decision = Rules.Evaluate(intent.Mind, intent, Env, context);
-        var review = Review(intent, context);
+        var review = Review(intent, context, out var plan);
         if (!review.Allowed) return new ActionResolution(false, review.Reason, decision);
 
         if (BeforeReactions != null && reactionDepth < MaxReactionDepth)
@@ -193,14 +213,12 @@ public class ActionRuntime
                 ["phase"] = "BeforeReaction"
             };
             foreach (var reaction in BeforeReactions(intent, reactionContext).ToArray())
-                ResolveDetailed(reaction, reactionContext, intent, "BeforeReaction", reactionDepth + 1);
-            review = Review(intent, context);
+                if (_reacted.Add(reaction.Actor)) ResolveDetailed(reaction, reactionContext, intent, "BeforeReaction", reactionDepth + 1);
+            review = Review(intent, context, out plan);
             if (!review.Allowed) return new ActionResolution(false, review.Reason, decision);
         }
 
-        var result = intent.Changes != null
-            ? Prepare(intent).Commit()
-            : intent.Execute();
+        var result = plan?.Commit() ?? intent.Execute();
         var ev = RuleEntityFactory.CreateEvent(
             $"{intent.Actor.Name}执行{intent.Label}", intent.Actor, intent.Effect, EventParent,
             outcome: result.Outcome, time: Timeline.Now, cause: cause);
@@ -238,7 +256,7 @@ public class ActionRuntime
             if (ReactionHandler == null || reactionDepth >= MaxReactionDepth) continue;
 
             var reaction = ReactionHandler(witness, ev, context);
-            if (reaction == null) continue;
+            if (reaction == null || !_reacted.Add(reaction.Actor)) continue;
 
             // 反应是当前行动的嵌套子回合，绝不插入普通 Timeline 队列。
             ResolveDetailed(reaction, context, ev, "Reaction", reactionDepth + 1);

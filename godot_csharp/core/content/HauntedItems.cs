@@ -113,22 +113,14 @@ public static class HauntedItems
             var kind = item.Get<HauntedItem>("item_kind");
             var associated = item.Get<Entity>("target");
 
-            if (kind == HauntedItem.Talisman)
+            if (kind is HauntedItem.Talisman or HauntedItem.Salt)
             {
+                var field = kind == HauntedItem.Talisman ? "protected" : "warded";
+                var label = kind == HauntedItem.Talisman ? "以符纸护住目标" : "撒盐守住边界";
                 foreach (var target in targets)
                     yield return IntentFor(actor, mind, item, target, "protect",
-                        [F("spend", item, "charges", 1.0), F("set", target, "protected", true),
-                         F("set", target, "protected_by", item)],
-                        [Gte(item, "charges", 1.0), Ne(target, "protected", true)], "以符纸护住目标");
-            }
-
-            if (kind == HauntedItem.Salt)
-            {
-                foreach (var target in targets)
-                    yield return IntentFor(actor, mind, item, target, "protect",
-                        [F("spend", item, "charges", 1.0), F("set", target, "warded", true),
-                         F("set", target, "warded_by", item)],
-                        [Gte(item, "charges", 1.0), Ne(target, "warded", true)], "撒盐守住边界");
+                        [F("spend", item, "charges", 1.0), F("set", target, field, true), F("set", target, field + "_by", item)],
+                        [Ne(target, field, true)], label);
             }
 
             if (kind == HauntedItem.Candle)
@@ -139,7 +131,7 @@ public static class HauntedItems
                          F("set", item, "lit", true), F("set", item, "lit_target", target),
                          F("set", item, "light_owner", actor), F("relate", target, "IlluminatedBy", item),
                          F("set", target, "illuminated", true)],
-                        [Gte(item, "fuel", 1.0), Ne(item, "lit", true)], "点燃烛火");
+                        [Ne(item, "lit", true)], "点燃烛火");
             }
 
             if (kind == HauntedItem.Bell)
@@ -148,7 +140,7 @@ public static class HauntedItems
                     yield return IntentFor(actor, mind, item, target, "ring",
                         [F("spend", item, "charges", 1.0), F("set", target, "startled", true),
                          F("set", target, "revealed", true)],
-                        [Gte(item, "charges", 1.0)], "摇铃惊动在场者");
+                        [], "摇铃惊动在场者");
             }
 
             if (kind == HauntedItem.Mirror)
@@ -165,7 +157,7 @@ public static class HauntedItems
                         [F("spend", item, "charges", 1.0), F("set", item, "endpoint_a", actor),
                          F("set", item, "endpoint_b", target), F("set", item, "linked", true),
                          F("relate", item, "endpoint", actor), F("relate", item, "endpoint", target)],
-                        [Gte(item, "charges", 1.0), Eq(item, "linked", false)], "用红线系住关系");
+                        [Eq(item, "linked", false)], "用红线系住关系");
                 if (item.Get<Entity>("endpoint_a") != null && item.Get<Entity>("endpoint_b") != null)
                     yield return IntentFor(actor, mind, item, item, "cut",
                         [F("set", item, "linked", false), F("set", item, "endpoint_a", null!),
@@ -182,6 +174,7 @@ public static class HauntedItems
                         [F("observe", mind, target, "evidence"), F("set", actor, "last_clue", item),
                          F("relate", actor, "Examined", item)],
                         [HasValue(target, "evidence"), Ne(target, "evidence", ""),
+                         AST.E("any", Ne(target, "occult_evidence", true), Eq(target, "illuminated", true), Eq(target, "revealed", true)),
                          Not(Contains(Value(actor, "rel:Examined"), item))], "查阅线索");
             }
 
@@ -189,18 +182,18 @@ public static class HauntedItems
             {
                 foreach (var target in targets)
                 {
-                    if (!target.HasProperty("statement") || string.IsNullOrEmpty(target.Get<string>("statement"))) continue;
+                    if (target.Get<object>("statement") == null) continue;
                     yield return IntentFor(actor, mind, item, target, "record",
                         [F("spend", item, "battery", 1.0), F("spend", item, "capacity", 1.0),
                          F("set", item, "recording_subject", target), F("set", item, "recording_text", Value(target, "statement"))],
-                        [Gte(item, "battery", 1.0), Gte(item, "capacity", 1.0),
+                        [
                          HasValue(target, "statement"), Ne(target, "statement", "")], "录下这句话");
                 }
 
                 yield return IntentFor(actor, mind, item, item, "play",
                         [F("spend", item, "battery", 1.0), F("observe", mind, item, "recording_subject"),
                          F("observe", mind, item, "recording_text"), F("set", actor, "heard_recording", item)],
-                        [Gte(item, "battery", 1.0), HasValue(item, "recording_subject"),
+                        [HasValue(item, "recording_subject"),
                          Ne(item, "recording_text", "")], "重放录音");
             }
 
@@ -214,7 +207,7 @@ public static class HauntedItems
                          F("set", target, "seal_source", item),
                          F("set", item, "sealed_parent", Value(target, "$parent")),
                          F("set", item, "sealed_object", target), F("move", target, item)],
-                        [Gte(item, "charges", 1.0), Eq(item, "sealed_object", null!),
+                        [Eq(item, "sealed_object", null!),
                          Ne(target, "sealed", true)], "把目标封进盒中");
                 }
                 var sealedObject = item.Get<Entity>("sealed_object");
@@ -295,7 +288,7 @@ public static class HauntedItems
             [F("spend", candle, "fuel", 1.0), F("set", target, "illuminated", true)],
             motionCost: Balance.CandleMaintenanceIntervalAv, label: "维持烛火",
             requirements: ItemRequirements(placement, candle,
-                Gte(candle, "fuel", 1.0), Eq(candle, "lit", true), Eq(candle, "lit_target", target),
+                Eq(candle, "lit", true), Eq(candle, "lit_target", target),
                 Contains(Value(target, "rel:IlluminatedBy"), candle)));
         var result = session.Runtime.ResolveDetailed(sustain, new Dictionary<string, object> { ["cause"] = candle });
         if (result.Allowed && result.Result is { Succeeded: true }) return Balance.CandleMaintenanceIntervalAv;
@@ -334,7 +327,7 @@ public static class HauntedItems
         var sustain = new Intent(box, mind, F("maintain_seal", box, target),
             [F("spend", box, "charges", 1.0), F("set", target, "sealed", true), F("move", target, box)],
             motionCost: Balance.CandleMaintenanceIntervalAv, label: "维持封存",
-            requirements: ItemRequirements(placement, box, Gte(box, "charges", 1.0),
+            requirements: ItemRequirements(placement, box, 
                 Eq(box, "sealed_object", target), Eq(target, "sealed", true), Eq(target, "seal_source", box)));
         var result = session.Runtime.ResolveDetailed(sustain, new Dictionary<string, object> { ["cause"] = box });
         if (result.Allowed && result.Result is { Succeeded: true }) return Balance.CandleMaintenanceIntervalAv;
@@ -353,7 +346,10 @@ public static class HauntedItems
     private static Intent IntentFor(Entity actor, Soul mind, Entity item, Entity target, string op,
         IEnumerable<Effect> changes, IEnumerable<Expr> requirements, string label) =>
         new(actor, mind, F(op, actor, target, item), changes, Balance.BasicActionAv, label,
-            ItemRequirements(actor, item, requirements.ToArray()))
+            ItemRequirements(actor, item, requirements.Concat(new[] {
+                AST.E("any", AST.E("eq", target, actor), ItemLocation(actor, target),
+                    AST.E("all", Eq(item, "sealed_object", target), Eq(target, "$parent", item)))
+            }).ToArray()))
         {
             Definition = item
         };
@@ -362,6 +358,7 @@ public static class HauntedItems
 
     private static IEnumerable<Entity> Targets(Entity actor, IReadOnlyDictionary<string, object>? context)
     {
+        yield return actor;
         var explicitTarget = context?.GetValueOrDefault("target") as Entity;
         if (explicitTarget != null && IsVisibleTarget(actor, explicitTarget)) yield return explicitTarget;
         foreach (var inventoryEntity in actor.Items.OfType<Entity>())
@@ -386,7 +383,7 @@ public static class HauntedItems
     private static bool IsVisibleTarget(Entity actor, Entity entity)
     {
         if (ReferenceEquals(entity, actor) || IsItem(entity) || entity.HasTag("Soul") || entity.HasTag("Scene")) return false;
-        if (entity.HasTag("Hidden") || entity.HasTag("Clause") || entity.HasProperty("clause") || entity.HasProperty("clause_pattern")) return false;
+        if (entity.HasTag("Hidden") || entity.HasTag("Clause") || entity.HasProperty("pattern") || entity.HasProperty("clause") || entity.HasProperty("clause_pattern")) return false;
         if (entity.Get<bool>("visible", true) == false) return false;
         return ReferenceEquals(entity.Parent, actor) || ReferenceEquals(entity.Parent, actor.Parent);
     }
@@ -410,7 +407,7 @@ public static class HauntedItems
     private static Expr Eq(Entity entity, string field, object value) => AST.E("eq", Value(entity, field), value);
     private static Expr Ne(Entity entity, string field, object value) => AST.E("ne", Value(entity, field), value);
     private static Expr Gte(Entity entity, string field, double value) => AST.E("gte", Value(entity, field), value);
-    private static Expr HasValue(Entity entity, string field) => AST.E("known", Value(entity, field));
+    private static Expr HasValue(Entity entity, string field) => AST.E("all", AST.E("known", Value(entity, field)), Ne(entity, field, null!));
     private static Expr Contains(Expr source, object value) => AST.E("contains", source, value);
     private static Expr Not(Expr expression) => AST.E("not", expression);
 
