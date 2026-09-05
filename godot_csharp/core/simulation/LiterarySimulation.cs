@@ -13,6 +13,7 @@ public sealed class LiterarySimulation : IDisposable
     public Entity World { get; }
     public SimulationSession Session { get; }
     public PatternBook Rules { get; }
+    public NarrativeDynamics Narrative { get; }
     public List<Character> Characters { get; } = new();
     private readonly Dictionary<Entity, Intent[]> _candidates = new();
     private readonly List<Action> _cleanup = new();
@@ -22,6 +23,7 @@ public sealed class LiterarySimulation : IDisposable
         Session = new SimulationSession(World);
         Session.Runtime.DeclarativeOnly = true;
         Rules = new PatternBook(Session);
+        Narrative = new NarrativeDynamics(Session);
         _cleanup.Add(HauntedItems.Install(Session));
         Session.Runtime.WitnessesCollector = (ev, _) =>
         {
@@ -64,9 +66,11 @@ public sealed class LiterarySimulation : IDisposable
         {
             Perceive(actor);
             var actions = BasicOffers(actor).Concat(HauntedItems.Offers(soul, body, env, context))
-                .Concat(Rules.Offers(soul, body)).Concat(LiteraryDialogue.Offers(soul, body, env, context)).ToArray();
+                .Concat(Rules.Offers(soul, body)).Concat(LiteraryDialogue.Offers(soul, body, env, context))
+                .Concat(Narrative.Offers(actor)).ToArray();
             _candidates[body] = actions;
-            return actions.Where(a => Session.Runtime.Prepare(a, new StateView(soul)).Succeeded).ToArray();
+            // 无值得执行的行动时只保留调度槽，不把每次重试写成新的文学事件。
+            return actions.Any(action => action.Effect.Op != "wait" && Score(action) > 0) ? actions : [];
         });
         Perceive(actor); return actor;
     }
@@ -98,6 +102,8 @@ public sealed class LiterarySimulation : IDisposable
         foreach (var clause in Rules.Clauses.Where(c => c.Parent == actor.Parent || c.Get<Entity>("issuer") == actor))
             foreach (var field in clause.Get<string[]>("public_fields") ?? [])
                 StateView.Learn(mind, clause, field, StateView.Actual(clause, field), clause);
+        foreach (var offer in Narrative.SharedOffers(actor))
+            StateView.Learn(mind, offer.Definition!, "used", offer.Definition!.Get<bool>("used"), offer.Actor);
     }
     private IEnumerable<Intent> BasicOffers(Character actor)
     {
@@ -129,19 +135,24 @@ public sealed class LiterarySimulation : IDisposable
         var score = ImmediateValue(action, plan);
         // 只查看一步准备后的下一行动。复用相同效果，不在分支调用真实闭包或世界 RNG。
         var future = 0d;
-        foreach (var next in _candidates.GetValueOrDefault(action.Actor, []).Take(64))
+        var available = 0d;
+        foreach (var next in _candidates.GetValueOrDefault(action.Actor, []).Concat(Narrative.SharedOffers(action.Actor)).Take(64))
         {
             if (next == action) continue;
+            double Benefit(EffectPlan result) => next.Actor == action.Actor ? ImmediateValue(next, result)
+                : Value(action.Actor, result) + Narrative.Value(action.Actor, result);
+            var current = Rules.ForecastConsequences(next, Session.Runtime.Prepare(next, view));
+            if (current.Succeeded) available = Math.Max(available, Benefit(current));
             var following = Rules.ForecastConsequences(next, Session.Runtime.Prepare(next, plan.View));
             if (following.Succeeded)
-                future = Math.Max(future, ImmediateValue(next, following));
+                future = Math.Max(future, Benefit(following));
         }
-        return (float)(score + .65 * future);
+        return (float)(score + .65 * (future - available));
     }
     private double ImmediateValue(Intent action, EffectPlan plan)
     {
         if (action.Effect.Op == "wait") return 0;
-        var score = Value(action.Actor, plan) - action.MotionCost / 20d + Rules.Pressure(action);
+        var score = Value(action.Actor, plan) + Narrative.Value(action, plan) - action.MotionCost / 20d + Rules.Pressure(action);
         var weights = Balance.PersonalityWeights[action.Actor.Get<PersonalityProfile>("personality")];
         if (action.Effect.Op == "state_claim")
             score += action.Actor.Get<bool>("guard_secret") ? -weights["safety"] * 2 : weights["truth"] + weights["image"] * .25;
@@ -163,7 +174,8 @@ public sealed class LiterarySimulation : IDisposable
         double value = 0;
         foreach (var c in plan.Changes)
         {
-            if (c.Subject == goal && c.Field == field && StateView.Same(c.After, desired) && !StateView.Same(c.Before, desired)) value += weights["goal"] * 3;
+            if (c.Subject == goal && c.Field == field && c.Before != StateView.Unknown && c.After != StateView.Unknown)
+                value += weights["goal"] * 3 * ((StateView.Same(c.After, desired) ? 1 : 0) - (StateView.Same(c.Before, desired) ? 1 : 0));
             if (c.Before == StateView.Unknown || c.After == StateView.Unknown) continue;
             if (c.Field == "KnownState" && c.After is Dictionary<(Entity, string), object?> known)
             {
@@ -252,6 +264,6 @@ public sealed class LiterarySimulation : IDisposable
     public void Dispose()
     {
         foreach (var cleanup in _cleanup) cleanup();
-        Rules.Dispose(); Session.Dispose();
+        Narrative.Dispose(); Rules.Dispose(); Session.Dispose();
     }
 }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DualOntologyWorldEngine.Core.Effects;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Rules;
@@ -230,9 +227,7 @@ public static class HauntedItems
         }
     }
 
-    /// <summary>
-    /// 安装烛火的连续阶段监听。每个阶段都由一个声明式 Intent 支付燃料；耗尽时产生熄灭事件。
-    /// </summary>
+    /// <summary>安装烛火的连续阶段监听。每个阶段都由一个声明式 Intent 支付燃料；耗尽时产生熄灭事件。</summary>
     public static Action Install(SimulationSession session)
     {
         var scheduled = new HashSet<Func<double?>>();

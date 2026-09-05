@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Core.Kotodama;
+using DualOntologyWorldEngine.Core.Effects;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Rules;
 using DualOntologyWorldEngine.Core.Timeline;
@@ -57,7 +58,9 @@ public sealed class SimulationSession : IDisposable
             if (ReadyAt(actor) > Timeline.Now) return ReadyAt(actor) - Timeline.Now;
             var intent = soul.Step(actor, Runtime.Rules, Runtime.Env, context, utility,
                 allows: action => ReferenceEquals(action.Actor, actor) && ReferenceEquals(action.Mind, soul)
-                    && (action.Changes != null || Runtime.Review(action, context).Allowed),
+                    && (action.Changes != null
+                        ? Runtime.Prepare(action, new StateView(soul)).Succeeded
+                        : Runtime.Review(action, context).Allowed),
                 chooser: chooser);
             var result = intent == null ? null : Runtime.ResolveDetailed(intent, context);
             completed?.Invoke(intent, result);

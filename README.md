@@ -4,7 +4,9 @@
 
 核心不计算房间内几何距离与碰撞，空间交互交由游戏层处理。跨场景移动依拓扑图寻路并支付通行代价；所有权、绑定、作用域与规则约束均保持客观闭合。
 
-新游戏优先从 [C# 文学模拟入口与规范](docs/literary-simulation-implementation-zh.md) 开始。它提供默认规则范式、灵异物品和人物交互，可直接用人物目标、认知与少量场景定义运行。
+C# Core 的当前接口与维护约定见 [Core 维护与验收](docs/csharp-core-maintenance-zh.md)及 [C# 语法规范](godot_csharp/core/AGENTS.md)。
+
+新游戏从 [当前 C# Core 使用规范](docs/csharp-core-usage-zh.md) 开始。文学模拟入口提供默认规则范式、灵异物品和人物交互。后续扩展见 [长篇成长、张力与平衡设计和测试方案](docs/long-term-simulation-plan-zh.md)，其中的长期机制尚未实施。
 
 ```powershell
 dotnet run --project godot_csharp/examples/literary_story/DualOntologyWorldEngine.LiteraryStory.csproj

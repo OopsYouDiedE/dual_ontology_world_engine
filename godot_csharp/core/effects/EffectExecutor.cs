@@ -49,7 +49,9 @@ public sealed class StateView
         soul.Get<Dictionary<(Entity, string), object?>>("KnownState") ?? new();
     public static void Learn(Soul soul, Entity subject, string field, object? value, object? source = null)
     {
-        var known = new Dictionary<(Entity, string), object?>(Knowledge(soul)) { [(subject, field)] = value };
+        var current = Knowledge(soul);
+        if (current.TryGetValue((subject, field), out var previous) && Same(previous, value)) return;
+        var known = new Dictionary<(Entity, string), object?>(current) { [(subject, field)] = value };
         soul.Set("KnownState", known);
         soul.Observe(AST.E("learned", subject, field, value ?? "空"), source);
     }
@@ -63,7 +65,15 @@ public sealed class StateView
     };
     internal static void Apply(Entity entity, string field, object? value)
     {
-        if (field == "strain" && entity is Character character) character.Mind!.SetFatigue(Convert.ToDouble(value));
+        if (field == "KnownState" && entity is Soul soul && value is Dictionary<(Entity, string), object?> known)
+        {
+            var previous = Knowledge(soul);
+            foreach (var ((subject, key), learned) in known)
+                if (!previous.TryGetValue((subject, key), out var old) || !Same(old, learned))
+                    soul.Observe(AST.E("learned", subject, key, learned ?? "空"), subject);
+            soul.Set(field, known);
+        }
+        else if (field == "strain" && entity is Character character) character.Mind!.SetFatigue(Convert.ToDouble(value));
         else if (field == "$parent") entity.Reparent((TreeMember?)value);
         else if (field.StartsWith("tag:")) entity.SetTag(field[4..], Convert.ToInt32(value));
         else if (field.StartsWith("rel:"))
@@ -210,7 +220,15 @@ public sealed class EffectExecutor
         if (supplied == StateView.Unknown) { plan.Uncertain = true; return; }
         switch (effect.Op)
         {
-            case "set": plan.Write(entity, key, supplied); break;
+            case "set":
+                if (key == "strain")
+                {
+                    var value = Convert.ToDouble(supplied);
+                    if (!double.IsFinite(value)) throw new InvalidOperationException("疲劳值必须为有限量");
+                    plan.Write(entity, key, Math.Clamp(value, 0d, Core.Content.Balance.FatigueHardLimit));
+                }
+                else plan.Write(entity, key, supplied);
+                break;
             case "change":
             case "spend":
                 var before = plan.View.Read(entity, key);

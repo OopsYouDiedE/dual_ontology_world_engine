@@ -237,12 +237,30 @@ public sealed class PatternBook : IDisposable
             return;
         }
         var issuer = c.Get<Entity>("issuer")!;
-        var changes = new List<Effect> { F("spend", issuer, "charges", Math.Max(1, Balance.ConsequenceBudget(effects))) };
+        var prepared = PrepareConsequence(c, issuer, effects);
+        if (!prepared.Plan.Succeeded)
+        {
+            if (c.Get<LiteraryPattern>("pattern") == LiteraryPattern.Deadline)
+                Resolve(c, cause, [F("set", c, "active", false)], "期限结束，后果因预算不足未能生效");
+            return;
+        }
+        var changes = new List<Effect> { F("spend", issuer, "charges", prepared.Cost) };
         changes.AddRange(effects);
         if (c.Get<LiteraryPattern>("pattern") == LiteraryPattern.Deadline) changes.Add(F("set", c, "active", false));
         var result = Resolve(c, cause, changes, text);
         if (result.Result?.Succeeded != true && c.Get<LiteraryPattern>("pattern") == LiteraryPattern.Deadline)
             Resolve(c, cause, [F("set", c, "active", false)], "期限结束，后果因预算不足未能生效");
+    }
+
+    private (EffectPlan Plan, double Cost) PrepareConsequence(Entity clause, Entity issuer, IEnumerable<Effect> effects, StateView? view = null)
+    {
+        var mind = issuer is Character character ? character.Mind! : issuer.Get<Soul>("mind")!;
+        var previewIntent = new Intent(issuer, mind, F("consequence", issuer, clause), effects);
+        var preview = _session.Runtime.Prepare(previewIntent, view);
+        if (!preview.Succeeded) return (preview, 0);
+        var cost = Math.Max(1, Balance.ConsequenceBudget(preview.Changes));
+        var finalEffects = new[] { F("spend", issuer, "charges", cost) }.Concat(effects);
+        return (_session.Runtime.Prepare(new Intent(issuer, mind, F("consequence", issuer, clause), finalEffects), view), cost);
     }
     private DualOntologyWorldEngine.Core.Timeline.ActionResolution Resolve(Entity c, Entity? cause, IEnumerable<Effect> changes, string text)
     {
@@ -260,19 +278,17 @@ public sealed class PatternBook : IDisposable
     }
     public EffectPlan ForecastConsequences(Intent intent, EffectPlan plan)
     {
-        foreach (var clause in Clauses.Where(c => StateView.Knowledge(intent.Mind).ContainsKey((c, "text"))
+        foreach (var clause in Clauses.Where(c => StateView.Knowledge(plan.View.Observer ?? intent.Mind).ContainsKey((c, "text"))
             && Active(c, plan.View) && Matches(c, intent)
             && c.Get<LiteraryPattern>("pattern") is LiteraryPattern.Prohibition or LiteraryPattern.Trigger))
         {
             var issuer = clause.Get<Entity>("issuer")!;
             var breach = clause.Get<Effect[]>("breach") ?? [];
-            var effects = new[] { F("spend", issuer, "charges", Math.Max(1, Balance.ConsequenceBudget(breach))) }.Concat(breach);
-            var consequence = new Intent(issuer, intent.Mind, F("consequence", issuer, clause), effects);
-            var next = _session.Runtime.Prepare(consequence, plan.View);
-            if (!next.Succeeded) continue;
-            plan.Changes.AddRange(next.Changes);
-            foreach (var change in next.Changes) plan.View.Write(change.Subject, change.Field, change.After);
-            plan.Uncertain |= next.Uncertain;
+            var prepared = PrepareConsequence(clause, issuer, breach, plan.View);
+            if (!prepared.Plan.Succeeded) continue;
+            plan.Changes.AddRange(prepared.Plan.Changes);
+            foreach (var change in prepared.Plan.Changes) plan.View.Write(change.Subject, change.Field, change.After);
+            plan.Uncertain |= prepared.Plan.Uncertain;
         }
         return plan;
     }

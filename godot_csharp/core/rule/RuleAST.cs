@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DualOntologyWorldEngine.Core.Rules;
 
-/// <summary>
-/// 可匹配、可求值的事实表达式 AST。
-/// </summary>
+/// <summary>可匹配、可求值的事实表达式 AST。</summary>
 /// <remarks>
 /// Expr 是规则系统中表示环境事实、命题状态与条件谓词的纯数据抽象语法树节点。
 /// 
@@ -18,18 +13,10 @@ namespace DualOntologyWorldEngine.Core.Rules;
 /// <param name="Args">谓词参数列表（支持嵌套表达式、实体引用或字符串标量）。</param>
 public record Expr(string Op, params object[] Args)
 {
-    public virtual bool Equals(Expr? other)
-    {
-        if (ReferenceEquals(this, other)) return true;
-        if (other is null) return false;
-        if (!string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)) return false;
-        if (Args.Length != other.Args.Length) return false;
-        for (int i = 0; i < Args.Length; i++)
-        {
-            if (!Equals(Args[i], other.Args[i])) return false;
-        }
-        return true;
-    }
+    public virtual bool Equals(Expr? other) =>
+        ReferenceEquals(this, other) || other is not null
+            && string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)
+            && Args.SequenceEqual(other.Args);
 
     public override int GetHashCode()
     {
@@ -40,9 +27,7 @@ public record Expr(string Op, params object[] Args)
     }
 }
 
-/// <summary>
-/// 等待已注册执行路径解释的世界效果 AST。
-/// </summary>
+/// <summary>等待已注册执行路径解释的世界效果 AST。</summary>
 /// <remarks>
 /// Effect 描述一次行动意图、契约产出或环境变迁所期望施加的客观效果。
 /// 既可作为待执行动作的原语，也可作为规则中 Require/Forbid/Permit 匹配的目标模式。
@@ -51,18 +36,10 @@ public record Expr(string Op, params object[] Args)
 /// <param name="Args">效果作用的目标实体、工具或环境参数。</param>
 public record Effect(string Op, params object[] Args)
 {
-    public virtual bool Equals(Effect? other)
-    {
-        if (ReferenceEquals(this, other)) return true;
-        if (other is null) return false;
-        if (!string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)) return false;
-        if (Args.Length != other.Args.Length) return false;
-        for (int i = 0; i < Args.Length; i++)
-        {
-            if (!Equals(Args[i], other.Args[i])) return false;
-        }
-        return true;
-    }
+    public virtual bool Equals(Effect? other) =>
+        ReferenceEquals(this, other) || other is not null
+            && string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)
+            && Args.SequenceEqual(other.Args);
 
     public override int GetHashCode()
     {
@@ -73,21 +50,17 @@ public record Effect(string Op, params object[] Args)
     }
 }
 
-/// <summary>
-/// 快捷构造事实表达式与待执行效果的辅助工厂。
-/// </summary>
+/// <summary>快捷构造事实表达式与待执行效果的辅助工厂。</summary>
 public static class AST
 {
     /// <summary>快捷创建事实表达式 Expr 节点。</summary>
-    public static Expr E(string op, params object[] args) => new(op, args);
+    public static Expr E(string op, params object[]? args) => new(op, args ?? []);
 
     /// <summary>快捷创建世界效果 Effect 节点。</summary>
-    public static Effect F(string op, params object[] args) => new(op, args);
+    public static Effect F(string op, params object[]? args) => new(op, args ?? []);
 }
 
-/// <summary>
-/// 规则模板中由当前行动上下文绑定的强类型槽位。
-/// </summary>
+/// <summary>规则模板中由当前行动上下文绑定的强类型槽位。</summary>
 /// <remarks>
 /// 固定的场景对象仍直接保存 Entity 引用；只有随每个 Intent 改变的位置使用槽位。
 /// 这避免以 null 或裸字符串冒充通配符，并让编译器检查模板参数。
@@ -107,9 +80,7 @@ public enum RuleSlot
     Scene
 }
 
-/// <summary>
-/// 规则指令施加的规范模式。
-/// </summary>
+/// <summary>规则指令施加的规范模式。</summary>
 /// <remarks>
 /// Mode 描述一条规范指令对主体意图的约束类型与规约力强度。
 /// 规则系统通过区分不同模式计算合规性（Complies）与规约压力得分（Score）。
@@ -141,24 +112,18 @@ public enum Mode
     Prefer
 }
 
-/// <summary>
-/// 规范模式与目标效果指令。
-/// </summary>
+/// <summary>规范模式与目标效果指令。</summary>
 /// <param name="Mode">规约模式（Require/Forbid/Permit/Prefer）。</param>
 /// <param name="Effect">目标世界效果 AST 表达式或匹配模式。</param>
 public record Directive(Mode Mode, Effect Effect);
 
-/// <summary>
-/// 仅在 condition 成立时参与评价的一组指令集合。
-/// </summary>
+/// <summary>仅在 condition 成立时参与评价的一组指令集合。</summary>
 /// <param name="Condition">触发评价的前置条件表达式 AST。</param>
 /// <param name="Directives">条件成立时生效的一组规范指令。</param>
 /// <param name="Source">规则条文来源、自然语言说明或法条标题。</param>
 public record Rule(Expr Condition, IReadOnlyList<Directive> Directives, string Source = "");
 
-/// <summary>
-/// Soul 对规则发布物的认知立场阶段。
-/// </summary>
+/// <summary>Soul 对规则发布物的认知立场阶段。</summary>
 /// <remarks>
 /// 描述外部条文进入主体心智后的内化推进过程。
 /// 只有跃迁至 Accepted 状态的规则，才会真正在 Soul 决策评估中施加规约压力。
@@ -190,9 +155,7 @@ public enum CognitiveStage
     Rejected
 }
 
-/// <summary>
-/// 通用反应与社交应对模式种类。
-/// </summary>
+/// <summary>通用反应与社交应对模式种类。</summary>
 /// <remarks>
 /// ResponseMode 用于在复杂群体交互情境中规范主体的行为倾向与态度表达。
 /// </remarks>
@@ -241,14 +204,10 @@ public enum ResponseMode
     Conceal
 }
 
-/// <summary>
-/// 规则、客观补丁与因果审计事件的实体构造工厂。
-/// </summary>
+/// <summary>规则、客观补丁与因果审计事件的实体构造工厂。</summary>
 public static class RuleEntityFactory
 {
-    /// <summary>
-    /// 建立一份真假未定的主观规则发布物实体（RulePublication）。
-    /// </summary>
+    /// <summary>建立一份真假未定的主观规则发布物实体（RulePublication）。</summary>
     /// <param name="rule">发布的抽象规则对象。</param>
     /// <param name="issuer">发布该规则的主体实体引用。</param>
     /// <param name="guaranteeTag">用于背书该规则的担保或权威标签名（默认为 "Guarantee"）。</param>
@@ -285,9 +244,7 @@ public static class RuleEntityFactory
         return pub;
     }
 
-    /// <summary>
-    /// 创建约束现实世界执行路径的客观规则补丁实体（RulePatch）。
-    /// </summary>
+    /// <summary>创建约束现实世界执行路径的客观规则补丁实体（RulePatch）。</summary>
     /// <remarks>
     /// RulePatch 代表客观世界中不以主体意志为转移的物理、超自然或系统法则。
     /// 当主体行动效果命中补丁中的 Forbid 指令时，将被运行时直接拦截阻断。
@@ -338,9 +295,7 @@ public static class RuleEntityFactory
         return patch;
     }
 
-    /// <summary>
-    /// 创建记录因果变迁与动作结果的历史审计事件实体（Event）。
-    /// </summary>
+    /// <summary>创建记录因果变迁与动作结果的历史审计事件实体（Event）。</summary>
     /// <param name="name">事件描述名称。</param>
     /// <param name="actor">发起该事件的行动主体实体。</param>
     /// <param name="effect">触发的世界效果表达式 AST。</param>

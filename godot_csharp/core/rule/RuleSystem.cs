@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DualOntologyWorldEngine.Core.Mind;
 
 namespace DualOntologyWorldEngine.Core.Rules;
 
-/// <summary>
-/// 规则推理与规约评价引擎。
-/// </summary>
+/// <summary>规则推理与规约评价引擎。</summary>
 /// <remarks>
 /// RuleSystem 负责双重维度的规则结算：
 /// 1. 主观规范评价（<see cref="Evaluate"/>）：针对 Soul 的已采信信念（Beliefs），计算 Require、Forbid、Permit、Prefer 模式对行动意图施加的规范压力与合规性；
@@ -15,9 +10,7 @@ namespace DualOntologyWorldEngine.Core.Rules;
 /// </remarks>
 public class RuleSystem
 {
-    /// <summary>
-    /// 递归展开嵌套包含条件（when）的效果指令。
-    /// </summary>
+    /// <summary>递归展开嵌套包含条件（when）的效果指令。</summary>
     private IEnumerable<Directive> Expanded(Rule rule, RuleEnvironment env)
     {
         foreach (var directive in rule.Directives)
@@ -37,9 +30,7 @@ public class RuleSystem
         }
     }
 
-    /// <summary>
-    /// 计算特定规则信念在心智体系中的综合权威与执行优先级权重。
-    /// </summary>
+    /// <summary>计算特定规则信念在心智体系中的综合权威与执行优先级权重。</summary>
     /// <remarks>
     /// 权重积分公式：
     /// Priority = 主观信任度(confidence) + 发布者担保强度(guarantee) * 2 + 发布者固有权威(Authority)。
@@ -58,30 +49,14 @@ public class RuleSystem
         return confidence + guaranteeVal * 2 + authority;
     }
 
-    /// <summary>
-    /// 提取指定 Soul 当前已采信（Accepted）且触发条件在环境中求值为真的所有活跃规则指令。
-    /// </summary>
+    /// <summary>提取指定 Soul 当前已采信（Accepted）且触发条件在环境中求值为真的所有活跃规则指令。</summary>
     /// <param name="soul">认知主体。</param>
     /// <param name="env">当前认知求值环境。</param>
     /// <returns>元组序列，包含所属信念实体与展开后的规范指令。</returns>
-    public IEnumerable<(Entity Belief, Directive Directive)> Active(Soul soul, RuleEnvironment env)
-    {
-        foreach (var belief in soul.Beliefs)
-        {
-            var rule = belief.Get<Rule>("rule");
-            if (rule != null && belief.HasTag("Accepted") && env.Evaluate(rule.Condition))
-            {
-                foreach (var directive in Expanded(rule, env))
-                {
-                    yield return (belief, directive);
-                }
-            }
-        }
-    }
+    public IEnumerable<(Entity Belief, Directive Directive)> Active(Soul soul, RuleEnvironment env) =>
+        Active(soul, env, null);
 
-    /// <summary>
-    /// 在当前行动的强类型槽位绑定下提取活跃规则。
-    /// </summary>
+    /// <summary>在当前行动的强类型槽位绑定下提取活跃规则。</summary>
     /// <param name="soul">接受规则的认知主体。</param>
     /// <param name="env">当前认知求值环境。</param>
     /// <param name="bindings">Actor、Target、Tool 与 Scene 的局部对象绑定。</param>
@@ -89,14 +64,14 @@ public class RuleSystem
     private IEnumerable<(Entity Belief, Directive Directive)> Active(
         Soul soul,
         RuleEnvironment env,
-        IReadOnlyDictionary<string, object> bindings)
+        IReadOnlyDictionary<string, object>? bindings)
     {
         foreach (var belief in soul.Beliefs)
         {
             var rule = belief.Get<Rule>("rule");
             if (rule == null || !belief.HasTag("Accepted")) continue;
 
-            var materialized = env.Materialize(rule, bindings);
+            var materialized = bindings == null ? rule : env.Materialize(rule, bindings);
             if (!env.Evaluate(materialized.Condition)) continue;
 
             foreach (var directive in Expanded(materialized, env))
@@ -106,9 +81,7 @@ public class RuleSystem
         }
     }
 
-    /// <summary>
-    /// 依据主体已采信规则，对指定候选效果意图进行合规性判定与规约压力积分。
-    /// </summary>
+    /// <summary>依据主体已采信规则，对指定候选效果意图进行合规性判定与规约压力积分。</summary>
     /// <remarks>
     /// 评分贡献规则：
     /// - Require 命中：+100 + Priority
@@ -121,51 +94,10 @@ public class RuleSystem
     /// <param name="intent">待评价效果 AST。</param>
     /// <param name="env">求值环境。</param>
     /// <returns>封装了合规状态、得分、主导依据与全部压力明细的 Decision 实例。</returns>
-    public Decision Evaluate(Soul soul, Effect intent, RuleEnvironment env)
-    {
-        var pressures = new List<RulePressure>();
+    public Decision Evaluate(Soul soul, Effect intent, RuleEnvironment env) =>
+        Evaluate(intent, env, Active(soul, env));
 
-        foreach (var (belief, directive) in Active(soul, env))
-        {
-            bool matched = env.EffectMatches(directive.Effect, intent);
-            int priority = BeliefPriority(belief);
-            float contribution = 0f;
-
-            if (directive.Mode == Mode.Require && matched) contribution = 100 + priority;
-            else if (directive.Mode == Mode.Require && !matched) contribution = -80 - priority;
-            else if (directive.Mode == Mode.Prefer && matched) contribution = 50 + priority;
-            else if (directive.Mode == Mode.Permit && matched) contribution = 20 + priority;
-            else if (directive.Mode == Mode.Forbid && matched) contribution = -100 - priority;
-
-            if (contribution != 0)
-            {
-                pressures.Add(new RulePressure(contribution, belief, directive, matched));
-            }
-        }
-
-        if (pressures.Count == 0)
-        {
-            return new Decision(intent, complies: true, score: 0, basis: null, reason: "无相关已接受规则");
-        }
-
-        float score = pressures.Sum(p => p.Amount);
-        var strongest = pressures.OrderByDescending(p => Math.Abs(p.Amount)).First();
-        bool complies = !pressures.Any(p =>
-            (p.Directive.Mode == Mode.Forbid && p.Matched) ||
-            (p.Directive.Mode == Mode.Require && !p.Matched));
-
-        var issuer = strongest.Belief.Get<Entity>("issuer");
-        string issuerName = issuer != null ? issuer.Name : strongest.Belief.Name;
-        string reason = (strongest.Directive.Mode == Mode.Require && !strongest.Matched)
-            ? $"未满足 REQUIRE：{issuerName}"
-            : $"{strongest.Directive.Mode}：{issuerName}";
-
-        return new Decision(intent, complies, score, strongest.Belief, reason, null, pressures);
-    }
-
-    /// <summary>
-    /// 使用完整行动对象评价规则，使模板槽位能够由实际人物、目标、工具和场景绑定。
-    /// </summary>
+    /// <summary>使用完整行动对象评价规则，使模板槽位能够由实际人物、目标、工具和场景绑定。</summary>
     /// <remarks>
     /// 场景对象优先取调用者提供的 context["scene"]，否则从 Character.CurrentScene 推导。
     /// 未出现的可选目标或工具不写入绑定，含该槽位的规则自然不会错误匹配。
@@ -181,25 +113,29 @@ public class RuleSystem
         RuleEnvironment env,
         IReadOnlyDictionary<string, object>? context = null)
     {
+        return Evaluate(intent.Effect, env, Active(soul, env, Bindings(intent, context)), intent);
+    }
+
+    private static Dictionary<string, object> Bindings(Intent intent, IReadOnlyDictionary<string, object>? context)
+    {
         var bindings = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
         {
             [nameof(RuleSlot.Actor)] = intent.Actor
         };
         if (intent.Target is { } target) bindings[nameof(RuleSlot.Target)] = target;
         if (intent.Tool is { } tool) bindings[nameof(RuleSlot.Tool)] = tool;
-        if (context?.TryGetValue("scene", out var scene) == true && scene is Entity)
-        {
+        if ((context?.GetValueOrDefault("scene") as Entity ?? TopologySystem.GetEnclosingScene(intent.Actor)) is { } scene)
             bindings[nameof(RuleSlot.Scene)] = scene;
-        }
-        else if (intent.Actor is Character { CurrentScene: { } currentScene })
-        {
-            bindings[nameof(RuleSlot.Scene)] = currentScene;
-        }
+        return bindings;
+    }
 
+    private static Decision Evaluate(Effect effect, RuleEnvironment env,
+        IEnumerable<(Entity Belief, Directive Directive)> active, Intent? action = null)
+    {
         var pressures = new List<RulePressure>();
-        foreach (var (belief, directive) in Active(soul, env, bindings))
+        foreach (var (belief, directive) in active)
         {
-            var matched = env.EffectMatches(directive.Effect, intent.Effect);
+            var matched = env.EffectMatches(directive.Effect, effect);
             var priority = BeliefPriority(belief);
             var contribution = (directive.Mode, matched) switch
             {
@@ -218,7 +154,7 @@ public class RuleSystem
 
         if (pressures.Count == 0)
         {
-            return new Decision(intent.Effect, true, 0, null, "无相关已接受规则", intent);
+            return new Decision(effect, true, 0, null, "无相关已接受规则", action);
         }
 
         var score = pressures.Sum(item => item.Amount);
@@ -231,12 +167,10 @@ public class RuleSystem
             ? $"未满足 REQUIRE：{issuer?.Name ?? strongest.Belief.Name}"
             : $"{strongest.Directive.Mode}：{issuer?.Name ?? strongest.Belief.Name}";
 
-        return new Decision(intent.Effect, complies, score, strongest.Belief, reason, intent, pressures);
+        return new Decision(effect, complies, score, strongest.Belief, reason, action, pressures);
     }
 
-    /// <summary>
-    /// 从多项候选效果中评价并筛选出综合得分最高的决策方案。
-    /// </summary>
+    /// <summary>从多项候选效果中评价并筛选出综合得分最高的决策方案。</summary>
     /// <param name="soul">决策心智主体。</param>
     /// <param name="candidates">候选效果序列。</param>
     /// <param name="env">认知求值环境。</param>
@@ -258,9 +192,7 @@ public class RuleSystem
         return best ?? new Decision(new Effect("none"), complies: true, score: 0, basis: null, reason: "无候选行动");
     }
 
-    /// <summary>
-    /// 检查候选意图是否完全满足给定的一组客观硬性规则约束。
-    /// </summary>
+    /// <summary>检查候选意图是否完全满足给定的一组客观硬性规则约束。</summary>
     /// <param name="intent">待执行效果 AST。</param>
     /// <param name="constraints">客观规则约束集合。</param>
     /// <param name="env">环境事实。</param>
@@ -270,9 +202,7 @@ public class RuleSystem
         return constraints.All(rule => ObjectiveComplies(intent, rule, env));
     }
 
-    /// <summary>
-    /// 检查单条客观规则对目标意图的合规性。
-    /// </summary>
+    /// <summary>检查单条客观规则对目标意图的合规性。</summary>
     /// <param name="intent">意图效果。</param>
     /// <param name="rule">客观硬规则。</param>
     /// <param name="env">求值环境。</param>
@@ -298,9 +228,7 @@ public class RuleSystem
         return true;
     }
 
-    /// <summary>
-    /// 检查言灵或契约的激活前置规则是否完全作为事实在当前环境中成立。
-    /// </summary>
+    /// <summary>检查言灵或契约的激活前置规则是否完全作为事实在当前环境中成立。</summary>
     /// <param name="rule">激活触发规则。</param>
     /// <param name="env">求值环境。</param>
     /// <returns>true 表示全部条件与要求均作为事实成立。</returns>
@@ -325,46 +253,43 @@ public class RuleSystem
         return true;
     }
 
-    /// <summary>
-    /// 检查目标辖域内的所有生效规则补丁（RulePatch）是否允许特定效果意图执行。
-    /// </summary>
+    /// <summary>检查目标辖域内的所有生效规则补丁（RulePatch）是否允许特定效果意图执行。</summary>
     /// <param name="intent">行动效果 AST。</param>
     /// <param name="patches">世界中部署的补丁实体列表。</param>
     /// <param name="env">求值环境。</param>
     /// <param name="context">包含当前所处辖域（domains）的情境上下文。</param>
     /// <returns>true 表示未被任何激活且适用辖域的补丁拦截阻断。</returns>
-    public bool PatchAllows(
-        Effect intent,
-        IEnumerable<Entity> patches,
-        RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context = null)
+    public bool PatchAllows(Effect intent, IEnumerable<Entity> patches, RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context = null) =>
+        PatchAllows(intent, patches, env, Domains(context?.GetValueOrDefault("domains")), null);
+
+    /// <summary>完整行动按实际身体绑定槽位；未指定 domains 时沿世界树推导客观补丁辖域。</summary>
+    public bool PatchAllows(Intent intent, IEnumerable<Entity> patches, RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context = null) =>
+        PatchAllows(intent.Effect, patches, env,
+            context?.ContainsKey("domains") == true ? Domains(context["domains"]) : Ancestors(intent.Actor),
+            Bindings(intent, context));
+
+    private bool PatchAllows(Effect effect, IEnumerable<Entity> patches, RuleEnvironment env,
+        IEnumerable<Entity> domains, IReadOnlyDictionary<string, object>? bindings)
     {
-        IEnumerable<Entity> domains = Enumerable.Empty<Entity>();
-        if (context != null && context.TryGetValue("domains", out var domObj))
-        {
-            if (domObj is IEnumerable<Entity> en) domains = en;
-            else if (domObj is Entity e) domains = new[] { e };
-        }
+        var scope = domains.ToHashSet();
+        return patches.Where(p => p.HasTag("RulePatch") && p.Get<bool>("active", true)
+                && (p.Get<Entity>("scope") is not { } domain || scope.Contains(domain)))
+            .Select(p => p.Get<Rule>("rule")).OfType<Rule>()
+            .All(rule => ObjectiveComplies(effect, bindings == null ? rule : env.Materialize(rule, bindings), env));
+    }
 
-        foreach (var patch in patches)
-        {
-            if (!patch.HasTag("RulePatch") || !patch.Get<bool>("active", true))
-            {
-                continue;
-            }
+    private static IEnumerable<Entity> Domains(object? value) => value switch
+    {
+        Entity entity => [entity],
+        IEnumerable<Entity> entities => entities,
+        _ => []
+    };
 
-            var scope = patch.Get<Entity>("scope");
-            if (scope != null && !domains.Contains(scope))
-            {
-                continue;
-            }
-
-            var rule = patch.Get<Rule>("rule");
-            if (rule != null && !ObjectiveAllows(intent, new[] { rule }, env))
-            {
-                return false;
-            }
-        }
-        return true;
+    private static IEnumerable<Entity> Ancestors(TreeMember member)
+    {
+        for (TreeMember? current = member; current != null; current = current.Parent)
+            if (current is Entity entity) yield return entity;
     }
 }

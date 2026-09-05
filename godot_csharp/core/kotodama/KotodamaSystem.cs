@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DualOntologyWorldEngine.Core;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Effects;
@@ -8,9 +5,7 @@ using DualOntologyWorldEngine.Core.Rules;
 
 namespace DualOntologyWorldEngine.Core.Kotodama;
 
-/// <summary>
-/// 言灵、仪式配方与超自然契约核心装配工厂。
-/// </summary>
+/// <summary>言灵、仪式配方与超自然契约核心装配工厂。</summary>
 /// <remarks>
 /// 负责构建具有规范结构的实体：
 /// 1. 仪式配方（Recipe）：定义槽位要求（slots）、源质门槛（thresholds）、支付代价（costs）与产出效果（effects）；
@@ -19,9 +14,7 @@ namespace DualOntologyWorldEngine.Core.Kotodama;
 /// </remarks>
 public static class KotodamaFactory
 {
-    /// <summary>
-    /// 装配创建一份通用仪式配方或契约模板实体。
-    /// </summary>
+    /// <summary>装配创建一份通用仪式配方或契约模板实体。</summary>
     /// <param name="name">配方或契约名称。</param>
     /// <param name="slots">槽位规格定义字典（角色、数量、标签与从属要求）。</param>
     /// <param name="thresholds">激活所需的各项源质强度门槛映射。</param>
@@ -86,9 +79,7 @@ public static class KotodamaFactory
         return recipe;
     }
 
-    /// <summary>
-    /// 快捷装配创建即时施展的言灵咏唱实体（Kotodama/Incantation）。
-    /// </summary>
+    /// <summary>快捷装配创建即时施展的言灵咏唱实体（Kotodama/Incantation）。</summary>
     /// <param name="name">言灵称谓或祝词名称。</param>
     /// <param name="slots">施展时所需的素材或介质槽位。</param>
     /// <param name="thresholds">发动言灵所需的源质强度门槛。</param>
@@ -132,9 +123,7 @@ public static class KotodamaFactory
             tags: wordTags);
     }
 
-    /// <summary>
-    /// 汇总折算一组输入材料与相关实体所贡献的有效源质（Aspect）强度总和。
-    /// </summary>
+    /// <summary>汇总折算一组输入材料与相关实体所贡献的有效源质（Aspect）强度总和。</summary>
     /// <param name="inputs">投入仪式或言灵的实体集合。</param>
     /// <param name="target">定向关系投影的目标客体。</param>
     /// <param name="context">附加上下文环境。</param>
@@ -165,9 +154,7 @@ public static class KotodamaFactory
     }
 }
 
-/// <summary>
-/// 统一核验简单言灵、持续仪式（Rite）和因果契约（Covenant）的运行时执行系统。
-/// </summary>
+/// <summary>统一核验简单言灵、持续仪式（Rite）和因果契约（Covenant）的运行时执行系统。</summary>
 /// <remarks>
 /// KotodamaSystem 负责世界引擎中所有超自然语言、仪式结算与契约因果的生命周期管理：
 /// 1. 效果原语注册（<see cref="Register"/>）：内置物理移动、属性增减、资源消耗与关系建立断开等核心原子效果；
@@ -199,9 +186,7 @@ public class KotodamaSystem
     /// <summary>最近一次仪式校验失败或代价支付中断的错误原因诊断文本。</summary>
     public string LastFailure { get; private set; } = "";
 
-    /// <summary>
-    /// 初始化言灵契约系统运行时。
-    /// </summary>
+    /// <summary>初始化言灵契约系统运行时。</summary>
     /// <param name="env">绑定的规则环境。</param>
     /// <param name="rules">绑定的规则系统。</param>
     public KotodamaSystem(RuleEnvironment env, RuleSystem rules)
@@ -211,14 +196,9 @@ public class KotodamaSystem
         RegisterCoreEffects();
     }
 
-    /// <summary>
-    /// 向言灵系统注册自定义效果原语的验证与执行处理委托。
-    /// </summary>
+    /// <summary>向言灵系统注册自定义效果原语的验证与执行处理委托。</summary>
     /// <param name="operation">效果操作符字符串（不区分大小写）。</param>
-    /// <param name="validate">效果前置参数自检委托。</param>
-    /// <param name="apply">执行效果产生状态变更的闭包委托，返回受影响的实体集合。</param>
-    /// <param name="layer">执行层级标识（如 "semantic" 或 "physical"）。</param>
-    /// <param name="minimum">所需的最低源质门槛映射。</param>
+    /// <param name="prepare">效果计划的验证与执行处理委托。</param>
     public void Register(string operation, Action<EffectPlan, Effect> prepare) => Effects.Register(operation, prepare);
 
     private void RegisterCoreEffects()
@@ -265,9 +245,7 @@ public class KotodamaSystem
         _ => expr
     };
 
-    /// <summary>
-    /// 依据当前局部绑定具象化效果表达式。
-    /// </summary>
+    /// <summary>依据当前局部绑定具象化效果表达式。</summary>
     /// <param name="effect">模板效果 AST。</param>
     /// <param name="bindings">代号替换映射表。</param>
     /// <returns>参数已绑定具体引用的效果实例。</returns>
@@ -276,9 +254,7 @@ public class KotodamaSystem
         return _env.Materialize(effect, bindings);
     }
 
-    /// <summary>
-    /// 依据局部绑定具象化规则对象。
-    /// </summary>
+    /// <summary>依据局部绑定具象化规则对象。</summary>
     /// <param name="rule">抽象规则定义。</param>
     /// <param name="bindings">代号映射字典。</param>
     /// <returns>具象化后的规则对象。</returns>
@@ -287,9 +263,7 @@ public class KotodamaSystem
         return _env.Materialize(rule, bindings);
     }
 
-    /// <summary>
-    /// 递归验证指定效果表达式是否在当前世界状态与处理器注册表中合法可行。
-    /// </summary>
+    /// <summary>递归验证指定效果表达式是否在当前世界状态与处理器注册表中合法可行。</summary>
     /// <param name="effect">待验证效果 AST。</param>
     /// <param name="cost">是否作为代价进行额外支付能力检查。</param>
     /// <returns>true 表示效果参数完备且前置检查通过。</returns>
@@ -360,9 +334,7 @@ public class KotodamaSystem
         return true;
     }
 
-    /// <summary>
-    /// 汇总计算施术者与输入素材聚合后的全部有效源质（Aspect）签名强度。
-    /// </summary>
+    /// <summary>汇总计算施术者与输入素材聚合后的全部有效源质（Aspect）签名强度。</summary>
     /// <param name="recipe">配方实体（读取 include_speaker 等配置）。</param>
     /// <param name="speaker">施术者心智主体。</param>
     /// <param name="inputs">投入仪式的实体映射。</param>
@@ -382,9 +354,7 @@ public class KotodamaSystem
         return KotodamaFactory.AggregateAspects(entities, bindings.GetValueOrDefault("target") as Entity, bindings);
     }
 
-    /// <summary>
-    /// 全面校验仪式配方在当前输入实体、目标客体与环境上下文下的前置合法性。
-    /// </summary>
+    /// <summary>全面校验仪式配方在当前输入实体、目标客体与环境上下文下的前置合法性。</summary>
     /// <param name="recipe">待校验的配方实体。</param>
     /// <param name="speaker">施术者主体。</param>
     /// <param name="inputs">投入的素材与介质字典。</param>
@@ -452,9 +422,7 @@ public class KotodamaSystem
         return missing;
     }
 
-    /// <summary>
-    /// 基于输入素材中包含的定向语义关系，反向推导可作为仪式施加对象的候选目标实体列表。
-    /// </summary>
+    /// <summary>基于输入素材中包含的定向语义关系，反向推导可作为仪式施加对象的候选目标实体列表。</summary>
     /// <param name="recipe">配方实体。</param>
     /// <param name="inputs">投入的素材字典。</param>
     /// <returns>符合槽位关联关系约束的公共交集目标实体列表。</returns>
@@ -485,9 +453,7 @@ public class KotodamaSystem
         return common.ToList();
     }
 
-    /// <summary>
-    /// 发起并启动一项仪式，校验前置条件并创建标记为 Rite=1 的施行状态实体。
-    /// </summary>
+    /// <summary>发起并启动一项仪式，校验前置条件并创建标记为 Rite=1 的施行状态实体。</summary>
     /// <param name="recipe">仪式配方实体。</param>
     /// <param name="speaker">施术者心智。</param>
     /// <param name="inputs">投入素材字典。</param>
@@ -539,9 +505,7 @@ public class KotodamaSystem
         return rite;
     }
 
-    /// <summary>
-    /// 推进仪式完成阶段，扣除代价并结算产出效果或生成持久 Covenant 契约实体。
-    /// </summary>
+    /// <summary>推进仪式完成阶段，扣除代价并结算产出效果或生成持久 Covenant 契约实体。</summary>
     /// <param name="rite">正在施行的 Rite 实体。</param>
     /// <returns>结算完成的 Rite 实体或新生成的 Covenant 契约实体；若代价支付失败则返回 null。</returns>
     public Entity? Advance(Entity rite)
@@ -623,9 +587,7 @@ public class KotodamaSystem
         return result;
     }
 
-    /// <summary>
-    /// 原子化一步完成仪式的校验、启动与执行全流程（Begin + Advance）。
-    /// </summary>
+    /// <summary>原子化一步完成仪式的校验、启动与执行全流程（Begin + Advance）。</summary>
     /// <param name="recipe">仪式配方实体。</param>
     /// <param name="speaker">施术者心智。</param>
     /// <param name="inputs">投入素材字典。</param>
@@ -651,16 +613,12 @@ public class KotodamaSystem
             .Any(expr => _env.Evaluate(expr));
     }
 
-    /// <summary>
-    /// 检查指定行动意图是否被活跃契约的硬性约束阻断。
-    /// </summary>
+    /// <summary>检查指定行动意图是否被活跃契约的硬性约束阻断。</summary>
     /// <param name="intent">待检查行动意图。</param>
     /// <returns>true 表示允许执行；false 表示被契约硬约束拦截。</returns>
     public bool Allows(Intent intent) => Allows(intent.Effect);
 
-    /// <summary>
-    /// 检查特定世界效果是否被生效契约的硬性约束（HardConstraint）阻断。
-    /// </summary>
+    /// <summary>检查特定世界效果是否被生效契约的硬性约束（HardConstraint）阻断。</summary>
     /// <param name="effect">效果 AST。</param>
     /// <returns>true 表示允许通过；false 表示被契约绝对拦截。</returns>
     public bool Allows(Effect effect)
@@ -677,9 +635,7 @@ public class KotodamaSystem
         return allowed;
     }
 
-    /// <summary>
-    /// 向所有生效契约通报发生的世界效果，审查是否触犯遵从义务（Obligation），触犯时立即施加违约惩戒（Breach）。
-    /// </summary>
+    /// <summary>向所有生效契约通报发生的世界效果，审查是否触犯遵从义务（Obligation），触犯时立即施加违约惩戒（Breach）。</summary>
     /// <param name="effect">已发生的世界效果 AST。</param>
     /// <returns>发生违约触碰的契约实体列表。</returns>
     public IReadOnlyList<Entity> Observe(Effect effect)
@@ -702,9 +658,7 @@ public class KotodamaSystem
         return breached;
     }
 
-    /// <summary>
-    /// 扫描全部生效契约，若其被动触发规则（Trigger）在环境中完全成立，自动执行预设效果并标记完成。
-    /// </summary>
+    /// <summary>扫描全部生效契约，若其被动触发规则（Trigger）在环境中完全成立，自动执行预设效果并标记完成。</summary>
     /// <returns>本次扫描触发并成功执行效果的契约实体列表。</returns>
     public IReadOnlyList<Entity> Trigger()
     {
@@ -741,9 +695,7 @@ public class KotodamaSystem
         return fired;
     }
 
-    /// <summary>
-    /// 强制撤销并作废指定的因果契约实体。
-    /// </summary>
+    /// <summary>强制撤销并作废指定的因果契约实体。</summary>
     /// <param name="contract">待废除的契约实体。</param>
     public void Revoke(Entity contract)
     {

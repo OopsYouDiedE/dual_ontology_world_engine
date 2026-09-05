@@ -7,6 +7,9 @@ namespace DualOntologyWorldEngine.Core.Simulation;
 public delegate IEnumerable<Intent> AffordanceFactory(Entity target, Soul mind, Entity actor,
     RuleEnvironment environment, IReadOnlyDictionary<string, object>? context);
 
+/// <summary>
+/// 能力（Affordances）相关的静态类，提供对象能力的创建和发现功能
+/// </summary>
 public static class Affordances
 {
     public static Facet Offer(this Entity target, AffordanceFactory factory, object? source = null) =>

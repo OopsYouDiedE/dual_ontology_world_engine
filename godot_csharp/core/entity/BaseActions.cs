@@ -1,15 +1,9 @@
-using System;
-using System.Linq;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Rules;
 
 namespace DualOntologyWorldEngine.Core;
 
-
-
-/// <summary>
-/// 引擎核心通用基础动作系统 (Base Actions)。
-/// </summary>
+/// <summary>引擎核心通用基础动作系统 (Base Actions)。</summary>
 /// <remarks>
 /// 为世界中的角色提供通用的物理交互与意图构造器。
 /// 所有动作意图生成标准的 <see cref="Intent"/> 派生实例，分类归入物理、认知、社交、契约与生理五大基础体系，
@@ -17,9 +11,7 @@ namespace DualOntologyWorldEngine.Core;
 /// </remarks>
 public static class BaseActions
 {
-    /// <summary>
-    /// 获取实体的关联心智主体，优先使用显式传入或已绑定的 Soul。
-    /// </summary>
+    /// <summary>获取实体的关联心智主体，优先使用显式传入或已绑定的 Soul。</summary>
     public static Soul GetActorMind(Entity actor, Soul? mind = null)
     {
         if (mind != null) return mind;
@@ -122,7 +114,6 @@ public static class BaseActions
 
     public static Intent CreateRestIntent(Entity actor, Entity restingPlace, double cost = 2.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("rest", actor, restingPlace), () => { actor.ChangeTag("Panic", -2); GetActorMind(actor, mind).ChangeTag("Stability", 2); }, AST.E("rested", restingPlace), $"休息：{actor.Name}在{restingPlace.Name}休憩", () => restingPlace.Parent == actor.Parent && (restingPlace.Has("RestingPlace") || restingPlace.Has("Bed") || restingPlace.Has("Resting")), cost);
-
 
     public static Intent CreateTransferIntent(Entity giver, Entity receiver, Entity item, double cost = 1.0, Soul? mind = null) =>
         Make(giver, mind, AST.F("transfer", giver, item), () => { item.Reparent(receiver); item.Unhold(); if (receiver is Character c && c.Mind != null) c.Mind.Observe(AST.E("received", item, giver)); }, AST.E("transferred", item, receiver), $"交接：{giver.Name}将{item.Name}递给{receiver.Name}", () => item.Parent == giver && giver.Parent == receiver.Parent, cost);

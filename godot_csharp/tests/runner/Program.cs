@@ -21,6 +21,7 @@ public static class Program
         {
             RunCoreMechanismsVerificationTests();
             RunFoodSupplyAndClosedLoopTests();
+            RunSceneItemsAndActionsTests(writeReport: false);
             SimulationArchitectureChecks.Run();
             return;
         }
@@ -562,7 +563,7 @@ public static class Program
         Console.WriteLine("==========================================================================\n");
     }
 
-    public static void RunSceneItemsAndActionsTests()
+    public static void RunSceneItemsAndActionsTests(bool writeReport = true)
     {
         Console.WriteLine("==========================================================================");
         Console.WriteLine("【启动场景物品与核心通用动作系统（C# 版）全量单元验证】");
@@ -635,50 +636,50 @@ public static class Program
         // 2.1 拾取意图 (TakeIntent)
         item.Drop();
         var takeIntent = BaseActions.CreateTakeIntent(actor, item);
-        var takeRes = runtime.Resolve(takeIntent);
-        if (takeRes == null || item.Parent != actor) throw new InvalidOperationException("[Test Failed] CreateTakeIntent 执行失败！");
+        var takeRes = runtime.ResolveDetailed(takeIntent);
+        if (takeRes.Result?.Succeeded != true || item.Parent != actor) throw new InvalidOperationException("[Test Failed] CreateTakeIntent 执行失败！");
         Console.WriteLine("  [PASS] 2.1 BaseActions.CreateTakeIntent 拾取意图结算成功");
         report.AppendLine("- **基础动作意图：拾取 (CreateTakeIntent)**：意图校验与执行顺利将地面物品收入行囊，并向心智记录观察事实 [通过]");
 
         // 2.2 丢弃意图 (DropIntent)
         var dropIntent = BaseActions.CreateDropIntent(actor, item);
-        var dropRes = runtime.Resolve(dropIntent);
-        if (dropRes == null || item.Parent != sceneA) throw new InvalidOperationException("[Test Failed] CreateDropIntent 执行失败！");
+        var dropRes = runtime.ResolveDetailed(dropIntent);
+        if (dropRes.Result?.Succeeded != true || item.Parent != sceneA) throw new InvalidOperationException("[Test Failed] CreateDropIntent 执行失败！");
         Console.WriteLine("  [PASS] 2.2 BaseActions.CreateDropIntent 丢弃意图结算成功");
         report.AppendLine("- **基础动作意图：丢弃 (CreateDropIntent)**：随身物品成功卸放至场景地面 [通过]");
 
         // 2.3 开启与关闭意图 (OpenIntent / CloseIntent)
         container.Close();
         var openIntent = BaseActions.CreateOpenIntent(actor, container);
-        var openRes = runtime.Resolve(openIntent);
-        if (openRes == null || !container.Get<bool>("opened")) throw new InvalidOperationException("[Test Failed] CreateOpenIntent 执行失败！");
+        var openRes = runtime.ResolveDetailed(openIntent);
+        if (openRes.Result?.Succeeded != true || !container.Get<bool>("opened")) throw new InvalidOperationException("[Test Failed] CreateOpenIntent 执行失败！");
 
         var closeIntent = BaseActions.CreateCloseIntent(actor, container);
-        var closeRes = runtime.Resolve(closeIntent);
-        if (closeRes == null || container.Get<bool>("opened")) throw new InvalidOperationException("[Test Failed] CreateCloseIntent 执行失败！");
+        var closeRes = runtime.ResolveDetailed(closeIntent);
+        if (closeRes.Result?.Succeeded != true || container.Get<bool>("opened")) throw new InvalidOperationException("[Test Failed] CreateCloseIntent 执行失败！");
         Console.WriteLine("  [PASS] 2.3 BaseActions.CreateOpenIntent / CloseIntent 开闭意图结算成功");
         report.AppendLine("- **基础动作意图：开启与关闭 (Open / Close)**：门与容器实体状态切换与心智事实记录正常 [通过]");
 
         // 2.4 上锁与解锁意图 (LockIntent / UnlockIntent)
         item.PickUp(actor);
         var lockIntent = BaseActions.CreateLockIntent(actor, container, item);
-        var lockRes = runtime.Resolve(lockIntent);
-        if (lockRes == null || !container.IsLocked()) throw new InvalidOperationException("[Test Failed] CreateLockIntent 执行失败！");
+        var lockRes = runtime.ResolveDetailed(lockIntent);
+        if (lockRes.Result?.Succeeded != true || !container.IsLocked()) throw new InvalidOperationException("[Test Failed] CreateLockIntent 执行失败！");
 
         var unlockIntent = BaseActions.CreateUnlockIntent(actor, container, item);
-        var unlockRes = runtime.Resolve(unlockIntent);
-        if (unlockRes == null || container.IsLocked()) throw new InvalidOperationException("[Test Failed] CreateUnlockIntent 执行失败！");
+        var unlockRes = runtime.ResolveDetailed(unlockIntent);
+        if (unlockRes.Result?.Succeeded != true || container.IsLocked()) throw new InvalidOperationException("[Test Failed] CreateUnlockIntent 执行失败！");
         Console.WriteLine("  [PASS] 2.4 BaseActions.CreateLockIntent / UnlockIntent 上锁解锁意图结算成功");
         report.AppendLine("- **基础动作意图：上锁与解锁 (Lock / Unlock)**：配合物理钥匙完成双向加锁与解锁 [通过]");
 
         // 2.5 检视与阅读意图 (ExamineIntent / ReadIntent)
         var book = new Entity("TestBook", sceneA, new Dictionary<string, int> { ["Book"] = 1, ["ReadingMaterial"] = 1 }, properties: new Dictionary<string, object> { ["content"] = "远古遗迹文献记录" });
         var examIntent = BaseActions.CreateExamineIntent(actor, book);
-        runtime.Resolve(examIntent);
+        runtime.ResolveDetailed(examIntent);
 
         var readIntent = BaseActions.CreateReadIntent(actor, book);
-        var readRes = runtime.Resolve(readIntent);
-        if (readRes == null) throw new InvalidOperationException("[Test Failed] CreateReadIntent 执行失败！");
+        var readRes = runtime.ResolveDetailed(readIntent);
+        if (readRes.Result?.Succeeded != true) throw new InvalidOperationException("[Test Failed] CreateReadIntent 执行失败！");
         Console.WriteLine("  [PASS] 2.5 BaseActions.CreateExamineIntent / ReadIntent 检视阅读意图结算成功");
         report.AppendLine("- **基础动作意图：检视与阅读 (Examine / Read)**：检视状态生成事实，阅读读物提取内容并注入主观认知 [通过]");
 
@@ -687,7 +688,7 @@ public static class Program
         actor.SetTag("Panic", 3);
         actorSoul.SetTag("Stability", 5);
         var restIntent = BaseActions.CreateRestIntent(actor, sofa);
-        runtime.Resolve(restIntent);
+        runtime.ResolveDetailed(restIntent);
         if (actor.Tag("Panic") != 1 || actorSoul.Tag("Stability") != 7) throw new InvalidOperationException("[Test Failed] CreateRestIntent 状态变更不符合预期！");
         Console.WriteLine("  [PASS] 2.6 BaseActions.CreateRestIntent 休息恢复意图结算成功");
         report.AppendLine("- **基础动作意图：休息 (CreateRestIntent)**：在休息处休憩使角色 Panic -2，Soul Stability +2 [通过]");
@@ -697,7 +698,7 @@ public static class Program
         var bobSoul = new Soul("BobSoul");
         bob.Bind(bobSoul);
         var transferIntent = BaseActions.CreateTransferIntent(actor, bob, item);
-        runtime.Resolve(transferIntent);
+        runtime.ResolveDetailed(transferIntent);
         if (item.Parent != bob) throw new InvalidOperationException("[Test Failed] CreateTransferIntent 转交失败！");
         Console.WriteLine("  [PASS] 2.7 BaseActions.CreateTransferIntent 物品转交意图结算成功");
         report.AppendLine("- **基础动作意图：转交 (CreateTransferIntent)**：同场景两名角色之间顺利移交物品，双方心智均记录事实 [通过]");
@@ -739,6 +740,7 @@ public static class Program
         Console.WriteLine("  [PASS] 3.1 学园全场景物品与 16 位学员随身道具装配全量验证通过！");
         Console.WriteLine("==========================================================================");
 
+        if (!writeReport) return;
         var testReportPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "scene_items_and_actions_report.md");
         var resolvedPath = Path.GetFullPath(testReportPath);
         File.WriteAllText(resolvedPath, report.ToString(), Encoding.UTF8);

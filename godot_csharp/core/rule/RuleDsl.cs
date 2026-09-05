@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DualOntologyWorldEngine.Core.Rules;
 
-/// <summary>
-/// 面向场景代码的类型安全规则语法糖。
-/// </summary>
+/// <summary>面向场景代码的类型安全规则语法糖。</summary>
 /// <remarks>
 /// 扩展方法只压缩重复的 AST 样板，不隐藏求值顺序。固定对象直接进入表达式；
 /// 当前行动的主体、目标、工具与场景使用 <see cref="RuleSlot"/> 延迟绑定。
@@ -30,22 +25,10 @@ public static class RuleDsl
         new(condition, directives, source);
 
     /// <summary>建立逻辑合取表达式。</summary>
-    public static Expr And(this Expr first, params Expr[] rest)
-    {
-        var args = new object[1 + rest.Length];
-        args[0] = first;
-        for (int i = 0; i < rest.Length; i++) args[i + 1] = rest[i];
-        return AST.E("all", args);
-    }
+    public static Expr And(this Expr first, params Expr[] rest) => AST.E("all", [first, ..rest]);
 
     /// <summary>建立逻辑析取表达式。</summary>
-    public static Expr Or(this Expr first, params Expr[] rest)
-    {
-        var args = new object[1 + rest.Length];
-        args[0] = first;
-        for (int i = 0; i < rest.Length; i++) args[i + 1] = rest[i];
-        return AST.E("any", args);
-    }
+    public static Expr Or(this Expr first, params Expr[] rest) => AST.E("any", [first, ..rest]);
 
     /// <summary>建立逻辑否定表达式。</summary>
     public static Expr Not(this Expr expression) => AST.E("not", expression);
@@ -79,26 +62,26 @@ public static class RuleDsl
         AST.E("related", subject, relation.ToString(), target);
 
     /// <summary>构造无目标行动效果。</summary>
-    public static Effect Does(this Entity actor, string operation) => AST.F(Required(operation), actor);
+    public static Effect Does(this Entity actor, string operation) => AST.F(operation, actor);
 
     /// <summary>构造作用于一个实际场景对象的行动效果。</summary>
     public static Effect Does(this Entity actor, string operation, Entity target) =>
-        AST.F(Required(operation), actor, target);
+        AST.F(operation, actor, target);
 
     /// <summary>构造带工具的行动效果；重载由编译器按参数形状选择。</summary>
     public static Effect Does(this Entity actor, string operation, Entity target, Entity tool) =>
-        AST.F(Required(operation), actor, target, tool);
+        AST.F(operation, actor, target, tool);
 
     /// <summary>构造由当前行动槽位延迟绑定的无目标效果。</summary>
-    public static Effect Does(this RuleSlot actor, string operation) => AST.F(Required(operation), actor);
+    public static Effect Does(this RuleSlot actor, string operation) => AST.F(operation, actor);
 
     /// <summary>构造由当前行动主体与目标槽位共同绑定的效果。</summary>
     public static Effect Does(this RuleSlot actor, string operation, RuleSlot target) =>
-        AST.F(Required(operation), actor, target);
+        AST.F(operation, actor, target);
 
     /// <summary>构造当前行动主体作用于固定对象的效果。</summary>
     public static Effect Does(this RuleSlot actor, string operation, Entity target) =>
-        AST.F(Required(operation), actor, target);
+        AST.F(operation, actor, target);
 
     /// <summary>从 Rule 的真实 AST 派生调试文本，避免维护第二份规则语义。</summary>
     public static string ToAstText(this Rule rule) =>
@@ -108,19 +91,12 @@ public static class RuleDsl
     /// 判断发布物集合中是否已经存在 AST 语义相同的规则。
     /// 名称和说明文字不参与比较，避免同义规则依靠改名重复发布。
     /// </summary>
-    public static bool ContainsEquivalentRule(this IEnumerable<Entity> publications, Rule candidate)
-    {
-        var signature = candidate.ToAstText();
-        return publications
+    public static bool ContainsEquivalentRule(this IEnumerable<Entity> publications, Rule candidate) =>
+        publications
             .Select(publication => publication.Get<Rule>("rule"))
             .OfType<Rule>()
-            .Any(rule => rule.ToAstText() == signature);
-    }
-
-    private static string Required(string operation) =>
-        !string.IsNullOrWhiteSpace(operation)
-            ? operation
-            : throw new ArgumentException("行动操作符不能为空。", nameof(operation));
+            .Any(rule => rule.Condition.Equals(candidate.Condition)
+                && rule.Directives.SequenceEqual(candidate.Directives));
 
     private static string Format(Expr expr) =>
         $"{expr.Op}({string.Join(", ", expr.Args.Select(FormatValue))})";

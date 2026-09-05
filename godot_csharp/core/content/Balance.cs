@@ -1,10 +1,7 @@
-using System.Collections.Generic;
 
 namespace DualOntologyWorldEngine.Core.Content;
 
-/// <summary>
-/// Core 默认数值档案。作品只在需要改变基调时覆盖这些值。
-/// </summary>
+/// <summary>Core 默认数值档案。作品只在需要改变基调时覆盖这些值。</summary>
 public enum PersonalityProfile
 {
     Cautious,
@@ -16,7 +13,7 @@ public enum PersonalityProfile
 
 public static class Balance
 {
-    /// <summary>默认条款后果预算。数值效力按绝对变化量收费，其他世界变化每项 1 Q。</summary>
+    /// <summary>兼容旧调用的声明式后果预算。它只作未准备效果的粗略估计。</summary>
     public static double ConsequenceBudget(IEnumerable<DualOntologyWorldEngine.Core.Rules.Effect> effects) => effects.Sum(effect => effect.Op switch
     {
         "sequence" => ConsequenceBudget(effect.Args.OfType<DualOntologyWorldEngine.Core.Rules.Effect>()),
@@ -25,6 +22,21 @@ public static class Balance
         "require" => 0,
         _ => 1d
     });
+
+    /// <summary>按已准备的实际状态变化计费；数值变化按绝对差额，其他非空变化按 1 Q，无变化为 0。</summary>
+    public static double ConsequenceBudget(IEnumerable<DualOntologyWorldEngine.Core.Effects.StateChange> changes) =>
+        changes.Sum(change =>
+        {
+            if (DualOntologyWorldEngine.Core.Effects.StateView.Same(change.Before, change.After)) return 0d;
+            if (ReferenceEquals(change.Before, DualOntologyWorldEngine.Core.Effects.StateView.Unknown)
+                || ReferenceEquals(change.After, DualOntologyWorldEngine.Core.Effects.StateView.Unknown)) return 0d;
+            return IsNumber(change.Before) || IsNumber(change.After)
+                ? Math.Abs((IsNumber(change.After) ? Convert.ToDouble(change.After) : 0d)
+                    - (IsNumber(change.Before) ? Convert.ToDouble(change.Before) : 0d))
+                : 1d;
+        });
+
+    private static bool IsNumber(object? value) => value is int or double or float or long or decimal;
     public const double BasicActionAv = 10.0;
     public const double BriefResponseAv = 5.0;
     public const double InvestigationAv = 20.0;

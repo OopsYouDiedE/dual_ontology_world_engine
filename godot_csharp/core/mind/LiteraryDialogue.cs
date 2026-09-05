@@ -1,7 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using DualOntologyWorldEngine.Core.Effects;
 using DualOntologyWorldEngine.Core.Rules;
 
@@ -15,9 +12,7 @@ namespace DualOntologyWorldEngine.Core.Mind;
 /// </summary>
 public static class LiteraryDialogue
 {
-    /// <summary>
-    /// 从当前场景、上下文和主体已知事实中装配有内容的交流行动。
-    /// </summary>
+    /// <summary>从当前场景、上下文和主体已知事实中装配有内容的交流行动。</summary>
     public static IEnumerable<Intent> Offers(Soul mind, Entity actor, RuleEnvironment env,
         IReadOnlyDictionary<string, object>? context)
     {

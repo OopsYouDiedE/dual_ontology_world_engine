@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DualOntologyWorldEngine.Core.Rules;
 
-/// <summary>
-/// 保存可解析别名和当前事实的轻量规则求值环境。
-/// </summary>
+/// <summary>保存可解析别名和当前事实的轻量规则求值环境。</summary>
 /// <remarks>
 /// RuleEnvironment 是规则表达式（<see cref="Expr"/>）与效果（<see cref="Effect"/>）的求值上下文容器。
 /// 
@@ -32,9 +27,7 @@ public class RuleEnvironment
     /// <summary>环境版本号。每次断言或撤销事实时单调递增，用于缓存失效检测。</summary>
     public int Version { get => State.Get<int>("version"); private set => State.Set("version", value); }
 
-    /// <summary>
-    /// 清空所有符号别名与已断言事实，将环境重置为初始状态。
-    /// </summary>
+    /// <summary>清空所有符号别名与已断言事实，将环境重置为初始状态。</summary>
     public void Clear()
     {
         _aliases.Clear();
@@ -42,9 +35,7 @@ public class RuleEnvironment
         Version++;
     }
 
-    /// <summary>
-    /// 注册或覆盖一条符号别名映射。
-    /// </summary>
+    /// <summary>注册或覆盖一条符号别名映射。</summary>
     /// <param name="name">别名代号（如 "target"、"scene"）。</param>
     /// <param name="value">绑定的目标对象或实体引用。</param>
     public void Alias(string name, object value)
@@ -52,9 +43,7 @@ public class RuleEnvironment
         _aliases[name] = value;
     }
 
-    /// <summary>
-    /// 从另一规则环境中复制全部符号别名映射。
-    /// </summary>
+    /// <summary>从另一规则环境中复制全部符号别名映射。</summary>
     /// <param name="other">源求值环境。</param>
     public void CopyAliasesFrom(RuleEnvironment other)
     {
@@ -64,41 +53,21 @@ public class RuleEnvironment
         }
     }
 
-    /// <summary>
-    /// 将可能的符号代号解析为具体的运行时对象引用。
-    /// </summary>
+    /// <summary>将可能的符号代号解析为具体的运行时对象引用。</summary>
     /// <param name="value">待解析的对象（若为字符串则尝试在 bindings 或 aliases 中寻址）。</param>
     /// <param name="bindings">临时优先绑定的局部代号字典。</param>
     /// <returns>解析后的具体对象引用；若未命中任何别名则返回原值。</returns>
     public object? Resolve(object? value, IReadOnlyDictionary<string, object>? bindings = null)
     {
-        if (value is RuleSlot slot)
-        {
-            var key = slot.ToString();
-            if (bindings != null)
-            {
-                foreach (var (name, bound) in bindings)
-                {
-                    if (string.Equals(name, key, StringComparison.OrdinalIgnoreCase)) return bound;
-                }
-            }
-            return _aliases.TryGetValue(key, out var slotted) ? slotted : value;
-        }
-        if (value is not string s) return value;
+        var key = value switch { RuleSlot slot => slot.ToString(), string text => text, _ => null };
+        if (key == null) return value;
         if (bindings != null)
-        {
-            foreach (var (k, v) in bindings)
-            {
-                if (string.Equals(k, s, StringComparison.OrdinalIgnoreCase)) return v;
-            }
-        }
-        if (_aliases.TryGetValue(s, out var found)) return found;
-        return value;
+            foreach (var (name, bound) in bindings)
+                if (string.Equals(name, key, StringComparison.OrdinalIgnoreCase)) return bound;
+        return _aliases.TryGetValue(key, out var found) ? found : value;
     }
 
-    /// <summary>
-    /// 判定两个参数在解析别名后是否在语义上等同。
-    /// </summary>
+    /// <summary>判定两个参数在解析别名后是否在语义上等同。</summary>
     /// <param name="left">左侧参数。</param>
     /// <param name="right">右侧参数。</param>
     /// <returns>true 表示两对象完全等同或引用同一实体。</returns>
@@ -113,9 +82,7 @@ public class RuleEnvironment
         return Equals(left, right);
     }
 
-    /// <summary>
-    /// 检查特定事实表达式是否精确匹配目标查询表达式。
-    /// </summary>
+    /// <summary>检查特定事实表达式是否精确匹配目标查询表达式。</summary>
     /// <param name="fact">事实表达式。</param>
     /// <param name="query">查询模板表达式。</param>
     /// <returns>true 表示操作符与全部参数匹配一致。</returns>
@@ -130,9 +97,7 @@ public class RuleEnvironment
         return true;
     }
 
-    /// <summary>
-    /// 检查候选效果是否命中了目标效果模式（支持 sequence 嵌套拆解）。
-    /// </summary>
+    /// <summary>检查候选效果是否命中了目标效果模式（支持 sequence 嵌套拆解）。</summary>
     /// <param name="pattern">规则指令中规定的模式效果。</param>
     /// <param name="candidate">候选行动意图携带的实际效果。</param>
     /// <returns>true 表示匹配成功。</returns>
@@ -152,9 +117,7 @@ public class RuleEnvironment
         return true;
     }
 
-    /// <summary>
-    /// 向环境中追加断言一条事实表达式。
-    /// </summary>
+    /// <summary>向环境中追加断言一条事实表达式。</summary>
     /// <param name="fact">待断言的事实表达式。</param>
     /// <returns>true 表示新增成功；false 表示已存在等价事实。</returns>
     public bool AssertFact(Expr fact)
@@ -165,9 +128,7 @@ public class RuleEnvironment
         return true;
     }
 
-    /// <summary>
-    /// 从环境中撤销并移除特定事实表达式。
-    /// </summary>
+    /// <summary>从环境中撤销并移除特定事实表达式。</summary>
     /// <param name="fact">待撤销的事实表达式。</param>
     /// <returns>true 表示成功撤销；false 表示原本未记录该事实。</returns>
     public bool Retract(Expr fact)
@@ -182,9 +143,7 @@ public class RuleEnvironment
         return false;
     }
 
-    /// <summary>
-    /// 对条件表达式进行求值，递归判定其在当前环境与实体状态下是否成立。
-    /// </summary>
+    /// <summary>对条件表达式进行求值，递归判定其在当前环境与实体状态下是否成立。</summary>
     /// <param name="expression">待求值的条件表达式 AST。</param>
     /// <returns>true 表示条件成立，false 表示不满足。</returns>
     public bool Evaluate(Expr expression)
@@ -243,9 +202,7 @@ public class RuleEnvironment
         }
     }
 
-    /// <summary>
-    /// 检查指定效果是否已作为既定事实存在于环境中。
-    /// </summary>
+    /// <summary>检查指定效果是否已作为既定事实存在于环境中。</summary>
     /// <param name="effect">待检查效果 AST。</param>
     /// <returns>true 表示已作为事实成立。</returns>
     public bool EffectIsFact(Effect effect)
@@ -257,9 +214,7 @@ public class RuleEnvironment
         return Evaluate(new Expr(effect.Op, effect.Args));
     }
 
-    /// <summary>
-    /// 将效果转化为等价的事实表达式并断言记录至环境中。
-    /// </summary>
+    /// <summary>将效果转化为等价的事实表达式并断言记录至环境中。</summary>
     /// <param name="effect">待固化的效果 AST。</param>
     public void AssertEffect(Effect effect)
     {
@@ -276,55 +231,25 @@ public class RuleEnvironment
         }
     }
 
-    /// <summary>
-    /// 具象化事实表达式，将其内部包含的所有符号代号替换为具体的运行时对象引用。
-    /// </summary>
+    /// <summary>具象化事实表达式，将其内部包含的所有符号代号替换为具体的运行时对象引用。</summary>
     /// <param name="expr">模板表达式。</param>
     /// <param name="bindings">当前上下文局部绑定字典。</param>
     /// <returns>参数已绑定具体实体的具象表达式新实例。</returns>
-    public Expr Materialize(Expr expr, IReadOnlyDictionary<string, object>? bindings = null)
-    {
-        if (expr == null) return AST.E("true");
-        if (expr.Args == null || expr.Args.Length == 0) return new Expr(expr.Op);
-        var resolvedArgs = expr.Args.Select(arg =>
-        {
-            if (arg is Expr subExpr) return Materialize(subExpr, bindings);
-            if (arg is Effect subEffect) return Materialize(subEffect, bindings);
-            return Resolve(arg, bindings) ?? arg;
-        }).ToArray();
-        return new Expr(expr.Op, resolvedArgs);
-    }
+    public Expr Materialize(Expr expr, IReadOnlyDictionary<string, object>? bindings = null) =>
+        new(expr.Op, MaterializeArgs(expr.Args, bindings));
 
-    /// <summary>
-    /// 具象化效果表达式，将其内部包含的所有符号代号替换为具体的运行时对象引用。
-    /// </summary>
-    /// <param name="effect">模板效果。</param>
-    /// <param name="bindings">局部代号字典。</param>
-    /// <returns>参数已绑定的具象效果新实例。</returns>
-    public Effect Materialize(Effect effect, IReadOnlyDictionary<string, object>? bindings = null)
-    {
-        if (effect == null) return AST.F("none");
-        if (effect.Args == null || effect.Args.Length == 0) return new Effect(effect.Op);
-        var resolvedArgs = effect.Args.Select(arg =>
-        {
-            if (arg is Expr subExpr) return Materialize(subExpr, bindings);
-            if (arg is Effect subEffect) return Materialize(subEffect, bindings);
-            return Resolve(arg, bindings) ?? arg;
-        }).ToArray();
-        return new Effect(effect.Op, resolvedArgs);
-    }
+    public Effect Materialize(Effect effect, IReadOnlyDictionary<string, object>? bindings = null) =>
+        new(effect.Op, MaterializeArgs(effect.Args, bindings));
 
-    /// <summary>
-    /// 具象化规则对象，将其条件谓词与全部规约指令具象化绑定至确定实体。
-    /// </summary>
-    /// <param name="rule">抽象规则定义。</param>
-    /// <param name="bindings">代号替换映射表。</param>
-    /// <returns>具象化后的全新 Rule 实例。</returns>
-    public Rule Materialize(Rule rule, IReadOnlyDictionary<string, object>? bindings = null)
-    {
-        if (rule == null) return new Rule(AST.E("true"), []);
-        var cond = Materialize(rule.Condition, bindings);
-        var dirs = (rule.Directives ?? []).Select(d => new Directive(d.Mode, Materialize(d.Effect, bindings))).ToList();
-        return new Rule(cond, dirs, rule.Source);
-    }
+    private object[] MaterializeArgs(object[] args, IReadOnlyDictionary<string, object>? bindings) =>
+        args.Select(arg => arg switch
+        {
+            Expr expr => Materialize(expr, bindings),
+            Effect effect => Materialize(effect, bindings),
+            _ => Resolve(arg, bindings) ?? arg
+        }).ToArray();
+
+    public Rule Materialize(Rule rule, IReadOnlyDictionary<string, object>? bindings = null) =>
+        new(Materialize(rule.Condition, bindings),
+            rule.Directives.Select(d => new Directive(d.Mode, Materialize(d.Effect, bindings))).ToArray(), rule.Source);
 }

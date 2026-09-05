@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Rules;
 
 namespace DualOntologyWorldEngine.Core.Social;
 
-/// <summary>
-/// 有限社交评价、目标情绪组合与态度压力系统。
-/// </summary>
+/// <summary>有限社交评价、目标情绪组合与态度压力系统。</summary>
 /// <remarks>
 /// SocialSystem 负责处理人际交互中的主观心理反馈与行为倾向修正：
 /// 1. 社交评价驱动（<see cref="SelectSocialInfluence"/>）：基于交互事件中的善意、威胁、损失或背叛等评价原语（Appraisal），决选复合情绪模式；
@@ -37,9 +32,7 @@ public static class SocialSystem
             ["THREATENED_DISTRUST"] = [("Fear", 2, 2), ("Anger", 1, 2), ("Hatred", 1, 2)]
         };
 
-    /// <summary>
-    /// 各复合情绪态对不同社交应对模式（ResponseMode）施加的动机压力加权表。
-    /// </summary>
+    /// <summary>各复合情绪态对不同社交应对模式（ResponseMode）施加的动机压力加权表。</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<ResponseMode, int>> AttitudePressures =
         new Dictionary<string, IReadOnlyDictionary<ResponseMode, int>>
         {
@@ -106,9 +99,7 @@ public static class SocialSystem
             }
         };
 
-    /// <summary>
-    /// 根据交互事件中的社交评价命题集合（Appraisal），决选匹配最恰当的复合情绪组合键名。
-    /// </summary>
+    /// <summary>根据交互事件中的社交评价命题集合（Appraisal），决选匹配最恰当的复合情绪组合键名。</summary>
     /// <param name="appraisal">包含 bond、threat 及各情境布尔标记的评价值字典。</param>
     /// <returns>命中的复合情绪组合名；未命中强变化时返回 "NO_STRONG_CHANGE"。</returns>
     public static string SelectSocialInfluence(IReadOnlyDictionary<string, object> appraisal)
@@ -136,9 +127,7 @@ public static class SocialSystem
         return "NO_STRONG_CHANGE";
     }
 
-    /// <summary>
-    /// 创建并向主体挂载一个包含多个时效性情感影响（Influence）的复合社交冲击包实体。
-    /// </summary>
+    /// <summary>创建并向主体挂载一个包含多个时效性情感影响（Influence）的复合社交冲击包实体。</summary>
     /// <param name="name">社交冲击包调试名称。</param>
     /// <param name="parent">承受该社交冲击的 Soul 主体。</param>
     /// <param name="target">本次社交关系指向的目标客体。</param>
@@ -198,9 +187,7 @@ public static class SocialSystem
         return impact;
     }
 
-    /// <summary>
-    /// 查询指定复合情绪态对特定社交应对模式施加的偏好修正值。
-    /// </summary>
+    /// <summary>查询指定复合情绪态对特定社交应对模式施加的偏好修正值。</summary>
     /// <param name="combination">情绪组合键名。</param>
     /// <param name="mode">待检查的社交应对模式枚举。</param>
     /// <returns>动机偏好修正分值（未配置时返回 0）。</returns>
