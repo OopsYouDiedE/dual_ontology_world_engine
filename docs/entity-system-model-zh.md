@@ -1,122 +1,43 @@
-# Entity System 统一模型与基础数据规范
+# Entity System 统一模型与数据规范
 
-## 1. 核心架构与设计原则
+## 1. 核心架构与基础结构
 
-根据 Python 动态特性与对象引用原则，系统避免建立平行的实体类族。箱子、门、手稿、证件、药剂、知识、情感与组织均由唯一的 `Entity` 结合轻量 `Facet` 和工厂函数生成。
-
-核心仅维护三种基础结构：
-- **`Entity`**：唯一的运行时世界对象。
-- **`Facet`**：依附于对象的轻量语义项，用于关系、声明、条件名称、揭示规则与 Aspect 贡献。
-- **`Passage`**：实现世界树接口的双端空间连接结构（非 Entity）。
-
-```text
-Entity
-├── name: str               # 无上下文时的后备名称
-├── tags: dict[str, int]    # 类别、功能标记、无条件固有 Aspect
-├── properties: dict        # 客观具体性质与直接对象引用（材料、作者、目标等）
-└── facets: list[Facet]     # 带条件、目标、强度或来源的动态语义
-```
-
----
+系统不为物品、知识或组织建立平行类族，核心仅维护三种基础结构：
+- **`Entity`**：唯一的运行时世界对象。持有 `name`、`tags`（类别与固有 Aspect）、`properties`（具体性质与直接对象引用）与 `facets`（语义项）。
+- **`Facet`**：挂载于实体的轻量语义项，用于关系、声明、条件名称与动态 Aspect。
+- **`Passage`**：世界树内部的双端拓扑连接结构（非 Entity），用于计算通行代价。
 
 ## 2. 基础属性与资源模型
 
-### 2.1 六项基础属性
-基础属性描述主体的通用能力倾向，依本体分层严格归属：
-- **身体实体（Character）**：
-  - `Vigor`（体魄）：施力、耐受与身体恢复。
-  - `Finesse`（巧技）：协调、精确与身体反应。
-  - `Perception`（感知）：环境观察与外显异常辨识。
-- **意识实体（Soul）**：
-  - `Reason`（理性）：分析、推演与规则解析。
-  - `Stability`（自持）：维持自我认同、抵抗认知冲突与精神侵蚀。
-  - `Presence`（显著）：表达身份、影响他者与维持语义显著性。
+### 六项基础属性
+- **身体实体（Character）**：`Vigor`（体魄）、`Finesse`（巧技）、`Perception`（感知）。
+- **意识实体（Soul）**：`Reason`（理性）、`Stability`（自持）、`Presence`（显著）。
+- 身体与 Soul 双向绑定，换体时各自独立持有属性。
 
-身体与 Soul 换体或多重绑定时，各自独立持有属性，不进行数据复制。
+### 资源模型
+- 同质度量存入 `Entity.resources`（如生命、耐力）。具象资源直接使用 Entity。
+- 支付必须核销实际对象额度，禁止循环引用套利。
 
-### 2.2 资源模型
-- **同质资源池**：生命、耐力、灵性等可度量数值，保存在 `Entity.resources` 中。
-- **具象资源**：书籍、药剂、材料、信物等具有独立身份和关系的对象，直接使用 `Entity`。
-- **支付原则**：资源支付必须记录来源对象并核销实际额度，严禁同一对象在同一因果链中重复支付。
+## 3. 知识、观察与采信
 
----
+客观世界事实、观察结果与主体信念严格解耦：
+- **`Reveal` Facet**：定义对象可见条件。未满足时观察者仅能读取公开名称。
+- **`Claim` Facet**：记录载体声称的主张。主观错误知识不写入客观世界事实。
+- **采信门控**：仅标记为 `Accepted` 的知识参与 `Soul.cognitive_environment()` 决策。拒绝或暂存不删除主张与来源。
+- **定向查询**：`claims_about(subject)` 保留主体、目标、来源与置信度。
 
-## 3. 知识、观察与信念
+## 4. Aspect 投影与 Influence 动态影响
 
-客观世界事实、主体观察结果与主观信念严格解耦：
+- **Aspect 投影**：`entity.aspects(target, context)` 实时汇总固有 Tag、材料衰减、属性映射与 Facet 贡献。
+- **Influence**：动态情感与状态统一作为挂载在 Soul 下的子实体，持有类型、强度、持续时间与衰减率。伤势、污染与专注共用该结构。
+- **稳定人格（Disposition）**：作为有来源的 Step（候选生成）与 Preference（候选排序）的依据，与临时 Influence 分开维护。
 
-```text
-客观 properties / facets / tags
-  → observe: 结合观察者状态与条件生成有限 Claim
-  → 存入观察者子树中的 Knowledge Entity
-  → Soul 经过 receive/observe -> understand -> accept/reject 形成个体立场
-  → 影响估计、命名与决策
-```
+## 5. 附录：核心词表约定
 
-- **`Reveal` Facet**：定义对象的可见性条件。未满足条件时，观察者仅获得公开名称，无法穿透读取内部性质。
-- **`Claim` Facet**：记录知识载体声称的命题。错误知识可以被主体理解并相信，但不会写入客观世界事实（`RuleEnvironment.facts`）。
-- **采信门控**：只有标记为 `Accepted` 的历史 Knowledge 才进入 `Soul.cognitive_environment()`；当前 Observation 仍直接参与。拒绝或暂存只改变立场，不删除声明与来源。
-- **定向查询**：`claims_about(subject, accepted=...)` 返回 Knowledge 与 Claim Facet，保留认知主体、目标、来源、置信度和阶段。A 对 B 的知识不会自动成为 B 对 A 的知识。
+### 十二原理（Aspect）
+- `Form`（形质）、`Name`（名契）、`Law`（律令）、`Mind`（心识）、`Bond`（缘系）、`Threshold`（门隙）。
+- `Transmutation`（蜕变）、`Preservation`（存续）、`Death`（终寂）、`Desire`（欲求）、`Strife`（争衡）、`Vestige`（遗痕）。
 
----
-
-## 4. Aspect 投影与认知估计
-
-Aspect 是单次行动能从对象提取的局部语义质量，通过无副作用投影实时计算：
-
-1. **客观投影（`entity.aspects(target, context)`）**：
-   - 固有十二项 Aspect Tag。
-   - 材料 Entity 的 Aspect（按完整度 `integrity` 缩放）。
-   - `PROPERTY_ASPECTS` 映射的具体物理/语义性质（硬度、锋利度、致死性、权威、历史等）。
-   - 挂载的 `Facet("Aspect", ...)`。
-   - 目标匹配的定向关系（如 `Depicts` 产生 `Bond` 与 `Vestige`）。
-2. **认知估计（`entity.estimated_aspects(observer, target, context)`）**：
-   - 仅汇总观察者已知来源的估计值，用于 UI 呈现与 AI 决策，不改变客观结算强度。
-
----
-
-## 5. 动态影响（Influence）与情感模型
-
-情感与状态统一作为挂载在 Soul 或 Entity 下的 `Influence` 子实体：
-
-```text
-Influence Entity
-├── parent: Soul / Entity          # 承受者
-├── tags: {"Influence": 1, ...}    # 情感种类（如 Fear, Love）与标记
-├── properties:                    # 强度、持续时间、衰减率（0 为长期）
-└── facets:                        # Target、Source、Anchor、天然 Aspect 贡献
-```
-
-- **情感种类**：`Love`, `Hatred`, `Fear`, `Anger`, `Joy`, `Sorrow`, `Hope`, `Despair`, `Remorse`, `Devotion`, `Obsession`, `Serenity`。
-- **规则作用**：情感贡献天然 Aspect，影响 Soul 决策权重与自我稳定计算，但不能作为凭空创生的超自然能量。
-- **状态统一**：伤势、污染、专注与祝福共用 `Influence` 生命周期，无需单独建立数据类。
-
-### 稳定人格与临时状态
-
-稳定人格使用 Soul 下的普通 `Disposition` Entity 表达。Disposition 作为有来源的 Step 与 `Preference` Facet 的来源：Step 生成主体已经有能力执行的 Intent，Preference 只调整这些候选的排序。
-
-人格贡献不会写入客观事实，也不能绕过 Intent 验证、RulePatch 或 Covenant。每项贡献在 Decision 中保留来源。恐惧、疲劳、药物与临时职责继续使用 Influence，不直接改写稳定 Disposition。
-
----
-
-## 6. 条件命名与关系网络
-
-- **条件命名（Designation）**：通过 `Designation` Facet 在不同方向、认知或状态下呈现不同名称，不修改实体核心身份。
-- **关系（Relation）**：通过包含 `source`、`target`、`kind`、`strength` 的 Facet 表达信任、敌意、债务、从属与见证。
-
----
-
-## 7. 配方系统（Recipe）
-
-配方是跨领域（制作、研究、仪式、交涉）的通用输入结算机制：
-- **槽位检查**：验证投入对象的 Kind、Rite 标记、关系与权限。
-- **局部 Aspect 汇总**：仅计算合法投入对象的 Aspect 总和，检查阈值。
-- **代价与交付**：明确指定投入对象的保留、消耗、损坏、转化或污染策略。
-- **严格作用域**：配方仅读取明确投入与引用的对象，禁止扫描全场景 Tag。
-
----
-
-## 8. 内置物品与工厂函数
-
-所有便捷构造均为工厂函数，返回标准 `Entity`：
-`make_item`, `Door`, `Container`, `Box`, `Manuscript`, `IdentityProof`, `AuthorityToken`, `Vehicle`, `Potion`, `Knowledge`, `TrueName`, `RitualKnowledge`, `Influence`。
+### 十二情绪（Emotion）
+- `Love`（爱）、`Hatred`（仇恨）、`Fear`（恐惧）、`Anger`（愤怒）、`Joy`（喜悦）、`Sorrow`（悲伤）。
+- `Hope`（希望）、`Despair`（绝望）、`Remorse`（悔恨）、`Devotion`（虔诚）、`Obsession`（执念）、`Serenity`（宁静）。

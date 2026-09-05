@@ -2,15 +2,30 @@
 
 ## 1. 核心规范（Engine Specifications）
 
-- [引擎公理设定](./engine-axioms-zh.md)：物理—语义二重本体底层公理、言灵、规则、理智、异常与身份定理。
-- [Entity System 统一模型](./entity-system-model-zh.md)：对象性质、Facet、Aspect 投影、基础属性、Knowledge 观察、Influence 动态影响与配方。
-- [回合、意图、规则与言灵模型](./turn-and-kotodama-model-zh.md)：嵌套行动值回合制、Timeline 调度、统一 Intent、规则评估、言灵、Rite 与 Covenant 约束。
-- [项目 Tag 表](./project-tag-catalog-zh.md)：Tag 词表、十二原理（Aspect）与十二情绪（Emotion）约定。
+- [文学范式、灵异物品与人物模拟设计](./literary-simulation-design-zh.md)：本轮最新设计，确定十二范式、十二物品、默认数值、人物交互和 AI 推演；不考虑旧接口兼容，尚待实现及校准。
+
+- [面向低配置涌现的核心改进方案](./emergence-core-plan-zh.md)：已敲定的下一轮方案，规定效果共用、规则与言灵协作、认知决策、表现及阶段验收；新增接口尚待实现。
+
+- [引擎公理设定](./engine-axioms-zh.md)：物理—语义—认知底层公理、言灵、规则、理智、异常与身份定理。
+- [Entity System 统一模型](./entity-system-model-zh.md)：Entity/Facet 架构、基础属性、Knowledge 观察采信、Aspect 投影与词表。
+- [回合调度、规则与言灵模型](./turn-and-kotodama-model-zh.md)：嵌套行动值 Timeline、Intent 模型、社交情绪组合、规则评估与言灵契约。
+- [Python / C# Core 替换规范](./python-csharp-core-replacement-standard-zh.md)：共享 Core 边界、状态唯一权威源、ActionRuntime 管线与跨 Core 验收轨迹。
+- [模拟架构与扩展规范](./simulation-architecture-zh.md)：核心与游戏层边界、可组合模拟机制、扩展约定及跨语言适配方向。
+
+当前 C# 实现主线的项目边界为：`godot_csharp/core/DualOntologyWorldEngine.Core.csproj` 是独立的 .NET 8 Core；学园 Simulation 是仅引用 Core 的独立项目；Godot 根项目承担表现宿主职责。Python 仍是参考实现，尚未同步本轮 `SimulationSession` 扩展。
 
 ---
 
-## 2. 测试主题：异常感知学园（Academy Test Theme）
+## 2. 内容层设计与推演轨迹（Content & Trajectory）
 
-- [异常感知学园内容层设计](./academy-content-design-zh.md)：人物羁绊、历史记忆、运行时表达、决策树、规则设立与最终封印流程。
-- [异常感知学园群像认知与相遇事件](./academy-ensemble-200av-design-zh.md)：定向认知关系、性格反应、规则决策树、强制睡眠与前二十天条件事件链。
-- [异常感知学园前五日剧情规则树](./academy-first-five-days-rule-tree-zh.md)：从醒来到第五日的节点池、摩擦种子、分支取消、有限修复与行动值约束。
+- [异常感知学园设计规范](./academy-design-zh.md)：游戏起点、200 AV 时间调度、群像定向认知、七类反应决策树与前序事件规则树。
+- [五日推演规范化轨迹](./five_days_trajectory.md)：历史学园样例的前五日审计日志与状态转移轨迹（保留的历史样例基准）；该文件不能单独证明通用模拟能力或 Python/C# 跨语言一致性。
+
+命令行验证与独立示例入口：
+
+```powershell
+dotnet run --project godot_csharp/tests/runner/runner.csproj -- --verify
+dotnet run --project godot_csharp/examples/resource_village/DualOntologyWorldEngine.ResourceVillage.csproj
+```
+
+资源村示例仅引用 Core，通过有限资源竞争展示行为如何发生变化。

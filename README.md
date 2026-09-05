@@ -1,43 +1,66 @@
 # 双重本体世界引擎
 
-这是一个以实体、行动值、Soul 决策、规则与言灵为核心的 Python 引擎与学园主题运行时。
+双重本体世界引擎以实体、单时间线行动值调度、Soul 决策、规则与言灵契约为核心。当前实现主线为 C#：Core 是独立的 .NET 8 项目，Simulation 仅引用 Core，Godot 根项目作为表现宿主；同时维护 Python 参考实现。
 
-无 2D/3D 表现不改变世界规则。同一逻辑场景内的实体忽略几何距离，可以直接交互；跨场景行动仍需沿空间拓扑寻路，并支付每条边对应的穿越代价。Parent、所有权、绑定、作用域、规则和行动值等机制保持不变。
+核心不计算房间内几何距离与碰撞，空间交互交由游戏层处理。跨场景移动依拓扑图寻路并支付通行代价；所有权、绑定、作用域与规则约束均保持客观闭合。
 
-## 主要目录
+## 目录结构
 
-- `core/python/entity_system.py`：Entity、Facet、知识采信、关系与 Aspect。
-- `core/python/soul.py`：Soul Step、Disposition 人格偏好、开放 ResponseMode、完整 Intent、认知规则、RulePatch 与 Event。
-- `core/python/kotodama.py`：语义配方、言灵、Rite、Covenant 与真实代价。
-- `core/python/engine.py`：空间、Timeline、条件 EventNode 与嵌套行动结算。
-- `python_cli/academy.py`：异常感知学园内容表。
-- `python_cli/academy_game.py`：Objective 承诺网络、群像决策、记忆、言灵、压力与多人封印流程。
-- `python_cli/ui.py`：可复用的终端 UI 组件。
-- `python_cli/app.py`：终端应用入口。
-- `docs/`：设计规范、公理设定、模型与测试主题文档。
+- `godot_csharp/core/DualOntologyWorldEngine.Core.csproj`：独立 .NET 8 Core 项目，包含 Entity、Mind/Soul、Kotodama、Rule、Social、Timeline 等引擎基础。
+- `godot_csharp/simulation/`：独立学园 Simulation 项目，仅引用 Core，负责群像动机、自主决策与日常日程模拟。
+- `godot_csharp/presentation/`：Godot 4 荒岛学园 2D 表现层；Godot 根项目是表现宿主（`scenes/smallville_demo.tscn`）。
+- `godot_csharp/tests/runner/`：独立命令行仿真运行入口。
+- `python/`：Python 核心与原型参考实现。
+- `docs/`：引擎底层公理、数据模型、调度管线与设计规范。
 
-## 运行 Python 版本
+## 运行与推演
 
-需要 Python 3.10 或更高版本。终端表现使用 `Rich`：
+### 1. C# 命令行推演（.NET 8）
+
+全自动执行五日推演并生成轨迹：
+```powershell
+dotnet run --project godot_csharp/tests/runner/runner.csproj -- --auto
+```
+
+进入交互控制台接管角色决策：
+```powershell
+dotnet run --project godot_csharp/tests/runner/runner.csproj -- --interactive
+```
+
+执行无输出覆盖验证：
+```powershell
+dotnet run --project godot_csharp/tests/runner/runner.csproj -- --verify
+```
+
+运行独立资源竞争示例（仅引用 Core；有限资源竞争会改变角色行为）：
+```powershell
+dotnet run --project godot_csharp/examples/resource_village/DualOntologyWorldEngine.ResourceVillage.csproj
+```
+
+### 2. Godot 4 场景展示
+
+使用 Godot 4 (Mono/C# 版) 打开 `godot_csharp/project.godot` 并启动主场景。
+- `Space`：暂停或继续。
+- `1` / `2` / `3`：切换推演速度（0.5x / 1x / 2x）。
+- `T`：显隐移动轨迹。
+- `R`：重置模拟。
+
+### 3. Python 参考实现
+
+Python 用于参考与原型验证，尚未同步本轮 C# `SimulationSession` 扩展。
 
 ```powershell
 pip install -r requirements.txt
-```
-
-```powershell
-python -m python_cli
-```
-
-终端不支持 ANSI 颜色时，可以使用：
-
-```powershell
-python -m python_cli --no-color
+python -m python
 ```
 
 ## 文档索引
 
 - [文档总索引](docs/README.md)
 - [引擎公理设定](docs/engine-axioms-zh.md)
+- [模拟架构与扩展规范](docs/simulation-architecture-zh.md)
 - [Entity System 统一模型](docs/entity-system-model-zh.md)
-- [回合、意图、规则与言灵模型](docs/turn-and-kotodama-model-zh.md)
-- [异常感知学园内容层设计](docs/academy-content-design-zh.md)
+- [回合调度、规则与言灵模型](docs/turn-and-kotodama-model-zh.md)
+- [Python / C# Core 替换规范](docs/python-csharp-core-replacement-standard-zh.md)
+- [异常感知学园设计规范](docs/academy-design-zh.md)
+- [五日推演规范化轨迹](docs/five_days_trajectory.md)：历史学园样例轨迹，用于审计与回归参考，不能单独证明通用模拟能力或 Python/C# 跨语言一致性。
