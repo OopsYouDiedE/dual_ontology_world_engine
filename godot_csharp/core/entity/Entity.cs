@@ -195,6 +195,12 @@ public enum KnowledgeStage
     Understood,
 
     /// <summary>
+    /// 已评估。
+    /// 表示主体已对信息的一致性、信誉度与真实性进行逻辑与心理评估。
+    /// </summary>
+    Evaluated,
+
+    /// <summary>
     /// 已接受。
     /// 表示主体已经将该信息纳入自身认知体系，
     /// 并将其视为有效事实、判断或信念。
@@ -623,6 +629,9 @@ public enum CommonTag
 
     /// <summary>知识已被主体理解但尚未决定采信。</summary>
     Understood,
+
+    /// <summary>知识已被主体评估。</summary>
+    Evaluated,
 
     /// <summary>规则信念实体。</summary>
     RuleBelief,
@@ -1138,14 +1147,15 @@ public class Entity : TreeMember
     #endregion
 }
 
-/// <summary>两场景实体之间的拓扑通道连接。</summary>
+/// <summary>两场景实体之间的拓扑通道连接（独立图边，非世界树节点）。</summary>
 public class Passage(string name, Entity left, Entity right, double cost = 1.0, double? reverseCost = null,
-    TreeMember? parent = null, int position = 0, Func<Entity, Entity?, object?, bool>? condition = null)
-    : TreeMember(name, parent, position: position)
+    Func<Entity, Entity?, object?, bool>? condition = null, IEnumerable<Entity>? doors = null)
 {
+    public string Name { get; set; } = name;
     public IReadOnlyList<Expr> Requirements { get; set; } = [];
     public Entity Left { get; } = left;
     public Entity Right { get; } = right;
+    public List<Entity> Doors { get; } = doors != null ? [..doors] : [];
     private readonly Dictionary<Entity, double> _costs = new() { [left] = cost, [right] = reverseCost ?? cost };
     private readonly Dictionary<Entity, string> _directionalDesignations = [];
     public Func<Entity, Entity?, object?, bool>? Condition { get; set; } = condition;
@@ -1159,8 +1169,7 @@ public class Passage(string name, Entity left, Entity right, double cost = 1.0, 
     public bool Allows(Entity scene, Entity? actor = null, object? env = null)
     {
         if (Other(scene) is null) return false;
-        var doors = Children.Keys.OfType<Entity>().Where(e => e.HasTag(CommonTag.Door));
-        if (doors.Any(door => !door.IsAccessible(scene))) return false;
+        if (Doors.Any(door => !door.IsAccessible(scene))) return false;
         return Condition is null || Condition(scene, actor, env);
     }
 }

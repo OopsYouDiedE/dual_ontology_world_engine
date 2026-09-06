@@ -134,27 +134,71 @@ public sealed class EffectPlan
     public StateView View { get; }
     public List<StateChange> Changes { get; } = new();
     private readonly List<Action> _commitActions = [];
+    private readonly List<Action> _abortActions = [];
     public string Reason { get; internal set; } = "";
     public bool Uncertain { get; internal set; }
-    public bool Succeeded => Reason.Length == 0;
+    public bool IsCommitted { get; private set; }
+    public bool IsAborted { get; private set; }
+    public bool Succeeded => Reason.Length == 0 && !IsAborted;
     internal EffectPlan(StateView view) => View = view;
+
     /// <summary>登记只在客观计划成功提交后执行的外部状态动作。</summary>
-    internal void OnCommit(Action action) => _commitActions.Add(action);
+    public void OnCommit(Action action) => _commitActions.Add(action);
+
+    /// <summary>登记在计划中止（Abort）时触发的资源与锁释放动作。</summary>
+    public void OnAbort(Action action) => _abortActions.Add(action);
+
     public void Write(Entity entity, string field, object? value)
     {
         var before = View.Read(entity, field);
         if (!StateView.Same(before, value)) Changes.Add(new(entity, field, before, value));
         View.Write(entity, field, value);
     }
+
+    /// <summary>中止事务执行，释放暂存锁定与资源预留。</summary>
+    public void Abort(string reason = "事务已主动中止")
+    {
+        if (IsCommitted || IsAborted) return;
+        IsAborted = true;
+        Reason = reason;
+        foreach (var action in _abortActions) action();
+    }
+
+    /// <summary>提交事务计划。提交失败时反向恢复已经写入的状态变化。</summary>
     public EffectResult Commit()
     {
+        if (IsCommitted)
+            return new(false, null, "计划已被提交，禁止重复提交");
+        if (IsAborted)
+            return new(false, null, Reason.Length > 0 ? Reason : "计划已被中止");
         if (!Succeeded || Uncertain || View.Observer != null)
             return new(false, null, Reason.Length > 0 ? Reason : "认知推演不能提交");
         if (View.Reads.Any(entry => !StateView.Same(StateView.Actual(entry.Key.Item1, entry.Key.Item2), entry.Value)))
             return new(false, null, "状态已变化，需要重新准备");
-        foreach (var c in Changes) StateView.Apply(c.Subject, c.Field, c.After);
-        foreach (var action in _commitActions) action();
-        return new(true, Changes.ToArray());
+
+        var applied = new List<StateChange>(Changes.Count);
+        try
+        {
+            foreach (var change in Changes)
+            {
+                StateView.Apply(change.Subject, change.Field, change.After);
+                applied.Add(change);
+            }
+            foreach (var action in _commitActions) action();
+            IsCommitted = true;
+            return new(true, Changes.ToArray());
+        }
+        catch (Exception ex)
+        {
+            for (var i = applied.Count - 1; i >= 0; i--)
+            {
+                var change = applied[i];
+                try { StateView.Apply(change.Subject, change.Field, change.Before); }
+                catch { /* 保留最初的提交异常；状态写入器应保持可逆。 */ }
+            }
+            Reason = $"提交失败：{ex.Message}";
+            return new(false, null, Reason);
+        }
     }
 }
 

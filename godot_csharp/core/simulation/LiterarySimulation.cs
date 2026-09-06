@@ -35,12 +35,17 @@ public sealed class LiterarySimulation : IDisposable
         Session.Runtime.Listeners.Add(PerceiveEvent);
         Session.Runtime.EffectTransforms.Add(Deflect);
     }
+    public TopologyGraph Topology => Session.Topology;
     public Entity Scene(string name) => new(name, World, new Dictionary<string, int> { ["Scene"] = 1 });
-    public Passage Connect(string name, Entity from, Entity to, Entity? gate = null, double cost = Balance.BasicActionAv) =>
-        new(name, from, to, cost, parent: World)
+    public Passage Connect(string name, Entity from, Entity to, Entity? gate = null, double cost = Balance.BasicActionAv)
+    {
+        var passage = Topology.Connect(name, from, to, cost, gate: gate);
+        if (gate != null)
         {
-            Requirements = gate == null ? [] : [E("eq", E("value", gate, "sealed"), false), E("eq", E("value", gate, "opened"), true)]
-        };
+            passage.Requirements = [E("eq", E("value", gate, "sealed"), false), E("eq", E("value", gate, "opened"), true)];
+        }
+        return passage;
+    }
     public Entity Anchor(string name, Entity scene)
     {
         var anchor = new Entity(name, scene, properties: new Dictionary<string, object>
@@ -121,7 +126,7 @@ public sealed class LiterarySimulation : IDisposable
         }
         yield return new Intent(actor, mind, F("rest", actor), [F("spend", actor, "strain", 1d)], 20, "暂且坐下，整理呼吸",
             [E("gte", E("value", actor, "strain"), 1d)]);
-        foreach (var passage in TopologySystem.CollectPassages(World).Where(p => p.Condition == null))
+        foreach (var passage in Topology.Passages.Where(p => p.Condition == null))
             if (actor.CurrentScene is { } current && passage.Other(current) is { } destination)
                 yield return new Intent(actor, mind, F("move", actor, destination), [F("move", actor, destination)], passage.CostFrom(current),
                     $"前往{destination.Name}", new[] { E("eq", E("value", actor, "$parent"), current) }.Concat(passage.Requirements));

@@ -8,7 +8,6 @@ namespace DualOntologyWorldEngine.Core.Simulation;
 
 /// <summary>
 /// 无表现层的模拟组合根。角色、玩家选择和世界过程共用 Runtime 的唯一时间线。
-/// 效果在行动槽立即发生，MotionCost 推迟下一槽；嵌套反应累加到反应者的恢复时间。
 /// </summary>
 public sealed class SimulationSession : IDisposable
 {
@@ -18,14 +17,17 @@ public sealed class SimulationSession : IDisposable
     public ActionRuntime Runtime { get; }
     public Timeline.Timeline Timeline => Runtime.Timeline;
     public Entity World { get; }
+    public TopologyGraph Topology { get; }
 
     public SimulationSession(Entity world)
         : this(CreateRuntime(world), world) { }
 
-    public SimulationSession(ActionRuntime runtime, Entity world)
+    public SimulationSession(ActionRuntime runtime, Entity world, TopologyGraph? topology = null)
     {
         Runtime = runtime;
         World = world;
+        Topology = topology ?? world.GetTopology() ?? new TopologyGraph();
+        World.Set("topology", Topology);
         Runtime.Executed += Charge;
     }
 

@@ -244,6 +244,54 @@ public class Soul : Entity
         RecalculateEmotion(emotion);
     }
 
+    /// <summary>依据双时间尺度动力学衰减连续方程结算情绪：I(t) = w_acute * I0 * e^(-λ_fast * t) + w_mood * I0 * e^(-λ_slow * t)。</summary>
+    public static double CalculateDualTimescaleDecay(
+        double initialIntensity,
+        double deltaT,
+        double wAcute = 0.7,
+        double wMood = 0.3,
+        double lambdaFast = 0.1,
+        double lambdaSlow = 0.005)
+    {
+        if (initialIntensity <= 0.0 || deltaT <= 0.0) return initialIntensity;
+        var acute = wAcute * initialIntensity * Math.Exp(-lambdaFast * deltaT);
+        var mood = wMood * initialIntensity * Math.Exp(-lambdaSlow * deltaT);
+        return Math.Max(0.0, acute + mood);
+    }
+
+    /// <summary>按双时间尺度连续指数衰减模型结算全部情绪来源。</summary>
+    public Dictionary<Emotion, (double OldVal, double NewVal)> DecayEmotionsDualTimescale(
+        double deltaT,
+        double wAcute = 0.7,
+        double wMood = 0.3,
+        double lambdaFast = 0.1,
+        double lambdaSlow = 0.005)
+    {
+        var deltas = new Dictionary<Emotion, (double OldVal, double NewVal)>();
+        foreach (var emo in Enum.GetValues<Emotion>())
+        {
+            double oldVal = EmotionIntensities.GetValueOrDefault(emo, 0.0);
+            if (EmotionSources.TryGetValue(emo, out var sources) && sources.Count > 0)
+            {
+                foreach (var key in sources.Keys.ToList())
+                {
+                    bool isPersistent = PersistentEmotionSources.Contains(key);
+                    var wa = isPersistent ? 0.2 : wAcute;
+                    var wm = isPersistent ? 0.8 : wMood;
+                    var lf = isPersistent ? lambdaFast * 0.5 : lambdaFast;
+                    var ls = isPersistent ? lambdaSlow * 0.5 : lambdaSlow;
+                    double updated = CalculateDualTimescaleDecay(sources[key], deltaT, wa, wm, lf, ls);
+                    if (updated < 0.05) sources.Remove(key);
+                    else sources[key] = updated;
+                }
+            }
+            RecalculateEmotion(emo);
+            double newVal = EmotionIntensities.GetValueOrDefault(emo, 0.0);
+            if (Math.Abs(newVal - oldVal) > 0.01 || newVal > 0.05) deltas[emo] = (oldVal, newVal);
+        }
+        return deltas;
+    }
+
     public Dictionary<Emotion, (double OldVal, double NewVal)> SettleDailyEmotions(double transientDecay = 0.5, double persistentDecay = 0.95)
     {
         var deltas = new Dictionary<Emotion, (double OldVal, double NewVal)>();
@@ -402,12 +450,14 @@ public class Soul : Entity
     {
         belief.SetTag(CommonTag.Received, 0);
         belief.SetTag(CommonTag.Understood, 0);
+        belief.SetTag(CommonTag.Evaluated, 0);
         belief.SetTag(CommonTag.Accepted, 0);
         belief.SetTag(CommonTag.Rejected, 0);
         belief.SetTag(stance switch
         {
             CognitiveStage.Received => CommonTag.Received,
             CognitiveStage.Understood => CommonTag.Understood,
+            CognitiveStage.Evaluated => CommonTag.Evaluated,
             CognitiveStage.Accepted => CommonTag.Accepted,
             _ => CommonTag.Rejected
         }, 1);
@@ -423,6 +473,15 @@ public class Soul : Entity
         return belief;
     }
 
+    /// <summary>显式执行四阶段流水线中的“评估”与“采纳/拒绝”裁决。</summary>
+    public Entity EvaluateBelief(Rule rule, double acceptanceThreshold = 4.0)
+    {
+        var belief = Beliefs.First(item => ReferenceEquals(item.Get<Rule>("rule"), rule) || Equals(item.Get<Rule>("rule"), rule));
+        Stance(belief, CognitiveStage.Evaluated);
+        int priority = RuleSystem.BeliefPriority(belief);
+        return Stance(belief, priority >= acceptanceThreshold ? CognitiveStage.Accepted : CognitiveStage.Rejected);
+    }
+
     public Entity Consider(Rule rule, Entity source, int confidence = 1, string guaranteeTag = "Guarantee")
     {
         var publication = source.Children.Keys.OfType<Entity>()
@@ -433,12 +492,30 @@ public class Soul : Entity
         Stance(belief, CognitiveStage.Understood);
         var issuer = publication.Issuer() ?? source;
         int support = confidence + issuer.Tag(guaranteeTag) * 2 + issuer.Tag("Authority");
+        Stance(belief, CognitiveStage.Evaluated);
         return Stance(belief, support >= 4 ? CognitiveStage.Accepted : CognitiveStage.Rejected);
     }
 
     public Entity Accept(Rule rule) => Stance(Beliefs.First(item => ReferenceEquals(item.Get<Rule>("rule"), rule) || Equals(item.Get<Rule>("rule"), rule)), CognitiveStage.Accepted);
 
     public Entity Reject(Rule rule) => Stance(Beliefs.First(item => ReferenceEquals(item.Get<Rule>("rule"), rule) || Equals(item.Get<Rule>("rule"), rule)), CognitiveStage.Rejected);
+
+    #region 主客观二元拓扑隔离（主观认知拓扑）
+
+    /// <summary>主体已知或已采信的空间通道集合。</summary>
+    public List<Passage> KnownPassages { get; } = [];
+
+    /// <summary>记录主体获知了新的空间通路。</summary>
+    public void LearnPassage(Passage passage)
+    {
+        if (!KnownPassages.Contains(passage)) KnownPassages.Add(passage);
+    }
+
+    /// <summary>基于主体主观认知图进行路线规划，彻底隔离于客观全知拓扑。</summary>
+    public IReadOnlyList<Passage>? FindPathSubjective(Entity fromScene, Entity toScene) =>
+        TopologySystem.FindPath(fromScene, toScene, KnownPassages, Body);
+
+    #endregion
 
     public Facet InstallStep(StepDelegate step, int priority = 0, Func<Entity, ActionContext?, bool>? when = null, object? source = null) => Attach(FacetType.Step, step, priority, when, source);
     public IReadOnlyList<Facet> UninstallSteps(object source) => Detach(FacetType.Step, source: source);
@@ -501,10 +578,13 @@ public class Soul : Entity
 
         if (commitment is TreeMember targetMember && action.Actor is Character character && character.CurrentScene != null)
         {
-            var next = TopologySystem.GetNextStep(character.CurrentScene, targetMember);
-            if (next.Passage != null)
+            var targetScene = TopologySystem.GetEnclosingScene(targetMember);
+            var path = targetScene != null ? FindPathSubjective(character.CurrentScene, targetScene) : null;
+            if (path is { Count: > 0 })
             {
-                if (action.Effect.Args.Any(arg => ReferenceEquals(arg, next.Passage) || ReferenceEquals(arg, next.NextScene)))
+                var passage = path[0];
+                var nextScene = passage.Other(character.CurrentScene);
+                if (action.Effect.Args.Any(arg => ReferenceEquals(arg, passage) || ReferenceEquals(arg, nextScene)))
                 {
                     return true;
                 }

@@ -336,6 +336,12 @@ public enum CognitiveStage
     Understood,
 
     /// <summary>
+    /// 已评估。
+    /// 表示主体已依据逻辑一致性、信誉与主观立场对规则完成可信度评估。
+    /// </summary>
+    Evaluated,
+
+    /// <summary>
     /// 已采信。
     /// 表示主体已将该规则纳入自身信念体系，在自主决策时主动受其约束。
     /// </summary>

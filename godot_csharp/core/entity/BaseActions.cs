@@ -59,14 +59,15 @@ public static class BaseActions
     public static Intent CreateMoveIntent(Entity world, Entity actor, Entity destination, double? cost = null, Soul? mind = null)
     {
         var start = TopologySystem.GetEnclosingScene(actor);
+        var passages = world.GetTopology()?.Passages ?? TopologySystem.CollectPassages(world);
         var (passage, next) = start == null ? (null, null)
-            : TopologySystem.GetNextStep(start, destination, TopologySystem.CollectPassages(world), actor);
+            : TopologySystem.GetNextStep(start, destination, passages, actor);
         return Make(actor, mind, AST.F("move", actor, next ?? destination),
             () => actor.Reparent(next), next == null ? null : AST.E("located_at", actor, next),
             $"移动：{actor.Name}前往{next?.Name ?? destination.Name}",
             () => start != null && passage != null && next != null
                 && TopologySystem.GetEnclosingScene(actor) == start
-                && TopologySystem.CollectPassages(world).Contains(passage) && passage.Allows(start, actor),
+                && passages.Contains(passage) && passage.Allows(start, actor),
             cost ?? (start != null && passage != null ? passage.CostFrom(start) : 1));
     }
 

@@ -38,6 +38,131 @@ public class Timeline
         return removed;
     }
 
+    /// <summary>标准 CTB 跑道距离基准常数（Gauge Threshold）。</summary>
+    public const double GaugeThreshold = 10_000.0;
+
+    /// <summary>计算基础行动值：BaseAV = D / Speed。</summary>
+    public static double CalculateBaseAv(double speed)
+    {
+        if (speed <= 0 || !double.IsFinite(speed))
+            throw new ArgumentOutOfRangeException(nameof(speed), "速度必须是大于 0 的有限数值。");
+        return GaugeThreshold / speed;
+    }
+
+    /// <summary>计算动作后摇行动值增量：ΔAV = (D * R) / Speed = BaseAV * R。</summary>
+    public static double CalculateActionAv(double speed, double rank = 1.0)
+    {
+        if (rank < 0 || !double.IsFinite(rank))
+            throw new ArgumentOutOfRangeException(nameof(rank), "动作代价等级必须为非负有限数。");
+        return CalculateBaseAv(speed) * rank;
+    }
+
+    /// <summary>调整指定任务的剩余行动值（拉条 / 推条）。</summary>
+    /// <param name="predicate">匹配目标任务的谓词。</param>
+    /// <param name="deltaAv">行动值变动量（负数为拉条提前，正数为推条延后）。</param>
+    /// <returns>成功调整的任务数量。</returns>
+    public int AdjustRemainingAv(Func<ScheduledTask, bool> predicate, double deltaAv)
+    {
+        var items = _queue.UnorderedItems.ToArray();
+        var adjustedCount = 0;
+        _queue.Clear();
+        foreach (var item in items)
+        {
+            var task = item.Element;
+            if (predicate(task))
+            {
+                var remaining = Math.Max(0.0, task.Time - Now);
+                var newRemaining = Math.Max(0.0, remaining + deltaAv);
+                var newTask = task with { Time = Now + newRemaining };
+                _queue.Enqueue(newTask, (newTask.Time, newTask.Sequence));
+                adjustedCount++;
+            }
+            else
+            {
+                _queue.Enqueue(task, item.Priority);
+            }
+        }
+        return adjustedCount;
+    }
+
+    /// <summary>行动提前（Action Advance / 拉条）：AV_new = max(0, AV_current - BaseAV * ratio)。</summary>
+    public int AdvanceGauge(Func<ScheduledTask, bool> predicate, double speed, double ratio)
+    {
+        if (ratio < 0 || !double.IsFinite(ratio))
+            throw new ArgumentOutOfRangeException(nameof(ratio), "拉条比例必须为非负有限数。");
+        var baseAv = CalculateBaseAv(speed);
+        return AdjustRemainingAv(predicate, -baseAv * ratio);
+    }
+
+    /// <summary>行动延后（Action Delay / 推条）：AV_new = AV_current + BaseAV * ratio。</summary>
+    public int DelayGauge(Func<ScheduledTask, bool> predicate, double speed, double ratio)
+    {
+        if (ratio < 0 || !double.IsFinite(ratio))
+            throw new ArgumentOutOfRangeException(nameof(ratio), "推条比例必须为非负有限数。");
+        var baseAv = CalculateBaseAv(speed);
+        return AdjustRemainingAv(predicate, baseAv * ratio);
+    }
+
+    /// <summary>进程中变速动态缩放：AV_new = AV_current * (oldSpeed / newSpeed)。</summary>
+    public int ScaleGaugeOnSpeedChange(Func<ScheduledTask, bool> predicate, double oldSpeed, double newSpeed)
+    {
+        if (oldSpeed <= 0 || !double.IsFinite(oldSpeed) || newSpeed <= 0 || !double.IsFinite(newSpeed))
+            throw new ArgumentOutOfRangeException(nameof(newSpeed), "速度值必须为大于 0 的有限数。");
+        var ratio = oldSpeed / newSpeed;
+        var items = _queue.UnorderedItems.ToArray();
+        var scaledCount = 0;
+        _queue.Clear();
+        foreach (var item in items)
+        {
+            var task = item.Element;
+            if (predicate(task))
+            {
+                var remaining = Math.Max(0.0, task.Time - Now);
+                var newRemaining = remaining * ratio;
+                var newTask = task with { Time = Now + newRemaining };
+                _queue.Enqueue(newTask, (newTask.Time, newTask.Sequence));
+                scaledCount++;
+            }
+            else
+            {
+                _queue.Enqueue(task, item.Priority);
+            }
+        }
+        return scaledCount;
+    }
+
+    /// <summary>瞬发中断执行（Immediate Turn / Burst）：暂停主推进流程，分配优先执行权，不消耗原本排队 AV。</summary>
+    public void Interrupt(string label, Action action)
+    {
+        action();
+    }
+
+    /// <summary>预测行动序列（Turn Order Preview）：轻量模拟未来 depth 步的行动次序。</summary>
+    public IReadOnlyList<string> PreviewTurnOrder(int depth = 10, double defaultSpeed = 100.0)
+    {
+        if (depth <= 0) return [];
+        var simQueue = new PriorityQueue<(string Label, double BaseAv), (double Time, long Sequence)>();
+        foreach (var item in _queue.UnorderedItems)
+        {
+            var remaining = Math.Max(0.0, item.Element.Time - Now);
+            simQueue.Enqueue((item.Element.Label, CalculateBaseAv(defaultSpeed)), (remaining, item.Element.Sequence));
+        }
+
+        var results = new List<string>(depth);
+        var simSeq = _nextSequence;
+        var simNow = 0.0;
+
+        while (results.Count < depth && simQueue.TryDequeue(out var candidate, out var priority))
+        {
+            results.Add(candidate.Label);
+            simNow = priority.Time;
+            var nextTime = simNow + candidate.BaseAv;
+            simQueue.Enqueue(candidate, (nextTime, simSeq++));
+        }
+
+        return results;
+    }
+
     /// <summary>从当前时刻登记任务，同刻按登记顺序执行。</summary>
     public void Schedule(double delay, string label, Func<double?> action)
     {

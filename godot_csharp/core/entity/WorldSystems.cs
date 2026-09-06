@@ -38,8 +38,7 @@ public static class AccessControlSystem
     /// </remarks>
     public static bool IsAccessible(this Entity entity, Entity? fromScene = null)
     {
-        var openable = entity.IsOpenable() || entity.IsContainer();
-        return (!openable || entity.IsOpen) && !entity.IsLocked(fromScene);
+        return (!entity.IsOpenable() || entity.IsOpen) && !entity.IsLocked(fromScene);
     }
 
     /// <summary>在当前方向没有有效锁阻断时开启对象。</summary>
@@ -87,12 +86,25 @@ public static class AccessControlSystem
             (source == null || Equals(l.Source, source)));
     }
 
-    /// <summary>将物品实体置入可访问的容器实体中。</summary>
+    /// <summary>使用钥匙实体解除门禁锁记录（支持 Source 匹配或 Unlocks 语义切面）。</summary>
+    /// <param name="entity">目标门禁实体。</param>
+    /// <param name="key">钥匙或凭证实体。</param>
+    /// <param name="side">特定方向。</param>
+    /// <returns>成功解除的锁记录数量。</returns>
+    public static int UnlockWithKey(this Entity entity, Entity key, Entity? side = null)
+    {
+        var hasUnlockFacet = key.Entries(FacetType.Unlocks).Any(f => ReferenceEquals(f.Value, entity));
+        return entity.Locks.RemoveAll(l =>
+            (side == null || l.Side == null || ReferenceEquals(l.Side, side)) &&
+            (hasUnlockFacet || ReferenceEquals(l.Source, key) || Equals(l.Source, key)));
+    }
+
+    /// <summary>将物品实体置入可访问的容器实体中，执行严格无环、通达性与容量检查。</summary>
     /// <param name="container">容器实体（需具备 Container 角色或标签）。</param>
     /// <param name="item">待放入的物品实体。</param>
     /// <param name="position">在容器内的初始槽位。</param>
     /// <param name="fromScene">观察或操作者所处场景。</param>
-    /// <returns>true 表示置入成功，false 表示不可访问或不具备容器角色。</returns>
+    /// <returns>true 表示置入成功，false 表示不可访问、超容或不具备容器角色。</returns>
     public static bool Put(this Entity container, Entity item, int position = 0, Entity? fromScene = null)
     {
         if (!container.IsContainer() || !container.IsAccessible(fromScene))
@@ -100,11 +112,29 @@ public static class AccessControlSystem
             return false;
         }
 
+        // 检查容量上限
+        if (container.Properties.TryGetValue("capacity", out var capVal) &&
+            TryConvertInt(capVal, out var capacity) && capacity > 0)
+        {
+            var currentItemsCount = container.Children.Keys.OfType<Entity>().Count();
+            if (currentItemsCount >= capacity)
+            {
+                return false;
+            }
+        }
+
+        // 祖先环路检查（禁止将自身放入自身或其后代中）
+        for (var ancestor = container as TreeMember; ancestor != null; ancestor = ancestor.Parent)
+        {
+            if (ReferenceEquals(ancestor, item))
+                return false;
+        }
+
         item.Reparent(container, position);
         return true;
     }
 
-    /// <summary>从可访问的容器中取出实体，并转移到新的父节点中。</summary>
+    /// <summary>从可访问的容器中取出实体，并转移到新的父节点中，受目标容量与通达性约束。</summary>
     /// <param name="container">容器实体。</param>
     /// <param name="item">被取出的实体。</param>
     /// <param name="newParent">新的归属父节点。</param>
@@ -118,8 +148,30 @@ public static class AccessControlSystem
             return false;
         }
 
+        if (newParent is Entity newEntity && newEntity.Properties.TryGetValue("capacity", out var capVal) &&
+            TryConvertInt(capVal, out var capacity) && capacity > 0)
+        {
+            var currentItemsCount = newEntity.Children.Keys.OfType<Entity>().Count();
+            if (currentItemsCount >= capacity)
+            {
+                return false;
+            }
+        }
+
         item.Reparent(newParent, position);
         return true;
+    }
+
+    private static bool TryConvertInt(object val, out int value)
+    {
+        switch (val)
+        {
+            case int i: value = i; return true;
+            case long l: value = (int)l; return true;
+            case float f: value = (int)f; return true;
+            case double d: value = (int)d; return true;
+            default: value = 0; return false;
+        }
     }
 }
 
@@ -127,16 +179,77 @@ public static class AccessControlSystem
 
 #region 场景拓扑与路径搜索系统
 
+/// <summary>场景拓扑图管理结构，独立于世界树维护空间通道（Passage）与邻接索引。</summary>
+public class TopologyGraph
+{
+    private readonly List<Passage> _passages = [];
+    private ILookup<Entity, (Entity From, Entity Next, Passage Passage)>? _cachedAdjacency;
+
+    public IReadOnlyList<Passage> Passages => _passages;
+
+    public ILookup<Entity, (Entity From, Entity Next, Passage Passage)> Adjacency =>
+        _cachedAdjacency ??= _passages
+            .SelectMany(p => new[] { (From: p.Left, Next: p.Right, Passage: p), (From: p.Right, Next: p.Left, Passage: p) })
+            .ToLookup(edge => edge.From);
+
+    public void Add(Passage passage)
+    {
+        _passages.Add(passage);
+        _cachedAdjacency = null;
+    }
+
+    public bool Remove(Passage passage)
+    {
+        var removed = _passages.Remove(passage);
+        if (removed) _cachedAdjacency = null;
+        return removed;
+    }
+
+    public Passage Connect(
+        string name,
+        Entity from,
+        Entity to,
+        double cost = 1.0,
+        double? reverseCost = null,
+        Entity? gate = null,
+        Func<Entity, Entity?, object?, bool>? condition = null)
+    {
+        var passage = new Passage(name, from, to, cost, reverseCost, condition, gate != null ? [gate] : null);
+        Add(passage);
+        return passage;
+    }
+
+    public IReadOnlyList<Passage>? FindPath(
+        Entity fromScene,
+        Entity toScene,
+        Entity? actor = null,
+        object? env = null) =>
+        TopologySystem.FindPath(fromScene, toScene, _passages, actor, env);
+
+    public (Passage? Passage, Entity? NextScene) GetNextStep(
+        Entity fromScene,
+        TreeMember destination,
+        Entity? actor = null,
+        object? env = null) =>
+        TopologySystem.GetNextStep(fromScene, destination, _passages, actor, env);
+}
+
 /// <summary>场景拓扑与路径搜索系统。</summary>
 /// <remarks>
-/// 负责在世界树中收集拓扑通道（<see cref="Passage"/>），
-/// 并基于通行代价（Cost）与通行许可（Allows）计算跨场景最优路径。
+/// 负责基于拓扑通道（<see cref="Passage"/>）与通行代价（Cost）、通行许可（Allows）计算跨场景最优路径。
 /// 核心不涉及房间内微观坐标与碰撞，仅计算宏观场景拓扑图。
 /// </remarks>
 public static class TopologySystem
 {
+    /// <summary>获取当前世界根节点关联的拓扑图实例。</summary>
+    public static TopologyGraph? GetTopology(this TreeMember member)
+    {
+        var root = GetRoot(member);
+        return root.Get<TopologyGraph>("topology");
+    }
+
     /// <summary>沿世界树向上溯源，查找指定成员所属的场景实体（持有 "Scene" 标签）。</summary>
-    /// <param name="member">世界树成员（物品、角色或通道等）。</param>
+    /// <param name="member">世界树成员（物品或角色等）。</param>
     /// <returns>所属场景实体；若未处于任何场景下则返回 null。</returns>
     public static Entity? GetEnclosingScene(TreeMember? member)
     {
@@ -163,34 +276,14 @@ public static class TopologySystem
         return current;
     }
 
-    /// <summary>递归收集指定根节点或世界树分支下的所有通道（<see cref="Passage"/>）。</summary>
-    public static List<Passage> CollectPassages(TreeMember root)
-    {
-        var passages = new List<Passage>();
-        var stack = new Stack<TreeMember>();
-        stack.Push(root);
-
-        while (stack.Count > 0)
-        {
-            var node = stack.Pop();
-            if (node is Passage p)
-            {
-                passages.Add(p);
-            }
-
-            foreach (var child in node.Children.Keys)
-            {
-                stack.Push(child);
-            }
-        }
-
-        return passages;
-    }
+    /// <summary>收集指定成员所在世界的全部通道；若世界挂载了 TopologyGraph 则返回其通道，否则返回空列表。</summary>
+    public static IReadOnlyList<Passage> CollectPassages(TreeMember root) =>
+        root.GetTopology()?.Passages ?? [];
 
     /// <summary>计算从起始场景到目标场景的最优通道路径（Dijkstra 算法）。</summary>
     /// <param name="fromScene">出发端场景实体。</param>
     /// <param name="toScene">目的地场景实体。</param>
-    /// <param name="passages">可选的可用通道集。若为 null 则自动向上追溯世界树根节点并收集全部通道。</param>
+    /// <param name="passages">可选的可用通道集。若为 null 则自动通过所属世界拓扑图获取全部通道。</param>
     /// <param name="actor">通行主体（用于门禁与条件检查）。</param>
     /// <param name="env">环境上下文。</param>
     /// <returns>按通行顺序排列的 Passage 列表；若已在目标场景返回空列表；若不可达返回 null。</returns>
@@ -202,7 +295,8 @@ public static class TopologySystem
         object? env = null)
     {
         if (fromScene == toScene) return [];
-        var adjacency = (passages ?? CollectPassages(GetRoot(fromScene)))
+        var passageList = passages ?? fromScene.GetTopology()?.Passages ?? [];
+        var adjacency = passageList
             .SelectMany(p => new[] { (From: p.Left, Next: p.Right, Passage: p), (From: p.Right, Next: p.Left, Passage: p) })
             .ToLookup(edge => edge.From);
         var distances = new Dictionary<Entity, double> { [fromScene] = 0 };
@@ -256,11 +350,67 @@ public static class TopologySystem
         var path = FindPath(fromScene, targetScene, passages, actor, env);
         return path is { Count: > 0 } ? (path[0], path[0].Other(fromScene)) : (null, null);
     }
+
+    /// <summary>执行标准跨场景位移完整四阶段：拓扑验证 -> 通行代价结算 -> 树节点重挂载 -> 触发进出事件。</summary>
+    /// <param name="actor">移动主体。</param>
+    /// <param name="fromScene">起点场景。</param>
+    /// <param name="toScene">目标场景。</param>
+    /// <param name="topology">世界拓扑图。</param>
+    /// <param name="onExit">起点场景离开事件回调。</param>
+    /// <param name="onEnter">目标场景进入事件回调。</param>
+    /// <param name="env">环境事实。</param>
+    /// <returns>true 表示成功完成迁移；false 表示通道不通或受阻断。</returns>
+    public static bool Transition(
+        Entity actor,
+        Entity fromScene,
+        Entity toScene,
+        TopologyGraph topology,
+        Action<Entity, Entity>? onExit = null,
+        Action<Entity, Entity>? onEnter = null,
+        object? env = null)
+    {
+        // 1. 拓扑合法性检验
+        var passage = topology.Passages.FirstOrDefault(p =>
+            (ReferenceEquals(p.Left, fromScene) && ReferenceEquals(p.Right, toScene)) ||
+            (ReferenceEquals(p.Right, fromScene) && ReferenceEquals(p.Left, toScene)));
+
+        if (passage == null || !passage.Allows(fromScene, actor, env))
+            return false;
+
+        // 2. 通行代价
+        var cost = passage.CostFrom(fromScene);
+        if (!double.IsFinite(cost) || cost < 0)
+            return false;
+
+        // 3. 树节点重挂载
+        actor.Reparent(toScene);
+
+        // 4. 触发进出事件
+        onExit?.Invoke(actor, fromScene);
+        onEnter?.Invoke(actor, toScene);
+        return true;
+    }
 }
 
 #endregion
 
 #region 动态影响与消耗品时效系统
+
+/// <summary>状态效果堆叠策略枚举。</summary>
+public enum StackingPolicy
+{
+    /// <summary>持续时间刷新策略：保留当前强度，重置到期时刻。</summary>
+    DurationRefresh,
+
+    /// <summary>强度层数累加策略：新强度累加到当前强度（受最大上限限制）。</summary>
+    IntensityStacking,
+
+    /// <summary>独立多实例策略：每个状态独立计时，综合取总和或最高值。</summary>
+    IndependentMultiInstance,
+
+    /// <summary>最高值覆盖策略：仅当新强度高于剩余强度时覆盖。</summary>
+    HighestValueOverride
+}
 
 /// <summary>动态影响（Influence）、时效性与世界树生命周期操作体系。</summary>
 /// <remarks>
@@ -273,7 +423,12 @@ public static class InfluenceSystem
 {
     #region 动态影响与时效计算
 
-    /// <summary>计算指定 Influence 实体在特定时刻的剩余有效强度。</summary>
+    /// <summary>依据标准闭式公式计算指定 Influence 实体在特定时刻的剩余有效强度。</summary>
+    /// <remarks>
+    /// 公式：
+    /// 若 t < t0 或 t >= t_expire，强度为 0；
+    /// 若 t0 <= t < t_expire，强度为 max(0, I0 - λ * (t - t0))。
+    /// </remarks>
     /// <param name="entity">具备 Influence 标签的实体。</param>
     /// <param name="currentTime">当前行动值时刻。若为 null 则返回未衰减的基础强度。</param>
     /// <returns>计算衰减与到期后的非负强度数值。</returns>
@@ -289,14 +444,21 @@ public static class InfluenceSystem
             return intensity;
         }
 
+        var startedAt = TryGetNumeric(entity.Properties, "started_at", out var s) ? s : 0.0;
+        // 未到起始时间
+        if (currentTime.Value < startedAt)
+        {
+            return 0.0;
+        }
+
+        // 已过过期时间
         if (TryGetNumeric(entity.Properties, "expires_at", out var expiresAt) && currentTime.Value >= expiresAt)
         {
             return 0.0;
         }
 
-        var startedAt = TryGetNumeric(entity.Properties, "started_at", out var s) ? s : currentTime.Value;
         var decay = TryGetNumeric(entity.Properties, "decay", out var d) ? d : 0.0;
-        var elapsed = Math.Max(0.0, currentTime.Value - startedAt);
+        var elapsed = currentTime.Value - startedAt;
 
         return Math.Max(0.0, intensity - elapsed * decay);
     }
@@ -312,7 +474,101 @@ public static class InfluenceSystem
             return false;
         }
 
+        if (TryGetNumeric(entity.Properties, "started_at", out var startedAt) && currentTime < startedAt)
+        {
+            return false;
+        }
+
         return !TryGetNumeric(entity.Properties, "expires_at", out var expiresAt) || currentTime < expiresAt;
+    }
+
+    /// <summary>依据指定堆叠策略向宿主施加或合并状态效果。</summary>
+    /// <param name="host">宿主实体。</param>
+    /// <param name="effectName">效果名称。</param>
+    /// <param name="intensity">施加强度。</param>
+    /// <param name="duration">持续时长。</param>
+    /// <param name="currentTime">当前时刻。</param>
+    /// <param name="policy">堆叠策略。</param>
+    /// <param name="decay">线性衰减率。</param>
+    /// <param name="maxIntensity">强度累加上限。</param>
+    /// <param name="source">来源实体。</param>
+    /// <returns>生效的状态效果实体。</returns>
+    public static Entity ApplyStatusEffect(
+        Entity host,
+        string effectName,
+        double intensity,
+        double duration,
+        double currentTime,
+        StackingPolicy policy = StackingPolicy.DurationRefresh,
+        double decay = 0.0,
+        double maxIntensity = double.PositiveInfinity,
+        Entity? source = null)
+    {
+        var existing = host.Children.Keys.OfType<Entity>().FirstOrDefault(e =>
+            e.HasTag(CommonTag.Influence) && e.Name == effectName);
+
+        if (existing == null || policy == StackingPolicy.IndependentMultiInstance)
+        {
+            var effect = new Entity(
+                effectName,
+                host,
+                new Dictionary<string, int> { ["Influence"] = 1 },
+                properties: new Dictionary<string, object>
+                {
+                    ["intensity"] = intensity,
+                    ["started_at"] = currentTime,
+                    ["duration"] = duration,
+                    ["expires_at"] = currentTime + duration,
+                    ["decay"] = decay
+                });
+            if (source != null) effect.Relate(FacetType.Source, source);
+            return effect;
+        }
+
+        var currentEffective = existing.EffectiveIntensity(currentTime);
+        switch (policy)
+        {
+            case StackingPolicy.DurationRefresh:
+                existing.Set("expires_at", currentTime + duration);
+                break;
+
+            case StackingPolicy.IntensityStacking:
+                var newIntensity = Math.Min(maxIntensity, currentEffective + intensity);
+                existing.Set("intensity", newIntensity);
+                existing.Set("started_at", currentTime);
+                existing.Set("expires_at", currentTime + duration);
+                break;
+
+            case StackingPolicy.HighestValueOverride:
+                if (intensity > currentEffective)
+                {
+                    existing.Set("intensity", intensity);
+                    existing.Set("started_at", currentTime);
+                    existing.Set("expires_at", currentTime + duration);
+                    existing.Set("decay", decay);
+                }
+                break;
+        }
+        return existing;
+    }
+
+    /// <summary>垃圾回收：扫描并清除宿主实体下所有已过期的 Influence 状态子节点。</summary>
+    /// <param name="host">宿主实体。</param>
+    /// <param name="currentTime">当前时刻。</param>
+    /// <param name="onExpire">状态注销回调。</param>
+    /// <returns>清除的到期状态数量。</returns>
+    public static int CleanupExpired(Entity host, double currentTime, Action<Entity>? onExpire = null)
+    {
+        var expired = host.Children.Keys.OfType<Entity>()
+            .Where(e => e.HasTag(CommonTag.Influence) && e.EffectiveIntensity(currentTime) <= 0.0)
+            .ToList();
+
+        foreach (var eff in expired)
+        {
+            onExpire?.Invoke(eff);
+            eff.Reparent(null);
+        }
+        return expired.Count;
     }
 
     #endregion
