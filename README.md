@@ -74,3 +74,18 @@ python -m python
 - [异常感知学园设计规范](docs/academy-design-zh.md)
 - [五日推演规范化轨迹](docs/five_days_trajectory.md)：历史学园样例轨迹，用于审计与回归参考，不能单独证明通用模拟能力或 Python/C# 跨语言一致性。
 
+
+## 长期运行与动物园验证
+
+独立核心长程回归：
+
+```powershell
+dotnet run --project godot_csharp/tests/long_run_checks/long_run_checks.csproj -c Release
+```
+
+动物园怪谈的无守则场景保留异常机制，另设关闭异常的对照组。模型解释与测试范围见[动物园无守则测试](docs/zoo-no-rules-validation-zh.md)。
+
+```powershell
+dotnet run --project godot_csharp/tests/zoo_checks/zoo_checks.csproj -c Release
+```
+

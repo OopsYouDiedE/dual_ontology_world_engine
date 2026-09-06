@@ -91,6 +91,12 @@ public sealed class StateView
         ? aa.SequenceEqual(bb) : IsNumber(a) && IsNumber(b) ? Convert.ToDouble(a) == Convert.ToDouble(b) : Equals(a, b);
     private static bool IsNumber(object? value) => value is int or double or float or long or decimal;
 
+    internal static double FiniteArithmetic(double x, double y, bool subtract)
+    {
+        var result = subtract ? x - y : x + y;
+        return double.IsFinite(result) ? result : throw new InvalidOperationException("数值运算结果必须为有限量");
+    }
+
     public object? Value(object? expression)
     {
         if (expression is not Expr e) return expression;
@@ -121,8 +127,8 @@ public sealed class StateView
             "gte" => Convert.ToDouble(x) >= Convert.ToDouble(y),
             "gt" => Convert.ToDouble(x) > Convert.ToDouble(y),
             "lte" => Convert.ToDouble(x) <= Convert.ToDouble(y),
-            "add" => Convert.ToDouble(x) + Convert.ToDouble(y),
-            "subtract" => Convert.ToDouble(x) - Convert.ToDouble(y),
+            "add" => FiniteArithmetic(Convert.ToDouble(x), Convert.ToDouble(y), subtract: false),
+            "subtract" => FiniteArithmetic(Convert.ToDouble(x), Convert.ToDouble(y), subtract: true),
             "contains" => x is object[] items && items.Contains(y),
             _ => throw new InvalidOperationException($"未知条件原语：{e.Op}")
         };
@@ -282,10 +288,13 @@ public sealed class EffectExecutor
             case "spend":
                 var before = plan.View.Read(entity, key);
                 if (before == StateView.Unknown) { plan.Uncertain = true; break; }
+                var current = Convert.ToDouble(before);
+                if (!double.IsFinite(current)) throw new InvalidOperationException("变化起始值必须为有限量");
                 var amount = Convert.ToDouble(supplied);
                 if (!double.IsFinite(amount)) throw new InvalidOperationException("变化必须为有限量");
                 if (effect.Op == "spend" && amount <= 0) throw new InvalidOperationException("支付量必须为正");
-                var after = Convert.ToDouble(before) + (effect.Op == "spend" ? -amount : amount);
+                var after = StateView.FiniteArithmetic(current,
+                    effect.Op == "spend" ? -amount : amount, subtract: false);
                 if (after < 0) throw new InvalidOperationException($"{entity.Name}的{key}不足");
                 if (key == "strain") after = Math.Min(Core.Content.Balance.FatigueHardLimit, after);
                 plan.Write(entity, key, after); break;

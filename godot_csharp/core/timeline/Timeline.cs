@@ -25,8 +25,22 @@ public class Timeline
     {
         var elapsed = time - Now;
         if (elapsed <= 0) return;
+        if (!double.IsFinite(time))
+            throw new ArgumentOutOfRangeException(nameof(time), "行动值时刻必须是有限数。");
         Now = time;
         Advanced?.Invoke(elapsed);
+    }
+
+    private double TimeAfterDelay(double delay)
+    {
+        var time = Now + delay;
+        if (!double.IsFinite(time))
+            throw new ArgumentOutOfRangeException(nameof(delay), "行动值延迟超出可表示的时间范围。");
+        if (delay == 0) return Now;
+        // 大时刻下过小的正延迟会舍入回当前时刻；拒绝它，避免静默改变延迟语义。
+        if (time <= Now)
+            throw new ArgumentOutOfRangeException(nameof(delay), "行动值延迟无法使时间严格前进。");
+        return time;
     }
 
     public int Cancel(Func<ScheduledTask, bool> predicate)
@@ -46,7 +60,10 @@ public class Timeline
     {
         if (speed <= 0 || !double.IsFinite(speed))
             throw new ArgumentOutOfRangeException(nameof(speed), "速度必须是大于 0 的有限数值。");
-        return GaugeThreshold / speed;
+        var result = GaugeThreshold / speed;
+        if (!double.IsFinite(result))
+            throw new ArgumentOutOfRangeException(nameof(speed), "速度导致行动值超出可表示范围。");
+        return result;
     }
 
     /// <summary>计算动作后摇行动值增量：ΔAV = (D * R) / Speed = BaseAV * R。</summary>
@@ -54,7 +71,10 @@ public class Timeline
     {
         if (rank < 0 || !double.IsFinite(rank))
             throw new ArgumentOutOfRangeException(nameof(rank), "动作代价等级必须为非负有限数。");
-        return CalculateBaseAv(speed) * rank;
+        var result = CalculateBaseAv(speed) * rank;
+        if (!double.IsFinite(result))
+            throw new ArgumentOutOfRangeException(nameof(rank), "动作代价超出可表示范围。");
+        return result;
     }
 
     /// <summary>调整指定任务的剩余行动值（拉条 / 推条）。</summary>
@@ -65,23 +85,29 @@ public class Timeline
     {
         var items = _queue.UnorderedItems.ToArray();
         var adjustedCount = 0;
-        _queue.Clear();
+        var rebuilt = new List<(ScheduledTask Task, (double Time, long Sequence) Priority)>(items.Length);
         foreach (var item in items)
         {
             var task = item.Element;
             if (predicate(task))
             {
                 var remaining = Math.Max(0.0, task.Time - Now);
-                var newRemaining = Math.Max(0.0, remaining + deltaAv);
-                var newTask = task with { Time = Now + newRemaining };
-                _queue.Enqueue(newTask, (newTask.Time, newTask.Sequence));
+                var shifted = remaining + deltaAv;
+                if (!double.IsFinite(shifted))
+                    throw new ArgumentOutOfRangeException(nameof(deltaAv), "行动值调整超出可表示范围。");
+                var newRemaining = Math.Max(0.0, shifted);
+                var newTime = newRemaining > 0 ? TimeAfterDelay(newRemaining) : Now;
+                var newTask = task with { Time = newTime };
+                rebuilt.Add((newTask, (newTask.Time, newTask.Sequence)));
                 adjustedCount++;
             }
             else
             {
-                _queue.Enqueue(task, item.Priority);
+                rebuilt.Add((task, item.Priority));
             }
         }
+        _queue.Clear();
+        foreach (var item in rebuilt) _queue.Enqueue(item.Task, item.Priority);
         return adjustedCount;
     }
 
@@ -111,7 +137,7 @@ public class Timeline
         var ratio = oldSpeed / newSpeed;
         var items = _queue.UnorderedItems.ToArray();
         var scaledCount = 0;
-        _queue.Clear();
+        var rebuilt = new List<(ScheduledTask Task, (double Time, long Sequence) Priority)>(items.Length);
         foreach (var item in items)
         {
             var task = item.Element;
@@ -119,15 +145,20 @@ public class Timeline
             {
                 var remaining = Math.Max(0.0, task.Time - Now);
                 var newRemaining = remaining * ratio;
-                var newTask = task with { Time = Now + newRemaining };
-                _queue.Enqueue(newTask, (newTask.Time, newTask.Sequence));
+                if (!double.IsFinite(newRemaining))
+                    throw new ArgumentOutOfRangeException(nameof(newSpeed), "速度变化导致行动值超出可表示范围。");
+                var newTime = newRemaining > 0 ? TimeAfterDelay(newRemaining) : Now;
+                var newTask = task with { Time = newTime };
+                rebuilt.Add((newTask, (newTask.Time, newTask.Sequence)));
                 scaledCount++;
             }
             else
             {
-                _queue.Enqueue(task, item.Priority);
+                rebuilt.Add((task, item.Priority));
             }
         }
+        _queue.Clear();
+        foreach (var item in rebuilt) _queue.Enqueue(item.Task, item.Priority);
         return scaledCount;
     }
 
@@ -157,6 +188,7 @@ public class Timeline
             results.Add(candidate.Label);
             simNow = priority.Time;
             var nextTime = simNow + candidate.BaseAv;
+            if (!double.IsFinite(nextTime)) break;
             simQueue.Enqueue(candidate, (nextTime, simSeq++));
         }
 
@@ -169,7 +201,7 @@ public class Timeline
         if (!double.IsFinite(delay) || delay < 0)
             throw new ArgumentOutOfRangeException(nameof(delay), "行动值延迟必须是有限非负数。");
 
-        var task = new ScheduledTask(Now + delay, _nextSequence++, label, action);
+        var task = new ScheduledTask(TimeAfterDelay(delay), _nextSequence++, label, action);
         _queue.Enqueue(task, (task.Time, task.Sequence));
     }
 

@@ -11,6 +11,8 @@ namespace DualOntologyWorldEngine.Core.Simulation;
 /// </summary>
 public sealed class SimulationSession : IDisposable
 {
+    private bool _disposed;
+    private readonly Func<Intent, StateView, EffectPlan, string?> _chargeGuard;
     private readonly Dictionary<Entity, Func<double?>> _actors = new();
     private readonly Dictionary<Entity, double> _readyAt = new();
     private readonly HashSet<Func<double?>> _commands = new();
@@ -29,6 +31,16 @@ public sealed class SimulationSession : IDisposable
         Topology = topology ?? world.GetTopology() ?? new TopologyGraph();
         World.Set("topology", Topology);
         Runtime.Executed += Charge;
+        _chargeGuard = (intent, _, _) =>
+        {
+            // 结算前确认行动值仍能以有限且严格递增的时刻记录。
+            var readyAt = ReadyAt(intent.Actor);
+            var next = readyAt + intent.MotionCost;
+            return double.IsFinite(next) && next > readyAt
+                ? null
+                : "行动值代价无法在当前时刻保持有限且严格递增";
+        };
+        Runtime.Guards.Add(_chargeGuard);
     }
 
     private static ActionRuntime CreateRuntime(Entity world)
@@ -39,8 +51,11 @@ public sealed class SimulationSession : IDisposable
     }
     public double ReadyAt(Entity actor) => Math.Max(Timeline.Now, _readyAt.GetValueOrDefault(actor));
 
-    private void Charge(Intent intent, ActionResolution result) =>
-        _readyAt[intent.Actor] = ReadyAt(intent.Actor) + intent.MotionCost;
+    private void Charge(Intent intent, ActionResolution result)
+    {
+        var readyAt = ReadyAt(intent.Actor) + intent.MotionCost;
+        _readyAt[intent.Actor] = readyAt;
+    }
 
     /// <summary>激活或替换一个身体的行动槽。chooser 可用于玩家接管，原有 Soul.Step 插件继续有效。</summary>
     public void Activate(
@@ -50,6 +65,7 @@ public sealed class SimulationSession : IDisposable
         Action<Intent?, ActionResolution?>? completed = null,
         ActionContext? context = null)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (!double.IsFinite(idleCost) || idleCost <= 0)
             throw new ArgumentOutOfRangeException(nameof(idleCost), "空闲重试必须使时间前进。");
         Deactivate(actor);
@@ -93,6 +109,7 @@ public sealed class SimulationSession : IDisposable
     public Action Submit(Intent intent, Action<ActionResolution>? completed = null,
         IReadOnlyDictionary<string, object>? context = null)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         Func<double?>? command = null;
         command = () =>
         {
@@ -113,9 +130,12 @@ public sealed class SimulationSession : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         foreach (var actor in _actors.Keys.ToArray()) Deactivate(actor);
         Timeline.Cancel(task => _commands.Contains(task.Action));
         _commands.Clear();
         Runtime.Executed -= Charge;
+        Runtime.Guards.Remove(_chargeGuard);
     }
 }
