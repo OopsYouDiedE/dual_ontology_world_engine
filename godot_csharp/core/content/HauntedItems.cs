@@ -99,7 +99,14 @@ public static class HauntedItems
         Soul mind,
         Entity actor,
         RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context = null)
+        ActionContext? context = null) =>
+        Offers(mind, actor, env, context?.ToDictionary());
+
+    public static IEnumerable<Intent> Offers(
+        Soul mind,
+        Entity actor,
+        RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context)
     {
         var items = actor.Items.OfType<Entity>().Concat(SceneEntities(actor))
             .Where(IsItem).Distinct().ToArray();

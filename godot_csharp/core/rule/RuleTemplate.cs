@@ -69,7 +69,7 @@ public static class RuleTemplate
     /// 返回 ValueTuple 以保持调用轻量。排序固定为亲和度降序、名称序，保证同分结果稳定。
     /// 不适用的套路返回空序列，这是正常场景状态，不抛出异常。
     /// </remarks>
-    public static IReadOnlyList<(Rule Rule, string Name, Aspect Guarantee, float BaseAffinity)> SampleCandidateRules(
+    public static IReadOnlyList<(Rule Rule, string Name, Aspect Guarantee, double BaseAffinity)> SampleCandidateRules(
         Soul soul,
         Entity actor,
         RuleEnvironment env,
@@ -81,7 +81,7 @@ public static class RuleTemplate
             .ThenBy(candidate => candidate.Name, StringComparer.Ordinal)
             .ToList();
 
-        IEnumerable<(Rule Rule, string Name, Aspect Guarantee, float BaseAffinity)> Candidates()
+        IEnumerable<(Rule Rule, string Name, Aspect Guarantee, double BaseAffinity)> Candidates()
         {
             foreach (var observation in soul.Observations)
             {
@@ -99,7 +99,7 @@ public static class RuleTemplate
                     rule,
                     $"《{risk.Name}》双人见证检查规程",
                     guarantee,
-                    12f + actor.Tag(Aspect.Law) * 3f + actor.Tag(Aspect.Preservation) * 2f);
+                    12d + actor.Tag(Aspect.Law) * 3d + actor.Tag(Aspect.Preservation) * 2d);
             }
 
             if (soul.Observations.Count > 0 || soul.Beliefs.Any(belief => belief.Has("Received")))
@@ -115,7 +115,7 @@ public static class RuleTemplate
                     rule,
                     "涉外部言论独立查验准则",
                     guarantee,
-                    10f + actor.Tag(Aspect.Mind) * 3f + actor.Tag(Aspect.Vestige) * 2f);
+                    10d + actor.Tag(Aspect.Mind) * 3d + actor.Tag(Aspect.Vestige) * 2d);
             }
 
             var orderAptitude = actor.Tag(Aspect.Law) * 2 + actor.Tag(Aspect.Mind);
@@ -125,7 +125,7 @@ public static class RuleTemplate
                     RequireEvidenceBefore("accuse_without_evidence"),
                     "公开指控证据前置公约",
                     Aspect.Law,
-                    11f + orderAptitude * 2f);
+                    11d + orderAptitude * 2d);
             }
         }
     }

@@ -6,7 +6,7 @@
 
 C# Core 的当前接口与维护约定见 [Core 维护与验收](docs/csharp-core-maintenance-zh.md)及 [C# 语法规范](godot_csharp/core/AGENTS.md)。
 
-新游戏从 [当前 C# Core 使用规范](docs/csharp-core-usage-zh.md) 开始。文学模拟入口提供默认规则范式、灵异物品和人物交互。后续扩展见 [长篇成长、张力与平衡设计和测试方案](docs/long-term-simulation-plan-zh.md)，其中的长期机制尚未实施。
+新游戏从 [当前 C# Core 使用规范](docs/csharp-core-usage-zh.md) 开始。文学模拟入口提供默认规则范式、灵异物品和人物交互。后续扩展见 [长篇成长、张力与平衡设计和测试方案](docs/long-term-simulation-plan-zh.md)，其中部分长期机制已由[四人与恶魔场景](docs/long-term-campaign-results.md)验证，尚未接入原学院五日流程。规范见[长程平衡数值表设计规范](docs/long-term-balance-standard-zh.md)和[核心使用规范](docs/csharp-core-usage-zh.md)。
 
 ```powershell
 dotnet run --project godot_csharp/examples/literary_story/DualOntologyWorldEngine.LiteraryStory.csproj
@@ -73,3 +73,4 @@ python -m python
 - [Python / C# Core 替换规范](docs/python-csharp-core-replacement-standard-zh.md)
 - [异常感知学园设计规范](docs/academy-design-zh.md)
 - [五日推演规范化轨迹](docs/five_days_trajectory.md)：历史学园样例轨迹，用于审计与回归参考，不能单独证明通用模拟能力或 Python/C# 跨语言一致性。
+

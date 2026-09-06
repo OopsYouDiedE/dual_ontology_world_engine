@@ -88,28 +88,18 @@ public class Character : Entity
 #region 认知心智主体 (Soul)
 
 /// <summary>候选行动生成步骤委托。</summary>
-/// <param name="soul">主导决策的认知心智主体。</param>
-/// <param name="actor">执行行动的角色身体实体。</param>
-/// <param name="env">当前认知求值环境。</param>
-/// <param name="context">外部附加情境上下文。</param>
-/// <returns>在当前环境可行的行动意图序列，无可用意图时返回 null 或空序列。</returns>
 public delegate IEnumerable<Intent>? StepDelegate(
     Soul soul,
     Entity actor,
     RuleEnvironment env,
-    IReadOnlyDictionary<string, object>? context);
+    ActionContext? context);
 
 /// <summary>主观偏好与动机打分委托。</summary>
-/// <param name="soul">进行主观价值权衡的认知主体。</param>
-/// <param name="intent">待评估的候选行动意图。</param>
-/// <param name="env">当前主观认知环境。</param>
-/// <param name="context">附加情境上下文字典。</param>
-/// <returns>动机偏好评分（正分为正向激励，负分为心理抵触）。</returns>
-public delegate float PreferenceDelegate(
+public delegate double PreferenceDelegate(
     Soul soul,
     Intent intent,
     RuleEnvironment env,
-    IReadOnlyDictionary<string, object>? context);
+    ActionContext? context);
 
 /// <summary>保存观察、信念、人格偏好、决策步骤与历史决策的独立认知主体。</summary>
 /// <remarks>
@@ -123,6 +113,9 @@ public delegate float PreferenceDelegate(
 /// </remarks>
 public class Soul : Entity
 {
+    private readonly List<Entity> _beliefs = [];
+    private readonly List<Entity> _dispositions = [];
+
     /// <summary>与认知绑定的主要角色物理身体（首选躯体）。</summary>
     public Character? Body => Characters.FirstOrDefault();
 
@@ -135,28 +128,34 @@ public class Soul : Entity
     public IReadOnlyList<Expr> Observations =>
         Entries("Observation").Select(f => f.Value).OfType<Expr>().ToList();
 
-    /// <summary>该 Soul 持有的规则信念实体（RuleBelief）。</summary>
+    /// <summary>该 Soul 持有的规则信念实体（RuleBelief），非世界实体，不挂载在世界树上。</summary>
     public IReadOnlyList<Entity> Beliefs =>
-        Children.Keys.OfType<Entity>().Where(child => child.Has("RuleBelief")).ToList();
+        _beliefs.Concat(Entries(FacetType.Belief).Select(f => f.Value).OfType<Entity>())
+        .Concat(Children.Keys.OfType<Entity>().Where(child => child.Has("RuleBelief") || child.HasTag(CommonTag.RuleBelief)))
+        .Distinct()
+        .ToList();
 
     /// <summary>已记录的决策历史结果列表。</summary>
     public IReadOnlyList<Decision> Decisions =>
         Entries("Decision").Select(f => f.Value).OfType<Decision>().ToList();
 
-    /// <summary>直接属于该 Soul 的稳定人格倾向实体。</summary>
+    /// <summary>直接属于该 Soul 的稳定人格倾向实体，非世界实体，不挂载在世界树上。</summary>
     public IReadOnlyList<Entity> Dispositions =>
-        Children.Keys.OfType<Entity>().Where(child => child.Has("Disposition")).ToList();
+        _dispositions.Concat(Entries(FacetType.Disposition).Select(f => f.Value).OfType<Entity>())
+        .Concat(Children.Keys.OfType<Entity>().Where(child => child.Has("Disposition")))
+        .Distinct()
+        .ToList();
 
     #region 长线目标承诺（Commitment）体系
 
     /// <summary>当前心智所承诺推进的长期长线目标对象（实体、场景或概念）。</summary>
-    public object? CurrentCommitment => Entries("CommittedTo").FirstOrDefault()?.Value;
+    public object? CurrentCommitment => Entries(FacetType.CommittedTo).FirstOrDefault()?.Value ?? Entries("CommittedTo").FirstOrDefault()?.Value;
 
     /// <summary>推进当前长线承诺目标时获得的动机惯性加分强度。</summary>
-    public float CommitmentInertia => Entries("CommittedTo").FirstOrDefault()?.Strength ?? 0;
+    public double CommitmentInertia => (double)(Entries(FacetType.CommittedTo).FirstOrDefault()?.Strength ?? Entries("CommittedTo").FirstOrDefault()?.Strength ?? 0);
 
     /// <summary>单次连续重复动作所施加的边际效用衰减惩罚分（默认 30 分）。</summary>
-    public float PenaltyPerRepetition { get; set; } = 30f;
+    public double PenaltyPerRepetition { get; set; } = 30.0;
 
     /// <summary>为心智确立一个长线目标承诺（CommittedTo），赋予持续推进的动机惯性。</summary>
     /// <param name="goal">目标实体或意图对象。</param>
@@ -164,13 +163,14 @@ public class Soul : Entity
     public void CommitTo(object goal, int inertia = 25)
     {
         ClearCommitment();
-        Attach("CommittedTo", goal, inertia);
+        Attach(FacetType.CommittedTo, goal, inertia);
     }
 
     /// <summary>清除当前心智持有的长线承诺。</summary>
     public void ClearCommitment()
     {
         Detach("CommittedTo");
+        Facets.RemoveAll(f => f.Type == FacetType.CommittedTo);
     }
 
     #endregion
@@ -178,13 +178,13 @@ public class Soul : Entity
     #region 非线性对数情绪来源体系
 
     /// <summary>对数情绪聚合的底数基数（默认 2.0）。</summary>
-    public float EmotionBase { get; set; } = 2.0f;
+    public double EmotionBase { get; set; } = 2.0;
 
     /// <summary>
     /// 各情感类型下按来源划分的离散强度字典。
     /// 结构为：[情感类型 -> [来源标识 -> 强度分值]]。
     /// </summary>
-    public Dictionary<Emotion, Dictionary<string, float>> EmotionSources { get; } = new()
+    public Dictionary<Emotion, Dictionary<string, double>> EmotionSources { get; } = new()
     {
         [Emotion.Fear] = new(),
         [Emotion.Anger] = new(),
@@ -199,24 +199,24 @@ public class Soul : Entity
     };
 
     /// <summary>经过非线性聚合后的各情感类型有效总强度缓存。</summary>
-    public Dictionary<Emotion, float> EmotionIntensities { get; } = new();
+    public Dictionary<Emotion, double> EmotionIntensities { get; } = new();
 
-    public float CalculateAggregatedEmotion(Emotion emotion)
+    public double CalculateAggregatedEmotion(Emotion emotion)
     {
-        if (!EmotionSources.TryGetValue(emotion, out var sources) || sources.Count == 0) return 0.0f;
+        if (!EmotionSources.TryGetValue(emotion, out var sources) || sources.Count == 0) return 0.0;
         var b = EmotionBase;
         double sum = 0.0;
-        foreach (var (_, intensity) in sources) if (intensity > 0.0f) sum += Math.Pow(b, intensity) - 1.0;
-        return sum <= 0.0 ? 0.0f : Math.Clamp((float)(Math.Log(1.0 + sum) / Math.Log(b)), 0.0f, 10.0f);
+        foreach (var (_, intensity) in sources) if (intensity > 0.0) sum += Math.Pow(b, intensity) - 1.0;
+        return sum <= 0.0 ? 0.0 : Math.Clamp(Math.Log(1.0 + sum) / Math.Log(b), 0.0, 10.0);
     }
 
     public HashSet<string> PersistentEmotionSources { get; } = new();
 
-    public void SetEmotionSource(Emotion emotion, string source, float intensity, bool isPersistent = false)
+    public void SetEmotionSource(Emotion emotion, string source, double intensity, bool isPersistent = false)
     {
         if (!EmotionSources.TryGetValue(emotion, out var sources)) EmotionSources[emotion] = sources = new();
         if (isPersistent) PersistentEmotionSources.Add(source);
-        if (intensity <= 0.0f) { sources.Remove(source); PersistentEmotionSources.Remove(source); }
+        if (intensity <= 0.0) { sources.Remove(source); PersistentEmotionSources.Remove(source); }
         else sources[source] = intensity;
         RecalculateEmotion(emotion);
     }
@@ -234,35 +234,35 @@ public class Soul : Entity
         SetTag(emotion, (int)Math.Round(aggregated));
     }
 
-    public void AdjustEmotion(Emotion emotion, int delta, string reason, bool isPersistent = false)
+    public void AdjustEmotion(Emotion emotion, double delta, string reason, bool isPersistent = false)
     {
         if (!EmotionSources.TryGetValue(emotion, out var sources)) EmotionSources[emotion] = sources = new();
         if (isPersistent) PersistentEmotionSources.Add(reason);
-        var updated = sources.GetValueOrDefault(reason, 0.0f) + delta;
-        if (updated <= 0.0f) { sources.Remove(reason); PersistentEmotionSources.Remove(reason); }
+        var updated = sources.GetValueOrDefault(reason, 0.0) + delta;
+        if (updated <= 0.0) { sources.Remove(reason); PersistentEmotionSources.Remove(reason); }
         else sources[reason] = updated;
         RecalculateEmotion(emotion);
     }
 
-    public Dictionary<Emotion, (float OldVal, float NewVal)> SettleDailyEmotions(float transientDecay = 0.5f, float persistentDecay = 0.95f)
+    public Dictionary<Emotion, (double OldVal, double NewVal)> SettleDailyEmotions(double transientDecay = 0.5, double persistentDecay = 0.95)
     {
-        var deltas = new Dictionary<Emotion, (float OldVal, float NewVal)>();
+        var deltas = new Dictionary<Emotion, (double OldVal, double NewVal)>();
         foreach (var emo in Enum.GetValues<Emotion>())
         {
-            float oldVal = EmotionIntensities.GetValueOrDefault(emo, 0.0f);
+            double oldVal = EmotionIntensities.GetValueOrDefault(emo, 0.0);
             if (EmotionSources.TryGetValue(emo, out var sources) && sources.Count > 0)
             {
                 foreach (var key in sources.Keys.ToList())
                 {
                     bool isPersistent = PersistentEmotionSources.Contains(key);
-                    float updated = sources[key] * (isPersistent ? persistentDecay : transientDecay);
-                    if (updated < 0.15f && !isPersistent) sources.Remove(key);
+                    double updated = sources[key] * (isPersistent ? persistentDecay : transientDecay);
+                    if (updated < 0.15 && !isPersistent) sources.Remove(key);
                     else sources[key] = updated;
                 }
             }
             RecalculateEmotion(emo);
-            float newVal = EmotionIntensities.GetValueOrDefault(emo, 0.0f);
-            if (Math.Abs(newVal - oldVal) > 0.01f || newVal > 0.1f) deltas[emo] = (oldVal, newVal);
+            double newVal = EmotionIntensities.GetValueOrDefault(emo, 0.0);
+            if (Math.Abs(newVal - oldVal) > 0.01 || newVal > 0.1) deltas[emo] = (oldVal, newVal);
         }
         return deltas;
     }
@@ -381,10 +381,9 @@ public class Soul : Entity
         var found = Beliefs.FirstOrDefault(b => ReferenceEquals(b.Get<Entity>("publication"), publication));
         if (found != null) return found;
 
-        return new Entity(
+        var created = new Entity(
             $"对“{publication.Name}”的理解",
-            this,
-            new Dictionary<string, int> { ["RuleBelief"] = 1, ["Belief"] = 1, ["Received"] = 1 },
+            parent: null,
             properties: new Dictionary<string, object>
             {
                 ["publication"] = publication,
@@ -393,37 +392,46 @@ public class Soul : Entity
                 ["confidence"] = confidence,
                 ["stance"] = CognitiveStage.Received,
                 ["stage"] = "received"
-            });
+            }).AddTags(CommonTag.RuleBelief, CommonTag.Belief, CommonTag.Received);
+        _beliefs.Add(created);
+        Attach(FacetType.Belief, created);
+        return created;
     }
 
     public static Entity Stance(Entity belief, CognitiveStage stance)
     {
-        belief.Tags.Remove("Received");
-        belief.Tags.Remove("Understood");
-        belief.Tags.Remove("Accepted");
-        belief.Tags.Remove("Rejected");
-        belief.Change(stance.ToString(), 1);
+        belief.SetTag(CommonTag.Received, 0);
+        belief.SetTag(CommonTag.Understood, 0);
+        belief.SetTag(CommonTag.Accepted, 0);
+        belief.SetTag(CommonTag.Rejected, 0);
+        belief.SetTag(stance switch
+        {
+            CognitiveStage.Received => CommonTag.Received,
+            CognitiveStage.Understood => CommonTag.Understood,
+            CognitiveStage.Accepted => CommonTag.Accepted,
+            _ => CommonTag.Rejected
+        }, 1);
         belief.Set("stance", stance);
-        belief.Set("stage", "understood");
+        belief.Set("stage", stance.ToString().ToLowerInvariant());
         return belief;
     }
 
     public Entity Understand(Rule rule)
     {
         var belief = Beliefs.First(item => ReferenceEquals(item.Get<Rule>("rule"), rule) || Equals(item.Get<Rule>("rule"), rule));
-        if (belief.Has("Received")) Stance(belief, CognitiveStage.Understood);
+        if (belief.HasTag(CommonTag.Received) || belief.Has("Received")) Stance(belief, CognitiveStage.Understood);
         return belief;
     }
 
     public Entity Consider(Rule rule, Entity source, int confidence = 1, string guaranteeTag = "Guarantee")
     {
         var publication = source.Children.Keys.OfType<Entity>()
-            .FirstOrDefault(child => child.Has("RulePublication") && (ReferenceEquals(child.Get<Rule>("rule"), rule) || Equals(child.Get<Rule>("rule"), rule)))
+            .FirstOrDefault(child => (child.HasTag(CommonTag.RulePublication) || child.Has("RulePublication")) && (ReferenceEquals(child.Rule(), rule) || Equals(child.Rule(), rule)))
             ?? RuleEntityFactory.CreateRulePublication(rule, source, guaranteeTag, source);
 
         var belief = Receive(publication, confidence);
         Stance(belief, CognitiveStage.Understood);
-        var issuer = publication.Get<Entity>("issuer") ?? source;
+        var issuer = publication.Issuer() ?? source;
         int support = confidence + issuer.Tag(guaranteeTag) * 2 + issuer.Tag("Authority");
         return Stance(belief, support >= 4 ? CognitiveStage.Accepted : CognitiveStage.Rejected);
     }
@@ -432,36 +440,37 @@ public class Soul : Entity
 
     public Entity Reject(Rule rule) => Stance(Beliefs.First(item => ReferenceEquals(item.Get<Rule>("rule"), rule) || Equals(item.Get<Rule>("rule"), rule)), CognitiveStage.Rejected);
 
-    public Facet InstallStep(StepDelegate step, int priority = 0, Func<Entity, IReadOnlyDictionary<string, object>?, bool>? when = null, object? source = null) => Attach("Step", step, priority, when, source);
-    public IReadOnlyList<Facet> UninstallSteps(object source) => Detach("Step", source: source);
-    public Facet InstallPreference(PreferenceDelegate preference, int strength = 1, Func<Entity, IReadOnlyDictionary<string, object>?, bool>? when = null, object? source = null) => Attach("Preference", preference, strength, when, source);
-    public IReadOnlyList<Facet> UninstallPreferences(object source) => Detach("Preference", source: source);
+    public Facet InstallStep(StepDelegate step, int priority = 0, Func<Entity, ActionContext?, bool>? when = null, object? source = null) => Attach(FacetType.Step, step, priority, when, source);
+    public IReadOnlyList<Facet> UninstallSteps(object source) => Detach(FacetType.Step, source: source);
+    public Facet InstallPreference(PreferenceDelegate preference, int strength = 1, Func<Entity, ActionContext?, bool>? when = null, object? source = null) => Attach(FacetType.Preference, preference, strength, when, source);
+    public IReadOnlyList<Facet> UninstallPreferences(object source) => Detach(FacetType.Preference, source: source);
 
-    public IReadOnlyList<PreferencePressure> PreferencePressures(Intent action, RuleEnvironment world, IReadOnlyDictionary<string, object>? context = null)
+    public IReadOnlyList<PreferencePressure> PreferencePressures(Intent action, RuleEnvironment world, ActionContext? context = null)
     {
         var cognitive = CognitiveEnvironment(world);
-        var local = new Dictionary<string, object>(context ?? new Dictionary<string, object>()) { ["actor"] = action.Actor, ["intent"] = action, ["soul"] = this, ["env"] = cognitive };
         var pressures = new List<PreferencePressure>();
-        foreach (var facet in Entries("Preference", local))
+        foreach (var facet in Entries(FacetType.Preference, context))
         {
             if (facet.Value is PreferenceDelegate pref)
             {
-                float amount = pref(this, action, cognitive, local) * facet.Strength;
-                if (Math.Abs(amount) > 0.0001f) pressures.Add(new PreferencePressure(amount, facet.Source ?? facet));
+                double amount = pref(this, action, cognitive, context) * facet.Strength;
+                if (Math.Abs(amount) > 0.0001) pressures.Add(new PreferencePressure(amount, facet.Source ?? facet));
             }
         }
         return pressures;
     }
 
-    public IReadOnlyList<Intent> Choices(Entity actor, RuleEnvironment env, IReadOnlyDictionary<string, object>? context = null)
+    public IReadOnlyList<PreferencePressure> PreferencePressures(Intent action, RuleEnvironment world, IReadOnlyDictionary<string, object>? context) =>
+        PreferencePressures(action, world, ActionContext.FromDictionary(context));
+
+    public IReadOnlyList<Intent> Choices(Entity actor, RuleEnvironment env, ActionContext? context = null)
     {
-        var ctx = new Dictionary<string, object>(context ?? new Dictionary<string, object>()) { ["actor"] = actor, ["soul"] = this, ["env"] = env };
         var results = new List<Intent>();
-        foreach (var facet in Entries("Step", ctx).OrderByDescending(f => f.Strength))
+        foreach (var facet in Entries(FacetType.Step, context).OrderByDescending(f => f.Strength))
         {
             if (facet.Value is StepDelegate step)
             {
-                var candidateResult = step(this, actor, env, ctx);
+                var candidateResult = step(this, actor, env, context);
                 if (candidateResult != null)
                 {
                     foreach (var act in candidateResult)
@@ -473,6 +482,9 @@ public class Soul : Entity
         }
         return results;
     }
+
+    public IReadOnlyList<Intent> Choices(Entity actor, RuleEnvironment env, IReadOnlyDictionary<string, object>? context) =>
+        Choices(actor, env, ActionContext.FromDictionary(context));
 
     /// <summary>判定指定行动意图是否有助于推进当前承诺的长线目标。</summary>
     private bool AdvancesCommitment(Intent action, object commitment)
@@ -519,13 +531,13 @@ public class Soul : Entity
 
         foreach (var ev in list)
         {
-            var evActor = ev.Get<Entity>("actor") ?? ev.Entries("Actor").FirstOrDefault()?.Value as Entity;
+            var evActor = ev.Actor() ?? ev.Entries("Actor").FirstOrDefault()?.Value as Entity;
             if (!ReferenceEquals(evActor, actor))
             {
                 continue;
             }
 
-            var evEffect = ev.Get<Effect>("effect");
+            var evEffect = ev.Effect();
             if (evEffect == null) break;
 
             var evTarget = evEffect.Args.Length > 1 ? evEffect.Args[1] : (evEffect.Args.Length > 0 && !ReferenceEquals(evEffect.Args[0], actor) ? evEffect.Args[0] : null);
@@ -554,20 +566,13 @@ public class Soul : Entity
         IEnumerable<Intent> candidates,
         RuleSystem rules,
         RuleEnvironment world,
-        Func<Intent, float>? utility = null,
-        IReadOnlyDictionary<string, object>? context = null)
+        Func<Intent, double>? utility = null,
+        ActionContext? context = null)
     {
         var cognitive = CognitiveEnvironment(world);
         var assessed = new List<Decision>();
 
-        IEnumerable<Entity>? historyEvents = null;
-        if (context != null)
-        {
-            if (context.TryGetValue("events", out var evObj) && evObj is IEnumerable<Entity> evList)
-                historyEvents = evList;
-            else if (context.TryGetValue("runtime", out var rtObj) && rtObj is ActionRuntime rt)
-                historyEvents = rt.Events;
-        }
+        var historyEvents = context?.Events ?? context?.Runtime?.Events;
 
         var commitment = CurrentCommitment;
         var inertia = CommitmentInertia;
@@ -576,19 +581,19 @@ public class Soul : Entity
         {
             var d = rules.Evaluate(this, action, cognitive, context);
             var prefs = PreferencePressures(action, world, context);
-            float prefScore = prefs.Sum(p => p.Amount);
-            float u = utility != null ? utility(action) : 0f;
+            double prefScore = prefs.Sum(p => p.Amount);
+            double u = utility != null ? utility(action) : 0.0;
 
             int repeats = CountRecentRepetitions(historyEvents, action.Actor, action.Effect);
-            float repPenalty = repeats * PenaltyPerRepetition;
+            double repPenalty = repeats * PenaltyPerRepetition;
 
-            float inertiaBonus = 0f;
+            double inertiaBonus = 0.0;
             if (commitment != null && AdvancesCommitment(action, commitment))
             {
                 inertiaBonus = inertia;
             }
 
-            float totalScore = d.Score + prefScore + u + inertiaBonus - repPenalty;
+            double totalScore = d.Score + prefScore + u + inertiaBonus - repPenalty;
 
             assessed.Add(new Decision(
                 action.Effect,
@@ -599,12 +604,27 @@ public class Soul : Entity
                 action,
                 d.Pressures,
                 prefs,
-                repetitionPenalty: repPenalty,
-                commitmentInertia: inertiaBonus));
+                repPenalty,
+                inertiaBonus));
         }
 
         return assessed.OrderByDescending(d => d.Score).ToList();
     }
+
+    public IReadOnlyList<Decision> Assess(
+        IEnumerable<Intent> candidates,
+        RuleSystem rules,
+        RuleEnvironment world,
+        Func<Intent, double> utility,
+        IReadOnlyDictionary<string, object>? context) =>
+        Assess(candidates, rules, world, utility, ActionContext.FromDictionary(context));
+
+    public IReadOnlyList<Decision> Assess(
+        IEnumerable<Intent> candidates,
+        RuleSystem rules,
+        RuleEnvironment world,
+        IReadOnlyDictionary<string, object>? context) =>
+        Assess(candidates, rules, world, null, ActionContext.FromDictionary(context));
 
     /// <summary>主体执行单次自主认知决策的主驱动入口。</summary>
     /// <remarks>
@@ -626,8 +646,8 @@ public class Soul : Entity
         Entity actor,
         RuleSystem rules,
         RuleEnvironment world,
-        IReadOnlyDictionary<string, object>? context = null,
-        Func<Intent, float>? utility = null,
+        ActionContext? context = null,
+        Func<Intent, double>? utility = null,
         Func<Intent, bool>? allows = null,
         Func<IReadOnlyList<Decision>, Intent>? chooser = null)
     {
@@ -645,15 +665,21 @@ public class Soul : Entity
 
         var chosenDecision = decisions.FirstOrDefault(d => ReferenceEquals(d.Action, chosenAction))
             ?? throw new InvalidOperationException("选择器必须返回本次候选中的行动。");
-        object? source = null;
-        if (context != null && context.TryGetValue("source", out var src))
-        {
-            source = src;
-        }
+        object? source = context?.Source;
 
         Attach("Decision", chosenDecision, 1, null, source);
         return chosenAction;
     }
+
+    public Intent? Step(
+        Entity actor,
+        RuleSystem rules,
+        RuleEnvironment world,
+        IReadOnlyDictionary<string, object>? context,
+        Func<Intent, double>? utility = null,
+        Func<Intent, bool>? allows = null,
+        Func<IReadOnlyList<Decision>, Intent>? chooser = null) =>
+        Step(actor, rules, world, ActionContext.FromDictionary(context), utility, allows, chooser);
 
     /// <summary>针对一组抽象效果表达式直接通过规则系统进行决策评估。</summary>
     /// <param name="candidates">效果表达式集合。</param>
@@ -665,7 +691,7 @@ public class Soul : Entity
         IEnumerable<Effect> candidates,
         RuleSystem rules,
         RuleEnvironment world,
-        Func<Effect, float>? utility = null)
+        Func<Effect, double>? utility = null)
     {
         return rules.Decide(this, candidates, CognitiveEnvironment(world), utility);
     }

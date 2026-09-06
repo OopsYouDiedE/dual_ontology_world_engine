@@ -1,4 +1,3 @@
-
 namespace DualOntologyWorldEngine.Core.Rules;
 
 /// <summary>保存可解析别名和当前事实的轻量规则求值环境。</summary>
@@ -15,8 +14,8 @@ namespace DualOntologyWorldEngine.Core.Rules;
 public class RuleEnvironment
 {
     private readonly Dictionary<string, object> _aliases = new(StringComparer.OrdinalIgnoreCase);
-    public Entity State { get; } = new("规则事实", properties: new Dictionary<string, object> { ["facts"] = new List<Expr>() });
-    private List<Expr> _facts => State.Get<List<Expr>>("facts")!;
+    private readonly List<Expr> _facts = new();
+    private int _version;
 
     /// <summary>当前环境中注册的符号别名映射字典（不区分大小写）。</summary>
     public IReadOnlyDictionary<string, object> Aliases => _aliases;
@@ -25,14 +24,14 @@ public class RuleEnvironment
     public IReadOnlyList<Expr> Facts => _facts;
 
     /// <summary>环境版本号。每次断言或撤销事实时单调递增，用于缓存失效检测。</summary>
-    public int Version { get => State.Get<int>("version"); private set => State.Set("version", value); }
+    public int Version => _version;
 
     /// <summary>清空所有符号别名与已断言事实，将环境重置为初始状态。</summary>
     public void Clear()
     {
         _aliases.Clear();
-        State.Set("facts", new List<Expr>());
-        Version++;
+        _facts.Clear();
+        _version++;
     }
 
     /// <summary>注册或覆盖一条符号别名映射。</summary>
@@ -123,8 +122,8 @@ public class RuleEnvironment
     public bool AssertFact(Expr fact)
     {
         if (_facts.Any(f => Matches(f, fact))) return false;
-        State.Set("facts", _facts.Append(fact).ToList());
-        Version++;
+        _facts.Add(fact);
+        _version++;
         return true;
     }
 
@@ -136,8 +135,8 @@ public class RuleEnvironment
         var found = _facts.FirstOrDefault(f => Matches(f, fact));
         if (found != null)
         {
-            State.Set("facts", _facts.Where(f => f != found).ToList());
-            Version++;
+            _facts.Remove(found);
+            _version++;
             return true;
         }
         return false;

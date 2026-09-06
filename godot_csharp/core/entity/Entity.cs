@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Core.Rules;
+using DualOntologyWorldEngine.Core.Timeline;
 
 namespace DualOntologyWorldEngine.Core;
 
@@ -490,6 +491,60 @@ public enum FacetType
     /// <summary>论及对象关系。表示当前记录载体、知识实体、情报或命题陈述所讨论、记录或指向的目标客体。</summary>
     About,
 
+    /// <summary>目标关系。表示某一事件、动作行为、仪式或契约所指向的作用目标实体。</summary>
+    Target,
+
+    /// <summary>投入关系。表示投入仪式或行为的素材、媒介或输入实体。</summary>
+    Input,
+
+    /// <summary>行动前置条件或准入需求。</summary>
+    Requirement,
+
+    /// <summary>行动或仪式所需支付的代价。</summary>
+    Cost,
+
+    /// <summary>行动、仪式或契约所产生的干涉效果。</summary>
+    Effect,
+
+    /// <summary>被动触发条件规则。</summary>
+    Trigger,
+
+    /// <summary>不可违抗的客观硬性约束规约。</summary>
+    HardConstraint,
+
+    /// <summary>主体应当遵从的主观因果义务规则。</summary>
+    Obligation,
+
+    /// <summary>违反义务时触发的违约惩戒效果。</summary>
+    Breach,
+
+    /// <summary>免责或豁免生效条件。</summary>
+    Exception,
+
+    /// <summary>实体对外发布的可交互能力工厂。</summary>
+    Affordance,
+
+    /// <summary>知识、物证或断言所承载的命题声明。</summary>
+    Claim,
+
+    /// <summary>心智人格倾向或态度设定。</summary>
+    Disposition,
+
+    /// <summary>动作或效果执行所产生并记录的状态变更。</summary>
+    Change,
+
+    /// <summary>心智执行步骤候选委托。</summary>
+    Step,
+
+    /// <summary>心智偏好倾向与效用加权委托。</summary>
+    Preference,
+
+    /// <summary>长线承诺目标。</summary>
+    CommittedTo,
+
+    /// <summary>规则或主观信念事实。</summary>
+    Belief,
+
     /// <summary>自定义扩展关系。表示未被预设枚举覆盖的用户定义或模组特定轻量语义关系。</summary>
     Custom
 }
@@ -527,6 +582,12 @@ public enum CommonTag
     /// <summary>处于锁定阻断状态。</summary>
     Locked,
 
+    /// <summary>处于被角色持握激活状态。</summary>
+    Held,
+
+    /// <summary>契约、誓约或因果公约实体。</summary>
+    Pact,
+
     /// <summary>动态影响或临时状态（带时效与衰减）。</summary>
     Influence,
 
@@ -555,7 +616,157 @@ public enum CommonTag
     Accepted,
 
     /// <summary>知识已被主体审视并确定拒绝/证伪。</summary>
-    Rejected
+    Rejected,
+
+    /// <summary>知识已接收但尚未深层理解。</summary>
+    Received,
+
+    /// <summary>知识已被主体理解但尚未决定采信。</summary>
+    Understood,
+
+    /// <summary>规则信念实体。</summary>
+    RuleBelief,
+
+    /// <summary>一般信念。</summary>
+    Belief,
+
+    /// <summary>规则发布声明实体。</summary>
+    RulePublication,
+
+    /// <summary>规则补丁。</summary>
+    RulePatch,
+
+    /// <summary>仪式配方实体。</summary>
+    Recipe,
+
+    /// <summary>言灵咒术实体。</summary>
+    Incantation,
+
+    /// <summary>言灵机制标志。</summary>
+    Kotodama,
+
+    /// <summary>施行中的仪式实体。</summary>
+    Rite,
+
+    /// <summary>因果公约/契约实体。</summary>
+    Covenant,
+
+    /// <summary>处于活跃激活状态。</summary>
+    Active,
+
+    /// <summary>契约处于触发执行中。</summary>
+    Firing,
+
+    /// <summary>阅读材料。</summary>
+    ReadingMaterial,
+
+    /// <summary>书籍。</summary>
+    Book,
+
+    /// <summary>文献记录。</summary>
+    Document,
+
+    /// <summary>食物。</summary>
+    Food,
+
+    /// <summary>饮品。</summary>
+    Drink,
+
+    /// <summary>休息处所。</summary>
+    RestingPlace,
+
+    /// <summary>床铺。</summary>
+    Bed,
+
+    /// <summary>休息状态/功能。</summary>
+    Resting,
+
+    /// <summary>维护完毕状态。</summary>
+    MaintenanceDone,
+
+    /// <summary>危险隐患。</summary>
+    Hazard,
+
+    /// <summary>受污状态。</summary>
+    Tainted,
+
+    /// <summary>物证实体。</summary>
+    Evidence,
+
+    /// <summary>录音/音响记录。</summary>
+    Recording,
+
+    /// <summary>一般物品实体。</summary>
+    Item,
+
+    /// <summary>大型不可随身携带设施。</summary>
+    Large,
+
+    /// <summary>隐藏状态。</summary>
+    Hidden,
+
+    /// <summary>条款标志。</summary>
+    Clause,
+
+    /// <summary>消耗品。</summary>
+    Consumable,
+
+    /// <summary>工具器具。</summary>
+    Tool,
+
+    /// <summary>恐惧/恐慌状态。</summary>
+    Panic,
+
+    /// <summary>理智稳定度。</summary>
+    Stability
+}
+
+/// <summary>核心稳定客观属性强类型枚举键。</summary>
+public enum PropertyKey
+{
+    Intensity,
+    ExpiresAt,
+    StartedAt,
+    Decay,
+    Revoked,
+    Doses,
+    Integrity,
+    Emotion,
+    ItemKind,
+    Claims,
+    Reveals,
+    Effects,
+    Subject,
+    Source,
+    Target,
+    Issuer,
+    Confidence,
+    Stage,
+    Stance,
+    Publication,
+    Rule,
+    Slots,
+    Thresholds,
+    Recipe,
+    Speaker,
+    Context,
+    Step,
+    Phase,
+    Pattern,
+    Active,
+    Completed,
+    Accepted,
+    Granted,
+    Hard,
+    PublicFields,
+    Text,
+    SelfBinding,
+    Sealed,
+    SealSource,
+    Fired,
+    Investigation,
+    ReflectionCredit,
+    ReflectAfter
 }
 
 #endregion
@@ -575,11 +786,13 @@ public enum CommonTag
 /// </remarks>
 public sealed class Facet
 {
-    /// <summary>切面或关系的字符串键名。</summary>
-    public string Key { get; }
+    private readonly string? _customKey;
 
-    /// <summary>强类型语义关系类型。</summary>
+    /// <summary>强类型语义关系类型或切面类型。</summary>
     public FacetType Type { get; } = FacetType.Custom;
+
+    /// <summary>切面或关系的字符串键名，便于调试诊断与显示。</summary>
+    public string Key => _customKey ?? Type.ToString();
 
     /// <summary>切面所持有的目标值（实体对象、表达式、规则或委托闭包等）。直接持有对象引用。</summary>
     public object Value { get; }
@@ -594,32 +807,44 @@ public sealed class Facet
     public object? Source { get; }
 
     /// <summary>条件激活判定谓词。签名为 (owner, context) => bool。</summary>
-    public Func<Entity, IReadOnlyDictionary<string, object>?, bool>? When { get; }
+    public Func<Entity, ActionContext?, bool>? When { get; }
 
-    /// <summary>初始化轻量切面事实。</summary>
+    /// <summary>初始化强类型切面事实。</summary>
     public Facet(
-        string key,
+        FacetType type,
         object value,
         int strength = 1,
-        Func<Entity, IReadOnlyDictionary<string, object>?, bool>? when = null,
+        Func<Entity, ActionContext?, bool>? when = null,
         object? source = null)
     {
-        Key = key;
+        Type = type;
         Value = value;
         Strength = strength;
         When = when;
         Source = source;
-        if (Enum.TryParse<FacetType>(key, true, out var parsed))
-        {
-            Type = parsed;
-        }
     }
 
-    /// <summary>初始化强类型语义关系切面。</summary>
-    public Facet(FacetType type, Entity value, int strength = 1, object? source = null)
-        : this(type.ToString(), value, strength, null, source)
+    /// <summary>初始化带自定义键名的切面事实（用于自定义或扩展语义）。</summary>
+    public Facet(
+        FacetType type,
+        string? customKey,
+        object value,
+        int strength = 1,
+        Func<Entity, ActionContext?, bool>? when = null,
+        object? source = null)
     {
         Type = type;
+        _customKey = customKey;
+        Value = value;
+        Strength = strength;
+        When = when;
+        Source = source;
+    }
+
+    /// <summary>初始化强类型实体关系切面。</summary>
+    public Facet(FacetType type, Entity value, int strength = 1, object? source = null)
+        : this(type, (object)value, strength, null, source)
+    {
     }
 
     /// <summary>生成切面的调试诊断字符串。</summary>
@@ -659,6 +884,12 @@ public abstract class TreeMember
 
     public TreeMember Reparent(TreeMember? newParent, int position = 0)
     {
+        for (var ancestor = newParent; ancestor != null; ancestor = ancestor.Parent)
+        {
+            if (ReferenceEquals(ancestor, this))
+                throw new InvalidOperationException("不能把节点挂载到自身或其后代下");
+        }
+
         Parent?._children.Remove(this);
         Parent = newParent;
         if (Parent is null) return this;
@@ -690,27 +921,43 @@ public abstract class TreeMember
     #region 属性操作
     public T? Get<T>(string name, T? defaultValue = default) =>
         Properties.TryGetValue(name, out var val) && val is T typed ? typed : defaultValue;
-    public object Set(string name, object value) => Properties[name] = value;
+    public T? Get<T>(PropertyKey key, T? defaultValue = default) =>
+        Get<T>(key.ToString().ToLowerInvariant(), defaultValue) ?? Get<T>(key.ToString(), defaultValue);
+    public virtual object Set(string name, object value) => Properties[name] = value;
+    public virtual object Set(PropertyKey key, object value) => Set(key.ToString().ToLowerInvariant(), value);
     public bool HasProperty(string name) => Properties.ContainsKey(name);
+    public bool HasProperty(PropertyKey key) => HasProperty(key.ToString().ToLowerInvariant()) || HasProperty(key.ToString());
     #endregion
 
     #region 切面关系
-    public Facet Attach(string key, object value, int strength = 1, Func<Entity, IReadOnlyDictionary<string, object>?, bool>? when = null, object? source = null)
+    public Facet Attach(FacetType type, object value, int strength = 1, Func<Entity, ActionContext?, bool>? when = null, object? source = null)
     {
-        var f = new Facet(key, value, strength, when, source);
+        var f = new Facet(type, value, strength, when, source);
         Facets.Add(f);
         return f;
     }
 
-    public IEnumerable<Facet> Entries(string key, IReadOnlyDictionary<string, object>? context = null) =>
-        Facets.Where(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase) && (f.When is null || (this is Entity e && f.When(e, context))));
-
-    public Facet Relate(FacetType type, Entity target, int strength = 1, object? source = null)
+    public Facet Attach(string key, object value, int strength = 1, Func<Entity, ActionContext?, bool>? when = null, object? source = null)
     {
-        var f = new Facet(type, target, strength, source);
+        var type = Enum.TryParse<FacetType>(key, true, out var parsed) ? parsed : FacetType.Custom;
+        var f = new Facet(type, type == FacetType.Custom ? key : null, value, strength, when, source);
         Facets.Add(f);
         return f;
     }
+
+    public IEnumerable<Facet> Entries(FacetType type, ActionContext? context = null) =>
+        Facets.Where(f => f.Type == type && (f.When is null || (this is Entity e && f.When(e, context))));
+
+    public IEnumerable<Facet> Entries(string key, ActionContext? context = null) =>
+        Enum.TryParse<FacetType>(key, true, out var parsed)
+            ? Entries(parsed, context)
+            : Facets.Where(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase) && (f.When is null || (this is Entity e && f.When(e, context))));
+
+    public IEnumerable<Facet> Entries(string key, IReadOnlyDictionary<string, object>? context) =>
+        Entries(key, (ActionContext?)null);
+
+    public Facet Relate(FacetType type, Entity target, int strength = 1, object? source = null) =>
+        Attach(type, target, strength, source: source);
 
     public Facet Relate(string kind, object target, int strength = 1, object? source = null) =>
         Attach(kind, target, strength, source: source);
@@ -719,7 +966,9 @@ public abstract class TreeMember
         Facets.Where(f => f.Type == type && (target is null || ReferenceEquals(f.Value, target)));
 
     public IEnumerable<Facet> Related(string kind, object? target = null) =>
-        Facets.Where(f => string.Equals(f.Key, kind, StringComparison.OrdinalIgnoreCase) && (target is null || Equals(f.Value, target)));
+        Enum.TryParse<FacetType>(kind, true, out var parsed)
+            ? Related(parsed, target as Entity)
+            : Facets.Where(f => string.Equals(f.Key, kind, StringComparison.OrdinalIgnoreCase) && (target is null || Equals(f.Value, target)));
 
     public bool Detach(Facet facet) => Facets.Remove(facet);
 
@@ -732,6 +981,8 @@ public abstract class TreeMember
 
     public IReadOnlyList<Facet> Detach(string kind, object? value = null, object? source = null)
     {
+        if (Enum.TryParse<FacetType>(kind, true, out var parsed))
+            return Detach(parsed, value as Entity, source);
         var matched = Facets.Where(f => string.Equals(f.Key, kind, StringComparison.OrdinalIgnoreCase) && (value is null || Equals(f.Value, value)) && (source is null || Equals(f.Source, source))).ToList();
         Facets.RemoveAll(matched.Contains);
         return matched;
@@ -740,42 +991,148 @@ public abstract class TreeMember
 }
 
 /// <summary>运行时的世界实体，具体物理、人物、场景等对象的载体。</summary>
-public class Entity(
-    string name,
-    TreeMember? parent = null,
-    IDictionary<string, int>? tags = null,
-    int position = 0,
-    IDictionary<string, object>? properties = null,
-    IEnumerable<Facet>? facets = null,
-    IEnumerable<Enum>? enumTags = null)
-    : TreeMember(name, parent, tags, position, properties, facets, enumTags)
+public class Entity : TreeMember
 {
+    private bool _isOpen;
+
+    /// <summary>实体的开启/关闭状态（强类型属性，同步底层 opened 属性以保持规则与效果兼容）。</summary>
+    public bool IsOpen
+    {
+        get => _isOpen;
+        set
+        {
+            _isOpen = value;
+            Properties["opened"] = value;
+        }
+    }
+
+    /// <summary>实体上施加的阻断锁记录集合（强类型列表，消除 _locks 字典反复拆装箱）。</summary>
+    public List<LockRecord> Locks { get; } = [];
+
+    /// <summary>实体携带的客观物理属性集合（强类型映射，消除物性字符串匹配与类型嗅探）。</summary>
+    public Dictionary<PhysicalProperty, double> PhysicalProperties { get; } = [];
+
+    public Entity(
+        string name,
+        TreeMember? parent = null,
+        IDictionary<string, int>? tags = null,
+        int position = 0,
+        IDictionary<string, object>? properties = null,
+        IEnumerable<Facet>? facets = null,
+        IEnumerable<Enum>? enumTags = null)
+        : base(name, parent, tags, position, properties, facets, enumTags)
+    {
+        if (properties != null)
+        {
+            if (properties.TryGetValue("opened", out var o) && o is true)
+            {
+                _isOpen = true;
+            }
+            if (properties.TryGetValue("_locks", out var l) && l is IEnumerable<LockRecord> locks)
+            {
+                Locks.AddRange(locks);
+            }
+            foreach (var (k, v) in properties)
+            {
+                if (Enum.TryParse<PhysicalProperty>(k, true, out var pp) && TryToDouble(v, out var d))
+                {
+                    PhysicalProperties[pp] = d;
+                }
+            }
+        }
+    }
+
     public Entity(string name, TreeMember? parent, IEnumerable<Enum> enumTags, int position = 0,
         IDictionary<string, object>? properties = null, IEnumerable<Facet>? facets = null)
         : this(name, parent, null, position, properties, facets, enumTags) { }
 
     public new Entity AddTags(params Enum[] tags) { base.AddTags(tags); return this; }
 
+    public override object Set(string name, object value)
+    {
+        if (name == "opened" && value is bool b)
+        {
+            _isOpen = b;
+        }
+        else if (Enum.TryParse<PhysicalProperty>(name, true, out var pp) && TryToDouble(value, out var d))
+        {
+            PhysicalProperties[pp] = d;
+        }
+        return base.Set(name, value);
+    }
+
+    /// <summary>获取指定物理属性的数值。</summary>
+    public double GetPhysicalProperty(PhysicalProperty property)
+    {
+        if (PhysicalProperties.TryGetValue(property, out var val))
+        {
+            return val;
+        }
+        if (Properties.TryGetValue(PropertyStringNames[(int)property], out var raw) && TryToDouble(raw, out var d))
+        {
+            PhysicalProperties[property] = d;
+            return d;
+        }
+        return 0.0;
+    }
+
+    /// <summary>设置指定物理属性的数值。</summary>
+    public void SetPhysicalProperty(PhysicalProperty property, double value)
+    {
+        PhysicalProperties[property] = value;
+        base.Set(PropertyStringNames[(int)property], value);
+    }
+
+    private static readonly string[] PropertyStringNames =
+    [
+        "hardness",
+        "durability",
+        "sharpness",
+        "permeability",
+        "reactivity",
+        "vitality",
+        "lethality",
+        "recognition",
+        "authority",
+        "cognition",
+        "affinity",
+        "motivation",
+        "conflict",
+        "antiquity"
+    ];
+
+    private static bool TryToDouble(object value, out double result)
+    {
+        switch (value)
+        {
+            case double d: result = d; return true;
+            case float f: result = f; return true;
+            case int i: result = i; return true;
+            case long l: result = l; return true;
+            default: result = 0.0; return false;
+        }
+    }
+
     #region 基础物品与装备操作（供 BaseActions 交互使用）
     public bool PickUp(TreeMember actor, int position = 0) { Reparent(actor, position); return true; }
-    public bool Drop(int position = 0) { if (Parent?.Parent is null) return false; Reparent(Parent.Parent, position); SetTag("Held", 0); return true; }
+    public bool Drop(int position = 0) { if (Parent?.Parent is null) return false; Reparent(Parent.Parent, position); SetTag(CommonTag.Held, 0); return true; }
     public bool PutInto(Entity container, int position = 0, Entity? fromScene = null)
     {
         if (!container.Put(this, position, fromScene)) return false;
-        SetTag("Held", 0);
+        SetTag(CommonTag.Held, 0);
         return true;
     }
     public bool TakeFrom(Entity container, TreeMember actor, int position = 0, Entity? fromScene = null) => container.Take(this, actor, position, fromScene);
-    public bool Hold(TreeMember actor) { if (Parent != actor) Reparent(actor); SetTag("Held", 1); return true; }
-    public bool Unhold() { SetTag("Held", 0); return true; }
+    public bool Hold(TreeMember actor) { if (Parent != actor) Reparent(actor); SetTag(CommonTag.Held, 1); return true; }
+    public bool Unhold() { SetTag(CommonTag.Held, 0); return true; }
     public Dictionary<string, object?> Examine(Entity? observer = null) => new()
     {
         ["name"] = Name,
         ["tags"] = new Dictionary<string, int>(Tags),
         ["properties"] = new Dictionary<string, object>(Properties),
         ["aspects"] = this.GetAspects(target: null, currentTime: null).ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
-        ["claims"] = Entries("Claim").Select(f => f.Value).ToList(),
-        ["opened"] = Get<bool?>("opened"),
+        ["claims"] = Entries(FacetType.Claim).Select(f => f.Value).ToList(),
+        ["opened"] = IsOpen,
         ["items"] = Items.OfType<Entity>().Select(i => i.Name).ToList()
     };
     #endregion
@@ -802,10 +1159,93 @@ public class Passage(string name, Entity left, Entity right, double cost = 1.0, 
     public bool Allows(Entity scene, Entity? actor = null, object? env = null)
     {
         if (Other(scene) is null) return false;
-        var doors = Children.Keys.OfType<Entity>().Where(e => e.HasTag("Door"));
+        var doors = Children.Keys.OfType<Entity>().Where(e => e.HasTag(CommonTag.Door));
         if (doors.Any(door => !door.IsAccessible(scene))) return false;
         return Condition is null || Condition(scene, actor, env);
     }
+}
+
+#endregion
+
+#region 切面扩展方法
+
+/// <summary>实体切面操作便捷扩展方法集合。</summary>
+public static class EntityFacetExtensions
+{
+    /// <summary>检查是否存在指定类型的切面。</summary>
+    public static bool HasFacet(this TreeMember member, FacetType type) =>
+        member.Facets.Any(f => f.Type == type);
+
+    /// <summary>获取指定类型的首个切面。</summary>
+    public static Facet? GetFacet(this TreeMember member, FacetType type) =>
+        member.Facets.FirstOrDefault(f => f.Type == type);
+
+    /// <summary>获取指定类型的首个切面值，若不存在或类型不匹配则返回默认值。</summary>
+    public static T? GetFacetValue<T>(this TreeMember member, FacetType type, T? defaultValue = default)
+    {
+        var facet = member.GetFacet(type);
+        return facet?.Value is T val ? val : defaultValue;
+    }
+
+    /// <summary>获取指定类型的所有切面值集合，强类型筛选。</summary>
+    public static IEnumerable<T> FacetValues<T>(this TreeMember member, FacetType type, ActionContext? context = null) =>
+        member.Entries(type, context).Select(f => f.Value).OfType<T>();
+
+    /// <summary>获取指定关联类型的所有目标实体集合。</summary>
+    public static IEnumerable<Entity> RelatedEntities(this TreeMember member, FacetType type) =>
+        member.Related(type).Select(f => f.TargetEntity).OfType<Entity>();
+
+    /// <summary>获取指定关联类型的首个目标实体。</summary>
+    public static Entity? RelatedEntity(this TreeMember member, FacetType type) =>
+        member.Related(type).FirstOrDefault()?.TargetEntity;
+
+    /// <summary>便捷切面快捷查询：需求切面列表。</summary>
+    public static IEnumerable<Facet> Requirements(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Requirement, context);
+
+    /// <summary>便捷切面快捷查询：代价切面列表。</summary>
+    public static IEnumerable<Facet> Costs(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Cost, context);
+
+    /// <summary>便捷切面快捷查询：效果切面列表。</summary>
+    public static IEnumerable<Facet> Effects(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Effect, context);
+
+    /// <summary>便捷切面快捷查询：触发规则切面列表。</summary>
+    public static IEnumerable<Facet> Triggers(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Trigger, context);
+
+    /// <summary>便捷切面快捷查询：硬约束切面列表。</summary>
+    public static IEnumerable<Facet> HardConstraints(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.HardConstraint, context);
+
+    /// <summary>便捷切面快捷查询：义务切面列表。</summary>
+    public static IEnumerable<Facet> Obligations(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Obligation, context);
+
+    /// <summary>便捷切面快捷查询：违约惩戒切面列表。</summary>
+    public static IEnumerable<Facet> Breaches(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Breach, context);
+
+    /// <summary>便捷切面快捷查询：豁免切面列表。</summary>
+    public static IEnumerable<Facet> Exceptions(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Exception, context);
+
+    /// <summary>便捷切面快捷查询：能力发布切面列表。</summary>
+    public static IEnumerable<Facet> Affordances(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Affordance, context);
+
+    /// <summary>便捷切面快捷查询：命题声明切面列表。</summary>
+    public static IEnumerable<Facet> Claims(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Claim, context);
+
+    /// <summary>便捷切面快捷查询：倾向切面列表。</summary>
+    public static IEnumerable<Facet> Dispositions(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Disposition, context);
+
+    /// <summary>便捷切面快捷查询：变更切面列表。</summary>
+    public static IEnumerable<Facet> Changes(this TreeMember member, ActionContext? context = null) =>
+        member.Entries(FacetType.Change, context);
 }
 
 #endregion

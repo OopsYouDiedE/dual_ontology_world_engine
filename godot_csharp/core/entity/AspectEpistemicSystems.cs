@@ -1,5 +1,55 @@
 namespace DualOntologyWorldEngine.Core;
 
+#region 核心枚举与定义
+
+/// <summary>客观物理与概念性质枚举，用于消除源质投影计算中的弱类型字符串匹配与类型嗅探。</summary>
+public enum PhysicalProperty
+{
+    /// <summary>硬度（抗形变能力）。</summary>
+    Hardness,
+
+    /// <summary>耐久度（耐损耗程度）。</summary>
+    Durability,
+
+    /// <summary>锋利度（切割与伤害潜能）。</summary>
+    Sharpness,
+
+    /// <summary>渗透度 / 通透性（边界穿越潜能）。</summary>
+    Permeability,
+
+    /// <summary>反应性（化学或转化潜能）。</summary>
+    Reactivity,
+
+    /// <summary>生命力（生物活力与守存）。</summary>
+    Vitality,
+
+    /// <summary>致命性（致死杀伤力）。</summary>
+    Lethality,
+
+    /// <summary>辨识度（象征与名号显赫度）。</summary>
+    Recognition,
+
+    /// <summary>权威度（法则秩序约束力）。</summary>
+    Authority,
+
+    /// <summary>认知度（心智与智慧沉淀）。</summary>
+    Cognition,
+
+    /// <summary>亲和力（联结与因果吸引）。</summary>
+    Affinity,
+
+    /// <summary>动机 / 欲望驱动力。</summary>
+    Motivation,
+
+    /// <summary>冲突性（对抗与争斗倾向）。</summary>
+    Conflict,
+
+    /// <summary>古老度（历史残迹与岁月沉淀）。</summary>
+    Antiquity
+}
+
+#endregion
+
 #region 源质（Aspect）投影计算系统
 
 /// <summary>源质贡献记录。</summary>
@@ -29,24 +79,44 @@ public readonly record struct AspectContribution(
 /// </remarks>
 public static class AspectSystem
 {
-    /// <summary>物性到源质的投影规则映射表。(目标源质, 乘数, 除数)</summary>
-    private static readonly Dictionary<string, (Aspect Aspect, int Multiplier, int Divisor)[]> PropertyAspects = new()
-    {
-        ["hardness"] = [(Aspect.Form, 1, 2), (Aspect.Preservation, 1, 4)],
-        ["durability"] = [(Aspect.Preservation, 1, 1), (Aspect.Form, 1, 3)],
-        ["sharpness"] = [(Aspect.Strife, 1, 1), (Aspect.Death, 1, 3)],
-        ["permeability"] = [(Aspect.Threshold, 1, 1)],
-        ["reactivity"] = [(Aspect.Transmutation, 1, 1)],
-        ["vitality"] = [(Aspect.Preservation, 1, 1)],
-        ["lethality"] = [(Aspect.Death, 1, 1), (Aspect.Strife, 1, 2)],
-        ["recognition"] = [(Aspect.Name, 1, 1)],
-        ["authority"] = [(Aspect.Law, 1, 1), (Aspect.Name, 1, 2)],
-        ["cognition"] = [(Aspect.Mind, 1, 1)],
-        ["affinity"] = [(Aspect.Bond, 1, 1)],
-        ["motivation"] = [(Aspect.Desire, 1, 1)],
-        ["conflict"] = [(Aspect.Strife, 1, 1)],
-        ["antiquity"] = [(Aspect.Vestige, 1, 1)],
-    };
+    /// <summary>14 项物性到源质的投影规则映射。(物性, 规则名, 目标源质与乘除数)</summary>
+    private static readonly (PhysicalProperty Property, string RuleName, (Aspect Aspect, int Multiplier, int Divisor)[] Rules)[] PropertyProjections =
+    [
+        (PhysicalProperty.Hardness, "property:hardness", [(Aspect.Form, 1, 2), (Aspect.Preservation, 1, 4)]),
+        (PhysicalProperty.Durability, "property:durability", [(Aspect.Preservation, 1, 1), (Aspect.Form, 1, 3)]),
+        (PhysicalProperty.Sharpness, "property:sharpness", [(Aspect.Strife, 1, 1), (Aspect.Death, 1, 3)]),
+        (PhysicalProperty.Permeability, "property:permeability", [(Aspect.Threshold, 1, 1)]),
+        (PhysicalProperty.Reactivity, "property:reactivity", [(Aspect.Transmutation, 1, 1)]),
+        (PhysicalProperty.Vitality, "property:vitality", [(Aspect.Preservation, 1, 1)]),
+        (PhysicalProperty.Lethality, "property:lethality", [(Aspect.Death, 1, 1), (Aspect.Strife, 1, 2)]),
+        (PhysicalProperty.Recognition, "property:recognition", [(Aspect.Name, 1, 1)]),
+        (PhysicalProperty.Authority, "property:authority", [(Aspect.Law, 1, 1), (Aspect.Name, 1, 2)]),
+        (PhysicalProperty.Cognition, "property:cognition", [(Aspect.Mind, 1, 1)]),
+        (PhysicalProperty.Affinity, "property:affinity", [(Aspect.Bond, 1, 1)]),
+        (PhysicalProperty.Motivation, "property:motivation", [(Aspect.Desire, 1, 1)]),
+        (PhysicalProperty.Conflict, "property:conflict", [(Aspect.Strife, 1, 1)]),
+        (PhysicalProperty.Antiquity, "property:antiquity", [(Aspect.Vestige, 1, 1)])
+    ];
+
+    /// <summary>物性到源质的投影规则映射只读字典。</summary>
+    public static readonly IReadOnlyDictionary<PhysicalProperty, (Aspect Aspect, int Multiplier, int Divisor)[]> PropertyAspects =
+        PropertyProjections.ToDictionary(p => p.Property, p => p.Rules);
+
+    private static readonly (Aspect Aspect, string TagName)[] AspectTagCache =
+    [
+        (Aspect.Form, nameof(Aspect.Form)),
+        (Aspect.Name, nameof(Aspect.Name)),
+        (Aspect.Law, nameof(Aspect.Law)),
+        (Aspect.Mind, nameof(Aspect.Mind)),
+        (Aspect.Bond, nameof(Aspect.Bond)),
+        (Aspect.Threshold, nameof(Aspect.Threshold)),
+        (Aspect.Transmutation, nameof(Aspect.Transmutation)),
+        (Aspect.Preservation, nameof(Aspect.Preservation)),
+        (Aspect.Death, nameof(Aspect.Death)),
+        (Aspect.Desire, nameof(Aspect.Desire)),
+        (Aspect.Strife, nameof(Aspect.Strife)),
+        (Aspect.Vestige, nameof(Aspect.Vestige))
+    ];
 
     /// <summary>
     /// 实体语义关系到源质的定向投影强度映射表。
@@ -92,14 +162,14 @@ public static class AspectSystem
     public static IReadOnlyList<AspectContribution> GetAspectContributions(
         this Entity entity,
         Entity? target = null,
-        float? currentTime = null)
+        double? currentTime = null)
     {
         var contributions = new List<AspectContribution>();
 
         // 1. 固有源质（Intrinsic Aspect Tags）
-        foreach (Aspect aspect in Enum.GetValues<Aspect>())
+        foreach (var (aspect, tagName) in AspectTagCache)
         {
-            var strength = entity.Tag(aspect.ToString());
+            var strength = entity.Tag(tagName);
             if (strength > 0)
             {
                 contributions.Add(new AspectContribution(entity, "intrinsic", aspect, strength));
@@ -111,12 +181,13 @@ public static class AspectSystem
         if (material != null)
         {
             var (numerator, denominator) = entity.GetIntegrityFraction();
-            foreach (Aspect aspect in Enum.GetValues<Aspect>())
+            var divisor = Math.Max(1, denominator);
+            foreach (var (aspect, tagName) in AspectTagCache)
             {
-                var matStrength = material.Tag(aspect.ToString());
+                var matStrength = material.Tag(tagName);
                 if (matStrength > 0)
                 {
-                    var inherited = (matStrength * numerator) / Math.Max(1, denominator);
+                    var inherited = (matStrength * numerator) / divisor;
                     if (inherited > 0)
                     {
                         contributions.Add(new AspectContribution(material, "material", aspect, inherited));
@@ -126,23 +197,24 @@ public static class AspectSystem
         }
 
         // 3. 具体客观物性投影（Property Projections）
-        foreach (var (propName, rules) in PropertyAspects)
+        foreach (var (property, ruleName, rules) in PropertyProjections)
         {
-            if (entity.TryGetNumericProperty(propName, out var propVal) && propVal > 0)
+            var propVal = entity.GetPhysicalProperty(property);
+            if (propVal > 0)
             {
                 foreach (var (aspect, mul, div) in rules)
                 {
                     var projected = (int)(propVal * mul / div);
                     if (projected > 0)
                     {
-                        contributions.Add(new AspectContribution(entity, $"property:{propName}", aspect, projected));
+                        contributions.Add(new AspectContribution(entity, ruleName, aspect, projected));
                     }
                 }
             }
         }
 
         // 4. 情感与动态影响（Influence Projections）
-        if (entity.HasTag("Influence") && entity.Properties.TryGetValue("emotion", out var emotionObj))
+        if (entity.HasTag(CommonTag.Influence) && entity.Properties.TryGetValue("emotion", out var emotionObj))
         {
             Emotion? emotion = emotionObj switch
             {
@@ -223,7 +295,7 @@ public static class AspectSystem
     public static Dictionary<Aspect, int> GetAspects(
         this Entity entity,
         Entity? target = null,
-        float? currentTime = null)
+        double? currentTime = null)
     {
         var totals = new Dictionary<Aspect, int>();
         var contributions = entity.GetAspectContributions(target, currentTime);
@@ -248,18 +320,6 @@ public static class AspectSystem
             if (val is double d) return ((int)(d * 100), 100);
         }
         return (1, 1);
-    }
-
-    private static bool TryGetNumericProperty(this Entity entity, string key, out double value)
-    {
-        if (entity.Properties.TryGetValue(key, out var val))
-        {
-            if (val is int i) { value = i; return true; }
-            if (val is float f) { value = f; return true; }
-            if (val is double d) { value = d; return true; }
-        }
-        value = 0;
-        return false;
     }
 
     #endregion
@@ -342,7 +402,22 @@ public static class EpistemicSystem
     /// <param name="confidence">置信度数值。</param>
     /// <param name="stage">达到的认知阶段。</param>
     /// <param name="name">知识实体的自定义命名。</param>
-    /// <returns>挂载在观察者名下的 Knowledge 实体。</returns>
+    private static IEnumerable<Entity> AllKnowledge(this Entity observer)
+    {
+        var claims = observer.Entries(FacetType.Claim).Select(f => f.Value).OfType<Entity>();
+        var childKnowledge = observer.Children.Keys.OfType<Entity>().Where(c => c.HasTag(CommonTag.Knowledge) || c.HasTag("Knowledge"));
+        return claims.Concat(childKnowledge).Distinct();
+    }
+
+    /// <summary>在观察者认知事实库中建立或更新一条指向 subject 的 Knowledge 实体（非世界实体，不挂载世界树）。</summary>
+    /// <param name="observer">认知主体实体（如角色或意识）。</param>
+    /// <param name="subject">该项知识所指向的客观实体。</param>
+    /// <param name="claims">本次获知的命题集合。</param>
+    /// <param name="source">信息来源对象。</param>
+    /// <param name="confidence">置信度数值。</param>
+    /// <param name="stage">达到的认知阶段。</param>
+    /// <param name="name">知识实体的自定义命名。</param>
+    /// <returns>关联在观察者名下的 Knowledge 实体。</returns>
     public static Entity Learn(
         this Entity observer,
         Entity subject,
@@ -352,9 +427,9 @@ public static class EpistemicSystem
         KnowledgeStage stage = KnowledgeStage.Understood,
         string? name = null)
     {
-        // 寻找观察者直接子节点中是否已有针对同一目标且来源相同的 Knowledge
-        var knowledge = observer.Children.Keys.OfType<Entity>().FirstOrDefault(child =>
-            child.HasTag("Knowledge") &&
+        // 寻找观察者关联认知中是否已有针对同一目标且来源相同的 Knowledge
+        var knowledge = observer.AllKnowledge().FirstOrDefault(child =>
+            (child.HasTag(CommonTag.Knowledge) || child.HasTag("Knowledge")) &&
             ReferenceEquals(child.Get<Entity>("subject"), subject) &&
             Equals(child.Get<object>("source"), source));
 
@@ -362,8 +437,8 @@ public static class EpistemicSystem
         {
             knowledge = new Entity(
                 name ?? $"关于{subject.Name}的认知",
-                observer,
-                new Dictionary<string, int> { ["Knowledge"] = 1 },
+                parent: null,
+                tags: new Dictionary<string, int> { ["Knowledge"] = 1 },
                 properties: new Dictionary<string, object>
                 {
                     ["subject"] = subject,
@@ -371,6 +446,7 @@ public static class EpistemicSystem
                     ["confidence"] = confidence,
                     ["stage"] = stage
                 });
+            observer.Attach(FacetType.Claim, knowledge);
         }
         else
         {
@@ -398,8 +474,8 @@ public static class EpistemicSystem
 
         if (stage == KnowledgeStage.Accepted)
         {
-            knowledge.SetTag("Accepted", 1);
-            knowledge.SetTag("Rejected", 0);
+            knowledge.SetTag(CommonTag.Accepted, 1);
+            knowledge.SetTag(CommonTag.Rejected, 0);
         }
 
         return knowledge;
@@ -411,8 +487,8 @@ public static class EpistemicSystem
         Entity subject,
         KnowledgeStage minStage = KnowledgeStage.Received)
     {
-        return observer.Children.Keys.OfType<Entity>().Where(child =>
-            child.HasTag("Knowledge") &&
+        return observer.AllKnowledge().Where(child =>
+            (child.HasTag(CommonTag.Knowledge) || child.HasTag("Knowledge")) &&
             ReferenceEquals(child.Get<Entity>("subject"), subject) &&
             child.Get<KnowledgeStage>("stage", KnowledgeStage.Received) >= minStage).ToList();
     }
@@ -548,11 +624,11 @@ public static class EpistemicSystem
         this Entity entity,
         Entity observer,
         Entity? target = null,
-        float? currentTime = null)
+        double? currentTime = null)
     {
         var knownSubjects = new HashSet<Entity>(
-            observer.Children.Keys.OfType<Entity>()
-                .Where(k => k.HasTag("Knowledge"))
+            observer.AllKnowledge()
+                .Where(k => k.HasTag(CommonTag.Knowledge) || k.HasTag("Knowledge"))
                 .Select(k => k.Get<Entity>("subject"))
                 .Where(s => s != null)!);
 

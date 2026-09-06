@@ -20,34 +20,26 @@ public record LockRecord(int Strength, Entity? Side = null, object? Source = nul
 /// </remarks>
 public static class AccessControlSystem
 {
-    private const string LocksKey = "_locks";
-    private const string OpenedKey = "opened";
-
-    /// <summary>获取实体上施加的所有锁记录列表。</summary>
-    private static List<LockRecord> GetLocks(Entity entity) =>
-        entity.Get<List<LockRecord>>(LocksKey) ?? [];
-
     /// <summary>检查实体在指定场景方向上是否处于锁定状态。</summary>
     /// <param name="entity">待检查的目标实体（如门或箱子）。</param>
     /// <param name="fromScene">主体所处的场景实体。为 null 时仅检查全局锁。</param>
     /// <returns>true 表示存在生效的阻断锁，false 表示未上锁。</returns>
     public static bool IsLocked(this Entity entity, Entity? fromScene = null)
     {
-        var locks = GetLocks(entity);
+        var locks = entity.Locks;
+        if (locks.Count == 0) return false;
         return locks.Any(l => l.Strength > 0 && (l.Side == null || ReferenceEquals(l.Side, fromScene)));
     }
 
     /// <summary>检查实体是否在当前方向允许访问或穿越。</summary>
     /// <remarks>
     /// 若实体不具备 Openable 标记，默认始终可访问；
-    /// 若具备 Openable 标记，则必须已开启（opened == true）且未被锁阻断。
+    /// 若具备 Openable 标记，则必须已开启（IsOpen == true）且未被锁阻断。
     /// </remarks>
     public static bool IsAccessible(this Entity entity, Entity? fromScene = null)
     {
-        var openable = entity.HasTag("Openable") || entity.HasRole(Role.AccessControl) || entity.HasRole(Role.Container);
-        var opened = entity.Get<bool>(OpenedKey, false);
-
-        return (!openable || opened) && !entity.IsLocked(fromScene);
+        var openable = entity.IsOpenable() || entity.IsContainer();
+        return (!openable || entity.IsOpen) && !entity.IsLocked(fromScene);
     }
 
     /// <summary>在当前方向没有有效锁阻断时开启对象。</summary>
@@ -59,14 +51,14 @@ public static class AccessControlSystem
             return false;
         }
 
-        entity.Set(OpenedKey, true);
+        entity.IsOpen = true;
         return true;
     }
 
     /// <summary>关闭可开合对象。</summary>
     public static void Close(this Entity entity)
     {
-        entity.Set(OpenedKey, false);
+        entity.IsOpen = false;
     }
 
     /// <summary>为实体施加一把锁并自动闭合对象。</summary>
@@ -79,9 +71,7 @@ public static class AccessControlSystem
     {
         entity.Close();
         var record = new LockRecord(strength, side, source);
-        var locks = GetLocks(entity);
-        locks.Add(record);
-        entity.Set(LocksKey, locks);
+        entity.Locks.Add(record);
         return record;
     }
 
@@ -92,8 +82,7 @@ public static class AccessControlSystem
     /// <returns>成功移除的锁数量。</returns>
     public static int Unlock(this Entity entity, Entity? side = null, object? source = null)
     {
-        var locks = GetLocks(entity);
-        return locks.RemoveAll(l =>
+        return entity.Locks.RemoveAll(l =>
             (side == null || l.Side == null || ReferenceEquals(l.Side, side)) &&
             (source == null || Equals(l.Source, source)));
     }
@@ -106,8 +95,7 @@ public static class AccessControlSystem
     /// <returns>true 表示置入成功，false 表示不可访问或不具备容器角色。</returns>
     public static bool Put(this Entity container, Entity item, int position = 0, Entity? fromScene = null)
     {
-        var isContainer = container.HasTag("Container") || container.HasRole(Role.Container);
-        if (!isContainer || !container.IsAccessible(fromScene))
+        if (!container.IsContainer() || !container.IsAccessible(fromScene))
         {
             return false;
         }
@@ -289,38 +277,42 @@ public static class InfluenceSystem
     /// <param name="entity">具备 Influence 标签的实体。</param>
     /// <param name="currentTime">当前行动值时刻。若为 null 则返回未衰减的基础强度。</param>
     /// <returns>计算衰减与到期后的非负强度数值。</returns>
-    public static float EffectiveIntensity(this Entity entity, float? currentTime = null)
+    public static double EffectiveIntensity(this Entity entity, double? currentTime = null)
     {
-        var intensity = entity.Get<float>("intensity", entity.Get<int>("intensity", 0));
-        if (!entity.HasTag("Influence") || currentTime == null)
+        if (!TryGetNumeric(entity.Properties, "intensity", out var intensity))
+        {
+            return 0.0;
+        }
+
+        if (!entity.HasTag(CommonTag.Influence) || currentTime is null)
         {
             return intensity;
         }
 
-        var expiresAt = entity.Get<float?>("expires_at", null);
-        if (expiresAt.HasValue && currentTime.Value >= expiresAt.Value)
+        if (TryGetNumeric(entity.Properties, "expires_at", out var expiresAt) && currentTime.Value >= expiresAt)
         {
-            return 0.0f;
+            return 0.0;
         }
 
-        var startedAt = entity.Get<float>("started_at", currentTime.Value);
-        var decay = entity.Get<float>("decay", 0.0f);
-        var elapsed = Math.Max(0.0f, currentTime.Value - startedAt);
+        var startedAt = TryGetNumeric(entity.Properties, "started_at", out var s) ? s : currentTime.Value;
+        var decay = TryGetNumeric(entity.Properties, "decay", out var d) ? d : 0.0;
+        var elapsed = Math.Max(0.0, currentTime.Value - startedAt);
 
-        return Math.Max(0.0f, intensity - elapsed * decay);
+        return Math.Max(0.0, intensity - elapsed * decay);
     }
 
     /// <summary>检查带有到期时刻（expires_at）或撤销状态（revoked）的实体在指定时间点是否有效。</summary>
     /// <param name="entity">待检查实体（如凭证、临时状态或许可）。</param>
     /// <param name="currentTime">当前行动值时间点。</param>
     /// <returns>true 表示未被撤销且未过期。</returns>
-    public static bool IsEffectiveAt(this Entity entity, float currentTime)
+    public static bool IsEffectiveAt(this Entity entity, double currentTime)
     {
-        var revoked = entity.Get<bool>("revoked", false);
-        if (revoked) return false;
+        if (entity.Properties.TryGetValue("revoked", out var revoked) && revoked is true)
+        {
+            return false;
+        }
 
-        var expiresAt = entity.Get<float?>("expires_at", null);
-        return !expiresAt.HasValue || currentTime < expiresAt.Value;
+        return !TryGetNumeric(entity.Properties, "expires_at", out var expiresAt) || currentTime < expiresAt;
     }
 
     #endregion
@@ -332,24 +324,51 @@ public static class InfluenceSystem
     /// <returns>该次使用释放的效果对象列表。若剂量已耗尽则返回空列表。</returns>
     public static IReadOnlyList<object> Consume(this Entity consumable)
     {
-        var doses = consumable.Get<int>("doses", 0);
-        if (doses <= 0)
+        if (!consumable.Properties.TryGetValue("doses", out var val) || !TryConvertInt(val, out var doses) || doses <= 0)
         {
             return Array.Empty<object>();
         }
 
-        consumable.Set("doses", doses - 1);
+        consumable.Properties["doses"] = doses - 1;
 
         // 获取预存的效果列表
         if (consumable.Properties.TryGetValue("effects", out var effVal) && effVal is IEnumerable<object> effList)
         {
-            return effList.ToList();
+            return effList as IReadOnlyList<object> ?? effList.ToList();
         }
 
         return Array.Empty<object>();
     }
 
     #endregion
+
+    private static bool TryGetNumeric(Dictionary<string, object> properties, string key, out double value)
+    {
+        if (properties.TryGetValue(key, out var val))
+        {
+            switch (val)
+            {
+                case double d: value = d; return true;
+                case float f: value = f; return true;
+                case int i: value = i; return true;
+                case long l: value = l; return true;
+            }
+        }
+        value = 0;
+        return false;
+    }
+
+    private static bool TryConvertInt(object val, out int value)
+    {
+        switch (val)
+        {
+            case int i: value = i; return true;
+            case long l: value = (int)l; return true;
+            case float f: value = (int)f; return true;
+            case double d: value = (int)d; return true;
+            default: value = 0; return false;
+        }
+    }
 }
 
 #endregion

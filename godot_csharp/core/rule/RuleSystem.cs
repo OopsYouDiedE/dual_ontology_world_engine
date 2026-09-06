@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Core.Mind;
+using DualOntologyWorldEngine.Core.Timeline;
 
 namespace DualOntologyWorldEngine.Core.Rules;
 
@@ -40,8 +41,8 @@ public class RuleSystem
     public static int BeliefPriority(Entity belief)
     {
         var pub = belief.Get<Entity>("publication");
-        var issuer = belief.Get<Entity>("issuer") ?? pub?.Get<Entity>("issuer");
-        var guarantee = pub?.Get<string>("guarantee_tag") ?? "Guarantee";
+        var issuer = belief.Get<Entity>("issuer") ?? pub?.Issuer();
+        var guarantee = pub?.GuaranteeTag() ?? "Guarantee";
         var confidence = belief.Get<int>("confidence", 1);
         var authority = issuer != null ? issuer.Tag("Authority") : 0;
         var guaranteeVal = issuer != null ? issuer.Tag(guarantee) : 0;
@@ -99,7 +100,7 @@ public class RuleSystem
 
     /// <summary>使用完整行动对象评价规则，使模板槽位能够由实际人物、目标、工具和场景绑定。</summary>
     /// <remarks>
-    /// 场景对象优先取调用者提供的 context["scene"]，否则从 Character.CurrentScene 推导。
+    /// 场景对象优先取调用者提供的 context.Scene，否则从 Character.CurrentScene 推导。
     /// 未出现的可选目标或工具不写入绑定，含该槽位的规则自然不会错误匹配。
     /// </remarks>
     /// <param name="soul">进行评价的认知主体。</param>
@@ -111,12 +112,19 @@ public class RuleSystem
         Soul soul,
         Intent intent,
         RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context = null)
+        ActionContext? context = null)
     {
         return Evaluate(intent.Effect, env, Active(soul, env, Bindings(intent, context)), intent);
     }
 
-    private static Dictionary<string, object> Bindings(Intent intent, IReadOnlyDictionary<string, object>? context)
+    public Decision Evaluate(
+        Soul soul,
+        Intent intent,
+        RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context) =>
+        Evaluate(soul, intent, env, ActionContext.FromDictionary(context));
+
+    private static Dictionary<string, object> Bindings(Intent intent, ActionContext? context)
     {
         var bindings = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
         {
@@ -124,7 +132,7 @@ public class RuleSystem
         };
         if (intent.Target is { } target) bindings[nameof(RuleSlot.Target)] = target;
         if (intent.Tool is { } tool) bindings[nameof(RuleSlot.Tool)] = tool;
-        if ((context?.GetValueOrDefault("scene") as Entity ?? TopologySystem.GetEnclosingScene(intent.Actor)) is { } scene)
+        if ((context?.Scene ?? TopologySystem.GetEnclosingScene(intent.Actor)) is { } scene)
             bindings[nameof(RuleSlot.Scene)] = scene;
         return bindings;
     }
@@ -176,14 +184,14 @@ public class RuleSystem
     /// <param name="env">认知求值环境。</param>
     /// <param name="utility">外部附加效用函数。</param>
     /// <returns>评分最高的决策结果。</returns>
-    public Decision Decide(Soul soul, IEnumerable<Effect> candidates, RuleEnvironment env, Func<Effect, float>? utility = null)
+    public Decision Decide(Soul soul, IEnumerable<Effect> candidates, RuleEnvironment env, Func<Effect, double>? utility = null)
     {
         Decision? best = null;
         foreach (var effect in candidates)
         {
             var d = Evaluate(soul, effect, env);
-            float u = utility != null ? utility(effect) : 0f;
-            float totalScore = d.Score + u;
+            double u = utility != null ? utility(effect) : 0.0;
+            double totalScore = d.Score + u;
             if (best == null || totalScore > best.Score)
             {
                 best = new Decision(d.Intent, d.Complies, totalScore, d.Basis, d.Reason, null, d.Pressures);
@@ -260,23 +268,31 @@ public class RuleSystem
     /// <param name="context">包含当前所处辖域（domains）的情境上下文。</param>
     /// <returns>true 表示未被任何激活且适用辖域的补丁拦截阻断。</returns>
     public bool PatchAllows(Effect intent, IEnumerable<Entity> patches, RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context = null) =>
-        PatchAllows(intent, patches, env, Domains(context?.GetValueOrDefault("domains")), null);
+        ActionContext? context = null) =>
+        PatchAllows(intent, patches, env, Domains(context?.Domains), null);
 
     /// <summary>完整行动按实际身体绑定槽位；未指定 domains 时沿世界树推导客观补丁辖域。</summary>
     public bool PatchAllows(Intent intent, IEnumerable<Entity> patches, RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context = null) =>
+        ActionContext? context = null) =>
         PatchAllows(intent.Effect, patches, env,
-            context?.ContainsKey("domains") == true ? Domains(context["domains"]) : Ancestors(intent.Actor),
+            context?.Domains != null ? Domains(context.Domains) : Ancestors(intent.Actor),
             Bindings(intent, context));
+
+    public bool PatchAllows(Effect intent, IEnumerable<Entity> patches, RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context) =>
+        PatchAllows(intent, patches, env, ActionContext.FromDictionary(context));
+
+    public bool PatchAllows(Intent intent, IEnumerable<Entity> patches, RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context) =>
+        PatchAllows(intent, patches, env, ActionContext.FromDictionary(context));
 
     private bool PatchAllows(Effect effect, IEnumerable<Entity> patches, RuleEnvironment env,
         IEnumerable<Entity> domains, IReadOnlyDictionary<string, object>? bindings)
     {
         var scope = domains.ToHashSet();
-        return patches.Where(p => p.HasTag("RulePatch") && p.Get<bool>("active", true)
-                && (p.Get<Entity>("scope") is not { } domain || scope.Contains(domain)))
-            .Select(p => p.Get<Rule>("rule")).OfType<Rule>()
+        return patches.Where(p => p.HasTag("RulePatch") && p.IsActive()
+                && (p.Scope() is not { } domain || scope.Contains(domain)))
+            .Select(p => p.Rule()).OfType<Rule>()
             .All(rule => ObjectiveComplies(effect, bindings == null ? rule : env.Materialize(rule, bindings), env));
     }
 

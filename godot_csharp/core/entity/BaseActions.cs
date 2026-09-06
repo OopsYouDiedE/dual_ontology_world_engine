@@ -70,6 +70,31 @@ public static class BaseActions
             cost ?? (start != null && passage != null ? passage.CostFrom(start) : 1));
     }
 
+    #region 强类型实体状态扩展方法
+
+    /// <summary>判断实体是否为容器（具有 Container 标签或角色）。</summary>
+    public static bool IsContainer(this Entity entity) =>
+        entity.HasTag(CommonTag.Container) || entity.HasRole(Role.Container);
+
+    /// <summary>判断实体是否为可开合对象（具有 Openable、Door 标签或 AccessControl 角色）。</summary>
+    public static bool IsOpenable(this Entity entity) =>
+        entity.HasTag(CommonTag.Openable) || entity.HasTag(CommonTag.Door) || entity.HasRole(Role.AccessControl);
+
+    /// <summary>判断实体当前是否处于被持握激活状态。</summary>
+    public static bool IsHeld(this Entity entity) =>
+        entity.HasTag(CommonTag.Held);
+
+    /// <summary>判断实体是否为可阅读的记录/载体/书籍。</summary>
+    public static bool IsReadable(this Entity entity) =>
+        entity.HasTag(CommonTag.Readable) ||
+        entity.HasTag(CommonTag.Record) ||
+        entity.HasRole(Role.RecordMedium) ||
+        entity.HasTag("ReadingMaterial") ||
+        entity.HasTag("Book") ||
+        entity.HasTag("Document");
+
+    #endregion
+
     public static Intent CreateTakeIntent(Entity actor, Entity item, double cost = 1.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("take", actor, item), () => item.PickUp(actor), AST.E("holds", actor, item), $"拾取：{actor.Name}获得{item.Name}", () => item.Parent == actor.Parent, cost);
 
@@ -77,16 +102,16 @@ public static class BaseActions
         Make(actor, mind, AST.F("drop", actor, item), () => item.Drop(), (actor.Parent as Entity) != null ? AST.E("located_at", item, (Entity)actor.Parent!) : null, $"丢弃：{actor.Name}放下{item.Name}", () => item.Parent == actor, cost);
 
     public static Intent CreateStoreIntent(Entity actor, Entity item, Entity container, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("store", actor, item, container), () => item.PutInto(container, fromScene: actor.Parent as Entity), AST.E("stored", item, container), $"收纳：{actor.Name}将{item.Name}存入{container.Name}", () => item.Parent == actor && container.Parent == actor.Parent && container.Has("Container") && container.IsAccessible(actor.Parent as Entity), cost);
+        Make(actor, mind, AST.F("store", actor, item, container), () => item.PutInto(container, fromScene: actor.Parent as Entity), AST.E("stored", item, container), $"收纳：{actor.Name}将{item.Name}存入{container.Name}", () => item.Parent == actor && container.Parent == actor.Parent && container.IsContainer() && container.IsAccessible(actor.Parent as Entity), cost);
 
     public static Intent CreateRetrieveIntent(Entity actor, Entity item, Entity container, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("retrieve", actor, item, container), () => item.TakeFrom(container, actor, fromScene: actor.Parent as Entity), AST.E("holds", actor, item), $"取出：{actor.Name}从{container.Name}拿出{item.Name}", () => item.Parent == container && container.Parent == actor.Parent && container.Has("Container") && container.IsAccessible(actor.Parent as Entity), cost);
+        Make(actor, mind, AST.F("retrieve", actor, item, container), () => item.TakeFrom(container, actor, fromScene: actor.Parent as Entity), AST.E("holds", actor, item), $"取出：{actor.Name}从{container.Name}拿出{item.Name}", () => item.Parent == container && container.Parent == actor.Parent && container.IsContainer() && container.IsAccessible(actor.Parent as Entity), cost);
 
     public static Intent CreateOpenIntent(Entity actor, Entity target, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("open", actor, target), () => target.Open(actor.Parent as Entity), AST.E("opened", target), $"打开：{actor.Name}开启{target.Name}", () => target.Has("Openable") && !target.Get<bool>("opened", false) && !target.IsLocked(actor.Parent as Entity), cost);
+        Make(actor, mind, AST.F("open", actor, target), () => target.Open(actor.Parent as Entity), AST.E("opened", target), $"打开：{actor.Name}开启{target.Name}", () => target.IsOpenable() && !target.IsOpen && !target.IsLocked(actor.Parent as Entity), cost);
 
     public static Intent CreateCloseIntent(Entity actor, Entity target, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("close", actor, target), () => target.Close(), AST.E("closed", target), $"关闭：{actor.Name}合上{target.Name}", () => target.Has("Openable") && target.Get<bool>("opened", false), cost);
+        Make(actor, mind, AST.F("close", actor, target), () => target.Close(), AST.E("closed", target), $"关闭：{actor.Name}合上{target.Name}", () => target.IsOpenable() && target.IsOpen, cost);
 
     public static Intent CreateUnlockIntent(Entity actor, Entity target, Entity key, double cost = 1.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("unlock", actor, target), () => target.Unlock(side: null, source: key), AST.E("unlocked", target), $"解锁：{actor.Name}使用{key.Name}开启{target.Name}的锁", () => key.Parent == actor && target.IsLocked(actor.Parent as Entity), cost);
@@ -95,16 +120,16 @@ public static class BaseActions
         Make(actor, mind, AST.F("lock", actor, target), () => target.Lock(1, side: null, source: key), AST.E("locked", target), $"上锁：{actor.Name}使用{key.Name}锁上{target.Name}", () => key.Parent == actor && !target.IsLocked(actor.Parent as Entity), cost);
 
     public static Intent CreateHoldIntent(Entity actor, Entity item, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("hold", actor, item), () => { foreach (var o in actor.Items.OfType<Entity>()) { if (!ReferenceEquals(o, item)) o.Unhold(); } item.Hold(actor); }, AST.E("ready_weapon_or_tool", actor, item), $"持握：{actor.Name}持握{item.Name}", () => item.Parent == actor && !item.Has("Held"), cost);
+        Make(actor, mind, AST.F("hold", actor, item), () => { foreach (var o in actor.Items.OfType<Entity>()) { if (!ReferenceEquals(o, item)) o.Unhold(); } item.Hold(actor); }, AST.E("ready_weapon_or_tool", actor, item), $"持握：{actor.Name}持握{item.Name}", () => item.Parent == actor && !item.IsHeld(), cost);
 
     public static Intent CreateUnholdIntent(Entity actor, Entity item, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("unhold", actor, item), () => item.Unhold(), null, $"收起：{actor.Name}收起{item.Name}", () => item.Parent == actor && item.Has("Held"), cost);
+        Make(actor, mind, AST.F("unhold", actor, item), () => item.Unhold(), null, $"收起：{actor.Name}收起{item.Name}", () => item.Parent == actor && item.IsHeld(), cost);
 
     public static Intent CreateExamineIntent(Entity actor, Entity target, double cost = 1.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("examine", actor, target), () => { var data = target.Examine(actor); if (data.TryGetValue("claims", out var claimsObj) && claimsObj is System.Collections.IEnumerable claims) { foreach (var claim in claims) GetActorMind(actor, mind).Observe(AST.E("fact", claim?.ToString() ?? "")); } }, AST.E("examined", target), $"检视：{actor.Name}仔细观察{target.Name}", () => target.Parent == actor || target.Parent == actor.Parent || target.Parent?.Parent == actor.Parent, cost, ResponseMode.Verify);
 
     public static Intent CreateReadIntent(Entity actor, Entity target, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("read", actor, target), () => { var content = target.Get<string>("content"); if (!string.IsNullOrEmpty(content)) GetActorMind(actor, mind).Observe(AST.E("text", content)); foreach (var claim in target.Entries("Claim")) GetActorMind(actor, mind).Observe(AST.E("claim", claim.Value?.ToString() ?? "")); }, AST.E("read", target), $"阅读：{actor.Name}翻阅{target.Name}", () => (target.Parent == actor || target.Parent == actor.Parent) && (target.Has("ReadingMaterial") || target.Has("Record") || target.Has("Book") || target.Has("Document")), cost, ResponseMode.Verify);
+        Make(actor, mind, AST.F("read", actor, target), () => { var content = target.Get<string>("content"); if (!string.IsNullOrEmpty(content)) GetActorMind(actor, mind).Observe(AST.E("text", content)); foreach (var claim in target.Entries("Claim")) GetActorMind(actor, mind).Observe(AST.E("claim", claim.Value?.ToString() ?? "")); }, AST.E("read", target), $"阅读：{actor.Name}翻阅{target.Name}", () => (target.Parent == actor || target.Parent == actor.Parent) && target.IsReadable(), cost, ResponseMode.Verify);
 
     public static Intent CreateUseIntent(Entity actor, Entity tool, Entity? target = null, double cost = 1.0, Soul? mind = null, Action? useEffect = null) =>
         Make(actor, mind, AST.F("use", actor, tool), useEffect, AST.E("used", tool, target ?? (object)tool), $"使用：{actor.Name}使用{tool.Name}" + (target != null ? $"于{target.Name}" : ""), () => tool.Parent == actor || tool.Parent == actor.Parent, cost);
@@ -122,7 +147,7 @@ public static class BaseActions
         Make(actor, mind, AST.F("examine_detail", actor, target), null, AST.E("forensic_clue_verified", target, tool), $"深度勘查：{actor.Name}借助{tool.Name}微观勘查{target.Name}", () => tool.Parent == actor, cost);
 
     public static Intent CreateSearchContainerIntent(Entity actor, Entity container, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("search_container", actor, container), null, AST.E("container_searched", container), $"搜查容器：{actor.Name}翻找{container.Name}", () => container.Parent == actor.Parent && container.Has("Container"), cost);
+        Make(actor, mind, AST.F("search_container", actor, container), null, AST.E("container_searched", container), $"搜查容器：{actor.Name}翻找{container.Name}", () => container.Parent == actor.Parent && container.IsContainer(), cost);
 
     public static Intent CreateMaintainMechanismIntent(Entity actor, Entity facility, double cost = 1.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("maintain_mechanism", actor, facility), () => facility.SetTag("MaintenanceDone", 1), AST.E("maintained", facility), $"检修机构：{actor.Name}维护调校{facility.Name}", () => facility.Parent == actor.Parent && !facility.Has("MaintenanceDone"), cost);
@@ -155,7 +180,7 @@ public static class BaseActions
         Make(actor, mind, AST.F("disarm_hazard", actor, hazard), () => hazard.SetTag("Hazard", 0), AST.E("hazard_disarmed", hazard), $"排险解除：{actor.Name}排除{hazard.Name}危险隐患", () => hazard.Parent == actor.Parent && hazard.Has("Hazard"), cost);
 
     public static Intent CreateStowEvidenceIntent(Entity actor, Entity evidence, Entity container, double cost = 1.0, Soul? mind = null) =>
-        Make(actor, mind, AST.F("stow_evidence", actor, evidence, container), () => evidence.PutInto(container, fromScene: actor.Parent as Entity), AST.E("evidence_safeguarded", evidence, container), $"物证封存：{actor.Name}将物证{evidence.Name}存入{container.Name}", () => evidence.Parent == actor && container.Parent == actor.Parent && container.Has("Container"), cost);
+        Make(actor, mind, AST.F("stow_evidence", actor, evidence, container), () => evidence.PutInto(container, fromScene: actor.Parent as Entity), AST.E("evidence_safeguarded", evidence, container), $"物证封存：{actor.Name}将物证{evidence.Name}存入{container.Name}", () => evidence.Parent == actor && container.Parent == actor.Parent && container.IsContainer(), cost);
 
     public static Intent CreateReinforceDoorIntent(Entity actor, Entity doorOrGate, Entity? material = null, double cost = 1.0, Soul? mind = null) =>
         Make(actor, mind, AST.F("reinforce_door", actor, doorOrGate), () => doorOrGate.SetTag("Reinforced", 1), AST.E("door_reinforced", doorOrGate), $"加固门禁：{actor.Name}加固防御{doorOrGate.Name}", () => doorOrGate.Parent == actor.Parent, cost);

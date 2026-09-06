@@ -35,7 +35,6 @@ public sealed class SimulationSession : IDisposable
         var rules = new RuleSystem();
         return new(new Timeline.Timeline(), env, rules, new KotodamaSystem(env, rules), world);
     }
-
     public double ReadyAt(Entity actor) => Math.Max(Timeline.Now, _readyAt.GetValueOrDefault(actor));
 
     private void Charge(Intent intent, ActionResolution result) =>
@@ -44,10 +43,10 @@ public sealed class SimulationSession : IDisposable
     /// <summary>激活或替换一个身体的行动槽。chooser 可用于玩家接管，原有 Soul.Step 插件继续有效。</summary>
     public void Activate(
         Entity actor, Soul soul, double delay = 0, double idleCost = 1,
-        Func<Intent, float>? utility = null,
+        Func<Intent, double>? utility = null,
         Func<IReadOnlyList<Decision>, Intent>? chooser = null,
         Action<Intent?, ActionResolution?>? completed = null,
-        IReadOnlyDictionary<string, object>? context = null)
+        ActionContext? context = null)
     {
         if (!double.IsFinite(idleCost) || idleCost <= 0)
             throw new ArgumentOutOfRangeException(nameof(idleCost), "空闲重试必须使时间前进。");
@@ -71,6 +70,14 @@ public sealed class SimulationSession : IDisposable
         _actors[actor] = turn;
         Timeline.Schedule(Math.Max(delay, ReadyAt(actor) - Timeline.Now), actor.Name, turn);
     }
+
+    public void Activate(
+        Entity actor, Soul soul, double delay, double idleCost,
+        Func<Intent, double>? utility,
+        Func<IReadOnlyList<Decision>, Intent>? chooser,
+        Action<Intent?, ActionResolution?>? completed,
+        IReadOnlyDictionary<string, object>? context) =>
+        Activate(actor, soul, delay, idleCost, utility, chooser, completed, ActionContext.FromDictionary(context));
 
     public void Deactivate(Entity actor)
     {

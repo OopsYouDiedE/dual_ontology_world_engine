@@ -3,6 +3,7 @@ using DualOntologyWorldEngine.Core.Effects;
 using DualOntologyWorldEngine.Core.Mind;
 using DualOntologyWorldEngine.Core.Patterns;
 using DualOntologyWorldEngine.Core.Rules;
+using DualOntologyWorldEngine.Core.Timeline;
 using static DualOntologyWorldEngine.Core.Rules.AST;
 
 namespace DualOntologyWorldEngine.Core.Simulation;
@@ -27,7 +28,7 @@ public sealed class LiterarySimulation : IDisposable
         _cleanup.Add(HauntedItems.Install(Session));
         Session.Runtime.WitnessesCollector = (ev, _) =>
         {
-            var intent = ev.Get<Intent>("intent")!;
+            var intent = ev.Intent()!;
             return Characters.Where(ch => ch == intent.Actor ||
                 (ch.Parent == intent.Actor.Parent && (!intent.IsPrivate || intent.Target == ch))).Select(ch => ch.Mind!);
         };
@@ -126,7 +127,7 @@ public sealed class LiterarySimulation : IDisposable
                     $"前往{destination.Name}", new[] { E("eq", E("value", actor, "$parent"), current) }.Concat(passage.Requirements));
     }
     public EffectPlan Predict(Intent intent) => Rules.ForecastConsequences(intent, Session.Runtime.Prepare(intent, new StateView(intent.Mind)));
-    public float Score(Intent action)
+    public double Score(Intent action)
     {
         if (action.Effect.Op == "wait") return 0;
         var view = new StateView(action.Mind);
@@ -147,7 +148,7 @@ public sealed class LiterarySimulation : IDisposable
             if (following.Succeeded)
                 future = Math.Max(future, Benefit(following));
         }
-        return (float)(score + .65 * (future - available));
+        return score + .65 * (future - available);
     }
     private double ImmediateValue(Intent action, EffectPlan plan)
     {
@@ -191,7 +192,7 @@ public sealed class LiterarySimulation : IDisposable
         }
         return value;
     }
-    private void PerceiveEvent(Entity ev, IReadOnlyDictionary<string, object>? context)
+    private void PerceiveEvent(Entity ev, ActionContext? context)
     {
         foreach (var witness in ev.Related(FacetType.Witness).Select(f => f.Value).OfType<Soul>())
             if (witness.Body is { } body) Perceive(body);

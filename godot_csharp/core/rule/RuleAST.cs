@@ -1,5 +1,188 @@
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Core.Mind;
+using DualOntologyWorldEngine.Core.Effects;
 
 namespace DualOntologyWorldEngine.Core.Rules;
+
+/// <summary>事实表达式谓词操作符强类型枚举。</summary>
+public enum ExprOp
+{
+    Quote,
+    Value,
+    Known,
+    All,
+    Any,
+    True,
+    False,
+    Not,
+    Eq,
+    Ne,
+    Gte,
+    Gt,
+    Lte,
+    Add,
+    Subtract,
+    Contains,
+    Learned,
+    State,
+    TagAtLeast,
+    Parent,
+    ObservedAnomaly
+}
+
+/// <summary>世界效果动作操作符强类型枚举。</summary>
+public enum EffectOp
+{
+    Sequence,
+    When,
+    Require,
+    Move,
+    Observe,
+    Set,
+    Change,
+    Spend,
+    Relate,
+    Unrelate,
+    Consequence,
+    Wait,
+    Rest,
+    Open,
+    Close,
+    Inspect,
+    Operate,
+    Eat,
+    Take,
+    Read,
+    Drink,
+    Reassure,
+    Explode,
+    Ping,
+    Work,
+    Respond,
+    Alert,
+    Say,
+    Ask,
+    Challenge,
+    Retract,
+    Silence,
+    Conceal,
+    StateClaim,
+    Hurt,
+    Light,
+    Reveal,
+    Disable,
+    Consume,
+    Restock,
+    AcceptClause,
+    Grant,
+    Exchange,
+    BindSelf,
+    Name,
+    PrepareSubstitute,
+    InvokeRelease,
+    InvokeSeal,
+    Testify
+}
+
+/// <summary>操作符枚举与 AST 字符串互转扩展。</summary>
+public static class OpFormat
+{
+    public static string ToOpString(this ExprOp op) => op switch
+    {
+        ExprOp.Quote => "quote",
+        ExprOp.Value => "value",
+        ExprOp.Known => "known",
+        ExprOp.All => "all",
+        ExprOp.Any => "any",
+        ExprOp.True => "true",
+        ExprOp.False => "false",
+        ExprOp.Not => "not",
+        ExprOp.Eq => "eq",
+        ExprOp.Ne => "ne",
+        ExprOp.Gte => "gte",
+        ExprOp.Gt => "gt",
+        ExprOp.Lte => "lte",
+        ExprOp.Add => "add",
+        ExprOp.Subtract => "subtract",
+        ExprOp.Contains => "contains",
+        ExprOp.Learned => "learned",
+        ExprOp.State => "state",
+        ExprOp.TagAtLeast => "tag_at_least",
+        ExprOp.Parent => "parent",
+        ExprOp.ObservedAnomaly => "observed_anomaly",
+        _ => ToSnakeCase(op.ToString())
+    };
+
+    public static string ToOpString(this EffectOp op) => op switch
+    {
+        EffectOp.Sequence => "sequence",
+        EffectOp.When => "when",
+        EffectOp.Require => "require",
+        EffectOp.Move => "move",
+        EffectOp.Observe => "observe",
+        EffectOp.Set => "set",
+        EffectOp.Change => "change",
+        EffectOp.Spend => "spend",
+        EffectOp.Relate => "relate",
+        EffectOp.Unrelate => "unrelate",
+        EffectOp.Consequence => "consequence",
+        EffectOp.Wait => "wait",
+        EffectOp.Rest => "rest",
+        EffectOp.Open => "open",
+        EffectOp.Close => "close",
+        EffectOp.Inspect => "inspect",
+        EffectOp.Operate => "operate",
+        EffectOp.Eat => "eat",
+        EffectOp.Take => "take",
+        EffectOp.Read => "read",
+        EffectOp.Drink => "drink",
+        EffectOp.Reassure => "reassure",
+        EffectOp.Explode => "explode",
+        EffectOp.Ping => "ping",
+        EffectOp.Work => "work",
+        EffectOp.Respond => "respond",
+        EffectOp.Alert => "alert",
+        EffectOp.Say => "say",
+        EffectOp.Ask => "ask",
+        EffectOp.Challenge => "challenge",
+        EffectOp.Retract => "retract",
+        EffectOp.Silence => "silence",
+        EffectOp.Conceal => "conceal",
+        EffectOp.StateClaim => "state_claim",
+        EffectOp.Hurt => "hurt",
+        EffectOp.Light => "light",
+        EffectOp.Reveal => "reveal",
+        EffectOp.Disable => "disable",
+        EffectOp.Consume => "consume",
+        EffectOp.Restock => "restock",
+        EffectOp.AcceptClause => "accept_clause",
+        EffectOp.Grant => "grant",
+        EffectOp.Exchange => "exchange",
+        EffectOp.BindSelf => "bind_self",
+        EffectOp.Name => "name",
+        EffectOp.PrepareSubstitute => "prepare_substitute",
+        EffectOp.InvokeRelease => "invoke_release",
+        EffectOp.InvokeSeal => "invoke_seal",
+        EffectOp.Testify => "testify",
+        _ => ToSnakeCase(op.ToString())
+    };
+
+    private static string ToSnakeCase(string str)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            if (char.IsUpper(c))
+            {
+                if (i > 0) sb.Append('_');
+                sb.Append(char.ToLowerInvariant(c));
+            }
+            else sb.Append(c);
+        }
+        return sb.ToString();
+    }
+}
 
 /// <summary>可匹配、可求值的事实表达式 AST。</summary>
 /// <remarks>
@@ -13,6 +196,8 @@ namespace DualOntologyWorldEngine.Core.Rules;
 /// <param name="Args">谓词参数列表（支持嵌套表达式、实体引用或字符串标量）。</param>
 public record Expr(string Op, params object[] Args)
 {
+    public Expr(ExprOp op, params object[] args) : this(op.ToOpString(), args) { }
+
     public virtual bool Equals(Expr? other) =>
         ReferenceEquals(this, other) || other is not null
             && string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)
@@ -36,6 +221,8 @@ public record Expr(string Op, params object[] Args)
 /// <param name="Args">效果作用的目标实体、工具或环境参数。</param>
 public record Effect(string Op, params object[] Args)
 {
+    public Effect(EffectOp op, params object[] args) : this(op.ToOpString(), args) { }
+
     public virtual bool Equals(Effect? other) =>
         ReferenceEquals(this, other) || other is not null
             && string.Equals(Op, other.Op, StringComparison.OrdinalIgnoreCase)
@@ -56,8 +243,14 @@ public static class AST
     /// <summary>快捷创建事实表达式 Expr 节点。</summary>
     public static Expr E(string op, params object[]? args) => new(op, args ?? []);
 
+    /// <summary>通过强类型 ExprOp 快捷创建事实表达式 Expr 节点。</summary>
+    public static Expr E(ExprOp op, params object[]? args) => new(op.ToOpString(), args ?? []);
+
     /// <summary>快捷创建世界效果 Effect 节点。</summary>
     public static Effect F(string op, params object[]? args) => new(op, args ?? []);
+
+    /// <summary>通过强类型 EffectOp 快捷创建世界效果 Effect 节点。</summary>
+    public static Effect F(EffectOp op, params object[]? args) => new(op.ToOpString(), args ?? []);
 }
 
 /// <summary>规则模板中由当前行动上下文绑定的强类型槽位。</summary>
@@ -344,4 +537,102 @@ public static class RuleEntityFactory
         }
         return ev;
     }
+}
+
+/// <summary>RulePublication、RulePatch 与 Event 实体的强类型扩展方法。</summary>
+public static class RuleEntityExtensions
+{
+    // --- 规则条文（RulePublication 与 RulePatch 公用） ---
+    /// <summary>获取实体挂载的规则 AST 对象。</summary>
+    public static Rule? Rule(this Entity entity) => entity.Get<Rule>("rule");
+
+    /// <summary>获取规则适用的空间辖域或场景实体。</summary>
+    public static Entity? Scope(this Entity entity) => entity.Get<Entity>("scope");
+
+    // --- 规则发布物（RulePublication） ---
+    /// <summary>获取规则发布主体实体引用。</summary>
+    public static Entity? Issuer(this Entity entity) => entity.Get<Entity>("issuer");
+
+    /// <summary>获取规则载体实体（如布告栏、终端等）。</summary>
+    public static Entity? Carrier(this Entity entity) => entity.Get<Entity>("carrier");
+
+    /// <summary>获取用于背书该规则的担保或权威标签名。</summary>
+    public static string GuaranteeTag(this Entity entity) => entity.Get<string>("guarantee_tag") ?? "Guarantee";
+
+    /// <summary>获取规则版本标识。</summary>
+    public static object? Version(this Entity entity) => entity.Get<object>("version");
+
+    /// <summary>设置规则版本标识。</summary>
+    public static void SetVersion(this Entity entity, object? version) => entity.Set("version", version!);
+
+    // --- 客观规则补丁（RulePatch） ---
+    /// <summary>获取客观规则补丁的仲裁优先级。</summary>
+    public static int Priority(this Entity entity) => entity.Get<int>("priority");
+
+    /// <summary>获取客观规则补丁是否处于激活生效状态。</summary>
+    public static bool IsActive(this Entity entity) => entity.Get<bool>("active", true);
+
+    /// <summary>设置客观规则补丁的激活状态。</summary>
+    public static void SetActive(this Entity entity, bool active) => entity.Set("active", active);
+
+    /// <summary>设置客观规则补丁的仲裁优先级。</summary>
+    public static void SetPriority(this Entity entity, int priority) => entity.Set("priority", priority);
+
+    // --- 历史审计事件（Event） ---
+    /// <summary>获取发起该事件的行动主体实体。</summary>
+    public static Entity? Actor(this Entity entity) => entity.Get<Entity>("actor");
+
+    /// <summary>获取触发事件的世界效果 AST。</summary>
+    public static Effect? Effect(this Entity entity) => entity.Get<Effect>("effect");
+
+    /// <summary>获取行动执行产出的结果对象。</summary>
+    public static object? Outcome(this Entity entity) => entity.Get<object>("outcome");
+
+    /// <summary>获取发生该事件的行动值时刻。</summary>
+    public static double Time(this Entity entity) => entity.Get<double>("time");
+
+    /// <summary>获取导致该事件发生的前置致因。</summary>
+    public static object? Cause(this Entity entity) => entity.Get<object>("cause");
+
+    /// <summary>获取发起事件主体的心智状态。</summary>
+    public static Soul? Mind(this Entity entity) => entity.Get<Soul>("mind");
+
+    /// <summary>获取事件所处的行动阶段说明。</summary>
+    public static string? Phase(this Entity entity) => entity.Get<string>("phase");
+
+    /// <summary>获取事件对应的行动是否成功执行。</summary>
+    public static bool Succeeded(this Entity entity) => entity.Get<bool>("succeeded");
+
+    /// <summary>获取事件关联的行动意图对象。</summary>
+    public static Intent? Intent(this Entity entity) => entity.Get<Intent>("intent");
+
+    /// <summary>获取事件伴随的言语台词。</summary>
+    public static string? Speech(this Entity entity) => entity.Get<string>("speech");
+
+    /// <summary>获取事件失败时的阻断原因说明。</summary>
+    public static string? Reason(this Entity entity) => entity.Get<string>("reason");
+
+    /// <summary>获取事件引发的状态变化列表。</summary>
+    public static StateChange[]? Changes(this Entity entity) => entity.Get<StateChange[]>("changes");
+
+    /// <summary>设置事件关联的心智主体。</summary>
+    public static void SetMind(this Entity entity, Soul? mind) => entity.Set("mind", mind!);
+
+    /// <summary>设置事件阶段。</summary>
+    public static void SetPhase(this Entity entity, string? phase) => entity.Set("phase", phase!);
+
+    /// <summary>设置事件成功与否状态。</summary>
+    public static void SetSucceeded(this Entity entity, bool succeeded) => entity.Set("succeeded", succeeded);
+
+    /// <summary>设置事件关联的意图。</summary>
+    public static void SetIntent(this Entity entity, Intent? intent) => entity.Set("intent", intent!);
+
+    /// <summary>设置事件伴随的言语台词。</summary>
+    public static void SetSpeech(this Entity entity, string? speech) => entity.Set("speech", speech!);
+
+    /// <summary>设置事件失败原因。</summary>
+    public static void SetReason(this Entity entity, string? reason) => entity.Set("reason", reason!);
+
+    /// <summary>设置事件引发的状态变化集合。</summary>
+    public static void SetChanges(this Entity entity, StateChange[]? changes) => entity.Set("changes", changes!);
 }

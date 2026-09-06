@@ -36,8 +36,8 @@ public sealed class MindMechanics
     public List<BondEffectRule> BondRules { get; } = new();
 
     /// <summary>短时与长效情绪的周期结算参数。</summary>
-    public float TransientEmotionDecay { get; set; } = 0.5f;
-    public float PersistentEmotionDecay { get; set; } = 0.95f;
+    public double TransientEmotionDecay { get; set; } = 0.5;
+    public double PersistentEmotionDecay { get; set; } = 0.95;
 
     /// <summary>按当前行动与已登记见证者结算全部匹配规则。</summary>
     public void Apply(
@@ -70,7 +70,7 @@ public sealed class MindMechanics
     }
 
     /// <summary>由 Core 统一完成周期性情绪衰减。</summary>
-    public IReadOnlyDictionary<Soul, Dictionary<Emotion, (float OldValue, float NewValue)>> SettleDaily(IEnumerable<Soul> souls) =>
+    public IReadOnlyDictionary<Soul, Dictionary<Emotion, (double OldValue, double NewValue)>> SettleDaily(IEnumerable<Soul> souls) =>
         souls.Distinct().ToDictionary(
             soul => soul,
             soul => soul.SettleDailyEmotions(TransientEmotionDecay, PersistentEmotionDecay));

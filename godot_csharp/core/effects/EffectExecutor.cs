@@ -133,10 +133,13 @@ public sealed class EffectPlan
 {
     public StateView View { get; }
     public List<StateChange> Changes { get; } = new();
+    private readonly List<Action> _commitActions = [];
     public string Reason { get; internal set; } = "";
     public bool Uncertain { get; internal set; }
     public bool Succeeded => Reason.Length == 0;
     internal EffectPlan(StateView view) => View = view;
+    /// <summary>登记只在客观计划成功提交后执行的外部状态动作。</summary>
+    internal void OnCommit(Action action) => _commitActions.Add(action);
     public void Write(Entity entity, string field, object? value)
     {
         var before = View.Read(entity, field);
@@ -150,6 +153,7 @@ public sealed class EffectPlan
         if (View.Reads.Any(entry => !StateView.Same(StateView.Actual(entry.Key.Item1, entry.Key.Item2), entry.Value)))
             return new(false, null, "状态已变化，需要重新准备");
         foreach (var c in Changes) StateView.Apply(c.Subject, c.Field, c.After);
+        foreach (var action in _commitActions) action();
         return new(true, Changes.ToArray());
     }
 }
@@ -159,6 +163,7 @@ public sealed class EffectExecutor
 {
     private readonly Dictionary<string, Action<EffectPlan, Effect>> _handlers = new();
     public void Register(string op, Action<EffectPlan, Effect> prepare) => _handlers.Add(op, prepare);
+    public void Register(EffectOp op, Action<EffectPlan, Effect> prepare) => Register(op.ToOpString(), prepare);
     public EffectPlan Prepare(IEnumerable<Effect> effects, StateView? view = null, IEnumerable<Expr>? requirements = null)
     {
         var plan = new EffectPlan((view ?? new StateView()).Fork());

@@ -29,8 +29,9 @@ public class Intent
     public bool IsPrivate { get; init; }
 
     public Intent(Entity actor, Soul mind, Effect effect, IEnumerable<Effect> changes,
-        double motionCost = 10, string label = "", IEnumerable<Expr>? requirements = null)
-        : this(actor, mind, effect, motionCost, resolve: null, label: label)
+        double motionCost = 10, string label = "", IEnumerable<Expr>? requirements = null,
+        Func<bool>? validate = null)
+        : this(actor, mind, effect, motionCost, resolve: null, label: label, validate: validate)
     {
         Changes = changes.ToArray();
         Requirements = requirements?.ToArray() ?? [];
@@ -115,12 +116,12 @@ public class Intent
 /// <param name="Belief">施加该规范压力的主体已采信规则信念实体（RuleBelief）。</param>
 /// <param name="Directive">匹配触发的具体规约指令对象（Mode + Effect）。</param>
 /// <param name="Matched">候选意图效果是否在当前求值环境中命中了指令模式。</param>
-public record RulePressure(float Amount, Entity Belief, Directive Directive, bool Matched);
+public record RulePressure(double Amount, Entity Belief, Directive Directive, bool Matched);
 
 /// <summary>单条人格特质、社交态度或情境偏好产生的动机偏好压力记录。</summary>
 /// <param name="Amount">偏好动机得分（正数代表正向激励与执行倾向，负数代表抗拒或心理不适）。</param>
 /// <param name="Source">动机来源对象或文本描述（如人格标签、社交态度模式或特定情绪源）。</param>
-public record PreferencePressure(float Amount, object Source);
+public record PreferencePressure(double Amount, object Source);
 
 /// <summary>规则系统与心智对候选行动意图的综合评价与决策裁决结果。</summary>
 /// <remarks>
@@ -132,21 +133,21 @@ public record PreferencePressure(float Amount, object Source);
 /// 3. 主导依据（<see cref="Basis"/>）与理由（<see cref="Reason"/>）：提取绝对权重大、影响力最强的核心信念实体与规约模式作为向外部汇报的理由。
 /// </remarks>
 public sealed class Decision(
-    Effect intent, bool complies, float score, Entity? basis, string reason,
+    Effect intent, bool complies, double score, Entity? basis, string reason,
     Intent? action = null, IEnumerable<RulePressure>? pressures = null,
     IEnumerable<PreferencePressure>? preferences = null,
-    float repetitionPenalty = 0, float commitmentInertia = 0)
+    double repetitionPenalty = 0, double commitmentInertia = 0)
 {
     public Effect Intent { get; } = intent;
     public bool Complies { get; } = complies;
-    public float Score { get; } = score;
+    public double Score { get; } = score;
     public Entity? Basis { get; } = basis;
     public string Reason { get; } = reason;
     public Intent? Action { get; } = action;
     public IReadOnlyList<RulePressure> Pressures { get; } = pressures?.ToArray() ?? [];
     public IReadOnlyList<PreferencePressure> Preferences { get; } = preferences?.ToArray() ?? [];
-    public float RepetitionPenalty { get; init; } = repetitionPenalty;
-    public float CommitmentInertia { get; init; } = commitmentInertia;
+    public double RepetitionPenalty { get; init; } = repetitionPenalty;
+    public double CommitmentInertia { get; init; } = commitmentInertia;
 
     /// <summary>生成决策结果的调试诊断字符串。</summary>
     public override string ToString() =>

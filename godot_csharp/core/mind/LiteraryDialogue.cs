@@ -1,6 +1,7 @@
 using System.Collections;
 using DualOntologyWorldEngine.Core.Effects;
 using DualOntologyWorldEngine.Core.Rules;
+using DualOntologyWorldEngine.Core.Timeline;
 
 namespace DualOntologyWorldEngine.Core.Mind;
 
@@ -14,15 +15,15 @@ public static class LiteraryDialogue
 {
     /// <summary>从当前场景、上下文和主体已知事实中装配有内容的交流行动。</summary>
     public static IEnumerable<Intent> Offers(Soul mind, Entity actor, RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context)
+        ActionContext? context = null)
     {
         var people = PeopleInScope(actor, context).ToArray();
         if (people.Length == 0) yield break;
         var (topic, claim) = Topics(mind, actor, env, context).FirstOrDefault();
         var evidence = Evidence(actor, context).FirstOrDefault();
         var goal = actor.Get<Entity>("goal_target") ?? ContextEntity(context, "goal_target");
-        var offer = ContextEntity(context, "offer") ?? Inventory(actor).FirstOrDefault(IsOffer);
-        var requested = ContextEntity(context, "requested") ?? ContextEntity(context, "request");
+        var offer = context?.Offer ?? ContextEntity(context, "offer") ?? Inventory(actor).FirstOrDefault(IsOffer);
+        var requested = context?.Requested ?? ContextEntity(context, "requested") ?? ContextEntity(context, "request");
         var view = new StateView(mind);
 
         foreach (var target in people)
@@ -117,6 +118,10 @@ public static class LiteraryDialogue
         }
     }
 
+    public static IEnumerable<Intent> Offers(Soul mind, Entity actor, RuleEnvironment env,
+        IReadOnlyDictionary<string, object>? context) =>
+        Offers(mind, actor, env, ActionContext.FromDictionary(context));
+
     private static string Statement(Entity actor, Soul mind, Expr claim) =>
         StateView.Knowledge(mind).Any(kv => kv.Key.Item2 == "claim" && Equals(kv.Value, claim))
             ? $"“我收到的材料指向这一点：{ClaimText(claim)}。这不是我亲眼看见的。”"
@@ -133,26 +138,25 @@ public static class LiteraryDialogue
         if (observer != null && !ev.Related(FacetType.Witness, observer).Any())
             return "有人进行了交涉，但你没有听清具体内容。";
 
-        var intent = ev.Get<Intent>("intent");
-        if (!ev.Get<bool>("succeeded", true))
+        var intent = ev.Intent();
+        if (!ev.Succeeded())
         {
             var failedTarget = intent?.Target?.Name ?? "对方";
-            var reason = ev.Get<string>("reason");
+            var reason = ev.Reason();
             return string.IsNullOrWhiteSpace(reason)
                 ? $"{failedTarget}没有完成这次交涉。"
                 : $"{failedTarget}没有完成这次交涉：{reason}。";
         }
-        var speech = ev.Get<string>("speech") ?? intent?.Speech;
+        var speech = ev.Speech() ?? intent?.Speech;
         if (!string.IsNullOrWhiteSpace(speech)) return speech;
 
         return intent?.Label ?? "发生了一次交涉。";
     }
 
-    private static IEnumerable<Character> PeopleInScope(Entity actor, IReadOnlyDictionary<string, object>? context)
+    private static IEnumerable<Character> PeopleInScope(Entity actor, ActionContext? context)
     {
         var people = new List<Character>();
-        var scene = actor is Character character ? character.CurrentScene : null;
-        scene ??= ContextEntity(context, "scene");
+        var scene = (actor as Character)?.CurrentScene ?? context?.Scene ?? ContextEntity(context, "scene");
         if (scene != null)
             foreach (var entity in scene.Children.Keys.OfType<Character>()) people.Add(entity);
         foreach (var key in new[] { "characters", "audience", "listener", "target", "subject" })
@@ -165,11 +169,12 @@ public static class LiteraryDialogue
         Soul mind,
         Entity actor,
         RuleEnvironment env,
-        IReadOnlyDictionary<string, object>? context)
+        ActionContext? context)
     {
         var expressions = new List<Expr>();
+        if (context?.Claim is { } directClaim) expressions.Add(directClaim);
         foreach (var key in new[] { "claim", "proposition", "topic" })
-            if (context?.GetValueOrDefault(key) is Expr expression) expressions.Add(expression);
+            if (ContextValue(context, key) is Expr expression) expressions.Add(expression);
         var ownSecret = StateValue(mind, actor, "secret") as Expr;
         if (ownSecret?.Op == "eq" && ownSecret.Args is [Expr { Op: "value", Args: [Entity referent, string field] }, _]
             && StateValue(mind, referent, field) is { } current && current != StateView.Unknown)
@@ -190,8 +195,10 @@ public static class LiteraryDialogue
         }
     }
 
-    private static IEnumerable<Entity> Evidence(Entity actor, IReadOnlyDictionary<string, object>? context)
+    private static IEnumerable<Entity> Evidence(Entity actor, ActionContext? context)
     {
+        if (context?.Evidence is { } directEvidence && Accessible(actor, directEvidence) && IsEvidence(directEvidence))
+            yield return directEvidence;
         foreach (var key in new[] { "evidence", "record", "proof" })
             foreach (var entity in ContextEntities(context, key))
                 if (Accessible(actor, entity) && IsEvidence(entity)) yield return entity;
@@ -211,16 +218,18 @@ public static class LiteraryDialogue
         ReferenceEquals(entity.Parent, actor) || ReferenceEquals(entity.Parent, actor.Parent);
 
     private static bool IsEvidence(Entity entity) =>
+        entity.HasTag(CommonTag.Evidence) || entity.HasTag(CommonTag.Record) || entity.HasTag(CommonTag.Recording) ||
         entity.Has("Evidence") || entity.Has("Record") || entity.Has("Recording") ||
-        entity.Entries("Claim").Any() || entity.Get<Expr>("claim") != null ||
+        entity.Entries(FacetType.Claim).Any() || entity.Entries("Claim").Any() || entity.Get<Expr>("claim") != null ||
         entity.Get<Expr>("proposition") != null || entity.HasProperty("evidence") ||
         entity.HasProperty("recording_text");
 
     private static bool IsOffer(Entity entity) =>
+        entity.HasTag(CommonTag.Item) || entity.HasTag(CommonTag.Evidence) || entity.HasTag(CommonTag.Consumable) || entity.HasTag(CommonTag.Tool) ||
         entity.Has("Item") || entity.Has("Evidence") || entity.Has("Consumable") || entity.Has("Tool");
 
     private static IEnumerable<Entity> Inventory(Entity actor) =>
-        actor.Children.Keys.OfType<Entity>().Where(entity => !entity.Has("Soul") && !entity.HasTag(CommonTag.Soul));
+        actor.Children.Keys.OfType<Entity>().Where(entity => !entity.HasTag(CommonTag.Soul) && !entity.Has("Soul"));
 
     private static bool Distressed(Soul observer, Character target)
     {
@@ -281,16 +290,45 @@ public static class LiteraryDialogue
     private static string EvidenceText(Entity evidence) =>
         evidence.Get<string>("description") ?? evidence.Get<string>("content") ?? evidence.Get<string>("evidence") ?? evidence.Name;
 
-    private static Entity? ContextEntity(IReadOnlyDictionary<string, object>? context, string key) =>
-        context?.GetValueOrDefault(key) as Entity;
-
-    private static IEnumerable<Entity> ContextEntities(IReadOnlyDictionary<string, object>? context, string key)
+    private static object? ContextValue(ActionContext? context, string key)
     {
-        if (context == null || !context.TryGetValue(key, out var value)) yield break;
-        if (value is Entity entity) { yield return entity; yield break; }
-        if (value is IEnumerable enumerable)
-            foreach (var item in enumerable)
-                if (item is Entity entityItem) yield return entityItem;
+        if (context == null) return null;
+        object? direct = key switch
+        {
+            "scene" => context.Scene,
+            "target" => context.Target,
+            "evidence" => context.Evidence,
+            "claim" or "proposition" or "topic" => context.Claim,
+            "offer" => context.Offer,
+            "requested" or "request" => context.Requested,
+            _ => null
+        };
+        if (direct != null) return direct;
+        return context.Extra != null && context.Extra.TryGetValue(key, out var val) ? val : null;
+    }
+
+    private static Entity? ContextEntity(ActionContext? context, string key) =>
+        ContextValue(context, key) as Entity;
+
+    private static IEnumerable<Entity> ContextEntities(ActionContext? context, string key)
+    {
+        if (context == null) yield break;
+        var direct = key switch
+        {
+            "target" => context.Target,
+            "evidence" => context.Evidence,
+            "offer" => context.Offer,
+            "requested" or "request" => context.Requested,
+            _ => null
+        };
+        if (direct != null) yield return direct;
+        if (context.Extra != null && context.Extra.TryGetValue(key, out var value))
+        {
+            if (value is Entity entity && !ReferenceEquals(entity, direct)) yield return entity;
+            else if (value is IEnumerable enumerable)
+                foreach (var item in enumerable)
+                    if (item is Entity entityItem && !ReferenceEquals(entityItem, direct)) yield return entityItem;
+        }
     }
 
     private static Expr Contains(Entity subject, string relation, Entity target) =>

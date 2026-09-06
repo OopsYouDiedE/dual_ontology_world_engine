@@ -5,6 +5,16 @@ using DualOntologyWorldEngine.Core.Rules;
 
 namespace DualOntologyWorldEngine.Core.Kotodama;
 
+/// <summary>仪式或言灵中单个槽位的约束规格。</summary>
+public readonly record struct SlotSpec(
+    bool Optional = false,
+    bool Many = false,
+    IReadOnlyDictionary<string, int>? Tags = null,
+    bool Held = false,
+    string Holder = "holder",
+    string? Relation = null,
+    string Target = "target");
+
 /// <summary>言灵、仪式配方与超自然契约核心装配工厂。</summary>
 /// <remarks>
 /// 负责构建具有规范结构的实体：
@@ -26,14 +36,13 @@ public static class KotodamaFactory
     /// <param name="obligations">契约规定的主体遵从义务规则集合（Obligation）。</param>
     /// <param name="breach">触犯义务违约时自动触发的惩戒效果列表。</param>
     /// <param name="exceptions">免责豁免条件表达式列表。</param>
-    /// <param name="steps">多阶段仪式的步骤定义列表。</param>
     /// <param name="parent">所属世界树节点。</param>
     /// <param name="tags">附加实体标签字典。</param>
     /// <param name="properties">附加客观属性字典。</param>
     /// <returns>标记为 Recipe=1 的仪式配方实体。</returns>
     public static Entity CreateRecipe(
         string name,
-        IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>? slots = null,
+        IReadOnlyDictionary<string, SlotSpec>? slots = null,
         IReadOnlyDictionary<string, int>? thresholds = null,
         IEnumerable<object>? requirements = null,
         IEnumerable<Effect>? costs = null,
@@ -43,7 +52,6 @@ public static class KotodamaFactory
         IEnumerable<Rule>? obligations = null,
         IEnumerable<Effect>? breach = null,
         IEnumerable<Expr>? exceptions = null,
-        IEnumerable<IReadOnlyDictionary<string, object>>? steps = null,
         TreeMember? parent = null,
         IDictionary<string, int>? tags = null,
         IDictionary<string, object>? properties = null)
@@ -56,9 +64,8 @@ public static class KotodamaFactory
 
         var props = new Dictionary<string, object>
         {
-            ["slots"] = slots != null ? new Dictionary<string, IReadOnlyDictionary<string, object>>(slots) : new(),
-            ["thresholds"] = thresholds != null ? new Dictionary<string, int>(thresholds) : new(),
-            ["steps"] = steps != null ? steps.ToList() : new List<IReadOnlyDictionary<string, object>>()
+            ["slots"] = slots != null ? new Dictionary<string, SlotSpec>(slots) : new(),
+            ["thresholds"] = thresholds != null ? new Dictionary<string, int>(thresholds) : new()
         };
         if (properties != null)
         {
@@ -67,14 +74,14 @@ public static class KotodamaFactory
 
         var recipe = new Entity(name, parent, recipeTags, properties: props);
 
-        if (requirements != null) foreach (var r in requirements) recipe.Attach("Requirement", r);
-        if (costs != null) foreach (var c in costs) recipe.Attach("Cost", c);
-        if (effects != null) foreach (var e in effects) recipe.Attach("Effect", e);
-        if (triggers != null) foreach (var t in triggers) recipe.Attach("Trigger", t);
-        if (constraints != null) foreach (var hc in constraints) recipe.Attach("HardConstraint", hc);
-        if (obligations != null) foreach (var o in obligations) recipe.Attach("Obligation", o);
-        if (breach != null) foreach (var b in breach) recipe.Attach("Breach", b);
-        if (exceptions != null) foreach (var ex in exceptions) recipe.Attach("Exception", ex);
+        if (requirements != null) foreach (var r in requirements) recipe.Attach(FacetType.Requirement, r);
+        if (costs != null) foreach (var c in costs) recipe.Attach(FacetType.Cost, c);
+        if (effects != null) foreach (var e in effects) recipe.Attach(FacetType.Effect, e);
+        if (triggers != null) foreach (var t in triggers) recipe.Attach(FacetType.Trigger, t);
+        if (constraints != null) foreach (var hc in constraints) recipe.Attach(FacetType.HardConstraint, hc);
+        if (obligations != null) foreach (var o in obligations) recipe.Attach(FacetType.Obligation, o);
+        if (breach != null) foreach (var b in breach) recipe.Attach(FacetType.Breach, b);
+        if (exceptions != null) foreach (var ex in exceptions) recipe.Attach(FacetType.Exception, ex);
 
         return recipe;
     }
@@ -92,7 +99,7 @@ public static class KotodamaFactory
     /// <returns>标记为 Incantation=1 与 Kotodama=1 的言灵实体。</returns>
     public static Entity CreateWordSpirit(
         string name = "未命名言灵",
-        IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>? slots = null,
+        IReadOnlyDictionary<string, SlotSpec>? slots = null,
         IReadOnlyDictionary<string, int>? thresholds = null,
         IEnumerable<object>? requirements = null,
         Effect? cost = null,
@@ -205,18 +212,17 @@ public class KotodamaSystem
     {
         Register("assert", (plan, effect) =>
         {
-            var facts = ((IEnumerable<Expr>?)plan.View.Read(_env.State, "facts") ?? []).ToList();
-            var fact = (Expr)effect.Args[0];
-            if (!facts.Contains(fact)) facts.Add(fact);
-            plan.Write(_env.State, "facts", facts);
-            plan.Write(_env.State, "version", Convert.ToInt32(plan.View.Read(_env.State, "version")) + 1);
+            if (effect.Args.Length > 0 && effect.Args[0] is Expr fact)
+            {
+                plan.OnCommit(() => _env.AssertFact(fact));
+            }
         });
         Register("retract", (plan, effect) =>
         {
-            var facts = ((IEnumerable<Expr>?)plan.View.Read(_env.State, "facts") ?? []).ToList();
-            facts.Remove((Expr)effect.Args[0]);
-            plan.Write(_env.State, "facts", facts);
-            plan.Write(_env.State, "version", Convert.ToInt32(plan.View.Read(_env.State, "version")) + 1);
+            if (effect.Args.Length > 0 && effect.Args[0] is Expr fact)
+            {
+                plan.OnCommit(() => _env.Retract(fact));
+            }
         });
     }
 
@@ -276,8 +282,9 @@ public class KotodamaSystem
         return result.Succeeded ? plan.Changes.Select(c => c.Subject).Distinct().ToArray() : null;
     }
 
-    private static IReadOnlyList<Entity> FlattenEntities(IReadOnlyDictionary<string, object> inputs)
+    private static IReadOnlyList<Entity> FlattenEntities(IReadOnlyDictionary<string, object>? inputs)
     {
+        if (inputs == null) return [];
         var found = new List<Entity>();
         foreach (var val in inputs.Values)
         {
@@ -289,21 +296,21 @@ public class KotodamaSystem
 
     private bool CheckSlot(
         string role,
-        IReadOnlyDictionary<string, object> spec,
+        SlotSpec spec,
         object? value,
         IReadOnlyDictionary<string, object> bindings)
     {
         var entities = value is Entity e ? [e] : (value as IEnumerable<Entity>)?.ToList() ?? new List<Entity>();
         if (entities.Count == 0)
         {
-            return spec.TryGetValue("optional", out var opt) && opt is true;
+            return spec.Optional;
         }
-        if (!spec.TryGetValue("many", out var many) || many is not true)
+        if (!spec.Many && entities.Count != 1)
         {
-            if (entities.Count != 1) return false;
+            return false;
         }
 
-        if (spec.TryGetValue("tags", out var tagsObj) && tagsObj is IReadOnlyDictionary<string, int> tagsMap)
+        if (spec.Tags is { Count: > 0 } tagsMap)
         {
             if (entities.Any(ent => tagsMap.Any(kvp => ent.Tag(kvp.Key) < kvp.Value)))
             {
@@ -311,9 +318,9 @@ public class KotodamaSystem
             }
         }
 
-        if (spec.TryGetValue("held", out var held) && held is true)
+        if (spec.Held)
         {
-            var holderKey = spec.TryGetValue("holder", out var hk) ? hk.ToString()! : "holder";
+            var holderKey = string.IsNullOrEmpty(spec.Holder) ? "holder" : spec.Holder;
             var holder = bindings.GetValueOrDefault(holderKey) as TreeMember;
             if (holder != null && entities.Any(ent => !ReferenceEquals(ent.Parent, holder)))
             {
@@ -321,11 +328,11 @@ public class KotodamaSystem
             }
         }
 
-        if (spec.TryGetValue("relation", out var relObj) && relObj is string relation && !string.IsNullOrEmpty(relation))
+        if (!string.IsNullOrEmpty(spec.Relation))
         {
-            var targetKey = spec.TryGetValue("target", out var tk) ? tk.ToString()! : "target";
+            var targetKey = string.IsNullOrEmpty(spec.Target) ? "target" : spec.Target;
             var target = bindings.GetValueOrDefault(targetKey) as Entity;
-            if (target == null || entities.Any(ent => !ent.Related(relation, target).Any()))
+            if (target == null || entities.Any(ent => !ent.Related(spec.Relation, target).Any()))
             {
                 return false;
             }
@@ -343,15 +350,15 @@ public class KotodamaSystem
     public Dictionary<string, int> Signature(
         Entity recipe,
         Soul speaker,
-        IReadOnlyDictionary<string, object> inputs,
-        IReadOnlyDictionary<string, object> bindings)
+        IReadOnlyDictionary<string, object>? inputs = null,
+        IReadOnlyDictionary<string, object>? bindings = null)
     {
         var entities = new List<Entity>(FlattenEntities(inputs));
         if (recipe.Get<bool>("include_speaker", true))
         {
             entities.Add(speaker);
         }
-        return KotodamaFactory.AggregateAspects(entities, bindings.GetValueOrDefault("target") as Entity, bindings);
+        return KotodamaFactory.AggregateAspects(entities, bindings?.GetValueOrDefault("target") as Entity, bindings);
     }
 
     /// <summary>全面校验仪式配方在当前输入实体、目标客体与环境上下文下的前置合法性。</summary>
@@ -364,21 +371,25 @@ public class KotodamaSystem
     public IReadOnlyList<string> Check(
         Entity recipe,
         Soul speaker,
-        IReadOnlyDictionary<string, object> inputs,
+        IReadOnlyDictionary<string, object>? inputs = null,
         Entity? target = null,
         IReadOnlyDictionary<string, object>? context = null)
     {
         var ctx = context != null ? new Dictionary<string, object>(context) : new Dictionary<string, object>();
-        foreach (var (k, v) in inputs) ctx[k] = v;
+        if (inputs != null)
+        {
+            foreach (var (k, v) in inputs) ctx[k] = v;
+        }
         ctx["speaker"] = speaker;
         if (target != null) ctx["target"] = target;
 
         var missing = new List<string>();
-        var slots = recipe.Get<IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>>("slots") ?? new Dictionary<string, IReadOnlyDictionary<string, object>>();
+        var slots = recipe.Get<IReadOnlyDictionary<string, SlotSpec>>("slots") ?? new Dictionary<string, SlotSpec>();
 
         foreach (var (role, spec) in slots)
         {
-            inputs.TryGetValue(role, out var slotVal);
+            object? slotVal = null;
+            inputs?.TryGetValue(role, out slotVal);
             if (!CheckSlot(role, spec, slotVal, ctx))
             {
                 missing.Add($"槽位:{role}");
@@ -398,7 +409,7 @@ public class KotodamaSystem
             }
         }
 
-        foreach (var facet in recipe.Entries("Requirement"))
+        foreach (var facet in recipe.Entries(FacetType.Requirement))
         {
             bool valid;
             if (facet.Value is Func<IReadOnlyDictionary<string, object>, bool> pred)
@@ -426,20 +437,20 @@ public class KotodamaSystem
     /// <param name="recipe">配方实体。</param>
     /// <param name="inputs">投入的素材字典。</param>
     /// <returns>符合槽位关联关系约束的公共交集目标实体列表。</returns>
-    public IReadOnlyList<Entity> TargetCandidates(Entity recipe, IReadOnlyDictionary<string, object> inputs)
+    public IReadOnlyList<Entity> TargetCandidates(Entity recipe, IReadOnlyDictionary<string, object>? inputs = null)
     {
         var groups = new List<HashSet<Entity>>();
-        var slots = recipe.Get<IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>>("slots") ?? new Dictionary<string, IReadOnlyDictionary<string, object>>();
+        var slots = recipe.Get<IReadOnlyDictionary<string, SlotSpec>>("slots") ?? new Dictionary<string, SlotSpec>();
 
         foreach (var (role, spec) in slots)
         {
-            if (!spec.TryGetValue("relation", out var relObj) || relObj is not string relation || string.IsNullOrEmpty(relation)) continue;
-            if (!inputs.TryGetValue(role, out var slotVal)) continue;
+            if (string.IsNullOrEmpty(spec.Relation)) continue;
+            if (inputs == null || !inputs.TryGetValue(role, out var slotVal)) continue;
 
             var entities = slotVal is Entity e ? [e] : (slotVal as IEnumerable<Entity>)?.ToList() ?? new List<Entity>();
             foreach (var ent in entities)
             {
-                var targets = ent.Related(relation).Select(f => f.Value).OfType<Entity>().ToHashSet();
+                var targets = ent.Related(spec.Relation).Select(f => f.Value).OfType<Entity>().ToHashSet();
                 groups.Add(targets);
             }
         }
@@ -463,7 +474,7 @@ public class KotodamaSystem
     public Entity? Begin(
         Entity recipe,
         Soul speaker,
-        IReadOnlyDictionary<string, object> inputs,
+        IReadOnlyDictionary<string, object>? inputs = null,
         Entity? target = null,
         IReadOnlyDictionary<string, object>? context = null)
     {
@@ -486,19 +497,22 @@ public class KotodamaSystem
                 ["recipe"] = recipe,
                 ["speaker"] = speaker,
                 ["target"] = target!,
-                ["inputs"] = new Dictionary<string, object>(inputs),
+                ["inputs"] = inputs != null ? new Dictionary<string, object>(inputs) : new Dictionary<string, object>(),
                 ["context"] = ctx,
                 ["step"] = 0,
                 ["phase"] = "prepared"
             });
 
         rite.Relate(FacetType.Source, speaker);
-        if (target != null) rite.Relate("Target", target);
+        if (target != null) rite.Relate(FacetType.Target, target);
 
-        foreach (var (role, val) in inputs)
+        if (inputs != null)
         {
-            rite.Attach(role, val);
-            if (val is Entity e) rite.Relate("Input", e);
+            foreach (var (role, val) in inputs)
+            {
+                rite.Attach(role, val);
+                if (val is Entity e) rite.Relate(FacetType.Input, e);
+            }
         }
 
         _rites.Add(rite);
@@ -526,11 +540,11 @@ public class KotodamaSystem
     private Entity? Complete(Entity rite, IReadOnlyDictionary<string, object> bindings)
     {
         var recipe = rite.Get<Entity>("recipe")!;
-        var costs = recipe.Entries("Cost").Select(f => f.Value).OfType<Effect>();
+        var costs = recipe.Entries(FacetType.Cost).Select(f => f.Value).OfType<Effect>();
 
-        bool persistent = recipe.Has("Covenant") || recipe.Entries("Trigger").Any() ||
-            recipe.Entries("HardConstraint").Any() || recipe.Entries("Obligation").Any();
-        var outputs = persistent ? Enumerable.Empty<Effect>() : recipe.Entries("Effect").Select(f => f.Value).OfType<Effect>();
+        bool persistent = recipe.Has("Covenant") || recipe.Entries(FacetType.Trigger).Any() ||
+            recipe.Entries(FacetType.HardConstraint).Any() || recipe.Entries(FacetType.Obligation).Any();
+        var outputs = persistent ? Enumerable.Empty<Effect>() : recipe.Entries(FacetType.Effect).Select(f => f.Value).OfType<Effect>();
         var plan = Effects.Prepare(costs.Concat(outputs).Select(e => BoundEffect(Materialize(e, bindings))));
         if (!plan.Commit().Succeeded)
         {
@@ -539,7 +553,7 @@ public class KotodamaSystem
             return null;
         }
         foreach (var change in plan.Changes)
-            rite.Attach("Change", change, source: change.Subject);
+            rite.Attach(FacetType.Change, change, source: change.Subject);
 
         Entity result;
         if (persistent)
@@ -558,9 +572,9 @@ public class KotodamaSystem
                     ["fired"] = false
                 });
 
-            foreach (var key in new[] { "Trigger", "HardConstraint", "Obligation", "Breach", "Exception", "Effect" })
+            foreach (var facetType in new[] { FacetType.Trigger, FacetType.HardConstraint, FacetType.Obligation, FacetType.Breach, FacetType.Exception, FacetType.Effect })
             {
-                foreach (var facet in recipe.Entries(key))
+                foreach (var facet in recipe.Entries(facetType))
                 {
                     object val = facet.Value switch
                     {
@@ -569,7 +583,7 @@ public class KotodamaSystem
                         Expr expr => _env.Materialize(expr, bindings),
                         _ => facet.Value
                     };
-                    contract.Attach(key, val, facet.Strength, source: recipe);
+                    contract.Attach(facetType, val, facet.Strength, source: recipe);
                 }
             }
 
@@ -597,7 +611,7 @@ public class KotodamaSystem
     public Entity? Invoke(
         Entity recipe,
         Soul speaker,
-        IReadOnlyDictionary<string, object> inputs,
+        IReadOnlyDictionary<string, object>? inputs = null,
         Entity? target = null,
         IReadOnlyDictionary<string, object>? context = null)
     {
@@ -607,7 +621,7 @@ public class KotodamaSystem
 
     private bool Excepted(Entity contract)
     {
-        return contract.Entries("Exception")
+        return contract.Entries(FacetType.Exception)
             .Select(f => f.Value)
             .OfType<Expr>()
             .Any(expr => _env.Evaluate(expr));
@@ -627,7 +641,7 @@ public class KotodamaSystem
         bool allowed = _contracts.Where(c => c.Get<bool>("active", true) && c.Has("Active") && !Excepted(c))
             .All(contract =>
             {
-                var hardConstraints = contract.Entries("HardConstraint").Select(f => f.Value).OfType<Rule>();
+                var hardConstraints = contract.Entries(FacetType.HardConstraint).Select(f => f.Value).OfType<Rule>();
                 return _rules.ObjectiveAllows(effect, hardConstraints, _env);
             });
 
@@ -644,7 +658,7 @@ public class KotodamaSystem
         foreach (var contract in _contracts)
         {
             if (!contract.Has("Active") || Excepted(contract)) continue;
-            var obligations = contract.Entries("Obligation").Select(f => f.Value).OfType<Rule>().ToList();
+            var obligations = contract.Entries(FacetType.Obligation).Select(f => f.Value).OfType<Rule>().ToList();
             if (obligations.Count > 0 && obligations.All(rule => _rules.ObjectiveComplies(effect, rule, _env)))
             {
                 continue;
@@ -653,7 +667,7 @@ public class KotodamaSystem
 
             contract.Change("Breached", 1);
             breached.Add(contract);
-            Apply(contract.Entries("Breach").Select(f => f.Value).OfType<Effect>().ToArray());
+            Apply(contract.Entries(FacetType.Breach).Select(f => f.Value).OfType<Effect>().ToArray());
         }
         return breached;
     }
@@ -670,7 +684,7 @@ public class KotodamaSystem
                 continue;
             }
 
-            var triggers = contract.Entries("Trigger").Select(f => f.Value).OfType<Rule>().ToList();
+            var triggers = contract.Entries(FacetType.Trigger).Select(f => f.Value).OfType<Rule>().ToList();
             if (triggers.Count > 0 && !triggers.All(r => _rules.ActivationSatisfied(r, _env)))
             {
                 continue;
@@ -678,14 +692,14 @@ public class KotodamaSystem
 
             contract.Change("Firing", 1);
             bool succeeded;
-            try { succeeded = Apply(contract.Entries("Effect").Select(f => f.Value).OfType<Effect>().ToArray()) != null; }
+            try { succeeded = Apply(contract.Entries(FacetType.Effect).Select(f => f.Value).OfType<Effect>().ToArray()) != null; }
             finally { contract.Tags.Remove("Firing"); }
 
             if (!succeeded) continue;
 
             contract.Change("Fired", 1);
             contract.Set("fired", true);
-            if (!contract.Entries("HardConstraint").Any() && !contract.Entries("Obligation").Any())
+            if (!contract.Entries(FacetType.HardConstraint).Any() && !contract.Entries(FacetType.Obligation).Any())
             {
                 contract.Tags.Remove("Active");
                 contract.Set("active", false);

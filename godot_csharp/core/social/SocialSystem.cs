@@ -172,7 +172,7 @@ public static class SocialSystem
                 properties: new Dictionary<string, object>
                 {
                     ["emotion"] = emotion,
-                    ["intensity"] = (float)intensity,
+                    ["intensity"] = (double)intensity,
                     ["target"] = target,
                     ["source"] = source,
                     ["mode"] = "relational",
