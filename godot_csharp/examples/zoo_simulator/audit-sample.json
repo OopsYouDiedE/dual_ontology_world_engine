@@ -1,0 +1,4436 @@
+{
+  "seed": 7,
+  "preset": "standard",
+  "startMinute": 540,
+  "duration": 180,
+  "steps": 1732,
+  "truncated": false,
+  "visitors": [
+    {
+      "Name": "游客1",
+      "scene": "猿类园区",
+      "outcome": "仍在园内",
+      "health": 10,
+      "erosion": 0,
+      "attention": 0
+    },
+    {
+      "Name": "游客2",
+      "scene": "正规出口",
+      "outcome": "离园",
+      "health": 10,
+      "erosion": 0,
+      "attention": 0
+    },
+    {
+      "Name": "游客3",
+      "scene": "大象展位",
+      "outcome": "仍在园内",
+      "health": 9.5,
+      "erosion": 1.4400000000000006,
+      "attention": 1.459999999999999
+    },
+    {
+      "Name": "游客4",
+      "scene": "猿类园区",
+      "outcome": "仍在园内",
+      "health": 10,
+      "erosion": 0,
+      "attention": 0
+    }
+  ],
+  "changes": [
+    {
+      "Time": 0,
+      "actor": "“它”",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区树荫灌木 → 兔区"
+    },
+    {
+      "Time": 0,
+      "actor": "游客1",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "游客2",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "游客3",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "游客4",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 员工补给区 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "红衣员工",
+      "scene": "海洋馆大厅",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 水母展区 → 海洋馆大厅"
+    },
+    {
+      "Time": 0,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 园长办公室 → 主步道"
+    },
+    {
+      "Time": 0,
+      "actor": "黑衣感染者",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 6.5,
+      "Outcome": "$parent: 猿区右街 → 猿类园区"
+    },
+    {
+      "Time": 1,
+      "actor": "游客1",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "游客2",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "游客3",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "游客4",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "大象区保安",
+      "scene": "保安室",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "红衣员工",
+      "scene": "海洋馆大厅",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "黑衣感染者",
+      "scene": "猿类园区",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 6.5,
+      "Outcome": "exposure: 无 → 0"
+    },
+    {
+      "Time": 1,
+      "actor": "游客1",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 猿类园区"
+    },
+    {
+      "Time": 1,
+      "actor": "游客2",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 狮区"
+    },
+    {
+      "Time": 1,
+      "actor": "游客3",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大象区"
+    },
+    {
+      "Time": 1,
+      "actor": "游客4",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 猿类园区"
+    },
+    {
+      "Time": 1,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 1.5,
+      "actor": "黑衣感染者",
+      "scene": "猿区左街",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 6.5,
+      "Outcome": "$parent: 猿类园区 → 猿区左街"
+    },
+    {
+      "Time": 2,
+      "actor": "园长",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 狮区"
+    },
+    {
+      "Time": 2,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 2,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "erosion: 0 → 0.04"
+    },
+    {
+      "Time": 2.5,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 6.5,
+      "Outcome": "$parent: 猿区左街 → 主步道"
+    },
+    {
+      "Time": 3,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 3,
+      "actor": "游客1",
+      "scene": "猿区左街",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 猿类园区 → 猿区左街"
+    },
+    {
+      "Time": 3,
+      "actor": "游客2",
+      "scene": "白狮假山",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 狮区 → 白狮假山"
+    },
+    {
+      "Time": 3,
+      "actor": "游客3",
+      "scene": "保安室",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 保安室"
+    },
+    {
+      "Time": 3,
+      "actor": "游客4",
+      "scene": "猿区左街",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 猿类园区 → 猿区左街"
+    },
+    {
+      "Time": 3,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.05,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 3,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 6.54,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 3,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 6.54,
+      "Outcome": "erosion: 6.5 → 6.54"
+    },
+    {
+      "Time": 4,
+      "actor": "园长",
+      "scene": "白狮假山",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 狮区 → 白狮假山"
+    },
+    {
+      "Time": 4,
+      "actor": "游客1",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 猿区左街 → 猿类园区"
+    },
+    {
+      "Time": 4,
+      "actor": "游客2",
+      "scene": "狮区工作通道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 白狮假山 → 狮区工作通道"
+    },
+    {
+      "Time": 4,
+      "actor": "游客3",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 保安室 → 大象区"
+    },
+    {
+      "Time": 4,
+      "actor": "游客4",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 猿区左街 → 猿类园区"
+    },
+    {
+      "Time": 4,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000001,
+      "Erosion": 6.58,
+      "Outcome": "erosion: 6.54 → 6.58"
+    },
+    {
+      "Time": 4.5,
+      "actor": "黑衣感染者",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0.12000000000000001,
+      "Erosion": 6.58,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 5,
+      "actor": "蓝衣员工",
+      "scene": "兔区树荫灌木",
+      "Mechanism": "move",
+      "Attention": 0.04,
+      "Erosion": 0.04,
+      "Outcome": "$parent: 兔区 → 兔区树荫灌木"
+    },
+    {
+      "Time": 5,
+      "actor": "白狮1",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 12 → 11"
+    },
+    {
+      "Time": 5,
+      "actor": "游客2",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 狮区工作通道 → 狮区"
+    },
+    {
+      "Time": 5,
+      "actor": "游客3",
+      "scene": "大象草坪",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象草坪"
+    },
+    {
+      "Time": 5,
+      "actor": "黑衣感染者",
+      "scene": "大门入口",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000001,
+      "Erosion": 6.58,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 6,
+      "actor": "红衣员工",
+      "scene": "鲸鱼区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大厅 → 鲸鱼区"
+    },
+    {
+      "Time": 6,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 6,
+      "actor": "大象区保安",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 保安室 → 大象区"
+    },
+    {
+      "Time": 6,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0.03,
+      "Erosion": 0.04,
+      "Outcome": "$parent: 兔区树荫灌木 → 兔区"
+    },
+    {
+      "Time": 6,
+      "actor": "游客2",
+      "scene": "正规出口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 狮区 → 正规出口"
+    },
+    {
+      "Time": 6,
+      "actor": "游客3",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象草坪 → 大象区"
+    },
+    {
+      "Time": 6,
+      "actor": "黑衣感染者",
+      "scene": "大门入口",
+      "Mechanism": "evolve",
+      "Attention": 0.17,
+      "Erosion": 6.62,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 6,
+      "actor": "黑衣感染者",
+      "scene": "大门入口",
+      "Mechanism": "evolve",
+      "Attention": 0.17,
+      "Erosion": 6.62,
+      "Outcome": "erosion: 6.58 → 6.62"
+    },
+    {
+      "Time": 6.5,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0.17,
+      "Erosion": 6.62,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 7,
+      "actor": "白狮4",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 12 → 11"
+    },
+    {
+      "Time": 7,
+      "actor": "红衣员工",
+      "scene": "海洋馆大厅",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 鲸鱼区 → 海洋馆大厅"
+    },
+    {
+      "Time": 7,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 7,
+      "actor": "黑衣感染者",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.16,
+      "Erosion": 6.62,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 7.5,
+      "actor": "黑衣感染者",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0.16,
+      "Erosion": 6.62,
+      "Outcome": "$parent: 主步道 → 大象区"
+    },
+    {
+      "Time": 8,
+      "actor": "红衣员工",
+      "scene": "海洋馆大门",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大厅 → 海洋馆大门"
+    },
+    {
+      "Time": 9,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 9,
+      "actor": "白狮1",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 11 → 10"
+    },
+    {
+      "Time": 9,
+      "actor": "红衣员工",
+      "scene": "馆外员工住处",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大门 → 馆外员工住处"
+    },
+    {
+      "Time": 9.5,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0.13999999999999999,
+      "Erosion": 6.62,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 11,
+      "actor": "白狮4",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 11 → 10"
+    },
+    {
+      "Time": 12,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 12,
+      "actor": "兔子血",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 动物园规则世界 → 冷柜货架"
+    },
+    {
+      "Time": 13,
+      "actor": "白狮2",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 12 → 11"
+    },
+    {
+      "Time": 13,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 13,
+      "actor": "伪第五白狮",
+      "scene": "白狮假山",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 动物园规则世界 → 白狮假山"
+    },
+    {
+      "Time": 15,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 15,
+      "actor": "白狮1",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 10 → 9"
+    },
+    {
+      "Time": 17,
+      "actor": "白狮4",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 10 → 9"
+    },
+    {
+      "Time": 18,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 19,
+      "actor": "伪第五白狮",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 6 → 5"
+    },
+    {
+      "Time": 21,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 21,
+      "actor": "白狮4",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 9 → 8"
+    },
+    {
+      "Time": 23,
+      "actor": "伪第五白狮",
+      "scene": "白狮假山",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 5 → 4"
+    },
+    {
+      "Time": 23,
+      "actor": "红衣员工",
+      "scene": "海洋馆大门",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 馆外员工住处 → 海洋馆大门"
+    },
+    {
+      "Time": 24,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 25,
+      "actor": "红衣员工",
+      "scene": "馆外员工住处",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大门 → 馆外员工住处"
+    },
+    {
+      "Time": 27,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 27,
+      "actor": "园长",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 白狮假山 → 狮区"
+    },
+    {
+      "Time": 28,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 狮区 → 主步道"
+    },
+    {
+      "Time": 28,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 28,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "erosion: 0 → 0.04"
+    },
+    {
+      "Time": 29,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000001,
+      "Erosion": 0.08,
+      "Outcome": "erosion: 0.04 → 0.08"
+    },
+    {
+      "Time": 30,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 30,
+      "actor": "园长",
+      "scene": "园长办公室",
+      "Mechanism": "move",
+      "Attention": 0.12000000000000001,
+      "Erosion": 0.08,
+      "Outcome": "$parent: 主步道 → 园长办公室"
+    },
+    {
+      "Time": 30,
+      "actor": "园长",
+      "scene": "园长办公室",
+      "Mechanism": "evolve",
+      "Attention": 0.11400000000000002,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 33,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 35,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0.09000000000000005,
+      "Erosion": 0.08,
+      "Outcome": "$parent: 园长办公室 → 主步道"
+    },
+    {
+      "Time": 35,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.15000000000000005,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 35,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.15000000000000005,
+      "Erosion": 0.12,
+      "Outcome": "erosion: 0.08 → 0.12"
+    },
+    {
+      "Time": 36,
+      "actor": "“它”",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 36,
+      "actor": "园长",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.14000000000000004,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 37,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0.14000000000000004,
+      "Erosion": 0.12,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 39,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 39,
+      "actor": "园长",
+      "scene": "兔区树荫灌木",
+      "Mechanism": "move",
+      "Attention": 0.12000000000000004,
+      "Erosion": 0.12,
+      "Outcome": "$parent: 兔区 → 兔区树荫灌木"
+    },
+    {
+      "Time": 39,
+      "actor": "红衣员工",
+      "scene": "海洋馆大门",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 馆外员工住处 → 海洋馆大门"
+    },
+    {
+      "Time": 40,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0.11000000000000004,
+      "Erosion": 0.12,
+      "Outcome": "$parent: 兔区树荫灌木 → 兔区"
+    },
+    {
+      "Time": 41,
+      "actor": "红衣员工",
+      "scene": "馆外员工住处",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大门 → 馆外员工住处"
+    },
+    {
+      "Time": 42,
+      "actor": "“它”",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 42,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 42,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.08,
+      "Outcome": "erosion: 0.04 → 0.08"
+    },
+    {
+      "Time": 42,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.15000000000000005,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 42,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.15000000000000005,
+      "Erosion": 0.16,
+      "Outcome": "erosion: 0.12 → 0.16"
+    },
+    {
+      "Time": 43,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000001,
+      "Erosion": 0.12,
+      "Outcome": "erosion: 0.08 → 0.12"
+    },
+    {
+      "Time": 43,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.21000000000000005,
+      "Erosion": 0.2,
+      "Outcome": "erosion: 0.16 → 0.2"
+    },
+    {
+      "Time": 44,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.18,
+      "Erosion": 0.16,
+      "Outcome": "erosion: 0.12 → 0.16"
+    },
+    {
+      "Time": 44,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.27,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "erosion: 0.2 → 0.24000000000000002"
+    },
+    {
+      "Time": 45,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 45,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.16999999999999998,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 45,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.26,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 48,
+      "actor": "“它”",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 48,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.20999999999999996,
+      "Erosion": 0.2,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 48,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.20999999999999996,
+      "Erosion": 0.2,
+      "Outcome": "erosion: 0.16 → 0.2"
+    },
+    {
+      "Time": 48,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.3,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 48,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.3,
+      "Erosion": 0.28,
+      "Outcome": "erosion: 0.24000000000000002 → 0.28"
+    },
+    {
+      "Time": 49,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.26999999999999996,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "erosion: 0.2 → 0.24000000000000002"
+    },
+    {
+      "Time": 49,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.36,
+      "Erosion": 0.32,
+      "Outcome": "erosion: 0.28 → 0.32"
+    },
+    {
+      "Time": 50,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.32999999999999996,
+      "Erosion": 0.28,
+      "Outcome": "erosion: 0.24000000000000002 → 0.28"
+    },
+    {
+      "Time": 50,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.42,
+      "Erosion": 0.36,
+      "Outcome": "erosion: 0.32 → 0.36"
+    },
+    {
+      "Time": 51,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 51,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.31999999999999995,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 51,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.41,
+      "Erosion": 0.36,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 54,
+      "actor": "“它”",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 54,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.35999999999999993,
+      "Erosion": 0.32,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 54,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.35999999999999993,
+      "Erosion": 0.32,
+      "Outcome": "erosion: 0.28 → 0.32"
+    },
+    {
+      "Time": 54,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.44999999999999996,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 54,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.44999999999999996,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "erosion: 0.36 → 0.39999999999999997"
+    },
+    {
+      "Time": 55,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.41999999999999993,
+      "Erosion": 0.36,
+      "Outcome": "erosion: 0.32 → 0.36"
+    },
+    {
+      "Time": 55,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.51,
+      "Erosion": 0.43999999999999995,
+      "Outcome": "erosion: 0.39999999999999997 → 0.43999999999999995"
+    },
+    {
+      "Time": 56,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.4799999999999999,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "erosion: 0.36 → 0.39999999999999997"
+    },
+    {
+      "Time": 56,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.5700000000000001,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "erosion: 0.43999999999999995 → 0.4799999999999999"
+    },
+    {
+      "Time": 57,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 57,
+      "actor": "蓝衣员工",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.4699999999999999,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 57,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.56,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 60,
+      "actor": "“它”",
+      "scene": "兔区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 兔区"
+    },
+    {
+      "Time": 60,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0.4499999999999999,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 60,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.6000000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 60,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.6000000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "erosion: 0.4799999999999999 → 0.5199999999999999"
+    },
+    {
+      "Time": 61,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.6600000000000001,
+      "Erosion": 0.5599999999999999,
+      "Outcome": "erosion: 0.5199999999999999 → 0.5599999999999999"
+    },
+    {
+      "Time": 62,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "move",
+      "Attention": 0.4299999999999999,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "$parent: 主步道 → 饮料店"
+    },
+    {
+      "Time": 62,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.5074999999999998,
+      "Erosion": 0.44999999999999996,
+      "Outcome": "exposure: 0 → 2.5"
+    },
+    {
+      "Time": 62,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.5074999999999998,
+      "Erosion": 0.44999999999999996,
+      "Outcome": "erosion: 0.39999999999999997 → 0.44999999999999996"
+    },
+    {
+      "Time": 62,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.7200000000000002,
+      "Erosion": 0.6,
+      "Outcome": "erosion: 0.5599999999999999 → 0.6"
+    },
+    {
+      "Time": 63,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 兔区 → 主步道"
+    },
+    {
+      "Time": 63,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.5849999999999999,
+      "Erosion": 0.49999999999999994,
+      "Outcome": "erosion: 0.44999999999999996 → 0.49999999999999994"
+    },
+    {
+      "Time": 63,
+      "actor": "园长",
+      "scene": "兔区",
+      "Mechanism": "evolve",
+      "Attention": 0.7100000000000002,
+      "Erosion": 0.6,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 64,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.6624999999999999,
+      "Erosion": 0.5499999999999999,
+      "Outcome": "erosion: 0.49999999999999994 → 0.5499999999999999"
+    },
+    {
+      "Time": 65,
+      "actor": "兔子血",
+      "scene": "饮料店",
+      "Mechanism": "take",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 冷柜货架 → 蓝衣员工"
+    },
+    {
+      "Time": 65,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.7399999999999999,
+      "Erosion": 0.6,
+      "Outcome": "erosion: 0.5499999999999999 → 0.6"
+    },
+    {
+      "Time": 66,
+      "actor": "“它”",
+      "scene": "饮料店",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 饮料店"
+    },
+    {
+      "Time": 66,
+      "actor": "兔子血",
+      "scene": "饮料店",
+      "Mechanism": "store",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 蓝衣员工 → 异常收缴箱"
+    },
+    {
+      "Time": 66,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.7999999999999998,
+      "Erosion": 0.64,
+      "Outcome": "exposure: 2.5 → 2"
+    },
+    {
+      "Time": 66,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.7999999999999998,
+      "Erosion": 0.64,
+      "Outcome": "erosion: 0.6 → 0.64"
+    },
+    {
+      "Time": 67,
+      "actor": "普通苏打水",
+      "scene": "饮料店",
+      "Mechanism": "consume",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "count: 10 → 9"
+    },
+    {
+      "Time": 67,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.8599999999999999,
+      "Erosion": 0.68,
+      "Outcome": "erosion: 0.64 → 0.68"
+    },
+    {
+      "Time": 68,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "evolve",
+      "Attention": 0.9199999999999999,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "erosion: 0.68 → 0.7200000000000001"
+    },
+    {
+      "Time": 69,
+      "actor": "“它”",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 饮料店 → 主步道"
+    },
+    {
+      "Time": 69,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0.9199999999999999,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "$parent: 饮料店 → 主步道"
+    },
+    {
+      "Time": 69,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "evolve",
+      "Attention": 0.98,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "erosion: 0.7200000000000001 → 0.7600000000000001"
+    },
+    {
+      "Time": 70,
+      "actor": "红衣员工",
+      "scene": "海洋馆大门",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 馆外员工住处 → 海洋馆大门"
+    },
+    {
+      "Time": 70,
+      "actor": "蓝衣员工",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0.98,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "$parent: 主步道 → 大象区"
+    },
+    {
+      "Time": 70,
+      "actor": "蓝衣员工",
+      "scene": "大象区",
+      "Mechanism": "evolve",
+      "Attention": 0.97,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 72,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 主步道 → 大象区"
+    },
+    {
+      "Time": 72,
+      "actor": "红衣员工",
+      "scene": "馆外员工住处",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大门 → 馆外员工住处"
+    },
+    {
+      "Time": 72,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0.96,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 75,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 75,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 75,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "erosion: 0 → 0.04"
+    },
+    {
+      "Time": 75,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.99,
+      "Erosion": 0.8000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 75,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.99,
+      "Erosion": 0.8000000000000002,
+      "Outcome": "erosion: 0.7600000000000001 → 0.8000000000000002"
+    },
+    {
+      "Time": 75,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 75,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.04,
+      "Outcome": "erosion: 0 → 0.04"
+    },
+    {
+      "Time": 75,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 6.66,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 75,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 6.66,
+      "Outcome": "erosion: 6.62 → 6.66"
+    },
+    {
+      "Time": 76,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 20 → 19"
+    },
+    {
+      "Time": 76,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.05,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 76,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.98,
+      "Erosion": 0.8000000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 76,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.05,
+      "Erosion": 0.04,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 76,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.05,
+      "Erosion": 6.66,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 78,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 81,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 81,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 81,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.08,
+      "Outcome": "erosion: 0.04 → 0.08"
+    },
+    {
+      "Time": 81,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 81,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "erosion: 0.8000000000000002 → 0.8400000000000002"
+    },
+    {
+      "Time": 81,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 81,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.08,
+      "Outcome": "erosion: 0.04 → 0.08"
+    },
+    {
+      "Time": 81,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 6.7,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 81,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 6.7,
+      "Outcome": "erosion: 6.66 → 6.7"
+    },
+    {
+      "Time": 82,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 19 → 18"
+    },
+    {
+      "Time": 82,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 82,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.99,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 82,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 0.08,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 82,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.060000000000000005,
+      "Erosion": 6.7,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 84,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 87,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 87,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 87,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 0.12,
+      "Outcome": "erosion: 0.08 → 0.12"
+    },
+    {
+      "Time": 87,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.01,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 87,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.01,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "erosion: 0.8400000000000002 → 0.8800000000000002"
+    },
+    {
+      "Time": 87,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 87,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 0.12,
+      "Outcome": "erosion: 0.08 → 0.12"
+    },
+    {
+      "Time": 87,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 6.74,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 87,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08,
+      "Erosion": 6.74,
+      "Outcome": "erosion: 6.7 → 6.74"
+    },
+    {
+      "Time": 88,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 18 → 17"
+    },
+    {
+      "Time": 88,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 88,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 88,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 0.12,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 88,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.07,
+      "Erosion": 6.74,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 90,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 93,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 93,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 93,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 0.16,
+      "Outcome": "erosion: 0.12 → 0.16"
+    },
+    {
+      "Time": 93,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 0.9200000000000003,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 93,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 0.9200000000000003,
+      "Outcome": "erosion: 0.8800000000000002 → 0.9200000000000003"
+    },
+    {
+      "Time": 93,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 93,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 0.16,
+      "Outcome": "erosion: 0.12 → 0.16"
+    },
+    {
+      "Time": 93,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 6.78,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 93,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000001,
+      "Erosion": 6.78,
+      "Outcome": "erosion: 6.74 → 6.78"
+    },
+    {
+      "Time": 94,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 17 → 16"
+    },
+    {
+      "Time": 94,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000002,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 94,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.01,
+      "Erosion": 0.9200000000000003,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 94,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000002,
+      "Erosion": 0.16,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 94,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000002,
+      "Erosion": 6.78,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 96,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 99,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 99,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 99,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "erosion: 0.16 → 0.2"
+    },
+    {
+      "Time": 99,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.03,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 99,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.03,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "erosion: 0.9200000000000003 → 0.9600000000000003"
+    },
+    {
+      "Time": 99,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 99,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "erosion: 0.16 → 0.2"
+    },
+    {
+      "Time": 99,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 6.82,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 99,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000002,
+      "Erosion": 6.82,
+      "Outcome": "erosion: 6.78 → 6.82"
+    },
+    {
+      "Time": 100,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 16 → 15"
+    },
+    {
+      "Time": 100,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 100,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 100,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000002,
+      "Erosion": 0.2,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 100,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000002,
+      "Erosion": 6.82,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 102,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 15 → 14"
+    },
+    {
+      "Time": 104,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 107,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 107,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 107,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "erosion: 0.2 → 0.24000000000000002"
+    },
+    {
+      "Time": 107,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 107,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "erosion: 0.9600000000000003 → 1.0000000000000002"
+    },
+    {
+      "Time": 107,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 107,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "erosion: 0.2 → 0.24000000000000002"
+    },
+    {
+      "Time": 107,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 6.86,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 107,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000004,
+      "Erosion": 6.86,
+      "Outcome": "erosion: 6.82 → 6.86"
+    },
+    {
+      "Time": 108,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 14 → 13"
+    },
+    {
+      "Time": 108,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 108,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.01,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 108,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000004,
+      "Erosion": 0.24000000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 108,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.08000000000000004,
+      "Erosion": 6.86,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 110,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 113,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 113,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 113,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "erosion: 0.24000000000000002 → 0.28"
+    },
+    {
+      "Time": 113,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.03,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 113,
+      "actor": "蓝衣员工",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.03,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "erosion: 1.0000000000000002 → 1.0400000000000003"
+    },
+    {
+      "Time": 113,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 113,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "erosion: 0.24000000000000002 → 0.28"
+    },
+    {
+      "Time": 113,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 6.9,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 113,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000005,
+      "Erosion": 6.9,
+      "Outcome": "erosion: 6.86 → 6.9"
+    },
+    {
+      "Time": 114,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 13 → 12"
+    },
+    {
+      "Time": 114,
+      "actor": "蓝衣员工",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 1.03,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 114,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 114,
+      "actor": "蓝衣员工",
+      "scene": "大象区",
+      "Mechanism": "evolve",
+      "Attention": 1.02,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 114,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000005,
+      "Erosion": 0.28,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 114,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.09000000000000005,
+      "Erosion": 6.9,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 115,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 1.02,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "$parent: 大象区 → 主步道"
+    },
+    {
+      "Time": 116,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 117,
+      "actor": "蓝衣员工",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 1,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "$parent: 主步道 → 狮区"
+    },
+    {
+      "Time": 118,
+      "actor": "蓝衣员工",
+      "scene": "狮区",
+      "Mechanism": "evolve",
+      "Attention": 0.33999999999999997,
+      "Erosion": 0.9760000000000002,
+      "Outcome": "erosion: 1.0400000000000003 → 0.9760000000000002"
+    },
+    {
+      "Time": 119,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 119,
+      "actor": "蓝衣员工",
+      "scene": "狮区工作通道",
+      "Mechanism": "move",
+      "Attention": 0.33999999999999997,
+      "Erosion": 0.9760000000000002,
+      "Outcome": "$parent: 狮区 → 狮区工作通道"
+    },
+    {
+      "Time": 119,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 119,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "erosion: 0.28 → 0.32"
+    },
+    {
+      "Time": 119,
+      "actor": "蓝衣员工",
+      "scene": "狮区工作通道",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.9120000000000001,
+      "Outcome": "erosion: 0.9760000000000002 → 0.9120000000000001"
+    },
+    {
+      "Time": 119,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 119,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "erosion: 0.28 → 0.32"
+    },
+    {
+      "Time": 119,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 6.94,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 119,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.11000000000000007,
+      "Erosion": 6.94,
+      "Outcome": "erosion: 6.9 → 6.94"
+    },
+    {
+      "Time": 120,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 12 → 11"
+    },
+    {
+      "Time": 120,
+      "actor": "蓝衣员工",
+      "scene": "白狮假山",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.9120000000000001,
+      "Outcome": "$parent: 狮区工作通道 → 白狮假山"
+    },
+    {
+      "Time": 120,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 120,
+      "actor": "蓝衣员工",
+      "scene": "白狮假山",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.8480000000000001,
+      "Outcome": "erosion: 0.9120000000000001 → 0.8480000000000001"
+    },
+    {
+      "Time": 120,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000007,
+      "Erosion": 0.32,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 120,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.10000000000000007,
+      "Erosion": 6.94,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 121,
+      "actor": "蓝衣员工",
+      "scene": "白狮假山",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.784,
+      "Outcome": "erosion: 0.8480000000000001 → 0.784"
+    },
+    {
+      "Time": 122,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 122,
+      "actor": "蓝衣员工",
+      "scene": "白狮假山",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.72,
+      "Outcome": "erosion: 0.784 → 0.72"
+    },
+    {
+      "Time": 123,
+      "actor": "蓝衣员工",
+      "scene": "白狮假山",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.6559999999999999,
+      "Outcome": "erosion: 0.72 → 0.6559999999999999"
+    },
+    {
+      "Time": 124,
+      "actor": "蓝衣员工",
+      "scene": "狮区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.6559999999999999,
+      "Outcome": "$parent: 白狮假山 → 狮区"
+    },
+    {
+      "Time": 124,
+      "actor": "蓝衣员工",
+      "scene": "狮区",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "erosion: 0.6559999999999999 → 0.5919999999999999"
+    },
+    {
+      "Time": 125,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 125,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 狮区 → 主步道"
+    },
+    {
+      "Time": 125,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 0.36,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 125,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 0.36,
+      "Outcome": "erosion: 0.32 → 0.36"
+    },
+    {
+      "Time": 125,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 0.36,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 125,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 0.36,
+      "Outcome": "erosion: 0.32 → 0.36"
+    },
+    {
+      "Time": 125,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 6.98,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 125,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.12000000000000009,
+      "Erosion": 6.98,
+      "Outcome": "erosion: 6.94 → 6.98"
+    },
+    {
+      "Time": 126,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "defend",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "health: 11 → 10"
+    },
+    {
+      "Time": 126,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1100000000000001,
+      "Erosion": 0.36,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 126,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1100000000000001,
+      "Erosion": 0.36,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 126,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1100000000000001,
+      "Erosion": 6.98,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 127,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 饮料店"
+    },
+    {
+      "Time": 128,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 130,
+      "actor": "普通苏打水",
+      "scene": "饮料店",
+      "Mechanism": "consume",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "count: 9 → 8"
+    },
+    {
+      "Time": 131,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 131,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 131,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "erosion: 0.36 → 0.39999999999999997"
+    },
+    {
+      "Time": 131,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 131,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 0.39999999999999997,
+      "Outcome": "erosion: 0.36 → 0.39999999999999997"
+    },
+    {
+      "Time": 131,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 7.0200000000000005,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 131,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.13000000000000012,
+      "Erosion": 7.0200000000000005,
+      "Outcome": "erosion: 6.98 → 7.0200000000000005"
+    },
+    {
+      "Time": 132,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1900000000000001,
+      "Erosion": 0.43999999999999995,
+      "Outcome": "erosion: 0.39999999999999997 → 0.43999999999999995"
+    },
+    {
+      "Time": 132,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1900000000000001,
+      "Erosion": 0.43999999999999995,
+      "Outcome": "erosion: 0.39999999999999997 → 0.43999999999999995"
+    },
+    {
+      "Time": 132,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.1900000000000001,
+      "Erosion": 7.0600000000000005,
+      "Outcome": "erosion: 7.0200000000000005 → 7.0600000000000005"
+    },
+    {
+      "Time": 133,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2500000000000001,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "erosion: 0.43999999999999995 → 0.4799999999999999"
+    },
+    {
+      "Time": 133,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2500000000000001,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "erosion: 0.43999999999999995 → 0.4799999999999999"
+    },
+    {
+      "Time": 133,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2500000000000001,
+      "Erosion": 7.1000000000000005,
+      "Outcome": "erosion: 7.0600000000000005 → 7.1000000000000005"
+    },
+    {
+      "Time": 134,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 134,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2400000000000001,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 134,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2400000000000001,
+      "Erosion": 0.4799999999999999,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 134,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2400000000000001,
+      "Erosion": 7.1000000000000005,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 135,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 饮料店 → 主步道"
+    },
+    {
+      "Time": 136,
+      "actor": "蓝衣员工",
+      "scene": "园长办公室",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 园长办公室"
+    },
+    {
+      "Time": 137,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 137,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 137,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "erosion: 0.4799999999999999 → 0.5199999999999999"
+    },
+    {
+      "Time": 137,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 137,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 0.5199999999999999,
+      "Outcome": "erosion: 0.4799999999999999 → 0.5199999999999999"
+    },
+    {
+      "Time": 137,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 7.140000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 137,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.2800000000000001,
+      "Erosion": 7.140000000000001,
+      "Outcome": "erosion: 7.1000000000000005 → 7.140000000000001"
+    },
+    {
+      "Time": 138,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.3400000000000001,
+      "Erosion": 0.5599999999999999,
+      "Outcome": "erosion: 0.5199999999999999 → 0.5599999999999999"
+    },
+    {
+      "Time": 138,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.3400000000000001,
+      "Erosion": 0.5599999999999999,
+      "Outcome": "erosion: 0.5199999999999999 → 0.5599999999999999"
+    },
+    {
+      "Time": 138,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.3400000000000001,
+      "Erosion": 7.180000000000001,
+      "Outcome": "erosion: 7.140000000000001 → 7.180000000000001"
+    },
+    {
+      "Time": 139,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.4000000000000001,
+      "Erosion": 0.6,
+      "Outcome": "erosion: 0.5599999999999999 → 0.6"
+    },
+    {
+      "Time": 139,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.4000000000000001,
+      "Erosion": 0.6,
+      "Outcome": "erosion: 0.5599999999999999 → 0.6"
+    },
+    {
+      "Time": 139,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.4000000000000001,
+      "Erosion": 7.220000000000001,
+      "Outcome": "erosion: 7.180000000000001 → 7.220000000000001"
+    },
+    {
+      "Time": 140,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 140,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.39000000000000007,
+      "Erosion": 0.6,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 140,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.39000000000000007,
+      "Erosion": 0.6,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 140,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.39000000000000007,
+      "Erosion": 7.220000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 142,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 园长办公室 → 主步道"
+    },
+    {
+      "Time": 143,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 143,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 0.64,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 143,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 0.64,
+      "Outcome": "erosion: 0.6 → 0.64"
+    },
+    {
+      "Time": 143,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 0.64,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 143,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 0.64,
+      "Outcome": "erosion: 0.6 → 0.64"
+    },
+    {
+      "Time": 143,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 7.260000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 143,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.43000000000000005,
+      "Erosion": 7.260000000000001,
+      "Outcome": "erosion: 7.220000000000001 → 7.260000000000001"
+    },
+    {
+      "Time": 144,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 休息点"
+    },
+    {
+      "Time": 144,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.49,
+      "Erosion": 0.68,
+      "Outcome": "erosion: 0.64 → 0.68"
+    },
+    {
+      "Time": 144,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.49,
+      "Erosion": 0.68,
+      "Outcome": "erosion: 0.64 → 0.68"
+    },
+    {
+      "Time": 144,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.49,
+      "Erosion": 7.300000000000001,
+      "Outcome": "erosion: 7.260000000000001 → 7.300000000000001"
+    },
+    {
+      "Time": 145,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 休息点 → 主步道"
+    },
+    {
+      "Time": 145,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.55,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "erosion: 0.68 → 0.7200000000000001"
+    },
+    {
+      "Time": 145,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.55,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "erosion: 0.68 → 0.7200000000000001"
+    },
+    {
+      "Time": 145,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.55,
+      "Erosion": 7.340000000000001,
+      "Outcome": "erosion: 7.300000000000001 → 7.340000000000001"
+    },
+    {
+      "Time": 146,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 146,
+      "actor": "蓝衣员工",
+      "scene": "猿类园区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 猿类园区"
+    },
+    {
+      "Time": 146,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.54,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 146,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.54,
+      "Erosion": 0.7200000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 146,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.54,
+      "Erosion": 7.340000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 148,
+      "actor": "蓝衣员工",
+      "scene": "猿区左街",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 猿类园区 → 猿区左街"
+    },
+    {
+      "Time": 149,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 149,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 猿区左街 → 主步道"
+    },
+    {
+      "Time": 149,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 149,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "erosion: 0.7200000000000001 → 0.7600000000000001"
+    },
+    {
+      "Time": 149,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 149,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 0.7600000000000001,
+      "Outcome": "erosion: 0.7200000000000001 → 0.7600000000000001"
+    },
+    {
+      "Time": 149,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 7.380000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 149,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.5800000000000001,
+      "Erosion": 7.380000000000001,
+      "Outcome": "erosion: 7.340000000000001 → 7.380000000000001"
+    },
+    {
+      "Time": 150,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6400000000000001,
+      "Erosion": 0.8000000000000002,
+      "Outcome": "erosion: 0.7600000000000001 → 0.8000000000000002"
+    },
+    {
+      "Time": 150,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6400000000000001,
+      "Erosion": 0.8000000000000002,
+      "Outcome": "erosion: 0.7600000000000001 → 0.8000000000000002"
+    },
+    {
+      "Time": 150,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6400000000000001,
+      "Erosion": 7.420000000000001,
+      "Outcome": "erosion: 7.380000000000001 → 7.420000000000001"
+    },
+    {
+      "Time": 151,
+      "actor": "蓝衣员工",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 151,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7000000000000002,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "erosion: 0.8000000000000002 → 0.8400000000000002"
+    },
+    {
+      "Time": 151,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7000000000000002,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "erosion: 0.8000000000000002 → 0.8400000000000002"
+    },
+    {
+      "Time": 151,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7000000000000002,
+      "Erosion": 7.460000000000001,
+      "Outcome": "erosion: 7.420000000000001 → 7.460000000000001"
+    },
+    {
+      "Time": 152,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 152,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6900000000000002,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 152,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6900000000000002,
+      "Erosion": 0.8400000000000002,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 152,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.6900000000000002,
+      "Erosion": 7.460000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 153,
+      "actor": "山羊肉",
+      "scene": "海洋馆大厅",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 动物园规则世界 → 海洋馆食品货架"
+    },
+    {
+      "Time": 155,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 155,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 大门入口 → 主步道"
+    },
+    {
+      "Time": 155,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 155,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "erosion: 0.8400000000000002 → 0.8800000000000002"
+    },
+    {
+      "Time": 155,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 155,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 0.8800000000000002,
+      "Outcome": "erosion: 0.8400000000000002 → 0.8800000000000002"
+    },
+    {
+      "Time": 155,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 7.500000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 155,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7300000000000002,
+      "Erosion": 7.500000000000001,
+      "Outcome": "erosion: 7.460000000000001 → 7.500000000000001"
+    },
+    {
+      "Time": 156,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7900000000000003,
+      "Erosion": 0.9200000000000003,
+      "Outcome": "erosion: 0.8800000000000002 → 0.9200000000000003"
+    },
+    {
+      "Time": 156,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7900000000000003,
+      "Erosion": 0.9200000000000003,
+      "Outcome": "erosion: 0.8800000000000002 → 0.9200000000000003"
+    },
+    {
+      "Time": 156,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.7900000000000003,
+      "Erosion": 7.540000000000001,
+      "Outcome": "erosion: 7.500000000000001 → 7.540000000000001"
+    },
+    {
+      "Time": 157,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8500000000000003,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "erosion: 0.9200000000000003 → 0.9600000000000003"
+    },
+    {
+      "Time": 157,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8500000000000003,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "erosion: 0.9200000000000003 → 0.9600000000000003"
+    },
+    {
+      "Time": 157,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8500000000000003,
+      "Erosion": 7.580000000000001,
+      "Outcome": "erosion: 7.540000000000001 → 7.580000000000001"
+    },
+    {
+      "Time": 157,
+      "actor": "3D溺亡大象投影",
+      "scene": "鲸鱼区",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 动物园规则世界 → 鲸鱼区"
+    },
+    {
+      "Time": 158,
+      "actor": "“它”",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 158,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5919999999999999,
+      "Outcome": "$parent: 主步道 → 休息点"
+    },
+    {
+      "Time": 158,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8400000000000003,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 158,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8400000000000003,
+      "Erosion": 0.9600000000000003,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 158,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8400000000000003,
+      "Erosion": 7.580000000000001,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 161,
+      "actor": "“它”",
+      "scene": "大象展位",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 大象区 → 大象展位"
+    },
+    {
+      "Time": 161,
+      "actor": "红衣员工",
+      "scene": "海洋馆大门",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 馆外员工住处 → 海洋馆大门"
+    },
+    {
+      "Time": 161,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 161,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "erosion: 0.9600000000000003 → 1.0000000000000002"
+    },
+    {
+      "Time": 161,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5769999999999998,
+      "Outcome": "erosion: 0.5919999999999999 → 0.5769999999999998"
+    },
+    {
+      "Time": 161,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 161,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 1.0000000000000002,
+      "Outcome": "erosion: 0.9600000000000003 → 1.0000000000000002"
+    },
+    {
+      "Time": 161,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 7.620000000000001,
+      "Outcome": "exposure: 0 → 2"
+    },
+    {
+      "Time": 161,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.8800000000000003,
+      "Erosion": 7.620000000000001,
+      "Outcome": "erosion: 7.580000000000001 → 7.620000000000001"
+    },
+    {
+      "Time": 162,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.9400000000000004,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "erosion: 1.0000000000000002 → 1.0400000000000003"
+    },
+    {
+      "Time": 162,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5619999999999998,
+      "Outcome": "erosion: 0.5769999999999998 → 0.5619999999999998"
+    },
+    {
+      "Time": 162,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.9400000000000004,
+      "Erosion": 1.0400000000000003,
+      "Outcome": "erosion: 1.0000000000000002 → 1.0400000000000003"
+    },
+    {
+      "Time": 162,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 0.9400000000000004,
+      "Erosion": 7.660000000000001,
+      "Outcome": "erosion: 7.620000000000001 → 7.660000000000001"
+    },
+    {
+      "Time": 163,
+      "actor": "红衣员工",
+      "scene": "馆外员工住处",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0,
+      "Outcome": "$parent: 海洋馆大门 → 馆外员工住处"
+    },
+    {
+      "Time": 163,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0000000000000004,
+      "Erosion": 1.0800000000000003,
+      "Outcome": "erosion: 1.0400000000000003 → 1.0800000000000003"
+    },
+    {
+      "Time": 163,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5469999999999998,
+      "Outcome": "erosion: 0.5619999999999998 → 0.5469999999999998"
+    },
+    {
+      "Time": 163,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0000000000000004,
+      "Erosion": 1.0800000000000003,
+      "Outcome": "erosion: 1.0400000000000003 → 1.0800000000000003"
+    },
+    {
+      "Time": 163,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0000000000000004,
+      "Erosion": 7.700000000000001,
+      "Outcome": "erosion: 7.660000000000001 → 7.700000000000001"
+    },
+    {
+      "Time": 164,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.0000000000000004,
+      "Erosion": 1.0800000000000003,
+      "Outcome": "health: 10 → 9.5"
+    },
+    {
+      "Time": 164,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0600000000000005,
+      "Erosion": 1.1200000000000003,
+      "Outcome": "erosion: 1.0800000000000003 → 1.1200000000000003"
+    },
+    {
+      "Time": 164,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0600000000000005,
+      "Erosion": 1.1200000000000003,
+      "Outcome": "erosion: 1.0800000000000003 → 1.1200000000000003"
+    },
+    {
+      "Time": 164,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0600000000000005,
+      "Erosion": 7.740000000000001,
+      "Outcome": "erosion: 7.700000000000001 → 7.740000000000001"
+    },
+    {
+      "Time": 165,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0850000000000004,
+      "Erosion": 1.1400000000000003,
+      "Outcome": "exposure: 2 → 1"
+    },
+    {
+      "Time": 165,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.0850000000000004,
+      "Erosion": 1.1400000000000003,
+      "Outcome": "erosion: 1.1200000000000003 → 1.1400000000000003"
+    },
+    {
+      "Time": 165,
+      "actor": "大象区保安",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1200000000000006,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "erosion: 1.1200000000000003 → 1.1600000000000004"
+    },
+    {
+      "Time": 165,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1200000000000006,
+      "Erosion": 7.780000000000001,
+      "Outcome": "erosion: 7.740000000000001 → 7.780000000000001"
+    },
+    {
+      "Time": 166,
+      "actor": "大象区保安",
+      "scene": "大象区",
+      "Mechanism": "move",
+      "Attention": 1.1200000000000006,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "$parent: 大象展位 → 大象区"
+    },
+    {
+      "Time": 166,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5469999999999998,
+      "Outcome": "$parent: 休息点 → 主步道"
+    },
+    {
+      "Time": 166,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1100000000000003,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "erosion: 1.1400000000000003 → 1.1600000000000004"
+    },
+    {
+      "Time": 166,
+      "actor": "大象区保安",
+      "scene": "大象区",
+      "Mechanism": "evolve",
+      "Attention": 1.1100000000000005,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "exposure: 2 → 0"
+    },
+    {
+      "Time": 166,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1800000000000006,
+      "Erosion": 7.820000000000001,
+      "Outcome": "erosion: 7.780000000000001 → 7.820000000000001"
+    },
+    {
+      "Time": 167,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.1800000000000006,
+      "Erosion": 7.820000000000001,
+      "Outcome": "health: 10 → 9.5"
+    },
+    {
+      "Time": 167,
+      "actor": "大象区保安",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 1.1100000000000005,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "$parent: 大象区 → 主步道"
+    },
+    {
+      "Time": 167,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1350000000000002,
+      "Erosion": 1.1800000000000004,
+      "Outcome": "erosion: 1.1600000000000004 → 1.1800000000000004"
+    },
+    {
+      "Time": 167,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.2400000000000007,
+      "Erosion": 7.860000000000001,
+      "Outcome": "erosion: 7.820000000000001 → 7.860000000000001"
+    },
+    {
+      "Time": 168,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.1600000000000001,
+      "Erosion": 1.2000000000000004,
+      "Outcome": "erosion: 1.1800000000000004 → 1.2000000000000004"
+    },
+    {
+      "Time": 168,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3000000000000007,
+      "Erosion": 7.900000000000001,
+      "Outcome": "erosion: 7.860000000000001 → 7.900000000000001"
+    },
+    {
+      "Time": 169,
+      "actor": "蓝衣员工",
+      "scene": "饮料店",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5469999999999998,
+      "Outcome": "$parent: 主步道 → 饮料店"
+    },
+    {
+      "Time": 169,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.185,
+      "Erosion": 1.2200000000000004,
+      "Outcome": "erosion: 1.2000000000000004 → 1.2200000000000004"
+    },
+    {
+      "Time": 169,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3600000000000008,
+      "Erosion": 7.940000000000001,
+      "Outcome": "erosion: 7.900000000000001 → 7.940000000000001"
+    },
+    {
+      "Time": 170,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.3600000000000008,
+      "Erosion": 7.940000000000001,
+      "Outcome": "health: 9.5 → 9"
+    },
+    {
+      "Time": 170,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.21,
+      "Erosion": 1.2400000000000004,
+      "Outcome": "erosion: 1.2200000000000004 → 1.2400000000000004"
+    },
+    {
+      "Time": 170,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.4200000000000008,
+      "Erosion": 7.980000000000001,
+      "Outcome": "erosion: 7.940000000000001 → 7.980000000000001"
+    },
+    {
+      "Time": 171,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.2349999999999999,
+      "Erosion": 1.2600000000000005,
+      "Outcome": "erosion: 1.2400000000000004 → 1.2600000000000005"
+    },
+    {
+      "Time": 171,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.4800000000000009,
+      "Erosion": 8.020000000000001,
+      "Outcome": "erosion: 7.980000000000001 → 8.020000000000001"
+    },
+    {
+      "Time": 172,
+      "actor": "蓝衣员工",
+      "scene": "主步道",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5469999999999998,
+      "Outcome": "$parent: 饮料店 → 主步道"
+    },
+    {
+      "Time": 172,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.2599999999999998,
+      "Erosion": 1.2800000000000005,
+      "Outcome": "erosion: 1.2600000000000005 → 1.2800000000000005"
+    },
+    {
+      "Time": 172,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.540000000000001,
+      "Erosion": 8.06,
+      "Outcome": "erosion: 8.020000000000001 → 8.06"
+    },
+    {
+      "Time": 173,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.540000000000001,
+      "Erosion": 8.06,
+      "Outcome": "health: 9 → 8.5"
+    },
+    {
+      "Time": 173,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.2849999999999997,
+      "Erosion": 1.3000000000000005,
+      "Outcome": "erosion: 1.2800000000000005 → 1.3000000000000005"
+    },
+    {
+      "Time": 173,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.600000000000001,
+      "Erosion": 8.1,
+      "Outcome": "erosion: 8.06 → 8.1"
+    },
+    {
+      "Time": 174,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3099999999999996,
+      "Erosion": 1.3200000000000005,
+      "Outcome": "erosion: 1.3000000000000005 → 1.3200000000000005"
+    },
+    {
+      "Time": 174,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.660000000000001,
+      "Erosion": 8.139999999999999,
+      "Outcome": "erosion: 8.1 → 8.139999999999999"
+    },
+    {
+      "Time": 175,
+      "actor": "大象区保安",
+      "scene": "大门入口",
+      "Mechanism": "move",
+      "Attention": 1.0300000000000005,
+      "Erosion": 1.1600000000000004,
+      "Outcome": "$parent: 主步道 → 大门入口"
+    },
+    {
+      "Time": 175,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "move",
+      "Attention": 0,
+      "Erosion": 0.5469999999999998,
+      "Outcome": "$parent: 主步道 → 休息点"
+    },
+    {
+      "Time": 175,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3349999999999995,
+      "Erosion": 1.3400000000000005,
+      "Outcome": "erosion: 1.3200000000000005 → 1.3400000000000005"
+    },
+    {
+      "Time": 175,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.720000000000001,
+      "Erosion": 8.179999999999998,
+      "Outcome": "erosion: 8.139999999999999 → 8.179999999999998"
+    },
+    {
+      "Time": 176,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.720000000000001,
+      "Erosion": 8.179999999999998,
+      "Outcome": "health: 8.5 → 8"
+    },
+    {
+      "Time": 176,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3599999999999994,
+      "Erosion": 1.3600000000000005,
+      "Outcome": "erosion: 1.3400000000000005 → 1.3600000000000005"
+    },
+    {
+      "Time": 176,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.7800000000000011,
+      "Erosion": 8.219999999999997,
+      "Outcome": "erosion: 8.179999999999998 → 8.219999999999997"
+    },
+    {
+      "Time": 177,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.3849999999999993,
+      "Erosion": 1.3800000000000006,
+      "Outcome": "erosion: 1.3600000000000005 → 1.3800000000000006"
+    },
+    {
+      "Time": 177,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.8400000000000012,
+      "Erosion": 8.259999999999996,
+      "Outcome": "erosion: 8.219999999999997 → 8.259999999999996"
+    },
+    {
+      "Time": 178,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.4099999999999993,
+      "Erosion": 1.4000000000000006,
+      "Outcome": "erosion: 1.3800000000000006 → 1.4000000000000006"
+    },
+    {
+      "Time": 178,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5319999999999998,
+      "Outcome": "erosion: 0.5469999999999998 → 0.5319999999999998"
+    },
+    {
+      "Time": 178,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.9000000000000012,
+      "Erosion": 8.299999999999995,
+      "Outcome": "erosion: 8.259999999999996 → 8.299999999999995"
+    },
+    {
+      "Time": 179,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "attack",
+      "Attention": 1.9000000000000012,
+      "Erosion": 8.299999999999995,
+      "Outcome": "health: 8 → 7.5"
+    },
+    {
+      "Time": 179,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.4349999999999992,
+      "Erosion": 1.4200000000000006,
+      "Outcome": "erosion: 1.4000000000000006 → 1.4200000000000006"
+    },
+    {
+      "Time": 179,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5169999999999998,
+      "Outcome": "erosion: 0.5319999999999998 → 0.5169999999999998"
+    },
+    {
+      "Time": 179,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.9600000000000013,
+      "Erosion": 8.339999999999995,
+      "Outcome": "erosion: 8.299999999999995 → 8.339999999999995"
+    },
+    {
+      "Time": 180,
+      "actor": "游客3",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 1.459999999999999,
+      "Erosion": 1.4400000000000006,
+      "Outcome": "erosion: 1.4200000000000006 → 1.4400000000000006"
+    },
+    {
+      "Time": 180,
+      "actor": "蓝衣员工",
+      "scene": "休息点",
+      "Mechanism": "evolve",
+      "Attention": 0,
+      "Erosion": 0.5019999999999998,
+      "Outcome": "erosion: 0.5169999999999998 → 0.5019999999999998"
+    },
+    {
+      "Time": 180,
+      "actor": "黑衣感染者",
+      "scene": "大象展位",
+      "Mechanism": "evolve",
+      "Attention": 2.0200000000000014,
+      "Erosion": 8.379999999999994,
+      "Outcome": "erosion: 8.339999999999995 → 8.379999999999994"
+    }
+  ]
+}

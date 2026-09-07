@@ -166,7 +166,9 @@ public class RuleEnvironment
                 var subj = Resolve(expression.Args[0]);
                 if (subj is Entity entity)
                 {
-                    return entity.HasTag(state) || _facts.Any(f => Matches(f, expression));
+                    return entity.HasTag(state)
+                        || (entity.Properties.TryGetValue(state, out var pv) && (pv is bool bv ? bv : Convert.ToDouble(pv) > 0))
+                        || _facts.Any(f => Matches(f, expression));
                 }
                 return false;
 
@@ -195,6 +197,42 @@ public class RuleEnvironment
                     return teAtLeast.Tag(tag) >= minAmount;
                 }
                 return false;
+
+            case "gte" when expression.Args.Length == 2:
+                var xGte = ResolveValue(expression.Args[0]);
+                var yGte = ResolveValue(expression.Args[1]);
+                return xGte != null && yGte != null
+                    && double.TryParse(xGte.ToString(), out var xdGte)
+                    && double.TryParse(yGte.ToString(), out var ydGte)
+                    && xdGte >= ydGte;
+
+            case "gt" when expression.Args.Length == 2:
+                var xGt = ResolveValue(expression.Args[0]);
+                var yGt = ResolveValue(expression.Args[1]);
+                return xGt != null && yGt != null
+                    && double.TryParse(xGt.ToString(), out var xdGt)
+                    && double.TryParse(yGt.ToString(), out var ydGt)
+                    && xdGt > ydGt;
+
+            case "lte" when expression.Args.Length == 2:
+                var xLte = ResolveValue(expression.Args[0]);
+                var yLte = ResolveValue(expression.Args[1]);
+                return xLte != null && yLte != null
+                    && double.TryParse(xLte.ToString(), out var xdLte)
+                    && double.TryParse(yLte.ToString(), out var ydLte)
+                    && xdLte <= ydLte;
+
+            case "eq" when expression.Args.Length == 2:
+                var xEq = ResolveValue(expression.Args[0]);
+                var yEq = ResolveValue(expression.Args[1]);
+                return Equals(xEq, yEq)
+                    || (double.TryParse(xEq?.ToString(), out var xNum) && double.TryParse(yEq?.ToString(), out var yNum) && xNum == yNum);
+
+            case "ne" when expression.Args.Length == 2:
+                var xNe = ResolveValue(expression.Args[0]);
+                var yNe = ResolveValue(expression.Args[1]);
+                return !Equals(xNe, yNe)
+                    && !(double.TryParse(xNe?.ToString(), out var xnNum) && double.TryParse(yNe?.ToString(), out var ynNum) && xnNum == ynNum);
 
             default:
                 return _facts.Any(f => Matches(f, expression));
@@ -228,6 +266,30 @@ public class RuleEnvironment
         {
             AssertFact(new Expr(effect.Op, effect.Args));
         }
+    }
+
+    public object? ResolveValue(object? arg)
+    {
+        if (arg is Expr expr)
+        {
+            if (string.Equals(expr.Op, "value", StringComparison.OrdinalIgnoreCase) && expr.Args.Length >= 2 && expr.Args[1] is string field)
+            {
+                var resolvedSubj = Resolve(expr.Args[0]);
+                if (resolvedSubj is Entity entity)
+                {
+                    if (field.StartsWith("tag:")) return entity.Tag(field[4..]);
+                    if (field == "$parent") return entity.Parent;
+                    if (entity.Properties.TryGetValue(field, out var pv)) return pv;
+                    return entity.Tag(field);
+                }
+            }
+            if (string.Equals(expr.Op, "quote", StringComparison.OrdinalIgnoreCase) && expr.Args.Length >= 1)
+            {
+                return expr.Args[0];
+            }
+            return Evaluate(expr);
+        }
+        return Resolve(arg);
     }
 
     /// <summary>具象化事实表达式，将其内部包含的所有符号代号替换为具体的运行时对象引用。</summary>
