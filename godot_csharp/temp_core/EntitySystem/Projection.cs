@@ -1,3 +1,5 @@
+using DualOntologyWorldEngine.TempCore;
+
 namespace DualOntologyWorldEngine.Core;
 /// <summary>
 /// Projection反映了一个物体在特定位置下的完全表现形式。
@@ -14,8 +16,13 @@ public class Projection
     /// <summary>
     /// 获取投影的名称
     /// </summary>
-    public string Name { get; private set; } = string.Empty;
-    public Projection? Parent { get; private set; }
-    public HashSet<Projection> Children { get; private set; } = new HashSet<Projection>();
+    public string Name { get; }
+    public Essence Source { get; }
+    public Projection? Parent { get; }
+    public HashSet<Projection> Children { get; }
+    public bool UpdateByObs = true;
 
+}
+public class BoundarySurfaceProjection : Projection
+{
 }
