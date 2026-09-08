@@ -1,82 +1,28 @@
 using System.Globalization;
 using System.Text.Json;
-
-namespace DualOntologyWorldEngine.Examples.ZooSimulator;
-
-public static class Program
+using DualOntologyWorldEngine.Examples.ZooSimulator;
+try
 {
-    public static int Main(string[] args)
-    {
-        try
-        {
-            int seed=42, visitors=4, maxSteps=2000000;
-            double duration=180, startMinute=540;
-            string preset="standard";
-            string? report=null;
-            bool verbose=false, catalog=false;
-            bool interactive = args.Length == 0;
-            for (int n=0;n<args.Length;n++)
-            {
-                string Value()=>++n<args.Length ? args[n] : throw new ArgumentException("参数缺少值");
-                switch (args[n])
-                {
-                    case "--interactive": case "-i": interactive=true; break;
-                    case "--seed": seed=int.Parse(Value(),CultureInfo.InvariantCulture); break;
-                    case "--time": duration=double.Parse(Value(),CultureInfo.InvariantCulture); break;
-                    case "--start-minute": startMinute=double.Parse(Value(),CultureInfo.InvariantCulture); break;
-                    case "--visitors": visitors=int.Parse(Value(),CultureInfo.InvariantCulture); break;
-                    case "--max-steps": maxSteps=int.Parse(Value(),CultureInfo.InvariantCulture); break;
-                    case "--rules": preset=Value(); break;
-                    case "--report": report=Value(); break;
-                    case "--verbose": verbose=true; break;
-                    case "--catalog": catalog=true; break;
-                    default: throw new ArgumentException($"未知参数：{args[n]}");
-                }
-            }
-            if (interactive)
-            {
-                var ui = new DashboardUi(seed, visitors, startMinute, preset);
-                ui.Run();
-                return 0;
-            }
-            if (!double.IsFinite(duration) || duration<0 || !double.IsFinite(startMinute) || startMinute<0 || visitors<0 || maxSteps<1)
-                throw new ArgumentException("时间与人数必须非负，时间必须有限，步数上限必须为正。");
-            using var simulation=new ZooSimulation(seed,visitors,startMinute,preset);
-            var w=simulation.World;
-            var rules=simulation.Rules;
-            if (catalog)
-            {
-                foreach (var clause in rules.Clauses) Console.WriteLine($"{clause.Key} [{(clause.Advice==null ? "声明" : "行动建议")}] {clause.Text}");
-                return 0;
-            }
-            var mechanisms=simulation.Anomalies;
-            if (verbose) w.Session.Runtime.Executed+=(i,r)=>
-            {
-                if (r.Result?.Succeeded==true && i.Effect.Op!="evolve") Console.WriteLine($"[{w.Session.Timeline.Now:F1}] {i.Actor.Name}：{i.Label}");
-            };
-            int steps=w.Run(duration,maxSteps);
-            bool truncated=w.Session.Timeline.Queue.Any(t=>t.Time<=duration);
-            Console.WriteLine($"种子 {seed}；初始文书 {preset}；{rules.Clauses.Count} 条原文；时刻 {w.Session.Timeline.Now:F1} 分钟；结算 {steps} 步。");
-            foreach (var c in w.Visitors)
-                Console.WriteLine($"{c.Name}：{w.Outcome(c)}，位置 {c.CurrentScene?.Name ?? "无"}，生命 {c.Get<double>("health"):F2}，侵蚀 {c.Get<double>("erosion"):F2}，关注 {c.Get<double>("attention"):F2}。");
-            Console.WriteLine($"因果变化 {mechanisms.Records.Count} 条。结局由当前状态读取，不为遵守或违反文书赋值。");
-            if (report!=null)
-            {
-                var payload=new
-                {
-                    seed,preset,startMinute,duration,steps,truncated,
-                    visitors=w.Visitors.Select(c=>new { c.Name,scene=c.CurrentScene?.Name,outcome=w.Outcome(c),health=c.Get<double>("health"),erosion=c.Get<double>("erosion"),attention=c.Get<double>("attention") }),
-                    changes=mechanisms.Records.Select(r=>new { r.Time,actor=r.Actor.Name,scene=r.Scene.Name,r.Mechanism,r.Attention,r.Erosion,r.Outcome })
-                };
-                File.WriteAllText(report,JsonSerializer.Serialize(payload,new JsonSerializerOptions { WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
-            }
-            if (truncated) Console.Error.WriteLine("达到步数上限，推演未完成。");
-            return truncated ? 2 : 0;
-        }
-        catch (Exception e) when (e is ArgumentException or FormatException or OverflowException)
-        {
-            Console.Error.WriteLine(e.Message);
-            return 1;
-        }
-    }
+    string Arg(string key,string fallback) {var index=Array.IndexOf(args,key);return index>=0?args[index+1]:fallback;}
+    var seed=int.Parse(Arg("--seed","7"));var count=int.Parse(Arg("--visitors","120"));
+    var start=double.Parse(Arg("--start-minute","480"),CultureInfo.InvariantCulture);
+    var duration=double.Parse(Arg("--time","480"),CultureInfo.InvariantCulture);
+    var steps=int.Parse(Arg("--max-steps","200000"));
+    if(!double.IsFinite(duration)||duration<0)throw new ArgumentException("模拟时长必须为有限非负数。");
+    using var simulation=new ZooSimulation(seed,count,start,Arg("--rules","standard"));
+    var w=simulation.World;
+    if(args.Contains("--catalog")){foreach(var c in w.Rules.Clauses.Values)Console.WriteLine($"{c.Key} {c.Original}\n{c.Script}");return 0;}
+    if(args.Contains("--rule")){w.Rules.Publish("Custom.1",Arg("--rule",""));w.Broadcast("Custom.1");}
+    var executed=w.Run(start+duration,steps);
+    var report=new { w.Now, Completed=w.Now>=start+duration, Steps=executed,w.PeakVisitors,Visitors=w.InPark,
+        Outcomes=w.People.GroupBy(p=>p.Outcome).ToDictionary(g=>g.Key,g=>g.Count()),
+        People=w.People.Select(p=>new {Name=p.Body.TrueName,Room=p.Room?.TrueName,p.Outcome,p.Job,p.TrueSpecies,p.ItsClassification,
+            Human=p.Self.Value(Z.Human),KnownRoom=p.Self.Parent?.Name,p.CurrentAction,Rules=p.Books.Count,Trace=p.DecisionTrace.ToArray()}).ToArray(),
+        Events=w.Events.ToArray()};
+    Console.WriteLine($"时间 {w.Now:F1} 分钟；执行 {executed} 步；峰值游客 {w.PeakVisitors}；在园 {w.InPark}；完成 {report.Completed}");
+    foreach(var outcome in report.Outcomes)Console.WriteLine($"{outcome.Key}：{outcome.Value}");
+    if(args.Contains("--verbose"))foreach(var e in w.Events)Console.WriteLine(e);
+    if(args.Contains("--report"))File.WriteAllText(Arg("--report","zoo-run.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping}));
+    return report.Completed?0:2;
 }
+catch(Exception e){Console.Error.WriteLine(e);return 1;}

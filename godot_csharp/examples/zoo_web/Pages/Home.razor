@@ -1,704 +1,87 @@
 @page "/"
 @implements IDisposable
-@using DualOntologyWorldEngine.Core.Effects
-@using DualOntologyWorldEngine.Core.Timeline
-
-<PageTitle>动物园规则怪谈世界引擎 - Web 终端 (C# Wasm)</PageTitle>
-
-<div class="terminal-container">
-  <!-- 顶部状态信息 -->
-  <header>
-    <div class="header-left">
-      <div class="title">动物园规则怪谈世界引擎 (Dual-Ontology C# WebAssembly)</div>
-      @if (_isPlaying)
-      {
-        <div class="status-badge status-playing">● 运行中 (PLAYING)</div>
-      }
-      else
-      {
-        <div class="status-badge status-paused">⏸ 已暂停 (PAUSED)</div>
-      }
-    </div>
-    <div class="header-right">
-      <span>园区时刻: <strong style="color: #fff;">@FormatTime(_world.Minute)</strong> (+@($"{_world.Session.Timeline.Now:F1}")m)</span>
-      <span>步数: <strong style="color: #fff;">@_totalSteps</strong></span>
-      <span>种子: <strong style="color: #fff;">@_seed</strong></span>
-    </div>
-  </header>
-
-  <!-- 主视图工作区 -->
-  <main>
-    <!-- 左侧：场景角色分布与日志 -->
-    <div class="left-col">
-      <div class="panel" style="flex: 1;">
-        <div class="panel-header">
-          <span>园区场景与在场角色</span>
-          <span style="font-size: 11px; color: var(--grey);">点击人物切换监控</span>
-        </div>
-        <div class="panel-body" style="padding: 0;">
-          <table class="table-custom">
-            <thead>
-              <tr>
-                <th style="width: 32%;">人物</th>
-                <th style="width: 44%;">当前位置</th>
-                <th style="width: 24%;">状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (var p in _world.People)
-              {
-                var isTracked = ReferenceEquals(p, _trackedCharacter);
-                var outcome = _world.Outcome(p);
-                var outcomeColor = outcome switch
-                {
-                  "离园" => "var(--green)",
-                  "仍在园内" => "var(--cyan)",
-                  "认知同化" => "var(--magenta)",
-                  "死亡" => "var(--red)",
-                  _ => "var(--yellow)"
-                };
-                <tr class="clickable-row @(isTracked ? "row-active" : "")" @onclick="() => SelectCharacter(p)">
-                  <td>@(isTracked ? "▶ " : "")@p.Name</td>
-                  <td>@(p.CurrentScene?.Name ?? "未知")</td>
-                  <td style="color: @outcomeColor;">@outcome</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="panel" style="height: 190px; flex-shrink: 0;">
-        <div class="panel-header">实时因果与心智日志</div>
-        <div class="panel-body">
-          <div class="log-box">
-            @foreach (var log in _eventLog)
+<PageTitle>动物园 · 认知与规则实验室</PageTitle>
+<div class="zoo">
+    <header><div><small>ESSENCE / PROJECTION · C# CORE</small><h1>动物园规则怪谈</h1></div><div class="clock">@Clock <small>@(W.Open ? "开放中 08:00—16:00" : "已闭园 · 停止入园")</small></div></header>
+    <nav>
+        <button @onclick="() => Advance(10)">推进 10 分钟</button><button @onclick="() => Advance(60)">推进 1 小时</button>
+        <button @onclick="Toggle">@(playing?"暂停":"连续推演")</button>
+        <select @bind="preset"><option value="standard">岗位与地图</option><option value="none">未读初始规则</option><option value="gate">采信门口告示</option><option value="all">全部冲突文书</option></select>
+        <label>首批游客 <input type="number" min="0" max="500" @bind="visitors" /></label>
+        <label>种子 <input type="number" @bind="seed" /></label><button @onclick="Reset">重建世界</button>
+    </nav>
+    <p class="status" role="status">@status</p>
+    <div class="metrics"><span>当前游客 <b>@W.InPark</b></span><span>峰值游客 <b>@W.PeakVisitors</b></span><span>已逃离 <b>@W.People.Count(p=>p.Outcome=="成功逃离")</b></span><span>原文文书 <b>@W.Rules.Clauses.Count</b></span><span>步行 <b>60 米/分钟</b></span></div>
+    <main>
+        <section><h2>园区现场 <small>客观视角</small></h2>
+            <div class="rooms">@foreach(var room in W.Rooms.Values.Where(r=>r.TrueName!="园外"))
+            {<button class="room @(tracked?.Room==room?"active":"")" @onclick="()=>SelectRoom(room)"><strong>@room.TrueName</strong><span>@W.People.Count(p=>p.Room==room&&p.Outcome=="在园") 人</span><small>@(room.Value(Z.Danger)>0?"可见异常":"") @(room.Value(Z.Calm)>0?"言灵：安静":"")</small></button>}</div>
+            <h2>人物</h2><select class="wide" @onchange="Pick">@foreach(var p in W.People){<option value="@p.Body.TrueName" selected="@(p==tracked)">@p.Body.TrueName · @p.Job · @p.Outcome</option>}</select>
+            @if(tracked is {} person)
             {
-              <div class="log-item">@log</div>
+                <dl><dt>真实物种</dt><dd>@person.TrueSpecies</dd><dt>本人认为</dt><dd>人类信念 @person.Self.Value(Z.Human) / 100</dd><dt>“它”认为</dt><dd>@(person.ItsClassification?.ToString()??"无法可靠分类")</dd><dt>身体兔化</dt><dd>@person.Body.Value(Z.Rabbit) / 100</dd><dt>实际位置</dt><dd>@person.Room?.TrueName</dd><dt>脑内位置</dt><dd>@person.Self.Parent?.Name</dd><dt>进行中行动</dt><dd>@person.CurrentAction</dd><dt>虚线纸</dt><dd>@(W.Anomalies.Paper(person)!=null?"持有撕下的纸片":"无分类保护")</dd></dl>
+                <h2>认知干预</h2><p>通过 Core 认知变换提交观察输入，下一次决策使用新的自我理解。</p>
+                <input type="range" min="0" max="100" @bind="human"/><span>@human</span><button @onclick="ChangeMind">改变人类信念</button>
+                <h2>言灵 · 临时修改当前场景</h2><p>消耗一次施放机会，作用 15 分钟；到期按叠加顺序恢复。</p><button @onclick="Cast">“此处暂时安静”</button><small>剩余 @person.Body.Value(Z.Mana) 次</small>
             }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右侧：目标人物精神状态监控面板 -->
-    <div class="panel" style="height: 100%;">
-      <div class="panel-header">
-        <span>人物精神与心智监控：<strong style="color: var(--yellow);">@_trackedCharacter.Name</strong></span>
-        <button class="btn" style="padding: 2px 8px; font-size: 11px;" @onclick="() => _showCharPicker = true">切换人物</button>
-      </div>
-      <div class="panel-body">
-        <div class="info-summary">
-          <div class="info-card"><span class="k">职务/身份</span><span class="v">@(_trackedCharacter.Get<string>("role") ?? "未知")</span></div>
-          <div class="info-card"><span class="k">所在场景</span><span class="v">@(_trackedCharacter.CurrentScene?.Name ?? "无")</span></div>
-          <div class="info-card"><span class="k">着装制服</span><span class="v">@(_trackedCharacter.Get<string>("uniform") ?? "普通便服")</span></div>
-          <div class="info-card"><span class="k">自我认知认同</span><span class="v">@(_trackedCharacter.Get<string>("identity") ?? "human") (@($"{_trackedCharacter.Get<double>("identity_strength"):P0}") )</span></div>
-          <div class="info-card"><span class="k">认知合规倾向</span><span class="v" style="color: var(--cyan);">@(_trackedCharacter.Get<string>("compliance_profile") ?? "未登记")</span></div>
-        </div>
-
-        <div style="margin-bottom: 12px; font-weight: bold; color: var(--cyan); font-size: 13px;">生理与精神核心指标</div>
-
-        @{
-          var health = Math.Clamp(_trackedCharacter.Get<double>("health"), 0, 10);
-            var stability = Math.Clamp(_trackedCharacter.Get<double>("stability"), 0, 15);
-          var erosion = Math.Clamp(_trackedCharacter.Get<double>("erosion"), 0, 10);
-          var fear = Math.Clamp(_trackedCharacter.Get<double>("fear"), 0, 10);
-          var attention = Math.Clamp(_trackedCharacter.Get<double>("attention"), 0, 10);
-          var uncertainty = Math.Clamp(_trackedCharacter.Get<double>("uncertainty"), 0, 5);
-        }
-
-        <div class="gauge-row">
-          <span class="gauge-label">生命健康 (Health)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--green); width: @(health * 10)%;"></div></div>
-          <span class="gauge-val">@($"{health:F1}/10")</span>
-        </div>
-
-        <div class="gauge-row">
-          <span class="gauge-label">精神稳定 (Stability)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--cyan); width: @(stability / 15.0 * 100)%;"></div></div>
-          <span class="gauge-val">@($"{stability:F1}/15")</span>
-        </div>
-
-        <div class="gauge-row">
-          <span class="gauge-label">侵蚀程度 (Erosion)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--magenta); width: @(erosion * 10)%;"></div></div>
-          <span class="gauge-val">@($"{erosion:F1}/10")</span>
-        </div>
-
-        <div class="gauge-row">
-          <span class="gauge-label">恐惧数值 (Fear)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--red); width: @(fear * 10)%;"></div></div>
-          <span class="gauge-val">@($"{fear:F1}/10")</span>
-        </div>
-
-        <div class="gauge-row">
-          <span class="gauge-label">受到关注 (Attention)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--yellow); width: @(attention * 10)%;"></div></div>
-          <span class="gauge-val">@($"{attention:F1}/10")</span>
-        </div>
-
-        <div class="gauge-row">
-          <span class="gauge-label">认知困惑 (Uncertain)</span>
-          <div class="gauge-track"><div class="gauge-fill" style="background-color: var(--cyan); width: @(uncertainty / 5.0 * 100)%;"></div></div>
-          <span class="gauge-val">@($"{uncertainty:F1}/5")</span>
-        </div>
-
-        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);">
-          @{
-            var inv = _trackedCharacter.Inventory.Any() ? string.Join(", ", _trackedCharacter.Inventory.Select(i => i.Name)) : "（空）";
-            var lastOp = _trackedCharacter.Get<string>("last_op") ?? "无";
-            var lastTarget = _trackedCharacter.Get<Entity>("last_target")?.Name ?? "无";
-            var acceptedCount = _trackedCharacter.Mind?.Beliefs.Count(b => b.HasTag(CommonTag.Accepted)) ?? 0;
-          }
-          <div style="margin-bottom: 8px;"><span style="color: var(--grey);">持有物品：</span><span style="color: #fff;">@inv</span></div>
-          <div style="margin-bottom: 8px;"><span style="color: var(--grey);">最近行动：</span><span style="color: var(--cyan);">@lastOp -> @lastTarget</span></div>
-          <div><span style="color: var(--grey);">已采信规则：</span><span style="color: var(--green);">@acceptedCount 条文书生效中</span></div>
-          <div style="margin-top: 8px;">心智情绪：@_trackedCharacter.Mind!.GetEmotionalSummary()</div>
-          <div>已知状态：@StateView.Knowledge(_trackedCharacter.Mind!).Count()；查证能力：@(_trackedCharacter.Get<double>("investigation").ToString("F1"))</div>
-          @foreach (var motive in _world.Narrative.Motives.Where(m => m.Actor == _trackedCharacter))
-          {
-            <div>@motive.Name：@(motive.Achieved ? "曾达成" : "追求中")</div>
-          }
-          <div style="margin-top: 8px; color: var(--grey);">下一行动：@string.Join(" → ", _world.Session.Timeline.Queue.Take(6).Select(t => t.Label))</div>
-          <div style="color: var(--yellow);">@_stepStatus</div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- 底部控制指令栏 -->
-  <footer>
-    <label>重置预设
-      <select class="btn" @bind="_preset">
-        <option value="standard">岗位与地图</option>
-        <option value="none">无初始文书</option>
-        <option value="gate">门口告示</option>
-        <option value="all">全部文书</option>
-      </select>
-    </label>
-    <button class="btn btn-primary" @onclick="TogglePlay">
-      <span>@(_isPlaying ? "暂停模拟" : "播放模拟")</span>
-    </button>
-    <button class="btn" @onclick="() => StepSimulation(10.0)">
-      单步推进 (+10m)
-    </button>
-    <button class="btn" @onclick="ResetWorld">
-      重置世界
-    </button>
-    <button class="btn" @onclick="() => _showCharPicker = true">
-      切换人物
-    </button>
-    <button class="btn" @onclick="() => _showRulesModal = true">
-      检测规则 (@_rules.Clauses.Count)
-    </button>
-    <button class="btn" @onclick="() => _showAddRule = true">
-      添加规则
-    </button>
-    <button class="btn" @onclick="() => _showDeleteRule = true">
-      删除规则
-    </button>
-  </footer>
-
-  <!-- 规则检测模态框 -->
-  @if (_showRulesModal)
-  {
-    <div class="modal-backdrop open">
-      <div class="modal-win" style="max-width: 960px;">
-        <div class="modal-header">
-          <span>当前生效怪谈文书一览 (@_rules.Clauses.Count 条) · 追踪人物: @_trackedCharacter.Name</span>
-          <button class="btn" @onclick="() => _showRulesModal = false">✕</button>
-        </div>
-        <div class="modal-body" style="padding: 0;">
-          <table class="table-custom">
-            <thead>
-              <tr>
-                <th style="width: 14%;">编号</th>
-                <th style="width: 26%;">实际生效形式 (Operational Form)</th>
-                <th style="width: 34%;">文书正文 (Original Text)</th>
-                <th style="width: 14%;">人物认知</th>
-                <th style="width: 12%;">全员采信</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (var c in _rules.Clauses)
-              {
-                var ruleAcceptedCount = _world.People.Count(p =>
-                  p.Mind?.Beliefs.Any(b => b.HasTag(CommonTag.Accepted) && ReferenceEquals(b.Get<Entity>("publication"), c.Publication)) == true);
-                var charBelief = _trackedCharacter.Mind?.Beliefs.FirstOrDefault(b => ReferenceEquals(b.Get<Entity>("publication"), c.Publication));
-                var (stanceText, stanceColor) = charBelief == null ? ("未感知(未读)", "var(--grey)") :
-                  charBelief.HasTag(CommonTag.Accepted) ? ($"已采信(★{charBelief.Get<int>("confidence")})", "var(--green)") :
-                  (charBelief.HasTag(CommonTag.Evaluated) || charBelief.HasTag(CommonTag.Understood)) ? ("存疑动摇", "var(--yellow)") : ("排斥/忽略", "var(--red)");
-                <tr>
-                  <td style="color: var(--cyan); font-weight: bold;">@c.Key</td>
-                  <td style="color: var(--yellow); font-family: monospace; font-size: 11px;">@c.OperationalForm</td>
-                  <td style="color: #ccc; font-size: 11px;">@c.Text</td>
-                  <td style="color: @stanceColor; font-weight: bold;">@stanceText</td>
-                  <td style="color: var(--green);">@ruleAcceptedCount/@_world.People.Count()</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" @onclick="() => _showRulesModal = false">关闭</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- 添加规则模态框 -->
-  @if (_showAddRule)
-  {
-    <div class="modal-backdrop open">
-      <div class="modal-win" style="max-width: 480px;">
-        <div class="modal-header">
-          <span>添加新怪谈规则条目</span>
-          <button class="btn" @onclick="() => _showAddRule = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <label style="color: var(--grey); font-size: 11px;">规则分区 (Section)</label>
-          <input class="form-input" @bind="_newRuleSection" placeholder="例如 Custom / Visitor" />
-          <label style="color: var(--grey); font-size: 11px;">规则编号 (Number)</label>
-          <input class="form-input" @bind="_newRuleNum" placeholder="例如 99" />
-          <label style="color: var(--grey); font-size: 11px;">正文内容 (Text)</label>
-          <textarea class="form-input" style="height: 80px; resize: vertical;" @bind="_newRuleText" placeholder="输入文书规则内容..."></textarea>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" @onclick="() => _showAddRule = false">取消</button>
-          <p>自定义正文作为文书广播；行为建议须由模拟器中的 C# 规则定义。</p>
-          <button class="btn btn-primary" @onclick="SubmitAddRule">确定添加并广播</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- 删除规则模态框 -->
-  @if (_showDeleteRule)
-  {
-    <div class="modal-backdrop open">
-      <div class="modal-win" style="max-width: 500px;">
-        <div class="modal-header">
-          <span>废除/删除规则</span>
-          <button class="btn" @onclick="() => _showDeleteRule = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <p style="color: var(--grey); font-size: 12px; margin-bottom: 10px;">点击废除指定规则，全员心智中的该条采信信念将被即刻撤销：</p>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            @foreach (var c in _rules.Clauses)
+        </section>
+        <section>
+            <h2>脑内决策树 <small>观察 → 理解 → 空间条件 → 建议权重 → Core 选择</small></h2>
+            @if(tracked is {} thinker)
             {
-              <button class="btn btn-danger" style="justify-content: space-between;" @onclick="() => DeleteRule(c.Key)">
-                <span><strong>@c.Key</strong>: @(c.Text.Length > 24 ? c.Text[..24] + "..." : c.Text)</span>
-                <span>废除 ✕</span>
-              </button>
+                <div class="trace">@foreach(var entry in thinker.DecisionTrace){<div>@entry</div>}@if(thinker.DecisionTrace.Count==0){<p>当前由日常游览、休息或岗位计划选择行动。</p>}</div>
+                <details><summary>最近观察（@thinker.Soul.World.Projections.Length 个脑内对象）</summary>@foreach(var observation in thinker.Soul.World.History.TakeLast(12).Reverse()){<p>@observation.Time.ToString("F1") · @observation.Source · @observation.Target.Name <small>@observation.Details</small></p>}</details>
             }
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" @onclick="() => _showDeleteRule = false">关闭</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- 选择人物模态框 -->
-  @if (_showCharPicker)
-  {
-    <div class="modal-backdrop open">
-      <div class="modal-win" style="max-width: 420px;">
-        <div class="modal-header">
-          <span>选择监控跟踪人物</span>
-          <button class="btn" @onclick="() => _showCharPicker = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            @foreach (var p in _world.People)
-            {
-              var isCurrent = ReferenceEquals(p, _trackedCharacter);
-              <button class="btn @(isCurrent ? "btn-primary" : "")" style="width: 100%; justify-content: space-between;" @onclick="() => SelectCharacter(p)">
-                <span><strong>@p.Name</strong> (@(p.Get<string>("role") ?? "角色"))</span>
-                <span>@(p.CurrentScene?.Name ?? "无")</span>
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  }
+            <h2>文书编辑</h2><p>受控中文会解析成 AST。修订后需要现场阅读或广播，人物才会知道新版本。广播不覆盖海洋馆和封闭宿舍。</p>
+            <select class="wide" @onchange="LoadRule">@foreach(var clause in W.Rules.Clauses.Values){<option value="@clause.Key" selected="@(clause.Key==key)">@clause.Key · @(clause.Original.Length>45?clause.Original[..45]+"…":clause.Original)</option>}</select>
+            <p class="original">@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
+            <input class="wide" aria-label="文书编号" @bind="key"/><textarea aria-label="受控规则文本" @bind="script"></textarea>
+            <div class="actions"><button @onclick="Publish">保存文书</button><button @onclick="Broadcast">保存并广播</button><button @onclick="Withdraw">张贴撤回告示</button><button @onclick="Accept">当前人物重新采信</button></div>
+            <details><summary>可用语法与词汇</summary><p>当 条件 时 优先 动作 权重 80；当 条件&amp;!另一条件 时 禁止 动作 权重 100</p><p>行为：前往:场景名、@string.Join("、",ZooMinds.Actions.Keys)</p><p>条件：@string.Join("、",ZooMinds.FactNames)</p></details>
+            <h2>人物记住的版本</h2>
+            @if(tracked is {} reader){<div class="books">@foreach(var book in reader.Books.Values){<details><summary>@book.Text.Key · @book.Acceptance · 理解 @book.Understanding%</summary><p>@book.Text.Script</p></details>}</div>}
+            <h2>行动与机制记录</h2><div class="log">@foreach(var entry in W.Events.TakeLast(30).Reverse()){<div>@entry</div>}</div>
+        </section>
+    </main>
 </div>
-
 <style>
-  :root {
-    --bg: #0c1017;
-    --panel-bg: #151b23;
-    --border: #30363d;
-    --text: #c9d1d9;
-    --cyan: #58a6ff;
-    --green: #3fb950;
-    --yellow: #d29922;
-    --red: #f85149;
-    --magenta: #bc8cff;
-    --grey: #8b949e;
-    --dark-grey: #21262d;
-    --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  .terminal-container {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: var(--font-mono);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-    font-size: 13px;
-    user-select: none;
-  }
-
-  header {
-    background-color: var(--panel-bg);
-    border-bottom: 2px solid var(--border);
-    padding: 8px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .header-right { font-size: 12px; display: flex; gap: 16px; }
-  .title { color: var(--cyan); font-weight: bold; font-size: 15px; }
-  .status-badge {
-    padding: 3px 10px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 12px;
-  }
-  .status-playing { background-color: rgba(63, 185, 80, 0.2); color: var(--green); border: 1px solid var(--green); }
-  .status-paused { background-color: rgba(210, 153, 34, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
-
-  main {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    flex: 1;
-    gap: 10px;
-    padding: 10px;
-    overflow: hidden;
-  }
-  @@media (max-width: 950px) {
-    main { grid-template-columns: 1fr; overflow-y: auto; }
-  }
-
-  .left-col { display: flex; flex-direction: column; gap: 10px; height: 100%; overflow: hidden; }
-
-  .panel {
-    background-color: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .panel-header {
-    background-color: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 12px;
-    font-weight: bold;
-    color: var(--cyan);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .panel-body { padding: 12px; flex: 1; overflow-y: auto; }
-
-  .table-custom {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .table-custom th, .table-custom td {
-    padding: 6px 8px;
-    text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .table-custom th { color: var(--grey); font-weight: normal; }
-  .clickable-row { cursor: pointer; transition: background 0.15s; }
-  .clickable-row:hover { background-color: rgba(255, 255, 255, 0.05); }
-  .row-active { background-color: rgba(88, 166, 255, 0.15); font-weight: bold; }
-
-  .log-box {
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--grey);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .log-item { word-break: break-all; }
-
-  .info-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .info-card { background: rgba(0, 0, 0, 0.2); padding: 8px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.05); }
-  .info-card .k { color: var(--grey); font-size: 11px; display: block; margin-bottom: 2px; }
-  .info-card .v { font-weight: bold; font-size: 13px; color: #fff; }
-
-  .gauge-row {
-    display: grid;
-    grid-template-columns: 140px 1fr 80px;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .gauge-label { color: var(--text); font-size: 12px; }
-  .gauge-track {
-    background-color: rgba(255, 255, 255, 0.06);
-    height: 14px;
-    border-radius: 3px;
-    overflow: hidden;
-    margin: 0 10px;
-  }
-  .gauge-fill { height: 100%; transition: width 0.25s ease; }
-  .gauge-val { text-align: right; font-weight: bold; font-size: 12px; }
-
-  footer {
-    background-color: var(--panel-bg);
-    border-top: 2px solid var(--border);
-    padding: 8px 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .btn {
-    background-color: var(--dark-grey);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .btn:hover { background-color: #30363d; border-color: var(--grey); }
-  .btn-primary { background-color: #238636; border-color: rgba(240, 246, 252, 0.1); color: #fff; }
-  .btn-primary:hover { background-color: #2ea043; }
-  .btn-danger { background-color: #da3633; border-color: rgba(240, 246, 252, 0.1); color: #fff; }
-  .btn-danger:hover { background-color: #f85149; }
-  .key-hint {
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 10px;
-    color: var(--cyan);
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  .modal-win {
-    background-color: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    width: 90%;
-    max-width: 680px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
-  }
-  .modal-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-    color: var(--cyan);
-  }
-  .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
-  .modal-footer {
-    padding: 10px 16px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-  .form-input {
-    width: 100%;
-    background-color: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 10px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    margin-top: 4px;
-    margin-bottom: 12px;
-  }
-  .form-input:focus { outline: none; border-color: var(--cyan); }
+.zoo{max-width:1500px;margin:auto;padding:24px;color:#d7e0e6;font:14px/1.6 system-ui;background:#101819}.zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:20px}.zoo h1{font-size:30px;margin:4px 0}.zoo small{color:#96b6a6;display:block}.clock{font-size:28px;color:#d9ecbc}.clock small{font-size:13px}.zoo nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.zoo button,.zoo select,.zoo input,.zoo textarea{background:#1a2827;color:#e5ece8;border:1px solid #53685f;border-radius:5px;padding:9px}.zoo button{cursor:pointer}.zoo button:hover{background:#31493b}.zoo input[type=number]{width:65px}.metrics{display:flex;gap:28px;padding:18px;background:#20342a;border-radius:8px}.metrics b{font-size:20px;margin-left:8px}.zoo main{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}.zoo section{min-width:0}.zoo h2{font-size:17px;margin:28px 0 14px;color:#d9ecbc}.zoo h2 small{font-size:12px;font-weight:400}.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.room{text-align:left;min-height:80px}.room span{display:block}.room.active{border-color:#cbe9a7;background:#2a4130}.wide{width:100%;box-sizing:border-box}.zoo dl{display:grid;grid-template-columns:110px 1fr;gap:8px}.zoo dd{margin:0;color:#e4edb5}.zoo dt{color:#91a89a}.trace,.log,.books{max-height:280px;overflow:auto;background:#14211d;padding:14px;border-left:2px solid #789468}.trace div,.log div{padding:4px;border-bottom:1px solid #25372d}.zoo textarea{width:100%;box-sizing:border-box;min-height:130px;margin-top:10px;font:14px/1.7 monospace}.zoo details{padding:8px;border-bottom:1px solid #35483d}.zoo summary{cursor:pointer}.original{color:#a8b7b0}.status{color:#eacb91;min-height:22px}.zoo p{overflow-wrap:anywhere}.zoo button:focus-visible{outline:2px solid #ebdf91}@@media(max-width:850px){.zoo main{grid-template-columns:1fr}.metrics{flex-wrap:wrap;gap:12px}.zoo{padding:12px}.zoo header{align-items:flex-start;gap:12px}.rooms{grid-template-columns:repeat(2,1fr)}}
 </style>
-
 @code {
-  private int _seed = 42;
-  private int _visitorCount = 4;
-  private double _startMinute = 540;
-  private string _preset = "standard";
-
-  private ZooWorld _world = null!;
-  private ZooRules _rules = null!;
-  private ZooAnomalies _anomalies = null!;
-  private ZooSimulation _simulation = null!;
-
-  private Character _trackedCharacter = null!;
-  private bool _isPlaying;
-  private int _totalSteps;
-  private System.Threading.Timer? _playTimer;
-  private int _playGeneration;
-  private bool _disposed;
-  private string _stepStatus = "";
-  private readonly List<string> _eventLog = [];
-
-  private bool _showRulesModal;
-  private bool _showAddRule;
-  private bool _showDeleteRule;
-  private bool _showCharPicker;
-
-  private string _newRuleSection = "Custom";
-  private string _newRuleNum = "99";
-  private string _newRuleText = "";
-
-  protected override void OnInitialized()
-  {
-    ResetWorld();
-  }
-
-  private void ResetWorld()
-  {
-    _playTimer?.Dispose();
-    _playTimer = null;
-    _playGeneration++;
-    _isPlaying = false;
-    _totalSteps = 0;
-
-    _simulation?.Dispose();
-
-    _simulation = new ZooSimulation(_seed, _visitorCount, _startMinute, _preset);
-    _world = _simulation.World;
-    _rules = _simulation.Rules;
-    _anomalies = _simulation.Anomalies;
-    _stepStatus = "";
-
-    _world.Session.Runtime.Executed += (intent, result) =>
+    ZooSimulation simulation=null!;ZooWorld W=>simulation.World;Person? tracked;
+    int seed=7,visitors=120,human=70;string preset="standard",key="Visitor.14",script="当 危险 时 优先 前往:狮子园区 权重 120",status="";
+    bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
+    string Clock=>$"第{(int)W.Now/1440+1}天 {(int)W.Now%1440/60:D2}:{(int)W.Now%60:D2}";
+    protected override void OnInitialized()=>Reset();
+    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,preset);tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];status="已创建世界；下一次行动从脑内世界选择。";}catch(Exception e){status=e.Message;}}
+    async Task Advance(double minutes)
     {
-      if (result.Result?.Succeeded == true && intent.Effect.Op != "evolve")
-      {
-        var log = $"[{_world.Session.Timeline.Now:F1}m / {result.Event?.Get<string>("phase")}] {intent.Actor.Name}: {intent.Speech ?? intent.Label}";
-        lock (_eventLog)
+        if(busy)return;busy=true;var current=generation;var world=W;var target=world.Now+minutes;
+        try
         {
-          _eventLog.Add(log);
-          if (_eventLog.Count > 15) _eventLog.RemoveAt(0);
+            while(!disposed&&current==generation&&world.Now<target)
+            {
+                world.Run(target,20);status=$"正在推进至目标时刻，当前 {Clock}。";
+                StateHasChanged();await Task.Delay(1);
+            }
+            if(current==generation)status=$"已推进至 {Clock}。";
         }
-      }
-    };
-
-    _trackedCharacter = _world.People.FirstOrDefault() ?? _world.BlueStaff;
-
-    lock (_eventLog)
-    {
-      _eventLog.Clear();
-      _eventLog.Add($"[系统] C# 引擎启动。时刻 {_startMinute:F1}m，在场 {_world.People.Count()} 人。");
+        catch(Exception e){Stop();status=e.Message;}
+        finally{if(current==generation)busy=false;}
     }
-  }
-
-  private void StepSimulation(double minutes)
-  {
-    var target = _world.Session.Timeline.Now + minutes;
-    _totalSteps += _world.Run(target, 500);
-    _stepStatus = _world.Session.Timeline.Queue.Any(t => t.Time <= target)
-      ? $"本批达到 500 步上限；实际推进至 {_world.Session.Timeline.Now:F1}m。"
-      : $"已推进至 {_world.Session.Timeline.Now:F1}m。";
-  }
-
-  private void TogglePlay()
-  {
-    _isPlaying = !_isPlaying;
-    var generation = ++_playGeneration;
-    if (_isPlaying)
-    {
-      _playTimer?.Dispose();
-      _playTimer = new System.Threading.Timer(_ =>
-      {
-        InvokeAsync(() =>
-        {
-          if (_disposed || !_isPlaying || generation != _playGeneration) return;
-          StepSimulation(5.0);
-          StateHasChanged();
-        });
-      }, null, 0, 400);
-    }
-    else
-    {
-      _playTimer?.Dispose();
-      _playTimer = null;
-    }
-  }
-
-  private void SelectCharacter(Character c)
-  {
-    _trackedCharacter = c;
-    _showCharPicker = false;
-  }
-
-  private void SubmitAddRule()
-  {
-    if (string.IsNullOrWhiteSpace(_newRuleText)) return;
-    var key = $"{_newRuleSection}.{_newRuleNum}";
-    _rules.AddCustomRule(_newRuleSection, key, _newRuleText);
-    lock (_eventLog)
-    {
-      _eventLog.Add($"[规则添加] 新增条目 {key}: {_newRuleText}");
-    }
-    _showAddRule = false;
-    _newRuleText = "";
-  }
-
-  private void DeleteRule(string key)
-  {
-    _rules.RemoveClause(key);
-    lock (_eventLog)
-    {
-      _eventLog.Add($"[规则废除] 已撤销条目 {key}");
-    }
-    _showDeleteRule = false;
-  }
-
-  private string FormatTime(double minuteOfDay)
-  {
-    var m = ((int)minuteOfDay) % 1440;
-    return $"{m / 60:D2}:{m % 60:D2}";
-  }
-
-  public void Dispose()
-  {
-    _disposed = true;
-    _playGeneration++;
-    _playTimer?.Dispose();
-    _simulation?.Dispose();
-  }
+    void Toggle(){if(playing){Stop();return;}playing=true;timer=new(_=>InvokeAsync(async ()=>{if(disposed||!playing)return;await Advance(2);StateHasChanged();}),null,0,700);}
+    void Stop(){playing=false;timer?.Dispose();timer=null;}
+    void SelectRoom(Essence room){tracked=W.People.FirstOrDefault(p=>p.Room==room&&p.Outcome=="在园")??tracked;}
+    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());}
+    void LoadRule(ChangeEventArgs e){key=e.Value!.ToString()!;script=W.Rules.Clauses[key].Script;}
+    void Publish(){try{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增现场文书");status="文本已通过解析并保存；尚未读到的人继续使用旧版本。";}catch(Exception e){status=e.Message;}}
+    void Broadcast(){try{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status="修订已通过广播进入听众的观察输入。";}catch(Exception e){status=e.Message;}}
+    void Withdraw(){W.Rules.Remove(key);status="已张贴撤回告示；人物再次阅读该处文书后撤销旧建议。";}
+    void Accept(){if(tracked?.Books.ContainsKey(key)==true){ZooRules.Accept(tracked,key,Truth.True,W.Now);status="人物已重新采信记忆中的版本。";}}
+    void ChangeMind(){if(tracked!=null){W.Anomalies.Reconsider(tracked,human);status="认知变换已提交，身体物种保持独立。";}}
+    void Cast(){try{if(tracked!=null)W.Anomalies.SayTemporary(tracked,Z.Calm,1,15);status="言灵已进入人物行动队列，完成当前行动后施放。";}catch(Exception e){status=e.Message;}}
+    public void Dispose(){disposed=true;Stop();simulation?.Dispose();}
 }
+
+
+

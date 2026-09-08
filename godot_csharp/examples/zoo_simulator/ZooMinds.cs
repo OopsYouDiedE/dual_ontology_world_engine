@@ -1,344 +1,236 @@
+using System.Collections.Immutable;
+using System.Globalization;
 using DualOntologyWorldEngine.Core;
-using DualOntologyWorldEngine.Core.Mind;
-using DualOntologyWorldEngine.Core.Rules;
-using static DualOntologyWorldEngine.Core.Rules.AST;
-
 namespace DualOntologyWorldEngine.Examples.ZooSimulator;
 
-/// <summary>共用行动词汇。可行性取决于位置、物资和身体；文书只参与效用评分。</summary>
+/// <summary>此模块只读取脑内投影、记忆与观察历史；不接收 WorldRuntime 或客观场景。</summary>
 public static class ZooMinds
 {
-    public static void ActivateAll(ZooWorld w, ZooRules rules, double lionDelay = 0)
+    public static readonly Dictionary<string, Deed> Actions = new()
     {
-        foreach (var c in w.People)
+        ["游览"]=Deed.Watch,["休息"]=Deed.Rest,["阅读"]=Deed.Read,["撕地图"]=Deed.Tear,["喂虚线纸"]=Deed.FeedPaper,
+        ["喂兔子"]=Deed.FeedRabbit,["购买兔子血"]=Deed.BuyBlood,["吃山羊肉"]=Deed.EatMeat,["换黑衣"]=Deed.WearBlack,
+        ["求助"]=Deed.Help,["坚定人类"]=Deed.Reaffirm,["无视"]=Deed.Ignore,["混入猿猴"]=Deed.MixApes,
+        ["维修"]=Deed.Repair,["关灯"]=Deed.SwitchOff,["修剪"]=Deed.Trim,["引兔至狮区"]=Deed.Lure,
+        ["泼兔子血"]=Deed.Splash,["丢弃纸片"]=Deed.Discard,["投纸信号"]=Deed.Signal,["查货"]=Deed.Inspect,
+        ["巡逻"]=Deed.Patrol,["辞职"]=Deed.Resign,["隔离十三小时"]=Deed.Isolate,["抢夺纸片"]=Deed.StealPaper,
+        ["驱离客房"]=Deed.Evict,["收存食品"]=Deed.Collect,["充电"]=Deed.Charge,["报告"]=Deed.Report,
+        ["跟随"]=Deed.Follow,["买兔玩偶"]=Deed.BuyToy,["丢弃玩偶"]=Deed.DiscardToy,["护送"]=Deed.Escort,
+        ["疏散"]=Deed.Evacuate,["封猿区"]=Deed.CloseApes,["值守"]=Deed.Patrol,["误认大象"]=Deed.Misidentify,
+        ["认同山羊"]=Deed.GoatIdentity,["交出地图"]=Deed.GivePaper,["劝阻"]=Deed.Report,["收缴玩偶"]=Deed.CollectToy,
+        ["交谈"]=Deed.Talk,["记录白狮"]=Deed.CountLions,["领取地图"]=Deed.GetMap,["清理"]=Deed.Clean,["开猿区"]=Deed.OpenApes,["认同大象"]=Deed.ElephantIdentity
+    };
+    public static readonly HashSet<string> FactNames = ["总是","出逃兔子","双路","象异常","独处","兔区","馆外","笑声","有地图","有纸","迷路","危险","获救","多余白狮","成年","玩偶过期","兔耳入象区","反复走散","查货到期","食品可见","修剪到期","黑衣","喂食到期","象区","有求助","有血","持续症状","无人","猿区","馆内","夜间","员工在场","白天","日间停留到期","夜间不足四小时","鲸区","客房","灯亮","疲倦","红衣","上班","下班","巡逻到期","周日","有离馆者","黑衣借宿","有兔玩偶","动摇","查狮到期","狮区","停电","办公室","水母死亡","隔离中","保安在岗","猿区已空","封闭到期"];
+    public static string Quote(string name) => System.Text.Json.JsonSerializer.Serialize(name);
+    public static string Ref(Projection p) => "@" + Quote(p.Name);
+    public static string? Route(ProjectionWorld mind, Projection self, string destination, bool forbid = false)
+    {
+        var target = mind.Projections.FirstOrDefault(p => p.Kind == ProjectionKind.Space && p.Name == destination);
+        var start = self.Parent;
+        if (start is null || target is null || ReferenceEquals(start,target)) return null;
+        if(self.Value(Z.Role)==(int)Job.Red&&start.Name=="海洋馆"&&destination=="园外"&&mind.Projections.FirstOrDefault(p=>p.Name=="海洋馆员工出口") is {} staffExit)
+            return $"wait(3, sequence(require(all(tag_at_least($Actor, 岗位, 2), not(tag_at_least($Actor, 岗位, 3)))), travel({Ref(staffExit)})))";
+        var queue = new Queue<(Projection Room, Projection? First)>();
+        var seen = new HashSet<Projection> {start};
+        queue.Enqueue((start,null));
+        while(queue.TryDequeue(out var node))
+        foreach(var door in mind.Projections.Where(p => p.Kind == ProjectionKind.Boundary && p.Existence == Truth.True && p.Value(Tags.Locked) == 0 && (p.Value(new Tag("员工专用"))==0 || self.Value(Z.Role)==(int)Job.Red) && p.Relations.Contains((Z.From,node.Room))))
         {
-            ActivatePerson(w, c, rules);
+            var next = door.Relations.FirstOrDefault(r => r.Relation == Z.Leads).Target;
+            if(next is null || !seen.Add(next)) continue;
+            var first = node.First ?? door;
+            if(ReferenceEquals(next,target))
+            {
+                if(forbid && !ReferenceEquals(first,door)) return null;
+                var duration = first.Value(Z.Minutes);
+                                var gate=first.Name=="入口 → 园外" ? "普通离园资格" : first.Name=="海洋馆 → 园外" ? "海馆离园资格" : null;
+                var travel=first.Name=="海洋馆员工出口"?$"sequence(require(all(tag_at_least($Actor, 岗位, 2), not(tag_at_least($Actor, 岗位, 3)))), travel({Ref(first)}))":gate is null?$"travel({Ref(first)})":$"sequence(require(tag_at_least($Actor, {gate}, 1)), travel({Ref(first)}))";
+                return $"wait({Math.Max(1,duration)}, {travel})";
+            }
+            queue.Enqueue((next,first));
         }
+        return null;
     }
-
-    public static void ActivatePerson(ZooWorld w, Character c, ZooRules rules)
+    private static string? FullRoute(ProjectionWorld mind,Projection self,string destination)
     {
-        c.Mind!.InstallStep((_,_,_,_) => Offers(w,c,rules));
-        w.Session.Activate(c,c.Mind, idleCost: 5,
-            utility: i => Utility(w,c,i)+rules.Score(c,i)+w.CognitiveUtility(i),
-            chooser: ds =>
-            {
-                var best = ds.Max(d=>d.Score);
-                var choices = ds.Where(d=>Math.Abs(d.Score-best)<0.001).ToArray();
-                return choices[w.Random.Next(choices.Length)].Action!;
-            },
-            completed: (i,r) =>
-            {
-                if (i==null || r?.Result?.Succeeded!=true) return;
-                rules.Reflect(c,i);
-                c.Set("repeats", c.Get<string>("last_op")==i.Effect.Op && c.Get<Entity>("last_target")==i.Target ? c.Get<double>("repeats")+1 : 0d);
-                c.Set("last_op",i.Effect.Op);
-                c.Set("last_target",i.Target!);
-                if (i.Effect.Op=="read" && i.Target is { } pub) rules.Read(c,pub);
-                
-                // 实体状态结算与替补机制
-                if (w.Finished(c))
-                {
-                    w.Session.Deactivate(c);
-                    // 若重度侵蚀或身份异化为兔子，在所在场景实体化兔子
-                    if (c.Get<double>("erosion") >= 10 || c.Get<string>("identity") == "rabbit")
-                    {
-                        if (c.CurrentScene is { } scene)
-                        {
-                            ZooWorld.Item($"异化兔子({c.Name})", scene, new() { ["is_animal"] = true, ["is_rabbit"] = true, ["anomaly_resonance"] = 1.5 });
-                        }
-                    }
-                    // 若游客离园或死亡，从大门生成新游客入园补位
-                    if (c.Get<string>("role") == "visitor")
-                    {
-                        var replacement = w.SpawnVisitor($"补位游客{w.NextVisitorIndex}", w.Entrance, "普通便服", hasMap: true);
-                        rules.LearnNewVisitor(replacement);
-                        ActivatePerson(w, replacement, rules);
-                    }
-                }
-            });
+        var target=mind.Projections.FirstOrDefault(p=>p.Name==destination&&p.Kind==ProjectionKind.Space);
+        if(target is null||self.Parent is null||target==self.Parent)return null;
+        var queue=new Queue<(Projection Room,List<Projection> Doors)>();queue.Enqueue((self.Parent,[]));
+        var seen=new HashSet<Projection>{self.Parent};
+        while(queue.TryDequeue(out var node))
+        foreach(var door in mind.Projections.Where(p=>p.Kind==ProjectionKind.Boundary&&p.Value(Tags.Locked)==0&&p.Relations.Contains((Z.From,node.Room))))
+        {
+            var next=door.Relations.FirstOrDefault(r=>r.Relation==Z.Leads).Target;
+            if(next is null||!seen.Add(next))continue;
+            List<Projection> path=[..node.Doors,door];
+            if(next==target)return "sequence("+string.Join(", ",path.Select(d=>$"wait({Math.Max(1,d.Value(Z.Minutes))}, travel({Ref(d)}))"))+")";
+            queue.Enqueue((next,path));
+        }
+        return null;
     }
-
-    public static IEnumerable<Intent> Offers(ZooWorld w, Character c, ZooRules rules)
+    public static string? ActionText(string action, ProjectionWorld mind, Projection self, bool forbid = false)
     {
-        if (w.Finished(c) || c.CurrentScene is not { } scene) yield break;
-        Observe(w,c);
-        w.Perceive(c);
-        foreach (var action in LiteraryDialogue.Offers(c.Mind!, c, w.Session.Runtime.Env))
-            if (action.Target is not Character peer || !w.Finished(peer)) yield return action;
-        foreach (var action in w.Narrative.Offers(c)) yield return action;
-        var local = w.Local(c).ToArray();
-        var now = w.Session.Timeline.Now;
-        Intent Act(string op, Entity target, IEnumerable<Effect> changes, double cost=1, params object[] extra)
+        if(action.StartsWith("前往:")) return Route(mind,self,action[3..],forbid);
+        var deed = Actions[action];
+        string? goal = deed switch
         {
-            var parent=target.Parent;
-            var effects=changes.ToArray();
-            var origins=effects.Where(e=>e.Op=="move" && e.Args[0] is Entity)
-                .Select(e=>(Entity:(Entity)e.Args[0],Parent:((Entity)e.Args[0]).Parent)).ToArray();
-            return new(c,c.Mind!,new Effect(op,new object[] { c,target }.Concat(extra).ToArray()),effects,cost,$"{op} · {target.Name}",
-                validate:()=>w.Alive(c) && c.CurrentScene==scene && target.Parent==parent && origins.All(o=>o.Entity.Parent==o.Parent));
-        }
-        yield return Act("wait",scene,[],10);
-        yield return Act("rest",scene,[F("set",c,"rest_until",now+15)],15);
-        yield return Act("sleep",scene,[F("set",c,"sleep_until",now+60)],60);
-        yield return Act("silence",scene,[F("set",c,"topic",""),F("change",c,"uncertainty",-Math.Min(0.1,c.Get<double>("uncertainty")))],5);
-        yield return Act("shout",scene,[F("change",c,"attention",1d)],2);
-        foreach (var identity in new[] { "human","elephant","goat" })
-            yield return Act("affirm",c,[F("set",c,"identity",identity),F("set",c,"identity_strength",1d),F("change",c,"uncertainty",-Math.Min(0.2,c.Get<double>("uncertainty")))],5,identity);
-        foreach (var p in c.Mind!.KnownPassages)
-        {
-            if (p.Other(scene) is not { } next || !p.Allows(scene,c)) continue;
-            // 侵蚀度较高时心智无法识别正规出口，屏蔽通道
-            if (next == w.RegularExit && c.Get<double>("erosion") >= 3.0) continue;
-            yield return Act("move",next,[F("move",c,next),F("relate",c,"visited",scene)],p.CostFrom(scene));
-        }
-
-        foreach (var item in local)
-        {
-            if (item.Get<bool>("detached") && item.Get<Entity>("owner") is Character sender && sender!=c)
-                yield return Act("read_signal",item,[F("set",c,"requester",sender),F("set",c,"received_request",true)],1);
-            if (rules.Publications.Contains(item))
-            {
-                if (!c.Mind.Beliefs.Any(b=>ReferenceEquals(b.Get<Entity>("publication"),item)))
-                    yield return Act("read",item,[],1);
-                continue;
-            }
-            if (item.Get<bool>("is_animal") || item.Get<bool>("is_projection"))
-            {
-                yield return Act("watch",item,[F("relate",c,"visited",scene)],2);
-                yield return Act("approach",item,[F("relate",c,"visited",scene)],1);
-                yield return Act("touch",item,[F("relate",c,"visited",scene)],1);
-                if (c.Get<double>("carried_food")>=1)
-                    yield return Act("feed",item,[F("spend",c,"carried_food",1d),F("change",item,"fed_count",1d),F("set",item,"last_feed",now),F("set",c,"rabbit_fed_at",now)],2);
-                if (item.Get<bool>("is_escaped_rabbit"))
-                    yield return Act("lure",item,[F("set",item,"following",c),F("set",c,"destination",w.LionRockery)],1);
-                yield return Act("reinterpret",item,[F("relate",c,"calibrated",item),F("change",c,"uncertainty",-Math.Min(0.2,c.Get<double>("uncertainty")))],2);
-            }
-            if (item.Get<double>("count")>0 || item.Get<bool>("is_toy") || item.Get<bool>("is_tool") || item.Get<bool>("is_uniform"))
-            {
-                if (!c.Inventory.Contains(item))
-                    yield return Act("take",item,[F("move",item,c),F("set",c,"toy_since",now)],1);
-                else
-                {
-                    yield return Act("drop",item,[F("move",item,scene)],1);
-                    var box = local.FirstOrDefault(e=>e.Get<bool>("containment"));
-                    if (box!=null) yield return Act("store",item,[F("move",item,box)],1);
-                }
-            }
-            if (item.Get<bool>("is_consumable") && item.Get<double>("count")>=1)
-                yield return Act("consume",item,[F("spend",item,"count",1d),F("change",c,"thirst",-Math.Min(2,c.Get<double>("thirst"))),F("change",c,"hunger",-Math.Min(2,c.Get<double>("hunger")))],2);
-            if (item.Get<bool>("is_uniform") && c.Get<string>("uniform")!=item.Get<string>("color"))
-                yield return Act("wear",item,[F("set",c,"uniform",item.Get<string>("color")!),F("set",c,"changed_uniform",true),F("change",c,"uncertainty",0.4)],2);
-            if (item.Get<bool>("is_light"))
-            {
-                if (item.Get<bool>("lit")) yield return Act("switch_off",item,[F("set",item,"lit",false)],1);
-                else if (item.Get<bool>("powered")) yield return Act("switch_on",item,[F("set",item,"lit",true)],1);
-                if (item==w.NightLight && item.Get<double>("battery")<10)
-                    yield return Act("charge",item,[F("set",item,"battery",10d),F("set",c,"charged_at",now)],15);
-            }
-                if (item==w.ElephantSign || item==w.DrinkShelf || item==w.Camera || item==w.Mirror || item==w.WhaleProjection)
-                yield return Act("inspect",item,[F("observe",c.Mind!,item,"evidence"),F("observe",c.Mind!,item,"claim"),F("relate",c,"calibrated",item),F("set",c,"shelf_check",now)],2);
-            if (item.Get<bool>("is_device") && !item.Get<bool>("powered"))
-                yield return Act("repair",item,[F("set",item,"powered",true)],10);
-            if (item.Get<bool>("is_rabbit_blood") && c.Inventory.Contains(item))
-                yield return Act("display",item,[F("set",item,"display_until",now+5)],1);
-            if (item.Get<bool>("is_pet"))
-                yield return Act("evict_pet",item,[F("move",item,w.Outside)],2);
-            if (item.Get<bool>("containment"))
-                yield return Act("inspect_containment",item,[F("set",item,"inspected_at",now)],2);
-            if (item.Get<double>("health")>0)
-                yield return Act("attack",item,[F("spend",item,"health",Math.Min(1,item.Get<double>("health"))),F("change",c,"fatigue",0.2)],2);
-            if (item.Get<bool>("is_device") || item.Get<bool>("is_projection") || item==w.Jellyfish)
-                yield return Act("destroy",item,[F("set",item,"active",false),F("set",item,"powered",false)],3);
-        }
-
-        // 地图纸是实际物件，作者引用随物件流转，不共享一个草坪布尔开关。
-        var paper = ZooWorld.HeldPaper(c);
-        if (paper?.Parent==c && !paper.Get<bool>("detached"))
-            yield return Act("tear",c,[F("set",paper,"detached",true),F("set",c,"has_dotted_paper",true)],1);
-        if (paper?.Parent==c && paper.Get<bool>("detached"))
-        {
-            yield return Act("drop_paper",scene,[F("move",paper,scene),F("set",paper,"owner",c),F("set",c,"has_dotted_paper",false)],1);
-            if (local.Contains(w.Rabbits))
-                yield return Act("give_paper",w.Rabbits,[F("move",paper,w.Rabbits),F("set",c,"has_dotted_paper",false),F("set",c,"paper_fed",true)],1);
-        }
-        if ((scene==w.RabbitArea || scene==w.RabbitBushes) && local.Any(e=>e.Get<bool>("is_shears")))
-            yield return Act("prune",w.RabbitBushes,[F("set",w.RabbitBushes,"growth",0d),F("set",w.RabbitBushes,"shaded",false),F("set",c,"pruned_at",now)],10);
-        if (scene==w.StaffSupply && w.FoodSupply.Get<double>("count")>=2)
-            yield return Act("supply",w.FoodSupply,[F("spend",w.FoodSupply,"count",2d),F("change",c,"carried_food",2d)],2);
-        if (scene==w.DirectorOffice)
-        {
-            if (c.Get<double>("money")>=5)
-                yield return Act("order_food",w.DirectorOffice,[F("spend",c,"money",5d),F("change",c,"hunger",-Math.Min(2,c.Get<double>("hunger"))),F("change",c,"thirst",-Math.Min(2,c.Get<double>("thirst")))],15);
-            yield return Act("rename",w.Computer,[F("set",w.Computer,"label","工作记录")],1);
-            if (c.Get<double>("observed_lions")>0)
-                yield return Act("record",w.Computer,[F("set",w.Computer,"lion_count",c.Get<double>("observed_lions")),F("set",c,"recorded_at",now),F("change",w.Computer,"records",1d)],3);
-            foreach (var supply in new[] { w.SpareMaps,w.AquariumFood })
-                if (w.World.Get<double>("budget")>=10)
-                    yield return Act("restock",supply,[F("spend",w.World,"budget",10d),F("change",supply,"count",5d),F("set",c,"restocked_at",now)],10);
-            if (w.World.Get<double>("budget")>=10)
-            {
-                yield return Act("grant",w.SecurityGuard,[F("spend",w.World,"budget",10d),F("change",w.SecurityGuard,"stamina",5d),F("set",c,"received_request",false)],3);
-                yield return Act("install_camera",w.Camera,[F("spend",w.World,"budget",10d),F("set",w.Camera,"backup",true)],10);
-            }
-            if (!w.OfficeLight.Get<bool>("powered"))
-                yield return Act("repair_power",w.OfficeLight,[F("set",w.OfficeLight,"powered",true)],10);
-        }
-        if (scene==w.AquariumLobby && w.World.Get<double>("budget")>=10)
-            yield return Act("restock",w.AquariumFood,[F("spend",w.World,"budget",10d),F("set",w.AquariumFood,"count",10d),F("set",c,"restocked_at",now)],5);
-        if (scene.Get<bool>("domain_lion"))
-            yield return Act("count",w.LionRockery,[F("set",c,"counted_at",now),F("set",c,"observed_lions",(double)w.VisibleLions(c))],2);
-        foreach (var area in new[] { w.PrimateArea,w.ElephantArea })
-            if (scene==area || w.Topology.Adjacency[scene].Any(e=>e.Next==area))
-            {
-                if (!area.Get<bool>("closed"))
-                    yield return Act("close",area,[F("set",area,"closed",true),F("set",area,"closed_at",now)],1);
-                else
-                    yield return Act("open",area,[F("set",area,"closed",false),F("set",c,"reported_split",false)],1);
-            }
-        if (scene.Get<bool>("enclosed"))
-            yield return Act("close_door",scene,[F("set",scene,"door_closed",true)],1);
-        yield return Act("patrol",scene,[F("set",c,"patrolled_at",now),F("relate",c,"visited",scene)],2);
-        if (c.Get<bool>("has_map") || local.OfType<Character>().Any())
-            yield return Act("report",scene,[F("set",w.BlueStaff,"reported_split",c.Get<bool>("saw_double_street")),F("set",w.Director,"saw_outage",c.Get<bool>("saw_outage")),F("set",c,"saw_aquarium",false),F("set",c,"reported_at",now)],1);
-
-        foreach (var peer in local.OfType<Character>().Where(w.Alive))
-        {
-            if (paper!=null)
-                yield return Act("give_paper",peer,[F("move",paper,peer),F("set",c,"has_dotted_paper",false)],1);
-            if (peer.Get<bool>("offers_tickets") && c.Get<double>("money")>=10)
-                yield return Act("buy_ticket",peer,[F("spend",c,"money",10d),F("change",peer,"money",10d),F("set",c,"has_ticket",true)],1);
-            if (c.Inventory.Contains(w.RabbitPlush) && peer.Get<double>("money")>=5)
-                yield return Act("sell",peer,[F("spend",peer,"money",5d),F("change",c,"money",5d),F("move",w.RabbitPlush,peer),F("set",peer,"toy_since",now)],1);
-            yield return Act("discuss_organization",peer,[F("set",peer,"topic","organization"),F("change",c,"uncertainty",0.1)],2);
-            yield return Act("discuss_zoo",peer,[F("set",peer,"topic","zoo")],2);
-            yield return Act("talk",peer,[F("set",peer,"topic",w.IsAquarium(scene) ? "aquarium" : "zoo"),F("change",c,"fear",-Math.Min(0.2,c.Get<double>("fear")))],2);
-            yield return Act("ask",peer,[F("set",peer,"requester",c),F("set",peer,"received_request",true)],1);
-            if (c.Get<Entity>("requester")==peer)
-                yield return Act("accept_help",peer,[F("set",c,"helping",peer),F("set",peer,"following",c),F("set",c,"requester",null!)],1);
-            yield return Act("follow",peer,[F("set",c,"following",peer)],1);
-            if (c.Get<Entity>("helping")==peer && w.NextStep(c,w.LionRockery) is { } next)
-                yield return Act("escort",peer,[F("move",c,next)],2);
-            if (scene==w.PrimateArea)
-                yield return Act("escort_left",peer,[F("set",peer,"following",c),F("move",c,w.LeftStreet)],2);
-            if (scene==w.ElephantArea)
-                yield return Act("evacuate",peer,[F("set",peer,"following",c),F("move",c,w.Walkway)],2);
-            if (w.IsAquarium(scene))
-            {
-                yield return Act("dissuade",peer,[F("change",peer,"reluctance_to_leave",1d)],1);
-                if (local.Contains(w.Taser))
-                    yield return Act("evict",peer,[F("change",peer,"fatigue",1d),F("set",peer,"destination",w.AquariumGate)],2);
-            }
-            if (peer.Get<double>("sleep_until")>now)
-                foreach (var toy in peer.Inventory.Where(e=>e.Get<bool>("is_rabbit_toy")))
-                    yield return Act("confiscate_toy",toy,[F("move",toy,c)],1);
-        }
-        if (c.Get<Entity>("following") is { } leader && ZooWorld.Place(leader) is { } place && place!=scene && w.NextStep(c,place) is { } step)
-            yield return Act("follow",leader,[F("move",c,step)],2);
-        foreach (var enemy in local.Where(e=>e.Get<double>("power")>0 || e.Get<bool>("is_fake_lion")))
-        {
-            if (c.Get<double>("stamina")>=1 && enemy.Get<double>("health")>0)
-                yield return Act("defend",enemy,[F("spend",c,"stamina",1d),F("spend",enemy,"health",Math.Min(1,enemy.Get<double>("health"))),F("set",scene,"guard_until",now+3)],2);
-            if (c.Inventory.Contains(w.RabbitBlood) && w.RabbitBlood.Get<double>("count")>=1)
-                yield return Act("splash",enemy,[F("spend",w.RabbitBlood,"count",1d),F("set",enemy,"scent",3d)],1);
-        }
-    }
-
-    public static void Observe(ZooWorld w, Character c)
-    {
-        var local = w.Local(c).ToArray();
-        var scene = c.CurrentScene!;
-        c.Set("has_dotted_paper",ZooWorld.HeldPaper(c)?.Get<bool>("detached")==true);
-        foreach (var p in w.Topology.Passages)
-            if (p.Other(scene) is { } next && (!w.IsAquarium(next) || c.Get<double>("erosion")>1 || w.IsAquarium(scene)))
-            {
-                // 侵蚀度较高时心智无法识别正规出口
-                if (next == w.RegularExit && c.Get<double>("erosion") >= 3.0) continue;
-                c.Mind!.LearnPassage(p);
-            }
-        if (scene==w.PrimateArea) c.Set("saw_double_street",scene.Get<bool>("has_double_street"));
-        if (scene==w.PrimateArea || !w.PrimateArea.Get<bool>("closed") && w.Topology.Adjacency[scene].Any(e=>e.Next==w.PrimateArea))
-            c.Set("observed_primate_visitors",(double)w.Visitors.Count(v=>v.CurrentScene==w.PrimateArea));
-        if (scene==w.RabbitArea || scene==w.RabbitBushes) c.Set("saw_shade",w.RabbitBushes.Get<bool>("shaded"));
-        if (scene.Get<bool>("domain_lion"))
-        {
-            c.Set("observed_lions",(double)w.VisibleLions(c));
-            c.Set("all_roared",w.Lions.All(e=>w.InEarshot(scene,ZooWorld.Place(e)) && e.Get<double>("roar_until")>w.Session.Timeline.Now && e.Get<double>("health")>0));
-        }
-        if (w.IsAquarium(scene))
-        {
-            c.Set("saw_aquarium",true);
-            c.Set("met_staff",local.OfType<Character>().Any(e=>e.Get<string>("role") is "red" or "staff"));
-        }
-        if (scene.Get<bool>("domain_elephant")) c.Set("saw_ears",local.OfType<Character>().Any(e=>e.Inventory.Any(t=>t.Get<bool>("is_earring"))));
-        if (scene==w.DirectorOffice)
-        {
-            c.Set("saw_outage",!w.OfficeLight.Get<bool>("powered"));
-            c.Set("saw_wrong_toy",w.SofaToy.Get<bool>("is_rabbit_toy"));
-            c.Set("saw_fur",w.Camera.Get<bool>("fur"));
-            c.Set("fur_since",w.Camera.Get<double>("fur_since"));
-            c.Set("observed_maps",w.SpareMaps.Get<double>("count"));
-        }
-        if (local.Contains(w.ElephantSign)) c.Set("calibrated",c.Related("calibrated").Any(f=>ReferenceEquals(f.Value,w.ElephantSign)));
-
-        // 极度恐慌或侵蚀加深导致心智信念动摇或遗忘
-        if (c.Get<double>("fear") > 3.0 && w.Random.Next(20) == 0)
-        {
-            var accepted = c.Mind!.Beliefs.Where(b => b.HasTag(CommonTag.Accepted)).ToList();
-            if (accepted.Count > 0)
-            {
-                var target = accepted[w.Random.Next(accepted.Count)];
-                Soul.Stance(target, CognitiveStage.Evaluated);
-            }
-        }
-        if (c.Get<double>("erosion") > 2.0 && w.Random.Next(20) == 0)
-        {
-            var accepted = c.Mind!.Beliefs.Where(b => b.HasTag(CommonTag.Accepted)).ToList();
-            if (accepted.Count > 0)
-            {
-                var target = accepted[w.Random.Next(accepted.Count)];
-                Soul.Stance(target, CognitiveStage.Rejected);
-            }
-        }
-    }
-
-    private static double Utility(ZooWorld w, Character c, Intent i)
-    {
-        double score = i.Effect.Op switch
-        {
-            "consume" => 12*(c.Get<double>("thirst")+c.Get<double>("hunger")),
-            "rest" => c.Get<double>("fatigue")*8,
-            "sleep" => c.Get<double>("fatigue")*7-10,
-            "watch" or "touch" or "approach" => 14,
-            "take" => 3,
-            "read" => 12,
-            "read_signal" => 18,
-            "move" => 8,
-            "affirm" => c.Get<double>("uncertainty")*12,
-            "follow" when c.Get<Entity>("following")==i.Target => 65,
-            "defend" => c.Get<double>("fear")*8,
-            _ => 0
+            Deed.BuyBlood or Deed.Inspect => "饮料店", Deed.FeedPaper or Deed.FeedRabbit or Deed.Trim or Deed.MixApes => deed == Deed.MixApes ? "猿猴混处区" : "兔子园区",
+            Deed.WearBlack => "海洋馆门口", Deed.SwitchOff => "客房", Deed.Repair => "园长办公室",
+            Deed.Splash or Deed.CountLions => "狮子园区", Deed.Signal => "大象园区", Deed.Isolate => "园长办公室", _ => null
         };
-        if (i.Effect.Op=="move" && i.Target is { } dest)
+        if(goal is not null && self.Parent?.Name != goal) return forbid ? null : Route(mind,self,goal);
+        if(deed == Deed.Tear && (self.Value(Z.Map)==0 || self.Value(Z.Paper)>0)) return null;
+        if(deed is Deed.FeedPaper or Deed.Discard or Deed.GivePaper or Deed.Signal && self.Value(Z.Paper)==0) return null;
+        if(deed == Deed.WearBlack && self.Value(Z.Role)==(int)Job.Black) return null;
+        if(deed == Deed.Splash && self.Value(Z.Blood)==0) return null;
+        if(deed == Deed.BuyBlood && self.Parent?.Value(Z.Food)==0) return null;
+        if(deed == Deed.GetMap && self.Value(Z.Map)>0) return null;
+        if(deed == Deed.SwitchOff && self.Parent?.Value(Z.Lamp)==0) return null;
+        if(deed == Deed.Help && !mind.Projections.Any(p=> p.Kind==ProjectionKind.Body && p!=self && p.Parent==self.Parent && p.Value(Z.Role)!=(int)Job.Visitor)) return null;
+        if(deed is Deed.Help or Deed.Escort or Deed.Evacuate or Deed.Talk or Deed.Report or Deed.Evict)
         {
-            var visits = c.Related("visited").Count(f=>ReferenceEquals(f.Value,dest));
-            score += visits==0 ? 12 : -visits*2;
-            if (dest==w.RegularExit)
+            var peer=mind.Projections.FirstOrDefault(p=>p.Kind==ProjectionKind.Body&&p!=self&&p.Parent==self.Parent&&p.Existence==Truth.True&&
+                (deed==Deed.Help?p.Value(Z.Role) is (int)Job.Blue or (int)Job.Guard:deed==Deed.Evict?p.Value(Z.Role)==(int)Job.Black:p.Value(Z.Role)==(int)Job.Visitor));
+            if(peer is null)return null;
+            var destination=deed==Deed.Evacuate?"主步道":deed==Deed.Evict?"海洋馆":"狮子园区";
+            var route=FullRoute(mind,self,destination);
+            if(route is null)return null;
+            var request=deed==Deed.Help?$"sequence(say({Ref(self)}, \"请跟我前往狮子园区\", {route}), {route})":route;
+            return $"wait(2, say({Ref(peer)}, \"请协助前往{destination}\", {request}))";
+        }
+        var duration = deed switch { Deed.Watch=>18, Deed.Rest=>20, Deed.Read=>4, Deed.Repair=>8, Deed.Trim=>20, Deed.Isolate=>15, _=>2 };
+        if(deed == Deed.Reaffirm)
+        {
+            var human = mind.Projections.FirstOrDefault(p=>p.Name=="人类");
+            if(human is null) return null;
+            return $"wait(2, sequence(infer(related($Actor, IsA, {Ref(human)})), set($Actor, 动作, {(int)deed+1})))";
+        }
+        return $"wait({duration}, set($Actor, 动作, {(int)deed+1}))";
+    }
+
+    public static Decision? Decide(Person person)
+    {
+        var mind = person.Soul.World;
+        var self = person.Self;
+        var clock = mind.Projections.First(p=>p.Name=="手表").Value(Z.Clock);
+        var facts = mind.Projections.First(p=>p.Name=="当前判断");
+        var factsValues = Facts(mind,self,clock);
+        Observation.Observe(person.Soul,new(facts.Name,facts.Kind) {Target=facts,Source=ObservationSource.Inference,Time=clock,
+            Tags=factsValues.ToImmutableDictionary(p=>new Tag(p.Key),p=>(int?)(p.Value?1:0)),Details="由已观察的身体、场景、手表与记忆形成判断"});
+        var decoder = new AstDecoder(mind,[..Z.All,..FactNames.Select(n=>new Tag(n))],Z.Relations);
+        person.DecisionTrace.Clear();
+        foreach(var book in person.Books.Values.ToArray())
+        {
+            var compiled = ImmutableArray.CreateBuilder<Rule>();
+            foreach(var instruction in ZooRules.Parse(book.Text.Script))
             {
-                if (c.Get<double>("erosion") >= 3.0) score -= 500;
-                else score += c.Get<string>("role")=="visitor" && (c.Get<double>("fatigue")>4 || c.Related("visited").Count()>=5) ? 40 : -30;
+                var action = ActionText(instruction.Action,mind,self,instruction.Mode==RuleMode.Forbid);
+                if(action is null) continue;
+                var conditions = instruction.Condition.Split('&').Select(term=>term.StartsWith('!')
+                    ? $"not(tag_at_least({Ref(facts)}, {term[1..]}, 1))" : $"tag_at_least({Ref(facts)}, {term}, 1)");
+                // 空间作用域也是条件树的一部分，馆内不沿用馆外告示。
+                var scope = Scope(book.Text.Section,self);
+                var text = $"RULE all({(scope?"true()":"false()")}, {string.Join(", ",conditions)}) => {instruction.Mode} {action}";
+                var rules = decoder.DecodeRules(text).Select(r=>r with {Acceptance=book.Acceptance,Weight=Math.Max(1,instruction.Weight*book.Understanding/100)}).ToArray();
+                compiled.AddRange(rules);
+                if(rules.Any(r=>r.Acceptance==Truth.True && Ast.Evaluate(r.Condition,new(self,Scene:self.Parent))==Truth.True))
+                    person.DecisionTrace.Add($"{book.Text.Key} → {instruction.Condition} → {instruction.Mode} {instruction.Action} ({rules[0].Weight})");
             }
-            if (dest==c.Get<Entity>("preferred_exhibit")) score+=8;
-            if (c.Get<Entity>("destination") is { } goal && dest==w.NextStep(c,goal)) score+=90;
+            Observation.Observe(person.Soul,new(book.Projection.Name,book.Projection.Kind) {Target=book.Projection,Source=ObservationSource.Inference,Time=clock,Rules=compiled.ToImmutable()});
         }
-        if (c.Get<string>("role") is "staff" or "red" or "director" or "guard")
+        var habits = mind.Projections.First(p=>p.Name=="日常计划");
+        var everyday = ImmutableArray.CreateBuilder<Rule>();
+        void Want(string action,int weight)
         {
-            if (i.Effect.Op=="move" && i.Target is { } patrolDestination && patrolDestination.Get<bool>("patrol_"+(c.Get<string>("role")=="staff" ? "blue" : c.Get<string>("role")))) score+=6;
-            if (i.Effect.Op=="supply" && c.Get<double>("carried_food")<1) score+=30;
-            if (i.Effect.Op=="accept_help") score+=25;
-            if (i.Effect.Op=="prune" && w.RabbitBushes.Get<bool>("shaded")) score+=20;
+            if(ActionText(action,mind,self) is { } text)
+                everyday.AddRange(decoder.DecodeRules($"RULE true() => PREFER {text}").Select(r=>r with {Acceptance=Truth.True,Weight=weight}));
         }
-        if (i.Effect.Op==c.Get<string>("last_op") && i.Target==c.Get<Entity>("last_target")) score-=20*(c.Get<double>("repeats")+1);
-        return score;
+        var room = self.Parent?.Name ?? "";
+        var role=(Job)self.Value(Z.Role);
+        var elapsed = self.Value(new Tag("入园时长"));
+        if(role==Job.Visitor)
+        {
+            var history = mind.History.Where(h=>ReferenceEquals(h.Target,self)&&h.Details.StartsWith("游览完成:")).ToArray();
+            var itinerary=new[]{"兔子园区","猿猴园区","大象园区","狮子园区","饮料店"};
+            var offset=self.Value(Z.Age)%itinerary.Length;
+            var goal=Enumerable.Range(0,itinerary.Length).Select(i=>itinerary[(i+offset)%itinerary.Length])
+                .OrderBy(g=>history.Count(h=>h.Details=="游览完成:"+g)).First();
+            Want(room==goal ? "游览" : "前往:"+goal,45);
+            if(elapsed>140 || clock%1440>=900) Want("前往:园外",elapsed>240?160:75);
+            Want("购买兔子血", 12); Want("喂兔子",16); Want("买兔玩偶",self.Value(Z.Toy)==0?14:1);
+        }
+        else if(role==Job.Black)
+        {
+            Want("前往:海洋馆",60);
+            if(factsValues["馆内"] && clock%1440>=360 && clock%1440<390) Want("前往:园外",220);
+            if(self.Value(Z.Human)<40) Want("抢夺纸片",85);
+            Want("休息",factsValues["馆内"]?65:5);
+        }
+        else
+        {
+            Want("巡逻",factsValues["巡逻到期"]?26:1);
+            if(role==Job.Red){Want("前往:水母区",room=="海洋馆"?35:15);if(factsValues["下班"])Want("前往:海洋馆",60);}
+            if(role is Job.Blue or Job.Guard && clock%1440 is >=60 and <360) Want("前往:内部宿舍",35);
+            if(role==Job.Director) Want("前往:园长办公室",35);
+            if(factsValues["停电"] && role!=Job.Director) Want("维修",170);
+        }
+        Want("休息",8); Want("阅读",self.Value(new Tag("未读文书"))>0?120:1);
+        if(self.Value(Z.Health)<80) Want("求助",40);
+        Observation.Observe(person.Soul,new(habits.Name,habits.Kind) {Target=habits,Source=ObservationSource.Inference,Time=clock,Rules=everyday.ToImmutable()});
+        var selected=DecisionSystem.Choose(mind,self);
+        var knowinglyDisregarded=selected is not null && mind.Projections.SelectMany(p=>p.Rules).Any(r=>r.Acceptance==Truth.True&&r.Mode==RuleMode.Require&&
+            Ast.Evaluate(r.Condition,new(self,Scene:self.Parent))==Truth.True&&!Ast.Equivalent(Ast.Bind(r.Effect,new(self,Scene:self.Parent)),selected.Effect));
+        Observation.Observe(person.Soul,new(self.Name,self.Kind){Target=self,Source=ObservationSource.Introspection,Time=clock,
+            Tags=ImmutableDictionary<Tag,int?>.Empty.Add(new Tag("明知违背"),knowinglyDisregarded?1:0),Details=knowinglyDisregarded?"意识到自己正在违背已知要求":"已完成行动抉择"});
+        return selected;
+    }
+    private static bool Scope(string section,Projection self)
+    {
+        var inside = IsInside(self.Parent?.Name);
+        var role=(Job)self.Value(Z.Role);
+        return section switch {"Gate"=>!inside, "Inside"=>inside,"Visitor"=>role==Job.Visitor&&!inside,
+            "Staff"=>role is Job.Blue or Job.Guard or Job.Black,"Red"=>role==Job.Red,"Director"=>role==Job.Director,_=>true};
+    }
+    public static bool IsInside(string? name)=>name is "海洋馆" or "水母区" or "鲸鱼区" or "客房";
+    private static Dictionary<string,bool> Facts(ProjectionWorld mind,Projection self,int time)
+    {
+        var room=self.Parent; var name=room?.Name; var hour=time%1440;
+        var peers=mind.Projections.Where(p=>p.Kind==ProjectionKind.Body&&p!=self&&p.Parent==room&&p.Existence==Truth.True).ToArray();
+        var inside=IsInside(name); var black=self.Value(Z.Role)==(int)Job.Black;
+        int V(string n)=>self.Value(new Tag(n));
+        bool Local(Tag t)=>room?.Value(t)>0;
+        var result=FactNames.ToDictionary(n=>n,_=>false);
+        void Set(string n,bool v)=>result[n]=v;
+        Set("总是",true); Set("出逃兔子",Local(new Tag("出逃兔子")));Set("双路",Local(Z.Split));Set("象异常",Local(Z.Anomaly));
+        Set("独处",peers.Length==0);Set("无人",peers.Length==0);Set("兔区",name=="兔子园区");Set("馆外",name=="海洋馆门口");
+        Set("笑声",Local(Z.Laugh));Set("有地图",self.Value(Z.Map)>0);Set("有纸",self.Value(Z.Paper)>0);
+        Set("迷路",V("迷路")>0);Set("危险",Local(Z.Danger)||self.Value(Z.Symptoms)>0||self.Value(Z.Human)<65);
+        Set("获救",V("获救")>0);Set("多余白狮",room?.Value(Z.LionCount)>4);Set("成年",self.Value(Z.Age)>=18);
+        Set("玩偶过期",self.Value(Z.Age)>12&&self.Value(Z.Toy)>0&&V("玩偶持有分钟")>=43200);
+        Set("兔耳入象区",name=="大象园区"&&peers.Any(p=>p.Value(Z.RabbitEars)>0));Set("反复走散",V("走散次数")>1);
+        Set("查货到期",V("查货到期")>0);Set("食品可见",Local(Z.Food));Set("修剪到期",V("修剪到期")>0);
+        Set("黑衣",black);Set("喂食到期",V("喂食到期")>0);Set("象区",name=="大象园区");
+        Set("有求助",mind.Projections.Any(p=>p.Kind==ProjectionKind.Event&&p.Procedure!=null&&p.Value(Tags.Responded)==0));
+        Set("有血",self.Value(Z.Blood)>0);Set("持续症状",self.Value(Z.Symptoms)>5);Set("猿区",name is "猿猴园区" or "猿猴混处区");
+        Set("馆内",inside);Set("夜间",hour<480||hour>=960);Set("白天",hour>=480&&hour<960);
+        Set("员工在场",peers.Any(p=>p.Value(Z.Role)!=(int)Job.Visitor));Set("日间停留到期",V("白天入馆")>0&&V("馆内分钟")>=20);
+        Set("夜间不足四小时",V("白天入馆")==0&&V("馆内分钟")<240&&hour>=390);
+        Set("鲸区",name=="鲸鱼区");Set("客房",name=="客房");Set("灯亮",Local(Z.Lamp));Set("疲倦",V("疲倦")>60);
+        Set("红衣",self.Value(Z.Role)==(int)Job.Red);Set("上班",hour>=30&&hour<360);Set("下班",hour>=360);
+        Set("巡逻到期",V("巡逻到期")>0);Set("周日",time/1440%7==6);Set("有离馆者",peers.Any(p=>p.Value(Z.Role)==(int)Job.Visitor));
+        Set("黑衣借宿",name=="客房"&&peers.Any(p=>p.Value(Z.Role)==(int)Job.Black));Set("有兔玩偶",peers.Any(p=>p.Value(Z.Toy)>0));
+        Set("动摇",self.Value(Z.Human)<85);Set("查狮到期",V("查狮到期")>0);Set("狮区",name=="狮子园区");
+        Set("停电",mind.Projections.FirstOrDefault(p=>p.Name=="园长办公室")?.Tags.TryGetValue(Z.Power,out var power)==true && power==0);
+        Set("办公室",name=="园长办公室");Set("水母死亡",Local(new Tag("水母死亡")));Set("隔离中",V("隔离中")>0);
+        Set("保安在岗",hour>=480||hour<60);
+        var apes=mind.Projections.FirstOrDefault(p=>p.Name=="猿猴园区");
+        Set("猿区已空",apes?.Tags.TryGetValue(new Tag("人数"),out var count)==true&&count==0);
+        Set("封闭到期",apes?.Value(new Tag("封闭分钟"))>=10);
+        return result;
     }
 }
+
+
+
+
+

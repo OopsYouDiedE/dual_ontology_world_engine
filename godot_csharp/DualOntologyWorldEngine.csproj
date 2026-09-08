@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="core/**;temp_core/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**" />
+    <Compile Remove="core/**;legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**" />
     <ProjectReference Include="core\DualOntologyWorldEngine.Core.csproj" />
-    <ProjectReference Include="simulation\DualOntologyWorldEngine.Simulation.csproj" />
   </ItemGroup>
 </Project>

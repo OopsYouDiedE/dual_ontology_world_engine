@@ -1,3 +1,5 @@
+> 本文保留迁移前的接口说明。当前 Essence–Projection Core 请参阅 [当前使用示例](core-essence-projection-usage-zh.md) 和 [迁移验收说明](core-migration-acceptance-zh.md)。
+
 # 标准 AST 文本编译器技术规范
 
 ## 1. 概述
