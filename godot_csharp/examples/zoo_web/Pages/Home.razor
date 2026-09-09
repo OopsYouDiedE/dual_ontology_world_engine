@@ -227,8 +227,17 @@
     {
         <!-- Tab 3: 脑内世界观察和编辑器 -->
         <div class="tab-pane">
+            <div class="explain-bar">
+                <strong>💡 脑内认知机制说明：</strong>
+                <span>
+                    动物园里的人物永远依据自己脑海中的“主观认知”行动。
+                    在下方篡改其脑内的场景属性（如制造危险假象）、阻断通道（如误以为出口封死）或改变自身身份（如暗示兔化），
+                    将立即改变其寻路与行为决策，而现实物理世界不会因此改变。
+                </span>
+            </div>
+
             <div class="person-selector-bar">
-                <label><strong>当前观察与编辑的人物：</strong></label>
+                <label><strong>当前观察与干预的人物：</strong></label>
                 <select class="wide" @onchange="Pick" style="max-width: 450px;">
                     @foreach (var p in W.People)
                     {
@@ -242,26 +251,34 @@
             @if (tracked is {} person)
             {
                 <div class="mind-grid">
+                    <!-- 左列：人物主客观状态透视与认知地图 -->
                     <div>
                         <div class="card">
-                            <h2>人物状态对比 <small>客观现实 vs 主观认知</small></h2>
-                            <dl>
-                                <dt>真实物种</dt><dd>@person.TrueSpecies</dd>
-                                <dt>本人认为</dt><dd>人类信念 @person.Self.Value(Z.Human) / 100</dd>
-                                <dt>“它”认为</dt><dd>@(person.LastClassified < 0 ? "尚未观察" : person.ItsClassification?.ToString() ?? "无法可靠分类")（上次观察：@(person.LastClassified < 0 ? "无" : person.LastClassified.ToString("F1"))）</dd>
-                                <dt>身体兔化</dt><dd>@person.Body.Value(Z.Rabbit) / 100</dd>
-                                <dt>实际物理位置</dt><dd>@person.Room?.TrueName</dd>
-                                <dt>脑内所在位置</dt><dd>@person.Self.Parent?.Name</dd>
-                                <dt>进行中行动</dt><dd>@person.CurrentAction</dd>
-                                <dt>虚线纸状态</dt><dd>@(W.Anomalies.Paper(person) != null ? "持有撕下的纸片" : "无分类保护")</dd>
-                            </dl>
+                            <h2>人物主客观对照 <small>客观现实 vs 主观认知</small></h2>
+                            <div class="profile-box">
+                                <div class="profile-col">
+                                    <h3 class="col-title reality">客观现实（物理真相）</h3>
+                                    <p>真实物种：<b>@person.TrueSpecies</b></p>
+                                    <p>身体兔化：<b>@person.Body.Value(Z.Rabbit)%</b></p>
+                                    <p>物理位置：<b>@person.Room?.TrueName</b></p>
+                                    <p>虚线纸保护：<b>@(W.Anomalies.Paper(person) != null ? "持有撕下纸片" : "无保护")</b></p>
+                                    <p>“它”的分类：@(person.LastClassified < 0 ? "未观察" : person.ItsClassification?.ToString() ?? "无法归类")</p>
+                                </div>
+                                <div class="profile-col">
+                                    <h3 class="col-title mind">主观认知（脑内以为）</h3>
+                                    <p>人类认同信念：<b>@person.Self.Value(Z.Human)%</b></p>
+                                    <p>自认所在位置：<b>@person.Self.Parent?.Name</b></p>
+                                    <p>进行中行动：<b>@person.CurrentAction</b></p>
+                                    <p>最近实际结算：<b>@person.LastActionResult</b></p>
+                                </div>
+                            </div>
 
                             <!-- 认知调节与出口导航机制面板 -->
-                            <div class="cog-panel">
+                            <div class="cog-panel" style="margin-top:14px;">
                                 <div class="cog-header">
-                                    <strong>认知调节与脑内地图</strong>
+                                    <strong>认知清晰度调节（人类信念）</strong>
                                     <span class="cog-badge @(person.Self.Value(Z.Human) >= 50 ? "good" : "bad")">
-                                        信念 @(person.Self.Value(Z.Human))% · @(person.Self.Value(Z.Human) >= 50 ? "认知清晰" : "认知崩溃")
+                                        @(person.Self.Value(Z.Human))% · @(person.Self.Value(Z.Human) >= 50 ? "认知清晰" : "认知崩溃")
                                     </span>
                                 </div>
                                 <div class="cog-controls">
@@ -277,120 +294,176 @@
                         </div>
 
                         <div class="card" style="margin-top: 16px;">
-                            <h2>历史行动与路线追踪</h2>
-                            <p>最近实际结算：<b>@person.LastActionResult</b></p>
-                            <details open>
-                                <summary>实际移动路线轨迹</summary>
-                                <div class="log" style="max-height: 180px;">
-                                    @foreach (var travel in W.Travels.Where(t => t.Person == person.Body.TrueName).TakeLast(15).Reverse())
-                                    {
-                                        <p style="margin:2px 0;">@travel.Time.ToString("F1")：@travel.From → @travel.To（@travel.Minutes 分钟）</p>
-                                    }
-                                </div>
-                            </details>
+                            <h2>实际移动路线轨迹</h2>
+                            <div class="log" style="max-height: 180px;">
+                                @foreach (var travel in W.Travels.Where(t => t.Person == person.Body.TrueName).TakeLast(15).Reverse())
+                                {
+                                    <p style="margin:2px 0;">@travel.Time.ToString("F1")：@travel.From → @travel.To（@travel.Minutes 分钟）</p>
+                                }
+                            </div>
                         </div>
                     </div>
 
+                    <!-- 右列：直观易懂的脑内世界干预编辑器 -->
                     <div>
                         <div class="card">
-                            <h2>脑内世界编辑器 <small>篡改主观投影与信念</small></h2>
-                            <p>修改下面的对象只影响此人的认知。先预览选择，再让人物凭当前认知行动；再次观察可能纠正错误。已排队行动不会因编辑自动改变。</p>
+                            <h2>脑内世界干预器 <small>篡改此角色的主观感知与记忆</small></h2>
 
-                            <label>脑内对象：
-                                <select class="wide" aria-label="脑内对象" @onchange="SelectMental">
-                                    @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
-                                    {
-                                        <option value="@item.i" selected="@(item.v == mental)">
-                                            @item.v.Name · @item.v.Kind
-                                        </option>
-                                    }
-                                </select>
-                            </label>
-
-                            <div class="actions">
-                                <button @onclick="NewMental">新建幻觉对象</button>
-                                <button @onclick="ForgetMental">遗忘此对象</button>
-                            </div>
-
-                            <label>名称：<input class="wide" aria-label="脑内名称" @bind="mentalName" /></label>
-                            
-                            <div style="display:flex;gap:12px;margin:8px 0;">
-                                <label style="flex:1;">类别：
-                                    <select class="wide" @bind="mentalKind">
-                                        @foreach (var k in Enum.GetValues<ProjectionKind>())
-                                        {
-                                            <option value="@k">@k</option>
-                                        }
-                                    </select>
-                                </label>
-                                <label style="flex:1;">是否存在：
-                                    <select class="wide" @bind="mentalExistence">
-                                        @foreach (var t in Enum.GetValues<Truth>())
-                                        {
-                                            <option value="@t">@t</option>
-                                        }
-                                    </select>
-                                </label>
-                            </div>
-
-                            <label>脑内所属位置：
-                                <select class="wide" @bind="mentalParentIndex">
-                                    <option value="-1">不知道位置 / 无所属对象</option>
-                                    @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)).Where(item => item.v != mental))
-                                    {
-                                        <option value="@item.i">@item.v.Name</option>
-                                    }
-                                </select>
-                            </label>
-
-                            <label>标签（每行 名称=整数，? 表示未知）：
-                                <textarea aria-label="脑内标签" @bind="mentalTags" style="min-height:75px;"></textarea>
-                            </label>
-
-                            <div class="word-group">
-                                <small>可点击填入标签：</small>
+                            <!-- 分类筛选器 -->
+                            <div class="filter-bar">
+                                <small style="display:block;margin-bottom:4px;color:#9cb5a6;">选择记忆类型：</small>
                                 <div class="chips">
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=100")'>人类信念=100</button>
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=20")'>人类信念=20</button>
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("危险征兆=1")'>危险征兆=1</button>
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("身体兔化=80")'>身体兔化=80</button>
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("迷路=1")'>迷路=1</button>
-                                    <button type="button" class="chip" @onclick='() => AppendMentalTag("树荫=1")'>树荫=1</button>
+                                    <button type="button" class="chip @(mentalFilter == "All" ? "active" : "")" @onclick='() => SetMentalFilter("All")'>全部记忆 (@person.Soul.World.Projections.Length)</button>
+                                    <button type="button" class="chip @(mentalFilter == "Space" ? "active" : "")" @onclick='() => SetMentalFilter("Space")'>🏢 场景园区</button>
+                                    <button type="button" class="chip @(mentalFilter == "Boundary" ? "active" : "")" @onclick='() => SetMentalFilter("Boundary")'>🚪 门与通道</button>
+                                    <button type="button" class="chip @(mentalFilter == "Body" ? "active" : "")" @onclick='() => SetMentalFilter("Body")'>👤 自身与人物</button>
+                                    <button type="button" class="chip @(mentalFilter == "Object" ? "active" : "")" @onclick='() => SetMentalFilter("Object")'>📦 物品道具</button>
+                                    <button type="button" class="chip @(mentalFilter == "Concept" ? "active" : "")" @onclick='() => SetMentalFilter("Concept")'>💡 规则念头</button>
                                 </div>
                             </div>
 
-                            <button @onclick="SaveMental" style="width:100%;margin:8px 0;background:#244434;font-weight:bold;">写入认知并对比决策</button>
+                            <!-- 目标对象下拉列表 -->
+                            <div style="margin: 12px 0;">
+                                <label>选择要干预的脑内对象：
+                                    <select class="wide" aria-label="脑内对象" @onchange="SelectMental">
+                                        @foreach (var item in FilteredProjections)
+                                        {
+                                            <option value="@item.index" selected="@(item.p == mental)">
+                                                @item.p.Name · @item.p.Kind @(item.p.Existence != Truth.True ? $"[{item.p.Existence}]" : "")
+                                            </option>
+                                        }
+                                    </select>
+                                </label>
+                            </div>
 
-                            <details>
-                                <summary>修改脑内关系</summary>
-                                <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;">
-                                    <input aria-label="关系名称" @bind="relationName" placeholder="关系名" style="width:100px;" />
-                                    <select @bind="relationOtherIndex">
-                                        @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
+                            @if (mental is {} currentTarget)
+                            {
+                                <!-- 场景化一键干预动作卡片 -->
+                                <div class="quick-intervene-box">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <strong style="color:#d9ecbc;">当前选中：@currentTarget.Name <small style="color:#8ea899;">(@currentTarget.Kind)</small></strong>
+                                        <span class="badge @(currentTarget.Existence == Truth.True ? "good" : "bad")">
+                                            @(currentTarget.Existence == Truth.True ? "脑中存在" : currentTarget.Existence == Truth.False ? "脑中断定不存在" : "脑中存疑")
+                                        </span>
+                                    </div>
+
+                                    <div class="intervention-actions">
+                                        @if (currentTarget.Kind == ProjectionKind.Space)
                                         {
-                                            <option value="@item.i">@item.v.Name</option>
+                                            <button type="button" class="action-btn warning" @onclick="QuickSetDanger">⚠️ 制造险情假象（让他以为此处危险而避开）</button>
+                                            <button type="button" class="action-btn success" @onclick="QuickSetSafe">🌳 制造安全假象（清除危险，标记阴凉树荫）</button>
                                         }
-                                    </select>
-                                    <select @bind="relationTruth">
-                                        @foreach (var t in Enum.GetValues<Truth>())
+                                        else if (currentTarget.Kind == ProjectionKind.Boundary)
                                         {
-                                            <option value="@t">@t</option>
+                                            @if (currentTarget.Existence == Truth.True)
+                                            {
+                                                <button type="button" class="action-btn danger" @onclick="QuickBlockDoor">🚫 脑内封死此门（误以为不通或不存在）</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="action-btn success" @onclick="QuickUnblockDoor">🔓 确认通路（重新回忆起此门通畅）</button>
+                                            }
                                         }
-                                    </select>
-                                    <button @onclick="SaveRelation">写入关系</button>
+                                        else if (currentTarget.Kind == ProjectionKind.Body)
+                                        {
+                                            <button type="button" class="action-btn warning" @onclick="QuickSetRabbitSelf">🐰 暗示兔化（人类信念降至10%，丧失自制）</button>
+                                            <button type="button" class="action-btn success" @onclick="QuickSetHumanSelf">🧑 坚定人类认同（信念恢复至100%）</button>
+                                        }
+                                        <button type="button" class="action-btn" @onclick="ForgetMental">❌ 遗忘此对象（从脑海中抹去）</button>
+                                        <button type="button" class="action-btn" @onclick="NewMental">✨ 新建幻觉对象（凭空捏造）</button>
+                                    </div>
                                 </div>
-                            </details>
 
-                            <details>
-                                <summary>为此脑内对象写 Core 规则 AST</summary>
-                                <textarea aria-label="脑内规则AST" @bind="mentalRule" style="min-height:60px;"></textarea>
-                                <button @onclick="SaveBelief" style="margin-top:6px;">采信此 AST</button>
-                            </details>
+                                <!-- 高级底层属性编辑 -->
+                                <details class="advanced-box" open>
+                                    <summary>高级底层参数编辑（标签、位置、关系与规则）</summary>
+                                    <div style="margin-top:10px;">
+                                        <div style="display:flex;gap:10px;margin-bottom:8px;">
+                                            <label style="flex:2;">名称：<input class="wide" @bind="mentalName" /></label>
+                                            <label style="flex:1;">类别：
+                                                <select class="wide" @bind="mentalKind">
+                                                    @foreach (var k in Enum.GetValues<ProjectionKind>())
+                                                    {
+                                                        <option value="@k">@k</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                            <label style="flex:1;">是否存在：
+                                                <select class="wide" @bind="mentalExistence">
+                                                    @foreach (var t in Enum.GetValues<Truth>())
+                                                    {
+                                                        <option value="@t">@t</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                        </div>
 
-                            <div class="actions" style="margin-top:14px;">
-                                <button @onclick="Preview">仅预览决策</button>
-                                <button @onclick="ActFromMind" style="border-color:#eab308;color:#fde047;">取消未完成行动并按脑内重选</button>
-                                <button @onclick="ObserveAgain">重新观察现场</button>
+                                        <label>脑内所属位置：
+                                            <select class="wide" @bind="mentalParentIndex">
+                                                <option value="-1">不知道位置 / 无所属对象</option>
+                                                @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)).Where(item => item.v != mental))
+                                                {
+                                                    <option value="@item.i">@item.v.Name</option>
+                                                }
+                                            </select>
+                                        </label>
+
+                                        <label style="margin-top:8px;display:block;">标签（每行 名称=整数，? 表示未知）：
+                                            <textarea aria-label="脑内标签" @bind="mentalTags" style="min-height:75px;"></textarea>
+                                        </label>
+
+                                        <div class="word-group">
+                                            <small>点击追加常用认知标签：</small>
+                                            <div class="chips">
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=100")'>人类信念=100</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=20")'>人类信念=20</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("危险征兆=1")'>危险征兆=1</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("身体兔化=80")'>身体兔化=80</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("迷路=1")'>迷路=1</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("树荫=1")'>树荫=1</button>
+                                            </div>
+                                        </div>
+
+                                        <details style="margin:8px 0;">
+                                            <summary>修改脑内关系拓扑</summary>
+                                            <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;">
+                                                <input aria-label="关系名称" @bind="relationName" placeholder="关系名" style="width:100px;" />
+                                                <select @bind="relationOtherIndex">
+                                                    @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
+                                                    {
+                                                        <option value="@item.i">@item.v.Name</option>
+                                                    }
+                                                </select>
+                                                <select @bind="relationTruth">
+                                                    @foreach (var t in Enum.GetValues<Truth>())
+                                                    {
+                                                        <option value="@t">@t</option>
+                                                    }
+                                                </select>
+                                                <button @onclick="SaveRelation">写入关系</button>
+                                            </div>
+                                        </details>
+
+                                        <details style="margin:8px 0;">
+                                            <summary>为此脑内对象写 Core 规则 AST</summary>
+                                            <textarea aria-label="脑内规则AST" @bind="mentalRule" style="min-height:60px;"></textarea>
+                                            <button @onclick="SaveBelief" style="margin-top:6px;">采信此 AST</button>
+                                        </details>
+
+                                        <button @onclick="SaveMental" style="width:100%;margin-top:8px;background:#244434;font-weight:bold;padding:10px;">
+                                            💾 保存底层参数并重算决策
+                                        </button>
+                                    </div>
+                                </details>
+                            }
+
+                            <!-- 决策与行动触发组 -->
+                            <div class="actions" style="margin-top:16px;border-top:1px solid #283e33;padding-top:12px;">
+                                <button @onclick="Preview">仅预览决策对比</button>
+                                <button @onclick="ActFromMind" style="border-color:#eab308;color:#fde047;font-weight:bold;">
+                                    ⚡ 取消旧行动并按当前脑内世界重选
+                                </button>
+                                <button @onclick="ObserveAgain">👁️ 现场重新观察（纠正认知）</button>
                             </div>
                         </div>
                     </div>
@@ -557,14 +630,60 @@
 .badge.good{background:#1d3929;color:#a3e8b6}
 .badge.bad{background:#3d1820;color:#f87171}
 
+/* Tab 3 特化样式 */
+.explain-bar{background:#14231d;border:1px solid #2e473a;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#c9ded3}
+.explain-bar span{font-size:13px;margin-left:4px;color:#b2c5bc}
+.profile-box{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#111c17;padding:12px;border-radius:6px;border:1px solid #283c31}
+.profile-col p{margin:4px 0;font-size:13px;color:#d3e0d8}
+.col-title{font-size:13px;margin:0 0 8px 0;padding-bottom:4px;border-bottom:1px solid #283c31}
+.col-title.reality{color:#7ee787}
+.col-title.mind{color:#79c0ff}
+.filter-bar{background:#111c17;padding:8px 10px;border-radius:6px;border:1px solid #283c31;margin-bottom:10px}
+.chip.active{background:#2c4f3d;color:#d9ecbc;border-color:#5a8a6f;font-weight:bold}
+.quick-intervene-box{background:#12211a;border:1px solid #334e40;border-radius:6px;padding:12px;margin:12px 0}
+.intervention-actions{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.action-btn{background:#1c2e26;border:1px solid #3b5a4a;color:#d7e5de;padding:7px 12px;border-radius:5px;cursor:pointer;text-align:left;font-size:12px;transition:background 0.15s}
+.action-btn:hover{background:#2b473a}
+.action-btn.warning{border-left:3px solid #eab308;color:#fef08a}
+.action-btn.danger{border-left:3px solid #ef4444;color:#fca5a5}
+.action-btn.success{border-left:3px solid #22c55e;color:#bbf7d0}
+.advanced-box{background:#101a15;border:1px solid #23352b;border-radius:6px;padding:10px;margin-top:12px}
+.advanced-box summary{cursor:pointer;color:#9cb5a6;font-size:13px}
+
 @@media(max-width:960px){
     .overview-grid,.rules-grid,.mind-grid,.decisions-grid{grid-template-columns:1fr}
+    .profile-box{grid-template-columns:1fr}
     .rooms{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 @code {
     ZooSimulation simulation=null!;ZooWorld W=>simulation.World;Person? tracked;
     int seed=7,visitors=120;int activeTab=0;string key="Visitor.14",script="当 危险 时 优先 前往:狮子园区 权重 120",status="";
+    string mentalFilter="All";
+    void SetMentalFilter(string filter)
+    {
+        mentalFilter=filter;
+        var first=FilteredProjections.FirstOrDefault();
+        if(first.p!=null)LoadMental(first.p);
+    }
+    IEnumerable<(Projection p, int index)> FilteredProjections =>
+        tracked==null?[]:tracked.Soul.World.Projections
+            .Select((v,i)=>(p:v,index:i))
+            .Where(item=>mentalFilter=="All"||item.p.Kind.ToString()==mentalFilter);
+
+    void QuickSetDanger(){AppendMentalTag("危险征兆=1");SaveMental();}
+    void QuickSetSafe()
+    {
+        var lines=(mentalTags??"").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)
+            .Where(l=>!l.StartsWith("危险征兆")&&!l.StartsWith("危险"));
+        mentalTags=string.Join("\n",lines);
+        AppendMentalTag("树荫=1");
+        SaveMental();
+    }
+    void QuickBlockDoor(){mentalExistence=Truth.False;SaveMental();}
+    void QuickUnblockDoor(){mentalExistence=Truth.True;SaveMental();}
+    void QuickSetRabbitSelf(){AppendMentalTag("人类信念=10");SaveMental();}
+    void QuickSetHumanSelf(){AppendMentalTag("人类信念=100");SaveMental();}
     bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
     string Clock=>$"第{(int)W.Now/1440+1}天 {(int)W.Now%1440/60:D2}:{(int)W.Now%60:D2}";
     protected override void OnInitialized()=>Reset();
