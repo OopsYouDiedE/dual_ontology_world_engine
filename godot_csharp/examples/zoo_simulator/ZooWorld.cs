@@ -152,6 +152,7 @@ public sealed class ZooWorld : IDisposable
     }
     public void Observe(Person person)
     {
+        if(!person.HasSelf)return;
         if(person.Room is not {} room)return;
         var visible=new List<Projection>{Views[room],Views[person.Body]};
         foreach(var pair in Views.Where(v=>v.Key.Kind==ProjectionKind.Boundary&&v.Key.Get<SpatialProperty>()?.Space==room))
@@ -198,10 +199,11 @@ public sealed class ZooWorld : IDisposable
     private void Think(Person p)
     {
         if(disposed||p.Outcome!="在园"||p.Execution?.Status==ExecutionStatus.Pending)return;
+        if(!p.HasSelf){p.CurrentAction="无法指代自身，停止自主决策";ZooMinds.Decide(p);return;}
         if(!p.SkipNextObservation)Observe(p);
         p.SkipNextObservation=false;
         var decision=ZooMinds.Decide(p);
-        if(decision is null){Session.CTB.Schedule(5,()=>Think(p));return;}
+        if(decision is null){p.CurrentAction="暂无可执行行动，等待重新判断";Session.CTB.Schedule(5,()=>Think(p));return;}
         p.CurrentAction=Describe(decision.Effect);
         p.Execution=Session.Submit(p.Soul,new(p.Self,decision.Effect,0,Basis:decision.Basis));
     }
@@ -263,9 +265,24 @@ public sealed class ZooWorld : IDisposable
     public void Replan(Person p,bool observeFirst=false)
     {
         if(p.Outcome!="在园")throw new InvalidOperationException("只能驱动仍在园的人物。");
+        if(!p.HasSelf)throw new InvalidOperationException("已遗忘自身，无法绑定行动主体或重新规划。");
         if(p.Execution?.Status==ExecutionStatus.Pending)Session.Cancel(p.Execution);
         p.SkipNextObservation=!observeFirst;
         Think(p);
+    }
+    public void ForgetMental(Person p,Projection target)
+    {
+        ZooExperiment.Forget(p,target,Now);
+        if(p.Execution is {Status:ExecutionStatus.Pending} execution &&
+            (execution.Intent.Actor==target || Ast.References(execution.Intent.Changes).Contains(target) ||
+             Ast.References(execution.Intent.Requirements).Contains(target)))
+        {
+            Session.Cancel(execution);
+            if(execution.Intent.Basis?.Name=="待执行言灵")Anomalies.UtteranceFailed(p);
+            p.LastActionResult=$"{Now:F1}：行动取消，无法再指代已遗忘的对象：{target.Name}；已完成阶段保留";
+            if(p.HasSelf)Session.CTB.Schedule(.25,()=>Think(p));
+        }
+        Log($"{p.Body.TrueName}遗忘「{target.Name}」"+(!p.HasSelf?"；无法指代自身，停止自主决策":""));
     }
     public void ScheduleReturn(Person p)
     {

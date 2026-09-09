@@ -73,8 +73,8 @@ public sealed class ZooAnomalies
         }
         foreach(var p in w.People)
         {
-            p.Body.Set(new Tag("普通离园资格"),p.Job!=Job.Black&&p.TrueSpecies==Species.Human&&p.Self.Value(Z.Human)>=35?1:0);
-            p.Body.Set(new Tag("海馆离园资格"),p.Job==Job.Red||t>=360&&t<390&&p.Self.Value(Z.Human)>=70?1:0);
+            p.Body.Set(new Tag("普通离园资格"),p.Job!=Job.Black&&p.TrueSpecies==Species.Human&&p.HumanBelief>=35?1:0);
+            p.Body.Set(new Tag("海馆离园资格"),p.Job==Job.Red||t>=360&&t<390&&p.HumanBelief>=70?1:0);
         }
         if(w.Now>=nextAnomaly&&shadowAction?.Status!=ExecutionStatus.Pending)PlanIt();
         foreach(var room in w.Rooms.Values)
@@ -145,7 +145,7 @@ public sealed class ZooAnomalies
     private void BecomeBlack(Person p,string cause)
     {
         if(p.Job==Job.Black)return;
-        p.Job=Job.Black;p.Body.Set(Z.Role,(int)Job.Black);BlackBirths++;Reconsider(p,Math.Min(p.Self.Value(Z.Human),65));
+        p.Job=Job.Black;p.Body.Set(Z.Role,(int)Job.Black);BlackBirths++;Reconsider(p,Math.Min(p.HumanBelief ?? 65,65));
         w.Log($"新黑衣诞生：{p.Body.TrueName}，原因：{cause}；仍是真实人类");
     }
     public void Expose(Person p)
@@ -156,12 +156,12 @@ public sealed class ZooAnomalies
         bool mixed=room.TrueName=="猿猴混处区"&&p.Body.Value(Z.Mixed)>0;
         bool shadow=room.Value(Z.Shadow)>0||(w.Now%1440<480||w.Now%1440>=960)&&room.Value(Z.Light)>0;
         bool near=room==shadowBody.Get<SpatialProperty>()!.Space;
-        bool seen=room.Value(Z.Danger)>0&&p.Self.Parent?.Value(Z.Danger)>0;
+        bool seen=p.HasSelf&&room.Value(Z.Danger)>0&&p.Self.Parent?.Value(Z.Danger)>0;
         if(!sheltered&&!mixed&&shadow&&near)
         {
             // 显露察觉才引来定向关注；未读规则者仍会受环境接触伤害。
-            if((seen||p.Self.Value(new Tag("明知违背"))>0)&&p.Body.Value(new Tag("掩饰"))==0)p.Body.Set(Z.Attention,Math.Min(100,p.Body.Value(Z.Attention)+(int)Math.Ceiling(dt)),false);
-            if(p.Body.Value(Z.Attention)>15&&!(room.TrueName!="园长办公室"&&(w.Now%1440<360)&&w.Rooms["园长办公室"].Value(Z.Power)>0&&w.Rooms["园长办公室"].Value(Z.Light)>0))
+            if((seen||p.HasSelf&&p.Self.Value(new Tag("明知违背"))>0)&&p.Body.Value(new Tag("掩饰"))==0)p.Body.Set(Z.Attention,Math.Min(100,p.Body.Value(Z.Attention)+(int)Math.Ceiling(dt)),false);
+            if(p.HasSelf&&p.Body.Value(Z.Attention)>15&&!(room.TrueName!="园长办公室"&&(w.Now%1440<360)&&w.Rooms["园长办公室"].Value(Z.Power)>0&&w.Rooms["园长办公室"].Value(Z.Light)>0))
             {
                 var drop=(int)Math.Ceiling(dt*.7);
                 new CorruptionProperty(new IdentityDistortion(p.Self,Math.Max(0,p.Self.Value(Z.Human)-drop))).Apply(p.Soul,w.Now);
@@ -177,10 +177,10 @@ public sealed class ZooAnomalies
             p.Body.Set(Z.Symptoms,(int)(w.Now-p.SymptomSince));
         }
         if(p.Body.Value(Z.Rabbit)>=85)p.TrueSpecies=Species.Rabbit;
-        else if(p.Self.Value(Z.Human)<15)p.TrueSpecies=Species.Goat;
+        else if(p.HumanBelief is <15)p.TrueSpecies=Species.Goat;
         if(near&&!sheltered)
         {
-            p.ItsClassification=Paper(p)!=null||mixed?null:p.Self.Value(Z.Human)<35?Species.Goat:p.Body.Value(Z.Rabbit)>60?Species.Rabbit:Species.Human;
+            p.ItsClassification=Paper(p)!=null||mixed?null:p.HumanBelief is <35?Species.Goat:p.Body.Value(Z.Rabbit)>60?Species.Rabbit:p.HasSelf?Species.Human:p.ItsClassification;
             p.LastClassified=w.Now;
             w.Runtime.Observe(observer,[w.Views[room],w.Views[p.Body]],w.Now,new ItsView(p.Body.TrueName,p.ItsClassification));
         }
@@ -203,6 +203,7 @@ public sealed class ZooAnomalies
     public void Reconsider(Person p,int human)
     {
         if(human is <0 or >100)throw new ArgumentOutOfRangeException(nameof(human));
+        if(!p.HasSelf)return;
         new CorruptionProperty(new IdentityDistortion(p.Self,human)).Apply(p.Soul,w.Now);
     }
     private void Roar()
@@ -218,7 +219,7 @@ public sealed class ZooAnomalies
             if(p.Body.Value(Z.Rabbit)>40&&p.Job is Job.Blue or Job.Guard)
             {BecomeBlack(p,"正常白狮咬伤但存活");p.Body.Set(Z.Health,Math.Max(1,p.Body.Value(Z.Health)-20));}
             // 吼叫驱逐关注，不让纸片或区域自动治愈已经发生的身体转化。
-            if(p.Body.Value(Z.Rabbit)>0||p.Body.Value(Z.Attention)>0||p.Body.Value(Z.Symptoms)>0||p.Self.Value(Z.Human)<85)
+            if(p.Body.Value(Z.Rabbit)>0||p.Body.Value(Z.Attention)>0||p.Body.Value(Z.Symptoms)>0||p.HumanBelief is <85)
             {p.Body.Set(Z.Attention,0,false);p.Body.Set(new Tag("获救"),1);p.Body.Set(new Tag("兔化稳定"),1);}
         }
         if(rabbit.Get<SpatialProperty>()!.Space==room&&rabbit.Value(Z.Paper)==0)rabbit.Set(Z.Health,0);
@@ -229,7 +230,7 @@ public sealed class ZooAnomalies
         {
             bool aquarium=ZooMinds.IsInside(from);
             bool window=w.Now%1440>=360&&w.Now%1440<390;
-            if(aquarium?(p.Job==Job.Red||window&&p.Self.Value(Z.Human)>=70):p.Job!=Job.Black&&p.Self.Value(Z.Human)>=35)
+            if(aquarium?(p.Job==Job.Red||window&&p.HumanBelief>=70):p.Job!=Job.Black&&p.HumanBelief>=35)
                 Finish(p,p.Job==Job.Visitor||p.Job==Job.Black?"成功逃离":"正常离岗");
         }
         if(p.Room==w.Rooms["大象园区"]&&p.Body.Value(Z.RabbitEars)>0)
@@ -250,11 +251,11 @@ public sealed class ZooAnomalies
     {
         var room=p.Room!;
         w.Log($"{p.Body.TrueName}：{deed}");
-        Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind){Target=p.Self,Source=ObservationSource.Introspection,Time=w.Now,Details=$"交互完成:{deed}:{room.TrueName}"});
+        if(p.HasSelf)Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind){Target=p.Self,Source=ObservationSource.Introspection,Time=w.Now,Details=$"交互完成:{deed}:{room.TrueName}"});
         switch(deed)
         {
             case Deed.Watch:
-                Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind){Target=p.Self,Source=ObservationSource.Introspection,Time=w.Now,Details="游览完成:"+room.TrueName});break;
+                if(p.HasSelf)Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind){Target=p.Self,Source=ObservationSource.Introspection,Time=w.Now,Details="游览完成:"+room.TrueName});break;
             case Deed.Read:w.ReadLocal(p);break;
             case Deed.Tear:
                 if(maps.GetValueOrDefault(p) is {} map&&map.Get<SpatialProperty>()?.Holder==p.Body)
@@ -314,7 +315,7 @@ public sealed class ZooAnomalies
             case Deed.Resign:if(p.Job!=Job.Black){p.Resigned=true;p.Job=Job.Visitor;p.Body.Set(Z.Role,(int)Job.Visitor);}break;
             case Deed.Isolate:
                 if(p.IsolationUntil==0)p.IsolationUntil=w.Now+780;
-                if(w.Now>=p.IsolationUntil&&p.TrueSpecies==Species.Human&&p.Self.Value(Z.Human)>=70)p.IsolationUntil=0;break;
+                if(w.Now>=p.IsolationUntil&&p.TrueSpecies==Species.Human&&p.HumanBelief>=70)p.IsolationUntil=0;break;
             case Deed.Evict:break;
             case Deed.CloseApes:
                 foreach(var door in w.Views.Keys.Where(e=>e.Kind==ProjectionKind.Boundary&&e.TrueName=="主步道 → 猿猴园区"))
@@ -335,13 +336,17 @@ public sealed class ZooAnomalies
         }
         w.Runtime.Sync();
     }
-    private void ReconsiderByObservation(Person p,int human,string details)=>Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind)
-    {Target=p.Self,Source=ObservationSource.Inference,Time=w.Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Human,human),Details=details});
+    private void ReconsiderByObservation(Person p,int human,string details)
+    {
+        if(p.HasSelf)Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind)
+        {Target=p.Self,Source=ObservationSource.Inference,Time=w.Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Human,human),Details=details});
+    }
     public void SayTemporary(Person speaker,Tag property,int value,double minutes)
         => QueueUtterance(speaker,$"temporary_set($Scene, {property.Name}, {value}, {minutes.ToString(System.Globalization.CultureInfo.InvariantCulture)})");
 
     public void QueueUtterance(Person speaker,string text)
     {
+        if(!speaker.HasSelf)throw new InvalidOperationException("已遗忘自身，无法准备言灵行动。");
         if(speaker.Outcome!="在园")throw new InvalidOperationException("人物当前不在园。");
         if(casts.ContainsKey(speaker))throw new InvalidOperationException("人物已有待执行言灵。");
         var decoder=ZooExperiment.Decoder(speaker);
@@ -356,7 +361,7 @@ public sealed class ZooAnomalies
     }
     public void UtteranceFailed(Person p)
     {
-        if(casts.Remove(p,out var request))Observation.Observe(p.Soul,new(request.Name,request.Kind){Target=request,
+        if(casts.Remove(p,out var request)&&p.Soul.World.Contains(request))Observation.Observe(p.Soul,new(request.Name,request.Kind){Target=request,
             Source=ObservationSource.Introspection,Time=w.Now,Rules=[],ClearProcedure=true,Details="施放失败，检查执行记录后可重试"});
     }
 }

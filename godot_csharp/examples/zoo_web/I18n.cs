@@ -225,6 +225,17 @@ public static class I18n
         ["TruthUnknown"] = ("Undecided", "未定", "未定", "未定"),
 
         // Status Messages
+        ["SelfForgetConsequence"] = ("Forgetting self removes the action subject and stops autonomous decisions.", "自己を忘れると行動主体を指示できず、自主判断が停止します。", "遗忘自身后，思维将无法指代行动主体，自主决策会停止。", "遺忘自身後，思維將無法指代行動主體，自主決策會停止。"),
+        ["SelfMissing"] = ("Self is forgotten: no action subject can be bound. Autonomous decisions are stopped; the body remains in the world. Routine observation does not restore self.", "自己を忘れたため行動主体を指示できません。自主判断は停止し、身体は現実に残ります。通常の観察では自己は復元されません。", "已遗忘自身，无法绑定行动主体，自主决策已停止。身体仍留在现实中，常规观察不会自动恢复自身概念。", "已遺忘自身，無法綁定行動主體，自主決策已停止。身體仍留在現實中，常規觀察不會自動恢復自身概念。"),
+        ["ForgotNamed"] = ("Forgot “{0}”. Related links and rules have been removed; the view is refreshed.", "「{0}」を忘却しました。関連する関係とルールを削除し、表示を更新しました。", "已遗忘“{0}”，相关关系与引用它的规则已移除，界面已刷新。", "已遺忘「{0}」，相關關係與引用它的規則已移除，介面已重新整理。"),
+        ["HumanConceptMissing"] = ("The human concept is missing: reaffirming human identity is unavailable. The numeric belief is a separate memory.", "人間の概念を失っているため、人間性の再確認は選べません。信念の数値は別の記憶です。", "已遗忘“人类”概念，无法选择“坚定人类”。下方信念数值是独立保留的记忆。", "已遺忘「人類」概念，無法選擇「堅定人類」。下方信念數值是獨立保留的記憶。"),
+        ["NoCandidates"] = ("No available candidate actions.", "選択できる行動がありません。", "当前没有可选行动。", "目前沒有可選行動。"),
+        ["NextDecision"] = ("Next choice from saved cognition: ", "保存済み認識による次の選択：", "按已保存认知的下一选择：", "按已儲存認知的下一選擇："),
+        ["NoPendingAction"] = ("No action in progress", "実行中の行動なし", "当前没有正在执行的行动", "目前沒有正在執行的行動"),
+        ["EditFailed"] = ("Operation failed: {0}", "操作失敗：{0}", "操作未完成：{0}", "操作未完成：{0}"),
+        ["RefreshFailed"] = ("Change saved, but decision refresh failed: {0}", "変更は保存済みですが、判断更新に失敗：{0}", "修改已保存，但决策刷新失败：{0}", "修改已儲存，但決策重新整理失敗：{0}"),
+        ["MentalCreated"] = ("Created a new mental object. You can edit it now.", "脳内オブジェクトを作成しました。編集できます。", "已创建脑内对象，可以继续编辑。", "已建立腦內物件，可以繼續編輯。"),
+        ["PreviewUpdated"] = ("Decision view refreshed from saved cognition.", "保存済みの認識で判断表示を更新しました。", "已按保存的认知刷新决策视图。", "已按儲存的認知重新整理決策視圖。"),
         ["WorldCreated"] = ("World created; you can pause to edit mental objects or rules, then compare decisions.", "世界を作成しました。一時停止して脳内オブジェクトやルールを編集し、選択を比較できます。", "已创建世界；可以暂停编辑脑内对象或规则，再比较选择。", "已創建世界；可以暫停編輯腦內對象或規則，再比較選擇。"),
         ["AdvancingTo"] = ("Advancing to target, currently {0}.", "目標時刻へ進行中、現在 {0}。", "正在推进至目标时刻，当前 {0}。", "正在推進至目標時刻，當前 {0}。"),
         ["AdvancedTo"] = ("Advanced to {0}.", "{0} まで進めました。", "已推进至 {0}。", "已推進至 {0}。"),

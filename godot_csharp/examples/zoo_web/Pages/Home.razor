@@ -33,7 +33,7 @@
         <button @onclick="Reset">@I18n.T("RebuildWorld")</button>
     </nav>
 
-    <p class="status" role="status">@status</p>
+    <p class="status @(statusError ? "error" : "")" role="@(statusError ? "alert" : "status")" aria-live="polite">@status</p>
 
     <!-- 4 个主 Tab 导航 -->
     <div class="tabs-nav">
@@ -275,13 +275,24 @@
                                 </div>
                                 <div class="profile-col">
                                     <h3 class="col-title mind">@I18n.T("SubjectiveMind")</h3>
-                                    <p>@I18n.T("HumanBelief")<b>@person.Self.Value(Z.Human)%</b></p>
-                                    <p>@I18n.T("BelievedLocation")<b>@I18n.TRoom(person.Self.Parent?.Name)</b></p>
-                                    <p>@I18n.T("OngoingAction")<b>@Vocabulary.Display(person.CurrentAction)</b></p>
+                                    @if (!person.Soul.World.Projections.Any(p=>p.Kind==ProjectionKind.Concept && p.Name=="人类" && p.Existence==Truth.True))
+                                    {
+                                        <p class="status-tip">@I18n.T("HumanConceptMissing")</p>
+                                    }
+                                    <p>@I18n.T("HumanBelief")<b>@(person.HumanBelief is {} human ? $"{human}%" : "—")</b></p>
+                                    <p>@I18n.T("BelievedLocation")<b>@(person.HasSelf ? I18n.TRoom(person.Self.Parent?.Name) : "—")</b></p>
+                                    <p>@I18n.T("OngoingAction")<b>@(person.Execution?.Status==ExecutionStatus.Pending ? Vocabulary.Display(person.CurrentAction) : I18n.T("NoPendingAction"))</b></p>
+                                    <p>@I18n.T("NextDecision")<b>@(person.Assessments.FirstOrDefault(a=>!a.Forbidden) is {} next ? Vocabulary.Display(ZooWorld.Describe(next.Decision.Effect)) : I18n.T("NoCandidates"))</b></p>
                                     <p>@I18n.T("LastResult")<b>@Vocabulary.Display(person.LastActionResult)</b></p>
                                 </div>
                             </div>
 
+                            @if (!person.HasSelf)
+                            {
+                                <p class="operation-feedback">@I18n.T("SelfMissing")</p>
+                            }
+                            else
+                            {
                             <!-- 认知调节与出口导航机制面板 -->
                             <div class="cog-panel" style="margin-top:14px;">
                                 <div class="cog-header">
@@ -300,6 +311,7 @@
                                     <small>@(person.Self.Value(Z.Human) >= 50 ? I18n.T("ExitDescClear") : I18n.T("ExitDescBroken"))</small>
                                 </div>
                             </div>
+                            }
                         </div>
 
                         <div class="card" style="margin-top: 16px;">
@@ -337,7 +349,7 @@
                                     <select class="wide" aria-label="Mental Object" @onchange="SelectMental">
                                         @foreach (var item in FilteredProjections)
                                         {
-                                            <option value="@item.index" selected="@(item.p == mental)">
+                                            <option @key="item.p" value="@item.index" selected="@(item.p == mental)">
                                                 @item.p.Name · @item.p.Kind @(item.p.Existence != Truth.True ? $"[{item.p.Existence}]" : "")
                                             </option>
                                         }
@@ -379,18 +391,23 @@
                                             <button type="button" class="action-btn success" @onclick="QuickSetHumanSelf">@I18n.T("ActionHumanAffirm")</button>
                                         }
                                         <button type="button" class="action-btn" @onclick="ForgetMental">@I18n.T("ActionForget")</button>
+                                        @if (currentTarget == tracked?.Self)
+                                        {
+                                            <p class="status-tip">@I18n.T("SelfForgetConsequence")</p>
+                                        }
                                         <button type="button" class="action-btn" @onclick="NewMental">@I18n.T("ActionCreateHallucination")</button>
                                     </div>
                                 </div>
 
+                                <p class="operation-feedback @(statusError ? "error" : "")">@status</p>
                                 <!-- 高级底层属性编辑 -->
                                 <details class="advanced-box" open>
                                     <summary>@I18n.T("AdvancedParams")</summary>
                                     <div style="margin-top:10px;">
                                         <div style="display:flex;gap:10px;margin-bottom:8px;">
-                                            <label style="flex:2;">@I18n.T("ParamName")<input class="wide" @bind="mentalName" /></label>
+                                            <label style="flex:2;">@I18n.T("ParamName")<input class="wide" @bind="mentalName" @bind:after="MarkMentalDirty" /></label>
                                             <label style="flex:1;">@I18n.T("ParamKind")
-                                                <select class="wide" @bind="mentalKind">
+                                                <select class="wide" @bind="mentalKind" @bind:after="MarkMentalDirty">
                                                     @foreach (var k in Enum.GetValues<ProjectionKind>())
                                                     {
                                                         <option value="@k">@k</option>
@@ -398,7 +415,7 @@
                                                 </select>
                                             </label>
                                             <label style="flex:1;">@I18n.T("ParamExistence")
-                                                <select class="wide" @bind="mentalExistence">
+                                                <select class="wide" @bind="mentalExistence" @bind:after="MarkMentalDirty">
                                                     @foreach (var t in Enum.GetValues<Truth>())
                                                     {
                                                         <option value="@t">@(t == Truth.True ? I18n.T("TruthTrue") : t == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown"))</option>
@@ -408,17 +425,17 @@
                                         </div>
 
                                         <label>@I18n.T("ParamParent")
-                                            <select class="wide" @bind="mentalParentIndex">
+                                            <select class="wide" @bind="mentalParentIndex" @bind:after="MarkMentalDirty">
                                                 <option value="-1">@I18n.T("UnknownParent")</option>
                                                 @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)).Where(item => item.v != mental))
                                                 {
-                                                    <option value="@item.i">@Vocabulary.Display(item.v.Name)</option>
+                                                    <option @key="item.v" value="@item.i">@Vocabulary.Display(item.v.Name)</option>
                                                 }
                                             </select>
                                         </label>
 
                                         <label style="margin-top:8px;display:block;">@I18n.T("ParamTags")
-                                            <textarea aria-label="Mental Tags" @bind="mentalTagsDisplay" style="min-height:75px;"></textarea>
+                                            <textarea aria-label="Mental Tags" @bind="mentalTagsDisplay" @bind:after="MarkMentalDirty" style="min-height:75px;"></textarea>
                                         </label>
 
                                         <div class="word-group">
@@ -438,9 +455,10 @@
                                             <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;">
                                                 <input aria-label="Relation Name" @bind="relationNameDisplay" placeholder="关系名" style="width:100px;" />
                                                 <select @bind="relationOtherIndex">
+                                                    <option value="-1">@I18n.T("UnknownParent")</option>
                                                     @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
                                                     {
-                                                        <option value="@item.i">@Vocabulary.Display(item.v.Name)</option>
+                                                        <option @key="item.v" value="@item.i">@Vocabulary.Display(item.v.Name)</option>
                                                     }
                                                 </select>
                                                 <select @bind="relationTruth">
@@ -516,6 +534,10 @@
                     <div class="card">
                         <h2>@I18n.T("CandidateActions") <small>@I18n.T("ForbiddenIncluded")</small></h2>
                         <div class="log" style="max-height: 420px;">
+                            @if (assessed.Assessments.Count==0)
+                            {
+                                <p>@I18n.T("NoCandidates")</p>
+                            }
                             @foreach (var row in assessed.Assessments)
                             {
                                 <div style="padding:6px 0;">
@@ -603,7 +625,7 @@
     }
     bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
     protected override void OnInitialized()=>Reset();
-    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";LoadAttitude();status=I18n.T("WorldCreated");}catch(Exception e){status=e.Message;}}
+    void Reset(){Stop();generation++;busy=false;statusError=false;mentalFilter="All";mental=null;mentalParent=null;relationOther=null;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];SelectSelfOrAvailable();beforeDecision="";afterDecision="";RefreshTracked(true);status=I18n.T("WorldCreated");}catch(Exception e){status=e.Message;}}
     async Task Advance(double minutes)
     {
         if(busy)return;busy=true;var current=generation;var world=W;var target=world.Now+minutes;
@@ -614,34 +636,100 @@
                 world.Run(target,20);status=I18n.T("AdvancingTo", I18n.TClock(world.Now));
                 StateHasChanged();await Task.Delay(1);
             }
-            if(current==generation)status=I18n.T("AdvancedTo", I18n.TClock(world.Now));
+            if(current==generation){statusError=false;status=I18n.T("AdvancedTo", I18n.TClock(world.Now));RefreshTracked(!mentalDirty);if(tracked!=null)afterDecision=tracked.HasSelf ? ZooExperiment.Snapshot(tracked,false) : I18n.T("SelfMissing");}
         }
-        catch(Exception e){Stop();status=e.Message;}
+        catch(Exception e){Stop();statusError=true;status=I18n.T("EditFailed",e.Message);RefreshTracked(!mentalDirty);}
         finally{if(current==generation)busy=false;}
     }
     void Toggle(){if(playing||busy){Stop();return;}playing=true;timer=new(_=>InvokeAsync(async ()=>{if(disposed||!playing)return;await Advance(2);StateHasChanged();}),null,0,700);}
     void Stop(){playing=false;timer?.Dispose();timer=null;generation++;busy=false;}
-    void SelectRoom(Essence room){tracked=W.People.Where(p=>p.Room==room&&p.Outcome=="在园").OrderBy(p=>p.Job!=Job.Visitor).FirstOrDefault()??tracked;if(tracked!=null)LoadMental(tracked.Self);}
-    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());LoadMental(tracked.Self);LoadAttitude();beforeDecision="";afterDecision="";}
+    void SelectRoom(Essence room){tracked=W.People.Where(p=>p.Room==room&&p.Outcome=="在园").OrderBy(p=>p.Job!=Job.Visitor).FirstOrDefault()??tracked;if(tracked!=null){mentalFilter="All";SelectSelfOrAvailable();RefreshTracked(true);beforeDecision="";afterDecision="";}}
+    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());mentalFilter="All";SelectSelfOrAvailable();RefreshTracked(true);beforeDecision="";afterDecision="";}
     void LoadRule(ChangeEventArgs e){key=e.Value!.ToString()!;script=W.Rules.Clauses[key].Script;LoadAttitude();}
-    void LoadAttitude(){if(tracked?.Books.TryGetValue(key,out var book)==true){acceptance=book.Acceptance;understanding=book.Understanding;}}
+    void LoadAttitude(){if(tracked?.Books.TryGetValue(key,out var book)==true){acceptance=book.Acceptance;understanding=book.Understanding;}else{acceptance=Truth.Unknown;understanding=0;}}
     Projection? mental;
     string mentalName="",mentalTags="",relationName="通往",mentalRule="RULE true() => PREFER wait(5, inspect($Actor))";
     string utterance="temporary_set($Scene, 树荫, 0, 15)",beforeDecision="",afterDecision="";
     ProjectionKind mentalKind=ProjectionKind.Object;Truth mentalExistence=Truth.True,relationTruth=Truth.True;
-    int mentalParentIndex=-1,relationOtherIndex;
+    Projection? mentalParent,relationOther;
+    int mentalParentIndex
+    {
+        get=>mentalParent is null ? -1 : tracked!.Soul.World.Projections.IndexOf(mentalParent);
+        set=>mentalParent=value<0 ? null : tracked!.Soul.World.Projections[value];
+    }
+    int relationOtherIndex
+    {
+        get=>relationOther is null ? -1 : tracked!.Soul.World.Projections.IndexOf(relationOther);
+        set=>relationOther=value<0 ? null : tracked!.Soul.World.Projections[value];
+    }
+    bool mentalDirty,statusError;
+    void MarkMentalDirty()=>mentalDirty=true;
     Truth acceptance=Truth.True;int understanding=100;
-    void Compare(Action action){Stop();try{if(tracked!=null)beforeDecision=ZooExperiment.Snapshot(tracked);action();if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}catch(Exception e){status=e.Message;}}
-    void LoadMental(Projection p){mental=p;mentalName=p.Name;mentalKind=p.Kind;mentalExistence=p.Existence;mentalTags=string.Join("\n",p.Tags.Select(t=>$"{t.Key.Name}={t.Value}"));mentalParentIndex=p.Parent==null?-1:tracked!.Soul.World.Projections.IndexOf(p.Parent);}
+    void Compare(Action action)
+    {
+        Stop();statusError=false;
+        try { beforeDecision=tracked is null ? "" : ZooExperiment.Snapshot(tracked); }
+        catch(Exception e) { beforeDecision=I18n.T("EditFailed",e.Message); }
+        var saved=false;
+        try
+        {
+            action();saved=true;
+            afterDecision=tracked is null ? "" : ZooExperiment.Snapshot(tracked);
+            if(tracked is {HasSelf:false})afterDecision=I18n.T("SelfMissing");
+            else if(string.IsNullOrWhiteSpace(afterDecision))afterDecision=I18n.T("NoCandidates");
+        }
+        catch(Exception e)
+        {
+            statusError=true;
+            status=I18n.T(saved ? "RefreshFailed" : "EditFailed",e.Message);
+            // 不能把上一次成功结果继续当成本次结果展示。
+            afterDecision=status;
+            if(saved && tracked is not null){tracked.Assessments=[];tracked.DecisionTrace.Clear();}
+        }
+        finally { RefreshTracked(saved && !mentalDirty);StateHasChanged(); }
+    }
+    void RefreshTracked(bool reloadEditor)
+    {
+        if(tracked is null){mental=null;mentalParent=null;relationOther=null;return;}
+        var world=tracked.Soul.World;
+        if(mental is null || !world.Contains(mental))
+        {
+            mental=FilteredProjections.FirstOrDefault().p;
+            reloadEditor=true;
+        }
+        else if(mentalFilter!="All" && mental.Kind.ToString()!=mentalFilter)mentalFilter="All";
+        if(mentalParent is not null && !world.Contains(mentalParent))mentalParent=null;
+        if(relationOther is null || !world.Contains(relationOther))relationOther=world.Projections.FirstOrDefault();
+        if(reloadEditor && mental is not null)LoadMental(mental);
+        LoadAttitude();
+    }
+    void LoadMental(Projection p){mentalDirty=false;mental=p;mentalName=p.Name;mentalKind=p.Kind;mentalExistence=p.Existence;mentalTags=string.Join("\n",p.Tags.Select(t=>$"{t.Key.Name}={t.Value}"));mentalParent=p.Parent;}
+    void SelectSelfOrAvailable()
+    {
+        mental=tracked?.HasSelf==true ? tracked.Self : FilteredProjections.FirstOrDefault().p;
+        if(mental is not null)LoadMental(mental);
+    }
     void SelectMental(ChangeEventArgs e){if(tracked!=null)LoadMental(tracked.Soul.World.Projections[int.Parse(e.Value!.ToString()!)]);}
-    void NewMental()=>Compare(()=>{mentalFilter="All";mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.Soul.World.Projections.IndexOf(tracked.Self.Parent!);mental=ZooExperiment.Edit(tracked,null,mentalName,mentalKind,mentalExistence,tracked.Self.Parent,"",W.Now);LoadMental(mental);});
-    void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParentIndex<0?null:tracked.Soul.World.Projections[mentalParentIndex],mentalTags,W.Now);LoadMental(mental);status=I18n.T("StatusOnlyMindModified");});
-    void ForgetMental()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Forget(tracked,mental,W.Now);LoadMental(tracked.Self);status=I18n.T("StatusForgotten");});
-    void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),tracked.Soul.World.Projections[relationOtherIndex],relationTruth,W.Now);status=I18n.T("StatusRelationSaved");});
+    void NewMental()=>Compare(()=>{mentalFilter="All";mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.HasSelf ? tracked.Soul.World.Projections.IndexOf(tracked.Self.Parent!) : -1;mental=ZooExperiment.Edit(tracked,null,mentalName,mentalKind,mentalExistence,mentalParent,"",W.Now);LoadMental(mental);status=I18n.T("MentalCreated");});
+    void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParent,mentalTags,W.Now);LoadMental(mental);status=I18n.T("StatusOnlyMindModified");});
+    void ForgetMental()
+    {
+        if(tracked is null || mental is null)return;
+        Compare(()=>
+        {
+            var name=mental.Name;
+            W.ForgetMental(tracked,mental);
+            mental=null;
+            status=I18n.T("ForgotNamed",Vocabulary.Display(name));
+            if(!tracked.HasSelf)status+=" "+I18n.T("SelfMissing");
+            if(name=="人类")status+=" "+I18n.T("HumanConceptMissing");
+        });
+    }
+    void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),relationOther ?? throw new InvalidOperationException("请选择关系目标。"),relationTruth,W.Now);status=I18n.T("StatusRelationSaved");});
     void SaveBelief()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.SetBelief(tracked,mental,mentalRule,W.Now);status=I18n.T("StatusBeliefSaved");});
-    void Preview(){if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}
-    void ActFromMind(){try{if(tracked!=null){W.Replan(tracked);status=I18n.T("StatusReplanDone");}}catch(Exception e){status=e.Message;}}
-    void ObserveAgain()=>Compare(()=>{if(tracked!=null){W.Observe(tracked);LoadMental(tracked.Self);status=I18n.T("StatusObserved");}});
+    void Preview()=>Compare(()=>status=I18n.T("PreviewUpdated"));
+    void ActFromMind()=>Compare(()=>{if(tracked!=null){W.Replan(tracked);status=I18n.T("StatusReplanDone");}});
+    void ObserveAgain()=>Compare(()=>{if(tracked!=null){if(!tracked.HasSelf)throw new InvalidOperationException(I18n.T("SelfMissing"));W.Observe(tracked);SelectSelfOrAvailable();status=I18n.T("StatusObserved");}});
     void Publish()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增文书");status=I18n.T("StatusRulePublished");});
     void Broadcast()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status=I18n.T("StatusBroadcasted");});
     void Withdraw()=>Compare(()=>{var affected=W.Withdraw(key,true);status=I18n.T("StatusWithdrawn", affected);});
@@ -655,7 +743,7 @@
         {
             Compare(()=>{
                 ZooExperiment.SetCognitionAndMap(tracked,val,W.Now);
-                LoadMental(tracked.Self);
+                SelectSelfOrAvailable();
                 status=val<50?I18n.T("StatusCognitionDropped"):I18n.T("StatusCognitionRestored");
             });
         }

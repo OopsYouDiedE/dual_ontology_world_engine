@@ -647,3 +647,8 @@ button:disabled { opacity: .5; cursor: default; transform: none; }
 .card, .profile-col, .compare > div { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 600px) { .zoo { padding: 16px 12px; } .zoo header, .person-selector-bar { flex-wrap: wrap; } .compare { grid-template-columns: 1fr; } .tabs-nav { overflow-x: auto; } .tab-btn { flex-shrink: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* 操作反馈在滚动编辑时仍然可见。 */
+.zoo .status { position: sticky; top: 8px; z-index: 20; background: var(--bg-card); box-shadow: var(--shadow-md); }
+.zoo .status.error, .operation-feedback.error { color: var(--accent-red); background: var(--accent-red-bg); border: 1px solid var(--accent-red); }
+.operation-feedback { padding: 10px 12px; border-radius: 10px; color: var(--text-primary); background: var(--bg-inset); overflow-wrap: anywhere; }

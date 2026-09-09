@@ -9,7 +9,8 @@ public static class DecisionSystem
     public static Decision? Choose(ProjectionWorld world, Projection actor) => Assess(world,actor).FirstOrDefault(a=>!a.Forbidden)?.Decision;
     public static IReadOnlyList<DecisionAssessment> Assess(ProjectionWorld world, Projection actor)
     {
-        if (!world.Contains(actor)) throw new InvalidOperationException("决策主体不属于内部世界。");
+        if (!ReferenceEquals(actor.World,world)) throw new InvalidOperationException("决策主体不属于内部世界。");
+        if (!world.Contains(actor)) return [];
         var rules = world.Projections.SelectMany(p => p.Rules.Where(r => r.Acceptance == Truth.True).Select(r => (Basis: p, Rule: r))).ToArray();
         var candidates = new List<(Effect Effect, ActionContext Context, Projection Basis, int Social)>();
         foreach (var (basis, rule) in rules.Where(r => r.Rule.Mode != RuleMode.Forbid))

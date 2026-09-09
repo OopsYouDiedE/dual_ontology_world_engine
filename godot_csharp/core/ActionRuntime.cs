@@ -11,6 +11,7 @@ public sealed class ActionRuntime(WorldRuntime world)
 {
     internal (ActionResolution Result, Effect? Next, double Delay) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline)
     {
+        if (!soul.World.Contains(intent.Actor)) return (new(false, ActionFailure.MissingObject, time), null, 0);
         var actor = world.Resolve(intent.Actor);
         if (actor is null) return (new(false, ActionFailure.MissingObject, time), null, 0);
         if (!world.Controls(soul, actor)) return (new(false, ActionFailure.NoControl, time), null, 0);

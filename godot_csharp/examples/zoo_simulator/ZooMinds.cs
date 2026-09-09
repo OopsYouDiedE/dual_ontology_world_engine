@@ -25,6 +25,7 @@ public static class ZooMinds
     public static string Ref(Projection p) => "@" + Quote(p.Name);
     public static string? Route(ProjectionWorld mind, Projection self, string destination, bool forbid = false)
     {
+        if(!mind.Contains(self))return null;
         var target = mind.Projections.FirstOrDefault(p => p.Kind == ProjectionKind.Space && p.Name == destination && p.Existence == Truth.True);
         var start = self.Parent;
         if (start is null || target is null || ReferenceEquals(start,target)) return null;
@@ -70,6 +71,7 @@ public static class ZooMinds
     }
     public static string? ActionText(string action, ProjectionWorld mind, Projection self, bool forbid = false)
     {
+        if(!mind.Contains(self))return null;
         if(action.StartsWith("前往:")) return Route(mind,self,action[3..],forbid);
         var deed = Actions[action];
         string? goal = deed switch
@@ -102,7 +104,7 @@ public static class ZooMinds
         var duration = deed switch { Deed.Watch=>18, Deed.Rest=>20, Deed.Read=>4, Deed.Repair=>8, Deed.Trim=>20, Deed.Isolate=>15, _=>2 };
         if(deed == Deed.Reaffirm)
         {
-            var human = mind.Projections.FirstOrDefault(p=>p.Name=="人类");
+            var human = mind.Projections.FirstOrDefault(p=>p.Name=="人类" && p.Kind==ProjectionKind.Concept && p.Existence==Truth.True);
             if(human is null) return null;
             return $"wait(2, sequence(infer(related($Actor, IsA, {Ref(human)})), set($Actor, 动作, {(int)deed+1})))";
         }
@@ -111,6 +113,13 @@ public static class ZooMinds
 
     public static Decision? Decide(Person person)
     {
+        if(!person.HasSelf)
+        {
+            person.Assessments=[];
+            person.DecisionTrace.Clear();
+            person.DecisionTrace.Add("无法指代自身，不能绑定行动主体；停止自主决策");
+            return null;
+        }
         var mind = person.Soul.World;
         var self = person.Self;
         var clock = person.Watch is {} watch && mind.Contains(watch) ? watch.Value(Z.Clock) : 0;

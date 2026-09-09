@@ -35,6 +35,9 @@ public sealed class Person(Essence body, SoulEssence soul, Projection self, Job 
     public Essence Body { get; } = body;
     public SoulEssence Soul { get; } = soul;
     public Projection Self { get; } = self;
+    // 宿主持有旧引用并不代表这个对象仍能被人物思维指代。
+    public bool HasSelf => Soul.World.Contains(Self);
+    public int? HumanBelief => HasSelf && Self.Tags.TryGetValue(Z.Human,out var human) ? human : null;
     public Job Job { get; set; } = job;
     public Species TrueSpecies { get; set; } = Species.Human;
     public Species? ItsClassification { get; set; }

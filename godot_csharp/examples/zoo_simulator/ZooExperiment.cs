@@ -36,17 +36,24 @@ public static class ZooExperiment
     }
     public static void Forget(Person p,Projection target,double time)
     {
-        if(target==p.Self)throw new InvalidOperationException("可修改自身认知；控制身体所需的自身引用不能删除。");
+        var name=target.Name;
         Observation.Observe(p.Soul,new(target.Name,target.Kind){Target=target,Forget=true,Source=ObservationSource.Corruption,Time=time});
         foreach(var book in p.Books.Values.Where(b=>b.Projection==target).ToArray())p.Books.Remove(book.Text.Key);
+        // 被删除对象的历史也会被清除，操作结果记录在仍然存在的自身投影上。
+        if(p.HasSelf)Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind){Target=p.Self,Source=ObservationSource.Introspection,Time=time,
+            Details=$"遗忘操作完成：{name}；相关关系与引用该对象的规则已移除"});
+        p.Assessments=[];
+        p.DecisionTrace.Clear();
+        if(!p.HasSelf)p.CurrentAction="无法指代自身，停止自主决策";
     }
-    public static string Snapshot(Person p)
+    public static string Snapshot(Person p,bool reconsider=true)
     {
-        ZooMinds.Decide(p);
+        if(reconsider)ZooMinds.Decide(p);
         return string.Join("\n",p.Assessments.Select(a=>$"{(a.Forbidden?"禁止":"可选")} {a.Decision.Score,4} · {ZooWorld.Describe(a.Decision.Effect)} · {string.Join("；",a.Reasons)}"));
     }
     public static void SetCognitionAndMap(Person p, int humanBelief, double time)
     {
+        if(!p.HasSelf)throw new InvalidOperationException("已遗忘自身，无法修改自身认知数值。");
         humanBelief = Math.Clamp(humanBelief, 0, 100);
         Observation.Observe(p.Soul, new(p.Self.Name, p.Self.Kind)
         {
