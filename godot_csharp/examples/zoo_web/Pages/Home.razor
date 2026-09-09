@@ -24,6 +24,25 @@
             @if(tracked is {} person)
             {
                 <dl><dt>真实物种</dt><dd>@person.TrueSpecies</dd><dt>本人认为</dt><dd>人类信念 @person.Self.Value(Z.Human) / 100</dd><dt>“它”认为</dt><dd>@(person.LastClassified<0?"尚未观察":person.ItsClassification?.ToString()??"无法可靠分类")（上次观察：@(person.LastClassified<0?"无":person.LastClassified.ToString("F1"))）</dd><dt>身体兔化</dt><dd>@person.Body.Value(Z.Rabbit) / 100</dd><dt>实际位置</dt><dd>@person.Room?.TrueName</dd><dt>脑内位置</dt><dd>@person.Self.Parent?.Name</dd><dt>进行中行动</dt><dd>@person.CurrentAction</dd><dt>虚线纸</dt><dd>@(W.Anomalies.Paper(person)!=null?"持有撕下的纸片":"无分类保护")</dd></dl>
+                
+                <div class="cog-panel">
+                    <div class="cog-header">
+                        <strong>认知调节与脑内地图</strong>
+                        <span class="cog-badge @(person.Self.Value(Z.Human)>=50?"good":"bad")">
+                            信念 @(person.Self.Value(Z.Human))% · @(person.Self.Value(Z.Human)>=50?"认知清晰":"认知崩溃")
+                        </span>
+                    </div>
+                    <div class="cog-controls">
+                        <input type="range" min="0" max="100" value="@(person.Self.Value(Z.Human))" @onchange="OnCognitionSliderChanged" />
+                        <button type="button" @onclick="()=>SetClarity(100)">设为清醒(100%)</button>
+                        <button type="button" @onclick="()=>SetClarity(30)">设为迷失(30%)</button>
+                    </div>
+                    <div class="cog-status @(person.Self.Value(Z.Human)>=50?"good":"bad")">
+                        <strong>出口寻路状态：</strong>@ZooExperiment.CheckExitKnowledge(person)
+                        <small>@(person.Self.Value(Z.Human)>=50?"认知正常：角色脑内出口通道连通，知道如何走向动物园出口。":"认知不足（<50%）：脑内已遗忘出口通道与园外空间，彻底不知道怎么走出动物园！")</small>
+                    </div>
+                </div>
+
                 <h2>脑内世界编辑器</h2>
                 <p>修改下面的对象只影响此人的认知。先预览选择，再让人物凭当前认知行动；再次观察可能纠正错误。已排队行动不会因编辑自动改变。</p>
                 <label>脑内对象<select class="wide" aria-label="脑内对象" @onchange="SelectMental">@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i))){<option value="@item.i" selected="@(item.v==mental)">@item.v.Name · @item.v.Kind</option>}</select></label>
@@ -33,6 +52,17 @@
                 <label>是否存在<select @bind="mentalExistence">@foreach(var t in Enum.GetValues<Truth>()){<option value="@t">@t</option>}</select></label>
                 <label>脑内所属位置<select class="wide" @bind="mentalParentIndex"><option value="-1">不知道位置 / 无所属对象</option>@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i)).Where(item=>item.v!=mental)){<option value="@item.i">@item.v.Name</option>}</select></label>
                 <label>标签（每行 名称=整数，? 表示未知）<textarea aria-label="脑内标签" @bind="mentalTags"></textarea></label>
+                <div class="word-group">
+                    <small>可点击填入标签：</small>
+                    <div class="chips">
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("人类信念=100")'>人类信念=100</button>
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("人类信念=20")'>人类信念=20</button>
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("危险征兆=1")'>危险征兆=1</button>
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("身体兔化=80")'>身体兔化=80</button>
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("迷路=1")'>迷路=1</button>
+                        <button type="button" class="chip" @onclick='()=>AppendMentalTag("树荫=1")'>树荫=1</button>
+                    </div>
+                </div>
                 <button @onclick="SaveMental">写入认知并对比决策</button>
                 <details><summary>修改脑内关系</summary><input aria-label="关系名称" @bind="relationName"/><select @bind="relationOtherIndex">@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i))){<option value="@item.i">@item.v.Name</option>}</select><select @bind="relationTruth">@foreach(var t in Enum.GetValues<Truth>()){<option value="@t">@t</option>}</select><button @onclick="SaveRelation">写入关系</button></details>
                 <details><summary>为此脑内对象写 Core 规则 AST</summary><textarea aria-label="脑内规则AST" @bind="mentalRule"></textarea><button @onclick="SaveBelief">采信此 AST</button></details>
@@ -40,7 +70,16 @@
                 <p>最近实际结算：@person.LastActionResult</p>
                 <details><summary>跟踪此人的实际路线</summary>@foreach(var travel in W.Travels.Where(t=>t.Person==person.Body.TrueName).TakeLast(15).Reverse()){<p>@travel.Time.ToString("F1")：@travel.From → @travel.To（@travel.Minutes 分钟）</p>}</details>
                 <h2>言灵 · Core AST 流程</h2><p>消耗一次施放机会，经过人物行动槽执行。临时状态独立计时；可组合多个效果及等待。</p>
-                <textarea aria-label="言灵AST" @bind="utterance"></textarea><button @onclick="Cast">解析并准备施放</button><small>剩余 @person.Body.Value(Z.Mana) 次</small>
+                <textarea aria-label="言灵AST" @bind="utterance"></textarea>
+                <div class="word-group">
+                    <small>可点击填入言灵模板：</small>
+                    <div class="chips">
+                        <button type="button" class="chip" @onclick='()=>SetUtterance("temporary_set($Scene, 树荫, 0, 15)")'>场景树荫失效15分</button>
+                        <button type="button" class="chip" @onclick='()=>SetUtterance("temporary_set($Scene, 危险, 1, 20)")'>场景显现危险20分</button>
+                        <button type="button" class="chip" @onclick='()=>SetUtterance("temporary_set($Actor, 迷路, 1, 15)")'>目标陷入迷路15分</button>
+                    </div>
+                </div>
+                <button @onclick="Cast">解析并准备施放</button><small>剩余 @person.Body.Value(Z.Mana) 次</small>
                 <p>当前场景的 Core 临时效果：@string.Join("；",person.Room?.Get<TemporaryStateProperty>()?.Active.Select(l=>$"{l.Tag.Name}={l.Value}，{l.ExpiresAt:F1}到期")??[])</p>
             }
         </section>
@@ -58,8 +97,33 @@
             <select class="wide" @onchange="LoadRule">@foreach(var clause in W.Rules.Clauses.Values){<option value="@clause.Key" selected="@(clause.Key==key)">@clause.Key · @(clause.Original.Length>45?clause.Original[..45]+"…":clause.Original)</option>}</select>
             <p class="original">@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
             <input class="wide" aria-label="文书编号" @bind="key"/><textarea aria-label="受控规则文本" @bind="script"></textarea>
+            
+            <div class="word-group">
+                <small>点击填入规则骨架：</small>
+                <div class="chips">
+                    <button type="button" class="chip" @onclick='()=>SetScript("当 总是 时 优先 前往:入口 权重 200")'>全员疏散至入口</button>
+                    <button type="button" class="chip" @onclick='()=>SetScript("当 危险 时 优先 前往:狮子园区 权重 150")'>避险至狮子园区</button>
+                    <button type="button" class="chip" @onclick='()=>SetScript("当 兔区 时 禁止 喂兔子 权重 100")'>禁止喂兔子</button>
+                    <button type="button" class="chip" @onclick='()=>SetScript("当 迷路 时 优先 求助 权重 130")'>迷路时求助</button>
+                </div>
+                <small>点击追加常用条件：</small>
+                <div class="chips">
+                    @foreach(var fact in new[]{"总是","危险","兔区","象区","狮区","馆内","迷路","成年","有地图","有纸","有兔玩偶","出逃兔子"})
+                    {
+                        <button type="button" class="chip sub" @onclick="()=>AppendScript(fact)">@fact</button>
+                    }
+                </div>
+                <small>点击追加常用动作与目标：</small>
+                <div class="chips">
+                    @foreach(var act in new[]{"前往:入口","前往:主步道","前往:狮子园区","前往:大象园区","前往:饮料店","前往:海洋馆","前往:园外","游览","休息","阅读","撕地图","喂兔子","买兔玩偶","换黑衣","求助","坚定人类"})
+                    {
+                        <button type="button" class="chip sub" @onclick="()=>AppendScript(act)">@act</button>
+                    }
+                </div>
+            </div>
+
             <div class="actions"><button @onclick="Publish">保存文书</button><button @onclick="Broadcast">保存并广播</button><button @onclick="Withdraw">撤回并广播</button><button @onclick="WithdrawLocal">仅撤下现场文书</button><button @onclick="Accept">当前人物重新采信</button></div>
-            <details><summary>可用语法与词汇</summary><p>当 条件 时 优先 动作 权重 80；当 条件&amp;!另一条件 时 禁止 动作 权重 100</p><p>行为：前往:场景名、@string.Join("、",ZooMinds.Actions.Keys)</p><p>条件：@string.Join("、",ZooMinds.FactNames)</p></details>
+            <details><summary>可用语法规范</summary><p>语法结构：当 [条件] 时 [优先/禁止] [动作] 权重 [数值]</p><p>支持 &amp; 与 ! 复合条件，例如：当 危险&amp;!有地图 时 优先 求助 权重 120</p></details>
             <p>此条当前仍被 @W.People.Count(p=>p.Outcome=="在园"&&p.Books.ContainsKey(key)) 名在园人物记住。撤回广播通过观察输入撤销记忆；未听见者继续保留。</p>
             <label>当前人物对该条的态度<select @bind="acceptance">@foreach(var a in Enum.GetValues<Truth>()){<option value="@a">@(a==Truth.True?"采信":a==Truth.False?"拒绝":"未定")</option>}</select></label>
             <label>理解程度<input type="number" min="0" max="100" @bind="understanding" /></label><button @onclick="ChangeUnderstanding">更新此人的理解并对比</button>
@@ -70,7 +134,25 @@
     </main>
 </div>
 <style>
-.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare pre{white-space:pre-wrap;font:12px/1.6 monospace;max-height:240px;overflow:auto;background:#14211d;padding:10px}.zoo{max-width:1500px;margin:auto;padding:24px;color:#d7e0e6;font:14px/1.6 system-ui;background:#101819}.zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:20px}.zoo h1{font-size:30px;margin:4px 0}.zoo small{color:#96b6a6;display:block}.clock{font-size:28px;color:#d9ecbc}.clock small{font-size:13px}.zoo nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.zoo button,.zoo select,.zoo input,.zoo textarea{background:#1a2827;color:#e5ece8;border:1px solid #53685f;border-radius:5px;padding:9px}.zoo button{cursor:pointer}.zoo button:hover{background:#31493b}.zoo input[type=number]{width:65px}.metrics{display:flex;gap:28px;padding:18px;background:#20342a;border-radius:8px}.metrics b{font-size:20px;margin-left:8px}.zoo main{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}.zoo section{min-width:0}.zoo h2{font-size:17px;margin:28px 0 14px;color:#d9ecbc}.zoo h2 small{font-size:12px;font-weight:400}.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.room{text-align:left;min-height:80px}.room span{display:block}.room.active{border-color:#cbe9a7;background:#2a4130}.wide{width:100%;box-sizing:border-box}.zoo dl{display:grid;grid-template-columns:110px 1fr;gap:8px}.zoo dd{margin:0;color:#e4edb5}.zoo dt{color:#91a89a}.trace,.log,.books{max-height:280px;overflow:auto;background:#14211d;padding:14px;border-left:2px solid #789468}.trace div,.log div{padding:4px;border-bottom:1px solid #25372d}.zoo textarea{width:100%;box-sizing:border-box;min-height:130px;margin-top:10px;font:14px/1.7 monospace}.zoo details{padding:8px;border-bottom:1px solid #35483d}.zoo summary{cursor:pointer}.original{color:#a8b7b0}.status{color:#eacb91;min-height:22px}.zoo p{overflow-wrap:anywhere}.zoo button:focus-visible{outline:2px solid #ebdf91}@@media(max-width:850px){.zoo main{grid-template-columns:1fr}.metrics{flex-wrap:wrap;gap:12px}.zoo{padding:12px}.zoo header{align-items:flex-start;gap:12px}.rooms{grid-template-columns:repeat(2,1fr)}}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare pre{white-space:pre-wrap;font:12px/1.6 monospace;max-height:240px;overflow:auto;background:#14211d;padding:10px}.zoo{max-width:1500px;margin:auto;padding:24px;color:#d7e0e6;font:14px/1.6 system-ui;background:#101819}.zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:20px}.zoo h1{font-size:30px;margin:4px 0}.zoo small{color:#96b6a6;display:block}.clock{font-size:28px;color:#d9ecbc}.clock small{font-size:13px}.zoo nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.zoo button,.zoo select,.zoo input,.zoo textarea{background:#1a2827;color:#e5ece8;border:1px solid #53685f;border-radius:5px;padding:9px}.zoo button{cursor:pointer}.zoo button:hover{background:#31493b}.zoo input[type=number]{width:65px}.metrics{display:flex;gap:28px;padding:18px;background:#20342a;border-radius:8px}.metrics b{font-size:20px;margin-left:8px}.zoo main{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}.zoo section{min-width:0}.zoo h2{font-size:17px;margin:28px 0 14px;color:#d9ecbc}.zoo h2 small{font-size:12px;font-weight:400}.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.room{text-align:left;min-height:80px}.room span{display:block}.room.active{border-color:#cbe9a7;background:#2a4130}.wide{width:100%;box-sizing:border-box}.zoo dl{display:grid;grid-template-columns:110px 1fr;gap:8px}.zoo dd{margin:0;color:#e4edb5}.zoo dt{color:#91a89a}.trace,.log,.books{max-height:280px;overflow:auto;background:#14211d;padding:14px;border-left:2px solid #789468}.trace div,.log div{padding:4px;border-bottom:1px solid #25372d}.zoo textarea{width:100%;box-sizing:border-box;min-height:100px;margin-top:10px;font:14px/1.7 monospace}.zoo details{padding:8px;border-bottom:1px solid #35483d}.zoo summary{cursor:pointer}.original{color:#a8b7b0}.status{color:#eacb91;min-height:22px}.zoo p{overflow-wrap:anywhere}.zoo button:focus-visible{outline:2px solid #ebdf91}
+.cog-panel{background:#16241e;border:1px solid #375344;border-radius:8px;padding:14px;margin:16px 0}
+.cog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cog-badge{font-size:12px;padding:3px 8px;border-radius:12px}
+.cog-badge.good{background:#1e3c2b;color:#a8f0be;border:1px solid #2d6343}
+.cog-badge.bad{background:#3d1a21;color:#fca5a5;border:1px solid #6e2735}
+.cog-controls{display:flex;gap:10px;align-items:center}
+.cog-controls input[type=range]{flex:1;cursor:pointer}
+.cog-status{margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px}
+.cog-status.good{background:#102219;border-left:3px solid #48bb78;color:#d1fae5}
+.cog-status.bad{background:#261217;border-left:3px solid #f56565;color:#fecaca}
+.cog-status small{display:block;margin-top:4px;opacity:0.85}
+.word-group{margin:10px 0;background:#14201b;padding:10px;border-radius:6px;border:1px solid #2d3f35}
+.word-group small{color:#9cb5a6;display:block;margin:6px 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#1c2d25;border:1px solid #446152;border-radius:4px;color:#d3e3db;padding:4px 8px;font-size:12px;cursor:pointer}
+.chip:hover{background:#2c493a;border-color:#7eb196}
+.chip.sub{background:#16241e;border-color:#354c3f;color:#b2c5bc;font-size:11px}
+@@media(max-width:850px){.zoo main{grid-template-columns:1fr}.metrics{flex-wrap:wrap;gap:12px}.zoo{padding:12px}.zoo header{align-items:flex-start;gap:12px}.rooms{grid-template-columns:repeat(2,1fr)}}
 </style>
 @code {
     ZooSimulation simulation=null!;ZooWorld W=>simulation.World;Person? tracked;
@@ -123,6 +205,25 @@
     void Accept()=>Compare(()=>{if(tracked?.Books.ContainsKey(key)==true)ZooRules.Accept(tracked,key,Truth.True,W.Now);});
     void ChangeUnderstanding()=>Compare(()=>{if(tracked is not {} person||!person.Books.TryGetValue(key,out var book))throw new InvalidOperationException("此人尚未读到该文书。");person.Books[key]=book with{Understanding=Math.Clamp(understanding,0,100)};ZooRules.Accept(person,key,acceptance,W.Now);status="修改只作用于此人对该条文书的理解。";});
     void Cast()=>Compare(()=>{if(tracked!=null){W.Anomalies.QueueUtterance(tracked,utterance);status="Core已解析言灵。按脑内重选可立即提交，否则等待现有行动结束。";}});
+    void SetClarity(int val)
+    {
+        if(tracked!=null)
+        {
+            Compare(()=>{
+                ZooExperiment.SetCognitionAndMap(tracked,val,W.Now);
+                LoadMental(tracked.Self);
+                status=val<50?"已降低此人认知：脑内地图退化，出口通道已遗忘，无法寻路离园。":"已恢复此人认知：脑内地图完整，已回忆起出口通道。";
+            });
+        }
+    }
+    void OnCognitionSliderChanged(ChangeEventArgs e)
+    {
+        if(int.TryParse(e.Value?.ToString(),out var val))SetClarity(val);
+    }
+    void AppendScript(string text){script=string.IsNullOrWhiteSpace(script)?text:script+" "+text;}
+    void SetScript(string text){script=text;}
+    void AppendMentalTag(string tag){mentalTags=string.IsNullOrWhiteSpace(mentalTags)?tag:mentalTags+"\n"+tag;}
+    void SetUtterance(string u){utterance=u;}
     public void Dispose(){disposed=true;Stop();simulation?.Dispose();}
 }
 

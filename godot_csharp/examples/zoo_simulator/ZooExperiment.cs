@@ -45,4 +45,36 @@ public static class ZooExperiment
         ZooMinds.Decide(p);
         return string.Join("\n",p.Assessments.Select(a=>$"{(a.Forbidden?"禁止":"可选")} {a.Decision.Score,4} · {ZooWorld.Describe(a.Decision.Effect)} · {string.Join("；",a.Reasons)}"));
     }
+    public static void SetCognitionAndMap(Person p, int humanBelief, double time)
+    {
+        humanBelief = Math.Clamp(humanBelief, 0, 100);
+        Observation.Observe(p.Soul, new(p.Self.Name, p.Self.Kind)
+        {
+            Target = p.Self,
+            Source = ObservationSource.Introspection,
+            Time = time,
+            Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Z.Human, humanBelief)
+        });
+        var exitTruth = humanBelief < 50 ? Truth.False : Truth.True;
+        var exitProjections = p.Soul.World.Projections
+            .Where(pr => (pr.Kind == ProjectionKind.Boundary && (pr.Name.Contains("园外") || pr.Name.Contains("出口")))
+                      || (pr.Kind == ProjectionKind.Space && pr.Name == "园外"))
+            .ToArray();
+        foreach (var proj in exitProjections)
+        {
+            Observation.Observe(p.Soul, new(proj.Name, proj.Kind)
+            {
+                Target = proj,
+                Existence = exitTruth,
+                Source = exitTruth == Truth.True ? ObservationSource.Recall : ObservationSource.Corruption,
+                Time = time,
+                Details = exitTruth == Truth.True ? "认知清醒，回忆起出口通路" : "认知崩塌，遗忘动物园出口"
+            });
+        }
+    }
+    public static string CheckExitKnowledge(Person p)
+    {
+        var route = ZooMinds.Route(p.Soul.World, p.Self, "园外");
+        return route != null ? "出口路线清晰（能找到出口）" : "不知道怎么走到动物园出口（认知不足或已迷失）";
+    }
 }

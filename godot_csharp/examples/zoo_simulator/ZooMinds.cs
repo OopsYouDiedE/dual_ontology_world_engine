@@ -25,10 +25,10 @@ public static class ZooMinds
     public static string Ref(Projection p) => "@" + Quote(p.Name);
     public static string? Route(ProjectionWorld mind, Projection self, string destination, bool forbid = false)
     {
-        var target = mind.Projections.FirstOrDefault(p => p.Kind == ProjectionKind.Space && p.Name == destination);
+        var target = mind.Projections.FirstOrDefault(p => p.Kind == ProjectionKind.Space && p.Name == destination && p.Existence == Truth.True);
         var start = self.Parent;
         if (start is null || target is null || ReferenceEquals(start,target)) return null;
-        if(self.Value(Z.Role)==(int)Job.Red&&start.Name=="海洋馆"&&destination=="园外"&&mind.Projections.FirstOrDefault(p=>p.Name=="海洋馆员工出口") is {} staffExit)
+        if(self.Value(Z.Role)==(int)Job.Red&&start.Name=="海洋馆"&&destination=="园外"&&mind.Projections.FirstOrDefault(p=>p.Name=="海洋馆员工出口"&&p.Existence==Truth.True) is {} staffExit)
             return $"wait(3, sequence(require(all(tag_at_least($Actor, 岗位, 2), not(tag_at_least($Actor, 岗位, 3)))), travel({Ref(staffExit)})))";
         var queue = new Queue<(Projection Room, Projection? First)>();
         var seen = new HashSet<Projection> {start};
@@ -53,7 +53,7 @@ public static class ZooMinds
     }
     private static string? FullRoute(ProjectionWorld mind,Projection self,string destination)
     {
-        var target=mind.Projections.FirstOrDefault(p=>p.Name==destination&&p.Kind==ProjectionKind.Space);
+        var target=mind.Projections.FirstOrDefault(p=>p.Name==destination&&p.Kind==ProjectionKind.Space&&p.Existence==Truth.True);
         if(target is null||self.Parent is null||target==self.Parent)return null;
         var queue=new Queue<(Projection Room,List<Projection> Doors)>();queue.Enqueue((self.Parent,[]));
         var seen=new HashSet<Projection>{self.Parent};
