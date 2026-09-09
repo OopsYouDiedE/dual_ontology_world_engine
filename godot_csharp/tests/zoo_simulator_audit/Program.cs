@@ -173,13 +173,63 @@ Run("真实换衣诞生新黑衣，阴影按本地观察分类并可吞噬",()=>
 });
 Run("连续两天开放入园，红衣本人下班后再通过脑内决策返岗",()=>
 {
-    using var w=new ZooWorld(7,2,480,"standard");var red=w.People.Single(p=>p.Job==Job.Red);
+    using var w=new ZooWorld(7,2,480,"standard");var red=w.People.Single(p=>p.Body.TrueName=="红衣员工");
     w.Run(600);Check(red.Outcome=="正常离岗","红衣未正常下班");
     w.Run(1480);Check(red.Returns==1&&red.Outcome=="在园"&&ZooMinds.IsInside(red.Room?.TrueName),$"红衣未返岗：{red.Outcome} / {red.Room?.TrueName} / {red.CurrentAction}");
     var yesterday=w.People.Count;w.Run(1921);
     Check(w.DailyAdmissions.GetValueOrDefault(1)>=2&&w.People.Count>yesterday,"次日首批游客没有恢复");
     Check(w.People.Count(p=>p.Body.TrueName==red.Body.TrueName)==1,"复制新员工代替本人返岗");
     Check(w.Events.Any(e=>e.Contains("它抵达")),"它没有通过行动产生异常");
+});
+Run("低认知抵达狮区后恢复身份并回忆出口，不再来回折返",()=>
+{
+    using var w=World();var p=w.AddPerson(Job.Visitor,"恢复人物","狮子园区");w.Observe(p);
+    foreach(var clause in w.Rules.Clauses.Values.Where(c=>c.Section=="Visitor"))ZooRules.Read(p,clause,w.Now);
+    ZooExperiment.SetCognitionAndMap(p,30,w.Now);w.Anomalies.Tick();w.Observe(p);
+    w.Replan(p);w.Run(540);
+    Check(p.Self.Value(Z.Human)>=85,"没有完成身份恢复");
+    Check(p.Outcome=="成功逃离","获救后未能离园："+p.Outcome+" / "+p.CurrentAction);
+    Check(w.Travels.Count(t=>t.Person==p.Body.TrueName&&t.To=="狮子园区")<2,"仍然反复返回狮区");
+});
+Run("FORBID 穿透等待、组合动作和目标槽位，权重不能覆盖禁止",()=>
+{
+    using var w=World();var p=Guest(w);
+    var target=p.Soul.World.Projections.First(v=>v.Name=="狮子园区");
+    var source=Observation.Observe(p.Soul,new("禁令实验",ProjectionKind.Concept){Existence=Truth.True,Rules=[
+        new(new Condition.Constant(Truth.True),RuleMode.Prefer,new Effect.Sequence([new Effect.Wait(9,new Effect.Act(ActionOp.Inspect,target))]),1000,Truth.True),
+        new(new Condition.Constant(Truth.True),RuleMode.Forbid,new Effect.Act(ActionOp.Inspect,new Noun.Slot(RuleSlot.Target)),1,Truth.True)]});
+    Check(DecisionSystem.Assess(p.Soul.World,p.Self).Single(a=>a.Decision.Basis==source).Forbidden,"组合动作绕过禁止");
+});
+Run("目的地禁止覆盖多段路线中的最后一扇门",()=>
+{
+    using var w=World();var p=Guest(w,"主步道");
+    ZooRules.Read(p,w.Rules.Publish("Custom.Forbid","当 总是 时 禁止 前往:园外 权重 1"),w.Now);
+    var decoder=ZooExperiment.Decoder(p);
+    ZooExperiment.SetBelief(p,p.Self,"RULE true() => PREFER sequence(wait(4, travel(@\"主步道 → 入口\")), wait(2, travel(@\"入口 → 园外\")))",w.Now);
+    ZooMinds.Decide(p);
+    Check(p.Assessments.Any(a=>a.Forbidden&&a.Decision.Basis==p.Self),"多段路线绕过目的地禁止");
+});
+Run("四种语言的可调用词汇和全部原始规则可无损往返",()=>
+{
+    var words=ZooMinds.FactNames.Concat(ZooMinds.Actions.Keys).Concat(ZooWorld.RoomNames).Concat(Z.All.Select(t=>t.Name)).Concat(Z.Relations.Select(r=>r.Name));
+    foreach(var language in Enum.GetValues<zoo_web.Lang>())
+    {
+        zoo_web.I18n.Current=language;
+        foreach(var word in words)Check(zoo_web.Vocabulary.ToCanonical(zoo_web.Vocabulary.Display(word))==word,"词汇不能往返："+word+" / "+language);
+        foreach(var clause in new ZooRules().Clauses.Values)
+        {
+            var restored=zoo_web.Vocabulary.ToCanonical(zoo_web.Vocabulary.Display(clause.Script));
+            Check(restored==clause.Script,"规则不能往返："+clause.Key);ZooRules.Parse(restored);
+        }
+        var ast="RULE true() => forbid sequence(require(true()), wait(2, set($Actor, 人类信念, 10)))";
+        Check(zoo_web.Vocabulary.ToCanonical(zoo_web.Vocabulary.Display(ast))==ast,"AST往返失败");
+    }
+});
+Run("默认客流配置岗位冗余并覆盖主步道",()=>
+{
+    using var w=new ZooWorld(7,120);
+    Check(w.People.Count(p=>p.Job is not (Job.Visitor or Job.Black))==19,"正式员工数量不匹配");
+    Check(w.People.Count(p=>p.Room==w.Rooms["主步道"]&&p.Job is Job.Blue or Job.Guard)==4,"步道没有救援覆盖");
 });
 Console.WriteLine($"审计：{passed}通过，{failed}失败");return failed==0?0:1;
 

@@ -218,7 +218,7 @@ public sealed class ZooAnomalies
             if(p.Body.Value(Z.Rabbit)>40&&p.Job is Job.Blue or Job.Guard)
             {BecomeBlack(p,"正常白狮咬伤但存活");p.Body.Set(Z.Health,Math.Max(1,p.Body.Value(Z.Health)-20));}
             // 吼叫驱逐关注，不让纸片或区域自动治愈已经发生的身体转化。
-            if(p.Body.Value(Z.Rabbit)>0||p.Body.Value(Z.Attention)>0||p.Body.Value(Z.Symptoms)>0)
+            if(p.Body.Value(Z.Rabbit)>0||p.Body.Value(Z.Attention)>0||p.Body.Value(Z.Symptoms)>0||p.Self.Value(Z.Human)<85)
             {p.Body.Set(Z.Attention,0,false);p.Body.Set(new Tag("获救"),1);p.Body.Set(new Tag("兔化稳定"),1);}
         }
         if(rabbit.Get<SpatialProperty>()!.Space==room&&rabbit.Value(Z.Paper)==0)rabbit.Set(Z.Health,0);
@@ -279,7 +279,10 @@ public sealed class ZooAnomalies
                 if(room.Value(Z.Food)>0||p.Body.Value(Z.Blood)>0){p.Body.Set(Z.Blood,0);room.Set(Z.Food,0);p.Body.Set(new Tag("兔化稳定"),0);p.Body.Set(Z.Rabbit,p.Body.Value(Z.Rabbit)+8,false);}break;
             case Deed.WearBlack:
                 if(room.TrueName=="海洋馆门口")BecomeBlack(p,"采信门口方案并实际换上黑衣");break;
-            case Deed.Reaffirm:ReconsiderByObservation(p,Math.Min(100,p.Self.Value(Z.Human)+12),"回忆人类的身体和自身经历");break;
+            case Deed.Reaffirm:
+                ReconsiderByObservation(p,Math.Min(100,p.Self.Value(Z.Human)+12),"回忆人类的身体和自身经历");
+                if(p.Self.Value(Z.Human)>=50)ZooExperiment.RecallExitMap(p,w.Now);
+                break;
             case Deed.ElephantIdentity:
                 Observation.Observe(p.Soul,new("我是大象",ProjectionKind.Concept){Source=ObservationSource.Inference,Time=w.Now,Details="误认自身为大象"});ReconsiderByObservation(p,Math.Max(0,p.Self.Value(Z.Human)-10),"错误自我身份");break;
             case Deed.GoatIdentity:ReconsiderByObservation(p,Math.Max(0,p.Self.Value(Z.Human)-12),"采信纸条中的山羊身份");break;

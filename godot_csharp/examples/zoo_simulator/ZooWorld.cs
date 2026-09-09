@@ -63,6 +63,17 @@ public sealed class ZooWorld : IDisposable
         AddPerson(Job.Blue,"蓝衣救援员","狮子园区");AddPerson(Job.Blue,"蓝衣饲养员","兔子园区");
         AddPerson(Job.Guard,"大象保安","安保室");AddPerson(Job.Director,"园长","园长办公室");
         AddPerson(Job.Red,"红衣员工","水母区");AddPerson(Job.Black,"黑衣人类","海洋馆门口");
+        // 首批客流同时决定岗位冗余；黑衣不计入正式救援编制。
+        var teams=(int)Math.Ceiling(visitors/60d);
+        for(var team=1;team<=teams;team++)
+        {
+            AddPerson(Job.Blue,$"入口服务员{team}","入口");
+            AddPerson(Job.Blue,$"步道救援员{team}","主步道");
+            AddPerson(Job.Blue,$"猿区服务员{team}","猿猴园区");
+            AddPerson(Job.Blue,$"象区服务员{team}","大象园区");
+            AddPerson(Job.Guard,$"步道保安{team}","主步道");
+            AddPerson(Job.Red,$"海馆服务员{team}","海洋馆");
+        }
         if(Open){Admit(visitors);lastOpeningDay=(int)(Now/1440);}
         Session.CTB.Schedule(1,Tick);Session.CTB.Schedule(15,ArrivalTick);
     }
@@ -99,7 +110,8 @@ public sealed class ZooWorld : IDisposable
         var local=Runtime.Observe(soul,[Views[Rooms[room]],view],Now);
         var self=local[1];
         Observation.Observe(soul,new(self.Name,self.Kind){Target=self,Source=ObservationSource.Introspection,Time=Now,
-            Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Human,job==Job.Black?65:100).Add(Tags.Cooperation,50)});
+            Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Human,job==Job.Black?65:100).Add(Tags.Cooperation,50),
+            AddRelations=(job is Job.Blue or Job.Guard) ? [(new RelationTag("岗位地点"),local[0])] : []});
         Observation.Observe(soul,new("人类",ProjectionKind.Concept){Source=ObservationSource.Recall,Existence=Truth.True,Time=Now});
         Observation.Observe(soul,new("手表",ProjectionKind.Object){Source=ObservationSource.Perception,Existence=Truth.True,Time=Now});
         Observation.Observe(soul,new("当前判断",ProjectionKind.Concept){Source=ObservationSource.Inference,Existence=Truth.True,Time=Now});

@@ -77,4 +77,11 @@ public static class ZooExperiment
         var route = ZooMinds.Route(p.Soul.World, p.Self, "园外");
         return route != null ? "出口路线清晰（能找到出口）" : "不知道怎么走到动物园出口（认知不足或已迷失）";
     }
+    public static void RecallExitMap(Person p,double time)
+    {
+        foreach(var projection in p.Soul.World.Projections.Where(pr=>pr.Existence==Truth.False &&
+            p.Soul.World.History.Any(h=>h.Target==pr && h.Details=="认知崩塌，遗忘动物园出口")).ToArray())
+            Observation.Observe(p.Soul,new(projection.Name,projection.Kind){Target=projection,Existence=Truth.True,
+                Source=ObservationSource.Recall,Time=time,Details="恢复身份后回忆已有出口记忆"});
+    }
 }

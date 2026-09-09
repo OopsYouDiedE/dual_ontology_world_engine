@@ -39,15 +39,37 @@ public static class DecisionSystem
             if(candidate.Social!=0)reasons.Add($"社交意愿 {candidate.Social:+0;-0;0}");
             foreach (var (basis, rule) in rules)
             {
+                if (rule.Mode == RuleMode.Forbid)
+                {
+                    if (Contexts(world, actor, rule).Any(context =>
+                        Ast.Evaluate(rule.Condition, context) == Truth.True &&
+                        ContainsForbidden(candidate.Effect, Ast.Bind(rule.Effect, context), candidate.Context)))
+                    { forbidden = true; reasons.Add($"{basis.Name}：禁止"); }
+                    continue;
+                }
                 if (Ast.Nouns(rule).OfType<Noun.Slot>().Any(n => candidate.Context.Resolve(n) is null) || Ast.Evaluate(rule.Condition, candidate.Context) != Truth.True) continue;
                 var matches = Ast.Equivalent(Ast.Bind(rule.Effect, candidate.Context), candidate.Effect);
-                if (rule.Mode == RuleMode.Forbid && matches) { forbidden = true; reasons.Add($"{basis.Name}：禁止"); continue; }
                 if (matches) { score += rule.Weight; reasons.Add($"{basis.Name}：+{rule.Weight}"); }
                 else if (rule.Mode == RuleMode.Require) { score -= rule.Weight; reasons.Add($"{basis.Name}：未满足要求 -{rule.Weight}"); }
             }
             assessments.Add(new(new(candidate.Effect,score,candidate.Basis),forbidden,reasons));
         }
         return assessments.OrderBy(a=>a.Forbidden).ThenByDescending(a=>a.Decision.Score).ToArray();
+    }
+
+    // 禁令约束行为本身，等待和外层组合不能绕过；传话中的请求不等于已经执行。
+    private static bool ContainsForbidden(Effect candidate, Effect forbidden, ActionContext context)
+    {
+        if (forbidden is Effect.Wait wait) return ContainsForbidden(candidate, wait.Body, context);
+        if (Ast.Equivalent(candidate, forbidden)) return true;
+        return candidate switch
+        {
+            Effect.Wait delayed => ContainsForbidden(delayed.Body, forbidden, context),
+            Effect.Sequence sequence => sequence.Items.Any(item => ContainsForbidden(item, forbidden, context)),
+            Effect.When conditional => Ast.Evaluate(conditional.Condition, context) != Truth.False &&
+                ContainsForbidden(conditional.Body, forbidden, context),
+            _ => false
+        };
     }
 
     private static IEnumerable<ActionContext> Contexts(ProjectionWorld world, Projection actor, Rule rule)

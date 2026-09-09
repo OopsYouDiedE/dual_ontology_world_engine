@@ -37,7 +37,7 @@ public static class ZooMinds
         foreach(var door in mind.Projections.Where(p => p.Kind == ProjectionKind.Boundary && p.Existence == Truth.True && p.Value(Tags.Locked) == 0 && (p.Value(new Tag("员工专用"))==0 || self.Value(Z.Role)==(int)Job.Red) && p.Relations.Contains((Z.From,node.Room))))
         {
             var next = door.Relations.FirstOrDefault(r => r.Relation == Z.Leads).Target;
-            if(next is null || !seen.Add(next)) continue;
+            if(next is null || next.Existence!=Truth.True || !seen.Add(next)) continue;
             var first = node.First ?? door;
             if(ReferenceEquals(next,target))
             {
@@ -58,10 +58,10 @@ public static class ZooMinds
         var queue=new Queue<(Projection Room,List<Projection> Doors)>();queue.Enqueue((self.Parent,[]));
         var seen=new HashSet<Projection>{self.Parent};
         while(queue.TryDequeue(out var node))
-        foreach(var door in mind.Projections.Where(p=>p.Kind==ProjectionKind.Boundary&&p.Value(Tags.Locked)==0&&p.Relations.Contains((Z.From,node.Room))))
+        foreach(var door in mind.Projections.Where(p=>p.Kind==ProjectionKind.Boundary&&p.Existence==Truth.True&&p.Value(Tags.Locked)==0&&(p.Value(new Tag("员工专用"))==0||self.Value(Z.Role)==(int)Job.Red)&&p.Relations.Contains((Z.From,node.Room))))
         {
             var next=door.Relations.FirstOrDefault(r=>r.Relation==Z.Leads).Target;
-            if(next is null||!seen.Add(next))continue;
+            if(next is null||next.Existence!=Truth.True||!seen.Add(next))continue;
             List<Projection> path=[..node.Doors,door];
             if(next==target)return "sequence("+string.Join(", ",path.Select(d=>$"wait({Math.Max(1,d.Value(Z.Minutes))}, travel({Ref(d)}))"))+")";
             queue.Enqueue((next,path));
@@ -125,17 +125,22 @@ public static class ZooMinds
             var compiled = ImmutableArray.CreateBuilder<Rule>();
             foreach(var instruction in ZooRules.Parse(book.Text.Script))
             {
-                var action = ActionText(instruction.Action,mind,self,instruction.Mode==RuleMode.Forbid);
-                if(action is null) continue;
-                var conditions = instruction.Condition.Split('&').Select(term=>term.StartsWith('!')
-                    ? $"not(tag_at_least({Ref(facts)}, {term[1..]}, 1))" : $"tag_at_least({Ref(facts)}, {term}, 1)");
-                // 空间作用域也是条件树的一部分，馆内不沿用馆外告示。
-                var scope = Scope(book.Text.Section,self);
-                var text = $"RULE all({(scope?"true()":"false()")}, {string.Join(", ",conditions)}) => {instruction.Mode} {action}";
-                var rules = decoder.DecodeRules(text).Select(r=>r with {Acceptance=book.Acceptance,Weight=Math.Max(1,instruction.Weight*book.Understanding/100)}).ToArray();
-                compiled.AddRange(rules);
-                if(rules.Any(r=>r.Acceptance==Truth.True && Ast.Evaluate(r.Condition,new(self,Scene:self.Parent))==Truth.True))
-                    person.DecisionTrace.Add($"{book.Text.Key} → {instruction.Condition} → {instruction.Mode} {instruction.Action} ({rules[0].Weight})");
+                var actions = instruction.Mode==RuleMode.Forbid && instruction.Action.StartsWith("前往:")
+                    ? mind.Projections.Where(p=>p.Kind==ProjectionKind.Boundary && p.Relations.Any(r=>r.Relation==Z.Leads && r.Target.Name==instruction.Action[3..]))
+                        .Select(p=>$"travel({Ref(p)})").ToArray()
+                    : ActionText(instruction.Action,mind,self,instruction.Mode==RuleMode.Forbid) is {} actionText ? [actionText] : Array.Empty<string>();
+                foreach(var action in actions)
+                {
+                    var conditions = instruction.Condition.Split('&').Select(term=>term.StartsWith('!')
+                        ? $"not(tag_at_least({Ref(facts)}, {term[1..]}, 1))" : $"tag_at_least({Ref(facts)}, {term}, 1)");
+                    // 空间作用域也是条件树的一部分，馆内不沿用馆外告示。
+                    var scope = Scope(book.Text.Section,self);
+                    var text = $"RULE all({(scope?"true()":"false()")}, {string.Join(", ",conditions)}) => {instruction.Mode} {action}";
+                    var rules = decoder.DecodeRules(text).Select(r=>r with {Acceptance=book.Acceptance,Weight=Math.Max(1,instruction.Weight*book.Understanding/100)}).ToArray();
+                    compiled.AddRange(rules);
+                    if(rules.Any(r=>r.Acceptance==Truth.True && Ast.Evaluate(r.Condition,new(self,Scene:self.Parent))==Truth.True))
+                        person.DecisionTrace.Add($"{book.Text.Key} → {instruction.Condition} → {instruction.Mode} {instruction.Action} ({rules[0].Weight})");
+                }
             }
             Observation.Observe(person.Soul,new(book.Projection.Name,book.Projection.Kind) {Target=book.Projection,Source=ObservationSource.Inference,Time=clock,Rules=compiled.ToImmutable()});
         }
@@ -149,6 +154,9 @@ public static class ZooMinds
         var room = self.Parent?.Name ?? "";
         var role=(Job)self.Value(Z.Role);
         var elapsed = self.Value(new Tag("入园时长"));
+        // 抵达避险地后继续处理身份动摇，避免目标完成后立刻被游览计划带走。
+        if(self.Value(Z.Human)<85 && (room=="狮子园区" || IsInside(room))) Want("坚定人类",200);
+        if(room=="狮子园区" && factsValues["危险"] && !factsValues["获救"]) Want("休息",180);
         if(role==Job.Visitor)
         {
             var history = mind.History.Where(h=>ReferenceEquals(h.Target,self)&&h.Details.StartsWith("游览完成:")).ToArray();
@@ -177,6 +185,9 @@ public static class ZooMinds
             if(role==Job.Red){if(room=="园外")Want("前往:海洋馆",250);else if(factsValues["上班"]){Want("前往:"+(room=="客房"?"鲸鱼区":room=="鲸鱼区"?"水母区":"客房"),65);}else Want("前往:海洋馆",60);}
             if(role is Job.Blue or Job.Guard && clock%1440 is >=60 and <360) Want("前往:内部宿舍",35);
             if(role==Job.Director) Want("前往:园长办公室",35);
+            var duty=self.Relations.FirstOrDefault(r=>r.Relation==new RelationTag("岗位地点")).Target;
+            if(role is Job.Blue or Job.Guard && duty is not null && self.Parent!=duty && clock%1440 is >=480 and <960)
+                Want("前往:"+duty.Name,55);
             if(factsValues["停电"] && role!=Job.Director) Want("维修",170);
         }
         Want("休息",8); Want("阅读",self.Value(new Tag("未读文书"))>0?120:1);
@@ -212,7 +223,7 @@ public static class ZooMinds
         Set("总是",true); Set("出逃兔子",Local(new Tag("出逃兔子")));Set("双路",Local(Z.Split));Set("象异常",Local(Z.Anomaly));
         Set("独处",peers.Length==0);Set("无人",peers.Length==0);Set("兔区",name=="兔子园区");Set("馆外",name=="海洋馆门口");
         Set("笑声",Local(Z.Laugh));Set("有地图",self.Value(Z.Map)>0);Set("有纸",self.Value(Z.Paper)>0);
-        Set("迷路",V("迷路")>0);Set("危险",Local(Z.Danger)||self.Value(Z.Symptoms)>0||self.Value(Z.Human)<65);
+        Set("迷路",V("迷路")>0);Set("危险",Local(Z.Danger)||(self.Value(Z.Symptoms)>0&&V("兔化稳定")==0)||self.Value(Z.Human)<65);
         Set("获救",V("获救")>0);Set("多余白狮",room?.Value(Z.LionCount)>4);Set("成年",self.Value(Z.Age)>=18);
         Set("玩偶过期",self.Value(Z.Age)>12&&self.Value(Z.Toy)>0&&V("玩偶持有分钟")>=43200);
         Set("兔耳入象区",name=="大象园区"&&peers.Any(p=>p.Value(Z.RabbitEars)>0));Set("反复走散",V("走散次数")>1);

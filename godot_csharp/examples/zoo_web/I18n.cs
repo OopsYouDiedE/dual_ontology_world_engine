@@ -10,11 +10,17 @@ public enum Lang
 
 public static class I18n
 {
-    public static Lang Current { get; set; } = Lang.En;
+    public static Lang Current { get; set; } = Lang.ZhHans;
 
     private static readonly Dictionary<string, (string en, string ja, string zhHans, string zhHant)> Dict = new()
     {
         // Header & Nav
+        ["StaffCount"] = ("Active staff", "在園職員", "在园员工", "在園員工"),
+        ["Job.Blue"] = ("Blue-coat staff", "青服職員", "蓝衣员工", "藍衣員工"),
+        ["Job.Red"] = ("Red-coat staff", "赤服職員", "红衣员工", "紅衣員工"),
+        ["Job.Black"] = ("Black-coat", "黒服", "黑衣人", "黑衣人"),
+        ["Job.Guard"] = ("Guard", "警備員", "保安", "保安"),
+        ["Job.Director"] = ("Director", "園長", "园长", "園長"),
         ["AppTitle"] = ("Zoo · Cognition & Rules Lab", "動物園 · 認知とルール実験室", "动物园 · 认知与规则实验室", "動物園 · 認知與規則實驗室"),
         ["Subtitle"] = ("ESSENCE / PROJECTION · C# CORE", "ESSENCE / PROJECTION · C# CORE", "ESSENCE / PROJECTION · C# CORE", "ESSENCE / PROJECTION · C# CORE"),
         ["MainHeading"] = ("Zoo Rules & Anomalies", "動物園のルール奇譚", "动物园规则怪谈", "動物園規則怪談"),
@@ -173,7 +179,7 @@ public static class I18n
         ["ActionFakeSafe"] = ("🌳 Fabricate Safety (clears danger, marks shade)", "🌳 安全の錯覚を植え付ける（危険解除、木陰を想起）", "🌳 制造安全假象（清除危险，标记阴凉树荫）", "🌳 製造安全假象（清除危險，標記陰涼樹蔭）"),
         ["ActionBlockDoor"] = ("🚫 Block Passage in Mind (make them think door is impassable/gone)", "🚫 脳内で通路を封鎖（通行不可または消失と錯覚）", "🚫 脑内封死此门（误以为不通或不存在）", "🚫 腦內封死此門（誤以為不通或不存在）"),
         ["ActionUnblockDoor"] = ("🔓 Reopen Passage (remind them path is clear)", "🔓 通路を想起させる（通路が開通していると認識）", "🔓 确认通路（重新回忆起此门通畅）", "🔓 確認通路（重新回憶起此門通暢）"),
-        ["ActionRabbitSuggest"] = ("🐰 Suggest Rabbit (Identity drops to 10%, lose control)", "🐰 ウサギ化の暗示（人間性を10%に低下、衝動増大）", "🐰 暗示兔化（人类信念降至10%，丧失自制）", "🐰 暗示兔化（人類信念降至10%，喪失自制）"),
+        ["ActionRabbitSuggest"] = ("🐰 Believe body is 80% rabbit", "🐰 肉体のウサギ化を80%と認識", "🐰 暗示身体兔化80%", "🐰 暗示身體兔化80%"),
         ["ActionHumanAffirm"] = ("🧑 Affirm Human Identity (Identity restored to 100%)", "🧑 人間性の再強化（自己信念を100%に回復）", "🧑 坚定人类认同（信念恢复至100%）", "🧑 堅定人類認同（信念恢復至100%）"),
         ["ActionForget"] = ("❌ Forget Object (erase from mind)", "❌ 忘却させる（脳内から抹消）", "❌ 遗忘此对象（从脑海中抹去）", "❌ 遺忘此對象（從腦海中抹去）"),
         ["ActionCreateHallucination"] = ("✨ Create Hallucination (fabricate new object)", "✨ 幻覚を捏造（存在しないものを創造）", "✨ 新建幻觉对象（凭空捏造）", "✨ 新建幻覺對象（憑空捏造）"),
@@ -287,7 +293,7 @@ public static class I18n
             "海洋馆" => T("Room.Aquarium"),
             "园外" => T("Room.Outside"),
             "水母区" => T("Room.Jellyfish"),
-            _ => name
+            _ => Vocabulary.Display(name)
         };
     }
 
@@ -298,6 +304,7 @@ public static class I18n
         return str switch
         {
             "Visitor" or "游客" => T("Job.Visitor"),
+            "Blue" or "Red" or "Black" or "Guard" or "Director" => T("Job."+str),
             "Employee" or "员工" => T("Job.Employee"),
             "Security" or "保安" => T("Job.Security"),
             _ => str ?? ""

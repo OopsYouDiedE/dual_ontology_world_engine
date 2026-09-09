@@ -24,10 +24,10 @@
     </header>
 
     <nav class="sim-nav">
-        <button @onclick="() => Advance(10)">@I18n.T("Adv10Min")</button>
-        <button @onclick="() => Advance(60)">@I18n.T("Adv1Hour")</button>
+        <button disabled="@busy" @onclick="() => Advance(10)">@I18n.T("Adv10Min")</button>
+        <button disabled="@busy" @onclick="() => Advance(60)">@I18n.T("Adv1Hour")</button>
         <button @onclick="Toggle">@(playing || busy ? I18n.T("Pause") : I18n.T("ContinuousRun"))</button>
-        <button @onclick="() => Advance((Math.Floor(W.Now / 1440) + 1) * 1440 + 480 - W.Now)">@I18n.T("AdvNextDay")</button>
+        <button disabled="@busy" @onclick="() => Advance((Math.Floor(W.Now / 1440) + 1) * 1440 + 480 - W.Now)">@I18n.T("AdvNextDay")</button>
         <label>@I18n.T("InitialVisitors") <input type="number" min="0" max="500" @bind="visitors" /></label>
         <label>@I18n.T("Seed") <input type="number" @bind="seed" /></label>
         <button @onclick="Reset">@I18n.T("RebuildWorld")</button>
@@ -59,10 +59,12 @@
                 <span>@I18n.T("CurrentVisitors") <b>@W.InPark</b></span>
                 <span>@I18n.T("PeakVisitors") <b>@W.PeakVisitors</b></span>
                 <span>@I18n.T("Escaped") <b>@W.People.Count(p => p.Outcome == "成功逃离")</b></span>
+                <span>@I18n.T("StaffCount") <b>@W.People.Count(p=>p.Job is not (Job.Visitor or Job.Black) && p.Outcome=="在园")</b></span>
                 <span>@I18n.T("ActiveRules") <b>@W.Rules.Clauses.Count</b></span>
                 <span>@I18n.T("WalkingSpeed") <b>@I18n.T("SpeedUnit")</b></span>
             </div>
 
+            <p class="outcome-summary">@string.Join(" · ", W.People.Where(p=>p.Job is not (Job.Visitor or Job.Black) && p.Outcome=="在园").GroupBy(p=>p.Job).Select(g=>$"{I18n.TJob(g.Key)} {g.Count()}"))</p>
             <p class="outcome-summary">@string.Join("；", W.People.GroupBy(p => p.Outcome).Select(g => $"{I18n.TOutcome(g.Key)} {I18n.T("PeopleCount", g.Count())}"))</p>
 
             <details class="section-details">
@@ -75,7 +77,7 @@
                 <summary>@I18n.T("ItsBehavior")</summary>
                 <p>@I18n.T("ItsLocation")<b>@I18n.TRoom(W.Anomalies.ItsLocation)</b>；@I18n.T("ItsNextAction")@W.Anomalies.ItsIntention</p>
                 <p>@W.Anomalies.ItsReason</p>
-                <p>@I18n.T("ItsNextThink", W.Anomalies.NextAnomaly)</p>
+                <p>@I18n.T("ItsNextThink", Math.Max(0, W.Anomalies.NextAnomaly - W.Now))</p>
                 <details>
                     <summary>@I18n.T("ItsClassificationLog")</summary>
                     <div class="log" style="max-height:160px;">
@@ -135,7 +137,7 @@
 
                     <p class="original">@I18n.T("OriginalText")@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
                     <label>@I18n.T("RuleCode")<input class="wide" aria-label="Rule Key" @bind="key" /></label>
-                    <label>@I18n.T("RuleScript")<textarea aria-label="Rule Script" @bind="script" style="min-height:90px;"></textarea></label>
+                    <label>@I18n.T("RuleScript")<textarea aria-label="Rule Script" @bind="scriptDisplay" style="min-height:90px;"></textarea></label>
 
                     <div class="word-group">
                         <small>@I18n.T("ClickRuleSkeleton")</small>
@@ -149,14 +151,14 @@
                         <div class="chips">
                             @foreach (var fact in new[] { "总是", "危险", "兔区", "象区", "狮区", "馆内", "迷路", "成年", "有地图", "有纸", "有兔玩偶", "出逃兔子" })
                             {
-                                <button type="button" class="chip sub" @onclick="() => AppendScript(fact)">@fact</button>
+                                <button type="button" class="chip sub" @onclick="() => AppendScript(fact)">@Vocabulary.Display(fact)</button>
                             }
                         </div>
                         <small>@I18n.T("ClickCommonAction")</small>
                         <div class="chips">
                             @foreach (var act in new[] { "前往:入口", "前往:主步道", "前往:狮子园区", "前往:大象园区", "前往:饮料店", "前往:海洋馆", "前往:园外", "游览", "休息", "阅读", "撕地图", "喂兔子", "买兔玩偶", "换黑衣", "求助", "坚定人类" })
                             {
-                                <button type="button" class="chip sub" @onclick="() => AppendScript(act)">@act</button>
+                                <button type="button" class="chip sub" @onclick="() => AppendScript(act)">@Vocabulary.Display(act)</button>
                             }
                         </div>
                     </div>
@@ -194,7 +196,7 @@
                                 {
                                     <details>
                                         <summary>@book.Text.Key · @(book.Acceptance == Truth.True ? I18n.T("TruthTrue") : book.Acceptance == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown")) · @I18n.T("UnderstandingLevel") @book.Understanding%</summary>
-                                        <p>@book.Text.Script</p>
+                                        <p>@Vocabulary.Display(book.Text.Script)</p>
                                     </details>
                                 }
                             </div>
@@ -207,14 +209,14 @@
                     <p>@I18n.T("UtteranceDesc")</p>
                     
                     <label>@I18n.T("UtteranceAst")
-                        <textarea aria-label="Utterance AST" @bind="utterance" style="min-height:90px;"></textarea>
+                        <textarea aria-label="Utterance AST" @bind="utteranceDisplay" style="min-height:90px;"></textarea>
                     </label>
 
                     <div class="word-group">
                         <small>@I18n.T("ClickUtteranceTpl")</small>
                         <div class="chips">
                             <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 树荫, 0, 15)")'>@I18n.T("Tpl1")</button>
-                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 危险, 1, 20)")'>@I18n.T("Tpl2")</button>
+                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 危险征兆, 1, 20)")'>@I18n.T("Tpl2")</button>
                             <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Actor, 迷路, 1, 15)")'>@I18n.T("Tpl3")</button>
                         </div>
                     </div>
@@ -224,9 +226,9 @@
                         <small style="align-self:center;">@I18n.T("RemainingMana", tracked?.Body.Value(Z.Mana) ?? 0)</small>
                     </div>
 
-                    <div style="margin-top: 16px; padding: 10px; background: #13201b; border-radius: 6px; border: 1px solid #2d4237;">
+                    <div style="margin-top: 16px; padding: 10px; background: var(--accent-green-bg); border-radius: 6px; border: 1px solid var(--border-medium);">
                         <strong>@I18n.T("RoomTempEffects")</strong>
-                        <p style="margin:6px 0 0 0; color:#d1fae5;">
+                        <p style="margin:6px 0 0 0; color:var(--text-primary);">
                             @string.Join("；", tracked?.Room?.Get<TemporaryStateProperty>()?.Active.Select(l => $"{l.Tag.Name}={l.Value} ({l.ExpiresAt:F1})") ?? [I18n.T("NoTempEffects")])
                         </p>
                     </div>
@@ -275,8 +277,8 @@
                                     <h3 class="col-title mind">@I18n.T("SubjectiveMind")</h3>
                                     <p>@I18n.T("HumanBelief")<b>@person.Self.Value(Z.Human)%</b></p>
                                     <p>@I18n.T("BelievedLocation")<b>@I18n.TRoom(person.Self.Parent?.Name)</b></p>
-                                    <p>@I18n.T("OngoingAction")<b>@person.CurrentAction</b></p>
-                                    <p>@I18n.T("LastResult")<b>@person.LastActionResult</b></p>
+                                    <p>@I18n.T("OngoingAction")<b>@Vocabulary.Display(person.CurrentAction)</b></p>
+                                    <p>@I18n.T("LastResult")<b>@Vocabulary.Display(person.LastActionResult)</b></p>
                                 </div>
                             </div>
 
@@ -318,7 +320,7 @@
 
                             <!-- 分类筛选器 -->
                             <div class="filter-bar">
-                                <small style="display:block;margin-bottom:4px;color:#9cb5a6;">@I18n.T("SelectMemoryType")</small>
+                                <small style="display:block;margin-bottom:4px;color:var(--text-secondary);">@I18n.T("SelectMemoryType")</small>
                                 <div class="chips">
                                     <button type="button" class="chip @(mentalFilter == "All" ? "active" : "")" @onclick='() => SetMentalFilter("All")'>@I18n.T("AllMemories", person.Soul.World.Projections.Length)</button>
                                     <button type="button" class="chip @(mentalFilter == "Space" ? "active" : "")" @onclick='() => SetMentalFilter("Space")'>@I18n.T("FilterSpace")</button>
@@ -348,7 +350,7 @@
                                 <!-- 场景化一键干预动作卡片 -->
                                 <div class="quick-intervene-box">
                                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <strong style="color:#d9ecbc;">@I18n.T("CurrentSelected")@currentTarget.Name <small style="color:#8ea899;">(@currentTarget.Kind)</small></strong>
+                                        <strong style="color:var(--text-primary);">@I18n.T("CurrentSelected")@currentTarget.Name <small style="color:var(--text-secondary);">(@currentTarget.Kind)</small></strong>
                                         <span class="badge @(currentTarget.Existence == Truth.True ? "good" : "bad")">
                                             @(currentTarget.Existence == Truth.True ? I18n.T("ExistsInMind") : currentTarget.Existence == Truth.False ? I18n.T("NotExistsInMind") : I18n.T("DoubtInMind"))
                                         </span>
@@ -410,35 +412,35 @@
                                                 <option value="-1">@I18n.T("UnknownParent")</option>
                                                 @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)).Where(item => item.v != mental))
                                                 {
-                                                    <option value="@item.i">@item.v.Name</option>
+                                                    <option value="@item.i">@Vocabulary.Display(item.v.Name)</option>
                                                 }
                                             </select>
                                         </label>
 
                                         <label style="margin-top:8px;display:block;">@I18n.T("ParamTags")
-                                            <textarea aria-label="Mental Tags" @bind="mentalTags" style="min-height:75px;"></textarea>
+                                            <textarea aria-label="Mental Tags" @bind="mentalTagsDisplay" style="min-height:75px;"></textarea>
                                         </label>
 
                                         <div class="word-group">
                                             <small>@I18n.T("ClickAppendTag")</small>
                                             <div class="chips">
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=100")'>人类信念=100</button>
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=20")'>人类信念=20</button>
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("危险征兆=1")'>危险征兆=1</button>
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("身体兔化=80")'>身体兔化=80</button>
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("迷路=1")'>迷路=1</button>
-                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("树荫=1")'>树荫=1</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=100")'>@Vocabulary.Display("人类信念=100")</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=20")'>@Vocabulary.Display("人类信念=20")</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("危险征兆=1")'>@Vocabulary.Display("危险征兆=1")</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("兔化=80")'>@Vocabulary.Display("兔化=80")</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("迷路=1")'>@Vocabulary.Display("迷路=1")</button>
+                                                <button type="button" class="chip" @onclick='() => AppendMentalTag("树荫=1")'>@Vocabulary.Display("树荫=1")</button>
                                             </div>
                                         </div>
 
                                         <details style="margin:8px 0;">
                                             <summary>@I18n.T("EditTopology")</summary>
                                             <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;">
-                                                <input aria-label="Relation Name" @bind="relationName" placeholder="关系名" style="width:100px;" />
+                                                <input aria-label="Relation Name" @bind="relationNameDisplay" placeholder="关系名" style="width:100px;" />
                                                 <select @bind="relationOtherIndex">
                                                     @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
                                                     {
-                                                        <option value="@item.i">@item.v.Name</option>
+                                                        <option value="@item.i">@Vocabulary.Display(item.v.Name)</option>
                                                     }
                                                 </select>
                                                 <select @bind="relationTruth">
@@ -447,17 +449,17 @@
                                                         <option value="@t">@(t == Truth.True ? I18n.T("TruthTrue") : t == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown"))</option>
                                                     }
                                                 </select>
-                                                <button @onclick="SaveRelation">写入关系</button>
+                                                <button @onclick="SaveRelation">@Vocabulary.Display("写入关系")</button>
                                             </div>
                                         </details>
 
                                         <details style="margin:8px 0;">
                                             <summary>@I18n.T("WriteAstRule")</summary>
-                                            <textarea aria-label="Mental Rule AST" @bind="mentalRule" style="min-height:60px;"></textarea>
+                                            <textarea aria-label="Mental Rule AST" @bind="mentalRuleDisplay" style="min-height:60px;"></textarea>
                                             <button @onclick="SaveBelief" style="margin-top:6px;">@I18n.T("AcceptAst")</button>
                                         </details>
 
-                                        <button @onclick="SaveMental" style="width:100%;margin-top:8px;background:#244434;font-weight:bold;padding:10px;">
+                                        <button @onclick="SaveMental" style="width:100%;margin-top:8px;background:var(--accent-green-bg);font-weight:bold;padding:10px;">
                                             @I18n.T("SaveMentalBtn")
                                         </button>
                                     </div>
@@ -465,9 +467,9 @@
                             }
 
                             <!-- 决策与行动触发组 -->
-                            <div class="actions" style="margin-top:16px;border-top:1px solid #283e33;padding-top:12px;">
+                            <div class="actions" style="margin-top:16px;border-top:1px solid var(--border-medium);padding-top:12px;">
                                 <button @onclick="Preview">@I18n.T("PreviewDecision")</button>
-                                <button @onclick="ActFromMind" style="border-color:#eab308;color:#fde047;font-weight:bold;">
+                                <button @onclick="ActFromMind" style="border-color:var(--accent-orange);color:var(--accent-orange);font-weight:bold;">
                                     @I18n.T("ReplanAction")
                                 </button>
                                 <button @onclick="ObserveAgain">@I18n.T("ObserveAgain")</button>
@@ -501,11 +503,11 @@
                     <div class="compare">
                         <div>
                             <h3>@I18n.T("SnapshotBefore")</h3>
-                            <pre>@beforeDecision</pre>
+                            <pre>@Vocabulary.Display(beforeDecision)</pre>
                         </div>
                         <div>
                             <h3>@I18n.T("SnapshotAfter")</h3>
-                            <pre>@afterDecision</pre>
+                            <pre>@Vocabulary.Display(afterDecision)</pre>
                         </div>
                     </div>
                 </div>
@@ -519,9 +521,9 @@
                                 <div style="padding:6px 0;">
                                     <strong>
                                         <span class="badge @(row.Forbidden ? "bad" : "good")">@(row.Forbidden ? I18n.T("Forbidden") : I18n.T("Available"))</span>
-                                        @I18n.T("Score") @row.Decision.Score · @ZooWorld.Describe(row.Decision.Effect)
+                                        @I18n.T("Score") @row.Decision.Score · @Vocabulary.Display(ZooWorld.Describe(row.Decision.Effect))
                                     </strong>
-                                    <small style="display:block;margin-top:3px;color:#a8b7b0;">@I18n.T("Reasons")@string.Join("；", row.Reasons)</small>
+                                    <small style="display:block;margin-top:3px;color:var(--text-secondary);">@I18n.T("Reasons")@string.Join("；", row.Reasons)</small>
                                 </div>
                             }
                         </div>
@@ -557,650 +559,13 @@
     }
 </div>
 
-<style>
-/* Apple Light Aesthetic - Clean, Subtle Borders, White/Grey Base with Vivid Focused Accents */
-:root {
-    --bg-main: #f5f5f7;
-    --bg-card: #ffffff;
-    --bg-subtle: #fbfbfd;
-    --bg-inset: #f2f2f7;
-    --text-primary: #1d1d1f;
-    --text-secondary: #6e6e73;
-    --text-tertiary: #86868b;
-    --border-subtle: rgba(0, 0, 0, 0.06);
-    --border-medium: rgba(0, 0, 0, 0.12);
-    --accent-blue: #0071e3;
-    --accent-blue-bg: rgba(0, 113, 227, 0.08);
-    --accent-green: #34c759;
-    --accent-green-bg: rgba(52, 199, 89, 0.10);
-    --accent-red: #ff3b30;
-    --accent-red-bg: rgba(255, 59, 48, 0.08);
-    --accent-orange: #ff9500;
-    --accent-orange-bg: rgba(255, 149, 0, 0.10);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
-}
 
-.zoo {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 28px 24px 48px;
-    color: var(--text-primary);
-    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg-main);
-    -webkit-font-smoothing: antialiased;
-}
-
-/* Header */
-.zoo header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-subtle);
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-}
-.zoo h1 {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    margin: 2px 0 0 0;
-    color: var(--text-primary);
-}
-.zoo small {
-    color: var(--text-secondary);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-weight: 600;
-    display: block;
-}
-.lang-selector {
-    display: flex;
-    align-items: center;
-    background: var(--bg-card);
-    padding: 6px 14px;
-    border-radius: 980px;
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-sm);
-}
-.lang-selector label {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 500;
-}
-.lang-selector select {
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    padding: 2px 4px;
-    outline: none;
-}
-.clock {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-align: right;
-    letter-spacing: -0.015em;
-}
-.clock small {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--accent-blue);
-    margin-top: 2px;
-}
-
-/* Simulation Controls Navigation */
-.sim-nav {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 16px 0;
-    align-items: center;
-}
-.zoo button, .zoo select, .zoo input, .zoo textarea {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid var(--border-subtle);
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-family: inherit;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    outline: none;
-}
-.zoo button {
-    cursor: pointer;
-    font-weight: 500;
-}
-.zoo button:hover {
-    background: #ffffff;
-    border-color: var(--border-medium);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-.zoo button:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-sm);
-    background: var(--bg-inset);
-}
-.zoo input[type=number] {
-    width: 65px;
-    padding: 7px 10px;
-}
-.zoo input:focus, .zoo select:focus, .zoo textarea:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
-}
-.status {
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-    min-height: 20px;
-    margin: 8px 0 16px;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 8px;
-    display: inline-block;
-}
-
-/* Tabs Navigation - Segmented Control / Apple Pill Style */
-.tabs-nav {
-    display: flex;
-    gap: 6px;
-    margin: 20px 0;
-    background: rgba(0, 0, 0, 0.05);
-    padding: 4px;
-    border-radius: 12px;
-    overflow-x: auto;
-}
-.tab-btn {
-    background: transparent;
-    color: var(--text-secondary);
-    border: none;
-    box-shadow: none;
-    padding: 8px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-.tab-btn:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.4);
-    box-shadow: none;
-    transform: none;
-}
-.tab-btn.active {
-    background: var(--bg-card);
-    color: var(--accent-blue);
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-.tab-pane {
-    animation: fadeIn 0.2s ease-out;
-}
-@@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Cards & Grid Containers - Prominent Focus */
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: var(--shadow-sm);
-}
-.overview-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin-top: 16px; }
-.rules-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
-.mind-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
-.decisions-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
-.person-selector-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--bg-card);
-    padding: 14px 20px;
-    border-radius: 14px;
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 20px;
-}
-
-/* Key Metrics Row - High Visual Focus */
-.metrics {
-    display: flex;
-    gap: 24px;
-    padding: 18px 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
-    flex-wrap: wrap;
-    align-items: baseline;
-}
-.metrics span {
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-}
-.metrics b {
-    color: var(--text-primary);
-    font-size: 24px;
-    font-weight: 700;
-    margin-left: 8px;
-    letter-spacing: -0.02em;
-}
-.outcome-summary {
-    margin: 14px 0;
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-/* Details and Accordions */
-.section-details {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin: 12px 0;
-    box-shadow: var(--shadow-sm);
-}
-.section-details summary {
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text-primary);
-    outline: none;
-}
-.section-details p {
-    margin: 8px 0 4px;
-    color: var(--text-secondary);
-    font-size: 13px;
-}
-
-/* Headings */
-.zoo h2 {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0 0 14px;
-    color: var(--text-primary);
-    letter-spacing: -0.015em;
-}
-.zoo h2 small {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--text-tertiary);
-    display: inline;
-    margin-left: 8px;
-    text-transform: none;
-    letter-spacing: 0;
-}
-
-/* Room Tiles - High Interactivity Focus */
-.rooms {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-.room {
-    text-align: left;
-    min-height: 76px;
-    background: var(--bg-subtle);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: all 0.15s ease;
-}
-.room strong {
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-}
-.room span {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 12px;
-    margin-top: 2px;
-}
-.room small {
-    color: var(--accent-orange);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: 0;
-}
-.room:hover {
-    background: #ffffff;
-    border-color: var(--border-medium);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-.room.active {
-    background: var(--accent-blue-bg);
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
-}
-.room.active strong {
-    color: var(--accent-blue);
-}
-
-.wide { width: 100%; box-sizing: border-box; }
-.trace, .log, .books {
-    max-height: 280px;
-    overflow: auto;
-    background: var(--bg-inset);
-    padding: 14px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-}
-.trace div, .log div {
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-    font-size: 13px;
-    color: var(--text-primary);
-}
-.zoo textarea {
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 80px;
-    margin-top: 6px;
-    font: 12px/1.6 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    background: var(--bg-inset);
-    border: 1px solid var(--border-subtle);
-}
-.actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 14px 0;
-}
-.compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-}
-.compare pre {
-    white-space: pre-wrap;
-    font: 12px/1.6 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    max-height: 240px;
-    overflow: auto;
-    background: var(--bg-inset);
-    padding: 14px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    color: var(--text-primary);
-}
-.original { color: var(--text-secondary); font-size: 13px; margin: 6px 0; }
-.status-tip { color: var(--text-secondary); font-size: 13px; margin: 8px 0; }
-
-/* Cognitive Clarity Panel - Prominent Visual Focus */
-.cog-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 16px;
-    margin: 16px 0;
-    box-shadow: var(--shadow-sm);
-}
-.cog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-.cog-badge {
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 980px;
-    font-weight: 600;
-}
-.cog-badge.good {
-    background: var(--accent-green-bg);
-    color: #248a3d;
-}
-.cog-badge.bad {
-    background: var(--accent-red-bg);
-    color: var(--accent-red);
-}
-.cog-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-.cog-controls input[type=range] {
-    flex: 1;
-    cursor: pointer;
-    accent-color: var(--accent-blue);
-}
-.cog-status {
-    margin-top: 12px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-}
-.cog-status.good {
-    background: var(--accent-green-bg);
-    color: #1b632c;
-    border: 1px solid rgba(52, 199, 89, 0.2);
-}
-.cog-status.bad {
-    background: var(--accent-red-bg);
-    color: #b01a11;
-    border: 1px solid rgba(255, 59, 48, 0.2);
-}
-.cog-status small {
-    display: block;
-    margin-top: 4px;
-    color: var(--text-secondary);
-    font-weight: 400;
-    text-transform: none;
-}
-
-/* Quick Chips */
-.word-group {
-    margin: 12px 0;
-    background: var(--bg-inset);
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-}
-.word-group small {
-    color: var(--text-secondary);
-    display: block;
-    margin: 4px 0 8px;
-    font-weight: 500;
-    text-transform: none;
-}
-.chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.chip {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    color: var(--text-primary);
-    padding: 5px 11px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-}
-.chip:hover {
-    background: #ffffff;
-    border-color: var(--border-medium);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-.chip.sub {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: transparent;
-    color: var(--text-secondary);
-    box-shadow: none;
-}
-.chip.sub:hover {
-    background: var(--bg-card);
-    border-color: var(--border-subtle);
-    color: var(--text-primary);
-}
-
-.badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 6px;
-    margin-right: 4px;
-}
-.badge.good {
-    background: var(--accent-green-bg);
-    color: #248a3d;
-}
-.badge.bad {
-    background: var(--accent-red-bg);
-    color: var(--accent-red);
-}
-
-/* Tab 3 Explanation & Profile */
-.explain-bar {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    color: var(--text-primary);
-    box-shadow: var(--shadow-sm);
-}
-.explain-bar strong {
-    color: var(--accent-blue);
-}
-.explain-bar span {
-    font-size: 13px;
-    margin-left: 6px;
-    color: var(--text-secondary);
-}
-.profile-box {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    background: var(--bg-subtle);
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-}
-.profile-col p {
-    margin: 6px 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-.profile-col b {
-    color: var(--text-primary);
-}
-.col-title {
-    font-size: 13px;
-    font-weight: 700;
-    margin: 0 0 10px 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-.col-title.reality { color: var(--text-primary); }
-.col-title.mind { color: var(--accent-blue); }
-
-.filter-bar {
-    background: var(--bg-inset);
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-    margin-bottom: 14px;
-}
-.chip.active {
-    background: var(--accent-blue);
-    color: #ffffff;
-    border-color: var(--accent-blue);
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);
-}
-.quick-intervene-box {
-    background: var(--bg-subtle);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 16px;
-    margin: 16px 0;
-}
-.intervention-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 14px;
-}
-.action-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-primary);
-    padding: 9px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: left;
-    font-size: 13px;
-    font-weight: 500;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.15s ease;
-}
-.action-btn:hover {
-    background: #ffffff;
-    border-color: var(--border-medium);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-.action-btn.warning {
-    border-left: 4px solid var(--accent-orange);
-    color: #c97500;
-}
-.action-btn.danger {
-    border-left: 4px solid var(--accent-red);
-    color: #d70015;
-}
-.action-btn.success {
-    border-left: 4px solid var(--accent-green);
-    color: #248a3d;
-}
-.advanced-box {
-    background: var(--bg-inset);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 14px;
-    margin-top: 14px;
-}
-.advanced-box summary {
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-    outline: none;
-}
-
-@@media(max-width:960px) {
-    .overview-grid, .rules-grid, .mind-grid, .decisions-grid { grid-template-columns: 1fr; }
-    .profile-box { grid-template-columns: 1fr; }
-    .rooms { grid-template-columns: repeat(2, 1fr); }
-}
-</style>
 @code {
+    string scriptDisplay { get=>Vocabulary.Display(script); set=>script=Vocabulary.ToCanonical(value); }
+    string utteranceDisplay { get=>Vocabulary.Display(utterance); set=>utterance=Vocabulary.ToCanonical(value); }
+    string mentalTagsDisplay { get=>Vocabulary.Display(mentalTags); set=>mentalTags=Vocabulary.ToCanonical(value); }
+    string mentalRuleDisplay { get=>Vocabulary.Display(mentalRule); set=>mentalRule=Vocabulary.ToCanonical(value); }
+    string relationNameDisplay { get=>Vocabulary.Display(relationName); set=>relationName=Vocabulary.ToCanonical(value); }
     ZooSimulation simulation=null!;ZooWorld W=>simulation.World;Person? tracked;
     int seed=7,visitors=120;int activeTab=0;string key="Visitor.14",script="当 危险 时 优先 前往:狮子园区 权重 120",status="";
     string mentalFilter="All";
@@ -1208,7 +573,7 @@
     {
         mentalFilter=filter;
         var first=FilteredProjections.FirstOrDefault();
-        if(first.p!=null)LoadMental(first.p);
+        if(first.p!=null)LoadMental(first.p);else mental=null;
     }
     IEnumerable<(Projection p, int index)> FilteredProjections =>
         tracked==null?[]:tracked.Soul.World.Projections
@@ -1221,25 +586,24 @@
         var lines=(mentalTags??"").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)
             .Where(l=>!l.StartsWith("危险征兆")&&!l.StartsWith("危险"));
         mentalTags=string.Join("\n",lines);
-        AppendMentalTag("树荫=1");
+        AppendMentalTag("危险征兆=0");
         SaveMental();
     }
     void QuickBlockDoor(){mentalExistence=Truth.False;SaveMental();}
     void QuickUnblockDoor(){mentalExistence=Truth.True;SaveMental();}
-    void QuickSetRabbitSelf(){AppendMentalTag("人类信念=10");SaveMental();}
+    void QuickSetRabbitSelf(){AppendMentalTag("兔化=80");SaveMental();}
     void QuickSetHumanSelf(){AppendMentalTag("人类信念=100");SaveMental();}
     void OnLanguageChanged(ChangeEventArgs e)
     {
         if (Enum.TryParse<Lang>(e.Value?.ToString(), out var l))
         {
             I18n.Current = l;
-            status = I18n.T("WorldCreated");
             StateHasChanged();
         }
     }
     bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
     protected override void OnInitialized()=>Reset();
-    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";status=I18n.T("WorldCreated");}catch(Exception e){status=e.Message;}}
+    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";LoadAttitude();status=I18n.T("WorldCreated");}catch(Exception e){status=e.Message;}}
     async Task Advance(double minutes)
     {
         if(busy)return;busy=true;var current=generation;var world=W;var target=world.Now+minutes;
@@ -1258,18 +622,19 @@
     void Toggle(){if(playing||busy){Stop();return;}playing=true;timer=new(_=>InvokeAsync(async ()=>{if(disposed||!playing)return;await Advance(2);StateHasChanged();}),null,0,700);}
     void Stop(){playing=false;timer?.Dispose();timer=null;generation++;busy=false;}
     void SelectRoom(Essence room){tracked=W.People.Where(p=>p.Room==room&&p.Outcome=="在园").OrderBy(p=>p.Job!=Job.Visitor).FirstOrDefault()??tracked;if(tracked!=null)LoadMental(tracked.Self);}
-    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());LoadMental(tracked.Self);}
-    void LoadRule(ChangeEventArgs e){key=e.Value!.ToString()!;script=W.Rules.Clauses[key].Script;}
+    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());LoadMental(tracked.Self);LoadAttitude();beforeDecision="";afterDecision="";}
+    void LoadRule(ChangeEventArgs e){key=e.Value!.ToString()!;script=W.Rules.Clauses[key].Script;LoadAttitude();}
+    void LoadAttitude(){if(tracked?.Books.TryGetValue(key,out var book)==true){acceptance=book.Acceptance;understanding=book.Understanding;}}
     Projection? mental;
     string mentalName="",mentalTags="",relationName="通往",mentalRule="RULE true() => PREFER wait(5, inspect($Actor))";
     string utterance="temporary_set($Scene, 树荫, 0, 15)",beforeDecision="",afterDecision="";
     ProjectionKind mentalKind=ProjectionKind.Object;Truth mentalExistence=Truth.True,relationTruth=Truth.True;
     int mentalParentIndex=-1,relationOtherIndex;
     Truth acceptance=Truth.True;int understanding=100;
-    void Compare(Action action){try{if(tracked!=null)beforeDecision=ZooExperiment.Snapshot(tracked);action();if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}catch(Exception e){status=e.Message;}}
+    void Compare(Action action){Stop();try{if(tracked!=null)beforeDecision=ZooExperiment.Snapshot(tracked);action();if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}catch(Exception e){status=e.Message;}}
     void LoadMental(Projection p){mental=p;mentalName=p.Name;mentalKind=p.Kind;mentalExistence=p.Existence;mentalTags=string.Join("\n",p.Tags.Select(t=>$"{t.Key.Name}={t.Value}"));mentalParentIndex=p.Parent==null?-1:tracked!.Soul.World.Projections.IndexOf(p.Parent);}
     void SelectMental(ChangeEventArgs e){if(tracked!=null)LoadMental(tracked.Soul.World.Projections[int.Parse(e.Value!.ToString()!)]);}
-    void NewMental(){mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.Soul.World.Projections.IndexOf(tracked.Self.Parent!);}
+    void NewMental()=>Compare(()=>{mentalFilter="All";mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.Soul.World.Projections.IndexOf(tracked.Self.Parent!);mental=ZooExperiment.Edit(tracked,null,mentalName,mentalKind,mentalExistence,tracked.Self.Parent,"",W.Now);LoadMental(mental);});
     void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParentIndex<0?null:tracked.Soul.World.Projections[mentalParentIndex],mentalTags,W.Now);LoadMental(mental);status=I18n.T("StatusOnlyMindModified");});
     void ForgetMental()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Forget(tracked,mental,W.Now);LoadMental(tracked.Self);status=I18n.T("StatusForgotten");});
     void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),tracked.Soul.World.Projections[relationOtherIndex],relationTruth,W.Now);status=I18n.T("StatusRelationSaved");});
@@ -1301,7 +666,7 @@
     }
     void AppendScript(string text){script=string.IsNullOrWhiteSpace(script)?text:script+" "+text;}
     void SetScript(string text){script=text;}
-    void AppendMentalTag(string tag){mentalTags=string.IsNullOrWhiteSpace(mentalTags)?tag:mentalTags+"\n"+tag;}
+    void AppendMentalTag(string tag){var name=tag.Split('=')[0];mentalTags=string.Join("\n",mentalTags.Split('\n',StringSplitOptions.RemoveEmptyEntries).Where(l=>l.Split('=')[0].Trim()!=name).Append(tag));}
     void SetUtterance(string u){utterance=u;}
     public void Dispose(){disposed=true;Stop();simulation?.Dispose();}
 }
