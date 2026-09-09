@@ -8,8 +8,8 @@
     <base href="./" />
     <style>
         body {
-            background-color: #000000;
-            color: #f5f5f7;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
             margin: 0;
             padding: 0;
@@ -24,10 +24,10 @@
             gap: 16px;
         }
         .wasm-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(88, 166, 255, 0.2);
-            border-top-color: #58a6ff;
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(0, 113, 227, 0.15);
+            border-top-color: #0071e3;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -41,8 +41,8 @@
     <div id="app">
         <div class="wasm-loader">
             <div class="wasm-spinner"></div>
-            <div style="font-size: 14px; color: #58a6ff; font-weight: bold;">正在载入 Dual-Ontology C# WebAssembly 核心...</div>
-            <div style="font-size: 12px; color: #8b949e;">首次加载正在下载 .NET 8 运行时与动物园模拟器程序集</div>
+            <div style="font-size: 15px; color: #1d1d1f; font-weight: 600;">Loading Dual-Ontology Engine...</div>
+            <div style="font-size: 13px; color: #86868b;">Initial run downloads .NET 8 WebAssembly runtime</div>
         </div>
     </div>
 
