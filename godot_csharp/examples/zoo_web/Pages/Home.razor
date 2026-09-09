@@ -1,25 +1,36 @@
 @page "/"
 @implements IDisposable
-<PageTitle>动物园 · 认知与规则实验室</PageTitle>
+<PageTitle>@I18n.T("AppTitle")</PageTitle>
 <div class="zoo">
     <header>
         <div>
-            <small>ESSENCE / PROJECTION · C# CORE</small>
-            <h1>动物园规则怪谈</h1>
+            <small>@I18n.T("Subtitle")</small>
+            <h1>@I18n.T("MainHeading")</h1>
         </div>
-        <div class="clock">
-            @Clock <small>@(W.Open ? "开放中 08:00—16:00" : "已闭园 · 停止入园")</small>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="lang-selector">
+                <label style="margin-right:6px;">🌐 @I18n.T("Language"):</label>
+                <select value="@I18n.Current" @onchange="OnLanguageChanged">
+                    <option value="@Lang.En">English</option>
+                    <option value="@Lang.Ja">日本語</option>
+                    <option value="@Lang.ZhHans">简体中文</option>
+                    <option value="@Lang.ZhHant">繁體中文</option>
+                </select>
+            </div>
+            <div class="clock">
+                @I18n.TClock(W.Now) <small>@(W.Open ? I18n.T("OpenStatus") : I18n.T("ClosedStatus"))</small>
+            </div>
         </div>
     </header>
 
     <nav class="sim-nav">
-        <button @onclick="() => Advance(10)">推进 10 分钟</button>
-        <button @onclick="() => Advance(60)">推进 1 小时</button>
-        <button @onclick="Toggle">@(playing || busy ? "暂停" : "连续推演")</button>
-        <button @onclick="() => Advance((Math.Floor(W.Now / 1440) + 1) * 1440 + 480 - W.Now)">推进至次日08:00</button>
-        <label>首批游客 <input type="number" min="0" max="500" @bind="visitors" /></label>
-        <label>种子 <input type="number" @bind="seed" /></label>
-        <button @onclick="Reset">重建世界</button>
+        <button @onclick="() => Advance(10)">@I18n.T("Adv10Min")</button>
+        <button @onclick="() => Advance(60)">@I18n.T("Adv1Hour")</button>
+        <button @onclick="Toggle">@(playing || busy ? I18n.T("Pause") : I18n.T("ContinuousRun"))</button>
+        <button @onclick="() => Advance((Math.Floor(W.Now / 1440) + 1) * 1440 + 480 - W.Now)">@I18n.T("AdvNextDay")</button>
+        <label>@I18n.T("InitialVisitors") <input type="number" min="0" max="500" @bind="visitors" /></label>
+        <label>@I18n.T("Seed") <input type="number" @bind="seed" /></label>
+        <button @onclick="Reset">@I18n.T("RebuildWorld")</button>
     </nav>
 
     <p class="status" role="status">@status</p>
@@ -27,16 +38,16 @@
     <!-- 4 个主 Tab 导航 -->
     <div class="tabs-nav">
         <button class="tab-btn @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">
-            📊 1. 总体概览
+            @I18n.T("Tab1")
         </button>
         <button class="tab-btn @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">
-            📜 2. 规则与言灵
+            @I18n.T("Tab2")
         </button>
         <button class="tab-btn @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">
-            🧠 3. 脑内观察与编辑器
+            @I18n.T("Tab3")
         </button>
         <button class="tab-btn @(activeTab == 3 ? "active" : "")" @onclick="() => activeTab = 3">
-            ⚖️ 4. 决策优先级与比较
+            @I18n.T("Tab4")
         </button>
     </div>
 
@@ -45,28 +56,28 @@
         <!-- Tab 1: 总体概览 -->
         <div class="tab-pane">
             <div class="metrics">
-                <span>当前游客 <b>@W.InPark</b></span>
-                <span>峰值游客 <b>@W.PeakVisitors</b></span>
-                <span>已逃离 <b>@W.People.Count(p => p.Outcome == "成功逃离")</b></span>
-                <span>当前文书 <b>@W.Rules.Clauses.Count</b></span>
-                <span>步行速度 <b>60 米/分钟</b></span>
+                <span>@I18n.T("CurrentVisitors") <b>@W.InPark</b></span>
+                <span>@I18n.T("PeakVisitors") <b>@W.PeakVisitors</b></span>
+                <span>@I18n.T("Escaped") <b>@W.People.Count(p => p.Outcome == "成功逃离")</b></span>
+                <span>@I18n.T("ActiveRules") <b>@W.Rules.Clauses.Count</b></span>
+                <span>@I18n.T("WalkingSpeed") <b>@I18n.T("SpeedUnit")</b></span>
             </div>
 
-            <p class="outcome-summary">@string.Join("；", W.People.GroupBy(p => p.Outcome).Select(g => $"{g.Key} {g.Count()} 人"))</p>
+            <p class="outcome-summary">@string.Join("；", W.People.GroupBy(p => p.Outcome).Select(g => $"{I18n.TOutcome(g.Key)} {I18n.T("PeopleCount", g.Count())}"))</p>
 
             <details class="section-details">
-                <summary>跨日客流与员工返岗</summary>
-                <p>@string.Join("；", W.DailyAdmissions.Select(d => $"第{d.Key + 1}天入园{d.Value}人"))</p>
-                <p>新增黑衣：@W.Anomalies.BlackBirths；红衣返岗：@W.People.Where(p => p.DutyRoom == "水母区").Sum(p => p.Returns) 次。</p>
+                <summary>@I18n.T("CrossDayStats")</summary>
+                <p>@string.Join("；", W.DailyAdmissions.Select(d => I18n.T("DayAdmission", d.Key + 1, d.Value)))</p>
+                <p>@I18n.T("BlackStaff", W.Anomalies.BlackBirths)；@I18n.T("RedStaffReturn", W.People.Where(p => p.DutyRoom == "水母区").Sum(p => p.Returns))</p>
             </details>
 
             <details class="section-details" open>
-                <summary>“它”的行动与机制</summary>
-                <p>实际位置：<b>@W.Anomalies.ItsLocation</b>；下一行动：@W.Anomalies.ItsIntention</p>
+                <summary>@I18n.T("ItsBehavior")</summary>
+                <p>@I18n.T("ItsLocation")<b>@I18n.TRoom(W.Anomalies.ItsLocation)</b>；@I18n.T("ItsNextAction")@W.Anomalies.ItsIntention</p>
                 <p>@W.Anomalies.ItsReason</p>
-                <p>下次考虑行动：@W.Anomalies.NextAnomaly.ToString("F1") 分钟。接近与显露察觉增加关注；身份动摇改变它的分类；纸片及猿猴混处干扰分类。兔化来自身体接触与后续发展，抢夺纸片损伤自我身份。文书不直接制造伤亡。</p>
+                <p>@I18n.T("ItsNextThink", W.Anomalies.NextAnomaly)</p>
                 <details>
-                    <summary>它记住的物种判断日志</summary>
+                    <summary>@I18n.T("ItsClassificationLog")</summary>
                     <div class="log" style="max-height:160px;">
                         @foreach (var line in W.Anomalies.Classifications.TakeLast(15))
                         {
@@ -78,20 +89,20 @@
 
             <div class="overview-grid">
                 <div>
-                    <h2>园区现场 <small>客观视角 · 点击区域切换人员</small></h2>
+                    <h2>@I18n.T("ParkSites") <small>@I18n.T("ObjectiveViewHint")</small></h2>
                     <div class="rooms">
                         @foreach (var room in W.Rooms.Values.Where(r => r.TrueName != "园外"))
                         {
                             <button class="room @(tracked?.Room == room ? "active" : "")" @onclick="() => SelectRoom(room)">
-                                <strong>@room.TrueName</strong>
-                                <span>@W.People.Count(p => p.Room == room && p.Outcome == "在园") 人</span>
-                                <small>@(room.Value(Z.Danger) > 0 ? "可见异常" : "") @(room.Value(Z.Calm) > 0 ? "言灵：安静" : "")</small>
+                                <strong>@I18n.TRoom(room.TrueName)</strong>
+                                <span>@I18n.T("PeopleCount", W.People.Count(p => p.Room == room && p.Outcome == "在园"))</span>
+                                <small>@(room.Value(Z.Danger) > 0 ? I18n.T("VisibleDanger") : "") @(room.Value(Z.Calm) > 0 ? I18n.T("CalmUtterance") : "")</small>
                             </button>
                         }
                     </div>
                 </div>
                 <div>
-                    <h2>行动与机制记录 <small>最近 30 条事件流</small></h2>
+                    <h2>@I18n.T("EventLog") <small>@I18n.T("Recent30")</small></h2>
                     <div class="log" style="max-height: 480px;">
                         @foreach (var entry in W.Events.TakeLast(30).Reverse())
                         {
@@ -108,10 +119,10 @@
         <div class="tab-pane">
             <div class="rules-grid">
                 <div class="card">
-                    <h2>怪谈文书管理 <small>自然语言受控规则</small></h2>
-                    <p>受控中文会解析成 AST。修订后需要现场阅读或广播，人物才会知道新版本。广播不覆盖海洋馆和封闭宿舍。</p>
+                    <h2>@I18n.T("RuleMgmt") <small>@I18n.T("ControlledChinese")</small></h2>
+                    <p>@I18n.T("RuleDesc")</p>
                     
-                    <label>选择现有文书：
+                    <label>@I18n.T("SelectExistingRule")
                         <select class="wide" @onchange="LoadRule">
                             @foreach (var clause in W.Rules.Clauses.Values)
                             {
@@ -122,26 +133,26 @@
                         </select>
                     </label>
 
-                    <p class="original">原文：@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
-                    <label>文书编号：<input class="wide" aria-label="文书编号" @bind="key" /></label>
-                    <label>受控规则文本：<textarea aria-label="受控规则文本" @bind="script" style="min-height:90px;"></textarea></label>
+                    <p class="original">@I18n.T("OriginalText")@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
+                    <label>@I18n.T("RuleCode")<input class="wide" aria-label="Rule Key" @bind="key" /></label>
+                    <label>@I18n.T("RuleScript")<textarea aria-label="Rule Script" @bind="script" style="min-height:90px;"></textarea></label>
 
                     <div class="word-group">
-                        <small>点击填入规则骨架：</small>
+                        <small>@I18n.T("ClickRuleSkeleton")</small>
                         <div class="chips">
-                            <button type="button" class="chip" @onclick='() => SetScript("当 总是 时 优先 前往:入口 权重 200")'>全员疏散至入口</button>
-                            <button type="button" class="chip" @onclick='() => SetScript("当 危险 时 优先 前往:狮子园区 权重 150")'>避险至狮子园区</button>
-                            <button type="button" class="chip" @onclick='() => SetScript("当 兔区 时 禁止 喂兔子 权重 100")'>禁止喂兔子</button>
-                            <button type="button" class="chip" @onclick='() => SetScript("当 迷路 时 优先 求助 权重 130")'>迷路时求助</button>
+                            <button type="button" class="chip" @onclick='() => SetScript("当 总是 时 优先 前往:入口 权重 200")'>@I18n.T("Skeleton1")</button>
+                            <button type="button" class="chip" @onclick='() => SetScript("当 危险 时 优先 前往:狮子园区 权重 150")'>@I18n.T("Skeleton2")</button>
+                            <button type="button" class="chip" @onclick='() => SetScript("当 兔区 时 禁止 喂兔子 权重 100")'>@I18n.T("Skeleton3")</button>
+                            <button type="button" class="chip" @onclick='() => SetScript("当 迷路 时 优先 求助 权重 130")'>@I18n.T("Skeleton4")</button>
                         </div>
-                        <small>点击追加常用条件：</small>
+                        <small>@I18n.T("ClickCommonCond")</small>
                         <div class="chips">
                             @foreach (var fact in new[] { "总是", "危险", "兔区", "象区", "狮区", "馆内", "迷路", "成年", "有地图", "有纸", "有兔玩偶", "出逃兔子" })
                             {
                                 <button type="button" class="chip sub" @onclick="() => AppendScript(fact)">@fact</button>
                             }
                         </div>
-                        <small>点击追加常用动作与目标：</small>
+                        <small>@I18n.T("ClickCommonAction")</small>
                         <div class="chips">
                             @foreach (var act in new[] { "前往:入口", "前往:主步道", "前往:狮子园区", "前往:大象园区", "前往:饮料店", "前往:海洋馆", "前往:园外", "游览", "休息", "阅读", "撕地图", "喂兔子", "买兔玩偶", "换黑衣", "求助", "坚定人类" })
                             {
@@ -151,38 +162,38 @@
                     </div>
 
                     <div class="actions">
-                        <button @onclick="Publish">保存文书</button>
-                        <button @onclick="Broadcast">保存并广播</button>
-                        <button @onclick="Withdraw">撤回并广播</button>
-                        <button @onclick="WithdrawLocal">仅撤下现场文书</button>
+                        <button @onclick="Publish">@I18n.T("SaveRule")</button>
+                        <button @onclick="Broadcast">@I18n.T("SaveAndBroadcast")</button>
+                        <button @onclick="Withdraw">@I18n.T("WithdrawAndBroadcast")</button>
+                        <button @onclick="WithdrawLocal">@I18n.T("WithdrawLocalOnly")</button>
                     </div>
 
-                    <p class="status-tip">此条文书当前仍被 <b>@W.People.Count(p => p.Outcome == "在园" && p.Books.ContainsKey(key))</b> 名在园人物记住。撤回广播通过观察输入撤销记忆；未听见者继续保留。</p>
+                    <p class="status-tip">@I18n.T("RuleRememberedTip", W.People.Count(p => p.Outcome == "在园" && p.Books.ContainsKey(key)))</p>
                     
                     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0;">
-                        <label>所选人物对该条的态度：
+                        <label>@I18n.T("PersonAttitude")
                             <select @bind="acceptance">
                                 @foreach (var a in Enum.GetValues<Truth>())
                                 {
-                                    <option value="@a">@(a == Truth.True ? "采信" : a == Truth.False ? "拒绝" : "未定")</option>
+                                    <option value="@a">@(a == Truth.True ? I18n.T("TruthTrue") : a == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown"))</option>
                                 }
                             </select>
                         </label>
-                        <label>理解程度：
+                        <label>@I18n.T("UnderstandingLevel")
                             <input type="number" min="0" max="100" @bind="understanding" style="width:65px;" />%
                         </label>
-                        <button @onclick="ChangeUnderstanding">更新此人理解并对比</button>
+                        <button @onclick="ChangeUnderstanding">@I18n.T("UpdateUnderstanding")</button>
                     </div>
 
                     <details>
-                        <summary>查看当前人物记住的所有文书版本</summary>
+                        <summary>@I18n.T("ViewRememberedClauses")</summary>
                         @if (tracked is {} reader)
                         {
                             <div class="books">
                                 @foreach (var book in reader.Books.Values)
                                 {
                                     <details>
-                                        <summary>@book.Text.Key · @book.Acceptance · 理解 @book.Understanding%</summary>
+                                        <summary>@book.Text.Key · @(book.Acceptance == Truth.True ? I18n.T("TruthTrue") : book.Acceptance == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown")) · @I18n.T("UnderstandingLevel") @book.Understanding%</summary>
                                         <p>@book.Text.Script</p>
                                     </details>
                                 }
@@ -192,31 +203,31 @@
                 </div>
 
                 <div class="card">
-                    <h2>言灵 · Core AST 流程 <small>现场规则直接干预</small></h2>
-                    <p>消耗一次施放机会，经过人物行动槽执行。临时状态独立计时；可组合多个效果及等待。</p>
+                    <h2>@I18n.T("UtteranceMgmt") <small>@I18n.T("DirectIntervention")</small></h2>
+                    <p>@I18n.T("UtteranceDesc")</p>
                     
-                    <label>言灵流程 AST：
-                        <textarea aria-label="言灵AST" @bind="utterance" style="min-height:90px;"></textarea>
+                    <label>@I18n.T("UtteranceAst")
+                        <textarea aria-label="Utterance AST" @bind="utterance" style="min-height:90px;"></textarea>
                     </label>
 
                     <div class="word-group">
-                        <small>可点击填入言灵模板：</small>
+                        <small>@I18n.T("ClickUtteranceTpl")</small>
                         <div class="chips">
-                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 树荫, 0, 15)")'>场景树荫失效15分</button>
-                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 危险, 1, 20)")'>场景显现危险20分</button>
-                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Actor, 迷路, 1, 15)")'>目标陷入迷路15分</button>
+                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 树荫, 0, 15)")'>@I18n.T("Tpl1")</button>
+                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Scene, 危险, 1, 20)")'>@I18n.T("Tpl2")</button>
+                            <button type="button" class="chip" @onclick='() => SetUtterance("temporary_set($Actor, 迷路, 1, 15)")'>@I18n.T("Tpl3")</button>
                         </div>
                     </div>
 
                     <div class="actions">
-                        <button @onclick="Cast">解析并准备施放</button>
-                        <small style="align-self:center;">剩余施放次数：<b>@(tracked?.Body.Value(Z.Mana) ?? 0)</b> 次</small>
+                        <button @onclick="Cast">@I18n.T("ParseAndCast")</button>
+                        <small style="align-self:center;">@I18n.T("RemainingMana", tracked?.Body.Value(Z.Mana) ?? 0)</small>
                     </div>
 
                     <div style="margin-top: 16px; padding: 10px; background: #13201b; border-radius: 6px; border: 1px solid #2d4237;">
-                        <strong>当前所在场景的 Core 临时效果：</strong>
+                        <strong>@I18n.T("RoomTempEffects")</strong>
                         <p style="margin:6px 0 0 0; color:#d1fae5;">
-                            @string.Join("；", tracked?.Room?.Get<TemporaryStateProperty>()?.Active.Select(l => $"{l.Tag.Name}={l.Value}，{l.ExpiresAt:F1}到期") ?? ["暂无临时效果"])
+                            @string.Join("；", tracked?.Room?.Get<TemporaryStateProperty>()?.Active.Select(l => $"{l.Tag.Name}={l.Value} ({l.ExpiresAt:F1})") ?? [I18n.T("NoTempEffects")])
                         </p>
                     </div>
                 </div>
@@ -228,21 +239,17 @@
         <!-- Tab 3: 脑内世界观察和编辑器 -->
         <div class="tab-pane">
             <div class="explain-bar">
-                <strong>💡 脑内认知机制说明：</strong>
-                <span>
-                    动物园里的人物永远依据自己脑海中的“主观认知”行动。
-                    在下方篡改其脑内的场景属性（如制造危险假象）、阻断通道（如误以为出口封死）或改变自身身份（如暗示兔化），
-                    将立即改变其寻路与行为决策，而现实物理世界不会因此改变。
-                </span>
+                <strong>@I18n.T("MindMechanismExplain")</strong>
+                <span>@I18n.T("MindMechanismText")</span>
             </div>
 
             <div class="person-selector-bar">
-                <label><strong>当前观察与干预的人物：</strong></label>
+                <label><strong>@I18n.T("CurrentTrackedPerson")</strong></label>
                 <select class="wide" @onchange="Pick" style="max-width: 450px;">
                     @foreach (var p in W.People)
                     {
                         <option value="@p.Body.TrueName" selected="@(p == tracked)">
-                            @p.Body.TrueName · @p.Job · @p.Outcome
+                            @p.Body.TrueName · @I18n.TJob(p.Job) · @I18n.TOutcome(p.Outcome)
                         </option>
                     }
                 </select>
@@ -254,51 +261,51 @@
                     <!-- 左列：人物主客观状态透视与认知地图 -->
                     <div>
                         <div class="card">
-                            <h2>人物主客观对照 <small>客观现实 vs 主观认知</small></h2>
+                            <h2>@I18n.T("RealityVsMind") <small>@I18n.T("SubtitleRealityVsMind")</small></h2>
                             <div class="profile-box">
                                 <div class="profile-col">
-                                    <h3 class="col-title reality">客观现实（物理真相）</h3>
-                                    <p>真实物种：<b>@person.TrueSpecies</b></p>
-                                    <p>身体兔化：<b>@person.Body.Value(Z.Rabbit)%</b></p>
-                                    <p>物理位置：<b>@person.Room?.TrueName</b></p>
-                                    <p>虚线纸保护：<b>@(W.Anomalies.Paper(person) != null ? "持有撕下纸片" : "无保护")</b></p>
-                                    <p>“它”的分类：@(person.LastClassified < 0 ? "未观察" : person.ItsClassification?.ToString() ?? "无法归类")</p>
+                                    <h3 class="col-title reality">@I18n.T("ObjectiveReality")</h3>
+                                    <p>@I18n.T("TrueSpecies")<b>@person.TrueSpecies</b></p>
+                                    <p>@I18n.T("BodyRabbit")<b>@person.Body.Value(Z.Rabbit)%</b></p>
+                                    <p>@I18n.T("PhysLocation")<b>@I18n.TRoom(person.Room?.TrueName)</b></p>
+                                    <p>@I18n.T("PaperProtection")<b>@(W.Anomalies.Paper(person) != null ? I18n.T("HasPaper") : I18n.T("NoPaper"))</b></p>
+                                    <p>@I18n.T("ItsClassified")@(person.LastClassified < 0 ? I18n.T("NotClassified") : person.ItsClassification?.ToString() ?? I18n.T("Unclassifiable"))</p>
                                 </div>
                                 <div class="profile-col">
-                                    <h3 class="col-title mind">主观认知（脑内以为）</h3>
-                                    <p>人类认同信念：<b>@person.Self.Value(Z.Human)%</b></p>
-                                    <p>自认所在位置：<b>@person.Self.Parent?.Name</b></p>
-                                    <p>进行中行动：<b>@person.CurrentAction</b></p>
-                                    <p>最近实际结算：<b>@person.LastActionResult</b></p>
+                                    <h3 class="col-title mind">@I18n.T("SubjectiveMind")</h3>
+                                    <p>@I18n.T("HumanBelief")<b>@person.Self.Value(Z.Human)%</b></p>
+                                    <p>@I18n.T("BelievedLocation")<b>@I18n.TRoom(person.Self.Parent?.Name)</b></p>
+                                    <p>@I18n.T("OngoingAction")<b>@person.CurrentAction</b></p>
+                                    <p>@I18n.T("LastResult")<b>@person.LastActionResult</b></p>
                                 </div>
                             </div>
 
                             <!-- 认知调节与出口导航机制面板 -->
                             <div class="cog-panel" style="margin-top:14px;">
                                 <div class="cog-header">
-                                    <strong>认知清晰度调节（人类信念）</strong>
+                                    <strong>@I18n.T("CognitionSliderTitle")</strong>
                                     <span class="cog-badge @(person.Self.Value(Z.Human) >= 50 ? "good" : "bad")">
-                                        @(person.Self.Value(Z.Human))% · @(person.Self.Value(Z.Human) >= 50 ? "认知清晰" : "认知崩溃")
+                                        @(person.Self.Value(Z.Human))% · @(person.Self.Value(Z.Human) >= 50 ? I18n.T("CognitionClear") : I18n.T("CognitionBroken"))
                                     </span>
                                 </div>
                                 <div class="cog-controls">
                                     <input type="range" min="0" max="100" value="@(person.Self.Value(Z.Human))" @onchange="OnCognitionSliderChanged" />
-                                    <button type="button" @onclick="() => SetClarity(100)">设为清醒(100%)</button>
-                                    <button type="button" @onclick="() => SetClarity(30)">设为迷失(30%)</button>
+                                    <button type="button" @onclick="() => SetClarity(100)">@I18n.T("SetClearBtn")</button>
+                                    <button type="button" @onclick="() => SetClarity(30)">@I18n.T("SetLostBtn")</button>
                                 </div>
                                 <div class="cog-status @(person.Self.Value(Z.Human) >= 50 ? "good" : "bad")">
-                                    <strong>出口寻路状态：</strong>@ZooExperiment.CheckExitKnowledge(person)
-                                    <small>@(person.Self.Value(Z.Human) >= 50 ? "认知正常：角色脑内出口通道连通，知道如何走向动物园出口。" : "认知不足（<50%）：脑内已遗忘出口通道与园外空间，彻底不知道怎么走出动物园！")</small>
+                                    <strong>@I18n.T("ExitPathfindingStatus")</strong>@(ZooMinds.Route(person.Soul.World, person.Self, "园外") != null ? I18n.T("ExitCanFind") : I18n.T("ExitCannotFind"))
+                                    <small>@(person.Self.Value(Z.Human) >= 50 ? I18n.T("ExitDescClear") : I18n.T("ExitDescBroken"))</small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="card" style="margin-top: 16px;">
-                            <h2>实际移动路线轨迹</h2>
+                            <h2>@I18n.T("ActualTravelLog")</h2>
                             <div class="log" style="max-height: 180px;">
                                 @foreach (var travel in W.Travels.Where(t => t.Person == person.Body.TrueName).TakeLast(15).Reverse())
                                 {
-                                    <p style="margin:2px 0;">@travel.Time.ToString("F1")：@travel.From → @travel.To（@travel.Minutes 分钟）</p>
+                                    <p style="margin:2px 0;">@travel.Time.ToString("F1")：@I18n.TRoom(travel.From) → @I18n.TRoom(travel.To)（@travel.Minutes @I18n.T("MinUnit")）</p>
                                 }
                             </div>
                         </div>
@@ -307,25 +314,25 @@
                     <!-- 右列：直观易懂的脑内世界干预编辑器 -->
                     <div>
                         <div class="card">
-                            <h2>脑内世界干预器 <small>篡改此角色的主观感知与记忆</small></h2>
+                            <h2>@I18n.T("MindInterventionTitle") <small>@I18n.T("MindInterventionSub")</small></h2>
 
                             <!-- 分类筛选器 -->
                             <div class="filter-bar">
-                                <small style="display:block;margin-bottom:4px;color:#9cb5a6;">选择记忆类型：</small>
+                                <small style="display:block;margin-bottom:4px;color:#9cb5a6;">@I18n.T("SelectMemoryType")</small>
                                 <div class="chips">
-                                    <button type="button" class="chip @(mentalFilter == "All" ? "active" : "")" @onclick='() => SetMentalFilter("All")'>全部记忆 (@person.Soul.World.Projections.Length)</button>
-                                    <button type="button" class="chip @(mentalFilter == "Space" ? "active" : "")" @onclick='() => SetMentalFilter("Space")'>🏢 场景园区</button>
-                                    <button type="button" class="chip @(mentalFilter == "Boundary" ? "active" : "")" @onclick='() => SetMentalFilter("Boundary")'>🚪 门与通道</button>
-                                    <button type="button" class="chip @(mentalFilter == "Body" ? "active" : "")" @onclick='() => SetMentalFilter("Body")'>👤 自身与人物</button>
-                                    <button type="button" class="chip @(mentalFilter == "Object" ? "active" : "")" @onclick='() => SetMentalFilter("Object")'>📦 物品道具</button>
-                                    <button type="button" class="chip @(mentalFilter == "Concept" ? "active" : "")" @onclick='() => SetMentalFilter("Concept")'>💡 规则念头</button>
+                                    <button type="button" class="chip @(mentalFilter == "All" ? "active" : "")" @onclick='() => SetMentalFilter("All")'>@I18n.T("AllMemories", person.Soul.World.Projections.Length)</button>
+                                    <button type="button" class="chip @(mentalFilter == "Space" ? "active" : "")" @onclick='() => SetMentalFilter("Space")'>@I18n.T("FilterSpace")</button>
+                                    <button type="button" class="chip @(mentalFilter == "Boundary" ? "active" : "")" @onclick='() => SetMentalFilter("Boundary")'>@I18n.T("FilterBoundary")</button>
+                                    <button type="button" class="chip @(mentalFilter == "Body" ? "active" : "")" @onclick='() => SetMentalFilter("Body")'>@I18n.T("FilterBody")</button>
+                                    <button type="button" class="chip @(mentalFilter == "Object" ? "active" : "")" @onclick='() => SetMentalFilter("Object")'>@I18n.T("FilterObject")</button>
+                                    <button type="button" class="chip @(mentalFilter == "Concept" ? "active" : "")" @onclick='() => SetMentalFilter("Concept")'>@I18n.T("FilterConcept")</button>
                                 </div>
                             </div>
 
                             <!-- 目标对象下拉列表 -->
                             <div style="margin: 12px 0;">
-                                <label>选择要干预的脑内对象：
-                                    <select class="wide" aria-label="脑内对象" @onchange="SelectMental">
+                                <label>@I18n.T("SelectMentalTarget")
+                                    <select class="wide" aria-label="Mental Object" @onchange="SelectMental">
                                         @foreach (var item in FilteredProjections)
                                         {
                                             <option value="@item.index" selected="@(item.p == mental)">
@@ -341,46 +348,46 @@
                                 <!-- 场景化一键干预动作卡片 -->
                                 <div class="quick-intervene-box">
                                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <strong style="color:#d9ecbc;">当前选中：@currentTarget.Name <small style="color:#8ea899;">(@currentTarget.Kind)</small></strong>
+                                        <strong style="color:#d9ecbc;">@I18n.T("CurrentSelected")@currentTarget.Name <small style="color:#8ea899;">(@currentTarget.Kind)</small></strong>
                                         <span class="badge @(currentTarget.Existence == Truth.True ? "good" : "bad")">
-                                            @(currentTarget.Existence == Truth.True ? "脑中存在" : currentTarget.Existence == Truth.False ? "脑中断定不存在" : "脑中存疑")
+                                            @(currentTarget.Existence == Truth.True ? I18n.T("ExistsInMind") : currentTarget.Existence == Truth.False ? I18n.T("NotExistsInMind") : I18n.T("DoubtInMind"))
                                         </span>
                                     </div>
 
                                     <div class="intervention-actions">
                                         @if (currentTarget.Kind == ProjectionKind.Space)
                                         {
-                                            <button type="button" class="action-btn warning" @onclick="QuickSetDanger">⚠️ 制造险情假象（让他以为此处危险而避开）</button>
-                                            <button type="button" class="action-btn success" @onclick="QuickSetSafe">🌳 制造安全假象（清除危险，标记阴凉树荫）</button>
+                                            <button type="button" class="action-btn warning" @onclick="QuickSetDanger">@I18n.T("ActionFakeDanger")</button>
+                                            <button type="button" class="action-btn success" @onclick="QuickSetSafe">@I18n.T("ActionFakeSafe")</button>
                                         }
                                         else if (currentTarget.Kind == ProjectionKind.Boundary)
                                         {
                                             @if (currentTarget.Existence == Truth.True)
                                             {
-                                                <button type="button" class="action-btn danger" @onclick="QuickBlockDoor">🚫 脑内封死此门（误以为不通或不存在）</button>
+                                                <button type="button" class="action-btn danger" @onclick="QuickBlockDoor">@I18n.T("ActionBlockDoor")</button>
                                             }
                                             else
                                             {
-                                                <button type="button" class="action-btn success" @onclick="QuickUnblockDoor">🔓 确认通路（重新回忆起此门通畅）</button>
+                                                <button type="button" class="action-btn success" @onclick="QuickUnblockDoor">@I18n.T("ActionUnblockDoor")</button>
                                             }
                                         }
                                         else if (currentTarget.Kind == ProjectionKind.Body)
                                         {
-                                            <button type="button" class="action-btn warning" @onclick="QuickSetRabbitSelf">🐰 暗示兔化（人类信念降至10%，丧失自制）</button>
-                                            <button type="button" class="action-btn success" @onclick="QuickSetHumanSelf">🧑 坚定人类认同（信念恢复至100%）</button>
+                                            <button type="button" class="action-btn warning" @onclick="QuickSetRabbitSelf">@I18n.T("ActionRabbitSuggest")</button>
+                                            <button type="button" class="action-btn success" @onclick="QuickSetHumanSelf">@I18n.T("ActionHumanAffirm")</button>
                                         }
-                                        <button type="button" class="action-btn" @onclick="ForgetMental">❌ 遗忘此对象（从脑海中抹去）</button>
-                                        <button type="button" class="action-btn" @onclick="NewMental">✨ 新建幻觉对象（凭空捏造）</button>
+                                        <button type="button" class="action-btn" @onclick="ForgetMental">@I18n.T("ActionForget")</button>
+                                        <button type="button" class="action-btn" @onclick="NewMental">@I18n.T("ActionCreateHallucination")</button>
                                     </div>
                                 </div>
 
                                 <!-- 高级底层属性编辑 -->
                                 <details class="advanced-box" open>
-                                    <summary>高级底层参数编辑（标签、位置、关系与规则）</summary>
+                                    <summary>@I18n.T("AdvancedParams")</summary>
                                     <div style="margin-top:10px;">
                                         <div style="display:flex;gap:10px;margin-bottom:8px;">
-                                            <label style="flex:2;">名称：<input class="wide" @bind="mentalName" /></label>
-                                            <label style="flex:1;">类别：
+                                            <label style="flex:2;">@I18n.T("ParamName")<input class="wide" @bind="mentalName" /></label>
+                                            <label style="flex:1;">@I18n.T("ParamKind")
                                                 <select class="wide" @bind="mentalKind">
                                                     @foreach (var k in Enum.GetValues<ProjectionKind>())
                                                     {
@@ -388,19 +395,19 @@
                                                     }
                                                 </select>
                                             </label>
-                                            <label style="flex:1;">是否存在：
+                                            <label style="flex:1;">@I18n.T("ParamExistence")
                                                 <select class="wide" @bind="mentalExistence">
                                                     @foreach (var t in Enum.GetValues<Truth>())
                                                     {
-                                                        <option value="@t">@t</option>
+                                                        <option value="@t">@(t == Truth.True ? I18n.T("TruthTrue") : t == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown"))</option>
                                                     }
                                                 </select>
                                             </label>
                                         </div>
 
-                                        <label>脑内所属位置：
+                                        <label>@I18n.T("ParamParent")
                                             <select class="wide" @bind="mentalParentIndex">
-                                                <option value="-1">不知道位置 / 无所属对象</option>
+                                                <option value="-1">@I18n.T("UnknownParent")</option>
                                                 @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)).Where(item => item.v != mental))
                                                 {
                                                     <option value="@item.i">@item.v.Name</option>
@@ -408,12 +415,12 @@
                                             </select>
                                         </label>
 
-                                        <label style="margin-top:8px;display:block;">标签（每行 名称=整数，? 表示未知）：
-                                            <textarea aria-label="脑内标签" @bind="mentalTags" style="min-height:75px;"></textarea>
+                                        <label style="margin-top:8px;display:block;">@I18n.T("ParamTags")
+                                            <textarea aria-label="Mental Tags" @bind="mentalTags" style="min-height:75px;"></textarea>
                                         </label>
 
                                         <div class="word-group">
-                                            <small>点击追加常用认知标签：</small>
+                                            <small>@I18n.T("ClickAppendTag")</small>
                                             <div class="chips">
                                                 <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=100")'>人类信念=100</button>
                                                 <button type="button" class="chip" @onclick='() => AppendMentalTag("人类信念=20")'>人类信念=20</button>
@@ -425,9 +432,9 @@
                                         </div>
 
                                         <details style="margin:8px 0;">
-                                            <summary>修改脑内关系拓扑</summary>
+                                            <summary>@I18n.T("EditTopology")</summary>
                                             <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;">
-                                                <input aria-label="关系名称" @bind="relationName" placeholder="关系名" style="width:100px;" />
+                                                <input aria-label="Relation Name" @bind="relationName" placeholder="关系名" style="width:100px;" />
                                                 <select @bind="relationOtherIndex">
                                                     @foreach (var item in person.Soul.World.Projections.Select((v, i) => (v, i)))
                                                     {
@@ -437,7 +444,7 @@
                                                 <select @bind="relationTruth">
                                                     @foreach (var t in Enum.GetValues<Truth>())
                                                     {
-                                                        <option value="@t">@t</option>
+                                                        <option value="@t">@(t == Truth.True ? I18n.T("TruthTrue") : t == Truth.False ? I18n.T("TruthFalse") : I18n.T("TruthUnknown"))</option>
                                                     }
                                                 </select>
                                                 <button @onclick="SaveRelation">写入关系</button>
@@ -445,13 +452,13 @@
                                         </details>
 
                                         <details style="margin:8px 0;">
-                                            <summary>为此脑内对象写 Core 规则 AST</summary>
-                                            <textarea aria-label="脑内规则AST" @bind="mentalRule" style="min-height:60px;"></textarea>
-                                            <button @onclick="SaveBelief" style="margin-top:6px;">采信此 AST</button>
+                                            <summary>@I18n.T("WriteAstRule")</summary>
+                                            <textarea aria-label="Mental Rule AST" @bind="mentalRule" style="min-height:60px;"></textarea>
+                                            <button @onclick="SaveBelief" style="margin-top:6px;">@I18n.T("AcceptAst")</button>
                                         </details>
 
                                         <button @onclick="SaveMental" style="width:100%;margin-top:8px;background:#244434;font-weight:bold;padding:10px;">
-                                            💾 保存底层参数并重算决策
+                                            @I18n.T("SaveMentalBtn")
                                         </button>
                                     </div>
                                 </details>
@@ -459,11 +466,11 @@
 
                             <!-- 决策与行动触发组 -->
                             <div class="actions" style="margin-top:16px;border-top:1px solid #283e33;padding-top:12px;">
-                                <button @onclick="Preview">仅预览决策对比</button>
+                                <button @onclick="Preview">@I18n.T("PreviewDecision")</button>
                                 <button @onclick="ActFromMind" style="border-color:#eab308;color:#fde047;font-weight:bold;">
-                                    ⚡ 取消旧行动并按当前脑内世界重选
+                                    @I18n.T("ReplanAction")
                                 </button>
-                                <button @onclick="ObserveAgain">👁️ 现场重新观察（纠正认知）</button>
+                                <button @onclick="ObserveAgain">@I18n.T("ObserveAgain")</button>
                             </div>
                         </div>
                     </div>
@@ -476,12 +483,12 @@
         <!-- Tab 4: 检查该人物的决策优先级和比较 -->
         <div class="tab-pane">
             <div class="person-selector-bar">
-                <label><strong>当前分析决策的人物：</strong></label>
+                <label><strong>@I18n.T("TargetPersonAnalyze")</strong></label>
                 <select class="wide" @onchange="Pick" style="max-width: 450px;">
                     @foreach (var p in W.People)
                     {
                         <option value="@p.Body.TrueName" selected="@(p == tracked)">
-                            @p.Body.TrueName · @p.Job · @p.Outcome
+                            @p.Body.TrueName · @I18n.TJob(p.Job) · @I18n.TOutcome(p.Outcome)
                         </option>
                     }
                 </select>
@@ -490,14 +497,14 @@
             @if (tracked is {} assessed)
             {
                 <div class="card" style="margin-bottom:16px;">
-                    <h2>决策前后对比 <small>认知篡改前 vs 认知篡改后</small></h2>
+                    <h2>@I18n.T("DecisionDiff") <small>@I18n.T("DecisionDiffSub")</small></h2>
                     <div class="compare">
                         <div>
-                            <h3>修改前快照</h3>
+                            <h3>@I18n.T("SnapshotBefore")</h3>
                             <pre>@beforeDecision</pre>
                         </div>
                         <div>
-                            <h3>修改后快照</h3>
+                            <h3>@I18n.T("SnapshotAfter")</h3>
                             <pre>@afterDecision</pre>
                         </div>
                     </div>
@@ -505,23 +512,23 @@
 
                 <div class="decisions-grid">
                     <div class="card">
-                        <h2>当前所有候选行动 <small>含被规则禁止的行动</small></h2>
+                        <h2>@I18n.T("CandidateActions") <small>@I18n.T("ForbiddenIncluded")</small></h2>
                         <div class="log" style="max-height: 420px;">
                             @foreach (var row in assessed.Assessments)
                             {
                                 <div style="padding:6px 0;">
                                     <strong>
-                                        <span class="badge @(row.Forbidden ? "bad" : "good")">@(row.Forbidden ? "禁止" : "可选")</span>
-                                        得分 @row.Decision.Score · @ZooWorld.Describe(row.Decision.Effect)
+                                        <span class="badge @(row.Forbidden ? "bad" : "good")">@(row.Forbidden ? I18n.T("Forbidden") : I18n.T("Available"))</span>
+                                        @I18n.T("Score") @row.Decision.Score · @ZooWorld.Describe(row.Decision.Effect)
                                     </strong>
-                                    <small style="display:block;margin-top:3px;color:#a8b7b0;">理由：@string.Join("；", row.Reasons)</small>
+                                    <small style="display:block;margin-top:3px;color:#a8b7b0;">@I18n.T("Reasons")@string.Join("；", row.Reasons)</small>
                                 </div>
                             }
                         </div>
                     </div>
 
                     <div class="card">
-                        <h2>脑内决策树链路 <small>观察 → 理解 → 空间条件 → 建议权重 → Core 选择</small></h2>
+                        <h2>@I18n.T("DecisionTrace") <small>@I18n.T("DecisionTraceSub")</small></h2>
                         <div class="trace" style="max-height: 200px;">
                             @foreach (var entry in assessed.DecisionTrace)
                             {
@@ -529,11 +536,11 @@
                             }
                             @if (assessed.DecisionTrace.Count == 0)
                             {
-                                <p>当前由日常游览、休息或岗位计划选择行动。</p>
+                                <p>@I18n.T("DefaultRoutineTip")</p>
                             }
                         </div>
 
-                        <h2 style="margin-top:16px;">最近观察历史 <small>@assessed.Soul.World.Projections.Length 个脑内对象</small></h2>
+                        <h2 style="margin-top:16px;">@I18n.T("ObservationHistory") <small>@I18n.T("MentalCountSub", assessed.Soul.World.Projections.Length)</small></h2>
                         <div class="log" style="max-height: 180px;">
                             @foreach (var observation in assessed.Soul.World.History.TakeLast(12).Reverse())
                             {
@@ -555,6 +562,8 @@
 .zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:16px}
 .zoo h1{font-size:28px;margin:4px 0}
 .zoo small{color:#96b6a6;display:block}
+.lang-selector{display:flex;align-items:center;background:#172620;padding:6px 12px;border-radius:6px;border:1px solid #334e40}
+.lang-selector select{border:none;background:transparent;color:#d9ecbc;font-weight:bold;cursor:pointer;padding:2px 6px}
 .clock{font-size:26px;color:#d9ecbc;text-align:right}
 .clock small{font-size:13px}
 .sim-nav{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;align-items:center}
@@ -684,10 +693,18 @@
     void QuickUnblockDoor(){mentalExistence=Truth.True;SaveMental();}
     void QuickSetRabbitSelf(){AppendMentalTag("人类信念=10");SaveMental();}
     void QuickSetHumanSelf(){AppendMentalTag("人类信念=100");SaveMental();}
+    void OnLanguageChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<Lang>(e.Value?.ToString(), out var l))
+        {
+            I18n.Current = l;
+            status = I18n.T("WorldCreated");
+            StateHasChanged();
+        }
+    }
     bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
-    string Clock=>$"第{(int)W.Now/1440+1}天 {(int)W.Now%1440/60:D2}:{(int)W.Now%60:D2}";
     protected override void OnInitialized()=>Reset();
-    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";status="已创建世界；可以暂停编辑脑内对象或规则，再比较选择。";}catch(Exception e){status=e.Message;}}
+    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";status=I18n.T("WorldCreated");}catch(Exception e){status=e.Message;}}
     async Task Advance(double minutes)
     {
         if(busy)return;busy=true;var current=generation;var world=W;var target=world.Now+minutes;
@@ -695,10 +712,10 @@
         {
             while(!disposed&&current==generation&&world.Now<target)
             {
-                world.Run(target,20);status=$"正在推进至目标时刻，当前 {Clock}。";
+                world.Run(target,20);status=I18n.T("AdvancingTo", I18n.TClock(world.Now));
                 StateHasChanged();await Task.Delay(1);
             }
-            if(current==generation)status=$"已推进至 {Clock}。";
+            if(current==generation)status=I18n.T("AdvancedTo", I18n.TClock(world.Now));
         }
         catch(Exception e){Stop();status=e.Message;}
         finally{if(current==generation)busy=false;}
@@ -718,20 +735,20 @@
     void LoadMental(Projection p){mental=p;mentalName=p.Name;mentalKind=p.Kind;mentalExistence=p.Existence;mentalTags=string.Join("\n",p.Tags.Select(t=>$"{t.Key.Name}={t.Value}"));mentalParentIndex=p.Parent==null?-1:tracked!.Soul.World.Projections.IndexOf(p.Parent);}
     void SelectMental(ChangeEventArgs e){if(tracked!=null)LoadMental(tracked.Soul.World.Projections[int.Parse(e.Value!.ToString()!)]);}
     void NewMental(){mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.Soul.World.Projections.IndexOf(tracked.Self.Parent!);}
-    void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParentIndex<0?null:tracked.Soul.World.Projections[mentalParentIndex],mentalTags,W.Now);LoadMental(mental);status="只修改了脑内世界。查看对比后可按当前认知重选行动。";});
-    void ForgetMental()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Forget(tracked,mental,W.Now);LoadMental(tracked.Self);status="对象已从脑内遗忘，现实对象仍然存在。";});
-    void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),tracked.Soul.World.Projections[relationOtherIndex],relationTruth,W.Now);status="脑内关系已更新。";});
-    void SaveBelief()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.SetBelief(tracked,mental,mentalRule,W.Now);status="此对象的Core规则已进入人物认知。";});
+    void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParentIndex<0?null:tracked.Soul.World.Projections[mentalParentIndex],mentalTags,W.Now);LoadMental(mental);status=I18n.T("StatusOnlyMindModified");});
+    void ForgetMental()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Forget(tracked,mental,W.Now);LoadMental(tracked.Self);status=I18n.T("StatusForgotten");});
+    void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),tracked.Soul.World.Projections[relationOtherIndex],relationTruth,W.Now);status=I18n.T("StatusRelationSaved");});
+    void SaveBelief()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.SetBelief(tracked,mental,mentalRule,W.Now);status=I18n.T("StatusBeliefSaved");});
     void Preview(){if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}
-    void ActFromMind(){try{if(tracked!=null){W.Replan(tracked);status="已取消旧行动的未完成阶段；新行动按当前脑内世界提交，已支付代价不返还。";}}catch(Exception e){status=e.Message;}}
-    void ObserveAgain()=>Compare(()=>{if(tracked!=null){W.Observe(tracked);LoadMental(tracked.Self);status="现场观察已更新脑内世界。";}});
-    void Publish()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增文书");status="仅更新现场版本；未读到的人选择不变。";});
-    void Broadcast()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status="修订通过广播进入认知。对比显示下一次选择；已排队行动继续原计划。";});
-    void Withdraw()=>Compare(()=>{var affected=W.Withdraw(key,true);status=$"文书已撤回，{affected} 人已听见撤回广播。";});
-    void WithdrawLocal()=>Compare(()=>{W.Withdraw(key,false);status="仅撤下现场文书，旧记忆暂时保留。";});
+    void ActFromMind(){try{if(tracked!=null){W.Replan(tracked);status=I18n.T("StatusReplanDone");}}catch(Exception e){status=e.Message;}}
+    void ObserveAgain()=>Compare(()=>{if(tracked!=null){W.Observe(tracked);LoadMental(tracked.Self);status=I18n.T("StatusObserved");}});
+    void Publish()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增文书");status=I18n.T("StatusRulePublished");});
+    void Broadcast()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status=I18n.T("StatusBroadcasted");});
+    void Withdraw()=>Compare(()=>{var affected=W.Withdraw(key,true);status=I18n.T("StatusWithdrawn", affected);});
+    void WithdrawLocal()=>Compare(()=>{W.Withdraw(key,false);status=I18n.T("StatusWithdrawLocal");});
     void Accept()=>Compare(()=>{if(tracked?.Books.ContainsKey(key)==true)ZooRules.Accept(tracked,key,Truth.True,W.Now);});
-    void ChangeUnderstanding()=>Compare(()=>{if(tracked is not {} person||!person.Books.TryGetValue(key,out var book))throw new InvalidOperationException("此人尚未读到该文书。");person.Books[key]=book with{Understanding=Math.Clamp(understanding,0,100)};ZooRules.Accept(person,key,acceptance,W.Now);status="修改只作用于此人对该条文书的理解。";});
-    void Cast()=>Compare(()=>{if(tracked!=null){W.Anomalies.QueueUtterance(tracked,utterance);status="Core已解析言灵。按脑内重选可立即提交，否则等待现有行动结束。";}});
+    void ChangeUnderstanding()=>Compare(()=>{if(tracked is not {} person||!person.Books.TryGetValue(key,out var book))throw new InvalidOperationException("此人尚未读到该文书。");person.Books[key]=book with{Understanding=Math.Clamp(understanding,0,100)};ZooRules.Accept(person,key,acceptance,W.Now);status=I18n.T("StatusUnderstandingChanged");});
+    void Cast()=>Compare(()=>{if(tracked!=null){W.Anomalies.QueueUtterance(tracked,utterance);status=I18n.T("StatusCast");}});
     void SetClarity(int val)
     {
         if(tracked!=null)
@@ -739,7 +756,7 @@
             Compare(()=>{
                 ZooExperiment.SetCognitionAndMap(tracked,val,W.Now);
                 LoadMental(tracked.Self);
-                status=val<50?"已降低此人认知：脑内地图退化，出口通道已遗忘，无法寻路离园。":"已恢复此人认知：脑内地图完整，已回忆起出口通道。";
+                status=val<50?I18n.T("StatusCognitionDropped"):I18n.T("StatusCognitionRestored");
             });
         }
     }
