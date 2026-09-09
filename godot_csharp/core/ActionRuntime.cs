@@ -9,12 +9,12 @@ public sealed record ActionResolution(bool Succeeded, ActionFailure Failure, dou
 /// <summary>运行时只在动作激活时读取现实。每个无等待阶段先准备，成功后统一提交。</summary>
 public sealed class ActionRuntime(WorldRuntime world)
 {
-    internal (ActionResolution Result, Effect? Next, double Delay) Resolve(SoulEssence soul, ActionIntent intent, double time)
+    internal (ActionResolution Result, Effect? Next, double Delay) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline)
     {
         var actor = world.Resolve(intent.Actor);
         if (actor is null) return (new(false, ActionFailure.MissingObject, time), null, 0);
         if (!world.Controls(soul, actor)) return (new(false, ActionFailure.NoControl, time), null, 0);
-        var plan = new Plan(world, soul, actor, intent.Actor, time);
+        var plan = new Plan(world, soul, actor, intent.Actor, time, timeline);
         if (intent.Requirements is not null && plan.Evaluate(intent.Requirements) != Truth.True)
             return (new(false, ActionFailure.ConditionFailed, time), null, 0);
         plan.Prepare(intent.Changes);
@@ -26,13 +26,14 @@ public sealed class ActionRuntime(WorldRuntime world)
     private sealed record State(ImmutableDictionary<Tag, int> Tags, ImmutableHashSet<(RelationTag Relation, Essence Target)> Relations,
         Essence? Space, Essence? Holder, bool? Locked, bool Exists);
 
-    private sealed class Plan(WorldRuntime world, SoulEssence soul, Essence actor, Projection actorProjection, double time)
+    private sealed class Plan(WorldRuntime world, SoulEssence soul, Essence actor, Projection actorProjection, double time, CTBSystem timeline)
     {
         private readonly Dictionary<Essence, State> _states = [];
         private readonly HashSet<Essence> _changed = [];
         private readonly List<Projection> _inspections = [];
         private readonly List<(SoulEssence Receiver, string Text, Effect? Request)> _messages = [];
         private readonly List<ObservationInput> _thoughts = [];
+        private readonly List<(Essence Target, StateLease Lease)> _leases = [];
         public ActionFailure Failure { get; private set; }
         public Effect? Next { get; private set; }
         public double Delay { get; private set; }
@@ -58,6 +59,8 @@ public sealed class ActionRuntime(WorldRuntime world)
         private int? Value(Essence essence, Tag tag)
         {
             var state = Read(essence);
+            if (_leases.LastOrDefault(l=>l.Target==essence&&l.Lease.Tag==tag).Lease is {} staged) return staged.Value;
+            if (essence.Get<TemporaryStateProperty>()?.Override(tag) is {} temporary) return temporary;
             return tag == Tags.Locked && state.Locked is { } locked ? locked ? 1 : 0 : state.Tags.GetValueOrDefault(tag);
         }
         private Essence? Location(Essence essence)
@@ -112,6 +115,14 @@ public sealed class ActionRuntime(WorldRuntime world)
                         Failure = ActionFailure.InvalidDelay;
                     else (Next, Delay) = (wait.Body, wait.Delay);
                     break;
+                case Effect.TemporarySet temporary:
+                    if (Resolve(temporary.Target) is not {} target) { Failure = ActionFailure.MissingObject; break; }
+                    if (!Reachable(target)) { Failure = ActionFailure.OutOfReach; break; }
+                    if (temporary.Tag==Tags.Locked) { Failure = ActionFailure.UnsupportedOperation; break; }
+                    if (!double.IsFinite(temporary.Duration)||temporary.Duration<=0||!double.IsFinite(time+temporary.Duration)||time+temporary.Duration<=time)
+                    { Failure = ActionFailure.InvalidDelay; break; }
+                    _leases.Add((target,new(temporary.Tag,temporary.Value,time+temporary.Duration)));
+                    break;
                 case Effect.Set set: Change(set.Target, set.Tag, set.Value, false, false); break;
                 case Effect.Change change: Change(change.Target, change.Tag, change.Amount, true, false); break;
                 case Effect.Spend spend: Change(spend.Target, spend.Tag, spend.Amount, true, true); break;
@@ -144,7 +155,7 @@ public sealed class ActionRuntime(WorldRuntime world)
         {
             if (Resolve(noun) is not { } essence) { Failure = ActionFailure.MissingObject; return; }
             var state = Read(essence);
-            var previous = Value(essence, tag) ?? 0;
+            var previous = tag==Tags.Locked ? Value(essence,tag)??0 : state.Tags.GetValueOrDefault(tag);
             if (spend && (amount < 0 || previous < amount)) { Failure = ActionFailure.InsufficientResource; return; }
             var value = relative ? (long)previous + (spend ? -(long)amount : amount) : amount;
             if (value is < int.MinValue or > int.MaxValue) { Failure = ActionFailure.InsufficientResource; return; }
@@ -205,6 +216,12 @@ public sealed class ActionRuntime(WorldRuntime world)
                 if (essence.Get<LockProperty>() is { } doorLock) doorLock.IsLocked = state.Locked!.Value;
                 if (!state.Exists) world.Destroy(essence);
             }
+            foreach (var (target, lease) in _leases)
+            {
+                var property=target.Get<TemporaryStateProperty>()??target.Add(new TemporaryStateProperty());
+                property.Layers.Add(lease);
+                timeline.Schedule(lease.ExpiresAt-time,()=>{property.Layers.RemoveAll(l=>ReferenceEquals(l,lease));world.Sync();});
+            }
             world.Sync();
             foreach (var thought in _thoughts) Observation.Observe(soul, thought);
             if (_inspections.Count > 0) world.Observe(soul, _inspections, time);
@@ -212,3 +229,4 @@ public sealed class ActionRuntime(WorldRuntime world)
         }
     }
 }
+

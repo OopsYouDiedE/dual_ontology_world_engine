@@ -1,11 +1,13 @@
 namespace DualOntologyWorldEngine.Core;
 
 public sealed record Decision(Effect Effect, int Score, Projection Basis);
+public sealed record DecisionAssessment(Decision Decision, bool Forbidden, IReadOnlyList<string> Reasons);
 
 /// <summary>候选、条件和偏好全部来自同一内部世界。客观可行性只在激活时检查。</summary>
 public static class DecisionSystem
 {
-    public static Decision? Choose(ProjectionWorld world, Projection actor)
+    public static Decision? Choose(ProjectionWorld world, Projection actor) => Assess(world,actor).FirstOrDefault(a=>!a.Forbidden)?.Decision;
+    public static IReadOnlyList<DecisionAssessment> Assess(ProjectionWorld world, Projection actor)
     {
         if (!world.Contains(actor)) throw new InvalidOperationException("决策主体不属于内部世界。");
         var rules = world.Projections.SelectMany(p => p.Rules.Where(r => r.Acceptance == Truth.True).Select(r => (Basis: p, Rule: r))).ToArray();
@@ -28,22 +30,24 @@ public static class DecisionSystem
             if (!candidates.Any(c => Ast.Equivalent(c.Effect, effect))) candidates.Add((effect, context, request, attitude.Score));
         }
 
-        Decision? best = null;
+        var assessments = new List<DecisionAssessment>();
         foreach (var candidate in candidates)
         {
             var score = candidate.Social;
             var forbidden = false;
-            foreach (var (_, rule) in rules)
+            var reasons = new List<string>();
+            if(candidate.Social!=0)reasons.Add($"社交意愿 {candidate.Social:+0;-0;0}");
+            foreach (var (basis, rule) in rules)
             {
                 if (Ast.Nouns(rule).OfType<Noun.Slot>().Any(n => candidate.Context.Resolve(n) is null) || Ast.Evaluate(rule.Condition, candidate.Context) != Truth.True) continue;
                 var matches = Ast.Equivalent(Ast.Bind(rule.Effect, candidate.Context), candidate.Effect);
-                if (rule.Mode == RuleMode.Forbid && matches) { forbidden = true; break; }
-                if (matches) score += rule.Weight;
-                else if (rule.Mode == RuleMode.Require) score -= rule.Weight;
+                if (rule.Mode == RuleMode.Forbid && matches) { forbidden = true; reasons.Add($"{basis.Name}：禁止"); continue; }
+                if (matches) { score += rule.Weight; reasons.Add($"{basis.Name}：+{rule.Weight}"); }
+                else if (rule.Mode == RuleMode.Require) { score -= rule.Weight; reasons.Add($"{basis.Name}：未满足要求 -{rule.Weight}"); }
             }
-            if (!forbidden && (best is null || score > best.Score)) best = new(candidate.Effect, score, candidate.Basis);
+            assessments.Add(new(new(candidate.Effect,score,candidate.Basis),forbidden,reasons));
         }
-        return best;
+        return assessments.OrderBy(a=>a.Forbidden).ThenByDescending(a=>a.Decision.Score).ToArray();
     }
 
     private static IEnumerable<ActionContext> Contexts(ProjectionWorld world, Projection actor, Rule rule)
@@ -59,3 +63,4 @@ public static class DecisionSystem
         }
     }
 }
+

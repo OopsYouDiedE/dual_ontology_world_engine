@@ -31,6 +31,7 @@ public abstract record Effect
     public sealed record Act(ActionOp Operation, Noun Target, Noun? Tool = null) : Effect;
     public sealed record Set(Noun Target, Tag Tag, int Value) : Effect;
     public sealed record Change(Noun Target, Tag Tag, int Amount) : Effect;
+    public sealed record TemporarySet(Noun Target, Tag Tag, int Value, double Duration) : Effect;
     public sealed record Spend(Noun Target, Tag Tag, int Amount) : Effect;
     public sealed record Relate(Noun Target, RelationTag Relation, Noun Other, bool Remove = false) : Effect;
     public sealed record Sequence(ImmutableArray<Effect> Items) : Effect;
@@ -108,6 +109,7 @@ public static class Ast
     {
         Effect.Act e => e with { Target = map(e.Target), Tool = e.Tool is null ? null : map(e.Tool) },
         Effect.Set e => e with { Target = map(e.Target) },
+        Effect.TemporarySet e => e with { Target = map(e.Target) },
         Effect.Change e => e with { Target = map(e.Target) },
         Effect.Spend e => e with { Target = map(e.Target) },
         Effect.Relate e => e with { Target = map(e.Target), Other = map(e.Other) },
@@ -175,3 +177,4 @@ public static class Ast
         _ => left == right
     };
 }
+

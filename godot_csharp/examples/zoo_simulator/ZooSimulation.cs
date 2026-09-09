@@ -19,7 +19,7 @@ public static class Z
     public static readonly Tag[] All = [new("普通离园资格"),new("海馆离园资格"),Health,Rabbit,Attention,Human,Paper,Map,Blood,Command,Light,Shadow,Calm,Role,Minutes,Distance,Open,Mana,Symptoms,Escape,RabbitEars,Toy,Age,Roaring,LionCount,Laugh,Mixed,StaffPresent,Danger,Food,Split,Anomaly,Clock,Lamp,Power,Confidence];
     public static readonly RelationTag Leads = new("通往"), From = new("起点");
     public static readonly RelationTag[] Relations = [Leads,From];
-    public static int Value(this Essence e, Tag t) => e.Get<StateProperty>()?.Values.GetValueOrDefault(t) ?? 0;
+    public static int Value(this Essence e, Tag t) => e.Get<TemporaryStateProperty>()?.Override(t) ?? e.Get<StateProperty>()?.Values.GetValueOrDefault(t) ?? 0;
     public static int Value(this Projection p, Tag t) => p.Tags.GetValueOrDefault(t);
     public static void Set(this Essence e, Tag t, int n, bool visible = true)
     {
@@ -37,7 +37,9 @@ public sealed class Person(Essence body, SoulEssence soul, Projection self, Job 
     public Projection Self { get; } = self;
     public Job Job { get; set; } = job;
     public Species TrueSpecies { get; set; } = Species.Human;
-    public Species? ItsClassification { get; set; } = Species.Human;
+    public Species? ItsClassification { get; set; }
+    public double LastClassified { get; set; } = -1;
+    public Projection? Watch { get; set; }
     public string DutyRoom { get; } = body.Get<SpatialProperty>()!.Space!.TrueName;
     public double Arrival { get; } = arrival;
     public double LastExposure { get; set; } = arrival;
@@ -52,6 +54,10 @@ public sealed class Person(Essence body, SoulEssence soul, Projection self, Job 
     public bool Discharged { get; set; }
     public string Outcome { get; set; } = "在园";
     public string CurrentAction { get; set; } = "观察";
+    public string LastActionResult { get; set; } = "尚未行动";
+    public bool SkipNextObservation { get; set; }
+    public int Returns { get; set; }
+    public IReadOnlyList<DecisionAssessment> Assessments { get; set; } = [];
     public ActionExecution? Execution { get; set; }
     public Dictionary<string, RememberedRule> Books { get; } = [];
     public Dictionary<string, int> Visits { get; } = [];
@@ -68,6 +74,7 @@ public sealed class ZooSimulation : IDisposable
     public ZooAnomalies Anomalies => World.Anomalies;
     public void Dispose() => World.Dispose();
 }
+
 
 
 

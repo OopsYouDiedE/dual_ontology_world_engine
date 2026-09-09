@@ -57,7 +57,7 @@ public sealed class WorldRuntime
         {
             view.Existence = Ast.From(_existing.Contains(essence));
             var states = essence.Get<StateProperty>();
-            var tags = states?.Values.Where(p => states.Observable.Contains(p.Key)).ToImmutableDictionary() ?? ImmutableDictionary<Tag, int>.Empty;
+            var tags = states?.Values.ToImmutableDictionary().SetItems(essence.Get<TemporaryStateProperty>()?.Values ?? []).Where(p => states.Observable.Contains(p.Key)).ToImmutableDictionary() ?? ImmutableDictionary<Tag, int>.Empty;
             if (essence.Get<SurfaceProperty>()?.Surfaces.TryGetValue(view, out var surface) == true) tags = tags.SetItems(surface);
             if (essence.Get<LockProperty>() is { } doorLock) tags = tags.SetItem(Tags.Locked, doorLock.IsLocked ? 1 : 0);
             view.Tags = tags;
@@ -151,3 +151,4 @@ public sealed class WorldRuntime
         });
     }
 }
+

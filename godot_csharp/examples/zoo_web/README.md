@@ -1,17 +1,22 @@
-# 动物园网页发布入口
+# 动物园网页
 
-网页使用 Blazor WebAssembly，在浏览器内运行 C# 模拟器。依赖链为 `zoo_web → ZooSimulator.Runtime → DualOntologyWorldEngine.Core`。终端项目 `ZooSimulator` 引用同一个 Runtime，终端交互依赖 Spectre.Console 不进入网页。
+Blazor WebAssembly 直接在浏览器运行 C#。依赖链：`zoo_web → ZooSimulator.Runtime → DualOntologyWorldEngine.Core`。网页与终端共用同一模拟，无 Spectre.Console 依赖。
 
-`zoo_simulator/runtime/ZooSimulator.Runtime.csproj` 编译模拟器目录的 C# 文件，排除两个终端入口文件，并内嵌原文。新增模拟器文件自动进入两个入口。网页与终端都通过 `ZooSimulation` 装配世界、知识预设、异常过程和角色行动。
+## 本地运行与发布
 
-在仓库根目录运行：
+在仓库根目录执行：
 
 ```powershell
+dotnet run --project godot_csharp/examples/zoo_web --urls http://localhost:5127
 ./godot_csharp/examples/zoo_web/publish.ps1
 ```
 
-静态托管根目录使用 `publish_wasm/wwwroot`，通过 HTTP 提供其中全部文件。网站支持目录形式的子路径，访问子路径时保留末尾 `/`。不要单独复制源码目录的 `wwwroot`，它尚未包含 .NET 运行时和模拟器程序集。发布输出已从项目输入排除，避免再次嵌入旧发布目录。
+静态站点根目录为 `publish_wasm/wwwroot`，包含 .NET WASM、Core 和模拟程序集。可将其中全部文件用于 GitHub Pages；保留 `.nojekyll`，子路径链接以 `/` 结尾，`index.html` 使用相对 base。发布脚本只生成本地文件，不自动上传 GitHub。
 
-网页的播放定时器只请求推进逻辑时间；角色和环境实际行动仍由 Core 的行动值队列结算。每批最多 500 步，达到上限显示实际进度。重置会更换整套模拟实例，旧定时回调不能推进新世界。
+## 实验界面
 
-人物面板显示情绪、已知状态、查证能力和长期动机，日志显示 C# 事件和嵌套回应。规则预设在重置时应用。自定义正文会广播为文书，新的行为建议仍需在 C# 模拟器内定义。
+四种初始模式已移除。通过人物面板自由修改脑内对象、关系、信念与理解程度，比较候选权重，提交新行动并跟踪实际路线。文书的保存、广播、撤回均有明确的感知范围。言灵输入支持 Core AST，包括临时状态覆盖与独立到期。展开跨日记录查看各日游客数、黑衣新增及红衣返岗；“它”面板显示行动与记忆分类。
+
+推进按每批最多 20 个 CTB 事件分片并让出浏览器线程。暂停可以中断单次长推演；重建世界会取消旧批次。浏览器的播放计时器只请求推进逻辑时间，不承担人物或异常结算。
+
+完整语法、机制边界与复现步骤见 [模拟器说明](../zoo_simulator/README.md)。

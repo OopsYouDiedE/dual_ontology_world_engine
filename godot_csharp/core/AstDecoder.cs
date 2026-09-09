@@ -188,6 +188,7 @@ public sealed class AstDecoder(ProjectionWorld world, IEnumerable<Tag>? tags = n
                 "destroy" => new Effect.Act(ActionOp.Destroy, Noun()),
                 "set" => new Effect.Set(Noun(), Next(Tag), Next(Integer)),
                 "change" => new Effect.Change(Noun(), Next(Tag), Next(Integer)),
+                "temporary_set" => new Effect.TemporarySet(Noun(), Next(Tag), Next(Integer), Next(Delay)),
                 "spend" => ReadSpend(),
                 "relate" => new Effect.Relate(Noun(), Next(Relation), Next(Noun)),
                 "unrelate" => new Effect.Relate(Noun(), Next(Relation), Next(Noun), true),
@@ -231,3 +232,4 @@ public sealed class AstDecoder(ProjectionWorld world, IEnumerable<Tag>? tags = n
         }
     }
 }
+

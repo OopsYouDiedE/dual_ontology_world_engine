@@ -5,13 +5,17 @@
     <header><div><small>ESSENCE / PROJECTION · C# CORE</small><h1>动物园规则怪谈</h1></div><div class="clock">@Clock <small>@(W.Open ? "开放中 08:00—16:00" : "已闭园 · 停止入园")</small></div></header>
     <nav>
         <button @onclick="() => Advance(10)">推进 10 分钟</button><button @onclick="() => Advance(60)">推进 1 小时</button>
-        <button @onclick="Toggle">@(playing?"暂停":"连续推演")</button>
-        <select @bind="preset"><option value="standard">岗位与地图</option><option value="none">未读初始规则</option><option value="gate">采信门口告示</option><option value="all">全部冲突文书</option></select>
+        <button @onclick="Toggle">@(playing||busy?"暂停":"连续推演")</button>
+        <button @onclick="()=>Advance((Math.Floor(W.Now/1440)+1)*1440+480-W.Now)">推进至次日08:00</button>
         <label>首批游客 <input type="number" min="0" max="500" @bind="visitors" /></label>
         <label>种子 <input type="number" @bind="seed" /></label><button @onclick="Reset">重建世界</button>
     </nav>
     <p class="status" role="status">@status</p>
-    <div class="metrics"><span>当前游客 <b>@W.InPark</b></span><span>峰值游客 <b>@W.PeakVisitors</b></span><span>已逃离 <b>@W.People.Count(p=>p.Outcome=="成功逃离")</b></span><span>原文文书 <b>@W.Rules.Clauses.Count</b></span><span>步行 <b>60 米/分钟</b></span></div>
+    <p>建议实验：推进后选中兔子园区的一名游客，查看喂食候选；撤回并广播 Visitor.8，比较禁止状态与首选行动，再按脑内重选。也可给此人脑内所在场景写入 危险征兆=1，观察避险选择，随后重新观察现场检验认知是否被纠正。</p>
+    <div class="metrics"><span>当前游客 <b>@W.InPark</b></span><span>峰值游客 <b>@W.PeakVisitors</b></span><span>已逃离 <b>@W.People.Count(p=>p.Outcome=="成功逃离")</b></span><span>当前文书 <b>@W.Rules.Clauses.Count</b></span><span>步行 <b>60 米/分钟</b></span></div>
+    <details><summary>跨日客流与员工返岗</summary><p>@string.Join("；",W.DailyAdmissions.Select(d=>$"第{d.Key+1}天入园{d.Value}人"))</p><p>新增黑衣：@W.Anomalies.BlackBirths；红衣返岗：@W.People.Where(p=>p.DutyRoom=="水母区").Sum(p=>p.Returns) 次。</p></details>
+    <p>@string.Join("；",W.People.GroupBy(p=>p.Outcome).Select(g=>$"{g.Key} {g.Count()} 人"))</p>
+    <details open><summary>“它”的行动与机制</summary><p>实际位置：@W.Anomalies.ItsLocation；下一行动：@W.Anomalies.ItsIntention</p><p>@W.Anomalies.ItsReason</p><p>下次考虑行动：@W.Anomalies.NextAnomaly.ToString("F1") 分钟。接近与显露察觉增加关注；身份动摇改变它的分类；纸片及猿猴混处干扰分类。兔化来自身体接触与后续发展，抢夺纸片损伤自我身份。文书不直接制造伤亡。</p><details><summary>它记住的物种判断</summary><div class="log">@foreach(var line in W.Anomalies.Classifications.TakeLast(15)){<div>@line</div>}</div></details></details>
     <main>
         <section><h2>园区现场 <small>客观视角</small></h2>
             <div class="rooms">@foreach(var room in W.Rooms.Values.Where(r=>r.TrueName!="园外"))
@@ -19,10 +23,25 @@
             <h2>人物</h2><select class="wide" @onchange="Pick">@foreach(var p in W.People){<option value="@p.Body.TrueName" selected="@(p==tracked)">@p.Body.TrueName · @p.Job · @p.Outcome</option>}</select>
             @if(tracked is {} person)
             {
-                <dl><dt>真实物种</dt><dd>@person.TrueSpecies</dd><dt>本人认为</dt><dd>人类信念 @person.Self.Value(Z.Human) / 100</dd><dt>“它”认为</dt><dd>@(person.ItsClassification?.ToString()??"无法可靠分类")</dd><dt>身体兔化</dt><dd>@person.Body.Value(Z.Rabbit) / 100</dd><dt>实际位置</dt><dd>@person.Room?.TrueName</dd><dt>脑内位置</dt><dd>@person.Self.Parent?.Name</dd><dt>进行中行动</dt><dd>@person.CurrentAction</dd><dt>虚线纸</dt><dd>@(W.Anomalies.Paper(person)!=null?"持有撕下的纸片":"无分类保护")</dd></dl>
-                <h2>认知干预</h2><p>通过 Core 认知变换提交观察输入，下一次决策使用新的自我理解。</p>
-                <input type="range" min="0" max="100" @bind="human"/><span>@human</span><button @onclick="ChangeMind">改变人类信念</button>
-                <h2>言灵 · 临时修改当前场景</h2><p>消耗一次施放机会，作用 15 分钟；到期按叠加顺序恢复。</p><button @onclick="Cast">“此处暂时安静”</button><small>剩余 @person.Body.Value(Z.Mana) 次</small>
+                <dl><dt>真实物种</dt><dd>@person.TrueSpecies</dd><dt>本人认为</dt><dd>人类信念 @person.Self.Value(Z.Human) / 100</dd><dt>“它”认为</dt><dd>@(person.LastClassified<0?"尚未观察":person.ItsClassification?.ToString()??"无法可靠分类")（上次观察：@(person.LastClassified<0?"无":person.LastClassified.ToString("F1"))）</dd><dt>身体兔化</dt><dd>@person.Body.Value(Z.Rabbit) / 100</dd><dt>实际位置</dt><dd>@person.Room?.TrueName</dd><dt>脑内位置</dt><dd>@person.Self.Parent?.Name</dd><dt>进行中行动</dt><dd>@person.CurrentAction</dd><dt>虚线纸</dt><dd>@(W.Anomalies.Paper(person)!=null?"持有撕下的纸片":"无分类保护")</dd></dl>
+                <h2>脑内世界编辑器</h2>
+                <p>修改下面的对象只影响此人的认知。先预览选择，再让人物凭当前认知行动；再次观察可能纠正错误。已排队行动不会因编辑自动改变。</p>
+                <label>脑内对象<select class="wide" aria-label="脑内对象" @onchange="SelectMental">@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i))){<option value="@item.i" selected="@(item.v==mental)">@item.v.Name · @item.v.Kind</option>}</select></label>
+                <div class="actions"><button @onclick="NewMental">新建幻觉对象</button><button @onclick="ForgetMental">遗忘此对象</button></div>
+                <label>名称<input class="wide" aria-label="脑内名称" @bind="mentalName" /></label>
+                <label>类别<select @bind="mentalKind">@foreach(var k in Enum.GetValues<ProjectionKind>()){<option value="@k">@k</option>}</select></label>
+                <label>是否存在<select @bind="mentalExistence">@foreach(var t in Enum.GetValues<Truth>()){<option value="@t">@t</option>}</select></label>
+                <label>脑内所属位置<select class="wide" @bind="mentalParentIndex"><option value="-1">不知道位置 / 无所属对象</option>@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i)).Where(item=>item.v!=mental)){<option value="@item.i">@item.v.Name</option>}</select></label>
+                <label>标签（每行 名称=整数，? 表示未知）<textarea aria-label="脑内标签" @bind="mentalTags"></textarea></label>
+                <button @onclick="SaveMental">写入认知并对比决策</button>
+                <details><summary>修改脑内关系</summary><input aria-label="关系名称" @bind="relationName"/><select @bind="relationOtherIndex">@foreach(var item in person.Soul.World.Projections.Select((v,i)=>(v,i))){<option value="@item.i">@item.v.Name</option>}</select><select @bind="relationTruth">@foreach(var t in Enum.GetValues<Truth>()){<option value="@t">@t</option>}</select><button @onclick="SaveRelation">写入关系</button></details>
+                <details><summary>为此脑内对象写 Core 规则 AST</summary><textarea aria-label="脑内规则AST" @bind="mentalRule"></textarea><button @onclick="SaveBelief">采信此 AST</button></details>
+                <div class="actions"><button @onclick="Preview">仅预览决策</button><button @onclick="ActFromMind">取消未完成行动并按脑内重选</button><button @onclick="ObserveAgain">重新观察现场</button></div>
+                <p>最近实际结算：@person.LastActionResult</p>
+                <details><summary>跟踪此人的实际路线</summary>@foreach(var travel in W.Travels.Where(t=>t.Person==person.Body.TrueName).TakeLast(15).Reverse()){<p>@travel.Time.ToString("F1")：@travel.From → @travel.To（@travel.Minutes 分钟）</p>}</details>
+                <h2>言灵 · Core AST 流程</h2><p>消耗一次施放机会，经过人物行动槽执行。临时状态独立计时；可组合多个效果及等待。</p>
+                <textarea aria-label="言灵AST" @bind="utterance"></textarea><button @onclick="Cast">解析并准备施放</button><small>剩余 @person.Body.Value(Z.Mana) 次</small>
+                <p>当前场景的 Core 临时效果：@string.Join("；",person.Room?.Get<TemporaryStateProperty>()?.Active.Select(l=>$"{l.Tag.Name}={l.Value}，{l.ExpiresAt:F1}到期")??[])</p>
             }
         </section>
         <section>
@@ -32,12 +51,18 @@
                 <div class="trace">@foreach(var entry in thinker.DecisionTrace){<div>@entry</div>}@if(thinker.DecisionTrace.Count==0){<p>当前由日常游览、休息或岗位计划选择行动。</p>}</div>
                 <details><summary>最近观察（@thinker.Soul.World.Projections.Length 个脑内对象）</summary>@foreach(var observation in thinker.Soul.World.History.TakeLast(12).Reverse()){<p>@observation.Time.ToString("F1") · @observation.Source · @observation.Target.Name <small>@observation.Details</small></p>}</details>
             }
+            <h2>决策前后对比</h2>
+            <div class="compare"><div><h3>修改前</h3><pre>@beforeDecision</pre></div><div><h3>修改后</h3><pre>@afterDecision</pre></div></div>
+            @if(tracked is {} assessed){<h3>当前所有候选（含被禁止的行动）</h3><div class="log">@foreach(var row in assessed.Assessments){<div><strong>@(row.Forbidden?"禁止":"可选") · @row.Decision.Score · @ZooWorld.Describe(row.Decision.Effect)</strong><small>@string.Join("；",row.Reasons)</small></div>}</div>}
             <h2>文书编辑</h2><p>受控中文会解析成 AST。修订后需要现场阅读或广播，人物才会知道新版本。广播不覆盖海洋馆和封闭宿舍。</p>
             <select class="wide" @onchange="LoadRule">@foreach(var clause in W.Rules.Clauses.Values){<option value="@clause.Key" selected="@(clause.Key==key)">@clause.Key · @(clause.Original.Length>45?clause.Original[..45]+"…":clause.Original)</option>}</select>
             <p class="original">@W.Rules.Clauses.GetValueOrDefault(key)?.Original</p>
             <input class="wide" aria-label="文书编号" @bind="key"/><textarea aria-label="受控规则文本" @bind="script"></textarea>
-            <div class="actions"><button @onclick="Publish">保存文书</button><button @onclick="Broadcast">保存并广播</button><button @onclick="Withdraw">张贴撤回告示</button><button @onclick="Accept">当前人物重新采信</button></div>
+            <div class="actions"><button @onclick="Publish">保存文书</button><button @onclick="Broadcast">保存并广播</button><button @onclick="Withdraw">撤回并广播</button><button @onclick="WithdrawLocal">仅撤下现场文书</button><button @onclick="Accept">当前人物重新采信</button></div>
             <details><summary>可用语法与词汇</summary><p>当 条件 时 优先 动作 权重 80；当 条件&amp;!另一条件 时 禁止 动作 权重 100</p><p>行为：前往:场景名、@string.Join("、",ZooMinds.Actions.Keys)</p><p>条件：@string.Join("、",ZooMinds.FactNames)</p></details>
+            <p>此条当前仍被 @W.People.Count(p=>p.Outcome=="在园"&&p.Books.ContainsKey(key)) 名在园人物记住。撤回广播通过观察输入撤销记忆；未听见者继续保留。</p>
+            <label>当前人物对该条的态度<select @bind="acceptance">@foreach(var a in Enum.GetValues<Truth>()){<option value="@a">@(a==Truth.True?"采信":a==Truth.False?"拒绝":"未定")</option>}</select></label>
+            <label>理解程度<input type="number" min="0" max="100" @bind="understanding" /></label><button @onclick="ChangeUnderstanding">更新此人的理解并对比</button>
             <h2>人物记住的版本</h2>
             @if(tracked is {} reader){<div class="books">@foreach(var book in reader.Books.Values){<details><summary>@book.Text.Key · @book.Acceptance · 理解 @book.Understanding%</summary><p>@book.Text.Script</p></details>}</div>}
             <h2>行动与机制记录</h2><div class="log">@foreach(var entry in W.Events.TakeLast(30).Reverse()){<div>@entry</div>}</div>
@@ -45,15 +70,15 @@
     </main>
 </div>
 <style>
-.zoo{max-width:1500px;margin:auto;padding:24px;color:#d7e0e6;font:14px/1.6 system-ui;background:#101819}.zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:20px}.zoo h1{font-size:30px;margin:4px 0}.zoo small{color:#96b6a6;display:block}.clock{font-size:28px;color:#d9ecbc}.clock small{font-size:13px}.zoo nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.zoo button,.zoo select,.zoo input,.zoo textarea{background:#1a2827;color:#e5ece8;border:1px solid #53685f;border-radius:5px;padding:9px}.zoo button{cursor:pointer}.zoo button:hover{background:#31493b}.zoo input[type=number]{width:65px}.metrics{display:flex;gap:28px;padding:18px;background:#20342a;border-radius:8px}.metrics b{font-size:20px;margin-left:8px}.zoo main{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}.zoo section{min-width:0}.zoo h2{font-size:17px;margin:28px 0 14px;color:#d9ecbc}.zoo h2 small{font-size:12px;font-weight:400}.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.room{text-align:left;min-height:80px}.room span{display:block}.room.active{border-color:#cbe9a7;background:#2a4130}.wide{width:100%;box-sizing:border-box}.zoo dl{display:grid;grid-template-columns:110px 1fr;gap:8px}.zoo dd{margin:0;color:#e4edb5}.zoo dt{color:#91a89a}.trace,.log,.books{max-height:280px;overflow:auto;background:#14211d;padding:14px;border-left:2px solid #789468}.trace div,.log div{padding:4px;border-bottom:1px solid #25372d}.zoo textarea{width:100%;box-sizing:border-box;min-height:130px;margin-top:10px;font:14px/1.7 monospace}.zoo details{padding:8px;border-bottom:1px solid #35483d}.zoo summary{cursor:pointer}.original{color:#a8b7b0}.status{color:#eacb91;min-height:22px}.zoo p{overflow-wrap:anywhere}.zoo button:focus-visible{outline:2px solid #ebdf91}@@media(max-width:850px){.zoo main{grid-template-columns:1fr}.metrics{flex-wrap:wrap;gap:12px}.zoo{padding:12px}.zoo header{align-items:flex-start;gap:12px}.rooms{grid-template-columns:repeat(2,1fr)}}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare pre{white-space:pre-wrap;font:12px/1.6 monospace;max-height:240px;overflow:auto;background:#14211d;padding:10px}.zoo{max-width:1500px;margin:auto;padding:24px;color:#d7e0e6;font:14px/1.6 system-ui;background:#101819}.zoo header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #43554d;padding-bottom:20px}.zoo h1{font-size:30px;margin:4px 0}.zoo small{color:#96b6a6;display:block}.clock{font-size:28px;color:#d9ecbc}.clock small{font-size:13px}.zoo nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.zoo button,.zoo select,.zoo input,.zoo textarea{background:#1a2827;color:#e5ece8;border:1px solid #53685f;border-radius:5px;padding:9px}.zoo button{cursor:pointer}.zoo button:hover{background:#31493b}.zoo input[type=number]{width:65px}.metrics{display:flex;gap:28px;padding:18px;background:#20342a;border-radius:8px}.metrics b{font-size:20px;margin-left:8px}.zoo main{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}.zoo section{min-width:0}.zoo h2{font-size:17px;margin:28px 0 14px;color:#d9ecbc}.zoo h2 small{font-size:12px;font-weight:400}.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.room{text-align:left;min-height:80px}.room span{display:block}.room.active{border-color:#cbe9a7;background:#2a4130}.wide{width:100%;box-sizing:border-box}.zoo dl{display:grid;grid-template-columns:110px 1fr;gap:8px}.zoo dd{margin:0;color:#e4edb5}.zoo dt{color:#91a89a}.trace,.log,.books{max-height:280px;overflow:auto;background:#14211d;padding:14px;border-left:2px solid #789468}.trace div,.log div{padding:4px;border-bottom:1px solid #25372d}.zoo textarea{width:100%;box-sizing:border-box;min-height:130px;margin-top:10px;font:14px/1.7 monospace}.zoo details{padding:8px;border-bottom:1px solid #35483d}.zoo summary{cursor:pointer}.original{color:#a8b7b0}.status{color:#eacb91;min-height:22px}.zoo p{overflow-wrap:anywhere}.zoo button:focus-visible{outline:2px solid #ebdf91}@@media(max-width:850px){.zoo main{grid-template-columns:1fr}.metrics{flex-wrap:wrap;gap:12px}.zoo{padding:12px}.zoo header{align-items:flex-start;gap:12px}.rooms{grid-template-columns:repeat(2,1fr)}}
 </style>
 @code {
     ZooSimulation simulation=null!;ZooWorld W=>simulation.World;Person? tracked;
-    int seed=7,visitors=120,human=70;string preset="standard",key="Visitor.14",script="当 危险 时 优先 前往:狮子园区 权重 120",status="";
+    int seed=7,visitors=120;string key="Visitor.14",script="当 危险 时 优先 前往:狮子园区 权重 120",status="";
     bool playing,disposed,busy;int generation;System.Threading.Timer? timer;
     string Clock=>$"第{(int)W.Now/1440+1}天 {(int)W.Now%1440/60:D2}:{(int)W.Now%60:D2}";
     protected override void OnInitialized()=>Reset();
-    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,preset);tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];status="已创建世界；下一次行动从脑内世界选择。";}catch(Exception e){status=e.Message;}}
+    void Reset(){Stop();generation++;busy=false;simulation?.Dispose();try{simulation=new(seed,visitors,480,"standard");tracked=W.People.FirstOrDefault(p=>p.Job==Job.Visitor)??W.People[0];LoadMental(tracked.Self);beforeDecision="";afterDecision="";status="已创建世界；可以暂停编辑脑内对象或规则，再比较选择。";}catch(Exception e){status=e.Message;}}
     async Task Advance(double minutes)
     {
         if(busy)return;busy=true;var current=generation;var world=W;var target=world.Now+minutes;
@@ -69,19 +94,39 @@
         catch(Exception e){Stop();status=e.Message;}
         finally{if(current==generation)busy=false;}
     }
-    void Toggle(){if(playing){Stop();return;}playing=true;timer=new(_=>InvokeAsync(async ()=>{if(disposed||!playing)return;await Advance(2);StateHasChanged();}),null,0,700);}
-    void Stop(){playing=false;timer?.Dispose();timer=null;}
-    void SelectRoom(Essence room){tracked=W.People.FirstOrDefault(p=>p.Room==room&&p.Outcome=="在园")??tracked;}
-    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());}
+    void Toggle(){if(playing||busy){Stop();return;}playing=true;timer=new(_=>InvokeAsync(async ()=>{if(disposed||!playing)return;await Advance(2);StateHasChanged();}),null,0,700);}
+    void Stop(){playing=false;timer?.Dispose();timer=null;generation++;busy=false;}
+    void SelectRoom(Essence room){tracked=W.People.Where(p=>p.Room==room&&p.Outcome=="在园").OrderBy(p=>p.Job!=Job.Visitor).FirstOrDefault()??tracked;if(tracked!=null)LoadMental(tracked.Self);}
+    void Pick(ChangeEventArgs e){tracked=W.People.First(p=>p.Body.TrueName==e.Value?.ToString());LoadMental(tracked.Self);}
     void LoadRule(ChangeEventArgs e){key=e.Value!.ToString()!;script=W.Rules.Clauses[key].Script;}
-    void Publish(){try{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增现场文书");status="文本已通过解析并保存；尚未读到的人继续使用旧版本。";}catch(Exception e){status=e.Message;}}
-    void Broadcast(){try{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status="修订已通过广播进入听众的观察输入。";}catch(Exception e){status=e.Message;}}
-    void Withdraw(){W.Rules.Remove(key);status="已张贴撤回告示；人物再次阅读该处文书后撤销旧建议。";}
-    void Accept(){if(tracked?.Books.ContainsKey(key)==true){ZooRules.Accept(tracked,key,Truth.True,W.Now);status="人物已重新采信记忆中的版本。";}}
-    void ChangeMind(){if(tracked!=null){W.Anomalies.Reconsider(tracked,human);status="认知变换已提交，身体物种保持独立。";}}
-    void Cast(){try{if(tracked!=null)W.Anomalies.SayTemporary(tracked,Z.Calm,1,15);status="言灵已进入人物行动队列，完成当前行动后施放。";}catch(Exception e){status=e.Message;}}
+    Projection? mental;
+    string mentalName="",mentalTags="",relationName="通往",mentalRule="RULE true() => PREFER wait(5, inspect($Actor))";
+    string utterance="temporary_set($Scene, 树荫, 0, 15)",beforeDecision="",afterDecision="";
+    ProjectionKind mentalKind=ProjectionKind.Object;Truth mentalExistence=Truth.True,relationTruth=Truth.True;
+    int mentalParentIndex=-1,relationOtherIndex;
+    Truth acceptance=Truth.True;int understanding=100;
+    void Compare(Action action){try{if(tracked!=null)beforeDecision=ZooExperiment.Snapshot(tracked);action();if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}catch(Exception e){status=e.Message;}}
+    void LoadMental(Projection p){mental=p;mentalName=p.Name;mentalKind=p.Kind;mentalExistence=p.Existence;mentalTags=string.Join("\n",p.Tags.Select(t=>$"{t.Key.Name}={t.Value}"));mentalParentIndex=p.Parent==null?-1:tracked!.Soul.World.Projections.IndexOf(p.Parent);}
+    void SelectMental(ChangeEventArgs e){if(tracked!=null)LoadMental(tracked.Soul.World.Projections[int.Parse(e.Value!.ToString()!)]);}
+    void NewMental(){mental=null;mentalName="幻觉对象";mentalKind=ProjectionKind.Object;mentalExistence=Truth.True;mentalTags="";mentalParentIndex=tracked!.Soul.World.Projections.IndexOf(tracked.Self.Parent!);}
+    void SaveMental()=>Compare(()=>{if(tracked==null)return;mental=ZooExperiment.Edit(tracked,mental,mentalName,mentalKind,mentalExistence,mentalParentIndex<0?null:tracked.Soul.World.Projections[mentalParentIndex],mentalTags,W.Now);LoadMental(mental);status="只修改了脑内世界。查看对比后可按当前认知重选行动。";});
+    void ForgetMental()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Forget(tracked,mental,W.Now);LoadMental(tracked.Self);status="对象已从脑内遗忘，现实对象仍然存在。";});
+    void SaveRelation()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.Relate(tracked,mental,new(relationName),tracked.Soul.World.Projections[relationOtherIndex],relationTruth,W.Now);status="脑内关系已更新。";});
+    void SaveBelief()=>Compare(()=>{if(tracked==null||mental==null)return;ZooExperiment.SetBelief(tracked,mental,mentalRule,W.Now);status="此对象的Core规则已进入人物认知。";});
+    void Preview(){if(tracked!=null)afterDecision=ZooExperiment.Snapshot(tracked);}
+    void ActFromMind(){try{if(tracked!=null){W.Replan(tracked);status="已取消旧行动的未完成阶段；新行动按当前脑内世界提交，已支付代价不返还。";}}catch(Exception e){status=e.Message;}}
+    void ObserveAgain()=>Compare(()=>{if(tracked!=null){W.Observe(tracked);LoadMental(tracked.Self);status="现场观察已更新脑内世界。";}});
+    void Publish()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"新增文书");status="仅更新现场版本；未读到的人选择不变。";});
+    void Broadcast()=>Compare(()=>{W.Rules.Publish(key,script,W.Rules.Clauses.GetValueOrDefault(key)?.Original??"现场广播");W.Broadcast(key);status="修订通过广播进入认知。对比显示下一次选择；已排队行动继续原计划。";});
+    void Withdraw()=>Compare(()=>{var affected=W.Withdraw(key,true);status=$"文书已撤回，{affected} 人已听见撤回广播。";});
+    void WithdrawLocal()=>Compare(()=>{W.Withdraw(key,false);status="仅撤下现场文书，旧记忆暂时保留。";});
+    void Accept()=>Compare(()=>{if(tracked?.Books.ContainsKey(key)==true)ZooRules.Accept(tracked,key,Truth.True,W.Now);});
+    void ChangeUnderstanding()=>Compare(()=>{if(tracked is not {} person||!person.Books.TryGetValue(key,out var book))throw new InvalidOperationException("此人尚未读到该文书。");person.Books[key]=book with{Understanding=Math.Clamp(understanding,0,100)};ZooRules.Accept(person,key,acceptance,W.Now);status="修改只作用于此人对该条文书的理解。";});
+    void Cast()=>Compare(()=>{if(tracked!=null){W.Anomalies.QueueUtterance(tracked,utterance);status="Core已解析言灵。按脑内重选可立即提交，否则等待现有行动结束。";}});
     public void Dispose(){disposed=true;Stop();simulation?.Dispose();}
 }
+
+
 
 
 

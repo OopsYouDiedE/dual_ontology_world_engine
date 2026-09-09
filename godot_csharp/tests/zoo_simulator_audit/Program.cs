@@ -124,5 +124,64 @@ Run("固定行动的实际后果不读取规则文书",()=>
     foreach(var deed in new[]{Deed.Tear,Deed.FeedPaper,Deed.FeedRabbit}){a.Anomalies.Perform(p,deed);b.Anomalies.Perform(q,deed);}
     Check(p.Body.Value(Z.Rabbit)==q.Body.Value(Z.Rabbit)&&p.Body.Value(Z.Paper)==q.Body.Value(Z.Paper),"同样行动因规则知识而收到任意惩罚");
 });
+Run("撤回游客第8条实际解除喂食禁令，选择经Core执行并导致兔化",()=>
+{
+    using var w=World();var p=Guest(w,"兔子园区");
+    ZooRules.Read(p,w.Rules.Clauses["Visitor.8"],w.Now);
+    var safe=ZooMinds.Decide(p)!;
+    Check(p.Assessments.Any(a=>a.Forbidden&&ZooWorld.Describe(a.Decision.Effect).StartsWith("喂兔子")),"未显示被禁的自然喂食候选");
+    w.Withdraw("Visitor.8",true);
+    var risky=ZooMinds.Decide(p)!;
+    Check(!Ast.Equivalent(safe.Effect,risky.Effect)&&ZooWorld.Describe(risky.Effect).StartsWith("喂兔子"),"撤回后实际选择未改变");
+    p.Execution=w.Session.Submit(p.Soul,new(p.Self,risky.Effect,0,Basis:risky.Basis));w.Run(482);Quiet(w);
+    Check(p.Body.Value(Z.Rabbit)==30,"喂食行动未结算身体接触");
+    // 隔离后只保留生理进展，证明确实有后续机制而非文书删除即惩罚。
+    for(var minute=483;minute<=540&&p.Outcome=="在园";minute++){w.Run(minute);w.Anomalies.Expose(p);}
+    Check(p.Outcome=="身体兔化",$"未持续发展：{p.Outcome} / {p.Body.Value(Z.Rabbit)}");
+});
+Run("自由脑内编辑和遗忘可继续决策，幻觉行动由Core判为缺失对象",()=>
+{
+    using var w=World();var p=Guest(w);
+    var original=ZooMinds.Decide(p)!.Effect;
+    var room=p.Self.Parent!;
+    ZooRules.Read(p,w.Rules.Publish("Custom.2","当 危险 时 优先 前往:狮子园区 权重 800"),w.Now);
+    ZooExperiment.Edit(p,room,room.Name,room.Kind,Truth.True,null,"危险征兆=1",w.Now);
+    Check(!Ast.Equivalent(original,ZooMinds.Decide(p)!.Effect)&&p.Room!.Value(Z.Danger)==0,"脑内实验未隔离现实");
+    w.Replan(p);Check(ZooWorld.Describe(p.Execution!.Intent.Changes).Contains("狮子园区"),"重选先观察抹除了实验认知");
+    w.Session.Cancel(p.Execution);Quiet(w);
+    foreach(var name in new[]{"手表","当前判断","日常计划","Custom.2"})ZooExperiment.Forget(p,p.Soul.World.Projections.First(v=>v.Name==name),w.Now);
+    ZooMinds.Decide(p);w.Observe(p);Check(p.Watch!=null&&p.Soul.World.Contains(p.Watch),"未重新看到手表");
+    var ghost=ZooExperiment.Edit(p,null,"幻想出口",ProjectionKind.Boundary,Truth.True,p.Self.Parent,"分钟=2",w.Now);
+    ZooExperiment.SetBelief(p,ghost,"RULE true() => PREFER wait(2, travel(@\"幻想出口\"))",w.Now);
+    w.Replan(p);var attempt=p.Execution!;w.Run(w.Now+2);
+    Check(attempt.Status==ExecutionStatus.Failed&&attempt.Result!.Failure==ActionFailure.MissingObject,"幻觉通道错误进入现实");
+});
+Run("真实换衣诞生新黑衣，阴影按本地观察分类并可吞噬",()=>
+{
+    using var w=World();var p=Guest(w,"海洋馆门口");
+    w.ReadLocal(p);w.Observe(p);
+    for(var step=0;step<4&&p.Job!=Job.Black;step++)
+    {
+        var chosen=ZooMinds.Decide(p)!;
+        p.Execution=w.Session.Submit(p.Soul,new(p.Self,chosen.Effect,0));w.Run(w.Now+2);Quiet(w);w.Observe(p);
+    }
+    Check(p.Job==Job.Black&&w.Anomalies.BlackBirths==1&&p.TrueSpecies==Species.Human,"没有新增黑衣人类");
+    var q=Guest(w,"兔子园区");w.Anomalies.Reconsider(q,30);q.Body.Set(Z.Health,2);
+    w.Run(w.Now+1);w.Anomalies.Expose(q);
+    Check(q.Outcome=="被阴影吞噬"&&q.ItsClassification==Species.Goat,"近处阴影没有执行分类与伤害");
+    Check(p.LastClassified<0,"远处人物被全知分类");
+});
+Run("连续两天开放入园，红衣本人下班后再通过脑内决策返岗",()=>
+{
+    using var w=new ZooWorld(7,2,480,"standard");var red=w.People.Single(p=>p.Job==Job.Red);
+    w.Run(600);Check(red.Outcome=="正常离岗","红衣未正常下班");
+    w.Run(1480);Check(red.Returns==1&&red.Outcome=="在园"&&ZooMinds.IsInside(red.Room?.TrueName),$"红衣未返岗：{red.Outcome} / {red.Room?.TrueName} / {red.CurrentAction}");
+    var yesterday=w.People.Count;w.Run(1921);
+    Check(w.DailyAdmissions.GetValueOrDefault(1)>=2&&w.People.Count>yesterday,"次日首批游客没有恢复");
+    Check(w.People.Count(p=>p.Body.TrueName==red.Body.TrueName)==1,"复制新员工代替本人返岗");
+    Check(w.Events.Any(e=>e.Contains("它抵达")),"它没有通过行动产生异常");
+});
 Console.WriteLine($"审计：{passed}通过，{failed}失败");return failed==0?0:1;
+
+
 

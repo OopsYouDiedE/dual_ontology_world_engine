@@ -19,6 +19,8 @@ public sealed class ZooWorld : IDisposable
     private readonly int population;
     private readonly string preset;
     private int visitorSequence;
+    private int lastOpeningDay = -1;
+    public Dictionary<int,int> DailyAdmissions { get; } = [];
     private bool disposed;
     public double Now => Session.CTB.Now;
     public int InPark => People.Count(p=>p.Job==Job.Visitor&&p.Outcome=="在园");
@@ -33,7 +35,7 @@ public sealed class ZooWorld : IDisposable
         foreach(var name in RoomNames)
         {
             var room=new Essence(name,ProjectionKind.Space);Rooms.Add(name,room);Views.Add(room,Runtime.Project(room,name));
-            room.Set(Z.Light,1);room.Set(Z.Shadow,name=="兔子园区"?1:0);room.Set(Z.Calm,0);room.Set(Z.Laugh,0);
+            room.Set(Z.Light,1);room.Set(Z.Shadow,name is "兔子园区" or "主步道" or "大象园区" or "猿猴园区"?1:0);room.Set(Z.Calm,0);room.Set(Z.Laugh,0);
             room.Set(Z.Danger,0);room.Set(Z.Food,0);room.Set(Z.Split,0);room.Set(Z.Anomaly,0);
         }
         Rooms["园长办公室"].Set(Z.Power,1);Rooms["客房"].Set(Z.Lamp,1);Rooms["狮子园区"].Set(Z.LionCount,4);
@@ -50,13 +52,18 @@ public sealed class ZooWorld : IDisposable
         staffExit.Add(new LockProperty {IsLocked=false});staffExit.Set(Z.Minutes,3);staffExit.Set(Z.Distance,180);staffExit.Set(new Tag("员工专用"),1);
         var staffView=Runtime.Project(staffExit,staffExit.TrueName);Views.Add(staffExit,staffView);
         staffExit.Add(new SurfaceProperty()).Relations[staffView]=[(Z.From,Views[Rooms["海洋馆"]]),(Z.Leads,Views[Rooms["园外"]])];
+        var staffEntry=new Essence("海洋馆员工入口",ProjectionKind.Boundary);
+        staffEntry.Add(new SpatialProperty {Space=Rooms["园外"]});staffEntry.Add(new PassageProperty()).Connections.Add(Rooms["园外"],Rooms["海洋馆"]);
+        staffEntry.Add(new LockProperty {IsLocked=false});staffEntry.Set(Z.Minutes,3);staffEntry.Set(Z.Distance,180);staffEntry.Set(new Tag("员工专用"),1);
+        var entryView=Runtime.Project(staffEntry,staffEntry.TrueName);Views.Add(staffEntry,entryView);
+        staffEntry.Add(new SurfaceProperty()).Relations[entryView]=[(Z.From,Views[Rooms["园外"]]),(Z.Leads,Views[Rooms["海洋馆"]])];
         Anomalies=new(this,random);
         Session.Completed+=Completed;
         AddPerson(Job.Blue,"蓝衣售货员","饮料店");AddPerson(Job.Blue,"夜间值守员","园长办公室");
         AddPerson(Job.Blue,"蓝衣救援员","狮子园区");AddPerson(Job.Blue,"蓝衣饲养员","兔子园区");
         AddPerson(Job.Guard,"大象保安","安保室");AddPerson(Job.Director,"园长","园长办公室");
         AddPerson(Job.Red,"红衣员工","水母区");AddPerson(Job.Black,"黑衣人类","海洋馆门口");
-        if(Open) Admit(visitors);
+        if(Open){Admit(visitors);lastOpeningDay=(int)(Now/1440);}
         Session.CTB.Schedule(1,Tick);Session.CTB.Schedule(15,ArrivalTick);
     }
     private void Connect(string a,string b,int meters)
@@ -97,7 +104,7 @@ public sealed class ZooWorld : IDisposable
         Observation.Observe(soul,new("手表",ProjectionKind.Object){Source=ObservationSource.Perception,Existence=Truth.True,Time=Now});
         Observation.Observe(soul,new("当前判断",ProjectionKind.Concept){Source=ObservationSource.Inference,Existence=Truth.True,Time=Now});
         Observation.Observe(soul,new("日常计划",ProjectionKind.Concept){Source=ObservationSource.Recall,Existence=Truth.True,Time=Now});
-        var p=new Person(body,soul,self,job,Now);People.Add(p);actors.Add(self,p);Anomalies.GiveMap(p);
+        var p=new Person(body,soul,self,job,Now){Watch=soul.World.Projections.First(v=>v.Name=="手表")};People.Add(p);actors.Add(self,p);Anomalies.GiveMap(p);
         var sections=preset switch {"none"=>Array.Empty<string>(),"gate"=>new[]{"Gate"},"all"=>new[]{"Visitor","Staff","Gate","Lost","Inside","Red","Guard","Director","Survivor"},
             _=>job switch {Job.Visitor=>new[]{"Visitor"},Job.Red=>new[]{"Red","Inside"},Job.Black=>new[]{"Gate","Survivor"},Job.Guard=>new[]{"Staff","Guard"},Job.Director=>new[]{"Director","Guard"},_=>new[]{"Staff"}}};
         foreach(var text in Rules.Clauses.Values.Where(c=>sections.Contains(c.Section)))ZooRules.Read(p,text,Now,ObservationSource.Recall);
@@ -114,17 +121,19 @@ public sealed class ZooWorld : IDisposable
     {
         if(!Open)return;
         for(int i=0;i<count;i++)AddPerson(Job.Visitor,$"游客{++visitorSequence:D4}","入口");
+        var day=(int)(Now/1440);DailyAdmissions[day]=DailyAdmissions.GetValueOrDefault(day)+count;
         if(count>0)Log($"入园 {count} 人；在园游客 {InPark}");
     }
     private void ArrivalTick()
     {
         if(disposed)return;
-        if(Open)Admit(Math.Max(population/12,population>0?1:0));
+        if(Open&&lastOpeningDay==(int)(Now/1440))Admit(Math.Max(population/12,population>0?1:0));
         Session.CTB.Schedule(15,ArrivalTick);
     }
     private void Tick()
     {
         if(disposed)return;
+        if(Open&&lastOpeningDay!=(int)(Now/1440)){lastOpeningDay=(int)(Now/1440);Admit(population);}
         Anomalies.Tick();
         foreach(var p in People.Where(p=>p.Outcome=="在园").ToArray())Anomalies.Expose(p);
         Session.CTB.Schedule(1,Tick);
@@ -145,7 +154,8 @@ public sealed class ZooWorld : IDisposable
                 Observation.Observe(person.Soul,new(remembered.Name,remembered.Kind){Target=remembered,Source=ObservationSource.Perception,Time=Now,
                     Move=true,Parent=null,Detected=false,Details="巡视此处未见此人；去向未知"});
         Runtime.Sync();Runtime.Observe(person.Soul,visible,Now,new LocalView(Views[room]));
-        var watch=person.Soul.World.Projections.First(p=>p.Name=="手表");
+        var watch=person.Watch is {} rememberedWatch && person.Soul.World.Contains(rememberedWatch)?rememberedWatch:
+            person.Watch=Observation.Observe(person.Soul,new("手表",ProjectionKind.Object){Source=ObservationSource.Perception,Time=Now,Existence=Truth.True});
         Observation.Observe(person.Soul,new(watch.Name,watch.Kind){Target=watch,Time=Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Clock,(int)Now)});
         // 自身时间感、疲劳和到岗记忆也走 Observe，不由决策查询客观世界。
         var section=VisibleSection(room.TrueName);
@@ -176,7 +186,8 @@ public sealed class ZooWorld : IDisposable
     private void Think(Person p)
     {
         if(disposed||p.Outcome!="在园"||p.Execution?.Status==ExecutionStatus.Pending)return;
-        Observe(p);
+        if(!p.SkipNextObservation)Observe(p);
+        p.SkipNextObservation=false;
         var decision=ZooMinds.Decide(p);
         if(decision is null){Session.CTB.Schedule(5,()=>Think(p));return;}
         p.CurrentAction=Describe(decision.Effect);
@@ -186,6 +197,8 @@ public sealed class ZooWorld : IDisposable
     {
         if(!actors.TryGetValue(execution.Intent.Actor,out var p))return;
         var previous=p.Self.Parent?.Name??"";
+        p.LastActionResult=$"{Now:F1}：{Describe(execution.Intent.Changes)} → {execution.Status} / {execution.Result?.Failure}";
+        if(execution.Status==ExecutionStatus.Failed&&execution.Intent.Basis?.Name=="待执行言灵")Anomalies.UtteranceFailed(p);
         if(execution.Status==ExecutionStatus.Completed&&p.Outcome=="在园")
         {
             var command=p.Body.Value(Z.Command);
@@ -199,6 +212,7 @@ public sealed class ZooWorld : IDisposable
                 if(ZooMinds.IsInside(current)&&!ZooMinds.IsInside(previous))p.AquariumEntered=Now;
                 if(!ZooMinds.IsInside(current))p.AquariumEntered=-1;
                 Anomalies.Arrive(p,previous);
+                if(previous=="园外"&&p.Job==Job.Red){p.Returns++;Log($"{p.Body.TrueName}第{p.Returns}次实际返岗");}
                 Log($"{p.Body.TrueName}：{previous} → {current}，步行 {duration:F0} 分钟");
             }
         }
@@ -207,7 +221,7 @@ public sealed class ZooWorld : IDisposable
     }
     public static double TravelDelay(Effect effect)=>effect switch {Effect.Wait w=>w.Delay+TravelDelay(w.Body),Effect.Sequence s=>s.Items.Sum(TravelDelay),_=>0};
     public static string Describe(Effect effect)=>effect switch
-    {Effect.Wait w=>$"{Describe(w.Body)}（{w.Delay}分钟）",Effect.Act a=>$"{a.Operation} {a.Target}",Effect.Set s when s.Tag==Z.Command=>((Deed)(s.Value-1)).ToString(),Effect.Sequence s=>string.Join(" → ",s.Items.Select(Describe)),_=>effect.GetType().Name};
+    {Effect.Wait w=>$"{Describe(w.Body)}（{w.Delay}分钟）",Effect.Act a=>$"{(a.Operation==ActionOp.Travel?"前往":a.Operation.ToString())} {(a.Target is Noun.Reference r?r.Projection.Name:a.Target.ToString())}",Effect.Set s when s.Tag==Z.Command=>ZooMinds.Actions.FirstOrDefault(a=>a.Value==(Deed)(s.Value-1)).Key??((Deed)(s.Value-1)).ToString(),Effect.Sequence s=>string.Join(" → ",s.Items.Select(Describe)),Effect.TemporarySet t=>$"临时改变 {t.Tag.Name}={t.Value}，{t.Duration}分钟",Effect.Say s=>$"对话：{s.Text}",_=>effect.GetType().Name};
     private static string VisibleSection(string? room)=>room switch {"入口"=>"Visitor","海洋馆门口"=>"Gate","海洋馆" or "客房"=>"Inside","水母区"=>"Red","鲸鱼区"=>"Survivor","猿猴园区"=>"Lost","内部宿舍"=>"Staff","安保室"=>"Guard","园长办公室"=>"Director",_=>"Custom"};
     public void ReadLocal(Person p)
     {
@@ -220,10 +234,44 @@ public sealed class ZooWorld : IDisposable
             p.Books.Remove(book.Text.Key);
         }
     }
+    public int Withdraw(string key,bool broadcast)
+    {
+        if(!Rules.Clauses.TryGetValue(key,out var text))return 0;
+        Rules.Remove(key);
+        var count=0;
+        if(broadcast)foreach(var p in BroadcastAudience())
+        {
+            if(!p.Books.Remove(key,out var old))continue;
+            Observation.Observe(p.Soul,new(old.Projection.Name,old.Projection.Kind){Target=old.Projection,Source=ObservationSource.Testimony,Time=Now,Rules=[],Details=$"听见撤回广播：{text.Key}"});count++;
+        }
+        Log($"撤回 {key}；已通过广播撤销 {count} 人的记忆，其他人等待现场告示");
+        return count;
+    }
+    private IEnumerable<Person> BroadcastAudience()=>People.Where(p=>p.Outcome=="在园"&&!ZooMinds.IsInside(p.Room?.TrueName)&&p.Room?.TrueName!="内部宿舍");
+    public void Replan(Person p,bool observeFirst=false)
+    {
+        if(p.Outcome!="在园")throw new InvalidOperationException("只能驱动仍在园的人物。");
+        if(p.Execution?.Status==ExecutionStatus.Pending)Session.Cancel(p.Execution);
+        p.SkipNextObservation=!observeFirst;
+        Think(p);
+    }
+    public void ScheduleReturn(Person p)
+    {
+        if(p.Job!=Job.Red)return;
+        var next=(Math.Floor(Now/1440)+1)*1440+27;
+        Log($"{p.Body.TrueName}回家，下次00:27启程，00:30返岗");
+        Session.CTB.Schedule(next-Now,()=>
+        {
+            if(disposed||p.Outcome!="正常离岗"||p.Job!=Job.Red)return;
+            p.Outcome="在园";p.LastExposure=Now;p.AquariumEntered=-1;
+            Think(p);
+            Log($"{p.Body.TrueName}到达员工入口，依据脑内岗位与通道选择返岗行动");
+        });
+    }
     public void Broadcast(string key)
     {
         var text=Rules.Clauses[key];
-        foreach(var p in People.Where(p=>p.Outcome=="在园"&&!ZooMinds.IsInside(p.Room?.TrueName)&&p.Room?.TrueName!="内部宿舍"))
+        foreach(var p in BroadcastAudience())
             ZooRules.Read(p,text,Now,ObservationSource.Testimony);
         Log($"园内广播修订 {key}；封闭宿舍及海洋馆未收到广播");
     }
@@ -231,6 +279,8 @@ public sealed class ZooWorld : IDisposable
     public int Run(double target,int maxSteps=100000)=>Session.CTB.RunUntil(target,maxSteps);
     public void Dispose(){disposed=true;Session.Completed-=Completed;Session.Dispose();}
 }
+
+
 
 
 

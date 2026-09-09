@@ -363,6 +363,29 @@ Run("排队后遗忘推理目标，激活失败不产生部分支付", () =>
     Check(execution.Status == ExecutionStatus.Failed && f.Body.Get<StateProperty>()!.Values[energy] == 5, "认知提交的失败必须在物理提交前发现");
 });
 
+Run("临时AST：叠加按独立期限撤销，期间的基础修改保留，感知不自动更新",()=>
+{
+    var f=new Fixture();var light=new Tag("Light");var state=f.Body.Get<StateProperty>()!;
+    state.Values[light]=1;state.Observable.Add(light);f.World.Sync();
+    var bodyView=f.BodyView;f.World.Observe(f.Soul,[bodyView]);
+    var decoder=new AstDecoder(f.Soul.World,[light]);
+    void Execute(string text){f.Session.Submit(f.Soul,new(f.MentalBody,decoder.DecodeEffect(text),0));f.Session.CTB.RunUntil(f.Session.CTB.Now);}
+    Execute("temporary_set($Actor, Light, 4, 10)");
+    Check(bodyView.Tags[light]==4&&f.MentalBody.Tags[light]==1,"临时值或认知隔离错误");
+    f.Session.CTB.RunUntil(1);Execute("temporary_set($Actor, Light, 9, 20)");
+    Execute("change($Actor, Light, 2)");
+    f.Session.CTB.RunUntil(10);Check(bodyView.Tags[light]==9,"较早层到期覆盖了较晚层");
+    f.Session.CTB.RunUntil(21);Check(bodyView.Tags[light]==3,"基础状态修改丢失或临时值被写入基础状态");
+    Check(f.Body.Get<TemporaryStateProperty>()!.Active.Count==0,"遗留已到期层");
+});
+Run("临时AST的失败阶段不留下状态、消耗或到期任务",()=>
+{
+    var f=new Fixture();var mana=new Tag("Mana");var state=f.Body.Get<StateProperty>()!;state.Values[mana]=2;
+    var decoder=new AstDecoder(f.Soul.World,[mana]);
+    var execution=f.Session.Submit(f.Soul,new(f.MentalBody,decoder.DecodeEffect("sequence(spend($Actor, Mana, 1), temporary_set($Actor, Mana, 9, 10), require(false()))"),0));
+    f.Session.CTB.RunUntil(0);
+    Check(execution.Status==ExecutionStatus.Failed&&state.Values[mana]==2&&f.Body.Get<TemporaryStateProperty>() is null&&!f.Session.CTB.Pending.Any(),"失败阶段留下了部分临时效果");
+});
 Console.WriteLine($"验收结果：{passed} 组通过，{failed} 组失败。");
 return failed == 0 ? 0 : 1;
 
@@ -382,6 +405,7 @@ sealed class Fixture
     public Projection HallView { get; }
     public Projection NearDoor { get; }
     public Projection FarDoor { get; }
+    public Projection BodyView { get; }
     public Projection MentalBody { get; }
     public Projection MentalDoor { get; }
     public SimulationSession Session { get; }
@@ -396,7 +420,7 @@ sealed class Fixture
         FarDoor = World.Project(Door, "另一侧门", archiveView);
         Body.Add(new SpatialProperty { Space = Hall });
         Body.Add(new StateProperty());
-        var bodyView = World.Project(Body, "甲身体", HallView);
+        var bodyView = BodyView = World.Project(Body, "甲身体", HallView);
         Soul.Relations.Add((Relations.Controls, Body));
         World.Project(Soul, "甲");
         var observed = World.Observe(Soul, [HallView, NearDoor, bodyView]);
@@ -415,4 +439,6 @@ sealed class Fixture
         Source = ObservationSource.Introspection, Rules = [..rules.Select(r => r with { Acceptance = Truth.True })]
     });
 }
+
+
 

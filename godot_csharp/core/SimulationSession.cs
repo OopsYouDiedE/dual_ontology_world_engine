@@ -51,7 +51,7 @@ public sealed class SimulationSession(WorldRuntime world) : IDisposable
 
     private void Continue(ActionExecution execution, ActionIntent intent)
     {
-        var (result, next, delay) = _runtime.Resolve(execution.Soul, intent, CTB.Now);
+        var (result, next, delay) = _runtime.Resolve(execution.Soul, intent, CTB.Now, CTB);
         execution.Result = result;
         if (result.Succeeded && next is not null)
         {
@@ -117,3 +117,4 @@ public sealed class SimulationSession(WorldRuntime world) : IDisposable
         _disposed = true;
     }
 }
+

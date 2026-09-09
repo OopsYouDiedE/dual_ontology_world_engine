@@ -85,6 +85,7 @@ public static class ZooMinds
         if(deed == Deed.Splash && self.Value(Z.Blood)==0) return null;
         if(deed == Deed.BuyBlood && self.Parent?.Value(Z.Food)==0) return null;
         if(deed == Deed.GetMap && self.Value(Z.Map)>0) return null;
+        if(deed == Deed.BuyToy && self.Value(Z.Toy)>0) return null;
         if(deed == Deed.SwitchOff && self.Parent?.Value(Z.Lamp)==0) return null;
         if(deed == Deed.Help && !mind.Projections.Any(p=> p.Kind==ProjectionKind.Body && p!=self && p.Parent==self.Parent && p.Value(Z.Role)!=(int)Job.Visitor)) return null;
         if(deed is Deed.Help or Deed.Escort or Deed.Evacuate or Deed.Talk or Deed.Report or Deed.Evict)
@@ -112,8 +113,8 @@ public static class ZooMinds
     {
         var mind = person.Soul.World;
         var self = person.Self;
-        var clock = mind.Projections.First(p=>p.Name=="手表").Value(Z.Clock);
-        var facts = mind.Projections.First(p=>p.Name=="当前判断");
+        var clock = person.Watch is {} watch && mind.Contains(watch) ? watch.Value(Z.Clock) : 0;
+        var facts = Concept(person, "当前判断");
         var factsValues = Facts(mind,self,clock);
         Observation.Observe(person.Soul,new(facts.Name,facts.Kind) {Target=facts,Source=ObservationSource.Inference,Time=clock,
             Tags=factsValues.ToImmutableDictionary(p=>new Tag(p.Key),p=>(int?)(p.Value?1:0)),Details="由已观察的身体、场景、手表与记忆形成判断"});
@@ -138,7 +139,7 @@ public static class ZooMinds
             }
             Observation.Observe(person.Soul,new(book.Projection.Name,book.Projection.Kind) {Target=book.Projection,Source=ObservationSource.Inference,Time=clock,Rules=compiled.ToImmutable()});
         }
-        var habits = mind.Projections.First(p=>p.Name=="日常计划");
+        var habits = Concept(person, "日常计划");
         var everyday = ImmutableArray.CreateBuilder<Rule>();
         void Want(string action,int weight)
         {
@@ -157,7 +158,11 @@ public static class ZooMinds
                 .OrderBy(g=>history.Count(h=>h.Details=="游览完成:"+g)).First();
             Want(room==goal ? "游览" : "前往:"+goal,45);
             if(elapsed>140 || clock%1440>=900) Want("前往:园外",elapsed>240?160:75);
-            Want("购买兔子血", 12); Want("喂兔子",16); Want("买兔玩偶",self.Value(Z.Toy)==0?14:1);
+            bool Done(Deed deed)=>mind.History.Any(h=>h.Target==self&&h.Details==$"交互完成:{deed}:{room}");
+            if(room=="兔子园区"&&!Done(Deed.FeedRabbit))Want("喂兔子",60+self.Value(Z.Age)%12);
+            if(room=="饮料店"&&!Done(Deed.BuyBlood)&&self.Parent!.Value(Z.Food)>0)Want("购买兔子血",60);
+            if(self.Value(Z.Toy)==0)Want("买兔玩偶",self.Value(Z.Age)<18?50:15);
+            if(self.Value(Z.Human)<85)Want("前往:海洋馆门口",65);
         }
         else if(role==Job.Black)
         {
@@ -169,7 +174,7 @@ public static class ZooMinds
         else
         {
             Want("巡逻",factsValues["巡逻到期"]?26:1);
-            if(role==Job.Red){Want("前往:水母区",room=="海洋馆"?35:15);if(factsValues["下班"])Want("前往:海洋馆",60);}
+            if(role==Job.Red){if(room=="园外")Want("前往:海洋馆",250);else if(factsValues["上班"]){Want("前往:"+(room=="客房"?"鲸鱼区":room=="鲸鱼区"?"水母区":"客房"),65);}else Want("前往:海洋馆",60);}
             if(role is Job.Blue or Job.Guard && clock%1440 is >=60 and <360) Want("前往:内部宿舍",35);
             if(role==Job.Director) Want("前往:园长办公室",35);
             if(factsValues["停电"] && role!=Job.Director) Want("维修",170);
@@ -177,13 +182,16 @@ public static class ZooMinds
         Want("休息",8); Want("阅读",self.Value(new Tag("未读文书"))>0?120:1);
         if(self.Value(Z.Health)<80) Want("求助",40);
         Observation.Observe(person.Soul,new(habits.Name,habits.Kind) {Target=habits,Source=ObservationSource.Inference,Time=clock,Rules=everyday.ToImmutable()});
-        var selected=DecisionSystem.Choose(mind,self);
+        person.Assessments=DecisionSystem.Assess(mind,self);
+        var selected=person.Assessments.FirstOrDefault(a=>!a.Forbidden)?.Decision;
         var knowinglyDisregarded=selected is not null && mind.Projections.SelectMany(p=>p.Rules).Any(r=>r.Acceptance==Truth.True&&r.Mode==RuleMode.Require&&
             Ast.Evaluate(r.Condition,new(self,Scene:self.Parent))==Truth.True&&!Ast.Equivalent(Ast.Bind(r.Effect,new(self,Scene:self.Parent)),selected.Effect));
         Observation.Observe(person.Soul,new(self.Name,self.Kind){Target=self,Source=ObservationSource.Introspection,Time=clock,
             Tags=ImmutableDictionary<Tag,int?>.Empty.Add(new Tag("明知违背"),knowinglyDisregarded?1:0),Details=knowinglyDisregarded?"意识到自己正在违背已知要求":"已完成行动抉择"});
         return selected;
     }
+    private static Projection Concept(Person p,string name)=>p.Soul.World.Projections.FirstOrDefault(v=>v.Name==name)??
+        Observation.Observe(p.Soul,new(name,ProjectionKind.Concept){Source=ObservationSource.Inference,Existence=Truth.True,Details="重新形成行动判断"});
     private static bool Scope(string section,Projection self)
     {
         var inside = IsInside(self.Parent?.Name);
@@ -229,6 +237,7 @@ public static class ZooMinds
         return result;
     }
 }
+
 
 
 
