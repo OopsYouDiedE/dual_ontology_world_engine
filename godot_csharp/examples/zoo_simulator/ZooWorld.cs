@@ -157,6 +157,8 @@ public sealed class ZooWorld : IDisposable
         var visible=new List<Projection>{Views[room],Views[person.Body]};
         foreach(var pair in Views.Where(v=>v.Key.Kind==ProjectionKind.Boundary&&v.Key.Get<SpatialProperty>()?.Space==room))
         {
+            if((pair.Key.TrueName.EndsWith(" → 海洋馆门口") || pair.Key.TrueName.EndsWith(" → 海洋馆")) && !CanSeeAquarium(person))
+                continue;
             visible.Add(pair.Value);
             foreach(var target in pair.Key.Get<PassageProperty>()!.Connections.Values)visible.Add(Views[target]);
         }
@@ -166,6 +168,11 @@ public sealed class ZooWorld : IDisposable
             if(!visible.Any(v=>v.Name==remembered.Name))
                 Observation.Observe(person.Soul,new(remembered.Name,remembered.Kind){Target=remembered,Source=ObservationSource.Perception,Time=Now,
                     Move=true,Parent=null,Detected=false,Details="巡视此处未见此人；去向未知"});
+        if(!CanSeeAquarium(person))
+        {
+            foreach(var remembered in person.Soul.World.Projections.Where(p=>p.Kind==ProjectionKind.Boundary&&(p.Name.EndsWith(" → 海洋馆门口")||p.Name.EndsWith(" → 海洋馆"))).ToArray())
+                Observation.Observe(person.Soul,new(remembered.Name,remembered.Kind){Target=remembered,Source=ObservationSource.Perception,Time=Now,Existence=Truth.False,Details="理智清醒，视线中确认没有海洋馆通路"});
+        }
         Runtime.Sync();Runtime.Observe(person.Soul,visible,Now,new LocalView(Views[room]));
         var watch=person.Watch is {} rememberedWatch && person.Soul.World.Contains(rememberedWatch)?rememberedWatch:
             person.Watch=Observation.Observe(person.Soul,new("手表",ProjectionKind.Object){Source=ObservationSource.Perception,Time=Now,Existence=Truth.True});
@@ -237,6 +244,9 @@ public sealed class ZooWorld : IDisposable
     public static double TravelDelay(Effect effect)=>effect switch {Effect.Wait w=>w.Delay+TravelDelay(w.Body),Effect.Sequence s=>s.Items.Sum(TravelDelay),_=>0};
     public static string Describe(Effect effect)=>effect switch
     {Effect.Wait w=>$"{Describe(w.Body)}（{w.Delay}分钟）",Effect.Act a=>$"{(a.Operation==ActionOp.Travel?"前往":a.Operation.ToString())} {(a.Target is Noun.Reference r?r.Projection.Name:a.Target.ToString())}",Effect.Set s when s.Tag==Z.Command=>ZooMinds.Actions.FirstOrDefault(a=>a.Value==(Deed)(s.Value-1)).Key??((Deed)(s.Value-1)).ToString(),Effect.Sequence s=>string.Join(" → ",s.Items.Select(Describe)),Effect.TemporarySet t=>$"临时改变 {t.Tag.Name}={t.Value}，{t.Duration}分钟",Effect.Say s=>$"对话：{s.Text}",_=>effect.GetType().Name};
+    public static bool CanSeeAquarium(Person person) =>
+        person.Room?.TrueName is "海洋馆门口" || ZooMinds.IsInside(person.Room?.TrueName) ||
+        (person.HumanBelief ?? 100) < 85 || person.Body.Value(Z.Symptoms) > 0 || person.Job is Job.Red or Job.Black;
     private static string VisibleSection(string? room)=>room switch {"入口"=>"Visitor","海洋馆门口"=>"Gate","海洋馆" or "客房"=>"Inside","水母区"=>"Red","鲸鱼区"=>"Survivor","猿猴园区"=>"Lost","内部宿舍"=>"Staff","安保室"=>"Guard","园长办公室"=>"Director",_=>"Custom"};
     public void ReadLocal(Person p)
     {

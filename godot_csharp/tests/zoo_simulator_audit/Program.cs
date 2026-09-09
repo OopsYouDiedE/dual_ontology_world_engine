@@ -266,6 +266,33 @@ Run("Lost规则采信限制：初次观察为Unknown且不驱动行动，重度�
     Check(!p.Assessments.Any(a=>ZooWorld.Describe(a.Decision.Effect).Contains("认同山羊")),"理智恢复后Lost规则仍在评估候选中");
     Check(!p.DecisionTrace.Any(t=>t.StartsWith("Lost.")),"理智恢复后Lost规则仍在Scope内");
 });
+Run("海洋馆连接仅在精神动摇时可见，阅读门口告示后正常诞生黑衣人",()=>
+{
+    using var w=World();var p=Guest(w,"主步道");
+    Check(!p.Soul.World.Projections.Any(pr=>pr.Name=="主步道 → 海洋馆门口"&&pr.Existence==Truth.True),"清醒游客看见了海洋馆连接");
+    Check(ZooMinds.Route(p.Soul.World,p.Self,"海洋馆门口")==null,"清醒游客计算出了海洋馆路径");
+
+    w.Anomalies.Reconsider(p,70);
+    w.Observe(p);
+    Check(p.Soul.World.Projections.Any(pr=>pr.Name=="主步道 → 海洋馆门口"&&pr.Existence==Truth.True),"动摇游客未能看见海洋馆连接");
+    var route=ZooMinds.Route(p.Soul.World,p.Self,"海洋馆门口");
+    Check(route!=null,"动摇游客无法寻路至海洋馆门口");
+
+    Execute(w,p,"前往:海洋馆门口");w.Run(w.Now+6);Quiet(w);
+    Check(p.Room==w.Rooms["海洋馆门口"],"移动至海洋馆门口失败");
+
+    w.Observe(p);
+    Check(p.Self.Value(new Tag("未读文书"))==1,"未感知到门口告示");
+    w.ReadLocal(p);w.Observe(p);
+    var act=ZooMinds.Decide(p)!;
+    Check(ZooWorld.Describe(act.Effect).Contains("换黑衣"),"阅读门口告示后未选择换黑衣："+ZooWorld.Describe(act.Effect));
+    p.Execution=w.Session.Submit(p.Soul,new(p.Self,act.Effect,0));w.Run(w.Now+2);
+    Check(p.Job==Job.Black&&w.Anomalies.BlackBirths==1,"阅读门口内容后未能正常转变为黑衣人");
+
+    w.Observe(p);
+    var enter=ZooMinds.Decide(p)!;
+    Check(ZooWorld.Describe(enter.Effect).Contains("海洋馆"),"成为黑衣人后未能选择进入海洋馆："+ZooWorld.Describe(enter.Effect));
+});
 Console.WriteLine($"审计：{passed}通过，{failed}失败");return failed==0?0:1;
 
 

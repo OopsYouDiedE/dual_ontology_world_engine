@@ -179,7 +179,7 @@ public static class ZooMinds
             if(room=="兔子园区"&&!Done(Deed.FeedRabbit))Want("喂兔子",60+self.Value(Z.Age)%12);
             if(room=="饮料店"&&!Done(Deed.BuyBlood)&&self.Parent!.Value(Z.Food)>0)Want("购买兔子血",60);
             if(self.Value(Z.Toy)==0)Want("买兔玩偶",self.Value(Z.Age)<18?50:15);
-            if(self.Value(Z.Human)<85)Want("前往:海洋馆门口",65);
+            if(self.Value(Z.Human)<85 || self.Value(Z.Symptoms)>0)Want("前往:海洋馆门口",65);
         }
         else if(role==Job.Black)
         {
