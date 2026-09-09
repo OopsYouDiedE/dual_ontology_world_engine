@@ -78,6 +78,11 @@ public static class ZooExperiment
                 Details = exitTruth == Truth.True ? "认知清醒，回忆起出口通路" : "认知崩塌，遗忘动物园出口"
             });
         }
+        if (humanBelief < 30)
+        {
+            foreach (var key in p.Books.Keys.Where(k => p.Books[k].Text.Section == "Lost" && p.Books[k].Acceptance == Truth.Unknown).ToArray())
+                ZooRules.Accept(p, key, Truth.True, time);
+        }
     }
     public static string CheckExitKnowledge(Person p)
     {

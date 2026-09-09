@@ -231,6 +231,41 @@ Run("默认客流配置岗位冗余并覆盖主步道",()=>
     Check(w.People.Count(p=>p.Job is not (Job.Visitor or Job.Black))==19,"正式员工数量不匹配");
     Check(w.People.Count(p=>p.Room==w.Rooms["主步道"]&&p.Job is Job.Blue or Job.Guard)==4,"步道没有救援覆盖");
 });
+Run("Lost规则观察限制：精神良好不显示未读也不观察记录，动摇或异常后才可观察",()=>
+{
+    using var w=World();var p=Guest(w,"猿猴园区");
+    Check(p.Self.Value(new Tag("未读文书"))==0,"清醒人物感知到了Lost纸条");
+    w.ReadLocal(p);
+    Check(!p.Books.Keys.Any(k=>k.StartsWith("Lost")),"清醒人物阅读记录了Lost规则");
+    ZooRules.Read(p,w.Rules.Clauses["Lost.1"],w.Now,ObservationSource.Perception);
+    Check(!p.Books.ContainsKey("Lost.1"),"直接感知违背精神限制被记录");
+
+    w.Anomalies.Reconsider(p,70);
+    w.Observe(p);
+    Check(p.Self.Value(new Tag("未读文书"))==1,"精神动摇后未能发现未读纸条");
+    w.ReadLocal(p);
+    Check(p.Books.ContainsKey("Lost.1"),"精神动摇后未能读入纸条内容");
+});
+Run("Lost规则采信限制：初次观察为Unknown且不驱动行动，重度侵蚀才采信",()=>
+{
+    using var w=World();var p=Guest(w,"猿猴园区");
+    w.Anomalies.Reconsider(p,70);
+    w.ReadLocal(p);
+    Check(p.Books["Lost.9"].Acceptance==Truth.Unknown,"初次观察Lost规则被直接采信");
+    ZooMinds.Decide(p);
+    Check(!p.Assessments.Any(a=>ZooWorld.Describe(a.Decision.Effect).Contains("认同山羊")),"未采信的Lost规则进入了行动候选");
+
+    w.Anomalies.Reconsider(p,20);
+    Check(p.Books["Lost.9"].Acceptance==Truth.True,"重度侵蚀未使Lost规则转化为采信");
+    ZooMinds.Decide(p);
+    Check(p.Assessments.Any(a=>ZooWorld.Describe(a.Decision.Effect).Contains("认同山羊")),"采信Lost规则后未产生认同山羊候选");
+    Check(p.DecisionTrace.Any(t=>t.StartsWith("Lost.")),"采信Lost规则后未进入决策考量");
+
+    w.Anomalies.Reconsider(p,90);
+    ZooMinds.Decide(p);
+    Check(!p.Assessments.Any(a=>ZooWorld.Describe(a.Decision.Effect).Contains("认同山羊")),"理智恢复后Lost规则仍在评估候选中");
+    Check(!p.DecisionTrace.Any(t=>t.StartsWith("Lost.")),"理智恢复后Lost规则仍在Scope内");
+});
 Console.WriteLine($"审计：{passed}通过，{failed}失败");return failed==0?0:1;
 
 

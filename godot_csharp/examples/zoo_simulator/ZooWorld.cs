@@ -172,7 +172,8 @@ public sealed class ZooWorld : IDisposable
         Observation.Observe(person.Soul,new(watch.Name,watch.Kind){Target=watch,Time=Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Clock,(int)Now)});
         // 自身时间感、疲劳和到岗记忆也走 Observe，不由决策查询客观世界。
         var section=VisibleSection(room.TrueName);
-        var unread=Rules.Clauses.Values.Any(c=>c.Section==section&&person.Books.GetValueOrDefault(c.Key)?.Text!=c)||person.Books.Values.Any(b=>b.Text.Section==section&&!Rules.Clauses.ContainsKey(b.Text.Key));
+        if(section=="Lost"&&!ZooRules.CanObserveLost(person))section=null;
+        var unread=section!=null&&(Rules.Clauses.Values.Any(c=>c.Section==section&&person.Books.GetValueOrDefault(c.Key)?.Text!=c)||person.Books.Values.Any(b=>b.Text.Section==section&&!Rules.Clauses.ContainsKey(b.Text.Key)));
         var entries=new Dictionary<Tag,int?>
         {
             [new("未读文书")]=unread?1:0,
@@ -240,6 +241,7 @@ public sealed class ZooWorld : IDisposable
     public void ReadLocal(Person p)
     {
         var section=VisibleSection(p.Room?.TrueName);
+        if(section=="Lost"&&!ZooRules.CanObserveLost(p))return;
         foreach(var text in Rules.Clauses.Values.Where(c=>c.Section==section))ZooRules.Read(p,text,Now);
         // 读到撤回告示后才撤销旧建议；别处的人保留旧版本。
         foreach(var book in p.Books.Values.Where(b=>b.Text.Section==section&&!Rules.Clauses.ContainsKey(b.Text.Key)).ToArray())

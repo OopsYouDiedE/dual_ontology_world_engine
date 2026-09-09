@@ -217,7 +217,8 @@ public static class ZooMinds
         var inside = IsInside(self.Parent?.Name);
         var role=(Job)self.Value(Z.Role);
         return section switch {"Gate"=>!inside, "Inside"=>inside,"Visitor"=>role==Job.Visitor&&!inside,
-            "Staff"=>role is Job.Blue or Job.Guard or Job.Black,"Red"=>role==Job.Red,"Director"=>role==Job.Director,_=>true};
+            "Staff"=>role is Job.Blue or Job.Guard or Job.Black,"Red"=>role==Job.Red,"Director"=>role==Job.Director,
+            "Lost"=>self.Value(Z.Human)<85||self.Value(Z.Symptoms)>0,_=>true};
     }
     public static bool IsInside(string? name)=>name is "海洋馆" or "水母区" or "鲸鱼区" or "客房";
     private static Dictionary<string,bool> Facts(ProjectionWorld mind,Projection self,int time)

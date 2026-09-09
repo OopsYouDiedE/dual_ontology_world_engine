@@ -164,7 +164,11 @@ public sealed class ZooAnomalies
             if(p.HasSelf&&p.Body.Value(Z.Attention)>15&&!(room.TrueName!="园长办公室"&&(w.Now%1440<360)&&w.Rooms["园长办公室"].Value(Z.Power)>0&&w.Rooms["园长办公室"].Value(Z.Light)>0))
             {
                 var drop=(int)Math.Ceiling(dt*.7);
-                new CorruptionProperty(new IdentityDistortion(p.Self,Math.Max(0,p.Self.Value(Z.Human)-drop))).Apply(p.Soul,w.Now);
+                var newHuman=Math.Max(0,p.Self.Value(Z.Human)-drop);
+                new CorruptionProperty(new IdentityDistortion(p.Self,newHuman)).Apply(p.Soul,w.Now);
+                if(newHuman<30)
+                    foreach(var key in p.Books.Keys.Where(k=>p.Books[k].Text.Section=="Lost"&&p.Books[k].Acceptance==Truth.Unknown).ToArray())
+                        ZooRules.Accept(p,key,Truth.True,w.Now);
             }
             if(room.Value(Z.Danger)>0&&p.Body.Value(Z.Paper)==0)
             {p.Body.Set(new Tag("兔化稳定"),0);p.Body.Set(Z.Rabbit,Math.Min(100,p.Body.Value(Z.Rabbit)+(int)Math.Ceiling(dt*.6)),false);}
@@ -205,6 +209,9 @@ public sealed class ZooAnomalies
         if(human is <0 or >100)throw new ArgumentOutOfRangeException(nameof(human));
         if(!p.HasSelf)return;
         new CorruptionProperty(new IdentityDistortion(p.Self,human)).Apply(p.Soul,w.Now);
+        if(human<30)
+            foreach(var key in p.Books.Keys.Where(k=>p.Books[k].Text.Section=="Lost"&&p.Books[k].Acceptance==Truth.Unknown).ToArray())
+                ZooRules.Accept(p,key,Truth.True,w.Now);
     }
     private void Roar()
     {
@@ -340,6 +347,9 @@ public sealed class ZooAnomalies
     {
         if(p.HasSelf)Observation.Observe(p.Soul,new(p.Self.Name,p.Self.Kind)
         {Target=p.Self,Source=ObservationSource.Inference,Time=w.Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Z.Human,human),Details=details});
+        if(human<30)
+            foreach(var key in p.Books.Keys.Where(k=>p.Books[k].Text.Section=="Lost"&&p.Books[k].Acceptance==Truth.Unknown).ToArray())
+                ZooRules.Accept(p,key,Truth.True,w.Now);
     }
     public void SayTemporary(Person speaker,Tag property,int value,double minutes)
         => QueueUtterance(speaker,$"temporary_set($Scene, {property.Name}, {value}, {minutes.ToString(System.Globalization.CultureInfo.InvariantCulture)})");

@@ -58,13 +58,21 @@ public sealed class ZooRules
     }
     public bool Remove(string key) => Clauses.Remove(key);
 
+    public static bool CanObserveLost(Person person) =>
+        (person.HumanBelief ?? 100) < 85 || person.Body.Value(Z.Symptoms) > 0;
+
     public static void Read(Person person, RuleText text, double time, ObservationSource source = ObservationSource.Perception)
     {
+        if (text.Section == "Lost" && source == ObservationSource.Perception && !CanObserveLost(person)) return;
         var old = person.Books.GetValueOrDefault(text.Key);
         // 角色采信的是自己读到的版本；发行和撤回不会远程改写记忆。
         if (old?.Text == text) return;
         var confidence = old?.Understanding ?? person.Self.Value(Z.Confidence);
-        var accepted = old?.Acceptance ?? (text.Section=="Gate"&&person.Self.Value(Z.Role)==(int)Job.Red ? Truth.False : confidence >= 35 ? Truth.True : Truth.Unknown);
+        var accepted = old?.Acceptance ?? (
+            text.Section == "Lost" ? Truth.Unknown
+            : text.Section == "Gate" && person.Self.Value(Z.Role) == (int)Job.Red ? Truth.False
+            : confidence >= 35 ? Truth.True
+            : Truth.Unknown);
         var p = Observation.Observe(person.Soul, new(text.Key, ProjectionKind.Concept)
         {
             Target = old?.Projection, Source = source, Time = time, Existence = Truth.True,
