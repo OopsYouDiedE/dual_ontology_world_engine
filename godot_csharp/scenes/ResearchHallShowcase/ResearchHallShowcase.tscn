@@ -1,0 +1,314 @@
+[gd_scene format=3 uid="uid://c6s5dai5onwcq"]
+
+[ext_resource type="Script" path="res://scenes/ResearchHallShowcase/UprightBillboard.cs" id="billboard"]
+
+[ext_resource type="PackedScene" path="res://scenes/CharacterShowcase/CharacterShowcase.tscn" id="actor"]
+[ext_resource type="Texture2D" uid="uid://cswrtxea0uaoi" path="res://ShareAsset/assets/environment/research_hall/cutouts/banner_black.png" id="banner_black"]
+[ext_resource type="Texture2D" uid="uid://5puf8btb2emx" path="res://ShareAsset/assets/environment/research_hall/cutouts/banner_blue.png" id="banner_blue"]
+[ext_resource type="Texture2D" uid="uid://d4jvpb07hggsy" path="res://ShareAsset/assets/environment/research_hall/cutouts/banner_red.png" id="banner_red"]
+[ext_resource type="Texture2D" uid="uid://bpjkywliwb2mm" path="res://ShareAsset/assets/environment/research_hall/cutouts/board.png" id="board"]
+[ext_resource type="Texture2D" uid="uid://djmxutks3p17a" path="res://ShareAsset/assets/environment/research_hall/cutouts/books.png" id="books"]
+[ext_resource type="Texture2D" uid="uid://blis3pxsetlj8" path="res://ShareAsset/assets/environment/research_hall/cutouts/chair_back.png" id="chair_back"]
+[ext_resource type="Texture2D" uid="uid://ddxcirgriiama" path="res://ShareAsset/assets/environment/research_hall/cutouts/chair_front.png" id="chair_front"]
+[ext_resource type="Texture2D" uid="uid://dms32m37hqnes" path="res://ShareAsset/assets/environment/research_hall/cutouts/chess.png" id="chess"]
+[ext_resource type="Texture2D" uid="uid://dl260x3vx26ff" path="res://ShareAsset/assets/environment/research_hall/cutouts/column.png" id="column"]
+[ext_resource type="Texture2D" uid="uid://sjvf6gqvfonv" path="res://ShareAsset/assets/environment/research_hall/cutouts/desk.png" id="desk"]
+[ext_resource type="Texture2D" uid="uid://dibqtp47ch4n2" path="res://ShareAsset/assets/environment/research_hall/cutouts/door.png" id="door"]
+[ext_resource type="Texture2D" uid="uid://b8wjmxhgpg0fh" path="res://ShareAsset/assets/environment/research_hall/cutouts/floor.png" id="floor"]
+[ext_resource type="Texture2D" uid="uid://5k5u3ttg3f1i" path="res://ShareAsset/assets/environment/research_hall/cutouts/ink.png" id="ink"]
+[ext_resource type="Texture2D" uid="uid://73wmeiitpvou" path="res://ShareAsset/assets/environment/research_hall/cutouts/lamp.png" id="lamp"]
+[ext_resource type="Texture2D" uid="uid://bstwuhm67v2qi" path="res://ShareAsset/assets/environment/research_hall/cutouts/plant.png" id="plant"]
+[ext_resource type="Script" uid="uid://bvjrk1e2cuo22" path="res://scenes/ResearchHallShowcase/ResearchHallShowcase.cs" id="room"]
+[ext_resource type="Texture2D" uid="uid://bapmahrruvofj" path="res://ShareAsset/assets/environment/research_hall/cutouts/rug.png" id="rug"]
+[ext_resource type="Texture2D" uid="uid://c77cvyyxnlj4d" path="res://ShareAsset/assets/environment/research_hall/cutouts/shelf.png" id="shelf"]
+[ext_resource type="Texture2D" uid="uid://nqh40nv6tsnt" path="res://ShareAsset/assets/environment/research_hall/cutouts/stove.png" id="stove"]
+[ext_resource type="Texture2D" uid="uid://oh4obqgduccv" path="res://ShareAsset/assets/environment/research_hall/cutouts/wall.png" id="wall"]
+[ext_resource type="Texture2D" uid="uid://bmeetugwiw2mm" path="res://ShareAsset/assets/environment/research_hall/cutouts/window.png" id="window"]
+
+[sub_resource type="BoxShape3D" id="wall_shape"]
+size = Vector3(14, 4, 0.2)
+
+[sub_resource type="BoxShape3D" id="side_shape"]
+size = Vector3(0.2, 4, 12)
+
+[sub_resource type="BoxShape3D" id="floor_shape"]
+size = Vector3(14, 0.2, 12)
+
+[sub_resource type="CapsuleShape3D" id="capsule"]
+radius = 0.23
+height = 1.6
+
+[sub_resource type="ViewportTexture" id="portrait"]
+viewport_path = NodePath("Player/Portrait")
+
+[node name="ResearchHallShowcase" type="Node3D" unique_id=1096603590]
+script = ExtResource("room")
+
+[node name="Architecture" type="Node3D" parent="." unique_id=675826467]
+
+[node name="Back" type="StaticBody3D" parent="Architecture" unique_id=1244253513]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Architecture/Back" unique_id=1629323985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("wall_shape")
+
+[node name="Art" type="Node3D" parent="Architecture/Back" unique_id=1592311692]
+
+[node name="Panel0" type="Sprite3D" parent="Architecture/Back/Art" unique_id=1872639492]
+transform = Transform3D(0.6889764, 0, 0, 0, 0.71428573, 0, 0, 0, 1, -5.25, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel1" type="Sprite3D" parent="Architecture/Back/Art" unique_id=1918354229]
+transform = Transform3D(0.6889764, 0, 0, 0, 0.71428573, 0, 0, 0, 1, -1.75, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel2" type="Sprite3D" parent="Architecture/Back/Art" unique_id=260733833]
+transform = Transform3D(0.6889764, 0, 0, 0, 0.71428573, 0, 0, 0, 1, 1.75, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel3" type="Sprite3D" parent="Architecture/Back/Art" unique_id=1771012758]
+transform = Transform3D(0.6889764, 0, 0, 0, 0.71428573, 0, 0, 0, 1, 5.25, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Door" type="Sprite3D" parent="Architecture/Back/Art" unique_id=115540158]
+transform = Transform3D(0.625, 0, 0, 0, 0.63432837, 0, 0, 0, 1, 0, 1.7, 0.035)
+alpha_cut = 1
+texture = ExtResource("door")
+
+[node name="Column-7" type="Sprite3D" parent="Architecture/Back/Art" unique_id=1814820478]
+transform = Transform3D(0.6923077, 0, 0, 0, 0.70446736, 0, 0, 0, 1, -7, 2.05, 0.08)
+alpha_cut = 1
+texture = ExtResource("column")
+
+[node name="Column7" type="Sprite3D" parent="Architecture/Back/Art" unique_id=1109082677]
+transform = Transform3D(0.6923077, 0, 0, 0, 0.70446736, 0, 0, 0, 1, 7, 2.05, 0.08)
+alpha_cut = 1
+texture = ExtResource("column")
+
+[node name="AcademyFlag" type="Sprite3D" parent="Architecture/Back/Art" unique_id=783306048]
+transform = Transform3D(0.26027396, 0, 0, 0, 0.2601969, 0, 0, 0, 1, -3.2, 3.5, 0.12)
+alpha_cut = 1
+texture = ExtResource("banner_red")
+
+[node name="CollegeFlag" type="Sprite3D" parent="Architecture/Back/Art" unique_id=484216884]
+transform = Transform3D(0.26027396, 0, 0, 0, 0.2601969, 0, 0, 0, 1, 0, 3.5, 0.12)
+alpha_cut = 1
+texture = ExtResource("banner_black")
+
+[node name="GuildFlag" type="Sprite3D" parent="Architecture/Back/Art" unique_id=2137112696]
+transform = Transform3D(0.26027396, 0, 0, 0, 0.2601969, 0, 0, 0, 1, 3.2, 3.5, 0.12)
+alpha_cut = 1
+texture = ExtResource("banner_blue")
+
+[node name="Left" type="StaticBody3D" parent="Architecture" unique_id=1907652906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Architecture/Left" unique_id=872801932]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("side_shape")
+
+[node name="Art" type="Node3D" parent="Architecture/Left" unique_id=1639565835]
+
+[node name="Panel0" type="Sprite3D" parent="Architecture/Left/Art" unique_id=585438878]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, -4)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel1" type="Sprite3D" parent="Architecture/Left/Art" unique_id=712952979]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel2" type="Sprite3D" parent="Architecture/Left/Art" unique_id=1111147165]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, 4)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Window" type="Sprite3D" parent="Architecture/Left/Art" unique_id=40251479]
+transform = Transform3D(4.3236682e-08, 0, 1, 0, 0.52816904, 0, -0.5726872, 0, 7.54979e-08, 0.025, 2.2, -2.7)
+alpha_cut = 1
+texture = ExtResource("window")
+
+[node name="Right" type="StaticBody3D" parent="Architecture" unique_id=831078591]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Architecture/Right" unique_id=861286683]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("side_shape")
+
+[node name="Art" type="Node3D" parent="Architecture/Right" unique_id=1204309972]
+
+[node name="Panel0" type="Sprite3D" parent="Architecture/Right/Art" unique_id=1962581629]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, -4)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel1" type="Sprite3D" parent="Architecture/Right/Art" unique_id=1416581103]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, 0)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Panel2" type="Sprite3D" parent="Architecture/Right/Art" unique_id=2078342337]
+transform = Transform3D(5.9447164e-08, 0, 1, 0, 0.71428573, 0, -0.78740156, 0, 7.54979e-08, 0, 2, 4)
+alpha_cut = 1
+texture = ExtResource("wall")
+
+[node name="Window" type="Sprite3D" parent="Architecture/Right/Art" unique_id=751411692]
+transform = Transform3D(4.3236682e-08, 0, 1, 0, 0.52816904, 0, -0.5726872, 0, 7.54979e-08, -0.025, 2.2, -2.7)
+alpha_cut = 1
+texture = ExtResource("window")
+
+[node name="NoticeBoard" type="Sprite3D" parent="Architecture/Right/Art" unique_id=265547370]
+transform = Transform3D(4.037321e-08, 0, 1, 0, 0.5294118, 0, -0.53475934, 0, 7.54979e-08, -0.04, 2.5, 1.3)
+alpha_cut = 1
+texture = ExtResource("board")
+
+[node name="FrontBoundary" type="StaticBody3D" parent="Architecture" unique_id=1626850798]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Architecture/FrontBoundary" unique_id=946894758]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("wall_shape")
+
+[node name="GroundBody" type="StaticBody3D" parent="Architecture" unique_id=1395176733]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Architecture/GroundBody" unique_id=1974743974]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("floor_shape")
+
+[node name="Floor" type="Sprite3D" parent="Architecture" unique_id=59779127]
+transform = Transform3D(1.7521902, 0, 0, 0, 1.11987e-07, 1, 0, -1.4833127, 7.54979e-08, 0, 0, 0)
+alpha_cut = 1
+texture = ExtResource("floor")
+
+[node name="Rug" type="Sprite3D" parent="Architecture" unique_id=443453266]
+transform = Transform3D(0.851735, 0, 0, 0, 8.066015e-08, 1, 0, -1.0683761, 7.54979e-08, 0, 0.018, 1)
+alpha_cut = 1
+texture = ExtResource("rug")
+
+[node name="Furniture" type="Node3D" parent="." unique_id=2118372877]
+
+[node name="BookcaseLeft" type="Sprite3D" parent="Furniture" unique_id=361143417]
+transform = Transform3D(0.9204152, 0, 0, 0, 0.92178774, 0, 0, 0, 1, -4.7, 1.65, -5.1)
+billboard = 0
+alpha_cut = 1
+texture = ExtResource("shelf")
+
+[node name="BookcaseRight" type="Sprite3D" parent="Furniture" unique_id=1721053134]
+transform = Transform3D(0.9204152, 0, 0, 0, 0.92178774, 0, 0, 0, 1, 4.7, 1.65, -5.1)
+billboard = 0
+alpha_cut = 1
+texture = ExtResource("shelf")
+
+[node name="Stove" type="Sprite3D" parent="Furniture" unique_id=381296788]
+transform = Transform3D(0.8041958, 0, 0, 0, 0.80924857, 0, 0, 0, 1, 5, 1.4, -1.5)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("stove")
+
+[node name="PlantLeft" type="Sprite3D" parent="Furniture" unique_id=964133036]
+transform = Transform3D(0.6574803, 0, 0, 0, 0.65527064, 0, 0, 0, 1, -5.8, 1.15, 2)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("plant")
+
+[node name="PlantRight" type="Sprite3D" parent="Furniture" unique_id=938317390]
+transform = Transform3D(0.6574803, 0, 0, 0, 0.65527064, 0, 0, 0, 1, 5.8, 1.15, 4)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("plant")
+
+[node name="ChessChairFar" type="Sprite3D" parent="Furniture" unique_id=1746495655]
+transform = Transform3D(0.5841584, 0, 0, 0, 0.5865922, 0, 0, 0, 1, -3.1, 1.05, -1.8)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("chair_front")
+
+[node name="ChessTable" type="Sprite3D" parent="Furniture" unique_id=605959445]
+transform = Transform3D(0.73040754, 0, 0, 0, 0.7291667, 0, 0, 0, 1, -3.1, 1.05, 0)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("chess")
+
+[node name="ChessChairNear" type="Sprite3D" parent="Furniture" unique_id=1888313681]
+transform = Transform3D(0.7135135, 0, 0, 0, 0.71428573, 0, 0, 0, 1, -3.1, 1.05, 2)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("chair_back")
+
+[node name="Desk" type="Node3D" parent="Furniture"]
+position = Vector3(3.1, 0, 3.7)
+script = ExtResource("billboard")
+[node name="Standee" type="Sprite3D" parent="Furniture/Desk"]
+position = Vector3(0, 1, 0)
+scale = Vector3(0.8157, 0.8163, 1)
+texture = ExtResource("desk")
+pixel_size = 0.01
+alpha_cut = 1
+[node name="Books" type="Sprite3D" parent="Furniture/Desk"]
+position = Vector3(0.8, 1.92, 0.05)
+scale = Vector3(0.3820, 0.3816, 1)
+texture = ExtResource("books")
+pixel_size = 0.01
+alpha_cut = 1
+[node name="Ink" type="Sprite3D" parent="Furniture/Desk"]
+position = Vector3(-0.7, 2.01, 0.06)
+scale = Vector3(0.3243, 0.3248, 1)
+texture = ExtResource("ink")
+pixel_size = 0.01
+alpha_cut = 1
+
+[node name="Hanging" type="Node3D" parent="." unique_id=1828856572]
+
+[node name="Chandelier" type="Sprite3D" parent="Hanging" unique_id=615280642]
+transform = Transform3D(0.35911602, 0, 0, 0, 0.35714287, 0, 0, 0, 1, 1.3, 4.2, -0.7)
+billboard = 2
+alpha_cut = 1
+texture = ExtResource("lamp")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=553615779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=9906482]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("capsule")
+
+[node name="Portrait" type="SubViewport" parent="Player" unique_id=857698258]
+transparent_bg = true
+render_target_update_mode = 4
+
+[node name="CharacterShowcase" parent="Player/Portrait" unique_id=1946184320 instance=ExtResource("actor")]
+EmbeddedInRoom = true
+
+[node name="Standee" type="Sprite3D" parent="Player" unique_id=201944205]
+offset = Vector2(0, 194)
+pixel_size = 0.006
+billboard = 1
+alpha_cut = 1
+texture = SubResource("portrait")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=541228881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+
+[node name="Pitch" type="Node3D" parent="CameraRig" unique_id=1493979303]
+transform = Transform3D(1, 0, 0, 0, 0.7648422, 0.64421767, 0, -0.64421767, 0.7648422, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch" unique_id=1123743906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4940946, 8.216064)
+current = true
+size = 16.0
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1708569748]
+
+[node name="Controls" type="Label" parent="HUD" unique_id=1065191574]
+offset_left = 30.0
+offset_top = 850.0
+theme_override_font_sizes/font_size = 18
+text = "WASD 移动  ·  Shift 奔跑  ·  J 挥击  ·  Q/E 旋转  ·  PgUp/PgDn 相机俯仰  ·  右键拖动视角  ·  滚轮缩放"
+
+

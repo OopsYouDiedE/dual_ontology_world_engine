@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://b1q2vlj2o8hgu"]
+
+[ext_resource type="Script" uid="uid://dctolcb8ifblh" path="res://scenes/Scene6/Scene6.gd" id="1_scene6"]
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 1
+background_color = Color(0.08, 0.11, 0.13, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.4, 0.44, 0.48, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(8, 8)
+
+[sub_resource type="QuadMesh" id="QuadMesh_wall"]
+size = Vector2(12, 4)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_shadow"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 0.01
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 0.4)
+
+[sub_resource type="TorusMesh" id="TorusMesh_indicator"]
+inner_radius = 0.35
+outer_radius = 0.45
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_indicator"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.88, 0.82, 0.58, 0.65)
+
+[node name="Scene6" type="Node3D" unique_id=537697141]
+script = ExtResource("1_scene6")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1323162366]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1712308218]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 10, 0)
+light_color = Color(0.96, 0.94, 0.88, 1)
+light_energy = 1.1
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=541463765]
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="Wall" type="MeshInstance3D" parent="." unique_id=1717903443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9836588, -4)
+mesh = SubResource("QuadMesh_wall")
+
+[node name="Wilson" type="Node3D" parent="." unique_id=36477929]
+
+[node name="Sprite3D" type="Sprite3D" parent="Wilson" unique_id=572956468]
+billboard = 2
+alpha_cut = 1
+texture_filter = 2
+
+[node name="Shadow" type="MeshInstance3D" parent="Wilson" unique_id=1519661725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.55, 0, 0.005, 0)
+mesh = SubResource("CylinderMesh_shadow")
+surface_material_override/0 = SubResource("StandardMaterial3D_shadow")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1991594902]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 7.8, 8.8)
+fov = 48.0
+
+[node name="ClickIndicator" type="MeshInstance3D" parent="." unique_id=2083048787]
+visible = false
+mesh = SubResource("TorusMesh_indicator")
+surface_material_override/0 = SubResource("StandardMaterial3D_indicator")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1047208091]

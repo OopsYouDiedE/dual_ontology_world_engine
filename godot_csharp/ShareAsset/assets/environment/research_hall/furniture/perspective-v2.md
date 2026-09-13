@@ -1,0 +1,9 @@
+# 家具透视微调
+
+使用内置 image_gen 编辑，输出保存为 `furniture_perspective_v2.png`。原始图板保留。
+
+编辑目标是 `furniture_sheet.png`，镜头参考是 `artifacts/research-hall/overview-before-furniture-v2.png`。场景只从新图板读取棋桌、书桌、正面椅和背面椅，其余物件继续读取原图。书桌在场景中水平翻转，使其露出的侧面朝向房间中央，并调整桌上书籍的落点。
+
+## 完整提示词
+
+Use case: precise-object-edit. Image 1 is the EDIT TARGET furniture atlas. Image 2 is ONLY the game room camera/perspective reference, do not output a room. Output the same 1536x1024 atlas composition as image 1. Make subtle perspective corrections ONLY to four objects: top-middle chess pedestal table, top-right front-view chair, middle-left writing desk, middle-center rear-view chair. Match a Hamlet-like elevated room camera looking down about 30 degrees, weak perspective, vertical upright legs and chair backs. Desk should show a moderately deeper tabletop consistent with floor foreshortening, about 0.5 depth compression, slightly revealing its LEFT side because located right of camera. Chess table should have a less steep top than the original and subtly reveal its RIGHT side because located left of camera; the tabletop and base must agree. Both chairs should align along the same room depth axis with the chess table, reduce their excessive three-quarter yaw: near-frontal front chair and near-straight rear chair, subtly reveal right side, seats foreshortened consistently. Preserve exact ornate reddish-brown wood designs, ink contours, hatching, wear, red upholstery, pedestal base, desk drawers, existing object scale and atlas slot positions. Keep the bookshelf, stove, noticeboard, plant, loose book, ink and book stack unchanged. Keep all objects fully inside their existing slots with no overlap and generous separation. Keep the same uniform neutral gray atlas background for existing engine color key, no shadows on background, no labels, no scene, no floor. This is a small production sprite perspective adjustment, not a redesign.

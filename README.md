@@ -4,25 +4,25 @@
 
 核心为独立 .NET 8 / C# 12 项目，支持按行动值延迟激活和嵌套行动。不包含房间内几何、碰撞、实时循环或 UI。
 
-## 本轮验收
+## 构建与验证
 
 ```powershell
-dotnet build godot_csharp/Core.sln -c Release
-dotnet run --project godot_csharp/tests/core_acceptance/CoreAcceptance.csproj -c Release
-pwsh -File godot_csharp/measure-core.ps1
+dotnet build csharp/Core.sln -c Release
+dotnet build godot_csharp/DualOntologyWorldEngine.sln
 ```
 
-- [迁移说明与验收边界](docs/core-migration-acceptance-zh.md)
-- [当前使用示例](docs/core-essence-projection-usage-zh.md)
-- [Core 维护规范](godot_csharp/core/AGENTS.md)
+- [Core 维护规范](csharp/AGENTS.md)
 
-## 目录
+## 目录架构
 
-- `godot_csharp/core`：正式核心，包括对象与观察、AST、CTB、决策、社交及结算。
-- `godot_csharp/tests/core_acceptance`：新核心独立因果场景。
-- `godot_csharp/Core.sln`：不依赖 Godot 的构建入口。
-- `godot_csharp/DualOntologyWorldEngine.sln`：包含 Godot 宿主的解决方案。
-- `godot_csharp/legacy`：迁移前核心与实验核心，保留供后续对照。
-- `godot_csharp/examples`：现有动物园程序仍依赖 legacy；验收之后迁移其语义与展示。
+- `csharp/`：正式核心引擎，包括对象与观察、AST、CTB、决策、社交及结算。独立于游戏引擎。
+  - `csharp/Core.sln`：核心独立构建入口。
+  - `csharp/sample/`：核心下属示例与演示合集。
+    - `csharp/sample/web/`：网页展示资源；子目录 `dist/` 为发布的网页。
+    - `csharp/sample/godot_scenes/`：Godot 机制演示场景与脚本。
+    - `csharp/sample/zoo/`：动物园机制模拟与 Web 演示。
+- `godot_csharp/`：未来游戏的核心工程目录，作为游戏层宿主接入核心引擎。
+  - `godot_csharp/DualOntologyWorldEngine.sln`：游戏主解决方案。
+  - `godot_csharp/project.godot`：Godot 游戏配置。
 
 docs 目录中原有的 Entity / Belief 规范属于旧实现。当前 API 以本页链接的使用示例及正式 Core 为准。

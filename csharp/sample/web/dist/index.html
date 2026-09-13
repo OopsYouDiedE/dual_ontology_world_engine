@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="一本可以开启、合拢和翻阅的三维异闻手记。"><title>异闻手记 · The Veiled Archive</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="atmosphere" aria-hidden="true"><div class="light"></div><div class="grid"></div><div class="mist"></div></div>
+<header><a class="brand" href="./"><span class="brand-mark">◇</span><span>异闻手记<small>THE VEILED ARCHIVE</small></span></a><span class="edition">旅人藏本 <i></i> VOL. 01</span><button id="sound" class="quiet" aria-pressed="false">声音 · 关</button></header>
+<main>
+<div class="scene" id="scene">
+<div class="book-wrap" id="bookWrap">
+<div class="book" id="book">
+<div class="right-cover"></div><div class="page-stack"></div>
+<article class="page right-page"><div class="page-top"><span>物 质 的 回 声</span><span>Ⅱ</span></div><div class="specimen bottle"><span class="seal">ᛑ</span><div class="sketch art-bottle"></div><div class="caption"><b id="itemTitle">余响之瓶</b><span id="itemSubtitle">VESSEL OF ECHOES</span></div><p id="itemText">封存离去者最后一句话。<br>月落以后，瓶中会泛起潮声。</p></div><div class="specimen chest"><span class="seal">山</span><div class="sketch art-chest"></div><div class="caption"><b id="chestTitle">渡鸦行箱</b><span id="chestSubtitle">THE RAVEN’S COFFER</span></div></div><footer><span>采集地 · 灰潮渡口</span><span class="page-number">02</span></footer></article>
+<div class="left-wing" id="leftWing"><article class="page left-page"><div class="page-top"><span>第一章 / 潮间之物</span><span>Ⅰ</span></div><span class="seal spirit-seal">ᛠ</span><div class="sketch art-spirit"></div><div class="measure"><span>↑</span><i></i><span>↓</span></div><div class="spirit-note">无形之躯<br>借潮而生</div><div class="left-caption"><span class="eyebrow">FIELD NOTE — 001</span><h1 id="chapterTitle">潮汐中的旅人</h1><p id="chapterText">它们在退潮时现身，循着记忆的纹路行走。<br>不要询问姓名，只需为它们留一盏灯。</p></div><footer><span>观察记录 · 第七个无月夜</span><span class="page-number">01</span></footer></article><div class="front-cover"><div class="cover-frame"><span class="cover-edition">THE VEILED ARCHIVE</span><div class="cover-symbol">◇<span>ᛠ</span></div><h2>异闻手记</h2><p>潮间之物 · 第一卷</p><span class="cover-bottom">献给走入雾中的人</span></div></div><div class="cover-edge"></div></div>
+<div class="spine"></div><button class="bookmark" id="bookmark" aria-label="开合手记">ᛠ</button>
+</div></div>
+<aside class="rune-panel" id="runePanel"><div class="panel-heading"><span>符 文 索 引</span><small id="runeCount">01 / 24</small></div><div class="rune-grid" id="runes"></div><div class="rune-description"><span class="tiny">SELECTED SIGIL</span><h2 id="runeName">潮生</h2><p id="runeText">万物自潮水而来。</p><span class="index-line"></span></div></aside>
+</div>
+<nav class="controls" aria-label="书本操作"><button id="prev" class="round" aria-label="上一章">←</button><span id="chapterIndicator">潮间之物 <small>01 — 03</small></span><button id="next" class="round" aria-label="下一章">→</button><span class="separator"></span><button id="toggle" class="close-book"><span>✕</span> 合上手记</button></nav>
+</main>
+<div class="bottom-bar"><span>ARCHIVE № 017 <i>／</i> 灰潮纪事</span><span id="hint">拖动书本旋转 <i>·</i> 点击符文查阅 <i>·</i> 空格开合</span><button id="reset" class="quiet">↺ 重置视角</button></div>
+<script src="app.js"></script></body></html>
