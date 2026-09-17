@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>公共研究室 · 过渡测试</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e6e1d6;color:#49443d;font:15px Georgia,serif;display:grid;place-items:center;min-height:100vh}
+main{width:min(1280px,96vw)}canvas{display:block;width:100%;box-shadow:0 3px 22px #403b3220}footer{display:flex;gap:18px;align-items:center;padding:14px 0}button{background:none;border:1px solid #aaa193;color:inherit;padding:6px 16px;cursor:pointer}input{flex:1;accent-color:#6f8372}output{min-width:170px}
+</style>
+<main><canvas id="view" width="1280" height="800"></canvas><footer><button id="play">重播</button><input id="seek" aria-label="过渡进度" type="range" min="0" max="4" step=".01" value="0"><output id="status">加载图片</output></footer></main>
+<script>
+const c=document.querySelector('canvas'),ctx=c.getContext('2d'),seek=document.querySelector('#seek'),status=document.querySelector('#status');
+const old=new Image(),final=new Image();old.src='transition-source.png';final.src='final.png';
+const layer=document.createElement('canvas');layer.width=1280;layer.height=800;const lc=layer.getContext('2d');
+const mask=document.createElement('canvas');mask.width=320;mask.height=200;const mc=mask.getContext('2d'),pixels=mc.createImageData(320,200);
+const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)};
+let ready=false,running=false,start=0;
+function render(t){
+ if(!ready)return;
+ ctx.globalAlpha=1;ctx.fillStyle='#f6f1e6';ctx.fillRect(0,0,1280,800);
+ const slide=ease((t-3)/.8);
+ if(t>=3.8){ctx.drawImage(final,0,0,1280,800)}
+ else if(t>=2.7){
+  ctx.globalAlpha=slide;ctx.drawImage(final,0,0,1280,800);ctx.globalAlpha=1;
+  const sx=430,sy=50,sw=1156,sh=880;
+  ctx.drawImage(final,sx,sy,sw,sh,slide*sx/final.width*1280,slide*sy/final.height*800,1280*(1-slide)+slide*sw/final.width*1280,800*(1-slide)+slide*sh/final.height*800);
+ }else{
+  // First flatten the whole real room into a pale, still recognizable texture.
+  // Keep that texture underneath until the mental scene has covered it completely.
+  const fade=ease((t-.3)/1.05);
+  ctx.filter='grayscale('+fade+') sepia('+(fade*.15)+')';
+  ctx.drawImage(old,11,10,749,460,0,0,1280,800);
+  ctx.filter='none';
+  ctx.globalAlpha=.76*fade;ctx.fillStyle='#f6f1e6';ctx.fillRect(0,0,1280,800);ctx.globalAlpha=1;
+  // Hold the faded texture from 1.35 to 1.65 seconds, then cover it edge-first.
+  const progress=clamp((t-1.65)/1.05)*1.2;
+  if(t>1.65){
+   lc.clearRect(0,0,1280,800);lc.globalCompositeOperation='source-over';
+   lc.drawImage(final,430,50,1156,880,0,0,1280,800);
+   for(let y=0;y<200;y++)for(let x=0;x<320;x++){
+    const r=Math.min(1,Math.hypot((x-160)/160,(y-100)/100)/1.414);
+    const threshold=1-r,noise=.012*Math.sin(x*.19)*Math.cos(y*.23);
+    const a=ease((progress-threshold-noise)/.15);
+    const i=(y*320+x)*4;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=255;pixels.data[i+3]=Math.round(a*255);
+   }
+   mc.putImageData(pixels,0,0);lc.globalCompositeOperation='destination-in';lc.drawImage(mask,0,0,1280,800);lc.globalCompositeOperation='source-over';ctx.drawImage(layer,0,0);
+  }
+ }
+ seek.value=t;status.textContent=t.toFixed(2)+' s · '+(t<.3?'现实':t<1.35?'褪成纹理':t<1.65?'保留纹理':t<2.7?'心象覆盖':t<3?'纸面心象':t<3.8?'展开规则':'完成');
+ window.previewState={time:t,ready,width:final.width,height:final.height};
+}
+function tick(now){if(!running)return;const t=Math.min(4,(now-start)/1000);render(t);if(t<4)requestAnimationFrame(tick);else running=false}
+document.querySelector('#play').onclick=()=>{running=true;start=performance.now();requestAnimationFrame(tick)};
+seek.oninput=()=>{running=false;render(Number(seek.value))};
+Promise.all([old.decode(),final.decode()]).then(()=>{ready=true;render(0)}).catch(e=>{status.textContent='图片加载失败';console.error(e)});
+window.setPreviewTime=t=>{running=false;render(t)};
+</script></html>
