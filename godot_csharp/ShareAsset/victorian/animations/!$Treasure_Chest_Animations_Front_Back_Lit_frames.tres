@@ -1,0 +1,78 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/victorian/48px+MVMZ/!$Treasure_Chest_Animations_Front_Back_Lit.png" id="1_x0b51"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h8ac8"]
+atlas = ExtResource("1_x0b51")
+region = Rect2(0, 144, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dwpk4"]
+atlas = ExtResource("1_x0b51")
+region = Rect2(0, 96, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s8t50"]
+atlas = ExtResource("1_x0b51")
+region = Rect2(0, 48, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nfn4c"]
+atlas = ExtResource("1_x0b51")
+region = Rect2(0, 0, 48, 48)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h8ac8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dwpk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s8t50")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nfn4c")
+}],
+"loop": false,
+"name": &"close",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nfn4c")
+}],
+"loop": false,
+"name": &"closed",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nfn4c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s8t50")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dwpk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h8ac8")
+}],
+"loop": false,
+"name": &"open",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h8ac8")
+}],
+"loop": false,
+"name": &"opened",
+"speed": 5.0
+}]
+metadata/frame_width = 48
+metadata/frame_height = 48
+metadata/x_tile = 1
+metadata/y_tile = 1
+metadata/orientation = "v"
+metadata/frames = 4

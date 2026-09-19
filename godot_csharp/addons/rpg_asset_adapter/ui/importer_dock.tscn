@@ -1,0 +1,151 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7rpgassetadapterui001"]
+
+[ext_resource type="Script" path="res://addons/rpg_asset_adapter/ui/importer_dock.gd" id="1_importer_dock"]
+
+[node name="RPGAssetAdapter" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_importer_dock")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "RPG Asset Adapter — Batch Importer"
+
+[node name="HSeparator1" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="SourceBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SourceBox"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Source Directory:"
+
+[node name="SourceDirEdit" type="LineEdit" parent="VBoxContainer/SourceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Path to asset folder (e.g. res://ShareAsset/victorian/48px+MVMZ)"
+
+[node name="BrowseSourceBtn" type="Button" parent="VBoxContainer/SourceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Browse..."
+
+[node name="ThemeBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ThemeBox"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Theme / Set Name:"
+
+[node name="ThemeNameEdit" type="LineEdit" parent="VBoxContainer/ThemeBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "e.g. Victorian"
+
+[node name="OutputBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/OutputBox"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Output Directory:"
+
+[node name="OutputDirEdit" type="LineEdit" parent="VBoxContainer/OutputBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "res://imported_assets/victorian"
+placeholder_text = "res://imported_assets/theme_name"
+
+[node name="BrowseOutputBtn" type="Button" parent="VBoxContainer/OutputBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Browse..."
+
+[node name="OptionsBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LabelMode" type="Label" parent="VBoxContainer/OptionsBox"]
+layout_mode = 2
+text = "Detect Mode:"
+
+[node name="DetectModeOption" type="OptionButton" parent="VBoxContainer/OptionsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LabelSize" type="Label" parent="VBoxContainer/OptionsBox"]
+layout_mode = 2
+text = "Tile Size Override:"
+
+[node name="TileSizeOption" type="OptionButton" parent="VBoxContainer/OptionsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ApplyMetadataCheck" type="CheckBox" parent="VBoxContainer/OptionsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Apply Tilesets.json Flags & Collision"
+
+[node name="ActionsBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ScanButton" type="Button" parent="VBoxContainer/ActionsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Scan Assets in Directory"
+
+[node name="ConvertButton" type="Button" parent="VBoxContainer/ActionsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Convert & Generate All Resources"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="AssetTree" type="Tree" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+columns = 4
+column_titles_visible = true
+
+[node name="ProgressBar" type="ProgressBar" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+value = 0.0
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ready. Select a directory and click 'Scan Assets in Directory'."
