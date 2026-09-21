@@ -7,11 +7,10 @@
 在仓库根目录执行：
 
 ```powershell
-dotnet run --project godot_csharp/examples/zoo_web --urls http://localhost:5127
-dotnet run --project godot_csharp/examples/zoo_simulator -- --seed 7 --visitors 120 --time 480
-dotnet run --project godot_csharp/examples/zoo_simulator -- --seed 7 --visitors 120 --time 480 --withdraw Visitor.8,Visitor.14,Visitor.6,Visitor.7
-dotnet run --project godot_csharp/tests/core_acceptance
-dotnet run --project godot_csharp/tests/zoo_simulator_audit
+dotnet run --project csharp/sample/zoo/zoo_web --urls http://localhost:5127
+dotnet run --project csharp/sample/zoo/zoo_simulator -- --seed 7 --visitors 120 --time 480
+dotnet run --project csharp/sample/zoo/zoo_simulator -- --seed 7 --visitors 120 --time 480 --withdraw Visitor.8,Visitor.14,Visitor.6,Visitor.7
+dotnet test csharp/Core.sln
 ```
 
 一分钟对应一个行动值。默认从第 1 天 08:00 开始，每天仅 08:00–16:00 接待游客；首批 120 人，此后每 15 分钟一批，次日重新接待首批游客。步行速度 60 米/分钟，通道一般 2–8 分钟，参观 18 分钟、休息 20 分钟。角色按游览经历和入园时长形成离园计划。红衣员工下班后回家，次日 00:27 回到员工入口，依据脑内岗位和地图选择返岗行动。

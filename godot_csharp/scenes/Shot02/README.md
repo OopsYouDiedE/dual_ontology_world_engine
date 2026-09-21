@@ -1,0 +1,1 @@
+当前版本：原图缩图适配 48px TileSet。参见 ShareAsset/rpg2d/resized48_shots/README.md。实际截图位于 artifacts/resized48-shots。旧 native48 程序绘制版已停用。

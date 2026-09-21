@@ -7,8 +7,8 @@ Blazor WebAssembly 直接在浏览器运行 C#。依赖链：`zoo_web → ZooSim
 在仓库根目录执行：
 
 ```powershell
-dotnet run --project godot_csharp/examples/zoo_web --urls http://localhost:5127
-./godot_csharp/examples/zoo_web/publish.ps1
+dotnet run --project csharp/sample/zoo/zoo_web --urls http://localhost:5127
+./csharp/sample/zoo/zoo_web/publish.ps1
 ```
 
 静态站点根目录为 `publish_wasm/wwwroot`，包含 .NET WASM、Core 和模拟程序集。可将其中全部文件用于 GitHub Pages；保留 `.nojekyll`，子路径链接以 `/` 结尾，`index.html` 使用相对 base。发布脚本只生成本地文件，不自动上传 GitHub。
