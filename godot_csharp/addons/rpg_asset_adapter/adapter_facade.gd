@@ -217,18 +217,27 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				if err == OK:
 					result["generated_atlases"].append(derived_res_path)
 				else:
-					result["warnings"].append("Failed to save derived atlas PNG: %s" % derived_png_path)
+					result["errors"].append("Failed to save derived atlas PNG: %s" % derived_png_path)
 
 				var src := TileSetConverterScript.add_autotile_atlas_source(
 					tileset,
 					d_img,
 					derived,
-					primary_tile_size,
-					derived_res_path
+					primary_tile_size
 				)
 				if src != null:
+					# Native texture resources reload immediately, without an editor PNG import pass.
+					var texture_path := res_atlases_dir.path_join("%s_derived.res" % stem)
+					var texture_err := ResourceSaver.save(src.texture, texture_path, ResourceSaver.FLAG_COMPRESS)
+					if texture_err == OK:
+						src.texture.take_over_path(texture_path)
+					else:
+						result["errors"].append("Failed to save atlas texture: %s (%d)" % [texture_path, texture_err])
+					src.set_meta("source_filename", info.path.get_file().get_basename())
 					src.set_meta("asset_kind", info.kind)
 					src.set_meta("slot_index", MetadataConverterScript.get_slot_for_asset_kind(info.kind))
+			else:
+				result["errors"].append("Could not reconstruct autotile: %s" % info.path)
 
 		# Process Normal Tileset Assets (A5, B..E, KR F, etc.)
 		for info: AssetDetectorScript.AssetInfo in normal_tileset_assets:
@@ -255,10 +264,11 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 					normal_res_path
 				)
 				if src != null:
+					src.set_meta("source_filename", info.path.get_file().get_basename())
 					src.set_meta("asset_kind", info.kind)
 					src.set_meta("slot_index", MetadataConverterScript.get_slot_for_asset_kind(info.kind))
 			else:
-				result["warnings"].append("Could not load image file: %s" % info.path)
+				result["errors"].append("Could not load image file: %s" % info.path)
 
 		# Apply metadata if Tilesets.json exists
 		if apply_meta and metadata_assets.size() > 0:
@@ -279,6 +289,8 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 						primary_tile_size
 					)
 					result["applied_metadata_count"] = applied_count
+				else:
+					result["warnings"].append("No matching Tilesets.json entry; metadata was skipped.")
 
 		# Save TileSet resource
 		var ts_res_path := res_tilesets_dir.path_join("%s.tres" % theme_name)
@@ -298,6 +310,9 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 		var char_data := CharacterConverterScript.convert(info.path, primary_tile_size, fps)
 		var is_single: bool = char_data.get("is_single", false)
 		var characters: Array = char_data.get("characters", [])
+		if characters.is_empty():
+			result["errors"].append("Could not convert character: %s" % info.path)
+			continue
 
 		if is_single:
 			var sf: SpriteFrames = char_data.get("sprite_frames", null)
@@ -305,6 +320,8 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				var sf_path := res_chars_dir.path_join("%s.tres" % stem)
 				if ResourceSaver.save(sf, sf_path) == OK:
 					result["generated_sprite_frames"].append(sf_path)
+				else:
+					result["errors"].append("Failed to save character frames: %s" % sf_path)
 		else:
 			for i in range(characters.size()):
 				var sf: SpriteFrames = characters[i]
@@ -312,6 +329,8 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 					var sf_path := res_chars_dir.path_join("%s_char%d.tres" % [stem, i])
 					if ResourceSaver.save(sf, sf_path) == OK:
 						result["generated_sprite_frames"].append(sf_path)
+					else:
+						result["errors"].append("Failed to save character frames: %s" % sf_path)
 
 	# 3. Process Objects, Doors, Chests
 	for info: AssetDetectorScript.AssetInfo in object_assets:
@@ -322,17 +341,25 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 			result["warnings"].append("Generic animation requires custom profile: %s" % info.path)
 			continue
 
+		if obj_data.get("sprite_frames") == null and obj_data.get("packed_scene") == null and obj_data.get("scenes", []).is_empty():
+			result["errors"].append("Could not convert object: %s" % info.path)
+			continue
+
 		var sf: SpriteFrames = obj_data.get("sprite_frames", null)
 		if sf != null:
 			var sf_path := res_anims_dir.path_join("%s_frames.tres" % stem)
 			if ResourceSaver.save(sf, sf_path) == OK:
 				result["generated_sprite_frames"].append(sf_path)
+			else:
+				result["errors"].append("Failed to save object frames: %s" % sf_path)
 
 		var packed_scene: PackedScene = obj_data.get("packed_scene", null)
 		if packed_scene != null:
 			var scene_path := res_scenes_dir.path_join("%s.tscn" % stem)
 			if ResourceSaver.save(packed_scene, scene_path) == OK:
 				result["generated_scenes"].append(scene_path)
+			else:
+				result["errors"].append("Failed to save object scene: %s" % scene_path)
 
 		var extra_scenes: Array = obj_data.get("scenes", [])
 		for sc_dict in extra_scenes:
@@ -342,5 +369,8 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				var sc_path := res_scenes_dir.path_join("%s.tscn" % sc_name)
 				if ResourceSaver.save(sc_res, sc_path) == OK:
 					result["generated_scenes"].append(sc_path)
+				else:
+					result["errors"].append("Failed to save object scene: %s" % sc_path)
 
+	result["success"] = result["errors"].is_empty()
 	return result

@@ -103,31 +103,23 @@ static func decode_tile_flags(flag: int, tile_size: int = 48) -> Dictionary:
 
 
 ## Applies decoded flag data to a TileData instance.
-## If all 4 directions blocked: creates centered square collision polygon on physics layer 0.
+## Non-star tiles blocked in all directions get a square collision on physics layer 0.
 ## If all 4 directions open: no collision polygon.
-## If partially blocked: stores directional passability flags in custom data.
+## Always writes directional flags; the game layer handles partial blocking and star semantics.
 static func apply_flag_to_tile_data(tile_data: TileData, flag: int, tile_size: int = 48) -> Dictionary:
 	var decoded := decode_tile_flags(flag, tile_size)
 
-	if decoded["star"]:
-		tile_data.set_custom_data("upper_layer", true)
-	if decoded["ladder"]:
-		tile_data.set_custom_data("ladder", true)
-	if decoded["bush"]:
-		tile_data.set_custom_data("bush", true)
-		tile_data.set_custom_data("bush_depth", decoded["bush_depth"])
-	if decoded["counter"]:
-		tile_data.set_custom_data("counter", true)
-	if decoded["damage_floor"]:
-		tile_data.set_custom_data("damage_floor", true)
-	if decoded["terrain_tag"] > 0:
-		tile_data.set_custom_data("terrain_tag", decoded["terrain_tag"])
+	# Write false/zero values too, so reapplying metadata clears previous flags.
+	tile_data.set_custom_data("upper_layer", decoded["star"])
+	for key in ["ladder", "bush", "bush_depth", "counter", "damage_floor", "terrain_tag",
+		"pass_down", "pass_left", "pass_right", "pass_up"]:
+		tile_data.set_custom_data(key, decoded[key])
 
 	# Clean up any existing collision polygons on physics layer 0
 	while tile_data.get_collision_polygons_count(0) > 0:
 		tile_data.remove_collision_polygon(0, 0)
 
-	if decoded["all_blocked"]:
+	if decoded["all_blocked"] and not decoded["star"]:
 		var half := float(tile_size) / 2.0
 		var poly := PackedVector2Array([
 			Vector2(-half, -half),
@@ -137,15 +129,6 @@ static func apply_flag_to_tile_data(tile_data: TileData, flag: int, tile_size: i
 		])
 		tile_data.add_collision_polygon(0)
 		tile_data.set_collision_polygon_points(0, 0, poly)
-	elif decoded["all_open"]:
-		# All 4 directions open: no collision polygon
-		pass
-	else:
-		# Partially blocked: store directional passability flags in custom data
-		tile_data.set_custom_data("pass_down", decoded["pass_down"])
-		tile_data.set_custom_data("pass_left", decoded["pass_left"])
-		tile_data.set_custom_data("pass_right", decoded["pass_right"])
-		tile_data.set_custom_data("pass_up", decoded["pass_up"])
 
 	return decoded
 
@@ -187,7 +170,7 @@ static func parse_tilesets_json(json_or_path: Variant) -> Array:
 
 
 ## Matches the tileset object whose tilesetNames matches the filenames in the current import set.
-## Falls back to index 0 (or first valid tileset dictionary if index 0 is null).
+## Returns an empty dictionary when no filenames match.
 static func match_tileset(tilesets_data: Array, import_filenames: Array) -> Dictionary:
 	if tilesets_data.is_empty():
 		return {}
@@ -212,7 +195,7 @@ static func match_tileset(tilesets_data: Array, import_filenames: Array) -> Dict
 			if s.is_empty():
 				continue
 			for imp in clean_import:
-				if imp == s or imp.contains(s) or s.contains(imp):
+				if imp == s:
 					score += 1
 					break
 		if score > highest_score:
@@ -222,15 +205,6 @@ static func match_tileset(tilesets_data: Array, import_filenames: Array) -> Dict
 	if highest_score > 0:
 		return best_match
 
-	# Fallback to index 0 if not matched
-	if tilesets_data.size() > 0 and tilesets_data[0] is Dictionary:
-		return tilesets_data[0]
-
-	# If index 0 is null (standard in RPG Maker JSON array), return the first valid dictionary
-	for item in tilesets_data:
-		if item is Dictionary:
-			return item
-
 	return {}
 
 
@@ -238,37 +212,30 @@ static func match_tileset(tilesets_data: Array, import_filenames: Array) -> Dict
 static func get_tile_id(slot_index: int, col: int, row: int) -> int:
 	match slot_index:
 		SLOT_B:
-			return BASE_ID_B + row * 16 + col
+			return BASE_ID_B + (col / 8) * 128 + row * 8 + col % 8
 		SLOT_C:
-			return BASE_ID_C + row * 16 + col
+			return BASE_ID_C + (col / 8) * 128 + row * 8 + col % 8
 		SLOT_D:
-			return BASE_ID_D + row * 16 + col
+			return BASE_ID_D + (col / 8) * 128 + row * 8 + col % 8
 		SLOT_E:
-			return BASE_ID_E + row * 16 + col
+			return BASE_ID_E + (col / 8) * 128 + row * 8 + col % 8
 		SLOT_A5:
 			return BASE_ID_A5 + row * 8 + col
-		SLOT_A1:
-			return BASE_ID_A1 + row * 16 + col
-		SLOT_A2:
-			return BASE_ID_A2 + row * 16 + col
-		SLOT_A3:
-			return BASE_ID_A3 + row * 16 + col
-		SLOT_A4:
-			return BASE_ID_A4 + row * 16 + col
 		_:
-			return row * 16 + col
+			# Autotiles require the explicit mapping from the reconstruction step.
+			return -1
 
 
 ## Maps an AssetKind to its corresponding RPG Maker slot index.
 static func get_slot_for_asset_kind(kind: AssetDetectorScript.AssetKind) -> int:
 	match kind:
-		AssetDetectorScript.AssetKind.RPG_A1, AssetDetectorScript.AssetKind.KR_NON_RM_A1:
+		AssetDetectorScript.AssetKind.RPG_A1:
 			return SLOT_A1
-		AssetDetectorScript.AssetKind.RPG_A2, AssetDetectorScript.AssetKind.KR_NON_RM_A2:
+		AssetDetectorScript.AssetKind.RPG_A2:
 			return SLOT_A2
-		AssetDetectorScript.AssetKind.RPG_A3, AssetDetectorScript.AssetKind.KR_NON_RM_A3:
+		AssetDetectorScript.AssetKind.RPG_A3:
 			return SLOT_A3
-		AssetDetectorScript.AssetKind.RPG_A4, AssetDetectorScript.AssetKind.KR_NON_RM_A4:
+		AssetDetectorScript.AssetKind.RPG_A4:
 			return SLOT_A4
 		AssetDetectorScript.AssetKind.RPG_A5:
 			return SLOT_A5
@@ -292,10 +259,11 @@ static func apply_flags_to_source(
 	tile_size: int = 48
 ) -> int:
 	var applied_count := 0
+	var tile_ids: Dictionary = source.get_meta("rpg_tile_ids", {})
 	var tiles_count := source.get_tiles_count()
 	for i in range(tiles_count):
 		var coords := source.get_tile_id(i)
-		var tile_id := get_tile_id(slot_index, coords.x, coords.y)
+		var tile_id: int = tile_ids.get(coords, get_tile_id(slot_index, coords.x, coords.y))
 		if tile_id >= 0 and tile_id < flags.size():
 			var flag := int(flags[tile_id])
 			var tile_data := source.get_tile_data(coords, 0)
@@ -330,6 +298,11 @@ static func apply_metadata_to_tileset(
 				slot = int(source.get_meta("slot_index"))
 			elif source.has_meta("asset_kind"):
 				slot = get_slot_for_asset_kind(source.get_meta("asset_kind"))
+
+			if slot >= 0 and source.has_meta("source_filename"):
+				var names: Array = tileset_info.get("tilesetNames", [])
+				if slot >= names.size() or str(names[slot]).to_lower() != str(source.get_meta("source_filename")).to_lower():
+					continue
 
 			if slot >= 0:
 				applied_total += apply_flags_to_source(source, flags, slot, tile_size)

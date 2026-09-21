@@ -1,0 +1,100 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/victorian/48px+MVMZ/!$Treasure_Chest_Animations_Front_Back_Lit.png" id="1_4mptl"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l0o11"]
+atlas = ExtResource("1_4mptl")
+region = Rect2(0, 144, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mef5m"]
+atlas = ExtResource("1_4mptl")
+region = Rect2(0, 96, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_py1sl"]
+atlas = ExtResource("1_4mptl")
+region = Rect2(0, 48, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n1eca"]
+atlas = ExtResource("1_4mptl")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_g3efh"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l0o11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mef5m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_py1sl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n1eca")
+}],
+"loop": false,
+"name": &"close",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n1eca")
+}],
+"loop": false,
+"name": &"closed",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n1eca")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_py1sl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mef5m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l0o11")
+}],
+"loop": false,
+"name": &"open",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l0o11")
+}],
+"loop": false,
+"name": &"opened",
+"speed": 5.0
+}]
+metadata/frame_width = 48
+metadata/frame_height = 48
+metadata/x_tile = 1
+metadata/y_tile = 1
+metadata/orientation = "v"
+metadata/frames = 4
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_esghp"]
+size = Vector2(48, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tomsg"]
+size = Vector2(48, 48)
+
+[node name="TreasureChest_Front" type="Node2D" unique_id=1625168720]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=480459832]
+sprite_frames = SubResource("SpriteFrames_g3efh")
+animation = &"closed"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=2114288881]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=487302598]
+shape = SubResource("RectangleShape2D_esghp")
+
+[node name="TriggerArea" type="Area2D" parent="." unique_id=457238173]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=52311621]
+shape = SubResource("RectangleShape2D_tomsg")

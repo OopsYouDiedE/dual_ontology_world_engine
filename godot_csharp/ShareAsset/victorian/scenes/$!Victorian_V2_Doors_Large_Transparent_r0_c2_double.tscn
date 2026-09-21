@@ -83,18 +83,18 @@ size = Vector2(96, 96)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ltktx"]
 size = Vector2(96, 96)
 
-[node name="Door" type="Node2D" unique_id=48262286]
+[node name="Door" type="Node2D" unique_id=1830635682]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=190267338]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=999233940]
 sprite_frames = SubResource("SpriteFrames_7i5j1")
 animation = &"closed"
 
-[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=2029898770]
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=920760024]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1580265452]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=309556273]
 shape = SubResource("RectangleShape2D_xlhwu")
 
-[node name="TriggerArea" type="Area2D" parent="." unique_id=1672162265]
+[node name="TriggerArea" type="Area2D" parent="." unique_id=107374108]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=891807154]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=341339923]
 shape = SubResource("RectangleShape2D_ltktx")

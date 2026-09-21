@@ -117,8 +117,6 @@ static func add_autotile_atlas_source(
 		tex = ResourceLoader.load(tex_res_path)
 	if tex == null:
 		var itex := ImageTexture.create_from_image(atlas_img)
-		if tex_res_path != "":
-			itex.take_over_path(tex_res_path)
 		tex = itex
 	source.texture = tex
 	source.texture_region_size = Vector2i(tile_size, tile_size)
@@ -130,6 +128,7 @@ static func add_autotile_atlas_source(
 	elif autotile_meta.has("tiles"):
 		autotile_list = [autotile_meta]
 
+	var rpg_tile_ids: Dictionary = {}
 	for at in autotile_list:
 		var t_set: int = at.get("terrain_set", 0)
 		var t_idx: int = -1
@@ -175,6 +174,8 @@ static func add_autotile_atlas_source(
 		for ti in tiles_arr:
 			var coords: Vector2i = ti["atlas_coords"]
 			source.create_tile(coords)
+			if at.has("rpg_tile_base"):
+				rpg_tile_ids[coords] = int(at["rpg_tile_base"]) + int(ti["shape_index"])
 
 			if anim_frames > 1:
 				source.set_tile_animation_columns(coords, anim_cols)
@@ -202,6 +203,7 @@ static func add_autotile_atlas_source(
 					if tileset.has_custom_data_layer_by_name(key):
 						tile_data.set_custom_data(key, ti_cdata[key])
 
+	source.set_meta("rpg_tile_ids", rpg_tile_ids)
 	return source
 
 
@@ -245,8 +247,6 @@ static func add_normal_atlas_source(
 
 	if tex == null:
 		var itex := ImageTexture.create_from_image(img)
-		if res_path != "":
-			itex.take_over_path(res_path)
 		tex = itex
 
 	var source := TileSetAtlasSource.new()

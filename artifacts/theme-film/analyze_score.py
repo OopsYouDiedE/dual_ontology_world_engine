@@ -1,6 +1,8 @@
-import xml.etree.ElementTree as E,json,csv,collections
+import xml.etree.ElementTree as E,json,csv,collections,zipfile
 from pathlib import Path
-p=Path('artifacts/theme-film'); root=E.parse('music/The Unfallen Duet v3.mscx').getroot().find('Score')
+p=Path('artifacts/theme-film')
+with zipfile.ZipFile('music/The Unfallen Duet.mscz') as z:
+    root=E.fromstring(z.read('The Unfallen Duet.mscx')).find('Score')
 names=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 def nn(x):return names[x%12]+str(x//12-1)
 rows=[]; details=[]

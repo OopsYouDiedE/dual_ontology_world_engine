@@ -191,6 +191,9 @@ func _test_full_conversion() -> bool:
 
 
 func _test_visual_verification() -> bool:
+	if DisplayServer.get_name() == "headless":
+		print("  SKIPPED: GPU screenshots require running without --headless.")
+		return true
 	print("\n[TEST 3] Generating visual verification renders...")
 	var ts_path := "res://imported_assets/test_victorian/tilesets/Victorian.tres"
 	var ts: TileSet = ResourceLoader.load(ts_path)
@@ -224,8 +227,8 @@ func _test_visual_verification() -> bool:
 	# single isolated tile
 	floor_cells.append(Vector2i(20, 3))
 
-	print("  Connecting floor terrain (TerrainSet 0, Terrain 0)...")
-	tile_layer.set_cells_terrain_connect(floor_cells, 0, 0, false)
+	print("  Connecting A2 floor terrain...")
+	tile_layer.set_cells_terrain_connect(floor_cells, 0, _terrain_index(ts, 0, "a2_floor_r2_c2"), false)
 
 	var wall_cells: Array[Vector2i] = []
 	# hollow box
@@ -243,17 +246,17 @@ func _test_visual_verification() -> bool:
 	# isolated single wall
 	wall_cells.append(Vector2i(16, 10))
 
-	print("  Connecting wall terrain (TerrainSet 1, Terrain 0)...")
-	if ts.get_terrain_sets_count() > 1 and ts.get_terrains_count(1) > 0:
-		tile_layer.set_cells_terrain_connect(wall_cells, 1, 0, false)
+	print("  Connecting A3 wall terrain...")
+	tile_layer.set_cells_terrain_connect(wall_cells, 1, _terrain_index(ts, 1, "a3_wall_r1_c0"), false)
 
 	for f in range(5):
 		await process_frame
 
 	var img := vp.get_texture().get_image()
-	if img != null:
-		var save_err := img.save_png("res://imported_assets/test_victorian/visual_verification_terrain.png")
-		print("  Saved visual_verification_terrain.png, error = %d" % save_err)
+	if img == null or img.save_png("res://imported_assets/test_victorian/visual_verification_terrain.png") != OK:
+		vp.queue_free()
+		return false
+	print("  Saved visual_verification_terrain.png")
 
 	tile_layer.queue_free()
 
@@ -262,14 +265,18 @@ func _test_visual_verification() -> bool:
 	vp.add_child(obj_root)
 
 	var door_scenes := [
-		"res://imported_assets/test_victorian/scenes/!$Victorian_V2_Doors_Small_A_block0_double.tscn",
-		"res://imported_assets/test_victorian/scenes/!$Victorian_V2_Doors_Small_A_block0_single.tscn",
-		"res://imported_assets/test_victorian/scenes/!$Victorian_V2_Doors_Large_A_block0_double.tscn",
-		"res://imported_assets/test_victorian/scenes/!$Victorian_V2_Doors_Large_A_block0_single.tscn",
+		"res://imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Small_Lit_r0_c0_double.tscn",
+		"res://imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Small_Lit_r0_c0_single.tscn",
+		"res://imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Large_Lit_r0_c0_double.tscn",
+		"res://imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Large_Lit_r0_c0_single.tscn",
 	]
 
 	var cur_x := 80
 	for d_path in door_scenes:
+		if not ResourceLoader.exists(d_path):
+			push_error("Missing door scene: %s" % d_path)
+			vp.queue_free()
+			return false
 		if ResourceLoader.exists(d_path):
 			var sc: PackedScene = ResourceLoader.load(d_path)
 			var inst_closed := sc.instantiate()
@@ -295,6 +302,10 @@ func _test_visual_verification() -> bool:
 	]
 	var chest_x := 80
 	for c_path in chest_scenes:
+		if not ResourceLoader.exists(c_path):
+			push_error("Missing chest scene: %s" % c_path)
+			vp.queue_free()
+			return false
 		if ResourceLoader.exists(c_path):
 			var sc: PackedScene = ResourceLoader.load(c_path)
 			var inst_c := sc.instantiate()
@@ -302,6 +313,10 @@ func _test_visual_verification() -> bool:
 			obj_root.add_child(inst_c)
 			var spr: AnimatedSprite2D = inst_c.get_node_or_null("AnimatedSprite2D")
 			if spr:
+				if c_path.contains("Left_Right") and spr.sprite_frames.get_frame_texture("closed", 0).get_size() != Vector2(48, 96):
+					push_error("Side-view chest must preserve its 48x96 frame.")
+					vp.queue_free()
+					return false
 				spr.play("closed")
 
 			var inst_o := sc.instantiate()
@@ -313,7 +328,11 @@ func _test_visual_verification() -> bool:
 
 			chest_x += 160
 
-	var f_path := "res://imported_assets/test_victorian/scenes/Victorian_Water_Animated_fountain_r0.tscn"
+	var f_path := "res://imported_assets/test_victorian/scenes/$fountainwater_fountain_r0.tscn"
+	if not ResourceLoader.exists(f_path):
+		push_error("Missing fountain scene: %s" % f_path)
+		vp.queue_free()
+		return false
 	if ResourceLoader.exists(f_path):
 		var f_sc: PackedScene = ResourceLoader.load(f_path)
 		var f_inst := f_sc.instantiate()
@@ -327,12 +346,20 @@ func _test_visual_verification() -> bool:
 		await process_frame
 
 	var obj_img := vp.get_texture().get_image()
-	if obj_img != null:
-		var err := obj_img.save_png("res://imported_assets/test_victorian/visual_verification_objects.png")
-		print("  Saved visual_verification_objects.png, error = %d" % err)
+	if obj_img == null or obj_img.save_png("res://imported_assets/test_victorian/visual_verification_objects.png") != OK:
+		vp.queue_free()
+		return false
+	print("  Saved visual_verification_objects.png")
 
 	obj_root.queue_free()
 	vp.queue_free()
 	print("  PASSED: Visual verification renders generated.")
 	return true
 
+
+func _terrain_index(tileset: TileSet, terrain_set: int, terrain_name: String) -> int:
+	for i in tileset.get_terrains_count(terrain_set):
+		if tileset.get_terrain_name(terrain_set, i) == terrain_name:
+			return i
+	assert(false, "Missing terrain: %s" % terrain_name)
+	return -1

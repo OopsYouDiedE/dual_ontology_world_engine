@@ -592,27 +592,28 @@ static func slice_chests(source: Variant, tile_size: int = 48, fps: float = DEFA
 	if source is String:
 		stem = source.get_file().get_basename()
 
-	var num_blocks := 1
-	var block_h := h
-	if h >= tile_size * 8:
-		num_blocks = h / (tile_size * 4)
-		block_h = tile_size * 4
+	# KR side-view chests are two tiles tall; all four states belong to one strip.
+	var side_view := stem.to_lower().replace("-", "_").contains("left_right")
+	var frame_tiles_y := 2 if side_view else 1
+	var frame_h := tile_size * frame_tiles_y
+	var block_h := frame_h * 4
+	var num_blocks := h / block_h
 
 	for b_idx in range(num_blocks):
 		var by := b_idx * block_h
 
 		# Front view (col 0: x=0, 1x1 tile, vertical 4 frames)
-		if not _is_region_empty(image, Rect2i(0, by, tile_size, tile_size * 4)):
-			var sf_front := extract_strip_frames(texture, Vector2i(0, by), 1, 1, "v", 4, tile_size, fps, true)
+		if not _is_region_empty(image, Rect2i(0, by, tile_size, block_h)):
+			var sf_front := extract_strip_frames(texture, Vector2i(0, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
 			result["objects"].append(sf_front)
-			var sc_front := create_interactive_object_scene(sf_front, "TreasureChest_Front", Vector2(tile_size, tile_size))
+			var sc_front := create_interactive_object_scene(sf_front, "TreasureChest_Front", Vector2(tile_size, frame_h))
 			result["scenes"].append({"name": "%s_b%d_front" % [stem, b_idx], "scene": sc_front, "frames": sf_front})
 
 		# Back view (col 1: x=tile_size, 1x1 tile, vertical 4 frames)
-		if not _is_region_empty(image, Rect2i(tile_size, by, tile_size, tile_size * 4)):
-			var sf_back := extract_strip_frames(texture, Vector2i(tile_size, by), 1, 1, "v", 4, tile_size, fps, true)
+		if not _is_region_empty(image, Rect2i(tile_size, by, tile_size, block_h)):
+			var sf_back := extract_strip_frames(texture, Vector2i(tile_size, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
 			result["objects"].append(sf_back)
-			var sc_back := create_interactive_object_scene(sf_back, "TreasureChest_Back", Vector2(tile_size, tile_size))
+			var sc_back := create_interactive_object_scene(sf_back, "TreasureChest_Back", Vector2(tile_size, frame_h))
 			result["scenes"].append({"name": "%s_b%d_back" % [stem, b_idx], "scene": sc_back, "frames": sf_back})
 
 	if not result["objects"].is_empty():

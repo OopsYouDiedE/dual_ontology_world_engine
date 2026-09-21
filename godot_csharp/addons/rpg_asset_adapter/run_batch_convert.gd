@@ -28,4 +28,4 @@ func _init() -> void:
 	if result.get("errors", []).size() > 0:
 		print("Errors: %s" % str(result["errors"]))
 	print("--- BATCH CONVERSION FINISHED ---")
-	quit(0)
+	quit(0 if result.get("success", false) else 1)

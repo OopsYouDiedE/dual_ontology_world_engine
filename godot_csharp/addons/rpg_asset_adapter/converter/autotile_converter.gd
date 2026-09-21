@@ -256,6 +256,7 @@ static func generate_a1_derived_atlas(a1_path_or_img: Variant, tile_size: int = 
 
 		autotiles.append({
 			"name": at_name,
+			"rpg_tile_base": 2048 + [0, 1, 8, 10, 4, 6, 12, 14, 2, 3][w_idx] * 48,
 			"terrain_set": 0,
 			"terrain_mode": TileSet.TERRAIN_MODE_MATCH_CORNERS_AND_SIDES,
 			"peering_type": "floor",
@@ -320,6 +321,7 @@ static func generate_a1_derived_atlas(a1_path_or_img: Variant, tile_size: int = 
 
 		autotiles.append({
 			"name": wf_name,
+			"rpg_tile_base": 2048 + [9, 11, 5, 7, 13, 15][wf_idx] * 48,
 			"terrain_set": 1,
 			"terrain_mode": TileSet.TERRAIN_MODE_MATCH_SIDES,
 			"peering_type": "waterfall",
@@ -393,6 +395,7 @@ static func generate_a2_derived_atlas(a2_path_or_img: Variant, tile_size: int = 
 
 			autotiles.append({
 				"name": "a2_floor_r%d_c%d" % [r, c],
+				"rpg_tile_base": 2816 + (r * 8 + c) * 48,
 				"terrain_set": 0,
 				"terrain_mode": TileSet.TERRAIN_MODE_MATCH_CORNERS_AND_SIDES,
 				"peering_type": "floor",
@@ -498,6 +501,7 @@ static func generate_a3_derived_atlas(a3_path_or_img: Variant, tile_size: int = 
 
 			autotiles.append({
 				"name": "a3_%s_r%d_c%d" % [rpg_type, r, c],
+				"rpg_tile_base": 4352 + (r * 8 + c) * 48,
 				"terrain_set": 1,
 				"terrain_mode": TileSet.TERRAIN_MODE_MATCH_SIDES,
 				"peering_type": "wall",
@@ -568,6 +572,7 @@ static func generate_a4_derived_atlas(a4_path_or_img: Variant, tile_size: int = 
 
 			autotiles.append({
 				"name": "a4_wall_top_p%d_c%d" % [p, c],
+				"rpg_tile_base": 5888 + (p * 16 + c) * 48,
 				"terrain_set": 0,
 				"terrain_mode": TileSet.TERRAIN_MODE_MATCH_CORNERS_AND_SIDES,
 				"peering_type": "floor",
@@ -605,6 +610,7 @@ static func generate_a4_derived_atlas(a4_path_or_img: Variant, tile_size: int = 
 
 			autotiles.append({
 				"name": "a4_wall_side_p%d_c%d" % [p, c],
+				"rpg_tile_base": 5888 + (p * 16 + 8 + c) * 48,
 				"terrain_set": 1,
 				"terrain_mode": TileSet.TERRAIN_MODE_MATCH_SIDES,
 				"peering_type": "wall",

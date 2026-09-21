@@ -1,0 +1,78 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/victorian/48px+MVMZ/$!Victorian_V2_Doors_XLarge_Dark.png" id="1_qgw2u"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_va0hs"]
+atlas = ExtResource("1_qgw2u")
+region = Rect2(0, 432, 144, 144)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_03hdu"]
+atlas = ExtResource("1_qgw2u")
+region = Rect2(0, 288, 144, 144)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s5hep"]
+atlas = ExtResource("1_qgw2u")
+region = Rect2(0, 144, 144, 144)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vwy0s"]
+atlas = ExtResource("1_qgw2u")
+region = Rect2(0, 0, 144, 144)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_va0hs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_03hdu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s5hep")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vwy0s")
+}],
+"loop": false,
+"name": &"close",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vwy0s")
+}],
+"loop": false,
+"name": &"closed",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vwy0s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s5hep")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_03hdu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_va0hs")
+}],
+"loop": false,
+"name": &"open",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_va0hs")
+}],
+"loop": false,
+"name": &"opened",
+"speed": 5.0
+}]
+metadata/frame_width = 144
+metadata/frame_height = 144
+metadata/x_tile = 3
+metadata/y_tile = 3
+metadata/orientation = "v"
+metadata/frames = 4

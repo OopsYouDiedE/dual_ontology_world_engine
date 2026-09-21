@@ -39,18 +39,18 @@ size = Vector2(144, 144)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oyy1y"]
 size = Vector2(144, 144)
 
-[node name="Fountain_r1" type="Node2D" unique_id=2138700289]
+[node name="Fountain_r1" type="Node2D" unique_id=1939531633]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=815979303]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=987314846]
 sprite_frames = SubResource("SpriteFrames_y2vuv")
 animation = &"loop"
 
-[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1664173380]
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=767235573]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=806063324]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=32717994]
 shape = SubResource("RectangleShape2D_4wicb")
 
-[node name="TriggerArea" type="Area2D" parent="." unique_id=217896798]
+[node name="TriggerArea" type="Area2D" parent="." unique_id=788579125]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=1116780331]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=976949099]
 shape = SubResource("RectangleShape2D_oyy1y")

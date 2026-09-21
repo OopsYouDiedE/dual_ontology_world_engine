@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/victorian/48px+MVMZ/$fountainwater.png" id="1_i5aen"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5rd6w"]
+atlas = ExtResource("1_i5aen")
+region = Rect2(0, 144, 144, 144)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3evgj"]
+atlas = ExtResource("1_i5aen")
+region = Rect2(144, 144, 144, 144)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g0rfr"]
+atlas = ExtResource("1_i5aen")
+region = Rect2(288, 144, 144, 144)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5ikd1"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5rd6w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3evgj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g0rfr")
+}],
+"loop": true,
+"name": &"loop",
+"speed": 6.0
+}]
+metadata/frame_width = 144
+metadata/frame_height = 144
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1jghh"]
+size = Vector2(144, 144)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q2vli"]
+size = Vector2(144, 144)
+
+[node name="Fountain_r1" type="Node2D" unique_id=1574865868]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1845568676]
+sprite_frames = SubResource("SpriteFrames_5ikd1")
+animation = &"loop"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1999496878]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1402764918]
+shape = SubResource("RectangleShape2D_1jghh")
+
+[node name="TriggerArea" type="Area2D" parent="." unique_id=1034419330]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=745839391]
+shape = SubResource("RectangleShape2D_q2vli")
