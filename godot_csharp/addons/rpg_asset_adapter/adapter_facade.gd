@@ -16,6 +16,37 @@ const TileSetConverterScript = preload("res://addons/rpg_asset_adapter/converter
 const CharacterConverterScript = preload("res://addons/rpg_asset_adapter/converter/character_converter.gd")
 const AnimationConverterScript = preload("res://addons/rpg_asset_adapter/converter/animation_converter.gd")
 const MetadataConverterScript = preload("res://addons/rpg_asset_adapter/converter/metadata_converter.gd")
+const RPGAdapterConfigScript = preload("res://addons/rpg_asset_adapter/rpg_adapter_config.gd")
+
+
+## Executes batch conversion using an RPGAdapterConfig resource (.tres).
+static func run_with_config(config: Resource) -> Dictionary:
+	if config == null:
+		push_error("AdapterFacade: Config is null.")
+		return {"success": false, "errors": ["Config is null"]}
+
+	var scanned := scan_directory(config.source_dir, AssetDetectorScript.DetectMode.AUTO, config.tile_size)
+	var filtered_assets := []
+	for info in scanned:
+		if config.ignore_non_rm:
+			if info.kind in [
+				AssetDetectorScript.AssetKind.KR_NON_RM_A1,
+				AssetDetectorScript.AssetKind.KR_NON_RM_A2,
+				AssetDetectorScript.AssetKind.KR_NON_RM_A3,
+				AssetDetectorScript.AssetKind.KR_NON_RM_A4
+			]:
+				continue
+		filtered_assets.append(info)
+
+	var options := {
+		"output_dir": config.output_dir,
+		"theme_name": config.theme_name,
+		"tile_size": config.tile_size,
+		"fps": config.fps,
+		"apply_metadata": config.apply_metadata,
+		"ignore_non_rm": config.ignore_non_rm
+	}
+	return convert_assets(filtered_assets, options)
 
 
 ## Scans a directory and returns an Array[AssetInfo] representing detected assets.
@@ -93,11 +124,12 @@ static func select_profile_for_assets(assets: Array) -> BaseProfileScript:
 ##   "apply_metadata": true
 ## }
 static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionary:
-	var output_dir: String = options.get("output_dir", "res://ShareAsset/victorian")
+	var output_dir: String = options.get("output_dir", "res://ShareAsset/Victorian")
 	var theme_name: String = options.get("theme_name", "Theme")
 	var tile_size_opt: int = options.get("tile_size", 0)
 	var fps: float = options.get("fps", 6.0)
 	var apply_meta: bool = options.get("apply_metadata", true)
+	var ignore_non_rm: bool = options.get("ignore_non_rm", false)
 
 	var profile: BaseProfileScript = options.get("profile", null)
 	if profile == null:
@@ -107,21 +139,21 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 	var global_output := ProjectSettings.globalize_path(output_dir) if output_dir.begins_with("res://") else output_dir
 	var atlases_dir := global_output.path_join("atlases")
 	var tilesets_dir := global_output.path_join("tilesets")
-	var scenes_dir := global_output.path_join("scenes")
 	var anims_dir := global_output.path_join("animations")
 	var chars_dir := global_output.path_join("characters")
+	var scenes_dir := global_output.path_join("scenes")
 
 	DirAccess.make_dir_recursive_absolute(atlases_dir)
 	DirAccess.make_dir_recursive_absolute(tilesets_dir)
-	DirAccess.make_dir_recursive_absolute(scenes_dir)
 	DirAccess.make_dir_recursive_absolute(anims_dir)
 	DirAccess.make_dir_recursive_absolute(chars_dir)
+	DirAccess.make_dir_recursive_absolute(scenes_dir)
 
 	var res_atlases_dir := output_dir.path_join("atlases")
 	var res_tilesets_dir := output_dir.path_join("tilesets")
-	var res_scenes_dir := output_dir.path_join("scenes")
 	var res_anims_dir := output_dir.path_join("animations")
 	var res_chars_dir := output_dir.path_join("characters")
+	var res_scenes_dir := output_dir.path_join("scenes")
 
 	var result := {
 		"success": true,
@@ -155,6 +187,14 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 		if info.warning != "":
 			result["warnings"].append(info.warning)
 
+		if ignore_non_rm and info.kind in [
+			AssetDetectorScript.AssetKind.KR_NON_RM_A1,
+			AssetDetectorScript.AssetKind.KR_NON_RM_A2,
+			AssetDetectorScript.AssetKind.KR_NON_RM_A3,
+			AssetDetectorScript.AssetKind.KR_NON_RM_A4
+		]:
+			continue
+
 		match info.kind:
 			AssetDetectorScript.AssetKind.RPG_A1, \
 			AssetDetectorScript.AssetKind.RPG_A2, \
@@ -178,6 +218,7 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 			AssetDetectorScript.AssetKind.RPG_CHARACTER_SHEET:
 				character_assets.append(info)
 
+			AssetDetectorScript.AssetKind.TAGGED_ANIMATION, \
 			AssetDetectorScript.AssetKind.DOOR, \
 			AssetDetectorScript.AssetKind.TREASURE_CHEST, \
 			AssetDetectorScript.AssetKind.RPG_OBJECT_SINGLE, \
@@ -210,15 +251,6 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 
 			var d_img: Image = derived.get("image", null)
 			if d_img != null:
-				var derived_png_name := "%s_derived.png" % stem
-				var derived_png_path := atlases_dir.path_join(derived_png_name)
-				var derived_res_path := res_atlases_dir.path_join(derived_png_name)
-				var err := d_img.save_png(derived_png_path)
-				if err == OK:
-					result["generated_atlases"].append(derived_res_path)
-				else:
-					result["errors"].append("Failed to save derived atlas PNG: %s" % derived_png_path)
-
 				var src := TileSetConverterScript.add_autotile_atlas_source(
 					tileset,
 					d_img,
@@ -226,24 +258,25 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 					primary_tile_size
 				)
 				if src != null:
-					# Native texture resources reload immediately, without an editor PNG import pass.
-					var texture_path := res_atlases_dir.path_join("%s_derived.res" % stem)
-					var texture_err := ResourceSaver.save(src.texture, texture_path, ResourceSaver.FLAG_COMPRESS)
+					# Save reconstructed atlas texture as compressed native binary resource (.res) to prevent massive plain-text .tres crash
+					var texture_res_name := "%s_derived.res" % stem
+					var texture_res_path := res_atlases_dir.path_join(texture_res_name)
+					var texture_err := ResourceSaver.save(src.texture, texture_res_path, ResourceSaver.FLAG_COMPRESS)
 					if texture_err == OK:
-						src.texture.take_over_path(texture_path)
+						src.texture.take_over_path(texture_res_path)
+						result["generated_atlases"].append(texture_res_path)
 					else:
-						result["errors"].append("Failed to save atlas texture: %s (%d)" % [texture_path, texture_err])
+						result["errors"].append("Failed to save atlas texture: %s (%d)" % [texture_res_path, texture_err])
 					src.set_meta("source_filename", info.path.get_file().get_basename())
 					src.set_meta("asset_kind", info.kind)
 					src.set_meta("slot_index", MetadataConverterScript.get_slot_for_asset_kind(info.kind))
 			else:
 				result["errors"].append("Could not reconstruct autotile: %s" % info.path)
 
-		# Process Normal Tileset Assets (A5, B..E, KR F, etc.)
+		# Process Normal Tileset Assets (A5, B..E, KR F, etc.) - directly referencing source image
 		for info: AssetDetectorScript.AssetInfo in normal_tileset_assets:
 			var normal_res_path: String = info.path
 			if not normal_res_path.begins_with("res://"):
-				# Try to localize
 				var local_p := ProjectSettings.localize_path(normal_res_path)
 				if local_p != "":
 					normal_res_path = local_p
@@ -292,7 +325,7 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				else:
 					result["warnings"].append("No matching Tilesets.json entry; metadata was skipped.")
 
-		# Save TileSet resource
+		# Save TileSet resource as .tres
 		var ts_res_path := res_tilesets_dir.path_join("%s.tres" % theme_name)
 		var ts_global_path := tilesets_dir.path_join("%s.tres" % theme_name)
 		var save_err := ResourceSaver.save(tileset, ts_res_path)
@@ -353,24 +386,25 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 			else:
 				result["errors"].append("Failed to save object frames: %s" % sf_path)
 
-		var packed_scene: PackedScene = obj_data.get("packed_scene", null)
-		if packed_scene != null:
-			var scene_path := res_scenes_dir.path_join("%s.tscn" % stem)
-			if ResourceSaver.save(packed_scene, scene_path) == OK:
-				result["generated_scenes"].append(scene_path)
-			else:
-				result["errors"].append("Failed to save object scene: %s" % scene_path)
-
-		var extra_scenes: Array = obj_data.get("scenes", [])
-		for sc_dict in extra_scenes:
-			var sc_name: String = sc_dict.get("name", "")
-			var sc_res: PackedScene = sc_dict.get("scene", null)
-			if sc_res != null and sc_name != "":
+		var scenes_list: Array = obj_data.get("scenes", [])
+		for sc_item: Dictionary in scenes_list:
+			var sc_name: String = sc_item.get("name", "")
+			var sc_packed: PackedScene = sc_item.get("scene", null)
+			if sc_packed != null and sc_name != "":
 				var sc_path := res_scenes_dir.path_join("%s.tscn" % sc_name)
-				if ResourceSaver.save(sc_res, sc_path) == OK:
+				if ResourceSaver.save(sc_packed, sc_path) == OK:
 					result["generated_scenes"].append(sc_path)
 				else:
-					result["errors"].append("Failed to save object scene: %s" % sc_path)
+					result["errors"].append("Failed to save scene: %s" % sc_path)
+
+		if scenes_list.is_empty():
+			var default_scene: PackedScene = obj_data.get("packed_scene", null)
+			if default_scene != null:
+				var sc_path := res_scenes_dir.path_join("%s.tscn" % stem)
+				if ResourceSaver.save(default_scene, sc_path) == OK:
+					result["generated_scenes"].append(sc_path)
+				else:
+					result["errors"].append("Failed to save scene: %s" % sc_path)
 
 	result["success"] = result["errors"].is_empty()
 	return result

@@ -12,8 +12,8 @@ func _init() -> void:
 	var out_dir := ProjectSettings.globalize_path("res://imported_assets/test_victorian")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 
-	var base := "res://ShareAsset/victorian/48px+MVMZ"
-	var tile_size := 48
+	var base := "res://ShareAsset/Victorian/source"
+	var tile_size := 32
 
 	var tileset := TileSetConverterScript.create_tileset(tile_size)
 

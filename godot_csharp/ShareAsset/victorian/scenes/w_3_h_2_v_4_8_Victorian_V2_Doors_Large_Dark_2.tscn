@@ -1,0 +1,134 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Victorian/source/w_3_h_2_v_4_8_Victorian_V2_Doors_Large_Dark.png" id="1_i2ea4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hgpul"]
+atlas = ExtResource("1_i2ea4")
+region = Rect2(192, 192, 96, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r41y3"]
+atlas = ExtResource("1_i2ea4")
+region = Rect2(192, 128, 96, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k2eod"]
+atlas = ExtResource("1_i2ea4")
+region = Rect2(192, 64, 96, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5ie46"]
+atlas = ExtResource("1_i2ea4")
+region = Rect2(192, 0, 96, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_qo340"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hgpul")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r41y3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k2eod")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ie46")
+}],
+"loop": false,
+"name": &"close",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ie46")
+}],
+"loop": false,
+"name": &"closed",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hgpul")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r41y3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k2eod")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ie46")
+}],
+"loop": false,
+"name": &"closing",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ie46")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k2eod")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r41y3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hgpul")
+}],
+"loop": false,
+"name": &"open",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hgpul")
+}],
+"loop": false,
+"name": &"opened",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ie46")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k2eod")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r41y3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hgpul")
+}],
+"loop": false,
+"name": &"opening",
+"speed": 6.0
+}]
+metadata/frame_width = 96
+metadata/frame_height = 64
+metadata/x_tile = 3
+metadata/y_tile = 2
+metadata/orientation = "v"
+metadata/frames = 4
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dachb"]
+size = Vector2(96, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ngjxu"]
+size = Vector2(96, 64)
+
+[node name="Victorian_V2_Doors_Large_Dark_2" type="Node2D" unique_id=233998086]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=316891056]
+sprite_frames = SubResource("SpriteFrames_qo340")
+animation = &"closed"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1427204743]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1795237881]
+shape = SubResource("RectangleShape2D_dachb")
+
+[node name="TriggerArea" type="Area2D" parent="." unique_id=871122939]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea" unique_id=1309433573]
+shape = SubResource("RectangleShape2D_ngjxu")

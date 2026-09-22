@@ -1,9 +1,9 @@
 extends SceneTree
 
 const Converter = preload("res://addons/rpg_asset_adapter/converter/autotile_converter.gd")
-const OUT := "res://ShareAsset/rpg2d/tilesets/academy_terrain_v1/"
-const ORIGINAL := "res://ShareAsset/victorian/48px+MVMZ/"
-const BASE := "res://ShareAsset/rpg2d/tilesets/academy_v1/Academy48.tres"
+const OUT := "res://ShareAsset/TileMap/Academy/"
+const ORIGINAL := "res://ShareAsset/Victorian/source/"
+const BASE := "res://ShareAsset/TileMap/Academy/Academy48.tres"
 const SCENES := "res://scenes/AcademyTerrain/"
 const REPORT := "res://../artifacts/academy-terrain-validation/"
 var report: Array[String] = []

@@ -49,7 +49,8 @@ enum AssetKind {
 	TREASURE_CHEST,
 	KR_F_EXTENSION,
 	GENERIC_ANIMATION,
-	RPG_TILESET_METADATA
+	RPG_TILESET_METADATA,
+	TAGGED_ANIMATION
 }
 
 
@@ -90,13 +91,33 @@ static func detect_asset(
 	var kind := AssetKind.UNKNOWN
 	var extra: Dictionary = {}
 
+	# 0. Tagged slice specification from start: ^w_(\d+)_h_(\d+)_([vh])_(\d+)_(\d+)
+	var tag_match := RegexRulesScript.regex_search(RegexRulesScript.REGEX_SLICE_TAG, stem)
+	if tag_match != null:
+		kind = AssetKind.TAGGED_ANIMATION
+		var w_tile := int(tag_match.get_string(1))
+		var h_tile := int(tag_match.get_string(2))
+		var orientation := tag_match.get_string(3).to_lower()
+		var frames := int(tag_match.get_string(4))
+		var count := int(tag_match.get_string(5))
+		var sub_name := tag_match.get_string(6) if tag_match.get_group_count() >= 6 else ""
+		extra["slice_tag"] = {
+			"w_tile": w_tile,
+			"h_tile": h_tile,
+			"orientation": orientation,
+			"frames": frames,
+			"count": count,
+			"name": sub_name
+		}
+		extra["is_single"] = (count == 1)
+
 	# 1. Tilesets metadata JSON
-	if file_name.to_lower() == "tilesets.json":
+	elif file_name.to_lower() == "tilesets.json":
 		kind = AssetKind.RPG_TILESET_METADATA
 		return AssetInfo.new(kind, path, DEFAULT_TILE_SIZE, extra, "")
 
 	# 2. Object or character with both ! and $ prefixes (!$, $!)
-	if stem.begins_with("!$") or stem.begins_with("$!"):
+	elif stem.begins_with("!$") or stem.begins_with("$!"):
 		var after_prefix := stem.substr(2)
 		var is_multi := not after_prefix.begins_with("single") and (
 			RegexRulesScript.regex_search(RegexRulesScript.REGEX_DOOR, stem) != null and (
@@ -243,7 +264,75 @@ static func detect_asset(
 	var tile_size: int = size_info["size"]
 	var warning: String = size_info["warning"]
 
+	# Enforce unified rule validation within the same image
+	var consistency_warn := validate_asset_consistency(path, kind, tile_size)
+	if consistency_warn != "":
+		warning = (warning + "; " + consistency_warn).strip_edges().trim_prefix("; ")
+
 	return AssetInfo.new(kind, path, tile_size, extra, warning)
+
+
+## Enforces unified rule validation within the same image.
+## Ensures image dimensions strictly adhere to the identified rule without mixed slicing.
+static func validate_asset_consistency(path: String, kind: AssetKind, tile_size: int) -> String:
+	if kind in [AssetKind.UNKNOWN, AssetKind.RPG_TILESET_METADATA]:
+		return ""
+
+	var global_path := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
+	if not FileAccess.file_exists(global_path):
+		return ""
+
+	var img := Image.load_from_file(global_path)
+	if img == null:
+		return "Failed to load image for consistency check: %s" % path.get_file()
+
+	var w := img.get_width()
+	var h := img.get_height()
+
+	# 1. Tile grid divisibility check
+	if tile_size > 0:
+		if w % tile_size != 0 or h % tile_size != 0:
+			return "Image %s (%dx%d) does not align with tile_size %d" % [path.get_file(), w, h, tile_size]
+
+	var cols := w / tile_size if tile_size > 0 else 0
+	var rows := h / tile_size if tile_size > 0 else 0
+
+	# 2. Strict grid ratios for standard tileset sheets
+	match kind:
+		AssetKind.RPG_A1, AssetKind.RPG_A2:
+			if cols != 16 or rows != 12:
+				return "A1/A2 expects 16x12 tiles, got %dx%d" % [cols, rows]
+		AssetKind.RPG_A3:
+			if cols != 16 or rows != 8:
+				return "A3 expects 16x8 tiles, got %dx%d" % [cols, rows]
+		AssetKind.RPG_A4:
+			if cols != 16 or rows != 15:
+				return "A4 expects 16x15 tiles, got %dx%d" % [cols, rows]
+		AssetKind.RPG_A5:
+			if cols != 8 or rows != 16:
+				return "A5 expects 8x16 tiles, got %dx%d" % [cols, rows]
+		AssetKind.RPG_B, AssetKind.RPG_C, AssetKind.RPG_D, AssetKind.RPG_E, AssetKind.KR_F_EXTENSION:
+			if cols != 16 or rows != 16:
+				return "B-F tileset expects 16x16 tiles, got %dx%d" % [cols, rows]
+
+		# 3. Animation and character rules: must divide by 3 columns and 4 rows
+		AssetKind.RPG_CHARACTER_SINGLE, AssetKind.RPG_OBJECT_SINGLE, AssetKind.DOOR, AssetKind.TREASURE_CHEST, AssetKind.GENERIC_ANIMATION:
+			if cols % 3 != 0:
+				return "Animation sheet %s columns (%d) must be multiple of 3" % [path.get_file(), cols]
+			if rows % 4 != 0:
+				return "Animation sheet %s rows (%d) must be multiple of 4" % [path.get_file(), rows]
+
+		AssetKind.TAGGED_ANIMATION:
+			var tag_m := RegexRulesScript.regex_search(RegexRulesScript.REGEX_SLICE_TAG, path.get_file().get_basename())
+			if tag_m != null:
+				var wt := int(tag_m.get_string(1))
+				var ht := int(tag_m.get_string(2))
+				if tile_size > 0 and (wt > 0 and w % (wt * tile_size) != 0):
+					return "Tagged animation width %d not divisible by frame width %d" % [w, wt * tile_size]
+				if tile_size > 0 and (ht > 0 and h % (ht * tile_size) != 0):
+					return "Tagged animation height %d not divisible by frame height %d" % [h, ht * tile_size]
+
+	return ""
 
 
 ## Resolves tile size following the priority:
@@ -261,6 +350,33 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 	# 2. Filename check
 	var file_name := path.get_file()
 	var stem := file_name.get_basename()
+
+	# Tagged animation derives tile size mathematically
+	if kind == AssetKind.TAGGED_ANIMATION:
+		var tag_m := RegexRulesScript.regex_search(RegexRulesScript.REGEX_SLICE_TAG, stem)
+		if tag_m != null:
+			var wt := int(tag_m.get_string(1))
+			var ht := int(tag_m.get_string(2))
+			var ori := tag_m.get_string(3).to_lower()
+			var frm := int(tag_m.get_string(4))
+			var cnt := int(tag_m.get_string(5))
+			var global_p := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
+			if FileAccess.file_exists(global_p):
+				var img := Image.load_from_file(global_p)
+				if img != null:
+					var ih := img.get_height()
+					var iw := img.get_width()
+					var ts := 0
+					for cand in [32, 48, 16, 64]:
+						var sw: int = (wt * cand) if ori == "v" else (wt * cand * frm)
+						var sh: int = (ht * cand * frm) if ori == "v" else (ht * cand)
+						if sw > 0 and sh > 0 and iw % sw == 0 and ih % sh == 0:
+							ts = cand
+							break
+					if ts > 0:
+						return {"size": ts, "warning": ""}
+					elif ht * frm > 0:
+						return {"size": ih / (ht * frm), "warning": ""}
 
 	var match_wxh := RegexRulesScript.regex_search(RegexRulesScript.REGEX_SIZE_WXH, stem)
 	if match_wxh:

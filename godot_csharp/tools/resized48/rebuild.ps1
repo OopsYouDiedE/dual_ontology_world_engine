@@ -2,7 +2,7 @@ param([Parameter(Mandatory=$true)][string]$Godot)
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $logRoot = Join-Path $projectRoot '../artifacts/resized48-shots'
 New-Item -ItemType Directory -Force $logRoot | Out-Null
-foreach ($script in @('layout_shot01','layout_shot02','bake_shots')) {
+foreach ($script in @('layout_shot01','layout_shot02')) {
     $log = Join-Path $logRoot ($script + '.log')
     $arguments = @('--path', $projectRoot, '--rendering-method', 'gl_compatibility', '--log-file', $log, '--script', "res://tools/resized48/$script.gd", '--quit-after', '240')
     $process = Start-Process -FilePath $Godot -ArgumentList $arguments -WindowStyle Hidden -PassThru

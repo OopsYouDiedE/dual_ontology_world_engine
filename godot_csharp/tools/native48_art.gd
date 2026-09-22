@@ -1,7 +1,7 @@
 extends RefCounted
 ## Raster drawing directly at the final pixel coordinates. No resampling.
-const ROOT := "res://ShareAsset/victorian/48px+MVMZ/"
-const OUT := "res://ShareAsset/rpg2d/native48/"
+const ROOT := "res://ShareAsset/Victorian/source/"
+const OUT := "res://ShareAsset/Images/native48/"
 var canvas: Image
 var objects: Dictionary = {}
 var palette := {"ink": Color("29251f"), "wood": Color("59402c"), "brass": Color("a38b54"), "light": Color("c6b17a"), "stone": Color("817b6c")}

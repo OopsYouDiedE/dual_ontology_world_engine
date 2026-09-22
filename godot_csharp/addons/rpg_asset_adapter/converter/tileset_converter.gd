@@ -227,16 +227,17 @@ static func add_normal_atlas_source(
 	var tex: Texture2D = null
 	var img: Image = null
 
-	if img_or_tex is Texture2D:
+	if img_or_tex is Image:
+		img = img_or_tex
+		if res_path != "" and ResourceLoader.exists(res_path):
+			tex = ResourceLoader.load(res_path)
+	elif img_or_tex is Texture2D:
 		tex = img_or_tex
 		img = tex.get_image()
 	elif res_path != "" and ResourceLoader.exists(res_path):
 		tex = ResourceLoader.load(res_path)
 		if tex != null:
 			img = tex.get_image()
-
-	if img == null and img_or_tex is Image:
-		img = img_or_tex
 
 	if img == null:
 		return null

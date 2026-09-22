@@ -15,7 +15,7 @@
 
 ## 使用
 
-项目已经启用插件。在底部面板选择 `res://ShareAsset/victorian/48px+MVMZ`，先扫描，再转换。48px 素材使用48px格子。默认输出目录为 `res://ShareAsset/victorian`，其中 `tilesets/Victorian.tres` 是地图使用的 TileSet，`atlases/` 保存重组图集。
+项目已经启用插件。在底部面板选择 `res://ShareAsset/Victorian/source`，先扫描，再转换。48px 素材使用48px格子。默认输出目录为 `res://ShareAsset/Victorian`，其中 `tilesets/Victorian.tres` 是地图使用的 TileSet，`atlases/` 保存重组图集。
 
 命令行在仓库根目录执行，`godot` 替换为本机 Godot 4.6 Mono 可执行文件：
 

@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Build an editable map from the adapter's saved TileSet, then reload it for verification.
-const TILESET_PATH := "res://ShareAsset/victorian/tilesets/Victorian.tres"
+const TILESET_PATH := "res://ShareAsset/Victorian/tilesets/Victorian.tres"
 const MAP_PATH := "res://scenes/Parlor/Parlor.tscn"
 const OUTPUT := "res://../artifacts/parlor-validation"
 var tileset: TileSet
@@ -20,12 +20,16 @@ func build() -> void:
 		var id := tileset.get_source_id(i)
 		var source := tileset.get_source(id) as TileSetAtlasSource
 		if source:
-			sources[source.texture.resource_path.get_file().get_basename()] = id
+			var sname: String = source.get_meta("source_filename", "")
+			if sname == "" and source.texture != null:
+				sname = source.texture.resource_path.get_file().get_basename()
+			if sname != "":
+				sources[sname] = id
 	room = Node2D.new()
 	room.name = "Parlor"
 	room.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	room.set_meta("reference", "artifacts/theme-film/scenes/shot-03.png")
-	room.set_meta("description", "公共娱乐室：壁炉、中央会客区、左下钢琴、两侧茶桌；48px 图块")
+	room.set_meta("description", "公共娱乐室：壁炉、中央会客区、左下钢琴、两侧茶桌；32px 图块")
 	var floor_layer := layer("Floor")
 	floor_layer.modulate = Color(0.59, 0.54, 0.47)
 	var floor_cells := cells(Rect2i(1, 3, 18, 8))
@@ -50,8 +54,8 @@ func build() -> void:
 	paint(rugs, cells(Rect2i(9, 10, 2, 3)), 0, "a2_floor_r2_c2")
 	var furnishings := layer("Furniture")
 	var objects := layer("TabletopObjects")
-	objects.position.y = -12
-	# Atlas rectangles stay on the original 48px grid. Multi-cell objects remain editable.
+	objects.position.y = -8
+	# Atlas rectangles stay on the original 32px grid. Multi-cell objects remain editable.
 	stamp(furnishings, "B", Rect2i(8, 0, 3, 2), Vector2i(8, 1)) # fireplace
 	stamp(furnishings, "C", Rect2i(8, 8, 1, 1), Vector2i(9, 0)) # picture
 	stamp(furnishings, "C", Rect2i(10, 0, 1, 2), Vector2i(17, 1)) # clock
@@ -79,7 +83,7 @@ func build() -> void:
 		stamp(furnishings, "C", Rect2i(8, 2, 1, 2), Vector2i(x, 9))
 	var camera := Camera2D.new()
 	camera.name = "Camera2D"
-	camera.position = Vector2(480, 312)
+	camera.position = Vector2(320, 192)
 	camera.zoom = Vector2.ONE
 	room.add_child(camera)
 	camera.owner = room

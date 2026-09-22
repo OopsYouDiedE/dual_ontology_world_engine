@@ -2,22 +2,21 @@
 extends SceneTree
 
 const AdapterFacadeScript = preload("res://addons/rpg_asset_adapter/adapter_facade.gd")
+const RPGAdapterConfigScript = preload("res://addons/rpg_asset_adapter/rpg_adapter_config.gd")
 
 func _init() -> void:
-	print("--- STARTING BATCH CONVERSION TO ShareAsset/victorian ---")
-	var scan_dir := "res://ShareAsset/victorian/48px+MVMZ"
-	var assets := AdapterFacadeScript.scan_directory(scan_dir)
-	print("Scanned %d assets." % assets.size())
+	print("--- STARTING BATCH CONVERSION WITH .TRES CONFIG ---")
+	var config_path := "res://ShareAsset/Victorian/victorian_config.tres"
+	var config: Resource = null
+	if ResourceLoader.exists(config_path):
+		config = ResourceLoader.load(config_path)
 
-	var options := {
-		"output_dir": "res://ShareAsset/victorian",
-		"theme_name": "Victorian",
-		"tile_size": 48,
-		"fps": 6.0,
-		"apply_metadata": true
-	}
+	if config == null:
+		config = RPGAdapterConfigScript.new()
 
-	var result := AdapterFacadeScript.convert_assets(assets, options)
+	print("Using Config: source=%s, output=%s, size=%d" % [config.get("source_dir"), config.get("output_dir"), config.get("tile_size")])
+	var result: Dictionary = AdapterFacadeScript.run_with_config(config)
+
 	print("Conversion Success: %s" % str(result.get("success", false)))
 	print("Generated TileSet: %s" % str(result.get("tileset_path", "")))
 	print("Generated Atlases: %d" % result.get("generated_atlases", []).size())

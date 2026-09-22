@@ -37,11 +37,11 @@ func _init() -> void:
 
 func _test_derived_atlases(out_dir: String) -> bool:
 	print("\n[TEST 1] Generating derived autotile atlases...")
-	var base := "res://ShareAsset/victorian/48px+MVMZ"
+	var base := "res://ShareAsset/Victorian/source"
 
 	# A1
 	var a1_path := base + "/Victorian_Inside_A1.png"
-	var a1_res := AutotileConverterScript.generate_a1_derived_atlas(a1_path, 48)
+	var a1_res := AutotileConverterScript.generate_a1_derived_atlas(a1_path, 32)
 	var a1_img: Image = a1_res.get("image", null)
 	if a1_img != null:
 		a1_img.save_png(out_dir.path_join("a1_derived.png"))
@@ -52,7 +52,7 @@ func _test_derived_atlases(out_dir: String) -> bool:
 
 	# A2
 	var a2_path := base + "/Victorian_Inside_A2.png"
-	var a2_res := AutotileConverterScript.generate_a2_derived_atlas(a2_path, 48)
+	var a2_res := AutotileConverterScript.generate_a2_derived_atlas(a2_path, 32)
 	var a2_img: Image = a2_res.get("image", null)
 	if a2_img != null:
 		a2_img.save_png(out_dir.path_join("a2_derived.png"))
@@ -63,7 +63,7 @@ func _test_derived_atlases(out_dir: String) -> bool:
 
 	# A3
 	var a3_path := base + "/Victorian_Inside_A3.png"
-	var a3_res := AutotileConverterScript.generate_a3_derived_atlas(a3_path, 48)
+	var a3_res := AutotileConverterScript.generate_a3_derived_atlas(a3_path, 32)
 	var a3_img: Image = a3_res.get("image", null)
 	if a3_img != null:
 		a3_img.save_png(out_dir.path_join("a3_derived.png"))
@@ -74,7 +74,7 @@ func _test_derived_atlases(out_dir: String) -> bool:
 
 	# A4
 	var a4_path := base + "/Victorian_Inside_A4.png"
-	var a4_res := AutotileConverterScript.generate_a4_derived_atlas(a4_path, 48)
+	var a4_res := AutotileConverterScript.generate_a4_derived_atlas(a4_path, 32)
 	var a4_img: Image = a4_res.get("image", null)
 	if a4_img != null:
 		a4_img.save_png(out_dir.path_join("a4_derived.png"))
@@ -93,7 +93,7 @@ func _test_door_chest_slicing(out_dir: String) -> bool:
 	# Find a door sheet
 	var door_files: Array[String] = []
 	var chest_files: Array[String] = []
-	var scan_dir := ProjectSettings.globalize_path("res://ShareAsset/victorian/48px+MVMZ")
+	var scan_dir := ProjectSettings.globalize_path("res://ShareAsset/Victorian/source")
 	var dir := DirAccess.open(scan_dir)
 	if dir:
 		dir.list_dir_begin()
@@ -109,7 +109,7 @@ func _test_door_chest_slicing(out_dir: String) -> bool:
 		dir.list_dir_end()
 
 	if door_files.size() > 0:
-		var d_res := AnimationConverterScript.slice_doors(door_files[0], 48, 6.0)
+		var d_res := AnimationConverterScript.slice_doors(door_files[0], 32, 6.0)
 		var d_objs: Array = d_res.get("objects", [])
 		print("  Door %s: %d objects extracted" % [door_files[0].get_file(), d_objs.size()])
 		if d_objs.size() == 0:
@@ -129,7 +129,7 @@ func _test_door_chest_slicing(out_dir: String) -> bool:
 		print("  SKIP: No door files found")
 
 	if chest_files.size() > 0:
-		var c_res := AnimationConverterScript.slice_chests(chest_files[0], 48, 6.0)
+		var c_res := AnimationConverterScript.slice_chests(chest_files[0], 32, 6.0)
 		var c_objs: Array = c_res.get("objects", [])
 		print("  Chest %s: %d objects extracted" % [chest_files[0].get_file(), c_objs.size()])
 		if c_objs.size() == 0:
@@ -149,9 +149,14 @@ func _test_door_chest_slicing(out_dir: String) -> bool:
 
 
 func _test_terrain_connect(out_dir: String) -> bool:
+	if DisplayServer.get_name() == "headless":
+		print("\n[TEST 3] Terrain connect visual test...")
+		print("  SKIPPED: Viewport capture requires non-headless renderer.")
+		return true
+
 	print("\n[TEST 3] Terrain connect visual test...")
-	var base := "res://ShareAsset/victorian/48px+MVMZ"
-	var tile_size := 48
+	var base := "res://ShareAsset/Victorian/source"
+	var tile_size := 32
 
 	# Build TileSet in-memory (no save/reload)
 	var tileset := TileSetConverterScript.create_tileset(tile_size)

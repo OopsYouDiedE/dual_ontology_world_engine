@@ -1,6 +1,6 @@
 extends SceneTree
 
-const OUT := "res://ShareAsset/rpg2d/resized48_detail/"
+const OUT := "res://ShareAsset/Images/resized48_detail/"
 const PREVIEW := "res://../artifacts/resized48-detail/"
 
 func _initialize() -> void:
@@ -9,7 +9,7 @@ func _initialize() -> void:
 func build() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(PREVIEW))
-	var original:=Image.load_from_file("res://ShareAsset/rpg2d/shot02/source/kitchen_generated.png")
+	var original:=Image.load_from_file("res://ShareAsset/Images/shot02/source/kitchen_generated.png")
 	var atlas:=Image.create(768,576,false,Image.FORMAT_RGBA8)
 	atlas.fill(Color.TRANSPARENT)
 	var specs:=[

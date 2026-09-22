@@ -35,8 +35,8 @@ func _init() -> void:
 
 
 func _test_scanning() -> bool:
-	print("\n[TEST 1] Scanning Victorian 48px assets folder...")
-	var test_dir := "res://ShareAsset/victorian/48px+MVMZ"
+	print("\n[TEST 1] Scanning Victorian 32px assets folder...")
+	var test_dir := "res://ShareAsset/Victorian/source"
 	var assets := AdapterFacadeScript.scan_directory(test_dir)
 
 	print("  Scanned asset count: %d" % assets.size())
@@ -63,24 +63,24 @@ func _test_scanning() -> bool:
 	# Verify tile size inference
 	for info in assets:
 		if info.kind in [AssetDetectorScript.AssetKind.RPG_A1, AssetDetectorScript.AssetKind.RPG_A2]:
-			if info.tile_size != 48:
-				push_error("FAIL: Expected tile size 48 for %s, got %d" % [info.path, info.tile_size])
+			if info.tile_size != 32:
+				push_error("FAIL: Expected tile size 32 for %s, got %d" % [info.path, info.tile_size])
 				return false
 
-	print("  PASSED: Scanning recognized all standard asset categories with correct 48px tile size.")
+	print("  PASSED: Scanning recognized all standard asset categories with correct 32px tile size.")
 	return true
 
 
 func _test_full_conversion() -> bool:
 	print("\n[TEST 2] Performing full batch conversion on Victorian assets...")
-	var test_dir := "res://ShareAsset/victorian/48px+MVMZ"
+	var test_dir := "res://ShareAsset/Victorian/source"
 	var assets := AdapterFacadeScript.scan_directory(test_dir)
 
 	var output_dir := "res://imported_assets/test_victorian"
 	var options := {
 		"output_dir": output_dir,
 		"theme_name": "Victorian",
-		"tile_size": 48,
+		"tile_size": 32,
 		"fps": 6.0,
 		"apply_metadata": true
 	}
@@ -104,8 +104,8 @@ func _test_full_conversion() -> bool:
 		push_error("FAIL: Could not load created TileSet resource.")
 		return false
 
-	if ts.tile_size != Vector2i(48, 48):
-		push_error("FAIL: TileSet tile_size is %s, expected Vector2i(48, 48)" % str(ts.tile_size))
+	if ts.tile_size != Vector2i(32, 32):
+		push_error("FAIL: TileSet tile_size is %s, expected Vector2i(32, 32)" % str(ts.tile_size))
 		return false
 
 	if ts.get_terrain_sets_count() < 2:
@@ -296,9 +296,9 @@ func _test_visual_verification() -> bool:
 			cur_x += 140
 
 	var chest_scenes := [
-		"res://imported_assets/test_victorian/scenes/!$Treasure_Chest_Animations_Front_Back_Lit_b0_front.tscn",
-		"res://imported_assets/test_victorian/scenes/!$Treasure_Chest_Animations_Front_Back_Lit_b0_back.tscn",
-		"res://imported_assets/test_victorian/scenes/!$Treasure_Chest_Animations_Left_Right_Lit_b0_front.tscn",
+		"res://imported_assets/test_victorian/scenes/w_1_h_1_v_4_2_Treasure_Chest_Animations_Front_Back_Lit_0.tscn",
+		"res://imported_assets/test_victorian/scenes/w_1_h_1_v_4_2_Treasure_Chest_Animations_Front_Back_Lit_1.tscn",
+		"res://imported_assets/test_victorian/scenes/w_1_h_2_v_4_2_Treasure_Chest_Animations_Left_Right_Lit_0.tscn",
 	]
 	var chest_x := 80
 	for c_path in chest_scenes:
@@ -313,8 +313,8 @@ func _test_visual_verification() -> bool:
 			obj_root.add_child(inst_c)
 			var spr: AnimatedSprite2D = inst_c.get_node_or_null("AnimatedSprite2D")
 			if spr:
-				if c_path.contains("Left_Right") and spr.sprite_frames.get_frame_texture("closed", 0).get_size() != Vector2(48, 96):
-					push_error("Side-view chest must preserve its 48x96 frame.")
+				if c_path.contains("Left_Right") and spr.sprite_frames.get_frame_texture("closed", 0).get_size() != Vector2(32, 64):
+					push_error("Side-view chest must preserve its 32x64 frame.")
 					vp.queue_free()
 					return false
 				spr.play("closed")
@@ -328,7 +328,7 @@ func _test_visual_verification() -> bool:
 
 			chest_x += 160
 
-	var f_path := "res://imported_assets/test_victorian/scenes/$fountainwater_fountain_r0.tscn"
+	var f_path := "res://imported_assets/test_victorian/scenes/w_3_h_3_h_3_2_fountainwater_0.tscn"
 	if not ResourceLoader.exists(f_path):
 		push_error("Missing fountain scene: %s" % f_path)
 		vp.queue_free()

@@ -23,6 +23,9 @@ static var REGEX_D: RegEx = RegEx.create_from_string("(?i)(?:^|[_\\-\\s])D(?:[_\
 static var REGEX_E: RegEx = RegEx.create_from_string("(?i)(?:^|[_\\-\\s])E(?:[_\\-\\s]|$)")
 static var REGEX_F: RegEx = RegEx.create_from_string("(?i)(?:^|[_\\-\\s])F(?:[_\\-\\s]|$)")
 
+# Tagged slice: starts with w_<w>_h_<h>_<dir>_<frames>_<count>
+static var REGEX_SLICE_TAG: RegEx = RegEx.create_from_string("(?i)^w_(\\d+)_h_(\\d+)_([vh])_(\\d+)_(\\d+)(?:[_-](.*))?$")
+
 # Entities and Animations
 static var REGEX_DOOR: RegEx = RegEx.create_from_string("(?i)(?:^|[_\\-\\s])doors?(?:[_\\-\\s]|$)")
 static var REGEX_CHEST: RegEx = RegEx.create_from_string("(?i)(treasure[_\\-\\s]?chest|chest)")

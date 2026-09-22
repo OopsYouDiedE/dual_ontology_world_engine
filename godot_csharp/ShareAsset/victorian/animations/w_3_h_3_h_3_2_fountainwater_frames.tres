@@ -1,0 +1,193 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Victorian/source/w_3_h_3_h_3_2_fountainwater.png" id="1_6rgsn"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qqfgn"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(0, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_npg27"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(96, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1pgb0"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(192, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ert8"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(0, 96, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nulqw"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(96, 96, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jdwp1"]
+atlas = ExtResource("1_6rgsn")
+region = Rect2(192, 96, 96, 96)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": true,
+"name": &"default",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": true,
+"name": &"item_0_default",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": true,
+"name": &"item_0_loop",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}],
+"loop": false,
+"name": &"item_0_state_0",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}],
+"loop": false,
+"name": &"item_0_state_1",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": false,
+"name": &"item_0_state_2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ert8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nulqw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jdwp1")
+}],
+"loop": true,
+"name": &"item_1_default",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ert8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nulqw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jdwp1")
+}],
+"loop": true,
+"name": &"item_1_loop",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ert8")
+}],
+"loop": false,
+"name": &"item_1_state_0",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nulqw")
+}],
+"loop": false,
+"name": &"item_1_state_1",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jdwp1")
+}],
+"loop": false,
+"name": &"item_1_state_2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": true,
+"name": &"loop",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqfgn")
+}],
+"loop": false,
+"name": &"state_0",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npg27")
+}],
+"loop": false,
+"name": &"state_1",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pgb0")
+}],
+"loop": false,
+"name": &"state_2",
+"speed": 5.0
+}]
+metadata/frame_width = 96
+metadata/frame_height = 96
+metadata/w_tile = 3
+metadata/h_tile = 3
+metadata/orientation = "h"
+metadata/frames = 3
+metadata/count = 2

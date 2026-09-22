@@ -1,6 +1,6 @@
 extends SceneTree
 
-const OUT := "res://ShareAsset/rpg2d/native48/"
+const OUT := "res://ShareAsset/Images/native48/"
 const SIZE := Vector2i(1248,768)
 var tileset: TileSet
 var sources := {}
@@ -13,7 +13,7 @@ func _initialize() -> void:
 
 func build() -> void:
 	catalog=preload("res://tools/native48_art.gd").new().build()
-	tileset=load("res://ShareAsset/victorian/tilesets/Victorian.tres").duplicate()
+	tileset=load("res://ShareAsset/Victorian/tilesets/Victorian.tres").duplicate()
 	for i in tileset.get_source_count():
 		var id:=tileset.get_source_id(i)
 		var atlas:=tileset.get_source(id) as TileSetAtlasSource
@@ -166,5 +166,5 @@ func verify(node:Node) -> void:
 			var source:=node.tile_set.get_source(node.get_cell_source_id(cell)) as TileSetAtlasSource
 			assert(source.texture_region_size==Vector2i(48,48))
 			var path:=source.texture.resource_path
-			assert(path.begins_with("res://ShareAsset/victorian/") or path==OUT+"Academy_Native48.res",path)
+			assert(path.begins_with("res://ShareAsset/Victorian/") or path==OUT+"Academy_Native48.res",path)
 	for child in node.get_children(): verify(child)

@@ -32,6 +32,8 @@ static func _resolve_texture_and_image(source: Variant) -> Dictionary:
 				image = Image.load_from_file(global_path)
 				if image != null:
 					texture = ImageTexture.create_from_image(image)
+					if path.begins_with("res://"):
+						texture.take_over_path(path)
 	elif source is Texture2D:
 		texture = source
 		image = texture.get_image()
@@ -397,6 +399,12 @@ static func extract_strip_frames(
 		for f in frames_array:
 			sf.add_frame("open", f)
 
+		sf.add_animation("opening")
+		sf.set_animation_loop("opening", false)
+		sf.set_animation_speed("opening", fps)
+		for f in frames_array:
+			sf.add_frame("opening", f)
+
 		sf.add_animation("opened")
 		sf.set_animation_loop("opened", false)
 		sf.add_frame("opened", frames_array[3])
@@ -406,6 +414,12 @@ static func extract_strip_frames(
 		sf.set_animation_speed("close", fps)
 		for f_idx in [3, 2, 1, 0]:
 			sf.add_frame("close", frames_array[f_idx])
+
+		sf.add_animation("closing")
+		sf.set_animation_loop("closing", false)
+		sf.set_animation_speed("closing", fps)
+		for f_idx in [3, 2, 1, 0]:
+			sf.add_frame("closing", frames_array[f_idx])
 	else:
 		sf.add_animation("default")
 		sf.set_animation_loop("default", true)
@@ -573,7 +587,8 @@ static func slice_doors(source: Variant, tile_size: int = 48, fps: float = DEFAU
 	return result
 
 
-## Slices treasure chest sheets strictly according to (x_tile=1, y_tile=1, orientation="v", frames=4).
+## Slices treasure chest sheets strictly according to (x_tile=1, y_tile=1 or 2, orientation="v", frames=4).
+## Supports front/back (1x1 tile) and side-view left/right (1x2 tiles).
 static func slice_chests(source: Variant, tile_size: int = 48, fps: float = DEFAULT_FPS) -> Dictionary:
 	var resolved := _resolve_texture_and_image(source)
 	var image: Image = resolved["image"]
@@ -597,30 +612,141 @@ static func slice_chests(source: Variant, tile_size: int = 48, fps: float = DEFA
 	var frame_tiles_y := 2 if side_view else 1
 	var frame_h := tile_size * frame_tiles_y
 	var block_h := frame_h * 4
-	var num_blocks := h / block_h
+	var num_blocks := maxi(1, h / block_h)
+
+	var dir0 := "left" if side_view else "front"
+	var dir1 := "right" if side_view else "back"
+	var root0 := "TreasureChest_Left" if side_view else "TreasureChest_Front"
+	var root1 := "TreasureChest_Right" if side_view else "TreasureChest_Back"
+
+	var unified_sf := SpriteFrames.new()
+	if unified_sf.has_animation("default"):
+		unified_sf.remove_animation("default")
 
 	for b_idx in range(num_blocks):
 		var by := b_idx * block_h
 
-		# Front view (col 0: x=0, 1x1 tile, vertical 4 frames)
+		# Col 0 view (x=0, vertical 4 frames)
 		if not _is_region_empty(image, Rect2i(0, by, tile_size, block_h)):
-			var sf_front := extract_strip_frames(texture, Vector2i(0, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
-			result["objects"].append(sf_front)
-			var sc_front := create_interactive_object_scene(sf_front, "TreasureChest_Front", Vector2(tile_size, frame_h))
-			result["scenes"].append({"name": "%s_b%d_front" % [stem, b_idx], "scene": sc_front, "frames": sf_front})
+			var sf_0 := extract_strip_frames(texture, Vector2i(0, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
+			result["objects"].append(sf_0)
+			var sc_0 := create_interactive_object_scene(sf_0, root0, Vector2(tile_size, frame_h))
+			result["scenes"].append({"name": "%s_b%d_%s" % [stem, b_idx, dir0], "scene": sc_0, "frames": sf_0})
+			_merge_strip_into_sprite_frames(unified_sf, texture, Vector2i(0, by), tile_size, frame_h, fps, dir0, b_idx == 0)
 
-		# Back view (col 1: x=tile_size, 1x1 tile, vertical 4 frames)
+		# Col 1 view (x=tile_size, vertical 4 frames)
 		if not _is_region_empty(image, Rect2i(tile_size, by, tile_size, block_h)):
-			var sf_back := extract_strip_frames(texture, Vector2i(tile_size, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
-			result["objects"].append(sf_back)
-			var sc_back := create_interactive_object_scene(sf_back, "TreasureChest_Back", Vector2(tile_size, frame_h))
-			result["scenes"].append({"name": "%s_b%d_back" % [stem, b_idx], "scene": sc_back, "frames": sf_back})
+			var sf_1 := extract_strip_frames(texture, Vector2i(tile_size, by), 1, frame_tiles_y, "v", 4, tile_size, fps, true)
+			result["objects"].append(sf_1)
+			var sc_1 := create_interactive_object_scene(sf_1, root1, Vector2(tile_size, frame_h))
+			result["scenes"].append({"name": "%s_b%d_%s" % [stem, b_idx, dir1], "scene": sc_1, "frames": sf_1})
+			_merge_strip_into_sprite_frames(unified_sf, texture, Vector2i(tile_size, by), tile_size, frame_h, fps, dir1, false)
 
-	if not result["objects"].is_empty():
+	if unified_sf.get_animation_names().size() > 0:
+		unified_sf.set_meta("frame_width", tile_size)
+		unified_sf.set_meta("frame_height", frame_h)
+		unified_sf.set_meta("x_tile", 1)
+		unified_sf.set_meta("y_tile", frame_tiles_y)
+		unified_sf.set_meta("orientation", "v")
+		unified_sf.set_meta("frames", 4)
+		result["sprite_frames"] = unified_sf
+	elif not result["objects"].is_empty():
 		result["sprite_frames"] = result["objects"][0]
+
+	if not result["scenes"].is_empty():
 		result["packed_scene"] = result["scenes"][0]["scene"]
 
 	return result
+
+
+static func _merge_strip_into_sprite_frames(
+	sf: SpriteFrames,
+	texture: Texture2D,
+	start_pos: Vector2i,
+	frame_w: int,
+	frame_h: int,
+	fps: float,
+	direction_suffix: String,
+	is_default: bool = false
+) -> void:
+	var frames_array: Array[AtlasTexture] = []
+	for f in range(4):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = Rect2(start_pos.x, start_pos.y + f * frame_h, frame_w, frame_h)
+		frames_array.append(atlas)
+
+	var d_closed := "closed_" + direction_suffix
+	var d_open := "open_" + direction_suffix
+	var d_opening := "opening_" + direction_suffix
+	var d_opened := "opened_" + direction_suffix
+	var d_close := "close_" + direction_suffix
+	var d_closing := "closing_" + direction_suffix
+
+	sf.add_animation(d_closed)
+	sf.set_animation_loop(d_closed, false)
+	sf.add_frame(d_closed, frames_array[0])
+
+	sf.add_animation(d_open)
+	sf.set_animation_loop(d_open, false)
+	sf.set_animation_speed(d_open, fps)
+	for f in frames_array:
+		sf.add_frame(d_open, f)
+
+	sf.add_animation(d_opening)
+	sf.set_animation_loop(d_opening, false)
+	sf.set_animation_speed(d_opening, fps)
+	for f in frames_array:
+		sf.add_frame(d_opening, f)
+
+	sf.add_animation(d_opened)
+	sf.set_animation_loop(d_opened, false)
+	sf.add_frame(d_opened, frames_array[3])
+
+	sf.add_animation(d_close)
+	sf.set_animation_loop(d_close, false)
+	sf.set_animation_speed(d_close, fps)
+	for f_idx in [3, 2, 1, 0]:
+		sf.add_frame(d_close, frames_array[f_idx])
+
+	sf.add_animation(d_closing)
+	sf.set_animation_loop(d_closing, false)
+	sf.set_animation_speed(d_closing, fps)
+	for f_idx in [3, 2, 1, 0]:
+		sf.add_frame(d_closing, frames_array[f_idx])
+
+	if is_default:
+		sf.add_animation("closed")
+		sf.set_animation_loop("closed", false)
+		sf.add_frame("closed", frames_array[0])
+
+		sf.add_animation("open")
+		sf.set_animation_loop("open", false)
+		sf.set_animation_speed("open", fps)
+		for f in frames_array:
+			sf.add_frame("open", f)
+
+		sf.add_animation("opening")
+		sf.set_animation_loop("opening", false)
+		sf.set_animation_speed("opening", fps)
+		for f in frames_array:
+			sf.add_frame("opening", f)
+
+		sf.add_animation("opened")
+		sf.set_animation_loop("opened", false)
+		sf.add_frame("opened", frames_array[3])
+
+		sf.add_animation("close")
+		sf.set_animation_loop("close", false)
+		sf.set_animation_speed("close", fps)
+		for f_idx in [3, 2, 1, 0]:
+			sf.add_frame("close", frames_array[f_idx])
+
+		sf.add_animation("closing")
+		sf.set_animation_loop("closing", false)
+		sf.set_animation_speed("closing", fps)
+		for f_idx in [3, 2, 1, 0]:
+			sf.add_frame("closing", frames_array[f_idx])
 
 
 
@@ -726,7 +852,228 @@ static func create_interactive_object_scene(frames: SpriteFrames, root_name: Str
 	return scene
 
 
-## Unified converter for object animations (doors, chests, generic animations).
+## Slices tagged animation assets strictly according to filename tag (w_<w>_h_<h>_<dir>_<frames>_<count>).
+## Strips are arranged horizontally from left to right.
+static func slice_tagged_animation(
+	source: Variant,
+	tag_data: Dictionary,
+	tile_size: int = 48,
+	fps: float = DEFAULT_FPS
+) -> Dictionary:
+	var resolved := _resolve_texture_and_image(source)
+	var image: Image = resolved["image"]
+	var texture: Texture2D = resolved["texture"]
+	var result := {
+		"objects": [] as Array[SpriteFrames],
+		"scenes": [] as Array[Dictionary],
+		"sprite_frames": null,
+		"packed_scene": null
+	}
+	if image == null or texture == null:
+		return result
+
+	var w_tile: int = tag_data.get("w_tile", 1)
+	var h_tile: int = tag_data.get("h_tile", 1)
+	var orientation: String = tag_data.get("orientation", "v").to_lower()
+	var frames: int = tag_data.get("frames", 4)
+	var count: int = tag_data.get("count", 1)
+	var tag_name: String = tag_data.get("name", "")
+
+	var stem: String = ""
+	if source is String:
+		stem = source.get_file().get_basename()
+	var display_name := tag_name if tag_name != "" else stem
+
+	# Derive tile_size if not provided
+	if tile_size <= 0:
+		if orientation == "v" and h_tile * frames > 0:
+			tile_size = image.get_height() / (h_tile * frames)
+		elif orientation == "h" and w_tile * frames * count > 0:
+			tile_size = image.get_width() / (w_tile * frames * count)
+		elif h_tile > 0:
+			tile_size = image.get_height() / h_tile
+	if tile_size <= 0:
+		tile_size = 32
+
+	var frame_w := w_tile * tile_size
+	var frame_h := h_tile * tile_size
+
+	var unified_sf := SpriteFrames.new()
+	if unified_sf.has_animation("default"):
+		unified_sf.remove_animation("default")
+
+	var strip_w := frame_w if orientation == "v" else frame_w * frames
+	var strip_h := frame_h * frames if orientation == "v" else frame_h
+	var max_cols := maxi(1, image.get_width() / strip_w)
+
+	for i in range(count):
+		var col := i % max_cols
+		var row := i / max_cols
+		var strip_pos := Vector2i(col * strip_w, row * strip_h)
+
+		if strip_pos.x + strip_w > image.get_width() or strip_pos.y + strip_h > image.get_height():
+			continue
+
+		if _is_region_empty(image, Rect2i(strip_pos.x, strip_pos.y, strip_w, strip_h)):
+			continue
+
+		var sf := extract_strip_frames(texture, strip_pos, w_tile, h_tile, orientation, frames, tile_size, fps, true)
+		result["objects"].append(sf)
+
+		var sc_name := "%s_%d" % [stem, i]
+		var root_name := "%s_%d" % [display_name, i]
+		var sc := create_interactive_object_scene(sf, root_name, Vector2(frame_w, frame_h))
+		result["scenes"].append({"name": sc_name, "scene": sc, "frames": sf})
+
+		_merge_tagged_strip(unified_sf, texture, strip_pos, orientation, frames, frame_w, frame_h, fps, i, i == 0)
+
+	if unified_sf.get_animation_names().size() > 0:
+		unified_sf.set_meta("frame_width", frame_w)
+		unified_sf.set_meta("frame_height", frame_h)
+		unified_sf.set_meta("w_tile", w_tile)
+		unified_sf.set_meta("h_tile", h_tile)
+		unified_sf.set_meta("orientation", orientation)
+		unified_sf.set_meta("frames", frames)
+		unified_sf.set_meta("count", count)
+		result["sprite_frames"] = unified_sf
+	elif not result["objects"].is_empty():
+		result["sprite_frames"] = result["objects"][0]
+
+	if not result["scenes"].is_empty():
+		result["packed_scene"] = result["scenes"][0]["scene"]
+
+	return result
+
+
+static func _merge_tagged_strip(
+	sf: SpriteFrames,
+	texture: Texture2D,
+	start_pos: Vector2i,
+	orientation: String,
+	frames_count: int,
+	frame_w: int,
+	frame_h: int,
+	fps: float,
+	strip_index: int,
+	is_default: bool = false
+) -> void:
+	var frames_array: Array[AtlasTexture] = []
+	var step_x := frame_w if orientation == "h" else 0
+	var step_y := frame_h if orientation == "v" else 0
+
+	for f in range(frames_count):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = Rect2(start_pos.x + f * step_x, start_pos.y + f * step_y, frame_w, frame_h)
+		frames_array.append(atlas)
+
+	var pfx := "item_%d_" % strip_index
+
+	if frames_count == 4:
+		sf.add_animation(pfx + "closed")
+		sf.set_animation_loop(pfx + "closed", false)
+		sf.add_frame(pfx + "closed", frames_array[0])
+
+		sf.add_animation(pfx + "open")
+		sf.set_animation_loop(pfx + "open", false)
+		sf.set_animation_speed(pfx + "open", fps)
+		for f in frames_array:
+			sf.add_frame(pfx + "open", f)
+
+		sf.add_animation(pfx + "opening")
+		sf.set_animation_loop(pfx + "opening", false)
+		sf.set_animation_speed(pfx + "opening", fps)
+		for f in frames_array:
+			sf.add_frame(pfx + "opening", f)
+
+		sf.add_animation(pfx + "opened")
+		sf.set_animation_loop(pfx + "opened", false)
+		sf.add_frame(pfx + "opened", frames_array[3])
+
+		sf.add_animation(pfx + "close")
+		sf.set_animation_loop(pfx + "close", false)
+		sf.set_animation_speed(pfx + "close", fps)
+		for f_idx in [3, 2, 1, 0]:
+			sf.add_frame(pfx + "close", frames_array[f_idx])
+
+		sf.add_animation(pfx + "closing")
+		sf.set_animation_loop(pfx + "closing", false)
+		sf.set_animation_speed(pfx + "closing", fps)
+		for f_idx in [3, 2, 1, 0]:
+			sf.add_frame(pfx + "closing", frames_array[f_idx])
+	else:
+		sf.add_animation(pfx + "loop")
+		sf.set_animation_loop(pfx + "loop", true)
+		sf.set_animation_speed(pfx + "loop", fps)
+		for f in frames_array:
+			sf.add_frame(pfx + "loop", f)
+
+		sf.add_animation(pfx + "default")
+		sf.set_animation_loop(pfx + "default", true)
+		sf.set_animation_speed(pfx + "default", fps)
+		for f in frames_array:
+			sf.add_frame(pfx + "default", f)
+
+	for f_idx in range(frames_count):
+		var s_name := pfx + "state_%d" % f_idx
+		sf.add_animation(s_name)
+		sf.set_animation_loop(s_name, false)
+		sf.add_frame(s_name, frames_array[f_idx])
+
+	if is_default:
+		if frames_count == 4:
+			sf.add_animation("closed")
+			sf.set_animation_loop("closed", false)
+			sf.add_frame("closed", frames_array[0])
+
+			sf.add_animation("open")
+			sf.set_animation_loop("open", false)
+			sf.set_animation_speed("open", fps)
+			for f in frames_array:
+				sf.add_frame("open", f)
+
+			sf.add_animation("opening")
+			sf.set_animation_loop("opening", false)
+			sf.set_animation_speed("opening", fps)
+			for f in frames_array:
+				sf.add_frame("opening", f)
+
+			sf.add_animation("opened")
+			sf.set_animation_loop("opened", false)
+			sf.add_frame("opened", frames_array[3])
+
+			sf.add_animation("close")
+			sf.set_animation_loop("close", false)
+			sf.set_animation_speed("close", fps)
+			for f_idx in [3, 2, 1, 0]:
+				sf.add_frame("close", frames_array[f_idx])
+
+			sf.add_animation("closing")
+			sf.set_animation_loop("closing", false)
+			sf.set_animation_speed("closing", fps)
+			for f_idx in [3, 2, 1, 0]:
+				sf.add_frame("closing", frames_array[f_idx])
+		else:
+			sf.add_animation("loop")
+			sf.set_animation_loop("loop", true)
+			sf.set_animation_speed("loop", fps)
+			for f in frames_array:
+				sf.add_frame("loop", f)
+
+			sf.add_animation("default")
+			sf.set_animation_loop("default", true)
+			sf.set_animation_speed("default", fps)
+			for f in frames_array:
+				sf.add_frame("default", f)
+
+		for f_idx in range(frames_count):
+			var s_name := "state_%d" % f_idx
+			sf.add_animation(s_name)
+			sf.set_animation_loop(s_name, false)
+			sf.add_frame(s_name, frames_array[f_idx])
+
+
+## Unified converter for object animations (doors, chests, generic animations, tagged animations).
 static func convert(
 	path: String,
 	profile: BaseProfileScript = null,
@@ -738,6 +1085,20 @@ static func convert(
 	var tile_size: int = info.tile_size
 	var kind: AssetDetectorScript.AssetKind = info.kind
 	var lower_stem := path.get_file().to_lower()
+
+	if kind == AssetDetectorScript.AssetKind.TAGGED_ANIMATION:
+		var tag_data: Dictionary = info.extra.get("slice_tag", {})
+		var t_res := slice_tagged_animation(path, tag_data, tile_size, fps)
+		return {
+			"kind": kind,
+			"is_single": tag_data.get("count", 1) == 1,
+			"tile_size": tile_size,
+			"sprite_frames": t_res["sprite_frames"],
+			"objects": t_res["objects"],
+			"packed_scene": t_res["packed_scene"],
+			"scenes": t_res["scenes"],
+			"requires_animation_profile": false
+		}
 
 	if kind == AssetDetectorScript.AssetKind.DOOR:
 		var d_res := slice_doors(path, tile_size, fps)

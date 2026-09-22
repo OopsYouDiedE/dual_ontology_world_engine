@@ -1,1 +1,1 @@
-当前版本：原图缩图适配 48px TileSet。参见 ShareAsset/rpg2d/resized48_shots/README.md。实际截图位于 artifacts/resized48-shots。旧 native48 程序绘制版已停用。
+当前版本：已迁移至 32px 基础规格，使用 `Victorian.tres` TileSet 与对应比例物件重构。构建脚本见 `tools/resized48/layout_shot02.gd`。

@@ -1,8 +1,8 @@
 extends SceneTree
 
-const OUT := "res://ShareAsset/rpg2d/tilesets/academy_v1/"
+const OUT := "res://ShareAsset/TileMap/Academy/"
 const SCENES := "res://scenes/AcademyTileset/"
-const BASE := "res://ShareAsset/victorian/tilesets/Victorian.tres"
+const BASE := "res://ShareAsset/Victorian/tilesets/Victorian.tres"
 const LABELS := ["bookcase", "lit_fireplace", "sofa", "research_desk", "piano", "clock", "banner", "telescope", "closed_door", "open_door", "vertical_pipe", "elbow_pipe", "inscription_pedestal", "alchemy_bench", "tea_table", "lantern"]
 # Measured object boundaries in the generated source, not an assumed AI grid.
 const REGIONS := [Rect2i(40, 30, 240, 290), Rect2i(318, 40, 304, 287), Rect2i(632, 118, 306, 202), Rect2i(954, 54, 279, 272), Rect2i(40, 337, 267, 292), Rect2i(398, 331, 149, 300), Rect2i(682, 332, 202, 299), Rect2i(992, 337, 225, 297), Rect2i(34, 639, 278, 279), Rect2i(330, 639, 278, 279), Rect2i(681, 636, 174, 289), Rect2i(939, 702, 296, 215), Rect2i(78, 922, 171, 298), Rect2i(313, 937, 305, 288), Rect2i(632, 1004, 308, 217), Rect2i(985, 942, 186, 278)]

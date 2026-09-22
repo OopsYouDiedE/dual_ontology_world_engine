@@ -1,6 +1,6 @@
 # 公共娱乐室地图
 
-在 Godot 中打开 `Parlor.tscn`，按 F6 运行。地图使用项目现有插件生成的 `ShareAsset/victorian/tilesets/Victorian.tres`，为30×20格、每格48px的可编辑场景。
+在 Godot 中打开 `Parlor.tscn`，按 F6 运行。地图使用项目现有插件生成的 `ShareAsset/Victorian/tilesets/Victorian.tres`，为30×20格、每格48px的可编辑场景。
 
 参考为 `artifacts/theme-film/scenes/shot-03.png`：上方壁炉、中央会客区、两侧茶桌、左下钢琴和下方入口。素材没有原画同款书架、人物和点燃壁炉效果，使用现有柜体及家具做布局适配，没有把原画当地图背景。
 

@@ -178,141 +178,165 @@ def generate_reconstructed_score():
     pno_l_dict[10] = [make_chord('whole', ['D2', 'A2', 'F3'])]
     pno_l_dict[11] = [make_chord('whole', ['G2', 'D3', 'B3'])]
 
-    # === Part II: M13–28 (Theme B Exposition & Dialogue) ===
-    dyn_vln[12] = 'mp'
-    vln_dict[12] = [make_chord('half', 'E5'), make_chord('half', 'C5')]
-    vln_dict[13] = [make_chord('quarter', 'E5'), make_chord('quarter', 'F5'), make_chord('half', 'E5')]
-    vln_dict[14] = [make_chord('half', 'G5'), make_chord('half', 'E5')]
-    vln_dict[15] = [make_chord('quarter', 'A5'), make_chord('quarter', 'B5'), make_chord('half', 'G5')]
-    vln_dict[16] = [make_chord('half', 'C6'), make_chord('half', 'A5')]
-    vln_dict[17] = [make_chord('quarter', 'B5'), make_chord('quarter', 'C6'), make_chord('half', 'B5')]
-    vln_dict[18] = [make_chord('half', 'G5'), make_chord('half', 'E5')]
-    vln_dict[19] = [make_chord('quarter', 'F5'), make_chord('quarter', 'D5'), make_chord('half', 'D5')]
+    # === Part II: M13–28 (Theme B: Dorian Mode / Folk-Sacred Incantation - Occult Study with Mentor) ===
+    # M13-20: Piano RH presents reformed Theme B (music1 arch: 5th leap + stepwise descent) while Violin weaves counterpoint dialogue
+    dyn_vln[12] = 'p'
+    vln_dict[12] = [make_chord('half', 'D4', tenuto=True), make_chord('half', 'F4', tenuto=True)]
+    vln_dict[13] = [make_chord('half', 'E4', tenuto=True), make_chord('half', 'G4', tenuto=True)]
+    vln_dict[14] = [make_chord('quarter', 'D4', tenuto=True), make_chord('quarter', 'F4', tenuto=True), make_chord('half', 'A4', tenuto=True)]
+    vln_dict[15] = [make_chord('half', 'G4', tenuto=True), make_chord('half', 'B4', tenuto=True)]
+    # M17-20: Violin introduces music1 m.26 stepwise motif in counterpoint dialogue
+    vln_dict[16] = [make_chord('quarter', 'D4'), make_chord('quarter', 'E4'), make_chord('quarter', 'F4'), make_chord('quarter', 'E4')]
+    vln_dict[17] = [make_chord('quarter', 'F4'), make_chord('quarter', 'E4'), make_chord('half', 'D4')]
+    vln_dict[18] = [make_chord('quarter', 'D4'), make_chord('quarter', 'E4'), make_chord('quarter', 'F4'), make_chord('quarter', 'E4')]
+    vln_dict[19] = [make_chord('quarter', 'C4'), make_chord('quarter', 'D4'), make_chord('half', 'E4')]
 
-    # M21-24: Violin pedal countermelody
-    vln_dict[20] = [make_chord('whole', 'B4', tenuto=True)]
-    vln_dict[21] = [make_chord('whole', 'C5', tenuto=True)]
-    vln_dict[22] = [make_chord('whole', 'D5', tenuto=True)]
-    vln_dict[23] = [make_chord('whole', 'G5', tenuto=True)]
+    # M21-28: Violin takes over the main melody in high register (music1 m.5-7 & m.44-46 arch)
+    dyn_vln[20] = 'mf'
+    vln_dict[20] = [make_chord('quarter', 'A5'), make_chord('quarter', 'C6'), make_chord('half', 'D6', accent=True)]
+    vln_dict[21] = [make_chord('quarter', 'B5'), make_chord('quarter', 'B5'), make_chord('quarter', 'G5'), make_chord('quarter', 'G5')]
+    vln_dict[22] = [make_chord('quarter', 'A5'), make_chord('quarter', 'C6'), make_chord('half', 'E6', accent=True)]
+    vln_dict[23] = [make_chord('quarter', 'D6'), make_chord('quarter', 'B5'), make_chord('quarter', 'G5'), make_chord('quarter', 'E5')]
+    vln_dict[24] = [make_chord('half', 'A5', accent=True), make_chord('quarter', 'C6'), make_chord('quarter', 'D6')]
+    vln_dict[25] = [make_chord('quarter', 'D6'), make_chord('half', 'C6'), make_chord('quarter', 'B5')]
+    vln_dict[26] = [make_chord('quarter', 'B5'), make_chord('quarter', 'A5'), make_chord('quarter', 'G5'), make_chord('quarter', 'F5')]
+    vln_dict[27] = [make_chord('quarter', 'F5'), make_chord('quarter', 'A5'), make_chord('half', 'G5')]
 
-    # M25-28: Violin rises mp -> mf
-    dyn_vln[24] = 'mf'
-    vln_dict[24] = [make_chord('half', 'E5'), make_chord('half', 'A5')]
-    vln_dict[25] = [make_chord('half', 'C6'), make_chord('half', 'B5')]
-    vln_dict[26] = [make_chord('half', 'D6'), make_chord('half', 'B5')]
-    vln_dict[27] = [make_chord('half', 'C6'), make_chord('half', 'B5')]
+    # Piano RH M13-20: Main Melody restructured with music1's clean modal arch
+    dyn_pno[12] = 'mp'
+    pno_r_dict[12] = [make_chord('quarter', 'D5'), make_chord('quarter', 'A5'), make_chord('half', 'G5')]
+    pno_r_dict[13] = [make_chord('quarter', 'G5'), make_chord('half', 'E5'), make_chord('quarter', 'F5')]
+    pno_r_dict[14] = [make_chord('quarter', 'F5'), make_chord('quarter', 'E5'), make_chord('quarter', 'D5'), make_chord('quarter', 'C5')]
+    pno_r_dict[15] = [make_chord('half', 'B4'), make_chord('quarter', 'D5'), make_chord('quarter', 'G5')]
+    pno_r_dict[16] = [make_chord('quarter', 'A5'), make_chord('quarter', 'C6'), make_chord('quarter', 'D6', dots=1), make_chord('eighth', 'C6')]
+    pno_r_dict[17] = [make_chord('quarter', 'B5'), make_chord('quarter', 'A5'), make_chord('quarter', 'G5'), make_chord('quarter', 'A5')]
+    pno_r_dict[18] = [make_chord('quarter', 'F5'), make_chord('quarter', 'A5'), make_chord('quarter', 'D6', dots=1), make_chord('eighth', 'C6')]
+    pno_r_dict[19] = [make_chord('quarter', 'B5'), make_chord('quarter', 'G5'), make_chord('half', 'A5')]
 
-    # Piano RH M13-20 flowing 8ths
-    dyn_pno[12] = 'p'
-    pno_r_dict[12] = [make_chord('eighth', p) for p in ['C4', 'E4', 'G4', 'C5', 'E5', 'C5', 'G4', 'E4']]
-    pno_r_dict[13] = [make_chord('eighth', p) for p in ['C4', 'F4', 'A4', 'C5', 'F5', 'C5', 'A4', 'F4']]
-    pno_r_dict[14] = [make_chord('eighth', p) for p in ['C4', 'E4', 'G4', 'C5', 'E5', 'C5', 'G4', 'E4']]
-    pno_r_dict[15] = [make_chord('eighth', p) for p in ['D4', 'G4', 'B4', 'D5', 'G5', 'D5', 'B4', 'G4']]
-    pno_r_dict[16] = [make_chord('eighth', p) for p in ['C4', 'E4', 'A4', 'C5', 'E5', 'C5', 'A4', 'E4']]
-    pno_r_dict[17] = [make_chord('eighth', p) for p in ['D4', 'F4', 'B4', 'D5', 'F5', 'D5', 'B4', 'F4']]
-    pno_r_dict[18] = [make_chord('eighth', p) for p in ['C4', 'E4', 'G4', 'C5', 'E5', 'C5', 'G4', 'E4']]
-    pno_r_dict[19] = [make_chord('eighth', p) for p in ['D4', 'F4', 'A4', 'D5', 'F5', 'D5', 'A4', 'F4']]
-
-    # Piano RH M21-24 takes melody
+    # Piano RH M21-28: Supporting counter-melody and arpeggio dialogue beneath Violin lead
     dyn_pno[20] = 'mf'
-    pno_r_dict[20] = [make_chord('half', 'G5'), make_chord('quarter', 'E5'), make_chord('quarter', 'G5')]
-    pno_r_dict[21] = [make_chord('half', 'A5'), make_chord('half', 'B5')]
-    pno_r_dict[22] = [make_chord('quarter', 'D5'), make_chord('quarter', 'G5'), make_chord('half', 'B5')]
-    pno_r_dict[23] = [make_chord('half', 'C5'), make_chord('half', 'G5')]
+    pno_r_dict[20] = [make_chord('quarter', 'F4'), make_chord('quarter', 'A4'), make_chord('quarter', 'D5'), make_chord('quarter', 'F5')]
+    pno_r_dict[21] = [make_chord('quarter', 'D4'), make_chord('quarter', 'G4'), make_chord('quarter', 'B4'), make_chord('quarter', 'D5')]
+    pno_r_dict[22] = [make_chord('quarter', 'C4'), make_chord('quarter', 'E4'), make_chord('quarter', 'A4'), make_chord('quarter', 'C5')]
+    pno_r_dict[23] = [make_chord('quarter', 'B3'), make_chord('quarter', 'E4'), make_chord('quarter', 'G4'), make_chord('quarter', 'B4')]
+    pno_r_dict[24] = [make_chord('quarter', 'C5'), make_chord('eighth', 'D5'), make_chord('eighth', 'E5'), make_chord('quarter', 'F5'), make_chord('quarter', 'E5')]
+    pno_r_dict[25] = [make_chord('quarter', 'D5'), make_chord('quarter', 'B4'), make_chord('quarter', 'G4'), make_chord('quarter', 'B4')]
+    pno_r_dict[26] = [make_chord('quarter', 'C5'), make_chord('quarter', 'A4'), make_chord('quarter', 'F4'), make_chord('quarter', 'A4')]
+    pno_r_dict[27] = [make_chord('quarter', 'B4'), make_chord('quarter', 'D5'), make_chord('half', 'F5')]
 
-    pno_r_dict[24] = [make_chord('eighth', p) for p in ['A3', 'C4', 'E4', 'A4', 'C5', 'A4', 'E4', 'C4']]
-    pno_r_dict[25] = [make_chord('eighth', p) for p in ['G3', 'B3', 'D4', 'G4', 'B4', 'G4', 'D4', 'B3']]
-    pno_r_dict[26] = [make_chord('eighth', p) for p in ['F3', 'A3', 'C4', 'F4', 'A4', 'F4', 'C4', 'A3']]
-    pno_r_dict[27] = [make_chord('eighth', p) for p in ['G3', 'B3', 'D4', 'G4', 'B4', 'G4', 'D4', 'G3']]
+    # Piano LH M13-28: Flowing Acoustic Bass Accompaniment (D Dorian Broken Chords)
+    pno_l_dict[12] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', ['F3', 'A3']), make_chord('quarter', 'A2')]
+    pno_l_dict[13] = [make_chord('quarter', 'C2'), make_chord('quarter', 'G2'), make_chord('quarter', ['E3', 'G3']), make_chord('quarter', 'G2')]
+    pno_l_dict[14] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', 'F2'), make_chord('quarter', ['A2', 'C3'])]
+    pno_l_dict[15] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['B2', 'D3']), make_chord('quarter', 'A2')]
+    pno_l_dict[16] = [make_chord('quarter', 'F2'), make_chord('quarter', 'C3'), make_chord('quarter', 'C2'), make_chord('quarter', ['G2', 'E3'])]
+    pno_l_dict[17] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', 'A2'), make_chord('quarter', ['E3', 'A3'])]
+    pno_l_dict[18] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', 'C2'), make_chord('quarter', ['G2', 'C3'])]
+    pno_l_dict[19] = [make_chord('quarter', 'B2'), make_chord('quarter', 'D3'), make_chord('quarter', 'D2'), make_chord('quarter', ['A2', 'F3'])]
+    pno_l_dict[20] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', ['F3', 'A3']), make_chord('quarter', 'D3')]
+    pno_l_dict[21] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['B2', 'D3']), make_chord('quarter', 'G3')]
+    pno_l_dict[22] = [make_chord('quarter', 'F2'), make_chord('quarter', 'C3'), make_chord('quarter', 'C2'), make_chord('quarter', ['E3', 'G3'])]
+    pno_l_dict[23] = [make_chord('quarter', 'E2'), make_chord('quarter', 'B2'), make_chord('quarter', ['G3', 'B3']), make_chord('quarter', 'E3')]
+    pno_l_dict[24] = [make_chord('quarter', 'A2'), make_chord('quarter', 'E3'), make_chord('quarter', ['C3', 'E3']), make_chord('quarter', 'E3')]
+    pno_l_dict[25] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['B2', 'D3']), make_chord('quarter', 'D3')]
+    pno_l_dict[26] = [make_chord('quarter', 'F2'), make_chord('quarter', 'C3'), make_chord('quarter', ['A2', 'C3']), make_chord('quarter', 'C3')]
+    pno_l_dict[27] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['B2', 'F3']), make_chord('quarter', 'G3')]
 
-    pno_l_dict[12] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[13] = [make_chord('whole', ['F2', 'C3'])]
-    pno_l_dict[14] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[15] = [make_chord('whole', ['G2', 'D3'])]
-    pno_l_dict[16] = [make_chord('whole', ['A2', 'E3'])]
-    pno_l_dict[17] = [make_chord('whole', ['D2', 'A2'])]
-    pno_l_dict[18] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[19] = [make_chord('whole', ['G2', 'D3'])]
-    pno_l_dict[20] = [make_chord('half', ['E2', 'B2']), make_chord('half', ['G2', 'D3'])]
-    pno_l_dict[21] = [make_chord('half', ['F2', 'C3']), make_chord('half', ['D2', 'A2'])]
-    pno_l_dict[22] = [make_chord('half', ['B2', 'F#3']), make_chord('half', ['G2', 'D3'])]
-    pno_l_dict[23] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[24] = [make_chord('whole', ['A2', 'E3'])]
-    pno_l_dict[25] = [make_chord('whole', ['G2', 'D3'])]
-    pno_l_dict[26] = [make_chord('whole', ['F2', 'C3'])]
-    pno_l_dict[27] = [make_chord('whole', ['G2', 'D3', 'B3'])]
+    # === Part III: M29–46 (Probing Deep Rules: Radiant Theme B2, Mini-Climax, and Fade-Out) ===
+    # Seamless resolution from M28 (G7) into M29 (C major)
+    dyn_vln[28] = 'mf'
+    dyn_pno[28] = 'mp'
 
-    # === Part III: M29–46 (Modal Shift / Mixolydian & Dorian / Darkening) ===
-    dyn_vln[28] = 'mp'
-    vln_dict[28] = [make_chord('half', 'G5'), make_chord('half', 'D5')]
-    vln_dict[29] = [make_chord('quarter', 'F5'), make_chord('quarter', 'G5'), make_chord('half', 'F5')]
-    vln_dict[30] = [make_chord('half', 'Eb5'), make_chord('half', 'C5')]
-    vln_dict[31] = [make_chord('half', 'D5'), make_chord('half', 'G4')]
-    vln_dict[32] = [make_chord('half', 'Bb4'), make_chord('half', 'C5')]
-    vln_dict[33] = [make_chord('half', 'D5'), make_chord('half', 'Eb5')]
-    vln_dict[34] = [make_chord('whole', 'F5')]
-    vln_dict[35] = [make_chord('whole', 'G5')]
+    # Violin M29-32: Radiant Theme B2 entry (C major -> G major)
+    vln_dict[28] = [make_chord('quarter', 'E5'), make_chord('quarter', 'G5'), make_chord('half', 'C6')]
+    vln_dict[29] = [make_chord('quarter', 'D6'), make_chord('quarter', 'C6'), make_chord('half', 'E6')]
+    vln_dict[30] = [make_chord('half', 'D6'), make_chord('half', 'B5')]
+    vln_dict[31] = [make_chord('quarter', 'C6'), make_chord('quarter', 'D6'), make_chord('half', 'B5')]
 
-    # M37-42: Violin low sustained open/fifth pedal foundation on G & D strings
-    dyn_vln[36] = 'p'
-    vln_dict[36] = [make_chord('whole', 'D4', tenuto=True)]
-    vln_dict[37] = [make_chord('whole', 'D4', tenuto=True)]
-    vln_dict[38] = [make_chord('whole', 'C4', tenuto=True)]
-    vln_dict[39] = [make_chord('whole', 'C4', tenuto=True)]
-    vln_dict[40] = [make_chord('whole', 'Bb3', tenuto=True)]
-    vln_dict[41] = [make_chord('whole', 'G3', tenuto=True)]
+    # Violin M33-34: Dialogue counter-line with Piano
+    vln_dict[32] = [make_chord('half', 'E5', tenuto=True), make_chord('half', 'C5', tenuto=True)]
+    vln_dict[33] = [make_chord('half', 'F5', tenuto=True), make_chord('half', 'D5', tenuto=True)]
 
-    # M43-46: Mystery, pp
-    dyn_vln[42] = 'pp'
-    vln_dict[42] = [make_chord('whole', 'Eb4', tenuto=True)]
-    vln_dict[43] = [make_chord('whole', 'D4', tenuto=True)]
-    vln_dict[44] = [make_chord('whole', 'C4', tenuto=True)]
-    vln_dict[45] = [make_chord('whole', 'B3', tenuto=True)]
+    # Violin M35-38: Lyrical reflective sequence & modal deepening (Mixolydian/Dorian color)
+    dyn_vln[34] = 'mp'
+    vln_dict[34] = [make_chord('quarter', 'Bb5'), make_chord('eighth', 'C6'), make_chord('eighth', 'Bb5'), make_chord('half', 'G5')]
+    vln_dict[35] = [make_chord('quarter', 'A5', dots=1), make_chord('eighth', 'Bb5'), make_chord('half', 'F5')]
+    vln_dict[36] = [make_chord('quarter', 'F5'), make_chord('quarter', 'G5'), make_chord('half', 'D5')]
+    vln_dict[37] = [make_chord('half', 'Eb5', tenuto=True), make_chord('half', 'C5', tenuto=True)]
 
-    # Piano RH M29-36 Mixolydian 8ths
-    pno_r_dict[28] = [make_chord('eighth', p) for p in ['C4', 'E4', 'G4', 'Bb4', 'C5', 'Bb4', 'G4', 'E4']]
-    pno_r_dict[29] = [make_chord('eighth', p) for p in ['D4', 'F4', 'A4', 'C5', 'D5', 'C5', 'A4', 'F4']]
-    pno_r_dict[30] = [make_chord('eighth', p) for p in ['C4', 'Eb4', 'G4', 'C5', 'Eb5', 'C5', 'G4', 'Eb4']]
-    pno_r_dict[31] = [make_chord('eighth', p) for p in ['Bb3', 'D4', 'F4', 'Bb4', 'D5', 'Bb4', 'F4', 'D4']]
-    pno_r_dict[32] = [make_chord('eighth', p) for p in ['Ab3', 'C4', 'Eb4', 'Ab4', 'C5', 'Ab4', 'Eb4', 'C4']]
-    pno_r_dict[33] = [make_chord('eighth', p) for p in ['G3', 'Bb3', 'Eb4', 'G4', 'Bb4', 'G4', 'Eb4', 'Bb3']]
-    pno_r_dict[34] = [make_chord('eighth', p) for p in ['F3', 'A3', 'C4', 'F4', 'A4', 'F4', 'C4', 'A3']]
-    pno_r_dict[35] = [make_chord('eighth', p) for p in ['G3', 'B3', 'D4', 'G4', 'B4', 'G4', 'D4', 'B3']]
+    # Violin M39-42: THE MINI-CLIMAX! (小高潮! cresc. -> f -> apex on G6)
+    dyn_vln[38] = 'mf'
+    dyn_pno[38] = 'mf'
+    vln_dict[38] = [make_chord('quarter', 'G5'), make_chord('quarter', 'Bb5'), make_chord('half', 'Eb6', accent=True)]
+    dyn_vln[39] = 'f'
+    dyn_pno[39] = 'f'
+    vln_dict[39] = [make_chord('quarter', 'Ab5'), make_chord('quarter', 'C6'), make_chord('half', 'F6', accent=True)]
+    dyn_vln[40] = 'ff'
+    dyn_pno[40] = 'ff'
+    vln_dict[40] = [make_chord('quarter', 'G6', accent=True), make_chord('quarter', 'F6'), make_chord('half', 'Eb6', tenuto=True)]
+    dyn_vln[41] = 'f'
+    dyn_pno[41] = 'f'
+    vln_dict[41] = [make_chord('half', 'D6', accent=True), make_chord('half', 'B5', tenuto=True)]
 
-    # Piano RH M37-42: Piano plays expressive modal melody
-    dyn_pno[36] = 'mp'
-    pno_r_dict[36] = [make_chord('quarter', 'F5'), make_chord('quarter', 'G5'), make_chord('half', 'D5')]
-    pno_r_dict[37] = [make_chord('half', 'D5'), make_chord('quarter', 'E5'), make_chord('quarter', 'C5')]
-    pno_r_dict[38] = [make_chord('quarter', 'Eb5'), make_chord('quarter', 'F5'), make_chord('half', 'C5')]
-    pno_r_dict[39] = [make_chord('half', 'C5'), make_chord('quarter', 'D5'), make_chord('quarter', 'Bb4')]
-    pno_r_dict[40] = [make_chord('quarter', 'D5'), make_chord('quarter', 'C5'), make_chord('half', 'G4')]
-    pno_r_dict[41] = [make_chord('whole', 'G4')]
+    # Violin M43-46: FADE-OUT (淡出, calando, morendo, dim. -> pp -> silence)
+    dyn_vln[42] = 'p'
+    dyn_pno[42] = 'p'
+    vln_dict[42] = [make_chord('half', 'C6', tenuto=True), make_chord('half', 'G5')]
+    dyn_vln[43] = 'pp'
+    dyn_pno[43] = 'pp'
+    vln_dict[43] = [make_chord('half', 'Eb5'), make_chord('half', 'D5')]
+    dyn_vln[44] = 'ppp'
+    dyn_pno[44] = 'ppp'
+    vln_dict[44] = [make_chord('half', 'C5'), make_chord('half', 'B4', tenuto=True)]
+    vln_dict[45] = [make_chord('half', 'B4', tenuto=True), make_rest('half')]
 
-    # Piano RH M43-46: Harmonic suspension pp
-    dyn_pno[42] = 'pp'
-    pno_r_dict[42] = [make_chord('half', ['G4', 'C5']), make_chord('half', ['F#4', 'C5'])]
-    pno_r_dict[43] = [make_chord('whole', ['G4', 'B4'])]
-    pno_r_dict[44] = [make_chord('half', ['Eb4', 'G4']), make_chord('half', ['D4', 'F#4'])]
-    pno_r_dict[45] = [make_chord('whole', ['D4', 'G4', 'B4'])]
+    # Piano RH M29-32: Flowing, glittering accompaniment supporting Violin's luminous B2 melody
+    pno_r_dict[28] = [make_chord('eighth', p) for p in ['C4', 'E4', 'G4', 'C5', 'E5', 'C5', 'G4', 'E4']]
+    pno_r_dict[29] = [make_chord('eighth', p) for p in ['C4', 'F4', 'A4', 'C5', 'F5', 'C5', 'A4', 'F4']]
+    pno_r_dict[30] = [make_chord('eighth', p) for p in ['D4', 'G4', 'B4', 'D5', 'G5', 'D5', 'B4', 'G4']]
+    pno_r_dict[31] = [make_chord('eighth', p) for p in ['D4', 'G4', 'B4', 'D5', 'F5', 'D5', 'B4', 'G4']]
 
-    pno_l_dict[28] = [make_chord('whole', ['C2', 'Bb2'])]
-    pno_l_dict[29] = [make_chord('whole', ['D2', 'A2'])]
-    pno_l_dict[30] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[31] = [make_chord('whole', ['Bb1', 'F2'])]
-    pno_l_dict[32] = [make_chord('whole', ['Ab1', 'Eb2'])]
-    pno_l_dict[33] = [make_chord('whole', ['Eb2', 'Bb2'])]
-    pno_l_dict[34] = [make_chord('whole', ['F2', 'C3'])]
-    pno_l_dict[35] = [make_chord('whole', ['G2', 'D3'])]
-    pno_l_dict[36] = [make_chord('whole', ['Bb1', 'F2'])]
-    pno_l_dict[37] = [make_chord('whole', ['G1', 'D2'])]
-    pno_l_dict[38] = [make_chord('whole', ['Ab1', 'Eb2'])]
-    pno_l_dict[39] = [make_chord('whole', ['F1', 'C2'])]
-    pno_l_dict[40] = [make_chord('whole', ['G1', 'D2'])]
-    pno_l_dict[41] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[42] = [make_chord('whole', ['Eb2', 'C3'])]
-    pno_l_dict[43] = [make_chord('whole', ['D2', 'B2'])]
-    pno_l_dict[44] = [make_chord('whole', ['C2', 'G2'])]
-    pno_l_dict[45] = [make_chord('whole', ['G1', 'D2'])]
+    # Piano RH M33-34: Piano takes lead melody in dialogue
+    pno_r_dict[32] = [make_chord('quarter', 'C6'), make_chord('quarter', 'E6'), make_chord('half', 'A5')]
+    pno_r_dict[33] = [make_chord('quarter', 'D6'), make_chord('quarter', 'F6'), make_chord('half', 'D6')]
+
+    # Piano RH M35-38: Expressive modal arpeggios
+    pno_r_dict[34] = [make_chord('eighth', p) for p in ['D4', 'G4', 'Bb4', 'D5', 'G5', 'D5', 'Bb4', 'G4']]
+    pno_r_dict[35] = [make_chord('eighth', p) for p in ['C4', 'F4', 'A4', 'C5', 'F5', 'C5', 'A4', 'F4']]
+    pno_r_dict[36] = [make_chord('eighth', p) for p in ['D4', 'F4', 'A4', 'D5', 'F5', 'D5', 'A4', 'F4']]
+    pno_r_dict[37] = [make_chord('eighth', p) for p in ['C4', 'Eb4', 'G4', 'C5', 'Eb5', 'C5', 'G4', 'Eb4']]
+
+    # Piano RH M39-42: Mini-Climax Piano accompaniment & grand chords
+    pno_r_dict[38] = [make_chord('eighth', p) for p in ['Eb4', 'G4', 'Bb4', 'Eb5', 'G5', 'Eb5', 'Bb4', 'G4']]
+    pno_r_dict[39] = [make_chord('eighth', p) for p in ['F4', 'Ab4', 'C5', 'F5', 'Ab5', 'F5', 'C5', 'Ab4']]
+    pno_r_dict[40] = [make_chord('half', ['F5', 'Ab5', 'B5', 'D6'], accent=True), make_chord('half', ['Eb5', 'G5', 'C6'], accent=True)]
+    pno_r_dict[41] = [make_chord('half', ['D5', 'F5', 'B5'], accent=True), make_chord('half', ['D5', 'G5', 'B5'], tenuto=True)]
+
+    # Piano RH M43-46: Fade-out delicate chords and whisper into silence
+    pno_r_dict[42] = [make_chord('half', ['C5', 'E5', 'G5']), make_chord('half', ['C5', 'E5'])]
+    pno_r_dict[43] = [make_chord('half', ['C5', 'Eb5']), make_chord('half', ['B4', 'D5'])]
+    pno_r_dict[44] = [make_chord('half', ['G4', 'C5']), make_chord('half', ['F#4', 'C5'])]
+    pno_r_dict[45] = [make_chord('half', ['F4', 'G4', 'B4']), make_rest('half')]
+
+    # Piano LH M29-46
+    pno_l_dict[28] = [make_chord('quarter', 'C2'), make_chord('quarter', 'G2'), make_chord('quarter', ['E3', 'G3']), make_chord('quarter', 'G2')]
+    pno_l_dict[29] = [make_chord('quarter', 'F2'), make_chord('quarter', 'C3'), make_chord('quarter', ['F3', 'A3']), make_chord('quarter', 'C3')]
+    pno_l_dict[30] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['G3', 'B3']), make_chord('quarter', 'D3')]
+    pno_l_dict[31] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['F3', 'B3']), make_chord('quarter', 'G2')]
+    pno_l_dict[32] = [make_chord('quarter', 'A2'), make_chord('quarter', 'E3'), make_chord('quarter', ['C3', 'E3']), make_chord('quarter', 'E3')]
+    pno_l_dict[33] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', ['F3', 'A3']), make_chord('quarter', 'A2')]
+    pno_l_dict[34] = [make_chord('quarter', 'G2'), make_chord('quarter', 'D3'), make_chord('quarter', ['Bb2', 'D3']), make_chord('quarter', 'D3')]
+    pno_l_dict[35] = [make_chord('quarter', 'F2'), make_chord('quarter', 'C3'), make_chord('quarter', ['A2', 'C3']), make_chord('quarter', 'C3')]
+    pno_l_dict[36] = [make_chord('quarter', 'D2'), make_chord('quarter', 'A2'), make_chord('quarter', ['F2', 'A2']), make_chord('quarter', 'A2')]
+    pno_l_dict[37] = [make_chord('quarter', 'C2'), make_chord('quarter', 'G2'), make_chord('quarter', ['Eb3', 'G3']), make_chord('quarter', 'G2')]
+    pno_l_dict[38] = [make_chord('half', ['Eb2', 'Eb3'], accent=True), make_chord('half', ['G2', 'Bb2'])]
+    pno_l_dict[39] = [make_chord('half', ['F2', 'F3'], accent=True), make_chord('half', ['Ab2', 'C3'])]
+    pno_l_dict[40] = [make_chord('whole', ['G1', 'G2'], accent=True)]
+    pno_l_dict[41] = [make_chord('whole', ['G1', 'G2'], accent=True)]
+    pno_l_dict[42] = [make_chord('whole', ['C2', 'G2'])]
+    pno_l_dict[43] = [make_chord('whole', ['G1', 'D2'])]
+    pno_l_dict[44] = [make_chord('whole', ['G1', 'G2'])]
+    pno_l_dict[45] = [make_chord('half', ['G1', 'G2']), make_rest('half')]
 
     # === Part IV: M47–66 (C minor Development / Contrapuntal Depth) ===
     dyn_vln[46] = 'mp'
@@ -606,10 +630,12 @@ def generate_reconstructed_score():
     # Export MIDI and MP3 via MuseScore 4
     musescore_exe = r'C:\Program Files\MuseScore 4\bin\MuseScore4.exe'
     if os.path.exists(musescore_exe):
+        import time
         out_mid = 'music/The Unfallen Duet.mid'
         out_mp3 = 'music/The Unfallen Duet.mp3'
         print(f"Exporting reconstructed MIDI to {out_mid}...")
         subprocess.run([musescore_exe, '-o', os.path.abspath(out_mid), os.path.abspath(out_mscz)], check=True)
+        time.sleep(1)
         print(f"Exporting reconstructed MP3 to {out_mp3}...")
         subprocess.run([musescore_exe, '-o', os.path.abspath(out_mp3), os.path.abspath(out_mscz)], check=True)
         print("Reconstructed score, MIDI and MP3 exports completed successfully.")

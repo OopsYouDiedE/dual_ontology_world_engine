@@ -33,7 +33,7 @@ func terrain(target:TileMapLayer,area:Rect2i,set_id:int,label:String) -> void:
 
 func build() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
-	tiles=load("res://ShareAsset/victorian/tilesets/Victorian.tres")
+	tiles=load("res://ShareAsset/Victorian/tilesets/Victorian.tres")
 	for i in tiles.get_source_count():
 		var id:=tiles.get_source_id(i)
 		var source:=tiles.get_source(id) as TileSetAtlasSource

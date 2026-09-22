@@ -1,6 +1,6 @@
 extends SceneTree
 
-const OUT := "res://ShareAsset/rpg2d/resized48_shots/"
+const OUT := "res://ShareAsset/Images/resized48_shots/"
 var room:Node2D
 var tiles:TileSet
 var shot:int
