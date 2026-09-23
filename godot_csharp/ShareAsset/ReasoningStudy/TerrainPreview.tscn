@@ -1,0 +1,453 @@
+[gd_scene format=4]
+
+[ext_resource type="TileSet" path="res://ShareAsset/ReasoningStudy/Study.tres" id="1_oyogm"]
+
+[sub_resource type="SystemFont" id="SystemFont_iwuom"]
+font_names = PackedStringArray("Microsoft YaHei")
+
+[node name="StudyTerrainPreview" type="Node2D" unique_id=1476579876]
+texture_filter = 1
+
+[node name="@Polygon2D@2" type="Polygon2D" parent="." unique_id=109065978]
+color = Color(0.09019608, 0.11372549, 0.12941177, 1)
+polygon = PackedVector2Array(0, 0, 1280, 0, 1280, 950, 0, 950)
+
+[node name="Terrain_0_0" type="TileMapLayer" parent="." unique_id=69043594]
+position = Vector2(36, 46)
+tile_map_data = PackedByteArray("AAACAAIAAAAEAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@3" type="Label" parent="." unique_id=2095892504]
+offset_left = 36.0
+offset_top = 17.0
+offset_right = 36.0
+offset_bottom = 17.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石板地面 · 单格"
+
+[node name="Terrain_0_1" type="TileMapLayer" parent="." unique_id=1632277477]
+position = Vector2(282, 46)
+tile_map_data = PackedByteArray("AAAEAAQAAAACAAYAAAADAAQAAAAEAAQAAAACAAQAAAAEAAQAAAABAAQAAAAEAAQAAAAAAAQAAAAEAAYAAAAEAAMAAAAAAAQAAAADAAMAAAAAAAAAAAACAAMAAAAAAAAAAAABAAMAAAAAAAAAAAAAAAMAAAAEAAIAAAAEAAIAAAAAAAQAAAADAAIAAAAAAAAAAAACAAIAAAAAAAAAAAABAAIAAAAAAAAAAAAAAAIAAAAEAAIAAAAEAAEAAAAAAAQAAAADAAEAAAAAAAAAAAACAAEAAAAAAAAAAAABAAEAAAAAAAAAAAAAAAEAAAAEAAIAAAAEAAAAAAAAAAYAAAADAAAAAAACAAMAAAACAAAAAAACAAMAAAABAAAAAAACAAMAAAAAAAAAAAAEAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@4" type="Label" parent="." unique_id=1982584040]
+offset_left = 282.0
+offset_top = 17.0
+offset_right = 282.0
+offset_bottom = 17.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石板地面 · 连铺"
+
+[node name="Terrain_0_2" type="TileMapLayer" parent="." unique_id=2061287566]
+position = Vector2(528, 46)
+tile_map_data = PackedByteArray("AAAEAAQAAAADAAcAAAADAAQAAAADAAUAAAACAAQAAAADAAUAAAABAAQAAAADAAUAAAAAAAQAAAAFAAYAAAAAAAMAAAACAAUAAAAAAAIAAAACAAUAAAAAAAEAAAACAAUAAAAAAAAAAAAAAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@5" type="Label" parent="." unique_id=930313552]
+offset_left = 528.0
+offset_top = 17.0
+offset_right = 528.0
+offset_bottom = 17.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石板地面 · L形"
+
+[node name="Terrain_0_3" type="TileMapLayer" parent="." unique_id=1213580366]
+position = Vector2(774, 46)
+tile_map_data = PackedByteArray("AAAEAAQAAAADAAYAAAADAAQAAAADAAUAAAACAAQAAAADAAUAAAABAAQAAAADAAUAAAAAAAQAAAAFAAYAAAAEAAMAAAACAAUAAAAAAAMAAAACAAUAAAAEAAIAAAACAAUAAAAAAAIAAAACAAUAAAAEAAEAAAACAAUAAAAAAAEAAAACAAUAAAAEAAAAAAABAAYAAAADAAAAAAADAAUAAAACAAAAAAADAAUAAAABAAAAAAADAAUAAAAAAAAAAAAFAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@6" type="Label" parent="." unique_id=2114884407]
+offset_left = 774.0
+offset_top = 17.0
+offset_right = 774.0
+offset_bottom = 17.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石板地面 · 内孔"
+
+[node name="Terrain_0_4" type="TileMapLayer" parent="." unique_id=508405409]
+position = Vector2(1020, 46)
+tile_map_data = PackedByteArray("AAACAAQAAAACAAcAAAACAAMAAAACAAUAAAAEAAIAAAADAAcAAAADAAIAAAADAAUAAAACAAIAAAADAAIAAAABAAIAAAADAAUAAAAAAAIAAAABAAcAAAACAAEAAAACAAUAAAACAAAAAAAAAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@7" type="Label" parent="." unique_id=665561419]
+offset_left = 1020.0
+offset_top = 17.0
+offset_right = 1020.0
+offset_bottom = 17.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石板地面 · 交叉"
+
+[node name="Terrain_1_0" type="TileMapLayer" parent="." unique_id=1739239026]
+position = Vector2(36, 268)
+tile_map_data = PackedByteArray("AAACAAIAAAAKAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@8" type="Label" parent="." unique_id=968179649]
+offset_left = 36.0
+offset_top = 239.0
+offset_right = 36.0
+offset_bottom = 239.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "蓝金地毯 · 单格"
+
+[node name="Terrain_1_1" type="TileMapLayer" parent="." unique_id=673331534]
+position = Vector2(282, 268)
+tile_map_data = PackedByteArray("AAAEAAQAAAAIAAYAAAADAAQAAAAKAAQAAAACAAQAAAAKAAQAAAABAAQAAAAKAAQAAAAAAAQAAAAKAAYAAAAEAAMAAAAGAAQAAAADAAMAAAAGAAAAAAACAAMAAAAGAAAAAAABAAMAAAAGAAAAAAAAAAMAAAAKAAIAAAAEAAIAAAAGAAQAAAADAAIAAAAGAAAAAAACAAIAAAAGAAAAAAABAAIAAAAGAAAAAAAAAAIAAAAKAAIAAAAEAAEAAAAGAAQAAAADAAEAAAAGAAAAAAACAAEAAAAGAAAAAAABAAEAAAAGAAAAAAAAAAEAAAAKAAIAAAAEAAAAAAAGAAYAAAADAAAAAAAIAAMAAAACAAAAAAAIAAMAAAABAAAAAAAIAAMAAAAAAAAAAAAKAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@9" type="Label" parent="." unique_id=1848921327]
+offset_left = 282.0
+offset_top = 239.0
+offset_right = 282.0
+offset_bottom = 239.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "蓝金地毯 · 连铺"
+
+[node name="Terrain_1_2" type="TileMapLayer" parent="." unique_id=590582906]
+position = Vector2(528, 268)
+tile_map_data = PackedByteArray("AAAEAAQAAAAJAAcAAAADAAQAAAAJAAUAAAACAAQAAAAJAAUAAAABAAQAAAAJAAUAAAAAAAQAAAALAAYAAAAAAAMAAAAIAAUAAAAAAAIAAAAIAAUAAAAAAAEAAAAIAAUAAAAAAAAAAAAGAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@10" type="Label" parent="." unique_id=18323389]
+offset_left = 528.0
+offset_top = 239.0
+offset_right = 528.0
+offset_bottom = 239.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "蓝金地毯 · L形"
+
+[node name="Terrain_1_3" type="TileMapLayer" parent="." unique_id=1788294619]
+position = Vector2(774, 268)
+tile_map_data = PackedByteArray("AAAEAAQAAAAJAAYAAAADAAQAAAAJAAUAAAACAAQAAAAJAAUAAAABAAQAAAAJAAUAAAAAAAQAAAALAAYAAAAEAAMAAAAIAAUAAAAAAAMAAAAIAAUAAAAEAAIAAAAIAAUAAAAAAAIAAAAIAAUAAAAEAAEAAAAIAAUAAAAAAAEAAAAIAAUAAAAEAAAAAAAHAAYAAAADAAAAAAAJAAUAAAACAAAAAAAJAAUAAAABAAAAAAAJAAUAAAAAAAAAAAALAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@11" type="Label" parent="." unique_id=1813669455]
+offset_left = 774.0
+offset_top = 239.0
+offset_right = 774.0
+offset_bottom = 239.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "蓝金地毯 · 内孔"
+
+[node name="Terrain_1_4" type="TileMapLayer" parent="." unique_id=250438678]
+position = Vector2(1020, 268)
+tile_map_data = PackedByteArray("AAACAAQAAAAIAAcAAAACAAMAAAAIAAUAAAAEAAIAAAAJAAcAAAADAAIAAAAJAAUAAAACAAIAAAAJAAIAAAABAAIAAAAJAAUAAAAAAAIAAAAHAAcAAAACAAEAAAAIAAUAAAACAAAAAAAGAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@12" type="Label" parent="." unique_id=370887067]
+offset_left = 1020.0
+offset_top = 239.0
+offset_right = 1020.0
+offset_bottom = 239.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "蓝金地毯 · 交叉"
+
+[node name="Terrain_2_0" type="TileMapLayer" parent="." unique_id=769975664]
+position = Vector2(36, 490)
+tile_map_data = PackedByteArray("AAACAAIAAQADABsAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@13" type="Label" parent="." unique_id=1339579536]
+offset_left = 36.0
+offset_top = 461.0
+offset_right = 36.0
+offset_bottom = 461.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石砌墙面 · 单格"
+
+[node name="Terrain_2_1" type="TileMapLayer" parent="." unique_id=1864632418]
+position = Vector2(282, 490)
+tile_map_data = PackedByteArray("AAAEAAQAAQAAABsAAAADAAQAAQAAABoAAAACAAQAAQAAABoAAAABAAQAAQAAABoAAAAAAAQAAQABABoAAAAEAAMAAQAAABkAAAADAAMAAQAAABgAAAACAAMAAQAAABgAAAABAAMAAQAAABgAAAAAAAMAAQABABgAAAAEAAIAAQAAABkAAAADAAIAAQAAABgAAAACAAIAAQAAABgAAAABAAIAAQAAABgAAAAAAAIAAQABABgAAAAEAAEAAQAAABkAAAADAAEAAQAAABgAAAACAAEAAQAAABgAAAABAAEAAQAAABgAAAAAAAEAAQABABgAAAAEAAAAAQACABkAAAADAAAAAQACABgAAAACAAAAAQACABgAAAABAAAAAQACABgAAAAAAAAAAQADABgAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@14" type="Label" parent="." unique_id=95182006]
+offset_left = 282.0
+offset_top = 461.0
+offset_right = 282.0
+offset_bottom = 461.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石砌墙面 · 连铺"
+
+[node name="Terrain_2_2" type="TileMapLayer" parent="." unique_id=1773689312]
+position = Vector2(528, 490)
+tile_map_data = PackedByteArray("AAAEAAQAAQACABsAAAADAAQAAQACABoAAAACAAQAAQACABoAAAABAAQAAQACABoAAAAAAAQAAQABABoAAAAAAAMAAQABABkAAAAAAAIAAQABABkAAAAAAAEAAQABABkAAAAAAAAAAQADABkAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@15" type="Label" parent="." unique_id=2119048754]
+offset_left = 528.0
+offset_top = 461.0
+offset_right = 528.0
+offset_bottom = 461.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石砌墙面 · L形"
+
+[node name="Terrain_2_3" type="TileMapLayer" parent="." unique_id=188056987]
+position = Vector2(774, 490)
+tile_map_data = PackedByteArray("AAAEAAQAAQAAABsAAAADAAQAAQACABoAAAACAAQAAQACABoAAAABAAQAAQACABoAAAAAAAQAAQABABoAAAAEAAMAAQABABkAAAAAAAMAAQABABkAAAAEAAIAAQABABkAAAAAAAIAAQABABkAAAAEAAEAAQABABkAAAAAAAEAAQABABkAAAAEAAAAAQACABkAAAADAAAAAQACABoAAAACAAAAAQACABoAAAABAAAAAQACABoAAAAAAAAAAQADABgAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@16" type="Label" parent="." unique_id=1762218179]
+offset_left = 774.0
+offset_top = 461.0
+offset_right = 774.0
+offset_bottom = 461.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石砌墙面 · 内孔"
+
+[node name="Terrain_2_4" type="TileMapLayer" parent="." unique_id=1541383003]
+position = Vector2(1020, 490)
+tile_map_data = PackedByteArray("AAACAAQAAQABABsAAAACAAMAAQABABkAAAAEAAIAAQACABsAAAADAAIAAQACABoAAAACAAIAAQAAABgAAAABAAIAAQACABoAAAAAAAIAAQADABoAAAACAAEAAQABABkAAAACAAAAAQADABkAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@17" type="Label" parent="." unique_id=1312315877]
+offset_left = 1020.0
+offset_top = 461.0
+offset_right = 1020.0
+offset_bottom = 461.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石砌墙面 · 交叉"
+
+[node name="Terrain_3_0" type="TileMapLayer" parent="." unique_id=1291298293]
+position = Vector2(36, 712)
+tile_map_data = PackedByteArray("AAACAAIAAQAKAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@18" type="Label" parent="." unique_id=1904437644]
+offset_left = 36.0
+offset_top = 683.0
+offset_right = 36.0
+offset_bottom = 683.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木质墙顶 · 单格"
+
+[node name="Terrain_3_1" type="TileMapLayer" parent="." unique_id=799272444]
+position = Vector2(282, 712)
+tile_map_data = PackedByteArray("AAAEAAQAAQAIAAYAAAADAAQAAQAKAAQAAAACAAQAAQAKAAQAAAABAAQAAQAKAAQAAAAAAAQAAQAKAAYAAAAEAAMAAQAGAAQAAAADAAMAAQAGAAAAAAACAAMAAQAGAAAAAAABAAMAAQAGAAAAAAAAAAMAAQAKAAIAAAAEAAIAAQAGAAQAAAADAAIAAQAGAAAAAAACAAIAAQAGAAAAAAABAAIAAQAGAAAAAAAAAAIAAQAKAAIAAAAEAAEAAQAGAAQAAAADAAEAAQAGAAAAAAACAAEAAQAGAAAAAAABAAEAAQAGAAAAAAAAAAEAAQAKAAIAAAAEAAAAAQAGAAYAAAADAAAAAQAIAAMAAAACAAAAAQAIAAMAAAABAAAAAQAIAAMAAAAAAAAAAQAKAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@19" type="Label" parent="." unique_id=1916175187]
+offset_left = 282.0
+offset_top = 683.0
+offset_right = 282.0
+offset_bottom = 683.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木质墙顶 · 连铺"
+
+[node name="Terrain_3_2" type="TileMapLayer" parent="." unique_id=302557794]
+position = Vector2(528, 712)
+tile_map_data = PackedByteArray("AAAEAAQAAQAJAAcAAAADAAQAAQAJAAUAAAACAAQAAQAJAAUAAAABAAQAAQAJAAUAAAAAAAQAAQALAAYAAAAAAAMAAQAIAAUAAAAAAAIAAQAIAAUAAAAAAAEAAQAIAAUAAAAAAAAAAQAGAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@20" type="Label" parent="." unique_id=881063207]
+offset_left = 528.0
+offset_top = 683.0
+offset_right = 528.0
+offset_bottom = 683.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木质墙顶 · L形"
+
+[node name="Terrain_3_3" type="TileMapLayer" parent="." unique_id=290993454]
+position = Vector2(774, 712)
+tile_map_data = PackedByteArray("AAAEAAQAAQAJAAYAAAADAAQAAQAJAAUAAAACAAQAAQAJAAUAAAABAAQAAQAJAAUAAAAAAAQAAQALAAYAAAAEAAMAAQAIAAUAAAAAAAMAAQAIAAUAAAAEAAIAAQAIAAUAAAAAAAIAAQAIAAUAAAAEAAEAAQAIAAUAAAAAAAEAAQAIAAUAAAAEAAAAAQAHAAYAAAADAAAAAQAJAAUAAAACAAAAAQAJAAUAAAABAAAAAQAJAAUAAAAAAAAAAQALAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@21" type="Label" parent="." unique_id=1323893123]
+offset_left = 774.0
+offset_top = 683.0
+offset_right = 774.0
+offset_bottom = 683.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木质墙顶 · 内孔"
+
+[node name="Terrain_3_4" type="TileMapLayer" parent="." unique_id=1536742607]
+position = Vector2(1020, 712)
+tile_map_data = PackedByteArray("AAACAAQAAQAIAAcAAAACAAMAAQAIAAUAAAAEAAIAAQAJAAcAAAADAAIAAQAJAAUAAAACAAIAAQAJAAIAAAABAAIAAQAJAAUAAAAAAAIAAQAHAAcAAAACAAEAAQAIAAUAAAACAAAAAQAGAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@22" type="Label" parent="." unique_id=650055540]
+offset_left = 1020.0
+offset_top = 683.0
+offset_right = 1020.0
+offset_bottom = 683.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木质墙顶 · 交叉"
+
+[node name="Terrain_4_0" type="TileMapLayer" parent="." unique_id=493975885]
+visible = false
+position = Vector2(36, 934)
+tile_map_data = PackedByteArray("AAACAAIAAQAEAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@23" type="Label" parent="." unique_id=1445485064]
+visible = false
+offset_left = 36.0
+offset_top = 905.0
+offset_right = 36.0
+offset_bottom = 905.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石质墙顶 · 单格"
+
+[node name="Terrain_4_1" type="TileMapLayer" parent="." unique_id=774907043]
+visible = false
+position = Vector2(282, 934)
+tile_map_data = PackedByteArray("AAAEAAQAAQACAAYAAAADAAQAAQAEAAQAAAACAAQAAQAEAAQAAAABAAQAAQAEAAQAAAAAAAQAAQAEAAYAAAAEAAMAAQAAAAQAAAADAAMAAQAAAAAAAAACAAMAAQAAAAAAAAABAAMAAQAAAAAAAAAAAAMAAQAEAAIAAAAEAAIAAQAAAAQAAAADAAIAAQAAAAAAAAACAAIAAQAAAAAAAAABAAIAAQAAAAAAAAAAAAIAAQAEAAIAAAAEAAEAAQAAAAQAAAADAAEAAQAAAAAAAAACAAEAAQAAAAAAAAABAAEAAQAAAAAAAAAAAAEAAQAEAAIAAAAEAAAAAQAAAAYAAAADAAAAAQACAAMAAAACAAAAAQACAAMAAAABAAAAAQACAAMAAAAAAAAAAQAEAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@24" type="Label" parent="." unique_id=1744471025]
+visible = false
+offset_left = 282.0
+offset_top = 905.0
+offset_right = 282.0
+offset_bottom = 905.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石质墙顶 · 连铺"
+
+[node name="Terrain_4_2" type="TileMapLayer" parent="." unique_id=1161954144]
+visible = false
+position = Vector2(528, 934)
+tile_map_data = PackedByteArray("AAAEAAQAAQADAAcAAAADAAQAAQADAAUAAAACAAQAAQADAAUAAAABAAQAAQADAAUAAAAAAAQAAQAFAAYAAAAAAAMAAQACAAUAAAAAAAIAAQACAAUAAAAAAAEAAQACAAUAAAAAAAAAAQAAAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@25" type="Label" parent="." unique_id=1217699869]
+visible = false
+offset_left = 528.0
+offset_top = 905.0
+offset_right = 528.0
+offset_bottom = 905.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石质墙顶 · L形"
+
+[node name="Terrain_4_3" type="TileMapLayer" parent="." unique_id=1252102001]
+visible = false
+position = Vector2(774, 934)
+tile_map_data = PackedByteArray("AAAEAAQAAQADAAYAAAADAAQAAQADAAUAAAACAAQAAQADAAUAAAABAAQAAQADAAUAAAAAAAQAAQAFAAYAAAAEAAMAAQACAAUAAAAAAAMAAQACAAUAAAAEAAIAAQACAAUAAAAAAAIAAQACAAUAAAAEAAEAAQACAAUAAAAAAAEAAQACAAUAAAAEAAAAAQABAAYAAAADAAAAAQADAAUAAAACAAAAAQADAAUAAAABAAAAAQADAAUAAAAAAAAAAQAFAAUAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@26" type="Label" parent="." unique_id=389535963]
+visible = false
+offset_left = 774.0
+offset_top = 905.0
+offset_right = 774.0
+offset_bottom = 905.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石质墙顶 · 内孔"
+
+[node name="Terrain_4_4" type="TileMapLayer" parent="." unique_id=878606235]
+visible = false
+position = Vector2(1020, 934)
+tile_map_data = PackedByteArray("AAACAAQAAQACAAcAAAACAAMAAQACAAUAAAAEAAIAAQADAAcAAAADAAIAAQADAAUAAAACAAIAAQADAAIAAAABAAIAAQADAAUAAAAAAAIAAQABAAcAAAACAAEAAQACAAUAAAACAAAAAQAAAAcAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@27" type="Label" parent="." unique_id=714871373]
+visible = false
+offset_left = 1020.0
+offset_top = 905.0
+offset_right = 1020.0
+offset_bottom = 905.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "石质墙顶 · 交叉"
+
+[node name="Terrain_5_0" type="TileMapLayer" parent="." unique_id=397400284]
+visible = false
+position = Vector2(36, 1156)
+tile_map_data = PackedByteArray("AAACAAIAAQAHABsAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@28" type="Label" parent="." unique_id=1930632740]
+visible = false
+offset_left = 36.0
+offset_top = 1127.0
+offset_right = 36.0
+offset_bottom = 1127.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木护墙 · 单格"
+
+[node name="Terrain_5_1" type="TileMapLayer" parent="." unique_id=1872230962]
+visible = false
+position = Vector2(282, 1156)
+tile_map_data = PackedByteArray("AAAEAAQAAQAEABsAAAADAAQAAQAEABoAAAACAAQAAQAEABoAAAABAAQAAQAEABoAAAAAAAQAAQAFABoAAAAEAAMAAQAEABkAAAADAAMAAQAEABgAAAACAAMAAQAEABgAAAABAAMAAQAEABgAAAAAAAMAAQAFABgAAAAEAAIAAQAEABkAAAADAAIAAQAEABgAAAACAAIAAQAEABgAAAABAAIAAQAEABgAAAAAAAIAAQAFABgAAAAEAAEAAQAEABkAAAADAAEAAQAEABgAAAACAAEAAQAEABgAAAABAAEAAQAEABgAAAAAAAEAAQAFABgAAAAEAAAAAQAGABkAAAADAAAAAQAGABgAAAACAAAAAQAGABgAAAABAAAAAQAGABgAAAAAAAAAAQAHABgAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@29" type="Label" parent="." unique_id=701048957]
+visible = false
+offset_left = 282.0
+offset_top = 1127.0
+offset_right = 282.0
+offset_bottom = 1127.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木护墙 · 连铺"
+
+[node name="Terrain_5_2" type="TileMapLayer" parent="." unique_id=2121613982]
+visible = false
+position = Vector2(528, 1156)
+tile_map_data = PackedByteArray("AAAEAAQAAQAGABsAAAADAAQAAQAGABoAAAACAAQAAQAGABoAAAABAAQAAQAGABoAAAAAAAQAAQAFABoAAAAAAAMAAQAFABkAAAAAAAIAAQAFABkAAAAAAAEAAQAFABkAAAAAAAAAAQAHABkAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@30" type="Label" parent="." unique_id=1978540108]
+visible = false
+offset_left = 528.0
+offset_top = 1127.0
+offset_right = 528.0
+offset_bottom = 1127.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木护墙 · L形"
+
+[node name="Terrain_5_3" type="TileMapLayer" parent="." unique_id=1535709318]
+visible = false
+position = Vector2(774, 1156)
+tile_map_data = PackedByteArray("AAAEAAQAAQAEABsAAAADAAQAAQAGABoAAAACAAQAAQAGABoAAAABAAQAAQAGABoAAAAAAAQAAQAFABoAAAAEAAMAAQAFABkAAAAAAAMAAQAFABkAAAAEAAIAAQAFABkAAAAAAAIAAQAFABkAAAAEAAEAAQAFABkAAAAAAAEAAQAFABkAAAAEAAAAAQAGABkAAAADAAAAAQAGABoAAAACAAAAAQAGABoAAAABAAAAAQAGABoAAAAAAAAAAQAHABgAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@31" type="Label" parent="." unique_id=1569886312]
+visible = false
+offset_left = 774.0
+offset_top = 1127.0
+offset_right = 774.0
+offset_bottom = 1127.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木护墙 · 内孔"
+
+[node name="Terrain_5_4" type="TileMapLayer" parent="." unique_id=602584958]
+visible = false
+position = Vector2(1020, 1156)
+tile_map_data = PackedByteArray("AAACAAQAAQAFABsAAAACAAMAAQAFABkAAAAEAAIAAQAGABsAAAADAAIAAQAGABoAAAACAAIAAQAEABgAAAABAAIAAQAGABoAAAAAAAIAAQAHABoAAAACAAEAAQAFABkAAAACAAAAAQAHABkAAAA=")
+tile_set = ExtResource("1_oyogm")
+
+[node name="@Label@32" type="Label" parent="." unique_id=911840127]
+visible = false
+offset_left = 1020.0
+offset_top = 1127.0
+offset_right = 1020.0
+offset_bottom = 1127.0
+theme_override_fonts/font = SubResource("SystemFont_iwuom")
+theme_override_font_sizes/font_size = 16
+text = "木护墙 · 交叉"

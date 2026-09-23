@@ -66,13 +66,39 @@ public sealed class ActionRuntime(WorldRuntime world)
         }
         private Essence? Location(Essence essence)
         {
-            var state = Read(essence);
-            return state.Holder is { } holder ? Read(holder).Space : state.Space;
+            var visited = new HashSet<Essence>();
+            for (var parent = Read(essence).Holder ?? Read(essence).Space; parent is not null;
+                 parent = Read(parent).Holder ?? Read(parent).Space)
+            {
+                if (!visited.Add(parent) || !Read(parent).Exists) return null;
+                if (parent.Kind == ProjectionKind.Space) return parent;
+            }
+            return null;
         }
-        private bool Reachable(Essence essence) => ReferenceEquals(essence, actor) ||
+        private bool Accessible(Essence essence)
+        {
+            var visited = new HashSet<Essence>();
+            for (var parent = Read(essence).Holder ?? Read(essence).Space; parent is not null;
+                 parent = Read(parent).Holder ?? Read(parent).Space)
+            {
+                if (!visited.Add(parent) || !Read(parent).Exists || Read(parent).Locked == true ||
+                    parent.Kind == ProjectionKind.Body && !ReferenceEquals(parent, actor)) return false;
+                if (parent.Kind == ProjectionKind.Space) return true;
+            }
+            return true;
+        }
+        private bool Reachable(Essence essence) => ReferenceEquals(essence, actor) || Accessible(essence) &&
             Location(actor) is { } room && (ReferenceEquals(Location(essence), room) ||
                 essence.Kind == ProjectionKind.Space && ReferenceEquals(essence, room) ||
                 essence.Get<PassageProperty>()?.Connections.ContainsKey(room) == true);
+
+        private bool WouldCycle(Essence target, Essence destination)
+        {
+            var ancestors = new HashSet<Essence>();
+            for (Essence? parent = destination; parent is not null; parent = Read(parent).Holder ?? Read(parent).Space)
+                if (ReferenceEquals(parent, target) || !ancestors.Add(parent)) return true;
+            return false;
+        }
 
         public Truth Evaluate(Condition condition) => condition switch
         {
@@ -187,13 +213,24 @@ public sealed class ActionRuntime(WorldRuntime world)
                     Write(actor, Read(actor) with { Space = to, Holder = null });
                     break;
                 case ActionOp.Take:
-                    if (target.Get<SpatialProperty>() is null || target.Kind != ProjectionKind.Object || state.Holder is not null && !ReferenceEquals(state.Holder, actor))
+                    if (target.Get<SpatialProperty>() is null || target.Kind != ProjectionKind.Object || state.Holder is { Kind: ProjectionKind.Body } holder && !ReferenceEquals(holder, actor))
                     { Failure = ActionFailure.UnsupportedOperation; return; }
+                    if (WouldCycle(target, actor)) { Failure = ActionFailure.ConditionFailed; return; }
                     Write(target, state with { Holder = actor, Space = null });
                     break;
+                case ActionOp.Place:
+                    // Tool names the destination support; placement preserves the existing object identity.
+                    if (action.Tool is null || Resolve(action.Tool) is not { } destination)
+                    { Failure = ActionFailure.MissingObject; return; }
+                    if (!ReferenceEquals(state.Holder, actor) || !Reachable(destination))
+                    { Failure = ActionFailure.OutOfReach; return; }
+                    if (Read(destination).Locked == true || destination.Kind is not (ProjectionKind.Object or ProjectionKind.Space))
+                    { Failure = ActionFailure.ConditionFailed; return; }
+                    if (WouldCycle(target, destination)) { Failure = ActionFailure.ConditionFailed; return; }
+                    Write(target, state with { Holder = null, Space = destination });
+                    break;
                 case ActionOp.Inspect:
-                    if (world.Representations(target).FirstOrDefault(p => p.Parent is null ||
-                        ReferenceEquals(world.Resolve(p.Parent), actor) || ReferenceEquals(world.Resolve(p.Parent), Location(actor))) is { } view) _inspections.Add(view);
+                    if (world.Representations(target).FirstOrDefault() is { } view) _inspections.Add(view);
                     else Failure = ActionFailure.OutOfReach;
                     break;
                 case ActionOp.Destroy: Write(target, state with { Exists = false }); break;
@@ -230,4 +267,3 @@ public sealed class ActionRuntime(WorldRuntime world)
         }
     }
 }
-

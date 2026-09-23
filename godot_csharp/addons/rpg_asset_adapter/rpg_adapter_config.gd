@@ -5,6 +5,8 @@ extends Resource
 ## Configuration resource for RPG Asset Adapter.
 ## Saved as .tres to control batch import parameters.
 
+const DEFAULT_CONFIG_PATH := "res://ShareAsset/Victorian/victorian_config.tres"
+
 @export_dir var source_dir: String = "res://ShareAsset/Victorian/source"
 @export_dir var output_dir: String = "res://ShareAsset/Victorian"
 @export var theme_name: String = "Victorian"

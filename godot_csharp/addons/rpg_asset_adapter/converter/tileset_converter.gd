@@ -35,9 +35,9 @@ const CUSTOM_DATA_LAYERS: Array[Dictionary] = [
 
 
 ## Creates a new Godot 4 TileSet configured with two TerrainSets and 21 custom data layers.
-static func create_tileset(tile_size: int = 48) -> TileSet:
+static func create_tileset(tile_size: int = 32) -> TileSet:
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	var ts := TileSet.new()
 	ts.tile_size = Vector2i(tile_size, tile_size)
@@ -95,14 +95,14 @@ static func add_autotile_atlas_source(
 	tileset: TileSet,
 	atlas_img: Image,
 	autotile_meta: Dictionary,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	tex_res_path: String = ""
 ) -> TileSetAtlasSource:
 	if tileset == null or atlas_img == null:
 		return null
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	ensure_tileset_layers(tileset)
 
@@ -212,7 +212,7 @@ static func add_normal_atlas_source(
 	tileset: TileSet,
 	img_or_tex: Variant,
 	kind: AssetDetectorScript.AssetKind,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	extra: Dictionary = {},
 	res_path: String = ""
 ) -> TileSetAtlasSource:
@@ -220,7 +220,7 @@ static func add_normal_atlas_source(
 		return null
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	ensure_tileset_layers(tileset)
 

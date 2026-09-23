@@ -9,6 +9,7 @@ const AssetDetectorScript = preload("res://addons/rpg_asset_adapter/detector/ass
 const BaseProfileScript = preload("res://addons/rpg_asset_adapter/profiles/base_profile.gd")
 const RpgMakerProfileScript = preload("res://addons/rpg_asset_adapter/profiles/rpg_maker_profile.gd")
 const KrProfileScript = preload("res://addons/rpg_asset_adapter/profiles/kr_profile.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 const DEFAULT_FPS: float = 6.0
 const DEFAULT_OBJECT_ROW_NAMES: Array[String] = ["row_0", "row_1", "row_2", "row_3"]
@@ -16,35 +17,7 @@ const DEFAULT_OBJECT_ROW_NAMES: Array[String] = ["row_0", "row_1", "row_2", "row
 
 ## Resolves input into Texture2D and Image.
 static func _resolve_texture_and_image(source: Variant) -> Dictionary:
-	var texture: Texture2D = null
-	var image: Image = null
-
-	if source is String:
-		var path: String = source
-		if ResourceLoader.exists(path):
-			var res = ResourceLoader.load(path)
-			if res is Texture2D:
-				texture = res
-				image = texture.get_image()
-		if image == null:
-			var global_path := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
-			if FileAccess.file_exists(global_path):
-				image = Image.load_from_file(global_path)
-				if image != null:
-					texture = ImageTexture.create_from_image(image)
-					if path.begins_with("res://"):
-						texture.take_over_path(path)
-	elif source is Texture2D:
-		texture = source
-		image = texture.get_image()
-	elif source is Image:
-		image = source
-		texture = ImageTexture.create_from_image(image)
-
-	return {
-		"texture": texture,
-		"image": image
-	}
+	return SourceLoader.resolve_texture_and_image(source)
 
 
 ## Resolves row animation names based on profile, asset kind, or custom row names array.
@@ -177,7 +150,7 @@ static func slice_object_sheet(
 ## │   └── CollisionShape2D (name="CollisionShape2D", shape=RectangleShape2D(size=(tile_size, tile_size)))
 ## └── Area2D (name="TriggerArea")
 ##     └── CollisionShape2D (name="CollisionShape2D", shape=RectangleShape2D(size=(tile_size, tile_size)))
-static func create_door_scene(frames: SpriteFrames, tile_size: int = 48) -> PackedScene:
+static func create_door_scene(frames: SpriteFrames, tile_size: int = 32) -> PackedScene:
 	var root := Node2D.new()
 	root.name = "Door"
 
@@ -232,7 +205,7 @@ static func create_door_scene(frames: SpriteFrames, tile_size: int = 48) -> Pack
 ## │   └── CollisionShape2D (name="CollisionShape2D", shape=RectangleShape2D(size=(tile_size, tile_size)))
 ## └── Area2D (name="TriggerArea")
 ##     └── CollisionShape2D (name="CollisionShape2D", shape=RectangleShape2D(size=(tile_size, tile_size)))
-static func create_chest_scene(frames: SpriteFrames, tile_size: int = 48) -> PackedScene:
+static func create_chest_scene(frames: SpriteFrames, tile_size: int = 32) -> PackedScene:
 	var root := Node2D.new()
 	root.name = "TreasureChest"
 
@@ -362,7 +335,7 @@ static func extract_strip_frames(
 	y_tile: int,
 	orientation: String = "v",
 	frames_count: int = 4,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	fps: float = DEFAULT_FPS,
 	is_interactive: bool = true
 ) -> SpriteFrames:
@@ -438,7 +411,7 @@ static func extract_strip_frames(
 
 ## Slices door sprite sheets into individual door scenes & frames based on explicit layout descriptors.
 ## Returns Dictionary with objects, scenes, sprite_frames, packed_scene.
-static func slice_doors(source: Variant, tile_size: int = 48, fps: float = DEFAULT_FPS) -> Dictionary:
+static func slice_doors(source: Variant, tile_size: int = 32, fps: float = DEFAULT_FPS) -> Dictionary:
 	var resolved := _resolve_texture_and_image(source)
 	var image: Image = resolved["image"]
 	var texture: Texture2D = resolved["texture"]
@@ -589,7 +562,7 @@ static func slice_doors(source: Variant, tile_size: int = 48, fps: float = DEFAU
 
 ## Slices treasure chest sheets strictly according to (x_tile=1, y_tile=1 or 2, orientation="v", frames=4).
 ## Supports front/back (1x1 tile) and side-view left/right (1x2 tiles).
-static func slice_chests(source: Variant, tile_size: int = 48, fps: float = DEFAULT_FPS) -> Dictionary:
+static func slice_chests(source: Variant, tile_size: int = 32, fps: float = DEFAULT_FPS) -> Dictionary:
 	var resolved := _resolve_texture_and_image(source)
 	var image: Image = resolved["image"]
 	var texture: Texture2D = resolved["texture"]
@@ -857,7 +830,7 @@ static func create_interactive_object_scene(frames: SpriteFrames, root_name: Str
 static func slice_tagged_animation(
 	source: Variant,
 	tag_data: Dictionary,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	fps: float = DEFAULT_FPS
 ) -> Dictionary:
 	var resolved := _resolve_texture_and_image(source)

@@ -6,6 +6,7 @@ extends RefCounted
 ## Supports directional animations (walk_down, walk_left, walk_right, walk_up) and object alignment offset.
 
 const AssetDetectorScript = preload("res://addons/rpg_asset_adapter/detector/asset_detector.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 const DEFAULT_FPS: float = 6.0
 const WALK_SEQUENCE: Array[int] = [0, 1, 2, 1]
@@ -23,33 +24,7 @@ static func calculate_offset_y(tile_size: int, has_exclamation: bool) -> float:
 
 ## Resolves input into a Texture2D and Image.
 static func _resolve_texture_and_image(source: Variant) -> Dictionary:
-	var texture: Texture2D = null
-	var image: Image = null
-
-	if source is String:
-		var path: String = source
-		if ResourceLoader.exists(path):
-			var res = ResourceLoader.load(path)
-			if res is Texture2D:
-				texture = res
-				image = texture.get_image()
-		if image == null:
-			var global_path := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
-			if FileAccess.file_exists(global_path):
-				image = Image.load_from_file(global_path)
-				if image != null:
-					texture = ImageTexture.create_from_image(image)
-	elif source is Texture2D:
-		texture = source
-		image = texture.get_image()
-	elif source is Image:
-		image = source
-		texture = ImageTexture.create_from_image(image)
-
-	return {
-		"texture": texture,
-		"image": image
-	}
+	return SourceLoader.resolve_texture_and_image(source)
 
 
 ## Slices a single character ($) image (3 cols x 4 rows) into a SpriteFrames resource.
@@ -57,7 +32,7 @@ static func _resolve_texture_and_image(source: Variant) -> Dictionary:
 ## Walk sequence per direction: 0 -> 1 -> 2 -> 1.
 static func slice_single_character(
 	source: Variant,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	has_exclamation: bool = false,
 	fps: float = DEFAULT_FPS
 ) -> SpriteFrames:
@@ -102,7 +77,7 @@ static func slice_single_character(
 ## 4 characters across x 2 characters down.
 static func slice_character_sheet(
 	source: Variant,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	has_exclamation: bool = false,
 	fps: float = DEFAULT_FPS
 ) -> Array[SpriteFrames]:

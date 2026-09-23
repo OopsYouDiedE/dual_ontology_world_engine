@@ -4,7 +4,7 @@ namespace DualOntologyWorldEngine.Core;
 
 public enum RuleSlot { Actor, Target, Tool, Scene }
 public enum RuleMode { Require, Forbid, Permit, Prefer }
-public enum ActionOp { Unlock, Travel, Take, Inspect, Destroy }
+public enum ActionOp { Unlock, Travel, Take, Inspect, Destroy, Place }
 
 public abstract record Noun
 {
@@ -177,4 +177,3 @@ public static class Ast
         _ => left == right
     };
 }
-

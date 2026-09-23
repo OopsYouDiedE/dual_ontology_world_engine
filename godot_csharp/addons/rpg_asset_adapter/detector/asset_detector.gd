@@ -6,6 +6,7 @@ extends RefCounted
 ## Performs deterministic categorization and tile size inference.
 
 const RegexRulesScript = preload("res://addons/rpg_asset_adapter/detector/regex_rules.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 enum TileSize {
 	SIZE_16 = 16,
@@ -14,7 +15,7 @@ enum TileSize {
 	SIZE_64 = 64
 }
 
-const DEFAULT_TILE_SIZE := TileSize.SIZE_48
+const DEFAULT_TILE_SIZE := TileSize.SIZE_32
 
 enum DetectMode {
 	AUTO,
@@ -57,14 +58,14 @@ enum AssetKind {
 class AssetInfo extends RefCounted:
 	var kind: AssetKind = AssetKind.UNKNOWN
 	var path: String = ""
-	var tile_size: int = 48
+	var tile_size: int = 32
 	var extra: Dictionary = {}
 	var warning: String = ""
 
 	func _init(
 		p_kind: AssetKind = AssetKind.UNKNOWN,
 		p_path: String = "",
-		p_tile_size: int = 48,
+		p_tile_size: int = 32,
 		p_extra: Dictionary = {},
 		p_warning: String = ""
 	) -> void:
@@ -282,7 +283,7 @@ static func validate_asset_consistency(path: String, kind: AssetKind, tile_size:
 	if not FileAccess.file_exists(global_path):
 		return ""
 
-	var img := Image.load_from_file(global_path)
+	var img: Image = SourceLoader.resolve_image(path)
 	if img == null:
 		return "Failed to load image for consistency check: %s" % path.get_file()
 
@@ -336,7 +337,7 @@ static func validate_asset_consistency(path: String, kind: AssetKind, tile_size:
 
 
 ## Resolves tile size following the priority:
-## Manual size -> Filename (px or WxH) -> Sheet ratio inference -> Default 48 with warning if unsupported.
+## Manual size -> Filename (px or WxH) -> Sheet ratio inference -> Default 32.
 static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0) -> Dictionary:
 	# 1. Manual size check
 	if manual_size > 0:
@@ -344,7 +345,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 			return {"size": manual_size, "warning": ""}
 		return {
 			"size": DEFAULT_TILE_SIZE,
-			"warning": "Unsupported manual tile size: %d, fallback to 48" % manual_size
+			"warning": "Unsupported manual tile size: %d, fallback to 32" % manual_size
 		}
 
 	# 2. Filename check
@@ -362,7 +363,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 			var cnt := int(tag_m.get_string(5))
 			var global_p := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
 			if FileAccess.file_exists(global_p):
-				var img := Image.load_from_file(global_p)
+				var img: Image = SourceLoader.resolve_image(path)
 				if img != null:
 					var ih := img.get_height()
 					var iw := img.get_width()
@@ -387,7 +388,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 				return {"size": w_val, "warning": ""}
 			return {
 				"size": DEFAULT_TILE_SIZE,
-				"warning": "Unsupported tile size in filename: %dx%d, fallback to 48" % [w_val, h_val]
+				"warning": "Unsupported tile size in filename: %dx%d, fallback to 32" % [w_val, h_val]
 			}
 
 	var match_px := RegexRulesScript.regex_search(RegexRulesScript.REGEX_SIZE_PX, stem)
@@ -397,7 +398,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 			return {"size": px_val, "warning": ""}
 		return {
 			"size": DEFAULT_TILE_SIZE,
-			"warning": "Unsupported tile size in filename: %dpx, fallback to 48" % px_val
+			"warning": "Unsupported tile size in filename: %dpx, fallback to 32" % px_val
 		}
 
 	# 3. Sheet ratio inference from Image dimensions
@@ -424,7 +425,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 	if expected_w_tiles > 0 and expected_h_tiles > 0:
 		var global_path := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
 		if FileAccess.file_exists(global_path):
-			var img := Image.load_from_file(global_path)
+			var img: Image = SourceLoader.resolve_image(path)
 			if img:
 				var img_w := img.get_width()
 				var img_h := img.get_height()
@@ -436,7 +437,7 @@ static func detect_tile_size(path: String, kind: AssetKind, manual_size: int = 0
 							return {"size": tw, "warning": ""}
 						return {
 							"size": DEFAULT_TILE_SIZE,
-							"warning": "Unsupported tile size: %d, fallback to 48" % tw
+							"warning": "Unsupported tile size: %d, fallback to 32" % tw
 						}
 
 	# 4. Default fallback

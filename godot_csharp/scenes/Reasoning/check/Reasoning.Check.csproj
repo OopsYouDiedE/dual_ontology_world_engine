@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="tea/**" />
     <ProjectReference Include="../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
     <Compile Include="../BreakfastCase.cs" Link="BreakfastCase.cs" />
     <Compile Include="../RuleLanguage.cs" Link="RuleLanguage.cs" />

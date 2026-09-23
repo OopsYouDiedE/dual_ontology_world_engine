@@ -7,6 +7,7 @@ extends RefCounted
 ## (upper_layer, ladder, bush, counter, damage_floor, terrain_tag) to Godot 4 TileSets.
 
 const AssetDetectorScript = preload("res://addons/rpg_asset_adapter/detector/asset_detector.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 # RPG Maker Tileset Slot Indices:
 # tilesetNames = [A1, A2, A3, A4, A5, B, C, D, E]
@@ -63,7 +64,7 @@ static func ensure_tileset_layers(tileset: TileSet) -> void:
 
 
 ## Decodes a 16-bit tile flag into individual flags and passability attributes.
-static func decode_tile_flags(flag: int, tile_size: int = 48) -> Dictionary:
+static func decode_tile_flags(flag: int, tile_size: int = 32) -> Dictionary:
 	var blocked_down := (flag & 0x01) != 0
 	var blocked_left := (flag & 0x02) != 0
 	var blocked_right := (flag & 0x04) != 0
@@ -106,7 +107,7 @@ static func decode_tile_flags(flag: int, tile_size: int = 48) -> Dictionary:
 ## Non-star tiles blocked in all directions get a square collision on physics layer 0.
 ## If all 4 directions open: no collision polygon.
 ## Always writes directional flags; the game layer handles partial blocking and star semantics.
-static func apply_flag_to_tile_data(tile_data: TileData, flag: int, tile_size: int = 48) -> Dictionary:
+static func apply_flag_to_tile_data(tile_data: TileData, flag: int, tile_size: int = 32) -> Dictionary:
 	var decoded := decode_tile_flags(flag, tile_size)
 
 	# Write false/zero values too, so reapplying metadata clears previous flags.
@@ -138,14 +139,7 @@ static func apply_flag_to_tile_data(tile_data: TileData, flag: int, tile_size: i
 static func parse_tilesets_json(json_or_path: Variant) -> Array:
 	var content: String = ""
 	if json_or_path is String:
-		var s: String = json_or_path
-		var global_path := ProjectSettings.globalize_path(s) if s.begins_with("res://") else s
-		if FileAccess.file_exists(global_path):
-			content = FileAccess.get_file_as_string(global_path)
-		elif FileAccess.file_exists(s):
-			content = FileAccess.get_file_as_string(s)
-		else:
-			content = s
+		content = SourceLoader.read_text(json_or_path)
 	elif json_or_path is Array:
 		return json_or_path
 	else:
@@ -256,7 +250,7 @@ static func apply_flags_to_source(
 	source: TileSetAtlasSource,
 	flags: Array,
 	slot_index: int,
-	tile_size: int = 48
+	tile_size: int = 32
 ) -> int:
 	var applied_count := 0
 	var tile_ids: Dictionary = source.get_meta("rpg_tile_ids", {})
@@ -278,7 +272,7 @@ static func apply_flags_to_source(
 static func apply_metadata_to_tileset(
 	tileset: TileSet,
 	tileset_info: Dictionary,
-	tile_size: int = 48,
+	tile_size: int = 32,
 	source_slot_mapping: Dictionary = {}
 ) -> int:
 	ensure_tileset_layers(tileset)

@@ -8,46 +8,14 @@ extends RefCounted
 
 const AutotileTables = preload("res://addons/rpg_asset_adapter/data/autotile_tables.gd")
 const AssetDetectorScript = preload("res://addons/rpg_asset_adapter/detector/asset_detector.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 const ANIMATION_DURATION: float = 0.5
 
 
 ## Resolves input into an Image (supports Image, Texture2D, or file path String).
 static func _resolve_image(source: Variant) -> Image:
-	if source is Image:
-		var img: Image = source
-		if img.is_compressed():
-			img = img.duplicate()
-			img.decompress()
-		return img
-	if source is Texture2D:
-		var tex := source as Texture2D
-		var img: Image = tex.get_image()
-		if img != null and img.is_compressed():
-			img = img.duplicate()
-			img.decompress()
-		return img
-	if source is String:
-		var path: String = source
-		if ResourceLoader.exists(path):
-			var res := ResourceLoader.load(path)
-			if res is Texture2D:
-				var tex := res as Texture2D
-				var img: Image = tex.get_image()
-				if img != null:
-					if img.is_compressed():
-						img = img.duplicate()
-						img.decompress()
-					return img
-		var global_path := ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
-		if FileAccess.file_exists(global_path):
-			var img := Image.load_from_file(global_path)
-			if img != null:
-				if img.is_compressed():
-					img.decompress()
-				return img
-
-	return null
+	return SourceLoader.resolve_image(source)
 
 
 ## Takes a 2T × 3T source block from an image, slices it into 4×6 quarter-tiles (T/2 × T/2),
@@ -160,13 +128,13 @@ static func reconstruct_waterfall_autotile(
 ## horizontally as [Frame 0, Frame 1, Frame 2, Frame 1] with frames_count = 4.
 ## Waterfall autotiles (4 shapes) are laid out horizontally as [Frame 0, Frame 1, Frame 2] with frames_count = 3.
 ## Returns {"image": Image, "autotiles": Array}.
-static func generate_a1_derived_atlas(a1_path_or_img: Variant, tile_size: int = 48) -> Dictionary:
+static func generate_a1_derived_atlas(a1_path_or_img: Variant, tile_size: int = 32) -> Dictionary:
 	var src_img := _resolve_image(a1_path_or_img)
 	if src_img == null:
 		return {"image": null, "autotiles": []}
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	var autotiles: Array = []
 
@@ -344,13 +312,13 @@ static func generate_a1_derived_atlas(a1_path_or_img: Variant, tile_size: int = 
 ## Slices each block into 48 shapes into a compact derived atlas (48 tiles wide × 32 tiles high).
 ## Supports custom data: rpg_a2_group, rpg_a2_overlay, counter, counter_visual_offset.
 ## Returns {"image": Image, "autotiles": Array}.
-static func generate_a2_derived_atlas(a2_path_or_img: Variant, tile_size: int = 48) -> Dictionary:
+static func generate_a2_derived_atlas(a2_path_or_img: Variant, tile_size: int = 32) -> Dictionary:
 	var src_img := _resolve_image(a2_path_or_img)
 	if src_img == null:
 		return {"image": null, "autotiles": []}
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	var autotiles: Array = []
 	# Left 4 columns (16 blocks of 2T x 3T) become 48-shape autotiles:
@@ -455,13 +423,13 @@ static func generate_a2_derived_atlas(a2_path_or_img: Variant, tile_size: int = 
 ## Slices each block into 16 shapes into a compact derived atlas (32 tiles wide × 16 tiles high).
 ## Supports custom data: rpg_type ("roof" or "wall"), auto_shadow_right = true.
 ## Returns {"image": Image, "autotiles": Array}.
-static func generate_a3_derived_atlas(a3_path_or_img: Variant, tile_size: int = 48) -> Dictionary:
+static func generate_a3_derived_atlas(a3_path_or_img: Variant, tile_size: int = 32) -> Dictionary:
 	var src_img := _resolve_image(a3_path_or_img)
 	if src_img == null:
 		return {"image": null, "autotiles": []}
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	var autotiles: Array = []
 	var atlas_w_tiles := 32  # 8 blocks * 4 tiles
@@ -524,13 +492,13 @@ static func generate_a3_derived_atlas(a3_path_or_img: Variant, tile_size: int = 
 ## Wall Top: 48 shapes via FLOOR_AUTOTILE_TABLE (TerrainSet 0, MATCH_CORNERS_AND_SIDES).
 ## Wall Side: 16 shapes via WALL_AUTOTILE_TABLE (TerrainSet 1, MATCH_SIDES).
 ## Returns {"image": Image, "autotiles": Array}.
-static func generate_a4_derived_atlas(a4_path_or_img: Variant, tile_size: int = 48) -> Dictionary:
+static func generate_a4_derived_atlas(a4_path_or_img: Variant, tile_size: int = 32) -> Dictionary:
 	var src_img := _resolve_image(a4_path_or_img)
 	if src_img == null:
 		return {"image": null, "autotiles": []}
 
 	if tile_size <= 0:
-		tile_size = 48
+		tile_size = 32
 
 	var autotiles: Array = []
 	# Wall Top: 8 cols * 6 tiles = 48 tiles wide; 3 rows * 8 tiles = 24 tiles high.

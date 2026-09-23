@@ -1,3 +1,5 @@
+> 仅为旧源图的生成记录。下列48px等参数用于追溯历史产物，不作为当前制作指令；现行规范见仓库 docs/design-standard.md。
+
 # 地形纹理重绘提示词
 
 工具：内置 imagegen。编辑目标为原始 Victorian A2 / A4；shot-03 和 shot-19 仅作为风格参考。
@@ -9,4 +11,3 @@ Use case: style-transfer. Image 1 EDIT TARGET is RPG Maker MV native A2 floor au
 ## A4
 
 Use case: style-transfer. Image1 is EDIT TARGET, a 768x720 RPG Maker MV A4 wall autotile atlas. Images2-3 style references only. Repaint the target textures for mysterious Victorian academy. Keep EXACT same atlas layout: 8 columns, each96px; 3 bands each240px high, each band has upper144px autotile caps and lower96px wall fronts. Preserve all border and corner positions, transparency, shape silhouettes; do not shift/scale any subpiece. Keep 768x720 canvas and no padding. No new layout. Use slate blue-gray and warm charcoal stone, dark walnut wood panelling, aged brass trim, burgundy damask wallpaper, muted blue patterned wallpaper. Desaturate orange and bright white. Most important first band column5 (x480..575): repaint stone cap and stone wall faces as dark blue-gray masonry matching corridor reference, clear small mortar joints, restrained pixel highlights. Other white/plaster surfaces become warm gray plaster. Existing wooden panels become dark walnut; existing gold trim becomes antique brass; wallpaper designs simplified burgundy, navy and charcoal gold. This is flat texture artwork not a room, no props no lighting/vignette/no labels/no grid guides. Pixel-art hard edges, finite shading ramps, 48px map tile native density. Preserve source layout and all 24px half-tile borders rigorously.
-

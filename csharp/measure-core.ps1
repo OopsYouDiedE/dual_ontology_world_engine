@@ -1,20 +1,25 @@
 $ErrorActionPreference = 'Stop'
-function Measure-CoreSource([string] $directory) {
-    $files = @(Get-ChildItem -LiteralPath $directory -Recurse -Filter '*.cs' |
-        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
-    $lines = @($files | ForEach-Object { Get-Content -LiteralPath $_.FullName })
+
+$sourceRoot = $PSScriptRoot
+$sourceRootPrefix = [System.IO.Path]::GetFullPath($sourceRoot).TrimEnd([char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)) + [System.IO.Path]::DirectorySeparatorChar
+$generatedPathPattern = '[\\/](bin|obj)[\\/]'
+$sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -Recurse -File -Filter '*.cs' |
+    Where-Object { $_.FullName -notmatch $generatedPathPattern } |
+    Sort-Object FullName)
+
+$fileMeasurements = foreach ($file in $sourceFiles) {
+    $lines = [System.IO.File]::ReadAllLines($file.FullName)
     [pscustomobject]@{
-        Directory = $directory
-        Files = $files.Count
-        Lines = $lines.Count
-        Nonempty = @($lines | Where-Object { $_.Trim().Length -gt 0 }).Count
+        Path = $file.FullName.Substring($sourceRootPrefix.Length).Replace('\', '/')
+        Lines = $lines.Length
+        NonemptyLines = @($lines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count
     }
 }
-$baseline = Measure-CoreSource (Join-Path $PSScriptRoot 'legacy/core')
-$current = Measure-CoreSource (Join-Path $PSScriptRoot 'core')
+
 [pscustomobject]@{
-    Baseline = $baseline
-    Current = $current
-    ActiveCoreReductionPercent = [Math]::Round(100 * (1 - $current.Lines / $baseline.Lines), 2)
-    Scope = '正式 Core 的源码规模比较。legacy 源码仍然保留；不是仓库总代码删除比例，也不是旧业务功能逐项等价的证明。'
-} | ConvertTo-Json -Depth 3
+    Scope = 'Current C# Core source under csharp/; recursively includes .cs files and excludes generated bin/ and obj/ trees.'
+    SourceFiles = $fileMeasurements.Count
+    TotalLines = ($fileMeasurements | Measure-Object -Property Lines -Sum).Sum
+    NonemptyLines = ($fileMeasurements | Measure-Object -Property NonemptyLines -Sum).Sum
+    Files = @($fileMeasurements)
+} | ConvertTo-Json -Depth 4

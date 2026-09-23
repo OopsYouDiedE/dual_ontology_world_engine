@@ -24,8 +24,8 @@
 [ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_2.res" id="22_pn28r"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_0.res" id="23_lefh4"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_4.res" id="24_4dr3w"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/detective_back.res" id="25_wknol"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/musician_front.res" id="26_jx0uq"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/06_detective.tres" id="25_wknol"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/08_musician.tres" id="26_jx0uq"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/morning_light.res" id="27_gq4y6"]
 [ext_resource type="Shader" path="res://scenes/Shot01/edge_shade.gdshader" id="28_hj13r"]
 
@@ -412,7 +412,7 @@ scale = Vector2(0.85, 0.16)
 texture = ExtResource("25_wknol")
 
 [node name="Detective" type="Sprite2D" parent="Characters" unique_id=493261810]
-position = Vector2(512, 507)
+position = Vector2(512, 533)
 texture = ExtResource("25_wknol")
 
 [node name="MusicianShadow" type="Sprite2D" parent="Characters" unique_id=1309462072]
@@ -422,7 +422,7 @@ scale = Vector2(0.85, 0.16)
 texture = ExtResource("26_jx0uq")
 
 [node name="Musician" type="Sprite2D" parent="Characters" unique_id=2103462715]
-position = Vector2(251, 211)
+position = Vector2(251, 237)
 texture = ExtResource("26_jx0uq")
 
 [node name="MorningLight" type="Node2D" parent="." unique_id=779286435]

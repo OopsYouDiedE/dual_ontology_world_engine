@@ -1,10 +1,12 @@
+> 历史源稿说明：文中的48px规格仅描述旧产物，不是当前制作要求。现行地图基础格为32×32；原图与提示词保留用于追溯，未通过实机资产验收。统一规范见仓库 docs/design-standard.md。
+
 # The Unfallen Duet：角色与主题曲分镜
 
 本目录存放本轮角色像素设计、乐谱分析和主题曲镜头首帧。
 
 ## 文件入口
 
-- `characters/`：21人统一正面全身角色设计及编号对照。
+- 当前角色：[32×48正面站立帧](../../godot_csharp/ShareAsset/Images/characters/README-zh.md)。旧角色总图与提示词副本已删除，展示页直接读取唯一新资源。
 - `scenes/`：逐镜头独立关键帧，保留用户原编号；没有镜头11。
 - `scene-direction-zh.md`：统一美术规范及25个镜头的首帧内容。
 - `music-analysis-zh.md`：基于MSCX音符与谱面标记的分析。

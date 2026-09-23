@@ -1,3 +1,5 @@
+> 仅为旧源图的生成记录。下列48px等参数用于追溯历史产物，不作为当前制作指令；现行规范见仓库 docs/design-standard.md。
+
 # 生成提示词
 
 工具：内置 imagegen；第一版生成，第二版简化细节与校正网格（实际输出尺寸仍为1254×1254）。
@@ -9,4 +11,3 @@ Use case: stylized-concept. Produce a PRODUCTION GAME TILE ATLAS, not a scene il
 ## 第二版（采用）
 
 Edit this game atlas. Critical correction: native output canvas MUST be exactly 768x768 pixels, NOT 1254, NOT 1024. REDRAW as low resolution pixel art at native resolution, each visible pixel is one actual output pixel, 48px tile units. Same 16 objects and same ordering. Exactly 4 columns x4 rows, each slot exactly 192x192, origins x/y 0,192,384,576. Each object entirely within its slot with 8px empty margin all sides. Transparent RGBA background. Preserve all silhouettes, palette and RPG orthographic view. Simplify detail substantially into crisp single pixel clusters and 4-step shading. No smoothing, no gradient, no photographic texture. The top-left bookcase should be about 144px wide and 176px high, not 250px. Fireplace 176x176. Small props (banner, clock, lantern) should be narrower and leave more whitespace. Do not draw grid lines or labels. Deliver only final exact 768x768 PNG tile atlas.
-

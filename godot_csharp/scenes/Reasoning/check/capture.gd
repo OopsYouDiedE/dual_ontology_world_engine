@@ -5,7 +5,7 @@ func _initialize() -> void:
 
 func capture() -> void:
 	root.size = Vector2i(1280, 800)
-	change_scene_to_file("res://scenes/Reasoning/Reasoning.tscn")
+	change_scene_to_file("res://scenes/Reasoning/BreakfastExperiment.tscn")
 	for frame in range(30):
 		await process_frame
 	root.get_texture().get_image().save_png("res://scenes/Reasoning/check/preview.png")

@@ -17,6 +17,7 @@ const CharacterConverterScript = preload("res://addons/rpg_asset_adapter/convert
 const AnimationConverterScript = preload("res://addons/rpg_asset_adapter/converter/animation_converter.gd")
 const MetadataConverterScript = preload("res://addons/rpg_asset_adapter/converter/metadata_converter.gd")
 const RPGAdapterConfigScript = preload("res://addons/rpg_asset_adapter/rpg_adapter_config.gd")
+const SourceLoader = preload("res://addons/rpg_asset_adapter/source_loader.gd")
 
 
 ## Executes batch conversion using an RPGAdapterConfig resource (.tres).
@@ -174,7 +175,7 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				primary_tile_size = info.tile_size
 				break
 	if primary_tile_size <= 0:
-		primary_tile_size = 48
+		primary_tile_size = 32
 
 	# Categorize assets
 	var autotile_assets: Array = []
@@ -281,7 +282,7 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 				if local_p != "":
 					normal_res_path = local_p
 
-			var img := Image.load_from_file(info.path)
+			var img: Image = SourceLoader.resolve_image(info.path)
 			if img != null:
 				var extra_cdata: Dictionary = info.extra.duplicate()
 				if info.kind == AssetDetectorScript.AssetKind.KR_F_EXTENSION:

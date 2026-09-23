@@ -60,7 +60,7 @@ public partial class SpellScene : Control
 		_play = ButtonIn(transport, "播放", () => { _running = !_running; Refresh(); });
 		ButtonIn(transport, "单步", () => { _running = false; _lab.Step(); });
 		ButtonIn(transport, "重置课题", Reset);
-		ButtonIn(transport, "返回推理", () => { if (ReturnToReasoning is { } back) { back(); QueueFree(); } else GetTree().ChangeSceneToFile("res://scenes/Reasoning/Reasoning.tscn"); });
+		ButtonIn(transport, "返回早餐实验", () => { if (ReturnToReasoning is { } back) { back(); QueueFree(); } else GetTree().ChangeSceneToFile("res://scenes/Reasoning/BreakfastExperiment.tscn"); });
 		LabelIn(right, "只让该来的声音进来", 25);
 		_objective = LabelIn(right, "", 15); _objective.CustomMinimumSize = new(0, 64);
 		_drawing = new SpellDrawing { CustomMinimumSize = new(0, 265), SizeFlagsVertical = SizeFlags.ExpandFill };

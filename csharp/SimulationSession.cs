@@ -14,14 +14,14 @@ public sealed class ActionExecution
 }
 
 /// <summary>将意图、CTB 与结算组合。子阶段等待期间父动作占用同一身体行动槽。</summary>
-public sealed class SimulationSession(WorldRuntime world) : IDisposable
+public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = null) : IDisposable
 {
     private readonly ActionRuntime _runtime = new(world);
     private readonly List<ActionExecution> _active = [];
     private readonly Dictionary<Projection, (SoulEssence Soul, double Delay, Action Changed)> _agents = [];
     private readonly Dictionary<Projection, ScheduledAction> _wakeups = [];
     private bool _disposed;
-    public CTBSystem CTB { get; } = new();
+    public CTBSystem CTB { get; } = timeline ?? new();
     public event Action<ActionExecution>? Completed;
 
     public ActionExecution Submit(SoulEssence soul, ActionIntent intent)
@@ -117,4 +117,3 @@ public sealed class SimulationSession(WorldRuntime world) : IDisposable
         _disposed = true;
     }
 }
-

@@ -6,7 +6,7 @@ const RPGAdapterConfigScript = preload("res://addons/rpg_asset_adapter/rpg_adapt
 
 func _init() -> void:
 	print("--- STARTING BATCH CONVERSION WITH .TRES CONFIG ---")
-	var config_path := "res://ShareAsset/Victorian/victorian_config.tres"
+	var config_path := RPGAdapterConfigScript.DEFAULT_CONFIG_PATH
 	var config: Resource = null
 	if ResourceLoader.exists(config_path):
 		config = ResourceLoader.load(config_path)
