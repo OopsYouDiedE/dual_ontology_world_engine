@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FirstAwakeningAnswerCatalog" format=3]
+
+[ext_resource type="Script" path="res://scenes/FirstAwakening/AnswerCatalog.gd" id="catalog"]
+
+[resource]
+script = ExtResource("catalog")
+sections = [
+{"slot": "place", "title_id": "FA_UI_069", "options": [
+    {"value": "临时牢房", "display_id": "FA_UI_022", "outcome": "reject_prison"},
+    {"value": "长期生活研习", "display_id": "FA_UI_175", "requirements": {"evidence_all": ["study"], "evidence_any": ["drawer", "cup"]}, "outcome": "ending_history"},
+    {"value": "新生入学考场 · 旧居未证实", "display_id": "FA_UI_109", "requirements": {"evidence_all": ["room_0", "rations"]}, "outcome": "ending_newcomer"}
+]},
+{"slot": "door", "title_id": "FA_UI_176", "options": [
+    {"value": "外敌破门 · 内侧顶门", "display_id": "FA_UI_075", "outcome": "reject_defense"},
+    {"value": "撬门越狱 · 被镇压", "display_id": "FA_UI_102", "outcome": "reject_escape"},
+    {"value": "先撑门进灰 → 撤楔合门 → 沾灰后包纸", "display_id": "FA_UI_039", "requirements": {"checks_all": ["门底遮蔽", "纸内转印"]}}
+]},
+{"slot": "outer", "title_id": "FA_UI_089", "options": [
+    {"value": "外侧单方锁死", "display_id": "FA_UI_073", "outcome": "reject_one_side"},
+    {"value": "生活翼内销 + 主楼侧外闩", "display_id": "FA_UI_134", "requirements": {"evidence_all": ["door", "slit"], "checks_all": ["双套锁止"]}}
+]}
+]

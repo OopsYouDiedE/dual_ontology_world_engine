@@ -2,11 +2,19 @@
 
 本场景是公共研究室家具喝茶案的可操作原型，仍未完成整案验收。片段完成条件见 [设计规范](../../../docs/design-standard.md)。
 
+[现行首宣大纲](../../../docs/游戏和核心宣传视频和图片录制/机制主线宣传片大纲.md)拟以脑内推演为约30秒主机制、言灵精准命中为约15秒短机制；本页记录的茶案与言灵试验台仍是各自独立原型。恶魔提问、实体授课和真名救场尚未接入这些场景，不能从现有原型说明推定它们已经可录。
+
 当前入口是 `res://scenes/Reasoning/Reasoning.tscn`，由 `TeaReasoningScene` 驱动；旧早餐实验入口为 `res://scenes/Reasoning/BreakfastExperiment.tscn`，言灵课题 `Spellwork.tscn` 保留。场景使用 Godot .NET 4.6.1，最小窗口为 1280×900，不修改原 `Main2D.tscn` 主场景。
 
-现场默认全屏显示。WASD/方向键移动，E 优先与附近人物交谈，F 检查器物（附近无人时E也可检查），Tab 进入或返回脑内重演，Esc 返回；札记为独立的只读材料窗口，仅显示材料、正文与来源。脑内是独立工作区：左侧重演，右侧行为假设；点击人物切换草稿，“当时所知”和句式帮助按需展开。现实与重演使用各自的场景实例和 World2D，退出脑内保留现实位置。地图 `StudyRoom.tscn` 使用 [ReasoningStudy 自定义图集](../../ShareAsset/ReasoningStudy/README.md) 的 A2 地面、地毯及 A4 墙面、墙顶，建筑由 Terrain 自动连接铺装。工作桌、书柜、工作台与窗使用新 B 图集，少量 Victorian 家具仍保留。`build_study.gd` 只重建 StudyRoom。侦探使用 `detective.tres`，四名案件人物使用 `placeholder.tres`。
+现场默认全屏显示。WASD/方向键移动，E 优先与附近人物交谈，F 检查器物（附近无人时E也可检查），Tab 进入或返回脑内重演，Esc 返回；札记为独立的只读材料窗口，仅显示材料、正文与来源。脑内是独立工作区：左侧重演，右侧行为假设；点击人物切换草稿，“当时所知”和句式帮助按需展开。现实与重演使用各自的场景实例和 World2D，退出脑内保留现实位置。地图 `StudyRoom.tscn` 使用 [ReasoningStudy 自定义图集](../../ShareAsset/Internal/Props/ReasoningStudy/README.md) 的 A2 地面、地毯及 A4 墙面、墙顶，建筑由 Terrain 自动连接铺装。工作桌、书柜、工作台与窗使用新 B 图集，少量 Victorian 家具仍保留。`godot_csharp/tools/build_study.gd` 只重建 StudyRoom。侦探使用 `detective.tres`，四名案件人物使用 `placeholder.tres`。
 
 自定义控件主题集中在 `ReasoningTheme.cs`，覆盖按钮、输入框、弹出菜单、滚动条与时间轴；不修改整个项目的默认主题。视觉依据与边界见 [界面设计记录](../../../docs/reasoning-art-direction.md)。
+
+2026-09-24：脑内工作区按用户参考图改为深绿背景、场景纸边与右侧书写纸，局部布局在 `TeaReplayLayout.cs`。人物标题和规则当前优先使用简体中文系统楷体；原先的清松手写体5保留为候选字体，辅助文字采用系统宋体。纸下词语可在光标处插入，保留人物切换、句式帮助、行为组织与证据对照。错误行着色，非法草稿禁用从头重演；左侧支持回退、播放、逐步及已记录范围拖动。画面明确区分已修改草稿和旧重演。
+
+本轮验证：`dotnet build godot_csharp/DualOntologyWorldEngine.sln --no-restore`，以及 Godot Compatibility 有头执行 `res://scenes/Reasoning/check/manuscript_check.gd`，检查1280/1586宽度及1280×900窗口、词语插入、非法与修正规则、真实回放、回退和返回现场后的草稿保留。截图及日志复用 `artifacts/tea-reasoning/manuscript-*`。构建存在 Dialogue 插件原有可空性警告；沙箱内引擎报告系统证书存储读取失败，编辑器退出写用户设置也受权限限制，场景运行与本轮界面检查可完成。此记录不代表整案试玩或美术已获用户验收。
+
+额外执行 `check/capture_tea.gd` 的现场回归未全通过：人物1（整理者）的交谈动画、镜像及侦探交谈动画三项失败，见 `artifacts/tea-reasoning/manuscript-regression.log`；本轮没有据此宣称全场景回归通过，也未改动人物演出逻辑。
 
 ## 调查交互
 

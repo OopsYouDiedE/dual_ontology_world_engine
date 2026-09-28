@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="FirstAwakeningInvestigationContent" format=3]
+
+[ext_resource type="Script" path="res://scenes/FirstAwakening/InvestigationContent.gd" id="content"]
+
+[resource]
+script = ExtResource("content")
+discussion_evidence = PackedStringArray("door", "paper", "rations", "wash", "hinge", "weight")
+speaker_name_ids = {"侦探": "FA_NAME_001", "工程师": "FA_NAME_002", "厨师": "FA_NAME_003", "音乐家": "FA_NAME_004", "铜口": "FA_NAME_005", "侦探（心声）": "FA_NAME_006"}
+journal_categories = [
+{"title_id": "FA_UI_003", "site_ids": PackedStringArray("notebook", "drawer", "paper", "study", "tear", "box_mark", "cup", "wash", "rations")},
+{"title_id": "FA_UI_004", "site_ids": PackedStringArray("hinge", "weight", "door", "slit", "trace", "stop", "floor_wipe")},
+{"title_id": "FA_UI_005", "site_ids": PackedStringArray("engineer", "chef", "musician", "clock", "window_0")}
+]
+replay_clues = [
+{"id": "door-mask", "state_ids": PackedStringArray("door-mask"), "canonical": "门底遮蔽", "pause_title": "门底遮蔽带 · 预测", "pause_title_id": "FA_UI_191", "mind_title_id": "FA_MIND_058", "conjecture_id": "FA_UI_186", "required": "door-mask", "site": "trace", "diagram": "trace", "conflict_terms": PackedStringArray("门底", "撑门")},
+{"id": "paper-inner-transfer", "state_ids": PackedStringArray("paper-inner-transfer"), "canonical": "纸内转印", "pause_title": "包纸内侧转印 · 待验", "pause_title_id": "FA_UI_192", "mind_title_id": "FA_MIND_059", "conjecture_id": "FA_UI_113", "required": "paper-inner-transfer", "site": "paper", "diagram": "wedge", "conflict_terms": PackedStringArray("包纸")},
+{"id": "locks", "state_ids": PackedStringArray("inner-bolt", "outer-bar"), "canonical": "双套锁止", "pause_title": "双套锁止 · 待验", "pause_title_id": "FA_UI_194", "mind_title_id": "FA_MIND_060", "conjecture_id": "FA_UI_044", "required": "inner-bolt", "site": "slit", "diagram": "bar", "conflict_terms": PackedStringArray("双套", "内销")},
+{"id": "wipe-after-stop", "state_ids": PackedStringArray("wipe-after-stop"), "canonical": "清理时序", "pause_title": "止挡座清理时序 · 待验", "pause_title_id": "FA_UI_193", "mind_title_id": "FA_MIND_061", "conjecture_id": "FA_UI_040", "required": "wipe-after-stop", "site": "stop", "diagram": "stop", "conflict_terms": PackedStringArray("擦拭", "移座")}
+]

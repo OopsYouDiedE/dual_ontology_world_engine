@@ -10,7 +10,7 @@
 
 [分镜审查](illustrations-audit.md)记录分镜提示词采用48px地图格，与当前32px地图冲突；[人物连续帧初稿](../artifacts/character-animation-v1/README.md)明确记载生成图不遵守画布、锚点与朝向。它们证明具体规格问题，不能据此说所有生成资产均不可用。
 
-[v2资源说明](../godot_csharp/ShareAsset/Images/characters/animation_v2/README.md)说明当前64×64是透明承载格，人形约43px；这与32×48基础设计画布是不同维度。旧规范表格把“普通行走单帧画布”固定写为32×48，容易与同页v2说明冲突，本轮已明确区分。外部素材按源规格切片，缩放派生如实注明，不能改名为原生像素制作。
+[v2资源说明](../godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)说明当前64×64是透明承载格，人形约43px；这与32×48基础设计画布是不同维度。旧规范表格把“普通行走单帧画布”固定写为32×48，容易与同页v2说明冲突，本轮已明确区分。外部素材按源规格切片，缩放派生如实注明，不能改名为原生像素制作。
 
 ### 推理难度被执行器细节挤占
 

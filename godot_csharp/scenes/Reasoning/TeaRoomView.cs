@@ -78,7 +78,7 @@ public partial class TeaObjectsDrawing : Node2D
     private readonly Dictionary<Essence, TeaPropDrawing> _props = [];
     public override void _Ready()
     {
-        var sheet = GD.Load<Texture2D>("res://ShareAsset/Victorian/source/Victorian_Inside_C.png");
+        var sheet = GD.Load<Texture2D>("res://ShareAsset/External/Victorian/textures/Victorian_Inside_C.png");
         Texture2D Region(Rect2 region) => new AtlasTexture { Atlas = sheet, Region = region };
         _cup = Region(new(168, 100, 20, 21)); _plate = Region(new(7, 129, 22, 19));
         _pot = Region(new(32, 192, 32, 32)); _cloth = Region(new(64, 320, 32, 32));

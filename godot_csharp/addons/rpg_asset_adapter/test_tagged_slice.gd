@@ -66,7 +66,7 @@ func _test_regex_matching() -> bool:
 
 func _test_asset_detection() -> bool:
 	print("\n[TEST 2] Testing AssetDetector integration...")
-	var fake_path := "res://ShareAsset/Victorian/source/w_1_h_2_v_4_2_Chest_Side.png"
+	var fake_path := "res://AssetsSource/External/Victorian/w_1_h_2_v_4_2_Chest_Side.png"
 	var info := AssetDetectorScript.detect_asset(fake_path, AssetDetectorScript.DetectMode.AUTO, 32)
 
 	if info.kind != AssetDetectorScript.AssetKind.TAGGED_ANIMATION:
@@ -84,7 +84,7 @@ func _test_asset_detection() -> bool:
 
 func _test_slicing_and_sprite_generation() -> bool:
 	print("\n[TEST 3] Testing slicing and SpriteFrames generation...")
-	var source_path := "res://ShareAsset/Victorian/source/w_1_h_2_v_4_2_Treasure_Chest_Animations_Left_Right_Lit.png"
+	var source_path := "res://AssetsSource/External/Victorian/w_1_h_2_v_4_2_Treasure_Chest_Animations_Left_Right_Lit.png"
 	var tag_data := {
 		"w_tile": 1,
 		"h_tile": 2,

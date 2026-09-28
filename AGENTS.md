@@ -29,12 +29,14 @@ AI在不同轮次执行同一任务时，严禁自行创建新的平行目录、
 1. **Godot 游戏宿主与资产：全部必须且只能在 `godot_csharp/`**
    - 严禁将 Godot 场景（`.tscn`）、资源（`.tres`）、GDScript、Godot C#脚本、切片后游戏纹理或 Godot 命令行工具放到根目录、`tmp/` 或 `scratch/`。
    - 严禁在 `godot_csharp/` 下自建 `artifacts/`。
-   - **素材放置原则**：外部素材必须按来源/包名独立建立文件夹（如 `ShareAsset/<SourcePackage>/`）；内部自制素材除非有明确指定分类（如 `characters/`, `identity/`），否则默认统一收拢在指定的同一文件夹内，严禁擅自为每个零碎道具随手新建文件夹。
+   - **素材放置原则**：美术生产源归 `AssetsSource/`，运行时资产归 `ShareAsset/`，两者都在 `godot_csharp/` 内。各自按 `External/<SourcePackage>/` 与 `Internal/{Characters,Identity,Props}/` 分流，零散内部家具、道具、地形统一归 `Internal/Props/`。音乐工程、非运行时概念归档与插件自身资源按各自职责保存。
+   - 不能按 `source` 文件夹名判定非运行时资源；迁入 `.gdignore` 区之前必须解除全部运行时引用。迁移必须同时更新生产脚本、插件配置和场景依赖，重建不得恢复旧目录。同名资产先比较内容，不得覆盖。
    - 具体放置规则必须严格遵守 [godot_csharp/AGENTS.md](godot_csharp/AGENTS.md)。
 2. **Core 独立世界引擎：全部必须且只能在 `csharp/`**
    - 仅限无引擎依赖的双重本体世界引擎纯 C# 实现与核心基准测试。详见 [csharp/AGENTS.md](csharp/AGENTS.md)。
 3. **交付物、阶段报告与概念原案：根目录 `artifacts/<task-name>/`**
-   - 仅用于非运行时的阶段性成果归档（如概念原案、评测长图、独立运行验收报告）。
+   - 用于非运行时的阶段性成果归档（如概念原案、评测长图、独立运行验收报告）；实际参与游戏资产重建的美术生产源归 `godot_csharp/AssetsSource/`。
+   - 发行交付物固定归 `artifacts/releases/core/` 与 `artifacts/releases/game/`；生成包不等于已公开发布。
    - 同一任务多轮执行时，必须复用既有的 `<task-name>` 目录，严禁同一任务按轮次新建 `task-name-v1`、`task-name-v2` 等分裂目录。
 4. **设计规范与文字设定：根目录 `docs/`**
    - 长期设计规范与世界观设定。按既有模块归档，不随手建零散目录。

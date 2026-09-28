@@ -37,7 +37,7 @@ func _init() -> void:
 
 func _test_derived_atlases(out_dir: String) -> bool:
 	print("\n[TEST 1] Generating derived autotile atlases...")
-	var base := "res://ShareAsset/Victorian/source"
+	var base := "res://AssetsSource/External/Victorian"
 
 	# A1
 	var a1_path := base + "/Victorian_Inside_A1.png"
@@ -93,7 +93,7 @@ func _test_door_chest_slicing(out_dir: String) -> bool:
 	# Find a door sheet
 	var door_files: Array[String] = []
 	var chest_files: Array[String] = []
-	var scan_dir := ProjectSettings.globalize_path("res://ShareAsset/Victorian/source")
+	var scan_dir := ProjectSettings.globalize_path("res://AssetsSource/External/Victorian")
 	var dir := DirAccess.open(scan_dir)
 	if dir:
 		dir.list_dir_begin()
@@ -155,7 +155,7 @@ func _test_terrain_connect(out_dir: String) -> bool:
 		return true
 
 	print("\n[TEST 3] Terrain connect visual test...")
-	var base := "res://ShareAsset/Victorian/source"
+	var base := "res://AssetsSource/External/Victorian"
 	var tile_size := 32
 
 	# Build TileSet in-memory (no save/reload)

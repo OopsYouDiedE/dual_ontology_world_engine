@@ -34,6 +34,30 @@ static func resolve_texture_and_image(source: Variant) -> Dictionary:
 	return {"texture": texture, "image": image}
 
 
+static func copy_file_to_runtime(source_path: String, runtime_path: String) -> Error:
+	var source_abs := ProjectSettings.globalize_path(source_path) if source_path.begins_with("res://") else source_path
+	var runtime_abs := ProjectSettings.globalize_path(runtime_path) if runtime_path.begins_with("res://") else runtime_path
+	if not FileAccess.file_exists(source_abs):
+		return ERR_FILE_NOT_FOUND
+	if FileAccess.file_exists(runtime_abs) and FileAccess.get_sha256(source_abs) == FileAccess.get_sha256(runtime_abs):
+		return OK
+	var dir_err := DirAccess.make_dir_recursive_absolute(runtime_abs.get_base_dir())
+	if dir_err != OK:
+		return dir_err
+	var input := FileAccess.open(source_abs, FileAccess.READ)
+	if input == null:
+		return FileAccess.get_open_error()
+	var output := FileAccess.open(runtime_abs, FileAccess.WRITE)
+	if output == null:
+		input.close()
+		return FileAccess.get_open_error()
+	output.store_buffer(input.get_buffer(input.get_length()))
+	var write_err := output.get_error()
+	output.close()
+	input.close()
+	return write_err
+
+
 static func read_text(source: Variant) -> String:
 	if source is String:
 		var path: String = source

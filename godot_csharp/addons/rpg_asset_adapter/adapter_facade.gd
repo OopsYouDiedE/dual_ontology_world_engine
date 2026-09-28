@@ -125,7 +125,7 @@ static func select_profile_for_assets(assets: Array) -> BaseProfileScript:
 ##   "apply_metadata": true
 ## }
 static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionary:
-	var output_dir: String = options.get("output_dir", "res://ShareAsset/Victorian")
+	var output_dir: String = options.get("output_dir", "res://ShareAsset/External/Victorian")
 	var theme_name: String = options.get("theme_name", "Theme")
 	var tile_size_opt: int = options.get("tile_size", 0)
 	var fps: float = options.get("fps", 6.0)
@@ -274,13 +274,15 @@ static func convert_assets(assets: Array, options: Dictionary = {}) -> Dictionar
 			else:
 				result["errors"].append("Could not reconstruct autotile: %s" % info.path)
 
-		# Process Normal Tileset Assets (A5, B..E, KR F, etc.) - directly referencing source image
+		# Process Normal Tileset Assets (A5, B..E, KR F, etc.) - runtime resources
 		for info: AssetDetectorScript.AssetInfo in normal_tileset_assets:
-			var normal_res_path: String = info.path
-			if not normal_res_path.begins_with("res://"):
-				var local_p := ProjectSettings.localize_path(normal_res_path)
-				if local_p != "":
-					normal_res_path = local_p
+			# Conversion reads source pixels, but the saved TileSet must only refer to
+			# a byte-identical runtime copy, regardless of which converter entry point is used.
+			var normal_res_path: String = output_dir.path_join("textures").path_join(info.path.get_file())
+			var copy_err := SourceLoader.copy_file_to_runtime(info.path, normal_res_path)
+			if copy_err != OK:
+				result["errors"].append("Could not stage runtime texture %s: %s" % [info.path, error_string(copy_err)])
+				continue
 
 			var img: Image = SourceLoader.resolve_image(info.path)
 			if img != null:

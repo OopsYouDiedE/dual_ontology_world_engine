@@ -1,6 +1,6 @@
 # 首批人物动作设计
 
-2026-09-23：首批两个人物的三向动作已生成、整理为运行时图集，并接入独立Godot验收室。资源、重建方式与限制见[图集说明](../godot_csharp/ShareAsset/Images/characters/animation_v2/README.md)。
+2026-09-23：首批两个人物的三向动作已生成、整理为运行时图集，并接入独立Godot验收室。资源、重建方式与限制见[图集说明](../godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)。
 
 ## 范围与朝向
 

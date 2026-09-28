@@ -1,0 +1,1530 @@
+diff --git a/docs/current-issues.md b/docs/current-issues.md
+index f7e5bfe..5ea39a9 100644
+--- a/docs/current-issues.md
++++ b/docs/current-issues.md
+@@ -4,4 +4,4 @@
+ 
+ 1. **旧摆景重建脚本仍使用 Lanczos 缩放。** `godot_csharp/tools/shots/layout_shot01.gd`、`layout_shot02.gd` 仍有调用。这是旧产物重建路径的像素处理遗留，不能推广成当前全部资源均用错误缩放，也未据此确认当前画面的具体失真。
+ 2. **茶案整案体验与表达负担尚未完成验证。** [第二轮设计记录](reasoning-round2-design.md)和[原始盲测](../artifacts/tea-reasoning/round2-player-report.md)仍保留行为录入像配置事件的反馈，未完成收齐材料后的再次提交和完整独立解答。主要替代因果路线也尚未验证。已修复的椅布标记遮挡不列为当前故障。
+-3. **美术与场景表演仍未完成最终验收。** 宣传前三场已扩产八名角色的侦探同系列基础动作，但基础动作不等于端盘、取食等专门表演，自动帧数检查也不证明动作质量。前三场装修仍待审美审看；其他镜头及茶案人物不属于此次扩产范围。不能再写成“除侦探外20人全是占位符”。依据：[动作图集说明](../godot_csharp/ShareAsset/Images/characters/animation_v2/README.md)、[前三场说明](../godot_csharp/scenes/Story/README.md)。
++3. **美术与场景表演仍未完成最终验收。** 宣传前三场已扩产八名角色的侦探同系列基础动作，但基础动作不等于端盘、取食等专门表演，自动帧数检查也不证明动作质量。前三场装修仍待审美审看；其他镜头及茶案人物不属于此次扩产范围。不能再写成“除侦探外20人全是占位符”。依据：[动作图集说明](../godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)、[前三场说明](../godot_csharp/scenes/Story/README.md)。
+diff --git a/docs/illustrations-audit.md b/docs/illustrations-audit.md
+index fb97916..f4bd70f 100644
+--- a/docs/illustrations-audit.md
++++ b/docs/illustrations-audit.md
+@@ -2,7 +2,7 @@
+ 
+ 本表保留打样前基线，不作为当前缺陷清单。2026-09-23 已新增[宣传前三场打样](../godot_csharp/scenes/Story/README.md)、对应九名角色v2基础动作、TileMap装修及统一Dialogue界面；下表前三场“暂无运行时动作”等旧状态已被这些实现取代。端盘、取食等专门表演与最终艺术验收仍未完成。当前仍成立的问题另见[当前问题](current-issues.md)。
+ 
+-审查范围：`godot_csharp/ShareAsset/Images/illustrations` 中现有分镜 PNG 与 prompts 文档、当前学园设定、设计与验收规范、宣传片要求、Shot01/02 场景文件、人物 v2 图集说明及 Victorian TileSet。本文是资料审查，不代表镜头已成为可玩片段、美术成品或年代考证完成。
++审查范围：`godot_csharp/AssetsSource/Internal/Characters/References` 中现有分镜 PNG 与 prompts 文档、当前学园设定、设计与验收规范、宣传片要求、Shot01/02 场景文件、人物 v2 图集说明及 Victorian TileSet。本文是资料审查，不代表镜头已成为可玩片段、美术成品或年代考证完成。
+ 
+ ## 总体判断
+ 
+@@ -70,6 +70,6 @@ Victorian资源存在 `godot_csharp/ShareAsset/Victorian/tilesets/Victorian.tres
+ - [宣传片制作要求](游戏和核心宣传视频和图片录制/宣传片指导意见.md)
+ - [宣传片切片说明](游戏和核心宣传视频和图片录制/宣传片切片.md)
+ - [Shot01 场景](../godot_csharp/scenes/Shot01/Shot01.tscn)、[Shot02 场景](../godot_csharp/scenes/Shot02/Shot02.tscn)
+-- [人物动画v2说明](../godot_csharp/ShareAsset/Images/characters/animation_v2/README.md)
+-- 分镜 PNG 与提示词：[illustrations](../godot_csharp/ShareAsset/Images/illustrations)
++- [人物动画v2说明](../godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)
++- 分镜 PNG 与提示词：[illustrations](../godot_csharp/AssetsSource/Internal/Characters/References)
+ 
+diff --git a/godot_csharp/addons/rpg_asset_adapter/README.md b/godot_csharp/addons/rpg_asset_adapter/README.md
+index 10b2a05..9298bf1 100644
+--- a/godot_csharp/addons/rpg_asset_adapter/README.md
++++ b/godot_csharp/addons/rpg_asset_adapter/README.md
+@@ -15,7 +15,7 @@
+ 
+ ## 使用
+ 
+-项目已经启用插件。游戏地图基础格为32px；转换器会优先使用文件名或图像尺寸识别外部素材的原生格子，因此识别出的48px素材仍按48px处理。默认输入目录为 `res://ShareAsset/Victorian/source`，输出目录为 `res://ShareAsset/Victorian`，其中 `tilesets/Victorian.tres` 是地图使用的 TileSet，`atlases/` 保存重组图集。
++项目已经启用插件。游戏地图基础格为32px；转换器会优先使用文件名或图像尺寸识别外部素材的原生格子，因此识别出的48px素材仍按48px处理。默认输入目录为 `res://AssetsSource/External/Victorian`，输出目录为 `res://ShareAsset/External/Victorian`，其中 `tilesets/Victorian.tres` 是地图使用的 TileSet，`atlases/` 保存重组图集。
+ 
+ 命令行在仓库根目录执行，`godot` 替换为本机 Godot 4.6 Mono 可执行文件：
+ 
+@@ -32,7 +32,7 @@ godot --headless --path godot_csharp --script res://addons/rpg_asset_adapter/run
+ - 每次转换完整写入通行和属性标记，清除旧值及旧碰撞。星标图块不生成阻挡碰撞；方向通行和星标组合由游戏层处理。
+ - 角色或物件未生成资源时，统一入口返回转换错误。
+ - A2右半区作为普通装饰图块保留；KR Non-RM图集不套用RPG Maker槽位编号。一次转换只选择一个匹配的 `Tilesets.json` 条目，需要不同规则的素材应分批转换。
+-- 已有产物不会自动改写；重新执行转换时对应输出文件会被覆盖。
++- 已有产物不会自动改写；重新执行转换时对应出出文件会被覆盖。
+ 
+ ## 实际地图验证
+ 
+diff --git a/godot_csharp/scenes/Parlor/Parlor.tscn b/godot_csharp/scenes/Parlor/Parlor.tscn
+index 1751e3c..e3a5732 100644
+--- a/godot_csharp/scenes/Parlor/Parlor.tscn
++++ b/godot_csharp/scenes/Parlor/Parlor.tscn
+@@ -1,6 +1,6 @@
+ [gd_scene format=4]
+ 
+-[ext_resource type="TileSet" path="res://ShareAsset/Victorian/tilesets/Victorian.tres" id="1_5qpdv"]
++[ext_resource type="TileSet" path="res://ShareAsset/External/Victorian/tilesets/Victorian.tres" id="1_5qpdv"]
+ 
+ [node name="Parlor" type="Node2D" unique_id=518238522]
+ texture_filter = 1
+diff --git a/godot_csharp/scenes/Parlor/README.md b/godot_csharp/scenes/Parlor/README.md
+index 20361a4..7aa431e 100644
+--- a/godot_csharp/scenes/Parlor/README.md
++++ b/godot_csharp/scenes/Parlor/README.md
+@@ -1,7 +1,7 @@
+ # 公共娱乐室构图原型
+ 
+-在Godot中打开 `Parlor.tscn`，按F6运行。场景使用 `ShareAsset/Victorian/tilesets/Victorian.tres`，基础格32px。它验证场景构图与素材组合，尚未实现玩家交互。
++在Godot中打开 SParlor.tscnS，按F6运行。场景使用 SShareAsset/External/Victorian/tilesets/Victorian.tresS，基础格32px。它验证场景构图与素材组合，尚未实现玩家交互。
+ 
+-生成入口为 `res://tools/build_parlor.gd`，生成记录输出到仓库 `artifacts/parlor-validation/`。重建会覆盖本场景；手工编辑后先保存需要保留的修改。旧验证截图已清理，不能据旧统计认定当前版本通过验收。
++生成入口为 Sres://tools/build_parlor.gdS，生成记录输出到仓库 Sartifacts/parlor-validation/S。重建会覆盖本场景；手工编辑后先保存需要保留的修改。旧验证截图已清理，不能据旧统计认定当前版本通过验收。
+ 
+-布局参照 `artifacts/theme-film/scenes/shot-03.png`，由地面、墙体、墙顶、地毯、家具和桌面物件六层组成。实际制作须按仓库 `docs/design-standard.md` 检查比例、遮挡、通路和操作。
++布局参照 Sartifacts/theme-film/scenes/shot-03.pngS，由地面、墙体、墙顶、地毯、家具和桌面物件六层组成。实际制作须按仓库 Sdocs/design-standard.mdS 检查比例、遮挡、通路和操作。
+diff --git a/godot_csharp/scenes/Shot01/Shot01.tscn b/godot_csharp/scenes/Shot01/Shot01.tscn
+index c089656..eddb938 100644
+--- a/godot_csharp/scenes/Shot01/Shot01.tscn
++++ b/godot_csharp/scenes/Shot01/Shot01.tscn
+@@ -2,31 +2,31 @@
+ 
+ [ext_resource type="Script" path="res://scenes/Shot01/Shot01.gd" id="1_1kh0u"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/stone_finish.gdshader" id="2_emp8n"]
+-[ext_resource type="TileSet" path="res://ShareAsset/Victorian/tilesets/Victorian.tres" id="3_rs31d"]
++[ext_resource type="TileSet" path="res://ShareAsset/External/Victorian/tilesets/Victorian.tres" id="3_rs31d"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/material_finish.gdshader" id="4_tt3wa"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/floor_inlay.res" id="5_oskks"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/compass.res" id="6_1akkh"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/portal.res" id="7_2d7qw"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/clock.res" id="8_7l0xy"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/window.res" id="9_asxbl"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/bench.res" id="10_r272v"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/statue.res" id="11_l1y83"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/research_table.res" id="12_yfxcu"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/bookcase.res" id="13_ut1mn"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/tree.res" id="14_f15qa"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/fern.res" id="15_atk4w"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/candelabrum.res" id="16_pyc7v"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/wall_lantern.res" id="17_6efwo"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/foreground_rail.res" id="18_82xvd"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/podium.tres" id="19_r5ugb"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_3.res" id="20_nksjx"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_1.res" id="21_7fm70"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_2.res" id="22_pn28r"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_0.res" id="23_lefh4"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/banner_4.res" id="24_4dr3w"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/06_detective.tres" id="25_wknol"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/08_musician.tres" id="26_jx0uq"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/morning_light.res" id="27_gq4y6"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/floor_inlay.res" id="5_oskks"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/compass.res" id="6_1akkh"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/portal.res" id="7_2d7qw"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/clock.res" id="8_7l0xy"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/window.res" id="9_asxbl"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/bench.res" id="10_r272v"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/statue.res" id="11_l1y83"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/research_table.res" id="12_yfxcu"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/bookcase.res" id="13_ut1mn"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/tree.res" id="14_f15qa"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/fern.res" id="15_atk4w"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/candelabrum.res" id="16_pyc7v"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/wall_lantern.res" id="17_6efwo"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/foreground_rail.res" id="18_82xvd"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/podium.tres" id="19_r5ugb"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/shot01_banner_3.res" id="20_nksjx"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/shot01_banner_1.res" id="21_7fm70"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/shot01_banner_2.res" id="22_pn28r"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/shot01_banner_0.res" id="23_lefh4"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/shot01_banner_4.res" id="24_4dr3w"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/06_detective.tres" id="25_wknol"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/08_musician.tres" id="26_jx0uq"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/morning_light.res" id="27_gq4y6"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/edge_shade.gdshader" id="28_hj13r"]
+ 
+ [sub_resource type="ShaderMaterial" id="ShaderMaterial_tupe3"]
+@@ -38,404 +38,404 @@ shader = ExtResource("4_tt3wa")
+ [sub_resource type="ShaderMaterial" id="ShaderMaterial_0on4w"]
+ shader = ExtResource("28_hj13r")
+ 
+-[node name="Shot01" type="Node2D" unique_id=2000413425]
++[node name="Shot01" type="Node2D" unique_id=130639022]
+ texture_filter = 1
+ script = ExtResource("1_1kh0u")
+ metadata/reference = "artifacts/theme-film/scenes/shot-01.png"
+ 
+-[node name="Floor" type="TileMapLayer" parent="." unique_id=1894908271]
++[node name="Floor" type="TileMapLayer" parent="." unique_id=680439446]
+ material = SubResource("ShaderMaterial_tupe3")
+ tile_map_data = PackedByteArray("AAAfABMAAQAUAB4AAAAeABMAAQAWABwAAAAdABMAAQAWABwAAAAcABMAAQAWABwAAAAbABMAAQAWABwAAAAaABMAAQAWABwAAAAZABMAAQAWABwAAAAYABMAAQAWABwAAAAXABMAAQAWABwAAAAWABMAAQAWABwAAAAVABMAAQAWABwAAAAUABMAAQAWABwAAAATABMAAQAWABwAAAASABMAAQAWABwAAAARABMAAQAWABwAAAAQABMAAQAWABwAAAAPABMAAQAWABwAAAAOABMAAQAWABwAAAANABMAAQAWABwAAAAMABMAAQAWABwAAAALABMAAQAWABwAAAAKABMAAQAWABwAAAAJABMAAQAWABwAAAAIABMAAQAWABwAAAAHABMAAQAWABwAAAAGABMAAQAWABwAAAAFABMAAQAWABwAAAAEABMAAQAWABwAAAADABMAAQAWABwAAAACABMAAQAWABwAAAABABMAAQAWABwAAAAAABMAAQAWAB4AAAAfABIAAQASABwAAAAeABIAAQASABgAAAAdABIAAQASABgAAAAcABIAAQASABgAAAAbABIAAQASABgAAAAaABIAAQASABgAAAAZABIAAQASABgAAAAYABIAAQASABgAAAAXABIAAQASABgAAAAWABIAAQASABgAAAAVABIAAQASABgAAAAUABIAAQASABgAAAATABIAAQASABgAAAASABIAAQASABgAAAARABIAAQASABgAAAAQABIAAQASABgAAAAPABIAAQASABgAAAAOABIAAQASABgAAAANABIAAQASABgAAAAMABIAAQASABgAAAALABIAAQASABgAAAAKABIAAQASABgAAAAJABIAAQASABgAAAAIABIAAQASABgAAAAHABIAAQASABgAAAAGABIAAQASABgAAAAFABIAAQASABgAAAAEABIAAQASABgAAAADABIAAQASABgAAAACABIAAQASABgAAAABABIAAQASABgAAAAAABIAAQAWABoAAAAfABEAAQASABwAAAAeABEAAQASABgAAAAdABEAAQASABgAAAAcABEAAQASABgAAAAbABEAAQASABgAAAAaABEAAQASABgAAAAZABEAAQASABgAAAAYABEAAQASABgAAAAXABEAAQASABgAAAAWABEAAQASABgAAAAVABEAAQASABgAAAAUABEAAQASABgAAAATABEAAQASABgAAAASABEAAQASABgAAAARABEAAQASABgAAAAQABEAAQASABgAAAAPABEAAQASABgAAAAOABEAAQASABgAAAANABEAAQASABgAAAAMABEAAQASABgAAAALABEAAQASABgAAAAKABEAAQASABgAAAAJABEAAQASABgAAAAIABEAAQASABgAAAAHABEAAQASABgAAAAGABEAAQASABgAAAAFABEAAQASABgAAAAEABEAAQASABgAAAADABEAAQASABgAAAACABEAAQASABgAAAABABEAAQASABgAAAAAABEAAQAWABoAAAAfABAAAQASABwAAAAeABAAAQASABgAAAAdABAAAQASABgAAAAcABAAAQASABgAAAAbABAAAQASABgAAAAaABAAAQASABgAAAAZABAAAQASABgAAAAYABAAAQASABgAAAAXABAAAQASABgAAAAWABAAAQASABgAAAAVABAAAQASABgAAAAUABAAAQASABgAAAATABAAAQASABgAAAASABAAAQASABgAAAARABAAAQASABgAAAAQABAAAQASABgAAAAPABAAAQASABgAAAAOABAAAQASABgAAAANABAAAQASABgAAAAMABAAAQASABgAAAALABAAAQASABgAAAAKABAAAQASABgAAAAJABAAAQASABgAAAAIABAAAQASABgAAAAHABAAAQASABgAAAAGABAAAQASABgAAAAFABAAAQASABgAAAAEABAAAQASABgAAAADABAAAQASABgAAAACABAAAQASABgAAAABABAAAQASABgAAAAAABAAAQAWABoAAAAfAA8AAQASABwAAAAeAA8AAQASABgAAAAdAA8AAQASABgAAAAcAA8AAQASABgAAAAbAA8AAQASABgAAAAaAA8AAQASABgAAAAZAA8AAQASABgAAAAYAA8AAQASABgAAAAXAA8AAQASABgAAAAWAA8AAQASABgAAAAVAA8AAQASABgAAAAUAA8AAQASABgAAAATAA8AAQASABgAAAASAA8AAQASABgAAAARAA8AAQASABgAAAAQAA8AAQASABgAAAAPAA8AAQASABgAAAAOAA8AAQASABgAAAANAA8AAQASABgAAAAMAA8AAQASABgAAAALAA8AAQASABgAAAAKAA8AAQASABgAAAAJAA8AAQASABgAAAAIAA8AAQASABgAAAAHAA8AAQASABgAAAAGAA8AAQASABgAAAAFAA8AAQASABgAAAAEAA8AAQASABgAAAADAA8AAQASABgAAAACAA8AAQASABgAAAABAA8AAQASABgAAAAAAA8AAQAWABoAAAAfAA4AAQASABwAAAAeAA4AAQASABgAAAAdAA4AAQASABgAAAAcAA4AAQASABgAAAAbAA4AAQASABgAAAAaAA4AAQASABgAAAAZAA4AAQASABgAAAAYAA4AAQASABgAAAAXAA4AAQASABgAAAAWAA4AAQASABgAAAAVAA4AAQASABgAAAAUAA4AAQASABgAAAATAA4AAQASABgAAAASAA4AAQASABgAAAARAA4AAQASABgAAAAQAA4AAQASABgAAAAPAA4AAQASABgAAAAOAA4AAQASABgAAAANAA4AAQASABgAAAAMAA4AAQASABgAAAALAA4AAQASABgAAAAKAA4AAQASABgAAAAJAA4AAQASABgAAAAIAA4AAQASABgAAAAHAA4AAQASABgAAAAGAA4AAQASABgAAAAFAA4AAQASABgAAAAEAA4AAQASABgAAAADAA4AAQASABgAAAACAA4AAQASABgAAAABAA4AAQASABgAAAAAAA4AAQAWABoAAAAfAA0AAQASABwAAAAeAA0AAQASABgAAAAdAA0AAQASABgAAAAcAA0AAQASABgAAAAbAA0AAQASABgAAAAaAA0AAQASABgAAAAZAA0AAQASABgAAAAYAA0AAQASABgAAAAXAA0AAQASABgAAAAWAA0AAQASABgAAAAVAA0AAQASABgAAAAUAA0AAQASABgAAAATAA0AAQASABgAAAASAA0AAQASABgAAAARAA0AAQASABgAAAAQAA0AAQASABgAAAAPAA0AAQASABgAAAAOAA0AAQASABgAAAANAA0AAQASABgAAAAMAA0AAQASABgAAAALAA0AAQASABgAAAAKAA0AAQASABgAAAAJAA0AAQASABgAAAAIAA0AAQASABgAAAAHAA0AAQASABgAAAAGAA0AAQASABgAAAAFAA0AAQASABgAAAAEAA0AAQASABgAAAADAA0AAQASABgAAAACAA0AAQASABgAAAABAA0AAQASABgAAAAAAA0AAQAWABoAAAAfAAwAAQASABwAAAAeAAwAAQASABgAAAAdAAwAAQASABgAAAAcAAwAAQASABgAAAAbAAwAAQASABgAAAAaAAwAAQASABgAAAAZAAwAAQASABgAAAAYAAwAAQASABgAAAAXAAwAAQASABgAAAAWAAwAAQASABgAAAAVAAwAAQASABgAAAAUAAwAAQASABgAAAATAAwAAQASABgAAAASAAwAAQASABgAAAARAAwAAQASABgAAAAQAAwAAQASABgAAAAPAAwAAQASABgAAAAOAAwAAQASABgAAAANAAwAAQASABgAAAAMAAwAAQASABgAAAALAAwAAQASABgAAAAKAAwAAQASABgAAAAJAAwAAQASABgAAAAIAAwAAQASABgAAAAHAAwAAQASABgAAAAGAAwAAQASABgAAAAFAAwAAQASABgAAAAEAAwAAQASABgAAAADAAwAAQASABgAAAACAAwAAQASABgAAAABAAwAAQASABgAAAAAAAwAAQAWABoAAAAfAAsAAQASABwAAAAeAAsAAQASABgAAAAdAAsAAQASABgAAAAcAAsAAQASABgAAAAbAAsAAQASABgAAAAaAAsAAQASABgAAAAZAAsAAQASABgAAAAYAAsAAQASABgAAAAXAAsAAQASABgAAAAWAAsAAQASABgAAAAVAAsAAQASABgAAAAUAAsAAQASABgAAAATAAsAAQASABgAAAASAAsAAQASABgAAAARAAsAAQASABgAAAAQAAsAAQASABgAAAAPAAsAAQASABgAAAAOAAsAAQASABgAAAANAAsAAQASABgAAAAMAAsAAQASABgAAAALAAsAAQASABgAAAAKAAsAAQASABgAAAAJAAsAAQASABgAAAAIAAsAAQASABgAAAAHAAsAAQASABgAAAAGAAsAAQASABgAAAAFAAsAAQASABgAAAAEAAsAAQASABgAAAADAAsAAQASABgAAAACAAsAAQASABgAAAABAAsAAQASABgAAAAAAAsAAQAWABoAAAAfAAoAAQASABwAAAAeAAoAAQASABgAAAAdAAoAAQASABgAAAAcAAoAAQASABgAAAAbAAoAAQASABgAAAAaAAoAAQASABgAAAAZAAoAAQASABgAAAAYAAoAAQASABgAAAAXAAoAAQASABgAAAAWAAoAAQASABgAAAAVAAoAAQASABgAAAAUAAoAAQASABgAAAATAAoAAQASABgAAAASAAoAAQASABgAAAARAAoAAQASABgAAAAQAAoAAQASABgAAAAPAAoAAQASABgAAAAOAAoAAQASABgAAAANAAoAAQASABgAAAAMAAoAAQASABgAAAALAAoAAQASABgAAAAKAAoAAQASABgAAAAJAAoAAQASABgAAAAIAAoAAQASABgAAAAHAAoAAQASABgAAAAGAAoAAQASABgAAAAFAAoAAQASABgAAAAEAAoAAQASABgAAAADAAoAAQASABgAAAACAAoAAQASABgAAAABAAoAAQASABgAAAAAAAoAAQAWABoAAAAfAAkAAQASABwAAAAeAAkAAQASABgAAAAdAAkAAQASABgAAAAcAAkAAQASABgAAAAbAAkAAQASABgAAAAaAAkAAQASABgAAAAZAAkAAQASABgAAAAYAAkAAQASABgAAAAXAAkAAQASABgAAAAWAAkAAQASABgAAAAVAAkAAQASABgAAAAUAAkAAQASABgAAAATAAkAAQASABgAAAASAAkAAQASABgAAAARAAkAAQASABgAAAAQAAkAAQASABgAAAAPAAkAAQASABgAAAAOAAkAAQASABgAAAANAAkAAQASABgAAAAMAAkAAQASABgAAAALAAkAAQASABgAAAAKAAkAAQASABgAAAAJAAkAAQASABgAAAAIAAkAAQASABgAAAAHAAkAAQASABgAAAAGAAkAAQASABgAAAAFAAkAAQASABgAAAAEAAkAAQASABgAAAADAAkAAQASABgAAAACAAkAAQASABgAAAABAAkAAQASABgAAAAAAAkAAQAWABoAAAAfAAgAAQASABwAAAAeAAgAAQASABgAAAAdAAgAAQASABgAAAAcAAgAAQASABgAAAAbAAgAAQASABgAAAAaAAgAAQASABgAAAAZAAgAAQASABgAAAAYAAgAAQASABgAAAAXAAgAAQASABgAAAAWAAgAAQASABgAAAAVAAgAAQASABgAAAAUAAgAAQASABgAAAATAAgAAQASABgAAAASAAgAAQASABgAAAARAAgAAQASABgAAAAQAAgAAQASABgAAAAPAAgAAQASABgAAAAOAAgAAQASABgAAAANAAgAAQASABgAAAAMAAgAAQASABgAAAALAAgAAQASABgAAAAKAAgAAQASABgAAAAJAAgAAQASABgAAAAIAAgAAQASABgAAAAHAAgAAQASABgAAAAGAAgAAQASABgAAAAFAAgAAQASABgAAAAEAAgAAQASABgAAAADAAgAAQASABgAAAACAAgAAQASABgAAAABAAgAAQASABgAAAAAAAgAAQAWABoAAAAfAAcAAQASABwAAAAeAAcAAQASABgAAAAdAAcAAQASABgAAAAcAAcAAQASABgAAAAbAAcAAQASABgAAAAaAAcAAQASABgAAAAZAAcAAQASABgAAAAYAAcAAQASABgAAAAXAAcAAQASABgAAAAWAAcAAQASABgAAAAVAAcAAQASABgAAAAUAAcAAQASABgAAAATAAcAAQASABgAAAASAAcAAQASABgAAAARAAcAAQASABgAAAAQAAcAAQASABgAAAAPAAcAAQASABgAAAAOAAcAAQASABgAAAANAAcAAQASABgAAAAMAAcAAQASABgAAAALAAcAAQASABgAAAAKAAcAAQASABgAAAAJAAcAAQASABgAAAAIAAcAAQASABgAAAAHAAcAAQASABgAAAAGAAcAAQASABgAAAAFAAcAAQASABgAAAAEAAcAAQASABgAAAADAAcAAQASABgAAAACAAcAAQASABgAAAABAAcAAQASABgAAAAAAAcAAQAWABoAAAAfAAYAAQASAB4AAAAeAAYAAQAUABsAAAAdAAYAAQAUABsAAAAcAAYAAQAUABsAAAAbAAYAAQAUABsAAAAaAAYAAQAUABsAAAAZAAYAAQAUABsAAAAYAAYAAQAUABsAAAAXAAYAAQAUABsAAAAWAAYAAQAUABsAAAAVAAYAAQAUABsAAAAUAAYAAQAUABsAAAATAAYAAQAUABsAAAASAAYAAQAUABsAAAARAAYAAQAUABsAAAAQAAYAAQAUABsAAAAPAAYAAQAUABsAAAAOAAYAAQAUABsAAAANAAYAAQAUABsAAAAMAAYAAQAUABsAAAALAAYAAQAUABsAAAAKAAYAAQAUABsAAAAJAAYAAQAUABsAAAAIAAYAAQAUABsAAAAHAAYAAQAUABsAAAAGAAYAAQAUABsAAAAFAAYAAQAUABsAAAAEAAYAAQAUABsAAAADAAYAAQAUABsAAAACAAYAAQAUABsAAAABAAYAAQAUABsAAAAAAAYAAQAWAB0AAAA=")
+ tile_set = ExtResource("3_rs31d")
+ 
+-[node name="BackMasonry" type="TileMapLayer" parent="." unique_id=2054001340]
++[node name="BackMasonry" type="TileMapLayer" parent="." unique_id=438106841]
+ modulate = Color(0.79, 0.73, 0.62, 1)
+ tile_map_data = PackedByteArray("AAAfAAYAAwAUABsAAAAeAAYAAwAUABoAAAAdAAYAAwAUABoAAAAcAAYAAwAUABoAAAAbAAYAAwAUABoAAAAaAAYAAwAUABoAAAAZAAYAAwAUABoAAAAYAAYAAwAUABoAAAAXAAYAAwAUABoAAAAWAAYAAwAUABoAAAAVAAYAAwAUABoAAAAUAAYAAwAUABoAAAATAAYAAwAUABoAAAASAAYAAwAUABoAAAARAAYAAwAUABoAAAAQAAYAAwAUABoAAAAPAAYAAwAUABoAAAAOAAYAAwAUABoAAAANAAYAAwAUABoAAAAMAAYAAwAUABoAAAALAAYAAwAUABoAAAAKAAYAAwAUABoAAAAJAAYAAwAUABoAAAAIAAYAAwAUABoAAAAHAAYAAwAUABoAAAAGAAYAAwAUABoAAAAFAAYAAwAUABoAAAAEAAYAAwAUABoAAAADAAYAAwAUABoAAAACAAYAAwAUABoAAAABAAYAAwAUABoAAAAAAAYAAwAVABoAAAAfAAUAAwAUABkAAAAeAAUAAwAUABgAAAAdAAUAAwAUABgAAAAcAAUAAwAUABgAAAAbAAUAAwAUABgAAAAaAAUAAwAUABgAAAAZAAUAAwAUABgAAAAYAAUAAwAUABgAAAAXAAUAAwAUABgAAAAWAAUAAwAUABgAAAAVAAUAAwAUABgAAAAUAAUAAwAUABgAAAATAAUAAwAUABgAAAASAAUAAwAUABgAAAARAAUAAwAUABgAAAAQAAUAAwAUABgAAAAPAAUAAwAUABgAAAAOAAUAAwAUABgAAAANAAUAAwAUABgAAAAMAAUAAwAUABgAAAALAAUAAwAUABgAAAAKAAUAAwAUABgAAAAJAAUAAwAUABgAAAAIAAUAAwAUABgAAAAHAAUAAwAUABgAAAAGAAUAAwAUABgAAAAFAAUAAwAUABgAAAAEAAUAAwAUABgAAAADAAUAAwAUABgAAAACAAUAAwAUABgAAAABAAUAAwAUABgAAAAAAAUAAwAVABgAAAAfAAQAAwAUABkAAAAeAAQAAwAUABgAAAAdAAQAAwAUABgAAAAcAAQAAwAUABgAAAAbAAQAAwAUABgAAAAaAAQAAwAUABgAAAAZAAQAAwAUABgAAAAYAAQAAwAUABgAAAAXAAQAAwAUABgAAAAWAAQAAwAUABgAAAAVAAQAAwAUABgAAAAUAAQAAwAUABgAAAATAAQAAwAUABgAAAASAAQAAwAUABgAAAARAAQAAwAUABgAAAAQAAQAAwAUABgAAAAPAAQAAwAUABgAAAAOAAQAAwAUABgAAAANAAQAAwAUABgAAAAMAAQAAwAUABgAAAALAAQAAwAUABgAAAAKAAQAAwAUABgAAAAJAAQAAwAUABgAAAAIAAQAAwAUABgAAAAHAAQAAwAUABgAAAAGAAQAAwAUABgAAAAFAAQAAwAUABgAAAAEAAQAAwAUABgAAAADAAQAAwAUABgAAAACAAQAAwAUABgAAAABAAQAAwAUABgAAAAAAAQAAwAVABgAAAAfAAMAAwAUABkAAAAeAAMAAwAUABgAAAAdAAMAAwAUABgAAAAcAAMAAwAUABgAAAAbAAMAAwAUABgAAAAaAAMAAwAUABgAAAAZAAMAAwAUABgAAAAYAAMAAwAUABgAAAAXAAMAAwAUABgAAAAWAAMAAwAUABgAAAAVAAMAAwAUABgAAAAUAAMAAwAUABgAAAATAAMAAwAUABgAAAASAAMAAwAUABgAAAARAAMAAwAUABgAAAAQAAMAAwAUABgAAAAPAAMAAwAUABgAAAAOAAMAAwAUABgAAAANAAMAAwAUABgAAAAMAAMAAwAUABgAAAALAAMAAwAUABgAAAAKAAMAAwAUABgAAAAJAAMAAwAUABgAAAAIAAMAAwAUABgAAAAHAAMAAwAUABgAAAAGAAMAAwAUABgAAAAFAAMAAwAUABgAAAAEAAMAAwAUABgAAAADAAMAAwAUABgAAAACAAMAAwAUABgAAAABAAMAAwAUABgAAAAAAAMAAwAVABgAAAAfAAIAAwAUABkAAAAeAAIAAwAUABgAAAAdAAIAAwAUABgAAAAcAAIAAwAUABgAAAAbAAIAAwAUABgAAAAaAAIAAwAUABgAAAAZAAIAAwAUABgAAAAYAAIAAwAUABgAAAAXAAIAAwAUABgAAAAWAAIAAwAUABgAAAAVAAIAAwAUABgAAAAUAAIAAwAUABgAAAATAAIAAwAUABgAAAASAAIAAwAUABgAAAARAAIAAwAUABgAAAAQAAIAAwAUABgAAAAPAAIAAwAUABgAAAAOAAIAAwAUABgAAAANAAIAAwAUABgAAAAMAAIAAwAUABgAAAALAAIAAwAUABgAAAAKAAIAAwAUABgAAAAJAAIAAwAUABgAAAAIAAIAAwAUABgAAAAHAAIAAwAUABgAAAAGAAIAAwAUABgAAAAFAAIAAwAUABgAAAAEAAIAAwAUABgAAAADAAIAAwAUABgAAAACAAIAAwAUABgAAAABAAIAAwAUABgAAAAAAAIAAwAVABgAAAAfAAEAAwAUABkAAAAeAAEAAwAUABgAAAAdAAEAAwAUABgAAAAcAAEAAwAUABgAAAAbAAEAAwAUABgAAAAaAAEAAwAUABgAAAAZAAEAAwAUABgAAAAYAAEAAwAUABgAAAAXAAEAAwAUABgAAAAWAAEAAwAUABgAAAAVAAEAAwAUABgAAAAUAAEAAwAUABgAAAATAAEAAwAUABgAAAASAAEAAwAUABgAAAARAAEAAwAUABgAAAAQAAEAAwAUABgAAAAPAAEAAwAUABgAAAAOAAEAAwAUABgAAAANAAEAAwAUABgAAAAMAAEAAwAUABgAAAALAAEAAwAUABgAAAAKAAEAAwAUABgAAAAJAAEAAwAUABgAAAAIAAEAAwAUABgAAAAHAAEAAwAUABgAAAAGAAEAAwAUABgAAAAFAAEAAwAUABgAAAAEAAEAAwAUABgAAAADAAEAAwAUABgAAAACAAEAAwAUABgAAAABAAEAAwAUABgAAAAAAAEAAwAVABgAAAAfAAAAAwAWABkAAAAeAAAAAwAWABgAAAAdAAAAAwAWABgAAAAcAAAAAwAWABgAAAAbAAAAAwAWABgAAAAaAAAAAwAWABgAAAAZAAAAAwAWABgAAAAYAAAAAwAWABgAAAAXAAAAAwAWABgAAAAWAAAAAwAWABgAAAAVAAAAAwAWABgAAAAUAAAAAwAWABgAAAATAAAAAwAWABgAAAASAAAAAwAWABgAAAARAAAAAwAWABgAAAAQAAAAAwAWABgAAAAPAAAAAwAWABgAAAAOAAAAAwAWABgAAAANAAAAAwAWABgAAAAMAAAAAwAWABgAAAALAAAAAwAWABgAAAAKAAAAAwAWABgAAAAJAAAAAwAWABgAAAAIAAAAAwAWABgAAAAHAAAAAwAWABgAAAAGAAAAAwAWABgAAAAFAAAAAwAWABgAAAAEAAAAAwAWABgAAAADAAAAAwAWABgAAAACAAAAAwAWABgAAAABAAAAAwAWABgAAAAAAAAAAwAXABgAAAA=")
+ tile_set = ExtResource("3_rs31d")
+ 
+-[node name="Wainscot" type="TileMapLayer" parent="." unique_id=1967581371]
++[node name="Wainscot" type="TileMapLayer" parent="." unique_id=1371295653]
+ modulate = Color(0.86, 0.82, 0.75, 1)
+ tile_map_data = PackedByteArray("AAAfAAYAAwAYABsAAAAeAAYAAwAYABoAAAAdAAYAAwAYABoAAAAcAAYAAwAYABoAAAAbAAYAAwAYABoAAAAaAAYAAwAYABoAAAAZAAYAAwAYABoAAAAYAAYAAwAYABoAAAAXAAYAAwAYABoAAAAWAAYAAwAYABoAAAAVAAYAAwAYABoAAAAUAAYAAwAYABoAAAATAAYAAwAYABoAAAASAAYAAwAYABoAAAARAAYAAwAYABoAAAAQAAYAAwAYABoAAAAPAAYAAwAYABoAAAAOAAYAAwAYABoAAAANAAYAAwAYABoAAAAMAAYAAwAYABoAAAALAAYAAwAYABoAAAAKAAYAAwAYABoAAAAJAAYAAwAYABoAAAAIAAYAAwAYABoAAAAHAAYAAwAYABoAAAAGAAYAAwAYABoAAAAFAAYAAwAYABoAAAAEAAYAAwAYABoAAAADAAYAAwAYABoAAAACAAYAAwAYABoAAAABAAYAAwAYABoAAAAAAAYAAwAZABoAAAAfAAUAAwAaABkAAAAeAAUAAwAaABgAAAAdAAUAAwAaABgAAAAcAAUAAwAaABgAAAAbAAUAAwAaABgAAAAaAAUAAwAaABgAAAAZAAUAAwAaABgAAAAYAAUAAwAaABgAAAAXAAUAAwAaABgAAAAWAAUAAwAaABgAAAAVAAUAAwAaABgAAAAUAAUAAwAaABgAAAATAAUAAwAaABgAAAASAAUAAwAaABgAAAARAAUAAwAaABgAAAAQAAUAAwAaABgAAAAPAAUAAwAaABgAAAAOAAUAAwAaABgAAAANAAUAAwAaABgAAAAMAAUAAwAaABgAAAALAAUAAwAaABgAAAAKAAUAAwAaABgAAAAJAAUAAwAaABgAAAAIAAUAAwAaABgAAAAHAAUAAwAaABgAAAAGAAUAAwAaABgAAAAFAAUAAwAaABgAAAAEAAUAAwAaABgAAAADAAUAAwAaABgAAAACAAUAAwAaABgAAAABAAUAAwAaABgAAAAAAAUAAwAbABgAAAA=")
+ tile_set = ExtResource("3_rs31d")
+ 
+-[node name="EntranceRug" type="TileMapLayer" parent="." unique_id=1397894288]
++[node name="EntranceRug" type="TileMapLayer" parent="." unique_id=1580456233]
+ modulate = Color(0.64, 0.7, 0.78, 1)
+ tile_map_data = PackedByteArray("AAASABMAAQACABYAAAARABMAAQAEABQAAAAQABMAAQAEABQAAAAPABMAAQAEABQAAAAOABMAAQAEABQAAAANABMAAQAEABYAAAASABIAAQAAABQAAAARABIAAQAAABAAAAAQABIAAQAAABAAAAAPABIAAQAAABAAAAAOABIAAQAAABAAAAANABIAAQAEABIAAAASABEAAQAAABQAAAARABEAAQAAABAAAAAQABEAAQAAABAAAAAPABEAAQAAABAAAAAOABEAAQAAABAAAAANABEAAQAEABIAAAASABAAAQAAABYAAAARABAAAQACABMAAAAQABAAAQACABMAAAAPABAAAQACABMAAAAOABAAAQACABMAAAANABAAAQAEABUAAAA=")
+ tile_set = ExtResource("3_rs31d")
+ 
+-[node name="FloorInlay" type="Node2D" parent="." unique_id=329969589]
++[node name="FloorInlay" type="Node2D" parent="." unique_id=2144790777]
+ 
+-[node name="InlayPattern" type="Sprite2D" parent="FloorInlay" unique_id=551699359]
++[node name="InlayPattern" type="Sprite2D" parent="FloorInlay" unique_id=246533666]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(512, 384)
+ texture = ExtResource("5_oskks")
+ 
+-[node name="CompassRose" type="Sprite2D" parent="FloorInlay" unique_id=1077469017]
++[node name="CompassRose" type="Sprite2D" parent="FloorInlay" unique_id=109244734]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(512, 351)
+ texture = ExtResource("6_1akkh")
+ 
+-[node name="Architecture" type="Node2D" parent="." unique_id=2026626589]
++[node name="Architecture" type="Node2D" parent="." unique_id=755261943]
+ 
+-[node name="Portal" type="Sprite2D" parent="Architecture" unique_id=940701255]
++[node name="Portal" type="Sprite2D" parent="Architecture" unique_id=655215054]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(192, 128)
+ texture = ExtResource("7_2d7qw")
+ 
+-[node name="@Sprite2D@2" type="Sprite2D" parent="Architecture" unique_id=1022421794]
++[node name="@Sprite2D@2" type="Sprite2D" parent="Architecture" unique_id=2061471984]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(336, 128)
+ texture = ExtResource("7_2d7qw")
+ 
+-[node name="@Sprite2D@3" type="Sprite2D" parent="Architecture" unique_id=793326306]
++[node name="@Sprite2D@3" type="Sprite2D" parent="Architecture" unique_id=530266102]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(688, 128)
+ texture = ExtResource("7_2d7qw")
+ 
+-[node name="@Sprite2D@4" type="Sprite2D" parent="Architecture" unique_id=691984643]
++[node name="@Sprite2D@4" type="Sprite2D" parent="Architecture" unique_id=674857420]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(832, 128)
+ texture = ExtResource("7_2d7qw")
+ 
+-[node name="MechanicalClockAndHorns" type="Sprite2D" parent="Architecture" unique_id=1941693885]
++[node name="MechanicalClockAndHorns" type="Sprite2D" parent="Architecture" unique_id=1116083497]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(512, 112)
+ texture = ExtResource("8_7l0xy")
+ 
+-[node name="MorningWindow" type="Sprite2D" parent="Architecture" unique_id=464726241]
++[node name="MorningWindow" type="Sprite2D" parent="Architecture" unique_id=1381576602]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(32, 123)
+ texture = ExtResource("9_asxbl")
+ 
+-[node name="@Sprite2D@5" type="Sprite2D" parent="Architecture" unique_id=597485572]
++[node name="@Sprite2D@5" type="Sprite2D" parent="Architecture" unique_id=1012330101]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(992, 123)
+ texture = ExtResource("9_asxbl")
+ 
+-[node name="Furniture" type="Node2D" parent="." unique_id=698222638]
++[node name="Furniture" type="Node2D" parent="." unique_id=16385755]
+ 
+-[node name="BenchShadow" type="Sprite2D" parent="Furniture" unique_id=83874391]
++[node name="BenchShadow" type="Sprite2D" parent="Furniture" unique_id=1479101191]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(156, 425.16)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("10_r272v")
+ 
+-[node name="Bench" type="Sprite2D" parent="Furniture" unique_id=115392179]
++[node name="Bench" type="Sprite2D" parent="Furniture" unique_id=1978329577]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(149, 397)
+ texture = ExtResource("10_r272v")
+ 
+-[node name="@Sprite2D@6" type="Sprite2D" parent="Furniture" unique_id=1745930549]
++[node name="@Sprite2D@6" type="Sprite2D" parent="Furniture" unique_id=169355918]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(882, 425.16)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("10_r272v")
+ 
+-[node name="@Sprite2D@7" type="Sprite2D" parent="Furniture" unique_id=136271304]
++[node name="@Sprite2D@7" type="Sprite2D" parent="Furniture" unique_id=1970283841]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(875, 397)
+ texture = ExtResource("10_r272v")
+ 
+-[node name="ScholarStatueShadow" type="Sprite2D" parent="Furniture" unique_id=640514280]
++[node name="ScholarStatueShadow" type="Sprite2D" parent="Furniture" unique_id=517659167]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(231, 536.32)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("11_l1y83")
+ 
+-[node name="ScholarStatue" type="Sprite2D" parent="Furniture" unique_id=1766240133]
++[node name="ScholarStatue" type="Sprite2D" parent="Furniture" unique_id=363735086]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(224, 480)
+ texture = ExtResource("11_l1y83")
+ 
+-[node name="@Sprite2D@8" type="Sprite2D" parent="Furniture" unique_id=1518621777]
++[node name="@Sprite2D@8" type="Sprite2D" parent="Furniture" unique_id=87362299]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(807, 536.32)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("11_l1y83")
+ 
+-[node name="@Sprite2D@9" type="Sprite2D" parent="Furniture" unique_id=1870156256]
++[node name="@Sprite2D@9" type="Sprite2D" parent="Furniture" unique_id=1478076864]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(800, 480)
+ texture = ExtResource("11_l1y83")
+ 
+-[node name="ResearchTableShadow" type="Sprite2D" parent="Furniture" unique_id=1705647510]
++[node name="ResearchTableShadow" type="Sprite2D" parent="Furniture" unique_id=1032853352]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(59, 502.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("12_yfxcu")
+ 
+-[node name="ResearchTable" type="Sprite2D" parent="Furniture" unique_id=1872729672]
++[node name="ResearchTable" type="Sprite2D" parent="Furniture" unique_id=1540191346]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(52, 460)
+ texture = ExtResource("12_yfxcu")
+ 
+-[node name="BookcaseShadow" type="Sprite2D" parent="Furniture" unique_id=2044028903]
++[node name="BookcaseShadow" type="Sprite2D" parent="Furniture" unique_id=1985909504]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(59, 377.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("13_ut1mn")
+ 
+-[node name="Bookcase" type="Sprite2D" parent="Furniture" unique_id=720117775]
++[node name="Bookcase" type="Sprite2D" parent="Furniture" unique_id=1294014500]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(52, 335)
+ texture = ExtResource("13_ut1mn")
+ 
+-[node name="@Sprite2D@10" type="Sprite2D" parent="Furniture" unique_id=1033325183]
++[node name="@Sprite2D@10" type="Sprite2D" parent="Furniture" unique_id=402563038]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(979, 502.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("12_yfxcu")
+ 
+-[node name="@Sprite2D@11" type="Sprite2D" parent="Furniture" unique_id=895445578]
++[node name="@Sprite2D@11" type="Sprite2D" parent="Furniture" unique_id=1453713379]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(972, 460)
+ texture = ExtResource("12_yfxcu")
+ 
+-[node name="@Sprite2D@12" type="Sprite2D" parent="Furniture" unique_id=1457793110]
++[node name="@Sprite2D@12" type="Sprite2D" parent="Furniture" unique_id=1527303906]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(979, 377.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("13_ut1mn")
+ 
+-[node name="@Sprite2D@13" type="Sprite2D" parent="Furniture" unique_id=1645918885]
++[node name="@Sprite2D@13" type="Sprite2D" parent="Furniture" unique_id=619959957]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(972, 335)
+ texture = ExtResource("13_ut1mn")
+ 
+-[node name="PottedTreeShadow" type="Sprite2D" parent="Furniture" unique_id=1994503519]
++[node name="PottedTreeShadow" type="Sprite2D" parent="Furniture" unique_id=1839103857]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(82, 273.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("14_f15qa")
+ 
+-[node name="PottedTree" type="Sprite2D" parent="Furniture" unique_id=635716923]
++[node name="PottedTree" type="Sprite2D" parent="Furniture" unique_id=2121016828]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(75, 231)
+ texture = ExtResource("14_f15qa")
+ 
+-[node name="@Sprite2D@14" type="Sprite2D" parent="Furniture" unique_id=145738093]
++[node name="@Sprite2D@14" type="Sprite2D" parent="Furniture" unique_id=1607747453]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(956, 273.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("14_f15qa")
+ 
+-[node name="@Sprite2D@15" type="Sprite2D" parent="Furniture" unique_id=1881105088]
++[node name="@Sprite2D@15" type="Sprite2D" parent="Furniture" unique_id=1668081609]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(949, 231)
+ texture = ExtResource("14_f15qa")
+ 
+-[node name="PottedFernShadow" type="Sprite2D" parent="Furniture" unique_id=550269677]
++[node name="PottedFernShadow" type="Sprite2D" parent="Furniture" unique_id=229558444]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(55, 427.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("15_atk4w")
+ 
+-[node name="PottedFern" type="Sprite2D" parent="Furniture" unique_id=203035053]
++[node name="PottedFern" type="Sprite2D" parent="Furniture" unique_id=1239467525]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(48, 385)
+ texture = ExtResource("15_atk4w")
+ 
+-[node name="@Sprite2D@16" type="Sprite2D" parent="Furniture" unique_id=1192547412]
++[node name="@Sprite2D@16" type="Sprite2D" parent="Furniture" unique_id=1416402101]
+ modulate = Color(0.04, 0.03, 0.02, 0.3)
+ position = Vector2(983, 427.24)
+ scale = Vector2(0.95, 0.18)
+ texture = ExtResource("15_atk4w")
+ 
+-[node name="@Sprite2D@17" type="Sprite2D" parent="Furniture" unique_id=1635085523]
++[node name="@Sprite2D@17" type="Sprite2D" parent="Furniture" unique_id=484036427]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(976, 385)
+ texture = ExtResource("15_atk4w")
+ 
+-[node name="Candelabra" type="Sprite2D" parent="Furniture" unique_id=306990367]
++[node name="Candelabra" type="Sprite2D" parent="Furniture" unique_id=1742846285]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(107, 288)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="@Sprite2D@18" type="Sprite2D" parent="Furniture" unique_id=654921355]
++[node name="@Sprite2D@18" type="Sprite2D" parent="Furniture" unique_id=713666865]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(917, 288)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="WallLantern" type="Sprite2D" parent="Furniture" unique_id=2094724125]
++[node name="WallLantern" type="Sprite2D" parent="Furniture" unique_id=1686194506]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(117, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="@Sprite2D@19" type="Sprite2D" parent="Furniture" unique_id=1049124438]
++[node name="@Sprite2D@19" type="Sprite2D" parent="Furniture" unique_id=756591557]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(267, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="@Sprite2D@20" type="Sprite2D" parent="Furniture" unique_id=2129222264]
++[node name="@Sprite2D@20" type="Sprite2D" parent="Furniture" unique_id=1671148539]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(395, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="@Sprite2D@21" type="Sprite2D" parent="Furniture" unique_id=699480839]
++[node name="@Sprite2D@21" type="Sprite2D" parent="Furniture" unique_id=797394525]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(629, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="@Sprite2D@22" type="Sprite2D" parent="Furniture" unique_id=1515346230]
++[node name="@Sprite2D@22" type="Sprite2D" parent="Furniture" unique_id=403446710]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(757, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="@Sprite2D@23" type="Sprite2D" parent="Furniture" unique_id=1202887872]
++[node name="@Sprite2D@23" type="Sprite2D" parent="Furniture" unique_id=639004698]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(907, 161)
+ texture = ExtResource("17_6efwo")
+ 
+-[node name="ForegroundWainscot" type="TileMapLayer" parent="." unique_id=2126655029]
++[node name="ForegroundWainscot" type="TileMapLayer" parent="." unique_id=1064208398]
+ modulate = Color(0.83, 0.78, 0.69, 1)
+ tile_map_data = PackedByteArray("AAAMABMAAwAYABsAAAALABMAAwAYABoAAAAKABMAAwAYABoAAAAJABMAAwAYABoAAAAIABMAAwAYABoAAAAHABMAAwAYABoAAAAGABMAAwAYABoAAAAFABMAAwAYABoAAAAEABMAAwAYABoAAAADABMAAwAYABoAAAACABMAAwAYABoAAAABABMAAwAYABoAAAAAABMAAwAZABoAAAAMABIAAwAYABkAAAALABIAAwAYABgAAAAKABIAAwAYABgAAAAJABIAAwAYABgAAAAIABIAAwAYABgAAAAHABIAAwAYABgAAAAGABIAAwAYABgAAAAFABIAAwAYABgAAAAEABIAAwAYABgAAAADABIAAwAYABgAAAACABIAAwAYABgAAAABABIAAwAYABgAAAAAABIAAwAZABgAAAAMABEAAwAaABkAAAALABEAAwAaABgAAAAKABEAAwAaABgAAAAJABEAAwAaABgAAAAIABEAAwAaABgAAAAHABEAAwAaABgAAAAGABEAAwAaABgAAAAFABEAAwAaABgAAAAEABEAAwAaABgAAAADABEAAwAaABgAAAACABEAAwAaABgAAAABABEAAwAaABgAAAAAABEAAwAbABgAAAAfABMAAwAYABsAAAAeABMAAwAYABoAAAAdABMAAwAYABoAAAAcABMAAwAYABoAAAAbABMAAwAYABoAAAAaABMAAwAYABoAAAAZABMAAwAYABoAAAAYABMAAwAYABoAAAAXABMAAwAYABoAAAAWABMAAwAYABoAAAAVABMAAwAYABoAAAAUABMAAwAYABoAAAATABMAAwAZABoAAAAfABIAAwAYABkAAAAeABIAAwAYABgAAAAdABIAAwAYABgAAAAcABIAAwAYABgAAAAbABIAAwAYABgAAAAaABIAAwAYABgAAAAZABIAAwAYABgAAAAYABIAAwAYABgAAAAXABIAAwAYABgAAAAWABIAAwAYABgAAAAVABIAAwAYABgAAAAUABIAAwAYABgAAAATABIAAwAZABgAAAAfABEAAwAaABkAAAAeABEAAwAaABgAAAAdABEAAwAaABgAAAAcABEAAwAaABgAAAAbABEAAwAaABgAAAAaABEAAwAaABgAAAAZABEAAwAaABgAAAAYABEAAwAaABgAAAAXABEAAwAaABgAAAAWABEAAwAaABgAAAAVABEAAwAaABgAAAAUABEAAwAaABgAAAATABEAAwAbABgAAAA=")
+ tile_set = ExtResource("3_rs31d")
+ 
+-[node name="ForegroundRail" type="Node2D" parent="." unique_id=943953925]
++[node name="ForegroundRail" type="Node2D" parent="." unique_id=479854676]
+ 
+-[node name="ForegroundRailLeft" type="Sprite2D" parent="ForegroundRail" unique_id=1442361965]
++[node name="ForegroundRailLeft" type="Sprite2D" parent="ForegroundRail" unique_id=1992367442]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(208, 543)
+ texture = ExtResource("18_82xvd")
+ 
+-[node name="ForegroundRailRight" type="Sprite2D" parent="ForegroundRail" unique_id=559875760]
++[node name="ForegroundRailRight" type="Sprite2D" parent="ForegroundRail" unique_id=426896622]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(816, 543)
+ texture = ExtResource("18_82xvd")
+ 
+-[node name="ForecourtPost" type="Sprite2D" parent="ForegroundRail" unique_id=2079938780]
++[node name="ForecourtPost" type="Sprite2D" parent="ForegroundRail" unique_id=74717133]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(107, 571)
+ scale = Vector2(1, 2)
+ texture = ExtResource("19_r5ugb")
+ 
+-[node name="PostCandle" type="Sprite2D" parent="ForegroundRail" unique_id=1433649764]
++[node name="PostCandle" type="Sprite2D" parent="ForegroundRail" unique_id=750025640]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(107, 504)
+ scale = Vector2(0.55, 0.55)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="@Sprite2D@24" type="Sprite2D" parent="ForegroundRail" unique_id=1230163747]
++[node name="@Sprite2D@24" type="Sprite2D" parent="ForegroundRail" unique_id=2035491685]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(363, 571)
+ scale = Vector2(1, 2)
+ texture = ExtResource("19_r5ugb")
+ 
+-[node name="@Sprite2D@25" type="Sprite2D" parent="ForegroundRail" unique_id=71638323]
++[node name="@Sprite2D@25" type="Sprite2D" parent="ForegroundRail" unique_id=847506731]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(363, 504)
+ scale = Vector2(0.55, 0.55)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="@Sprite2D@26" type="Sprite2D" parent="ForegroundRail" unique_id=127605590]
++[node name="@Sprite2D@26" type="Sprite2D" parent="ForegroundRail" unique_id=676366296]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(661, 571)
+ scale = Vector2(1, 2)
+ texture = ExtResource("19_r5ugb")
+ 
+-[node name="@Sprite2D@27" type="Sprite2D" parent="ForegroundRail" unique_id=1193901451]
++[node name="@Sprite2D@27" type="Sprite2D" parent="ForegroundRail" unique_id=1018928958]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(661, 504)
+ scale = Vector2(0.55, 0.55)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="@Sprite2D@28" type="Sprite2D" parent="ForegroundRail" unique_id=1509117940]
++[node name="@Sprite2D@28" type="Sprite2D" parent="ForegroundRail" unique_id=1836782826]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(917, 571)
+ scale = Vector2(1, 2)
+ texture = ExtResource("19_r5ugb")
+ 
+-[node name="@Sprite2D@29" type="Sprite2D" parent="ForegroundRail" unique_id=869729731]
++[node name="@Sprite2D@29" type="Sprite2D" parent="ForegroundRail" unique_id=1881816163]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(917, 504)
+ scale = Vector2(0.55, 0.55)
+ texture = ExtResource("16_pyc7v")
+ 
+-[node name="IdentityBanners" type="Node2D" parent="." unique_id=840011927]
++[node name="IdentityBanners" type="Node2D" parent="." unique_id=964218278]
+ 
+-[node name="Academy" type="Sprite2D" parent="IdentityBanners" unique_id=851992348]
++[node name="Academy" type="Sprite2D" parent="IdentityBanners" unique_id=413813630]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(512, 187)
+ scale = Vector2(0.67, 0.67)
+ texture = ExtResource("20_nksjx")
+ 
+-[node name="RoyalScience" type="Sprite2D" parent="IdentityBanners" unique_id=1447592783]
++[node name="RoyalScience" type="Sprite2D" parent="IdentityBanners" unique_id=540165340]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(192, 71)
+ scale = Vector2(0.84, 0.84)
+ texture = ExtResource("21_7fm70")
+ 
+-[node name="@Sprite2D@30" type="Sprite2D" parent="IdentityBanners" unique_id=1007167909]
++[node name="@Sprite2D@30" type="Sprite2D" parent="IdentityBanners" unique_id=1401871523]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(688, 71)
+ scale = Vector2(0.84, 0.84)
+ texture = ExtResource("21_7fm70")
+ 
+-[node name="MysticGuild" type="Sprite2D" parent="IdentityBanners" unique_id=1080025565]
++[node name="MysticGuild" type="Sprite2D" parent="IdentityBanners" unique_id=1959823959]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(336, 71)
+ scale = Vector2(0.84, 0.84)
+ texture = ExtResource("22_pn28r")
+ 
+-[node name="@Sprite2D@31" type="Sprite2D" parent="IdentityBanners" unique_id=1456646376]
++[node name="@Sprite2D@31" type="Sprite2D" parent="IdentityBanners" unique_id=1515263334]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(832, 71)
+ scale = Vector2(0.84, 0.84)
+ texture = ExtResource("22_pn28r")
+ 
+-[node name="RoyalAuthority" type="Sprite2D" parent="IdentityBanners" unique_id=1343812583]
++[node name="RoyalAuthority" type="Sprite2D" parent="IdentityBanners" unique_id=1210230591]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(80, 67)
+ texture = ExtResource("23_lefh4")
+ 
+-[node name="CountPatron" type="Sprite2D" parent="IdentityBanners" unique_id=871807476]
++[node name="CountPatron" type="Sprite2D" parent="IdentityBanners" unique_id=1459347337]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(944, 67)
+ texture = ExtResource("24_4dr3w")
+ 
+-[node name="AcademyEntrance" type="Sprite2D" parent="IdentityBanners" unique_id=1194520706]
++[node name="AcademyEntrance" type="Sprite2D" parent="IdentityBanners" unique_id=2140299378]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(288, 580)
+ texture = ExtResource("20_nksjx")
+ 
+-[node name="@Sprite2D@32" type="Sprite2D" parent="IdentityBanners" unique_id=475311473]
++[node name="@Sprite2D@32" type="Sprite2D" parent="IdentityBanners" unique_id=566287161]
+ material = SubResource("ShaderMaterial_y527h")
+ position = Vector2(736, 580)
+ texture = ExtResource("20_nksjx")
+ 
+-[node name="Characters" type="Node2D" parent="." unique_id=590735065]
++[node name="Characters" type="Node2D" parent="." unique_id=919192251]
+ 
+-[node name="DetectiveShadow" type="Sprite2D" parent="Characters" unique_id=1260059824]
++[node name="DetectiveShadow" type="Sprite2D" parent="Characters" unique_id=26710534]
+ modulate = Color(0.04, 0.03, 0.02, 0.26)
+-position = Vector2(512, 551.16)
++position = Vector2(512, 555.08)
+ scale = Vector2(0.85, 0.16)
+ texture = ExtResource("25_wknol")
+ 
+-[node name="Detective" type="Sprite2D" parent="Characters" unique_id=493261810]
++[node name="Detective" type="Sprite2D" parent="Characters" unique_id=1322220461]
+ position = Vector2(512, 533)
+ texture = ExtResource("25_wknol")
+ 
+-[node name="MusicianShadow" type="Sprite2D" parent="Characters" unique_id=1309462072]
++[node name="MusicianShadow" type="Sprite2D" parent="Characters" unique_id=1919245878]
+ modulate = Color(0.04, 0.03, 0.02, 0.26)
+-position = Vector2(251, 255.16)
++position = Vector2(251, 259.08)
+ scale = Vector2(0.85, 0.16)
+ texture = ExtResource("26_jx0uq")
+ 
+-[node name="Musician" type="Sprite2D" parent="Characters" unique_id=2103462715]
++[node name="Musician" type="Sprite2D" parent="Characters" unique_id=1050418594]
+ position = Vector2(251, 237)
+ texture = ExtResource("26_jx0uq")
+ 
+-[node name="MorningLight" type="Node2D" parent="." unique_id=779286435]
++[node name="MorningLight" type="Node2D" parent="." unique_id=66409636]
+ 
+-[node name="MorningLightGrid" type="Sprite2D" parent="MorningLight" unique_id=1213321777]
++[node name="MorningLightGrid" type="Sprite2D" parent="MorningLight" unique_id=2132893206]
+ position = Vector2(304, 384)
+ texture = ExtResource("27_gq4y6")
+ 
+-[node name="PeripheralShade" type="ColorRect" parent="." unique_id=29421170]
++[node name="PeripheralShade" type="ColorRect" parent="." unique_id=104854541]
+ material = SubResource("ShaderMaterial_0on4w")
+ offset_right = 1024.0
+ offset_bottom = 640.0
+ mouse_filter = 2
+ 
+-[node name="Camera2D" type="Camera2D" parent="." unique_id=937872326]
++[node name="Camera2D" type="Camera2D" parent="." unique_id=628152687]
+ position = Vector2(512, 320)
+diff --git a/godot_csharp/scenes/Shot02/Shot02.tscn b/godot_csharp/scenes/Shot02/Shot02.tscn
+index 300aac3..8764a38 100644
+--- a/godot_csharp/scenes/Shot02/Shot02.tscn
++++ b/godot_csharp/scenes/Shot02/Shot02.tscn
+@@ -2,32 +2,32 @@
+ 
+ [ext_resource type="Script" path="res://scenes/Shot02/Shot02.gd" id="1_ioju2"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/stone_finish.gdshader" id="2_u7g03"]
+-[ext_resource type="TileSet" path="res://ShareAsset/Victorian/tilesets/Victorian.tres" id="3_bsemw"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/hearth.res" id="4_l8fql"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/pantry.res" id="5_lqpv8"]
++[ext_resource type="TileSet" path="res://ShareAsset/External/Victorian/tilesets/Victorian.tres" id="3_bsemw"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/hearth.res" id="4_l8fql"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/pantry.res" id="5_lqpv8"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/material_finish.gdshader" id="6_qvx6f"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/closed_door.res" id="7_rb320"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/prep_island.res" id="8_xdqbb"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/bread_barrel.res" id="9_ksgx8"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/supplies.res" id="10_4mcwc"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/window.res" id="11_quyii"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/wall_lantern.res" id="12_xm8xf"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/chair.res" id="13_3qujl"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/side_table.res" id="14_ydpvx"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/bread_plate.res" id="15_nc31q"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/books.res" id="16_qoca8"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/candelabrum.res" id="17_mhdnc"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/tree.res" id="18_afiyr"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot01/revision2/fern.res" id="19_d4v74"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/academy_emblem.res" id="20_x2f3v"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/11_chef.tres" id="21_rhy01"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/breakfast_table.res" id="22_10x5j"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/06_detective.tres" id="23_3uhic"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/09_naturalist.tres" id="24_8gth4"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/characters/atlas/10_mechanical_engineer.tres" id="25_cvigc"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/window_light.res" id="26_idkqf"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/front_panel.res" id="27_fvemn"]
+-[ext_resource type="Texture2D" path="res://ShareAsset/Images/shot02/front_gate.res" id="28_mm33w"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/closed_door.res" id="7_rb320"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/prep_island.res" id="8_xdqbb"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/bread_barrel.res" id="9_ksgx8"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/supplies.res" id="10_4mcwc"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/window.res" id="11_quyii"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/kitchen_wall_lantern.res" id="12_xm8xf"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/chair.res" id="13_3qujl"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/side_table.res" id="14_ydpvx"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/bread_plate.res" id="15_nc31q"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/books.res" id="16_qoca8"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/candelabrum.res" id="17_mhdnc"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/tree.res" id="18_afiyr"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/fern.res" id="19_d4v74"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/academy_emblem.res" id="20_x2f3v"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/11_chef.tres" id="21_rhy01"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/breakfast_table.res" id="22_10x5j"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/06_detective.tres" id="23_3uhic"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/09_naturalist.tres" id="24_8gth4"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/atlas/10_mechanical_engineer.tres" id="25_cvigc"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/window_light.res" id="26_idkqf"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/front_panel.res" id="27_fvemn"]
++[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/front_gate.res" id="28_mm33w"]
+ [ext_resource type="Shader" path="res://scenes/Shot01/edge_shade.gdshader" id="29_0f7ys"]
+ 
+ [sub_resource type="ShaderMaterial" id="ShaderMaterial_fkgx8"]
+@@ -39,577 +39,577 @@ shader = ExtResource("6_qvx6f")
+ [sub_resource type="ShaderMaterial" id="ShaderMaterial_27xeo"]
+ shader = ExtResource("29_0f7ys")
+ 
+-[node name="Shot02" type="Node2D" unique_id=258946912]
++[node name="Shot02" type="Node2D" unique_id=1207236774]
+ texture_filter = 1
+ script = ExtResource("1_ioju2")
+ metadata/reference = "artifacts/theme-film/scenes/shot-02.png"
+ 
+-[node name="StoneFloor" type="TileMapLayer" parent="." unique_id=798237414]
++[node name="StoneFloor" type="TileMapLayer" parent="." unique_id=1227053466]
+ material = SubResource("ShaderMaterial_fkgx8")
+ tile_map_data = PackedByteArray("AAAfABIAAQAUAB4AAAAeABIAAQAWABwAAAAdABIAAQAWABwAAAAcABIAAQAWABwAAAAbABIAAQAWABwAAAAaABIAAQAWABwAAAAZABIAAQAWABwAAAAYABIAAQAWABwAAAAXABIAAQAWABwAAAAWABIAAQAWABwAAAAVABIAAQAWABwAAAAUABIAAQAWABwAAAATABIAAQAWABwAAAASABIAAQAWABwAAAARABIAAQAWABwAAAAQABIAAQAWABwAAAAPABIAAQAWABwAAAAOABIAAQAWABwAAAANABIAAQAWABwAAAAMABIAAQAWABwAAAALABIAAQAWABwAAAAKABIAAQAWABwAAAAJABIAAQAWABwAAAAIABIAAQAWABwAAAAHABIAAQAWABwAAAAGABIAAQAWABwAAAAFABIAAQAWABwAAAAEABIAAQAWABwAAAADABIAAQAWABwAAAACABIAAQAWABwAAAABABIAAQAWABwAAAAAABIAAQAWAB4AAAAfABEAAQASABwAAAAeABEAAQASABgAAAAdABEAAQASABgAAAAcABEAAQASABgAAAAbABEAAQASABgAAAAaABEAAQASABgAAAAZABEAAQASABgAAAAYABEAAQASABgAAAAXABEAAQASABgAAAAWABEAAQASABgAAAAVABEAAQASABgAAAAUABEAAQASABgAAAATABEAAQASABgAAAASABEAAQASABgAAAARABEAAQASABgAAAAQABEAAQASABgAAAAPABEAAQASABgAAAAOABEAAQASABgAAAANABEAAQASABgAAAAMABEAAQASABgAAAALABEAAQASABgAAAAKABEAAQASABgAAAAJABEAAQASABgAAAAIABEAAQASABgAAAAHABEAAQASABgAAAAGABEAAQASABgAAAAFABEAAQASABgAAAAEABEAAQASABgAAAADABEAAQASABgAAAACABEAAQASABgAAAABABEAAQASABgAAAAAABEAAQAWABoAAAAfABAAAQASABwAAAAeABAAAQASABgAAAAdABAAAQASABgAAAAcABAAAQASABgAAAAbABAAAQASABgAAAAaABAAAQASABgAAAAZABAAAQASABgAAAAYABAAAQASABgAAAAXABAAAQASABgAAAAWABAAAQASABgAAAAVABAAAQASABgAAAAUABAAAQASABgAAAATABAAAQASABgAAAASABAAAQASABgAAAARABAAAQASABgAAAAQABAAAQASABgAAAAPABAAAQASABgAAAAOABAAAQASABgAAAANABAAAQASABgAAAAMABAAAQASABgAAAALABAAAQASABgAAAAKABAAAQASABgAAAAJABAAAQASABgAAAAIABAAAQASABgAAAAHABAAAQASABgAAAAGABAAAQASABgAAAAFABAAAQASABgAAAAEABAAAQASABgAAAADABAAAQASABgAAAACABAAAQASABgAAAABABAAAQASABgAAAAAABAAAQAWABoAAAAfAA8AAQASABwAAAAeAA8AAQASABgAAAAdAA8AAQASABgAAAAcAA8AAQASABgAAAAbAA8AAQASABgAAAAaAA8AAQASABgAAAAZAA8AAQASABgAAAAYAA8AAQASABgAAAAXAA8AAQASABgAAAAWAA8AAQASABgAAAAVAA8AAQASABgAAAAUAA8AAQASABgAAAATAA8AAQASABgAAAASAA8AAQASABgAAAARAA8AAQASABgAAAAQAA8AAQASABgAAAAPAA8AAQASABgAAAAOAA8AAQASABgAAAANAA8AAQASABgAAAAMAA8AAQASABgAAAALAA8AAQASABgAAAAKAA8AAQASABgAAAAJAA8AAQASABgAAAAIAA8AAQASABgAAAAHAA8AAQASABgAAAAGAA8AAQASABgAAAAFAA8AAQASABgAAAAEAA8AAQASABgAAAADAA8AAQASABgAAAACAA8AAQASABgAAAABAA8AAQASABgAAAAAAA8AAQAWABoAAAAfAA4AAQASABwAAAAeAA4AAQASABgAAAAdAA4AAQASABgAAAAcAA4AAQASABgAAAAbAA4AAQASABgAAAAaAA4AAQASABgAAAAZAA4AAQASABgAAAAYAA4AAQASABgAAAAXAA4AAQASABgAAAAWAA4AAQASABgAAAAVAA4AAQASABgAAAAUAA4AAQASABgAAAATAA4AAQASABgAAAASAA4AAQASABgAAAARAA4AAQASABgAAAAQAA4AAQASABgAAAAPAA4AAQASABgAAAAOAA4AAQASABgAAAANAA4AAQASABgAAAAMAA4AAQASABgAAAALAA4AAQASABgAAAAKAA4AAQASABgAAAAJAA4AAQASABgAAAAIAA4AAQASABgAAAAHAA4AAQASABgAAAAGAA4AAQASABgAAAAFAA4AAQASABgAAAAEAA4AAQASABgAAAADAA4AAQASABgAAAACAA4AAQASABgAAAABAA4AAQASABgAAAAAAA4AAQAWABoAAAAfAA0AAQASABwAAAAeAA0AAQASABgAAAAdAA0AAQASABgAAAAcAA0AAQASABgAAAAbAA0AAQASABgAAAAaAA0AAQASABgAAAAZAA0AAQASABgAAAAYAA0AAQASABgAAAAXAA0AAQASABgAAAAWAA0AAQASABgAAAAVAA0AAQASABgAAAAUAA0AAQASABgAAAATAA0AAQASABgAAAASAA0AAQASABgAAAARAA0AAQASABgAAAAQAA0AAQASABgAAAAPAA0AAQASABgAAAAOAA0AAQASABgAAAANAA0AAQASABgAAAAMAA0AAQASABgAAAALAA0AAQASABgAAAAKAA0AAQASABgAAAAJAA0AAQASABgAAAAIAA0AAQASABgAAAAHAA0AAQASABgAAAAGAA0AAQASABgAAAAFAA0AAQASABgAAAAEAA0AAQASABgAAAADAA0AAQASABgAAAACAA0AAQASABgAAAABAA0AAQASABgAAAAAAA0AAQAWABoAAAAfAAwAAQASABwAAAAeAAwAAQASABgAAAAdAAwAAQASABgAAAAcAAwAAQASABgAAAAbAAwAAQASABgAAAAaAAwAAQASABgAAAAZAAwAAQASABgAAAAYAAwAAQASABgAAAAXAAwAAQASABgAAAAWAAwAAQASABgAAAAVAAwAAQASABgAAAAUAAwAAQASABgAAAATAAwAAQASABgAAAASAAwAAQASABgAAAARAAwAAQASABgAAAAQAAwAAQASABgAAAAPAAwAAQASABgAAAAOAAwAAQASABgAAAANAAwAAQASABgAAAAMAAwAAQASABgAAAALAAwAAQASABgAAAAKAAwAAQASABgAAAAJAAwAAQASABgAAAAIAAwAAQASABgAAAAHAAwAAQASABgAAAAGAAwAAQASABgAAAAFAAwAAQASABgAAAAEAAwAAQASABgAAAADAAwAAQASABgAAAACAAwAAQASABgAAAABAAwAAQASABgAAAAAAAwAAQAWABoAAAAfAAsAAQASABwAAAAeAAsAAQASABgAAAAdAAsAAQASABgAAAAcAAsAAQASABgAAAAbAAsAAQASABgAAAAaAAsAAQASABgAAAAZAAsAAQASABgAAAAYAAsAAQASABgAAAAXAAsAAQASABgAAAAWAAsAAQASABgAAAAVAAsAAQASABgAAAAUAAsAAQASABgAAAATAAsAAQASABgAAAASAAsAAQASABgAAAARAAsAAQASABgAAAAQAAsAAQASABgAAAAPAAsAAQASABgAAAAOAAsAAQASABgAAAANAAsAAQASABgAAAAMAAsAAQASABgAAAALAAsAAQASABgAAAAKAAsAAQASABgAAAAJAAsAAQASABgAAAAIAAsAAQASABgAAAAHAAsAAQASABgAAAAGAAsAAQASABgAAAAFAAsAAQASABgAAAAEAAsAAQASABgAAAADAAsAAQASABgAAAACAAsAAQASABgAAAABAAsAAQASABgAAAAAAAsAAQAWABoAAAAfAAoAAQASABwAAAAeAAoAAQASABgAAAAdAAoAAQASABgAAAAcAAoAAQASABgAAAAbAAoAAQASABgAAAAaAAoAAQASABgAAAAZAAoAAQASABgAAAAYAAoAAQASABgAAAAXAAoAAQASABgAAAAWAAoAAQASABgAAAAVAAoAAQASABgAAAAUAAoAAQASABgAAAATAAoAAQASABgAAAASAAoAAQASABgAAAARAAoAAQASABgAAAAQAAoAAQASABgAAAAPAAoAAQASABgAAAAOAAoAAQASABgAAAANAAoAAQASABgAAAAMAAoAAQASABgAAAALAAoAAQASABgAAAAKAAoAAQASABgAAAAJAAoAAQASABgAAAAIAAoAAQASABgAAAAHAAoAAQASABgAAAAGAAoAAQASABgAAAAFAAoAAQASABgAAAAEAAoAAQASABgAAAADAAoAAQASABgAAAACAAoAAQASABgAAAABAAoAAQASABgAAAAAAAoAAQAWABoAAAAfAAkAAQASABwAAAAeAAkAAQASABgAAAAdAAkAAQASABgAAAAcAAkAAQASABgAAAAbAAkAAQASABgAAAAaAAkAAQASABgAAAAZAAkAAQASABgAAAAYAAkAAQASABgAAAAXAAkAAQASABgAAAAWAAkAAQASABgAAAAVAAkAAQASABgAAAAUAAkAAQASABgAAAATAAkAAQASABgAAAASAAkAAQASABgAAAARAAkAAQASABgAAAAQAAkAAQASABgAAAAPAAkAAQASABgAAAAOAAkAAQASABgAAAANAAkAAQASABgAAAAMAAkAAQASABgAAAALAAkAAQASABgAAAAKAAkAAQASABgAAAAJAAkAAQASABgAAAAIAAkAAQASABgAAAAHAAkAAQASABgAAAAGAAkAAQASABgAAAAFAAkAAQASABgAAAAEAAkAAQASABgAAAADAAkAAQASABgAAAACAAkAAQASABgAAAABAAkAAQASABgAAAAAAAkAAQAWABoAAAAfAAgAAQASABwAAAAeAAgAAQASABgAAAAdAAgAAQASABgAAAAcAAgAAQASABgAAAAbAAgAAQASABgAAAAaAAgAAQASABgAAAAZAAgAAQASABgAAAAYAAgAAQASABgAAAAXAAgAAQASABgAAAAWAAgAAQASABgAAAAVAAgAAQASABgAAAAUAAgAAQASABgAAAATAAgAAQASABgAAAASAAgAAQASABgAAAARAAgAAQASABgAAAAQAAgAAQASABgAAAAPAAgAAQASABgAAAAOAAgAAQASABgAAAANAAgAAQASABgAAAAMAAgAAQASABgAAAALAAgAAQASABgAAAAKAAgAAQASABgAAAAJAAgAAQASABgAAAAIAAgAAQASABgAAAAHAAgAAQASABgAAAAGAAgAAQASABgAAAAFAAgAAQASABgAAAAEAAgAAQASABgAAAADAAgAAQASABgAAAACAAgAAQASABgAAAABAAgAAQASABgAAAAAAAgAAQAWABoAAAAfAAcAAQASABwAAAAeAAcAAQASABgAAAAdAAcAAQASABgAAAAcAAcAAQASABgAAAAbAAcAAQASABgAAAAaAAcAAQASABgAAAAZAAcAAQASABgAAAAYAAcAAQASABgAAAAXAAcAAQASABgAAAAWAAcAAQASABgAAAAVAAcAAQASABgAAAAUAAcAAQASABgAAAATAAcAAQASABgAAAASAAcAAQASABgAAAARAAcAAQASABgAAAAQAAcAAQASABgAAAAPAAcAAQASABgAAAAOAAcAAQASABgAAAANAAcAAQASABgAAAAMAAcAAQASABgAAAALAAcAAQASABgAAAAKAAcAAQASABgAAAAJAAcAAQASABgAAAAIAAcAAQASABgAAAAHAAcAAQASABgAAAAGAAcAAQASABgAAAAFAAcAAQASABgAAAAEAAcAAQASABgAAAADAAcAAQASABgAAAACAAcAAQASABgAAAABAAcAAQASABgAAAAAAAcAAQAWABoAAAAfAAYAAQASABwAAAAeAAYAAQASABgAAAAdAAYAAQASABgAAAAcAAYAAQASABgAAAAbAAYAAQASABgAAAAaAAYAAQASABgAAAAZAAYAAQASABgAAAAYAAYAAQASABgAAAAXAAYAAQASABgAAAAWAAYAAQASABgAAAAVAAYAAQASABgAAAAUAAYAAQASABgAAAATAAYAAQASABgAAAASAAYAAQASABgAAAARAAYAAQASABgAAAAQAAYAAQASABgAAAAPAAYAAQASABgAAAAOAAYAAQASABgAAAANAAYAAQASABgAAAAMAAYAAQASABgAAAALAAYAAQASABgAAAAKAAYAAQASABgAAAAJAAYAAQASABgAAAAIAAYAAQASABgAAAAHAAYAAQASABgAAAAGAAYAAQASABgAAAAFAAYAAQASABgAAAAEAAYAAQASABgAAAADAAYAAQASABgAAAACAAYAAQASABgAAAABAAYAAQASABgAAAAAAAYAAQAWABoAAAAfAAUAAQASABwAAAAeAAUAAQASABgAAAAdAAUAAQASABgAAAAcAAUAAQASABgAAAAbAAUAAQASABgAAAAaAAUAAQASABgAAAAZAAUAAQASABgAAAAYAAUAAQASABgAAAAXAAUAAQASABgAAAAWAAUAAQASABgAAAAVAAUAAQASABgAAAAUAAUAAQASABgAAAATAAUAAQASABgAAAASAAUAAQASABgAAAARAAUAAQASABgAAAAQAAUAAQASABgAAAAPAAUAAQASABgAAAAOAAUAAQASABgAAAANAAUAAQASABgAAAAMAAUAAQASABgAAAALAAUAAQASABgAAAAKAAUAAQASABgAAAAJAAUAAQASABgAAAAIAAUAAQASABgAAAAHAAUAAQASABgAAAAGAAUAAQASABgAAAAFAAUAAQASABgAAAAEAAUAAQASABgAAAADAAUAAQASABgAAAACAAUAAQASABgAAAABAAUAAQASABgAAAAAAAUAAQAWABoAAAAfAAQAAQASAB4AAAAeAAQAAQAUABsAAAAdAAQAAQAUABsAAAAcAAQAAQAUABsAAAAbAAQAAQAUABsAAAAaAAQAAQAUABsAAAAZAAQAAQAUABsAAAAYAAQAAQAUABsAAAAXAAQAAQAUABsAAAAWAAQAAQAUABsAAAAVAAQAAQAUABsAAAAUAAQAAQAUABsAAAATAAQAAQAUABsAAAASAAQAAQAUABsAAAARAAQAAQAUABsAAAAQAAQAAQAUABsAAAAPAAQAAQAUABsAAAAOAAQAAQAUABsAAAANAAQAAQAUABsAAAAMAAQAAQAUABsAAAALAAQAAQAUABsAAAAKAAQAAQAUABsAAAAJAAQAAQAUABsAAAAIAAQAAQAUABsAAAAHAAQAAQAUABsAAAAGAAQAAQAUABsAAAAFAAQAAQAUABsAAAAEAAQAAQAUABsAAAADAAQAAQAUABsAAAACAAQAAQAUABsAAAABAAQAAQAUABsAAAAAAAQAAQAWAB0AAAA=")
+ tile_set = ExtResource("3_bsemw")
+ 
+-[node name="BackWall" type="TileMapLayer" parent="." unique_id=419689945]
++[node name="BackWall" type="TileMapLayer" parent="." unique_id=1239114324]
+ modulate = Color(0.94, 0.87, 0.75, 1)
+ tile_map_data = PackedByteArray("AAAfAAQAAwAUABsAAAAeAAQAAwAUABoAAAAdAAQAAwAUABoAAAAcAAQAAwAUABoAAAAbAAQAAwAUABoAAAAaAAQAAwAUABoAAAAZAAQAAwAUABoAAAAYAAQAAwAUABoAAAAXAAQAAwAUABoAAAAWAAQAAwAUABoAAAAVAAQAAwAUABoAAAAUAAQAAwAUABoAAAATAAQAAwAUABoAAAASAAQAAwAUABoAAAARAAQAAwAUABoAAAAQAAQAAwAUABoAAAAPAAQAAwAUABoAAAAOAAQAAwAUABoAAAANAAQAAwAUABoAAAAMAAQAAwAUABoAAAALAAQAAwAUABoAAAAKAAQAAwAUABoAAAAJAAQAAwAUABoAAAAIAAQAAwAUABoAAAAHAAQAAwAUABoAAAAGAAQAAwAUABoAAAAFAAQAAwAUABoAAAAEAAQAAwAUABoAAAADAAQAAwAUABoAAAACAAQAAwAUABoAAAABAAQAAwAUABoAAAAAAAQAAwAVABoAAAAfAAMAAwAUABkAAAAeAAMAAwAUABgAAAAdAAMAAwAUABgAAAAcAAMAAwAUABgAAAAbAAMAAwAUABgAAAAaAAMAAwAUABgAAAAZAAMAAwAUABgAAAAYAAMAAwAUABgAAAAXAAMAAwAUABgAAAAWAAMAAwAUABgAAAAVAAMAAwAUABgAAAAUAAMAAwAUABgAAAATAAMAAwAUABgAAAASAAMAAwAUABgAAAARAAMAAwAUABgAAAAQAAMAAwAUABgAAAAPAAMAAwAUABgAAAAOAAMAAwAUABgAAAANAAMAAwAUABgAAAAMAAMAAwAUABgAAAALAAMAAwAUABgAAAAKAAMAAwAUABgAAAAJAAMAAwAUABgAAAAIAAMAAwAUABgAAAAHAAMAAwAUABgAAAAGAAMAAwAUABgAAAAFAAMAAwAUABgAAAAEAAMAAwAUABgAAAADAAMAAwAUABgAAAACAAMAAwAUABgAAAABAAMAAwAUABgAAAAAAAMAAwAVABgAAAAfAAIAAwAUABkAAAAeAAIAAwAUABgAAAAdAAIAAwAUABgAAAAcAAIAAwAUABgAAAAbAAIAAwAUABgAAAAaAAIAAwAUABgAAAAZAAIAAwAUABgAAAAYAAIAAwAUABgAAAAXAAIAAwAUABgAAAAWAAIAAwAUABgAAAAVAAIAAwAUABgAAAAUAAIAAwAUABgAAAATAAIAAwAUABgAAAASAAIAAwAUABgAAAARAAIAAwAUABgAAAAQAAIAAwAUABgAAAAPAAIAAwAUABgAAAAOAAIAAwAUABgAAAANAAIAAwAUABgAAAAMAAIAAwAUABgAAAALAAIAAwAUABgAAAAKAAIAAwAUABgAAAAJAAIAAwAUABgAAAAIAAIAAwAUABgAAAAHAAIAAwAUABgAAAAGAAIAAwAUABgAAAAFAAIAAwAUABgAAAAEAAIAAwAUABgAAAADAAIAAwAUABgAAAACAAIAAwAUABgAAAABAAIAAwAUABgAAAAAAAIAAwAVABgAAAAfAAEAAwAUABkAAAAeAAEAAwAUABgAAAAdAAEAAwAUABgAAAAcAAEAAwAUABgAAAAbAAEAAwAUABgAAAAaAAEAAwAUABgAAAAZAAEAAwAUABgAAAAYAAEAAwAUABgAAAAXAAEAAwAUABgAAAAWAAEAAwAUABgAAAAVAAEAAwAUABgAAAAUAAEAAwAUABgAAAATAAEAAwAUABgAAAASAAEAAwAUABgAAAARAAEAAwAUABgAAAAQAAEAAwAUABgAAAAPAAEAAwAUABgAAAAOAAEAAwAUABgAAAANAAEAAwAUABgAAAAMAAEAAwAUABgAAAALAAEAAwAUABgAAAAKAAEAAwAUABgAAAAJAAEAAwAUABgAAAAIAAEAAwAUABgAAAAHAAEAAwAUABgAAAAGAAEAAwAUABgAAAAFAAEAAwAUABgAAAAEAAEAAwAUABgAAAADAAEAAwAUABgAAAACAAEAAwAUABgAAAABAAEAAwAUABgAAAAAAAEAAwAVABgAAAAfAAAAAwAWABkAAAAeAAAAAwAWABgAAAAdAAAAAwAWABgAAAAcAAAAAwAWABgAAAAbAAAAAwAWABgAAAAaAAAAAwAWABgAAAAZAAAAAwAWABgAAAAYAAAAAwAWABgAAAAXAAAAAwAWABgAAAAWAAAAAwAWABgAAAAVAAAAAwAWABgAAAAUAAAAAwAWABgAAAATAAAAAwAWABgAAAASAAAAAwAWABgAAAARAAAAAwAWABgAAAAQAAAAAwAWABgAAAAPAAAAAwAWABgAAAAOAAAAAwAWABgAAAANAAAAAwAWABgAAAAMAAAAAwAWABgAAAALAAAAAwAWABgAAAAKAAAAAwAWABgAAAAJAAAAAwAWABgAAAAIAAAAAwAWABgAAAAHAAAAAwAWABgAAAAGAAAAAwAWABgAAAAFAAAAAwAWABgAAAAEAAAAAwAWABgAAAADAAAAAwAWABgAAAACAAAAAwAWABgAAAABAAAAAwAWABgAAAAAAAAAAwAXABgAAAA=")
+ tile_set = ExtResource("3_bsemw")
+ 
+-[node name="Wainscot" type="TileMapLayer" parent="." unique_id=340597789]
++[node name="Wainscot" type="TileMapLayer" parent="." unique_id=1911881537]
+ modulate = Color(0.82, 0.76, 0.66, 1)
+ tile_map_data = PackedByteArray("AAAfAAQAAwAYABsAAAAeAAQAAwAYABoAAAAdAAQAAwAYABoAAAAcAAQAAwAYABoAAAAbAAQAAwAYABoAAAAaAAQAAwAYABoAAAAZAAQAAwAYABoAAAAYAAQAAwAYABoAAAAXAAQAAwAYABoAAAAWAAQAAwAYABoAAAAVAAQAAwAYABoAAAAUAAQAAwAYABoAAAATAAQAAwAYABoAAAASAAQAAwAYABoAAAARAAQAAwAYABoAAAAQAAQAAwAYABoAAAAPAAQAAwAYABoAAAAOAAQAAwAYABoAAAANAAQAAwAYABoAAAAMAAQAAwAYABoAAAALAAQAAwAYABoAAAAKAAQAAwAYABoAAAAJAAQAAwAYABoAAAAIAAQAAwAYABoAAAAHAAQAAwAYABoAAAAGAAQAAwAYABoAAAAFAAQAAwAYABoAAAAEAAQAAwAYABoAAAADAAQAAwAYABoAAAACAAQAAwAYABoAAAABAAQAAwAYABoAAAAAAAQAAwAZABoAAAAfAAMAAwAaABkAAAAeAAMAAwAaABgAAAAdAAMAAwAaABgAAAAcAAMAAwAaABgAAAAbAAMAAwAaABgAAAAaAAMAAwAaABgAAAAZAAMAAwAaABgAAAAYAAMAAwAaABgAAAAXAAMAAwAaABgAAAAWAAMAAwAaABgAAAAVAAMAAwAaABgAAAAUAAMAAwAaABgAAAATAAMAAwAaABgAAAASAAMAAwAaABgAAAARAAMAAwAaABgAAAAQAAMAAwAaABgAAAAPAAMAAwAaABgAAAAOAAMAAwAaABgAAAANAAMAAwAaABgAAAAMAAMAAwAaABgAAAALAAMAAwAaABgAAAAKAAMAAwAaABgAAAAJAAMAAwAaABgAAAAIAAMAAwAaABgAAAAHAAMAAwAaABgAAAAGAAMAAwAaABgAAAAFAAMAAwAaABgAAAAEAAMAAwAaABgAAAADAAMAAwAaABgAAAACAAMAAwAaABgAAAABAAMAAwAaABgAAAAAAAMAAwAbABgAAAA=")
+ tile_set = ExtResource("3_bsemw")
+ 
+-[node name="Rugs" type="TileMapLayer" parent="." unique_id=1348090398]
++[node name="Rugs" type="TileMapLayer" parent="." unique_id=644905709]
+ modulate = Color(0.72, 0.75, 0.78, 1)
+ tile_map_data = PackedByteArray("AAAXAA4AAQACABYAAAAWAA4AAQAEABQAAAAVAA4AAQAEABQAAAAUAA4AAQAEABQAAAATAA4AAQAEABQAAAASAA4AAQAEABQAAAARAA4AAQAEABQAAAAQAA4AAQAEABQAAAAPAA4AAQAEABQAAAAOAA4AAQAEABQAAAANAA4AAQAEABQAAAAMAA4AAQAEABQAAAALAA4AAQAEABQAAAAKAA4AAQAEABQAAAAJAA4AAQAEABQAAAAIAA4AAQAEABYAAAAXAA0AAQAAABQAAAAWAA0AAQAAABAAAAAVAA0AAQAAABAAAAAUAA0AAQAAABAAAAATAA0AAQAAABAAAAASAA0AAQAAABAAAAARAA0AAQAAABAAAAAQAA0AAQAAABAAAAAPAA0AAQAAABAAAAAOAA0AAQAAABAAAAANAA0AAQAAABAAAAAMAA0AAQAAABAAAAALAA0AAQAAABAAAAAKAA0AAQAAABAAAAAJAA0AAQAAABAAAAAIAA0AAQAEABIAAAAXAAwAAQAAABQAAAAWAAwAAQAAABAAAAAVAAwAAQAAABAAAAAUAAwAAQAAABAAAAATAAwAAQAAABAAAAASAAwAAQAAABAAAAARAAwAAQAAABAAAAAQAAwAAQAAABAAAAAPAAwAAQAAABAAAAAOAAwAAQAAABAAAAANAAwAAQAAABAAAAAMAAwAAQAAABAAAAALAAwAAQAAABAAAAAKAAwAAQAAABAAAAAJAAwAAQAAABAAAAAIAAwAAQAEABIAAAAXAAsAAQAAABQAAAAWAAsAAQAAABAAAAAVAAsAAQAAABAAAAAUAAsAAQAAABAAAAATAAsAAQAAABAAAAASAAsAAQAAABAAAAARAAsAAQAAABAAAAAQAAsAAQAAABAAAAAPAAsAAQAAABAAAAAOAAsAAQAAABAAAAANAAsAAQAAABAAAAAMAAsAAQAAABAAAAALAAsAAQAAABAAAAAKAAsAAQAAABAAAAAJAAsAAQAAABAAAAAIAAsAAQAEABIAAAAXAAoAAQAAABQAAAAWAAoAAQAAABAAAAAVAAoAAQAAABAAAAAUAAoAAQAAABAAAAATAAoAAQAAABAAAAASAAoAAQAAABAAAAARAAoAAQAAABAAAAAQAAoAAQAAABAAAAAPAAoAAQAAABAAAAAOAAoAAQAAABAAAAANAAoAAQAAABAAAAAMAAoAAQAAABAAAAALAAoAAQAAABAAAAAKAAoAAQAAABAAAAAJAAoAAQAAABAAAAAIAAoAAQAEABIAAAAXAAkAAQAAABYAAAAWAAkAAQACABMAAAAVAAkAAQACABMAAAAUAAkAAQACABMAAAATAAkAAQACABMAAAASAAkAAQACABMAAAARAAkAAQACABMAAAAQAAkAAQACABMAAAAPAAkAAQACABMAAAAOAAkAAQACABMAAAANAAkAAQACABMAAAAMAAkAAQACABMAAAALAAkAAQACABMAAAAKAAkAAQACABMAAAAJAAkAAQACABMAAAAIAAkAAQAEABUAAAAeAAYAAQACABYAAAAdAAYAAQAEABQAAAAcAAYAAQAEABQAAAAbAAYAAQAEABYAAAAeAAUAAQAAABYAAAAdAAUAAQACABMAAAAcAAUAAQACABMAAAAbAAUAAQAEABUAAAA=")
+ tile_set = ExtResource("3_bsemw")
+ 
+-[node name="Kitchen" type="Node2D" parent="." unique_id=1519491183]
++[node name="Kitchen" type="Node2D" parent="." unique_id=751630958]
+ 
+-[node name="Hearth" type="Sprite2D" parent="Kitchen" unique_id=1212487173]
++[node name="Hearth" type="Sprite2D" parent="Kitchen" unique_id=1673566970]
+ position = Vector2(504, 96)
+ texture = ExtResource("4_l8fql")
+ 
+-[node name="@Sprite2D@2" type="Sprite2D" parent="Kitchen" unique_id=1703086391]
++[node name="@Sprite2D@2" type="Sprite2D" parent="Kitchen" unique_id=745672903]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(229, 165.64)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("5_lqpv8")
+ 
+-[node name="Pantry" type="Sprite2D" parent="Kitchen" unique_id=99565667]
++[node name="Pantry" type="Sprite2D" parent="Kitchen" unique_id=1819649331]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(224, 85)
+ texture = ExtResource("5_lqpv8")
+ 
+-[node name="@Sprite2D@3" type="Sprite2D" parent="Kitchen" unique_id=566583155]
++[node name="@Sprite2D@3" type="Sprite2D" parent="Kitchen" unique_id=866520233]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(784, 165.64)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("5_lqpv8")
+ 
+-[node name="@Sprite2D@4" type="Sprite2D" parent="Kitchen" unique_id=970798476]
++[node name="@Sprite2D@4" type="Sprite2D" parent="Kitchen" unique_id=208030643]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(779, 85)
+ texture = ExtResource("5_lqpv8")
+ 
+-[node name="ClosedDoor" type="Sprite2D" parent="Kitchen" unique_id=1344762257]
++[node name="ClosedDoor" type="Sprite2D" parent="Kitchen" unique_id=1004514439]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(912, 84)
+ texture = ExtResource("7_rb320")
+ 
+-[node name="@Sprite2D@5" type="Sprite2D" parent="Kitchen" unique_id=1520193646]
++[node name="@Sprite2D@5" type="Sprite2D" parent="Kitchen" unique_id=1332400767]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(517, 234.76)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("8_xdqbb")
+ 
+-[node name="PrepIsland" type="Sprite2D" parent="Kitchen" unique_id=1437086140]
++[node name="PrepIsland" type="Sprite2D" parent="Kitchen" unique_id=1293600582]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(512, 181)
+ texture = ExtResource("8_xdqbb")
+ 
+-[node name="@Sprite2D@6" type="Sprite2D" parent="Kitchen" unique_id=1609816852]
++[node name="@Sprite2D@6" type="Sprite2D" parent="Kitchen" unique_id=1494299362]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(304, 190.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("9_ksgx8")
+ 
+-[node name="BreadBarrel" type="Sprite2D" parent="Kitchen" unique_id=1986142420]
++[node name="BreadBarrel" type="Sprite2D" parent="Kitchen" unique_id=1672866220]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(299, 164)
+ texture = ExtResource("9_ksgx8")
+ 
+-[node name="@Sprite2D@7" type="Sprite2D" parent="Kitchen" unique_id=104330041]
++[node name="@Sprite2D@7" type="Sprite2D" parent="Kitchen" unique_id=465104472]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(826, 190.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("9_ksgx8")
+ 
+-[node name="@Sprite2D@8" type="Sprite2D" parent="Kitchen" unique_id=64894205]
++[node name="@Sprite2D@8" type="Sprite2D" parent="Kitchen" unique_id=1301137261]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(821, 164)
+ texture = ExtResource("9_ksgx8")
+ 
+-[node name="Supplies" type="Sprite2D" parent="Kitchen" unique_id=882896600]
++[node name="Supplies" type="Sprite2D" parent="Kitchen" unique_id=433322415]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(733, 158)
+ texture = ExtResource("10_4mcwc")
+ 
+-[node name="Window" type="Sprite2D" parent="Kitchen" unique_id=784852814]
++[node name="Window" type="Sprite2D" parent="Kitchen" unique_id=792935221]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(24, 92)
+ texture = ExtResource("11_quyii")
+ 
+-[node name="@Sprite2D@9" type="Sprite2D" parent="Kitchen" unique_id=1358933581]
++[node name="@Sprite2D@9" type="Sprite2D" parent="Kitchen" unique_id=358728001]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(75, 92)
+ texture = ExtResource("11_quyii")
+ 
+-[node name="WallLantern" type="Sprite2D" parent="Kitchen" unique_id=864338706]
++[node name="WallLantern" type="Sprite2D" parent="Kitchen" unique_id=924448177]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(159, 75)
+ texture = ExtResource("12_xm8xf")
+ 
+-[node name="@Sprite2D@10" type="Sprite2D" parent="Kitchen" unique_id=143512590]
++[node name="@Sprite2D@10" type="Sprite2D" parent="Kitchen" unique_id=1323501809]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(296, 75)
+ texture = ExtResource("12_xm8xf")
+ 
+-[node name="@Sprite2D@11" type="Sprite2D" parent="Kitchen" unique_id=1906563820]
++[node name="@Sprite2D@11" type="Sprite2D" parent="Kitchen" unique_id=1017860910]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(729, 75)
+ texture = ExtResource("12_xm8xf")
+ 
+-[node name="@Sprite2D@12" type="Sprite2D" parent="Kitchen" unique_id=728571550]
++[node name="@Sprite2D@12" type="Sprite2D" parent="Kitchen" unique_id=1282130516]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(837, 75)
+ texture = ExtResource("12_xm8xf")
+ 
+-[node name="@Sprite2D@13" type="Sprite2D" parent="Kitchen" unique_id=293156177]
++[node name="@Sprite2D@13" type="Sprite2D" parent="Kitchen" unique_id=658865617]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(995, 75)
+ texture = ExtResource("12_xm8xf")
+ 
+-[node name="SideFurniture" type="Node2D" parent="." unique_id=2101167305]
++[node name="SideFurniture" type="Node2D" parent="." unique_id=1210566285]
+ 
+-[node name="@Sprite2D@14" type="Sprite2D" parent="SideFurniture" unique_id=1872902380]
++[node name="@Sprite2D@14" type="Sprite2D" parent="SideFurniture" unique_id=1913318853]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(144, 313.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="Chair" type="Sprite2D" parent="SideFurniture" unique_id=245662161]
++[node name="Chair" type="Sprite2D" parent="SideFurniture" unique_id=2099801256]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(139, 287)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@15" type="Sprite2D" parent="SideFurniture" unique_id=909297573]
++[node name="@Sprite2D@15" type="Sprite2D" parent="SideFurniture" unique_id=1988204012]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(144, 380.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="SideTable" type="Sprite2D" parent="SideFurniture" unique_id=1243638070]
++[node name="SideTable" type="Sprite2D" parent="SideFurniture" unique_id=1500992711]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(139, 340)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@16" type="Sprite2D" parent="SideFurniture" unique_id=288698446]
++[node name="@Sprite2D@16" type="Sprite2D" parent="SideFurniture" unique_id=1241039326]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(144, 421.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@17" type="Sprite2D" parent="SideFurniture" unique_id=2133792398]
++[node name="@Sprite2D@17" type="Sprite2D" parent="SideFurniture" unique_id=1270591812]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(139, 395)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="BreadPlate" type="Sprite2D" parent="SideFurniture" unique_id=1637540291]
++[node name="BreadPlate" type="Sprite2D" parent="SideFurniture" unique_id=1668255218]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(163, 324)
+ texture = ExtResource("15_nc31q")
+ 
+-[node name="Books" type="Sprite2D" parent="SideFurniture" unique_id=2107759709]
++[node name="Books" type="Sprite2D" parent="SideFurniture" unique_id=534982903]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(98, 324)
+ texture = ExtResource("16_qoca8")
+ 
+-[node name="Candelabrum" type="Sprite2D" parent="SideFurniture" unique_id=1425000697]
++[node name="Candelabrum" type="Sprite2D" parent="SideFurniture" unique_id=648772534]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(82, 317)
+ scale = Vector2(0.32, 0.32)
+ texture = ExtResource("17_mhdnc")
+ 
+-[node name="@Sprite2D@18" type="Sprite2D" parent="SideFurniture" unique_id=2016945406]
++[node name="@Sprite2D@18" type="Sprite2D" parent="SideFurniture" unique_id=699614130]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(90, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@19" type="Sprite2D" parent="SideFurniture" unique_id=337297500]
++[node name="@Sprite2D@19" type="Sprite2D" parent="SideFurniture" unique_id=1478609707]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(85, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@20" type="Sprite2D" parent="SideFurniture" unique_id=240433755]
++[node name="@Sprite2D@20" type="Sprite2D" parent="SideFurniture" unique_id=619023467]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(90, 537.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@21" type="Sprite2D" parent="SideFurniture" unique_id=1327283761]
++[node name="@Sprite2D@21" type="Sprite2D" parent="SideFurniture" unique_id=1893927311]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(85, 497)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@22" type="Sprite2D" parent="SideFurniture" unique_id=1383396497]
++[node name="@Sprite2D@22" type="Sprite2D" parent="SideFurniture" unique_id=687658001]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(90, 578.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@23" type="Sprite2D" parent="SideFurniture" unique_id=426635174]
++[node name="@Sprite2D@23" type="Sprite2D" parent="SideFurniture" unique_id=1674492995]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(85, 552)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@24" type="Sprite2D" parent="SideFurniture" unique_id=1308979055]
++[node name="@Sprite2D@24" type="Sprite2D" parent="SideFurniture" unique_id=1255594829]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(109, 481)
+ texture = ExtResource("15_nc31q")
+ 
+-[node name="@Sprite2D@25" type="Sprite2D" parent="SideFurniture" unique_id=70925429]
++[node name="@Sprite2D@25" type="Sprite2D" parent="SideFurniture" unique_id=1328586602]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(44, 481)
+ texture = ExtResource("16_qoca8")
+ 
+-[node name="@Sprite2D@26" type="Sprite2D" parent="SideFurniture" unique_id=52917876]
++[node name="@Sprite2D@26" type="Sprite2D" parent="SideFurniture" unique_id=1514879377]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(28, 474)
+ scale = Vector2(0.32, 0.32)
+ texture = ExtResource("17_mhdnc")
+ 
+-[node name="@Sprite2D@27" type="Sprite2D" parent="SideFurniture" unique_id=1344151541]
++[node name="@Sprite2D@27" type="Sprite2D" parent="SideFurniture" unique_id=2071752377]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(949, 297.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@28" type="Sprite2D" parent="SideFurniture" unique_id=1078705848]
++[node name="@Sprite2D@28" type="Sprite2D" parent="SideFurniture" unique_id=291001530]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(944, 271)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@29" type="Sprite2D" parent="SideFurniture" unique_id=1140133556]
++[node name="@Sprite2D@29" type="Sprite2D" parent="SideFurniture" unique_id=1598507609]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(949, 364.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@30" type="Sprite2D" parent="SideFurniture" unique_id=550964340]
++[node name="@Sprite2D@30" type="Sprite2D" parent="SideFurniture" unique_id=67912926]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(944, 324)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@31" type="Sprite2D" parent="SideFurniture" unique_id=1469534039]
++[node name="@Sprite2D@31" type="Sprite2D" parent="SideFurniture" unique_id=970547811]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(949, 405.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@32" type="Sprite2D" parent="SideFurniture" unique_id=320476924]
++[node name="@Sprite2D@32" type="Sprite2D" parent="SideFurniture" unique_id=568059766]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(944, 379)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@33" type="Sprite2D" parent="SideFurniture" unique_id=1455279122]
++[node name="@Sprite2D@33" type="Sprite2D" parent="SideFurniture" unique_id=1906773022]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(968, 308)
+ texture = ExtResource("15_nc31q")
+ 
+-[node name="@Sprite2D@34" type="Sprite2D" parent="SideFurniture" unique_id=992975785]
++[node name="@Sprite2D@34" type="Sprite2D" parent="SideFurniture" unique_id=1783797452]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(903, 308)
+ texture = ExtResource("16_qoca8")
+ 
+-[node name="@Sprite2D@35" type="Sprite2D" parent="SideFurniture" unique_id=1825450988]
++[node name="@Sprite2D@35" type="Sprite2D" parent="SideFurniture" unique_id=2121648986]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(887, 301)
+ scale = Vector2(0.32, 0.32)
+ texture = ExtResource("17_mhdnc")
+ 
+-[node name="@Sprite2D@36" type="Sprite2D" parent="SideFurniture" unique_id=380234866]
++[node name="@Sprite2D@36" type="Sprite2D" parent="SideFurniture" unique_id=493840260]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(954, 468.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@37" type="Sprite2D" parent="SideFurniture" unique_id=1179902864]
++[node name="@Sprite2D@37" type="Sprite2D" parent="SideFurniture" unique_id=232224866]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(949, 442)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@38" type="Sprite2D" parent="SideFurniture" unique_id=978978751]
++[node name="@Sprite2D@38" type="Sprite2D" parent="SideFurniture" unique_id=1879268296]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(954, 535.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@39" type="Sprite2D" parent="SideFurniture" unique_id=1566653686]
++[node name="@Sprite2D@39" type="Sprite2D" parent="SideFurniture" unique_id=452941277]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(949, 495)
+ texture = ExtResource("14_ydpvx")
+ 
+-[node name="@Sprite2D@40" type="Sprite2D" parent="SideFurniture" unique_id=208493602]
++[node name="@Sprite2D@40" type="Sprite2D" parent="SideFurniture" unique_id=1416467136]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(954, 576.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@41" type="Sprite2D" parent="SideFurniture" unique_id=1338846201]
++[node name="@Sprite2D@41" type="Sprite2D" parent="SideFurniture" unique_id=60272849]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(949, 550)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@42" type="Sprite2D" parent="SideFurniture" unique_id=1186706939]
++[node name="@Sprite2D@42" type="Sprite2D" parent="SideFurniture" unique_id=1733961850]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(973, 479)
+ texture = ExtResource("15_nc31q")
+ 
+-[node name="@Sprite2D@43" type="Sprite2D" parent="SideFurniture" unique_id=1934346700]
++[node name="@Sprite2D@43" type="Sprite2D" parent="SideFurniture" unique_id=1132055400]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(908, 479)
+ texture = ExtResource("16_qoca8")
+ 
+-[node name="@Sprite2D@44" type="Sprite2D" parent="SideFurniture" unique_id=2038275233]
++[node name="@Sprite2D@44" type="Sprite2D" parent="SideFurniture" unique_id=619392808]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(892, 472)
+ scale = Vector2(0.32, 0.32)
+ texture = ExtResource("17_mhdnc")
+ 
+-[node name="@Sprite2D@45" type="Sprite2D" parent="SideFurniture" unique_id=174430666]
++[node name="@Sprite2D@45" type="Sprite2D" parent="SideFurniture" unique_id=1248937428]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(138, 193.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("18_afiyr")
+ 
+-[node name="Tree" type="Sprite2D" parent="SideFurniture" unique_id=271682317]
++[node name="Tree" type="Sprite2D" parent="SideFurniture" unique_id=1778985838]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(133, 153)
+ texture = ExtResource("18_afiyr")
+ 
+-[node name="@Sprite2D@46" type="Sprite2D" parent="SideFurniture" unique_id=1076027794]
++[node name="@Sprite2D@46" type="Sprite2D" parent="SideFurniture" unique_id=253355392]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(1012, 219.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("18_afiyr")
+ 
+-[node name="@Sprite2D@47" type="Sprite2D" parent="SideFurniture" unique_id=800863659]
++[node name="@Sprite2D@47" type="Sprite2D" parent="SideFurniture" unique_id=437205092]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(1007, 179)
+ texture = ExtResource("18_afiyr")
+ 
+-[node name="@Sprite2D@48" type="Sprite2D" parent="SideFurniture" unique_id=64629375]
++[node name="@Sprite2D@48" type="Sprite2D" parent="SideFurniture" unique_id=1301112267]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(37, 324.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("19_d4v74")
+ 
+-[node name="Fern" type="Sprite2D" parent="SideFurniture" unique_id=868638607]
++[node name="Fern" type="Sprite2D" parent="SideFurniture" unique_id=935088031]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(32, 284)
+ texture = ExtResource("19_d4v74")
+ 
+-[node name="@Sprite2D@49" type="Sprite2D" parent="SideFurniture" unique_id=2052098949]
++[node name="@Sprite2D@49" type="Sprite2D" parent="SideFurniture" unique_id=584371042]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(34, 564.32)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("19_d4v74")
+ 
+-[node name="@Sprite2D@50" type="Sprite2D" parent="SideFurniture" unique_id=99002390]
++[node name="@Sprite2D@50" type="Sprite2D" parent="SideFurniture" unique_id=186291017]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(29, 524)
+ texture = ExtResource("19_d4v74")
+ 
+-[node name="@Sprite2D@51" type="Sprite2D" parent="SideFurniture" unique_id=945767947]
++[node name="@Sprite2D@51" type="Sprite2D" parent="SideFurniture" unique_id=22173262]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(66, 272.76)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("8_xdqbb")
+ 
+-[node name="PrepIsland" type="Sprite2D" parent="SideFurniture" unique_id=569529503]
++[node name="PrepIsland" type="Sprite2D" parent="SideFurniture" unique_id=2126081259]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(61, 219)
+ scale = Vector2(0.32, 0.62)
+ texture = ExtResource("8_xdqbb")
+ 
+-[node name="AcademyEmblem" type="Sprite2D" parent="SideFurniture" unique_id=32737631]
++[node name="AcademyEmblem" type="Sprite2D" parent="SideFurniture" unique_id=182785908]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(61, 242)
+ scale = Vector2(0.7, 0.7)
+ texture = ExtResource("20_x2f3v")
+ 
+-[node name="Breakfast" type="Node2D" parent="." unique_id=914317606]
++[node name="Breakfast" type="Node2D" parent="." unique_id=72266830]
+ 
+-[node name="@Sprite2D@52" type="Sprite2D" parent="Breakfast" unique_id=738702702]
++[node name="@Sprite2D@52" type="Sprite2D" parent="Breakfast" unique_id=632766406]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(378, 326.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="Chair" type="Sprite2D" parent="Breakfast" unique_id=1528806604]
++[node name="Chair" type="Sprite2D" parent="Breakfast" unique_id=1623087692]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(373, 300)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@53" type="Sprite2D" parent="Breakfast" unique_id=1297545524]
++[node name="@Sprite2D@53" type="Sprite2D" parent="Breakfast" unique_id=802178877]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(474, 326.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@54" type="Sprite2D" parent="Breakfast" unique_id=1311922314]
++[node name="@Sprite2D@54" type="Sprite2D" parent="Breakfast" unique_id=368699982]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(469, 300)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@55" type="Sprite2D" parent="Breakfast" unique_id=592895177]
++[node name="@Sprite2D@55" type="Sprite2D" parent="Breakfast" unique_id=2095892016]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(656, 326.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@56" type="Sprite2D" parent="Breakfast" unique_id=1568692530]
++[node name="@Sprite2D@56" type="Sprite2D" parent="Breakfast" unique_id=470328627]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(651, 300)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="Chef" type="Sprite2D" parent="Breakfast" unique_id=2083083996]
++[node name="Chef" type="Sprite2D" parent="Breakfast" unique_id=1479126002]
+ position = Vector2(560, 250)
+ texture = ExtResource("21_rhy01")
+ 
+-[node name="@Sprite2D@57" type="Sprite2D" parent="Breakfast" unique_id=1090236971]
++[node name="@Sprite2D@57" type="Sprite2D" parent="Breakfast" unique_id=1853984573]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(528, 425.76)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("22_10x5j")
+ 
+-[node name="BreakfastTable" type="Sprite2D" parent="Breakfast" unique_id=57981557]
++[node name="BreakfastTable" type="Sprite2D" parent="Breakfast" unique_id=2127493696]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(523, 372)
+ texture = ExtResource("22_10x5j")
+ 
+-[node name="Detective" type="Sprite2D" parent="Breakfast" unique_id=350981399]
++[node name="Detective" type="Sprite2D" parent="Breakfast" unique_id=1624116775]
+ position = Vector2(430, 464)
+ texture = ExtResource("23_3uhic")
+ 
+-[node name="Naturalist" type="Sprite2D" parent="Breakfast" unique_id=1451605470]
++[node name="Naturalist" type="Sprite2D" parent="Breakfast" unique_id=507286924]
+ position = Vector2(622, 464)
+ texture = ExtResource("24_8gth4")
+ 
+-[node name="Engineer" type="Sprite2D" parent="Breakfast" unique_id=991893934]
++[node name="Engineer" type="Sprite2D" parent="Breakfast" unique_id=688461179]
+ position = Vector2(736, 464)
+ texture = ExtResource("25_cvigc")
+ 
+-[node name="@Sprite2D@58" type="Sprite2D" parent="Breakfast" unique_id=1317708177]
++[node name="@Sprite2D@58" type="Sprite2D" parent="Breakfast" unique_id=1868069636]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(362, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@59" type="Sprite2D" parent="Breakfast" unique_id=1401092783]
++[node name="@Sprite2D@59" type="Sprite2D" parent="Breakfast" unique_id=754883578]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(357, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@60" type="Sprite2D" parent="Breakfast" unique_id=13414719]
++[node name="@Sprite2D@60" type="Sprite2D" parent="Breakfast" unique_id=1746130710]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(453, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@61" type="Sprite2D" parent="Breakfast" unique_id=1489555473]
++[node name="@Sprite2D@61" type="Sprite2D" parent="Breakfast" unique_id=895078865]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(448, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@62" type="Sprite2D" parent="Breakfast" unique_id=724948961]
++[node name="@Sprite2D@62" type="Sprite2D" parent="Breakfast" unique_id=495639913]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(544, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@63" type="Sprite2D" parent="Breakfast" unique_id=532240475]
++[node name="@Sprite2D@63" type="Sprite2D" parent="Breakfast" unique_id=1037379515]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(539, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@64" type="Sprite2D" parent="Breakfast" unique_id=827945448]
++[node name="@Sprite2D@64" type="Sprite2D" parent="Breakfast" unique_id=430640872]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(634, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@65" type="Sprite2D" parent="Breakfast" unique_id=559102888]
++[node name="@Sprite2D@65" type="Sprite2D" parent="Breakfast" unique_id=835898703]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(629, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@66" type="Sprite2D" parent="Breakfast" unique_id=916172937]
++[node name="@Sprite2D@66" type="Sprite2D" parent="Breakfast" unique_id=1311933388]
+ modulate = Color(0.04, 0.03, 0.02, 0.22)
+ position = Vector2(725, 470.88)
+ scale = Vector2(0.97, 0.15)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="@Sprite2D@67" type="Sprite2D" parent="Breakfast" unique_id=687436242]
++[node name="@Sprite2D@67" type="Sprite2D" parent="Breakfast" unique_id=1962647932]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(720, 444)
+ texture = ExtResource("13_3qujl")
+ 
+-[node name="WindowLight" type="Node2D" parent="." unique_id=19766754]
++[node name="WindowLight" type="Node2D" parent="." unique_id=648376831]
+ 
+-[node name="WindowLightGrid" type="Sprite2D" parent="WindowLight" unique_id=262139853]
++[node name="WindowLightGrid" type="Sprite2D" parent="WindowLight" unique_id=1386683001]
+ position = Vector2(304, 352)
+ texture = ExtResource("26_idkqf")
+ 
+-[node name="ForegroundRail" type="Node2D" parent="." unique_id=1976817084]
++[node name="ForegroundRail" type="Node2D" parent="." unique_id=1284255587]
+ 
+-[node name="FrontPanel" type="Sprite2D" parent="ForegroundRail" unique_id=948171198]
++[node name="FrontPanel" type="Sprite2D" parent="ForegroundRail" unique_id=1546307832]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(-16, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@68" type="Sprite2D" parent="ForegroundRail" unique_id=320500318]
++[node name="@Sprite2D@68" type="Sprite2D" parent="ForegroundRail" unique_id=2109578644]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(80, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@69" type="Sprite2D" parent="ForegroundRail" unique_id=1045971130]
++[node name="@Sprite2D@69" type="Sprite2D" parent="ForegroundRail" unique_id=1445310438]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(176, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@70" type="Sprite2D" parent="ForegroundRail" unique_id=932937523]
++[node name="@Sprite2D@70" type="Sprite2D" parent="ForegroundRail" unique_id=1668830741]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(240, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@71" type="Sprite2D" parent="ForegroundRail" unique_id=1336182384]
++[node name="@Sprite2D@71" type="Sprite2D" parent="ForegroundRail" unique_id=1856268640]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(784, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@72" type="Sprite2D" parent="ForegroundRail" unique_id=645987009]
++[node name="@Sprite2D@72" type="Sprite2D" parent="ForegroundRail" unique_id=749797171]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(848, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@73" type="Sprite2D" parent="ForegroundRail" unique_id=1868244959]
++[node name="@Sprite2D@73" type="Sprite2D" parent="ForegroundRail" unique_id=903759494]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(944, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="@Sprite2D@74" type="Sprite2D" parent="ForegroundRail" unique_id=705407105]
++[node name="@Sprite2D@74" type="Sprite2D" parent="ForegroundRail" unique_id=410508450]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(1040, 597)
+ texture = ExtResource("27_fvemn")
+ 
+-[node name="FrontGate" type="Sprite2D" parent="ForegroundRail" unique_id=801708307]
++[node name="FrontGate" type="Sprite2D" parent="ForegroundRail" unique_id=1228529519]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(512, 597)
+ texture = ExtResource("28_mm33w")
+ 
+-[node name="AcademyEmblem" type="Sprite2D" parent="ForegroundRail" unique_id=1896552577]
++[node name="AcademyEmblem" type="Sprite2D" parent="ForegroundRail" unique_id=1198912676]
+ material = SubResource("ShaderMaterial_rr5et")
+ position = Vector2(512, 580)
+ texture = ExtResource("20_x2f3v")
+ 
+-[node name="PeripheralShade" type="ColorRect" parent="." unique_id=959522525]
++[node name="PeripheralShade" type="ColorRect" parent="." unique_id=1245130554]
+ material = SubResource("ShaderMaterial_27xeo")
+ offset_right = 1024.0
+ offset_bottom = 608.0
+ mouse_filter = 2
+ 
+-[node name="Camera2D" type="Camera2D" parent="." unique_id=1767411427]
++[node name="Camera2D" type="Camera2D" parent="." unique_id=1178173511]
+ position = Vector2(512, 304)
+diff --git a/godot_csharp/tools/build_parlor.gd b/godot_csharp/tools/build_parlor.gd
+index 4df0a40..674e019 100644
+--- a/godot_csharp/tools/build_parlor.gd
++++ b/godot_csharp/tools/build_parlor.gd
+@@ -1,7 +1,7 @@
+ extends SceneTree
+ 
+ ## Build an editable map from the adapter's saved TileSet, then reload it for verification.
+-const TILESET_PATH := "res://ShareAsset/Victorian/tilesets/Victorian.tres"
++const TILESET_PATH := "res://ShareAsset/External/Victorian/tilesets/Victorian.tres"
+ const MAP_PATH := "res://scenes/Parlor/Parlor.tscn"
+ const OUTPUT := "res://../artifacts/parlor-validation"
+ var tileset: TileSet
+diff --git a/godot_csharp/tools/shots/layout_shot01.gd b/godot_csharp/tools/shots/layout_shot01.gd
+index 10f2e27..5831c14 100644
+--- a/godot_csharp/tools/shots/layout_shot01.gd
++++ b/godot_csharp/tools/shots/layout_shot01.gd
+@@ -1,22 +1,23 @@
+ extends SceneTree
+ 
+-const TILESET := "res://ShareAsset/Victorian/tilesets/Victorian.tres"
+-const ASSETS := "res://ShareAsset/Images/shot01/"
++const TILESET := "res://ShareAsset/External/Victorian/tilesets/Victorian.tres"
++const ASSETS := "res://ShareAsset/Internal/Props/"
+ const SCENE := "res://scenes/Shot01/Shot01.tscn"
+ const OUTPUT := "res://../artifacts/shots/shot01-validation/"
+ const NAMES := ["clock", "portal", "window", "statue", "compass", "bench"]
+ const REGIONS := [Rect2i(0,0,524,561), Rect2i(537,0,399,557), Rect2i(969,0,243,551), Rect2i(1267,49,227,518), Rect2i(9,563,491,414), Rect2i(521,719,431,192)]
+ # Scaled for 32px (2/3 of 48px sizes)
+ const SIZES := [Vector2i(224,224), Vector2i(128,192), Vector2i(64,192), Vector2i(64,128), Vector2i(192,192), Vector2i(128,48)]
+-const CHARACTERS := "res://ShareAsset/Images/characters/atlas/"
++const CHARACTERS := "res://ShareAsset/Internal/Characters/atlas/"
+ var room: Node2D
+ var tileset: TileSet
+ var report: Array[String] = []
+ var finish: ShaderMaterial
+ var texture_cache: Dictionary = {}
+-const REVISION := ASSETS + "revision2/"
++const REVISION := ASSETS
+ 
+ func _initialize() -> void:
++	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT))
+ 	call_deferred("build")
+ 
+ func save_texture(img: Image, path_prefix: String) -> Texture2D:
+@@ -32,7 +33,7 @@ func save_texture(img: Image, path_prefix: String) -> Texture2D:
+ 	return loaded
+ 
+ func build() -> void:
+-	var source := Image.load_from_file(ASSETS + "source/central_hall_generated.png")
++	var source := Image.load_from_file("res://AssetsSource/Internal/Props/central_hall_generated.png")
+ 	source.convert(Image.FORMAT_RGBA8)
+ 	for i in NAMES.size():
+ 		var piece := source.get_region(REGIONS[i])
+@@ -244,14 +245,14 @@ func object(parent: Node, label: String, index: int, pos: Vector2, size: Vector2
+ 	if texture_cache.has(tex_path + ".res"):
+ 		tex = texture_cache[tex_path + ".res"]
+ 	else:
+-		var img := Image.load_from_file("res://ShareAsset/TileMap/Academy/academy_objects_48.png").get_region(Rect2i((index % 4) * 192, (index / 4) * 192, 192, 192))
++		var img := Image.load_from_file(ProjectSettings.globalize_path("res://AssetsSource/Internal/Props/AcademyTileMap/academy_objects_48.png")).get_region(Rect2i((index % 4) * 192, (index / 4) * 192, 192, 192))
+ 		img = img.get_region(img.get_used_rect())
+ 		fit32(img, size.x, size.y)
+ 		tex = save_texture(img, tex_path)
+ 	sprite(parent, label, tex, pos)
+ 
+ func banner(parent: Node, label: String, row: int, pos: Vector2, size_scale: Vector2 = Vector2.ONE) -> void:
+-	var node := sprite(parent, label, load(REVISION + "banner_%d.res" % row), pos)
++	var node := sprite(parent, label, load(REVISION + "shot01_banner_%d.res" % row), pos)
+ 	node.scale = size_scale
+ 
+ func prepare_drawn_assets() -> void:
+@@ -326,9 +327,9 @@ func raster_line(img: Image, p1: Vector2, p2: Vector2, color: Color, width: floa
+ 	raster_polygon(img, PackedVector2Array([p1 - normal, p2 - normal, p2 + normal, p1 + normal]), color)
+ 
+ func prepare_revision() -> void:
+-	var source := Image.load_from_file(REVISION + "hall_finish_generated.png")
++	var source := Image.load_from_file("res://AssetsSource/Internal/Props/hall_finish_generated.png")
+ 	var rects := [Rect2i(58,38,252,521), Rect2i(345,38,250,521), Rect2i(637,38,255,521), Rect2i(933,38,253,521), Rect2i(1228,38,252,521), Rect2i(18,632,299,337), Rect2i(333,553,241,415), Rect2i(570,632,425,339), Rect2i(1027,567,163,412), Rect2i(1236,725,279,233)]
+-	var names := ["banner_0", "banner_1", "banner_2", "banner_3", "banner_4", "fern", "tree", "research_table", "candelabrum", "books"]
++	var names := ["shot01_banner_0", "shot01_banner_1", "shot01_banner_2", "shot01_banner_3", "shot01_banner_4", "fern", "tree", "research_table", "candelabrum", "books"]
+ 	var sizes := [Vector2i(64,128), Vector2i(64,128), Vector2i(64,128), Vector2i(64,128), Vector2i(64,128), Vector2i(75,85), Vector2i(59,96), Vector2i(107,85), Vector2i(32,80), Vector2i(32,27)]
+ 	for i in rects.size():
+ 		var part := source.get_region(rects[i])
+diff --git a/godot_csharp/tools/shots/layout_shot02.gd b/godot_csharp/tools/shots/layout_shot02.gd
+index f12ee59..e68b763 100644
+--- a/godot_csharp/tools/shots/layout_shot02.gd
++++ b/godot_csharp/tools/shots/layout_shot02.gd
+@@ -1,9 +1,9 @@
+ extends SceneTree
+ 
+-const ASSETS := "res://ShareAsset/Images/shot02/"
+-const CHARACTERS := "res://ShareAsset/Images/characters/atlas/"
+-const PREVIOUS := "res://ShareAsset/Images/shot01/"
+-const TILESET := "res://ShareAsset/Victorian/tilesets/Victorian.tres"
++const ASSETS := "res://ShareAsset/Internal/Props/"
++const CHARACTERS := "res://ShareAsset/Internal/Characters/atlas/"
++const PREVIOUS := "res://ShareAsset/Internal/Props/"
++const TILESET := "res://ShareAsset/External/Victorian/tilesets/Victorian.tres"
+ const SCENE := "res://scenes/Shot02/Shot02.tscn"
+ const OUTPUT := "res://../artifacts/shots/shot02-validation/"
+ var room: Node2D
+@@ -12,6 +12,7 @@ var textures: Dictionary = {}
+ var finish: ShaderMaterial
+ 
+ func _initialize() -> void:
++	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT))
+ 	call_deferred("build")
+ 
+ func texture(name: String, image: Image) -> void:
+@@ -29,7 +30,7 @@ func extract(image: Image, name: String, region: Rect2i, size: Vector2i) -> void
+ 	texture(name, part)
+ 
+ func prepare() -> void:
+-	var image := Image.load_from_file(ASSETS + "source/kitchen_generated.png")
++	var image := Image.load_from_file("res://AssetsSource/Internal/Props/kitchen_generated.png")
+ 	extract(image, "hearth", Rect2i(61, 0, 1004, 450), Vector2i(384, 168))
+ 	extract(image, "pantry", Rect2i(1175, 0, 274, 474), Vector2i(96, 168))
+ 	extract(image, "breakfast_table", Rect2i(87, 470, 1359, 278), Vector2i(448, 128))
+@@ -43,17 +44,18 @@ func prepare() -> void:
+ 	textures["chef"] = load(CHARACTERS + "11_chef.tres")
+ 	textures["engineer"] = load(CHARACTERS + "10_mechanical_engineer.tres")
+ 
+-	image = Image.load_from_file("res://ShareAsset/TileMap/Academy/academy_objects_48.png")
+-	extract(image, "wall_lantern", Rect2i(576, 576, 192, 192), Vector2i(16, 37))
++	image = Image.load_from_file(ProjectSettings.globalize_path("res://AssetsSource/Internal/Props/AcademyTileMap/academy_objects_48.png"))
++	extract(image, "kitchen_wall_lantern", Rect2i(576, 576, 192, 192), Vector2i(16, 37))
++	textures["wall_lantern"] = textures["kitchen_wall_lantern"]
+ 
+-	image = Image.load_from_file(ASSETS + "source/joinery_generated.png")
++	image = Image.load_from_file("res://AssetsSource/Internal/Props/joinery_generated.png")
+ 	extract(image, "closed_door", Rect2i(142, 18, 581, 668), Vector2i(128, 168))
+ 	extract(image, "supplies", Rect2i(860, 241, 630, 458), Vector2i(75, 64))
+ 	extract(image, "front_gate", Rect2i(7, 722, 920, 253), Vector2i(576, 128))
+ 	extract(image, "front_panel", Rect2i(88, 737, 173, 227), Vector2i(96, 128))
+ 	extract(image, "bread_plate", Rect2i(969, 707, 550, 287), Vector2i(59, 32))
+ 
+-	image = Image.load_from_file("res://ShareAsset/Images/flags/five_emblems_48.png")
++	image = Image.load_from_file(ProjectSettings.globalize_path("res://AssetsSource/Internal/Identity/five_emblems_48.png"))
+ 	var emblem := image.get_region(Rect2i(144, 0, 48, 48))
+ 	emblem.resize(32, 32, Image.INTERPOLATE_LANCZOS)
+ 	texture("academy_emblem", emblem)
+@@ -61,7 +63,7 @@ func prepare() -> void:
+ 	for n in ["window"]:
+ 		textures[n] = load(PREVIOUS + n + ".res")
+ 	for n in ["fern", "tree", "books", "candelabrum"]:
+-		textures[n] = load(PREVIOUS + "revision2/" + n + ".res")
++		textures[n] = load(PREVIOUS + n + ".res")
+ 
+ 	var light_img := Image.create(416, 384, false, Image.FORMAT_RGBA8)
+ 	light_img.fill(Color.TRANSPARENT)

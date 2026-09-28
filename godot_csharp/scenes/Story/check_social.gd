@@ -13,6 +13,40 @@ func expect(value: bool, message: String) -> void:
 		failures.append(message)
 		push_error(message)
 
+func facing_toward(origin: Vector2, target: Vector2) -> String:
+	var delta := target - origin
+	if absf(delta.x) > absf(delta.y):
+		return "right" if delta.x > 0.0 else "left"
+	return "front" if delta.y > 0.0 else "back"
+
+func check_line_presentation() -> void:
+	if room.cast.is_empty() or not room.dialogue.active:
+		return
+	var speaker: Node2D = room.player if room.dialogue.line.character == "侦探" else null
+	for actor in room.cast:
+		if actor.get_meta("display_name", "") == room.dialogue.line.character:
+			speaker = actor
+			break
+	if speaker == null:
+		return
+	if speaker != room.player:
+		expect(room.player.facing == facing_toward(room.player.position, speaker.position), room_scene + ": 玩家对白时没有面向发言者")
+		if not speaker.get_meta("seated", false):
+			expect(speaker.facing == facing_toward(speaker.position, room.player.position), room_scene + ": 站立发言者没有面向玩家")
+	for actor in room.cast:
+		if actor.get_meta("seated", false):
+			var direction: String = actor.get_meta("seated_facing", "back")
+			var height := float(actor.get_meta("seat_height", 0.0))
+			expect(actor.seated, room_scene + ": 坐姿角色被对白动作带回站立")
+			expect(actor.position.distance_to(actor.get_meta("start_position", actor.position)) < 0.1, room_scene + ": 坐姿角色在对白中离开座位锚点")
+			expect(actor.sprite.animation.begins_with("sit_"), room_scene + ": 坐姿角色没有保持坐姿动画")
+			expect(not actor.sprite.is_playing(), room_scene + ": 坐姿定格帧仍在播放")
+			expect(is_equal_approx(actor.sprite.position.y, -23.0 - height), room_scene + ": 坐姿精灵偏移未匹配座垫高度")
+			expect(actor.facing == direction, room_scene + ": 坐姿角色朝向被对白动作改写")
+		elif room.conversation and actor != speaker:
+			var expected_facing := facing_toward(actor.position, speaker.position)
+			expect(actor.facing == expected_facing, room_scene + ": 站立听众" + str(actor.get_meta("display_name", actor.name)) + "没有面向" + str(speaker.get_meta("display_name", speaker.name)) + "；实际=" + actor.facing + "，预期=" + expected_facing)
+
 func key(code: Key, held := 0.08) -> void:
 	var down := InputEventKey.new()
 	down.keycode = code
@@ -26,6 +60,30 @@ func key(code: Key, held := 0.08) -> void:
 	up.pressed = false
 	Input.parse_input_event(up)
 	await process_frame
+
+func walk_to(target: Vector2, tolerance: float = 6.0, timeout: float = 8.0) -> bool:
+	var deadline := Time.get_ticks_msec() + int(timeout * 1000.0)
+	var last_progress := Time.get_ticks_msec()
+	while room.player.position.distance_to(target) > tolerance and Time.get_ticks_msec() < deadline:
+		var before: Vector2 = room.player.position
+		var delta := target - before
+		var direction: Key = KEY_D if absf(delta.x) >= absf(delta.y) and delta.x > 0.0 else KEY_A
+		if absf(delta.y) > absf(delta.x):
+			direction = KEY_S if delta.y > 0.0 else KEY_W
+		await key(direction, 0.02 if delta.length() < 12.0 else 0.08)
+		if room.player.position.distance_to(before) > 0.1:
+			last_progress = Time.get_ticks_msec()
+		elif Time.get_ticks_msec() - last_progress > 650:
+			return false
+	return room.player.position.distance_to(target) <= tolerance
+
+func walk_route(waypoints: Array[Vector2], label: String) -> bool:
+	for waypoint in waypoints:
+		var reached := await walk_to(waypoint)
+		if not reached:
+			expect(false, label + ": waypoint不可达 " + str(waypoint) + "，当前位置 " + str(room.player.position))
+			return false
+	return true
 
 func click(button: Button) -> void:
 	var event := InputEventMouseButton.new()
@@ -57,6 +115,7 @@ func finish_story(choice_index: int, require_choice := false) -> void:
 		expect(await wait_line(), room_scene + ": 对话行未能显示")
 		if not room.dialogue.active or room.dialogue.busy:
 			break
+		check_line_presentation()
 		if room.dialogue.body.visible_characters >= 0:
 			await key(KEY_SPACE)
 		if not room.dialogue.line.responses.is_empty():
@@ -89,27 +148,31 @@ func close_room() -> void:
 	await process_frame
 
 func walk_to_breakfast_chef() -> void:
-	# Go around the left end of the long table, then approach the chef's feet.
-	await key(KEY_A, 3.25)
-	await key(KEY_W, 1.95)
-	await key(KEY_D, 1.6)
-	await process_frame
+	# Go around the west side of the dining table, then approach the chef from north.
+	if not await walk_route([Vector2(168, 336), Vector2(168, 180)], "早餐：接近主厨"):
+		return
+	var reached_chef_side := await walk_to(Vector2(352, 180))
+	expect(reached_chef_side, "早餐：主厨北侧接近点不可达，当前位置 " + str(room.player.position))
 	expect(room.player.position.distance_to(room.cast[0].position) < 68.0, "早餐：主厨接近点不可达")
-	expect(room.nearest == room.cast[0], "早餐：主厨不是最近的可交互对象")
+	if room.nearest != room.cast[0]:
+		expect(false, "早餐：主厨不是最近的可交互对象")
+		return
 	await key(KEY_E)
 	expect(room.dialogue.active, "早餐：E 未启动主厨对话")
 	await finish_story(0)
 
 func walk_to_breakfast_table() -> void:
-	# From beside the chef, return below the table and approach its south edge.
-	await key(KEY_A, 1.4)
-	await key(KEY_S, 1.3)
-	await key(KEY_D, 2.55)
-	await key(KEY_W, 1.2)
-	await process_frame
+	# Return west of the dining table, then pass below the chairs to its south edge.
+	if not await walk_route([Vector2(184, 180), Vector2(184, 340), Vector2(320, 340)], "早餐：接近长桌"):
+		return
+	if not await walk_to(Vector2(320, 326)):
+		expect(false, "早餐：长桌南侧接近点不可达，当前位置 " + str(room.player.position))
+		return
 	var table: Node2D = room.items.get_node("BreakfastTable")
 	expect(room.player.position.distance_to(table.position) < 68.0, "早餐：长桌交互点不可达")
-	expect(room.nearest == table, "早餐：长桌不是最近的交互对象")
+	if room.nearest != table:
+		expect(false, "早餐：长桌不是最近的交互对象")
+		return
 	await key(KEY_E)
 	expect(room.dialogue.active, "早餐：E 未启动长桌检查对白")
 	await finish_story(0)
@@ -135,7 +198,7 @@ func test_history_and_movement(label: String) -> void:
 func play_opening_branch(index: int, evidence: String, check_nav_lock := false) -> void:
 	await key(KEY_R)
 	expect(room.dialogue.active, room_scene + ": R 未开始或重演剧情")
-	expect(room.player.position.distance_to(Vector2(512, 520)) < 1.0, room_scene + ": R 没有重置玩家站位")
+	expect(room.player.position.distance_to(Vector2(320, 336)) < 1.0, room_scene + ": R 没有重置玩家站位")
 	if check_nav_lock and room.dialogue.active:
 		var held_scene := room.scene_file_path
 		await key(KEY_F8)
@@ -145,26 +208,27 @@ func play_opening_branch(index: int, evidence: String, check_nav_lock := false) 
 	expect(combined.contains(evidence), room_scene + ": 所选分支内容未出现在回看记录")
 
 func walk_to_parlor_poet() -> void:
-	# Route around the tea table and chairs; test the reachable interaction radius, not overlapping feet.
-	await key(KEY_A, 3.0)
-	await key(KEY_W, 2.0)
-	await key(KEY_D, 2.4)
-	await process_frame
+	# Walk around the room's west edge, then approach the poet from south of the sofa.
+	if not await walk_route([Vector2(184, 336), Vector2(184, 244), Vector2(320, 244)], "围谈：接近诗人"):
+		return
 	expect(room.player.position.distance_to(room.cast[0].position) < 68.0, "围谈：诗人接近点不可达")
-	expect(room.nearest == room.cast[0], "围谈：诗人不是最近的可交互对象")
+	if room.nearest != room.cast[0]:
+		expect(false, "围谈：诗人不是最近的可交互对象")
+		return
 	await key(KEY_E)
 	expect(room.dialogue.active, "围谈：E 未启动诗人对话")
 	await finish_story(0)
 
 func walk_to_parlor_table() -> void:
-	# Circle below the chairs before approaching the central table.
-	await key(KEY_A, 2.2)
-	await key(KEY_S, 1.4)
-	await key(KEY_D, 2.55)
-	await process_frame
+	# The player stands south of the sofa, aligned with the table's open approach.
+	if not await walk_to(Vector2(320, 255), 2.0):
+		expect(false, "围谈：会客桌北侧接近点不可达，当前位置 " + str(room.player.position))
+		return
 	var table: Node2D = room.items.get_node("TeaTable")
 	expect(room.player.position.distance_to(table.position) < 68.0, "围谈：会客桌交互点不可达")
-	expect(room.nearest == table, "围谈：会客桌不是最近的交互对象")
+	if room.nearest != table:
+		expect(false, "围谈：会客桌不是最近的交互对象")
+		return
 	await key(KEY_E)
 	expect(room.dialogue.active, "围谈：E 未启动会客桌检查对白")
 	await finish_story(0)
@@ -178,9 +242,9 @@ func check_map_extent(label: String) -> void:
 	for cell in used:
 		left = minf(left, float(cell.x * 32))
 		right = maxf(right, float((cell.x + 1) * 32))
-	expect(left <= 64.0 and right >= 960.0, label + ": 房间地面未覆盖约定有效宽度")
-	expect(room.collision_rects.any(func(r: Rect2) -> bool: return r.position == Vector2(64, 544) and r.size.x == 416.0), label + ": 左侧底边碰撞异常")
-	expect(room.collision_rects.any(func(r: Rect2) -> bool: return r.position == Vector2(544, 544) and r.size.x == 416.0), label + ": 右侧底边碰撞异常")
+	expect(left <= 32.0 and right >= 608.0, label + ": 房间地面未覆盖约定有效宽度")
+	expect(room.collision_rects.any(func(r: Rect2) -> bool: return r.position == Vector2(32, 352) and r.size.x == 256.0), label + ": 左侧底边碰撞异常")
+	expect(room.collision_rects.any(func(r: Rect2) -> bool: return r.position == Vector2(352, 352) and r.size.x == 256.0), label + ": 右侧底边碰撞异常")
 
 func wait_for_scene(path: String, label: String) -> void:
 	var deadline := Time.get_ticks_msec() + 5000
@@ -200,11 +264,9 @@ func switch_by_key(code: Key, path: String, label: String) -> void:
 func exit_social_room_to_hall(label: String) -> void:
 	var entrance: Node2D = room.items.get_node("Entrance")
 	# The actual E interaction on the south exit should return to the central hall.
-	var delta: Vector2 = entrance.position - room.player.position
-	if absf(delta.x) > 18.0:
-		await key(KEY_D if delta.x > 0.0 else KEY_A, absf(delta.x) / 90.0 + 0.06)
-	if absf(delta.y) > 18.0:
-		await key(KEY_S if delta.y > 0.0 else KEY_W, absf(delta.y) / 90.0 + 0.06)
+	if not await walk_to(entrance.position, 6.0, 8.0):
+		expect(false, label + ": 南门waypoint不可达，当前位置 " + str(room.player.position))
+		return
 	await process_frame
 	expect(room.nearest == entrance, label + ": 南门 E 交互点不可达")
 	await key(KEY_E)

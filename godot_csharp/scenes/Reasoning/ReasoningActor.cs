@@ -11,9 +11,9 @@ public partial class ReasoningActor : CharacterBody2D
 {
 	private const float MoveSpeed = 80.0f;
 	private const string DetectiveFramesPath =
-		"res://ShareAsset/Images/characters/animation_v2/detective.tres";
+		"res://ShareAsset/Internal/Characters/animation_v2/detective.tres";
 	private const string PlaceholderFramesPath =
-		"res://ShareAsset/Images/characters/animation_v2/placeholder.tres";
+		"res://ShareAsset/Internal/Characters/animation_v2/placeholder.tres";
 
 	private static readonly Vector2 SpriteOffset = new(0, -23);
 	private static readonly Vector2 CollisionSize = new(16, 12);

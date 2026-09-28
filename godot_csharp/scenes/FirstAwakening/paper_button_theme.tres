@@ -1,0 +1,37 @@
+[gd_resource type="Theme" load_steps=5 format=3]
+
+[ext_resource type="FontFile" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="print_font"]
+
+[sub_resource type="StyleBoxEmpty" id="clear"]
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+bg_color = Color(0.2, 0.25, 0.2, 0.08)
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="scroll_grabber"]
+bg_color = Color(0.2, 0.25, 0.2, 0.35)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[resource]
+default_font = ExtResource("print_font")
+Button/colors/font_color = Color(0.188235, 0.223529, 0.188235, 1)
+Button/colors/font_hover_color = Color(0.188235, 0.223529, 0.188235, 1)
+Button/colors/font_pressed_color = Color(0.188235, 0.223529, 0.188235, 1)
+Button/colors/font_focus_color = Color(0.188235, 0.223529, 0.188235, 1)
+Button/colors/font_disabled_color = Color(0.384314, 0.400000, 0.352941, 1)
+Button/styles/normal = SubResource("clear")
+Button/styles/pressed = SubResource("clear")
+Button/styles/disabled = SubResource("clear")
+Button/styles/focus = SubResource("clear")
+Button/styles/hover = SubResource("hover")
+VScrollBar/styles/scroll = SubResource("clear")
+VScrollBar/styles/scroll_focus = SubResource("clear")
+VScrollBar/styles/grabber = SubResource("scroll_grabber")
+VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber")
+VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber")

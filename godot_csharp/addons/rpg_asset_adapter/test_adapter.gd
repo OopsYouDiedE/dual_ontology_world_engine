@@ -36,7 +36,7 @@ func _init() -> void:
 
 func _test_scanning() -> bool:
 	print("\n[TEST 1] Scanning Victorian 32px assets folder...")
-	var test_dir := "res://ShareAsset/Victorian/source"
+	var test_dir := "res://AssetsSource/External/Victorian"
 	var assets := AdapterFacadeScript.scan_directory(test_dir)
 
 	print("  Scanned asset count: %d" % assets.size())
@@ -73,7 +73,7 @@ func _test_scanning() -> bool:
 
 func _test_full_conversion() -> bool:
 	print("\n[TEST 2] Performing full batch conversion on Victorian assets...")
-	var test_dir := "res://ShareAsset/Victorian/source"
+	var test_dir := "res://AssetsSource/External/Victorian"
 	var assets := AdapterFacadeScript.scan_directory(test_dir)
 
 	var output_dir := "res://imported_assets/test_victorian"

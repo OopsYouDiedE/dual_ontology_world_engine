@@ -14,9 +14,15 @@
 - 验收通过独立因果场景，不能由测试脚本代写决策结果或绕过 Observe。
 - 动物园规则及叙事专用内容属于游戏层，不能为了兼容旧示例把旧 Entity/Belief 机制搬回 Core。
 
+## 独立打包边界
+
+- Core 仅作为独立 .NET 类库构建与打包；包元数据和 API 说明必须与当前 C# 源码一致，不沿用旧文档中的 Python 入口或 Entity/Belief API。
+- Core 包说明维护在本目录 `README.md`；打包时将其包含在 NuGet 包中。没有经项目确认的许可证、作者或仓库地址时，不得编造这些元数据。未声明许可证的包只可作本地构建产物，不适合公开分发。
+- Core 的 NuGet 打包输出统一放在仓库根目录 `artifacts/releases/core/`。此处仅放发布包等非运行时交付物，不在 `csharp/` 下另建发行或临时目录；SDK 的 `bin/`、`obj/` 缓存沿用默认位置并由 gitignore 排除，不把包产物提交为核心源码。
+- 使用 `dotnet build csharp/Core.sln -c Release` 构建；使用 `dotnet pack csharp/DualOntologyWorldEngine.Core.csproj -c Release -o artifacts/releases/core` 本地打包。打包不代表发布或授权。
+
 ## 目录纯净性与文件放置红线
 
 - **严禁引入任何游戏层产物**：禁止在本目录放置 Godot 场景（`.tscn`）、资源（`.tres`、`.import`）、GDScript、图片素材、UI 或音效文件。任何游戏呈现与交互一律放入 `godot_csharp/`。
 - **禁止随意自建临时目录**：核心级基准与验证脚本（如 `measure-core.ps1`）就地存放在 `csharp/` 根层，严禁随意建立临时文件夹堆放实验代码。
 - **多轮次代码修改原则**：对核心系统的修改直接在既有文件上重构与演进，严禁创建 `Model_v2.cs` 等平行版本。
-

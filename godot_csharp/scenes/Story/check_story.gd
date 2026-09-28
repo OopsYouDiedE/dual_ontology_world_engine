@@ -12,6 +12,12 @@ func expect(value: bool, message: String) -> void:
 		failures.append(message)
 		push_error(message)
 
+func facing_toward(origin: Vector2, target: Vector2) -> String:
+	var delta := target - origin
+	if absf(delta.x) > absf(delta.y):
+		return "right" if delta.x > 0.0 else "left"
+	return "front" if delta.y > 0.0 else "back"
+
 func key(code: Key, held: float = 0.06) -> void:
 	var event := InputEventKey.new()
 	event.keycode = code
@@ -25,6 +31,29 @@ func key(code: Key, held: float = 0.06) -> void:
 	event.pressed = false
 	Input.parse_input_event(event)
 	await process_frame
+
+func walk_to(target: Vector2, tolerance: float = 4.0, timeout: float = 8.0) -> bool:
+	var deadline := Time.get_ticks_msec() + int(timeout * 1000.0)
+	var last_progress := Time.get_ticks_msec()
+	while room.player.position.distance_to(target) > tolerance and Time.get_ticks_msec() < deadline:
+		var before: Vector2 = room.player.position
+		var delta := target - before
+		var direction: Key = KEY_D if absf(delta.x) >= absf(delta.y) and delta.x > 0.0 else KEY_A
+		if absf(delta.y) > absf(delta.x):
+			direction = KEY_S if delta.y > 0.0 else KEY_W
+		await key(direction, 0.08)
+		if room.player.position.distance_to(before) > 0.1:
+			last_progress = Time.get_ticks_msec()
+		elif Time.get_ticks_msec() - last_progress > 650:
+			return false
+	return room.player.position.distance_to(target) <= tolerance
+
+func walk_route(waypoints: Array[Vector2], label: String) -> bool:
+	for waypoint in waypoints:
+		if not await walk_to(waypoint):
+			expect(false, label + ": waypoint不可达 " + str(waypoint) + "，当前位置 " + str(room.player.position))
+			return false
+	return true
 
 func settle() -> void:
 	var deadline := Time.get_ticks_msec() + 15000
@@ -48,13 +77,14 @@ func screenshot(label: String) -> void:
 		return
 	await process_frame
 	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png("res://../artifacts/story-sample/" + label + ".png")
+	root.get_texture().get_image().save_png("res://../artifacts/first-three-scenes/" + label + ".png")
 
 func play_branch(index: int) -> void:
 	await key(KEY_R)
 	await settle()
 	var selected_option := ""
 	var history_choice_lock_checked := false
+	var listen_facing_checked := false
 	var limit := 0
 	while room.dialogue.active and limit < 24 and failures.is_empty():
 		limit += 1
@@ -85,6 +115,11 @@ func play_branch(index: int) -> void:
 		else:
 			await screenshot("dialogue" if limit == 1 else "latest")
 			await key(KEY_SPACE)
+			if index == 0 and not listen_facing_checked and room.dialogue.line.character == "音乐家" and room.dialogue.line.text == "……先别说话。":
+				await process_frame
+				expect(room.musician.sprite.sprite_frames == room.musician.special, "Listening mutation should play musician's special action")
+				expect(room.musician.facing == facing_toward(room.musician.position, room.clock_item.position), "Musician should face the clock during the listening action")
+				listen_facing_checked = true
 		await settle()
 	expect(not room.dialogue.active, "Dialogue should return control")
 	expect(room.completed, "Opening should finish after chosen response")
@@ -101,12 +136,13 @@ func run() -> void:
 	await process_frame
 	await screenshot("hall")
 	# Exercise a real boundary with physics, followed by a reachable prop interaction.
-	await key(KEY_W, 3.5)
-	expect(room.player.position.y >= 235, "Player crossed north wall")
+	var reached_north_wall := await walk_to(Vector2(320, 96))
+	expect(not reached_north_wall and room.player.position.y >= 128.0, "Player crossed north wall at y=128")
 	expect(room.nearest == room.clock_item, "Clock should be reachable from central aisle")
 	await key(KEY_E)
 	await settle()
 	expect(room.dialogue.active, "E should inspect the clock")
+	expect(room.player.facing == facing_toward(room.player.position, room.clock_item.position), "Detective should face the clock during its inspection dialogue")
 	for i in 2:
 		room.dialogue.reveal()
 		await key(KEY_SPACE)
@@ -114,7 +150,7 @@ func run() -> void:
 	expect(not room.dialogue.active, "Inspection must restore control")
 	await play_branch(0)
 	var previous: Vector2 = room.player.position
-	await key(KEY_S, 0.3)
+	await key(KEY_S, 0.16)
 	expect(room.player.position.y > previous.y, "Walking not restored after dialogue")
 	await key(KEY_H)
 	expect(room.dialogue.history_panel.visible, "History key did not open history")
@@ -125,16 +161,16 @@ func run() -> void:
 	await key(KEY_H)
 	await play_branch(1)
 	# Approach from the far side of the NPC: the scripted route must go around them.
-	await key(KEY_W, 0.85)
-	await key(KEY_A, 0.71)
-	await key(KEY_S, 0.1)
+	await walk_route([Vector2(288, 144), Vector2(224, 144)], "approach musician from north")
 	expect(room.nearest == room.musician, "Musician should be reachable from the north")
 	await key(KEY_E)
 	await settle()
+	expect(room.player.facing == facing_toward(room.player.position, room.musician.position), "Detective should face the musician after approaching from the north")
+	expect(room.musician.facing == facing_toward(room.musician.position, room.player.position), "Musician should face the detective after an E conversation")
 	room.dialogue.reveal()
 	await key(KEY_ENTER)
 	await settle()
-	expect(room.player.position.distance_to(Vector2(432, 320)) < 2, "Arrival route failed from north side")
+	expect(room.player.position.distance_to(Vector2(288, 200)) < 2, "Arrival route failed from north side")
 	# End this replay through real dialogue input before geometry capture.
 	for i in 20:
 		if not room.dialogue.active:
@@ -145,7 +181,7 @@ func run() -> void:
 	await key(KEY_F3)
 	await screenshot("geometry")
 	var report := "PASS: wall collision, reachable clock via E, keyboard/mouse dialogue choices, both branches, listen action, replay, restored movement, history input lock, approach/replay from north of NPC.\n" if failures.is_empty() else "FAIL:\n" + "\n".join(failures)
-	FileAccess.open("res://../artifacts/story-sample/validation.txt", FileAccess.WRITE).store_string(report)
+	FileAccess.open("res://../artifacts/first-three-scenes/story-validation.txt", FileAccess.WRITE).store_string(report)
 	print(report)
 	room.queue_free()
 	room = null

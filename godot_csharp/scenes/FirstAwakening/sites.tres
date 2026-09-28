@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="SiteCatalog" format=3]
+
+[ext_resource type="Script" path="res://scenes/FirstAwakening/SiteCatalog.gd" id="catalog"]
+
+[resource]
+script = ExtResource("catalog")
+entries = [
+{"id": "window_0", "title": "铁格雾窗", "point": Vector2(108, 104), "description": "铸铁栅条深深嵌在石制窗框内，格栅间距容不下一只肩膀穿过。擦去窗玻璃上的浮灰，窗外只有浓厚翻滚的白雾，辨别不出日照方向或外部景物。", "diagram": "window", "reach": 48.0, "title_id": "FA_UI_172", "description_id": "FA_UI_210"},
+{"id": "window_1", "title": "铁格雾窗", "point": Vector2(428, 104), "description": "铁条表面留有锉刀打磨的倒角痕迹，桌边的折尺在窗框投下直角阴影。没有能拆解铁条的现成工具，这扇窗户起到了严密的阻断作用。", "diagram": "window", "reach": 48.0, "title_id": "FA_UI_172", "description_id": "FA_UI_211"},
+{"id": "window_2", "title": "铁格雾窗", "point": Vector2(748, 104), "description": "白雾遮蔽了视野，空气透过窗缝渗入，带有一种干燥冰凉的静止感。这里无法判断地势高低或外部是否有道路。", "diagram": "window", "reach": 48.0, "title_id": "FA_UI_172", "description_id": "FA_UI_212"},
+{"id": "window_3", "title": "铁格雾窗", "point": Vector2(1068, 104), "description": "从走廊最东侧的房间向外看，依然是相同的铁格与白雾。换了一个观察角度，视野没有任何改变。", "diagram": "window", "reach": 48.0, "title_id": "FA_UI_172", "description_id": "FA_UI_213"},
+{"id": "room_0", "title": "R-05 门牌", "point": Vector2(192, 382), "description": "门框上方刷着黑色铅印编号“R-05”。这是我醒来的房间。门牌只有编号，没有姓名；先记下位置，便于回房整理线索。", "diagram": "number", "reach": 48.0, "title_id": "FA_UI_006", "description_id": "FA_UI_214"},
+{"id": "room_1", "title": "R-06 门牌", "point": Vector2(512, 382), "description": "“R-06”。与我的房间相邻。门内的书桌被推到了侧墙，正中腾出一块空地，地上散落着细微的黄铜刮屑。", "diagram": "number", "reach": 48.0, "title_id": "FA_UI_007", "description_id": "FA_UI_215"},
+{"id": "room_2", "title": "R-07 门牌", "point": Vector2(832, 382), "description": "“R-07”。衣柜、衣箱整齐排列在右侧，被褥折叠得很紧凑，从床铺到门口留有一条直通的空道。", "diagram": "number", "reach": 48.0, "title_id": "FA_UI_008", "description_id": "FA_UI_216"},
+{"id": "room_3", "title": "R-08 门牌", "point": Vector2(1152, 382), "description": "“R-08”。走廊东端的房间。书桌前的椅子向后拉得很开，地毯正中有一块被双脚反复踩踏踩平的区域，容得下一个人站立。", "diagram": "number", "reach": 48.0, "title_id": "FA_UI_009", "description_id": "FA_UI_217"},
+{"id": "bed_0", "title": "整理过的寝具", "point": Vector2(154, 174), "description": "青绿格纹被面铺展平整，白床单翻折在枕头下方。外衣搭在书桌椅背上，大小合身；右袖口边缘有一抹三角形的灰痕。拖鞋整齐留在床边。身上没有外伤，也没有被捆绑过的麻木感。", "diagram": "bed", "reach": 48.0, "title_id": "FA_UI_108", "description_id": "FA_UI_218"},
+{"id": "bed_1", "title": "整理过的寝具", "point": Vector2(474, 174), "description": "灰绿格纹被面，床架与我房里的形制相同。枕边放着卡尺和黄铜铅笔，日常用品集中在床的另一侧。", "diagram": "bed", "reach": 48.0, "title_id": "FA_UI_108", "description_id": "FA_UI_219"},
+{"id": "bed_2", "title": "整理过的寝具", "point": Vector2(794, 174), "description": "暗红格纹被面，衣箱靠着衣柜摆放，随身物件摆在手边触手可及的位置。", "diagram": "bed", "reach": 48.0, "title_id": "FA_UI_108", "description_id": "FA_UI_220"},
+{"id": "bed_3", "title": "整理过的寝具", "point": Vector2(1114, 174), "description": "紫色格纹被面，床边摆着一双软底鞋。书桌上摊着散落的乐谱纸，床侧没有堆放阻挡通行的箱笼。", "diagram": "bed", "reach": 48.0, "title_id": "FA_UI_108", "description_id": "FA_UI_221"},
+{"id": "desk_1", "title": "量具与工作台面", "point": Vector2(428, 240), "description": "三角尺、折尺和卡钳放在桌面上，桌角一小罐黑机油，盖子没有拧紧。桌边留着可以转身、放下拆检物件的空地。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_225", "description_id": "FA_UI_222"},
+{"id": "desk_2", "title": "收纳旁的书桌", "point": Vector2(870, 224), "description": "几张纸叠在桌面一边，杯子放在另一边。衣箱和衣柜都在手边，桌前仍留着坐下整理东西的位置。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_226", "description_id": "FA_UI_223"},
+{"id": "desk_3", "title": "谱纸与练习位置", "point": Vector2(1196, 174), "description": "两张谱纸摊在桌上，旁边是一支音叉和一块用掉一半的淡黄色松香。椅子退在后方，面向谱纸的地毯空着，容得下一个人站着练习。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_227", "description_id": "FA_UI_224"},
+{"id": "clock", "title": "发条机械钟", "point": Vector2(216, 104), "description": "秒针一格一格平稳跳动，机壳内传出轻微的滴答声。表盘上只有十二个罗马数字刻度，没有显示年份与日期的窗口。", "diagram": "clock", "reach": 48.0, "title_id": "FA_UI_056", "description_id": "FA_UI_142"},
+{"id": "notebook", "title": "私人笔记", "point": Vector2(50, 184), "description": "装订结实，字迹与我当下的书写习惯一致。翻到末页，字迹清晰工整，收笔平稳，笔帽端正扣在桌边： “照旧例，还是会错。那一回已经排过。留原来的；相同的不能抵作一次。先核那一项，余下的等明日排期。” 句意完整，没有被外力粗暴打断的痕迹。“旧例”与“那一项”似乎指代某种特定的校准流程，但在当前房间内找不到更多的说明。页边的演算题旁画着对勾，末端都带一个小钩。", "diagram": "notebook", "reach": 48.0, "title_id": "FA_UI_141", "description_id": "FA_UI_155"},
+{"id": "drawer", "title": "书桌抽屉", "point": Vector2(92, 186), "description": "抽屉内垫着几层旧报纸和废草稿，边缘已被抽拉磨得起毛泛白，木槽内侧留有多次取放文具形成的浅滑痕。", "diagram": "repair", "reach": 48.0, "title_id": "FA_UI_025", "description_id": "FA_UI_092"},
+{"id": "paper", "title": "废纸篓里的包纸", "point": Vector2(108, 202), "description": "展开废纸篓里揉皱的旧练习纸。纸边是锯齿状的撕口，印着表格横线，演算题旁画着末端带钩的对勾。纸的内侧有一团边缘清晰的斜向灰黑印痕，外侧干干净净。里面包着一枚削成斜面的硬木楔，侧面刻着两道细线；斜面一侧有黑灰擦痕，背面压着一道深槽。", "diagram": "wedge", "reach": 48.0, "title_id": "FA_UI_088", "description_id": "FA_UI_084"},
+{"id": "study", "title": "研习材料", "point": Vector2(282, 652), "description": "几叠泛黄的测量练习纸，上面写满了结构几何与力学校核。不同的笔迹在纸面上交错：有些推导被另一种笔迹划掉重写，旁边又被工整的小楷订正。旁边放着直尺、带缺口的定位木条和带钉眼的方木。", "diagram": "study", "reach": 72.0, "title_id": "FA_UI_136", "description_id": "FA_UI_045"},
+{"id": "tear", "title": "同源撕口", "point": Vector2(346, 652), "description": "研习桌边放着一本《结构测量练习册》，中间缺了一页。留下的撕口呈锯齿状，前后几页印着同样的表格横线。", "diagram": "tear", "reach": 72.0, "title_id": "FA_UI_058", "description_id": "FA_UI_116"},
+{"id": "box_mark", "title": "桌面磨痕", "point": Vector2(368, 640), "description": "长桌角有一小块漆面浅色磨痕，边缘留有三处短小的点状凹痕，像是常有带脚钉的小物件搁在这里。", "diagram": "box", "reach": 72.0, "title_id": "FA_UI_118", "description_id": "FA_UI_117"},
+{"id": "meeting", "title": "四人会议", "point": Vector2(320, 716), "description": "在长桌前召集同伴，检验关于房屋与隔离门的竞争假说。", "diagram": "", "reach": 62.0, "title_id": "FA_UI_063", "description_id": "FA_UI_068"},
+{"id": "rations", "title": "分装口粮", "point": Vector2(968, 668), "description": "储食柜内摆着四份用油纸包裹的硬面包，切口整齐，旁边贴着便签：`每日口粮——丙型配给`。柜内空荡，没有多余的面粉或储备干粮。", "diagram": "rations", "reach": 48.0, "title_id": "FA_UI_047", "description_id": "FA_UI_065"},
+{"id": "water", "title": "水阀", "point": Vector2(852, 580), "description": "拧开黄铜水阀，管道微震，落下一股清水。关上阀门后，管口滴下两滴便止住。管道向上通往顶部的独立水箱。", "diagram": "water", "reach": 48.0, "title_id": "FA_UI_124", "description_id": "FA_UI_097"},
+{"id": "wash", "title": "洗盆与湿布", "point": Vector2(882, 580), "description": "洗盆内沿有一圈未干透的灰黑烟垢。折叠的粗麻湿布上有一团黑灰擦痕，布角开线处嵌着一截草绿色粗线。盆边小陶罐里剩着带碱味的清洗水。", "diagram": "wash", "reach": 48.0, "title_id": "FA_UI_128", "description_id": "FA_UI_129"},
+{"id": "cup", "title": "缺口杯与杯片", "point": Vector2(746, 664), "description": "桌上留有一块带釉的陶杯残片。工程师床头的水杯缺了一角，缺口的大小和它相近。", "diagram": "cup", "reach": 48.0, "title_id": "FA_UI_152", "description_id": "FA_UI_090"},
+{"id": "hinge", "title": "门轴与石砌止口", "point": Vector2(604, 950), "description": "铁门的铰链轴心装在主楼一侧。门框四周凸出一圈花岗岩石砌止口，凸边朝着生活翼；门扇边缘贴在止口的主楼一侧，贴合处磨出了一圈亮痕。", "diagram": "hinge", "reach": 48.0, "title_id": "FA_UI_184", "description_id": "FA_UI_185"},
+{"id": "weight", "title": "自闭配重", "point": Vector2(700, 950), "description": "钢绳穿过门框上方的定滑轮，一端连着门扇上部，另一端吊着一块铸铁重块。钢绳绷紧，重块离地约一掌高。", "diagram": "weight", "reach": 48.0, "title_id": "FA_UI_153", "description_id": "FA_UI_151"},
+{"id": "door", "title": "隔离门与内销", "point": Vector2(644, 954), "description": "水平铁销穿过门上的铁座，末端伸进门框。销身上有几道发亮的新刮痕，销座里抹着一层新鲜的黑色机油。", "diagram": "door", "reach": 48.0, "title_id": "FA_UI_187", "description_id": "FA_UI_123"},
+{"id": "slit", "title": "检视盖窄孔", "point": Vector2(664, 952), "description": "掀开门板中央的生铁检视盖，透过狭窄缝隙望向主楼侧：一根粗重的铁制横闩稳稳落入两侧的铸铁卡座内。横闩位于门外，从生活翼这一侧无法触及。", "diagram": "bar", "reach": 48.0, "title_id": "FA_UI_120", "description_id": "FA_UI_167"},
+{"id": "trace", "title": "门底灰迹", "point": Vector2(628, 956), "description": "门底地砖上蒙着一层薄薄的灰黑沉积。门扇下方正中空出一块边缘锐利的三角形干净区域，斜边朝着门扇。", "diagram": "trace", "reach": 48.0, "title_id": "FA_UI_180", "description_id": "FA_UI_181"},
+{"id": "stop", "title": "墙边的铁止挡座", "point": Vector2(532, 946), "description": "墙角立着一只沉重的铸铁地面止挡座，提手上沾着一点淡黄色的细粉。门厅中央有一圈与它底座大小相符的灰印；圈里的地面也被湿布擦过。", "diagram": "stop", "reach": 48.0, "title_id": "FA_UI_072", "description_id": "FA_UI_071"},
+{"id": "floor_wipe", "title": "门厅擦拭痕", "point": Vector2(596, 930), "description": "几道由粗布擦拭拖拽出的泛白水渍横过地砖，水渍带有微弱的碱性气味，缝隙深处仍有残留黑灰。擦拭范围主要集中在从门前到走廊的走动通道上。", "diagram": "wipe", "reach": 48.0, "title_id": "FA_UI_179", "description_id": "FA_UI_046"},
+{"id": "engineer", "title": "工程师", "point": Vector2(480, 416), "description": "他记得入学前的职业训练，却想不起在这里的经历。手中的杯子缺了一角，指节上蹭着一点发黑的机油。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_085", "description_id": "FA_UI_028"},
+{"id": "chef", "title": "厨师", "point": Vector2(983, 728), "description": "她正在检查食水。外衣袖口缝着草绿色的补线，其中一处线头像是新断的。她保留厨艺与入学前的记忆，却不记得这里的旧事。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_052", "description_id": "FA_UI_077"},
+{"id": "musician", "title": "音乐家", "point": Vector2(706, 944), "description": "他在门厅试推过门，推不动；内销仍插着，他没有拔。腰侧挂着一只半开的小木盒，格子里嵌着几片削成斜面的木片，每片侧面刻着两道细线，最边上一格空着。", "diagram": "", "reach": 48.0, "title_id": "FA_UI_188", "description_id": "FA_UI_027"},
+{"id": "transmitter", "title": "铜质传声口", "point": Vector2(498, 556), "description": "墙上固定铜口与拉柄。导线进入砌体，终点不可见。", "diagram": "transmitter", "reach": 48.0, "title_id": "FA_UI_174", "description_id": "FA_UI_070"},
+]

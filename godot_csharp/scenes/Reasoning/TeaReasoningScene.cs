@@ -44,7 +44,7 @@ public partial class TeaReasoningScene : Control
 		GetWindow().ContentScaleSize = Vector2I.Zero;
 		SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		Theme = ReasoningTheme.Create(_font);
-		var background = new ColorRect { Color = new("141b20"), MouseFilter = MouseFilterEnum.Ignore };
+		var background = new ColorRect { Color = new("192421"), MouseFilter = MouseFilterEnum.Ignore };
 		AddChild(background); background.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		_stage = new SubViewportContainer { Name = "RoomStage", Size = new(1280, 832), Stretch = true, StretchShrink = 2,
 			MouseFilter = MouseFilterEnum.Stop, TextureFilter = TextureFilterEnum.Nearest };
@@ -148,6 +148,7 @@ public partial class TeaReasoningScene : Control
 		ButtonIn(help, "关闭帮助", () => _help.Visible = false); _help.Visible = false;
 		BuildReasoningTools();
 		BuildInvestigation();
+		BuildReplayManuscript(rules, right, tools, evidenceTools, mindHeader, mindHeading, prompt, playback, controls);
 		MoveChild(_modal, GetChildCount() - 1);
 		Resized += LayoutStage; LayoutStage();
 		LoadDraft(); RefreshMaterials(); RefreshPanel(); RefreshStatus();
@@ -164,7 +165,7 @@ public partial class TeaReasoningScene : Control
 	private void LayoutStage()
 	{
 		_stage.Position = new(Mathf.Floor((Size.X - 1280) / 2), Mathf.Floor((Size.Y - 832) / 2));
-		if (_mindStage is not null) _mindStage.Position = new(Mathf.Floor((Size.X - 472 - 640) / 2), Mathf.Floor((Size.Y - 416) / 2) - 45);
+		LayoutReplayManuscript();
 	}
 	private PanelContainer PaperPanel(string name) => new() { Name = name, Theme = ReasoningTheme.Create(_font, true) };
 
@@ -186,6 +187,18 @@ public partial class TeaReasoningScene : Control
 		_diagnostic.Visible = validation.Count > 0;
 		_diagnostic.Text = validation.Count == 0 ? "" : validation[0];
 		_diagnostic.AddThemeColorOverride("font_color", validation.Count == 0 ? new Color("5e654f") : new Color("9e4938"));
+		_draftValid = validation.Count == 0;
+		if (_run is not null) _run.Disabled = !_draftValid || !_mental;
+		if (_editor is not null)
+		{
+			for (var line = 0; line < _editor.GetLineCount(); line++) _editor.SetLineBackgroundColor(line, Colors.Transparent);
+			foreach (var error in validation.Where(e => e.StartsWith(_reality.People[_person].Name + "：") || e.StartsWith(_reality.People[_person].Name + " 第")))
+			{
+				var match = System.Text.RegularExpressions.Regex.Match(error, @"第\s*(\d+)\s*行");
+				if (match.Success && int.TryParse(match.Groups[1].Value, out var number) && number <= _editor.GetLineCount())
+					_editor.SetLineBackgroundColor(number - 1, new Color(0.65f, 0.12f, 0.08f, 0.09f));
+			}
+		}
 	}
 	private void ToggleMind()
 	{
@@ -264,15 +277,16 @@ public partial class TeaReasoningScene : Control
 	private void RefreshStatus()
 	{
 		if (_status is null) return;
-		_transport.Visible = _mental; _run.Disabled = !_mental; _play.Disabled = !_mental; _next.Disabled = !_mental; _timeline.Editable = _mental;
+		_transport.Visible = _mental; _run.Disabled = !_mental || !_draftValid; _play.Disabled = !_mental || (!_simulation.Started && !_draftValid); _next.Disabled = _play.Disabled; _timeline.Editable = _mental;
 		var frame = _simulation.Frames[Math.Clamp(_frame, 0, _simulation.Frames.Count - 1)];
-		_mindTitle.Text = _mental ? $"脑内重演 · 思路{Math.Max(1, _version)}" + (_dirty ? " · 草稿已修改" : "") : "公共研究室";
+		_mindTitle.Text = "脑内重演";
 		_play.Text = _playing ? "暂停" : "播放";
 		foreach (var actor in _mindActors) { if (_mental && !_playing) actor.Sprite.Pause(); else actor.Sprite.Play(); }
 		var missing = MissingCriticalEvidence();
 		var replayState = _simulation.Finished && _frame == _simulation.Frames.Count - 1 ? "重演结束" : "当前回放";
-		_status.Text = !_mental ? "侦探：移动、调查、使用脑内重演技能" : replayState + " · " +
+		_status.Text = !_mental ? "侦探：移动、调查、使用脑内重演技能" : replayState + $" {frame.Time:0.0} · " +
 			(frame.Differences.Any(IsKnownDifference) ? $"{frame.Differences.Count(IsKnownDifference)}项已检查记录存在差异" : _simulation.Finished && _frame == _simulation.Frames.Count - 1 && missing.Count == 0 ? "与全部已调查关键证据相容" : _simulation.Finished && _frame == _simulation.Frames.Count - 1 ? $"截至当前已检查内容相容；还有{missing.Count}项材料未检查" : "截至当前尚未完成检查") + (_dirty ? " · 回看旧版本" : "");
+		RefreshReplayCaption();
 	}
 	public override void _Process(double delta)
 	{

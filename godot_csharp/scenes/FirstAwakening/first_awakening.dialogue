@@ -1,0 +1,403 @@
+~ opening
+侦探（心声）: ……喉咙有些发紧。脑袋像是刚从沉睡中苏醒，迟滞而沉重。 [ID:FA_001]
+侦探（心声）: 枕边的外衣合身，桌上的用具顺手……这处居所处处留着我的生活习惯，但我却想不起自己在这里住过多久。 [ID:FA_002]
+侦探（心声）: 窗外是无法看透的白雾。门外有走动声……我需要出去确认眼下的状况。 [ID:FA_002_1]
+=> END
+
+~ engineer_0
+do dialogue_mark_met("engineer")
+工程师: 你也醒了？过来时留神脚下，这里有些金属碎屑。 [ID:FA_003]
+侦探: 谢谢。你知道这是哪里吗？ [ID:FA_004]
+工程师: 没有。我刚检查了这几间宿舍，走廊南端有一扇极沉的铁门，推不开。我是做机械工程的，手上的活还顺手，但记不起昨晚的事情。 [ID:FA_005]
+侦探: 我是侦探。我也记不得之前的经历。 [ID:FA_007]
+工程师: 侦探？那你瞧瞧这窗上的铁条、门上的编号，还有那扇封死的重门。凭构造看，这里很像某种收容或拘禁设施。 [ID:FA_006]
+侦探: 收容？仅凭门窗的坚固程度，还不能定性用途。 [ID:FA_009]
+工程师: 或许吧。备餐间有水声，南边门前还有个人。如果找到能拆卸门窗的工具，叫我一声，我再仔细看看这扇门。 [ID:FA_011]
+侦探: 碎片先收好，别伤到人。 [ID:FA_012]
+侦探（心声）: 他指节上蹭着一点发黑的机油，自己没有察觉。 [ID:FA_147]
+=> END
+
+~ engineer_repeat
+工程师: 房门本身能推开，没有外部反锁。真正卡死通路的是南端那道重型铁门。 [ID:FA_013]
+=> END
+
+~ chef_0
+do dialogue_mark_met("chef")
+厨师: 别喝生水，水箱我还没查完。 [ID:FA_014]
+侦探: 水质有问题？ [ID:FA_015]
+厨师: 水看起来没问题，但储粮柜不太寻常。柜子里只有四份切好的干面包，按人头分装，油纸上贴着“丙型配给”。除此之外，连多余的生面粉都没有。 [ID:FA_016]
+侦探: 只有一天的分量？ [ID:FA_017]
+厨师: 我是个厨师，习惯先清点食水。这里的存粮只够我们维持今天的基础消耗，不像是长住的库房。 [ID:FA_018]
+厨师: 看来留给我们的时间并不充裕。 [ID:FA_019]
+侦探: 我是侦探，也在找出去的路。 [ID:FA_020]
+厨师: 好。你去查出路，我来分好今日的口粮。找到别人，让他们到起居室汇合。 [ID:FA_021]
+侦探: 明白，你留神安全。 [ID:FA_022]
+侦探（心声）: 她袖口的补线是草绿色的，有一处线头像是新断的。 [ID:FA_148]
+=> END
+
+~ chef_repeat
+厨师: 口粮已经切好分装了。天黑前如果找不出出路，我们没有多余的储备过夜。 [ID:FA_023]
+=> END
+
+~ musician_0
+do dialogue_mark_met("musician")
+音乐家: 请稍等片刻……让空气静下来，我在听门外的风声。 [ID:FA_024]
+侦探: 好。听到了什么？ [ID:FA_025]
+音乐家: 门缝里有低微的气流声，像隔着很长的空腔在震颤。门板摸上去有轻微的余温。 [ID:FA_026]
+侦探: 门打不开？ [ID:FA_027]
+音乐家: 我推过，很沉，内侧插着一根粗铁销。我是做音乐的，耳朵对回声很敏感，门外像是一处很大的空间。 [ID:FA_028]
+音乐家: 看地上的痕迹，门底曾插过木楔。昨晚门外可能发生过异常，有人在内侧用木楔顶住大门，防止外面推开。 [ID:FA_030]
+侦探: 用木楔顶门防外？门是朝哪个方向开的？ [ID:FA_031]
+音乐家: 既然是防范外面，门自然该向内挡。碰那根内销时通知我一声，我站远些。 [ID:FA_032]
+侦探: 好，我先勘验锁止结构。 [ID:FA_033]
+侦探（心声）: 他腰侧挂着一只半开的小木盒，里面嵌着几枚削成斜面的木片。最边上那一格是空的。 [ID:FA_149]
+=> END
+
+~ musician_repeat
+音乐家: 门缝的气流很平稳，暂时没有别的异常杂音。你要检查门扇，我把位置让给你。 [ID:FA_034]
+=> END
+
+~ mind_intro
+侦探（心声）: 牢房、御敌、越狱……三种说法都没能解释全部痕迹。 [ID:FA_035]
+侦探（心声）: 可驳倒别人，不等于知道发生了什么。铜口要的是经过。 [ID:FA_036]
+侦探（心声）: 右页写下每个人可能做的事，缺词就翻“词汇”；左页从头重演。 [ID:FA_037]
+侦探（心声）: 重演留下的痕迹未必真的存在。要回现场，一处一处核对。 [ID:FA_038]
+=> END
+
+~ engineer_1
+do dialogue_mark_met("engineer")
+工程师: 那个声音要我们自己判断这里的用途？铁格窗、编号和死闩摆在眼前；研习桌上的东西又像长期用过。我暂时不肯只凭其中一边下结论。 [ID:FA_039]
+侦探: 我们把找到的物件都带到长桌上，一件一件比对。 [ID:FA_041]
+=> END
+
+~ chef_1
+do dialogue_mark_met("chef")
+厨师: 听到了吧，口粮只有今天的分量。它所谓的“放逐”，就是把想不出答案的人当成弃卒抹掉记忆扔回去。我们得抓紧。 [ID:FA_042]
+=> END
+
+~ musician_1
+do dialogue_mark_met("musician")
+音乐家: 声音冰冷得像齿轮咬合。但至少证实了门外有人在监管。昨夜门底到底发生过什么，必须用事实回答它。 [ID:FA_044]
+=> END
+
+~ engineer_2
+do dialogue_mark_met("engineer")
+工程师: 你去说明我们已经核对过的部分，我会在这里听着。 [ID:FA_047]
+=> END
+
+~ chef_2
+do dialogue_mark_met("chef")
+厨师: 把确定的和没确定的分开说。需要补查，我们再一起去。 [ID:FA_048]
+=> END
+
+~ musician_2
+do dialogue_mark_met("musician")
+音乐家: 我也会听着。有遗漏，我们可以接着补充。 [ID:FA_049]
+=> END
+
+~ broadcast
+铜口: （铜管内传来一阵沉闷的金属回音，随后是一个冰冷、平稳、没有任何情感起伏的非人声线） [ID:FA_050_0]
+铜口: 各位已经醒来。我在传声回路的另一端。 [ID:FA_050]
+铜口: 按照立约者的规定，生活翼今日的供给已经配齐。在此周期内，此处没有迫近的生理危险。 [ID:FA_050_1]
+铜口: 想要开启通往主楼的大门，请向我阐明两项事实：这处空间经历过怎样的使用痕迹？门前的器物昨夜经历过何种因果？ [ID:FA_051]
+铜口: 契约仅接纳严密的物证与因果。你们可以调查、相互核对，无法确定的部分可如实保留，但不得凭空编造。 [ID:FA_052]
+铜口: 不愿继续探索者，可申请退场。契约允许送返，条件是洗去关于此地的全部记忆，由各人自愿决定。时限截至今日落日。 [ID:FA_053]
+=> transmitter
+
+~ transmitter
+铜口: 我在听取真实之声。 [ID:FA_054]
+- 有人在听吗？ [ID:FA_055]
+	铜口: 听得见。你们可以通过这只拉柄和我交谈。 [ID:FA_056]
+	=> transmitter
+- 你是谁？这里在哪里？ [ID:FA_057]
+	铜口: 我的名字受契约束缚，现不予宣读。你们所在的区域由我按约代管；它的名称和用途，须由你们依据眼前的痕迹陈述。 [ID:FA_058]
+	=> transmitter
+
+- 昨夜大门外发生了什么？ [ID:FA_061]
+	铜口: 气流已平，烟尘已落。契约禁止我向未解开第一道试炼之人叙述昨夜的变故。请自行由物理残留中探寻。 [ID:FA_062]
+	=> transmitter
+- 如果今天内无法得出结论呢？ [ID:FA_063]
+	铜口: 契约将判定你们不具备在此处探求真知的资格。日光落尽之时——按你们墙上的钟，是十八时——供给停止，全员抹除记忆送回原籍。 [ID:FA_064]
+	do dialogue_learn_deadline()
+	=> transmitter
+- 提交论证 [ID:FA_065]
+	do dialogue_choose_answer()
+	=> END
+- 放弃探索 [ID:FA_066]
+	do dialogue_choose_exit()
+	=> END
+- 松开拉柄 [ID:FA_067]
+	侦探: 它的回答受制于严格的规则。先收集足够的现场证据。 [ID:FA_068]
+	=> END
+
+~ meeting
+工程师: 我们把手头的线索摊在桌上。从编号、窄窗、定额口粮来看，我倾向于这里是一处封闭式的收容或拘禁牢房。 [ID:FA_069]
+音乐家: 我有不同看法。门底留有木楔和灰迹，我认为昨夜外面发生过骚乱，有人在门内塞入木楔顶门御敌。 [ID:FA_070]
+厨师: 洗盆里全是黑灰，门又从外面推不开。会不会是有人想撬门出去，被外面的人拦下、锁死了？ [ID:FA_072]
+侦探: 三种说法都有各自直观的诱因。但器物的物理特性必须完全符合推论。 [ID:FA_076]
+侦探: 我们逐项核验，看看现场留下的实物到底支持哪一种。 [ID:FA_077]
+=> END
+
+~ challenge_prison
+侦探: 看看抽屉里层层垫入、磨损泛白的旧衬纸，再看研习桌上不同笔迹互相推敲划改的计算稿。 [ID:FA_078]
+侦探: 如果是临时牢房，不仅无法解释这些长期的、自发式的学术研习痕迹，更无法解释门内侧为什么安装着可由我们自主操作的重型铁销。 [ID:FA_078_1]
+侦探: 我们出不去是昨夜之后的结果，但不能把眼下的困境反推为这里的原始用途。 [ID:FA_079]
+工程师: （端详着桌上的计算纸，片刻后点头）……有道理。演算稿上的批注笔迹各异，确实属于长期的研讨。我把被困的现状误当作了房间的本质。 [ID:FA_080]
+=> END
+
+~ challenge_defense
+侦探: 门轴在主楼一侧，门框四周是石砌止口。门只能往主楼那边推开，往我们这边一寸也拉不动。 [ID:FA_081]
+侦探: 外面的人要是撞门，门扇只会被压进止口里。塞在我们这一侧门底的木楔，挡不住那个方向的力。 [ID:FA_082]
+侦探: 所以木楔不是用来顶门的。它原本在做什么，我现在还说不上来。 [ID:FA_082_1]
+音乐家: （低头看着门底）……门朝外开？那木楔塞在这里，又图什么？这得弄清楚。 [ID:FA_083]
+=> END
+
+~ challenge_escape
+侦探: 包木楔的纸撕自研习桌上那本练习册。灰黑都在纸的里面，外面几乎是干净的。 [ID:FA_084]
+侦探: 越狱被镇压，能说通门外那道横闩，却说不通这个：为什么有人把一枚沾灰的木楔仔细包好，扔进我的废纸篓？ [ID:FA_085]
+侦探: 这像是有人收拾过，不像有人被制服。谁、在什么时候收拾的，还不知道。 [ID:FA_085_1]
+厨师: （看着洗盆边的陶罐）……看守不会替我们包好木楔。好，我不坚持这个说法。 [ID:FA_086]
+=> END
+
+~ meeting_nomination
+工程师: 三种说法都倒了。可铜口要的是昨夜的经过，我们谁也不记得。 [ID:FA_087]
+音乐家: 侦探，你看痕迹比我们仔细。把可能的经过排出来，我们一起核对。 [ID:FA_089]
+厨师: 排好了再去铜口前说。说之前，先让我们看看你的根据。 [ID:FA_088]
+=> END
+
+~ reject_prison
+铜口: 你说明了目前被困，却还没说明房间原来的用途。“临时牢房”需要更多根据。 [ID:FA_090]
+=> END
+
+~ reject_defense
+铜口: 你提出的顶门动作与门的开向不合。请重新说明木楔怎样受力。 [ID:FA_091]
+=> END
+
+~ reject_escape
+铜口: 木楔的受力还不能证明越狱和镇压。请解释灰迹和包纸的关系。 [ID:FA_092]
+=> END
+
+~ reject_one_side
+铜口: 外闩与内销需要分别从两侧操作。你的回答只交代了一侧。 [ID:FA_093]
+=> END
+
+~ reject_recent
+铜口: 一夜之间，磨不出那样的抽屉滑槽，也写不满那些互相订正的练习纸。 [ID:FA_162]
+=> END
+
+~ reject_wrap_early
+铜口: 你让纸先于灰出现。那么灰该落在纸外，而不是纸里。 [ID:FA_163]
+=> END
+
+~ reject_wrap_braced
+铜口: 木楔还撑在门底时，谁能把它包进纸里？ [ID:FA_164]
+=> END
+
+~ reject_mask_closed
+铜口: 门已经合拢，灰从何处落到门底，又怎会留下木楔的形状？ [ID:FA_165]
+=> END
+
+~ reject_inside_both
+铜口: 外闩在主楼一侧。门已合拢，你们之中谁能把手伸过去？ [ID:FA_166]
+=> END
+
+~ reject_wipe_order
+铜口: 地先擦了，止挡座才挪开？那它原来压着的那圈灰，本该原样留着。 [ID:FA_179]
+=> END
+
+~ reject_unsupported
+铜口: 这个回答还有未核对的部分。你可以继续调查，再来说明。 [ID:FA_094]
+=> END
+
+~ ending_newcomer
+铜口: 精巧的审视。在不可知的时间断层前，你们恪守了理性的边界。 [ID:FA_095]
+铜口: 旧物不足以断定你们早在此处居住，你们也没有把它说成定论。门前的经过与两侧的锁，都有凭据。 [ID:FA_096]
+铜口: 论证与物证相容。契约成立，主楼大门的阻隔已经解除。 [ID:FA_097]
+=> END
+
+~ ending_history
+铜口: 你们认出了这里被长久使用的痕迹，也说清了门前的经过。 [ID:FA_098]
+铜口: 生活翼的内销和主楼侧外闩并非一次单方操作。契约成立，生活翼的封锁即刻开放。 [ID:FA_099]
+=> END
+
+~ ending_sunset
+铜口: 日光已尽。契约所定的期限到了。 [ID:FA_167]
+铜口: 你们留下的陈述，不足以说明这里与那扇门。按约，送返程序开始。 [ID:FA_168]
+侦探（心声）: 滴答声远了。我努力记住门底那片干净的三角……然后什么也没剩下。 [ID:FA_169]
+=> END
+
+~ attribution
+if attribution_state == "full"
+	铜口: 你们还指明了每一步经手的人。依据是各自留下的物件，而不是记忆。此项采信。 [ID:FA_170]
+	音乐家: 盒子里空着的那一格……原来那枚楔子是我自己削的。 [ID:FA_171]
+	工程师: 指节上的机油，销座里的机油。插销的是我。 [ID:FA_172]
+	厨师: 那截绿线是从我袖口断下来的。擦地的人是我。 [ID:FA_173]
+	侦探（心声）: 包纸的人是我。我们谁都不记得，可我们的东西记得。 [ID:FA_174]
+elif attribution_state == "partial"
+	铜口: 你们指明了其中几步经手的人，其余如实保留。已指明之处与物证相容。 [ID:FA_175]
+	厨师: 没说准的，就先空着。东西还在，以后慢慢对。 [ID:FA_176]
+else
+	铜口: 至于谁做了哪一步——你们的指认有凭空之处，或与物证相悖。此项不予采信。 [ID:FA_177]
+	工程师: 先别替谁定下昨夜的事。凭东西说话，别凭感觉。 [ID:FA_178]
+=> END
+
+~ ending_exit
+侦探: 我们离开。 [ID:FA_100]
+铜口: 如你所愿。 [ID:FA_101]
+侦探: 那么，送我们回去吧。 [ID:FA_102]
+=> END
+
+~ engineer_entry
+if captain
+	=> engineer_2
+elif broadcast_heard
+	if not npc_stage_seen.has("engineer")
+		工程师: 刚才没顾上介绍，我是机械工程师。你也听到了那个声音吧？ [ID:FA_103]
+	=> engineer_1
+elif npc_stage_seen.has("engineer")
+	=> engineer_repeat
+else
+	=> engineer_0
+
+~ chef_entry
+if captain
+	=> chef_2
+elif broadcast_heard
+	if not npc_stage_seen.has("chef")
+		厨师: 我是厨师，刚才一直在备餐间。现在我们得一起弄清处境。 [ID:FA_104]
+	=> chef_1
+elif npc_stage_seen.has("chef")
+	=> chef_repeat
+else
+	=> chef_0
+
+~ musician_entry
+if captain
+	=> musician_2
+elif broadcast_heard
+	if not npc_stage_seen.has("musician")
+		音乐家: 我是音乐家，刚才在门边听动静。你和传声口说的话，我也听见了。 [ID:FA_105]
+	=> musician_1
+elif npc_stage_seen.has("musician")
+	=> musician_repeat
+else
+	=> musician_0
+
+~ transmitter_entry
+if not transmitter_rules
+	侦探（心声）: 拉柄旁刻着一行字：按住接通，松手断开。 [ID:FA_106]
+do dialogue_connect_transmitter()
+if not broadcast_heard
+	do dialogue_hear_broadcast()
+	=> broadcast
+=> transmitter
+
+~ door
+if inner_bolt
+	侦探（心声）: 铁销插在内侧的销座里。 [ID:FA_107]
+else
+	侦探（心声）: 内侧铁销已经拔出。 [ID:FA_108]
+- 拔出内销 [if inner_bolt] [ID:FA_109]
+	do _toggle_bolt()
+	侦探（心声）: 铁销从销座里滑出来了。 [ID:FA_110]
+	=> door
+- 插回内销 [if not inner_bolt] [ID:FA_111]
+	do _toggle_bolt()
+	侦探（心声）: 铁销重新插入销座。 [ID:FA_112]
+	=> door
+- 推门 [ID:FA_113]
+	do _advance()
+	if inner_bolt
+		侦探（心声）: 门扇一动，内侧铁销便抵住了销座。 [ID:FA_114]
+	elif evidence.has("slit")
+		侦探（心声）: 内销虽已拔出，门仍被外面的横闩挡住。 [ID:FA_115]
+	else
+		侦探（心声）: 内销已经拔了，门还是推不开。阻力在另一侧，得看看。 [ID:FA_116]
+	=> door
+- 拉门 [ID:FA_117]
+	do _advance()
+	侦探（心声）: 门扇抵在石止口上，向这边拉不开。 [ID:FA_118]
+	=> door
+- 掀开检视盖 [ID:FA_119]
+	do dialogue_inspect_door("slit")
+	侦探（心声）: 窄孔外，一根横闩落在门另一侧的两只卡座里。从这里够不到。 [ID:FA_120]
+	=> door
+- 检查铰链与配重 [ID:FA_121]
+	do dialogue_inspect_door("hinge")
+	侦探（心声）: 铰链允许门向另一侧转动。绳子经过滑轮，连着悬垂的重块，拉力指向合门方向。 [ID:FA_122]
+	=> door
+- 离开门边 [ID:FA_123]
+	=> END
+
+~ exit_discussion
+侦探: 如果选择回去，它说我们会忘掉这里。你们怎么想？ [ID:FA_124]
+工程师: 抹除记忆？我还会用这些工具，但不知道自己在这里做过什么。我不答应像一件损坏的工具一样被洗去心智送走。我拒绝签字。 [ID:FA_125]
+厨师: 看看储粮柜吧，它给的口粮精确到克，说明它根本不打算做慈善。抹除记忆的代价我们谁也无法预料，我不赞成退场。 [ID:FA_126]
+音乐家: 门缝后的风声我还没弄清缘由。如果在此刻选择遗忘，以后每一次拉琴我都会为今天的退缩而痛苦。我选择留下。 [ID:FA_127]
+铜口: （冷漠的金属共振）一人犹豫，三人拒绝。契约规定退场需四人全票一致。松开拉柄吧，退场申请未获达成。 [ID:FA_128]
+- 先留下继续调查 [ID:FA_130]
+	侦探: 明白了，我们继续调查。 [ID:FA_130_1]
+	=> transmitter
+
+~ present_prison
+工程师: 侦探，你用什么根据说明这里不是收容牢房？ [ID:FA_131]
+- 抽屉内的新旧补纸 [if evidence.has("drawer")] [ID:FA_132]
+	do dialogue_accept_challenge("prison")
+	=> challenge_prison
+- 反复使用的研习材料 [if evidence.has("study")] [ID:FA_133]
+	do dialogue_accept_challenge("prison")
+	=> challenge_prison
+- 门上的编号 [if evidence.has("room_0")] [ID:FA_134]
+	do dialogue_weak_evidence()
+	工程师: 编号正是收容规制的典型特征，单凭这个否定不了我。 [ID:FA_135]
+	=> present_prison
+- 缺口杯与杯片 [if evidence.has("cup")] [ID:FA_150]
+	do dialogue_weak_evidence()
+	工程师: 杯子摔了能说明什么？关人的地方也发杯子。 [ID:FA_151]
+	=> present_prison
+- 没有日期的机械钟 [if evidence.has("clock")] [ID:FA_152]
+	do dialogue_weak_evidence()
+	工程师: 不让人知道日子，这倒更像牢房了。 [ID:FA_153]
+	=> present_prison
+- 先继续查看 [ID:FA_136]
+	=> END
+
+~ present_defense
+音乐家: 如果木楔不是用来顶门防范外面推门的，构造上有何矛盾？ [ID:FA_137]
+- 铰链、石止口和自闭配重 [if evidence.has("hinge") and evidence.has("weight")] [ID:FA_138]
+	do dialogue_accept_challenge("defense")
+	=> challenge_defense
+- 洗盆里的灰垢 [if evidence.has("wash")] [ID:FA_139]
+	do dialogue_weak_evidence()
+	厨师: 灰垢只说明有人清洗过烟尘，说明不了木楔的受力方向。 [ID:FA_140]
+	=> present_defense
+- 门底的三角形干净区 [if evidence.has("trace")] [ID:FA_154]
+	do dialogue_weak_evidence()
+	音乐家: 那正是木楔待过的地方——就在门底，顶门的位置。你这是在帮我。 [ID:FA_155]
+	=> present_defense
+- 门外落下的横闩 [if evidence.has("slit")] [ID:FA_156]
+	do dialogue_weak_evidence()
+	音乐家: 外面有人落闩，说明外面确实有人。这恰好是我担心的。 [ID:FA_157]
+	=> present_defense
+- 先继续查看 [ID:FA_141]
+	=> END
+
+~ present_escape
+厨师: 那木楔背面的深凹槽和废纸篓里的黑灰又该作何解释？越狱被镇压的假设哪里不合？ [ID:FA_142]
+- 包纸撕口与接触面的灰迹 [if evidence.has("paper") and evidence.has("tear")] [ID:FA_143]
+	do dialogue_accept_challenge("escape")
+	=> challenge_escape
+- 备好的口粮 [if evidence.has("rations")] [ID:FA_144]
+	do dialogue_weak_evidence()
+	厨师: 口粮只能说明目前没有断粮，解释不了木楔上的受力痕迹。 [ID:FA_145]
+	=> present_escape
+- 内销上的新刮痕 [if evidence.has("door")] [ID:FA_158]
+	do dialogue_weak_evidence()
+	厨师: 新刮痕？那更像有人和看守抢过那根销。 [ID:FA_159]
+	=> present_escape
+- 门厅的湿布擦痕 [if evidence.has("floor_wipe")] [ID:FA_160]
+	do dialogue_weak_evidence()
+	厨师: 镇压完了，总得有人收拾地面。擦过地，说明不了是谁的地盘。 [ID:FA_161]
+	=> present_escape
+- 先继续查看 [ID:FA_146]
+	=> END
