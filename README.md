@@ -13,7 +13,7 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 
 - [宣传前三场人物动作图集](godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)：每人111帧位，含Godot资源和[可操作验收室](godot_csharp/scenes/CharacterAnimationPreview/README.md)。
 
-- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Main2D.tscn` 加载[初醒 Demo](godot_csharp/scenes/FirstAwakening/README.md)：四人生活翼调查、门厅因果推演、会议辩驳与双解答辩。[宣传前三场剧情打样](godot_csharp/scenes/Story/README.md)仍可直接打开各场景；旧Shot01/02和Parlor路径保留兼容入口。
+- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Main2D.tscn` 加载[初醒 Demo](godot_csharp/scenes/FirstAwakening/README.md)：大厅相遇与广播、各自查房、2+2同行勘验、圆桌开始后的人物行为规则推演、证物辩驳与三槽因果答辩。脑内规则支持持续条件、优先和禁止，动作不按职业限制；活动厅创作稿的开场已接入，推理后半由实际操作推进。设计见[调查经过与还原动机](docs/academy_setting/first-awakening-design.md)。[宣传前三场剧情打样](godot_csharp/scenes/Story/README.md)仍可直接打开各场景；旧Shot01/02和Parlor路径保留兼容入口。
 - [场景审查与扩产缺口](docs/illustrations-audit.md)：分镜年代、时间线、剧情/机制分类，以及角色动作与TileMap资源盘点。
 - [家具喝茶谜原型](godot_csharp/scenes/Reasoning/README.md)：公共研究室调查与家具喝茶重演，当前仍是未完成的可玩原型。
 - [首支宣传片现行大纲](docs/游戏和核心宣传视频和图片录制/机制主线宣传片大纲.md)：75–80秒，日常→脑内推演→言灵课堂→真名救场→决战一瞥；设计必须能落实到游戏，现有剧情打样与机制原型尚未组成成片。制作方法见[宣传片指导](docs/游戏和核心宣传视频和图片录制/宣传片指导意见.md)。

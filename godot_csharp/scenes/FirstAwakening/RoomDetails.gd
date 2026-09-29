@@ -24,7 +24,18 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if kind != "traces":
 		return
+	# Observed table packing and chair movement share the existing map coordinates.
+	draw_colored_polygon(PackedVector2Array([Vector2(295, 687), Vector2(307, 687), Vector2(305, 682), Vector2(298, 683)]), Color("93948a"))
+	for point in [Vector2(266, 660), Vector2(378, 660), Vector2(266, 712), Vector2(378, 712)]:
+		draw_rect(Rect2(point, Vector2(2, 10)), Color("706b63"))
 	var soot := Color("2b2630")
+	# Thin fan-shaped deposits make the inward direction visible on the field map.
+	for i in 68:
+		var depth := 4 + (i * 7) % 42
+		var spread := depth / 2
+		draw_rect(Rect2(644 + (i * 13) % (spread * 2 + 1) - spread, 954 - depth, 2, 1), soot)
+	# Arc endpoint is a measured trace, not a permanent mechanical opening limit.
+	draw_arc(Vector2(604, 952), 40, -0.28, 0.0, 14, Color("8e877e"), 1.0)
 	for i in 40:
 		draw_rect(Rect2(604 + (i * 13) % 78, 954 + (i * 7) % 5, 2, 1), soot)
 	draw_rect(Rect2(606, 958, 76, 2), Color(0.17, 0.15, 0.19, 0.6))

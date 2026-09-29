@@ -20,12 +20,13 @@ static func resolution(sections: Array[Dictionary], slots: Dictionary, evidence:
 	for section in sections:
 		var slot: String = section.slot
 		for option in section.options:
-			if option.value == slots[slot]:
+			if option.value == slots.get(slot, ""):
 				if not available(option, evidence, checks): return "reject_unsupported"
 				chosen[slot] = option
 				break
 		if not chosen.has(slot): return "reject_unsupported"
-	for slot in ["place", "door", "outer"]:
+	for section in sections:
+		var slot: String = section.slot
 		var outcome: String = chosen[slot].get("outcome", "")
 		if outcome.begins_with("reject_"): return outcome
-	return "ending_newcomer" if chosen.place.get("outcome", "") == "ending_newcomer" else "ending_history"
+	return "ending_passed"

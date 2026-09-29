@@ -79,7 +79,7 @@ def book_row(c: Canvas, x: int, y: int, w: int, h: int, seed: int) -> None:
 # ------------------------------------------------------------------ rooms ---
 
 def bed(room: int) -> Canvas:
-    """36x64 walnut bed. The quilt carries the occupant's colour."""
+    """36x64 walnut bed with standard dormitory bedding."""
     quilt = DORMS[room]["quilt"]
     c = Canvas(36, 64)
     # Headboard: carved panel with finials
@@ -153,7 +153,7 @@ def nightstand() -> Canvas:
 
 
 def desk(room: int) -> Canvas:
-    """58x38 writing desk, green leather inset; the occupant's work lies on it."""
+    """58x38 writing desk, green leather inset; the top has been cleared."""
     c = Canvas(58, 38)
     slab(c, 1, 4, 56, 14, 16, WALNUT, seed=10 + room)
     c.rect(5, 6, 48, 10, BOTTLE[3])
@@ -169,49 +169,7 @@ def desk(room: int) -> Canvas:
     for lx in (1, 55):
         c.rect(lx, 32, 2, 6, WALNUT[2])
     c.vline(1, 18, 16, WALNUT[4])
-    # Ink stand
-    c.rect(48, 3, 5, 3, INK)
-    c.px(49, 2, BRASS[4])
-    c.line(51, 1, 53, -1, CREAM[5])
-    if room == 0:  # notebook with a pencil
-        c.rect(12, 5, 14, 9, CREAM[5])
-        c.vline(19, 5, 9, CREAM[2])
-        for ly in (7, 9, 11):
-            c.hline(13, ly, 5, FOG[2])
-            c.hline(21, ly, 4, FOG[2])
-        c.line(27, 12, 32, 8, OCHRE[4])
-        c.rect(34, 8, 8, 5, CREAM[3])
-    elif room == 1:  # engineer: callipers, set square, a folding rule
-        c.poly([(9, 14), (9, 5), (19, 14)], CREAM[4])
-        c.poly([(11, 12), (11, 9), (14, 12)], BOTTLE[3])
-        c.hline(22, 9, 16, OCHRE[4])
-        c.hline(22, 10, 16, OCHRE[2])
-        for tx in range(23, 38, 3):
-            c.px(tx, 9, OCHRE[1])
-        c.line(32, 6, 40, 13, IRON[5])
-        c.line(34, 6, 40, 11, IRON[4])
-        c.rect(42, 10, 4, 3, BRASS[3])
-    elif room == 2:  # a chipped cup and a wrapped sandwich of papers
-        c.rect(14, 6, 16, 9, CREAM[4])
-        c.rect(16, 5, 16, 9, CREAM[5])
-        c.hline(17, 8, 12, FOG[2])
-        c.hline(17, 10, 10, FOG[2])
-        c.ellipse(39, 10, 4, 3, CREAM[5])
-        c.ellipse(39, 9, 3, 1.5, (120, 84, 60, 255))
-        c.px(42, 8, (0, 0, 0, 0))
-        c.px(41, 7, (0, 0, 0, 0))
-    else:  # musician: sheet music and a tuning fork
-        c.rect(10, 5, 13, 10, CREAM[5])
-        c.rect(24, 6, 13, 9, CREAM[4])
-        for ly in (7, 9, 11, 13):
-            c.hline(11, ly, 11, (70, 60, 72, 255))
-            c.hline(25, ly, 11, (70, 60, 72, 255))
-        for nx, ny in ((13, 8), (16, 10), (19, 7), (27, 11), (31, 9)):
-            c.px(nx, ny, INK)
-            c.px(nx + 1, ny - 1, INK)
-        c.vline(41, 6, 7, IRON[5])
-        c.vline(43, 6, 7, IRON[5])
-        c.hline(41, 12, 3, IRON[4])
+    # Cleared desktop: no tools, score, handwriting or personal tableware.
     return _finish(c)
 
 
@@ -240,6 +198,9 @@ def chair_back(coat: bool = False) -> Canvas:
         c.vline(1, 6, 16, coat_ramp[3])
         c.vline(16, 6, 17, coat_ramp[1])
         c.rect(12, 20, 5, 3, coat_ramp[4])
+        # Grey abrasion on the hanging sleeve is the detective's clue.
+        c.hline(12, 16, 3, (158, 157, 148, 255))
+        c.px(13, 17, (118, 119, 115, 255))
         c.px(3, 3, BRASS[4])
     return _finish(c)
 
@@ -262,7 +223,7 @@ def chair_front() -> Canvas:
     return _finish(c)
 
 
-def bookcase(seed: int) -> Canvas:
+def bookcase(seed: int, empty: bool = False) -> Canvas:
     c = Canvas(40, 60)
     c.rect(0, 2, 40, 58, WALNUT[3])
     c.rect(0, 0, 40, 4, WALNUT[4])
@@ -270,13 +231,15 @@ def bookcase(seed: int) -> Canvas:
     c.hline(0, 3, 40, WALNUT[2])
     c.rect(3, 5, 34, 47, WALNUT[1])
     for i, sy in enumerate((5, 17, 29, 41)):
-        book_row(c, 3, sy + 1, 34, 10, seed * 13 + i)
+        if not empty:
+            book_row(c, 3, sy + 1, 34, 10, seed * 13 + i)
         c.rect(3, sy + 11, 34, 1, WALNUT[4])
         c.hline(3, sy + 12, 34, WALNUT[2])
-    # Ornaments
-    c.rect(28, 41, 5, 7, BRASS[3])
-    c.hline(28, 41, 5, BRASS[5])
-    c.rect(6, 17, 4, 5, (220, 214, 200, 255))
+    # Dormitory shelves are clean and empty; communal study shelves stay stocked.
+    if not empty:
+        c.rect(28, 41, 5, 7, BRASS[3])
+        c.hline(28, 41, 5, BRASS[5])
+        c.rect(6, 17, 4, 5, (220, 214, 200, 255))
     c.vline(1, 2, 56, WALNUT[5])
     c.vline(38, 2, 56, WALNUT[2])
     c.rect(0, 53, 40, 7, WALNUT[3])
@@ -367,7 +330,7 @@ def fern(seed: int = 1) -> Canvas:
     return _finish(c)
 
 
-def paper_basket() -> Canvas:
+def paper_basket(with_wrapper: bool = True) -> Canvas:
     c = Canvas(14, 16)
     c.rect(2, 5, 10, 11, OCHRE[2])
     for x in range(2, 12, 2):
@@ -375,10 +338,11 @@ def paper_basket() -> Canvas:
     for y in (7, 10, 13):
         c.hline(2, y, 10, OCHRE[1])
     c.rect(1, 4, 12, 2, OCHRE[4])
-    # A crumpled wrapper sticking out of the top.
-    c.poly([(4, 5), (6, 1), (9, 2), (10, 5)], CREAM[5])
-    c.px(6, 3, (70, 66, 62, 255))
-    c.px(7, 2, (70, 66, 62, 255))
+    # Only the detective's basket retains the case clue.
+    if with_wrapper:
+        c.poly([(4, 5), (6, 1), (9, 2), (10, 5)], CREAM[5])
+        c.px(6, 3, (70, 66, 62, 255))
+        c.px(7, 2, (70, 66, 62, 255))
     return _finish(c)
 
 
@@ -725,8 +689,9 @@ def dresser() -> Canvas:
     c.rect(1, 44, 34, 2, WALNUT[1])
     for lx in (2, 31):
         c.rect(lx, 46, 3, 2, WALNUT[2])
-    c.rect(4, 15, 5, 4, TILE[5])
-    c.px(6, 14, CLARET[4])
+    # A shared porcelain vanity dish is present in all four standard rooms.
+    c.ellipse(26, 20, 4, 2, CREAM[4])
+    c.ellipse(26, 19, 2.5, 1, (250, 248, 238, 255))
     return _finish(c)
 
 
@@ -738,13 +703,7 @@ def coat_stand() -> Canvas:
     for hx, hy in ((3, 8), (14, 8), (5, 12), (12, 12)):
         c.line(8 if hx < 9 else 9, hy + 3, hx, hy, WALNUT[3])
     c.ellipse(9, 6, 2, 2, BRASS[4])
-    c.rect(11, 10, 4, 16, CLARET[3])
-    c.vline(11, 10, 16, CLARET[4])
-    c.hline(11, 25, 4, CLARET[2])
-    # A bowler hat on the top hook
-    c.rect(2, 3, 7, 4, INK)
-    c.hline(1, 7, 9, (40, 32, 40, 255))
-    c.hline(3, 3, 5, (70, 60, 72, 255))
+    # All hooks are empty in the standard dormitory.
     return _finish(c)
 
 
@@ -1003,6 +962,7 @@ def build() -> dict[str, Canvas]:
         out[f"desk_{room}"] = desk(room)
         out[f"linen_chest_{room}"] = linen_chest(room)
         out[f"bookcase_{room}"] = bookcase(room + 1)
+    out["bookcase_empty"] = bookcase(1, empty=True)
     out["bookcase_study"] = bookcase(7)
     out["bookcase_study_b"] = bookcase(9)
     out["nightstand"] = nightstand()
@@ -1013,6 +973,7 @@ def build() -> dict[str, Canvas]:
     out["fern"] = fern(3)
     out["fern_b"] = fern(8)
     out["paper_basket"] = paper_basket()
+    out["paper_basket_empty"] = paper_basket(False)
     out["wall_clock"] = wall_clock()
     out["floor_lamp"] = floor_lamp()
     out["study_table"] = study_table()

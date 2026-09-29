@@ -5,18 +5,18 @@
 [resource]
 script = ExtResource("catalog")
 sections = [
-{"slot": "place", "title_id": "FA_UI_069", "options": [
-    {"value": "临时牢房", "display_id": "FA_UI_022", "outcome": "reject_prison"},
-    {"value": "长期生活研习", "display_id": "FA_UI_175", "requirements": {"evidence_all": ["study"], "evidence_any": ["drawer", "cup"]}, "outcome": "ending_history"},
-    {"value": "新生入学考场 · 旧居未证实", "display_id": "FA_UI_109", "requirements": {"evidence_all": ["room_0", "rations"]}, "outcome": "ending_newcomer"}
+{"slot": "opening_motive", "title_id": "FA_UI_253", "options": [
+    {"value": "以窄缝供人逃离", "display_id": "FA_UI_256", "outcome": "reject_escape"},
+    {"value": "内侧木楔抵挡外敌推门", "display_id": "FA_UI_257", "outcome": "reject_defense"},
+    {"value": "撑开窄缝探听主楼险情", "display_id": "FA_UI_258", "requirements": {"evidence_all": ["trace"], "evidence_any": ["hinge", "weight"]}}
 ]},
-{"slot": "door", "title_id": "FA_UI_176", "options": [
-    {"value": "外敌破门 · 内侧顶门", "display_id": "FA_UI_075", "outcome": "reject_defense"},
-    {"value": "撬门越狱 · 被镇压", "display_id": "FA_UI_102", "outcome": "reject_escape"},
-    {"value": "先撑门进灰 → 撤楔合门 → 沾灰后包纸", "display_id": "FA_UI_039", "requirements": {"checks_all": ["门底遮蔽", "纸内转印"]}}
+{"slot": "closing_motive", "title_id": "FA_UI_254", "options": [
+    {"value": "关门使主楼烟气留在生活翼", "display_id": "FA_UI_259", "outcome": "reject_betrayal"},
+    {"value": "烟灰涌入后撤楔合门避险", "display_id": "FA_UI_260", "requirements": {"evidence_all": ["door", "trace"]}}
 ]},
-{"slot": "outer", "title_id": "FA_UI_089", "options": [
+{"slot": "cleanup_and_locks", "title_id": "FA_UI_255", "options": [
+    {"value": "门外的人不跨门便伪造现场并操作双锁", "display_id": "FA_UI_261", "outcome": "reject_fifth_person"},
     {"value": "外侧单方锁死", "display_id": "FA_UI_073", "outcome": "reject_one_side"},
-    {"value": "生活翼内销 + 主楼侧外闩", "display_id": "FA_UI_134", "requirements": {"evidence_all": ["door", "slit"], "checks_all": ["双套锁止"]}}
+    {"value": "生活翼清理与内销，主楼侧另落外闩", "display_id": "FA_UI_262", "requirements": {"evidence_all": ["wash", "paper", "door", "slit"]}}
 ]}
 ]

@@ -64,7 +64,7 @@ func run() -> void:
 	print("CLICK OBJECT: drawer_opened=" + str(drawer_opened) + " position=" + str(scene.player.position) + " distance=" + str(scene.player.position.distance_to(drawer)))
 	scene._close_modal()
 	await physics_frame
-	_require(scene.hud_hint.text.begins_with("点击 / E · "), "nearby object HUD names the click and E controls")
+	_require(scene.hud_hint.text == TranslationServer.translate(scene.sites["drawer"].title_id), "nearby object HUD shows only the object name")
 	await _capture("hint")
 	await _click_world(scene, drawer + Vector2(0, -12))
 	_require(scene.modal_open and scene.click_path.is_empty(), "nearby object click interacts immediately without walking")

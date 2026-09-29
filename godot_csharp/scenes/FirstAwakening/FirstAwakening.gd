@@ -17,12 +17,22 @@ const FIELD_THEME_OTHER: Theme = preload("res://scenes/FirstAwakening/field_them
 const CLICK_STOP_RADIUS := 8.0
 const APPROACH_DIRECTIONS := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]
 
+const FirstAwakeningStateScript = preload("res://scenes/FirstAwakening/FirstAwakeningState.gd")
+const FirstAwakeningEnsembleScript = preload("res://scenes/FirstAwakening/FirstAwakeningEnsemble.gd")
+const FirstAwakeningDeductionScript = preload("res://scenes/FirstAwakening/FirstAwakeningDeduction.gd")
+
+var state: Resource = FirstAwakeningStateScript.new()
+var ensemble: RefCounted = FirstAwakeningEnsembleScript.new()
+var deduction: RefCounted = FirstAwakeningDeductionScript.new()
+
 var floors: Dictionary = {}
 var obstacle_rects: Array[Rect2] = []
 var layout: Dictionary = {}
 var sites: Dictionary = {}
 var active_sites: Dictionary = {}
-var evidence: Dictionary = {}
+var evidence: Dictionary:
+	get: return state.evidence
+	set(v): state.evidence = v
 var actors: Dictionary = {}
 var npc_stage_seen: Dictionary = {}
 @onready var scene_items: Node2D = $ObjectsAndPeople
@@ -30,6 +40,8 @@ var player: CharacterBody2D
 var click_path := PackedVector2Array()
 var click_waypoint := 0
 var click_interaction_id := ""
+var click_last_position := Vector2(INF, INF)
+var click_stall_seconds := 0.0
 var camera: Camera2D
 var nearest := ""
 var reachable: Array[String] = []
@@ -37,22 +49,85 @@ var cycle_offset := 0
 var last_cell := Vector2i(-1, -1)
 var last_proximity_position := Vector2(INF, INF)
 var proximity_refresh_frames := 0
-var minute := 7 * 60 + 20
-var inner_bolt := true
-var viewing_outer_bar := false
-var broadcast_heard := false
-var meeting_done := false
-var captain := false
-var ended := false
-var ending_title := ""
-var disputed := {"prison": false, "defense": false, "escape": false}
-var neutral_actions_unlocked := false
+const PAIR_SITES := {
+	"engineer": ["hinge", "weight", "trace", "door", "slit", "floor_wipe"],
+	"cook": ["wash", "water", "rations", "basin_ring", "cloth_hang", "cold_stove"],
+	"musician": ["study", "tear", "box_mark", "table_wedge", "chair_marks", "transmitter"]
+}
+
+var minute: int:
+	get: return state.minute
+	set(v): state.minute = v
+var inner_bolt: bool:
+	get: return state.inner_bolt
+	set(v): state.inner_bolt = v
+var viewing_outer_bar: bool:
+	get: return state.viewing_outer_bar
+	set(v): state.viewing_outer_bar = v
+var broadcast_heard: bool:
+	get: return state.broadcast_heard
+	set(v): state.broadcast_heard = v
+var meeting_done: bool:
+	get: return state.meeting_done
+	set(v): state.meeting_done = v
+var captain: bool:
+	get: return state.captain
+	set(v): state.captain = v
+var ended: bool:
+	get: return state.ended
+	set(v): state.ended = v
+var ending_title: String:
+	get: return state.ending_title
+	set(v): state.ending_title = v
+var disputed: Dictionary:
+	get: return state.disputed
+	set(v): state.disputed = v
+var investigation_phase: String:
+	get: return state.investigation_phase
+	set(v): state.investigation_phase = v
+var player_name: String:
+	get: return state.player_name
+	set(v): state.player_name = v
+var name_entry: Control
+var conversation_staged := false
+var conversation_focus: String:
+	get: return ensemble.conversation_focus
+	set(v): ensemble.conversation_focus = v
+const ARRIVAL_THRESHOLD := Rect2(224, 544, 64, 48)
+var arrival_started := false
+var ambient_elapsed: float:
+	get: return ensemble.ambient_elapsed
+	set(v): ensemble.ambient_elapsed = v
+var ambient_speaker_index: int:
+	get: return ensemble.ambient_speaker_index
+	set(v): ensemble.ambient_speaker_index = v
+var ambient_murmurs: Dictionary:
+	get: return ensemble.ambient_murmurs
+	set(v): ensemble.ambient_murmurs = v
+var conversation_look_targets: Dictionary:
+	get: return ensemble.conversation_look_targets
+	set(v): ensemble.conversation_look_targets = v
+var paired_companion: String:
+	get: return state.paired_companion
+	set(v): state.paired_companion = v
+var npc_searches: Dictionary:
+	get: return state.npc_searches
+	set(v): state.npc_searches = v
+var companion_route_cooldown := 0.0
+var evidence_sources: Dictionary:
+	get: return state.evidence_sources
+	set(v): state.evidence_sources = v
+var known_dorms: Dictionary:
+	get: return state.known_dorms
+	set(v): state.known_dorms = v
+var deep_inspections: Dictionary:
+	get: return state.deep_inspections
+	set(v): state.deep_inspections = v
 var ui: CanvasLayer
 var modal: FieldModal
 var modal_box: VBoxContainer
 var hud_title: Label
 var hud_hint: Label
-var hud_lead: Label
 var hud_time: Label
 var modal_open := false
 var mode := ""
@@ -60,47 +135,112 @@ var modal_locale_refresh: Callable
 var language_selector: OptionButton
 var active_locale_theme: Theme
 var pending_close := false
-var transmitter_rules := false
-var transmitter_connected := false
-var transmitter_answer_seen := false
-var preliminary_answer_attempted := false
+var transmitter_rules: bool:
+	get: return state.transmitter_rules
+	set(v): state.transmitter_rules = v
+var transmitter_connected: bool:
+	get: return state.transmitter_connected
+	set(v): state.transmitter_connected = v
+var transmitter_answer_seen: bool:
+	get: return state.transmitter_answer_seen
+	set(v): state.transmitter_answer_seen = v
+var preliminary_answer_attempted: bool:
+	get: return state.preliminary_answer_attempted
+	set(v): state.preliminary_answer_attempted = v
 var bridge: Node
 var bolt_visual: CanvasItem
-var sim_actions: Array[String] = []
-var sim_actor_actions: Dictionary = {}
-var mind_text := ""
-var mind_drafts: Dictionary = {}
-var mind_person := "侦探"
-var mind_dirty := false
-var mind_note := ""
-var mind_trace := 0
-var sim_result: Dictionary = {}
-var sim_checks: Dictionary = {}
-var pending_inspections: Dictionary = {}
-var conjectures: Dictionary = {}
-var checks_this_run := 0
-var replay_events: Array[String] = []
-var replay_states: Array = []
-var replay_pause_points: Dictionary = {}
-var replay_pause_display_points: Dictionary = {}
-var replay_pause_ids: Dictionary = {}
-var replay_index := 0
-var replay_playing := false
-var replay_fast := false
-var replay_accum := 0.0
+var sim_actions: Array[String]:
+	get: return state.sim_actions
+	set(v): state.sim_actions = v
+var sim_actor_actions: Dictionary:
+	get: return state.sim_actor_actions
+	set(v): state.sim_actor_actions = v
+var mind_text: String:
+	get: return state.mind_text
+	set(v): state.mind_text = v
+var mind_drafts: Dictionary:
+	get: return state.mind_drafts
+	set(v): state.mind_drafts = v
+var mind_person: String:
+	get: return state.mind_person
+	set(v): state.mind_person = v
+var mind_dirty: bool:
+	get: return state.mind_dirty
+	set(v): state.mind_dirty = v
+var mind_note: String:
+	get: return state.mind_note
+	set(v): state.mind_note = v
+var mind_trace: int:
+	get: return state.mind_trace
+	set(v): state.mind_trace = v
+var sim_result: Dictionary:
+	get: return state.sim_result
+	set(v): state.sim_result = v
+var sim_checks: Dictionary:
+	get: return state.sim_checks
+	set(v): state.sim_checks = v
+var simulated_draft_snapshot: Dictionary:
+	get: return state.simulated_draft_snapshot
+	set(v): state.simulated_draft_snapshot = v
+var pending_inspections: Dictionary:
+	get: return state.pending_inspections
+	set(v): state.pending_inspections = v
+var conjectures: Dictionary:
+	get: return state.conjectures
+	set(v): state.conjectures = v
+var checks_this_run: int:
+	get: return state.checks_this_run
+	set(v): state.checks_this_run = v
+var replay_events: Array[String]:
+	get: return state.replay_events
+	set(v): state.replay_events = v
+var replay_states: Array:
+	get: return state.replay_states
+	set(v): state.replay_states = v
+var replay_pause_points: Dictionary:
+	get: return state.replay_pause_points
+	set(v): state.replay_pause_points = v
+var replay_pause_display_points: Dictionary:
+	get: return state.replay_pause_display_points
+	set(v): state.replay_pause_display_points = v
+var replay_pause_ids: Dictionary:
+	get: return state.replay_pause_ids
+	set(v): state.replay_pause_ids = v
+var replay_index: int:
+	get: return state.replay_index
+	set(v): state.replay_index = v
+var replay_playing: bool:
+	get: return state.replay_playing
+	set(v): state.replay_playing = v
+var replay_fast: bool:
+	get: return state.replay_fast
+	set(v): state.replay_fast = v
+var replay_accum: float:
+	get: return state.replay_accum
+	set(v): state.replay_accum = v
 var replay_stage: Control
 var replay_status: Label
 var replay_feedback: VBoxContainer
-var replay_reached: Dictionary = {}
+var replay_reached: Dictionary:
+	get: return state.replay_reached
+	set(v): state.replay_reached = v
 var reasoning_music: AudioStreamPlayer
 var reasoning_music_enabled := true
 var reasoning_music_tween: Tween
-var answer_slots := {"place": "", "door": "", "outer": ""}
-var answer_slot_display_ids := {"place": "", "door": "", "outer": ""}
+var answer_slots: Dictionary:
+	get: return state.answer_slots
+	set(v): state.answer_slots = v
+var answer_slot_display_ids: Dictionary:
+	get: return state.answer_slot_display_ids
+	set(v): state.answer_slot_display_ids = v
 var dialogue: CanvasLayer
 var dialogue_after := ""
-var meeting_introduction_seen := false
-var mind_introduction_seen := false
+var meeting_introduction_seen: bool:
+	get: return state.meeting_introduction_seen
+	set(v): state.meeting_introduction_seen = v
+var mind_introduction_seen: bool:
+	get: return state.mind_introduction_seen
+	set(v): state.mind_introduction_seen = v
 
 func _notification(what: int) -> void:
 	if what != NOTIFICATION_TRANSLATION_CHANGED:
@@ -141,6 +281,8 @@ func _refresh_replay_locale() -> void:
 	_refresh_replay_feedback()
 
 func _localized_speaker(canonical_name: String) -> String:
+	if canonical_name == "侦探" and player_name != "侦探": return player_name
+	if canonical_name == "侦探（心声）" and player_name != "侦探": return player_name + "（" + tr("FA_UI_272") + "）"
 	var ids: Dictionary = INVESTIGATION_CONTENT.speaker_name_ids
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
 
@@ -156,11 +298,13 @@ func _apply_locale_theme() -> void:
 	active_locale_theme = theme
 	if is_instance_valid(ui):
 		for control in ui.find_children("*", "Control", true, false):
+			if control == name_entry or name_entry.is_ancestor_of(control): continue
 			control.theme = theme
 		if is_instance_valid(modal):
 			modal.theme = theme
 	if is_instance_valid(dialogue):
 		dialogue.call("apply_locale_font", font, theme)
+	if is_instance_valid(name_entry): name_entry.apply_locale_theme()
 
 func _on_language_selected(index: int) -> void:
 	GameLocale.set_language(["zh_CN", "en", "ja"][index])
@@ -193,6 +337,8 @@ func _ready() -> void:
 	_load_sites()
 	_isolation_door()
 	_build_characters()
+	ensemble.setup(self, actors, player)
+	deduction.setup(self, state)
 	var hints: Node2D = $InteractionHints
 	hints.set("source", self)
 	_build_ui()
@@ -215,6 +361,7 @@ func _ready() -> void:
 	camera = $Camera2D
 	camera.position = player.position
 	camera.make_current()
+	_place_party_at_table()
 	_begin_dialogue("opening")
 
 func _build_geometry() -> void:
@@ -249,6 +396,7 @@ func _site_exited(id: String) -> void:
 func _build_characters() -> void:
 	for id in ["侦探", "工程师", "厨师", "音乐家"]:
 		actors[id] = scene_items.get_node(id)
+		actors[id].arrived.connect(_refresh_conversation_facing)
 	player = actors["侦探"]
 	# A local copy preserves the shared walk cadence outside this scene.
 	player.standard = player.standard.duplicate()
@@ -257,9 +405,9 @@ func _build_characters() -> void:
 	player.sprite.sprite_frames = player.standard
 	player.pose("idle", "front")
 	player.sit_at("front", 4.0)
-	actors["工程师"].pose("idle", "left")
-	actors["厨师"].pose("idle", "left")
-	actors["音乐家"].pose("idle", "back")
+	actors["工程师"].pose("idle", "right")
+	actors["厨师"].pose("idle", "back")
+	actors["音乐家"].pose("idle", "left")
 
 func _leave_bed() -> void:
 	player.position = $WakePosition.position
@@ -271,8 +419,21 @@ func _isolation_door() -> void:
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
 		return
+	if investigation_phase == "arrival" and not arrival_started:
+		_update_ambient_discussion(_delta)
+	if not paired_companion.is_empty() and can_access_dorm(paired_companion):
+		for door in scene_items.get_children():
+			if door.has_method("access_allowed") and door.dorm_owner == paired_companion and door.interior_bounds.has_point(player.position):
+				known_dorms[paired_companion] = true
 	if camera:
 		camera.position = Vector2(clampf(player.position.x, 320, 960), clampf(player.position.y - 24, 248, 776)).round()
+		if investigation_phase == "arrival" and player.position.y >= 480 and player.position.x >= 224 and player.position.x <= 288:
+			camera.position = Vector2(320, 640)
+		if conversation_staged:
+			var center := Vector2.ZERO
+			for actor in actors.values(): center += actor.position
+			center /= float(actors.size())
+			camera.position = Vector2(clampf(center.x, 320, 960), center.y + (-96.0 if name_entry.visible else 64.0)).round()
 	# Area2D overlap notifications trail direct position changes by a physics tick.
 	if player.position.distance_to(last_proximity_position) > 16.0:
 		proximity_refresh_frames = 16
@@ -285,8 +446,15 @@ func _physics_process(_delta: float) -> void:
 	proximity_refresh_frames = maxi(0, proximity_refresh_frames - 1)
 	_update_status()
 	if modal_open or dialogue.active or ended:
-		if not player.seated: player.move_input(Vector2.ZERO)
+		if not player.travelling: player.velocity = Vector2.ZERO
 		return
+	if investigation_phase == "arrival" and not arrival_started and ARRIVAL_THRESHOLD.has_point(player.position):
+		click_path.clear()
+		click_interaction_id = ""
+		player.move_input(Vector2.ZERO)
+		_begin_dialogue("activity_hall_opening")
+		return
+	_follow_companion()
 	var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)), float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)))
 	if direction.length_squared() > 0:
 		click_path.clear()
@@ -302,6 +470,15 @@ func _physics_process(_delta: float) -> void:
 			_interact(target_id)
 			return
 	if direction == Vector2.ZERO and not click_path.is_empty():
+		click_stall_seconds = click_stall_seconds + _delta if player.position.distance_to(click_last_position) < 0.25 else 0.0
+		click_last_position = player.position
+		if click_stall_seconds >= 0.5:
+			var pending_id := click_interaction_id
+			var destination := click_path[-1]
+			click_stall_seconds = 0.0
+			if pending_id.is_empty(): _move_to_click(destination)
+			else: _approach_site(pending_id)
+			return
 		while click_waypoint < click_path.size() and player.position.distance_to(click_path[click_waypoint]) <= CLICK_STOP_RADIUS:
 			click_waypoint += 1
 		if click_waypoint >= click_path.size():
@@ -322,6 +499,7 @@ func _pick_nearest() -> void:
 	var scored: Array = []
 	var candidates: Array = sites.keys() if proximity_refresh_frames > 0 else active_sites.keys()
 	for id in candidates:
+		if not _site_accessible(id): continue
 		var site: Dictionary = sites[id]
 		var target: Vector2 = actors[site.title].position if actors.has(site.title) else site.point
 		var offset := target - player.position
@@ -342,16 +520,15 @@ func _pick_nearest() -> void:
 	else:
 		nearest = reachable[cycle_offset % reachable.size()]
 	if hud_hint:
-		if nearest == "":
-			hud_hint.text = tr("FA_UI_011")
-		else:
-			var others := tr("FA_UI_002") % [cycle_offset % reachable.size() + 1, reachable.size()] if reachable.size() > 1 else ""
-			hud_hint.text = tr("FA_UI_190") + tr(sites[nearest].title_id) + others + tr("FA_UI_001")
+		hud_hint.text = "" if nearest == "" else tr(sites[nearest].title_id)
 
 func _process(delta: float) -> void:
 	hud_hint.visible = not modal_open and not dialogue.active
-	if is_instance_valid(hud_lead):
-		hud_lead.visible = not modal_open and not dialogue.active
+	if conversation_staged and dialogue.active and not dialogue.busy and dialogue.line != null and dialogue.body.visible_characters >= 0:
+		var speaker: String = "厨师" if dialogue.line.character == "主厨" else dialogue.line.character
+		if actors.has(speaker):
+			var actor: CharacterBody2D = actors[speaker]
+			if not actor.travelling and _conversation_actor_active(actor) and not actor.sprite.is_playing(): actor.pose("talk")
 	if is_instance_valid(replay_stage) and modal_open and mode == "flow" and replay_pause_points.has(replay_index):
 		replay_stage.queue_redraw()
 	if not replay_playing or not modal_open or mode != "flow":
@@ -376,6 +553,11 @@ func _input(event: InputEvent) -> void:
 	if language_selector.get_global_rect().has_point(event.position) or language_selector.get_popup().visible:
 		return
 	var destination: Vector2 = get_global_transform_with_canvas().affine_inverse() * event.position
+	for door in scene_items.get_children():
+		if door.has_method("access_allowed") and not door.access_allowed() and (door.contains_private_point(destination) or door.door_click_rect().has_point(destination)):
+			_show_message("FA_UI_362", "FA_UI_363")
+			get_viewport().set_input_as_handled()
+			return
 	var site_id := _clicked_site(destination)
 	if site_id == "":
 		click_interaction_id = ""
@@ -417,6 +599,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_request_flow()
 
 func _move_to_click(destination: Vector2) -> void:
+	click_stall_seconds = 0.0
 	if not _walkable(destination):
 		return
 	if player.seated:
@@ -435,9 +618,13 @@ func _site_point(id: String) -> Vector2:
 	return FieldNavigation.site_point(id, sites, actors)
 
 func _clicked_site(position: Vector2) -> String:
-	return FieldNavigation.clicked_site(position, sites, actors)
+	var visible_sites := {}
+	for id in sites:
+		if _site_accessible(id): visible_sites[id] = sites[id]
+	return FieldNavigation.clicked_site(position, visible_sites, actors)
 
 func _approach_site(id: String) -> void:
+	click_stall_seconds = 0.0
 	click_path.clear()
 	click_interaction_id = ""
 	var point := _site_point(id)
@@ -481,6 +668,13 @@ func _advance(amount := 5) -> void:
 		hud_time.text = "%02d:%02d" % [int(minute / 60) % 24, minute % 60]
 
 func _interact(id: String) -> void:
+	if investigation_phase == "paired" and id in PAIR_SITES[paired_companion] and actors[_paired_actor()].position.distance_to(player.position) > 96:
+		_show_message("FA_UI_364", "FA_UI_365")
+		return
+	if not _site_accessible(id):
+		_show_message("FA_UI_366", "FA_UI_367")
+		return
+	_record_deep_inspection(id)
 	click_path.clear()
 	click_interaction_id = ""
 	if player.seated:
@@ -507,6 +701,7 @@ func _interact(id: String) -> void:
 	var site: Dictionary = sites[id]
 	if not evidence.has(id):
 		evidence[id] = true
+		evidence_sources[id] = "亲见"
 		if not pending_inspections.has(id):
 			_advance()
 	if _resolve_pending_inspection(id):
@@ -518,8 +713,9 @@ func _npc_stage() -> int:
 	return 2 if captain else 1 if broadcast_heard else 0
 
 func _has_new_at(id: String) -> bool:
+	if not _site_accessible(id): return false
 	if ended: return false
-	if pending_inspections.has(id) and not mind_dirty and checks_this_run < 3:
+	if pending_inspections.has(id) and not mind_dirty:
 		return true
 	if id in ["engineer", "chef", "musician"]:
 		return int(npc_stage_seen.get(id, -1)) < _npc_stage()
@@ -531,6 +727,7 @@ func _has_new_at(id: String) -> bool:
 			if not evidence.has(part): return true
 		return false
 	if id == "meeting":
+		if investigation_phase in ["arrival", "regroup", "paired"]: return true
 		if not broadcast_heard or captain: return false
 		for required in INVESTIGATION_CONTENT.discussion_evidence:
 			if not evidence.has(required): return false
@@ -541,14 +738,17 @@ func _has_new_at(id: String) -> bool:
 	return not evidence.has(id)
 
 func _can_challenge(hypothesis: String) -> bool:
-	match hypothesis:
-		"prison": return evidence.has("door") and (evidence.has("drawer") or evidence.has("study"))
-		"defense": return evidence.has("hinge") and evidence.has("weight")
-		"escape": return evidence.has("paper") and evidence.has("tear") and evidence.has("slit")
+	for claim in INVESTIGATION_CONTENT.meeting_hypotheses:
+		if claim.id == hypothesis:
+			return AnswerRules.available({"requirements": claim}, evidence, {})
 	return false
 
 func _talk_npc(id: String) -> void:
-	_begin_dialogue(id + "_entry")
+	if investigation_phase == "arrival":
+		_begin_dialogue("activity_hall_opening")
+	else:
+		dialogue_mark_met(id)
+		_begin_dialogue("companion_" + id)
 
 func dialogue_mark_met(id: String) -> void:
 	var stage := _npc_stage()
@@ -559,6 +759,12 @@ func dialogue_mark_met(id: String) -> void:
 		evidence[id] = true
 
 func _begin_dialogue(title: String, after := "", keep_scene := false) -> void:
+	conversation_staged = title in ["activity_hall_opening", "first_regrouping_meeting", "exchange_findings", "companion_engineer", "companion_chef", "companion_musician"] or title in ["transmitter_entry", "ending_passed", "meeting_nomination"] or after == "meeting_board"
+	conversation_focus = ""
+	conversation_look_targets.clear()
+	if title == "activity_hall_opening":
+		arrival_started = true
+		for label in ambient_murmurs.values(): label.hide()
 	if modal_open and not keep_scene:
 		modal.hide()
 		modal_open = false
@@ -568,23 +774,59 @@ func _begin_dialogue(title: String, after := "", keep_scene := false) -> void:
 	dialogue.heading.text = tr("FA_UI_049") + tr("FA_UI_030" if title.begins_with("broadcast") or title.begins_with("transmitter") or title.begins_with("reject") or title.begins_with("ending") else "FA_UI_132")
 	dialogue.start(DIALOGUE, title, self)
 
-func _on_dialogue_line_shown(_character: String) -> void:
-	dialogue.layout_compact_line()
+func _conversation_actor_active(actor: CharacterBody2D) -> bool:
+	if npc_searches.has(actor.name): return false
+	if npc_searches.has("other_pair") and actor != player and actor != actors[_paired_actor()]: return false
+	return true
+
+func _on_dialogue_line_shown(character: String) -> void:
+	dialogue.speaker.text = _localized_speaker(character)
+	if conversation_staged:
+		ensemble.on_dialogue_line_shown(character, dialogue)
+
+func _refresh_conversation_facing() -> void:
+	if conversation_staged and dialogue.active and dialogue.line != null:
+		_on_dialogue_line_shown(dialogue.line.character)
+
+func dialogue_face_group(focus: String) -> void:
+	ensemble.face_group(focus)
+
+func dialogue_face_actor(who: String, target: String) -> void:
+	ensemble.face_actor(who, target)
+
+func dialogue_follow_speaker() -> void:
+	ensemble.follow_speaker()
+
+func _update_ambient_discussion(delta: float) -> void:
+	ensemble.update_ambient_discussion(delta)
+
+func dialogue_stage_arrival() -> void:
+	await ensemble.stage_arrival()
+
+func dialogue_request_name() -> void:
+	dialogue.panel.hide()
+	player_name = await name_entry.request_name()
+	await dialogue._refresh_history_locale()
+	dialogue.panel.show()
 
 func _on_dialogue_finished() -> void:
+	if conversation_staged:
+		for actor in actors.values():
+			if not actor.travelling and _conversation_actor_active(actor):
+				actor.pose("idle")
+	conversation_staged = false
+	conversation_focus = ""
 	dialogue.panel.hide()
 	var after := dialogue_after
 	dialogue_after = ""
-	if after == "meeting_board":
+	if after == "regroup":
+		_gather_party()
+	elif after == "meeting_board":
 		_show_meeting_board()
 	elif after == "nomination":
 		_begin_dialogue("meeting_nomination")
 	elif after == "answer":
 		_open_answer()
-	elif after == "exit":
-		_begin_dialogue("exit_discussion")
-	elif after == "depart":
-		_finish("ending_exit")
 	elif after == "ending":
 		_show_ending_panel()
 	elif after == "preliminary_done":
@@ -597,12 +839,6 @@ func _on_dialogue_finished() -> void:
 
 func dialogue_choose_answer() -> void:
 	dialogue_after = "answer"
-
-func dialogue_choose_exit() -> void:
-	dialogue_after = "exit"
-
-func dialogue_accept_exit() -> void:
-	dialogue_after = "depart"
 
 func _style(color: Color, border := Color("63706b")) -> StyleBoxFlat:
 	return modal.style(color, border)
@@ -618,14 +854,6 @@ func _build_ui() -> void:
 	hud_title = $FieldUI/Title
 	hud_time = $FieldUI/Time
 	hud_hint = $FieldUI/Hint
-	hud_lead = Label.new()
-	hud_lead.name = "InvestigationLead"
-	hud_lead.position = Vector2(24, 46)
-	hud_lead.size = Vector2(900, 24)
-	hud_lead.add_theme_font_size_override("font_size", 14)
-	hud_lead.add_theme_color_override("font_color", Color("cfc4a6"))
-	hud_lead.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(hud_lead)
 	language_selector = $FieldUI/Language
 	language_selector.add_item(tr("FA_UI_021"))
 	language_selector.add_item("English")
@@ -634,6 +862,8 @@ func _build_ui() -> void:
 	_refresh_language_selector()
 	modal = $FieldUI/InvestigationPanel
 	modal_box = $FieldUI/InvestigationPanel/ModalScroll/ModalBox
+	name_entry = preload("res://scenes/FirstAwakening/NameEntry.tscn").instantiate()
+	ui.add_child(name_entry)
 
 func _open_modal(title: String, next_mode: String) -> void:
 	if mode == "flow" and next_mode != "flow":
@@ -653,6 +883,9 @@ func _close_modal() -> void:
 	transmitter_connected = false
 	modal_locale_refresh = Callable()
 	player.pose("idle")
+	if investigation_phase == "dorm_search" and _own_dorm_complete():
+		investigation_phase = "regroup"
+		_begin_dialogue("dorm_investigation_finished")
 
 func _show_message(title: String, words: String) -> void:
 	modal_locale_refresh = Callable(self, "_show_message").bind(title, words)
@@ -661,7 +894,7 @@ func _show_message(title: String, words: String) -> void:
 	for part in words.split("\n\n"):
 		localized_parts.append(_translate_display_id_sequence(part))
 	_label(modal_box, "\n\n".join(localized_parts), 21)
-	_button(modal_box, "FA_UI_148", _close_modal)
+	modal.add_footer([["FA_UI_148", _close_modal]])
 
 func _show_detail(id: String, title: String, words: String, diagram: String) -> void:
 	modal_locale_refresh = Callable(self, "_show_detail").bind(id, title, words, diagram)
@@ -670,19 +903,6 @@ func _show_detail(id: String, title: String, words: String, diagram: String) -> 
 	for part in words.split("\n\n"):
 		localized_parts.append(_translate_display_id_sequence(part))
 	modal.add_detail("\n\n".join(localized_parts), diagram, _close_modal)
-
-func _get_investigation_lead() -> String:
-	if ended:
-		return "FA_LEAD_ENDED"
-	if not broadcast_heard:
-		return "FA_LEAD_BROADCAST"
-	if not (evidence.has("door") and evidence.has("inner_bolt") and evidence.has("stop_base")):
-		return "FA_LEAD_EXAMINE_DOOR"
-	if not (disputed.prison and disputed.defense and disputed.escape):
-		return "FA_LEAD_TALK_COMPANIONS"
-	if not (sim_checks.has("门底遮蔽") and sim_checks.has("纸内转印") and sim_checks.has("双套锁止")):
-		return "FA_LEAD_REPLAY_MIND"
-	return "FA_LEAD_ROUNDTABLE"
 
 func _update_status() -> void:
 	if hud_title and is_instance_valid(player):
@@ -696,17 +916,12 @@ func _update_status() -> void:
 		else:
 			room = "FA_UI_177"
 		hud_title.text = tr("FA_UI_049") + tr(room)
-	if is_instance_valid(hud_lead):
-		hud_lead.text = tr("FA_UI_LEAD_PREFIX") + tr(_get_investigation_lead())
-		hud_lead.visible = not modal_open and not dialogue.active
 
 func _open_journal() -> void:
 	modal_locale_refresh = Callable(self, "_open_journal")
 	_open_modal("FA_UI_050", "journal")
-	_label(modal_box, tr("FA_UI_054") % [int(minute / 60) % 24, minute % 60], 17)
-	_label(modal_box, tr("FA_UI_LEAD_PREFIX") + tr(_get_investigation_lead()), 18, Color("dfc995"))
 	for category in INVESTIGATION_CONTENT.journal_categories:
-		_label(modal_box, category.title_id, 22, Color("d1bc90"))
+		_label(modal_box, category.title_id, 17, modal.MUTED)
 		var found: Array[String] = []
 		for id in category.site_ids:
 			if evidence.has(id):
@@ -717,13 +932,14 @@ func _open_journal() -> void:
 	var pending_names: Array[String] = []
 	for id in pending_inspections:
 		pending_names.append(tr(sites[id].title_id))
-	_label(modal_box, tr("FA_UI_127") + (_localized_join(pending_names) if not pending_names.is_empty() else tr("FA_UI_110")), 17, Color("dfc995"))
-	_label(modal_box, tr("FA_UI_086") + (_localized_join(conjectures.values()) if not conjectures.is_empty() else tr("FA_UI_110")), 17, Color("bdd2a4"))
-	_button(modal_box, "FA_UI_162", _close_modal)
+	if not pending_names.is_empty():
+		_label(modal_box, tr("FA_UI_127") + _localized_join(pending_names), 17, modal.MUTED)
+	modal.add_footer([["FA_UI_162", _close_modal]])
 
 func _review_evidence(id: String) -> void:
 	var site: Dictionary = sites[id]
-	_show_detail(id, site.title_id, site.description_id, site.diagram)
+	var source := tr("FA_UI_356") % player_name if evidence_sources.get(id, "亲见") == "亲见" else tr("FA_UI_357")
+	_show_detail(id, site.title_id, source + "\n\n" + tr(site.description_id), site.diagram)
 
 func _open_door() -> void:
 	if not evidence.has("door"):
@@ -738,14 +954,24 @@ func _toggle_bolt() -> void:
 	_advance()
 
 func dialogue_inspect_door(part: String) -> void:
+	_record_deep_inspection(part)
 	evidence[part] = true
+	evidence_sources[part] = "亲见"
 	if part == "hinge": evidence["weight"] = true
 	_advance()
 
 func _open_transmitter() -> void:
+	if investigation_phase == "arrival":
+		_begin_dialogue("activity_hall_opening")
+		return
 	_begin_dialogue("transmitter_entry", "transmitter")
 
 func dialogue_connect_transmitter() -> void:
+	var operator: CharacterBody2D = actors["厨师"] if investigation_phase == "arrival" else player
+	operator.face_point(sites["transmitter"].point)
+	operator.pose("interact")
+	await operator.sprite.animation_finished
+	operator.pose("idle")
 	transmitter_rules = true
 	transmitter_connected = true
 	if captain: transmitter_answer_seen = true
@@ -754,7 +980,6 @@ func dialogue_connect_transmitter() -> void:
 func dialogue_hear_broadcast() -> void:
 	broadcast_heard = true
 	evidence["transmitter"] = true
-	_gather_party()
 	_update_status()
 
 func _finish(dialogue_title: String) -> void:
@@ -773,76 +998,160 @@ func _show_ending_panel() -> void:
 		bolt_visual.hide()
 	modal_locale_refresh = Callable(self, "_show_ending_panel")
 	_open_modal("FA_UI_144", "ending")
-	_label(modal_box, "FA_UI_114", 17)
-	_button(modal_box, "FA_UI_169", func(): get_tree().reload_current_scene())
+	_label(modal_box, tr("FA_UI_361") % player_name, 21)
+	modal.add_footer([["FA_UI_169", func(): get_tree().reload_current_scene()]])
 
 func _open_meeting() -> void:
-	if not broadcast_heard:
-		_show_message("FA_UI_137", "FA_UI_173")
+	if player.position.distance_to(sites["meeting"].point) > 100:
+		_show_message("FA_UI_063", "FA_UI_368")
 		return
-	if player.position.distance_to(sites["meeting"].point) > 75:
-		_show_message("FA_UI_157", "FA_UI_029")
+	if investigation_phase == "arrival":
+		if ARRIVAL_THRESHOLD.has_point(player.position) and not arrival_started: _begin_dialogue("activity_hall_opening")
 		return
-	var missing: Array[String] = []
-	for id in INVESTIGATION_CONTENT.discussion_evidence:
-		if not evidence.has(id):
-			missing.append(sites[id].title_id)
-	if not missing.is_empty():
-		_show_message("FA_UI_163", "FA_UI_041|LIST|" + "|LIST|".join(missing))
+	if investigation_phase == "dorm_search":
+		_show_message("FA_UI_369", "FA_UI_370")
 		return
-	if not meeting_done:
-		meeting_done = true
-		_advance()
-	if not meeting_introduction_seen:
-		meeting_introduction_seen = true
-		_begin_dialogue("meeting", "meeting_board")
+	if investigation_phase == "regroup":
+		_begin_dialogue("first_regrouping_meeting")
+		return
+	if investigation_phase == "paired":
+		var missing: Array[String] = []
+		for id in PAIR_SITES[paired_companion]:
+			if not deep_inspections.has(id): missing.append(tr(sites[id].title_id))
+		if not missing.is_empty():
+			_show_message("FA_UI_364", tr("FA_UI_371") + _localized_join(missing))
+			return
+		_begin_dialogue("exchange_findings", "meeting_board")
 		return
 	_show_meeting_board()
 
 func _show_meeting_board() -> void:
 	modal_locale_refresh = Callable(self, "_show_meeting_board")
 	_open_modal("FA_UI_064", "meeting")
-	_label(modal_box, "FA_UI_080", 19)
-	_button(modal_box, tr("FA_UI_014" if disputed.prison else "FA_UI_053") + tr("FA_UI_023"), func(): _challenge("prison"), not _can_challenge("prison"))
-	_button(modal_box, tr("FA_UI_014" if disputed.defense else "FA_UI_053") + tr("FA_UI_076"), func(): _challenge("defense"), not _can_challenge("defense"))
-	_button(modal_box, tr("FA_UI_014" if disputed.escape else "FA_UI_053") + tr("FA_UI_103"), func(): _challenge("escape"), not _can_challenge("escape"))
-	if disputed.prison and disputed.defense and disputed.escape:
+	for claim in INVESTIGATION_CONTENT.meeting_hypotheses:
+		var claim_button := _button(modal_box, claim.label_id, _challenge.bind(claim.id), disputed[claim.id])
+		claim_button.tooltip_text = tr("FA_UI_372") + " · " + tr(claim.label_id)
+	if _all_disputed():
 		captain = true
-		_label(modal_box, "FA_UI_017", 20, Color("bdd2a4"))
-		_button(modal_box, "FA_UI_229", _request_flow)
-	else:
-		_label(modal_box, "FA_UI_130", 16)
-	_button(modal_box, "FA_UI_150", _close_modal)
+	modal.add_footer([["FA_UI_162", _close_modal], ["FA_MIND_001", _request_flow]])
 	_update_status()
 
 func _walkable(center: Vector2) -> bool:
-	return FieldNavigation.walkable(center, floors, obstacle_rects)
+	return FieldNavigation.walkable(center, floors, _navigation_obstacles())
 
-func _route(start: Vector2, finish: Vector2) -> PackedVector2Array:
-	return FieldNavigation.route(start, finish, floors, obstacle_rects, Vector2i(layout.rows[0].length(), layout.rows.size()))
+func _route(start: Vector2, finish: Vector2, mover: CharacterBody2D = null) -> PackedVector2Array:
+	if mover == null: mover = player
+	return FieldNavigation.route(start, finish, floors, _navigation_obstacles(start, mover), Vector2i(layout.rows[0].length(), layout.rows.size()))
+
+func _walk_actor_to(actor: CharacterBody2D, destination: Vector2) -> bool:
+	# Stage through real collision and replan if another actor blocks the route.
+	actor.travelling = false
+	if actor.seated: actor.stand_up()
+	var route := _route(actor.position, destination, actor)
+	if route.is_empty(): return false
+	actor.follow_path(route)
+	var previous := actor.position
+	var stalled := 0.0
+	var elapsed := 0.0
+	while actor.travelling and elapsed < 45.0:
+		await get_tree().physics_frame
+		var delta := get_physics_process_delta_time()
+		elapsed += delta
+		stalled = stalled + delta if actor.position.distance_to(previous) < 0.25 else 0.0
+		previous = actor.position
+		if stalled > 0.5:
+			var replacement := _route(actor.position, destination, actor)
+			if not replacement.is_empty():
+				actor.path = replacement
+				actor.waypoint = 0
+				actor.target = replacement[0]
+			stalled = 0.0
+	if actor.travelling:
+		actor.travelling = false
+		actor.velocity = Vector2.ZERO
+		actor.pose("idle")
+		actor.arrived.emit()
+		push_warning("FirstAwakening staging blocked: " + actor.name + " at " + str(actor.position) + " target " + str(actor.target) + " toward " + str(destination))
+		for index in actor.get_slide_collision_count(): print("STAGING COLLIDER ", actor.get_slide_collision(index).get_collider().get_path())
+	return actor.position.distance_to(destination) < 28.0
 
 func _gather_party() -> void:
+	# Room searches finish before anyone reports what they found.
+	while not npc_searches.is_empty():
+		await get_tree().physics_frame
+	await _walk_actor_to(player, $MeetingSpots/Detective.position)
 	var destinations := {"工程师": $MeetingSpots/Engineer.position, "厨师": $MeetingSpots/Chef.position, "音乐家": $MeetingSpots/Musician.position}
 	for id in destinations:
-		var cast: CharacterBody2D = actors[id]
-		var route := _route(cast.position, destinations[id])
-		if route.size() > 1:
-			cast.follow_path(route)
+		await _walk_actor_to(actors[id], destinations[id])
+	conversation_focus = ""
+
+func dialogue_prepare_transmitter() -> void:
+	await _walk_actor_to(player, Vector2(440, 624))
+	await _walk_actor_to(actors["厨师"], Vector2(504, 584))
+
+	dialogue_face_group("transmitter")
+
+func dialogue_question_actor(name: String) -> void:
+	var destination: Vector2 = {"工程师": Vector2(472, 584), "音乐家": Vector2(552, 608)}[name]
+	await _walk_actor_to(actors[name], destination)
+	dialogue_face_group("transmitter")
+
+func dialogue_prepare_answer() -> void:
+	# The delegate reaches the handle by player input; companions join him there.
+	if not captain: return
+	var destinations := {"工程师": Vector2(440, 624), "厨师": Vector2(552, 624), "音乐家": Vector2(584, 584)}
+	for id in destinations:
+		await _walk_actor_to(actors[id], destinations[id])
+	dialogue_face_group("transmitter")
+
+func dialogue_disconnect_transmitter() -> void:
+	transmitter_connected = false
 
 func _challenge(hypothesis: String) -> void:
-	_begin_dialogue("present_" + hypothesis, "meeting_board")
+	for claim in INVESTIGATION_CONTENT.meeting_hypotheses:
+		if claim.id == hypothesis:
+			_open_modal(claim.title_id, "meeting_evidence")
+			_label(modal_box, tr(claim.claim_id), 19)
+	var shelf := HFlowContainer.new()
+	shelf.add_theme_constant_override("h_separation", 8)
+	shelf.add_theme_constant_override("v_separation", 4)
+	modal_box.add_child(shelf)
+	for id in evidence:
+		if sites.has(id) and id not in ["engineer", "chef", "musician", "meeting", "transmitter"]:
+			_button(shelf, sites[id].title_id, _present_evidence.bind(hypothesis, id))
+	modal.add_footer([["FA_UI_373", _show_meeting_board]])
+
+func _present_evidence(hypothesis: String, id: String) -> void:
+	for claim in INVESTIGATION_CONTENT.meeting_hypotheses:
+		if claim.id != hypothesis: continue
+		var related: bool = id in claim.get("evidence_all", []) or id in claim.get("evidence_any", [])
+		if not related or not _can_challenge(hypothesis):
+			_begin_dialogue("weak_evidence", "meeting_board")
+			return
+		if not _replay_submission_validation().ready:
+			_show_message("FA_UI_374", "FA_UI_375")
+			return
+		_begin_dialogue("challenge_" + hypothesis, "meeting_board")
+		return
+
+func _all_disputed() -> bool:
+	return state.all_disputed()
 
 func dialogue_accept_challenge(hypothesis: String) -> void:
 	disputed[hypothesis] = true
 	_advance()
-	if disputed.prison and disputed.defense and disputed.escape:
+	if _all_disputed():
 		captain = true
 		dialogue_after = "nomination"
-	else:
-		dialogue_after = "meeting_board"
 	_update_status()
 
+func dialogue_weak_evidence() -> void:
+	_advance(1)
+
 func _request_flow() -> void:
+	if not meeting_done:
+		_show_message("FA_MIND_001", "FA_UI_376")
+		return
 	_open_flow()
 	if not mind_introduction_seen:
 		mind_introduction_seen = true
@@ -850,28 +1159,28 @@ func _request_flow() -> void:
 		_begin_dialogue("mind_intro", "mind_ready", true)
 
 func _open_flow() -> void:
+	if not meeting_done: return
 	preload("res://scenes/FirstAwakening/MindPresentation.gd").open(self)
 
 func _hypothesis_test(hypothesis: String) -> void:
-	_advance()
-	neutral_actions_unlocked = true
 	_show_hypothesis_probe(hypothesis)
 	_update_status()
 
 func _show_hypothesis_probe(hypothesis: String) -> void:
-	var is_defense := hypothesis == "defense"
-	var probe_id := "InnerWedgeStopsOutsidePush" if is_defense else "OutsideActorSetBothLocks"
-	var title_id := "FA_UI_051" if is_defense else "FA_UI_099"
-	var suffix_id := "FA_UI_168" if is_defense else "FA_UI_036"
-	modal_locale_refresh = Callable(self, "_show_hypothesis_probe").bind(hypothesis)
-	_open_modal(tr(title_id), "message")
-	_label(modal_box, bridge.Probe(probe_id) + "\n\n" + tr(suffix_id), 21)
-	_button(modal_box, "FA_UI_148", _close_modal)
+	if not meeting_done: return
+	_open_modal("FA_UI_377", "message")
+	_label(modal_box, bridge.ProbeHypothesis(hypothesis), 21)
+	modal.add_footer([["FA_UI_378", _request_flow]])
 
 func _run_replay() -> void:
+	simulated_draft_snapshot.clear()
 	var program := _compile_program()
 	if program.has("error"):
 		mind_note = str(program.error)
+		_refresh_replay_feedback()
+		return
+	if program.states.is_empty():
+		mind_note = "当前草稿没有可运行的行动。"
 		_refresh_replay_feedback()
 		return
 	replay_states = program.states
@@ -885,64 +1194,26 @@ func _run_replay() -> void:
 	pending_inspections.clear()
 	_build_replay_pause_points()
 	checks_this_run = 0
+	simulated_draft_snapshot = _current_replay_input()
 	_open_flow()
 
+func _current_replay_input() -> Dictionary:
+	return deduction.current_replay_input()
+
+func _replay_submission_validation() -> Dictionary:
+	return deduction.replay_submission_validation()
+
 func _build_replay_pause_points() -> void:
-	replay_pause_points.clear()
-	replay_pause_display_points.clear()
-	replay_pause_ids.clear()
-	var seen := {}
-	for index in range(1,replay_states.size()):
-		var ids: Array = replay_states[index].ids
-		var titles: Array[String] = []
-		var display_titles: Array[String] = []
-		var point_ids: Array[String] = []
-		for clue in INVESTIGATION_CONTENT.replay_clues:
-			if seen.has(clue.id):
-				continue
-			var present := true
-			for state_id in clue.state_ids:
-				if not ids.has(state_id):
-					present = false
-			if present:
-				seen[clue.id] = true
-				point_ids.append(clue.id)
-				titles.append(clue.pause_title)
-				display_titles.append(tr(clue.pause_title_id))
-		if not titles.is_empty():
-			replay_pause_points[index] = " / ".join(titles)
-			replay_pause_display_points[index] = " / ".join(display_titles)
-			replay_pause_ids[index] = point_ids
+	deduction.build_replay_pause_points()
 
 func _compile_program() -> Dictionary:
-	if not sim_actor_actions.is_empty():
-		return bridge.CompileActorDrafts(sim_actor_actions, _replay_context())
-	if sim_actions.is_empty() or not sim_actions[0].contains("|"):
-		return bridge.Compile(sim_actions)
-	return bridge.CompileDraft(sim_actions, _replay_context())
+	return deduction.compile_program(bridge)
 
 func _replay_context() -> Dictionary:
-	var context := {}
-	for id in sites:
-		var site: Dictionary = sites[id]
-		var talk: Array[String] = []
-		var speaker: String = site.title
-		if id == "transmitter": speaker = "铜口"
-		if id in ["engineer", "chef", "musician", "transmitter", "meeting"]:
-			for entry in dialogue.history:
-				if entry.begins_with(speaker + "\n") or (id == "meeting" and meeting_introduction_seen): talk.append(entry)
-		context[id] = {"title":site.title, "point":site.point,
-			"description":site.description if evidence.has(id) else "",
-			"known_dialogue":"\n".join(talk)}
-	return context
+	return deduction.replay_context()
 
 func _reveal_replay_point() -> void:
-	if not replay_pause_points.has(replay_index):
-		return
-	var point_ids: Array = replay_pause_ids[replay_index]
-	for clue in INVESTIGATION_CONTENT.replay_clues:
-		if point_ids.has(clue.id):
-			replay_reached[clue.canonical] = true
+	deduction.reveal_replay_point()
 
 func _refresh_replay_feedback() -> void:
 	preload("res://scenes/FirstAwakening/MindPresentation.gd").refresh(self)
@@ -986,7 +1257,7 @@ func _trace_visible(required: String) -> bool:
 	return ids.has(required) and (required != "inner-bolt" or (state.inner_bolt and state.outer_bar))
 
 func _request_trace_check(title: String, required: String, actual_site: String) -> void:
-	if mind_dirty or checks_this_run >= 3 or sim_checks.has(title) or not replay_reached.has(title):
+	if mind_dirty or not replay_reached.has(title):
 		return
 	if not _trace_visible(required):
 		return
@@ -999,35 +1270,27 @@ func _request_trace_check(title: String, required: String, actual_site: String) 
 func _resolve_pending_inspection(id: String) -> bool:
 	if not pending_inspections.has(id):
 		return false
-	if checks_this_run >= 3:
-		_show_message("FA_UI_115", "FA_UI_122")
-		return true
 	var pending: Dictionary = pending_inspections[id]
 	pending_inspections.erase(id)
 	_verify_trace(pending.title, pending.required, id)
 	return true
 
 func _verify_trace(title: String, required: String, actual_site: String) -> void:
-	if mind_dirty or checks_this_run >= 3 or sim_result.is_empty() or not replay_reached.has(title) or sim_checks.has(title):
+	if mind_dirty or sim_result.is_empty() or not replay_reached.has(title):
 		return
 	if not _trace_visible(required) or not evidence.has(actual_site):
 		_show_message("FA_UI_033", "FA_UI_165")
 		return
-	checks_this_run += 1
-	_advance(10)
-	sim_checks[title] = true
 	var clue: Dictionary = {}
 	for entry in INVESTIGATION_CONTENT.replay_clues:
 		if entry.canonical == title:
 			clue = entry
 			break
-	if not clue.is_empty():
-		conjectures[title] = clue.conjecture_id
 	var lead_id := "FA_UI_121"
 	if actual_site == "trace" and not evidence.has("paper"):
 		lead_id = "FA_UI_043"
 	var title_display_id: String = clue.get("pause_title_id", "FA_UI_121")
-	_show_detail(actual_site, "FA_UI_034|" + title_display_id, lead_id + "\n\n" + sites[actual_site].description_id + "\n\nFA_UI_055", sites[actual_site].diagram)
+	_show_detail(actual_site, "FA_UI_034|" + title_display_id, lead_id + "\n\n" + sites[actual_site].description_id, sites[actual_site].diagram)
 	_refresh_replay_feedback()
 	_update_status()
 
@@ -1037,11 +1300,10 @@ func _open_answer() -> void:
 		return
 	modal_locale_refresh = Callable(self, "_open_answer")
 	_open_modal("FA_UI_145", "answer")
-	if not captain:
-		_label(modal_box, "FA_UI_230", 17, Color("dfc995"))
-	elif not (sim_checks.has("门底遮蔽") and sim_checks.has("纸内转印") and sim_checks.has("双套锁止")):
-		_label(modal_box, "FA_UI_228", 17, Color("dfc995"))
-		_button(modal_box, "FA_UI_229", _request_flow)
+	var replay_validation: Dictionary = _replay_submission_validation()
+	if not replay_validation.ready:
+		_label(modal_box, "\n".join(replay_validation.reasons), 17, modal.MUTED)
+		_button(modal_box, "FA_UI_229", _request_flow).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	for section in ANSWER_CATALOG.sections:
 		var options := []
 		for option in section.options:
@@ -1049,25 +1311,19 @@ func _open_answer() -> void:
 			if refuted and answer_slots[section.slot] == option.value:
 				answer_slots[section.slot] = ""
 				answer_slot_display_ids[section.slot] = ""
-			options.append([option.value, not refuted and AnswerRules.available(option, evidence, sim_checks), option.display_id])
+			options.append([option.value, not refuted and AnswerRules.available(option, evidence, {}), option.display_id])
 		_answer_choice(section.slot, section.title_id, options)
-	var footer := HBoxContainer.new()
-	modal_box.add_child(footer)
-	_button(footer,"FA_UI_162",_close_modal)
-	var space := Control.new()
-	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(space)
-	_button(footer,"FA_UI_100",_submit_answer,answer_slots.values().has(""))
+	var submit := modal.add_footer([["FA_UI_162", _close_modal], ["FA_UI_100", _submit_answer]])
+	submit.disabled = answer_slots.values().has("") or not captain or not replay_validation.ready
 
 func _answer_choice(slot: String, title: String, options: Array) -> void:
-	_label(modal_box,title,18,Color("a1ae9f"))
+	_label(modal_box,title,17,modal.MUTED)
 	var menu := MenuButton.new()
 	menu.text = tr(answer_slot_display_ids[slot]) if not answer_slot_display_ids[slot].is_empty() else tr("FA_UI_166")
 	menu.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	menu.custom_minimum_size.y = 58
-	menu.add_theme_font_size_override("font_size",22)
-	menu.add_theme_color_override("font_color",Color("e6dfcc"))
-	menu.add_theme_stylebox_override("normal",_style(Color("253d34"),Color("253d34")))
+	menu.custom_minimum_size.y = 44
+	menu.add_theme_font_size_override("font_size",21)
+	modal.paper_field(menu)
 	var available: Array[String] = []
 	for option in options:
 		if option[1]:
@@ -1099,14 +1355,145 @@ func _submit_answer() -> void:
 	if not transmitter_connected:
 		_show_message("FA_UI_031", "FA_UI_094")
 		return
+	var replay_validation: Dictionary = _replay_submission_validation()
+	if not replay_validation.ready:
+		_show_message("FA_UI_386", "\n".join(replay_validation.reasons))
+		return
 	_advance()
-	if answer_slots.place == "" or answer_slots.door == "" or answer_slots.outer == "":
+	if answer_slots.values().has(""):
 		_show_message("FA_UI_156", "FA_UI_016")
 		return
-	var resolution: String = AnswerRules.resolution(ANSWER_CATALOG.sections, answer_slots, evidence, sim_checks)
+	var resolution: String = AnswerRules.resolution(ANSWER_CATALOG.sections, answer_slots, evidence, {})
 	if not captain and not resolution.begins_with("reject_"):
 		resolution = "reject_unsupported"
 	if resolution.begins_with("reject_"):
 		_begin_dialogue(resolution, "answer")
 	else:
 		_finish(resolution)
+
+func can_access_dorm(owner: String) -> bool:
+	if not state.can_access_dorm(owner):
+		return false
+	if owner == "detective":
+		return true
+	return actors.has(_paired_actor()) and actors[_paired_actor()].position.distance_to(player.position) <= 96
+
+func _site_accessible(id: String) -> bool:
+	if not sites.has(id): return false
+	var owner := "detective"
+	for suffix in ["1", "2", "3"]:
+		if id in ["room_" + suffix, "bed_" + suffix, "window_" + suffix, "desk_" + suffix]:
+			owner = {"1": "engineer", "2": "cook", "3": "musician"}[suffix]
+			if not can_access_dorm(owner): return false
+	if investigation_phase == "arrival": return id in ["meeting", "transmitter", "engineer", "chef", "musician", "room_0"]
+	if investigation_phase == "dorm_search": return id in ["window_0", "bed_0", "drawer", "paper", "room_0", "meeting"]
+	return true
+
+func _navigation_obstacles(mover_position := Vector2(INF, INF), mover: CharacterBody2D = null) -> Array[Rect2]:
+	var result: Array[Rect2] = obstacle_rects.duplicate()
+	for door in scene_items.get_children():
+		if door.has_method("access_allowed") and not door.access_allowed():
+			if mover != null and mover != player and door.owner_actor() == mover: continue
+			result.append(Rect2(door.position + Vector2(-32, -8), Vector2(64, 8)))
+	for actor in actors.values():
+		if actor == mover or (mover == null and actor == player): continue
+		result.append(Rect2(actor.position + Vector2(-8, -12), Vector2(16, 12)))
+	return result
+
+func _own_dorm_complete() -> bool:
+	return state.is_own_dorm_complete()
+
+func _place_party_at_table() -> void:
+	ensemble.place_party_at_table()
+
+func dialogue_start_dorm_search() -> void:
+	broadcast_heard = true
+	evidence["transmitter"] = true
+	investigation_phase = "dorm_search"
+	for name in ["工程师", "厨师", "音乐家"]:
+		npc_searches[name] = true
+		_search_npc_room(name)
+
+func _search_npc_room(name: String) -> void:
+	var actor: CharacterBody2D = actors[name]
+	var room_x: float = {"工程师": 512.0, "厨师": 832.0, "音乐家": 1152.0}[name]
+	await _walk_actor_to(actor, Vector2(room_x, 232))
+	actor.face_point(Vector2(room_x + 66, 112))
+	actor.pose("inspect")
+	await actor.sprite.animation_finished
+	actor.pose("idle")
+	var common_point: Vector2 = {"工程师": Vector2(580, 910), "厨师": Vector2(900, 600), "音乐家": Vector2(400, 730)}[name]
+	await _walk_actor_to(actor, common_point)
+	actor.face_point({"工程师": Vector2(644, 954), "厨师": Vector2(882, 580), "音乐家": Vector2(320, 652)}[name])
+	npc_searches.erase(name)
+
+func dialogue_pair(owner: String) -> void:
+	paired_companion = owner
+	investigation_phase = "paired"
+	deep_inspections.clear()
+	npc_searches["other_pair"] = true
+	_inspect_other_pair()
+
+func _inspect_other_pair() -> void:
+	var others: Array[CharacterBody2D] = []
+	for name in ["工程师", "厨师", "音乐家"]:
+		if name != _paired_actor(): others.append(actors[name])
+	var locations: Array = {"engineer": ["pantry", "study"], "cook": ["study", "hall"], "musician": ["hall", "pantry"]}[paired_companion]
+	var spots := {"pantry": [Vector2(904, 600), Vector2(952, 600)], "study": [Vector2(400, 730), Vector2(456, 730)], "hall": [Vector2(580, 910), Vector2(700, 910)]}
+	var subjects := {"pantry": Vector2(882, 580), "study": Vector2(320, 652), "hall": Vector2(644, 954)}
+	for location in locations:
+		for index in others.size():
+			await _walk_actor_to(others[index], spots[location][index])
+			others[index].face_point(subjects[location])
+		await get_tree().create_timer(0.8).timeout
+	npc_searches.erase("other_pair")
+
+func _paired_actor() -> String:
+	return state.paired_actor()
+
+func _follow_companion() -> void:
+	if investigation_phase != "paired" or paired_companion.is_empty(): return
+	var partner: CharacterBody2D = actors[_paired_actor()]
+	if partner.position.distance_to(player.position) <= 70: return
+	companion_route_cooldown -= get_physics_process_delta_time()
+	var stale: bool = partner.travelling and ((not partner.path.is_empty() and partner.path[-1].distance_to(player.position) > 96) or not FieldNavigation.walkable(partner.target, floors, _navigation_obstacles(partner.position, partner)))
+	if partner.travelling and not stale:
+		if companion_route_cooldown <= 0:
+			companion_route_cooldown = 0.75
+			var shorter := _route(partner.position, partner.path[-1], partner)
+			# A temporary blockage must not send the companion around the entire wing
+			# after the nearby passage has become free again.
+			if shorter.size() > 1 and shorter.size() + 4 < partner.path.size() - partner.waypoint:
+				partner.follow_path(shorter)
+		return
+	var offsets: Array[Vector2] = [player.position.direction_to(partner.position)]
+	offsets.append_array(APPROACH_DIRECTIONS)
+	var best := PackedVector2Array()
+	for offset in offsets:
+		var destination := player.position + offset.normalized() * 48
+		if not _walkable(destination): continue
+		var route := _route(partner.position, destination, partner)
+		if route.size() > 1 and (best.is_empty() or route.size() < best.size()): best = route
+	if not best.is_empty():
+		companion_route_cooldown = 0.75
+		partner.follow_path(best)
+
+func _record_deep_inspection(id: String) -> void:
+	if investigation_phase == "paired" and id in PAIR_SITES[paired_companion]:
+		state.record_deep_inspection(id)
+
+func dialogue_exchange_findings() -> void:
+	# Other pair's inspection is reported at the table, never passed off as sight.
+	for owner in PAIR_SITES:
+		if owner == paired_companion: continue
+		for id in PAIR_SITES[owner]:
+			if not evidence.has(id):
+				evidence[id] = true
+				evidence_sources[id] = "同伴勘验后转述"
+	for id in ["stop", "floor_wipe"]:
+		if not evidence.has(id):
+			evidence[id] = true
+			evidence_sources[id] = "同伴勘验后转述"
+	meeting_done = true
+	meeting_introduction_seen = true
+	investigation_phase = "discussion"

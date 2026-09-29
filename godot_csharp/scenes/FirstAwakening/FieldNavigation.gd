@@ -23,11 +23,26 @@ static func route(start: Vector2, finish: Vector2, floors: Dictionary, obstacles
 			var node := Vector2i(x, y)
 			var center := Vector2(node * 16) + Vector2(8, 8)
 			grid.set_point_solid(node, not walkable(center, floors, obstacles))
-	var from := Vector2i(start / 16.0)
-	var to := Vector2i(finish / 16.0)
-	grid.set_point_solid(from, false)
-	grid.set_point_solid(to, false)
+	# A legal continuous position can round into a blocked grid centre near a chair.
+	# Use a nearby free centre; never make furniture traversable for an endpoint.
+	var from := _free_endpoint(grid, start)
+	var to := _free_endpoint(grid, finish)
+	if from.x < 0 or to.x < 0: return PackedVector2Array()
 	return grid.get_point_path(from, to)
+
+static func _free_endpoint(grid: AStarGrid2D, point: Vector2) -> Vector2i:
+	var cell := Vector2i(point / 16.0)
+	var best := Vector2i(-1, -1)
+	var distance := INF
+	for y in range(-1, 2):
+		for x in range(-1, 2):
+			var candidate := cell + Vector2i(x, y)
+			if not grid.region.has_point(candidate) or grid.is_point_solid(candidate): continue
+			var offset := grid.get_point_position(candidate).distance_squared_to(point)
+			if offset < distance:
+				distance = offset
+				best = candidate
+	return best
 
 static func site_point(id: String, sites: Dictionary, actors: Dictionary) -> Vector2:
 	var site: Dictionary = sites[id]

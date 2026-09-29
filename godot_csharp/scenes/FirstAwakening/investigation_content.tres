@@ -4,8 +4,13 @@
 
 [resource]
 script = ExtResource("content")
-discussion_evidence = PackedStringArray("door", "paper", "rations", "wash", "hinge", "weight")
-speaker_name_ids = {"侦探": "FA_NAME_001", "工程师": "FA_NAME_002", "厨师": "FA_NAME_003", "音乐家": "FA_NAME_004", "铜口": "FA_NAME_005", "侦探（心声）": "FA_NAME_006"}
+discussion_evidence = PackedStringArray("door", "trace", "paper", "wash")
+meeting_hypotheses = [
+{"id": "escape", "label_id": "FA_UI_263", "title_id": "FA_UI_263", "claim": "门只撑开窄缝，四人就从这里逃了出去。", "claim_id": "FA_UI_266", "evidence_all": PackedStringArray("trace"), "evidence_any": PackedStringArray("hinge", "weight")},
+{"id": "betrayal", "label_id": "FA_UI_264", "title_id": "FA_UI_264", "claim": "关门把主楼烟气留在生活翼，是为了加害同伴。", "claim_id": "FA_UI_267", "evidence_all": PackedStringArray("door", "trace")},
+{"id": "fifth_person", "label_id": "FA_UI_265", "title_id": "FA_UI_265", "claim": "第五人一直留在主楼侧，却清理伪造生活翼现场，并在两侧完成双锁。", "claim_id": "FA_UI_268", "evidence_all": PackedStringArray("wash", "paper")}
+]
+speaker_name_ids = {"侦探": "FA_NAME_001", "工程师": "FA_NAME_002", "厨师": "FA_NAME_003", "主厨": "FA_NAME_003", "音乐家": "FA_NAME_004", "铜口": "FA_NAME_005", "侦探（心声）": "FA_NAME_006"}
 journal_categories = [
 {"title_id": "FA_UI_003", "site_ids": PackedStringArray("notebook", "drawer", "paper", "study", "tear", "box_mark", "cup", "wash", "rations")},
 {"title_id": "FA_UI_004", "site_ids": PackedStringArray("hinge", "weight", "door", "slit", "trace", "stop", "floor_wipe")},

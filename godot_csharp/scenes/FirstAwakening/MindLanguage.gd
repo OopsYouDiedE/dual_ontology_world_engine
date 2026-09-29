@@ -208,11 +208,17 @@ static func _get_catalog_zh(sites: Dictionary = {}) -> Dictionary:
 	for i in ORDER_WORDS.size(): order_words.append(_word(101 + i, "zh"))
 	var templates: Array[String] = []
 	for i in 4: templates.append(_word(111 + i, "zh"))
+	templates.append_array([
+		"每当［人物］看见［条件］后，［人物］行动。",
+		"每当［人物］看见［条件］后，优先［行动］。",
+		"每当［人物］看见［条件］后，禁止［行动］。",
+	])
 	var phrases: Array[Dictionary] = []
 	for i in PHRASES.size(): phrases.append({"word":_word(311 + i, "zh"), "code":PHRASES[i].code, "target":PHRASES[i].target})
 	return {"locale":"zh", "people": people, "verbs": verbs, "targets": targets, "conditions": conditions,
 		"condition_forms": forms, "order_words": order_words,
-		"templates": templates, "phrases": phrases, "help": _word(121, "zh")}
+		"templates": templates, "phrases": phrases, "help": _word(121, "zh"),
+		"rule_help":"每当［人物］看见［条件］后，［人物］行动；也可在动作前加“优先”或“禁止”。条件观察者就是行动者。中文支持此持续规则句式；英文和日文仍使用原有顺序条件句。"}
 
 static func _compact(text: String) -> String:
 	return text.strip_edges().replace(" ", "").replace("　", "").replace("\t", "").replace(",", "，")
@@ -265,6 +271,10 @@ static func _compile_zh(draft: String, sites: Dictionary = {}, default_person: S
 		for raw_sentence in text.split("；", false):
 			var sentence: String = raw_sentence
 			var ordered := false
+			var persistent := sentence.begins_with("每当")
+			if persistent:
+				sentence = sentence.trim_prefix("每当")
+			var mode := "RULE"
 			for prefix in ORDER_WORDS:
 				if sentence.begins_with(prefix):
 					ordered = true
@@ -288,22 +298,41 @@ static func _compile_zh(draft: String, sites: Dictionary = {}, default_person: S
 					if sentence.begins_with(prefix):
 						sentence = sentence.trim_prefix(prefix)
 						break
-			var parsed := _parse_action(sentence, targets, default_person)
+			if persistent and sentence.begins_with("优先"):
+				mode = "PREFER"
+				sentence = sentence.trim_prefix("优先")
+			elif persistent and sentence.begins_with("禁止"):
+				mode = "FORBID"
+				sentence = sentence.trim_prefix("禁止")
+			var action_default := observer if not observer.is_empty() else default_person
+			var parsed := _parse_action(sentence, targets, action_default)
 			if parsed.has("error"): return _error(line, parsed.error)
 			var code := "ACT|%s|%s|%s" % [parsed.actor, parsed.verb, parsed.target]
-			if not observer.is_empty(): codes.append("WHEN|%s|%s|%s" % [observer, condition.code, condition.target])
-			codes.append(code)
+			if persistent and observer.is_empty(): return _error(line, _word(132, "zh"))
+			if not observer.is_empty() and observer != parsed.actor:
+				return _error(line, "条件观察者与行动者必须是同一人物。")
+			var sentence_codes: Array[String] = []
+			if persistent:
+				sentence_codes.append("%s|%s|%s|%s" % [mode, observer, condition.code, condition.target])
+			elif not observer.is_empty():
+				sentence_codes.append("WHEN|%s|%s|%s" % [observer, condition.code, condition.target])
+			sentence_codes.append(code)
+			codes.append_array(sentence_codes)
 			sentences.append({"code":code, "actor":parsed.actor, "verb":parsed.verb,
 				"target":parsed.target, "observer":observer, "condition":condition.get("code", ""),
-				"smoke":condition.get("code", "") == "Smoke", "line":line})
+				"condition_target":condition.get("target", ""), "smoke":condition.get("code", "") == "Smoke", "line":line,
+				"persistent":persistent, "mode":mode if persistent else "WHEN", "codes":sentence_codes})
 	return {"codes":codes, "sentences":sentences}
 
 static func _words_zh(code: String, sites: Dictionary = {}) -> String:
 	var pieces := code.split("|")
 	if pieces.size() != 4: return ""
-	if pieces[0] == "WHEN":
+	if pieces[0] in ["WHEN", "RULE", "PREFER", "FORBID"]:
 		for form in CONDITION_FORMS:
-			if form.code == pieces[2]: return pieces[1] + form.word.trim_suffix("，")
+			if form.code == pieces[2]:
+				var prefix := "每当" if pieces[0] != "WHEN" else ""
+				var suffix := "，优先" if pieces[0] == "PREFER" else "，禁止" if pieces[0] == "FORBID" else "，" if pieces[0] != "WHEN" else ""
+				return prefix + pieces[1] + form.word.trim_suffix("，") + suffix
 		return ""
 	var catalog := _get_catalog_zh(sites)
 	var action_word: String = pieces[2]
@@ -393,9 +422,11 @@ static func _compile_local(draft: String, sites: Dictionary, default_person: Str
 			var code := "ACT|%s|%s|%s" % [parsed.actor, parsed.verb, parsed.target]
 			if not observer.is_empty(): codes.append("WHEN|%s|%s|%s" % [observer, condition.code, condition.target])
 			codes.append(code)
+			if not observer.is_empty() and observer != parsed.actor:
+				return _local_error(line, language, "条件观察者与行动者必须是同一人物。")
 			sentences.append({"code":code, "actor":parsed.actor, "verb":parsed.verb,
 				"target":parsed.target, "observer":observer, "condition":condition.get("code", ""),
-				"smoke":condition.get("code", "") == "Smoke", "line":line})
+				"condition_target":condition.get("target", ""), "smoke":condition.get("code", "") == "Smoke", "line":line})
 	return {"codes":codes, "sentences":sentences}
 
 static func compile_text(draft: String, sites: Dictionary = {}, default_person: String = "", locale: String = "") -> Dictionary:

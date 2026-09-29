@@ -6,13 +6,16 @@ public static class HallCausalityRules
     public enum Hypothesis
     {
         InnerWedgeStopsOutsidePush,
-        OutsideActorSetBothLocks
+        OutsideActorSetBothLocks,
+        PassageThroughWedgeGap,
+        ClosedDoorContinuesAdmittingSmoke,
+        OutsideActorDidAllCleanup
     }
     public enum Action
     {
         BraceDoorWithWedge, SmokeArrives, RemoveWedge, CloseDoor,
         SlideInnerBolt, WrapWedge, MoveStop, WipeFloor, OuterBar,
-        PushDoor, PullDoor, UnwrapWedge, WithdrawInnerBolt, LiftOuterBar, ReturnStop
+        PushDoor, PullDoor, UnwrapWedge, WithdrawInnerBolt, LiftOuterBar, ReturnStop, ReleaseDoor
     }
 
     public enum ConflictKind
@@ -22,7 +25,10 @@ public static class HallCausalityRules
         SootMaskRequiresOpenDoorAndBrace,
         PaperTransferRequiresDirtyWedgeBeforeWrapping,
         TwoLocksRequireSeparateOperations,
-        WipeBandRequiresStopMovedBeforeWiping
+        WipeBandRequiresStopMovedBeforeWiping,
+        PassageRequiresWiderOpening,
+        ClosureStopsOpenDoorSmokePath,
+        CleanupRequiresInsideAccess
     }
 
     public sealed record Trace(string Id, string Description);
@@ -31,7 +37,7 @@ public static class HallCausalityRules
         bool DoorWasBraced, bool SmokeReachedDoor, bool WedgeWasRemoved,
         bool DoorClosed, bool InnerBoltSlid, bool WedgeWrapped,
         bool StopMoved, bool FloorWiped, bool OuterBarDropped,
-        bool DoorIsBraced, IReadOnlyList<string> Failures);
+        bool DoorIsBraced, IReadOnlyList<string> Failures, bool DoorAllowsPassage);
 
     /// <summary>Evaluate a proposed explanation against door geometry and simulated lock ownership.</summary>
     public static Conflict TestHypothesis(Hypothesis hypothesis, Result state) => hypothesis switch
@@ -41,6 +47,14 @@ public static class HallCausalityRules
         Hypothesis.OutsideActorSetBothLocks => new(ConflictKind.TwoLocksRequireSeparateOperations,
             state.InnerBoltSlid && state.OuterBarDropped,
             "内销位于生活翼侧，外闩位于主楼侧；单独站在外侧的操作者不能同时完成内销插入与外闩落座。"),
+        Hypothesis.PassageThroughWedgeGap => new(ConflictKind.PassageRequiresWiderOpening,
+            !state.DoorClosed && !state.DoorAllowsPassage,
+            "木楔撑出的约十厘米开口不能直接让成人穿行；必须另有把门开大并保持通路的行动。这只否定直接穿缝，不排除先探路、随后撤离。"),
+        Hypothesis.ClosedDoorContinuesAdmittingSmoke => new(ConflictKind.ClosureStopsOpenDoorSmokePath,
+            state.SmokeReachedDoor && state.DoorClosed,
+            "撤楔后配重使门合拢，先前敞开的进烟通路随之关闭；不能一面重演合门，一面称烟气仍从同一开口持续涌入。此前留下的灰迹仍保留；这不证明操作者善意，也不排除其他加害办法。"),
+        Hypothesis.OutsideActorDidAllCleanup => new(ConflictKind.CleanupRequiresInsideAccess, true,
+            "一直留在门外的人够不到生活翼内的包楔、擦地与冲洗对象；门合拢后也不能从内侧落下外闩。须补出开大门、跨侧及实际处置行动。洗布和包楔不能排除外来者，内外锁也不证明必须有两个不同身份的人。"),
         _ => throw new ArgumentOutOfRangeException(nameof(hypothesis), hypothesis, "Unknown door hypothesis.")
     };
 
@@ -53,13 +67,14 @@ public static class HallCausalityRules
         var failures = new List<string>();
         bool everBraced = false;
         bool braced = false, smoke = false, wedgeRemoved = false, closed = true;
+        bool allowsPassage = false;
         bool bolt = false, wrapped = false, moved = false, wiped = false, outerBar = false;
         bool sootOnWedge = false, sootMaskedAtDoor = false, sootOnPaperInside = false, sootOnPaperOutside = false;
         bool wipeAtStopFoot = false;
 
         void MarkWedgeExposure()
         {
-            if (!smoke || closed || !braced || sootMaskedAtDoor) return;
+            if (!smoke || closed || !braced || allowsPassage || sootMaskedAtDoor) return;
             sootMaskedAtDoor = true;
             sootOnWedge = true;
             traces.Add(new("door-mask", "门底形成木楔遮蔽的斜边洁净区。"));
@@ -75,6 +90,7 @@ public static class HallCausalityRules
                     if (!braced && !wrapped && !bolt && !outerBar)
                     {
                         closed = false;
+                        allowsPassage = false;
                         wedgeRemoved = false;
                         braced = true; everBraced = true;
                         traces.Add(new("wedge-brace", "木楔支撑门扇，抵住配重的合门拉力。"));
@@ -85,17 +101,30 @@ public static class HallCausalityRules
                 case Action.PushDoor:
                 case Action.PullDoor:
                     if (bolt || outerBar) failures.Add("开门未完成：内销或外闩仍在锁止门扇。");
-                    else if (!closed) failures.Add("门扇已经开启。");
+                    else if (!closed && (!braced || allowsPassage)) failures.Add("门扇已经开启。");
                     else
                     {
                         closed = false;
-                        traces.Add(new("door-held-open", "门扇向主楼侧打开，需要继续扶住以抵住配重。"));
+                        allowsPassage = true;
+                        traces.Add(new("door-held-open", braced
+                            ? "将木楔留出的窄缝开大至可通行，需要继续扶住；松手后门扇退回木楔支撑的位置。"
+                            : "门扇向主楼侧打开至可通行，需要继续扶住以抵住配重。"));
                     }
+                    break;
+                case Action.ReleaseDoor:
+                    if (closed) { failures.Add("门扇已经合拢，无需松手。"); break; }
+                    allowsPassage = false;
+                    if (braced)
+                    {
+                        traces.Add(new("door-wedge-gap", "松开门扇，配重使开口缩回木楔支撑的约十厘米窄缝。"));
+                        MarkWedgeExposure();
+                    }
+                    else { closed = true; traces.Add(new("door-closed", "松开门扇后，配重将门扇拉合。")); }
                     break;
                 case Action.SmokeArrives:
                     smoke = true;
                     MarkWedgeExposure();
-                    if (!closed && !braced) traces.Add(new("door-soot", "门处于开启状态，灰气可到达门底与楔子。"));
+                    if (!closed && (!braced || allowsPassage)) traces.Add(new("door-soot", "门处于开启状态，灰气可到达门底与楔子。"));
                     if (wrapped)
                     {
                         sootOnPaperOutside = true;
@@ -105,14 +134,14 @@ public static class HallCausalityRules
                 case Action.RemoveWedge:
                     if (braced && !closed)
                     {
-                        wedgeRemoved = true; braced = false; closed = true;
+                        wedgeRemoved = true; braced = false; closed = true; allowsPassage = false;
                         traces.Add(new("wedge-removed", "撤下门底木楔。"));
                         traces.Add(new("door-closed", "失去木楔支撑，配重将门扇拉合。"));
                     }
                     else failures.Add("撤楔未完成：门底没有正在撑门的木楔。");
                     break;
                 case Action.CloseDoor:
-                    if (!braced && !closed) { closed = true; traces.Add(new("door-closed", "门扇在配重作用下合拢并抵住外开止口。")); }
+                    if (!braced && !closed) { closed = true; allowsPassage = false; traces.Add(new("door-closed", "门扇在配重作用下合拢并抵住外开止口。")); }
                     else failures.Add(braced ? "合门未完成：木楔仍在支撑门扇。" : "门扇已经合拢，无需再次合门。");
                     break;
                 case Action.SlideInnerBolt:
@@ -173,6 +202,6 @@ public static class HallCausalityRules
             new Conflict(ConflictKind.WipeBandRequiresStopMovedBeforeWiping, wiped && !wipeAtStopFoot, "先擦地再移止挡座，不能在原座底遮蔽区留下后发连续擦拭带。")
         };
         return new(traces.AsReadOnly(), Array.AsReadOnly(conflicts), everBraced, smoke, wedgeRemoved, closed,
-            bolt, wrapped, moved, wiped, outerBar, braced, failures.AsReadOnly());
+            bolt, wrapped, moved, wiped, outerBar, braced, failures.AsReadOnly(), allowsPassage);
     }
 }

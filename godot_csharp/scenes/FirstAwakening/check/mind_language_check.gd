@@ -53,14 +53,24 @@ func _initialize() -> void:
 		for form in catalog.condition_forms:
 			for suffix in [form.word] + form.aliases:
 				if condition == observer + suffix: matching = form
-		var expected := ["WHEN|%s|%s|%s" % [observer, matching.code, matching.target], "ACT|厨师|RemoveWedge|wedge"]
-		accepts(condition + "厨师撤下木楔", expected)
+		var expected := ["WHEN|%s|%s|%s" % [observer, matching.code, matching.target], "ACT|%s|RemoveWedge|wedge" % observer]
+		accepts(condition + observer + "撤下木楔", expected)
 		for order in catalog.order_words:
-			accepts(order + condition + "厨师撤下木楔", expected)
-			accepts(condition + order + "厨师撤下木楔", expected)
-			rejects(order + condition + order + "厨师撤下木楔")
+			accepts(order + condition + observer + "撤下木楔", expected)
+			accepts(condition + order + observer + "撤下木楔", expected)
+			rejects(order + condition + order + observer + "撤下木楔")
+	accepts("每当厨师看见隔离门打开后，厨师关闭隔离门。", ["RULE|厨师|DoorOpen|door", "ACT|厨师|CloseDoor|door"])
+	accepts("每当厨师看见隔离门打开后，优先厨师关闭隔离门。", ["PREFER|厨师|DoorOpen|door", "ACT|厨师|CloseDoor|door"])
+	accepts("每当厨师看见隔离门打开后，禁止厨师关闭隔离门。", ["FORBID|厨师|DoorOpen|door", "ACT|厨师|CloseDoor|door"])
+	accepts("每当厨师看见隔离门打开后，关闭隔离门。", ["RULE|厨师|DoorOpen|door", "ACT|厨师|CloseDoor|door"])
+	accepts("每当音乐家看见热烟后，优先音乐家撤下木楔；音乐家走到隔离门。", ["PREFER|音乐家|Smoke|door", "ACT|音乐家|RemoveWedge|wedge", "ACT|音乐家|GoTo|door"])
+	rejects("每当厨师看见隔离门打开后，工程师关闭隔离门。")
+	rejects("每当厨师关闭隔离门。")
+	rejects("每当厨师看见隔离门打开后，偏好厨师关闭隔离门。")
+	var rule_catalog := Language.get_catalog(SITES, "zh_CN")
+	require(rule_catalog.get("rule_help", "").contains("优先") and rule_catalog.templates.has("每当［人物］看见［条件］后，［人物］行动。"), "persistent rule syntax is discoverable in the existing vocabulary catalogue")
 	accepts(" 侦探 把 水阀 移开。工程师将生活翼内销插入；音乐家观察R-05的铁格雾窗然后厨师观察R-06铁格雾窗", ["ACT|侦探|MoveStop|water", "ACT|工程师|SlideInnerBolt|inner_bolt", "ACT|音乐家|Inspect|window_0", "ACT|厨师|Inspect|window_1"])
-	accepts("# 私人笔记\n＃ 自由批注\n\n音乐家走到门边观察.\r\n随后,音乐家看见热烟后,侦探撤下门底的木楔;然后，厨师用纸包起木楔", ["ACT|音乐家|GoTo|door", "WHEN|音乐家|Smoke|door", "ACT|侦探|RemoveWedge|wedge", "ACT|厨师|WrapWedge|wedge"])
+	accepts("# 私人笔记\n＃ 自由批注\n\n音乐家走到门边观察.\r\n随后,音乐家看见热烟后,音乐家撤下门底的木楔;然后，厨师用纸包起木楔", ["ACT|音乐家|GoTo|door", "WHEN|音乐家|Smoke|door", "ACT|音乐家|RemoveWedge|wedge", "ACT|厨师|WrapWedge|wedge"])
 	accepts("# 仅笔记\n\n", [])
 	# Shared predicates preserve the real target. The bridge routes these natural
 	# combinations to the matching physical rule, not to an occupational recipe.
@@ -70,8 +80,10 @@ func _initialize() -> void:
 	rejects("侦探观察水阀 # 尾注")
 	require(Language.words("ACT|厨师|Inspect|water", SITES) == "厨师观察水阀", "human description")
 	var titled := Language.compile_text("观察水阀；音乐家走到隔离门。\n厨师看见内销拔出后，插入内销", SITES, "工程师")
-	require(titled.get("codes", []) == ["ACT|工程师|Inspect|water", "ACT|音乐家|GoTo|door", "WHEN|厨师|InnerBoltWithdrawn|inner_bolt", "ACT|工程师|SlideInnerBolt|inner_bolt"], "default person does not replace explicit actor or observer")
-	require(titled.get("sentences", []).size() == 3 and titled.sentences[2].line == 1, "default person preserves lines")
+	require(titled.get("codes", []) == ["ACT|工程师|Inspect|water", "ACT|音乐家|GoTo|door", "WHEN|厨师|InnerBoltWithdrawn|inner_bolt", "ACT|厨师|SlideInnerBolt|inner_bolt"], "omitted action actor defaults to the condition observer, not the current editor page")
+	var titled_own := Language.compile_text("观察水阀；音乐家走到隔离门。\n音乐家看见内销拔出后，插入内销", SITES, "工程师")
+	require(titled_own.get("codes", []) == ["ACT|工程师|Inspect|water", "ACT|音乐家|GoTo|door", "WHEN|音乐家|InnerBoltWithdrawn|inner_bolt", "ACT|音乐家|SlideInnerBolt|inner_bolt"], "default actor and explicit actor remain distinct with owned observations")
+	require(titled_own.get("sentences", []).size() == 3 and titled_own.sentences[2].line == 1, "default person preserves lines")
 	for draft in ["观察水阀", "音乐家观察水阀", ""]:
 		var invalid := Language.compile_text(draft, SITES, "陌生人")
 		require(invalid.has("error") and not invalid.has("codes"), "invalid heading refuses entire draft")

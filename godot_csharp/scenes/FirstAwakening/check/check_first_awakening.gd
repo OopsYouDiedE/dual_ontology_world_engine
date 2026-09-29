@@ -41,7 +41,8 @@ func _click_world(scene: Node2D, destination: Vector2) -> void:
 	await process_frame
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_LEFT
-	event.position = screen_position
+	# Camera follows the last physical movement during the hover frame.
+	event.position = scene.get_viewport().get_canvas_transform() * destination
 	event.pressed = true
 	Input.parse_input_event(event)
 	await process_frame
@@ -50,6 +51,14 @@ func _click_world(scene: Node2D, destination: Vector2) -> void:
 	await process_frame
 
 func _click_control(control: Control) -> void:
+	# New evidence rows need a layout pass before their scroll offsets exist.
+	for frame in 3: await process_frame
+	var ancestor := control.get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer:
+			ancestor.ensure_control_visible(control)
+		ancestor = ancestor.get_parent()
+	for frame in 3: await process_frame
 	var at := control.get_global_rect().get_center()
 	var motion := InputEventMouseMotion.new()
 	motion.position = at
@@ -67,8 +76,79 @@ func _click_control(control: Control) -> void:
 
 func _advance_dialogue(scene: Node2D, want_choices := false) -> void:
 	var balloon: CanvasLayer = scene.get("dialogue")
-	for i in 60:
+	for i in 260:
 		for frame in 2: await process_frame
+		for frame in 6000:
+			if not balloon.active or not balloon.busy or scene.name_entry.visible: break
+			await physics_frame
+		if balloon.busy and not scene.name_entry.visible:
+			print("STAGING STATE phase=", scene.investigation_phase, " searches=", scene.npc_searches, " line=", balloon.line.text if balloon.line else "")
+			for actor in scene.actors.values(): print(actor.name, " at=", actor.position, " target=", actor.target, " travelling=", actor.travelling, " seated=", actor.seated)
+			_require(false, "dialogue action completes within 6000 physics frames")
+			return
+		var name_entry := scene.get("name_entry") as Control
+		if name_entry != null and name_entry.visible:
+			var name_input := name_entry.get_node("Center/Panel/Margin/Content/Name") as LineEdit
+			var name_confirm := name_entry.get_node("Center/Panel/Margin/Content/Confirm") as Button
+			_require(name_entry.has_method("validation_error"), "name entry exposes the shared validation used by confirmation")
+			for invalid in ["", "   ", "霍铎", "沈鼎", "苏泠", "侦探", "铜口", "一二三四五六七八九十一二三四五六七"]:
+				_require(not String(name_entry.validation_error(invalid)).is_empty(), "invalid or reserved name is rejected: " + invalid)
+			for valid in ["林", " 林 ", "一二三四五六七八九十一二三四五六"]:
+				_require(String(name_entry.validation_error(valid)).is_empty(), "name validation accepts trimmed length 1–16: " + valid)
+			_require(name_entry.get_node_or_null("Center/Panel/Margin/Content/Suggested") != null, "suggested-name button is present")
+			var player_start: Vector2 = scene.player.position
+			_require(name_input.text.is_empty() and name_confirm.disabled, "empty name cannot be confirmed")
+			var escape := InputEventKey.new()
+			escape.keycode = KEY_ESCAPE
+			escape.pressed = true
+			Input.parse_input_event(escape)
+			await process_frame
+			var escape_release := InputEventKey.new()
+			escape_release.keycode = KEY_ESCAPE
+			Input.parse_input_event(escape_release)
+			await process_frame
+			_require(name_entry.visible, "Escape does not skip the required naming window")
+			await _hold_physical_key(KEY_W, 4)
+			_require(scene.player.position.is_equal_approx(player_start), "movement input does not pass through the naming window")
+			var naming_mode: String = scene.mode
+			await _hold_physical_key(KEY_J, 1)
+			await _hold_physical_key(KEY_F, 1)
+			_require(name_entry.visible and scene.mode == naming_mode and not scene.modal_open, "journal and reasoning shortcuts stay blocked while naming")
+			name_input.grab_focus()
+			name_input.clear()
+			await _click_control(name_input)
+			var typed_name := InputEventKey.new()
+			typed_name.keycode = KEY_NONE
+			typed_name.physical_keycode = KEY_NONE
+			typed_name.unicode = 0x6797
+			typed_name.pressed = true
+			root.push_input(typed_name, true)
+			await process_frame
+			var name_release := InputEventKey.new()
+			root.push_input(name_release, true)
+			for frame in 3: await process_frame
+			_require(name_input.text == "林" and not name_confirm.disabled, "real keyboard input enables name confirmation")
+			await _capture_click("name-entry")
+			if name_confirm.disabled: return
+			await _hold_physical_key(KEY_ENTER, 1)
+			for frame in 3: await process_frame
+			for frame in 6000:
+				if not balloon.busy: break
+				await physics_frame
+			_require(scene.player_name == "林" and not name_entry.visible, "confirmed name is saved and the naming window closes")
+			_require(balloon.active and balloon.panel.visible, "dialogue resumes after name confirmation")
+			continue
+		if balloon.active and balloon.line != null and balloon.line.text == "又出来一个。":
+			for actor in scene.actors.values():
+				if actor == scene.player: continue
+				var offset: Vector2 = scene.player.position - actor.position
+				var expected_facing := "front" if offset.y > 0 else "back"
+				if absf(offset.x) > absf(offset.y): expected_facing = "right" if offset.x > 0 else "left"
+				_require(actor.facing == expected_facing, "opening group faces the detective during the detective's line")
+		if balloon.active and balloon.line != null and balloon.line.text.begins_with("妈的！你们房间里翻出行李了吗"):
+			_require(scene.actors.values().all(func(actor): return not actor.travelling), "first regrouping dialogue waits for everyone to arrive")
+		if balloon.active and balloon.line != null and balloon.line.text.begins_with("把两组查到的东西摊开"):
+			_require(scene.actors.values().all(func(actor): return not actor.travelling), "findings exchange waits for everyone to arrive")
 		if not balloon.active:
 			_require(not want_choices, "dialogue remains active until requested choices")
 			return
@@ -240,229 +320,70 @@ func _check_composable_replay() -> void:
 	_require(replay.states.back().closed and not replay.states.back().succeeded, "a summoned door holder releases the door when joining the meeting")
 	bridge.queue_free()
 
-func run() -> void:
-	TranslationServer.set_locale("zh_CN")
-	_check_composable_replay()
-	_check_replay_logic()
-	if OS.get_cmdline_user_args().has("--replay-logic-only"):
-		print("REPLAY LOGIC: ", "FAIL" if failed else "PASS")
-		quit(1 if failed else 0)
-		return
-	var scene: Node2D = load("res://scenes/FirstAwakening/FirstAwakening.tscn").instantiate()
-	root.add_child(scene)
-	current_scene = scene
-	for index in 5:
-		await process_frame
-	var balloon: CanvasLayer = scene.get("dialogue")
-	_require(balloon.active and balloon.line != null and balloon.line.character == "侦探（心声）", "opening is delivered by Dialogue Manager")
-	var manager: Node = root.get_node("DialogueManager")
-	var script_resource: Resource = load("res://scenes/FirstAwakening/first_awakening.dialogue")
-	for title in ["engineer_0", "chef_0", "musician_0", "engineer_1", "chef_1", "musician_1", "engineer_2", "chef_2", "musician_2", "broadcast", "transmitter", "meeting", "challenge_prison", "challenge_defense", "challenge_escape", "meeting_nomination", "reject_prison", "reject_defense", "reject_escape", "reject_one_side", "reject_unsupported", "ending_newcomer", "ending_history", "ending_exit"]:
-		var first_line = await manager.get_next_dialogue_line(script_resource, title, [scene], DMConstants.MutationBehaviour.Skip)
-		_require(first_line != null and not first_line.character.is_empty(), "Dialogue Manager loads branch: " + title)
-	var transmitter_line = await manager.get_next_dialogue_line(script_resource, "transmitter", [scene])
-	_require(transmitter_line.responses.size() == 7, "transmitter choices come from Dialogue Manager")
-	for response in transmitter_line.responses:
-		if response.text == "提交论证":
-			await manager.get_next_dialogue_line(script_resource, response.next_id, [scene])
-			_require(scene.get("dialogue_after") == "answer", "Dialogue Manager submit choice opens the answer board")
-	_dismiss(scene)
-	var floors: Dictionary = scene.get("floors")
-	var sites: Dictionary = scene.get("sites")
-	_require(sites.size() == 38, "all 38 investigation sites are registered")
-	for id in sites:
-		var actor_name: String = sites[id].title
-		var trigger_path := "ObjectsAndPeople/%s/%s" % [actor_name, id] if scene.actors.has(actor_name) else "InvestigationSites/%s" % id
-		var trigger := scene.get_node_or_null(trigger_path) as Area2D
-		_require(trigger != null, "site has an Area2D trigger: " + id)
-		if trigger != null:
-			var shape := trigger.get_node("CollisionShape2D").shape as CircleShape2D
-			_require(trigger.global_position.is_equal_approx(sites[id].point) and is_equal_approx(shape.radius, sites[id].reach), "site trigger matches its resource: " + id)
-	var player: CharacterBody2D = scene.get("player")
-	var architecture: Sprite2D = scene.get_node("LifeWingArchitecture")
-	var camera: Camera2D = scene.get("camera")
-	_require(architecture.texture.get_size() == Vector2(1280, 1024), "painted life-wing architecture covers the 40x32 map at 1x")
-	_require(scene.get_node("WallSolids").get_child_count() > 60, "every non-walkable cell has wall collision")
-	_require(floors.has(Vector2i(5, 9)) and not floors.has(Vector2i(19, 27)), "bedroom doorway is open and the hall gate wall is solid")
-	_require(player.seated, "detective opens seated at the bed")
-	_require(camera.offset == Vector2.ZERO, "world camera uses the full viewport without a vertical crop offset")
-	_require(scene.get("hud_title").position.y < 48 and scene.get("hud_time").position.y < 48, "location and clock stay in the upper HUD")
-	_require(scene.get("hud_hint").position.y > 900, "interaction help is a single lower-edge line")
-	_require(is_equal_approx(Engine.time_scale, 1.0), "movement acceptance runs at normal time scale")
-	await _capture_click("start")
-	var down := InputEventKey.new()
-	down.keycode = KEY_S
-	down.physical_keycode = KEY_S
-	down.pressed = true
-	Input.parse_input_event(down)
-	for index in 8:
-		await physics_frame
-	down.pressed = false
-	Input.parse_input_event(down)
-	_require(not player.seated and player.position.y > 184, "real movement input stands the detective up and moves him")
-	var dorm_door: Node2D = scene.get_node("ObjectsAndPeople/DormitoryDoor1")
-	await _hold_physical_key(KEY_D, 24)
-	var bedside_clear := player.position.x > 176 and player.position.y < 280
-	_require(bedside_clear, "physical right input clears the bed side: " + str(player.position))
-	await _hold_physical_key(KEY_S, 140)
-	var crossed_room_door: bool = player.position.x > 176 and player.position.y > 384 and dorm_door.leaf_collision.disabled
-	_require(crossed_room_door, "physical down input crosses the auto-opening bedroom door: position=" + str(player.position) + ", door_open=" + str(dorm_door.leaf_collision.disabled))
-	await _hold_physical_key(KEY_D, 40)
-	var reached_hall_corner := player.position.x > 225 and player.position.y > 384 and player.position.y < 448
-	_require(reached_hall_corner, "physical right input rounds the corridor corner: " + str(player.position))
-	await _hold_physical_key(KEY_S, 90)
-	var reached_public_study := player.position.x > 224 and player.position.x < 288 and player.position.y > 520 and player.position.y < 590
-	_require(reached_public_study, "physical down input passes the public study doorway and reaches its circulation area: " + str(player.position))
-	print("REAL KEY MOVEMENT (time_scale=1): bedside=" + str(bedside_clear) + " bedroom-door=" + str(crossed_room_door) + " corridor-corner=" + str(reached_hall_corner) + " public-study=" + str(reached_public_study) + " final=" + str(player.position))
-	await _capture_click("before")
-	var click_destination := Vector2(360, 570)
-	_require(scene.call("_walkable", click_destination), "click destination in public study is walkable")
-	await _click_world(scene, click_destination)
-	for index in 100:
-		await physics_frame
-	_require(player.position.distance_to(click_destination) <= 8.0, "click movement reaches its destination within the stop radius: " + str(player.position))
-	_require((scene.get("click_path") as PackedVector2Array).is_empty(), "click movement stops after arrival")
-	await _capture_click("after")
-	var settled := player.position
-	await _click_world(scene, settled + Vector2(4, 0))
-	for index in 12:
-		await physics_frame
-	_require(player.position.distance_to(settled) < 0.5 and (scene.get("click_path") as PackedVector2Array).is_empty(), "nearby clicks stay inside the deadzone")
-	await _capture_click("deadzone")
-	await _click_world(scene, Vector2.ZERO)
-	_require((scene.get("click_path") as PackedVector2Array).is_empty(), "unwalkable clicks do not create a path")
-	print("DEBUG MOUSE INPUT: reached=" + str(player.position) + " target=" + str(click_destination) + " deadzone_stable=" + str(player.position.distance_to(settled) < 0.5) + " blocked_click_ignored=" + str((scene.get("click_path") as PackedVector2Array).is_empty()))
-	player.position = sites["drawer"].point + Vector2(-2, 10)
-	player.pose("idle", "back")
-	for index in 3:
-		await physics_frame
-	var inspect := InputEventKey.new()
-	inspect.keycode = KEY_E
-	inspect.physical_keycode = KEY_E
-	inspect.pressed = true
-	root.push_input(inspect, true)
+func _key(key: Key) -> void:
+	var event := InputEventKey.new()
+	event.keycode = key
+	event.physical_keycode = key
+	event.pressed = true
+	root.push_input(event, true)
 	await process_frame
-	var release := InputEventKey.new()
-	release.keycode = KEY_E
-	release.physical_keycode = KEY_E
-	release.pressed = false
-	root.push_input(release, true)
-	_require(scene.get("evidence").has("drawer"), "real E input inspects the nearest drawer")
-	_dismiss(scene)
-	player.position = Vector2(154, 190)
-	var reached := {Vector2i(player.position / 32.0): true}
-	var frontier: Array[Vector2i] = [Vector2i(player.position / 32.0)]
-	while not frontier.is_empty():
-		var cell: Vector2i = frontier.pop_front()
-		for direction in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-			var adjacent: Vector2i = cell + direction
-			if floors.has(adjacent) and not reached.has(adjacent):
-				reached[adjacent] = true
-				frontier.append(adjacent)
-	for id in sites:
-		var site: Dictionary = sites[id]
-		var accessible := false
-		for cell in reached:
-			if (Vector2(cell * 32) + Vector2(16, 16)).distance_to(site.point) < site.reach:
-				accessible = true
-				break
-		_require(accessible, "site is not accessible from connected map: " + id)
-	_require(reached.size() > 400, "north dorms and southern loop should share one walkable network")
-	for id in ["drawer", "study", "paper", "tear", "hinge", "weight", "slit", "room_0", "rations"]:
-		scene.call("_interact", id)
-		if id == "drawer":
-			var card_nodes: Array = scene.get("modal_box").get_children()
-			var card: VBoxContainer = card_nodes[2]
-			_require(card_nodes.size() >= 4 and card.get_node("Picture") is TextureRect and card.get_node("Description") is RichTextLabel and card.get_node("Picture").get_index() < card.get_node("Description").get_index(), "evidence card places its image above the description")
-		_dismiss(scene)
-	# Dense gate fixtures: facing the gate selects the door itself, and Tab
-	# reaches every fixture within reach (the earlier playtest blocker).
-	var resume_at := player.position
-	for stand in [Vector2(644, 944), Vector2(622, 946), Vector2(668, 946)]:
-		player.position = stand
-		player.pose("idle", "front")
-		for index in 2:
-			await physics_frame
-		var pool: Array = scene.get("reachable")
-		_require(pool.has("door"), "gate door is reachable from " + str(stand) + ": " + str(pool))
-		var seen := {}
-		for index in pool.size():
-			seen[scene.get("nearest")] = true
-			var tab := InputEventKey.new()
-			tab.keycode = KEY_TAB
-			tab.physical_keycode = KEY_TAB
-			tab.pressed = true
-			root.push_input(tab, true)
-			await process_frame
-		_require(seen.size() == pool.size(), "Tab cycles every reachable gate fixture from " + str(stand))
-	player.position = Vector2(644, 944)
-	player.pose("idle", "front")
-	for index in 2:
-		await physics_frame
-	_require(scene.get("nearest") == "door", "standing at the gate and facing it selects the door: " + str(scene.get("nearest")))
-	player.position = resume_at
-	scene.call("_interact", "engineer")
+	event.pressed = false
+	root.push_input(event, true)
 	await process_frame
-	_require(scene.get("npc_stage_seen").engineer == 0, "engineer has an initial encounter branch")
-	_require(balloon.active and balloon.line.character == "工程师", "NPC speech is delivered by Dialogue Manager")
-	_dismiss(scene)
-	scene.call("_interact", "door")
-	scene.call("_toggle_bolt")
-	_require(not scene.get("inner_bolt"), "pulling inner bolt changes mechanical state")
-	_dismiss(scene)
-	scene.call("_open_transmitter")
-	await _advance_dialogue(scene, true)
-	_require(scene.get("transmitter_rules") and scene.get("broadcast_heard") and scene.get("transmitter_connected"), "first pull continues from instructions to broadcast and conversation")
-	await _choose_dialogue(scene, "松开拉柄")
-	await _advance_dialogue(scene)
-	_require(not scene.get("transmitter_connected"), "release choice disconnects the speaking tube")
-	var cast: Dictionary = scene.get("actors")
-	var destinations := {"工程师": Vector2(238, 704), "厨师": Vector2(394, 717), "音乐家": Vector2(481, 710)}
-	for id in destinations:
-		var route: PackedVector2Array = scene.call("_route", cast[id].position, destinations[id])
-		_require(route.size() > 1, id + " can path from their discovery point to the common study")
-	var engineer_start: Vector2 = cast["工程师"].position
-	for index in 12:
-		await process_frame
-	_require(cast["工程师"].position.distance_to(engineer_start) > 0, "engineer actually starts walking after the broadcast")
-	await create_timer(18.0).timeout
-	for id in destinations:
-		var distance: float = cast[id].position.distance_to(destinations[id])
-		_require(distance < 32, id + " reaches the meeting area without being trapped by walls or furniture; position=" + str(cast[id].position) + ", target=" + str(destinations[id]) + ", distance=" + str(distance) + ", travelling=" + str(cast[id].travelling) + ", waypoint=" + str(cast[id].waypoint) + "/" + str(cast[id].path.size()))
-	player.position = sites["meeting"].point + Vector2(0, 24)
-	scene.call("_open_meeting")
-	_require(scene.get("mode") == "message", "meeting does not reveal claims about uninspected wash evidence")
-	_dismiss(scene)
-	scene.call("_interact", "wash")
-	_dismiss(scene)
-	scene.call("_open_meeting")
+
+func _check_locked_dorms(scene: Node2D, allowed := "") -> void:
+	if scene.player.seated: scene.call("_leave_bed")
+	for index in range(2, 5):
+		var door: Node2D = scene.get_node("ObjectsAndPeople/DormitoryDoor" + str(index))
+		var expected: bool = door.dorm_owner == allowed
+		scene.player.position = door.position + Vector2(0, 28)
+		if expected:
+			var partner: CharacterBody2D = scene.actors[scene.call("_paired_actor")]
+			partner.position = scene.player.position + Vector2(30, 0)
+			partner.travelling = false
+		for frame in 4: await physics_frame
+		_require(door.access_allowed() == expected, "dorm access matches companion: " + door.dorm_owner)
+		for cover in door.privacy_covers:
+			_require(cover.visible == not expected, "private room is covered until owner accompanies: " + door.dorm_owner)
+		if expected:
+			_require(door.leaf_collision.disabled, "accompanied owner's door opens on approach")
+		else:
+			_require(not door.leaf_collision.disabled and is_zero_approx(door.openness), "locked dorm retains leaf collision: " + door.dorm_owner)
+			await _hold_physical_key(KEY_W, 22)
+			_require(scene.player.position.y >= door.position.y + 10, "real movement cannot cross locked dorm: " + door.dorm_owner)
+			var target: Vector2 = door.interior_bounds.get_center()
+			_require(scene.call("_route", scene.player.position, target).is_empty(), "navigation cannot route into locked private room")
+			await _click_world(scene, target)
+			_require(scene.mode == "message" and scene.click_path.is_empty(), "private-room click gives denial without a path")
+			_dismiss(scene)
+			var site_id := "room_" + str(index - 1)
+			scene.call("_interact", site_id)
+			_require(not scene.evidence.has(site_id), "inaccessible room cannot leak evidence: " + site_id)
+			_dismiss(scene)
+
+func _inspect(scene: Node2D, id: String) -> void:
+	scene.player.position = scene.sites[id].point + Vector2(0, 18)
+	if not scene.paired_companion.is_empty():
+		var partner: CharacterBody2D = scene.actors[scene.call("_paired_actor")]
+		partner.position = scene.player.position + Vector2(30, 0)
+		partner.travelling = false
+	for frame in 3: await physics_frame
+	# Use the same interaction entry as E after selecting a dense fixture.
+	scene.call("_interact", id)
 	await process_frame
-	_require(balloon.active and balloon.line.character == "工程师", "the four-person meeting starts through Dialogue Manager")
-	_dismiss(scene)
-	scene.call("_interact", "engineer")
-	await process_frame
-	_require(scene.get("npc_stage_seen").engineer == 1, "engineer has a new evidence-based debate branch")
-	_dismiss(scene)
-	scene.call("_hypothesis_test", "defense")
-	_require(scene.get("neutral_actions_unlocked"), "Core geometry counterexample unlocks neutral actions")
-	_require(not scene.get("disputed").defense, "sand-table failure does not silently win the group debate")
-	_dismiss(scene)
-	for pair in [["prison", "抽屉内的新旧补纸"], ["defense", "铰链、石止口和自闭配重"], ["escape", "包纸撕口与接触面的灰迹"]]:
-		scene.call("_challenge", pair[0])
+	if id in ["door", "transmitter"]:
 		await _advance_dialogue(scene, true)
-		_require(not scene.disputed[pair[0]], "opening evidence selection does not decide the rebuttal")
-		await _choose_dialogue(scene, pair[1])
+		await _choose_dialogue(scene, "松开拉柄" if id == "transmitter" else "离开门边")
 		await _advance_dialogue(scene)
-		_dismiss(scene)
-	_require(scene.get("captain"), "three evidence-backed rebuttals nominate the detective")
-	scene.call("_interact", "engineer")
-	await process_frame
-	_require(scene.get("npc_stage_seen").engineer == 2, "engineer acknowledges the nominated representative")
 	_dismiss(scene)
+	_require(scene.evidence.has(id), "inspection records physical evidence: " + id)
+
+func _check_mind_ui(scene: Node2D) -> void:
+	var balloon: CanvasLayer = scene.get("dialogue")
 	scene.set("sim_actions", [])
 	scene.call("_request_flow")
 	await process_frame
-	_require(scene.modal_open and balloon.active, "first mind entry opens the workspace before its introduction")
+	_require(scene.modal_open and not balloon.active, "reopening mind workspace does not repeat its introduction")
 	await _advance_dialogue(scene)
 	_require(scene.modal.process_mode == Node.PROCESS_MODE_INHERIT, "mind introduction restores workspace input")
 	var mind: Control = scene.get("modal")
@@ -478,7 +399,8 @@ func run() -> void:
 	editor.insert_text_at_caret("音乐家走到门边观察。\n侦探撤下门底的木楔。")
 	await process_frame
 	var mind_script: Script = load("res://scenes/FirstAwakening/MindPresentation.gd")
-	_require(mind_script.compile_draft(scene).has("error"), "another actor cannot be controlled from the detective's page")
+	var cross_page_program: Dictionary = mind_script.compile_draft(scene)
+	_require(not cross_page_program.has("error") and cross_page_program.get("codes", []).has("ACT|音乐家|GoTo|door"), "the detective's page may contain an action assigned to another actor")
 	editor.text = "走到隔离门。\n侦探看见热烟后，撤下木楔。\n用纸包起木楔。"
 	editor.text_changed.emit()
 	scene.mind_drafts["音乐家"] = "用木楔撑开隔离门。"
@@ -503,7 +425,7 @@ func run() -> void:
 	await process_frame
 	var verify_button := _find_button_containing(mind, "核对 ·")
 	if verify_button == null: verify_button = _find_button_containing(mind, "标记位置")
-	_require(verify_button != null and verify_button.disabled, "stale replay cannot verify traces")
+	_require(verify_button == null or verify_button.disabled, "stale replay cannot verify traces")
 	var retained_text: String = scene.mind_text
 	_require(_press_button(mind, "返回现场"), "workspace returns to the scene")
 	scene._open_flow()
@@ -533,7 +455,7 @@ func run() -> void:
 	_require(not scene.mind_dirty, "new replay clears the stale state")
 	_require(_press_button(mind,"返回现场"), "direct-writing workspace closes")
 	scene.call("_interact", "drawer")
-	_require(scene.get("mode") == "detail" and scene.get("modal").size == Vector2(780, 700), "evidence inspection restores its centered card dimensions after replay")
+	_require(scene.get("mode") == "detail" and scene.get("modal").size == scene.modal.detail_bounds.size, "evidence inspection restores its centered card dimensions after replay")
 	_require((scene.get("modal").get_node("ModalScroll") as ScrollContainer).vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "evidence inspection restores scrolling after replay")
 	_dismiss(scene)
 	scene.call("_open_journal")
@@ -543,90 +465,265 @@ func run() -> void:
 	root.push_input(escape, true)
 	await process_frame
 	_require(not scene.get("modal_open"), "Escape closes a standard modal")
-	scene.sim_actor_actions.clear()
-	var correct: Array[String] = ["BraceDoorWithWedge", "IF_SMOKE:4", "GOTO:2", "RemoveWedge", "CloseDoor", "SlideInnerBolt", "WrapWedge", "MoveStop", "WipeFloor", "OuterBar"]
-	scene.set("sim_actions", correct)
-	var program: Dictionary = scene.call("_compile_program")
-	_require(not program.has("error"), "IF / GOTO loop exits when smoke arrives")
-	var actions: Array = program.get("actions", [])
-	_require(actions.has("SmokeArrives") and actions.find("BraceDoorWithWedge") < actions.find("SmokeArrives"), "environmental smoke enters after the brace")
-	scene.call("_run_replay")
-	var result: Dictionary = scene.get("sim_result")
-	var trace_ids: Array = result.get("ids", [])
-	for id in ["door-mask", "paper-inner-transfer", "inner-bolt", "outer-bar", "wipe-after-stop"]:
-		_require(trace_ids.has(id), "Core replay must produce " + id)
-	_require(result.get("conflicts", []).is_empty(), "correct sequence has no causal contradictions")
-	var pause_points: Dictionary = scene.get("replay_pause_points")
-	_require(pause_points.size() >= 3, "replay contains key causal pauses")
-	var first_pause: int = pause_points.keys().min()
-	scene.set("replay_index", first_pause - 1)
-	scene.call("_start_replay", false)
-	scene.call("_replay_step", 1)
-	_require(not scene.get("replay_playing") and scene.get("replay_index") == first_pause, "continuous replay pauses at a pending trace")
-	scene.call("_request_trace_check", "纸内转印", "paper-inner-transfer", "paper")
-	_require(not scene.get("sim_checks").has("纸内转印"), "a future replay event cannot be verified before playback reaches it")
-	scene.call("_request_trace_check", "门底遮蔽", "door-mask", "trace")
-	_require(scene.get("pending_inspections").has("trace") and not scene.get("evidence").has("trace"), "prediction stays separate from observed evidence")
-	_require(not scene.get("sim_checks").has("门底遮蔽"), "prediction alone does not unlock the conjecture")
-	_dismiss(scene)
-	player.position = sites["trace"].point
-	for index in 3:
-		await physics_frame
-	var inspect_trace := InputEventKey.new()
-	inspect_trace.keycode = KEY_E
-	inspect_trace.physical_keycode = KEY_E
-	inspect_trace.pressed = true
-	root.push_input(inspect_trace, true)
-	await process_frame
-	inspect_trace.pressed = false
-	root.push_input(inspect_trace, true)
-	_require(scene.get("evidence").has("trace") and scene.get("sim_checks").has("门底遮蔽"), "real E inspection verifies the predicted door mask")
-	_dismiss(scene)
-	while scene.get("replay_index") < scene.get("replay_events").size():
-		scene.call("_replay_step", 1)
-	for point in [["纸内转印", "paper-inner-transfer", "paper"], ["双套锁止", "inner-bolt", "slit"]]:
-		scene.call("_verify_trace", point[0], point[1], point[2])
-		_dismiss(scene)
-	_require(scene.get("checks_this_run") == 3, "exactly three targeted checks used")
-	scene.call("_verify_trace", "清理时序", "wipe-after-stop", "stop")
-	_require(scene.get("checks_this_run") == 3, "fourth check is blocked until another run")
-	var wrong: Array[String] = ["WrapWedge", "BraceDoorWithWedge", "WAIT", "CloseDoor", "SlideInnerBolt"]
-	scene.set("sim_actions", wrong)
-	var wrong_program: Dictionary = scene.call("_compile_program")
-	var wrong_result: Dictionary = scene.get("bridge").call("Run", wrong_program.actions)
-	_require(not wrong_result.get("conflicts", []).is_empty(), "early wrapping receives a physical contradiction")
-	var impossible_wrap: Dictionary = scene.get("bridge").call("Run", ["BraceDoorWithWedge", "SmokeArrives", "WrapWedge"])
-	_require(not impossible_wrap.get("conflicts", []).is_empty() and not impossible_wrap.get("ids", []).has("paper-inner-transfer"), "wedge cannot be wrapped while it still braces the door")
-	scene.set("sim_actions", correct)
-	scene.call("_run_replay")
-	_require(scene.get("checks_this_run") == 0 and scene.get("sim_checks").has("门底遮蔽"), "new runs reset inspection budget while keeping verified conjectures")
-	_dismiss(scene)
-	player.position = sites["transmitter"].point + Vector2(-30, 30)
-	scene.call("_open_transmitter")
-	var slots := {"place": "临时牢房", "door": "先撑门进灰 → 撤楔合门 → 沾灰后包纸", "outer": "生活翼内销 + 主楼侧外闩"}
-	scene.set("answer_slots", slots)
-	scene.call("_submit_answer")
-	_require(not scene.get("ended"), "prison explanation is rejected and remains retryable")
-	slots.place = "新生入学考场 · 旧居未证实"
-	scene.set("answer_slots", slots)
-	scene.call("_submit_answer")
-	_require(scene.get("ended"), "compatible newcomer explanation formally passes")
-	scene.set("ended", false)
-	slots.place = "长期生活研习"
-	scene.set("answer_slots", slots)
-	scene.call("_submit_answer")
-	_require(scene.get("ended"), "historical long-use explanation also passes")
-	balloon.active = false
-	balloon.panel.hide()
-	var restart := InputEventKey.new()
-	restart.keycode = KEY_R
-	restart.pressed = true
-	root.push_input(restart, true)
-	for index in 8:
-		await process_frame
-	var restarted: Node2D = current_scene
-	_require(restarted != null and restarted != scene and not restarted.get("ended") and (restarted.get("dialogue") as CanvasLayer).active, "R reloads the ending and restarts at the opening")
-	if not failed:
-		print("FIRST AWAKENING PASS: connected map, interactions, Core replay, three checks, rebuttals and both accepted answers")
-	quit(1 if failed else 0)
 
+func _check_answer_rules(scene: Node2D) -> void:
+	var catalog: Resource = load("res://scenes/FirstAwakening/answers.tres")
+	var rules: Script = load("res://scenes/FirstAwakening/AnswerRules.gd")
+	var correct := {}
+	for section in catalog.sections:
+		for option in section.options:
+			if not str(option.get("outcome", "")).begins_with("reject_"): correct[section.slot] = option.value
+	_require(rules.resolution(catalog.sections, correct, scene.evidence, {}) == "ending_passed", "new three-slot answer has a single qualified ending")
+	for section in catalog.sections:
+		for option in section.options:
+			var outcome: String = option.get("outcome", "")
+			if not outcome.begins_with("reject_"): continue
+			var wrong: Dictionary = correct.duplicate()
+			wrong[section.slot] = option.value
+			_require(rules.resolution(catalog.sections, wrong, scene.evidence, {}) == outcome, "specific rejection remains reachable: " + outcome)
+	var missing: Dictionary = scene.evidence.duplicate()
+	missing.erase("paper")
+	_require(rules.resolution(catalog.sections, correct, missing, {}) == "reject_unsupported", "missing paper rejects an unsupported answer")
+	missing = scene.evidence.duplicate()
+	missing.erase("hinge")
+	_require(rules.resolution(catalog.sections, correct, missing, {}) == "ending_passed", "weight may substitute for hinge evidence")
+	_require(rules.resolution(catalog.sections, {}, scene.evidence, {}) == "reject_unsupported", "missing answer slots reject without crashing")
+
+func _check_branch(owner: String, movement_check: bool) -> void:
+	var scene: Node2D = load("res://scenes/FirstAwakening/FirstAwakening.tscn").instantiate()
+	root.add_child(scene)
+	current_scene = scene
+	for frame in 5: await process_frame
+	var balloon: CanvasLayer = scene.get("dialogue")
+	_require(balloon.active and balloon.line != null and balloon.line.character == "侦探（心声）", "opening remains delivered by Dialogue Manager")
+	await _advance_dialogue(scene)
+	await _key(KEY_F)
+	_require(scene.mode != "flow" and not scene.meeting_done, "F cannot open mind replay before the broadcast")
+	_dismiss(scene)
+	if movement_check: await _check_real_movement(scene)
+	await _check_locked_dorms(scene)
+	# The old distance trigger must no longer start arrival near the table.
+	scene.player.position = Vector2(320, 744)
+	for frame in 3: await physics_frame
+	_require(not balloon.active, "standing inside the old table-distance trigger does not bypass doorway arrival")
+	scene.player.position = Vector2(256, 532)
+	for frame in 3: await physics_frame
+	await _capture_click("before-arrival")
+	await _hold_physical_key(KEY_S, 12)
+	_require(balloon.active, "crossing the activity-hall doorway automatically starts arrival dialogue")
+	await _capture_click("arrival-turn")
+	await _advance_dialogue(scene)
+	_require(scene.broadcast_heard and scene.investigation_phase == "dorm_search", "arrival dialogue runs broadcast and assigns own-room search")
+	await _key(KEY_F)
+	_require(scene.mode != "flow" and not scene.meeting_done, "F stays unavailable after broadcast and before roundtable")
+	_dismiss(scene)
+	scene.call("_interact", "hinge")
+	_require(not scene.evidence.has("hinge"), "own-room search does not permit premature public evidence")
+	_dismiss(scene)
+	for id in ["window_0", "bed_0", "drawer", "paper"]: await _inspect(scene, id)
+	await _capture_click("dorm-0")
+	_require(scene.investigation_phase == "regroup" and not scene.meeting_done, "four own-room inspections advance to first reunion")
+	for frame in 3600:
+		if scene.npc_searches.is_empty(): break
+		await physics_frame
+	_require(scene.npc_searches.is_empty(), "NPC room searches finish before preparing first reunion")
+	if not scene.npc_searches.is_empty():
+		scene.queue_free()
+		current_scene = null
+		await process_frame
+		return
+	scene.player.position = scene.sites.meeting.point + Vector2(0, 24)
+	scene.call("_interact", "meeting")
+	await _advance_dialogue(scene, true)
+	var caption: String = {"engineer": "跟随工程师前往门厅，深入勘验隔离门与地面痕迹。", "cook": "跟随主厨前往备餐间，深入勘验生活器具与水渍抹布。", "musician": "跟随音乐家前往研习室，深入勘验案台图册与声学构造。"}[owner]
+	await _choose_dialogue(scene, caption)
+	await _advance_dialogue(scene)
+	_require(scene.paired_companion == owner and scene.investigation_phase == "paired", "actual dialogue choice selects companion: " + owner)
+	var first_site: String = scene.PAIR_SITES[owner][0]
+	scene.player.position = scene.sites[first_site].point
+	var partner: CharacterBody2D = scene.actors[scene.call("_paired_actor")]
+	partner.position = scene.player.position + Vector2(240, 0)
+	partner.travelling = false
+	_require(not scene.call("can_access_dorm", owner), "selecting a distant owner alone does not unlock the private dorm")
+	scene.call("_interact", first_site)
+	_require(not scene.deep_inspections.has(first_site), "deep inspection requires the selected companion physically nearby")
+	_dismiss(scene)
+	await _check_locked_dorms(scene, owner)
+	var owned_suffix: String = {"engineer": "1", "cook": "2", "musician": "3"}[owner]
+	await _inspect(scene, "room_" + owned_suffix)
+	scene.player.position = Vector2(192 + int(owned_suffix) * 320, 232)
+	partner.position = scene.player.position + Vector2(30, 0)
+	partner.travelling = false
+	for frame in 4: await physics_frame
+	await _capture_click("dorm-" + owned_suffix)
+	scene.player.position = scene.sites.meeting.point + Vector2(0, 24)
+	scene.call("_open_meeting")
+	_require(scene.mode == "message" and not scene.meeting_done, "returning before six inspections does not begin discussion")
+	_dismiss(scene)
+	for id in scene.PAIR_SITES[owner]: await _inspect(scene, id)
+	_require(scene.deep_inspections.size() == 6, "all six companion-specific deep inspections recorded: " + owner)
+	await _key(KEY_F)
+	_require(scene.mode != "flow" and not scene.meeting_done, "F remains unavailable until findings are exchanged")
+	_dismiss(scene)
+	scene.player.position = scene.sites.meeting.point + Vector2(0, 24)
+	scene.call("_interact", "meeting")
+	await _advance_dialogue(scene)
+	_require(scene.meeting_done and scene.investigation_phase == "discussion" and scene.mode == "meeting", "findings exchange starts roundtable before mind replay")
+	for other in scene.PAIR_SITES:
+		if other == owner: continue
+		for id in scene.PAIR_SITES[other]:
+			if id == "transmitter":
+				_require(scene.evidence.has(id), "broadcast already records the speaking tube")
+			else:
+				_require(scene.evidence.has(id) and scene.evidence_sources.get(id) == "同伴勘验后转述", "other pair findings retain reported provenance: " + id)
+	_dismiss(scene)
+	await _key(KEY_F)
+	await _advance_dialogue(scene)
+	_require(scene.mode == "flow" and not scene.captain, "real F opens mind replay during discussion before nomination")
+	for claim in scene.INVESTIGATION_CONTENT.meeting_hypotheses:
+		var probe := _find_button(scene.modal, TranslationServer.translate(claim.label_id))
+		_require(probe != null, "mind workspace offers hypothesis probe: " + claim.id)
+		if probe != null: await _click_control(probe)
+		_require(scene.mode == "message" and not scene.disputed[claim.id], "Core hypothesis probe explains a contradiction without winning the meeting: " + claim.id)
+		var back := _find_button(scene.modal, "返回脑内推演")
+		if back != null: await _click_control(back)
+	_dismiss(scene)
+	if movement_check: await _check_mind_ui(scene)
+	scene.sim_actor_actions.clear()
+	var correct: Array[String] = ["ACT|厨师|BraceDoorWithWedge|door", "PREFER|厨师|Smoke|door", "ACT|厨师|RemoveWedge|wedge", "ACT|侦探|SlideInnerBolt|inner_bolt", "ACT|音乐家|WrapWedge|wedge", "ACT|工程师|MoveStop|stop", "ACT|侦探|WipeFloor|floor", "ACT|门外的人|OuterBar|outer_bar"]
+	scene.sim_actions = correct
+	scene.call("_run_replay")
+	scene.call("_start_replay", false)
+	while scene.replay_index < scene.replay_events.size(): scene.call("_replay_step", 1)
+	var validation: Dictionary = scene.call("_replay_submission_validation")
+	_require(validation.ready, "complete current causal replay is compatible with collected evidence: " + str(validation.reasons))
+	_dismiss(scene)
+	for pair in [["escape", "trace"], ["betrayal", "door"], ["fifth_person", "wash"]]:
+		scene.call("_challenge", pair[0])
+		var wrong := _find_button(scene.modal, TranslationServer.translate(scene.sites.window_0.title_id))
+		_require(wrong != null, "meeting offers a real wrong evidence choice")
+		if wrong != null: await _click_control(wrong)
+		await _advance_dialogue(scene)
+		_require(not scene.disputed[pair[0]], "wrong evidence cannot win the meeting claim: " + pair[0])
+		scene.call("_challenge", pair[0])
+		var right := _find_button(scene.modal, TranslationServer.translate(scene.sites[pair[1]].title_id))
+		_require(right != null, "correct meeting evidence is offered: " + pair[1])
+		if right != null: await _click_control(right)
+		await _advance_dialogue(scene)
+		_require(scene.disputed[pair[0]], "correct physical evidence earns the companion's response: " + pair[0])
+		_dismiss(scene)
+	_require(scene.captain and scene.disputed.values().all(func(value): return value), "all three rebuttals nominate the detective")
+	_check_answer_rules(scene)
+	scene.player.position = scene.sites.transmitter.point + Vector2(-30, 30)
+	scene.call("_interact", "transmitter")
+	await _advance_dialogue(scene, true)
+	await _choose_dialogue(scene, "提交论证")
+	await _advance_dialogue(scene)
+	_require(scene.mode == "answer" and scene.transmitter_connected, "live transmitter opens answer board while connected")
+	# Popup signals select the actual offered options instead of assigning slots.
+	for index in 3:
+		var menus: Array[Node] = scene.modal.find_children("*", "MenuButton", true, false)
+		_require(menus.size() == 3 and menus[index].get_popup().item_count == 1, "nominated answer board offers supported explanation for slot " + str(index))
+		if menus.size() == 3: menus[index].get_popup().index_pressed.emit(0)
+		await process_frame
+	var submit := _find_button(scene.modal, TranslationServer.translate("FA_UI_100"))
+	_require(submit != null and not submit.disabled, "current replay and three answers enable actual submit button")
+	if submit != null and not submit.disabled: await _click_control(submit)
+	await _advance_dialogue(scene)
+	_require(scene.ended and scene.ending_title == "ending_passed", "three-slot causal answer passes through actual submission: " + owner)
+	_require(not scene.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorFace").visible and scene.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "qualified ending visually releases the gate")
+	print("NEW FLOW BRANCH: ", owner, " ", "FAIL" if failed else "PASS")
+	scene.queue_free()
+	current_scene = null
+	await process_frame
+
+func _check_real_movement(scene: Node2D) -> void:
+	var floors: Dictionary = scene.get("floors")
+	var sites: Dictionary = scene.get("sites")
+	_require(sites.size() == 43, "all 43 investigation sites are registered")
+	for id in sites:
+		var actor_name: String = sites[id].title
+		var trigger_path := "ObjectsAndPeople/%s/%s" % [actor_name, id] if scene.actors.has(actor_name) else "InvestigationSites/%s" % id
+		var trigger := scene.get_node_or_null(trigger_path) as Area2D
+		_require(trigger != null, "site has an Area2D trigger: " + id)
+		if trigger != null:
+			var shape := trigger.get_node("CollisionShape2D").shape as CircleShape2D
+			var target: Vector2 = scene.call("_site_point", id)
+			_require(trigger.global_position.is_equal_approx(target) and is_equal_approx(shape.radius, sites[id].reach), "site trigger follows its actor or static resource: " + id)
+	var player: CharacterBody2D = scene.get("player")
+	var architecture: Sprite2D = scene.get_node("LifeWingArchitecture")
+	var camera: Camera2D = scene.get("camera")
+	_require(architecture.texture.get_size() == Vector2(1280, 1024), "painted life-wing architecture covers the 40x32 map at 1x")
+	_require(scene.get_node("WallSolids").get_child_count() > 60, "every non-walkable cell has wall collision")
+	_require(floors.has(Vector2i(5, 9)) and not floors.has(Vector2i(19, 27)), "bedroom doorway is open and the hall gate wall is solid")
+	_require(player.seated, "detective opens seated at the bed")
+	_require(camera.offset == Vector2.ZERO, "world camera uses the full viewport without a vertical crop offset")
+	_require(scene.get("hud_title").position.y < 48 and scene.get("hud_time").position.y < 48, "location and clock stay in the upper HUD")
+	_require(scene.get("hud_hint").position.y > 900, "nearby object name sits on the lower edge")
+	_require(is_equal_approx(Engine.time_scale, 1.0), "movement acceptance runs at normal time scale")
+	await _capture_click("start")
+	var down := InputEventKey.new()
+	down.keycode = KEY_S
+	down.physical_keycode = KEY_S
+	down.pressed = true
+	Input.parse_input_event(down)
+	for index in 8:
+		await physics_frame
+	down.pressed = false
+	Input.parse_input_event(down)
+	_require(not player.seated and player.position.y > 184, "real movement input stands the detective up and moves him")
+	var dorm_door: Node2D = scene.get_node("ObjectsAndPeople/DormitoryDoor1")
+	await _hold_physical_key(KEY_D, 24)
+	var bedside_clear := player.position.x > 176 and player.position.y < 280
+	_require(bedside_clear, "physical right input clears the bed side: " + str(player.position))
+	await _hold_physical_key(KEY_S, 140)
+	var crossed_room_door: bool = player.position.x > 176 and player.position.y > 384 and dorm_door.leaf_collision.disabled
+	_require(crossed_room_door, "physical down input crosses the auto-opening bedroom door: position=" + str(player.position) + ", door_open=" + str(dorm_door.leaf_collision.disabled))
+	await _hold_physical_key(KEY_D, 40)
+	var reached_hall_corner := player.position.x > 225 and player.position.y > 384 and player.position.y < 448
+	_require(reached_hall_corner, "physical right input rounds the corridor corner: " + str(player.position))
+	# Stop outside the arrival threshold; its dialogue is exercised later.
+	var approach := InputEventKey.new()
+	approach.keycode = KEY_S
+	approach.physical_keycode = KEY_S
+	approach.pressed = true
+	Input.parse_input_event(approach)
+	for frame in 90:
+		await physics_frame
+		if player.position.y >= 528 or scene.dialogue.active: break
+	var release := approach.duplicate() as InputEventKey
+	release.pressed = false
+	Input.parse_input_event(release)
+	await physics_frame
+	var reached_public_study := player.position.x > 224 and player.position.x < 288 and player.position.y > 520 and player.position.y < 544
+	_require(reached_public_study and not scene.dialogue.active, "physical down input approaches the doorway without starting arrival: " + str(player.position))
+	print("REAL KEY MOVEMENT (time_scale=1): bedside=" + str(bedside_clear) + " bedroom-door=" + str(crossed_room_door) + " corridor-corner=" + str(reached_hall_corner) + " public-study=" + str(reached_public_study) + " final=" + str(player.position))
+	await _capture_click("before")
+	var click_destination := Vector2(256, 416)
+	_require(scene.call("_walkable", click_destination), "click destination in the outer corridor is walkable")
+	await _click_world(scene, click_destination)
+	for index in 100:
+		await physics_frame
+	_require(player.position.distance_to(click_destination) <= 8.0, "click movement reaches its destination within the stop radius: " + str(player.position))
+	_require((scene.get("click_path") as PackedVector2Array).is_empty(), "click movement stops after arrival")
+	_require(not scene.dialogue.active, "movement acceptance leaves doorway arrival for its dedicated check")
+	await _capture_click("after")
+	var settled := player.position
+	await _click_world(scene, settled + Vector2(4, 0))
+	for index in 12:
+		await physics_frame
+	_require(player.position.distance_to(settled) < 0.5 and (scene.get("click_path") as PackedVector2Array).is_empty(), "nearby clicks stay inside the deadzone")
+	await _capture_click("deadzone")
+	await _click_world(scene, Vector2.ZERO)
+	_require((scene.get("click_path") as PackedVector2Array).is_empty(), "unwalkable clicks do not create a path")
+	print("DEBUG MOUSE INPUT: reached=" + str(player.position) + " target=" + str(click_destination) + " deadzone_stable=" + str(player.position.distance_to(settled) < 0.5) + " blocked_click_ignored=" + str((scene.get("click_path") as PackedVector2Array).is_empty()))
+
+func run() -> void:
+	TranslationServer.set_locale("zh_CN")
+	_check_composable_replay()
+	_check_replay_logic()
+	if not OS.get_cmdline_user_args().has("--replay-logic-only"):
+		for owner in ["engineer", "cook", "musician"]:
+			await _check_branch(owner, owner == "engineer")
+	print("FIRST AWAKENING: ", "FAIL" if failed else "PASS")
+	quit(1 if failed else 0)

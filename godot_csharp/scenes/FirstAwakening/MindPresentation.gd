@@ -35,9 +35,13 @@ static func compile_draft(scene: Node2D) -> Dictionary:
 			compiled.person = actor
 			return compiled
 		for sentence in compiled.sentences:
-			if sentence.actor != actor or (not sentence.observer.is_empty() and sentence.observer != actor):
-				return {"error": tx("FA_MIND_087") % Language.display_person(actor), "person": actor, "line": sentence.line}
-		actor_codes[actor] = compiled.codes
+			var sentence_codes: Array = sentence.get("codes", [])
+			if sentence_codes.is_empty():
+				if not sentence.observer.is_empty():
+					sentence_codes.append("WHEN|%s|%s|%s" % [sentence.observer, sentence.condition, sentence.get("condition_target", "")])
+				sentence_codes.append(sentence.code)
+			if not actor_codes.has(sentence.actor): actor_codes[sentence.actor] = []
+			actor_codes[sentence.actor].append_array(sentence_codes)
 		all_codes.append_array(compiled.codes)
 	return {"codes": all_codes, "actor_codes": actor_codes}
 
@@ -252,6 +256,8 @@ static func _populate_vocabulary(scene: Node2D, page: Control) -> void:
 	var catalog: Dictionary = Language.get_catalog(scene.sites)
 	if tab == "conditions" and query.is_empty():
 		label(entries,catalog.help,18,MUTED)
+		if catalog.has("rule_help"):
+			label(entries,catalog.rule_help,18,INK)
 		for template in catalog.templates: label(entries,template,18,INK)
 		label(entries,tx("FA_MIND_037"),18,MUTED)
 		var observers := HFlowContainer.new()
@@ -318,6 +324,10 @@ static func refresh(scene: Node2D) -> void:
 		scene.replay_feedback.remove_child(child)
 		child.queue_free()
 	var parent: VBoxContainer = scene.replay_feedback
+	if scene.sim_result.is_empty() and scene.meeting_done:
+		for claim in INVESTIGATION_CONTENT.meeting_hypotheses:
+			flow_button(parent, tx(claim.label_id), scene._hypothesis_test.bind(claim.id), MUTED)
+
 	var obs: Node = scene.replay_feedback.get_parent().get_parent().get_node_or_null("Observation")
 	var has_content: bool = not scene.sim_result.is_empty() or not scene.mind_note.is_empty()
 	if obs: obs.visible = has_content
@@ -357,7 +367,6 @@ static func refresh(scene: Node2D) -> void:
 	var space := Control.new()
 	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(space)
-	label(heading,tx("FA_MIND_051") % maxi(0,3-scene.checks_this_run),18,MUTED)
 	var note := VBoxContainer.new()
 	parent.add_child(note)
 	label(note,tx(("FA_MIND_052" if scene.sim_checks.has(trace.canonical) else "FA_MIND_053") if produced else "FA_MIND_054"),19,INK if produced else Color("8f3d32"))
@@ -371,7 +380,7 @@ static func refresh(scene: Node2D) -> void:
 				if str(conflict).contains(term): explanation = conflict
 	label(note,tx(explanation),19,LIGHT)
 	if produced:
-		flow_button(note,tx("FA_MIND_056") if scene.evidence.has(trace.site) else tx("FA_MIND_057"),func(): scene._request_trace_check(trace.canonical,trace.required,trace.site),Color("8a5d36"),scene.mind_dirty or scene.sim_checks.has(trace.canonical) or scene.checks_this_run >= 3)
+		flow_button(note,tx("FA_MIND_056").get_slice(" · ", 0).get_slice("・", 0) if scene.evidence.has(trace.site) else tx("FA_MIND_057"),func(): scene._request_trace_check(trace.canonical,trace.required,trace.site),Color("8a5d36"),scene.mind_dirty or scene.sim_checks.has(trace.canonical))
 
 static func paper_arrow(parent: Node, glyph: String, callback: Callable, tip: String) -> Button:
 	var result: Button = preload("res://scenes/FirstAwakening/PaperIconButton.gd").new()

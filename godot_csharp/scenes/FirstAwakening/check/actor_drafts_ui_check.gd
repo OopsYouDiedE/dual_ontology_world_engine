@@ -12,6 +12,7 @@ func run() -> void:
 	var presentation: Script = load("res://scenes/FirstAwakening/MindPresentation.gd")
 	scene.dialogue.active = false
 	scene.dialogue.panel.hide()
+	scene.meeting_done = true
 	scene._open_flow()
 	await process_frame
 	var page: Control = scene.modal.find_child("MindNotebook", true, false)
@@ -32,7 +33,9 @@ func run() -> void:
 	editor.text = "音乐家用木楔撑开门。"
 	editor.text_changed.emit()
 	await process_frame
-	assert(presentation.compile_draft(scene).has("error"), "cannot issue another actor's action from this page")
+	var cross_page: Dictionary = presentation.compile_draft(scene)
+	assert(not cross_page.has("error"), "a page can draft another person's behavior rule")
+	assert(cross_page.get("actor_codes", {}).get("音乐家", []) == ["ACT|音乐家|BraceDoorWithWedge|door"], "the action is regrouped under its actual actor")
 	scene.mind_drafts = {
 		"侦探":"走到隔离门。\n侦探看见热烟后，撤下木楔。\n用纸包起木楔。",
 		"工程师":"走到隔离门。\n工程师看见木楔撤下后，插入生活翼内销。",

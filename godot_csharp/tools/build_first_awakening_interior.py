@@ -28,8 +28,8 @@ def _site_triggers() -> list[tuple[str, float, float, float]]:
         match = re.search(r'\{"id": "([^"]+)".*"point": Vector2\(([^,]+), ([^)]+)\).*"reach": ([0-9.]+)', line)
         if match:
             result.append((match[1], float(match[2]), float(match[3]), float(match[4])))
-    if len(result) != 38:
-        raise ValueError(f"Expected 38 investigation sites, found {len(result)} in {SITES}")
+    if not result or len({site[0] for site in result}) != len(result):
+        raise ValueError(f"Investigation catalog must contain unique sites: {SITES}")
     return result
 
 
@@ -62,6 +62,7 @@ def write_scene(data: dict) -> None:
         ('PackedScene', 'res://scenes/FirstAwakening/FirstAwakeningDialogue.tscn', 'dialogue'),
         ('Script', 'res://scenes/FirstAwakening/HallReplayBridge.cs', 'bridge'),
         ('AudioStream', 'res://ShareAsset/Internal/Props/first_awakening_reasoning_piano.mp3', 'reasoning_music'),
+        ('Texture2D', 'res://ShareAsset/Internal/Props/FirstAwakeningInterior/mind-ui-dossier.png', 'paper_card'),
     ]
     resources += [('Texture2D', f'res://ShareAsset/Internal/Props/FirstAwakeningInterior/{name}.png', name) for name in sorted(sprites)]
     resources += [('SpriteFrames', f'res://ShareAsset/Internal/Characters/animation_v2/{name}.tres', name + '_frames') for name in ('detective', 'engineer', 'chef', 'musician')]
@@ -111,25 +112,34 @@ def write_scene(data: dict) -> None:
         '[sub_resource type="GradientTexture2D" id="hud_bottom"]',
         'gradient = SubResource("hud_bottom_gradient")', 'width = 4', 'height = 64',
         'fill_from = Vector2(0, 0)', 'fill_to = Vector2(0, 1)', '',
-        '[sub_resource type="StyleBoxFlat" id="modal_panel"]',
-        'bg_color = Color(0.12549, 0.164706, 0.172549, 1)',
-        'border_width_left = 2', 'border_width_top = 2',
-        'border_width_right = 2', 'border_width_bottom = 2',
-        'border_color = Color(0.611765, 0.568627, 0.431373, 1)',
-        'corner_radius_top_left = 4', 'corner_radius_top_right = 4',
-        'corner_radius_bottom_right = 4', 'corner_radius_bottom_left = 4',
-        'content_margin_left = 10.0', 'content_margin_top = 10.0',
-        'content_margin_right = 10.0', 'content_margin_bottom = 10.0', '',
-        '[sub_resource type="StyleBoxEmpty" id="flow_panel"]', '',
-        '[sub_resource type="StyleBoxFlat" id="answer_panel"]',
-        'bg_color = Color(0.094118, 0.176471, 0.160784, 1)',
-        'border_width_left = 2', 'border_width_top = 2',
-        'border_width_right = 2', 'border_width_bottom = 2',
-        'border_color = Color(0.094118, 0.176471, 0.160784, 1)',
-        'corner_radius_top_left = 4', 'corner_radius_top_right = 4',
-        'corner_radius_bottom_right = 4', 'corner_radius_bottom_left = 4',
-        'content_margin_left = 32.0', 'content_margin_top = 32.0',
-        'content_margin_right = 32.0', 'content_margin_bottom = 32.0', '',
+        '[sub_resource type="StyleBoxTexture" id="modal_panel"]',
+        'texture = ExtResource("paper_card")',
+        'axis_stretch_horizontal = 1',
+        'axis_stretch_vertical = 1',
+        'texture_margin_left = 8.0',
+        'texture_margin_top = 8.0',
+        'texture_margin_right = 8.0',
+        'texture_margin_bottom = 8.0',
+        'content_margin_left = 40.0',
+        'content_margin_top = 32.0',
+        'content_margin_right = 40.0',
+        'content_margin_bottom = 32.0',
+        '',
+        '[sub_resource type="StyleBoxEmpty" id="flow_panel"]',
+        '',
+        '[sub_resource type="StyleBoxTexture" id="answer_panel"]',
+        'texture = ExtResource("paper_card")',
+        'axis_stretch_horizontal = 1',
+        'axis_stretch_vertical = 1',
+        'texture_margin_left = 8.0',
+        'texture_margin_top = 8.0',
+        'texture_margin_right = 8.0',
+        'texture_margin_bottom = 8.0',
+        'content_margin_left = 48.0',
+        'content_margin_top = 40.0',
+        'content_margin_right = 48.0',
+        'content_margin_bottom = 40.0',
+        '',
     ]
     for index, rect in enumerate(data['solids']):
         _rect_shape(lines, 'WallSolids', str(index), rect, f'wall_{index}')
@@ -145,11 +155,13 @@ def write_scene(data: dict) -> None:
         'position = Vector2(154, 184)', '',
         '[node name="MeetingSpots" type="Node2D" parent="."]', '',
         '[node name="Engineer" type="Marker2D" parent="MeetingSpots"]',
-        'position = Vector2(238, 704)', '',
+        'position = Vector2(232, 680)', '',
         '[node name="Chef" type="Marker2D" parent="MeetingSpots"]',
-        'position = Vector2(394, 717)', '',
+        'position = Vector2(320, 760)', '',
         '[node name="Musician" type="Marker2D" parent="MeetingSpots"]',
-        'position = Vector2(481, 710)', '',
+        'position = Vector2(408, 680)', '',
+        '[node name="Detective" type="Marker2D" parent="MeetingSpots"]',
+        'position = Vector2(320, 600)', '',
         '[node name="Darkness" type="ColorRect" parent="."]',
         'z_index = -10',
         'offset_left = -640.0', 'offset_top = -512.0',
@@ -259,8 +271,10 @@ def write_scene(data: dict) -> None:
               'centered = false', 'texture = SubResource("bed_quilt")', '']
     for index, at in enumerate(data['dorm_doors']):
         name = f'DormitoryDoor{index + 1}'
+        owner = ('detective', 'engineer', 'cook', 'musician')[index]
         lines += [f'[node name="{name}" type="Node2D" parent="ObjectsAndPeople"]',
-                  f'position = {_vec(*at)}', 'script = ExtResource("room_door")', '',
+                  f'position = {_vec(*at)}', 'script = ExtResource("room_door")',
+                  f'dorm_owner = "{owner}"', f'interior_bounds = Rect2({layout.DORM_X[index] * layout.CELL}, 32, 256, 256)', '',
                   f'[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/{name}"]', '',
                   f'[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/{name}/Body"]',
                   'position = Vector2(0, -4)', 'shape = SubResource("dorm_leaf")', '']
@@ -314,15 +328,22 @@ def write_scene(data: dict) -> None:
         'offset_left = 946.0', 'offset_top = 15.0',
         'offset_right = 1122.0', 'offset_bottom = 53.0', '',
         '[node name="Hint" type="Label" parent="FieldUI"]',
-        'offset_left = 24.0', 'offset_top = 950.0',
-        'offset_right = 1254.0', 'offset_bottom = 978.0',
-        'theme_override_colors/font_color = Color(0.905882, 0.886275, 0.831373, 1)',
-        'theme_override_font_sizes/font_size = 16', 'text = "FA_UI_011"', '',
+        'offset_left = 340.0',
+        'offset_top = 940.0',
+        'offset_right = 940.0',
+        'offset_bottom = 970.0',
+        'mouse_filter = 2',
+        'theme_override_colors/font_color = Color(0.94, 0.91, 0.83, 0.92)',
+        'theme_override_colors/font_shadow_color = Color(0.03, 0.02, 0.05, 0.6)',
+        'theme_override_constants/shadow_offset_y = 1',
+        'theme_override_font_sizes/font_size = 18',
+        'horizontal_alignment = 1',
+        '',
         '[node name="InvestigationPanel" type="PanelContainer" parent="FieldUI"]',
         'script = ExtResource("field_modal")',
-        'regular_bounds = Rect2(94, 62, 1092, 850)',
-        'detail_bounds = Rect2(250, 138, 780, 700)',
-        'answer_bounds = Rect2(230, 166, 820, 660)',
+        'regular_bounds = Rect2(300, 112, 680, 768)',
+        'detail_bounds = Rect2(270, 96, 740, 800)',
+        'answer_bounds = Rect2(260, 96, 760, 800)',
         'flow_bounds = Rect2(0, 0, 1280, 992)',
         'regular_panel_style = SubResource("modal_panel")',
         'flow_panel_style = SubResource("flow_panel")',

@@ -170,6 +170,8 @@ func _refresh_history_locale() -> void:
 		history[index] = character + "\n" + refreshed.text
 
 func _localized_speaker(canonical_name: String) -> String:
+	if is_instance_valid(context) and context.has_method("_localized_speaker"):
+		return context.call("_localized_speaker", canonical_name)
 	var ids := {"侦探":"FA_NAME_001", "工程师":"FA_NAME_002", "厨师":"FA_NAME_003",
 		"音乐家":"FA_NAME_004", "铜口":"FA_NAME_005", "侦探（心声）":"FA_NAME_006"}
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
@@ -319,13 +321,13 @@ func use_compact_layout() -> void:
 	background.bg_color = Color("182723", 0.97)
 	background.set_corner_radius_all(8)
 	panel.add_theme_stylebox_override("panel", background)
-	speaker.position = Vector2(32, 24)
+	speaker.position = Vector2(32, 18)
 	speaker.add_theme_font_size_override("font_size", 18)
 	speaker.add_theme_color_override("font_color", Color("c4b798"))
-	body.position = Vector2(32, 62)
-	body.size = Vector2(1088, 110)
-	body.add_theme_font_size_override("normal_font_size", 23)
-	choices.position = Vector2(32, 174)
+	body.position = Vector2(32, 52)
+	body.size = Vector2(1088, 104)
+	body.add_theme_font_size_override("normal_font_size", 24)
+	choices.position = Vector2(32, 160)
 	next_button.text = tr("FA_UI_148")
 	next_button.position.x = 1024
 	next_button.size.x = 96
@@ -345,10 +347,10 @@ func layout_compact_line() -> void:
 	var count := 0
 	for response in line.responses:
 		if response.is_allowed: count += 1
-	var height := 224 + int(ceil(count / 2.0)) * 54 if count > 0 else 224
+	var height := 204 + int(ceil(count / 2.0)) * 54 if count > 0 else 204
 	panel.size.y = height
 	panel.position.y = 992 - 32 - height
-	next_button.position.y = height - 56
+	next_button.position.y = height - 52
 
 func label(text: String, at: Vector2, size: int, color: Color) -> Label:
 	var result := Label.new()

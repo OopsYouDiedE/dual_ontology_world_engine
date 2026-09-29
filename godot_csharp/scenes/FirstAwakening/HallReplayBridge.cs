@@ -105,7 +105,8 @@ public partial class HallReplayBridge : Node
         OuterBarDropped, OuterBarLifted, WedgeBraced, WedgeRemoved,
         WedgeWrapped, StopMoved, FloorWiped, WaterRunning
     }
-    private sealed record Command(ReplayActor Actor, Verb Verb, Target Target, Condition? Condition);
+    private sealed record Command(ReplayActor Actor, Verb Verb, Target Target, Condition? Condition,
+        RuleMode? Policy = null);
 
     public Godot.Collections.Dictionary CompileDraft(Godot.Collections.Array<string> steps,
         Godot.Collections.Dictionary sites)
@@ -125,7 +126,7 @@ public partial class HallReplayBridge : Node
                 var parts = code.Split('|');
                 if (parts.Length != 4 || parts[1] != name)
                     return new Godot.Collections.Dictionary { ["error"] = Visible(name + "的草稿只能规定本人观察和行动。") };
-                if (parts[0] == "WHEN" && (index + 1 >= personSteps.Count ||
+                if (parts[0] is "WHEN" or "RULE" or "PREFER" or "FORBID" && (index + 1 >= personSteps.Count ||
                     !personSteps[index + 1].StartsWith("ACT|" + name + "|", StringComparison.Ordinal)))
                     return new Godot.Collections.Dictionary { ["error"] = Visible(name + "的观察条件必须接本人行动。") };
                 steps.Add(code);
@@ -171,16 +172,33 @@ public partial class HallReplayBridge : Node
         for (int i = 0; i < steps.Count; i++)
         {
             var parts = steps[i].Split('|');
-            if (parts.Length != 4 || parts[0] is not ("ACT" or "WHEN") ||
+            if (parts.Length != 4 || parts[0] is not ("ACT" or "WHEN" or "RULE" or "PREFER" or "FORBID") ||
                 !actors.TryGetValue(parts[1], out var actor) || !targets.TryGetValue(parts[3], out var target))
                 return new Godot.Collections.Dictionary { ["error"] = Visible($"第{i + 1}步包含未公布的人物、对象或句式。") };
-            bool when = parts[0] == "WHEN";
+            bool when = parts[0] != "ACT";
             Verb verb = Verb.Wait;
             Condition condition = Condition.Smoke;
             if (when ? !Enum.TryParse(parts[2], out condition) || !Enum.IsDefined(condition) || condition.ToString() != parts[2] :
                 !Enum.TryParse(parts[2], out verb) || !Enum.IsDefined(verb) || verb.ToString() != parts[2])
                 return new Godot.Collections.Dictionary { ["error"] = Visible($"第{i + 1}步包含未公布的行动或条件。") };
-            commands.Add(new(actor, verb, target, when ? condition : null));
+            RuleMode? policy = parts[0] switch
+            {
+                "RULE" => RuleMode.Permit, "PREFER" => RuleMode.Prefer,
+                "FORBID" => RuleMode.Forbid, _ => null
+            };
+            commands.Add(new(actor, verb, target, when ? condition : null, policy));
+        }
+        // Persistent rules are declarations, not entries blocking a person's task queue.
+        // Their action vocabulary and physical execution are exactly the ordinary actions'.
+        var policies = new List<(Command Test, Command Action)>();
+        for (int i = 0; i < commands.Count;)
+        {
+            if (commands[i].Policy is null) { i++; continue; }
+            if (i + 1 >= commands.Count || commands[i + 1].Condition is not null ||
+                commands[i].Actor != commands[i + 1].Actor)
+                return new Godot.Collections.Dictionary { ["error"] = Visible("持续规则须连接同一观察者的行动。") };
+            policies.Add((commands[i], commands[i + 1]));
+            commands.RemoveRange(i, 2);
         }
         var physical = new List<HallCausalityRules.Action>();
         var result = HallCausalityRules.Simulate(physical);
@@ -237,6 +255,28 @@ public partial class HallReplayBridge : Node
             return success;
         }
         bool NearDoor(ReplayActor actor) => actor.Position.Key is "door" or "slit" or "hinge" or "weight" or "trace" or "stop" or "floor_wipe" or "floor" or "inner_bolt" or "outer_bar" or "outside";
+        bool CanObserve(Command test)
+        {
+            var actor = test.Actor;
+            string key = test.Target.Key;
+            bool near = actor.Position == test.Target || SiteKey(actor.Position.Key) == SiteKey(key);
+            return test.Condition switch
+            {
+                Condition.Smoke or Condition.DoorOpen or Condition.DoorClosed =>
+                    key is "door" or "outside" && NearDoor(actor),
+                Condition.InnerBoltSlid or Condition.InnerBoltWithdrawn =>
+                    key is "door" or "inner_bolt" && !actor.Outside && NearDoor(actor),
+                Condition.OuterBarDropped or Condition.OuterBarLifted =>
+                    key is "slit" or "outer_bar" && (actor.Outside ? NearDoor(actor) : actor.Position.Key == "slit"),
+                Condition.WedgeBraced => key is "door" or "wedge" or "paper" && !actor.Outside && NearDoor(actor),
+                Condition.WedgeRemoved => key is "wedge" or "paper" && !actor.Outside && (NearDoor(actor) || near),
+                Condition.WedgeWrapped => key is "wedge" or "paper" && !actor.Outside && near,
+                Condition.StopMoved => key == "stop" && !actor.Outside && NearDoor(actor),
+                Condition.FloorWiped => key is "floor" or "floor_wipe" && !actor.Outside && NearDoor(actor),
+                Condition.WaterRunning => key == "water" && !actor.Outside && (near || actor.Position.Key is "wash" or "cloth"),
+                _ => false
+            };
+        }
         bool ConditionMet(Condition condition) => condition switch
         {
             Condition.Smoke => result.SmokeReachedDoor || result.DoorIsBraced,
@@ -254,13 +294,13 @@ public partial class HallReplayBridge : Node
             Condition.WaterRunning => valveOpen,
             _ => false
         };
-        bool CanCross() => !result.DoorClosed && !result.InnerBoltSlid && !result.OuterBarDropped;
+        bool CanCross() => result.DoorAllowsPassage && !result.InnerBoltSlid && !result.OuterBarDropped;
         bool AtDoorHandle(Target target) => target.Key is "door" or "slit" or "inner_bolt" or "outer_bar" or "outside" or "trace" or "hinge" or "weight";
         void ReleaseForDestination(ReplayActor actor, Target destination, bool crossesDoor = false)
         {
             if (holdingDoor == actor && (crossesDoor || !AtDoorHandle(destination)))
             {
-                Apply(HallCausalityRules.Action.CloseDoor, out string closure);
+                Apply(HallCausalityRules.Action.ReleaseDoor, out string closure);
                 holdingDoor = null;
                 Emit("CloseDoor", actor, Start("door"), true, actor.Name + "离开门边，松开门扇。" + closure);
             }
@@ -275,11 +315,39 @@ public partial class HallReplayBridge : Node
         var actorQueues = independent
             ? actorOrder.ToDictionary(name => name, name => new Queue<Command>(commands.Where(command => command.Actor.Name == name)))
             : null;
-        int legacyIndex = 0, turn = 0;
+        int legacyIndex = 0, turn = 0, decisions = 0;
         string? forcedActor = null;
+        Command? ruleAction = null;
+        var triggered = new HashSet<(Command Test, Command Action)>();
+        Verb ResolvedVerb(Command action) => action.Verb switch
+        {
+            Verb.RemoveWedge when action.Target.Key == "inner_bolt" => Verb.WithdrawInnerBolt,
+            Verb.WipeFloor when action.Target.Key.StartsWith("window_", StringComparison.Ordinal) => Verb.WipeWindow,
+            Verb.CloseDoor when action.Target.Key == "water" => Verb.CloseValve,
+            _ => action.Verb
+        };
+        string ActionObject(Command action) => ResolvedVerb(action) switch
+        {
+            Verb.RemoveWedge or Verb.WrapWedge or Verb.UnwrapWedge when action.Target.Key is "wedge" or "paper" or "door" => "wedge",
+            Verb.SlideInnerBolt or Verb.WithdrawInnerBolt when action.Target.Key is "door" or "inner_bolt" => "inner_bolt",
+            Verb.OuterBar or Verb.LiftOuterBar when action.Target.Key is "slit" or "outer_bar" => "outer_bar",
+            Verb.WipeFloor when action.Target.Key is "floor" or "floor_wipe" => "floor",
+            _ => action.Target.Key
+        };
+        bool Active(Command test) => CanObserve(test) && test.Condition is { } condition &&
+            (condition == Condition.Smoke ? result.SmokeReachedDoor : ConditionMet(condition));
+        bool Forbidden(Command action) => policies.Any(p => p.Test.Policy == RuleMode.Forbid &&
+            p.Action.Actor == action.Actor && ResolvedVerb(p.Action) == ResolvedVerb(action) &&
+            ActionObject(p.Action) == ActionObject(action) && Active(p.Test));
         Command? NextCommand()
         {
-            if (!independent) return legacyIndex < commands.Count ? commands[legacyIndex++] : null;
+            if (ruleAction is not null)
+            {
+                var selected = ruleAction;
+                ruleAction = null;
+                turn = (Array.IndexOf(actorOrder, selected.Actor.Name) + 1) % actorOrder.Length;
+                return selected;
+            }
             if (forcedActor is not null)
             {
                 var next = actorQueues![forcedActor].Dequeue();
@@ -287,10 +355,42 @@ public partial class HallReplayBridge : Node
                 turn = (Array.IndexOf(actorOrder, next.Actor.Name) + 1) % actorOrder.Length;
                 return next;
             }
+            // The case's external smoke reaches an open doorway at the next decision
+            // boundary. It is not created by a character's knowledge or a successful guess.
+            if (policies.Count > 0 && !result.DoorClosed && !result.SmokeReachedDoor)
+            {
+                Apply(HallCausalityRules.Action.SmokeArrives, out string smokeCaption);
+                Emit("SmokeArrives", null, Start("door"), true, smokeCaption);
+            }
+            triggered.RemoveWhere(rule => !Active(rule.Test));
+            if (++decisions > 512)
+            {
+                Emit("RuleLimit", null, null, false, "规则持续循环，重建尚未结束；请检查互相触发的行为。");
+                return null;
+            }
             for (int offset = 0; offset < actorOrder.Length; offset++)
             {
                 int index = (turn + offset) % actorOrder.Length;
-                var queue = actorQueues![actorOrder[index]];
+                string actorName = actorOrder[index];
+                var choice = policies.Where(p => p.Test.Policy != RuleMode.Forbid &&
+                    p.Test.Actor.Name == actorName && Active(p.Test) && !triggered.Contains(p) && !Forbidden(p.Action))
+                    .OrderByDescending(p => p.Test.Policy == RuleMode.Prefer).FirstOrDefault();
+                if (choice.Test is not null)
+                {
+                    triggered.Add(choice);
+                    ruleAction = choice.Action;
+                    Emit("RuleDecision", choice.Action.Actor, choice.Action.Target, true,
+                        choice.Action.Actor.Name + "依据当前亲见的条件触发" +
+                        (choice.Test.Policy == RuleMode.Prefer ? "优先规则。" : "行为规则。"));
+                    return choice.Test;
+                }
+                if (!independent) continue;
+                var queue = actorQueues![actorName];
+                while (queue.Count > 0 && queue.Peek().Condition is null && Forbidden(queue.Peek()))
+                {
+                    var prevented = queue.Dequeue();
+                    Emit("RuleForbidden", prevented.Actor, prevented.Target, true, prevented.Actor.Name + "的当前禁行规则阻止了这次行动。");
+                }
                 if (queue.Count == 0) continue;
                 var head = queue.Peek();
                 if (head.Condition is { } condition && !ConditionMet(condition)) continue;
@@ -298,6 +398,20 @@ public partial class HallReplayBridge : Node
                 if (head.Condition.HasValue && queue.Count > 0) forcedActor = head.Actor.Name;
                 else turn = (index + 1) % actorOrder.Length;
                 return head;
+            }
+            if (!independent)
+            {
+                while (legacyIndex < commands.Count)
+                {
+                    var next = commands[legacyIndex++];
+                    if (next.Condition is null && Forbidden(next))
+                    {
+                        Emit("RuleForbidden", next.Actor, next.Target, true, next.Actor.Name + "的当前禁行规则阻止了这次行动。");
+                        continue;
+                    }
+                    return next;
+                }
+                return null;
             }
             // An unresolved condition remains visible as a failed observation, rather than silently passing.
             for (int offset = 0; offset < actorOrder.Length; offset++)
@@ -323,15 +437,15 @@ public partial class HallReplayBridge : Node
                 "musician" => actors["音乐家"], _ => null
             };
             // The manuscript's generic wording is resolved against the chosen object.
-            var verb = command.Verb switch
-            {
-                Verb.RemoveWedge when key == "inner_bolt" => Verb.WithdrawInnerBolt,
-                Verb.WipeFloor when key.StartsWith("window_", StringComparison.Ordinal) => Verb.WipeWindow,
-                Verb.CloseDoor when key == "water" => Verb.CloseValve,
-                _ => command.Verb
-            };
+            var verb = ResolvedVerb(command);
             string actionName = command.Condition == Condition.Smoke ? "WaitSmoke" : command.Condition.HasValue ? "ObserveCondition" : verb.ToString();
             void Fail(string text) => Emit(actionName, actor, target, false, actor.Name + "：" + text);
+            if (command.Condition is null && Forbidden(command))
+            {
+                Emit("RuleForbidden", actor, target, true, actor.Name + "的当前禁行规则阻止了这次行动。");
+                skipNext = false;
+                continue;
+            }
             if (command.Condition is { } condition)
             {
                 bool near = actor.Position == target || SiteKey(actor.Position.Key) == SiteKey(key);
@@ -412,7 +526,7 @@ public partial class HallReplayBridge : Node
             bool crossing = verb == Verb.GoTo && actor.Outside != (addressed?.Outside ?? key is "outside" or "outer_bar");
             if (holdingDoor == actor && verb is not (Verb.GoTo or Verb.Wait or Verb.Inspect or Verb.PushDoor or Verb.PullDoor or Verb.BraceDoorWithWedge or Verb.CloseDoor) && !crossing)
             {
-                Apply(HallCausalityRules.Action.CloseDoor, out string closure);
+                Apply(HallCausalityRules.Action.ReleaseDoor, out string closure);
                 holdingDoor = null;
                 Emit("CloseDoor", actor, Start("door"), true, actor.Name + "松开门扇。" + closure);
             }
@@ -424,7 +538,13 @@ public partial class HallReplayBridge : Node
             if (verb == Verb.GoTo)
             {
                 bool wantsOutside = addressed?.Outside ?? key is "outside" or "outer_bar";
-                if (actor.Outside != wantsOutside && !CanCross()) { Fail("隔离门尚未打开，不能穿过门扇抵达另一侧。"); continue; }
+                if (actor.Outside != wantsOutside && !CanCross())
+                {
+                    Fail(!result.DoorClosed && result.DoorIsBraced
+                        ? "木楔留下的约十厘米窄缝不能穿行；须先将门开大并扶住门扇。"
+                        : "隔离门尚未打开，不能穿过门扇抵达另一侧。");
+                    continue;
+                }
                 var moveDestination = addressed?.Position ?? target;
                 if (!crossing) ReleaseForDestination(actor, moveDestination);
                 actor.Outside = wantsOutside; actor.Position = moveDestination;
@@ -566,6 +686,47 @@ public partial class HallReplayBridge : Node
         return Visible(HallCausalityRules.TestHypothesis(claim, observedLocks).Explanation);
     }
 
+    // These are counterexamples to concrete proposed steps, not verdicts on motives or identities.
+    public string ProbeHypothesis(string hypothesis)
+    {
+        var claim = hypothesis switch
+        {
+            "escape" => HallCausalityRules.Hypothesis.PassageThroughWedgeGap,
+            "betrayal" => HallCausalityRules.Hypothesis.ClosedDoorContinuesAdmittingSmoke,
+            "fifth_person" => HallCausalityRules.Hypothesis.OutsideActorDidAllCleanup,
+            _ => (HallCausalityRules.Hypothesis?)null
+        };
+        if (claim is null) return Probe(hypothesis);
+        var actions = new List<HallCausalityRules.Action>
+        {
+            HallCausalityRules.Action.BraceDoorWithWedge,
+            HallCausalityRules.Action.SmokeArrives
+        };
+        if (hypothesis != "escape") actions.Add(HallCausalityRules.Action.RemoveWedge);
+        string explanation = Visible(HallCausalityRules.TestHypothesis(claim.Value,
+            HallCausalityRules.Simulate(actions)).Explanation);
+        if (hypothesis == "betrayal") return explanation;
+        // Exercise the same spatial execution path used by the player's manuscript:
+        // Core supplies the opening state; this host supplies passage and operation sides.
+        var sites = new Godot.Collections.Dictionary();
+        foreach (var (site, title) in new[]
+        {
+            ("notebook", "纸面"), ("study", "研习桌"), ("water", "水阀"),
+            ("door", "隔离门"), ("paper", "包纸"), ("stop", "止挡座"), ("floor_wipe", "门厅地面")
+        }) sites[site] = new Godot.Collections.Dictionary { ["title"] = title };
+        var steps = hypothesis == "escape"
+            ? new Godot.Collections.Array<string> { "ACT|侦探|BraceDoorWithWedge|door", "ACT|侦探|GoTo|outside" }
+            : new Godot.Collections.Array<string>
+            {
+                "ACT|门外的人|WrapWedge|wedge", "ACT|门外的人|WipeFloor|floor",
+                "ACT|侦探|OuterBar|outer_bar"
+            };
+        var replay = CompileDraft(steps, sites);
+        var final = replay["states"].AsGodotArray().Last().AsGodotDictionary();
+        var failures = final["failures"].AsGodotArray<string>();
+        return string.Join("\n", failures) + "\n" + explanation;
+    }
+
     public Godot.Collections.Dictionary Run(Godot.Collections.Array<string> orderedActions)
     {
         var actions = new List<HallCausalityRules.Action>();
@@ -584,19 +745,25 @@ public partial class HallReplayBridge : Node
         var ids = new Godot.Collections.Array<string>();
         var descriptions = new Godot.Collections.Array<string>();
         var conflicts = new Godot.Collections.Array<string>();
+        var conflictKinds = new Godot.Collections.Array<string>();
         var failures = new Godot.Collections.Array<string>();
         foreach (var trace in result.Traces) { ids.Add(trace.Id); descriptions.Add(Visible(trace.Description)); }
-        foreach (var conflict in result.Conflicts.Where(item => item.Contradiction)) conflicts.Add(Visible(conflict.Explanation));
+        foreach (var conflict in result.Conflicts.Where(item => item.Contradiction))
+        {
+            conflicts.Add(Visible(conflict.Explanation));
+            conflictKinds.Add(conflict.Kind.ToString());
+        }
         foreach (var failure in result.Failures) failures.Add(Visible(failure));
         return new Godot.Collections.Dictionary
         {
             ["ids"] = ids, ["descriptions"] = descriptions, ["conflicts"] = conflicts,
+            ["conflict_kinds"] = conflictKinds,
             ["failures"] = failures, ["action"] = action, ["succeeded"] = succeeded, ["caption"] = Visible(caption),
             ["closed"] = result.DoorClosed, ["inner_bolt"] = result.InnerBoltSlid,
             ["outer_bar"] = result.OuterBarDropped, ["braced"] = result.DoorIsBraced,
             ["wrapped"] = result.WedgeWrapped, ["wedge_removed"] = result.WedgeWasRemoved,
             ["stop_moved"] = result.StopMoved, ["wiped"] = result.FloorWiped,
-            ["smoke"] = result.SmokeReachedDoor
+            ["smoke"] = result.SmokeReachedDoor, ["passage_open"] = result.DoorAllowsPassage
         };
     }
 }

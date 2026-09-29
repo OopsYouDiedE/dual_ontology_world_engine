@@ -1,7 +1,7 @@
 """One hand-tuned palette for the whole life wing.
 
 Value plan: pale limed floors carry the dark-clad cast; walnut furniture sits
-in the middle values; wall faces are the saturated, per-occupant accent; caps
+in the middle values; dormitory walls share the same saturated accent; caps
 and void are the darkest frame. Warm interior light answers cool fog glass.
 """
 from .pixel import hexc
@@ -38,16 +38,15 @@ OCHRE = r("#4a3113", "#6f4d1c", "#977029", "#bf933d", "#dcb65e", "#efd690")
 CHALK = r("#1c2522", "#27332f", "#34433d", "#e3e0d2")
 GRASS = r("#0f1a17", "#15241e", "#1d3027", "#273d30", "#344c3a")
 
-# Per-room identity: wallpaper, textile accent, rug and quilt.
+# Room materials: public rooms may vary; dormitories share one finish.
 TEAL = r("#13262b", "#1c353b", "#28494e", "#386163", "#517f7c", "#76a39a")
 SAGE = r("#222c24", "#313f33", "#435645", "#5a6f59", "#778c72", "#9db092")
 ROSE = r("#371d22", "#522d2f", "#6d403f", "#8a5750", "#a8746a", "#c69885")
 PLUM = r("#1f1828", "#302539", "#43344f", "#594767", "#745f80", "#978099")
 BOTTLE = r("#0f1d16", "#172a20", "#21392c", "#2e4b3a", "#406350", "#5d826b")
 
+# Dormitories have the same institutional finish; only door numbers differ.
 DORMS = [
-    {"name": "R-05", "paper": TEAL, "accent": OCHRE, "rug": TEAL, "quilt": TEAL, "motif": "pinstripe"},
-    {"name": "R-06", "paper": SAGE, "accent": OCHRE, "rug": SAGE, "quilt": SAGE, "motif": "lattice"},
-    {"name": "R-07", "paper": ROSE, "accent": LINEN, "rug": ROSE, "quilt": ROSE, "motif": "sprig"},
-    {"name": "R-08", "paper": PLUM, "accent": BRASS, "rug": PLUM, "quilt": PLUM, "motif": "damask"},
+    {"name": f"R-{5 + i:02}", "paper": TEAL, "accent": OCHRE, "rug": TEAL, "quilt": TEAL, "motif": "pinstripe"}
+    for i in range(4)
 ]

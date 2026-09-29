@@ -25,9 +25,10 @@ func _initialize() -> void:
 				require(parsed.get("codes", []) == ["ACT|侦探|%s|%s" % [verb.code, target.key]], locale + " action " + action + " => " + str(parsed))
 		for form in catalog.condition_forms:
 			var action: String = catalog.people[1] + " inspect water valve" if locale == "en" else catalog.people[1] + "水栓を調べる"
-			var draft: String = catalog.people[0] + form.word + action
+			# A condition is observed by the same person who chooses the action.
+			var draft: String = catalog.people[1] + form.word + action
 			var parsed := Language.compile_text(draft, SITES, "", locale)
-			require(parsed.get("codes", []) == ["WHEN|侦探|%s|%s" % [form.code, form.target], "ACT|工程师|Inspect|water"], locale + " condition " + draft + " => " + str(parsed))
+			require(parsed.get("codes", []) == ["WHEN|工程师|%s|%s" % [form.code, form.target], "ACT|工程师|Inspect|water"], locale + " condition " + draft + " => " + str(parsed))
 		var implicit: String = "inspect water valve" if locale == "en" else "水栓を調べる"
 		var compiled := Language.compile_text(implicit, SITES, "工程师", locale)
 		require(compiled.get("codes", []) == ["ACT|工程师|Inspect|water"], locale + " canonical heading")

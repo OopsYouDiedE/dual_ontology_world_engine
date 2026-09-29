@@ -116,12 +116,9 @@ func _test() -> void:
 		else:
 			print("Background music verified: playing=%s, volume_db=%.1f, bus=%s" % [bgm.playing, bgm.volume_db, bgm.bus])
 
-	# 6. 验证角色调查方向 (Lead)
-	var lead_label: Label = scene.hud_lead
-	if lead_label == null:
-		failures.append("hud_lead node missing in FieldUI")
-	elif not (lead_label.text.contains("广播") or lead_label.text.contains("broadcast") or lead_label.text.contains("放送")):
-		failures.append("Initial investigation lead should direct to transmitter broadcast: " + lead_label.text)
+	# 6. 常驻引导已删除：界面不再指示调查方向。
+	if scene.get("hud_lead") != null or scene.ui.find_child("InvestigationLead", true, false) != null:
+		failures.append("FieldUI should not show an investigation lead")
 
 	# 7. 验证角色调查交互朝向 (Facing Direction)
 	var player_actor: CharacterBody2D = scene.player

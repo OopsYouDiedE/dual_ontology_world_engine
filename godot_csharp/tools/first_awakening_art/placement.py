@@ -9,42 +9,21 @@ from __future__ import annotations
 def dorm(i: int) -> list[dict]:
     bx = 32 + 320 * i
     items = [
-        {"name": f"Bookcase{i}", "sprite": f"bookcase_{i}", "position": [bx + 26, 110], "footprint": [bx + 6, 96, 40, 14]},
-        {"name": f"Bed{i}", "sprite": f"bed_{i}", "position": [bx + 122, 166], "footprint": [bx + 104, 98, 36, 64]},
+        {"name": f"Bookcase{i}", "sprite": "bookcase_empty", "position": [bx + 26, 110], "footprint": [bx + 6, 96, 40, 14]},
+        {"name": f"Bed{i}", "sprite": "bed_0", "position": [bx + 122, 166], "footprint": [bx + 104, 98, 36, 64]},
         {"name": f"Nightstand{i}", "sprite": "nightstand", "position": [bx + 154, 120], "footprint": [bx + 145, 106, 18, 12]},
         {"name": f"Wardrobe{i}", "sprite": "wardrobe", "position": [bx + 226, 112], "footprint": [bx + 206, 96, 40, 16]},
-        {"name": f"Desk{i}", "sprite": f"desk_{i}", "position": [bx + 36, 178], "footprint": [bx + 7, 150, 58, 26]},
+        {"name": f"Desk{i}", "sprite": "desk_0", "position": [bx + 36, 178], "footprint": [bx + 7, 150, 58, 26]},
         {"name": f"DeskChair{i}", "sprite": "chair_coat" if i == 0 else "chair_back", "position": [bx + 36, 200], "footprint": [bx + 29, 188, 14, 10]},
-        {"name": f"LinenChest{i}", "sprite": f"linen_chest_{i}", "position": [bx + 226, 206], "footprint": [bx + 207, 188, 38, 16]},
-        {"name": f"Fern{i}", "sprite": "fern" if i % 2 == 0 else "fern_b", "position": [bx + 62, 282], "footprint": [bx + 55, 272, 14, 10]},
+        {"name": f"LinenChest{i}", "sprite": "linen_chest_0", "position": [bx + 226, 206], "footprint": [bx + 207, 188, 38, 16]},
+        {"name": f"Fern{i}", "sprite": "fern", "position": [bx + 62, 282], "footprint": [bx + 55, 272, 14, 10]},
         {"name": f"Dresser{i}", "sprite": "dresser", "position": [bx + 20, 256], "footprint": [bx + 3, 240, 34, 16]},
         {"name": f"CoatStand{i}", "sprite": "coat_stand", "position": [bx + 236, 282], "footprint": [bx + 230, 274, 12, 8]},
     ]
-    if i == 0:
-        items.append({"name": "PaperBasket", "sprite": "paper_basket", "position": [bx + 76, 196], "footprint": [bx + 70, 188, 12, 8]})
-        items.append({"name": "WallClock", "sprite": "wall_clock", "position": [bx + 184, 82], "footprint": None})
-    if i == 1:
-        items.append({"name": "MechanismSketch", "sprite": "mechanism_sketch", "position": [bx + 184, 64], "footprint": None})
-    # Keep the shared bed/window shell, but give each occupant a usable work area.
-    # Anchors and collision footprints move together; R-05 evidence stays put.
-    rearranged = {
-        1: {"Desk": (76, 240), "DeskChair": (76, 266),
-            "LinenChest": (222, 256), "Dresser": (20, 182), "Fern": (236, 186),
-            "CoatStand": (20, 280)},
-        2: {"Desk": (198, 224), "DeskChair": (198, 252),
-            "LinenChest": (226, 170), "Dresser": (20, 214), "CoatStand": (236, 278)},
-        3: {"Desk": (204, 174), "DeskChair": (204, 232),
-            "LinenChest": (26, 246), "Dresser": (20, 176), "Fern": (60, 278)},
-    }.get(i, {})
-    for item in items:
-        for prefix, (x, y) in rearranged.items():
-            if item["name"] != f"{prefix}{i}":
-                continue
-            dx, dy = bx + x - item["position"][0], y - item["position"][1]
-            item["position"] = [bx + x, y]
-            if item["footprint"] is not None:
-                item["footprint"][0] += dx
-                item["footprint"][1] += dy
+    # Standard furnishings cannot reveal an occupant's profession or shared past.
+    # The wrapped wedge is the surviving case clue, not a personal furnishing.
+    items.append({"name": f"PaperBasket{i}", "sprite": "paper_basket" if i == 0 else "paper_basket_empty", "position": [bx + 76, 196], "footprint": [bx + 70, 188, 12, 8]})
+    items.append({"name": "WallClock" if i == 0 else f"WallClock{i}", "sprite": "wall_clock", "position": [bx + 184, 82], "footprint": None})
     return items
 
 
@@ -92,8 +71,7 @@ FURNITURE: list[dict] = [item for i in range(4) for item in dorm(i)] + [
 ]
 
 # Floor-level textiles baked into the architecture (x, y, w, h, palette name).
-RUGS = [(118, 150, 72, 88, 0), (386, 210, 104, 64, 1),
-        (822, 196, 92, 72, 2), (1112, 176, 112, 88, 3)] + [(222, 598, 196, 148, "study"), (44, 728, 120, 60, "study"), (916, 700, 128, 64, "pantry")]
+RUGS = [(118 + 320 * i, 150, 72, 88, 0) for i in range(4)] + [(222, 598, 196, 148, "study"), (44, 728, 120, 60, "study"), (916, 700, 128, 64, "pantry")]
 SHOES = [(32 + 320 * i + 96, 178) for i in range(4)]
 
 # The gate sits in the south front wall and hangs down from the floor line

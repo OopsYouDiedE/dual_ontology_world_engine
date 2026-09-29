@@ -12,13 +12,16 @@ func run() -> void:
 	root.add_child(scene)
 	current_scene = scene
 	for i in 6: await process_frame
-	for entry in [["en", "My throat feels tight", "English"], ["ja", "喉が少し詰まる", "日本語"], ["zh_CN", "喉咙有些发紧", "中文"]]:
+	scene.player_name = "林"
+	for entry in [["en", "I woke in an unfamiliar single room", "English"], ["ja", "見知らぬ一人部屋", "日本語"], ["zh_CN", "我醒在一间陌生的单人房", "中文"]]:
 		locale.set_language(entry[0])
 		for i in 5: await process_frame
 		if not scene.dialogue.body.text.contains(entry[1]):
 			failures.append(entry[0] + " current dialogue")
 		if scene.language_selector.get_item_text(scene.language_selector.selected) != entry[2]:
 			failures.append(entry[0] + " HUD selector")
+		if not scene.dialogue.speaker.text.begins_with("林"):
+			failures.append(entry[0] + " player name survives locale refresh")
 	locale.set_language(original)
 	for failure in failures: push_error(failure)
 	print("LOCALE SWITCH: %d failures" % failures.size())

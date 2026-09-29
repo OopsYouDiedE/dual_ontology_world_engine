@@ -35,7 +35,7 @@ def build() -> tuple[Canvas, dict]:
     for x, y, w in WINDOWS:
         _window(c, x, y, w)
     for x, y, kind in PAINTINGS:
-        if not (y == 32 and x == 216):  # R-05 carries the clock and sketch instead
+        if y != 32:  # The same clock occupies this wall in every dormitory.
             _painting(c, x, y + 10, kind)
     for x, y in SCONCES:
         _sconce(c, x, y)
@@ -743,7 +743,7 @@ def _rug(c: Canvas, x: int, y: int, w: int, h: int, key) -> None:
         field, border, trim = [LINEN[0], LINEN[1], LINEN[2], LINEN[3], LINEN[4], LINEN[5]], CLARET, OCHRE
     else:
         info = DORMS[key]
-        field, border, trim = info["rug"], CLARET if key != 2 else BOTTLE, info["accent"]
+        field, border, trim = info["rug"], CLARET, info["accent"]
     c.rect(x, y, w, h, border[3])
     c.frame(x, y, w, h, border[1])
     c.frame(x + 2, y + 2, w - 4, h - 4, trim[3])

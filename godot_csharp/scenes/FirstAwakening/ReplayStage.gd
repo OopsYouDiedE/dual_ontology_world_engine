@@ -28,6 +28,7 @@ var marker: Line2D
 var paths: Dictionary = {}
 var caption_font: Font = preload("res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf")
 const JAPANESE_PRINT_FONT := preload("res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf")
+const FieldNavigation = preload("res://scenes/FirstAwakening/FieldNavigation.gd")
 const CLOSED_DORM_DOOR := preload("res://scenes/FirstAwakening/ReplayDormDoor.tscn")
 const ACTIONS := ["BraceDoorWithWedge", "RemoveWedge", "CloseDoor", "SlideInnerBolt", "WrapWedge", "MoveStop", "WipeFloor", "OuterBar"]
 
@@ -60,6 +61,13 @@ func _ready() -> void:
 			var leaves := CLOSED_DORM_DOOR.instantiate() as Node2D
 			leaves.position = original.position
 			fixtures.add_child(leaves)
+			# Remembered geometry comes from rooms actually seen with their owner.
+			# Removing the live door must not reveal its private room in the replay.
+			if not source.known_dorms.has(original.dorm_owner):
+				for original_cover in original.privacy_covers:
+					var cover := original_cover.duplicate(0) as Polygon2D
+					cover.visible = true
+					leaves.add_child(cover)
 	stop = fixtures.get_node("StopBase")
 	stop_now = Vector2(source.layout.stop.now[0], source.layout.stop.now[1])
 	stop_before = Vector2(source.layout.stop.before[0], source.layout.stop.before[1])
@@ -133,7 +141,7 @@ func _target_point(key: String, state: Dictionary, person: String, fallback: Vec
 		for x in range(-4,5):
 			var cell := Vector2i(floori(at.x / 16)+x,floori(at.y / 16)+y)
 			var candidate := Vector2(cell)*16+Vector2(8,8)
-			if source._walkable(candidate) and candidate.distance_squared_to(preference) < distance:
+			if FieldNavigation.walkable(candidate, source.floors, source.obstacle_rects) and candidate.distance_squared_to(preference) < distance:
 				best = candidate
 				distance = candidate.distance_squared_to(preference)
 	return best
@@ -161,7 +169,7 @@ func _process(_delta: float) -> void:
 		var at := start
 		if progress > 0 and direction.length() > 1:
 			var key := str(start) + str(finish)
-			if not paths.has(key): paths[key] = source._route(start, finish)
+			if not paths.has(key): paths[key] = FieldNavigation.route(start, finish, source.floors, source.obstacle_rects, Vector2i(source.layout.rows[0].length(), source.layout.rows.size()))
 			var route: PackedVector2Array = paths[key]
 			if route.size() > 1:
 				var step := progress * (route.size() - 1)
