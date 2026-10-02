@@ -38,6 +38,9 @@ var locale_refresh_key := ""
 var dialogue_theme: Theme
 var character_portraits: Dictionary = {}
 var character_portrait: TextureRect
+var portrait_frame: PanelContainer
+## Full-length portraits are shown as a head-and-shoulders card (fractions of the image).
+const PORTRAIT_BUST := Rect2(0.2, 0.02, 0.6, 0.4)
 var portrait_character := ""
 ## Opening dialogue consumes keyboard input before focused GUI buttons.
 var single_press_keyboard_continue := false
@@ -199,26 +202,50 @@ func set_character_portraits(mapping: Dictionary) -> void:
 		if character.is_empty():
 			continue
 		var asset: Variant = mapping[canonical_name]
+		var texture: Texture2D = null
 		if asset is Texture2D:
-			character_portraits[character] = asset
+			texture = asset
 		elif asset is String and ResourceLoader.exists(asset):
-			var texture := load(asset) as Texture2D
-			if texture != null:
-				character_portraits[character] = texture
+			texture = load(asset) as Texture2D
+		if texture != null:
+			character_portraits[character] = _bust(texture)
 	if not is_instance_valid(panel):
 		return
 	if not is_instance_valid(character_portrait):
+		# A framed card sitting on the dialogue box's top edge, so the face
+		# belongs to the box instead of floating over the map.
+		portrait_frame = PanelContainer.new()
+		portrait_frame.name = "PortraitFrame"
+		portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var card := StyleBoxFlat.new()
+		card.bg_color = Color("1b2b23")
+		card.border_color = Color("b49a5e")
+		card.set_border_width_all(2)
+		card.set_corner_radius_all(3)
+		card.set_content_margin_all(3)
+		card.shadow_color = Color(0, 0, 0, 0.35)
+		card.shadow_size = 6
+		portrait_frame.add_theme_stylebox_override("panel", card)
+		portrait_frame.size = Vector2(178, 178)
+		portrait_frame.position = Vector2(28, -186)
+		panel.add_child(portrait_frame)
 		character_portrait = TextureRect.new()
 		character_portrait.name = "CharacterPortrait"
 		character_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		character_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		character_portrait.size = Vector2(200, 360)
-		character_portrait.position = Vector2(24, -372)
-		panel.add_child(character_portrait)
+		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		character_portrait.custom_minimum_size = Vector2(172, 172)
+		portrait_frame.add_child(character_portrait)
 	character_portrait.texture = null
 	portrait_character = ""
 	_refresh_character_portrait()
+
+func _bust(texture: Texture2D) -> Texture2D:
+	var size := texture.get_size()
+	var crop := AtlasTexture.new()
+	crop.atlas = texture
+	crop.region = Rect2(size * PORTRAIT_BUST.position, size * PORTRAIT_BUST.size)
+	return crop
 
 func _portrait_character(canonical_name: String) -> String:
 	match canonical_name:
@@ -239,7 +266,9 @@ func _refresh_character_portrait() -> void:
 	if character != portrait_character:
 		portrait_character = character
 		character_portrait.texture = character_portraits.get(character) as Texture2D
-	character_portrait.visible = active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
+	var shown := active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
+	character_portrait.visible = shown
+	if is_instance_valid(portrait_frame): portrait_frame.visible = shown
 
 func apply_locale_font(font: Font, _theme: Theme) -> void:
 	dialogue_theme.default_font = font
@@ -449,6 +478,7 @@ func label(text: String, at: Vector2, size: int, color: Color) -> Label:
 func idle(title: String = "", text: String = "") -> void:
 	if is_instance_valid(character_portrait):
 		character_portrait.hide()
+		if is_instance_valid(portrait_frame): portrait_frame.hide()
 	speaker.text = tr(title) if not title.is_empty() else ""
 	body.text = tr(text) if not text.is_empty() else ""
 	body.visible_characters = -1

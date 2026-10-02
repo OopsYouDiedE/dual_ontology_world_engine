@@ -122,7 +122,7 @@ func _build_designer_view(parent: Node) -> void:
 	var stage_tools: HBoxContainer = HBoxContainer.new()
 	right.add_child(stage_tools)
 
-	stage_tools.add_child(Label.new()).text = "当前绘制角色: "
+	_label(stage_tools, "当前绘制角色: ")
 	var actors_sel := OptionButton.new()
 	for act in ACTOR_NAMES:
 		actors_sel.add_item(act)
@@ -166,7 +166,7 @@ func _build_visual_inspector_tab(parent: TabContainer) -> void:
 
 	var row1 := HBoxContainer.new()
 	container.add_child(row1)
-	row1.add_child(Label.new()).text = "节点ID: "
+	_label(row1, "节点ID: ")
 	ui_id = LineEdit.new()
 	ui_id.custom_minimum_size.x = 130
 	ui_id.text_changed.connect(func(_t: String) -> void: _sync_form_to_beat())
@@ -187,28 +187,28 @@ func _build_visual_inspector_tab(parent: TabContainer) -> void:
 	ui_mech_enabled.toggled.connect(func(_b: bool) -> void: _sync_form_to_beat())
 	row_mech.add_child(ui_mech_enabled)
 
-	row_mech.add_child(Label.new()).text = "类型: "
+	_label(row_mech, "类型: ")
 	ui_mech_kind = OptionButton.new()
 	for k in MECHANISM_KINDS:
 		ui_mech_kind.add_item(k)
 	ui_mech_kind.item_selected.connect(func(_idx: int) -> void: _sync_form_to_beat())
 	row_mech.add_child(ui_mech_kind)
 
-	row_mech.add_child(Label.new()).text = "动作: "
+	_label(row_mech, "动作: ")
 	ui_mech_op = OptionButton.new()
 	for op in SAFE_OPERATIONS:
 		ui_mech_op.add_item(op)
 	ui_mech_op.item_selected.connect(func(_idx: int) -> void: _sync_form_to_beat())
 	row_mech.add_child(ui_mech_op)
 
-	row_mech.add_child(Label.new()).text = "行动者: "
+	_label(row_mech, "行动者: ")
 	ui_mech_actor = OptionButton.new()
 	for a in ACTOR_NAMES:
 		ui_mech_actor.add_item(a)
 	ui_mech_actor.item_selected.connect(func(_idx: int) -> void: _sync_form_to_beat())
 	row_mech.add_child(ui_mech_actor)
 
-	row_mech.add_child(Label.new()).text = "目标/参数: "
+	_label(row_mech, "目标/参数: ")
 	ui_mech_id = LineEdit.new()
 	ui_mech_id.custom_minimum_size.x = 80
 	ui_mech_id.text_changed.connect(func(_t: String) -> void: _sync_form_to_beat())
@@ -219,7 +219,7 @@ func _build_visual_inspector_tab(parent: TabContainer) -> void:
 	# Actor track row
 	var row_act := HBoxContainer.new()
 	container.add_child(row_act)
-	row_act.add_child(Label.new()).text = "配置角色: "
+	_label(row_act, "配置角色: ")
 	ui_track_actor = OptionButton.new()
 	for a in ACTOR_NAMES:
 		ui_track_actor.add_item(a)
@@ -228,21 +228,21 @@ func _build_visual_inspector_tab(parent: TabContainer) -> void:
 		_refresh_form_track_ui())
 	row_act.add_child(ui_track_actor)
 
-	row_act.add_child(Label.new()).text = "朝向: "
+	_label(row_act, "朝向: ")
 	ui_track_face = OptionButton.new()
 	for f in FACINGS:
 		ui_track_face.add_item(f)
 	ui_track_face.item_selected.connect(func(_idx: int) -> void: _sync_form_to_beat())
 	row_act.add_child(ui_track_face)
 
-	row_act.add_child(Label.new()).text = "姿态: "
+	_label(row_act, "姿态: ")
 	ui_track_pose = OptionButton.new()
 	for p in POSES:
 		ui_track_pose.add_item(p)
 	ui_track_pose.item_selected.connect(func(_idx: int) -> void: _sync_form_to_beat())
 	row_act.add_child(ui_track_pose)
 
-	row_act.add_child(Label.new()).text = "速度: "
+	_label(row_act, "速度: ")
 	ui_track_speed = SpinBox.new()
 	ui_track_speed.min_value = 10
 	ui_track_speed.max_value = 300
@@ -256,7 +256,7 @@ func _build_visual_inspector_tab(parent: TabContainer) -> void:
 	ui_track_stand.toggled.connect(func(_b: bool) -> void: _sync_form_to_beat())
 	row_act.add_child(ui_track_stand)
 
-	row_act.add_child(Label.new()).text = "座高: "
+	_label(row_act, "座高: ")
 	ui_track_seat = SpinBox.new()
 	ui_track_seat.min_value = -1
 	ui_track_seat.max_value = 32
@@ -292,6 +292,12 @@ func _build_dialogs() -> void:
 	discard_dialog.dialog_text = "当前源文或编排尚未保存。切换将丢弃这些修改。"
 	discard_dialog.confirmed.connect(func() -> void: _open_file(pending_open))
 	add_child(discard_dialog)
+
+func _label(parent: Control, text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	parent.add_child(label)
+	return label
 
 func _button(parent: Control, label: String, action: Callable) -> Button:
 	var btn := Button.new()
@@ -449,7 +455,7 @@ func _sync_form_to_beat() -> void:
 	current_beat["wait"] = ui_wait.button_pressed
 
 	if ui_mech_enabled.button_pressed and ui_mech_kind.selected > 0:
-		var kind := MECHANISM_KINDS[ui_mech_kind.selected]
+		var kind: String = MECHANISM_KINDS[ui_mech_kind.selected]
 		var mech := {"kind": kind}
 		match kind:
 			"safe":

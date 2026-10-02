@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .layout import CELL, DORM_X, H, ROWS, W, mark, region, walkable
 from .palette import (HONEY, SAGE_TILE, BOTTLE, BRASS, CAP, CHALK, CLARET, CREAM, DORMS, FOG, GRASS, IRON, LEAF, LINEN,
-                      OAK, OCHRE, PLANK, STONE, TILE, TILE_GREEN, VOID, WALNUT)
+                      OAK, OCHRE, PLANK, QUARRY, STONE, TILE, TILE_GREEN, VOID, WALNUT)
 from .pixel import Canvas, mix, rng, shift
 
 MAP_W, MAP_H = W * CELL, H * CELL
@@ -105,35 +105,44 @@ def _herringbone(ramp, seed: int, unit: int = 8) -> Canvas:
                 key, rect = (u, v, "v"), (u * unit, v * unit, unit, unit * 2)
             else:
                 continue
-            tone = tones.setdefault(key, int(g.choice([3, 3, 4])))
+            # Close tones and soft seams: the pattern is felt, not shouted.
+            tone = tones.setdefault(key, int(g.choice([3, 3, 3, 4])))
             x, y, w, h = rect
-            t.rect(x, y, w, h, ramp[tone])
-            t.hline(x, y + h - 1, w, ramp[2])
-            t.vline(x + w - 1, y, h, ramp[2])
-            if w > h and g.random() < 0.6:
-                t.hline(x + 2 + int(g.integers(0, 4)), y + 2 + int(g.integers(0, 2)), 4, mix(ramp[tone], ramp[tone - 1], 0.4))
-            elif h > w and g.random() < 0.6:
-                t.vline(x + 2 + int(g.integers(0, 2)), y + 2 + int(g.integers(0, 4)), 4, mix(ramp[tone], ramp[tone - 1], 0.4))
+            base = ramp[tone] if tone == 3 else mix(ramp[3], ramp[4], 0.45)
+            t.rect(x, y, w, h, base)
+            seam = mix(base, ramp[2], 0.65)
+            t.hline(x, y + h - 1, w, seam)
+            t.vline(x + w - 1, y, h, seam)
+            if w > h and g.random() < 0.35:
+                t.hline(x + 2 + int(g.integers(0, 6)), y + 2 + int(g.integers(0, 3)), 5, mix(base, ramp[2], 0.25))
+            elif h > w and g.random() < 0.35:
+                t.vline(x + 2 + int(g.integers(0, 3)), y + 2 + int(g.integers(0, 6)), 5, mix(base, ramp[2], 0.25))
     return t
 
 
-def _checker(seed: int) -> Canvas:
+def _quarry(seed: int) -> Canvas:
+    """Pale limestone quarry tile: 16px squares, each its own quiet tone,
+    soft grout, worn lighter where the corners meet. Replaces the loud
+    green-and-white checkerboard so figures read against the floor."""
     g = rng(seed)
     t = Canvas(MAP_W, MAP_H)
     size = 16
     for ty in range(0, MAP_H, size):
         for tx in range(0, MAP_W, size):
-            dark = ((tx + ty) // size) % 2 == 1
-            ramp = SAGE_TILE if dark else TILE
-            tone = 3 if dark else int(g.choice([2, 2, 3]))
-            t.rect(tx, ty, size, size, ramp[tone])
-            t.hline(tx + 1, ty + 1, size - 2, ramp[min(tone + 1, len(ramp) - 1)])
-            t.vline(tx + 1, ty + 1, size - 2, mix(ramp[tone], ramp[min(tone + 1, len(ramp) - 1)], 0.5))
-            t.hline(tx, ty + size - 1, size, TILE[1])
-            t.vline(tx + size - 1, ty, size, TILE[1])
-            if g.random() < 0.18:
+            tone = 4
+            # each stone differs only slightly from its neighbours
+            base = mix(QUARRY[4], QUARRY[int(g.choice([3, 5]))], float(g.uniform(0.0, 0.32)))
+            t.rect(tx, ty, size, size, base)
+            t.dither(tx + 1, ty + 1, size - 2, size - 2, mix(base, QUARRY[tone - 1], 0.5), 0.12, int(g.integers(0, 4)))
+            t.hline(tx + 1, ty + 1, size - 3, mix(base, QUARRY[tone + 1], 0.5))
+            grout = mix(QUARRY[2], base, 0.35)
+            t.hline(tx, ty + size - 1, size, grout)
+            t.vline(tx + size - 1, ty, size, grout)
+            t.px(tx + size - 1, ty + size - 1, QUARRY[2])
+            if g.random() < 0.12:
                 cx, cy = tx + int(g.integers(3, 12)), ty + int(g.integers(3, 12))
-                t.px(cx, cy, ramp[tone - 1])
+                t.px(cx, cy, QUARRY[tone - 1])
+                t.px(cx + 1, cy, mix(base, QUARRY[tone - 1], 0.5))
     return t
 
 
@@ -170,8 +179,8 @@ def floor_materials() -> dict[str, Canvas]:
     return {
         "oak": _boards(OAK, 6, (48, 120), 11, 0.22, (3, 3, 4, 4, 3), 2),
         "corridor": _boards(PLANK, 8, (48, 128), 12, 0.25),
-        "study": _herringbone(HONEY, 13),
-        "prep": _checker(14),
+        "study": _herringbone([mix(h, o, 0.3) for h, o in zip(HONEY, OAK)], 13),
+        "prep": _quarry(14),
         "hall": _flagstones(15),
     }
 
@@ -198,14 +207,15 @@ def _runner(c: Canvas, x: int, y: int, w: int, h: int) -> None:
     c.frame(x + 2, y + 2, w - 4, h - 4, OCHRE[3])
     c.frame(x + 5, y + 5, w - 10, h - 10, CLARET[3])
     for gx in range(x + 12, x + w - 12, 16):
-        c.px(gx, y + 3, OCHRE[4])
-        c.px(gx, y + h - 4, OCHRE[4])
+        c.px(gx, y + 3, OCHRE[3])
+        c.px(gx, y + h - 4, OCHRE[3])
+    # small, low-contrast lozenges: a runner, not a signpost
     for gx in range(x + 20, x + w - 20, 40):
         cy = y + h // 2
-        for dy in range(-6, 7):
-            span = 6 - abs(dy)
-            c.hline(gx - span, cy + dy, span * 2 + 1, TEAL[4] if abs(dy) % 3 else OCHRE[2])
-        c.rect(gx - 1, cy - 1, 3, 3, CLARET[4])
+        for dy in range(-4, 5):
+            span = 4 - abs(dy)
+            c.hline(gx - span, cy + dy, span * 2 + 1, mix(TEAL[3], TEAL[4], 0.6) if abs(dy) != 4 - 1 else mix(TEAL[3], OCHRE[2], 0.5))
+        c.px(gx, cy, mix(TEAL[3], CLARET[4], 0.6))
     c.hline(x, y + h, w, shift(TEAL[1], -0.2))
     for rx in (x, x + w - 1):
         c.vline(rx, y - 1, h + 2, BRASS[3])
@@ -429,9 +439,10 @@ def _caps(c: Canvas) -> None:
     g = rng(31)
     for x, y in _cells(lambda x, y: mark(x, y) == "#"):
         x0, y0 = x * CELL, y * CELL
-        c.rect(x0, y0, CELL, CELL, CAP[1])
-        for _ in range(10):
-            c.px(x0 + int(g.integers(0, 32)), y0 + int(g.integers(0, 32)), CAP[2])
+        c.rect(x0, y0, CELL, CELL, CAP[2])
+        c.dither(x0, y0, CELL, CELL, CAP[1], 0.35, (x + y) % 4)
+        for _ in range(6):
+            c.px(x0 + int(g.integers(0, 32)), y0 + int(g.integers(0, 32)), CAP[3])
     for x, y in _cells(lambda x, y: mark(x, y) == "#"):
         x0, y0 = x * CELL, y * CELL
         open_n, open_s = mark(x, y - 1) != "#", mark(x, y + 1) != "#"

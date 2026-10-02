@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=5 format=3]
+[gd_resource type="Theme" load_steps=8 format=3]
 
 [ext_resource type="FontFile" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="print_font"]
 
@@ -8,12 +8,81 @@ content_margin_top = 2.0
 content_margin_right = 6.0
 content_margin_bottom = 2.0
 
+[sub_resource type="StyleBoxFlat" id="paper"]
+bg_color = Color(0.2, 0.25, 0.2, 0.04)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.188235, 0.223529, 0.188235, 0.42)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+
 [sub_resource type="StyleBoxFlat" id="hover"]
-bg_color = Color(0.2, 0.25, 0.2, 0.08)
-content_margin_left = 6.0
-content_margin_top = 2.0
-content_margin_right = 6.0
-content_margin_bottom = 2.0
+bg_color = Color(0.2, 0.25, 0.2, 0.11)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.188235, 0.223529, 0.188235, 0.7)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+bg_color = Color(0.2, 0.25, 0.2, 0.2)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.188235, 0.223529, 0.188235, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 12.0
+content_margin_top = 7.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.654902, 0.388235, 0.12549, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="disabled"]
+bg_color = Color(0.2, 0.25, 0.2, 0.02)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.188235, 0.223529, 0.188235, 0.18)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="scroll_grabber"]
 bg_color = Color(0.2, 0.25, 0.2, 0.35)
@@ -29,10 +98,10 @@ Button/colors/font_hover_color = Color(0.188235, 0.223529, 0.188235, 1)
 Button/colors/font_pressed_color = Color(0.188235, 0.223529, 0.188235, 1)
 Button/colors/font_focus_color = Color(0.188235, 0.223529, 0.188235, 1)
 Button/colors/font_disabled_color = Color(0.384314, 0.400000, 0.352941, 1)
-Button/styles/normal = SubResource("clear")
-Button/styles/pressed = SubResource("hover")
-Button/styles/disabled = SubResource("clear")
-Button/styles/focus = SubResource("hover")
+Button/styles/normal = SubResource("paper")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
 Button/styles/hover = SubResource("hover")
 VScrollBar/styles/scroll = SubResource("clear")
 VScrollBar/styles/scroll_focus = SubResource("clear")

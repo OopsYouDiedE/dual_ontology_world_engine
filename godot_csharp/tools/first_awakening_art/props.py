@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from .palette import (BRASS, CLARET, CREAM, DORMS, FLAME, FOG, IRON, LEAF, LINEN, OCHRE, STONE, TEAL,
                       BOTTLE, TILE, WALNUT, INK, SAGE, ROSE, PLUM)
-from .pixel import Canvas, mix, rng, shift
+from .pixel import hexc, Canvas, mix, rng, shift
 
 SHADE = (22, 14, 26, 255)
 
@@ -702,6 +702,10 @@ def dresser() -> Canvas:
 
 
 def coat_stand() -> Canvas:
+    return _finish(_coat_stand_base())
+
+
+def _coat_stand_base() -> Canvas:
     c = Canvas(18, 50)
     c.ellipse(9, 47, 7, 2.5, WALNUT[2])
     c.vline(8, 8, 39, WALNUT[4])
@@ -710,6 +714,20 @@ def coat_stand() -> Canvas:
         c.line(8 if hx < 9 else 9, hy + 3, hx, hy, WALNUT[3])
     c.ellipse(9, 6, 2, 2, BRASS[4])
     # All hooks are empty in the standard dormitory.
+    return c
+
+
+def coat_stand_coat() -> Canvas:
+    """The detective's dark-brown long coat on the hook until he takes it."""
+    c = _coat_stand_base()
+    coat = [hexc("#2e1f17"), hexc("#3f2c20"), hexc("#5a4130"), hexc("#6e5240")]
+    c.poly([(5, 10), (12, 10), (14, 40), (3, 40)], coat[2])
+    c.vline(4, 13, 27, coat[3])
+    c.vline(12, 13, 27, coat[1])
+    c.vline(8, 14, 26, coat[1])                     # front opening
+    c.hline(4, 40, 10, coat[0])
+    c.rect(6, 10, 5, 2, coat[3])                    # collar over the hook
+    c.px(9, 9, BRASS[4])
     return _finish(c)
 
 
@@ -974,6 +992,7 @@ def build() -> dict[str, Canvas]:
     out["nightstand"] = nightstand()
     out["chair_back"] = chair_back()
     out["chair_coat"] = chair_back(True)
+    out["coat_stand_coat"] = coat_stand_coat()
     out["chair_front"] = chair_front()
     out["wardrobe"] = wardrobe()
     out["fern"] = fern(3)

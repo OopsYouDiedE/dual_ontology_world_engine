@@ -82,8 +82,9 @@ func _open_red_defense() -> void:
 		var result: Dictionary = source.red.call("Defend",answer)
 		if result.get("ok",false):
 			source.ended = true
-			source.red_dialogue_queue.assign(["S27", "S28"])
-			source._begin_dialogue("S28_ADMISSION")
+			# The copper voice asks its three questions aloud, then rules.
+			source.red_dialogue_queue.assign(["S25", "S26", "S28_ADMISSION", "S27", "S28"])
+			source._begin_dialogue("S24")
 		else:
 			feedback.text = str(result.get("message","请检查材料支持范围。"))
 			feedback.visible = true]]

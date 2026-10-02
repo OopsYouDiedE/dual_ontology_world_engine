@@ -1,5 +1,7 @@
 # 人物动作图集 v2
 
+2026-10-02 生活翼四人（`detective`、`engineer`、`chef`、`musician`）及无外衣变体 `detective_shirt` 改由原生像素配方 `godot_csharp/tools/first_awakening_art/cast.py` 生成：头部按人物与朝向逐像素手绘，身体、服装与四肢按骨架逐帧摆姿，约 1:3.5 半Q头身比，服装与发色以主控规范第一部分 §5 为准。图集结构、帧数与锚点不变，原 `.tres` 继续有效；`detective_shirt.tres` 为同结构副本。重建：在 `godot_csharp/tools` 下运行 `python -m first_awakening_art.cast`，会校验帧数、二值 alpha、格边留白与脚底行，并把生产源写入 `AssetsSource/Internal/Characters/NativeCast/`。下文 imagegen 导入流程仅适用于其余角色。
+
 2026-09-25 早餐专用表演另使用本目录`breakfast_exchange.png`（512×128，8列×2行，16帧），由`BreakfastPerformance.gd`读取，保持原有九人的通用图集不变。制作源、提示词与重建命令见[早餐动作生产说明](../../../../AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.md)。它是源稿缩制的专用坐姿表演，不能用于替代全方向行走图集；完整日常片段的验证与限制见[日常三幕记录](../../../../../artifacts/first-three-scenes/daily-montage.md)。
 
 当前有侦探及宣传剧情打样使用的八名角色：音乐家、自然学家、工程师、厨师、诗人、盗贼、律师、画家。每人 PNG 为 512×1536，配套 `.tres` 可赋给 Godot `AnimatedSprite2D.sprite_frames`。

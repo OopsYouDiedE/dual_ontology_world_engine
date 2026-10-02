@@ -9,6 +9,12 @@ const EvidenceNotebook = preload("res://scenes/FirstAwakening/EvidenceNotebook.t
 const DefenseView = preload("res://scenes/FirstAwakening/RedTokenDefenseView.gd")
 const Director = preload("res://scenes/Story/StoryDirector.gd")
 const RED_LAYOUT: Resource = preload("res://ShareAsset/Internal/Props/FirstAwakeningInterior/red_mechanisms.tres")
+const DETECTIVE_COAT: SpriteFrames = preload("res://ShareAsset/Internal/Characters/animation_v2/detective.tres")
+const DETECTIVE_SHIRT: SpriteFrames = preload("res://ShareAsset/Internal/Characters/animation_v2/detective_shirt.tres")
+const COAT_STAND_EMPTY: Texture2D = preload("res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand.png")
+const COAT_STAND_COAT: Texture2D = preload("res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand_coat.png")
+## Authored conversations reached by inspecting a site for the first time.
+const INSPECTION_SCENES := {"E15":["S05"], "E05":["S06"], "E06":["S06"], "E07":["S07"], "E08":["S08"], "E09":["S08"], "E02":["S11"], "E12":["S13"], "E13":["S18"], "E14":["S19"], "E09.deep":["S15"], "E16":["S22", "S23"]}
 var red_defense_view = DefenseView.new()
 var red_performance: Node
 var red: Node
@@ -39,6 +45,10 @@ var red_defense_answer := {}
 var red_defense_section := "open"
 var red_defense_hints := false
 var red_opening_active := false
+var coat_worn := false
+## Conversations wait here until the player is back in the field; each plays once.
+var story_backlog: Array[String] = []
+var story_played := {}
 signal player_name_confirmed
 var player_name := ""
 var name_entry_active := false
@@ -104,6 +114,7 @@ func _start_case() -> void:
 	previous_entry_position = player.position
 	# Preserve the existing party placement and seated opening.
 	_place_party_at_table()
+	_dress_detective(false)
 	$HallTraceDecals.hide()
 	get_window().title = "安眠者有福 · 未归的红筹 · Demo"
 	hud_time.position = Vector2(650,18)
@@ -186,7 +197,6 @@ func _begin_dialogue(title: String, _after := "", _keep_scene := false) -> void:
 	story_message = ""
 	story_has_beats = false
 	if title in ["opening", "S01"]: red_opening_active = true
-	if title == "S28": _open_red_exit()
 	if is_instance_valid(red_notebook): red_notebook.hide()
 	if modal: modal.hide()
 	modal_open = false
@@ -349,6 +359,8 @@ func _on_dialogue_finished() -> void:
 		_begin_dialogue(next)
 	elif not red_dialogue_queue.is_empty():
 		_begin_dialogue(red_dialogue_queue.pop_front())
+	elif not story_backlog.is_empty() and not ended:
+		_flush_story.call_deferred()
 	elif ended:
 		_open_modal("本 Demo 完成 · 证物与未知保留", "red")
 		_label(modal_box,"红筹案已结，本区交接记录留存。外闩已升起，四人带着证物走向门厅；封存的疑问将带入主楼。下一章尚未开放。",21)
@@ -421,6 +433,10 @@ func _stage_common_room_entry() -> void:
 	player.face_point($MeetingSpots/Chef.position)
 	conversation_staged = true
 	_begin_dialogue("S02")
+
+func dialogue_open_red_exit() -> void:
+	# Called from S28 after Halvard pulls the inner bolt, so the door opens on cue.
+	_open_red_exit()
 
 func _open_red_exit() -> void:
 	if red_exit_open: return
@@ -667,6 +683,9 @@ func _safe_red(operation: String, _title: String) -> void:
 	if not is_inside_tree() or ended: return
 	if result.get("ok",false): safe_done[operation] = true
 	if is_instance_valid(red_visuals) and result.has("safe_state"): red_visuals.test_state = result.safe_state
+	if safe_done.has("press") and safe_done.has("release"): _queue_story("S12")
+	if safe_done.has("gap") and safe_done.has("pipe"): _queue_story("S14")
+	if ["侦探","工程师霍铎","主厨沈鼎","音乐家苏泠"].all(func(person): return safe_done.has("reward:" + person)): _queue_story("S03")
 	var id: String = Content.safe_interaction_site(operation)
 	red_interaction_results[id] = result
 	_open_red_interaction(id,true)
@@ -718,6 +737,7 @@ func _accept_room_inspection(id: String) -> bool:
 		return false
 	room_seen[id] = true
 	_refresh_site_title(id)
+	if id == "ROOM_COAT": _dress_detective(true)
 	return true
 
 func _red_safe_status(id: String, trial: Dictionary) -> void:
@@ -798,6 +818,7 @@ func _accept_red_inspection(id: String, result: Dictionary) -> void:
 	evidence_sources[id] = "具名转述" if id == "E12" else "亲见"
 	if id == "E01": receipt_checked = true
 	if id == "E09.deep": red_seen["E09"] = result; evidence["E09"] = true
+	for title in INSPECTION_SCENES.get(id, []): _queue_story(title)
 
 func _show_red_inspection_record(id: String, title: String) -> void:
 	# Use the same dialogue resource and state evaluator as the spoken view.
@@ -818,6 +839,7 @@ func _show_red_inspection_record(id: String, title: String) -> void:
 	var line_ids: Array[String] = record.line_ids
 	red_notes[id] = paragraphs
 	_update_status()
+	if can_use_mind_reasoning(): _queue_story("S09")
 	for index in paragraphs.size():
 		dialogue.history.append(paragraphs[index])
 		dialogue.history_line_ids.append(line_ids[index])
@@ -902,6 +924,11 @@ func _evaluate_red(number: int) -> void:
 	var result: Dictionary = red.call("EvaluateRound",number,candidate)
 	red_feedback = result
 	verified[number-1] = result.get("ok",false)
+	if number == 1: _queue_story("S10")
+	if number == 2 and verified[1]:
+		_queue_story("S16")
+		_queue_story("S17")
+	if number == 3: _queue_story("S21" if verified[2] else "S20")
 	set_meta("last_predictions", result.get("predictions", {}))
 	if is_instance_valid(replay_summary):
 		replay_summary.text = str(result.get("message","这一片段尚无材料可验证。"))
@@ -1028,8 +1055,30 @@ func _pin_red_footer(actions: Array, status := "") -> void:
 	row.add_theme_constant_override("v_separation", 8)
 	footer.add_child(row)
 	for action in actions:
-		_button(row, action[0], action[1]).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var button := _button(row, action[0], action[1])
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if str(action[0]).begins_with("提交"): _style_primary(button)
 	_layout_red_fixed_page.call_deferred()
+
+func _style_primary(button: Button) -> void:
+	# The one decisive action on a page reads as filled ink, not another paper tab.
+	var ink := StyleBoxFlat.new()
+	ink.bg_color = Color("344c39")
+	ink.border_color = Color("213c27")
+	ink.set_border_width_all(1)
+	ink.border_width_bottom = 3
+	ink.set_corner_radius_all(2)
+	ink.set_content_margin_all(8)
+	var hover := ink.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("3f5c45")
+	var pressed := ink.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color("2a3e2e")
+	pressed.border_width_bottom = 1
+	for state in ["normal", "focus"]: button.add_theme_stylebox_override(state, ink)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	for key in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+		button.add_theme_color_override(key, Color("fff8e8"))
 
 func _layout_red_fixed_page() -> void:
 	# Run after FieldModal's short-card fitting so long pages keep their bounds.
@@ -1133,6 +1182,44 @@ func _close_modal() -> void:
 	replay_playing = false
 	modal_open = false
 	mode = ""
+	_flush_story.call_deferred()
+
+func _queue_story(title: String) -> void:
+	if story_played.has(title) or title in story_backlog: return
+	story_backlog.append(title)
+
+func _flush_story() -> void:
+	# Conversations need the companions present and never interrupt open pages.
+	if story_backlog.is_empty() or ended or modal_open: return
+	if not (red_companions_met and copper_introduction_complete): return
+	if dialogue == null: return
+	if story_lock or dialogue.active or (is_instance_valid(red_performance) and red_performance.busy):
+		# A line or blocking is still finishing; try again next frame.
+		if not get_tree().process_frame.is_connected(_flush_story):
+			get_tree().process_frame.connect(_flush_story, CONNECT_ONE_SHOT)
+		return
+	var title: String = story_backlog.pop_front()
+	story_played[title] = true
+	_begin_dialogue(title)
+
+func _dress_detective(coat_on: bool) -> void:
+	# The coat hangs on the R-05 stand until the player takes it in ROOM_COAT.
+	coat_worn = coat_on
+	var frames: SpriteFrames = (DETECTIVE_COAT if coat_on else DETECTIVE_SHIRT).duplicate()
+	for direction_name in ["front", "back", "left"]:
+		frames.set_animation_speed("walk_" + direction_name, 7.5)
+	var was_standard: bool = player.sprite.sprite_frames == player.standard
+	var animation: StringName = player.sprite.animation
+	var frame: int = player.sprite.frame
+	var playing: bool = player.sprite.is_playing()
+	player.standard = frames
+	if was_standard:
+		player.sprite.sprite_frames = frames
+		player.sprite.play(animation)
+		player.sprite.frame = frame
+		if not playing: player.sprite.pause()
+	var stand := scene_items.get_node_or_null("CoatStand0") as Sprite2D
+	if is_instance_valid(stand): stand.texture = COAT_STAND_EMPTY if coat_on else COAT_STAND_COAT
 
 func _exit_tree() -> void:
 	if is_instance_valid(red_performance): red_performance.cancel()

@@ -31,6 +31,8 @@ FOG = r("#39435c", "#53607c", "#7888a4", "#a1b1c7", "#c8d4e1", "#e5ecf2")
 FLAME = r("#8a3c16", "#d57a28", "#fbb84e", "#ffe29a", "#fffbe8")
 LEAF = r("#122017", "#1c3322", "#29492d", "#3b633a", "#557f48", "#7ca25f")
 TILE = r("#7f8278", "#9fa196", "#bdbdb0", "#d3d2c4", "#e6e4d7", "#f3f1e6")
+# Pale unglazed limestone quarry tile for the service rooms.
+QUARRY = r("#6a6257", "#82796b", "#9b917f", "#b0a691", "#c1b7a1", "#cfc6b1", "#dcd4c1")
 TILE_GREEN = r("#1d2f2a", "#284039", "#35544a", "#476b5e", "#5f8676")
 SLATE = r("#262b31", "#343b42", "#465057", "#5b6769", "#73817f")
 CLARET = r("#2a0f17", "#431822", "#60232e", "#80323b", "#a1464b", "#be6660")

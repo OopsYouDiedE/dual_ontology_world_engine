@@ -7,6 +7,7 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 ## 当前入口与状态
 
 - [主控设计与验收规范](docs/design-standard.md)：统合学园世界观设定、四大历史事故与羁绊物证、初期篇二十日节奏、初醒案情因果链、双重本体引擎原理、现场勘查 24 动作、32px 美术与 MCP 工作流，以及机制主线宣传片大纲。
+- [设计总纲](docs/design-standard.md#设计总纲2026-10-02-整理)：设计支柱、案件／日程／长线三层循环、长线状态量、实现状态与待裁定事项。
 - [学园世界与角色设定](docs/design-standard.md#第一部分学园世界与角色设定)：世界观边界、导师遗存、恶魔契约法定规则、胜负退场机制与 16 位角色属性包。
 - [剧情主线与初醒案情](docs/design-standard.md#第二部分剧情主线与初醒案情)：叙事层级划分、四大历史事故物证链、生活翼空间拓扑、四人固定本能与闭合因果链。
 - [Core 世界引擎原理](docs/design-standard.md#第三部分core-独立世界引擎运作原理)：Essence–Projection 双重本体模型、`Observation.Observe` 认知更新与 CTB 嵌套行动值调度。

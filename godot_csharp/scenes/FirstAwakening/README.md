@@ -5,6 +5,8 @@
 
 当前版本已接入《未归的红筹》的场景、调查卡、手稿共享舞台与原生新道具。已按实际截图盲玩修复候选反馈、长页操作、鼠标改点与转角、规则参照隐式改写、初识与本人认签顺序；最后修复定向425项通过。全新独立会话 `mouse-rendered-20261002-07` 首输入至正常终局30分33.615秒，231输入、246PNG、实际查看49张，无求助、错误、超时或移动停滞。完整报告归 `artifacts/first-awakening/blind-mouse-rendered-20261002-07/`；游戏帧2次超过50ms与截图开销分列。历次失败与体验评价保留，纯思考、真人净30分钟及发布体验仍未认证。下方旧案历史记录不代表本版验收结果。
 
+2026-10-02：剧本 S03—S26 经剧情队列接入（触发表见主控规范 §4.11 前的“运行时接线”）；侦探醒来时外衣挂在衣架上，检视外衣后换装；S28 在霍铎拔销后开门。跳转状态回归：`--headless --path godot_csharp --script res://scenes/FirstAwakening/check/story_flow_check.gd`。盲玩驱动 `check/playtest_session.gd` 已按 `tools/blind_playtest.py` 协议重建（有窗口运行，末尾加 `-- --session=<新ID> --agent=<名称>`）。
+
 默认 `Main2D.tscn` → `FirstAwakening.tscn` → `RedTokenDemo.gd`。`RedTokenBridge.cs` 接入宿主 C# 会话；原 `FirstAwakening.gd` / Hall 系列保留兼容，旧六轮与七槽不控制新默认入口。
 
 本轮修复涉及场景、UI、物证细节及正文交互，技术回归与独立盲玩分开验收，构建和可视操作通过不能据此称为可发布剧情 Demo。新案正文目前使用中文；语言设置与姓名控件保留，选择英日时会明确显示覆盖范围。
