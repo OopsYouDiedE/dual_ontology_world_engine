@@ -81,55 +81,55 @@ internal static class RedTokenHypothesis
     internal static void Compile(RedTokenSimulation s, IReadOnlyDictionary<string, string> f)
     {
         string Get(string key, string fallback = "unknown") => f.GetValueOrDefault(key, fallback);
-        void Do(string actor, string action) { var r = s.Perform(actor, action); if (!r.Ok) s.Failures.Add(r.Message); }
+        void Do(string actor, RedTokenOperation action) { var r = s.Perform(actor, action); if (!r.Ok) s.Failures.Add(r.Message); }
         const string engineer = "工程师霍铎", chef = "主厨沈鼎", music = "音乐家苏泠", detective = "侦探";
         // 共同行动中的楔始终是同一引用；门底、手上、纸内不能并存。
         if (Get("wedge") != "unknown")
         {
-            Do(music, "take_wedge");
-            Do(music, "release_wedge");
-            if (Get("wedge") == "dirty_then_wrap") Do(music, "dirty_wedge");
-            Do(detective, "take_wedge"); Do(detective, "close_door"); Do(detective, "wrap_wedge");
+            Do(music, RedTokenOperation.TakeWedge);
+            Do(music, RedTokenOperation.ReleaseWedge);
+            if (Get("wedge") == "dirty_then_wrap") Do(music, RedTokenOperation.DirtyWedge);
+            Do(detective, RedTokenOperation.TakeWedge); Do(detective, RedTokenOperation.CloseDoor); Do(detective, RedTokenOperation.WrapWedge);
         }
-        if (Get("sound_gap") != "unknown" || Get("sound_pipe") != "unknown") { Do(detective, "close_door"); Do(music, "knock_gap"); Do(engineer, "knock_pipe"); }
-        if (Get("engineer_exception") == "read") Do(engineer, "read_exception");
-        if (Get("wipe") == "before") Do(chef, "wipe");
+        if (Get("sound_gap") != "unknown" || Get("sound_pipe") != "unknown") { Do(detective, RedTokenOperation.CloseDoor); Do(music, RedTokenOperation.KnockGap); Do(engineer, RedTokenOperation.KnockPipe); }
+        if (Get("engineer_exception") == "read") Do(engineer, RedTokenOperation.ReadException);
+        if (Get("wipe") == "before") Do(chef, RedTokenOperation.Wipe);
         if (Get("flow") == "ash")
         {
-            if (Get("cloth_before_flow") == "yes" || Get("cook_filter") == "yes") Do(chef, "clip_filter");
+            if (Get("cloth_before_flow") == "yes" || Get("cook_filter") == "yes") Do(chef, RedTokenOperation.ClipFilter);
             var holder = Get("holder") == "cook" ? chef : Get("holder") == "engineer" ? engineer : null;
             if (holder is not null)
             {
-                Do(holder, "take_handle");
-                if (Get("cook_filter") == "yes") Do(chef, "confirm_filter");
-                Do(holder, "hold");
+                Do(holder, RedTokenOperation.TakeHandle);
+                if (Get("cook_filter") == "yes") Do(chef, RedTokenOperation.ConfirmFilter);
+                Do(holder, RedTokenOperation.Hold);
                 if (s.Flowing)
                 {
-                    Do(chef, "capture");
-                    if (Get("release") == "after_confirmation") { Do(chef, "inspect_clear"); Do(chef, "confirm"); }
-                    if (Get("release") != "unknown") Do(holder, "release");
+                    Do(chef, RedTokenOperation.Capture);
+                    if (Get("release") == "after_confirmation") { Do(chef, RedTokenOperation.InspectClear); Do(chef, RedTokenOperation.Confirm); }
+                    if (Get("release") != "unknown") Do(holder, RedTokenOperation.Release);
                 }
             }
         }
         else if (Get("flow") == "water")
         {
-            Do(chef, "wash");
-            if (Get("completion_record") == "mistaken") Do(chef, "misrecord_clear");
+            Do(chef, RedTokenOperation.Wash);
+            if (Get("completion_record") == "mistaken") Do(chef, RedTokenOperation.MisrecordClear);
         }
-        if (Get("wipe") == "after") { Do(chef, "wipe"); Do(chef, "wash"); }
+        if (Get("wipe") == "after") { Do(chef, RedTokenOperation.Wipe); Do(chef, RedTokenOperation.Wash); }
         if (Get("returned") == "yes")
         {
-            Do(engineer, "deposit_other"); Do(engineer, "push_other");
-            Do("值守者", "deposit_red"); Do("值守者", "push_red");
-            if (Get("return_before_room") == "yes") Do(detective, "take_white");
+            Do(engineer, RedTokenOperation.DepositOther); Do(engineer, RedTokenOperation.PushOther);
+            Do("值守者", RedTokenOperation.DepositRed); Do("值守者", RedTokenOperation.PushRed);
+            if (Get("return_before_room") == "yes") Do(detective, RedTokenOperation.TakeWhite);
         }
-        if (Get("return_before_room") == "yes") foreach (var actor in new[] { detective, engineer, chef, music }) Do(actor, "return_room");
-        if (Get("return_before_room") == "no") foreach (var actor in new[] { detective, engineer, chef, music }) Do(actor, "go_room_without_sign");
-        if (Get("returned") == "no") Do("值守者", "carry_red_without_return");
+        if (Get("return_before_room") == "yes") foreach (var actor in new[] { detective, engineer, chef, music }) Do(actor, RedTokenOperation.ReturnRoom);
+        if (Get("return_before_room") == "no") foreach (var actor in new[] { detective, engineer, chef, music }) Do(actor, RedTokenOperation.GoRoomWithoutSign);
+        if (Get("returned") == "no") Do("值守者", RedTokenOperation.CarryRedWithoutReturn);
         if (Get("take") == "after_return")
         {
             var mover = Get("identity") == "receptionist" ? "接待者" : Get("identity") == "student" ? detective : "未知后取者";
-            Do(mover, "open_drawer"); Do(mover, "move_red_to_chair");
+            Do(mover, RedTokenOperation.OpenDrawer); Do(mover, RedTokenOperation.MoveRedToChair);
         }
     }
     internal static Dictionary<string, string> Predict(RedTokenSimulation s, IReadOnlyDictionary<string, string> f)

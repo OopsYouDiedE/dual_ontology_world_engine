@@ -1,48 +1,41 @@
 using DualOntologyWorldEngine.Core;
-using System.Collections.Immutable;
 namespace DualOntologyWorldEngine.Game.FirstAwakening;
 
 /// <summary>现场会话只保管实际材料；候选历史每次单独建立现实模型，不改变现场。</summary>
-public sealed class RedTokenSession : IDisposable
+public sealed partial class RedTokenSession : IDisposable
 {
-	private readonly Dictionary<string, Projection> _evidence = new();
 	private readonly Dictionary<string, string> _candidate = new();
-	private static readonly Tag Inspected = new("Inspected");
-	public WorldRuntime World { get; } = new();
-	public SoulEssence Investigator { get; } = new("侦探");
-	public RedTokenSimulation Physical { get; } = new();
-	private readonly RedTokenSimulation _safe = new();
+	private bool _openingRoomSearched;
+	public WorldRuntime World => Physical.World;
+	public SoulEssence Investigator => Physical.Souls["侦探"];
+	public RedTokenSimulation Physical { get; } = new(RedTokenWorldKind.Scene);
+	private readonly RedTokenSimulation _safe = new(RedTokenWorldKind.SafeTrial);
 	public int Round { get; private set; } = 1;
 	public bool Ended { get; private set; }
 	public bool Solved { get; private set; }
-	public IEnumerable<string> Available => _evidence.Keys.Where(id => id != "E16" || Physical.Value("pipe", RedTokenSimulation.Taken) == 1);
-	public IEnumerable<string> Known => Investigator.World.Projections.Where(p => p.Tags.GetValueOrDefault(Inspected) == 1).Select(p => p.Name);
+	public IEnumerable<string> Available => Physical.EvidenceObjects.Keys.Where(id => id.StartsWith("E", StringComparison.Ordinal) && (id != "E16" || Physical.Value("pipe", RedTokenSimulation.Taken) == 1));
+	public IEnumerable<string> Known => Physical.KnownEvidence("侦探").Where(id => id.StartsWith("E", StringComparison.Ordinal));
+	public IEnumerable<string> DiscoveredSites => Physical.NoticedSites("侦探").Concat(Physical.KnownEvidence("侦探")).Distinct(StringComparer.Ordinal);
+	public IReadOnlyList<string> SearchOpeningRoom()
+	{
+		if (Ended || _openingRoomSearched || Physical.ObjectLocation("侦探") != "R05") return [];
+		_openingRoomSearched = true;
+		return new[] { "ROOM_COAT", "ROOM_DESK", "ROOM_DOOR", "ROOM_WINDOW", "E07" }
+			.Where(id => Physical.NoticeSite("侦探", id)).ToArray();
+	}
 	public bool WaitingForConfirmation => Physical.Waiting;
 	public string? SafeHolder => _safe.Holder;
-	public RedTokenSession()
-	{
-		for (int i = 1; i <= 16; i++) Add($"E{i:00}");
-		Add("E09.deep"); Add("E09.completion");
-	}
-	private void Add(string id)
-	{
-		var obj = new Essence(id); var state = obj.Add(new StateProperty());
-		state.Observable.Add(Inspected); state.Values[Inspected] = 1;
-		_evidence.Add(id, World.Project(obj, id));
-	}
+	public bool CompanionsMet => Physical.HasKnowledge("侦探", RedTokenSimulation.Introduced);
+	public bool CanLeaveRoom => Physical.HasKnowledge("侦探", RedTokenSimulation.ReceptionKnown) || Physical.HasKnowledge("侦探", RedTokenSimulation.ExitKnown);
 	public RedTokenResult Inspect(string id)
 	{
-		if (Ended || !_evidence.TryGetValue(id, out var evidence)) return new(false, "没有这份现场材料。");
-		if (id == "E01" && new[] { "侦探", "工程师霍铎", "主厨沈鼎", "音乐家苏泠" }.Any(a => _safe.Value("reward:" + a, RedTokenSimulation.Read) != 1)) return new(false, "请四人分别核验本人的约定报偿与可信凭证。" );
+		if (Ended || !Physical.EvidenceObjects.ContainsKey(id)) return new(false, "没有这份现场材料。");
+		if (id == "E01" && RedTokenSimulation.Companions.Any(a => !Physical.HasKnowledge(a, RedTokenSimulation.RewardVerified))) return new(false, "请四人分别核验本人的约定报偿与可信凭证。");
 		if (id == "E16" && Physical.Value("pipe", RedTokenSimulation.Taken) != 1) return new(false, "请先拿接收印与椅筹矛盾，在现实铜口质询索取移物单。");
-		if (id == "E12")
-		{
-			// 触本人签收与楔的片段分别进入其自身世界，侦探得到的是具名转述。
-			Observation.Observe(Physical.Souls["工程师霍铎"], new ObservationInput("本人签收折页：合门后台侧仍响", ProjectionKind.Event) { Source = ObservationSource.Recall, Existence = Truth.True });
-			Observation.Observe(Physical.Souls["音乐家苏泠"], new ObservationInput("本人楔：合门后门侧静", ProjectionKind.Event) { Source = ObservationSource.Recall, Existence = Truth.True });
-			Observation.Observe(Investigator, new ObservationInput(id) { Source = ObservationSource.Testimony, Existence = Truth.True, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Inspected, 1), Details = "工程师与音乐家分别转述本人触物片段；并非直接历史实证。" });
-		}
-		else World.Observe(Investigator, id == "E09" ? new[] { evidence, _evidence["E09.completion"] } : new[] { evidence });
+		if (id == "E12") return RecallStatements();
+		var result = Physical.ObserveSite("侦探", id);
+		if (!result.Ok) return result;
+		if (id == "E09") Physical.ObserveSite("侦探", "E09.completion");
 		return new(true, id == "E09.deep" ? "上游当班捕集片有新灰；落水空隙使盆水不能逆流生成此灰。" : $"现场材料{id}已进入侦探认知。");
 	}
 	private bool Knows(string id) => Known.Contains(id);
@@ -54,16 +47,22 @@ public sealed class RedTokenSession : IDisposable
 		var result = Physical.Perform(actor, action, station);
 		return result with { Snapshots = Physical.Snapshots.Skip(before).ToArray() };
 	}
-	public IReadOnlyDictionary<string, object> SafeState => new Dictionary<string, object> { ["pressed"] = _safe.Flowing, ["gap_sound"] = _safe.Value("door", RedTokenSimulation.Sound) == 1, ["pipe_sound"] = _safe.Value("pipe", RedTokenSimulation.Sound) == 1, ["red_received"] = _safe.Value("red", RedTokenSimulation.Received) == 1, ["handle_received"] = _safe.Value("handle", RedTokenSimulation.Received) == 1, ["white"] = _safe.WhiteAvailable, ["rewards_verified"] = new[] { "侦探", "工程师霍铎", "主厨沈鼎", "音乐家苏泠" }.Count(a => _safe.Value("reward:" + a, RedTokenSimulation.Read) == 1) };
-	public RedTokenResult SafeTest(string operation)
+	public IReadOnlyDictionary<string, object> SafeState => new Dictionary<string, object> { ["pressed"] = _safe.Flowing, ["gap_sound"] = _safe.Value("door", RedTokenSimulation.Sound) == 1, ["pipe_sound"] = _safe.Value("pipe", RedTokenSimulation.Sound) == 1, ["red_received"] = _safe.Value("receipt_red", RedTokenSimulation.Received) == 1, ["handle_received"] = _safe.Value("receipt_handle", RedTokenSimulation.Received) == 1, ["white"] = _safe.WhiteAvailable, ["rewards_verified"] = RedTokenSimulation.Companions.Count(a => Physical.HasKnowledge(a, RedTokenSimulation.RewardVerified)) };
+	private RedTokenResult ExecuteSafe(string operation, string actor)
 	{
 		if (Ended) return new(false, "本次调查已经结束。");
 		var parts = operation.Split(':', 2);
-		string actor = parts.Length > 1 ? parts[1] : "工程师霍铎";
 		var action = parts[0] switch { "reward" => "verify_reward", "press" => "safe_press", "release" => "release", "gap" => "knock_gap", "pipe" => "knock_pipe", "close" => "close_door", "red" => "deposit_red", "handle" => "deposit_other", "push_red" => "push_red", "push_handle" => "push_other", "white" => "take_white", _ => "" };
 		if (action == "") return new(false, "没有该安全试验。");
-		var before = _safe.Snapshots.Count;
-		var result = _safe.Perform(actor, action);
+		var world = parts[0] == "reward" ? Physical : _safe;
+		var before = world.Snapshots.Count;
+		if (parts[0] == "press" && _safe.Holder is null)
+		{
+			var take = _safe.Perform(actor, RedTokenOperation.TakeHandle);
+			if (!take.Ok) return take;
+		}
+		var result = world.Perform(actor, action);
+		if (result.Ok && parts[0] == "reward") Physical.RememberSelf(actor, RedTokenSimulation.RewardVerified, 1, "本人近身核验约定报偿及可信凭证，去留意愿仍由本人决定。");
 		var message = result.Ok ? parts[0] switch
 		{
 			"reward" => actor + "已核验本人约定报偿与凭证。",
@@ -77,10 +76,12 @@ public sealed class RedTokenSession : IDisposable
 			"white" => _safe.Value("white", RedTokenSimulation.Taken) == 1 ? "白片已领取；试件的双槽交接状态已记录。" : "白片尚未领取。",
 			_ => result.Message
 		} : result.Message;
-		return result with { Message = message, Snapshots = _safe.Snapshots.Skip(before).ToArray() };
+		return result with { Message = message, Snapshots = world.Snapshots.Skip(before).ToArray() };
 	}
 	public RedTokenResult Cancel()
 	{
+		CancelPreparedAction();
+		StopFollowing();
 		if (Physical.Holder is { } actor) Physical.Perform(actor, "release");
 		if (_safe.Holder is { } safeActor) _safe.Perform(safeActor, "release");
 		return new(true, "现场与安全试件的持续持柄均已取消，弹簧回路停流。");
@@ -150,5 +151,5 @@ public sealed class RedTokenSession : IDisposable
 			return new(false, "签条只证明交接后返房，不能把操作造成失忆写成已证事实；封存范围仍未知。");
 		Cancel(); Ended = true; Dispose(); return new(true, "三项前提均保留材料边界；替代解释与未知已记录，答辩完成。");
 	}
-	public void Dispose() { Physical.Dispose(); _safe.Dispose(); }
+	public void Dispose() { CancelPreparedAction(); StopFollowing(); _safe.Dispose(); Physical.Dispose(); }
 }

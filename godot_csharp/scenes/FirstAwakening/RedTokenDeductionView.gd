@@ -39,16 +39,16 @@ var right_scroll: ScrollContainer
 var right_content: VBoxContainer
 var concordance_container: GridContainer
 var concordance_title: Label
-var finding_label: Label
+var finding_label: RichTextLabel
 var btn_details: Button
 var btn_evaluate: Button
 var btn_reset: Button
 var preset_label: Label
 var btn_preset_h1: Button
 var btn_preset_h2: Button
-var candidate_summary: Label
-var candidate_missing: Label
-var candidate_semantics: Label
+var candidate_summary: RichTextLabel
+var candidate_missing: RichTextLabel
+var candidate_semantics: RichTextLabel
 var candidate_box: VBoxContainer
 
 # Evidence keys to display in Concordance list
@@ -552,12 +552,15 @@ func _build_ui() -> void:
 	btn_details.pressed.connect(func(): demo._open_red_feedback())
 	left_box.add_child(btn_details)
 
-	finding_label = Label.new()
+	finding_label = RichTextLabel.new()
 	finding_label.custom_minimum_size = Vector2(628, 64)
 	finding_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	finding_label.add_theme_font_override("font", _font_writing())
-	finding_label.add_theme_font_size_override("font_size", 16)
-	finding_label.add_theme_color_override("font_color", COLOR_INK)
+	finding_label.bbcode_enabled = true
+	finding_label.fit_content = true
+	finding_label.scroll_active = false
+	finding_label.add_theme_font_override("normal_font", _font_writing())
+	finding_label.add_theme_font_size_override("normal_font_size", 16)
+	finding_label.add_theme_color_override("default_color", COLOR_INK)
 	finding_label.text = tr_str("INITIAL_FINDING")
 	left_box.add_child(finding_label)
 
@@ -650,17 +653,21 @@ func _build_ui() -> void:
 	summary_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	summary_box.add_theme_constant_override("separation", 5)
 	add_child(summary_box)
-	candidate_summary = Label.new()
+	candidate_summary = RichTextLabel.new()
 	candidate_summary.name = "CurrentCandidateSummary"
-	candidate_missing = Label.new()
+	candidate_missing = RichTextLabel.new()
 	candidate_missing.name = "CandidateMissingFields"
-	candidate_semantics = Label.new()
+	candidate_semantics = RichTextLabel.new()
 	for label in [candidate_summary, candidate_missing, candidate_semantics]:
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.add_theme_font_override("font", _font_print())
-		label.add_theme_font_size_override("font_size", 15)
-		label.add_theme_color_override("font_color", COLOR_INK)
+		label.bbcode_enabled = true
+		label.fit_content = true
+		label.scroll_active = false
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.add_theme_font_override("normal_font", _font_print())
+		label.add_theme_font_size_override("normal_font_size", 15)
+		label.add_theme_color_override("default_color", COLOR_INK)
 		summary_box.add_child(label)
 
 	# --- Right Page Bottom Bar Area (offset_left=710, top=870, width=534, height=90) ---
@@ -764,7 +771,7 @@ func refresh() -> void:
 	concordance_title.text = tr_str("CONCORDANCE_TITLE")
 	btn_details.text = tr_str("DETAILS")
 	if finding_label:
-		finding_label.add_theme_font_override("font", _font_writing())
+		finding_label.add_theme_font_override("normal_font", _font_writing())
 		if last_engine_message != "":
 			finding_label.text = _translate_engine_message(last_engine_message)
 		else:
@@ -1221,22 +1228,30 @@ func _add_segmented_choice(card: PanelContainer, label_text: String, field_key: 
 
 func _add_desc_label(card: PanelContainer, text: String) -> void:
 	var box: VBoxContainer = card.get_child(0)
-	var lbl := Label.new()
+	var lbl := RichTextLabel.new()
 	lbl.text = text
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.add_theme_font_override("font", _font_print())
-	lbl.add_theme_font_size_override("font_size", 17)
-	lbl.add_theme_color_override("font_color", COLOR_MUTED)
+	lbl.bbcode_enabled = true
+	lbl.fit_content = true
+	lbl.scroll_active = false
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_override("normal_font", _font_print())
+	lbl.add_theme_font_size_override("normal_font_size", 17)
+	lbl.add_theme_color_override("default_color", COLOR_MUTED)
 	box.add_child(lbl)
 
 func _add_eval_label(card: PanelContainer, text: String) -> void:
 	var box: VBoxContainer = card.get_child(0)
-	var lbl := Label.new()
+	var lbl := RichTextLabel.new()
 	lbl.text = tr_str("CANDIDATE_NOTE") + "\n" + text
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.add_theme_font_override("font", _font_writing())
-	lbl.add_theme_font_size_override("font_size", 18)
-	lbl.add_theme_color_override("font_color", COLOR_INK)
+	lbl.bbcode_enabled = true
+	lbl.fit_content = true
+	lbl.scroll_active = false
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_override("normal_font", _font_writing())
+	lbl.add_theme_font_size_override("normal_font_size", 18)
+	lbl.add_theme_color_override("default_color", COLOR_INK)
 	box.add_child(lbl)
 
 func _get_field_val(key: String) -> String:

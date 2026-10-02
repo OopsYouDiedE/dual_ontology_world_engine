@@ -15,7 +15,7 @@ const RED := Color("a34b3c")
 const WATER := Color("98b8bd")
 
 var evidence_id := ""
-var _labels: Array[Label] = []
+var _labels: Array[RichTextLabel] = []
 var _label_rects: Array[Rect2] = []
 var _view_height := 380.0
 
@@ -45,16 +45,19 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_THEME_CHANGED and is_inside_tree():
 		for label in _labels:
-			label.add_theme_font_size_override("font_size", maxi(18, get_theme_font_size("font_size", "Label")))
+			label.add_theme_font_size_override("normal_font_size", maxi(18, get_theme_font_size("font_size", "Label")))
 
 func _label(text: String, rect: Rect2, color := INK) -> void:
-	var label := Label.new()
+	var label := RichTextLabel.new()
 	# Set width before text shaping so autowrap never measures a zero-width label.
 	label.size = rect.size
 	label.text = text
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", maxi(18, get_theme_font_size("font_size", "Label")))
+	label.bbcode_enabled = true
+	label.fit_content = false
+	label.scroll_active = false
+	label.add_theme_color_override("default_color", color)
+	label.add_theme_font_size_override("normal_font_size", maxi(18, get_theme_font_size("font_size", "Label")))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(label)

@@ -1,0 +1,436 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/EvidenceNotebook/wedge-paper.png" id="Notebook_wedge"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/EvidenceNotebook/tear-detail.png" id="Notebook_tear"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/Yozai/Yozai-Regular.ttf" id="Notebook_zh"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="Notebook_ja"]
+
+[sub_resource type="StyleBoxFlat" id="Notebook_cover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.12, 0.19, 0.16, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_page"]
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_tabs"]
+content_margin_top = 12.0
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_selected"]
+content_margin_left = 24.0
+content_margin_top = 8.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_unselected"]
+content_margin_left = 24.0
+content_margin_top = 8.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.21, 0.27, 0.23, 1)
+
+[sub_resource type="Theme" id="Notebook_theme"]
+default_font = ExtResource("Notebook_zh")
+default_font_size = 22
+Label/colors/font_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/font_sizes/normal_font_size = 22
+TabContainer/colors/font_selected_color = Color(0.168627, 0.12549, 0.086275, 1)
+TabContainer/colors/font_unselected_color = Color(0.901961, 0.862745, 0.74902, 1)
+TabContainer/font_sizes/font_size = 22
+TabContainer/styles/panel = SubResource("Notebook_tabs")
+TabContainer/styles/tab_selected = SubResource("Notebook_selected")
+TabContainer/styles/tab_unselected = SubResource("Notebook_unselected")
+
+[sub_resource type="Theme" id="Notebook_english_theme"]
+default_font = ExtResource("Notebook_ja")
+default_font_size = 22
+Label/colors/font_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/fonts/normal_font = ExtResource("Notebook_ja")
+RichTextLabel/font_sizes/normal_font_size = 22
+
+[node name="EvidenceInspectionCTrilingual" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Notebook_theme")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.09, 0.13, 0.11, 1)
+
+[node name="OuterMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="Languages" type="TabContainer" parent="OuterMargin"]
+layout_mode = 2
+current_tab = 0
+
+[node name="中文" type="PanelContainer" parent="OuterMargin/Languages"]
+layout_mode = 2
+theme = SubResource("Notebook_theme")
+theme_override_styles/panel = SubResource("Notebook_cover")
+
+[node name="Pages" type="HBoxContainer" parent="OuterMargin/Languages/中文"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="LeftPage" type="PanelContainer" parent="OuterMargin/Languages/中文/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Sketches" type="VBoxContainer" parent="OuterMargin/Languages/中文/Pages/LeftPage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Number" type="Label" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "E07"
+
+[node name="Caption" type="RichTextLabel" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 20
+text = "木楔与纸包"
+fit_content = true
+scroll_active = false
+
+[node name="Wedge" type="TextureRect" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(256, 192)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_wedge")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="SketchGap" type="Control" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="DetailCaption" type="RichTextLabel" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 20
+text = "撕口"
+fit_content = true
+scroll_active = false
+
+[node name="Tear" type="TextureRect" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(192, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_tear")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Space" type="Control" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/中文/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "12"
+horizontal_alignment = 1
+
+[node name="Binding" type="ColorRect" parent="OuterMargin/Languages/中文/Pages"]
+custom_minimum_size = Vector2(2, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.48, 0.44, 0.35, 1)
+
+[node name="RightPage" type="PanelContainer" parent="OuterMargin/Languages/中文/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Notes" type="VBoxContainer" parent="OuterMargin/Languages/中文/Pages/RightPage"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="RichTextLabel" parent="OuterMargin/Languages/中文/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 24
+text = "五号房纸包"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Languages/中文/Pages/RightPage/Notes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 22
+theme_override_constants/line_separation = 8
+bbcode_enabled = true
+text = "纸包里有一块木楔，斜面沾灰。\n\n纸的内侧有转印，形状贴合楔面。外侧是干净的。\n\n撕口与五号房抽屉里的空白纸相合。"
+autowrap_mode = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/中文/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13"
+horizontal_alignment = 1
+
+[node name="English" type="PanelContainer" parent="OuterMargin/Languages"]
+layout_mode = 2
+visible = false
+theme = SubResource("Notebook_english_theme")
+theme_override_styles/panel = SubResource("Notebook_cover")
+
+[node name="Pages" type="HBoxContainer" parent="OuterMargin/Languages/English"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="LeftPage" type="PanelContainer" parent="OuterMargin/Languages/English/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Sketches" type="VBoxContainer" parent="OuterMargin/Languages/English/Pages/LeftPage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Number" type="Label" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "E07"
+
+[node name="Caption" type="RichTextLabel" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 20
+text = "Wedge and paper"
+fit_content = true
+scroll_active = false
+
+[node name="Wedge" type="TextureRect" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(256, 192)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_wedge")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="SketchGap" type="Control" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="DetailCaption" type="RichTextLabel" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 20
+text = "Torn edge"
+fit_content = true
+scroll_active = false
+
+[node name="Tear" type="TextureRect" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(192, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_tear")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Space" type="Control" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/English/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "12"
+horizontal_alignment = 1
+
+[node name="Binding" type="ColorRect" parent="OuterMargin/Languages/English/Pages"]
+custom_minimum_size = Vector2(2, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.48, 0.44, 0.35, 1)
+
+[node name="RightPage" type="PanelContainer" parent="OuterMargin/Languages/English/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Notes" type="VBoxContainer" parent="OuterMargin/Languages/English/Pages/RightPage"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="RichTextLabel" parent="OuterMargin/Languages/English/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 24
+text = "Paper bundle · Room 5"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Languages/English/Pages/RightPage/Notes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 22
+theme_override_constants/line_separation = 8
+bbcode_enabled = true
+text = "A wooden wedge lies inside the paper bundle. Its sloping face is dusty.\n\nThere is an imprint on the inside of the paper, matching the wedge's sloping face. The outside is clean.\n\nThe torn edge matches the blank paper in the drawer in Room 5."
+autowrap_mode = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/English/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13"
+horizontal_alignment = 1
+
+[node name="日本語" type="PanelContainer" parent="OuterMargin/Languages"]
+layout_mode = 2
+visible = false
+theme = SubResource("Notebook_theme")
+theme_override_styles/panel = SubResource("Notebook_cover")
+
+[node name="Pages" type="HBoxContainer" parent="OuterMargin/Languages/日本語"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="LeftPage" type="PanelContainer" parent="OuterMargin/Languages/日本語/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Sketches" type="VBoxContainer" parent="OuterMargin/Languages/日本語/Pages/LeftPage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Number" type="Label" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "E07"
+
+[node name="Caption" type="RichTextLabel" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 20
+text = "くさびと紙包み"
+fit_content = true
+scroll_active = false
+
+[node name="Wedge" type="TextureRect" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(256, 192)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_wedge")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="SketchGap" type="Control" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="DetailCaption" type="RichTextLabel" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 20
+text = "破れ目"
+fit_content = true
+scroll_active = false
+
+[node name="Tear" type="TextureRect" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(192, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_tear")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Space" type="Control" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/日本語/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "12"
+horizontal_alignment = 1
+
+[node name="Binding" type="ColorRect" parent="OuterMargin/Languages/日本語/Pages"]
+custom_minimum_size = Vector2(2, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.48, 0.44, 0.35, 1)
+
+[node name="RightPage" type="PanelContainer" parent="OuterMargin/Languages/日本語/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Notes" type="VBoxContainer" parent="OuterMargin/Languages/日本語/Pages/RightPage"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="RichTextLabel" parent="OuterMargin/Languages/日本語/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 24
+text = "5号室の紙包み"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Languages/日本語/Pages/RightPage/Notes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("Notebook_ja")
+theme_override_font_sizes/normal_font_size = 22
+theme_override_constants/line_separation = 8
+bbcode_enabled = true
+text = "紙包みの中に木のくさびがある。斜面にはほこりが付いている。\n\n紙の内側に転写の跡があり、くさびの斜面の形に合う。外側はきれいだ。\n\n破れ目は、5号室の引き出しにある白紙と一致する。"
+autowrap_mode = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Languages/日本語/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13"
+horizontal_alignment = 1
+

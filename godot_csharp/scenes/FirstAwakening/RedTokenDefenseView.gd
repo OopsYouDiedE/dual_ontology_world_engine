@@ -44,7 +44,7 @@ func _open_red_defense() -> void:
 	_defense_choice(key+"_alternative", alternatives, answer, source.modal_box, "2 · 解释")
 	_defense_choice(key+"_unknown", unknowns, answer, source.modal_box, "3 · 未知范围")
 	var selected_material: String = str(answer.get(key+"_material", "unknown"))
-	var summary: Label = source._label(source.modal_box, "当前这卡：\n材料：%s\n解释：%s\n保留：%s" % [
+	var summary: RichTextLabel = source._label(source.modal_box, "当前这卡：\n材料：%s\n解释：%s\n保留：%s" % [
 		_defense_option_text(materials, selected_material),
 		_defense_option_text(alternatives, str(answer.get(key+"_alternative", "unknown"))),
 		_defense_option_text(unknowns, str(answer.get(key+"_unknown", "unknown")))], 18)
@@ -75,10 +75,10 @@ func _open_red_defense() -> void:
 			option.toggle_mode = true
 			option.set_pressed_no_signal(chosen)
 			_style_red_statement(option, chosen)
-	var feedback: Label = source._label(source.modal_box,"",18)
+	var feedback: RichTextLabel = source._label(source.modal_box,"",18)
 	feedback.name = "RedDefenseFeedback"
 	feedback.visible = false
-	source._pin_red_footer([["证物页",source._open_journal],["返回推演",source._open_red_notebook],["返回现场",source._close_modal],["提交有材料的三项答辩",func():
+	var actions: Array = [["证物页",source._open_journal],["返回现场",source._close_modal],["提交有材料的三项答辩",func():
 		var result: Dictionary = source.red.call("Defend",answer)
 		if result.get("ok",false):
 			source.ended = true
@@ -86,7 +86,12 @@ func _open_red_defense() -> void:
 			source._begin_dialogue("S28_ADMISSION")
 		else:
 			feedback.text = str(result.get("message","请检查材料支持范围。"))
-			feedback.visible = true]], ("交接推演已完成。" if source.red.call("State").get("solved",false) else "交接推演尚未完成，可先记草稿。")+"\n"+_red_defense_status())
+			feedback.visible = true]]
+	var status := _red_defense_status()
+	if source.can_use_mind_reasoning():
+		actions.insert(1, ["返回推演", source._open_red_notebook])
+		status = ("交接推演已完成。" if source.red.call("State").get("solved", false) else "交接推演尚未完成，可先记草稿。") + "\n" + status
+	source._pin_red_footer(actions, status)
 
 func _red_defense_status() -> String:
 	var missing: Array[String] = []
@@ -132,7 +137,7 @@ func _defense_choice(key: String, options: Array, answer: Dictionary, parent: No
 	box.name = key
 	box.add_theme_constant_override("separation", 12)
 	(parent if parent != null else source.modal_box).add_child(box)
-	var label: Label = source._label(box, caption, 18)
+	var label: RichTextLabel = source._label(box, caption, 18)
 	label.custom_minimum_size.x = 122
 	var selector: OptionButton = OptionButton.new()
 	selector.name = "Choice"

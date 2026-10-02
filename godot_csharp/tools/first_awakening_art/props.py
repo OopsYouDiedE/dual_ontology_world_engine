@@ -614,24 +614,30 @@ def armchair() -> Canvas:
 
 
 def transmitter() -> Canvas:
-    """26x34 brass speaking tube with a pull handle, mounted on walnut."""
+    """Fixed 28x36 speaking tube: wall flange, bent neck, bell and pull chain."""
     c = Canvas(28, 36)
-    c.rect(6, 2, 12, 32, WALNUT[3])
-    c.frame(6, 2, 12, 32, WALNUT[1])
-    c.vline(7, 3, 30, WALNUT[5])
-    c.rect(10, 8, 4, 12, BRASS[3])
-    c.vline(10, 8, 12, BRASS[5])
-    # Horn flaring toward the room
-    c.poly([(12, 18), (26, 12), (27, 30), (12, 24)], BRASS[3])
-    c.poly([(13, 19), (25, 14), (25, 17), (13, 21)], BRASS[5])
-    c.ellipse(25, 21, 3, 9, BRASS[1])
-    c.ellipse(25, 21, 2, 7, INK)
-    # Pull handle on a chain
-    c.vline(4, 6, 16, IRON[4])
-    c.rect(2, 22, 5, 3, CREAM[5])
-    c.px(3, 22, (255, 255, 255, 255))
-    c.rect(9, 27, 6, 4, BRASS[2])
-    c.px(10, 28, BRASS[5])
+    c.rect(6, 2, 12, 32, WALNUT[2]); c.frame(6, 2, 12, 32, WALNUT[0])
+    c.vline(7, 3, 30, WALNUT[4]); c.hline(7, 3, 10, WALNUT[5])
+    for yy in (5, 29):
+        c.rect(9, yy, 3, 3, IRON[1]); c.px(9, yy, IRON[4])
+    # The back flange sits on the board; the neck turns outward from it.
+    c.ellipse(13, 11, 5, 6, BRASS[0]); c.ellipse(12, 10, 4, 5, BRASS[2])
+    c.vline(9, 7, 6, BRASS[4]); c.rect(11, 10, 5, 10, BRASS[1])
+    c.vline(11, 10, 9, BRASS[4]); c.rect(12, 17, 6, 5, BRASS[2])
+    c.poly([(14, 17), (22, 12), (24, 27), (14, 22)], BRASS[2])
+    c.line(14, 17, 21, 13, BRASS[4]); c.line(14, 22, 22, 26, BRASS[0])
+    # A thick lip surrounds a shaded mouth, not a flat black sticker.
+    c.ellipse(22, 20, 4, 8, BRASS[0]); c.ellipse(22, 19, 4, 7, BRASS[3])
+    c.ellipse(23, 20, 2.5, 5.5, BRASS[0]); c.ellipse(23, 21, 2, 4, IRON[0])
+    c.vline(19, 16, 6, BRASS[5]); c.px(20, 13, BRASS[4])
+    c.px(24, 24, BRASS[1])
+    # Alternating chain links terminate in a hand-sized turned wood pull.
+    c.rect(3, 5, 3, 3, IRON[1]); c.px(3, 5, IRON[4])
+    for yy in range(8, 24, 3):
+        c.px(4, yy, IRON[4]); c.vline(3, yy+1, 2, IRON[2])
+    c.rect(1, 25, 6, 4, WALNUT[1]); c.hline(1, 25, 6, WALNUT[5])
+    c.hline(2, 27, 4, WALNUT[3]); c.px(4, 24, IRON[3])
+    c.rect(10, 29, 6, 3, BRASS[1]); c.hline(10, 29, 6, BRASS[3])
     return _finish(c)
 
 

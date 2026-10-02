@@ -478,7 +478,6 @@ func _open_modal(title: String, next_mode: String) -> void:
 	mode = next_mode
 	modal_open = true
 	modal.open_content(title, next_mode, active_locale_theme)
-	modal.call_deferred("_fit_height", modal.regular_bounds)
 
 func _close_modal() -> void:
 	modal_locale_refresh = Callable()
@@ -499,12 +498,16 @@ func _button(parent: Node, words: String, action: Callable, disabled := false) -
 	parent.add_child(button)
 	return button
 
-func _label(parent: Node, words: String, font_size := 18, color := Color("d8cfbe")) -> Label:
-	var label: Label = Label.new()
+func _label(parent: Node, words: String, font_size := 18, color := FieldModal.INK) -> RichTextLabel:
+	var label := RichTextLabel.new()
 	label.text = words
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.scroll_active = false
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
+	label.add_theme_font_size_override("normal_font_size", font_size)
+	label.add_theme_color_override("default_color", color)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(label)
 	return label
 

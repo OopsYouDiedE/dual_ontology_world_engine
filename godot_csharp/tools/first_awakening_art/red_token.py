@@ -5,7 +5,6 @@ from PIL import Image, ImageDraw
 from .pixel import Canvas
 from .palette import WALNUT, BRASS, IRON, LINEN, CLARET, TEAL, FOG, INK, STONE, TILE
 from .props import slab, drawer, leg, _finish, chair_back
-from .surface_texture import apply as surface_texture
 
 # Permanent placement and collision are authored together, independent of art bounds.
 FIXTURES = [
@@ -50,17 +49,34 @@ def paper(c,x,y,w,h):
     for yy in range(y+5,y+h-2,4): c.hline(x+3,yy,w-6,LINEN[1])
 
 def cabinet():
+    """Two framed leaves, four visible bays and a load-bearing plinth."""
     c=Canvas(112,72)
-    slab(c,2,8,108,7,54,WALNUT,seed=115)
-    for x in [6,31,56,81]:
-        bevel(c,x,19,23,40,WALNUT)
-        bevel(c,x+3,22,17,13,BRASS)
-        c.rect(x+5,24,13,9,TEAL[1])
-        paper(c,x+7,26,9,5)
-        c.vline(x+4,39,15,WALNUT[1]); c.vline(x+18,39,15,WALNUT[1])
-        c.rect(x+15,43,4,3,BRASS[0]); c.hline(x+15,43,3,BRASS[4])
-        screw(c,x+2,20); screw(c,x+18,53)
-    c.rect(5,65,5,7,WALNUT[1]); c.rect(102,65,5,7,WALNUT[1])
+    # Projecting cornice and dark end grain separate the top from the facade.
+    slab(c,2,8,108,6,3,WALNUT,grain=False)
+    c.rect(4,17,104,45,WALNUT[2]); c.vline(4,17,45,WALNUT[4])
+    c.rect(7,18,98,43,WALNUT[0])
+    for x in (8,57):
+        bevel(c,x,18,47,42,WALNUT)
+        c.rect(x+4,22,39,31,WALNUT[0])
+        # The two bays in each leaf are shelves, not four miniature doors.
+        for yy in (23,39):
+            c.rect(x+5,yy,37,12,TEAL[1]); c.vline(x+5,yy,12,TEAL[2])
+            c.hline(x+5,yy+11,37,WALNUT[4])
+            c.rect(x+8,yy+4,15,6,LINEN[3]); c.hline(x+8,yy+4,15,LINEN[5])
+            c.hline(x+10,yy+6,10,LINEN[1]); c.rect(x+26,yy+3,11,7,IRON[2])
+            c.hline(x+26,yy+3,11,IRON[4]); c.rect(x+29,yy+5,5,3,BRASS[2])
+        c.hline(x+4,36,39,WALNUT[5]); c.hline(x+4,37,39,WALNUT[1])
+        c.hline(x+6,55,34,WALNUT[3])
+    # Hinges stay on the outside edges; paired pulls meet at the centre seam.
+    for x in (7,102):
+        for yy in (24,48):
+            c.rect(x,yy,3,6,IRON[1]); c.vline(x,yy,5,IRON[4])
+    for x in (49,59):
+        c.rect(x,40,3,8,BRASS[0]); c.vline(x,40,7,BRASS[4]); c.px(x+1,47,BRASS[2])
+    c.vline(55,18,42,WALNUT[0]); c.vline(56,18,42,WALNUT[4])
+    bevel(c,3,61,106,6,WALNUT)
+    for x in (5,101):
+        c.rect(x,67,6,5,WALNUT[1]); c.vline(x,67,5,WALNUT[3])
     return c
 
 def board():
@@ -83,55 +99,77 @@ def rack():
 def handle(pressed=False):
     c=Canvas(64,48)
     slab(c,2,20,60,14,6,WALNUT,grain=False,seed=116)
-    # Compact mechanical bed seated directly on the worktop.
-    slab(c,11,13,29,9,5,IRON,grain=False)
-    c.rect(14,16,22,4,IRON[0])
-    for x in range(15,34,4): c.line(x,17,x+2,19,IRON[4])
-    c.ellipse(25,24,6,3,BRASS[1]); c.ellipse(24,23,4,2,BRASS[4])
-    end=(48,22) if pressed else (43,5)
-    c.line(25,24,*end,BRASS[0]); c.line(25,23,end[0],end[1]-1,BRASS[3]); c.line(25,22,end[0],end[1]-2,BRASS[5])
-    c.rect(end[0]-4,end[1]-3,9,5,WALNUT[2]); c.hline(end[0]-4,end[1]-3,9,WALNUT[5])
+    # A bolted bed, spring guide and upright cheek carry the same pivot in both states.
+    slab(c,8,16,31,7,4,IRON,grain=False)
+    c.rect(10,18,27,4,IRON[0]); c.hline(11,20,24,IRON[3])
+    c.rect(11,16,3,7,IRON[3]); c.hline(11,16,3,IRON[5])
+    spring_end=23 if pressed else 30
+    for x in range(15,spring_end,3 if pressed else 4):
+        c.line(x,17,x+2,20,IRON[4]); c.line(x+2,20,x+3,17,IRON[2])
+    c.rect(spring_end,16,3,6,BRASS[2]); c.vline(spring_end,16,6,BRASS[4])
+    c.line(spring_end+1,21,27,24,IRON[3])
+    c.poly([(22,28),(23,21),(27,18),(31,22),(32,28)],IRON[1])
+    c.line(23,27,24,21,IRON[4]); c.hline(23,28,10,IRON[0])
+    end=(49,22) if pressed else (43,5)
+    c.line(27,23,*end,BRASS[0]); c.line(27,22,end[0],end[1]-1,BRASS[2])
+    c.line(27,21,end[0],end[1]-2,BRASS[4])
+    c.ellipse(27,24,4,3,BRASS[0]); c.ellipse(26,23,3,2,BRASS[3])
+    c.px(26,22,BRASS[5]); c.rect(26,23,2,2,IRON[1])
+    bevel(c,end[0]-4,end[1]-3,9,5,WALNUT)
+    for x,y in ((9,24),(35,24)): screw(c,x,y)
     paper(c,44,25,13,6)
     c.hline(5,37,54,WALNUT[1])
     for x in (5,55):
         c.rect(x,40,4,8,WALNUT[3]); c.hline(x,42,4,WALNUT[5]); c.hline(x,46,4,WALNUT[1])
-    return surface_texture(_finish(c),"spring_handle_pressed" if pressed else "spring_handle",1)[0]
+    c.hline(8,30,13,WALNUT[3]); c.hline(25,32,12,WALNUT[3])
+    return _finish(c)
 
 
 def basin():
     c=Canvas(96,64)
-    top=[WALNUT[0],WALNUT[1],WALNUT[2],WALNUT[3],TILE[4],TILE[5]]
-    slab(c,3,24,90,16,19,top,grain=False)
-    # Stone seam and recess establish a substantial washable counter.
-    pass # stone surface distribution is applied below
-    c.ellipse(44,31,31,8,IRON[1]); c.ellipse(44,30,29,7,IRON[4])
-    c.ellipse(44,30,26,5,FOG[1]); c.hline(25,29,33,FOG[3]); c.ellipse(45,32,3,1.5,IRON[1])
+    # Counter thickness, bowl wall and water surface use separate silhouettes.
+    slab(c,3,24,90,14,4,TILE,grain=False)
+    c.rect(4,42,88,17,WALNUT[2]); c.vline(4,42,17,WALNUT[4])
+    c.ellipse(44,30,32,9,STONE[1]); c.ellipse(44,29,31,8,TILE[3])
+    c.ellipse(44,29,28,7,IRON[0]); c.ellipse(44,30,26,6,IRON[2])
+    c.ellipse(44,32,23,4,FOG[1]); c.hline(25,31,19,FOG[2])
+    c.hline(26,32,12,FOG[3]); c.hline(49,34,12,FOG[2])
+    c.ellipse(45,33,3,1.5,IRON[0]); c.hline(43,32,4,IRON[3])
+    c.hline(23,23,29,TILE[5]); c.hline(18,25,10,TILE[4])
+    c.hline(35,38,25,STONE[1]); c.vline(92,28,13,TILE[2])
     for x in (8,49):
         drawer(c,x,43,37,14,WALNUT)
         c.vline(x+2,45,9,WALNUT[4])
     c.rect(3,59,90,5,WALNUT[1]); c.hline(4,59,88,WALNUT[3])
     # Fold over the right counter edge; the detachable clip remains its own state asset.
     c.rect(80,27,9,16,LINEN[3]); c.hline(80,27,9,LINEN[5]); c.vline(81,28,13,LINEN[4]); c.vline(88,29,14,LINEN[1])
-    return surface_texture(_finish(c),'filter_basin',1)[0]
+    c.hline(14,50,11,WALNUT[3]); c.hline(62,53,14,WALNUT[3])
+    return _finish(c)
 
 
 def inlet():
     c=Canvas(64,48)
     for x,r in [(13,BRASS),(43,IRON)]:
-        bevel(c,x-6,3,17,12,r)
-        c.rect(x,12,5,20,r[1]); c.vline(x+1,12,19,r[4])
-        c.rect(x-2,25,9,6,r[2]); c.hline(x-1,25,7,r[5])
-        c.rect(x,30,5,7,r[2]); c.hline(x,36,5,r[0])
+        # Separate wall flanges and elbows make both branches readable.
+        bevel(c,x-5,3,15,9,IRON)
+        c.rect(x-2,6,8,8,r[1]); c.vline(x-2,6,8,r[4])
+        c.rect(x,11,5,18,r[2]); c.vline(x,11,18,r[4])
+        c.rect(x-2,13,9,3,r[1]); c.hline(x-2,13,9,r[4])
+        c.rect(x-2,28,9,4,r[1]); c.hline(x-2,28,9,r[4])
+        c.rect(x,32,5,5,r[2]); c.hline(x,36,5,r[0])
+        screw(c,x+6,5)
     # Both pipe mouths terminate above the bowl. The transparent gap is real art.
-    c.rect(3,16,26,13,IRON[0]); c.frame(3,16,26,13,BRASS[2]); c.rect(6,19,20,6,FOG[0])
-    c.px(9,22,STONE[3]); c.px(15,20,STONE[2]); c.px(21,23,STONE[3])
+    bevel(c,3,17,26,12,BRASS); c.rect(6,20,20,5,IRON[0])
+    c.hline(6,25,20,BRASS[1]); c.px(9,22,STONE[3]); c.px(15,21,STONE[2]); c.px(21,23,STONE[3])
     c.hline(44,38,3,FOG[3]); c.px(45,41,FOG[2]); c.px(45,45,FOG[3])
     return c
 
 def capture():
-    c=Canvas(24,16); bevel(c,1,1,22,14,BRASS); c.rect(4,4,15,7,IRON[0])
+    c=Canvas(24,16); bevel(c,1,2,22,12,BRASS); c.rect(4,5,15,6,IRON[0])
+    c.hline(4,11,15,IRON[3]); c.hline(3,3,17,BRASS[4])
     for x,y in [(5,5),(7,8),(11,6),(15,9),(17,5)]: c.px(x,y,STONE[3])
-    c.rect(19,5,3,5,BRASS[3]); c.px(20,6,BRASS[5]); return c
+    c.rect(19,6,3,4,BRASS[3]); c.px(20,6,BRASS[5])
+    c.rect(3,13,17,2,BRASS[0]); c.hline(3,13,17,BRASS[2]); return c
 
 def clip():
     c=Canvas(24,24); c.poly([(2,5),(19,3),(21,19),(5,23)],LINEN[2])
@@ -147,16 +185,21 @@ def receiver():
     c=Canvas(48,64)
     slab(c,3,7,42,14,34,WALNUT,grain=False,seed=118)
     for x,ramp in [(7,BRASS),(27,CLARET)]:
-        # Slots lie in a receding top, with a dark lip and a visible brass throat.
-        c.rect(x,11,13,6,IRON[1]); c.hline(x,11,13,IRON[0])
-        c.hline(x+1,16,11,ramp[3]); c.hline(x+2,13,9,IRON[0])
-        c.px(x+1,12,ramp[4])
-    c.rect(7,25,34,16,WALNUT[2]); c.hline(7,25,34,WALNUT[1])
-    c.rect(9,28,30,10,IRON[1]); c.hline(9,28,30,IRON[0]); c.hline(10,37,28,BRASS[2])
-    drawer(c,6,44,36,10,WALNUT)
+        # Independent fixed throats: a rear void above a sloping one-way tongue.
+        bevel(c,x-1,10,15,9,IRON); c.rect(x+1,12,11,3,IRON[0])
+        c.hline(x+1,15,11,ramp[2]); c.hline(x+2,16,9,ramp[4])
+        c.hline(x+2,17,9,ramp[1]); c.px(x+2,13,IRON[3])
+    c.vline(4,23,29,WALNUT[4]); c.vline(43,23,29,WALNUT[1])
+    bevel(c,7,25,34,16,IRON)
+    c.rect(10,28,28,8,IRON[0]); c.hline(11,35,26,BRASS[2])
+    c.rect(13,30,22,3,LINEN[3]); c.hline(13,30,22,LINEN[5])
+    # The front drawer and its rail shadow are independent of the receiving throat.
+    c.rect(6,43,36,11,WALNUT[0]); bevel(c,7,45,34,8,WALNUT)
+    c.rect(20,47,8,3,BRASS[0]); c.hline(21,47,6,BRASS[4])
+    c.hline(9,51,12,WALNUT[3]); c.hline(4,54,40,WALNUT[1])
     for x in (5,39):
         leg(c,x,55,9,WALNUT); c.vline(x+2,55,9,WALNUT[3])
-    return surface_texture(_finish(c),'return_box',1)[0]
+    return _finish(c)
 
 
 def band():

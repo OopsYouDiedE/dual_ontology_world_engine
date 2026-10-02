@@ -28,12 +28,16 @@ func style(color: Color, border := Color("63706b")) -> StyleBoxFlat:
 	box.set_content_margin_all(10)
 	return box
 
-func add_label(parent: Node, words: String, size := 20, color := INK) -> Label:
-	var label := Label.new()
+func add_label(parent: Node, words: String, size := 20, color := INK) -> RichTextLabel:
+	var label := RichTextLabel.new()
 	label.text = tr(words)
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", color)
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.scroll_active = false
+	label.add_theme_font_size_override("normal_font_size", size)
+	label.add_theme_color_override("default_color", color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(label)
 	return label
 
@@ -78,8 +82,20 @@ func paper_field(control: Control) -> void:
 	control.add_theme_color_override("font_color", INK)
 	control.add_theme_color_override("font_hover_color", INK)
 	control.add_theme_color_override("font_pressed_color", INK)
+	if control is LineEdit:
+		# Single-line fields need their own colors; TextEdit theme colors do not inherit.
+		control.add_theme_color_override("font_placeholder_color", MUTED)
+		control.add_theme_color_override("font_uneditable_color", MUTED)
+		control.add_theme_color_override("caret_color", INK)
+		control.add_theme_color_override("font_selected_color", INK)
+		control.add_theme_color_override("selection_color", PAPER_THEME.get_color("selection_color", "TextEdit"))
 
 func open_content(title: String, next_mode: String, locale_theme: Theme) -> void:
+	if has_node("EvidenceNotebook"):
+		var previous := get_node("EvidenceNotebook")
+		remove_child(previous)
+		previous.queue_free()
+	$ModalScroll.visible = next_mode != "evidence"
 	for child in content.get_children():
 		content.remove_child(child)
 		child.queue_free()
@@ -96,6 +112,12 @@ func open_content(title: String, next_mode: String, locale_theme: Theme) -> void
 	position = bounds.position
 	size = bounds.size
 	show()
+	if current_mode == "evidence":
+		# The book owns its body scroll and fixed actions; no outer scrolling or fit pass.
+		position = Vector2(94, 96)
+		size = Vector2(1092, 800)
+		add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		return
 	if current_mode == "flow":
 		return
 	add_label(content, title, 24, INK)
@@ -114,6 +136,13 @@ func add_detail(body: String, diagram: String, close_action: Callable) -> void:
 	card.get_node("Description").add_theme_color_override("default_color", INK)
 	content.add_child(card)
 	add_footer([["FA_UI_057", close_action]])
+
+func compact_name_card() -> void:
+	# Naming is a short interruption within the ticket inspection.
+	var card_size := Vector2(620, 284)
+	$ModalScroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	size = card_size
+	position = regular_bounds.get_center() - card_size / 2.0
 
 func _paper_theme(locale_theme: Theme) -> Theme:
 	# The notebook theme draws the paper; the locale theme only swaps the print face.

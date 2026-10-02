@@ -438,13 +438,17 @@ static func column(parent: Node, at: Vector2, dimensions: Vector2) -> VBoxContai
 	parent.add_child(result)
 	return result
 
-static func label(parent: Node, text: String, size: int, color: Color, handwritten := false) -> Label:
-	var result := Label.new()
+static func label(parent: Node, text: String, size: int, color: Color, handwritten := false) -> RichTextLabel:
+	var result := RichTextLabel.new()
 	result.text = text
+	result.bbcode_enabled = true
+	result.fit_content = true
+	result.scroll_active = false
 	result.autowrap_mode = TextServer.AUTOWRAP_OFF if parent is HBoxContainer else TextServer.AUTOWRAP_WORD_SMART
-	result.add_theme_font_size_override("font_size",size)
-	result.add_theme_color_override("font_color",color)
-	result.add_theme_font_override("font",writing() if handwritten else serif())
+	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result.add_theme_font_size_override("normal_font_size",size)
+	result.add_theme_color_override("default_color",color)
+	result.add_theme_font_override("normal_font",writing() if handwritten else serif())
 	parent.add_child(result)
 	return result
 

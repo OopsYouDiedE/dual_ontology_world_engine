@@ -19,7 +19,7 @@ var context: Node
 var line
 var busy := false
 var active := false
-var speaker: Label
+var speaker: RichTextLabel
 var body: RichTextLabel
 var choices: GridContainer
 var next_button: Button
@@ -36,9 +36,11 @@ var elapsed := 0.0
 var compact := false
 var locale_refresh_key := ""
 var dialogue_theme: Theme
-## Keyboard confirmation stays explicit even when the typewriter finishes between inputs.
-var keyboard_line_confirmed := false
-var confirm_completed_keyboard_line := false
+var character_portraits: Dictionary = {}
+var character_portrait: TextureRect
+var portrait_character := ""
+## Opening dialogue consumes keyboard input before focused GUI buttons.
+var single_press_keyboard_continue := false
 
 const BASE_VOICE_VOLUME_DB := -6.0
 
@@ -54,9 +56,14 @@ const CHARACTER_PITCH_LOUDNESS_COMPENSATION := {
 	"侦探（心声）": 0.0,
 	"厨师": 2.4,
 	"主厨": 2.4,
+	"沈鼎": 2.4,
 	"工程师": -1.5,
+	"霍铎": -1.5,
 	"音乐家": -3.0,
+	"苏泠": -3.0,
 	"铜口": -2.6,
+	"学院管理人？": -2.6,
+	"？？？": -2.6,
 }
 
 ## Estimated typing speed (characters per second) across languages to normalize sentence audio duration.
@@ -138,6 +145,7 @@ func _refresh_active_line_locale(key: String) -> void:
 	line = refreshed
 	busy = false
 	speaker.text = _localized_speaker(line.character)
+	_refresh_character_portrait()
 	body.text = line.text
 	if revealed:
 		body.visible_characters = -1
@@ -171,14 +179,67 @@ func _refresh_history_locale() -> void:
 		if refreshed == null:
 			continue
 		var character := _localized_speaker(refreshed.character)
-		history[index] = character + "\n" + refreshed.text
+		history[index] = _escape_rich_text(character) + "\n" + refreshed.text
 
 func _localized_speaker(canonical_name: String) -> String:
 	if is_instance_valid(context) and context.has_method("_localized_speaker"):
 		return context.call("_localized_speaker", canonical_name)
 	var ids := {"侦探":"FA_NAME_001", "工程师":"FA_NAME_002", "厨师":"FA_NAME_003",
-		"音乐家":"FA_NAME_004", "铜口":"FA_NAME_005", "侦探（心声）":"FA_NAME_006"}
+		"音乐家":"FA_NAME_004", "铜口":"FA_NAME_005", "侦探（心声）":"FA_NAME_006",
+		"霍铎":"FA_NAME_002", "沈鼎":"FA_NAME_003", "苏泠":"FA_NAME_004"}
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
+
+func _escape_rich_text(value: String) -> String:
+	return value.replace("[", "[lb]").replace("]", "[rb]")
+
+func set_character_portraits(mapping: Dictionary) -> void:
+	character_portraits.clear()
+	for canonical_name in mapping:
+		var character := _portrait_character(str(canonical_name))
+		if character.is_empty():
+			continue
+		var asset: Variant = mapping[canonical_name]
+		if asset is Texture2D:
+			character_portraits[character] = asset
+		elif asset is String and ResourceLoader.exists(asset):
+			var texture := load(asset) as Texture2D
+			if texture != null:
+				character_portraits[character] = texture
+	if not is_instance_valid(panel):
+		return
+	if not is_instance_valid(character_portrait):
+		character_portrait = TextureRect.new()
+		character_portrait.name = "CharacterPortrait"
+		character_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		character_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		character_portrait.size = Vector2(200, 360)
+		character_portrait.position = Vector2(24, -372)
+		panel.add_child(character_portrait)
+	character_portrait.texture = null
+	portrait_character = ""
+	_refresh_character_portrait()
+
+func _portrait_character(canonical_name: String) -> String:
+	match canonical_name:
+		"侦探", "侦探（心声）", "侦探心声":
+			return "侦探"
+		"工程师", "霍铎":
+			return "工程师"
+		"厨师", "主厨", "沈鼎":
+			return "厨师"
+		"音乐家", "苏泠":
+			return "音乐家"
+	return ""
+
+func _refresh_character_portrait() -> void:
+	if not is_instance_valid(character_portrait):
+		return
+	var character := _portrait_character(str(line.character)) if active and not busy and line != null else ""
+	if character != portrait_character:
+		portrait_character = character
+		character_portrait.texture = character_portraits.get(character) as Texture2D
+	character_portrait.visible = active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
 
 func apply_locale_font(font: Font, _theme: Theme) -> void:
 	dialogue_theme.default_font = font
@@ -229,11 +290,18 @@ func _ready() -> void:
 	panel.gui_input.connect(on_panel_input)
 	add_child(panel)
 	heading = label("FA_UI_087", Vector2(36, 18), 13, GOLD)
-	speaker = label("", Vector2(36, 50), 22, PAPER)
+	speaker = RichTextLabel.new()
+	speaker.position = Vector2(36, 50)
+	speaker.size = Vector2(144, 32)
+	speaker.bbcode_enabled = false
+	speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speaker.add_theme_font_size_override("normal_font_size", 22)
+	speaker.add_theme_color_override("default_color", PAPER)
+	panel.add_child(speaker)
 	body = RichTextLabel.new()
 	body.position = Vector2(206, 48)
 	body.size = Vector2(1030, 84)
-	body.bbcode_enabled = false
+	body.bbcode_enabled = true
 	body.scroll_active = false
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_theme_font_size_override("normal_font_size", 20)
@@ -270,6 +338,7 @@ func _ready() -> void:
 	history_panel.add_theme_stylebox_override("panel", background)
 	add_child(history_panel)
 	history_text = RichTextLabel.new()
+	history_text.bbcode_enabled = true
 	history_text.position = Vector2(24, 24)
 	history_text.size = Vector2(656, 378)
 	history_panel.add_child(history_text)
@@ -334,8 +403,8 @@ func use_compact_layout() -> void:
 	background.set_corner_radius_all(8)
 	panel.add_theme_stylebox_override("panel", background)
 	speaker.position = Vector2(32, 18)
-	speaker.add_theme_font_size_override("font_size", 18)
-	speaker.add_theme_color_override("font_color", Color("c4b798"))
+	speaker.add_theme_font_size_override("normal_font_size", 18)
+	speaker.add_theme_color_override("default_color", Color("c4b798"))
 	body.position = Vector2(32, 52)
 	body.size = Vector2(1088, 104)
 	body.add_theme_font_size_override("normal_font_size", 24)
@@ -363,7 +432,7 @@ func layout_compact_line() -> void:
 	panel.size.y = height
 	panel.position.y = 992 - 32 - height
 	next_button.position.y = height - 52
-	if confirm_completed_keyboard_line:
+	if single_press_keyboard_continue:
 		hint.show()
 		hint.position = Vector2(32, height - 35)
 
@@ -378,6 +447,8 @@ func label(text: String, at: Vector2, size: int, color: Color) -> Label:
 	return result
 
 func idle(title: String = "", text: String = "") -> void:
+	if is_instance_valid(character_portrait):
+		character_portrait.hide()
 	speaker.text = tr(title) if not title.is_empty() else ""
 	body.text = tr(text) if not text.is_empty() else ""
 	body.visible_characters = -1
@@ -395,19 +466,20 @@ func start(story: Resource, title: String, state: Node) -> void:
 func _get_character_voice(char_name: String) -> AudioStream:
 	if char_name == "侦探" or char_name == "侦探（心声）":
 		return VOICE_DETECTIVE
-	elif char_name == "工程师":
+	elif char_name == "工程师" or char_name == "霍铎":
 		return VOICE_ENGINEER
-	elif char_name == "厨师" or char_name == "主厨":
+	elif char_name == "厨师" or char_name == "主厨" or char_name == "沈鼎":
 		return VOICE_CHEF
-	elif char_name == "音乐家":
+	elif char_name == "音乐家" or char_name == "苏泠":
 		return VOICE_MUSICIAN
-	elif char_name == "铜口":
+	elif char_name == "铜口" or char_name == "学院管理人？" or char_name == "？？？":
 		return VOICE_TUBE
 	return VOICE_DETECTIVE
 
 func show_line(key: String) -> void:
 	busy = true
-	keyboard_line_confirmed = false
+	line = null
+	_refresh_character_portrait()
 	next_button.hide()
 	# A new branch can await actor movement before producing its next line.
 	# Do not leave an already-read sentence on screen as if it were awaiting input.
@@ -415,6 +487,7 @@ func show_line(key: String) -> void:
 	body.text = ""
 	body.visible_characters = -1
 	hint.text = "…"
+	hint.visible = not compact
 	choices.hide()
 	for child in choices.get_children():
 		choices.remove_child(child)
@@ -423,18 +496,20 @@ func show_line(key: String) -> void:
 	busy = false
 	if line == null:
 		active = false
+		_refresh_character_portrait()
 		finished.emit()
 		return
 	speaker.text = _localized_speaker(line.character) if not line.character.is_empty() else ""
+	_refresh_character_portrait()
 	body.text = line.text
 	body.visible_characters = 0
 	elapsed = 0
 	current_voice_stream = _get_character_voice(line.character)
 	last_voice_char_index = -1
-	history.append(speaker.text + "\n" + line.text)
+	history.append(_escape_rich_text(speaker.text) + "\n" + line.text)
 	history_line_ids.append(line.id)
 	line_shown.emit(line.character)
-	hint.text = tr("FA_UI_143")
+	hint.hide()
 	_update_continue_hint()
 	for response in line.responses:
 		if not response.is_allowed:
@@ -476,12 +551,11 @@ func reveal() -> void:
 	_update_continue_hint()
 
 func _update_continue_hint() -> void:
-	if not confirm_completed_keyboard_line:
-		return
-	hint.show()
-	hint.text = "Space / Enter：继续" if keyboard_line_confirmed else "Space / Enter：先确认本句，再按继续；点击继续直接推进"
+	# Visible continue and history buttons already communicate these actions.
+	hint.hide()
 
 func _process(delta: float) -> void:
+	_refresh_character_portrait()
 	if active and not busy and not history_panel.visible and body.visible_characters >= 0:
 		elapsed += delta
 		var loc := TranslationServer.get_locale()
@@ -516,6 +590,12 @@ func _play_typewriter_voice(from_count: int, to_count: int) -> void:
 			voice_player.play()
 			break
 
+func clear_history() -> void:
+	history.clear()
+	history_line_ids.clear()
+	if is_instance_valid(history_text):
+		history_text.text = ""
+
 func toggle_history() -> void:
 	var focused := get_viewport().gui_get_focus_owner()
 	if is_instance_valid(focused) and (panel.is_ancestor_of(focused) or history_panel.is_ancestor_of(focused)):
@@ -535,15 +615,20 @@ func on_panel_input(event: InputEvent) -> void:
 		panel.accept_event()
 
 func _input(event: InputEvent) -> void:
-	if confirm_completed_keyboard_line:
+	if single_press_keyboard_continue:
 		_handle_dialogue_key(event)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Other story hosts keep normal GUI response-button keyboard activation.
-	if not confirm_completed_keyboard_line:
+	if not single_press_keyboard_continue:
 		_handle_dialogue_key(event)
 
 func _handle_dialogue_key(event: InputEvent) -> void:
+	var editor := get_viewport().gui_get_focus_owner()
+	if editor is LineEdit or editor is TextEdit:
+		return
+	if is_instance_valid(context) and context.has_method("dialogue_has_modal_input") and context.call("dialogue_has_modal_input"):
+		return
 	if not active or not event is InputEventKey or event.keycode not in [KEY_H, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
 		return
 	# Consume down, repeat and up before focused Buttons receive ui_accept.
@@ -555,9 +640,11 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 		return
 	if busy or history_panel.visible:
 		return
-	if confirm_completed_keyboard_line and not keyboard_line_confirmed:
-		keyboard_line_confirmed = true
-		reveal()
+	if single_press_keyboard_continue and body.visible_characters >= 0:
+		if line.responses.is_empty():
+			await show_line(line.next_id)
+		else:
+			reveal()
 		return
 	if event.keycode in [KEY_ENTER, KEY_KP_ENTER] and choices.visible and choices.get_child_count() > 0:
 		var focused := get_viewport().gui_get_focus_owner()

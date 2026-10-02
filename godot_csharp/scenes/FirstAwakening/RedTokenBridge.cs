@@ -10,6 +10,27 @@ public partial class RedTokenBridge : Node
     public void InvalidateCandidate() => _session.InvalidateCandidate();
     public override void _ExitTree() => _session.Dispose();
     public GDictionary Inspect(string id) => Result(_session.Inspect(id));
+    public Godot.Collections.Array<string> SearchOpeningRoom() => new(_session.SearchOpeningRoom());
+    public Godot.Collections.Array<string> DiscoveredSites() => new(_session.DiscoveredSites);
+    public GDictionary IntroduceCompanions() => Result(_session.IntroduceCompanions());
+    public GDictionary ReceiveCopperIntroduction() => Result(_session.ReceiveCopperIntroduction());
+    public GDictionary FollowCompanion(string actor) => Result(_session.FollowCompanion(actor));
+    public GDictionary StopFollowing() => Result(_session.StopFollowing());
+    public GDictionary IdentifyInvestigator(string name) => Result(_session.Physical.IdentifyInvestigator(name));
+    public GDictionary PrepareSafeAction(string operation)
+    {
+        var plan = _session.PrepareSafeAction(operation);
+        return new GDictionary { ["ok"] = plan.Ok, ["message"] = plan.Message,
+            ["actor"] = plan.Actor, ["site"] = plan.Site, ["operation"] = plan.Operation };
+    }
+    public GDictionary CommitSafeAction() => Result(_session.CommitSafeAction());
+    public GDictionary CancelPreparedAction() => Result(_session.CancelPreparedAction());
+    public GDictionary SiteKnowledge(string id)
+    {
+        var knowledge = _session.SiteKnowledge(id);
+        return new GDictionary { ["name"] = knowledge.Name, ["noticed"] = knowledge.Noticed,
+            ["identified"] = knowledge.Identified, ["understood"] = knowledge.Understood };
+    }
     public GDictionary SafeTest(string operation) => Result(_session.SafeTest(operation));
     public GDictionary Cancel() => Result(_session.Cancel());
     public GDictionary Perform(string actor, string action, string station) => Result(_session.Perform(actor, action, station));
@@ -18,13 +39,21 @@ public partial class RedTokenBridge : Node
     public GDictionary State()
     {
         var p = _session.Physical;
-        return new GDictionary { ["round"] = _session.Round, ["ended"] = _session.Ended, ["solved"] = _session.Solved,
+        bool Knows(string key, DualOntologyWorldEngine.Core.Tag tag)
+            => p.KnownObject("侦探", key)?.Tags.GetValueOrDefault(tag) == 1;
+        var capturedAsh = Knows("upstream", RedTokenSimulation.Ash);
+        var whiteAvailable = Knows("white", RedTokenSimulation.Identified) ||
+            (Knows("receipt_red", RedTokenSimulation.Received) && Knows("receipt_red", RedTokenSimulation.Pushed) &&
+             Knows("receipt_handle", RedTokenSimulation.Received) && Knows("receipt_handle", RedTokenSimulation.Pushed));
+        return new GDictionary { ["can_leave_room"] = _session.CanLeaveRoom, ["companions_met"] = _session.CompanionsMet,
+            ["copper_introduction_received"] = p.CopperIntroductionReceived, ["round"] = _session.Round, ["ended"] = _session.Ended, ["solved"] = _session.Solved,
             ["holder"] = ActorLabel(p.Holder ?? ""), ["safe_holder"] = ActorLabel(_session.SafeHolder ?? ""),
             ["known"] = new Godot.Collections.Array<string>(_session.Known), ["available"] = new Godot.Collections.Array<string>(_session.Available),
-            ["waiting_for_confirmation"] = p.Waiting, ["flowing"] = p.Flowing, ["captured_ash"] = p.HistoricalGray,
-            ["clear_confirmed"] = p.Value("confirmation", RedTokenSimulation.Confirmed) == 1, ["historical_gray"] = p.HistoricalGray,
-            ["red_received"] = p.Value("red", RedTokenSimulation.Received) == 1, ["white_available"] = p.WhiteAvailable,
-            ["white_taken"] = p.Value("white", RedTokenSimulation.Taken) == 1, ["work_complete"] = p.Complete };
+            ["waiting_for_confirmation"] = p.Waiting, ["flowing"] = p.Flowing, ["captured_ash"] = capturedAsh,
+            ["clear_confirmed"] = Knows("completion_record", RedTokenSimulation.Confirmed), ["historical_gray"] = capturedAsh,
+            ["red_received"] = Knows("receipt_red", RedTokenSimulation.Received), ["white_available"] = whiteAvailable,
+            ["white_taken"] = Knows("white", RedTokenSimulation.Taken),
+            ["work_complete"] = Knows("completion_record", RedTokenSimulation.Clear) && Knows("completion_record", RedTokenSimulation.Released) };
     }
     public GDictionary GetRoundOptions(int round)
     {

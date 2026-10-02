@@ -145,4 +145,3 @@ func refresh() -> void:
 	else:
 		var base_sec := get_base_seconds()
 		clock_label.text = format_time(elapsed_seconds(), base_sec) + " / " + format_time(count * BEAT_SECONDS, base_sec)
-

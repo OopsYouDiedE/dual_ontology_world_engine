@@ -34,6 +34,10 @@ func owner_actor() -> CharacterBody2D:
 func access_allowed() -> bool:
 	return dorm_owner == "detective" or (room.has_method("can_access_dorm") and bool(room.call("can_access_dorm", dorm_owner)))
 
+func threshold_collision_rect() -> Rect2:
+	var size: Vector2 = leaf_collision.shape.size
+	return Rect2(position + leaf_collision.position - size * 0.5, size)
+
 func contains_private_point(point: Vector2) -> bool:
 	return interior_bounds.has_point(point) or Rect2(position + Vector2(-32, -96), Vector2(64, 96)).has_point(point)
 

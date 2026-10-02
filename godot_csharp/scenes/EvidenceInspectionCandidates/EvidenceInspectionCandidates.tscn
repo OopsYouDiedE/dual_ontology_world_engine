@@ -1,0 +1,474 @@
+[gd_scene load_steps=24 format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningEvidence/wedge.png" id="1_wedge"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningEvidence/tear.png" id="2_tear"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/Yozai/Yozai-Regular.ttf" id="3_font"]
+
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/EvidenceNotebook/wedge-paper.png" id="Notebook_wedge"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/EvidenceNotebook/tear-detail.png" id="Notebook_tear"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/Yozai/Yozai-Regular.ttf" id="Notebook_zh"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/playwriteustrad/PlaywriteUSTrad[wght].ttf" id="Notebook_en"]
+[ext_resource type="FontFile" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="Notebook_ja"]
+
+[sub_resource type="StyleBoxFlat" id="Style_paper"]
+content_margin_left = 32.0
+content_margin_top = 28.0
+content_margin_right = 32.0
+content_margin_bottom = 28.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.54, 0.43, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_mount"]
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+bg_color = Color(0.79, 0.75, 0.64, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.6, 0.49, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_green"]
+content_margin_left = 32.0
+content_margin_top = 28.0
+content_margin_right = 32.0
+content_margin_bottom = 28.0
+bg_color = Color(0.12, 0.19, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.43, 0.35, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_tabs"]
+content_margin_left = 0.0
+content_margin_top = 20.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_selected"]
+content_margin_left = 30.0
+content_margin_top = 12.0
+content_margin_right = 30.0
+content_margin_bottom = 12.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+border_width_top = 3
+border_color = Color(0.541176, 0.2, 0.141176, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_unselected"]
+content_margin_left = 30.0
+content_margin_top = 12.0
+content_margin_right = 30.0
+content_margin_bottom = 12.0
+bg_color = Color(0.21, 0.27, 0.23, 1)
+
+[sub_resource type="StyleBoxLine" id="Style_rule"]
+color = Color(0.61, 0.55, 0.44, 0.6)
+thickness = 1
+
+[sub_resource type="Theme" id="Theme_evidence"]
+default_font = ExtResource("3_font")
+default_font_size = 24
+Label/colors/font_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/font_sizes/normal_font_size = 24
+RichTextLabel/constants/line_separation = 10
+HSeparator/styles/separator = SubResource("Style_rule")
+TabContainer/colors/font_selected_color = Color(0.168627, 0.12549, 0.086275, 1)
+TabContainer/colors/font_unselected_color = Color(0.901961, 0.862745, 0.74902, 1)
+TabContainer/font_sizes/font_size = 24
+TabContainer/styles/panel = SubResource("Style_tabs")
+TabContainer/styles/tab_selected = SubResource("Style_tab_selected")
+TabContainer/styles/tab_unselected = SubResource("Style_tab_unselected")
+
+
+[sub_resource type="StyleBoxFlat" id="Notebook_cover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.12, 0.19, 0.16, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_page"]
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_tabs"]
+content_margin_top = 12.0
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_selected"]
+content_margin_left = 24.0
+content_margin_top = 8.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+
+[sub_resource type="StyleBoxFlat" id="Notebook_unselected"]
+content_margin_left = 24.0
+content_margin_top = 8.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.21, 0.27, 0.23, 1)
+
+[sub_resource type="Theme" id="Notebook_theme"]
+default_font = ExtResource("Notebook_zh")
+default_font_size = 22
+Label/colors/font_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
+RichTextLabel/font_sizes/normal_font_size = 22
+TabContainer/colors/font_selected_color = Color(0.168627, 0.12549, 0.086275, 1)
+TabContainer/colors/font_unselected_color = Color(0.901961, 0.862745, 0.74902, 1)
+TabContainer/font_sizes/font_size = 22
+TabContainer/styles/panel = SubResource("Notebook_tabs")
+TabContainer/styles/tab_selected = SubResource("Notebook_selected")
+TabContainer/styles/tab_unselected = SubResource("Notebook_unselected")
+
+[sub_resource type="SystemFont" id="Notebook_body_en"]
+font_names = PackedStringArray("Georgia")
+
+[node name="EvidenceInspectionCandidates" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_evidence")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.09, 0.13, 0.11, 1)
+
+[node name="OuterMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="Candidates" type="TabContainer" parent="OuterMargin"]
+layout_mode = 2
+current_tab = 0
+
+[node name="A 对照" type="PanelContainer" parent="OuterMargin/Candidates"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_paper")
+
+[node name="Page" type="VBoxContainer" parent="OuterMargin/Candidates/A 对照"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Number" type="Label" parent="OuterMargin/Candidates/A 对照/Page"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+text = "E07　／　证据检视"
+
+[node name="Title" type="Label" parent="OuterMargin/Candidates/A 对照/Page"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 38
+text = "五号房纸包"
+
+[node name="Rule" type="HSeparator" parent="OuterMargin/Candidates/A 对照/Page"]
+layout_mode = 2
+
+
+[node name="Comparison" type="HBoxContainer" parent="OuterMargin/Candidates/A 对照/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 32
+
+[node name="Images" type="VBoxContainer" parent="OuterMargin/Candidates/A 对照/Page/Comparison"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.1
+theme_override_constants/separation = 12
+
+[node name="WedgeMount" type="PanelContainer" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
+theme_override_styles/panel = SubResource("Style_mount")
+
+[node name="Wedge" type="TextureRect" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images/WedgeMount"]
+layout_mode = 2
+texture = ExtResource("1_wedge")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WedgeCaption" type="Label" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "木楔 · 斜面"
+horizontal_alignment = 1
+
+[node name="PaperMount" type="PanelContainer" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Style_mount")
+
+[node name="Paper" type="TextureRect" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images/PaperMount"]
+layout_mode = 2
+texture = ExtResource("2_tear")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PaperCaption" type="Label" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Images"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "纸张 · 撕口"
+horizontal_alignment = 1
+
+[node name="Notes" type="VBoxContainer" parent="OuterMargin/Candidates/A 对照/Page/Comparison"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="NotesHeading" type="Label" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Notes"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+text = "观察记录"
+
+[node name="Scroll" type="ScrollContainer" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Notes"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Candidates/A 对照/Page/Comparison/Notes/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "[color=#8A3324]01　木楔斜面[/color]\n纸包内的木楔斜面沾灰。\n\n[color=#8A3324]02　纸张内外[/color]\n纸内侧留下贴合楔面的转印，外侧干净。\n\n[color=#8A3324]03　撕口[/color]\n撕口与五号房抽屉空白纸相合。"
+fit_content = true
+scroll_active = false
+
+[node name="B 案卷" type="PanelContainer" parent="OuterMargin/Candidates"]
+layout_mode = 2
+visible = false
+theme_override_styles/panel = SubResource("Style_paper")
+
+[node name="Page" type="VBoxContainer" parent="OuterMargin/Candidates/B 案卷"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Heading" type="HBoxContainer" parent="OuterMargin/Candidates/B 案卷/Page"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="OuterMargin/Candidates/B 案卷/Page/Heading"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 38
+text = "五号房纸包"
+
+[node name="Number" type="Label" parent="OuterMargin/Candidates/B 案卷/Page/Heading"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+text = "E07"
+
+[node name="Images" type="HBoxContainer" parent="OuterMargin/Candidates/B 案卷/Page"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 200)
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.8
+theme_override_constants/separation = 28
+
+[node name="Wedge" type="VBoxContainer" parent="OuterMargin/Candidates/B 案卷/Page/Images"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Image" type="TextureRect" parent="OuterMargin/Candidates/B 案卷/Page/Images/Wedge"]
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("1_wedge")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Caption" type="Label" parent="OuterMargin/Candidates/B 案卷/Page/Images/Wedge"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "木楔 · 斜面"
+horizontal_alignment = 1
+
+[node name="Paper" type="VBoxContainer" parent="OuterMargin/Candidates/B 案卷/Page/Images"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Image" type="TextureRect" parent="OuterMargin/Candidates/B 案卷/Page/Images/Paper"]
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("2_tear")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Caption" type="Label" parent="OuterMargin/Candidates/B 案卷/Page/Images/Paper"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "纸张 · 撕口"
+horizontal_alignment = 1
+
+[node name="Rule" type="HSeparator" parent="OuterMargin/Candidates/B 案卷/Page"]
+layout_mode = 2
+
+
+[node name="NotesHeading" type="Label" parent="OuterMargin/Candidates/B 案卷/Page"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+text = "观察记录"
+
+[node name="Scroll" type="ScrollContainer" parent="OuterMargin/Candidates/B 案卷/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Candidates/B 案卷/Page/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "[color=#8A3324]01　木楔斜面[/color]\n纸包内的木楔斜面沾灰。\n\n[color=#8A3324]02　纸张内外[/color]\n纸内侧留下贴合楔面的转印，外侧干净。\n\n[color=#8A3324]03　撕口[/color]\n撕口与五号房抽屉空白纸相合。"
+fit_content = true
+scroll_active = false
+
+
+[node name="C 速记本" type="PanelContainer" parent="OuterMargin/Candidates"]
+layout_mode = 2
+visible = false
+theme = SubResource("Notebook_theme")
+theme_override_styles/panel = SubResource("Notebook_cover")
+
+[node name="Pages" type="HBoxContainer" parent="OuterMargin/Candidates/C 速记本"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="LeftPage" type="PanelContainer" parent="OuterMargin/Candidates/C 速记本/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Sketches" type="VBoxContainer" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Number" type="Label" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "E07"
+
+[node name="Caption" type="RichTextLabel" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 20
+text = "木楔与纸包"
+fit_content = true
+scroll_active = false
+
+[node name="Wedge" type="TextureRect" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(256, 192)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_wedge")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="SketchGap" type="Control" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="DetailCaption" type="RichTextLabel" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 20
+text = "撕口"
+fit_content = true
+scroll_active = false
+
+[node name="Tear" type="TextureRect" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+custom_minimum_size = Vector2(192, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_filter = 1
+texture = ExtResource("Notebook_tear")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Space" type="Control" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Candidates/C 速记本/Pages/LeftPage/Sketches"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "12"
+horizontal_alignment = 1
+
+[node name="Binding" type="ColorRect" parent="OuterMargin/Candidates/C 速记本/Pages"]
+custom_minimum_size = Vector2(2, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.48, 0.44, 0.35, 1)
+
+[node name="RightPage" type="PanelContainer" parent="OuterMargin/Candidates/C 速记本/Pages"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+theme_override_styles/panel = SubResource("Notebook_page")
+
+[node name="Notes" type="VBoxContainer" parent="OuterMargin/Candidates/C 速记本/Pages/RightPage"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="RichTextLabel" parent="OuterMargin/Candidates/C 速记本/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 24
+text = "五号房纸包"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Body" type="RichTextLabel" parent="OuterMargin/Candidates/C 速记本/Pages/RightPage/Notes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("Notebook_zh")
+theme_override_font_sizes/normal_font_size = 22
+theme_override_constants/line_separation = 8
+bbcode_enabled = true
+text = "纸包里有一块木楔，斜面沾灰。\n\n纸的内侧有转印，形状贴合楔面。外侧是干净的。\n\n撕口与五号房抽屉里的空白纸相合。"
+autowrap_mode = 3
+
+[node name="PageNumber" type="Label" parent="OuterMargin/Candidates/C 速记本/Pages/RightPage/Notes"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13"
+horizontal_alignment = 1
+

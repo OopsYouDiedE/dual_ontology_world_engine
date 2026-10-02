@@ -28,11 +28,15 @@ static func _known(scene: Node2D, entry: Dictionary) -> bool:
 static func tx(key: String) -> String:
 	return TranslationServer.translate(key)
 
-static func _label(parent: Node, value: String, size := 20, color := INK) -> Label:
-	var result := Label.new()
+static func _label(parent: Node, value: String, size := 20, color := INK) -> RichTextLabel:
+	var result := RichTextLabel.new()
 	result.text = value
-	result.add_theme_font_size_override("font_size", size)
-	result.add_theme_color_override("font_color", color)
+	result.bbcode_enabled = true
+	result.fit_content = true
+	result.scroll_active = false
+	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result.add_theme_font_size_override("normal_font_size", size)
+	result.add_theme_color_override("default_color", color)
 	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	parent.add_child(result)
 	return result
