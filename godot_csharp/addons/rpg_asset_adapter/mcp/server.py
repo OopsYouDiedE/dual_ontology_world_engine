@@ -18,6 +18,7 @@ mcp = MCPServer('rpg-tilemap', instructions='Before art authoring read tilemap_w
 def tilemap_workflow() -> dict:
     """Return the required workflow, project dimensions and drawing contract."""
     return dict(grid=32,actor_design=[32,48],actor_collision=[16,12],
+        design_standard='Read docs/design-standard.md sections 32px 像素制作 and 文档与工作分配: author 32px tiles as exact native pixel grids, reduce duplicate design files, and decouple files by responsibility with explicit inputs and outputs.',
         stages=[
             '1. Read visual reference: room silhouette, wall height, doorway width, perspective, palette and occlusion; no pixel-grid inference from screenshots.',
             '2. Author a floor plan with walkable space, 32px doors and 64px passing lanes; reserve wall-face height explicitly.',
@@ -33,7 +34,7 @@ def tilemap_workflow() -> dict:
             furniture='Provide ground anchor, collision footprint and reachable interaction standing point independently. Run audit_layout with every runtime collider, not just decorative props.',
             review='Inspect captured runtime images after each design change. Connectivity and successful export do not approve appearance.'),
         paths=dict(source=str(workflow.SOURCE),runtime=str(workflow.OUTPUT),review=str(workflow.REPORT)),
-        native_interior='FirstAwakening currently loads life_wing.png and layout.json. Use native_art_catalog/read_native_recipe/rebuild_native_interior; the legacy TileMap preview is a separate sample.',
+        native_interior='FirstAwakening currently loads life_wing.png and layout.tres; layout.json is retained for audit tools. Use native_art_catalog/read_native_recipe/rebuild_native_interior; the legacy TileMap preview is a separate sample.',
         production='review_dialogue checks configurable budgets and explicit knowledge claims. create_plan/read_plan/update_task/next_task record bounded work and evidence, not an autonomous background executor.',
         limitations=['No automatic semantic segmentation or artistic approval from a screenshot.',
                       '47-tile tool uses a procedural 3..8 pixel border. Elaborate ornament requires custom source drawing.',

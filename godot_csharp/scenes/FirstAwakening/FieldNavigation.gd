@@ -11,6 +11,9 @@ static func walkable(center: Vector2, floors: Dictionary, obstacles: Array[Rect2
 	return true
 
 static func route(start: Vector2, finish: Vector2, floors: Dictionary, obstacles: Array[Rect2], map_size: Vector2i) -> PackedVector2Array:
+	return route_on_grid(start, finish, build_route_grid(floors, obstacles, map_size))
+
+static func build_route_grid(floors: Dictionary, obstacles: Array[Rect2], map_size: Vector2i) -> AStarGrid2D:
 	# Half-cell resolution keeps every footprint from slipping between free centres.
 	var grid := AStarGrid2D.new()
 	grid.region = Rect2i(Vector2i.ZERO, map_size * 2)
@@ -23,6 +26,9 @@ static func route(start: Vector2, finish: Vector2, floors: Dictionary, obstacles
 			var node := Vector2i(x, y)
 			var center := Vector2(node * 16) + Vector2(8, 8)
 			grid.set_point_solid(node, not walkable(center, floors, obstacles))
+	return grid
+
+static func route_on_grid(start: Vector2, finish: Vector2, grid: AStarGrid2D) -> PackedVector2Array:
 	# A legal continuous position can round into a blocked grid centre near a chair.
 	# Use a nearby free centre; never make furniture traversable for an endpoint.
 	var from := _free_endpoint(grid, start)

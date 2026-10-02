@@ -1,0 +1,544 @@
+{
+  "artifact": "chapter-one-reconstruction-design-audit",
+  "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\docs\\design-standard.md",
+  "source_sha256": "3c488c5773dd45b72ace813ae95c2cc6cf81dfbd91d9acc0b63482ffe6bd5bd1",
+  "model": {
+    "checks": [
+      {
+        "check": "正确路径可执行并覆盖规定材料",
+        "passed": true
+      },
+      {
+        "check": "后取不倒退接收事实",
+        "passed": true
+      },
+      {
+        "check": "结束时无占用或流路泄漏",
+        "passed": true
+      },
+      {
+        "check": "转清而未确认仍保持占用",
+        "passed": true
+      },
+      {
+        "check": "同一身体不能离位插销",
+        "passed": true
+      },
+      {
+        "check": "同一工具不能保持并归还",
+        "passed": true
+      },
+      {
+        "check": "他人可并行做门侧动作",
+        "passed": true
+      },
+      {
+        "check": "安全取消显式关闭并解除占用",
+        "passed": true
+      },
+      {
+        "check": "安全取消保留已有灰层却不标任务成功",
+        "passed": true
+      },
+      {
+        "check": "早停未归解释可有门锁洗布但缺承灰和接收",
+        "passed": true
+      },
+      {
+        "check": "盆侧不能远程使用台侧他人持有工具",
+        "passed": true
+      },
+      {
+        "check": "完整H2可解释盆灰湿布记录归还及后移",
+        "passed": true
+      },
+      {
+        "check": "完整H2不能逆流生成上游当班捕集灰",
+        "passed": true
+      },
+      {
+        "check": "误写完成不改变客观转清或任务成功",
+        "passed": true
+      },
+      {
+        "check": "完整H1可保留真实排灰洗布与椅上筹",
+        "passed": true
+      },
+      {
+        "check": "完整H1从未归还与当班印白片冲突",
+        "passed": true
+      },
+      {
+        "check": "未获特例不能依作者全知启动该策略",
+        "passed": true
+      },
+      {
+        "check": "先夹滤确认再开流",
+        "passed": true
+      },
+      {
+        "check": "只归扳柄不释放白片",
+        "passed": true
+      },
+      {
+        "check": "无开匣路径不能把已收红筹放回椅",
+        "passed": true
+      },
+      {
+        "check": "不同渠道报告可相容",
+        "passed": true
+      },
+      {
+        "check": "一个人的感知不自动进入他人世界",
+        "passed": true
+      },
+      {
+        "check": "渠道限制未取得信息",
+        "passed": true
+      },
+      {
+        "check": "至少四个允许的等价局部顺序，未伪称全序唯一",
+        "passed": true
+      },
+      {
+        "check": "反例：交回工具也可能未完成排灰",
+        "passed": true
+      }
+    ],
+    "compatible_variants": [
+      {
+        "bolter": "侦探",
+        "cleanup_before_return": false,
+        "compatible": true
+      },
+      {
+        "bolter": "侦探",
+        "cleanup_before_return": true,
+        "compatible": true
+      },
+      {
+        "bolter": "音乐家",
+        "cleanup_before_return": false,
+        "compatible": true
+      },
+      {
+        "bolter": "音乐家",
+        "cleanup_before_return": true,
+        "compatible": true
+      }
+    ],
+    "correct_path": {
+      "traces": [
+        "上游当班捕集灰",
+        "前封条开启",
+        "后发擦带",
+        "后擦纤维",
+        "夹滤承灰",
+        "椅上红筹",
+        "洗布",
+        "清点签条",
+        "盆内灰",
+        "窄手印",
+        "红筹接收印",
+        "纸内转印",
+        "转清确认副联",
+        "门底遮蔽"
+      ],
+      "errors": []
+    },
+    "complete_competitor_h2": {
+      "name": "洗布水冒充排灰完成",
+      "traces": [
+        "仅擦地来源",
+        "前封条开启",
+        "后发擦带",
+        "椅上红筹",
+        "洗布",
+        "清点签条",
+        "盆内灰",
+        "窄手印",
+        "红筹接收印",
+        "纸内转印",
+        "转清确认副联",
+        "门底遮蔽"
+      ],
+      "errors": [],
+      "missing_observed_trace": "上游当班捕集灰"
+    },
+    "complete_competitor_h1": {
+      "name": "排灰后从未归还",
+      "traces": [
+        "上游当班捕集灰",
+        "后发擦带",
+        "后擦纤维",
+        "夹滤承灰",
+        "椅上红筹",
+        "洗布",
+        "盆内灰",
+        "纸内转印",
+        "转清确认副联",
+        "门底遮蔽"
+      ],
+      "errors": [
+        "清点签条引用的本班白片尚未产生"
+      ],
+      "missing_observed_traces": [
+        "红筹接收印",
+        "清点签条"
+      ]
+    },
+    "partial_wrong_paths": [
+      {
+        "name": "瞬时开流后早停未归",
+        "traces": [
+          "仅擦地来源",
+          "内销",
+          "后发擦带",
+          "洗布",
+          "盆内灰",
+          "纸内转印",
+          "门底遮蔽"
+        ],
+        "errors": [
+          "无持续分流与夹滤，不能生成承灰层",
+          "清点签条引用的本班白片尚未产生"
+        ]
+      },
+      {
+        "name": "盆侧远程持柄",
+        "traces": [
+          "纸内转印",
+          "门底遮蔽"
+        ],
+        "errors": [
+          "分流需台侧与本人持有扳柄",
+          "无持续分流与夹滤，不能生成承灰层"
+        ]
+      }
+    ],
+    "limitations": [
+      "这是规则设计的独立抽象校验，并非现有Core或Godot运行",
+      "错误路径只校验局部可执行性；完整竞争解释与证据真实性另经人工审查",
+      "不证明流体/材质残留、历史真实性、睡眠机制或净游玩时长",
+      "新增条件挂起与取消清理尚未在Core实现"
+    ]
+  },
+  "script": {
+    "present": true,
+    "complete": true,
+    "counting": "Unicode汉字/字母/数字，排除角色前缀、标点、空白、作者标记及条件；全稿包括互斥分支，必经路径报告条件分支字数范围，非净游玩测量",
+    "total": 11398,
+    "mandatory": 10056,
+    "mandatory_max": 10217,
+    "optional": 992,
+    "reading_minutes_total_300_to_250": [
+      37.99,
+      45.59
+    ],
+    "reading_minutes_mandatory_300_to_250": [
+      33.52,
+      40.87
+    ],
+    "scenes": [
+      {
+        "scene": "S01",
+        "route": "main",
+        "effective_characters": 430,
+        "visible_path_characters": [
+          430,
+          430
+        ]
+      },
+      {
+        "scene": "S02",
+        "route": "main",
+        "effective_characters": 441,
+        "visible_path_characters": [
+          237,
+          366
+        ]
+      },
+      {
+        "scene": "S03",
+        "route": "main",
+        "effective_characters": 505,
+        "visible_path_characters": [
+          505,
+          505
+        ]
+      },
+      {
+        "scene": "S04",
+        "route": "main",
+        "effective_characters": 472,
+        "visible_path_characters": [
+          354,
+          378
+        ]
+      },
+      {
+        "scene": "S05",
+        "route": "main",
+        "effective_characters": 363,
+        "visible_path_characters": [
+          363,
+          363
+        ]
+      },
+      {
+        "scene": "S06",
+        "route": "main",
+        "effective_characters": 445,
+        "visible_path_characters": [
+          445,
+          445
+        ]
+      },
+      {
+        "scene": "S07",
+        "route": "main",
+        "effective_characters": 288,
+        "visible_path_characters": [
+          288,
+          288
+        ]
+      },
+      {
+        "scene": "S08",
+        "route": "main",
+        "effective_characters": 403,
+        "visible_path_characters": [
+          403,
+          403
+        ]
+      },
+      {
+        "scene": "S09",
+        "route": "main",
+        "effective_characters": 229,
+        "visible_path_characters": [
+          229,
+          229
+        ]
+      },
+      {
+        "scene": "S10",
+        "route": "main",
+        "effective_characters": 339,
+        "visible_path_characters": [
+          339,
+          339
+        ]
+      },
+      {
+        "scene": "S11",
+        "route": "main",
+        "effective_characters": 431,
+        "visible_path_characters": [
+          431,
+          431
+        ]
+      },
+      {
+        "scene": "S12",
+        "route": "main",
+        "effective_characters": 385,
+        "visible_path_characters": [
+          385,
+          385
+        ]
+      },
+      {
+        "scene": "S13",
+        "route": "main",
+        "effective_characters": 606,
+        "visible_path_characters": [
+          606,
+          606
+        ]
+      },
+      {
+        "scene": "S14",
+        "route": "main",
+        "effective_characters": 284,
+        "visible_path_characters": [
+          284,
+          284
+        ]
+      },
+      {
+        "scene": "S15",
+        "route": "main",
+        "effective_characters": 381,
+        "visible_path_characters": [
+          381,
+          381
+        ]
+      },
+      {
+        "scene": "S16",
+        "route": "main",
+        "effective_characters": 438,
+        "visible_path_characters": [
+          438,
+          438
+        ]
+      },
+      {
+        "scene": "S17",
+        "route": "main",
+        "effective_characters": 374,
+        "visible_path_characters": [
+          374,
+          374
+        ]
+      },
+      {
+        "scene": "S18",
+        "route": "main",
+        "effective_characters": 501,
+        "visible_path_characters": [
+          501,
+          501
+        ]
+      },
+      {
+        "scene": "S19",
+        "route": "main",
+        "effective_characters": 308,
+        "visible_path_characters": [
+          308,
+          308
+        ]
+      },
+      {
+        "scene": "S20",
+        "route": "main",
+        "effective_characters": 336,
+        "visible_path_characters": [
+          336,
+          336
+        ]
+      },
+      {
+        "scene": "S21",
+        "route": "main",
+        "effective_characters": 305,
+        "visible_path_characters": [
+          305,
+          305
+        ]
+      },
+      {
+        "scene": "S22",
+        "route": "main",
+        "effective_characters": 501,
+        "visible_path_characters": [
+          501,
+          501
+        ]
+      },
+      {
+        "scene": "S23",
+        "route": "main",
+        "effective_characters": 307,
+        "visible_path_characters": [
+          307,
+          307
+        ]
+      },
+      {
+        "scene": "S24",
+        "route": "main",
+        "effective_characters": 377,
+        "visible_path_characters": [
+          377,
+          377
+        ]
+      },
+      {
+        "scene": "S25",
+        "route": "main",
+        "effective_characters": 315,
+        "visible_path_characters": [
+          315,
+          315
+        ]
+      },
+      {
+        "scene": "S26",
+        "route": "main",
+        "effective_characters": 308,
+        "visible_path_characters": [
+          308,
+          308
+        ]
+      },
+      {
+        "scene": "S28_ADMISSION",
+        "route": "main",
+        "effective_characters": 105,
+        "visible_path_characters": [
+          77,
+          85
+        ]
+      },
+      {
+        "scene": "S27",
+        "route": "main",
+        "effective_characters": 114,
+        "visible_path_characters": [
+          114,
+          114
+        ]
+      },
+      {
+        "scene": "S28",
+        "route": "main",
+        "effective_characters": 115,
+        "visible_path_characters": [
+          115,
+          115
+        ]
+      },
+      {
+        "scene": "A01",
+        "route": "alt",
+        "effective_characters": 305,
+        "visible_path_characters": [
+          305,
+          305
+        ]
+      },
+      {
+        "scene": "A02",
+        "route": "alt",
+        "effective_characters": 226,
+        "visible_path_characters": [
+          226,
+          226
+        ]
+      },
+      {
+        "scene": "A03",
+        "route": "alt",
+        "effective_characters": 233,
+        "visible_path_characters": [
+          233,
+          233
+        ]
+      },
+      {
+        "scene": "A04",
+        "route": "alt",
+        "effective_characters": 228,
+        "visible_path_characters": [
+          228,
+          228
+        ]
+      }
+    ]
+  },
+  "runtime_verified": false,
+  "human_playtime_verified": false
+}

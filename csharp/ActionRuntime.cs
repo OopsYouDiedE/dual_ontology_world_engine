@@ -9,19 +9,19 @@ public sealed record ActionResolution(bool Succeeded, ActionFailure Failure, dou
 /// <summary>运行时只在动作激活时读取现实。每个无等待阶段先准备，成功后统一提交。</summary>
 public sealed class ActionRuntime(WorldRuntime world)
 {
-    internal (ActionResolution Result, Effect? Next, double Delay) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline)
+    internal (ActionResolution Result, Effect? Next, double Delay, Condition? Until) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline, Func<Action, bool, Action> retainCleanup)
     {
-        if (!soul.World.Contains(intent.Actor)) return (new(false, ActionFailure.MissingObject, time), null, 0);
+        if (!soul.World.Contains(intent.Actor)) return (new(false, ActionFailure.MissingObject, time), null, 0, null);
         var actor = world.Resolve(intent.Actor);
-        if (actor is null) return (new(false, ActionFailure.MissingObject, time), null, 0);
-        if (!world.Controls(soul, actor)) return (new(false, ActionFailure.NoControl, time), null, 0);
+        if (actor is null) return (new(false, ActionFailure.MissingObject, time), null, 0, null);
+        if (!world.Controls(soul, actor)) return (new(false, ActionFailure.NoControl, time), null, 0, null);
         var plan = new Plan(world, soul, actor, intent.Actor, time, timeline);
         if (intent.Requirements is not null && plan.Evaluate(intent.Requirements) != Truth.True)
-            return (new(false, ActionFailure.ConditionFailed, time), null, 0);
+            return (new(false, ActionFailure.ConditionFailed, time), null, 0, null);
         plan.Prepare(intent.Changes);
-        if (plan.Failure != ActionFailure.None) return (new(false, plan.Failure, time), null, 0);
-        plan.Commit();
-        return (new(true, ActionFailure.None, time), plan.Next, plan.Delay);
+        if (plan.Failure != ActionFailure.None) return (new(false, plan.Failure, time), null, 0, null);
+        plan.Commit(retainCleanup);
+        return (new(true, ActionFailure.None, time), plan.Next, plan.Delay, plan.Until);
     }
 
     private sealed record State(ImmutableDictionary<Tag, int> Tags, ImmutableHashSet<(RelationTag Relation, Essence Target)> Relations,
@@ -38,6 +38,7 @@ public sealed class ActionRuntime(WorldRuntime world)
         public ActionFailure Failure { get; private set; }
         public Effect? Next { get; private set; }
         public double Delay { get; private set; }
+        public Condition? Until { get; private set; }
 
         private State Read(Essence essence)
         {
@@ -138,6 +139,11 @@ public sealed class ActionRuntime(WorldRuntime world)
                     if (Evaluate(require.Condition) != Truth.True) Failure = ActionFailure.ConditionFailed;
                     break;
                 case Effect.Wait wait:
+                    if (wait.Until is not null)
+                    {
+                        (Next, Until) = (wait.Body, wait.Until);
+                        break;
+                    }
                     if (!double.IsFinite(wait.Delay) || wait.Delay < 0 || !double.IsFinite(time + wait.Delay) || wait.Delay > 0 && time + wait.Delay <= time)
                         Failure = ActionFailure.InvalidDelay;
                     else (Next, Delay) = (wait.Body, wait.Delay);
@@ -149,6 +155,12 @@ public sealed class ActionRuntime(WorldRuntime world)
                     if (!double.IsFinite(temporary.Duration)||temporary.Duration<=0||!double.IsFinite(time+temporary.Duration)||time+temporary.Duration<=time)
                     { Failure = ActionFailure.InvalidDelay; break; }
                     _leases.Add((target,new(temporary.Tag,temporary.Value,time+temporary.Duration)));
+                    break;
+                case Effect.TemporarySetUntilEnd temporary:
+                    if (Resolve(temporary.Target) is not { } scopedTarget) { Failure = ActionFailure.MissingObject; break; }
+                    if (!Reachable(scopedTarget)) { Failure = ActionFailure.OutOfReach; break; }
+                    if (temporary.Tag == Tags.Locked) { Failure = ActionFailure.UnsupportedOperation; break; }
+                    _leases.Add((scopedTarget, new(temporary.Tag, temporary.Value, null)));
                     break;
                 case Effect.Set set: Change(set.Target, set.Tag, set.Value, false, false); break;
                 case Effect.Change change: Change(change.Target, change.Tag, change.Amount, true, false); break;
@@ -237,7 +249,7 @@ public sealed class ActionRuntime(WorldRuntime world)
             }
         }
 
-        public void Commit()
+        public void Commit(Func<Action, bool, Action> retainCleanup)
         {
             foreach (var essence in _changed)
             {
@@ -258,7 +270,16 @@ public sealed class ActionRuntime(WorldRuntime world)
             {
                 var property=target.Get<TemporaryStateProperty>()??target.Add(new TemporaryStateProperty());
                 property.Layers.Add(lease);
-                timeline.Schedule(lease.ExpiresAt-time,()=>{property.Layers.RemoveAll(l=>ReferenceEquals(l,lease));world.Sync();});
+                ScheduledAction? expiry = null;
+                Action? release = null;
+                void Remove()
+                {
+                    if (expiry is { Pending: true }) timeline.Cancel(expiry);
+                    release?.Invoke();
+                    if (property.Layers.RemoveAll(l => ReferenceEquals(l, lease)) > 0) world.Sync();
+                }
+                if (lease.ExpiresAt is { } expiresAt) expiry = timeline.Schedule(expiresAt-time, Remove);
+                release = retainCleanup(Remove, lease.ExpiresAt is null);
             }
             world.Sync();
             foreach (var thought in _thoughts) Observation.Observe(soul, thought);

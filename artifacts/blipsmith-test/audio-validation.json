@@ -1,0 +1,1295 @@
+{
+  "timestamp_utc": "2026-10-01T04:21:08.487772+00:00",
+  "scope": "Independent file analysis only; no design/source/history access and no listening.",
+  "methodology": {
+    "decoder": "Python standard library wave PCM decoder, plus independent RIFF chunk parsing and NumPy sample statistics",
+    "levels": "Signed integer PCM normalized to negative full scale; dBFS = 20*log10(amplitude). RMS includes silence.",
+    "hard_clipping": "Reports samples at integer full-scale and longest consecutive run; absence does not exclude clipping below full scale or other distortion.",
+    "boundary": "First/last sample compared with digital zero. >0.01 full-scale is a reporting threshold, not proof of audibility. Adjacent changes also measured; synthesis naturally changes between samples.",
+    "different_takes": "Decoded PCM data SHA-256 equality across blip WAVs, independent of metadata."
+  },
+  "archives": [
+    {
+      "file": "chinese-villager.zip",
+      "file_bytes": 235408,
+      "sha256": "5faddb80efc9e6c9379b8344e65623e0665322dd0e795efd3f017ff25415bc06",
+      "crc_error_member": null,
+      "members": [
+        {
+          "path": "villager/blip_01.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_02.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_03.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_04.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_05.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_06.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/line_demo.wav",
+          "bytes": 102924,
+          "compressed_bytes": 102924,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/params.json",
+          "bytes": 808,
+          "compressed_bytes": 808,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/README.txt",
+          "bytes": 1212,
+          "compressed_bytes": 1212,
+          "compression_method": 0
+        }
+      ],
+      "wav_files": [
+        {
+          "name": "villager/blip_01.wav",
+          "file_bytes": 21566,
+          "sha256": "b1c2185c57b30492c10851b0de72fc26caf782a4be3dda5d5979639fd5eca2aa",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "ded28465c27e102ae30beb8b81de329af3e7e21ffb5eef8a4d35deab7a8666c3",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.297637939453125,
+              "peak_dbfs": -10.526234214878576,
+              "rms_linear": 0.09584618227782651,
+              "rms_dbfs": -20.368503623103614,
+              "dc_mean": -8.632609219635722e-06,
+              "nonzero_samples": 10367,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.0009765625,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.0009765625,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001068115234375,
+              "largest_adjacent_sample_delta": 0.09967041015625,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/blip_02.wav",
+          "file_bytes": 21566,
+          "sha256": "43ad63bf920a3ef991e331285441398e8674b93a502ec616fc907e586feca2e6",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "7c3c8291f413270a764a3e2a1022042d3072aa4470f0b48c8df2b3cc036f762b",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.297027587890625,
+              "peak_dbfs": -10.544064231686791,
+              "rms_linear": 0.0959773805290925,
+              "rms_dbfs": -20.356622145226524,
+              "dc_mean": 9.648160258253183e-05,
+              "nonzero_samples": 10278,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.000823974609375,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000823974609375,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001434326171875,
+              "largest_adjacent_sample_delta": 0.099822998046875,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/blip_03.wav",
+          "file_bytes": 21566,
+          "sha256": "1c879e12ec4aa2515d17403c03e31403871a342367dd21254df2d3f859e7a3f9",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "0e04ab6da6488df76ee4311f8a042df6523362077644aa7ce3fa9bdeb44d6a01",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.298248291015625,
+              "peak_dbfs": -10.508440723788464,
+              "rms_linear": 0.09565854163740749,
+              "rms_dbfs": -20.385524889029046,
+              "dc_mean": 8.37056812505808e-05,
+              "nonzero_samples": 10340,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.000701904296875,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000701904296875,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001312255859375,
+              "largest_adjacent_sample_delta": 0.099822998046875,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/blip_04.wav",
+          "file_bytes": 21566,
+          "sha256": "2eafc9b10a98154fe727a7c1f4c5cb014901a701ba222b2297c01ba414b4eedb",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "f0fe71d82d4067dd989c11d62ca01c5fb75eb713d73d8affba3094491dba6cac",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.298675537109375,
+              "peak_dbfs": -10.49600693281727,
+              "rms_linear": 0.09625050813089074,
+              "rms_dbfs": -20.331939381249615,
+              "dc_mean": 6.908356129774185e-05,
+              "nonzero_samples": 10318,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 6.103515625e-05,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 6.103515625e-05,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001220703125,
+              "largest_adjacent_sample_delta": 0.099639892578125,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/blip_05.wav",
+          "file_bytes": 21566,
+          "sha256": "d6f5a90c55bba391d4781894bc730e6ee33f8847a4538a7efce59439dfd0849c",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "c0e6173d212e44984a0f0d27e5b2dc8901cf27a18cf5bc5e2c62d569396a5842",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.296539306640625,
+              "peak_dbfs": -10.558354644597571,
+              "rms_linear": 0.09623875462651794,
+              "rms_dbfs": -20.333000112019807,
+              "dc_mean": 4.747367882283245e-06,
+              "nonzero_samples": 10275,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 3.0517578125e-05,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 3.0517578125e-05,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.0009765625,
+              "largest_adjacent_sample_delta": 0.100250244140625,
+              "adjacent_delta_over_0_1_count": 1
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/blip_06.wav",
+          "file_bytes": 21566,
+          "sha256": "20a5307819e71c21b4745eb3346747f31990a5eb230e6e58c3167c381d785688",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "70c658c144cc129fcf7a8c662818afb1a9b1a722534d8fd4f00b04c50eec64df",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.2969970703125,
+              "peak_dbfs": -10.54495669401874,
+              "rms_linear": 0.09615910807900399,
+              "rms_dbfs": -20.3401914721685,
+              "dc_mean": 9.428374708147477e-05,
+              "nonzero_samples": 10296,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": -9.1552734375e-05,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 9.1552734375e-05,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001129150390625,
+              "largest_adjacent_sample_delta": 0.099945068359375,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        },
+        {
+          "name": "villager/line_demo.wav",
+          "file_bytes": 102924,
+          "sha256": "59c12849e8b5407b7c6b6675ce6d71cb2bdd9f386f20c0022dd999829cd0eec3",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 102924,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 102880,
+                "actual_bytes": 102880
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 51440,
+            "decoded_bytes": 102880
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 1.166439909297052,
+          "audio_data_sha256": "d8c1832fa5b5e7613fa594b0028fb8fd3922bc25423a0999b8c338d76421f101",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.59552001953125,
+              "peak_dbfs": -4.5020726861157065,
+              "rms_linear": 0.1959786007908461,
+              "rms_dbfs": -14.155826946934074,
+              "dc_mean": 0.00012471271710670198,
+              "nonzero_samples": 50513,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 6.103515625e-05,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 6.103515625e-05,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.00079345703125,
+              "largest_adjacent_sample_delta": 0.19268798828125,
+              "adjacent_delta_over_0_1_count": 117
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "chinese-villager.zip"
+        }
+      ],
+      "export_parameters": {
+        "voice": "VILLAGER",
+        "settings": {
+          "size": 52,
+          "bright": 58,
+          "wobble": 26,
+          "grit": 32,
+          "speed": 52,
+          "len": 26,
+          "thick": 0,
+          "warble": 0,
+          "space": 6,
+          "vol": 55,
+          "gap": 0,
+          "pause": 35,
+          "bend": 8,
+          "wave": "chip",
+          "shape": "flat",
+          "pattern": "random",
+          "mouth": "blip",
+          "intone": true
+        },
+        "derived": {
+          "baseHz": 388.2243464405165,
+          "cutoff": 2707.4742924737443,
+          "spread": 3.64,
+          "crush": 29.44,
+          "noise": 0.096,
+          "cps": 30.880000000000003,
+          "dur": 0.07,
+          "thick": 0,
+          "warbleD": 0,
+          "warbleR": 4.5,
+          "space": 0.045,
+          "vol": 0.55,
+          "gap": 1,
+          "pause": 0.175,
+          "bend": 1.76,
+          "wave": "square",
+          "shape": "flat",
+          "pattern": "random",
+          "mouth": "blip",
+          "intone": true
+        }
+      },
+      "metadata_notes": {
+        "params_keys": [
+          "voice",
+          "settings",
+          "derived"
+        ],
+        "sample_text_recorded": false,
+        "sample_character_count_recorded": false,
+        "random_seed_recorded": false,
+        "readme_sha256": "f523c26b4ad0d1ceb2af006e9b05b0f015bac2a1e3d926ef8c4ecccb5fe1ec22",
+        "readme_declared_format": "44.1 kHz, 16-bit, mono WAV",
+        "format_matches_wav": true
+      },
+      "take_comparison": {
+        "take_count": 6,
+        "unique_decoded_audio_count": 6,
+        "all_distinct": true,
+        "all_identical": false
+      }
+    },
+    {
+      "file": "default-villager.zip",
+      "file_bytes": 482802,
+      "sha256": "19c3cc2acca3df249bd76396c53ba018e988153b92e8935c4a9d302dec2704bb",
+      "crc_error_member": null,
+      "members": [
+        {
+          "path": "villager/blip_01.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_02.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_03.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_04.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_05.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/blip_06.wav",
+          "bytes": 21566,
+          "compressed_bytes": 21566,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/line_demo.wav",
+          "bytes": 350318,
+          "compressed_bytes": 350318,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/params.json",
+          "bytes": 808,
+          "compressed_bytes": 808,
+          "compression_method": 0
+        },
+        {
+          "path": "villager/README.txt",
+          "bytes": 1212,
+          "compressed_bytes": 1212,
+          "compression_method": 0
+        }
+      ],
+      "wav_files": [
+        {
+          "name": "villager/blip_01.wav",
+          "file_bytes": 21566,
+          "sha256": "ae1f92b2870afa808b7be3fddba99f144809ed8464e8c4399bb9f528b8291032",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "7926ed775ccc978b2ff6d4979c53952b9fd4e85a9eb0a21752a6eea628e6e0f1",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.297332763671875,
+              "peak_dbfs": -10.535144648198022,
+              "rms_linear": 0.09580859191578141,
+              "rms_dbfs": -20.371910850935425,
+              "dc_mean": -3.588034554757922e-05,
+              "nonzero_samples": 10318,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.000518798828125,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000518798828125,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001312255859375,
+              "largest_adjacent_sample_delta": 0.099273681640625,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/blip_02.wav",
+          "file_bytes": 21566,
+          "sha256": "a2f38e93063c2bcc5914b3ba22ce96c7203390942f23b7585b6ea18622791688",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "9ab851a9b16af3795a1fa37f6bc48eb9cb02872246488bcbaa4ff7fa286e5613",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.297821044921875,
+              "peak_dbfs": -10.520892339164039,
+              "rms_linear": 0.09608869386813707,
+              "rms_dbfs": -20.346554198667288,
+              "dc_mean": 7.713196634548369e-05,
+              "nonzero_samples": 10382,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": -0.000244140625,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000244140625,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.001190185546875,
+              "largest_adjacent_sample_delta": 0.100372314453125,
+              "adjacent_delta_over_0_1_count": 1
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/blip_03.wav",
+          "file_bytes": 21566,
+          "sha256": "63705be07ad587f9b08cb72affde23b43179f7c748d4ae1aa6610674671d11ee",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "d357b290d4d83480238122c13a00d5fa517cbe219b017501b4a8b1dadb09f2ea",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.296844482421875,
+              "peak_dbfs": -10.549420381684717,
+              "rms_linear": 0.0958771830091421,
+              "rms_dbfs": -20.365694691256945,
+              "dc_mean": 8.521723864679165e-05,
+              "nonzero_samples": 10212,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": -0.000213623046875,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000213623046875,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.0008544921875,
+              "largest_adjacent_sample_delta": 0.099822998046875,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/blip_04.wav",
+          "file_bytes": 21566,
+          "sha256": "0793e595fe888faf998fe0ced0e75a46c3c0cacfac8c9cf6064c0aa3ecee6cdb",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "f8f7c31ce5892cff889f27e671e58fc6f7e3ba9b6309146c7fef6191002f9cfb",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.29681396484375,
+              "peak_dbfs": -10.550313394551187,
+              "rms_linear": 0.09578773670723228,
+              "rms_dbfs": -20.373801764418516,
+              "dc_mean": 7.119066663617461e-05,
+              "nonzero_samples": 10356,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.0,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.0,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.00079345703125,
+              "largest_adjacent_sample_delta": 0.09906005859375,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/blip_05.wav",
+          "file_bytes": 21566,
+          "sha256": "f90077cb30b580a0af43c83a67529965dad99f50422478bdd76f9b571fd6de8b",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "b42ad4b413b3784167f7269e3b4a04c194e1cf23e8c73f86c6123ec0b5ee0727",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.296783447265625,
+              "peak_dbfs": -10.551206499239452,
+              "rms_linear": 0.09569497545218324,
+              "rms_dbfs": -20.382217292671548,
+              "dc_mean": 9.140242941815352e-06,
+              "nonzero_samples": 10238,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": -0.00018310546875,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.00018310546875,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.000579833984375,
+              "largest_adjacent_sample_delta": 0.0997314453125,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/blip_06.wav",
+          "file_bytes": 21566,
+          "sha256": "b03d1c95665c0878188d25a67e618f1c0ba8162f7fcc85e84caaf5c96be6a00f",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 21566,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 21522,
+                "actual_bytes": 21522
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 10761,
+            "decoded_bytes": 21522
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 0.24401360544217687,
+          "audio_data_sha256": "4d65e42a72af349f20ac728eb5fc8378029a2c0d572dd27e9adde2bd270a38a7",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.296783447265625,
+              "peak_dbfs": -10.551206499239452,
+              "rms_linear": 0.0962598088428722,
+              "rms_dbfs": -20.331100101992696,
+              "dc_mean": 8.363194674344857e-05,
+              "nonzero_samples": 10305,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 0.000946044921875,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 0.000946044921875,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.0013427734375,
+              "largest_adjacent_sample_delta": 0.099761962890625,
+              "adjacent_delta_over_0_1_count": 0
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        },
+        {
+          "name": "villager/line_demo.wav",
+          "file_bytes": 350318,
+          "sha256": "d4ad58bdaee714f0a5e7c965fcbc9ccc68c706a13a33c38ce3cc203588f45cb6",
+          "wav_header": {
+            "encoding": 1,
+            "channels": 1,
+            "sample_rate_hz": 44100,
+            "byte_rate": 88200,
+            "block_align": 2,
+            "bits_per_sample": 16,
+            "riff_declared_file_bytes": 350318,
+            "chunks": [
+              {
+                "id": "fmt ",
+                "declared_bytes": 16,
+                "actual_bytes": 16
+              },
+              {
+                "id": "data",
+                "declared_bytes": 350274,
+                "actual_bytes": 350274
+              }
+            ]
+          },
+          "wave_decode": {
+            "success": true,
+            "frames": 175137,
+            "decoded_bytes": 350274
+          },
+          "header_checks": {
+            "riff_length_matches": true,
+            "chunks_complete": true,
+            "chunk_walk_matches": true,
+            "pcm_encoding": true,
+            "block_align_matches": true,
+            "byte_rate_matches": true,
+            "data_frame_aligned": true,
+            "frame_count_matches_data": true,
+            "decoded_data_matches": true
+          },
+          "duration_seconds": 3.971360544217687,
+          "audio_data_sha256": "8d2eeeb8de91a251fda492573c3f4128c4e5783db9b8f264554cfe1b04e08467",
+          "non_silent": true,
+          "per_channel": [
+            {
+              "channel": 1,
+              "peak_linear": 0.599853515625,
+              "peak_dbfs": -4.439095829753868,
+              "rms_linear": 0.19890834795209272,
+              "rms_dbfs": -14.026939793172462,
+              "dc_mean": 7.09088439737534e-05,
+              "nonzero_samples": 172781,
+              "fullscale_samples": 0,
+              "longest_fullscale_run_samples": 0,
+              "first_sample": 0.0,
+              "last_sample": 6.103515625e-05,
+              "boundary_jump_from_zero_start": 0.0,
+              "boundary_jump_to_zero_end": 6.103515625e-05,
+              "first_5ms_peak": 0.0,
+              "last_5ms_peak": 0.000213623046875,
+              "largest_adjacent_sample_delta": 0.193572998046875,
+              "adjacent_delta_over_0_1_count": 453
+            }
+          ],
+          "hard_clipping_fullscale_evidence": false,
+          "boundary_jump_over_0_01": false,
+          "archive": "default-villager.zip"
+        }
+      ],
+      "export_parameters": {
+        "voice": "VILLAGER",
+        "settings": {
+          "size": 52,
+          "bright": 58,
+          "wobble": 26,
+          "grit": 32,
+          "speed": 52,
+          "len": 26,
+          "thick": 0,
+          "warble": 0,
+          "space": 6,
+          "vol": 55,
+          "gap": 0,
+          "pause": 35,
+          "bend": 8,
+          "wave": "chip",
+          "shape": "flat",
+          "pattern": "random",
+          "mouth": "blip",
+          "intone": true
+        },
+        "derived": {
+          "baseHz": 388.2243464405165,
+          "cutoff": 2707.4742924737443,
+          "spread": 3.64,
+          "crush": 29.44,
+          "noise": 0.096,
+          "cps": 30.880000000000003,
+          "dur": 0.07,
+          "thick": 0,
+          "warbleD": 0,
+          "warbleR": 4.5,
+          "space": 0.045,
+          "vol": 0.55,
+          "gap": 1,
+          "pause": 0.175,
+          "bend": 1.76,
+          "wave": "square",
+          "shape": "flat",
+          "pattern": "random",
+          "mouth": "blip",
+          "intone": true
+        }
+      },
+      "metadata_notes": {
+        "params_keys": [
+          "voice",
+          "settings",
+          "derived"
+        ],
+        "sample_text_recorded": false,
+        "sample_character_count_recorded": false,
+        "random_seed_recorded": false,
+        "readme_sha256": "f523c26b4ad0d1ceb2af006e9b05b0f015bac2a1e3d926ef8c4ecccb5fe1ec22",
+        "readme_declared_format": "44.1 kHz, 16-bit, mono WAV",
+        "format_matches_wav": true
+      },
+      "take_comparison": {
+        "take_count": 6,
+        "unique_decoded_audio_count": 6,
+        "all_distinct": true,
+        "all_identical": false
+      }
+    }
+  ],
+  "standalone_audio": [],
+  "cross_archive_comparison": {
+    "parameters_identical": true,
+    "readme_identical": true,
+    "corresponding_wavs": [
+      {
+        "name": "villager/blip_01.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/blip_02.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/blip_03.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/blip_04.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/blip_05.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/blip_06.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 0.24401360544217687,
+        "chinese_seconds": 0.24401360544217687
+      },
+      {
+        "name": "villager/line_demo.wav",
+        "decoded_pcm_identical": false,
+        "default_seconds": 3.971360544217687,
+        "chinese_seconds": 1.166439909297052
+      }
+    ],
+    "text_support_conclusion": "Export metadata records neither input text nor character count nor random seed. Shorter mixed-language demo alone does not prove Chinese characters do not emit blips; pure Chinese behavior remains untested by this file analysis."
+  },
+  "summary": {
+    "wav_count": 14,
+    "all_decode_and_header_checks_pass": true,
+    "all_non_silent": true,
+    "fullscale_clipping_evidence_files": [],
+    "boundary_jump_over_0_01_files": [],
+    "excluded_archives": [
+      "all-voices.zip"
+    ]
+  }
+}

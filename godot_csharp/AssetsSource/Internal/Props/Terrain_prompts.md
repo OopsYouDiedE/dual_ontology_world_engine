@@ -1,13 +1,9 @@
-> 仅为旧源图的生成记录。下列48px等参数用于追溯历史产物，不作为当前制作指令；现行规范见仓库 docs/design-standard.md。
+# 32px 地形与墙面纹理提示词
 
-# 地形纹理重绘提示词
+制作与验收统一遵循 [设计规范](../../../../docs/design-standard.md#第五部分32px-像素美术与地图工作流)。
 
-工具：内置 imagegen。编辑目标为原始 Victorian A2 / A4；shot-03 和 shot-19 仅作为风格参考。
+## 32px 地面与墙面规格
 
-## A2
-
-Use case: style-transfer. Image 1 EDIT TARGET is RPG Maker MV native A2 floor autotile sheet (768x576). Images 2 and 3 are STYLE REFERENCES ONLY for warm academy parlor and cold underground corridor. Repaint texture of image 1 while PRESERVING EXACT sheet geometry, all 8 columns x4 rows of 96x144 autotile blocks, every border, corner, transparency silhouette and 24px quadrant position. Output 768x576 if possible; same 4:3 aspect. This is a texture atlas, NOT a scene. No text, gaps, frames or UI. Repaint the left half indoor materials to muted warm limestone square paving, dark walnut marquetry, burgundy and muted gold patterned rugs, midnight blue and brass rugs. Specifically block row3 col3 (zero indexed, x288..383 y432..575) warm gray limestone large paving squares with fine dark joints. Block row2 col2 (x192..287 y288..431) burgundy rug with antique gold small woven botanical pattern and decorated edge, central field subtle pattern not flat solid. Restyle other interior floor blocks within their exact original shapes, reduce orange, use worn walnut brown and slate gray. Right half garden/plant/metal texture types remain recognizable, desaturated to suit mysterious academy, preserve their transparent areas. Flat neutral lighting, no vignette. Crisp low-resolution pixel clusters at native48 tile density, no photoreal noise, no antialias. Critical: do NOT redesign atlas arrangement or create a room; match exact edit-target geometry and edge locations.
-
-## A4
-
-Use case: style-transfer. Image1 is EDIT TARGET, a 768x720 RPG Maker MV A4 wall autotile atlas. Images2-3 style references only. Repaint the target textures for mysterious Victorian academy. Keep EXACT same atlas layout: 8 columns, each96px; 3 bands each240px high, each band has upper144px autotile caps and lower96px wall fronts. Preserve all border and corner positions, transparency, shape silhouettes; do not shift/scale any subpiece. Keep 768x720 canvas and no padding. No new layout. Use slate blue-gray and warm charcoal stone, dark walnut wood panelling, aged brass trim, burgundy damask wallpaper, muted blue patterned wallpaper. Desaturate orange and bright white. Most important first band column5 (x480..575): repaint stone cap and stone wall faces as dark blue-gray masonry matching corridor reference, clear small mortar joints, restrained pixel highlights. Other white/plaster surfaces become warm gray plaster. Existing wooden panels become dark walnut; existing gold trim becomes antique brass; wallpaper designs simplified burgundy, navy and charcoal gold. This is flat texture artwork not a room, no props no lighting/vignette/no labels/no grid guides. Pixel-art hard edges, finite shading ramps, 48px map tile native density. Preserve source layout and all 24px half-tile borders rigorously.
+- 地图基础格：严格为 32×32 像素。
+- 风格与材质：暗黑学术（Dark Academia），哑光暖石灰岩大方砖地面、胡桃木嵌木地板、酒红色与古金色织毯；墙面采用板岩蓝灰石砌、胡桃木护墙板与复古黄铜装饰。
+- 绘制要求：正交俯视角度，硬像素边缘，无抗锯齿，限制 3-4 阶明暗调，符合 32px 原生网格对齐。

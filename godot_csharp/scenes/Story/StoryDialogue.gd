@@ -36,6 +36,9 @@ var elapsed := 0.0
 var compact := false
 var locale_refresh_key := ""
 var dialogue_theme: Theme
+## Keyboard confirmation stays explicit even when the typewriter finishes between inputs.
+var keyboard_line_confirmed := false
+var confirm_completed_keyboard_line := false
 
 const BASE_VOICE_VOLUME_DB := -6.0
 
@@ -116,6 +119,7 @@ func _notification(what: int) -> void:
 		if is_instance_valid(next_button): next_button.text = tr("FA_UI_148" if compact else "FA_UI_149")
 		if is_instance_valid(history_button): history_button.text = tr("FA_UI_067")
 		if is_instance_valid(history_close_button): history_close_button.text = tr("FA_UI_161")
+		if active: _update_continue_hint()
 	if what == NOTIFICATION_TRANSLATION_CHANGED and active and not busy and line != null:
 		locale_refresh_key = line.id
 		call_deferred("_refresh_active_line_locale", locale_refresh_key)
@@ -275,6 +279,7 @@ func _ready() -> void:
 	history_close_button.pressed.connect(toggle_history)
 	history_panel.add_child(history_close_button)
 	history_panel.hide()
+	_configure_auxiliary_focus()
 	_setup_voice_player()
 	idle()
 
@@ -297,8 +302,15 @@ func _bind_existing() -> void:
 	next_button.pressed.connect(advance)
 	history_button.pressed.connect(toggle_history)
 	history_close_button.pressed.connect(toggle_history)
+	_configure_auxiliary_focus()
 	_setup_voice_player()
 	idle()
+
+func _configure_auxiliary_focus() -> void:
+	# Dialogue keys are handled once in _input; mouse utility buttons must not
+	# retain native ui_accept focus after the history overlay closes.
+	for button in [next_button, history_button, history_close_button]:
+		button.focus_mode = Control.FOCUS_NONE
 
 func _setup_voice_player() -> void:
 	if not is_instance_valid(voice_player):
@@ -351,6 +363,9 @@ func layout_compact_line() -> void:
 	panel.size.y = height
 	panel.position.y = 992 - 32 - height
 	next_button.position.y = height - 52
+	if confirm_completed_keyboard_line:
+		hint.show()
+		hint.position = Vector2(32, height - 35)
 
 func label(text: String, at: Vector2, size: int, color: Color) -> Label:
 	var result := Label.new()
@@ -392,7 +407,15 @@ func _get_character_voice(char_name: String) -> AudioStream:
 
 func show_line(key: String) -> void:
 	busy = true
+	keyboard_line_confirmed = false
 	next_button.hide()
+	# A new branch can await actor movement before producing its next line.
+	# Do not leave an already-read sentence on screen as if it were awaiting input.
+	speaker.text = ""
+	body.text = ""
+	body.visible_characters = -1
+	hint.text = "…"
+	choices.hide()
 	for child in choices.get_children():
 		choices.remove_child(child)
 		child.queue_free()
@@ -412,6 +435,7 @@ func show_line(key: String) -> void:
 	history_line_ids.append(line.id)
 	line_shown.emit(line.character)
 	hint.text = tr("FA_UI_143")
+	_update_continue_hint()
 	for response in line.responses:
 		if not response.is_allowed:
 			continue
@@ -449,6 +473,13 @@ func reveal() -> void:
 	next_button.visible = line.responses.is_empty()
 	if choices.get_child_count() > 0:
 		choices.get_child(0).grab_focus()
+	_update_continue_hint()
+
+func _update_continue_hint() -> void:
+	if not confirm_completed_keyboard_line:
+		return
+	hint.show()
+	hint.text = "Space / Enter：继续" if keyboard_line_confirmed else "Space / Enter：先确认本句，再按继续；点击继续直接推进"
 
 func _process(delta: float) -> void:
 	if active and not busy and not history_panel.visible and body.visible_characters >= 0:
@@ -486,30 +517,55 @@ func _play_typewriter_voice(from_count: int, to_count: int) -> void:
 			break
 
 func toggle_history() -> void:
+	var focused := get_viewport().gui_get_focus_owner()
+	if is_instance_valid(focused) and (panel.is_ancestor_of(focused) or history_panel.is_ancestor_of(focused)):
+		focused.release_focus()
 	history_panel.visible = not history_panel.visible
 	history_text.text = tr("FA_UI_081") + "\n\n" + "\n\n".join(history)
+	if history_panel.visible:
+		call_deferred("_scroll_history_to_latest")
+
+func _scroll_history_to_latest() -> void:
+	if history_panel.visible:
+		history_text.scroll_to_line(maxi(0, history_text.get_line_count() - 1))
 
 func on_panel_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		advance()
+		panel.accept_event()
+
+func _input(event: InputEvent) -> void:
+	if confirm_completed_keyboard_line:
+		_handle_dialogue_key(event)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if active and event.keycode == KEY_H:
-			toggle_history()
-			get_viewport().set_input_as_handled()
-		elif active and event.keycode in [KEY_SPACE, KEY_ENTER]:
-			if event.keycode == KEY_ENTER and choices.visible and choices.get_child_count() > 0:
-				var focused := get_viewport().gui_get_focus_owner()
-				var choice: Button
-				if focused is Button and choices.is_ancestor_of(focused):
-					choice = focused
-				else:
-					choice = choices.get_child(0) as Button
-				choose(str(choice.get_meta("dialogue_next_id")))
-			else:
-				advance()
-			get_viewport().set_input_as_handled()
-	elif active and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and panel.get_global_rect().has_point(event.position):
+	# Other story hosts keep normal GUI response-button keyboard activation.
+	if not confirm_completed_keyboard_line:
+		_handle_dialogue_key(event)
+
+func _handle_dialogue_key(event: InputEvent) -> void:
+	if not active or not event is InputEventKey or event.keycode not in [KEY_H, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+		return
+	# Consume down, repeat and up before focused Buttons receive ui_accept.
+	get_viewport().set_input_as_handled()
+	if not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_H:
+		toggle_history()
+		return
+	if busy or history_panel.visible:
+		return
+	if confirm_completed_keyboard_line and not keyboard_line_confirmed:
+		keyboard_line_confirmed = true
+		reveal()
+		return
+	if event.keycode in [KEY_ENTER, KEY_KP_ENTER] and choices.visible and choices.get_child_count() > 0:
+		var focused := get_viewport().gui_get_focus_owner()
+		var choice: Button
+		if focused is Button and choices.is_ancestor_of(focused):
+			choice = focused
+		else:
+			choice = choices.get_child(0) as Button
+		choose(str(choice.get_meta("dialogue_next_id")))
+	else:
 		advance()
-		get_viewport().set_input_as_handled()

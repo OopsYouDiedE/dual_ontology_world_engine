@@ -1,6 +1,6 @@
 # 宣传分镜前三场 · 剧情打样
 
-本页记录现有三场的操作与验收，场景顺序沿用旧宣传分镜编号，并不代表现行首宣必须完整录入这三场。[现行首宣大纲](../../../docs/游戏和核心宣传视频和图片录制/机制主线宣传片大纲.md)只从可玩日常中选取需要的片段；茶案是独立机制原型，不在这三场的人物或美术扩产中。
+本页记录现有三场的操作与验收，场景顺序沿用旧宣传分镜编号。[首支宣传片主线大纲](../../../docs/design-standard.md#第六部分宣传视频与成果验收规范)从可玩日常中选取需要的片段；茶案是独立机制原型，不在这三场的人物或美术扩产中。
 
 `CentralHall.tscn` 可直接打开进入这组剧情打样；默认 `Main2D.tscn` 当前进入初醒 Demo。打样内部可用 F6/F7/F8 或对白区上方按钮切换三场；中央厅相应门廊也可进入早餐厅/娱乐室，二者南侧入口返回中央厅。兼容入口 `Shot01.tscn`、`Shot02.tscn` 和 `Parlor.tscn` 分别实例化 Story 的中央厅、早餐厅和围谈场景，不再维护平行摆景。
 
@@ -47,7 +47,7 @@
 
 本轮优先统一可玩房间的空间尺度，不强行把三张不同构图的概念图完全套入同一个镜头。早餐主厨的画面占比仍小于原概念特写；角色衣服、专门盛餐演技、钢琴和部分配件的风格仍与宣传图有差距。画面收紧、素材协调和完整艺术验收分别判断。
 
-家具统一通过 `res://tools/build_story_tiles.gd -- --compact-only` 重建。12组既有道具按比例派生；4件围谈家具来自 `AssetsSource/Internal/Props/story_parlor_furniture.png`，完整内置 image_gen 提示词与生产说明在同名 `.md`。运行时仅读取 `ShareAsset/Internal/Props/story_*.res`。alpha包围盒以0.5阈值识别实体，保留裁取后的原始alpha；输出缩放不是原生像素重绘。旧 Shot01/02 纹理源与切片入口保留在 `AssetsSource/Internal/Props/` 和 `tools/shots/`，但其脚本只重建旧源派生贴图，不再写场景；Story 使用 `story_*` 紧凑资源。
+家具统一通过 `res://tools/build_story_tiles.gd -- --compact-only` 重建。12组既有道具按比例派生；4件围谈家具当前来自 `AssetsSource/Internal/Props/story_parlor_projection.png`，`story_parlor_furniture.png` 保留为早期源稿。当前转换以脚本中的裁切范围、锚点和输出尺寸为准。运行时仅读取 `ShareAsset/Internal/Props/story_*.res`。alpha包围盒以0.5阈值识别实体，保留裁取后的原始alpha；输出缩放不是原生像素重绘。旧 Shot01/02 纹理源与切片入口保留在 `AssetsSource/Internal/Props/` 和 `tools/shots/`，但其脚本只重建旧源派生贴图，不再写场景；Story 使用 `story_*` 紧凑资源。
 
 Dialogue Manager 已实质接入3.10.4：台词与选项留在三个 `.dialogue` 文件，`do` 调用场景演出方法；`StoryDialogue.gd` 仅负责显示、选择、回看和恢复。本轮调整对白区域与点击边界，没有另外实现对白解析器。
 

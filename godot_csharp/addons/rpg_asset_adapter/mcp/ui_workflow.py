@@ -29,7 +29,7 @@ RECIPE_HASHES = {Path(path): hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def ui_design_contract() -> dict:
     """Return verified Godot 4.6 UI rules and current project evidence, not universal style bans."""
     return dict(palette=COLORS, project_grid=32,
-        source='docs/tilemap-workflow.md',
+        source='docs/design-standard.md',
         rules=['Hand-placed native pixels on paper; 640x496 notebook displayed at 2x. No generated image or resampling.',
             'StyleBoxTexture: tile both axes only with periodic source strips; explicit texture and content margins.',
             'Button: normal/hover/pressed/hover_pressed/disabled plus transparent pixel focus overlay.',

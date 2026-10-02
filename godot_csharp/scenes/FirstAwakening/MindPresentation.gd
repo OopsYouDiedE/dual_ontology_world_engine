@@ -338,30 +338,36 @@ static func refresh(scene: Node2D) -> void:
 		label(parent,scene.mind_note,20,Color("8f3d32"))
 		return
 	var finished: bool = not scene.sim_result.is_empty() and scene.replay_index >= scene.replay_events.size()
+	if finished and not scene.mind_dirty and scene.state.event_mode:
+		var validation: Dictionary = scene._replay_submission_validation()
+		if not validation.ready and not validation.reasons.is_empty():
+			label(parent, str(validation.reasons[0]), 18, Color("8f3d32"))
 	var result: Dictionary = scene.replay_stage._state(scene.replay_index)
 	var caption: String = str(result.get("caption",""))
 	if scene.replay_index > 0 and (not result.get("succeeded",true) or caption.length() > 32):
 		label(parent,tx(caption),19,INK if result.get("succeeded",true) else Color("8f3d32"))
 	var available: Array[int] = []
+	var current_point_ids: Array = scene.replay_pause_ids.get(scene.replay_index, [])
 	for i in INVESTIGATION_CONTENT.replay_clues.size():
 		var clue: Dictionary = INVESTIGATION_CONTENT.replay_clues[i]
-		if scene._trace_visible(clue.required) or (finished and scene.evidence.has(clue.site)): available.append(i)
+		var keep_selected: bool = i == scene.mind_trace and scene.replay_reached.has(clue.canonical)
+		if scene._trace_visible(clue.required) or current_point_ids.has(clue.id) or keep_selected or (finished and scene.evidence.has(clue.site)): available.append(i)
 	if scene.sim_result.is_empty() or available.is_empty():
 		return
-	if not available.has(scene.mind_trace): scene.mind_trace = available.back()
-	var trace: Dictionary = INVESTIGATION_CONTENT.replay_clues[scene.mind_trace]
+	var trace_index: int = scene.mind_trace if available.has(scene.mind_trace) else available.back()
+	var trace: Dictionary = INVESTIGATION_CONTENT.replay_clues[trace_index]
 	var produced: bool = result.ids.has(trace.required)
 	if trace.id == "locks": produced = produced and result.inner_bolt and result.outer_bar
 	var heading := HBoxContainer.new()
 	heading.add_theme_constant_override("separation",12)
 	parent.add_child(heading)
 	var previous := paper_arrow(heading,"left",func():
-		scene.mind_trace = available[posmod(available.find(scene.mind_trace)-1,available.size())]
+		scene.mind_trace = available[posmod(available.find(trace_index)-1,available.size())]
 		refresh(scene),"FA_MIND_049")
 	previous.disabled = available.size() < 2
-	label(heading,"%s  %d/%d" % [tx(trace.mind_title_id),available.find(scene.mind_trace)+1,available.size()],22,INK).name = "TraceTitle"
+	label(heading,"%s  %d/%d" % [tx(trace.mind_title_id),available.find(trace_index)+1,available.size()],22,INK).name = "TraceTitle"
 	var next := paper_arrow(heading,"right",func():
-		scene.mind_trace = available[posmod(available.find(scene.mind_trace)+1,available.size())]
+		scene.mind_trace = available[posmod(available.find(trace_index)+1,available.size())]
 		refresh(scene),"FA_MIND_050")
 	next.disabled = available.size() < 2
 	var space := Control.new()
@@ -369,18 +375,18 @@ static func refresh(scene: Node2D) -> void:
 	heading.add_child(space)
 	var note := VBoxContainer.new()
 	parent.add_child(note)
-	label(note,tx(("FA_MIND_052" if scene.sim_checks.has(trace.canonical) else "FA_MIND_053") if produced else "FA_MIND_054"),19,INK if produced else Color("8f3d32"))
+	label(note,tx(("FA_MIND_052" if scene._trace_is_checked(trace) else "FA_MIND_053") if produced else "FA_MIND_054"),19,INK if produced else Color("8f3d32"))
 	var explanation := "FA_MIND_055"
 	if produced:
-		var trace_index: int = result.ids.find(trace.required)
-		if trace_index >= 0: explanation = result.descriptions[trace_index]
+		var state_id_index: int = result.ids.find(trace.required)
+		if state_id_index >= 0: explanation = result.descriptions[state_id_index]
 	if not produced and finished:
 		for conflict in scene.sim_result.conflicts:
 			for term in trace.conflict_terms:
 				if str(conflict).contains(term): explanation = conflict
 	label(note,tx(explanation),19,LIGHT)
 	if produced:
-		flow_button(note,tx("FA_MIND_056").get_slice(" · ", 0).get_slice("・", 0) if scene.evidence.has(trace.site) else tx("FA_MIND_057"),func(): scene._request_trace_check(trace.canonical,trace.required,trace.site),Color("8a5d36"),scene.mind_dirty or scene.sim_checks.has(trace.canonical))
+		flow_button(note,tx("FA_MIND_056").get_slice(" · ", 0).get_slice("・", 0) if scene.evidence.has(trace.site) else tx("FA_MIND_057"),func(): scene._request_trace_check(trace.canonical,trace.required,trace.site),Color("8a5d36"),scene.mind_dirty or scene._trace_is_checked(trace))
 
 static func paper_arrow(parent: Node, glyph: String, callback: Callable, tip: String) -> Button:
 	var result: Button = preload("res://scenes/FirstAwakening/PaperIconButton.gd").new()

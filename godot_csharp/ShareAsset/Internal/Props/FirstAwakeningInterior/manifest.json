@@ -1,5 +1,5 @@
 {
-  "process": "native 1x pixel recipes in tools/first_awakening_art; no resampling, no generated source images",
+  "process": "native 1x pixel recipes in tools/first_awakening_art and authored native-size SVG copied from AssetsSource; no resampling",
   "entry": "tools/build_first_awakening_interior.py",
   "anchor": "bottom-centre of each sprite is its floor contact point",
   "architecture": {
@@ -356,6 +356,22 @@
       "size": [
         22,
         44
+      ]
+    },
+    "alarm_regulations": {
+      "file": "alarm_regulations.svg",
+      "size": [
+        32,
+        48
+      ],
+      "source": "AssetsSource/Internal/Props/FirstAwakeningInterior/alarm_regulations.svg",
+      "runtime": "ShareAsset/Internal/Props/FirstAwakeningInterior/alarm_regulations.svg",
+      "process": "authored native 1x integer-pixel SVG; byte-for-byte source copy",
+      "sha256": "1e9a8605b372e265d8c02917fe81b5839f679168c50bb9995f49c732a738749a",
+      "anchor": "top-left; centered=false",
+      "position": [
+        536,
+        962
       ]
     }
   }

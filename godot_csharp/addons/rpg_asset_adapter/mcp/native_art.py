@@ -72,7 +72,7 @@ def native_art_catalog() -> dict:
             identity='TEAL/SAGE/ROSE/PLUM wallpaper, quilt and rug motifs; not a universal 16-colour palette.',
             layers='Runtime architecture is a flattened painted background; furniture, doors and bolt are separate sprites.',
             caveats='mix/shift/alpha blending add colours beyond base ramps. Pixel count alone cannot assess quality. Baked contact shadows require rebuild after furniture moves.'),
-        source_reference='docs/tilemap-workflow.md',
+        source_reference='docs/design-standard.md',
         scope='All current architecture and prop recipes; no invented character animation frames.')
 
 

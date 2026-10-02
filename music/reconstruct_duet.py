@@ -91,7 +91,29 @@ def make_dynamic(dyn_str):
     vel.text = str(v_map.get(dyn_str, 80))
     return d
 
-def set_measure_elements(measure, elements, dynamic=None):
+def make_tempo(bpm, label=''):
+    # MuseScore 4 Tempo: <tempo> is quarter notes per second
+    t = ET.Element('Tempo')
+    ET.SubElement(t, 'tempo').text = '%.6f' % (bpm / 60.0)
+    ET.SubElement(t, 'followText').text = '1'
+    txt = ET.SubElement(t, 'text')
+    if label:
+        txt.text = label + ' '
+    ET.SubElement(txt, 'sym').text = 'metNoteQuarterUp'
+    fnt = ET.SubElement(txt, 'font')
+    fnt.set('face', 'Edwin')
+    fnt.tail = f' = {bpm}'
+    return t
+
+def make_fermata(below=False):
+    f = ET.Element('Fermata')
+    ET.SubElement(f, 'subtype').text = 'fermataBelow' if below else 'fermataAbove'
+    return f
+
+def arp8(tones):
+    return [make_chord('eighth', t) for t in tones]
+
+def set_measure_elements(measure, elements, dynamic=None, extra_head=None):
     preserved_head = []
     preserved_tail = []
     voices = measure.findall('voice')
@@ -106,6 +128,8 @@ def set_measure_elements(measure, elements, dynamic=None):
             preserved_tail.append(el)
     v0.clear()
     for el in preserved_head:
+        v0.append(el)
+    for el in (extra_head or []):
         v0.append(el)
     if dynamic:
         v0.append(make_dynamic(dynamic))

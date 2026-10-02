@@ -44,3 +44,16 @@ func _draw() -> void:
 	for i in 6:
 		draw_rect(Rect2(588 + i * 9, 928 + i % 2, 12, 1), Color("7f8d86"))
 		draw_rect(Rect2(590 + i * 9, 930 + i % 2, 8, 1), Color(0.5, 0.56, 0.54, 0.6))
+	# Physical tracks are present from the outset. Low light reveals their layers.
+	var examined: bool = get_parent().state.evidence.has("heel_tracks")
+	for room_index in 4:
+		var room_x: float = [192.0, 512.0, 832.0, 1152.0][room_index]
+		var path := PackedVector2Array([Vector2(638 + room_index * 4, 944), Vector2(638 + room_index * 4, 420), Vector2(room_x, 420), Vector2(room_x, 382)])
+		var count := 0
+		for leg in range(1, path.size()):
+			var steps := maxi(1, int(path[leg - 1].distance_to(path[leg]) / 28))
+			for foot in steps:
+				var point := path[leg - 1].lerp(path[leg], float(foot) / steps).round()
+				var opacity := maxf(0.04, (0.46 if examined else 0.12) - count * 0.01)
+				draw_rect(Rect2(point + Vector2(-1, -2), Vector2(2, 4)), Color(0.15, 0.13, 0.16, opacity))
+				count += 1

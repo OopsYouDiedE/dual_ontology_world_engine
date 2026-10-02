@@ -20,6 +20,8 @@ var stop: Node2D
 var stop_before := Vector2.ZERO
 var stop_now := Vector2.ZERO
 var wipe: Line2D
+var footprint_marks: Node2D
+var sweep_mark: Line2D
 var water_stream: Line2D
 var focus := Vector2.ZERO
 var manual_focus := Vector2.ZERO
@@ -76,6 +78,7 @@ func _ready() -> void:
 	water_stream.position = fixtures.get_node("Washstand").position
 	# Floor marks lie under the figures; the wedge and outer bar sit on the gate.
 	world.move_child(fixtures, wedge.get_index())
+	_build_second_phase_marks()
 	for actor in $SubViewport/World/FigureTemplates.get_children():
 		initial_points[actor.name] = actor.position
 		actor.reparent(fixtures)
@@ -88,6 +91,33 @@ func _ready() -> void:
 	view_camera.make_current()
 	var drawing: TextureRect = $Drawing
 	drawing.texture = viewport.get_texture()
+
+func _build_second_phase_marks() -> void:
+	footprint_marks = Node2D.new()
+	footprint_marks.name = "FourRoomFootprints"
+	world.add_child(footprint_marks)
+	world.move_child(footprint_marks, fixtures.get_index())
+	# The inspected tracks end at the four thresholds; private interiors stay covered.
+	for index in 4:
+		var target: Vector2 = source.sites["room_" + str(index)].point + Vector2(0, 28)
+		var route := FieldNavigation.route(Vector2(640 + (index - 2) * 8, 932), target, source.floors, source.obstacle_rects, Vector2i(source.layout.rows[0].length(), source.layout.rows.size()))
+		for step in range(0, route.size(), 2):
+			var heel := Polygon2D.new()
+			heel.polygon = PackedVector2Array([Vector2(-1, -3), Vector2(1, -3), Vector2(1, 3), Vector2(-1, 3)])
+			heel.position = route[step] + Vector2(index * 2 - 3, 0)
+			heel.color = Color(0.23, 0.21, 0.24, lerpf(0.85, 0.18, float(step) / maxf(1.0, route.size() - 1.0)))
+			footprint_marks.add_child(heel)
+	sweep_mark = Line2D.new()
+	sweep_mark.name = "FullDoorSweep"
+	sweep_mark.width = 2
+	sweep_mark.default_color = Color("59515d")
+	for step in 17:
+		var angle := float(step) * PI / 32.0
+		sweep_mark.add_point(Vector2(606, 960) + Vector2(cos(angle), sin(angle)) * 76)
+	world.add_child(sweep_mark)
+	world.move_child(sweep_mark, fixtures.get_index())
+	footprint_marks.hide()
+	sweep_mark.hide()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -193,6 +223,8 @@ func _process(_delta: float) -> void:
 		soot.visible = ids.has("door-mask")
 		outside_bar.visible = state.outer_bar
 		wipe.visible = state.get("wiped",false)
+		footprint_marks.visible = ids.has("four-room-footprints")
+		sweep_mark.visible = ids.has("full-door-sweep")
 		water_stream.visible = state.get("valve_open",false)
 		stop.position = stop_now if state.get("stop_moved",false) else stop_before
 		var active: String = str(state.get("actor",""))

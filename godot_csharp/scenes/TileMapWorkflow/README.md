@@ -1,6 +1,6 @@
 # TileMap制作验收室
 
-入口 `Preview.tscn`，由 `addons/rpg_asset_adapter/mcp/export_map.gd` 生成；数据与重建入口见[工作流](../../../docs/tilemap-workflow.md)。不改变项目主场景。
+入口 `Preview.tscn`，由 `addons/rpg_asset_adapter/mcp/export_map.gd` 生成；数据与重建入口见 [工作流](../../../docs/design-standard.md#第五部分32px-像素美术与地图工作流)。不改变项目主场景。
 
 WASD / 方向键移动。人物使用现行32×48正面静态帧，仅供尺度、碰撞、前后遮挡检查。镜头固定房间中心，保持整数倍率。预览不包含剧情、开关门状态或正式人物行走动画。
 

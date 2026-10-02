@@ -16,6 +16,7 @@ func _draw() -> void:
 	if source == null or source.modal_open or source.dialogue.active or source.ended:
 		return
 	for id in source.sites:
+		if not source._site_accessible(id): continue
 		if not source._has_new_at(id):
 			continue
 		var point: Vector2 = source.sites[id].point
@@ -25,6 +26,11 @@ func _draw() -> void:
 		point.y -= 46 if source.actors.has(actor_name) else 12
 		point = point.round()
 		var predicted: bool = source.pending_inspections.has(id)
+		if source.steady_investigation_hints():
+			# The investigation host needs a visible, steady mouse target.
+			_spark(point,4,predicted)
+			draw_rect(Rect2(point-Vector2(8,8),Vector2(17,17)),Color("d2bc85"),false,1)
+			continue
 		# Stagger crisp pixel glints instead of pulsing every object together.
 		var phase := fmod(clock + float(posmod(id.hash(), 220)) / 100.0, 2.2)
 		var frame := int(phase * 8.0)

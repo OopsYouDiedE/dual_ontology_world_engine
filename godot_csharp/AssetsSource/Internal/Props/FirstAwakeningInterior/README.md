@@ -2,6 +2,8 @@
 
 使用场景：`scenes/FirstAwakening/FirstAwakening.gd`、`RoomDetails.gd`、`RoomDoor.gd` 与复用现场的 `ReplayStage.gd`。运行时只加载 `ShareAsset/Internal/Props/FirstAwakeningInterior/`。当前统一重建入口：`tools/build_first_awakening_interior.py`，实际生产代码位于 `tools/first_awakening_art/`。
 
+`alarm_regulations.svg` 是 32×48 原生整数像素警铃与规程铜牌生产源。家具重建入口将其原样复制到 ShareAsset 同族（包括 `--scene-only`），并在 `manifest.json` 记录源路径、运行时路径、实际尺寸与 SHA-256；场景以左上角锚点、`centered=false` 装配在 `(536, 962)`。铜牌与侧光检查鞋印使用 `sites.tres` 的点位及 48 像素交互半径生成实体 Area；检视盖向下观察、记谱辨认及两份人物证言由对话取得，不生成额外实体 Area。
+
 以下透明底图是 2026-09-26 的历史 image_gen 源稿与提示记录。它们保留用于来源追溯，不是当前室内物件和建筑的重建输入；当前运行时图由 `tools/first_awakening_art/` 的原生像素配方直接绘制。用户提供的 RPG 房间截图只用于构图、材质密度、俯视角和遮挡研究，没有作为图块切片，也未复制其角色与剧情。用户明确允许按既有素材协议进行改色和二次创作；本族没有覆盖 External/Victorian 原始包或其授权资料。
 
 | 历史源稿 | 原始内容与当前关系 |

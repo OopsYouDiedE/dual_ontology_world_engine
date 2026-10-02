@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scenes/FirstAwakening/FirstAwakening.gd" id="main"]
+[ext_resource type="Script" path="res://scenes/FirstAwakening/RedTokenDemo.gd" id="main"]
 [ext_resource type="Script" path="res://scenes/FirstAwakening/RoomDetails.gd" id="details"]
 [ext_resource type="Script" path="res://scenes/Story/StoryActor.gd" id="actor"]
 [ext_resource type="Script" path="res://scenes/FirstAwakening/RoomDoor.gd" id="room_door"]
@@ -8,9 +8,9 @@
 [ext_resource type="Script" path="res://scenes/FirstAwakening/InvestigationSite.gd" id="investigation_site"]
 [ext_resource type="Script" path="res://scenes/FirstAwakening/FieldModal.gd" id="field_modal"]
 [ext_resource type="PackedScene" path="res://scenes/FirstAwakening/FirstAwakeningDialogue.tscn" id="dialogue"]
-[ext_resource type="Script" path="res://scenes/FirstAwakening/HallReplayBridge.cs" id="bridge"]
 [ext_resource type="AudioStream" path="res://ShareAsset/Internal/Props/first_awakening_reasoning_piano.mp3" id="reasoning_music"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/mind-ui-dossier.png" id="paper_card"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/alarm_regulations.svg" id="alarm_regulations"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/armchair.png" id="armchair"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/barrel.png" id="barrel"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bed_0.png" id="bed_0"]
@@ -2465,6 +2465,11 @@ offset = Vector2(-11, -16)
 centered = false
 texture = ExtResource("stop_base")
 
+[node name="AlarmRegulations" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(536, 962)
+centered = false
+texture = ExtResource("alarm_regulations")
+
 [node name="侦探" type="CharacterBody2D" parent="ObjectsAndPeople"]
 position = Vector2(154, 144)
 script = ExtResource("actor")
@@ -3066,14 +3071,34 @@ site_id = "chair_marks"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InvestigationSites/chair_marks"]
 shape = SubResource("site_reach_48")
 
+[node name="alarm_regulations" type="Area2D" parent="InvestigationSites"]
+position = Vector2(552.0, 950.0)
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+script = ExtResource("investigation_site")
+site_id = "alarm_regulations"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InvestigationSites/alarm_regulations"]
+shape = SubResource("site_reach_48")
+
+[node name="heel_tracks" type="Area2D" parent="InvestigationSites"]
+position = Vector2(572.0, 894.0)
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+script = ExtResource("investigation_site")
+site_id = "heel_tracks"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InvestigationSites/heel_tracks"]
+shape = SubResource("site_reach_48")
+
 [node name="InteractionHints" type="Node2D" parent="."]
 z_index = 50
 script = ExtResource("hints")
 
 [node name="Dialogue" parent="." instance=ExtResource("dialogue")]
 
-[node name="HallReplayBridge" type="Node" parent="."]
-script = ExtResource("bridge")
 
 [node name="ReasoningMusic" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("reasoning_music")

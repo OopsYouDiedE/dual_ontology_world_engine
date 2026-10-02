@@ -1,0 +1,71 @@
+{
+  "task": "story-modularization",
+  "date": "2026-10-02",
+  "baseline": "Existing dirty workspace preserved; code, configuration and required assets will be committed together after independent verification.",
+  "review_scope": [
+    "Core C# runtime and cognition",
+    "Reasoning C# cases and Story bindings",
+    "FirstAwakening host, adapters and interaction helpers",
+    "RedToken scene coordinator, simulation, session, dialogue and presentation"
+  ],
+  "changes": [
+    {
+      "module": "RedTokenContent.gd",
+      "responsibility": "Chapter-local sites, hypothesis display fields, reward text, defense material options, safe actions and follow-up observations"
+    },
+    {
+      "module": "RedTokenHypothesis.cs",
+      "responsibility": "Candidate compilation, trace prediction, conflict and unproven explanations extracted without rule changes"
+    },
+    {
+      "module": "RedTokenSession.cs",
+      "responsibility": "Observation acquisition, physical/safe sessions, candidate state, evaluation and defense authority"
+    },
+    {
+      "module": "RedTokenDefenseView.gd",
+      "responsibility": "Defense UI delegated from scene; current draft and authority remain in original owners"
+    },
+    {
+      "module": "Story/ObservationReader.gd",
+      "responsibility": "Shared Dialogue Manager observation traversal, no evidence grants"
+    },
+    {
+      "module": "FirstAwakening.gd",
+      "responsibility": "Chapter runtime/site/start hooks; legacy deduction initialized only by legacy runtime hook"
+    }
+  ],
+  "line_counts": {
+    "RedTokenDemo_before": 868,
+    "RedTokenDemo_after": 687,
+    "RedTokenSession_before": 313,
+    "RedTokenSession_after": 153
+  },
+  "authoring_contract": "docs/design-standard.md section 4.15",
+  "preserved": [
+    "C# Core mechanisms and workspace fixes",
+    "Dialogue wording and evidence requirements",
+    "Entry scene and existing input protocol",
+    "Committed snapshot based replay",
+    "Independent physical, safe-test and hypothesis worlds"
+  ],
+  "remaining_boundaries": [
+    "Host still uses legacy state/resource and scene dependencies",
+    "Historical Hall benchmark code is still compiled into Core",
+    "Tea case still has case-specific hardcoded content",
+    "This is not a generic arbitrary chapter configuration engine"
+  ],
+  "verification": {
+    "core_build": "passed",
+    "godot_build": "passed; 23 existing plugin nullable warnings",
+    "core_scope": "21/21",
+    "opening_investigation": "40/40",
+    "modules": "86/86",
+    "red_token_round6": "425/425; 377 automated inputs",
+    "blind_play": "not performed; automated regressions do not certify play experience",
+    "reports": [
+      "verification-report.md",
+      "final-verification/report.md"
+    ]
+  },
+  "commit_scope": "Application source, configuration, runtime/source assets, main design and implementation docs, and this task reports; historical playtest media and temporary explorations excluded."
+}

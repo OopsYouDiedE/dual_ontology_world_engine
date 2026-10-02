@@ -1,6 +1,6 @@
 # RPG TileMap MCP
 
-stdio MCP入口：现行Claude初醒配方、像素检查与Aseprite交接、对白审查、制作任务图，以及旧TileMap制作工具。[制作规范与建议分析](../../../../docs/tilemap-workflow.md)。不依赖Core，不调用网络绘图服务。
+stdio MCP入口：现行Claude初醒配方、像素检查与Aseprite交接、对白审查、制作任务图，以及旧TileMap制作工具。[制作与验收规范](../../../../docs/design-standard.md#第五部分32px-像素美术与地图工作流)。不依赖Core，不调用网络绘图服务。
 
 ## 安装和启动
 
@@ -97,7 +97,7 @@ godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/
 首次交接可给check_native_art.py加 `--handoff`；已有工程时不重复导出覆盖。验证报告为仓库 `artifacts/tilemap-workflow/native-mcp-check.json`。以下旧样板检查会重导出TileMapWorkflow，不能替代当前初醒验收：
 
 ```powershell
-# 重建初醒场景使用的当前地图
+# 重建旧47形TileMap样板；不是当前初醒地图入口
 godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/tools/rebuild_first_awakening_tilemap.py
 # 真实stdio客户端：发现工具、读调用、非法输入、导出调用
 godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/addons/rpg_asset_adapter/mcp/check.py
@@ -105,9 +105,9 @@ godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/
 & $env:GODOT_BIN --path godot_csharp res://scenes/TileMapWorkflow/Preview.tscn
 ```
 
-`demo.py` 是旧样板配方，运行会覆盖初醒场景共用的 TileMapWorkflow 资产。WASD/方向键移动。map-1x.png是离线布局图，不是实机截图。结果保存在仓库artifacts/tilemap-workflow；技术通过不等于艺术验收。
+`demo.py` 是旧样板配方，运行会覆盖 TileMapWorkflow 样板资产。当前初醒使用FirstAwakeningInterior/life_wing.png与layout.tres，重建入口为 `godot_csharp/tools/build_first_awakening_interior.py`，也可通过 `rebuild_native_interior` 调用同一builder。旧样板支持WASD/方向键移动；map-1x.png是离线布局图，不是实机截图。结果保存在仓库artifacts/tilemap-workflow；技术通过不等于艺术验收。
 
-初醒管线只导出建筑，家具仍由FirstAwakening场景拥有，因此建筑报告不能代表家具已审查。实际家具碰撞须另传audit_layout。严禁把床、柜子的整张透明画布当占地；门叶必须以墙体地面线为锚点，画面可以向上延伸，但不得让角色在本应属于门厚度的区域内站立。机关的剖面示意属于检视画面。
+旧TileMap样板管线只导出建筑；当前初醒builder绘制建筑及物件，家具装配与实际碰撞由FirstAwakening场景维护。建筑报告不能代表家具已审查，实际家具碰撞须另传audit_layout并实机检查。严禁把床、柜子的整张透明画布当占地；门叶必须以墙体地面线为锚点，画面可以向上延伸，但不得让角色在本应属于门厚度的区域内站立。机关的剖面示意属于检视画面。
 
 RPG Maker格式仍由父插件处理，ReasoningStudy原链路不变。这里补充新图适配与MCP制作入口。
 

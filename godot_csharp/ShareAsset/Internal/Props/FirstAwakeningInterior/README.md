@@ -2,6 +2,8 @@
 
 当前运行时家具与生活翼建筑由 `godot_csharp/tools/first_awakening_art/` 的原生像素配方绘制；入口为 `godot_csharp/tools/build_first_awakening_interior.py`。早期 image_gen 源稿及提示仍保存在 `godot_csharp/AssetsSource/Internal/Props/FirstAwakeningInterior/` 供来源追溯，当前重建不读取这些图像。
 
+`alarm_regulations.svg` 为 AssetsSource 同族 32×48 原生整数像素生产源的逐字节副本。统一重建入口在普通重建及 `--scene-only` 中同步发布，`manifest.json` 保存来源、实际尺寸与 SHA-256。场景 `AlarmRegulations` 使用左上角锚点、`centered=false`，位于 `(536, 962)`；实体铜牌和鞋印检查的交互区域均从 `sites.tres` 的点位及半径生成。`outer_sweep`、`notation`、`chef_morning`、`engineer_testimony` 是检视或对话记录，不生成独立 Area。
+
 重建：在仓库根目录执行 `godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/tools/build_first_awakening_interior.py`，然后由 Godot 导入资源。单一输出目录，直接更新现行资源，不建立按轮次分裂的副本。
 
 `manifest.json` 记录生产入口、原生配方过程、实际像素尺寸及脚底锚点。PNG由配方直接逐像素绘制，没有源图缩放或量化步骤。所有家具与道具由 FirstAwakening 场景装配；碰撞由场景脚底占地决定，不能把整张精灵透明画布当作碰撞盒。技术生产路径不等于全部艺术验收通过。

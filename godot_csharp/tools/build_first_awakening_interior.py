@@ -6,19 +6,24 @@ image: each pixel is placed by tools/first_awakening_art/ at game scale.
 
 Run from the repository root:  python godot_csharp/tools/build_first_awakening_interior.py
 """
+import hashlib
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
+from xml.etree import ElementTree
 
 GAME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GAME / "tools"))
 
-from first_awakening_art import architecture, layout, placement, props  # noqa: E402
+from first_awakening_art import architecture, layout, placement, props, red_token  # noqa: E402
 
 TARGET = GAME / "ShareAsset/Internal/Props/FirstAwakeningInterior"
+SOURCE = GAME / "AssetsSource/Internal/Props/FirstAwakeningInterior"
 SCENE = GAME / "scenes/FirstAwakening/FirstAwakening.tscn"
 SITES = GAME / "scenes/FirstAwakening/sites.tres"
+VIRTUAL_SITES = {"outer_sweep", "notation", "chef_morning", "engineer_testimony"}
 
 
 def _site_triggers() -> list[tuple[str, float, float, float]]:
@@ -26,7 +31,7 @@ def _site_triggers() -> list[tuple[str, float, float, float]]:
     result = []
     for line in SITES.read_text(encoding="utf-8").splitlines():
         match = re.search(r'\{"id": "([^"]+)".*"point": Vector2\(([^,]+), ([^)]+)\).*"reach": ([0-9.]+)', line)
-        if match:
+        if match and match[1] not in VIRTUAL_SITES:
             result.append((match[1], float(match[2]), float(match[3]), float(match[4])))
     if not result or len({site[0] for site in result}) != len(result):
         raise ValueError(f"Investigation catalog must contain unique sites: {SITES}")
@@ -52,7 +57,7 @@ def write_scene(data: dict) -> None:
     sprites = {item["sprite"] for item in data["furniture"]}
     sprites.update({"life_wing", "isolation_gate", "isolation_gate_open", "inner_bolt", "stop_base", "bed_0"})
     resources = [
-        ('Script', 'res://scenes/FirstAwakening/FirstAwakening.gd', 'main'),
+        ('Script', 'res://scenes/FirstAwakening/RedTokenDemo.gd', 'main'),
         ('Script', 'res://scenes/FirstAwakening/RoomDetails.gd', 'details'),
         ('Script', 'res://scenes/Story/StoryActor.gd', 'actor'),
         ('Script', 'res://scenes/FirstAwakening/RoomDoor.gd', 'room_door'),
@@ -63,6 +68,7 @@ def write_scene(data: dict) -> None:
         ('Script', 'res://scenes/FirstAwakening/HallReplayBridge.cs', 'bridge'),
         ('AudioStream', 'res://ShareAsset/Internal/Props/first_awakening_reasoning_piano.mp3', 'reasoning_music'),
         ('Texture2D', 'res://ShareAsset/Internal/Props/FirstAwakeningInterior/mind-ui-dossier.png', 'paper_card'),
+        ('Texture2D', 'res://ShareAsset/Internal/Props/FirstAwakeningInterior/alarm_regulations.svg', 'alarm_regulations'),
     ]
     resources += [('Texture2D', f'res://ShareAsset/Internal/Props/FirstAwakeningInterior/{name}.png', name) for name in sorted(sprites)]
     resources += [('SpriteFrames', f'res://ShareAsset/Internal/Characters/animation_v2/{name}.tres', name + '_frames') for name in ('detective', 'engineer', 'chef', 'musician')]
@@ -252,6 +258,9 @@ def write_scene(data: dict) -> None:
               f'position = {_vec(sx, sy)}',
               f'offset = {_vec(-sprite_canvases["stop_base"].w // 2, -sprite_canvases["stop_base"].h)}',
               'centered = false', 'texture = ExtResource("stop_base")', '']
+    lines += ['[node name="AlarmRegulations" type="Sprite2D" parent="ObjectsAndPeople"]',
+              'position = Vector2(536, 962)', 'centered = false',
+              'texture = ExtResource("alarm_regulations")', '']
     for name, x, y in [('侦探', 154, 144), ('工程师', 480, 416), ('厨师', 983, 728), ('音乐家', 706, 944)]:
         sheet = {'侦探': 'detective', '工程师': 'engineer', '厨师': 'chef', '音乐家': 'musician'}[name]
         lines += [f'[node name="{name}" type="CharacterBody2D" parent="ObjectsAndPeople"]',
@@ -320,8 +329,8 @@ def write_scene(data: dict) -> None:
         'theme_override_colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)',
         'theme_override_font_sizes/font_size = 22', 'text = "FA_UI_050"', '',
         '[node name="Time" type="Label" parent="FieldUI"]',
-        'offset_left = 1150.0', 'offset_top = 18.0',
-        'offset_right = 1255.0', 'offset_bottom = 52.0',
+        'offset_left = 650.0', 'offset_top = 18.0',
+        'offset_right = 920.0', 'offset_bottom = 52.0',
         'theme_override_colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)',
         'theme_override_font_sizes/font_size = 22', 'text = "07:20"', '',
         '[node name="Language" type="OptionButton" parent="FieldUI"]',
@@ -405,18 +414,38 @@ def render() -> tuple[dict, dict, dict]:
         "dorm_doors": [[x + 32, 384] for x in architecture.DORM_DOORS],
     }
     manifest = {
-        "process": "native 1x pixel recipes in tools/first_awakening_art; no resampling, no generated source images",
+        "process": "native 1x pixel recipes in tools/first_awakening_art and authored native-size SVG copied from AssetsSource; no resampling",
         "entry": "tools/build_first_awakening_interior.py",
         "anchor": "bottom-centre of each sprite is its floor contact point",
         "architecture": {"file": "life_wing.png", "size": [wing.w, wing.h]},
         "sprites": {name: {"size": [c.w, c.h]} for name, c in sprites.items()},
+    }
+    # The bell and plaque are an authored integer-pixel SVG, not a generated PNG.
+    # Record the bytes of the actual production source before publishing its copy.
+    plaque_source = SOURCE / "alarm_regulations.svg"
+    plaque_bytes = plaque_source.read_bytes()
+    plaque_root = ElementTree.fromstring(plaque_bytes)
+    if (plaque_root.get("width"), plaque_root.get("height")) != ("32", "48"):
+        raise ValueError(f"Alarm regulations sprite must retain its native 32x48 canvas: {plaque_source}")
+    manifest["sprites"]["alarm_regulations"] = {
+        "file": "alarm_regulations.svg",
+        "size": [32, 48],
+        "source": plaque_source.relative_to(GAME).as_posix(),
+        "runtime": (TARGET / "alarm_regulations.svg").relative_to(GAME).as_posix(),
+        "process": "authored native 1x integer-pixel SVG; byte-for-byte source copy",
+        "sha256": hashlib.sha256(plaque_bytes).hexdigest(),
+        "anchor": "top-left; centered=false",
+        "position": [536, 962],
     }
     return {"life_wing": wing, **sprites}, data, manifest
 
 
 def main() -> None:
     canvases, data, manifest = render()
+    manifest["red_token_mechanisms"] = red_token.publish(GAME)
     TARGET.mkdir(parents=True, exist_ok=True)
+    # Scene-only rebuilds still publish authored inputs required by the scene.
+    shutil.copyfile(SOURCE / "alarm_regulations.svg", TARGET / "alarm_regulations.svg")
     if '--scene-only' not in sys.argv:
         for name, canvas in canvases.items():
             canvas.save(TARGET / f"{name}.png")
@@ -424,7 +453,7 @@ def main() -> None:
     (TARGET / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     write_layout_resource(data)
     write_scene(data)
-    print(json.dumps({"sprites": len(canvases) - 1, "solids": len(data["solids"]), "furniture": len(placement.FURNITURE)}))
+    print(json.dumps({"sprites": len(manifest["sprites"]), "solids": len(data["solids"]), "furniture": len(placement.FURNITURE)}))
 
 
 if __name__ == "__main__":

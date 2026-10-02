@@ -6,7 +6,7 @@
 
 ## 入口与职责
 
-- [TileMap MCP 工作流](mcp/README.md)：新图绘制、显式裁切适配、47形墙顶包边、房间预览与Godot导出；[设计规范](../../../docs/tilemap-workflow.md)。
+- [TileMap MCP 工作流](mcp/README.md)：新图绘制、显式裁切适配、47形墙顶包边、房间预览与Godot导出；[统一设计规范](../../../docs/design-standard.md#第五部分32px-像素美术与地图工作流)。
 
 - `plugin.gd`：提供 `Project > Tools > RPG Asset Adapter: Convert Saved Config`，读取已保存配置并执行一次转换。
 - `adapter_facade.gd`：统一调用入口，组织检测、转换与资源保存。

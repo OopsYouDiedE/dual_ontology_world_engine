@@ -41,7 +41,7 @@ func _ready() -> void:
 	if next_button:
 		next_button.tooltip_text = tr("FA_MIND_080")
 	seek.tooltip_text = tr("FA_MIND_081")
-	clock_label.tooltip_text = tr("FA_MIND_082")
+	clock_label.tooltip_text = tr("FA_MIND_103") if is_instance_valid(source) and source.state.event_mode else tr("FA_MIND_082")
 	clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	refresh()
 
@@ -140,6 +140,9 @@ func refresh() -> void:
 	play_button.set("glyph", "pause" if playing else "play")
 	play_button.tooltip_text = tr("FA_MIND_066" if playing else "FA_MIND_067" if index >= count and available else "FA_MIND_065") + tr("FA_MIND_085")
 	fast_button.tooltip_text = tr("FA_MIND_083" if fast_button.button_pressed else "FA_MIND_084") + tr("FA_MIND_086")
-	var base_sec := get_base_seconds()
-	clock_label.text = format_time(elapsed_seconds(), base_sec) + " / " + format_time(count * BEAT_SECONDS, base_sec)
+	if is_instance_valid(source) and source.state.event_mode:
+		clock_label.text = tr("FA_MIND_104") % [index, count]
+	else:
+		var base_sec := get_base_seconds()
+		clock_label.text = format_time(elapsed_seconds(), base_sec) + " / " + format_time(count * BEAT_SECONDS, base_sec)
 

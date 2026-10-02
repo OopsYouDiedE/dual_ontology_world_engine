@@ -32,12 +32,16 @@ public abstract record Effect
     public sealed record Set(Noun Target, Tag Tag, int Value) : Effect;
     public sealed record Change(Noun Target, Tag Tag, int Amount) : Effect;
     public sealed record TemporarySet(Noun Target, Tag Tag, int Value, double Duration) : Effect;
+    public sealed record TemporarySetUntilEnd(Noun Target, Tag Tag, int Value) : Effect;
     public sealed record Spend(Noun Target, Tag Tag, int Amount) : Effect;
     public sealed record Relate(Noun Target, RelationTag Relation, Noun Other, bool Remove = false) : Effect;
     public sealed record Sequence(ImmutableArray<Effect> Items) : Effect;
     public sealed record When(Condition Condition, Effect Body) : Effect;
     public sealed record Require(Condition Condition) : Effect;
-    public sealed record Wait(double Delay, Effect Body) : Effect;
+    public sealed record Wait(double Delay, Effect Body, Condition? Until = null) : Effect
+    {
+        public Wait(Condition until, Effect body) : this(0, body, until) { }
+    }
     public sealed record Say(Noun Recipient, string Text, Effect? Request = null) : Effect;
     public sealed record Think(Condition Fact) : Effect;
 }
@@ -110,13 +114,14 @@ public static class Ast
         Effect.Act e => e with { Target = map(e.Target), Tool = e.Tool is null ? null : map(e.Tool) },
         Effect.Set e => e with { Target = map(e.Target) },
         Effect.TemporarySet e => e with { Target = map(e.Target) },
+        Effect.TemporarySetUntilEnd e => e with { Target = map(e.Target) },
         Effect.Change e => e with { Target = map(e.Target) },
         Effect.Spend e => e with { Target = map(e.Target) },
         Effect.Relate e => e with { Target = map(e.Target), Other = map(e.Other) },
         Effect.Sequence e => new Effect.Sequence([..e.Items.Select(item => Map(item, map))]),
         Effect.When e => new Effect.When(Map(e.Condition, map), Map(e.Body, map)),
         Effect.Require e => new Effect.Require(Map(e.Condition, map)),
-        Effect.Wait e => e with { Body = Map(e.Body, map) },
+        Effect.Wait e => e with { Body = Map(e.Body, map), Until = e.Until is null ? null : Map(e.Until, map) },
         Effect.Say e => e with { Recipient = map(e.Recipient), Request = e.Request is null ? null : Map(e.Request, map) },
         Effect.Think e => e with { Fact = Map(e.Fact, map) },
         _ => throw new NotSupportedException()
@@ -132,36 +137,88 @@ public static class Ast
             Effect.Say say => say with { Recipient = BindNoun(say.Recipient) },
             Effect.Sequence sequence => new Effect.Sequence([..sequence.Items.Select(e => Bind(e, context))]),
             Effect.When conditional => new Effect.When(Map(conditional.Condition, BindNoun), Bind(conditional.Body, context)),
-            Effect.Wait wait => wait with { Body = Bind(wait.Body, context) },
+            Effect.Wait wait => wait with { Body = Bind(wait.Body, context), Until = wait.Until is null ? null : Map(wait.Until, BindNoun) },
             _ => Map(effect, BindNoun)
         };
     }
     public static IEnumerable<Noun> Nouns(Effect? effect)
     {
         var nouns = new List<Noun>();
-        if (effect is not null) Map(effect, noun => { nouns.Add(noun); return noun; });
+        if (effect is not null) CollectNouns(effect, nouns);
         return nouns;
     }
     public static IEnumerable<Noun> Nouns(Rule rule)
     {
         var nouns = new List<Noun>();
-        Map(rule, noun => { nouns.Add(noun); return noun; });
+        CollectNouns(rule.Condition, nouns);
+        CollectNouns(rule.Effect, nouns);
         return nouns;
     }
     public static IEnumerable<Projection> References(Effect? effect) => Nouns(effect).OfType<Noun.Reference>().Select(n => n.Projection);
     public static IEnumerable<Projection> References(Rule rule) => Nouns(rule).OfType<Noun.Reference>().Select(n => n.Projection);
     public static IEnumerable<Projection> References(Condition? condition)
     {
-        var references = new List<Projection>();
-        if (condition is not null) Map(condition, noun => { if (noun is Noun.Reference r) references.Add(r.Projection); return noun; });
-        return references;
+        var nouns = new List<Noun>();
+        CollectNouns(condition, nouns);
+        // Keep the condition overload eager, as it was before direct traversal.
+        return nouns.OfType<Noun.Reference>().Select(n => n.Projection).ToArray();
+    }
+
+    // Read-only traversal must not rebuild the AST. Preserve noun order and repeated references.
+    private static void CollectNouns(Condition? condition, List<Noun> nouns)
+    {
+        switch (condition)
+        {
+            case Condition.Exists c: nouns.Add(c.Target); break;
+            case Condition.Tagged c: nouns.Add(c.Target); break;
+            case Condition.Related c: nouns.Add(c.Target); nouns.Add(c.Other); break;
+            case Condition.At c: nouns.Add(c.Target); nouns.Add(c.Space); break;
+            case Condition.IsKind c: nouns.Add(c.Target); break;
+            case Condition.Not c: CollectNouns(c.Operand, nouns); break;
+            case Condition.All c:
+                foreach (var item in c.Items) CollectNouns(item, nouns);
+                break;
+            case Condition.Any c:
+                foreach (var item in c.Items) CollectNouns(item, nouns);
+                break;
+        }
+    }
+
+    private static void CollectNouns(Effect effect, List<Noun> nouns)
+    {
+        switch (effect)
+        {
+            case Effect.Act e:
+                nouns.Add(e.Target);
+                if (e.Tool is not null) nouns.Add(e.Tool);
+                break;
+            case Effect.Set e: nouns.Add(e.Target); break;
+            case Effect.TemporarySet e: nouns.Add(e.Target); break;
+            case Effect.TemporarySetUntilEnd e: nouns.Add(e.Target); break;
+            case Effect.Change e: nouns.Add(e.Target); break;
+            case Effect.Spend e: nouns.Add(e.Target); break;
+            case Effect.Relate e: nouns.Add(e.Target); nouns.Add(e.Other); break;
+            case Effect.Sequence e:
+                foreach (var item in e.Items) CollectNouns(item, nouns);
+                break;
+            case Effect.When e: CollectNouns(e.Condition, nouns); CollectNouns(e.Body, nouns); break;
+            case Effect.Require e: CollectNouns(e.Condition, nouns); break;
+            case Effect.Wait e: CollectNouns(e.Until, nouns); CollectNouns(e.Body, nouns); break;
+            case Effect.Say e:
+                nouns.Add(e.Recipient);
+                if (e.Request is not null) CollectNouns(e.Request, nouns);
+                break;
+            case Effect.Think e: CollectNouns(e.Fact, nouns); break;
+            default: throw new NotSupportedException();
+        }
     }
 
     /// <summary>ImmutableArray 的默认相等比较不比较内容，规则匹配使用结构比较。</summary>
     public static bool Equivalent(Effect left, Effect right) => (left, right) switch
     {
         (Effect.Sequence a, Effect.Sequence b) => a.Items.Length == b.Items.Length && a.Items.Zip(b.Items).All(p => Equivalent(p.First, p.Second)),
-        (Effect.Wait a, Effect.Wait b) => a.Delay == b.Delay && Equivalent(a.Body, b.Body),
+        (Effect.Wait a, Effect.Wait b) => a.Delay == b.Delay &&
+            (a.Until is null ? b.Until is null : b.Until is not null && Equivalent(a.Until, b.Until)) && Equivalent(a.Body, b.Body),
         (Effect.When a, Effect.When b) => Equivalent(a.Condition, b.Condition) && Equivalent(a.Body, b.Body),
         (Effect.Require a, Effect.Require b) => Equivalent(a.Condition, b.Condition),
         (Effect.Think a, Effect.Think b) => Equivalent(a.Fact, b.Fact),

@@ -103,7 +103,7 @@ func open_content(title: String, next_mode: String, locale_theme: Theme) -> void
 	rule.color = RULE
 	rule.custom_minimum_size = Vector2(0, 1)
 	content.add_child(rule)
-	if current_mode in ["message", "ending", "meeting_evidence"]:
+	if current_mode in ["message", "ending", "meeting", "meeting_evidence", "answer"]:
 		_fit_height.call_deferred(bounds)
 
 func add_detail(body: String, diagram: String, close_action: Callable) -> void:
@@ -124,7 +124,10 @@ func _paper_theme(locale_theme: Theme) -> Theme:
 
 func _fit_height(bounds: Rect2) -> void:
 	# Short cards shrink to their text and stay centred on the original bounds.
-	if not visible:
+	# Wrapped labels report their height only after one layout pass at the card width.
+	var mode := current_mode
+	await get_tree().process_frame
+	if not visible or mode != current_mode:
 		return
 	var margin := get_theme_stylebox("panel").get_minimum_size().y
 	var wanted := minf(bounds.size.y, content.get_combined_minimum_size().y + margin)

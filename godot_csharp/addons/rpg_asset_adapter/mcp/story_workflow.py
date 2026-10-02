@@ -318,6 +318,7 @@ def story_design_contract() -> dict:
         sources[name] = dict(path=relative, sha256=hashlib.sha256(raw).hexdigest(), excerpt=excerpt)
     return dict(sources=sources,
                 revision_principles=[
+                    'Follow docs/design-standard.md#语言风格 for all on-screen writing: omit text for information the visuals can convey, and use contrastive clauses only when necessary.',
                     'Keep observable facts, character hypotheses, and rule-produced results explicitly separate.',
                     'A character gains knowledge only through a concrete observation or an explicitly recorded acquisition.',
                     'Weak observations do not certify a unique historical sequence; retain feasible equivalent explanations as unknown.',
@@ -378,9 +379,7 @@ def review_story_beats(beats: list[dict[str, Any]], characters: list[dict[str, A
 
 def story_scene_design_contract() -> dict:
     """Give the author a scene-first dramatic design and review contract."""
-    source_paths = ('docs/academy_setting/story-spine.md',
-                    'docs/academy_setting/first-awakening-design.md',
-                    'docs/design-standard.md')
+    source_paths = ('docs/design-standard.md',)
     sources = []
     for relative in source_paths:
         source = workflow.REPO / relative
@@ -396,6 +395,9 @@ def story_scene_design_contract() -> dict:
                                         information_gained='', state_change='', source_ref='')],
                             exit_state='', next_hook=''),
         review_questions=[
+            'Before scripting, was the complete player experience written as a comprehensive continuous novel-like narrative, including attention, interpretation, decisions, exact inputs, feedback and branch recovery, using only player-available information, as required by docs/design-standard.md#片段设计顺序? A checklist or synopsis alone is insufficient.',
+            'Has actual player-input acceptance compared expected and observed steps, measured deviations and distinguished faulty assumptions from game design or implementation faults, as required by docs/design-standard.md#完成条件?',
+            'Does every on-screen line follow docs/design-standard.md#语言风格: no text for visually conveyable information, and contrastive clauses only when necessary?',
             'What can the player do before anyone explains the situation?',
             'What does each speaker want from the listener in this moment? What might the listener refuse?',
             'Which fact is discovered by touching, seeing, comparing, choosing or failing, and where is that action implemented?',
@@ -406,9 +408,10 @@ def story_scene_design_contract() -> dict:
             'Does the exit state differ from the entrance state in a way the next scene uses?'],
         principle='Narration and inner voice may convey sensory experience or a personal decision, but should not replace a playable discovery or explain a conclusion for the player.',
         workflow=['inventory_story_project', 'audit_story_presentation',
+                  'write the full player experience as a comprehensive continuous novel-like narrative before scripting: attention, interpretation, decisions, exact operations, feedback, branches, failure and recovery',
                   'draft arc/scene/beat cards with the returned template', 'review_story_beats',
                   'inspect_story', 'review_story_revision', 'apply_story_revision',
-                  'compile Dialogue Manager and play the scene; human literary review'],
+                  'compile Dialogue Manager and play the scene; compare actual steps with the original operation hypothesis, diagnose deviations, revise and retest; human literary review'],
         limit='The MCP supplies evidence and review structure. Its static signals are candidates, not literary verdicts or proof of runtime interaction.')
 
 

@@ -1,28 +1,27 @@
 # Core 维护规范
 
-本目录使用 .NET 8、C# 12、nullable reference types 和 implicit usings。
+本目录使用 .NET 8、C# 12、nullable reference types 和 implicit usings。世界引擎原理详见 [统一设计规范](../docs/design-standard.md#第三部分core-独立世界引擎运作原理)。
 
-- Essence 表示客观对象身份；非本质状态和机制由 Property 持有。
-- Projection 不持有可供主体读取的 Essence 引用。对象身份使用引用，不增加定位 ID。
-- Soul 的认知、规则、历史均在自身 ProjectionWorld。所有主观修改经过 Observation.Observe；内部提交实现除外。
-- DecisionSystem、SocialSystem 只接收内部世界。不得在候选过滤时查询 WorldRuntime 或客观 Property。
-- AST 使用类型化节点、槽位、Tag 和 Projection 引用。字符串只出现在名称、描述及文本解析边界。
-- CTBSystem 只负责离散行动值延迟激活；动作选择、代价结算和嵌套阶段由调用方协调。
-- ActionRuntime 对每个不含等待的阶段先准备再提交；不能在准备阶段修改实际状态。
-- 对外公开的认知集合不可直接修改，避免绕过观察入口改变主体知识。
-- 不引入 Godot、实时循环、房间内几何、碰撞或 UI。
-- 验收通过独立因果场景，不能由测试脚本代写决策结果或绕过 Observe。
-- 动物园规则及叙事专用内容属于游戏层，不能为了兼容旧示例把旧 Entity/Belief 机制搬回 Core。
+- Essence 表示客观对象身份；物理状态和环境机制由 Property 持有。
+- Projection 为主观认知投射，对象身份使用引用，结构保持精炼。
+- Soul 的认知、规则与历史均保存在自身的 ProjectionWorld。主观认知的更新统一经过 Observation.Observe 接口。
+- DecisionSystem 与 SocialSystem 严格基于主体的主观认知展开逻辑演算与决策。
+- AST 使用类型化节点、槽位、Tag 和 Projection 引用。字符串仅用于名称、描述及文本解析边界。
+- CTBSystem 负责离散行动值延迟激活；动作选择、代价结算和嵌套阶段由调用方协调。
+- ActionRuntime 对每个阶段先准备再提交，状态变更在提交阶段权威生效。
+- 认知集合的访问保持封闭，确保认知演变完全由观察与交互事件驱动。
+- 核心引擎保持纯粹性，与具体的渲染引擎、实时循环、几何与 UI 分立。
+- 验收依据独立因果场景推进，决策结果由规则权威结算。
 
 ## 独立打包边界
 
-- Core 仅作为独立 .NET 类库构建与打包；包元数据和 API 说明必须与当前 C# 源码一致，不沿用旧文档中的 Python 入口或 Entity/Belief API。
-- Core 包说明维护在本目录 `README.md`；打包时将其包含在 NuGet 包中。没有经项目确认的许可证、作者或仓库地址时，不得编造这些元数据。未声明许可证的包只可作本地构建产物，不适合公开分发。
-- Core 的 NuGet 打包输出统一放在仓库根目录 `artifacts/releases/core/`。此处仅放发布包等非运行时交付物，不在 `csharp/` 下另建发行或临时目录；SDK 的 `bin/`、`obj/` 缓存沿用默认位置并由 gitignore 排除，不把包产物提交为核心源码。
-- 使用 `dotnet build csharp/Core.sln -c Release` 构建；使用 `dotnet pack csharp/DualOntologyWorldEngine.Core.csproj -c Release -o artifacts/releases/core` 本地打包。打包不代表发布或授权。
+- Core 作为独立 .NET 类库构建与打包；包元数据和 API 说明与当前 C# 源码保持一致。
+- Core 的包说明维护在本目录 `README.md`。
+- Core 的 NuGet 打包输出统一保存在仓库根目录 `artifacts/releases/core/`。
+- 使用 `dotnet build csharp/Core.sln -c Release` 构建；使用 `dotnet pack csharp/DualOntologyWorldEngine.Core.csproj -c Release -o artifacts/releases/core` 本地打包。
 
-## 目录纯净性与文件放置红线
+## 目录纯净性与代码演化
 
-- **严禁引入任何游戏层产物**：禁止在本目录放置 Godot 场景（`.tscn`）、资源（`.tres`、`.import`）、GDScript、图片素材、UI 或音效文件。任何游戏呈现与交互一律放入 `godot_csharp/`。
-- **禁止随意自建临时目录**：核心级基准与验证脚本（如 `measure-core.ps1`）就地存放在 `csharp/` 根层，严禁随意建立临时文件夹堆放实验代码。
-- **多轮次代码修改原则**：对核心系统的修改直接在既有文件上重构与演进，严禁创建 `Model_v2.cs` 等平行版本。
+- 本目录专属于 Core 独立逻辑与核心基准测试，游戏呈现与交互资源属于 `godot_csharp/`。
+- 核心级基准与验证脚本就地保存在 `csharp/` 根层。
+- 系统演进直接在既有架构与文件上持续重构。

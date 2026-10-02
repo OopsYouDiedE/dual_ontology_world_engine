@@ -21,7 +21,7 @@ A2和A4墙顶由现有 `autotile_converter.gd` 的48形重组；A4墙面由16形
 
 ## 来源与处理
 
-`AssetsSource/Internal/Props/ReasoningStudy/source/materials.png` 与 `furniture.png` 是内置image_gen生成的1254×1254源图，使用 `Images/illustrations/shot-02.png` 作为风格参考。[完整提示词](../../../../AssetsSource/Internal/Props/ReasoningStudy/source/prompts.md)保留。源图不修改。
+`AssetsSource/Internal/Props/ReasoningStudy/source/materials.png` 与 `furniture.png` 是内置image_gen生成的1254×1254源图，使用 `AssetsSource/Internal/Characters/References/shot-02.png` 作为风格参考。[完整提示词](../../../../AssetsSource/Internal/Props/ReasoningStudy/source/prompts.md)保留。源图不修改。
 
 这些素材经过降采样、透明边界裁切、四分之一块排布与连接边饰加工，属于32px游戏派生资源，**不是原生32px逐像素原绘**。生成源本身没有提供正确的自动图块结构：边缘、内角、外角由构建脚本明确装配，不能把四个原始材质方格直接当作A2/A4。
 

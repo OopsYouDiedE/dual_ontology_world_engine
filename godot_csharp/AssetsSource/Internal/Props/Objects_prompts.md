@@ -1,13 +1,9 @@
-> 仅为旧源图的生成记录。下列48px等参数用于追溯历史产物，不作为当前制作指令；现行规范见仓库 docs/design-standard.md。
+# 32px 场景物件与道具提示词
 
-# 生成提示词
+制作与验收统一遵循 [设计规范](../../../../docs/design-standard.md)。
 
-工具：内置 imagegen；第一版生成，第二版简化细节与校正网格（实际输出尺寸仍为1254×1254）。
+## 32px 道具与家具规格
 
-## 第一版
-
-Use case: stylized-concept. Produce a PRODUCTION GAME TILE ATLAS, not a scene illustration. Input 1 is parlor storyboard style reference, input 2 underground corridor storyboard reference, input 3 existing native 48px furniture sprite atlas for pixel density reference. Output EXACTLY 768 by 768 pixels, native resolution crisp pixel art, no upscale, no antialias, true transparent background, no grid lines, no text. Orthographic top-down RPG with visible front faces matching references. Muted walnut, warm gray stone, burgundy, brass, cold blue-gray underground stone. This is a 4 by 4 array of EXACT 192x192 slots (each slot 4x4 tiles of 48px). Each isolated object completely INSIDE its slot with at least 8px transparent margin; bottom at slot y+180; no objects overlap slots. Row 1: full walnut bookcase full of books; lit gray stone fireplace with bright fire; burgundy tufted three seat sofa; walnut research desk with parchment brass armillary and books. Row 2: black grand piano with keyboard facing down; tall brass pendulum clock; burgundy gold academy hanging banner; brass telescope on wooden tripod. Row 3: CLOSED tall gray stone arch double door with brass circular sigils; OPEN version same arch door with dark transparent passage and tiny cyan rim; vertical copper pipe assembly with valve; horizontal copper pipe assembly with elbow and valve. Row 4: blue-gray stone inscription pedestal with brass inlay; alchemy bench with glass flasks and copper equipment; low walnut tea table with white tea service; brass lantern on decorative wall bracket. Uniform scale designed for 48px map cells; architectural/furniture objects occupy 2-4 cells; delicate single-pixel details, finite shading ramps, clean silhouettes. No characters, no floor patches, no baked checkerboard, no cast shadows outside objects. All 16 assets MUST be separated on transparency and usable as independent 192px stamps.
-
-## 第二版（采用）
-
-Edit this game atlas. Critical correction: native output canvas MUST be exactly 768x768 pixels, NOT 1254, NOT 1024. REDRAW as low resolution pixel art at native resolution, each visible pixel is one actual output pixel, 48px tile units. Same 16 objects and same ordering. Exactly 4 columns x4 rows, each slot exactly 192x192, origins x/y 0,192,384,576. Each object entirely within its slot with 8px empty margin all sides. Transparent RGBA background. Preserve all silhouettes, palette and RPG orthographic view. Simplify detail substantially into crisp single pixel clusters and 4-step shading. No smoothing, no gradient, no photographic texture. The top-left bookcase should be about 144px wide and 176px high, not 250px. Fireplace 176x176. Small props (banner, clock, lantern) should be narrower and leave more whitespace. Do not draw grid lines or labels. Deliver only final exact 768x768 PNG tile atlas.
+- 地图以32×32像素基础格布置；图片画布、地面占位预算与实际碰撞分别确定。大型家具可跨格，画布可留透明边，碰撞按真实脚底占地设置，不强制为32px整数倍；小道具也不因装入32×32画布就阻挡整格。遵循脚底Y排序与碰撞规范。
+- 风格与材质：复古黄铜、胡桃木、暖灰石材、羊皮纸与暗色绒布。
+- 绘制要求：严格透明通道背景，无地面阴影烘焙（阴影由引擎层处理），硬边缘像素点簇，各物件完全独立切片。
