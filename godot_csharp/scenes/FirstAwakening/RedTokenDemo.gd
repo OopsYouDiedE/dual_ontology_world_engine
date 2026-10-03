@@ -974,7 +974,9 @@ func _open_recorded_evidence(id: String, return_to_notebook: bool) -> void:
 		mode = "evidence"
 	var return_to_reasoning := return_to_notebook and can_use_mind_reasoning()
 	var actions: Array = [[3, _open_red_notebook]] if return_to_reasoning else [[2, _close_modal]]
-	if not return_to_reasoning and not room_sites.has(id) and id != "E07":
+	# Objects that open their record directly have no separate page to return to.
+	var page_id := "E09" if id.begins_with("E09.") else id
+	if not return_to_reasoning and not room_sites.has(id) and id != "E07" and not _inspect_only(page_id):
 		actions.push_front([0, func(): _return_to_inspection(id)])
 	book.configure(id, _recorded_evidence_title(id), red_notes[id], actions)
 	book.set_records(records, id, func(next_id: String): _open_recorded_evidence(next_id, return_to_notebook))

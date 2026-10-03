@@ -162,7 +162,13 @@ func _run() -> void:
 	host._open_recorded_evidence("E05", false)
 	await frames(2)
 	var book: Node = host.modal.get_node_or_null("EvidenceNotebook")
+	var actions: Node = book.get_node("%Actions") if is_instance_valid(book) else null
+	expect(is_instance_valid(actions) and not actions.get_child(0).visible, "E05 record offers no 返回检视 loop (PR1-F003)")
 	expect(is_instance_valid(book) and book.step(1) and host.last_recorded_evidence != "E05", "evidence book turns to the next record")
+	host._open_recorded_evidence("E09", false)
+	await frames(2)
+	book = host.modal.get_node_or_null("EvidenceNotebook")
+	expect(is_instance_valid(book) and book.get_node("%Actions").get_child(0).visible, "E09 record keeps 返回检视 to its operation page")
 	host._close_modal()
 	host.story_backlog.clear()
 
