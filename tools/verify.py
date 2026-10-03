@@ -37,17 +37,38 @@ GALLERY = ROOT / "tmp" / "state_gallery"
 ENGINE_ERRORS = re.compile(r"SCRIPT ERROR|Parse Error|Failed to load script")
 
 
-def find_godot(explicit: str | None) -> str | None:
-    for candidate in (explicit, os.environ.get("GODOT")):
-        if candidate and Path(candidate).exists():
-            return candidate
-    for name in ("godot", "godot4"):
-        found = shutil.which(name)
-        if found:
-            return found
+def probe_godot(path: str) -> str | None:
+    """Returns the version if `path` runs as a Godot .NET command line, else None.
+
+    A PATH hit can be a desktop wrapper (godot.EXE) that refuses CLI use, so
+    every candidate is run with --version and must report a mono build.
+    """
+    try:
+        result = subprocess.run([path, "--version"], capture_output=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    version = decode(result.stdout).strip().splitlines()
+    if result.returncode != 0 or not version or ".mono." not in version[-1]:
+        return None
+    return version[-1]
+
+
+def find_godot(explicit: str | None) -> tuple[str | None, str]:
+    """Returns (path, note). An explicit --godot or GODOT that does not probe is an error, not a fallback."""
+    named = explicit or os.environ.get("GODOT")
+    if named:
+        version = probe_godot(named)
+        source = "--godot" if explicit else "GODOT"
+        return (named, version) if version else (None, f"{source}={named} is not a runnable Godot .NET console")
     local = os.environ.get("LOCALAPPDATA", "")
-    matches = sorted(glob.glob(os.path.join(local, "Programs", "Godot", "*", "Godot_*_console.exe")))
-    return matches[-1] if matches else None
+    candidates = sorted(glob.glob(os.path.join(local, "Programs", "Godot", "*", "Godot_*_console.exe")), reverse=True)
+    candidates += [found for found in (shutil.which(name) for name in ("godot", "godot4")) if found]
+    for candidate in candidates:
+        version = probe_godot(candidate)
+        if version:
+            return candidate, version
+    tried = ", ".join(candidates) or "none"
+    return None, f"no runnable Godot .NET console found (tried: {tried}); pass --godot or set GODOT"
 
 
 def decode(data: bytes) -> str:
@@ -96,12 +117,14 @@ def main() -> int:
     parser.add_argument("--keep-going", action="store_true", help="run every step even after a failure")
     args = parser.parse_args()
 
-    godot = find_godot(args.godot)
+    godot, godot_note = find_godot(args.godot)
+    print(f"Godot: {godot} ({godot_note})" if godot else f"Godot: {godot_note}")
     steps = [
         ("core", ["dotnet", "build", "csharp/Core.sln", "-c", "Release", "-nologo", "-v", "q"], 600, False),
         ("scope", ["dotnet", "run", "--project", "csharp/ScopeRegression.csproj", "-c", "Release"], 600, False),
         ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-nologo", "-v", "q"], 600, False),
     ]
+    engine_steps = ["flow", "nav", "gallery"]
     if godot:
         steps.append(("flow", [godot, "--headless", "--path", str(HOST), "--script",
                                "res://scenes/FirstAwakening/check/story_flow_check.gd"], 600, True))
@@ -109,10 +132,15 @@ def main() -> int:
                               "res://scenes/FirstAwakening/check/navigation_check.gd"], 900, True))
         steps.append(("gallery", [godot, "--path", str(HOST), "--rendering-method", "gl_compatibility", "--script",
                                   "res://scenes/FirstAwakening/check/state_gallery.gd", "--", f"--out={GALLERY}"], 600, True))
-    else:
-        print("Godot not found (pass --godot or set GODOT); skipping flow and gallery.")
 
     results: list[tuple[str, bool, str]] = []
+    if not godot:
+        # Engine checks that were not skipped on purpose cannot pass silently.
+        missing = [name for name in engine_steps if name not in args.skip]
+        for name in engine_steps:
+            results.append((name, name in args.skip, "skipped" if name in args.skip else godot_note))
+        if missing and not args.keep_going:
+            steps = []
     for name, command, timeout, scan in steps:
         if name in args.skip:
             results.append((name, True, "skipped"))

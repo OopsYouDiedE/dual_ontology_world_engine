@@ -18,6 +18,8 @@ artifacts/releases/
 *.autosave
 .mscbackup/
 *.wav
+# Runtime voice blips are preloaded by StoryDialogue.gd and must ship with the project.
+!godot_csharp/ShareAsset/Internal/Characters/voices/*.wav
 godot_csharp/imported_assets/
 csharp/**/*.import
 
