@@ -137,7 +137,7 @@ public sealed partial class Game
             Board[place] = board;
         }
         foreach (var dorm in new[] { Place.DormLife, Place.DormW, Place.DormS, Place.DormL })
-            Litter[dorm] = NewThing(Names.Of(dorm) + "的废纸篓", dorm, [T.Crumbs]);
+            Litter[dorm] = NewThing(Names.Of(dorm) + "的废纸篓", dorm, [T.Crumbs, T.Emptied]);
         NameVoice = new Essence("以你之名唤你的声音");
         View[NameVoice] = Rt.Project(NameVoice, "以你之名唤你的声音");
 
@@ -194,9 +194,10 @@ public sealed partial class Game
             var tags = ImmutableDictionary<Tag, int?>.Empty
                 .Add(Tags.Trust, Cast.BaseTrust(p.Id, other.Id))
                 .Add(T.Craftsman, other.Pro.Craftsman ? 1 : 0)
+                .Add(T.Picks, other.Pro.Lock >= 3 ? 1 : 0).Add(T.Strong, other.Pro.Strength >= 2 ? 1 : 0).Add(T.Signals, other.Pro.Signal >= 3 ? 1 : 0)
                 .Add(T.Branded, 0).Add(T.Accused, 0).Add(T.Suspect, 0);
             Observation.Observe(p.Soul, new ObservationInput(them.Name, them.Kind)
-            { Target = them, Source = ObservationSource.Recall, Tags = tags, DenyRelations = [(Fx.Asked, p.M[Granary])] });
+            { Target = them, Source = ObservationSource.Recall, Tags = tags, DenyRelations = [(Fx.Asked, p.M[Granary]), (Fx.Asked, p.M[ArchiveDoor])] });
         }
         // 自知：钥匙、技艺在自己身上（不可见标签，经内省写入）。
         var self = ImmutableDictionary<Tag, int?>.Empty;
@@ -216,8 +217,10 @@ public sealed partial class Game
     // ---------------------------------------------------------------- helpers --
 
     public static int Get(Essence e, Tag t) => e.Get<StateProperty>()?.Values.GetValueOrDefault(t) ?? 0;
-    public void Set(Essence e, Tag t, int v) => e.Get<StateProperty>()!.Values[t] = v;
-    public void Add(Essence e, Tag t, int v) => e.Get<StateProperty>()!.Values[t] = Get(e, t) + v;
+    public void Set(Essence e, Tag t, int v) { e.Get<StateProperty>()!.Values[t] = v; RealDirty = true; }
+    public void Add(Essence e, Tag t, int v) { e.Get<StateProperty>()!.Values[t] = Get(e, t) + v; RealDirty = true; }
+    /// <summary>游戏层改了客观状态、还没同步到现实投影（Core 的 ActionRuntime 提交时自己会同步）。</summary>
+    public bool RealDirty;
 
     public Place Where(Person p) => PlaceOf[SpaceOf(p.Body)];
     public Essence SpaceOf(Essence e)
@@ -248,21 +251,77 @@ public sealed partial class Game
     public void Perceive(Person p)
     {
         using var _ = Prof.Time("Perceive");
+        if (RealDirty) using (Prof.Time("C:Sync")) { Rt.Sync(); RealDirty = false; }
         var space = SpaceOf(p.Body);
         var place = PlaceOf[space];
         var views = new List<Projection> { View[space], View[Clock] };
         foreach (var thing in Things) if (SpaceOf(thing) == space) views.Add(View[thing]);
         foreach (var other in People) if (SpaceOf(other.Body) == space && (other == p || !other.Asleep || Slot != Slot.Night)) views.Add(View[other.Body]);
         if (Options.Hide is { } hide) views.RemoveAll(v => hide(p, v));
-        using (Prof.Time("Rt.Observe")) Rt.Observe(p.Soul, views, Now);
+        // 每个时段第一次看，全部看一遍；同一时段里再看，只看状态变了的、或心里位置对不上的对象（性能：§12 第 10 条）。
+        var full = Options.Hide is not null || !_fullAt.TryGetValue(p, out var fa) || fa != (Day, Slot);
+        if (full) _fullAt[p] = (Day, Slot);
+        var see = new List<Projection>(views.Count);
+        var mySpace = p.M[space];
+        foreach (var v in views)
+        {
+            var sig = ViewSig(v);
+            var stale = _viewEssence.TryGetValue(v, out var e) && e != space && e != Clock && !ReferenceEquals(p.M[e].Parent, mySpace);
+            if (full || stale || !_viewSig.TryGetValue((p, v), out var old) || old != sig) { see.Add(v); _viewSig[(p, v)] = sig; }
+        }
+        if (see.Count > 0) using (Prof.Time("Rt.Observe")) Rt.Observe(p.Soul, see, Now);
         // 以为在这里、其实不在眼前的人：位置不再确知。
         foreach (var other in People.Where(o => o != p && SpaceOf(o.Body) != space && ReferenceEquals(p.M[o.Body].Parent, p.M[space])))
             Observation.Observe(p.Soul, new ObservationInput(p.M[other.Body].Name, ProjectionKind.Body) { Target = p.M[other.Body], Time = Now, Move = true, Parent = null });
         if (Slot == Slot.Night) NightSight(p, place);
-        using (Prof.Time("JudgeBoards")) JudgeBoards(p, place);
+        // 板上的规则每个时段判一次（板变了就重判）。
+        if (_judgedAt.GetValueOrDefault((p, place)) != (Day, Slot, PostVersion))
+        {
+            _judgedAt[(p, place)] = (Day, Slot, PostVersion);
+            using (Prof.Time("JudgeBoards")) JudgeBoards(p, place);
+        }
         // 懂结构的人一眼看出门闩松动（隐藏状态，只有行家看得出）。
         if (place == Place.Logistics && p.Pro.Structure >= 2) RevealLatch(p);
         foreach (var other in People.Where(o => o != p && SpaceOf(o.Body) == space)) { OnMeet(p, other); if (p == Det) DetMet(other); }
+        if (p == Det && Slot != Slot.Night)
+        {
+            DetPassed(place);
+            if (!DetSeenAt.TryGetValue(place, out var seen)) DetSeenAt[place] = seen = [];
+            foreach (var other in People.Where(o => o != p && SpaceOf(o.Body) == space)) seen.Add(other.Id);
+        }
+    }
+
+    private readonly Dictionary<(Person, Projection), ulong> _viewSig = [];
+    private readonly Dictionary<Person, (int, Slot)> _fullAt = [];
+    private readonly Dictionary<(Person, Place), (int, Slot, int)> _judgedAt = [];
+    private Dictionary<Projection, Essence>? _viewEssenceCache;
+    private Dictionary<Projection, Essence> _viewEssence => _viewEssenceCache ??= View.ToDictionary(kv => kv.Value, kv => kv.Key);
+    /// <summary>每次张贴、改写规则板都加一，令“板上内容变了”进入感知签名。</summary>
+    public int PostVersion;
+
+    /// <summary>一个可见对象此刻样子的确定性签名（FNV-1a 64 位）：标签、所在、板的版本。</summary>
+    private ulong ViewSig(Projection v)
+    {
+        var h = 14695981039346656037UL;
+        void Mix(ulong x) { unchecked { h ^= x; h *= 1099511628211UL; } }
+        var tags = 0UL;
+        foreach (var (t, x) in v.Tags) unchecked { tags += (Fnv(t.Name) ^ (ulong)(x + 7)) * 1099511628211UL; }
+        Mix(tags);
+        Mix(v.Parent is null ? 0 : Fnv(v.Parent.Name));
+        if (!v.Rules.IsEmpty) { Mix((ulong)v.Rules.Length); Mix((ulong)PostVersion); }
+        return h;
+    }
+
+    private static readonly Dictionary<string, ulong> _fnv = [];
+    private static ulong Fnv(string s)
+    {
+        lock (_fnv)
+        {
+            if (_fnv.TryGetValue(s, out var v)) return v;
+            var h = 14695981039346656037UL;
+            foreach (var c in s) unchecked { h ^= c; h *= 1099511628211UL; }
+            return _fnv[s] = h;
+        }
     }
 
     /// <summary>门闩的松紧与工具痕只有凑近细看（Inspect 粮仓）或懂结构的人才看得出。</summary>

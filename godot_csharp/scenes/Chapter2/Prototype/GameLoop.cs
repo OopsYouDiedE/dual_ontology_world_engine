@@ -20,13 +20,17 @@ public sealed partial class Game
     {
         if (Ended) return;
         Script.Add(act);
-        if (Slot == Slot.Morning && !_dawnDone) BeginDay();
+        if (Slot == Slot.Morning && !_dawnDone) using (Prof.Time("P:BeginDay")) BeginDay();
         _dawnDone = false;
         SetClock();
+        if (Slot is Slot.Morning or Slot.Afternoon or Slot.Evening or Slot.Night) RefreshPlans();
         if (Slot == Slot.Night) RunNight(act);
         else RunDay(act);
         Advance();
     }
+
+    /// <summary>调试：把钟拨到当前时段并重建计划，不推演。</summary>
+    public void ProbeStart() { SetClock(); RefreshPlans(); PerceiveAll(); }
 
     private void SetClock()
     {
@@ -91,20 +95,21 @@ public sealed partial class Game
         for (var round = 0; round < Rounds(Slot); round++)
         {
             var start = Now;
-            foreach (var p in Npcs) Decide(p);
+            using (Prof.Time("P:Decide")) foreach (var p in Npcs) Decide(p);
             // 侦探在配给台等开粮：一轮没等到，下一轮接着等（与 NPC 的领粮一样）。
             if (round == 0 || act?.Cmd == Cmd.Collect && Det.Exec is null && Get(Det.Body, T.Fed) == 0) PlayerDo(act);
             // 等候中的人（例如在配给台等开粮）每隔一刻再看一眼；其余人只在自己或同处者的动作完成时感知。
             for (var t = TickLength; t < RoundLength; t += TickLength)
                 S.CTB.Schedule(t, () => { foreach (var p in People.Where(p => p.Exec?.WaitingFor is not null)) Perceive(p); });
-            S.CTB.RunUntil(start + RoundLength, 100_000);
+            using (Prof.Time("P:CTB")) S.CTB.RunUntil(start + RoundLength, 100_000);
             CancelAll();
-            PerceiveAll();
+            using (Prof.Time("P:PerceiveAll")) PerceiveAll();
             Gossip();
-            Suspicions();
-            RoundHooks(round);
+            using (Prof.Time("P:Susp")) Suspicions();
+            using (Prof.Time("P:Hooks")) RoundHooks(round);
             NoteCompany();
             if (Day == 4 && Slot == Slot.Morning && round == 0) Confront(act?.Cmd == Cmd.Confront ? act.Plan : null);
+            else if (act?.Cmd == Cmd.Reopen && round == 0 && LastAction is not null) Reopen(act.Plan);
         }
         SlotPhysics();
         PlayerEnd(act);
@@ -160,10 +165,24 @@ public sealed partial class Game
     public Job? JobOf(Person p, Effect effect)
     {
         foreach (var (job, fx) in p.JobFx)
+        {
+            if (Ast.Nouns(fx).OfType<Noun.Slot>().Any(n => n.Role != RuleSlot.Actor)) continue; // 带对象槽位的动作（分粮给谁）靠下面的标记认
             if (Ast.Equivalent(Ast.Bind(fx, new ActionContext(p.Self)), effect)) return job;
+        }
+        if (DidTag(effect) is { } did) return did;
         if (effect is Effect.Sequence { Items: [Effect.Say, ..] }) return Job.AskLatchHelp;
         return null;
     }
+
+    private static readonly Dictionary<Tag, Job> _didToJob = Enum.GetValues<Job>().ToDictionary(T.Did, j => j);
+    /// <summary>动作里自己记下的“做过某事”标记（Did 标签）就是它是哪件事。</summary>
+    private static Job? DidTag(Effect e) => e switch
+    {
+        Effect.Change { Tag: var t } when _didToJob.TryGetValue(t, out var j) => j,
+        Effect.Sequence s => s.Items.Select(DidTag).FirstOrDefault(x => x is not null),
+        Effect.Wait w => DidTag(w.Body),
+        _ => null
+    };
 
     private Place? Destination(Effect effect) => effect switch
     {
@@ -186,7 +205,7 @@ public sealed partial class Game
         p.DoingWhy = $"{basis}（{why}）";
         p.DoingScore = d.Score;
         _running[p.Exec] = (job, p.DoingWhy, d.Score);
-        if (p.Id != P.Det) p.Diary.Add($"D{Day} {Names.Of(Slot)} {(job is { } j ? Names.Of(j) : "照请求行事")} ← {p.DoingWhy}");
+        if (p.Id != P.Det) p.Diary.Add($"D{Day} {Names.Of(Slot)} {(job is { } j ? Names.Of(j) : dest is { } d2 && d.Basis.Name == "重演假设" ? "去" + Names.Of(d2) + "看一眼" : "照请求行事")} ← {p.DoingWhy}");
     }
 
     public void SubmitDet(Effect effect, double delay = 0.6, Job? job = null)
@@ -222,6 +241,7 @@ public sealed partial class Game
     private bool _flushQueued;
     private void FlushPerception()
     {
+        using var _ = Prof.Time("C:Flush");
         _flushQueued = false;
         var places = _dirty.ToArray();
         _dirty.Clear();
@@ -230,6 +250,7 @@ public sealed partial class Game
 
     private void OnCompleted(ActionExecution exec)
     {
+        using var _ = Prof.Time("C:OnCompleted");
         var p = People.First(x => ReferenceEquals(x.Self, exec.Intent.Actor));
         var (job, why, _) = _running.GetValueOrDefault(exec);
         _running.Remove(exec);
@@ -241,7 +262,11 @@ public sealed partial class Game
             if (job is { } j) Set(p.Body, T.Did(j), 1);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } asked && ReferenceEquals(asked.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target, p.M[Det.Body]))
                 DetHelpers.Add(p.Id);
+            _currentEvent = 0;
+            RecordAction(p, job, exec);
+            _physicsOf = p;
             Physics(p, job, exec);
+            _physicsOf = null;
         }
         else
         {
@@ -257,13 +282,13 @@ public sealed partial class Game
             if (Slot == Slot.Night && job is Job.NightTakeSick or Job.NightTakeSickRec or Job.NightTakeSelf or Job.NightTakeSelfRec or Job.Hoard)
             {
                 p.Body.Get<SpatialProperty>()!.Space = Space[Place.Logistics];
+                RealDirty = true;
                 _failedAtGranary++;
                 Sound(Place.Logistics, "有人推仓门，推不开");
             }
         }
-        Rt.Sync();
-        TrackMoves();
-        RefreshKeys();
+        // 现实投影的同步推迟到这一刻的感知（FlushPerception / Perceive）之前：同一刻多个动作完成只同步一次。
+        using (Prof.Time("C:Track")) { TrackMoves(); RefreshKeys(); }
         // 同一刻完成的动作合并成一次感知：这一处的人各看一眼。
         _dirty.Add(Where(p));
         if (exec.Intent.Changes is Effect.Sequence { Items: [Effect.Act { Operation: ActionOp.Travel }, ..] }) _dirty.Add(_startPlace.GetValueOrDefault(p, Where(p)));
@@ -283,11 +308,13 @@ public sealed partial class Game
         {
             case Job.Sleep when Slot == Slot.Night: p.Asleep = true; break;
             case Job.NightTakeSickRec or Job.NightTakeSelfRec:
+                NightSeenTaking(p, true);
                 NightTruth.Add($"D{Day} {p.Name} {Names.Of(job.Value)}");
                 NightLedgerNames.Add($"D{Day} {p.Name}");
                 if (job == Job.NightTakeSickRec) _bowlFilledTonight = true;
                 break;
             case Job.NightTakeSick or Job.NightTakeSelf or Job.Hoard or Job.RepairLatch:
+                if (job != Job.RepairLatch) NightSeenTaking(p, false);
                 NightTruth.Add($"D{Day} {p.Name} {Names.Of(job.Value)}");
                 if (job == Job.RepairLatch) Know(p, Granary, T.LatchLoose, 0, ObservationSource.Introspection, "我修好了门闩");
                 if (job == Job.NightTakeSick) _bowlFilledTonight = true;
@@ -300,9 +327,32 @@ public sealed partial class Game
                 Witness(p, text, 1, 0, People.Where(o => Where(o) == place), spread: false);
                 break;
             case Job.CountLedger: Count(p); break;
+            case Job.Tear:
+            {
+                // 撕掉点人名的规矩：雀儿撕沃德那条点她名的；卢西安撕任何点名的。板上少了一张纸，在场的人都看见。
+                var torn = Specs.Where(s => s.PostedAt.Contains(Place.Hall) && (p.Id == P.Quer ? s == WardNight : s.Flags.HasFlag(RF.Targets))).ToArray();
+                foreach (var s in torn) Unpost(s, Place.Hall);
+                if (torn.Length > 0)
+                {
+                    var tornText = $"{p.Name}撕下了中央厅板上的「{Short(torn[0])}」";
+                    NewsFrom(p, NewsKind.Fact, tornText, about: p);
+                    Witness(p, tornText, 0, 0, People.Where(o => o != p && Where(o) == Place.Hall), spread: true);
+                    Log.Add($"D{Day} {Names.Of(Slot)} {tornText}");
+                }
+                break;
+            }
+            case Job.Share:
+                Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}把自己的口粮分了出去");
+                break;
+            case Job.Tidy:
+                _tidied.Add((Day, p.Pro.Dorm));
+                Sound(p.Pro.Dorm, "有人窸窸窣窣地倒废纸篓");
+                NightTruth.Add($"D{Day} {p.Name} {Names.Of(job.Value)}");
+                break;
             case Job.Distribute: _distributor = p; break;
             case Job.Cook: _cookedThisSlot = true; break;
             case Job.Accuse: AccuseSpeech(p); break;
+            case Job.Watch: break;
             case Job.Defend: DefendSpeech(p); break;
             case Job.PostRules: WardPosts(p); break;
             case Job.AskLatchHelp: break;
@@ -323,6 +373,26 @@ public sealed partial class Game
                 break;
         }
         if (job is { } jj && p != Det && Slot == Slot.Night) Log.Add($"D{Day} 夜 {Now:0.0} {p.Name}：{Names.Of(jj)}");
+    }
+
+    private Person? _physicsOf;
+    private int _wardReposts;
+
+    /// <summary>夜里在粮仓边守着的人，近处看得清是谁：没记账的取粮记为嫌疑，并且是亲眼所见（可以凭此当众指控）。</summary>
+    private void NightSeenTaking(Person taker, bool recorded)
+    {
+        var take = _currentEvent;
+        foreach (var w in People.Where(w => w != taker && w != Det && !w.Asleep && Where(w) == Place.Logistics))
+        {
+            var text = $"{w.Name}夜里在后勤院亲眼看见{taker.Name}从粮仓取了一份{(recorded ? "，记了账" : "，没记账")}";
+            var id = RecordEvent(w.Id, $"夜里看见{taker.Name}取粮{(recorded ? "（记了账）" : "（没记账）")}", "看守", Place.Logistics, [take], job: Job.Watch);
+            NewsFrom(w, NewsKind.Sighting, text, about: taker, trust: recorded ? 0 : -1);
+            Log.Add($"D{Day} 夜 {text}");
+            if (recorded) continue;
+            Know(w, taker.Body, T.Suspect, 1, ObservationSource.Perception, text);
+            Know(w, w.Body, T.SawAct, 1, ObservationSource.Introspection, text);
+            Touch(taker.Body, T.Suspect, id, w.Id);
+        }
     }
 
     private int _handedAtCount, _nightRecAtCount;
@@ -370,6 +440,7 @@ public sealed partial class Game
         {
             Set(Ledger, T.Unrecorded, Get(Ledger, T.Unrecorded) + unrec);
             var text = $"台账：清点少了{unrec}份，无记录取用×{unrec}";
+            if (_currentEvent > 0) Touch(Ledger, T.Unrecorded, _currentEvent, p.Id); // 清点出了缺口：这本账从此“被人动过”
             NewsFrom(p, NewsKind.Ledger, text, on: Ledger, tag: T.Unrecorded, value: Get(Ledger, T.Unrecorded));
             Log.Add($"D{Day} {Names.Of(Slot)} {p.Name} 清点：{text}");
         }
@@ -413,6 +484,7 @@ public sealed partial class Game
             if (TrustIn(l, w) >= 2) Know(l, q.Body, T.Branded, 1, ObservationSource.Testimony, text);
         }
         Know(w, q.Body, T.Accused, 1, ObservationSource.Introspection);
+        if (_currentEvent > 0) Touch(q.Body, T.Accused, _currentEvent, w.Id);
         if (Where(q) == Place.Hall) { Witness(w, $"{w.Name}当众指控我私取", -2, 0, [q], spread: false); q.News[item.Id] = new(w.Id, 1, ObservationSource.Perception, Day, text); }
         if (q.Id == P.Quer) AccusedQuer = true;
         Accusations.Add((Day, w.Id, q.Id, n));
@@ -436,6 +508,12 @@ public sealed partial class Game
 
     private void WardPosts(Person w)
     {
+        // 被撕掉的规矩，沃德傍晚再贴回去。
+        if (Day >= 3 && !WardNight.PostedAt.Contains(Place.Hall) && Belief(w, this[P.Quer], T.Branded) > 0 && _wardReposts++ < 2)
+        {
+            Post(WardNight, Place.Hall);
+            if (Where(Det) == Place.Hall) Feed.Add("沃德把那张被撕掉的规矩又贴了回去。");
+        }
         if (Day >= 5 && WardCommittee is null)
         {
             WardCommittee = NewSpec("名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", P.Ward, RF.CommitteeArchive | RF.WardAuthority | RF.Records, fx => []);
@@ -467,6 +545,7 @@ public sealed partial class Game
                 Observation.Observe(quer.Soul, new ObservationInput(quer.Self.Name, quer.Self.Kind)
                 { Target = quer.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Shamed, 1) });
                 Feed.Add("傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。");
+                Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(this[P.Ward]), [], fix: true), P.Ward);
                 break;
             }
             case (2, Slot.Afternoon):
@@ -481,6 +560,7 @@ public sealed partial class Game
                 if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Text = "", Origin = P.Selma, FactTag = T.Sick }))
                     Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
                 Log.Add("D2 下午 莫兰发烧，被送去诊疗所（作者固定）");
+                Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true), P.Moran);
                 break;
             case (5, Slot.Morning):
                 break;
@@ -552,7 +632,8 @@ public sealed partial class Game
     /// <summary>温室：阀门与压力表两站须同时有人；指针过红线时，没听过警告的人会开顶窗（受伤，恶魔须显形救人）。</summary>
     private void GreenhousePhysics()
     {
-        var crew = People.Where(p => Where(p) == Place.Greenhouse && Get(p.Body, T.Did(Job.Greenhouse)) > 0).ToArray();
+        // 这个下午在温室干过活的人（干完活走了也算；阀门与压力表须同时有人守，所以至少两人）。
+        var crew = People.Where(p => Get(p.Body, T.Did(Job.Greenhouse)) > 0 || p == Det && LastAction?.Cmd == Cmd.Greenhouse && Where(p) == Place.Greenhouse).ToArray();
         if (crew.Length == 0 || GreenhouseRepaired) return;
         if (crew.Length < 2)
         {
@@ -585,6 +666,17 @@ public sealed partial class Game
             Set(Valve, T.Work, GreenhouseProgress);
             return;
         }
+        // 指针过了红线：得有人知道怎么泄压（懂结构的行家，或问清了泄压办法、又把它带到温室来的人），否则只能停手（§12 第 8 条：认真分工才修得成）。
+        var knows = crew.Any(p => p.Pro.Structure >= 3 || p == Det && WarnedPrecisely || p.News.Values.Any(h => h.Text.StartsWith("温室：先在阀门泄压")));
+        if (progress >= 3 && !knows)
+        {
+            GreenhouseProgress = Math.Min(GreenhouseProgress, 3);
+            Set(Valve, T.Work, GreenhouseProgress);
+            Log.Add($"D{Day} 下午 温室指针过了红线，在场的人（{string.Join("、", crew.Select(p => p.Name))}）不知道怎么泄压，只好停手");
+            if (crew.Contains(Det)) Feed.Add("压力表指针过了红线。没人知道该怎么泄压，只好停手。（也许懂结构的人，或问清了办法的人，才修得下去。）");
+            Rt.Sync();
+            return;
+        }
         if (progress >= GreenhouseNeed)
         {
             GreenhouseRepaired = true;
@@ -606,7 +698,6 @@ public sealed partial class Game
     {
         Options.BeforeNight?.Invoke(this);
         OilPhysics();
-        PlanSeizure();
         foreach (var p in People) { p.Asleep = false; p.NightSteps = 0; p.NightVisited.Clear(); }
         NightBegins();
         PerceiveAll();

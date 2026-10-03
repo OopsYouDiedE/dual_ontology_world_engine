@@ -58,23 +58,64 @@ public static class Bots
     };
 
     /// <summary>
-    /// 机器人用的“会看人”的游说：挑一个此刻最值得当面说服的人——他听了会站到这条规则一边（比别的方案更合他意），
-    /// 而且信他的人多（他会转述）。机器人偷看了真实认知；这是测试工具，不是玩家能做的事。
+    /// 机器人的游说（§12 第 9 条：只用玩家看得见的信息）：不读任何人的真实认知。
+    /// 跳过侦探已知认了或已知不认的人（当面的态度、别人亲口说的、亲眼看见的转述），跳过侦探知道病着的人；
+    /// 剩下的人里，先找侦探见过常与很多人同处的“枢纽”（他会转述），再按名单顺序。
     /// </summary>
     private static PlayerAction Greedy(Game g, Card card)
     {
         var spec = g.CardSpec(card, P.Det);
-        var plans = g.ArchivePlans().Where(s => s.Card != card).ToArray();
-        int Best(Person x) => plans.Select(s => g.AcceptScore(x, s, Channel.Public, Place.Hall, out _)).DefaultIfEmpty(-99).Max();
-        var pick = g.Npcs.Where(x => Game.Get(x.Body, T.Sick) == 0 && x.Acc.GetValueOrDefault(spec) != Truth.True && !x.Vetoed.Contains(spec))
-            .Select(x => (x, win: g.AcceptScore(x, spec, Channel.Face, null, out _) >= Math.Max(g.Options.AcceptThreshold, Best(x)) ? 1 : 0,
-                reach: g.Npcs.Count(o => o != x && g.TrustIn(o, x) >= 1 && o.Acc.GetValueOrDefault(spec) != Truth.True)))
-            .OrderByDescending(t => t.win).ThenByDescending(t => t.reach).ThenBy(t => t.x.Id).FirstOrDefault();
+        var known = g.DetToldFace.Where(x => x.Spec == spec).Select(x => x.Who)
+            .Concat(g.SpreadKnown.Where(k => k.Spec == spec).Select(k => k.Hearer)).ToHashSet();
+        var mine = Game.FamilyOf(spec);
+        // 侦探听到过他在饭桌上向着别家（尤其是开库那一家，人最多）的，先去争取；没表过态的其次；已经向着我这家的不必再说。
+        int Lean(Person x) => g.VoicedStance.TryGetValue(x.Id, out var v) && v.Spec is { } s ? (Game.FamilyOf(s) == mine ? -1 : Game.FamilyOf(s) == Ending.OpenEach ? 2 : 1) : 0;
+        var pick = g.Npcs.Where(x => !known.Contains(x.Id) && (Game.Belief(g.Det, x, T.Sick) ?? 0) == 0 && Lean(x) >= 0)
+            .Select(x => (x, lean: Lean(x), hub: g.SeenTogether.Count(kv => kv.Key.Item1 == x.Id)))
+            .OrderByDescending(t => t.lean).ThenByDescending(t => t.hub).ThenBy(t => t.x.Id).FirstOrDefault();
         return pick.x is null ? new(Cmd.Post) { Place = Place.Hall, Card = card } : new(Cmd.TellRule) { Who = pick.x.Id, Card = card };
+    }
+
+    /// <summary>
+    /// 补查与重开对质（§12 第 4 条）：第 4 日之后，指控还悬着，就把没查的痕迹补查完，再援引共同规则重开对质。
+    /// 只看侦探自己查到了什么（DetEvidence 是侦探认知里的感知记录）。
+    /// </summary>
+    public static PlayerAction? CatchUp(Game g)
+    {
+        if (g.Day < 4 || g.Day == 4 && g.Slot == Slot.Morning || g.Slot == Slot.Night || g.QuerCleared || !g.AccusedQuer) return null;
+        if (g.Slot is Slot.Noon or Slot.Evening && Game.Get(g.Det.Body, T.Fed) == 0) return null; // 先吃饭
+        var ev = g.DetEvidence();
+        if (!ev.Contains(0) || !ev.Contains(1)) return new(Cmd.Inspect) { Place = Place.Logistics, Thing = "台账" };
+        if (!ev.Contains(2)) return new(Cmd.Inspect) { Place = Place.Clinic, Thing = "碗" };
+        if (!ev.Contains(3)) return new(Cmd.Inspect) { Place = Place.DormW, Thing = "文契废纸篓" };
+        return new(Cmd.Reopen) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, true) };
+    }
+
+    /// <summary>把恶魔在课上亲口说的“取回即接通，它离我们更近”转告给饭桌上向着开库的人（侦探自己听到、记下的消息）。</summary>
+    private static PlayerAction? Doubt(Game g)
+    {
+        var word = g.Det.News.FirstOrDefault(n => g.AllNews[n.Key - 1].Kind == NewsKind.DemonWord).Key;
+        if (word == 0) return null;
+        var who = g.Npcs.Where(x => g.VoicedStance.TryGetValue(x.Id, out var v) && v.Spec is { } s && Game.FamilyOf(s) == Ending.OpenEach && !g.DetToldNews.Contains((x.Id, word)))
+            .OrderBy(x => x.Id).FirstOrDefault();
+        return who is null ? null : new(Cmd.Tell) { Who = who.Id, NewsId = word };
+    }
+
+    /// <summary>
+    /// 第 5、6 日午饭时，和饭桌上向着开库的一个人打赌“今夜沃德会守在名录库前厅”（侦探夜巡、守夜看得到沃德夜夜守门）；说中了，他认侦探的方案。
+    /// </summary>
+    private static void Bet(Game g, Card card)
+    {
+        if (g.Day < 5 || g.Slot != Slot.Noon || g.Wagers.Any(w => w.W.Day == g.Day)) return;
+        var spec = g.CardSpec(card, P.Det);
+        var with = g.Npcs.Where(x => g.Where(x) == g.Where(g.Det) && g.VoicedStance.TryGetValue(x.Id, out var v) && v.Spec is { } s && Game.FamilyOf(s) == Ending.OpenEach && !x.Equals(g[P.Ward]))
+            .OrderBy(x => x.Id).FirstOrDefault();
+        if (with is not null) g.MakeWager(with.Id, P.Ward, Place.ArchiveFront, spec.Id);
     }
 
     private static PlayerAction? Campaign(Game g, Card card) => (g.Day, g.Slot) switch
     {
+        (6, Slot.Morning) or (6, Slot.Afternoon) when Doubt(g) is { } d => d,
         (5, Slot.Forenoon) => new(Cmd.Class) { Topic = 0, Precise = true },
         (6, Slot.Forenoon) => new(Cmd.Class) { Topic = 1, Precise = true },
         (4, Slot.Evening) => new(Cmd.Post) { Place = Place.Hall, Card = card },
@@ -92,7 +133,7 @@ public static class Bots
                 Slot.Afternoon => new(Cmd.Archive) { Crew = [P.Huo, P.Quer, P.Su, P.Bertrand] },
                 _ => Eat(g)
             } },
-        new() { Name = "拉拢沃德（委员会）", Act = g => Investigate(g) ?? Campaign(g, Committee) ?? Eat(g), Confront = g => GoodPlan(g), Back = g => 9 },
+        new() { Name = "拉拢沃德（委员会）", Act = g => Investigate(g) ?? CatchUp(g) ?? Campaign(g, Committee) ?? Eat(g), Confront = g => GoodPlan(g), Back = g => 9, Free = g => Bet(g, Committee) },
         new() { Name = "拉拢后勤组（茉拉）", Act = g => g.Slot switch
             {
                 Slot.Morning or Slot.Afternoon => new(Cmd.Help) { Who = P.Mora },
@@ -121,6 +162,7 @@ public static class Bots
                 (2, Slot.Morning) => new(Cmd.Help) { Who = P.Mora },
                 (2, Slot.Noon) => A(Cmd.Mediate),
                 (3, Slot.Morning) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
+                (3, Slot.Forenoon) => new(Cmd.Class) { Topic = 2, Precise = true },
                 (_, Slot.Afternoon) => new(Cmd.Greenhouse) { Crew = [P.Selma, P.Margaret] },
                 _ => Eat(g)
             } },
@@ -128,8 +170,8 @@ public static class Bots
             Free = g => { if (g.Slot == Slot.Noon) g.MakeWager(P.Ruan, P.Bertrand, Place.Hall, null); } },
         new() { Name = "帮人开库（各取其物）", Act = g => Investigate(g) ?? Lobby(g, Open, P.Huo, P.Su, P.Selma, P.Ruan) ?? (g.Slot == Slot.Afternoon ? new(Cmd.Help) { Who = P.Huo } : Eat(g)),
             Confront = g => GoodPlan(g), Back = g => 9 },
-        new() { Name = "劝封（讲钩的代价）", Act = g => Investigate(g) ?? Campaign(g, Seal) ?? Eat(g), Confront = g => GoodPlan(g), Back = g => 9 },
-        new() { Name = "立约·宽（不禁夜，争取想开库的人）", Act = g => Investigate(g) ?? (g.Day, g.Slot) switch
+        new() { Name = "劝封（讲钩的代价）", Act = g => Investigate(g) ?? CatchUp(g) ?? Campaign(g, Seal) ?? Eat(g), Confront = g => GoodPlan(g), Back = g => 9, Free = g => Bet(g, Seal) },
+        new() { Name = "立约·宽（不禁夜，争取想开库的人）", Act = g => Investigate(g) ?? CatchUp(g) ?? (g.Day, g.Slot) switch
             {
                 (5, Slot.Forenoon) => new(Cmd.Class) { Topic = 0, Precise = true },
                 (5, Slot.Afternoon) => new(Cmd.Archive) { Crew = [P.Huo, P.Quer, P.Su, P.Bertrand] },

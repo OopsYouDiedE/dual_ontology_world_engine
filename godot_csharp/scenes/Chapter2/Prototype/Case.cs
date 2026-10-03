@@ -203,18 +203,20 @@ public sealed partial class Game
     /// 第 4 日中央厅的公开对质（读与写）。陈述与出示成对；有效的一对让听者积累“材料”：亲见过的 +2，
     /// 信侦探的转述 +1，当事人当场承认按听者对她的信任再 +1。够 3 点的人改写心中对雀儿的认定。
     /// </summary>
-    public void Confront(ConfrontPlan? plan)
+    public void Confront(ConfrontPlan? plan, bool reopen = false)
     {
         var room = People.Where(p => Get(p.Body, T.Sick) == 0).ToArray();
         foreach (var p in room) p.Body.Get<SpatialProperty>()!.Space = Space[Place.Hall];
         Rt.Sync();
         PerceiveAll();
         var quer = this[P.Quer];
-        ConfrontLog.Add(AccusedQuer ? "中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，雀儿私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
+        var logStart = ConfrontLog.Count;
+        if (!reopen) ConfrontLog.Add(AccusedQuer ? "中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，雀儿私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
         if (plan is null || plan.Pairs.Count == 0)
         {
-            ConfrontLog.Add("你没有说话。指控就这样搁着。");
-            if (AccusedQuer) Ostracize();
+            ConfrontLog.Add(reopen ? "你把人请来了，却什么也没出示。众人各自散去。" : "你没有说话。指控就这样搁着。");
+            if (AccusedQuer && !reopen) Ostracize();
+            Feed.AddRange(ConfrontLog.Skip(logStart));
             return;
         }
         var points = room.ToDictionary(p => p, _ => 0);
@@ -254,7 +256,19 @@ public sealed partial class Game
         }
         var ward = this[P.Ward];
         QuerCleared = revised.Contains(ward) || !AccusedQuer && revised.Count > 0;
-        if (QuerCleared)
+        if (QuerCleared && QuerOstracized)
+        {
+            QuerOstracized = false;
+            quer.Body.Get<SpatialProperty>()!.Space = Space[Place.DormW];
+            RealDirty = true;
+            ConfrontLog.Add("雀儿听说了，傍晚搬回了文契寝区。");
+        }
+        if (QuerCleared && !AccusedQuer)
+        {
+            ConfrontLog.Add($"台账上的缺口说清了。改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
+            Witness(Det, "侦探的推断在对质中被证实", 0, 2, room.Where(p => p != Det), domain: Dom.Rations);
+        }
+        else if (QuerCleared)
         {
             ConfrontLog.Add($"沃德沉默了一会：“依据……补记之前，不视为私取。”改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
             Witness(Det, "侦探替雀儿洗清了冤屈", 2, 1, [quer]);
@@ -270,15 +284,16 @@ public sealed partial class Game
         else
         {
             ConfrontLog.Add($"沃德不为所动：“材料不足。”{(revised.Count > 0 ? "改变看法的只有：" + string.Join("、", revised.Select(p => p.Name)) : "没有人改变看法")}。");
-            Ostracize();
+            if (!reopen) Ostracize();
         }
         if (plan.Proposal is { } card)
         {
             CaseRule = CardSpec(card, P.Det);
             Det.Acc[CaseRule] = Truth.True;
             Post(CaseRule, Place.Hall);
-            ConfrontLog.Add($"你提出新规则：「{card.Text}」");
-            foreach (var p in room.Where(p => p != Det)) Tell(p, CaseRule, Channel.Public);
+            ConfrontLog.Add($"你提出新规则{LabelOf(CaseRule)}「{card.Text}」");
+            var said = RecordEvent(P.Det, $"在对质中当众提出「{Short(CaseRule)}」", "交谈", Place.Hall, []);
+            foreach (var p in room.Where(p => p != Det)) { Tell(p, CaseRule, Channel.Public); _transmit[(CaseRule.Id, p.Id)] = said; }
             foreach (var p in room.Where(p => p != Det)) NoteFor(p.Id, "规则", $"对质中你提出「{card.Text}」，他{(p.Acc[CaseRule] == Truth.True ? "表示照办" : "摇头")}");
             foreach (var key in new[] { P.Ward, P.Mora, P.Ruan, P.Quer })
             {
@@ -302,7 +317,33 @@ public sealed partial class Game
             var refusers = room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) != Truth.True).ToArray();
             if (refusers.Length > 0) ConfrontLog.Add($"  没接受的：{string.Join("、", refusers.Select(p => $"{p.Name}{Voice(p, CommonRule, Truth.False)}"))}");
         }
-        Feed.AddRange(ConfrontLog);
+        Feed.AddRange(ConfrontLog.Skip(logStart));
+    }
+
+    private int _reopenedDay;
+
+    /// <summary>
+    /// 重开对质（§12 第 4 条）：第 4 日之后的任一日，援引第一条共同规则“公开指控须附可检查的材料”，请众人回中央厅再对一次。
+    /// 共同规则还没成立的，先当众再提一次；证物不随日消失，没被清理的仍在原处，被清理的留下清理的痕迹。
+    /// </summary>
+    private void Reopen(ConfrontPlan? plan)
+    {
+        if (_reopenedDay == Day) { Feed.Add("今天已经重开过一次对质了。"); return; }
+        if (Day < 4 || Day == 4 && Slot == Slot.Morning) { Feed.Add("第 4 日清晨的对质还没开始。"); return; }
+        if (QuerCleared || !AccusedQuer) { Feed.Add("眼下没有悬着的指控要重开。"); return; }
+        _reopenedDay = Day;
+        var head = $"你援引「{CommonRule.Text}」，请众人回中央厅，把台账的事重新对一遍。";
+        Feed.Add(head);
+        if (!CommonRuleEstablished)
+        {
+            var room = People.Where(p => p != Det && Get(p.Body, T.Sick) == 0).ToArray();
+            foreach (var p in room) Tell(p, CommonRule, Channel.Public);
+            Det.Acc[CommonRule] = Truth.True;
+            CommonRuleEstablished = room.Count(p => p.Acc.GetValueOrDefault(CommonRule) == Truth.True) >= 12;
+            Feed.Add(CommonRuleEstablished ? "这一次，点头的人够了：它成了十六人的第一条共同规则。" : "点头的人还不够；但人都来了，对质照开。");
+            if (CommonRuleEstablished && !CommonRule.PostedAt.Contains(Place.Hall)) Post(CommonRule, Place.Hall);
+        }
+        Confront(plan, reopen: true);
     }
 
     private string Reaction(int claim) => claim switch

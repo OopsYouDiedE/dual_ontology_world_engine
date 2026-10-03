@@ -37,17 +37,22 @@ public sealed partial class Game
             Post(spec, where);
             if (Where(Det) == where) Feed.Add($"{Names.Of(author)}在{Names.Of(where)}贴出：「{spec.Text}」");
         }
-        foreach (var spec in Specs.Where(s => s.Author is { } a && a != P.Det && !s.ByDemon && s != RuanLedger && (s.PostedAt.Count > 0)))
+        // 每个立规者一晚只拉两个人，用他最近贴出的那一条（人物也受注意力限制）；先找价值相近的人（同一聚落，可以不在一处），再找身边信他的人。
+        foreach (var spec in Specs.Where(s => s.Author is { } a && a != P.Det && !s.ByDemon && s != RuanLedger && s.PostedAt.Count > 0)
+                     .GroupBy(s => s.Author).Select(g => g.OrderByDescending(s => s.Id).First()).ToArray())
         {
             var author = this[spec.Author!.Value];
             if (Get(author.Body, T.Sick) > 0) continue;
-            var targets = People.Where(o => o != author && o != Det && Where(o) == Where(author) && !o.Acc.ContainsKey(spec))
-                .OrderByDescending(o => TrustIn(o, author)).ThenBy(o => o.Id).Take(2).ToArray();
+            var cluster = Cast.ClusterOf(author.Id);
+            var targets = People.Where(o => o != author && o != Det && Get(o.Body, T.Sick) == 0 && !o.Acc.ContainsKey(spec) &&
+                    (Where(o) == Where(author) || cluster != Cluster.None && Cast.ClusterOf(o.Id) == cluster))
+                .OrderByDescending(o => cluster != Cluster.None && Cast.ClusterOf(o.Id) == cluster ? 1 : 0).ThenByDescending(o => TrustIn(o, author)).ThenBy(o => o.Id).Take(2).ToArray();
             foreach (var o in targets)
             {
                 var v = Tell(o, spec, Channel.Face);
+                _transmit[(spec.Id, o.Id)] = RecordEvent(author.Id, $"拉{o.Name}认「{Short(spec)}」，{o.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(author), [_postedEv.GetValueOrDefault(spec.Id)]);
                 Log.Add($"D{Day} 傍晚 {author.Name}当面拉{o.Name}认「{Short(spec)}」：{(v == Truth.True ? "认了" : "没认")}");
-                if (Where(Det) == Where(author)) Feed.Add($"{author.Name}拉着{o.Name}说「{Short(spec)}」。{o.Name}{Voice(o, spec, v)}");
+                if (Where(Det) == Where(author) && Where(o) == Where(author)) Feed.Add($"{author.Name}拉着{o.Name}说「{Short(spec)}」。{o.Name}{Voice(o, spec, v)}");
             }
         }
     }

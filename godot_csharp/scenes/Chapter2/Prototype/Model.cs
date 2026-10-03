@@ -19,7 +19,7 @@ public enum Job
     NightTakeSick, NightTakeSickRec, NightTakeSelf, NightTakeSelfRec,
     RepairLatch, InspectStructure, Patrol, GuardArchive, VisitArchive, Greenhouse,
     Socialize, Work, CountLedger, Stele, Scavenge, Hoard, Accuse, PostRules, Defend,
-    AskLatchHelp, Seize, AnswerName, Escort, Inform, FeedWeak, GiveKey
+    AskLatchHelp, Seize, AnswerName, Escort, Inform, FeedWeak, GiveKey, Tidy, Wander, Share, Tear, Watch, AskOpen
 }
 
 /// <summary>规则的语义标记：规则接受公式据此与各人的欲望、习惯、利益相比。</summary>
@@ -39,7 +39,9 @@ public static class T
     public static readonly Tag NightRecorded = new("NightRecorded"), Porridge = new("Porridge"), Crumbs = new("Crumbs"), Residue = new("Residue");
     public static readonly Tag Medicine = new("Medicine"), Oil = new("Oil"), Treated = new("Treated"), Work = new("Work");
     public static readonly Tag Pressure = new("Pressure"), Chalk = new("Chalk"), Rubbed = new("Rubbed"), Accusation = new("Accusation");
-    public static readonly Tag Posted = new("Posted"), Counted = new("Counted"), Shoe = new("Shoe");
+    public static readonly Tag Posted = new("Posted"), Counted = new("Counted"), Shoe = new("Shoe"), Emptied = new("Emptied"), Torn = new("Torn");
+    /// <summary>众所周知的本事（他人心中的标签）：会开锁、力气大、懂传声。</summary>
+    public static readonly Tag Picks = new("Picks"), Strong = new("Strong"), Signals = new("Signals");
     // 身体（客观，可见）
     public static readonly Tag Fed = new("Fed"), Hungry = new("Hungry"), Weak = new("Weak"), Sick = new("Sick"), NightAte = new("NightAte"), Stash = new("Stash");
     // 身体（客观，不可见：钥匙与技艺）
@@ -77,6 +79,23 @@ public static class Names
         Slot.Morning => "清晨", Slot.Forenoon => "上午", Slot.Noon => "午间", Slot.Afternoon => "下午", Slot.Evening => "傍晚", Slot.Night => "夜里", _ => ""
     };
     public static string Of(Group g) => g switch { Group.Life => "生活翼", Group.Wenqi => "文契组", Group.Xingyi => "星仪组", Group.Houqin => "后勤组", _ => "" };
+    /// <summary>
+    /// 动作帧类别（§12 第 0 条：可映射为画面）：每个动作落到有限的人物动作帧——行走、操作、交谈、递物、坐、看守、蹲查、拉拽——供后续 32×48 动作图集。
+    /// </summary>
+    public static string Frame(Job j) => j switch
+    {
+        Job.Sleep or Job.Rest or Job.Class => "坐",
+        Job.Collect or Job.FeedWeak or Job.GiveKey or Job.Share => "递物",
+        Job.Distribute or Job.Cook or Job.NightTakeSick or Job.NightTakeSickRec or Job.NightTakeSelf or Job.NightTakeSelfRec or Job.RepairLatch
+            or Job.Greenhouse or Job.Work or Job.Hoard or Job.PostRules or Job.Inform => "操作",
+        Job.FetchWater or Job.Seize or Job.Tear => "拉拽",
+        Job.Care or Job.InspectStructure or Job.CountLedger or Job.Stele or Job.Scavenge or Job.Tidy => "蹲查",
+        Job.GuardArchive or Job.VisitArchive or Job.Watch => "看守",
+        Job.Patrol or Job.Escort or Job.Wander => "行走",
+        Job.Socialize or Job.Accuse or Job.Defend or Job.AskLatchHelp or Job.AnswerName or Job.AskOpen => "交谈",
+        _ => "行走"
+    };
+
     public static string Of(Job j) => j switch
     {
         Job.Sleep => "回寝区睡下", Job.Rest => "在寝区歇着", Job.Class => "去讲堂上课", Job.Collect => "去配给台领口粮",
@@ -88,7 +107,8 @@ public static class Names
         Job.Socialize => "在中央厅与人交谈", Job.Work => "做自己的手艺", Job.CountLedger => "清点粮仓、记台账",
         Job.Stele => "去誓约庭看石碑", Job.Scavenge => "到后勤院找吃的", Job.Hoard => "多取两份藏起来",
         Job.Accuse => "在中央厅当众指控", Job.PostRules => "在中央厅张贴规则", Job.Defend => "在中央厅替人说话",
-        Job.AskLatchHelp => "请在场的工匠修门闩", Job.Seize => "夜里去开名录库", Job.AnswerName => "应了唤名", Job.Escort => "同行", Job.Inform => "去台账补记昨夜的取用", Job.FeedWeak => "替饿着的人领一份口粮送去", Job.GiveKey => "把粮仓钥匙交给沈鼎", _ => j.ToString()
+        Job.AskLatchHelp => "请在场的工匠修门闩", Job.Seize => "夜里去开名录库", Job.AnswerName => "应了唤名", Job.Escort => "同行", Job.Inform => "去台账补记昨夜的取用", Job.FeedWeak => "替饿着的人领一份口粮送去", Job.GiveKey => "把粮仓钥匙交给沈鼎", Job.Tidy => "倒空自己寝区的废纸篓", Job.Wander => "去某处看一眼",
+        Job.Share => "把自己的口粮分给饿着的人", Job.Tear => "撕下中央厅板上的一张规矩", Job.Watch => "夜里守在粮仓边上", Job.AskOpen => "约人夜里去开名录库", _ => j.ToString()
     };
     public static readonly ImmutableDictionary<string, P> PersonAlias = new Dictionary<string, P>
     {

@@ -11,9 +11,12 @@ public static class Program
         {
             case "play":
             {
-                var script = args.Length > 1 ? File.ReadAllText(args[1]) : null;
+                // play [--debug] [脚本]：默认关闭调试命令；--debug 才能看作者侧日志与真实认知。
+                var debug = args.Contains("--debug");
+                var file = args.Skip(1).FirstOrDefault(a => a != "--debug");
+                var script = file is not null ? File.ReadAllText(file) : null;
                 var input = script is not null ? new StringReader(script) : Console.In;
-                new ConsoleUI(new Game(), input, Console.Out, echo: script is not null || Console.IsInputRedirected).Run();
+                new ConsoleUI(new Game(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug).Run();
                 return 0;
             }
             case "idle":
@@ -38,7 +41,10 @@ public static class Program
             case "bots": return Bots.RunAll(args.Skip(1).ToArray());
             case "trace":
             {
-                var bot = Bots.All[int.Parse(args[1])];
+                var first = Bots.All[int.Parse(args[1])];
+                var then = args.Length > 3 && args[2] == "then" ? Bots.All[int.Parse(args[3])] : null;
+                if (then is not null) args = [.. args.Take(2), .. args.Skip(4)];
+                Bot bot = then is null ? first : new() { Name = first.Name + "→" + then.Name, Act = g => (g.Day >= 4 ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
                 var g = new Game();
                 while (!g.Ended)
                 {
@@ -55,9 +61,72 @@ public static class Program
                 Console.WriteLine(Report.ChapterEnd(g));
                 return 0;
             }
-            case "prof": { var r = Bots.Play(Bots.All[int.Parse(args[1])]); Console.WriteLine($"{r.Name} {r.Ms} ms"); Prof.Print(); return 0; }
+            case "prof": { Prof.Enabled = true; var r = Bots.Play(Bots.All[int.Parse(args[1])]); Console.WriteLine($"{r.Name} {r.Ms} ms"); Prof.Print(); return 0; }
+            case "slots":
+            {
+                var bot = Bots.All[args.Length > 1 ? int.Parse(args[1]) : 0];
+                var g = new Game();
+                var line = new System.Text.StringBuilder();
+                while (!g.Ended)
+                {
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    var cpu = Checks.ThreadCpu();
+                    bot.Free?.Invoke(g);
+                    g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
+                    line.Append($"{sw.ElapsedMilliseconds}/{(Checks.ThreadCpu() - cpu).TotalMilliseconds:0} ");
+                    if (g.Slot == Slot.Morning) { Console.WriteLine($"D{g.Day - 1}: {line}"); line.Clear(); }
+                }
+                return 0;
+            }
+            case "emerge":
+            {
+                // emerge 脚本：按脚本玩一局（不打印），再列出这一局的涌现链与玩家读到的情况（报告用）
+                var g = new Game();
+                new ConsoleUI(g, new StringReader(File.ReadAllText(args[1])), TextWriter.Null, echo: false).Run();
+                var chains = g.Chains();
+                Console.WriteLine($"结局 {Game.EndingText(g.Result)}；人物动作 {g.Events.Count(e => !e.Fixed && e.Who != P.Det)}；涌现链 {chains.Count}（不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的 {chains.Count(g.Visible)}）");
+                Console.WriteLine("每日玩家读得到的涌现链（第2—6日）：" + string.Join(" ", Enumerable.Range(2, 5).Select(d => chains.Count(c => c.Day == d && g.Visible(c)))));
+                foreach (var c in Emergence.Interesting(chains, g).GroupBy(Emergence.Trunk).Select(x => x.First()).Take(args.Length > 2 ? int.Parse(args[2]) : 8)) Console.WriteLine("  · " + g.Describe(c));
+                return 0;
+            }
+            case "chains":
+            {
+                var r = Bots.Play(Bots.All[args.Length > 1 ? int.Parse(args[1]) : 0]);
+                var g = r.World;
+                var chains = g.Chains();
+                Console.WriteLine($"{r.Name}：结局 {Game.EndingText(r.Ending)}；事件 {g.Events.Count}，涌现链 {chains.Count}（玩家读得到的 {chains.Count(g.Visible)}）");
+                Console.WriteLine("  动作：" + string.Join(" ", g.Events.Where(e => !e.Fixed).GroupBy(e => e.Job?.ToString() ?? "说/应").OrderByDescending(x => x.Count()).Select(x => $"{x.Key}{x.Count()}")));
+                foreach (var e in g.Events.Where(e => e.Job is Job.AskOpen or Job.Seize || e.Text.StartsWith("答应") || e.Text.Contains("名录库"))) Console.WriteLine("    " + e.Short + " 因：" + string.Join(",", e.Causes));
+                foreach (var d in Enumerable.Range(2, 5)) Console.WriteLine($"  第{d}日：涌现链 {chains.Count(c => c.Day == d)}，玩家读得到 {chains.Count(c => c.Day == d && g.Visible(c))}");
+                foreach (var c in Emergence.Interesting(chains, g).Take(args.Length > 2 ? int.Parse(args[2]) : 12)) Console.WriteLine("  · " + g.Describe(c));
+                return 0;
+            }
+            case "probe":
+            {
+                // probe 机器人号 日 时段号 人名：推演到那个时段开头，打印此人的决策评估（调试用）
+                var bot = Bots.All[int.Parse(args[1])];
+                var g = new Game();
+                while (!g.Ended && !(g.Day == int.Parse(args[2]) && (int)g.Slot == int.Parse(args[3])))
+                { bot.Free?.Invoke(g); g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
+                g.ProbeStart();
+                var p = g[Names.PersonAlias[args[4]]];
+                Console.WriteLine($"{p.Name} 在 {Names.Of(g.Where(p))}；习惯规则 {p.Habit.Rules.Length} 条（说话类 {p.Habit.Rules.Count(r => r.Effect is DualOntologyWorldEngine.Core.Effect.Sequence { Items: [DualOntologyWorldEngine.Core.Effect.Say, ..] })}）；同处：{string.Join("、", g.People.Where(o => o != p && g.Where(o) == g.Where(p)).Select(o => o.Name))}");
+                Console.WriteLine("  心中的钟：" + string.Join(" ", p.M[g.Clock].Tags.Where(t => t.Value != 0).Select(t => $"{t.Key.Name}={t.Value}")) + "；规则：" + string.Join(" | ", p.Habit.Rules.Where(r => g.JobOf(p, r.Effect) == Job.Sleep).Select(r => r.Condition.ToString()[..Math.Min(120, r.Condition.ToString().Length)])));
+                foreach (var o in g.People.Where(o => o != p && g.Where(o) == g.Where(p)))
+                    Console.WriteLine($"  心中的{o.Name}：Trust={p.M[o.Body].Tags.GetValueOrDefault(DualOntologyWorldEngine.Core.Tags.Trust)} Picks={p.M[o.Body].Tags.GetValueOrDefault(T.Picks)}；在{p.M[o.Body].Parent?.Name}；我在{p.Self.Parent?.Name}");
+                foreach (var r in p.Habit.Rules.Where(r => r.Effect is DualOntologyWorldEngine.Core.Effect.Sequence { Items: [DualOntologyWorldEngine.Core.Effect.Say, ..] }))
+                    foreach (var o in g.People.Where(o => o != p && g.Where(o) == g.Where(p)))
+                    {
+                        var ctx = new DualOntologyWorldEngine.Core.ActionContext(p.Self, p.M[o.Body], null, p.Self.Parent);
+                        var parts = r.Condition is DualOntologyWorldEngine.Core.Condition.All all ? all.Items.Select(c => DualOntologyWorldEngine.Core.Ast.Evaluate(c, ctx).ToString()) : [DualOntologyWorldEngine.Core.Ast.Evaluate(r.Condition, ctx).ToString()];
+                        Console.WriteLine($"  规则（对{o.Name}）条件：{string.Join(" ", parts)} 接受={r.Acceptance}");
+                    }
+                foreach (var a in DualOntologyWorldEngine.Core.DecisionSystem.Assess(p.World, p.Self).Take(8))
+                    Console.WriteLine($"  {(a.Forbidden ? "[禁]" : "")}{g.JobOf(p, a.Decision.Effect)?.ToString() ?? a.Decision.Effect.GetType().Name} {a.Decision.Score}：{string.Join("；", a.Reasons)}");
+                return 0;
+            }
             case "check": return Checks.RunAll(args.Skip(1).ToArray());
-            default: Console.WriteLine("用法：play [脚本] | idle | diary [日] | bots | check"); return 1;
+            default: Console.WriteLine("用法：play [--debug] [脚本] | bots [-v] | check [1-5] | trace 机器人号 | slots | idle | diary [日] | prof 机器人号"); return 1;
         }
     }
 }

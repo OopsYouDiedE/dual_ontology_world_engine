@@ -161,6 +161,7 @@ public sealed partial class Game
     /// </summary>
     private void Relays(Person[] here)
     {
+        if (_relaySlot != (Day, Slot)) { _relaySlot = (Day, Slot); _relayedThisSlot.Clear(); }
         foreach (var teller in here.Where(t => t != Det))
         {
             var spec = Specs.Where(s => !s.ByDemon && s.Author is not null && s != RuanLedger && Holds(teller, s) &&
@@ -168,15 +169,32 @@ public sealed partial class Game
                 .OrderByDescending(s => s.Author == P.Det ? 1 : 0).ThenByDescending(s => s.Id)
                 .FirstOrDefault(s => here.Any(h => h != teller && h != Det && !h.Acc.ContainsKey(s) && TrustIn(h, teller) >= 1));
             if (spec is null) continue;
-            foreach (var hearer in here.Where(h => h != teller && h != Det && !h.Acc.ContainsKey(spec) && TrustIn(h, teller) >= 1))
+            // 转述也受注意力限制：一个人一个时段最多跟两个人细说（先挑最信他的）。
+            var budget = 2 - _relayedThisSlot.GetValueOrDefault(teller);
+            if (budget <= 0) continue;
+            var seen = new List<(Person, Truth)>();
+            foreach (var hearer in here.Where(h => h != teller && h != Det && !h.Acc.ContainsKey(spec) && TrustIn(h, teller) >= 1)
+                         .OrderByDescending(h => TrustIn(h, teller)).ThenBy(h => h.Id).Take(budget).ToArray())
             {
                 var v = Tell(hearer, spec, Channel.Relay, teller);
+                _relayedThisSlot[teller] = _relayedThisSlot.GetValueOrDefault(teller) + 1;
+                var from = _transmit.TryGetValue((spec.Id, teller.Id), out var tf) ? tf : _postedEv.GetValueOrDefault(spec.Id);
+                _transmit[(spec.Id, hearer.Id)] = RecordEvent(teller.Id, $"向{hearer.Name}转述「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(teller), [from]);
                 RelayLog.Add((Day, Slot, teller.Id, hearer.Id, spec.Id, v == Truth.True));
+                // 信任链留下可读痕迹（§12 第 2 条）：侦探在场就亲眼看见；不在场，听者下次见到侦探会说出是谁跟他讲的。
+                if (spec.Author == P.Det)
+                {
+                    if (here.Contains(Det) && Slot != Slot.Night) seen.Add((hearer, v));
+                    else QueueDisclosure(hearer, spec, teller, null, v == Truth.True);
+                }
             }
+            if (seen.Count > 0) DetSawRelay(teller, seen, spec);
         }
     }
 
     public readonly List<(int Day, Slot Slot, P Teller, P Hearer, int Spec, bool Accepted)> RelayLog = [];
+    private readonly Dictionary<Person, int> _relayedThisSlot = [];
+    private (int, Slot) _relaySlot;
 
     public void Receive(Person teller, Person hearer, NewsItem item, Heard via, Channel channel = Channel.Relay)
     {
@@ -238,24 +256,30 @@ public sealed partial class Game
 
     public sealed record Faction(ImmutableArray<P> Members, P Leader, ImmutableArray<string> SharedRules);
 
-    /// <summary>派系 = 相互信任 ≥ 2、且至少共享一条已接受的人立规则的人群（连通分量）；领头者是组内被信任总和最高的人。</summary>
     /// <summary>
-    /// 派系 = 围绕立规者的追随（§11 第 7 条）：每个立过人立规则的人（含侦探）是一个潜在的中心；
-    /// 每个人投向“他认了最多条其规则、又最信”的那个中心（认一条 +2，触犯底线被否一条 −2，再加对中心的信任，上限 2）；
-    /// 得分 ≥ 3 才算入派。中心本人自成其派。派系少于两人不计。
+    /// 派系 = 围绕立规者的追随（§11 第 7 条；§12 第 8 条向价值聚落收敛）：
+    /// 中心是四个价值聚落的立规者（沃德、沈鼎、卢西安、维罗妮卡）、侦探，以及别的立过规矩且至少有两人认的人；
+    /// 每个人投向“认了他几条规矩（每条 +2，触犯底线被否一条 −2）+ 信他（上限 2）+ 价值相近（同一聚落 +2）”最高的中心，得分 ≥ 3 才算入派。
+    /// 价值相近只是倾向：认了别家的规矩、信别的人，就会被拉走。派系少于两人不计。
     /// </summary>
     public List<Faction> Factions()
     {
         var core = Specs.Where(s => !s.ByDemon && s != RuanLedger && s.Author is not null).ToArray();
-        var centers = core.Select(s => s.Author!.Value).Distinct().Select(a => this[a]).ToArray();
+        var leaders = new[] { P.Ward, P.Shen, P.Lucian, P.Veronica, P.Det };
+        var centers = core.Select(s => s.Author!.Value).Distinct()
+            .Where(a => leaders.Contains(a) || core.Where(s => s.Author == a).Any(s => People.Count(p => p.Id != a && p.Acc.GetValueOrDefault(s) == Truth.True) >= 2))
+            .Select(a => this[a]).ToArray();
         int Pull(Person p, Person c) =>
             core.Where(s => s.Author == c.Id).Sum(s => p.Acc.GetValueOrDefault(s) == Truth.True ? 2 : p.Vetoed.Contains(s) ? -2 : 0)
-            + Math.Clamp(c == Det ? ImageOfDet(p).Credible : TrustIn(p, c), -3, 2);
+            + Math.Clamp(c == Det ? ImageOfDet(p).Credible : TrustIn(p, c), -3, 2)
+            + (c != Det && Cast.ClusterOf(c.Id) != Cluster.None && Cast.ClusterOf(c.Id) == Cast.ClusterOf(p.Id) ? 2 : 0);
         var join = new Dictionary<Person, Person>();
         foreach (var p in People)
         {
-            if (centers.Contains(p)) { join[p] = p; continue; }
-            var best = centers.Select(c => (c, score: Pull(p, c))).OrderByDescending(x => x.score).ThenBy(x => x.c.Id).FirstOrDefault();
+            if (p == Det && !centers.Contains(p)) continue;
+            if (centers.Contains(p) && leaders.Contains(p.Id)) { join[p] = p; continue; }
+            var best = centers.Where(c => c != p).Select(c => (c, score: Pull(p, c))).OrderByDescending(x => x.score).ThenBy(x => x.c.Id).FirstOrDefault();
+            if (centers.Contains(p) && best.score < 5) { join[p] = p; continue; }
             if (best.c is not null && best.score >= 3) join[p] = best.c;
         }
         var result = new List<Faction>();

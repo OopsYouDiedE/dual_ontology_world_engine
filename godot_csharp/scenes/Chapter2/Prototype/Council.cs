@@ -49,61 +49,39 @@ public sealed partial class Game
     // ----------------------------------------------------- night seizure --
 
     /// <summary>
-    /// 第 5、6 夜：上了钩（应过唤名）、欲望又被放到最大、并不怎么听侦探的人，会在傍晚约自己信得过的人
-    /// “今夜去开名录库”（Say+Request 写入对方认知）。去不去由各人的 DecisionSystem 决定（接受了“夜里不开库”的人被禁止）。
-    /// 凑齐三站即私占。领头者本人接受了“夜里不开库”的规则，就不会起这个头。
+    /// 夜间私占（§12 第 0、5 条）：不再由作者在傍晚替人“约好”。想开库的人自己下午去约会开锁的、有力气的、懂传声的人（见 GameJobs.PlanRules），
+    /// 答应的人入夜赴约。天亮前看今夜动过名录库之门的人：凑得齐三站就开了；有人守在前厅（沃德）而他不在其中，就被拦下。
     /// </summary>
-    public void PlanSeizure()
-    {
-        if (Day < 5 || SeizedBy is not null) return;
-        var taken = new HashSet<Person>();
-        foreach (var leader in Npcs.Where(p => p.Hooks >= 1 && p.Desire >= 4 && Get(p.Body, T.Sick) == 0).OrderByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id))
-        {
-            if (taken.Contains(leader)) continue;
-            var trustDet = TrustIn(leader, Det);
-            var bound = Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && leader.Acc.GetValueOrDefault(s) == Truth.True);
-            var detSpoke = Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && leader.Acc.ContainsKey(s));
-            if (bound || detSpoke && trustDet >= 2)
-            {
-                Log.Add($"D{Day} 傍晚 （{leader.Name}上了钩，但{(bound ? "接受了“夜里不开”的约" : $"侦探对名录库有说法，他信侦探（{trustDet}），等议事")}，没有夜里去开库）");
-                continue;
-            }
-            var plan = ArchivePlans().Select(s => (s, AcceptScore(leader, s, Channel.Face, null, out _))).Where(x => x.s.Flags.HasFlag(RF.OpenArchive) && !x.s.Flags.HasFlag(RF.PactArchive) || x.s.Flags.HasFlag(RF.CommitteeArchive))
-                .OrderByDescending(x => x.Item2).First();
-            // 去请信得过的人：同组的，和会开锁的、有力气的、懂信号的。
-            var crew = new List<Person> { leader };
-            foreach (var x in Npcs.Where(x => x != leader && !taken.Contains(x) && TrustIn(x, leader) >= 1 &&
-                         (x.Pro.Group == leader.Pro.Group && TrustIn(leader, x) >= 1 || x.Pro.Lock >= 3 || x.Pro.Strength >= 1 || x.Pro.Signal >= 3 || Get(x.Body, T.ArchiveKey) > 0)))
-                crew.Add(x);
-            foreach (var m in crew)
-            {
-                taken.Add(m);
-                Observation.Observe(m.Soul, new ObservationInput($"{leader.Name}：今夜去开名录库", ProjectionKind.Event)
-                {
-                    Source = m == leader ? ObservationSource.Introspection : ObservationSource.Testimony, Existence = Truth.True, Time = Now,
-                    AddRelations = [(Relations.Subject, m == leader ? m.Self : m.M[leader.Body])], Procedure = FxOf(m).Job(Job.Seize), Details = plan.s.Text
-                });
-            }
-            _seizePlans.Add((new Faction([.. crew.Select(c => c.Id)], leader.Id, []), plan.s));
-            Log.Add($"D{Day} 傍晚 {leader.Name} 约{string.Join("、", crew.Skip(1).Select(c => c.Name))}今夜去开名录库（{plan.s.Text}）");
-        }
-    }
-    private readonly List<(Faction F, RuleSpec Plan)> _seizePlans = [];
-
     private void Seizure()
     {
-        foreach (var (f, plan) in _seizePlans)
+        if (SeizedBy is not null) return;
+        var crew = Npcs.Where(p => Get(p.Body, T.Did(Job.Seize)) > 0).ToArray();
+        if (crew.Length == 0) return;
+        var leader = crew.OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
+        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && e.Job == Job.Seize).Select(e => e.Id).ToArray();
+        // 守在前厅的人（沃德）拦得住一两个人，拦不住三个以上。
+        var guard = Npcs.FirstOrDefault(p => !crew.Contains(p) && Get(p.Body, T.Did(Job.GuardArchive)) > 0);
+        if (guard is not null && crew.Length < 3)
         {
-            var crew = f.Members.Select(id => this[id]).Where(p => Get(p.Body, T.Did(Job.Seize)) > 0 || p.NightVisited.Contains(Place.ArchiveFront)).ToArray();
-            if (crew.Length == 0) continue;
-            var ok = Staff(crew, out var report);
-            Log.Add($"D{Day} 夜 名录库：{string.Join("、", crew.Select(c => c.Name))} 来了。{report.TrimEnd('。')}。{(ok ? "门开了" : "没开成")}");
-            NewsFrom(crew[0], NewsKind.Rumor, $"昨夜有人在名录库前厅（{string.Join("、", crew.Select(c => c.Name))}）{(ok ? "，门开过" : "，没开成")}");
-            if (ok) { SeizedBy = f; SeizedPlan = plan; break; }
+            var text = $"昨夜有人摸到名录库前厅想开门，被{guard.Name}拦下了：{string.Join("、", crew.Select(c => c.Name))}";
+            Log.Add($"D{Day} 夜 {text}");
+            NewsFrom(guard, NewsKind.Accusation, text, about: leader, trust: -1);
+            var blockEv = RecordEvent(guard.Id, $"在前厅拦下了{string.Join("、", crew.Select(x => x.Name))}", "看守", Place.ArchiveFront, causes);
+            foreach (var c in crew) Touch(c.Body, T.Accused, blockEv, guard.Id);
+            return;
         }
-        _seizePlans.Clear();
+        var ok = Staff(crew, out var report);
+        Log.Add($"D{Day} 夜 名录库：{string.Join("、", crew.Select(c => c.Name))} 来了。{report.TrimEnd('。')}。{(ok ? "门开了" : "没开成")}");
+        NewsFrom(crew[0], NewsKind.Rumor, $"昨夜有人在名录库前厅（{string.Join("、", crew.Select(c => c.Name))}）{(ok ? "，门开过" : "，没开成")}");
+        RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
+        if (ok) { SeizedBy = new Faction([.. crew.Select(c => c.Id)], leader.Id, []); SeizedPlan = ArchivePlans().First(); SeizedDay = Day; }
     }
     public RuleSpec? SeizedPlan;
+    /// <summary>议事时每个人站到了哪个方案（自动检查用：立场可预读）。</summary>
+    public readonly Dictionary<P, RuleSpec> CouncilChoice = [];
+    public static Ending FamilyOf(RuleSpec s) => s.Flags.HasFlag(RF.PactArchive) ? Ending.DetectivePact : s.Flags.HasFlag(RF.CommitteeArchive) ? Ending.Committee
+        : s.Flags.HasFlag(RF.SealArchive) ? Ending.Sealed : Ending.OpenEach;
+    public int SeizedDay;
 
     // ----------------------------------------------------------- council --
 
@@ -143,6 +121,7 @@ public sealed partial class Game
                 .Where(x => x.score >= Options.AcceptThreshold).OrderByDescending(x => x.score).ThenBy(x => x.s.Id).FirstOrDefault();
             if (best.s is null) { CouncilLog.Add($"  {p.Name}：哪个方案都不肯认"); continue; }
             support[best.s].Add(p);
+            CouncilChoice[p.Id] = best.s;
             p.Acc[best.s] = Truth.True;
             CouncilLog.Add($"  {p.Name}站到了「{Short(best.s)}」一边。");
             DebugLog.Add($"议事 {p.Name} 支持 {best.s}（{best.why}）");

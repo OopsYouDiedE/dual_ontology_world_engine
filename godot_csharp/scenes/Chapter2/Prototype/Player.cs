@@ -3,7 +3,7 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout }
+public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen }
 
 /// <summary>侦探一个时段的行动。每个时段只能做一件事（第三部分 §4）。</summary>
 public sealed record PlayerAction(Cmd Cmd)
@@ -45,8 +45,17 @@ public sealed partial class Game
         ["药柜"] = (Place.Clinic, g => g.MedCab), ["黑板"] = (Place.Lecture, g => g.Blackboard), ["石碑"] = (Place.Oath, g => g.Stele),
         ["压力表"] = (Place.Greenhouse, g => g.Gauge), ["名录库之门"] = (Place.ArchiveFront, g => g.ArchiveDoor), ["油库"] = (Place.DormS, g => g.OilStore),
         ["文契废纸篓"] = (Place.DormW, g => g.Litter[Place.DormW]), ["星仪废纸篓"] = (Place.DormS, g => g.Litter[Place.DormS]),
-        ["后勤废纸篓"] = (Place.DormL, g => g.Litter[Place.DormL]), ["文契公告"] = (Place.DormW, g => g.Board[Place.DormW]),
+        ["后勤废纸篓"] = (Place.DormL, g => g.Litter[Place.DormL]), ["生活翼废纸篓"] = (Place.DormLife, g => g.Litter[Place.DormLife]), ["文契公告"] = (Place.DormW, g => g.Board[Place.DormW]),
+        ["生活翼公告"] = (Place.DormLife, g => g.Board[Place.DormLife]), ["讲堂公告"] = (Place.Lecture, g => g.Board[Place.Lecture]),
         ["星仪公告"] = (Place.DormS, g => g.Board[Place.DormS]), ["后勤公告"] = (Place.DormL, g => g.Board[Place.DormL]),
+    }.ToImmutableDictionary();
+
+    /// <summary>同一区域里一并细看的痕迹物件（§12 第 7 条：查证成本）。</summary>
+    public static readonly ImmutableDictionary<Place, string[]> AreaThings = new Dictionary<Place, string[]>
+    {
+        [Place.Logistics] = ["粮仓", "台账", "配给台公告"], [Place.Clinic] = ["碗", "病床", "药柜"], [Place.DormW] = ["文契废纸篓", "文契公告"],
+        [Place.DormS] = ["星仪废纸篓", "油库", "星仪公告"], [Place.DormL] = ["后勤废纸篓", "后勤公告"], [Place.DormLife] = ["生活翼废纸篓", "生活翼公告"],
+        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["石碑"], [Place.Hall] = ["中央厅公告"],
     }.ToImmutableDictionary();
 
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
@@ -123,6 +132,7 @@ public sealed partial class Game
         var stance = SocialSystem.Evaluate(p.World, p.Self, req);
 
         _asked[who] = stance.Stance;
+        _asks[(P.Det, who)] = RecordEvent(P.Det, $"请{p.Name}：“{text}”", "交谈", Where(Det), []);
         NoteFor(who, "态度", $"你请他：“{text}”他{(stance.Stance == SocialStance.Accept ? "答应了" : stance.Stance == SocialStance.Negotiate ? "要你先办件事" : "拒绝了")}");
         Feed.Add($"你对{p.Name}说：“{text}” {p.Name}：{Answer(p, stance.Stance)}");
     }
@@ -135,13 +145,13 @@ public sealed partial class Game
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 1), AddRelations = [(Relations.Subject, p.M[Det.Body])]
         });
         Promises.Add((p.Id, Day + 1, false));
-        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。用“帮忙 {p.Name}”兑现。）");
+        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。用“帮 {p.Name}”兑现。）");
     }
 
     private static string Answer(Person p, SocialStance s) => s switch
     {
         SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + "（他在等你先帮他一把：helpout）",
+        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + $"（他在等你先帮他一把：用“帮 {p.Name}”）",
         _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
     };
 
@@ -174,7 +184,7 @@ public sealed partial class Game
                 break;
             case Cmd.Post: SubmitDet(Fx.Seq(fx.Go(act.Place!.Value), fx.Look(Board[act.Place.Value])), 0.8); break;
             case Cmd.Mediate: SubmitDet(Fx.Seq(fx.Go(Place.Logistics), fx.Look(Desk)), 0.5); break;
-            case Cmd.Confront: break;
+            case Cmd.Confront or Cmd.Reopen: break;
             default: SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); break;
         }
     }
@@ -193,7 +203,11 @@ public sealed partial class Game
                 Feed.Add($"你答应{Names.Of(who)}的事，没有做到。");
             }
         }
-        if (act is null || LastAction is null) return;
+        if (act is null || LastAction is null) { AfterSlot(null); return; }
+        if (act.Cmd == Cmd.Manipulate && act.Who is { } mw && act.About is { } ma)
+            Touch(this[ma].Body, T.Suspect, RecordEvent(P.Det, $"对{Names.Of(mw)}片面告知{Names.Of(ma)}的事", "交谈", Where(Det), []), P.Det);
+        if (act.Cmd == Cmd.ShareFood && act.Who is { } sw)
+            Touch(this[sw].Body, T.Fed, RecordEvent(P.Det, $"把口粮分给{Names.Of(sw)}", "递物", Where(Det), []), P.Det);
         var here = Where(Det);
         switch (act.Cmd)
         {
@@ -232,9 +246,19 @@ public sealed partial class Game
             case Cmd.Escort:
             case Cmd.Archive when false:
                 var thing = Things_[act.Thing!].Thing(this);
-                if (Day >= 3 && here == Things_[act.Thing!].Place) DetLooked.Add(thing);
-                if (here == Things_[act.Thing!].Place) DetSaw(thing);
-                Feed.Add($"你在{Names.Of(here)}：{Describe(thing)}");
+                var area = Things_[act.Thing!].Place;
+                if (here == area)
+                {
+                    // 同一区域的痕迹一并细看。
+                    var all = new List<Essence> { thing };
+                    foreach (var name in AreaThings.GetValueOrDefault(area) ?? []) { var e = Things_[name].Thing(this); if (!all.Contains(e)) all.Add(e); }
+                    foreach (var e in all) { if (Day >= 3) DetLooked.Add(e); DetSaw(e); }
+                    if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
+                    Feed.Add($"你细看了{Names.Of(here)}：");
+                    foreach (var e in all) Feed.Add("  · " + Describe(e));
+                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) Feed.Add("  · " + fp.Text + "。");
+                }
+                else Feed.Add($"你没能走到{Names.Of(area)}。");
                 if (act.Cmd == Cmd.Escort)
                 {
                     var who = this[act.Who!.Value];
@@ -314,7 +338,7 @@ public sealed partial class Game
             case Cmd.Tell:
             {
                 var who = this[act.Who!.Value];
-                if (Det.News.TryGetValue(act.NewsId, out var heard)) { Receive(Det, who, AllNews[act.NewsId - 1], heard, Channel.Face); Feed.Add($"你把「{heard.Text}」告诉了{who.Name}。"); }
+                if (Det.News.TryGetValue(act.NewsId, out var heard)) { Receive(Det, who, AllNews[act.NewsId - 1], heard, Channel.Face); DetToldNews.Add((who.Id, act.NewsId)); Feed.Add($"你把「{heard.Text}」告诉了{who.Name}。"); }
                 break;
             }
             case Cmd.TellRule:
@@ -323,8 +347,11 @@ public sealed partial class Game
                 var spec = CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 var v = Tell(who, spec);
-                Feed.Add($"你当面对{who.Name}说了这条规则。{who.Name}{(v == Truth.True ? "点了头" : "没有接受")}。");
-                NoteFor(who.Id, "规则", $"你当面讲「{spec.Text}」，他{(v == Truth.True ? "点了头" : "没有接受")}");
+                _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, $"当面对{who.Name}讲「{Short(spec)}」", "交谈", Where(Det), []);
+                DetToldFace.Add((spec, who.Id, v == Truth.True, Day));
+                _toDisclose.RemoveAll(d => d.Who == who.Id && d.Spec == spec);
+                Feed.Add($"你当面对{who.Name}说了{LabelOf(spec)}「{spec.Text}」。{who.Name}{(v == Truth.True ? "点了头" : "没有接受")}：{Voice(who, spec, v)}");
+                NoteFor(who.Id, "规矩", $"{(v == Truth.True ? "当面点了头" : "当面没接受")}：{LabelOf(spec)}「{Short(spec)}」");
                 if (spec.Manipulative) Manipulations.Add(new() { Target = who.Id, About = P.Quer, Means = "针对性的规则", Day = Day });
                 break;
             }
@@ -333,7 +360,7 @@ public sealed partial class Game
                 var spec = CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 Post(spec, act.Place!.Value);
-                Feed.Add($"你在{Names.Of(act.Place.Value)}贴出：「{spec.Text}」");
+                Feed.Add($"你在{Names.Of(act.Place.Value)}贴出{LabelOf(spec)}「{spec.Text}」");
                 if (spec.Manipulative) foreach (var p in Npcs) Manipulations.Add(new() { Target = p.Id, About = P.Quer, Means = "张贴针对性的规则", Day = Day });
                 break;
             }
@@ -376,6 +403,7 @@ public sealed partial class Game
             Feed.Add($"你在{Names.Of(act.Place.Value)}守了一夜：");
             foreach (var line in StakeoutReport(Day, act.Place.Value)) Feed.Add("  " + line);
         }
+        AfterSlot(act.Who);
     }
 
     private void ExtraHabit(Person p, Job job)
@@ -421,7 +449,7 @@ public sealed partial class Game
         if (e == ArchiveDoor) return "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。";
         if (e == MedCab) return $"药柜：药品 {Get(MedCab, T.Medicine)}。";
         if (e == OilStore) return $"油库：灯油 {Get(OilStore, T.Oil)}。";
-        if (Litter.ContainsValue(e)) return Get(e, T.Crumbs) > 0 ? "废纸篓里有一份口粮的包纸和饼屑。" : "废纸篓里只有废纸。";
+        if (Litter.ContainsValue(e)) return Get(e, T.Crumbs) > 0 ? "废纸篓里有一份口粮的包纸和饼屑。" : Get(e, T.Emptied) > 0 ? "废纸篓刚被人倒空过；篓底还粘着几粒饼屑和一角口粮包纸。" : "废纸篓里只有废纸。";
         if (Board.ContainsValue(e))
         {
             var place = Board.First(b => b.Value == e).Key;
@@ -437,6 +465,8 @@ public sealed partial class Game
     // ----------------------------------------------------------- 赌约 --
 
     public readonly List<(Wager W, bool? Right)> Wagers = [];
+    /// <summary>侦探转告过谁哪条消息（机器人用：只记侦探自己做过的事）。</summary>
+    public readonly HashSet<(P Who, int News)> DetToldNews = [];
 
     /// <summary>
     /// 与在场的某一个人约定：“今晚某人会去某处；若我说中，你采纳我的那条规则”（§11 第 11 条）。不占时段，每日一次。
@@ -450,8 +480,8 @@ public sealed partial class Game
         Wagers.Add((w, null));
         FreeScript.Add((SlotIndex, w));
         var rule = spec is { } id ? Specs.FirstOrDefault(s => s.Id == id) : null;
-        NoteFor(with, "赌约", $"你对他说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，他就认「{Short(rule)}」" : "")}");
-        return $"你对{Names.Of(with)}说：“今晚，{Names.Of(who)}会去{Names.Of(where)}。{(rule is not null ? $"我若说中，你就认「{rule.Text}」。" : "")}”{Names.Of(with)}：{(TrustIn(this[with], Det) >= 1 ? "“好，明早见分晓。”" : "“……随你。”")}";
+        NoteFor(with, "赌约", $"你对他说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，他就认{LabelOf(rule)}「{Short(rule)}」" : "")}");
+        return $"你对{Names.Of(with)}说：“今晚，{Names.Of(who)}会去{Names.Of(where)}。{(rule is not null ? $"我若说中，你就认{LabelOf(rule)}「{rule.Text}」。" : "")}”{Names.Of(with)}：{(TrustIn(this[with], Det) >= 1 ? "“好，明早见分晓。”" : "“……随你。”")}";
     }
 
     private void SettleWagers()

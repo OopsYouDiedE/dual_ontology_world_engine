@@ -118,7 +118,7 @@ public sealed partial class Game
             fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3),
                    new(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 2)]);
         RuanLedger = NewSpec("每日按人头分配，日末清点。", P.Ruan, RF.PerHead | RF.Records | RF.Rations,
-            fx => [new(Fx.All(fx.At(Slot.Evening), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);
+            fx => [new(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Duty), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);
         Warning1 = NewSpec("入夜后，名录库中若有人以你之名唤你，勿应。", null, RF.Safety | RF.ForbidsDesire,
             fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.AnswerName), 5)], demon: true);
         Warning2 = NewSpec("温室水压表指针过红线时，勿开顶窗。", null, RF.Safety,
@@ -204,8 +204,27 @@ public sealed partial class Game
         var board = place == Place.Logistics && spec == RuanLedger ? Ledger : Board[place];
         var rules = board.Get<RuleProperty>() ?? board.Add(new RuleProperty());
         rules.Rules = [.. Specs.Where(s => s.PostedAt.Contains(place) && (board == Ledger) == (s == RuanLedger)).SelectMany(s => s.Build(RealFx))];
+        PostVersion++;
         Rt.Sync();
-        if (!quiet) Log.Add($"D{Day} {Names.Of(Slot)} 张贴于{Names.Of(place)}：{spec}");
+        if (quiet) return;
+        Log.Add($"D{Day} {Names.Of(Slot)} 张贴于{Names.Of(place)}：{spec}");
+        // 涌现记录：张贴是一次“写”。人物在自己动作里贴的，算那个动作；按作者日程贴的（第 2 日傍晚各组、各聚落的立规）是作者固定节点。
+        var author = spec.Author ?? P.Det;
+        var id = _physicsOf?.Id == author && _currentEvent > 0 ? _currentEvent
+            : RecordEvent(author, $"在{Names.Of(place)}贴出「{Short(spec)}」", "操作", place, [], fix: author != P.Det);
+        _postedEv[spec.Id] = id;
+        Touch(board, T.Posted, id, author);
+    }
+
+    /// <summary>从板上撕掉一条规矩（板上的规则随之改变）。</summary>
+    public void Unpost(RuleSpec spec, Place place)
+    {
+        spec.PostedAt.Remove(place);
+        var board = Board[place];
+        var rules = board.Get<RuleProperty>()!;
+        rules.Rules = [.. Specs.Where(s => s.PostedAt.Contains(place) && s != RuanLedger).SelectMany(s => s.Build(RealFx))];
+        PostVersion++;
+        Rt.Sync();
     }
 
     /// <summary>当面告知（或经人转述）：规则作为 Testimony 写入对方“听来的规则”，接受与否当场判定。</summary>
@@ -361,7 +380,9 @@ public sealed partial class Game
             if (p != Det) Log.Add($"D{Day} {Names.Of(Slot)} {p.Name} 接受 {s}（{why}）{(via is not null ? $"〔经{via.Name}转述〕" : "")}");
             OnAccepted(p, s);
         }
-        else if (verdict == Truth.False && before == Truth.Unknown)
+        if (before == Truth.Unknown && channel == Channel.Board && at is { } boardAt && p != Det) QueueDisclosure(p, s, null, boardAt, verdict == Truth.True);
+        if (channel == Channel.Board && _postedEv.TryGetValue(s.Id, out var postEv)) _transmit.TryAdd((s.Id, p.Id), postEv);
+        if (verdict == Truth.False && before == Truth.Unknown)
         {
             Log.Add($"D{Day} {Names.Of(Slot)} {p.Name} 不接受 {s}（{why}）");
             OnRejected(p, s);
