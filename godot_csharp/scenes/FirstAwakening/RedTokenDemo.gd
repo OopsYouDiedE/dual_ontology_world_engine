@@ -49,6 +49,7 @@ var coat_worn := false
 ## Conversations wait here until the player is back in the field; each plays once.
 var story_backlog: Array[String] = []
 var story_played := {}
+var departure_explained := false
 signal player_name_confirmed
 var player_name := ""
 var name_entry_active := false
@@ -654,9 +655,12 @@ func _open_red_interaction(id: String, keep_scroll := false) -> void:
 			_button(modal_box,"%s · %s" % [person, "已核验交付" if verified_person else "核验交付"],func(): _safe_red("reward:"+person,"本人凭证与约定交付"))
 			if verified_person:
 				_label(modal_box, str(deliveries[person]), 18)
-		_label(modal_box, "四人各自核验可信凭证与约定交付后，自愿决定留下参加；拒绝教学不损随时离校终止权。", 18)
-		_button(modal_box,"听取安全与去留说明",func(): _begin_dialogue("S04"))
-		_button(modal_box,"拒绝教学，安全结束本 Demo",_safe_exit)
+		_label(modal_box, "四人各自核验可信凭证与约定交付后，自愿决定留下参加。", 18)
+		_button(modal_box,"听取安全与去留说明",func():
+			departure_explained = true
+			_begin_dialogue("S04"))
+		if departure_explained:
+			_button(modal_box,"暂不参加考题，结束本 Demo",_safe_exit)
 	var knowledge: Dictionary = red.call("SiteKnowledge", id)
 	if knowledge.get("noticed", false):
 		for option in Content.SAFE_INTERACTIONS.get(id, []):
@@ -1138,7 +1142,7 @@ func _safe_exit() -> void:
 	red.call("Cancel")
 	ended = true
 	_open_modal("安全结束本 Demo", "red")
-	_label(modal_box,"生活支路已停流，实验动力保持断联。饮水与食物已确认。四人可选择休息或由院务安排后勤返航；本 Demo 在生活翼结束布置，无需认罪或过题。",21)
+	_label(modal_box,"生活支路已停流，实验动力保持断联。饮水与食物已确认。四人可在安全起居处休息；本 Demo 在生活翼结束布置，无需认罪或过题。",21)
 	modal.add_footer([["重新开始",func(): get_tree().reload_current_scene()]])
 
 func _unhandled_input(event: InputEvent) -> void:
