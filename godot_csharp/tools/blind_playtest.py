@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Generic, human-directed client for a fresh FirstAwakening input session.
+"""Generic, human-directed client for a fresh input session of the default scene (Main2D).
 
 Start the rendered Godot driver separately with:
-  --script res://scenes/FirstAwakening/check/playtest_session.gd -- \
+  --script res://scenes/Awakening/check/playtest_session.gd -- \
   --session=<fresh-id> --agent=<canonical-agent-name>
 
 Use status to read the last acknowledged screenshot, snapshot to request a
@@ -41,7 +41,7 @@ import uuid
 from typing import Any
 
 
-DEFAULT_ARTIFACTS = Path(__file__).resolve().parents[2] / "artifacts" / "first-awakening"
+DEFAULT_ARTIFACTS = Path(__file__).resolve().parents[2] / "artifacts" / "remake-belief-replay"
 INPUT_TYPES = {"tap", "hold", "text", "click", "wheel", "wait", "click_control", "text_control", "snapshot"}
 
 
