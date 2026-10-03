@@ -30,7 +30,7 @@ var red_exit_open := false
 var red_details := {}
 var red_notebook: Control
 var red_notebook_box: VBoxContainer
-var replay_summary: Label
+var replay_summary: RichTextLabel
 var deduction_view: Control
 var red_visuals: Node2D
 var safe_done := {}
@@ -63,6 +63,22 @@ var story_has_beats := false
 var story_safe_holder: String:
 	get: return str(red.call("State").get("safe_holder", "")) if is_instance_valid(red) else ""
 const STORY_ACTORS := {"侦探":"侦探", "工程师":"工程师霍铎", "厨师":"主厨沈鼎", "音乐家":"音乐家苏泠"}
+## The four contract holders, in the order the cabinet lists their deliveries.
+const PARTY := ["侦探", "工程师霍铎", "主厨沈鼎", "音乐家苏泠"]
+## Records the hypothesis notebook needs before it opens.
+const REASONING_RECORDS := ["E01", "E05", "E06", "E07", "E08", "E09", "E15"]
+const FieldKeyHints = preload("res://scenes/FirstAwakening/FieldKeyHints.gd")
+var key_hints: HBoxContainer
+var restart_pending := false
+var hint_text_shown := ""
+## A blocked move explains itself on the prompt pill for a moment before proximity hints resume.
+var field_notice := ""
+var field_notice_until := 0
+
+func _field_notice(text: String, seconds := 2.5) -> void:
+	field_notice = text
+	field_notice_until = Time.get_ticks_msec() + int(seconds * 1000.0)
+	if hud_hint: hud_hint.text = text
 var room_sites = Content.ROOM_SITES.duplicate(true)
 
 var red_sites = Content.RED_SITES.duplicate(true)
@@ -118,10 +134,7 @@ func _start_case() -> void:
 	_dress_detective(false)
 	$HallTraceDecals.hide()
 	get_window().title = "安眠者有福 · 未归的红筹 · Demo"
-	hud_time.position = Vector2(650,18)
-	hud_time.size = Vector2(270,34)
-	hud_time.add_theme_font_size_override("font_size",18)
-	hud_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_build_field_hud()
 	red_visuals = preload("res://scenes/FirstAwakening/RedTokenMechanisms.gd").new()
 	red_visuals.source = self
 	scene_items.add_child(red_visuals)
@@ -141,6 +154,36 @@ func _start_case() -> void:
 			"音乐家": "res://ShareAsset/Internal/Characters/FirstAwakeningPortraits/musician.png",
 		})
 	_begin_dialogue("opening")
+
+func _build_field_hud() -> void:
+	# Keycaps replace the plain legend; the proximity prompt sits on a pill.
+	hud_time.hide()
+	key_hints = FieldKeyHints.new()
+	key_hints.position = Vector2(380, 16)
+	key_hints.size = Vector2(546, 36)
+	ui.add_child(key_hints)
+	ui.move_child(key_hints, hud_time.get_index())
+	key_hints.theme = active_locale_theme
+	var pill := StyleBoxFlat.new()
+	pill.bg_color = Color(0.06, 0.08, 0.07, 0.8)
+	pill.border_color = Color(0.71, 0.6, 0.41, 0.6)
+	pill.set_border_width_all(1)
+	pill.set_corner_radius_all(16)
+	pill.content_margin_left = 20
+	pill.content_margin_right = 20
+	pill.content_margin_top = 5
+	pill.content_margin_bottom = 6
+	hud_hint.add_theme_stylebox_override("normal", pill)
+	hud_hint.add_theme_constant_override("shadow_offset_y", 0)
+
+func _fit_hint_pill() -> void:
+	if hud_hint.text == hint_text_shown: return
+	hint_text_shown = hud_hint.text
+	hud_hint.size = Vector2.ZERO
+	hud_hint.position = Vector2(roundf(640.0 - hud_hint.size.x / 2.0), 966.0 - hud_hint.size.y)
+
+func reasoning_records_found() -> int:
+	return REASONING_RECORDS.filter(func(id): return red_notes.has(id) and red_seen.has(id)).size()
 
 func steady_investigation_hints() -> bool:
 	return true
@@ -164,14 +207,19 @@ func _room_departure_hint() -> String:
 	return "先看看门是否能开，或核对衣袋里的凭据，再决定出去。"
 
 func _move_to_click(destination: Vector2) -> void:
+	for rect in _closed_room_rects(player):
+		if rect.grow(8.0).has_point(destination):
+			_cancel_click_navigation()
+			_field_notice("门关着，那是别人的房间。")
+			return
 	if story_safe_holder == "侦探":
 		_cancel_click_navigation()
-		if hud_hint: hud_hint.text = "我还在持柄，先松手再离开岗位。"
+		_field_notice("我还在持柄，先松手再离开岗位。")
 		return
 	var threshold: Rect2 = scene_items.get_node("DormitoryDoor1").threshold_collision_rect()
 	if not can_leave_detective_room() and player.position.y < threshold.end.y and destination.y >= threshold.position.y:
 		_cancel_click_navigation()
-		if hud_hint: hud_hint.text = _room_departure_hint()
+		_field_notice(_room_departure_hint())
 		return
 	super._move_to_click(destination)
 
@@ -234,7 +282,7 @@ func dialogue_request_name() -> void:
 	dialogue.panel.hide()
 	_open_modal("票据上的姓名", "name")
 	modal.compact_name_card()
-	modal.add_label(modal_box, "票据上写着你的名字：")
+	modal.add_label(modal_box, "衣袋里的登船凭据，边角有海水浸过的黄斑。姓名栏写着你的名字：")
 	name_entry = LineEdit.new()
 	name_entry.placeholder_text = "输入姓名"
 	name_entry.custom_minimum_size = Vector2(0, 44)
@@ -480,7 +528,7 @@ func _physics_process(delta: float) -> void:
 			player.move_input(Vector2.ZERO)
 			_pick_nearest()
 			_update_status()
-			if hud_hint: hud_hint.text = _room_departure_hint()
+			_field_notice(_room_departure_hint())
 			return
 	super._physics_process(delta)
 	if not is_instance_valid(player): return
@@ -501,7 +549,10 @@ func _physics_process(delta: float) -> void:
 	if crossed_entry or approached_table: _stage_common_room_entry()
 
 func _process(delta: float) -> void:
-	if hud_hint: hud_hint.visible = not modal_open and not dialogue.active
+	if hud_hint:
+		hud_hint.visible = not modal_open and not dialogue.active and not hud_hint.text.is_empty()
+		_fit_hint_pill()
+	if is_instance_valid(key_hints): key_hints.visible = not (modal_open and mode == "rednotebook")
 	if replay_playing and is_instance_valid(replay_stage):
 		replay_accum += delta
 		var beat := 0.65 / (4.0 if replay_fast else 1.0)
@@ -532,8 +583,10 @@ func _pick_nearest() -> void:
 	for candidate in scores: reachable.append(candidate[1])
 	nearest = "" if reachable.is_empty() else reachable[cycle_offset % reachable.size()]
 	if hud_hint: hud_hint.text = "" if nearest == "" else "E 检视 · " + str(sites[nearest].title)
+	if hud_hint and reachable.size() > 1: hud_hint.text += "　　Tab 换目标 %d/%d" % [cycle_offset % reachable.size() + 1, reachable.size()]
 	if hud_hint and inspection_hint_visible("ROOM_DOOR") and not can_leave_detective_room() and player.position.distance_to(_site_point("ROOM_DOOR")) <= 64.0:
 		hud_hint.text = "E 检视 · 房门　" + _room_departure_hint()
+	if hud_hint and Time.get_ticks_msec() < field_notice_until: hud_hint.text = field_notice
 
 func _approach_site(id: String) -> void:
 	# A deliberate mouse target remains available before a search; use its known name.
@@ -548,16 +601,20 @@ func _update_status() -> void:
 	for id in red_sites:
 		if red_seen.has(id): count += 1
 	if hud_title: hud_title.text = "未归的红筹"
-	if hud_time: hud_time.text = "J 证物　F 假说　R 重启" if can_use_mind_reasoning() else "J 证物　R 重启"
+	if not is_instance_valid(key_hints): return
+	var entries: Array = [["J", "证物"]]
+	if can_use_mind_reasoning(): entries.append(["F", "假说"])
+	elif investigation_phase == "investigation": entries.append(["", "推演材料 %d / %d" % [reasoning_records_found(), REASONING_RECORDS.size()]])
+	entries.append(["R", "重启"])
+	key_hints.show_entries(entries)
 
 func can_use_mind_reasoning() -> bool:
-	for id in ["E01", "E05", "E06", "E07", "E08", "E09", "E15"]:
-		if not red_notes.has(id) or not red_seen.has(id): return false
-	return true
+	return reasoning_records_found() == REASONING_RECORDS.size()
 
 func _apply_locale_theme() -> void:
 	super._apply_locale_theme()
 	active_locale_theme = preload("res://scenes/FirstAwakening/field_theme_zh.tres")
+	if is_instance_valid(key_hints): key_hints.theme = active_locale_theme
 	if is_instance_valid(dialogue): dialogue.apply_locale_font(preload("res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf"),active_locale_theme)
 	if is_instance_valid(modal): modal.theme = active_locale_theme
 
@@ -568,6 +625,7 @@ func _on_language_selected(index: int) -> void:
 		_show_message("Translation coverage / 翻訳範囲","The new Red Token case is currently available in Chinese. Language selection still applies to shared controls and name entry.\n新しい事件本文は現在中国語のみです。共有操作と姓名入力の言語設定は保持されます。\n本轮新案未提供完整英日译文，旧案译文不会用作新案对白。")
 
 func _open_modal(title: String, next_mode: String) -> void:
+	restart_pending = false
 	_restore_red_scroll()
 	modal_locale_refresh = Callable()
 	if is_instance_valid(red_notebook): red_notebook.hide()
@@ -624,7 +682,7 @@ func _return_to_inspection(id: String) -> void:
 
 func _open_red_interaction(id: String, keep_scroll := false) -> void:
 	if not red_sites.has(id): return
-	if id == "E07":
+	if id == "E07" or _inspect_only(id):
 		_inspect_red(id)
 		return
 	var scroll: ScrollContainer = modal_box.get_parent()
@@ -650,11 +708,18 @@ func _open_red_interaction(id: String, keep_scroll := false) -> void:
 		else:
 			_label(modal_box, "铜口位于领取柜上方；现实质询须先检视归还匣与椅上红筹的现场材料。", 18)
 		var deliveries: Dictionary = Content.DELIVERIES
-		for person in ["侦探","工程师霍铎","主厨沈鼎","音乐家苏泠"]:
+		var pending := PARTY.filter(func(person): return not safe_done.get("reward:" + person, false))
+		if pending.size() > 1:
+			# One request walks each remaining holder to the cabinet in turn.
+			var batch := _button(modal_box, "四人依次核验交付（剩余 %d 人）" % pending.size(), _verify_all_deliveries)
+			_style_primary(batch)
+		var grid := _button_grid()
+		for person in PARTY:
 			var verified_person: bool = safe_done.get("reward:" + person, false)
-			_button(modal_box,"%s · %s" % [person, "已核验交付" if verified_person else "核验交付"],func(): _safe_red("reward:"+person,"本人凭证与约定交付"))
-			if verified_person:
-				_label(modal_box, str(deliveries[person]), 18)
+			_button(grid,"%s · %s" % [person, "已核验" if verified_person else "核验交付"],func(): _safe_red("reward:"+person,"本人凭证与约定交付"))
+		for person in PARTY:
+			if safe_done.get("reward:" + person, false):
+				_label(modal_box, "[color=#344c39]%s[/color]　%s" % [person, str(deliveries[person])], 17)
 		_label(modal_box, "四人各自核验可信凭证与约定交付后，自愿决定留下参加。", 18)
 		_button(modal_box,"听取安全与去留说明",func():
 			departure_explained = true
@@ -663,23 +728,36 @@ func _open_red_interaction(id: String, keep_scroll := false) -> void:
 			_button(modal_box,"暂不参加考题，结束本 Demo",_safe_exit)
 	var knowledge: Dictionary = red.call("SiteKnowledge", id)
 	if knowledge.get("noticed", false):
+		var safe_grid := _button_grid()
 		for option in Content.SAFE_INTERACTIONS.get(id, []):
-			_red_safe_button(option[0],option[1],option[2])
+			_red_safe_button(option[0],option[1],option[2],safe_grid)
 		for option in Content.FOLLOWUP_INSPECTIONS.get(id, []):
 			_button(modal_box,option[1],func(): _inspect_red(option[0]))
 	elif Content.SAFE_INTERACTIONS.has(id):
 		_label(modal_box,"先近身查看物件，再提出具体的操作请求。",18)
 	if id in ["E10", "E11"]:
 		_label(modal_box, "触物入口原在试柄旁；记录的是两人的转述，内容以检视后证物页为准。", 18)
-	if id == "E01":
-		_pin_red_footer([["返回现场",_close_modal],["提交答辩",_open_red_defense]])
-	else:
-		modal.add_footer([["返回现场",_close_modal]])
+	# Every object page keeps its exits fixed below the scrolling body.
+	_pin_red_footer([["返回现场",_close_modal],["提交答辩",_open_red_defense]] if id == "E01" else [["返回现场",_close_modal]])
 	if keep_scroll: scroll.set_deferred("scroll_vertical",scroll_position)
 
-func _red_safe_button(operation: String, caption: String, title: String) -> void:
+## Objects whose page would only offer "检视" open their record directly.
+func _inspect_only(id: String) -> bool:
+	if id in ["E01", "E10", "E11"] or red_interaction_results.has(id): return false
+	return not Content.SAFE_INTERACTIONS.has(id) and not Content.FOLLOWUP_INSPECTIONS.has(id)
+
+func _button_grid(parent: Node = null) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 8)
+	(parent if parent != null else modal_box).add_child(grid)
+	return grid
+
+func _red_safe_button(operation: String, caption: String, title: String, parent: Node = null) -> void:
 	var mark := " · 已核验" if safe_done.get(operation,false) else ""
-	_button(modal_box,caption + mark,func(): _safe_red(operation,title))
+	_button(parent if parent != null else modal_box,caption + mark,func(): _safe_red(operation,title))
 
 func _safe_red(operation: String, _title: String) -> void:
 	if story_lock or red_performance.busy: return
@@ -689,10 +767,17 @@ func _safe_red(operation: String, _title: String) -> void:
 	if is_instance_valid(red_visuals) and result.has("safe_state"): red_visuals.test_state = result.safe_state
 	if safe_done.has("press") and safe_done.has("release"): _queue_story("S12")
 	if safe_done.has("gap") and safe_done.has("pipe"): _queue_story("S14")
-	if ["侦探","工程师霍铎","主厨沈鼎","音乐家苏泠"].all(func(person): return safe_done.has("reward:" + person)): _queue_story("S03")
+	if PARTY.all(func(person): return safe_done.has("reward:" + person)): _queue_story("S03")
 	var id: String = Content.safe_interaction_site(operation)
 	red_interaction_results[id] = result
 	_open_red_interaction(id,true)
+
+func _verify_all_deliveries() -> void:
+	for person in PARTY:
+		if safe_done.get("reward:" + person, false): continue
+		await _safe_red("reward:" + person, "本人凭证与约定交付")
+		# A cancelled walk or refused check stops the queue on the page that explains it.
+		if not safe_done.get("reward:" + person, false) or not is_inside_tree() or ended: return
 
 func _walk_actor_to(actor: CharacterBody2D, destination: Vector2) -> bool:
 	if actor.travelling: return false
@@ -906,8 +991,7 @@ func _open_red_feedback() -> void:
 		_label(modal_box,"待证 · " + str(message),18)
 	_label(modal_box,"查阅已经读过的材料",20)
 	for id in red_notes:
-		var title: String = str(room_sites[id][0]) if room_sites.has(id) else str(red_sites[id][0]) if red_sites.has(id) else "上游捕集片" if id == "E09.deep" else "同号转清与停流联"
-		_button(modal_box,id + " · " + title,func(): _open_recorded_evidence(id, true))
+		_button(modal_box,id + " · " + _recorded_evidence_title(id),func(): _open_recorded_evidence(id, true))
 	_pin_red_footer([["返回推演",_open_red_notebook]])
 
 func _request_flow() -> void:
@@ -1155,13 +1239,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if story_lock: return
 	if modal_open and modal.current_mode == "evidence" and not dialogue.active and event is InputEventKey and event.pressed and not event.echo:
-		_close_modal()
 		get_viewport().set_input_as_handled()
+		if event.keycode in [KEY_SHIFT, KEY_CTRL, KEY_ALT, KEY_META]: return
+		var book := modal.get_node_or_null("EvidenceNotebook")
+		var turn := -1 if event.keycode in [KEY_LEFT, KEY_PAGEUP] else 1 if event.keycode in [KEY_RIGHT, KEY_PAGEDOWN] else 0
+		# Arrow keys turn pages; any other key returns to the field as before.
+		if turn != 0:
+			if is_instance_valid(book): book.step(turn)
+			return
+		_close_modal()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R and not dialogue.active:
-		red.call("CancelPreparedAction")
-		red.call("Cancel")
-		get_tree().reload_current_scene()
+		# A stray R must not wipe the run: the first press asks, a second confirms.
+		if restart_pending: _restart_case()
+		else: _confirm_restart()
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and not dialogue.active and not modal_open and not ended:
 		if get_viewport().gui_get_focus_owner() is LineEdit: return
@@ -1175,7 +1267,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	super._unhandled_input(event)
 
+func _confirm_restart() -> void:
+	if ended:
+		_restart_case()
+		return
+	_open_modal("重新开始？", "message")
+	_label(modal_box, "当前调查进度不会保存，将回到醒来的房间。
+再按一次 R 也可确认。", 21)
+	modal.add_footer([["继续调查", _close_modal], ["重新开始", _restart_case]])
+	restart_pending = true
+
+func _restart_case() -> void:
+	red.call("CancelPreparedAction")
+	red.call("Cancel")
+	get_tree().reload_current_scene()
+
 func _close_modal() -> void:
+	restart_pending = false
 	if name_entry_active: return
 	if is_instance_valid(red_performance) and red_performance.busy:
 		red_performance.cancel()

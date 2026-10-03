@@ -24,7 +24,9 @@ func _open_red_defense() -> void:
 	var active: Array = []
 	for section in Content.defense_sections():
 		var section_id: String = section[0]
-		var tab: Button = source._button(tabs, section[1], func():
+		var filled := _filled_fields(section_id)
+		var tab: Button = source._button(tabs, "%s
+%s" % [section[1], "✓ 已填三项" if filled == 3 else "已填 %d / 3" % filled], func():
 			source.red_defense_section = section_id
 			source.red_defense_hints = false
 			_open_red_defense())
@@ -94,13 +96,20 @@ func _open_red_defense() -> void:
 		status = ("交接推演已完成。" if source.red.call("State").get("solved", false) else "交接推演尚未完成，可先记草稿。") + "\n" + status
 	source._pin_red_footer(actions, status)
 
+const DEFENSE_FIELDS := [["material","材料"],["alternative","解释"],["unknown","未知范围"]]
+const SECTION_SHORT := {"open":"开态", "token":"红筹", "memory":"空白"}
+
+func _filled_fields(section_id: String) -> int:
+	return DEFENSE_FIELDS.filter(func(entry): return source.red_defense_answer.get(section_id+"_"+entry[0], "unknown") != "unknown").size()
+
 func _red_defense_status() -> String:
 	var missing: Array[String] = []
 	for section in Content.defense_sections():
-		for entry in [["material","材料"],["alternative","解释"],["unknown","未知范围"]]:
-			if source.red_defense_answer.get(section[0]+"_"+entry[0], "unknown") == "unknown":
-				missing.append({"open":"开态", "token":"红筹", "memory":"空白"}[section[0]]+"·"+entry[1])
-	return "九字段均已选择；支持范围仍由提交核验。" if missing.is_empty() else "未补："+"、".join(missing)
+		var gaps: Array[String] = []
+		for entry in DEFENSE_FIELDS:
+			if source.red_defense_answer.get(section[0]+"_"+entry[0], "unknown") == "unknown": gaps.append(entry[1])
+		if not gaps.is_empty(): missing.append("%s（%s）" % [SECTION_SHORT[section[0]], "、".join(gaps)])
+	return "九字段均已选择；支持范围仍由提交核验。" if missing.is_empty() else "未补："+"；".join(missing)
 
 func _style_red_statement(button: Button, selected: bool) -> void:
 	var paper: StyleBoxFlat = StyleBoxFlat.new()
@@ -140,13 +149,15 @@ func _defense_choice(key: String, options: Array, answer: Dictionary, parent: No
 	(parent if parent != null else source.modal_box).add_child(box)
 	var label: RichTextLabel = source._label(box, caption, 18)
 	label.custom_minimum_size.x = 122
+	# The caption keeps its width; the selector takes the rest so long wording stays legible.
+	label.size_flags_horizontal = Control.SIZE_FILL
 	var selector: OptionButton = OptionButton.new()
 	selector.name = "Choice"
 	selector.fit_to_longest_item = false
 	selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	selector.custom_minimum_size.y = 44
 	selector.add_theme_font_size_override("font_size", 18)
-	selector.get_popup().add_theme_font_size_override("font_size", 18)
+	source.FieldModal.paper_popup(selector.get_popup())
 	box.add_child(selector)
 	var selected: int = 0
 	for index in options.size():

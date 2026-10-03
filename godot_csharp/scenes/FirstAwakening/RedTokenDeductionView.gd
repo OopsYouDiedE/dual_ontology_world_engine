@@ -669,6 +669,10 @@ func _build_ui() -> void:
 		label.add_theme_font_size_override("normal_font_size", 15)
 		label.add_theme_color_override("default_color", COLOR_INK)
 		summary_box.add_child(label)
+	# The selected buttons below already show the current candidate; keep only progress and the rule.
+	candidate_summary.hide()
+	candidate_semantics.add_theme_font_size_override("normal_font_size", 14)
+	candidate_semantics.add_theme_color_override("default_color", COLOR_MUTED)
 
 	# --- Right Page Bottom Bar Area (offset_left=710, top=870, width=534, height=90) ---
 	var bottom_container := VBoxContainer.new()
@@ -820,7 +824,9 @@ func _render_candidate_summary() -> void:
 			current.append(caption+"："+shown)
 	var loc := _get_locale()
 	candidate_summary.text = ("本页当前候选 · " if loc == "zh_CN" else "Current page · " if loc == "en" else "現在の候補 · ")+"；".join(current)
-	candidate_missing.text = ("尚未指定动作/规程：" if loc == "zh_CN" else "Unspecified actions/rules: " if loc == "en" else "未指定の動作・規程：")+("、".join(missing) if not missing.is_empty() else "无" if loc == "zh_CN" else "None" if loc == "en" else "なし")
+	var total := specs.size() - 1
+	var progress := ("候选已指定 %d / %d　" if loc == "zh_CN" else "Candidate: %d / %d set.  " if loc == "en" else "候補 %d / %d 指定済　") % [total - missing.size(), total]
+	candidate_missing.text = "[color=#205026]" + progress + "[/color]" + ("尚未指定：" if loc == "zh_CN" else "Unspecified: " if loc == "en" else "未指定：")+("、".join(missing) if not missing.is_empty() else "无" if loc == "zh_CN" else "None" if loc == "en" else "なし")
 	candidate_semantics.text = "未确定＝这份模拟没有指定该动作；可先提出并核验。证据仍未知不等于不能提出候选；身份未知可合法保留。" if loc == "zh_CN" else "Unspecified means this replay has no assigned action. You may submit and inspect its gaps. Unknown evidence does not bar a candidate; an unknown identity is allowed." if loc == "en" else "未確定は再現に動作を指定していない意味です。候補を提出して不足を確認できます。証拠の不明は候補の禁止ではなく、身元不明は保留できます。"
 	_layout_candidate_summary.call_deferred()
 
@@ -1200,8 +1206,9 @@ func _add_segmented_choice(card: PanelContainer, label_text: String, field_key: 
 	lbl.add_theme_color_override("font_color", COLOR_MUTED)
 	row.add_child(lbl)
 
-	var btn_row := VBoxContainer.new()
-	btn_row.add_theme_constant_override("separation", 5)
+	# Options sit side by side so each question reads as one choice, not a column of bars.
+	var btn_row := HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 6)
 	row.add_child(btn_row)
 
 	var current_val: String = _get_field_val(field_key)
@@ -1213,8 +1220,9 @@ func _add_segmented_choice(card: PanelContainer, label_text: String, field_key: 
 		btn.text = opt_label
 		btn.clip_text = false
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.size_flags_stretch_ratio = 0.7 if opt_id == "unknown" else 1.0
 		btn.custom_minimum_size.y = 40
 		btn.toggle_mode = true
 		btn.set_pressed_no_signal(opt_id == current_val)

@@ -126,9 +126,10 @@ var voice_char_interval := 2
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
-		if is_instance_valid(next_button): next_button.text = tr("FA_UI_148" if compact else "FA_UI_149")
+		if is_instance_valid(next_button): _refresh_next_caption()
 		if is_instance_valid(history_button): history_button.text = tr("FA_UI_067")
 		if is_instance_valid(history_close_button): history_close_button.text = tr("FA_UI_161")
+		if is_instance_valid(fast_forward_label): fast_forward_label.text = _key_legend()
 		if active: _update_continue_hint()
 	if what == NOTIFICATION_TRANSLATION_CHANGED and active and not busy and line != null:
 		locale_refresh_key = line.id
@@ -192,6 +193,29 @@ func _localized_speaker(canonical_name: String) -> String:
 		"霍铎":"FA_NAME_002", "沈鼎":"FA_NAME_003", "苏泠":"FA_NAME_004"}
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
 
+## The last line of a conversation says so, so a quick extra press is not a surprise.
+func _refresh_next_caption() -> void:
+	if not compact:
+		next_button.text = tr("FA_UI_149")
+		return
+	if not _line_ends_conversation():
+		next_button.text = tr("FA_UI_148") + "  ▸"
+		return
+	var locale := TranslationServer.get_locale()
+	next_button.text = ("Close" if locale.begins_with("en") else "閉じる" if locale.begins_with("ja") else "结束") + "  ■"
+
+func _line_ends_conversation() -> bool:
+	if line == null or resource == null or not ("lines" in resource) or not line.responses.is_empty(): return false
+	var id := str(line.next_id)
+	for guard in 8:
+		# Runtime ids carry a "<resource>@" prefix that the compiled line table does not.
+		if id.contains("@"): id = id.get_slice("@", id.get_slice_count("@") - 1)
+		if id.is_empty() or id.begins_with("end"): return true
+		var entry: Variant = resource.lines.get(id)
+		if not entry is Dictionary or str(entry.get("type", "")) != "goto" or entry.get("is_snippet", false): return false
+		id = str(entry.get("next_id", ""))
+	return false
+
 func _escape_rich_text(value: String) -> String:
 	return value.replace("[", "[lb]").replace("]", "[rb]")
 
@@ -239,6 +263,7 @@ func set_character_portraits(mapping: Dictionary) -> void:
 	character_portrait.texture = null
 	portrait_character = ""
 	_refresh_character_portrait()
+	layout_compact_line()
 
 func _bust(texture: Texture2D) -> Texture2D:
 	var size := texture.get_size()
@@ -267,8 +292,33 @@ func _refresh_character_portrait() -> void:
 		portrait_character = character
 		character_portrait.texture = character_portraits.get(character) as Texture2D
 	var shown := active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
-	character_portrait.visible = shown
+	if compact:
+		# The card keeps one layout for every speaker: a portrait, or a monogram for
+		# narration and voices without a face. It stays put between lines and under the log.
+		var line_ready := active and not busy and line != null
+		shown = active and panel.visible
+		character_portrait.visible = line_ready and character_portrait.texture != null
+		if line_ready: _refresh_monogram()
+	else:
+		character_portrait.visible = shown
+	var changed := is_instance_valid(portrait_frame) and portrait_frame.visible != shown
 	if is_instance_valid(portrait_frame): portrait_frame.visible = shown
+	if changed and compact: layout_compact_line()
+
+var portrait_monogram: Label
+
+func _refresh_monogram() -> void:
+	if not is_instance_valid(portrait_monogram):
+		portrait_monogram = Label.new()
+		portrait_monogram.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait_monogram.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		portrait_monogram.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		portrait_monogram.add_theme_font_size_override("font_size", 56)
+		portrait_monogram.add_theme_color_override("font_color", Color(GOLD, 0.75))
+		portrait_frame.add_child(portrait_monogram)
+	var name_text := str(speaker.text).strip_edges()
+	portrait_monogram.text = name_text.left(1) if not name_text.is_empty() and not name_text.begins_with("？") else "·"
+	portrait_monogram.visible = not character_portrait.visible
 
 func apply_locale_font(font: Font, _theme: Theme) -> void:
 	dialogue_theme.default_font = font
@@ -420,50 +470,81 @@ func _setup_voice_player() -> void:
 			voice_player.volume_db = -6.0
 			add_child(voice_player)
 
+## Compact box geometry: a floating card above the bottom edge with the portrait inside it.
+const COMPACT_WIDTH := 1152.0
+const COMPACT_HEIGHT := 172.0
+const COMPACT_MARGIN := 20.0
+const COMPACT_PORTRAIT := 140.0
+const COMPACT_TEXT_X := 32.0
+
 func use_compact_layout() -> void:
 	compact = true
 	heading.hide()
 	hint.hide()
 	panel.get_node("SpeakerDivider").hide()
-	panel.position.x = 64
-	panel.size.x = 1152
+	panel.position.x = (1280.0 - COMPACT_WIDTH) / 2.0
+	panel.size.x = COMPACT_WIDTH
 	var background := StyleBoxFlat.new()
-	background.bg_color = Color("182723", 0.97)
-	background.set_corner_radius_all(8)
+	background.bg_color = Color("16231f", 0.96)
+	background.border_color = Color(GOLD, 0.55)
+	background.set_border_width_all(1)
+	background.border_width_top = 2
+	background.set_corner_radius_all(6)
+	background.shadow_color = Color(0, 0, 0, 0.45)
+	background.shadow_size = 10
+	background.shadow_offset = Vector2(0, 3)
 	panel.add_theme_stylebox_override("panel", background)
-	speaker.position = Vector2(32, 18)
-	speaker.add_theme_font_size_override("normal_font_size", 18)
-	speaker.add_theme_color_override("default_color", Color("c4b798"))
-	body.position = Vector2(32, 52)
-	body.size = Vector2(1088, 104)
+	speaker.size = Vector2(480, 28)
+	speaker.add_theme_font_size_override("normal_font_size", 19)
+	speaker.add_theme_color_override("default_color", Color("d9c28c"))
 	body.add_theme_font_size_override("normal_font_size", 24)
-	choices.position = Vector2(32, 160)
-	next_button.text = tr("FA_UI_148")
-	next_button.position.x = 1024
-	next_button.size.x = 96
+	body.add_theme_constant_override("line_separation", 6)
+	_refresh_next_caption()
+	next_button.size = Vector2(116, 40)
+	next_button.add_theme_color_override("font_color", Color("d9c28c"))
 	for state in ["normal", "hover", "pressed", "focus"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("31433b") if state in ["hover", "pressed"] else Color(0,0,0,0)
-		style.set_content_margin_all(12)
+		style.set_content_margin_all(10)
 		style.set_corner_radius_all(4)
 		if state == "focus":
 			style.border_color = GOLD
 			style.border_width_bottom = 1
 		panel.theme.set_stylebox(state, "Button", style)
-	history_button.position = Vector2(1040, 14)
+	history_button.position = Vector2(COMPACT_WIDTH - 104, 10)
+	history_button.add_theme_color_override("font_color", Color("9fa898"))
+	fast_forward_label = label("", Vector2.ZERO, 14, Color("7f8a7c"))
+	fast_forward_label.text = _key_legend()
+	layout_compact_line()
 
 func layout_compact_line() -> void:
+	## Sizes the box to the line's choices and makes room for the speaker portrait.
 	if not compact: return
 	var count := 0
-	for response in line.responses:
-		if response.is_allowed: count += 1
-	var height := 204 + int(ceil(count / 2.0)) * 54 if count > 0 else 204
+	if line != null:
+		for response in line.responses:
+			if response.is_allowed: count += 1
+	var height := COMPACT_HEIGHT + (int(ceil(count / 2.0)) * 54 if count > 0 else 0)
 	panel.size.y = height
-	panel.position.y = 992 - 32 - height
-	next_button.position.y = height - 52
-	if single_press_keyboard_continue:
-		hint.show()
-		hint.position = Vector2(32, height - 35)
+	panel.position.y = 992.0 - COMPACT_MARGIN - height
+	var portrait_shown := is_instance_valid(portrait_frame) and portrait_frame.visible
+	var text_x := COMPACT_TEXT_X + (COMPACT_PORTRAIT + 8.0 if portrait_shown else 0.0)
+	var text_width := COMPACT_WIDTH - text_x - 32.0
+	speaker.position = Vector2(text_x, 16)
+	body.position = Vector2(text_x, 48)
+	body.size = Vector2(text_width - 112.0, 84)
+	choices.position = Vector2(text_x, COMPACT_HEIGHT - 16)
+	for button in choices.get_children():
+		(button as Control).custom_minimum_size.x = (text_width - 12.0) / 2.0
+	next_button.position = Vector2(COMPACT_WIDTH - next_button.size.x - 16, height - next_button.size.y - 14)
+	if is_instance_valid(fast_forward_label):
+		fast_forward_label.position = Vector2(text_x, height - 30)
+		fast_forward_label.visible = count == 0
+	if is_instance_valid(portrait_frame):
+		portrait_frame.position = Vector2(16, 16)
+		portrait_frame.size = Vector2.ONE * COMPACT_PORTRAIT
+		character_portrait.custom_minimum_size = Vector2.ONE * (COMPACT_PORTRAIT - 6.0)
+
 
 func label(text: String, at: Vector2, size: int, color: Color) -> Label:
 	var result := Label.new()
@@ -552,6 +633,8 @@ func show_line(key: String) -> void:
 		button.pressed.connect(_on_choice_pressed.bind(button))
 		choices.add_child(button)
 	choices.hide()
+	layout_compact_line()
+	_refresh_next_caption()
 
 func choose(key: String) -> void:
 	if busy or not active or history_panel.visible:
@@ -586,6 +669,7 @@ func _update_continue_hint() -> void:
 
 func _process(delta: float) -> void:
 	_refresh_character_portrait()
+	_fast_forward(delta)
 	if active and not busy and not history_panel.visible and body.visible_characters >= 0:
 		elapsed += delta
 		var loc := TranslationServer.get_locale()
@@ -596,6 +680,31 @@ func _process(delta: float) -> void:
 			body.visible_characters = target_chars
 		if body.visible_characters >= body.get_total_character_count():
 			reveal()
+
+## Holding Ctrl in the compact box reveals and advances plain lines quickly; choices still stop it.
+const FAST_FORWARD_INTERVAL := 0.09
+var fast_forward_wait := 0.0
+var fast_forward_label: Label
+
+func _key_legend() -> String:
+	var locale := TranslationServer.get_locale()
+	if locale.begins_with("en"): return "Space continue   H review   hold Ctrl to skip"
+	if locale.begins_with("ja"): return "Space 続ける　H 履歴　Ctrl 長押しで早送り"
+	return "Space 继续　H 回看　按住 Ctrl 快进"
+
+func _fast_forward(delta: float) -> void:
+	if not compact or not active or busy or line == null or history_panel.visible or not Input.is_key_pressed(KEY_CTRL):
+		fast_forward_wait = 0.0
+		return
+	if not line.responses.is_empty() or get_viewport().gui_get_focus_owner() is LineEdit:
+		return
+	if is_instance_valid(context) and context.has_method("dialogue_has_modal_input") and context.call("dialogue_has_modal_input"):
+		return
+	fast_forward_wait -= delta
+	if fast_forward_wait > 0.0: return
+	fast_forward_wait = FAST_FORWARD_INTERVAL
+	if body.visible_characters >= 0: reveal()
+	else: show_line(line.next_id)
 
 func _play_typewriter_voice(from_count: int, to_count: int) -> void:
 	if current_voice_stream == null or not is_instance_valid(voice_player):

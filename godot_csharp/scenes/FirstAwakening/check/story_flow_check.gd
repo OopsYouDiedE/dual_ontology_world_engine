@@ -95,6 +95,77 @@ func _run() -> void:
 		for row in spoken:
 			expect(not str(row[0]).is_empty(), "%s line has a speaker: %s" % [title, row[1]])
 
+	# --- A closed dormitory is not floor: clicking it never traps the detective in its doorway.
+	var locked_door: Node2D = host.scene_items.get_node("DormitoryDoor2")
+	host.player.position = locked_door.position + Vector2(-40, 40)
+	await frames(2)
+	host._move_to_click(locked_door.position + Vector2(0, -20))
+	expect(host.click_path.is_empty(), "no route into a closed dormitory")
+	host._move_to_click(locked_door.position + Vector2(0, 40))
+	for i in 90: await physics_frame
+	var meeting: Vector2 = host.get_node("MeetingSpots/Detective").position
+	host._move_to_click(meeting)
+	expect(not host.click_path.is_empty(), "the corridor still routes back to the common room")
+	host._cancel_click_navigation()
+	host.player.position = meeting
+
+	# --- The last line of a conversation is marked as the end.
+	host.story_backlog.clear()
+	host._begin_dialogue("S04")
+	await frames(3)
+	var last_caption := ""
+	var ended_early := 0
+	while host.dialogue.active:
+		if last_caption.begins_with("结束"): ended_early += 1
+		last_caption = host.dialogue.next_button.text
+		await host.dialogue.advance()
+		await host.dialogue.advance()
+		await frames(2)
+	expect(last_caption.begins_with("结束"), "final line offers 结束 (%s)" % last_caption)
+	expect(ended_early == 0, "earlier lines keep 继续")
+	await frames(4)
+
+	# --- Holding Ctrl fast-forwards a plain conversation to its end.
+	host.story_backlog.clear()
+	host._begin_dialogue("S04")
+	await frames(3)
+	expect(host.dialogue.active, "S04 starts before fast-forward")
+	var ctrl := InputEventKey.new()
+	ctrl.keycode = KEY_CTRL
+	ctrl.physical_keycode = KEY_CTRL
+	ctrl.pressed = true
+	Input.parse_input_event(ctrl)
+	var waited := 0
+	while host.dialogue.active and waited < 900:
+		await process_frame
+		waited += 1
+	ctrl = ctrl.duplicate()
+	ctrl.pressed = false
+	Input.parse_input_event(ctrl)
+	expect(not host.dialogue.active, "holding Ctrl fast-forwards S04 (%d frames)" % waited)
+	await frames(4)
+
+	# --- Field UI: restart asks first, the hypothesis notebook opens cleanly.
+	host.story_backlog.clear()
+	host._confirm_restart()
+	expect(host.restart_pending and host.modal_open, "R asks before restarting")
+	host._close_modal()
+	expect(not host.restart_pending and not host.modal_open, "closing the prompt keeps the run")
+	for id in host.REASONING_RECORDS:
+		host.red_notes[id] = ["record"]
+		host.red_seen[id] = {}
+	expect(host.can_use_mind_reasoning(), "seven records unlock the hypothesis notebook")
+	host._open_red_notebook()
+	await frames(4)
+	expect(is_instance_valid(host.deduction_view) and host.red_notebook.visible, "hypothesis notebook opens")
+	host._close_modal()
+	host._open_recorded_evidence("E05", false)
+	await frames(2)
+	var book: Node = host.modal.get_node_or_null("EvidenceNotebook")
+	expect(is_instance_valid(book) and book.step(1) and host.last_recorded_evidence != "E05", "evidence book turns to the next record")
+	host._close_modal()
+	host.story_backlog.clear()
+
 	# --- Exit: the door stays shut until Halvard pulls the bolt.
 	var door: Node = host.scene_items.get_node("MechanicalIsolationDoor")
 	host.ended = true

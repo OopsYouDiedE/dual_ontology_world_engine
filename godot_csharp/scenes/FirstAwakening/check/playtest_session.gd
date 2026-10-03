@@ -87,7 +87,27 @@ func _run(command: Dictionary) -> void:
 		await process_frame
 	await _publish(seq, str(command.get("name", "input")), error)
 
+## Durations accept "ms", "seconds" or "frames" (default one frame) for both hold and wait.
+func _hold_for(action: Dictionary) -> void:
+	if action.has("ms") or action.has("seconds"):
+		var seconds := float(action.get("ms", 0)) / 1000.0 if action.has("ms") else float(action.get("seconds", 0))
+		await create_timer(maxf(seconds, 0.0)).timeout
+		return
+	for i in maxi(1, int(action.get("frames", 1))):
+		await process_frame
+
+const ACTION_FIELDS := {
+	"click": ["x", "y", "button"], "wheel": ["x", "y", "direction", "steps"], "tap": ["key"],
+	"hold": ["key", "ms", "seconds", "frames"], "wait": ["ms", "seconds", "frames"], "text": ["text"],
+	"click_control": ["control_id"], "text_control": ["control_id", "text", "replace"], "snapshot": [],
+}
+
 func _act(action: Dictionary) -> String:
+	# Unknown fields are reported instead of silently ignored, so a mistyped duration cannot pass as one frame.
+	var allowed: Array = ACTION_FIELDS.get(str(action.get("type", "")), [])
+	for field in action:
+		if field != "type" and field not in allowed and ACTION_FIELDS.has(str(action.get("type", ""))):
+			return "unknown field for %s: %s" % [action.get("type"), field]
 	match str(action.get("type", "")):
 		"click":
 			await _click(Vector2(float(action.get("x", 0)), float(action.get("y", 0))), str(action.get("button", "left")))
@@ -108,19 +128,14 @@ func _act(action: Dictionary) -> String:
 			if held == KEY_NONE:
 				return "unknown key name: " + str(action.get("key", ""))
 			await _key(held, 0, true)
-			for i in maxi(1, int(action.get("frames", 1))):
-				await process_frame
+			await _hold_for(action)
 			await _key(held, 0, false)
 		"text":
 			for ch in str(action.get("text", "")):
 				await _key(KEY_NONE, ch.unicode_at(0), true)
 				await _key(KEY_NONE, ch.unicode_at(0), false)
 		"wait":
-			if action.has("ms"):
-				await create_timer(float(action.get("ms", 0)) / 1000.0).timeout
-			else:
-				for i in maxi(1, int(action.get("frames", 1))):
-					await process_frame
+			await _hold_for(action)
 		"click_control":
 			var control: Control = controls_by_id.get(str(action.get("control_id", "")))
 			if not is_instance_valid(control) or not control.is_visible_in_tree():
@@ -172,7 +187,9 @@ func _key(code: Key, unicode: int, pressed: bool, ctrl := false) -> void:
 	event.unicode = unicode
 	event.pressed = pressed
 	event.ctrl_pressed = ctrl
-	root.push_input(event, true)
+	# Through Input so held keys update Input.is_physical_key_pressed, which movement polls;
+	# Viewport.push_input alone delivers the event but never marks the key as held.
+	Input.parse_input_event(event)
 	await process_frame
 
 # ---------------------------------------------------------------- publish ---

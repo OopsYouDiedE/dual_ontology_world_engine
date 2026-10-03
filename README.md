@@ -25,10 +25,10 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 使用 .NET 8 和 Godot 4.6.1 .NET：
 
 ```powershell
-dotnet build csharp/Core.sln -c Release
-dotnet build godot_csharp/DualOntologyWorldEngine.sln
-dotnet run --project godot_csharp/scenes/Reasoning/check/Reasoning.Check.csproj
+python tools/verify.py
 ```
+
+`tools/verify.py` 依次执行 Core 构建、Core 作用域回归、宿主构建、红筹跳转回归 `story_flow_check.gd` 与关键画面截图集 `state_gallery.gd`（输出到 `tmp/state_gallery/`），引擎日志出现 SCRIPT ERROR 即判失败；可用 `--skip` 跳过步骤，`--godot` 或环境变量 `GODOT` 指定 Godot .NET 控制台程序。以上均为注入状态的自动回归，不替代独立盲玩。
 
 素材迁移或重建后，用 Godot .NET 先执行 `--headless --editor --path godot_csharp --import`，再执行 `--headless --path godot_csharp --script res://tools/check_asset_layout.gd` 检查运行时依赖和资源加载。实际交互回归入口见各场景说明。
 

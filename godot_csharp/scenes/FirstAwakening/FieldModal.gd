@@ -76,6 +76,25 @@ func add_footer(actions: Array) -> Button:
 		footer.alignment = BoxContainer.ALIGNMENT_END
 	return last
 
+## Drop-down lists match the paper cards instead of the engine's default dark menu.
+static func paper_popup(popup: PopupMenu, font_size := 18) -> void:
+	var sheet := StyleBoxFlat.new()
+	sheet.bg_color = Color("f1e9d6")
+	sheet.border_color = Color("8c7a62")
+	sheet.set_border_width_all(1)
+	sheet.set_corner_radius_all(3)
+	sheet.set_content_margin_all(6)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color("344c39")
+	hover.set_corner_radius_all(2)
+	popup.add_theme_stylebox_override("panel", sheet)
+	popup.add_theme_stylebox_override("hover", hover)
+	popup.add_theme_color_override("font_color", INK)
+	popup.add_theme_color_override("font_hover_color", Color("fff8e8"))
+	popup.add_theme_color_override("font_disabled_color", MUTED)
+	popup.add_theme_font_size_override("font_size", font_size)
+	popup.add_theme_constant_override("v_separation", 10)
+
 func paper_field(control: Control) -> void:
 	for state in ["normal", "hover", "pressed", "focus"]:
 		control.add_theme_stylebox_override(state, PAPER_THEME.get_stylebox("focus" if state == "focus" else "normal", "TextEdit"))

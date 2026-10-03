@@ -14,6 +14,8 @@ seq=ack_seq+1, name, and actions, then wait for that exact acknowledgement.
 Generic input fields (coordinates are viewport pixels):
   {"type":"click", "x":400, "y":300, "button":"left"}
   {"type":"tap", "key":"Space"}  # Enter, Escape and other key names also work
+  {"type":"hold", "key":"D", "ms":800}   # duration: "ms", "seconds" or "frames"
+  {"type":"wait", "seconds":2}           # same duration fields; unknown fields are rejected
   {"type":"wheel", "x":400, "y":300, "direction":"down", "steps":1}
   {"type":"click_control", "control_id":"ID from the current snapshot"}
   {"type":"text_control", "control_id":"visible text field ID",
@@ -214,6 +216,10 @@ class BlindSession:
 
 
 def main() -> int:
+    # Game text includes symbols outside legacy Windows code pages; never fail on printing.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--session", required=True, help="the fresh id passed to this Godot process")
     parser.add_argument("--artifacts", type=Path, default=DEFAULT_ARTIFACTS)

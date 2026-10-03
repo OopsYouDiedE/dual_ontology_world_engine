@@ -10,6 +10,7 @@ const FIELD_THEME_ZH: Theme = preload("res://scenes/FirstAwakening/field_theme_z
 const FIELD_THEME_OTHER: Theme = preload("res://scenes/FirstAwakening/field_theme_other.tres")
 
 const CLICK_STOP_RADIUS := 8.0
+const HUD_BAR_HEIGHT := 60.0
 const CLICK_REPATH_DELAY := 0.15
 const APPROACH_DIRECTIONS := [
 	Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT,
@@ -23,12 +24,16 @@ var sites: Dictionary = {}
 var active_sites: Dictionary = {}
 class StateShim extends RefCounted:
 	var evidence: Dictionary = {}
+	## Replays step through committed actions, not wall-clock time.
+	var event_mode := true
 
 var state := StateShim.new()
 var evidence: Dictionary:
 	get: return state.evidence
 	set(v): state.evidence = v
 var evidence_sources: Dictionary = {}
+## Dormitory interiors the replay may show uncovered; only the detective's own room is known.
+var known_dorms: Dictionary = {"detective": true}
 var actors: Dictionary = {}
 var player: CharacterBody2D
 var camera: Camera2D
@@ -40,6 +45,10 @@ var click_waypoint := 0
 var click_interaction_id := ""
 var click_last_position := Vector2(INF, INF)
 var click_stall_seconds := 0.0
+## Repaths without real progress; a route that keeps failing is dropped instead of looping.
+var click_blocked_repaths := 0
+var click_progress_anchor := Vector2(INF, INF)
+const CLICK_MAX_BLOCKED_REPATHS := 4
 
 var nearest := ""
 var reachable: Array[String] = []
@@ -265,10 +274,18 @@ func _physics_process(_delta: float) -> void:
 	if direction == Vector2.ZERO and not click_path.is_empty():
 		click_stall_seconds = click_stall_seconds + _delta if player.position.distance_to(click_last_position) < 0.25 else 0.0
 		click_last_position = player.position
+		if player.position.distance_to(click_progress_anchor) > 12.0:
+			click_progress_anchor = player.position
+			click_blocked_repaths = 0
 		if click_stall_seconds >= CLICK_REPATH_DELAY:
 			var pending_id := click_interaction_id
 			var destination := click_path[-1]
 			click_stall_seconds = 0.0
+			click_blocked_repaths += 1
+			if click_blocked_repaths > CLICK_MAX_BLOCKED_REPATHS:
+				# Something the grid cannot see is in the way; stop rather than push forever.
+				_cancel_click_navigation()
+				return
 			if pending_id.is_empty(): _move_to_click(destination)
 			else: _approach_site(pending_id)
 			return
@@ -339,6 +356,12 @@ func _input(event: InputEvent) -> void:
 		return
 	if language_selector.get_global_rect().has_point(event.position) or language_selector.get_popup().visible:
 		return
+	# The top bar is interface, not floor: clicks there never walk the detective.
+	if event.position.y < HUD_BAR_HEIGHT:
+		get_viewport().set_input_as_handled()
+		return
+	click_blocked_repaths = 0
+	click_progress_anchor = player.position
 	_cancel_click_navigation()
 	var destination: Vector2 = get_global_transform_with_canvas().affine_inverse() * event.position
 	var site_id := _clicked_site(destination)
@@ -447,12 +470,24 @@ func _approach_site(id: String) -> void:
 func _walkable(point: Vector2) -> bool:
 	var cell := Vector2i(point / 32.0)
 	if not floors.has(cell): return false
-	for rect in obstacle_rects:
+	for rect in obstacle_rects + _closed_room_rects(player):
 		if rect.grow(8.0).has_point(point): return false
 	return true
 
+## Doorways and interiors of dormitories the walker may not enter; their leaves stay solid.
+func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if not is_instance_valid(scene_items): return rects
+	for door in scene_items.get_children():
+		if not door.has_method("access_allowed") or door.access_allowed(): continue
+		if is_instance_valid(walker) and door.owner_actor() == walker: continue
+		rects.append(door.threshold_collision_rect())
+		rects.append(door.interior_bounds)
+	return rects
+
 func _navigation_obstacles(_walker_pos: Vector2, _walker: CharacterBody2D) -> Array[Rect2]:
 	var obstacles := obstacle_rects.duplicate()
+	obstacles.append_array(_closed_room_rects(_walker))
 	for other_actor in actors.values():
 		if other_actor != _walker and is_instance_valid(other_actor):
 			obstacles.append(Rect2(other_actor.position.x - 8, other_actor.position.y - 8, 16, 16))

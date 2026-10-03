@@ -1,5 +1,7 @@
 # 初醒 Demo：当前宿主技术入口
 
+界面与操作优化（2026-10-03）：修复三处使假说手稿（F）每帧报脚本错误的回归（重演舞台缺 `known_dorms`、走带缺 `state.event_mode`、结论标签类型不符）；对白框改为带内嵌立绘的浮动卡片并支持按住 Ctrl 快进；顶栏键帽与推演材料进度、近身提示圆角条与 Tab 换目标；R 重启先确认；领取柜可一次请四人依次核验交付；证物页翻页与目录；假说选项横排；答辩标签显示填写进度。规约见[主控规范 §4.19](../../../docs/design-standard.md#419-现场界面与减少重复操作2026-10-03)。自动回归：`python tools/verify.py`（`story_flow_check.gd` 与截图集 `check/state_gallery.gd`）；导航网格与碰撞一致性检查为 `check/navigation_check.gd`；原文提及的 `story_module_check.gd` 已不在仓库中。本轮做了两次独立盲玩，均未到达结局：[第一轮](../../../artifacts/first-awakening/blind-ui-pass-20261003-01/report.md)发现宿舍门卡死、面板溢出等问题，已修复；[复测](../../../artifacts/first-awakening/blind-ui-pass-20261003-02/report.md)卡在“交接因果推演”入口不可见，结论为不合格，待改项列于报告。复测还查出盲玩驱动的按键从未进入 `Input` 状态，已修正。
+
 剧情重整（2026-10-02）：当前红筹案以 `RedTokenDemo` 协调 Content、Session、Hypothesis、Simulation 与独立答辩 View；观察文本通过共享 `Story/ObservationReader` 读取。新增剧情的模块职责与任务顺序统一维护在 [主控规范 §4.15](../../../docs/design-standard.md#415-剧情模块与新增任务边界2026-10-02)。旧场景/输入入口保持，历史检查与试玩记录不自动等同本轮验证。 本轮独立自动回归：模块86/86、红筹425/425、开场调查40/40、Core作用域21/21通过；构建通过。记录见[重整验收](../../../artifacts/story-modularization/final-verification/report.md)，不替代盲玩。模块检查入口为 `check/story_module_check.gd`，使用 Godot .NET 的 `--path godot_csharp --script res://scenes/FirstAwakening/check/story_module_check.gd` 执行。
 
 
