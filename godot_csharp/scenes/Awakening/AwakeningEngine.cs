@@ -74,7 +74,7 @@ public partial class AwakeningEngine : Node
         return new GArray(heard.Select(h => Variant.From(new GDict
         {
             ["who"] = Key(h.Who), ["room"] = Key(h.Where), ["text"] = h.Text, ["outside"] = h.SeemsFromOutside,
-            ["hearing"] = h.Hearing.ToString(),
+            ["hearing"] = h.Hearing.ToString(), ["direction"] = h.Direction,
         })));
     }
 
@@ -90,6 +90,32 @@ public partial class AwakeningEngine : Node
             ["hooks"] = _morning.Hooks(memory.Who),
         };
     }
+
+    private static Person PersonOf(string key) => (Person)Array.IndexOf(PersonKeys, key);
+
+    /// <summary>恶魔对某人说一句朝向其欲望的真话（Corruption 来源）。</summary>
+    public int Amplify(string who, string words) => _morning.Amplify(PersonOf(who), words);
+
+    public void ShowClause8(string who) => _morning.ShowClause8(PersonOf(who));
+    public bool KnowsClause8(string who) => _morning.KnowsClause8(PersonOf(who));
+    public int DesireStrength(string who) => _morning.DesireStrength(PersonOf(who));
+
+    /// <summary>同伴碰不碰旧物：choice 为 touch / hesitate / refuse，thought 为自然语言依据。</summary>
+    public GDict DecideRecall(string evidence)
+    {
+        var decision = _morning.DecideRecall(evidence);
+        if (decision is null) return new GDict();
+        return new GDict
+        {
+            ["who"] = Key(decision.Who), ["thought"] = decision.Thought,
+            ["choice"] = decision.Choice switch { RecallChoice.Touch => "touch", RecallChoice.Refuse => "refuse", _ => "hesitate" },
+        };
+    }
+
+    /// <summary>犹豫的同伴反问“你说呢？”：advice 为 touch / decline / own；返回 SocialSystem 的判定。</summary>
+    public string Advise(string who, string advice) => _morning.Advise(PersonOf(who), advice).ToString();
+
+    public GArray PostedClauses() => new(MorningWorld.PostedClauses.Select(c => Variant.From(c)));
 
     public void Examine(string who, string evidence)
         => _morning.Examine((Person)Array.IndexOf(PersonKeys, who), evidence);

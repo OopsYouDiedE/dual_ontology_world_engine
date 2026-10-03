@@ -56,8 +56,9 @@ public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidO
 public enum Hearing { Nothing, AlarmOnly, Murmur, Tail, Full, FullMuffled }
 
 /// <summary>
-/// 声路（设计 §4.2 感知表）。这是游戏层的空间事实：铜口的传声管沿门厅墙走向主楼，
-/// 在隔离门门框旁的松动接头漏出低沉的重读音节；R-08 的墙后贴着同一段管。
+/// 声路（设计 §4.2 感知表）。这是游戏层的空间事实：铜口的传声管沿墙走向主楼，
+/// 在隔离门门框旁的松动接头漏出低沉的重读音节。设计中 R-08“紧挨门厅”，与门厅同列；
+/// 复用的地图几何里 R-08 在走廊东端，此处仍按设计表处理（偏离见实现报告）。
 /// </summary>
 public static class Acoustics
 {

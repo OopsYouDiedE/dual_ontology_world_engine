@@ -10,9 +10,22 @@ const RULE := Color(0.17, 0.13, 0.09, 0.28)
 const MATCH := Color("3f5a3a")
 const FONT: Font = preload("res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf")
 
+## 打字机字体缺字时（▸ ■ ◎ ⊥ ✕ ✓ 等符号）由系统中文字体补字。
+static var _stack: Font
+
+static func font() -> Font:
+	if _stack == null:
+		var system := SystemFont.new()
+		system.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI Symbol"])
+		var variation := FontVariation.new()
+		variation.base_font = FONT
+		variation.fallbacks = [system]
+		_stack = variation
+	return _stack
+
 static func theme() -> Theme:
 	var t := Theme.new()
-	t.default_font = FONT
+	t.default_font = font()
 	t.default_font_size = 19
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var box := StyleBoxFlat.new()

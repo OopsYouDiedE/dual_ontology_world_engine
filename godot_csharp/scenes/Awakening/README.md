@@ -1,0 +1,70 @@
+# 第一章《门的这一侧》（重制版）
+
+`scenes/Main2D.tscn` 默认加载本场景 `Awakening.tscn`。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧场景 `scenes/FirstAwakening/` 保留不删，不再是默认入口。
+
+## 运行
+
+```powershell
+dotnet build godot_csharp/DualOntologyWorldEngine.sln
+& $env:GODOT --path godot_csharp            # 有窗口游玩（默认场景）
+```
+
+新 worktree 先执行一次 `& $env:GODOT --headless --editor --path godot_csharp --import`。
+
+操作：鼠标点击移动与交互（悬停可交互物件时高亮并显示名称；点到普通家具只给一句极短心声，同一件只说一次）；WASD 移动；E / 空格 / Enter 检视或交谈（对白刚结束的 0.6 秒内多按的一下不触发新的交谈）；Tab 笔记本；R 重演手稿（第一次看到闩上的门后开放）。对白一次空格推进，H 回看；已问过的对话选项变灰。证物卡上可做现场试验、请同伴协助、请本人触物回忆；任意键返回现场。回放中空格暂停、F 倍速、Esc 跳过（跳过与看完的结算相同）。答辩在活动厅铜口处进行。
+
+## 检查入口
+
+| 检查 | 命令 | 说明 |
+| :--- | :--- | :--- |
+| 解空间穷举、感知隔离、重演不改现实、回忆只影响本人 | `dotnet run --project godot_csharp/scenes/Awakening/check/ReplayCheck` | 编译游戏内同一份 `Night/*.cs`，跑 216 种组合；输出写入 `artifacts/remake-belief-replay/solution-space.txt` |
+| 流程跳转回归 | `& $env:GODOT --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd` | 直接跳到醒来、广播后公告框、门厅反转、“不妨一试”、同伴回忆、声路试验、重演吻合、答辩第 5 步、门开（窄底鞋印、结局名单）、对白后多按空格、退出考题；对白由脚本代推进 |
+| 关键画面截图（开发自检） | `& $env:GODOT --path godot_csharp --script res://scenes/Awakening/check/state_gallery.gd` | 有窗口；PNG 写入 `artifacts/remake-belief-replay/gallery/` |
+| 证物美术重建 | `python godot_csharp/tools/build_awakening_evidence.py` | 原生像素配方 `tools/first_awakening_art/awakening_evidence.py`；同时写 AssetsSource 与 ShareAsset，之后需 Godot 导入 |
+
+以上都是注入状态的自动检查，不替代独立盲玩。
+
+## 盲玩驱动
+
+```powershell
+& $env:GODOT --path godot_csharp --rendering-method gl_compatibility --script res://scenes/Awakening/check/playtest_session.gd -- --session=<新id> --agent=<名字>
+python godot_csharp/tools/blind_playtest.py --session <新id> snapshot
+python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"type":"tap","key":"Space"}'
+```
+
+会话目录：`artifacts/remake-belief-replay/blind-<id>/`（截图、`timeline.jsonl` 输入轨迹、`status.json` 可见文字与控件）。驱动只注入通用鼠标键盘输入，不读写剧情状态。每次截图前等镜头连续 8 帧不动（最多 240 帧），截图里的坐标与下一次点击时的镜头一致。
+
+## 文件
+
+| 文件 | 职责 |
+| :--- | :--- |
+| `Night/NightVariables.cs` | 六个变量、人物与房间、声路表（§4.2 感知表）、声路试验可用的句子 |
+| `Night/NightReplay.cs` | 昨夜重演：每次新建 `WorldRuntime`、四个 `SoulEssence` 与各自 `ProjectionWorld`；声路感知经 `Observation.Observe`；人物习惯是 `Rule`，由 `DecisionSystem` 选择；请求经 `Effect.Say` 携带，`SocialSystem` 依 Trust 判定；行动由 `SimulationSession`/`ActionRuntime` 在 CTB 上结算；宿主层只做寻路（走到行动目标所在房间、到了先看一眼再决定）与烟灰/鞋印/湿布的物理后果。“苏泠守在门边直到门关上”“沈鼎只在门已闭合时压湿布”是规则条件，不靠行动值先后；`NightTiming` 列出全部行动值参数，穷举检查在 39 组参数上复测。心声气泡用自然语言写出决策依据（信谁、为何不全信），不显示数值 |
+| `Night/MorningTraces.cs` | 重演留下的晨间痕迹、今晨现实的证物事实（作者给定），以及对照（吻合／冲突／未查）与冲突文字 |
+| `Night/MorningWorld.cs` | 清晨的现实世界：证物 Essence、四人的认知与核心欲望；公告框抄录的契约第 1—8 条；恶魔的话以 Corruption 来源放大欲望；同伴碰不碰旧物由其内部世界的 `Rule`（欲望、对恶魔的信任、天性谨慎、是否读到第 8 条）经 `DecisionSystem` 决定；声路试验（感知）与触物回忆（Recall，记钩）只写入相应本人的认知 |
+| `AwakeningEngine.cs` | GDScript 与 C# 之间的桥：重演、声路试验、回忆、钩数、章节结束状态 |
+| `Awakening.tscn` / `Awakening.gd` | 生活翼地图（几何、寻路、相机复用旧场景的通用部分），S1–S10 流程、证物卡、笔记本、声路试验、触物回忆、始业之答、结局 |
+| `AwakeningContent.gd` | 12 件证物的卡片文字、现场点位、重演变量与陈述 |
+| `ReplayManuscript.gd` | 重演手稿：左页六个变量，右页对照；改变量后旧结果标为过期 |
+| `ReplayStage.gd` | 墨影回放：真实地图上的半透明人影与四个并排的心声气泡；暂停、倍速、跳过 |
+| `TraceDecals.gd` | 传声铜管走向、管接头、灰扇、靴印、湿布、门框凹痕、书架无尘方框与窄手印 |
+| `awakening.dialogue` | 全章台词（Dialogue Manager），按玩家已取得的材料分支 |
+| `Paper.gd`、`HintOverlay.gd`、`LampFlicker.gd`、`RoomDoor.gd`、`FieldNavigation.gd`、`AwakeningDialogue.tscn` | 手稿样式、交互高亮、灯光、宿舍门、网格寻路、对白框（后四者复制自旧场景的通用节点） |
+| `check/` | 上表的检查与盲玩驱动 |
+
+美术：`ShareAsset/Internal/Props/AwakeningEvidence/`（运行时）与 `AssetsSource/Internal/Props/AwakeningEvidence/`（生产源），共 18 张场景贴图（含公告框、门开后的窄底鞋印）与 12 张检视卡局部图（96×72，卡上 3 倍显示）。
+
+## 与设计方案的对应
+
+- **证物 12 件**：E1–E12 见 `AwakeningContent.gd`。可做现场试验的：E1 拔闩推门、E2 木楔比对、E3 检视自己的靴底（触发第一次反转）、E8 声路试验、E11 比手；同伴协助：E4/E9/E10 沈鼎、E5/E6 苏泠、E7 霍铎。
+- **重演对照**：E1–E7、E9 参与对照；E8、E10、E11、E12 是旁证（E8 的声路试验与 V3/V4 的感知规则是同一张表）。
+- **唯一解**：穷举确认 216 种组合中只有“她的房间 / 活动厅铜口旁 / 从主楼对着铜口说 / 闩门，别开 / 霍铎 / 早已相熟”全部吻合。
+- **第二次反转**：V5=霍铎、V6=素不相识时，侦探对霍铎转述的请求由 `SocialSystem` 判为 Negotiate，回放中他的心声气泡是“我凭什么信一个昨天才认识的人？”；改为“早已相熟”后全部吻合，触发 S8。
+- **开场**：S3 恶魔自报身份（代管者、教师、受契约约束、“恶魔亦可”）；广播结束时镜头带过活动厅公告框，第 1—8 条完整呈现一次（任意键翻过），之后可随时再读；S4 核验报偿时恶魔逐一点到四人的欲望（Corruption）。全章台词与公告框不出现第 9、10 条（流程检查逐字扫描）。
+- **触物回忆（第一次“写”）**：音叉（苏泠）、石板（霍铎）、酵种罐（沈鼎）由同伴自己决定碰不碰；玩家第一次打开这件物件时，恶魔先说一句朝向此人欲望的“不妨一试”（每件一次、四句各不相同，以 Corruption 写入此人认知）；回忆选项标注“（契约第 8 条）”；同伴先走过来再决定；读过公告框后，玩家可在他决定前把第 8 条指给他看，或什么都不说。三人倾向各不相同（设计 §5）：霍铎不论是否被告知都会碰（“图纸值这个价”）；苏泠未被告知会碰、被告知则拒绝；沈鼎未被告知时犹豫并反问“你说呢？”，侦探的回答（劝碰／劝别碰／由他自己）经 `SocialSystem` 判定后写进他的认知、再由他自己取舍，被告知则拒绝。插闩（侦探）由玩家决定，可拒绝。回忆把对应变量标为“回忆所证”，不替玩家改变量；钩数改变恶魔对此人的称呼与苏泠、沈鼎的结尾台词；结局卡列出“留在恶魔那里的钩”与“你没有交出的”，写入 `user://chapter1_end.json`。
+- **始业之答**：铜口对话；第 1—4 步须陈述与出示成对（“陈述”“出示”两列各选一项后“作答”）；第 5 步“反问”只在重演全部吻合后出现，由玩家主动发起。
+- **声路**：铜管从铜口出发，沿北墙到东外墙，一支经过 R-08 墙后（松动接头），主管绕到门厅隔离门左侧门框（松动接头）；声路试验可在铜口旁、R-08、门边、备餐间、R-05 听；同伴只报听到的原字与声音来处的方向（如“……开门　从那边。（指向门）”），不说“像在门外”。重演对照的“未查”只说区域（如“门厅门框一带还有东西没看过”）。
+- **门开**：恶魔须显形才能抬外闩，门开后主楼走廊的烟灰上露出一行窄底尖头的鞋印，走到门前又折回。
+- **退出考题**：S4 的末位选项，以及铜口菜单末位“不作答，在生活翼歇息”。
+
+偏离与待裁定事项见 `artifacts/remake-belief-replay/implementation-report.md`。

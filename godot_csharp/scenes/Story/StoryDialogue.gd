@@ -42,6 +42,9 @@ var portrait_frame: PanelContainer
 ## Full-length portraits are shown as a head-and-shoulders card (fractions of the image).
 const PORTRAIT_BUST := Rect2(0.2, 0.02, 0.6, 0.4)
 var portrait_character := ""
+## Hosts may dim responses the player has already chosen once (opt-in).
+var dim_visited_responses := false
+var _visited_responses: Dictionary = {}
 ## Opening dialogue consumes keyboard input before focused GUI buttons.
 var single_press_keyboard_continue := false
 
@@ -320,7 +323,13 @@ func _refresh_monogram() -> void:
 	portrait_monogram.text = name_text.left(1) if not name_text.is_empty() and not name_text.begins_with("？") else "·"
 	portrait_monogram.visible = not character_portrait.visible
 
+## Text already shaped with the previous font still holds its RIDs; freeing that font
+## mid-frame makes the text server report `Parameter "fd" is null`. Keep it alive.
+var _retired_fonts: Array[Font] = []
+
 func apply_locale_font(font: Font, _theme: Theme) -> void:
+	if dialogue_theme.default_font != null and dialogue_theme.default_font != font and not _retired_fonts.has(dialogue_theme.default_font):
+		_retired_fonts.append(dialogue_theme.default_font)
 	dialogue_theme.default_font = font
 	dialogue_theme.default_font_size = 18
 	panel.theme = dialogue_theme
@@ -631,6 +640,8 @@ func show_line(key: String) -> void:
 		if compact: button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.set_meta("dialogue_next_id", response.next_id)
 		button.pressed.connect(_on_choice_pressed.bind(button))
+		if dim_visited_responses and _visited_responses.has(str(response.next_id)):
+			button.modulate = Color(1, 1, 1, 0.5)
 		choices.add_child(button)
 	choices.hide()
 	layout_compact_line()
@@ -642,6 +653,7 @@ func choose(key: String) -> void:
 	await show_line(key)
 
 func _on_choice_pressed(button: Button) -> void:
+	_visited_responses[str(button.get_meta("dialogue_next_id"))] = true
 	choose(str(button.get_meta("dialogue_next_id")))
 
 func advance() -> void:
@@ -792,6 +804,7 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 			choice = focused
 		else:
 			choice = choices.get_child(0) as Button
+		_visited_responses[str(choice.get_meta("dialogue_next_id"))] = true
 		choose(str(choice.get_meta("dialogue_next_id")))
 	else:
 		advance()

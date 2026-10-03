@@ -52,6 +52,20 @@ public sealed record Finding(string Evidence, string Place, FindingStatus Status
 public static class Comparison
 {
     /// <summary>参与对照的证物、它们所在的地点，以及卡片上的自然语言名称。</summary>
+    /// <summary>“未查”提示具体到区域：只说哪一带还有东西没看过，不说是什么。</summary>
+    public static string RegionOf(string id) => id switch
+    {
+        "E1" => "门厅那扇门上",
+        "E2" => "门厅墙角与门底一带",
+        "E3" => "门厅插闩下方的地面",
+        "E4" => "门厅门底",
+        "E5" => "门厅门框一带",
+        "E6" => "R-08 的书桌上",
+        "E7" => "活动厅长桌上",
+        "E9" => "备餐间水槽一带",
+        _ => "这一带"
+    };
+
     public static readonly ImmutableArray<(string Id, string Place, string Name)> Items =
     [
         ("E1", "门厅", "闩上的隔离门"),
@@ -73,7 +87,7 @@ public static class Comparison
             if (!examined(id))
             {
                 // 未检视之处只给地点，不给结果。
-                findings.Add(new(id, place, FindingStatus.Unvisited, $"你还没查过这里：{place}。"));
+                findings.Add(new(id, place, FindingStatus.Unvisited, $"你还没查过这里：{RegionOf(id)}还有东西没看过。"));
                 continue;
             }
             findings.Add(differences.Count == 0

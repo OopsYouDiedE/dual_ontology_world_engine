@@ -71,6 +71,11 @@ var modal_kind := ""
 var manuscript: Control
 var stage_node: Node2D
 var decals: Node2D
+var hover_tip: Label
+var aside: Label
+var aside_until := 0
+var furniture_spoken: Dictionary = {}
+var dialogue_closed_ms := -100000
 
 var stage := "wake"
 var detective_name := "侦探"
@@ -115,7 +120,8 @@ func _ready() -> void:
 	dialogue.layer = 20
 	dialogue.use_compact_layout()
 	dialogue.single_press_keyboard_continue = true
-	dialogue.apply_locale_font(Paper.FONT, null)
+	dialogue.dim_visited_responses = true
+	dialogue.apply_locale_font(Paper.font(), null)
 	dialogue.set_character_portraits(PORTRAITS)
 	dialogue.panel.hide()
 	var music: AudioStreamPlayer = get_node_or_null("ReasoningMusic")
@@ -188,12 +194,21 @@ func _build_props() -> void:
 		face.texture = load(ART + "isolation_door.png")
 		(door.get_node("DoorGap") as Sprite2D).texture = load(ART + "isolation_door_open.png")
 		door.get_node("InnerBolt").hide()
+	if ResourceLoader.exists(ART + "demon_prints.png"):
+		var prints := Sprite2D.new()
+		prints.name = "DemonPrints"
+		prints.texture = load(ART + "demon_prints.png")
+		prints.centered = false
+		prints.offset = Vector2(-34, 14)
+		prints.z_index = 1
+		prints.hide()
+		door.add_child(prints)
 	var tube := $ObjectsAndPeople/CopperTransmitter as Sprite2D
 	if ResourceLoader.exists(ART + "speaking_tube.png"):
 		tube.texture = load(ART + "speaking_tube.png")
 		tube.offset = Vector2(-14, -44)
 	# [节点名, 贴图, 画面上的脚底位置, 遮挡排序用的 Y（放在桌面上的物件跟随桌子的前沿排序）]
-	for spec in [["Slate", "slate.png", Vector2(372, 650), 682.0], ["Score", "score.png", Vector2(1022, 160), 180.0],
+	for spec in [["NoticeFrame", "notice_frame.png", Vector2(458, 522), 544.0], ["Slate", "slate.png", Vector2(372, 650), 682.0], ["Score", "score.png", Vector2(1022, 160), 180.0],
 			["Cups", "cups.png", Vector2(862, 548), 572.0], ["Jar", "jar.png", Vector2(1128, 516), 572.0],
 			["Fork", "fork.png", Vector2(714, 954), 954.0], ["Wedge", "wedge.png", Vector2(530, 952), 952.0]]:
 		if not ResourceLoader.exists(ART + spec[1]):
@@ -213,6 +228,8 @@ func _build_sites() -> void:
 		sites[id] = site
 	for key in ["huo", "shen", "su"]:
 		sites[key] = {"person": key, "title": Content.PERSON_NAMES[key], "reach": 44.0}
+	# 活动厅公告框：恶魔依第 5、6 条抄录的契约第 1—8 条。
+	sites["BOARD"] = {"board": true, "point": Vector2(458, 544), "reach": 52.0, "title": "公告框"}
 
 # ======================================================================= UI ==
 
@@ -222,16 +239,48 @@ func _build_ui() -> void:
 	hud_hint = $FieldUI/Hint
 	$FieldUI/Time.hide()
 	for label in [hud_title, hud_hint]:
-		label.add_theme_font_override("font", Paper.FONT)
+		label.add_theme_font_override("font", Paper.font())
 	hud_keys = Label.new()
 	hud_keys.position = Vector2(700, 20)
 	hud_keys.size = Vector2(556, 30)
 	hud_keys.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hud_keys.add_theme_font_override("font", Paper.FONT)
+	hud_keys.add_theme_font_override("font", Paper.font())
 	hud_keys.add_theme_font_size_override("font_size", 17)
 	hud_keys.add_theme_color_override("font_color", Color("e8d6a7"))
 	hud_keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(0.05, 0.06, 0.06, 0.72)
+	plate.set_corner_radius_all(6)
+	plate.content_margin_left = 12
+	plate.content_margin_right = 12
+	hud_keys.add_theme_stylebox_override("normal", plate)
 	ui.add_child(hud_keys)
+	hover_tip = Label.new()
+	hover_tip.add_theme_font_override("font", Paper.font())
+	hover_tip.add_theme_font_size_override("font_size", 17)
+	hover_tip.add_theme_color_override("font_color", Color("f1e4bd"))
+	var tip := StyleBoxFlat.new()
+	tip.bg_color = Color(0.07, 0.07, 0.08, 0.86)
+	tip.border_color = Color(0.83, 0.74, 0.52, 0.7)
+	tip.set_border_width_all(1)
+	tip.set_corner_radius_all(4)
+	tip.set_content_margin_all(5)
+	hover_tip.add_theme_stylebox_override("normal", tip)
+	hover_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hover_tip.hide()
+	ui.add_child(hover_tip)
+	aside = Label.new()
+	aside.add_theme_font_override("font", Paper.font())
+	aside.add_theme_font_size_override("font_size", 19)
+	aside.add_theme_color_override("font_color", Color("f1e4bd"))
+	aside.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.05))
+	aside.add_theme_constant_override("outline_size", 6)
+	aside.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aside.position = Vector2(240, 880)
+	aside.size = Vector2(800, 30)
+	aside.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	aside.hide()
+	ui.add_child(aside)
 	modal_layer = CanvasLayer.new()
 	modal_layer.layer = 15
 	add_child(modal_layer)
@@ -284,6 +333,8 @@ func site_is_new(id: String) -> bool:
 	var site: Dictionary = sites[id]
 	if site.has("person"):
 		return false
+	if site.has("board"):
+		return not flags.has("board_read")
 	return not examined.has(site.evidence)
 
 func site_point(id: String) -> Vector2:
@@ -316,6 +367,8 @@ func site_box(id: String) -> Rect2:
 		"E4": return Rect2(598, 952, 58, 10)
 		"E5": return Rect2(702, 940, 24, 16)
 		"E8j": return Rect2(566, 954, 16, 18)
+		"E8r": return Rect2(1200, 320, 18, 24)
+		"BOARD": return Rect2(446, 488, 26, 36)
 	return Rect2(site.point + Vector2(-14, -22), Vector2(28, 26))
 
 # ================================================================ movement ===
@@ -398,6 +451,15 @@ func _process(_delta: float) -> void:
 				if distance < best:
 					best = distance
 					hovered = id
+	if is_instance_valid(hover_tip):
+		hover_tip.visible = hovered != "" and field_active()
+		if hover_tip.visible:
+			hover_tip.text = str(sites[hovered].title)
+			hover_tip.reset_size()
+			var at := get_viewport().get_mouse_position() + Vector2(16, -34)
+			hover_tip.position = Vector2(clampf(at.x, 8, 1272 - hover_tip.size.x), clampf(at.y, 64, 960))
+	if is_instance_valid(aside) and aside.visible and Time.get_ticks_msec() > aside_until:
+		aside.hide()
 	if Engine.get_process_frames() % 20 == 0:
 		_refresh_hud()
 
@@ -428,6 +490,7 @@ func _input(event: InputEvent) -> void:
 	var destination: Vector2 = get_global_transform_with_canvas().affine_inverse() * event.position
 	var site_id := _clicked_site(destination)
 	if site_id == "":
+		_furniture_aside(destination)
 		_move_to_click(destination)
 	else:
 		_approach_site(site_id)
@@ -453,6 +516,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not field_active():
 		return
 	if event.keycode in [KEY_E, KEY_SPACE, KEY_ENTER] and nearest != "":
+		# 对话刚结束时多按的一下，只是在推进对白，不当作新的交互。
+		if Time.get_ticks_msec() - dialogue_closed_ms < 600:
+			get_viewport().set_input_as_handled()
+			return
 		_complete_click_interaction(nearest)
 		get_viewport().set_input_as_handled()
 	elif event.keycode == KEY_TAB and stage == "investigate":
@@ -461,6 +528,43 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.keycode == KEY_R and replay_open:
 		open_manuscript()
 		get_viewport().set_input_as_handled()
+
+## 普通家具不是证物：点到时只给一句极短的心声，同一件只说一次，不打断移动。
+const FURNITURE_ASIDES := {
+	"Bed": "床。被子叠过。", "Nightstand": "床头柜。灯油还有。", "Wardrobe": "衣柜。几件换洗衣服。",
+	"Desk": "书桌。抽屉是空的。", "DeskChair": "椅子。", "LinenChest": "箱子里是被褥。", "Fern": "一盆蕨。",
+	"Dresser": "梳妆台。一只白瓷小碟。", "PaperBasket": "纸篓。", "WallClock": "挂钟。还在走。",
+	"StudyBookcase": "书架。都是寻常的书。", "StudyChair": "椅子。", "StudyLamp": "落地灯。", "ReadingChair": "扶手椅。",
+	"ReadingTable": "小几。", "Globe": "地球仪。转得动。", "StudySofa": "沙发。", "StudyFern": "花架。",
+	"StudyConsole": "边桌。", "Sideboard": "碗柜。碗碟摆得整整齐齐。", "Range": "灶。是冷的。", "Worktable": "案板。刀收在架上。",
+	"CupTable": "小圆桌。", "PantryLamp": "落地灯。", "PantryFern": "一盆蕨。", "PantryBarrel": "水桶。满的。",
+	"PantryCrate": "存粮。", "PantrySack": "面粉。", "CorridorConsole": "边桌。", "CorridorPlant": "花架。",
+	"HallLamp": "落地灯。", "CoatStand": "衣架。",
+}
+
+func _furniture_aside(pos: Vector2) -> void:
+	for node in $ObjectsAndPeople.get_children():
+		if node is not Sprite2D or furniture_spoken.has(node.name):
+			continue
+		var key := ""
+		for prefix in FURNITURE_ASIDES:
+			if str(node.name).begins_with(prefix) and prefix.length() > key.length():
+				key = prefix
+		if key == "":
+			continue
+		var sprite := node as Sprite2D
+		if sprite.texture == null:
+			continue
+		var rect := Rect2(sprite.position + sprite.offset, sprite.texture.get_size())
+		if rect.has_point(pos):
+			furniture_spoken[node.name] = true
+			show_aside(FURNITURE_ASIDES[key])
+			return
+
+func show_aside(text: String) -> void:
+	aside.text = text
+	aside.show()
+	aside_until = Time.get_ticks_msec() + 2600
 
 func _clicked_site(pos: Vector2) -> String:
 	var chosen := ""
@@ -551,7 +655,7 @@ func _walkable(point: Vector2) -> bool:
 	return true
 
 func can_access_dorm(_owner: String) -> bool:
-	return stage in ["investigate", "answer", "finale"]
+	return stage in ["investigate", "playback", "answer", "finale"]
 
 func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
@@ -577,6 +681,18 @@ func _route(from: Vector2, to: Vector2, walker: CharacterBody2D = null) -> Packe
 	var grid := FieldNavigation.build_route_grid(floors, _navigation_obstacles(who), Vector2i(layout.rows[0].length(), layout.rows.size()))
 	return FieldNavigation.route_on_grid(from, to, grid)
 
+## 回放墨影的走位：只避家具与墙，不受宿舍门与人物阻挡；网格只建一次。
+var _ink_grid: AStarGrid2D
+
+func ink_route(from: Vector2, to: Vector2) -> PackedVector2Array:
+	if _ink_grid == null:
+		_ink_grid = FieldNavigation.build_route_grid(floors, obstacle_rects, Vector2i(layout.rows[0].length(), layout.rows.size()))
+	var route := FieldNavigation.route_on_grid(from, to, _ink_grid)
+	if route.is_empty():
+		return PackedVector2Array([to])
+	route.append(to)
+	return route
+
 ## 把某人走到某处（场面调度用）；走不通就直接放到那里。
 func walk_actor(key: String, point: Vector2, speed := 150.0) -> void:
 	var actor := actor_of(key)
@@ -601,14 +717,20 @@ func _check_triggers() -> void:
 		_meeting()
 		return
 	if stage == "investigate":
-		for id in RECALL_OBJECTS:
-			if nudged.has(id) or not examined.has(id):
-				continue
-			var site_id: String = id
-			if player.position.distance_to(site_point(site_id)) < 64.0:
-				nudged[id] = true
-				call_deferred("_nudge", id)
+		var room := _room_key(player.position)
+		if room != "" and not visited_rooms.has(room):
+			visited_rooms[room] = true
+			if room in ["foyer", "pantry", "R08", "R06", "R07"]:
+				call_deferred("_nudge_room", room)
 				return
+
+var visited_rooms: Dictionary = {}
+
+func _room_key(p: Vector2) -> String:
+	return {"R-05": "R05", "R-06": "R06", "R-07": "R07", "R-08": "R08", "走廊": "corridor", "活动厅": "hall", "备餐间": "pantry", "门厅": "foyer"}.get(_room_name(p), "")
+
+func _nudge_room(room: String) -> void:
+	await say("enter_" + room)
 
 func _nudge(id: String) -> void:
 	await say("nudge_" + id)
@@ -625,6 +747,7 @@ func say(title: String) -> void:
 	await dialogue.finished
 	dialogue.panel.hide()
 	story_lock = false
+	dialogue_closed_ms = Time.get_ticks_msec()
 	_refresh_hud()
 
 func _localized_speaker(canonical: String) -> String:
@@ -644,6 +767,8 @@ func flag(name: String) -> bool: return flags.has(name)
 func set_flag(name: String) -> void: flags[name] = true
 func clear_flag(name: String) -> void: flags.erase(name)
 func recalled(who: String) -> bool: return recalls.has(who)
+## 恶魔朝某人的欲望说一句真话（.dialogue 中 do amplify(...)）：以 Corruption 来源写入此人认知。
+func amplify(who: String, words: String) -> void: engine.Amplify(who, words)
 func hooks(who: String) -> int: return int(engine.Hooks(who))
 func total_hooks() -> int: return int(engine.TotalHooks())
 func matched() -> bool: return full_match_seen
@@ -652,12 +777,12 @@ func fragment(who: String) -> String: return str(recalls.get(who, ""))
 func heard(who: String) -> String:
 	for h in last_sound:
 		if h.who == who:
-			return str(h.text) + ("——像是从门外来的。" if h.outside else "")
+			return str(h.text) + ("　" + str(h.direction) if str(h.direction) != "" else "")
 	return ""
 func heard_where(who: String) -> String:
 	for h in last_sound:
 		if h.who == who:
-			return {"hall": "铜口旁", "foyer": "门边", "pantry": "备餐间", "R05": "R-05"}.get(h.room, "")
+			return {"hall": "铜口旁", "foyer": "门边", "pantry": "备餐间", "R05": "R-05", "R08": "R-08"}.get(h.room, "")
 	return ""
 ## 恶魔对有钩之人改用更亲近的称呼。
 func addr(who: String) -> String:
@@ -687,15 +812,17 @@ func _meeting() -> void:
 	await say("s2_meet")
 	await _ask_name()
 	await say("s2_tea")
-	await say("s3_rewards")
-	await say("s4_question")
+	await say("s3_broadcast")
+	await _present_board()
+	await say("s4_rewards")
+	await say("s5_question")
 	if flags.has("rest_chosen"):
 		await _rest()
 		return
 	stage = "investigate"
 	for key in POSTS:
 		walk_actor(key, POSTS[key])
-	await say("s5_begin")
+	await say("s6_begin")
 	_refresh_hud()
 
 var _name_field: LineEdit
@@ -793,6 +920,9 @@ func interact(id: String) -> void:
 	if id == "E8":
 		open_tube_menu()
 		return
+	if site.has("board"):
+		open_board()
+		return
 	open_card(site.evidence)
 
 func examine(id: String) -> void:
@@ -800,11 +930,16 @@ func examine(id: String) -> void:
 		return
 	examined[id] = true
 	engine.Examine("detective", id)
-	if id == "E1" and not replay_open:
+	if id in ["E1", "E3"] and not replay_open:
 		call_deferred("_unlock_replay")
 
 func open_card(id: String) -> void:
 	examine(id)
+	if id in RECALL_OBJECTS and not nudged.has(id):
+		# 恶魔在玩家第一次面对这件物件的回忆选项之前说一句，朝向此人的欲望；每件只说一次。
+		nudged[id] = true
+		close_modal()
+		await say("nudge_" + id)
 	var ev: Dictionary = Content.EVIDENCE[id]
 	var body := open_modal(ev.name, Vector2(900, 660), "card")
 	var row := HBoxContainer.new()
@@ -840,7 +975,7 @@ func open_card(id: String) -> void:
 		actions.append(["请%s看看" % Content.PERSON_NAMES[ev.help], _on_help.bind(id)])
 	if ev.has("recall") and not recalls.has(ev.recall):
 		var who: String = ev.recall
-		actions.append(["触碰插闩，试着回想" if who == "detective" else "请%s触碰它，回想" % Content.PERSON_NAMES[who], _on_recall.bind(id)])
+		actions.append(["触碰插闩，试着回想（契约第 8 条）" if who == "detective" else "请%s触碰它，回想（契约第 8 条）" % Content.PERSON_NAMES[who], _on_recall.bind(id)])
 	actions.append(["返回现场", close_modal])
 	add_footer(actions)
 
@@ -849,7 +984,7 @@ func _card_notes(id: String) -> Array:
 	var ev: Dictionary = Content.EVIDENCE[id]
 	if experiments.has(id):
 		if id == "E8":
-			notes.append("声路试验：" + "；".join(last_sound.map(func(h): return "%s（%s）听到 %s%s" % [Content.PERSON_NAMES[h.who], heard_where(h.who), h.text, "，像在门外" if h.outside else ""])))
+			notes.append("声路试验：" + "；".join(last_sound.map(func(h): return "%s（%s）听到 %s %s" % [Content.PERSON_NAMES[h.who], heard_where(h.who), h.text, h.direction])))
 		elif id == "E11":
 			notes.append(HELP_NOTES.E11)
 		else:
@@ -858,6 +993,8 @@ func _card_notes(id: String) -> Array:
 		notes.append(HELP_NOTES[id])
 	if ev.has("recall") and recalls.has(ev.recall):
 		notes.append("回忆（%s）：%s" % [Content.PERSON_NAMES[ev.recall], recalls[ev.recall]])
+	elif ev.has("recall") and refusals.has(ev.recall):
+		notes.append("%s没有碰它：“%s”" % [Content.PERSON_NAMES[ev.recall], refusals[ev.recall]])
 	return notes
 
 func _on_experiment(id: String) -> void:
@@ -899,26 +1036,107 @@ func _summon(who: String) -> void:
 				if other != actor and other.position.distance_to(spot) < 18:
 					taken = true
 			if _walkable(spot) and not taken:
-				actor.position = spot
+				# 同伴真的走过来；路走不通才直接站到旁边。
+				var route := _route(actor.position, spot, actor)
+				if route.is_empty():
+					actor.position = spot
+				else:
+					route.append(spot)
+					var previous: float = actor.speed
+					actor.speed = 240.0
+					await actor.follow_path(route)
+					actor.speed = previous
 				break
 	actor.face_point(player.position)
 	player.face_point(actor.position)
 
+## 恶魔走近旧物时对本人说的、朝向其欲望的真话（Corruption 来源写入此人认知）。
+const WHISPERS := {
+	"huo": "图纸就在主楼。记得它的人，是你。",
+	"su": "那墙里的声音，你昨夜已经听过一次。还有你从未听过的，就在后面。",
+	"shen": "这罐子记得你护过的每一个人。你想护住的，都在里面。",
+}
+var whispered: Dictionary = {}
+var recall_decision: Dictionary = {}
+var refusals: Dictionary = {}
+
+func told8(who: String) -> bool:
+	return bool(engine.KnowsClause8(who))
+
+func recall_thought() -> String:
+	return str(recall_decision.get("thought", ""))
+
 func _on_recall(id: String) -> void:
 	close_modal()
 	var who: String = Content.EVIDENCE[id].recall
-	if who != "detective":
-		await _summon(who)
-	flags.erase("recall_yes")
-	await say("recall_ask_" + who)
-	if flags.has("recall_yes"):
-		var memory: Dictionary = engine.Recall(id)
-		if not memory.is_empty():
-			recalls[who] = memory.fragment
-			for variable in memory.confirms:
-				recall_marks[int(variable)] = who
-			await say("recall_" + who)
+	if who == "detective":
+		flags.erase("recall_yes")
+		await say("recall_ask_detective")
+		if flags.has("recall_yes"):
+			_apply_recall(id, who)
+			await say("recall_detective")
+		open_card(id)
+		return
+	await _summon(who)
+	# 写：在他决定之前，可以把公告框上的第 8 条指给他看，或者什么都不说。
+	if flags.has("board_read") and not bool(engine.KnowsClause8(who)):
+		flags.erase("show8")
+		await say("recall_offer_" + who)
+		if flags.has("show8"):
+			engine.ShowClause8(who)
+			await say("recall_shown_" + who)
+	recall_decision = engine.DecideRecall(id)
+	var choice := str(recall_decision.get("choice", "refuse"))
+	if choice == "hesitate":
+		# 犹豫的人反问“你说呢？”：侦探的回答经 SocialSystem 判定后进入他的认知，再由他自己取舍。
+		for key in ["advice_touch", "advice_decline", "advice_own"]:
+			flags.erase(key)
+		await say("recall_hesitate_" + who)
+		var advice := "touch" if flags.has("advice_touch") else "decline" if flags.has("advice_decline") else "own"
+		engine.Advise(who, advice)
+		recall_decision = engine.DecideRecall(id)
+		choice = str(recall_decision.get("choice", "refuse"))
+		if choice == "hesitate":
+			choice = "refuse"
+	flags["recall_" + choice + "_" + who] = true
+	if choice != "touch":
+		refusals[who] = str(recall_decision.get("thought", ""))
+	await say("recall_" + choice + "_" + who)
+	if choice == "touch":
+		_apply_recall(id, who)
+		await say("recall_" + who)
 	open_card(id)
+
+func _apply_recall(id: String, who: String) -> void:
+	var memory: Dictionary = engine.Recall(id)
+	if memory.is_empty():
+		return
+	recalls[who] = memory.fragment
+	for variable in memory.confirms:
+		recall_marks[int(variable)] = who
+
+## S3 广播结束：镜头带过公告框，第 1—8 条完整呈现一次（任意键翻过）。读不读，由玩家决定；这里只是让它被看见过一次。
+func _present_board() -> void:
+	follow_camera = false
+	var from := camera.position
+	var tween := create_tween()
+	tween.tween_property(camera, "position", Vector2(458, 560), 0.8)
+	await tween.finished
+	open_board()
+	while modal_kind != "":
+		await get_tree().process_frame
+	var back := create_tween()
+	back.tween_property(camera, "position", from, 0.5)
+	await back.finished
+	follow_camera = true
+
+func open_board() -> void:
+	flags["board_read"] = true
+	var body := open_modal("活动厅公告框", Vector2(860, 620), "card")
+	body.add_child(Paper.label("框里压着一张新抄的纸，字迹端正，墨色很新。题头写着：契约要点。", 18, Paper.MUTED))
+	for clause in engine.PostedClauses():
+		body.add_child(Paper.label(str(clause), 19))
+	add_footer([["返回现场", close_modal]])
 
 func _unlock_replay() -> void:
 	if replay_open:
@@ -953,6 +1171,11 @@ func open_notebook() -> void:
 			if experiments.has(id) or helped.has(id):
 				mark = "　·已试"
 			grid.add_child(Paper.button(str(Content.EVIDENCE[id].name) + mark, open_card.bind(id), 18))
+	if flags.has("board_read"):
+		body.add_child(Paper.label("[b]其他[/b]", 21, Paper.SEAL))
+		var other := Paper.button("活动厅公告框（契约要点）", open_board, 18)
+		other.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		body.add_child(other)
 	if not recalls.is_empty():
 		body.add_child(Paper.rule())
 		body.add_child(Paper.label("[b]回忆所得[/b]", 21, Paper.SEAL))
@@ -997,6 +1220,15 @@ func play_replay(result: Dictionary) -> void:
 
 func after_replay(result: Dictionary) -> void:
 	close_modal()
+	if replay_count == 1 and not bool(result.full_match):
+		await say("replay_first")
+	var refused := false
+	for frame in result.frames:
+		if str(frame.thoughts.detective).contains("我凭什么信"):
+			refused = true
+	if refused and not flags.has("refusal_seen"):
+		flags["refusal_seen"] = true
+		await say("replay_refused")
 	if bool(result.full_match) and not full_match_seen:
 		full_match_seen = true
 		for who in ["huo", "shen", "su"]:
@@ -1021,7 +1253,7 @@ func _sound_pick(kind: String, index: int, value: Variant) -> void:
 
 func sound_test() -> void:
 	var body := open_modal("声路试验", Vector2(820, 600), "sound")
-	body.add_child(Paper.label("请铜口说一句话。你和三位同伴分别站在铜口旁、门边、备餐间、R-05 听。", 19))
+	body.add_child(Paper.label("请铜口说一句话。你和三位同伴分别站在铜口旁、R-08、门边、备餐间、R-05 中的四处听。", 19))
 	body.add_child(Paper.label("[b]让铜口说哪一句[/b]", 19, Paper.SEAL))
 	var sentences: Array = engine.Sentences()
 	_sound_choice = [0, "foyer"]
@@ -1038,7 +1270,7 @@ func sound_test() -> void:
 	var where_row := HBoxContainer.new()
 	where_row.add_theme_constant_override("separation", 10)
 	body.add_child(where_row)
-	var places := [["foyer", "门边"], ["hall", "铜口旁"], ["pantry", "备餐间"], ["R05", "R-05"]]
+	var places := [["foyer", "门边"], ["R08", "R-08"], ["hall", "铜口旁"], ["pantry", "备餐间"], ["R05", "R-05"]]
 	for i in places.size():
 		var b := Paper.button(places[i][1], _sound_pick.bind("spot", i, places[i][0]))
 		b.toggle_mode = true
@@ -1051,11 +1283,11 @@ func sound_test() -> void:
 		await get_tree().process_frame
 	if not _modal_result:
 		return
-	# 同伴补上其余位置：苏泠优先门边，霍铎优先铜口旁，沈鼎优先备餐间。
-	var free := ["hall", "foyer", "pantry", "R05"]
+	# 同伴补上其余位置：苏泠优先 R-08，霍铎优先铜口旁，沈鼎优先门边。
+	var free := ["R08", "hall", "foyer", "pantry", "R05"]
 	free.erase(_sound_choice[1])
 	var positions := {"detective": _sound_choice[1]}
-	for pair in [["su", "foyer"], ["huo", "hall"], ["shen", "pantry"]]:
+	for pair in [["su", "R08"], ["huo", "hall"], ["shen", "foyer"]]:
 		var spot: String = pair[1] if free.has(pair[1]) else free[0]
 		positions[pair[0]] = spot
 		free.erase(spot)
@@ -1111,11 +1343,13 @@ func statements() -> Array:
 	for i in 6:
 		if int(replay_vars[i]) >= 0 and replay_count > 0:
 			list.append("V%d_%d" % [i + 1, int(replay_vars[i])])
+	if replay_count > 0 and int(replay_vars[4]) == 0 and int(replay_vars[5]) == 1:
+		list.append("trust")
 	return list
 
 func answer() -> void:
 	stage = "answer"
-	answer_state = {"step": 1, "said_trust": false, "shown_familiar": false}
+	answer_state = {"step": 1}
 	await say("answer_open")
 	while answer_state.step <= 4:
 		await say("answer_q%d" % answer_state.step)
@@ -1138,20 +1372,40 @@ func answer() -> void:
 				var pick: Dictionary = await _answer_pick(true)
 				if pick.is_empty():
 					break
-				if pick.kind == "show" and pick.id in ["E10", "E11"]:
+				if str(pick.get("show", "")) in ["E10", "E11"]:
 					flags["asked_reverse"] = true
 					await say("answer_reverse")
 					break
 				await say("answer_reverse_wrong")
 	await finale()
 
-## 底部两个按钮：陈述 / 出示。返回 {kind, id}；空字典表示暂时不答。
+## 第 1—4 步陈述与出示成对：先各选一项，再作答。返回 {say, show}；空字典表示暂时不答。
 var _answer_list: VBoxContainer
+var _answer_choice: Dictionary = {}
+var _answer_summary: RichTextLabel
+var _answer_submit: Button
+var _answer_reverse := false
 
 func _answer_pick(reverse := false) -> Dictionary:
 	_modal_result = null
-	var body := open_modal("始业之答" if not reverse else "反问", Vector2(860, 640), "answer")
-	body.add_child(Paper.label("铜口在等你回答。陈述一句，或出示一件东西。" if not reverse else "你说：“你说我们‘初涉斯地’。”——拿出一件东西。", 20))
+	_answer_reverse = reverse
+	_answer_choice = {"say": "", "show": ""}
+	var body := open_modal("始业之答" if not reverse else "反问", Vector2(900, 820), "answer")
+	# 题目与当前所选的陈述、出示固定在顶部；下面的列表单独滚动，不与题目叠压。
+	var column: VBoxContainer = modal_root.get_meta("column")
+	var header := VBoxContainer.new()
+	header.add_theme_constant_override("separation", 6)
+	column.add_child(header)
+	column.move_child(header, 2)
+	var questions := {1: "门，是谁闩上的？", 2: "门外，有人呼喊吗？", 3: "他喊的是什么？", 4: "闩门的人，为何不听门边那位女士的？"}
+	if reverse:
+		header.add_child(Paper.label("你说：“你说我们‘初涉斯地’。”——拿出一件东西。", 20))
+	else:
+		header.add_child(Paper.label("铜口问：[b]%s[/b]" % questions.get(int(answer_state.get("step", 1)), ""), 21, Paper.SEAL))
+		header.add_child(Paper.label("陈述一句结论，再出示一件能支撑它的东西。", 18, Paper.MUTED))
+	_answer_summary = Paper.label("", 18)
+	header.add_child(_answer_summary)
+	header.add_child(Paper.rule())
 	_answer_list = VBoxContainer.new()
 	_answer_list.add_theme_constant_override("separation", 8)
 	body.add_child(_answer_list)
@@ -1160,12 +1414,34 @@ func _answer_pick(reverse := false) -> Dictionary:
 		footer_actions.append(["陈述", _answer_show_list.bind("say")])
 	footer_actions.append(["出示", _answer_show_list.bind("show")])
 	footer_actions.append(["暂且不答" if not reverse else "算了", _modal_choose.bind({})])
-	add_footer(footer_actions)
-	if reverse:
-		_answer_show_list("show")
+	footer_actions.append(["作答", _answer_submit_pressed])
+	var footer := add_footer(footer_actions)
+	_answer_submit = footer.get_child(footer.get_child_count() - 1)
+	_answer_show_list("show" if reverse else "say")
+	_answer_refresh()
 	while _modal_result == null:
 		await get_tree().process_frame
 	return _modal_result
+
+func _answer_refresh() -> void:
+	var said := str(_answer_choice.say)
+	var shown := str(_answer_choice.show)
+	var line := ""
+	if not _answer_reverse:
+		line += "陈述：" + (Content.STATEMENTS[said] if said != "" else "（未选）") + "\n"
+	line += "出示：" + (str(Content.EVIDENCE[shown].name) if shown != "" else "（未选）")
+	_answer_summary.text = line
+	if is_instance_valid(_answer_submit):
+		_answer_submit.disabled = shown == "" or (not _answer_reverse and said == "")
+
+func _answer_select(kind: String, id: String) -> void:
+	_answer_choice[kind] = id
+	_answer_refresh()
+
+func _answer_submit_pressed() -> void:
+	if _answer_submit.disabled:
+		return
+	_modal_choose(_answer_choice.duplicate())
 
 func _answer_show_list(kind: String) -> void:
 	for child in _answer_list.get_children():
@@ -1175,48 +1451,47 @@ func _answer_show_list(kind: String) -> void:
 		if options.is_empty():
 			_answer_list.add_child(Paper.label("你还没有可以陈述的结论。重演一次，设定过的处境就能说出口。", 18, Paper.MUTED))
 		for key in options:
-			_answer_list.add_child(Paper.button(Content.STATEMENTS[key], _modal_choose.bind({"kind": "say", "id": key}), 19))
+			var b := Paper.button(Content.STATEMENTS[key], _answer_select.bind("say", key), 19)
+			b.toggle_mode = true
+			b.button_pressed = _answer_choice.say == key
+			_answer_list.add_child(b)
 	else:
 		if examined.is_empty():
 			_answer_list.add_child(Paper.label("笔记本里还没有东西。", 18, Paper.MUTED))
 		for id in Content.EVIDENCE:
 			if examined.has(id):
-				_answer_list.add_child(Paper.button(Content.EVIDENCE[id].name, _modal_choose.bind({"kind": "show", "id": id}), 19))
+				var b := Paper.button(Content.EVIDENCE[id].name, _answer_select.bind("show", id), 19)
+				b.toggle_mode = true
+				b.button_pressed = _answer_choice.show == id
+				_answer_list.add_child(b)
 
 func _judge(step: int, pick: Dictionary) -> String:
-	var kind: String = pick.kind
-	var id: String = pick.id
+	var said := str(pick.get("say", ""))
+	var shown := str(pick.get("show", ""))
+	var good_say := false
+	var good_show := false
 	match step:
 		1:
-			if kind == "say" and id == "me": return "answer_ok1"
-			if kind == "show" and id == "E3": return "answer_ok1"
-			if kind == "show" and id in ["E12", "E7"] and examined.has("E12") and examined.has("E7"): return "answer_ok1"
+			good_say = said == "me"
+			good_show = shown == "E3" or (shown in ["E12", "E7"] and examined.has("E12") and examined.has("E7"))
 		2:
-			if kind == "show" and id == "E8" and experiments.has("E8"): return "answer_ok2"
-			if kind == "show" and id == "E5": return "answer_ok2"
-			if kind == "say" and id == "V3_0": return "answer_ok2"
-			if kind == "show" and id == "E8": return "answer_need_test"
+			good_say = said == "V3_0"
+			good_show = (shown == "E8" and experiments.has("E8")) or shown == "E5"
+			if good_say and shown == "E8" and not experiments.has("E8"):
+				return "answer_need_test"
 		3:
-			if kind == "show" and id in ["E7", "E6"]: return "answer_ok3"
-			if kind == "say" and id == "V4_0": return "answer_ok3"
+			good_say = said == "V4_0"
+			good_show = shown in ["E7", "E6"]
 		4:
-			if kind == "say" and id == "V5_0":
-				answer_state.said_trust = true
-			elif kind == "show" and id in ["E9", "E10", "E11", "E7"]:
-				answer_state.shown_familiar = true
-			else:
-				return _wrong(step, kind, id)
-			if answer_state.said_trust and answer_state.shown_familiar:
-				return "answer_ok4"
-			return "answer_half4_trust" if answer_state.said_trust else "answer_half4_shown"
-	return _wrong(step, kind, id)
-
-func _wrong(_step: int, kind: String, id: String) -> String:
-	if kind == "show":
-		set_meta("wrong_name", Content.EVIDENCE[id].name)
-		return "answer_wrong_show"
-	set_meta("wrong_name", Content.STATEMENTS[id])
-	return "answer_wrong_say"
+			good_say = said in ["V5_0", "V6_1", "trust"]
+			good_show = shown in ["E9", "E10", "E11", "E7"]
+	if good_say and good_show:
+		return "answer_ok%d" % step
+	if not good_say:
+		set_meta("wrong_name", Content.STATEMENTS.get(said, ""))
+		return "answer_wrong_say"
+	set_meta("wrong_name", Content.EVIDENCE[shown].name)
+	return "answer_wrong_show"
 
 func wrong_name() -> String:
 	return str(get_meta("wrong_name", ""))
@@ -1227,14 +1502,21 @@ func finale() -> void:
 	stage = "finale"
 	story_lock = true
 	follow_camera = false
+	player.position = Vector2(616, 916)
+	player.pose("idle", "front")
 	camera.position = Vector2(644, 862)
+	_refresh_hud()
 	await say("s10_steps")
 	var door := $ObjectsAndPeople/MechanicalIsolationDoor
 	door.get_node("DoorFace").hide()
 	door.get_node("DoorGap").show()
+	# 恶魔须显形才能抬外闩：主楼走廊的烟灰上留下一行窄底皮鞋印。
+	var prints := door.get_node_or_null("DemonPrints")
+	if prints:
+		prints.show()
 	flags["door_open"] = true
 	decals.queue_redraw()
-	await walk_actor("su", player.position + Vector2(30, 0))
+	await walk_actor("su", player.position + Vector2(34, 0))
 	await say("s10_open")
 	_save_chapter_end(false)
 	_ending_card("门的这一侧 · 完", "主楼的门开了。")
@@ -1262,6 +1544,11 @@ func _ending_card(title: String, line: String) -> void:
 		if hooks(key) > 0:
 			hook_text.append(Content.PERSON_NAMES[key])
 	body.add_child(Paper.label("留在恶魔那里的钩：%s" % ("无" if hook_text.is_empty() else "、".join(hook_text)), 18, Paper.SEAL))
+	var kept := []
+	for key in ["detective", "huo", "shen", "su"]:
+		if hooks(key) == 0:
+			kept.append(Content.PERSON_NAMES[key] if key != "detective" else "你自己")
+	body.add_child(Paper.label("你没有交出的：%s" % ("无" if kept.is_empty() else "、".join(kept)), 18, Paper.MATCH))
 	body.add_child(Paper.label("按 R 重新开始。", 17, Paper.MUTED))
 	modal_kind = "ending"
 	stage = "ended"

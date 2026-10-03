@@ -195,7 +195,27 @@ func _key(code: Key, unicode: int, pressed: bool, ctrl := false) -> void:
 
 # ---------------------------------------------------------------- publish ---
 
+## 快照前等镜头稳定：画布变换连续若干帧不变（最多约 4 秒）。否则人物还在走、镜头还在平移时拍下的画面，
+## 与之后点击时的画面坐标不一致，会造成“点击偏移”。这是驱动的时机问题，不读写任何剧情状态。
+const STABLE_FRAMES := 8
+const MAX_STABLE_WAIT := 240
+
+func _wait_camera_stable() -> void:
+	var last := root.get_canvas_transform()
+	var still := 0
+	for i in MAX_STABLE_WAIT:
+		await process_frame
+		var now := root.get_canvas_transform()
+		if now.is_equal_approx(last):
+			still += 1
+			if still >= STABLE_FRAMES:
+				return
+		else:
+			still = 0
+		last = now
+
 func _publish(seq: int, name: String, error: String) -> void:
+	await _wait_camera_stable()
 	await RenderingServer.frame_post_draw
 	var shot := "%04d-%s.png" % [seq, name.validate_filename()]
 	root.get_texture().get_image().save_png(directory.path_join(shot))

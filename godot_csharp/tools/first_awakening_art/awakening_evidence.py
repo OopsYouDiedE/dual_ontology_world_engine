@@ -429,7 +429,53 @@ def card_coat() -> Canvas:
     return c
 
 
+def notice_frame() -> Canvas:
+    """24x34 notice frame on the hall wall: a walnut frame holding a freshly copied sheet of eight clauses."""
+    c = Canvas(24, 34)
+    c.rect(0, 0, 24, 34, WALNUT[3])
+    c.frame(0, 0, 24, 34, WALNUT[1])
+    c.hline(1, 1, 22, WALNUT[5])
+    c.rect(3, 3, 18, 28, PAPER[2])
+    c.hline(3, 30, 18, PAPER[0])
+    for i, y in enumerate(range(6, 29, 3)):
+        c.px(4, y, INK_A)
+        c.hline(6, y, 13 - (i * 5) % 6, mix(INK_A, PAPER[2], 0.35))
+    c.px(11, 0, BRASS[4])
+    c.px(12, 0, BRASS[4])
+    return _finish(c)
+
+
+def demon_prints() -> Canvas:
+    """60x50 overlay for the opened gate: settled ash in the main-wing corridor, and one line of
+    narrow, pointed shoe prints walking up to the door and turning back (the demon had to take form to lift the bar)."""
+    c = Canvas(60, 50)
+    # the ash has to read against the dark doorway: an opaque settled layer, lighter speckle on top
+    c.rect(0, 0, 60, 50, hexc("#77726b", 235))
+    c.dither(0, 0, 60, 50, hexc("#8d8880", 240), 0.55)
+    c.dither(0, 30, 60, 20, hexc("#a29d94", 240), 0.45)
+    dark = hexc("#2a262b", 245)
+
+    def shoe(x: int, y: int, toe_up: bool) -> None:
+        # narrow sole (3 px) with a pointed toe and a separate small heel
+        if toe_up:
+            c.px(x + 1, y, dark)
+            c.rect(x, y + 1, 3, 4, dark)
+            c.rect(x, y + 7, 3, 2, dark)
+        else:
+            c.rect(x, y, 3, 2, dark)
+            c.rect(x, y + 4, 3, 4, dark)
+            c.px(x + 1, y + 8, dark)
+
+    for i, y in enumerate(range(38, 2, -11)):
+        shoe(20 + (i % 2) * 5, y, True)
+    for i, y in enumerate(range(6, 44, 11)):
+        shoe(34 + (i % 2) * 5, y, False)
+    return c
+
+
 FIELD = {
+    "demon_prints": demon_prints,
+    "notice_frame": notice_frame,
     "speaking_tube": speaking_tube, "isolation_door": isolation_door,
     "isolation_door_open": lambda: isolation_door(True), "wedge": wedge, "fork": fork, "score": score,
     "slate": slate, "cups": cups, "jar": jar, "ash_fan": ash_fan, "boot_print": boot_print,

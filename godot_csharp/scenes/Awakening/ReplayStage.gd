@@ -85,7 +85,7 @@ func _setup() -> void:
 	bar.add_child(caption)
 	controls = Label.new()
 	controls.text = "空格 暂停　F 倍速　Esc 跳过"
-	controls.add_theme_font_override("font", Paper.FONT)
+	controls.add_theme_font_override("font", Paper.font())
 	controls.add_theme_font_size_override("font_size", 16)
 	controls.add_theme_color_override("font_color", Color("cfc3a2"))
 	controls.position = Vector2(960, 950)
@@ -93,7 +93,7 @@ func _setup() -> void:
 	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	layer.add_child(controls)
 	door_label = Label.new()
-	door_label.add_theme_font_override("font", Paper.FONT)
+	door_label.add_theme_font_override("font", Paper.font())
 	door_label.add_theme_font_size_override("font_size", 16)
 	door_label.add_theme_color_override("font_color", Color("f1e4bd"))
 	door_label.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.06))
@@ -161,12 +161,24 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 		if previous.is_empty():
 			figure.position = target
 		elif figure.position.distance_to(target) > 1.0:
-			var direction := target - figure.position
-			var facing := "left" if absf(direction.x) > absf(direction.y) else ("front" if direction.y > 0 else "back")
-			figure.flip_h = direction.x > 0 and facing == "left"
-			figure.play("walk_" + facing)
+			# 沿地图上的可走路线移动，不穿过桌椅。
+			var route: PackedVector2Array = host.ink_route(figure.position, target)
+			var total := 0.0
+			var last := figure.position
+			for point in route:
+				total += last.distance_to(point)
+				last = point
 			var tween := create_tween()
-			tween.tween_property(figure, "position", target, 0.7 / speed)
+			last = figure.position
+			var facing := "front"
+			for point in route:
+				var step := point - last
+				if step.length() < 0.5:
+					continue
+				facing = "left" if absf(step.x) > absf(step.y) else ("front" if step.y > 0 else "back")
+				tween.tween_callback(_face.bind(figure, facing, step.x > 0 and facing == "left"))
+				tween.tween_property(figure, "position", point, maxf(0.02, 0.8 / speed * step.length() / maxf(total, 1.0)))
+				last = point
 			tween.tween_callback(figure.play.bind("idle_" + facing))
 		figure.modulate = INK if who != Content.PERSON_NAMES[key] else Color(0.1, 0.08, 0.14, 0.9)
 		var bubble: PanelContainer = bubbles[key]
@@ -179,18 +191,25 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 	door_label.position = Vector2(560, 880)
 	call_deferred("_place_bubbles", frame)
 
+func _face(figure: AnimatedSprite2D, facing: String, flip: bool) -> void:
+	figure.flip_h = flip
+	figure.play("walk_" + facing)
+
 func _place_bubbles(frame: Dictionary) -> void:
 	if figures.is_empty():
 		return
 	var placed: Array[Rect2] = []
-	var canvas := get_viewport().get_canvas_transform()
+	# 相机在同一帧里刚换了缩放与位置，视口的画布变换要到下一帧才更新：按相机参数直接换算屏幕坐标。
+	var zoom: Vector2 = host.camera.zoom
+	var center: Vector2 = host.camera.position
+	var half := Vector2(640, 496)
 	var keys := ORDER.duplicate()
 	keys.sort_custom(func(a, b): return position_of(frame, a).y > position_of(frame, b).y)
 	for key in keys:
 		var bubble: PanelContainer = bubbles[key]
 		bubble.reset_size()
 		var size := bubble.get_combined_minimum_size()
-		var anchor: Vector2 = canvas * position_of(frame, key)
+		var anchor: Vector2 = (position_of(frame, key) - center) * zoom + half
 		var rect := Rect2(anchor + Vector2(-size.x / 2.0, -62 - size.y), size)
 		rect.position.x = clampf(rect.position.x, 6, 1274 - size.x)
 		rect.position.y = clampf(rect.position.y, 60, 940 - size.y)

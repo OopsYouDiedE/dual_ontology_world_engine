@@ -36,7 +36,7 @@ var matches = results.Where(r => r.FullMatch).ToArray();
 Check(matches.Length == 1, $"全部证物对照下完全吻合的组合数 = {matches.Length}");
 Check(matches.Length == 1 && matches[0].Variables == truth, "唯一吻合组合 = 设计 §4.4（她的房间 / 活动厅铜口旁 / 从主楼对着铜口说 / 闩门，别开 / 霍铎 / 早已相熟）");
 Check(results.All(r => r.Log.All(l => !l.Contains("失败"))), "216 次重演中没有行动因客观不可行而失败");
-Check(results.All(r => r.Frames.Length > 3), "每次重演都产生可回放的帧");
+Check(results.All(r => r.Frames.Length >= 3), "每次重演都产生可回放的帧（至少警铃与两次人声）");
 
 Line("");
 Line("== 每个错误组合被哪些证物否定（全部证物已检视时）");
@@ -80,6 +80,42 @@ foreach (var (id, _, name) in Comparison.Items)
     var survivors = results.Where(r => r.Conflicts.All(c => c == id)).Select(r => Short(r.Variables)).ToArray();
     Line($"不看 {id} {name}：{survivors.Length} 个组合吻合  {string.Join(" | ", survivors)}");
 }
+
+// 唯一解不依赖行动值调参：在一组速度、延迟参数上复测（逐项改一个参数，再加随机组合）。
+Line("");
+Line("== 行动值参数扫描（唯一解是否依赖先后调参）");
+var timings = new List<(string Name, NightTiming Timing)>();
+var baseTiming = NightTiming.Default;
+foreach (var v in new[] { 0.4, 0.6, 1.2, 2.0 }) timings.Add(($"侦探速度 {v}", baseTiming with { DetectiveSpeed = v }));
+foreach (var v in new[] { 0.5, 0.8, 2.0, 3.0 }) timings.Add(($"苏泠速度 {v}", baseTiming with { SuSpeed = v }));
+foreach (var v in new[] { 0.5, 2.0 }) timings.Add(($"霍铎速度 {v}", baseTiming with { HuoSpeed = v }));
+foreach (var v in new[] { 0.4, 2.0 }) timings.Add(($"沈鼎速度 {v}", baseTiming with { ShenSpeed = v }));
+foreach (var v in new[] { 0.5, 3.0, 40.0 }) timings.Add(($"烟传到备餐间 {v}", baseTiming with { SmokeReachesPantry = v }));
+foreach (var v in new[] { 0.2, 3.0 }) timings.Add(($"到场先看一眼 {v}", baseTiming with { LookDelay = v }));
+foreach (var v in new[] { 6.0, 20.0 }) timings.Add(($"侦探惊醒后延迟 {v}", baseTiming with { DetectiveWakes = v }));
+var random = new Random(20261003);
+double Pick(params double[] values) => values[random.Next(values.Length)];
+for (var i = 0; i < 20; i++)
+    timings.Add(($"随机组合 {i + 1}", new NightTiming(Pick(0.5, 0.85, 1.5), Pick(0.6, 1.0, 1.6), Pick(0.6, 0.9, 1.6), Pick(0.6, 1.3, 2.5),
+        Pick(1, 8, 13, 30), Pick(0, 4, 12), Pick(0.3, 1, 2.5))));
+var falseMatches = new List<string>();
+var truthLost = new List<string>();
+foreach (var (name, timing) in timings)
+{
+    var sweep = all.Select(v => NightReplay.Run(v, timing)).ToArray();
+    var winners = sweep.Where(r => r.FullMatch).Select(r => r.Variables).ToArray();
+    var wrong = winners.Where(w => w != truth).ToArray();
+    if (wrong.Length > 0) falseMatches.Add($"{name}：{string.Join(" | ", wrong.Select(Short))}");
+    if (!winners.Contains(truth))
+    {
+        var truthRunHere = sweep.First(r => r.Variables == truth);
+        truthLost.Add($"{name}（真值组合冲突 {string.Join(" ", truthRunHere.Conflicts)}）");
+    }
+    Line($"{(wrong.Length > 0 ? "错配" : winners.Contains(truth) ? "唯一" : "真值不再重现")}  {name}  {timing}");
+}
+Check(falseMatches.Count == 0, $"{timings.Count} 组行动值参数下，没有任何错误组合吻合现场" + (falseMatches.Count == 0 ? "" : "；错配：" + string.Join("；", falseMatches)));
+Check(results.First(r => r.Variables == truth).FullMatch, "默认行动值下真值组合必须重现现场（苏泠先于侦探到门边是故事前提，主代理裁定接受）");
+Line($"仍依赖先后的地方：{timings.Count - truthLost.Count}/{timings.Count} 组参数下真值组合仍全部吻合；其余 {truthLost.Count} 组里真值本身重现不出现场（苏泠须先于侦探到门边开门）：{string.Join("；", truthLost)}");
 
 // 盲目改值能多快试出答案：每次只改一个变量、选冲突最少的那一改（贪心爬山），从每个起点出发要重演几次。
 // 这一项只是度量，不判通过与否：次数越少，越可能退化成“试到全绿”的填空。
@@ -168,6 +204,52 @@ foreach (var memory in MorningWorld.Memories)
     Check(morning.Hooks(memory.Who) == hooks + 1, $"{Names.Of(memory.Who)}重复回忆不再加钩");
 }
 Check(morning.RealityFingerprint() == realityBefore, "回忆不改动客观世界");
+
+// ---------------------------------------------------------------- 6. 欲望放大与同伴是否触物回忆（引擎决定）
+Line("");
+Line("== 欲望放大（Corruption）与同伴触物回忆的决定");
+RecallDecision Ask(MorningWorld world, string evidence, Person who, bool showClause8)
+{
+    if (showClause8) world.ShowClause8(who);
+    world.Amplify(who, "（走近旧物时的一句真话）");
+    return world.DecideRecall(evidence)!;
+}
+var told = new MorningWorld();
+foreach (var who in Enum.GetValues<Person>()) told.Amplify(who, "（S4 核验报偿时的一句真话）");
+Check(told.WorldOf(Person.Huo).History.Any(h => h.Source == ObservationSource.Corruption) && told.DesireStrength(Person.Huo) == 2,
+    "S4 恶魔的话以 Corruption 来源写入霍铎认知，欲望加强");
+// 三人倾向各不相同（设计 §5）：(物件, 人, 未告知时, 已告知时)
+foreach (var (evidence, who, plainExpected, toldExpected) in new[]
+{
+    ("E7", Person.Huo, RecallChoice.Touch, RecallChoice.Touch),
+    ("E5", Person.Su, RecallChoice.Touch, RecallChoice.Refuse),
+    ("E10", Person.Shen, RecallChoice.Hesitate, RecallChoice.Refuse),
+})
+{
+    var plain = new MorningWorld();
+    plain.Amplify(who, "S4");
+    var yes = Ask(plain, evidence, who, false);
+    var shown = new MorningWorld();
+    shown.Amplify(who, "S4");
+    var othersBefore = Enum.GetValues<Person>().Where(p => p != who).ToDictionary(p => p, shown.MindFingerprint);
+    var no = Ask(shown, evidence, who, true);
+    Check(yes.Choice == plainExpected, $"{Names.Of(who)}：未被告知第 8 条时，DecisionSystem 选择 {yes.Choice}（{yes.Thought}）");
+    Check(no.Choice == toldExpected, $"{Names.Of(who)}：被告知第 8 条后，选择 {no.Choice}（{no.Thought}）");
+    Check(othersBefore.All(p => shown.MindFingerprint(p.Key) == p.Value), $"{Names.Of(who)}：指看第 8 条与恶魔的话只改变他本人的认知");
+}
+// 沈鼎犹豫时反问侦探：三种回答经 SocialSystem 判定后写进他的认知，再由 DecisionSystem 取舍。
+foreach (var (advice, adviceExpected) in new[] { ("touch", RecallChoice.Touch), ("decline", RecallChoice.Refuse), ("own", RecallChoice.Refuse) })
+{
+    var world = new MorningWorld();
+    world.Amplify(Person.Shen, "S4");
+    Ask(world, "E10", Person.Shen, false);
+    var stance = world.Advise(Person.Shen, advice);
+    var after = world.DecideRecall("E10")!;
+    Check(stance == DualOntologyWorldEngine.Core.SocialStance.Accept && after.Choice == adviceExpected,
+        $"沈鼎“你说呢？”——侦探回答 {advice}：SocialSystem 判 {stance}，沈鼎选择 {after.Choice}（{after.Thought}）");
+}
+Check(MorningWorld.PostedClauses.Length == 8 && MorningWorld.PostedClauses.All(c => !c.Contains("归乡") && !c.Contains("放逐")),
+    "公告框只抄录第 1—8 条，没有第 9、10 条");
 
 Line("");
 Line("== 真值组合的推演日志");
