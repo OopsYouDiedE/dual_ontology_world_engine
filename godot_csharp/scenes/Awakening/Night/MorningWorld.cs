@@ -16,6 +16,9 @@ public sealed record RecallDecision(Person Who, RecallChoice Choice, string Thou
 /// <summary>可触物回忆的物件、回忆者、唤回的片段与它所证的变量（设计 §5）。</summary>
 public sealed record RecallMemory(string Evidence, Person Who, string Fragment, ImmutableArray<int> Confirms);
 
+/// <summary>同伴此刻想不想走过去拿起自己的旧物：由他内部世界的 Rule 经 DecisionSystem 取舍。Thought 是自然语言的依据。</summary>
+public sealed record Intention(Person Who, bool Reach, string Thought);
+
 /// <summary>
 /// 清晨的现实：玩家实际所在的世界。证物是这里的 Essence；四人各有自己的 ProjectionWorld。
 /// 声路试验经 Observation.Observe（感知）进入在场者的认知；触物回忆经 Observation.Observe（回忆）只进入回忆者本人的认知。
@@ -63,12 +66,15 @@ public sealed class MorningWorld
     private static int TrustInDetective(Person who) => who == Person.Shen ? 1 : 0;
 
     public static readonly Tag Strength = new("Strength");
+    /// <summary>旧物被拿起又放回：现实中留下的痕迹（摆得和原来不一样）。</summary>
+    public static readonly Tag Disturbed = new("被动过");
 
     private sealed class Mind
     {
         public Projection Self = null!, Desire = null!, Demon = null!, Clause8 = null!, Detective = null!, Object = null!;
-        public Effect Touch = null!, Decline = null!;
-        public Projection AdviceTouch = null!, AdviceDecline = null!, AdviceOwn = null!;
+        public Effect Touch = null!, Decline = null!, Reach = null!, Stay = null!;
+        public Projection AdviceTouch = null!, AdviceDecline = null!, AdviceOwn = null!, Whisper = null!, Settled = null!, Room = null!;
+        public RecallMemory Memory = null!;
     }
 
     private readonly Dictionary<Person, Mind> _minds = [];
@@ -80,10 +86,14 @@ public sealed class MorningWorld
     private readonly Dictionary<string, Essence> _evidence = [];
     private readonly Dictionary<Person, int> _hooks = [];
     private readonly Dictionary<Person, Projection> _recalled = [];
+    private readonly Dictionary<string, Room> _evidenceRoom = [];
+    private readonly Dictionary<Person, string> _unheeded = [];
+    private readonly SimulationSession _session;
     private double _time;
 
     public MorningWorld()
     {
+        _session = new SimulationSession(_runtime);
         foreach (var room in Enum.GetValues<Room>())
         {
             var space = new Essence(Names.Of(room), ProjectionKind.Space);
@@ -137,9 +147,10 @@ public sealed class MorningWorld
         var who = memory.Who;
         var soul = _souls[who];
         var views = _runtime.Representations(_bodies[who]).Concat(_runtime.Representations(_bodies[Person.Detective]))
-            .Concat(_runtime.Representations(_evidence[memory.Evidence])).ToArray();
+            .Concat(_runtime.Representations(_evidence[memory.Evidence]))
+            .Concat(_runtime.Representations(_space[_evidenceRoom[memory.Evidence]])).ToArray();
         var seen = _runtime.Observe(soul, views, 0);
-        var mind = new Mind { Self = seen[0], Detective = seen[1], Object = seen[2], Desire = _desires[who] };
+        var mind = new Mind { Self = seen[0], Detective = seen[1], Object = seen[2], Room = seen[3], Desire = _desires[who], Memory = memory };
         Observation.Observe(soul, new ObservationInput(mind.Detective.Name, mind.Detective.Kind)
         {
             Target = mind.Detective, Source = ObservationSource.Perception,
@@ -163,6 +174,11 @@ public sealed class MorningWorld
         });
         mind.Touch = new Effect.Act(ActionOp.Inspect, mind.Object);
         mind.Decline = new Effect.Say(mind.Detective, "不碰。");
+        // 走过去、拿起旧物（Take，由 ActionRuntime 结算：人不在物件所在的房间就拿不到），或者守着手头的事。
+        mind.Reach = new Effect.Act(ActionOp.Take, mind.Object);
+        mind.Stay = new Effect.Say(mind.Detective, "我手头还有事。");
+        mind.Whisper = Advice("铜口对我说的那句话");
+        mind.Settled = Advice("这件旧物，我已经拿过主意");
         var rules = new List<Rule>();
         for (var level = 1; level <= 8; level++)
             rules.Add(new Rule(new Condition.Tagged(mind.Desire, Strength, level), RuleMode.Prefer, mind.Touch, 1, Truth.True));
@@ -174,6 +190,16 @@ public sealed class MorningWorld
         rules.Add(new Rule(new Condition.Exists(mind.AdviceTouch), RuleMode.Prefer, mind.Touch, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.AdviceDecline), RuleMode.Prefer, mind.Decline, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.AdviceOwn), RuleMode.Prefer, mind.Decline, 1, Truth.True));
+        // 要不要自己走过去拿起它：恶魔对他本人说过那句话（Corruption）、欲望、对恶魔的信任，推他过去；
+        // 手头的事、读到过的第 8 条拉住他；已经拿过主意的，不再去。
+        rules.Add(new Rule(new Condition.Exists(mind.Whisper), RuleMode.Prefer, mind.Reach, 3, Truth.True));
+        for (var level = 1; level <= 8; level++)
+            rules.Add(new Rule(new Condition.Tagged(mind.Desire, Strength, level), RuleMode.Prefer, mind.Reach, 1, Truth.True));
+        for (var level = 1; level <= 3; level++)
+            rules.Add(new Rule(new Condition.Tagged(mind.Demon, Tags.Trust, level), RuleMode.Prefer, mind.Reach, 1, Truth.True));
+        rules.Add(new Rule(new Condition.Constant(Truth.True), RuleMode.Prefer, mind.Stay, 5, Truth.True));
+        rules.Add(new Rule(new Condition.Exists(mind.Clause8), RuleMode.Prefer, mind.Stay, 2, Truth.True));
+        rules.Add(new Rule(new Condition.Exists(mind.Settled), RuleMode.Prefer, mind.Stay, 20, Truth.True));
         Observation.Observe(soul, new ObservationInput(Names.Of(who) + "对旧物的习惯", ProjectionKind.Concept)
         {
             Source = ObservationSource.Introspection, Existence = Truth.True, Rules = [..rules]
@@ -195,6 +221,79 @@ public sealed class MorningWorld
     }
 
     public int DesireStrength(Person who) => _desires[who].Tags.GetValueOrDefault(Strength);
+
+    /// <summary>恶魔对某人低语：欲望加强一级，并把“铜口对我说的那句话”写进他的认知（Corruption 来源）。</summary>
+    public void Whisper(Person who, string words)
+    {
+        Amplify(who, words);
+        if (!_minds.TryGetValue(who, out var mind)) return;
+        Observation.Observe(_souls[who], new ObservationInput(mind.Whisper.Name, mind.Whisper.Kind)
+        {
+            Target = mind.Whisper, Source = ObservationSource.Corruption, Existence = Truth.True, Time = ++_time, Details = words
+        });
+    }
+
+    public bool Whispered(Person who) => _minds.TryGetValue(who, out var mind) && mind.Whisper.Existence == Truth.True;
+
+    /// <summary>此刻想不想自己走过去拿起旧物：DecisionSystem 在他自己的内部世界里比较“拿起它”与“守着手头的事”。</summary>
+    public Intention? Intend(Person who)
+    {
+        if (!_minds.TryGetValue(who, out var mind)) return null;
+        var options = DecisionSystem.Assess(_souls[who].World, mind.Self).Where(a => !a.Forbidden).ToArray();
+        var reach = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Reach))?.Decision.Score ?? 0;
+        var stay = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Stay))?.Decision.Score ?? 0;
+        var wants = DesireOf(who);
+        var thought = reach > stay
+            ? $"它说的那句话，一直在耳朵里。我想要{wants}。……去看看{mind.Object.Name}。"
+            : mind.Settled.Existence == Truth.True ? "那件东西，我已经拿过主意了。"
+            : mind.Clause8.Existence == Truth.True ? "第八条我读过。手头的事要紧。"
+            : "手头的事要紧。";
+        return new(who, reach > stay, thought);
+    }
+
+    /// <summary>宿主层把人走到了哪个房间，同步到现实（几何归宿主，房间归现实）。</summary>
+    public void Locate(Person who, Room room)
+    {
+        _bodies[who].Get<SpatialProperty>()!.Space = _space[room];
+        _runtime.Sync();
+    }
+
+    /// <summary>伸手拿起旧物：经 SimulationSession/ActionRuntime 结算；人不在物件所在的房间时拿不到。</summary>
+    public bool Reach(Person who) => _minds.TryGetValue(who, out var mind) && Execute(who, mind.Reach);
+
+    /// <summary>把旧物放回原处：放得和原来不一样（现实里留下“被动过”的痕迹）；此人从此对这件旧物拿定了主意。</summary>
+    public bool PutBack(Person who)
+    {
+        if (!_minds.TryGetValue(who, out var mind)) return false;
+        var done = Execute(who, new Effect.Sequence([new Effect.Set(mind.Object, Disturbed, 1), new Effect.Act(ActionOp.Place, mind.Object, mind.Room)]));
+        Settle(who);
+        return done;
+    }
+
+    /// <summary>此人对旧物拿定了主意（碰过或不碰），不会再自己去拿。</summary>
+    public void Settle(Person who)
+    {
+        if (!_minds.TryGetValue(who, out var mind)) return;
+        Observation.Observe(_souls[who], new ObservationInput(mind.Settled.Name, mind.Settled.Kind)
+        {
+            Target = mind.Settled, Source = ObservationSource.Introspection, Existence = Truth.True, Time = ++_time
+        });
+    }
+
+    public bool Holding(Person who)
+        => _minds.TryGetValue(who, out var mind) && ReferenceEquals(_evidence[mind.Memory.Evidence].Get<SpatialProperty>()!.Holder, _bodies[who]);
+
+    public bool IsDisturbed(string evidence)
+        => _evidence.TryGetValue(evidence, out var essence) && essence.Get<StateProperty>()!.Values.GetValueOrDefault(Disturbed) > 0;
+
+    private bool Execute(Person who, Effect effect)
+    {
+        var mind = _minds[who];
+        var execution = _session.Submit(_souls[who], new ActionIntent(mind.Self, effect, 1));
+        var steps = 0;
+        while (execution.Status == ExecutionStatus.Pending && steps++ < 100 && _session.CTB.Step()) { }
+        return execution.Status == ExecutionStatus.Completed && execution.Result is { Succeeded: true };
+    }
 
     /// <summary>玩家把公告框上的第 8 条指给某人看：他亲眼读到（感知）。决定仍是他的。</summary>
     public void ShowClause8(Person who)
@@ -229,6 +328,7 @@ public sealed class MorningWorld
             AddRelations = [(Relations.Subject, mind.Detective)], Procedure = procedure
         });
         var stance = procedure is null ? SocialStance.Accept : SocialSystem.Evaluate(soul.World, mind.Self, said).Stance;
+        if (stance != SocialStance.Accept) _unheeded[who] = advice;
         if (procedure is not null)
             Observation.Observe(soul, new ObservationInput(said.Name, said.Kind)
             {
@@ -257,9 +357,12 @@ public sealed class MorningWorld
         var advisedTouch = mind.AdviceTouch.Existence == Truth.True;
         var advisedDecline = mind.AdviceDecline.Existence == Truth.True;
         var advisedOwn = mind.AdviceOwn.Existence == Truth.True;
+        var unheeded = _unheeded.GetValueOrDefault(memory.Who) == "decline";
         var thought = choice switch
         {
             RecallChoice.Touch when advisedTouch => "你说碰。……我信你。碰。",
+            RecallChoice.Touch when unheeded && memory.Who == Person.Huo => "你说别碰。……图纸值这个价。",
+            RecallChoice.Touch when unheeded => $"你劝我别碰。……可我们昨天才认识。我想要{wants}。",
             RecallChoice.Touch when knows && memory.Who == Person.Huo => "第八条我读了。接上就接上。……图纸值这个价。",
             RecallChoice.Touch when knows => $"代价我读到了。可我想要{wants}——想得顾不上了。",
             RecallChoice.Touch => $"它说的是真的。我想要{wants}。碰一下，就知道了。",
@@ -272,8 +375,17 @@ public sealed class MorningWorld
         return new(memory.Who, choice, thought);
     }
 
+    /// <summary>侦探不在场时的取舍：同样由 DecisionSystem 决定；犹豫的人身边没人可问，便放下。</summary>
+    public RecallDecision? DecideAlone(string evidence)
+    {
+        var decision = DecideRecall(evidence);
+        if (decision is null || decision.Choice != RecallChoice.Hesitate) return decision;
+        return decision with { Choice = RecallChoice.Refuse, Thought = decision.Thought + "……没人可问。放下吧。" };
+    }
+
     private void Evidence(string id, string name, Room room, params (string Tag, int Value)[] facts)
     {
+        _evidenceRoom[id] = room;
         var essence = new Essence(name);
         essence.Add(new SpatialProperty { Space = _space[room] });
         var state = essence.Add(new StateProperty());

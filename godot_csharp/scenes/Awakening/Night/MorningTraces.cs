@@ -101,6 +101,9 @@ public static class Comparison
     public static ImmutableArray<string> Conflicts(MorningTraces predicted, MorningTraces actual)
         => [..Items.Where(i => Differences(i.Id, predicted, actual).Count > 0).Select(i => i.Id)];
 
+    /// <summary>
+    /// 冲突只描述痕迹之差：重演留下了什么、现场是什么。不描述谁做了什么、没做什么。
+    /// </summary>
     private static List<string> Differences(string id, MorningTraces p, MorningTraces a)
     {
         var d = new List<string>();
@@ -108,25 +111,25 @@ public static class Comparison
         {
             case "E1":
                 if (p.InnerBoltDown != a.InnerBoltDown)
-                    d.Add(p.InnerBoltDown ? "重演中内闩被插上了；但门厅的内闩没有落下。" : "重演中门没有闩上；但门厅的内闩落着。");
+                    d.Add(p.InnerBoltDown ? "重演中内闩落在闩槽里；现场内闩没有落下。" : "重演中内闩没有落下；现场内闩落在闩槽里。");
                 break;
             case "E2":
                 if (p.AshFan != a.AshFan)
-                    d.Add(p.AshFan ? "重演中门开着时进了烟；但门内地面没有灰。" : "重演中门一直没有开过，烟进不来；但门内地面有一片扇形灰。");
+                    d.Add(p.AshFan ? "重演中门内地面有一片扇形灰；现场门内没有灰。" : "重演中门内地面没有灰；现场有一片扇形灰。");
                 else if (p.WedgeTopSooted != a.WedgeTopSooted)
-                    d.Add(p.WedgeTopSooted ? "重演中木楔撑在门缝里沾了灰；但现场木楔是干净的。" : "重演中进烟时没有东西撑在门缝里；但木楔上面沾灰、底面干净。");
+                    d.Add(p.WedgeTopSooted ? "重演中木楔上沾着灰；现场木楔是干净的。" : "重演中木楔是干净的；现场木楔上面沾灰、底面干净。");
                 if (p.WedgeInCorner != a.WedgeInCorner)
-                    d.Add(p.WedgeInCorner ? "重演中木楔被踢到了角落；但现场木楔不在角落。" : "重演中木楔留在原处；但现场木楔被踢到了角落。");
+                    d.Add(p.WedgeInCorner ? "重演中木楔在墙角；现场木楔不在墙角。" : "重演中木楔不在墙角；现场木楔在墙角。");
                 break;
             case "E3":
                 if (!p.Prints.SequenceEqual(a.Prints))
                 {
                     if (p.Prints.Any(x => x.Sole == Sole.WorkBoot))
-                        d.Add("重演中灰上会留下厚底工装靴印；但现场只有一枚马球靴印。");
+                        d.Add("重演中灰上有厚底工装靴印；现场只有一枚马球靴印。");
                     else if (p.Prints.IsEmpty)
-                        d.Add("重演中没有人踩进门边的灰里；但灰上有一枚马球靴印。");
+                        d.Add("重演中门边的灰上没有鞋印；现场有一枚马球靴印。");
                     else if (!p.Prints.Contains(new BootPrint(Sole.PoloBoot, PrintToward.Bolt)))
-                        d.Add("重演中马球靴印的鞋尖朝着门缝；但现场的鞋尖朝向插闩。");
+                        d.Add("重演中马球靴印的鞋尖朝着门缝；现场的鞋尖朝着插闩。");
                     else
                         d.Add("重演中灰上的鞋印与现场不同。");
                 }
@@ -135,43 +138,43 @@ public static class Comparison
                 if (p.Cloth != a.Cloth)
                     d.Add(p.Cloth switch
                     {
-                        0 => "重演中没有人拿湿布来；但门底压着一条湿抹布。",
-                        2 => "重演中湿布塞在敞开的门缝里；但现场的湿布沿闭合的门底压成一条直线。",
+                        0 => "重演中门底没有湿布；现场门底压着一条湿抹布。",
+                        2 => "重演中湿布塞在门缝里；现场湿布沿闭合的门底压成一条直线。",
                         _ => "重演中湿布的样子与现场不同。"
                     });
                 else if (p.ClothOverHeel != a.ClothOverHeel)
-                    d.Add(p.ClothOverHeel ? "重演中湿布压住了一枚鞋印；但现场湿布下没有鞋印。" : "重演中湿布放下时灰上还没有鞋印；但现场湿布的一端压住了靴印的鞋跟。");
+                    d.Add(p.ClothOverHeel ? "重演中湿布压着一枚鞋印；现场湿布下没有鞋印。" : "重演中湿布与鞋印不相压；现场湿布的一端压住了靴印的鞋跟。");
                 break;
             case "E5":
                 if (p.ForkByFrame != a.ForkByFrame || p.FrameDent != a.FrameDent)
-                    d.Add(p.ForkByFrame ? "重演中有人在门框旁敲了音叉；但现场没有。" : "重演中没有人到门边敲音叉；但音叉落在门框旁，门框齐肩处有一个小凹痕。");
+                    d.Add(p.ForkByFrame ? "重演中门框旁有音叉、门框上有凹痕；现场没有。" : "重演中门框旁没有音叉，门框完好；现场音叉落在门框旁，门框齐肩处有一个小凹痕。");
                 break;
             case "E6":
                 if (p.ScoreLine1 != a.ScoreLine1)
                     d.Add(p.ScoreLine1 switch
                     {
-                        0 => "重演中苏泠没有记谱；但乐谱上记着两遍重读的“开门”，旁注“门外？”。",
-                        2 => "重演中乐谱记下的是“救我”；但乐谱上的字是“开门”。",
-                        3 => "重演中乐谱记下了整句话；但乐谱上前两拍是听不清的弱音。",
+                        0 => "重演中乐谱是空白的；现场乐谱记着两遍重读的“开门”，旁注“门外？”。",
+                        2 => "重演中乐谱上的字是“救我”；现场是“开门”。",
+                        3 => "重演中乐谱记下了整句话；现场前两拍是听不清的弱音。",
                         _ => "重演中的乐谱与现场不同。"
                     });
                 if (p.ScoreLine2 != a.ScoreLine2)
-                    d.Add(p.ScoreLine2 ? "重演中乐谱下方多了一行字；但现场没有。" : "重演中苏泠没有写下“他们关了门”；但乐谱下方换了一种墨迹写着这一行。");
+                    d.Add(p.ScoreLine2 ? "重演中乐谱下方多一行字；现场没有。" : "重演中乐谱下方没有字；现场下方换了一种墨迹写着“他们关了门”。");
                 break;
             case "E7":
                 if (p.SlateLine1 != a.SlateLine1)
                     d.Add(p.SlateLine1 switch
                     {
-                        0 => "重演中没有人在石板上记下指令；但石板上有一行粉笔速记。",
-                        2 => "重演中石板上记的是“开门”；但石板上写着“✕开”——禁止开门。",
-                        3 => "重演中石板上记的指令里没有 ◎；但现场的速记末尾有 ◎。",
+                        0 => "重演中石板是空的；现场有一行粉笔速记。",
+                        2 => "重演中石板上记的是“开门”；现场写着“✕开”。",
+                        3 => "重演中石板速记的末尾没有 ◎；现场末尾有 ◎。",
                         _ => "重演中的石板与现场不同。"
                     });
                 if (p.SlateLine2 != a.SlateLine2)
                     d.Add(p.SlateLine2 switch
                     {
-                        0 => "重演中没有人回来报告门已闩好；但石板上有第二行：一个小小的放大镜图样加“⊥✓”。",
-                        2 => "重演中霍铎认不出报告的人，画不出那个小图；但第二行画的是放大镜。",
+                        0 => "重演中石板只有一行；现场有两行，第二行是一个小小的放大镜图样加“⊥✓”。",
+                        2 => "重演中石板第二行没有小图；现场第二行画的是放大镜。",
                         _ => "重演中的石板第二行与现场不同。"
                     });
                 break;
@@ -179,8 +182,8 @@ public static class Comparison
                 if (p.CupSugar != a.CupSugar)
                     d.Add(p.CupSugar switch
                     {
-                        0 => "重演中没有人泡茶；但水槽里有四只用过的杯子。",
-                        2 => "重演中四只杯子放了一样的糖；但青瓷杯底没有糖渍，锡杯底糖渍很厚。",
+                        0 => "重演中水槽里没有杯子；现场有四只用过的杯子。",
+                        2 => "重演中四只杯底的糖渍一样；现场青瓷杯底没有糖渍，锡杯底糖渍很厚。",
                         _ => "重演中的杯子与现场不同。"
                     });
                 break;

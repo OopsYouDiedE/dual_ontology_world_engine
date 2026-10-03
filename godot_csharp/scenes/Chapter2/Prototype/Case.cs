@@ -177,6 +177,7 @@ public sealed partial class Game
         [0] = [0, 1, 7], [1] = [2, 3], [2] = [4, 1], [3] = [5], [4] = [5], [5] = [6],
     }.ToImmutableDictionary();
 
+    public bool DetHasEvidence(int evidence) => DetHas(evidence);
     private bool DetHas(int evidence) => evidence switch
     {
         0 => DetEvidence().Contains(2), 1 => Det.Acc.ContainsKey(MoraNight),
@@ -209,13 +210,13 @@ public sealed partial class Game
         foreach (var p in room) p.Body.Get<SpatialProperty>()!.Space = Space[Place.Hall];
         Rt.Sync();
         PerceiveAll();
-        var quer = this[P.Quer];
+        var quer = this[Accused ?? P.Quer];
         var logStart = ConfrontLog.Count;
-        if (!reopen) ConfrontLog.Add(AccusedQuer ? "中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，雀儿私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
+        if (!reopen) ConfrontLog.Add(Accused is not null ? $"中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，{quer.Name}私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
         if (plan is null || plan.Pairs.Count == 0)
         {
             ConfrontLog.Add(reopen ? "你把人请来了，却什么也没出示。众人各自散去。" : "你没有说话。指控就这样搁着。");
-            if (AccusedQuer && !reopen) Ostracize();
+            if (Accused is not null && !reopen) Ostracize();
             Feed.AddRange(ConfrontLog.Skip(logStart));
             return;
         }
@@ -250,20 +251,20 @@ public sealed partial class Game
             if (points[p] >= 3)
             {
                 foreach (var t in new[] { T.Branded, T.Suspect, T.Accused }) Know(p, quer.Body, t, 0, ObservationSource.Inference, "对质");
-                Witness(quer, $"{p.Name}在对质里认清了：雀儿没有私取", 1, 0, [p], spread: false);
+                Witness(quer, $"{p.Name}在对质里认清了：{quer.Name}没有私取", 1, 0, [p], spread: false);
                 revised.Add(p);
             }
         }
         var ward = this[P.Ward];
-        QuerCleared = revised.Contains(ward) || !AccusedQuer && revised.Count > 0;
+        QuerCleared = revised.Contains(ward) || Accused is null && revised.Count > 0;
         if (QuerCleared && QuerOstracized)
         {
             QuerOstracized = false;
-            quer.Body.Get<SpatialProperty>()!.Space = Space[Place.DormW];
+            quer.Body.Get<SpatialProperty>()!.Space = Space[quer.Pro.Dorm];
             RealDirty = true;
-            ConfrontLog.Add("雀儿听说了，傍晚搬回了文契寝区。");
+            ConfrontLog.Add($"{quer.Name}听说了，傍晚搬回了{Names.Of(quer.Pro.Dorm)}。");
         }
-        if (QuerCleared && !AccusedQuer)
+        if (QuerCleared && Accused is null)
         {
             ConfrontLog.Add($"台账上的缺口说清了。改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
             Witness(Det, "侦探的推断在对质中被证实", 0, 2, room.Where(p => p != Det), domain: Dom.Rations);
@@ -271,7 +272,7 @@ public sealed partial class Game
         else if (QuerCleared)
         {
             ConfrontLog.Add($"沃德沉默了一会：“依据……补记之前，不视为私取。”改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
-            Witness(Det, "侦探替雀儿洗清了冤屈", 2, 1, [quer]);
+            Witness(Det, $"侦探替{quer.Name}洗清了冤屈", 2, 1, [quer]);
             // 推得准是“判断”，只在口粮与案子这一领域；为人不因此上涨（§11 第 4 条）。
             Witness(Det, "侦探的推断在对质中被证实", 0, 2, room.Where(p => p != Det && p != quer), domain: Dom.Rations);
             foreach (var m in Manipulations.Where(m => m.About == P.Quer))
@@ -321,6 +322,7 @@ public sealed partial class Game
     }
 
     private int _reopenedDay;
+    public int ReopenedDay => _reopenedDay;
 
     /// <summary>
     /// 重开对质（§12 第 4 条）：第 4 日之后的任一日，援引第一条共同规则“公开指控须附可检查的材料”，请众人回中央厅再对一次。
@@ -330,7 +332,7 @@ public sealed partial class Game
     {
         if (_reopenedDay == Day) { Feed.Add("今天已经重开过一次对质了。"); return; }
         if (Day < 4 || Day == 4 && Slot == Slot.Morning) { Feed.Add("第 4 日清晨的对质还没开始。"); return; }
-        if (QuerCleared || !AccusedQuer) { Feed.Add("眼下没有悬着的指控要重开。"); return; }
+        if (QuerCleared || Accused is null) { Feed.Add("眼下没有悬着的指控要重开。"); return; }
         _reopenedDay = Day;
         var head = $"你援引「{CommonRule.Text}」，请众人回中央厅，把台账的事重新对一遍。";
         Feed.Add(head);
@@ -359,13 +361,17 @@ public sealed partial class Game
     /// <summary>指控成立或不了了之：雀儿被排斥，对没有改变看法的人更不信任，转而独行。</summary>
     private void Ostracize()
     {
-        if (!AccusedQuer) return;
+        if (Accused is not { } acc) return;
         QuerOstracized = true;
-        var quer = this[P.Quer];
-        foreach (var p in People.Where(p => p != quer && (Belief(p, quer, T.Branded) ?? 0) > 0))
-            Witness(p, $"{p.Name}仍把我当贼", -2, 0, [quer], spread: false);
-        ConfrontLog.Add("雀儿当天搬出了文契寝区。");
-        quer.Body.Get<SpatialProperty>()!.Space = Space[Place.Oath];
+        var who = this[acc];
+        foreach (var p in People.Where(p => p != who && ((Belief(p, who, T.Branded) ?? 0) > 0 || (Belief(p, who, T.Accused) ?? 0) > 0)))
+            Witness(p, $"{p.Name}仍把我当贼", -2, 0, [who], spread: false);
+        if (acc == P.Quer)
+        {
+            ConfrontLog.Add("雀儿当天搬出了文契寝区。");
+            who.Body.Get<SpatialProperty>()!.Space = Space[Place.Oath];
+        }
+        else ConfrontLog.Add($"{who.Name}被当成了私取之人。这一天没什么人跟{who.Name}说话。");
         Rt.Sync();
     }
 
@@ -376,6 +382,7 @@ public sealed partial class Game
         public required string Means { get; init; }
         public required int Day { get; init; }
         public bool Exposed { get; set; }
+        public bool Apologized { get; set; }
     }
     public readonly List<Manipulation> Manipulations = [];
 }

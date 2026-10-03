@@ -24,6 +24,7 @@ public sealed partial class Game
         _dawnDone = false;
         SetClock();
         if (Slot is Slot.Morning or Slot.Afternoon or Slot.Evening or Slot.Night) RefreshPlans();
+        if (Slot is Slot.Noon or Slot.Evening) RefreshStanceContext();
         if (Slot == Slot.Night) RunNight(act);
         else RunDay(act);
         Advance();
@@ -205,6 +206,8 @@ public sealed partial class Game
         p.DoingWhy = $"{basis}（{why}）";
         p.DoingScore = d.Score;
         _running[p.Exec] = (job, p.DoingWhy, d.Score);
+        _startPlace[p] = Where(p);
+        if (job == Job.Follow && d.Effect is Effect.Sequence { Items: [Effect.Act { Target: Noun.Reference fr }, ..] } && PersonOf(p, fr.Projection) is { } followed) _following[p] = followed;
         if (p.Id != P.Det) p.Diary.Add($"D{Day} {Names.Of(Slot)} {(job is { } j ? Names.Of(j) : dest is { } d2 && d.Basis.Name == "重演假设" ? "去" + Names.Of(d2) + "看一眼" : "照请求行事")} ← {p.DoingWhy}");
     }
 
@@ -222,6 +225,7 @@ public sealed partial class Game
         {
             var exec = p.Exec!;
             S.Cancel(exec);
+            ReleaseStation(p);
             if (p.Doing is Job.Collect)
             {
                 p.Diary.Add($"D{Day} {Names.Of(Slot)} 在配给台没等到开粮");
@@ -259,22 +263,29 @@ public sealed partial class Game
         if (exec.Status == ExecutionStatus.Completed)
         {
             if (Inspects(exec.Intent.Changes, p.M[Granary])) RevealLatch(p);
+            if (Inspects(exec.Intent.Changes, p.M[Base]) && Get(Base, T.Crack) > 0 && p.Witnessed.Add("crack") && p != Det)
+            {
+                Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}凑近看见了中央基座的新裂纹");
+                NewsFrom(p, NewsKind.Fact, $"{p.Name}亲眼看见中央基座裂了一道新缝，像是从里面撑开的");
+            }
             if (job is { } j) Set(p.Body, T.Did(j), 1);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } asked && ReferenceEquals(asked.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target, p.M[Det.Body]))
                 DetHelpers.Add(p.Id);
             _currentEvent = 0;
-            RecordAction(p, job, exec);
+            if (!HandleTalk(p, job, exec)) RecordAction(p, job, exec);
             _physicsOf = p;
             Physics(p, job, exec);
             _physicsOf = null;
         }
         else
         {
-            Log.Add($"D{Day} {Names.Of(Slot)} {Now:0.0} {p.Name} 未完成：{(job is { } j2 ? Names.Of(j2) : "?")}（{exec.Result?.Failure}）");
+            Log.Add($"D{Day} {Names.Of(Slot)} {Now:0.0} {p.Name} 未完成：{(job is { } j2 ? Names.Of(j2) : "?")}（{exec.Result?.Failure}）" + (job is Job.GuardArchive or Job.Seize ? $"〔配重室占着={Get(WeightRoom, T.Occupied)} 锁芯={Get(LockCore, T.Occupied)} 中继={Get(RelayPost, T.Occupied)} 在{Names.Of(Where(p))}〕" : ""));
             p.Diary.Add($"D{Day} {Names.Of(Slot)} 没做成：{(job is { } j3 ? Names.Of(j3) : "请求之事")}（{exec.Result?.Failure}）");
             if (job is Job.Sleep) p.Asleep = true;
             // 试过、没做成：今天不再试同一件事；请求算是答复过了（做不到）。
-            if (job is { } jf) Set(p.Body, T.Did(jf), 1);
+            // 去开库时那一站被人占着：人已经站在前厅了，等让开了还会再试（不记“做过”）。
+            if (job is { } jf && jf is not (Job.Seize or Job.GuardArchive or Job.Relay or Job.Teach)) Set(p.Body, T.Did(jf), 1);
+            ReleaseStation(p);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } req && p.World.Contains(req))
                 Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
             if (job is Job.RepairLatch) Know(p, Granary, T.LatchLoose, 0, ObservationSource.Perception, "门闩已经修好了");
@@ -330,7 +341,7 @@ public sealed partial class Game
             case Job.Tear:
             {
                 // 撕掉点人名的规矩：雀儿撕沃德那条点她名的；卢西安撕任何点名的。板上少了一张纸，在场的人都看见。
-                var torn = Specs.Where(s => s.PostedAt.Contains(Place.Hall) && (p.Id == P.Quer ? s == WardNight : s.Flags.HasFlag(RF.Targets))).ToArray();
+                var torn = Specs.Where(s => s.PostedAt.Contains(Place.Hall) && (p.Id == P.Quer ? s == WardNight : p.Id == P.Lucian ? s.Flags.HasFlag(RF.Targets) : s.Author == P.Det && p.Vetoed.Contains(s))).ToArray();
                 foreach (var s in torn) Unpost(s, Place.Hall);
                 if (torn.Length > 0)
                 {
@@ -339,6 +350,31 @@ public sealed partial class Game
                     Witness(p, tornText, 0, 0, People.Where(o => o != p && Where(o) == Place.Hall), spread: true);
                     Log.Add($"D{Day} {Names.Of(Slot)} {tornText}");
                 }
+                break;
+            }
+            case Job.Treat: NewsFrom(p, NewsKind.Rumor, $"{p.Name}又去诊疗所给脚踝换了药", about: p); break;
+            case Job.Retreat: NewsFrom(p, NewsKind.Rumor, $"{p.Name}一个人在誓约庭坐了一下午", about: p); break;
+            case Job.Report:
+            {
+                var seen = Sightings.Where(s => s.Day == Day - 1 && s.Witness == P.Bertrand).GroupBy(s => (s.At, s.Build)).Select(g => $"{Names.Of(g.Key.At)}{Cn(g.Count())}个{BuildText(g.Key.Build).TrimEnd('的')}身影").ToArray();
+                var report = $"贝尔特朗在中央厅报告：昨夜{(seen.Length == 0 ? "巡夜无异常" : string.Join("，", seen))}。";
+                var item = NewsFrom(p, NewsKind.Sighting, report);
+                foreach (var o in People.Where(o => o != p && Where(o) == place)) o.News[item.Id] = new(p.Id, 1, ObservationSource.Testimony, Day, report);
+                if (Where(Det) == place) Feed.Add(report);
+                break;
+            }
+            case Job.Sample: NewsFrom(p, NewsKind.Rumor, p.Id == P.Selma ? "赛尔玛一早从温室剪了一枝源质样本" : "维罗妮卡在灶边刮炉灰，装进小瓶里贴了标签", about: p); break;
+            case Job.Needle:
+                Witness(p, "维罗妮卡当面挑我账上的错", -1, 0, [this[P.Mora]], spread: false);
+                NewsFrom(p, NewsKind.Rumor, "维罗妮卡又当面问茉拉夜里的取用误差，茉拉没理她", about: p);
+                break;
+            case Job.Sketch:
+            {
+                var seen = Sightings.Where(s => s.Day == Day - 1 && s.Witness == P.Moran).ToArray();
+                var drawing = seen.Length == 0 ? $"第{Day - 1}夜：中央厅空荡荡的，只画了月光" :
+                    $"第{Day - 1}夜：" + string.Join("；", seen.Select(s => $"{Names.Of(s.At)}，一个{BuildText(s.Build).TrimEnd('的')}的身影，颜色涂的是{Names.Of(s.Truth)}的颜色"));
+                Sketches.Add((Day - 1, drawing));
+                NewsFrom(p, NewsKind.Rumor, "莫兰画了一张昨夜的速写，压在星仪寝区的枕头底下", about: p);
                 break;
             }
             case Job.Share:
@@ -376,7 +412,20 @@ public sealed partial class Game
     }
 
     private Person? _physicsOf;
+    private readonly HashSet<Person> _seizeOk = [];
+
+    /// <summary>动作被打断或没做成：他占着的那一站随之空出来，守门的样子也没了（身体离开了岗位）。</summary>
+    private void ReleaseStation(Person p)
+    {
+        if (Get(p.Body, T.Prying) > 0) { Set(p.Body, T.Prying, 0); Set(StationFor(p), T.Occupied, 0); }
+        if (Get(p.Body, T.Guarding) == 0) return;
+        Set(p.Body, T.Guarding, 0);
+        Set(WeightRoom, T.Occupied, 0);
+    }
     private int _wardReposts;
+    /// <summary>莫兰的速写本：哪一夜、画了什么（认得出是谁）。</summary>
+    public readonly List<(int Night, string Text)> Sketches = [];
+    private readonly HashSet<(P, P)> _sawTaking = [];
 
     /// <summary>夜里在粮仓边守着的人，近处看得清是谁：没记账的取粮记为嫌疑，并且是亲眼所见（可以凭此当众指控）。</summary>
     private void NightSeenTaking(Person taker, bool recorded)
@@ -390,6 +439,7 @@ public sealed partial class Game
             Log.Add($"D{Day} 夜 {text}");
             if (recorded) continue;
             Know(w, taker.Body, T.Suspect, 1, ObservationSource.Perception, text);
+            _sawTaking.Add((w.Id, taker.Id));
             Know(w, w.Body, T.SawAct, 1, ObservationSource.Introspection, text);
             Touch(taker.Body, T.Suspect, id, w.Id);
         }
@@ -424,7 +474,7 @@ public sealed partial class Game
                 break;
             case Job.RepairLatch: Sound(Place.Logistics, "几下很轻的敲打声"); break;
             case Job.AnswerName: Sound(Place.ArchiveFront, "有人低低地应了一声"); break;
-            case Job.Seize: Sound(Place.ArchiveFront, "铁链和配重的闷响"); _seizeTried.Add(Day); break;
+            case Job.Seize: Sound(Place.ArchiveFront, "铁链和配重的闷响"); _seizeTried.Add(Day); _seizeOk.Add(p); break;
             case Job.Patrol: Sound(Place.Hall, "提灯的脚步声走过"); break;
         }
     }
@@ -471,12 +521,17 @@ public sealed partial class Game
 
     private void AccuseSpeech(Person w)
     {
-        var suspects = People.Where(q => q != w && (Belief(w, q, T.Suspect) ?? 0) > 0).ToArray();
+        // 指控以亲见优先（§13 第 3 条）：先指自己亲眼看见没记账取粮的人，再依转述与成见。
+        var suspects = People.Where(q => q != w && (Belief(w, q, T.Suspect) ?? 0) > 0)
+            .OrderByDescending(q => _sawTaking.Contains((w.Id, q.Id)) ? 1 : 0).ThenBy(q => q.Id).ToArray();
         if (suspects.Length == 0) return;
         var q = suspects[0];
         var n = Belief(w, w.M[Ledger], T.Unrecorded) ?? 0;
-        var seen = w.News.Values.FirstOrDefault(h => h.Text.Contains("瘦小的身影"));
-        var text = $"{w.Name}当众指控：依据台账，昨夜无记录取用{n}份{(seen is not null ? "；依据夜巡所见，有瘦小身影出入后勤院" : "")}；{q.Name}视为私取。";
+        var build = BuildText(q.Pro.Build);
+        var seen = w.News.Values.FirstOrDefault(h => h.Text.Contains(build + "身影"));
+        var text = _sawTaking.Contains((w.Id, q.Id))
+            ? $"{w.Name}当众指控：依据我亲眼所见，昨夜{q.Name}从粮仓取了一份，没有记账；依据台账，无记录取用{n}份；{q.Name}视为私取。"
+            : $"{w.Name}当众指控：依据台账，昨夜无记录取用{n}份{(seen is not null ? $"；依据夜巡所见，有{build}身影出入后勤院" : "")}；{q.Name}视为私取。";
         var item = NewsFrom(w, NewsKind.Accusation, text, about: q, trust: -2);
         foreach (var l in People.Where(l => l != w && Where(l) == Place.Hall && l != q))
         {
@@ -487,6 +542,7 @@ public sealed partial class Game
         if (_currentEvent > 0) Touch(q.Body, T.Accused, _currentEvent, w.Id);
         if (Where(q) == Place.Hall) { Witness(w, $"{w.Name}当众指控我私取", -2, 0, [q], spread: false); q.News[item.Id] = new(w.Id, 1, ObservationSource.Perception, Day, text); }
         if (q.Id == P.Quer) AccusedQuer = true;
+        Accused ??= q.Id;
         Accusations.Add((Day, w.Id, q.Id, n));
         Log.Add($"D{Day} {Names.Of(Slot)} {text}");
         if (Where(Det) == Place.Hall) { Feed.Add(text); NoteFor(w.Id, "指控", text); }
@@ -697,6 +753,12 @@ public sealed partial class Game
     private void RunNight(PlayerAction? act)
     {
         Options.BeforeNight?.Invoke(this);
+        if (Day == 6)
+        {
+            // 第 6 日夜，恶魔对每个人放大欲望一次（§13 第 12 条）。
+            foreach (var p in Npcs) { p.Desire = Math.Min(5, p.Desire + 1); RewriteDesire(p, "第6日夜，恶魔在梦里把那样东西又说了一遍"); }
+            Feed.Add("入夜前，广播里没有声音，可每个人都像听见有人在耳边把最想要的东西又说了一遍。");
+        }
         OilPhysics();
         foreach (var p in People) { p.Asleep = false; p.NightSteps = 0; p.NightVisited.Clear(); }
         NightBegins();
@@ -719,6 +781,12 @@ public sealed partial class Game
 
     private void NightTick()
     {
+        // 跟随：跟着的人走到哪里，跟随者就到哪里（房内几何属宿主层）。
+        foreach (var (f, t) in _following.ToArray())
+        {
+            if (f.Doing != Job.Follow) { _following.Remove(f); continue; }
+            if (Where(f) != Where(t)) { f.Body.Get<SpatialProperty>()!.Space = SpaceOf(t.Body); RealDirty = true; }
+        }
         TrackMoves();
         foreach (var p in People.Where(p => !p.Asleep)) p.NightVisited.Add(Where(p));
         if (Day >= 5) NameCall();
@@ -732,6 +800,7 @@ public sealed partial class Game
             S.Cancel(p.Exec!);
             _running.Remove(p.Exec!);
             p.Exec = null;
+            ReleaseStation(p);
             Submit(p, top.Decision, top.Reasons);
         }
     }

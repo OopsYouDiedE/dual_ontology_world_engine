@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
@@ -192,6 +193,9 @@ public sealed partial class Game
         _failedAtGranary = 0; _pickedGranary = 0; _bowlFilledTonight = false;
         foreach (var (dorm, litter) in Litter) _crumbsBefore[dorm] = Get(litter, T.Crumbs);
         foreach (var p in People) _lastPlace[p] = Where(p);
+        foreach (var st in new[] { WeightRoom, LockCore, RelayPost }) { Set(st, T.Occupied, 0); Set(st, T.Worked, 0); }
+        foreach (var p in People) { Set(p.Body, T.Guarding, 0); Set(p.Body, T.Prying, 0); }
+        _seizeOk.Clear();
     }
 
     /// <summary>这处痕迹侦探是否细看过（读得到全貌）。</summary>
@@ -203,7 +207,7 @@ public sealed partial class Game
         {
             "台账" => looked.Contains(Ledger), "门闩" => looked.Contains(Granary), "碗" => looked.Contains(Bowl) || looked.Contains(Bed),
             "前厅脚印" or "前厅机关" => looked.Contains(ArchiveDoor) || Stakeouts.Contains((night, Place.ArchiveFront)),
-            "夜巡" => AskedOn.Contains((night + 1, P.Bertrand)) || AskedOn.Contains((night + 2, P.Bertrand)),
+            "夜巡" => AskedOn.Contains((night + 1, P.Bertrand)) || AskedOn.Contains((night + 2, P.Bertrand)) || Stakeouts.Contains((night, Place.Hall)),
             _ when t.Key.StartsWith("饼屑:") => looked.Contains(Litter[t.Where]),
             _ when t.Key.StartsWith("神情:") => met.Contains(Names.PersonAlias[t.Key[3..]]),
             _ => false
@@ -245,9 +249,30 @@ public sealed partial class Game
         if (!DawnTraces.TryGetValue(night, out var traces)) return;
         var changed = traces.Where(Changed).Select(t => t.Key.StartsWith("神情:") ? "有人的神色" : Names.Of(t.Where)).Distinct().ToArray();
         if (Day > 2) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。（“清晨”看你已读到的痕迹，“重演”对照昨夜）");
+        if (Day is 5 or 6)
+        {
+            // 第 7 日的短缺要在第 5—6 日清晨读得到（§13 第 8、13 条）：存量、每日耗用、温室状态。
+            var stock = Get(Granary, T.Ration);
+            var perDay = Curve.Count >= 2 ? Math.Max(1, Curve[^2].Rations - Curve[^1].Rations) : 13;
+            var days = stock / perDay;
+            Feed.Add($"配给台前有人数了数：存粮还剩 {stock} 份，照这几天的吃法，{(days >= 7 - Day + 1 ? "撑得到议事那天" : $"撑不到第 7 日的早饭")}。温室{(GreenhouseRepaired ? "已经修好，每天能添几份" : "还没修好")}。");
+        }
+        // 早饭前人们说起的昨天的事（§13 第 2 条）：侦探整天私下说话，清晨也至少读得到两件别人自发做的事。
+        var heard = Events.Where(e => e.Day == night && !e.Fixed && e.Who != P.Det && !e.SeenByDet && e.Job is { } j && MorningWorthy.Contains(j))
+            .OrderByDescending(e => e.Slot == Slot.Night ? 1 : 0).ThenBy(e => e.Id).GroupBy(e => e.Who).Select(g => g.First()).Take(2).ToArray();
+        if (heard.Length > 0)
+        {
+            Feed.Add("早饭前听人说起：" + string.Join("；", heard.Select(e => (e.Slot == Slot.Night ? "昨夜" : "昨天" + Names.Of(e.Slot)) + Names.Of(e.Who) + e.Text)) + "。");
+            foreach (var e in heard) { e.SeenByDet = true; MorningHeard.Add(e.Id); }
+        }
         var learned = SpreadKnown.Where(k => k.Day == night).GroupBy(k => k.Spec).ToArray();
         if (learned.Length > 0) Feed.Add("昨天你得知的规矩传播：" + string.Join("；", learned.Select(g => $"{LabelOf(g.Key)}　" + string.Join("、", g.Select(k => k.Text)))) + "。（“传播”查看全部）");
     }
+
+    private static readonly HashSet<Job> MorningWorthy = [Job.Tear, Job.PostRules, Job.Accuse, Job.Defend, Job.Share, Job.Exchange, Job.Teach, Job.AskOpen, Job.AskLeave,
+        Job.GuardArchive, Job.Watch, Job.Tidy, Job.Treat, Job.Retreat, Job.Report, Job.Sample, Job.Needle, Job.Sketch, Job.Follow, Job.Avoid, Job.RepairLatch, Job.Greenhouse, Job.Relay];
+    /// <summary>侦探经清晨闲谈读到的事件（计量用）。</summary>
+    public readonly HashSet<int> MorningHeard = [];
 
     private static bool Changed(TraceItem t) => !(t.Text is "三处机关没人碰过" or "前厅积灰上没有新脚印" or "病床边没有新送来的东西" or "贝尔特朗：夜巡无异常" or "门闩完好")
         && !t.Text.Contains("没有新东西") && !(t.Key == "台账" && t.Text.StartsWith("账面与存量差 0 份；夜间记账一栏是空的"));
@@ -290,6 +315,8 @@ public sealed partial class Game
     /// <summary>重演假设“他那一夜在/不在某处”：写进他心里一条只在重演里存在的规则（去那里看一眼 / 不往那里去）。</summary>
     public void ForcePresence(Person p, Place place, bool there)
     {
+        // “在”不强迫他去（强迫会改变当夜的先后，留下现实里没有的痕迹）：只作为检验——重演里他若没去那里，这组假设就自相矛盾。
+        if (there) return;
         var fx = FxOf(p);
         Rule rule = there
             ? new(Fx.All(fx.At(Slot.Night), fx.NotDone(Job.Wander)), RuleMode.Prefer,
@@ -324,21 +351,27 @@ public sealed partial class Game
     private static string Label(string key) => key.StartsWith("饼屑:") ? key[3..] + "的废纸篓" : key.StartsWith("神情:") ? key[3..] + "的神情" : key;
 
     /// <summary>重演中被假设的人的墨影与心声（不显示数值）；其余人只给身影。</summary>
-    public static List<string> Ink(Game w, int night, IEnumerable<P> who)
+    /// <summary>
+    /// 重演中被假设的人的墨影：只给身影（身量），不换成人名（§13 第 11 条）；心声只在重演与你细看过的痕迹全部吻合之后才给，作为确认。
+    /// 动作里的失败原因一律不露出来，只说“没做成”。
+    /// </summary>
+    public static List<string> Ink(Game w, int night, IEnumerable<P> who, bool confirmed = false)
     {
         var lines = new List<string>();
         var names = who.Distinct().ToArray();
         foreach (var id in names)
         {
             var p = w[id];
-            foreach (var d in p.Diary.Where(d => (d.StartsWith($"D{night} 夜里") || d.StartsWith($"D{night} 傍晚")) && !d.Contains(" 接受") && !d.Contains("欲望升至")))
+            var figure = $"一个{BuildText(p.Pro.Build).TrimEnd('的')}的身影";
+            foreach (var d in p.Diary.Where(d => d.StartsWith($"D{night} 夜里") && !d.Contains(" 接受") && !d.Contains("欲望升至") && !d.Contains("回寝区睡下") && !d.Contains("在寝区歇着")))
             {
                 var text = d[(d.IndexOf(' ', 3) + 1)..];
                 var arrow = text.IndexOf(" ← ", StringComparison.Ordinal);
-                var act = arrow > 0 ? text[..arrow] : text;
+                var act = Regex.Replace(arrow > 0 ? text[..arrow] : text, "（[A-Za-z]+）", "");
+                foreach (var n in Enum.GetValues<P>()) act = act.Replace(Names.Of(n), "某人");
                 var why = arrow > 0 ? text[(arrow + 3)..] : "";
                 var basis = why.Contains('（') ? why[..why.IndexOf('（')] : why;
-                lines.Add($"  墨影·{p.Name}：{act}{(basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}");
+                lines.Add($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}");
             }
         }
         var others = w.Moves.Where(m => m.Day == night && !names.Contains(m.Who) && m.Who != P.Det && m.To is Place.Logistics or Place.ArchiveFront or Place.Clinic)
@@ -350,7 +383,7 @@ public sealed partial class Game
     private static string Thought(string basis) => basis switch
     {
         var b when b.Contains("的习惯") => "平常就这么做。",
-        var b when b.StartsWith("应") => $"{b[1..^2]}请我做的。",
+        var b when b.StartsWith("应") => "有人请我做的。",
         "听来的规则" => "有人跟我说过这条规矩，我认。",
         "重演假设" => "（你假设他这么做。）",
         var b when b.Contains("公告板") || b == "台账" => $"{b}上写着的，我认。",
@@ -370,8 +403,9 @@ public sealed partial class Game
     public List<ReplayOption> ReplayMenu(int night)
     {
         var opts = new List<ReplayOption>();
+        var cands = ReplayCandidates(night);
         foreach (var spec in DetKnownSpecs().Where(s => s.Card is null || s.Card.Behavior is 0 or 2 or 9 || s.Domain != Dom.General).Reverse().Take(6))
-            foreach (var who in DetSuspects(spec).Take(4))
+            foreach (var who in DetSuspects(spec).Where(cands.Contains).Take(4))
             {
                 opts.Add(new($"{Names.Of(who)} 认 {LabelOf(spec)}「{Short(spec)}」", new(who, spec.Id, true), null));
                 opts.Add(new($"{Names.Of(who)} 不认 {LabelOf(spec)}「{Short(spec)}」", new(who, spec.Id, false), null));
@@ -385,13 +419,29 @@ public sealed partial class Game
                 (Det.News.Values.Any(h => h.Text.Contains(p.Name) && h.Text.Contains(Names.Of(place))) ? 4 : 0)
                 + (DetSeenAt.GetValueOrDefault(place)?.Contains(p.Id) == true ? 2 : 0)
                 + (SpreadKnown.Any(k => k.Hearer == p.Id && k.Accepted) || DetToldFace.Any(x => x.Who == p.Id && x.Nodded) ? 1 : 0);
-            foreach (var p in Npcs.Where(p => builds.Count == 0 || builds.Contains(p.Pro.Build)).OrderByDescending(Relevance).ThenBy(p => p.Id).Take(5))
+            foreach (var p in Npcs.Where(p => cands.Contains(p.Id) && (builds.Count == 0 || builds.Contains(p.Pro.Build))).OrderByDescending(Relevance).ThenBy(p => p.Id).Take(5))
             {
                 opts.Add(new($"{p.Name} 昨夜在 {Names.Of(place)}", null, new(p.Id, place, true)));
                 opts.Add(new($"{p.Name} 昨夜不在 {Names.Of(place)}", null, new(p.Id, place, false)));
             }
         }
         return opts;
+    }
+
+    /// <summary>
+    /// 那一夜可以被假设的人（§13 第 11 条）：身量与你读到的身影、脚印相符，或者名字出现在你读到的痕迹里（台账签名）；
+    /// 你知道那夜病着躺在诊疗所的人排除。你什么都没读到，就没有人可以假设。
+    /// </summary>
+    public HashSet<P> ReplayCandidates(int night)
+    {
+        var known = KnownTraces(night);
+        var builds = new HashSet<Build>();
+        foreach (var place in Enum.GetValues<Place>()) builds.UnionWith(BuildsSeenAt(night, place));
+        foreach (var t in known.Values) foreach (Build b in Enum.GetValues<Build>()) if (t.Text.Contains(BuildText(b).TrimEnd('的'))) builds.Add(b);
+        var set = Npcs.Where(p => builds.Contains(p.Pro.Build) && (Belief(Det, p, T.Sick) ?? 0) == 0).Select(p => p.Id).ToHashSet();
+        foreach (var t in known.Values) foreach (var p in Npcs) if (t.Text.Contains(p.Name)) set.Add(p.Id);
+        if (DetSketchSeen.Contains(night)) foreach (var s in Sightings.Where(s => s.Day == night && s.Witness == P.Moran)) set.Add(s.Truth);
+        return set;
     }
 
     /// <summary>侦探读到的那一夜某处出现过的身量（守夜、夜巡证言、前厅脚印）。</summary>
@@ -423,7 +473,7 @@ public sealed partial class Game
     public RuleSpec? SpecByLabel(string label) => _labels.FirstOrDefault(kv => kv.Value == label).Key;
 
     /// <summary>侦探知道存在的规矩：自己写的、读过的板上的、听人说起的。</summary>
-    public IEnumerable<RuleSpec> DetKnownSpecs() => Specs.Where(s => s != RuanLedger && !s.ByDemon && (s.Author == P.Det && (s != CommonRule || Det.Acc.ContainsKey(s)) || Det.Acc.ContainsKey(s) || SpreadKnown.Any(k => k.Spec == s)))
+    public IEnumerable<RuleSpec> DetKnownSpecs() => Specs.Where(s => s != RuanLedger && !s.ByDemon && (s.Author == P.Det && (s != CommonRule || Det.Acc.ContainsKey(s)) || Det.Acc.ContainsKey(s) || DetHeard.Contains(s) || SpreadKnown.Any(k => k.Spec == s)))
         .Concat(Specs.Where(s => s.ByDemon && Det.Acc.ContainsKey(s) && s != Warning2)).Distinct();
 
     /// <summary>侦探有理由怀疑认了某条规矩的人：他当面讲给谁、谁亲口说起、他亲见谁转述给谁、规矩点名的人或值守者、贴出时在板前的人。</summary>
@@ -441,6 +491,19 @@ public sealed partial class Game
         }
         foreach (var place in s.PostedAt) foreach (var p in DetSeenAt.GetValueOrDefault(place) ?? []) Add(p);
         return list;
+    }
+
+    /// <summary>侦探在场听见别人转述过的规矩（及时进入“规矩”列表）。</summary>
+    public readonly HashSet<RuleSpec> DetHeard = [];
+
+    /// <summary>规矩的来历与是否通过（玩家看的说法）。</summary>
+    public string SourceOf(RuleSpec s)
+    {
+        if (s.ByDemon) return "恶魔的广播";
+        if (s.Author != P.Det) return Names.Of(s.Author!.Value) + "立";
+        if (s == CommonRule) return CommonRuleEstablished ? "你提议的共同规则（已成立）" : "你提议过的共同规则（没成立）";
+        var nods = DetToldFace.Count(x => x.Spec == s && x.Nodded) + SpreadKnown.Count(k => k.Spec == s && k.Accepted);
+        return s == CaseRule ? $"你在对质中当众提出（你知道认了的：{nods} 人）" : $"你写的（你知道认了的：{nods} 人）";
     }
 
     /// <summary>侦探当面讲过规矩的人（与对方的当场态度）。</summary>

@@ -55,28 +55,49 @@ public sealed partial class Game
     private void Seizure()
     {
         if (SeizedBy is not null) return;
-        var crew = Npcs.Where(p => Get(p.Body, T.Did(Job.Seize)) > 0).ToArray();
-        if (crew.Length == 0) return;
-        var leader = crew.OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
-        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && e.Job == Job.Seize).Select(e => e.Id).ToArray();
-        // 守在前厅的人（沃德）拦得住一两个人，拦不住三个以上。
-        var guard = Npcs.FirstOrDefault(p => !crew.Contains(p) && Get(p.Body, T.Did(Job.GuardArchive)) > 0);
-        if (guard is not null && crew.Length < 3)
+        var crew = _seizeOk.ToArray();
+        var tried = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job == Job.Seize || e.Job == Job.AskLeave)).Select(e => e.Who).Distinct().ToArray();
+        if (crew.Length == 0 && tried.Length == 0) return;
+        var leader = (crew.Length > 0 ? crew : tried.Select(t => this[t]).ToArray()).OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
+        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.Text.StartsWith("答应了") && e.Text.Contains("让开"))).Select(e => e.Id).ToArray();
+        // 三站都有人使过劲、又有人开得了前厅的锁，门就开了；有一站始终被守门的人占着，就开不了（§13 第 4 条：没有人数阈值）。
+        var worked = new[] { WeightRoom, LockCore, RelayPost }.All(st => Get(st, T.Worked) > 0);
+        var entry = crew.Any(p => Get(p.Body, T.ArchiveKey) > 0 || p.Pro.Lock >= 3);
+        var ok = worked && entry;
+        var names = string.Join("、", (crew.Length > 0 ? crew.Select(c => c.Name) : tried.Select(Names.Of)));
+        var guard = Npcs.FirstOrDefault(p => !crew.Contains(p) && Get(p.Body, T.Did(Job.GuardArchive)) > 0 && Get(WeightRoom, T.Worked) == 0);
+        Log.Add($"D{Day} 夜 名录库：{names} 来过。{(ok ? "三站齐了，门开了" : guard is not null ? $"{guard.Name}占着配重室，没让开" : "三站没凑齐")}");
+        if (!ok && guard is not null)
         {
-            var text = $"昨夜有人摸到名录库前厅想开门，被{guard.Name}拦下了：{string.Join("、", crew.Select(c => c.Name))}";
-            Log.Add($"D{Day} 夜 {text}");
+            var text = $"昨夜有人摸到名录库前厅想开门，{guard.Name}守着配重室没让开：{names}";
             NewsFrom(guard, NewsKind.Accusation, text, about: leader, trust: -1);
-            var blockEv = RecordEvent(guard.Id, $"在前厅拦下了{string.Join("、", crew.Select(x => x.Name))}", "看守", Place.ArchiveFront, causes);
+            var blockEv = RecordEvent(guard.Id, $"守着配重室，没给{names}让开", "看守", Place.ArchiveFront, causes);
             foreach (var c in crew) Touch(c.Body, T.Accused, blockEv, guard.Id);
             return;
         }
-        var ok = Staff(crew, out var report);
-        Log.Add($"D{Day} 夜 名录库：{string.Join("、", crew.Select(c => c.Name))} 来了。{report.TrimEnd('。')}。{(ok ? "门开了" : "没开成")}");
-        NewsFrom(crew[0], NewsKind.Rumor, $"昨夜有人在名录库前厅（{string.Join("、", crew.Select(c => c.Name))}）{(ok ? "，门开过" : "，没开成")}");
+        NewsFrom(leader, NewsKind.Rumor, $"昨夜有人在名录库前厅（{names}）{(ok ? "，门开过" : "，没开成")}");
         RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
         if (ok) { SeizedBy = new Faction([.. crew.Select(c => c.Id)], leader.Id, []); SeizedPlan = ArchivePlans().First(); SeizedDay = Day; }
     }
     public RuleSpec? SeizedPlan;
+
+    /// <summary>开门一幕体现所定方案的条款（§13 第 15 条）。</summary>
+    private string OpeningScene(Ending fam, RuleSpec plan, List<Person> who)
+    {
+        var names = who.Where(w => w != Det).Select(w => w.Name).Take(4).ToArray();
+        if (plan.Card is { } c && plan.Author == P.Det)
+        {
+            var sign = c.Account switch { 3 => "每个进去的人身后都站着两个见证的人，在门边的纸上签了名", 1 or 2 => "门边摆着台账，进去的人一个一个记上名字", _ => "没人记账，进去的人各自摸黑找自己的匣子" };
+            var night = c.Exception == 4 ? "说好只在白天开，天一擦黑门就合上了" : c.Exception == 3 ? "两人一组进去，一个人不许单独进" : "";
+            return $"门开了。{sign}{(night.Length > 0 ? "；" + night : "")}。{(c.Behavior == 8 ? "本人亲取：每人只拿标着自己名字的那一只。" : c.Behavior == 6 ? "钥匙交给了委员会，取回的人先过一遍登记。" : "")}";
+        }
+        return fam switch
+        {
+            Ending.Committee => $"沃德拿着钥匙站在门边，{string.Join("、", names)}排着队，一个一个登记、一个一个进去。",
+            Ending.OpenEach => $"门一开，{string.Join("、", names)}就涌了进去，没人记账，也没人等谁。",
+            _ => "门开了。"
+        };
+    }
     /// <summary>议事时每个人站到了哪个方案（自动检查用：立场可预读）。</summary>
     public readonly Dictionary<P, RuleSpec> CouncilChoice = [];
     public static Ending FamilyOf(RuleSpec s) => s.Flags.HasFlag(RF.PactArchive) ? Ending.DetectivePact : s.Flags.HasFlag(RF.CommitteeArchive) ? Ending.Committee
@@ -110,14 +131,23 @@ public sealed partial class Game
         if (SeizedBy is not null)
         {
             Result = Ending.NightSeized;
-            CouncilLog.Add($"议事开始之前，名录库已经被打开过：{string.Join("、", SeizedBy.Members.Select(Names.Of))}（领头：{Names.Of(SeizedBy.Leader)}）照「{SeizedPlan!.Text}」夜里私占了它。");
+            CouncilLog.Add($"议事开始之前，名录库已经被打开过：第{SeizedDay}日夜里，{string.Join("、", SeizedBy.Members.Select(Names.Of))}（领头：{Names.Of(SeizedBy.Leader)}）各占一站，把门撬开了。没人记账，也没人见证。");
             ResultText = EndingText(Result);
             return Result;
         }
+        // 第 7 日的早饭（§13 第 13、16 条）：存粮不够十六人，掌粮的人先给信得过的；没吃上的人多半跟着掌粮的人走。
+        var stock = Get(Granary, T.Ration);
+        var holder = People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0) ?? this[P.Mora];
+        var unfed = room.Where(p => p != Det && p != holder).OrderBy(p => TrustIn(holder, p)).ThenByDescending(p => p.Id).Take(Math.Max(0, room.Length - stock)).ToArray();
+        foreach (var p in unfed) p.HungryAtCouncil = true;
+        RefreshStanceContext();
+        if (unfed.Length > 0)
+            CouncilLog.Add($"第 7 日早上，粮仓只剩 {stock} 份，{holder.Name}按人头分不过来：{string.Join("、", unfed.Select(p => p.Name))}没吃上早饭。{(GrainSide() is { } gs ? $"饿着的人多半跟着掌粮的人那一边（{EndingText(gs)}）。" : "")}");
+        else CouncilLog.Add($"第 7 日早上，粮仓还有 {stock} 份，人人吃上了早饭。");
         var support = plans.ToDictionary(s => s, _ => new List<Person>());
         foreach (var p in room.Where(p => p != Det))
         {
-            var best = plans.Select(s => (s, score: AcceptScore(p, s, Channel.Public, Place.Hall, out var why), why))
+            var best = plans.Select(s => (s, score: AcceptScore(p, s, Channel.Public, Place.Hall, out var why, stance: true), why))
                 .Where(x => x.score >= Options.AcceptThreshold).OrderByDescending(x => x.score).ThenBy(x => x.s.Id).FirstOrDefault();
             if (best.s is null) { CouncilLog.Add($"  {p.Name}：哪个方案都不肯认"); continue; }
             support[best.s].Add(p);
@@ -154,6 +184,7 @@ public sealed partial class Game
             {
                 Result = f.Family;
                 CouncilLog.Add($"【{EndingText(f.Family)}】办得成：{report.TrimEnd('。')}。门开了。");
+                CouncilLog.Add(OpeningScene(f.Family, f.Texts.Select(t => plans.First(p => p.Text == t)).FirstOrDefault(p => p.Author == P.Det) ?? plans.First(p => f.Texts.Contains(p.Text)), f.Who));
                 break;
             }
             CouncilLog.Add($"【{EndingText(f.Family)}】支持者凑不齐机关：{report.TrimEnd('。')}。");
@@ -161,7 +192,7 @@ public sealed partial class Game
         if (Result == Ending.None) { Result = Ending.Sealed; CouncilLog.Add("没有一方凑得齐三站。名录库只好封着。"); }
         ResultText = EndingText(Result);
         if (Result is not Ending.Sealed)
-            CouncilLog.Add("侦探的封存匣标签上写着他的名字。他念出来，匣子没有应。恶魔：“那并非你的名字。”（此句待第七部分裁定）");
+            CouncilLog.Add("侦探的封存匣标签上写着他的名字。他念出来，匣子没有应。恶魔：“那并非你的名字。”停了一下，“……也不是别人的。”");
         if (SteleRubbed) CouncilLog.Add("恶魔在章末广播里没有提第九、第十条。你想起石碑上那两条——它从没说过。");
         return Result;
     }

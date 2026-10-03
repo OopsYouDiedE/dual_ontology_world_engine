@@ -28,7 +28,8 @@ func _draw() -> void:
 				var radius: int = [0, 1, 2, 4, 3, 2, 1, 0][frame]
 				if radius > 0:
 					_spark(point.round(), radius)
-	for id in [source.hovered, source.nearest]:
+	# 只描一件：鼠标所指的那件；没有指着东西时，才描最近的那件。
+	for id in [source.hovered if source.hovered != "" else source.nearest]:
 		if id == "" or not source.sites.has(id) or not source.site_visible(id):
 			continue
 		var box: Rect2 = source.site_box(id)

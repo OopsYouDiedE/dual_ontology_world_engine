@@ -20,6 +20,8 @@ func _ready() -> void:
 	_build_variables(left)
 	_build_results(right)
 	_refresh()
+	if host.v6_open():
+		host.flags["v6_seen"] = true
 
 func _page() -> VBoxContainer:
 	var panel := PanelContainer.new()
@@ -45,12 +47,16 @@ func _build_variables(column: VBoxContainer) -> void:
 	column.add_child(Paper.label("[b]昨夜重演[/b]", 25))
 	column.add_child(Paper.label("设定当时的处境与人心，让昨夜重演一次。", 17, Paper.MUTED))
 	column.add_child(Paper.rule())
-	for index in Content.VARIABLES.size():
+	# 第六个问题（昨夜之前，四人彼此……）起初不写出来：素不相识是没人说出口的默认。
+	# 重演里出现信任上的拒绝，或细看过两件相熟旁证之后，它才出现。
+	var count: int = Content.VARIABLES.size() if host.v6_open() else Content.VARIABLES.size() - 1
+	for index in count:
 		var variable: Dictionary = Content.VARIABLES[index]
 		var mark := ""
 		if host.recall_marks.has(index + 1):
 			mark = "　[color=#8a3324]✓ 回忆所证（%s）[/color]" % Content.PERSON_NAMES[host.recall_marks[index + 1]]
-		column.add_child(Paper.label("%s　%s%s" % [["一", "二", "三", "四", "五", "六"][index], variable.question, mark], 19))
+		var fresh := "　[color=#8a3324]（新）[/color]" if index == 5 and not host.flags.has("v6_seen") else ""
+		column.add_child(Paper.label("%s　%s%s%s" % [["一", "二", "三", "四", "五", "六"][index], variable.question, mark, fresh], 19))
 		var row := HFlowContainer.new()
 		row.add_theme_constant_override("h_separation", 8)
 		row.add_theme_constant_override("v_separation", 6)
@@ -58,8 +64,7 @@ func _build_variables(column: VBoxContainer) -> void:
 		var buttons := []
 		for option in variable.options.size():
 			var text: String = variable.options[option]
-			if variable.has("preset") and option == variable.preset:
-				text += "（%s）" % variable.preset_note
+
 			var b := Paper.button(text, _choose.bind(index, option), 17)
 			b.toggle_mode = true
 			buttons.append(b)

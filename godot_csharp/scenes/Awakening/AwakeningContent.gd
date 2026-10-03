@@ -22,7 +22,7 @@ const EVIDENCE := {
 	"E3": {
 		"name": "灰上的靴印", "place": "门厅", "source": "门厅地面 · 插闩下方",
 		"facts": "灰上有一枚马球靴印，踩得很清楚。\n鞋尖朝着门侧的插闩。\n鞋跟一端被什么东西压过。",
-		"experiment": "检视自己的靴底",
+		"experiment": "比对鞋底",
 		"experiment_result": "你抬起脚。\n马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。",
 		"picture": "print",
 	},
@@ -105,7 +105,7 @@ const VARIABLES := [
 	{"key": "V3", "question": "那人是从哪里喊话的", "options": ["从主楼对着铜口说", "就在门外走廊"], "evidence": ["E8"]},
 	{"key": "V4", "question": "那人说的是什么", "options": ["“闩门，别开”", "“开门，救我”"], "evidence": ["E6", "E7"]},
 	{"key": "V5", "question": "侦探更信谁", "options": ["霍铎", "苏泠", "谁都不全信，自己去看"], "evidence": ["E3", "E7"]},
-	{"key": "V6", "question": "昨夜之前，四人彼此", "options": ["素不相识", "早已相熟"], "evidence": ["E9", "E10", "E11"], "preset": 0, "preset_note": "今晨大家都这么以为"},
+	{"key": "V6", "question": "昨夜之前，四人彼此……", "options": ["素不相识", "早已相熟"], "evidence": ["E9", "E10", "E11", "E12"]},
 ]
 
 ## 陈述：只来自玩家在重演中已设定的值（以及重演里侦探自己闩了门的结论）。

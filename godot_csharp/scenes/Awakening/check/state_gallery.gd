@@ -128,6 +128,9 @@ func _run() -> void:
 	await show_line(game, "超越卡诺循环的那一张")
 	await settle(10)
 	await shot("03-desire-amplified")
+	await show_line(game, "考人，不是问路")
+	await settle(10)
+	await shot("03b-reactions-after-the-question")
 	# 3 公告框
 	game = await fresh()
 	game.jump_to("investigate")
@@ -137,7 +140,7 @@ func _run() -> void:
 	await settle(10)
 	await shot("04-notice-board-clauses-1-8")
 	game.close_modal()
-	# 4 门厅现场、证物卡、门厅反转
+	# 4 门厅现场、证物卡、比对鞋底由玩家选人、门厅反转
 	game.player.position = Vector2(640, 918)
 	game.player.pose("idle", "front")
 	await finish_dialogue(game)
@@ -150,41 +153,68 @@ func _run() -> void:
 	game.examine("E1")
 	await finish_dialogue(game)
 	game._on_experiment("E3")
+	await until_modal(game, "menu", 120)
+	await settle(10)
+	await shot("06b-compare-soles-choose-whose")
+	game._modal_choose("detective")
 	await show_line(game, "……是我")
 	await settle(10)
 	await shot("07-reversal-one")
 	await finish_dialogue(game)
 	game.close_modal()
-	# 5 触物回忆：出示第 8 条后苏泠拒绝；霍铎接受
+	# 5 恶魔低语后，苏泠自己蹲向音叉；侦探在场，指出第 8 条，她放下
 	game.engine.Amplify("su", "S4")
-	game.engine.Amplify("huo", "S4")
-	await open_with_nudge(game, "E5", "还有你从未听过的", "08a-nudge-su-before-recall")
-	game._on_recall("E5")
-	await show_line(game, "第八条写着", [0])
-	await settle(10)
-	await shot("08-recall-su-refuses-after-clause-8")
-	await finish_dialogue(game)
-	game.close_modal()
-	game.player.position = Vector2(372, 700)
+	game.player.position = Vector2(660, 900)
 	await settle(5)
-	await open_with_nudge(game, "E7", "图纸就在主楼", "08b-nudge-huo-before-recall")
-	game._on_recall("E7")
-	await show_line(game, "碰一下，就知道了", [1])
+	game.open_card("E5")
+	await show_line(game, "后面还有你从未听过的")
 	await settle(10)
-	await shot("09-recall-huo-touches")
+	await shot("08a-whisper-su")
+	await show_line(game, "拾起了那把音叉")
+	await settle(20)
+	await show_line(game, "它说的那句话")
+	await settle(10)
+	await shot("08b-su-reaches-for-fork-three-responses")
+	await show_line(game, "第八条写着", [1])
+	await settle(10)
+	await shot("08-su-refuses-after-clause-8")
 	await finish_dialogue(game)
-	game.close_modal()
+	# 5a 侦探不在场：霍铎独自碰了石板；回来时的神色与“我想起了一点”
+	game.engine.Amplify("huo", "S4")
+	game.player.position = Vector2(1000, 650)
+	await settle(10)
+	game.whisper("huo", "图纸就在主楼。")
+	await finish_dialogue(game)
+	for i in 1500:
+		await process_frame
+		if str(game.life.get("huo", {}).get("state", "")) == "done" and not game.actor_of("huo").travelling:
+			break
+	game.player.position = game.actor_of("huo").position + Vector2(60, 40)
+	# 走进活动厅时看见他事后的神色（旁白只停 2.6 秒，有窗口截图时帧慢，少等几帧）。
+	for i in 120:
+		await process_frame
+		if game.aside.visible:
+			break
+	await settle(2)
+	await shot("09-huo-after-touching-alone")
+	game.talk("huo")
+	await show_line(game, "我想起了一点")
+	await settle(10)
+	await shot("09a-huo-i-remember-a-little")
+	await finish_dialogue(game)
+	# 5b 请沈鼎回忆（请求这一路）：犹豫，反问“你说呢？”
 	game.engine.Amplify("shen", "S4")
+	game.engine.Amplify("shen", "nudge")
+	game.nudged["E10"] = true
 	game.player.position = Vector2(1100, 600)
 	await settle(5)
-	await open_with_nudge(game, "E10", "你想护住的", "08c-nudge-shen-before-recall")
 	game._on_recall("E10")
 	await show_line(game, "你说呢", [1])
 	await settle(10)
 	await shot("09b-recall-shen-asks-you-decide")
 	await finish_dialogue(game, [0])
 	game.close_modal()
-	# 5b 声路试验：同伴只报原字与方向
+	# 5c 声路试验：第一轮同伴只报原字与方向；第二轮起一张小表
 	game.last_sound = game.engine.SoundTest(0, {"detective": "foyer", "huo": "hall", "shen": "pantry", "su": "R08"})
 	game.set_meta("sound_sentence", game.engine.Sentences()[0])
 	game.say("sound_test")
@@ -192,7 +222,14 @@ func _run() -> void:
 	await settle(10)
 	await shot("09d-sound-test-directions")
 	await finish_dialogue(game)
-	# 5c 普通家具的一句心声
+	game.sound_rounds = 2
+	game.last_sound = game.engine.SoundTest(1, {"detective": "pantry", "huo": "hall", "shen": "foyer", "su": "R08"})
+	game.set_meta("sound_sentence", game.engine.Sentences()[1])
+	game._sound_table()
+	await settle(10)
+	await shot("09g-sound-test-second-round-table")
+	game.close_modal()
+	# 5d 普通家具与窗：一句心声
 	for node in game.get_node("ObjectsAndPeople").get_children():
 		if str(node.name).begins_with("StudyBookcase") and node is Sprite2D:
 			game.player.position = node.position + Vector2(0, 56)
@@ -202,7 +239,7 @@ func _run() -> void:
 	# 心声只停留 2.6 秒；有窗口截图时帧慢，只等两帧。
 	await settle(2)
 	await shot("09e-furniture-aside")
-	# 5d 悬停可交互物件：高亮并显示名称
+	# 5e 悬停可交互物件：只描一件，显示名称
 	var center: Vector2 = game.site_box("E7").get_center()
 	game.player.position = center + Vector2(0, 90)
 	await settle(30)
@@ -210,6 +247,28 @@ func _run() -> void:
 	await settle(4)
 	await shot("09f-hover-name")
 	root.warp_mouse(Vector2(4, 4))
+	# 5f 请人看过之后只给新得到的那一句
+	game.player.position = Vector2(616, 910)
+	await settle(5)
+	game._on_help("E4")
+	await finish_dialogue(game)
+	await until_modal(game, "card", 300)
+	await settle(10)
+	await shot("09j-help-brief")
+	game.close_modal()
+	# 5g R-06 的生活痕迹
+	game.player.position = Vector2(470, 220)
+	await settle(20)
+	game.interact("L6")
+	await settle(10)
+	await shot("09i-trace-oil-hook")
+	game.close_modal()
+	# 5h 第六个问题起初不写出来
+	game.replay_open = true
+	game.open_manuscript()
+	await settle(20)
+	await shot("09h-manuscript-five-questions")
+	game.close_modal()
 	# 6 重演手稿与回放
 	for id in ["E2", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]:
 		game.examine(id)
@@ -259,18 +318,16 @@ func _run() -> void:
 	await settle(20)
 	await shot("14-manuscript-all-match")
 	game.close_modal()
-	# 6b 霍铎读到第 8 条也照样碰
+	# 6b 霍铎读到第 8 条也照样碰（请求这一路）
 	game = await fresh()
 	game.jump_to("investigate")
 	game.player.position = Vector2(372, 700)
 	game.engine.Amplify("huo", "S4")
+	game.engine.Amplify("huo", "nudge")
+	game.nudged["E7"] = true
 	game.open_board()
 	game.close_modal()
 	await finish_dialogue(game)
-	game.open_card("E7")
-	await finish_dialogue(game)
-	await until_modal(game, "card", 120)
-	game.close_modal()
 	game._on_recall("E7")
 	await show_line(game, "图纸值这个价", [0])
 	await settle(10)
@@ -288,6 +345,8 @@ func _run() -> void:
 	var captured_admit := false
 	var captured_door := false
 	var captured_prints := false
+	var captured_hand := false
+	var captured_hand_answer := false
 	for i in 3000:
 		await process_frame
 		var d = game.dialogue
@@ -324,6 +383,14 @@ func _run() -> void:
 				await settle(6)
 				await shot("18a-door-demon-prints")
 				captured_prints = true
+			if not captured_hand and str(d.line.text).contains("架上那半枚手印"):
+				await settle(6)
+				await shot("18b-ask-about-the-handprint")
+				captured_hand = true
+			if not captured_hand_answer and str(d.line.text).contains("依第二条"):
+				await settle(6)
+				await shot("18c-demon-took-what-was-sealed")
+				captured_hand_answer = true
 			if not captured_door and str(d.line.text).contains("你听对了"):
 				await settle(6)
 				await shot("18-door-open")

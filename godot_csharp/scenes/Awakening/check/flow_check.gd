@@ -90,6 +90,23 @@ func open_card_settled(game: Node, id: String) -> void:
 			return
 		await process_frame
 
+## 让某位同伴自己走向旧物的整段过程推进完：对白代为推进，直到他放回旧物。
+func run_reach(game: Node, who: String, choices: Array = []) -> void:
+	for round in 120:
+		await drain(game, choices)
+		if str(game.life.get(who, {}).get("state", "")) == "done" and not game.dialogue.active:
+			return
+		await process_frame
+
+## 一个房间里够得着某个点、又走得到的位置。
+func stand_near(game: Node, room_center: Vector2, point: Vector2, radius: float) -> void:
+	game.player.position = room_center
+	for i in 3:
+		await physics_frame
+	game.player.position = game._spot_near(point, radius, game.player)
+	for i in 3:
+		await physics_frame
+
 func wait_until(condition: Callable, limit := 600) -> bool:
 	for i in limit:
 		if condition.call():
@@ -141,6 +158,9 @@ func _run() -> void:
 		"S3 开场广播：恶魔自报身份与契约要点")
 	check(opening.find("恶魔亦可") < opening.find("此为始业之问"), "自报身份在始业之问之前")
 	check(FORBIDDEN.filter(func(w): return opening.contains(w)).is_empty(), "开场全部台词不提第 9、10 条")
+	check(opening.contains("不是来给它断案的") and opening.contains("考人，不是问路") and opening.contains("我只信我听见的"),
+		"始业之问后，三人各有一句不同的抵触或怀疑，再开始调查（修订四·11）")
+	check(opening.contains("插进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
 	check(int(game.engine.DesireStrength("huo")) == 2 and int(game.engine.DesireStrength("su")) == 2 and int(game.engine.DesireStrength("shen")) == 2,
 		"S4 恶魔逐一点到三人的欲望（Corruption 来源，欲望各加强一级）")
 	check(game.flags.has("board_read"), "S3 广播结束后，公告框第 1—8 条完整呈现过一次（修订三·2）")
@@ -167,9 +187,24 @@ func _run() -> void:
 	await drain(game)
 	check(game.replay_open, "第一次看到闩上的门后，重演开放")
 	game.open_card("E3")
+	seen_lines.clear()
 	game._on_experiment("E3")
+	await wait_until(func(): return game.modal_kind == "menu")
+	game._modal_choose("huo")
+	for round in 60:
+		await drain(game)
+		if game.modal_kind == "card" and not game.dialogue.active:
+			break
+		await process_frame
+	check(not game.flags.has("reversal_one") and game.soles_compared.has("huo") and "\n".join(seen_lines).contains("粗齿纹"),
+		"比对鞋底由玩家选择对象：比霍铎的鞋，对不上，不触发反转（修订四·4）")
+	seen_lines.clear()
+	game._on_experiment("E3")
+	await wait_until(func(): return game.modal_kind == "menu")
+	game._modal_choose("detective")
 	await drain(game)
 	check(game.flags.has("reversal_one") and game.experiments.has("E3"), "门厅反转：对照靴底后触发“……是我”")
+	check("\n".join(seen_lines).contains("簌簌地落"), "“……是我”处，侦探有一句克制的心声（修订四·10）")
 	check(game.statements().has("me"), "陈述列表出现“是我闩的门”")
 
 	# ---- 4. 声路试验（含 R-08 听点）
@@ -179,6 +214,20 @@ func _run() -> void:
 	check(game.heard("su").begins_with("……开门") and game.heard("su").contains("墙那边") and not game.heard("su").contains("门外"), "声路试验：R-08 只听到“……开门”，从墙那边")
 	check(game.heard("huo").begins_with("闩上门，不要开门。") and game.heard("huo").contains("从铜口里"), "声路试验：铜口旁听到整句")
 	game.close_modal()
+	seen_lines.clear()
+	for round in 2:
+		game.sound_test()
+		await wait_until(func(): return game.modal_kind == "sound")
+		game._modal_choose(true)
+		await drain(game)
+		await wait_until(func(): return game.modal_kind == "card")
+		if round == 1:
+			var title := ""
+			for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+				title += str(l.get_parsed_text())
+			check(title.contains("第 2 轮") and title.contains("从哪边来"), "声路试验第二轮起以一张小表汇总四处所闻（修订四·8）")
+		game.close_modal()
+	check(seen_lines.filter(func(l): return l.contains("声音走管子")).size() == 1, "两轮声路试验，苏泠的点评只说一次")
 
 	# ---- 5. 触物回忆：三人倾向各不相同（未告知／已告知第 8 条），沈鼎犹豫时侦探的三种回答
 	# [物件, 人, 是否先指给他看第 8 条, 犹豫时侦探的回答序号（-1 表示不会犹豫）, 期望结果, 期望心声片段]
@@ -196,6 +245,9 @@ func _run() -> void:
 		game = await fresh()
 		game.jump_to("investigate")
 		game.engine.Amplify(case[1], "S4")
+		# 请求回忆这一路单独检验：恶魔那句话这里只放大欲望，不让他先自己走过去（那一路见 5c）。
+		game.engine.Amplify(case[1], "nudge")
+		game.nudged[case[0]] = true
 		game.open_board()
 		game.close_modal()
 		var choices := [0 if case[2] else 1]
@@ -219,29 +271,189 @@ func _run() -> void:
 			check(not hesitated, "%s不犹豫，直接自己决定" % Content.PERSON_NAMES[case[1]])
 	game = await fresh()
 	game.jump_to("investigate")
-	game.engine.Amplify("huo", "S4")
 	seen_lines.clear()
-	await open_card_settled(game, "E7")
-	check(game.modal_kind == "card" and "\n".join(seen_lines).contains("图纸就在主楼"), "第一次打开石板的证物卡：先听到恶魔朝向霍铎欲望的那句“不妨一试”，然后才出现回忆选项（修订三·3）")
+	await open_card_settled(game, "E1")
+	check(game.modal_kind == "card" and "\n".join(seen_lines).contains("它记得你昨夜是什么"), "第一次打开插闩的证物卡：先听到恶魔朝向侦探欲望的那句话，然后才出现回忆选项（修订三·3）")
 	var labels := []
 	for b in game.modal_root.find_children("*", "Button", true, false):
 		labels.append(str(b.text))
 	check(labels.any(func(t): return str(t).contains("契约第 8 条")), "回忆选项标注“（契约第 8 条）”（修订三·2）")
 	game.close_modal()
 	seen_lines.clear()
-	await open_card_settled(game, "E7")
-	check(not "\n".join(seen_lines).contains("不妨一试"), "同一件物件的“不妨一试”只说一次")
+	await open_card_settled(game, "E1")
+	check(not "\n".join(seen_lines).contains("门闩记得"), "同一件物件，恶魔那句话只说一次")
 	game.close_modal()
 	var nudges := {}
 	for id in ["E1", "E5", "E7", "E10"]:
 		var resource: Resource = load("res://scenes/Awakening/awakening.dialogue")
 		nudges[id] = resource.titles.has("nudge_" + id)
 	var nudge_text := FileAccess.get_file_as_string("res://scenes/Awakening/awakening.dialogue")
-	check(nudge_text.contains("门闩记得你昨夜是什么") and nudge_text.contains("还有你从未听过的") and nudge_text.contains("图纸就在主楼") and nudge_text.contains("你想护住的"),
+	check(nudge_text.contains("门闩记得你昨夜是什么") and nudge_text.contains("后面还有你从未听过的") and nudge_text.contains("图纸就在主楼") and nudge_text.contains("那罐子都替你记着"),
 		"四件物件四句不同的话，各自朝向此人的欲望")
+	var endings := []
+	for id in ["E1", "E5", "E7", "E10"]:
+		var block := nudge_text.substr(nudge_text.find("~ nudge_" + id))
+		var line := block.substr(block.find("铜口:"), block.find("\n", block.find("铜口:")) - block.find("铜口:"))
+		endings.append(line.right(6))
+	var distinct_endings := {}
+	for e in endings:
+		distinct_endings[e] = true
+	check(distinct_endings.size() == 4 and not nudge_text.contains("不妨一试。\ndo"), "四句诱导不以同一句收尾（修订四·6）%s" % str(endings))
+	game = await fresh()
+	game.jump_to("investigate")
+	game.engine.Amplify("huo", "S4")
+	game.nudged["E7"] = true
 	await run_recall(game, "E7", [1])
 	check(game.recall_marks.get(2, "") == "huo" and int(game.replay_vars[1]) == -1, "回忆把 V2 标为“回忆所证”，但不替玩家设定变量")
 	game.close_modal()
+
+	# ---- 5c. 恶魔低语后，同伴自己走向旧物（修订四·1）：在场时三种回应
+	# [人, 物件, 房间中心, 侦探的回应（0 劝阻，1 说明第 8 条，2 任其自便）, 期望]
+	var rooms := {"huo": Vector2(300, 720), "su": Vector2(640, 900), "shen": Vector2(1000, 650)}
+	var expect := {"huo": ["touch", "touch", "touch"], "su": ["touch", "refuse", "touch"], "shen": ["refuse", "refuse", "touch"]}
+	var reach_lines := {"huo": "拿起了那块石板", "su": "拾起了那把音叉", "shen": "端起酵种罐"}
+	for who in ["huo", "su", "shen"]:
+		for answer in 3:
+			game = await fresh()
+			game.jump_to("investigate")
+			game.engine.Amplify(who, "S4")
+			var obj: String = game.OWN_OBJECTS[who]
+			await stand_near(game, rooms[who], game.site_point(obj), 90.0)
+			for i in 40:
+				await physics_frame
+			var still: bool = not game.life.has(who)
+			seen_lines.clear()
+			game.whisper(who, "（低语）")
+			# 沈鼎任其自便时会犹豫、反问“你说呢？”——这里答“碰吧”。
+			await run_reach(game, who, [answer, 0])
+			var touched: bool = int(game.engine.Hooks(who)) == 1
+			var text := "\n".join(seen_lines)
+			var ok: bool = still and text.contains(reach_lines[who]) and touched == (expect[who][answer] == "touch") \
+				and bool(game.engine.IsDisturbed(obj)) and game.decided.has(who)
+			check(ok, "%s：低语之前不动；低语后自己走过去伸手；侦探%s → %s（钩 %d，%s）" % [Content.PERSON_NAMES[who], ["劝阻", "说明第 8 条", "任其自便"][answer],
+				expect[who][answer], int(game.engine.Hooks(who)), str(game.recall_decision.get("thought", ""))])
+			if who == "shen" and answer == 2:
+				check(text.contains("你说呢"), "沈鼎被任其自便时犹豫，反问侦探“你说呢？”")
+	# 不在场：只留下痕迹与事后的神色，回来时说一句
+	for who in ["huo", "su", "shen"]:
+		game = await fresh()
+		game.jump_to("investigate")
+		game.engine.Amplify(who, "S4")
+		game.player.position = Vector2(160, 230)
+		for i in 4:
+			await physics_frame
+		game.whisper(who, "（低语）")
+		await wait_until(func(): return str(game.life.get(who, {}).get("state", "")) == "done" and not game.life[who].get("walking_back", false), 1500)
+		var obj: String = game.OWN_OBJECTS[who]
+		var touched: bool = int(game.engine.Hooks(who)) == 1
+		var expected_touch: bool = who != "shen"
+		check(touched == expected_touch and bool(game.engine.IsDisturbed(obj)) and not game.recalls.has(who) and bool(game.life[who].alone),
+			"%s：侦探不在场，自己%s（钩 %d）；侦探什么也没听见，物件上留下“被动过”的痕迹" % [Content.PERSON_NAMES[who], "碰了" if expected_touch else "放下了", int(game.engine.Hooks(who))])
+		await wait_until(func(): return not game.actor_of(who).travelling, 600)
+		game.player.position = game.actor_of(who).position + Vector2(26, 0)
+		seen_lines.clear()
+		game.talk(who)
+		await drain(game)
+		var said := "\n".join(seen_lines)
+		if expected_touch:
+			check(said.contains("我想起了一点") and game.recalls.has(who), "%s回来后说“我想起了一点”，片段这时才到侦探手里" % Content.PERSON_NAMES[who])
+		else:
+			check(said.contains("又放回去了"), "沈鼎回来后说他把罐子端起来、又放回去了")
+		await open_card_settled(game, obj)
+		var notes := ""
+		for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+			notes += str(l.get_parsed_text())
+		check(notes.contains("被人拿起过"), "%s的证物卡上记着它被人拿起过" % Content.PERSON_NAMES[who])
+		game.close_modal()
+	# 恶魔挑侦探不在的时候低语（玩家听不见）：调查过四件后，下一次换房间时，不在场的同伴会被低语
+	game = await fresh()
+	game.jump_to("investigate")
+	for id in ["E1", "E2", "E3", "E4"]:
+		game.examine(id)
+	await drain(game)
+	await wait_until(func(): return game.life.has("huo"), 300)
+	check(game.life.has("huo") and bool(game.engine.Whispered("huo")) and game.nudged.has("E7") and not game.life.has("su"),
+		"侦探在门厅：恶魔对不在场的霍铎低语，他自己走向石板（在场的苏泠没有被低语）")
+	await wait_until(func(): return str(game.life.get("huo", {}).get("state", "")) == "done" and not game.actor_of("huo").travelling, 1500)
+	check(int(game.engine.Hooks("huo")) == 1 and not game.recalls.has("huo"), "玩家不作为也有后果：霍铎独自碰了石板，留下一枚钩，侦探还不知道")
+	game.player.position = Vector2(300, 720)
+	await wait_until(func(): return game.aside.visible, 60)
+	check(game.aside.visible and game.aside.text.contains("恍惚"), "走进活动厅：看见霍铎事后的神色")
+
+	# ---- 5d. 第六个问题起初不写出来（修订四·2）
+	game = await fresh()
+	game.jump_to("investigate")
+	game.replay_open = true
+	game.open_manuscript()
+	await process_frame
+	var page := ""
+	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+		page += str(l.get_parsed_text())
+	check(not page.contains("昨夜之前") and not game.statements().has("V6_0"), "重演手稿起初只有五个问题，“素不相识”是不写出来的默认")
+	game.close_modal()
+	seen_lines.clear()
+	game.examine("E9")
+	await drain(game)
+	check(not game.v6_open(), "细看一件相熟旁证，第六个问题还不出现")
+	game.examine("E12")
+	await drain(game)
+	game.open_manuscript()
+	await process_frame
+	page = ""
+	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+		page += str(l.get_parsed_text())
+	check(game.v6_open() and page.contains("昨夜之前，四人彼此") and "\n".join(seen_lines).contains("我们真的是昨天才认识的吗"),
+		"细看两件相熟旁证（杯子、放大镜）后，侦探起疑，手稿出现第六个问题")
+	game.close_modal()
+	game = await fresh()
+	game.jump_to("reversal_one")
+	check(not game.v6_open(), "另一条路：起初没有第六个问题")
+	var first: Dictionary = game.run_replay([0, 0, 0, 0, 0, 0])
+	seen_lines.clear()
+	game.after_replay(first)
+	for round in 20:
+		await drain(game)
+		if game.modal_kind == "replay":
+			break
+		await process_frame
+	check(game.v6_open() and "\n".join(seen_lines).contains("真是昨天才认识的吗"), "重演中侦探因信任不足拒绝转述后，手稿出现第六个问题")
+	game.close_modal()
+
+	# ---- 5e. 交互一致性与减少重复（修订四·7、8、9）
+	game = await fresh()
+	game.jump_to("investigate")
+	check(game.player.collision_mask == 1 and game.actor_of("su").collision_mask == 1, "人与人不互相阻挡（只与墙和家具碰撞）")
+	game.player.position = game.site_point("E4") + Vector2(0, -44)
+	game._approach_site("E4")
+	check(game.modal_kind == "card", "站在够得着的地方点物件：直接打开，不绕到别处")
+	game.close_modal()
+	seen_lines.clear()
+	game._on_help("E4")
+	for round in 60:
+		await drain(game)
+		if game.modal_kind == "card" and not game.dialogue.active:
+			break
+		await process_frame
+	var brief := ""
+	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+		brief += str(l.get_parsed_text())
+	check(brief.contains("这布是我拧的") and not brief.contains("一条拧过的湿抹布"), "请人看过之后只给新得到的那一句，不重显整张原文")
+	game.close_modal()
+	check(game.site_visible("L6") and game.site_visible("L7"), "R-06、R-07 各有一处本人的生活痕迹")
+	game.interact("L6")
+	var hook := ""
+	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+		hook += str(l.get_parsed_text())
+	check(hook.contains("机油") and hook.contains("挂很多回"), "R-06 床头挂钩上的油渍：相熟与久居的旁证，不编号")
+	game.close_modal()
+	game.interact("L7")
+	var stone := ""
+	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
+		stone += str(l.get_parsed_text())
+	check(stone.contains("磨刀石") and stone.contains("深槽"), "R-07 桌上磨得凹陷的磨刀石")
+	game.close_modal()
+	game._furniture_aside(Vector2(108, 55))
+	check(game.aside.visible and game.aside.text.contains("窗"), "点到窗：也给一句心声")
 
 	# ---- 6. 重演：素不相识时的拒绝，与全部吻合
 	var refused: Dictionary = game.run_replay([0, 0, 0, 0, 0, 0])
@@ -341,6 +553,9 @@ func _run() -> void:
 	check(game.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible and finale.contains("鞋底窄"),
 		"门开：主楼走廊烟灰上留下一行窄底皮鞋印（恶魔显形才能抬闩，修订三·8）")
 	check(game._room_name(game.player.position) == "门厅", "结局时地名显示“门厅”")
+	check(game.flags.has("asked_hand") and finale.contains("依第二条，我取走了诸位授权封存之物"),
+		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔字面承认取物（修订四·5）")
+	check(finale.contains("比我以为的站得久"), "门开时侦探有一句克制的心声（修订四·10）")
 	check(finale.contains("二十四道，我都想起来了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
 	var ending_text := ""
 	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):

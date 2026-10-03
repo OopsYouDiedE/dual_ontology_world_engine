@@ -473,8 +473,65 @@ def demon_prints() -> Canvas:
     return c
 
 
+def oil_hook() -> Canvas:
+    """12x18 iron hook on the R-06 wall, wrapped in a blackened oily rag, with an oil smear on the plaster below."""
+    hook = Canvas(12, 18)
+    hook.rect(5, 0, 2, 3, IRON[2]); hook.px(5, 0, IRON[4])
+    hook.vline(5, 3, 5, IRON[3]); hook.vline(6, 3, 5, IRON[1])
+    hook.line(6, 8, 8, 6, IRON[3])
+    hook.rect(3, 4, 6, 4, hexc("#2f2a26")); hook.hline(3, 4, 6, hexc("#4a433c")); hook.px(7, 6, hexc("#5c5348"))
+    _finish(hook)
+    c = Canvas(12, 18)
+    # the smear: a soft, darker stain on the plaster, wider where the rag hung
+    for y in range(8, 18):
+        w = 5 if y < 12 else 4 if y < 15 else 3
+        x0 = 6 - w // 2
+        c.hline(x0, y, w, hexc("#2c241d", 70 if y < 15 else 45))
+    c.hline(4, 9, 4, hexc("#1f1914", 95))
+    c.blit(hook, 0, 0)
+    return c
+
+
+def whetstone() -> Canvas:
+    """18x8 whetstone on the R-07 desk, worn into a deep hollow down the middle."""
+    c = Canvas(18, 8)
+    c.rect(1, 2, 16, 5, hexc("#6e6a62")); c.hline(1, 2, 16, hexc("#9a958a")); c.hline(1, 6, 16, hexc("#4b4741"))
+    c.hline(3, 3, 12, hexc("#57534c")); c.hline(5, 4, 8, hexc("#3a3631")); c.hline(4, 4, 1, hexc("#4b4741")); c.hline(13, 4, 1, hexc("#4b4741"))
+    c.px(7, 3, hexc("#a9b2ba")); c.px(11, 3, hexc("#a9b2ba"))
+    return _finish(c)
+
+
+def card_hook() -> Canvas:
+    c = _card(hexc("#b8ad97"))
+    c.dither(0, 0, 96, 72, hexc("#aea38c"), 0.18)
+    for y in range(30, 72):
+        w = 30 if y < 44 else 24 if y < 58 else 18
+        c.hline(48 - w // 2, y, w, hexc("#2c241d", 60 if y < 58 else 40))
+    c.hline(34, 34, 28, hexc("#1f1914", 90))
+    c.rect(44, 4, 8, 10, IRON[2]); c.hline(44, 4, 8, IRON[4])
+    c.rect(46, 14, 4, 20, IRON[3]); c.vline(49, 14, 20, IRON[1])
+    c.line(50, 32, 58, 24, IRON[3]); c.line(50, 33, 58, 25, IRON[2])
+    c.rect(38, 18, 20, 14, hexc("#2f2a26")); c.hline(38, 18, 20, hexc("#4a433c"))
+    for x, y in ((41, 22), (47, 26), (53, 21), (44, 29)):
+        c.px(x, y, hexc("#5c5348"))
+    return c
+
+
+def card_whetstone() -> Canvas:
+    c = _card(WALNUT[3])
+    c.dither(0, 0, 96, 72, WALNUT[2], 0.2)
+    c.rect(10, 20, 76, 34, hexc("#6e6a62")); c.hline(10, 20, 76, hexc("#9a958a")); c.hline(10, 53, 76, hexc("#3f3b36"))
+    c.ellipse(48, 37, 30, 8, hexc("#57534c"))
+    c.ellipse(48, 38, 24, 5, hexc("#45413b"))
+    c.ellipse(48, 39, 16, 3, hexc("#34302b"))
+    c.hline(26, 30, 44, hexc("#8a857b"))
+    for x in (30, 41, 55, 63):
+        c.px(x, 37, hexc("#a9b2ba"))
+    return c
+
+
 FIELD = {
-    "demon_prints": demon_prints,
+    "demon_prints": demon_prints, "oil_hook": oil_hook, "whetstone": whetstone,
     "notice_frame": notice_frame,
     "speaking_tube": speaking_tube, "isolation_door": isolation_door,
     "isolation_door_open": lambda: isolation_door(True), "wedge": wedge, "fork": fork, "score": score,
@@ -485,6 +542,7 @@ FIELD = {
 CARDS = {
     "card_door": card_door, "card_wedge": card_wedge, "card_print": card_print, "card_cloth": card_cloth,
     "card_fork": card_fork, "card_score": card_score, "card_slate": card_slate, "card_tube": card_tube,
+    "card_hook": card_hook, "card_whetstone": card_whetstone,
     "card_cups": card_cups, "card_jar": card_jar, "card_shelf": card_shelf, "card_coat": card_coat,
 }
 

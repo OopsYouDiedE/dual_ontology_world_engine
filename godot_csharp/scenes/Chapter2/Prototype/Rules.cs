@@ -92,6 +92,8 @@ public sealed partial class Game
     public readonly List<RuleSpec> Specs = [];
     public RuleSpec WardLedger = null!, WardNight = null!, MoraNight = null!, RuanLedger = null!, Warning1 = null!, Warning2 = null!, CommonRule = null!;
     public bool AccusedQuer;
+    /// <summary>第一个被当众指控私取的人（可能是雀儿，也可能是被人亲眼看见没记账的别人）。</summary>
+    public P? Accused;
     private int _specId;
 
     public RuleSpec NewSpec(string text, P? author, RF flags, Func<Fx, IEnumerable<Rule>> build, bool demon = false, Card? card = null,
@@ -294,7 +296,7 @@ public sealed partial class Game
     /// 立规者一项分“为人”（不撒谎、不冤枉人）与该领域的“判断”（推得准、办得成），各自有上限；
     /// 经人转述时，转述者的担保代替大半作者的分量；公告板覆盖面大但说服力弱。
     /// </summary>
-    public int AcceptScore(Person p, RuleSpec s, Channel channel, Place? at, out string why, Person? via = null)
+    public int AcceptScore(Person p, RuleSpec s, Channel channel, Place? at, out string why, Person? via = null, bool stance = false)
     {
         using var _ = Prof.Time("AcceptScore");
         var parts = new List<string>();
@@ -302,11 +304,21 @@ public sealed partial class Game
         if (Veto(p, s) is { } veto) { why = $"底线：{veto}"; return -99; }
         var score = 0;
         var author = AuthorTerm(p, s, parts);
+        // 名录库的立场（§13 第 6、12 条）：信不信提方案的人只占小分量；“点过头”也只占小分量。主要看欲望、亲眼所见、饥饱、所属派系。
+        if (stance && !s.ByDemon)
+        {
+            var capped = Math.Clamp(author, -1, 1);
+            if (capped != author) parts.Add($"（立场：信谁只算{capped:+0;-0;0}）");
+            author = capped;
+        }
+        if (stance) score += StanceTerms(p, s, parts);
         if (via is not null && via != p && via.Id != s.Author)
         {
             author = Math.Min(author, 1);
             var v = Math.Clamp(TrustIn(p, via), 0, TrustCap);
             score += v; parts.Add($"{via.Name}担保{v:+0;-0;0}");
+            // 转述者对立规者有成见：话一出口就走了样（§13 第 5 条）。
+            if (s.Author is { } au && via.Pro.Prejudice.GetValueOrDefault(au) < 0) { score -= 1; parts.Add($"{via.Name}讲走了样-1"); }
         }
         score += author;
         if (at is { } place)
@@ -333,6 +345,44 @@ public sealed partial class Game
         if (ch != 0) { score += ch; parts.Add(channel == Channel.Face ? "当面+1" : "只是贴在板上-1"); }
         why = string.Join(" ", parts) + $" = {score}";
         return score;
+    }
+
+    /// <summary>立场的主要来源：亲眼所见、点过头、饭桌上被驳、饥饱、所属派系、知道第九条。</summary>
+    private int StanceTerms(Person p, RuleSpec s, List<string> parts)
+    {
+        var fam = FamilyOf(s);
+        var score = 0;
+        void Add(int v, string why) { if (v == 0) return; score += v; parts.Add($"{why}{v:+0;-0;0}"); }
+        if (p.Witnessed.Contains("hook")) Add(fam switch { Ending.OpenEach => -2, Ending.Sealed or Ending.DetectivePact => 1, _ => 0 }, "亲眼见过应了唤名的人");
+        if (p.Witnessed.Contains("crack")) Add(fam switch { Ending.OpenEach => -4, Ending.DetectivePact or Ending.Committee => 1, _ => 0 }, "亲眼见过基座的裂纹");
+        else if (p.Witnessed.Contains("crack-heard")) Add(fam == Ending.OpenEach ? -1 : 0, "听亲眼见过的人说基座裂了");
+        if (p.Witnessed.Contains("machine")) Add(fam == Ending.DetectivePact ? 2 : 0, "亲眼见过侦探把机关安稳地试开");
+        if (p.Acc.GetValueOrDefault(s) == Truth.True) Add(1, "点过头");
+        if (p.StanceNudge.TryGetValue(fam, out var n)) Add(Math.Min(1, n), "饭桌上被说动");
+        if (p.News.Values.Any(h => h.Text.Contains("第九、第十条"))) Add(fam switch { Ending.OpenEach => -1, Ending.DetectivePact => 1, _ => 0 }, "听说石碑上还有第九条");
+        if (p.HungryAtCouncil && GrainSide() is { } g && g == fam && People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0) is { } holder && TrustIn(p, holder) >= 1) Add(1, "饿着，跟掌粮的人走");
+        if (FactionLeaderOf(p) is { } lead && lead != p && lead != Det && _leaderStance.TryGetValue(lead.Id, out var lf) && lf == fam) Add(1, $"跟着{lead.Name}");
+        return score;
+    }
+
+    private readonly Dictionary<P, Ending> _leaderStance = [];
+    private Person? FactionLeaderOf(Person p) => _factionCache?.FirstOrDefault(f => f.Members.Contains(p.Id)) is { } f ? this[f.Leader] : null;
+    private List<Faction>? _factionCache;
+    /// <summary>掌粮的一方：手里有粮仓钥匙的人此刻向着的那一边。</summary>
+    private Ending? GrainSide() => People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0) is { } k && _leaderStance.TryGetValue(k.Id, out var f) ? f : null;
+
+    /// <summary>每个时段开头重算一次派系与领头人的立场（立场里“跟着领头人”一项用它，避免循环）。</summary>
+    public void RefreshStanceContext()
+    {
+        _factionCache = Factions();
+        _leaderStance.Clear();
+        var heads = _factionCache.Select(f => f.Leader).Append(People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0)?.Id ?? P.Mora).Distinct();
+        foreach (var h in heads.Where(h => h != P.Det))
+        {
+            var lead = this[h];
+            var best = StancePlans().Select(s => (s, sc: AcceptScore(lead, s, Channel.Public, null, out _))).Where(x => x.sc >= Options.AcceptThreshold).OrderByDescending(x => x.sc).ThenBy(x => x.s.Id).FirstOrDefault();
+            if (best.s is not null) _leaderStance[h] = FamilyOf(best.s);
+        }
     }
 
     private int AuthorTerm(Person p, RuleSpec s, List<string> parts)

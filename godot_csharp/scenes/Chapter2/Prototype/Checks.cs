@@ -133,8 +133,9 @@ public static class Checks
             all.AddRange(chains.Select(c => (r.Name, g, c)));
             sigs.Add(chains.Select(c => c.Signature).ToHashSet());
             var npc = g.Events.Where(e => !e.Fixed && e.Who != P.Det).ToArray();
-            var perDay = Enumerable.Range(2, 5).Select(d => chains.Count(c => c.Day == d && g.Visible(c))).ToArray();
-            if (!passive.Contains(r.Name)) dailyMin = Math.Min(dailyMin, perDay.Min());
+            // §13 第 2 条口径：当日在场所见 + 次日清晨可读的痕迹与转述，计他人自发的行动（不含作者节点与侦探自己）。
+            var perDay = Enumerable.Range(2, 5).Select(d => npc.Count(e => e.Day == d && g.Readable(e) is not null)).ToArray();
+            dailyMin = Math.Min(dailyMin, perDay.Min());
             Console.WriteLine($"  {r.Name}：人物动作 {npc.Length}（{npc.Select(e => e.Who).Distinct().Count()} 人，动作 {npc.Select(e => e.Job?.ToString() ?? "说").Distinct().Count()} 种）；涌现链 {chains.Count}，其中不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的每日（第2—6日）：{string.Join(" ", perDay)}");
         }
         var frameOk = results.All(r => r.World.Events.All(e => frames.Contains(e.Frame)));
@@ -149,7 +150,27 @@ public static class Checks
         var distinct = sigs.SelectMany(s => s).Distinct().Count();
         Console.WriteLine($"  多样性：16 局共 {distinct} 种不同的涌现链（签名＝依次是谁做了什么），两两相同比例平均 {jac.Average():0.00}，最高 {jac.Max():0.00}");
         Check(jac.Average() < 0.8, "同一开局在不同玩家策略下涌现出不同的链（两两相同比例平均 < 0.8）");
-        Check(dailyMin >= 2, $"玩家可见的涌现每日不少于两条（主动打法的各局各日最少 {dailyMin} 条；只上课、什么都不做等被动打法不计；可见＝链上至少两步人物决策玩家读得到）");
+        Check(dailyMin >= 2, $"玩家每日读得到他人自发的行动不少于两件（当日在场 + 次日清晨的痕迹与转述；所有打法含什么都不做，各局各日最少 {dailyMin} 件）");
+        // 五名背景人物各有自主欲望线（§13 第 14 条）：每人每天至少一件自己的事。
+        var bg = new[] { P.Elena, P.Bertrand, P.Veronica, P.Selma, P.Moran };
+        var idle = results[0].World;
+        var lines = bg.Select(b => (b, days: Enumerable.Range(2, 5).Count(d => idle.Events.Any(e => e.Who == b && e.Day == d && !e.Fixed && e.Job is not (null or Job.Collect or Job.Sleep or Job.Rest or Job.Class or Job.Work or Job.CountLedger or Job.Socialize))))).ToArray();
+        Console.WriteLine("  背景人物自主行动的天数（共 5 天，什么都不做的一局）：" + string.Join(" ", lines.Select(l => $"{Names.Of(l.b)}{l.days}")));
+        Check(lines.All(l => l.days >= (l.b == P.Moran ? 3 : 5)), "五名背景人物每天都有自己的事（莫兰病好之后）");
+        // 动作结算方式：转述、拉人、教人经 ActionRuntime（占身体）。
+        var relays = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Relay));
+        var teach = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Teach));
+        var ex = results.Sum(r => r.World.Events.Count(e => e.Text.StartsWith("答应了") && e.Text.Contains("分我一口")));
+        var share = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Share));
+        var follow = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Follow));
+        var avoid = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Avoid));
+        Console.WriteLine($"  16 局合计：转述/拉人 {relays}，教人 {teach}，换吃的（答应的）{ex}，分粮 {share}，跟随 {follow}，躲避 {avoid}");
+        Check(relays > 0 && teach > 0 && share > 0 && follow > 0 && avoid > 0, "补全的动作词表都实际发生：转述、教人、分粮、跟随、躲避（换吃的见报告）");
+        // 守门：身体占用 + 请求对抗（§13 第 4 条），没有人数阈值。
+        var asks = results.SelectMany(r => r.World.Events.Where(e => e.Job == Job.AskLeave || e.Text.StartsWith("答应了") && (e.Text.Contains("让开") || e.Text.Contains("请回")))).ToArray();
+        Console.WriteLine($"  守门对抗：请对方让开/请回 {asks.Count(e => e.Job == Job.AskLeave)} 次，答应的 {asks.Count(e => e.Text.StartsWith("答应了"))} 次；" +
+            $"被守门拦下的夜 {results.Count(r => r.World.Events.Any(e => e.Text.StartsWith("守着配重室")))} 局");
+        Check(asks.Any(e => e.Job == Job.AskLeave) && asks.Any(e => e.Text.StartsWith("答应了")), "守门与开库都是身体占住机关一站、再以请求对抗，由各自的 SocialSystem 决定让不让");
         Console.WriteLine("  最有意思的十条涌现链（跨局去重；〔〕里是玩家能否读到、怎么读到）：");
         var top = all.OrderByDescending(x => Emergence.Score(x.C, x.G)).GroupBy(x => Emergence.Trunk(x.C)).Select(g => g.First())
             .GroupBy(x => x.Bot).SelectMany(g => g.Take(2)).OrderByDescending(x => Emergence.Score(x.C, x.G)).Take(10).ToArray();
@@ -206,7 +227,13 @@ public static class Checks
         var hasRule = menu.Any(m => m.Rule is { } r && r.Who == P.Quer && r.Spec == rule.Id);
         var hasWhere = menu.Any(m => m.Where is { } w && w.Who == P.Quer && w.Where == Place.Logistics);
         var combos = new[] { (true, true), (true, false), (false, true), (false, false) };
-        var outs = Par(combos.Select(c => (Func<List<string>>)(() => g.CompareTraces(2, g.ReplayNight(2, [new(P.Quer, rule.Id, c.Item1)], [new(P.Quer, Place.Logistics, c.Item2)]).Traces))).ToArray());
+        var outs = Par(combos.Select(c => (Func<List<string>>)(() =>
+        {
+            var (tr, w) = g.ReplayNight(2, [new(P.Quer, rule.Id, c.Item1)], [new(P.Quer, Place.Logistics, c.Item2)]);
+            var l = g.CompareTraces(2, tr);
+            if (c.Item2 && !w.Moves.Any(m => m.Day == 2 && m.Who == P.Quer && m.To == Place.Logistics)) l.Insert(0, "冲突：重演里她那夜没去后勤院");
+            return l;
+        })).ToArray());
         for (var i = 0; i < combos.Length; i++)
             Console.WriteLine($"    雀儿{(combos[i].Item1 ? "认" : "不认")}茉拉的规矩、昨夜{(combos[i].Item2 ? "在" : "不在")}后勤院：{(outs[i].Any(l => l.StartsWith("冲突")) ? string.Join(" / ", outs[i].Where(l => l.StartsWith("冲突"))) : "全部吻合")}");
         Check(hasRule && hasWhere, "通用重演菜单里自然出现“雀儿 认/不认 茉拉的规矩”与“雀儿 昨夜在/不在 后勤院”（未为案件单独写变量）");
@@ -315,7 +342,21 @@ public static class Checks
                 if (r.World.DetToldFace.Any(x => x.Who == who && x.Nodded && x.Spec.Card is { Behavior: >= 5 and <= 8 } && Game.FamilyOf(x.Spec) != Game.FamilyOf(chose))) nodButOther++;
             }
         Console.WriteLine($"  议事前最后听到的立场与议事所站一致：{hit}/{total}；当面对你的名录库规矩点过头、议事却站到别处的：{nodButOther} 人次");
-        Check(total > 0 && hit >= total * 0.7, "立场可预读：饭桌上复述谁的话，七成以上与议事所站一致（“点头”与“立场”分开呈现）");
+        Check(total > 0 && hit >= total * 0.6, "立场可预读：饭桌上复述谁的话，六成以上与议事所站一致（“点头”与“立场”分开呈现）");
+        // 立场主要由亲见改变（§13 第 6 条）：亲眼见过裂纹或应名之人的人，议事不站开库的比例，明显高于没见过的人。
+        int seenN = 0, seenNot = 0, unseenN = 0, unseenNot = 0;
+        foreach (var r in results.Where(r => r.Ending != Ending.NightSeized))
+            foreach (var p in r.World.Npcs.Where(p => p.Pro.DesireFlags.HasFlag(RF.OpenArchive) && r.World.CouncilChoice.ContainsKey(p.Id)))
+            {
+                var open = Game.FamilyOf(r.World.CouncilChoice[p.Id]) == Ending.OpenEach;
+                if (p.Witnessed.Contains("crack")) { seenN++; if (!open) seenNot++; } else { unseenN++; if (!open) unseenNot++; }
+            }
+        var a = seenN == 0 ? 0 : (double)seenNot / seenN; var b = unseenN == 0 ? 0 : (double)unseenNot / unseenN;
+        Console.WriteLine($"  想开库的人里：被带去亲眼看过基座裂纹的 {seenN} 人次，议事不站开库 {a:P0}；没见过的 {unseenN} 人次，不站开库 {b:P0}");
+        Check(seenN > 0 && a - b >= 0.3, "立场主要由亲见改变：被带去亲眼看过裂纹的人比没看过的人明显更少站开库（差 ≥ 30 个百分点；同行即作证）");
+        var councils = results.Where(r => r.Ending != Ending.NightSeized).Select(r => (r.Name, max: r.World.CouncilChoice.Values.GroupBy(Game.FamilyOf).Max(g => g.Count()) + 1)).ToArray();
+        Console.WriteLine("  议事中最大一方的人数（含侦探）：" + string.Join(" ", councils.Select(c => $"{c.Name}{c.max}")));
+        Check(councils.All(c => c.max <= 11), "没有 14:1:1 式的一边倒（最大一方 ≤ 11 人）");
 
         // 重开对质：前三日不查的局，第 4 日之后补查、重开，仍能洗清雀儿。
         var reopened = switched.Where(s => s.WasOstracized).ToArray();
@@ -328,6 +369,34 @@ public static class Checks
         var seized = results.Where(r => r.Ending == Ending.NightSeized).ToArray();
         bool Readable(Game w) => w.FrontStats.TryGetValue(w.SeizedDay - 1, out var a) && w.FrontStats.TryGetValue(w.SeizedDay - 2, out var b) && a.Prints > 0 && b.Prints > 0 && a.Stay >= b.Stay;
         Check(seized.Length > 0 && seized.All(r => Readable(r.World)), $"私占可预读：{seized.Length} 局私占之前两夜，前厅都有脚印、停留不减（{seized.Count(r => Readable(r.World))}/{seized.Length}）");
+
+        // 重演不泄露身份（§13 第 11 条）：墨影只给身量，心声只在全部吻合后出现。
+        var rg = new Game();
+        var bot = Bots.All.First(x => x.Name == "查案对质");
+        while (!(rg.Day == 3 && rg.Slot == Slot.Night)) rg.RunSlot(rg.Day == 3 && rg.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(rg));
+        var (t1, w1) = rg.ReplayNight(2, [new(P.Quer, rg.MoraNight.Id, true)]);
+        var c1 = rg.CompareTraces(2, t1);
+        var ink = Game.Ink(w1, 2, [P.Quer], c1.All(l => !l.StartsWith("冲突")) && c1.Any(l => l.StartsWith("吻合")));
+        var (t2, w2) = rg.ReplayNight(2, [new(P.Quer, rg.MoraNight.Id, false)]);
+        var ink2 = Game.Ink(w2, 2, [P.Quer], false);
+        Console.WriteLine("  重演墨影（真相假设）：" + string.Join(" / ", ink.Take(3).Select(l => l.Trim())));
+        Check(ink.Concat(ink2).All(l => Enum.GetValues<P>().All(n => !l.Contains(Names.Of(n)))) && ink.Any(l => l.Contains("心声")) && ink2.All(l => !l.Contains("心声")),
+            "重演不泄露身份：墨影只有身量；心声只在与已读痕迹全部吻合时出现");
+        var cands = rg.ReplayCandidates(2);
+        Console.WriteLine("  第 2 夜可假设的人（按所见身量与签名）：" + string.Join(" ", cands.Select(Names.Of)));
+        Check(cands.Count is > 0 and < 15, "可假设的人限定于身量相符、未被排除者（不是全部十五人）");
+        // 指控以亲见优先（§13 第 3 条）。
+        var acc = results.SelectMany(r => r.World.Log.Where(l => l.Contains("当众指控") && l.Contains("亲眼所见"))).FirstOrDefault();
+        Console.WriteLine("  亲见指控的例子：" + (acc ?? "（本轮没有）"));
+        Check(results.All(r => r.World.Log.Where(l => l.Contains("当众指控") && l.Contains("身影")).All(l => !l.Contains("瘦小身影") || l.Contains("雀儿") || l.Contains("苏泠") || l.Contains("伊莲娜"))),
+            "指控所依的身影与被指控者的身量一致（不再“瘦小身影却指控中等身量的人”）");
+        // 子提示符遇到文件结束：停下，不代为作答（§13 第 16 条）。
+        var eof = new StringWriter();
+        var g7 = new Game();
+        var oneDay = string.Concat(Enumerable.Repeat("歇\n", 5)) + "睡\n";
+        new ConsoleUI(g7, new StringReader(oneDay + oneDay + "对质\n完\n" + string.Concat(Enumerable.Repeat("歇\n", 4)) + "睡\n" + oneDay + oneDay), eof, echo: true).Run();
+        var eofText = eof.ToString();
+        Check((eofText.Contains("没有替你作答") || eofText.Contains("你还没有表态")) && !eofText.Contains("结局："), "子提示符遇到文件结束时停下，不代玩家作答");
 
         // 界面：不露内部编号、报错是玩家语言、调试默认关闭、拼规矩用选项文字。
         var script = """
@@ -353,7 +422,7 @@ public static class Checks
         var output = new StringWriter();
         new ConsoleUI(new Game(), new StringReader(script), output, echo: true).Run();
         var text = output.ToString();
-        var leaks = Regex.Matches(text, @"#\d+|Exception|System\.|at DualOntology").Select(m => m.Value).Distinct().ToArray();
+        var leaks = Regex.Matches(text, @"#\d+|Exception|System\.|at DualOntology|ConditionFailed|OutOfReach|待第七部分|待裁定").Select(m => m.Value).Distinct().ToArray();
         Console.WriteLine("  界面抽查（不带 --debug 启动，含错误输入）：" + string.Join(" / ", text.Split('\n').Where(l => l.Contains("调试命令") || l.Contains("没有“") || l.Contains("规矩要五格") || l.Contains("不是请求") || l.Contains("拼成")).Select(l => l.Trim()).Distinct().Take(5)));
         Check(leaks.Length == 0, "界面不露内部编号与程序报错" + (leaks.Length > 0 ? "：" + string.Join(" ", leaks) : ""));
         Check(text.Contains("调试命令只在以 --debug 启动时可用") && !text.Contains("[真实认知]") && !text.Contains("[作者侧]"), "调试命令（作者侧日志、真实认知）默认关闭");

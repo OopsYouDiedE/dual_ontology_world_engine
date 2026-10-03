@@ -28,6 +28,18 @@ const APPROACH_DIRECTIONS := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RI
 ## 调查阶段同伴各在一处。
 const POSTS := {"huo": Vector2(458, 586), "shen": Vector2(984, 726), "su": Vector2(688, 910)}
 const RECALL_OBJECTS := ["E1", "E5", "E7", "E10"]
+## 三位同伴各自的旧物，与它在地图上的贴图节点。
+const OWN_OBJECTS := {"huo": "E7", "su": "E5", "shen": "E10"}
+const OBJECT_SPRITES := {"E7": "Slate", "E5": "Fork", "E10": "Jar"}
+## 相熟旁证：细看两件以上，重演手稿才出现第六个问题。
+const ACQUAINTANCE_EVIDENCE := ["E9", "E10", "E11", "E12"]
+## R-06、R-07 里本人的生活痕迹（不编号的旁证）。
+const LIFE_TRACES := {
+	"L6": {"title": "床头的挂钩", "point": Vector2(452, 104), "reach": 52.0, "room": "R-06", "picture": "card_hook",
+		"facts": "床头墙上钉着一枚铁钩。钩上缠着一圈发黑的机油布，钩下的墙皮蹭出一道油印。\n要挂很多回，才蹭得出这样一道印子。"},
+	"L7": {"title": "桌上的磨刀石", "point": Vector2(720, 160), "reach": 52.0, "room": "R-07", "picture": "card_whetstone",
+		"facts": "书桌上一块磨刀石，中间磨得凹下去一道深槽，槽边泛着铁色。\n一天两天，磨不出这样的槽。"},
+}
 const HELP_NOTES := {
 	"E4": "沈鼎：“这布是我拧的，这手法我认得。”",
 	"E5": "苏泠用音叉轻敲凹痕：音色与敲桌面不同。“这里贴着空管。”",
@@ -86,6 +98,14 @@ var recalls: Dictionary = {}       # person → fragment
 var recall_marks: Dictionary = {}  # 变量序号(1..6) → 回忆者
 var nudged: Dictionary = {}
 var flags: Dictionary = {}
+## 同伴自己去碰旧物的过程：who → {state: going/holding/done, alone, choice, thought, fragment, told, noticed}
+var life: Dictionary = {}
+## 已对旧物拿定主意的同伴（碰过或不碰），回忆按钮不再出现。
+var decided: Dictionary = {}
+var soles_compared: Dictionary = {}
+var sound_rounds := 0
+var last_unheard_ms := -100000
+var current_room := ""
 var replay_open := false
 var replay_vars := [-1, -1, -1, -1, -1, 0]
 var replay_result: Dictionary = {}
@@ -157,6 +177,9 @@ func _build_geometry() -> void:
 	for item in layout.furniture:
 		if item.footprint != null:
 			var raw: Array = item.footprint
+			# 备餐间小圆桌：共享布局里的足迹比贴图窄，人会站进桌面两侧；本场景按贴图宽度（与 Awakening.tscn 的碰撞一致）。
+			if str(item.get("name", "")) == "CupTable":
+				raw = [725, 636, 42, 18]
 			obstacle_rects.append(Rect2(raw[0], raw[1], raw[2], raw[3]))
 
 func _build_characters() -> void:
@@ -177,6 +200,9 @@ func _build_characters() -> void:
 	actor_of("su").position = Vector2(1120, 200)
 	for key in ["huo", "shen", "su"]:
 		actor_of(key).pose("idle", "front")
+	# 人与人之间不互相阻挡：只与墙和家具碰撞。被挤到时，同伴自己让开（见 _make_way）。
+	for actor in actors.values():
+		actor.collision_mask = 1
 
 func actor_of(key: String) -> CharacterBody2D:
 	return actors[Content.ACTOR_NODES[key]]
@@ -210,7 +236,8 @@ func _build_props() -> void:
 	# [节点名, 贴图, 画面上的脚底位置, 遮挡排序用的 Y（放在桌面上的物件跟随桌子的前沿排序）]
 	for spec in [["NoticeFrame", "notice_frame.png", Vector2(458, 522), 544.0], ["Slate", "slate.png", Vector2(372, 650), 682.0], ["Score", "score.png", Vector2(1022, 160), 180.0],
 			["Cups", "cups.png", Vector2(862, 548), 572.0], ["Jar", "jar.png", Vector2(1128, 516), 572.0],
-			["Fork", "fork.png", Vector2(714, 954), 954.0], ["Wedge", "wedge.png", Vector2(530, 952), 952.0]]:
+			["Fork", "fork.png", Vector2(714, 954), 954.0], ["Wedge", "wedge.png", Vector2(530, 952), 952.0],
+			["OilHook", "oil_hook.png", Vector2(452, 98), 118.0], ["Whetstone", "whetstone.png", Vector2(720, 156), 179.0]]:
 		if not ResourceLoader.exists(ART + spec[1]):
 			continue
 		var sprite := Sprite2D.new()
@@ -226,6 +253,8 @@ func _build_sites() -> void:
 	for id in Content.SITES:
 		var site: Dictionary = Content.SITES[id].duplicate()
 		sites[id] = site
+	for id in LIFE_TRACES:
+		sites[id] = {"trace": true, "point": LIFE_TRACES[id].point, "reach": LIFE_TRACES[id].reach, "title": LIFE_TRACES[id].title}
 	for key in ["huo", "shen", "su"]:
 		sites[key] = {"person": key, "title": Content.PERSON_NAMES[key], "reach": 44.0}
 	# 活动厅公告框：恶魔依第 5、6 条抄录的契约第 1—8 条。
@@ -333,6 +362,8 @@ func site_is_new(id: String) -> bool:
 	var site: Dictionary = sites[id]
 	if site.has("person"):
 		return false
+	if site.has("trace"):
+		return not examined.has(id)
 	if site.has("board"):
 		return not flags.has("board_read")
 	return not examined.has(site.evidence)
@@ -369,6 +400,8 @@ func site_box(id: String) -> Rect2:
 		"E8j": return Rect2(566, 954, 16, 18)
 		"E8r": return Rect2(1200, 320, 18, 24)
 		"BOARD": return Rect2(446, 488, 26, 36)
+		"L6": return Rect2(440, 82, 24, 30)
+		"L7": return Rect2(706, 144, 28, 20)
 	return Rect2(site.point + Vector2(-14, -22), Vector2(28, 26))
 
 # ================================================================ movement ===
@@ -378,6 +411,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if follow_camera and camera:
 		camera.position = Vector2(clampf(player.position.x, 320, 960), clampf(player.position.y - 24, 248, 776)).round()
+	_make_way()
 	_pick_nearest()
 	_check_triggers()
 	if not field_active():
@@ -395,7 +429,7 @@ func _physics_process(delta: float) -> void:
 		_leave_bed()
 	if direction == Vector2.ZERO and click_interaction_id != "":
 		var target_id := click_interaction_id
-		if player.position.distance_to(site_point(target_id)) <= float(sites[target_id].reach) + 4.0:
+		if player.position.distance_to(site_point(target_id)) <= float(sites[target_id].reach) + 6.0:
 			_complete_click_interaction(target_id)
 			return
 	if direction == Vector2.ZERO and not click_path.is_empty():
@@ -539,8 +573,18 @@ const FURNITURE_ASIDES := {
 	"StudyConsole": "边桌。", "Sideboard": "碗柜。碗碟摆得整整齐齐。", "Range": "灶。是冷的。", "Worktable": "案板。刀收在架上。",
 	"CupTable": "小圆桌。", "PantryLamp": "落地灯。", "PantryFern": "一盆蕨。", "PantryBarrel": "水桶。满的。",
 	"PantryCrate": "存粮。", "PantrySack": "面粉。", "CorridorConsole": "边桌。", "CorridorPlant": "花架。",
-	"HallLamp": "落地灯。", "CoatStand": "衣架。",
+	"HallLamp": "落地灯。", "CoatStand": "衣架。", "Bookcase": "书架。灰很厚。", "StudyTable": "长桌。桌面擦得很干净。",
+	"Washstand": "水槽。",
 }
+## 画在墙上、地上的东西（窗、拖鞋、地毯、挂画）不是节点，按地图区域给一句心声。
+const DECOR_ASIDES := [
+	[Rect2(90, 30, 40, 50), "窗。外面是灰的，什么也看不清。"], [Rect2(410, 30, 40, 50), "窗。外面是灰的。"],
+	[Rect2(730, 30, 40, 50), "窗。外面是灰的。"], [Rect2(1050, 30, 40, 50), "窗。外面是灰的。"],
+	[Rect2(270, 470, 40, 56), "窗。雾贴着玻璃。"], [Rect2(786, 470, 40, 56), "窗。雾贴着玻璃。"],
+	[Rect2(126, 174, 16, 12), "一双拖鞋。摆得很正，鞋头朝外。"],
+	[Rect2(118, 150, 72, 88), "地毯。踩得发亮的地方，在床边。"],
+	[Rect2(334, 326, 26, 22), "一幅小画。海，灯塔。"],
+]
 
 func _furniture_aside(pos: Vector2) -> void:
 	for node in $ObjectsAndPeople.get_children():
@@ -559,6 +603,12 @@ func _furniture_aside(pos: Vector2) -> void:
 		if rect.has_point(pos):
 			furniture_spoken[node.name] = true
 			show_aside(FURNITURE_ASIDES[key])
+			return
+	for index in DECOR_ASIDES.size():
+		var decor: Array = DECOR_ASIDES[index]
+		if (decor[0] as Rect2).has_point(pos) and not furniture_spoken.has("decor%d" % index):
+			furniture_spoken["decor%d" % index] = true
+			show_aside(decor[1])
 			return
 
 func show_aside(text: String) -> void:
@@ -615,7 +665,8 @@ func _approach_site(id: String) -> void:
 	_cancel_click_navigation()
 	var point := site_point(id)
 	var reach := float(sites[id].reach)
-	if player.position.distance_to(point) <= reach:
+	# 与行走中“到了就打开”的判定一致：站在够得着的地方，再点一次就直接打开，不绕到别处。
+	if player.position.distance_to(point) <= reach + 6.0:
 		_complete_click_interaction(id)
 		return
 	if player.seated:
@@ -671,9 +722,6 @@ func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
 func _navigation_obstacles(walker: CharacterBody2D) -> Array[Rect2]:
 	var obstacles := obstacle_rects.duplicate()
 	obstacles.append_array(_closed_room_rects(walker))
-	for other in actors.values():
-		if other != walker and is_instance_valid(other):
-			obstacles.append(Rect2(other.position.x - 8, other.position.y - 8, 16, 16))
 	return obstacles
 
 func _route(from: Vector2, to: Vector2, walker: CharacterBody2D = null) -> PackedVector2Array:
@@ -705,8 +753,28 @@ func walk_actor(key: String, point: Vector2, speed := 150.0) -> void:
 	route.append(point)
 	var previous: float = actor.speed
 	actor.speed = speed
-	await actor.follow_path(route)
+	await _follow(actor, route)
 	actor.speed = previous
+
+## 沿路走；被家具的碰撞卡住（导航网格与碰撞体略有出入）时，最后几步直接到位，不让人原地踏步。
+func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> void:
+	actor.follow_path(route)
+	var last := actor.position
+	var still := 0
+	while actor.travelling:
+		await get_tree().physics_frame
+		if actor.position.distance_to(last) < 0.2:
+			still += 1
+			if still > 20:
+				actor.position = route[route.size() - 1]
+				actor.travelling = false
+				actor.velocity = Vector2.ZERO
+				actor.pose("idle")
+				actor.arrived.emit()
+				break
+		else:
+			still = 0
+		last = actor.position
 
 # ================================================================ triggers ===
 
@@ -718,6 +786,9 @@ func _check_triggers() -> void:
 		return
 	if stage == "investigate":
 		var room := _room_key(player.position)
+		if room != current_room:
+			current_room = room
+			_on_room_changed(room)
 		if room != "" and not visited_rooms.has(room):
 			visited_rooms[room] = true
 			if room in ["foyer", "pantry", "R08", "R06", "R07"]:
@@ -769,6 +840,21 @@ func clear_flag(name: String) -> void: flags.erase(name)
 func recalled(who: String) -> bool: return recalls.has(who)
 ## 恶魔朝某人的欲望说一句真话（.dialogue 中 do amplify(...)）：以 Corruption 来源写入此人认知。
 func amplify(who: String, words: String) -> void: engine.Amplify(who, words)
+## 恶魔对某位同伴低语（.dialogue 中 do whisper(...)）：写入他的认知后，他自己决定要不要去拿旧物。
+func whisper(who: String, words: String) -> void:
+	engine.Whisper(who, words)
+	nudged[OWN_OBJECTS[who]] = true
+	call_deferred("_consider", who)
+func alone_choice(who: String) -> String: return str(life.get(who, {}).get("choice", ""))
+func life_thought(who: String) -> String: return str(life.get(who, {}).get("thought", ""))
+func share_recall(who: String) -> void:
+	_apply_recall(OWN_OBJECTS[who], who)
+	life[who]["told"] = true
+func compared(who: String) -> bool: return soles_compared.has(who)
+func v6_open() -> bool:
+	if flags.has("refusal_seen"):
+		return true
+	return ACQUAINTANCE_EVIDENCE.filter(func(id): return examined.has(id)).size() >= 2
 func hooks(who: String) -> int: return int(engine.Hooks(who))
 func total_hooks() -> int: return int(engine.TotalHooks())
 func matched() -> bool: return full_match_seen
@@ -923,7 +1009,34 @@ func interact(id: String) -> void:
 	if site.has("board"):
 		open_board()
 		return
+	if site.has("trace"):
+		open_trace(id)
+		return
 	open_card(site.evidence)
+
+## R-06、R-07 的生活痕迹：只看，不编号，不进重演对照。
+func open_trace(id: String) -> void:
+	examined[id] = true
+	var trace: Dictionary = LIFE_TRACES[id]
+	var body := open_modal(trace.title, Vector2(820, 460), "card")
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 22)
+	body.add_child(row)
+	var picture_path := ART + str(trace.picture) + ".png"
+	if ResourceLoader.exists(picture_path):
+		var picture := TextureRect.new()
+		picture.texture = load(picture_path)
+		picture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		picture.custom_minimum_size = Vector2(288, 216)
+		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(picture)
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(text)
+	text.add_child(Paper.label(str(trace.facts), 20))
+	text.add_child(Paper.label("来源：" + str(trace.room), 16, Paper.MUTED))
+	add_footer([["返回现场", close_modal]])
 
 func examine(id: String) -> void:
 	if examined.has(id):
@@ -932,8 +1045,17 @@ func examine(id: String) -> void:
 	engine.Examine("detective", id)
 	if id in ["E1", "E3"] and not replay_open:
 		call_deferred("_unlock_replay")
+	if id in ACQUAINTANCE_EVIDENCE and v6_open() and not flags.has("v6_revealed"):
+		flags["v6_revealed"] = true
+		call_deferred("_v6_doubt")
 
-func open_card(id: String) -> void:
+## 细看了两件相熟旁证：疑问由玩家的发现提出，重演手稿多出第六个问题。
+func _v6_doubt() -> void:
+	while story_lock or dialogue.active:
+		await get_tree().process_frame
+	await say("v6_doubt")
+
+func open_card(id: String, brief := false) -> void:
 	examine(id)
 	if id in RECALL_OBJECTS and not nudged.has(id):
 		# 恶魔在玩家第一次面对这件物件的回忆选项之前说一句，朝向此人的欲望；每件只说一次。
@@ -941,7 +1063,13 @@ func open_card(id: String) -> void:
 		close_modal()
 		await say("nudge_" + id)
 	var ev: Dictionary = Content.EVIDENCE[id]
-	var body := open_modal(ev.name, Vector2(900, 660), "card")
+	var body := open_modal(ev.name, Vector2(900, 660 if not brief else 420), "card")
+	if brief:
+		# 请人看过之后，只给新得到的那一句，不重显整张原文。
+		for note in _card_notes(id):
+			body.add_child(Paper.label(note, 19, Paper.SEAL if note.begins_with("回忆") else Paper.INK))
+		add_footer([["看整张证物卡", open_card.bind(id)], ["返回现场", close_modal]])
+		return
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 22)
 	body.add_child(row)
@@ -973,7 +1101,8 @@ func open_card(id: String) -> void:
 		actions.append([str(ev.experiment) + ("（再做一次）" if experiments.has(id) and id == "E8" else ""), _on_experiment.bind(id), experiments.has(id) and id != "E8"])
 	if ev.has("help") and not helped.has(id):
 		actions.append(["请%s看看" % Content.PERSON_NAMES[ev.help], _on_help.bind(id)])
-	if ev.has("recall") and not recalls.has(ev.recall):
+	var going: bool = str(life.get(str(ev.get("recall", "")), {}).get("state", "")) in ["going", "holding"]
+	if ev.has("recall") and not recalls.has(ev.recall) and not decided.has(ev.recall) and not going:
 		var who: String = ev.recall
 		actions.append(["触碰插闩，试着回想（契约第 8 条）" if who == "detective" else "请%s触碰它，回想（契约第 8 条）" % Content.PERSON_NAMES[who], _on_recall.bind(id)])
 	actions.append(["返回现场", close_modal])
@@ -991,10 +1120,16 @@ func _card_notes(id: String) -> Array:
 			notes.append("试验：" + str(ev.experiment_result).replace("\n", ""))
 	if helped.has(id) and HELP_NOTES.has(id):
 		notes.append(HELP_NOTES[id])
+	if id == "E3":
+		for who in ["huo", "shen", "su"]:
+			if soles_compared.has(who):
+				notes.append(soles_compared[who])
 	if ev.has("recall") and recalls.has(ev.recall):
 		notes.append("回忆（%s）：%s" % [Content.PERSON_NAMES[ev.recall], recalls[ev.recall]])
 	elif ev.has("recall") and refusals.has(ev.recall):
 		notes.append("%s没有碰它：“%s”" % [Content.PERSON_NAMES[ev.recall], refusals[ev.recall]])
+	if bool(engine.IsDisturbed(id)):
+		notes.append("它被人拿起过，又放回去了，摆得和原来不一样。")
 	return notes
 
 func _on_experiment(id: String) -> void:
@@ -1008,6 +1143,18 @@ func _on_experiment(id: String) -> void:
 			await say("help_E11")
 			experiments[id] = true
 		"E3":
+			# 由玩家选择比对谁的鞋底；只有一双对得上。
+			var who := await _pick_sole()
+			if who == "":
+				open_card(id)
+				return
+			if who != "detective":
+				await _summon(who)
+				await say("sole_" + who)
+				soles_compared[who] = {"huo": "霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。", "shen": "沈鼎的鞋底：千层布底，没有纹。",
+					"su": "苏泠的鞋底：软底小皮鞋，比灰上那枚短一截。"}[who]
+				open_card(id)
+				return
 			await say("exp_E3")
 			experiments[id] = true
 			if not flags.has("reversal_one"):
@@ -1024,10 +1171,28 @@ func _on_help(id: String) -> void:
 	await _summon(who)
 	await say("help_" + id)
 	helped[id] = true
-	open_card(id)
+	open_card(id, true)
+
+func _pick_sole() -> String:
+	var body := open_modal("比对鞋底", Vector2(620, 450), "menu")
+	body.add_child(Paper.label("灰上那枚马球靴印。拿谁的鞋底来比？", 19))
+	_modal_result = null
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 10)
+	body.add_child(list)
+	for pair in [["detective", "你自己的靴底"], ["huo", "霍铎的鞋"], ["shen", "沈鼎的鞋"], ["su", "苏泠的鞋"]]:
+		list.add_child(Paper.button(pair[1], _modal_choose.bind(pair[0])))
+	add_footer([["算了", _modal_choose.bind("")]])
+	while _modal_result == null:
+		await get_tree().process_frame
+	return str(_modal_result)
 
 func _summon(who: String) -> void:
 	var actor := actor_of(who)
+	var guard := 0
+	while str(life.get(who, {}).get("state", "")) in ["going", "holding"] and guard < 900:
+		guard += 1
+		await get_tree().process_frame
 	if actor.position.distance_to(player.position) > 90:
 		for offset in [Vector2(30, 4), Vector2(-30, 4), Vector2(0, -28), Vector2(48, -10), Vector2(-48, -10), Vector2(0, 30)]:
 			var spot: Vector2 = player.position + offset
@@ -1044,7 +1209,7 @@ func _summon(who: String) -> void:
 					route.append(spot)
 					var previous: float = actor.speed
 					actor.speed = 240.0
-					await actor.follow_path(route)
+					await _follow(actor, route)
 					actor.speed = previous
 				break
 	actor.face_point(player.position)
@@ -1078,6 +1243,10 @@ func _on_recall(id: String) -> void:
 		open_card(id)
 		return
 	await _summon(who)
+	if decided.has(who):
+		# 他刚才已经自己拿过主意了。
+		open_card(id)
+		return
 	# 写：在他决定之前，可以把公告框上的第 8 条指给他看，或者什么都不说。
 	if flags.has("board_read") and not bool(engine.KnowsClause8(who)):
 		flags.erase("show8")
@@ -1085,6 +1254,11 @@ func _on_recall(id: String) -> void:
 		if flags.has("show8"):
 			engine.ShowClause8(who)
 			await say("recall_shown_" + who)
+	await _resolve_recall(id, who)
+	open_card(id)
+
+## 他碰不碰：DecisionSystem 在他自己的世界里取舍；犹豫时反问侦探。请求回忆与他自己去拿，走同一段结算。
+func _resolve_recall(id: String, who: String) -> void:
 	recall_decision = engine.DecideRecall(id)
 	var choice := str(recall_decision.get("choice", "refuse"))
 	if choice == "hesitate":
@@ -1105,7 +1279,162 @@ func _on_recall(id: String) -> void:
 	if choice == "touch":
 		_apply_recall(id, who)
 		await say("recall_" + who)
-	open_card(id)
+	engine.Settle(who)
+	decided[who] = true
+
+# ============================================================ companions' own reach ===
+## 恶魔低语之后，同伴依自己的认知决定要不要走过去拿起旧物（MorningWorld.Intend）；
+## 走到之后伸手由 ActionRuntime 结算（MorningWorld.Reach）；碰不碰仍由他自己决定。
+## 侦探在场可以劝阻、说明第 8 条或任其自便；不在场，只留下痕迹和他事后的神色。
+
+func _consider(who: String) -> void:
+	if life.has(who) or decided.has(who) or recalls.has(who):
+		return
+	var intent: Dictionary = engine.Intend(who)
+	if bool(intent.get("reach", false)):
+		_go_reach(who, str(intent.get("thought", "")))
+
+func _go_reach(who: String, thought: String) -> void:
+	life[who] = {"state": "going", "thought": thought}
+	var obj: String = OWN_OBJECTS[who]
+	await get_tree().create_timer(0.6).timeout
+	while dialogue.active and _detective_present(who):
+		await get_tree().process_frame
+	var actor := actor_of(who)
+	var spot := _spot_near(site_point(obj), float(sites[obj].reach) - 14.0, actor)
+	await walk_actor(who, spot, 110.0)
+	actor.face_point(site_point(obj))
+	engine.Locate(who, _room_key(actor.position))
+	if not bool(engine.Reach(who)):
+		life.erase(who)
+		return
+	life[who]["state"] = "holding"
+	_show_object(obj, false)
+	if _detective_present(who):
+		await _present_reach(who)
+	else:
+		await _alone_reach(who)
+
+func _detective_present(who: String) -> bool:
+	var actor := actor_of(who)
+	return _room_name(player.position) == _room_name(actor.position) and player.position.distance_to(actor.position) < 360.0
+
+func _present_reach(who: String) -> void:
+	while dialogue.active or story_lock or (modal_kind != "" and modal_kind != "card") or stage != "investigate":
+		await get_tree().process_frame
+	if not _detective_present(who):
+		await _alone_reach(who)
+		return
+	close_modal()
+	var obj: String = OWN_OBJECTS[who]
+	for key in ["reach_decline", "reach_clause8"]:
+		flags.erase(key)
+	actor_of(who).face_point(player.position)
+	player.face_point(actor_of(who).position)
+	await say("reach_" + who)
+	if flags.has("reach_decline"):
+		engine.Advise(who, "decline")
+	elif flags.has("reach_clause8"):
+		engine.ShowClause8(who)
+		await say("recall_shown_" + who)
+	await _resolve_recall(obj, who)
+	life[who]["state"] = "done"
+	life[who]["alone"] = false
+	_finish_reach(who)
+
+func _alone_reach(who: String) -> void:
+	var obj: String = OWN_OBJECTS[who]
+	var decision: Dictionary = engine.DecideAlone(obj)
+	await get_tree().create_timer(1.2).timeout
+	life[who]["alone"] = true
+	life[who]["choice"] = str(decision.get("choice", "refuse"))
+	life[who]["thought"] = str(decision.get("thought", ""))
+	if life[who].choice == "touch":
+		var memory: Dictionary = engine.Recall(obj)
+		life[who]["fragment"] = str(memory.get("fragment", ""))
+	engine.Settle(who)
+	decided[who] = true
+	life[who]["state"] = "done"
+	_finish_reach(who)
+
+func _finish_reach(who: String) -> void:
+	var obj: String = OWN_OBJECTS[who]
+	engine.PutBack(who)
+	_show_object(obj, true)
+	if _detective_present(who):
+		life[who]["noticed"] = true
+	await walk_actor(who, POSTS[who], 110.0)
+	engine.Locate(who, _room_key(actor_of(who).position))
+
+func _show_object(obj: String, visible_now: bool) -> void:
+	var sprite := $ObjectsAndPeople.get_node_or_null(OBJECT_SPRITES.get(obj, ""))
+	if sprite == null:
+		return
+	sprite.visible = visible_now
+	if visible_now and not sprite.has_meta("moved"):
+		# 放回去了，摆得和原来不一样。
+		sprite.set_meta("moved", true)
+		sprite.position.x += 3
+
+func _spot_near(point: Vector2, radius: float, walker: CharacterBody2D) -> Vector2:
+	var best := walker.position
+	var best_cost := INF
+	for fraction in [1.0, 0.7]:
+		for heading in APPROACH_DIRECTIONS:
+			var candidate: Vector2 = point + heading.normalized() * radius * fraction
+			if not _walkable(candidate):
+				continue
+			var route := _route(walker.position, candidate, walker)
+			if route.is_empty():
+				continue
+			var cost := walker.position.distance_to(candidate)
+			if cost < best_cost:
+				best_cost = cost
+				best = candidate
+	return best
+
+## 走进一个房间：不在场的同伴可能被恶魔低语过；碰过旧物的人，事后的神色会被看见。
+func _on_room_changed(room: String) -> void:
+	for who in ["huo", "su", "shen"]:
+		var state: Dictionary = life.get(who, {})
+		if bool(state.get("alone", false)) and not bool(state.get("noticed", false)) and _room_key(actor_of(who).position) == room:
+			state["noticed"] = true
+			show_aside({"huo": "霍铎看上去有点恍惚。粉笔灰沾在他的指节上。", "su": "苏泠的手指一直在膝上轻轻敲着，像在数拍子。",
+				"shen": "沈鼎在擦手。他看了一眼架上的罐子，又转开了。"}[who] if state.get("choice", "") == "touch" else
+				{"huo": "霍铎在铜口旁站着，石板摆得歪了一点。", "su": "苏泠站在门边，音叉换了个位置。", "shen": "沈鼎在揉面。酵种罐挪过位置。"}[who])
+	if stage != "investigate" or examined.size() < 4 or Time.get_ticks_msec() - last_unheard_ms < 20000:
+		return
+	# 恶魔挑侦探不在的时候，对某个人说一句（玩家听不见）。
+	for who in ["huo", "su", "shen"]:
+		var obj: String = OWN_OBJECTS[who]
+		if nudged.has(obj) or decided.has(who) or life.has(who) or recalls.has(who):
+			continue
+		if _room_key(actor_of(who).position) == room:
+			continue
+		last_unheard_ms = Time.get_ticks_msec()
+		engine.Whisper(who, WHISPERS[who])
+		nudged[obj] = true
+		_consider(who)
+		return
+
+## 被挤到时让开：玩家走路贴上来，站着的同伴往旁边挪一步。
+func _make_way() -> void:
+	if player.velocity.length() < 10.0:
+		return
+	for key in ["huo", "shen", "su"]:
+		var actor := actor_of(key)
+		if actor.travelling or actor.position.distance_to(player.position) > 20.0:
+			continue
+		if str(life.get(key, {}).get("state", "")) in ["going", "holding"]:
+			continue
+		var side := player.velocity.normalized().orthogonal() * 28.0
+		for spot in [actor.position + side, actor.position - side]:
+			if _walkable(spot):
+				actor.walk_to(spot)
+				break
+
+func talk_first(who: String) -> bool:
+	return bool(life.get(who, {}).get("alone", false)) and not bool(life.get(who, {}).get("told", false))
 
 func _apply_recall(id: String, who: String) -> void:
 	var memory: Dictionary = engine.Recall(id)
@@ -1228,6 +1557,7 @@ func after_replay(result: Dictionary) -> void:
 			refused = true
 	if refused and not flags.has("refusal_seen"):
 		flags["refusal_seen"] = true
+		flags["v6_revealed"] = true
 		await say("replay_refused")
 	if bool(result.full_match) and not full_match_seen:
 		full_match_seen = true
@@ -1294,8 +1624,30 @@ func sound_test() -> void:
 	last_sound = engine.SoundTest(_sound_choice[0], positions)
 	experiments["E8"] = true
 	set_meta("sound_sentence", sentences[_sound_choice[0]])
-	await say("sound_test")
-	open_card("E8")
+	sound_rounds += 1
+	if sound_rounds == 1:
+		await say("sound_test")
+		open_card("E8")
+	else:
+		# 第二轮起不再逐人复述：一张小表汇总四处所闻。
+		_sound_table()
+
+func _sound_table() -> void:
+	var body := open_modal("声路试验 · 第 %d 轮" % sound_rounds, Vector2(820, 470), "card")
+	body.add_child(Paper.label("铜口说：“%s”" % sound_sentence(), 19))
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 22)
+	grid.add_theme_constant_override("v_separation", 8)
+	body.add_child(grid)
+	for head in ["位置", "谁", "听到", "从哪边来"]:
+		grid.add_child(Paper.label("[b]%s[/b]" % head, 18, Paper.SEAL))
+	for h in last_sound:
+		grid.add_child(Paper.label(heard_where(h.who), 18))
+		grid.add_child(Paper.label(Content.PERSON_NAMES[h.who] if h.who != "detective" else "你", 18))
+		grid.add_child(Paper.label(str(h.text), 18))
+		grid.add_child(Paper.label(str(h.direction), 18))
+	add_footer([["看证物卡", open_card.bind("E8")], ["返回现场", close_modal]])
 
 func sound_sentence() -> String:
 	return str(get_meta("sound_sentence", ""))
@@ -1305,6 +1657,10 @@ func sound_sentence() -> String:
 func talk(who: String) -> void:
 	actor_of(who).face_point(player.position)
 	player.face_point(actor_of(who).position)
+	if talk_first(who):
+		# 他自己去碰过（或没碰）旧物：回来时说一句。
+		life[who]["told"] = true
+		await say("alone_" + who)
 	await say("talk_" + who)
 
 # ==================================================================== tube ===
@@ -1340,7 +1696,7 @@ func statements() -> Array:
 	var list := []
 	if flags.has("reversal_one") or (not replay_result.is_empty() and bool(replay_result.get("detective_bolted", false))):
 		list.append("me")
-	for i in 6:
+	for i in (6 if v6_open() else 5):
 		if int(replay_vars[i]) >= 0 and replay_count > 0:
 			list.append("V%d_%d" % [i + 1, int(replay_vars[i])])
 	if replay_count > 0 and int(replay_vars[4]) == 0 and int(replay_vars[5]) == 1:
@@ -1516,6 +1872,10 @@ func finale() -> void:
 		prints.show()
 	flags["door_open"] = true
 	decals.queue_redraw()
+	await say("s10_prints")
+	# 细看过架上的窄手印、又看见门外窄底鞋印，可以多问一句。
+	if examined.has("E11"):
+		await say("s10_hand")
 	await walk_actor("su", player.position + Vector2(34, 0))
 	await say("s10_open")
 	_save_chapter_end(false)

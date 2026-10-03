@@ -3,7 +3,7 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen }
+public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
 
 /// <summary>侦探一个时段的行动。每个时段只能做一件事（第三部分 §4）。</summary>
 public sealed record PlayerAction(Cmd Cmd)
@@ -13,6 +13,8 @@ public sealed record PlayerAction(Cmd Cmd)
     public string? Thing { get; init; }
     public Job? Job { get; init; }
     public Card? Card { get; init; }
+    /// <summary>用称呼引用的已有规矩（讲、贴）。</summary>
+    public RuleSpec? Spec { get; init; }
     public int Topic { get; init; } = -1;
     public bool Precise { get; init; }
     public P[] Crew { get; init; } = [];
@@ -41,7 +43,7 @@ public sealed partial class Game
     public static readonly ImmutableDictionary<string, (Place Place, Func<Game, Essence> Thing)> Things_ = new Dictionary<string, (Place, Func<Game, Essence>)>
     {
         ["粮仓"] = (Place.Logistics, g => g.Granary), ["台账"] = (Place.Logistics, g => g.Ledger), ["配给台公告"] = (Place.Logistics, g => g.Board[Place.Logistics]),
-        ["中央厅公告"] = (Place.Hall, g => g.Board[Place.Hall]), ["碗"] = (Place.Clinic, g => g.Bowl), ["病床"] = (Place.Clinic, g => g.Bed),
+        ["中央厅公告"] = (Place.Hall, g => g.Board[Place.Hall]), ["中央基座"] = (Place.Hall, g => g.Base), ["速写本"] = (Place.DormS, g => g.SketchBook), ["碗"] = (Place.Clinic, g => g.Bowl), ["病床"] = (Place.Clinic, g => g.Bed),
         ["药柜"] = (Place.Clinic, g => g.MedCab), ["黑板"] = (Place.Lecture, g => g.Blackboard), ["石碑"] = (Place.Oath, g => g.Stele),
         ["压力表"] = (Place.Greenhouse, g => g.Gauge), ["名录库之门"] = (Place.ArchiveFront, g => g.ArchiveDoor), ["油库"] = (Place.DormS, g => g.OilStore),
         ["文契废纸篓"] = (Place.DormW, g => g.Litter[Place.DormW]), ["星仪废纸篓"] = (Place.DormS, g => g.Litter[Place.DormS]),
@@ -54,8 +56,8 @@ public sealed partial class Game
     public static readonly ImmutableDictionary<Place, string[]> AreaThings = new Dictionary<Place, string[]>
     {
         [Place.Logistics] = ["粮仓", "台账", "配给台公告"], [Place.Clinic] = ["碗", "病床", "药柜"], [Place.DormW] = ["文契废纸篓", "文契公告"],
-        [Place.DormS] = ["星仪废纸篓", "油库", "星仪公告"], [Place.DormL] = ["后勤废纸篓", "后勤公告"], [Place.DormLife] = ["生活翼废纸篓", "生活翼公告"],
-        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["石碑"], [Place.Hall] = ["中央厅公告"],
+        [Place.DormS] = ["星仪废纸篓", "油库", "速写本", "星仪公告"], [Place.DormL] = ["后勤废纸篓", "后勤公告"], [Place.DormLife] = ["生活翼废纸篓", "生活翼公告"],
+        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["石碑"], [Place.Hall] = ["中央基座", "中央厅公告"],
     }.ToImmutableDictionary();
 
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
@@ -184,6 +186,7 @@ public sealed partial class Game
                 break;
             case Cmd.Post: SubmitDet(Fx.Seq(fx.Go(act.Place!.Value), fx.Look(Board[act.Place.Value])), 0.8); break;
             case Cmd.Mediate: SubmitDet(Fx.Seq(fx.Go(Place.Logistics), fx.Look(Desk)), 0.5); break;
+            case Cmd.Apologize: SubmitDet(Fx.Seq(fx.Go(Place.Hall), fx.Look(Board[Place.Hall])), 0.5); break;
             case Cmd.Confront or Cmd.Reopen: break;
             default: SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); break;
         }
@@ -263,8 +266,12 @@ public sealed partial class Game
                 {
                     var who = this[act.Who!.Value];
                     var came = DetHelpers.Contains(who.Id);
+                    if (thing == Base) DetShown.Add(who.Id);
+                    DetEscortTried.Add((who.Id, act.Thing!));
+                    if (who.Id == P.Ward) WardEscorts += came ? 10 : 1;
+                    if (came && thing == Base && Get(Base, T.Crack) > 0) Feed.Add($"你把那道裂纹指给{who.Name}看。他盯着看了很久。");
                     var saw = who.World.History.Any(h => h.Source == ObservationSource.Perception && ReferenceEquals(h.Target, who.M[thing]) && h.Time >= DayStart(Day));
-                    Feed.Add(came ? $"{who.Name}跟你一起看了。" : saw ? $"{who.Name}没答应同行，不过他本来就在{Names.Of(act.Place!.Value)}，也看见了。" : $"{who.Name}没有跟来（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
+                    Feed.Add(came ? $"{who.Name}跟你一起看了。" : saw && thing == Base ? $"{who.Name}没答应同行。他人就在{Names.Of(act.Place!.Value)}，可那道裂纹要凑近细看才看得出，你没能指给他。" : saw ? $"{who.Name}没答应同行，不过他本来就在{Names.Of(act.Place!.Value)}，也看见了。" : $"{who.Name}没有跟来（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
                 }
                 break;
             case Cmd.Ask:
@@ -299,6 +306,7 @@ public sealed partial class Game
                 ArchiveTested |= ok;
                 Feed.Add($"名录库前厅：{(crew.Length == 0 ? "没有人来" : string.Join("、", crew.Select(c => c.Name)) + "来了")}。{report.TrimEnd('。')}。{(ok ? "门里传出配重落位的声音，第一道门开了一线，又被你们合上。" : "门没开。")}");
                 if (crew.Length > 0) Witness(Det, ok ? "侦探主持开了名录库的机关" : "侦探主持的机关没开成", ok ? 1 : 0, ok ? 2 : -1, crew, domain: Dom.Archive);
+                if (ok) foreach (var c in crew) c.Witnessed.Add("machine");
                 break;
             }
             case Cmd.Rub:
@@ -326,11 +334,13 @@ public sealed partial class Game
                 {
                     Promises[idx] = (who, Promises[idx].Due, true);
                     Witness(Det, $"侦探兑现了对{Names.Of(who)}的承诺", 1, 0, People.Where(p => Where(p) == Where(this[who])));
+                    if (Repairs.Remove(who)) { Witness(Det, "侦探认了错，也把答应的事办了", 1, 0, [this[who]], spread: true); Feed.Add($"{Names.Of(who)}点了点头：“行，这事算过去了。”"); }
                     Feed.Add($"你替{Names.Of(who)}办完了答应的事。");
                 }
                 else
                 {
                     Witness(Det, $"侦探来帮{Names.Of(who)}干活", 1, 0, [this[who]], spread: false);
+                    DetHelped.Add(who);
                     Feed.Add($"你帮{Names.Of(who)}干了一个时段的活。");
                 }
                 break;
@@ -344,7 +354,7 @@ public sealed partial class Game
             case Cmd.TellRule:
             {
                 var who = this[act.Who!.Value];
-                var spec = CardSpec(act.Card!, P.Det);
+                var spec = act.Spec ?? CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 var v = Tell(who, spec);
                 _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, $"当面对{who.Name}讲「{Short(spec)}」", "交谈", Where(Det), []);
@@ -355,9 +365,25 @@ public sealed partial class Game
                 if (spec.Manipulative) Manipulations.Add(new() { Target = who.Id, About = P.Quer, Means = "针对性的规则", Day = Day });
                 break;
             }
+            case Cmd.Apologize:
+            {
+                // 公开认错（§13 第 1 条）：当众承认说过的片面话；被你说过的人提一件要你办的事，兑现了才挽回一点“为人”（回不到揭穿前）。
+                var present = People.Where(p => p != Det && Where(p) == here).ToArray();
+                foreach (var m in Manipulations.Where(m => m.Exposed && !m.Apologized).ToArray())
+                {
+                    m.Apologized = true;
+                    var target = this[m.Target];
+                    Feed.Add($"你在中央厅当众说：之前对{target.Name}说的，只说了一半。{(present.Contains(target) ? $"{target.Name}看了你很久：“那你替我办件事，办到了再说。”" : $"{target.Name}不在场，你托人带了话。")}");
+                    Promises.Add((target.Id, Day + 1, false));
+                    Repairs.Add(target.Id);
+                    Witness(Det, "侦探当众认了错", 0, 0, present.Append(target), spread: true);
+                    NoteFor(target.Id, "其他", "你当众认了错；他要你明天之前替他办一件事");
+                }
+                break;
+            }
             case Cmd.Post:
             {
-                var spec = CardSpec(act.Card!, P.Det);
+                var spec = act.Spec ?? CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 Post(spec, act.Place!.Value);
                 Feed.Add($"你在{Names.Of(act.Place.Value)}贴出{LabelOf(spec)}「{spec.Text}」");
@@ -424,7 +450,7 @@ public sealed partial class Game
         P.Mora => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")) ? "“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”" : "“我一直在诊疗所。”",
         P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (TrustIn(p, Det) >= 2 ? "“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”" : "“关你什么事。”") : "“我那晚饿着睡的。”",
         P.Ruan => $"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”",
-        P.Ward => AccusedQuer ? "“依据台账与夜巡所见，事实清楚。”" : "“无记录即违规。仅此而已。”",
+        P.Ward => Accused is not null ? "“依据台账与所见，事实清楚。”" : "“无记录即违规。仅此而已。”",
         _ => "“我那晚睡着了。”"
     };
 
@@ -446,6 +472,12 @@ public sealed partial class Game
         if (e == Blackboard) return Get(Blackboard, T.Chalk) > 0 ? $"黑板上有 {Get(Blackboard, T.Chalk)} 堂课的粉笔字；讲台前的灰上有窄底皮鞋印。" : "黑板是干净的。";
         if (e == Stele) return "风化严重。第一至第八条还认得；最后两条只剩笔画的影子，须拓印辨读。";
         if (e == Gauge) return $"压力表指针：{(Get(Gauge, T.Pressure) >= 2 ? "过了红线" : "红线以下")}。";
+        if (e == SketchBook)
+        {
+            foreach (var (n, _) in Sketches) DetSketchSeen.Add(n);
+            return Sketches.Count == 0 ? "莫兰的速写本里只有几张颜色练习。" : "莫兰的速写本：" + string.Join("　", Sketches.Select(s => s.Text)) + "。";
+        }
+        if (e == Base) return Get(Base, T.Crack) > 0 ? "中央基座上有一道新裂纹，像是从里面撑开的。" : "中央基座完好，石面上刻着契约的前八条。";
         if (e == ArchiveDoor) return "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。";
         if (e == MedCab) return $"药柜：药品 {Get(MedCab, T.Medicine)}。";
         if (e == OilStore) return $"油库：灯油 {Get(OilStore, T.Oil)}。";
@@ -465,6 +497,16 @@ public sealed partial class Game
     // ----------------------------------------------------------- 赌约 --
 
     public readonly List<(Wager W, bool? Right)> Wagers = [];
+    /// <summary>认错之后还等着兑现的人。</summary>
+    public readonly HashSet<P> Repairs = [];
+    /// <summary>侦探翻过速写的那几夜（速写上画的是谁，可作重演的已知）。</summary>
+    public readonly HashSet<int> DetSketchSeen = [];
+    /// <summary>侦探带去亲眼看过基座裂纹的人（侦探自己做的事，机器人可用）。</summary>
+    public readonly HashSet<P> DetShown = [];
+    /// <summary>侦探请谁同去看过什么（不论来没来）。</summary>
+    public readonly HashSet<(P, string)> DetEscortTried = [];
+    public readonly HashSet<P> DetHelped = [];
+    public int WardEscorts;
     /// <summary>侦探转告过谁哪条消息（机器人用：只记侦探自己做过的事）。</summary>
     public readonly HashSet<(P Who, int News)> DetToldNews = [];
 

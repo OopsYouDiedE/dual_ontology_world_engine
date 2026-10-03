@@ -71,6 +71,62 @@ public sealed partial class Game
         _seenLines.Clear();
     }
 
+    /// <summary>
+    /// 转述与教人做完了（说话占过身体）：听的人当场判定认不认这条规矩 / 从此完整学过这一课。返回 true 表示已记成事件。
+    /// 转述者对立规者有成见的，话会走样（听者那里多一分折扣，见 AcceptScore）。
+    /// </summary>
+    private bool HandleTalk(Person p, Job? job, ActionExecution exec)
+    {
+        if (job is not (Job.Relay or Job.Teach or Job.Avoid or Job.Follow) || p == Det) return false;
+        var say = exec.Intent.Changes is Effect.Sequence seq ? seq.Items.OfType<Effect.Say>().FirstOrDefault() : null;
+        var hearer = say?.Recipient is Noun.Reference r ? PersonOf(p, r.Projection) : null;
+        if (job == Job.Relay && say is not null && hearer is not null && RelayText.TryGetValue(say.Text, out var spec))
+        {
+            if (hearer == Det) return true;
+            var v = Tell(hearer, spec, Channel.Relay, p);
+            if (Where(Det) == Where(p) && Slot != Slot.Night) DetHeard.Add(spec);
+            RelayLog.Add((Day, Slot, p.Id, hearer.Id, spec.Id, v == Truth.True));
+            var from = _transmit.TryGetValue((spec.Id, p.Id), out var tf) ? tf : _postedEv.GetValueOrDefault(spec.Id);
+            var own = spec.Author == p.Id;
+            var id = RecordEvent(p.Id, $"{(own ? "拉" + hearer.Name + "认自己的" : "向" + hearer.Name + "转述")}「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(p), [from], job: Job.Relay);
+            _transmit[(spec.Id, hearer.Id)] = id;
+            Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}{(own ? "拉" : "向")}{hearer.Name}{(own ? "认" : "转述")}「{Short(spec)}」：{(v == Truth.True ? "认了" : "没认")}");
+            if (spec.Author == P.Det)
+            {
+                if (Where(Det) == Where(p) && Slot != Slot.Night) DetSawRelay(p, [(hearer, v)], spec);
+                else QueueDisclosure(hearer, spec, p, null, v == Truth.True);
+            }
+            return true;
+        }
+        if (job == Job.Teach && say is not null && hearer is not null && hearer != Det)
+        {
+            var l = int.Parse(new string(say.Text.Skip(1).TakeWhile(char.IsDigit).ToArray()));
+            var had = hearer.Lessons.GetValueOrDefault(l);
+            hearer.Lessons[l] = true;
+            if (!had) Observation.Observe(hearer.Soul, new ObservationInput(hearer.Lore.Name, hearer.Lore.Kind)
+            { Target = hearer.Lore, Source = ObservationSource.Testimony, Time = Now, Details = Lessons[l].Title + "：" + Lessons[l].Teach + $"（{p.Name}讲的）" });
+            RecordEvent(p.Id, $"给{hearer.Name}讲第{l}课{(had ? "" : "（他原先没学全）")}", "交谈", Where(p), [], job: Job.Teach);
+            return true;
+        }
+        if (job == Job.Avoid)
+        {
+            var enemy = p.Id == P.Quer ? P.Ward : P.Ruan;
+            RecordEvent(p.Id, $"一见{Names.Of(enemy)}就走开了", "行走", _startPlace.GetValueOrDefault(p, Where(p)), [], job: Job.Avoid);
+            return true;
+        }
+        if (job == Job.Follow)
+        {
+            var whom = _following.GetValueOrDefault(p);
+            RecordEvent(p.Id, $"夜里跟着{(whom is null ? "一个人" : whom.Name)}走了一阵", "行走", Where(p), [], job: Job.Follow);
+            _following.Remove(p);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>跟随：谁在跟着谁（宿主层负责把跟随者的身体带到被跟者所在处）。</summary>
+    private readonly Dictionary<Person, Person> _following = [];
+
     /// <summary>一个人物动作完成：记成事件，找出它的因，并登记它动过的东西。</summary>
     private void RecordAction(Person p, Job? job, ActionExecution exec)
     {
@@ -226,6 +282,7 @@ public sealed partial class Game
     public string? Readable(ActEvent e)
     {
         if (e.Who == P.Det) return "自己做的";
+        if (MorningHeard.Contains(e.Id)) return "清晨闲谈";
         if (e.SeenByDet) return e.Slot == Slot.Night ? "守夜" : "在场";
         if (e.Slot == Slot.Night && e.Job is { } j)
         {
@@ -240,6 +297,7 @@ public sealed partial class Game
         }
         if (SpreadKnown.Any(k => k.Day == e.Day && k.Hearer != P.Det && e.Text.Contains(Names.Of(k.Hearer)) && k.Teller == e.Who)) return "转述";
         var name = Names.Of(e.Who);
+        if (e.Job is Job.Treat or Job.Retreat or Job.Sample or Job.Needle or Job.Sketch or Job.Report or Job.Share && Det.News.Values.Any(h => h.Day >= e.Day && h.Day <= e.Day + 1 && h.Text.Contains(name))) return "转述";
         var word = e.Job switch
         {
             Job.Accuse => "指控", Job.Defend => "替", Job.Tear => "撕", Job.PostRules => "贴", Job.GiveKey => "钥匙", Job.Share => "口粮", Job.Seize or Job.AskOpen => "名录库",

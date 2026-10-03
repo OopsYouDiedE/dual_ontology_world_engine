@@ -112,6 +112,37 @@ public partial class AwakeningEngine : Node
         };
     }
 
+    /// <summary>恶魔对某同伴低语（Corruption）：欲望加强，并记下“铜口对我说的那句话”。</summary>
+    public void Whisper(string who, string words) => _morning.Whisper(PersonOf(who), words);
+    public bool Whispered(string who) => _morning.Whispered(PersonOf(who));
+
+    /// <summary>同伴此刻想不想自己去拿旧物：reach（bool）与 thought。</summary>
+    public GDict Intend(string who)
+    {
+        var intention = _morning.Intend(PersonOf(who));
+        return intention is null ? new GDict() : new GDict { ["reach"] = intention.Reach, ["thought"] = intention.Thought };
+    }
+
+    /// <summary>宿主把人走到某个房间（房间键）后同步到现实。</summary>
+    public void Locate(string who, string room) => _morning.Locate(PersonOf(who), (Room)Array.IndexOf(RoomKeys, room));
+    public bool Reach(string who) => _morning.Reach(PersonOf(who));
+    public bool PutBack(string who) => _morning.PutBack(PersonOf(who));
+    public void Settle(string who) => _morning.Settle(PersonOf(who));
+    public bool Holding(string who) => _morning.Holding(PersonOf(who));
+    public bool IsDisturbed(string evidence) => _morning.IsDisturbed(evidence);
+
+    /// <summary>侦探不在场时，同伴自己的取舍（犹豫则放下）。</summary>
+    public GDict DecideAlone(string evidence)
+    {
+        var decision = _morning.DecideAlone(evidence);
+        if (decision is null) return new GDict();
+        return new GDict
+        {
+            ["who"] = Key(decision.Who), ["thought"] = decision.Thought,
+            ["choice"] = decision.Choice switch { RecallChoice.Touch => "touch", RecallChoice.Refuse => "refuse", _ => "hesitate" },
+        };
+    }
+
     /// <summary>犹豫的同伴反问“你说呢？”：advice 为 touch / decline / own；返回 SocialSystem 的判定。</summary>
     public string Advise(string who, string advice) => _morning.Advise(PersonOf(who), advice).ToString();
 

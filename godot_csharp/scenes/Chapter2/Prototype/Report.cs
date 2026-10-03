@@ -48,7 +48,7 @@ public sealed partial class Game
     }
 
     /// <summary>此人此刻在名录库的事上最向着哪一边（与议事同一判断；没有一边够格则为 null）。</summary>
-    public RuleSpec? StanceOf(Person p) => StancePlans().Select(s => (s, score: AcceptScore(p, s, Channel.Public, null, out _)))
+    public RuleSpec? StanceOf(Person p) => StancePlans().Select(s => (s, score: AcceptScore(p, s, Channel.Public, null, out _, stance: true)))
         .Where(x => x.score >= Options.AcceptThreshold).OrderByDescending(x => x.score).ThenBy(x => x.s.Id).Select(x => x.s).FirstOrDefault();
 
     private readonly Dictionary<P, (int Day, RuleSpec? Spec)> _voicedStance = [];
@@ -70,10 +70,19 @@ public sealed partial class Game
         foreach (var (p, s) in talkers)
         {
             _voicedStance[p.Id] = (Day, s);
-            var (who, line) = s!.Author == P.Det ? ("你", $"你那条{LabelOf(s)}「{Short(s)}」，我看行。")
+            var (who, line0) = s!.Author == P.Det ? ("你", $"你那条{LabelOf(s)}「{Short(s)}」，我看行。")
                 : s.ByDemon ? ("恶魔", "凡学员皆可取回己物——它自己说的。我的东西在里面。")
-                : s.Flags.HasFlag(RF.CommitteeArchive) ? ("沃德", "名录库得有人管、有账可查。沃德这话在理。")
-                : ("顾平章", "回忆就是上钩。还是封着好，顾平章说得对。");
+                : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", "依据：名录库须有人管、有账可查。") : ("沃德", "名录库得有人管、有账可查。沃德这话在理。"))
+                : p.Id == P.Gu ? ("自己", "回忆就是上钩。老朽还是那句话：封着。") : ("顾平章", "回忆就是上钩。还是封着好，顾平章说得对。");
+            var line = line0;
+            // 有人当众驳你的方案（§13 第 12 条）：说的人向着别家，你又有方案在议，他就顺口驳一句；信他的人会被说动一点。
+            var mine = Specs.LastOrDefault(x => x.Author == P.Det && x.Card is { Behavior: >= 5 and <= 8 } && Det.Acc.ContainsKey(x));
+            var fam = FamilyOf(s!);
+            if (mine is not null && FamilyOf(mine) != fam && s!.Author != P.Det)
+                line = $"侦探那条{LabelOf(mine)}？{(fam switch { Ending.OpenEach => "东西本来就是我们的，凭什么等人点头。", Ending.Committee => "没有人管、没有账，迟早出事。", Ending.Sealed => "开了就是上钩，什么条款也拦不住。", _ => "说得好听。" })}" + line;
+            if (mine is not null && FamilyOf(mine) != fam)
+                foreach (var l in Npcs.Where(l => l != p && Where(l) == here && TrustIn(l, p) >= 2))
+                    l.StanceNudge[fam] = Math.Min(1, l.StanceNudge.GetValueOrDefault(fam) + 1);
             Feed.Add($"{p.Name}在饭桌上说：“{line}”");
             NoteFor(p.Id, "立场", $"复述{who}的话：{line}");
         }

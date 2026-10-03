@@ -133,7 +133,7 @@ public sealed partial class Game
                 }
             }
             Bonds(here);
-            Relays(here);
+            // 转述与拉人改由各人心中的规则经 ActionRuntime 结算（GameJobs.TalkRules、Game.HandleTalk），这里只交换消息。
         }
     }
 
@@ -226,6 +226,7 @@ public sealed partial class Game
         if (item.FactOn is { } on && item.FactTag is { } tag && trust >= 0) Know(hearer, on, tag, item.FactValue, ObservationSource.Testimony, text);
         // 恶魔亲口承认的话经人转述：信得过转述者，就对它那条“凡学员皆可取回己物”多一分疑心（信任链传播）。
         if (item.Kind == NewsKind.DemonWord && trust >= 1 && hearer.DemonDoubt < 1) hearer.DemonDoubt = 1;
+        if (text.Contains("亲眼看见中央基座裂") && trust >= 2) hearer.Witnessed.Add("crack-heard");
         if (item.Kind == NewsKind.Accusation && item.About is { } acc && trust >= 0) Know(hearer, this[acc].Body, T.Accused, 1, ObservationSource.Testimony, text);
         if (item.Kind == NewsKind.Lesson && !hearer.Lessons.ContainsKey(item.Lesson))
         {
@@ -233,7 +234,7 @@ public sealed partial class Game
             hearer.Lessons[item.Lesson] = full;
             Log.Add($"D{Day} {Names.Of(Slot)} {hearer.Name} 从{teller.Name}处听到第{item.Lesson}课（{(full ? "完整" : "走样")}）");
         }
-        if (hearer == Det) Feed.Add($"{teller.Name}说：{text}");
+        if (hearer == Det) Feed.Add($"{teller.Name}说：{(text.StartsWith(teller.Name) ? "我" + text[teller.Name.Length..] : text)}");
     }
 
     private bool RelayAccepted(Person p) => Specs.Any(s => s.Card?.Behavior == 4 && p.Acc.GetValueOrDefault(s) == Truth.True);

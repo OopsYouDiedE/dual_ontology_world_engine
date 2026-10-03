@@ -19,7 +19,8 @@ public enum Job
     NightTakeSick, NightTakeSickRec, NightTakeSelf, NightTakeSelfRec,
     RepairLatch, InspectStructure, Patrol, GuardArchive, VisitArchive, Greenhouse,
     Socialize, Work, CountLedger, Stele, Scavenge, Hoard, Accuse, PostRules, Defend,
-    AskLatchHelp, Seize, AnswerName, Escort, Inform, FeedWeak, GiveKey, Tidy, Wander, Share, Tear, Watch, AskOpen
+    AskLatchHelp, Seize, AnswerName, Escort, Inform, FeedWeak, GiveKey, Tidy, Wander, Share, Tear, Watch, AskOpen, Relay, Teach, Exchange, Follow, Avoid, AskLeave,
+    Treat, Retreat, Report, Sample, Needle, NightSketch, Sketch
 }
 
 /// <summary>规则的语义标记：规则接受公式据此与各人的欲望、习惯、利益相比。</summary>
@@ -40,6 +41,8 @@ public static class T
     public static readonly Tag Medicine = new("Medicine"), Oil = new("Oil"), Treated = new("Treated"), Work = new("Work");
     public static readonly Tag Pressure = new("Pressure"), Chalk = new("Chalk"), Rubbed = new("Rubbed"), Accusation = new("Accusation");
     public static readonly Tag Posted = new("Posted"), Counted = new("Counted"), Shoe = new("Shoe"), Emptied = new("Emptied"), Torn = new("Torn");
+    /// <summary>名录库机关的一站被人占着 / 今夜有人在这一站使过劲；有人守门（身上可见）；中央基座的裂纹（凑近才看得见）。</summary>
+    public static readonly Tag Occupied = new("Occupied"), Worked = new("Worked"), Guarding = new("Guarding"), Prying = new("Prying"), Crack = new("Crack"), OwesWater = new("OwesWater");
     /// <summary>众所周知的本事（他人心中的标签）：会开锁、力气大、懂传声。</summary>
     public static readonly Tag Picks = new("Picks"), Strong = new("Strong"), Signals = new("Signals");
     // 身体（客观，可见）
@@ -92,7 +95,9 @@ public static class Names
         Job.Care or Job.InspectStructure or Job.CountLedger or Job.Stele or Job.Scavenge or Job.Tidy => "蹲查",
         Job.GuardArchive or Job.VisitArchive or Job.Watch => "看守",
         Job.Patrol or Job.Escort or Job.Wander => "行走",
-        Job.Socialize or Job.Accuse or Job.Defend or Job.AskLatchHelp or Job.AnswerName or Job.AskOpen => "交谈",
+        Job.Socialize or Job.Accuse or Job.Defend or Job.AskLatchHelp or Job.AnswerName or Job.AskOpen or Job.Relay or Job.Teach or Job.Exchange or Job.AskLeave => "交谈",
+        Job.Follow or Job.Avoid => "行走",
+        Job.Treat or Job.Sample => "蹲查", Job.Retreat or Job.NightSketch or Job.Sketch => "坐", Job.Report or Job.Needle => "交谈",
         _ => "行走"
     };
 
@@ -108,7 +113,11 @@ public static class Names
         Job.Stele => "去誓约庭看石碑", Job.Scavenge => "到后勤院找吃的", Job.Hoard => "多取两份藏起来",
         Job.Accuse => "在中央厅当众指控", Job.PostRules => "在中央厅张贴规则", Job.Defend => "在中央厅替人说话",
         Job.AskLatchHelp => "请在场的工匠修门闩", Job.Seize => "夜里去开名录库", Job.AnswerName => "应了唤名", Job.Escort => "同行", Job.Inform => "去台账补记昨夜的取用", Job.FeedWeak => "替饿着的人领一份口粮送去", Job.GiveKey => "把粮仓钥匙交给沈鼎", Job.Tidy => "倒空自己寝区的废纸篓", Job.Wander => "去某处看一眼",
-        Job.Share => "把自己的口粮分给饿着的人", Job.Tear => "撕下中央厅板上的一张规矩", Job.Watch => "夜里守在粮仓边上", Job.AskOpen => "约人夜里去开名录库", _ => j.ToString()
+        Job.Share => "把自己的口粮分给饿着的人", Job.Tear => "撕下中央厅板上的一张规矩", Job.Watch => "夜里守在粮仓边上", Job.AskOpen => "约人夜里去开名录库",
+        Job.Relay => "向人转述一条规矩", Job.Teach => "给缺课的人讲课", Job.Exchange => "拿明天的活换一口吃的", Job.Follow => "跟着一个人", Job.Avoid => "躲开一个人",
+        Job.AskLeave => "请守门的人让开",
+        Job.Treat => "去诊疗所给脚踝换药", Job.Retreat => "去誓约庭静坐", Job.Report => "在中央厅报告昨夜夜巡所见", Job.Sample => "采样",
+        Job.Needle => "当面挑茉拉账上的错", Job.NightSketch => "夜里坐在中央厅看颜色", Job.Sketch => "画速写", _ => j.ToString()
     };
     public static readonly ImmutableDictionary<string, P> PersonAlias = new Dictionary<string, P>
     {

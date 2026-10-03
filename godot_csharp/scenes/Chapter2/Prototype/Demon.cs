@@ -111,6 +111,7 @@ public sealed partial class Game
             case 4: Broadcast("今日第十三课：言灵初阶。诸位今日在中央厅有一场对质，我会旁听。"); break;
             case 5:
                 GuaranteeCracks++;
+                Set(Base, T.Crack, 1);
                 Broadcast("……今日第十四课：异象与记忆。（广播里有一层此前没有的底噪。中央基座多了一道新裂纹。）");
                 break;
             case 6: Broadcast("今日无新课。答疑照常。"); break;

@@ -14,7 +14,13 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
     public static readonly Noun Target = new Noun.Slot(RuleSlot.Target);
     public static readonly RelationTag Asked = new("Asked");
     /// <summary>答应过别人“今夜一起去开名录库”（应约者心里记下的事）。</summary>
-    public static readonly RelationTag Promised = new("Promised");
+    public static readonly RelationTag Promised = new("Promised"), AskedLeave = new("AskedLeave"), AskedFood = new("AskedFood");
+    /// <summary>“我已经跟他讲过第 k 条规矩 / 第 l 课”（讲话的人心里记的，初始一律为否）。</summary>
+    public const int MaxSpecs = 48;
+    private static readonly RelationTag[] _told = [.. Enumerable.Range(0, MaxSpecs + 1).Select(k => new RelationTag("Told" + k))];
+    private static readonly Dictionary<int, RelationTag> _taught = new[] { 11, 12, 13, 14 }.ToDictionary(l => l, l => new RelationTag("Taught" + l));
+    public static RelationTag Told(int spec) => _told[Math.Min(spec, MaxSpecs)];
+    public static RelationTag Taught(int lesson) => _taught[lesson];
     public static readonly Condition Constant = new Condition.Constant(Truth.True);
     public Projection R(Essence e) => r(e);
     public Effect Go(Place p) => new Effect.Act(ActionOp.Travel, r(g.Way[p]));
@@ -71,7 +77,9 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         Prototype.Job.RepairLatch => Seq(Go(Place.Logistics), Need(Tg(g.Granary, T.LatchLoose)), Set(g.Granary, T.LatchLoose, 0), Set(g.Granary, T.ToolMarks, 1)),
         Prototype.Job.InspectStructure => Seq(Go(Place.Logistics), Look(g.Granary), Wait(5, Look(g.Granary))),
         Prototype.Job.Patrol => Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.ArchiveFront), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Go(Place.DormL))))))))),
-        Prototype.Job.GuardArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(6, Look(g.ArchiveDoor))),
+        // 守门：走到前厅，占住配重室这一站（同一时刻一站只容一个身体），身上带着“守门”的样子，守一阵再让出来（§13 第 4 条）。
+        Prototype.Job.GuardArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(0.3, Seq(Need(Not(Tg(g.WeightRoom, T.Occupied))), Set(g.WeightRoom, T.Occupied, 1),
+            new Effect.Set(Me, T.Guarding, 1), Wait(8, Seq(Look(g.ArchiveDoor), Set(g.WeightRoom, T.Occupied, 0), new Effect.Set(Me, T.Guarding, 0)))))),
         Prototype.Job.VisitArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(2, Look(g.ArchiveDoor))),
         Prototype.Job.Greenhouse => Seq(Go(Place.Greenhouse), Look(g.Gauge), Change(g.Valve, T.Work, 1)),
         Prototype.Job.Socialize => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
@@ -82,14 +90,26 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         Prototype.Job.Accuse => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Accusation, 1)),
         Prototype.Job.PostRules => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Posted, 1)),
         Prototype.Job.Defend => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
-        Prototype.Job.Seize => Seq(Go(Place.ArchiveFront), Change(g.ArchiveDoor, T.Work, 1), new Effect.Think(new Condition.Not(new Condition.Related(Me, Promised, r(g.ArchiveDoor))))),
+        // 开库：先走到前厅看一眼（看得见哪一站被人占着），再去占自己会的那一站使劲；那一站被占着就做不成（§13 第 4 条）。
+        // 不带人的版本只是“动名录库之门”这个动作本身，供“夜里不许开库”一类的禁令匹配。
+        Prototype.Job.Seize => who is null ? Change(g.ArchiveDoor, T.Work, 1) : SeizeAt(g.StationFor(who)),
         Prototype.Job.AnswerName => Seq(Look(g.ArchiveDoor), MeChange(T.Answered, 1)),
         Prototype.Job.Share => Seq(new Effect.Change(Target, T.Fed, 1), MeChange(T.Fed, -1), MeChange(T.Did(Prototype.Job.Share), 1)),
         Prototype.Job.Tear => Seq(Go(Place.Hall), Look(g.Board[Place.Hall]), Change(g.Board[Place.Hall], T.Torn, 1)),
         Prototype.Job.Watch => Seq(Go(Place.Logistics), Look(g.Granary), Wait(8, Look(g.Granary))),
+        Prototype.Job.Treat => Seq(Go(Place.Clinic), Look(g.Bed), Need(Tg(g.MedCab, T.Medicine)), Spend(g.MedCab, T.Medicine, 1), Wait(1, Look(g.Bed))),
+        Prototype.Job.Retreat => Seq(Go(Place.Oath), Look(g.Stele), Wait(3, Look(g.Stele))),
+        Prototype.Job.Report => Seq(Go(Place.Hall), Look(g.Board[Place.Hall]), Wait(1, Look(g.Board[Place.Hall]))),
+        Prototype.Job.Sample => who!.Id == P.Selma ? Seq(Go(Place.Greenhouse), Look(g.Gauge), Wait(1.5, Look(g.Gauge))) : Seq(Go(Place.Logistics), Look(g.Stove), Wait(1.5, Look(g.Stove))),
+        Prototype.Job.NightSketch => Seq(Go(Place.Hall), Look(g.Space[Place.Hall]), Wait(6, Look(g.Space[Place.Hall]))),
+        Prototype.Job.Sketch => Seq(Go(Place.DormS), Look(g.Space[Place.DormS]), Wait(2, Look(g.Space[Place.DormS]))),
         Prototype.Job.Tidy => Seq(Go(who!.Pro.Dorm), Look(g.Litter[who.Pro.Dorm]), Set(g.Litter[who.Pro.Dorm], T.Crumbs, 0), Set(g.Litter[who.Pro.Dorm], T.Emptied, 1)),
         _ => throw new NotSupportedException(job.ToString())
     };
+
+    private Effect SeizeAt(Essence st) => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(0.3, Seq(Change(g.ArchiveDoor, T.Work, 1), Need(Not(Tg(st, T.Occupied))),
+        Set(st, T.Occupied, 1), new Effect.Set(Me, T.Prying, 1), Wait(3, Seq(Look(g.ArchiveDoor), Set(st, T.Worked, 1), Set(st, T.Occupied, 0), new Effect.Set(Me, T.Prying, 0),
+            new Effect.Think(new Condition.Not(new Condition.Related(Me, Promised, r(g.ArchiveDoor))))))))) ;
 
     /// <summary>沈鼎“先喂弱者”：等开粮，替饿着的人领一份记账送去。</summary>
     public Effect FeedWeak() => Seq(Go(Place.Logistics), new Effect.Wait(Tg(g.Desk, T.Open),
@@ -109,13 +129,17 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
 
 public sealed partial class Game
 {
+    /// <summary>此人在名录库之门会去站的那一站：会开锁的去锁芯，懂传声（或学过第十二课）的去中继，有力气的去配重室。</summary>
+    public Essence StationFor(Person p) => p.Pro.Lock >= 3 ? LockCore : p.Pro.Signal >= 3 ? RelayPost : p.Pro.Strength >= 1 ? WeightRoom
+        : p.Pro.Lock >= 2 ? LockCore : p.Lessons.GetValueOrDefault(12) ? RelayPost : WeightRoom;
+
     public static Place WorkPlace(P p) => p switch
     {
         P.Huo => Place.Lecture, P.Su => Place.Lecture, P.Veronica => Place.Clinic, P.Moran => Place.Oath, P.Quer => Place.DormW,
         P.Shen => Place.Logistics, _ => Cast.Of(p).Dorm
     };
 
-    public static readonly ImmutableHashSet<Job> Interruptible = [Job.Rest, Job.InspectStructure, Job.GuardArchive, Job.Scavenge, Job.VisitArchive];
+    public static readonly ImmutableHashSet<Job> Interruptible = [Job.Rest, Job.InspectStructure, Job.GuardArchive, Job.Scavenge, Job.VisitArchive, Job.Seize, Job.Watch];
 
     public Fx FxOf(Person p) => new(this, e => p.M[e]);
     public Fx RealFx => new(this, e => View[e]);
@@ -128,7 +152,7 @@ public sealed partial class Game
         var fx = FxOf(p);
         foreach (var j in Enum.GetValues<Job>())
         {
-            if (j is Job.AskLatchHelp or Job.Escort or Job.FeedWeak or Job.Wander or Job.AskOpen) continue;
+            if (j is Job.AskLatchHelp or Job.Escort or Job.FeedWeak or Job.Wander or Job.AskOpen or Job.Relay or Job.Teach or Job.Exchange or Job.Follow or Job.Avoid or Job.AskLeave or Job.Needle) continue;
             if (j is Job.GiveKey) { p.JobFx[j] = fx.GiveKeyTo(this[P.Shen]); continue; }
             p.JobFx[j] = fx.Job(j, p);
         }
@@ -155,6 +179,7 @@ public sealed partial class Game
                 Job.Defend => Fx.All(c, Fx.Any([.. People.Where(o => o != p).Select(o => Fx.All(fx.Tg(o.Body, T.Accused), fx.Tg(o.Body, Tags.Trust, 1)))])),
                 Job.FetchWater => Fx.All(c, Fx.Not(fx.Tg(Jar, T.Water, 3))),
                 Job.InspectStructure => Fx.All(c, fx.Tg(Granary, T.LatchLoose, 0)),
+                Job.GuardArchive => Fx.All(c, Fx.Not(fx.Tg(WeightRoom, T.Occupied))),
                 _ => c
             };
             Add(h.Job, c, weight);
@@ -210,6 +235,7 @@ public sealed partial class Game
         var pull = p.Desire + p.Hooks * 2 - 2;
         var linger = 1.5 + Math.Max(0, p.Desire - 2) + 2 * p.Hooks; // 带半拍，免得与“守在前厅”的动作同形
         p.JobFx[Job.VisitArchive] = Fx.Seq(fx.Go(Place.ArchiveFront), fx.Look(ArchiveDoor), Fx.Wait(linger, fx.Look(ArchiveDoor)));
+        p.JobFx[Job.Seize] = fx.Job(Job.Seize, p); // 学了第十二课，会站的那一站可能变
         var opener = p.Pro.DesireFlags.HasFlag(RF.OpenArchive);
         if (p != Det && pull > 0 && (opener && p.Desire >= 3 || p.Hooks > 0))
             Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, p.Hooks > 0 ? 5 : 3), fx.NotDone(Job.VisitArchive)), pull);
@@ -231,7 +257,15 @@ public sealed partial class Game
     private void PlanRules(Person p, Fx fx, List<Rule> rules)
     {
         var door = ArchiveDoor;
-        rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.Related(Fx.Me, Fx.Promised, fx.R(door)), fx.NotDone(Job.Seize)), RuleMode.Prefer, p.JobFx[Job.Seize], 6, Truth.True));
+        var myStation = fx.Tg(StationFor(p), T.Occupied);
+        rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.Related(Fx.Me, Fx.Promised, fx.R(door)), fx.NotDone(Job.Seize), Fx.Not(myStation)), RuleMode.Prefer, p.JobFx[Job.Seize], 6, Truth.True));
+        // 赴约或领头去开库的人，在前厅撞见守门的人：请他让开（他让不让，由他自己的 SocialSystem 决定）。
+        var leave = Fx.Seq(fx.Set(WeightRoom, T.Occupied, 0), new Effect.Set(Fx.Me, T.Guarding, 0), fx.Go(Place.Hall));
+        rules.Add(new Rule(Fx.All(fx.At(Slot.Night), Fx.Any([new Condition.Related(Fx.Me, Fx.Promised, fx.R(door)), .. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]),
+                new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Guarding, 1), new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)),
+                Fx.Not(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door)))), RuleMode.Prefer,
+            Fx.Seq(new Effect.Say(Fx.Target, "让开。今夜这道门我们要开。", leave), new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))),
+                Fx.MeChange(T.Did(Job.AskLeave), 1)), 7, Truth.True));
         var bound = Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && p.Acc.GetValueOrDefault(s) == Truth.True);
         var waits = Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && p.Acc.GetValueOrDefault(s) == Truth.True) && TrustIn(p, Det) >= 2;
         if (p.Pro.DesireFlags.HasFlag(RF.OpenArchive) && p.Hooks >= 1 && p.Desire >= 4 && !bound && !waits)
@@ -262,21 +296,120 @@ public sealed partial class Game
             if (p.Pro.Lock < 3) rules.Add(Ask(T.Picks, "今夜陪我去名录库前厅，帮我开那道锁。", w));
             if (p.Pro.Strength < 2) rules.Add(Ask(T.Strong, "今夜帮我拉一把名录库的配重。", w - 1));
             if (p.Pro.Signal < 3) rules.Add(Ask(T.Signals, "今夜帮我守名录库的传声中继。", w - 1));
-            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, 4), Fx.Any([.. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]), fx.NotDone(Job.Seize)),
+            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, 4), Fx.Any([.. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]), fx.NotDone(Job.Seize), Fx.Not(myStation)),
                 RuleMode.Prefer, p.JobFx[Job.Seize], 5 + p.Hooks, Truth.True));
         }
         var tears = Events.Count(e => e.Who == p.Id && e.Job == Job.Tear);
         if (p.Id == P.Quer && WardNight.PostedAt.Contains(Place.Hall) && tears < 2)
             rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.Tg(Clock, T.Day, 3), Fx.Mine(T.Branded), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 3, Truth.True));
+        // 别家撕你的方案（§13 第 12 条）：中央厅板上贴着一条他以底线否决过的、侦探的名录库方案，他就去撕。
+        if (p.Id is not (P.Quer or P.Lucian) && tears < 1 && Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && s.PostedAt.Contains(Place.Hall) && p.Vetoed.Contains(s)))
+            rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 4, Truth.True));
         if (p.Id == P.Lucian && Specs.Any(s => s.Flags.HasFlag(RF.Targets) && s.PostedAt.Contains(Place.Hall)) && tears < 2)
             rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 3, Truth.True));
+        // 守门的人在前厅撞见有人在动机关：请他回去（他回不回，由他自己的 SocialSystem 决定）。
+        if (p.Pro.Habits.Any(h => h.Job == Job.GuardArchive) || Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && p.Acc.GetValueOrDefault(s) == Truth.True))
+            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Prying, 1),
+                    new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), Fx.Not(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door)))), RuleMode.Prefer,
+                Fx.Seq(new Effect.Say(Fx.Target, "依据：夜里不得动名录库。请回。", Fx.Seq(new Effect.Set(Fx.Me, T.Prying, 0), fx.Go(Place.Hall))),
+                    new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))), Fx.MeChange(T.Did(Job.AskLeave), 1)), 8, Truth.True));
         if (p.Id == P.Ward && Day <= 4)
             rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Ledger, T.Unrecorded), Fx.Any([.. People.Where(o => o != p).Select(o => fx.Tg(o.Body, T.Suspect))]), fx.NotDone(Job.Watch)),
                 RuleMode.Prefer, p.JobFx[Job.Watch], 6, Truth.True));
-        if (p.Id is P.Quer or P.Mora or P.Selma or P.Bertrand)
-            rules.Add(new Rule(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Fed), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Hungry, 1),
-                    Fx.Not(new Condition.Tagged(Fx.Target, T.Fed, 1)), new Condition.Tagged(Fx.Target, Tags.Trust, 2), new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Share)),
-                RuleMode.Prefer, p.JobFx[Job.Share], 2 + Math.Max(0, p.Pro.Cooperation), Truth.True));
+        // 分粮：心软的人看见身边饿着、今天还没吃上的熟人，把自己那份分出去（自己就少吃一顿）。
+        if (p.Id is P.Quer or P.Mora or P.Selma or P.Bertrand or P.Margaret or P.Huo)
+            rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.Fed), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Hungry, 1),
+                    Fx.Not(new Condition.Tagged(Fx.Target, T.Fed, 1)), new Condition.Tagged(Fx.Target, Tags.Trust, 1), new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Share)),
+                RuleMode.Prefer, p.JobFx[Job.Share], 3 + Math.Max(0, p.Pro.Cooperation), Truth.True));
+        TalkRules(p, fx, rules);
+        BackgroundLines(p, fx, rules);
+    }
+
+    /// <summary>
+    /// 五名背景人物各自的欲望线（§13 第 14 条）——每人每天至少一件自己的事，做了会被人说起：
+    /// 伊莲娜清早去诊疗所给脚踝换药、下午去誓约庭静坐；贝尔特朗清晨在中央厅报告昨夜夜巡所见；
+    /// 维罗妮卡下午在灶边刮炉灰采样，饭点碰见茉拉就挑她账上的错（旧怨）；赛尔玛清早去温室剪源质样本；
+    /// 莫兰病好以后，夜里坐在中央厅看颜色，第二天下午把看见的画成速写（速写认得出是谁，可作证据）。
+    /// </summary>
+    private void BackgroundLines(Person p, Fx fx, List<Rule> rules)
+    {
+        void Daily(Job j, Slot[] slots, int w, Condition? extra = null) =>
+            rules.Add(new Rule(Fx.All([fx.AtAny(slots), fx.NotDone(j), .. extra is null ? Array.Empty<Condition>() : [extra]]), RuleMode.Prefer, p.JobFx[j], w, Truth.True));
+        switch (p.Id)
+        {
+            case P.Elena: Daily(Job.Treat, [Slot.Morning, Slot.Forenoon], 4); Daily(Job.Retreat, [Slot.Afternoon], 3); break;
+            case P.Bertrand: Daily(Job.Report, [Slot.Morning], 5); break;
+            case P.Veronica:
+                Daily(Job.Sample, [Slot.Afternoon], 3);
+                rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), new Condition.At(fx.R(this[P.Mora].Body), new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Needle)), RuleMode.Prefer,
+                    Fx.Seq(new Effect.Say(fx.R(this[P.Mora].Body), "你夜里的取用，误差是多少？"), Fx.MeChange(T.Did(Job.Needle), 1)), 4, Truth.True));
+                break;
+            case P.Selma: Daily(Job.Sample, [Slot.Morning], 4); break;
+            case P.Moran:
+                Daily(Job.NightSketch, [Slot.Night], 3, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, 3)));
+                Daily(Job.Sketch, [Slot.Afternoon], 5, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, 4)));
+                break;
+        }
+    }
+
+    private static readonly Slot[] DaySlots = [Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening];
+    public readonly Dictionary<string, RuleSpec> RelayText = [];
+    public static string RelayLine(RuleSpec s) => $"跟你说条规矩：「{s.Text}」";
+    public static string TeachLine(int l) => $"第{l}课讲的我给你讲讲。";
+
+    /// <summary>
+    /// 转述、拉人、教人、换吃的、跟随、躲避（§13 第 5、7 条）——全部是此人心中的规则，经 DecisionSystem 选出、ActionRuntime 结算：
+    /// 说话要占身体一段时间（同一身体不能同时做两件事），所以转述有成本，一个时段说不了几个人。
+    /// · 转述：只转述自己认的、又合自己价值的规矩（自己立的规矩更起劲）；对象是身边信得过的人，讲过的不再讲。
+    /// · 拉人：立规者傍晚到配给台找同一聚落的人当面讲自己的规矩。
+    /// · 教人：好合作的、看重转述的人，把自己完整听过的课讲给身边的人（听的人从此“完整”学过这一课）。
+    /// · 换吃的：昨天没吃上、今天也还没吃上的人，向身边吃过的熟人讨一口，答应明早替他挑水。
+    /// · 跟随：沃德在案子没了结的夜里跟着他怀疑的人走。
+    /// · 躲避：雀儿一见沃德就走开，伊莲娜一见阮清越就走开。
+    /// </summary>
+    private void TalkRules(Person p, Fx fx, List<Rule> rules)
+    {
+        var clock = fx.R(Clock);
+        Condition Near() => Fx.All(new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), new Condition.Tagged(Fx.Target, Tags.Trust, 1));
+        foreach (var s in Specs.Where(s => !s.ByDemon && s.Author is not null && s != RuanLedger && s.Id <= Fx.MaxSpecs && (s.Author == p.Id || p.Acc.GetValueOrDefault(s) == Truth.True)))
+        {
+            var own = s.Author == p.Id;
+            var fits = own || Enum.GetValues<RF>().Where(f => f != RF.None && s.Flags.HasFlag(f)).Sum(f => p.Pro.Values.GetValueOrDefault(f)) > 0;
+            if (!fits || !own && AcceptScore(p, s, Channel.Relay, null, out _) < Options.AcceptThreshold + 1) continue;
+            var line = RelayLine(s);
+            RelayText[line] = s;
+            var told = Fx.Told(s.Id);
+            var talk = Fx.Seq(new Effect.Say(Fx.Target, line), Fx.Wait(2.5, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1));
+            rules.Add(new Rule(Fx.All(fx.AtAny(DaySlots), Near(), Fx.Not(new Condition.Related(Fx.Target, told, clock))), RuleMode.Prefer, talk, own ? 2 : 1, Truth.True));
+            if (!own || Cast.ClusterOf(p.Id) == Cluster.None) continue;
+            foreach (var mate in Npcs.Where(m => m != p && Cast.ClusterOf(m.Id) == Cast.ClusterOf(p.Id)))
+            {
+                var r = fx.R(mate.Body);
+                rules.Add(new Rule(Fx.All(fx.At(Slot.Evening), Fx.Not(new Condition.Related(r, told, clock))), RuleMode.Prefer,
+                    Fx.Seq(fx.Go(Place.Logistics), new Effect.Say(r, line), Fx.Wait(1.5, new Effect.Act(ActionOp.Inspect, r)), new Effect.Think(new Condition.Related(r, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1)), 3, Truth.True));
+            }
+        }
+        if (p.Pro.Cooperation >= 1 || p.Pro.Values.GetValueOrDefault(RF.Relay) > 0)
+            foreach (var l in p.Lessons.Where(l => l.Value).Select(l => l.Key))
+                if (l is 12 or 14) rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Afternoon, Slot.Evening]), Near(), fx.NotDone(Job.Teach), Fx.Not(new Condition.Related(Fx.Target, Fx.Taught(l), clock))), RuleMode.Prefer,
+                    Fx.Seq(new Effect.Say(Fx.Target, TeachLine(l)), Fx.Wait(2, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, Fx.Taught(l), clock)), Fx.MeChange(T.Did(Job.Teach), 1)),
+                    2, Truth.True));
+        // 换吃的：给的人从自己那份里分出来（他答不答应，由他自己的 SocialSystem 决定）。
+        rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Mine(T.Hungry), Fx.Not(Fx.Mine(T.Fed)), Near(), new Condition.Tagged(Fx.Target, T.Fed, 1),
+                Fx.Not(new Condition.Related(Fx.Target, Fx.AskedFood, clock)), fx.NotDone(Job.Exchange)), RuleMode.Prefer,
+            Fx.Seq(new Effect.Say(Fx.Target, "分我一口吃的，明天一早我替你挑水。", Fx.Seq(Fx.Need(Fx.Mine(T.Fed)), Fx.MeChange(T.Fed, -1), fx.Change(p.Body, T.Fed, 1), fx.Change(p.Body, T.OwesWater, 1))),
+                new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedFood, clock)), Fx.MeChange(T.Did(Job.Exchange), 1)), 4, Truth.True));
+        rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon]), Fx.Mine(T.OwesWater)), RuleMode.Prefer, Fx.Seq(fx.Job(Job.FetchWater), Fx.MeChange(T.OwesWater, -1)), 5, Truth.True));
+        // 跟随：沃德夜里跟着他心里的嫌疑人。
+        if (p.Id == P.Ward && Day <= 5)
+            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Suspect, 1),
+                    new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Follow)), RuleMode.Prefer,
+                Fx.Seq(new Effect.Act(ActionOp.Inspect, Fx.Target), Fx.Wait(8, new Effect.Act(ActionOp.Inspect, Fx.Target)), Fx.MeChange(T.Did(Job.Follow), 1)), 7, Truth.True));
+        // 躲避：一见那个人就走开。
+        foreach (var (who, enemy, away) in new[] { (P.Quer, P.Ward, Place.Oath), (P.Elena, P.Ruan, Place.DormS) })
+            if (p.Id == who)
+                rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Afternoon]), new Condition.At(fx.R(this[enemy].Body), new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Avoid)),
+                    RuleMode.Prefer, Fx.Seq(fx.Go(away), fx.Look(Space[away]), Fx.MeChange(T.Did(Job.Avoid), 1)), 4, Truth.True));
     }
 
     /// <summary>每个时段开头，按各人此刻的处境重建心中的习惯与计划。</summary>

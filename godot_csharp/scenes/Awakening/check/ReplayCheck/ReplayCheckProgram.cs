@@ -251,6 +251,79 @@ foreach (var (advice, adviceExpected) in new[] { ("touch", RecallChoice.Touch), 
 Check(MorningWorld.PostedClauses.Length == 8 && MorningWorld.PostedClauses.All(c => !c.Contains("归乡") && !c.Contains("放逐")),
     "公告框只抄录第 1—8 条，没有第 9、10 条");
 
+// ---------------------------------------------------------------- 6b. 冲突只描述痕迹之差
+Line("");
+Line("== 冲突文字只描述痕迹之差，不描述动作");
+var conflictTexts = results.SelectMany(r => Comparison.Compare(r.Traces, MorningTraces.Evidence, _ => true))
+    .Where(f => f.Status == FindingStatus.Conflict).Select(f => f.Text).Distinct().ToArray();
+var actionWords = new[] { "有人", "没有人", "报告", "回来", "敲了", "拿来", "踢", "撑在", "泡茶", "记谱" };
+var offending = conflictTexts.Where(t => actionWords.Any(t.Contains)).ToArray();
+Check(conflictTexts.Length > 0 && offending.Length == 0 && conflictTexts.All(t => t.StartsWith("重演中") && t.Contains("现场")),
+    $"216 次重演的 {conflictTexts.Length} 种冲突文字都写成“重演中……；现场……”，不出现谁做了什么" + (offending.Length > 0 ? "：" + string.Join(" / ", offending) : ""));
+
+// ---------------------------------------------------------------- 7. 同伴自己会去碰（涌现）
+Line("");
+Line("== 恶魔低语后，同伴自己走向旧物（DecisionSystem 决定去不去、碰不碰；ActionRuntime 结算拿不拿得到）");
+foreach (var (evidence, who, room, wrong) in new[]
+{
+    ("E7", Person.Huo, Room.Hall, Room.Pantry),
+    ("E5", Person.Su, Room.Foyer, Room.Hall),
+    ("E10", Person.Shen, Room.Pantry, Room.Foyer),
+})
+{
+    var world = new MorningWorld();
+    world.Amplify(who, "S4");
+    var before = world.Intend(who)!;
+    world.Whisper(who, "（低语）");
+    var after = world.Intend(who)!;
+    Check(!before.Reach && after.Reach && world.WorldOf(who).History.Last().Source == ObservationSource.Corruption,
+        $"{Names.Of(who)}：低语之前守着手头的事（{before.Thought}）；低语（Corruption）之后自己要去拿（{after.Thought}）");
+    var reality = world.RealityFingerprint();
+    world.Locate(who, wrong);
+    var far = world.Reach(who);
+    Check(!far && !world.Holding(who), $"{Names.Of(who)}：人不在{Names.Of(room)}时，ActionRuntime 判定拿不到");
+    world.Locate(who, room);
+    Check(world.Reach(who) && world.Holding(who), $"{Names.Of(who)}：走到{Names.Of(room)}后伸手，拿起了{evidence}");
+    world.PutBack(who);
+    Check(!world.Holding(who) && world.IsDisturbed(evidence) && world.RealityFingerprint() != reality,
+        $"{Names.Of(who)}：放回后现实里留下“被动过”的痕迹");
+    Check(!world.Intend(who)!.Reach, $"{Names.Of(who)}：拿定主意之后不再自己去拿");
+    var toldFirst = new MorningWorld();
+    toldFirst.Amplify(who, "S4");
+    toldFirst.ShowClause8(who);
+    toldFirst.Whisper(who, "（低语）");
+    var expectGo = who == Person.Huo;
+    Check(toldFirst.Intend(who)!.Reach == expectGo, $"{Names.Of(who)}：事先读过第 8 条，低语之后{(expectGo ? "仍然要去" : "不去")}");
+}
+// 侦探在场时的三种回应：劝阻（Testimony，经 SocialSystem）、说明第 8 条（感知）、任其自便（什么也不说）；不在场时他独自取舍。
+foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, aloneExpected) in new[]
+{
+    ("E7", Person.Huo, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch),
+    ("E5", Person.Su, RecallChoice.Touch, RecallChoice.Refuse, RecallChoice.Touch, RecallChoice.Touch),
+    ("E10", Person.Shen, RecallChoice.Refuse, RecallChoice.Refuse, RecallChoice.Hesitate, RecallChoice.Refuse),
+})
+{
+    MorningWorld Fresh()
+    {
+        var w = new MorningWorld();
+        w.Amplify(who, "S4");
+        w.Whisper(who, "（低语）");
+        return w;
+    }
+    var dissuaded = Fresh();
+    var stance = dissuaded.Advise(who, "decline");
+    var a = dissuaded.DecideRecall(evidence)!;
+    var shown = Fresh();
+    shown.ShowClause8(who);
+    var b = shown.DecideRecall(evidence)!;
+    var c = Fresh().DecideRecall(evidence)!;
+    var d = Fresh().DecideAlone(evidence)!;
+    Check(a.Choice == declineExpected, $"{Names.Of(who)}：侦探劝阻（SocialSystem 判 {stance}）→ {a.Choice}（{a.Thought}）");
+    Check(b.Choice == clauseExpected, $"{Names.Of(who)}：侦探说明第 8 条 → {b.Choice}（{b.Thought}）");
+    Check(c.Choice == noneExpected, $"{Names.Of(who)}：侦探任其自便 → {c.Choice}（{c.Thought}）");
+    Check(d.Choice == aloneExpected, $"{Names.Of(who)}：侦探不在场 → {d.Choice}（{d.Thought}）");
+}
+
 Line("");
 Line("== 真值组合的推演日志");
 foreach (var l in truthRun.Log) Line("  " + l);

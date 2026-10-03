@@ -37,6 +37,11 @@ public sealed class Person
     public readonly List<string> Diary = [];
     public readonly HashSet<Place> NightVisited = [];
     public int NightSteps, Interpreted, Whispered, DemonDoubt;
+    /// <summary>此人亲眼见过、会改变名录库立场的事（§13 第 6 条）：应了唤名之人的样子、中央基座的裂纹、侦探试开机关。</summary>
+    public readonly HashSet<string> Witnessed = [];
+    /// <summary>饭桌上被信得过的人驳过几回（向某一边的推力，上限 2）。</summary>
+    public readonly Dictionary<Ending, int> StanceNudge = [];
+    public bool HungryAtCouncil;
     public bool Weak => HungerStreak >= 2;
 }
 
@@ -50,6 +55,7 @@ public sealed partial class Game
     public readonly Dictionary<Essence, Projection> View = [];
     public readonly Dictionary<Essence, Place> PlaceOf = [];
     public readonly List<Essence> Things = [];
+    public Essence WeightRoom = null!, LockCore = null!, RelayPost = null!, Base = null!, SketchBook = null!;
     public Essence Clock = null!, Granary = null!, Desk = null!, Stove = null!, Jar = null!, Ledger = null!, Bowl = null!, Bed = null!,
         MedCab = null!, OilStore = null!, Valve = null!, Gauge = null!, Blackboard = null!, Stele = null!, ArchiveDoor = null!, NameVoice = null!;
     public readonly Person[] People;
@@ -76,7 +82,7 @@ public sealed partial class Game
 
     // ------------------------------------------------------------------ build --
 
-    private static readonly Tag[] BodyVisible = [T.Fed, T.Hungry, T.Weak, T.Sick, T.NightAte, T.Stash, T.OweNote];
+    private static readonly Tag[] BodyVisible = [T.Fed, T.Hungry, T.Weak, T.Sick, T.NightAte, T.Stash, T.OweNote, T.Guarding, T.Prying, T.OwesWater];
     private static readonly Tag[] BodyHidden = [T.GranaryKey, T.MedKey, T.ArchiveKey, T.OilKey, T.Lockpick, T.Craftsman, T.Structure];
 
     private Essence NewThing(string name, Place place, Tag[] visible, Tag[]? hidden = null)
@@ -130,6 +136,13 @@ public sealed partial class Game
         Blackboard = NewThing("讲堂黑板", Place.Lecture, [T.Chalk, T.Shoe]);
         Stele = NewThing("誓约庭石碑", Place.Oath, [T.Rubbed]);
         ArchiveDoor = NewThing("名录库之门", Place.ArchiveFront, [T.Open, T.Work]);
+        // 名录库之门的三站：配重室、锁芯、传声中继。一站同一时刻只容一个身体（Occupied）；今夜有人在这一站使过劲（Worked）。
+        WeightRoom = NewThing("配重室", Place.ArchiveFront, [T.Occupied, T.Worked]);
+        LockCore = NewThing("锁芯", Place.ArchiveFront, [T.Occupied, T.Worked]);
+        RelayPost = NewThing("传声中继", Place.ArchiveFront, [T.Occupied, T.Worked]);
+        // 中央基座：第 5 日起有一道新裂纹（担保衰减的迹象），只有凑近细看才看得见。
+        Base = NewThing("中央基座", Place.Hall, [], [T.Crack]);
+        SketchBook = NewThing("莫兰的速写本", Place.DormS, [T.Posted]);
         foreach (var place in new[] { Place.Hall, Place.Logistics, Place.Lecture, Place.DormLife, Place.DormW, Place.DormS, Place.DormL })
         {
             var board = NewThing(place == Place.Logistics ? "配给台公告板" : Names.Of(place) + "公告板", place, [T.Accusation, T.Posted]);
@@ -196,8 +209,15 @@ public sealed partial class Game
                 .Add(T.Craftsman, other.Pro.Craftsman ? 1 : 0)
                 .Add(T.Picks, other.Pro.Lock >= 3 ? 1 : 0).Add(T.Strong, other.Pro.Strength >= 2 ? 1 : 0).Add(T.Signals, other.Pro.Signal >= 3 ? 1 : 0)
                 .Add(T.Branded, 0).Add(T.Accused, 0).Add(T.Suspect, 0);
+            // 人物之间的“讲过没讲过”初始一律为否；侦探不在人物互相转述、讲课、讨吃的之列（他是玩家，由玩家自己去问）。
+            var marks = Enumerable.Range(1, Fx.MaxSpecs).Select(k => (Fx.Told(k), p.M[Clock])).Concat(new[] { 11, 12, 13, 14 }.Select(l => (Fx.Taught(l), p.M[Clock])))
+                .Append((Fx.AskedFood, p.M[Clock])).ToImmutableHashSet();
             Observation.Observe(p.Soul, new ObservationInput(them.Name, them.Kind)
-            { Target = them, Source = ObservationSource.Recall, Tags = tags, DenyRelations = [(Fx.Asked, p.M[Granary]), (Fx.Asked, p.M[ArchiveDoor])] });
+            {
+                Target = them, Source = ObservationSource.Recall, Tags = tags,
+                DenyRelations = [(Fx.Asked, p.M[Granary]), (Fx.Asked, p.M[ArchiveDoor]), (Fx.AskedLeave, p.M[ArchiveDoor]), .. other == Det ? [] : marks],
+                AddRelations = other == Det ? marks : []
+            });
         }
         // 自知：钥匙、技艺在自己身上（不可见标签，经内省写入）。
         var self = ImmutableDictionary<Tag, int?>.Empty;
@@ -282,7 +302,14 @@ public sealed partial class Game
         }
         // 懂结构的人一眼看出门闩松动（隐藏状态，只有行家看得出）。
         if (place == Place.Logistics && p.Pro.Structure >= 2) RevealLatch(p);
-        foreach (var other in People.Where(o => o != p && SpaceOf(o.Body) == space)) { OnMeet(p, other); if (p == Det) DetMet(other); }
+        foreach (var other in People.Where(o => o != p && SpaceOf(o.Body) == space))
+        {
+            OnMeet(p, other);
+            if (p == Det) DetMet(other);
+            // 亲眼看见昨夜应了唤名的人今早的样子（§13 第 6 条：立场主要由亲见改变）。
+            if (p != Det && Slot is Slot.Morning or Slot.Forenoon && _answered.Contains((Day - 1, other.Id)) && p.Witnessed.Add("hook"))
+                Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}亲眼看见{other.Name}神情恍惚（应过唤名）");
+        }
         if (p == Det && Slot != Slot.Night)
         {
             DetPassed(place);

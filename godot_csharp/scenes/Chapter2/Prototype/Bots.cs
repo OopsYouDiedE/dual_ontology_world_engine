@@ -82,13 +82,29 @@ public static class Bots
     /// </summary>
     public static PlayerAction? CatchUp(Game g)
     {
-        if (g.Day < 4 || g.Day == 4 && g.Slot == Slot.Morning || g.Slot == Slot.Night || g.QuerCleared || !g.AccusedQuer) return null;
+        // 操纵被揭穿后的修复路（§13 第 1 条）：先当众认错，再把对方要的事办了。
+        if (g.Day >= 4 && g.Slot != Slot.Night && !(g.Day == 4 && g.Slot == Slot.Morning))
+        {
+            if (g.Manipulations.Any(m => m.Exposed && !m.Apologized)) return new(Cmd.Apologize);
+            if (g.Repairs.FirstOrDefault() is var r && g.Repairs.Count > 0 && g.Promises.Any(p => p.Who == r && !p.Done)) return new(Cmd.Help) { Who = r };
+        }
+        if (g.Day < 4 || g.Day == 4 && g.Slot == Slot.Morning || g.Slot == Slot.Night || g.QuerCleared || g.Accused is null) return null;
         if (g.Slot is Slot.Noon or Slot.Evening && Game.Get(g.Det.Body, T.Fed) == 0) return null; // 先吃饭
         var ev = g.DetEvidence();
         if (!ev.Contains(0) || !ev.Contains(1)) return new(Cmd.Inspect) { Place = Place.Logistics, Thing = "台账" };
         if (!ev.Contains(2)) return new(Cmd.Inspect) { Place = Place.Clinic, Thing = "碗" };
         if (!ev.Contains(3)) return new(Cmd.Inspect) { Place = Place.DormW, Thing = "文契废纸篓" };
-        return new(Cmd.Reopen) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, true) };
+        if (g.ReopenedDay == g.Day) return null;
+        // 同行即作证：先请指控的人亲眼看看那只碗。
+        if (g.WardEscorts == 0) return new(Cmd.Escort) { Who = P.Ward, Place = Place.Clinic, Thing = "碗" };
+        if (g.WardEscorts == 1 && !g.DetHelped.Contains(P.Ward)) return new(Cmd.Help) { Who = P.Ward };   // 他没答应：先帮他一把再请
+        if (g.WardEscorts == 1) return new(Cmd.Escort) { Who = P.Ward, Place = Place.Clinic, Thing = "碗" };
+        // 只说自己亲眼查到的：门闩上看见工具痕才说“雀儿修了门闩”，废纸篓里看见饼屑（或倒空的痕迹）才说“雀儿自取”。
+        var pairs = new List<(int, int)> { (0, 0), (3, 5) };
+        if ((Game.Belief(g.Det, g.Det.M[g.Granary], T.ToolMarks) ?? 0) > 0) pairs.Add((1, 2));
+        var litter = g.Det.M[g.Litter[Place.DormW]];
+        if ((Game.Belief(g.Det, litter, T.Crumbs) ?? 0) > 0 || (Game.Belief(g.Det, litter, T.Emptied) ?? 0) > 0) pairs.Add((2, 4));
+        return new(Cmd.Reopen) { Plan = new(pairs, null, true) };
     }
 
     /// <summary>把恶魔在课上亲口说的“取回即接通，它离我们更近”转告给饭桌上向着开库的人（侦探自己听到、记下的消息）。</summary>
@@ -113,8 +129,25 @@ public static class Bots
         if (with is not null) g.MakeWager(with.Id, P.Ward, Place.ArchiveFront, spec.Id);
     }
 
+    /// <summary>
+    /// 同行即作证（§13 第 6 条）：第 5 日起，把饭桌上复述过“开库”说法、侦探还没带去看过的人，请去中央厅亲眼看基座的裂纹。
+    /// 只用侦探自己见过、做过的事（他亲眼看过裂纹，听过谁在饭桌上向着开库）。
+    /// </summary>
+    private static PlayerAction? ShowCrack(Game g)
+    {
+        if (g.Day < 5 || !g.Det.Witnessed.Contains("crack") && !g.DetLookedOn.Values.Any(s => s.Contains(g.Base))) return null;
+        // 先请当面对侦探点过头、答应过侦探请求的人（侦探知道他们肯跟自己走）。
+        var who = g.Npcs.Where(x => !g.DetShown.Contains(x.Id) && g.VoicedStance.TryGetValue(x.Id, out var v) && v.Spec is { } s && Game.FamilyOf(s) == Ending.OpenEach)
+            .OrderByDescending(x => g.DetToldFace.Count(t => t.Who == x.Id && t.Nodded) + g.DetNotes.Count(n => n.Who == x.Id && n.Text.Contains("答应了"))).ThenBy(x => x.Id).FirstOrDefault();
+        return who is null ? null : new(Cmd.Escort) { Who = who.Id, Place = Place.Hall, Thing = "中央基座" };
+    }
+
+    private static PlayerAction? LookCrack(Game g) => g.Day >= 5 && !g.DetLookedOn.Values.Any(s => s.Contains(g.Base)) ? new(Cmd.Inspect) { Place = Place.Hall, Thing = "中央基座" } : null;
+
     private static PlayerAction? Campaign(Game g, Card card) => (g.Day, g.Slot) switch
     {
+        (5, Slot.Morning) when LookCrack(g) is { } lc => lc,
+        (5, Slot.Afternoon) or (5, Slot.Evening) or (6, Slot.Morning) or (6, Slot.Afternoon) or (6, Slot.Evening) when ShowCrack(g) is { } sc => sc,
         (6, Slot.Morning) or (6, Slot.Afternoon) when Doubt(g) is { } d => d,
         (5, Slot.Forenoon) => new(Cmd.Class) { Topic = 0, Precise = true },
         (6, Slot.Forenoon) => new(Cmd.Class) { Topic = 1, Precise = true },
@@ -176,9 +209,9 @@ public static class Bots
                 (5, Slot.Forenoon) => new(Cmd.Class) { Topic = 0, Precise = true },
                 (5, Slot.Afternoon) => new(Cmd.Archive) { Crew = [P.Huo, P.Quer, P.Su, P.Bertrand] },
                 (5, Slot.Evening) => new(Cmd.Post) { Place = Place.Hall, Card = PactLoose },
-                (6, Slot.Morning) => new(Cmd.TellRule) { Who = P.Su, Card = PactLoose },
+                (6, Slot.Morning) => LookCrack(g) ?? ShowCrack(g) ?? new(Cmd.TellRule) { Who = P.Su, Card = PactLoose },
                 (6, Slot.Forenoon) => new(Cmd.TellRule) { Who = P.Selma, Card = PactLoose },
-                (6, Slot.Afternoon) => new(Cmd.TellRule) { Who = P.Lucian, Card = PactLoose },
+                (6, Slot.Afternoon) => ShowCrack(g) ?? new(Cmd.TellRule) { Who = P.Lucian, Card = PactLoose },
                 (6, Slot.Evening) => new(Cmd.TellRule) { Who = P.Quer, Card = PactLoose },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g), Back = g => -1 },
@@ -187,7 +220,8 @@ public static class Bots
                 (5, Slot.Forenoon) => new(Cmd.Class) { Topic = 1, Precise = true },
                 (5, Slot.Afternoon) => new(Cmd.Archive) { Crew = [P.Huo, P.Quer, P.Su, P.Bertrand] },
                 (5, Slot.Evening) => new(Cmd.TellRule) { Who = P.Huo, Card = Pact },
-                (6, Slot.Morning) => new(Cmd.TellRule) { Who = P.Mora, Card = Pact },
+                (6, Slot.Morning) => LookCrack(g) ?? new(Cmd.TellRule) { Who = P.Mora, Card = Pact },
+                (6, Slot.Afternoon) or (6, Slot.Evening) => ShowCrack(g) ?? Eat(g),
                 (6, Slot.Forenoon) => new(Cmd.TellRule) { Who = P.Ward, Card = Pact },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g), Back = g => -1 },
