@@ -65,15 +65,6 @@ def publish() -> None:
                 "\ndo dialogue_complete_copper_introduction()\n"
                 "if not story_ok\n\t=> STAGE_BLOCKED"
             )
-        elif title == "S04":
-            first, rest = body.split("\n", 1)
-            # Safety information remains available before actual delivery;
-            # its first line must not claim that unexamined money was checked.
-            body = (
-                "if receipt_checked\n\t" + first + "\nelse\n"
-                "\t沈鼎: 先把话说清。我们几个都只记得登船，后面全是空的。这是怎么回事？\n"
-                + rest
-            )
         return f"~ {title}\n{body}\n=> END\n\n"
 
     rewritten = re.sub(r"^~ (\w+)\n(.*?)(?=^~ |\Z)", rewrite, text, flags=re.M | re.S)

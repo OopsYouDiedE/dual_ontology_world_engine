@@ -15,7 +15,7 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 - [32px 美术与 MCP 工作流](docs/design-standard.md#第五部分32px-像素美术与地图工作流)：32px 地图格、32×48 角色帧预算、47-autotile 布局标准与资源分流法定路径。
 - [首支宣传片主线大纲](docs/design-standard.md#第六部分宣传视频与成果验收规范)：75–80 秒分镜结构（日常、推演、言灵、真名救场、决战一瞥）与实机运行要求。
 - `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Main2D.tscn` 加载[初醒 Demo](godot_csharp/scenes/FirstAwakening/README.md)：当前默认已接入《未归的红筹》的场景、调查UI与新道具。
-- [第一章“未归的红筹”重设](docs/design-standard.md#4-初醒案件现场与因果链)：新案场景与UI已接入默认 Demo。已修复候选反馈、长页操作、鼠标改点与转角、规则参照隐式改写、初识与认签顺序等问题；最新全新有窗口鼠标盲玩正常完成，首输入至终局30分33.615秒，231输入、246PNG，无求助或运行卡关。[最新报告](artifacts/first-awakening/blind-mouse-rendered-20261002-07/report.md)保留完整评价与计量；最后修复定向425项通过。真人净30分钟及发布体验仍未认证，旧案历史和其他轮次不替代本版结果。
+- [第一章“未归的红筹”重设](docs/design-standard.md#4-初醒案件现场与因果链)：新案场景与UI已接入默认 Demo。已修复候选反馈、长页操作、鼠标改点与转角、规则参照隐式改写、初识与认签顺序等问题；最新全新有窗口鼠标盲玩正常完成，首输入至终局30分33.615秒，231输入、246PNG，无求助或运行卡关。[综合汇报](artifacts/first-awakening/consolidated-audit-report.md)归纳各轮评价与计量（原始轨迹目录已精简删除）；最后修复定向425项通过。真人净30分钟及发布体验仍未认证，旧案历史和其他轮次不替代本版结果。
 - [家具喝茶推理原型](godot_csharp/scenes/Reasoning/README.md)：公共研究室调查与家具喝茶重演。
 - [宣传前三场人物动作图集](godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)：每人 111 帧位，含 Godot 资源与各方向动作规范；在[剧情打样场景](godot_csharp/scenes/Story/README.md)中验证。
 - [21人32×48正面站立帧](godot_csharp/ShareAsset/Internal/Characters/README-zh.md)：原生像素角色资源与日常携带规范。
