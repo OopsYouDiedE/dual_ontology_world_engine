@@ -1,0 +1,26 @@
+extends RefCounted
+## 配乐与音效的静态入口：转给自动加载的 GameAudio；它不在时（无头检查脚本）什么也不做。
+
+static func _hub() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	return tree.root.get_node_or_null("GameAudio") if tree else null
+
+static func music(id: String, fade := 1.6) -> void:
+	var hub := _hub()
+	if hub:
+		hub.play_music(id, fade)
+
+static func stop_music(fade := 1.6) -> void:
+	var hub := _hub()
+	if hub:
+		hub.stop_music(fade)
+
+static func duck(on: bool) -> void:
+	var hub := _hub()
+	if hub:
+		hub.duck(on)
+
+static func sfx(id: String, volume_db := 0.0, pitch := 1.0) -> void:
+	var hub := _hub()
+	if hub:
+		hub.play_sfx(id, volume_db, pitch)

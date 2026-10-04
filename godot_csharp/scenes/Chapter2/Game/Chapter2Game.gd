@@ -4,6 +4,7 @@ extends "res://scenes/Chapter2/Field/Chapter2Field.gd"
 ## J 展开记录；Tab 看笔记；Enter 直接输入原型命令（与文字原型相同）。时段过去后，众人按推演换到各自的去处。
 
 const Paper := preload("res://scenes/Awakening/Paper.gd")
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const BridgeScript := preload("res://scenes/Chapter2/Game/Chapter2Bridge.cs")
 const FRAMES_DIR := "res://ShareAsset/Internal/Characters/animation_v2/%s.tres"
 
@@ -64,6 +65,7 @@ func _ready() -> void:
 	bridge.name = "Bridge"
 	add_child(bridge)
 	bridge.Start()
+	Sound.music("day", 2.5)
 	_show_intro()
 
 # ------------------------------------------------------------------ 宿主循环 --
@@ -126,7 +128,12 @@ func _on_ready() -> void:
 	last_slot_key = slot_key
 	_refresh_hud()
 	tint.color = SLOT_TINT[int(state.slot)]
+	var mode := String(state.mode)
+	# 配乐随局面：第 4 日清晨的对质与第 7 日名录库之议用对质曲，夜里是夜曲，其余是日间曲。
+	var confronting := mode in ["confront", "council"] or (int(state.day) == 4 and int(state.slot) == 0)
+	Sound.music("confrontation" if confronting else ("night" if int(state.slot) == 5 else "day"))
 	if changed:
+		Sound.sfx("bell_slot", -10.0)
 		var place := String(state.det_place)
 		if MAP_PLACE.get(String(map.name), "") != place and PLACE_MAP.has(place):
 			var target: Array = PLACE_MAP[place]
@@ -134,7 +141,6 @@ func _on_ready() -> void:
 		else:
 			_spawn_actors()
 		_flash_title("第%d日 · %s" % [state.day, state.slot_name])
-	var mode := String(state.mode)
 	if mode in ["card", "yesno", "confront"]:
 		_log("（原型在等你作答：在下方输入框里输入）")
 		input_line.grab_focus()
@@ -462,6 +468,7 @@ func _open_night() -> void:
 	_menu("夜里", items, "守夜只看得见身影、听得见动静；第二天清晨可以读痕迹、做重演。")
 
 func _open_confront(reopen: bool) -> void:
+	Sound.music("confrontation")
 	_open_modal("中央厅：公开对质" if not reopen else "重开对质")
 	modal_box.add_child(Paper.label("每句陈述配一件证物（不配就不说）。证物要你手里有：去细看、去问人。", 15, Paper.MUTED))
 	var ev_names := ["（不说这句）"]
@@ -524,6 +531,7 @@ func _confront_proposal(reopen: bool, cells: String) -> void:
 	_open_confront(reopen)
 
 func _open_council() -> void:
+	Sound.music("confrontation")
 	var items := []
 	var plans: Array = state.get("plans", [])
 	for i in plans.size():
@@ -670,6 +678,7 @@ func _show_intro() -> void:
 	modal_box.add_child(Paper.button("开始", go, 18))
 
 func _show_ending() -> void:
+	Sound.music("main_theme", 4.0)
 	_open_modal("第二章 · 终")
 	var t := RichTextLabel.new()
 	t.custom_minimum_size = Vector2(820, 420)

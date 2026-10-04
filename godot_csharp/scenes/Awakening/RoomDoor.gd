@@ -1,10 +1,13 @@
 extends Node2D
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 ## Dormitory doors: access is granted by the host (can_access_dorm); leaves open when someone is near.
 ## Frame, lintel and number plate are painted into the architecture.
 @export var dorm_owner := "detective"
 @export var interior_bounds := Rect2(32, 32, 256, 256)
 @onready var room: Node2D = get_parent().get_parent()
 var openness := 0.0
+## 门扇是否已转开（用于合页与撞框的声音，只在玩家附近发声）。
+var swung := false
 var privacy_covers: Array[Polygon2D] = []
 @onready var leaf_collision: CollisionShape2D = $Body/LeafCollision
 var left: Texture2D = preload("res://ShareAsset/Internal/Props/FirstAwakeningInterior/room_door_left.png")
@@ -70,7 +73,21 @@ func _physics_process(delta: float) -> void:
 			nearby = true
 	openness = move_toward(openness, 1.0 if nearby else 0.0, delta * 5.0)
 	leaf_collision.set_deferred("disabled", nearby or openness > 0.1)
+	_door_sound()
 	queue_redraw()
+
+func _door_sound() -> void:
+	if not swung and openness > 0.05:
+		swung = true
+		if _player_near():
+			Sound.sfx("door_open", -8.0, randf_range(0.94, 1.06))
+	elif swung and openness <= 0.0:
+		swung = false
+		if _player_near():
+			Sound.sfx("door_close", -8.0, randf_range(0.94, 1.06))
+
+func _player_near() -> bool:
+	return "player" in room and is_instance_valid(room.player) and room.player.position.distance_to(position) < 260
 
 func _draw() -> void:
 	# Each leaf swings into the room, foreshortening toward its hinge.

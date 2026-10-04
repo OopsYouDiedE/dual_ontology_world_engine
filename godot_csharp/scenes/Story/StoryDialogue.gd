@@ -7,6 +7,7 @@ const INK := Color("191e23")
 const PAPER := Color("e8dfca")
 const GOLD := Color("b59a68")
 
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const VOICE_DETECTIVE: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_detective.wav")
 const VOICE_ENGINEER: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_engineer.wav")
 const VOICE_CHEF: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_chef.wav")
@@ -124,6 +125,8 @@ static func estimate_dialogue_audio_duration(text: String, locale: String = "") 
 
 var voice_player: AudioStreamPlayer
 var current_voice_stream: AudioStream = null
+## 铜口开口时先响一声盖片与管道共鸣；同一段连说不重复。
+var _previous_voice_stream: AudioStream = null
 var last_voice_char_index := -1
 var voice_char_interval := 2
 
@@ -625,6 +628,9 @@ func show_line(key: String) -> void:
 	body.visible_characters = 0
 	elapsed = 0
 	current_voice_stream = _get_character_voice(line.character)
+	if current_voice_stream == VOICE_TUBE and _previous_voice_stream != VOICE_TUBE:
+		Sound.sfx("tube", -6.0)
+	_previous_voice_stream = current_voice_stream
 	last_voice_char_index = -1
 	history.append(_escape_rich_text(speaker.text) + "\n" + line.text)
 	history_line_ids.append(line.id)

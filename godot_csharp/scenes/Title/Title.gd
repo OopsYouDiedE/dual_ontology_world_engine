@@ -2,9 +2,11 @@ extends Control
 ## 标题：选章。第一章结束时也可直接进入第二章。
 
 const Paper := preload("res://scenes/Awakening/Paper.gd")
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 
 func _ready() -> void:
 	theme = Paper.theme()
+	Sound.music("main_theme", 2.5)
 	var bg := ColorRect.new()
 	bg.color = Color("1d1a1f")
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)

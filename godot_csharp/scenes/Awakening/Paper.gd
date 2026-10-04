@@ -8,6 +8,7 @@ const SEAL := Color("8a3324")
 const MUTED := Color("6b5d48")
 const RULE := Color(0.17, 0.13, 0.09, 0.28)
 const MATCH := Color("3f5a3a")
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const FONT: Font = preload("res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf")
 
 ## 打字机字体缺字时（▸ ■ ◎ ⊥ ✕ ✓ 等符号）由系统中文字体补字。
@@ -98,6 +99,7 @@ static func button(text: String, action: Callable, size := 19) -> Button:
 	b.text = text
 	b.add_theme_font_size_override("font_size", size)
 	b.focus_mode = Control.FOCUS_NONE
+	b.pressed.connect(func(): Sound.sfx("ui_click", -4.0))
 	b.pressed.connect(action)
 	return b
 

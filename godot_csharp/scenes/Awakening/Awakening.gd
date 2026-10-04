@@ -6,6 +6,7 @@ extends Node2D
 const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
 const FieldNavigation := preload("res://scenes/Awakening/FieldNavigation.gd")
 const Paper := preload("res://scenes/Awakening/Paper.gd")
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const ReplayManuscript := preload("res://scenes/Awakening/ReplayManuscript.gd")
 const ReplayStage := preload("res://scenes/Awakening/ReplayStage.gd")
 const TraceDecals := preload("res://scenes/Awakening/TraceDecals.gd")
@@ -145,13 +146,7 @@ func _ready() -> void:
 	dialogue.apply_locale_font(Paper.font(), null)
 	dialogue.set_character_portraits(PORTRAITS)
 	dialogue.panel.hide()
-	var music: AudioStreamPlayer = get_node_or_null("ReasoningMusic")
-	if music and music.stream:
-		var loop_stream := music.stream.duplicate() as AudioStreamMP3
-		loop_stream.loop = true
-		music.stream = loop_stream
-		music.volume_db = -14.0
-		music.play()
+	Sound.music("door_side", 2.5)
 	camera = $Camera2D
 	camera.position = player.position
 	camera.make_current()
@@ -924,6 +919,8 @@ func open_modal(title: String, size: Vector2, kind: String) -> VBoxContainer:
 	close_modal()
 	modal_kind = kind
 	_cancel_click_navigation()
+	if kind != "ending":
+		Sound.sfx("page", -6.0)
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.theme = Paper.theme()
@@ -1027,6 +1024,7 @@ func examine(id: String) -> void:
 		return
 	examined[id] = true
 	engine.Examine("detective", id)
+	Sound.sfx("evidence", -3.0)
 	if id in ["E1", "E3"] and not replay_open:
 		call_deferred("_unlock_replay")
 	if id in ACQUAINTANCE_EVIDENCE and v6_open() and not flags.has("v6_revealed"):
@@ -1526,7 +1524,10 @@ func play_replay(result: Dictionary) -> void:
 	close_modal()
 	stage = "playback"
 	story_lock = true
+	Sound.sfx("replay", -4.0)
+	Sound.duck(true)
 	await stage_node.play(result.frames)
+	Sound.duck(false)
 	stage = "investigate"
 	story_lock = false
 	await after_replay(result)
@@ -1545,6 +1546,7 @@ func after_replay(result: Dictionary) -> void:
 		await say("replay_refused")
 	if bool(result.full_match) and not full_match_seen:
 		full_match_seen = true
+		Sound.sfx("answer_ok", -4.0)
 		for who in ["huo", "shen", "su"]:
 			await _summon(who)
 		await say("s8_reversal")
@@ -1605,6 +1607,7 @@ func sound_test() -> void:
 		var spot: String = pair[1] if free.has(pair[1]) else free[0]
 		positions[pair[0]] = spot
 		free.erase(spot)
+	Sound.sfx("tuning_fork", -5.0)
 	last_sound = engine.SoundTest(_sound_choice[0], positions)
 	experiments["E8"] = true
 	set_meta("sound_sentence", sentences[_sound_choice[0]])
@@ -1690,16 +1693,22 @@ func statements() -> Array:
 func answer() -> void:
 	stage = "answer"
 	answer_state = {"step": 1}
+	Sound.music("confrontation")
 	await say("answer_open")
 	while answer_state.step <= 4:
 		await say("answer_q%d" % answer_state.step)
 		var pick: Dictionary = await _answer_pick()
 		if pick.is_empty():
 			await say("answer_pause")
+			Sound.music("door_side")
 			stage = "investigate"
 			_refresh_hud()
 			return
 		var verdict := _judge(answer_state.step, pick)
+		if verdict == "answer_ok%d" % answer_state.step:
+			Sound.sfx("answer_ok", -4.0)
+		elif verdict.begins_with("answer_wrong"):
+			Sound.sfx("answer_wrong", -3.0)
 		await say(verdict)
 		if verdict == "answer_ok%d" % answer_state.step:
 			answer_state.step += 1
@@ -1746,7 +1755,7 @@ func _answer_pick() -> Dictionary:
 func _answer_refresh() -> void:
 	var said := str(_answer_choice.say)
 	var shown := str(_answer_choice.show)
-	var line := "陈述：" + (Content.STATEMENTS[said] if said != "" else "（未选）") + "\n"
+	var line: String = "陈述：" + (Content.STATEMENTS[said] if said != "" else "（未选）") + "\n"
 	line += "出示：" + (str(Content.EVIDENCE[shown].name) if shown != "" else "（未选）")
 	_answer_summary.text = line
 	if is_instance_valid(_answer_submit):
@@ -1826,6 +1835,8 @@ func finale() -> void:
 	_refresh_hud()
 	await say("s10_steps")
 	var door := $ObjectsAndPeople/MechanicalIsolationDoor
+	Sound.sfx("door_unbar")
+	Sound.music("main_theme", 4.0)
 	door.get_node("DoorFace").hide()
 	door.get_node("DoorGap").show()
 	door.get_node("LoungeCover").hide()
@@ -1848,6 +1859,7 @@ func finale() -> void:
 func _rest() -> void:
 	stage = "finale"
 	story_lock = true
+	Sound.music("night", 4.0)
 	await say("ending_rest")
 	_save_chapter_end(true)
 	_ending_card("门的这一侧 · 歇息", "你们留在生活翼。门一直闩着。")

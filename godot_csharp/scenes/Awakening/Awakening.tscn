@@ -6,7 +6,6 @@
 [ext_resource type="Script" path="res://scenes/Awakening/RoomDoor.gd" id="room_door"]
 [ext_resource type="Script" path="res://scenes/Awakening/HintOverlay.gd" id="hints"]
 [ext_resource type="PackedScene" path="res://scenes/Awakening/AwakeningDialogue.tscn" id="dialogue"]
-[ext_resource type="AudioStream" path="res://ShareAsset/Internal/Props/first_awakening_reasoning_piano.mp3" id="reasoning_music"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/detective.tres" id="detective_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/engineer.tres" id="engineer_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/chef.tres" id="chef_frames"]
@@ -2196,10 +2195,6 @@ script = ExtResource("hints")
 
 [node name="Dialogue" parent="." instance=ExtResource("dialogue")]
 
-
-[node name="ReasoningMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("reasoning_music")
-volume_db = -48.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)
