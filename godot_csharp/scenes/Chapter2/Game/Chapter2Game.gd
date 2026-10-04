@@ -25,6 +25,8 @@ const PORTRAITS := {
 }
 
 const SLOT_TINT := [Color(1.0, 0.96, 0.9), Color(1, 1, 1), Color(1, 1, 0.97), Color(1.0, 0.95, 0.86), Color(0.96, 0.8, 0.68), Color(0.42, 0.47, 0.66)]
+## 各时段的配乐：清晨与上午是船歌式日常变奏，午间丝竹式，下午木卡姆式，傍晚拉格式，夜里八音盒。
+const SLOT_MUSIC := ["day", "day", "day_noon", "day_afternoon", "day_evening", "night"]
 
 var bridge: Node
 var state := {}
@@ -191,9 +193,13 @@ func _on_ready() -> void:
 	_refresh_hud()
 	tint.color = SLOT_TINT[int(state.slot)]
 	var mode := String(state.mode)
-	# 配乐随局面：第 4 日清晨的对质与第 7 日名录库之议用对质曲，夜里是夜曲，其余是日间曲。
-	var confronting := mode in ["confront", "council"] or (int(state.day) == 4 and int(state.slot) == 0)
-	Sound.music("confrontation" if confronting else ("night" if int(state.slot) == 5 else "day"))
+	# 配乐随局面：第 4 日清晨的对质用对质曲，第 7 日名录库之议用雅乐式变奏，其余按时段。
+	if mode == "council":
+		Sound.music("rite", 3.0)
+	elif mode == "confront" or (int(state.day) == 4 and int(state.slot) == 0):
+		Sound.music("confrontation")
+	else:
+		Sound.music(SLOT_MUSIC[clampi(int(state.slot), 0, SLOT_MUSIC.size() - 1)])
 	if changed:
 		Sound.sfx("bell_slot", -10.0)
 		var place := String(state.det_place)
@@ -650,7 +656,7 @@ func _confront_proposal(reopen: bool, cells: String) -> void:
 	_open_confront(reopen)
 
 func _open_council() -> void:
-	Sound.music("confrontation")
+	Sound.music("rite", 3.0)
 	var items := []
 	var plans: Array = state.get("plans", [])
 	for i in plans.size():
