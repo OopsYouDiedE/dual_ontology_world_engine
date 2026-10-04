@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>Chapter1Script</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Chapter1Script.cs;../Night/*.cs" />
+    <EmbeddedResource Include="../AwakeningContent.json" LogicalName="Awakening.Content.json" />
+    <EmbeddedResource Include="../awakening.dialogue" LogicalName="Awakening.Dialogue" />
+    <ProjectReference Include="../../Shared/Story/ChapterRuntime.csproj" />
+  </ItemGroup>
+</Project>

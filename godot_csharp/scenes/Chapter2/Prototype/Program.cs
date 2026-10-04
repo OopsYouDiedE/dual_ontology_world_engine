@@ -2,10 +2,27 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 public static class Program
 {
+    private sealed class InputReadyReader(TextReader input) : TextReader
+    {
+        public override string? ReadLine()
+        {
+            Console.WriteLine("\u001einput-ready");
+            return input.ReadLine();
+        }
+    }
     public static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.InputEncoding = System.Text.Encoding.UTF8;
+        WorldScriptDefinition? world = null;
+        var worldArgument = Array.IndexOf(args, "--world-script");
+        if (worldArgument >= 0)
+        {
+            if (worldArgument + 1 >= args.Length) throw new ArgumentException("--world-script 需要已编译的脚本 DLL 路径。");
+            world = WorldScript.Load(args[worldArgument + 1]);
+            args = [.. args.Take(worldArgument), .. args.Skip(worldArgument + 2)];
+        }
+        Game CreateGame() => world?.CreateGame() ?? Chapter2Script.CreateWorld();
         var mode = args.Length > 0 ? args[0] : "play";
         switch (mode)
         {
@@ -13,15 +30,16 @@ public static class Program
             {
                 // play [--debug] [脚本]：默认关闭调试命令；--debug 才能看作者侧日志与真实认知。
                 var debug = args.Contains("--debug");
-                var file = args.Skip(1).FirstOrDefault(a => a != "--debug");
+                var file = args.Skip(1).FirstOrDefault(a => a is not ("--debug" or "--input-ready" or "--room-scoped"));
                 var script = file is not null ? File.ReadAllText(file) : null;
-                var input = script is not null ? new StringReader(script) : Console.In;
-                new ConsoleUI(new Game(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug).Run();
+                TextReader input = script is not null ? new StringReader(script) : Console.In;
+                if (args.Contains("--input-ready")) input = new InputReadyReader(input);
+                new ConsoleUI(CreateGame(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug, roomScoped: args.Contains("--room-scoped")).Run();
                 return 0;
             }
             case "idle":
             {
-                var g = new Game();
+                var g = CreateGame();
                 while (!g.Ended) g.RunSlot(null);
                 g.Council();
                 foreach (var l in g.Log) Console.WriteLine(l);
@@ -32,7 +50,7 @@ public static class Program
             }
             case "diary":
             {
-                var g = new Game();
+                var g = CreateGame();
                 var until = args.Length > 1 ? int.Parse(args[1]) : 3;
                 while (!g.Ended && g.Day < until) g.RunSlot(null);
                 foreach (var p in g.People.Skip(1)) { Console.WriteLine("== " + p.Name); foreach (var d in p.Diary) Console.WriteLine("  " + d); }
@@ -45,7 +63,7 @@ public static class Program
                 var then = args.Length > 3 && args[2] == "then" ? Bots.All[int.Parse(args[3])] : null;
                 if (then is not null) args = [.. args.Take(2), .. args.Skip(4)];
                 Bot bot = then is null ? first : new() { Name = first.Name + "→" + then.Name, Act = g => (g.Day >= 4 ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
-                var g = new Game();
+                var g = CreateGame();
                 while (!g.Ended)
                 {
                     bot.Free?.Invoke(g);
@@ -65,7 +83,7 @@ public static class Program
             case "slots":
             {
                 var bot = Bots.All[args.Length > 1 ? int.Parse(args[1]) : 0];
-                var g = new Game();
+                var g = CreateGame();
                 var line = new System.Text.StringBuilder();
                 while (!g.Ended)
                 {
@@ -81,7 +99,7 @@ public static class Program
             case "emerge":
             {
                 // emerge 脚本：按脚本玩一局（不打印），再列出这一局的涌现链与玩家读到的情况（报告用）
-                var g = new Game();
+                var g = CreateGame();
                 new ConsoleUI(g, new StringReader(File.ReadAllText(args[1])), TextWriter.Null, echo: false).Run();
                 var chains = g.Chains();
                 Console.WriteLine($"结局 {Game.EndingText(g.Result)}；人物动作 {g.Events.Count(e => !e.Fixed && e.Who != P.Det)}；涌现链 {chains.Count}（不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的 {chains.Count(g.Visible)}）");
@@ -105,7 +123,7 @@ public static class Program
             {
                 // probe 机器人号 日 时段号 人名：推演到那个时段开头，打印此人的决策评估（调试用）
                 var bot = Bots.All[int.Parse(args[1])];
-                var g = new Game();
+                var g = CreateGame();
                 while (!g.Ended && !(g.Day == int.Parse(args[2]) && (int)g.Slot == int.Parse(args[3])))
                 { bot.Free?.Invoke(g); g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
                 g.ProbeStart();

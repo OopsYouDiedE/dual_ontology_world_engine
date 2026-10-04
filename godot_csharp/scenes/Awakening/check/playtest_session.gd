@@ -14,6 +14,7 @@ const MAIN_SCENE := "res://scenes/Main2D.tscn"
 const SETTLE_FRAMES := 6
 
 var session := ""
+var scene_path := MAIN_SCENE
 var agent := ""
 var run_id := ""
 var directory := ""
@@ -27,6 +28,8 @@ func _initialize() -> void:
 			session = arg.trim_prefix("--session=")
 		elif arg.begins_with("--agent="):
 			agent = arg.trim_prefix("--agent=")
+		elif arg.begins_with("--scene="):
+			scene_path = arg.trim_prefix("--scene=")
 	var valid := RegEx.create_from_string("^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 	if valid.search(session) == null:
 		push_error("playtest_session: pass -- --session=<fresh-id>")
@@ -43,11 +46,12 @@ func _initialize() -> void:
 	call_deferred("_start")
 
 func _start() -> void:
-	var scene: Node = load(MAIN_SCENE).instantiate()
+	var scene: Node = load(scene_path).instantiate()
 	root.add_child(scene)
 	current_scene = scene
 	_write_json("metadata.json", {
 		"session": session, "agent": agent, "run_id": run_id,
+		"scene": scene_path,
 		"godot": Engine.get_version_info().string,
 		"started_utc": Time.get_datetime_string_from_system(true),
 		"viewport": [root.get_visible_rect().size.x, root.get_visible_rect().size.y],

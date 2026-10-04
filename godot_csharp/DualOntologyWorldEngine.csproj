@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Reasoning/check/**;scenes/Awakening/check/**;scenes/Chapter2/Prototype/Program.cs;scenes/Chapter2/Prototype/Checks.cs;scenes/Chapter2/Prototype/Bots.cs" />
+    <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Reasoning/check/**;scenes/Awakening/check/**;scenes/Awakening/Night/**;scenes/Awakening/Script/**;scenes/Chapter2/Prototype/**;scenes/Chapter2/Script/**;scenes/Shared/Story/**" />
+    <ProjectReference Include="scenes/Awakening/Script/Chapter1Script.csproj" />
+    <ProjectReference Include="scenes/Chapter2/Prototype/Prototype.csproj" />
     <ProjectReference Include="..\csharp\DualOntologyWorldEngine.Core.csproj" />
   </ItemGroup>
 </Project>

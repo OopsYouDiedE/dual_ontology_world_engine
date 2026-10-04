@@ -1,0 +1,52 @@
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using DualOntologyWorldEngine.Core;
+using System.Text.Json;
+var results = new List<object>(); int failures=0;
+void Check(bool ok,string label) { results.Add(new {ok,label}); Console.WriteLine((ok?"PASS ":"FAIL ")+label); if(!ok) failures++; }
+void Pump(Game g) { g.Story?.Poll(); g.Story?.Pump(); while(g.Story?.PendingChoice is {} c) {g.ChooseStory(c.Options.First(o=>o.Available?.Invoke(g)!=false).Id); g.Story.Pump();} }
+void Step(Game g,PlayerAction? act) {Pump(g); g.Feed.Clear(); g.RunSlot(act); Pump(g);}
+var g=Chapter2Script.CreateWorld(); Pump(g);
+Check(!InvestigationPresentation.Entries(g).Any(e=>e.Id.StartsWith("inspection:")||e.Id.StartsWith("thing:")),"No saved inspection before original Inspect action");
+Check(InvestigationPresentation.Questions(g,1).Length==0,"Questions unavailable before day three");
+while(g.Day<3) { Step(g,new(g.Slot==Slot.Night?Cmd.Sleep:Cmd.Rest)); Console.WriteLine($"ADVANCE original action: day {g.Day}, {g.Slot}"); }
+Check(g.Day==3,"Original RunSlot actions advance to day three without clock injection");
+g.SetPlayerPlace(Place.Logistics);
+var key=Game.Things_.First(k=>k.Value.Place==Place.Logistics && ReferenceEquals(k.Value.Thing(g),g.Ledger)).Key;
+Step(g,new(Cmd.Inspect){Place=Place.Logistics,Thing=key});
+var saved=g.InspectionRecords.ToArray();
+Check(saved.Length>0,"Original Inspect creates records");
+Check(saved.All(r=>g.Feed.Contains("  · "+r.Text)),"Every saved record exactly matches original Feed text");
+Check(saved.All(r=>r.Text==g.Describe(Game.Things_[r.Key].Thing(g))),"Saved inspection matches original Describe at completion");
+var entries=InvestigationPresentation.Entries(g); var notebook=entries.Single(e=>e.Id=="inspection:Logistics");
+Check(notebook.Facts.SequenceEqual(saved.Select(r=>r.Text)),"Grouped inspection retains original area facts and order");
+Check(notebook.Sources.Single().Contains($"第{saved[0].Day}日{Names.Of(saved[0].Slot)}") && notebook.Sources[0].Contains("亲自细看"),"Saved card records original time/place/perception source");
+var ledgerEntry=entries.Single(e=>e.Id=="thing:"+key);
+g.Ledger.Get<StateProperty>()!.Values[T.Handed]=9876;
+var updated=InvestigationPresentation.Entries(g);
+Check(updated.Single(e=>e.Id==ledgerEntry.Id).Facts.SequenceEqual(ledgerEntry.Facts),"Live ledger mutation does not refresh saved thing facts");
+Check(updated.Single(e=>e.Id==notebook.Id).Facts.SequenceEqual(notebook.Facts),"Live ledger mutation does not refresh saved room inspection");
+Check(!ledgerEntry.Facts.Any(f=>f.Contains("9876")),"Saved facts do not leak injected unseen value");
+var person=g.Npcs.First(p=>g.Det.M[p.Body].Parent is not null);var seen=g.Det.M[person.Body].Parent!.Name;
+var prior=updated.Single(e=>e.Id=="person:"+person.Id);
+var other=Enum.GetValues<Place>().First(pl=>pl!=g.Where(person) && Names.Of(pl)!=seen);
+person.Body.Get<SpatialProperty>()!.Space=g.Space[other];
+person.Body.Get<StateProperty>()!.Values[T.Sick]=Game.Belief(g.Det,g.Det.M[person.Body],T.Sick)>0?0:1;
+var after=InvestigationPresentation.Entries(g).Single(e=>e.Id==prior.Id);
+Check(after.Facts.SequenceEqual(prior.Facts) && after.Facts[0].Contains(seen),"Person last-seen and illness use unchanged detective projection after unseen objective mutation");
+// Use a fresh world to keep objective injection tests separate from legal replay eligibility.
+var replayWorld=Chapter2Script.CreateWorld();Pump(replayWorld);
+while(replayWorld.Day<3) Step(replayWorld,replayWorld.Slot==Slot.Night?new(Cmd.Stakeout){Place=Place.Logistics}:new(Cmd.Rest));
+foreach(var place in new[]{Place.Logistics,Place.Clinic}) {replayWorld.SetPlayerPlace(place);var target=Game.Things_.First(k=>k.Value.Place==place && ReferenceEquals(k.Value.Thing(replayWorld),place==Place.Logistics?replayWorld.Ledger:replayWorld.Bowl)).Key;Step(replayWorld,new(Cmd.Inspect){Place=place,Thing=target});}
+Console.WriteLine("KNOWN "+JsonSerializer.Serialize(replayWorld.KnownTraces(2))); Console.WriteLine("CAND "+JsonSerializer.Serialize(replayWorld.ReplayCandidates(2))); var menu=replayWorld.ReplayMenu(2,true);var questions=InvestigationPresentation.Questions(replayWorld,2);
+Check(replayWorld.KnownTraces(2).Count>0 && menu.Count>0,"Original day-three Logistics/Clinic inspections yield real known traces and legal candidates");
+Check(questions.Length>0,"Nonempty original candidates produce semantic questions");
+Check(questions.All(q=>q.Context.Length>0 && q.Options.Length==q.Choices.Length && q.Choices[0]==0),"Every question includes context and unset choice");
+Check(questions.SelectMany(q=>q.Choices.Skip(1)).Order().SequenceEqual(Enumerable.Range(1,menu.Count)),"Grouped choice numbers exactly preserve original ReplayMenu indices");
+Check(questions.All(q=>q.Choices.Skip(1).Select((n,i)=>q.Options[i+1]==menu[n-1].Text).All(v=>v)),"Grouped option text matches original ordered menu");
+Console.WriteLine("QUESTIONS "+JsonSerializer.Serialize(questions));
+var first=menu[0];var beforeDay=replayWorld.Day;var beforeSlot=replayWorld.Slot;var beforePlace=replayWorld.Where(replayWorld.Det);var beforeLedger=Game.Get(replayWorld.Ledger,T.Handed);
+var (traces,shadow)=replayWorld.ReplayNight(2,first.Rule is {} rule?[rule]:[],first.Where is {} where?[where]:[]);
+Check(!ReferenceEquals(replayWorld,shadow) && traces.Count>0,"One original legal hypothesis returns real replay traces in separate world");
+Check(replayWorld.Day==beforeDay && replayWorld.Slot==beforeSlot && replayWorld.Where(replayWorld.Det)==beforePlace && Game.Get(replayWorld.Ledger,T.Handed)==beforeLedger,"Real replay preserves original day/slot/location/ledger");
+File.WriteAllText("artifacts/remake-chapter2/shared-runtime/semantic-csharp-checks.json",JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));
+Console.WriteLine($"SEMANTIC_CSHARP_FINISH {failures} failures / {results.Count} assertions");return failures==0?0:1;

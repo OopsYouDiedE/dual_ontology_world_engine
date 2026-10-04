@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 解空间穷举、感知隔离与回忆隔离检查。直接编译游戏内使用的同一份重演源码（../../Night/*.cs）。 -->
+  <!-- 解空间穷举、感知隔离与回忆隔离检查。引用游戏默认加载的完整第一章剧本程序集。 -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,7 +9,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Night/*.cs" />
+    <ProjectReference Include="../../Script/Chapter1Script.csproj" />
     <Compile Include="ReplayCheckProgram.cs" />
     <ProjectReference Include="../../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
   </ItemGroup>

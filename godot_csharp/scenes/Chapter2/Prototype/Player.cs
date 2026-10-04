@@ -150,16 +150,19 @@ public sealed partial class Game
         Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。用“帮 {p.Name}”兑现。）");
     }
 
-    private static string Answer(Person p, SocialStance s) => s switch
+    private string Answer(Person p, SocialStance s) => s switch
     {
         SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + $"（他在等你先帮他一把：用“帮 {p.Name}”）",
+        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……我还不能答应。”" }) + (DetHelped.Contains(p.Id) || Promises.Any(x => x.Who == p.Id && x.Done)
+            ? "（你先前帮过他，但这次请求仍没被接受。帮助会改变信任，不保证他答应每个请求；也可带他查证或换请别人。）"
+            : $"（可以用“帮 {p.Name}”增进信任；帮助不保证他答应每个请求，也可带他查证或换请别人。）"),
         _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
     };
 
     /// <summary>侦探自己的身体：做这一时段选定的事（与 NPC 一起在 CTB 上结算）。</summary>
     private void PlayerDo(PlayerAction? act)
     {
+        if (Story?.Controls(P.Det) == true) return;
         if (Slot == Slot.Afternoon && Get(Det.Body, T.Hungry) > 0) return;
         var fx = FxOf(Det);
         if (Slot == Slot.Night)
@@ -258,8 +261,18 @@ public sealed partial class Game
                     foreach (var e in all) { if (Day >= 3) DetLooked.Add(e); DetSaw(e); }
                     if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
                     Feed.Add($"你细看了{Names.Of(here)}：");
-                    foreach (var e in all) Feed.Add("  · " + Describe(e));
-                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) Feed.Add("  · " + fp.Text + "。");
+                    foreach (var e in all)
+                    {
+                        var description = Describe(e);
+                        var key = ReferenceEquals(e, thing) ? act.Thing! : Things_.First(t => ReferenceEquals(t.Value.Thing(this), e)).Key;
+                        InspectionRecords.Add(new(Day, Slot, key, area, description));
+                        Feed.Add("  · " + description);
+                    }
+                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp)
+                    {
+                        InspectionRecords.Add(new(Day, Slot, "前厅脚印", area, fp.Text + "。"));
+                        Feed.Add("  · " + fp.Text + "。");
+                    }
                 }
                 else Feed.Add($"你没能走到{Names.Of(area)}。");
                 if (act.Cmd == Cmd.Escort)
@@ -297,7 +310,9 @@ public sealed partial class Game
                 break;
             }
             case Cmd.Greenhouse:
-                Feed.Add($"温室：{string.Join("、", People.Where(p => Where(p) == Place.Greenhouse).Select(p => p.Name))}在。{(GreenhouseRepaired ? "水压稳住了，温室修好了。" : $"阀门修了大约{Math.Min(9, GreenhouseProgress * 10 / GreenhouseNeed)}成。")}");
+                foreach (var who in act.Crew.Where(w => _asked.TryGetValue(w, out var stance) && stance == SocialStance.Accept && Get(this[w].Body, T.Did(Job.Greenhouse)) == 0))
+                    Feed.Add($"{Names.Of(who)}先前答应过，但你没看见他完成这次修水压。答应请求与实际做成是两件事，温室仍须凑齐同时守两站的人。");
+                Feed.Add($"温室：此刻{string.Join("、", People.Where(p => Where(p) == Place.Greenhouse).Select(p => p.Name))}还在场。{(GreenhouseRepaired ? "水压稳住了，温室修好了。" : $"阀门修了大约{Math.Min(9, GreenhouseProgress * 10 / GreenhouseNeed)}成。")}随后记录的是这个下午你看见的动作，参与者也可能已经离开。");
                 break;
             case Cmd.Archive:
             {
@@ -521,6 +536,7 @@ public sealed partial class Game
         var w = new Wager(Day, with, who, where, spec);
         Wagers.Add((w, null));
         FreeScript.Add((SlotIndex, w));
+        FreeEvents.Add(new FreeEvent.Bet(SlotIndex, w));
         var rule = spec is { } id ? Specs.FirstOrDefault(s => s.Id == id) : null;
         NoteFor(with, "赌约", $"你对他说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，他就认{LabelOf(rule)}「{Short(rule)}」" : "")}");
         return $"你对{Names.Of(with)}说：“今晚，{Names.Of(who)}会去{Names.Of(where)}。{(rule is not null ? $"我若说中，你就认{LabelOf(rule)}「{rule.Text}」。" : "")}”{Names.Of(with)}：{(TrustIn(this[with], Det) >= 1 ? "“好，明早见分晓。”" : "“……随你。”")}";

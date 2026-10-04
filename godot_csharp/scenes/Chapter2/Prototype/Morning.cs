@@ -26,12 +26,15 @@ public sealed partial class Game
     public readonly List<(int Slot, Wager Wager)> FreeScript = [];
 
     /// <summary>按同一份行动记录，从第 2 日晨重放到某个时段之前。确定性保证重建的就是现实。</summary>
-    public static Game Rebuild(IReadOnlyList<PlayerAction?> script, IReadOnlyList<(int Slot, Wager Wager)> free, int stopBefore, GameOptions options)
+    public static Game Rebuild(IReadOnlyList<PlayerAction?> script, IReadOnlyList<(int Slot, Wager Wager)> free, int stopBefore, GameOptions options,
+        IReadOnlyList<(int Slot, Place Place)>? places = null, IReadOnlyList<(int Slot, string Choice, string Option)>? choices = null,
+        IReadOnlyList<FreeEvent>? events = null)
     {
         var g = new Game(options);
         for (var i = 0; i < stopBefore && i < script.Count && !g.Ended; i++)
         {
-            foreach (var (_, w) in free.Where(f => f.Slot == i)) g.MakeWager(w.With, w.Who, w.Where, w.Spec);
+            g.RestoreFree(i, places, choices, events);
+            if (events is null) foreach (var (_, w) in free.Where(f => f.Slot == i)) g.MakeWager(w.With, w.Who, w.Where, w.Spec);
             g.RunSlot(script[i]);
         }
         return g;
@@ -293,19 +296,19 @@ public sealed partial class Game
         var presence = pres ?? [];
         var dayStart = (night - 2) * 6;
         var nightSlot = dayStart + (int)Slot.Night;
-        var options = new GameOptions
+        var options = Options with
         {
             Quiet = true, StartRations = Options.StartRations, StartOil = Options.StartOil, StartMedicine = Options.StartMedicine,
             ForceAcceptance = (g, p, s) => g.Day == night && hyp.FirstOrDefault(h => h.Who == p.Id && h.Spec == s.Id) is { } h ? (h.Accept ? Truth.True : Truth.False) : null,
             BeforeNight = g => { if (g.Day == night) foreach (var pr in presence) g.ForcePresence(g[pr.Who], pr.Where, pr.There); },
         };
-        var w = Rebuild(Script, FreeScript, dayStart, options);
+        var w = Rebuild(Script, FreeScript, dayStart, options, PlaceScript, StoryChoices, FreeEvents);
         foreach (var h in hyp)
             if (w.Specs.FirstOrDefault(s => s.Id == h.Spec) is { } spec && w[h.Who].Acc.ContainsKey(spec))
                 w.OverrideAcceptance(w[h.Who], spec, h.Accept ? Truth.True : Truth.False);
         for (var i = dayStart; i <= nightSlot && !w.Ended; i++)
         {
-            foreach (var (_, wg) in FreeScript.Where(f => f.Slot == i)) w.MakeWager(wg.With, wg.Who, wg.Where, wg.Spec);
+            w.RestoreFree(i, PlaceScript, StoryChoices, FreeEvents);
             w.RunSlot(i < Script.Count ? Script[i] : null);
         }
         w.BeginDayPublic();
@@ -348,6 +351,13 @@ public sealed partial class Game
         return lines;
     }
 
+    public Place[] UnreadTracePlaces(int night)
+    {
+        var known = KnownTraces(night);
+        return (DawnTraces.GetValueOrDefault(night) ?? []).Where(t => !known.ContainsKey(t.Key) && !t.Key.StartsWith("神情:") && Changed(t))
+            .Select(t => t.Where).Distinct().ToArray();
+    }
+
     private static string Label(string key) => key.StartsWith("饼屑:") ? key[3..] + "的废纸篓" : key.StartsWith("神情:") ? key[3..] + "的神情" : key;
 
     /// <summary>重演中被假设的人的墨影与心声（不显示数值）；其余人只给身影。</summary>
@@ -355,14 +365,20 @@ public sealed partial class Game
     /// 重演中被假设的人的墨影：只给身影（身量），不换成人名（§13 第 11 条）；心声只在重演与你细看过的痕迹全部吻合之后才给，作为确认。
     /// 动作里的失败原因一律不露出来，只说“没做成”。
     /// </summary>
+    public sealed record InkFrame(string Text, string Place, string Figure);
+
     public static List<string> Ink(Game w, int night, IEnumerable<P> who, bool confirmed = false)
+        => InkFrames(w, night, who, confirmed).Select(frame => frame.Text).ToList();
+
+    public static List<InkFrame> InkFrames(Game w, int night, IEnumerable<P> who, bool confirmed = false)
     {
-        var lines = new List<string>();
+        var lines = new List<InkFrame>();
         var names = who.Distinct().ToArray();
         foreach (var id in names)
         {
             var p = w[id];
             var figure = $"一个{BuildText(p.Pro.Build).TrimEnd('的')}的身影";
+            var place = p.Pro.Dorm.ToString();
             foreach (var d in p.Diary.Where(d => d.StartsWith($"D{night} 夜里") && !d.Contains(" 接受") && !d.Contains("欲望升至") && !d.Contains("回寝区睡下") && !d.Contains("在寝区歇着")))
             {
                 var text = d[(d.IndexOf(' ', 3) + 1)..];
@@ -371,13 +387,31 @@ public sealed partial class Game
                 foreach (var n in Enum.GetValues<P>()) act = act.Replace(Names.Of(n), "某人");
                 var why = arrow > 0 ? text[(arrow + 3)..] : "";
                 var basis = why.Contains('（') ? why[..why.IndexOf('（')] : why;
-                lines.Add($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}");
+                // 日记记的是当时的动作；只定位文字明确的地点，不拿重演结束位置冒充过去。
+                // 不明去处的动作可能移动，停止沿用上一个地点。
+                place = InkPlace(act, p.Pro.Dorm);
+                lines.Add(new($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}", place, figure));
             }
         }
         var others = w.Moves.Where(m => m.Day == night && !names.Contains(m.Who) && m.Who != P.Det && m.To is Place.Logistics or Place.ArchiveFront or Place.Clinic)
-            .Select(m => $"  墨影：一个{BuildText(w[m.Who].Pro.Build)}身影去了{Names.Of(m.To)}").Distinct();
+            .Select(m => new InkFrame($"  墨影：一个{BuildText(w[m.Who].Pro.Build)}身影去了{Names.Of(m.To)}", m.To.ToString(), $"一个{BuildText(w[m.Who].Pro.Build)}身影")).DistinctBy(frame => frame.Text);
         lines.AddRange(others);
         return lines;
+    }
+
+    private static string InkPlace(string act, Place dorm)
+    {
+        if (act.StartsWith("没做成：")) return "";
+        if (act.Contains("自己寝区")) return dorm.ToString();
+        var places = Enum.GetValues<Place>().Where(place => act.Contains(Names.Of(place))).ToArray();
+        if (places.Length == 1) return places[0].ToString();
+        if (places.Length > 1) return "";
+        if (act.StartsWith("开粮仓") || act.StartsWith("修粮仓门闩") || act.StartsWith("清点粮仓")
+            || act.StartsWith("夜里守在粮仓边上") || act.StartsWith("去配给台") || act.StartsWith("在配给台")
+            || act.StartsWith("在灶上") || act.StartsWith("去台账"))
+            return Place.Logistics.ToString();
+        if (act.StartsWith("夜里去开名录库")) return Place.ArchiveFront.ToString();
+        return "";
     }
 
     private static string Thought(string basis) => basis switch
@@ -400,15 +434,16 @@ public sealed partial class Game
     /// “侦探知道存在的规矩 × 他有理由怀疑认了它的人”与“某人那一夜在不在某处（那一夜有痕迹、且身量对得上的人）”。
     /// 案件变形时同样可用；不为任何一个案子单独写变量。
     /// </summary>
-    public List<ReplayOption> ReplayMenu(int night)
+    public List<ReplayOption> ReplayMenu(int night, bool preview = false)
     {
+        var labels = preview ? new Dictionary<RuleSpec, string>(_labels) : _labels;
         var opts = new List<ReplayOption>();
         var cands = ReplayCandidates(night);
         foreach (var spec in DetKnownSpecs().Where(s => s.Card is null || s.Card.Behavior is 0 or 2 or 9 || s.Domain != Dom.General).Reverse().Take(6))
             foreach (var who in DetSuspects(spec).Where(cands.Contains).Take(4))
             {
-                opts.Add(new($"{Names.Of(who)} 认 {LabelOf(spec)}「{Short(spec)}」", new(who, spec.Id, true), null));
-                opts.Add(new($"{Names.Of(who)} 不认 {LabelOf(spec)}「{Short(spec)}」", new(who, spec.Id, false), null));
+                opts.Add(new($"{Names.Of(who)} 认 {LabelOf(spec, labels)}「{Short(spec)}」", new(who, spec.Id, true), null));
+                opts.Add(new($"{Names.Of(who)} 不认 {LabelOf(spec, labels)}「{Short(spec)}」", new(who, spec.Id, false), null));
             }
         var known = KnownTraces(night);
         foreach (var place in known.Values.Where(t => Changed(t) && !t.Key.StartsWith("神情:")).Select(t => t.Where).Distinct())
@@ -462,11 +497,19 @@ public sealed partial class Game
     private readonly Dictionary<RuleSpec, string> _labels = [];
 
     /// <summary>侦探给规矩起的称呼：按他第一次知道它的先后，甲、乙、丙……（不是内部编号）。</summary>
-    public string LabelOf(RuleSpec s)
+    public string LabelOf(RuleSpec s) => LabelOf(s, _labels);
+
+    public IEnumerable<(string Label, RuleSpec Spec)> PreviewKnownRules()
     {
-        if (_labels.TryGetValue(s, out var l)) return l;
-        l = _labels.Count < Stems.Length ? Stems[_labels.Count] : $"第{_labels.Count + 1}条";
-        _labels[s] = l;
+        var labels = new Dictionary<RuleSpec, string>(_labels);
+        return DetKnownSpecs().Select(s => (LabelOf(s, labels), s)).ToArray();
+    }
+
+    private static string LabelOf(RuleSpec s, Dictionary<RuleSpec, string> labels)
+    {
+        if (labels.TryGetValue(s, out var l)) return l;
+        l = labels.Count < Stems.Length ? Stems[labels.Count] : $"第{labels.Count + 1}条";
+        labels[s] = l;
         return l;
     }
 

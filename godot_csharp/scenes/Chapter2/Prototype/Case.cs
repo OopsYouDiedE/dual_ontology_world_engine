@@ -65,7 +65,7 @@ public sealed partial class Game
     public (CaseTraces Traces, Game World) ReplayCase(CaseVars v)
     {
         Game? world = null;
-        var options = new GameOptions
+        var options = Options with
         {
             Quiet = true, StartRations = Options.StartRations,
             ForceAcceptance = (gw, p, s) =>
@@ -103,7 +103,8 @@ public sealed partial class Game
             }
         };
         // 现实快照：按侦探真实的行动记录重放第 2 日（§11 第 10 条），只改变量所说的认知与处境。
-        world = Rebuild(Script, FreeScript, 5, options);
+        world = Rebuild(Script, FreeScript, 5, options, PlaceScript, StoryChoices, FreeEvents);
+        world.RestoreFree(5, PlaceScript, StoryChoices, FreeEvents);
         world.RunSlot(Script.Count > 5 ? Script[5] : null);
         return (world.Dawn(), world);
     }

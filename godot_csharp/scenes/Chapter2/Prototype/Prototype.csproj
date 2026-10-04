@@ -1,16 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 第二章《第十一课》系统原型：文字界面 + 策略机器人 + 自动检查。独立控制台工程，以 ProjectReference 引用 Core。 -->
+  <!-- 第二章命令行入口；完整原逻辑编译在正式剧本程序集。 -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <RootNamespace>DualOntologyWorldEngine.Chapter2.Prototype</RootNamespace>
     <AssemblyName>Chapter2Prototype</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
+    <Compile Include="Program.cs" />
+    <ProjectReference Include="../Script/Chapter2Script.csproj" />
   </ItemGroup>
 </Project>

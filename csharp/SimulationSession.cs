@@ -28,6 +28,9 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
     private bool _disposed;
     public CTBSystem CTB { get; } = timeline ?? new();
     public event Action<ActionExecution>? Completed;
+    public bool IsActing(Projection actor) => _active.Any(e => ReferenceEquals(e.Intent.Actor, actor));
+    /// <summary>阶段提交后的只读宿主通知；不参与决策或结算。</summary>
+    public event Action<ActionExecution>? StageCommitted;
 
     public ActionExecution Submit(SoulEssence soul, ActionIntent intent)
     {
@@ -84,6 +87,7 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
             };
         });
         execution.Result = result;
+        if (result.Succeeded) StageCommitted?.Invoke(execution);
         if (!_active.Contains(execution)) return;
         if (result.Succeeded && next is not null)
         {
@@ -150,7 +154,7 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
         _wakeups[actor] = CTB.Schedule(0, () =>
         {
             _wakeups.Remove(actor);
-            if (_agents.TryGetValue(actor, out var agent)) Decide(agent.Soul, actor, agent.Delay);
+            if (_agents.TryGetValue(actor, out var agent) && !IsActing(actor)) Decide(agent.Soul, actor, agent.Delay);
         });
     }
     public void Deactivate(Projection actor)

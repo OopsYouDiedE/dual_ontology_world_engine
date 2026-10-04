@@ -8,19 +8,28 @@ public sealed class PlayerError(string message) : Exception(message);
 /// <summary>子提示符里输入结束了：停下，不代玩家作答（§13 第 16 条）。</summary>
 public sealed class EndOfInput() : Exception("输入结束");
 
+/// <summary>同一次重演的玩家可见结果，供命令行与 Godot 手稿共用。</summary>
+public sealed record ReplayPresentation(int Night, string[] Selected, string[] Lines, string[] Ink, bool Confirmed, string Summary, Game.InkFrame[] Frames);
+
 /// <summary>
 /// 文字界面（§12：可读性）。玩家扮演侦探：每个时段选一件事；看笔记、规矩、痕迹、重演不占时段。
 /// 命令可用中文或英文；界面里不出现内部编号，规矩用“甲乙丙”称呼，拼规矩用选项文字。
 /// 调试命令（作者侧日志、真实认知）只在以 --debug 启动时可用。
 /// </summary>
-public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool echo, bool debugAllowed = false)
+public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool echo, bool debugAllowed = false, bool roomScoped = false, bool spatialHost = false)
 {
+    public bool HasRoom { get; set; } = true;
     private bool _debug;
+    public ReplayPresentation? LastReplay { get; private set; }
+    public int ReplayNightNumber => g.Day - 1;
+    public IReadOnlyList<Game.ReplayOption> ReplayOptions() =>
+        g.Day < 3 ? Array.Empty<Game.ReplayOption>() : g.ReplayMenu(ReplayNightNumber, preview: true);
     /// <summary>当前等待的输入：main 主命令、card 拼规矩、yesno 确认、confront 对质、council 名录库之议、ended 结束（Godot 宿主据此给出选项）。</summary>
     public volatile string Mode = "main";
+    public int CardCell { get; private set; }
     private int _logShown, _debugShown;
     private readonly List<int> _newsOrder = [];
-    private void W(string s = "") => output.WriteLine(s);
+    private void W(string s = "") => output.WriteLine(Chapter2Content.PlayerText(s));
 
     // ------------------------------------------------------------ 命令表 --
 
@@ -42,16 +51,33 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         ["认错"] = "apologize", ["apologize"] = "apologize",
         ["重开对质"] = "reopen", ["reopen"] = "reopen", ["睡"] = "sleep", ["sleep"] = "sleep", ["守夜"] = "stakeout", ["stakeout"] = "stakeout",
         ["证物"] = "evidence", ["evidence"] = "evidence",
+        ["去往"] = "go", ["go"] = "go",
         ["调试"] = "debug", ["debug"] = "debug", ["真相"] = "truth", ["truth"] = "truth",
     };
 
     public void Run()
     {
-        W("《安眠者有福》第二章。输入“帮助”查看命令。");
+        W(Chapter2Content.Intro);
+        if (!spatialHost)
+        {
+            W();
+            W(Chapter2Content.Instructions);
+            W();
+            W("《安眠者有福》第二章。输入“帮助”查看命令。");
+        }
         Flush();
         while (!g.Ended)
         {
-            Header();
+            g.Story?.Poll();
+            g.Story?.Pump();
+            if (g.Story is not null) Flush();
+            if (g.Story?.PendingChoice is not null)
+            {
+                try { StoryPrompt(); Flush(); }
+                catch (EndOfInput) { W("（输入结束：停在当前剧情选择）"); return; }
+                continue;
+            }
+            if (!spatialHost) Header();
             Mode = "main";
             var line = Read();
             if (line is null) { W("（输入结束）"); return; }
@@ -66,6 +92,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
                     throw new PlayerError("夜里只能“睡”或“守夜 某地”。");
                 if (g.Slot != Slot.Night && act?.Cmd is Cmd.Stakeout) throw new PlayerError("守夜要等到夜里。");
                 g.RunSlot(act);
+                g.Story?.Pump();
                 Flush();
             }
             catch (PlayerError e) { W("  " + e.Message); }
@@ -86,11 +113,39 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         return line;
     }
 
+    private void StoryPrompt()
+    {
+        var story = g.Story!;
+        while (story.PendingChoice is { } choice)
+        {
+            W(choice.Prompt);
+            if (!spatialHost) W(Menu(choice.Options.Select(o => o.Text).ToArray()));
+            Mode = "story";
+            var answer = Read() ?? throw new EndOfInput();
+            try
+            {
+                var option = choice.Options.FirstOrDefault(o => o.Id == answer)
+                    ?? choice.Options[Pick(answer, choice.Options.Select(o => o.Text).ToArray(), "剧情选项")];
+                g.ChooseStory(option.Id);
+                Flush();
+            }
+            catch (PlayerError e) { W("  " + e.Message); }
+        }
+    }
+
     private void Header() => W($"\n【第{g.Day}日 · {Names.Of(g.Slot)}】你在{Names.Of(g.Where(g.Det))}。{(g.Slot == Slot.Night ? "（夜里：睡，或 守夜 某地）" : g.Day == 4 && g.Slot == Slot.Morning ? "（今晨是公开对质：输入“对质”）" : "")}");
 
     private void Flush()
     {
-        foreach (var f in Compact(g.Feed)) W("  " + f);
+        foreach (var f in OrderedFeed(g.Feed))
+        {
+            if (f.StartsWith(StoryRuntime.MediaMarker, StringComparison.Ordinal))
+            {
+                if (roomScoped) output.WriteLine(f);
+                else W("  （剧情展示附加媒体）");
+            }
+            else W("  " + f);
+        }
         g.Feed.Clear();
         if (_debug)
         {
@@ -101,12 +156,28 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         _debugShown = g.DebugLog.Count;
     }
 
+    private static IEnumerable<string> OrderedFeed(IEnumerable<string> feed)
+    {
+        var ordinary = new List<string>();
+        foreach (var text in feed)
+        {
+            if (text.StartsWith(StoryRuntime.MediaMarker, StringComparison.Ordinal) || text.StartsWith(StoryRuntime.TextMarker, StringComparison.Ordinal))
+            {
+                foreach (var line in Compact(ordinary)) yield return line;
+                ordinary.Clear();
+                yield return text.StartsWith(StoryRuntime.MediaMarker, StringComparison.Ordinal) ? text : text[StoryRuntime.TextMarker.Length..];
+            }
+            else ordinary.Add(text);
+        }
+        foreach (var line in Compact(ordinary)) yield return line;
+    }
+
     /// <summary>几个人说了同一句话时合成一行。</summary>
     public static IEnumerable<string> Compact(IEnumerable<string> feed)
     {
         var order = new List<string>();
         var tellers = new Dictionary<string, List<string>>();
-        foreach (var f in feed)
+        foreach (var f in feed.Distinct())
         {
             var i = f.IndexOf("说：", StringComparison.Ordinal);
             if (i > 0 && i <= 5)
@@ -176,9 +247,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         var a = line.Split([' ', '　'], StringSplitOptions.RemoveEmptyEntries);
         var key = a[0].ToLowerInvariant();
         if (!Alias.TryGetValue(key, out var c)) throw new PlayerError($"没有“{a[0]}”这个命令。输入“帮助”查看命令。");
+        if (roomScoped && !HasRoom && c is not ("help" or "status" or "evidence" or "notes" or "news" or "cards" or "rules" or "spread" or "morning" or "replay" or "things" or "boards" or "company" or "go" or "rest" or "sleep"))
+            throw new PlayerError("这里没有可用的场景动作。请先走进对应房间。");
+        if (roomScoped && HasRoom) RoomPresentation.Validate(g, c, a);
         string Arg(int i, string what) => i < a.Length ? a[i] : throw new PlayerError($"缺少{what}。输入“帮助”查看用法。");
         switch (c)
         {
+            case "go": g.SetPlayerPlace(PlaceOf(Arg(1, "目的地"))); consumed = false; return null;
             case "help": Help(); consumed = false; return null;
             case "status": Status(); consumed = false; return null;
             case "evidence": Evidence(); consumed = false; return null;
@@ -213,10 +288,12 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
                 return new(Cmd.Class) { Topic = Array.IndexOf(Game.Topics, topics[t]), Precise = precise };
             }
             case "ration": return new(Cmd.Collect);
-            case "inspect": { var t = ThingOf(Arg(1, "要看的东西或地点")); return new(Cmd.Inspect) { Place = Game.Things_[t].Place, Thing = t }; }
+            case "inspect": { var t = ThingOf(Arg(1, "要看的东西或地点")); if (roomScoped && Game.Things_[t].Place != g.Where(g.Det)) throw new PlayerError("请先去" + Names.Of(Game.Things_[t].Place) + "。"); return new(Cmd.Inspect) { Place = Game.Things_[t].Place, Thing = t }; }
             case "escort": { var t = ThingOf(Arg(2, "要去看的东西或地点")); return new(Cmd.Escort) { Who = Person(Arg(1, "请谁同去")), Place = Game.Things_[t].Place, Thing = t }; }
             case "ask": return new(Cmd.Ask) { Who = Person(Arg(1, "请谁")), Job = JobOf(Arg(2, "请他做什么")) };
-            case "askabout": return new(Cmd.AskAbout) { Who = Person(Arg(1, "问谁")) };
+            case "askabout":
+                if (a.Length > 2) throw new PlayerError("问人会听他当下愿意说的事：写“问 某人”。课堂提问才选择话题：写“上课 温室 精确”等。此次没有花掉时段。");
+                return new(Cmd.AskAbout) { Who = Person(Arg(1, "问谁")) };
             case "givekey": return new(Cmd.GiveKey) { Who = Person(Arg(1, "持钥匙的人")), About = Person(Arg(2, "交给谁")) };
             case "tell":
             {
@@ -231,6 +308,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
                 return new(Cmd.TellRule) { Who = who, Card = CardOf(a, 2) ?? throw new PlayerError("这次不讲了。") };
             }
             case "post": { var place = PlaceOf(Arg(1, "贴在哪里")); if (!g.Board.ContainsKey(place)) throw new PlayerError($"{Names.Of(place)}没有公告板。有板的地方：{string.Join(" ", g.Board.Keys.Select(Names.Of))}");
+                if (roomScoped && place != g.Where(g.Det)) throw new PlayerError("请先去" + Names.Of(place) + "。");
                 if (a.Length == 3 && g.SpecByLabel(a[2]) is { } known) return new(Cmd.Post) { Place = place, Spec = known, Card = known.Card };
                 return new(Cmd.Post) { Place = place, Card = CardOf(a, 2) ?? throw new PlayerError("这次不贴了。") }; }
             case "greenhouse": return new(Cmd.Greenhouse) { Crew = a.Skip(1).Select(Person).ToArray() };
@@ -274,7 +352,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         throw new PlayerError($"没有“{s}”这样东西。输入“物件”看能细看什么（也可以直接写地点）。");
     }
 
-    private static readonly (string Name, Job Job)[] Jobs =
+    public static readonly (string Name, Job Job)[] Jobs =
     [
         ("开粮", Job.Distribute), ("煮粥", Job.Cook), ("照看病人", Job.Care), ("修门闩", Job.RepairLatch), ("修温室", Job.Greenhouse), ("上课", Job.Class),
         ("领粮", Job.Collect), ("补记台账", Job.Inform), ("挑水", Job.FetchWater), ("来中央厅", Job.Socialize), ("清点", Job.CountLedger),
@@ -313,12 +391,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             return card;
         }
         if (cells.Length != 0) throw new PlayerError("规矩要五格：主语 条件 行为 例外 记账（写文字或序号，用空格隔开）；或者只写命令，按提示一格一格选。输入“拼规矩”看选项。");
-        W("  拼一条规矩（每格写序号或文字；写“算了”放弃）：");
+        if (!spatialHost) W("  拼一条规矩（每格写序号或文字；写“算了”放弃）：");
         for (var i = 0; i < 5; i++)
         {
             while (true)
             {
-                W($"  {Cells[i].Cell}（{Cells[i].Ask}）：{Menu(Cells[i].Options)}{(i == 0 ? "；也可以直接写一个人名" : "")}");
+                CardCell = i;
+                if (!spatialHost) W($"  {Cells[i].Cell}（{Cells[i].Ask}）：{Menu(Cells[i].Options)}{(i == 0 ? "；也可以直接写一个人名" : "")}");
                 Mode = "card";
                 var line = Read() ?? throw new EndOfInput();
                 if (line is "算了" or "取消") return null;
@@ -387,6 +466,9 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
           —— 夜里 ——
             睡                    睡下
             守夜 地点             守在某处一夜（只看得见身影、听得见动静）
+          守夜只观察，不会拦住别人。有人夜里凑齐机关便可能私开名录库，最后投票无法撤回已发生的事。
+          白天可以请人“守名录库”、讲规则或张贴公告干预；是否奏效，要看谁接受、谁实际行动，次晨查痕迹确认。
+          温室过红线后可以在上午写“上课 温室 精确”，问清泄压方法；修理仍须两人实际协作。
           人名：霍铎 沈鼎 苏泠 卢西安 顾平章 雀儿 沃德 赛尔玛 阮清越 伊莲娜 莫兰 维罗妮卡 贝尔特朗 玛格丽特 茉拉
           地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 文契寝区 星仪寝区 后勤寝区
           """);
@@ -406,7 +488,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     private void Things()
     {
         W("能细看的东西（“查”东西或地点都行；同一处的痕迹会一并看）：");
-        foreach (var grp in Game.Things_.GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
+        foreach (var grp in Game.Things_.Where(t => !roomScoped || HasRoom && t.Value.Place == g.Where(g.Det)).GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
     }
 
     private void Status()
@@ -476,6 +558,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     {
         foreach (var (place, board) in g.Board)
         {
+            if (roomScoped && (!HasRoom || place != g.Where(g.Det))) continue;
             var mental = g.Det.M[board];
             var read = g.Det.World.History.Any(h => ReferenceEquals(h.Target, mental));
             var specs = g.Specs.Where(s => s.PostedAt.Contains(place) && s != g.RuanLedger).ToArray();
@@ -546,6 +629,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     /// <summary>重演（§12 第 6 条）：变量由“你知道的规矩 × 你怀疑认了它的人”和“某人那一夜在不在某处”组合而成。</summary>
     private void Replay(string[] v)
     {
+        LastReplay = null;
         if (g.Day < 3) { W("还没有可以重演的夜。"); return; }
         var night = g.Day - 1;
         if (v.Length > 0 && v[0].StartsWith('第') && v[0].EndsWith('夜')) { night = Night(v[0]); v = v[1..]; }
@@ -599,17 +683,21 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             throw new PlayerError("同一个人对同一件事只能假设一次。");
         W("  （重演中……）");
         var (tr, world) = g.ReplayNight(night, rules, where);
-        var said = rules.Select(r => $"{Names.Of(r.Who)}{(r.Accept ? "认" : "不认")}{g.LabelOf(g.Specs.First(s => s.Id == r.Spec))}").Concat(where.Select(w => $"{Names.Of(w.Who)}{(w.There ? "在" : "不在")}{Names.Of(w.Where)}"));
-        W($"重演第{night}日夜：{string.Join("，", said)}");
+        var said = rules.Select(r => $"{Names.Of(r.Who)}{(r.Accept ? "认" : "不认")}{g.LabelOf(g.Specs.First(s => s.Id == r.Spec))}").Concat(where.Select(w => $"{Names.Of(w.Who)}{(w.There ? "在" : "不在")}{Names.Of(w.Where)}")).ToArray();
         var lines = g.CompareTraces(night, tr);
         foreach (var w in where.Where(w => w.There && !world.Moves.Any(m => m.Day == night && m.Who == w.Who && m.To == w.Where)))
             lines.Insert(0, $"冲突：照这组假设，那个{Game.BuildText(g[w.Who].Pro.Build).TrimEnd('的')}的身影那夜根本没去{Names.Of(w.Where)}");
         var conflicts = lines.Count(l => l.StartsWith("冲突"));
         var unread = lines.Count(l => l.StartsWith("未查"));
         var confirmed = conflicts == 0 && lines.Any(l => l.StartsWith("吻合"));
-        foreach (var t in Game.Ink(world, night, rules.Select(r => r.Who).Concat(where.Select(w => w.Who)), confirmed)) W(t);
-        foreach (var l in lines) W("  " + l);
-        W(conflicts == 0 ? $"  —— 与你读到的痕迹没有冲突{(unread > 0 ? "（还有没去看的地方）" : "")}。{(confirmed ? "墨影的心声浮了出来。" : "")}" : $"  —— 有 {conflicts} 处对不上：昨夜不是这样。");
+        var frames = Game.InkFrames(world, night, rules.Select(r => r.Who).Concat(where.Select(w => w.Who)), confirmed).ToArray();
+        var ink = frames.Select(frame => frame.Text).ToArray();
+        var summary = conflicts == 0 ? $"—— 与你读到的痕迹没有冲突{(unread > 0 ? "（还有没去看的地方）" : "")}。{(confirmed ? "墨影的心声浮了出来。" : "")}" : $"—— 有 {conflicts} 处对不上：昨夜不是这样。";
+        LastReplay = new(night, said, lines.ToArray(), ink, confirmed, summary, frames);
+        W($"重演第{LastReplay.Night}日夜：{string.Join("，", LastReplay.Selected)}");
+        foreach (var t in LastReplay.Ink) W(t);
+        foreach (var l in LastReplay.Lines) W("  " + l);
+        W("  " + LastReplay.Summary);
     }
 
     private void Truth(P who)
@@ -634,7 +722,9 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         W(reopen ? "重开对质。先写好要说的：" : "公开对质。");
         W("  每一句陈述配一件证物：写“陈述号 证物号”（例：1 1）；“提规”当众提出一条新规矩；“共同”提议共同规则“公开指控须附可检查的材料”；写“完”结束。");
         for (var i = 0; i < Game.Claims.Length; i++) W($"  陈述 {i + 1}：{Game.Claims[i]}");
-        for (var i = 0; i < Game.EvidenceNames.Length; i++) W($"  证物 {i + 1}：{Game.EvidenceNames[i]}");
+        W("  这里只列你已取得的证物；其余需要先细看现场或问人。");
+        for (var i = 0; i < Game.EvidenceNames.Length; i++)
+            if (g.DetHasEvidence(i)) W($"  证物 {i + 1}：{Game.EvidenceNames[i]}");
         var pairs = new List<(int, int)>();
         Card? proposal = null;
         var common = false;
@@ -652,7 +742,10 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
                 if (a[0] is "提规" or "propose") { proposal = CardOf(a, 1); continue; }
                 var nums = a.Where(x => x is not ("陈述" or "证物" or "claim")).ToArray();
                 if (nums.Length == 2 && TryNum(nums[0], out var c) && TryNum(nums[1], out var e) && c >= 1 && c <= Game.Claims.Length && e >= 1 && e <= Game.EvidenceNames.Length)
-                { pairs.Add((c - 1, e - 1)); W($"  （记下：{Game.Claims[c - 1]}——{Game.EvidenceNames[e - 1]}）"); continue; }
+                {
+                    if (!g.DetHasEvidence(e - 1)) throw new PlayerError("你还没有取得这件证物：先细看现场或问人，再重开对质。");
+                    pairs.Add((c - 1, e - 1)); W($"  （记下：{Game.Claims[c - 1]}——{Game.EvidenceNames[e - 1]}）"); continue;
+                }
                 W("  写“陈述号 证物号”、“提规”、“共同”或“完”。");
             }
             catch (PlayerError err) { W("  " + err.Message); }

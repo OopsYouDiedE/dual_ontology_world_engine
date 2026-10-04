@@ -1,15 +1,16 @@
 using System.Collections.Immutable;
 using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>一名学员：客观身体（Essence）+ 灵魂（SoulEssence，内含自己的 ProjectionWorld）+ 游戏层的少量持久状态。</summary>
 public sealed class Person
 {
-    public Person(P id)
+    public Person(P id, Profile? profile = null)
     {
         Id = id;
-        Pro = Cast.Of(id);
+        Pro = profile ?? Cast.Of(id);
         Soul = new SoulEssence(Names.Of(id));
         Body = new Essence(Names.Of(id), ProjectionKind.Body);
     }
@@ -66,6 +67,8 @@ public sealed partial class Game
     public Slot Slot { get; private set; } = Slot.Morning;
     public double Now => S.CTB.Now;
     public readonly GameOptions Options;
+    public StoryRuntime? Story { get; internal set; }
+    public ChapterSession Chapter { get; } = new();
     /// <summary>作者侧客观日志（调试可见）。</summary>
     public readonly List<string> Log = [];
     /// <summary>本时段侦探可知的信息（感知、听闻、广播）。</summary>
@@ -76,8 +79,19 @@ public sealed partial class Game
         Options = options ?? new();
         S = new SimulationSession(Rt);
         S.Completed += OnCompleted;
-        People = Enum.GetValues<P>().Select(p => new Person(p)).ToArray();
+        S.StageCommitted += CapturePresentation;
+        People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p))).ToArray();
         BuildWorld();
+        foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
+        SyncChapterRooms();
+        if (Options.Definition is { } definition)
+        {
+            definition.Initialize?.Invoke(this);
+            Rt.Sync();
+            PerceiveAll();
+            Story = new StoryRuntime(this, definition.Sequences);
+            Story.Poll();
+        }
     }
 
     // ------------------------------------------------------------------ build --
@@ -270,6 +284,7 @@ public sealed partial class Game
     /// </summary>
     public void Perceive(Person p)
     {
+        SyncChapterRooms();
         using var _ = Prof.Time("Perceive");
         if (RealDirty) using (Prof.Time("C:Sync")) { Rt.Sync(); RealDirty = false; }
         var space = SpaceOf(p.Body);
@@ -278,6 +293,8 @@ public sealed partial class Game
         foreach (var thing in Things) if (SpaceOf(thing) == space) views.Add(View[thing]);
         foreach (var other in People) if (SpaceOf(other.Body) == space && (other == p || !other.Asleep || Slot != Slot.Night)) views.Add(View[other.Body]);
         if (Options.Hide is { } hide) views.RemoveAll(v => hide(p, v));
+        foreach (var (name, item) in Things_)
+            if (item.Place == place && views.Contains(View[item.Thing(this)])) Chapter.Observe(p.Id.ToString(), name);
         // 每个时段第一次看，全部看一遍；同一时段里再看，只看状态变了的、或心里位置对不上的对象（性能：§12 第 10 条）。
         var full = Options.Hide is not null || !_fullAt.TryGetValue(p, out var fa) || fa != (Day, Slot);
         if (full) _fullAt[p] = (Day, Slot);
@@ -392,8 +409,10 @@ public sealed partial class Game
     public static string BuildText(Build b) => b switch { Build.Small => "瘦小的", Build.Large => "高大的", _ => "中等身量的" };
 }
 
-public sealed class GameOptions
+public sealed record GameOptions
 {
+    public IReadOnlyDictionary<P, Profile>? Profiles { get; init; }
+    public WorldScriptDefinition? Definition { get; init; }
     public int StartRations { get; init; } = 80;
     public int StartOil { get; init; } = 30;
     public int StartMedicine { get; init; } = 10;
@@ -406,4 +425,27 @@ public sealed class GameOptions
     public Func<Person, NewsItem, bool>? BlockNews { get; init; }
     public Action<Game>? BeforeNight { get; init; }
     public bool Quiet { get; init; }
+}
+
+
+/// <summary>第二章命令行与 Godot 宿主共用的玩家可见剧情。</summary>
+public static class Chapter2Content
+{
+    // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
+    public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
+    public const string Intro =
+        "第 1 日傍晚，四个寝区的隔离门都开了。十六个人在起居厅里第一次见面——人人都以为彼此是初识。\n\n" +
+        "另外三组各自答过了关于昨夜的题，答案字面上都对，裂痕却留了下来：文契组为名录库的柜锁，星仪组为沉静室的门，后勤组为白塔柜里少的那瓶试剂。\n\n" +
+        "第 2 日清晨，铜口召集全体到中央厅。";
+
+    public const string Instructions =
+        "每日五个时段，侦探每个时段只能做一件事；其余十五人各按自己的认知行动。夜里发生的事，只以痕迹、身影与转述到达你。第 7 日，十六人在誓约庭决定名录库归谁、怎么开。";
+}
+
+/// <summary>第二章正式剧本入口；原人物、世界与剧情直接编译在本程序集。</summary>
+public static class Chapter2Script
+{
+    public const string Id = "chapter2";
+    public const string Title = "第十一课";
+    public static Game CreateWorld(GameOptions? options = null) => new(options);
 }

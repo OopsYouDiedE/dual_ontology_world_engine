@@ -1,11 +1,13 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/FieldUI.tscn" id="field_ui"]
+
 [ext_resource type="Script" path="res://scenes/Awakening/Awakening.gd" id="main"]
 [ext_resource type="Script" path="res://scenes/Awakening/LampFlicker.gd" id="details"]
 [ext_resource type="Script" path="res://scenes/Story/StoryActor.gd" id="actor"]
 [ext_resource type="Script" path="res://scenes/Awakening/RoomDoor.gd" id="room_door"]
-[ext_resource type="Script" path="res://scenes/Awakening/HintOverlay.gd" id="hints"]
-[ext_resource type="PackedScene" path="res://scenes/Awakening/AwakeningDialogue.tscn" id="dialogue"]
+[ext_resource type="Script" path="res://scenes/Shared/UI/HintOverlay.gd" id="hints"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterDialogue.tscn" id="dialogue"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/detective.tres" id="detective_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/engineer.tres" id="engineer_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/animation_v2/chef.tres" id="chef_frames"]
@@ -112,35 +114,11 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
-[sub_resource type="Gradient" id="hud_vignette_gradient"]
-offsets = PackedFloat32Array(0, 0.55, 1)
-colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.42)
 
-[sub_resource type="GradientTexture2D" id="hud_vignette"]
-gradient = SubResource("hud_vignette_gradient")
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1.05, 1.05)
 
-[sub_resource type="Gradient" id="hud_top_gradient"]
-colors = PackedColorArray(0.03, 0.02, 0.05, 0.62, 0.03, 0.02, 0.05, 0)
 
-[sub_resource type="Gradient" id="hud_bottom_gradient"]
-colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.62)
 
-[sub_resource type="GradientTexture2D" id="hud_top"]
-gradient = SubResource("hud_top_gradient")
-width = 4
-height = 64
-fill_from = Vector2(0, 0)
-fill_to = Vector2(0, 1)
 
-[sub_resource type="GradientTexture2D" id="hud_bottom"]
-gradient = SubResource("hud_bottom_gradient")
-width = 4
-height = 64
-fill_from = Vector2(0, 0)
-fill_to = Vector2(0, 1)
 
 [sub_resource type="AtlasTexture" id="bed_quilt"]
 atlas = ExtResource("bed_0")
@@ -2199,54 +2177,4 @@ script = ExtResource("hints")
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)
 
-[node name="FieldUI" type="CanvasLayer" parent="."]
-layer = 10
-
-[node name="Vignette" type="TextureRect" parent="FieldUI"]
-offset_right = 1280.0
-offset_bottom = 992.0
-mouse_filter = 2
-texture = SubResource("hud_vignette")
-
-[node name="TopShade" type="TextureRect" parent="FieldUI"]
-offset_right = 1280.0
-offset_bottom = 84.0
-mouse_filter = 2
-texture = SubResource("hud_top")
-
-[node name="BottomShade" type="TextureRect" parent="FieldUI"]
-offset_top = 916.0
-offset_right = 1280.0
-offset_bottom = 992.0
-mouse_filter = 2
-texture = SubResource("hud_bottom")
-
-[node name="Title" type="Label" parent="FieldUI"]
-offset_left = 24.0
-offset_top = 18.0
-offset_right = 784.0
-offset_bottom = 52.0
-theme_override_colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)
-theme_override_font_sizes/font_size = 22
-text = "FA_UI_050"
-
-[node name="Time" type="Label" parent="FieldUI"]
-offset_left = 1150.0
-offset_top = 18.0
-offset_right = 1255.0
-offset_bottom = 52.0
-theme_override_colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)
-theme_override_font_sizes/font_size = 22
-text = "07:20"
-
-[node name="Hint" type="Label" parent="FieldUI"]
-offset_left = 340.0
-offset_top = 940.0
-offset_right = 940.0
-offset_bottom = 970.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.94, 0.91, 0.83, 0.92)
-theme_override_colors/font_shadow_color = Color(0.03, 0.02, 0.05, 0.6)
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 18
-horizontal_alignment = 1
+[node name="FieldUI" parent="." instance=ExtResource("field_ui")]

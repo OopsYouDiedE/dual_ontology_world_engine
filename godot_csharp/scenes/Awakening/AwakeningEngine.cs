@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Awakening;
+using DualOntologyWorldEngine.Story;
 using Godot;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
@@ -9,7 +10,162 @@ using GDict = Godot.Collections.Dictionary;
 /// </summary>
 public partial class AwakeningEngine : Node
 {
-    private MorningWorld _morning = new();
+    private static readonly Chapter1Script Chapter = new();
+    private MorningWorld _morning = Chapter.CreateWorld();
+    private AwakeningContentSession _content = Chapter.CreateContent();
+
+    public GDict Content()
+    {
+        return Json.ParseString(_content.Content.RootElement.GetRawText()).AsGodotDictionary();
+    }
+
+    public string DialogueText() => Chapter.DialogueText;
+    public string ScriptId() => Chapter.Id;
+    public string ScriptAssembly() => _morning.GetType().Assembly.GetName().Name!;
+
+    public GDict Progress(string group)
+    {
+        var result = new GDict();
+        foreach (var (key, value) in _content.Session.GetProgress(group))
+            result[group == "recall_marks" ? Variant.From(int.Parse(key)) : Variant.From(key)] = ToVariant(value);
+        return result;
+    }
+    private static Variant ToVariant(object value) => value switch
+    {
+        bool b => Variant.From(b), int n => Variant.From(n), long n => Variant.From(n), double n => Variant.From(n),
+        Dictionary<string, object> map => Variant.From(ToDictionary(map)),
+        object[] array => Variant.From(new GArray(array.Select(ToVariant))),
+        _ => Variant.From((string)value),
+    };
+    private static GDict ToDictionary(Dictionary<string, object> map)
+    {
+        var result = new GDict();
+        foreach (var (key, value) in map) result[key] = ToVariant(value);
+        return result;
+    }
+    private static object FromVariant(Variant value) => value.VariantType switch
+    {
+        Variant.Type.Bool => value.AsBool(), Variant.Type.Int => value.AsInt64(), Variant.Type.Float => value.AsDouble(),
+        Variant.Type.Dictionary => value.AsGodotDictionary().ToDictionary(p => p.Key.AsString(), p => FromVariant(p.Value)),
+        Variant.Type.Array => value.AsGodotArray().Select(FromVariant).ToArray(),
+        _ => value.AsString(),
+    };
+    public void ReplaceProgress(string group, GDict values)
+    {
+        var state = _content.Session.GetProgress(group);
+        state.Clear();
+        foreach (var (key, value) in values) state[key.AsString()] = FromVariant(value);
+    }
+    public void SetDetail(string group, string key, string field, Variant value)
+        => ((Dictionary<string, object>)_content.Session.GetProgress(group)[key])[field] = FromVariant(value);
+    public void SetProgress(string group, Variant key, Variant value)
+    {
+        _content.Session.Set(group, key.AsString(), FromVariant(value));
+        if (group == "examined") _content.Session.Observe("detective", key.AsString());
+    }
+    public void RemoveProgress(string group, string key) => _content.Session.Remove(group, key);
+    public bool V6Open() => _content.V6Open;
+    public bool SiteVisible(string stage, string id, string playerRoom, string targetRoom)
+    {
+        _content.Session.Locate("detective", playerRoom);
+        _content.Session.Place(id, targetRoom);
+        return _content.SiteVisible(stage, id);
+    }
+    public bool CanExperiment(string id) => _content.CanExperiment(id);
+    public bool CanHelp(string id) => _content.CanHelp(id);
+    public bool CanRecall(string who, bool moving) => _content.CanRecall(who, moving);
+    public GArray Statements(GArray variables, int replayCount, bool bolted)
+        => new(_content.Statements(variables.Select(v => v.AsInt32()).ToArray(), replayCount, bolted).Select(s => Variant.From(s)));
+    public string Judge(int step, string said, string shown) => _content.Judge(step, said, shown);
+    public int BeginMeeting() => RegisterPlan(_content.StartPlan(() => _content.BeginMeeting(_morning)));
+    public int BeginExperiment(string id, string who) => RegisterPlan(_content.StartPlan(() => _content.BeginExperiment(_morning, id, who)));
+    public int BeginHelp(string id) => RegisterPlan(_content.StartPlan(() => _content.BeginHelp(_morning, id)));
+    public int BeginRecall(string id) => RegisterPlan(_content.StartPlan(() => _content.BeginRecall(_morning, id)));
+    public int BeginResolveRecall(string id, string who) => RegisterPlan(_content.StartPlan(() => _content.BeginResolveRecall(_morning, id, who)));
+    public void ApplyRecall(string id, string who) => _content.ApplyRecall(_morning, id, who);
+    public int BeginAfterReplay() => RegisterPlan(_content.StartPlan(() => _content.BeginAfterReplay(_morning)));
+    public int BeginTalk(string who) => RegisterPlan(_content.StartPlan(() => _content.BeginTalk(_morning, who)));
+    public int BeginAnswer() => RegisterPlan(_content.StartPlan(() => _content.BeginAnswer(_morning)));
+    public int BeginFinale() => RegisterPlan(_content.StartPlan(() => _content.BeginFinale(_morning)));
+    public int BeginRest() => RegisterPlan(_content.StartPlan(() => _content.BeginRest(_morning)));
+    public int BeginConfirmRest() => RegisterPlan(_content.StartPlan(() => _content.BeginConfirmRest(_morning)));
+    public GDict Consider(string who)
+    {
+        var intent = _content.Consider(_morning, who);
+        return intent is null ? new() : new() { ["reach"] = intent.Reach, ["thought"] = intent.Thought };
+    }
+    public void BeginReach(string who, string thought) => _content.BeginReach(who, thought);
+    public int BeginPresentReach(string who) => RegisterPlan(_content.StartPlan(() => _content.BeginPresentReach(_morning, who)));
+    public void PrepareAlone(string who) => _content.PrepareAlone(_morning, who);
+    public void CompleteAlone(string who) => _content.CompleteAlone(_morning, who);
+    public int BeginRoomChanged(string room, long now) => RegisterPlan(_content.StartPlan(() => _content.BeginRoomChanged(_morning, room, now)));
+    public string RoomEntry(string room) => _content.RoomEntry(room);
+    public string RoomTrigger(string room)
+    {
+        Locate("detective", room);
+        return _content.RoomTrigger(room);
+    }
+    public GDict LifeTrace(string id) => Json.ParseString(_content.LifeTrace(id).GetRawText()).AsGodotDictionary();
+    public int BeginWake() => RegisterPlan(_content.StartPlan(() => _content.BeginWake(_morning)));
+    public GArray ExamineContent(string id) => new(_content.Examine(_morning, id).Select(s => Variant.From(s)));
+    public bool UnlockReplay() => _content.UnlockReplay();
+    public bool NudgeCard(string id) => _content.NudgeCard(id);
+    public string CardFacts(string id) => _content.CardFacts(id);
+    public GArray CardNotes(string id) => new(_content.CardNotes(_morning, id).Select(s => Variant.From(s)));
+    public string WrongName() => (string)_content.Session.GetProgress("state").GetValueOrDefault("wrong_name", "");
+    public GDict SoundPositions(string playerRoom)
+    {
+        var positions = new GDict();
+        foreach (var (who, room) in _content.SoundPositions(playerRoom)) positions[who] = room;
+        return positions;
+    }
+    private readonly Dictionary<int, AwakeningContentSession.InteractionPlan> _plans = new();
+    private int _nextPlan;
+    private int RegisterPlan(AwakeningContentSession.InteractionPlan plan)
+    {
+        var key = ++_nextPlan;
+        _plans[key] = plan;
+        return key;
+    }
+    public string NextMeeting(int key)
+    {
+        var plan = _plans[key];
+        var output = _content.NextMeeting(plan);
+        if (plan.Finished) _plans.Remove(key);
+        return output;
+    }
+    public void Presented(int key) => _content.Presented(_plans[key]);
+
+    private StoryRuntime<MorningWorld, Person>? _script;
+    private readonly Queue<GDict> _scriptOutput = new();
+    public void LoadScript(string path)
+    {
+        _scriptOutput.Clear();
+        _script = ChapterScript.Load<MorningWorld, Person>(path).CreateRuntime(_morning, new()
+        {
+            Text = (_, text) => _scriptOutput.Enqueue(new() { ["kind"] = "text", ["content"] = text }),
+            Present = (_, output) => _scriptOutput.Enqueue(new() { ["kind"] = output.Kind.ToString().ToLowerInvariant(), ["content"] = output.Content, ["actor"] = Key(output.Actor) }),
+            Busy = (world, actor) => world.StoryBusy(actor),
+            Execute = (world, actor, effect) => world.SubmitStory(actor, effect),
+            Timeline = world => world.StoryTimeline,
+        });
+    }
+    public GDict NextScript()
+    {
+        _script!.Pump();
+        if (_scriptOutput.Count > 0) return _scriptOutput.Dequeue();
+        if (_script.PendingChoice is { } choice)
+            return new() { ["kind"] = "choice", ["content"] = choice.Prompt,
+                ["options"] = new GArray(choice.Options.Select(o => Variant.From(new GDict { ["id"] = o.Id, ["text"] = o.Text }))) };
+        return new() { ["kind"] = _script.IsRunning ? "wait" : "done" };
+    }
+    public void ChooseScript(string option) => _script!.Choose(option);
+    public bool PollScript()
+    {
+        if (_script is null) return false;
+        _script.Pump();
+        return _scriptOutput.Count > 0 || _script.PendingChoice is not null;
+    }
 
     public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
     public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
@@ -17,7 +173,11 @@ public partial class AwakeningEngine : Node
     private static string Key(Person p) => PersonKeys[(int)p];
     private static string Key(Room r) => RoomKeys[(int)r];
 
-    public void Reset() => _morning = new MorningWorld();
+    public void Reset()
+    {
+        _morning = Chapter.CreateWorld();
+        _content = Chapter.CreateContent();
+    }
 
     /// <summary>变量以选项序号传入（与 NightVariables 的枚举顺序一致）；examined 是玩家已检视的证物编号。</summary>
     public GDict RunReplay(GArray variables, GArray examined)
@@ -124,8 +284,13 @@ public partial class AwakeningEngine : Node
     }
 
     /// <summary>宿主把人走到某个房间（房间键）后同步到现实。</summary>
-    public void Locate(string who, string room) => _morning.Locate(PersonOf(who), (Room)Array.IndexOf(RoomKeys, room));
-    public bool Reach(string who) => _morning.Reach(PersonOf(who));
+    public void Locate(string who, string room)
+    {
+        _content.Session.Locate(who, room);
+        var index = Array.IndexOf(RoomKeys, room);
+        if (index >= 0) _morning.Locate(PersonOf(who), (Room)index);
+    }
+    public bool Reach(string who) => _content.Reach(_morning, who);
     public bool PutBack(string who) => _morning.PutBack(PersonOf(who));
     public void Settle(string who) => _morning.Settle(PersonOf(who));
     public bool Holding(string who) => _morning.Holding(PersonOf(who));

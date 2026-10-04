@@ -19,6 +19,10 @@ public sealed partial class Game
     public void RunSlot(PlayerAction? act)
     {
         if (Ended) return;
+        Story?.Poll();
+        if (Story?.PendingChoice is not null) throw new PlayerError("请先回答当前剧情中的选择。");
+        PresentationFrames.Clear();
+        BeginPresentation();
         Script.Add(act);
         if (Slot == Slot.Morning && !_dawnDone) using (Prof.Time("P:BeginDay")) BeginDay();
         _dawnDone = false;
@@ -28,6 +32,7 @@ public sealed partial class Game
         if (Slot == Slot.Night) RunNight(act);
         else RunDay(act);
         Advance();
+        Story?.Poll();
     }
 
     /// <summary>调试：把钟拨到当前时段并重建计划，不推演。</summary>
@@ -221,7 +226,7 @@ public sealed partial class Game
 
     private void CancelAll()
     {
-        foreach (var p in People.Where(p => p.Exec is not null).ToArray())
+        foreach (var p in People.Where(p => p.Exec is not null && Story?.Controls(p.Id) != true).ToArray())
         {
             var exec = p.Exec!;
             S.Cancel(exec);
@@ -255,7 +260,14 @@ public sealed partial class Game
     private void OnCompleted(ActionExecution exec)
     {
         using var _ = Prof.Time("C:OnCompleted");
-        var p = People.First(x => ReferenceEquals(x.Self, exec.Intent.Actor));
+        var p = People.FirstOrDefault(x => ReferenceEquals(x.Self, exec.Intent.Actor));
+        if (Story?.Owns(exec) == true)
+        {
+            if (p is not null) { p.Exec = null; p.Doing = null; }
+            PerceiveAll();
+            return;
+        }
+        if (p is null) return;
         var (job, why, _) = _running.GetValueOrDefault(exec);
         _running.Remove(exec);
         p.Exec = null;
