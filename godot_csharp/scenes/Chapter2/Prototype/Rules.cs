@@ -38,7 +38,7 @@ public sealed class RuleSpec
 public sealed record Card(int Subject, int Cond, int Behavior, int Exception, int Account)
 {
     public static readonly string[] Subjects = ["任何人", "值守者", "生活翼的人", "文契组的人", "星仪组的人", "后勤组的人"];
-    public static readonly string[] Conds = ["任何时候", "入夜后", "有人急病时", "自己没领到口粮时", "第十四课之后"];
+    public static readonly string[] Conds = ["任何时候", "入夜后", "有人急病时", "自己没领到口粮时", "学过《异象与记忆》之后"];
     public static readonly string[] Behaviors =
     [
         "取一份口粮", "按人头领口粮", "粮仓钥匙交给煮饭的人统一煮粥", "公开指控须附可检查的材料", "课后向缺课的人转述",

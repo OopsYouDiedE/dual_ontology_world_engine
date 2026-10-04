@@ -16,6 +16,8 @@ public sealed class EndOfInput() : Exception("输入结束");
 public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool echo, bool debugAllowed = false)
 {
     private bool _debug;
+    /// <summary>当前等待的输入：main 主命令、card 拼规矩、yesno 确认、confront 对质、council 名录库之议、ended 结束（Godot 宿主据此给出选项）。</summary>
+    public volatile string Mode = "main";
     private int _logShown, _debugShown;
     private readonly List<int> _newsOrder = [];
     private void W(string s = "") => output.WriteLine(s);
@@ -36,7 +38,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         ["交钥匙"] = "givekey", ["givekey"] = "givekey", ["转告"] = "tell", ["tell"] = "tell", ["讲"] = "tellrule", ["tellrule"] = "tellrule",
         ["贴"] = "post", ["post"] = "post", ["修温室"] = "greenhouse", ["greenhouse"] = "greenhouse", ["开库"] = "archive", ["archive"] = "archive",
         ["帮"] = "helpout", ["helpout"] = "helpout", ["分粮"] = "share", ["share"] = "share", ["调停"] = "mediate", ["mediate"] = "mediate",
-        ["拓碑"] = "rub", ["rub"] = "rub", ["片面告知"] = "slant", ["slant"] = "slant", ["对质"] = "confront", ["confront"] = "confront",
+        ["片面告知"] = "slant", ["slant"] = "slant", ["对质"] = "confront", ["confront"] = "confront",
         ["认错"] = "apologize", ["apologize"] = "apologize",
         ["重开对质"] = "reopen", ["reopen"] = "reopen", ["睡"] = "sleep", ["sleep"] = "sleep", ["守夜"] = "stakeout", ["stakeout"] = "stakeout",
         ["证物"] = "evidence", ["evidence"] = "evidence",
@@ -45,11 +47,12 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     public void Run()
     {
-        W("《安眠者有福》第二章《第十一课》系统原型（文字界面）。输入“帮助”查看命令。");
+        W("《安眠者有福》第二章。输入“帮助”查看命令。");
         Flush();
         while (!g.Ended)
         {
             Header();
+            Mode = "main";
             var line = Read();
             if (line is null) { W("（输入结束）"); return; }
             if (line.Length == 0 || line.StartsWith('#')) continue;
@@ -71,6 +74,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         }
         try { CouncilPrompt(); }
         catch (EndOfInput) { W("（输入结束：你还没有表态，名录库之议停在这里）"); }
+        Mode = "ended";
     }
 
     private string? Read()
@@ -258,7 +262,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         throw new PlayerError("写成“第3夜”或“3”。");
     }
 
-    private List<string> Topics() => [.. Game.Topics.Where(t => t != "第九条" || g.SteleRubbed)];
+    private List<string> Topics() => [.. Game.Topics];
 
     private static string ThingOf(string s)
     {
@@ -315,6 +319,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             while (true)
             {
                 W($"  {Cells[i].Cell}（{Cells[i].Ask}）：{Menu(Cells[i].Options)}{(i == 0 ? "；也可以直接写一个人名" : "")}");
+                Mode = "card";
                 var line = Read() ?? throw new EndOfInput();
                 if (line is "算了" or "取消") return null;
                 try { picks[i] = i == 0 ? SubjectOf(line) : Pick(line, Cells[i].Options, Cells[i].Cell); break; }
@@ -323,6 +328,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         }
         var built = new Card(picks[0], picks[1], picks[2], picks[3], picks[4]);
         W($"  拼成：「{built.Text}」。就这么说吗？（是/否）");
+        Mode = "yesno";
         var yes = Read() ?? throw new EndOfInput();
         return yes is "是" or "y" or "yes" or "好" or "对" ? built : null;
     }
@@ -374,7 +380,6 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             帮 某人               帮他干一个时段的活，或兑现答应他的事
             分粮 某人             把你今天的口粮给他
             调停                  （第 2 日午间）调停配给台前的争执
-            拓碑 [某人]           去誓约庭拓印石碑（可请人同去）
             片面告知 某人 关于谁   只说一半实话（会被记下）
             对质                  第 4 日清晨，中央厅的公开对质
             重开对质              第 4 日之后：援引共同规则“公开指控须附可检查的材料”，把人请回中央厅再对一次
@@ -408,7 +413,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     {
         var det = g.Det;
         W($"第{g.Day}日{Names.Of(g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。");
-        W($"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"第{l.Key}课{(l.Value ? "" : "（听人转述，可能走样）")}")))}");
+        W($"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"《{Game.Lessons[l.Key].Title}》{(l.Value ? "" : "（听人转述，可能走样）")}")))}");
         if (g.Day >= 3)
         {
             var ev = g.DetEvidence();
@@ -480,7 +485,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         }
     }
 
-    private List<int> NewsOrder()
+    public List<int> NewsOrder()
     {
         foreach (var id in g.Det.News.Keys.Order()) if (!_newsOrder.Contains(id) && _newsOrder.All(x => g.Det.News[x].Text != g.Det.News[id].Text)) _newsOrder.Add(id);
         return _newsOrder;
@@ -635,6 +640,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         var common = false;
         while (true)
         {
+            Mode = "confront";
             var line = Read() ?? throw new EndOfInput();
             var a = line.Split([' ', '　'], StringSplitOptions.RemoveEmptyEntries);
             if (a.Length == 0) continue;
@@ -663,6 +669,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         var choice = -1;
         while (true)
         {
+            Mode = "council";
             var line = Read() ?? throw new EndOfInput();
             var a = line.Split([' ', '　'], StringSplitOptions.RemoveEmptyEntries);
             if (a.Length == 0) continue;

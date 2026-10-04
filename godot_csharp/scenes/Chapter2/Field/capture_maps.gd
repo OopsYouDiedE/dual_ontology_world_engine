@@ -3,7 +3,8 @@ extends SceneTree
 ## 运行：godot --path godot_csharp --rendering-method gl_compatibility --script res://scenes/Chapter2/Field/capture_maps.gd
 
 const MAPS := ["living_hall", "zone_jia", "zone_yi", "zone_bing", "zone_ding", "central_hall", "lecture", "archive",
-	"counterweight", "resonance", "clinic", "logistics", "granary", "greenhouse", "campus"]
+	"counterweight", "resonance", "clinic", "logistics", "granary", "greenhouse",
+	"campus_nw", "campus_n", "campus_ne", "campus_sw", "campus_s", "harbor"]
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
 const FRAMES := preload("res://ShareAsset/Internal/Characters/animation_v2/detective.tres")
 

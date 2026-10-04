@@ -4,11 +4,13 @@ Run from the repository root:  python godot_csharp/tools/build_chapter2_scenes.p
 Then import in Godot:          godot --headless --editor --path godot_csharp --import
 
 Writes
-  godot_csharp/ShareAsset/Internal/Props/Chapter2/rooms/<key>.png      painted architecture (1x)
+  godot_csharp/ShareAsset/Internal/Props/Chapter2/rooms/<key>.png      painted architecture / outdoor ground (1x)
   godot_csharp/ShareAsset/Internal/Props/Chapter2/props/<name>.png     chapter-2 sprites (1x)
   godot_csharp/scenes/Chapter2/Maps/<key>.tscn                         one scene per location
   godot_csharp/ShareAsset/Internal/Props/Chapter2/manifest.json        sizes, anchors, exits
 Chapter-1 furniture is referenced from FirstAwakeningInterior, not duplicated.
+Interior exits name the outdoors as "campus"; they are pointed at the outdoor region that holds
+their spawn point (outdoor.py cuts the outdoors into six regions).
 Every pixel comes from the recipes in tools/first_awakening_art and tools/chapter2_art.
 """
 from __future__ import annotations
@@ -22,7 +24,7 @@ GAME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GAME / "tools"))
 
 from first_awakening_art import props as ch1_props                               # noqa: E402
-from chapter2_art import campus_room, painter, props_archive, props_core, props_service, rooms   # noqa: E402
+from chapter2_art import outdoor, painter, props_archive, props_core, props_service, rooms   # noqa: E402
 
 OUT = GAME / "ShareAsset/Internal/Props/Chapter2"
 CH1 = "res://ShareAsset/Internal/Props/FirstAwakeningInterior"
@@ -58,6 +60,40 @@ def resolve(furniture, fps):
             f["footprint"] = None if fp is None else [int(x - fp[0] / 2), int(y - fp[1]), int(fp[0]), int(fp[1])]
         out.append(f)
     return out
+
+
+def stands(room, n=16):
+    """Standing points for people: open floor cells away from walls, furniture and doorways, spread out."""
+    rows = room["rows"]
+    if not rows:
+        return room.get("stands", [])
+    blocked = set()
+    for f in room["furniture"]:
+        if f.get("footprint"):
+            x, y, w, h = f["footprint"]
+            for cy in range((y - 12) // CELL, (y + h + 12) // CELL + 1):
+                for cx in range((x - 12) // CELL, (x + w + 12) // CELL + 1):
+                    blocked.add((cx, cy))
+    for e in room["exits"]:
+        if "cells" in e:
+            x0, y0, x1, y1 = e["cells"]
+            for cy in range(y0 - 2, y1 + 2):
+                for cx in range(x0 - 2, x1 + 2):
+                    blocked.add((cx, cy))
+    ok = []
+    for y in range(1, len(rows) - 1):
+        for x in range(1, len(rows[0]) - 1):
+            if (x, y) in blocked:
+                continue
+            if all(rows[y + dy][x + dx] in painter.WALKABLE for dy in (-1, 0, 1) for dx in (-1, 0, 1)):
+                ok.append((x, y))
+    if not ok:
+        return []
+    cx = sum(p[0] for p in ok) / len(ok); cy = sum(p[1] for p in ok) / len(ok)
+    pick = [min(ok, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)]
+    while len(pick) < min(n, len(ok)):
+        pick.append(max(ok, key=lambda p: min((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 for q in pick)))
+    return [[x * CELL + CELL // 2, y * CELL + CELL - 4] for x, y in pick]
 
 
 def wall_rects(rows):
@@ -105,14 +141,19 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     W = len(room["rows"][0]) * CELL if "size_px" not in room else room["size_px"][0]
     H = len(room["rows"]) * CELL if "size_px" not in room else room["size_px"][1]
     lines += [f'[node name="{room["key"]}" type="Node2D"]', 'texture_filter = 1',
-              f'metadata/title = "{room["title"]}"', f'metadata/map_size = Vector2({W}, {H})', '',
+              f'metadata/title = "{room["title"]}"', f'metadata/map_size = Vector2({W}, {H})']
+    lines += [f'metadata/{k} = {v}' for k, v in room.get("meta", {}).items()]
+    lines += ['',
               '[node name="Architecture" type="Sprite2D" parent="."]', 'z_index = -10', 'texture = ExtResource("arch")', 'centered = false', '',
               '[node name="Objects" type="Node2D" parent="."]', 'y_sort_enabled = true', '']
     for f in room["furniture"]:
         w, h = sizes[f["sprite"]]
         x, y = f["position"]
         lines += [f'[node name="{f["name"]}" type="Sprite2D" parent="Objects"]', f'position = Vector2({x}, {y})',
-                  f'texture = ExtResource("t_{f["sprite"]}")', 'centered = false', f'offset = Vector2({-(w // 2)}, {-h})', '']
+                  f'texture = ExtResource("t_{f["sprite"]}")', 'centered = false', f'offset = Vector2({-(w // 2)}, {-h})']
+        if f.get("occluder"):
+            lines.append('metadata/occluder = true')
+        lines.append('')
     lines += ['[node name="Solids" type="StaticBody2D" parent="."]', 'collision_mask = 0', '']
     for sid, cx, cy, _, _ in shapes:
         lines += [f'[node name="{sid}" type="CollisionShape2D" parent="Solids"]', f'position = Vector2({cx}, {cy})', f'shape = SubResource("{sid}")', '']
@@ -124,6 +165,9 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     lines += ['[node name="Spawns" type="Node2D" parent="."]', '']
     for name, (x, y) in room["spawns"].items():
         lines += [f'[node name="{name}" type="Marker2D" parent="Spawns"]', f'position = Vector2({x}, {y})', '']
+    lines += ['[node name="Stands" type="Node2D" parent="."]', '']
+    for i, (x, y) in enumerate(stands(room)):
+        lines += [f'[node name="s{i:02d}" type="Marker2D" parent="Stands"]', f'position = Vector2({x}, {y})', '']
     lines += ['[node name="Sites" type="Node2D" parent="."]', '']
     for s in room.get("sites", []):
         lines += [f'[node name="{s["id"]}" type="Marker2D" parent="Sites"]', f'position = Vector2({s["point"][0]}, {s["point"][1]})',
@@ -148,8 +192,16 @@ def main():
         if name not in sprite_paths:
             sprite_paths[name] = f"{CH1}/{name}.png"
             sizes[name] = (can.w, can.h)
+    regions, spawn_region, outdoor_sprites = outdoor.build(sizes, fps)
+    for name, can in outdoor_sprites.items():
+        can.save(OUT / "props" / f"{name}.png")
+        sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"
+        sizes[name] = (can.w, can.h)
     all_rooms = rooms.all_rooms()
     for room in all_rooms:
+        for e in room["exits"]:
+            if e["target"] == "campus":
+                e["target"] = spawn_region[e["spawn"]]
         room["furniture"] = resolve(room["furniture"], fps)
         missing = {f["sprite"] for f in room["furniture"]} - set(sprite_paths)
         assert not missing, (room["key"], missing)
@@ -160,17 +212,13 @@ def main():
         manifest["rooms"][room["key"]] = {"title": room["title"], "cells": [len(room["rows"][0]), len(room["rows"])],
                                           "exits": room["exits"], "spawns": room["spawns"], "sites": room.get("sites", [])}
         print(room["key"], arch.w, arch.h, len(room["furniture"]))
-    campus = campus_room.build(fps)
-    for name, can in campus["extra_sprites"].items():
-        can.save(OUT / "props" / f"{name}.png")
-        sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"
-        sizes[name] = (can.w, can.h)
-    campus["architecture"].save(OUT / "rooms" / "campus.png")
-    (SCENES / "campus.tscn").write_text(tscn(campus, "res://ShareAsset/Internal/Props/Chapter2/rooms/campus.png", sprite_paths, sizes),
-                                        encoding="utf-8")
-    manifest["rooms"]["campus"] = {"title": campus["title"], "size_px": campus["size_px"], "exits": campus["exits"],
-                                   "spawns": campus["spawns"], "sites": campus["sites"]}
-    print("campus", *campus["size_px"], len(campus["furniture"]))
+    for room in regions:
+        room["architecture"].save(OUT / "rooms" / f"{room['key']}.png")
+        (SCENES / f"{room['key']}.tscn").write_text(
+            tscn(room, f"res://ShareAsset/Internal/Props/Chapter2/rooms/{room['key']}.png", sprite_paths, sizes), encoding="utf-8")
+        manifest["rooms"][room["key"]] = {"title": room["title"], "size_px": room["size_px"], "exits": room["exits"],
+                                          "spawns": room["spawns"], "sites": room["sites"]}
+        print(room["key"], *room["size_px"], len(room["furniture"]), len(room["solids_px"]), "solids")
     # link check: every exit's target room and spawn exist
     spawns = {k: set(v["spawns"]) for k, v in manifest["rooms"].items()}
     bad = [(k, e["name"], e["target"], e["spawn"]) for k, v in manifest["rooms"].items() for e in v["exits"]

@@ -561,7 +561,7 @@ shape = SubResource("s67")
 position = Vector2(192.0, 976.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_ne"
 metadata/spawn = "greenhouse_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]
@@ -571,6 +571,56 @@ shape = SubResource("e0")
 
 [node name="south" type="Marker2D" parent="Spawns"]
 position = Vector2(192, 944)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(240, 540)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(80, 156)
+
+[node name="s02" type="Marker2D" parent="Stands"]
+position = Vector2(80, 924)
+
+[node name="s03" type="Marker2D" parent="Stands"]
+position = Vector2(304, 284)
+
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(304, 796)
+
+[node name="s05" type="Marker2D" parent="Stands"]
+position = Vector2(80, 380)
+
+[node name="s06" type="Marker2D" parent="Stands"]
+position = Vector2(80, 700)
+
+[node name="s07" type="Marker2D" parent="Stands"]
+position = Vector2(80, 540)
+
+[node name="s08" type="Marker2D" parent="Stands"]
+position = Vector2(240, 156)
+
+[node name="s09" type="Marker2D" parent="Stands"]
+position = Vector2(208, 412)
+
+[node name="s10" type="Marker2D" parent="Stands"]
+position = Vector2(208, 668)
+
+[node name="s11" type="Marker2D" parent="Stands"]
+position = Vector2(304, 924)
+
+[node name="s12" type="Marker2D" parent="Stands"]
+position = Vector2(304, 636)
+
+[node name="s13" type="Marker2D" parent="Stands"]
+position = Vector2(80, 252)
+
+[node name="s14" type="Marker2D" parent="Stands"]
+position = Vector2(304, 380)
+
+[node name="s15" type="Marker2D" parent="Stands"]
+position = Vector2(80, 796)
 
 [node name="Sites" type="Node2D" parent="."]
 

@@ -536,6 +536,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if ended:
 		if event.keycode == KEY_R:
 			get_tree().reload_current_scene()
+		elif event.keycode == KEY_C:
+			get_tree().change_scene_to_file("res://scenes/Chapter2/Game/Chapter2Game.tscn")
 		return
 	if modal_kind == "card":
 		# 任意键返回现场。
@@ -1909,7 +1911,7 @@ func _ending_card(title: String, line: String) -> void:
 		if hooks(key) == 0:
 			kept.append(Content.PERSON_NAMES[key] if key != "detective" else "你自己")
 	body.add_child(Paper.label("你没有交出的：%s" % ("无" if kept.is_empty() else "、".join(kept)), 18, Paper.MATCH))
-	body.add_child(Paper.label("按 R 重新开始。", 17, Paper.MUTED))
+	body.add_child(Paper.label("按 C 进入第二章；按 R 重新开始。", 17, Paper.MUTED))
 	modal_kind = "ending"
 	stage = "ended"
 

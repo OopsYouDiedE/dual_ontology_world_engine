@@ -1,6 +1,19 @@
 # 人物动作图集 v2
 
-2026-10-02 生活翼四人（`detective`、`engineer`、`chef`、`musician`）及无外衣变体 `detective_shirt` 改由原生像素配方 `godot_csharp/tools/first_awakening_art/cast.py` 生成：头部按人物与朝向逐像素手绘，身体、服装与四肢按骨架逐帧摆姿，约 1:3.5 半Q头身比，服装与发色以主控规范第一部分 §5 为准。图集结构、帧数与锚点不变，原 `.tres` 继续有效；`detective_shirt.tres` 为同结构副本。重建：在 `godot_csharp/tools` 下运行 `python -m first_awakening_art.cast`，会校验帧数、二值 alpha、格边留白与脚底行，并把生产源写入 `AssetsSource/Internal/Characters/NativeCast/`。下文 imagegen 导入流程仅适用于其余角色。
+2026-10-02 生活翼四人（`detective`、`engineer`、`chef`、`musician`）及无外衣变体 `detective_shirt` 改由原生像素配方 `godot_csharp/tools/first_awakening_art/cast.py` 生成：头部按人物与朝向逐像素手绘，身体、服装与四肢按骨架逐帧摆姿，约 1:3.5 半Q头身比，服装与发色以主控规范第一部分 §5 为准。图集结构、帧数与锚点不变，原 `.tres` 继续有效；`detective_shirt.tres` 为同结构副本。重建：在 `godot_csharp/tools` 下运行 `python -m first_awakening_art.cast`，会校验帧数、二值 alpha、格边留白与脚底行，并把生产源写入 `AssetsSource/Internal/Characters/NativeCast/`。下文 imagegen 导入流程仅适用于 `placeholder` 与早餐专用表演等遗留资源。
+
+2026-10-04 其余十二名候选人同样改由 `cast.py` 原生配方生成，身份对照 `../characters-21-front-master.png`，服装为 1900 年前后的平民职业装，默认空手站姿。`publish()` 现同时写出 PNG、`.tres`（结构与原五人逐字节一致）和 `NativeCast/` 生产源。原 imagegen 版 `poet`、`thief`、`lawyer`、`naturalist`、`painter` 运行图集已被原生版覆盖（imagegen 源稿与 `DemoAnimation/approved-atlas/thief.png` 保留但不再是当前运行图）。
+
+| 键 | 人物 | 键 | 人物 |
+| --- | --- | --- | --- |
+| `detective` / `detective_shirt` | 侦探（外套 / 衬衫马甲） | `engineer` | 工程师 |
+| `chef` | 厨师 | `musician` | 音乐家 |
+| `poet` | 卢西安（诗人） | `archaeologist` | 顾平章（考古学家） |
+| `thief` | 雀儿（盗贼） | `lawyer` | 沃德（律师） |
+| `naturalist` | 赛尔玛（自然学家） | `chessplayer` | 阮清越（棋手） |
+| `dancer` | 伊莲娜（舞者） | `painter` | 莫兰（画家） |
+| `chemist` | 维罗妮卡（化学家） | `marksman` | 贝尔特朗（神射手） |
+| `architect` | 玛格丽特（建筑师） | `doctor` | 茉拉（医生） |
 
 2026-09-25 早餐专用表演另使用本目录`breakfast_exchange.png`（512×128，8列×2行，16帧），由`BreakfastPerformance.gd`读取，保持原有九人的通用图集不变。制作源、提示词与重建命令见[早餐动作生产说明](../../../../AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.md)。它是源稿缩制的专用坐姿表演，不能用于替代全方向行走图集；完整日常片段的验证与限制见[日常三幕记录](../../../../../artifacts/first-three-scenes/daily-montage.md)。
 

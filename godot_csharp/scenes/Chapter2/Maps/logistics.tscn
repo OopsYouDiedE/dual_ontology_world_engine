@@ -439,7 +439,7 @@ shape = SubResource("s41")
 position = Vector2(16.0, 320.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_s"
 metadata/spawn = "logistics_west"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/west"]
@@ -449,7 +449,7 @@ shape = SubResource("e0")
 position = Vector2(976.0, 320.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_s"
 metadata/spawn = "logistics_east"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/east"]
@@ -462,6 +462,56 @@ position = Vector2(52, 336)
 
 [node name="east" type="Marker2D" parent="Spawns"]
 position = Vector2(940, 336)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(496, 188)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(880, 380)
+
+[node name="s02" type="Marker2D" parent="Stands"]
+position = Vector2(80, 156)
+
+[node name="s03" type="Marker2D" parent="Stands"]
+position = Vector2(272, 380)
+
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(816, 156)
+
+[node name="s05" type="Marker2D" parent="Stands"]
+position = Vector2(592, 380)
+
+[node name="s06" type="Marker2D" parent="Stands"]
+position = Vector2(272, 188)
+
+[node name="s07" type="Marker2D" parent="Stands"]
+position = Vector2(112, 316)
+
+[node name="s08" type="Marker2D" parent="Stands"]
+position = Vector2(368, 284)
+
+[node name="s09" type="Marker2D" parent="Stands"]
+position = Vector2(912, 220)
+
+[node name="s10" type="Marker2D" parent="Stands"]
+position = Vector2(592, 252)
+
+[node name="s11" type="Marker2D" parent="Stands"]
+position = Vector2(816, 284)
+
+[node name="s12" type="Marker2D" parent="Stands"]
+position = Vector2(176, 220)
+
+[node name="s13" type="Marker2D" parent="Stands"]
+position = Vector2(496, 348)
+
+[node name="s14" type="Marker2D" parent="Stands"]
+position = Vector2(592, 156)
+
+[node name="s15" type="Marker2D" parent="Stands"]
+position = Vector2(368, 188)
 
 [node name="Sites" type="Node2D" parent="."]
 

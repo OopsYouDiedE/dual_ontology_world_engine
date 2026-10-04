@@ -16,7 +16,7 @@
       9,
       1
      ],
-     "target": "campus",
+     "target": "campus_sw",
      "spawn": "living_north"
     },
     {
@@ -71,7 +71,7 @@
       1,
       17
      ],
-     "target": "campus",
+     "target": "campus_sw",
      "spawn": "lane_west"
     },
     {
@@ -82,7 +82,7 @@
       16,
       17
      ],
-     "target": "campus",
+     "target": "campus_sw",
      "spawn": "lane_east"
     }
    ],
@@ -366,7 +366,7 @@
       14,
       1
      ],
-     "target": "campus",
+     "target": "campus_n",
      "spawn": "hall_north"
     },
     {
@@ -377,7 +377,7 @@
       14,
       26
      ],
-     "target": "campus",
+     "target": "campus_n",
      "spawn": "hall_south"
     },
     {
@@ -399,7 +399,7 @@
       26,
       14
      ],
-     "target": "campus",
+     "target": "campus_n",
      "spawn": "hall_east"
     }
    ],
@@ -515,7 +515,7 @@
       9,
       19
      ],
-     "target": "campus",
+     "target": "campus_n",
      "spawn": "archive_front"
     },
     {
@@ -634,7 +634,7 @@
       12,
       16
      ],
-     "target": "campus",
+     "target": "campus_nw",
      "spawn": "resonance_front"
     }
    ],
@@ -678,7 +678,7 @@
       10,
       11
      ],
-     "target": "campus",
+     "target": "campus_s",
      "spawn": "clinic_front"
     }
    ],
@@ -722,7 +722,7 @@
       1,
       11
      ],
-     "target": "campus",
+     "target": "campus_s",
      "spawn": "logistics_west"
     },
     {
@@ -733,7 +733,7 @@
       31,
       11
      ],
-     "target": "campus",
+     "target": "campus_s",
      "spawn": "logistics_east"
     }
    ],
@@ -797,7 +797,7 @@
       6,
       9
      ],
-     "target": "campus",
+     "target": "campus_s",
      "spawn": "granary_front"
     }
    ],
@@ -841,7 +841,7 @@
       7,
       31
      ],
-     "target": "campus",
+     "target": "campus_ne",
      "spawn": "greenhouse_front"
     }
    ],
@@ -870,18 +870,18 @@
     }
    ]
   },
-  "campus": {
-   "title": "学园",
+  "campus_nw": {
+   "title": "学园·讲堂与星仪院",
    "size_px": [
-    3312,
-    2544
+    2976,
+    3216
    ],
    "exits": [
     {
      "name": "生活翼北门",
      "rect_px": [
-      608,
-      1321,
+      1906,
+      2996,
       36,
       36
      ],
@@ -889,32 +889,41 @@
      "spawn": "north_door"
     },
     {
-     "name": "夹道西",
+     "name": "共鸣厅",
      "rect_px": [
-      543,
-      1502,
+      1326,
+      1863,
       36,
       36
      ],
-     "target": "living_hall",
-     "spawn": "west_lane"
-    },
-    {
-     "name": "夹道东",
-     "rect_px": [
-      673,
-      1502,
-      36,
-      36
-     ],
-     "target": "living_hall",
-     "spawn": "east_lane"
-    },
+     "target": "resonance",
+     "spawn": "south"
+    }
+   ],
+   "spawns": {
+    "living_north": [
+     1924,
+     2961
+    ],
+    "resonance_front": [
+     1344,
+     1934
+    ]
+   },
+   "sites": []
+  },
+  "campus_n": {
+   "title": "学园·中央厅与名录库",
+   "size_px": [
+    3024,
+    3216
+   ],
+   "exits": [
     {
      "name": "中央厅北",
      "rect_px": [
-      1182,
-      613,
+      654,
+      1580,
       36,
       36
      ],
@@ -924,8 +933,8 @@
     {
      "name": "中央厅南",
      "rect_px": [
-      1182,
-      1030,
+      654,
+      2415,
       36,
       36
      ],
@@ -935,8 +944,8 @@
     {
      "name": "中央厅东",
      "rect_px": [
-      1390,
-      822,
+      1071,
+      1998,
       36,
       36
      ],
@@ -946,8 +955,8 @@
     {
      "name": "名录库",
      "rect_px": [
-      1182,
-      394,
+      654,
+      1143,
       36,
       36
      ],
@@ -955,21 +964,164 @@
      "spawn": "south"
     },
     {
-     "name": "共鸣厅",
+     "name": "诊疗所",
      "rect_px": [
-      318,
-      754,
+      1998,
+      2943,
       36,
       36
      ],
-     "target": "resonance",
+     "target": "clinic",
      "spawn": "south"
+    }
+   ],
+   "spawns": {
+    "hall_north": [
+     672,
+     1545
+    ],
+    "hall_south": [
+     672,
+     2486
+    ],
+    "hall_east": [
+     1142,
+     2024
+    ],
+    "archive_front": [
+     672,
+     1214
+    ],
+    "clinic_front": [
+     2016,
+     3014
+    ]
+   },
+   "sites": [
+    {
+     "id": "spring",
+     "point": [
+      2976,
+      2760
+     ],
+     "label": "汲水泉"
+    }
+   ]
+  },
+  "campus_ne": {
+   "title": "学园·温室与汲水泉",
+   "size_px": [
+    3168,
+    3216
+   ],
+   "exits": [
+    {
+     "name": "温室",
+     "rect_px": [
+      606,
+      2247,
+      36,
+      36
+     ],
+     "target": "greenhouse",
+     "spawn": "south"
+    }
+   ],
+   "spawns": {
+    "greenhouse_front": [
+     624,
+     2318
+    ]
+   },
+   "sites": [
+    {
+     "id": "spring",
+     "point": [
+      528,
+      2760
+     ],
+     "label": "汲水泉"
+    }
+   ]
+  },
+  "campus_sw": {
+   "title": "学园·生活翼",
+   "size_px": [
+    2976,
+    3216
+   ],
+   "exits": [
+    {
+     "name": "生活翼北门",
+     "rect_px": [
+      1906,
+      356,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "north_door"
     },
+    {
+     "name": "夹道西",
+     "rect_px": [
+      1777,
+      718,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "west_lane"
+    },
+    {
+     "name": "夹道东",
+     "rect_px": [
+      2036,
+      718,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "east_lane"
+    }
+   ],
+   "spawns": {
+    "living_north": [
+     1924,
+     321
+    ],
+    "lane_west": [
+     1742,
+     744
+    ],
+    "lane_east": [
+     2107,
+     744
+    ]
+   },
+   "sites": [
+    {
+     "id": "lane",
+     "point": [
+      1924,
+      736
+     ],
+     "label": "夹道"
+    }
+   ]
+  },
+  "campus_s": {
+   "title": "学园·誓约庭与后勤院",
+   "size_px": [
+    3024,
+    3216
+   ],
+   "exits": [
     {
      "name": "诊疗所",
      "rect_px": [
-      1854,
-      1294,
+      1998,
+      303,
       36,
       36
      ],
@@ -979,8 +1131,8 @@
     {
      "name": "后勤院西",
      "rect_px": [
-      1417,
-      1626,
+      1124,
+      966,
       36,
       36
      ],
@@ -990,8 +1142,8 @@
     {
      "name": "后勤院东",
      "rect_px": [
-      1762,
-      1626,
+      1815,
+      966,
       36,
       36
      ],
@@ -1001,112 +1153,121 @@
     {
      "name": "粮仓",
      "rect_px": [
-      1854,
-      1594,
+      1998,
+      903,
       36,
       36
      ],
      "target": "granary",
      "spawn": "south"
-    },
-    {
-     "name": "温室",
-     "rect_px": [
-      2382,
-      946,
-      36,
-      36
-     ],
-     "target": "greenhouse",
-     "spawn": "south"
     }
    ],
    "spawns": {
-    "living_north": [
-     626,
-     1313
-    ],
-    "lane_west": [
-     525,
-     1530
-    ],
-    "lane_east": [
-     727,
-     1530
-    ],
-    "hall_north": [
-     1200,
-     605
-    ],
-    "hall_south": [
-     1200,
-     1094
-    ],
-    "hall_east": [
-     1444,
-     850
-    ],
-    "archive_front": [
-     1200,
-     458
-    ],
-    "resonance_front": [
-     336,
-     818
-    ],
     "clinic_front": [
-     1872,
-     1358
+     2016,
+     374
     ],
     "logistics_west": [
-     1399,
-     1654
+     1089,
+     992
     ],
     "logistics_east": [
-     1816,
-     1654
+     1886,
+     992
     ],
     "granary_front": [
-     1872,
-     1658
+     2016,
+     974
     ],
-    "greenhouse_front": [
-     2400,
-     1010
+    "gate_inside": [
+     672,
+     2076
+    ],
+    "gate_outside": [
+     672,
+     2388
     ]
    },
    "sites": [
     {
-     "id": "lane",
-     "point": [
-      626,
-      1520
-     ],
-     "label": "夹道"
-    },
-    {
-     "id": "collapse",
-     "point": [
-      2925,
-      2460
-     ],
-     "label": "港路塌方处"
-    },
-    {
      "id": "oath_court",
      "point": [
-      1200,
-      2040
+      672,
+      1776
      ],
      "label": "誓约庭"
     },
     {
      "id": "spring",
      "point": [
-      2352,
-      1224
+      2976,
+      120
      ],
      "label": "汲水泉"
+    },
+    {
+     "id": "drying_yard",
+     "point": [
+      2400,
+      960
+     ],
+     "label": "晾晒场"
+    },
+    {
+     "id": "gate",
+     "point": [
+      672,
+      2220
+     ],
+     "label": "门楼"
+    }
+   ]
+  },
+  "harbor": {
+   "title": "港路与港口",
+   "size_px": [
+    3168,
+    3216
+   ],
+   "exits": [],
+   "spawns": {
+    "harbor_landing": [
+     2016,
+     1680
+    ]
+   },
+   "sites": [
+    {
+     "id": "collapse",
+     "point": [
+      1675,
+      2617
+     ],
+     "label": "港路塌方处"
+    },
+    {
+     "id": "spring",
+     "point": [
+      528,
+      120
+     ],
+     "label": "汲水泉"
+    },
+    {
+     "id": "stele",
+     "point": [
+      2016,
+      1584
+     ],
+     "label": "契约石碑"
+    },
+    {
+     "id": "harbor",
+     "point": [
+      2424,
+      1704
+     ],
+     "label": "码头"
     }
    ]
   }

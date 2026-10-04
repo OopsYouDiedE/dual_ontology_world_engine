@@ -200,7 +200,7 @@ shape = SubResource("s19")
 position = Vector2(160.0, 272.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_s"
 metadata/spawn = "granary_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]
@@ -210,6 +210,14 @@ shape = SubResource("e0")
 
 [node name="south" type="Marker2D" parent="Spawns"]
 position = Vector2(160, 240)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(144, 188)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(176, 188)
 
 [node name="Sites" type="Node2D" parent="."]
 

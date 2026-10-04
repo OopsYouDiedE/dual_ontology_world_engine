@@ -500,7 +500,7 @@ shape = SubResource("s55")
 position = Vector2(416.0, 16.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_n"
 metadata/spawn = "hall_north"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/north"]
@@ -510,7 +510,7 @@ shape = SubResource("e0")
 position = Vector2(416.0, 816.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_n"
 metadata/spawn = "hall_south"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]
@@ -530,7 +530,7 @@ shape = SubResource("e2")
 position = Vector2(816.0, 416.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_n"
 metadata/spawn = "hall_east"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/east"]
@@ -549,6 +549,56 @@ position = Vector2(80, 432)
 
 [node name="east" type="Marker2D" parent="Spawns"]
 position = Vector2(768, 432)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(432, 476)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(112, 348)
+
+[node name="s02" type="Marker2D" parent="Stands"]
+position = Vector2(560, 188)
+
+[node name="s03" type="Marker2D" parent="Stands"]
+position = Vector2(720, 540)
+
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(304, 732)
+
+[node name="s05" type="Marker2D" parent="Stands"]
+position = Vector2(304, 188)
+
+[node name="s06" type="Marker2D" parent="Stands"]
+position = Vector2(144, 572)
+
+[node name="s07" type="Marker2D" parent="Stands"]
+position = Vector2(528, 700)
+
+[node name="s08" type="Marker2D" parent="Stands"]
+position = Vector2(688, 348)
+
+[node name="s09" type="Marker2D" parent="Stands"]
+position = Vector2(272, 412)
+
+[node name="s10" type="Marker2D" parent="Stands"]
+position = Vector2(432, 284)
+
+[node name="s11" type="Marker2D" parent="Stands"]
+position = Vector2(304, 572)
+
+[node name="s12" type="Marker2D" parent="Stands"]
+position = Vector2(560, 412)
+
+[node name="s13" type="Marker2D" parent="Stands"]
+position = Vector2(560, 572)
+
+[node name="s14" type="Marker2D" parent="Stands"]
+position = Vector2(432, 604)
+
+[node name="s15" type="Marker2D" parent="Stands"]
+position = Vector2(208, 252)
 
 [node name="Sites" type="Node2D" parent="."]
 

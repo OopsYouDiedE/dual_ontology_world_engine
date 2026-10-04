@@ -44,7 +44,7 @@ public sealed partial class Game
     {
         ["粮仓"] = (Place.Logistics, g => g.Granary), ["台账"] = (Place.Logistics, g => g.Ledger), ["配给台公告"] = (Place.Logistics, g => g.Board[Place.Logistics]),
         ["中央厅公告"] = (Place.Hall, g => g.Board[Place.Hall]), ["中央基座"] = (Place.Hall, g => g.Base), ["速写本"] = (Place.DormS, g => g.SketchBook), ["碗"] = (Place.Clinic, g => g.Bowl), ["病床"] = (Place.Clinic, g => g.Bed),
-        ["药柜"] = (Place.Clinic, g => g.MedCab), ["黑板"] = (Place.Lecture, g => g.Blackboard), ["石碑"] = (Place.Oath, g => g.Stele),
+        ["药柜"] = (Place.Clinic, g => g.MedCab), ["黑板"] = (Place.Lecture, g => g.Blackboard), ["铺石"] = (Place.Oath, g => g.Stele),
         ["压力表"] = (Place.Greenhouse, g => g.Gauge), ["名录库之门"] = (Place.ArchiveFront, g => g.ArchiveDoor), ["油库"] = (Place.DormS, g => g.OilStore),
         ["文契废纸篓"] = (Place.DormW, g => g.Litter[Place.DormW]), ["星仪废纸篓"] = (Place.DormS, g => g.Litter[Place.DormS]),
         ["后勤废纸篓"] = (Place.DormL, g => g.Litter[Place.DormL]), ["生活翼废纸篓"] = (Place.DormLife, g => g.Litter[Place.DormLife]), ["文契公告"] = (Place.DormW, g => g.Board[Place.DormW]),
@@ -57,7 +57,7 @@ public sealed partial class Game
     {
         [Place.Logistics] = ["粮仓", "台账", "配给台公告"], [Place.Clinic] = ["碗", "病床", "药柜"], [Place.DormW] = ["文契废纸篓", "文契公告"],
         [Place.DormS] = ["星仪废纸篓", "油库", "速写本", "星仪公告"], [Place.DormL] = ["后勤废纸篓", "后勤公告"], [Place.DormLife] = ["生活翼废纸篓", "生活翼公告"],
-        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["石碑"], [Place.Hall] = ["中央基座", "中央厅公告"],
+        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["铺石"], [Place.Hall] = ["中央基座", "中央厅公告"],
     }.ToImmutableDictionary();
 
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
@@ -470,14 +470,14 @@ public sealed partial class Game
         if (e == Bowl) return Get(Bowl, T.Residue) > 0 ? $"莫兰床边一只空碗，碗底有粥渍{(Get(Bowl, T.Porridge) > 0 ? "；另有一碗粥还温着" : "")}。" : "碗是干净的。";
         if (e == Bed) return Get(this[P.Moran].Body, T.Sick) > 0 ? "莫兰躺着，额头很烫。" : "病床空着。";
         if (e == Blackboard) return Get(Blackboard, T.Chalk) > 0 ? $"黑板上有 {Get(Blackboard, T.Chalk)} 堂课的粉笔字；讲台前的灰上有窄底皮鞋印。" : "黑板是干净的。";
-        if (e == Stele) return "风化严重。第一至第八条还认得；最后两条只剩笔画的影子，须拓印辨读。";
+        if (e == Stele) return "铺石顺坡，几级台阶。石面上刻着磨平的纹样，看不出原本写的是什么。";
         if (e == Gauge) return $"压力表指针：{(Get(Gauge, T.Pressure) >= 2 ? "过了红线" : "红线以下")}。";
         if (e == SketchBook)
         {
             foreach (var (n, _) in Sketches) DetSketchSeen.Add(n);
             return Sketches.Count == 0 ? "莫兰的速写本里只有几张颜色练习。" : "莫兰的速写本：" + string.Join("　", Sketches.Select(s => s.Text)) + "。";
         }
-        if (e == Base) return Get(Base, T.Crack) > 0 ? "中央基座上有一道新裂纹，像是从里面撑开的。" : "中央基座完好，石面上刻着契约的前八条。";
+        if (e == Base) return Get(Base, T.Crack) > 0 ? "中央基座上有一道新裂纹，像是从里面撑开的。" : "中央基座完好，石面上光洁，没有刻字。";
         if (e == ArchiveDoor) return "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。";
         if (e == MedCab) return $"药柜：药品 {Get(MedCab, T.Medicine)}。";
         if (e == OilStore) return $"油库：灯油 {Get(OilStore, T.Oil)}。";

@@ -533,7 +533,7 @@ shape = SubResource("s54")
 position = Vector2(256.0, 592.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus"
+metadata/target = "campus_n"
 metadata/spawn = "archive_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]
@@ -556,6 +556,56 @@ position = Vector2(256, 560)
 
 [node name="stairs" type="Marker2D" parent="Spawns"]
 position = Vector2(112, 496)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(336, 252)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(816, 540)
+
+[node name="s02" type="Marker2D" parent="Stands"]
+position = Vector2(80, 444)
+
+[node name="s03" type="Marker2D" parent="Stands"]
+position = Vector2(432, 540)
+
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(80, 156)
+
+[node name="s05" type="Marker2D" parent="Stands"]
+position = Vector2(624, 540)
+
+[node name="s06" type="Marker2D" parent="Stands"]
+position = Vector2(272, 444)
+
+[node name="s07" type="Marker2D" parent="Stands"]
+position = Vector2(240, 156)
+
+[node name="s08" type="Marker2D" parent="Stands"]
+position = Vector2(432, 156)
+
+[node name="s09" type="Marker2D" parent="Stands"]
+position = Vector2(144, 252)
+
+[node name="s10" type="Marker2D" parent="Stands"]
+position = Vector2(688, 444)
+
+[node name="s11" type="Marker2D" parent="Stands"]
+position = Vector2(176, 508)
+
+[node name="s12" type="Marker2D" parent="Stands"]
+position = Vector2(336, 156)
+
+[node name="s13" type="Marker2D" parent="Stands"]
+position = Vector2(368, 444)
+
+[node name="s14" type="Marker2D" parent="Stands"]
+position = Vector2(720, 540)
+
+[node name="s15" type="Marker2D" parent="Stands"]
+position = Vector2(176, 188)
 
 [node name="Sites" type="Node2D" parent="."]
 

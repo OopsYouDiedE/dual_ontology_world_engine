@@ -34,10 +34,10 @@ public sealed partial class Game
 
     public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
     {
-        [11] = (2, "第十一课·契约读法", "按字面读条款，找出条款没写什么（第 1—8 条）。"),
-        [12] = (3, "第十二课·传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
-        [13] = (4, "第十三课·言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
-        [14] = (5, "第十四课·异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
+        [11] = (2, "守则读法", "按字面读它自己的守则与学员立的规，找出条文没写什么。"),
+        [12] = (3, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
+        [13] = (4, "言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
+        [14] = (5, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
     }.ToImmutableDictionary();
 
     public static int LessonOfDay(int day) => Lessons.FirstOrDefault(l => l.Value.Day == day).Key;
@@ -73,7 +73,7 @@ public sealed partial class Game
     /// <summary>第十四课：讲清回忆为何接上钩。欲望强的人更想去试，欲望弱的人更怕（第三部分 §5.8）。</summary>
     private void LessonFourteen(Person p)
     {
-        if (p.Desire >= 3) { p.Desire += 1; RewriteDesire(p, "第十四课让人更想试一试"); }
+        if (p.Desire >= 3) { p.Desire += 1; RewriteDesire(p, "《异象与记忆》让人更想试一试"); }
         if (p != Det) Tell(p, Warning1, Channel.Face);
     }
 
@@ -99,7 +99,7 @@ public sealed partial class Game
         switch (Day)
         {
             case 2:
-                Broadcast("诸位晨安。按课表，今日是第十一课。上回讲到契约的读法——诸位大约不记得了。无妨，我记得。");
+                Broadcast("诸位晨安。按课表，今日讲守则的读法。讲堂门外贴着课表。");
                 Broadcast("封存之物存于名录库，凡学员皆可取回己物。");
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
@@ -107,12 +107,12 @@ public sealed partial class Game
                 Feed.Add("恶魔逐一对每个人低声说了一句话，说的都是那人最想要的东西。");
                 foreach (var p in People) Whisper(p);
                 break;
-            case 3: Broadcast("今日第十二课：传声与机械。"); break;
-            case 4: Broadcast("今日第十三课：言灵初阶。诸位今日在中央厅有一场对质，我会旁听。"); break;
+            case 3: Broadcast("今日讲传声与机械。"); break;
+            case 4: Broadcast("今日讲言灵初阶。诸位今日在中央厅有一场对质，我会旁听。"); break;
             case 5:
                 GuaranteeCracks++;
                 Set(Base, T.Crack, 1);
-                Broadcast("……今日第十四课：异象与记忆。（广播里有一层此前没有的底噪。中央基座多了一道新裂纹。）");
+                Broadcast("……今日讲异象与记忆。（广播里有一层此前没有的底噪。中央基座多了一道新裂纹。）");
                 break;
             case 6: Broadcast("今日无新课。答疑照常。"); break;
             case 7: Broadcast("今日，诸位要决定名录库的事。我只旁听。"); break;
@@ -121,7 +121,7 @@ public sealed partial class Game
 
     // --------------------------------------------------------------- Q&A --
 
-    public static readonly string[] Topics = ["名录库", "唤名", "温室", "封存匣", "契约", "担保", "导师", "第九条", "你想要什么"];
+    public static readonly string[] Topics = ["名录库", "唤名", "温室", "封存匣", "守则", "裂纹", "导师", "你想要什么"];
 
     /// <summary>
     /// 答疑：问得含糊，得到字面为真而误导的答案；问得精确，得到精确的真相；可援引第 7 条拒答。
@@ -136,7 +136,7 @@ public sealed partial class Game
         {
             case 0:
                 answer = !precise ? "封存之物存于名录库，凡学员皆可取回己物。"
-                    : learned(14) ? "取回，即重新接通。接通之后，我离诸位更近一些。后果自负——第八条写着。" : "此事第十四课会讲。现在讲，诸位听不懂。";
+                    : learned(14) ? "取回，即重新接通。接通之后，我离诸位更近一些。寻回者，自负其果——守则第一条写着。" : "此事《异象与记忆》会讲。现在讲，诸位听不懂。";
                 praised = precise && learned(14);
                 break;
             case 1:
@@ -144,7 +144,7 @@ public sealed partial class Game
                 praised = precise;
                 break;
             case 2:
-                answer = !precise ? "指针过红线时，勿开顶窗。" : learned(12) ? "先在阀门泄压，指针回落到红线下再开顶窗。红线之上开窗，玻璃会碎。" : "你还不认得那张图。第十二课之后再问。";
+                answer = !precise ? "指针过红线时，勿开顶窗。" : learned(12) ? "先在阀门泄压，指针回落到红线下再开顶窗。红线之上开窗，玻璃会碎。" : "你还不认得那张图。学过《传声与机械》再问。";
                 praised = precise && learned(12);
                 if (precise && learned(12)) WarnedPrecisely = true;
                 break;
@@ -153,8 +153,8 @@ public sealed partial class Game
                 praised = precise && learned(13);
                 break;
             case 4:
-                answer = !precise ? "契约第一至第八条抄在中央厅的公告框里。我所立之规，都在那里。" : "导师所立之条，不归我公开。第五条只要求我公开我自己所立之规。";
-                praised = precise && learned(11);
+                if (!precise) answer = "我所立之规，皆张贴于中央厅的公告框。四条，一字不多。";
+                else { answer = "守则之外的事，此知会伤及心志。"; refused = true; }
                 break;
             case 5:
                 answer = "此知会伤及心志。";
@@ -164,13 +164,6 @@ public sealed partial class Game
                 answer = "此知会伤及心志。";
                 refused = true;
                 break;
-            case 7:
-                if (!SteleRubbed) { answer = "你问的是哪一条？请说清楚。"; break; }
-                Clause9Asked = true;
-                answer = "第九条：经其余十五名学员一致同意，或封印已无法完成时，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。……你问得很准。";
-                praised = true;
-                DemonSays("侦探", answer, asked9: true);
-                return answer;
             default:
                 answer = "我想教。诸位想学。我们要的东西，没有那么不同。";
                 break;

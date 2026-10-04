@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Dual Ontology World Engine"
-run/main_scene="res://scenes/Main2D.tscn"
+run/main_scene="res://scenes/Title/Title.tscn"
 config/features=PackedStringArray("4.6", "C#")
 
 [autoload]
@@ -37,12 +37,12 @@ project/assembly_name="DualOntologyWorldEngine"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/rpg_asset_adapter/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg", "res://addons/story_editor/plugin.cfg")
+enabled=PackedStringArray("res://addons/rpg_asset_adapter/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg")
 
 [internationalization]
 
 locale/translations=PackedStringArray("res://scenes/FirstAwakening/i18n/first_awakening_ui.zh_CN.translation", "res://scenes/FirstAwakening/i18n/first_awakening_ui.en.translation", "res://scenes/FirstAwakening/i18n/first_awakening_ui.ja.translation", "res://scenes/FirstAwakening/i18n/en.po", "res://scenes/FirstAwakening/i18n/ja.po", "res://scenes/FirstAwakening/i18n/dialogue_names.zh_CN.translation", "res://scenes/FirstAwakening/i18n/dialogue_names.en.translation", "res://scenes/FirstAwakening/i18n/dialogue_names.ja.translation", "res://scenes/FirstAwakening/i18n/mind_ui.zh_CN.po", "res://scenes/FirstAwakening/i18n/mind_ui.en.po", "res://scenes/FirstAwakening/i18n/mind_ui.ja.po", "res://scenes/FirstAwakening/i18n/mind_language.zh_CN.translation", "res://scenes/FirstAwakening/i18n/mind_language.en.translation", "res://scenes/FirstAwakening/i18n/mind_language.ja.translation", "res://scenes/FirstAwakening/i18n/replay_ui.zh_CN.translation", "res://scenes/FirstAwakening/i18n/replay_ui.en.translation", "res://scenes/FirstAwakening/i18n/replay_ui.ja.translation")
-locale/translations_pot_files=PackedStringArray("res://scenes/Story/central_hall.dialogue", "res://scenes/Story/breakfast.dialogue", "res://scenes/Story/parlor.dialogue", "res://scenes/FirstAwakening/red_token.dialogue", "res://scenes/Awakening/awakening.dialogue")
+locale/translations_pot_files=PackedStringArray("res://scenes/Awakening/awakening.dialogue")
 locale/fallback="zh_CN"
 
 [rendering]

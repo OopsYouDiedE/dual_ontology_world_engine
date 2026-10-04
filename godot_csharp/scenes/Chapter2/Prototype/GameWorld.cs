@@ -134,7 +134,7 @@ public sealed partial class Game
         Valve = NewThing("温室阀门", Place.Greenhouse, [T.Work]);
         Gauge = NewThing("温室压力表", Place.Greenhouse, [T.Pressure]);
         Blackboard = NewThing("讲堂黑板", Place.Lecture, [T.Chalk, T.Shoe]);
-        Stele = NewThing("誓约庭石碑", Place.Oath, [T.Rubbed]);
+        Stele = NewThing("誓约庭铺石", Place.Oath, [T.Rubbed]);
         ArchiveDoor = NewThing("名录库之门", Place.ArchiveFront, [T.Open, T.Work]);
         // 名录库之门的三站：配重室、锁芯、传声中继。一站同一时刻只容一个身体（Occupied）；今夜有人在这一站使过劲（Worked）。
         WeightRoom = NewThing("配重室", Place.ArchiveFront, [T.Occupied, T.Worked]);
