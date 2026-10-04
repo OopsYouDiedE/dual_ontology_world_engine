@@ -854,7 +854,7 @@ Core 不出现专案名词。
 
 ### 音乐与音效（2026-10-04 重写）
 
-全部原声由 `music/build_soundtrack.py` 一键生成：曲谱原稿写在 `music/cues.py`（记谱与 MuseScore 4／MIDI 导出在 `score_io.py`），音色在 `synth.py`（numpy 加法合成，不用外部录音与音色库；固定种子，波形逐位可重现，OGG 容器的流序号每次不同），音效与对白提示音在 `sfx.py`。曲谱输出为 `music/Blessed Sleepers - <曲名>.mscz／.mid`，装有 MuseScore 4 时同时由它打开并导出总谱 PDF 与 MusicXML（`.pdf／.musicxml`，打不开即构建失败）；游戏内配乐与音效为 OGG，归 `godot_csharp/ShareAsset/Internal/Props/Audio/{Music,Sfx}/`，提示音仍为 `Internal/Characters/voices/voice_*.wav`。旧曲 `The Unfallen` 系列只作存档，游戏不再使用。改旋律只改 `cues.py` 后重新生成。
+全部原声由 `music/build_soundtrack.py` 一键生成：曲谱原稿写在 `music/cues.py`（记谱与 MuseScore 4／MIDI 导出在 `score_io.py`），配乐由 `sf2.py` 采样器用 MuseScore 4 自带的 MS Basic 音色库（MIT，FluidR3 衍生，许可见 `godot_csharp/ShareAsset/External/MSBasic/LICENSE.md`）发声，按 SoundFont 2.01 规范实现调制器、调制包络与随时间变化的低通；找不到音色库时退回 `synth.py` 的 numpy 加法合成。音效与对白提示音由 `sfx.py` 加法合成。固定种子，波形可重现（OGG 容器的流序号每次不同）。曲谱输出为 `music/Blessed Sleepers - <曲名>.mscz／.mid`，装有 MuseScore 4 时同时由它打开并导出总谱 PDF 与 MusicXML（`.pdf／.musicxml`，打不开即构建失败）；游戏内配乐与音效为 OGG，归 `godot_csharp/ShareAsset/Internal/Props/Audio/{Music,Sfx}/`，提示音仍为 `Internal/Characters/voices/voice_*.wav`。旧曲 `The Unfallen` 系列只作存档，游戏不再使用。改旋律只改 `cues.py` 后重新生成。
 
 **门句动机**：情感核心是“开门”只是“不要开门”的后半截（第二部分 §1）。动机一小节四拍：前两拍两个下行弱音（不要）D5–C#5–B4，后两拍上跳五度的呼喊（开门）F#5–E5–F#5，停在属音上像一个问句。只出现后半截时是门外的“呼喊”；完整出现是真相；主题尾声里后半截第一次落回主音（B 大调），问句得到回答。恶魔的和声是阻碍终止：旋律给出正确的落音，脚下换成别的和弦（字面为真）。
 
@@ -865,6 +865,10 @@ Core 不出现专案名词。
 | `confrontation` | 对质 | 簧风琴、钢琴、低音弦乐；b 小调；4/4；♩=88 | 下行半音哀歌低音 8 · 字面为真（两次阻碍终止）8 · 整句（风琴独奏门句，末音“对了”而低音落在 G）8；约 66 秒 | 始业之答；第二章第 4 日对质、重开对质与名录库之议 |
 | `day` | 十六人的日子 | 单簧管、钢片琴、钢琴、拨奏弦乐；D 大调；6/8；♩.=60 | 门句的大调形（F#–E–D｜A–G–A）A 8 · B 8（借 g 小调：短缺来自不信任）· A' 8 · B' 8；约 64 秒 | 第二章白天各时段 |
 | `night` | 安眠 | 八音盒、管钟、簧风琴、钢琴、低音弦乐；b 小调；3/4；♩=54 | 熄灯 8 · 守夜 8 · 发条 8（发条将尽，最后只剩一个“开”）；约 80 秒 | 第二章夜间；第一章“歇息”结局 |
+
+**演奏诠释**（`music/interpret.py`，规则取自 KTH Director Musices 演奏规则体系与钢琴、合奏的常规做法，全部确定）：四小节乐句的速度弧线（句中略推、句尾放慢，段落末放得更多，延长记号处明显放慢）与力度弧线；拍位强弱；旋律声部加重且越高越亮，比伴奏早约 12 毫秒；钢琴和弦自下而上轻微琶开；持续音乐器的旋律连奏、句末呼吸；钢琴按和声换切分踏板（调查曲与船歌半踏板，对质的左手脉动不踩）；紧张和弦略加重；船歌伴奏的和弦音短促。各曲深浅不同：主题与夜曲的速度弧线最深，调查曲只留四成以保持钟摆感，对质只留四分之一以保持逼迫感。每小节的和声与旋律所在谱表写在曲谱数据里（`Bar.harm`、`Bar.lead`），不进谱面。
+
+**混音**：各乐器按“远近”设混响发送（管钟最湿、拨奏最干）；各谱表电平按实测配平到旋律约 -4 dB、伴奏约 -10 dB、铺底约 -11 dB、色彩乐器约 -13 dB（相对整曲）；总线压缩的压缩比按用途定，调查曲 2.4、夜曲 2.0、主题 1.8、其余 1.6，并把门限以下 12 dB 内的安静段抬起，使循环背景的响度范围收在 5～10 dB（主题保留约 13 dB）。
 
 配乐全部无缝循环（渲染三遍取中间一遍，接缝处余音与混响连续），响度对齐到 -19 dBFS RMS；宿主 `GameAudio`（自动加载，`scenes/Shared/Audio/`）以两条轨交叉淡化，重演回放时压低 9 dB。场景经 `Sound.gd` 调用，自动加载缺席时静默跳过。
 

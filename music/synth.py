@@ -251,6 +251,32 @@ def pan_gains(pan):
     return np.cos(angle), np.sin(angle)
 
 
+def compress(stereo, ratio=1.6, below_rms_db=4.0, attack=0.03, release=0.35, sr=SR):
+    """总线压缩：门限取整曲平均响度以下 below_rms_db，按 RMS 包络柔和地收拢动态，
+    让安静段与全奏段的落差适合作为游戏背景。ratio 为压缩比，ratio < 1 时为扩展（不用）。"""
+    hop = 512
+    threshold_db = 20 * np.log10(np.sqrt(np.mean(stereo ** 2)) + 1e-12) - below_rms_db
+    mono = np.sqrt(np.mean(stereo ** 2, axis=0))
+    frames = len(mono) // hop + 1
+    padded = np.pad(mono, (0, frames * hop - len(mono)))
+    level = 20 * np.log10(np.sqrt(np.mean(padded.reshape(frames, hop) ** 2, axis=1)) + 1e-9)
+    over = np.maximum(0.0, level - threshold_db)
+    target = -over * (1 - 1 / ratio)
+    # 向上压缩：比门限低 12 dB 以内的安静段按同一比率抬起，再往下的（静音、尾音）不动
+    under = np.clip(threshold_db - level, 0.0, 12.0) * (level > threshold_db - 30)
+    target += under * (1 - 1 / ratio) * 0.6
+    gain = np.zeros(frames)
+    g = 0.0
+    a_coef = np.exp(-hop / (attack * sr))
+    r_coef = np.exp(-hop / (release * sr))
+    for k in range(frames):
+        coef = a_coef if target[k] < g else r_coef
+        g = coef * g + (1 - coef) * target[k]
+        gain[k] = g
+    curve = np.interp(np.arange(stereo.shape[1]), np.arange(frames) * hop + hop / 2, gain)
+    return stereo * 10 ** (curve / 20)
+
+
 def master(stereo, target_rms_db=-19.0, ceiling_db=-1.2):
     """响度对齐到目标 RMS，并以柔和削波限制峰值。"""
     rms = np.sqrt(np.mean(stereo ** 2)) + 1e-12

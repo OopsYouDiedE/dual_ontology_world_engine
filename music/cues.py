@@ -144,17 +144,17 @@ def main_theme():
     ]
     bars = []
     # 引子 · 门外：只有后半截与它的回声
-    bars.append(Bar({CEL: CALL, BEL: 'B4:w', STR: 'B2:w'},
+    bars.append(Bar({CEL: CALL, BEL: 'B4:w', STR: 'B2:w'}, harm=['Bm'], lead=CEL,
                     dyn={CEL: 'p', BEL: 'pp', STR: 'pp', ORG: 'pp', RH: 'p', LH: 'p'},
                     mark='引子 · 门外', text={CEL: 'lontano, come da un tubo'},
                     tempo=(63, tempo_text(63, 'Lento, cullando'))))
-    bars.append(Bar({CEL: ECHO, STR: 'B2:w'}))
-    bars.append(Bar({CEL: CALL, ORG: 'D4+F#4+B4:w', STR: 'G2:w'}))
-    bars.append(Bar({CEL: ECHO, ORG: 'C#4+F#4+A#4:w', STR: 'F#2:w'}))
+    bars.append(Bar({CEL: ECHO, STR: 'B2:w'}, harm=['Bm'], lead=CEL))
+    bars.append(Bar({CEL: CALL, ORG: 'D4+F#4+B4:w', STR: 'G2:w'}, harm=['Gmaj7'], lead=CEL))
+    bars.append(Bar({CEL: ECHO, ORG: 'C#4+F#4+A#4:w', STR: 'F#2:w'}, harm=['F#'], lead=CEL))
     # A · 安眠：钢琴独自说出整句
     for i, (mel, ch) in enumerate(THEME_A):
         kw = dict(dyn={RH: 'p', LH: 'pp', STR: 'pp'}, mark='A · 安眠', text={RH: 'semplice, cantabile'}) if i == 0 else {}
-        bars.append(Bar({RH: mel, LH: arp(ch), STR: bass(ch)}, **kw))
+        bars.append(Bar({RH: mel, LH: arp(ch), STR: bass(ch)}, harm=ch, lead=RH, **kw))
     # A2 · 誓约：风琴接过旋律，钢片琴在半终止处应答那半截呼喊
     a2 = list(THEME_A)
     a2[6] = ('D5:q. C#5:e B4:q C#5:q', ['G', 'A7'])
@@ -165,7 +165,7 @@ def main_theme():
             lines[CEL] = 'r:h F#6:q E6:e F#6:e'
         kw = dict(dyn={ORG: 'mp', RH: 'pp', LH: 'p', STR: 'p', CEL: 'pp'}, mark='A2 · 誓约',
                   text={ORG: 'legato, come un inno'}) if i == 0 else {}
-        bars.append(Bar(lines, **kw))
+        bars.append(Bar(lines, harm=ch, lead=ORG, **kw))
     # B · 旧日的灯：D 大调，钢片琴高八度叠奏
     theme_b = [
         ('F#5:q. G5:e A5:q F#5:q', ['D', 'Bm']),
@@ -184,7 +184,7 @@ def main_theme():
             lines[BEL] = 'D5:w'
             kw = dict(dyn={RH: 'mf', CEL: 'pp', ORG: 'p', LH: 'mp', STR: 'mp', BEL: 'pp'},
                       mark='B · 旧日的灯', text={RH: 'con calore'})
-        bars.append(Bar(lines, **kw))
+        bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     # A' · 有福：全奏，钢琴八度，后句攀上高点再落回
     a3 = list(THEME_A)
     a3[5] = ('B5:h A5:q G5:q', ['G', 'A7'])
@@ -202,16 +202,19 @@ def main_theme():
             kw = dict(dyn={RH: 'ff', ORG: 'f', STR: 'f'})
         if i == 6:
             kw = dict(dyn={RH: 'mf', ORG: 'mp', LH: 'mp', STR: 'mp'}, text={RH: 'dim.'})
-        bars.append(Bar(lines, **kw))
+        bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     # 尾声 · 问句得到回答：后半截第一次落回主音（B 大调）
-    bars.append(Bar({CEL: CALL, ORG: 'F#3+B3+D#4:w', STR: 'B2:w', LH: 'B1+F#2:w'},
+    bars.append(Bar({CEL: CALL, ORG: 'F#3+B3+D#4:w', STR: 'B2:w', LH: 'B1+F#2:w'}, harm=['B'], lead=CEL,
                     dyn={CEL: 'p', ORG: 'pp', STR: 'pp', LH: 'pp'}, mark='尾声 · 回答', text={CEL: 'dolcissimo'}))
-    bars.append(Bar({CEL: 'E5:h D#5:h', ORG: 'G#3+B3+E4:h F#3+B3+D#4:h', STR: 'B2:w', LH: 'B1+E2:h B1+F#2:h'}))
-    bars.append(Bar({CEL: CALL, ORG: 'F#3+B3+D4:w', STR: 'G2:w', LH: 'G1+D2:w'}, dyn={CEL: 'pp'}))
+    bars.append(Bar({CEL: 'E5:h D#5:h', ORG: 'G#3+B3+E4:h F#3+B3+D#4:h', STR: 'B2:w', LH: 'B1+E2:h B1+F#2:h'},
+                    harm=['E/B', 'B'], lead=CEL))
+    bars.append(Bar({CEL: CALL, ORG: 'F#3+B3+D4:w', STR: 'G2:w', LH: 'G1+D2:w'}, dyn={CEL: 'pp'},
+                    harm=['Gmaj7'], lead=CEL))
     bars.append(Bar({CEL: 'D#5:h B4:h^', ORG: 'F#3+B3+D#4:w^', STR: 'B2:w^', LH: 'B1+F#2:w^', BEL: 'B4:w^'},
-                    dyn={BEL: 'pp'}))
+                    dyn={BEL: 'pp'}, harm=['B'], lead=CEL))
     return Piece('main_theme', '安眠者有福', 'Beati qui dormiunt — 主题', 2, (4, 4), parts, bars,
-                 reverb=2.6, wet=0.3, mix={CEL: 2, BEL: 5, RH: 3, LH: -6, STR: -2})
+                 reverb=2.6, wet=0.3, mix={CEL: 8, BEL: 13, ORG: -2, RH: 3, LH: 2, STR: -7},
+                 style=dict(rubato=1.0, swell=1.0, pedal={RH: 'full', LH: 'full'}), squeeze=1.8)
 
 
 def door_side():
@@ -258,9 +261,10 @@ def door_side():
                     kw.update(dyn={RH: 'mp', LH: 'p', STR: 'p', ORG: 'pp', CEL: 'p'})
                 if si == 3:
                     kw.update(dyn={RH: 'p', LH: 'pp', STR: 'pp', CEL: 'pp'})
-            bars.append(Bar(lines, **kw))
+            bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     return Piece('door_side', '门的这一侧', '第一章 · 现场（循环）', 2, (4, 4), parts, bars, reverb=1.8, wet=0.28,
-                 mix={CEL: 3, RH: 3, LH: -5.5})
+                 mix={CEL: 9, ORG: 2, RH: 3, LH: -0.5, STR: -7},
+                 style=dict(rubato=0.4, swell=0.6, pedal={RH: 'half', LH: 'half'}), squeeze=2.4)
 
 
 def confrontation():
@@ -299,17 +303,19 @@ def confrontation():
         if i == 0:
             kw = dict(mark='一 · 指认', dyn={ORG: 'mp', LH: 'mf', STR: 'mp', RH: 'mf'},
                       tempo=(88, tempo_text(88, 'Moderato, inesorabile')), text={LH: 'marcato'})
-        bars.append(Bar({ORG: pad(ch), LH: pulse(ch), STR: bass(ch)}, **kw))
+        bars.append(Bar({ORG: pad(ch), LH: pulse(ch), STR: bass(ch)}, harm=ch, **kw))
     for i, (mel, ch) in enumerate(demon):
         kw = dict(mark='二 · 字面为真', text={RH: 'tenuto, con ambiguità'}) if i == 0 else {}
-        bars.append(Bar({RH: octaves(mel), ORG: pad(ch), LH: pulse(ch, offbeat=True), STR: bass(ch)}, **kw))
+        bars.append(Bar({RH: octaves(mel), ORG: pad(ch), LH: pulse(ch, offbeat=True), STR: bass(ch)},
+                        harm=ch, lead=RH, **kw))
     for i, (mel, ch) in enumerate(truth):
         kw = dict(mark='三 · 整句', dyn={ORG: 'f'}, text={ORG: 'solo, a piena voce'}) if i == 0 else {}
         if i == 7:
             kw = dict(text={ORG: 'la nota giusta, il basso sbagliato'})
-        bars.append(Bar({ORG: mel, RH: block(ch), LH: pulse(ch), STR: bass(ch)}, **kw))
+        bars.append(Bar({ORG: mel, RH: block(ch), LH: pulse(ch), STR: bass(ch)}, harm=ch, lead=ORG, **kw))
     return Piece('confrontation', '对质', '始业之答 · 对质（循环）', 2, (4, 4), parts, bars, reverb=1.6, wet=0.22,
-                 mix={ORG: 1, RH: 3, LH: -6})
+                 mix={ORG: -1, RH: 3, LH: 0, STR: -5},
+                 style=dict(rubato=0.25, swell=0.5, pedal={RH: 'half', LH: 'none'}))
 
 
 # 第二章日间用的 6/8 伴奏：低音在 1、4 拍，和弦在其余八分
@@ -363,22 +369,23 @@ def day():
     for i, (mel, ch) in enumerate(a):
         kw = dict(mark='A · 配给台', tempo=tempo, text={RH: 'leggiero'},
                   dyn={RH: 'mf', LH: 'p', PIZ: 'mp', CLA: 'mp', CEL: 'p'}) if i == 0 else {}
-        bars.append(Bar({RH: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, **kw))
+        bars.append(Bar({RH: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, harm=ch, lead=RH, **kw))
     for i, (mel, ch) in enumerate(b):
         kw = dict(mark='B · 十六人的规矩', text={CLA: 'dolce, un poco esitante'}) if i == 0 else {}
-        bars.append(Bar({CLA: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, **kw))
+        bars.append(Bar({CLA: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, harm=ch, lead=CLA, **kw))
     for i, (mel, ch) in enumerate(a):
         lines = {CLA: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}
         if i % 2 == 1:
             lines[CEL] = shift(mel, 1)
         kw = dict(mark="A' · 午后", dyn={CLA: 'mf'}) if i == 0 else {}
-        bars.append(Bar(lines, **kw))
+        bars.append(Bar(lines, harm=ch, lead=CLA, **kw))
     for i, (mel, ch) in enumerate(b):
         lines = {RH: mel, CEL: shift(mel, 1), LH: barcarolle(ch), PIZ: pizz_line(ch)}
         kw = dict(mark="B' · 傍晚对账", dyn={RH: 'mp', CEL: 'pp'}) if i == 0 else {}
-        bars.append(Bar(lines, **kw))
+        bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     return Piece('day', '十六人的日子', '第二章 · 日间（循环）', 2, (6, 8), parts, bars, reverb=1.5, wet=0.2,
-                 mix={CLA: 3, CEL: 3, RH: 4, LH: -6, PIZ: -1})
+                 mix={CLA: 3, CEL: 13, RH: 4, LH: 0, PIZ: -5},
+                 style=dict(rubato=0.5, swell=0.8, pedal={RH: 'half', LH: 'half'}, short_chords=(LH,)))
 
 
 def night():
@@ -419,9 +426,10 @@ def night():
                 if si == 0:
                     kw.update(tempo=(54, tempo_text(54, 'Lento, carillon')),
                               dyn={BOX: 'mp', BEL: 'pp', ORG: 'ppp', LH: 'pp', STR: 'pp'})
-            bars.append(Bar(lines, **kw))
+            bars.append(Bar(lines, harm=[c], lead=BOX, **kw))
     return Piece('night', '安眠', '第二章 · 夜（循环）', 2, (3, 4), parts, bars, reverb=3.0, wet=0.36,
-                 mix={BEL: 5, LH: -3})
+                 mix={BEL: 9, LH: 1, STR: -8},
+                 style=dict(rubato=1.0, swell=0.8, pedal={LH: 'full'}), squeeze=2.0)
 
 
 CUES = [main_theme, door_side, confrontation, day, night]

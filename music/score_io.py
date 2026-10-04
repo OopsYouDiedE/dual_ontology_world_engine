@@ -120,6 +120,8 @@ class Bar:
     mark: str = ''
     text: dict = field(default_factory=dict)
     tempo: tuple = None      # (每分钟四分音符数, 谱面文字)
+    harm: list = None        # 本小节和弦（等分），供演奏层换踏板与强调紧张和弦；不写入谱面
+    lead: int = None         # 本小节旋律所在谱表，供演奏层突出旋律
 
 
 @dataclass
@@ -135,6 +137,8 @@ class Piece:
     reverb: float = 2.2      # 混响时间（秒）
     wet: float = 0.24
     mix: dict = field(default_factory=dict)  # 谱表序号 -> 增益（dB），只影响合成音频
+    style: dict = None       # 演奏诠释参数（interpret.Style），只影响合成音频
+    squeeze: float = 1.6     # 总线压缩比：作为背景循环的曲子收得更紧
 
     def staff_parts(self):
         """全局谱表序号 -> (声部, 声部内谱表序号)。"""
