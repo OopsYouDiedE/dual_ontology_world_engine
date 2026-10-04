@@ -6,6 +6,7 @@
 后缀：> 重音，- 保持音，^ 延长记号。不用连音线与三连音，长音都写在小节之内。
 """
 import os
+import re
 import json
 import struct
 import zipfile
@@ -118,6 +119,9 @@ class Part:
     drum_map: dict = field(default_factory=dict)
     channel_name: str = ''
     soundfont: str = ''       # music/ 下的专用采样库，相对路径
+    transpose: tuple = (0, 0)  # 记谱移调（半音, 音级），如降 B 调单簧管 (-2, -1)、钢片琴 (12, 7)
+    amateur: tuple = None      # 业余音域 (低, 高)；缺省同专业音域 lo–hi
+    channels: tuple = ()       # 多通道模板的全部通道 ((名称, bank, program), ...)；channel_name 为当前所用
 
     def playback_pitch(self, pitch):
         return self.drum_map[pitch] if self.drum_map else pitch
@@ -132,6 +136,7 @@ class Bar:
     tempo: tuple = None      # (每分钟四分音符数, 谱面文字)
     harm: list = None        # 本小节和弦（等分），供演奏层换踏板与强调紧张和弦；不写入谱面
     lead: int = None         # 本小节旋律所在谱表，供演奏层突出旋律
+    tech: dict = field(default_factory=dict)  # 谱表序号 -> 演奏法（如 'pizzicato'），写为 PlayTechAnnotation
 
 
 @dataclass
@@ -199,6 +204,8 @@ DRUM_DEFINITIONS = {
     'frame-drum': '<Drum pitch="45"><head>normal</head><line>0</line><voice>0</voice><name>Frame Drum</name><stem>1</stem><shortcut>A</shortcut></Drum>',
     'tablas': '<Drum pitch="73"><head>normal</head><line>1</line><voice>0</voice><name>Ge (open bass)</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum><Drum pitch="71"><head>normal</head><line>-1</line><voice>0</voice><name>Na</name><stem>1</stem><shortcut>B</shortcut><panelRow>0</panelRow><panelColumn>1</panelColumn></Drum><Drum pitch="87"><head>normal</head><line>-1</line><voice>0</voice><name>Tin</name><stem>1</stem><shortcut>C</shortcut><panelRow>0</panelRow><panelColumn>2</panelColumn></Drum><Drum pitch="84"><head>normal</head><line>-1</line><voice>0</voice><name>Te</name><stem>1</stem><shortcut>D</shortcut><panelRow>0</panelRow><panelColumn>3</panelColumn></Drum>',
     'bass-drum': '<Drum pitch="36"><head>normal</head><line>0</line><voice>0</voice><name>Concert Bass Drum</name><stem>2</stem><shortcut>A</shortcut></Drum>',
+    'temple-blocks': '<Drum pitch="58"><head>normal</head><line>8</line><voice>0</voice><name>Low Temple Block</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum><Drum pitch="59"><head>normal</head><line>6</line><voice>0</voice><name>Low-Mid Temple Block</name><stem>1</stem><shortcut>B</shortcut><panelRow>0</panelRow><panelColumn>1</panelColumn></Drum><Drum pitch="60"><head>normal</head><line>4</line><voice>0</voice><name>Mid Temple Block</name><stem>1</stem><shortcut>C</shortcut><panelRow>0</panelRow><panelColumn>2</panelColumn></Drum><Drum pitch="61"><head>normal</head><line>2</line><voice>0</voice><name>High-Mid Temple Block</name><stem>1</stem><shortcut>D</shortcut><panelRow>0</panelRow><panelColumn>3</panelColumn></Drum><Drum pitch="62"><head>normal</head><line>0</line><voice>0</voice><name>High Temple Block</name><stem>1</stem><shortcut>E</shortcut><panelRow>0</panelRow><panelColumn>4</panelColumn></Drum>',
+    'dagu': '<Drum pitch="87"><head>normal</head><line>0</line><voice>0</voice><name>Dagu</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum>',
     'wood-blocks': '<Drum pitch="76"><head>normal</head><line>-1</line><voice>0</voice><name>High Wood Block</name><stem>1</stem><shortcut>A</shortcut></Drum><Drum pitch="77"><head>normal</head><line>1</line><voice>0</voice><name>Low Wood Block</name><stem>1</stem><shortcut>B</shortcut></Drum>',
 }
 
@@ -265,6 +272,20 @@ def _part_xml(pid, part):
     drumset = ('<useDrumset>1</useDrumset>' + DRUM_DEFINITIONS[part.template_id]) if percussion else ''
     channel_name = f' name="{part.channel_name}"' if part.channel_name else ''
     bank = f'<controller ctrl="0" value="{part.bank >> 7}" /><controller ctrl="32" value="{part.bank & 127}" />'
+    a_lo, a_hi = part.amateur or (part.lo, part.hi)
+    transpose = ''
+    if part.transpose != (0, 0):
+        transpose = (f'\n        <transposeDiatonic>{part.transpose[1]}</transposeDiatonic>'
+                     f'\n        <transposeChromatic>{part.transpose[0]}</transposeChromatic>')
+    instrument_id = f'\n        <instrumentId>{part.instrument_id}</instrumentId>' if part.instrument_id else ''
+    if part.channels:
+        channels = ''.join(
+            f'\n        <Channel name="{n}">\n          <controller ctrl="0" value="{b >> 7}" />'
+            f'<controller ctrl="32" value="{b & 127}" />\n          <program value="{pr}" />\n          </Channel>'
+            for n, b, pr in part.channels)
+    else:
+        channels = (f'\n        <Channel{channel_name}>\n          {bank}\n'
+                    f'          <program value="{part.program}" />\n          </Channel>')
     return (f'    <Part id="{pid}">\n' + ''.join(staves) + f'''      <trackName>{part.name}</trackName>
       <Instrument id="{part.template_id}">
         <longName>{part.name}</longName>
@@ -272,13 +293,8 @@ def _part_xml(pid, part):
         <trackName>{part.name}</trackName>
         <minPitchP>{part.lo}</minPitchP>
         <maxPitchP>{part.hi}</maxPitchP>
-        <minPitchA>{part.lo}</minPitchA>
-        <maxPitchA>{part.hi}</maxPitchA>
-        <instrumentId>{part.instrument_id}</instrumentId>{clef}{drumset}
-        <Channel{channel_name}>
-          {bank}
-          <program value="{part.program}" />
-          </Channel>
+        <minPitchA>{a_lo}</minPitchA>
+        <maxPitchA>{a_hi}</maxPitchA>{transpose}{instrument_id}{clef}{drumset}{channels}
         </Instrument>
       </Part>
 ''')
@@ -314,6 +330,10 @@ def build_mscx(piece):
             if si in bar.dyn:
                 d = bar.dyn[si]
                 head += f'<Dynamic><subtype>{d}</subtype><velocity>{VELOCITY[d]}</velocity></Dynamic>'
+            if si in bar.tech:  # MuseScore 把演奏法写在力度之后
+                label = {'pizzicato': 'pizz.', 'arco': 'arco'}[bar.tech[si]]
+                head += (f'<PlayTechAnnotation><playTechType>{bar.tech[si]}</playTechType>'
+                         f'<text>{label}</text></PlayTechAnnotation>')
             body = _events_xml(piece.line(bar, si), kalt, part)
             tail = '<BarLine><subtype>end</subtype></BarLine>' if bi == len(piece.bars) - 1 else ''
             rows.append(f'      <Measure><voice>{head}{body}{tail}</voice></Measure>\n')
@@ -519,3 +539,75 @@ def _track_bytes(events):
         last = t
     data += _vlq(0) + b'\xff\x2f\x00'
     return b'MTrk' + struct.pack('>I', len(data)) + data
+
+
+
+# ---------------------------------------------------------------- 曲谱与源数据一致性
+# 曲谱（.mscz）可以在 MuseScore 里手工编辑；cues.py 必须与之同步。比对的是“音乐内容”：
+# 声部（名称、模板、音色、移调）、每小节的音符与时值、力度、文字、演奏法、排练记号与可见速度。
+# 排版、eid、隐形播放控制（visible=0 的 Tempo、Slur、HairPin）不比对。
+
+def score_content(mscx):
+    parts = []
+    for p in re.findall(r'<Part id="\d+">(.*?)</Part>', mscx, re.S):
+        def g(pat):
+            m = re.search(pat, p, re.S)
+            return m.group(1) if m else ''
+        first = re.search(r'<Channel(?: name="[^"]*")?>(.*?)</Channel>', p, re.S)
+        ch = first.group(1) if first else ''
+        msb = re.search(r'ctrl="0" value="(\d+)"', ch)
+        lsb = re.search(r'ctrl="32" value="(\d+)"', ch)
+        prog = re.search(r'<program value="(\d+)"', ch)
+        parts.append((g(r'<Instrument id="([^"]*)"'), g(r'<longName>([^<]*)'), g(r'<shortName>([^<]*)'),
+                      g(r'<instrumentId>([^<]*)'),
+                      (int(msb.group(1)) << 7 if msb else 0) + (int(lsb.group(1)) if lsb else 0),
+                      int(prog.group(1)) if prog else 0, g(r'<transposeChromatic>(-?\d+)') or '0'))
+    staves = []
+    for _, body in re.findall(r'<Staff id="(\d+)">(.*?)</Staff>\s*(?=<Staff id|</Score>)', mscx, re.S):
+        bars = []
+        for m in re.findall(r'<Measure[^>]*>(.*?)</Measure>', body, re.S):
+            voice = re.findall(r'<voice>(.*?)</voice>', m, re.S)
+            events = []
+            pattern = r'<(Chord|Rest|Dynamic|StaffText|PlayTechAnnotation|RehearsalMark|Tempo)>(.*?)</\1>'
+            for el in re.finditer(pattern, voice[0] if voice else '', re.S):
+                kind, b = el.groups()
+                if kind in ('Chord', 'Rest'):
+                    d = re.search(r'<durationType>(\w+)', b)
+                    dur = (d.group(1) if d else 'measure') + ('.' if '<dots>' in b else '')
+                    pitches = tuple(sorted(int(v) for v in re.findall(r'<pitch>(\d+)', b)))
+                    events.append((kind[0], dur, pitches))
+                elif kind == 'Dynamic':
+                    events.append(('D', re.search(r'<subtype>(\w+)', b).group(1)))
+                elif kind == 'Tempo':
+                    if '<visible>0</visible>' not in b:
+                        events.append(('T', round(float(re.search(r'<tempo>([\d.]+)', b).group(1)), 3)))
+                elif kind == 'PlayTechAnnotation':
+                    events.append(('P', re.search(r'<playTechType>(\w+)', b).group(1)))
+                else:
+                    t = re.search(r'<text>(.*?)</text>', b, re.S)
+                    events.append((kind[0], re.sub('<[^>]+>', '', t.group(1)) if t else ''))
+            bars.append(events)
+        staves.append(bars)
+    return parts, staves
+
+
+def compare_with_score(piece, path):
+    """返回曲谱与 cues.py 的差异列表（空表示一致）。"""
+    with zipfile.ZipFile(path) as z:
+        stored = z.read([n for n in z.namelist() if n.endswith('.mscx')][0]).decode('utf-8')
+    (pa, sa), (pb, sb) = score_content(stored), score_content(build_mscx(piece))
+    diffs = []
+    labels = ('模板', '名称', '简称', 'MusicXML', 'bank', 'program', '移调')
+    if len(pa) != len(pb):
+        diffs.append(f'声部数：曲谱 {len(pa)}，源数据 {len(pb)}')
+    for i, (x, y) in enumerate(zip(pa, pb)):
+        for k, (u, v) in enumerate(zip(x, y)):
+            if u != v:
+                diffs.append(f'声部 {i + 1} {labels[k]}：曲谱 {u!r}，源数据 {v!r}')
+    if len(sa) != len(sb):
+        diffs.append(f'谱表数：曲谱 {len(sa)}，源数据 {len(sb)}')
+    for si, (x, y) in enumerate(zip(sa, sb)):
+        for bi, (u, v) in enumerate(zip(x, y)):
+            if u != v:
+                diffs.append(f'谱表 {si + 1} 第 {bi + 1} 小节：曲谱 {u}，源数据 {v}')
+    return diffs

@@ -26,6 +26,67 @@
 """
 from score_io import Bar, Part, Piece, octaves, shift
 
+# ---------------------------------------------------------------- 乐器（以 MuseScore 中手工确认的曲谱为准）
+# 名称、模板、音色通道与移调和 music/ 下的 .mscz 一致；build_soundtrack.py 在渲染前逐项比对，不一致即停止。
+STRINGS_CH = (('arco', 0, 48), ('pizzicato', 0, 45), ('tremolo', 0, 44))
+CELLOS_CH = (('arco', 41, 48), ('pizzicato', 40, 45), ('tremolo', 41, 44))
+BASSES_CH = (('arco', 51, 48), ('pizzicato', 50, 45), ('tremolo', 51, 44))
+
+
+def p_celesta(**kw):
+    return Part('celesta', '钢片琴', 'Cel.', 'keyboard.celesta', 8, 48, 113, template_id='celesta',
+                voice='celesta', transpose=(12, 7), **kw)
+
+
+def p_bells(**kw):
+    return Part('bell', '管钟', 'Cme.', 'pitched-percussion.tubular-bells', 14, 53, 79, amateur=(60, 79),
+                template_id='tubular-bells', voice='bell', **kw)
+
+
+def p_harmonium(**kw):
+    return Part('organ', '簧风琴', 'Harm.', 'keyboard.harmonium', 20, 29, 89, template_id='harmonium',
+                voice='organ', **kw)
+
+
+def p_piano(**kw):
+    return Part('piano', '钢琴', 'Pno.', 'keyboard.piano', 0, 21, 108, template_id='piano', voice='piano', **kw)
+
+
+def p_strings(**kw):
+    return Part('strings', '弦乐组', 'St.', 'strings.group', 48, 24, 108, bass_clef=True, template_id='strings',
+                voice='strings', channel_name='arco', channels=STRINGS_CH, **kw)
+
+
+def p_cellos(pizz=False, **kw):
+    return Part('cellos', '乐队大提琴', 'Vcs.', 'strings.group', 45 if pizz else 48, 36, 90, amateur=(36, 67),
+                bass_clef=True, template_id='violoncellos', voice='cellos_pizz' if pizz else 'cellos',
+                bank=40 if pizz else 41, channel_name='pizzicato' if pizz else 'arco', channels=CELLOS_CH, **kw)
+
+
+def p_basses(pizz=False, **kw):
+    return Part('contrabasses', '乐队低音提琴', 'Cbs.', 'strings.group', 45 if pizz else 48, 24, 67, amateur=(28, 62),
+                bass_clef=True, template_id='contrabasses', voice='basses_pizz' if pizz else 'basses',
+                bank=50 if pizz else 51, channel_name='pizzicato' if pizz else 'arco', channels=BASSES_CH,
+                transpose=(-12, -7), **kw)
+
+
+def p_temple_blocks(**kw):
+    return Part('woodblock', '木鱼', 'Tmp. Bl.', 'wood.temple-block', 115, 60, 84, template_id='temple-blocks',
+                voice='templeblocks', bank=1, drum_map={72: 62}, **kw)
+
+
+def with_contrabass(bars, cello, bass):
+    """低音提琴：大提琴线整体低八度重复，力度与演奏法随大提琴。"""
+    for bar in bars:
+        if cello in bar.lines:
+            bar.lines[bass] = shift(bar.lines[cello], -1)
+        if cello in bar.dyn:
+            bar.dyn[bass] = bar.dyn[cello]
+        if cello in bar.tech:
+            bar.tech[bass] = bar.tech[cello]
+    return bars
+
+
 # ---------------------------------------------------------------- 和弦表
 # 名字 -> (钢琴左手四音（低到高）, 风琴三四音, 低音)
 CH = {
@@ -142,13 +203,10 @@ THEME_A = [
 
 
 def main_theme():
-    CEL, BEL, ORG, RH, LH, STR = range(6)
+    CEL, BEL, ORG, RH, LH, STR, CB = range(7)
     parts = [
-        Part('celesta', 'Celesta', 'Cel.', 'keyboard.celesta', 8, 60, 108, pan=0.35, template_id='celesta', voice='celesta'),
-        Part('bell', 'Tubular Bells', 'T.B.', 'pitched-percussion.tubular-bells', 14, 60, 77, pan=-0.3, gain=0.8, template_id='tubular-bells', voice='bell'),
-        Part('organ', 'Reed Organ', 'Org.', 'keyboard.organ.reed', 20, 36, 96, pan=-0.2, template_id='reed-organ', voice='organ'),
-        Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, staves=2, pan=0.1, template_id='piano', voice='piano'),
-        Part('strings', 'Low Strings', 'Str.', 'strings.group', 49, 36, 76, bass_clef=True, pan=-0.1, gain=0.9, template_id='strings', voice='strings'),
+        p_celesta(pan=0.35), p_bells(pan=-0.3, gain=0.8), p_harmonium(pan=-0.2), p_piano(staves=2, pan=0.1),
+        p_cellos(pan=-0.1, gain=0.9), p_basses(pan=-0.15, gain=0.9),
     ]
     bars = []
     # 引子 · 门外：只有后半截与它的回声
@@ -220,8 +278,9 @@ def main_theme():
                     harm=['Gmaj7'], lead=CEL))
     bars.append(Bar({CEL: 'D#5:h B4:h^', ORG: 'F#3+B3+D#4:w^', STR: 'B2:w^', LH: 'B1+F#2:w^', BEL: 'B4:w^'},
                     dyn={BEL: 'pp'}, harm=['B'], lead=CEL))
+    bars = with_contrabass(bars, STR, CB)
     return Piece('main_theme', '安眠者有福', 'Beati qui dormiunt — 主题', 2, (4, 4), parts, bars,
-                 reverb=2.6, wet=0.3, mix={CEL: 8, BEL: 13, ORG: -2, RH: 3, LH: 2, STR: -7},
+                 reverb=2.6, wet=0.3, mix={CEL: 8, BEL: 13, ORG: -2, RH: 3, LH: 2, STR: -4, CB: -7},
                  style=dict(rubato=1.0, swell=1.0, pedal={RH: 'full', LH: 'full'}), squeeze=1.8)
 
 
@@ -229,10 +288,8 @@ def door_side():
     """第一章《门的这一侧》：一个主题、一种织体。钟摆式左手、零星的右手旋律，远处只剩半句呼喊。"""
     CEL, ORG, RH, LH, STR = range(5)
     parts = [
-        Part('celesta', 'Celesta', 'Cel.', 'keyboard.celesta', 8, 60, 108, pan=0.45, gain=0.85, template_id='celesta', voice='celesta'),
-        Part('organ', 'Reed Organ', 'Org.', 'keyboard.organ.reed', 20, 36, 96, pan=-0.3, gain=0.7, template_id='reed-organ', voice='organ'),
-        Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, staves=2, template_id='piano', voice='piano'),
-        Part('strings', 'Low Strings', 'Str.', 'strings.group', 49, 36, 76, bass_clef=True, pan=-0.15, gain=0.75, template_id='strings', voice='strings'),
+        p_celesta(pan=0.45, gain=0.85), p_harmonium(pan=-0.3, gain=0.7), p_piano(staves=2),
+        p_strings(pan=-0.15, gain=0.75),
     ]
     chords = [['Bm9'], ['Gmaj9'], ['Em9'], ['F#sus4'], ['Bm9'], ['Gmaj9'], ['Dmaj7/F#'], ['A6'],
               ['Bm9'], ['Gmaj9'], ['Em9'], ['F#sus4'], ['Bm9'], ['Gmaj9'], ['Dmaj7/F#'], ['F#sus4', 'F#']]
@@ -260,9 +317,7 @@ def confrontation():
     脚下却是 G 大调（阻碍终止，恶魔“字面为真”）。第二遍句尾攀到 B5 再落下。"""
     ORG, RH, LH, STR = range(4)
     parts = [
-        Part('organ', 'Reed Organ', 'Org.', 'keyboard.organ.reed', 20, 36, 96, pan=-0.25, template_id='reed-organ', voice='organ'),
-        Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, staves=2, pan=0.1, template_id='piano', voice='piano'),
-        Part('strings', 'Low Strings', 'Str.', 'strings.group', 49, 36, 76, bass_clef=True, pan=-0.05, template_id='strings', voice='strings'),
+        p_harmonium(pan=-0.25), p_piano(staves=2, pan=0.1), p_strings(pan=-0.05),
     ]
 
     def pulse(chords):
@@ -294,11 +349,8 @@ def night():
     """第二章·夜：一个主题、一种织体。八音盒放慢的门句，第二遍发条将尽，最后只剩一个“开”。"""
     BOX, BEL, ORG, LH, STR = range(5)
     parts = [
-        Part('musicbox', 'Celesta', 'Cel.', 'keyboard.celesta', 8, 60, 108, pan=0.25, template_id='celesta', voice='celesta'),
-        Part('bell', 'Tubular Bells', 'T.B.', 'pitched-percussion.tubular-bells', 14, 48, 77, pan=-0.45, gain=0.55, template_id='tubular-bells', voice='bell'),
-        Part('organ', 'Reed Organ', 'Org.', 'keyboard.organ.reed', 20, 36, 96, pan=-0.2, gain=0.6, template_id='reed-organ', voice='organ'),
-        Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, bass_clef=True, pan=0.05, gain=0.8, template_id='piano', voice='piano'),
-        Part('strings', 'Low Strings', 'Str.', 'strings.group', 49, 36, 76, bass_clef=True, gain=0.8, template_id='strings', voice='strings'),
+        p_celesta(pan=0.25), p_bells(pan=-0.45, gain=0.55), p_harmonium(pan=-0.2, gain=0.6),
+        p_piano(bass_clef=True, pan=0.05, gain=0.8), p_strings(gain=0.8),
     ]
 
     def rock3(c):
@@ -366,18 +418,18 @@ def pizz_line(chords):
 
 def day():
     """第二章晨与上午：主题的日常变奏，D 大调 6/8 船歌。三种形式：钢琴、单簧管（钢片琴应和）、钢片琴（单簧管对位）。"""
-    CLA, CEL, RH, LH, PIZ = range(5)
+    CLA, CEL, RH, LH, PIZ, CB = range(6)
     parts = [
-        Part('clarinet', 'Clarinet', 'Cl.', 'wind.reed.clarinet', 71, 49, 94, pan=-0.3, template_id='clarinet', voice='clarinet'),
-        Part('celesta', 'Celesta', 'Cel.', 'keyboard.celesta', 8, 60, 108, pan=0.4, gain=0.7, template_id='celesta', voice='celesta'),
-        Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, staves=2, pan=0.1, template_id='piano', voice='piano'),
-        Part('pizz', 'Pizzicato Strings', 'Pizz.', 'strings.group', 45, 36, 76, bass_clef=True, pan=-0.1, template_id='strings', voice='pizz', channel_name='pizzicato'),
+        Part('clarinet', '单簧管', 'Cl.', 'wind.reed.clarinet.bflat', 71, 50, 94, amateur=(50, 89), pan=-0.3,
+             template_id='bb-clarinet', voice='clarinet', transpose=(-2, -1)),
+        p_celesta(pan=0.4, gain=0.7), p_piano(staves=2, pan=0.1),
+        p_cellos(pizz=True, pan=-0.1), p_basses(pizz=True, pan=-0.15),
     ]
     bars = []
     tempo = (90, tempo_text(60, 'Allegretto, a passeggio', dotted=True))
     for i, (mel, ch) in enumerate(THEME_MAJOR_68):
         kw = dict(mark='一 · 钢琴', tempo=tempo, text={RH: 'leggiero'},
-                  dyn={RH: 'mf', LH: 'p', PIZ: 'mp', CLA: 'mp', CEL: 'p'}) if i == 0 else {}
+                  dyn={RH: 'mf', LH: 'p', PIZ: 'mp', CLA: 'mp', CEL: 'p'}, tech={PIZ: 'pizzicato'}) if i == 0 else {}
         bars.append(Bar({RH: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, harm=ch, lead=RH, **kw))
     for i, (mel, ch) in enumerate(THEME_MAJOR_68):
         lines = {CLA: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}
@@ -389,8 +441,9 @@ def day():
         lines = {CEL: mel, CLA: COUNTER_68[i], LH: barcarolle(ch), PIZ: pizz_line(ch)}
         kw = dict(mark='三 · 钢片琴', dyn={CEL: 'mp', CLA: 'p'}) if i == 0 else {}
         bars.append(Bar(lines, harm=ch, lead=CEL, **kw))
+    bars = with_contrabass(bars, PIZ, CB)
     return Piece('day', '十六人的日子', '日常变奏 · 船歌（循环）', 2, (6, 8), parts, bars, reverb=1.5, wet=0.2,
-                 mix={CLA: 6, CEL: 7, RH: 4, LH: 0, PIZ: -5},
+                 mix={CLA: 6, CEL: 7, RH: 4, LH: 0, PIZ: -5, CB: -7},
                  style=dict(rubato=0.5, swell=0.8, pedal={RH: 'half', LH: 'half'}, short_chords=(LH,)))
 
 
@@ -432,12 +485,17 @@ def day_noon():
     弹拨低八度与木鱼加入，第二遍笛子翻高八度。各声部同奏一条旋律的不同繁简（支声复调），不用西式和声。"""
     DIZI, ERHU, YANG, PIPA, ZHENG_, MUYU = range(6)
     parts = [
-        Part('flute', 'D Dizi', 'D Di.', 'wind.flutes.di-zi', 72, 60, 98, pan=-0.25, template_id='d-dizi', voice='flute'),
-        Part('fiddle', 'Erhu', 'Eh.', 'strings.erhu', 110, 55, 96, pan=0.25, template_id='erhu', voice='fiddle', channel_name='arco'),
-        Part('dulcimer', 'Dulcimer', 'Dulc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 96, pan=0.4, template_id='dulcimer', voice='dulcimer'),
-        Part('shamisen', 'Shamisen', 'Sham.', 'pluck.shamisen', 106, 40, 88, pan=-0.4, template_id='shamisen', voice='shamisen'),
-        Part('koto', 'Koto', 'Koto', 'pluck.koto', 107, 36, 91, bass_clef=True, pan=0.1, template_id='koto', voice='koto'),
-        Part('woodblock', 'Wood Blocks', 'Wd. Bl.', 'wood.wood-block', 48, 60, 84, template_id='wood-blocks', voice='woodblock', bank=128, drum_map={72: 76}),
+        Part('flute', 'D调笛子', 'D Di.', 'wind.flutes.di-zi', 72, 69, 100, amateur=(69, 95), pan=-0.25,
+             template_id='d-dizi', voice='flute'),
+        Part('fiddle', '二胡', 'Eh.', 'strings.erhu', 110, 62, 93, amateur=(62, 81), pan=0.25, template_id='erhu',
+             voice='fiddle', channel_name='arco', channels=(('arco', 0, 110), ('pizzicato', 0, 45), ('tremolo', 0, 44))),
+        Part('dulcimer', '扬琴', 'Dlc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 86, pan=0.4,
+             template_id='dulcimer', voice='dulcimer'),
+        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 48, 84, amateur=(48, 79), pan=-0.4,
+             template_id='shamisen', voice='shamisen'),
+        Part('koto', '日本筝', 'Ko.', 'pluck.koto', 107, 36, 83, amateur=(57, 83), bass_clef=True, pan=0.1,
+             template_id='koto', voice='koto'),
+        p_temple_blocks(),
     ]
     bars = []
     for i in range(8):
@@ -474,12 +532,17 @@ def day_afternoon():
     最后扬琴以轮音加花接过主题、拉弦低八度相随。和声只靠 B–F# 的持续音与旋律本身。"""
     NEY, SANTUR, DUTAR, FIDDLE, DAF, DRONE = range(6)
     parts = [
-        Part('shakuhachi', 'Shakuhachi', 'Shak.', 'wind.flutes.shakuhachi', 77, 60, 93, pan=-0.2, template_id='shakuhachi', voice='shakuhachi'),
-        Part('dulcimer', 'Dulcimer', 'Dulc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 96, pan=0.35, template_id='dulcimer', voice='dulcimer'),
-        Part('shamisen', 'Shamisen', 'Sham.', 'pluck.shamisen', 106, 40, 84, bass_clef=True, pan=-0.35, template_id='shamisen', voice='shamisen'),
-        Part('fiddle', 'Violin', 'Vln.', 'strings.violin', 40, 55, 96, pan=0.2, template_id='violin', voice='violin', channel_name='arco'),
-        Part('framedrum', 'Frame Drum', 'Fr. Dr.', 'drum.frame-drum', 0, 48, 72, pan=0.05, template_id='frame-drum', voice='framedrum', bank=128, drum_map={48: 45, 60: 45}),
-        Part('strings', 'Low Strings', 'Str.', 'strings.group', 49, 36, 76, bass_clef=True, gain=0.6, template_id='strings', voice='strings'),
+        Part('shakuhachi', '尺八', 'Shak.', 'wind.flutes.shakuhachi', 77, 60, 100, amateur=(62, 88), pan=-0.2,
+             template_id='shakuhachi', voice='shakuhachi'),
+        Part('dulcimer', '扬琴', 'Dlc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 86, pan=0.35,
+             template_id='dulcimer', voice='dulcimer'),
+        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 48, 84, amateur=(48, 79), bass_clef=True,
+             pan=-0.35, template_id='shamisen', voice='shamisen'),
+        Part('fiddle', '小提琴', 'Vln.', 'strings.violin', 40, 55, 103, amateur=(55, 88), pan=0.2, template_id='violin',
+             voice='violin', channel_name='arco', channels=(('arco', 0, 40), ('pizzicato', 0, 45), ('tremolo', 0, 44))),
+        Part('framedrum', '框鼓', 'Fr. Dr.', 'drum.frame-drum', 0, 48, 72, pan=0.05, template_id='frame-drum',
+             voice='framedrum', bank=128, drum_map={48: 45, 60: 45}),
+        p_strings(gain=0.6),
     ]
     aksak = 'C3:e> r:e C4:e C3:e> r:e C4:e C4:e> C4:e'
     ostinato = 'B2:e F#3:e B3:e B2:e F#3:e B3:e F#3:e B3:e'
@@ -497,7 +560,7 @@ def day_afternoon():
         bars.append(Bar({SANTUR: tremolo(line), FIDDLE: shift(line, -1), DUTAR: ostinato, DAF: aksak,
                          DRONE: 'B2+F#3:w'}, harm=['Bm'], lead=SANTUR, **kw))
     return Piece('day_afternoon', '午后', '日常变奏 · 木卡姆式（循环）', 2, (4, 4), parts, bars, reverb=1.4, wet=0.22,
-                 mix={DRONE: -6, DAF: -2}, style=dict(rubato=0.6, swell=0.7, lead_db=2.5))
+                 mix={DRONE: -6, DAF: 6}, style=dict(rubato=0.6, swell=0.7, lead_db=2.5))
 
 
 # Kirwani 拉格（音阶与和声小调相同），Sa = B
@@ -516,12 +579,15 @@ TEENTAAL = ['C3+C4:q> C3+D4:q C3+D4:q C3+C4:q', 'C3+C4:q C3+D4:q C3+D4:e E4:e C3
 def day_evening():
     """傍晚：拉格式变奏。坦布拉的 Pa–Sa–Sa–Sa 持续音之上，西塔琴先以阿拉普慢慢展开音阶，
     第七小节才露出门句；随后塔布拉进入十六拍，西塔琴与竹笛先后奏主题。"""
-    SITAR, BANSURI, TANPURA, TABLA = range(4)
+    SITAR, TANPURA, BANSURI, TABLA = range(4)
     parts = [
-        Part('sitar', 'Sitar', 'Sit.', 'pluck.sitar', 104, 48, 84, pan=-0.15, template_id='sitar', voice='sitar'),
-        Part('flute', 'Flute', 'Fl.', 'wind.flutes.flute', 73, 60, 96, pan=0.25, template_id='flute', voice='flute'),
-        Part('tanpura', 'Sitar Drone', 'Sit. Dr.', 'pluck.sitar', 104, 40, 64, bass_clef=True, gain=0.8, template_id='sitar', voice='sitar'),
-        Part('tabla', 'Tablas', 'Tbs.', 'drum.tabla', 0, 48, 72, pan=0.1, template_id='tablas', voice='tabla', bank=0, drum_map={48: 73, 60: 71, 62: 87, 64: 84}, soundfont='SoundFonts/Tabla.sf2'),
+        Part('sitar', '西塔琴', 'Si.', 'pluck.sitar', 104, 36, 84, pan=-0.15, template_id='sitar', voice='sitar'),
+        Part('tanpura', '西塔琴', 'Si.', 'pluck.sitar', 104, 36, 84, bass_clef=True, gain=0.8, template_id='sitar',
+             voice='sitar'),
+        Part('flute', '长笛', 'Fl.', 'wind.flutes.flute', 73, 59, 98, amateur=(60, 93), pan=0.25, template_id='flute',
+             voice='flute'),
+        Part('tabla', 'Tablas', 'Tbs.', 'drum.tabla', 0, 48, 72, pan=0.1, template_id='tablas', voice='tabla', bank=0,
+             drum_map={48: 73, 60: 71, 62: 87, 64: 84}, soundfont='SoundFonts/Tabla.sf2'),
     ]
     drone = 'F#3:q B3:q B3:q B2:q'
     bars = []
@@ -541,7 +607,7 @@ def day_evening():
                 lines[BANSURI] = line
             bars.append(Bar(lines, harm=['Bm'], lead=SITAR if rep == 0 else BANSURI, **kw))
     return Piece('day_evening', '暮课', '日常变奏 · 拉格式（循环）', 2, (4, 4), parts, bars, reverb=1.8, wet=0.24,
-                 mix={SITAR: 2, BANSURI: 1, TANPURA: -5, TABLA: -4}, style=dict(rubato=0.7, swell=0.7, lead_db=2.5))
+                 mix={SITAR: 2, BANSURI: 1, TANPURA: -5, TABLA: 4}, style=dict(rubato=0.7, swell=0.7, lead_db=2.5))
 
 
 # 羽调式五声（B D E F# A）的主题：门句成为 D–B | F#–E–F#
@@ -558,13 +624,16 @@ def rite():
     笙以四五度持续，建鼓开合；第二遍埙奏主题、琴低八度支声，末以三通鼓止。"""
     BZ, QING, SHENG_, XUN, QIN_, DRUM, ZHU = range(7)
     parts = [
-        Part('bianzhong', 'Tubular Bells', 'T.B.', 'pitched-percussion.tubular-bells', 14, 48, 96, pan=-0.3, template_id='tubular-bells', voice='bell'),
-        Part('bianqing', 'Xylophone', 'Xyl.', 'pitched-percussion.xylophone', 13, 48, 96, pan=0.3, template_id='xylophone', voice='xylophone'),
-        Part('organ', 'Sheng', 'She.', 'wind.reed.sheng', 20, 48, 88, gain=0.8, template_id='sheng', voice='organ'),
-        Part('ocarina', 'Ocarina', 'Oc.', 'wind.flutes.ocarina', 79, 60, 88, pan=-0.15, template_id='ocarina', voice='ocarina'),
-        Part('koto', 'Koto', 'Koto', 'pluck.koto', 107, 36, 84, pan=0.15, template_id='koto', voice='koto'),
-        Part('taiko', 'Concert Bass Drum', 'B. Dr.', 'drum.bass-drum', 48, 36, 60, bass_clef=True, template_id='bass-drum', voice='bassdrum', bank=128, drum_map={48: 36}),
-        Part('woodblock', 'Wood Blocks', 'Wd. Bl.', 'wood.wood-block', 48, 60, 84, template_id='wood-blocks', voice='woodblock', bank=128, drum_map={72: 76}),
+        p_bells(pan=-0.3),
+        Part('bianqing', '木琴', 'Xyl.', 'pitched-percussion.xylophone', 13, 60, 108, amateur=(65, 96), pan=0.3,
+             template_id='xylophone', voice='xylophone', transpose=(12, 7)),
+        Part('organ', '中音笙', 'A. She.', 'wind.reed.sheng', 20, 48, 83, gain=0.8, template_id='alto-sheng', voice='organ'),
+        Part('ocarina', '中音陶笛', 'A. Oc.', 'wind.flutes.ocarina', 79, 69, 89, amateur=(72, 89), pan=-0.15,
+             template_id='c-alto-ocarina', voice='ocarina'),
+        Part('koto', '日本筝', 'Ko.', 'pluck.koto', 107, 36, 83, amateur=(57, 83), pan=0.15, template_id='koto',
+             voice='koto'),
+        Part('taiko', '大鼓', 'Dagu', '', 0, 36, 60, template_id='dagu', voice='dagu', bank=128, drum_map={48: 87}),
+        p_temple_blocks(),
     ]
     bars = []
     for rep in range(2):
@@ -587,12 +656,12 @@ def rite():
             kw = {}
             if i == 0 and rep == 0:
                 kw = dict(mark='一 · 金声玉振', tempo=(50, tempo_text(50, 'Grave, rituale')),
-                          dyn={BZ: 'mf', QING: 'mp', SHENG_: 'p', XUN: 'mp', QIN_: 'mp', DRUM: 'mf', ZHU: 'mp'})
+                          dyn={BZ: 'mf', QING: 'mp', SHENG_: 'p', XUN: 'mp', QIN_: 'mp', DRUM: 'mf', ZHU: 'mf'})
             elif i == 0:
                 kw = dict(mark='二 · 埙与琴')
             bars.append(Bar(lines, harm=['Bm'], lead=BZ if rep == 0 else XUN, **kw))
     return Piece('rite', '誓约', '日常变奏 · 雅乐式（名录库之议，循环）', 2, (4, 4), parts, bars, reverb=2.8, wet=0.32,
-                 mix={QING: 3, QIN_: 4, DRUM: 2, ZHU: 12}, style=dict(rubato=0.15, swell=0.4, lead_db=2.0), squeeze=1.8)
+                 mix={QING: 16, QIN_: 4, DRUM: -4, ZHU: 12, BZ: 3}, style=dict(rubato=0.15, swell=0.4, lead_db=2.0), squeeze=1.8)
 
 
 CUES = [main_theme, door_side, confrontation, night, day, day_noon, day_afternoon, day_evening, rite]

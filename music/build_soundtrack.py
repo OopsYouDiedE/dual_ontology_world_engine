@@ -2,7 +2,13 @@
 
     python music/build_soundtrack.py              # 曲谱、配乐、音效与对白提示音全部重建
     python music/build_soundtrack.py --only night # 只重建某一首（或某个音效 id）
-    python music/build_soundtrack.py --scores     # 只写曲谱（.mscz / .mid，及下述 PDF / MusicXML）
+    python music/build_soundtrack.py --scores     # 只核对曲谱，不渲染音频
+    python music/build_soundtrack.py --export     # 另用 MuseScore 重新导出 PDF / MusicXML / MIDI / MP3
+    python music/build_soundtrack.py --rewrite-scores  # 从 cues.py 重写曲谱（会丢失手工编辑）
+
+曲谱（.mscz）可在 MuseScore 4 里手工编辑，编辑后须把同样的改动写回 cues.py：构建会逐项比对
+两者（声部、音色、移调、每小节的音符、力度、文字、演奏法、排练记号、可见速度），不一致即停止。
+游戏 OGG 始终由 cues.py 经演奏诠释、采样器与混音渲染，并做无缝循环与响度统一。
 
 输出：
     music/Blessed Sleepers - <曲名>.mscz / .mid        曲谱原稿（MuseScore 4 可打开编辑）
@@ -29,7 +35,7 @@ import cues  # noqa: E402
 import interpret  # noqa: E402
 import sfx  # noqa: E402
 import synth  # noqa: E402
-from score_io import write_midi, write_mscz  # noqa: E402
+from score_io import compare_with_score, write_midi, write_mscz  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 ASSETS = os.path.join(ROOT, 'godot_csharp', 'ShareAsset', 'Internal')
@@ -54,11 +60,12 @@ def find_musescore():
 def export_score(musescore, mscz):
     """用 MuseScore 4 打开生成的曲谱并导出 PDF 与 MusicXML；打不开即报错。"""
     base = os.path.splitext(mscz)[0]
-    for ext in ('.pdf', '.musicxml'):
+    for ext in ('.pdf', '.musicxml', '.mid', '.mp3'):
         out = base + ext
         if os.path.exists(out):
             os.remove(out)
-        subprocess.run([musescore, '-o', out, mscz], check=True, capture_output=True, timeout=300)
+        extra = ['-b', '320'] if ext == '.mp3' else []
+        subprocess.run([musescore, *extra, '-o', out, mscz], check=True, capture_output=True, timeout=300)
         if not os.path.exists(out) or os.path.getsize(out) == 0:
             raise RuntimeError(f'MuseScore 未能导出 {out}')
 
@@ -67,12 +74,14 @@ SOUNDFONT = os.environ.get('SOUNDFONT', 'C:/Program Files/MuseScore 4/sound/MS B
 # 音色 -> (库, 预设, 电平修正 dB)；电平修正使各采样在同一力度下大致等响
 SAMPLED = {
     'piano': (0, 0, 0.0), 'organ': (0, 20, -2.0), 'celesta': (0, 8, 0.0), 'bell': (0, 14, -1.0),
-    'musicbox': (0, 10, -2.0), 'clarinet': (0, 71, -4.0), 'strings': (0, 49, 1.0), 'pizz': (0, 45, 9.0),
+    'musicbox': (0, 10, -2.0), 'clarinet': (0, 71, -4.0), 'strings': (0, 48, -2.5), 'pizz': (0, 45, 9.0),
     'flute': (0, 73, -5.0), 'fiddle': (0, 110, -3.0), 'dulcimer': (0, 15, 4.0), 'shamisen': (0, 106, 4.0),
     'koto': (0, 107, -2.0), 'woodblock': (128, 48, -3.0), 'shakuhachi': (0, 77, -6.0), 'sitar': (0, 104, -2.0),
     'ocarina': (0, 79, -9.0), 'taiko': (0, 116, 0.0),
     'violin': (0, 40, -3.0), 'xylophone': (0, 13, -11.0),
     'framedrum': (128, 0, -11.0), 'tabla': (0, 0, -12.0), 'bassdrum': (128, 48, 0.0),
+    'cellos': (41, 48, -4.0), 'basses': (51, 48, 2.0), 'cellos_pizz': (40, 45, 9.0), 'basses_pizz': (50, 45, 7.0),
+    'templeblocks': (1, 115, -3.0), 'dagu': (128, 0, -4.0),
 }
 # 合成音色（音色库里没有的乐器）的电平修正
 SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
@@ -80,7 +89,8 @@ SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': 
 SEND = {'bell': 0.6, 'celesta': 0.45, 'musicbox': 0.45, 'organ': 0.38, 'piano': 0.3,
         'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2, 'bianzhong': 0.55, 'bianqing': 0.5, 'taiko': 0.4,
         'flute': 0.28, 'fiddle': 0.26, 'dulcimer': 0.25, 'shamisen': 0.2, 'koto': 0.3, 'woodblock': 0.18,
-        'violin': 0.26, 'xylophone': 0.5, 'bassdrum': 0.4,
+        'violin': 0.26, 'xylophone': 0.5, 'bassdrum': 0.4, 'cellos': 0.34, 'basses': 0.34, 'cellos_pizz': 0.2,
+        'basses_pizz': 0.2, 'templeblocks': 0.18, 'dagu': 0.4,
         'shakuhachi': 0.32, 'sitar': 0.25, 'ocarina': 0.35, 'tanpura': 0.3, 'tabla': 0.15, 'framedrum': 0.18}
 _sf = None
 _custom_fonts = {}
@@ -184,6 +194,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--only', default='')
     ap.add_argument('--scores', action='store_true')
+    ap.add_argument('--rewrite-scores', action='store_true',
+                    help='从 cues.py 重写 .mscz（会丢失在 MuseScore 里的手工编辑，仅在确实需要时使用）')
+    ap.add_argument('--export', action='store_true', help='重新用 MuseScore 导出 PDF / MusicXML / MIDI / MP3')
     args = ap.parse_args()
     for d in (MUSIC_OUT, SFX_OUT, VOICE_OUT):
         os.makedirs(d, exist_ok=True)
@@ -196,9 +209,20 @@ def main():
         if args.only and args.only != piece.slug:
             continue
         base = os.path.join(HERE, f'Blessed Sleepers - {SCORE_NAMES[piece.slug]}')
-        write_mscz(piece, base + '.mscz')
-        write_midi(piece, base + '.mid')
-        if musescore:
+        # 曲谱可在 MuseScore 里手工编辑：已有的 .mscz 不覆盖，只核对它与 cues.py 一致
+        rewrite = args.rewrite_scores or not os.path.exists(base + '.mscz')
+        if rewrite:
+            write_mscz(piece, base + '.mscz')
+        else:
+            diffs = compare_with_score(piece, base + '.mscz')
+            if diffs:
+                print(f'{piece.slug}：曲谱与 cues.py 不一致（共 {len(diffs)} 处），先同步再渲染：')
+                for d in diffs[:20]:
+                    print('   ', d)
+                sys.exit(1)
+        if rewrite and not musescore:
+            write_midi(piece, base + '.mid')   # 没有 MuseScore 时才由 cues.py 直接写 MIDI
+        if musescore and (rewrite or args.export):
             export_score(musescore, base + '.mscz')
         if args.scores:
             print(f'{piece.slug}: {len(piece.bars)} 小节（只写曲谱）')

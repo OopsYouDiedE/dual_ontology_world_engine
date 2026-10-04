@@ -13,9 +13,13 @@ func _initialize() -> void:
 	# 曲目表常量（如第二章按时段的 SLOT_MUSIC）里列出的 id 也算引用
 	var table := RegEx.create_from_string("const \\w*MUSIC\\w* := \\[([^\\]]*)\\]")
 	var quoted := RegEx.create_from_string("\"([a-z_]+)\"")
+	# C# 剧本经宿主执行的音乐与音效指令（“@music:” 或 “@sfx:” 后接曲目 id）
+	var command := RegEx.create_from_string("@(music|sfx):([a-z_]+)")
 	for path in _scripts("res://scenes"):
 		var text := FileAccess.get_file_as_string(path)
 		for m in pattern.search_all(text):
+			refs[m.get_string(1)][m.get_string(2)] = path
+		for m in command.search_all(text):
 			refs[m.get_string(1)][m.get_string(2)] = path
 		for t in table.search_all(text):
 			for q in quoted.search_all(t.get_string(1)):
@@ -52,7 +56,7 @@ func _initialize() -> void:
 func _scripts(dir: String) -> Array[String]:
 	var out: Array[String] = []
 	for file in DirAccess.get_files_at(dir):
-		if file.ends_with(".gd"):
+		if file.ends_with(".gd") or file.ends_with(".cs"):
 			out.append(dir.path_join(file))
 	for sub in DirAccess.get_directories_at(dir):
 		out.append_array(_scripts(dir.path_join(sub)))
