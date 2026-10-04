@@ -1,0 +1,11 @@
+独立自动回归 auto-04，2026-10-04。报告冻结于主代理后续生产修复之前。
+没有读取设计文件、历史报告；没有改生产源码。仅修改既有测试regression_v5.gd、compare_v5.ps1。
+构建：宿主build成功25警告0错误。Prototype默认输出首次被独立盲玩PID33656锁定，未终止进程；主代理指定独立输出cli-build后build成功2警告0错误。
+真实窗口渲染回归完成，37条命令、234 output_entries；CLI与Godot全部275行逐字比较，0差异。仅剔除CLI自身 > 输入回显，保留其他所有字符、空行、重复与次序。
+规矩：第3日使用_pick_rule真实send规矩后读取state.rules，讲苏泠甲，输出“你当面对苏泠说了甲...苏泠没有接受”，证明标签已正式登记并正确解析。
+重演：使用manuscript._choose(0,1)同步真实选择后宿主run_replay([1,0,0],true)，inputs记录同一重演第2夜1。last_run_vars断言通过，未改选择有效、改选择标已过期、次夜上下文清空结果与last_run_vars均通过。不直接注入replay_result。stage单独play用于渲染截图并skipping，用途是截图，不是游玩验证。
+静态复用：Paper、HintOverlay、FieldNavigation与Awakening原版完整SHA256一致，见hashes.txt。Chapter2Dialogue.tscn仍ext_resource引用res://scenes/Story/StoryDialogue.gd；Chapter2Game.tscn实例引用Chapter2Dialogue.tscn，无复制共享脚本逻辑。
+导航失败：远目标_approach_site后pending目标存在且未ui_lock断言通过；Input.parse_input_event物理D按下后click_path与pending清空断言通过；再次_approach_site自然physics_frame等待30秒后未打开菜单，check_navigation第30行assert失败，见godot.log。本次没有打印具体id与末位置，不能从日志断言卡住原因。已修测试追加目标、位置、路径失败证据并quit(4)，未再运行，留给下一独立Agent。
+该失败被Godot assertion只中止函数而主run继续，日志虽有COMPLETE与进程exit0，整轮不能判通过。下一轮必须检查SCRIPT ERROR且测试应失败退出。
+查看最新全部11张截图：开场正文清晰；笔记、规矩拼卡、左右手稿、墨影、有效结果、过期结果、对质、结尾均可读。08b滚动末尾清晰包含侦探名字与老师“那并非你的名字”“也不是别人的”、结局标题。左页内容须滚动，截图未覆盖全部下方变量/操作按钮。
+这是自动回归与渲染验证，不是独立盲玩，也没有证明有效游玩时长、体验或后续生产修复。

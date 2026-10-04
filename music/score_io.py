@@ -6,13 +6,15 @@
 后缀：> 重音，- 保持音，^ 延长记号。不用连音线与三连音，长音都写在小节之内。
 """
 import os
+import json
 import struct
 import zipfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from fractions import Fraction
 from xml.sax.saxutils import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE = os.path.join(HERE, 'The Unfallen Duet.mscz')
 
 STEP_SEMI = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 STEP_TPC = {'F': 13, 'C': 14, 'G': 15, 'D': 16, 'A': 17, 'E': 18, 'B': 19}
@@ -111,6 +113,14 @@ class Part:
     pan: float = 0.0         # -1 左 … 1 右
     gain: float = 1.0
     voice: str = ''          # 合成器音色，默认同 key
+    template_id: str = ''    # MuseScore 本机乐器模板 ID
+    bank: int = 0            # SoundFont/MIDI bank
+    drum_map: dict = field(default_factory=dict)
+    channel_name: str = ''
+    soundfont: str = ''       # music/ 下的专用采样库，相对路径
+
+    def playback_pitch(self, pitch):
+        return self.drum_map[pitch] if self.drum_map else pitch
 
 
 @dataclass
@@ -184,8 +194,19 @@ class Piece:
 
 # ---------------------------------------------------------------- MSCX 输出
 
-def _note_xml(name, state, kalt):
+# 框鼓、大鼓、木块复用本机击打定义；塔布拉沿用结构并采用 Tabla.sf2 的击法键位。
+DRUM_DEFINITIONS = {
+    'frame-drum': '<Drum pitch="45"><head>normal</head><line>0</line><voice>0</voice><name>Frame Drum</name><stem>1</stem><shortcut>A</shortcut></Drum>',
+    'tablas': '<Drum pitch="73"><head>normal</head><line>1</line><voice>0</voice><name>Ge (open bass)</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum><Drum pitch="71"><head>normal</head><line>-1</line><voice>0</voice><name>Na</name><stem>1</stem><shortcut>B</shortcut><panelRow>0</panelRow><panelColumn>1</panelColumn></Drum><Drum pitch="87"><head>normal</head><line>-1</line><voice>0</voice><name>Tin</name><stem>1</stem><shortcut>C</shortcut><panelRow>0</panelRow><panelColumn>2</panelColumn></Drum><Drum pitch="84"><head>normal</head><line>-1</line><voice>0</voice><name>Te</name><stem>1</stem><shortcut>D</shortcut><panelRow>0</panelRow><panelColumn>3</panelColumn></Drum>',
+    'bass-drum': '<Drum pitch="36"><head>normal</head><line>0</line><voice>0</voice><name>Concert Bass Drum</name><stem>2</stem><shortcut>A</shortcut></Drum>',
+    'wood-blocks': '<Drum pitch="76"><head>normal</head><line>-1</line><voice>0</voice><name>High Wood Block</name><stem>1</stem><shortcut>A</shortcut></Drum><Drum pitch="77"><head>normal</head><line>1</line><voice>0</voice><name>Low Wood Block</name><stem>1</stem><shortcut>B</shortcut></Drum>',
+}
+
+
+def _note_xml(name, state, kalt, part):
     step, alter, octave, midi = parse_pitch(name)
+    if part.drum_map:
+        return f'<Note><pitch>{part.playback_pitch(midi)}</pitch><tpc>14</tpc></Note>'
     tpc = STEP_TPC[step] + 7 * alter
     expected = state.get((step, octave), kalt[step])
     acc = ''
@@ -195,7 +216,7 @@ def _note_xml(name, state, kalt):
     return f'<Note><pitch>{midi}</pitch><tpc>{tpc}</tpc>{acc}</Note>'
 
 
-def _events_xml(line, kalt):
+def _events_xml(line, kalt, part):
     state, out = {}, []
     for pitches, dur, flags in parse_line(line):
         dtype, dots, _ = DUR[dur]
@@ -210,21 +231,27 @@ def _events_xml(line, kalt):
             arts += '<Articulation><subtype>articTenutoAbove</subtype></Articulation>'
         if 'fermata' in flags:
             out.append('<Fermata><subtype>fermataAbove</subtype></Fermata>')
-        out.append(f'<Chord>{dxml}{arts}' + ''.join(_note_xml(p, state, kalt) for p in pitches) + '</Chord>')
+        out.append(f'<Chord>{dxml}{arts}' + ''.join(_note_xml(p, state, kalt, part) for p in pitches) + '</Chord>')
     return ''.join(out)
 
 
 def _part_xml(pid, part):
     staves = []
+    percussion = bool(part.drum_map)
+    group = 'percussion' if percussion else 'pitched'
+    staff_name = 'perc1Line' if percussion else 'stdNormal'
+    lines = '<lines>1</lines>' if percussion else ''
     for i in range(part.staves):
         extra = ''
         if part.staves == 2 and i == 0:
             extra = '\n        <bracket type="1" span="2" col="0" visible="1" />\n        <barLineSpan>1</barLineSpan>'
-        if (part.staves == 2 and i == 1) or (part.staves == 1 and part.bass_clef):
+        if not percussion and ((part.staves == 2 and i == 1) or (part.staves == 1 and part.bass_clef)):
             extra += '\n        <defaultClef>F</defaultClef>'
+        if percussion:
+            extra += '\n        <defaultClef>PERC</defaultClef>'
         staves.append(f'''      <Staff>
-        <StaffType group="pitched">
-          <name>stdNormal</name>
+        <StaffType group="{group}">
+          <name>{staff_name}</name>{lines}
           </StaffType>{extra}
         </Staff>
 ''')
@@ -233,8 +260,13 @@ def _part_xml(pid, part):
         clef = '\n        <clef staff="2">F</clef>'
     elif part.bass_clef:
         clef = '\n        <clef>F</clef>'
+    if percussion:
+        clef = '\n        <clef>PERC</clef>'
+    drumset = ('<useDrumset>1</useDrumset>' + DRUM_DEFINITIONS[part.template_id]) if percussion else ''
+    channel_name = f' name="{part.channel_name}"' if part.channel_name else ''
+    bank = f'<controller ctrl="0" value="{part.bank >> 7}" /><controller ctrl="32" value="{part.bank & 127}" />'
     return (f'    <Part id="{pid}">\n' + ''.join(staves) + f'''      <trackName>{part.name}</trackName>
-      <Instrument id="{part.key}">
+      <Instrument id="{part.template_id}">
         <longName>{part.name}</longName>
         <shortName>{part.short}</shortName>
         <trackName>{part.name}</trackName>
@@ -242,10 +274,10 @@ def _part_xml(pid, part):
         <maxPitchP>{part.hi}</maxPitchP>
         <minPitchA>{part.lo}</minPitchA>
         <maxPitchA>{part.hi}</maxPitchA>
-        <instrumentId>{part.instrument_id}</instrumentId>{clef}
-        <Channel>
+        <instrumentId>{part.instrument_id}</instrumentId>{clef}{drumset}
+        <Channel{channel_name}>
+          {bank}
           <program value="{part.program}" />
-          <synti>Fluid</synti>
           </Channel>
         </Instrument>
       </Part>
@@ -269,7 +301,7 @@ def build_mscx(piece):
         for bi, bar in enumerate(piece.bars):
             head = ''
             if bi == 0:
-                head += (f'<KeySig><concertKey>{piece.key}</concertKey></KeySig>'
+                head += (('' if part.drum_map else f'<KeySig><concertKey>{piece.key}</concertKey></KeySig>') +
                          f'<TimeSig><sigN>{num}</sigN><sigD>{den}</sigD></TimeSig>')
             if si == 0 and bar.mark:
                 head += f'<RehearsalMark><text>{escape(bar.mark)}</text></RehearsalMark>'
@@ -282,13 +314,13 @@ def build_mscx(piece):
             if si in bar.dyn:
                 d = bar.dyn[si]
                 head += f'<Dynamic><subtype>{d}</subtype><velocity>{VELOCITY[d]}</velocity></Dynamic>'
-            body = _events_xml(piece.line(bar, si), kalt)
+            body = _events_xml(piece.line(bar, si), kalt, part)
             tail = '<BarLine><subtype>end</subtype></BarLine>' if bi == len(piece.bars) - 1 else ''
             rows.append(f'      <Measure><voice>{head}{body}{tail}</voice></Measure>\n')
         rows.append('      </Staff>\n')
         staves_xml.append(''.join(rows))
     parts_xml = ''.join(_part_xml(i + 1, p) for i, p in enumerate(piece.parts))
-    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+    mscx = ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<museScore version="4.70">\n'
             '  <programVersion>4.7.5</programVersion>\n'
             '  <Score>\n'
@@ -301,62 +333,113 @@ def build_mscx(piece):
             + parts_xml + ''.join(staves_xml) +
             '    </Score>\n'
             '  </museScore>\n')
+    return apply_expression_playback(mscx, piece)
+
+
+def apply_expression_playback(mscx, piece):
+    """补谱中文字尚未表达的播放控制；也可用于保留用户编辑的现有总谱。"""
+    if piece.slug not in ('main_theme', 'door_side', 'day_afternoon', 'day_evening'):
+        return mscx
+    root = ET.fromstring(mscx)
+    score = root.find('Score')
+    lengths = {'16th': .25, 'eighth': .5, 'quarter': 1., 'half': 2., 'whole': 4.}
+    def connect(kind, start, end, properties):
+        start_item, sm, sq = start
+        end_item, em, eq = end
+        fraction = Fraction(eq - sq).limit_denominator() / 4
+        ET.SubElement(start_item, 'Spanner', type=kind).extend([
+            ET.fromstring(f'<{kind}><visible>0</visible>{properties}</{kind}>'),
+            ET.fromstring(f'<next><location><measures>{em-sm}</measures><fractions>{fraction.numerator}/{fraction.denominator}</fractions></location></next>')])
+        ET.SubElement(end_item, 'Spanner', type=kind).append(ET.fromstring(
+            f'<prev><location><measures>{sm-em}</measures><fractions>{-fraction.numerator}/{fraction.denominator}</fractions></location></prev>'))
+    if piece.slug == 'main_theme':
+        measures = score.findall('Staff')[3].findall('Measure')
+        start = measures[34].find('voice')
+        end = measures[35].find('voice')
+        # 钢琴最后一个整音以 p 起音，随后自然衰减；只影响右手谱表。
+        props = '<subtype>1</subtype><veloChange>-31</veloChange><singleNoteDynamics>0</singleNoteDynamics><voiceAssignment>allInStaff</voiceAssignment>'
+        start.insert(list(start).index(start.find('Chord')), ET.fromstring(
+            f'<Spanner type="HairPin"><HairPin><visible>0</visible>{props}</HairPin><next><location><measures>1</measures><fractions>0/1</fractions></location></next></Spanner>'))
+        end.insert(list(end).index(end.find('Chord')), ET.fromstring(
+            '<Spanner type="HairPin"><prev><location><measures>-1</measures><fractions>0/1</fractions></location></prev></Spanner>'))
+    ranges = {'main_theme': [(3, 4, 12), (2, 12, 20)], 'door_side': [(3, 0, 16)]}
+    for si, begin, finish in ranges.get(piece.slug, []):
+        run = []
+        for bi, measure in enumerate(score.findall('Staff')[si].findall('Measure')[begin:finish], begin):
+            beat = 0.
+            for child in measure.find('voice'):
+                if child.tag not in ('Chord', 'Rest'):
+                    continue
+                if child.tag == 'Chord':
+                    run.append((child, bi, beat))
+                else:
+                    if len(run) > 1:
+                        connect('Slur', run[0], run[-1], '')
+                    run = []
+                dots = int(child.findtext('dots', '0'))
+                beat += lengths[child.findtext('durationType')] * (2 - .5 ** dots)
+        if len(run) > 1:
+            connect('Slur', run[0], run[-1], '')
+    if piece.slug in ('day_afternoon', 'day_evening'):
+        # 复用已有演奏层的乐句呼吸，只作用于散板引子，节奏段恢复原速度。
+        from interpret import Style, tempo_curve
+        qgrid, tgrid = tempo_curve(piece, Style(**piece.style))
+        count = 4 if piece.slug == 'day_afternoon' else 8
+        measures = score.find('Staff').findall('Measure')
+        for bi, measure in enumerate(measures[:count]):
+            voice = measure.find('voice')
+            beat = 0.
+            for child in list(voice):
+                if child.tag not in ('Chord', 'Rest'):
+                    continue
+                q = bi * 4 + beat
+                k = min(int(round(q * 96)), len(tgrid) - 2)
+                bpm = 60 / ((tgrid[k + 1] - tgrid[k]) * 96)
+                tempo = ET.fromstring(f'<Tempo><visible>0</visible><tempo>{bpm / 60:.8f}</tempo><followText>0</followText><text>♩ = {bpm:.3f}</text></Tempo>')
+                voice.insert(list(voice).index(child), tempo)
+                dots = int(child.findtext('dots', '0'))
+                beat += lengths[child.findtext('durationType')] * (2 - .5 ** dots)
+        restore = piece.bars[count].tempo[0] if piece.bars[count].tempo else piece.bars[0].tempo[0]
+        if not piece.bars[count].tempo:
+            measures[count].find('voice').insert(0, ET.fromstring(f'<Tempo><visible>0</visible><tempo>{restore / 60:.8f}</tempo><followText>0</followText><text>♩ = {restore}</text></Tempo>'))
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding='unicode')
+
+
+def soundfont_input(part):
+    """MuseScore 4.7 FluidResolver 的指定预设资源格式。"""
+    name = os.path.splitext(os.path.basename(part.soundfont))[0]
+    return {'resourceMeta': {
+        'id': f'{name}\\{part.bank}\\{part.program}',
+        'type': 'fluid_soundfont', 'vendor': 'Fluid', 'hasNativeEditorSupport': False,
+        'attributes': {'soundFontName': name, 'playbackSetupData': 'last.last.last',
+                       'presetName': name, 'presetBank': str(part.bank), 'presetProgram': str(part.program)}
+    }, 'unitConfiguration': {}}
 
 
 def write_mscz(piece, path):
     base = os.path.splitext(os.path.basename(path))[0]
-    with zipfile.ZipFile(TEMPLATE) as z:
-        style = z.read('score_style.mss')
-        view = z.read('viewsettings.json')
+    with open(os.path.join(HERE, 'score_style.mss'), 'rb') as f:
+        style = f.read()
+    with open(os.path.join(HERE, 'viewsettings.json'), 'rb') as f:
+        view = f.read()
+    custom_tracks = [{'partId': str(i + 1), 'instrumentId': part.template_id,
+                      'in': soundfont_input(part)} for i, part in enumerate(piece.parts) if part.soundfont]
     container = ('<?xml version="1.0" encoding="UTF-8"?>\n<container>\n  <rootfiles>\n'
                  '    <rootfile full-path="score_style.mss"/>\n'
                  f'    <rootfile full-path="{base}.mscx"/>\n'
-                 '    <rootfile full-path="viewsettings.json"/>\n'
+                 '    <rootfile full-path="viewsettings.json"/>\n' +
+                 ('    <rootfile full-path="audiosettings.json"/>\n' if custom_tracks else '') +
                  '    </rootfiles>\n  </container>\n')
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr(f'{base}.mscx', build_mscx(piece))
         z.writestr('score_style.mss', style)
         z.writestr('viewsettings.json', view)
         z.writestr('META-INF/container.xml', container)
+        if custom_tracks:
+            z.writestr('audiosettings.json', json.dumps({'tracks': custom_tracks}, ensure_ascii=False))
 
 
-# ---------------------------------------------------------------- 演奏事件
-
-@dataclass
-class Note:
-    staff: int
-    start: float     # 秒
-    length: float    # 秒（记谱时值）
-    pitch: int
-    velocity: int
-    accent: bool
-    fermata: bool
-
-
-def performance(piece):
-    """展开为 [Note] 与总时长（秒）；速度可在小节处变化。"""
-    piece.validate()
-    tempo = {i: bpm for i, bpm in piece.tempo_map()}
-    notes, t0, bpm = [], 0.0, piece.bars[0].tempo[0]
-    vel = {}
-    for bi, bar in enumerate(piece.bars):
-        bpm = tempo.get(bi, bpm)
-        sec_per_tick = 60.0 / bpm / 480
-        for si in range(len(piece.staff_parts())):
-            if si in bar.dyn:
-                vel[si] = VELOCITY[bar.dyn[si]]
-            t = t0
-            for pitches, dur, flags in parse_line(piece.line(bar, si)):
-                length = DUR[dur][2] * sec_per_tick
-                if pitches:
-                    v = min(127, vel.get(si, 64) + (14 if 'accent' in flags else 0))
-                    for p in pitches:
-                        notes.append(Note(si, t, length, midi_of(p), v, 'accent' in flags, 'fermata' in flags))
-                t += length
-        t0 += piece.measure_ticks * sec_per_tick
-    return notes, t0
-
-
+# ---------------------------------------------------------------- MIDI 输出
 def write_midi(piece, path):
     num, den = piece.time
     dd = {4: 2, 8: 3}[den]
@@ -364,11 +447,26 @@ def write_midi(piece, path):
     for bi, bpm in piece.tempo_map():
         us = int(60_000_000 / bpm)
         conductor.append((bi * piece.measure_ticks, 0, b'\xff\x51\x03' + us.to_bytes(3, 'big')))
+    if piece.slug in ('day_afternoon', 'day_evening'):
+        from interpret import Style, tempo_curve
+        qgrid, tgrid = tempo_curve(piece, Style(**piece.style))
+        count = 4 if piece.slug == 'day_afternoon' else 8
+        for bi, bar in enumerate(piece.bars[:count]):
+            tick = bi * piece.measure_ticks
+            for _, dur, _ in parse_line(piece.line(bar, 0)):
+                k = min(round(tick / 480 * 96), len(tgrid) - 2)
+                bpm = 60 / ((tgrid[k + 1] - tgrid[k]) * 96)
+                conductor.append((tick, 1, b'\xff\x51\x03' + int(60_000_000 / bpm).to_bytes(3, 'big')))
+                tick += DUR[dur][2]
+        if not piece.bars[count].tempo:
+            conductor.append((count * piece.measure_ticks, 1, b'\xff\x51\x03' + int(60_000_000 / piece.bars[0].tempo[0]).to_bytes(3, 'big')))
     tracks = [_track_bytes(conductor)]
     channel = 0
     for part in piece.parts:
-        ch = channel
-        evs = [(0, 0, bytes([0xC0 | ch, part.program]))]
+        ch = 9 if part.drum_map else channel
+        evs = [(0, 0, bytes([0xB0 | ch, 0, part.bank >> 7])),
+               (0, 0, bytes([0xB0 | ch, 32, part.bank & 127])),
+               (0, 0, bytes([0xC0 | ch, part.program]))]
         name = part.name.encode('utf-8')
         evs.append((0, 0, b'\xff\x03' + _vlq(len(name)) + name))
         staff_ids = [i for i, (p, _) in enumerate(piece.staff_parts()) if p is part]
@@ -382,16 +480,24 @@ def write_midi(piece, path):
                     ticks = DUR[dur][2]
                     if pitches:
                         length = int(ticks * (1.5 if 'fermata' in flags else 0.96))
+                        legato = ((piece.slug == 'door_side' and si == 3) or
+                                  (piece.slug == 'main_theme' and
+                                   ((si == 3 and 4 <= bi < 12) or (si == 2 and 12 <= bi < 20))))
+                        if legato and 'fermata' not in flags:
+                            length = ticks - 1
                         v = min(127, vel.get(si, 64) + (14 if 'accent' in flags else 0))
+                        if piece.slug == 'main_theme' and si == 3 and 34 <= bi < 36:
+                            v -= min(31, int((t - 34 * piece.measure_ticks) / piece.measure_ticks * 31))
                         for p in pitches:
-                            m = midi_of(p)
+                            m = part.playback_pitch(midi_of(p))
                             evs.append((t, 1, bytes([0x90 | ch, m, v])))
                             evs.append((t + length, 0, bytes([0x80 | ch, m, 0])))
                     t += ticks
         tracks.append(_track_bytes(evs))
-        channel += 1
-        if channel == 9:
-            channel = 10
+        if not part.drum_map:
+            channel += 1
+            if channel == 9:
+                channel = 10
     with open(path, 'wb') as f:
         f.write(b'MThd' + struct.pack('>IHHH', 6, 1, len(tracks), 480) + b''.join(tracks))
 

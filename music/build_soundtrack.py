@@ -69,8 +69,10 @@ SAMPLED = {
     'piano': (0, 0, 0.0), 'organ': (0, 20, -2.0), 'celesta': (0, 8, 0.0), 'bell': (0, 14, -1.0),
     'musicbox': (0, 10, -2.0), 'clarinet': (0, 71, -4.0), 'strings': (0, 49, 1.0), 'pizz': (0, 45, 9.0),
     'flute': (0, 73, -5.0), 'fiddle': (0, 110, -3.0), 'dulcimer': (0, 15, 4.0), 'shamisen': (0, 106, 4.0),
-    'koto': (0, 107, -2.0), 'woodblock': (0, 115, -3.0), 'shakuhachi': (0, 77, -6.0), 'sitar': (0, 104, -2.0),
+    'koto': (0, 107, -2.0), 'woodblock': (128, 48, -3.0), 'shakuhachi': (0, 77, -6.0), 'sitar': (0, 104, -2.0),
     'ocarina': (0, 79, -9.0), 'taiko': (0, 116, 0.0),
+    'violin': (0, 40, -3.0), 'xylophone': (0, 13, -11.0),
+    'framedrum': (128, 0, -11.0), 'tabla': (0, 0, -12.0), 'bassdrum': (128, 48, 0.0),
 }
 # 合成音色（音色库里没有的乐器）的电平修正
 SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
@@ -78,8 +80,10 @@ SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': 
 SEND = {'bell': 0.6, 'celesta': 0.45, 'musicbox': 0.45, 'organ': 0.38, 'piano': 0.3,
         'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2, 'bianzhong': 0.55, 'bianqing': 0.5, 'taiko': 0.4,
         'flute': 0.28, 'fiddle': 0.26, 'dulcimer': 0.25, 'shamisen': 0.2, 'koto': 0.3, 'woodblock': 0.18,
+        'violin': 0.26, 'xylophone': 0.5, 'bassdrum': 0.4,
         'shakuhachi': 0.32, 'sitar': 0.25, 'ocarina': 0.35, 'tanpura': 0.3, 'tabla': 0.15, 'framedrum': 0.18}
 _sf = None
+_custom_fonts = {}
 
 
 def soundfont():
@@ -106,18 +110,27 @@ def render(piece):
     cache = {}
     for ev in events:
         part, _ = staff_parts[ev.staff]
+        note_font = font
+        if part.soundfont:
+            if part.soundfont not in _custom_fonts:
+                import sf2
+                _custom_fonts[part.soundfont] = sf2.SoundFont(os.path.join(HERE, part.soundfont))
+            note_font = _custom_fonts[part.soundfont]
         voice = part.voice or part.key
-        key = (voice, ev.pitch, ev.velocity, round(ev.length, 2))
+        pitch = part.playback_pitch(ev.pitch)
+        preset = (part.bank, part.program)
+        key = (part.soundfont, voice, *preset, pitch, ev.velocity, round(ev.length, 2))
         if key not in cache:
-            if font is not None and voice in SAMPLED:
-                bank, program, trim = SAMPLED[voice]
-                if voice not in regions:
-                    regions[voice] = font.regions(bank, program)
-                audio = font.note(regions[voice], ev.pitch, ev.velocity, ev.length) * 10 ** (trim / 20)
+            if note_font is not None and voice in SAMPLED:
+                trim = SAMPLED[voice][2]
+                region_key = (part.soundfont, *preset)
+                if region_key not in regions:
+                    regions[region_key] = note_font.regions(*preset)
+                audio = note_font.note(regions[region_key], pitch, ev.velocity, ev.length) * 10 ** (trim / 20)
             else:
                 fn = synth.VOICES[voice]
-                mono = (fn(ev.pitch, ev.velocity, ev.length, rng, pedal=0.0) if voice == 'piano'
-                        else fn(ev.pitch, ev.velocity, ev.length, rng))
+                mono = (fn(pitch, ev.velocity, ev.length, rng, pedal=0.0) if voice == 'piano'
+                        else fn(pitch, ev.velocity, ev.length, rng))
                 audio = np.stack([mono, mono]).astype(np.float32) * 0.7 * 10 ** (SYNTH_TRIM.get(voice, 0.0) / 20)
             cache[key] = audio
         audio = cache[key]

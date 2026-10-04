@@ -182,6 +182,9 @@ def perform(piece, style, rng):
         order = sorted(pitches)
         for idx, pitch in enumerate(order):
             pdb = db
+            if piece.slug == 'main_theme' and si == 3 and 34 <= bi < 36:
+                # dim. 的两小节渐弱，不重复改变前面已有的 ff → mf。
+                pdb -= min(1., (q0 - 34 * bpb) / bpb) * (80 - 49) / 2.2
             if is_lead:
                 pdb += 0.12 * (pitch - 72)
             elif len(pitches) > 1 and pitch != lowest:
@@ -205,7 +208,7 @@ def perform(piece, style, rng):
                     note_len *= 0.92
             if voice == 'piano':
                 mode = (style.pedal or {}).get(si, 'full')
-                if is_lead:
+                if is_lead or (piece.slug == 'door_side' and inner == 1):
                     nxt = [qq for qq in lead_next[si] if qq > q0 + 1e-6]
                     if nxt and abs(nxt[0] - (q0 + dq)) < 1e-6:
                         note_len += 0.015

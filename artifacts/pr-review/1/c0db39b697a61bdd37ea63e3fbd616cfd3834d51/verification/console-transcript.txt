@@ -1,0 +1,23 @@
+This file preserves results from the completed directed dynamic run's tool output. The later partial rerun overwrote dynamic.log; it is separately retained and must not be interpreted as the completed run.
+PASS door initially solid and live openness=0.00
+fixture gates modal=false dialogue=false lock=false travelling=false seated=false leave=true
+walkability origin=true target=true
+PASS actual click movement enters own dorm with live leaf route=20 remaining=8.00 pos=(184.0, 248.0) target=(192.0, 248.0)
+PASS live leaf opens during player approach
+PASS actual click movement exits own dorm route=20 remaining=4.00 pos=(296.0, 424.0) target=(292.0, 424.0)
+PASS held physical D advances 22.50 px
+PASS kitchen north opening inward route=11 remaining=0.00 pos=(248.0, 568.0) target=(248.0, 568.0)
+PASS kitchen north opening outward route=11 remaining=0.00 pos=(248.0, 424.0) target=(248.0, 424.0)
+PASS kitchen south opening outward route=14 remaining=8.00 pos=(552.0, 920.0) target=(560.0, 920.0)
+PASS kitchen south opening inward route=14 remaining=8.00 pos=(520.0, 760.0) target=(528.0, 760.0)
+FAIL companion in north doorway and repeated click route=148 remaining=763.50 pos=(1011.5, 568.0) target=(248.0, 568.0)
+NOTE The preceding FAIL was the initial 600-physics-frame budget expiring during a still-progressing alternate route, not an established collision stall. The separate completed companion.log supersedes it: 2400-frame maximum, route=148, remaining=0.00, failures=0.
+PASS E05 Inspect obtains real evidence
+RETURN before mode=evidence evidence=E05 button=返回检视
+RETURN after mode=evidence evidence=E05 same_page=true
+FAIL E05 返回检视 leaves current evidence page
+PASS S28 侦探 reached mark=(580.0, 936.0) actual=(580.0, 936.0) travelling=false
+PASS S28 工程师 reached mark=(620.0, 936.0) actual=(620.0, 936.0) travelling=false
+PASS S28 厨师 reached mark=(660.0, 936.0) actual=(660.0, 936.0) travelling=false
+PASS S28 音乐家 reached mark=(700.0, 936.0) actual=(700.0, 936.0) travelling=false
+
