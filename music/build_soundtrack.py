@@ -38,7 +38,8 @@ SFX_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Sfx')
 VOICE_OUT = os.path.join(ASSETS, 'Characters', 'voices')
 SCORE_NAMES = {
     'main_theme': 'Main Theme', 'door_side': 'The Near Side of the Door', 'confrontation': 'Confrontation',
-    'day': 'Days of Sixteen', 'night': 'Sleep',
+    'day': 'Days of Sixteen', 'night': 'Sleep', 'day_noon': 'Noon', 'day_afternoon': 'Afternoon',
+    'day_evening': 'Evening', 'rite': 'Rite',
 }
 
 
@@ -67,10 +68,17 @@ SOUNDFONT = os.environ.get('SOUNDFONT', 'C:/Program Files/MuseScore 4/sound/MS B
 SAMPLED = {
     'piano': (0, 0, 0.0), 'organ': (0, 20, -2.0), 'celesta': (0, 8, 0.0), 'bell': (0, 14, -1.0),
     'musicbox': (0, 10, -2.0), 'clarinet': (0, 71, -4.0), 'strings': (0, 49, 1.0), 'pizz': (0, 45, 9.0),
+    'flute': (0, 73, -5.0), 'fiddle': (0, 110, -3.0), 'dulcimer': (0, 15, 4.0), 'shamisen': (0, 106, 4.0),
+    'koto': (0, 107, -2.0), 'woodblock': (0, 115, -3.0), 'shakuhachi': (0, 77, -6.0), 'sitar': (0, 104, -2.0),
+    'ocarina': (0, 79, -9.0), 'taiko': (0, 116, 0.0),
 }
+# 合成音色（音色库里没有的乐器）的电平修正
+SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
 # 混响发送：越“远”的乐器越湿（钟在塔上，钢片琴与八音盒在空间里回荡，拨弦最干）
 SEND = {'bell': 0.6, 'celesta': 0.45, 'musicbox': 0.45, 'organ': 0.38, 'piano': 0.3,
-        'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2}
+        'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2, 'bianzhong': 0.55, 'bianqing': 0.5, 'taiko': 0.4,
+        'flute': 0.28, 'fiddle': 0.26, 'dulcimer': 0.25, 'shamisen': 0.2, 'koto': 0.3, 'woodblock': 0.18,
+        'shakuhachi': 0.32, 'sitar': 0.25, 'ocarina': 0.35, 'tanpura': 0.3, 'tabla': 0.15, 'framedrum': 0.18}
 _sf = None
 
 
@@ -110,7 +118,7 @@ def render(piece):
                 fn = synth.VOICES[voice]
                 mono = (fn(ev.pitch, ev.velocity, ev.length, rng, pedal=0.0) if voice == 'piano'
                         else fn(ev.pitch, ev.velocity, ev.length, rng))
-                audio = np.stack([mono, mono]).astype(np.float32) * 0.7
+                audio = np.stack([mono, mono]).astype(np.float32) * 0.7 * 10 ** (SYNTH_TRIM.get(voice, 0.0) / 20)
             cache[key] = audio
         audio = cache[key]
         pan = part.pan + ((ev.pitch - 60) / 48 * 0.25 if voice == 'piano' else 0.0)

@@ -201,8 +201,100 @@ def bell(pitch, vel, length, rng, stretch=1.0):
     return out * (0.3 + 0.7 * v) * 0.28
 
 
+def tanpura(pitch, vel, length, rng):
+    """坦布拉：弦与弧面琴马的“嗡音”（jawari）——高次泛音在拨弦后慢慢浮起再沉下，长时间延续。"""
+    f0 = hz(pitch, rng.uniform(-2, 2))
+    v = vel / 127.0
+    n = int(4.5 * SR)
+    t = np.arange(n) / SR
+    out = np.zeros(n)
+    for k in range(1, 40):
+        if f0 * k > 9000:
+            break
+        bloom = np.exp(-((t - 0.25 - 0.012 * k) / (0.35 + 0.02 * k)) ** 2) * (0.6 if k > 4 else 0.0)
+        amp = k ** -0.7 * (np.exp(-t / 3.2) * (0.8 if k <= 4 else 0.25) + bloom)
+        out += amp * np.sin(TAU * f0 * k * (1 + 0.0004 * k) * t + rng.uniform(0, TAU))
+    out *= np.minimum(1.0, t / 0.004)
+    return out * (0.3 + 0.7 * v) * 0.09
+
+
+# 塔布拉的击法以音高编码：C3 = Ge（低鼓开音）、D3 = Ke（低鼓闷音）、C4 = Na、D4 = Tin、E4 = Te（高鼓）
+TABLA_SA = 59  # 高鼓调到 Sa（B3）
+
+
+def tabla(pitch, vel, length, rng):
+    v = vel / 127.0
+    n = int(1.6 * SR)
+    t = np.arange(n) / SR
+    pc = pitch % 12
+    if pitch < 60:   # 低鼓 bayan
+        if pc == 0:  # Ge：开音，音高下滑
+            f = 95 * (1 + 0.35 * np.exp(-t / 0.05))
+            out = np.sin(TAU * np.cumsum(f) / SR) * np.exp(-t / 0.45)
+            out += 0.3 * np.sin(TAU * np.cumsum(2.1 * f) / SR) * np.exp(-t / 0.2)
+        else:        # Ke：闷击
+            out = _noise_burst(n, rng, 900) * np.exp(-t / 0.03) + 0.5 * np.sin(TAU * 140 * t) * np.exp(-t / 0.04)
+    else:            # 高鼓 dayan：一组谐和的泛音
+        f0 = hz(TABLA_SA)
+        if pc == 0:      # Na：边击，亮
+            ratios, amps, taus = [1, 2, 3, 4, 5], [0.5, 1.0, 0.6, 0.35, 0.2], [0.35, 0.3, 0.2, 0.12, 0.08]
+        elif pc == 2:    # Tin：中心与边之间，柔
+            ratios, amps, taus = [1, 2, 3], [1.0, 0.5, 0.2], [0.5, 0.3, 0.15]
+        else:            # Te：闷击
+            ratios, amps, taus = [1, 2], [0.3, 0.2], [0.04, 0.03]
+        out = _partials(t, [f0 * r for r in ratios], amps, taus, rng.uniform(0, TAU, len(ratios)))
+        out += _noise_burst(n, rng, 5000) * np.exp(-t / 0.004) * 0.4
+    out *= np.minimum(1.0, t / 0.001)
+    return out * (0.3 + 0.7 * v) * 0.35
+
+
+def framedrum(pitch, vel, length, rng):
+    """手鼓（达甫）：C3 为鼓心低音 dum，C4 为鼓边 tek，二者都带一圈小铁环的沙声。"""
+    v = vel / 127.0
+    n = int(0.9 * SR)
+    t = np.arange(n) / SR
+    if pitch < 60:
+        out = np.sin(TAU * np.cumsum(70 * (1 + 0.6 * np.exp(-t / 0.03))) / SR) * np.exp(-t / 0.22)
+        jingle = 0.12
+    else:
+        out = _noise_burst(n, rng, 3500) * np.exp(-t / 0.02) + 0.4 * np.sin(TAU * 420 * t) * np.exp(-t / 0.03)
+        jingle = 0.3
+    rattle = _noise_burst(n, rng, 9000) - _noise_burst(n, rng, 4000)
+    out += rattle * jingle * np.exp(-t / 0.12) * (1 + 0.5 * np.sin(TAU * 38 * t))
+    return out * (0.3 + 0.7 * v) * 0.4
+
+
+def bianzhong(pitch, vel, length, rng):
+    """编钟：合瓦形钟体，一钟两音（正鼓音与侧鼓音相差约小三度），衰减比西式钟快。"""
+    f0 = hz(pitch)
+    v = vel / 127.0
+    n = int(4.0 * SR)
+    t = np.arange(n) / SR
+    ratios = [1.0, 1.19, 2.03, 2.48, 3.1, 4.2]
+    amps = [1.0, 0.3, 0.35, 0.18, 0.12, 0.06]
+    taus = [1.9, 1.2, 0.7, 0.45, 0.3, 0.15]
+    out = _partials(t, [f0 * r for r in ratios], amps, taus, rng.uniform(0, TAU, len(ratios)))
+    out += _noise_burst(n, rng, 3000) * np.exp(-t / 0.005) * 0.3 * v
+    return out * (0.3 + 0.7 * v) * 0.3
+
+
+def bianqing(pitch, vel, length, rng):
+    """编磬：石片，音短而清，泛音不成整数倍。"""
+    f0 = hz(pitch)
+    v = vel / 127.0
+    n = int(1.8 * SR)
+    t = np.arange(n) / SR
+    ratios = [1.0, 2.76, 5.4, 8.9]
+    amps = [1.0, 0.45, 0.2, 0.08]
+    taus = [0.6, 0.25, 0.1, 0.05]
+    out = _partials(t, [f0 * r for r in ratios], amps, taus, rng.uniform(0, TAU, len(ratios)))
+    out += _noise_burst(n, rng, 6000) * np.exp(-t / 0.002) * 0.3
+    return out * (0.3 + 0.7 * v) * 0.35
+
+
 VOICES = {'piano': piano, 'celesta': celesta, 'musicbox': musicbox, 'organ': organ,
-          'strings': strings, 'pizz': pizz, 'clarinet': clarinet, 'bell': bell}
+          'strings': strings, 'pizz': pizz, 'clarinet': clarinet, 'bell': bell,
+          'tanpura': tanpura, 'tabla': tabla, 'framedrum': framedrum, 'bianzhong': bianzhong, 'bianqing': bianqing}
 
 
 # ---------------------------------------------------------------- 空间
