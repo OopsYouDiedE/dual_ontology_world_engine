@@ -77,7 +77,8 @@ def _source_value(src, vel, key):
     index, cc = src & 0x7F, bool(src & 0x80)
     direction, polar, kind = (src >> 8) & 1, (src >> 9) & 1, (src >> 10) & 0x3F
     if cc:
-        x = CC_DEFAULTS.get(index, 0) / 127.0
+        # CC2（呼吸/表情）随力度：MuseScore 对“Expr.”音色按每个音的力度发送 CC2，力度到音量由它控制
+        x = (vel if index == 2 else CC_DEFAULTS.get(index, 0)) / 127.0
     elif index == 2:
         x = vel / 127.0
     elif index == 3:
