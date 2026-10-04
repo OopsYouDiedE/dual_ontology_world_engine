@@ -854,7 +854,7 @@ Core 不出现专案名词。
 
 ### 音乐与音效（2026-10-04 重写）
 
-全部原声由 `music/build_soundtrack.py` 一键生成：曲谱原稿写在 `music/cues.py`（记谱与 MuseScore 4／MIDI 导出在 `score_io.py`），音色在 `synth.py`（numpy 加法合成，不用外部录音与音色库；固定种子，波形逐位可重现，OGG 容器的流序号每次不同），音效与对白提示音在 `sfx.py`。曲谱输出为 `music/Blessed Sleepers - <曲名>.mscz／.mid`；游戏内配乐与音效为 OGG，归 `godot_csharp/ShareAsset/Internal/Props/Audio/{Music,Sfx}/`，提示音仍为 `Internal/Characters/voices/voice_*.wav`。旧曲 `The Unfallen` 系列只作存档，游戏不再使用。改旋律只改 `cues.py` 后重新生成。
+全部原声由 `music/build_soundtrack.py` 一键生成：曲谱原稿写在 `music/cues.py`（记谱与 MuseScore 4／MIDI 导出在 `score_io.py`），音色在 `synth.py`（numpy 加法合成，不用外部录音与音色库；固定种子，波形逐位可重现，OGG 容器的流序号每次不同），音效与对白提示音在 `sfx.py`。曲谱输出为 `music/Blessed Sleepers - <曲名>.mscz／.mid`，装有 MuseScore 4 时同时由它打开并导出总谱 PDF 与 MusicXML（`.pdf／.musicxml`，打不开即构建失败）；游戏内配乐与音效为 OGG，归 `godot_csharp/ShareAsset/Internal/Props/Audio/{Music,Sfx}/`，提示音仍为 `Internal/Characters/voices/voice_*.wav`。旧曲 `The Unfallen` 系列只作存档，游戏不再使用。改旋律只改 `cues.py` 后重新生成。
 
 **门句动机**：情感核心是“开门”只是“不要开门”的后半截（第二部分 §1）。动机一小节四拍：前两拍两个下行弱音（不要）D5–C#5–B4，后两拍上跳五度的呼喊（开门）F#5–E5–F#5，停在属音上像一个问句。只出现后半截时是门外的“呼喊”；完整出现是真相；主题尾声里后半截第一次落回主音（B 大调），问句得到回答。恶魔的和声是阻碍终止：旋律给出正确的落音，脚下换成别的和弦（字面为真）。
 

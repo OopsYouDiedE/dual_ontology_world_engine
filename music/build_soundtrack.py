@@ -2,17 +2,20 @@
 
     python music/build_soundtrack.py              # 曲谱、配乐、音效与对白提示音全部重建
     python music/build_soundtrack.py --only night # 只重建某一首（或某个音效 id）
-    python music/build_soundtrack.py --scores     # 只写曲谱（.mscz / .mid）
+    python music/build_soundtrack.py --scores     # 只写曲谱（.mscz / .mid，及下述 PDF / MusicXML）
 
 输出：
     music/Blessed Sleepers - <曲名>.mscz / .mid        曲谱原稿（MuseScore 4 可打开编辑）
+    music/Blessed Sleepers - <曲名>.pdf / .musicxml    由 MuseScore 4 导出的总谱与交换格式（装有 MuseScore 时）
     godot_csharp/ShareAsset/Internal/Props/Audio/Music/<id>.ogg   游戏内配乐（无缝循环）
     godot_csharp/ShareAsset/Internal/Props/Audio/Sfx/<id>.ogg     音效
     godot_csharp/ShareAsset/Internal/Characters/voices/voice_*.wav 对白提示音
-依赖：numpy、soundfile（OGG Vorbis 编码）。
+依赖：numpy、soundfile（OGG Vorbis 编码）；可选 MuseScore 4（环境变量 MUSESCORE 或默认安装路径）。
 """
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 import wave
 import zlib
@@ -38,6 +41,26 @@ SCORE_NAMES = {
 }
 # 钢琴延音踏板（秒）：钟摆曲不踩踏板，其余适度
 PEDAL = {'door_side': 0.12, 'confrontation': 0.2, 'day': 0.15}
+
+
+def find_musescore():
+    for path in (os.environ.get('MUSESCORE'), 'C:/Program Files/MuseScore 4/bin/MuseScore4.exe',
+                 shutil.which('mscore'), shutil.which('MuseScore4')):
+        if path and os.path.exists(path):
+            return path
+    return None
+
+
+def export_score(musescore, mscz):
+    """用 MuseScore 4 打开生成的曲谱并导出 PDF 与 MusicXML；打不开即报错。"""
+    base = os.path.splitext(mscz)[0]
+    for ext in ('.pdf', '.musicxml'):
+        out = base + ext
+        if os.path.exists(out):
+            os.remove(out)
+        subprocess.run([musescore, '-o', out, mscz], check=True, capture_output=True, timeout=300)
+        if not os.path.exists(out) or os.path.getsize(out) == 0:
+            raise RuntimeError(f'MuseScore 未能导出 {out}')
 
 
 def render(piece):
@@ -106,6 +129,9 @@ def main():
     args = ap.parse_args()
     for d in (MUSIC_OUT, SFX_OUT, VOICE_OUT):
         os.makedirs(d, exist_ok=True)
+    musescore = find_musescore()
+    if not musescore:
+        print('未找到 MuseScore 4：跳过 PDF / MusicXML 导出')
 
     for make in cues.CUES:
         piece = make()
@@ -114,6 +140,8 @@ def main():
         base = os.path.join(HERE, f'Blessed Sleepers - {SCORE_NAMES[piece.slug]}')
         write_mscz(piece, base + '.mscz')
         write_midi(piece, base + '.mid')
+        if musescore:
+            export_score(musescore, base + '.mscz')
         if args.scores:
             print(f'{piece.slug}: {len(piece.bars)} 小节（只写曲谱）')
             continue

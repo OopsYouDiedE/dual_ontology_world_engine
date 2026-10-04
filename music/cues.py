@@ -341,7 +341,7 @@ def day():
     """第二章·日间：D 大调 6/8。门句的大调形（F# E D | A G A），短缺来自不信任——借来的 g 小调。"""
     CLA, CEL, RH, LH, PIZ = range(5)
     parts = [
-        Part('clarinet', 'Clarinet in A', 'Cl.', 'wind.reed.clarinet', 71, 49, 94, pan=-0.3),
+        Part('clarinet', 'Clarinet', 'Cl.', 'wind.reed.clarinet', 71, 49, 94, pan=-0.3),
         Part('celesta', 'Celesta', 'Cel.', 'keyboard.celesta', 8, 60, 108, pan=0.4, gain=0.7),
         Part('piano', 'Piano', 'Pno.', 'keyboard.piano', 0, staves=2, pan=0.1),
         Part('pizz', 'Pizzicato Strings', 'Pizz.', 'strings.cello', 45, 36, 76, bass_clef=True, pan=-0.1),

@@ -195,7 +195,7 @@ def _events_xml(line, kalt):
     state, out = {}, []
     for pitches, dur, flags in parse_line(line):
         dtype, dots, _ = DUR[dur]
-        dxml = f'<durationType>{dtype}</durationType>' + (f'<dots>{dots}</dots>' if dots else '')
+        dxml = (f'<dots>{dots}</dots>' if dots else '') + f'<durationType>{dtype}</durationType>'  # MuseScore 要求附点在前
         if pitches is None:
             out.append(f'<Rest>{dxml}</Rest>')
             continue
