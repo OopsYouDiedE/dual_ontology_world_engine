@@ -35,9 +35,9 @@ public sealed partial class Game
     public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
     {
         [11] = (2, "守则读法", "按字面读它自己的守则与学员立的规，找出条文没写什么。"),
-        [12] = (3, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
-        [13] = (4, "言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
-        [14] = (5, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
+        [12] = (0, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
+        [13] = (0, "言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
+        [14] = (0, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
     }.ToImmutableDictionary();
 
     public static int LessonOfDay(int day) => Lessons.FirstOrDefault(l => l.Value.Day == day).Key;
@@ -99,7 +99,7 @@ public sealed partial class Game
         switch (Day)
         {
             case 2:
-                Broadcast("诸位晨安。按课表，今日讲守则的读法。讲堂门外贴着课表。");
+                Broadcast("诸位晨安。今日讲守则的读法。请到讲堂来。");
                 Broadcast("封存之物存于名录库，凡学员皆可取回己物。");
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
@@ -107,15 +107,13 @@ public sealed partial class Game
                 Feed.Add("恶魔逐一对每个人低声说了一句话，说的都是那人最想要的东西。");
                 foreach (var p in People) Whisper(p);
                 break;
-            case 3: Broadcast("今日讲传声与机械。"); break;
-            case 4: Broadcast("今日讲言灵初阶。诸位今日在中央厅有一场对质，我会旁听。"); break;
-            case 5:
-                GuaranteeCracks++;
-                Set(Base, T.Crack, 1);
-                Broadcast("……今日讲异象与记忆。（广播里有一层此前没有的底噪。中央基座多了一道新裂纹。）");
+            case 3:
+            {
+                var shortBy = CaseActual?.LedgerShort ?? 0;
+                Broadcast(shortBy > 0 ? $"诸位晨安。台账上，少了{Cn(shortBy)}份。昨夜，有人进过后勤院。" : "诸位晨安。今日无新课。");
                 break;
-            case 6: Broadcast("今日无新课。答疑照常。"); break;
-            case 7: Broadcast("今日，诸位要决定名录库的事。我只旁听。"); break;
+            }
+            case 4: Broadcast("今日，诸位要决定名录库的事。我只旁听。"); break;
         }
     }
 

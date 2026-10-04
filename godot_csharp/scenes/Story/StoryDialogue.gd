@@ -288,7 +288,10 @@ func _portrait_character(canonical_name: String) -> String:
 			return "厨师"
 		"音乐家", "苏泠":
 			return "音乐家"
-	return ""
+		"", "铜口":
+			return ""
+	# 其余人物（第二章的十二人）以名字直接对应立绘。
+	return canonical_name
 
 func _refresh_character_portrait() -> void:
 	if not is_instance_valid(character_portrait):

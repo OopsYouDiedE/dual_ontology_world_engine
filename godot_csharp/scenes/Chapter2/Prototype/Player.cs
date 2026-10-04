@@ -3,7 +3,7 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
+public enum Cmd { Stay, Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
 
 /// <summary>侦探一个时段的行动。每个时段只能做一件事（第三部分 §4）。</summary>
 public sealed record PlayerAction(Cmd Cmd)
@@ -147,13 +147,13 @@ public sealed partial class Game
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 1), AddRelations = [(Relations.Subject, p.M[Det.Body])]
         });
         Promises.Add((p.Id, Day + 1, false));
-        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。用“帮 {p.Name}”兑现。）");
+        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找他“帮他一把”即算兑现。）");
     }
 
     private static string Answer(Person p, SocialStance s) => s switch
     {
         SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + $"（他在等你先帮他一把：用“帮 {p.Name}”）",
+        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + "（他想先要你帮他一把。）",
         _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
     };
 
@@ -171,6 +171,7 @@ public sealed partial class Game
         if (act is null) { SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); return; }
         switch (act.Cmd)
         {
+            case Cmd.Stay: SubmitDet(Fx.Seq(fx.Go(act.Place ?? Where(Det)), fx.Look(Space[act.Place ?? Where(Det)])), 0.5); break;
             case Cmd.Class: SubmitDet(fx.Job(Job.Class), 0.5, Job.Class); break;
             case Cmd.Collect: SubmitDet(fx.Job(Job.Collect), 0.8, Job.Collect); break;
             case Cmd.Inspect:

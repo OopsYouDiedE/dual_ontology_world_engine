@@ -7,7 +7,8 @@ const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
 const FieldNavigation := preload("res://scenes/Awakening/FieldNavigation.gd")
 const Paper := preload("res://scenes/Awakening/Paper.gd")
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
-const ReplayManuscript := preload("res://scenes/Awakening/ReplayManuscript.gd")
+const ReplayManuscript := preload("res://scenes/Shared/ReplayManuscript.gd")
+const SightMask := preload("res://scenes/Shared/SightMask.gd")
 const ReplayStage := preload("res://scenes/Awakening/ReplayStage.gd")
 const TraceDecals := preload("res://scenes/Awakening/TraceDecals.gd")
 const EngineScript := preload("res://scenes/Awakening/AwakeningEngine.cs")
@@ -71,6 +72,7 @@ var nearest := ""
 var hovered := ""
 var story_lock := false
 var follow_camera := true
+var sight: Node2D
 
 # ------------------------------------------------------------------ story ---
 var engine: Node
@@ -136,6 +138,13 @@ func _ready() -> void:
 	_build_props()
 	_build_sites()
 	_build_ui()
+	# 视野（设计总纲 §四.6）：墙挡视线，视线外暗下去，视线外的人不显示。
+	sight = Node2D.new()
+	sight.set_script(SightMask)
+	sight.name = "Sight"
+	sight.z_index = 40
+	sight.host = self
+	add_child(sight)
 	var hints: Node2D = get_node_or_null("InteractionHints")
 	if hints: hints.set("source", self)
 	dialogue = $Dialogue
@@ -326,6 +335,11 @@ func _room_name(p: Vector2) -> String:
 		return ["R-08", "R-05", "空房"][column]
 	return ["R-07", "R-06", "空房"][column]
 
+func sight_origin() -> Vector2: return player.position + Vector2(0, -8)
+func sight_size() -> Vector2i: return Vector2i(layout.rows[0].length(), layout.rows.size())
+func sight_blocks(cell: Vector2i) -> bool: return not floors.has(cell)
+func in_sight(point: Vector2) -> bool: return sight == null or sight.can_see(point + Vector2(0, -8))
+
 func field_active() -> bool:
 	return stage in ["roam", "investigate"] and modal_kind == "" and not dialogue.active and not story_lock and not ended
 
@@ -338,8 +352,8 @@ func site_visible(id: String) -> bool:
 	if stage != "investigate":
 		return false
 	if site.has("person"):
-		return true
-	return true
+		return actor_of(site.person).visible
+	return in_sight(site_point(id))
 
 func site_is_new(id: String) -> bool:
 	var site: Dictionary = sites[id]
@@ -450,6 +464,9 @@ func _physics_process(delta: float) -> void:
 		player.move_input(direction.normalized() * movement_scale)
 
 func _process(_delta: float) -> void:
+	# 视线外的同伴不显示：他在做什么，侦探看不见（回放的墨影是假设，不受此限）。
+	for key in ["huo", "shen", "su"]:
+		actor_of(key).visible = in_sight(actor_of(key).position)
 	if hud_hint:
 		hud_hint.visible = field_active()
 		if field_active():
@@ -1511,6 +1528,27 @@ func open_manuscript() -> void:
 	manuscript.host = self
 	manuscript.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(manuscript)
+
+## 重演手稿（两章共用组件）向宿主取的内容。
+func replay_title() -> String: return "昨夜重演"
+func replay_hint() -> String: return "设定当时的处境与人心，让昨夜重演一次。"
+## 第六个问题（昨夜之前，四人彼此……）起初不写出来：素不相识是没人说出口的默认。
+## 重演里出现信任上的拒绝，或细看过两件相熟旁证之后，它才出现。
+func replay_questions() -> Array:
+	var count: int = Content.VARIABLES.size() if v6_open() else Content.VARIABLES.size() - 1
+	return Content.VARIABLES.slice(0, count)
+func replay_mark(index: int) -> String:
+	if recall_marks.has(index + 1):
+		return "　[color=#8a3324]✓ 回忆所证（%s）[/color]" % Content.PERSON_NAMES[recall_marks[index + 1]]
+	return ""
+func replay_is_new(index: int) -> bool: return index == 5 and not flags.has("v6_seen")
+func replay_opened() -> void:
+	if v6_open():
+		flags["v6_seen"] = true
+func finding_title(finding: Dictionary) -> String:
+	return Content.EVIDENCE[finding.id].name if str(finding.status) != "unvisited" else str(finding.place)
+func finding_card(finding: Dictionary) -> Callable:
+	return open_card.bind(str(finding.id))
 
 func run_replay(vars: Array) -> Dictionary:
 	replay_vars = vars.duplicate()

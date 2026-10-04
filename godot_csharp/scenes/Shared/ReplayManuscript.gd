@@ -1,8 +1,9 @@
 extends HBoxContainer
-## 重演手稿。左页：六个变量（处境与人心）；右页：对照结果（吻合／冲突／未查）。
+## 重演手稿（两章共用，设计总纲 §四.4）。左页：变量（处境与人心）；右页：对照结果（吻合／冲突／未查）。
 ## 玩家从不指定任何人“做了什么”；行动由 C# 引擎从各人的认知与习惯推出。
+## 宿主提供：replay_vars、replay_result、last_run_vars、replay_questions()、replay_mark(i)、replay_is_new(i)、
+## replay_title()、replay_hint()、replay_opened()、finding_title(f)、finding_card(f)、run_replay、play_replay、after_replay、close_modal。
 
-const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
 const Paper := preload("res://scenes/Awakening/Paper.gd")
 
 var host: Node
@@ -20,8 +21,7 @@ func _ready() -> void:
 	_build_variables(left)
 	_build_results(right)
 	_refresh()
-	if host.v6_open():
-		host.flags["v6_seen"] = true
+	host.replay_opened()
 
 func _page() -> VBoxContainer:
 	var panel := PanelContainer.new()
@@ -44,18 +44,14 @@ func _page() -> VBoxContainer:
 	return column
 
 func _build_variables(column: VBoxContainer) -> void:
-	column.add_child(Paper.label("[b]昨夜重演[/b]", 25))
-	column.add_child(Paper.label("设定当时的处境与人心，让昨夜重演一次。", 17, Paper.MUTED))
+	column.add_child(Paper.label("[b]%s[/b]" % host.replay_title(), 25))
+	column.add_child(Paper.label(host.replay_hint(), 17, Paper.MUTED))
 	column.add_child(Paper.rule())
-	# 第六个问题（昨夜之前，四人彼此……）起初不写出来：素不相识是没人说出口的默认。
-	# 重演里出现信任上的拒绝，或细看过两件相熟旁证之后，它才出现。
-	var count: int = Content.VARIABLES.size() if host.v6_open() else Content.VARIABLES.size() - 1
-	for index in count:
-		var variable: Dictionary = Content.VARIABLES[index]
-		var mark := ""
-		if host.recall_marks.has(index + 1):
-			mark = "　[color=#8a3324]✓ 回忆所证（%s）[/color]" % Content.PERSON_NAMES[host.recall_marks[index + 1]]
-		var fresh := "　[color=#8a3324]（新）[/color]" if index == 5 and not host.flags.has("v6_seen") else ""
+	var questions: Array = host.replay_questions()
+	for index in questions.size():
+		var variable: Dictionary = questions[index]
+		var mark: String = host.replay_mark(index)
+		var fresh := "　[color=#8a3324]（新）[/color]" if host.replay_is_new(index) else ""
 		column.add_child(Paper.label("%s　%s%s%s" % [["一", "二", "三", "四", "五", "六"][index], variable.question, mark, fresh], 19))
 		var row := HFlowContainer.new()
 		row.add_theme_constant_override("h_separation", 8)
@@ -64,7 +60,6 @@ func _build_variables(column: VBoxContainer) -> void:
 		var buttons := []
 		for option in variable.options.size():
 			var text: String = variable.options[option]
-
 			var b := Paper.button(text, _choose.bind(index, option), 17)
 			b.toggle_mode = true
 			buttons.append(b)
@@ -100,7 +95,7 @@ func _refresh() -> void:
 	for index in option_buttons.size():
 		for option in option_buttons[index].size():
 			option_buttons[index][option].button_pressed = selection[index] == option
-	var ready := not selection.has(-1)
+	var ready := not selection.slice(0, option_buttons.size()).has(-1)
 	for b in run_buttons:
 		b.disabled = not ready
 	for child in results_box.get_children():
@@ -117,7 +112,7 @@ func _refresh() -> void:
 	for finding in result.findings:
 		var status: String = finding.status
 		var chip: String = {"match": "[color=#3f5a3a]吻合[/color]", "conflict": "[color=#8a3324]冲突[/color]", "unvisited": "[color=#6b5d48]未查[/color]"}[status]
-		var name: String = Content.EVIDENCE[finding.id].name if status != "unvisited" else str(finding.place)
+		var name: String = host.finding_title(finding)
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 2)
 		results_box.add_child(row)
@@ -125,13 +120,14 @@ func _refresh() -> void:
 		row.add_child(head)
 		if status != "match":
 			row.add_child(Paper.label(str(finding.text), 17, Color(Paper.INK, 0.5) if stale else Paper.INK))
-		if status != "unvisited":
-			var open := Paper.button("看证物卡", host.open_card.bind(str(finding.id)), 15)
+		var card: Callable = host.finding_card(finding)
+		if status != "unvisited" and card.is_valid():
+			var open := Paper.button("看证物卡", card, 15)
 			open.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 			row.add_child(open)
 
 func _run(skip: bool) -> void:
-	if selection.has(-1):
+	if selection.slice(0, option_buttons.size()).has(-1):
 		return
 	var result: Dictionary = host.run_replay(selection)
 	host.last_run_vars = selection.duplicate()

@@ -61,7 +61,7 @@ public sealed partial class Game
     /// </summary>
     private void StanceTalk()
     {
-        if (Day < 4 || Slot is not (Slot.Noon or Slot.Evening)) return;
+        if (Day < CaseDay || Slot is not (Slot.Noon or Slot.Evening)) return;
         var here = Where(Det);
         var talkers = Npcs.Where(p => Where(p) == here && Get(p.Body, T.Sick) == 0 && _voicedStance.GetValueOrDefault(p.Id).Day != Day)
             .Select(p => (p, s: StanceOf(p))).Where(x => x.s is not null)

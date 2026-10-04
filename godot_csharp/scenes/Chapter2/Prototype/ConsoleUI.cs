@@ -60,7 +60,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             {
                 var act = Parse(line, out var consumed);
                 if (!consumed) continue;
-                if (g.Day == 4 && g.Slot == Slot.Morning && act?.Cmd != Cmd.Confront)
+                if (g.Day == Game.CaseDay && g.Slot == Slot.Evening && act?.Cmd != Cmd.Confront)
                     throw new PlayerError("第 4 日清晨是中央厅的公开对质。输入“对质”开始（不想说话，就输入“对质”再输入“完”）。");
                 if (g.Slot == Slot.Night && act is not null && act.Cmd is not (Cmd.Stakeout or Cmd.Sleep))
                     throw new PlayerError("夜里只能“睡”或“守夜 某地”。");
@@ -86,7 +86,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         return line;
     }
 
-    private void Header() => W($"\n【第{g.Day}日 · {Names.Of(g.Slot)}】你在{Names.Of(g.Where(g.Det))}。{(g.Slot == Slot.Night ? "（夜里：睡，或 守夜 某地）" : g.Day == 4 && g.Slot == Slot.Morning ? "（今晨是公开对质：输入“对质”）" : "")}");
+    private void Header() => W($"\n【第{g.Day}日 · {Names.Of(g.Slot)}】你在{Names.Of(g.Where(g.Det))}。{(g.Slot == Slot.Night ? "（夜里：睡，或 守夜 某地）" : g.Day == Game.CaseDay && g.Slot == Slot.Evening ? "（傍晚是公开对质：输入“对质”）" : "")}");
 
     private void Flush()
     {
@@ -242,13 +242,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             case "slant": return new(Cmd.Manipulate) { Who = Person(Arg(1, "对谁说")), About = Person(Arg(2, "关于谁")) };
             case "stakeout": return new(Cmd.Stakeout) { Place = PlaceOf(Arg(1, "守在哪里")) };
             case "confront":
-                if (!(g.Day == 4 && g.Slot == Slot.Morning)) throw new PlayerError("公开对质在第 4 日清晨。之后要再对，用“重开对质”。");
+                if (!(g.Day == Game.CaseDay && g.Slot == Slot.Evening)) throw new PlayerError("公开对质在第 3 日傍晚。之后要再对，用“重开对质”。");
                 return new(Cmd.Confront) { Plan = ConfrontPrompt(false) };
             case "apologize":
                 if (!g.Manipulations.Any(m => m.Exposed && !m.Apologized)) throw new PlayerError("你没有被揭穿过的片面话要认。");
                 return new(Cmd.Apologize);
             case "reopen":
-                if (g.Day < 4 || g.Day == 4 && g.Slot == Slot.Morning) throw new PlayerError("第 4 日清晨的对质之后，才能重开对质。");
+                if (g.Day < 4 || g.Day == Game.CaseDay && g.Slot == Slot.Evening) throw new PlayerError("第 3 日傍晚的对质之后，才能重开对质。");
                 if (g.QuerCleared || g.Accused is null) throw new PlayerError("眼下没有悬着的指控要重开。");
                 return new(Cmd.Reopen) { Plan = ConfrontPrompt(true) };
         }
@@ -388,7 +388,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             睡                    睡下
             守夜 地点             守在某处一夜（只看得见身影、听得见动静）
           人名：霍铎 沈鼎 苏泠 卢西安 顾平章 雀儿 沃德 赛尔玛 阮清越 伊莲娜 莫兰 维罗妮卡 贝尔特朗 玛格丽特 茉拉
-          地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 文契寝区 星仪寝区 后勤寝区
+          地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 甲区 丙区 丁区
           """);
         if (debugAllowed) W("  调试（仅 --debug）：调试 开|关　真相 某人");
     }
