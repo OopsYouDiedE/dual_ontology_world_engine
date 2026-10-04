@@ -1,0 +1,109 @@
+extends Node2D
+## 第二章场景浏览：载入 Maps/ 下的地图，侦探用 WASD/方向键行走，进门口自动换图。
+## 只承载场景与移动；剧情、认知与规则由第二章系统另行接入。
+
+const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
+const ACTOR := preload("res://scenes/Story/StoryActor.gd")
+const FRAMES := preload("res://ShareAsset/Internal/Characters/animation_v2/detective.tres")
+
+@export var start_map := "living_hall"
+@export var start_spawn := "north_door"
+
+var map: Node2D
+var player: CharacterBody2D
+var camera: Camera2D
+var place_label: Label
+var armed := true          # 换图后须先离开出入口区域，才会再次触发
+
+func _ready() -> void:
+	player = CharacterBody2D.new()
+	player.set_script(ACTOR)
+	player.standard = FRAMES
+	player.name = "Detective"
+	add_child(player)
+	camera = Camera2D.new()
+	camera.zoom = Vector2(2, 2)
+	camera.position_smoothing_enabled = true
+	player.add_child(camera)
+	var hud := CanvasLayer.new()
+	add_child(hud)
+	place_label = Label.new()
+	place_label.position = Vector2(12, 8)
+	place_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.84))
+	place_label.add_theme_color_override("font_outline_color", Color(0.1, 0.08, 0.1))
+	place_label.add_theme_constant_override("outline_size", 6)
+	hud.add_child(place_label)
+	var args := OS.get_cmdline_user_args()
+	for a in args:
+		if a.begins_with("--map="): start_map = a.substr(6)
+		elif a.begins_with("--spawn="): start_spawn = a.substr(8)
+	load_map(start_map, start_spawn)
+
+func load_map(key: String, spawn: String) -> void:
+	if map:
+		# 先停掉旧图出口的检测并断开信号，再把侦探移出、释放旧图，避免物理回调里改动碰撞体
+		for exit in map.get_node("Exits").get_children():
+			var area := exit as Area2D
+			area.monitoring = false
+			for c in area.body_entered.get_connections():
+				area.body_entered.disconnect(c.callable)
+			for c in area.body_exited.get_connections():
+				area.body_exited.disconnect(c.callable)
+		player.get_parent().remove_child(player)
+		add_child(player)
+		var old := map
+		remove_child(old)
+		old.queue_free()
+	map = (load(MAPS % key) as PackedScene).instantiate()
+	add_child(map)
+	move_child(map, 0)
+	remove_child(player)
+	map.get_node("Objects").add_child(player)
+	var marker := map.get_node_or_null("Spawns/" + spawn) as Marker2D
+	player.position = marker.position if marker else Vector2(64, 64)
+	var size: Vector2 = map.get_meta("map_size", Vector2(1024, 1024))
+	camera.limit_left = 0
+	camera.limit_top = 0
+	camera.limit_right = int(size.x)
+	camera.limit_bottom = int(size.y)
+	camera.reset_smoothing()
+	place_label.text = String(map.get_meta("title", key))
+	armed = false
+	for exit in map.get_node("Exits").get_children():
+		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
+		(exit as Area2D).body_exited.connect(_on_exit_left)
+
+func _on_exit_entered(body: Node, exit: Area2D) -> void:
+	if body != player or not armed:
+		return
+	armed = false
+	call_deferred("load_map", String(exit.get_meta("target")), String(exit.get_meta("spawn")))
+
+func _on_exit_left(body: Node) -> void:
+	if body == player:
+		armed = true
+
+func _physics_process(_delta: float) -> void:
+	if not armed and not _inside_exit():
+		armed = true
+	var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	if Input.is_physical_key_pressed(KEY_A): dir.x -= 1
+	if Input.is_physical_key_pressed(KEY_D): dir.x += 1
+	if Input.is_physical_key_pressed(KEY_W): dir.y -= 1
+	if Input.is_physical_key_pressed(KEY_S): dir.y += 1
+	dir = dir.limit_length(1.0)
+	player.velocity = dir * 120.0
+	player.move_and_slide()
+	if dir.length() > 0.1:
+		var facing := "front"
+		if abs(dir.x) > abs(dir.y): facing = "right" if dir.x > 0 else "left"
+		elif dir.y < 0: facing = "back"
+		player.pose("walk", facing)
+	else:
+		player.pose("idle")
+
+func _inside_exit() -> bool:
+	for exit in map.get_node("Exits").get_children():
+		if (exit as Area2D).overlaps_body(player):
+			return true
+	return false

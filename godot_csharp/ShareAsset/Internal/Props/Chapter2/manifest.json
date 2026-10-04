@@ -1,0 +1,1675 @@
+{
+ "source": "godot_csharp/tools/build_chapter2_scenes.py",
+ "rooms": {
+  "living_hall": {
+   "title": "起居厅",
+   "cells": [
+    16,
+    40
+   ],
+   "exits": [
+    {
+     "name": "north_door",
+     "cells": [
+      7,
+      0,
+      9,
+      1
+     ],
+     "target": "campus",
+     "spawn": "living_north"
+    },
+    {
+     "name": "west_north",
+     "cells": [
+      0,
+      7,
+      1,
+      9
+     ],
+     "target": "zone_jia",
+     "spawn": "from_hall"
+    },
+    {
+     "name": "west_south",
+     "cells": [
+      0,
+      23,
+      1,
+      25
+     ],
+     "target": "zone_bing",
+     "spawn": "from_hall"
+    },
+    {
+     "name": "east_north",
+     "cells": [
+      15,
+      7,
+      16,
+      9
+     ],
+     "target": "zone_ding",
+     "spawn": "from_hall"
+    },
+    {
+     "name": "east_south",
+     "cells": [
+      15,
+      23,
+      16,
+      25
+     ],
+     "target": "zone_yi",
+     "spawn": "from_hall"
+    },
+    {
+     "name": "west_lane",
+     "cells": [
+      0,
+      15,
+      1,
+      17
+     ],
+     "target": "campus",
+     "spawn": "lane_west"
+    },
+    {
+     "name": "east_lane",
+     "cells": [
+      15,
+      15,
+      16,
+      17
+     ],
+     "target": "campus",
+     "spawn": "lane_east"
+    }
+   ],
+   "spawns": {
+    "north_door": [
+     256,
+     104
+    ],
+    "west_north": [
+     52,
+     272
+    ],
+    "west_south": [
+     52,
+     784
+    ],
+    "east_north": [
+     460,
+     272
+    ],
+    "east_south": [
+     460,
+     784
+    ],
+    "west_lane": [
+     52,
+     528
+    ],
+    "east_lane": [
+     460,
+     528
+    ]
+   },
+   "sites": [
+    {
+     "id": "watch_point",
+     "point": [
+      256,
+      624
+     ],
+     "label": "守夜点"
+    },
+    {
+     "id": "hall_notice",
+     "point": [
+      352,
+      136
+     ],
+     "label": "生活翼公告板"
+    },
+    {
+     "id": "fireplace",
+     "point": [
+      128,
+      136
+     ],
+     "label": "壁炉"
+    }
+   ]
+  },
+  "zone_jia": {
+   "title": "甲区",
+   "cells": [
+    36,
+    22
+   ],
+   "exits": [
+    {
+     "name": "isolation_gate",
+     "cells": [
+      35,
+      11,
+      36,
+      13
+     ],
+     "target": "living_hall",
+     "spawn": "west_north"
+    }
+   ],
+   "spawns": {
+    "from_hall": [
+     1088,
+     400
+    ]
+   },
+   "sites": [
+    {
+     "id": "transmitter",
+     "point": [
+      800,
+      136
+     ],
+     "label": "铜口"
+    },
+    {
+     "id": "zone_rules",
+     "point": [
+      896,
+      136
+     ],
+     "label": "公告框"
+    },
+    {
+     "id": "isolation_gate",
+     "point": [
+      1104,
+      384
+     ],
+     "label": "隔离门"
+    }
+   ]
+  },
+  "zone_yi": {
+   "title": "乙区",
+   "cells": [
+    36,
+    22
+   ],
+   "exits": [
+    {
+     "name": "isolation_gate",
+     "cells": [
+      0,
+      11,
+      1,
+      13
+     ],
+     "target": "living_hall",
+     "spawn": "east_south"
+    }
+   ],
+   "spawns": {
+    "from_hall": [
+     64,
+     400
+    ]
+   },
+   "sites": [
+    {
+     "id": "transmitter",
+     "point": [
+      352,
+      136
+     ],
+     "label": "铜口"
+    },
+    {
+     "id": "zone_rules",
+     "point": [
+      256,
+      136
+     ],
+     "label": "公告框"
+    },
+    {
+     "id": "isolation_gate",
+     "point": [
+      48,
+      384
+     ],
+     "label": "隔离门"
+    }
+   ]
+  },
+  "zone_bing": {
+   "title": "丙区",
+   "cells": [
+    36,
+    22
+   ],
+   "exits": [
+    {
+     "name": "isolation_gate",
+     "cells": [
+      35,
+      11,
+      36,
+      13
+     ],
+     "target": "living_hall",
+     "spawn": "west_south"
+    }
+   ],
+   "spawns": {
+    "from_hall": [
+     1088,
+     400
+    ]
+   },
+   "sites": [
+    {
+     "id": "transmitter",
+     "point": [
+      800,
+      136
+     ],
+     "label": "铜口"
+    },
+    {
+     "id": "zone_rules",
+     "point": [
+      896,
+      136
+     ],
+     "label": "公告框"
+    },
+    {
+     "id": "isolation_gate",
+     "point": [
+      1104,
+      384
+     ],
+     "label": "隔离门"
+    }
+   ]
+  },
+  "zone_ding": {
+   "title": "丁区",
+   "cells": [
+    36,
+    22
+   ],
+   "exits": [
+    {
+     "name": "isolation_gate",
+     "cells": [
+      0,
+      11,
+      1,
+      13
+     ],
+     "target": "living_hall",
+     "spawn": "east_north"
+    }
+   ],
+   "spawns": {
+    "from_hall": [
+     64,
+     400
+    ]
+   },
+   "sites": [
+    {
+     "id": "transmitter",
+     "point": [
+      352,
+      136
+     ],
+     "label": "铜口"
+    },
+    {
+     "id": "zone_rules",
+     "point": [
+      256,
+      136
+     ],
+     "label": "公告框"
+    },
+    {
+     "id": "isolation_gate",
+     "point": [
+      48,
+      384
+     ],
+     "label": "隔离门"
+    }
+   ]
+  },
+  "central_hall": {
+   "title": "中央厅",
+   "cells": [
+    26,
+    26
+   ],
+   "exits": [
+    {
+     "name": "north",
+     "cells": [
+      12,
+      0,
+      14,
+      1
+     ],
+     "target": "campus",
+     "spawn": "hall_north"
+    },
+    {
+     "name": "south",
+     "cells": [
+      12,
+      25,
+      14,
+      26
+     ],
+     "target": "campus",
+     "spawn": "hall_south"
+    },
+    {
+     "name": "west",
+     "cells": [
+      0,
+      12,
+      1,
+      14
+     ],
+     "target": "lecture",
+     "spawn": "from_central"
+    },
+    {
+     "name": "east",
+     "cells": [
+      25,
+      12,
+      26,
+      14
+     ],
+     "target": "campus",
+     "spawn": "hall_east"
+    }
+   ],
+   "spawns": {
+    "north": [
+     416,
+     112
+    ],
+    "south": [
+     416,
+     744
+    ],
+    "west": [
+     80,
+     432
+    ],
+    "east": [
+     768,
+     432
+    ]
+   },
+   "sites": [
+    {
+     "id": "relay",
+     "point": [
+      416,
+      456
+     ],
+     "label": "传声中继"
+    },
+    {
+     "id": "mouthpiece",
+     "point": [
+      352,
+      480
+     ],
+     "label": "铜口"
+    },
+    {
+     "id": "central_notice",
+     "point": [
+      192,
+      224
+     ],
+     "label": "中央公告板"
+    },
+    {
+     "id": "watch_point",
+     "point": [
+      416,
+      640
+     ],
+     "label": "守夜点"
+    }
+   ]
+  },
+  "lecture": {
+   "title": "讲堂",
+   "cells": [
+    22,
+    18
+   ],
+   "exits": [
+    {
+     "name": "east",
+     "cells": [
+      21,
+      9,
+      22,
+      11
+     ],
+     "target": "central_hall",
+     "spawn": "west"
+    }
+   ],
+   "spawns": {
+    "from_central": [
+     640,
+     336
+    ]
+   },
+   "sites": [
+    {
+     "id": "blackboard",
+     "point": [
+      352,
+      168
+     ],
+     "label": "黑板"
+    },
+    {
+     "id": "timetable",
+     "point": [
+      576,
+      136
+     ],
+     "label": "课表"
+    }
+   ]
+  },
+  "archive": {
+   "title": "名录库·文献工房",
+   "cells": [
+    28,
+    19
+   ],
+   "exits": [
+    {
+     "name": "south",
+     "cells": [
+      7,
+      18,
+      9,
+      19
+     ],
+     "target": "campus",
+     "spawn": "archive_front"
+    },
+    {
+     "name": "down",
+     "cells": [
+      1,
+      16,
+      3,
+      18
+     ],
+     "target": "counterweight",
+     "spawn": "from_stairs"
+    }
+   ],
+   "spawns": {
+    "south": [
+     256,
+     560
+    ],
+    "stairs": [
+     112,
+     496
+    ]
+   },
+   "sites": [
+    {
+     "id": "lock_core",
+     "point": [
+      256,
+      384
+     ],
+     "label": "库门锁芯"
+    },
+    {
+     "id": "seal_boxes",
+     "point": [
+      256,
+      160
+     ],
+     "label": "封存匣"
+    },
+    {
+     "id": "name_warning",
+     "point": [
+      160,
+      384
+     ],
+     "label": "唤名警告"
+    },
+    {
+     "id": "red_ink",
+     "point": [
+      608,
+      480
+     ],
+     "label": "规程页"
+    },
+    {
+     "id": "watch_point",
+     "point": [
+      320,
+      512
+     ],
+     "label": "守夜点"
+    }
+   ]
+  },
+  "counterweight": {
+   "title": "配重室",
+   "cells": [
+    14,
+    11
+   ],
+   "exits": [
+    {
+     "name": "up",
+     "cells": [
+      1,
+      7,
+      3,
+      8
+     ],
+     "target": "archive",
+     "spawn": "stairs"
+    }
+   ],
+   "spawns": {
+    "from_stairs": [
+     80,
+     272
+    ]
+   },
+   "sites": [
+    {
+     "id": "counterweight",
+     "point": [
+      224,
+      192
+     ],
+     "label": "配重"
+    }
+   ]
+  },
+  "resonance": {
+   "title": "共鸣厅·沉静室",
+   "cells": [
+    29,
+    16
+   ],
+   "exits": [
+    {
+     "name": "south",
+     "cells": [
+      10,
+      15,
+      12,
+      16
+     ],
+     "target": "campus",
+     "spawn": "resonance_front"
+    }
+   ],
+   "spawns": {
+    "south": [
+     352,
+     464
+    ]
+   },
+   "sites": [
+    {
+     "id": "step_marks",
+     "point": [
+      800,
+      160
+     ],
+     "label": "门内步位标线"
+    },
+    {
+     "id": "silent_door",
+     "point": [
+      672,
+      192
+     ],
+     "label": "沉静室门"
+    }
+   ]
+  },
+  "clinic": {
+   "title": "诊疗所·安全端",
+   "cells": [
+    27,
+    11
+   ],
+   "exits": [
+    {
+     "name": "south",
+     "cells": [
+      8,
+      10,
+      10,
+      11
+     ],
+     "target": "campus",
+     "spawn": "clinic_front"
+    }
+   ],
+   "spawns": {
+    "south": [
+     288,
+     304
+    ]
+   },
+   "sites": [
+    {
+     "id": "reagent",
+     "point": [
+      720,
+      160
+     ],
+     "label": "试剂柜"
+    },
+    {
+     "id": "empty_bowl",
+     "point": [
+      160,
+      192
+     ],
+     "label": "病床"
+    }
+   ]
+  },
+  "logistics": {
+   "title": "后勤院",
+   "cells": [
+    31,
+    14
+   ],
+   "exits": [
+    {
+     "name": "west",
+     "cells": [
+      0,
+      9,
+      1,
+      11
+     ],
+     "target": "campus",
+     "spawn": "logistics_west"
+    },
+    {
+     "name": "east",
+     "cells": [
+      30,
+      9,
+      31,
+      11
+     ],
+     "target": "campus",
+     "spawn": "logistics_east"
+    }
+   ],
+   "spawns": {
+    "west": [
+     52,
+     336
+    ],
+    "east": [
+     940,
+     336
+    ]
+   },
+   "sites": [
+    {
+     "id": "ration_counter",
+     "point": [
+      464,
+      288
+     ],
+     "label": "配给台"
+    },
+    {
+     "id": "ledger",
+     "point": [
+      512,
+      256
+     ],
+     "label": "台账"
+    },
+    {
+     "id": "ration_notice",
+     "point": [
+      512,
+      128
+     ],
+     "label": "配给台公告板"
+    },
+    {
+     "id": "watch_point",
+     "point": [
+      576,
+      288
+     ],
+     "label": "守夜点"
+    }
+   ]
+  },
+  "granary": {
+   "title": "粮仓",
+   "cells": [
+    10,
+    9
+   ],
+   "exits": [
+    {
+     "name": "south",
+     "cells": [
+      4,
+      8,
+      6,
+      9
+     ],
+     "target": "campus",
+     "spawn": "granary_front"
+    }
+   ],
+   "spawns": {
+    "south": [
+     160,
+     240
+    ]
+   },
+   "sites": [
+    {
+     "id": "latch",
+     "point": [
+      160,
+      232
+     ],
+     "label": "门闩"
+    },
+    {
+     "id": "stock",
+     "point": [
+      160,
+      128
+     ],
+     "label": "存粮"
+    }
+   ]
+  },
+  "greenhouse": {
+   "title": "温室",
+   "cells": [
+    12,
+    31
+   ],
+   "exits": [
+    {
+     "name": "south",
+     "cells": [
+      5,
+      30,
+      7,
+      31
+     ],
+     "target": "campus",
+     "spawn": "greenhouse_front"
+    }
+   ],
+   "spawns": {
+    "south": [
+     192,
+     944
+    ]
+   },
+   "sites": [
+    {
+     "id": "valve",
+     "point": [
+      192,
+      128
+     ],
+     "label": "阀门"
+    },
+    {
+     "id": "gauge",
+     "point": [
+      224,
+      128
+     ],
+     "label": "压力表"
+    }
+   ]
+  },
+  "campus": {
+   "title": "学园",
+   "size_px": [
+    3312,
+    2544
+   ],
+   "exits": [
+    {
+     "name": "生活翼北门",
+     "rect_px": [
+      608,
+      1321,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "north_door"
+    },
+    {
+     "name": "夹道西",
+     "rect_px": [
+      543,
+      1502,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "west_lane"
+    },
+    {
+     "name": "夹道东",
+     "rect_px": [
+      673,
+      1502,
+      36,
+      36
+     ],
+     "target": "living_hall",
+     "spawn": "east_lane"
+    },
+    {
+     "name": "中央厅北",
+     "rect_px": [
+      1182,
+      613,
+      36,
+      36
+     ],
+     "target": "central_hall",
+     "spawn": "north"
+    },
+    {
+     "name": "中央厅南",
+     "rect_px": [
+      1182,
+      1030,
+      36,
+      36
+     ],
+     "target": "central_hall",
+     "spawn": "south"
+    },
+    {
+     "name": "中央厅东",
+     "rect_px": [
+      1390,
+      822,
+      36,
+      36
+     ],
+     "target": "central_hall",
+     "spawn": "east"
+    },
+    {
+     "name": "名录库",
+     "rect_px": [
+      1182,
+      394,
+      36,
+      36
+     ],
+     "target": "archive",
+     "spawn": "south"
+    },
+    {
+     "name": "共鸣厅",
+     "rect_px": [
+      318,
+      754,
+      36,
+      36
+     ],
+     "target": "resonance",
+     "spawn": "south"
+    },
+    {
+     "name": "诊疗所",
+     "rect_px": [
+      1854,
+      1294,
+      36,
+      36
+     ],
+     "target": "clinic",
+     "spawn": "south"
+    },
+    {
+     "name": "后勤院西",
+     "rect_px": [
+      1417,
+      1626,
+      36,
+      36
+     ],
+     "target": "logistics",
+     "spawn": "west"
+    },
+    {
+     "name": "后勤院东",
+     "rect_px": [
+      1762,
+      1626,
+      36,
+      36
+     ],
+     "target": "logistics",
+     "spawn": "east"
+    },
+    {
+     "name": "粮仓",
+     "rect_px": [
+      1854,
+      1594,
+      36,
+      36
+     ],
+     "target": "granary",
+     "spawn": "south"
+    },
+    {
+     "name": "温室",
+     "rect_px": [
+      2382,
+      946,
+      36,
+      36
+     ],
+     "target": "greenhouse",
+     "spawn": "south"
+    }
+   ],
+   "spawns": {
+    "living_north": [
+     626,
+     1313
+    ],
+    "lane_west": [
+     525,
+     1530
+    ],
+    "lane_east": [
+     727,
+     1530
+    ],
+    "hall_north": [
+     1200,
+     605
+    ],
+    "hall_south": [
+     1200,
+     1094
+    ],
+    "hall_east": [
+     1444,
+     850
+    ],
+    "archive_front": [
+     1200,
+     458
+    ],
+    "resonance_front": [
+     336,
+     818
+    ],
+    "clinic_front": [
+     1872,
+     1358
+    ],
+    "logistics_west": [
+     1399,
+     1654
+    ],
+    "logistics_east": [
+     1816,
+     1654
+    ],
+    "granary_front": [
+     1872,
+     1658
+    ],
+    "greenhouse_front": [
+     2400,
+     1010
+    ]
+   },
+   "sites": [
+    {
+     "id": "lane",
+     "point": [
+      626,
+      1520
+     ],
+     "label": "夹道"
+    },
+    {
+     "id": "collapse",
+     "point": [
+      2925,
+      2460
+     ],
+     "label": "港路塌方处"
+    },
+    {
+     "id": "oath_court",
+     "point": [
+      1200,
+      2040
+     ],
+     "label": "誓约庭"
+    },
+    {
+     "id": "spring",
+     "point": [
+      2352,
+      1224
+     ],
+     "label": "汲水泉"
+    }
+   ]
+  }
+ },
+ "props": {
+  "fireplace": {
+   "size": [
+    72,
+    64
+   ],
+   "footprint": [
+    64,
+    14
+   ],
+   "sha256": "1bba3a2902b06b49f93242994a5eb58dc522630ddf2c469e40a5aa130e824deb"
+  },
+  "long_table": {
+   "size": [
+    160,
+    56
+   ],
+   "footprint": [
+    150,
+    34
+   ],
+   "sha256": "b4a8188e892e305d1b0d4ce0b8e72c707b992a136b7aef2d44b5281672aeefc7"
+  },
+  "long_bench": {
+   "size": [
+    128,
+    24
+   ],
+   "footprint": [
+    124,
+    10
+   ],
+   "sha256": "99dbc9334a42ee52ada0b5034a802d0be26039fa56824850d97b4d15569d2e56"
+  },
+  "upright_piano": {
+   "size": [
+    60,
+    56
+   ],
+   "footprint": [
+    56,
+    16
+   ],
+   "sha256": "edc4680fd3822e6d7958b91e32bc330a306876e2784158f781bd8578ac144f6d"
+  },
+  "piano_stool": {
+   "size": [
+    18,
+    20
+   ],
+   "footprint": [
+    12,
+    8
+   ],
+   "sha256": "1217e66942273f35969db995adba6c8d179f0bfe856ecf4f3f91a35c168eb35e"
+  },
+  "chess_table": {
+   "size": [
+    34,
+    34
+   ],
+   "footprint": [
+    24,
+    12
+   ],
+   "sha256": "19c4eb68855967b5a7e4e1cb09b8eb777d9ca55fbb9a7e7dd2975eaec3584f51"
+  },
+  "notice_board": {
+   "size": [
+    44,
+    40
+   ],
+   "footprint": null,
+   "sha256": "90381f13e933b5da80a2ebbf6f5fde3c7b8cabe78d48a316051e576b52962f6f"
+  },
+  "shoe_bench": {
+   "size": [
+    48,
+    26
+   ],
+   "footprint": [
+    44,
+    10
+   ],
+   "sha256": "06b7ab9e05762b932282ec2060c03a9fcf44e39fe1d83f540673113d2084ff2f"
+  },
+  "basin_row": {
+   "size": [
+    112,
+    44
+   ],
+   "footprint": [
+    108,
+    16
+   ],
+   "sha256": "23194a79541b219b0c21cef85226c460e14b1262ed936872547585de003c41c9"
+  },
+  "bathtub": {
+   "size": [
+    70,
+    40
+   ],
+   "footprint": [
+    64,
+    22
+   ],
+   "sha256": "2e03d551d91ba2d44e86ed42ae7d9ddec55ab4f7b8e6d69a11a87d0f909fdf59"
+  },
+  "water_heater": {
+   "size": [
+    30,
+    60
+   ],
+   "footprint": [
+    22,
+    12
+   ],
+   "sha256": "837961d06825e4356a9f3d06104a40de6d1644ba8bccc4e9f9277d13fa462502"
+  },
+  "laundry_tub": {
+   "size": [
+    40,
+    30
+   ],
+   "footprint": [
+    32,
+    12
+   ],
+   "sha256": "fd4e29b89924767a9e5c0edf3d179b542e96c14281603595c058ebcc9daea299"
+  },
+  "lecture_desk_row": {
+   "size": [
+    140,
+    40
+   ],
+   "footprint": [
+    136,
+    18
+   ],
+   "sha256": "db7f6c5f7849c2e2ee54445b6191b862a9d5e8e1639bd592ce933293069dfccc"
+  },
+  "lectern": {
+   "size": [
+    28,
+    44
+   ],
+   "footprint": [
+    18,
+    10
+   ],
+   "sha256": "4d52e8e06fa3c6d432b75463ff1676b8ea9b6cd8e1b46eaf29ac7942c1da0423"
+  },
+  "blackboard_large": {
+   "size": [
+    132,
+    60
+   ],
+   "footprint": null,
+   "sha256": "bf5de23f8596dfda7f89c0dd6615fab39318cd482d17f4793f786f7574c7c2e6"
+  },
+  "relay_column": {
+   "size": [
+    52,
+    96
+   ],
+   "footprint": [
+    36,
+    20
+   ],
+   "sha256": "cdfe1452c913f1b8cc49367b570595986163482343f737b96842eaaed30ba8b8"
+  },
+  "mouthpiece_stand": {
+   "size": [
+    22,
+    46
+   ],
+   "footprint": [
+    12,
+    8
+   ],
+   "sha256": "06194e8d184797629a3b50fc34798341d13083b1415ad43fc61c18363f38d026"
+  },
+  "notice_pillar": {
+   "size": [
+    34,
+    58
+   ],
+   "footprint": [
+    24,
+    12
+   ],
+   "sha256": "5fec8da38b9f5098971b7dc756e4422324f29cf10ae251d5a77784710c074453"
+  },
+  "timetable_board": {
+   "size": [
+    40,
+    48
+   ],
+   "footprint": null,
+   "sha256": "b25c312d2bbd4e6f6a9f4f5d686930926c34cda6122f3aa3c248cc169dd5a918"
+  },
+  "archive_shelf": {
+   "size": [
+    52,
+    72
+   ],
+   "footprint": [
+    48,
+    14
+   ],
+   "sha256": "ca59623e03eb9463fdaadf53733122380a36e10b18a54d32ad853b633e8ae8ce"
+  },
+  "seal_rack": {
+   "size": [
+    60,
+    64
+   ],
+   "footprint": [
+    56,
+    14
+   ],
+   "sha256": "eb26bbaa933cb80166156c80d1e33895a472e0f708251ca340d8bb0ed527eb50"
+  },
+  "seal_box": {
+   "size": [
+    16,
+    14
+   ],
+   "footprint": null,
+   "sha256": "38e755c8f2d11fa32e0a37ac3929b3142bfa7d5fef0b921a1883939a5a60b6ac"
+  },
+  "box_pedestal": {
+   "size": [
+    20,
+    28
+   ],
+   "footprint": [
+    14,
+    10
+   ],
+   "sha256": "39e9758ee62bee2254e27bdfb79415243bbb549309d620f5b1cf81623b619292"
+  },
+  "vault_door": {
+   "size": [
+    76,
+    80
+   ],
+   "footprint": null,
+   "sha256": "f038ab9f19eb5223f648144cdd5e1affda00a0a36fc22efcb37a429ec58a17a2"
+  },
+  "counterweight_engine": {
+   "size": [
+    72,
+    92
+   ],
+   "footprint": [
+    64,
+    22
+   ],
+   "sha256": "206000b72cd40b8c28c8ba1a170c9b98da111342d54de45e29bd54b5312756f7"
+  },
+  "copy_desk": {
+   "size": [
+    60,
+    44
+   ],
+   "footprint": [
+    56,
+    18
+   ],
+   "sha256": "3d4f00947830c11672ed832869fc71d69d9e09e24a9700c8237e345de3fe2b28"
+  },
+  "plan_cabinet": {
+   "size": [
+    52,
+    40
+   ],
+   "footprint": [
+    48,
+    16
+   ],
+   "sha256": "49e3c0ef8cb6a6fc770fdce27a7adaebc63715a3e749052a1c3485db6ac3a6e8"
+  },
+  "tuning_frame": {
+   "size": [
+    68,
+    64
+   ],
+   "footprint": [
+    60,
+    14
+   ],
+   "sha256": "5ddccd650683f65db338cf25320daa7452c424cd0e3ff24fc11703d67758a1c9"
+  },
+  "music_stand": {
+   "size": [
+    20,
+    40
+   ],
+   "footprint": [
+    10,
+    8
+   ],
+   "sha256": "d0150134949d9ff20dc28e584b505c0c10b6d2c5f6bfce59f35a29e53ca02d99"
+  },
+  "ward_bed": {
+   "size": [
+    36,
+    60
+   ],
+   "footprint": [
+    30,
+    40
+   ],
+   "sha256": "2dacdded65eb11443f941fe9a7f5b0e512e1948dbb70aa67d39b7331e2cfac2a"
+  },
+  "medicine_cabinet": {
+   "size": [
+    50,
+    60
+   ],
+   "footprint": [
+    46,
+    12
+   ],
+   "sha256": "a7ed892fd62a4f1f4de91278353a9b69a4381e4b4697a7f471b0a85fac83d571"
+  },
+  "reagent_cabinet": {
+   "size": [
+    50,
+    60
+   ],
+   "footprint": [
+    46,
+    12
+   ],
+   "sha256": "cad0ff86b3a4e0ac0bbaa0f828d9d12ffa894149ddde2835be58860d2c815865"
+  },
+  "wash_trough": {
+   "size": [
+    60,
+    30
+   ],
+   "footprint": [
+    56,
+    14
+   ],
+   "sha256": "080c883c8f0952bc586ae7852ac9d54b50d86cbff4b59a95395a89cb13713644"
+  },
+  "folding_screen": {
+   "size": [
+    50,
+    46
+   ],
+   "footprint": [
+    46,
+    8
+   ],
+   "sha256": "45ef989508ce91cc5dc3520c1c7afc5bf72f08b9937099fb15bfa27da8ae985a"
+  },
+  "doctor_desk": {
+   "size": [
+    56,
+    40
+   ],
+   "footprint": [
+    52,
+    16
+   ],
+   "sha256": "2dd9961897514363a8ad142dc310aa009225c3ff1dcd07fb56804d6f48b1e9a3"
+  },
+  "kitchen_range": {
+   "size": [
+    100,
+    60
+   ],
+   "footprint": [
+    96,
+    18
+   ],
+   "sha256": "c3b853da169c2279b6b576f6c32bd6ae965417ac69bef954ca4a908abd7af501"
+  },
+  "hood_chimney": {
+   "size": [
+    100,
+    40
+   ],
+   "footprint": null,
+   "sha256": "c3dd37b6f51c09fb36b8d71864fa4b6782910c647c7ba75e53d5c1a042c1170a"
+  },
+  "ration_counter": {
+   "size": [
+    104,
+    48
+   ],
+   "footprint": [
+    100,
+    16
+   ],
+   "sha256": "9f177fdca6508f92618ba1c20d0efb92d107d0a2f1df7ae4f0c519d72893ea31"
+  },
+  "ledger_stand": {
+   "size": [
+    24,
+    40
+   ],
+   "footprint": [
+    14,
+    10
+   ],
+   "sha256": "2fccf685d4fa592acb6a630148723b5cfde6d50d0c24c09cdde9fc6e9705f888"
+  },
+  "dish_rack": {
+   "size": [
+    56,
+    52
+   ],
+   "footprint": [
+    52,
+    10
+   ],
+   "sha256": "a23fef24520c8920fe6ed79721beb303dca45aa77afcd6740c17e4cdf4abea74"
+  },
+  "granary_bin": {
+   "size": [
+    52,
+    48
+   ],
+   "footprint": [
+    48,
+    18
+   ],
+   "sha256": "e531fbee9855fdb0a861d8845b2ae65d0c00392e529485d54c41533d5617127f"
+  },
+  "granary_door": {
+   "size": [
+    48,
+    60
+   ],
+   "footprint": null,
+   "sha256": "38d2359bdfef329be7d59a84f3fa296bfbb71f800aab88373092bf9b2950c962"
+  },
+  "hand_pump": {
+   "size": [
+    24,
+    44
+   ],
+   "footprint": [
+    14,
+    10
+   ],
+   "sha256": "fe8478145f2fd8bd1b95e7070853a15bde1247b095104fe0023d815b92d00d76"
+  },
+  "spring_trough": {
+   "size": [
+    64,
+    34
+   ],
+   "footprint": [
+    60,
+    18
+   ],
+   "sha256": "4c1370a2b5ab412b12b46406a49652e0865fe52133a005b5fa6bfb0b2aaa5f80"
+  },
+  "bucket_pair": {
+   "size": [
+    30,
+    22
+   ],
+   "footprint": [
+    24,
+    8
+   ],
+   "sha256": "af1a5ca2902395bde9d70c3325b6741718071061b7799d8f92c227098259a255"
+  },
+  "drying_lines": {
+   "size": [
+    100,
+    52
+   ],
+   "footprint": [
+    100,
+    6
+   ],
+   "sha256": "0bf47bb9778518ca9f2817dff2e16c916db72902417367e49312df15894c5301"
+  },
+  "valve_station": {
+   "size": [
+    44,
+    52
+   ],
+   "footprint": [
+    36,
+    14
+   ],
+   "sha256": "67b1a029f09d2b6d9077afe75efb0effcab105719dd1d092350430cb9828c536"
+  },
+  "planter_bed": {
+   "size": [
+    96,
+    34
+   ],
+   "footprint": [
+    92,
+    20
+   ],
+   "sha256": "1ee69393b906062254cda178f329728a049766e83afd5a8391f52ff02b4fa316"
+  },
+  "seedling_pots": {
+   "size": [
+    34,
+    20
+   ],
+   "footprint": [
+    26,
+    8
+   ],
+   "sha256": "c8b544b90efd4ea8e400b20c5c1284d5813fc606a20ae899662cdadaece51eed"
+  },
+  "garden_tools": {
+   "size": [
+    30,
+    46
+   ],
+   "footprint": [
+    20,
+    8
+   ],
+   "sha256": "a9d827ac759cedf7391d338c00c0e19db9814cc039ea4aca936a3589648f375e"
+  },
+  "stone_bench": {
+   "size": [
+    56,
+    24
+   ],
+   "footprint": [
+    52,
+    10
+   ],
+   "sha256": "2de71dafaff2910b31c8306d0871585b0e886f7eaa70473bb25cddaf95b327ce"
+  },
+  "lamp_post": {
+   "size": [
+    16,
+    64
+   ],
+   "footprint": [
+    6,
+    6
+   ],
+   "sha256": "86f9772f35cb97d8d842a51ce0500a2b7bd5d6cc628f114cbe9e44c52efc5018"
+  },
+  "gate_leaf": {
+   "size": [
+    36,
+    52
+   ],
+   "footprint": null,
+   "sha256": "d5bf00512ba28e26420bf61102290a07a472c7e0d84a97155223c263917f0528"
+  }
+ }
+}
