@@ -6,7 +6,7 @@ source image is scaled or quantized.
 """
 from __future__ import annotations
 
-from .palette import BRASS, CREAM, IRON, LINEN, OAK, STONE, WALNUT, INK
+from .palette import BRASS, CREAM, IRON, LINEN, OAK, OCHRE, STONE, WALNUT, INK
 from .pixel import Canvas, hexc, mix
 from . import props
 
@@ -153,20 +153,19 @@ def cups() -> Canvas:
 
 
 def jar() -> Canvas:
-    """14x18 glass jar of live starter; the paper label carries 24 short strokes."""
+    """14x18 glass jar of live starter; old dough has dried on the glass in fine layers, too many to count."""
     c = Canvas(14, 18)
     glass = hexc("#9fb3b0", 200)
     c.rect(1, 3, 12, 15, glass)
-    c.rect(2, 7, 10, 10, CREAM[4])
-    c.dither(2, 7, 10, 10, CREAM[2], 0.25)
-    for x, y in ((4, 8), (8, 10), (6, 12), (10, 9)):
+    c.rect(2, 9, 10, 8, CREAM[4])
+    c.dither(2, 9, 10, 8, CREAM[2], 0.25)
+    for x, y in ((4, 10), (8, 12), (6, 14), (10, 11)):
         c.px(x, y, CREAM[5])
-    c.rect(1, 0, 12, 3, WALNUT[3]); c.hline(1, 0, 12, WALNUT[5])
-    c.rect(3, 12, 8, 4, PAPER[2])
-    for x in range(4, 10):
-        c.px(x, 13, INK_A)
-        c.px(x, 14, INK_A)
-    c.px(10, 13, INK_A)
+    # 罐壁上一层摞一层干结的旧面痕：细而密，没有可数的刻度。
+    for y in range(3, 9):
+        c.hline(1, y, 12, mix(CREAM[3], glass, 0.35 if y % 2 else 0.6))
+    c.dither(1, 3, 12, 6, CREAM[1], 0.3)
+    c.rect(1, 0, 12, 3, LINEN[3]); c.hline(1, 0, 12, LINEN[5]); c.hline(1, 2, 12, WALNUT[3])
     return _finish(c)
 
 
@@ -395,13 +394,12 @@ def card_jar() -> Canvas:
     c.rect(24, 24, 48, 44, CREAM[4]); c.dither(24, 24, 48, 44, CREAM[2], 0.2)
     for x, y in ((30, 30), (44, 40), (58, 34), (38, 52), (64, 56), (50, 28)):
         c.ellipse(x, y, 2, 2, CREAM[5])
-    c.rect(20, 2, 56, 7, WALNUT[4])
-    c.rect(26, 44, 44, 16, PAPER[2])
-    for i in range(24):
-        x = 28 + i * 2 - (i // 12) * 24
-        y = 46 if i < 12 else 52
-        c.vline(x, y, 5, INK_A)
-    c.line(74 - 28, 52, 74 - 26, 57, INK_A)
+    c.rect(20, 2, 56, 7, LINEN[3]); c.hline(20, 2, 56, LINEN[5]); c.hline(20, 8, 56, WALNUT[3])
+    # 上半截罐壁：一圈摞一圈干结的旧面痕，细密到数不清。
+    for y in range(9, 24):
+        c.hline(20, y, 56, mix(CREAM[3], glass, (0.25, 0.5, 0.7)[(y * 7) % 3]))
+    c.dither(20, 9, 56, 15, CREAM[1], 0.35)
+    c.dither(20, 9, 56, 15, CREAM[5], 0.12)
     return c
 
 
@@ -430,16 +428,18 @@ def card_coat() -> Canvas:
 
 
 def notice_frame() -> Canvas:
-    """24x34 notice frame on the hall wall: a walnut frame holding a freshly copied sheet of eight clauses."""
+    """24x34 notice frame on the hall wall: a walnut frame holding a freshly copied sheet of four school rules."""
     c = Canvas(24, 34)
     c.rect(0, 0, 24, 34, WALNUT[3])
     c.frame(0, 0, 24, 34, WALNUT[1])
     c.hline(1, 1, 22, WALNUT[5])
     c.rect(3, 3, 18, 28, PAPER[2])
     c.hline(3, 30, 18, PAPER[0])
-    for i, y in enumerate(range(6, 29, 3)):
+    c.hline(8, 6, 8, INK_A)  # 题头：学园守则
+    for i, y in enumerate((11, 16, 21, 26)):
         c.px(4, y, INK_A)
-        c.hline(6, y, 13 - (i * 5) % 6, mix(INK_A, PAPER[2], 0.35))
+        c.hline(6, y, 14 - (i * 3) % 5, mix(INK_A, PAPER[2], 0.35))
+        c.hline(6, y + 2, 10 - i * 2, mix(INK_A, PAPER[2], 0.45))
     c.px(11, 0, BRASS[4])
     c.px(12, 0, BRASS[4])
     return _finish(c)
@@ -470,6 +470,109 @@ def demon_prints() -> Canvas:
         shoe(20 + (i % 2) * 5, y, True)
     for i, y in enumerate(range(6, 44, 11)):
         shoe(34 + (i % 2) * 5, y, False)
+    return c
+
+
+def isolation_door_side(open_: bool = False) -> Canvas:
+    """96x136 overlay for the isolation door in the foyer's west wall, seen from above.
+
+    Placed with its top-left at map pixel (72, 288): the wall column is x 56..88, the
+    doorway y 64..128, the foyer floor begins at x 88 and the living hall lies west of x 56.
+    Closed: the oak leaf fills the doorway, the inner bolt shot into its keeper on the foyer
+    side, the heavy outer bar across the outside face. Open: the leaf has swung out into the
+    living hall against the north jamb, and the outer bar lies where it was set down.
+    """
+    c = Canvas(96, 136)
+    # keepers for the outer bar on both jambs (they stay when the bar is lifted)
+    for ky in (54, 128):
+        c.rect(50, ky, 8, 7, IRON[2]); c.hline(50, ky, 8, IRON[4]); c.rect(52, ky + 2, 4, 3, INK)
+    # pulley on the north jamb; its rope runs to the head of the leaf
+    c.ellipse(72, 48, 5, 5, IRON[3]); c.ellipse(72, 48, 2.5, 2.5, IRON[1]); c.px(70, 45, IRON[5])
+    if not open_:
+        c.vline(73, 53, 9, OCHRE[3]); c.vline(74, 53, 9, OCHRE[1])
+        # the leaf: oak planks running north-south, three iron straps
+        c.rect(63, 60, 11, 72, WALNUT[3])
+        for x in (65, 68, 71):
+            c.vline(x, 60, 72, WALNUT[2])
+        c.vline(63, 60, 72, WALNUT[5]); c.vline(73, 60, 72, WALNUT[1])
+        c.hline(63, 60, 11, WALNUT[5])
+        for sy in (70, 94, 118):
+            c.rect(62, sy, 13, 3, IRON[2]); c.hline(62, sy, 13, IRON[4])
+        # inner bolt along the foyer face, shot down into its keeper on the south jamb
+        c.rect(75, 86, 3, 46, IRON[3]); c.vline(75, 86, 46, IRON[5])
+        c.rect(77, 100, 5, 3, IRON[4]); c.px(81, 101, IRON[5])
+        c.rect(74, 128, 6, 6, IRON[2]); c.hline(74, 128, 6, IRON[4])
+        # the outer bar, heavy and dark, across the outside face
+        c.rect(54, 56, 5, 78, IRON[1]); c.vline(54, 56, 78, IRON[3]); c.vline(58, 56, 78, IRON[0])
+    else:
+        c.vline(71, 53, 6, OCHRE[3])
+        # the leaf stands open against the north jamb, its south face toward us
+        c.rect(4, 10, 56, 54, WALNUT[3])
+        for x in range(4, 60, 8):
+            c.vline(x, 10, 54, WALNUT[2]); c.vline(x + 1, 10, 54, WALNUT[4])
+        c.hline(4, 10, 56, WALNUT[5]); c.hline(4, 63, 56, WALNUT[1])
+        for sy in (18, 34, 52):
+            c.rect(4, sy, 56, 4, IRON[2]); c.hline(4, sy, 56, IRON[4])
+            for rx in range(7, 58, 8):
+                c.px(rx, sy + 2, IRON[5])
+        c.rect(44, 26, 10, 6, IRON[2]); c.rect(46, 28, 6, 2, INK)  # peephole hatch
+        c.hline(4, 64, 56, (26, 16, 30, 120))
+        # the outer bar, lifted out and laid down in the ash
+        c.line(18, 112, 46, 96, IRON[1]); c.line(18, 113, 46, 97, IRON[2]); c.line(18, 114, 46, 98, IRON[0])
+    return _finish(c)
+
+
+def demon_prints_side() -> Canvas:
+    """112x136 overlay for the living hall once the door is open (top-left at map pixel (8, 288)):
+    one line of narrow, pointed shoe prints comes down the hall from the north, stops at the
+    door and turns back. The demon had to take form to lift the outer bar."""
+    c = Canvas(112, 136)
+    dark = hexc("#2a262b", 245)
+
+    def shoe(x: int, y: int, toe: str) -> None:
+        if toe == "down":
+            c.rect(x, y, 3, 2, dark); c.rect(x, y + 4, 3, 4, dark); c.px(x + 1, y + 8, dark)
+        elif toe == "up":
+            c.px(x + 1, y, dark); c.rect(x, y + 1, 3, 4, dark); c.rect(x, y + 7, 3, 2, dark)
+        else:  # toe east, at the door
+            c.rect(x, y, 2, 3, dark); c.rect(x + 4, y, 4, 3, dark); c.px(x + 8, y + 1, dark)
+
+    for i, y in enumerate(range(0, 84, 11)):
+        shoe(66 + (i % 2) * 5, y, "down")
+    shoe(92, 88, "east")
+    shoe(92, 96, "east")
+    for i, y in enumerate(range(80, -4, -11)):
+        shoe(80 + (i % 2) * 5, y, "up")
+    return c
+
+
+def bed_sheeted() -> Canvas:
+    """36x64 bed in an empty room, under a dust sheet; dust lies evenly over it."""
+    c = Canvas(36, 64)
+    sheet = [hexc("#8e8a80"), hexc("#a9a497"), hexc("#c2bdae"), hexc("#d6d1c2")]
+    for fx in (0, 33):
+        c.rect(fx, 0, 3, 3, WALNUT[4]); c.px(fx + 1, 0, BRASS[4])
+    c.rect(1, 2, 34, 15, sheet[1])
+    c.poly([(8, 5), (18, 1), (28, 5)], sheet[2])
+    c.rect(1, 15, 34, 46, sheet[2])
+    for x in (6, 13, 22, 29):
+        c.vline(x, 17, 42, sheet[1])
+    c.hline(1, 16, 34, sheet[3])
+    c.hline(1, 30, 34, sheet[3])
+    c.hline(1, 46, 34, sheet[1])
+    for x in range(1, 35):
+        c.px(x, 60 + (x // 4) % 2, sheet[0])
+    c.dither(1, 2, 34, 58, hexc("#9b968a"), 0.12)
+    return _finish(c)
+
+
+def shelf_dust_even() -> Canvas:
+    """40x60 overlay for the bookcase in an empty room: an even coat of dust, nothing ever stood there."""
+    c = Canvas(40, 60)
+    dust = hexc("#b9b1a3", 150)
+    for board in (16, 28, 40, 52):
+        c.hline(3, board - 1, 34, dust)
+        c.hline(3, board - 2, 34, hexc("#b9b1a3", 80))
     return c
 
 
@@ -532,6 +635,8 @@ def card_whetstone() -> Canvas:
 
 FIELD = {
     "demon_prints": demon_prints, "oil_hook": oil_hook, "whetstone": whetstone,
+    "isolation_door_side": isolation_door_side, "isolation_door_side_open": lambda: isolation_door_side(True),
+    "demon_prints_side": demon_prints_side, "bed_sheeted": bed_sheeted, "shelf_dust_even": shelf_dust_even,
     "notice_frame": notice_frame,
     "speaking_tube": speaking_tube, "isolation_door": isolation_door,
     "isolation_door_open": lambda: isolation_door(True), "wedge": wedge, "fork": fork, "score": score,

@@ -208,9 +208,9 @@ Check(morning.RealityFingerprint() == realityBefore, "回忆不改动客观世�
 // ---------------------------------------------------------------- 6. 欲望放大与同伴是否触物回忆（引擎决定）
 Line("");
 Line("== 欲望放大（Corruption）与同伴触物回忆的决定");
-RecallDecision Ask(MorningWorld world, string evidence, Person who, bool showClause8)
+RecallDecision Ask(MorningWorld world, string evidence, Person who, bool showRule1)
 {
-    if (showClause8) world.ShowClause8(who);
+    if (showRule1) world.ShowRule1(who);
     world.Amplify(who, "（走近旧物时的一句真话）");
     return world.DecideRecall(evidence)!;
 }
@@ -233,9 +233,9 @@ foreach (var (evidence, who, plainExpected, toldExpected) in new[]
     shown.Amplify(who, "S4");
     var othersBefore = Enum.GetValues<Person>().Where(p => p != who).ToDictionary(p => p, shown.MindFingerprint);
     var no = Ask(shown, evidence, who, true);
-    Check(yes.Choice == plainExpected, $"{Names.Of(who)}：未被告知第 8 条时，DecisionSystem 选择 {yes.Choice}（{yes.Thought}）");
-    Check(no.Choice == toldExpected, $"{Names.Of(who)}：被告知第 8 条后，选择 {no.Choice}（{no.Thought}）");
-    Check(othersBefore.All(p => shown.MindFingerprint(p.Key) == p.Value), $"{Names.Of(who)}：指看第 8 条与恶魔的话只改变他本人的认知");
+    Check(yes.Choice == plainExpected, $"{Names.Of(who)}：未被告知守则第 1 条时，DecisionSystem 选择 {yes.Choice}（{yes.Thought}）");
+    Check(no.Choice == toldExpected, $"{Names.Of(who)}：被告知守则第 1 条后，选择 {no.Choice}（{no.Thought}）");
+    Check(othersBefore.All(p => shown.MindFingerprint(p.Key) == p.Value), $"{Names.Of(who)}：指看守则第 1 条与恶魔的话只改变他本人的认知");
 }
 // 沈鼎犹豫时反问侦探：三种回答经 SocialSystem 判定后写进他的认知，再由 DecisionSystem 取舍。
 foreach (var (advice, adviceExpected) in new[] { ("touch", RecallChoice.Touch), ("decline", RecallChoice.Refuse), ("own", RecallChoice.Refuse) })
@@ -248,8 +248,8 @@ foreach (var (advice, adviceExpected) in new[] { ("touch", RecallChoice.Touch), 
     Check(stance == DualOntologyWorldEngine.Core.SocialStance.Accept && after.Choice == adviceExpected,
         $"沈鼎“你说呢？”——侦探回答 {advice}：SocialSystem 判 {stance}，沈鼎选择 {after.Choice}（{after.Thought}）");
 }
-Check(MorningWorld.PostedClauses.Length == 8 && MorningWorld.PostedClauses.All(c => !c.Contains("归乡") && !c.Contains("放逐")),
-    "公告框只抄录第 1—8 条，没有第 9、10 条");
+Check(MorningWorld.PostedRules.Length == 4 && MorningWorld.PostedRules.All(c => !c.Contains("契约") && !c.Contains("导师") && !c.Contains("归乡") && !c.Contains("放逐")),
+    "公告框只贴学园守则四条：不提契约、导师与第 9、10 条");
 
 // ---------------------------------------------------------------- 6b. 冲突只描述痕迹之差
 Line("");
@@ -290,12 +290,12 @@ foreach (var (evidence, who, room, wrong) in new[]
     Check(!world.Intend(who)!.Reach, $"{Names.Of(who)}：拿定主意之后不再自己去拿");
     var toldFirst = new MorningWorld();
     toldFirst.Amplify(who, "S4");
-    toldFirst.ShowClause8(who);
+    toldFirst.ShowRule1(who);
     toldFirst.Whisper(who, "（低语）");
     var expectGo = who == Person.Huo;
-    Check(toldFirst.Intend(who)!.Reach == expectGo, $"{Names.Of(who)}：事先读过第 8 条，低语之后{(expectGo ? "仍然要去" : "不去")}");
+    Check(toldFirst.Intend(who)!.Reach == expectGo, $"{Names.Of(who)}：事先读过守则第 1 条，低语之后{(expectGo ? "仍然要去" : "不去")}");
 }
-// 侦探在场时的三种回应：劝阻（Testimony，经 SocialSystem）、说明第 8 条（感知）、任其自便（什么也不说）；不在场时他独自取舍。
+// 侦探在场时的三种回应：劝阻（Testimony，经 SocialSystem）、说明守则第 1 条（感知）、任其自便（什么也不说）；不在场时他独自取舍。
 foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, aloneExpected) in new[]
 {
     ("E7", Person.Huo, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch),
@@ -314,12 +314,12 @@ foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, alon
     var stance = dissuaded.Advise(who, "decline");
     var a = dissuaded.DecideRecall(evidence)!;
     var shown = Fresh();
-    shown.ShowClause8(who);
+    shown.ShowRule1(who);
     var b = shown.DecideRecall(evidence)!;
     var c = Fresh().DecideRecall(evidence)!;
     var d = Fresh().DecideAlone(evidence)!;
     Check(a.Choice == declineExpected, $"{Names.Of(who)}：侦探劝阻（SocialSystem 判 {stance}）→ {a.Choice}（{a.Thought}）");
-    Check(b.Choice == clauseExpected, $"{Names.Of(who)}：侦探说明第 8 条 → {b.Choice}（{b.Thought}）");
+    Check(b.Choice == clauseExpected, $"{Names.Of(who)}：侦探说明守则第 1 条 → {b.Choice}（{b.Thought}）");
     Check(c.Choice == noneExpected, $"{Names.Of(who)}：侦探任其自便 → {c.Choice}（{c.Thought}）");
     Check(d.Choice == aloneExpected, $"{Names.Of(who)}：侦探不在场 → {d.Choice}（{d.Thought}）");
 }

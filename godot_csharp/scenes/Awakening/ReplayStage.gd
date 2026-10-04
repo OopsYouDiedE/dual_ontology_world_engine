@@ -6,13 +6,13 @@ const Paper := preload("res://scenes/Awakening/Paper.gd")
 const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
 
 const ROOM_ANCHORS := {
-	"R05": Vector2(150, 214), "R06": Vector2(470, 214), "R07": Vector2(790, 214), "R08": Vector2(1110, 214),
-	"corridor": Vector2(640, 428), "hall": Vector2(300, 748), "pantry": Vector2(996, 768), "foyer": Vector2(648, 930),
-	"main": Vector2(648, 1010),
+	"R05": Vector2(930, 200), "R06": Vector2(930, 600), "R07": Vector2(706, 600), "R08": Vector2(706, 200),
+	"corridor": Vector2(800, 388), "hall": Vector2(440, 340), "pantry": Vector2(470, 652), "foyer": Vector2(224, 388),
+	"lounge": Vector2(64, 388),
 }
 const SPOTS := {
-	"door": ["foyer", Vector2(648, 940)], "tube": ["hall", Vector2(498, 572)], "slate": ["hall", Vector2(380, 690)],
-	"desk": ["R08", Vector2(1030, 212)], "sink": ["pantry", Vector2(862, 596)],
+	"door": ["foyer", Vector2(178, 384)], "tube": ["hall", Vector2(500, 132)], "slate": ["hall", Vector2(532, 290)],
+	"desk": ["R08", Vector2(690, 214)], "sink": ["pantry", Vector2(352, 560)],
 }
 const OFFSETS := {"detective": Vector2(-22, 4), "huo": Vector2(22, 4), "shen": Vector2(-6, 18), "su": Vector2(10, -12)}
 const ORDER := ["detective", "huo", "shen", "su"]
@@ -66,7 +66,7 @@ func _setup() -> void:
 	host.ui.visible = false
 	host.follow_camera = false
 	host.camera.zoom = Vector2.ONE
-	host.camera.position = Vector2(640, 508)
+	host.camera.position = Vector2(640, 352)
 	layer = CanvasLayer.new()
 	layer.layer = 14
 	add_child(layer)
@@ -149,7 +149,7 @@ func position_of(frame: Dictionary, key: String) -> Vector2:
 	if SPOTS.has(spot) and SPOTS[spot][0] == room:
 		return SPOTS[spot][1] + OFFSETS[key] * 0.6
 	if room == "corridor":
-		return Vector2(380 + ORDER.find(key) * 170, 428)
+		return Vector2(650 + ORDER.find(key) * 90, 388)
 	return ROOM_ANCHORS.get(room, Vector2(640, 500)) + OFFSETS[key]
 
 func _apply(frame: Dictionary, previous: Dictionary) -> void:
@@ -188,7 +188,7 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 	if bool(frame.smoke):
 		door += "　·　烟灰进了门厅" if bool(frame.ash) else ""
 	door_label.text = door
-	door_label.position = Vector2(560, 880)
+	door_label.position = Vector2(120, 600)
 	call_deferred("_place_bubbles", frame)
 
 func _face(figure: AnimatedSprite2D, facing: String, flip: bool) -> void:

@@ -62,7 +62,7 @@ def exit_(name, x0, y0, x1, y1, target, spawn):
 
 ZONES = {
     "甲": dict(numbers=["01", "02", "03", "04"], wall=("paper", "LINEN", "lattice", "CLARET"), floor="oak", east=False, extra="ink"),
-    "乙": dict(numbers=["05", "06", "07", "08"], wall=("paper", "TEAL", "pinstripe", "OCHRE"), floor="oak", east=True, extra="brass"),
+    "乙": dict(numbers=["05", "06", "08", "07"], wall=("paper", "TEAL", "pinstripe", "OCHRE"), floor="oak", east=True, extra="brass"),
     "丙": dict(numbers=["09", "10", "11", "12"], wall=("paper", "PLUM", "damask", "OCHRE"), floor="herringbone", east=False, extra="drape"),
     "丁": dict(numbers=["13", "14", "15", "16"], wall=("tile",), floor="whitetile", east=True, extra="tile"),
 }

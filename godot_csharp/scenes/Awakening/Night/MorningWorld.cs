@@ -30,21 +30,17 @@ public sealed class MorningWorld
     [
         new("E5", Person.Su, "门边……有人在喊开门。我想开门让他进来。", [1]),
         new("E7", Person.Huo, "铜口里的声音很清楚……“守在铜口旁，等我下一次通知。”——他再也没有来。", [2, 3, 4]),
-        new("E10", Person.Shen, "第二十四道。阿泠的茶不放糖，老霍的放两勺……", [6]),
+        new("E10", Person.Shen, "又该喂了。阿泠的茶不放糖，老霍的放两勺……", [6]),
         new("E1", Person.Detective, "霍铎说闩。我就闩了。我信他。", [5, 6]),
     ];
 
-    /// <summary>活动厅公告框抄录的契约第 1—8 条（恶魔依第 5、6 条公开的部分）。</summary>
-    public static readonly ImmutableArray<string> PostedClauses =
+    /// <summary>活动厅公告框上的“学园守则”四条：恶魔自己所立之规（设计第一部分 §2）。契约不公开。</summary>
+    public static readonly ImmutableArray<string> PostedRules =
     [
-        "一、恶魔常驻岛内，不得离岛。",
-        "二、经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。",
-        "三、恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。",
-        "四、恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。",
-        "五、恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。",
-        "六、恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。",
-        "七、恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。",
-        "八、封存的记忆可凭对应之物恢复；恢复即重新接通，后果自负。",
+        "一、封存之物，可凭对应之物寻回；寻回者，自负其果。",
+        "二、饮水、炉火、照明照常供给；物资由诸位自行分配。",
+        "三、外闩所封之处，余患未清，清后即启。",
+        "四、我所立之规，皆张贴于此。",
     ];
 
     /// <summary>每人的核心欲望（设计第一部分 §5）。恶魔的真话以 Corruption 来源放大它。</summary>
@@ -57,7 +53,7 @@ public sealed class MorningWorld
     };
 
     // 三人倾向各不相同（设计第二部分 §5）：写进各自认知的规则权重，不显示给玩家。
-    // 霍铎：欲望最强，对恶魔有一分职业性的信任，读到第 8 条也照样碰。
+    // 霍铎：欲望最强，对恶魔有一分职业性的信任，读到守则第 1 条也照样碰。
     // 苏泠：欲望强，但最怕被“接上”：不知代价会碰，知道了就拒绝。
     // 沈鼎：护短而谨慎，信身边人不信恶魔：不知代价时想碰与不碰分量相当（犹豫），听侦探的；知道了就拒绝。
     private static int DemonTrust(Person who) => who == Person.Huo ? 2 : 0;
@@ -71,7 +67,7 @@ public sealed class MorningWorld
 
     private sealed class Mind
     {
-        public Projection Self = null!, Desire = null!, Demon = null!, Clause8 = null!, Detective = null!, Object = null!;
+        public Projection Self = null!, Desire = null!, Demon = null!, Rule1 = null!, Detective = null!, Object = null!;
         public Effect Touch = null!, Decline = null!, Reach = null!, Stay = null!;
         public Projection AdviceTouch = null!, AdviceDecline = null!, AdviceOwn = null!, Whisper = null!, Settled = null!, Room = null!;
         public RecallMemory Memory = null!;
@@ -110,7 +106,7 @@ public sealed class MorningWorld
         Evidence("E7", "霍铎的石板", Room.Hall, ("第一行", traces.SlateLine1), ("第二行", traces.SlateLine2));
         Evidence("E8", "铜口与管接头", Room.Hall, ("接头松动", 1));
         Evidence("E9", "四只杯子", Room.Pantry, ("按人放糖", traces.CupSugar));
-        Evidence("E10", "酵种罐", Room.Pantry, ("刻痕", 24));
+        Evidence("E10", "酵种罐", Room.Pantry, ("层层旧面痕", 1));
         Evidence("E11", "架上的无尘方框", Room.R05, ("窄手印", 1));
         Evidence("E12", "侦探的外衣口袋", Room.R05, ("放大镜", 1));
         foreach (var who in Enum.GetValues<Person>())
@@ -139,7 +135,7 @@ public sealed class MorningWorld
     }
 
     /// <summary>
-    /// 同伴面对“触碰旧物、回想”的习惯：欲望越强、越信恶魔，越想碰；天性谨慎、知道第 8 条的代价，越不肯碰。
+    /// 同伴面对“触碰旧物、回想”的习惯：欲望越强、越信恶魔，越想碰；天性谨慎、读到守则第 1 条“自负其果”，越不肯碰。
     /// 两种选择都是写进他内部世界的 Rule，由 DecisionSystem 取舍。
     /// </summary>
     private void WriteMind(RecallMemory memory)
@@ -168,7 +164,7 @@ public sealed class MorningWorld
             Source = ObservationSource.Perception, Existence = Truth.True,
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, DemonTrust(who))
         });
-        mind.Clause8 = Observation.Observe(soul, new ObservationInput("契约第八条：恢复即重新接通，后果自负", ProjectionKind.Concept)
+        mind.Rule1 = Observation.Observe(soul, new ObservationInput("守则第一条：寻回者，自负其果", ProjectionKind.Concept)
         {
             Source = ObservationSource.Introspection, Existence = Truth.False
         });
@@ -185,20 +181,20 @@ public sealed class MorningWorld
         for (var level = 1; level <= 3; level++)
             rules.Add(new Rule(new Condition.Tagged(mind.Demon, Tags.Trust, level), RuleMode.Prefer, mind.Touch, 1, Truth.True));
         rules.Add(new Rule(new Condition.Constant(Truth.True), RuleMode.Prefer, mind.Decline, Caution(who), Truth.True));
-        rules.Add(new Rule(new Condition.Exists(mind.Clause8), RuleMode.Prefer, mind.Decline, 3, Truth.True));
+        rules.Add(new Rule(new Condition.Exists(mind.Rule1), RuleMode.Prefer, mind.Decline, 3, Truth.True));
         // 被接受的劝告（SocialSystem 判定）写进认知后，成为取舍的一部分；让他自己拿主意，天性里的谨慎多占一分。
         rules.Add(new Rule(new Condition.Exists(mind.AdviceTouch), RuleMode.Prefer, mind.Touch, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.AdviceDecline), RuleMode.Prefer, mind.Decline, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.AdviceOwn), RuleMode.Prefer, mind.Decline, 1, Truth.True));
         // 要不要自己走过去拿起它：恶魔对他本人说过那句话（Corruption）、欲望、对恶魔的信任，推他过去；
-        // 手头的事、读到过的第 8 条拉住他；已经拿过主意的，不再去。
+        // 手头的事、读到过的守则第 1 条拉住他；已经拿过主意的，不再去。
         rules.Add(new Rule(new Condition.Exists(mind.Whisper), RuleMode.Prefer, mind.Reach, 3, Truth.True));
         for (var level = 1; level <= 8; level++)
             rules.Add(new Rule(new Condition.Tagged(mind.Desire, Strength, level), RuleMode.Prefer, mind.Reach, 1, Truth.True));
         for (var level = 1; level <= 3; level++)
             rules.Add(new Rule(new Condition.Tagged(mind.Demon, Tags.Trust, level), RuleMode.Prefer, mind.Reach, 1, Truth.True));
         rules.Add(new Rule(new Condition.Constant(Truth.True), RuleMode.Prefer, mind.Stay, 5, Truth.True));
-        rules.Add(new Rule(new Condition.Exists(mind.Clause8), RuleMode.Prefer, mind.Stay, 2, Truth.True));
+        rules.Add(new Rule(new Condition.Exists(mind.Rule1), RuleMode.Prefer, mind.Stay, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.Settled), RuleMode.Prefer, mind.Stay, 20, Truth.True));
         Observation.Observe(soul, new ObservationInput(Names.Of(who) + "对旧物的习惯", ProjectionKind.Concept)
         {
@@ -246,7 +242,7 @@ public sealed class MorningWorld
         var thought = reach > stay
             ? $"它说的那句话，一直在耳朵里。我想要{wants}。……去看看{mind.Object.Name}。"
             : mind.Settled.Existence == Truth.True ? "那件东西，我已经拿过主意了。"
-            : mind.Clause8.Existence == Truth.True ? "第八条我读过。手头的事要紧。"
+            : mind.Rule1.Existence == Truth.True ? "守则第一条我读过。手头的事要紧。"
             : "手头的事要紧。";
         return new(who, reach > stay, thought);
     }
@@ -295,17 +291,17 @@ public sealed class MorningWorld
         return execution.Status == ExecutionStatus.Completed && execution.Result is { Succeeded: true };
     }
 
-    /// <summary>玩家把公告框上的第 8 条指给某人看：他亲眼读到（感知）。决定仍是他的。</summary>
-    public void ShowClause8(Person who)
+    /// <summary>玩家把公告框上的守则第 1 条指给某人看：他亲眼读到（感知）。决定仍是他的。</summary>
+    public void ShowRule1(Person who)
     {
         if (!_minds.TryGetValue(who, out var mind)) return;
-        Observation.Observe(_souls[who], new ObservationInput(mind.Clause8.Name, mind.Clause8.Kind)
+        Observation.Observe(_souls[who], new ObservationInput(mind.Rule1.Name, mind.Rule1.Kind)
         {
-            Target = mind.Clause8, Source = ObservationSource.Perception, Existence = Truth.True, Time = ++_time, Details = PostedClauses[7]
+            Target = mind.Rule1, Source = ObservationSource.Perception, Existence = Truth.True, Time = ++_time, Details = PostedRules[0]
         });
     }
 
-    public bool KnowsClause8(Person who) => _minds.TryGetValue(who, out var mind) && mind.Clause8.Existence == Truth.True;
+    public bool KnowsRule1(Person who) => _minds.TryGetValue(who, out var mind) && mind.Rule1.Existence == Truth.True;
 
     /// <summary>
     /// 犹豫的人反问侦探“你说呢？”。侦探的回答作为一句带请求的话（Testimony）进入此人认知；
@@ -353,7 +349,7 @@ public sealed class MorningWorld
         var decline = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Decline))?.Decision.Score ?? 0;
         var choice = touch > decline ? RecallChoice.Touch : touch < decline ? RecallChoice.Refuse : RecallChoice.Hesitate;
         var wants = DesireOf(memory.Who);
-        var knows = mind.Clause8.Existence == Truth.True;
+        var knows = mind.Rule1.Existence == Truth.True;
         var advisedTouch = mind.AdviceTouch.Existence == Truth.True;
         var advisedDecline = mind.AdviceDecline.Existence == Truth.True;
         var advisedOwn = mind.AdviceOwn.Existence == Truth.True;
@@ -363,14 +359,14 @@ public sealed class MorningWorld
             RecallChoice.Touch when advisedTouch => "你说碰。……我信你。碰。",
             RecallChoice.Touch when unheeded && memory.Who == Person.Huo => "你说别碰。……图纸值这个价。",
             RecallChoice.Touch when unheeded => $"你劝我别碰。……可我们昨天才认识。我想要{wants}。",
-            RecallChoice.Touch when knows && memory.Who == Person.Huo => "第八条我读了。接上就接上。……图纸值这个价。",
-            RecallChoice.Touch when knows => $"代价我读到了。可我想要{wants}——想得顾不上了。",
+            RecallChoice.Touch when knows && memory.Who == Person.Huo => "守则第一条我读了。果，我自己担。……图纸值这个价。",
+            RecallChoice.Touch when knows => $"自负其果，我读到了。可我想要{wants}——想得顾不上了。",
             RecallChoice.Touch => $"它说的是真的。我想要{wants}。碰一下，就知道了。",
             RecallChoice.Refuse when advisedDecline => "你说别碰，那就不碰。",
             RecallChoice.Refuse when advisedOwn => "让我自己拿主意……那就不碰。",
-            RecallChoice.Refuse when knows => $"第八条写着：恢复即重新接通，后果自负。我想要{wants}，可我不想被它接上。",
+            RecallChoice.Refuse when knows => $"守则第一条写着：寻回者，自负其果。我想要{wants}，可我不知道那个果是什么。",
             RecallChoice.Refuse => "这东西认得我。我不一定想认得它。",
-            _ => $"想要{wants}……可碰了，会不会把谁也一起接上？"
+            _ => $"想要{wants}……可碰了，会碰出什么来？"
         };
         return new(memory.Who, choice, thought);
     }

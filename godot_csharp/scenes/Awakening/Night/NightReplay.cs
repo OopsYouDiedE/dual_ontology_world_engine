@@ -76,12 +76,13 @@ public sealed class NightReplay
     private double DetectiveWakes => _timing.DetectiveWakes;
     private double LookDelay => _timing.LookDelay;
 
+    // 乙区拓扑（设计第二部分 §11 第 7 条）：四间住房开向中廊，中廊通活动厅；备餐间与门厅都只经活动厅出入。
     private static readonly ImmutableDictionary<(Room, Room), double> Hops = new Dictionary<(Room, Room), double>
     {
         [(Room.R05, Room.Corridor)] = 1.2, [(Room.R06, Room.Corridor)] = 1.2,
         [(Room.R07, Room.Corridor)] = 1.2, [(Room.R08, Room.Corridor)] = 1.2,
-        [(Room.Corridor, Room.Hall)] = 2.0, [(Room.Corridor, Room.Pantry)] = 2.0,
-        [(Room.Hall, Room.Foyer)] = 2.5, [(Room.Pantry, Room.Foyer)] = 2.5,
+        [(Room.Corridor, Room.Hall)] = 2.0, [(Room.Hall, Room.Pantry)] = 2.0,
+        [(Room.Hall, Room.Foyer)] = 2.5,
     }.ToImmutableDictionary();
 
     private readonly NightVariables _v;
@@ -466,7 +467,7 @@ public sealed class NightReplay
         }
         Frame("", _v.V3 == VoiceOrigin.Tube
             ? (count == 1 ? "主楼有人对着铜口说话" : "铜口里的话又说了一遍")
-            : (count == 1 ? "门外走廊有人喊话" : "门外的人又喊了一遍"));
+            : (count == 1 ? "门外有人喊话" : "门外的人又喊了一遍"));
         QueueDecisions();
     }
 

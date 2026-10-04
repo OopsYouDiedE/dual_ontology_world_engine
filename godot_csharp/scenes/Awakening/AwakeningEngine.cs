@@ -12,7 +12,7 @@ public partial class AwakeningEngine : Node
     private MorningWorld _morning = new();
 
     public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
-    public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "main"];
+    public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
 
     private static string Key(Person p) => PersonKeys[(int)p];
     private static string Key(Room r) => RoomKeys[(int)r];
@@ -96,8 +96,8 @@ public partial class AwakeningEngine : Node
     /// <summary>恶魔对某人说一句朝向其欲望的真话（Corruption 来源）。</summary>
     public int Amplify(string who, string words) => _morning.Amplify(PersonOf(who), words);
 
-    public void ShowClause8(string who) => _morning.ShowClause8(PersonOf(who));
-    public bool KnowsClause8(string who) => _morning.KnowsClause8(PersonOf(who));
+    public void ShowRule1(string who) => _morning.ShowRule1(PersonOf(who));
+    public bool KnowsRule1(string who) => _morning.KnowsRule1(PersonOf(who));
     public int DesireStrength(string who) => _morning.DesireStrength(PersonOf(who));
 
     /// <summary>同伴碰不碰旧物：choice 为 touch / hesitate / refuse，thought 为自然语言依据。</summary>
@@ -146,7 +146,7 @@ public partial class AwakeningEngine : Node
     /// <summary>犹豫的同伴反问“你说呢？”：advice 为 touch / decline / own；返回 SocialSystem 的判定。</summary>
     public string Advise(string who, string advice) => _morning.Advise(PersonOf(who), advice).ToString();
 
-    public GArray PostedClauses() => new(MorningWorld.PostedClauses.Select(c => Variant.From(c)));
+    public GArray PostedRules() => new(MorningWorld.PostedRules.Select(c => Variant.From(c)));
 
     public void Examine(string who, string evidence)
         => _morning.Examine((Person)Array.IndexOf(PersonKeys, who), evidence);
@@ -156,14 +156,14 @@ public partial class AwakeningEngine : Node
     public bool HasRecalled(string who) => _morning.HasRecalled((Person)Array.IndexOf(PersonKeys, who));
 
     /// <summary>章节结束状态：钩数、信任（V6 结论）、已公开的物证。供后续章节读取。</summary>
-    public GDict ChapterEnd(GArray examined, bool familiar, bool askedReverse, bool rested)
+    public GDict ChapterEnd(GArray examined, bool familiar, bool askedHand, bool rested)
     {
         var hooks = new GDict();
         foreach (var p in Enum.GetValues<Person>()) hooks[Key(p)] = _morning.Hooks(p);
         return new GDict
         {
             ["hooks"] = hooks, ["trust_familiar"] = familiar, ["evidence_public"] = examined,
-            ["asked_reverse"] = askedReverse, ["rested"] = rested,
+            ["asked_hand"] = askedHand, ["rested"] = rested,
         };
     }
 }

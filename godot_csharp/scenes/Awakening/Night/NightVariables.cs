@@ -5,8 +5,8 @@ namespace DualOntologyWorldEngine.Awakening;
 /// <summary>四个人。Detective 是玩家。</summary>
 public enum Person { Detective, Huo, Shen, Su }
 
-/// <summary>生活翼的房间与主楼一侧的走廊。地图几何属宿主；这里只有房间拓扑。</summary>
-public enum Room { R05, R06, R07, R08, Corridor, Hall, Pantry, Foyer, MainWing }
+/// <summary>乙区的房间与隔离门外的起居厅。地图几何属宿主；这里只有房间拓扑。</summary>
+public enum Room { R05, R06, R07, R08, Corridor, Hall, Pantry, Foyer, Lounge }
 
 // 重演面板的六个变量（设计 §4.1）。每个选项都是“处境与人心”，没有任何一项指定某人做了什么。
 public enum SuPlace { OwnRoom, Hall, Pantry }
@@ -56,9 +56,8 @@ public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidO
 public enum Hearing { Nothing, AlarmOnly, Murmur, Tail, Full, FullMuffled }
 
 /// <summary>
-/// 声路（设计 §4.2 感知表）。这是游戏层的空间事实：铜口的传声管沿墙走向主楼，
-/// 在隔离门门框旁的松动接头漏出低沉的重读音节。设计中 R-08“紧挨门厅”，与门厅同列；
-/// 复用的地图几何里 R-08 在走廊东端，此处仍按设计表处理（偏离见实现报告）。
+/// 声路（设计 §4.2 感知表）。这是游戏层的空间事实：铜口的传声管一路沿活动厅北墙进门厅，
+/// 贴着隔离门门框通往主楼；一支走活动厅与 R-08 之间的墙内。两处松动接头只漏出低沉的重读音节。
 /// </summary>
 public static class Acoustics
 {
@@ -74,7 +73,7 @@ public static class Acoustics
         _ => listener switch
         {
             Room.Foyer or Room.R08 => Hearing.FullMuffled,
-            Room.MainWing => Hearing.Full,
+            Room.Lounge => Hearing.Full,
             _ => Hearing.Nothing
         }
     };
@@ -118,6 +117,6 @@ public static class Names
     {
         Room.R05 => "R-05", Room.R06 => "R-06", Room.R07 => "R-07", Room.R08 => "R-08",
         Room.Corridor => "走廊", Room.Hall => "活动厅", Room.Pantry => "备餐间", Room.Foyer => "门厅",
-        _ => "主楼走廊"
+        _ => "门外"
     };
 }

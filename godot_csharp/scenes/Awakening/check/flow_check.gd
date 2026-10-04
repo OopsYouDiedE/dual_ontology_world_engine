@@ -1,6 +1,6 @@
 extends SceneTree
-## 流程跳转回归：直接把局面摆到关键状态（醒来、自报身份广播、公告框、门厅反转、同伴触物回忆两种分支、
-## 重演全部吻合、答辩第 5 步、门开、退出考题），检查可达与无脚本错误。
+## 流程跳转回归：直接把局面摆到关键状态（醒来、开场广播、学园守则、门厅反转、同伴触物回忆两种分支、
+## 重演全部吻合、始业之答、门开、退出考题），检查可达与无脚本错误。地图为第五轮修订后的乙区（中廊两侧各三间房）。
 ## 对白由脚本代为推进；这不是游玩验证，不替代独立盲玩。
 ##   godot --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd
 
@@ -8,6 +8,8 @@ const SCENE := "res://scenes/Main2D.tscn"
 const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
 ## 恶魔在全章都不提契约第 9、10 条。
 const FORBIDDEN := ["第九", "第 9", "第9", "第十条", "第 10", "九、", "十、", "尽忘", "归乡", "放逐", "十五名", "担保耗尽"]
+## 第五轮修订删去的说法：初涉斯地、可数的刻痕、恶魔自报为恶魔或提导师与契约、门外是“主楼走廊”。
+const RETIRED := ["初涉斯地", "二十四", "刻痕", "恶魔亦可", "导师将我拘于", "契约第", "主楼走廊", "依第二条", "第 8 条", "第八条"]
 var checks := 0
 var failures := 0
 var holder: Node
@@ -123,8 +125,8 @@ func _run() -> void:
 		"recall_ask_detective", "recall_detective", "recall_su", "recall_huo", "recall_shen",
 		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "rest_confirm", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
 		"answer_ok2", "answer_need_test", "answer_q3", "answer_ok3", "answer_q4", "answer_ok4",
-		"answer_wrong_show", "answer_wrong_say", "answer_pause", "answer_offer_reverse", "answer_reverse", "answer_reverse_wrong",
-		"s10_steps", "s10_open", "ending_rest", "enter_foyer", "enter_pantry", "enter_R08", "enter_R06", "enter_R07", "replay_first", "replay_refused"]
+		"answer_wrong_show", "answer_wrong_say", "answer_pause", "s10_steps", "s10_prints", "s10_hand", "s10_open", "ending_rest",
+		"enter_foyer", "enter_pantry", "enter_R08", "enter_R06", "enter_R07", "enter_empty", "replay_first", "replay_refused"]
 	for who in ["su", "huo", "shen"]:
 		for part in ["recall_offer_", "recall_shown_", "recall_touch_", "recall_refuse_", "recall_hesitate_"]:
 			needed.append(part + who)
@@ -133,6 +135,10 @@ func _run() -> void:
 	var raw := FileAccess.get_file_as_string("res://scenes/Awakening/awakening.dialogue") + FileAccess.get_file_as_string("res://scenes/Awakening/AwakeningContent.gd")
 	var hits := FORBIDDEN.filter(func(w): return raw.contains(w))
 	check(hits.is_empty(), "台词与证物文本中没有契约第 9、10 条的字样 %s" % str(hits))
+	var retired_raw := raw + FileAccess.get_file_as_string("res://scenes/Awakening/Awakening.gd")
+	var retired := RETIRED.filter(func(w): return retired_raw.contains(w))
+	check(retired.is_empty(), "第五轮修订：不再有“初涉斯地”、可数刻痕、契约条款与“主楼走廊” %s" % str(retired))
+	check(not titles.has("answer_offer_reverse") and not titles.has("answer_reverse"), "第五轮修订：删去答辩第 5 步“反问”")
 
 	# ---- 1. 醒来 → 相遇 → 自报身份广播 → 核验 → 始业之问 → 调查（完整开场，对白代为推进）
 	var game := await fresh(false)
@@ -142,7 +148,7 @@ func _run() -> void:
 	check(game.stage == "roam", "醒来后可以自由行动")
 	check(game.site_visible("E12") and game.site_visible("E11a") and not game.site_visible("E1"), "醒来时只看得到 R-05 里的东西")
 	game.player.stand_up()
-	game.player.position = Vector2(300, 600)
+	game.player.position = Vector2(440, 340)
 	check(await wait_until(func(): return game.stage == "meeting"), "走进活动厅触发 S2 相遇")
 	seen_lines.clear()
 	for round in 120:
@@ -154,27 +160,37 @@ func _run() -> void:
 		await process_frame
 	check(game.stage == "investigate", "S2–S5 结束后进入调查")
 	var opening := "\n".join(seen_lines)
-	check(opening.contains("我是此地的代管者，也是诸位的教师") and opening.contains("恶魔亦可") and opening.contains("不得令诸位因无知而死"),
-		"S3 开场广播：恶魔自报身份与契约要点")
-	check(opening.find("恶魔亦可") < opening.find("此为始业之问"), "自报身份在始业之问之前")
+	check(opening.contains("我是此地的代管者，也是诸位的教师") and opening.contains("我所立之规") and not opening.contains("恶魔")
+		and not opening.contains("导师") and not opening.contains("契约") and not opening.contains("初涉斯地"),
+		"S3 开场广播：只称代管者与教师，不说自己是什么，不提导师与契约，没有“初涉斯地”（第五轮修订 1、3）")
+	check(opening.find("代管者") < opening.find("此为始业之问"), "开场广播在始业之问之前")
 	check(FORBIDDEN.filter(func(w): return opening.contains(w)).is_empty(), "开场全部台词不提第 9、10 条")
 	check(opening.contains("不是来给它断案的") and opening.contains("考人，不是问路") and opening.contains("我只信我听见的"),
 		"始业之问后，三人各有一句不同的抵触或怀疑，再开始调查（修订四·11）")
 	check(opening.contains("插进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
 	check(int(game.engine.DesireStrength("huo")) == 2 and int(game.engine.DesireStrength("su")) == 2 and int(game.engine.DesireStrength("shen")) == 2,
 		"S4 恶魔逐一点到三人的欲望（Corruption 来源，欲望各加强一级）")
-	check(game.flags.has("board_read"), "S3 广播结束后，公告框第 1—8 条完整呈现过一次（修订三·2）")
+	check(game.flags.has("board_read"), "S3 广播结束后，公告框上的学园守则完整呈现过一次（修订三·2、第五轮修订 2）")
 	check(game.detective_name == "试验", "姓名由玩家输入")
 	check(game.can_access_dorm("musician"), "调查阶段可进入其他宿舍")
-	for dorm in [["R-06", Vector2(480, 200)], ["R-07", Vector2(800, 200)]]:
-		var route: PackedVector2Array = game._route(Vector2(640, 424), dorm[1])
-		check(not route.is_empty() and game._walkable(dorm[1]), "%s 可以走进去（修订三·1）" % dorm[0])
+	for dorm in [["R-06", Vector2(930, 600)], ["R-07", Vector2(706, 600)], ["空房", Vector2(1150, 200)]]:
+		var route: PackedVector2Array = game._route(Vector2(800, 388), dorm[1])
+		check(not route.is_empty() and game._walkable(dorm[1]) and game._room_name(dorm[1]) == dorm[0], "%s 可以走进去（修订三·1）" % dorm[0])
+	# 乙区布局（第五轮修订 7）：中廊两侧各三间房，四人入住，靠外端两间空着；门厅在西端，隔离门开向起居厅。
+	var names := {}
+	for p in [Vector2(706, 200), Vector2(930, 200), Vector2(1150, 200), Vector2(706, 600), Vector2(930, 600), Vector2(1150, 600)]:
+		names[game._room_name(p)] = names.get(game._room_name(p), 0) + 1
+	check(names.get("R-05", 0) == 1 and names.get("R-06", 0) == 1 and names.get("R-07", 0) == 1 and names.get("R-08", 0) == 1 and names.get("空房", 0) == 2,
+		"中廊两侧各三间房：R-05—08 四间住人，外端两间空着 %s" % str(names))
+	check(game._room_name(Vector2(224, 390)) == "门厅" and game._room_name(Vector2(64, 390)) == "起居厅" and not game._walkable(Vector2(144, 384)),
+		"门厅在乙区西端，隔离门外是起居厅，门闩着走不过去")
 
-	# ---- 2. 公告框：只抄第 1—8 条
+	# ---- 2. 公告框：学园守则四条（第五轮修订 2）
 	game.open_board()
-	var board: Array = game.engine.PostedClauses()
+	var board: Array = game.engine.PostedRules()
 	var board_text := "\n".join(board)
-	check(board.size() == 8 and board_text.contains("八、封存的记忆可凭对应之物恢复") and board_text.contains("不得令学员因无知而死"), "活动厅公告框抄录契约第 1—8 条")
+	check(board.size() == 4 and board_text.contains("一、封存之物，可凭对应之物寻回；寻回者，自负其果。") and board_text.contains("四、我所立之规，皆张贴于此。")
+		and not board_text.contains("契约") and not board_text.contains("恶魔"), "活动厅公告框贴的是学园守则四条，不是契约")
 	check(FORBIDDEN.filter(func(w): return board_text.contains(w)).is_empty(), "公告框没有第 9、10 条")
 	game.close_modal()
 
@@ -229,14 +245,14 @@ func _run() -> void:
 		game.close_modal()
 	check(seen_lines.filter(func(l): return l.contains("声音走管子")).size() == 1, "两轮声路试验，苏泠的点评只说一次")
 
-	# ---- 5. 触物回忆：三人倾向各不相同（未告知／已告知第 8 条），沈鼎犹豫时侦探的三种回答
-	# [物件, 人, 是否先指给他看第 8 条, 犹豫时侦探的回答序号（-1 表示不会犹豫）, 期望结果, 期望心声片段]
+	# ---- 5. 触物回忆：三人倾向各不相同（未告知／已告知守则第 1 条），沈鼎犹豫时侦探的三种回答
+	# [物件, 人, 是否先指给他看守则第 1 条, 犹豫时侦探的回答序号（-1 表示不会犹豫）, 期望结果, 期望心声片段]
 	var cases := [
 		["E7", "huo", false, -1, "touch", "碰一下"],
 		["E7", "huo", true, -1, "touch", "图纸值这个价"],
 		["E5", "su", false, -1, "touch", "碰一下"],
-		["E5", "su", true, -1, "refuse", "第八条"],
-		["E10", "shen", true, -1, "refuse", "第八条"],
+		["E5", "su", true, -1, "refuse", "守则第一条"],
+		["E10", "shen", true, -1, "refuse", "守则第一条"],
 		["E10", "shen", false, 0, "touch", "我信你"],
 		["E10", "shen", false, 1, "refuse", "你说别碰"],
 		["E10", "shen", false, 2, "refuse", "自己拿主意"],
@@ -263,7 +279,7 @@ func _run() -> void:
 		var thought := str(game.recall_decision.get("thought", ""))
 		var ok: bool = (touched == (case[4] == "touch")) and int(game.engine.Hooks(case[1])) == (1 if touched else 0) and thought.contains(case[5])
 		var advice_text: String = ["劝碰", "劝别碰", "由他自己"][case[3]] if case[3] >= 0 else ""
-		check(ok, "%s%s：%s%s → %s（%s）" % [Content.PERSON_NAMES[case[1]], "（已被告知第 8 条）" if case[2] else "（未被告知）",
+		check(ok, "%s%s：%s%s → %s（%s）" % [Content.PERSON_NAMES[case[1]], "（已被告知守则第 1 条）" if case[2] else "（未被告知）",
 			"犹豫并反问“你说呢？”，侦探" + advice_text + " " if case[3] >= 0 else "", "", case[4], thought])
 		if case[1] == "shen" and not case[2]:
 			check(hesitated, "沈鼎未被告知时先犹豫，反问侦探“你说呢？”")
@@ -277,7 +293,7 @@ func _run() -> void:
 	var labels := []
 	for b in game.modal_root.find_children("*", "Button", true, false):
 		labels.append(str(b.text))
-	check(labels.any(func(t): return str(t).contains("契约第 8 条")), "回忆选项标注“（契约第 8 条）”（修订三·2）")
+	check(labels.any(func(t): return str(t).contains("守则第 1 条")), "回忆选项标注“（守则第 1 条）”（修订三·2、第五轮修订 2）")
 	game.close_modal()
 	seen_lines.clear()
 	await open_card_settled(game, "E1")
@@ -308,8 +324,8 @@ func _run() -> void:
 	game.close_modal()
 
 	# ---- 5c. 恶魔低语后，同伴自己走向旧物（修订四·1）：在场时三种回应
-	# [人, 物件, 房间中心, 侦探的回应（0 劝阻，1 说明第 8 条，2 任其自便）, 期望]
-	var rooms := {"huo": Vector2(300, 720), "su": Vector2(640, 900), "shen": Vector2(1000, 650)}
+	# [人, 物件, 房间中心, 侦探的回应（0 劝阻，1 说明守则第 1 条，2 任其自便）, 期望]
+	var rooms := {"huo": Vector2(440, 340), "su": Vector2(224, 390), "shen": Vector2(448, 652)}
 	var expect := {"huo": ["touch", "touch", "touch"], "su": ["touch", "refuse", "touch"], "shen": ["refuse", "refuse", "touch"]}
 	var reach_lines := {"huo": "拿起了那块石板", "su": "拾起了那把音叉", "shen": "端起酵种罐"}
 	for who in ["huo", "su", "shen"]:
@@ -330,7 +346,7 @@ func _run() -> void:
 			var text := "\n".join(seen_lines)
 			var ok: bool = still and text.contains(reach_lines[who]) and touched == (expect[who][answer] == "touch") \
 				and bool(game.engine.IsDisturbed(obj)) and game.decided.has(who)
-			check(ok, "%s：低语之前不动；低语后自己走过去伸手；侦探%s → %s（钩 %d，%s）" % [Content.PERSON_NAMES[who], ["劝阻", "说明第 8 条", "任其自便"][answer],
+			check(ok, "%s：低语之前不动；低语后自己走过去伸手；侦探%s → %s（钩 %d，%s）" % [Content.PERSON_NAMES[who], ["劝阻", "说明守则第 1 条", "任其自便"][answer],
 				expect[who][answer], int(game.engine.Hooks(who)), str(game.recall_decision.get("thought", ""))])
 			if who == "shen" and answer == 2:
 				check(text.contains("你说呢"), "沈鼎被任其自便时犹豫，反问侦探“你说呢？”")
@@ -339,7 +355,7 @@ func _run() -> void:
 		game = await fresh()
 		game.jump_to("investigate")
 		game.engine.Amplify(who, "S4")
-		game.player.position = Vector2(160, 230)
+		game.player.position = Vector2(930, 200)
 		for i in 4:
 			await physics_frame
 		game.whisper(who, "（低语）")
@@ -376,7 +392,7 @@ func _run() -> void:
 		"侦探在门厅：恶魔对不在场的霍铎低语，他自己走向石板（在场的苏泠没有被低语）")
 	await wait_until(func(): return str(game.life.get("huo", {}).get("state", "")) == "done" and not game.actor_of("huo").travelling, 1500)
 	check(int(game.engine.Hooks("huo")) == 1 and not game.recalls.has("huo"), "玩家不作为也有后果：霍铎独自碰了石板，留下一枚钩，侦探还不知道")
-	game.player.position = Vector2(300, 720)
+	game.player.position = Vector2(440, 340)
 	await wait_until(func(): return game.aside.visible, 60)
 	check(game.aside.visible and game.aside.text.contains("恍惚"), "走进活动厅：看见霍铎事后的神色")
 
@@ -423,7 +439,7 @@ func _run() -> void:
 	game = await fresh()
 	game.jump_to("investigate")
 	check(game.player.collision_mask == 1 and game.actor_of("su").collision_mask == 1, "人与人不互相阻挡（只与墙和家具碰撞）")
-	game.player.position = game.site_point("E4") + Vector2(0, -44)
+	game.player.position = game.site_point("E4") + Vector2(20, -20)
 	game._approach_site("E4")
 	check(game.modal_kind == "card", "站在够得着的地方点物件：直接打开，不绕到别处")
 	game.close_modal()
@@ -452,7 +468,7 @@ func _run() -> void:
 		stone += str(l.get_parsed_text())
 	check(stone.contains("磨刀石") and stone.contains("深槽"), "R-07 桌上磨得凹陷的磨刀石")
 	game.close_modal()
-	game._furniture_aside(Vector2(108, 55))
+	game._furniture_aside(Vector2(704, 50))
 	check(game.aside.visible and game.aside.text.contains("窗"), "点到窗：也给一句心声")
 
 	# ---- 6. 重演：素不相识时的拒绝，与全部吻合
@@ -505,14 +521,14 @@ func _run() -> void:
 	check(game.full_match_seen, "跳过与看完结算相同：全部吻合触发 S9（第二次反转）")
 	game.close_modal()
 
-	# ---- 7. 始业之答（陈述与出示成对，含第 5 步反问）→ 门开
+	# ---- 7. 始业之答（陈述与出示成对；第五轮修订删去反问）→ 门开
 	game = await fresh()
 	game.jump_to("replay_match")
 	game._apply_recall("E10", "shen")
 	seen_lines.clear()
 	game.answer()
 	var picks := [{"say": "me", "show": "E9"}, {"say": "V4_0", "show": "E3"}, {"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"},
-		{"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}, {"say": "", "show": "E11"}]
+		{"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
 	var saw_reverse := false
 	var saw_wrong_show := false
 	var saw_wrong_say := false
@@ -545,18 +561,18 @@ func _run() -> void:
 				d.choose(str(d.line.responses[0].next_id))
 	check(saw_wrong_show, "陈述对、出示不相干：得到指向性回应，不扣分、不重来")
 	check(saw_wrong_say, "陈述不对：指出“回答的是别的问题”")
-	check(saw_reverse, "答辩第 5 步：重演全部吻合后出现“反问”选项")
-	check(game.flags.has("asked_reverse"), "反问出示无尘方框：恶魔承认“我从未说过诸位昨日方至”")
+	check(not saw_reverse and not game.flags.has("asked_reverse"), "答辩到第 4 步为止，不再出现“反问”（第五轮修订 3）")
 	check(game.flags.has("door_open") and game.ended, "门开：S11 结尾")
 	check(game.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "门开：隔离门画面换为开启")
 	var finale := "\n".join(seen_lines)
-	check(game.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible and finale.contains("鞋底窄"),
-		"门开：主楼走廊烟灰上留下一行窄底皮鞋印（恶魔显形才能抬闩，修订三·8）")
+	check(game.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible and finale.contains("鞋底窄") and finale.contains("起居厅")
+		and not game.get_node("ObjectsAndPeople/MechanicalIsolationDoor/LoungeCover").visible,
+		"门开：门外是起居厅，烟灰上留下一行窄底皮鞋印（恶魔显形才能抬闩，修订三·8、第五轮修订 6）")
 	check(game._room_name(game.player.position) == "门厅", "结局时地名显示“门厅”")
-	check(game.flags.has("asked_hand") and finale.contains("依第二条，我取走了诸位授权封存之物"),
-		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔字面承认取物（修订四·5）")
+	check(game.flags.has("asked_hand") and finale.contains("诸位授权封存之物，是我取走的") and not finale.contains("第二条"),
+		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔承认取物，不提“第二条”（修订四·5、第五轮修订 5）")
 	check(finale.contains("比我以为的站得久"), "门开时侦探有一句克制的心声（修订四·10）")
-	check(finale.contains("二十四道，我都想起来了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
+	check(finale.contains("那罐子喂过的日子，我想起来一些了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
 	var ending_text := ""
 	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
 		ending_text += str(l.get_parsed_text()) + "\n"

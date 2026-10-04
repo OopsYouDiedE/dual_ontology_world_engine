@@ -114,11 +114,11 @@ func _run() -> void:
 	await show_line(game, "我只记得上船")
 	await settle(10)
 	await shot("01-wake")
-	# 2 自报身份广播与欲望放大
+	# 2 开场广播（代管者兼教师）与欲望放大
 	await finish_dialogue(game)
 	game.player.stand_up()
-	game.player.position = Vector2(300, 600)
-	await show_line(game, "恶魔亦可")
+	game.player.position = Vector2(440, 340)
+	await show_line(game, "我所立之规")
 	await settle(10)
 	await shot("02-broadcast-self-introduction")
 	await until_modal(game, "card")
@@ -134,15 +134,15 @@ func _run() -> void:
 	# 3 公告框
 	game = await fresh()
 	game.jump_to("investigate")
-	game.player.position = Vector2(458, 590)
+	game.player.position = Vector2(400, 140)
 	await settle(10)
 	game.open_board()
 	await settle(10)
-	await shot("04-notice-board-clauses-1-8")
+	await shot("04-notice-board-school-rules")
 	game.close_modal()
 	# 4 门厅现场、证物卡、比对鞋底由玩家选人、门厅反转
-	game.player.position = Vector2(640, 918)
-	game.player.pose("idle", "front")
+	game.player.position = Vector2(206, 392)
+	game.player.pose("idle", "left")
 	await finish_dialogue(game)
 	await settle(30)
 	await shot("05-foyer")
@@ -162,9 +162,9 @@ func _run() -> void:
 	await shot("07-reversal-one")
 	await finish_dialogue(game)
 	game.close_modal()
-	# 5 恶魔低语后，苏泠自己蹲向音叉；侦探在场，指出第 8 条，她放下
+	# 5 恶魔低语后，苏泠自己蹲向音叉；侦探在场，指出守则第 1 条，她放下
 	game.engine.Amplify("su", "S4")
-	game.player.position = Vector2(660, 900)
+	game.player.position = Vector2(230, 400)
 	await settle(5)
 	game.open_card("E5")
 	await show_line(game, "后面还有你从未听过的")
@@ -175,13 +175,13 @@ func _run() -> void:
 	await show_line(game, "它说的那句话")
 	await settle(10)
 	await shot("08b-su-reaches-for-fork-three-responses")
-	await show_line(game, "第八条写着", [1])
+	await show_line(game, "守则第一条写着", [1])
 	await settle(10)
-	await shot("08-su-refuses-after-clause-8")
+	await shot("08-su-refuses-after-rule-1")
 	await finish_dialogue(game)
 	# 5a 侦探不在场：霍铎独自碰了石板；回来时的神色与“我想起了一点”
 	game.engine.Amplify("huo", "S4")
-	game.player.position = Vector2(1000, 650)
+	game.player.position = Vector2(930, 200)
 	await settle(10)
 	game.whisper("huo", "图纸就在主楼。")
 	await finish_dialogue(game)
@@ -206,7 +206,7 @@ func _run() -> void:
 	game.engine.Amplify("shen", "S4")
 	game.engine.Amplify("shen", "nudge")
 	game.nudged["E10"] = true
-	game.player.position = Vector2(1100, 600)
+	game.player.position = Vector2(470, 600)
 	await settle(5)
 	game._on_recall("E10")
 	await show_line(game, "你说呢", [1])
@@ -248,7 +248,7 @@ func _run() -> void:
 	await shot("09f-hover-name")
 	root.warp_mouse(Vector2(4, 4))
 	# 5f 请人看过之后只给新得到的那一句
-	game.player.position = Vector2(616, 910)
+	game.player.position = Vector2(196, 392)
 	await settle(5)
 	game._on_help("E4")
 	await finish_dialogue(game)
@@ -257,7 +257,7 @@ func _run() -> void:
 	await shot("09j-help-brief")
 	game.close_modal()
 	# 5g R-06 的生活痕迹
-	game.player.position = Vector2(470, 220)
+	game.player.position = Vector2(948, 540)
 	await settle(20)
 	game.interact("L6")
 	await settle(10)
@@ -318,10 +318,10 @@ func _run() -> void:
 	await settle(20)
 	await shot("14-manuscript-all-match")
 	game.close_modal()
-	# 6b 霍铎读到第 8 条也照样碰（请求这一路）
+	# 6b 霍铎读到守则第 1 条也照样碰（请求这一路）
 	game = await fresh()
 	game.jump_to("investigate")
-	game.player.position = Vector2(372, 700)
+	game.player.position = Vector2(536, 300)
 	game.engine.Amplify("huo", "S4")
 	game.engine.Amplify("huo", "nudge")
 	game.nudged["E7"] = true
@@ -331,18 +331,16 @@ func _run() -> void:
 	game._on_recall("E7")
 	await show_line(game, "图纸值这个价", [0])
 	await settle(10)
-	await shot("09c-recall-huo-touches-despite-clause-8")
+	await shot("09c-recall-huo-touches-despite-rule-1")
 	await finish_dialogue(game)
 	game.close_modal()
-	# 7 答辩（陈述与出示成对）与第 5 步、门开
+	# 7 答辩（陈述与出示成对，到第 4 步为止）、门开
 	game = await fresh()
 	game.jump_to("replay_match")
 	game._apply_recall("E10", "shen")
 	game.answer()
 	var picks := [{"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"}, {"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
 	var captured_pair := false
-	var captured_reverse := false
-	var captured_admit := false
 	var captured_door := false
 	var captured_prints := false
 	var captured_hand := false
@@ -360,25 +358,10 @@ func _run() -> void:
 				captured_pair = true
 			game._modal_choose(picks.pop_front())
 			continue
-		if game.modal_kind == "answer" and picks.is_empty():
-			game._modal_choose({"say": "", "show": "E11"})
-			continue
 		if d.active and d.line != null and not d.busy:
 			if d.body.visible_characters >= 0:
 				d.reveal()
 				continue
-			var has_reverse := false
-			for r in d.line.responses:
-				if str(r.text).begins_with("反问"):
-					has_reverse = true
-			if has_reverse and not captured_reverse:
-				await settle(8)
-				await shot("16-answer-step5-reverse")
-				captured_reverse = true
-			if not captured_admit and str(d.line.text).contains("我从未说过诸位昨日方至"):
-				await settle(6)
-				await shot("17-demon-admits")
-				captured_admit = true
 			if not captured_prints and str(d.line.text).contains("鞋底窄"):
 				await settle(6)
 				await shot("18a-door-demon-prints")
@@ -387,7 +370,7 @@ func _run() -> void:
 				await settle(6)
 				await shot("18b-ask-about-the-handprint")
 				captured_hand = true
-			if not captured_hand_answer and str(d.line.text).contains("依第二条"):
+			if not captured_hand_answer and str(d.line.text).contains("是我取走的"):
 				await settle(6)
 				await shot("18c-demon-took-what-was-sealed")
 				captured_hand_answer = true
