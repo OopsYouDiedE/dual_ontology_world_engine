@@ -1,6 +1,37 @@
+@tool
 extends Node2D
-## Interaction cues: unexamined objects glint, the hovered or nearest object gets a pixel outline.
-## Decorations never glint or highlight; only sites registered by the host do.
+## 交互线索与描边提示组件。未检视物件闪烁，悬停或距离最近的物件呈现像素描边。
+## 支持在检视器中配置描边与闪烁色调。
+
+@export var hover_color: Color = Color("f4df9d"):
+	set(value):
+		hover_color = value
+		queue_redraw()
+
+@export var near_color: Color = Color(0.95, 0.88, 0.62, 0.7):
+	set(value):
+		near_color = value
+		queue_redraw()
+
+@export var shade_color: Color = Color(0.12, 0.09, 0.07, 0.6):
+	set(value):
+		shade_color = value
+		queue_redraw()
+
+@export var spark_edge_color: Color = Color("756044"):
+	set(value):
+		spark_edge_color = value
+		queue_redraw()
+
+@export var spark_light_color: Color = Color("f4df9d"):
+	set(value):
+		spark_light_color = value
+		queue_redraw()
+
+@export var spark_center_color: Color = Color("fff2c9"):
+	set(value):
+		spark_center_color = value
+		queue_redraw()
 
 var source: Node2D
 var clock := 0.0
@@ -16,6 +47,10 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	if source == null or not source.field_active():
+		if Engine.is_editor_hint():
+			# 编辑器预览样本：绘制演示描边与闪烁点
+			_outline(Rect2(Vector2(20, 20), Vector2(48, 48)), hover_color)
+			_spark(Vector2(44, 44), 3)
 		return
 	for id in source.sites:
 		if not source.site_visible(id):
@@ -33,7 +68,7 @@ func _draw() -> void:
 		if id == "" or not source.sites.has(id) or not source.site_visible(id):
 			continue
 		var box: Rect2 = source.site_box(id)
-		_outline(box, Color("f4df9d") if id == source.hovered else Color(0.95, 0.88, 0.62, 0.7))
+		_outline(box, hover_color if id == source.hovered else near_color)
 
 func _outline(box: Rect2, color: Color) -> void:
 	var r := Rect2(box.position.round(), box.size.round())
@@ -41,15 +76,12 @@ func _outline(box: Rect2, color: Color) -> void:
 	draw_rect(Rect2(r.position + Vector2(0, r.size.y - 1), Vector2(r.size.x, 1)), color)
 	draw_rect(Rect2(r.position, Vector2(1, r.size.y)), color)
 	draw_rect(Rect2(r.position + Vector2(r.size.x - 1, 0), Vector2(1, r.size.y)), color)
-	var shade := Color(0.12, 0.09, 0.07, 0.6)
-	draw_rect(Rect2(r.position - Vector2(1, 1), Vector2(r.size.x + 2, 1)), shade)
-	draw_rect(Rect2(r.position + Vector2(-1, r.size.y), Vector2(r.size.x + 2, 1)), shade)
+	draw_rect(Rect2(r.position - Vector2(1, 1), Vector2(r.size.x + 2, 1)), shade_color)
+	draw_rect(Rect2(r.position + Vector2(-1, r.size.y), Vector2(r.size.x + 2, 1)), shade_color)
 
 func _spark(point: Vector2, radius: int) -> void:
-	var edge := Color("756044")
-	var light := Color("f4df9d")
-	draw_rect(Rect2(point + Vector2(-radius, -1), Vector2(radius * 2 + 1, 3)), edge)
-	draw_rect(Rect2(point + Vector2(-1, -radius), Vector2(3, radius * 2 + 1)), edge)
-	draw_rect(Rect2(point + Vector2(-radius, 0), Vector2(radius * 2 + 1, 1)), light)
-	draw_rect(Rect2(point + Vector2(0, -radius), Vector2(1, radius * 2 + 1)), light)
-	draw_rect(Rect2(point, Vector2.ONE), Color("fff2c9"))
+	draw_rect(Rect2(point + Vector2(-radius, -1), Vector2(radius * 2 + 1, 3)), spark_edge_color)
+	draw_rect(Rect2(point + Vector2(-1, -radius), Vector2(3, radius * 2 + 1)), spark_edge_color)
+	draw_rect(Rect2(point + Vector2(-radius, 0), Vector2(radius * 2 + 1, 1)), spark_light_color)
+	draw_rect(Rect2(point + Vector2(0, -radius), Vector2(1, radius * 2 + 1)), spark_light_color)
+	draw_rect(Rect2(point, Vector2.ONE), spark_center_color)

@@ -1,7 +1,12 @@
+@tool
 extends CanvasLayer
 ## Shared Dialogue Manager presentation; story content stays in .dialogue resources.
 signal finished
 signal line_shown(character: String)
+
+@export var panel_bg_color: Color = Color("191e23")
+@export var panel_border_color: Color = Color("b59a68")
+@export var base_voice_volume_db: float = -6.0
 
 const INK := Color("191e23")
 const PAPER := Color("e8dfca")
@@ -374,7 +379,11 @@ func apply_locale_font(font: Font, _theme: Theme) -> void:
 
 func _ready() -> void:
 	layer = 10
-	manager = get_node("/root/DialogueManager")
+	if Engine.is_editor_hint():
+		if has_node("DialoguePanel"):
+			_bind_existing()
+		return
+	manager = get_node_or_null("/root/DialogueManager")
 	if has_node("DialoguePanel"):
 		_bind_existing()
 		return
@@ -473,9 +482,10 @@ func _ready() -> void:
 func _bind_existing() -> void:
 	panel = $DialoguePanel
 	history_panel = $HistoryPanel
-	dialogue_theme = panel.theme.duplicate()
-	panel.theme = dialogue_theme
-	history_panel.theme = dialogue_theme
+	if panel.theme != null:
+		dialogue_theme = panel.theme.duplicate()
+		panel.theme = dialogue_theme
+		history_panel.theme = dialogue_theme
 	heading = $DialoguePanel/Heading
 	speaker = $DialoguePanel/Speaker
 	body = $DialoguePanel/Body
@@ -485,13 +495,14 @@ func _bind_existing() -> void:
 	history_button = $DialoguePanel/HistoryButton
 	history_text = $HistoryPanel/HistoryText
 	history_close_button = $HistoryPanel/Close
-	panel.gui_input.connect(on_panel_input)
-	next_button.pressed.connect(advance)
-	history_button.pressed.connect(toggle_history)
-	history_close_button.pressed.connect(toggle_history)
-	_configure_auxiliary_focus()
-	_setup_voice_player()
-	idle()
+	if not Engine.is_editor_hint():
+		panel.gui_input.connect(on_panel_input)
+		next_button.pressed.connect(advance)
+		history_button.pressed.connect(toggle_history)
+		history_close_button.pressed.connect(toggle_history)
+		_configure_auxiliary_focus()
+		_setup_voice_player()
+		idle()
 
 func _configure_auxiliary_focus() -> void:
 	# Dialogue keys are handled once in _input; mouse utility buttons must not
@@ -716,6 +727,8 @@ func _update_continue_hint() -> void:
 	hint.hide()
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	_refresh_character_portrait()
 	_fast_forward(delta)
 	if active and not busy and not history_panel.visible and body.visible_characters >= 0:

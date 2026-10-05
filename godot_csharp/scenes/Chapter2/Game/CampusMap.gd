@@ -1,3 +1,4 @@
+@tool
 extends Control
 ## 学园手稿图：羊皮纸上的示意平面。两种用途——
 ## 1. 去往（M）：点一处地点，直接走到那里（走路不占时段，只是省掉路上的工夫）。只画侦探去过或听人提到过的地方，
@@ -6,6 +7,47 @@ extends Control
 ##    全部吻合之后才写出名字与心声（第三部分 §13 第 11 条）。空格暂停，F 倍速，Esc 跳过。
 
 const Paper := preload("res://scenes/Shared/UI/Paper.gd")
+
+@export var map_size: Vector2 = Vector2(1000, 640):
+	set(value):
+		map_size = value
+		custom_minimum_size = map_size
+		queue_redraw()
+
+@export var bg_color: Color = Color("ebe2c8"):
+	set(value):
+		bg_color = value
+		queue_redraw()
+
+@export var border_color: Color = Color(0.17, 0.13, 0.09, 0.35):
+	set(value):
+		border_color = value
+		queue_redraw()
+
+@export var link_color: Color = Color(0.17, 0.13, 0.09, 0.28):
+	set(value):
+		link_color = value
+		queue_redraw()
+
+@export var node_fill_color: Color = Color("f3ecd8"):
+	set(value):
+		node_fill_color = value
+		queue_redraw()
+
+@export var node_hover_color: Color = Color("f6eedb"):
+	set(value):
+		node_hover_color = value
+		queue_redraw()
+
+@export var node_current_color: Color = Color("e9d9b0"):
+	set(value):
+		node_current_color = value
+		queue_redraw()
+
+@export var preview_all_nodes: bool = false:
+	set(value):
+		preview_all_nodes = value
+		queue_redraw()
 
 ## 地点：示意位置、显示名、去往时载入的地图与出生点。键与引擎的 Place 同名（另有几处宿主自有的地点）。
 const NODES := {
@@ -27,7 +69,6 @@ const NODES := {
 const LINKS := [["ArchiveFront", "Hall"], ["Hall", "Lecture"], ["Lecture", "Resonance"], ["Hall", "Commons"], ["Commons", "DormW"], ["Commons", "DormL"],
 	["Commons", "DormS"], ["Commons", "DormLife"], ["Commons", "Oath"], ["Commons", "Logistics"], ["Logistics", "Granary"], ["Logistics", "Clinic"],
 	["Clinic", "Greenhouse"], ["Logistics", "Oath"]]
-const SIZE := Vector2(1000, 640)
 
 signal picked(node: String)
 signal playback_done
@@ -42,7 +83,7 @@ var speed := 1.0
 var skipping := false
 
 func _ready() -> void:
-	custom_minimum_size = SIZE
+	custom_minimum_size = map_size
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _gui_input(event: InputEvent) -> void:
@@ -59,6 +100,8 @@ func _gui_input(event: InputEvent) -> void:
 			picked.emit(n)
 
 func _shown(key: String) -> bool:
+	if Engine.is_editor_hint():
+		return preview_all_nodes or ["Hall", "Commons", "Lecture", "Oath"].has(key)
 	return mode == "replay" or known.has(key)
 
 func _node_at(p: Vector2) -> String:
@@ -70,12 +113,13 @@ func _node_at(p: Vector2) -> String:
 	return ""
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, SIZE), Color("ebe2c8"))
-	draw_rect(Rect2(Vector2(6, 6), SIZE - Vector2(12, 12)), Color(Paper.INK, 0.35), false, 1.0)
+	var draw_size: Vector2 = map_size
+	draw_rect(Rect2(Vector2.ZERO, draw_size), bg_color)
+	draw_rect(Rect2(Vector2(6, 6), draw_size - Vector2(12, 12)), border_color, false, 1.0)
 	var font := Paper.font()
 	for link in LINKS:
 		if _shown(link[0]) and _shown(link[1]):
-			draw_line(NODES[link[0]].pos, NODES[link[1]].pos, Color(Paper.INK, 0.28), 2.0)
+			draw_line(NODES[link[0]].pos, NODES[link[1]].pos, link_color, 2.0)
 	# 生活翼的外廓：四个寝区围着起居厅。
 	draw_rect(Rect2(Vector2(300, 295), Vector2(400, 180)), Color(Paper.INK, 0.18), false, 1.0)
 	for key in NODES:
@@ -83,11 +127,11 @@ func _draw() -> void:
 			continue
 		var node: Dictionary = NODES[key]
 		var box := Rect2(node.pos - Vector2(56, 18), Vector2(112, 36))
-		var fill := Color("f3ecd8")
+		var fill := node_fill_color
 		if key == here:
-			fill = Color("e9d9b0")
+			fill = node_current_color
 		if key == hovered:
-			fill = Color("f6eedb")
+			fill = node_hover_color
 		draw_rect(box, fill)
 		draw_rect(box, Color(Paper.SEAL, 0.9) if key == hovered or key == here else Color(Paper.INK, 0.5), false, 1.0)
 		draw_string(font, box.position + Vector2(0, 24), node.label, HORIZONTAL_ALIGNMENT_CENTER, box.size.x, 17, Paper.INK)
@@ -103,15 +147,17 @@ func _draw() -> void:
 			draw_rect(r, Color(Paper.INK, 0.5), false, 1.0)
 			draw_string(font, r.position + Vector2(6, 18), text, HORIZONTAL_ALIGNMENT_LEFT, w - 12, 13, Paper.INK)
 	if mode == "replay":
-		draw_string(font, Vector2(20, SIZE.y - 18), "空格 暂停　F 倍速（%sx）　Esc 跳过" % str(speed), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Paper.MUTED)
+		draw_string(font, Vector2(20, draw_size.y - 18), "空格 暂停　F 倍速（%sx）　Esc 跳过" % str(speed), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Paper.MUTED)
 
-func _draw_ink(p: Vector2, alpha: float, label: String) -> void:
+func _draw_ink(p: Vector2, alpha: float, label_text: String) -> void:
 	var ink := Color(0.12, 0.1, 0.09, 0.55 * alpha)
 	draw_circle(p + Vector2(0, -30), 6, ink)
 	draw_colored_polygon(PackedVector2Array([p + Vector2(-7, -23), p + Vector2(7, -23), p + Vector2(10, 0), p + Vector2(-10, 0)]), ink)
-	draw_string(Paper.font(), p + Vector2(-50, 14), label, HORIZONTAL_ALIGNMENT_CENTER, 100, 12, Color(Paper.INK, 0.8 * alpha))
+	draw_string(Paper.font(), p + Vector2(-50, 14), label_text, HORIZONTAL_ALIGNMENT_CENTER, 100, 12, Color(Paper.INK, 0.8 * alpha))
 
 func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return
 	if mode != "replay" or not is_visible_in_tree() or event is not InputEventKey or not event.pressed or event.echo:
 		return
 	match event.keycode:

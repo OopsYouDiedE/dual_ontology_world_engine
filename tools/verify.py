@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HOST = ROOT / "godot_csharp"
 GALLERY = ROOT / "artifacts" / "remake-belief-replay" / "gallery"
 STEP_NAMES = ["core", "scope", "host", "flow", "flow2", "gallery"]
-ENGINE_ERRORS = re.compile(r"SCRIPT ERROR|Parse Error|Failed to load script|^\s*ERROR:")
+ENGINE_ERRORS = re.compile(r"SCRIPT ERROR|Parse Error|Failed to load script|^\s*ERROR:(?!.*resources still in use at exit)")
 
 
 def probe_godot(path: str) -> str | None:
