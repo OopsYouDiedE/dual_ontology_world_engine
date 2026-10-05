@@ -2,21 +2,23 @@
 """One-command regression for Core and the Godot host.
 
 Runs, in order, and stops at the first failure unless --keep-going:
-  1. dotnet build csharp/Core.sln -c Release
+  1. dotnet build csharp/ScopeRegression.csproj -c Release (includes Core)
   2. dotnet run csharp/ScopeRegression.csproj (Core scope regression)
   3. dotnet build godot_csharp/DualOntologyWorldEngine.sln
-  4. Godot headless story_flow_check.gd (jump-to-state staging and dialogue wiring)
-  5. Godot headless navigation_check.gd (grid routes swept with the detective's real collider)
-  6. Godot windowed state_gallery.gd (screenshots of key screens into tmp/state_gallery)
+  4. Godot headless Awakening/check/flow_check.gd (includes room routes)
+  5. Godot headless Chapter2/Game/check_flow.gd (includes map walkability)
+  6. Godot windowed state_gallery.gd (screenshots into artifacts/remake-belief-replay/gallery)
 
-Godot steps also fail on any "SCRIPT ERROR" / "Parse Error" in the log, which the
+Godot steps also fail on any "SCRIPT ERROR" / "Parse Error" / "ERROR:" in the log, which the
 engine otherwise prints without changing the exit code.
 
 These are automated checks with injected state. They are not playtests and do not
 replace the independent blind playtest required by AGENTS.md.
 
   python tools/verify.py                 # everything
-  python tools/verify.py --skip core     # skip steps by name: core, scope, host, flow, nav, gallery
+  python tools/verify.py --skip core     # core, scope, host, flow, flow2, gallery
+  python tools/verify.py --only flow2    # run a selected subset; host binaries must exist
+  # Legacy nav option selects/skips flow2 (the retired navigation script is gone).
   python tools/verify.py --godot PATH    # Godot .NET console binary (or env GODOT)
 """
 from __future__ import annotations
@@ -33,8 +35,9 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 HOST = ROOT / "godot_csharp"
-GALLERY = ROOT / "tmp" / "state_gallery"
-ENGINE_ERRORS = re.compile(r"SCRIPT ERROR|Parse Error|Failed to load script")
+GALLERY = ROOT / "artifacts" / "remake-belief-replay" / "gallery"
+STEP_NAMES = ["core", "scope", "host", "flow", "flow2", "gallery"]
+ENGINE_ERRORS = re.compile(r"SCRIPT ERROR|Parse Error|Failed to load script|^\s*ERROR:")
 
 
 def probe_godot(path: str) -> str | None:
@@ -87,8 +90,13 @@ def run(name: str, command: list[str], timeout: int, scan_engine: bool = False) 
     env = dict(os.environ, DOTNET_CLI_UI_LANGUAGE="en", DOTNET_NOLOGO="1")
     try:
         result = subprocess.run(command, cwd=ROOT, capture_output=True, env=env, timeout=timeout)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as error:
+        # Preserve all captured output: the last assertion or engine stack trace
+        # is the evidence needed to diagnose a hung check.
+        print(decode(error.stdout or b"") + decode(error.stderr or b""), flush=True)
         return False, f"timed out after {timeout}s"
+    except OSError as error:
+        return False, str(error)
     output = decode(result.stdout) + decode(result.stderr)
     lines = output.strip().splitlines()
     # Show the tail plus any result lines a check printed earlier.
@@ -102,7 +110,7 @@ def run(name: str, command: list[str], timeout: int, scan_engine: bool = False) 
         if errors:
             for line in errors[:10]:
                 print("  ", line)
-            return False, f"{len(errors)} engine script error(s) ({seconds:.0f}s)"
+            return False, f"{len(errors)} engine error(s) ({seconds:.0f}s)"
     summary = next((line for line in reversed(output.splitlines()) if "checks" in line or "routes" in line or "shot " in line or "通过" in line), "")
     return True, f"ok ({seconds:.0f}s) {summary.strip()}"
 
@@ -112,37 +120,46 @@ def main() -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--skip", nargs="*", default=[], choices=["core", "scope", "host", "flow", "nav", "gallery"])
+    parser.add_argument("--skip", nargs="*", default=[], choices=STEP_NAMES + ["nav"])
+    parser.add_argument("--only", nargs="+", choices=STEP_NAMES + ["nav"], help="run only these steps; omitted build steps require existing binaries")
     parser.add_argument("--godot", help="Godot .NET console executable")
     parser.add_argument("--keep-going", action="store_true", help="run every step even after a failure")
     args = parser.parse_args()
 
-    godot, godot_note = find_godot(args.godot)
-    print(f"Godot: {godot} ({godot_note})" if godot else f"Godot: {godot_note}")
+    canonical = lambda names: {"flow2" if name == "nav" else name for name in names}
+    selected = canonical(args.only) if args.only else set(STEP_NAMES)
+    skipped = canonical(args.skip) | (set(STEP_NAMES) - selected)
+    engine_steps = ["flow", "flow2", "gallery"]
+    needs_godot = any(name not in skipped for name in engine_steps)
+    godot, godot_note = find_godot(args.godot) if needs_godot else (None, "not needed for selected steps")
+    if needs_godot:
+        print(f"Godot: {godot} ({godot_note})" if godot else f"Godot: {godot_note}")
+    scope_command = ["dotnet", "run", "--project", "csharp/ScopeRegression.csproj", "-c", "Release"]
+    if "core" not in skipped:
+        scope_command.append("--no-build")
     steps = [
-        ("core", ["dotnet", "build", "csharp/Core.sln", "-c", "Release", "-nologo", "-v", "q"], 600, False),
-        ("scope", ["dotnet", "run", "--project", "csharp/ScopeRegression.csproj", "-c", "Release"], 600, False),
+        ("core", ["dotnet", "build", "csharp/ScopeRegression.csproj", "-c", "Release", "-nologo", "-v", "q"], 600, False),
+        ("scope", scope_command, 600, False),
         ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-nologo", "-v", "q"], 600, False),
     ]
-    engine_steps = ["flow", "nav", "gallery"]
     if godot:
         steps.append(("flow", [godot, "--headless", "--path", str(HOST), "--script",
-                               "res://scenes/FirstAwakening/check/story_flow_check.gd"], 600, True))
-        steps.append(("nav", [godot, "--headless", "--path", str(HOST), "--script",
-                              "res://scenes/FirstAwakening/check/navigation_check.gd"], 900, True))
+                               "res://scenes/Awakening/check/flow_check.gd"], 600, True))
+        steps.append(("flow2", [godot, "--headless", "--path", str(HOST), "--script",
+                              "res://scenes/Chapter2/Game/check_flow.gd"], 900, True))
         steps.append(("gallery", [godot, "--path", str(HOST), "--rendering-method", "gl_compatibility", "--script",
-                                  "res://scenes/FirstAwakening/check/state_gallery.gd", "--", f"--out={GALLERY}"], 600, True))
+                                  "res://scenes/Awakening/check/state_gallery.gd"], 600, True))
 
     results: list[tuple[str, bool, str]] = []
     if not godot:
         # Engine checks that were not skipped on purpose cannot pass silently.
-        missing = [name for name in engine_steps if name not in args.skip]
+        missing = [name for name in engine_steps if name not in skipped]
         for name in engine_steps:
-            results.append((name, name in args.skip, "skipped" if name in args.skip else godot_note))
+            results.append((name, name in skipped, "skipped" if name in skipped else godot_note))
         if missing and not args.keep_going:
             steps = []
     for name, command, timeout, scan in steps:
-        if name in args.skip:
+        if name in skipped:
             results.append((name, True, "skipped"))
             continue
         ok, detail = run(name, command, timeout, scan)

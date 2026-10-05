@@ -134,7 +134,7 @@ public static class InvestigationPresentation
         return "";
     }
 
-    private static string SourceText(ObservationSource source) => source switch
+    internal static string SourceText(ObservationSource source) => source switch
     {
         ObservationSource.Perception => "亲见", ObservationSource.Testimony => "听说", ObservationSource.Recall => "回忆", ObservationSource.Inference => "推断",
         ObservationSource.Corruption => "恶魔之言", _ => "自知"

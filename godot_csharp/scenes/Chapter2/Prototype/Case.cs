@@ -12,7 +12,7 @@ public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchTool
         yield return (0, $"台账：无记录取用×{LedgerShort}");
         yield return (1, LatchFixed ? "粮仓门闩：新的工具痕，已紧固" : "粮仓门闩：仍然松动");
         yield return (2, BowlPorridge ? "诊疗所：莫兰床边空碗，有粥渍" : "诊疗所：碗是干净的");
-        yield return (3, QuerCrumbs ? "文契寝区废纸篓：一份口粮的包纸与饼屑" : "文契寝区废纸篓：没有饼屑");
+        yield return (3, QuerCrumbs ? "甲区废纸篓：一份口粮的包纸与饼屑" : "甲区废纸篓：没有饼屑");
         yield return (4, SmallFigure ? "夜巡：中央厅望见后勤院有瘦小的身影" + (MediumFigure ? "，还有中等身量的身影" : "") : MediumFigure ? "夜巡：望见后勤院有中等身量的身影" : "夜巡：后勤院没见人影");
     }
 }
@@ -123,7 +123,7 @@ public sealed partial class Game
         var lines = new List<string>();
         var r = replay.Describe().ToArray();
         var a = actual.Describe().ToArray();
-        string[] where = ["粮仓门内的台账", "粮仓门", "诊疗所", "文契寝区", "贝尔特朗（夜巡）"];
+        string[] where = ["粮仓门内的台账", "粮仓门", "诊疗所", "甲区", "贝尔特朗（夜巡）"];
         for (var i = 0; i < r.Length; i++)
         {
             if (known is not null && !known.Contains(i)) { lines.Add($"未查：你还没查过这里——{where[i]}"); continue; }
@@ -332,7 +332,7 @@ public sealed partial class Game
     private void Reopen(ConfrontPlan? plan)
     {
         if (_reopenedDay == Day) { Feed.Add("今天已经重开过一次对质了。"); return; }
-        if (Day < 4 || Day == 4 && Slot == Slot.Morning) { Feed.Add("第 4 日清晨的对质还没开始。"); return; }
+        if (Day < CaseDay || Day == CaseDay && Slot < Slot.Night) { Feed.Add("第 3 日傍晚的对质还没开始。"); return; }
         if (QuerCleared || Accused is null) { Feed.Add("眼下没有悬着的指控要重开。"); return; }
         _reopenedDay = Day;
         var head = $"你援引「{CommonRule.Text}」，请众人回中央厅，把台账的事重新对一遍。";
@@ -369,7 +369,7 @@ public sealed partial class Game
             Witness(p, $"{p.Name}仍把我当贼", -2, 0, [who], spread: false);
         if (acc == P.Quer)
         {
-            ConfrontLog.Add("雀儿当天搬出了文契寝区。");
+            ConfrontLog.Add("雀儿当天搬出了甲区。");
             who.Body.Get<SpatialProperty>()!.Space = Space[Place.Oath];
         }
         else ConfrontLog.Add($"{who.Name}被当成了私取之人。这一天没什么人跟{who.Name}说话。");

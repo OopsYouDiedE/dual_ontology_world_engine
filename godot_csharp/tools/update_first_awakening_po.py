@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 SCENE = Path(__file__).resolve().parents[1] / "scenes" / "FirstAwakening"
+I18N = Path(__file__).resolve().parents[1] / "scenes" / "Shared" / "Locale" / "i18n"
 
 
 def read_entries(path):
@@ -75,7 +76,7 @@ def main():
     sources = dialogue_entries()
     failed = False
     for language in ("en", "ja"):
-        path = SCENE / "i18n" / f"{language}.po"
+        path = I18N / f"{language}.po"
         existing = read_entries(path)
         content, missing = render(language, sources, existing)
         stale = any(existing.get(tag, ("", ""))[0] != source for tag, source in sources.items())

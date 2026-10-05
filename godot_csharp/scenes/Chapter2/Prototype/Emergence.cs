@@ -22,6 +22,7 @@ public sealed partial class Game
         public required Place Where { get; init; }
         public required int[] Causes { get; init; }
         public Job? Job { get; init; }
+        public double Time { get; init; }
         public bool Fixed { get; init; }
         public bool SeenByDet { get; set; }
         public string Short => $"第{Day}日{Names.Of(Slot)} {Names.Of(Who)}{Text}【{Frame}】";
@@ -52,7 +53,7 @@ public sealed partial class Game
         var e = new ActEvent
         {
             Id = Events.Count + 1, Day = Day, Slot = Slot, Who = who, Text = text, Frame = frame, Where = where,
-            Causes = causes.Where(c => c > 0).Distinct().ToArray(), Fixed = fix, Job = job,
+            Causes = causes.Where(c => c > 0).Distinct().ToArray(), Fixed = fix, Job = job, Time = Now,
         };
         // 侦探看得见：白天同处一地；夜里守在那里（只看得见身影）。
         e.SeenByDet = who != P.Det && Where(Det) == where && (Slot != Slot.Night || LastAction?.Cmd == Cmd.Stakeout && LastAction.Place == where);

@@ -70,7 +70,7 @@ public sealed partial class Game
 
     private static string From(Place p) => p switch
     {
-        Place.DormLife => "生活翼方向", Place.DormW => "文契寝区方向", Place.DormS => "星仪寝区方向", Place.DormL => "后勤寝区方向",
+        Place.DormLife => "乙区方向", Place.DormW => "甲区方向", Place.DormS => "丙区方向", Place.DormL => "丁区方向",
         _ => Names.Of(p) + "方向"
     };
 
@@ -251,8 +251,8 @@ public sealed partial class Game
     {
         if (!DawnTraces.TryGetValue(night, out var traces)) return;
         var changed = traces.Where(Changed).Select(t => t.Key.StartsWith("神情:") ? "有人的神色" : Names.Of(t.Where)).Distinct().ToArray();
-        if (Day > 2) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。（“清晨”看你已读到的痕迹，“重演”对照昨夜）");
-        if (Day is 5 or 6)
+        if (Day > 2) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。");
+        if (Day is 99)
         {
             // 第 7 日的短缺要在第 5—6 日清晨读得到（§13 第 8、13 条）：存量、每日耗用、温室状态。
             var stock = Get(Granary, T.Ration);
@@ -269,7 +269,7 @@ public sealed partial class Game
             foreach (var e in heard) { e.SeenByDet = true; MorningHeard.Add(e.Id); }
         }
         var learned = SpreadKnown.Where(k => k.Day == night).GroupBy(k => k.Spec).ToArray();
-        if (learned.Length > 0) Feed.Add("昨天你得知的规矩传播：" + string.Join("；", learned.Select(g => $"{LabelOf(g.Key)}　" + string.Join("、", g.Select(k => k.Text)))) + "。（“传播”查看全部）");
+        if (learned.Length > 0) Feed.Add("昨天你得知的规矩传播：" + string.Join("；", learned.Select(g => $"{LabelOf(g.Key)}　" + string.Join("、", g.Select(k => k.Text)))) + "。");
     }
 
     private static readonly HashSet<Job> MorningWorthy = [Job.Tear, Job.PostRules, Job.Accuse, Job.Defend, Job.Share, Job.Exchange, Job.Teach, Job.AskOpen, Job.AskLeave,

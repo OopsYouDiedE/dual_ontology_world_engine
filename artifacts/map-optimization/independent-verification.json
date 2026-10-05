@@ -1,0 +1,230 @@
+{
+  "scope": "Independent source-image verification; no design files read, no gameplay or runtime seam/occlusion validation",
+  "detail_structures_native_v1": {
+    "dimensions": [
+      640,
+      480
+    ],
+    "dimensions_divisible_by_32": true,
+    "mode": "RGBA",
+    "alpha_bounds": [
+      0,
+      0,
+      640,
+      480
+    ],
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "source_sha256": "f8c410875629600ac106b8406889e007fc38e29c0680995886ca43f4ca3f9809",
+    "display_sha256": "f8c410875629600ac106b8406889e007fc38e29c0680995886ca43f4ca3f9809",
+    "source_display_hash_match": true,
+    "manifest_hash_match": true,
+    "manifest_declared_image_hash_match": true,
+    "commands_count": 15557,
+    "generator_recipe_equal": false,
+    "replayed_rgba_pixels_equal": true,
+    "crop_overlap_pairs": [],
+    "panels": [
+      {
+        "id": 1,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": true,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      },
+      {
+        "id": 2,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": true,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      },
+      {
+        "id": 3,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": true,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      },
+      {
+        "id": 4,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": true,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      },
+      {
+        "id": 5,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": false,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      },
+      {
+        "id": 6,
+        "crop_in_canvas": true,
+        "crop_in_panel": true,
+        "anchor_coordinate_consistent": true,
+        "anchor_in_closed_crop_bounds": true,
+        "anchor_in_pixel_indices": true,
+        "collision_defined": false,
+        "occlusion_status": "undefined; requires runtime verification"
+      }
+    ],
+    "visual_inspection": "Native hard-edged pixels, six separated structural studies are readable. Door masonry/tiles, step faces/rails, barrel hoops/gutter/grate, pipe flanges/valve, lane edges/channel, flowers/planter have visible material detail. Sheet has opaque presentation panels, not ready transparent runtime sprites. Anchors 1,2,3,4,6 visually sit at contact/front ground; panel 5 uses bottom-edge lane pivot. No visual clipping at crop extents observed.",
+    "notes": [
+      "Panel 5 anchor is on exclusive crop boundary; legitimate bottom-edge pivot if intended, not a drawable pixel."
+    ],
+    "runtime_validated": false,
+    "generator_commands_equal": true,
+    "generator_palette_equal": true,
+    "generator_difference": "Generator adds only name=detail_structures_native_v1; all rendering fields equal."
+  },
+  "pending": [],
+  "rebuild_workflow": {
+    "js_execution_success": true,
+    "js_output": "JSON recipe to stdout, includes all 15557 commands",
+    "standalone_png_reconstruction": true,
+    "limitation": "JS emits recipe only; added Python renderer completes native PNG reconstruction. It depends on Pillow and asserts exact PNG bytes before checking existing targets; different existing contents are preserved by refusal.",
+    "python_command": "python godot_csharp/tools/rebuild_map_detail_structures_native_v1.py",
+    "python_execution_success": true,
+    "png_bytes_sha256_verified": "f8c410875629600ac106b8406889e007fc38e29c0680995886ca43f4ca3f9809"
+  },
+  "runtime_reference_check": {
+    "query": "detail_structures_native_v1|island_overview_painted_v1|campus_overview_painted_v1|living_wing_plan_native_v1|living_wing_material_study_v1|MapOptimization|map_optimization|map-optimization",
+    "searched_extensions": [
+      ".tscn",
+      ".tres",
+      ".cs",
+      ".gd",
+      "project.godot"
+    ],
+    "matches": [],
+    "conclusion": "No direct existing runtime scene/resource/code reference found. New sheet is source-only and is not loaded through a direct runtime reference. Godot was not run."
+  },
+  "island_overview_painted_v1": {
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "dimensions_divisible_by_32": true,
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "source_sha256": "d0dced99a9125e3a3a829b803f7e0ab7f75ca485a3e9b5aa7d2bd96e736c436f",
+    "display_sha256": "d0dced99a9125e3a3a829b803f7e0ab7f75ca485a3e9b5aa7d2bd96e736c436f",
+    "source_display_hash_match": true,
+    "visual_inspection": "Complete elongated island perimeter appears within sea margin. Large lake with rock islands visible in northern half. Small building compound visible at southern tip and pier extends from its east shore. Painterly source overview, not certified exact terrain, tile atlas, scale, seams, collision or occlusion.",
+    "runtime_validated": false
+  },
+  "campus_overview_painted_v1": {
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "dimensions_divisible_by_32": true,
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "source_sha256": "39f50a5d9f553fb1cfda70cd13e3f5a7e88df376f088199e00b6253127af1a75",
+    "display_sha256": "39f50a5d9f553fb1cfda70cd13e3f5a7e88df376f088199e00b6253127af1a75",
+    "source_display_hash_match": true,
+    "visual_inspection": "Elevated campus overview visibly includes central domed hall, north building pair, west grouped red-roof wings, east smaller buildings, greenhouse plot, white coastal tower, southeast workshop by descending stone road and pier, south entrance and garden paths. Structures and cliff shoreline remain readable. Painterly source board, not runtime tile/sprite map or exact topology certification.",
+    "runtime_validated": false
+  },
+  "living_wing_plan_native_v1": {
+    "dimensions": [
+      864,
+      640
+    ],
+    "dimensions_divisible_by_32": true,
+    "mode": "RGBA",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "source_sha256": "992faa8ba6c85affc988671821ed7f3b1509906f63a34bb24c08cd36b25cf69c",
+    "display_sha256": "992faa8ba6c85affc988671821ed7f3b1509906f63a34bb24c08cd36b25cf69c",
+    "source_display_hash_match": true,
+    "runtime_validated": false,
+    "manifest_source_display_equal": true,
+    "commands_count": 731,
+    "generator_commands_equal": true,
+    "generator_palette_equal": true,
+    "replayed_rgba_pixels_equal": true,
+    "bedrooms_counted": 24,
+    "occupied_counted": 16,
+    "empty_counted": 8,
+    "bedroom_openings_counted": 24,
+    "mirror_errors": [],
+    "pixel_scale_errors": [],
+    "room_bounds_errors": [],
+    "north": "up",
+    "scale_px_per_m": 14,
+    "total_dimensions_m": [
+      54.8,
+      35.4
+    ],
+    "lanes_m": [
+      [
+        0,
+        13.2,
+        22.4,
+        3
+      ],
+      [
+        32.4,
+        13.2,
+        22.4,
+        3
+      ]
+    ],
+    "lanes_verified_3m": true,
+    "central_hall_m": [
+      22.4,
+      0,
+      10,
+      29.4
+    ],
+    "south_annex_m": [
+      22.4,
+      29.4,
+      10,
+      6
+    ],
+    "collision_footprints": null,
+    "occlusion_status": "not runtime verified",
+    "visual_inspection": "Native top-down diagram shows four room groups, mirrored left/right, continuous central hall, two exterior side lanes and south annex. Beds and door openings are visible. Exact metre dimensions are from manifest geometry with rounded 14px/m drawing; not runtime or collision validation.",
+    "rebuild_python_command": "python godot_csharp/tools/rebuild_living_wing_plan_native_v1.py",
+    "rebuild_execution_success": true,
+    "rebuild_png_bytes_sha256_verified": "992faa8ba6c85affc988671821ed7f3b1509906f63a34bb24c08cd36b25cf69c"
+  },
+  "living_wing_material_study_v1": {
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "dimensions_divisible_by_32": true,
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "source_sha256": "36a681ef1b06ebc3bea61b097ff29e5d08554395d7b19c1c156912009b0d6be1",
+    "display_sha256": "36a681ef1b06ebc3bea61b097ff29e5d08554395d7b19c1c156912009b0d6be1",
+    "source_display_hash_match": true,
+    "runtime_validated": false,
+    "visual_inspection": "Painterly cutaway/cross-section and doorway detail show red roof tiles, pale plaster, dark stone, wood floors and doors, lamp, pipe and rugs. The cutaway visibly portrays fewer bedrooms than the exact plan; it is material reference only, not exact layout."
+  }
+}

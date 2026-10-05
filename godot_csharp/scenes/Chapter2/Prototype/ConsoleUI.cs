@@ -86,8 +86,8 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             {
                 var act = Parse(line, out var consumed);
                 if (!consumed) continue;
-                if (g.Day == 4 && g.Slot == Slot.Morning && act?.Cmd != Cmd.Confront)
-                    throw new PlayerError("第 4 日清晨是中央厅的公开对质。输入“对质”开始（不想说话，就输入“对质”再输入“完”）。");
+                if (g.Day == Game.CaseDay && g.Slot == Slot.Evening && act?.Cmd != Cmd.Confront)
+                    throw new PlayerError("第 3 日傍晚是中央厅的公开对质。输入“对质”开始（不想说话，就输入“对质”再输入“完”）。");
                 if (g.Slot == Slot.Night && act is not null && act.Cmd is not (Cmd.Stakeout or Cmd.Sleep))
                     throw new PlayerError("夜里只能“睡”或“守夜 某地”。");
                 if (g.Slot != Slot.Night && act?.Cmd is Cmd.Stakeout) throw new PlayerError("守夜要等到夜里。");
@@ -133,7 +133,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         }
     }
 
-    private void Header() => W($"\n【第{g.Day}日 · {Names.Of(g.Slot)}】你在{Names.Of(g.Where(g.Det))}。{(g.Slot == Slot.Night ? "（夜里：睡，或 守夜 某地）" : g.Day == 4 && g.Slot == Slot.Morning ? "（今晨是公开对质：输入“对质”）" : "")}");
+    private void Header() => W($"\n【{Chapter2Content.TimeName(g.Day, g.Slot)}】你在{Names.Of(g.Where(g.Det))}。{(g.Slot == Slot.Night ? "（夜里：睡，或 守夜 某地）" : g.Day == Game.CaseDay && g.Slot == Slot.Evening ? "（傍晚公开对质：输入“对质”）" : "")}");
 
     private void Flush()
     {
@@ -320,13 +320,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             case "slant": return new(Cmd.Manipulate) { Who = Person(Arg(1, "对谁说")), About = Person(Arg(2, "关于谁")) };
             case "stakeout": return new(Cmd.Stakeout) { Place = PlaceOf(Arg(1, "守在哪里")) };
             case "confront":
-                if (!(g.Day == 4 && g.Slot == Slot.Morning)) throw new PlayerError("公开对质在第 4 日清晨。之后要再对，用“重开对质”。");
+                if (!(g.Day == Game.CaseDay && g.Slot == Slot.Evening)) throw new PlayerError("公开对质在第 3 日傍晚。之后要再对，用“重开对质”。");
                 return new(Cmd.Confront) { Plan = ConfrontPrompt(false) };
             case "apologize":
                 if (!g.Manipulations.Any(m => m.Exposed && !m.Apologized)) throw new PlayerError("你没有被揭穿过的片面话要认。");
                 return new(Cmd.Apologize);
             case "reopen":
-                if (g.Day < 4 || g.Day == 4 && g.Slot == Slot.Morning) throw new PlayerError("第 4 日清晨的对质之后，才能重开对质。");
+                if (g.Day < Game.CaseDay || g.Day == Game.CaseDay && g.Slot == Slot.Evening) throw new PlayerError("第 3 日傍晚的对质之后，才能重开对质。");
                 if (g.QuerCleared || g.Accused is null) throw new PlayerError("眼下没有悬着的指控要重开。");
                 return new(Cmd.Reopen) { Plan = ConfrontPrompt(true) };
         }
@@ -460,7 +460,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             分粮 某人             把你今天的口粮给他
             调停                  （第 2 日午间）调停配给台前的争执
             片面告知 某人 关于谁   只说一半实话（会被记下）
-            对质                  第 4 日清晨，中央厅的公开对质
+            对质                  第 3 日傍晚，中央厅的公开对质
             重开对质              第 4 日之后：援引共同规则“公开指控须附可检查的材料”，把人请回中央厅再对一次
             认错                  当众承认你说过的片面话（要被揭穿过才用得上）
           —— 夜里 ——
@@ -494,7 +494,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     private void Status()
     {
         var det = g.Det;
-        W($"第{g.Day}日{Names.Of(g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。");
+        W($"{Chapter2Content.TimeName(g.Day, g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。");
         W($"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"《{Game.Lessons[l.Key].Title}》{(l.Value ? "" : "（听人转述，可能走样）")}")))}");
         if (g.Day >= 3)
         {
@@ -503,7 +503,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         }
         if (g.Accused is { } acc) W(g.QuerCleared ? $"{Names.Of(acc)}已经洗清。" : g.QuerOstracized ? $"{Names.Of(acc)}被当成私取之人，搬出了寝区。" : "沃德的指控还悬着。");
         foreach (var (who, due, done) in g.Promises.Where(p => !p.Done)) W($"答应过：第{due}日前替{Names.Of(who)}办一件事（用“帮 {Names.Of(who)}”兑现）");
-        foreach (var (w, right) in g.Wagers) W($"赌约：第{w.Day}日和{Names.Of(w.With)}赌{Names.Of(w.Who)}夜里去{Names.Of(w.Where)}——{(right is null ? "待揭晓" : right.Value ? "说中" : "没说中")}");
+        foreach (var (w, right) in g.Wagers) W($"赌约：{Chapter2Content.DayName(w.Day)}和{Names.Of(w.With)}赌{Names.Of(w.Who)}夜里去{Names.Of(w.Where)}——{(right is null ? "待揭晓" : right.Value ? "说中" : "没说中")}");
         if (g.SteleRubbed) W("你读过石碑上的第九、第十条。");
     }
 
@@ -519,27 +519,21 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             W($"· {p.Name}（{Names.Of(p.Pro.Group)}）最后见到在{seen}。{(sick ? "病着。" : "")}");
             var n = only is null ? 2 : 12;
             var rules = g.DetNotes.Where(x => x.Who == p.Id && x.Kind is "规矩" or "规则").TakeLast(n).ToArray();
-            if (rules.Length > 0) W("    规矩：" + string.Join("；", rules.Select(x => $"第{x.Day}日 {x.Text}")));
+            if (rules.Length > 0) W("    规矩：" + string.Join("；", rules.Select(x => $"{Chapter2Content.DayName(x.Day)} {x.Text}")));
             var stance = g.DetNotes.Where(x => x.Who == p.Id && x.Kind == "立场").TakeLast(only is null ? 1 : 6).ToArray();
-            if (stance.Length > 0) W("    立场：" + string.Join("；", stance.Select(x => $"第{x.Day}日 {x.Text}")));
+            if (stance.Length > 0) W("    立场：" + string.Join("；", stance.Select(x => $"{Chapter2Content.DayName(x.Day)} {x.Text}")));
             var comp = g.CompanionsOf(p.Id).ToArray();
             if (comp.Length > 0) W("    同行：常与 " + string.Join("、", comp.Select(c => $"{Names.Of(c.Who)}（{c.N} 次）")) + " 同处");
             var other = g.DetNotes.Where(x => x.Who == p.Id && x.Kind is not ("规矩" or "规则" or "立场" or "同处")).TakeLast(only is null ? 1 : 8).ToArray();
-            foreach (var x in other) W($"    第{x.Day}日 {x.Text}");
+            foreach (var x in other) W($"    {Chapter2Content.DayName(x.Day)} {x.Text}");
             if (only is not null)
             {
                 var about = det.World.History.Where(h => h.Target.Kind == ProjectionKind.Event && h.Relations.Contains((Relations.Subject, them)) && h.Details != "")
-                    .Select(h => $"{h.Details}（{SourceText(h.Source)}）").Distinct().TakeLast(6).ToArray();
+                    .Select(h => $"{h.Details}（{InvestigationPresentation.SourceText(h.Source)}）").Distinct().TakeLast(6).ToArray();
                 foreach (var x in about) W("    听说/看到：" + x);
             }
         }
     }
-
-    private static string SourceText(ObservationSource s) => s switch
-    {
-        ObservationSource.Perception => "亲见", ObservationSource.Testimony => "听说", ObservationSource.Recall => "回忆", ObservationSource.Inference => "推断",
-        ObservationSource.Corruption => "恶魔之言", _ => "自知"
-    };
 
     private void Company()
     {
@@ -581,7 +575,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         for (var i = 0; i < order.Count; i++)
         {
             var h = g.Det.News[order[i]];
-            W($"  {i + 1}. 第{h.Day}日 {h.Text}　——{(h.Hops == 0 ? "亲见" : $"听{Names.Of(h.From)}说" + (h.Hops > 1 ? "（转了几道手）" : ""))}");
+            W($"  {i + 1}. {Chapter2Content.DayName(h.Day)} {h.Text}　——{(h.Hops == 0 ? "亲见" : $"听{Names.Of(h.From)}说" + (h.Hops > 1 ? "（转了几道手）" : ""))}");
         }
     }
 
@@ -604,9 +598,9 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         {
             W($"{g.LabelOf(s)}「{s.Text}」{(s.PostedAt.Count > 0 ? "（贴在" + string.Join("、", s.PostedAt.Select(Names.Of)) + "）" : "")}");
             var face = g.DetToldFace.Where(x => x.Spec == s).ToArray();
-            if (face.Length > 0) W("  当面讲过：" + string.Join("、", face.Select(x => $"{Names.Of(x.Who)}（第{x.Day}日，{(x.Nodded ? "点了头" : "没接受")}）")));
+            if (face.Length > 0) W("  当面讲过：" + string.Join("、", face.Select(x => $"{Names.Of(x.Who)}（{Chapter2Content.DayName(x.Day)}，{(x.Nodded ? "点了头" : "没接受")}）")));
             var spread = g.SpreadKnown.Where(k => k.Spec == s).ToArray();
-            foreach (var k in spread) W($"  第{k.Day}日 {k.Text}{(k.How == "亲见" ? "（你亲眼看见）" : "")}");
+            foreach (var k in spread) W($"  {Chapter2Content.DayName(k.Day)} {k.Text}{(k.How == "亲见" ? "（你亲眼看见）" : "")}");
             if (face.Length == 0 && spread.Length == 0) W("  还不知道它传到了谁。");
         }
     }
@@ -615,7 +609,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     {
         if (!g.DawnTraces.TryGetValue(night, out var traces)) { W("还没有那一夜的痕迹。"); return; }
         var known = g.KnownTraces(night);
-        W($"第{night}日夜里之后的痕迹：");
+        W($"{Chapter2Content.DayName(night)}夜里之后的痕迹：");
         foreach (var t in traces.Where(t => known.ContainsKey(t.Key)))
             W($"  · {known[t.Key].Text}{(known[t.Key].Text != t.Text ? "（路过时一眼看到的；细看才知全貌）" : "")}");
         var unseen = traces.Where(t => !known.ContainsKey(t.Key) && !t.Key.StartsWith("神情:") && Changed(t)).Select(t => Names.Of(t.Where)).Distinct().ToArray();

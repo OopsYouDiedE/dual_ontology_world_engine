@@ -1,0 +1,57 @@
+{
+  "preserved": [
+    "godot_csharp/scenes/Shared/check/modal_equivalence_check.gd",
+    "godot_csharp/scenes/Shared/check/modal_baseline_ch1.gd",
+    "godot_csharp/scenes/Shared/check/modal_baseline_ch2.gd",
+    "godot_csharp/scenes/Shared/check/check_room_fog.gd",
+    "All stage reports, logs and screenshots",
+    "Completed exit-lifecycle repairs and strict verify.py ERROR handling"
+  ],
+  "moves": [
+    {
+      "before_sha256": "4C1F790C7CCD1DC6BF0B99EFF01B202FC9F537D80C0B07DC3B63B29A9C1D7954",
+      "after_sha256": "4C1F790C7CCD1DC6BF0B99EFF01B202FC9F537D80C0B07DC3B63B29A9C1D7954",
+      "uid_evidence": false,
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp\\scenes\\Shared\\check\\map_entry_visual_check.gd",
+      "identical": true,
+      "destination": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\verification-20261005\\source-baseline\\map_entry_visual_check.gd"
+    },
+    {
+      "before_sha256": "89587D1D91A9C67F1A2F3A9B64F79365BE8BA7ED13ED587A6AEABD4CF92FF968",
+      "after_sha256": "89587D1D91A9C67F1A2F3A9B64F79365BE8BA7ED13ED587A6AEABD4CF92FF968",
+      "uid_evidence": true,
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp\\scenes\\Shared\\check\\map_entry_visual_check.gd.uid",
+      "identical": true,
+      "destination": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\verification-20261005\\source-baseline\\map_entry_visual_check.gd.uid"
+    },
+    {
+      "before_sha256": "BFAFA59FFBE4952ADEA00E8264FD76BE67F8CB39F2E0D173AE52A3CFEA354DE7",
+      "after_sha256": "BFAFA59FFBE4952ADEA00E8264FD76BE67F8CB39F2E0D173AE52A3CFEA354DE7",
+      "uid_evidence": false,
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp\\scenes\\Shared\\check\\map_entry_physical_reverify.gd",
+      "identical": true,
+      "destination": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\map_entry_physical_reverify.gd"
+    },
+    {
+      "before_sha256": "374D1361FE901094C5FD91AA3F88D326932D3EAE791CDDD37F6CFE78ED50D986",
+      "after_sha256": "374D1361FE901094C5FD91AA3F88D326932D3EAE791CDDD37F6CFE78ED50D986",
+      "uid_evidence": true,
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp\\scenes\\Shared\\check\\map_entry_physical_reverify.gd.uid",
+      "identical": true,
+      "destination": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\map_entry_physical_reverify.gd.uid"
+    },
+    {
+      "before_sha256": "2AD73C97F19AAA765BA0AB796A25EE84DC6F357A4E8569DB18FC3CD522DE9311",
+      "after_sha256": "2AD73C97F19AAA765BA0AB796A25EE84DC6F357A4E8569DB18FC3CD522DE9311",
+      "uid_evidence": false,
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp\\scenes\\Shared\\check\\map_entry_final_verification.gd",
+      "identical": true,
+      "destination": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\final-map-verification-20261005\\source-baseline\\map_entry_final_verification.gd"
+    }
+  ],
+  "formal_references": "No filename references found in production/code trees or repository outside reports, docs and temporary outputs",
+  "task": "project-audit/test-fixture-retirement",
+  "method": "Single PowerShell, Move-Item -LiteralPath per ordinary file; absolute source/destination paths checked within workspace; no recursive operations or overwrites",
+  "status": "completed without tests",
+  "reason": "Three one-off room-entry checks failed because fixture or camera/render assumptions were invalid; they are stage verification source evidence, not maintained executable regressions"
+}

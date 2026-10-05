@@ -7,6 +7,8 @@ public sealed partial class Game
 {
     public const double RoundLength = 5, NightLength = 24, TickLength = 1;
     public bool Ended { get; private set; }
+    /// <summary>章节的最后一日（第 4 日清晨即议事，见设计第三部分 §15）。</summary>
+    public const int LastDay = 4, CaseDay = 3;
     public bool Mediated;
     public int LedgerBaseline;
     public readonly List<(int Day, int Rations, int Oil, int Medicine, int Hungry)> Curve = [];
@@ -52,7 +54,7 @@ public sealed partial class Game
             Day++; Slot = Slot.Morning;
             // 天一亮就结算昨夜（痕迹表、饥饿、碗与饼屑），玩家在清晨行动之前就能读痕迹、做重演。
             BeginDay(); _dawnDone = true;
-            if (Day >= 7) Ended = true;
+            if (Day >= LastDay) Ended = true;
         }
         else Slot++;
     }
@@ -114,7 +116,7 @@ public sealed partial class Game
             using (Prof.Time("P:Susp")) Suspicions();
             using (Prof.Time("P:Hooks")) RoundHooks(round);
             NoteCompany();
-            if (Day == 4 && Slot == Slot.Morning && round == 0) Confront(act?.Cmd == Cmd.Confront ? act.Plan : null);
+            if (Day == CaseDay && Slot == Slot.Evening && round == 0) Confront(act?.Cmd == Cmd.Confront ? act.Plan : null);
             else if (act?.Cmd == Cmd.Reopen && round == 0 && LastAction is not null) Reopen(act.Plan);
         }
         SlotPhysics();
@@ -386,7 +388,7 @@ public sealed partial class Game
                 var drawing = seen.Length == 0 ? $"第{Day - 1}夜：中央厅空荡荡的，只画了月光" :
                     $"第{Day - 1}夜：" + string.Join("；", seen.Select(s => $"{Names.Of(s.At)}，一个{BuildText(s.Build).TrimEnd('的')}的身影，颜色涂的是{Names.Of(s.Truth)}的颜色"));
                 Sketches.Add((Day - 1, drawing));
-                NewsFrom(p, NewsKind.Rumor, "莫兰画了一张昨夜的速写，压在星仪寝区的枕头底下", about: p);
+                NewsFrom(p, NewsKind.Rumor, "莫兰画了一张昨夜的速写，压在丙区的枕头底下", about: p);
                 break;
             }
             case Job.Share:
@@ -582,7 +584,7 @@ public sealed partial class Game
             Post(WardNight, Place.Hall);
             if (Where(Det) == Place.Hall) Feed.Add("沃德把那张被撕掉的规矩又贴了回去。");
         }
-        if (Day >= 5 && WardCommittee is null)
+        if (Day >= CaseDay && Slot == Slot.Evening && WardCommittee is null)
         {
             WardCommittee = NewSpec("名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", P.Ward, RF.CommitteeArchive | RF.WardAuthority | RF.Records, fx => []);
             Post(WardCommittee, Place.Hall);
@@ -646,7 +648,7 @@ public sealed partial class Game
             Post(WardLedger, Place.Hall);
             Post(WardNight, Place.Hall);
             Post(MoraNight, Place.Logistics);
-            Feed.Add("傍晚，各人在板上张贴自己的规则：沃德在中央厅贴了两条，茉拉在配给台贴了一条，沈鼎在生活翼、维罗妮卡在后勤寝区各贴一条。");
+            Feed.Add("傍晚，各人在板上张贴自己的规则：沃德在中央厅贴了两条，茉拉在配给台贴了一条，沈鼎在生活翼、维罗妮卡在丁区各贴一条。");
         }
         if (Slot == Slot.Evening && round == 0) AllianceEvening();
     }
@@ -765,10 +767,10 @@ public sealed partial class Game
     private void RunNight(PlayerAction? act)
     {
         Options.BeforeNight?.Invoke(this);
-        if (Day == 6)
+        if (Day == LastDay - 1)
         {
             // 第 6 日夜，恶魔对每个人放大欲望一次（§13 第 12 条）。
-            foreach (var p in Npcs) { p.Desire = Math.Min(5, p.Desire + 1); RewriteDesire(p, "第6日夜，恶魔在梦里把那样东西又说了一遍"); }
+            foreach (var p in Npcs) { p.Desire = Math.Min(5, p.Desire + 1); RewriteDesire(p, "议事前夜，恶魔在耳边把那样东西又说了一遍"); }
             Feed.Add("入夜前，广播里没有声音，可每个人都像听见有人在耳边把最想要的东西又说了一遍。");
         }
         OilPhysics();
@@ -801,7 +803,7 @@ public sealed partial class Game
         }
         TrackMoves();
         foreach (var p in People.Where(p => !p.Asleep)) p.NightVisited.Add(Where(p));
-        if (Day >= 5) NameCall();
+        if (Day >= CaseDay) NameCall();
         PerceiveAll();
         // 守候中的人看到新情况，重新掂量：更想做的事出现了，就放下手里的等待。
         foreach (var p in Npcs.Where(p => !p.Asleep && p.Exec is not null && p.Doing is { } d && Interruptible.Contains(d)))
@@ -817,7 +819,7 @@ public sealed partial class Game
         }
     }
 
-    /// <summary>第五日起，入夜后名录库前厅里有人以你之名唤你：一个请求（Say+Request），由 SocialSystem 判；警告 1 是 Forbid。</summary>
+    /// <summary>第 3 日起，入夜后名录库前厅里有人以你之名唤你：一个请求（Say+Request），由 SocialSystem 判；警告 1 是 Forbid。</summary>
     private void NameCall()
     {
         foreach (var p in People.Where(p => !p.Asleep && Where(p) == Place.ArchiveFront && p != Det))

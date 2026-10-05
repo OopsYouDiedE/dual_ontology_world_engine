@@ -21,11 +21,24 @@ const DECALS := [
 
 var host: Node
 var textures: Dictionary = {}
+var _known_cells := -1
 
 func _ready() -> void:
 	for name in ["ash_fan.png", "boot_print.png", "wet_cloth.png", "pipe_joint.png", "frame_dent.png", "shelf_dust.png", "shelf_dust_hand.png", "shelf_dust_even.png"]:
 		if ResourceLoader.exists(ART + name):
 			textures[name] = load(ART + name)
+
+func _process(_delta: float) -> void:
+	if host == null or host.sight == null:
+		return
+	# 新进入房间后重新绘制墙边痕迹，未知房间的书架灰痕也不能穿过明亮墙格。
+	var known: int = host.sight.seen_cells.size()
+	if known != _known_cells:
+		_known_cells = known
+		queue_redraw()
+
+func _known(point: Vector2) -> bool:
+	return host != null and host.sight != null and host.sight.terrain_known(point)
 
 func _draw() -> void:
 	var copper := Color("9d7031")
@@ -34,6 +47,8 @@ func _draw() -> void:
 	for pipe in PIPES:
 		_pipe(pipe, copper, copper_light, shade)
 	for spec in DECALS:
+		if not _known(spec[1]):
+			continue
 		var texture: Texture2D = textures.get(spec[0])
 		if texture:
 			draw_set_transform(spec[1], deg_to_rad(spec[2]))
@@ -41,6 +56,8 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	# 书架上的灰：R-05 有半枚窄手印；四人的房里有干净的方框；空房的灰落得很匀。
 	for shelf in host.layout.shelves:
+		if not _known(Vector2(shelf[0], shelf[1])):
+			continue
 		var texture: Texture2D = textures.get({"hand": "shelf_dust_hand.png", "plain": "shelf_dust.png", "even": "shelf_dust_even.png"}[shelf[2]])
 		if texture:
 			draw_texture(texture, Vector2(shelf[0], shelf[1]))

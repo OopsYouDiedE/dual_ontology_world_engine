@@ -135,7 +135,7 @@ public sealed partial class Game
     {
         if (Specs.FirstOrDefault(s => s.Card == card && s.Author == author) is { } existing) return existing;
         var flags = card.Flags(this);
-        return NewSpec(card.Text, author, flags, fx => CompileCard(fx, card), card: card,
+        return NewSpec(WordingOf(card) ?? card.Text, author, flags, fx => CompileCard(fx, card), card: card,
             witnessed: card.Behavior == 0 ? (g, p) => g.SawNightPermission(p) : null,
             manipulative: card.Behavior == 9 && card.Subject != 0, target: card.Target);
     }

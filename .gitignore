@@ -24,3 +24,12 @@ godot_csharp/imported_assets/
 csharp/**/*.import
 
 runs/
+
+# Reproducible Python environments and local compressed backups.
+.venv/
+artifacts/project-audit/*.zip
+artifacts/project-audit/*.7z
+artifacts/project-audit/*.rar
+
+# Local transient status and editor save files.
+*.tmp

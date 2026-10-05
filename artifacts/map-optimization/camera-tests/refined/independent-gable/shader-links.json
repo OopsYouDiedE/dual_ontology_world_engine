@@ -1,0 +1,845 @@
+{
+  "红瓦": {
+    "nodes": [
+      {
+        "name": "Principled BSDF",
+        "type": "ShaderNodeBsdfPrincipled",
+        "operation": null
+      },
+      {
+        "name": "Material Output",
+        "type": "ShaderNodeOutputMaterial",
+        "operation": null
+      },
+      {
+        "name": "几何数据",
+        "type": "ShaderNodeNewGeometry",
+        "operation": null
+      },
+      {
+        "name": "分离 XYZ",
+        "type": "ShaderNodeSeparateXYZ",
+        "operation": null
+      },
+      {
+        "name": "分离 XYZ.001",
+        "type": "ShaderNodeSeparateXYZ",
+        "operation": null
+      },
+      {
+        "name": "噪波纹理",
+        "type": "ShaderNodeTexNoise",
+        "operation": null
+      },
+      {
+        "name": "合并 XYZ",
+        "type": "ShaderNodeCombineXYZ",
+        "operation": null
+      },
+      {
+        "name": "砖墙纹理",
+        "type": "ShaderNodeTexBrick",
+        "operation": null
+      },
+      {
+        "name": "运算",
+        "type": "ShaderNodeMath",
+        "operation": "ABSOLUTE"
+      },
+      {
+        "name": "运算.001",
+        "type": "ShaderNodeMath",
+        "operation": "GREATER_THAN"
+      },
+      {
+        "name": "颜色渐变",
+        "type": "ShaderNodeValToRGB",
+        "operation": null
+      },
+      {
+        "name": "运算.002",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "Mix (Legacy)",
+        "type": "ShaderNodeMixRGB",
+        "operation": null
+      },
+      {
+        "name": "运算.003",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.004",
+        "type": "ShaderNodeMath",
+        "operation": "SUBTRACT"
+      },
+      {
+        "name": "运算.005",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.006",
+        "type": "ShaderNodeMath",
+        "operation": "ADD"
+      },
+      {
+        "name": "运算.007",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.008",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.009",
+        "type": "ShaderNodeMath",
+        "operation": "ADD"
+      },
+      {
+        "name": "凹凸",
+        "type": "ShaderNodeBump",
+        "operation": null
+      },
+      {
+        "name": "映射范围",
+        "type": "ShaderNodeMapRange",
+        "operation": null
+      }
+    ],
+    "links": [
+      {
+        "from": "Principled BSDF",
+        "from_type": "ShaderNodeBsdfPrincipled",
+        "socket": "BSDF",
+        "to": "Material Output",
+        "to_type": "ShaderNodeOutputMaterial",
+        "input": "Surface"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Position",
+        "to": "分离 XYZ",
+        "to_type": "ShaderNodeSeparateXYZ",
+        "input": "Vector"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Normal",
+        "to": "分离 XYZ.001",
+        "to_type": "ShaderNodeSeparateXYZ",
+        "input": "Vector"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Position",
+        "to": "噪波纹理",
+        "to_type": "ShaderNodeTexNoise",
+        "input": "Vector"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "X",
+        "to": "合并 XYZ",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "X"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Y",
+        "to": "合并 XYZ",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "Y"
+      },
+      {
+        "from": "合并 XYZ",
+        "from_type": "ShaderNodeCombineXYZ",
+        "socket": "Vector",
+        "to": "砖墙纹理",
+        "to_type": "ShaderNodeTexBrick",
+        "input": "Vector"
+      },
+      {
+        "from": "分离 XYZ.001",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Z",
+        "to": "运算",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.001",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "颜色渐变",
+        "to_type": "ShaderNodeValToRGB",
+        "input": "Fac"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "运算.002",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Fac"
+      },
+      {
+        "from": "颜色渐变",
+        "from_type": "ShaderNodeValToRGB",
+        "socket": "Color",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Color1"
+      },
+      {
+        "from": "砖墙纹理",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Color",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Color2"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.003",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "砖墙纹理",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Fac",
+        "to": "运算.003",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.004",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.004",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.005",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.002",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.005",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.003",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.006",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.005",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.006",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "Mix (Legacy)",
+        "from_type": "ShaderNodeMixRGB",
+        "socket": "Color",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Base Color"
+      },
+      {
+        "from": "运算.006",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.007",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "运算.008",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.007",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.009",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.008",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.009",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.009",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "凹凸",
+        "to_type": "ShaderNodeBump",
+        "input": "Height"
+      },
+      {
+        "from": "凹凸",
+        "from_type": "ShaderNodeBump",
+        "socket": "Normal",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Normal"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "映射范围",
+        "to_type": "ShaderNodeMapRange",
+        "input": "Value"
+      },
+      {
+        "from": "映射范围",
+        "from_type": "ShaderNodeMapRange",
+        "socket": "Result",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Roughness"
+      }
+    ]
+  },
+  "石板瓦": {
+    "nodes": [
+      {
+        "name": "Principled BSDF",
+        "type": "ShaderNodeBsdfPrincipled",
+        "operation": null
+      },
+      {
+        "name": "Material Output",
+        "type": "ShaderNodeOutputMaterial",
+        "operation": null
+      },
+      {
+        "name": "几何数据",
+        "type": "ShaderNodeNewGeometry",
+        "operation": null
+      },
+      {
+        "name": "分离 XYZ",
+        "type": "ShaderNodeSeparateXYZ",
+        "operation": null
+      },
+      {
+        "name": "分离 XYZ.001",
+        "type": "ShaderNodeSeparateXYZ",
+        "operation": null
+      },
+      {
+        "name": "噪波纹理",
+        "type": "ShaderNodeTexNoise",
+        "operation": null
+      },
+      {
+        "name": "合并 XYZ",
+        "type": "ShaderNodeCombineXYZ",
+        "operation": null
+      },
+      {
+        "name": "砖墙纹理",
+        "type": "ShaderNodeTexBrick",
+        "operation": null
+      },
+      {
+        "name": "运算",
+        "type": "ShaderNodeMath",
+        "operation": "ABSOLUTE"
+      },
+      {
+        "name": "运算.001",
+        "type": "ShaderNodeMath",
+        "operation": "GREATER_THAN"
+      },
+      {
+        "name": "合并 XYZ.001",
+        "type": "ShaderNodeCombineXYZ",
+        "operation": null
+      },
+      {
+        "name": "运算.002",
+        "type": "ShaderNodeMath",
+        "operation": "ABSOLUTE"
+      },
+      {
+        "name": "运算.003",
+        "type": "ShaderNodeMath",
+        "operation": "ABSOLUTE"
+      },
+      {
+        "name": "运算.004",
+        "type": "ShaderNodeMath",
+        "operation": "GREATER_THAN"
+      },
+      {
+        "name": "运算.005",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.006",
+        "type": "ShaderNodeMath",
+        "operation": "SUBTRACT"
+      },
+      {
+        "name": "运算.007",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.008",
+        "type": "ShaderNodeMath",
+        "operation": "ADD"
+      },
+      {
+        "name": "砖墙纹理.001",
+        "type": "ShaderNodeTexBrick",
+        "operation": null
+      },
+      {
+        "name": "Mix (Legacy)",
+        "type": "ShaderNodeMixRGB",
+        "operation": null
+      },
+      {
+        "name": "运算.009",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.010",
+        "type": "ShaderNodeMath",
+        "operation": "SUBTRACT"
+      },
+      {
+        "name": "运算.011",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.012",
+        "type": "ShaderNodeMath",
+        "operation": "ADD"
+      },
+      {
+        "name": "运算.013",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.014",
+        "type": "ShaderNodeMath",
+        "operation": "MULTIPLY"
+      },
+      {
+        "name": "运算.015",
+        "type": "ShaderNodeMath",
+        "operation": "ADD"
+      },
+      {
+        "name": "凹凸",
+        "type": "ShaderNodeBump",
+        "operation": null
+      },
+      {
+        "name": "映射范围",
+        "type": "ShaderNodeMapRange",
+        "operation": null
+      }
+    ],
+    "links": [
+      {
+        "from": "Principled BSDF",
+        "from_type": "ShaderNodeBsdfPrincipled",
+        "socket": "BSDF",
+        "to": "Material Output",
+        "to_type": "ShaderNodeOutputMaterial",
+        "input": "Surface"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Position",
+        "to": "分离 XYZ",
+        "to_type": "ShaderNodeSeparateXYZ",
+        "input": "Vector"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Normal",
+        "to": "分离 XYZ.001",
+        "to_type": "ShaderNodeSeparateXYZ",
+        "input": "Vector"
+      },
+      {
+        "from": "几何数据",
+        "from_type": "ShaderNodeNewGeometry",
+        "socket": "Position",
+        "to": "噪波纹理",
+        "to_type": "ShaderNodeTexNoise",
+        "input": "Vector"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "X",
+        "to": "合并 XYZ",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "X"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Y",
+        "to": "合并 XYZ",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "Y"
+      },
+      {
+        "from": "合并 XYZ",
+        "from_type": "ShaderNodeCombineXYZ",
+        "socket": "Vector",
+        "to": "砖墙纹理",
+        "to_type": "ShaderNodeTexBrick",
+        "input": "Vector"
+      },
+      {
+        "from": "分离 XYZ.001",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Z",
+        "to": "运算",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.001",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "分离 XYZ.001",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "X",
+        "to": "运算.002",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "分离 XYZ.001",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Y",
+        "to": "运算.003",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.002",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.004",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.003",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.004",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.004",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.005",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Y",
+        "to": "运算.005",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.004",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.006",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.006",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.007",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "X",
+        "to": "运算.007",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.005",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.008",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.007",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.008",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.008",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "合并 XYZ.001",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "X"
+      },
+      {
+        "from": "分离 XYZ",
+        "from_type": "ShaderNodeSeparateXYZ",
+        "socket": "Z",
+        "to": "合并 XYZ.001",
+        "to_type": "ShaderNodeCombineXYZ",
+        "input": "Y"
+      },
+      {
+        "from": "合并 XYZ.001",
+        "from_type": "ShaderNodeCombineXYZ",
+        "socket": "Vector",
+        "to": "砖墙纹理.001",
+        "to_type": "ShaderNodeTexBrick",
+        "input": "Vector"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Fac"
+      },
+      {
+        "from": "砖墙纹理.001",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Color",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Color1"
+      },
+      {
+        "from": "砖墙纹理",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Color",
+        "to": "Mix (Legacy)",
+        "to_type": "ShaderNodeMixRGB",
+        "input": "Color2"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.009",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "砖墙纹理",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Fac",
+        "to": "运算.009",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.001",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.010",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.010",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.011",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "砖墙纹理.001",
+        "from_type": "ShaderNodeTexBrick",
+        "socket": "Fac",
+        "to": "运算.011",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.009",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.012",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.011",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.012",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "Mix (Legacy)",
+        "from_type": "ShaderNodeMixRGB",
+        "socket": "Color",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Base Color"
+      },
+      {
+        "from": "运算.012",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.013",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "运算.014",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.013",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.015",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.014",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "运算.015",
+        "to_type": "ShaderNodeMath",
+        "input": "Value"
+      },
+      {
+        "from": "运算.015",
+        "from_type": "ShaderNodeMath",
+        "socket": "Value",
+        "to": "凹凸",
+        "to_type": "ShaderNodeBump",
+        "input": "Height"
+      },
+      {
+        "from": "凹凸",
+        "from_type": "ShaderNodeBump",
+        "socket": "Normal",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Normal"
+      },
+      {
+        "from": "噪波纹理",
+        "from_type": "ShaderNodeTexNoise",
+        "socket": "Fac",
+        "to": "映射范围",
+        "to_type": "ShaderNodeMapRange",
+        "input": "Value"
+      },
+      {
+        "from": "映射范围",
+        "from_type": "ShaderNodeMapRange",
+        "socket": "Result",
+        "to": "Principled BSDF",
+        "to_type": "ShaderNodeBsdfPrincipled",
+        "input": "Roughness"
+      }
+    ]
+  }
+}

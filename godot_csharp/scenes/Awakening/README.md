@@ -1,6 +1,6 @@
 # 第一章《门的这一侧》（重制版）
 
-`scenes/Main2D.tscn` 默认加载本场景 `Awakening.tscn`。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧场景 `scenes/FirstAwakening/` 保留不删，不再是默认入口。
+标题入口 `scenes/Title/Title.tscn` 选第一章后，经 `scenes/Main2D.tscn` 加载本场景 `Awakening.tscn`。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧章节已退出运行目录，语言设置与翻译资源统一位于 `scenes/Shared/Locale/`。
 
 ## 运行
 

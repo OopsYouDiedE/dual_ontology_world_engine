@@ -103,8 +103,10 @@ func _setup() -> void:
 		var actor: CharacterBody2D = host.actor_of(key)
 		var sprite := AnimatedSprite2D.new()
 		sprite.sprite_frames = actor.standard
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.offset = Vector2(0, -23)
+		actor.apply_visual(sprite)
+		# Replay positions replace position.y; offset is measured in texture coordinates.
+		sprite.offset.y = actor.foot_offset / actor.visual_scale
+		sprite.position.y = 0.0
 		sprite.modulate = INK
 		sprite.play("idle_front")
 		sprite.z_index = 60
@@ -168,7 +170,7 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 			for point in route:
 				total += last.distance_to(point)
 				last = point
-			var tween := create_tween()
+			var tween := create_tween().bind_node(figure)
 			last = figure.position
 			var facing := "front"
 			for point in route:

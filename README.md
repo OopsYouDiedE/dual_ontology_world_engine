@@ -7,12 +7,12 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 ## 当前入口与状态
 
 - [主控设计与验收规范（重制版）](docs/design-standard.md)：重制分支的唯一设计依据。[设计总纲](docs/design-standard.md#设计总纲)给出核心判断（信念重演为核心动词，真话之敌、记忆之价为另两根支柱）与删除测试；[第二部分](docs/design-standard.md#第二部分第一章门的这一侧)是第一章《门的这一侧》的真相、题面、12 件证物、重演变量、解空间、触物回忆与始业之答；[第三部分](docs/design-standard.md#第三部分系统与界面)是 Core 映射与界面；[第五部分](docs/design-standard.md#第五部分实施与验收)是实施与验收。
-- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Main2D.tscn` 加载[第一章《门的这一侧》](godot_csharp/scenes/Awakening/README.md)：生活翼现场调查、昨夜重演（跑在 Core 上的感知—认知—决策推演，墨影回放与四人心声气泡）、触物回忆与钩、始业之答（含反问）与退出考题。实现报告与自检截图在 `artifacts/remake-belief-replay/`；第一次独立盲玩（ch1-blind-01）的结论与第三轮修订见[设计第二部分 §9](docs/design-standard.md#9-第一次独立盲玩ch1-blind-01与第三轮修订)。
-- 旧第一章《未归的红筹》场景保留在 `godot_csharp/scenes/FirstAwakening/`，不再是默认入口，也不再作为设计依据。
-- 第二章入口为 `godot_csharp/scenes/Chapter2/Game/Chapter2Game.tscn`；完整复用第一章对白、纸页、高亮、寻路与重演界面，剧情直接取自同一份 C# `ConsoleUI`。本轮实现范围与双测试结果见[第二章重构报告](artifacts/remake-chapter2/refactor-v5/report.md)。
-- [家具喝茶推理原型](godot_csharp/scenes/Reasoning/README.md)：公共研究室调查与家具喝茶重演。
+- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Title/Title.tscn` 选章，第一章经 `scenes/Main2D.tscn` 加载[《门的这一侧》](godot_csharp/scenes/Awakening/README.md)：生活翼现场调查、昨夜重演（跑在 Core 上的感知—认知—决策推演，墨影回放与四人心声气泡）、触物回忆与钩、始业之答与退出考题。实现报告与自检截图在 `artifacts/remake-belief-replay/`；第一次独立盲玩（ch1-blind-01）的结论与第三轮修订见[设计第二部分 §9](docs/design-standard.md#9-第一次独立盲玩ch1-blind-01与第三轮修订)。
+- 旧第一章《未归的红筹》已退出运行目录；仍在使用的语言设置与翻译资源原样迁至 `godot_csharp/scenes/Shared/Locale/`。
+- 第二章入口为 `godot_csharp/scenes/Chapter2/Game/Chapter2Game.tscn`；开场紧接第一章隔离门开启，仍在始业日上午，不插入次日醒来。采用远端两章统一版：读不耗时、写过一阵，共用对白、重演手稿与视野遮挡，第二章推进至第三日名录库之议（内部日程键 4）。Godot 经 `Chapter2Engine` 调用正式剧本程序集中的 `Game`；界面对白使用 `Game/chapter2.dialogue`。本轮合并验证见[验证报告](artifacts/claude-unify-merge/verification-runtime-final.md)。
 - [宣传前三场人物动作图集](godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)：每人 111 帧位，含 Godot 资源与各方向动作规范；在[剧情打样场景](godot_csharp/scenes/Story/README.md)中验证。
 - [21人32×48正面站立帧](godot_csharp/ShareAsset/Internal/Characters/README-zh.md)：原生像素角色资源与日常携带规范。
+- 正式第一、二章场内动作使用 `godot_csharp/ShareAsset/Internal/Characters/AnimeCast/` 的半 Q 人物：放大头部与上身、缩短腿部，由 `godot_csharp/tools/build_anime_cast.py` 注册。台词左侧另用 `DialogueCast/` 的正常比例上半身立绘，六种情绪配合姿势，由 `godot_csharp/tools/build_dialogue_cast.py` 注册。两套高分辨率透明源图及提示词分别归 `godot_csharp/AssetsSource/Internal/Characters/` 下的同名目录。地图、脚底坐标与碰撞尺度保持原有逻辑。
 
 ## 构建与验证
 
@@ -51,7 +51,7 @@ dotnet run --project godot_csharp/scenes/Chapter2/Prototype -- play --room-scope
 
 两章的 `ScriptWorld` 使用同一个 `CoreScriptWorld`，可直接定义新的 Core 人物、逻辑空间和物件，并复用原观察、规则、动作与自主决策。逻辑空间的声明不包含地图几何；原章的地图和职业系统继续使用原内容。
 
-两章实际界面共同使用 `scenes/Shared/UI/` 的原对白场景、现场 HUD、Paper 样式、纸页与页脚、证物图文布局和重演双页组件。共同键位为 E／点击交互、Tab 笔记、R 重演、Q 行动、H 回看、Esc 合页。第二章 Q 只呈现现场动作；休息与睡下通过真实椅子与床交互，守夜在当前房间进行。游戏不提供命令输入或菜单瞬移，原命令行入口独立保留。Tab 按地点和记录类别列出侦探已知的卡片；调查卡保存原 C# 调查发生时的描述及时间地点来源，不用世界当前真值更新旧记录。R 按原合法候选的人物、规矩或位置组织具体问题，并保留原重演编号、最多三项和异步结算。没有合法候选时显示已见痕迹与待查地点。第二章的离散时段规则保持原样。
+两章使用共同对白、纸页与现场表现组件；本轮采用远端 `scenes/Shared/ReplayManuscript.gd` 与 `scenes/Shared/SightMask.gd`。共同键位为点击／WASD 走动、E 检视交谈、Tab 笔记、R 重演、H 回看、Esc 合页；第二章增加 M 学园图与 T 过一阵。调查与重演不耗时，改变他人认知的行动结算一个时段。未到访房间内部完全遮蔽，所有墙壁与门保持显示；实际进入室内地面后记录到访，无须检视，门与墙不计入进入范围。室内可见性按房间判断：当前房间整体可见，其他已到访房间只压暗内部，墙与门保持正常显示；宿舍与其他房间共用遮蔽逻辑，不需要迷雾的场景可直接展示环境。室内其他房间的人物与热点不显示；通过门洞不切换当前房间。第二章不再通过 `ConsoleUI` 桥驱动游戏界面；命令行入口独立保留为开发工具。
 
 第二章独立盲玩使用真实命令行，先构建 `godot_csharp/scenes/Chapter2/Prototype/Prototype.csproj`。下列 `start` 须保持运行，在另一终端使用 `snapshot` 与 `send`；每个新盲玩者使用新的会话名。完整输入与输出保存于 `artifacts/remake-chapter2/<会话名>/`。画面验收另用 Godot 脚本截图，不作为盲玩。
 
@@ -62,13 +62,13 @@ python godot_csharp/tools/chapter2_cli.py --session my-chapter2-play send "帮�
 python godot_csharp/tools/chapter2_cli.py --session my-chapter2-play stop
 ```
 
-旧入口：
+统一自动回归入口：
 
 ```powershell
 python tools/verify.py
 ```
 
-`tools/verify.py` 依次执行 Core 构建、Core 作用域回归、宿主构建、红筹跳转回归 `story_flow_check.gd` 与关键画面截图集 `state_gallery.gd`（输出到 `tmp/state_gallery/`），引擎日志出现 SCRIPT ERROR 即判失败；可用 `--skip` 跳过步骤，`--godot` 或环境变量 `GODOT` 指定 Godot .NET 控制台程序。以上均为注入状态的自动回归，不替代独立盲玩。
+`tools/verify.py` 依次执行 Core 构建、Core 作用域回归、宿主构建、第一章 `Awakening/check/flow_check.gd`、第二章 `Chapter2/Game/check_flow.gd` 与第一章 `state_gallery.gd`（截图输出到 `artifacts/remake-belief-replay/gallery/`）。可用 `--only flow flow2` 仅执行两章流程，或 `--skip` 跳过步骤；`--godot` 或环境变量 `GODOT` 指定 Godot .NET 控制台程序。以上为自动回归与截图检查，不替代独立盲玩。
 
 素材迁移或重建后，用 Godot .NET 先执行 `--headless --editor --path godot_csharp --import`，再执行 `--headless --path godot_csharp --script res://tools/check_asset_layout.gd` 检查运行时依赖和资源加载。实际交互回归入口见各场景说明。
 

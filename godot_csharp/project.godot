@@ -17,7 +17,7 @@ config/features=PackedStringArray("4.6", "C#")
 [autoload]
 
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
-GameLocale="*res://scenes/FirstAwakening/LocaleSettings.gd"
+GameLocale="*res://scenes/Shared/Locale/LocaleSettings.gd"
 GameAudio="*res://scenes/Shared/Audio/GameAudio.gd"
 
 [dialogue_manager]
@@ -42,8 +42,8 @@ enabled=PackedStringArray("res://addons/rpg_asset_adapter/plugin.cfg", "res://ad
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://scenes/FirstAwakening/i18n/first_awakening_ui.zh_CN.translation", "res://scenes/FirstAwakening/i18n/first_awakening_ui.en.translation", "res://scenes/FirstAwakening/i18n/first_awakening_ui.ja.translation", "res://scenes/FirstAwakening/i18n/en.po", "res://scenes/FirstAwakening/i18n/ja.po", "res://scenes/FirstAwakening/i18n/dialogue_names.zh_CN.translation", "res://scenes/FirstAwakening/i18n/dialogue_names.en.translation", "res://scenes/FirstAwakening/i18n/dialogue_names.ja.translation", "res://scenes/FirstAwakening/i18n/mind_ui.zh_CN.po", "res://scenes/FirstAwakening/i18n/mind_ui.en.po", "res://scenes/FirstAwakening/i18n/mind_ui.ja.po", "res://scenes/FirstAwakening/i18n/mind_language.zh_CN.translation", "res://scenes/FirstAwakening/i18n/mind_language.en.translation", "res://scenes/FirstAwakening/i18n/mind_language.ja.translation", "res://scenes/FirstAwakening/i18n/replay_ui.zh_CN.translation", "res://scenes/FirstAwakening/i18n/replay_ui.en.translation", "res://scenes/FirstAwakening/i18n/replay_ui.ja.translation")
-locale/translations_pot_files=PackedStringArray("res://scenes/Awakening/awakening.dialogue")
+locale/translations=PackedStringArray("res://scenes/Shared/Locale/i18n/first_awakening_ui.zh_CN.translation", "res://scenes/Shared/Locale/i18n/first_awakening_ui.en.translation", "res://scenes/Shared/Locale/i18n/first_awakening_ui.ja.translation", "res://scenes/Shared/Locale/i18n/en.po", "res://scenes/Shared/Locale/i18n/ja.po", "res://scenes/Shared/Locale/i18n/dialogue_names.zh_CN.translation", "res://scenes/Shared/Locale/i18n/dialogue_names.en.translation", "res://scenes/Shared/Locale/i18n/dialogue_names.ja.translation", "res://scenes/Shared/Locale/i18n/mind_ui.zh_CN.po", "res://scenes/Shared/Locale/i18n/mind_ui.en.po", "res://scenes/Shared/Locale/i18n/mind_ui.ja.po", "res://scenes/Shared/Locale/i18n/mind_language.zh_CN.translation", "res://scenes/Shared/Locale/i18n/mind_language.en.translation", "res://scenes/Shared/Locale/i18n/mind_language.ja.translation", "res://scenes/Shared/Locale/i18n/replay_ui.zh_CN.translation", "res://scenes/Shared/Locale/i18n/replay_ui.en.translation", "res://scenes/Shared/Locale/i18n/replay_ui.ja.translation")
+locale/translations_pot_files=PackedStringArray("res://scenes/Awakening/awakening.dialogue", "res://scenes/Chapter2/Game/chapter2.dialogue")
 locale/fallback="zh_CN"
 
 [rendering]

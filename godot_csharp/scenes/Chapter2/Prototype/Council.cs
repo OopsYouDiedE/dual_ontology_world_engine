@@ -142,8 +142,8 @@ public sealed partial class Game
         foreach (var p in unfed) p.HungryAtCouncil = true;
         RefreshStanceContext();
         if (unfed.Length > 0)
-            CouncilLog.Add($"第 7 日早上，粮仓只剩 {stock} 份，{holder.Name}按人头分不过来：{string.Join("、", unfed.Select(p => p.Name))}没吃上早饭。{(GrainSide() is { } gs ? $"饿着的人多半跟着掌粮的人那一边（{EndingText(gs)}）。" : "")}");
-        else CouncilLog.Add($"第 7 日早上，粮仓还有 {stock} 份，人人吃上了早饭。");
+            CouncilLog.Add($"第 {LastDay} 日早上，粮仓只剩 {stock} 份，{holder.Name}按人头分不过来：{string.Join("、", unfed.Select(p => p.Name))}没吃上早饭。{(GrainSide() is { } gs ? $"饿着的人多半跟着掌粮的人那一边（{EndingText(gs)}）。" : "")}");
+        else CouncilLog.Add($"第 {LastDay} 日早上，粮仓还有 {stock} 份，人人吃上了早饭。");
         var support = plans.ToDictionary(s => s, _ => new List<Person>());
         foreach (var p in room.Where(p => p != Det))
         {
@@ -195,7 +195,6 @@ public sealed partial class Game
             CouncilLog.Add("你支持封闭。尽管多数人打开了名录库，你仍留在门外，没有念匣上的名字，也没有触物回忆。");
         else if (Result is not Ending.Sealed)
             CouncilLog.Add("侦探的封存匣标签上写着他的名字。他念出来，匣子没有应。恶魔：“那并非你的名字。”停了一下，“……也不是别人的。”");
-        if (SteleRubbed) CouncilLog.Add("恶魔在章末广播里没有提第九、第十条。你想起石碑上那两条——它从没说过。");
         return Result;
     }
 }

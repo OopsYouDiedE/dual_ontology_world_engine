@@ -92,9 +92,23 @@ public sealed class AwakeningContentSession
         {
             case "E8": Show("@sound"); break;
             case "E11":
-                foreach (var actor in new[] { "huo", "shen", "su" }) Show("@summon:" + actor);
-                Show("help_E11");
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("experiments", id, true)));
+                // 宿主先核验架沿距离；内容层只接受 R-05 当地的逐人比对。
+                if (who is not ("detective" or "huo" or "shen" or "su") ||
+                    Session.CharacterRooms.GetValueOrDefault("detective") != "R05" ||
+                    !Session.IsLocalTarget("detective", who)) break;
+                if (Session.GetProgress("life").TryGetValue(who, out var activity) &&
+                    activity is Dictionary<string, object> busy &&
+                    busy.GetValueOrDefault("state") is "going" or "holding") break;
+                if (!Session.Has("hand_comparisons", who))
+                {
+                    Show("help_E11_" + who);
+                    steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("hand_comparisons", who, true)));
+                }
+                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ =>
+                {
+                    if (new[] { "detective", "huo", "shen", "su" }.All(person => Session.Has("hand_comparisons", person)))
+                        Session.Set("experiments", id, true);
+                }));
                 break;
             case "E3" when who == "": break;
             case "E3" when who != "detective":
@@ -370,14 +384,17 @@ public sealed class AwakeningContentSession
         }
         Start(world, steps);
     }
+    // 房间参数由宿主在脚下真实室内地板上核验；门槛不能报告为到场。
     public string RoomEntry(string room)
     {
         if (room == "" || Session.Has("visited_rooms", room)) return "";
         Session.Set("visited_rooms", room, true);
-        return room is "foyer" or "pantry" or "R08" or "R06" or "R07" or "empty" ? "enter_" + room : "";
+        return "";
     }
+    // 同样只接受宿主已核验的实际进入房间。
     public string RoomTrigger(string room)
     {
+        if (room == "") return "";
         var stage = (string)Session.GetProgress("state")["stage"];
         if (stage == "roam" && room == "hall")
         {
@@ -425,7 +442,20 @@ public sealed class AwakeningContentSession
         var evidence = Content.RootElement.GetProperty("EVIDENCE").GetProperty(id);
         var helps = Content.RootElement.GetProperty("HELP_NOTES");
         string Name(string who) => Content.RootElement.GetProperty("PERSON_NAMES").GetProperty(who).GetString()!;
-        if (Session.Has("experiments", id))
+        if (id == "E11")
+        {
+            var people = new[] { "detective", "huo", "shen", "su" };
+            var compared = people.Where(person => Session.Has("hand_comparisons", person)).Select(Name).ToArray();
+            var missing = people.Where(person => !Session.Has("hand_comparisons", person)).Select(Name).ToArray();
+            notes.Add($"手掌比对：{compared.Length}/4。已比对：{(compared.Length == 0 ? "尚无" : string.Join("、", compared))}。");
+            if (compared.Length == 4) notes.Add(helps.GetProperty("E11").GetString()!);
+            else
+            {
+                if (compared.Length > 0) notes.Add("半枚手印，比已比对者的手掌窄；其他人的尚未核验。");
+                notes.Add($"待比对：{string.Join("、", missing)}。请在 R-05 架沿旁先比自己的手；到同伴面前交谈，逐人邀请来这里，再在现场比对。");
+            }
+        }
+        else if (Session.Has("experiments", id))
         {
             if (id == "E8")
             {
@@ -436,10 +466,9 @@ public sealed class AwakeningContentSession
                     return $"{Name((string)h["who"])}（{place}）听到 {h["text"]} {h["direction"]}";
                 })));
             }
-            else if (id == "E11") notes.Add(helps.GetProperty("E11").GetString()!);
             else notes.Add("试验：" + evidence.GetProperty("experiment_result").GetString()!.Replace("\n", ""));
         }
-        if (Session.Has("helped", id) && helps.TryGetProperty(id, out var help)) notes.Add(help.GetString()!);
+        if (id != "E11" && Session.Has("helped", id) && helps.TryGetProperty(id, out var help)) notes.Add(help.GetString()!);
         if (id == "E3") foreach (var who in new[] { "huo", "shen", "su" })
             if (Session.GetProgress("soles_compared").TryGetValue(who, out var sole)) notes.Add((string)sole);
         if (evidence.TryGetProperty("recall", out var recall))

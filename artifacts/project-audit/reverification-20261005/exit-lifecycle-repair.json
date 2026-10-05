@@ -1,0 +1,52 @@
+{
+  "task": "project-audit/checker-exit-lifecycle",
+  "status": "source fixes complete; no build or regression executed",
+  "evidence": {
+    "directory": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005",
+    "native_logs": [
+      "flow-engine-full.log",
+      "flow2-engine-full.log",
+      "gallery-engine-full.log"
+    ],
+    "report": "verification-report.json",
+    "observed": "Awakening flow118/0; Chapter2 flow0 failures but ERROR4 resources still in use; gallery35 shots without CallbackTweener ERROR. Each log has ObjectDB exit leak warning. There is no full-logs subdirectory; native logs are directly in this directory."
+  },
+  "baseline": [
+    {
+      "path": "tools/verify.py",
+      "saved": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\exit-lifecycle\\verify.py",
+      "before_sha256": "7130c6958a12a7a9004c9d45f2a8ec66f91c7f8292f31ab8e069b2392454358f",
+      "after_sha256": "dd2b034789b94c8e59778ec60c0ce3ce2e1ef7274a376a9306f81ca736deb240"
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/check/flow_check.gd",
+      "saved": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\exit-lifecycle\\awakening-flow_check.gd",
+      "before_sha256": "10ede8bf960cf84daa83da3a37642c66e933133903da746fe5a7e76c6efdf80a",
+      "after_sha256": "6ac49fe0db5af1aa9fdc17902772a332f2fafb20d670f9cb25fd4caae2ebbf47"
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Game/check_flow.gd",
+      "saved": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\exit-lifecycle\\chapter2-check_flow.gd",
+      "before_sha256": "f3b2a51468b025e172f49f3bf3bee9f867df1b70097f5bf193500a9080c0dfde",
+      "after_sha256": "629c10155070e450c53b1f620a979de376a53ec91005e29abf7a3c78d0e49b7a"
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/check/state_gallery.gd",
+      "saved": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\reverification-20261005\\source-baseline\\exit-lifecycle\\state_gallery.gd",
+      "before_sha256": "a44189a98df3d658bdb03008680c8bbeb0ba761065c0726bd7c0272409c6b4c6",
+      "after_sha256": "6a0c2716e8f97a4d6297b706c027bbc3da4ea0cc29332ba27fd9b77a535baeb0"
+    }
+  ],
+  "verify": "Removed the resources-still-in-use negative-lookahead exception. All line-leading Godot ERROR: messages now fail the relevant engine step, including shutdown resource errors. Warnings remain printed; no warning/error suppression added.",
+  "lifecycle_changes": {
+    "Awakening flow": "After final assertions, _run schedules _finish and returns. This releases its actual compiled story Resource and DialogueLine locals before fixture destruction. _finish queues holder deletion, clears the holder reference, allows exactly two process frames to flush queued node/engine/UI destruction and callbacks, then quits with existing assertion exit status.",
+    "Chapter2 flow": "After final assertions, queue_free the whole game fixture (including C# engine) and defer _finish. _run returns before shutdown so the dynamic feed DialogueResource res and result locals are released; _finish allows two process frames to flush queued deletion and callbacks then quits with unchanged failure-derived status.",
+    "Awakening gallery": "After all35 screenshot captures, defer _finish so _run releases replay stage/dialogue local references. _finish queues holder deletion, clears the holder reference, flushes two process frames, then quits."
+  },
+  "scope": "No production sources, gameplay mechanisms, assertions, screenshots, scenario branches or expected flow outcomes changed. No new helpers outside existing checker files. No arbitrary wall-clock sleep or forced garbage collection.",
+  "limits": [
+    "No post-edit assertion that leaks have disappeared: runtime validation is explicitly deferred to a fresh independent agent.",
+    "Current native logs omit verbose instance/resource identities. They cannot prove a third-party .NET shutdown defect or identify all4 leaked resources. Source evidence is sufficient to fix the immediate checker lifetime mistake, but remaining leakage must be diagnosed by native --verbose output if it persists.",
+    "Strict ERROR handling may now yield failure for any remaining resource cleanup issue, intentionally rather than hiding it."
+  ]
+}

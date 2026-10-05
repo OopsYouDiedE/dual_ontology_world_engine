@@ -1,0 +1,55 @@
+{
+  "task": "project-audit/tooling-flow-repair",
+  "status": "implemented; intentionally no builds or tests executed",
+  "failure_evidence": "Read only this round verification-report.json and current production sources. Saved all three failed checker/tooling files verbatim before edits.",
+  "files": [
+    {
+      "path": "tools/verify.py",
+      "baseline_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\verification-20261005\\source-baseline\\tooling-failure\\verify.py",
+      "baseline_sha256": "079e3f7d74e9833be464b153ae6a72bf358b4ee530dabdea15c3b9a2965acf49",
+      "current_sha256": "7130c6958a12a7a9004c9d45f2a8ec66f91c7f8292f31ab8e069b2392454358f"
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/check/flow_check.gd",
+      "baseline_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\verification-20261005\\source-baseline\\tooling-failure\\awakening-flow_check.gd",
+      "baseline_sha256": "2f0fbb1452ef8ebadd13d32fe6f7271fecea7678c8d0cf445d53fb198523e0bf",
+      "current_sha256": "10ede8bf960cf84daa83da3a37642c66e933133903da746fe5a7e76c6efdf80a"
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Game/check_flow.gd",
+      "baseline_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\project-audit\\verification-20261005\\source-baseline\\tooling-failure\\chapter2-check_flow.gd",
+      "baseline_sha256": "82b9489e6a413c0a0b5d4aecf7842112f1dd36f1d5be5b7b4f94099e15e3fbde",
+      "current_sha256": "f3b2a51468b025e172f49f3bf3bee9f867df1b70097f5bf193500a9080c0dfde"
+    }
+  ],
+  "awakening": {
+    "cause_identified_in_source": "Current talk_huo/talk_shen/talk_su each lead to a persistent talk_*_menu; every normal question returns to that menu, while the explicit 没事了。 option ends the conversation. Old drain always picked the first allowed option, repeatedly returning to the question menu. drain could exhaust 900 frames repeatedly inside nested outer loops, consuming the entire 600 second process timeout.",
+    "diagnostic_limit": "The original timeout discarded partial output, so its exact final assertion/stack trace cannot be reconstructed. The persistent-menu defect is independently evident in the current formal dialogue and checker.",
+    "changes": [
+      "When no scenario-specific choices remain, drain explicitly chooses the current 没事了。 response when present. Explicit recall/reach scenario choice sequences remain authoritative.",
+      "Dialogue/content and nudge checks now inspect actual game.STORY and engine.DialogueText()/Content() from the formal embedded Chapter1Script resources instead of separately loading source .dialogue/GDScript content.",
+      "Replay skip is sent through the current ReplayStage Escape InputEventKey handler; Space checks include physical_keycode. No ui_up action injection added.",
+      "A failed assertion now exits this dependent stateful checker immediately; dialogue exhaustion reports stage/modal/busy/line, and helper exhaustion/invalid choice reports a concrete failure. Production mechanics and original scenario outcome assertions were not changed."
+    ]
+  },
+  "chapter2": {
+    "cause": "Current formal Chapter2Game._begin() opens say(d2_arrival), followed by d2_gather, d2_lesson, d2_free; d2_wake is absent from current chapter2.dialogue.",
+    "changes": "Replace obsolete d2_wake requirement with d2_arrival and include d2_free; keep other static titles, map checks, day progression, replay, confrontation and council assertions."
+  },
+  "verify": {
+    "changes": [
+      "TimeoutExpired now prints the complete captured stdout and stderr before returning failure.",
+      "General line-leading Godot ERROR: messages join SCRIPT ERROR/Parse Error/Failed to load script detection, so CallbackTweener errors cannot yield PASS solely from exit0.",
+      "Correct gallery output documentation to its current existing directory."
+    ],
+    "concurrent_edit": "On resuming after interruption, the current regex additionally excludes resources still in use at exit. That exclusion was not introduced by this subagent and was preserved as concurrent work."
+  },
+  "concurrent_edits_preserved": [
+    "During interruption, obsolete enter_* title requirements were removed and L6/L7 visibility fixtures repositioned by another actor. These preexisting resumed-work edits were retained and not attributed to this subagent."
+  ],
+  "limitations": [
+    "No post-edit runtime success claimed; fresh independent agent must execute regression.",
+    "This task did not fix CallbackTweener production errors. They now become detectable by verify.py and still need production-source repair by the main agent.",
+    "Physical key events here are synthetic automated input through existing handlers, not native OS input and not blind play."
+  ]
+}

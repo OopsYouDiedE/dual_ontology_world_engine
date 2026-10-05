@@ -54,3 +54,8 @@
 - （2026-10-04 续）三维：Blender 4.5.14 LTS 便携版装在 `C:\Users\Administrator\tools\blender-4.5.14-windows-x64`（仓库外）。`campus-site/build_3d.py` 建模渲染五个视角，`campus_3d.blend` 约 35 MB、`dem/` 约 4.8 MB，提交前决定是否纳入仓库。更正：主轴方位 -14° 不正对最高点，最高点在右前方约 12°（设计规范已改）。
 - （2026-10-04 续）用户要求压缩岛屿：科尔沃岛地形三向等比缩为 0.5 倍（`campus-site/scale.json`），选址、总平面、剖面、全岛图、三维图均已按 0.5 倍重做；主轴方位 2°，基本正对 351 m 最高点。设计规范第一部分 §1.1 与第三部分 §3.2 已更新。
 - （2026-10-04 续）第二章场景已绘制并提交（`c078e69`）。随后用户指出室外比例不对、范围不全：室外改为真实比例 1 m = 24 px、三分之四俯视，覆盖全部学园、港路与港口，分六张重叠区域地图（`campus_nw/n/ne/sw/s`、`harbor`），浏览脚本按核心范围无缝换区。生产链：`godot_csharp/tools/chapter2_art/{outdoor,buildings,oblique,nature}.py`；旧的 12 px 外景（`exterior.py`、`campus_room.py`、`campus.tscn`）已删除。主代理新裁定：学园有围墙、门楼是唯一出入口、墙外只看不进（设计规范第三部分 §3.4、第七部分 §1）。用户说暂不盲玩，只做一轮美术检验。
+- （2026-10-04 续）**两章玩法统一**（用户要求）：设计规范总纲新增 §四“两章共用的玩法规约”（操作、读写划分、人物驱动、案件循环、视野），第三部分 §4—§8 按统一后的第二章重写，新增 §15 取舍表。第二章压缩为第 2—4 日：读不耗时、写过一阵；删去动作菜单/命令行/文字日志、五格拼规矩、灯油药品温室、预判打赌、片面告知等。
+  - 宿主重写：`godot_csharp/scenes/Chapter2/Game/Chapter2Game.gd`（第一章同款操作：点击/WASD、悬停描边、E 检视交谈、Tab 笔记本、R 重演、M 学园图、T 过一阵）；`Chapter2Engine.cs` 直接调用原型的 `Game`（新增 `Prototype/Host.cs`），旧的文字循环桥 `Chapter2Bridge.cs` 已删；对白 `chapter2.dialogue`；学园手稿图与墨影回放 `CampusMap.gd`。
+  - 共用组件：`scenes/Shared/ReplayManuscript.gd`（两章重演手稿）、`scenes/Shared/SightMask.gd`（视野：墙挡视线，视线外暗、人不显示；用户追加要求“视野符合认知，不要全图视野”）。十二人立绘由 `tools/first_awakening_art/portraits.py` 生成。
+  - 检查：`scenes/Chapter2/Game/check_flow.gd`（跳状态冒烟，全过）、`check_gallery.gd`（截图）；原型 `dotnet …Chapter2Prototype.dll host`。原型 `check`/`bots` 未按三日重跑。
+  - 第一章：修好第五轮修订遗留的 `Awakening.gd` 解析错误（`_answer_refresh` 类型推断，原先整章无法载入）；`flow_check.gd` 前 74 项通过，之后在“苏泠独自碰音叉后的证物卡”一步卡住（与本轮改动无关，待查）。

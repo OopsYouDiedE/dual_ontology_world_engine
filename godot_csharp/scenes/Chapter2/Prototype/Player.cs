@@ -3,7 +3,7 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-public enum Cmd { Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
+public enum Cmd { Stay, Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
 
 /// <summary>侦探一个时段的行动。每个时段只能做一件事（第三部分 §4）。</summary>
 public sealed record PlayerAction(Cmd Cmd)
@@ -147,22 +147,19 @@ public sealed partial class Game
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 1), AddRelations = [(Relations.Subject, p.M[Det.Body])]
         });
         Promises.Add((p.Id, Day + 1, false));
-        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。用“帮 {p.Name}”兑现。）");
+        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找他“帮他一把”即算兑现。）");
     }
 
-    private string Answer(Person p, SocialStance s) => s switch
+    private static string Answer(Person p, SocialStance s) => s switch
     {
         SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……我还不能答应。”" }) + (DetHelped.Contains(p.Id) || Promises.Any(x => x.Who == p.Id && x.Done)
-            ? "（你先前帮过他，但这次请求仍没被接受。帮助会改变信任，不保证他答应每个请求；也可带他查证或换请别人。）"
-            : $"（可以用“帮 {p.Name}”增进信任；帮助不保证他答应每个请求，也可带他查证或换请别人。）"),
+        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + "（他想先要你帮他一把。）",
         _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
     };
 
     /// <summary>侦探自己的身体：做这一时段选定的事（与 NPC 一起在 CTB 上结算）。</summary>
     private void PlayerDo(PlayerAction? act)
     {
-        if (Story?.Controls(P.Det) == true) return;
         if (Slot == Slot.Afternoon && Get(Det.Body, T.Hungry) > 0) return;
         var fx = FxOf(Det);
         if (Slot == Slot.Night)
@@ -174,6 +171,7 @@ public sealed partial class Game
         if (act is null) { SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); return; }
         switch (act.Cmd)
         {
+            case Cmd.Stay: SubmitDet(Fx.Seq(fx.Go(act.Place ?? Where(Det)), fx.Look(Space[act.Place ?? Where(Det)])), 0.5); break;
             case Cmd.Class: SubmitDet(fx.Job(Job.Class), 0.5, Job.Class); break;
             case Cmd.Collect: SubmitDet(fx.Job(Job.Collect), 0.8, Job.Collect); break;
             case Cmd.Inspect:
@@ -261,18 +259,8 @@ public sealed partial class Game
                     foreach (var e in all) { if (Day >= 3) DetLooked.Add(e); DetSaw(e); }
                     if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
                     Feed.Add($"你细看了{Names.Of(here)}：");
-                    foreach (var e in all)
-                    {
-                        var description = Describe(e);
-                        var key = ReferenceEquals(e, thing) ? act.Thing! : Things_.First(t => ReferenceEquals(t.Value.Thing(this), e)).Key;
-                        InspectionRecords.Add(new(Day, Slot, key, area, description));
-                        Feed.Add("  · " + description);
-                    }
-                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp)
-                    {
-                        InspectionRecords.Add(new(Day, Slot, "前厅脚印", area, fp.Text + "。"));
-                        Feed.Add("  · " + fp.Text + "。");
-                    }
+                    foreach (var e in all) Feed.Add("  · " + Describe(e));
+                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) Feed.Add("  · " + fp.Text + "。");
                 }
                 else Feed.Add($"你没能走到{Names.Of(area)}。");
                 if (act.Cmd == Cmd.Escort)
@@ -310,9 +298,7 @@ public sealed partial class Game
                 break;
             }
             case Cmd.Greenhouse:
-                foreach (var who in act.Crew.Where(w => _asked.TryGetValue(w, out var stance) && stance == SocialStance.Accept && Get(this[w].Body, T.Did(Job.Greenhouse)) == 0))
-                    Feed.Add($"{Names.Of(who)}先前答应过，但你没看见他完成这次修水压。答应请求与实际做成是两件事，温室仍须凑齐同时守两站的人。");
-                Feed.Add($"温室：此刻{string.Join("、", People.Where(p => Where(p) == Place.Greenhouse).Select(p => p.Name))}还在场。{(GreenhouseRepaired ? "水压稳住了，温室修好了。" : $"阀门修了大约{Math.Min(9, GreenhouseProgress * 10 / GreenhouseNeed)}成。")}随后记录的是这个下午你看见的动作，参与者也可能已经离开。");
+                Feed.Add($"温室：{string.Join("、", People.Where(p => Where(p) == Place.Greenhouse).Select(p => p.Name))}在。{(GreenhouseRepaired ? "水压稳住了，温室修好了。" : $"阀门修了大约{Math.Min(9, GreenhouseProgress * 10 / GreenhouseNeed)}成。")}");
                 break;
             case Cmd.Archive:
             {
@@ -455,27 +441,33 @@ public sealed partial class Game
     }
 
     /// <summary>当面问一个人：他只报告自己的感知与职业判读。</summary>
-    public string Testimony(Person p) => Day < 3 || p.Id is not (P.Bertrand or P.Margaret or P.Mora or P.Quer or P.Ruan or P.Ward) ? Chat(p) : p.Id switch
+    public string Testimony(Person p) => TestimonyPresentation(p).Text;
+
+    // Presentation accompanies the selected wording; rules and testimony text are unchanged.
+    private (string Text, string Emotion) TestimonyPresentation(Person p) => Day < 3 || p.Id is not (P.Bertrand or P.Margaret or P.Mora or P.Quer or P.Ruan or P.Ward) ? ChatPresentation(p) : p.Id switch
     {
-        P.Bertrand => "“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == 2)).GroupBy(s => (s.Day, s.At))
-            .Select(g => $"第{g.Key.Day}日夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”",
+        P.Bertrand => ("“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == 2)).GroupBy(s => (s.Day, s.At))
+            .Select(g => $"第{g.Key.Day}日夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”", "thoughtful"),
         P.Margaret => NightTruth.Any(t => t.Contains("雀儿 修粮仓门闩")) && p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked))
-            ? "“粮仓门闩松了，前天夜里我在后勤院碰见雀儿，请她修的。她修得很干净。……有人说她偷东西？她当时饿着肚子在修门。”"
-            : p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked)) ? "“门闩松了，我请人修，没人搭理。”" : "“后勤院的门闩松着，没人管。”",
-        P.Mora => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")) ? "“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”" : "“我一直在诊疗所。”",
-        P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (TrustIn(p, Det) >= 2 ? "“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”" : "“关你什么事。”") : "“我那晚饿着睡的。”",
-        P.Ruan => $"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”",
-        P.Ward => Accused is not null ? "“依据台账与所见，事实清楚。”" : "“无记录即违规。仅此而已。”",
-        _ => "“我那晚睡着了。”"
+            ? ("“粮仓门闩松了，前天夜里我在后勤院碰见雀儿，请她修的。她修得很干净。……有人说她偷东西？她当时饿着肚子在修门。”", "angry")
+            : p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked)) ? ("“门闩松了，我请人修，没人搭理。”", "worried") : ("“后勤院的门闩松着，没人管。”", "worried"),
+        P.Mora => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")) ? ("“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”", "worried") : ("“我一直在诊疗所。”", "calm"),
+        P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (TrustIn(p, Det) >= 2 ? ("“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”", "worried") : ("“关你什么事。”", "angry")) : ("“我那晚饿着睡的。”", "worried"),
+        P.Ruan => ($"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”", "thoughtful"),
+        P.Ward => Accused is not null ? ("“依据台账与所见，事实清楚。”", "calm") : ("“无记录即违规。仅此而已。”", "calm"),
+        _ => ("“我那晚睡着了。”", "calm")
     };
 
     /// <summary>平常的交谈：他最近听说的两件事（他自己的说法，可能走样），以及他对侦探的态度。</summary>
-    private string Chat(Person p)
+    private (string Text, string Emotion) ChatPresentation(Person p)
     {
         var heard = p.News.OrderByDescending(n => n.Key).Where(n => AllNews[n.Key - 1].Kind != NewsKind.Lesson).Select(n => n.Value).Where(h => h.Day >= Day - 1).Take(2).Select(h => h.Hops == 0 ? h.Text : $"{h.Text}（听{Names.Of(h.From)}说的）").ToArray();
         var t = TrustIn(p, Det);
         var mood = t >= 3 ? "他说话不避着你。" : t >= 1 ? "他还算客气。" : t >= 0 ? "他话不多。" : "他明显不想跟你多说。";
-        return (heard.Length == 0 ? "“没什么新鲜事。”" : "“" + string.Join("；", heard) + "。”") + mood;
+        // Recalling witnessed/heard news uses the thinking pose. Only the wording
+        // explicitly saying he does not want to speak selects the annoyed pose.
+        return ((heard.Length == 0 ? "“没什么新鲜事。”" : "“" + string.Join("；", heard) + "。”") + mood,
+            t < 0 ? "angry" : heard.Length > 0 ? "thoughtful" : "calm");
     }
 
     public string Describe(Essence e)
@@ -536,7 +528,6 @@ public sealed partial class Game
         var w = new Wager(Day, with, who, where, spec);
         Wagers.Add((w, null));
         FreeScript.Add((SlotIndex, w));
-        FreeEvents.Add(new FreeEvent.Bet(SlotIndex, w));
         var rule = spec is { } id ? Specs.FirstOrDefault(s => s.Id == id) : null;
         NoteFor(with, "赌约", $"你对他说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，他就认{LabelOf(rule)}「{Short(rule)}」" : "")}");
         return $"你对{Names.Of(with)}说：“今晚，{Names.Of(who)}会去{Names.Of(where)}。{(rule is not null ? $"我若说中，你就认{LabelOf(rule)}「{rule.Text}」。" : "")}”{Names.Of(with)}：{(TrustIn(this[with], Det) >= 1 ? "“好，明早见分晓。”" : "“……随你。”")}";

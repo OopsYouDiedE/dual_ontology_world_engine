@@ -63,6 +63,7 @@ public sealed partial class Game
     public Person this[P p] => People[(int)p];
     public Person Det => People[0];
     public IEnumerable<Person> Npcs => People.Skip(1);
+    // 2 是第一章门开启后的始业日排程键；晨段用于上午集合，没有跨夜。
     public int Day { get; private set; } = 2;
     public Slot Slot { get; private set; } = Slot.Morning;
     public double Now => S.CTB.Now;
@@ -202,7 +203,7 @@ public sealed partial class Game
         foreach (var person in People) WriteHabits(person);
     }
 
-    /// <summary>第 2 日晨十六人在中央厅会合：每人看见全部可指称的对象与彼此；此后的位置与状态只靠感知更新。</summary>
+    /// <summary>始业日上午十六人在中央厅会合：每人看见全部可指称的对象与彼此；此后的位置与状态只靠感知更新。</summary>
     private void Know(Person p)
     {
         var sources = View.Keys.ToArray();
@@ -433,13 +434,22 @@ public static class Chapter2Content
 {
     // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
     public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
+    public static string DayName(int day) => day switch
+    {
+        2 => "始业日", 3 => "翌日", 4 => "第三日", _ => $"第{day - 1}日",
+    };
+    public static string SlotName(int day, Slot slot) => (day, slot) switch
+    {
+        (2, Slot.Morning) => "上午（集合）",
+        (2, Slot.Forenoon) => "上午（首课）",
+        _ => Names.Of(slot),
+    };
+    public static string TimeName(int day, Slot slot) => $"{DayName(day)} · {SlotName(day, slot)}";
     public const string Intro =
-        "第 1 日傍晚，四个寝区的隔离门都开了。十六个人在起居厅里第一次见面——人人都以为彼此是初识。\n\n" +
-        "另外三组各自答过了关于昨夜的题，答案字面上都对，裂痕却留了下来：文契组为名录库的柜锁，星仪组为沉静室的门，后勤组为白塔柜里少的那瓶试剂。\n\n" +
-        "第 2 日清晨，铜口召集全体到中央厅。";
+        "始业日上午，始业之问已经答毕。铜口随即召集全体到中央厅，开始首课。";
 
     public const string Instructions =
-        "每日五个时段，侦探每个时段只能做一件事；其余十五人各按自己的认知行动。夜里发生的事，只以痕迹、身影与转述到达你。第 7 日，十六人在誓约庭决定名录库归谁、怎么开。";
+        "读不耗时：细看、询问、读板与重演可以慢慢来。写或等待推进一阵，其余十五人也各按自己的认知行动。日程有清晨、上午、午间、下午、傍晚与夜里六个时段；始业日上午先集合，再上首课。夜里的事通过痕迹、身影与转述得知。第三日清晨，十六人在誓约庭决定名录库归谁、怎么开。";
 }
 
 /// <summary>第二章正式剧本入口；原人物、世界与剧情直接编译在本程序集。</summary>

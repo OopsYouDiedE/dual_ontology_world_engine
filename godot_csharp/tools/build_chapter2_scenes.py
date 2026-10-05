@@ -142,6 +142,8 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     H = len(room["rows"]) * CELL if "size_px" not in room else room["size_px"][1]
     lines += [f'[node name="{room["key"]}" type="Node2D"]', 'texture_filter = 1',
               f'metadata/title = "{room["title"]}"', f'metadata/map_size = Vector2({W}, {H})']
+    if room["rows"]:
+        lines.append(f'metadata/terrain_rows = {json.dumps(room["rows"])}')
     lines += [f'metadata/{k} = {v}' for k, v in room.get("meta", {}).items()]
     lines += ['',
               '[node name="Architecture" type="Sprite2D" parent="."]', 'z_index = -10', 'texture = ExtResource("arch")', 'centered = false', '',

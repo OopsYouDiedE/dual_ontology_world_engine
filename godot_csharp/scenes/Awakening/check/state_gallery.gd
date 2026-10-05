@@ -13,6 +13,16 @@ func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	call_deferred("_run")
 
+func _finish() -> void:
+	# Release _run's replay/dialogue locals before deleting the fixture and
+	# its C# engine; queued UI deletion must complete before SceneTree exits.
+	if is_instance_valid(holder):
+		holder.queue_free()
+	holder = null
+	await process_frame
+	await process_frame
+	quit(0)
+
 func fresh(skip_intro := true) -> Node:
 	if is_instance_valid(holder):
 		holder.queue_free()
@@ -280,6 +290,7 @@ func _run() -> void:
 	await shot("10-manuscript-strangers")
 	game.close_modal()
 	await finish_dialogue(game)
+	game.close_modal()
 	game.stage = "playback"
 	var stage = game.stage_node
 	stage._setup()
@@ -292,9 +303,11 @@ func _run() -> void:
 			doubt = frame
 	stage._apply(voice, {})
 	await settle(20)
+	assert(game.modal_kind == "", "Playback gallery must not have a foreground modal")
 	await shot("11-playback-four-bubbles")
 	stage._apply(doubt, voice)
 	await settle(50)
+	assert(game.modal_kind == "", "Playback gallery must not have a foreground modal")
 	await shot("12-playback-why-trust")
 	stage._teardown()
 	await settle(5)
@@ -309,6 +322,7 @@ func _run() -> void:
 			break
 	stage._apply(bolt, {})
 	await settle(40)
+	assert(game.modal_kind == "", "Playback gallery must not have a foreground modal")
 	await shot("13-playback-decision-basis")
 	stage._teardown()
 	await settle(5)
@@ -387,4 +401,4 @@ func _run() -> void:
 	await settle(10)
 	await shot("19-ending")
 	print("TOTAL %d shots" % shots)
-	quit(0)
+	call_deferred("_finish")

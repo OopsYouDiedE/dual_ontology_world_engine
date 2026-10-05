@@ -74,8 +74,8 @@ public static class Names
     public static string Of(Place p) => p switch
     {
         Place.Hall => "中央厅", Place.Lecture => "讲堂", Place.Logistics => "后勤院", Place.Clinic => "诊疗所",
-        Place.Greenhouse => "温室", Place.ArchiveFront => "名录库前厅", Place.Oath => "誓约庭", Place.DormLife => "生活翼",
-        Place.DormW => "文契寝区", Place.DormS => "星仪寝区", Place.DormL => "后勤寝区", _ => p.ToString()
+        Place.Greenhouse => "温室", Place.ArchiveFront => "名录库前厅", Place.Oath => "誓约庭", Place.DormLife => "乙区",
+        Place.DormW => "甲区", Place.DormS => "丙区", Place.DormL => "丁区", _ => p.ToString()
     };
     public static string Of(Slot s) => s switch
     {

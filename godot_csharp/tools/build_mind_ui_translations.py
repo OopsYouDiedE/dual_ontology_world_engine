@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-SOURCE = Path(__file__).resolve().parents[1] / "scenes/FirstAwakening/i18n/mind_ui.tsv"
+SOURCE = Path(__file__).resolve().parents[1] / "scenes/Shared/Locale/i18n/mind_ui.tsv"
 
 
 def quote(value: str) -> str:

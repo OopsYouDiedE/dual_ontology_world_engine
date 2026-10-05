@@ -111,3 +111,37 @@ static func rule() -> ColorRect:
 	r.custom_minimum_size = Vector2(0, 1)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
+
+## 两章原样共用的纸页弹窗；流程状态与导航仍由各宿主负责。
+static func modal(layer: CanvasLayer, title: String, size: Vector2) -> Control:
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.theme = theme()
+	layer.add_child(root)
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.03, 0.05, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(dim)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", sheet())
+	panel.position = (Vector2(1280, 992) - size) / 2.0
+	panel.size = size
+	panel.custom_minimum_size = size
+	root.add_child(panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	panel.add_child(column)
+	if not title.is_empty():
+		column.add_child(label("[b]" + title + "[/b]", 25))
+		column.add_child(rule())
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 10)
+	scroll.add_child(body)
+	root.set_meta("column", column)
+	root.set_meta("body", body)
+	return root

@@ -1,0 +1,7 @@
+{
+  "overall": "FAIL: intended doorway start precondition was not preserved; no rerun or assertion modification",
+  "entry_interpretation": "KEY_W was physically pressed. Start position (672,1214) matches an outdoor transition after archive south exit injection; final archive foyer (256,503.6663), visited 0 to 160. This proves real input can enter archive and reveal foyer, but does not certify the intended within-map doorway trajectory.",
+  "screenshot_review": "Normal camera screenshot shows foyer clear, vault floor black, vault walls and doorway visible; works floor sample is outside normal viewport. Overview camera transform is recorded, but changing camera after disabling process retained cached fog draw extent: rightmost works floor appears exposed. Overview cannot certify all-room rendered masking and must not be treated as runtime proof.",
+  "mask_properties": "84 foyer interior cells clear/current, 150 unvisited vault/works interior cells opaque, 298 architectural cells clear",
+  "scope": "One rendered targeted execution, no build/full flow/modal/production change/visited clear/floor fabrication/endpoint write; script assertions preserved."
+}

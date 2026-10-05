@@ -43,6 +43,8 @@ var portrait_frame: PanelContainer
 ## Full-length portraits are shown as a head-and-shoulders card (fractions of the image).
 const PORTRAIT_BUST := Rect2(0.2, 0.02, 0.6, 0.4)
 var portrait_character := ""
+var portrait_mood := "calm"
+const PORTRAIT_MOODS := ["calm", "thoughtful", "worried", "angry", "warm", "hooked"]
 ## Hosts may dim responses the player has already chosen once (opt-in).
 var dim_visited_responses := false
 var _visited_responses: Dictionary = {}
@@ -225,6 +227,16 @@ func _line_ends_conversation() -> bool:
 func _escape_rich_text(value: String) -> String:
 	return value.replace("[", "[lb]").replace("]", "[rb]")
 
+## Character labels map to existing cast keys; each sheet supplies six explicit moods.
+func set_dialogue_cast(mapping: Dictionary) -> void:
+	var portraits := {}
+	for character in mapping:
+		var moods := {}
+		for mood in PORTRAIT_MOODS:
+			moods[mood] = "res://ShareAsset/Internal/Characters/DialogueCast/%s_%s.tres" % [str(mapping[character]), mood]
+		portraits[character] = moods
+	set_character_portraits(portraits)
+
 func set_character_portraits(mapping: Dictionary) -> void:
 	character_portraits.clear()
 	for canonical_name in mapping:
@@ -232,13 +244,18 @@ func set_character_portraits(mapping: Dictionary) -> void:
 		if character.is_empty():
 			continue
 		var asset: Variant = mapping[canonical_name]
-		var texture: Texture2D = null
-		if asset is Texture2D:
-			texture = asset
-		elif asset is String and ResourceLoader.exists(asset):
-			texture = load(asset) as Texture2D
-		if texture != null:
-			character_portraits[character] = _bust(texture)
+		var moods: Dictionary = asset if asset is Dictionary else {"calm": asset}
+		var textures := {}
+		for mood in PORTRAIT_MOODS:
+			var value: Variant = moods.get(mood)
+			var texture: Texture2D = null
+			if value is Texture2D:
+				texture = value
+			elif value is String and ResourceLoader.exists(value):
+				texture = load(value) as Texture2D
+			if texture != null:
+				textures[mood] = texture if texture.get_meta("portrait_bust", false) else _bust(texture)
+		character_portraits[character] = textures
 	if not is_instance_valid(panel):
 		return
 	if not is_instance_valid(character_portrait):
@@ -260,14 +277,16 @@ func set_character_portraits(mapping: Dictionary) -> void:
 		portrait_frame.position = Vector2(28, -186)
 		panel.add_child(portrait_frame)
 		character_portrait = TextureRect.new()
+		character_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		character_portrait.name = "CharacterPortrait"
 		character_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		character_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		character_portrait.custom_minimum_size = Vector2(172, 172)
 		portrait_frame.add_child(character_portrait)
 	character_portrait.texture = null
 	portrait_character = ""
+	portrait_mood = "calm"
 	_refresh_character_portrait()
 	layout_compact_line()
 
@@ -288,15 +307,23 @@ func _portrait_character(canonical_name: String) -> String:
 			return "厨师"
 		"音乐家", "苏泠":
 			return "音乐家"
-	return ""
+		"", "铜口":
+			return ""
+	# 其余人物（第二章的十二人）以名字直接对应立绘。
+	return canonical_name
 
 func _refresh_character_portrait() -> void:
 	if not is_instance_valid(character_portrait):
 		return
 	var character := _portrait_character(str(line.character)) if active and not busy and line != null else ""
-	if character != portrait_character:
+	var mood: String = str(line.get_tag_value("emotion")) if active and not busy and line != null else "calm"
+	if mood not in PORTRAIT_MOODS:
+		mood = "calm"
+	if character != portrait_character or mood != portrait_mood:
 		portrait_character = character
-		character_portrait.texture = character_portraits.get(character) as Texture2D
+		portrait_mood = mood
+		var textures: Dictionary = character_portraits.get(character, {})
+		character_portrait.texture = textures.get(mood, textures.get("calm")) as Texture2D
 	var shown := active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
 	if compact:
 		# The card keeps one layout for every speaker: a portrait, or a monogram for
@@ -486,7 +513,8 @@ func _setup_voice_player() -> void:
 const COMPACT_WIDTH := 1152.0
 const COMPACT_HEIGHT := 172.0
 const COMPACT_MARGIN := 20.0
-const COMPACT_PORTRAIT := 140.0
+const COMPACT_PORTRAIT := 210.0
+const COMPACT_PORTRAIT_HEIGHT := 280.0
 const COMPACT_TEXT_X := 32.0
 
 func use_compact_layout() -> void:
@@ -553,9 +581,11 @@ func layout_compact_line() -> void:
 		fast_forward_label.position = Vector2(text_x, height - 30)
 		fast_forward_label.visible = count == 0
 	if is_instance_valid(portrait_frame):
-		portrait_frame.position = Vector2(16, 16)
-		portrait_frame.size = Vector2.ONE * COMPACT_PORTRAIT
-		character_portrait.custom_minimum_size = Vector2.ONE * (COMPACT_PORTRAIT - 6.0)
+		# The upper-body card rises above the compact text box and ends before
+		# the response rows, keeping shoulder/hand gestures readable.
+		portrait_frame.position = Vector2(16, COMPACT_HEIGHT - 16.0 - COMPACT_PORTRAIT_HEIGHT)
+		portrait_frame.size = Vector2(COMPACT_PORTRAIT, COMPACT_PORTRAIT_HEIGHT)
+		character_portrait.custom_minimum_size = Vector2(COMPACT_PORTRAIT - 6.0, COMPACT_PORTRAIT_HEIGHT - 6.0)
 
 
 func label(text: String, at: Vector2, size: int, color: Color) -> Label:

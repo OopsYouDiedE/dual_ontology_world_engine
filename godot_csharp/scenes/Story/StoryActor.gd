@@ -9,6 +9,9 @@ var travelling := false
 var speed := 90.0
 @export var standard: SpriteFrames
 @export var special: SpriteFrames
+@export var visual_scale := 1.0
+@export var foot_offset := -23.0
+@export var linear_filter := false
 var path := PackedVector2Array()
 var waypoint := 0
 var seated := false
@@ -16,10 +19,15 @@ var seat_direction := "front"
 var seat_height := 0.0
 
 func _ready() -> void:
+	if standard != null:
+		visual_scale = float(standard.get_meta("visual_scale", visual_scale))
+		foot_offset = float(standard.get_meta("foot_offset", foot_offset))
+		linear_filter = bool(standard.get_meta("linear_filter", linear_filter))
 	collision_layer = 2
 	collision_mask = 3
 	if has_node("Sprite"):
 		sprite = $Sprite
+		apply_visual(sprite)
 		sprite.sprite_frames = standard
 		pose("idle")
 		return
@@ -36,17 +44,22 @@ func _ready() -> void:
 	shadow.polygon = PackedVector2Array([Vector2(-9,-2),Vector2(-6,-4),Vector2(6,-4),Vector2(9,-2),Vector2(9,0),Vector2(6,2),Vector2(-6,2),Vector2(-9,0)])
 	shadow.color = Color(0.06, 0.05, 0.04, 0.28)
 	add_child(shadow)
-	sprite.position.y = -23
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	apply_visual(sprite)
 	add_child(sprite)
 	sprite.sprite_frames = standard
 	pose("idle")
+
+## Only the drawing scales; body geometry, movement and Y sorting remain in world units.
+func apply_visual(target_sprite: AnimatedSprite2D) -> void:
+	target_sprite.scale = Vector2.ONE * visual_scale
+	target_sprite.position.y = foot_offset
+	target_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if linear_filter else CanvasItem.TEXTURE_FILTER_NEAREST
 
 func pose(action: String, direction: String = "") -> void:
 	if seated:
 		hold_seat()
 		return
-	sprite.position.y = -23
+	sprite.position.y = foot_offset
 	if not direction.is_empty():
 		facing = direction
 	sprite.sprite_frames = standard
@@ -68,7 +81,7 @@ func sit_at(direction: String, cushion_height: float) -> void:
 func stand_up() -> void:
 	seated = false
 	get_node("ContactShadow").show()
-	sprite.position.y = -23
+	sprite.position.y = foot_offset
 	pose("idle")
 
 func sit_down(direction: String, cushion_height: float, duration := 0.4) -> void:
@@ -82,7 +95,7 @@ func sit_down(direction: String, cushion_height: float, duration := 0.4) -> void
 	var count := standard.get_frame_count(animation)
 	for index in count:
 		sprite.frame = index
-		sprite.position.y = -23.0 - cushion_height * float(index) / (count - 1)
+		sprite.position.y = foot_offset - cushion_height * float(index) / maxi(1, count - 1)
 		await get_tree().create_timer(duration / count).timeout
 	sit_at(direction, cushion_height)
 
@@ -91,7 +104,7 @@ func rise_from_seat(duration := 0.4) -> void:
 	var count := standard.get_frame_count(animation)
 	for index in range(count - 1, -1, -1):
 		sprite.frame = index
-		sprite.position.y = -23.0 - seat_height * float(index) / (count - 1)
+		sprite.position.y = foot_offset - seat_height * float(index) / maxi(1, count - 1)
 		await get_tree().create_timer(duration / count).timeout
 	stand_up()
 
@@ -103,7 +116,7 @@ func hold_seat() -> void:
 	sprite.play(animation)
 	sprite.pause()
 	sprite.frame = standard.get_frame_count(animation) - 1
-	sprite.position.y = -23 - seat_height
+	sprite.position.y = foot_offset - seat_height
 
 func face_point(point: Vector2) -> void:
 	if not seated and position.distance_squared_to(point) > 1.0:

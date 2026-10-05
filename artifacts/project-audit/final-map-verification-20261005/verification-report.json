@@ -1,0 +1,123 @@
+{
+	"chapter2-archive-mask-overview": {
+		"camera_global": "(448.0, 304.0)",
+		"camera_zoom": "(1.0, 1.0)",
+		"canvas_transform": "[X: (1.0, 0.0), Y: (0.0, 1.0), O: (192.0, 192.0)]",
+		"locations": {
+			"current_foyer_floor": {
+				"screen": "(464.0, 720.0)",
+				"world": "(272.0, 528.0)"
+			},
+			"vault_door": {
+				"screen": "(464.0, 496.0)",
+				"world": "(272.0, 304.0)"
+			},
+			"vault_floor": {
+				"screen": "(464.0, 368.0)",
+				"world": "(272.0, 176.0)"
+			},
+			"vault_wall": {
+				"screen": "(240.0, 240.0)",
+				"world": "(48.0, 48.0)"
+			},
+			"works_door": {
+				"screen": "(688.0, 656.0)",
+				"world": "(496.0, 464.0)"
+			},
+			"works_floor": {
+				"screen": "(848.0, 688.0)",
+				"world": "(656.0, 496.0)"
+			}
+		},
+		"viewport": "[P: (0.0, 0.0), S: (1280.0, 992.0)]"
+	},
+	"chapter2-entered-foyer": {
+		"camera_global": "(256.0, 503.6663)",
+		"camera_zoom": "(2.0, 2.0)",
+		"canvas_transform": "[X: (2.0, 0.0), Y: (0.0, 2.0), O: (0.0, -224.0)]",
+		"locations": {
+			"player_foot": {
+				"screen": "(544.0, 768.0)",
+				"world": "(272.0, 496.0)"
+			},
+			"vault_floor": {
+				"screen": "(544.0, 128.0)",
+				"world": "(272.0, 176.0)"
+			},
+			"works_door": {
+				"screen": "(992.0, 704.0)",
+				"world": "(496.0, 464.0)"
+			},
+			"works_floor": {
+				"screen": "(1312.0, 768.0)",
+				"world": "(656.0, 496.0)"
+			}
+		},
+		"viewport": "[P: (0.0, 0.0), S: (1280.0, 992.0)]"
+	},
+	"checks": [
+		{
+			"label": "fresh archive doorway has no current room or visited cells",
+			"pass": false
+		},
+		{
+			"label": "host movement active with collision enabled",
+			"pass": true
+		},
+		{
+			"label": "physical KEY_W reaches host input",
+			"pass": true
+		},
+		{
+			"label": "physical movement enters legal previously unvisited foyer and updates current/visited",
+			"pass": true
+		},
+		{
+			"label": "physical key released",
+			"pass": true
+		},
+		{
+			"label": "all current foyer interiors visible",
+			"pass": true
+		},
+		{
+			"label": "all unvisited vault/works interiors fully masked",
+			"pass": true
+		},
+		{
+			"label": "all walls and doorways remain visible",
+			"pass": true
+		},
+		{
+			"label": "works doorway visible beside masked works floor",
+			"pass": true
+		},
+		{
+			"label": "screenshot chapter2-entered-foyer",
+			"pass": true
+		},
+		{
+			"label": "screenshot chapter2-archive-mask-overview",
+			"pass": true
+		}
+	],
+	"entry": {
+		"current_region": "foyer",
+		"finish": "(256.0, 503.6663)",
+		"finish_cell": "(8, 15)",
+		"initial_region": "",
+		"initial_visited": 0,
+		"map": "archive",
+		"start": "(672.0, 1214.0)",
+		"start_cell": "(21, 37)",
+		"visible": 160,
+		"visited": 160
+	},
+	"failures": 1,
+	"kind": "targeted automatic physical input regression; not blind play",
+	"mask_counts": {
+		"architecture": 298,
+		"current_interior": 84,
+		"unknown_interior": 150
+	}
+}

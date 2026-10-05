@@ -18,11 +18,26 @@ var seen_lines: Array[String] = []
 func _initialize() -> void:
 	call_deferred("_run")
 
+func _finish(exit_code: int) -> void:
+	# _run has returned, releasing its Resource/DialogueLine locals first.
+	# Free the fixture (including its C# engine), then flush queued deletion.
+	if is_instance_valid(holder):
+		holder.queue_free()
+	holder = null
+	await process_frame
+	await process_frame
+	quit(exit_code)
+
 func check(ok: bool, name: String) -> void:
 	checks += 1
 	if not ok:
 		failures += 1
 	print(("PASS " if ok else "FAIL ") + name)
+	if not ok:
+		# Later stages depend on these states. Stop at the first concrete failure
+		# instead of running nested dialogue waits against an invalid fixture.
+		print("TOTAL %d checks, %d failed" % [checks, failures])
+		quit(1)
 
 func fresh(skip_intro := true) -> Node:
 	if is_instance_valid(holder):
@@ -71,8 +86,22 @@ func drain(game: Node, choices: Array = [], limit := 900) -> void:
 		if allowed.is_empty():
 			d.advance()
 		else:
-			var index: int = choices.pop_front() if not choices.is_empty() else 0
+			var index := 0
+			if not choices.is_empty():
+				index = int(choices.pop_front())
+			else:
+				# Current companion talks return to a persistent question menu.
+				# These checks inspect the opening/account of the prior recall;
+				# selecting the first question repeatedly never ends that menu.
+				for option in allowed.size():
+					if str(allowed[option].text) == "没事了。":
+						index = option
+						break
+			if index < 0 or index >= allowed.size():
+				check(false, "对白选项越界：%s，选择 %d，可选 %d" % [str(d.line.id), index, allowed.size()])
+				return
 			d.choose(str(allowed[index].next_id))
+	check(false, "对白未在 %d 帧内结束：stage=%s modal=%s busy=%s line=%s" % [limit, game.stage, game.modal_kind, game.dialogue.busy, str(game.dialogue.line.id) if game.dialogue.line != null else "<waiting>"])
 
 ## 触物回忆：同伴要先走过来，再决定；一直推进到回忆结束、证物卡重新打开为止。
 func run_recall(game: Node, id: String, choices: Array = []) -> void:
@@ -82,6 +111,7 @@ func run_recall(game: Node, id: String, choices: Array = []) -> void:
 		if game.modal_kind == "card" and not game.dialogue.active:
 			return
 		await process_frame
+	check(false, "触物回忆没有返回证物卡：" + id)
 
 ## 打开证物卡（第一次打开可回忆的物件时先有一句“不妨一试”），推进到卡片出现为止。
 func open_card_settled(game: Node, id: String) -> void:
@@ -91,6 +121,7 @@ func open_card_settled(game: Node, id: String) -> void:
 		if game.modal_kind == "card" and not game.dialogue.active:
 			return
 		await process_frame
+	check(false, "打开证物卡没有完成：" + id)
 
 ## 让某位同伴自己走向旧物的整段过程推进完：对白代为推进，直到他放回旧物。
 func run_reach(game: Node, who: String, choices: Array = []) -> void:
@@ -99,6 +130,7 @@ func run_reach(game: Node, who: String, choices: Array = []) -> void:
 		if str(game.life.get(who, {}).get("state", "")) == "done" and not game.dialogue.active:
 			return
 		await process_frame
+	check(false, "同伴取物没有完成：" + who)
 
 ## 一个房间里够得着某个点、又走得到的位置。
 func stand_near(game: Node, room_center: Vector2, point: Vector2, radius: float) -> void:
@@ -118,7 +150,9 @@ func wait_until(condition: Callable, limit := 600) -> bool:
 
 func _run() -> void:
 	# ---- 0. 对白标题齐全；全章文本不出现第 9、10 条
-	var story: Resource = load("res://scenes/Awakening/awakening.dialogue")
+	# Inspect the actual embedded Chapter1Script dialogue compiled by the host.
+	var game := await fresh()
+	var story: Resource = game.STORY
 	var titles: Array = story.titles.keys()
 	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s4_rewards", "s5_question", "s6_begin", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
 		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11", "nudge_E1", "nudge_E5", "nudge_E7", "nudge_E10",
@@ -126,13 +160,13 @@ func _run() -> void:
 		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "rest_confirm", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
 		"answer_ok2", "answer_need_test", "answer_q3", "answer_ok3", "answer_q4", "answer_ok4",
 		"answer_wrong_show", "answer_wrong_say", "answer_pause", "s10_steps", "s10_prints", "s10_hand", "s10_open", "ending_rest",
-		"enter_foyer", "enter_pantry", "enter_R08", "enter_R06", "enter_R07", "enter_empty", "replay_first", "replay_refused"]
+		"replay_first", "replay_refused"]
 	for who in ["su", "huo", "shen"]:
 		for part in ["recall_offer_", "recall_shown_", "recall_touch_", "recall_refuse_", "recall_hesitate_"]:
 			needed.append(part + who)
 	var missing := needed.filter(func(t): return not titles.has(t))
 	check(missing.is_empty(), "代码引用的对白标题全部存在 %s" % str(missing))
-	var raw := FileAccess.get_file_as_string("res://scenes/Awakening/awakening.dialogue") + FileAccess.get_file_as_string("res://scenes/Awakening/AwakeningContent.gd")
+	var raw: String = game.engine.DialogueText() + JSON.stringify(game.engine.Content())
 	var hits := FORBIDDEN.filter(func(w): return raw.contains(w))
 	check(hits.is_empty(), "台词与证物文本中没有契约第 9、10 条的字样 %s" % str(hits))
 	var retired_raw := raw + FileAccess.get_file_as_string("res://scenes/Awakening/Awakening.gd")
@@ -141,7 +175,7 @@ func _run() -> void:
 	check(not titles.has("answer_offer_reverse") and not titles.has("answer_reverse"), "第五轮修订：删去答辩第 5 步“反问”")
 
 	# ---- 1. 醒来 → 相遇 → 自报身份广播 → 核验 → 始业之问 → 调查（完整开场，对白代为推进）
-	var game := await fresh(false)
+	game = await fresh(false)
 	check(await wait_until(func(): return game.dialogue.active), "开场：S1 醒来对白出现")
 	check(game.player.seated and game._room_name(game.player.position) == "R-05", "醒来：侦探在 R-05 床上")
 	await drain(game)
@@ -301,9 +335,9 @@ func _run() -> void:
 	game.close_modal()
 	var nudges := {}
 	for id in ["E1", "E5", "E7", "E10"]:
-		var resource: Resource = load("res://scenes/Awakening/awakening.dialogue")
+		var resource: Resource = game.STORY
 		nudges[id] = resource.titles.has("nudge_" + id)
-	var nudge_text := FileAccess.get_file_as_string("res://scenes/Awakening/awakening.dialogue")
+	var nudge_text: String = game.engine.DialogueText()
 	check(nudge_text.contains("门闩记得你昨夜是什么") and nudge_text.contains("后面还有你从未听过的") and nudge_text.contains("图纸就在主楼") and nudge_text.contains("那罐子都替你记着"),
 		"四件物件四句不同的话，各自朝向此人的欲望")
 	var endings := []
@@ -454,8 +488,15 @@ func _run() -> void:
 	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
 		brief += str(l.get_parsed_text())
 	check(brief.contains("这布是我拧的") and not brief.contains("一条拧过的湿抹布"), "请人看过之后只给新得到的那一句，不重显整张原文")
-	game.close_modal()
-	check(game.site_visible("L6") and game.site_visible("L7"), "R-06、R-07 各有一处本人的生活痕迹")
+	game.player.position = game.site_point("L6") + Vector2(0, 16)
+	for i in 2:
+		await process_frame
+	var l6_visible: bool = game.site_visible("L6")
+	game.player.position = game.site_point("L7") + Vector2(0, 16)
+	for i in 2:
+		await process_frame
+	var l7_visible: bool = game.site_visible("L7")
+	check(l6_visible and l7_visible, "R-06、R-07 各有一处本人的生活痕迹")
 	game.interact("L6")
 	var hook := ""
 	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
@@ -510,7 +551,11 @@ func _run() -> void:
 	game.play_replay(game.replay_result)
 	await process_frame
 	await process_frame
-	game.stage_node.skipping = true
+	var skip_key := InputEventKey.new()
+	skip_key.keycode = KEY_ESCAPE
+	skip_key.physical_keycode = KEY_ESCAPE
+	skip_key.pressed = true
+	game.stage_node._unhandled_input(skip_key)
 	for round in 80:
 		# 全部吻合后三位同伴先走过来，再说第二次反转。
 		await drain(game)
@@ -602,6 +647,7 @@ func _run() -> void:
 	game._pick_nearest()
 	var key := InputEventKey.new()
 	key.keycode = KEY_SPACE
+	key.physical_keycode = KEY_SPACE
 	key.pressed = true
 	game._unhandled_input(key)
 	await process_frame
@@ -621,4 +667,4 @@ func _run() -> void:
 	check(game.ended and game.flags.has("rest_chosen"), "退出考题：不作答，在生活翼歇息，以简短收尾结束")
 
 	print("TOTAL %d checks, %d failed" % [checks, failures])
-	quit(0 if failures == 0 else 1)
+	call_deferred("_finish", 0 if failures == 0 else 1)

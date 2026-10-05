@@ -37,6 +37,42 @@ public static class Program
                 new ConsoleUI(CreateGame(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug, roomScoped: args.Contains("--room-scoped")).Run();
                 return 0;
             }
+            case "host":
+            {
+                // 宿主路径冒烟：与 Godot 第二章同样的调用顺序（读不耗时，写/等待经 RunSlot）。
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var g = CreateGame();
+                void Run(PlayerAction? act) { var t0 = sw.ElapsedMilliseconds; var d = g.Day; var s = g.Slot; g.RunSlot(act); Console.WriteLine($"-- D{d} {Names.Of(s)} ({sw.ElapsedMilliseconds - t0} ms)"); foreach (var l in g.TakeFeed()) Console.WriteLine("   " + l); }
+                Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
+                Run(new PlayerAction(Cmd.Class));
+                Console.WriteLine(g.HostExamine("配给台公告"));
+                Run(new PlayerAction(Cmd.Collect));
+                Run(new PlayerAction(Cmd.Stay) { Place = Place.Logistics });
+                Run(new PlayerAction(Cmd.Collect));
+                Run(null);
+                Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
+                foreach (var th in new[] { "台账", "粮仓", "碗", "文契废纸篓", "配给台公告", "中央厅公告" }) Console.WriteLine($"[{th}] " + g.HostExamine(th));
+                foreach (var who in new[] { P.Bertrand, P.Margaret, P.Mora, P.Quer }) Console.WriteLine($"[问{Names.Of(who)}] " + g.HostAsk(who));
+                Console.WriteLine("known: " + string.Join(",", g.DetEvidence()));
+                var t1 = sw.ElapsedMilliseconds;
+                var (tr, replayWorld) = g.ReplayCase(CaseVars.Truth);
+                Console.WriteLine($"replay {sw.ElapsedMilliseconds - t1} ms; match={tr == g.CaseActual}; steps={Game.InkSteps(replayWorld, 2).Count}");
+                foreach (var st in Game.InkSteps(replayWorld, 2).Take(12)) Console.WriteLine($"   {st.Time:0.0} {Names.Of(st.Who)} {st.From}->{st.To} {st.Act}");
+                Run(new PlayerAction(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = "配给台公告" });
+                Run(new PlayerAction(Cmd.Collect));
+                Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
+                var pairs = new List<(int, int)>();
+                foreach (var (c, e) in new[] { (0, 0), (2, 4), (1, 2), (3, 5) }) { Console.WriteLine($"pair {c},{e} valid={g.HostPairValid(c, e)}"); if (g.HostPairValid(c, e)) pairs.Add((c, e)); }
+                Run(new PlayerAction(Cmd.Confront) { Plan = new Game.ConfrontPlan(pairs, Game.CaseWordings[0].Card, true) });
+                Run(null);
+                Console.WriteLine($"ended={g.Ended} day={g.Day}");
+                g.CardSpec(Game.ArchiveWordings[0].Card, P.Det);
+                var plans = g.ArchivePlans().ToList();
+                g.Council(plans.FindIndex(s => s.Author == P.Det));
+                foreach (var l in g.CouncilLog) Console.WriteLine("   " + l);
+                Console.WriteLine($"total {sw.ElapsedMilliseconds} ms");
+                return 0;
+            }
             case "idle":
             {
                 var g = CreateGame();
@@ -62,12 +98,12 @@ public static class Program
                 var first = Bots.All[int.Parse(args[1])];
                 var then = args.Length > 3 && args[2] == "then" ? Bots.All[int.Parse(args[3])] : null;
                 if (then is not null) args = [.. args.Take(2), .. args.Skip(4)];
-                Bot bot = then is null ? first : new() { Name = first.Name + "→" + then.Name, Act = g => (g.Day >= 4 ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
+                Bot bot = then is null ? first : new() { Name = first.Name + "→" + then.Name, Act = g => (g.Day >= Game.CaseDay ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
                 var g = CreateGame();
                 while (!g.Ended)
                 {
                     bot.Free?.Invoke(g);
-                    var act = g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g);
+                    var act = g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g);
                     Console.WriteLine($"【D{g.Day} {Names.Of(g.Slot)}】{act?.Describe() ?? "歇着"}");
                     g.RunSlot(act);
                     foreach (var f in g.Feed) Console.WriteLine("   " + f);
@@ -90,7 +126,7 @@ public static class Program
                     var sw = System.Diagnostics.Stopwatch.StartNew();
                     var cpu = Checks.ThreadCpu();
                     bot.Free?.Invoke(g);
-                    g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
+                    g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
                     line.Append($"{sw.ElapsedMilliseconds}/{(Checks.ThreadCpu() - cpu).TotalMilliseconds:0} ");
                     if (g.Slot == Slot.Morning) { Console.WriteLine($"D{g.Day - 1}: {line}"); line.Clear(); }
                 }
@@ -125,7 +161,7 @@ public static class Program
                 var bot = Bots.All[int.Parse(args[1])];
                 var g = CreateGame();
                 while (!g.Ended && !(g.Day == int.Parse(args[2]) && (int)g.Slot == int.Parse(args[3])))
-                { bot.Free?.Invoke(g); g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
+                { bot.Free?.Invoke(g); g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
                 g.ProbeStart();
                 var p = g[Names.PersonAlias[args[4]]];
                 Console.WriteLine($"{p.Name} 在 {Names.Of(g.Where(p))}；习惯规则 {p.Habit.Rules.Length} 条（说话类 {p.Habit.Rules.Count(r => r.Effect is DualOntologyWorldEngine.Core.Effect.Sequence { Items: [DualOntologyWorldEngine.Core.Effect.Say, ..] })}）；同处：{string.Join("、", g.People.Where(o => o != p && g.Where(o) == g.Where(p)).Select(o => o.Name))}");

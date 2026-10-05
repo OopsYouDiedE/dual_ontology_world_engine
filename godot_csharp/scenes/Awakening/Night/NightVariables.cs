@@ -18,9 +18,6 @@ public enum Acquaintance { Strangers, Familiar }
 
 public sealed record NightVariables(SuPlace V1, HuoPlace V2, VoiceOrigin V3, VoiceWords V4, DetectiveHeeds V5, Acquaintance V6)
 {
-    /// <summary>今晨的共识只预填 V6；其余变量由玩家设定。</summary>
-    public static readonly Acquaintance MorningConsensus = Acquaintance.Strangers;
-
     public static IEnumerable<NightVariables> All()
     {
         foreach (var v1 in Enum.GetValues<SuPlace>())
