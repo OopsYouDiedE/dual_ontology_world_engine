@@ -37,20 +37,16 @@ public sealed class RuleSpec
 /// <summary>五格拼规则（§11 第 6 条）：主语 + 条件 + 行为 + 例外 + 记账方式。</summary>
 public sealed record Card(int Subject, int Cond, int Behavior, int Exception, int Account)
 {
-    public static readonly string[] Subjects = ["任何人", "值守者", "生活翼的人", "文契组的人", "星仪组的人", "后勤组的人"];
-    public static readonly string[] Conds = ["任何时候", "入夜后", "有人急病时", "自己没领到口粮时", "学过《异象与记忆》之后"];
-    public static readonly string[] Behaviors =
-    [
-        "取一份口粮", "按人头领口粮", "粮仓钥匙交给煮饭的人统一煮粥", "公开指控须附可检查的材料", "课后向缺课的人转述",
-        "名录库各取其物", "名录库由委员会保管", "名录库封闭不启", "名录库须本人亲取、两人见证",
-        "不得入后勤院", "温室两人同修，指针过红线不开顶窗"
-    ];
-    public static readonly string[] Exceptions = ["无例外", "急病夜取不在此限", "次日补记者不算私取", "两人在场者不在此限", "入夜一律不行"];
-    public static readonly string[] Accounts = ["不记账", "记入台账", "次日补记", "两人见证签名"];
+    // 各格的选项与价值标记读自剧本的“规矩格”。
+    public static readonly string[] Subjects = [.. CardKit.Subjects];
+    public static readonly string[] Conds = [.. CardKit.Conds.Select(o => o.Text)];
+    public static readonly string[] Behaviors = [.. CardKit.Behaviors.Select(o => o.Text)];
+    public static readonly string[] Exceptions = [.. CardKit.Exceptions.Select(o => o.Text)];
+    public static readonly string[] Accounts = [.. CardKit.Accounts.Select(o => o.Text)];
 
     /// <summary>主语编号：0—5 见 Subjects；10 + (int)P 为某一个人。</summary>
     public static string SubjectText(int s) => s >= 10 ? Names.Of((P)(s - 10)) : Subjects[s];
-    public string Text => $"{SubjectText(Subject)}：{Conds[Cond]}，{Behaviors[Behavior]}；{Exceptions[Exception]}；{Accounts[Account]}";
+    public string Text => Chapter2Design.Text("规矩格.格式", ("主语", SubjectText(Subject)), ("条件", Conds[Cond]), ("行为", Behaviors[Behavior]), ("例外", Exceptions[Exception]), ("记账", Accounts[Account]));
 
     public static IEnumerable<Card> All(int subjects = 6)
     {
@@ -67,22 +63,13 @@ public sealed record Card(int Subject, int Cond, int Behavior, int Exception, in
     public RF Flags(Game g)
     {
         var f = RF.None;
-        if (Cond == 2) f |= RF.SickPriority;
-        f |= Behavior switch
-        {
-            0 => RF.Rations, 1 => RF.PerHead | RF.Rations, 2 => RF.CentralCook | RF.Rations, 3 => RF.EvidenceFirst, 4 => RF.Relay, 5 => RF.OpenArchive,
-            6 => RF.CommitteeArchive | RF.WardAuthority, 7 => RF.SealArchive, 8 => RF.PactArchive | RF.TwoWitness | RF.OpenArchive,
-            9 => RF.Restricts | RF.Rations, 10 => RF.Safety, _ => RF.None
-        };
+        f |= CardKit.Conds[Cond].Flags;
+        f |= CardKit.Behaviors[Behavior].Flags;
         if (Target is { } t) f |= RF.Targets | (t == P.Quer ? RF.TargetsQuer : RF.None);
         if (Behavior == 9 && Subject == 0 && g.AccusedQuer) f |= RF.TargetsQuer;
-        f |= Exception switch
-        {
-            0 => RF.NoException, 1 or 2 => RF.NightException, 3 => RF.TwoWitness,
-            4 => (f & (RF.OpenArchive | RF.CommitteeArchive | RF.PactArchive)) != 0 ? RF.ForbidNightOpen : RF.NoException | RF.Restricts,
-            _ => RF.None
-        };
-        f |= Account switch { 1 or 2 => RF.Records, 3 => RF.Records | RF.TwoWitness, _ => RF.None };
+        var exception = CardKit.Exceptions[Exception];
+        f |= exception.IfAny != RF.None ? ((f & exception.IfAny) != 0 ? exception.Flags : exception.ElseFlags) : exception.Flags;
+        f |= CardKit.Accounts[Account].Flags;
         return f;
     }
 }
@@ -95,6 +82,18 @@ public sealed partial class Game
     /// <summary>第一个被当众指控私取的人（可能是雀儿，也可能是被人亲眼看见没记账的别人）。</summary>
     public P? Accused;
     private int _specId;
+
+    private readonly Dictionary<string, RuleSpec> _specById = [];
+    /// <summary>按剧本里的编号取规矩（内容、立规者、价值标记读自 chapter_02.story；Core 的 Rule 由 build 编译）。</summary>
+    public RuleSpec RuleById(string id) => _specById.TryGetValue(id, out var spec) ? spec : throw new InvalidOperationException("规矩尚未建立：" + id);
+
+    private RuleSpec Spec(string id, Func<Fx, IEnumerable<Rule>> build, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)
+    {
+        var d = RuleDesign.Of(id);
+        var spec = NewSpec(d.Text, d.Author, d.Flags, build, demon: d.ByDemon, card: d.Card is { } cells ? CardKit.ToCard(cells) : null, witnessed: witnessed, manipulative: manipulative, target: d.Target);
+        _specById[id] = spec;
+        return spec;
+    }
 
     public RuleSpec NewSpec(string text, P? author, RF flags, Func<Fx, IEnumerable<Rule>> build, bool demon = false, Card? card = null,
         Func<Game, Person, bool>? witnessed = null, bool manipulative = false, P? target = null)
@@ -112,22 +111,21 @@ public sealed partial class Game
     /// <summary>作者侧已知的规则：沃德、茉拉、阮清越的板（第三部分 §7）、恶魔的致命警告（§5.3），以及各价值聚落的立规（§11 第 7 条，见 Alliances.cs）。</summary>
     private void WriteRules()
     {
-        WardLedger = NewSpec("凡取用公物须登记于台账；无登记取用者视为私取。", P.Ward, RF.Records | RF.NoException | RF.WardAuthority | RF.Rations,
+        WardLedger = Spec("WardLedger",
             fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.NightTakeSelf), 2), new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.NightTakeSick), 2)]);
-        WardNight = NewSpec("私取之人（雀儿）入夜不得入后勤院。", P.Ward, RF.Restricts | RF.TargetsQuer | RF.Targets | RF.WardAuthority | RF.Rations,
-            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Mine(T.Branded)), RuleMode.Forbid, fx.Go(Place.Logistics), 2)], target: P.Quer);
-        MoraNight = NewSpec("病者伤者优先。夜间急需可自取一份，次日告知。", P.Mora, RF.SickPriority | RF.NightException | RF.Rations,
+        WardNight = Spec("WardNight",
+            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Mine(T.Branded)), RuleMode.Forbid, fx.Go(Place.Logistics), 2)]);
+        MoraNight = Spec("MoraNight",
             fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3),
                    new(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 2)]);
-        RuanLedger = NewSpec("每日按人头分配，日末清点。", P.Ruan, RF.PerHead | RF.Records | RF.Rations,
+        RuanLedger = Spec("RuanLedger",
             fx => [new(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Duty), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);
-        Warning1 = NewSpec("入夜后，名录库中若有人以你之名唤你，勿应。", null, RF.Safety | RF.ForbidsDesire,
-            fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.AnswerName), 5)], demon: true);
-        Warning2 = NewSpec("温室水压表指针过红线时，勿开顶窗。", null, RF.Safety,
-            fx => [new(fx.Tg(Gauge, T.Pressure, 2), RuleMode.Forbid, fx.Set(Valve, T.Open, 1), 5)], demon: true);
-        CommonRule = NewSpec("公开指控须附可检查的材料。", P.Det, RF.EvidenceFirst,
-            fx => [new(Fx.Not(Fx.Mine(T.SawAct)), RuleMode.Forbid, fx.Job(Job.Accuse), 3)], card: new Card(0, 0, 3, 0, 0));
-        Post(RuanLedger, Place.Logistics, quiet: true); // 台账上的旧规则（粮仓门内）
+        Warning1 = Spec("Warning1", fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.AnswerName), 5)]);
+        Warning2 = Spec("Warning2", fx => [new(fx.Tg(Gauge, T.Pressure, 2), RuleMode.Forbid, fx.Set(Valve, T.Open, 1), 5)]);
+        CommonRule = Spec("CommonRule", fx => [new(Fx.Not(Fx.Mine(T.SawAct)), RuleMode.Forbid, fx.Job(Job.Accuse), 3)]);
+        // 开局就贴在老地方的规矩（台账上的旧规则，粮仓门内）。
+        foreach (var rule in RuleDesign.All)
+            foreach (var post in rule.Posts.Where(p => p.Mode == "静默")) Post(RuleById(rule.Id), post.Place, quiet: true);
         WriteAllianceRules();
     }
 
@@ -481,14 +479,7 @@ public sealed partial class Game
         };
     }
 
-    public static string FlagText(RF f) => f switch
-    {
-        RF.Records => "记账", RF.SickPriority => "病者优先", RF.PerHead => "按人头", RF.Restricts => "限制他人", RF.TargetsQuer => "针对雀儿",
-        RF.CentralCook => "统一煮粥", RF.EvidenceFirst => "凭证据", RF.OpenArchive => "开库", RF.CommitteeArchive => "委员会", RF.SealArchive => "封库",
-        RF.PactArchive => "约束开库", RF.NightException => "夜取例外", RF.TwoWitness => "两人见证", RF.WardAuthority => "沃德定规",
-        RF.Tradition => "守旧制", RF.Relay => "转述", RF.Safety => "保命", RF.NoException => "无例外", RF.ForbidNightOpen => "夜不开库",
-        RF.Rations => "口粮", RF.Targets => "点名", _ => f.ToString()
-    };
+    public static string FlagText(RF f) => Chapter2Design.FlagText(f);
 
     /// <summary>“亲见”夜取许可的事实：读过配给台的茉拉规则，且亲眼看过修好的门闩或诊疗所的碗。</summary>
     public bool SawNightPermission(Person p)

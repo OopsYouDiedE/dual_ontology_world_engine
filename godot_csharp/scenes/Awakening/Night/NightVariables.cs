@@ -32,17 +32,22 @@ public sealed record NightVariables(SuPlace V1, HuoPlace V2, VoiceOrigin V3, Voi
     public override string ToString() => $"V1={V1} V2={V2} V3={V3} V4={V4} V5={V5} V6={V6}";
 }
 
-/// <summary>一句话的完整内容、传声管接头漏出的重读句尾，以及听清时可解读出的意思。</summary>
+/// <summary>一句话的完整内容、传声管接头漏出的重读句尾，以及听清时可解读出的意思。内容来自 chapter_01.story 的“话语”与“试验句”。</summary>
 public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidOpen, bool HoldTube, bool Open, bool Help)
 {
-    public static readonly Utterance BoltKeepShut = new(
-        "生活翼！我是格雷厄姆。主楼泄漏。闩上隔离门——无论听到什么，都不要开门。守在铜口旁，等我下一次通知。",
-        "……开门……开门", Bolt: true, ForbidOpen: true, HoldTube: true, Open: false, Help: false);
+    internal static Utterance From(System.Text.Json.JsonElement e) => new(
+        e.GetProperty("full").GetString()!, e.GetProperty("tail").GetString()!, e.GetProperty("Bolt").GetBoolean(),
+        e.GetProperty("ForbidOpen").GetBoolean(), e.GetProperty("HoldTube").GetBoolean(), e.GetProperty("Open").GetBoolean(),
+        e.GetProperty("Help").GetBoolean());
 
-    public static readonly Utterance OpenSaveMe = new(
-        "开门！快开门——救我！", "……救我……救我", Bolt: false, ForbidOpen: false, HoldTube: false, Open: true, Help: true);
+    private static readonly Lazy<ImmutableArray<Utterance>> Spoken = new(() =>
+        [..Chapter1Data.Root.GetProperty("UTTERANCES").EnumerateObject().Select(p => From(p.Value))]);
 
-    public static Utterance Of(VoiceWords words) => words == VoiceWords.BoltKeepShut ? BoltKeepShut : OpenSaveMe;
+    /// <summary>变量 V4 的两个选项依次对应“话语”里的两条（与 VoiceWords 枚举同序）。</summary>
+    public static Utterance BoltKeepShut => Spoken.Value[(int)VoiceWords.BoltKeepShut];
+    public static Utterance OpenSaveMe => Spoken.Value[(int)VoiceWords.OpenSaveMe];
+
+    public static Utterance Of(VoiceWords words) => Spoken.Value[(int)words];
 
     /// <summary>只听到重读句尾时，听者能从字面得到的东西：有人要开门，或有人求救。</summary>
     public bool TailWantsOpen => Tail.Contains("开门") || Tail.Contains("救我");
@@ -58,62 +63,58 @@ public enum Hearing { Nothing, AlarmOnly, Murmur, Tail, Full, FullMuffled }
 /// </summary>
 public static class Acoustics
 {
-    public static Hearing Hear(VoiceOrigin origin, Room listener) => origin switch
+    private sealed record Data(IReadOnlyDictionary<string, IReadOnlyDictionary<string, Hearing>> Table,
+        IReadOnlySet<Hearing> SeemsOutside, IReadOnlySet<Room> Shout);
+
+    private static readonly Lazy<Data> Loaded = new(() =>
     {
-        VoiceOrigin.Tube => listener switch
-        {
-            Room.Hall => Hearing.Full,
-            Room.Foyer or Room.R08 => Hearing.Tail,
-            Room.Pantry => Hearing.Murmur,
-            _ => Hearing.AlarmOnly
-        },
-        _ => listener switch
-        {
-            Room.Foyer or Room.R08 => Hearing.FullMuffled,
-            Room.Lounge => Hearing.Full,
-            _ => Hearing.Nothing
-        }
-    };
+        var root = Chapter1Data.Root.GetProperty("ACOUSTICS");
+        var table = root.GetProperty("hearing").EnumerateObject().ToDictionary(origin => origin.Name,
+            origin => (IReadOnlyDictionary<string, Hearing>)origin.Value.EnumerateObject()
+                .ToDictionary(row => row.Name, row => Enum.Parse<Hearing>(row.Value.GetString()!)));
+        return new(table,
+            root.GetProperty("seems_outside").EnumerateArray().Select(h => Enum.Parse<Hearing>(h.GetString()!)).ToHashSet(),
+            root.GetProperty("hears_shout").EnumerateArray().Select(r => RoomOf(r.GetString()!)).ToHashSet());
+    });
+
+    private static Room RoomOf(string key) => (Room)Array.IndexOf(Names.RoomKeys, key);
+
+    public static Hearing Hear(VoiceOrigin origin, Room listener)
+    {
+        var rows = Loaded.Value.Table[origin.ToString()];
+        return rows.TryGetValue(Names.RoomKeys[(int)listener], out var hearing) ? hearing : rows["*"];
+    }
 
     /// <summary>只听见句尾或隔门听见时，声音听来像是从门外来的。</summary>
-    public static bool SeemsFromOutside(Hearing hearing) => hearing is Hearing.Tail or Hearing.FullMuffled;
+    public static bool SeemsFromOutside(Hearing hearing) => Loaded.Value.SeemsOutside.Contains(hearing);
 
     public static string Render(Utterance words, Hearing hearing) => hearing switch
     {
-        Hearing.Full => words.Full,
-        Hearing.FullMuffled => "（隔着门，发闷）" + words.Full,
-        Hearing.Tail => words.Tail,
-        Hearing.Murmur => "（有人在说话，听不清）",
-        Hearing.AlarmOnly => "（只有警铃）",
-        _ => "（什么也听不到）"
+        Hearing.Full => Chapter1Data.Text("声响·完整", ("整句", words.Full)),
+        Hearing.FullMuffled => Chapter1Data.Text("声响·隔门", ("整句", words.Full)),
+        Hearing.Tail => Chapter1Data.Text("声响·句尾", ("句尾", words.Tail)),
+        Hearing.Murmur => Chapter1Data.Text("声响·低语"),
+        Hearing.AlarmOnly => Chapter1Data.Text("声响·仅警铃"),
+        _ => Chapter1Data.Text("声响·无")
     };
 
-    /// <summary>霍铎在活动厅朝走廊喊话：走廊与四间宿舍都听得见，备餐间与门厅隔着门。</summary>
-    public static bool HearsShout(Room listener) => listener is Room.Hall or Room.Corridor or Room.R05 or Room.R06 or Room.R07 or Room.R08;
+    /// <summary>霍铎在活动厅朝走廊喊话：谁听得见由“喊声可闻”决定。</summary>
+    public static bool HearsShout(Room listener) => Loaded.Value.Shout.Contains(listener);
 }
 
-/// <summary>声路试验可以让铜口说的句子。整句与句尾都来自同一张表。</summary>
+/// <summary>声路试验可以让铜口说的句子。整句与句尾都来自 chapter_01.story 的“试验句”。</summary>
 public static class TestSentences
 {
-    public static readonly ImmutableArray<Utterance> All =
-    [
-        new("闩上门，不要开门。", "……开门", true, true, false, false, false),
-        new("开门，救我。", "……救我", false, false, false, true, true),
-        new("守在铜口旁，等我下一次通知。", "……通知", false, false, true, false, false),
-    ];
+    public static ImmutableArray<Utterance> All => Loaded.Value;
+    private static readonly Lazy<ImmutableArray<Utterance>> Loaded = new(() =>
+        [..Chapter1Data.Root.GetProperty("TEST_SENTENCES").EnumerateArray().Select(Utterance.From)]);
 }
 
+/// <summary>人物与房间的称呼来自 chapter_01.story 的“人名”“房间名”；键与枚举同序。</summary>
 public static class Names
 {
-    public static string Of(Person person) => person switch
-    {
-        Person.Detective => "侦探", Person.Huo => "霍铎", Person.Shen => "沈鼎", _ => "苏泠"
-    };
-
-    public static string Of(Room room) => room switch
-    {
-        Room.R05 => "R-05", Room.R06 => "R-06", Room.R07 => "R-07", Room.R08 => "R-08",
-        Room.Corridor => "走廊", Room.Hall => "活动厅", Room.Pantry => "备餐间", Room.Foyer => "门厅",
-        _ => "门外"
-    };
+    public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
+    public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
+    public static string Of(Person person) => Chapter1Data.PersonName(PersonKeys[(int)person]);
+    public static string Of(Room room) => Chapter1Data.RoomName(RoomKeys[(int)room]);
 }

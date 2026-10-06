@@ -5,13 +5,13 @@ using DualOntologyWorldEngine.Core;
 namespace DualOntologyWorldEngine.Awakening;
 
 /// <summary>原 GD 的调查进度与始业之答判定，原样迁移到 C#。</summary>
-public sealed class AwakeningContentSession
+public sealed partial class AwakeningContentSession
 {
     public ChapterSession Session { get; } = new();
     public AwakeningContentSession()
     {
-        Session.Set("state", "stage", "wake");
-        Session.Set("state", "detective_name", "侦探");
+        Session.Set("state", "stage", StageEvent("初始"));
+        Session.Set("state", "detective_name", Chapter1Data.Text("报名·默认名"));
         Session.Set("state", "sound_rounds", 0);
         Session.Set("state", "replay_count", 0);
         Session.Set("state", "full_match_seen", false);
@@ -22,7 +22,13 @@ public sealed class AwakeningContentSession
         Session.Set("state", "last_sound", Array.Empty<object>());
         Session.Set("state", "last_unheard_ms", -100000L);
     }
-    public System.Text.Json.JsonDocument Content { get; private set; } = null!;
+    public System.Text.Json.JsonDocument Content { get; private set; } = System.Text.Json.JsonDocument.Parse(ReadContent());
+    private static string ReadContent()
+    {
+        using var stream = typeof(Chapter1Data).Assembly.GetManifestResourceStream("Awakening.Content.json")!;
+        using var reader = new System.IO.StreamReader(stream);
+        return reader.ReadToEnd();
+    }
     public void LoadContent(string text) => Content = System.Text.Json.JsonDocument.Parse(text);
     public sealed class InteractionPlan
     {
@@ -52,21 +58,7 @@ public sealed class AwakeningContentSession
     }
     public string NextMeeting() => NextMeeting(_activePlan);
     public void Presented() => Presented(_activePlan);
-    public void BeginMeeting(MorningWorld world)
-    {
-        var steps = new List<StoryStep<MorningWorld, Person>>();
-        void Show(string text)
-        {
-            steps.Add(new StoryStep<MorningWorld, Person>.Text(text));
-            steps.Add(WaitForPresentation());
-        }
-        foreach (var text in new[] { "s2_meet", "@name", "s2_tea", "s3_broadcast", "@board", "s4_rewards", "s5_question" }) Show(text);
-        steps.Add(new StoryStep<MorningWorld, Person>.Branch(_ => Session.Has("flags", "rest_chosen"),
-            [new StoryStep<MorningWorld, Person>.Text("@rest")],
-            [new StoryStep<MorningWorld, Person>.Text("@investigate"), WaitForPresentation(),
-             new StoryStep<MorningWorld, Person>.Text("s6_begin"), WaitForPresentation()]));
-        Start(world, steps);
-    }
+    public void BeginMeeting(MorningWorld world) => StartFlow(world, "相遇");
     private void Start(MorningWorld world, IReadOnlyList<StoryStep<MorningWorld, Person>> steps)
     {
         var plan = _activePlan;
@@ -80,110 +72,23 @@ public sealed class AwakeningContentSession
             Timeline = w => w.StoryTimeline,
         }, [new("interaction", _ => true, steps)]);
     }
+    /// <summary>做试验：流程按证物编号取“实验·E3”之类，没有专写的就用“实验·默认”。</summary>
     public void BeginExperiment(MorningWorld world, string id, string who)
-    {
-        var steps = new List<StoryStep<MorningWorld, Person>>();
-        void Show(string text)
-        {
-            steps.Add(new StoryStep<MorningWorld, Person>.Text(text));
-            steps.Add(WaitForPresentation());
-        }
-        switch (id)
-        {
-            case "E8": Show("@sound"); break;
-            case "E11":
-                // 宿主先核验架沿距离；内容层只接受 R-05 当地的逐人比对。
-                if (who is not ("detective" or "huo" or "shen" or "su") ||
-                    Session.CharacterRooms.GetValueOrDefault("detective") != "R05" ||
-                    !Session.IsLocalTarget("detective", who)) break;
-                if (Session.GetProgress("life").TryGetValue(who, out var activity) &&
-                    activity is Dictionary<string, object> busy &&
-                    busy.GetValueOrDefault("state") is "going" or "holding") break;
-                if (!Session.Has("hand_comparisons", who))
-                {
-                    Show("help_E11_" + who);
-                    steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("hand_comparisons", who, true)));
-                }
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ =>
-                {
-                    if (new[] { "detective", "huo", "shen", "su" }.All(person => Session.Has("hand_comparisons", person)))
-                        Session.Set("experiments", id, true);
-                }));
-                break;
-            case "E3" when who == "": break;
-            case "E3" when who != "detective":
-                Show("@summon:" + who);
-                Show("sole_" + who);
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("soles_compared", who, who switch
-                {
-                    "huo" => "霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。",
-                    "shen" => "沈鼎的鞋底：千层布底，没有纹。",
-                    "su" => "苏泠的鞋底：软底小皮鞋，比灰上那枚短一截。",
-                    _ => throw new ArgumentException(who),
-                })));
-                break;
-            case "E3":
-                Show("exp_E3");
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("experiments", id, true)));
-                steps.Add(new StoryStep<MorningWorld, Person>.Branch(_ => !Session.Has("flags", "reversal_one"),
-                    [new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("flags", "reversal_one", true)),
-                     new StoryStep<MorningWorld, Person>.Text("s6_reversal"), WaitForPresentation()], []));
-                break;
-            default:
-                Show("exp_" + id);
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("experiments", id, true)));
-                break;
-        }
-        Start(world, steps);
-    }
-    public void BeginHelp(MorningWorld world, string id)
-    {
-        var who = Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).GetProperty("help").GetString()!;
-        Start(world, [new StoryStep<MorningWorld, Person>.Text("@summon:" + who), WaitForPresentation(),
-            new StoryStep<MorningWorld, Person>.Text("help_" + id), WaitForPresentation(),
-            new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("helped", id, true))]);
-    }
+        => StartFlow(world, HasFlow("实验·" + id) ? "实验·" + id : "实验·默认", ("物", id), ("人", who));
+    public void BeginHelp(MorningWorld world, string id) => StartFlow(world, "请人看看", ("物", id));
     private static Person PersonOf(string who) => who switch { "detective" => Person.Detective, "huo" => Person.Huo, "shen" => Person.Shen, "su" => Person.Su, _ => throw new ArgumentException(who) };
-    public void BeginAfterReplay(MorningWorld world)
-    {
-        var replay = Session.GetProgress("replay_result");
-        var fullMatch = (bool)replay["full_match"];
-        var refused = ((object[])replay["frames"]).Cast<Dictionary<string, object>>().Any(frame =>
-            ((string)((Dictionary<string, object>)frame["thoughts"])["detective"]).Contains("我凭什么信"));
-        var steps = new List<StoryStep<MorningWorld, Person>>();
-        if (Convert.ToInt32(Session.GetProgress("state")["replay_count"]) == 1 && !fullMatch) steps.AddRange(Show("replay_first"));
-        steps.Add(new StoryStep<MorningWorld, Person>.Branch(_ => refused && !Session.Has("flags", "refusal_seen"),
-            [new StoryStep<MorningWorld, Person>.Update(_ => { Session.Set("flags", "refusal_seen", true); Session.Set("flags", "v6_revealed", true); }),
-             .. Show("replay_refused")], []));
-        steps.Add(new StoryStep<MorningWorld, Person>.Branch(_ => fullMatch && !(bool)Session.GetProgress("state")["full_match_seen"],
-            [new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("state", "full_match_seen", true)), .. Show("@sfx:answer_ok"),
-             .. Show("@summon:huo"), .. Show("@summon:shen"), .. Show("@summon:su"), .. Show("s8_reversal")], []));
-        Start(world, steps);
-    }
-    public void BeginTalk(MorningWorld world, string who)
-    {
-        var steps = new List<StoryStep<MorningWorld, Person>>();
-        if (Session.GetProgress("life").TryGetValue(who, out var value))
-        {
-            var life = (Dictionary<string, object>)value;
-            if (life.GetValueOrDefault("alone") is true && life.GetValueOrDefault("told") is not true)
-            {
-                steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => life["told"] = true));
-                steps.AddRange(Show("alone_" + who));
-            }
-        }
-        steps.AddRange(Show("talk_" + who));
-        Start(world, steps);
-    }
+    public void BeginAfterReplay(MorningWorld world) => StartFlow(world, "重演之后");
+    public void BeginTalk(MorningWorld world, string who) => StartFlow(world, "交谈", ("人", who));
+    /// <summary>声路试验里同伴各站哪里：偏好与候补顺序来自 chapter_01.story 的“同伴站位”“站位候补”。</summary>
     public Dictionary<string, string> SoundPositions(string playerRoom)
     {
-        var free = new List<string> { "R08", "hall", "foyer", "pantry", "R05" };
+        var free = Chapter1Data.Strings("SPOT_ORDER").ToList();
         free.Remove(playerRoom);
         var positions = new Dictionary<string, string> { ["detective"] = playerRoom };
-        foreach (var (who, preferred) in new[] { ("su", "R08"), ("huo", "hall"), ("shen", "foyer") })
+        foreach (var preference in Content.RootElement.GetProperty("COMPANION_SPOTS").EnumerateObject())
         {
-            var room = free.Contains(preferred) ? preferred : free[0];
-            positions[who] = room;
+            var room = free.Contains(preference.Value.GetString()!) ? preference.Value.GetString()! : free[0];
+            positions[preference.Name] = room;
             free.Remove(room);
         }
         return positions;
@@ -256,59 +161,16 @@ public sealed class AwakeningContentSession
         return presentation;
     }
     public void Presented(InteractionPlan plan) => plan.Presentation = "";
-    public void BeginAnswer(MorningWorld world)
-    {
-        Session.Set("state", "stage", "answer");
-        Session.GetProgress("answer_state").Clear();
-        Session.Set("answer_state", "step", 1);
-        Start(world, [.. Show("@music:confrontation"), .. Show("answer_open"), new StoryStep<MorningWorld, Person>.Update(BeginAnswerQuestion)]);
-    }
-    private void BeginAnswerQuestion(MorningWorld world)
-    {
-        var step = Convert.ToInt32(Session.GetProgress("answer_state")["step"]);
-        if (step > 4) { Start(world, Show("@finale")); return; }
-        Start(world, [.. Show("answer_q" + step), .. Show("@answerpick"), new StoryStep<MorningWorld, Person>.Update(ResolveAnswer)]);
-    }
-    private void ResolveAnswer(MorningWorld world)
-    {
-        var pick = Session.GetProgress("answer_pick");
-        if (pick.Count == 0)
-        {
-            Start(world, [.. Show("answer_pause"), .. Show("@music:door_side"),
-                new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("state", "stage", "investigate")), .. Show("@hud")]);
-            return;
-        }
-        var step = Convert.ToInt32(Session.GetProgress("answer_state")["step"]);
-        var said = (string)pick["say"];
-        var shown = (string)pick["show"];
-        var verdict = Judge(step, said, shown);
-        var steps = new List<StoryStep<MorningWorld, Person>>();
-        if (verdict == "answer_ok" + step) steps.AddRange(Show("@sfx:answer_ok:-4"));
-        else if (verdict.StartsWith("answer_wrong")) steps.AddRange(Show("@sfx:answer_wrong:-3"));
-        steps.AddRange(Show(verdict));
-        if (verdict == "answer_ok" + step) steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("answer_state", "step", step + 1)));
-        steps.Add(new StoryStep<MorningWorld, Person>.Update(BeginAnswerQuestion));
-        Start(world, steps);
-    }
-    public void BeginFinale(MorningWorld world)
-    {
-        Session.Set("state", "stage", "finale");
-        Start(world, [.. Show("@finale_prepare"), .. Show("s10_steps"), .. Show("@door_open"),
-            new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("flags", "door_open", true)), .. Show("@redraw"), .. Show("s10_prints"),
-            new StoryStep<MorningWorld, Person>.Branch(_ => Session.Has("examined", "E11"), Show("s10_hand"), []),
-            .. Show("@su_approach"), .. Show("s10_open"), .. Show("@save:false"), .. Show("@ending:complete")]);
-    }
-    public void BeginRest(MorningWorld world)
-    {
-        Session.Set("state", "stage", "finale");
-        Start(world, [.. Show("@lock"), .. Show("@music:night:4"), .. Show("ending_rest"), .. Show("@save:true"), .. Show("@ending:rest")]);
-    }
-    public void BeginConfirmRest(MorningWorld world)
-        => Start(world, [new StoryStep<MorningWorld, Person>.Update(_ => Session.Remove("flags", "rest_chosen")), .. Show("rest_confirm"),
-            new StoryStep<MorningWorld, Person>.Branch(_ => Session.Has("flags", "rest_chosen"),
-                [new StoryStep<MorningWorld, Person>.Update(BeginRest)], [])]);
-    private static string OwnObject(string who) => who switch { "huo" => "E7", "su" => "E5", "shen" => "E10", _ => throw new ArgumentException(who) };
+    public void BeginAnswer(MorningWorld world) => StartFlow(world, "答辩·开始");
+    public void BeginFinale(MorningWorld world) => StartFlow(world, "终局");
+    public void BeginRest(MorningWorld world) => StartFlow(world, "歇息");
+    public void BeginConfirmRest(MorningWorld world) => StartFlow(world, "确认歇息");
+    public string OwnObject(string who) => Content.RootElement.GetProperty("OWN_OBJECTS").GetProperty(who).GetString()!;
+    private bool ContentList(string key, string id) => Content.RootElement.GetProperty(key).EnumerateArray().Any(item => item.GetString() == id);
     private Dictionary<string, object> Life(string who) => (Dictionary<string, object>)Session.GetProgress("life")[who];
+    /// <summary>声路试验里听者所站位置的称呼，来自 chapter_01.story 的“声路站位”。</summary>
+    public static string SoundSpot(string room)
+        => Chapter1Data.Root.GetProperty("SOUND_SPOTS").TryGetProperty(room, out var label) ? label.GetString()! : "";
     public Intention? Consider(MorningWorld world, string who)
         => Session.Has("life", who) || Session.Has("decided", who) || Session.Has("recalls", who) ? null : world.Intend(PersonOf(who));
     public void BeginReach(string who, string thought) => Session.Set("life", who, new Dictionary<string, object> { ["state"] = "going", ["thought"] = thought });
@@ -354,15 +216,7 @@ public sealed class AwakeningContentSession
             if (life.GetValueOrDefault("alone") is not true || life.GetValueOrDefault("noticed") is true || Session.CharacterRooms.GetValueOrDefault(who) != room) continue;
             steps.Add(new StoryStep<MorningWorld, Person>.Update(_ => life["noticed"] = true));
             var touched = life.GetValueOrDefault("choice") is "touch";
-            var text = (who, touched) switch
-            {
-                ("huo", true) => "霍铎看上去有点恍惚。粉笔灰沾在他的指节上。",
-                ("su", true) => "苏泠的手指一直在膝上轻轻敲着，像在数拍子。",
-                ("shen", true) => "沈鼎在擦手。他看了一眼架上的罐子，又转开了。",
-                ("huo", false) => "霍铎在铜口旁站着，石板摆得歪了一点。",
-                ("su", false) => "苏泠站在门边，音叉换了个位置。",
-                _ => "沈鼎在揉面。酵种罐挪过位置。",
-            };
+            var text = Chapter1Data.Text((touched ? "旁白·碰过·" : "旁白·没碰·") + who);
             steps.AddRange(Show("@aside:" + text));
         }
         if ((string)Session.GetProgress("state")["stage"] == "investigate" && Session.GetProgress("examined").Count >= 4 &&
@@ -395,13 +249,13 @@ public sealed class AwakeningContentSession
     public string RoomTrigger(string room)
     {
         if (room == "") return "";
-        var stage = (string)Session.GetProgress("state")["stage"];
-        if (stage == "roam" && room == "hall")
+        var stage = Stage(CurrentStage);
+        if (stage.GetProperty("enter").TryGetProperty(room, out var enter))
         {
-            Session.Set("state", "stage", "meeting");
-            return "meeting";
+            Session.Set("state", "stage", enter.GetProperty("stage").GetString()!);
+            return enter.GetProperty("signal").GetString()!;
         }
-        return stage == "investigate" ? "investigate" : "";
+        return stage.GetProperty("room_events").GetBoolean() ? "room" : "";
     }
     public System.Text.Json.JsonElement LifeTrace(string id) => Content.RootElement.GetProperty("LIFE_TRACES").GetProperty(id);
     public string[] Examine(MorningWorld world, string id)
@@ -412,7 +266,7 @@ public sealed class AwakeningContentSession
         world.Examine(Person.Detective, id);
         var events = new List<string> { "evidence" };
         if (id is "E1" or "E3" && !(bool)Session.GetProgress("state")["replay_open"]) events.Add("unlock");
-        if (AcquaintanceEvidence.Contains(id) && V6Open && !Session.Has("flags", "v6_revealed"))
+        if (ContentList("ACQUAINTANCE_EVIDENCE", id) && V6Open && !Session.Has("flags", "v6_revealed"))
         {
             Session.Set("flags", "v6_revealed", true);
             events.Add("v6");
@@ -427,7 +281,7 @@ public sealed class AwakeningContentSession
     }
     public bool NudgeCard(string id)
     {
-        if (id is not ("E1" or "E5" or "E7" or "E10") || Session.Has("nudged", id)) return false;
+        if (!ContentList("RECALL_OBJECTS", id) || Session.Has("nudged", id)) return false;
         Session.Set("nudged", id, true);
         return true;
     }
@@ -447,12 +301,13 @@ public sealed class AwakeningContentSession
             var people = new[] { "detective", "huo", "shen", "su" };
             var compared = people.Where(person => Session.Has("hand_comparisons", person)).Select(Name).ToArray();
             var missing = people.Where(person => !Session.Has("hand_comparisons", person)).Select(Name).ToArray();
-            notes.Add($"手掌比对：{compared.Length}/4。已比对：{(compared.Length == 0 ? "尚无" : string.Join("、", compared))}。");
+            notes.Add(Chapter1Data.Text("笔记·手印·进度", ("数", compared.Length.ToString()),
+                ("名单", compared.Length == 0 ? Chapter1Data.Text("笔记·手印·尚无") : string.Join("、", compared))));
             if (compared.Length == 4) notes.Add(helps.GetProperty("E11").GetString()!);
             else
             {
-                if (compared.Length > 0) notes.Add("半枚手印，比已比对者的手掌窄；其他人的尚未核验。");
-                notes.Add($"待比对：{string.Join("、", missing)}。请在 R-05 架沿旁先比自己的手；到同伴面前交谈，逐人邀请来这里，再在现场比对。");
+                if (compared.Length > 0) notes.Add(Chapter1Data.Text("笔记·手印·较窄"));
+                notes.Add(Chapter1Data.Text("笔记·手印·待比对", ("名单", string.Join("、", missing))));
             }
         }
         else if (Session.Has("experiments", id))
@@ -460,13 +315,10 @@ public sealed class AwakeningContentSession
             if (id == "E8")
             {
                 var sound = ((object[])Session.GetProgress("state")["last_sound"]).Cast<Dictionary<string, object>>();
-                notes.Add("声路试验：" + string.Join("；", sound.Select(h =>
-                {
-                    var place = (string)h["room"] switch { "hall" => "铜口旁", "foyer" => "门边", "pantry" => "备餐间", "R05" => "R-05", "R08" => "R-08", _ => "" };
-                    return $"{Name((string)h["who"])}（{place}）听到 {h["text"]} {h["direction"]}";
-                })));
+                notes.Add(Chapter1Data.Text("笔记·声路", ("列表", string.Join("；", sound.Select(h => Chapter1Data.Text("笔记·声路·一条",
+                    ("人名", Name((string)h["who"])), ("地点", SoundSpot((string)h["room"])), ("文字", (string)h["text"]), ("方向", (string)h["direction"])))))));
             }
-            else notes.Add("试验：" + evidence.GetProperty("experiment_result").GetString()!.Replace("\n", ""));
+            else notes.Add(Chapter1Data.Text("笔记·试验", ("结果", evidence.GetProperty("experiment_result").GetString()!.Replace("\n", ""))));
         }
         if (id != "E11" && Session.Has("helped", id) && helps.TryGetProperty(id, out var help)) notes.Add(help.GetString()!);
         if (id == "E3") foreach (var who in new[] { "huo", "shen", "su" })
@@ -474,22 +326,20 @@ public sealed class AwakeningContentSession
         if (evidence.TryGetProperty("recall", out var recall))
         {
             var who = recall.GetString()!;
-            if (Session.GetProgress("recalls").TryGetValue(who, out var fragment)) notes.Add($"回忆（{Name(who)}）：{fragment}");
-            else if (Session.GetProgress("refusals").TryGetValue(who, out var refusal)) notes.Add($"{Name(who)}没有碰它：“{refusal}”");
+            if (Session.GetProgress("recalls").TryGetValue(who, out var fragment)) notes.Add(Chapter1Data.Text("笔记·回忆", ("人名", Name(who)), ("片段", (string)fragment)));
+            else if (Session.GetProgress("refusals").TryGetValue(who, out var refusal)) notes.Add(Chapter1Data.Text("笔记·不碰", ("人名", Name(who)), ("想法", (string)refusal)));
         }
-        if (world.IsDisturbed(id)) notes.Add("它被人拿起过，又放回去了，摆得和原来不一样。");
+        if (world.IsDisturbed(id)) notes.Add(Chapter1Data.Text("笔记·被动过"));
         return notes.ToArray();
     }
-    public void BeginWake(MorningWorld world)
+    public void BeginWake(MorningWorld world) => StartFlow(world, "醒来");
+    public bool V6Open => Session.Has("flags", "refusal_seen") || Content.RootElement.GetProperty("ACQUAINTANCE_EVIDENCE").EnumerateArray().Count(item => Session.Has("examined", item.GetString()!)) >= 2;
+    public bool SiteVisible(string stage, string id)
     {
-        Session.Set("state", "stage", "wake");
-        Start(world, [.. Show("@lock"), .. Show("s1_wake"),
-            new StoryStep<MorningWorld, Person>.Update(_ => Session.Set("state", "stage", "roam")), .. Show("@unlock"), .. Show("@hud")]);
+        var sites = Stage(stage).GetProperty("sites");
+        var shown = sites.ValueKind == System.Text.Json.JsonValueKind.String || sites.EnumerateArray().Any(site => site.GetString() == id);
+        return shown && Session.IsLocalTarget("detective", id);
     }
-    private static readonly string[] AcquaintanceEvidence = ["E9", "E10", "E11", "E12"];
-    public bool V6Open => Session.Has("flags", "refusal_seen") || AcquaintanceEvidence.Count(id => Session.Has("examined", id)) >= 2;
-    public bool SiteVisible(string stage, string id) =>
-        (stage == "roam" ? id is "E12" or "E11a" : stage == "investigate") && Session.IsLocalTarget("detective", id);
     public string[] Statements(int[] variables, int replayCount, bool detectiveBolted)
     {
         var list = new List<string>();
@@ -499,28 +349,25 @@ public sealed class AwakeningContentSession
         if (replayCount > 0 && variables[4] == 0 && variables[5] == 1) list.Add("trust");
         return list.ToArray();
     }
+    /// <summary>始业之答的一问：答对与否由 chapter_01.story 的“判定”表达式决定；这里只负责记下错在哪里，供铜口的回应引用。</summary>
     public string Judge(int step, string said, string shown)
     {
         bool goodSay = false, goodShow = false;
-        switch (step)
+        (_judgeSaid, _judgeShown) = (said, shown);
+        try
         {
-            case 1:
-                goodSay = said == "me";
-                goodShow = shown == "E3" || ((shown is "E12" or "E7") && Session.Has("examined", "E12") && Session.Has("examined", "E7"));
-                break;
-            case 2:
-                goodSay = said == "V3_0";
-                goodShow = (shown == "E8" && Session.Has("experiments", "E8")) || shown == "E5";
-                if (goodSay && shown == "E8" && !Session.Has("experiments", "E8")) return "answer_need_test";
-                break;
-            case 3: goodSay = said == "V4_0"; goodShow = shown is "E7" or "E6"; break;
-            case 4: goodSay = said is "V5_0" or "V6_1" or "trust"; goodShow = shown is "E9" or "E10" or "E11" or "E7"; break;
+            if (Content.RootElement.GetProperty("VERDICTS").TryGetProperty(step.ToString(), out var verdict))
+            {
+                if (verdict.TryGetProperty("need_test", out var need) && Truthy(Eval(need, null, NoArgs))) return "answer_need_test";
+                goodSay = Truthy(Eval(verdict.GetProperty("say_ok"), null, NoArgs));
+                goodShow = Truthy(Eval(verdict.GetProperty("show_ok"), null, NoArgs));
+            }
         }
+        finally { (_judgeSaid, _judgeShown) = (null, null); }
         if (goodSay && goodShow) return $"answer_ok{step}";
-        if (Content is not null)
-            Session.Set("state", "wrong_name", !goodSay
-                ? (Content.RootElement.GetProperty("STATEMENTS").TryGetProperty(said, out var statement) ? statement.GetString()! : "")
-                : Content.RootElement.GetProperty("EVIDENCE").GetProperty(shown).GetProperty("name").GetString()!);
+        Session.Set("state", "wrong_name", !goodSay
+            ? (Content.RootElement.GetProperty("STATEMENTS").TryGetProperty(said, out var statement) ? statement.GetString()! : "")
+            : Content.RootElement.GetProperty("EVIDENCE").GetProperty(shown).GetProperty("name").GetString()!);
         return !goodSay ? "answer_wrong_say" : "answer_wrong_show";
     }
     public bool CanExperiment(string id) => !Session.Has("experiments", id) || id == "E8";
@@ -539,19 +386,22 @@ public sealed partial class MorningWorld
             _space[room] = space;
             _runtime.Project(space, Names.Of(room));
         }
-        var traces = MorningTraces.Evidence;
-        Evidence("E1", "闩上的隔离门", Room.Foyer, ("内闩", traces.InnerBoltDown ? 1 : 0), ("外闩", 1), ("猫眼糊灰", 1));
-        Evidence("E2", "门底的灰与木楔", Room.Foyer, ("扇形灰", traces.AshFan ? 1 : 0), ("楔面沾灰", traces.WedgeTopSooted ? 1 : 0), ("楔在角落", traces.WedgeInCorner ? 1 : 0));
-        Evidence("E3", "灰上的靴印", Room.Foyer, ("马球靴印朝插闩", 1));
-        Evidence("E4", "门底的湿布", Room.Foyer, ("沿门底压成直线", traces.Cloth == 1 ? 1 : 0), ("压住鞋跟", traces.ClothOverHeel ? 1 : 0));
-        Evidence("E5", "音叉", Room.Foyer, ("门框凹痕", traces.FrameDent ? 1 : 0));
-        Evidence("E6", "苏泠的乐谱", Room.R08, ("第一行", traces.ScoreLine1), ("第二行", traces.ScoreLine2 ? 1 : 0));
-        Evidence("E7", "霍铎的石板", Room.Hall, ("第一行", traces.SlateLine1), ("第二行", traces.SlateLine2));
-        Evidence("E8", "铜口与管接头", Room.Hall, ("接头松动", 1));
-        Evidence("E9", "四只杯子", Room.Pantry, ("按人放糖", traces.CupSugar));
-        Evidence("E10", "酵种罐", Room.Pantry, ("层层旧面痕", 1));
-        Evidence("E11", "架上的无尘方框", Room.R05, ("窄手印", 1));
-        Evidence("E12", "侦探的外衣口袋", Room.R05, ("放大镜", 1));
+        var truth = Chapter1Data.Root.GetProperty("TRUTH");
+        int TruthValue(string field, int? equals)
+        {
+            var value = truth.GetProperty(field);
+            var number = value.ValueKind is System.Text.Json.JsonValueKind.True ? 1 : value.ValueKind is System.Text.Json.JsonValueKind.False ? 0 : value.GetInt32();
+            return equals is { } expected ? (number == expected ? 1 : 0) : number;
+        }
+        foreach (var item in Chapter1Data.Root.GetProperty("EVIDENCE").EnumerateObject())
+        {
+            var data = item.Value;
+            Evidence(item.Name, (data.TryGetProperty("mind_name", out var mindName) ? mindName : data.GetProperty("name")).GetString()!,
+                (Room)Array.IndexOf(Names.RoomKeys, data.GetProperty("room").GetString()),
+                data.GetProperty("world_facts").EnumerateArray().Select(fact => (fact.GetProperty("tag").GetString()!,
+                    fact.TryGetProperty("value", out var fixedValue) ? fixedValue.GetInt32()
+                        : TruthValue(fact.GetProperty("truth").GetString()!, fact.TryGetProperty("equals", out var eq) ? eq.GetInt32() : null))).ToArray());
+        }
         foreach (var who in Enum.GetValues<Person>())
         {
             var soul = new SoulEssence(Names.Of(who));
@@ -564,11 +414,11 @@ public sealed partial class MorningWorld
             _bodies[who] = body;
             _hooks[who] = 0;
             // 醒来时只记得登船。
-            Observation.Observe(soul, new ObservationInput("登船", ProjectionKind.Event)
+            Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·登船·名"), ProjectionKind.Event)
             {
-                Source = ObservationSource.Introspection, Existence = Truth.True, Details = "只记得上船。"
+                Source = ObservationSource.Introspection, Existence = Truth.True, Details = Chapter1Data.Text("认知·登船·详")
             });
-            _desires[who] = Observation.Observe(soul, new ObservationInput("想要的：" + DesireOf(who), ProjectionKind.Concept)
+            _desires[who] = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·欲望·前缀") + DesireOf(who), ProjectionKind.Concept)
             {
                 Source = ObservationSource.Introspection, Existence = Truth.True,
                 Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Strength, 1)

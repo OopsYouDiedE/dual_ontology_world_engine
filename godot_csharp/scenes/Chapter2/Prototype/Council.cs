@@ -13,11 +13,7 @@ public sealed partial class Game
     public Faction? SeizedBy;
     public bool ArchiveTested;
 
-    public static string EndingText(Ending e) => e switch
-    {
-        Ending.OpenEach => "各取其物：开放取回", Ending.Committee => "委员会保管（沃德主导）", Ending.Sealed => "封闭不启（顾平章、茉拉主导）",
-        Ending.DetectivePact => "侦探之约", Ending.NightSeized => "被某派系夜间私占", _ => "未决"
-    };
+    public static string EndingText(Ending e) => Chapter2Design.EndingText(e);
 
     /// <summary>
     /// 名录库之门三站：配重（力气，不虚弱不带伤）、锁芯（精细）、传声中继（信号；没学过第十二课规程信号被吃掉一半，
@@ -110,9 +106,9 @@ public sealed partial class Game
     public IEnumerable<RuleSpec> ArchivePlans()
     {
         // 开放取回就是恶魔第 2 日广播里那条“它自己所立之规”：凡学员皆可取回己物。接受与否看信不信它、想不想要。
-        _openPlan ??= NewSpec("名录库各取其物：凡学员皆可取回己物。", null, RF.OpenArchive, fx => [], demon: true);
-        _sealPlan ??= NewSpec("名录库封闭不启：回忆即上钩，谁也不开。", P.Gu, RF.SealArchive | RF.Tradition, fx => []);
-        WardCommittee ??= NewSpec("名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", P.Ward, RF.CommitteeArchive | RF.WardAuthority | RF.Records, fx => []);
+        _openPlan ??= Spec("OpenPlan", fx => []);
+        _sealPlan ??= Spec("SealPlan", fx => []);
+        WardCommittee ??= Spec("CommitteePlan", fx => []);
         _sealPlan.Endorsers.Add(P.Mora);
         yield return _openPlan;
         yield return WardCommittee;

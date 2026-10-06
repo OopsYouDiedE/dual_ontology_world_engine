@@ -4,6 +4,7 @@ namespace DualOntologyWorldEngine.Awakening;
 /// <summary>Authoritative field interaction and evidence-card choices. Geometry is supplied by the host.</summary>
 public sealed class Chapter1Interaction(AwakeningContentSession content, MorningWorld world)
 {
+    private static string Text(string key, params (string Name, string Value)[] args) => Chapter1Data.Text(key, args);
     private string? _card;
     private HashSet<string> _geometricPeople = new();
     private static InteractionPacket Commands(params WorldCommand[] commands) => new([], [], PresentationMode.World, commands);
@@ -41,25 +42,25 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
                 var busy = content.Session.GetProgress("life").TryGetValue(who, out var life) &&
                     ((Dictionary<string, object>)life).GetValueOrDefault("state") is "going" or "holding";
                 var local = content.Session.CharacterRooms.GetValueOrDefault("detective") == "R05" && content.Session.IsLocalTarget("detective", who);
-                Add("compare", who == "detective" ? "比对自己的手掌轮廓" : $"与{Name(who)}逐人比对手掌轮廓",
+                Add("compare", who == "detective" ? Text("卡片·比对自己") : Text("卡片·比对他人", ("人名", Name(who))),
                     !compared && !busy && local && _geometricPeople.Contains(who),
-                    compared ? "已经比对过。" : "请在 R-05 架沿旁，与实际到场且有空的人逐人比对。", who);
+                    compared ? Text("卡片·提示·已比对") : Text("提示·比对站位"), who);
             }
         }
         else if (evidence.TryGetProperty("experiment", out var experiment))
-            Add("experiment", experiment.GetString()! + (id == "E8" && content.Session.Has("experiments", id) ? "（再做一次）" : ""),
-                content.CanExperiment(id), "已经完成这项试验。");
+            Add("experiment", experiment.GetString()! + (id == "E8" && content.Session.Has("experiments", id) ? Text("卡片·再做一次") : ""),
+                content.CanExperiment(id), Text("卡片·提示·试验已做"));
         if (evidence.TryGetProperty("help", out var help))
-            Add("help", $"请{Name(help.GetString()!)}看看", content.CanHelp(id), "同伴已经核验过。");
+            Add("help", Text("卡片·请看看", ("人名", Name(help.GetString()!))), content.CanHelp(id), Text("卡片·提示·已请看过"));
         if (evidence.TryGetProperty("recall", out var recall))
         {
             var who = recall.GetString()!;
             var moving = content.Session.GetProgress("life").TryGetValue(who, out var life) &&
                 ((Dictionary<string, object>)life).GetValueOrDefault("state") is "going" or "holding";
-            Add("recall", who == "detective" ? "触碰插闩，试着回想（守则第 1 条）" : $"请{Name(who)}触碰它，回想（守则第 1 条）",
-                content.CanRecall(who, moving), "此人已经作出取舍，或正忙。");
+            Add("recall", who == "detective" ? Text("卡片·触碰自己") : Text("卡片·触碰他人", ("人名", Name(who))),
+                content.CanRecall(who, moving), Text("卡片·提示·不可回想"));
         }
-        Add("close", "返回现场", true);
+        Add("close", Text("卡片·返回"), true);
         return new([], choices, PresentationMode.EvidenceCard, [], Card: new(id, evidence.GetProperty("name").GetString()!,
             content.CardFacts(id), evidence.GetProperty("source").GetString()!, evidence.GetProperty("picture").GetString()!, content.CardNotes(world, id)));
     }

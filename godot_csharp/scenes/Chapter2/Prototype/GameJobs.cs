@@ -133,11 +133,8 @@ public sealed partial class Game
     public Essence StationFor(Person p) => p.Pro.Lock >= 3 ? LockCore : p.Pro.Signal >= 3 ? RelayPost : p.Pro.Strength >= 1 ? WeightRoom
         : p.Pro.Lock >= 2 ? LockCore : p.Lessons.GetValueOrDefault(12) ? RelayPost : WeightRoom;
 
-    public static Place WorkPlace(P p) => p switch
-    {
-        P.Huo => Place.Lecture, P.Su => Place.Lecture, P.Veronica => Place.Clinic, P.Moran => Place.Oath, P.Quer => Place.DormW,
-        P.Shen => Place.Logistics, _ => Cast.Of(p).Dorm
-    };
+    /// <summary>此人平日做手艺的地方：人物块的“工作地点”，没写就是自己的寝区。</summary>
+    public static Place WorkPlace(P p) => Chapter2Design.PersonData(p).WorkPlace ?? Cast.Of(p).Dorm;
 
     public static readonly ImmutableHashSet<Job> Interruptible = [Job.Rest, Job.InspectStructure, Job.GuardArchive, Job.Scavenge, Job.VisitArchive, Job.Seize, Job.Watch];
 

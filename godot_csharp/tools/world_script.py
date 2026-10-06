@@ -137,8 +137,9 @@ def infer(value: Any) -> dict[str, Any]:
 
 
 class Compiler:
-    def __init__(self, paths: list[Path], external_chapters: set[str] | None = None):
+    def __init__(self, paths: list[Path], external_chapters: set[str] | None = None, texts: dict[str, str] | None = None):
         self.paths = paths
+        self.texts = texts or {}
         self.external_chapters = external_chapters or set()
         self.chapters: list[Chapter] = []
         self.chapter_ids: dict[str, int] = {}
@@ -181,7 +182,7 @@ class Compiler:
         for path_index, path in enumerate(self.paths):
             self.current_path = path.as_posix()
             try:
-                raw = path.read_text(encoding="utf-8-sig")
+                raw = self.texts[self.current_path] if self.current_path in self.texts else path.read_text(encoding="utf-8-sig")
             except OSError as exc:
                 raise ScriptError(f"无法读取脚本：{exc}") from exc
             except UnicodeError as exc:

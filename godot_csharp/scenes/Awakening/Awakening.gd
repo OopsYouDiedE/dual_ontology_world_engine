@@ -206,7 +206,7 @@ func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	get_window().content_scale_stretch = Window.CONTENT_SCALE_STRETCH_INTEGER
 	get_window().size = Vector2i(1280, 992)
-	get_window().title = "安眠者有福 · 门的这一侧"
+	get_window().title = Content.text("窗口标题")
 	engine.name = "Engine"
 	add_child(engine)
 	Content.apply_content(engine.Content())
@@ -264,13 +264,12 @@ func _build_characters() -> void:
 	for direction_name in ["front", "back", "left"]:
 		player.standard.set_animation_speed("walk_" + direction_name, 7.5)
 	player.sprite.sprite_frames = player.standard
-	player.position = Vector2(982, 144)
+	player.position = Content.STAGING["起点·detective"]
 	player.pose("idle", "front")
 	player.sit_at("front", 4.0)
 	# 醒来时同伴各在自己房里（霍铎 R-06、沈鼎 R-07、苏泠 R-08）；相遇时才到活动厅。
-	actor_of("huo").position = Vector2(930, 590)
-	actor_of("shen").position = Vector2(706, 590)
-	actor_of("su").position = Vector2(706, 210)
+	for key in ["huo", "shen", "su"]:
+		actor_of(key).position = Content.STAGING["起点·" + key]
 	for key in ["huo", "shen", "su"]:
 		actor_of(key).pose("idle", "front")
 	# 人与人之间不互相阻挡：只与墙和家具碰撞。被挤到时，同伴自己让开（见 _make_way）。
@@ -340,30 +339,27 @@ func _ui_action(button: Button, action: Callable) -> void:
 func _refresh_hud() -> void:
 	if not is_instance_valid(hud_title):
 		return
-	hud_title.text = "生活翼 · " + _room_name(player.position)
+	hud_title.text = Content.text("界面·地点前缀") + " " + _room_name(player.position)
 	var keys := []
-	if stage in ["roam", "investigate"]:
-		keys.append("E / 点击  检视")
-	if stage == "investigate":
-		keys.append("Tab  笔记本")
+	if Content.STAGES[stage].examine:
+		keys.append(Content.text("界面·键位·检视"))
+	if Content.STAGES[stage].notebook:
+		keys.append(Content.text("界面·键位·笔记本"))
 	if replay_open:
-		keys.append("R  重演")
+		keys.append(Content.text("界面·键位·重演"))
 	hud_keys.text = "　　".join(keys)
 
-## 乙区（第二部分 §11 第 7 条）：西端门厅（北厕、南储物），活动厅与备餐间，中廊两侧各三间房，外端两间空着。
+## 脚下是哪个房间：区域表写在 chapter_01.story 的“房间区域”。
+func _region_at(p: Vector2) -> Dictionary:
+	for region in Content.ROOM_REGIONS:
+		var rect: Array = region.rect
+		if (rect[0] == null or p.x >= float(rect[0])) and (rect[1] == null or p.y >= float(rect[1])) \
+				and (rect[2] == null or p.x < float(rect[2])) and (rect[3] == null or p.y < float(rect[3])):
+			return region
+	return {"name": "", "region": ""}
+
 func _room_name(p: Vector2) -> String:
-	if p.x < 160:
-		return "起居厅"
-	if p.x < 304:
-		return "厕" if p.y < 256 else ("储物间" if p.y >= 448 else "门厅")
-	if p.x < 584:
-		return "活动厅" if p.y < 416 else "备餐间"
-	if p.y >= 304 and p.y < 448:
-		return "走廊"
-	var column := 0 if p.x < 816 else (1 if p.x < 1040 else 2)
-	if p.y < 304:
-		return ["R-08", "R-05", "空房"][column]
-	return ["R-07", "R-06", "空房"][column]
+	return str(_region_at(p).name)
 
 func sight_origin() -> Vector2: return player.position + Vector2(0, -8)
 func sight_entry_origin() -> Vector2: return player.position
@@ -375,15 +371,13 @@ func sight_interior(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.x < row.length() and row.substr(cell.x, 1) == "."
 
 func sight_region(cell: Vector2i) -> String:
-	var point := Vector2(cell * 32) + Vector2(16, 16)
-	var room := _room_name(point)
-	# 两间空房各自揭示，不能因同名而同时展开。
-	return room + ("_north" if point.y < 304 else "_south") if room == "空房" else room
+	# 同名的房间（两间空房）在区域表里各有区域名，各自揭示。
+	return str(_region_at(Vector2(cell * 32) + Vector2(16, 16)).region)
 
 func in_sight(point: Vector2) -> bool: return sight == null or sight.can_see(point)
 
 func field_active() -> bool:
-	return stage in ["roam", "investigate"] and modal_kind == "" and not dialogue.active and not story_lock and not ended
+	return Content.STAGES[stage].walk and modal_kind == "" and not dialogue.active and not story_lock and not ended
 
 func site_visible(id: String) -> bool:
 	if not sites.has(id):
@@ -590,7 +584,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		_complete_click_interaction(nearest)
 		get_viewport().set_input_as_handled()
-	elif event.keycode == KEY_TAB and stage == "investigate":
+	elif event.keycode == KEY_TAB and Content.STAGES[stage].notebook:
 		open_notebook()
 		get_viewport().set_input_as_handled()
 	elif event.keycode == KEY_R and replay_open:
@@ -720,7 +714,7 @@ func _walkable(point: Vector2) -> bool:
 	return true
 
 func can_access_dorm(_owner: String) -> bool:
-	return stage in ["investigate", "playback", "answer", "finale"]
+	return Content.STAGES[stage].dorms
 
 func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
@@ -806,7 +800,7 @@ func _check_triggers() -> void:
 	if trigger == "meeting":
 		_meeting()
 		return
-	if trigger == "investigate" and room != current_room:
+	if trigger == "room" and room != current_room:
 		current_room = room
 		_on_room_changed(room)
 		engine.RoomEntry(room)
@@ -816,7 +810,11 @@ var visited_rooms: Dictionary:
 	set(value): engine.ReplaceProgress("visited_rooms", value)
 
 func _room_key(p: Vector2) -> String:
-	return {"R-05": "R05", "R-06": "R06", "R-07": "R07", "R-08": "R08", "走廊": "corridor", "活动厅": "hall", "备餐间": "pantry", "门厅": "foyer", "空房": "empty"}.get(_room_name(p), "")
+	var name := _room_name(p)
+	for key in Content.ROOM_NAMES:
+		if Content.ROOM_NAMES[key] == name:
+			return key
+	return ""
 
 ## 剧情到场按脚下真实室内地板判定，门槛与墙不算进入。
 func _entered_room(point: Vector2) -> String:
@@ -893,8 +891,7 @@ func present_dialogue_command(kind: String, args: Array) -> void:
 		"rest":
 			await _rest()
 			if _closing: return
-		"investigate":
-			stage = "investigate"
+		"posts":
 			for who in Content.POSTS: walk_actor(who, Content.POSTS[who])
 		"summon":
 			await _summon(str(args[0]))
@@ -922,9 +919,9 @@ func present_dialogue_command(kind: String, args: Array) -> void:
 		"finale_prepare":
 			story_lock = true
 			follow_camera = false
-			player.position = Vector2(196, 384)
+			player.position = Content.STAGING["终局站位·侦探"]
 			player.pose("idle", "left")
-			camera.position = Vector2(320, 368)
+			camera.position = Content.STAGING["终局镜头"]
 			_refresh_hud()
 		"door_open":
 			Sound.sfx("door_unbar")
@@ -939,9 +936,7 @@ func present_dialogue_command(kind: String, args: Array) -> void:
 			await walk_actor("su", player.position + Vector2(34, 6))
 			if _closing: return
 		"save": _save_chapter_end(str(args[0]) == "true")
-		"ending":
-			if str(args[0]) == "complete": _ending_card("门的这一侧 · 完", "门开了。门外是起居厅。")
-			else: _ending_card("门的这一侧 · 歇息", "你们留在生活翼。门一直闩着。")
+		"ending": _ending_card(str(args[0]))
 		_: push_error("Unknown chapter presentation: " + kind)
 
 func _localized_speaker(canonical: String) -> String:
@@ -962,7 +957,7 @@ func heard_where(who: String) -> String:
 
 func _meeting() -> void:
 	if _closing: return
-	stage = "meeting"
+	stage = Content.STAGE_EVENTS["相遇"]
 	story_lock = true
 	_cancel_click_navigation()
 	player.move_input(Vector2.ZERO)
@@ -982,12 +977,14 @@ var _name_field: LineEdit
 
 func _ask_name() -> void:
 	if _closing: return
-	var body := open_modal("报上名字", Vector2(560, 300), "name")
+	var body := open_modal(Content.text("报名·标题"), Vector2(560, 300), "name")
 	var view := _ui_content("NameEntry", body)
+	view.get_node("Prompt").text = Content.text("报名·提示")
 	_name_field = view.get_node("Name")
+	_name_field.placeholder_text = Content.text("报名·占位")
 	_modal_result = null
 	_name_field.text_submitted.connect(func(_t: String) -> void: _confirm_name())
-	add_footer([["就叫这个", _confirm_name]])
+	add_footer([[Content.text("报名·确认"), _confirm_name]])
 	_name_field.grab_focus.call_deferred()
 	while _modal_result == null:
 		await _wait_signal(get_tree().process_frame)
@@ -995,7 +992,7 @@ func _ask_name() -> void:
 
 func _confirm_name() -> void:
 	var text := _name_field.text.strip_edges()
-	detective_name = text if not text.is_empty() else "侦探"
+	detective_name = text if not text.is_empty() else Content.text("报名·默认名")
 	_modal_choose(true)
 
 # =================================================================== modal ===
@@ -1159,7 +1156,7 @@ func _compare_hand(who: String) -> void:
 	if _closing: return
 	close_modal()
 	if not _can_compare_hand(who):
-		show_aside("请在 R-05 架沿旁，与实际到场且有空的人逐人比对。")
+		show_aside(Content.text("提示·比对站位"))
 		open_card("E11")
 		return
 	engine.Locate("detective", _room_key(player.position))
@@ -1171,14 +1168,14 @@ func _compare_hand(who: String) -> void:
 func _invite_hand(who: String) -> void:
 	var actor := actor_of(who)
 	if not examined.has("E11") or not actor.visible or not in_sight(actor.position) or player.position.distance_to(actor.position) > 56.0:
-		show_aside("走到同伴面前交谈，才能邀请他到 R-05 书架旁。")
+		show_aside(Content.text("旁白·邀请距离"))
 		return
 	if _hand_busy(who) or hand_invitations.has(who):
-		show_aside("%s现在正忙，等他做完眼前的事，再当面邀请。" % Content.PERSON_NAMES[who])
+		show_aside(Content.text("旁白·正忙", {"人名": Content.PERSON_NAMES[who]}))
 		return
 	if _at_hand_shelf(actor):
 		engine.Locate(who, _room_key(actor.position))
-		show_aside("%s已在架沿旁；你也到这里，打开证物卡逐人比对。" % Content.PERSON_NAMES[who])
+		show_aside(Content.text("旁白·已在架沿", {"人名": Content.PERSON_NAMES[who]}))
 		return
 	var obstacles := _navigation_obstacles(actor)
 	var grid := FieldNavigation.build_route_grid(floors, obstacles, Vector2i(layout.rows[0].length(), layout.rows.size()))
@@ -1199,7 +1196,7 @@ func _invite_hand(who: String) -> void:
 		destination = spot
 		break
 	if route.is_empty():
-		show_aside("%s：到 R-05 架沿的路走不通，先让出通道，再来叫我。" % Content.PERSON_NAMES[who])
+		show_aside(Content.text("旁白·路不通", {"人名": Content.PERSON_NAMES[who]}))
 		return
 	if actor.seated: actor.stand_up()
 	route.append(destination)
@@ -1207,7 +1204,7 @@ func _invite_hand(who: String) -> void:
 	engine.Locate(who, room)
 	hand_invitations[who] = {"destination": destination, "last": actor.position, "still": 0.0, "room": room}
 	actor.follow_path(route)
-	show_aside("%s正步行去 R-05 书架旁。你可以自行过去，再逐人比对。" % Content.PERSON_NAMES[who])
+	show_aside(Content.text("旁白·正赶去", {"人名": Content.PERSON_NAMES[who]}))
 
 func _update_hand_invitations(delta: float) -> void:
 	for who in hand_invitations.keys():
@@ -1219,7 +1216,7 @@ func _update_hand_invitations(delta: float) -> void:
 			invitation.room = room
 		if not actor.travelling:
 			hand_invitations.erase(who)
-			show_aside("%s已到 R-05 架沿旁，等你来比对。" % Content.PERSON_NAMES[who] if _at_hand_shelf(actor) else "%s停下了；请到他面前重新邀请。" % Content.PERSON_NAMES[who])
+			show_aside(Content.text("旁白·已到" if _at_hand_shelf(actor) else "旁白·停下", {"人名": Content.PERSON_NAMES[who]}))
 			continue
 		invitation.still = float(invitation.still) + delta if actor.position.distance_to(invitation.last) < 0.2 else 0.0
 		invitation.last = actor.position
@@ -1229,7 +1226,7 @@ func _update_hand_invitations(delta: float) -> void:
 			actor.pose("idle")
 			actor.arrived.emit()
 			hand_invitations.erase(who)
-			show_aside("%s的路被挡住了，已停步。让出通道后，可以当面再次邀请。" % Content.PERSON_NAMES[who])
+			show_aside(Content.text("旁白·被挡", {"人名": Content.PERSON_NAMES[who]}))
 
 func _on_help(id: String) -> void:
 	if _closing: return
@@ -1240,12 +1237,13 @@ func _on_help(id: String) -> void:
 
 func _pick_sole() -> String:
 	if _closing: return ""
-	var body := open_modal("比对鞋底", Vector2(620, 450), "menu")
+	var body := open_modal(Content.text("鞋底·标题"), Vector2(620, 450), "menu")
 	var view := _ui_content("SoleChoice", body)
+	view.get_node("Prompt").text = Content.text("鞋底·提示")
 	_modal_result = null
 	var list := view.get_node("Choices") as VBoxContainer
-	for pair in [["detective", "你自己的靴底"], ["huo", "霍铎的鞋"], ["shen", "沈鼎的鞋"], ["su", "苏泠的鞋"]]:
-		list.add_child(Paper.button(pair[1], _modal_choose.bind(pair[0])))
+	for key in Content.SOLE_TARGETS:
+		list.add_child(Paper.button(str(Content.SOLE_TARGETS[key]), _modal_choose.bind(key)))
 	add_footer([["算了", _modal_choose.bind("")]])
 	while _modal_result == null:
 		await _wait_signal(get_tree().process_frame)
@@ -1418,7 +1416,7 @@ func _present_board() -> void:
 	follow_camera = false
 	var from := camera.position
 	var tween := create_tween()
-	tween.tween_property(camera, "position", Vector2(420, 248), 0.8)
+	tween.tween_property(camera, "position", Content.STAGING["公告框镜头"], 0.8)
 	await _wait_signal(tween.finished)
 	if _closing: return
 	open_board()
@@ -1433,8 +1431,9 @@ func _present_board() -> void:
 
 func open_board() -> void:
 	engine.SetProgress("flags", "board_read", true)
-	var body := open_modal("活动厅公告框", Vector2(860, 620), "card")
+	var body := open_modal(Content.text("公告框·标题"), Vector2(860, 620), "card")
 	var view := _ui_content("Board", body)
+	view.get_node("Introduction").text = Content.text("公告框·引言")
 	var clauses := view.get_node("Clauses") as VBoxContainer
 	for clause in engine.PostedRules():
 		clauses.add_child(Paper.label(str(clause), 19))
@@ -1453,6 +1452,7 @@ func _unlock_replay() -> void:
 func open_notebook() -> void:
 	var body := open_modal("笔记本", Vector2(1000, 780), "notebook")
 	var view := _ui_content("Notebook", body)
+	view.get_node("Empty").text = Content.text("笔记·空")
 	view.get_node("Empty").visible = examined.is_empty()
 	for place in Content.PLACES:
 		var ids := []
@@ -1467,11 +1467,13 @@ func open_notebook() -> void:
 		for id in ids:
 			var mark := ""
 			if experiments.has(id) or helped.has(id):
-				mark = "　·已试"
+				mark = "　·" + Content.text("笔记·已试")
 			grid.add_child(Paper.button(str(Content.EVIDENCE[id].name) + mark, open_card.bind(id), 18))
 	view.get_node("Groups").visible = view.get_node("Groups").get_child_count() > 0
 	view.get_node("Others").visible = flags.has("board_read")
+	view.get_node("Others/Board").text = Content.text("笔记·公告框")
 	_ui_action(view.get_node("Others/Board"), open_board)
+	view.get_node("Recalls/Heading").text = Content.text("笔记·回忆所得")
 	view.get_node("Recalls").visible = not recalls.is_empty()
 	for who in recalls:
 		view.get_node("Recalls/Entries").add_child(Paper.label("%s：%s" % [Content.PERSON_NAMES[who], recalls[who]], 18))
@@ -1497,8 +1499,8 @@ func open_manuscript() -> void:
 	column.add_child(manuscript)
 
 ## 重演手稿（两章共用组件）向宿主取的内容。
-func replay_title() -> String: return "昨夜重演"
-func replay_hint() -> String: return "设定当时的处境与人心，让昨夜重演一次。"
+func replay_title() -> String: return Content.text("重演·标题")
+func replay_hint() -> String: return Content.text("重演·提示")
 ## 第六个问题（昨夜之前，四人彼此……）起初不写出来：素不相识是没人说出口的默认。
 ## 重演里出现信任上的拒绝，或细看过两件相熟旁证之后，它才出现。
 func replay_questions() -> Array:
@@ -1506,7 +1508,7 @@ func replay_questions() -> Array:
 	return Content.VARIABLES.slice(0, count)
 func replay_mark(index: int) -> String:
 	if recall_marks.has(index + 1):
-		return "　[color=seal]✓ 回忆所证（%s）[/color]" % Content.PERSON_NAMES[recall_marks[index + 1]]
+		return "　[color=seal]%s[/color]" % Content.text("重演·回忆所证", {"人名": Content.PERSON_NAMES[recall_marks[index + 1]]})
 	return ""
 func replay_is_new(index: int) -> bool: return index == 5 and not flags.has("v6_seen")
 func replay_opened() -> void:
@@ -1528,14 +1530,14 @@ func run_replay(vars: Array) -> Dictionary:
 func play_replay(result: Dictionary) -> void:
 	if _closing: return
 	close_modal()
-	stage = "playback"
+	stage = Content.STAGE_EVENTS["重演开始"]
 	story_lock = true
 	Sound.sfx("replay", -4.0)
 	Sound.duck(true)
 	await stage_node.play(result.frames)
 	if _closing: return
 	Sound.duck(false)
-	stage = "investigate"
+	stage = Content.STAGE_EVENTS["重演结束"]
 	story_lock = false
 	await after_replay(result)
 	if _closing: return
@@ -1562,10 +1564,13 @@ func _sound_pick(kind: String, index: int, value: Variant) -> void:
 
 func sound_test() -> void:
 	if _closing: return
-	var body := open_modal("声路试验", Vector2(820, 600), "sound")
+	var body := open_modal(Content.text("声路·标题"), Vector2(820, 600), "sound")
 	var view := _ui_content("SoundExperiment", body)
+	view.get_node("Introduction").text = Content.text("声路·说明")
+	view.get_node("SentenceHeading").text = Content.text("声路·选句")
+	view.get_node("PlaceHeading").text = Content.text("声路·选位")
 	var sentences: Array = engine.Sentences()
-	_sound_choice = [0, "foyer"]
+	_sound_choice = [0, str(Content.SOUND_SPOTS.keys()[0])]
 	_sound_buttons = {"sentence": [], "spot": []}
 	var sentence_row := view.get_node("Sentences") as VBoxContainer
 	for i in sentences.size():
@@ -1575,9 +1580,9 @@ func sound_test() -> void:
 		_sound_buttons.sentence.append(b)
 		sentence_row.add_child(b)
 	var where_row := view.get_node("Places") as HBoxContainer
-	var places := [["foyer", "门边"], ["R08", "R-08"], ["hall", "铜口旁"], ["pantry", "备餐间"], ["R05", "R-05"]]
+	var places: Array = Content.SOUND_SPOTS.keys()
 	for i in places.size():
-		var b := Paper.button(places[i][1], _sound_pick.bind("spot", i, places[i][0]))
+		var b := Paper.button(str(Content.SOUND_SPOTS[places[i]]), _sound_pick.bind("spot", i, places[i]))
 		b.toggle_mode = true
 		b.button_pressed = i == 0
 		_sound_buttons.spot.append(b)
@@ -1604,13 +1609,13 @@ func sound_test() -> void:
 		_sound_table()
 
 func _sound_table() -> void:
-	var body := open_modal("声路试验 · 第 %d 轮" % sound_rounds, Vector2(820, 470), "card")
+	var body := open_modal(Content.text("声路·轮标题", {"轮": sound_rounds}), Vector2(820, 470), "card")
 	var view := _ui_content("SoundResults", body)
-	view.get_node("Sentence").text = "铜口说：“%s”" % sound_sentence()
+	view.get_node("Sentence").text = Content.text("声路·铜口说", {"句": sound_sentence()})
 	var grid := view.get_node("Grid") as GridContainer
 	for h in last_sound:
 		grid.add_child(Paper.label(heard_where(h.who), 18))
-		grid.add_child(Paper.label(Content.PERSON_NAMES[h.who] if h.who != "detective" else "你", 18))
+		grid.add_child(Paper.label(Content.PERSON_NAMES[h.who] if h.who != "detective" else Content.text("声路·你"), 18))
 		grid.add_child(Paper.label(str(h.text), 18))
 		grid.add_child(Paper.label(str(h.direction), 18))
 	add_footer([["看证物卡", open_card.bind("E8")], ["返回现场", close_modal]])
@@ -1632,8 +1637,12 @@ func talk(who: String) -> void:
 		_invite_hand(who)
 
 func open_tube_menu() -> void:
-	var body := open_modal("铜口", Vector2(620, 420), "menu")
+	var body := open_modal(Content.text("铜口·标题"), Vector2(620, 420), "menu")
 	var view := _ui_content("TubeMenu", body)
+	view.get_node("Introduction").text = Content.text("铜口·描述")
+	view.get_node("Choices/Examine").text = Content.text("铜口·检视")
+	view.get_node("Choices/Answer").text = Content.text("铜口·作答")
+	view.get_node("Choices/Rest").text = Content.text("铜口·歇息")
 	_ui_action(view.get_node("Choices/Examine"), open_card.bind("E8"))
 	_ui_action(view.get_node("Choices/Answer"), _tube_answer)
 	_ui_action(view.get_node("Choices/Rest"), _tube_rest)
@@ -1669,13 +1678,14 @@ func _answer_pick() -> Dictionary:
 	if _closing: return {}
 	_modal_result = null
 	_answer_choice = {"say": "", "show": ""}
-	var body := open_modal("始业之答", Vector2(900, 820), "answer")
+	var body := open_modal(Content.text("答辩·标题"), Vector2(900, 820), "answer")
 	# 题目与当前所选的陈述、出示固定在顶部；下面的列表单独滚动，不与题目叠压。
 	var column: VBoxContainer = modal_root.get_meta("column")
 	var header := _ui_content("AnswerHeader", column) as VBoxContainer
 	column.move_child(header, 2)
-	var questions := {1: "门，是谁闩上的？", 2: "门外，有人呼喊吗？", 3: "他喊的是什么？", 4: "闩门的人，为何不听门边那位女士的？"}
-	header.get_node("Question").text = "铜口问：[b]%s[/b]" % questions.get(int(answer_state.get("step", 1)), "")
+	var verdict: Dictionary = Content.VERDICTS.get(str(int(answer_state.get("step", 1))), {})
+	header.get_node("Question").text = Content.text("答辩·题头", {"问题": verdict.get("question", "")})
+	header.get_node("Instructions").text = Content.text("答辩·说明")
 	_answer_summary = header.get_node("Summary")
 	_answer_list = _ui_content("AnswerList", body) as VBoxContainer
 	var footer_actions := []
@@ -1695,8 +1705,8 @@ func _answer_pick() -> Dictionary:
 func _answer_refresh() -> void:
 	var said := str(_answer_choice.say)
 	var shown := str(_answer_choice.show)
-	var line: String = "陈述：" + (Content.STATEMENTS[said] if said != "" else "（未选）") + "\n"
-	line += "出示：" + (str(Content.EVIDENCE[shown].name) if shown != "" else "（未选）")
+	var line: String = Content.text("答辩·陈述行", {"内容": Content.STATEMENTS[said] if said != "" else Content.text("答辩·未选")}) + "\n"
+	line += Content.text("答辩·出示行", {"内容": str(Content.EVIDENCE[shown].name) if shown != "" else Content.text("答辩·未选")})
 	_answer_summary.text = line
 	if is_instance_valid(_answer_submit):
 		_answer_submit.disabled = shown == "" or said == ""
@@ -1716,7 +1726,7 @@ func _answer_show_list(kind: String) -> void:
 	if kind == "say":
 		var options := statements()
 		if options.is_empty():
-			_answer_list.add_child(Paper.label("你还没有可以陈述的结论。重演一次，设定过的处境就能说出口。", 18, Paper.MUTED))
+			_answer_list.add_child(Paper.label(Content.text("答辩·无陈述"), 18, Paper.MUTED))
 		for key in options:
 			var b := Paper.button(Content.STATEMENTS[key], _answer_select.bind("say", key), 19)
 			b.toggle_mode = true
@@ -1724,7 +1734,7 @@ func _answer_show_list(kind: String) -> void:
 			_answer_list.add_child(b)
 	else:
 		if examined.is_empty():
-			_answer_list.add_child(Paper.label("笔记本里还没有东西。", 18, Paper.MUTED))
+			_answer_list.add_child(Paper.label(Content.text("答辩·无笔记"), 18, Paper.MUTED))
 		for id in Content.EVIDENCE:
 			if examined.has(id):
 				var b := Paper.button(Content.EVIDENCE[id].name, _answer_select.bind("show", id), 19)
@@ -1749,24 +1759,24 @@ func _save_chapter_end(rested: bool) -> void:
 	if file:
 		file.store_string(JSON.stringify(data, "\t"))
 
-func _ending_card(title: String, line: String) -> void:
+func _ending_card(kind: String) -> void:
 	ended = true
-	var body := open_modal(title, Vector2(720, 420), "ending")
+	var body := open_modal(Content.text("结局·%s·标题" % kind), Vector2(720, 420), "ending")
 	var view := _ui_content("Ending", body)
-	view.get_node("Outcome").text = line
+	view.get_node("Outcome").text = Content.text("结局·%s·正文" % kind)
 	var hook_text := []
 	for key in ["detective", "huo", "shen", "su"]:
 		if int(engine.Hooks(key)) > 0:
 			hook_text.append(Content.PERSON_NAMES[key])
-	view.get_node("Hooks").text = "留在恶魔那里的钩：%s" % ("无" if hook_text.is_empty() else "、".join(hook_text))
+	view.get_node("Hooks").text = Content.text("结局·钩", {"名单": Content.text("结局·无") if hook_text.is_empty() else "、".join(hook_text)})
 	var kept := []
 	for key in ["detective", "huo", "shen", "su"]:
 		if int(engine.Hooks(key)) == 0:
-			kept.append(Content.PERSON_NAMES[key] if key != "detective" else "你自己")
-	view.get_node("Kept").text = "你没有交出的：%s" % ("无" if kept.is_empty() else "、".join(kept))
-	view.get_node("Continue").text = "按 C 进入第二章；按 R 重新开始。" if flags.has("door_open") else "按 R 重新开始。"
+			kept.append(Content.PERSON_NAMES[key] if key != "detective" else Content.text("结局·你自己"))
+	view.get_node("Kept").text = Content.text("结局·未交", {"名单": Content.text("结局·无") if kept.is_empty() else "、".join(kept)})
+	view.get_node("Continue").text = Content.text("结局·续章" if flags.has("door_open") else "结局·重开")
 	modal_kind = "ending"
-	stage = "ended"
+	stage = Content.STAGE_EVENTS["章末"]
 
 # ============================================================ test support ===
 ## 流程跳转回归使用：直接把局面摆到某个状态，不走完整游玩。

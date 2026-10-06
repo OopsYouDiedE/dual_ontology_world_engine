@@ -470,7 +470,7 @@ public sealed partial class Game
         }
     }
 
-    public static string BuildText(Build b) => b switch { Build.Small => "瘦小的", Build.Large => "高大的", _ => "中等身量的" };
+    public static string BuildText(Build b) => Chapter2Design.BuildFigure(b);
 }
 
 public sealed record GameOptions
@@ -497,22 +497,11 @@ public static class Chapter2Content
 {
     // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
     public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
-    public static string DayName(int day) => day switch
-    {
-        2 => "始业日", 3 => "翌日", 4 => "第三日", _ => $"第{day - 1}日",
-    };
-    public static string SlotName(int day, Slot slot) => (day, slot) switch
-    {
-        (2, Slot.Morning) => "上午（集合）",
-        (2, Slot.Forenoon) => "上午（首课）",
-        _ => Names.Of(slot),
-    };
+    public static string DayName(int day) => Chapter2Design.DayName(day);
+    public static string SlotName(int day, Slot slot) => Chapter2Design.SlotDisplay(day, slot);
     public static string TimeName(int day, Slot slot) => $"{DayName(day)} · {SlotName(day, slot)}";
-    public const string Intro =
-        "始业日上午，始业之问已经答毕。铜口随即召集全体到中央厅，开始首课。";
-
-    public const string Instructions =
-        "读不耗时：细看、询问、读板与重演可以慢慢来。写或等待推进一阵，其余十五人也各按自己的认知行动。日程有清晨、上午、午间、下午、傍晚与夜里六个时段；始业日上午先集合，再上首课。夜里的事通过痕迹、身影与转述得知。第三日清晨，十六人在誓约庭决定名录库归谁、怎么开。";
+    public static string Intro => Chapter2Design.Intro;
+    public static string Instructions => Chapter2Design.Instructions;
 }
 
 /// <summary>第二章正式剧本入口；原人物、世界与剧情直接编译在本程序集。</summary>

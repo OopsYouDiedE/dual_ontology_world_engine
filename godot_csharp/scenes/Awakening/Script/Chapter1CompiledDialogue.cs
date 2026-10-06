@@ -2,7 +2,7 @@ using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Awakening;
 
-/// <summary>Generated from ch1_awakening.py by tools/compile_story.py.</summary>
+/// <summary>Generated from chapter_01.story by tools/compile_story.py.</summary>
 public static class Chapter1CompiledDialogue
 {
     private const string Json = """

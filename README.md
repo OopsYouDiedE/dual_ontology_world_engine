@@ -9,7 +9,7 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 - [主控设计与验收规范（重制版）](docs/design-standard.md)：重制分支的唯一设计依据。[设计总纲](docs/design-standard.md#设计总纲)给出核心判断（信念重演为核心动词，真话之敌、记忆之价为另两根支柱）与删除测试；[第二部分](docs/design-standard.md#第二部分第一章门的这一侧)是第一章《门的这一侧》的真相、题面、12 件证物、重演变量、解空间、触物回忆与始业之答；[第三部分](docs/design-standard.md#第三部分系统与界面)是 Core 映射与界面；[第五部分](docs/design-standard.md#第五部分实施与验收)是实施与验收。
 - `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Title/Title.tscn` 选章，第一章经 `scenes/Main2D.tscn` 加载[《门的这一侧》](godot_csharp/scenes/Awakening/README.md)：生活翼现场调查、昨夜重演（跑在 Core 上的感知—认知—决策推演，墨影回放与四人心声气泡）、触物回忆与钩、始业之答与退出考题。实现报告与自检截图在 `artifacts/remake-belief-replay/`；第一次独立盲玩（ch1-blind-01）的结论与第三轮修订见[设计第二部分 §9](docs/design-standard.md#9-第一次独立盲玩ch1-blind-01与第三轮修订)。
 - 旧第一章《未归的红筹》已退出运行目录；仍在使用的语言设置与翻译资源原样迁至 `godot_csharp/scenes/Shared/Locale/`。
-- 第二章入口为 `godot_csharp/scenes/Chapter2/Game/Chapter2Game.tscn`，须从第一章的真实会话继续。正式作者源为 `godot_csharp/scenes/Chapter2/Script/chapter_02.world`，生成 `generated_chapter_02.json`；C# `Game` 保留人物自主行动与案件推演，`Chapter2InteractionSession` 负责场景事件、候选与剧情推进，Godot 负责几何、输入和呈现。迁移后的实机验证交由 Gemini，尚待结果。
+- 第二章入口为 `godot_csharp/scenes/Chapter2/Game/Chapter2Game.tscn`，须从第一章的真实会话继续。正式作者源为 `godot_csharp/scenes/Chapter2/Script/chapter_02.story`，生成 `generated_chapter_02.json`；C# `Game` 保留人物自主行动与案件推演，`Chapter2InteractionSession` 负责场景事件、候选与剧情推进，Godot 负责几何、输入和呈现。迁移后的实机验证交由 Gemini，尚待结果。
 - [宣传前三场人物动作图集](godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)：每人 111 帧位，含 Godot 资源与各方向动作规范；在[剧情打样场景](godot_csharp/scenes/Story/README.md)中验证。
 - [21人32×48正面站立帧](godot_csharp/ShareAsset/Internal/Characters/README-zh.md)：原生像素角色资源与日常携带规范。
 - 正式第一、二章场内动作使用 `godot_csharp/ShareAsset/Internal/Characters/AnimeCast/` 的半 Q 人物：放大头部与上身、缩短腿部，由 `godot_csharp/tools/build_anime_cast.py` 注册。台词左侧另用 `DialogueCast/` 的正常比例上半身立绘，六种情绪配合姿势，由 `godot_csharp/tools/build_dialogue_cast.py` 注册。两套高分辨率透明源图及提示词分别归 `godot_csharp/AssetsSource/Internal/Characters/` 下的同名目录。地图、脚底坐标与碰撞尺度保持原有逻辑。
@@ -31,8 +31,8 @@ dotnet run --project godot_csharp/scenes/Awakening/check/ReplayCheck          # 
 
 两章都使用独立 Core 与无 Godot 依赖的章节运行时，作者入口如下：
 
-- 第一章：[ch1_awakening.py](godot_csharp/scenes/Awakening/Script/ch1_awakening.py) 是对白、分支、证物内容和现场热点的生产源；[Chapter1Script.cs](godot_csharp/scenes/Awakening/Script/Chapter1Script.cs) 保留调查流程、世界初始化与 `Night/` 推演。编译器生成纯 C# 对白数据、内容 JSON 和宿主布局 JSON，由同目录工程编入正式程序集。
-- 第二章：[chapter_02.world](godot_csharp/scenes/Chapter2/Script/chapter_02.world) 声明房间、人物画像、物件、交互点、扁平候选与剧情台词；[Chapter2Script.cs](godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs) 及 `Prototype/` 保留 Core 规则、人物策略、行动、重演和结局算法。
+- 第一章：[chapter_01.story](godot_csharp/scenes/Awakening/Script/chapter_01.story) 是对白、分支、证物内容和现场热点的生产源；[Chapter1Script.cs](godot_csharp/scenes/Awakening/Script/Chapter1Script.cs) 保留调查流程、世界初始化与 `Night/` 推演。编译器生成纯 C# 对白数据、内容 JSON 和宿主布局 JSON，由同目录工程编入正式程序集。
+- 第二章：[chapter_02.story](godot_csharp/scenes/Chapter2/Script/chapter_02.story) 声明房间、人物画像、物件、交互点、扁平候选与剧情台词；[Chapter2Script.cs](godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs) 及 `Prototype/` 保留 Core 规则、人物策略、行动、重演和结局算法。
 
 两个章节工程仍编译为 `Chapter1Script.dll`、`Chapter2Script.dll`。第二章作者文件先经 AST 编译为 JSON，运行时从该文件读取声明并绑定真实 Core 对象；对白框仅消费 C# 发出的语义事件。
 
@@ -43,11 +43,13 @@ python godot_csharp/tools/compile_story.py
 python godot_csharp/tools/compile_story.py --check
 ```
 
-世界脚本前端位于 `godot_csharp/tools/world_script.py`，使用 Python 风格声明加三反引号对白的 `.world` 文件；它只解析 AST，不执行作者代码。第二章正式文件位于 `scenes/Chapter2/Script/chapter_02.world`，示例仍位于 `scenes/Shared/Story/Examples/WorldScript/`。玩家选项与 NPC 反应平铺声明；Core 检查可用性并为 NPC 选择适用反应。第二章借用第一章运行中的 Core 会话及其人物实体和认知，不从存档重建。
+世界脚本前端位于 `godot_csharp/tools/world_script.py`，使用 Python 风格声明加三反引号对白的 `.world` 文件；它只解析 AST，不执行作者代码。统一剧本语言 `.story` 由 `godot_csharp/tools/story_script.py` 译成同一份 IR（设计草案见 `artifacts/unified-story-script/spec-draft.md`）；第二章正式文件位于 `scenes/Chapter2/Script/chapter_02.story`，其中人物、物件、文案、请求已用 `.story` 写法，选项、反应、场面、交互点暂在末尾“原生”块，示例仍位于 `scenes/Shared/Story/Examples/WorldScript/`。玩家选项与 NPC 反应平铺声明；Core 检查可用性并为 NPC 选择适用反应。第二章借用第一章运行中的 Core 会话及其人物实体和认知，不从存档重建。
 
 ```powershell
 python godot_csharp/tools/world_script.py godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world -o godot_csharp/scenes/Shared/Story/Examples/WorldScript/generated_world.json
-python godot_csharp/tools/world_script.py godot_csharp/scenes/Chapter2/Script/chapter_02.world --external-chapter awakening -o godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json
+python godot_csharp/tools/story_script.py godot_csharp/scenes/Chapter2/Script/chapter_02.story --external-chapter awakening -o godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json
+python godot_csharp/tools/story_script.py godot_csharp/scenes/Chapter2/Script/chapter_02.story --external-chapter awakening -o godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json --check
+python godot_csharp/tools/check/test_story_script.py
 ```
 
 构建 Godot 工程后，可从编辑器运行 `res://scenes/Shared/Story/Examples/WorldScript/Host/WorldScriptPreview.tscn` 查看作者预览；正式第二章请从标题页进入第一章，再经章节结束进入第二章。跨进程存档恢复和第一章统一 `.world` 迁移尚未完成。
@@ -94,7 +96,7 @@ Core 使用 Essence–Projection 模型及嵌套行动值调度，独立于 Godo
 
 ## 架构与文件归属
 
-剧情新增与修复以当前《安眠者有福》的正式章节为准。第一章编辑 `ch1_awakening.py` 并生成内容；第二章编辑 `chapter_02.world` 并生成 JSON。旧红筹案与 `.dialogue` 编辑路径不再作为正式运行或验收入口；第二章迁移须由 Gemini 完成构建、流程和实机验证后才可认定通过。
+剧情新增与修复以当前《安眠者有福》的正式章节为准。第一章编辑 `chapter_01.story` 并生成内容；第二章编辑 `chapter_02.story` 并生成 JSON。旧红筹案与 `.dialogue` 编辑路径不再作为正式运行或验收入口；第二章迁移须由 Gemini 完成构建、流程和实机验证后才可认定通过。
 
 `csharp/` 为独立世界引擎，构建方式见 [Core README](csharp/README.md)。`godot_csharp/` 为游戏宿主，通过 `ProjectReference` 单向引用 Core；房内几何、碰撞、实时表现、UI 与具体游戏内容留在宿主。
 

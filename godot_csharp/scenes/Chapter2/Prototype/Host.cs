@@ -10,17 +10,8 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 public sealed partial class Game
 {
     /// <summary>玩家能说出口的规矩写法（总纲 §四.2：从具体写法中选，不在格子里拼）。</summary>
-    public static readonly (Card Card, string Text)[] CaseWordings =
-    [
-        (new Card(0, 2, 0, 2, 2), "急病夜取一份，次日补记；补记者不算私取。"),
-        (new Card(0, 1, 9, 4, 0), "入夜后，谁也不得入后勤院。"),
-        (new Card(0, 1, 0, 3, 3), "夜里取粮须两人在场，两人签名。"),
-    ];
-    public static readonly (Card Card, string Text)[] ArchiveWordings =
-    [
-        (new Card(0, 0, 8, 0, 3), "名录库须本人亲取，两人见证签名。"),
-        (new Card(0, 0, 8, 4, 1), "名录库只在白天开；本人亲取，记入台账。"),
-    ];
+    public static readonly (Card Card, string Text)[] CaseWordings = [.. CardKit.CaseWordings];
+    public static readonly (Card Card, string Text)[] ArchiveWordings = [.. CardKit.ArchiveWordings];
 
     public static string? WordingOf(Card card) =>
         CaseWordings.Concat(ArchiveWordings).Where(w => w.Card == card).Select(w => w.Text).FirstOrDefault();

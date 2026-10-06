@@ -28,7 +28,8 @@
     "hall": "活动厅",
     "pantry": "备餐间",
     "foyer": "门厅",
-    "lounge": "门外"
+    "lounge": "门外",
+    "empty": "空房"
   },
   "VARIABLES": [
     {
@@ -140,6 +141,31 @@
     "E10": "沈鼎：“是我喂的。……这罐子，不是昨天才养的。”",
     "E11": "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。"
   },
+  "SOUND_SPOTS": {
+    "foyer": "门边",
+    "R08": "R-08",
+    "hall": "铜口旁",
+    "pantry": "备餐间",
+    "R05": "R-05"
+  },
+  "COMPANION_SPOTS": {
+    "su": "R08",
+    "huo": "hall",
+    "shen": "foyer"
+  },
+  "SPOT_ORDER": [
+    "R08",
+    "hall",
+    "foyer",
+    "pantry",
+    "R05"
+  ],
+  "SOLE_TARGETS": {
+    "detective": "你自己的靴底",
+    "huo": "霍铎的鞋",
+    "shen": "沈鼎的鞋",
+    "su": "苏泠的鞋"
+  },
   "EVIDENCE": {
     "E1": {
       "name": "闩上的隔离门",
@@ -149,7 +175,30 @@
       "experiment": "拔闩推门",
       "experiment_result": "内闩拔得出来。门推不动——外侧的横闩卡着。\n你把内闩插回原处。",
       "recall": "detective",
-      "picture": "door"
+      "picture": "door",
+      "room": "foyer",
+      "world_facts": [
+        {
+          "tag": "内闩",
+          "truth": "InnerBoltDown"
+        },
+        {
+          "tag": "外闩",
+          "value": 1
+        },
+        {
+          "tag": "猫眼糊灰",
+          "value": 1
+        }
+      ],
+      "compare_place": "门厅",
+      "compare_region": "门厅那扇门上",
+      "on_examine": "unlock_replay",
+      "recall_fragment": "霍铎说闩。我就闩了。我信他。",
+      "recall_confirms": [
+        5,
+        6
+      ]
     },
     "E2": {
       "name": "门底的灰与木楔",
@@ -158,7 +207,24 @@
       "facts": "门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n门底边有一道擦痕。",
       "experiment": "比对木楔与灰扇",
       "experiment_result": "楔尖的新磨痕，对得上门底那道擦痕；楔背的厚度，与灰扇窄端的宽度一样。\n两者吻合的，是一道窄缝。",
-      "picture": "wedge"
+      "picture": "wedge",
+      "room": "foyer",
+      "world_facts": [
+        {
+          "tag": "扇形灰",
+          "truth": "AshFan"
+        },
+        {
+          "tag": "楔面沾灰",
+          "truth": "WedgeTopSooted"
+        },
+        {
+          "tag": "楔在角落",
+          "truth": "WedgeInCorner"
+        }
+      ],
+      "compare_place": "门厅",
+      "compare_region": "门厅墙角与门底一带"
     },
     "E3": {
       "name": "灰上的靴印",
@@ -167,7 +233,17 @@
       "facts": "灰上有一枚马球靴印，踩得很清楚。\n鞋尖朝着门侧的插闩。\n鞋跟一端被什么东西压过。",
       "experiment": "比对鞋底",
       "experiment_result": "你抬起脚。\n马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。",
-      "picture": "print"
+      "picture": "print",
+      "room": "foyer",
+      "world_facts": [
+        {
+          "tag": "马球靴印朝插闩",
+          "value": 1
+        }
+      ],
+      "compare_place": "门厅",
+      "compare_region": "门厅插闩下方的地面",
+      "on_examine": "unlock_replay"
     },
     "E4": {
       "name": "门底的湿布",
@@ -175,7 +251,21 @@
       "source": "门厅 · 门底",
       "facts": "一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\n布的一端压住了靴印的鞋跟边缘。",
       "help": "shen",
-      "picture": "cloth"
+      "picture": "cloth",
+      "room": "foyer",
+      "world_facts": [
+        {
+          "tag": "沿门底压成直线",
+          "truth": "Cloth",
+          "equals": 1
+        },
+        {
+          "tag": "压住鞋跟",
+          "truth": "ClothOverHeel"
+        }
+      ],
+      "compare_place": "门厅",
+      "compare_region": "门厅门底"
     },
     "E5": {
       "name": "门框旁的音叉",
@@ -184,7 +274,21 @@
       "facts": "地上一把纯银音叉，柄上刻着“S.L.”。\n门框齐肩高的地方，有一个很小的凹痕。",
       "help": "su",
       "recall": "su",
-      "picture": "fork"
+      "picture": "fork",
+      "room": "foyer",
+      "mind_name": "音叉",
+      "world_facts": [
+        {
+          "tag": "门框凹痕",
+          "truth": "FrameDent"
+        }
+      ],
+      "compare_place": "门厅",
+      "compare_region": "门厅门框一带",
+      "recall_fragment": "门边……有人在喊开门。我想开门让他进来。",
+      "recall_confirms": [
+        1
+      ]
     },
     "E6": {
       "name": "苏泠的乐谱",
@@ -192,7 +296,20 @@
       "source": "R-08 · 书桌",
       "facts": "一页手写乐谱，只有一小节。\n前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\n旁注：“门外？”\n下方换了一种墨迹：“他们关了门。”",
       "help": "su",
-      "picture": "score"
+      "picture": "score",
+      "room": "R08",
+      "world_facts": [
+        {
+          "tag": "第一行",
+          "truth": "ScoreLine1"
+        },
+        {
+          "tag": "第二行",
+          "truth": "ScoreLine2"
+        }
+      ],
+      "compare_place": "R-08 书桌",
+      "compare_region": "R-08 的书桌上"
     },
     "E7": {
       "name": "霍铎的石板",
@@ -201,7 +318,26 @@
       "facts": "一块小石板，粉笔速记两行。\n第一行：G：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。",
       "help": "huo",
       "recall": "huo",
-      "picture": "slate"
+      "picture": "slate",
+      "room": "hall",
+      "world_facts": [
+        {
+          "tag": "第一行",
+          "truth": "SlateLine1"
+        },
+        {
+          "tag": "第二行",
+          "truth": "SlateLine2"
+        }
+      ],
+      "compare_place": "活动厅长桌",
+      "compare_region": "活动厅长桌上",
+      "recall_fragment": "铜口里的声音很清楚……“守在铜口旁，等我下一次通知。”——他再也没有来。",
+      "recall_confirms": [
+        2,
+        3,
+        4
+      ]
     },
     "E8": {
       "name": "铜口与管接头",
@@ -209,7 +345,14 @@
       "source": "活动厅北墙铜口 · 活动厅与 R-08 之间的墙 · 隔离门北侧门框",
       "facts": "铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\n一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\n那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。",
       "experiment": "声路试验",
-      "picture": "tube"
+      "picture": "tube",
+      "room": "hall",
+      "world_facts": [
+        {
+          "tag": "接头松动",
+          "value": 1
+        }
+      ]
     },
     "E9": {
       "name": "四只杯子",
@@ -217,7 +360,16 @@
       "source": "备餐间 · 水槽",
       "facts": "水槽里四只用过的杯子，各不相同：\n一只青瓷小杯，杯底没有糖渍；\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n一只缺口白杯；\n一只粗瓷大杯。",
       "help": "shen",
-      "picture": "cups"
+      "picture": "cups",
+      "room": "pantry",
+      "world_facts": [
+        {
+          "tag": "按人放糖",
+          "truth": "CupSugar"
+        }
+      ],
+      "compare_place": "备餐间水槽",
+      "compare_region": "备餐间水槽一带"
     },
     "E10": {
       "name": "酵种罐",
@@ -226,7 +378,18 @@
       "facts": "罐里的酵种还活着，冒着细泡。\n罐壁上一层摞一层干结的旧面痕，数不清。",
       "help": "shen",
       "recall": "shen",
-      "picture": "jar"
+      "picture": "jar",
+      "room": "pantry",
+      "world_facts": [
+        {
+          "tag": "层层旧面痕",
+          "value": 1
+        }
+      ],
+      "recall_fragment": "又该喂了。阿泠的茶不放糖，老霍的放两勺……",
+      "recall_confirms": [
+        6
+      ]
     },
     "E11": {
       "name": "架上的无尘方框",
@@ -234,14 +397,28 @@
       "source": "R-05 至 R-08 · 书架",
       "facts": "四间宿舍的书架都积着灰。灰上留着几块干净的长方形，像相框和书立过很久的位置。\nR-05 的架沿上有半枚手印。",
       "experiment": "比对手掌轮廓",
-      "picture": "shelf"
+      "picture": "shelf",
+      "room": "R05",
+      "world_facts": [
+        {
+          "tag": "窄手印",
+          "value": 1
+        }
+      ]
     },
     "E12": {
       "name": "侦探的外衣口袋",
       "place": "R-05",
       "source": "R-05 · 衣架",
       "facts": "衣架上挂着你的深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。",
-      "picture": "coat"
+      "picture": "coat",
+      "room": "R05",
+      "world_facts": [
+        {
+          "tag": "放大镜",
+          "value": 1
+        }
+      ]
     }
   },
   "LIFE_TRACES": {
@@ -363,5 +540,1878 @@
       "kind": "person",
       "target": "su"
     }
+  },
+  "OWN_OBJECTS": {
+    "huo": "E7",
+    "su": "E5",
+    "shen": "E10"
+  },
+  "RECALL_OBJECTS": [
+    "E1",
+    "E5",
+    "E7",
+    "E10"
+  ],
+  "ACQUAINTANCE_EVIDENCE": [
+    "E9",
+    "E10",
+    "E11",
+    "E12"
+  ],
+  "TEXT": {
+    "章名": "门的这一侧",
+    "认知·登船·名": "登船",
+    "认知·登船·详": "只记得上船。",
+    "认知·欲望·前缀": "想要的：",
+    "窗口标题": "安眠者有福 · 门的这一侧",
+    "界面·地点前缀": "生活翼 ·",
+    "界面·键位·检视": "E / 点击  检视",
+    "界面·键位·笔记本": "Tab  笔记本",
+    "界面·键位·重演": "R  重演",
+    "结局·完成·标题": "门的这一侧 · 完",
+    "结局·完成·正文": "门开了。门外是起居厅。",
+    "结局·歇息·标题": "门的这一侧 · 歇息",
+    "结局·歇息·正文": "你们留在生活翼。门一直闩着。",
+    "结局·钩": "留在恶魔那里的钩：{名单}",
+    "结局·未交": "你没有交出的：{名单}",
+    "结局·无": "无",
+    "结局·你自己": "你自己",
+    "结局·续章": "按 C 进入第二章；按 R 重新开始。",
+    "结局·重开": "按 R 重新开始。",
+    "提示·比对站位": "请在 R-05 架沿旁，与实际到场且有空的人逐人比对。",
+    "旁白·邀请距离": "走到同伴面前交谈，才能邀请他到 R-05 书架旁。",
+    "旁白·正忙": "{人名}现在正忙，等他做完眼前的事，再当面邀请。",
+    "旁白·已在架沿": "{人名}已在架沿旁；你也到这里，打开证物卡逐人比对。",
+    "旁白·路不通": "{人名}：到 R-05 架沿的路走不通，先让出通道，再来叫我。",
+    "旁白·正赶去": "{人名}正步行去 R-05 书架旁。你可以自行过去，再逐人比对。",
+    "旁白·已到": "{人名}已到 R-05 架沿旁，等你来比对。",
+    "旁白·停下": "{人名}停下了；请到他面前重新邀请。",
+    "旁白·被挡": "{人名}的路被挡住了，已停步。让出通道后，可以当面再次邀请。",
+    "报名·标题": "报上名字",
+    "报名·提示": "三个人在等你开口。登船之前，你叫什么？",
+    "报名·占位": "你的名字",
+    "报名·确认": "就叫这个",
+    "报名·默认名": "侦探",
+    "公告框·标题": "活动厅公告框",
+    "公告框·引言": "框里压着一张新抄的纸，字迹端正，墨色很新。题头写着：学园守则。",
+    "笔记·空": "还没有记下任何东西。",
+    "笔记·公告框": "活动厅公告框（学园守则）",
+    "笔记·回忆所得": "[b]回忆所得[/b]",
+    "笔记·已试": "已试",
+    "铜口·标题": "铜口",
+    "铜口·描述": "铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。",
+    "铜口·检视": "检视铜口与铜牌",
+    "铜口·作答": "回答始业之问",
+    "铜口·歇息": "不作答，在生活翼歇息",
+    "鞋底·标题": "比对鞋底",
+    "鞋底·huo": "霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。",
+    "鞋底·shen": "沈鼎的鞋底：千层布底，没有纹。",
+    "鞋底·su": "苏泠的鞋底：软底小皮鞋，比灰上那枚短一截。",
+    "鞋底·提示": "灰上那枚马球靴印。拿谁的鞋底来比？",
+    "声路·标题": "声路试验",
+    "声路·轮标题": "声路试验 · 第 {轮} 轮",
+    "声路·说明": "请铜口说一句话。你和三位同伴分别站在铜口旁、R-08、门边、备餐间、R-05 中的四处听。",
+    "声路·选句": "[b]让铜口说哪一句[/b]",
+    "声路·选位": "[b]你自己站在哪里听[/b]",
+    "声路·铜口说": "铜口说：“{句}”",
+    "声路·你": "你",
+    "答辩·标题": "始业之答",
+    "答辩·题头": "铜口问：[b]{问题}[/b]",
+    "答辩·说明": "陈述一句结论，再出示一件能支撑它的东西。",
+    "答辩·陈述行": "陈述：{内容}",
+    "答辩·出示行": "出示：{内容}",
+    "答辩·未选": "（未选）",
+    "答辩·无陈述": "你还没有可以陈述的结论。重演一次，设定过的处境就能说出口。",
+    "答辩·无笔记": "笔记本里还没有东西。",
+    "重演·标题": "昨夜重演",
+    "重演·提示": "设定当时的处境与人心，让昨夜重演一次。",
+    "重演·回忆所证": "✓ 回忆所证（{人名}）",
+    "重演·昨夜": "昨夜",
+    "重演·门开": "门：开着，木楔撑住",
+    "重演·门闩": "门：闩上了",
+    "重演·门关": "门：关着",
+    "重演·烟灰": "烟灰进了门厅",
+    "称呼·detective·亲近": "我的侦探",
+    "称呼·detective·生疏": "侦探先生",
+    "称呼·huo·亲近": "霍铎",
+    "称呼·huo·生疏": "霍先生",
+    "称呼·shen·亲近": "沈鼎",
+    "称呼·shen·生疏": "沈师傅",
+    "称呼·su·亲近": "泠",
+    "称呼·su·生疏": "苏小姐",
+    "旁白·碰过·huo": "霍铎看上去有点恍惚。粉笔灰沾在他的指节上。",
+    "旁白·碰过·su": "苏泠的手指一直在膝上轻轻敲着，像在数拍子。",
+    "旁白·碰过·shen": "沈鼎在擦手。他看了一眼架上的罐子，又转开了。",
+    "旁白·没碰·huo": "霍铎在铜口旁站着，石板摆得歪了一点。",
+    "旁白·没碰·su": "苏泠站在门边，音叉换了个位置。",
+    "旁白·没碰·shen": "沈鼎在揉面。酵种罐挪过位置。",
+    "卡片·比对自己": "比对自己的手掌轮廓",
+    "卡片·比对他人": "与{人名}逐人比对手掌轮廓",
+    "卡片·再做一次": "（再做一次）",
+    "卡片·请看看": "请{人名}看看",
+    "卡片·触碰自己": "触碰插闩，试着回想（守则第 1 条）",
+    "卡片·触碰他人": "请{人名}触碰它，回想（守则第 1 条）",
+    "卡片·返回": "返回现场",
+    "卡片·提示·已比对": "已经比对过。",
+    "卡片·提示·试验已做": "已经完成这项试验。",
+    "卡片·提示·已请看过": "同伴已经核验过。",
+    "卡片·提示·不可回想": "此人已经作出取舍，或正忙。",
+    "笔记·手印·进度": "手掌比对：{数}/4。已比对：{名单}。",
+    "笔记·手印·尚无": "尚无",
+    "笔记·手印·较窄": "半枚手印，比已比对者的手掌窄；其他人的尚未核验。",
+    "笔记·手印·待比对": "待比对：{名单}。请在 R-05 架沿旁先比自己的手；到同伴面前交谈，逐人邀请来这里，再在现场比对。",
+    "笔记·声路": "声路试验：{列表}",
+    "笔记·声路·一条": "{人名}（{地点}）听到 {文字} {方向}",
+    "笔记·试验": "试验：{结果}",
+    "笔记·回忆": "回忆（{人名}）：{片段}",
+    "笔记·不碰": "{人名}没有碰它：“{想法}”",
+    "笔记·被动过": "它被人拿起过，又放回去了，摆得和原来不一样。",
+    "声响·无": "（什么也听不到）",
+    "声响·完整": "{整句}",
+    "声响·隔门": "（隔着门，发闷）{整句}",
+    "声响·句尾": "{句尾}",
+    "声响·低语": "（有人在说话，听不清）",
+    "声响·仅警铃": "（只有警铃）",
+    "方位·完整": "从铜口里。",
+    "方位·句尾·foyer": "从那边。（指向门）",
+    "方位·句尾·R08": "从墙那边。（指向门厅的方向）",
+    "方位·低语": "从活动厅那边。",
+    "心声·想去拿": "它说的那句话，一直在耳朵里。我想要{想要}。……去看看{物名}。",
+    "心声·已定": "那件东西，我已经拿过主意了。",
+    "心声·读过守则": "守则第一条我读过。手头的事要紧。",
+    "心声·手头有事": "手头的事要紧。",
+    "取舍·碰·听劝": "你说碰。……我信你。碰。",
+    "取舍·碰·不听劝·huo": "你说别碰。……图纸值这个价。",
+    "取舍·碰·不听劝": "你劝我别碰。……可我们昨天才认识。我想要{想要}。",
+    "取舍·碰·知守则·huo": "守则第一条我读了。果，我自己担。……图纸值这个价。",
+    "取舍·碰·知守则": "自负其果，我读到了。可我想要{想要}——想得顾不上了。",
+    "取舍·碰": "它说的是真的。我想要{想要}。碰一下，就知道了。",
+    "取舍·不碰·听劝": "你说别碰，那就不碰。",
+    "取舍·不碰·自便": "让我自己拿主意……那就不碰。",
+    "取舍·不碰·知守则": "守则第一条写着：寻回者，自负其果。我想要{想要}，可我不知道那个果是什么。",
+    "取舍·不碰": "这东西认得我。我不一定想认得它。",
+    "取舍·犹豫": "想要{想要}……可碰了，会碰出什么来？",
+    "取舍·无人可问": "……没人可问。放下吧。",
+    "对照·未查": "你还没查过这里：{区域}还有东西没看过。",
+    "对照·一致": "{名称}：与重演一致。",
+    "对照·E1·重演有闩": "重演中内闩落在闩槽里；现场内闩没有落下。",
+    "对照·E1·重演无闩": "重演中内闩没有落下；现场内闩落在闩槽里。",
+    "对照·E2·重演有灰": "重演中门内地面有一片扇形灰；现场门内没有灰。",
+    "对照·E2·重演无灰": "重演中门内地面没有灰；现场有一片扇形灰。",
+    "对照·E2·重演楔沾灰": "重演中木楔上沾着灰；现场木楔是干净的。",
+    "对照·E2·重演楔干净": "重演中木楔是干净的；现场木楔上面沾灰、底面干净。",
+    "对照·E2·重演楔在角": "重演中木楔在墙角；现场木楔不在墙角。",
+    "对照·E2·重演楔不在角": "重演中木楔不在墙角；现场木楔在墙角。",
+    "对照·E3·工装靴": "重演中灰上有厚底工装靴印；现场只有一枚马球靴印。",
+    "对照·E3·无印": "重演中门边的灰上没有鞋印；现场有一枚马球靴印。",
+    "对照·E3·朝门缝": "重演中马球靴印的鞋尖朝着门缝；现场的鞋尖朝着插闩。",
+    "对照·E3·不同": "重演中灰上的鞋印与现场不同。",
+    "对照·E4·无布": "重演中门底没有湿布；现场门底压着一条湿抹布。",
+    "对照·E4·塞缝": "重演中湿布塞在门缝里；现场湿布沿闭合的门底压成一条直线。",
+    "对照·E4·不同": "重演中湿布的样子与现场不同。",
+    "对照·E4·压鞋印": "重演中湿布压着一枚鞋印；现场湿布下没有鞋印。",
+    "对照·E4·不相压": "重演中湿布与鞋印不相压；现场湿布的一端压住了靴印的鞋跟。",
+    "对照·E5·重演有叉": "重演中门框旁有音叉、门框上有凹痕；现场没有。",
+    "对照·E5·重演无叉": "重演中门框旁没有音叉，门框完好；现场音叉落在门框旁，门框齐肩处有一个小凹痕。",
+    "对照·E6·行1·0": "重演中乐谱是空白的；现场乐谱记着两遍重读的“开门”，旁注“门外？”。",
+    "对照·E6·行1·2": "重演中乐谱上的字是“救我”；现场是“开门”。",
+    "对照·E6·行1·3": "重演中乐谱记下了整句话；现场前两拍是听不清的弱音。",
+    "对照·E6·行1·其他": "重演中的乐谱与现场不同。",
+    "对照·E6·行2·有": "重演中乐谱下方多一行字；现场没有。",
+    "对照·E6·行2·无": "重演中乐谱下方没有字；现场下方换了一种墨迹写着“他们关了门”。",
+    "对照·E7·行1·0": "重演中石板是空的；现场有一行粉笔速记。",
+    "对照·E7·行1·2": "重演中石板上记的是“开门”；现场写着“✕开”。",
+    "对照·E7·行1·3": "重演中石板速记的末尾没有 ◎；现场末尾有 ◎。",
+    "对照·E7·行1·其他": "重演中的石板与现场不同。",
+    "对照·E7·行2·0": "重演中石板只有一行；现场有两行，第二行是一个小小的放大镜图样加“⊥✓”。",
+    "对照·E7·行2·2": "重演中石板第二行没有小图；现场第二行画的是放大镜。",
+    "对照·E7·行2·其他": "重演中的石板第二行与现场不同。",
+    "对照·E9·0": "重演中水槽里没有杯子；现场有四只用过的杯子。",
+    "对照·E9·2": "重演中四只杯底的糖渍一样；现场青瓷杯底没有糖渍，锡杯底糖渍很厚。",
+    "对照·E9·其他": "重演中的杯子与现场不同。"
+  },
+  "POSTED_RULES": [
+    "一、封存之物，可凭对应之物寻回；寻回者，自负其果。",
+    "二、饮水、炉火、照明照常供给；物资由诸位自行分配。",
+    "三、外闩所封之处，余患未清，清后即启。",
+    "四、我所立之规，皆张贴于此。"
+  ],
+  "UTTERANCES": {
+    "闩门别开": {
+      "full": "生活翼！我是格雷厄姆。主楼泄漏。闩上隔离门——无论听到什么，都不要开门。守在铜口旁，等我下一次通知。",
+      "tail": "……开门……开门",
+      "Bolt": true,
+      "ForbidOpen": true,
+      "HoldTube": true,
+      "Open": false,
+      "Help": false
+    },
+    "开门救我": {
+      "full": "开门！快开门——救我！",
+      "tail": "……救我……救我",
+      "Bolt": false,
+      "ForbidOpen": false,
+      "HoldTube": false,
+      "Open": true,
+      "Help": true
+    }
+  },
+  "TEST_SENTENCES": [
+    {
+      "full": "闩上门，不要开门。",
+      "tail": "……开门",
+      "Bolt": true,
+      "ForbidOpen": true,
+      "HoldTube": false,
+      "Open": false,
+      "Help": false
+    },
+    {
+      "full": "开门，救我。",
+      "tail": "……救我",
+      "Bolt": false,
+      "ForbidOpen": false,
+      "HoldTube": false,
+      "Open": true,
+      "Help": true
+    },
+    {
+      "full": "守在铜口旁，等我下一次通知。",
+      "tail": "……通知",
+      "Bolt": false,
+      "ForbidOpen": false,
+      "HoldTube": true,
+      "Open": false,
+      "Help": false
+    }
+  ],
+  "PEOPLE": {
+    "detective": {
+      "desire": "弄清自己是什么"
+    },
+    "huo": {
+      "desire": "超越卡诺循环的动力图纸"
+    },
+    "shen": {
+      "desire": "安稳，护住身边的人"
+    },
+    "su": {
+      "desire": "从未听过的声音"
+    }
+  },
+  "ROOM_REGIONS": [
+    {
+      "name": "起居厅",
+      "region": "起居厅",
+      "rect": [
+        null,
+        null,
+        160,
+        null
+      ]
+    },
+    {
+      "name": "厕",
+      "region": "厕",
+      "rect": [
+        160,
+        null,
+        304,
+        256
+      ]
+    },
+    {
+      "name": "门厅",
+      "region": "门厅",
+      "rect": [
+        160,
+        256,
+        304,
+        448
+      ]
+    },
+    {
+      "name": "储物间",
+      "region": "储物间",
+      "rect": [
+        160,
+        448,
+        304,
+        null
+      ]
+    },
+    {
+      "name": "活动厅",
+      "region": "活动厅",
+      "rect": [
+        304,
+        null,
+        584,
+        416
+      ]
+    },
+    {
+      "name": "备餐间",
+      "region": "备餐间",
+      "rect": [
+        304,
+        416,
+        584,
+        null
+      ]
+    },
+    {
+      "name": "走廊",
+      "region": "走廊",
+      "rect": [
+        584,
+        304,
+        null,
+        448
+      ]
+    },
+    {
+      "name": "R-08",
+      "region": "R-08",
+      "rect": [
+        584,
+        null,
+        816,
+        304
+      ]
+    },
+    {
+      "name": "R-05",
+      "region": "R-05",
+      "rect": [
+        816,
+        null,
+        1040,
+        304
+      ]
+    },
+    {
+      "name": "空房",
+      "region": "空房_north",
+      "rect": [
+        1040,
+        null,
+        null,
+        304
+      ]
+    },
+    {
+      "name": "R-07",
+      "region": "R-07",
+      "rect": [
+        584,
+        448,
+        816,
+        null
+      ]
+    },
+    {
+      "name": "R-06",
+      "region": "R-06",
+      "rect": [
+        816,
+        448,
+        1040,
+        null
+      ]
+    },
+    {
+      "name": "空房",
+      "region": "空房_south",
+      "rect": [
+        1040,
+        448,
+        null,
+        null
+      ]
+    }
+  ],
+  "TRUTH": {
+    "InnerBoltDown": true,
+    "AshFan": true,
+    "WedgeTopSooted": true,
+    "WedgeInCorner": true,
+    "Prints": [
+      {
+        "sole": "PoloBoot",
+        "toward": "Bolt"
+      }
+    ],
+    "Cloth": 1,
+    "ClothOverHeel": true,
+    "ForkByFrame": true,
+    "FrameDent": true,
+    "ScoreLine1": 1,
+    "ScoreLine2": true,
+    "SlateLine1": 1,
+    "SlateLine2": 1,
+    "CupSugar": 1
+  },
+  "STAGES": {
+    "wake": {
+      "enter": {},
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "dorms": false,
+      "room_events": false,
+      "sites": []
+    },
+    "roam": {
+      "enter": {
+        "hall": {
+          "stage": "meeting",
+          "signal": "meeting"
+        }
+      },
+      "walk": true,
+      "examine": true,
+      "sites": [
+        "E12",
+        "E11a"
+      ],
+      "notebook": false,
+      "dorms": false,
+      "room_events": false
+    },
+    "meeting": {
+      "enter": {},
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "dorms": false,
+      "room_events": false,
+      "sites": []
+    },
+    "investigate": {
+      "enter": {},
+      "walk": true,
+      "examine": true,
+      "notebook": true,
+      "dorms": true,
+      "room_events": true,
+      "sites": "all"
+    },
+    "playback": {
+      "enter": {},
+      "dorms": true,
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "room_events": false,
+      "sites": []
+    },
+    "answer": {
+      "enter": {},
+      "dorms": true,
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "room_events": false,
+      "sites": []
+    },
+    "finale": {
+      "enter": {},
+      "dorms": true,
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "room_events": false,
+      "sites": []
+    },
+    "ended": {
+      "enter": {},
+      "walk": false,
+      "examine": false,
+      "notebook": false,
+      "dorms": false,
+      "room_events": false,
+      "sites": []
+    }
+  },
+  "STAGE_EVENTS": {
+    "初始": "wake",
+    "相遇": "meeting",
+    "重演开始": "playback",
+    "重演结束": "investigate",
+    "章末": "ended"
+  },
+  "FLOWS": {
+    "醒来": {
+      "steps": [
+        {
+          "op": "stage",
+          "value": "wake"
+        },
+        {
+          "op": "show",
+          "scene": "@lock"
+        },
+        {
+          "op": "show",
+          "scene": "s1_wake"
+        },
+        {
+          "op": "stage",
+          "value": "roam"
+        },
+        {
+          "op": "show",
+          "scene": "@unlock"
+        },
+        {
+          "op": "show",
+          "scene": "@hud"
+        }
+      ]
+    },
+    "相遇": {
+      "steps": [
+        {
+          "op": "show",
+          "scene": "s2_meet"
+        },
+        {
+          "op": "show",
+          "scene": "@name"
+        },
+        {
+          "op": "show",
+          "scene": "s2_tea"
+        },
+        {
+          "op": "show",
+          "scene": "s3_broadcast"
+        },
+        {
+          "op": "show",
+          "scene": "@board"
+        },
+        {
+          "op": "show",
+          "scene": "s4_rewards"
+        },
+        {
+          "op": "show",
+          "scene": "s5_question"
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "call",
+            "name": "flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "rest_chosen"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "@rest"
+            }
+          ],
+          "else": [
+            {
+              "op": "stage",
+              "value": "investigate"
+            },
+            {
+              "op": "show",
+              "scene": "@posts"
+            },
+            {
+              "op": "show",
+              "scene": "s6_begin"
+            }
+          ]
+        }
+      ]
+    },
+    "重演之后": {
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "and",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "replay_count"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "op": "not",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "full_match"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "replay_first"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "replay_refused"
+              },
+              {
+                "op": "not",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "refusal_seen"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "set_flag",
+              "key": "refusal_seen"
+            },
+            {
+              "op": "set_flag",
+              "key": "v6_revealed"
+            },
+            {
+              "op": "show",
+              "scene": "replay_refused"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "full_match"
+              },
+              {
+                "op": "not",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "matched"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "record",
+              "group": "state",
+              "key": "full_match_seen",
+              "value": true
+            },
+            {
+              "op": "show",
+              "scene": "@sfx:answer_ok"
+            },
+            {
+              "op": "show",
+              "scene": "@summon:huo"
+            },
+            {
+              "op": "show",
+              "scene": "@summon:shen"
+            },
+            {
+              "op": "show",
+              "scene": "@summon:su"
+            },
+            {
+              "op": "show",
+              "scene": "s8_reversal"
+            }
+          ],
+          "else": []
+        }
+      ]
+    },
+    "交谈": {
+      "params": [
+        "人"
+      ],
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "call",
+            "name": "talk_first",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{人}"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "detail",
+              "group": "life",
+              "key": "{人}",
+              "field": "told",
+              "value": true
+            },
+            {
+              "op": "show",
+              "scene": "alone_{人}"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "talk_{人}"
+        }
+      ]
+    },
+    "请人看看": {
+      "params": [
+        "物",
+        "人"
+      ],
+      "provider": "协助者",
+      "steps": [
+        {
+          "op": "show",
+          "scene": "@summon:{人}"
+        },
+        {
+          "op": "show",
+          "scene": "help_{物}"
+        },
+        {
+          "op": "record",
+          "group": "helped",
+          "key": "{物}",
+          "value": true
+        }
+      ]
+    },
+    "实验·默认": {
+      "params": [
+        "物"
+      ],
+      "steps": [
+        {
+          "op": "show",
+          "scene": "exp_{物}"
+        },
+        {
+          "op": "record",
+          "group": "experiments",
+          "key": "{物}",
+          "value": true
+        }
+      ]
+    },
+    "实验·E8": {
+      "steps": [
+        {
+          "op": "show",
+          "scene": "@sound"
+        }
+      ]
+    },
+    "实验·E3": {
+      "params": [
+        "物",
+        "人"
+      ],
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{人}"
+              },
+              {
+                "op": "literal",
+                "value": ""
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "ne",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{人}"
+              },
+              {
+                "op": "literal",
+                "value": "detective"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "@summon:{人}"
+            },
+            {
+              "op": "show",
+              "scene": "sole_{人}"
+            },
+            {
+              "op": "record",
+              "group": "soles_compared",
+              "key": "{人}",
+              "value": {
+                "text": "鞋底·{人}"
+              }
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "exp_E3"
+        },
+        {
+          "op": "record",
+          "group": "experiments",
+          "key": "E3",
+          "value": true
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "flag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "reversal_one"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "set_flag",
+              "key": "reversal_one"
+            },
+            {
+              "op": "show",
+              "scene": "s6_reversal"
+            }
+          ],
+          "else": []
+        }
+      ]
+    },
+    "实验·E11": {
+      "params": [
+        "人"
+      ],
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "not",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "and",
+                    "args": [
+                      {
+                        "op": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "is_person",
+                            "args": [
+                              {
+                                "op": "literal",
+                                "value": "{人}"
+                              }
+                            ]
+                          },
+                          {
+                            "op": "call",
+                            "name": "in_room",
+                            "args": [
+                              {
+                                "op": "literal",
+                                "value": "detective"
+                              },
+                              {
+                                "op": "literal",
+                                "value": "R05"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "local",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "detective"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "{人}"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "not",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "busy",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "{人}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "has",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "hand_comparisons"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "{人}"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "help_E11_{人}"
+            },
+            {
+              "op": "record",
+              "group": "hand_comparisons",
+              "key": "{人}",
+              "value": true
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "and",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "has",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "hand_comparisons"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "detective"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "has",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "hand_comparisons"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "huo"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "has",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "hand_comparisons"
+                      },
+                      {
+                        "op": "literal",
+                        "value": "shen"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "has",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "hand_comparisons"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "su"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "record",
+              "group": "experiments",
+              "key": "E11",
+              "value": true
+            }
+          ],
+          "else": []
+        }
+      ]
+    },
+    "答辩·开始": {
+      "steps": [
+        {
+          "op": "stage",
+          "value": "answer"
+        },
+        {
+          "op": "clear",
+          "group": "answer_state"
+        },
+        {
+          "op": "record",
+          "group": "answer_state",
+          "key": "step",
+          "value": 1
+        },
+        {
+          "op": "show",
+          "scene": "@music:confrontation"
+        },
+        {
+          "op": "show",
+          "scene": "answer_open"
+        },
+        {
+          "op": "continue",
+          "flow": "答辩·提问"
+        }
+      ]
+    },
+    "答辩·提问": {
+      "provider": "答辩步",
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "gt",
+            "args": [
+              {
+                "op": "call",
+                "name": "value",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "answer_state"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "step"
+                  }
+                ]
+              },
+              {
+                "op": "literal",
+                "value": 4
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "@finale"
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "answer_q{步}"
+        },
+        {
+          "op": "show",
+          "scene": "@answerpick"
+        },
+        {
+          "op": "continue",
+          "flow": "答辩·裁决"
+        }
+      ]
+    },
+    "答辩·裁决": {
+      "provider": "答辩裁决",
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{裁决}"
+              },
+              {
+                "op": "literal",
+                "value": "none"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "answer_pause"
+            },
+            {
+              "op": "show",
+              "scene": "@music:door_side"
+            },
+            {
+              "op": "stage",
+              "value": "investigate"
+            },
+            {
+              "op": "show",
+              "scene": "@hud"
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{裁决}"
+              },
+              {
+                "op": "literal",
+                "value": "ok"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "@sfx:answer_ok:-4"
+            },
+            {
+              "op": "show",
+              "scene": "answer_ok{步}"
+            },
+            {
+              "op": "record",
+              "group": "answer_state",
+              "key": "step",
+              "value": "{下一步}"
+            },
+            {
+              "op": "continue",
+              "flow": "答辩·提问"
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "literal",
+                "value": "{裁决}"
+              },
+              {
+                "op": "literal",
+                "value": "need_test"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "answer_need_test"
+            },
+            {
+              "op": "continue",
+              "flow": "答辩·提问"
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "@sfx:answer_wrong:-3"
+        },
+        {
+          "op": "show",
+          "scene": "answer_{裁决}"
+        },
+        {
+          "op": "continue",
+          "flow": "答辩·提问"
+        }
+      ]
+    },
+    "终局": {
+      "steps": [
+        {
+          "op": "stage",
+          "value": "finale"
+        },
+        {
+          "op": "show",
+          "scene": "@finale_prepare"
+        },
+        {
+          "op": "show",
+          "scene": "s10_steps"
+        },
+        {
+          "op": "show",
+          "scene": "@door_open"
+        },
+        {
+          "op": "set_flag",
+          "key": "door_open"
+        },
+        {
+          "op": "show",
+          "scene": "@redraw"
+        },
+        {
+          "op": "show",
+          "scene": "s10_prints"
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "call",
+            "name": "seen",
+            "args": [
+              {
+                "op": "literal",
+                "value": "E11"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "s10_hand"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "@su_approach"
+        },
+        {
+          "op": "show",
+          "scene": "s10_open"
+        },
+        {
+          "op": "show",
+          "scene": "@save:false"
+        },
+        {
+          "op": "show",
+          "scene": "@ending:完成"
+        }
+      ]
+    },
+    "歇息": {
+      "steps": [
+        {
+          "op": "stage",
+          "value": "finale"
+        },
+        {
+          "op": "show",
+          "scene": "@lock"
+        },
+        {
+          "op": "show",
+          "scene": "@music:night:4"
+        },
+        {
+          "op": "show",
+          "scene": "ending_rest"
+        },
+        {
+          "op": "show",
+          "scene": "@save:true"
+        },
+        {
+          "op": "show",
+          "scene": "@ending:歇息"
+        }
+      ]
+    },
+    "确认歇息": {
+      "steps": [
+        {
+          "op": "clear_flag",
+          "key": "rest_chosen"
+        },
+        {
+          "op": "show",
+          "scene": "rest_confirm"
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "call",
+            "name": "flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "rest_chosen"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "continue",
+              "flow": "歇息"
+            }
+          ],
+          "else": []
+        }
+      ]
+    }
+  },
+  "VERDICTS": {
+    "1": {
+      "step": 1,
+      "question": "门，是谁闩上的？",
+      "say_ok": {
+        "op": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "said"
+          },
+          {
+            "op": "literal",
+            "value": "me"
+          }
+        ]
+      },
+      "show_ok": {
+        "op": "or",
+        "args": [
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "shown"
+              },
+              {
+                "op": "literal",
+                "value": "E3"
+              }
+            ]
+          },
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "or",
+                    "args": [
+                      {
+                        "op": "eq",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "shown"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "E12"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "eq",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "shown"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "E7"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "seen",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "E12"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "seen",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "E7"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "2": {
+      "step": 2,
+      "question": "门外，有人呼喊吗？",
+      "say_ok": {
+        "op": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "said"
+          },
+          {
+            "op": "literal",
+            "value": "V3_0"
+          }
+        ]
+      },
+      "show_ok": {
+        "op": "or",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "shown"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "E8"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "tested",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "E8"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "shown"
+              },
+              {
+                "op": "literal",
+                "value": "E5"
+              }
+            ]
+          }
+        ]
+      },
+      "need_test": {
+        "op": "and",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "said"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "V3_0"
+                  }
+                ]
+              },
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "shown"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "E8"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "tested",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "E8"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "3": {
+      "step": 3,
+      "question": "他喊的是什么？",
+      "say_ok": {
+        "op": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "said"
+          },
+          {
+            "op": "literal",
+            "value": "V4_0"
+          }
+        ]
+      },
+      "show_ok": {
+        "op": "or",
+        "args": [
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "shown"
+              },
+              {
+                "op": "literal",
+                "value": "E7"
+              }
+            ]
+          },
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "shown"
+              },
+              {
+                "op": "literal",
+                "value": "E6"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "4": {
+      "step": 4,
+      "question": "闩门的人，为何不听门边那位女士的？",
+      "say_ok": {
+        "op": "or",
+        "args": [
+          {
+            "op": "or",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "said"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "V5_0"
+                  }
+                ]
+              },
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "said"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "V6_1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "said"
+              },
+              {
+                "op": "literal",
+                "value": "trust"
+              }
+            ]
+          }
+        ]
+      },
+      "show_ok": {
+        "op": "or",
+        "args": [
+          {
+            "op": "or",
+            "args": [
+              {
+                "op": "or",
+                "args": [
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "shown"
+                      },
+                      {
+                        "op": "literal",
+                        "value": "E9"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "shown"
+                      },
+                      {
+                        "op": "literal",
+                        "value": "E10"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "shown"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "E11"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "shown"
+              },
+              {
+                "op": "literal",
+                "value": "E7"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "ACOUSTICS": {
+    "hearing": {
+      "Tube": {
+        "hall": "Full",
+        "foyer": "Tail",
+        "R08": "Tail",
+        "pantry": "Murmur",
+        "*": "AlarmOnly"
+      },
+      "OutsideDoor": {
+        "foyer": "FullMuffled",
+        "R08": "FullMuffled",
+        "lounge": "Full",
+        "*": "Nothing"
+      }
+    },
+    "seems_outside": [
+      "Tail",
+      "FullMuffled"
+    ],
+    "hears_shout": [
+      "hall",
+      "corridor",
+      "R05",
+      "R06",
+      "R07",
+      "R08"
+    ]
   }
 }

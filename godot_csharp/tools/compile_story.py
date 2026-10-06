@@ -12,17 +12,19 @@ from typing import Any
 
 HERE = Path(__file__).resolve().parent
 SCRIPT_DIR = HERE.parent / "scenes" / "Awakening" / "Script"
-SOURCE = SCRIPT_DIR / "ch1_awakening.py"
+SOURCE = SCRIPT_DIR / "chapter_01.story"
 sys.path.insert(0, str(HERE))
 
 from engine_spec import Expr, Instruction, dialogue_document  # noqa: E402
+from story_script import StoryError  # noqa: E402
 
 EFFECTS = {"set_flag", "clear_flag", "amplify", "whisper", "share_recall"}
 QUERIES = {
     "detective_name", "seen", "tested", "asked", "flag", "recalled", "compared", "v6_open",
     "told_rule", "hooks", "total_hooks", "matched", "replayed", "fragment", "alone_choice",
     "life_thought", "talk_first", "recall_thought", "wrong_name", "addr", "heard", "heard_where",
-    "sound_sentence",
+    "sound_sentence", "has", "count", "value", "replay_count", "full_match", "replay_refused",
+    "in_room", "local", "busy", "said", "shown", "is_person", "geo_reach", "acquaintance_seen", "replay_var", "bolted",
 }
 EXPR_OPS = {"literal", "call", "not", "and", "or", "eq", "ne", "gt", "gte", "lt", "lte"}
 INTERPOLATION = re.compile(r"\{\{(.*?)\}\}")
@@ -31,19 +33,24 @@ CALL_ARITY = {
     "compared": 1, "v6_open": 0, "told_rule": 1, "hooks": 1, "total_hooks": 0,
     "matched": 0, "replayed": 0, "fragment": 1, "alone_choice": 1, "life_thought": 1,
     "talk_first": 1, "recall_thought": 0, "wrong_name": 0, "addr": 1, "heard": 1,
-    "heard_where": 1, "sound_sentence": 0,
+    "heard_where": 1, "sound_sentence": 0, "has": 2, "count": 1, "value": 2, "replay_count": 0,
+    "full_match": 0, "replay_refused": 0, "in_room": 2, "local": 2, "busy": 1, "said": 0, "shown": 0,
+    "is_person": 1, "geo_reach": 1, "acquaintance_seen": 0, "replay_var": 1, "bolted": 0,
 }
+# 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
+HOST_COMMANDS = {
+    "name", "board", "rest", "investigate", "summon", "sound", "music", "sfx", "lock", "unlock", "hud",
+    "answerpick", "finale", "finale_prepare", "door_open", "redraw", "su_approach", "save", "ending",
+    "aside", "consider", "finish", "posts",
+}
+FLOW_HOOKS: set[str] = set()
+FLOW_PROVIDERS = {"协助者", "答辩步", "答辩裁决"}
 EFFECT_ARITY = {"set_flag": 1, "clear_flag": 1, "amplify": 2, "whisper": 2, "share_recall": 1}
 
 
 def load_source():
-    spec = importlib.util.spec_from_file_location("ch1_awakening", SOURCE)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"could not load Python story source: {SOURCE}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    import story_chapter1
+    return story_chapter1.load(SOURCE)
 
 
 def validate_expr(expr: Expr, where: str) -> None:
@@ -120,6 +127,56 @@ def _expression(value: dict[str, Any]) -> Expr:
                 args=tuple(_expression(item) for item in value.get("args", [])))
 
 
+def validate_flow(steps: list[dict[str, Any]], where: str, flows: dict, stages: dict, scenes: set[str], stop_ok: bool = True) -> None:
+    for index, node in enumerate(steps):
+        location = f"{where}[{index}]"
+        op = node["op"]
+        if op == "stop" and not (stop_ok and index == len(steps) - 1):
+            raise ValueError(f"{location}: 结束 only allowed as the last step of the flow or of an 若 branch")
+        if op == "show":
+            scene = node["scene"]
+            if scene.startswith("@"):
+                if scene[1:].split(":")[0] not in HOST_COMMANDS:
+                    raise ValueError(f"{location}: unknown host command {scene!r}")
+            elif "{" not in scene and scene not in scenes:
+                raise ValueError(f"{location}: unknown scene {scene!r}")
+        elif op == "stage":
+            if node["value"] not in stages:
+                raise ValueError(f"{location}: unknown stage {node['value']!r}")
+        elif op == "hook":
+            if node["name"] not in FLOW_HOOKS:
+                raise ValueError(f"{location}: unknown flow hook {node['name']!r}")
+        elif op == "continue":
+            if node["flow"] not in flows:
+                raise ValueError(f"{location}: unknown flow {node['flow']!r}")
+        elif op == "if":
+            validate_expr(_expression(node["condition"]), location)
+            validate_flow(node["then"], location + ".then", flows, stages, scenes, stop_ok=stop_ok)
+            validate_flow(node["else"], location + ".else", flows, stages, scenes, stop_ok=False)
+        elif op not in {"set_flag", "clear_flag", "record", "remove", "detail", "clear", "stop"}:
+            raise ValueError(f"{location}: unsupported flow step {op!r}")
+
+
+def validate_rules(rules: dict[str, Any], scenes: set[str]) -> None:
+    stages = rules.get("STAGES", {})
+    flows = rules.get("FLOWS", {})
+    for name, stage in stages.items():
+        for room, target in stage["enter"].items():
+            if target["stage"] not in stages:
+                raise ValueError(f"stage {name}: enter {room} goes to unknown stage {target['stage']!r}")
+    for event, stage in rules.get("STAGE_EVENTS", {}).items():
+        if stage not in stages:
+            raise ValueError(f"stage event {event}: unknown stage {stage!r}")
+    for name, flow in flows.items():
+        if flow.get("provider") and flow["provider"] not in FLOW_PROVIDERS:
+            raise ValueError(f"flow {name}: unknown parameter provider {flow['provider']!r}")
+        validate_flow(flow["steps"], "flow:" + name, flows, stages, scenes)
+    for step, verdict in rules.get("VERDICTS", {}).items():
+        for key in ("say_ok", "show_ok", "need_test"):
+            if key in verdict:
+                validate_expr(_expression(verdict[key]), f"verdict {step}.{key}")
+
+
 def assign_choice_ids(entries: dict[str, list[dict[str, Any]]]) -> None:
     for entry_id, body in entries.items():
         sequence = 0
@@ -152,6 +209,10 @@ def content_data(source) -> dict[str, Any]:
         for record in source.LIFE_TRACES
     }
     result["SITE_INTERACTIONS"] = site_interactions(source)
+    result["OWN_OBJECTS"] = dict(source.OWN_OBJECTS)
+    result["RECALL_OBJECTS"] = list(source.RECALL_OBJECTS)
+    result["ACQUAINTANCE_EVIDENCE"] = list(source.ACQUAINTANCE_EVIDENCE)
+    result.update(source.RULES_DATA)
     return result
 
 
@@ -160,8 +221,7 @@ def site_interactions(source) -> dict[str, dict[str, str]]:
     for site in source.SITES:
         if site.id in result:
             raise ValueError(f"duplicate site interaction id {site.id!r}")
-        kind = "tube" if site.id == "E8" else "evidence"
-        result[site.id] = {"kind": kind, "target": "E8" if kind == "tube" else site.evidence}
+        result[site.id] = {"kind": site.click, "target": site.evidence}
     for trace in source.LIFE_TRACES:
         if trace.id in result:
             raise ValueError(f"duplicate site interaction id {trace.id!r}")
@@ -204,6 +264,7 @@ def layout_data(source) -> dict[str, Any]:
             for t in source.LIFE_TRACES
         ],
         "posts": {key: list(point) for key, point in source.POSTS.items()},
+        "staging": {key: list(point) for key, point in source.STAGING.items()},
         "objects": {
             key: {"person": next(person for person, evidence in source.OWN_OBJECTS.items() if evidence == key),
                   "sprite": sprite}
@@ -236,6 +297,7 @@ def generated_files() -> dict[Path, str]:
     for entry_id, instructions in document["entries"].items():
         validate_instructions(instructions, entry_id)
     content = content_data(source)
+    validate_rules(source.RULES_DATA, set(document["entries"]))
     layout = layout_data(source)
     dialogue_json = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
     content_json = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
@@ -244,7 +306,7 @@ def generated_files() -> dict[Path, str]:
     csharp = (
         "using DualOntologyWorldEngine.Story;\n\n"
         "namespace DualOntologyWorldEngine.Awakening;\n\n"
-        "/// <summary>Generated from ch1_awakening.py by tools/compile_story.py.</summary>\n"
+        "/// <summary>Generated from chapter_01.story by tools/compile_story.py.</summary>\n"
         "public static class Chapter1CompiledDialogue\n{\n"
         "    private const string Json = \"\"\"\n" + escaped + "\n    \"\"\";\n\n"
         "    public static CompiledDialogueDocument Create() => CompiledDialogueDocument.Parse(Json);\n}\n"
@@ -279,6 +341,9 @@ def main() -> int:
         else:
             print(f"generated {len(outputs)} outputs from {SOURCE.name}")
         return 0
+    except StoryError as error:
+        print(f"{SOURCE.name}:{error.line}: {error}", file=sys.stderr)
+        return 2
     except (ValueError, KeyError, TypeError) as error:
         print(f"story compile failed: {error}", file=sys.stderr)
         return 2

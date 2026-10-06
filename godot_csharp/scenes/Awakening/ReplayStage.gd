@@ -133,7 +133,7 @@ func position_of(frame: Dictionary, key: String) -> Vector2:
 
 func _apply(frame: Dictionary, previous: Dictionary) -> void:
 	var who := str(frame.actor)
-	caption.text = "[b]昨夜[/b]　" + str(frame.label)
+	caption.text = "[b]%s[/b]　%s" % [Content.text("重演·昨夜"), str(frame.label)]
 	for key in ORDER:
 		var figure: AnimatedSprite2D = figures[key]
 		var target := position_of(frame, key)
@@ -163,9 +163,9 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 		var bubble: PanelContainer = bubbles[key]
 		var text: RichTextLabel = bubble.get_meta("text")
 		text.text = "[b]%s[/b]　%s" % [Content.PERSON_NAMES[key], str(frame.thoughts[key])]
-	var door := "门：开着，木楔撑住" if bool(frame.door_open) else ("门：闩上了" if bool(frame.door_bolted) else "门：关着")
+	var door := Content.text("重演·门开") if bool(frame.door_open) else (Content.text("重演·门闩") if bool(frame.door_bolted) else Content.text("重演·门关"))
 	if bool(frame.smoke):
-		door += "　·　烟灰进了门厅" if bool(frame.ash) else ""
+		door += "　·　" + Content.text("重演·烟灰") if bool(frame.ash) else ""
 	door_label.text = door
 	door_label.position = Vector2(120, 600)
 	call_deferred("_place_bubbles", frame)

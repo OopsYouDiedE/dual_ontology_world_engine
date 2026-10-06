@@ -16,17 +16,18 @@ public sealed partial class Game
     private void WriteAllianceRules()
     {
         // 劳作互助派（沈鼎）：钥匙交给做饭的人，统一煮，先喂饿着的人。接受者若手里有钥匙，就会交出去。
-        ShenKitchen = NewSpec("粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。", P.Shen, RF.CentralCook | RF.Rations | RF.SickPriority | RF.Records,
+        ShenKitchen = Spec("ShenKitchen",
             fx => [new(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Mine(T.GranaryKey), Fx.Not(Fx.Mine(T.Is[P.Shen]))), RuleMode.Prefer, fx.GiveKeyTo(this[P.Shen]), 4)]);
         // 实证派（维罗妮卡）：指控要有实物。
-        VeronicaEvidence = NewSpec("指控须有实物为证；取用须有记录。", P.Veronica, RF.EvidenceFirst | RF.Records,
+        VeronicaEvidence = Spec("VeronicaEvidence",
             fx => [new(Fx.Not(Fx.Mine(T.SawAct)), RuleMode.Forbid, fx.Job(Job.Accuse), 3)]);
         // 感官与美派（卢西安）：不得以私取之名限制任何人。
-        LucianNoBrand = NewSpec("未经查验，不得以“私取”之名限制任何人行走。", P.Lucian, RF.EvidenceFirst | RF.NightException,
+        LucianNoBrand = Spec("LucianNoBrand",
             fx => [new(Fx.All(fx.At(Slot.Morning), Fx.Any([.. People.Select(o => fx.Tg(o.Body, T.Accused))])), RuleMode.Prefer, fx.Job(Job.Defend), 2)]);
-        _agenda.AddRange([
-            (2, P.Shen, ShenKitchen, Place.DormLife), (2, P.Veronica, VeronicaEvidence, Place.DormL), (3, P.Lucian, LucianNoBrand, Place.Lecture),
-        ]);
+        // 各聚落领头人何时何处张贴自己的规矩，写在剧本的“规矩”块里（张贴：第 N 日 时段 地点）。
+        foreach (var rule in RuleDesign.All.Where(r => r.Author is not null))
+            foreach (var post in rule.Posts.Where(p => p.Mode == "单条"))
+                _agenda.Add((post.Day, rule.Author!.Value, RuleById(rule.Id), post.Place));
     }
 
     /// <summary>傍晚：到期的聚落规则张贴出来；每个立规者当面拉两个在场、最信他、还没听过的人（人物也受注意力限制）。</summary>
@@ -35,7 +36,7 @@ public sealed partial class Game
         foreach (var (day, author, spec, where) in _agenda.Where(a => a.Day == Day))
         {
             Post(spec, where);
-            if (Where(Det) == where) Feed.Add($"{Names.Of(author)}在{Names.Of(where)}贴出：「{spec.Text}」");
+            if (Where(Det) == where) Feed.Add(X("规矩.聚落张贴", ("人", Names.Of(author)), ("地", Names.Of(where)), ("规矩", spec.Text)));
         }
         // 拉人不再由作者每晚替立规者“拉两个”：立规者自己傍晚到配给台找同一聚落的人当面讲（GameJobs.TalkRules），占用他的时段。
     }

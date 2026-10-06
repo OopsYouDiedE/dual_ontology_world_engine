@@ -8,7 +8,8 @@ public sealed partial class Game
     public const double RoundLength = 5, NightLength = 24, TickLength = 1;
     public bool Ended { get; private set; }
     /// <summary>章节的最后一日（第 4 日清晨即议事，见设计第三部分 §15）。</summary>
-    public const int LastDay = 4, CaseDay = 3;
+    public static int LastDay => Chapter2Design.LastDay;
+    public static int CaseDay => Chapter2Design.CaseDay;
     public bool Mediated;
     public int LedgerBaseline;
     public readonly List<(int Day, int Rations, int Oil, int Medicine, int Hungry)> Curve = [];
@@ -586,7 +587,7 @@ public sealed partial class Game
         }
         if (Day >= CaseDay && Slot == Slot.Evening && WardCommittee is null)
         {
-            WardCommittee = NewSpec("名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", P.Ward, RF.CommitteeArchive | RF.WardAuthority | RF.Records, fx => []);
+            WardCommittee = Spec("CommitteePlan", fx => []);
             Post(WardCommittee, Place.Hall);
             if (Where(Det) == Place.Hall) Feed.Add($"沃德在中央厅贴出：{WardCommittee.Text}");
         }
@@ -642,13 +643,12 @@ public sealed partial class Game
     {
         if (Slot == Slot.Morning && round == 0) MorningBroadcast();
         if (Slot == Slot.Forenoon) TeachClass();
-        if (Day == 2 && Slot == Slot.Evening && round == 0)
+        if (round == 0)
         {
-            // 傍晚各组张贴自己的规则（第三部分 §6 第 2 日）。沃德当众盯视雀儿。
-            Post(WardLedger, Place.Hall);
-            Post(WardNight, Place.Hall);
-            Post(MoraNight, Place.Logistics);
-            Feed.Add("傍晚，各人在板上张贴自己的规则：沃德在中央厅贴了两条，茉拉在配给台贴了一条，沈鼎在生活翼、维罗妮卡在丁区各贴一条。");
+            // 剧本里标明“集中”张贴的规矩（沃德、茉拉的板），在它们的日子与时段一并贴出，并给一段总括的旁白。
+            var batch = RuleDesign.All.SelectMany(r => r.Posts.Where(p => p.Mode == "集中" && p.Day == Day && p.Slot == Slot).Select(p => (Rule: r, Post: p))).ToArray();
+            foreach (var (rule, post) in batch) Post(RuleById(rule.Id), post.Place);
+            if (batch.Length > 0) Feed.Add(X("规矩.集中张贴"));
         }
         if (Slot == Slot.Evening && round == 0) AllianceEvening();
     }

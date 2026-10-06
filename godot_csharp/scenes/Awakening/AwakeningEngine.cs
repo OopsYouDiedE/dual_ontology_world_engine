@@ -163,8 +163,8 @@ public partial class AwakeningEngine : Node
     }
     public void Presented(int key) => _content.Presented(_plans[key]);
 
-    public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
-    public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
+    public static string[] PersonKeys => Names.PersonKeys;
+    public static string[] RoomKeys => Names.RoomKeys;
 
     private static string Key(Person p) => PersonKeys[(int)p];
     private static string Key(Room r) => RoomKeys[(int)r];

@@ -26,31 +26,21 @@ public sealed record Intention(Person Who, bool Reach, string Thought);
 /// </summary>
 public sealed partial class MorningWorld
 {
-    public static readonly ImmutableArray<RecallMemory> Memories =
-    [
-        new("E5", Person.Su, "门边……有人在喊开门。我想开门让他进来。", [1]),
-        new("E7", Person.Huo, "铜口里的声音很清楚……“守在铜口旁，等我下一次通知。”——他再也没有来。", [2, 3, 4]),
-        new("E10", Person.Shen, "又该喂了。阿泠的茶不放糖，老霍的放两勺……", [6]),
-        new("E1", Person.Detective, "霍铎说闩。我就闩了。我信他。", [5, 6]),
-    ];
+    /// <summary>可触物回忆的物件：证物写了“回忆”（谁）、“回忆片段”与“回忆证实”的那几件。</summary>
+    public static ImmutableArray<RecallMemory> Memories => Remembered.Value;
 
-    /// <summary>活动厅公告框上的“学园守则”四条：恶魔自己所立之规（设计第一部分 §2）。契约不公开。</summary>
-    public static readonly ImmutableArray<string> PostedRules =
-    [
-        "一、封存之物，可凭对应之物寻回；寻回者，自负其果。",
-        "二、饮水、炉火、照明照常供给；物资由诸位自行分配。",
-        "三、外闩所封之处，余患未清，清后即启。",
-        "四、我所立之规，皆张贴于此。",
-    ];
+    private static readonly Lazy<ImmutableArray<RecallMemory>> Remembered = new(() =>
+        [..Chapter1Data.Root.GetProperty("EVIDENCE").EnumerateObject().Where(e => e.Value.TryGetProperty("recall_fragment", out _))
+            .Select(e => new RecallMemory(e.Name, (Person)Array.IndexOf(Names.PersonKeys, e.Value.GetProperty("recall").GetString()),
+                e.Value.GetProperty("recall_fragment").GetString()!,
+                [..e.Value.GetProperty("recall_confirms").EnumerateArray().Select(n => n.GetInt32())]))]);
 
-    /// <summary>每人的核心欲望（设计第一部分 §5）。恶魔的真话以 Corruption 来源放大它。</summary>
-    public static string DesireOf(Person who) => who switch
-    {
-        Person.Detective => "弄清自己是什么",
-        Person.Huo => "超越卡诺循环的动力图纸",
-        Person.Shen => "安稳，护住身边的人",
-        _ => "从未听过的声音"
-    };
+    /// <summary>活动厅公告框上的“学园守则”四条：恶魔自己所立之规（设计第一部分 §2）。契约不公开。文字写在 chapter_01.story 的“守则”。</summary>
+    public static ImmutableArray<string> PostedRules => [..Chapter1Data.Strings("POSTED_RULES")];
+
+    /// <summary>每人的核心欲望（设计第一部分 §5）。恶魔的真话以 Corruption 来源放大它。写在 chapter_01.story 的“人物”。</summary>
+    public static string DesireOf(Person who)
+        => Chapter1Data.Root.GetProperty("PEOPLE").GetProperty(Names.PersonKeys[(int)who]).GetProperty("desire").GetString()!;
 
     // 三人倾向各不相同（设计第二部分 §5）：写进各自认知的规则权重，不显示给玩家。
     // 霍铎：欲望最强，对恶魔有一分职业性的信任，读到守则第 1 条也照样碰。
@@ -203,10 +193,10 @@ public sealed partial class MorningWorld
         var stay = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Stay))?.Decision.Score ?? 0;
         var wants = DesireOf(who);
         var thought = reach > stay
-            ? $"它说的那句话，一直在耳朵里。我想要{wants}。……去看看{mind.Object.Name}。"
-            : mind.Settled.Existence == Truth.True ? "那件东西，我已经拿过主意了。"
-            : mind.Rule1.Existence == Truth.True ? "守则第一条我读过。手头的事要紧。"
-            : "手头的事要紧。";
+            ? Chapter1Data.Text("心声·想去拿", ("想要", wants), ("物名", mind.Object.Name))
+            : mind.Settled.Existence == Truth.True ? Chapter1Data.Text("心声·已定")
+            : mind.Rule1.Existence == Truth.True ? Chapter1Data.Text("心声·读过守则")
+            : Chapter1Data.Text("心声·手头有事");
         return new(who, reach > stay, thought);
     }
 
@@ -319,19 +309,19 @@ public sealed partial class MorningWorld
         var advisedDecline = mind.AdviceDecline.Existence == Truth.True;
         var advisedOwn = mind.AdviceOwn.Existence == Truth.True;
         var unheeded = _unheeded.GetValueOrDefault(memory.Who) == "decline";
+        string Say(string key, string who = "") => Chapter1Data.Text(who != "" && Chapter1Data.HasText(key + "·" + who) ? key + "·" + who : key, ("想要", wants));
+        var person = Names.PersonKeys[(int)memory.Who];
         var thought = choice switch
         {
-            RecallChoice.Touch when advisedTouch => "你说碰。……我信你。碰。",
-            RecallChoice.Touch when unheeded && memory.Who == Person.Huo => "你说别碰。……图纸值这个价。",
-            RecallChoice.Touch when unheeded => $"你劝我别碰。……可我们昨天才认识。我想要{wants}。",
-            RecallChoice.Touch when knows && memory.Who == Person.Huo => "守则第一条我读了。果，我自己担。……图纸值这个价。",
-            RecallChoice.Touch when knows => $"自负其果，我读到了。可我想要{wants}——想得顾不上了。",
-            RecallChoice.Touch => $"它说的是真的。我想要{wants}。碰一下，就知道了。",
-            RecallChoice.Refuse when advisedDecline => "你说别碰，那就不碰。",
-            RecallChoice.Refuse when advisedOwn => "让我自己拿主意……那就不碰。",
-            RecallChoice.Refuse when knows => $"守则第一条写着：寻回者，自负其果。我想要{wants}，可我不知道那个果是什么。",
-            RecallChoice.Refuse => "这东西认得我。我不一定想认得它。",
-            _ => $"想要{wants}……可碰了，会碰出什么来？"
+            RecallChoice.Touch when advisedTouch => Say("取舍·碰·听劝"),
+            RecallChoice.Touch when unheeded => Say("取舍·碰·不听劝", person),
+            RecallChoice.Touch when knows => Say("取舍·碰·知守则", person),
+            RecallChoice.Touch => Say("取舍·碰"),
+            RecallChoice.Refuse when advisedDecline => Say("取舍·不碰·听劝"),
+            RecallChoice.Refuse when advisedOwn => Say("取舍·不碰·自便"),
+            RecallChoice.Refuse when knows => Say("取舍·不碰·知守则"),
+            RecallChoice.Refuse => Say("取舍·不碰"),
+            _ => Say("取舍·犹豫")
         };
         return new(memory.Who, choice, thought);
     }
@@ -341,7 +331,7 @@ public sealed partial class MorningWorld
     {
         var decision = DecideRecall(evidence);
         if (decision is null || decision.Choice != RecallChoice.Hesitate) return decision;
-        return decision with { Choice = RecallChoice.Refuse, Thought = decision.Thought + "……没人可问。放下吧。" };
+        return decision with { Choice = RecallChoice.Refuse, Thought = decision.Thought + Chapter1Data.Text("取舍·无人可问") };
     }
 
     private void Evidence(string id, string name, Room room, params (string Tag, int Value)[] facts)
@@ -382,7 +372,7 @@ public sealed partial class MorningWorld
         {
             var hearing = Acoustics.Hear(VoiceOrigin.Tube, room);
             // 清晨没有警铃：传不到的地方就是什么也听不到。
-            var text = hearing is Hearing.AlarmOnly or Hearing.Nothing ? "（什么也听不到）" : Acoustics.Render(sentence, hearing);
+            var text = hearing is Hearing.AlarmOnly or Hearing.Nothing ? Chapter1Data.Text("声响·无") : Acoustics.Render(sentence, hearing);
             var outside = Acoustics.SeemsFromOutside(hearing);
             Observation.Observe(_souls[who], new ObservationInput("铜口试声", ProjectionKind.Event)
             {
@@ -398,14 +388,11 @@ public sealed partial class MorningWorld
     /// 声音来处的方向，只说听者感到它从哪边来：门边的接头在门框旁，R-08 的接头在墙里，
     /// 铜口旁就在铜口，备餐间隔着墙从活动厅那边来。不说“门外”这类判断。
     /// </summary>
-    public static string DirectionOf(Room room, Hearing hearing) => hearing switch
+    public static string DirectionOf(Room room, Hearing hearing)
     {
-        Hearing.Full => "从铜口里。",
-        Hearing.Tail when room == Room.Foyer => "从那边。（指向门）",
-        Hearing.Tail when room == Room.R08 => "从墙那边。（指向门厅的方向）",
-        Hearing.Murmur => "从活动厅那边。",
-        _ => ""
-    };
+        var key = hearing switch { Hearing.Full => "方位·完整", Hearing.Tail => "方位·句尾·" + Names.RoomKeys[(int)room], Hearing.Murmur => "方位·低语", _ => "" };
+        return key != "" && Chapter1Data.HasText(key) ? Chapter1Data.Text(key) : "";
+    }
 
     /// <summary>触物回忆：本人触碰物件，唤回一个昨夜的认知（来源：回忆）。只写入回忆者本人；记一枚钩。</summary>
     public RecallMemory? Recall(string evidence)

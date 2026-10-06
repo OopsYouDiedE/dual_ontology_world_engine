@@ -39,6 +39,10 @@ public static class Chapter2Bindings
             throw new InvalidDataException("Unknown formal binding: "+entity.Id);
         }
     }
+    /// <summary>按剧本里的物件编号（object.X / Board.地点 / Litter.地点）取游戏里的实体。</summary>
+    public static Essence ResolveId(Game game,string id)=>
+        id.StartsWith("Board.",StringComparison.Ordinal)?game.Board[Enum.Parse<Place>(id[6..])]:
+        id.StartsWith("Litter.",StringComparison.Ordinal)?game.Litter[Enum.Parse<Place>(id[7..])]:Objects[id[7..]](game);
     public static Essence Resolve(Game game,WorldEntityDefinition entity)
     {
         var local=Local(entity);

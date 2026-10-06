@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Chapter2Script.cs" />
+    <EmbeddedResource Include="generated_chapter_02.json" LogicalName="generated_chapter_02.json" />
     <Compile Include="../Prototype/*.cs" Exclude="../Prototype/Program.cs" />
     <ProjectReference Include="../../Shared/Story/ChapterRuntime.csproj" />
     <ProjectReference Include="../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
