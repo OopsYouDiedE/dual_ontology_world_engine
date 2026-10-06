@@ -704,6 +704,37 @@ def read_duration_table(body: list[Line], what: str) -> dict[str, int]:
     return result
 
 
+RUN_UNITS = {"分钟": 1, "小时": 60, "天": 1440}
+
+
+def read_run(head: Line, body: list[Line]) -> dict[str, Any]:
+    """`运行`：声明一次运行的时长（游戏分钟，自起始分钟起算）；“到结局”或不写表示直到剧情自然结束。"""
+    if head.text != "运行":
+        raise StoryError("运行写成单独一行“运行”，参数缩进写在下面。", head.number)
+    fields = read_fields(body)
+    unknown = set(fields) - {"时长"}
+    if unknown:
+        raise StoryError("运行不认识：" + "、".join(sorted(unknown)) + "。可用：时长。", head.number)
+    duration = None
+    if "时长" in fields:
+        value, line, _ = fields["时长"]
+        duration = parse_duration(value, line.number)
+    return {"duration_minutes": duration}
+
+
+def parse_duration(value: str, number: int) -> int | None:
+    """`到结局`，或若干段“数字+单位”（分钟、小时、天），如 `1天22小时`。"""
+    if value == "到结局":
+        return None
+    parts = re.findall(r"(\d+)\s*(分钟|小时|天)", value)
+    if not parts or re.sub(r"\d+\s*(分钟|小时|天)", "", value).strip():
+        raise StoryError(f"时长写成“到结局”或“数字+分钟/小时/天”：{value}", number)
+    minutes = sum(int(n) * RUN_UNITS[unit] for n, unit in parts)
+    if minutes <= 0:
+        raise StoryError("时长必须大于零。", number)
+    return minutes
+
+
 def read_clock(body: list[Line]) -> dict[str, Any]:
     fields = read_fields(body)
     scalars = {"起始分钟": "start_minutes", "预计出门分钟": "expected_exit_minutes",
@@ -772,6 +803,9 @@ def load(path: Path) -> Chapter1Source:
             continue
         word, _, rest = text.partition(" ")
         rest = rest.strip()
+        if text == "运行" or text.startswith(("运行：", "运行:")):
+            source.RULES_DATA["RUN"] = read_run(head, body)
+            continue
         if text == "剧情时长":
             if "DAY_CLOCK" in source.RULES_DATA:
                 raise StoryError("剧情时长重复声明", head.number)

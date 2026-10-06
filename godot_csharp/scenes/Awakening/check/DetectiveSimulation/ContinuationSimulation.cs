@@ -10,7 +10,7 @@ public static class ContinuationSimulation
     public sealed record Outcome(bool Started, bool Ended, string Stage, int Inputs, int CharacterActions, int FailedActions, string Result, string Limitation);
 
     public static Outcome Run(MorningWorld morning, ChapterSession progress, int seed, double handoffGameMinutes,
-        Action<double, double, int, C.Slot, string, string> record)
+        double? stopGameMinutes, Action<double, double, int, C.Slot, string, string> record)
     {
         var live = morning.ExportContinuation(progress);
         var json = C.Chapter2Design.Json;
@@ -120,6 +120,8 @@ public static class ContinuationSimulation
             Dispatch(new() { ["kind"] = "begin" });
             for (var budget = 0; budget < 5000 && !ended && !failed; budget++)
             {
+                if (stopGameMinutes is { } stop && GameMinute() >= stop)
+                { Emit("运行停点", $"达到运行时长：游戏第 {GameMinute():0} 分钟。之后的剧情不在本次运行范围内。"); break; }
                 if (presentations.TryDequeue(out var presentation))
                 { Dispatch(new() { ["kind"] = "presented", ["presentation_id"] = presentation }); continue; }
                 if (options.Count > 0)

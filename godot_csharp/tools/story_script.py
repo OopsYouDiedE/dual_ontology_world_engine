@@ -10,6 +10,7 @@ Blocks (top-level, 4-space indented bodies; `#` starts a comment):
   引入：<相对路径或通配> 就地展开另一个片段文件的全部顶层语句；分段引入与写在同一文件等价
   继承生态：<相对路径>    只继承词汇、常数、地点和人物，不带入案件或晨间循环
   续篇 <id>             缩进正文声明后续章节；--section 选择，默认只编译主体；同名续篇再次出现即续写同一作用域
+  运行                  只写在入口文件末尾：此前各句只登记内容，运行声明一次模拟的时长；外部测试可用参数代替
   晨间日常              封锁、旁听与人物有序步骤（房间、目标、动作、说明、权重、游戏分钟）
   文案                  <键>：<文字> / <键>： 后接 `- 条目` 列表
   请求                  `- <标签> → <岗位>`
@@ -71,7 +72,11 @@ def expand_includes(path: Path, ancestors: tuple[Path, ...] = (), base: int = 0)
         body, i = children(lines, i + 1, 0)
         if head.indent != 0:
             raise StoryError("顶层内容必须顶格。", head.number)
-        if head.text.startswith(("引入：", "引入:")):
+        if head.text == "运行" or head.text.startswith(("运行：", "运行:")):
+            if base:
+                raise StoryError("运行只能写在入口文件的末尾，片段里不能写。", head.number)
+            result.extend([head, *body])
+        elif head.text.startswith(("引入：", "引入:")):
             _, pattern = split_pair(head)
             if not pattern or body:
                 raise StoryError("引入须写成“引入：相对路径或通配”，不带正文。", head.number)
@@ -88,6 +93,11 @@ def expand_includes(path: Path, ancestors: tuple[Path, ...] = (), base: int = 0)
                 result.extend(fragment)
         else:
             result.extend([head, *body])
+    if not ancestors:
+        heads = [line for line in result if line.indent == 0]
+        runs = [line for line in heads if line.text == "运行" or line.text.startswith(("运行：", "运行:"))]
+        if len(runs) > 1 or runs and heads[-1] is not runs[0]:
+            raise StoryError("运行只能有一处，且必须是全剧最后一条语句。", runs[-1].number)
     return result
 
 
@@ -293,6 +303,8 @@ class Translator:
                 self.morning(line, body)
             elif keyword == "出区日常":
                 self.departures(line, body)
+            elif keyword in {"运行", "运行：", "运行:"} or head.startswith(("运行：", "运行:")):
+                pass  # 运行参数由章节数据读取（story_chapter1.read_run）；世界脚本只登记内容。
             elif keyword in DESIGN_BLOCKS:
                 self.design_blocks.append((line, body))
             else:

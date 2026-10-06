@@ -20,6 +20,7 @@ if (args.Length > 0 && args[0] == "--render-json")
 if (!args.Contains("--enabled", StringComparer.Ordinal))
     throw new ArgumentException("自主逻辑模拟必须显式传入 --enabled；正常游戏保持玩家控制。");
 var decisionProfile = "default";
+string? durationArgument = null;
 var outputArguments = new List<string>();
 for (var index = 0; index < args.Length; index++)
 {
@@ -29,6 +30,12 @@ for (var index = 0; index < args.Length; index++)
         if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
             throw new ArgumentException("--decision-profile 需要一个剧情选择意图名称。");
         decisionProfile = args[index];
+    }
+    else if (args[index] == "--duration")
+    {
+        if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
+            throw new ArgumentException("--duration 需要时长，如 240、90分钟、1天22小时或到结局。");
+        durationArgument = args[index];
     }
     else if (args[index].StartsWith("--",StringComparison.Ordinal))
         throw new ArgumentException("未知模拟参数：" + args[index]);
@@ -48,6 +55,21 @@ if (!content.Content.RootElement.GetProperty("DETECTIVE_DIALOGUE_CHOICES").Enume
 using var layoutStream = typeof(MorningWorld).Assembly.GetManifestResourceStream("Awakening.Layout.json")
     ?? throw new InvalidOperationException("Missing public host layout.");
 using var hostLayout = JsonDocument.Parse(layoutStream);
+// 运行时长：外部参数优先，否则读入口文件末尾的“运行”；两者都没有时不启动，避免默认跑出无意的长度。
+var root = content.Content.RootElement;
+var startMinutes = root.GetProperty("DAY_CLOCK").GetProperty("start_minutes").GetInt32();
+double? stopMinutes;
+string runSource;
+if (durationArgument is not null) { stopMinutes = startMinutes + RunDuration.Parse(durationArgument); runSource = "外部参数 --duration " + durationArgument; }
+else if (root.TryGetProperty("RUN", out var run))
+{
+    var declared = run.GetProperty("duration_minutes");
+    stopMinutes = declared.ValueKind == JsonValueKind.Null ? null : startMinutes + declared.GetInt32();
+    runSource = "剧本的运行语句";
+}
+else throw new ArgumentException("剧本没有“运行”语句时，须用 --duration 指定时长（可写“到结局”）。");
+if (stopMinutes is not null && double.IsNaN(stopMinutes.Value)) stopMinutes = null;
+bool Expired() => stopMinutes is { } stop && content.GameMinutes >= stop;
 var dialogue = new Chapter1Dialogue(content, world);
 var mind = world.WorldOf(Person.Detective);
 var planner = new DetectivePlanner(content.Content.RootElement);
@@ -315,12 +337,13 @@ void PlayFlow(Action begin)
 }
 world.SetDetectiveControl("simulation");
 controls.Add(new { Time = time, Mode = world.DetectiveControl, Reason = "新会话开始即启用侦探与住民相同的自主行动机制", SameMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)) });
+Story("运行", $"来源：{runSource}；{(stopMinutes is { } limit ? $"运行到游戏第 {limit} 分钟（自起始 {startMinutes} 分钟起 {limit - startMinutes} 分钟）" : "运行到剧情自然结束")}");
 content.Session.Locate("detective", currentRoom);
 SyncStage();
 PlayFlow(() => content.StartFlow(world, "醒来"));
 // Roaming and meeting are advanced through the original public daily/story flow.
-for (var tick = 0; tick < 180 * 4 && !awaitingInput && Stage() != "investigate"; tick++) Tick(true);
-for (var actionIndex = 0; actionIndex < planner.ActionBudget && !awaitingInput && Stage() == "investigate"; actionIndex++)
+for (var tick = 0; tick < 180 * 4 && !awaitingInput && !Expired() && Stage() != "investigate"; tick++) Tick(true);
+for (var actionIndex = 0; actionIndex < planner.ActionBudget && !awaitingInput && !Expired() && Stage() == "investigate"; actionIndex++)
 {
     planner.Refresh(mind,content);
     var search = planner.Plan();
@@ -394,7 +417,8 @@ SyncStage();
 foreach (var entry in content.TakeTiming()) timing.Add(new { Time = time, Timing = entry });
 Story("停点", $"当前阶段 {Stage()}；实际自主答辩提交 {answerSubmitted}；正式终局开门 {exitGameMinutes is not null}。预测、动机与搜索值均为主观假设；结果以正式流程反馈为准。");
 ContinuationSimulation.Outcome? continuation = null;
-if (exitGameMinutes is { } handoffMinutes && !awaitingInput)
+if (Expired()) Story("运行停点", $"达到运行时长：游戏第 {content.GameMinutes} 分钟；当前阶段 {Stage()}。之后的剧情不在本次运行范围内。");
+else if (exitGameMinutes is { } handoffMinutes && !awaitingInput)
 {
     var handoffSeconds = time;
     var sequence = 0;
@@ -403,7 +427,7 @@ if (exitGameMinutes is { } handoffMinutes && !awaitingInput)
     try
     {
         continuation = ContinuationSimulation.Run(world, content.Session,
-            content.Content.RootElement.GetProperty("DETECTIVE_SEARCH").GetProperty("seed").GetInt32(), content.GameMinutes,
+            content.Content.RootElement.GetProperty("DETECTIVE_SEARCH").GetProperty("seed").GetInt32(), content.GameMinutes, stopMinutes,
             (elapsed, gameMinutes, day, slot, kind, text) =>
             {
                 time = Math.Max(time, handoffSeconds + elapsed) + 0.000001;
