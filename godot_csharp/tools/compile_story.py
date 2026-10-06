@@ -29,7 +29,10 @@ QUERIES = {
     "life_thought", "talk_first", "recall_thought", "wrong_name", "addr", "heard", "heard_where",
     "sound_sentence", "has", "count", "value", "replay_count", "full_match", "replay_refused",
     "in_room", "local", "busy", "said", "shown", "is_person", "geo_reach", "acquaintance_seen", "replay_var", "bolted",
+    "credence", "knows", "speech",
 }
+# 全局剧情进度：只许流程与阶段使用；对白条件须写成说话人自己的认知（总纲 §五.5）。
+GLOBAL_PROGRESS_QUERIES = {"matched", "replayed", "full_match", "replay_count", "replay_refused"}
 EXPR_OPS = {"literal", "call", "not", "and", "or", "eq", "ne", "gt", "gte", "lt", "lte"}
 INTERPOLATION = re.compile(r"\{\{(.*?)\}\}")
 CALL_ARITY = {
@@ -40,6 +43,7 @@ CALL_ARITY = {
     "heard_where": 1, "sound_sentence": 0, "has": 2, "count": 1, "value": 2, "replay_count": 0,
     "full_match": 0, "replay_refused": 0, "in_room": 2, "local": 2, "busy": 1, "said": 0, "shown": 0,
     "is_person": 1, "geo_reach": 1, "acquaintance_seen": 0, "replay_var": 1, "bolted": 0,
+    "credence": 2, "knows": 2, "speech": 2,
 }
 # 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
 HOST_COMMANDS = {
@@ -57,7 +61,9 @@ def load_source(path: Path = SOURCE):
     return story_chapter1.load(path)
 
 
-def validate_expr(expr: Expr, where: str) -> None:
+def validate_expr(expr: Expr, where: str, dialogue: bool = False) -> None:
+    if dialogue and expr.op == "call" and expr.name in GLOBAL_PROGRESS_QUERIES:
+        raise ValueError(f"{where}: 对白条件不能用全局剧情进度 {expr.name!r}；请改写成说话人的认知（把握、知道）")
     if expr.op not in EXPR_OPS:
         raise ValueError(f"{where}: unsupported expression operator {expr.op!r}")
     if expr.op == "call" and expr.name not in QUERIES:
@@ -69,7 +75,7 @@ def validate_expr(expr: Expr, where: str) -> None:
     if expr.op == "call" and len(expr.args) != CALL_ARITY[expr.name]:
         raise ValueError(f"{where}: query {expr.name!r} expects {CALL_ARITY[expr.name]} arguments")
     for arg in expr.args:
-        validate_expr(arg, where)
+        validate_expr(arg, where, dialogue)
 
 
 def validate_text(text: str, where: str) -> None:
@@ -103,7 +109,7 @@ def validate_instructions(instructions: list[dict[str, Any]], where: str) -> Non
             validate_text(node["text"], location)
             validate_text(node["speaker"], location)
         elif op == "if":
-            validate_expr(_expression(node["condition"]), location)
+            validate_expr(_expression(node["condition"]), location, dialogue=True)
             validate_instructions(node["then"], location + ".then")
             validate_instructions(node["else"], location + ".else")
         elif op == "call":
@@ -118,7 +124,7 @@ def validate_instructions(instructions: list[dict[str, Any]], where: str) -> Non
                 validate_text(option["label"], location + ".choice.label")
                 validate_text(option["lock_hint"], location + ".choice.lock_hint")
                 if option["condition"] is not None:
-                    validate_expr(_expression(option["condition"]), location + ".choice")
+                    validate_expr(_expression(option["condition"]), location + ".choice", dialogue=True)
                 validate_instructions(option["body"], location + ".choice")
         elif op == "jump":
             continue
@@ -417,7 +423,8 @@ def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> d
     continuation_json = continuation_json.replace(folder, display_path(story.parent) + "/")
     if require_line_ids:
         check_line_ids(AUTHORED_LINES, story)
-    lines_csv = line_table([("", document), ("chapter2", json.loads(continuation_json))])
+    lines_csv = line_table([("", document), ("chapter2", json.loads(continuation_json)),
+                            *((f"topic.{name}", topic) for name, topic in content.get("TOPICS", {}).items())])
     escaped = "\n".join("    " + line for line in dialogue_json.rstrip("\n").splitlines())
     csharp = (
         "using DualOntologyWorldEngine.Story;\n\n"

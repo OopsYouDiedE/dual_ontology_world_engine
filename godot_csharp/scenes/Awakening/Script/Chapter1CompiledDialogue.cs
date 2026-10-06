@@ -2459,7 +2459,17 @@ public static class Chapter1CompiledDialogue
             "op": "if",
             "condition": {
               "op": "call",
-              "name": "matched"
+              "name": "knows",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "huo"
+                },
+                {
+                  "op": "literal",
+                  "value": "侦探重演吻合"
+                }
+              ]
             },
             "then": [
               {
@@ -2476,7 +2486,17 @@ public static class Chapter1CompiledDialogue
                 "op": "if",
                 "condition": {
                   "op": "call",
-                  "name": "replayed"
+                  "name": "knows",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "huo"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "侦探在重演昨夜"
+                    }
+                  ]
                 },
                 "then": [
                   {
@@ -2834,34 +2854,318 @@ public static class Chapter1CompiledDialogue
                 "label": "我们在这里很久了。",
                 "label_id": "talk_huo_menu.022",
                 "condition": {
-                  "op": "call",
-                  "name": "matched"
+                  "op": "gte",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "credence",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "detective"
+                        },
+                        {
+                          "op": "literal",
+                          "value": "早已相熟"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": 75
+                    }
+                  ]
                 },
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "霍铎",
-                    "mood": "",
-                    "text": "嗯。",
-                    "voice_clip": "",
-                    "line_id": "talk_huo_menu.023"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "霍铎",
-                    "mood": "",
-                    "text": "我在石板上画人，画他手里的家伙。我画了放大镜。",
-                    "voice_clip": "",
-                    "line_id": "talk_huo_menu.024"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "霍铎",
-                    "mood": "",
-                    "text": "我认得你。只是忘了。",
-                    "voice_clip": "",
-                    "line_id": "talk_huo_menu.025"
+                    "op": "if",
+                    "condition": {
+                      "op": "eq",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "speech",
+                          "args": [
+                            {
+                              "op": "literal",
+                              "value": "huo"
+                            },
+                            {
+                              "op": "literal",
+                              "value": "早已相熟"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "如实·有把握"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "霍铎",
+                        "mood": "",
+                        "text": "嗯。",
+                        "voice_clip": "",
+                        "line_id": "talk_huo_menu.023"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "霍铎",
+                        "mood": "",
+                        "text": "我在石板上画人，画他手里的家伙。我画了放大镜。",
+                        "voice_clip": "",
+                        "line_id": "talk_huo_menu.024"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "霍铎",
+                        "mood": "",
+                        "text": "我认得你。只是忘了。",
+                        "voice_clip": "",
+                        "line_id": "talk_huo_menu.025"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "if",
+                        "condition": {
+                          "op": "eq",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "speech",
+                              "args": [
+                                {
+                                  "op": "literal",
+                                  "value": "huo"
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "早已相熟"
+                                }
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "如实·否认"
+                            }
+                          ]
+                        },
+                        "then": [
+                          {
+                            "op": "line",
+                            "speaker": "霍铎",
+                            "mood": "",
+                            "text": "昨天才见。我只记得上船。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.003"
+                          }
+                        ],
+                        "else": [
+                          {
+                            "op": "if",
+                            "condition": {
+                              "op": "eq",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "speech",
+                                  "args": [
+                                    {
+                                      "op": "literal",
+                                      "value": "huo"
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "早已相熟"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "如实·没把握"
+                                }
+                              ]
+                            },
+                            "then": [
+                              {
+                                "op": "line",
+                                "speaker": "霍铎",
+                                "mood": "",
+                                "text": "说不准。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.001"
+                              },
+                              {
+                                "op": "line",
+                                "speaker": "霍铎",
+                                "mood": "",
+                                "text": "手认得的东西，比脑子多。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.002"
+                              }
+                            ],
+                            "else": [
+                              {
+                                "op": "if",
+                                "condition": {
+                                  "op": "eq",
+                                  "args": [
+                                    {
+                                      "op": "call",
+                                      "name": "speech",
+                                      "args": [
+                                        {
+                                          "op": "literal",
+                                          "value": "huo"
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "早已相熟"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "含糊"
+                                    }
+                                  ]
+                                },
+                                "then": [
+                                  {
+                                    "op": "line",
+                                    "speaker": "霍铎",
+                                    "mood": "",
+                                    "text": "这事……以后再说。",
+                                    "voice_clip": "",
+                                    "line_id": "topic.早已相熟.011"
+                                  }
+                                ],
+                                "else": [
+                                  {
+                                    "op": "if",
+                                    "condition": {
+                                      "op": "eq",
+                                      "args": [
+                                        {
+                                          "op": "call",
+                                          "name": "speech",
+                                          "args": [
+                                            {
+                                              "op": "literal",
+                                              "value": "huo"
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "早已相熟"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "反问"
+                                        }
+                                      ]
+                                    },
+                                    "then": [
+                                      {
+                                        "op": "line",
+                                        "speaker": "霍铎",
+                                        "mood": "",
+                                        "text": "你为什么这么问？",
+                                        "voice_clip": "",
+                                        "line_id": "topic.早已相熟.012"
+                                      }
+                                    ],
+                                    "else": [
+                                      {
+                                        "op": "if",
+                                        "condition": {
+                                          "op": "eq",
+                                          "args": [
+                                            {
+                                              "op": "call",
+                                              "name": "speech",
+                                              "args": [
+                                                {
+                                                  "op": "literal",
+                                                  "value": "huo"
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "早已相熟"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "隐瞒"
+                                            }
+                                          ]
+                                        },
+                                        "then": [
+                                          {
+                                            "op": "line",
+                                            "speaker": "霍铎",
+                                            "mood": "",
+                                            "text": "（目光移开了，没有接话。）",
+                                            "voice_clip": "",
+                                            "line_id": "topic.早已相熟.013"
+                                          }
+                                        ],
+                                        "else": [
+                                          {
+                                            "op": "if",
+                                            "condition": {
+                                              "op": "eq",
+                                              "args": [
+                                                {
+                                                  "op": "call",
+                                                  "name": "speech",
+                                                  "args": [
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "huo"
+                                                    },
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "早已相熟"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "拒绝"
+                                                }
+                                              ]
+                                            },
+                                            "then": [
+                                              {
+                                                "op": "line",
+                                                "speaker": "霍铎",
+                                                "mood": "",
+                                                "text": "（没有回答。）",
+                                                "voice_clip": "",
+                                                "line_id": "topic.早已相熟.014"
+                                              }
+                                            ],
+                                            "else": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
                     "op": "jump",
@@ -2911,7 +3215,17 @@ public static class Chapter1CompiledDialogue
             "op": "if",
             "condition": {
               "op": "call",
-              "name": "matched"
+              "name": "knows",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "shen"
+                },
+                {
+                  "op": "literal",
+                  "value": "侦探重演吻合"
+                }
+              ]
             },
             "then": [
               {
@@ -2928,7 +3242,17 @@ public static class Chapter1CompiledDialogue
                 "op": "if",
                 "condition": {
                   "op": "call",
-                  "name": "replayed"
+                  "name": "knows",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "shen"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "侦探在重演昨夜"
+                    }
+                  ]
                 },
                 "then": [
                   {
@@ -3285,34 +3609,318 @@ public static class Chapter1CompiledDialogue
                 "label": "罐壁上那些面痕。",
                 "label_id": "talk_shen_menu.022",
                 "condition": {
-                  "op": "call",
-                  "name": "matched"
+                  "op": "gte",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "credence",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "detective"
+                        },
+                        {
+                          "op": "literal",
+                          "value": "早已相熟"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": 75
+                    }
+                  ]
                 },
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "一层面痕，就是喂过一回。我数不过来。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.023"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "你们的口味，我记在手上，没记在脑子里。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.024"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "……也好。脑子会被人拿走，手拿不走。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.025"
+                    "op": "if",
+                    "condition": {
+                      "op": "eq",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "speech",
+                          "args": [
+                            {
+                              "op": "literal",
+                              "value": "shen"
+                            },
+                            {
+                              "op": "literal",
+                              "value": "早已相熟"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "如实·有把握"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "一层面痕，就是喂过一回。我数不过来。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.023"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "你们的口味，我记在手上，没记在脑子里。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.024"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "……也好。脑子会被人拿走，手拿不走。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.025"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "if",
+                        "condition": {
+                          "op": "eq",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "speech",
+                              "args": [
+                                {
+                                  "op": "literal",
+                                  "value": "shen"
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "早已相熟"
+                                }
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "如实·否认"
+                            }
+                          ]
+                        },
+                        "then": [
+                          {
+                            "op": "line",
+                            "speaker": "沈鼎",
+                            "mood": "",
+                            "text": "罐子是老的，人是今早才认的。两回事。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.006"
+                          }
+                        ],
+                        "else": [
+                          {
+                            "op": "if",
+                            "condition": {
+                              "op": "eq",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "speech",
+                                  "args": [
+                                    {
+                                      "op": "literal",
+                                      "value": "shen"
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "早已相熟"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "如实·没把握"
+                                }
+                              ]
+                            },
+                            "then": [
+                              {
+                                "op": "line",
+                                "speaker": "沈鼎",
+                                "mood": "",
+                                "text": "一层面痕，就是喂过一回。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.004"
+                              },
+                              {
+                                "op": "line",
+                                "speaker": "沈鼎",
+                                "mood": "",
+                                "text": "可喂罐子的是我，喝茶的是谁，罐子不说。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.005"
+                              }
+                            ],
+                            "else": [
+                              {
+                                "op": "if",
+                                "condition": {
+                                  "op": "eq",
+                                  "args": [
+                                    {
+                                      "op": "call",
+                                      "name": "speech",
+                                      "args": [
+                                        {
+                                          "op": "literal",
+                                          "value": "shen"
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "早已相熟"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "含糊"
+                                    }
+                                  ]
+                                },
+                                "then": [
+                                  {
+                                    "op": "line",
+                                    "speaker": "沈鼎",
+                                    "mood": "",
+                                    "text": "这事……以后再说。",
+                                    "voice_clip": "",
+                                    "line_id": "topic.早已相熟.011"
+                                  }
+                                ],
+                                "else": [
+                                  {
+                                    "op": "if",
+                                    "condition": {
+                                      "op": "eq",
+                                      "args": [
+                                        {
+                                          "op": "call",
+                                          "name": "speech",
+                                          "args": [
+                                            {
+                                              "op": "literal",
+                                              "value": "shen"
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "早已相熟"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "反问"
+                                        }
+                                      ]
+                                    },
+                                    "then": [
+                                      {
+                                        "op": "line",
+                                        "speaker": "沈鼎",
+                                        "mood": "",
+                                        "text": "你为什么这么问？",
+                                        "voice_clip": "",
+                                        "line_id": "topic.早已相熟.012"
+                                      }
+                                    ],
+                                    "else": [
+                                      {
+                                        "op": "if",
+                                        "condition": {
+                                          "op": "eq",
+                                          "args": [
+                                            {
+                                              "op": "call",
+                                              "name": "speech",
+                                              "args": [
+                                                {
+                                                  "op": "literal",
+                                                  "value": "shen"
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "早已相熟"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "隐瞒"
+                                            }
+                                          ]
+                                        },
+                                        "then": [
+                                          {
+                                            "op": "line",
+                                            "speaker": "沈鼎",
+                                            "mood": "",
+                                            "text": "（目光移开了，没有接话。）",
+                                            "voice_clip": "",
+                                            "line_id": "topic.早已相熟.013"
+                                          }
+                                        ],
+                                        "else": [
+                                          {
+                                            "op": "if",
+                                            "condition": {
+                                              "op": "eq",
+                                              "args": [
+                                                {
+                                                  "op": "call",
+                                                  "name": "speech",
+                                                  "args": [
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "shen"
+                                                    },
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "早已相熟"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "拒绝"
+                                                }
+                                              ]
+                                            },
+                                            "then": [
+                                              {
+                                                "op": "line",
+                                                "speaker": "沈鼎",
+                                                "mood": "",
+                                                "text": "（没有回答。）",
+                                                "voice_clip": "",
+                                                "line_id": "topic.早已相熟.014"
+                                              }
+                                            ],
+                                            "else": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
                     "op": "jump",
@@ -3378,7 +3986,17 @@ public static class Chapter1CompiledDialogue
             "op": "if",
             "condition": {
               "op": "call",
-              "name": "matched"
+              "name": "knows",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "su"
+                },
+                {
+                  "op": "literal",
+                  "value": "侦探重演吻合"
+                }
+              ]
             },
             "then": [
               {
@@ -3395,7 +4013,17 @@ public static class Chapter1CompiledDialogue
                 "op": "if",
                 "condition": {
                   "op": "call",
-                  "name": "replayed"
+                  "name": "knows",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "su"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "侦探在重演昨夜"
+                    }
+                  ]
                 },
                 "then": [
                   {
@@ -3760,26 +4388,310 @@ public static class Chapter1CompiledDialogue
                 "label": "我们早就认识。",
                 "label_id": "talk_su_menu.022",
                 "condition": {
-                  "op": "call",
-                  "name": "matched"
+                  "op": "gte",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "credence",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "detective"
+                        },
+                        {
+                          "op": "literal",
+                          "value": "早已相熟"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": 75
+                    }
+                  ]
                 },
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "苏泠",
-                    "mood": "",
-                    "text": "沈鼎不给我放糖。他知道。",
-                    "voice_clip": "",
-                    "line_id": "talk_su_menu.023"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "苏泠",
-                    "mood": "",
-                    "text": "……我也知道你。想不起来，可是知道。",
-                    "voice_clip": "",
-                    "line_id": "talk_su_menu.024"
+                    "op": "if",
+                    "condition": {
+                      "op": "eq",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "speech",
+                          "args": [
+                            {
+                              "op": "literal",
+                              "value": "su"
+                            },
+                            {
+                              "op": "literal",
+                              "value": "早已相熟"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "如实·有把握"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "苏泠",
+                        "mood": "",
+                        "text": "沈鼎不给我放糖。他知道。",
+                        "voice_clip": "",
+                        "line_id": "talk_su_menu.023"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "苏泠",
+                        "mood": "",
+                        "text": "……我也知道你。想不起来，可是知道。",
+                        "voice_clip": "",
+                        "line_id": "talk_su_menu.024"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "if",
+                        "condition": {
+                          "op": "eq",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "speech",
+                              "args": [
+                                {
+                                  "op": "literal",
+                                  "value": "su"
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "早已相熟"
+                                }
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "如实·否认"
+                            }
+                          ]
+                        },
+                        "then": [
+                          {
+                            "op": "line",
+                            "speaker": "苏泠",
+                            "mood": "",
+                            "text": "我只认得今天早上的你们。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.009"
+                          }
+                        ],
+                        "else": [
+                          {
+                            "op": "if",
+                            "condition": {
+                              "op": "eq",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "speech",
+                                  "args": [
+                                    {
+                                      "op": "literal",
+                                      "value": "su"
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "早已相熟"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "literal",
+                                  "value": "如实·没把握"
+                                }
+                              ]
+                            },
+                            "then": [
+                              {
+                                "op": "line",
+                                "speaker": "苏泠",
+                                "mood": "",
+                                "text": "……我说不上来。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.007"
+                              },
+                              {
+                                "op": "line",
+                                "speaker": "苏泠",
+                                "mood": "",
+                                "text": "可那杯茶，他没问就没放糖。",
+                                "voice_clip": "",
+                                "line_id": "topic.早已相熟.008"
+                              }
+                            ],
+                            "else": [
+                              {
+                                "op": "if",
+                                "condition": {
+                                  "op": "eq",
+                                  "args": [
+                                    {
+                                      "op": "call",
+                                      "name": "speech",
+                                      "args": [
+                                        {
+                                          "op": "literal",
+                                          "value": "su"
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "早已相熟"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "literal",
+                                      "value": "含糊"
+                                    }
+                                  ]
+                                },
+                                "then": [
+                                  {
+                                    "op": "line",
+                                    "speaker": "苏泠",
+                                    "mood": "",
+                                    "text": "这事……以后再说。",
+                                    "voice_clip": "",
+                                    "line_id": "topic.早已相熟.011"
+                                  }
+                                ],
+                                "else": [
+                                  {
+                                    "op": "if",
+                                    "condition": {
+                                      "op": "eq",
+                                      "args": [
+                                        {
+                                          "op": "call",
+                                          "name": "speech",
+                                          "args": [
+                                            {
+                                              "op": "literal",
+                                              "value": "su"
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "早已相熟"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "literal",
+                                          "value": "反问"
+                                        }
+                                      ]
+                                    },
+                                    "then": [
+                                      {
+                                        "op": "line",
+                                        "speaker": "苏泠",
+                                        "mood": "",
+                                        "text": "你为什么这么问？",
+                                        "voice_clip": "",
+                                        "line_id": "topic.早已相熟.012"
+                                      }
+                                    ],
+                                    "else": [
+                                      {
+                                        "op": "if",
+                                        "condition": {
+                                          "op": "eq",
+                                          "args": [
+                                            {
+                                              "op": "call",
+                                              "name": "speech",
+                                              "args": [
+                                                {
+                                                  "op": "literal",
+                                                  "value": "su"
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "早已相熟"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "op": "literal",
+                                              "value": "隐瞒"
+                                            }
+                                          ]
+                                        },
+                                        "then": [
+                                          {
+                                            "op": "line",
+                                            "speaker": "苏泠",
+                                            "mood": "",
+                                            "text": "（目光移开了，没有接话。）",
+                                            "voice_clip": "",
+                                            "line_id": "topic.早已相熟.013"
+                                          }
+                                        ],
+                                        "else": [
+                                          {
+                                            "op": "if",
+                                            "condition": {
+                                              "op": "eq",
+                                              "args": [
+                                                {
+                                                  "op": "call",
+                                                  "name": "speech",
+                                                  "args": [
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "su"
+                                                    },
+                                                    {
+                                                      "op": "literal",
+                                                      "value": "早已相熟"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": "literal",
+                                                  "value": "拒绝"
+                                                }
+                                              ]
+                                            },
+                                            "then": [
+                                              {
+                                                "op": "line",
+                                                "speaker": "苏泠",
+                                                "mood": "",
+                                                "text": "（没有回答。）",
+                                                "voice_clip": "",
+                                                "line_id": "topic.早已相熟.014"
+                                              }
+                                            ],
+                                            "else": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
                     "op": "jump",

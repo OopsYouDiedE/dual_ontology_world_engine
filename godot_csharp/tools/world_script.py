@@ -34,7 +34,7 @@ ACTION_NAMES = {
 AUTHORITY_ACTIONS = {"lesson_answer": ["boolean"], "mediate": []}
 REACTION_INTENTS = {"testimony", "decline"}
 # A line ID tag may precede or follow the emotion tag at the end of a dialogue line.
-LINE_ID_TAG = re.compile(r"\s*\[#id=([A-Za-z0-9_][A-Za-z0-9_.\-]*)\](?=\s*(?:\[#emotion=[a-z_]+\])?\s*$)")
+LINE_ID_TAG = re.compile(r"\s*\[#id=(\w[\w.\-]*)\](?=\s*(?:\[#emotion=[a-z_]+\])?\s*$)")
 COGNITIVE_QUERY_TAGS = {"Trust", "Cooperation", "Sick", "Hungry", "Fed", "Weak"}
 PROFILE_FIELDS = {
     "group", "dorm", "speed", "cooperation", "build", "desire", "demon_line", "desire_flags",

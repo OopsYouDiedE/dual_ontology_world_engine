@@ -51,6 +51,8 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `ReplayStage.gd` | 墨影回放：真实地图上的半透明人影与四个并排的心声气泡；暂停、倍速、跳过 |
 | `TraceDecals.gd` | 传声铜管走向、管接头、灰扇、靴印、湿布、门框凹痕、书架无尘方框与窄手印 |
 | `Script/chapter_01.story` + `Script/story/` | 两章对白、分支、证物事实与热点的唯一生产源。入口文件只写章节、按序 `引入：<相对路径或通配>` 与末尾的 `运行`（声明时长；模拟器 `--duration` 可代替或覆盖）；片段按生态、第一章、续篇分目录，按序引入与写在同一文件等价；每句台词行尾带 `[#id=…]` 稳定编号，新台词用 `python godot_csharp/tools/compile_story.py --assign-ids` 写回 |
+| `Night/AwakeningCase.cs` / `Night/Persona.cs` / `Script/Chapter1Speech.cs` | 共享案件模型（Core `Reasoner` 用）、人物认知初值（读 story，`Persona.Overrides` 仅供微调验证）、话题回应与重演目睹 |
+| `check/CognitionCheck/` | 认知与言语的场景检查和默认设置微调检查 |
 | `Script/generated_lines_zh.csv` | 编译器生成的台词表（编号、场面、说话人、中文），供翻译使用；不手工修改 |
 | `Script/Chapter1Dialogue.cs` / `Shared/Story/InteractionPacket.cs` | 纯 C# 对白查询、效果、选择与交互协议；不依赖 Godot |
 | `Script/generated_awakening_*.json` / `Script/Chapter1CompiledDialogue.cs` | 由 `python godot_csharp/tools/compile_story.py` 生成；`--check` 检查一致性，不手工修改 |

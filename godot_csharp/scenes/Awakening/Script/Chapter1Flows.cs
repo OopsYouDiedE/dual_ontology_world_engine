@@ -57,6 +57,8 @@ public sealed partial class AwakeningContentSession
             "busy" => LifeBusy(A()),
             "said" => _judgeSaid ?? PickField("say"), "shown" => _judgeShown ?? PickField("show"),
             "is_person" => Names.PersonKeys.Contains(A()),
+            "credence" => Credence(W(), A(0), A(1)), "knows" => W().Knows(PersonOf(A(0)), A(1)),
+            "speech" => SpeechKey(W(), A(0), A(1)),
             _ => throw new InvalidDataException("Unknown chapter query: " + name),
         };
     }

@@ -475,11 +475,19 @@ public sealed partial class Game
         var heard = p.News.OrderByDescending(n => n.Key).Where(n => AllNews[n.Key - 1].Kind != NewsKind.Lesson).Select(n => n.Value).Where(h => h.Day >= Day - 1).Take(2).Select(h => h.Hops == 0 ? h.Text : $"{h.Text}（听{Names.Of(h.From)}说的）").ToArray();
         var t = TrustIn(p, Det);
         var he = p.Pro.Pronoun;
+        // 说什么之前先定言语行为（Core 言语规则）：他知道自己听来的事，信不信侦探决定说几件、说不说。
+        var act = heard.Length == 0 ? SpeechAct.Tell : SpeechPolicy.Assess(1.0, t, new SpeechHabits())[0].Act;
         var mood = t >= 3 ? $"{he}说话不避着你。" : t >= 1 ? $"{he}还算客气。" : t >= 0 ? $"{he}话不多。" : $"{he}明显不想跟你多说。";
+        var said = act switch
+        {
+            SpeechAct.Refuse => "“这件事，我不想说。”",
+            SpeechAct.Withhold => $"“没什么新鲜事。”{he}像是知道些什么，没有说。",
+            SpeechAct.Hedge => "“" + heard[0] + "。”",
+            _ => heard.Length == 0 ? "“没什么新鲜事。”" : "“" + string.Join("；", heard) + "。”",
+        };
         // Recalling witnessed/heard news uses the thinking pose. Only the wording
         // explicitly saying he does not want to speak selects the annoyed pose.
-        return ((heard.Length == 0 ? "“没什么新鲜事。”" : "“" + string.Join("；", heard) + "。”") + mood,
-            t < 0 ? "angry" : heard.Length > 0 ? "thoughtful" : "calm");
+        return (said + mood, t < 0 ? "angry" : heard.Length > 0 && act != SpeechAct.Withhold ? "thoughtful" : "calm");
     }
 
     public string Describe(Essence e)

@@ -9,6 +9,7 @@ public sealed partial class AwakeningContentSession
     {
         RecordReplayRun();
         var result = NightReplay.Run(variables);
+        WitnessReplay(world, variables, result.FullMatch);
         var values = new object[] { (int)variables.V1, (int)variables.V2, (int)variables.V3,
             (int)variables.V4, (int)variables.V5, (int)variables.V6 };
         var state = Session.GetProgress("state");

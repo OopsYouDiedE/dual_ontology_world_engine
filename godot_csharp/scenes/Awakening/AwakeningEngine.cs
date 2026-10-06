@@ -196,6 +196,7 @@ public partial class AwakeningEngine : Node
         var seen = examined.Select(x => x.AsString()).ToHashSet();
         _content.RecordReplayRun();
         var result = NightReplay.Run(v);
+        _content.WitnessReplay(_morning, v, result.FullMatch);
         var frames = new GArray();
         foreach (var f in result.Frames)
         {

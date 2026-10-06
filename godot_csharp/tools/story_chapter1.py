@@ -96,6 +96,7 @@ QUERY_NAMES = {
     "replay_refused": "重演被拒", "in_room": "在房间", "local": "同处", "busy": "忙碌",
     "said": "陈述", "shown": "出示", "is_person": "是同伴", "geo_reach": "几何可达",
     "acquaintance_seen": "相识已查", "replay_var": "重演变量", "bolted": "重演侦探闩门",
+    "credence": "把握", "knows": "知道", "speech": "话题回应",
 }
 QUERY_BY_ZH = {zh: en for en, zh in QUERY_NAMES.items()}
 EFFECT_WORDS = {"设旗": "set_flag", "清旗": "clear_flag", "放大": "amplify", "低语": "whisper", "共享回忆": "share_recall"}
@@ -263,6 +264,10 @@ def restore_interpolation(text: str) -> str:
 
 # ---- 场面 ----
 
+# 话题在读取时登记：须先声明后使用，与人物同一顺序语义。
+TOPICS: dict[str, Any] = {}
+
+
 def parse_body(lines: list[Line], start: int, depth: int, entry_id: str) -> tuple[list[Any], int]:
     """解析缩进为 depth 的指令序列，返回指令列表与结束位置。"""
     result: list[Any] = []
@@ -285,6 +290,10 @@ def parse_body(lines: list[Line], start: int, depth: int, entry_id: str) -> tupl
             raise StoryError("“否则”前面必须有“若”。", line.number)
         elif text.startswith("跳转 "):
             result.append(jump(text[3:].strip()))
+            i += 1
+        elif text.startswith("回应话题 "):
+            topic, _, who = text[len("回应话题 "):].partition("：")
+            result.append(expand_topic_response(topic.strip(), who.strip(), line.number))
             i += 1
         elif text.startswith("选择"):
             sub, i = children(lines, i + 1, depth)
@@ -526,7 +535,8 @@ def finalize_acoustics(source) -> None:
     }
 
 
-PERSON_FIELDS = {"欲望": "desire"}
+PERSON_FIELDS = {"欲望": "desire", "初醒信任": "initial_trust", "谨慎": "caution", "说话习惯": "speech"}
+SPEECH_HABITS = {"坦率": "candor", "寡言": "reticence", "好问": "curiosity"}
 
 
 def read_person(fields) -> dict[str, Any]:
@@ -536,8 +546,100 @@ def read_person(fields) -> dict[str, Any]:
             continue
         if key not in PERSON_FIELDS:
             raise StoryError(f"人物里不认识“{key}”。", line.number)
-        person[PERSON_FIELDS[key]] = text_of(value, sub)
+        if key == "初醒信任":
+            # 醒来时、记忆封存之下此人心里的信任：“侦探 1，铜口 0”。
+            trust = {}
+            for entry in split_list(value):
+                name, _, number = entry.rpartition(" ")
+                if not name.strip():
+                    raise StoryError(f"初醒信任写成“对象 数值”：{entry}", line.number)
+                trust[name.strip()] = num(number, "初醒信任", line.number)
+            person["initial_trust"] = trust
+        elif key == "谨慎":
+            person["caution"] = num(value, "谨慎", line.number)
+        elif key == "说话习惯":
+            # “坦率 1，寡言 1，好问 1，会撒谎”：说话行为的修正；不写“会撒谎”即从不撒谎。
+            speech: dict[str, Any] = {"candor": 0, "reticence": 0, "curiosity": 0, "may_lie": False}
+            for entry in split_list(value):
+                if entry == "会撒谎":
+                    speech["may_lie"] = True
+                    continue
+                name, _, number = entry.partition(" ")
+                if name not in SPEECH_HABITS:
+                    raise StoryError(f"说话习惯不认识“{name}”。可用：" + "、".join(SPEECH_HABITS) + "、会撒谎。", line.number)
+                speech[SPEECH_HABITS[name]] = num(number, "说话习惯", line.number)
+            person["speech"] = speech
+        else:
+            person[PERSON_FIELDS[key]] = text_of(value, sub)
     return person
+
+
+# ---- 话题：命题、牵涉与各人按言语行为的回应 ----
+SPEECH_KEYS = ("如实·有把握", "如实·否认", "如实·没把握", "含糊", "反问", "隐瞒", "拒绝", "撒谎·有把握", "撒谎·否认")
+HOST_PEOPLE = {"侦探": "detective", "霍铎": "huo", "沈鼎": "shen", "苏泠": "su"}
+
+
+def read_topic(name: str, head: Line, body: list[Line]) -> dict[str, Any]:
+    """`话题 <名>`：命题写成“推演变量 = 选项”；回应按人（或“任何人”）与言语行为分列，每条台词带编号。"""
+    fields = read_fields(body)
+    if "命题" not in fields:
+        raise StoryError(f"话题“{name}”缺少命题。", head.number)
+    question, eq, option = fields["命题"][0].partition("=")
+    if not eq:
+        raise StoryError("命题写成“推演变量 = 选项”，如：V6 = 早已相熟。", fields["命题"][1].number)
+    topic: dict[str, Any] = {"question": question.strip(), "option": option.strip(), "implicates": [], "responses": {}}
+    if "牵涉" in fields:
+        topic["implicates"] = [HOST_PEOPLE.get(who, who) for who in split_list(fields["牵涉"][0])]
+    for key, (value, line, sub) in fields.items():
+        if key in {"命题", "牵涉"}:
+            continue
+        if not key.startswith("回应 "):
+            raise StoryError(f"话题里不认识“{key}”。可用：命题、牵涉、回应 <人物或任何人>。", line.number)
+        who = key[len("回应 "):].strip()
+        speaker = who if who != "任何人" else ""
+        responses: dict[str, list[dict[str, Any]]] = {}
+        j = 0
+        while j < len(sub):
+            item = sub[j]
+            more, j = children(sub, j + 1, item.indent)
+            act, _, text = item.text.partition("：")
+            if act not in SPEECH_KEYS:
+                raise StoryError(f"回应的言语行为“{act}”不认识。可用：" + "、".join(SPEECH_KEYS), item.number)
+            if act in responses:
+                raise StoryError(f"回应“{act}”重复。", item.number)
+            said = []
+            # 同一行为可接几句：首句写在冒号后，后续句缩进写在下面（同一说话人）。
+            for number, raw in [(item.number, text.strip()), *((m.number, m.text) for m in more)]:
+                words, mood, line_id = split_tags(raw, number)
+                if not words:
+                    raise StoryError("回应须写出台词。", number)
+                note_line(f"topic.{name}", line_id, number)
+                said.append(dialogue_line(speaker, restore_interpolation(words), mood, line_id=line_id).json())
+            responses[act] = said
+        topic["responses"]["any" if who == "任何人" else HOST_PEOPLE.get(who, who)] = responses
+    return topic
+
+
+def expand_topic_response(topic: str, who: str, number: int) -> Any:
+    """`回应话题 <话题>：<人物>` 译成按此人所选言语行为分支的对白；选择在运行时由推理器与言语规则作出。"""
+    if topic not in TOPICS:
+        raise StoryError(f"话题“{topic}”尚未声明；话题须写在使用它的场面之前。", number)
+    responses = TOPICS[topic]["responses"]
+    own, common = responses.get(who, {}), responses.get("any", {})
+    speaker = {host: zh for zh, host in HOST_PEOPLE.items()}.get(who, who)
+    branches: list[Any] = []
+    for act in SPEECH_KEYS:
+        lines = own.get(act) or common.get(act)
+        if not lines:
+            continue
+        body = [dialogue_line(speaker, item["text"], item["mood"], line_id=item["line_id"]) for item in lines]
+        branches.append((binary("eq", call("speech", who, topic), literal(act)), body))
+    if not branches:
+        raise StoryError(f"话题“{topic}”没有写给“{who}”或“任何人”的回应。", number)
+    result: list[Any] = []
+    for test, body in reversed(branches):
+        result = [condition(test, body, result)]
+    return result[0]
 
 
 def parse_flow(lines: list[Line], depth: int) -> list[dict[str, Any]]:
@@ -788,6 +890,7 @@ def merge_table(previous: Any, value: Any, what: str, number: int) -> Any:
 
 
 def load(path: Path) -> Chapter1Source:
+    TOPICS.clear()
     lines = source_lines(path)
     source = Chapter1Source()
     content_order: list[str] = []
@@ -959,6 +1062,9 @@ def load(path: Path) -> Chapter1Source:
             else:
                 had = attr in source.__dict__ and getattr(source, attr)
                 setattr(source, attr, merge_table(getattr(source, attr) if had else None, value, key, head.number))
+        elif word == "话题":
+            unique(TOPICS, rest, read_topic(rest, head, body), "话题", head.number)
+            source.RULES_DATA.setdefault("TOPICS", {})[rest] = TOPICS[rest]
         elif word == "场面":
             if any(existing[0] == rest for existing in source.entries):
                 raise StoryError(f"场面“{rest}”重复。", head.number)

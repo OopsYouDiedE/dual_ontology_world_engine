@@ -82,6 +82,9 @@ public sealed partial class AwakeningContentSession
     public void BeginHelp(MorningWorld world, string id)
     {
         ConsumeAction("协助", id);
+        // 请来辨认的人亲眼看了这件东西。
+        if (Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).TryGetProperty("help", out var helper))
+            world.Examine(PersonOf(helper.GetString()!), id);
         StartFlow(world, "请人看看", ("物", id));
     }
     private static Person PersonOf(string who) => who switch { "detective" => Person.Detective, "huo" => Person.Huo, "shen" => Person.Shen, "su" => Person.Su, _ => throw new ArgumentException(who) };
@@ -279,6 +282,7 @@ public sealed partial class AwakeningContentSession
         Session.Set("examined", id, true);
         Session.Observe("detective", id);
         world.Examine(Person.Detective, id);
+        ShareExamination(world, id);
         var events = new List<string> { "evidence" };
         if (id is "E1" or "E3" && !(bool)Session.GetProgress("state")["replay_open"]) events.Add("unlock");
         if (ContentList("ACQUAINTANCE_EVIDENCE", id) && V6Open && !Session.Has("flags", "v6_revealed"))

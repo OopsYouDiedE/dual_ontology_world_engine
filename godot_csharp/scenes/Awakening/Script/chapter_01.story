@@ -20,6 +20,7 @@
 引入：story/第一章/文案与守则.story
 引入：story/第一章/声路与真相.story
 引入：story/第一章/阶段与流程.story
+引入：story/第一章/话题.story
 引入：story/第一章/场面/*.story
 引入：story/第一章/模拟侦探.story
 引入：story/第一章/出区日常.story

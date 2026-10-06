@@ -74,22 +74,9 @@ public sealed class DetectivePlanner
             _arguments.Add(new(item.Value.GetProperty("step").GetInt32(),item.Value.GetProperty("variable").GetInt32(),
                 S(item.Value,"evidence").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries),
                 S(item.Value,"required_group"),S(item.Value,"required_key")));
-        // Predicted traces only. ReplayResult.FullMatch and Conflicts are intentionally never read.
-        foreach (var variables in NightVariables.All())
-        {
-            var predicted = NightReplay.Run(variables).Traces;
-            var facts = new Dictionary<string, int>();
-            foreach (var field in _fields)
-            {
-                var property = typeof(MorningTraces).GetProperty(field.Field)
-                    ?? throw new InvalidDataException("Unknown predicted trace field: " + field.Field);
-                var value = property.GetValue(predicted);
-                var scalar = value switch { bool b => b ? 1 : 0, int number => number,
-                    _ => throw new InvalidDataException("Detective trace fields must be boolean or integer.") };
-                facts[field.Field] = field.EqualsValue < 0 ? scalar : scalar == field.EqualsValue ? 1 : 0;
-            }
-            _hypotheses.Add(new(variables, facts));
-        }
+        // Predicted traces only, from the shared case model. ReplayResult.FullMatch and Conflicts are never read.
+        foreach (var prediction in AwakeningCase.Predictions)
+            _hypotheses.Add(new(prediction.Variables, prediction.Facts.ToDictionary(p => p.Key, p => p.Value)));
     }
     public void RecordVisibleText(string text, string source)
     {

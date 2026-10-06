@@ -116,5 +116,6 @@ public static class Names
     public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
     public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
     public static string Of(Person person) => Chapter1Data.PersonName(PersonKeys[(int)person]);
+    public static Person PersonOf(string key) => Array.IndexOf(PersonKeys, key) is var i and >= 0 ? (Person)i : throw new ArgumentException("Unknown person key: " + key);
     public static string Of(Room room) => Chapter1Data.RoomName(RoomKeys[(int)room]);
 }

@@ -684,7 +684,7 @@ class Translator:
             for key in ("属性", "认知", "可见", "立绘"):
                 allowed.add(key)
             args.extend(self.extras(fields, "state", "belief", "observable", "sprite", name))
-            allowed |= set(PROFILE_FIELDS_ZH) | PERSON_FIELDS
+            allowed |= set(PROFILE_FIELDS_ZH) | PERSON_FIELDS | CHAPTER_PERSONA_FIELDS
             args.append("profile=" + self.profile(name, fields, head))
             if entity_id.startswith("person."):
                 self.person_design[entity_id.split(".", 1)[1]] = compile_person(name, fields, self, head)
@@ -805,6 +805,8 @@ class Translator:
 
 
 GENDERS = {"男": "Male", "女": "Female"}
+# 由章节读取器（story_chapter1.read_person）解释的人物认知初值；世界脚本只放行。
+CHAPTER_PERSONA_FIELDS = {"初醒信任", "谨慎", "说话习惯"}
 PROFILE_FIELDS_ZH = {"性别", "阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
                      "信号", "结构", "温室", "厨艺", "工匠", "看重", "偏见", "魔偏见", "日常", "口吻"}
 

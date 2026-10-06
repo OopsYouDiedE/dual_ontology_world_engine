@@ -42,14 +42,14 @@ public sealed partial class MorningWorld
     public static string DesireOf(Person who)
         => Chapter1Data.Root.GetProperty("PEOPLE").GetProperty(Names.PersonKeys[(int)who]).GetProperty("desire").GetString()!;
 
-    // 三人倾向各不相同（设计第二部分 §5）：写进各自认知的规则权重，不显示给玩家。
-    // 霍铎：欲望最强，对恶魔有一分职业性的信任，读到守则第 1 条也照样碰。
+    // 三人倾向各不相同（设计第二部分 §5）：写进各自认知的规则权重，不显示给玩家；初值写在各人的 story 文件（初醒信任、谨慎）。
+    // 霍铎：欲望最强，对铜口有一分职业性的信任，读到守则第 1 条也照样碰。
     // 苏泠：欲望强，但最怕被“接上”：不知代价会碰，知道了就拒绝。
-    // 沈鼎：护短而谨慎，信身边人不信恶魔：不知代价时想碰与不碰分量相当（犹豫），听侦探的；知道了就拒绝。
-    private static int DemonTrust(Person who) => who == Person.Huo ? 2 : 0;
-    private static int Caution(Person who) => who switch { Person.Huo => 0, Person.Shen => 3, Person.Su => 1, _ => 2 };
+    // 沈鼎：护短而谨慎，信身边人不信铜口：不知代价时想碰与不碰分量相当（犹豫），听侦探的；知道了就拒绝。
+    private static int DemonTrust(Person who) => Persona.InitialTrust(who, "铜口");
+    private static int Caution(Person who) => Persona.Caution(who);
     /// <summary>此人认知里对侦探的信任：沈鼎信的是身边人。</summary>
-    private static int TrustInDetective(Person who) => who == Person.Shen ? 1 : 0;
+    private static int TrustInDetective(Person who) => Persona.InitialTrust(who, "侦探");
 
     public static readonly Tag Strength = new("Strength");
     /// <summary>旧物被拿起又放回：现实中留下的痕迹（摆得和原来不一样）。</summary>
@@ -412,6 +412,49 @@ public sealed partial class MorningWorld
     }
 
     public bool HasRecalled(Person who) => _recalled.ContainsKey(who);
+
+    // ---- 推理与言语所需的认知读写（总纲 §六 第二期）：只经 Observation.Observe 写入，只读本人认知 ----
+
+    /// <summary>此人心里对另一人的信任：其认知中那人投影上的 Trust。</summary>
+    public int TrustIn(Person who, Person other)
+        => _runtime.KnownProjection(_souls[who], _bodies[other])?.Tags.GetValueOrDefault(Tags.Trust) ?? 0;
+
+    /// <summary>此人亲眼看见了一件事（以事件名记入其认知）。</summary>
+    public void Witness(Person who, string name)
+    {
+        var known = _souls[who].World.Projections.FirstOrDefault(p => p.Name == name);
+        Observation.Observe(_souls[who], new ObservationInput(name, ProjectionKind.Event)
+        { Target = known, Source = ObservationSource.Perception, Existence = Truth.True, Time = ++_time });
+    }
+
+    /// <summary>此人自己想到了一个问题（以概念名记入其认知，来源是推断）。</summary>
+    public void Conceive(Person who, string concept)
+        => Observation.Observe(_souls[who], new ObservationInput(concept, ProjectionKind.Concept)
+        { Target = _souls[who].World.Projections.FirstOrDefault(p => p.Name == concept), Source = ObservationSource.Inference, Existence = Truth.True, Time = ++_time });
+
+    /// <summary>此人认知里有没有这件事或这个概念。</summary>
+    public bool Knows(Person who, string name)
+        => _souls[who].World.Projections.Any(p => p.Name == name && p.Existence == Truth.True);
+
+    /// <summary>
+    /// 一组认定进入此人认知：自己推出的记为推断；别人说的记为证言，挂上说话人，由听者心里对说话人的信任折算。
+    /// </summary>
+    public void Hear(Person listener, Person speaker, IEnumerable<string> claims)
+    {
+        var soul = _souls[listener];
+        var source = listener == speaker ? ObservationSource.Inference : ObservationSource.Testimony;
+        var subject = listener == speaker ? null : _runtime.KnownProjection(soul, _bodies[speaker])
+            ?? _runtime.Observe(soul, _runtime.Representations(_bodies[speaker]), _time)[0];
+        foreach (var claim in claims)
+        {
+            var known = soul.World.Projections.FirstOrDefault(p => p.Name == claim);
+            Observation.Observe(soul, new ObservationInput(claim, ProjectionKind.Concept)
+            {
+                Target = known, Source = source, Existence = Truth.True, Time = ++_time,
+                AddRelations = subject is null ? [] : [(Relations.Subject, subject)]
+            });
+        }
+    }
 
     /// <summary>客观世界的指纹：所有证物与身体的状态。重演前后必须一致。</summary>
     public string RealityFingerprint()

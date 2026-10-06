@@ -21,6 +21,7 @@ if (!args.Contains("--enabled", StringComparer.Ordinal))
     throw new ArgumentException("自主逻辑模拟必须显式传入 --enabled；正常游戏保持玩家控制。");
 var decisionProfile = "default";
 string? durationArgument = null;
+var persona = new Dictionary<string, double>(StringComparer.Ordinal);
 var outputArguments = new List<string>();
 for (var index = 0; index < args.Length; index++)
 {
@@ -30,6 +31,13 @@ for (var index = 0; index < args.Length; index++)
         if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
             throw new ArgumentException("--decision-profile 需要一个剧情选择意图名称。");
         decisionProfile = args[index];
+    }
+    else if (args[index] == "--persona")
+    {
+        // 自动验证用：微调某人的默认设置，如 --persona 苏泠.初醒信任.侦探=-2（总纲 §六 第二期）。
+        if (++index >= args.Length || !args[index].Contains('=')) throw new ArgumentException("--persona 写成 人物.字段[.对象]=数值。");
+        var (key, value) = (args[index][..args[index].IndexOf('=')], args[index][(args[index].IndexOf('=') + 1)..]);
+        persona[key] = double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
     }
     else if (args[index] == "--duration")
     {
@@ -46,6 +54,7 @@ var outputArgument = outputArguments.FirstOrDefault();
 var output = outputArgument is not null ? Path.GetFullPath(outputArgument) : Path.GetFullPath("artifacts/chapter-one-ecology/unified-game-trajectory.txt");
 if (string.Equals(Path.GetExtension(output), ".json", StringComparison.OrdinalIgnoreCase))
     throw new ArgumentException("完整动作脚本只接受文本输出路径，不生成 JSON 文件。");
+Persona.Overrides = persona;
 var world = new MorningWorld();
 world.InitializePlayerPerception();
 var content = new AwakeningContentSession();
@@ -337,6 +346,7 @@ void PlayFlow(Action begin)
 }
 world.SetDetectiveControl("simulation");
 controls.Add(new { Time = time, Mode = world.DetectiveControl, Reason = "新会话开始即启用侦探与住民相同的自主行动机制", SameMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)) });
+if (persona.Count > 0) Story("运行", "人物默认设置微调：" + string.Join("，", persona.Select(p => $"{p.Key}={p.Value}")));
 Story("运行", $"来源：{runSource}；{(stopMinutes is { } limit ? $"运行到游戏第 {limit} 分钟（自起始 {startMinutes} 分钟起 {limit - startMinutes} 分钟）" : "运行到剧情自然结束")}");
 content.Session.Locate("detective", currentRoom);
 SyncStage();

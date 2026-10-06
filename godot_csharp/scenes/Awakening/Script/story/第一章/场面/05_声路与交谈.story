@@ -9,9 +9,9 @@
     跳转 END
 
 场面 talk_huo
-    若 已吻合：
+    若 知道("huo", "侦探重演吻合")：
         霍铎：你推完了。……我在这儿守了很久，是不是。 [#id=talk_huo.001]
-    否则 若 已重演：
+    否则 若 知道("huo", "侦探在重演昨夜")：
         霍铎：你在推昨晚。推出什么，跟我说。 [#id=talk_huo.002]
     否则 若 旗("met_huo")：
         霍铎：嗯。 [#id=talk_huo.003]
@@ -60,10 +60,8 @@
             霍铎：他叫我守。我就守。守到天亮，没有下一次。 [#id=talk_huo_menu.021]
             跳转 talk_huo_menu
         - 我们在这里很久了。 [#id=talk_huo_menu.022]
-            条件：已吻合
-            霍铎：嗯。 [#id=talk_huo_menu.023]
-            霍铎：我在石板上画人，画他手里的家伙。我画了放大镜。 [#id=talk_huo_menu.024]
-            霍铎：我认得你。只是忘了。 [#id=talk_huo_menu.025]
+            条件：把握("detective", "早已相熟") >= 75
+            回应话题 早已相熟：huo
             跳转 talk_huo_menu
         - 昨晚你在哪？ [#id=talk_huo_menu.026]
             霍铎：不记得。只记得上船。 [#id=talk_huo_menu.027]
@@ -72,9 +70,9 @@
             跳转 END
 
 场面 talk_shen
-    若 已吻合：
+    若 知道("shen", "侦探重演吻合")：
         沈鼎：推明白了？脸色比早上好。……坐，喝口茶。 [#id=talk_shen.001]
-    否则 若 已重演：
+    否则 若 知道("shen", "侦探在重演昨夜")：
         沈鼎：在推昨晚的事？推到我那块布了没有？ [#id=talk_shen.002]
     否则 若 旗("met_shen")：
         沈鼎：又来了？饿了说一声。 [#id=talk_shen.003]
@@ -122,10 +120,8 @@
             沈鼎：水一开，连嗡嗡都没了。灶台前的人，耳朵是聋的。 [#id=talk_shen_menu.021]
             跳转 talk_shen_menu
         - 罐壁上那些面痕。 [#id=talk_shen_menu.022]
-            条件：已吻合
-            沈鼎：一层面痕，就是喂过一回。我数不过来。 [#id=talk_shen_menu.023]
-            沈鼎：你们的口味，我记在手上，没记在脑子里。 [#id=talk_shen_menu.024]
-            沈鼎：……也好。脑子会被人拿走，手拿不走。 [#id=talk_shen_menu.025]
+            条件：把握("detective", "早已相熟") >= 75
+            回应话题 早已相熟：shen
             跳转 talk_shen_menu
         - 昨晚你在哪？ [#id=talk_shen_menu.026]
             沈鼎：不记得。 [#id=talk_shen_menu.027]
@@ -136,9 +132,9 @@
             跳转 END
 
 场面 talk_su
-    若 已吻合：
+    若 知道("su", "侦探重演吻合")：
         苏泠：……你都推出来了。我听得出来，你走路的声音变了。 [#id=talk_su.001]
-    否则 若 已重演：
+    否则 若 知道("su", "侦探在重演昨夜")：
         苏泠：你在推昨晚。……推到我开门那里了吗。 [#id=talk_su.002]
     否则 若 旗("met_su")：
         苏泠：……嗯。 [#id=talk_su.003]
@@ -187,9 +183,8 @@
             苏泠：可要是半夜，铃在响，我刚放下琴……我不知道我分没分。 [#id=talk_su_menu.021]
             跳转 talk_su_menu
         - 我们早就认识。 [#id=talk_su_menu.022]
-            条件：已吻合
-            苏泠：沈鼎不给我放糖。他知道。 [#id=talk_su_menu.023]
-            苏泠：……我也知道你。想不起来，可是知道。 [#id=talk_su_menu.024]
+            条件：把握("detective", "早已相熟") >= 75
+            回应话题 早已相熟：su
             跳转 talk_su_menu
         - 昨晚你在哪？ [#id=talk_su_menu.025]
             苏泠：不记得。 [#id=talk_su_menu.026]

@@ -70,7 +70,7 @@ def children(lines: list[Line], start: int, depth: int) -> tuple[list[Line], int
 
 
 # ---- 台词编号：行尾 `[#id=…]`，与 `[#emotion=…]` 顺序不限 ----
-LINE_ID = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.\-]*")
+LINE_ID = re.compile(r"\w[\w.\-]*")
 _TAG = re.compile(r"\s*\[#(emotion|id)=([^\]]*)\]\s*$")
 # Every authored line seen by a parser this run: (prefix, line_id or "", line number).
 AUTHORED_LINES: list[tuple[str, str, int]] = []
@@ -83,7 +83,7 @@ def split_tags(text: str, number: int) -> tuple[str, str, str]:
         kind, value = match.group(1), match.group(2).strip()
         if kind == "id":
             if line_id or not LINE_ID.fullmatch(value):
-                raise StoryError(f"台词编号须是唯一的 [#id=字母数字._-]：{value}", number)
+                raise StoryError(f"台词编号须是唯一的 [#id=文字、数字与 ._-]：{value}", number)
             line_id = value
         else:
             if emotion:

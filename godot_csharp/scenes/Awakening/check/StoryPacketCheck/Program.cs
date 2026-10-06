@@ -87,8 +87,9 @@ foreach (var rest in new[] { false, true })
 // Nested if/else priorities come from the actual talk entry.
 foreach (var branch in new[] { "first", "met", "replayed", "matched" })
 {
-    content.Session.Set("state", "full_match_seen", branch == "matched");
-    content.Session.Set("state", "replay_count", branch is "replayed" or "matched" ? 1 : 0);
+    // 霍铎的招呼按他自己的认知分支：看见侦探重演、看见重演吻合（总纲 §六 第二期），而不是全局进度。
+    if (branch == "replayed") world.Witness(Person.Huo, "侦探在重演昨夜");
+    if (branch == "matched") world.Witness(Person.Huo, "侦探重演吻合");
     if (branch == "first") content.Session.Remove("flags", "met_huo");
     else content.Session.Set("flags", "met_huo", true);
     var talk = dialogue.Start("talk_huo");

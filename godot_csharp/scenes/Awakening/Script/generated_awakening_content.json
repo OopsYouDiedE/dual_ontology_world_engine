@@ -1118,16 +1118,50 @@
   },
   "PEOPLE": {
     "detective": {
-      "desire": "弄清自己是什么"
+      "desire": "弄清自己是什么",
+      "caution": 2
     },
     "huo": {
-      "desire": "超越卡诺循环的动力图纸"
+      "desire": "超越卡诺循环的动力图纸",
+      "initial_trust": {
+        "侦探": 0,
+        "铜口": 2
+      },
+      "caution": 0,
+      "speech": {
+        "candor": 0,
+        "reticence": 1,
+        "curiosity": 0,
+        "may_lie": false
+      }
     },
     "shen": {
-      "desire": "安稳，护住身边的人"
+      "desire": "安稳，护住身边的人",
+      "initial_trust": {
+        "侦探": 1,
+        "铜口": 0
+      },
+      "caution": 3,
+      "speech": {
+        "candor": 1,
+        "reticence": 0,
+        "curiosity": 0,
+        "may_lie": false
+      }
     },
     "su": {
-      "desire": "从未听过的声音"
+      "desire": "从未听过的声音",
+      "initial_trust": {
+        "侦探": 0,
+        "铜口": 0
+      },
+      "caution": 1,
+      "speech": {
+        "candor": 0,
+        "reticence": 0,
+        "curiosity": 1,
+        "may_lie": false
+      }
     }
   },
   "TEXT": {
@@ -2998,6 +3032,227 @@
             ]
           }
         ]
+      }
+    }
+  },
+  "TOPICS": {
+    "早已相熟": {
+      "question": "V6",
+      "option": "早已相熟",
+      "implicates": [],
+      "responses": {
+        "huo": {
+          "如实·有把握": [
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "嗯。",
+              "voice_clip": "",
+              "line_id": "talk_huo_menu.023"
+            },
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "我在石板上画人，画他手里的家伙。我画了放大镜。",
+              "voice_clip": "",
+              "line_id": "talk_huo_menu.024"
+            },
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "我认得你。只是忘了。",
+              "voice_clip": "",
+              "line_id": "talk_huo_menu.025"
+            }
+          ],
+          "如实·没把握": [
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "说不准。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.001"
+            },
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "手认得的东西，比脑子多。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.002"
+            }
+          ],
+          "如实·否认": [
+            {
+              "op": "line",
+              "speaker": "霍铎",
+              "mood": "",
+              "text": "昨天才见。我只记得上船。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.003"
+            }
+          ]
+        },
+        "shen": {
+          "如实·有把握": [
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "一层面痕，就是喂过一回。我数不过来。",
+              "voice_clip": "",
+              "line_id": "talk_shen_menu.023"
+            },
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "你们的口味，我记在手上，没记在脑子里。",
+              "voice_clip": "",
+              "line_id": "talk_shen_menu.024"
+            },
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "……也好。脑子会被人拿走，手拿不走。",
+              "voice_clip": "",
+              "line_id": "talk_shen_menu.025"
+            }
+          ],
+          "如实·没把握": [
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "一层面痕，就是喂过一回。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.004"
+            },
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "可喂罐子的是我，喝茶的是谁，罐子不说。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.005"
+            }
+          ],
+          "如实·否认": [
+            {
+              "op": "line",
+              "speaker": "沈鼎",
+              "mood": "",
+              "text": "罐子是老的，人是今早才认的。两回事。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.006"
+            }
+          ]
+        },
+        "su": {
+          "如实·有把握": [
+            {
+              "op": "line",
+              "speaker": "苏泠",
+              "mood": "",
+              "text": "沈鼎不给我放糖。他知道。",
+              "voice_clip": "",
+              "line_id": "talk_su_menu.023"
+            },
+            {
+              "op": "line",
+              "speaker": "苏泠",
+              "mood": "",
+              "text": "……我也知道你。想不起来，可是知道。",
+              "voice_clip": "",
+              "line_id": "talk_su_menu.024"
+            }
+          ],
+          "如实·没把握": [
+            {
+              "op": "line",
+              "speaker": "苏泠",
+              "mood": "",
+              "text": "……我说不上来。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.007"
+            },
+            {
+              "op": "line",
+              "speaker": "苏泠",
+              "mood": "",
+              "text": "可那杯茶，他没问就没放糖。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.008"
+            }
+          ],
+          "如实·否认": [
+            {
+              "op": "line",
+              "speaker": "苏泠",
+              "mood": "",
+              "text": "我只认得今天早上的你们。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.009"
+            }
+          ]
+        },
+        "any": {
+          "如实·没把握": [
+            {
+              "op": "line",
+              "speaker": "",
+              "mood": "",
+              "text": "说不上来。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.010"
+            }
+          ],
+          "含糊": [
+            {
+              "op": "line",
+              "speaker": "",
+              "mood": "",
+              "text": "这事……以后再说。",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.011"
+            }
+          ],
+          "反问": [
+            {
+              "op": "line",
+              "speaker": "",
+              "mood": "",
+              "text": "你为什么这么问？",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.012"
+            }
+          ],
+          "隐瞒": [
+            {
+              "op": "line",
+              "speaker": "",
+              "mood": "",
+              "text": "（目光移开了，没有接话。）",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.013"
+            }
+          ],
+          "拒绝": [
+            {
+              "op": "line",
+              "speaker": "",
+              "mood": "",
+              "text": "（没有回答。）",
+              "voice_clip": "",
+              "line_id": "topic.早已相熟.014"
+            }
+          ]
+        }
       }
     }
   },
