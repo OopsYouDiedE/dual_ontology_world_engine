@@ -84,7 +84,7 @@ public sealed partial class Game
     private int _specId;
 
     private readonly Dictionary<string, RuleSpec> _specById = [];
-    /// <summary>按剧本里的编号取规矩（内容、立规者、价值标记读自 chapter_02.story；Core 的 Rule 由 build 编译）。</summary>
+    /// <summary>按剧本里的编号取规矩（内容、立规者、价值标记读自 chapter_01.story；Core 的 Rule 由 build 编译）。</summary>
     public RuleSpec RuleById(string id) => _specById.TryGetValue(id, out var spec) ? spec : throw new InvalidOperationException("规矩尚未建立：" + id);
 
     private RuleSpec Spec(string id, Func<Fx, IEnumerable<Rule>> build, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)

@@ -143,6 +143,7 @@ public sealed partial class AwakeningContentSession
     /// <summary>按名字起一个流程；args 是流程里 {名称} 的取值。</summary>
     public void StartFlow(MorningWorld world, string name, params (string Name, string Value)[] args)
     {
+        world.SetDailyStage(CurrentStage);
         var map = args.ToDictionary(a => a.Name, a => a.Value);
         Start(world, BuildFlow(world, name, map));
     }
@@ -170,6 +171,7 @@ public sealed partial class AwakeningContentSession
                 var result = new Dictionary<string, string> { ["步"] = step.ToString(), ["下一步"] = (step + 1).ToString() };
                 var pick = Session.GetProgress("answer_pick");
                 if (pick.Count == 0) { result["裁决"] = "none"; return result; }
+                ConsumeAction("答辩", step.ToString());
                 var verdict = Judge(step, (string)pick["say"], (string)pick["show"]);
                 result["裁决"] = verdict == "answer_ok" + step ? "ok" : verdict.Substring("answer_".Length);
                 return result;
@@ -207,21 +209,21 @@ public sealed partial class AwakeningContentSession
                     break;
                 case "stage":
                     var stage = Str("value");
-                    steps.Add(new Step.Update(_ => Session.Set("state", "stage", stage)));
+                    steps.Add(new Step.Update(w => { Session.Set("state", "stage", stage); w.SetDailyStage(stage); }));
                     break;
                 case "set_flag": var setKey = Str("key"); steps.Add(new Step.Update(_ => Session.Set("flags", setKey, true))); break;
                 case "clear_flag": var clearKey = Str("key"); steps.Add(new Step.Update(_ => Session.Remove("flags", clearKey))); break;
                 case "record":
                     var (group, key) = (Str("group"), Str("key"));
-                    var recorded = FlowValue(node.GetProperty("value"), map)!;
-                    steps.Add(new Step.Update(_ => Session.Set(group, key, recorded)));
+                    var valNode = node.GetProperty("value").Clone();
+                    steps.Add(new Step.Update(_ => Session.Set(group, key, FlowValue(valNode, map)!)));
                     break;
                 case "remove": var (rGroup, rKey) = (Str("group"), Str("key")); steps.Add(new Step.Update(_ => Session.Remove(rGroup, rKey))); break;
                 case "clear": var cGroup = Str("group"); steps.Add(new Step.Update(_ => Session.GetProgress(cGroup).Clear())); break;
                 case "detail":
                     var (dGroup, dKey, field) = (Str("group"), Str("key"), Str("field"));
-                    var detail = FlowValue(node.GetProperty("value"), map)!;
-                    steps.Add(new Step.Update(_ => ((Dictionary<string, object>)Session.GetProgress(dGroup)[dKey])[field] = detail));
+                    var dValNode = node.GetProperty("value").Clone();
+                    steps.Add(new Step.Update(_ => ((Dictionary<string, object>)Session.GetProgress(dGroup)[dKey])[field] = FlowValue(dValNode, map)!));
                     break;
                 case "continue":
                     var next = Str("flow");

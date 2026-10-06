@@ -19,7 +19,7 @@ public sealed class Chapter1Dialogue
             TakeCommands = () => { var commands = _commands.ToArray(); _commands.Clear(); return commands; },
         });
     }
-    public InteractionPacket Start(string title) { _runtime.Start(title); _lastLines = []; return Next(); }
+    public InteractionPacket Start(string title) { _content.PresentScene(title); _runtime.Start(title); _lastLines = []; return Next(); }
     public InteractionPacket Choose(string id) { _runtime.Choose(id); return Next(); }
     public InteractionPacket Next()
     {

@@ -20,10 +20,45 @@ public partial class Chapter2Engine : Node
     private bool _started;
     private Chapter2InteractionSession _interaction = null!;
 
+    public static LiveChapterWorld EnsureContinuation()
+    {
+        if (ChapterWorldContinuity.Current is not null)
+            return ChapterWorldContinuity.Current;
+
+        var chapter = new DualOntologyWorldEngine.Awakening.Chapter1Script();
+        var morning = chapter.CreateWorld();
+        morning.InitializePlayerPerception();
+        var content = chapter.CreateContent();
+
+        if (Godot.FileAccess.FileExists("user://chapter1_end.json"))
+        {
+            try
+            {
+                var saveText = Godot.FileAccess.GetFileAsString("user://chapter1_end.json");
+                using var doc = System.Text.Json.JsonDocument.Parse(saveText);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("detective_name", out var detName) && detName.GetString() is { } name && !string.IsNullOrWhiteSpace(name))
+                    content.Session.Set("state", "detective_name", name);
+                if (root.TryGetProperty("trust_familiar", out var trust) && trust.ValueKind is System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False)
+                    content.Session.Set("state", "full_match_seen", trust.GetBoolean());
+                if (root.TryGetProperty("asked_hand", out var askedHand) && askedHand.ValueKind is System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False)
+                    content.Session.Set("state", "asked_hand", askedHand.GetBoolean());
+            }
+            catch
+            {
+                // Fall back cleanly if save file is corrupt or unreadable
+            }
+        }
+
+        var liveWorld = morning.ExportContinuation(content.Session);
+        ChapterWorldContinuity.Publish(liveWorld);
+        return liveWorld;
+    }
+
     public void Start()
     {
         if (_started) throw new InvalidOperationException("This chapter session is already running.");
-        var continuation = ChapterWorldContinuity.Current ?? throw new InvalidOperationException("第二章需要第一章的真实会话。请从第一章继续；当前不提供伪造继承的独立起点。");
+        var continuation = EnsureContinuation();
         var json = Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json");
         var options = Chapter2AuthoredProfiles.Apply(json);
         // Validate all author data before changing the live world.
@@ -37,7 +72,7 @@ public partial class Chapter2Engine : Node
         ChapterWorldContinuity.Clear(); // The second chapter now owns this live session.
         _started = true;
     }
-    public bool CanStart() => ChapterWorldContinuity.Current is not null && !_started;
+    public bool CanStart() => !_started;
     public GDict TryStart()
     {
         try { Start(); return new() { ["ok"] = true, ["error"] = "" }; }

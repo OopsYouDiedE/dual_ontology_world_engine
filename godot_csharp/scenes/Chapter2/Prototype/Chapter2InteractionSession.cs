@@ -123,9 +123,11 @@ public sealed class Chapter2InteractionSession
                     _choices.Clear(); ++_version; choice.Submit(output); Pump(output); break;
                 case "interact": Interact(input,output); break;
                 case "card":
+                    ShownDay=_game.Day; ShownSlot=_game.Slot;
                     if (!_examined.TryGetValue(Text(input,"card_id"),out var card)) throw new InvalidOperationException("尚未观察该卡片。");
                     ShowCard(Text(input,"card_id"),card,output); break;
                 case "furniture":
+                    ShownDay=_game.Day; ShownSlot=_game.Slot;
                     var hitNodes=input.GetValueOrDefault("nodes") is IEnumerable<object?> hits ? hits.Select(n=>n?.ToString()??"") : [Text(input,"node")];
                     foreach(var hitNode in hitNodes)
                     {
@@ -160,7 +162,12 @@ public sealed class Chapter2InteractionSession
         _presentation = Guid.NewGuid().ToString("N"); output.Add(Event("lines",("presentation_id",_presentation),("lines",array)));
     }
     private void Activate(string name,List<Dictionary<string,object?>> output)
-    { Consume(_narrative.Activate(name,_game.Day,_game.Slot,Variables()),output); }
+    {
+        // A new authored scene occurs in the current slot. Run's feed remains
+        // labelled with the slot it just settled until a new scene is activated.
+        ShownDay=_game.Day; ShownSlot=_game.Slot;
+        Consume(_narrative.Activate(name,_game.Day,_game.Slot,Variables()),output);
+    }
     private IReadOnlyDictionary<string,string> Variables() => new Dictionary<string,string>
     {
         ["detective_name"] = DetectiveName(), ["accused_name"] = _game.Accused is { } accused ? Names.Of(accused) : "",
@@ -282,6 +289,7 @@ public sealed class Chapter2InteractionSession
     private void Interact(IReadOnlyDictionary<string,object?> input,List<Dictionary<string,object?>> output)
     {
         if (_stage!="field" || _choices.Count>0) throw new InvalidOperationException("请先完成当前选择。");
+        ShownDay=_game.Day; ShownSlot=_game.Slot;
         var map=Text(input,"map"); var site=Text(input,"site"); var target=Text(input,"target");
         if (site.StartsWith("person:",StringComparison.Ordinal)) target=site[7..];
         if (Enum.TryParse<P>(target,out var person)) { Talk(person,output); return; }
@@ -338,7 +346,7 @@ public sealed class Chapter2InteractionSession
         if (!Local(who)) throw new InvalidOperationException("人物当前不在场。");
         var name=Names.Of(who); var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>
         {
-            ("ask","问问"+name+"知道些什么",()=>Local(who),o=>{AskReaction(who,o);_continuations.Enqueue(next=>Talk(who,next));}),
+            ("ask","问问"+name+"知道些什么",()=>Local(who),o=>{AskReaction(who,o);_continuations.Enqueue(next=>ResumeTalk(who,next));}),
             ("escort","请他跟你去看一样东西",()=>Local(who),o=>Menu("看什么",_examined.Values.Where(c=>Text(c,"thing")!="").Select(c=>Text(c,"thing")).Distinct().Select(t=>(t,t,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Escort){Who=who,Thing=t,Place=Game.Things_[t].Place},next)))),o)),
             ("request","请他做一件事",()=>Local(who),o=>Menu("做什么",_content.Requests.Select(r=>(r.Job.ToString(),r.Label,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Ask){Who=who,Job=r.Job},next)))),o)),
             ("rule","跟他讲一条规矩",()=>Local(who),o=>RuleMenu(who,o)),
@@ -348,12 +356,20 @@ public sealed class Chapter2InteractionSession
         };
         Menu("跟"+name+"说什么",choices.Where(c=>c.Item3()),output);
     }
+    private void ResumeTalk(P who,List<Dictionary<string,object?>> output)
+    {
+        if(Local(who)) { Talk(who,output); return; }
+        // A completed response does not keep a moving or sleeping body in place.
+        // Close stale follow-up menus instead of failing the presentation receipt.
+        Invalidate();
+        output.Add(Event("interaction_closed",("actor",who.ToString()),("reason","actor_unavailable")));
+    }
     private void RuleMenu(P who,List<Dictionary<string,object?>> output)
     {
         var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>();
         foreach(var spec in _game.HostTellable()) { var rule=spec; choices.Add(("rule:"+rule.Id,rule.Text,()=>Local(who)&&_game.HostTellable().Contains(rule),o=>Commit(new(Cmd.TellRule){Who=who,Spec=rule,Card=rule.Card},o))); }
         for(var i=0;i<Game.CaseWordings.Length;i++) { var index=i; choices.Add(("wording:"+i,Game.CaseWordings[i].Text,()=>Local(who),o=>Commit(new(Cmd.TellRule){Who=who,Card=Game.CaseWordings[index].Card},o))); }
-        choices.Add(("cancel","返回",()=>true,o=>Talk(who,o))); Menu("讲哪一条",choices,output);
+        choices.Add(("cancel","返回",()=>true,o=>ResumeTalk(who,o))); Menu("讲哪一条",choices,output);
     }
     private void AskReaction(P who,List<Dictionary<string,object?>> output)
     {

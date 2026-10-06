@@ -19,25 +19,30 @@ public sealed partial class MorningWorld
         if (Enum.GetValues<Person>().Any(p => StoryBusy(p) ||
             _runtime.KnownProjection(_souls[p],_bodies[p]) is { } self && _session.IsActing(self)))
             throw new InvalidOperationException("Finish pending chapter actions before handing the live world to the next chapter.");
+        StopEcology();
         var entities = new Dictionary<string, Essence>();
         foreach (var (room, space) in _space) entities["chapter1:room:" + room] = space;
         foreach (var (id, evidence) in _evidence) entities["chapter1:object:" + id] = evidence;
+        foreach (var (key, space) in _dailySpaces) entities["world:room." + key] = space;
         foreach (var person in Enum.GetValues<Person>())
         {
             var key = person switch { Person.Detective => "Det", Person.Huo => "Huo", Person.Shen => "Shen", _ => "Su" };
             entities["world:person:" + key] = _bodies[person];
         }
         var people = new Dictionary<string, ContinuingCharacter>();
-        foreach (var person in Enum.GetValues<Person>())
+        foreach (var daily in _dailyPeople.Values) entities["world:person:" + daily.Key] = daily.Body;
+        foreach (var daily in _dailyPeople.Values)
         {
-            var key = person switch { Person.Detective => "Det", Person.Huo => "Huo", Person.Shen => "Shen", _ => "Su" };
-            var soul = _souls[person];
-            var body = _bodies[person];
+            var key = daily.Key;
+            var soul = daily.Soul;
+            var body = daily.Body;
             entities["world:person:" + key] = body;
             var known = entities.Values.Distinct().Select(e => (Entity: e, Mental: _runtime.KnownProjection(soul, e)))
                 .Where(p => p.Mental is not null).ToDictionary(p => p.Entity, p => p.Mental!);
             people[key] = new(soul, body, _runtime.KnownProjection(soul, body), known,
-                Hooks(person), DesireStrength(person), KnowsRule1(person));
+                daily.Hosted is { } person ? Hooks(person) : 0,
+                daily.Hosted is { } desirePerson ? DesireStrength(desirePerson) : 0,
+                daily.Hosted is { } rulePerson && KnowsRule1(rulePerson));
         }
         if (_scriptWorld is not null) _session.Completed -= _scriptWorld.RefreshAfter;
         _continuationExported = true;
@@ -57,7 +62,11 @@ public sealed partial class MorningWorld
             var self = _runtime.Observe(soul, _runtime.Representations(_bodies[id].Get<SpatialProperty>()!.Space!)
                 .Concat(_runtime.Representations(_bodies[id])), _session.CTB.Now).Single(p => p.Kind == ProjectionKind.Body);
             world.RegisterCharacter("person:" + id, soul, _bodies[id], self,
-                () => StoryBusy(id), execution => _storyActions[id] = execution);
+                () => StoryBusy(id), execution =>
+                {
+                    DailySuspend(Names.PersonKeys[(int)id]);
+                    _storyActions[id] = execution;
+                });
         }
         return world;
     }

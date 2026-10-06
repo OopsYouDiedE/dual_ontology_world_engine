@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>
-/// 第二章设计数据的唯一读取口：词汇、人物与地点名称、时间、文本。全部来自 chapter_02.story 编译出的
+/// 第二章设计数据的唯一读取口：词汇、人物与地点名称、时间、文本。全部来自 chapter_01.story 编译出的
 /// generated_chapter_02.json 的 design 子树（同一份文件随程序集嵌入，Godot 宿主读的也是它）。
 /// 代码里不再存一份中文名与台词；缺项会在装载时报错，而不是悄悄回退到别处的默认值。
 /// </summary>
@@ -19,8 +19,9 @@ public static class Chapter2Design
     public static string Json => D.Json;
     public static JsonElement Chapter => D.Chapter;
     public static JsonElement Section(string name) => D.Design.TryGetProperty(name, out var value) ? value
-        : throw new InvalidDataException("chapter_02.story 缺少设计块：" + name);
+        : throw new InvalidDataException("chapter_01.story 缺少设计块：" + name);
     public static bool HasSection(string name) => D.Design.TryGetProperty(name, out _);
+    public static JsonElement CaseSection => Section("case");
 
     // ---------------------------------------------------------------- 名称 --
     public static string PersonName(P p) => D.People[(int)p];
@@ -38,13 +39,13 @@ public static class Chapter2Design
     public sealed record PersonDesign(Cluster Cluster, bool OnDuty, Place? WorkPlace, IReadOnlyDictionary<P, int> Trust, string Sprite);
     public static PersonDesign PersonData(P p) => D.PersonData[(int)p];
     public static double Const(string name) => D.Design.GetProperty("consts").TryGetProperty(name, out var value) ? value.GetDouble()
-        : throw new InvalidDataException("chapter_02.story 缺少常数：" + name);
+        : throw new InvalidDataException("chapter_01.story 缺少常数：" + name);
 
     public static string EndingText(Ending e)
     {
         foreach (var row in Section("endings").EnumerateArray())
             if (row.GetProperty("id").GetString() == e.ToString()) return row.GetProperty("text").GetString()!;
-        throw new InvalidDataException("chapter_02.story 缺少结局：" + e);
+        throw new InvalidDataException("chapter_01.story 缺少结局：" + e);
     }
 
     // ---------------------------------------------------------------- 时间 --
@@ -75,9 +76,9 @@ public static class Chapter2Design
         return text;
     }
     public static string RawText(string key) => D.TextTable.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.String
-        ? value.GetString()! : throw new InvalidDataException("chapter_02.story 缺少文本：" + key);
+        ? value.GetString()! : throw new InvalidDataException("chapter_01.story 缺少文本：" + key);
     public static IReadOnlyList<string> TextList(string key) => D.TextTable.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Array
-        ? [.. value.EnumerateArray().Select(v => v.GetString()!)] : throw new InvalidDataException("chapter_02.story 缺少文本列表：" + key);
+        ? [.. value.EnumerateArray().Select(v => v.GetString()!)] : throw new InvalidDataException("chapter_01.story 缺少文本列表：" + key);
     public static bool HasText(string key) => D.TextTable.ContainsKey(key);
 
     // ---------------------------------------------------------------- 装载 --
@@ -159,6 +160,6 @@ public static class Chapter2Design
     private static void Require(string[] table, string what)
     {
         for (var i = 0; i < table.Length; i++)
-            if (table[i] is null) throw new InvalidDataException($"chapter_02.story 的{what}缺少第 {i} 项。");
+            if (table[i] is null) throw new InvalidDataException($"chapter_01.story 的{what}缺少第 {i} 项。");
     }
 }

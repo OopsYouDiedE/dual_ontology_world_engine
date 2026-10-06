@@ -6,7 +6,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>
 /// 剧本里的条件短语（tools/story_rules.py 的 CondParser 编译出的 JSON 树）的通用求值器。
-/// 求值只读客观记录与各人的认知，条件的内容（日期、人物、物件、标记）全部来自 chapter_02.story。
+/// 求值只读客观记录与各人的认知，条件的内容（日期、人物、物件、标记）全部来自 chapter_01.story。
 /// </summary>
 public abstract record Cond
 {
@@ -178,7 +178,7 @@ public static class RuleDesign
         return map;
     });
     public static IReadOnlyCollection<DesignRule> All => _byId.Value.Values.ToArray();
-    public static DesignRule Of(string id) => _byId.Value.TryGetValue(id, out var rule) ? rule : throw new InvalidDataException("chapter_02.story 缺少规矩：" + id);
+    public static DesignRule Of(string id) => _byId.Value.TryGetValue(id, out var rule) ? rule : throw new InvalidDataException("chapter_01.story 缺少规矩：" + id);
 }
 
 /// <summary>《少了一份》：痕迹、事实、重演变量、对质的主张与证据（读自剧本的“案件”）。</summary>
@@ -200,7 +200,7 @@ public static class CaseDesign
     private static Data D => _data.Value;
     public static int Night => D.Night;
     public static IReadOnlyList<Trace> Traces => D.Traces;
-    public static Cond Fact(string name) => D.Facts.TryGetValue(name, out var c) ? c : throw new InvalidDataException("chapter_02.story 缺少案件事实：" + name);
+    public static Cond Fact(string name) => D.Facts.TryGetValue(name, out var c) ? c : throw new InvalidDataException("chapter_01.story 缺少案件事实：" + name);
     public static IReadOnlyList<(string Question, string[] Options)> Variables => D.Variables;
     public static IReadOnlyList<Claim> Claims => D.Claims;
     public static IReadOnlyList<Evidence> EvidenceList => D.Evidence;

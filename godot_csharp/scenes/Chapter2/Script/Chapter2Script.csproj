@@ -8,6 +8,7 @@
     <RootNamespace>DualOntologyWorldEngine.Chapter2.Prototype</RootNamespace>
     <AssemblyName>Chapter2Script</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <StoryPython Condition="'$(StoryPython)' == ''">python</StoryPython>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Chapter2Script.cs" />
@@ -16,4 +17,8 @@
     <ProjectReference Include="../../Shared/Story/ChapterRuntime.csproj" />
     <ProjectReference Include="../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
   </ItemGroup>
+  <Target Name="CheckUnifiedStory" BeforeTargets="BeforeBuild">
+    <Exec Command="&quot;$(StoryPython)&quot; &quot;$(MSBuildThisFileDirectory)..\..\..\tools\compile_story.py&quot; --check"
+          WorkingDirectory="$(MSBuildThisFileDirectory)" />
+  </Target>
 </Project>

@@ -8,7 +8,7 @@ func _initialize() -> void:
 	var runtime: Dictionary = engine.Content()
 	var failed := 0
 	for key in data:
-		var ok := runtime.has(key) and runtime[key] == data[key]
+		var ok: bool = runtime.has(key) and runtime[key] == data[key]
 		if not ok: failed += 1
 		print(("PASS " if ok else "FAIL ") + "generated content equals compiled runtime " + key)
 	Content.apply_content(runtime)

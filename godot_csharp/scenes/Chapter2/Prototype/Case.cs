@@ -6,7 +6,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// <summary>《少了一份》第 3 日清晨的痕迹。</summary>
 public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, bool QuerCrumbs, bool SmallFigure, bool MediumFigure)
 {
-    public static readonly string[] Labels = ["台账少了几份", "粮仓门闩", "诊疗所的碗", "雀儿房中的饼屑", "夜巡所见"];
+    public static readonly string[] Labels = [.. CaseDesign.Traces.Select(t => t.Label)];
     public IEnumerable<(int Item, string Text)> Describe()
     {
         yield return (0, $"台账：无记录取用×{LedgerShort}");
@@ -20,14 +20,8 @@ public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchTool
 /// <summary>重演变量：全部是“处境与人心”，不指定任何人做了什么。</summary>
 public sealed record CaseVars(int MoraBelief, int QuerRule, int MargaretRule, int QuerSupper)
 {
-    public static readonly string[][] Options =
-    [
-        ["发烧的莫兰", "没有人（她不知道莫兰发烧）", "她自己（她没领到口粮）"],
-        ["茉拉的（夜间急需可自取）", "沃德的（私取之人入夜不得入后勤院）", "都不接受"],
-        ["没读过沃德的规则", "读过并接受（视雀儿为私取之人）"],
-        ["没领", "领了"],
-    ];
-    public static readonly string[] Questions = ["V1 夜里，茉拉以为谁需要口粮", "V2 雀儿接受了哪条规则", "V3 玛格丽特是否接受了沃德的规则", "V4 雀儿领没领晚配"];
+    public static readonly string[][] Options = [.. CaseDesign.Variables.Select(v => v.Options)];
+    public static readonly string[] Questions = [.. CaseDesign.Variables.Select((v, i) => $"V{i + 1} {v.Question}")];
     public static readonly CaseVars Truth = new(0, 0, 0, 0);
     public static IEnumerable<CaseVars> All()
     {
@@ -123,7 +117,7 @@ public sealed partial class Game
         var lines = new List<string>();
         var r = replay.Describe().ToArray();
         var a = actual.Describe().ToArray();
-        string[] where = ["粮仓门内的台账", "粮仓门", "诊疗所", "甲区", "贝尔特朗（夜巡）"];
+        string[] where = [.. CaseDesign.Traces.Select(t => t.Where)];
         for (var i = 0; i < r.Length; i++)
         {
             if (known is not null && !known.Contains(i)) { lines.Add($"未查：你还没查过这里——{where[i]}"); continue; }
@@ -136,13 +130,10 @@ public sealed partial class Game
     public HashSet<int> DetEvidence()
     {
         var known = new HashSet<int>();
-        // 只算真的看清了的：账上的数、门闩的工具痕或松动、碗底的粥渍、废纸篓里的东西（路过不算）。
-        bool Saw(Essence e, Tag t) => Det.World.History.Any(h => h.Source == ObservationSource.Perception && ReferenceEquals(h.Target, Det.M[e]) && h.Time >= DayStart(3) && h.Tags.ContainsKey(t));
-        if (Saw(Ledger, T.Unrecorded) && DetLooked.Contains(Ledger)) known.Add(0);
-        if (Saw(Granary, T.ToolMarks) || Saw(Granary, T.LatchLoose)) known.Add(1);
-        if (Saw(Bowl, T.Residue) && DetLooked.Contains(Bowl)) known.Add(2);
-        if (DetLooked.Contains(Litter[Place.DormW])) known.Add(3);
-        if (DetAsked.Contains(P.Bertrand)) known.Add(4);
+        for (var i = 0; i < CaseDesign.Traces.Count; i++)
+        {
+            if (CaseDesign.Traces[i].Known.Eval(this)) known.Add(i);
+        }
         return known;
     }
 
@@ -154,47 +145,20 @@ public sealed partial class Game
 
     // ------------------------------------------------------------ 对质 --
 
-    public static readonly string[] Claims =
-    [
-        "茉拉夜里为病人取了一份", "雀儿修好了粮仓门闩", "雀儿照茉拉的规则自取了一份，打算次日告知",
-        "台账只记白天的领取，夜里的自取没有入账", "雀儿偷了两份", "夜巡望见的瘦小身影是雀儿"
-    ];
-    public static readonly string[] EvidenceKeys = ["bowl", "deskboard", "granary", "margaret", "litter", "ledger", "bertrand", "mora"];
-    public static readonly string[] EvidenceNames = ["诊疗所的空碗", "配给台公告", "粮仓门闩", "玛格丽特的请托", "雀儿房中的饼屑", "台账", "贝尔特朗的证言", "茉拉的说法"];
+    public static readonly string[] Claims = [.. CaseDesign.Claims.Select(c => c.Text)];
+    public static readonly string[] EvidenceKeys = [.. CaseDesign.EvidenceList.Select(e => e.Key)];
+    public static readonly string[] EvidenceNames = [.. CaseDesign.EvidenceList.Select(e => e.Name)];
 
-    private bool ClaimTrue(int c) => c switch
-    {
-        0 => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")),
-        1 => NightTruth.Any(t => t.StartsWith("D2 雀儿 修粮仓门闩")),
-        2 => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")),
-        3 => true,
-        4 => NightTruth.Count(t => t.StartsWith("D2 雀儿 夜里自取") || t.StartsWith("D2 雀儿 多取")) >= 2,
-        5 => Sightings.Any(s => s.Day == 2 && s.At == Place.Logistics && s.Build == Build.Small && s.Truth == P.Quer),
-        _ => false
-    };
+    private bool ClaimTrue(int c) => c >= 0 && c < CaseDesign.Claims.Count && CaseDesign.Claims[c].True.Eval(this);
 
-    private static readonly ImmutableDictionary<int, int[]> Relevant = new Dictionary<int, int[]>
-    {
-        [0] = [0, 1, 7], [1] = [2, 3], [2] = [4, 1], [3] = [5], [4] = [5], [5] = [6],
-    }.ToImmutableDictionary();
+    private static readonly ImmutableDictionary<int, int[]> Relevant = CaseDesign.Claims
+        .Select((c, i) => (i, c.Relevant))
+        .ToImmutableDictionary(x => x.i, x => x.Relevant);
 
     public bool DetHasEvidence(int evidence) => DetHas(evidence);
-    private bool DetHas(int evidence) => evidence switch
-    {
-        0 => DetEvidence().Contains(2), 1 => Det.Acc.ContainsKey(MoraNight),
-        2 => DetEvidence().Contains(1), 3 => DetAsked.Contains(P.Margaret), 4 => DetEvidence().Contains(3), 5 => DetEvidence().Contains(0),
-        6 => DetAsked.Contains(P.Bertrand), 7 => DetAsked.Contains(P.Mora) || true, _ => false
-    };
+    private bool DetHas(int evidence) => evidence >= 0 && evidence < CaseDesign.EvidenceList.Count && CaseDesign.EvidenceList[evidence].Have.Eval(this);
 
-    private bool PersonallySaw(Person p, int evidence)
-    {
-        bool Saw(Essence e, Tag t) => p.World.History.Any(h => h.Source == ObservationSource.Perception && ReferenceEquals(h.Target, p.M[e]) && h.Tags.GetValueOrDefault(t) > 0 && h.Time >= DayStart(3));
-        return evidence switch
-        {
-            0 => Saw(Bowl, T.Residue), 1 => p.Acc.ContainsKey(MoraNight), 2 => Saw(Granary, T.ToolMarks), 4 => Saw(Litter[Place.DormW], T.Crumbs),
-            5 => Saw(Ledger, T.Counted), _ => false
-        };
-    }
+    private bool PersonallySaw(Person p, int evidence) => evidence >= 0 && evidence < CaseDesign.EvidenceList.Count && (CaseDesign.EvidenceList[evidence].Saw?.Eval(this, p) ?? false);
 
     public sealed record ConfrontPlan(IReadOnlyList<(int Claim, int Evidence)> Pairs, Card? Proposal, bool CommonRule);
     public readonly List<string> ConfrontLog = [];
@@ -226,16 +190,17 @@ public sealed partial class Game
         {
             var valid = ClaimTrue(claim) && Relevant[claim].Contains(evidence) && DetHas(evidence);
             var line = $"你：“{Claims[claim]}。”出示：{EvidenceNames[evidence]}。";
+            var frames = claim >= 0 && claim < CaseDesign.Claims.Count && CaseDesign.Claims[claim].Frames;
             if (!valid)
             {
                 var why = !ClaimTrue(claim) ? "这话不对" : !DetHas(evidence) ? "你手里没有这样东西" : "这东西证明不了这句话";
                 ConfrontLog.Add(line + $" ——众人面面相觑（{why}）。");
-                Witness(Det, $"侦探在对质中说了站不住的话：{Claims[claim]}", claim is 4 or 5 ? -1 : 0, -1, room.Where(p => p != Det), domain: Dom.Rations);
-                if (claim is 4 or 5) Witness(Det, "侦探当众冤枉我", -2, 0, [quer], spread: false);
+                Witness(Det, $"侦探在对质中说了站不住的话：{Claims[claim]}", frames ? -1 : 0, -1, room.Where(p => p != Det), domain: Dom.Rations);
+                if (frames) Witness(Det, "侦探当众冤枉我", -2, 0, [quer], spread: false);
                 continue;
             }
             ConfrontLog.Add(line + " ——" + Reaction(claim));
-            if (claim is 4 or 5) { foreach (var p in room) points[p] -= 2; continue; }
+            if (frames) { foreach (var p in room) points[p] -= 2; continue; }
             foreach (var p in room.Where(p => p != Det))
             {
                 var pts = PersonallySaw(p, evidence) ? 2 : TrustIn(p, Det) >= 1 ? 1 : 0;
@@ -349,15 +314,7 @@ public sealed partial class Game
         Confront(plan, reopen: true);
     }
 
-    private string Reaction(int claim) => claim switch
-    {
-        0 => "茉拉皱眉：“是我取的。莫兰烧得厉害。我本打算今早告知——今早走不开。”",
-        1 => "玛格丽特：“门闩是我请她修的。手艺很干净。”",
-        2 => "雀儿别过脸：“板上写着急需可以自取。我打算今天说的。”",
-        3 => "阮清越：“台账只记配给台发出的。夜里的，我记不到。”",
-        4 => "雀儿冷笑了一声。",
-        _ => "贝尔特朗：“身影是瘦小的。是谁，我没看清。”"
-    };
+    private static string Reaction(int claim) => claim >= 0 && claim < CaseDesign.Claims.Count ? CaseDesign.Claims[claim].Reaction : "";
 
     /// <summary>指控成立或不了了之：雀儿被排斥，对没有改变看法的人更不信任，转而独行。</summary>
     private void Ostracize()

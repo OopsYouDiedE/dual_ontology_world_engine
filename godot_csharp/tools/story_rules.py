@@ -252,7 +252,7 @@ def compile_endings(tree: list[Node]) -> list[dict[str, str]]:
 # ------------------------------------------------------------------ 案件 --
 
 def compile_case(tree: list[Node], ctx: Any, rules: dict[str, str], head: Line) -> dict[str, Any]:
-    """`案件`：痕迹、事实、重演变量、主张、证据。结构见 chapter_02.story。"""
+    """`案件`：痕迹、事实、重演变量、主张、证据。结构见 chapter_01.story。"""
     case: dict[str, Any] = {}
     sections = {n.pair()[0]: n for n in tree}
     unknown = set(sections) - {"案发夜", "痕迹", "事实", "变量", "主张", "证据"}

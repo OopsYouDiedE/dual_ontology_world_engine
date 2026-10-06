@@ -65,7 +65,7 @@ public static class T
 
 public static class Names
 {
-    /// <summary>人物、地点、时段、阵营的显示名，全部来自 chapter_02.story。</summary>
+    /// <summary>人物、地点、时段、阵营的显示名，全部来自 chapter_01.story。</summary>
     public static string Of(P p) => Chapter2Design.PersonName(p);
     public static string Of(Place p) => Chapter2Design.PlaceName(p);
     public static string Of(Slot s) => Chapter2Design.SlotName(s);
@@ -120,7 +120,7 @@ public sealed class Profile
 
 public static class Cast
 {
-    /// <summary>十六名学员的画像：全部读自 chapter_02.story 的人物块（本事、看重、偏见、日常、欲望……）。</summary>
+    /// <summary>十六名学员的画像：全部读自 chapter_01.story 的人物块（本事、看重、偏见、日常、欲望……）。</summary>
     public static readonly ImmutableArray<Profile> All = [.. Chapter2AuthoredProfiles.ReadAll(Chapter2Design.Json).Values.OrderBy(p => (int)p.Id)];
 
     public static Profile Of(P p) => All[(int)p];

@@ -124,6 +124,13 @@ var last_unheard_ms: int:
 	get: return engine.Progress("state")["last_unheard_ms"]
 	set(value): engine.SetProgress("state", "last_unheard_ms", value)
 var current_room := ""
+## 日常计划只持有自己的路线；对白、物件动作和场面走位随时取得控制权。
+var daily_actors: Dictionary = {}
+var staged_actors: Dictionary = {}
+var motion_generations: Dictionary = {}
+var motion_previous_speeds: Dictionary = {}
+var daily_plan_depth := 0
+var daily_witness_after := 0
 var replay_open: bool:
 	get: return engine.Progress("state")["replay_open"]
 	set(value): engine.SetProgress("state", "replay_open", value)
@@ -193,6 +200,10 @@ func begin_shutdown() -> void:
 	hand_invitations.clear()
 	if is_instance_valid(modal_root): close_modal()
 
+func _enter_tree() -> void:
+	if engine != null:
+		Content.apply_content(engine.Content())
+
 func _exit_tree() -> void:
 	begin_shutdown()
 
@@ -206,10 +217,10 @@ func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	get_window().content_scale_stretch = Window.CONTENT_SCALE_STRETCH_INTEGER
 	get_window().size = Vector2i(1280, 992)
-	get_window().title = Content.text("窗口标题")
 	engine.name = "Engine"
 	add_child(engine)
 	Content.apply_content(engine.Content())
+	get_window().title = Content.text("窗口标题")
 	_build_geometry()
 	_build_characters()
 	_build_props()
@@ -291,15 +302,32 @@ func _build_props() -> void:
 		tube.texture = load(ART + "speaking_tube.png")
 		tube.offset = Vector2(-14, -44)
 	for spec in Content.PROPS:
-		if not ResourceLoader.exists(ART + str(spec.texture)): continue
+		var texture_path := str(spec.texture)
+		if not texture_path.begins_with("res://"): texture_path = ART + texture_path
+		if not ResourceLoader.exists(texture_path): continue
 		var sprite := Sprite2D.new()
 		sprite.name = str(spec.node)
-		sprite.texture = load(ART + str(spec.texture))
+		sprite.texture = load(texture_path)
 		var visual := Vector2(float(spec.x), float(spec.y))
 		sprite.position = Vector2(visual.x, float(spec.z_y))
 		sprite.offset = Vector2(-sprite.texture.get_width() / 2.0, visual.y - float(spec.z_y) - sprite.texture.get_height())
 		sprite.centered = false
 		$ObjectsAndPeople.add_child(sprite)
+		if str(spec.node) == "Piano":
+			# 琴身的地面足迹与导航使用同一矩形，上方绘画由场景 Y 排序遮挡。
+			var footprint := Rect2(visual + Vector2(-40, -14), Vector2(80, 14))
+			var body := StaticBody2D.new()
+			body.name = "Piano"
+			body.position = footprint.get_center()
+			body.collision_layer = 1
+			body.collision_mask = 1
+			var shape := RectangleShape2D.new()
+			shape.size = footprint.size
+			var collision := CollisionShape2D.new()
+			collision.shape = shape
+			body.add_child(collision)
+			$FurnitureSolids.add_child(body)
+			obstacle_rects.append(footprint)
 
 func _build_sites() -> void:
 	for id in Content.SITES:
@@ -339,7 +367,7 @@ func _ui_action(button: Button, action: Callable) -> void:
 func _refresh_hud() -> void:
 	if not is_instance_valid(hud_title):
 		return
-	hud_title.text = Content.text("界面·地点前缀") + " " + _room_name(player.position)
+	hud_title.text = Content.text("界面·地点前缀") + " " + _room_name(player.position) + "　" + str(engine.ClockText())
 	var keys := []
 	if Content.STAGES[stage].examine:
 		keys.append(Content.text("界面·键位·检视"))
@@ -431,6 +459,10 @@ func _physics_process(delta: float) -> void:
 	_make_way()
 	_pick_nearest()
 	_check_triggers()
+	_update_daily(delta)
+	if str(engine.DetectiveControl()) == "simulation":
+		_cancel_click_navigation()
+		return
 	if not field_active():
 		_cancel_click_navigation()
 		if not player.travelling:
@@ -535,6 +567,7 @@ func _pick_nearest() -> void:
 			nearest = id
 
 func _input(event: InputEvent) -> void:
+	if str(engine.DetectiveControl()) == "simulation": return
 	if not field_active():
 		return
 	if event is not InputEventMouseButton or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
@@ -555,6 +588,7 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if field_active() and str(engine.DetectiveControl()) == "simulation": return
 	if event is not InputEventKey or not event.pressed or event.echo:
 		return
 	if ended:
@@ -714,7 +748,7 @@ func _walkable(point: Vector2) -> bool:
 	return true
 
 func can_access_dorm(_owner: String) -> bool:
-	return Content.STAGES[stage].dorms
+	return Content.STAGES.get(stage, {}).get("dorms", false)
 
 func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
@@ -750,31 +784,60 @@ func ink_route(from: Vector2, to: Vector2) -> PackedVector2Array:
 	return route
 
 ## 把某人走到某处（场面调度用）；走不通就直接放到那里。
-func walk_actor(key: String, point: Vector2, speed := 150.0) -> void:
-	if _closing: return
+func walk_actor(key: String, point: Vector2, speed := 150.0) -> bool:
+	if _closing: return false
+	_claim_staged_actor(key)
 	var actor := actor_of(key)
 	if actor.seated:
 		actor.stand_up()
 	var route := _route(actor.position, point, actor)
 	if route.is_empty() or actor.position.distance_to(point) < 4:
 		actor.position = point
-		return
+		_release_staged_actor(key)
+		return true
 	route.append(point)
 	var previous: float = actor.speed
+	motion_previous_speeds[actor.get_instance_id()] = previous
 	actor.speed = speed
-	await _follow(actor, route)
-	if _closing: return
+	var completed: bool = await _follow(actor, route)
+	if _closing: return false
+	if not completed:
+		_release_staged_actor(key)
+		return false
 	actor.speed = previous
+	motion_previous_speeds.erase(actor.get_instance_id())
+	_release_staged_actor(key)
+	return true
+
+func _next_motion(actor: CharacterBody2D) -> int:
+	var id := actor.get_instance_id()
+	var generation := int(motion_generations.get(id, 0)) + 1
+	motion_generations[id] = generation
+	return generation
+
+func _cancel_actor_motion(actor: CharacterBody2D) -> void:
+	_next_motion(actor)
+	var id := actor.get_instance_id()
+	if motion_previous_speeds.has(id):
+		actor.speed = float(motion_previous_speeds[id])
+		motion_previous_speeds.erase(id)
+	var moving: bool = actor.travelling
+	actor.travelling = false
+	actor.velocity = Vector2.ZERO
+	actor.path.clear()
+	if moving: actor.arrived.emit()
 
 ## 沿路走；被家具的碰撞卡住（导航网格与碰撞体略有出入）时，最后几步直接到位，不让人原地踏步。
-func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> void:
-	if _closing: return
+func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> bool:
+	if _closing: return false
+	var generation := _next_motion(actor)
+	var id := actor.get_instance_id()
 	actor.follow_path(route)
 	var last := actor.position
 	var still := 0
 	while actor.travelling:
 		await _wait_signal(get_tree().physics_frame)
-		if _closing: return
+		if _closing or int(motion_generations.get(id, 0)) != generation: return false
 		if actor.position.distance_to(last) < 0.2:
 			still += 1
 			if still > 20:
@@ -787,6 +850,179 @@ func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> void:
 		else:
 			still = 0
 		last = actor.position
+	return int(motion_generations.get(id, 0)) == generation
+
+# ================================================================ daily life ===
+
+func set_detective_control(mode: String) -> void:
+	_cancel_click_navigation()
+	_release_daily_actor("detective", true)
+	engine.SetDetectiveControl(mode)
+
+func _daily_actor_keys() -> Array:
+	var keys: Array = ["huo", "shen", "su"]
+	if str(engine.DetectiveControl()) == "simulation": keys.append("detective")
+	return keys
+
+func _claim_staged_actor(who: String) -> void:
+	_release_daily_actor(who, true)
+	if hand_invitations.has(who):
+		hand_invitations.erase(who)
+	var actor := actor_of(who)
+	_cancel_actor_motion(actor)
+	actor.pose("idle")
+	staged_actors[who] = int(staged_actors.get(who, 0)) + 1
+
+func _release_staged_actor(who: String) -> void:
+	var count := int(staged_actors.get(who, 0)) - 1
+	if count <= 0: staged_actors.erase(who)
+	else: staged_actors[who] = count
+
+func _release_daily_actor(who: String, suspend: bool = false) -> void:
+	if not daily_actors.has(who): return
+	var job: Dictionary = daily_actors[who]
+	var actor := actor_of(who)
+	if actor.travelling:
+		actor.travelling = false
+		actor.velocity = Vector2.ZERO
+		actor.path.clear()
+		actor.arrived.emit()
+	actor.speed = float(job.previous_speed)
+	actor.pose("idle")
+	daily_actors.erase(who)
+	if suspend: engine.DailySuspend(who)
+
+func _pause_daily() -> void:
+	for who in daily_actors.keys(): _release_daily_actor(str(who), true)
+
+func _daily_busy() -> Array:
+	var busy: Array = []
+	for who in _daily_actor_keys():
+		if staged_actors.has(who) or hand_invitations.has(who) \
+				or str(life.get(who, {}).get("state", "")) in ["going", "holding"] \
+				or (actor_of(who).travelling and not daily_actors.has(who)):
+			busy.append(who)
+	return busy
+
+## 热点只供几何定位；日常不会调用检视、实验或拿取证物。
+func _daily_station(plan: Dictionary) -> Dictionary:
+	var target := str(plan.get("target", ""))
+	if target == "self":
+		var start_key := "起点·" + str(plan.who)
+		if not Content.STAGING.has(start_key): return {}
+		return {"point": Content.STAGING[start_key], "radius": 12.0}
+	if target == "piano":
+		var piano := $ObjectsAndPeople.get_node_or_null("Piano") as Node2D
+		if piano == null: return {}
+		return {"point": piano.position + Vector2(0, 32), "focus": piano.position, "radius": 16.0}
+	var site := {"tube": "E8", "sink": "E9", "door": "E8j", "score": "E6"}
+	if site.has(target) and sites.has(site[target]):
+		return {"point": site_point(site[target]), "radius": float(sites[site[target]].reach) - 10.0}
+	var node := str({"table": "StudyTable", "prep": "Worktable"}.get(target, ""))
+	var prop: Node2D = null
+	if node != "": prop = $ObjectsAndPeople.get_node_or_null(node) as Node2D
+	if prop != null:
+		return {"point": prop.position + Vector2(0, -24), "radius": 78.0 if target == "table" else 62.0}
+	return {}
+
+func _start_daily_actor(plan: Dictionary) -> void:
+	var who := str(plan.who)
+	var serial := int(plan.serial)
+	var station := _daily_station(plan)
+	if station.is_empty():
+		engine.DailyBlock(who, serial)
+		return
+	var actor := actor_of(who)
+	var obstacles := _navigation_obstacles(actor)
+	var grid := FieldNavigation.build_route_grid(floors, obstacles, Vector2i(layout.rows[0].length(), layout.rows.size()))
+	var destination := Vector2.ZERO
+	var best_route := PackedVector2Array()
+	var best_cost := INF
+	for fraction in [1.0, 0.75]:
+		for heading in APPROACH_DIRECTIONS:
+			var point: Vector2 = station.point + heading.normalized() * float(station.radius) * fraction
+			if _entered_room(point) != str(plan.room) or not FieldNavigation.walkable(point, floors, obstacles): continue
+			var reserved := false
+			for other in daily_actors.values():
+				if point.distance_to(other.destination) < 28.0: reserved = true
+			if reserved: continue
+			var route := FieldNavigation.route_on_grid(actor.position, point, grid)
+			if route.is_empty(): continue
+			var cost := actor.position.distance_to(route[0]) + route[-1].distance_to(point)
+			for index in range(1, route.size()): cost += route[index - 1].distance_to(route[index])
+			if cost < best_cost:
+				best_cost = cost
+				destination = point
+				best_route = route
+	if best_route.is_empty():
+		engine.DailyBlock(who, serial)
+		return
+	if actor.seated: actor.stand_up()
+	daily_actors[who] = {"serial": serial, "plan": plan, "destination": destination,
+		"focus": station.get("focus", station.point), "last": actor.position, "still": 0.0, "working": false, "previous_speed": actor.speed}
+	actor.speed *= clampf(float(plan.get("speed", 1.0)), 0.5, 2.0)
+	best_route.append(destination)
+	actor.follow_path(best_route)
+
+func _daily_work_pose(actor: CharacterBody2D, job: Dictionary) -> void:
+	actor.face_point(job.focus)
+	match str(job.plan.get("action", "rest")):
+		"check": actor.pose("inspect")
+		"work": actor.pose("interact")
+		_: actor.pose("idle")
+
+func _update_daily(delta: float) -> void:
+	engine.SyncMorningClock()
+	engine.SetDailyStage(stage)
+	var active := field_active() and bool(Content.STAGES.get(stage, {}).get("daily", false)) and daily_plan_depth == 0
+	var busy := _daily_busy()
+	if not active: _pause_daily()
+	else:
+		for who in busy: _release_daily_actor(str(who), true)
+	engine.Locate("detective", _room_key(player.position))
+	for who in _daily_actor_keys(): engine.Locate(who, _room_key(actor_of(who).position))
+	var tick: Dictionary = engine.DailyTick(delta, active, busy)
+	if not active: return
+	var present: Dictionary = {}
+	for plan in tick.get("actors", []):
+		var who := str(plan.who)
+		if who not in _daily_actor_keys() or who in busy: continue
+		present[who] = true
+		if daily_actors.has(who) and int(daily_actors[who].serial) != int(plan.serial): _release_daily_actor(who)
+		if not daily_actors.has(who): _start_daily_actor(plan)
+	for who in daily_actors.keys():
+		if not present.has(who):
+			_release_daily_actor(str(who))
+			continue
+		var actor := actor_of(who)
+		var job: Dictionary = daily_actors[who]
+		if bool(job.working): continue
+		if not actor.travelling:
+			var room := _entered_room(actor.position)
+			engine.Locate(who, room)
+			if actor.position.distance_to(job.destination) <= 4.0 and room == str(job.plan.room) \
+					and bool(engine.DailyArrive(who, int(job.serial), room)):
+				job.working = true
+				actor.speed = float(job.previous_speed)
+				_daily_work_pose(actor, job)
+			else:
+				engine.DailyBlock(who, int(job.serial))
+				_release_daily_actor(str(who))
+			continue
+		job.still = float(job.still) + delta if actor.position.distance_to(job.last) < 0.2 else 0.0
+		job.last = actor.position
+		if float(job.still) >= 1.0:
+			engine.DailyBlock(who, int(job.serial))
+			_release_daily_actor(str(who))
+	var now := Time.get_ticks_msec()
+	if now >= daily_witness_after and (not is_instance_valid(aside) or not aside.visible):
+		daily_witness_after = now + 1000
+		var room := _entered_room(player.position)
+		if room == "": return
+		var note := str(engine.DailyWitness(room))
+		if not note.is_empty():
+			show_aside(note)
+			daily_witness_after = now + 18000
 
 # ================================================================ triggers ===
 
@@ -826,10 +1062,12 @@ func _entered_room(point: Vector2) -> String:
 
 func say(title: String) -> void:
 	if _closing: return
+	if title == "" or title == "<null>": return
 	if dialogue.active:
 		await _wait_signal(dialogue.finished)
 		if _closing: return
 	_cancel_click_navigation()
+	_pause_daily()
 	story_lock = true
 	dialogue.panel.show()
 	dialogue.start_packet(engine, title, self)
@@ -842,10 +1080,18 @@ func say(title: String) -> void:
 
 ## C# plans choose chapter events; the host executes their spatial and UI presentations.
 func _play_plan(key: int) -> void:
+	daily_plan_depth += 1
+	_pause_daily()
+	await _run_plan(key)
+	daily_plan_depth -= 1
+
+func _run_plan(key: int) -> void:
 	if _closing: return
 	while true:
-		var event := str(engine.NextMeeting(key))
-		if event == "": break
+		var raw = engine.NextMeeting(key)
+		if raw == null: break
+		var event := str(raw)
+		if event == "" or event == "<null>": break
 		if event.begins_with("@"):
 			var parts := event.substr(1).split(":")
 			var args: Array = []
@@ -893,6 +1139,10 @@ func present_dialogue_command(kind: String, args: Array) -> void:
 			if _closing: return
 		"posts":
 			for who in Content.POSTS: walk_actor(who, Content.POSTS[who])
+		"stage_actor":
+			await walk_actor(str(args[0]), Content.STAGING[str(args[1])])
+			if _closing: return
+			engine.Locate(str(args[0]), _room_key(actor_of(str(args[0])).position))
 		"summon":
 			await _summon(str(args[0]))
 			if _closing: return
@@ -957,13 +1207,18 @@ func heard_where(who: String) -> String:
 
 func _meeting() -> void:
 	if _closing: return
+	_pause_daily()
 	stage = Content.STAGE_EVENTS["相遇"]
+	engine.SetDailyStage(stage)
 	story_lock = true
 	_cancel_click_navigation()
 	player.move_input(Vector2.ZERO)
 	var spots := {"huo": $MeetingSpots/Engineer.position, "shen": $MeetingSpots/Chef.position, "su": $MeetingSpots/Musician.position}
 	for key in spots:
+		_claim_staged_actor(key)
 		actor_of(key).position = spots[key]
+		engine.Locate(key, _room_key(spots[key]))
+		_release_staged_actor(key)
 	actor_of("huo").pose("idle", "right")
 	actor_of("shen").pose("idle", "back")
 	actor_of("su").pose("idle", "left")
@@ -1000,6 +1255,7 @@ func _confirm_name() -> void:
 func open_modal(title: String, size: Vector2, kind: String) -> VBoxContainer:
 	close_modal()
 	modal_kind = kind
+	_pause_daily()
 	_cancel_click_navigation()
 	if kind != "ending":
 		Sound.sfx("page", -6.0)
@@ -1144,7 +1400,7 @@ func _at_hand_shelf(actor: CharacterBody2D) -> bool:
 	return _room_key(actor.position) == "R05" and actor.position.distance_to(site_point("E11a")) <= 85.0
 
 func _hand_busy(who: String) -> bool:
-	return actor_of(who).travelling or str(life.get(who, {}).get("state", "")) in ["going", "holding"]
+	return (actor_of(who).travelling and not daily_actors.has(who)) or str(life.get(who, {}).get("state", "")) in ["going", "holding"]
 
 func _can_compare_hand(who: String) -> bool:
 	if not _at_hand_shelf(player): return false
@@ -1173,6 +1429,7 @@ func _invite_hand(who: String) -> void:
 	if _hand_busy(who) or hand_invitations.has(who):
 		show_aside(Content.text("旁白·正忙", {"人名": Content.PERSON_NAMES[who]}))
 		return
+	_release_daily_actor(who, true)
 	if _at_hand_shelf(actor):
 		engine.Locate(who, _room_key(actor.position))
 		show_aside(Content.text("旁白·已在架沿", {"人名": Content.PERSON_NAMES[who]}))
@@ -1210,6 +1467,18 @@ func _update_hand_invitations(delta: float) -> void:
 	for who in hand_invitations.keys():
 		var actor := actor_of(who)
 		var invitation: Dictionary = hand_invitations[who]
+		if not field_active():
+			if actor.travelling:
+				invitation.paused_path = actor.path.slice(actor.waypoint)
+				actor.travelling = false
+				actor.velocity = Vector2.ZERO
+				actor.pose("idle")
+			continue
+		if invitation.has("paused_path"):
+			actor.follow_path(invitation.paused_path)
+			invitation.erase("paused_path")
+			invitation.last = actor.position
+			invitation.still = 0.0
 		var room := _room_key(actor.position)
 		if room != str(invitation.room):
 			engine.Locate(who, room)
@@ -1252,6 +1521,7 @@ func _pick_sole() -> String:
 
 func _summon(who: String) -> void:
 	if _closing: return
+	_claim_staged_actor(who)
 	var actor := actor_of(who)
 	var guard := 0
 	while str(life.get(who, {}).get("state", "")) in ["going", "holding"] and guard < 900:
@@ -1271,15 +1541,15 @@ func _summon(who: String) -> void:
 				if route.is_empty():
 					actor.position = spot
 				else:
-					route.append(spot)
-					var previous: float = actor.speed
-					actor.speed = 240.0
-					await _follow(actor, route)
+					var completed: bool = await walk_actor(who, spot, 240.0)
 					if _closing: return
-					actor.speed = previous
+					if not completed:
+						_release_staged_actor(who)
+						return
 				break
 	actor.face_point(player.position)
 	player.face_point(actor.position)
+	_release_staged_actor(who)
 
 func _on_recall(id: String) -> void:
 	if _closing: return
@@ -1297,6 +1567,7 @@ func _consider(who: String) -> void:
 
 func _go_reach(who: String, thought: String) -> void:
 	if _closing: return
+	_release_daily_actor(who, true)
 	engine.BeginReach(who, thought)
 	var obj: String = Content.OWN_OBJECTS[who]
 	await _wait_signal(get_tree().create_timer(0.6).timeout)
@@ -1304,10 +1575,16 @@ func _go_reach(who: String, thought: String) -> void:
 	while dialogue.active and _detective_present(who):
 		await _wait_signal(get_tree().process_frame)
 		if _closing: return
+	while not field_active():
+		await _wait_signal(get_tree().process_frame)
+		if _closing: return
 	var actor := actor_of(who)
 	var spot := _spot_near(site_point(obj), float(sites[obj].reach) - 14.0, actor)
-	await walk_actor(who, spot, 110.0)
+	var completed: bool = await walk_actor(who, spot, 110.0)
 	if _closing: return
+	if not completed:
+		engine.RemoveProgress("life", who)
+		return
 	actor.face_point(site_point(obj))
 	engine.Locate(who, _room_key(actor.position))
 	if not bool(engine.Reach(who)):
@@ -1400,6 +1677,7 @@ func _make_way() -> void:
 	if player.velocity.length() < 10.0:
 		return
 	for key in ["huo", "shen", "su"]:
+		if daily_actors.has(key) or staged_actors.has(key) or hand_invitations.has(key): continue
 		var actor := actor_of(key)
 		if actor.travelling or actor.position.distance_to(player.position) > 20.0:
 			continue
@@ -1627,6 +1905,7 @@ func sound_sentence() -> String:
 
 func talk(who: String) -> void:
 	if _closing: return
+	_pause_daily()
 	actor_of(who).face_point(player.position)
 	player.face_point(actor_of(who).position)
 	engine.RemoveProgress("flags", "invite_hand_" + who)
@@ -1775,6 +2054,15 @@ func _ending_card(kind: String) -> void:
 			kept.append(Content.PERSON_NAMES[key] if key != "detective" else Content.text("结局·你自己"))
 	view.get_node("Kept").text = Content.text("结局·未交", {"名单": Content.text("结局·无") if kept.is_empty() else "、".join(kept)})
 	view.get_node("Continue").text = Content.text("结局·续章" if flags.has("door_open") else "结局·重开")
+	if flags.has("door_open"):
+		add_footer([
+			["进入第二章 (C)", func(): begin_shutdown(); get_tree().change_scene_to_file("res://scenes/Chapter2/Game/Chapter2Game.tscn")],
+			["重新开始 (R)", func(): begin_shutdown(); get_tree().reload_current_scene()]
+		])
+	else:
+		add_footer([
+			["重新开始 (R)", func(): begin_shutdown(); get_tree().reload_current_scene()]
+		])
 	modal_kind = "ending"
 	stage = Content.STAGE_EVENTS["章末"]
 

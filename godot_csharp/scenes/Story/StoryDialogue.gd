@@ -473,7 +473,7 @@ func _exit_tree() -> void:
 	cancel_presentation()
 
 func start_packet(source: Node, title: String, state: Node) -> void:
-	if Engine.is_editor_hint() or active: return
+	if Engine.is_editor_hint() or active or title == "" or title == "<null>": return
 	packet_engine = source
 	context = state
 	active = true
@@ -483,7 +483,13 @@ func start_packet(source: Node, title: String, state: Node) -> void:
 
 func _start_packet_ready(source: Node, title: String) -> void:
 	if not active: return
-	await _show_packet(source.StartDialogue(title))
+	var packet = source.StartDialogue(title)
+	if packet == null:
+		active = false
+		busy = false
+		finished.emit()
+		return
+	await _show_packet(packet)
 
 func _show_packet(packet: Dictionary) -> void:
 	busy = true

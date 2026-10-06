@@ -51,7 +51,7 @@ stdio面向MCP客户端，不是交互命令行。SDK最低版本来自实际使
 
 ### Godot UI
 
-正式剧情维护 `scenes/Awakening/Script/chapter_01.story` 与 `scenes/Chapter2/Script/chapter_02.story`；本 MCP 的旧 `.dialogue` 剧情修订工具已退出，使用章节编译器及独立测试流程。
+正式剧情维护 `scenes/Awakening/Script/chapter_01.story`（含 `续篇 chapter2`）；本 MCP 的旧 `.dialogue` 剧情修订工具已退出，使用章节编译器及独立测试流程。
 - `ui_design_contract()`：核实后的Godot样式规则、当前色板和尺寸边界。保留像素焦点，不用低可读性代替低饱和。
 - `build_diegetic_ui(replace=false)`：固定FirstAwakeningInterior族，生成8张PNG切片及Aseprite源、共享Theme、`MindThemePreview.tscn`、带切线与内容边距的源清单。replace也拒绝覆盖未经登记或画师改过的文件。首次生成后用Godot编辑器导入资源；不会自行改玩法脚本或剧情。
 - `inspect_godot_ui(viewport=[1280,992])`：实际Godot加载上述固定样板，允许960–2560×640–1440，审查解析后的样式、布局与Button六态。需要`GODOT_BIN`和已导入的资源；报告固定归`artifacts/tilemap-workflow/`。样板通过不证明动态游戏全界面自适应。

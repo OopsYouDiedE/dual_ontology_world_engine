@@ -16,7 +16,8 @@ SOURCE = SCRIPT_DIR / "chapter_01.story"
 sys.path.insert(0, str(HERE))
 
 from engine_spec import Expr, Instruction, dialogue_document  # noqa: E402
-from story_script import StoryError  # noqa: E402
+from story_script import StoryError, compile_story as compile_world_story  # noqa: E402
+from world_script import ScriptError as WorldScriptError  # noqa: E402
 
 EFFECTS = {"set_flag", "clear_flag", "amplify", "whisper", "share_recall"}
 QUERIES = {
@@ -40,7 +41,7 @@ CALL_ARITY = {
 # 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
 HOST_COMMANDS = {
     "name", "board", "rest", "investigate", "summon", "sound", "music", "sfx", "lock", "unlock", "hud",
-    "answerpick", "finale", "finale_prepare", "door_open", "redraw", "su_approach", "save", "ending",
+    "answerpick", "finale", "finale_prepare", "stage_actor", "door_open", "redraw", "su_approach", "save", "ending",
     "aside", "consider", "finish", "posts",
 }
 FLOW_HOOKS: set[str] = set()
@@ -201,6 +202,25 @@ def assign_choice_ids(entries: dict[str, list[dict[str, Any]]]) -> None:
         visit(body)
 
 
+def validate_clock(clock: dict[str, Any], scenes: set[str]) -> None:
+    start, expected = clock["start_minutes"], clock["expected_exit_minutes"]
+    earliest, latest = clock["normal_exit_earliest_minutes"], clock["normal_exit_latest_minutes"]
+    if not start < expected <= earliest <= latest:
+        raise ValueError("DAY_CLOCK requires start < expected <= normal earliest <= normal latest")
+    if clock["companion_start_minutes"] >= start:
+        raise ValueError("DAY_CLOCK companions must wake before the detective")
+    if latest >= 24 * 60:
+        raise ValueError("DAY_CLOCK must stay within the authored first day")
+    unknown = set(clock["scenes"]) - scenes
+    if unknown:
+        raise ValueError("DAY_CLOCK unknown scenes: " + ", ".join(sorted(unknown)))
+    required = {"检视", "试验", "协助", "交谈", "声路", "重演", "答辩", "走动"}
+    if set(clock["actions"]) != required:
+        raise ValueError("DAY_CLOCK actions must declare: " + ", ".join(sorted(required)))
+    if any(type(value) is not int or value <= 0 for value in clock["actions"].values()):
+        raise ValueError("DAY_CLOCK action durations must be positive integer minutes")
+
+
 def content_data(source) -> dict[str, Any]:
     result = dict(source.CONTENT_TABLES)
     result["EVIDENCE"] = {record.id: record.json() for record in source.EVIDENCE}
@@ -298,10 +318,19 @@ def generated_files() -> dict[Path, str]:
         validate_instructions(instructions, entry_id)
     content = content_data(source)
     validate_rules(source.RULES_DATA, set(document["entries"]))
+    validate_clock(content["DAY_CLOCK"], set(document["entries"]))
     layout = layout_data(source)
     dialogue_json = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
     content_json = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
     layout_json = json.dumps(layout, ensure_ascii=False, indent=2) + "\n"
+    world_json = json.dumps(compile_world_story([SOURCE], set(), ecology_only=True),
+                            ensure_ascii=False, indent=2) + "\n"
+    world_json = world_json.replace(SOURCE.as_posix(), SOURCE.relative_to(HERE.parent.parent).as_posix())
+    continuation_json = json.dumps(
+        compile_world_story([SOURCE], {"awakening"}, section="chapter2"),
+        ensure_ascii=False, indent=2) + "\n"
+    continuation_json = continuation_json.replace(
+        SOURCE.as_posix(), SOURCE.relative_to(HERE.parent.parent).as_posix())
     escaped = "\n".join("    " + line for line in dialogue_json.rstrip("\n").splitlines())
     csharp = (
         "using DualOntologyWorldEngine.Story;\n\n"
@@ -315,7 +344,9 @@ def generated_files() -> dict[Path, str]:
         SCRIPT_DIR / "generated_awakening_dialogue.json": dialogue_json,
         SCRIPT_DIR / "generated_awakening_content.json": content_json,
         SCRIPT_DIR / "generated_awakening_layout.json": layout_json,
+        SCRIPT_DIR / "generated_chapter_01_world.json": world_json,
         SCRIPT_DIR / "Chapter1CompiledDialogue.cs": csharp,
+        SCRIPT_DIR.parent.parent / "Chapter2" / "Script" / "generated_chapter_02.json": continuation_json,
     }
 
 
@@ -343,6 +374,10 @@ def main() -> int:
         return 0
     except StoryError as error:
         print(f"{SOURCE.name}:{error.line}: {error}", file=sys.stderr)
+        return 2
+    except WorldScriptError as error:
+        location = f"{error.source.path}:{error.source.line}" if error.source else SOURCE.name
+        print(f"{location}: {error}", file=sys.stderr)
         return 2
     except (ValueError, KeyError, TypeError) as error:
         print(f"story compile failed: {error}", file=sys.stderr)

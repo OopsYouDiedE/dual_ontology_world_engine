@@ -1,4 +1,648 @@
-章节：chapter1
+章节：awakening
+
+# 游戏钟按实际场面与行动结算；慢读、暂停和回看不走钟。目标不是开门条件。
+剧情时长
+    每游戏分钟日常逻辑秒：0.5
+    同伴醒来分钟：440
+    起始分钟：480
+    预计出门分钟：720
+    正常出门最早分钟：740
+    正常出门最晚分钟：770
+    默认场面分钟：1
+    场面时长：
+        s1_wake：8
+        s2_meet：10
+        s2_tea：12
+        s3_broadcast：8
+        s4_rewards：18
+        s5_question：12
+        s6_begin：4
+        s6_reversal：5
+        s8_reversal：8
+        s10_steps：4
+        s10_prints：3
+        s10_hand：2
+        s10_open：6
+        ending_rest：5
+        talk_huo_menu：0
+        talk_shen_menu：0
+        talk_su_menu：0
+    行动时长：
+        检视：3
+        试验：7
+        协助：5
+        交谈：4
+        声路：10
+        重演：12
+        答辩：4
+        走动：1
+
+# ---- 全章共享生态：词汇、常数、地点、十六人画像与日常的唯一作者源 ----
+
+阵营
+    - 生活翼 | Life
+    - 文契组 | Wenqi
+    - 星仪组 | Xingyi
+    - 后勤组 | Houqin
+
+群落
+    - 秩序派 | Order
+    - 劳作互助派 | Labor
+    - 感官与美派 | Beauty
+    - 实证派 | Evidence
+
+体型
+    # 关键词 | 编号 | 夜里望见时的描述
+    - 小巧 | Small | 瘦小的
+    - 中等 | Medium | 中等身量的
+    - 魁梧 | Large | 高大的
+
+时段
+    # 关键词 | 编号 | 显示名（时段先后即此处顺序）
+    - 早晨 | Morning | 清晨
+    - 上午 | Forenoon | 上午
+    - 中午 | Noon | 午间
+    - 下午 | Afternoon | 下午
+    - 傍晚 | Evening | 傍晚
+    - 夜里 | Night | 夜里
+
+价值
+    # 关键词 | 编号 | 接受规则时的说法
+    - 记录 | Records | 记账
+    - 病人优先 | SickPriority | 病者优先
+    - 按人头 | PerHead | 按人头
+    - 限制 | Restricts | 限制他人
+    - 针对雀儿 | TargetsQuer | 针对雀儿
+    - 中央做饭 | CentralCook | 统一煮粥
+    - 证据优先 | EvidenceFirst | 凭证据
+    - 开放名录库 | OpenArchive | 开库
+    - 委员会管名录库 | CommitteeArchive | 委员会
+    - 封存名录库 | SealArchive | 封库
+    - 依约管名录库 | PactArchive | 约束开库
+    - 夜间特例 | NightException | 夜取例外
+    - 双人见证 | TwoWitness | 两人见证
+    - 沃德权威 | WardAuthority | 沃德定规
+    - 传统 | Tradition | 守旧制
+    - 传声 | Relay | 转述
+    - 安全 | Safety | 保命
+    - 不许特例 | NoException | 无例外
+    - 禁夜间开门 | ForbidNightOpen | 夜不开库
+    - 禁止欲望 | ForbidsDesire | 禁止欲望
+    - 口粮 | Rations | 口粮
+    - 针对个人 | Targets | 点名
+
+行动
+    # 关键词 | 编号 | 动作说明 | 画面动作帧（坐 递物 操作 拉拽 蹲查 看守 行走 交谈）
+    - 睡觉 | Sleep | 回寝区睡下 | 坐
+    - 休息 | Rest | 在寝区歇着 | 坐
+    - 上课 | Class | 去讲堂上课 | 坐
+    - 领口粮 | Collect | 去配给台领口粮 | 递物
+    - 分口粮 | Distribute | 开粮仓、开配给台 | 操作
+    - 做饭 | Cook | 在灶上煮粥 | 操作
+    - 取水 | FetchWater | 挑水 | 拉拽
+    - 照看病人 | Care | 在诊疗所照看病人 | 蹲查
+    - 夜取病粮 | NightTakeSick | 夜里为病人取一份口粮（不记账） | 操作
+    - 夜取病粮记账 | NightTakeSickRec | 夜里为病人取一份口粮并记账 | 操作
+    - 夜取自粮 | NightTakeSelf | 夜里自取一份口粮（不记账） | 操作
+    - 夜取自粮记账 | NightTakeSelfRec | 夜里自取一份口粮并记账 | 操作
+    - 修门闩 | RepairLatch | 修粮仓门闩 | 操作
+    - 查结构 | InspectStructure | 查看后勤院的结构 | 蹲查
+    - 巡夜 | Patrol | 提灯夜巡 | 行走
+    - 守名录库 | GuardArchive | 守在名录库前厅 | 看守
+    - 探访名录库 | VisitArchive | 去名录库前厅 | 看守
+    - 温室 | Greenhouse | 修温室水压 | 操作
+    - 社交 | Socialize | 在中央厅与人交谈 | 交谈
+    - 做工 | Work | 做自己的手艺 | 操作
+    - 对账 | CountLedger | 清点粮仓、记台账 | 蹲查
+    - 抄碑 | Stele | 去誓约庭看铺石上的刻纹 | 蹲查
+    - 拾荒 | Scavenge | 到后勤院找吃的 | 蹲查
+    - 囤积 | Hoard | 多取两份藏起来 | 操作
+    - 指控 | Accuse | 在中央厅当众指控 | 交谈
+    - 张贴规矩 | PostRules | 在中央厅张贴规则 | 操作
+    - 辩护 | Defend | 在中央厅替人说话 | 交谈
+    - 请人修门闩 | AskLatchHelp | 请在场的工匠修门闩 | 交谈
+    - 夜开名录库 | Seize | 夜里去开名录库 | 拉拽
+    - 应唤名 | AnswerName | 应了唤名 | 交谈
+    - 同行 | Escort | 同行 | 行走
+    - 补记 | Inform | 去台账补记昨夜的取用 | 操作
+    - 送口粮 | FeedWeak | 替饿着的人领一份口粮送去 | 递物
+    - 交钥匙 | GiveKey | 把粮仓钥匙交给沈鼎 | 递物
+    - 收拾 | Tidy | 倒空自己寝区的废纸篓 | 蹲查
+    - 闲逛 | Wander | 去某处看一眼 | 行走
+    - 分享 | Share | 把自己的口粮分给饿着的人 | 递物
+    - 撕规矩 | Tear | 撕下中央厅板上的一张规矩 | 拉拽
+    - 守望 | Watch | 夜里守在粮仓边上 | 看守
+    - 约人开库 | AskOpen | 约人夜里去开名录库 | 交谈
+    - 转述 | Relay | 向人转述一条规矩 | 交谈
+    - 教学 | Teach | 给缺课的人讲课 | 交谈
+    - 换口粮 | Exchange | 拿明天的活换一口吃的 | 交谈
+    - 跟随 | Follow | 跟着一个人 | 行走
+    - 躲避 | Avoid | 躲开一个人 | 行走
+    - 请人让开 | AskLeave | 请守门的人让开 | 交谈
+    - 治疗 | Treat | 去诊疗所给脚踝换药 | 蹲查
+    - 撤退 | Retreat | 去誓约庭静坐 | 坐
+    - 汇报 | Report | 在中央厅报告昨夜夜巡所见 | 交谈
+    - 取样 | Sample | 采样 | 蹲查
+    - 挑错 | Needle | 当面挑茉拉账上的错 | 交谈
+    - 夜里看色 | NightSketch | 夜里坐在中央厅看颜色 | 坐
+    - 速写 | Sketch | 画速写 | 坐
+
+常数
+    同阵营初始信任：2
+    同群落跨阵营好感：1
+
+地点 中央厅
+    编号：room.Hall
+    别名：Hall
+    范围：世界
+
+地点 讲堂
+    编号：room.Lecture
+    别名：Lecture
+    范围：世界
+
+地点 后勤院
+    编号：room.Logistics
+    别名：Logistics
+    范围：世界
+
+地点 诊疗所
+    编号：room.Clinic
+    别名：Clinic
+    范围：世界
+
+地点 温室
+    编号：room.Greenhouse
+    别名：Greenhouse
+    范围：世界
+
+地点 名录库前厅
+    编号：room.ArchiveFront
+    别名：ArchiveFront
+    范围：世界
+
+地点 誓约庭
+    编号：room.Oath
+    别名：Oath
+    范围：世界
+
+地点 乙区
+    编号：room.DormLife
+    别名：DormLife
+    范围：世界
+
+地点 甲区
+    编号：room.DormW
+    别名：DormW
+    范围：世界
+
+地点 丙区
+    编号：room.DormS
+    别名：DormS
+    范围：世界
+
+地点 丁区
+    编号：room.DormL
+    别名：DormL
+    范围：世界
+
+人物 侦探
+    编号：person.Det
+    别名：侦探（心声）
+    范围：世界
+    所在：中央厅
+    阵营：生活翼
+    宿舍：乙区
+    体型：中等
+    速度：1.0
+    欲望：弄清自己是什么
+    魔音台词：你的封存匣在名录库里，标签上写着你的名字。
+    信任：霍铎 3，沈鼎 3，苏泠 3
+    立绘：detective
+
+人物 霍铎
+    编号：person.Huo
+    范围：世界
+    所在：中央厅
+    阵营：生活翼
+    宿舍：乙区
+    体型：魁梧
+    速度：1.0
+    欲望：超越卡诺循环的动力图纸
+    魔音台词：图纸就在名录库，记得它的人，是你。
+    群落：劳作互助派
+    工作地点：讲堂
+    信任：侦探 3，雀儿 1，维罗妮卡 1，玛格丽特 1
+    立绘：engineer
+    配合：1
+    力气：2
+    开锁：2
+    结构：1
+    工匠：是
+    口吻：工匠口吻，短
+    欲望标志：开放名录库
+    看重：记录 1，开放名录库 1，中央做饭 1，证据优先 1
+    偏见：卢西安 -1，顾平章 -1
+    日常：
+        上午 上课 重要 2 合欲望 备注：《传声与机械》讲机械
+        下午 温室 重要 2
+        上午、中午、下午、傍晚 做工 重要 1
+        中午、傍晚 领口粮 重要 3
+
+人物 沈鼎
+    编号：person.Shen
+    范围：世界
+    所在：中央厅
+    阵营：生活翼
+    宿舍：乙区
+    体型：魁梧
+    速度：0.9
+    欲望：安稳，护住身边的人
+    魔音台词：粮仓的钥匙若在你手里，就没人会挨饿。
+    群落：劳作互助派
+    工作地点：后勤院
+    信任：侦探 3，雀儿 1
+    立绘：chef
+    配合：1
+    力气：1
+    厨艺：3
+    欲望标志：中央做饭
+    看重：中央做饭 3，病人优先 1，按人头 1，针对雀儿 -1，封存名录库 1
+    偏见：卢西安 -1
+    日常：
+        早晨 取水 重要 4
+        中午、傍晚 做饭 重要 4 合欲望
+        中午、傍晚 领口粮 重要 3
+        上午、中午、下午、傍晚 做工 重要 1
+
+人物 苏泠
+    编号：person.Su
+    范围：世界
+    所在：中央厅
+    阵营：生活翼
+    宿舍：乙区
+    体型：小巧
+    速度：1.3
+    欲望：从未听过的声音
+    魔音台词：共鸣厅里有一种诸位从未听过的声音。它在名录库的匣子里也响过。
+    群落：感官与美派
+    工作地点：讲堂
+    信任：侦探 3
+    立绘：musician
+    信号：3
+    欲望标志：开放名录库
+    看重：开放名录库 1，传声 1，沃德权威 -1
+    偏见：沃德 -1，卢西安 -1
+    日常：
+        上午 上课 重要 2 合欲望
+        上午、中午、下午、傍晚 做工 重要 1
+        中午、傍晚 领口粮 重要 3
+
+人物 卢西安
+    编号：person.Lucian
+    范围：世界
+    所在：中央厅
+    阵营：文契组
+    宿舍：甲区
+    体型：中等
+    速度：1.1
+    欲望：言灵的完美韵律
+    魔音台词：言灵初阶的词，你会比任何人都念得准。
+    群落：感官与美派
+    信任：雀儿 2，沃德 1
+    立绘：poet
+    配合：1
+    欲望标志：开放名录库
+    看重：证据优先 1，针对雀儿 -2，限制 -1，病人优先 1，开放名录库 1，记录 1
+    偏见：维罗妮卡 -1
+    日常：
+        上午 上课 重要 3 合欲望
+        下午 社交 重要 2
+        早晨 辩护 重要 3
+        中午、傍晚 领口粮 重要 3
+
+人物 顾平章
+    编号：person.Gu
+    范围：世界
+    所在：中央厅
+    阵营：文契组
+    宿舍：甲区
+    体型：中等
+    速度：0.7
+    欲望：读通古代铭文
+    魔音台词：誓约庭的石碑上，有你一辈子都想读的那种字。
+    群落：秩序派
+    信任：雀儿 -1
+    立绘：archaeologist
+    魔偏见：-1
+    欲望标志：传统
+    看重：记录 1，传统 2，封存名录库 3，开放名录库 -2，证据优先 1，依约管名录库 1
+    偏见：雀儿 -1，维罗妮卡 -1
+    日常：
+        上午 上课 重要 2
+        下午 抄碑 重要 2 合欲望
+        中午、傍晚 领口粮 重要 3
+
+人物 雀儿
+    编号：person.Quer
+    范围：世界
+    所在：中央厅
+    阵营：文契组
+    宿舍：甲区
+    体型：小巧
+    速度：1.4
+    欲望：一个不会赶她走的地方
+    魔音台词：名录库里有你的匣子。那里面的人，从没赶过你。
+    群落：劳作互助派
+    工作地点：甲区
+    信任：沃德 -3，顾平章 -1，卢西安 2，霍铎 2，沈鼎 2，茉拉 2，玛格丽特 2
+    立绘：thief
+    配合：-1
+    开锁：3
+    工匠：是
+    欲望标志：开放名录库
+    看重：针对雀儿 -4，限制 -2，记录 -1，证据优先 2，夜间特例 1，双人见证 1，开放名录库 1，委员会管名录库 -2，沃德权威 -2
+    偏见：沃德 -3，顾平章 -1
+    日常：
+        上午、中午、下午、傍晚 做工 重要 1
+        中午、傍晚 领口粮 重要 3
+
+人物 沃德
+    编号：person.Ward
+    范围：世界
+    所在：中央厅
+    阵营：文契组
+    宿舍：甲区
+    体型：中等
+    速度：1.0
+    欲望：成为定规则的人
+    魔音台词：这里缺一个定规则的人。诸位迟早要听某个人的。
+    群落：秩序派
+    信任：雀儿 -2，阮清越 1
+    立绘：lawyer
+    欲望标志：沃德权威、委员会管名录库
+    看重：记录 2，沃德权威 2，限制 1，委员会管名录库 3，不许特例 1，双人见证 1，开放名录库 -1，证据优先 1
+    偏见：雀儿 -2
+    日常：
+        上午 上课 重要 2
+        傍晚 张贴规矩 重要 3 合欲望
+        早晨 指控 重要 4
+        下午 社交 重要 2
+        夜里 守名录库 重要 2 合欲望
+        中午、傍晚 领口粮 重要 3
+
+人物 赛尔玛
+    编号：person.Selma
+    范围：世界
+    所在：中央厅
+    阵营：星仪组
+    宿舍：丙区
+    体型：中等
+    速度：1.1
+    欲望：为源质这一新物种定名
+    魔音台词：温室里的源质在长。你会是第一个给它命名的人。
+    群落：劳作互助派
+    立绘：naturalist
+    配合：1
+    温室：3
+    欲望标志：开放名录库
+    看重：开放名录库 1，病人优先 1，沃德权威 -1，证据优先 1
+    偏见：沃德 -1
+    日常：
+        下午 温室 重要 3 合欲望
+        上午 上课 重要 2
+        中午、傍晚 领口粮 重要 3
+
+人物 阮清越
+    编号：person.Ruan
+    范围：世界
+    所在：中央厅
+    阵营：星仪组
+    宿舍：丙区
+    体型：中等
+    速度：1.0
+    欲望：赢下与恶魔的对局
+    魔音台词：这局棋你落后一子。名录库里有你忘掉的那几步。
+    群落：秩序派
+    值守：是
+    信任：伊莲娜 1，沃德 1
+    立绘：chessplayer
+    欲望标志：开放名录库
+    看重：记录 2，按人头 2，双人见证 1，证据优先 1，委员会管名录库 1，开放名录库 1
+    日常：
+        上午 上课 重要 3 合欲望
+        傍晚 对账 重要 4
+        早晨 对账 重要 4
+        中午、傍晚 领口粮 重要 3
+
+人物 伊莲娜
+    编号：person.Elena
+    范围：世界
+    所在：中央厅
+    阵营：星仪组
+    宿舍：丙区
+    体型：小巧
+    速度：0.7
+    欲望：治好脚踝，查明仪式真相
+    魔音台词：那晚的仪式，名录库里记着全程。
+    群落：感官与美派
+    信任：阮清越 -2
+    立绘：dancer
+    欲望标志：开放名录库
+    看重：传统 1，证据优先 1，依约管名录库 1，安全 1
+    偏见：贝尔特朗 -1
+    日常：
+        上午 上课 重要 1
+        上午、中午、下午、傍晚 休息 重要 2
+        中午、傍晚 领口粮 重要 3
+
+人物 莫兰
+    编号：person.Moran
+    范围：世界
+    所在：中央厅
+    阵营：星仪组
+    宿舍：丙区
+    体型：中等
+    速度：0.9
+    欲望：看见更多的以太色层
+    魔音台词：有些颜色，你只在封存之前见过。
+    群落：感官与美派
+    工作地点：誓约庭
+    立绘：painter
+    欲望标志：开放名录库
+    看重：开放名录库 1
+    日常：
+        上午、中午、下午、傍晚 做工 重要 2 合欲望
+        中午、傍晚 领口粮 重要 3
+
+人物 维罗妮卡
+    编号：person.Veronica
+    范围：世界
+    所在：中央厅
+    阵营：后勤组
+    宿舍：丁区
+    体型：中等
+    速度：1.0
+    欲望：独立研究，证明理化能解释一切
+    魔音台词：你的试剂柜里，缺的那一瓶，名录库里有记录。
+    群落：实证派
+    工作地点：诊疗所
+    信任：霍铎 2
+    立绘：chemist
+    魔偏见：-2
+    欲望标志：证据优先
+    看重：证据优先 2，记录 1，封存名录库 -1，开放名录库 1
+    日常：
+        上午、中午、下午、傍晚 做工 重要 2 合欲望
+        上午 上课 重要 1
+        中午、傍晚 领口粮 重要 3
+
+人物 贝尔特朗
+    编号：person.Bertrand
+    范围：世界
+    所在：中央厅
+    阵营：后勤组
+    宿舍：丁区
+    体型：魁梧
+    速度：1.1
+    欲望：护住平民同伴
+    魔音台词：夜里只有你醒着。他们睡得着，是因为你。
+    群落：劳作互助派
+    值守：是
+    信任：维罗妮卡 -1
+    立绘：marksman
+    力气：2
+    欲望标志：安全
+    看重：病人优先 1，记录 1，限制 1，安全 1
+    偏见：维罗妮卡 -1，沃德 -1
+    日常：
+        夜里 巡夜 重要 3 合欲望
+        下午 取水 重要 2
+        中午、傍晚 领口粮 重要 3
+
+人物 玛格丽特
+    编号：person.Margaret
+    范围：世界
+    所在：中央厅
+    阵营：后勤组
+    宿舍：丁区
+    体型：中等
+    速度：1.0
+    欲望：亲手建成、被人承认
+    魔音台词：温室是半成品。修好它的人，会被所有人记住。
+    群落：实证派
+    信任：霍铎 2，雀儿 1
+    立绘：architect
+    配合：1
+    力气：1
+    结构：3
+    温室：2
+    欲望标志：中央做饭
+    看重：证据优先 1，中央做饭 1，开放名录库 1，记录 1
+    偏见：卢西安 -1
+    日常：
+        下午 查结构 重要 3 合欲望
+        下午 温室 重要 2
+        中午、傍晚 领口粮 重要 3
+
+人物 茉拉
+    编号：person.Mora
+    范围：世界
+    所在：中央厅
+    阵营：后勤组
+    宿舍：丁区
+    体型：中等
+    速度：1.0
+    欲望：不再失去病人
+    魔音台词：取回的记忆会伤人。可封着的，也会。
+    群落：实证派
+    值守：是
+    信任：维罗妮卡 -1，莫兰 1
+    立绘：doctor
+    魔偏见：-1
+    欲望标志：病人优先
+    看重：病人优先 3，不许特例 -2，中央做饭 -1，封存名录库 2，开放名录库 -1，证据优先 1，夜间特例 1，依约管名录库 1
+    偏见：维罗妮卡 -2
+    日常：
+        中午、傍晚 领口粮 重要 2
+
+晨间日常
+    封锁：乙区
+    # 三人早醒，已经互相介绍并初查；侦探汇合前只查看与听辨，核验后才做工。
+    人物阶段：
+        # 调查时侦探由多步规划或玩家决策接管，不并行执行会合前的闲游。
+        侦探：roam
+        霍铎：roam、investigate
+        沈鼎：roam、investigate
+        苏泠：roam、investigate
+    旁听：
+        - foyer | 门外远处有几下脚步，随后停了。隔着横闩，听不出是谁，也辨不出去了哪里。
+        - foyer | 门外有人低声交谈，字句被墙和管路吞掉了。你只能确定：这座生活翼里，还有别人在醒着。
+    侦探：
+        - R05 | self | check | 在醒来的房间核对随身物，只把眼前能确认的事记下来 | 2 | 8
+        - hall | table | check | 到长桌旁观察众人的举动，把亲眼所见与猜测分开 | 2 | 14
+        - foyer | door | listen | 到门边听辨声响，暂不把隔墙听见的片段当成整句话 | 1 | 12
+    霍铎：
+        - hall | tube | check | 检查铜口与管接头 | 2 | 10 | roam、investigate
+        - hall | table | work | 在长桌检查配重与备用工具 | 1 | 12 | investigate
+        - hall | table | check | 把试过的工具按尺寸排开，留出长桌上放石板的位置 | 1 | 15 | investigate
+    沈鼎：
+        - pantry | sink | check | 在水槽取水并清洗备用碗 | 1 | 8 | roam、investigate
+        - pantry | prep | work | 揉面并续养酵种 | 2 | 12 | investigate
+        - pantry | prep | rest | 将揉好的面盖住，等它醒发；手指上的面粉还没拍净 | 1 | 35 | investigate
+    苏泠：
+        - foyer | door | listen | 在门边听辨管路与门缝的声音 | 1 | 10 | roam、investigate
+        - R08 | piano | work | 在房里轻试琴弦，辨听余音 | 2 | 12 | investigate
+        - foyer | door | listen | 回到门边静听，等房里的余音散尽再辨方向；她没有碰地上的音叉 | 1 | 18 | investigate
+    卢西安：
+        - DormW | self | check | 在甲区核对自己的笔记与随身物 | 1 | 8
+        - DormW | desk | work | 推敲诗句与言灵韵律 | 2 | 12
+        - DormW | desk | listen | 念到句尾时放低声音，听别人说话有没有同样的停顿 | 1 | 17
+    顾平章：
+        - DormW | self | check | 在甲区核对拓片与随身物 | 1 | 8
+        - DormW | desk | work | 整理铭文辨读笔记 | 2 | 12
+        - DormW | desk | check | 将不能认定的字留白，把猜读与能看清的笔画分列 | 1 | 19
+    雀儿：
+        - DormW | self | check | 在甲区核对自己的袋口与物件 | 1 | 8
+        - DormW | latch | work | 检查寝区门闩并整理修锁工具 | 2 | 10
+        - DormW | latch | check | 收起修锁工具，示意旁人先看门闩的位置，再试着推门 | 1 | 13
+    沃德：
+        - DormW | self | check | 在甲区核对自己的纸张与随身物 | 1 | 8
+        - DormW | desk | work | 整理条款并校对用词 | 2 | 12
+        - DormW | desk | listen | 听见试门的动静，搁笔问刚才谁碰过门；没有回应前先空着名字 | 1 | 18
+    赛尔玛：
+        - DormS | self | check | 在丙区核对标本与观察笔记 | 1 | 8
+        - DormS | desk | work | 记录标本状态并整理分类 | 2 | 12
+        - DormS | desk | check | 把标本与旧笔记并排，只记能看见的变化，不急着给它定名 | 1 | 21
+    阮清越：
+        - DormS | self | check | 在丙区核对棋子与自己的记录 | 1 | 8
+        - DormS | desk | work | 摆棋复核棋谱与眼前的落子 | 2 | 12
+        - DormS | desk | check | 停在记不清的一手，将那枚棋子放到棋盘外，没有补成一局 | 1 | 16
+    伊莲娜：
+        - DormS | self | check | 在丙区查看脚踝与自己的护具 | 1 | 8
+        - DormS | bedside | work | 坐着活动脚踝并记录可用舞步 | 2 | 10
+        - DormS | bedside | rest | 脚踝发紧便停下来，拉平护具边缘，暂不站起试步 | 1 | 32
+    莫兰：
+        - DormS | self | check | 在丙区核对颜料与速写本 | 1 | 8
+        - DormS | desk | work | 观察窗边色层并做速写 | 2 | 12
+        - DormS | desk | check | 挪开颜料盒，让窗光照上纸边，对照刚才画出的两块颜色 | 1 | 18
+    维罗妮卡：
+        - DormL | self | check | 在丁区核对试剂与自己的器具 | 1 | 8
+        - DormL | desk | work | 清洁器具并整理理化记录 | 2 | 12
+        - DormL | desk | check | 封好试剂，把未经验证的解释划到页边，给复核留下一栏 | 1 | 20
+    贝尔特朗：
+        - DormL | self | check | 在丁区检查自己的装备与提灯 | 1 | 8
+        - DormL | door | check | 巡查丁区门口与通路 | 2 | 10
+        - DormL | door | listen | 收住脚步听门另一侧的动静，提灯留在手边，没有越过门去 | 1 | 15
+    玛格丽特：
+        - DormL | self | check | 在丁区核对自己的图纸与量具 | 1 | 8
+        - DormL | desk | work | 复核建筑草图与尺寸 | 2 | 12
+        - DormL | door | check | 走到门边比照草图，把摸不到的门外尺寸留成虚线 | 1 | 22
+    茉拉：
+        - DormL | self | check | 在丁区核对自己的药包与绷带 | 1 | 8
+        - DormL | desk | work | 整理诊疗记录并清点敷料 | 2 | 12
+        - DormL | desk | rest | 将可用的敷料另包好，搁在药包上层，给有人来求助时留用 | 1 | 26
+
 
 # 第一章作者源：调查数据、设定表与全部对白都写在这里。生成物由 tools/compile_story.py 产出，不得手改。
 
@@ -328,6 +972,11 @@
     位置：652, 174
     层：193.0
 
+摆设 Piano
+    贴图：res://ShareAsset/Internal/Props/story_parlor_piano.png
+    位置：700, 110
+    层：110.0
+
 摆设 Cups
     贴图：cups.png
     位置：352, 522
@@ -469,6 +1118,7 @@
     E11：在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。
 
 家具旁白
+    Piano：琴。弦上的余音很轻，近处才听得清。
     Bed：床。被子叠过。
     Nightstand：床头柜。灯油还有。
     Wardrobe：衣柜。几件换洗衣服。
@@ -525,6 +1175,9 @@
     起点·su：706, 210
     公告框镜头：420, 248
     终局站位·侦探：196, 384
+    终局站位·huo：250, 330
+    终局站位·shen：270, 370
+    终局站位·su：240, 404
     终局镜头：320, 368
 
 物品立绘
@@ -601,8 +1254,6 @@
     界面·键位·重演：R  重演
     结局·完成·标题：门的这一侧 · 完
     结局·完成·正文：门开了。门外是起居厅。
-    结局·歇息·标题：门的这一侧 · 歇息
-    结局·歇息·正文：你们留在生活翼。门一直闩着。
     结局·钩：留在恶魔那里的钩：{名单}
     结局·未交：你没有交出的：{名单}
     结局·无：无
@@ -633,11 +1284,12 @@
     铜口·描述：铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。
     铜口·检视：检视铜口与铜牌
     铜口·作答：回答始业之问
-    铜口·歇息：不作答，在生活翼歇息
+    铜口·歇息：先在生活翼歇息一阵，暂不作答
     鞋底·标题：比对鞋底
     鞋底·huo：霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。
     鞋底·shen：沈鼎的鞋底：千层布底，没有纹。
     鞋底·su：苏泠的鞋底：软底小皮鞋，比灰上那枚短一截。
+    鞋底·detective：马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。
     鞋底·提示：灰上那枚马球靴印。拿谁的鞋底来比？
     声路·标题：声路试验
     声路·轮标题：声路试验 · 第 {轮} 轮
@@ -662,6 +1314,8 @@
     重演·门闩：门：闩上了
     重演·门关：门：关着
     重演·烟灰：烟灰进了门厅
+    夜间·怀疑·生人：我凭什么信一个昨天才认识的人？
+    夜间·怀疑·熟人：{人名}的话，我不全信。
     称呼·detective·亲近：我的侦探
     称呼·detective·生疏：侦探先生
     称呼·huo·亲近：霍铎
@@ -817,22 +1471,6 @@
     句尾：……通知
     含义：守铜口
 
-人物 侦探
-    编号：detective
-    欲望：弄清自己是什么
-
-人物 霍铎
-    编号：huo
-    欲望：超越卡诺循环的动力图纸
-
-人物 沈鼎
-    编号：shen
-    欲望：安稳，护住身边的人
-
-人物 苏泠
-    编号：su
-    欲望：从未听过的声音
-
 房间区域
     起居厅：*, *, 160, *
     厕：160, *, 304, 256
@@ -892,6 +1530,7 @@
 阶段 roam
     说明：醒来后在自己房里与门厅一带走动；还不能进别人的房间。走进活动厅，就撞上广播。
     走动：是
+    日常：是
     检视：是
     可见热点：E12、E11a
     进入 hall：阶段 meeting，信号 meeting
@@ -902,6 +1541,7 @@
 阶段 investigate
     说明：自由调查。能记笔记、重演、进别人的宿舍，随时回铜口作答。
     走动：是
+    日常：是
     检视：是
     笔记本：是
     宿舍开放：是
@@ -951,6 +1591,7 @@
     否则：
         阶段 investigate
         指令 posts
+        设旗 posts_assigned
         演出 s6_begin
 
 流程 重演之后
@@ -970,6 +1611,7 @@
 
 流程 交谈
     参数：人
+    指令 summon:{人}
     若 先开口("{人}")：
         详情 life {人} told = true
         演出 alone_{人}
@@ -1057,6 +1699,9 @@
 流程 终局
     阶段 finale
     指令 finale_prepare
+    指令 stage_actor:huo:终局站位·huo
+    指令 stage_actor:shen:终局站位·shen
+    指令 stage_actor:su:终局站位·su
     演出 s10_steps
     指令 door_open
     设旗 door_open
@@ -1070,12 +1715,15 @@
     指令 ending:完成
 
 流程 歇息
-    阶段 finale
+    阶段 investigate
     指令 lock
-    指令 music:night:4
+    若 非 旗("posts_assigned")：
+        指令 posts
+        设旗 posts_assigned
     演出 ending_rest
-    指令 save:true
-    指令 ending:歇息
+    清旗 rest_chosen
+    指令 unlock
+    指令 hud
 
 流程 确认歇息
     清旗 rest_chosen
@@ -1117,11 +1765,13 @@
     跳转 END
 
 场面 s2_meet
-    沈鼎：又醒一个。过来站，别在门口杵着。
+    沈鼎：又醒一个。我们三个先醒，已经互相认过名字，也各处看了一遍。过来站，别在门口杵着。
     沈鼎：我姓沈，沈鼎。做菜的。上一份工在远洋货轮上掌勺，再上一份在岭南行会。
     霍铎：……霍铎。钳工。萨克森，船厂。
+    霍铎：铜口和接头，我先看过了。还没有动它。
     沈鼎：他就这么说话，一个字掰成两半用。你别介意。
     苏泠：苏泠。弹琴的。
+    苏泠：我在门边听过一阵。听见了声音，来源还不能认定。
     沈鼎：你呢？看你这身风衣，不像跑船的。
     跳转 END
 
@@ -1169,7 +1819,7 @@
     放大 huo：超越卡诺循环的那一张，此地有人画过。
     霍铎：（手停在试件上）……在哪。
     铜口：学会了，自然知道在哪。
-    苏泠：（把蜡筒凑到耳边，闭上眼听完一整段）……是她。
+    苏泠：（把蜡筒装进领取柜旁的手摇试听机，摇动曲柄。琴声响起，她闭上眼，听完一整段）……是她。
     铜口：那是旧声，苏小姐。此地还有诸位从未听过的声音。
     放大 su：此地还有诸位从未听过的声音。
     （她把蜡筒抱在怀里，很久没有说话。）
@@ -1192,7 +1842,7 @@
     铜口：通往主楼之门，在诸位这一侧闩上了。那人再没有回来。
     铜口：此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？
     沈鼎：闩门？……谁闩的？我们一觉醒来，什么都不记得。
-    沈鼎：你这话问得蹊跷。我们四个刚见面，你就问我们谁昨晚干了什么？
+    沈鼎：你这话问得蹊跷。我们今天才认过名字，你就问我们谁昨晚干了什么？
     霍铎：……
     苏泠：（朝门厅的方向看了一眼，没有说话）
     铜口：记不得，并不妨碍作答。物件记得。
@@ -1203,7 +1853,7 @@
         - 先去查看生活翼。
             设旗 accepted
             侦探：我去看看那扇门。
-        - 不作答，在生活翼歇息。
+        - 先在生活翼歇息一阵，暂不作答。
             设旗 rest_chosen
     跳转 END
 
@@ -1243,6 +1893,7 @@
 场面 s6_reversal
     侦探（心声）：……
     侦探（心声）：……是我。
+    侦探（心声）：这双靴子到过门边。可来过，还不能证明闩过；它怎样落下，得和别的痕迹对上。
     侦探（心声）：我把脚放下。灰从纹槽里簌簌地落，落回它原来的地方。
     （苏泠看了你一眼，没有说话。）
     跳转 END
@@ -1708,8 +2359,8 @@
     跳转 END
 
 场面 rest_confirm
-    铜口：不作答，便在生活翼歇息。水与食物照常，无需认任何事。
-    铜口：这是诸位的权利。
+    铜口：阁下可以先在生活翼歇一会。水与食物照常，无需认任何事。
+    铜口：何时继续查看、何时作答，由阁下自己决定。其他人的去留，不由这次选择决定。
     选择：
         - 就这样吧。歇息。
             设旗 rest_chosen
@@ -1808,18 +2459,18 @@
     跳转 END
 
 场面 s10_open
-    （厅里另外三扇寝区门的后面，有人声。有人在敲门，有人在喊另一个人的名字。）
-    侦探（心声）：门后还有人。他们也醒了，也只记得上船。
+    （门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。）
+    侦探（心声）：另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。
     侦探（心声）：我站在门槛这一边，比我以为的站得久。
     苏泠：你昨夜没听我的。……你听对了。
     若 钩数("su") > 0：
         苏泠：那个声音……我还记得它。它现在也记得我了。
     否则：
-        苏泠：那把音叉，我没让它再响。我想先用自己的耳朵听这里。
+        苏泠：那把音叉，我没拿它追封存的旧声。我想先用自己的耳朵听这里。
     若 钩数("shen") > 0：
         沈鼎：那罐子喂过的日子，我想起来一些了。……走吧，先找吃的。另外三个寝区，人也得吃饭。
     否则：
-        沈鼎：罐子我没碰，照样喂着。走吧，先找吃的。另外三个寝区，人也得吃饭。
+        沈鼎：罐子照样喂着，封存的旧事，我没去追。走吧，先找吃的。另外三个寝区，人也得吃饭。
     霍铎：（看着厅的北头）……他让我等下一次通知。
     霍铎：不等了。去找。
     若 旗("asked_hand")：
@@ -1831,18 +2482,16 @@
     否则 若 总钩数 >= 1：
         铜口：碰过旧物的人，我记下了。想起什么，随时来找我。
     否则：
-        铜口：诸位一样旧物也没碰。……谨慎是美德。
+        铜口：诸位没有借旧物取回封存的记忆。……谨慎是美德。
     跳转 END
 
 场面 ending_rest
-    铜口：如诸位所愿。
-    沈鼎：也好。水够，粮够。我去续酵种。
-    霍铎：我守铜口。
-    苏泠：……
-    （你们留在生活翼。沈鼎烧水做饭，霍铎坐在铜口旁，苏泠在门边坐了很久。）
-    （门一直闩着。门后很静。）
-    （沈鼎又喂了一回酵种。罐壁上，又多了一层面痕。）
-    铜口：水与食物照常。……晚安，诸位。
+    侦探：我先坐一会，理清眼前的事。
+    沈鼎：你歇着。我去看看存粮和水，人得先吃饭。
+    霍铎：我去铜口旁检查接头。有事再问我。
+    苏泠：我还要去门边听听。……我不歇着。
+    （水槽里又响起水声。霍铎走向铜口，苏泠停在门边。桌旁只余侦探，把纷乱的念头慢慢理开。）
+    侦探（心声）：歇过这一阵，再从能看见、能核验的东西开始。
     跳转 END
 
 场面 replay_first
@@ -1964,3 +2613,1735 @@
         沈鼎：我把罐子端起来，又放回去了。
         沈鼎：{{生活所思("shen")}}
     跳转 END
+
+# 模拟侦探仅用已观察信息；此处声明搜索预算、行动与论证来源，不声明答案。
+
+侦探搜索参数
+    iterations：320
+    depth：6
+    exploration：1.414
+    discount：0.92
+    time_cost：0.08
+    information_weight：12
+    progress_weight：2
+    repeat_penalty：8
+    confidence：0.99
+    action_budget：48
+    seed：731
+    unknown_reliability：1.5
+
+侦探对白选择意图
+    investigate_before_commitment：
+        profile：default
+        scene：s5_question
+        label_contains：先去查看生活翼
+        weight：1
+    postpone_rest_while_investigating：
+        profile：default
+        scene：s5_question
+        label_contains：在生活翼歇息
+        weight：0
+    personal_rest_before_investigation：
+        profile：rest
+        scene：s5_question
+        label_contains：在生活翼歇息
+        weight：1
+    postpone_investigation_until_after_rest：
+        profile：rest
+        scene：s5_question
+        label_contains：先去查看生活翼
+        weight：0
+
+侦探调查行动
+    talk_huo：
+        kind：talk
+        target：huo
+        room：hall
+        label：向霍铎询问他的判断与打算
+        minutes：5
+        weight：1.4
+        requires_group：-
+        requires_key：-
+        completion_group：-
+        completion_key：-
+        repeatable：否
+    talk_shen：
+        kind：talk
+        target：shen
+        room：pantry
+        label：向沈鼎询问他的判断与打算
+        minutes：5
+        weight：1.4
+        requires_group：-
+        requires_key：-
+        completion_group：-
+        completion_key：-
+        repeatable：否
+    talk_su：
+        kind：talk
+        target：su
+        room：foyer
+        label：向苏泠询问她的判断与打算
+        minutes：5
+        weight：1.4
+        requires_group：-
+        requires_key：-
+        completion_group：-
+        completion_key：-
+        repeatable：否
+    inspect_E1：
+        kind：inspect
+        target：E1
+        room：foyer
+        label：检视闩上的隔离门
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E1
+        repeatable：否
+    inspect_E2：
+        kind：inspect
+        target：E2
+        room：foyer
+        label：检视门底的灰与木楔
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E2
+        repeatable：否
+    inspect_E3：
+        kind：inspect
+        target：E3
+        room：foyer
+        label：检视灰上的靴印
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E3
+        repeatable：否
+    inspect_E4：
+        kind：inspect
+        target：E4
+        room：foyer
+        label：检视门底的湿布
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E4
+        repeatable：否
+    inspect_E5：
+        kind：inspect
+        target：E5
+        room：foyer
+        label：检视门框旁的音叉
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E5
+        repeatable：否
+    inspect_E6：
+        kind：inspect
+        target：E6
+        room：R08
+        label：检视苏泠的乐谱
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E6
+        repeatable：否
+    inspect_E7：
+        kind：inspect
+        target：E7
+        room：hall
+        label：检视霍铎的石板
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E7
+        repeatable：否
+    inspect_E8：
+        kind：inspect
+        target：E8
+        room：hall
+        label：检视铜口与管接头
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E8
+        repeatable：否
+    inspect_E9：
+        kind：inspect
+        target：E9
+        room：pantry
+        label：检视四只杯子
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E9
+        repeatable：否
+    inspect_E10：
+        kind：inspect
+        target：E10
+        room：pantry
+        label：检视酵种罐
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E10
+        repeatable：否
+    inspect_E11：
+        kind：inspect
+        target：E11
+        room：R05
+        label：检视架上的无尘方框
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E11
+        repeatable：否
+    inspect_E12：
+        kind：inspect
+        target：E12
+        room：R05
+        label：检视侦探的外衣口袋
+        minutes：3
+        weight：1
+        requires_group：-
+        requires_key：-
+        completion_group：examined
+        completion_key：E12
+        repeatable：否
+    experiment_E1：
+        kind：experiment
+        target：E1
+        room：foyer
+        label：拔闩推门
+        minutes：7
+        weight：2
+        requires_group：examined
+        requires_key：E1
+        completion_group：experiments
+        completion_key：E1
+        repeatable：否
+    experiment_E2：
+        kind：experiment
+        target：E2
+        room：foyer
+        label：比对木楔与灰扇
+        minutes：7
+        weight：2
+        requires_group：examined
+        requires_key：E2
+        completion_group：experiments
+        completion_key：E2
+        repeatable：否
+    experiment_E3：
+        kind：experiment
+        target：E3
+        room：foyer
+        label：比对鞋底
+        minutes：7
+        weight：2
+        requires_group：examined
+        requires_key：E3
+        completion_group：experiments
+        completion_key：E3
+        repeatable：否
+    help_E4：
+        kind：help
+        target：E4
+        room：foyer
+        label：请同伴辨认门底的湿布
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E4
+        completion_group：helped
+        completion_key：E4
+        repeatable：否
+    help_E5：
+        kind：help
+        target：E5
+        room：foyer
+        label：请同伴辨认门框旁的音叉
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E5
+        completion_group：helped
+        completion_key：E5
+        repeatable：否
+    help_E6：
+        kind：help
+        target：E6
+        room：R08
+        label：请同伴辨认苏泠的乐谱
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E6
+        completion_group：helped
+        completion_key：E6
+        repeatable：否
+    help_E7：
+        kind：help
+        target：E7
+        room：hall
+        label：请同伴辨认霍铎的石板
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E7
+        completion_group：helped
+        completion_key：E7
+        repeatable：否
+    experiment_E8：
+        kind：experiment
+        target：E8
+        room：hall
+        label：声路试验
+        minutes：10
+        weight：2
+        requires_group：examined
+        requires_key：E8
+        completion_group：experiments
+        completion_key：E8
+        repeatable：否
+    help_E9：
+        kind：help
+        target：E9
+        room：pantry
+        label：请同伴辨认四只杯子
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E9
+        completion_group：helped
+        completion_key：E9
+        repeatable：否
+    help_E10：
+        kind：help
+        target：E10
+        room：pantry
+        label：请同伴辨认酵种罐
+        minutes：5
+        weight：1.4
+        requires_group：examined
+        requires_key：E10
+        completion_group：helped
+        completion_key：E10
+        repeatable：否
+    replay：
+        kind：replay
+        target：-
+        room：hall
+        label：以当前假设重演昨夜并核对已查痕迹
+        minutes：12
+        weight：2
+        requires_group：state
+        requires_key：replay_open
+        completion_group：-
+        completion_key：-
+        repeatable：是
+    answer：
+        kind：answer
+        target：-
+        room：hall
+        label：依据已验证假设与亲见证物作答
+        minutes：16
+        weight：3
+        requires_group：state
+        requires_key：full_match_seen
+        completion_group：-
+        completion_key：-
+        repeatable：否
+
+侦探痕迹字段
+    E1_InnerBoltDown：
+        evidence：E1
+        field：InnerBoltDown
+        tag：内闩
+        equals：-1
+    E2_AshFan：
+        evidence：E2
+        field：AshFan
+        tag：扇形灰
+        equals：-1
+    E2_WedgeTopSooted：
+        evidence：E2
+        field：WedgeTopSooted
+        tag：楔面沾灰
+        equals：-1
+    E2_WedgeInCorner：
+        evidence：E2
+        field：WedgeInCorner
+        tag：楔在角落
+        equals：-1
+    E4_Cloth：
+        evidence：E4
+        field：Cloth
+        tag：沿门底压成直线
+        equals：1
+    E4_ClothOverHeel：
+        evidence：E4
+        field：ClothOverHeel
+        tag：压住鞋跟
+        equals：-1
+    E5_FrameDent：
+        evidence：E5
+        field：FrameDent
+        tag：门框凹痕
+        equals：-1
+    E6_ScoreLine1：
+        evidence：E6
+        field：ScoreLine1
+        tag：第一行
+        equals：-1
+    E6_ScoreLine2：
+        evidence：E6
+        field：ScoreLine2
+        tag：第二行
+        equals：-1
+    E7_SlateLine1：
+        evidence：E7
+        field：SlateLine1
+        tag：第一行
+        equals：-1
+    E7_SlateLine2：
+        evidence：E7
+        field：SlateLine2
+        tag：第二行
+        equals：-1
+    E9_CupSugar：
+        evidence：E9
+        field：CupSugar
+        tag：按人放糖
+        equals：-1
+
+侦探动机假设
+    huo_command：
+        person：huo
+        label：霍铎可能把带铜口标记的指令当成可信来源
+        cue：◎，铜口
+        counter_cue：不等了
+        prior：0.5
+    shen_care：
+        person：shen
+        label：沈鼎可能先保住人的吃食与安全，再考虑其他事
+        cue：人得先吃饭
+        counter_cue：人不必吃饭
+        prior：0.5
+    su_hearing：
+        person：su
+        label：苏泠可能依靠不完整的听觉片段判断门外情况
+        cue：两拍弱音
+        counter_cue：我听见了整句话
+        prior：0.5
+
+侦探论证来源
+    identity：
+        step：1
+        variable：-1
+        evidence：E3
+        required_group：experiments
+        required_key：E3
+    voice_source：
+        step：2
+        variable：3
+        evidence：E8,E5
+        required_group：experiments
+        required_key：E8
+    words：
+        step：3
+        variable：4
+        evidence：E7,E6
+        required_group：helped
+        required_key：E7
+    trust：
+        step：4
+        variable：6
+        evidence：E9,E10,E11,E7
+        required_group：helped
+        required_key：E9
+
+# 各组完成自己寝区的初查后先进入公共区；生活翼仍须通过本案答辩。
+出区日常
+    卢西安：
+        出门分钟：705
+        行动：
+            - Hall | desk | check | 到中央厅整理言灵笔记，等生活翼的人出来 | 1 | 12
+    顾平章：
+        出门分钟：705
+        行动：
+            - ArchiveFront | door | check | 到名录库前厅核对门上的铭文，不擅自推开库门 | 1 | 12
+    雀儿：
+        出门分钟：705
+        行动：
+            - Hall | door | check | 离开甲区到中央厅查看公共门的锁具，只看可见的构件 | 1 | 12
+    沃德：
+        出门分钟：705
+        行动：
+            - Hall | board | check | 到中央厅读公告，把本组已经核对的条款重新排清 | 1 | 12
+    赛尔玛：
+        出门分钟：710
+        行动：
+            - Greenhouse | desk | check | 离开丙区到温室查看标本，把寝区观察与新环境分开记 | 1 | 12
+    阮清越：
+        出门分钟：710
+        行动：
+            - Hall | table | check | 到中央厅收起棋子，核对自己能确认的物品数目 | 1 | 12
+    伊莲娜：
+        出门分钟：710
+        行动：
+            - Hall | bench | check | 离开丙区后在中央厅坐下，避开伤脚久站 | 1 | 12
+    莫兰：
+        出门分钟：710
+        行动：
+            - Hall | window | check | 到中央厅观察窗光，翻看刚才画出的色层 | 1 | 12
+    维罗妮卡：
+        出门分钟：715
+        行动：
+            - Logistics | table | check | 离开丁区到后勤院查看公用器具，暂不取用未知试剂 | 1 | 12
+    贝尔特朗：
+        出门分钟：715
+        行动：
+            - Hall | door | check | 从丁区出来巡看中央厅的通路，给后来的人留出门口 | 1 | 12
+    玛格丽特：
+        出门分钟：715
+        行动：
+            - Hall | door | check | 走到中央厅把真正看见的门外尺寸补进草图 | 1 | 12
+    茉拉：
+        出门分钟：715
+        行动：
+            - Clinic | table | check | 离开丁区到诊疗所清点可用敷料，预备有人求助 | 1 | 12
+
+# ---- 始业与后续案件：共享上文十六人生态，独立保留场面作用域 ----
+续篇 chapter2
+    前置章节：awakening
+
+    # 始业与后续案件：与生活翼共用本文件中的生态声明。
+    # 读法：先词汇与时间，再文案、地点、人物（含画像与倾向）、物件、交互点，最后是场面（剧情顺序）。
+    # 词汇、常数、地点、人物与画像共用上文声明。
+
+    # ---- 时间：日名、时段别称、日程节点、开场白与操作说明 -------------------------------------
+
+    时间
+        日名：
+            2：始业日
+            3：翌日
+            4：第三日
+            其余：第{日-1}日
+        时段别称：
+            - 第 2 日 早晨：午后（集合）
+            - 第 2 日 上午：午后（首课）
+            - 第 2 日 中午：午后（配给）
+        # 分钟从当日零点计；夜段的结束分钟跨到次日。
+        时段分钟：
+            - 早晨 | 360 | 540
+            - 上午 | 540 | 720
+            - 中午 | 720 | 840
+            - 下午 | 840 | 1080
+            - 傍晚 | 1080 | 1260
+            - 夜里 | 1260 | 1800
+        # 始业集合接生活翼实际收尾时刻；不倒拨到清晨。
+        首日時段分钟：
+            - 早晨 | 720 | 780
+            - 上午 | 780 | 840
+            - 中午 | 840 | 900
+            - 下午 | 900 | 1080
+            - 傍晚 | 1080 | 1260
+            - 夜里 | 1260 | 1800
+        日程：
+            首日：2
+            案发日：3
+            末日：4
+        开场白：始业日午后，始业之问已经答毕。铜口随即召集全体到中央厅，开始首课。
+        操作说明：读不耗时：细看、询问、读板与重演可以慢慢来。写或等待推进一阵，其余十五人也各按自己的认知行动。日程有清晨、上午、午间、下午、傍晚与夜里六个时段；始业日午后先集合，再上首课。夜里的事通过痕迹、身影与转述得知。第三日清晨，十六人在誓约庭决定名录库归谁、怎么开。
+
+    文案
+        回放标题：那一夜重演
+        回放提示：设定第 2 日夜里的处境与人心，让那一夜重演一次。谁做了什么，由各人自己的认知推出。
+        线索标题：
+            - 台账
+            - 粮仓门闩
+            - 诊疗所的碗
+            - 甲区的废纸篓
+            - 贝尔特朗夜巡所见
+        质询问题：
+            - 台账上的缺口，有一份，是谁取的？为何取？
+            - 其余的呢？
+            - 夜里有人动过粮仓的门。
+            - 那台账上，为何不见记录？
+        饥饿：你饿得发虚。这个下午做不了要紧的事。（按 T 让它过去）
+        太早睡：还不到睡的时候。
+        太早守夜：守夜点。入夜后，可以在这里守着。
+        配给台关闭：配给台。午间和傍晚开粮。
+
+    请求
+        - 修粮仓的门闩 → 修门闩
+        - 去台账上补记 → 补记
+        - 给饿着的人送一份口粮 → 送口粮
+        - 去诊疗所照看病人 → 照看病人
+        - 夜里守着名录库 → 守名录库
+
+    物件 粮仓
+        编号：object.Granary
+        范围：世界
+        位置：后勤院
+        可见：Ration、Locked
+
+    物件 配给台
+        编号：object.Desk
+        范围：世界
+        位置：后勤院
+        可见：Open
+
+    物件 灶
+        编号：object.Stove
+        范围：世界
+        位置：后勤院
+        可见：Cooked
+
+    物件 水缸
+        编号：object.Jar
+        范围：世界
+        位置：后勤院
+        可见：Water
+
+    物件 台账
+        编号：object.Ledger
+        范围：世界
+        位置：后勤院
+        可见：Handed、NightRecorded、Unrecorded、Counted
+
+    物件 诊疗所的碗
+        编号：object.Bowl
+        别名：碗
+        范围：世界
+        位置：诊疗所
+        可见：Porridge、Residue
+
+    物件 病床
+        编号：object.Bed
+        范围：世界
+        位置：诊疗所
+        可见：Treated
+
+    物件 药柜
+        编号：object.MedCab
+        范围：世界
+        位置：诊疗所
+        可见：Medicine
+
+    物件 油库
+        编号：object.OilStore
+        范围：世界
+        位置：丙区
+        可见：Oil
+
+    物件 温室阀门
+        编号：object.Valve
+        别名：阀门
+        范围：世界
+        位置：温室
+        可见：Work
+
+    物件 温室压力表
+        编号：object.Gauge
+        别名：压力表
+        范围：世界
+        位置：温室
+        可见：Pressure
+
+    物件 讲堂黑板
+        编号：object.Blackboard
+        别名：黑板
+        范围：世界
+        位置：讲堂
+        可见：Chalk、Shoe
+
+    物件 誓约庭铺石
+        编号：object.Stele
+        别名：铺石
+        范围：世界
+        位置：誓约庭
+        可见：Rubbed
+
+    物件 名录库之门
+        编号：object.ArchiveDoor
+        范围：世界
+        位置：名录库前厅
+        可见：Open、Work
+
+    物件 配重室
+        编号：object.WeightRoom
+        范围：世界
+        位置：名录库前厅
+        可见：Occupied、Worked
+
+    物件 锁芯
+        编号：object.LockCore
+        范围：世界
+        位置：名录库前厅
+        可见：Occupied、Worked
+
+    物件 传声中继
+        编号：object.RelayPost
+        范围：世界
+        位置：名录库前厅
+        可见：Occupied、Worked
+
+    物件 中央基座
+        编号：object.Base
+        范围：世界
+        位置：中央厅
+
+    物件 莫兰的速写本
+        编号：object.SketchBook
+        别名：速写本
+        范围：世界
+        位置：丙区
+        可见：Posted
+
+    物件 钟
+        编号：object.Clock
+        范围：世界
+        位置：中央厅
+
+    物件 以你之名唤你的声音
+        编号：object.NameVoice
+        别名：铜口、铜柱
+        范围：世界
+        位置：中央厅
+
+    物件 中央厅公告板
+        编号：Board.Hall
+        别名：中央厅公告
+        范围：世界
+        位置：中央厅
+        可见：Accusation、Posted
+
+    物件 配给台公告板
+        编号：Board.Logistics
+        别名：配给台公告
+        范围：世界
+        位置：后勤院
+        可见：Accusation、Posted
+
+    物件 讲堂公告板
+        编号：Board.Lecture
+        别名：讲堂公告
+        范围：世界
+        位置：讲堂
+        可见：Accusation、Posted
+
+    物件 乙区公告板
+        编号：Board.DormLife
+        别名：生活翼公告
+        范围：世界
+        位置：乙区
+        可见：Accusation、Posted
+
+    物件 甲区公告板
+        编号：Board.DormW
+        别名：文契公告
+        范围：世界
+        位置：甲区
+        可见：Accusation、Posted
+
+    物件 丙区公告板
+        编号：Board.DormS
+        别名：星仪公告
+        范围：世界
+        位置：丙区
+        可见：Accusation、Posted
+
+    物件 丁区公告板
+        编号：Board.DormL
+        别名：后勤公告
+        范围：世界
+        位置：丁区
+        可见：Accusation、Posted
+
+    物件 乙区的废纸篓
+        编号：Litter.DormLife
+        范围：世界
+        位置：乙区
+        可见：Crumbs、Emptied
+
+    物件 甲区的废纸篓
+        编号：Litter.DormW
+        别名：文契废纸篓
+        范围：世界
+        位置：甲区
+        可见：Crumbs、Emptied
+
+    物件 丙区的废纸篓
+        编号：Litter.DormS
+        范围：世界
+        位置：丙区
+        可见：Crumbs、Emptied
+
+    物件 丁区的废纸篓
+        编号：Litter.DormL
+        别名：后勤废纸篓
+        范围：世界
+        位置：丁区
+        可见：Crumbs、Emptied
+
+    交互点 ledger
+        地图：logistics
+        地点：后勤院
+        标题：台账
+        物件：台账
+
+    交互点 ration_notice
+        地图：logistics
+        地点：后勤院
+        标题：配给台公告
+        物件：配给台公告板
+
+    交互点 ration_counter
+        地图：logistics
+        地点：后勤院
+        标题：配给台
+        种类：meal
+
+    交互点 watch_point
+        地图：logistics
+        地点：后勤院
+        标题：守夜点
+        种类：watch
+
+    交互点 latch
+        地图：granary
+        地点：后勤院
+        标题：粮仓门闩
+        物件：粮仓
+
+    交互点 stock
+        地图：granary
+        地点：后勤院
+        标题：存粮
+        物件：粮仓
+
+    交互点 empty_bowl
+        地图：clinic
+        地点：诊疗所
+        标题：莫兰床边的碗
+        物件：诊疗所的碗
+
+    交互点 reagent
+        地图：clinic
+        地点：诊疗所
+        标题：试剂柜
+        物件：药柜
+        传说：
+            白漆试剂柜，标签写着“白塔”。有一格空着。
+            茉拉把柜门关得很紧，不让人碰。
+
+    交互点 central_notice
+        地图：central_hall
+        地点：中央厅
+        标题：中央厅公告板
+        物件：中央厅公告板
+
+    交互点 mouthpiece
+        地图：central_hall
+        地点：中央厅
+        标题：铜口
+        种类：tube
+        传说：
+            铜牌上刻着一行字：
+            入夜后，名录库中若有人以你之名唤你，勿应。
+
+    交互点 relay
+        地图：central_hall
+        地点：中央厅
+        标题：传声中继
+        传说：
+            一根铜柱，管道从四面汇进来。
+            要开名录库的门，这里得有人按拍子转发信号。
+
+    交互点 watch_point
+        地图：central_hall
+        地点：中央厅
+        标题：守夜点
+        种类：watch
+
+    交互点 blackboard
+        地图：lecture
+        地点：讲堂
+        标题：黑板
+        物件：讲堂黑板
+
+    交互点 timetable
+        地图：lecture
+        地点：讲堂
+        标题：讲堂门外的公告
+        物件：讲堂公告板
+
+    交互点 lock_core
+        地图：archive
+        地点：名录库前厅
+        标题：名录库之门
+        物件：名录库之门
+
+    交互点 seal_boxes
+        地图：archive
+        地点：名录库前厅
+        标题：封存匣
+        传说：
+            门缝里看得见架子。十六只封存匣排在四座架上，每只贴着名字。
+            你的名字也在其中一只上。
+
+    交互点 name_warning
+        地图：archive
+        地点：名录库前厅
+        标题：门边的铜牌
+        传说：
+            铜牌上刻着一行字：
+            入夜后，名录库中若有人以你之名唤你，勿应。
+
+    交互点 red_ink
+        地图：archive
+        地点：名录库前厅
+        标题：规程页的红墨批注
+        传说：
+            文献规程页的页边，一行红墨批注：“授钥：雀。”字迹端正，是导师的手。
+            库门锁芯与那把钥匙的齿上，都没有撬过的痕迹。
+
+    交互点 watch_point
+        地图：archive
+        地点：名录库前厅
+        标题：守夜点
+        种类：watch
+
+    交互点 hall_notice
+        地图：living_hall
+        地点：乙区
+        标题：起居厅公告板
+        物件：乙区公告板
+
+    交互点 fireplace
+        地图：living_hall
+        地点：乙区
+        标题：壁炉
+        传说：壁炉还温着。炉台上摆着十六只杯子，样式都不一样。
+
+    交互点 watch_point
+        地图：living_hall
+        地点：乙区
+        标题：守夜点
+        种类：watch
+
+    交互点 zone_rules
+        地图：zone_yi
+        地点：乙区
+        标题：公告框（学园守则）
+        种类：school_rules
+        传说：
+            一、封存之物，可凭对应之物寻回；寻回者，自负其果。
+            二、饮水、炉火、照明照常供给；物资由诸位自行分配。
+            三、外闩所封之处，余患未清，清后即启。
+            四、我所立之规，皆张贴于此。
+
+    交互点 bed
+        地图：zone_yi
+        地点：乙区
+        标题：你的床（R-05）
+        种类：bed
+
+    交互点 zone_rules
+        地图：zone_jia
+        地点：甲区
+        标题：甲区公告
+        物件：甲区公告板
+
+    交互点 litter
+        地图：zone_jia
+        地点：甲区
+        标题：雀儿房里的废纸篓
+        物件：甲区的废纸篓
+
+    交互点 zone_rules
+        地图：zone_bing
+        地点：丙区
+        标题：丙区公告
+        物件：丙区公告板
+
+    交互点 zone_rules
+        地图：zone_ding
+        地点：丁区
+        标题：丁区公告
+        物件：丁区公告板
+
+    交互点 step_marks
+        地图：resonance
+        地点：乙区
+        标题：沉静室门内的步位标线
+        传说：门内地上的步位标线，一道不缺，一步也没有踩乱。
+
+    交互点 silent_door
+        地图：resonance
+        地点：乙区
+        标题：沉静室的门
+        传说：厚木门，内侧有一道浅浅的指痕。门是从外面关上的。
+
+    交互点 valve
+        地图：greenhouse
+        地点：温室
+        标题：阀门
+        物件：温室阀门
+        传说：温室的水压阀门。锈住了。
+
+    交互点 gauge
+        地图：greenhouse
+        地点：温室
+        标题：压力表
+        物件：温室压力表
+        传说：压力表的指针贴着红线。没有人在修。
+
+    交互点 oath_court
+        地图：campus_s
+        地点：誓约庭
+        标题：誓约庭
+        物件：誓约庭铺石
+        传说：铺石顺坡，设了几级台阶。站在这里，谁站在谁身边，一眼看得清。
+
+    交互点 gate
+        地图：campus_s
+        地点：誓约庭
+        标题：门楼
+        传说：门楼外是去港口的路。沿海崖有一段塌了。
+
+    交互点 drying_yard
+        地图：campus_s
+        地点：誓约庭
+        标题：晾晒场
+        传说：绳上晾着几件衬衫。地上是泥。
+
+    交互点 spring
+        地图：campus_s
+        地点：誓约庭
+        标题：汲水泉
+        传说：泉水照常在流。
+
+    # ---- 规矩：板上与口中的规矩（内容、立规者、价值标记、何时张贴）----------------------------------
+    # 规矩的“怎么判定、怎么执行”是 Core 的 Rule，写在 C#；这里只写它是什么、谁立的、带哪些价值标记。
+
+    规矩 沃德台账规
+        编号：WardLedger
+        立规者：沃德
+        内容：凡取用公物须登记于台账；无登记取用者视为私取。
+        标记：记录、不许特例、沃德权威、口粮
+        张贴：第 2 日 傍晚 中央厅 集中
+
+    规矩 沃德夜规
+        编号：WardNight
+        立规者：沃德
+        内容：私取之人（雀儿）入夜不得入后勤院。
+        标记：限制、针对雀儿、针对个人、沃德权威、口粮
+        针对：雀儿
+        张贴：第 2 日 傍晚 中央厅 集中
+
+    规矩 茉拉夜规
+        编号：MoraNight
+        立规者：茉拉
+        内容：病者伤者优先。夜间急需可自取一份，次日告知。
+        标记：病人优先、夜间特例、口粮
+        张贴：第 2 日 傍晚 后勤院 集中
+
+    规矩 阮清越台账规
+        编号：RuanLedger
+        立规者：阮清越
+        内容：每日按人头分配，日末清点。
+        标记：按人头、记录、口粮
+        张贴：第 2 日 早晨 后勤院 静默
+
+    规矩 警告一
+        编号：Warning1
+        立规者：恶魔
+        内容：入夜后，名录库中若有人以你之名唤你，勿应。
+        标记：安全、禁止欲望
+
+    规矩 警告二
+        编号：Warning2
+        立规者：恶魔
+        内容：温室水压表指针过红线时，勿开顶窗。
+        标记：安全
+
+    规矩 共同规则
+        编号：CommonRule
+        立规者：侦探
+        内容：公开指控须附可检查的材料。
+        标记：证据优先
+        格：任何人 | 任何时候 | 公开指控须附可检查的材料 | 无例外 | 不记账
+
+    规矩 沈鼎灶规
+        编号：ShenKitchen
+        立规者：沈鼎
+        内容：粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。
+        标记：中央做饭、口粮、病人优先、记录
+        张贴：第 2 日 傍晚 乙区
+
+    规矩 维罗妮卡实物规
+        编号：VeronicaEvidence
+        立规者：维罗妮卡
+        内容：指控须有实物为证；取用须有记录。
+        标记：证据优先、记录
+        张贴：第 2 日 傍晚 丁区
+
+    规矩 卢西安不烙印规
+        编号：LucianNoBrand
+        立规者：卢西安
+        内容：未经查验，不得以“私取”之名限制任何人行走。
+        标记：证据优先、夜间特例
+        张贴：第 3 日 傍晚 讲堂
+
+    规矩 开放取回方案
+        编号：OpenPlan
+        立规者：恶魔
+        内容：名录库各取其物：凡学员皆可取回己物。
+        标记：开放名录库
+
+    规矩 封闭不启方案
+        编号：SealPlan
+        立规者：顾平章
+        内容：名录库封闭不启：回忆即上钩，谁也不开。
+        标记：封存名录库、传统
+
+    规矩 委员会保管方案
+        编号：CommitteePlan
+        立规者：沃德
+        内容：名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。
+        标记：委员会管名录库、沃德权威、记录
+
+    # ---- 规矩格：玩家拼规矩的五格选项，及每个选项带的价值标记 ---------------------------------
+
+    规矩格
+        主语：
+            - 任何人
+            - 值守者
+            - 生活翼的人
+            - 文契组的人
+            - 星仪组的人
+            - 后勤组的人
+        条件：
+            - 任何时候
+            - 入夜后
+            - 有人急病时 | 病人优先
+            - 自己没领到口粮时
+            - 学过《异象与记忆》之后
+        行为：
+            # 名称 | 编号（代码按编号认行为）| 标记
+            - 取一份口粮 | 取粮 | 口粮
+            - 按人头领口粮 | 按人头 | 按人头、口粮
+            - 粮仓钥匙交给煮饭的人统一煮粥 | 交钥匙 | 中央做饭、口粮
+            - 公开指控须附可检查的材料 | 指控须证 | 证据优先
+            - 课后向缺课的人转述 | 转述 | 传声
+            - 名录库各取其物 | 开库各取 | 开放名录库
+            - 名录库由委员会保管 | 开库委员会 | 委员会管名录库、沃德权威
+            - 名录库封闭不启 | 开库封闭 | 封存名录库
+            - 名录库须本人亲取、两人见证 | 开库约束 | 依约管名录库、双人见证、开放名录库
+            - 不得入后勤院 | 限制入院 | 限制、口粮
+            - 温室两人同修，指针过红线不开顶窗 | 温室 | 安全
+        例外：
+            - 无例外 | 不许特例
+            - 急病夜取不在此限 | 夜间特例
+            - 次日补记者不算私取 | 夜间特例
+            - 两人在场者不在此限 | 双人见证
+            - 入夜一律不行 | 若有 开放名录库、委员会管名录库、依约管名录库：禁夜间开门 否则：不许特例、限制
+        记账：
+            - 不记账
+            - 记入台账 | 记录
+            - 次日补记 | 记录
+            - 两人见证签名 | 记录、双人见证
+        案件说法：
+            # 主语 | 条件 | 行为 | 例外 | 记账 | 玩家说得出口的写法
+            - 任何人 | 有人急病时 | 取一份口粮 | 次日补记者不算私取 | 次日补记 | 急病夜取一份，次日补记；补记者不算私取。
+            - 任何人 | 入夜后 | 不得入后勤院 | 入夜一律不行 | 不记账 | 入夜后，谁也不得入后勤院。
+            - 任何人 | 入夜后 | 取一份口粮 | 两人在场者不在此限 | 两人见证签名 | 夜里取粮须两人在场，两人签名。
+        名录库说法：
+            - 任何人 | 任何时候 | 名录库须本人亲取、两人见证 | 无例外 | 两人见证签名 | 名录库须本人亲取，两人见证签名。
+            - 任何人 | 任何时候 | 名录库须本人亲取、两人见证 | 入夜一律不行 | 记入台账 | 名录库只在白天开；本人亲取，记入台账。
+
+    # ---- 结局：名录库之议的去向 ----------------------------------------------------------------
+
+    结局
+        - OpenEach | 各取其物：开放取回
+        - Committee | 委员会保管（沃德主导）
+        - Sealed | 封闭不启（顾平章、茉拉主导）
+        - DetectivePact | 侦探之约
+        - NightSeized | 被某派系夜间私占
+        - None | 未决
+
+    # ---- 案件：《少了一份》的痕迹、事实、重演变量、对质的主张与证据 ---------------------------------
+    # 条件短语见 tools/story_rules.py 的说明；全部只读客观记录与各人的认知。
+
+    案件 少了一份
+        案发夜：2
+        痕迹：
+            # 编号 | 读者看到的名称 | 没查过时只给的地点
+            - 台账 | 台账少了几份 | 粮仓门内的台账
+                查清：见过 台账 Unrecorded 且 细看过 台账
+            - 门闩 | 粮仓门闩 | 粮仓门
+                查清：见过 粮仓 ToolMarks 或 见过 粮仓 LatchLoose
+            - 碗 | 诊疗所的碗 | 诊疗所
+                查清：见过 诊疗所的碗 Residue 且 细看过 诊疗所的碗
+            - 饼屑 | 雀儿房中的饼屑 | 甲区
+                查清：细看过 甲区的废纸篓
+            - 夜巡 | 夜巡所见 | 贝尔特朗（夜巡）
+                查清：问过 贝尔特朗
+        事实：
+            门闩已紧固：状态 粮仓 LatchLoose = 0
+            门闩有工具痕：状态 粮仓 ToolMarks ＞ 0
+            碗有粥渍：状态 诊疗所的碗 Residue ＞ 0
+            废纸篓有饼屑：状态 甲区的废纸篓 Crumbs ＞ 0
+            瘦小身影：夜巡 第 2 日 后勤院 小巧 见证 贝尔特朗
+            中等身影：夜巡 第 2 日 后勤院 中等 见证 贝尔特朗
+        变量：
+            - 夜里，茉拉以为谁需要口粮
+                发烧的莫兰
+                没有人（她不知道莫兰发烧）
+                她自己（她没领到口粮）
+            - 雀儿接受了哪条规则
+                茉拉的（夜间急需可自取）
+                沃德的（私取之人入夜不得入后勤院）
+                都不接受
+            - 玛格丽特是否接受了沃德的规则
+                没读过沃德的规则
+                读过并接受（视雀儿为私取之人）
+            - 雀儿领没领晚配
+                没领
+                领了
+        证据：
+            - bowl | 诊疗所的空碗
+                已有：已查清 碗
+                亲见：见到 诊疗所的碗 Residue
+            - deskboard | 配给台公告
+                已有：读过 茉拉夜规
+                亲见：读过 茉拉夜规
+            - granary | 粮仓门闩
+                已有：已查清 门闩
+                亲见：见到 粮仓 ToolMarks
+            - margaret | 玛格丽特的请托
+                已有：问过 玛格丽特
+            - litter | 雀儿房中的饼屑
+                已有：已查清 饼屑
+                亲见：见到 甲区的废纸篓 Crumbs
+            - ledger | 台账
+                已有：已查清 台账
+                亲见：见到 台账 Counted
+            - bertrand | 贝尔特朗的证言
+                已有：问过 贝尔特朗
+            - mora | 茉拉的说法
+                已有：恒真
+        主张：
+            - 茉拉夜里为病人取了一份
+                为真：夜里 第 2 日 茉拉 夜取病粮、夜取病粮记账
+                反应：茉拉皱眉：“是我取的。莫兰烧得厉害。我本打算今早告知——今早走不开。”
+                相关证据：诊疗所的空碗、配给台公告、茉拉的说法
+            - 雀儿修好了粮仓门闩
+                为真：夜里 第 2 日 雀儿 修门闩
+                反应：玛格丽特：“门闩是我请她修的。手艺很干净。”
+                相关证据：粮仓门闩、玛格丽特的请托
+            - 雀儿照茉拉的规则自取了一份，打算次日告知
+                为真：夜里 第 2 日 雀儿 夜取自粮、夜取自粮记账
+                反应：雀儿别过脸：“板上写着急需可以自取。我打算今天说的。”
+                相关证据：雀儿房中的饼屑、配给台公告
+            - 台账只记白天的领取，夜里的自取没有入账
+                为真：恒真
+                反应：阮清越：“台账只记配给台发出的。夜里的，我记不到。”
+                相关证据：台账
+            - 雀儿偷了两份
+                为真：夜里 第 2 日 雀儿 夜取自粮、夜取自粮记账、囤积 至少 2 次
+                反应：雀儿冷笑了一声。
+                相关证据：台账
+                冤枉：是
+            - 夜巡望见的瘦小身影是雀儿
+                为真：夜巡 第 2 日 后勤院 小巧 是 雀儿
+                反应：贝尔特朗：“身影是瘦小的。是谁，我没看清。”
+                相关证据：贝尔特朗的证言
+                冤枉：是
+
+    选项 lesson_precise
+        标签：它没写“果”是什么。
+        仅选择：是
+
+    选项 lesson_who
+        标签：它没写谁可以寻回。
+        仅选择：是
+
+    选项 lesson_where
+        标签：它没写封存之物在哪里。
+        仅选择：是
+
+    选项 mediate
+        标签：出面调停（要花上这一阵）
+        仅选择：是
+
+    选项 skip_dispute
+        标签：不插手，排队领饭
+        仅选择：是
+
+    回应 huo_testimony
+        角色：霍铎
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        霍铎：你想问什么？
+
+    回应 huo_decline
+        角色：霍铎
+        意图：拒绝
+        条件：侦探 信任 < 0
+        霍铎：这件事，我不想说。
+
+    回应 shen_testimony
+        角色：沈鼎
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        沈鼎：你想问什么？
+
+    回应 shen_decline
+        角色：沈鼎
+        意图：拒绝
+        条件：侦探 信任 < 0
+        沈鼎：这件事，我不想说。
+
+    回应 su_testimony
+        角色：苏泠
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        苏泠：你想问什么？
+
+    回应 su_decline
+        角色：苏泠
+        意图：拒绝
+        条件：侦探 信任 < 0
+        苏泠：这件事，我不想说。
+
+    回应 lucian_testimony
+        角色：卢西安
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        卢西安：你想问什么？
+
+    回应 lucian_decline
+        角色：卢西安
+        意图：拒绝
+        条件：侦探 信任 < 0
+        卢西安：这件事，我不想说。
+
+    回应 gu_testimony
+        角色：顾平章
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        顾平章：你想问什么？
+
+    回应 gu_decline
+        角色：顾平章
+        意图：拒绝
+        条件：侦探 信任 < 0
+        顾平章：这件事，我不想说。
+
+    回应 quer_testimony
+        角色：雀儿
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        雀儿：你想问什么？
+
+    回应 quer_decline
+        角色：雀儿
+        意图：拒绝
+        条件：侦探 信任 < 0
+        雀儿：这件事，我不想说。
+
+    回应 ward_testimony
+        角色：沃德
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        沃德：你想问什么？
+
+    回应 ward_decline
+        角色：沃德
+        意图：拒绝
+        条件：侦探 信任 < 0
+        沃德：这件事，我不想说。
+
+    回应 selma_testimony
+        角色：赛尔玛
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        赛尔玛：你想问什么？
+
+    回应 selma_decline
+        角色：赛尔玛
+        意图：拒绝
+        条件：侦探 信任 < 0
+        赛尔玛：这件事，我不想说。
+
+    回应 ruan_testimony
+        角色：阮清越
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        阮清越：你想问什么？
+
+    回应 ruan_decline
+        角色：阮清越
+        意图：拒绝
+        条件：侦探 信任 < 0
+        阮清越：这件事，我不想说。
+
+    回应 elena_testimony
+        角色：伊莲娜
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        伊莲娜：你想问什么？
+
+    回应 elena_decline
+        角色：伊莲娜
+        意图：拒绝
+        条件：侦探 信任 < 0
+        伊莲娜：这件事，我不想说。
+
+    回应 moran_testimony
+        角色：莫兰
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        莫兰：你想问什么？
+
+    回应 moran_decline
+        角色：莫兰
+        意图：拒绝
+        条件：侦探 信任 < 0
+        莫兰：这件事，我不想说。
+
+    回应 veronica_testimony
+        角色：维罗妮卡
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        维罗妮卡：你想问什么？
+
+    回应 veronica_decline
+        角色：维罗妮卡
+        意图：拒绝
+        条件：侦探 信任 < 0
+        维罗妮卡：这件事，我不想说。
+
+    回应 bertrand_testimony
+        角色：贝尔特朗
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        贝尔特朗：你想问什么？
+
+    回应 bertrand_decline
+        角色：贝尔特朗
+        意图：拒绝
+        条件：侦探 信任 < 0
+        贝尔特朗：这件事，我不想说。
+
+    回应 margaret_testimony
+        角色：玛格丽特
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        玛格丽特：你想问什么？
+
+    回应 margaret_decline
+        角色：玛格丽特
+        意图：拒绝
+        条件：侦探 信任 < 0
+        玛格丽特：这件事，我不想说。
+
+    回应 mora_testimony
+        角色：茉拉
+        意图：作证
+        条件：侦探 信任 ≥ 0
+        茉拉：你想问什么？
+
+    回应 mora_decline
+        角色：茉拉
+        意图：拒绝
+        条件：侦探 信任 < 0
+        茉拉：这件事，我不想说。
+
+    场面 arrival
+        事件：begin.arrival
+        日：2
+        时段：早晨
+        铜口：诸位，请到中央厅来。全体。
+
+    场面 gather
+        事件：begin.gather
+        日：2
+        时段：上午
+        （中央厅。八角形的穹顶下，十六个人站成了几团。铜柱居中，管道从四面汇进来。）
+        侦探（心声）：站成几团，是按寝区站的。没人往别的团里走。
+        铜口：我是此地的代管者，也是诸位的教师。
+        铜口：封存之物，存于名录库。凡学员，皆可取回己物。
+        铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。
+        （它停了一下。接着，一个声音贴着每个人的耳朵，各说了一句。）
+        铜口：你的封存匣在名录库里。标签上，写着你的名字。
+        侦探（心声）：……它对每个人都说了一句。说的是什么，只有各人自己听见。
+        沃德：依据它方才的话，名录库是公物。公物之取用，须有章程。
+        雀儿：你的章程，留着自己念。
+        沃德：我没有点你的名。
+        雀儿：你的眼睛点了。 [#emotion=angry]
+        铜口：诸位，请到讲堂。今日讲守则的读法。
+
+    场面 lesson
+        事件：begin.lesson
+        日：2
+        时段：中午
+        （讲堂。黑板前没有人，粉笔却自己在板上写字。讲台前的灰上，多出一行窄底的鞋印。）
+        铜口：一条规矩写了什么，诸位都会读。今日读它没写什么。
+        铜口：以我自己的守则为例。第一条：封存之物，可凭对应之物寻回；寻回者，自负其果。
+        铜口：这一条没写的，最要紧的是什么？——请那位穿风衣的先生答。
+        选择 lesson_answer：lesson_precise、lesson_who、lesson_where
+        铜口：本课到此。诸位所立之规，也请这样读。下课。
+        侦探（心声）：读它没写什么。……记下了。
+
+    场面 lesson_precise_branch
+        事件：choice:chapter2:lesson_precise
+        日：2
+        时段：上午
+        动作 lesson_answer：真
+        铜口：……正是。“自负其果”，果是什么，条文一字未提。读到这里的人，下回会先问。
+        铜口：很好。
+        侦探（心声）：它是真的高兴。几个人看我的眼神变了。不全是好的那种。
+
+    场面 lesson_who_branch
+        事件：choice:chapter2:lesson_who
+        日：2
+        时段：上午
+        动作 lesson_answer：假
+        铜口：写了。“寻回者”——谁寻回，谁便是。不限其人。
+        铜口：再读一遍。
+
+    场面 lesson_where_branch
+        事件：choice:chapter2:lesson_where
+        日：2
+        时段：上午
+        动作 lesson_answer：假
+        铜口：名录库。我方才说过。
+        铜口：读条文，不读我。
+
+    场面 free
+        事件：begin.free
+        日：2
+        时段：中午
+        侦探（心声）：读不费时辰。看，问，读板上的规矩，都可以慢慢来。
+        侦探（心声）：想让谁改个主意——带他去亲眼看，跟他讲一条规矩，请他做件事——那要花上一阵。一阵过去，大家各忙各的，人就换了地方。
+        侦探（心声）：一天就那么几阵。得想好花在谁身上。
+
+    场面 noon_dispute
+        事件：commit.noon_dispute
+        日：2
+        时段：中午
+        （配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。）
+        阮清越：按人头。十六份，日末清点。
+        茉拉：莫兰脸色不对。病人先领。 [#emotion=worried]
+        阮清越：“先”是多少？说个数。 [#emotion=thoughtful]
+        茉拉：你让开。
+        侦探（心声）：两个人都没说错。队伍在等。
+        选择 noon_dispute：mediate、skip_dispute
+
+    场面 mediate_branch
+        事件：choice:chapter2:mediate
+        日：2
+        时段：中午
+        动作 mediate：
+
+    场面 skip_dispute_branch
+        事件：choice:chapter2:skip_dispute
+        日：2
+        时段：中午
+
+    场面 night_hint
+        事件：commit.night_hint
+        日：2
+        时段：夜里
+        侦探（心声）：入夜了。回 R-05 睡下，或者找个地方守着。
+        侦探（心声）：起居厅、后勤院、名录库前厅、中央厅，都有能坐一夜的地方。
+
+    场面 dawn
+        事件：night.dawn
+        日：3
+        时段：早晨
+        （清晨。铜口把众人又叫到了中央厅。阮清越拿着台账站在铜柱旁，沃德站在他身边。）
+
+    场面 after
+        事件：night.after
+        日：3
+        时段：上午
+        侦探（心声）：“昨夜，有人进过后勤院。”——它说的每个字都是真的。
+        侦探（心声）：可“取了而不记”，就一定是偷？
+        侦探（心声）：傍晚对账的时候，人人都会在这里。在那之前，先把账上的缺口查清楚。
+
+    场面 no_accuse
+        事件：night.no_accuse
+        日：3
+        时段：上午
+        侦探（心声）：账上有缺口，没有人站出来指认谁。这一回，没人先开口。
+
+    场面 replay_unlock
+        事件：card.replay_unlock
+        日：3
+        侦探（心声）：台账上的缺口，落在一夜之间。
+        侦探（心声）：那一夜每个人读过哪条规矩、认了哪条，各自就会照着去做。……把那一夜重演一遍。
+        侦探（心声）：（按 R 打开重演手稿。）
+
+    场面 replay_first
+        事件：after_replay.first
+        侦探（心声）：墨影只看得出身量，看不出是谁。
+        侦探（心声）：冲突写的是痕迹之差。哪里对不上，就去哪里再看一眼，或者再问一个人。
+
+    场面 replay_match
+        事件：after_replay.match
+        侦探（心声）：……全对上了。 [#emotion=thoughtful]
+        侦探（心声）：没有贼。同一件事，照茉拉的规矩是“急需自取，次日告知”；照沃德的规矩，是私取。
+        侦探（心声）：规矩贴在三块板上。没有人读过全部。
+
+    场面 evening
+        事件：confront.evening
+        日：3
+        时段：傍晚
+        （傍晚。中央厅点起了灯。十五个人到了，莫兰还躺在诊疗所。）
+        铜口：诸位要对账。我只旁听。
+
+    场面 confront_begin
+        事件：confront.begin
+        日：3
+        时段：傍晚
+        侦探（心声）：一问一答。说一句，就拿出能支撑它的东西。
+
+    场面 confront_pause
+        事件：confront.pause
+        日：3
+        时段：傍晚
+        侦探（心声）：这一句，先不说。
+
+    场面 confront_wrong_say
+        事件：confront.wrong_say
+        日：3
+        时段：傍晚
+        沃德：这与我问的无关。
+
+    场面 confront_wrong_show
+        事件：confront.wrong_show
+        日：3
+        时段：傍晚
+        沃德：依据何在？{{wrong_name()}}证明不了这句话。 [#emotion=angry]
+
+    场面 confront_frame
+        事件：confront.frame
+        日：3
+        时段：傍晚
+        （众人的目光都落到了雀儿身上。她没有躲。）
+        雀儿：……行。你也这么看。
+        侦探（心声）：每个字都是真的。可我说出它，是在指着她。
+
+    场面 confront_rule
+        事件：confront.rule
+        日：3
+        时段：傍晚
+        沃德：账上的疑处，诸位已听见。依据何在，今后如何？
+        侦探（心声）：该提一条大家都能照着做的规矩了。
+
+    场面 whisper
+        事件：confront.whisper
+        日：3
+        时段：夜里
+        （散场的时候，铜口没有出声。可走出中央厅的每一个人，脚步都慢了一点，像在听耳边有人说话。）
+        侦探（心声）：它又对每个人说了一遍那样东西。……今夜，名录库前厅不会太安静。
+
+    场面 council
+        事件：council.begin
+        日：4
+        时段：早晨
+        （第三日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。）
+        铜口：今日，诸位要决定名录库的事。我只旁听。
+        沃德：我仍主张，凡事须有章程。名录库，由委员会保管。
+        顾平章：回忆即上钩。老朽只一句：封着。 [#emotion=worried]
+        霍铎：……图纸在里面。 [#emotion=hooked]
+        侦探（心声）：每个人会站到哪一边，昨天、前天就定下了大半。看他们这几天亲眼见过什么、饿没饿着、信谁。
+
+    场面 box
+        事件：council.box
+        日：4
+        时段：早晨
+        （库门开了。十六只封存匣排在四座架上，每只贴着名字。）
+        侦探（心声）：我的名字。在第三座架子上，第二格。
+        侦探：{{detective_name}}。
+        （匣子没有动。）
+        侦探：……{{detective_name}}。
+        铜口：那并非你的名字。
+        铜口：……也不是别人的。
+        侦探（心声）：那么，是谁的？
+
+    场面 sealed
+        事件：council.sealed
+        日：4
+        时段：早晨
+        （名录库没有开。十六只封存匣留在门后。）
+        侦探（心声）：我的名字也在门后。是不是我的，今天没人知道。
+
+    家具
+        Bed：床。
+        Wardrobe：衣柜。
+        Crate：箱子。
+        Nightstand：床头柜。
+        Desk：书桌。
+        Chair：椅子。
+        Coat：衣架。
+        StudyTable：长桌。
+        HallBookcase：书架。
+        HallLamp：落地灯。
+        Armchair：扶手椅。
+        Range：灶。
+        Sideboard：碗柜。
+        Worktable：案板。
+        Barrel：水桶。满的。
+        Washstand：水槽。
+        CoatStand：衣架。
+        ShoeBench：鞋凳。
+        Store：存货。
+        ToolBench：工具台。
+        InkShelf：墨架。墨块码得整整齐齐。
+        Hood：烟罩。
+        DishRack：碗架。
+        Pump：压水机。
+        Sacks：面粉。
+        Table：长桌。
+        Bench：长凳。
+
+    # ---- 文本：玩家看到的句子（{名} 为代码填入的占位符）--------------------------------------------
+
+    文本
+        规矩格：
+            格式：{主语}：{条件}，{行为}；{例外}；{记账}
+        规矩：
+            集中张贴：傍晚，各人在板上张贴自己的规则：沃德在中央厅贴了两条，茉拉在配给台贴了一条，沈鼎在生活翼、维罗妮卡在丁区各贴一条。
+            聚落张贴：{人}在{地}贴出：「{规矩}」

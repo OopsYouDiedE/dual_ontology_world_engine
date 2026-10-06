@@ -166,6 +166,526 @@
     "shen": "沈鼎的鞋",
     "su": "苏泠的鞋"
   },
+  "DETECTIVE_SEARCH": {
+    "iterations": 320,
+    "depth": 6,
+    "exploration": 1.414,
+    "discount": 0.92,
+    "time_cost": 0.08,
+    "information_weight": 12,
+    "progress_weight": 2,
+    "repeat_penalty": 8,
+    "confidence": 0.99,
+    "action_budget": 48,
+    "seed": 731,
+    "unknown_reliability": 1.5
+  },
+  "DETECTIVE_ACTIONS": {
+    "talk_huo": {
+      "kind": "talk",
+      "target": "huo",
+      "room": "hall",
+      "label": "向霍铎询问他的判断与打算",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "",
+      "completion_key": "",
+      "repeatable": false
+    },
+    "talk_shen": {
+      "kind": "talk",
+      "target": "shen",
+      "room": "pantry",
+      "label": "向沈鼎询问他的判断与打算",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "",
+      "completion_key": "",
+      "repeatable": false
+    },
+    "talk_su": {
+      "kind": "talk",
+      "target": "su",
+      "room": "foyer",
+      "label": "向苏泠询问她的判断与打算",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "",
+      "completion_key": "",
+      "repeatable": false
+    },
+    "inspect_E1": {
+      "kind": "inspect",
+      "target": "E1",
+      "room": "foyer",
+      "label": "检视闩上的隔离门",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E1",
+      "repeatable": false
+    },
+    "inspect_E2": {
+      "kind": "inspect",
+      "target": "E2",
+      "room": "foyer",
+      "label": "检视门底的灰与木楔",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E2",
+      "repeatable": false
+    },
+    "inspect_E3": {
+      "kind": "inspect",
+      "target": "E3",
+      "room": "foyer",
+      "label": "检视灰上的靴印",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E3",
+      "repeatable": false
+    },
+    "inspect_E4": {
+      "kind": "inspect",
+      "target": "E4",
+      "room": "foyer",
+      "label": "检视门底的湿布",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E4",
+      "repeatable": false
+    },
+    "inspect_E5": {
+      "kind": "inspect",
+      "target": "E5",
+      "room": "foyer",
+      "label": "检视门框旁的音叉",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E5",
+      "repeatable": false
+    },
+    "inspect_E6": {
+      "kind": "inspect",
+      "target": "E6",
+      "room": "R08",
+      "label": "检视苏泠的乐谱",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E6",
+      "repeatable": false
+    },
+    "inspect_E7": {
+      "kind": "inspect",
+      "target": "E7",
+      "room": "hall",
+      "label": "检视霍铎的石板",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E7",
+      "repeatable": false
+    },
+    "inspect_E8": {
+      "kind": "inspect",
+      "target": "E8",
+      "room": "hall",
+      "label": "检视铜口与管接头",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E8",
+      "repeatable": false
+    },
+    "inspect_E9": {
+      "kind": "inspect",
+      "target": "E9",
+      "room": "pantry",
+      "label": "检视四只杯子",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E9",
+      "repeatable": false
+    },
+    "inspect_E10": {
+      "kind": "inspect",
+      "target": "E10",
+      "room": "pantry",
+      "label": "检视酵种罐",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E10",
+      "repeatable": false
+    },
+    "inspect_E11": {
+      "kind": "inspect",
+      "target": "E11",
+      "room": "R05",
+      "label": "检视架上的无尘方框",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E11",
+      "repeatable": false
+    },
+    "inspect_E12": {
+      "kind": "inspect",
+      "target": "E12",
+      "room": "R05",
+      "label": "检视侦探的外衣口袋",
+      "minutes": 3,
+      "weight": 1,
+      "requires_group": "",
+      "requires_key": "",
+      "completion_group": "examined",
+      "completion_key": "E12",
+      "repeatable": false
+    },
+    "experiment_E1": {
+      "kind": "experiment",
+      "target": "E1",
+      "room": "foyer",
+      "label": "拔闩推门",
+      "minutes": 7,
+      "weight": 2,
+      "requires_group": "examined",
+      "requires_key": "E1",
+      "completion_group": "experiments",
+      "completion_key": "E1",
+      "repeatable": false
+    },
+    "experiment_E2": {
+      "kind": "experiment",
+      "target": "E2",
+      "room": "foyer",
+      "label": "比对木楔与灰扇",
+      "minutes": 7,
+      "weight": 2,
+      "requires_group": "examined",
+      "requires_key": "E2",
+      "completion_group": "experiments",
+      "completion_key": "E2",
+      "repeatable": false
+    },
+    "experiment_E3": {
+      "kind": "experiment",
+      "target": "E3",
+      "room": "foyer",
+      "label": "比对鞋底",
+      "minutes": 7,
+      "weight": 2,
+      "requires_group": "examined",
+      "requires_key": "E3",
+      "completion_group": "experiments",
+      "completion_key": "E3",
+      "repeatable": false
+    },
+    "help_E4": {
+      "kind": "help",
+      "target": "E4",
+      "room": "foyer",
+      "label": "请同伴辨认门底的湿布",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E4",
+      "completion_group": "helped",
+      "completion_key": "E4",
+      "repeatable": false
+    },
+    "help_E5": {
+      "kind": "help",
+      "target": "E5",
+      "room": "foyer",
+      "label": "请同伴辨认门框旁的音叉",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E5",
+      "completion_group": "helped",
+      "completion_key": "E5",
+      "repeatable": false
+    },
+    "help_E6": {
+      "kind": "help",
+      "target": "E6",
+      "room": "R08",
+      "label": "请同伴辨认苏泠的乐谱",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E6",
+      "completion_group": "helped",
+      "completion_key": "E6",
+      "repeatable": false
+    },
+    "help_E7": {
+      "kind": "help",
+      "target": "E7",
+      "room": "hall",
+      "label": "请同伴辨认霍铎的石板",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E7",
+      "completion_group": "helped",
+      "completion_key": "E7",
+      "repeatable": false
+    },
+    "experiment_E8": {
+      "kind": "experiment",
+      "target": "E8",
+      "room": "hall",
+      "label": "声路试验",
+      "minutes": 10,
+      "weight": 2,
+      "requires_group": "examined",
+      "requires_key": "E8",
+      "completion_group": "experiments",
+      "completion_key": "E8",
+      "repeatable": false
+    },
+    "help_E9": {
+      "kind": "help",
+      "target": "E9",
+      "room": "pantry",
+      "label": "请同伴辨认四只杯子",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E9",
+      "completion_group": "helped",
+      "completion_key": "E9",
+      "repeatable": false
+    },
+    "help_E10": {
+      "kind": "help",
+      "target": "E10",
+      "room": "pantry",
+      "label": "请同伴辨认酵种罐",
+      "minutes": 5,
+      "weight": 1.4,
+      "requires_group": "examined",
+      "requires_key": "E10",
+      "completion_group": "helped",
+      "completion_key": "E10",
+      "repeatable": false
+    },
+    "replay": {
+      "kind": "replay",
+      "target": "",
+      "room": "hall",
+      "label": "以当前假设重演昨夜并核对已查痕迹",
+      "minutes": 12,
+      "weight": 2,
+      "requires_group": "state",
+      "requires_key": "replay_open",
+      "completion_group": "",
+      "completion_key": "",
+      "repeatable": true
+    },
+    "answer": {
+      "kind": "answer",
+      "target": "",
+      "room": "hall",
+      "label": "依据已验证假设与亲见证物作答",
+      "minutes": 16,
+      "weight": 3,
+      "requires_group": "state",
+      "requires_key": "full_match_seen",
+      "completion_group": "",
+      "completion_key": "",
+      "repeatable": false
+    }
+  },
+  "DETECTIVE_TRACE_FIELDS": {
+    "E1_InnerBoltDown": {
+      "evidence": "E1",
+      "field": "InnerBoltDown",
+      "tag": "内闩",
+      "equals": -1
+    },
+    "E2_AshFan": {
+      "evidence": "E2",
+      "field": "AshFan",
+      "tag": "扇形灰",
+      "equals": -1
+    },
+    "E2_WedgeTopSooted": {
+      "evidence": "E2",
+      "field": "WedgeTopSooted",
+      "tag": "楔面沾灰",
+      "equals": -1
+    },
+    "E2_WedgeInCorner": {
+      "evidence": "E2",
+      "field": "WedgeInCorner",
+      "tag": "楔在角落",
+      "equals": -1
+    },
+    "E4_Cloth": {
+      "evidence": "E4",
+      "field": "Cloth",
+      "tag": "沿门底压成直线",
+      "equals": 1
+    },
+    "E4_ClothOverHeel": {
+      "evidence": "E4",
+      "field": "ClothOverHeel",
+      "tag": "压住鞋跟",
+      "equals": -1
+    },
+    "E5_FrameDent": {
+      "evidence": "E5",
+      "field": "FrameDent",
+      "tag": "门框凹痕",
+      "equals": -1
+    },
+    "E6_ScoreLine1": {
+      "evidence": "E6",
+      "field": "ScoreLine1",
+      "tag": "第一行",
+      "equals": -1
+    },
+    "E6_ScoreLine2": {
+      "evidence": "E6",
+      "field": "ScoreLine2",
+      "tag": "第二行",
+      "equals": -1
+    },
+    "E7_SlateLine1": {
+      "evidence": "E7",
+      "field": "SlateLine1",
+      "tag": "第一行",
+      "equals": -1
+    },
+    "E7_SlateLine2": {
+      "evidence": "E7",
+      "field": "SlateLine2",
+      "tag": "第二行",
+      "equals": -1
+    },
+    "E9_CupSugar": {
+      "evidence": "E9",
+      "field": "CupSugar",
+      "tag": "按人放糖",
+      "equals": -1
+    }
+  },
+  "DETECTIVE_MOTIVES": {
+    "huo_command": {
+      "person": "huo",
+      "label": "霍铎可能把带铜口标记的指令当成可信来源",
+      "cue": "◎，铜口",
+      "counter_cue": "不等了",
+      "prior": 0.5
+    },
+    "shen_care": {
+      "person": "shen",
+      "label": "沈鼎可能先保住人的吃食与安全，再考虑其他事",
+      "cue": "人得先吃饭",
+      "counter_cue": "人不必吃饭",
+      "prior": 0.5
+    },
+    "su_hearing": {
+      "person": "su",
+      "label": "苏泠可能依靠不完整的听觉片段判断门外情况",
+      "cue": "两拍弱音",
+      "counter_cue": "我听见了整句话",
+      "prior": 0.5
+    }
+  },
+  "DETECTIVE_ARGUMENTS": {
+    "identity": {
+      "step": 1,
+      "variable": -1,
+      "evidence": "E3",
+      "required_group": "experiments",
+      "required_key": "E3"
+    },
+    "voice_source": {
+      "step": 2,
+      "variable": 3,
+      "evidence": "E8,E5",
+      "required_group": "experiments",
+      "required_key": "E8"
+    },
+    "words": {
+      "step": 3,
+      "variable": 4,
+      "evidence": "E7,E6",
+      "required_group": "helped",
+      "required_key": "E7"
+    },
+    "trust": {
+      "step": 4,
+      "variable": 6,
+      "evidence": "E9,E10,E11,E7",
+      "required_group": "helped",
+      "required_key": "E9"
+    }
+  },
+  "DETECTIVE_DIALOGUE_CHOICES": {
+    "investigate_before_commitment": {
+      "profile": "default",
+      "scene": "s5_question",
+      "label_contains": "先去查看生活翼",
+      "weight": 1
+    },
+    "postpone_rest_while_investigating": {
+      "profile": "default",
+      "scene": "s5_question",
+      "label_contains": "在生活翼歇息",
+      "weight": 0
+    },
+    "personal_rest_before_investigation": {
+      "profile": "rest",
+      "scene": "s5_question",
+      "label_contains": "在生活翼歇息",
+      "weight": 1
+    },
+    "postpone_investigation_until_after_rest": {
+      "profile": "rest",
+      "scene": "s5_question",
+      "label_contains": "先去查看生活翼",
+      "weight": 0
+    }
+  },
   "EVIDENCE": {
     "E1": {
       "name": "闩上的隔离门",
@@ -558,6 +1078,58 @@
     "E11",
     "E12"
   ],
+  "DAY_CLOCK": {
+    "start_minutes": 480,
+    "expected_exit_minutes": 720,
+    "normal_exit_earliest_minutes": 740,
+    "normal_exit_latest_minutes": 770,
+    "default_scene_minutes": 1,
+    "companion_start_minutes": 440,
+    "daily_seconds_per_game_minute": 0.5,
+    "scenes": {
+      "s1_wake": 8,
+      "s2_meet": 10,
+      "s2_tea": 12,
+      "s3_broadcast": 8,
+      "s4_rewards": 18,
+      "s5_question": 12,
+      "s6_begin": 4,
+      "s6_reversal": 5,
+      "s8_reversal": 8,
+      "s10_steps": 4,
+      "s10_prints": 3,
+      "s10_hand": 2,
+      "s10_open": 6,
+      "ending_rest": 5,
+      "talk_huo_menu": 0,
+      "talk_shen_menu": 0,
+      "talk_su_menu": 0
+    },
+    "actions": {
+      "检视": 3,
+      "试验": 7,
+      "协助": 5,
+      "交谈": 4,
+      "声路": 10,
+      "重演": 12,
+      "答辩": 4,
+      "走动": 1
+    }
+  },
+  "PEOPLE": {
+    "detective": {
+      "desire": "弄清自己是什么"
+    },
+    "huo": {
+      "desire": "超越卡诺循环的动力图纸"
+    },
+    "shen": {
+      "desire": "安稳，护住身边的人"
+    },
+    "su": {
+      "desire": "从未听过的声音"
+    }
+  },
   "TEXT": {
     "章名": "门的这一侧",
     "认知·登船·名": "登船",
@@ -570,8 +1142,6 @@
     "界面·键位·重演": "R  重演",
     "结局·完成·标题": "门的这一侧 · 完",
     "结局·完成·正文": "门开了。门外是起居厅。",
-    "结局·歇息·标题": "门的这一侧 · 歇息",
-    "结局·歇息·正文": "你们留在生活翼。门一直闩着。",
     "结局·钩": "留在恶魔那里的钩：{名单}",
     "结局·未交": "你没有交出的：{名单}",
     "结局·无": "无",
@@ -602,11 +1172,12 @@
     "铜口·描述": "铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。",
     "铜口·检视": "检视铜口与铜牌",
     "铜口·作答": "回答始业之问",
-    "铜口·歇息": "不作答，在生活翼歇息",
+    "铜口·歇息": "先在生活翼歇息一阵，暂不作答",
     "鞋底·标题": "比对鞋底",
     "鞋底·huo": "霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。",
     "鞋底·shen": "沈鼎的鞋底：千层布底，没有纹。",
     "鞋底·su": "苏泠的鞋底：软底小皮鞋，比灰上那枚短一截。",
+    "鞋底·detective": "马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。",
     "鞋底·提示": "灰上那枚马球靴印。拿谁的鞋底来比？",
     "声路·标题": "声路试验",
     "声路·轮标题": "声路试验 · 第 {轮} 轮",
@@ -631,6 +1202,8 @@
     "重演·门闩": "门：闩上了",
     "重演·门关": "门：关着",
     "重演·烟灰": "烟灰进了门厅",
+    "夜间·怀疑·生人": "我凭什么信一个昨天才认识的人？",
+    "夜间·怀疑·熟人": "{人名}的话，我不全信。",
     "称呼·detective·亲近": "我的侦探",
     "称呼·detective·生疏": "侦探先生",
     "称呼·huo·亲近": "霍铎",
@@ -785,20 +1358,6 @@
       "Help": false
     }
   ],
-  "PEOPLE": {
-    "detective": {
-      "desire": "弄清自己是什么"
-    },
-    "huo": {
-      "desire": "超越卡诺循环的动力图纸"
-    },
-    "shen": {
-      "desire": "安稳，护住身边的人"
-    },
-    "su": {
-      "desire": "从未听过的声音"
-    }
-  },
   "ROOM_REGIONS": [
     {
       "name": "起居厅",
@@ -960,6 +1519,7 @@
       "notebook": false,
       "dorms": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     },
     "roam": {
@@ -970,6 +1530,7 @@
         }
       },
       "walk": true,
+      "daily": true,
       "examine": true,
       "sites": [
         "E12",
@@ -986,11 +1547,13 @@
       "notebook": false,
       "dorms": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     },
     "investigate": {
       "enter": {},
       "walk": true,
+      "daily": true,
       "examine": true,
       "notebook": true,
       "dorms": true,
@@ -1004,6 +1567,7 @@
       "examine": false,
       "notebook": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     },
     "answer": {
@@ -1013,6 +1577,7 @@
       "examine": false,
       "notebook": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     },
     "finale": {
@@ -1022,6 +1587,7 @@
       "examine": false,
       "notebook": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     },
     "ended": {
@@ -1031,6 +1597,7 @@
       "notebook": false,
       "dorms": false,
       "room_events": false,
+      "daily": false,
       "sites": []
     }
   },
@@ -1126,6 +1693,10 @@
             {
               "op": "show",
               "scene": "@posts"
+            },
+            {
+              "op": "set_flag",
+              "key": "posts_assigned"
             },
             {
               "op": "show",
@@ -1273,6 +1844,10 @@
         "人"
       ],
       "steps": [
+        {
+          "op": "show",
+          "scene": "@summon:{人}"
+        },
         {
           "op": "if",
           "condition": {
@@ -1888,6 +2463,18 @@
         },
         {
           "op": "show",
+          "scene": "@stage_actor:huo:终局站位·huo"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:shen:终局站位·shen"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:su:终局站位·su"
+        },
+        {
+          "op": "show",
           "scene": "s10_steps"
         },
         {
@@ -1948,27 +2535,56 @@
       "steps": [
         {
           "op": "stage",
-          "value": "finale"
+          "value": "investigate"
         },
         {
           "op": "show",
           "scene": "@lock"
         },
         {
-          "op": "show",
-          "scene": "@music:night:4"
+          "op": "if",
+          "condition": {
+            "op": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "flag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "posts_assigned"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "@posts"
+            },
+            {
+              "op": "set_flag",
+              "key": "posts_assigned"
+            }
+          ],
+          "else": []
         },
         {
           "op": "show",
           "scene": "ending_rest"
         },
         {
-          "op": "show",
-          "scene": "@save:true"
+          "op": "clear_flag",
+          "key": "rest_chosen"
         },
         {
           "op": "show",
-          "scene": "@ending:歇息"
+          "scene": "@unlock"
+        },
+        {
+          "op": "show",
+          "scene": "@hud"
         }
       ]
     },

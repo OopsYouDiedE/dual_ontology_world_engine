@@ -7,6 +7,9 @@ stay in one place. Nothing here evaluates author code.
 
 Blocks (top-level, 4-space indented bodies; `#` starts a comment):
   章节：<id>            前置章节：<id>、<id>
+  继承生态：<相对路径>    只继承词汇、常数、地点和人物，不带入案件或晨间循环
+  续篇 <id>             缩进正文声明后续章节；--section 选择，默认只编译主体
+  晨间日常              封锁、旁听与人物有序步骤（房间、目标、动作、说明、权重、秒数）
   文案                  <键>：<文字> / <键>： 后接 `- 条目` 列表
   请求                  `- <标签> → <岗位>`
   地点 <名称>           编号 别名 范围
@@ -39,6 +42,77 @@ TAGS = {"信任": "Trust", "合作": "Cooperation", "患病": "Sick", "饥饿": 
 INTENTS = {"作证": "testimony", "拒绝": "decline"}
 OPS = {"≥": ">=", "≤": "<=", "＜": "<", "＞": ">", "<": "<", ">": ">", "=": "==", "＝": "==", "≠": "!="}
 RESERVED_SCENE_FIELDS = {"事件", "日", "时段"}
+ECOLOGY_BLOCKS = set(VOCAB_BLOCKS) | {"常数", "地点", "人物"}
+
+
+def ecology_block(head: Line) -> bool:
+    return head.text.split(None, 1)[0] in ECOLOGY_BLOCKS
+
+
+def source_lines(path: Path, *, ecology_only: bool = False,
+                 ancestors: tuple[Path, ...] = (), section: str | None = None) -> list[Line]:
+    """Resolve ecology inheritance without importing the source chapter's case or scenes."""
+    resolved = path.resolve()
+    if resolved in ancestors:
+        raise StoryError("继承生态出现循环：" + " → ".join(p.name for p in (*ancestors, resolved)))
+    try:
+        lines = read_lines(path.read_text(encoding="utf-8-sig"))
+    except OSError as exc:
+        raise StoryError(f"无法读取生态来源“{path}”：{exc}") from exc
+    result = []
+    sections: dict[str, tuple[Line, list[Line]]] = {}
+    i = 0
+    while i < len(lines):
+        head = lines[i]
+        body, i = children(lines, i + 1, 0)
+        if head.indent != 0:
+            raise StoryError("顶层内容必须顶格。", head.number)
+        if head.text.split(None, 1)[0] == "续篇":
+            name = head.text[len("续篇"):].strip()
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9-]*", name):
+                raise StoryError("续篇需要有效的章节编号：续篇 <id>。", head.number)
+            if name in sections:
+                raise StoryError(f"重复的续篇“{name}”。", head.number)
+            if not body:
+                raise StoryError("续篇必须有缩进正文。", head.number)
+            lifted = [Line(line.number, line.indent - 1, line.text) for line in body]
+            for line in lifted:
+                if line.indent == 0 and (line.text.startswith(("章节：", "章节:"))
+                                         or line.text.split(None, 1)[0] == "续篇"):
+                    raise StoryError("续篇编号已声明章节，正文不能再次声明章节或嵌套续篇。", line.number)
+            sections[name] = (head, lifted)
+        elif head.text.startswith(("继承生态：", "继承生态:")):
+            _, relative = split_pair(head)
+            if not relative or body:
+                raise StoryError("继承生态须写成“继承生态：相对路径”，不带正文。", head.number)
+            if Path(relative).is_absolute():
+                raise StoryError("继承生态必须使用相对路径。", head.number)
+            inherited = source_lines(path.parent / relative, ecology_only=True,
+                                     ancestors=(*ancestors, resolved))
+            # An import never introduces its source chapter header or morning loop.
+            result.extend(line for line in inherited if not (
+                line.indent == 0 and line.text.startswith(("章节：", "章节:"))))
+        elif not ecology_only or ecology_block(head) or head.text.startswith(("章节：", "章节:")):
+            result.extend([head, *body])
+    if section is None:
+        return result
+    if section not in sections:
+        raise StoryError(f"文件没有续篇“{section}”。")
+    head, selected = sections[section]
+    # Keep prerequisites immediately after the virtual header, then share only
+    # authored ecology. The main case and its daily loop never enter this section.
+    prefix: list[Line] = [Line(head.number, 0, f"章节：{section}")]
+    if selected[0].indent == 0 and selected[0].text.startswith(("前置章节：", "前置章节:")):
+        prefix.append(selected[0])
+        selected = selected[1:]
+    shared: list[Line] = []
+    i = 0
+    while i < len(result):
+        shared_head = result[i]
+        body, i = children(result, i + 1, 0)
+        if ecology_block(shared_head):
+            shared.extend([shared_head, *body])
+    return [*prefix, *shared, *selected]
 
 
 def table(mapping: dict[str, str], word: str, what: str, line: int) -> str:
@@ -110,8 +184,8 @@ class Translator:
         base = re.sub(r"\W", "_", entity_id)
         return f"e{self.counter}_{base}"
 
-    def translate(self, raw: str) -> str:
-        lines = read_lines(raw)
+    def translate(self, raw: str, lines: list[Line] | None = None) -> str:
+        lines = read_lines(raw) if lines is None else lines
         self.prescan_people(lines)
         self.prescan_vocab(lines)
         i = 0
@@ -160,13 +234,119 @@ class Translator:
                 self.scene(line, body)
             elif keyword == "原生":
                 self.native(line, body, raw_lines)
+            elif keyword == "晨间日常":
+                self.morning(line, body)
+            elif keyword == "出区日常":
+                self.departures(line, body)
             elif keyword in DESIGN_BLOCKS:
                 self.design_blocks.append((line, body))
             else:
                 raise StoryError(f"未知块“{keyword}”。可用：章节、文案、请求、地点、人物、物件、交互点、家具、选项、回应、场面、原生，以及设计块：" + "、".join(sorted(DESIGN_BLOCKS)) + "。", line.number)
             i = nxt
+        morning = self.design.get("morning")
+        departures = self.design.get("departures", {})
+        if departures:
+            if morning is None:
+                raise StoryError("出区日常须配有晨间日常块。")
+            for person_id, routine in departures.items():
+                if person_id in {"Det", "Huo", "Shen", "Su"}:
+                    raise StoryError("出区日常只用于其余寝区人物。")
+                if any(step["room"] in morning["blocked_rooms"] for step in routine["steps"]):
+                    raise StoryError("出区日常不能进入封锁生活翼。")
+            morning["departures"] = departures
         self.design = compile_design(self.design_blocks, self)
+        if morning is not None:
+            self.design["morning"] = morning
         return "\n".join(self.out) + "\n"
+
+    def morning(self, head: Line, body: list[Line]) -> None:
+        if "morning" in self.design:
+            raise StoryError("晨间日常块只能有一个。", head.number)
+        fields = self.fields_of(head, body, {"封锁", "旁听", "人物阶段", *self.person_enum})
+        morning: dict[str, Any] = {"blocked_rooms": [], "people": {}, "witnesses": []}
+        allowed_stages: dict[str, list[str]] = {}
+        if "人物阶段" in fields:
+            value, line, sub = fields["人物阶段"]
+            if value or not sub:
+                raise StoryError("人物阶段须使用缩进的人物与阶段列表。", line.number)
+            for item in sub:
+                name, stages = split_pair(item)
+                person_id = table(self.person_enum, name, "人物", item.number)
+                if person_id in allowed_stages:
+                    raise StoryError(f"人物阶段“{name}”重复。", item.number)
+                allowed_stages[person_id] = split_list(stages)
+                if not allowed_stages[person_id]:
+                    raise StoryError("人物阶段至少须声明一个阶段。", item.number)
+        if "封锁" in fields:
+            value, line, _ = fields["封锁"]
+            morning["blocked_rooms"] = [table(self.dorms, name, "地点", line.number)
+                                        for name in split_list(value)]
+        actor_ids = {"Det": "detective", "Huo": "huo", "Shen": "shen", "Su": "su"}
+        for name, (value, line, sub) in fields.items():
+            if name in {"封锁", "人物阶段"}:
+                continue
+            if name == "旁听":
+                if value or not sub:
+                    raise StoryError("旁听须使用缩进的房间与感知文字列表。", line.number)
+                for item in sub:
+                    parts = [part.strip() for part in item.text.removeprefix("- ").split("|", 1)]
+                    if not item.text.startswith("- ") or len(parts) != 2 or not all(parts):
+                        raise StoryError("旁听须写成“- 房间 | 玩家能听见的文字”。", item.number)
+                    morning["witnesses"].append({"room": parts[0], "text": parts[1]})
+                continue
+            if value or not sub:
+                raise StoryError("晨间日常人物字段须使用缩进的步骤列表。", line.number)
+            person_id = self.person_enum[name]
+            steps = self.daily_steps(sub)
+            for step, item in zip(steps, sub):
+                if person_id not in actor_ids and step["room"] in morning["blocked_rooms"]:
+                    raise StoryError("晨间日常不能让其余寝区人物进入封锁生活翼。", item.number)
+            morning["people"][person_id] = {"actor": actor_ids.get(person_id, person_id.lower()), "steps": steps,
+                                          "allowed_stages": allowed_stages.get(person_id, [])}
+        for person_id in allowed_stages:
+            if person_id not in morning["people"]:
+                raise StoryError(f"人物阶段“{person_id}”没有晨间日常步骤。", head.number)
+        self.design["morning"] = morning
+
+    def departures(self, head: Line, body: list[Line]) -> None:
+        if "departures" in self.design:
+            raise StoryError("出区日常块只能有一个。", head.number)
+        departures: dict[str, Any] = {}
+        for name, (value, line, sub) in self.fields_of(head, body, set(self.person_enum)).items():
+            if value or not sub:
+                raise StoryError("出区日常人物须缩进声明出门分钟与行动。", line.number)
+            fields = self.fields_of(line, sub, {"出门分钟", "行动"})
+            if set(fields) != {"出门分钟", "行动"}:
+                raise StoryError("出区日常人物须同时声明出门分钟与行动。", line.number)
+            minutes_text, minutes_line, minutes_sub = fields["出门分钟"]
+            minutes = parse_int(minutes_text, "出门分钟", minutes_line.number)
+            if minutes_sub or minutes < 0:
+                raise StoryError("出门分钟须为非负整数。", minutes_line.number)
+            actions, action_line, steps = fields["行动"]
+            if actions or not steps:
+                raise StoryError("出区行动须使用缩进的步骤列表。", action_line.number)
+            person_id = self.person_enum[name]
+            departures[person_id] = {"actor": person_id.lower(), "minutes": minutes,
+                                     "steps": self.daily_steps(steps)}
+        self.design["departures"] = departures
+
+    def daily_steps(self, lines: list[Line]) -> list[dict[str, Any]]:
+        steps = []
+        for item in lines:
+            parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+            if not item.text.startswith("- ") or len(parts) not in {4, 5, 6, 7} or not all(parts):
+                raise StoryError("日常步骤须写成“- 房间 | 目标 | 动作 | 说明 [| 权重 [| 秒数 [| 阶段]]]”。", item.number)
+            room, target, action, note = parts[:4]
+            if action not in {"check", "listen", "work", "rest", "move"}:
+                raise StoryError(f"未知日常动作“{action}”。", item.number)
+            weight = parse_int(parts[4], "日常权重", item.number) if len(parts) >= 5 else 1
+            seconds = parse_number(parts[5], "日常秒数", item.number) if len(parts) >= 6 else 10.0
+            if weight <= 0 or not 0 < seconds < float("inf"):
+                raise StoryError("日常权重与秒数必须大于零。", item.number)
+            steps.append({"room": room, "target": target, "action": action, "note": note,
+                          "weight": weight, "seconds": float(seconds),
+                          "allowed_stages": split_list(parts[6]) if len(parts) == 7 else []})
+        return steps
 
     def prescan_people(self, lines: list[Line]) -> None:
         """人物之间可以互相引用（偏见），因此先收集全部人物的 C# 枚举名。"""
@@ -235,9 +415,11 @@ class Translator:
         if not body:
             return
         first, last = body[0].number, body[-1].number
+        physical_head = raw_lines[head.number - 1].expandtabs(4)
+        trim = len(physical_head) - len(physical_head.lstrip(" ")) + 4
         for number in range(first, last + 1):
             text = raw_lines[number - 1].expandtabs(4)
-            self.emit(text[4:] if text.startswith("    ") else text.lstrip(), number)
+            self.emit(text[trim:] if text.startswith(" " * trim) else text.lstrip(), number)
 
     # ---- 交互点、家具、选项、回应、场面 ----
     def fields_of(self, head, body, allowed):
@@ -245,10 +427,10 @@ class Translator:
         j = 0
         while j < len(body):
             line = body[j]
-            if line.indent != 1:
+            if line.indent != head.indent + 1:
                 raise StoryError("字段缩进错误。", line.number)
             key, value = split_pair(line)
-            sub, j = children(body, j + 1, 1)
+            sub, j = children(body, j + 1, head.indent + 1)
             if key not in allowed:
                 raise StoryError(f"{head.text.split()[0]}不支持字段“{key}”。可用：" + "、".join(sorted(allowed)), line.number)
             if key in fields:
@@ -554,7 +736,10 @@ PROFILE_FIELDS_ZH = {"阵营", "宿舍", "速度", "配合", "体型", "欲望",
                      "信号", "结构", "温室", "厨艺", "工匠", "看重", "偏见", "魔偏见", "日常", "口吻"}
 
 
-def compile_story(paths: list[Path], external: set[str]) -> dict[str, Any]:
+def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool = False,
+                  section: str | None = None) -> dict[str, Any]:
+    if ecology_only and section is not None:
+        raise ws.ScriptError("生态编译不能同时选择续篇。")
     texts: dict[str, str] = {}
     maps: dict[str, list[int]] = {}
     designs: list[dict[str, Any]] = []
@@ -566,7 +751,17 @@ def compile_story(paths: list[Path], external: set[str]) -> dict[str, Any]:
             raise ws.ScriptError(f"无法读取脚本：{exc}") from exc
         translator = Translator()
         try:
-            texts[path.as_posix()] = translator.translate(raw)
+            lines = source_lines(path, ecology_only=ecology_only, section=section)
+            if ecology_only:
+                # Morning loops belong to this chapter, but are not inherited by later chapters.
+                original = read_lines(raw)
+                i = 0
+                while i < len(original):
+                    head = original[i]
+                    body, i = children(original, i + 1, 0)
+                    if head.text in {"晨间日常", "出区日常"}:
+                        lines.extend([head, *body])
+            texts[path.as_posix()] = translator.translate(raw, lines)
         except StoryError as exc:
             source = ws.Source(path.as_posix(), exc.line or 1, 1, exc.line or 1, 1)
             raise ws.ScriptError(str(exc), source) from exc
@@ -575,6 +770,15 @@ def compile_story(paths: list[Path], external: set[str]) -> dict[str, Any]:
         world_paths.append(path)
     try:
         document = ws.Compiler(world_paths, external, texts=texts).parse()
+        # Source IDs remain stable IR keys; locations point back to the author's
+        # physical file, including a continuation's original (unlifted) line.
+        for location in document.get("source_map", {}).values():
+            mapped = maps.get(location["path"])
+            if mapped is not None:
+                for key in ("line", "end_line"):
+                    generated = location[key]
+                    if 0 < generated <= len(mapped):
+                        location[key] = mapped[generated - 1]
         for chapter, design in zip(document["chapters"], designs):
             if design:
                 chapter["design"] = design
@@ -593,11 +797,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("scripts", nargs="+", type=Path)
     parser.add_argument("--external-chapter", action="append", default=[], metavar="ID")
+    parser.add_argument("--section", metavar="ID", help="编译同一 story 文件中的指定续篇，并共享主体生态")
     parser.add_argument("-o", "--output", type=Path)
     parser.add_argument("--check", action="store_true", help="fail if --output is missing or differs from the compiled result")
     args = parser.parse_args(argv)
     try:
-        document = compile_story(args.scripts, set(args.external_chapter))
+        document = compile_story(args.scripts, set(args.external_chapter), section=args.section)
     except ws.ScriptError as exc:
         if exc.source:
             print(f"{exc.source.path}:{exc.source.line}: {exc}", file=sys.stderr)

@@ -68,7 +68,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "又醒一个。过来站，别在门口杵着。",
+            "text": "又醒一个。我们三个先醒，已经互相认过名字，也各处看了一遍。过来站，别在门口杵着。",
             "voice_clip": ""
           },
           {
@@ -87,6 +87,13 @@ public static class Chapter1CompiledDialogue
           },
           {
             "op": "line",
+            "speaker": "霍铎",
+            "mood": "",
+            "text": "铜口和接头，我先看过了。还没有动它。",
+            "voice_clip": ""
+          },
+          {
+            "op": "line",
             "speaker": "沈鼎",
             "mood": "",
             "text": "他就这么说话，一个字掰成两半用。你别介意。",
@@ -97,6 +104,13 @@ public static class Chapter1CompiledDialogue
             "speaker": "苏泠",
             "mood": "",
             "text": "苏泠。弹琴的。",
+            "voice_clip": ""
+          },
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "我在门边听过一阵。听见了声音，来源还不能认定。",
             "voice_clip": ""
           },
           {
@@ -401,7 +415,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "（把蜡筒凑到耳边，闭上眼听完一整段）……是她。",
+            "text": "（把蜡筒装进领取柜旁的手摇试听机，摇动曲柄。琴声响起，她闭上眼，听完一整段）……是她。",
             "voice_clip": ""
           },
           {
@@ -561,7 +575,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "你这话问得蹊跷。我们四个刚见面，你就问我们谁昨晚干了什么？",
+            "text": "你这话问得蹊跷。我们今天才认过名字，你就问我们谁昨晚干了什么？",
             "voice_clip": ""
           },
           {
@@ -636,7 +650,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "s5_question:choice:1",
-                "label": "不作答，在生活翼歇息。",
+                "label": "先在生活翼歇息一阵，暂不作答。",
                 "condition": null,
                 "lock_hint": "",
                 "body": [
@@ -828,6 +842,13 @@ public static class Chapter1CompiledDialogue
             "speaker": "侦探（心声）",
             "mood": "",
             "text": "……是我。",
+            "voice_clip": ""
+          },
+          {
+            "op": "line",
+            "speaker": "侦探（心声）",
+            "mood": "",
+            "text": "这双靴子到过门边。可来过，还不能证明闩过；它怎样落下，得和别的痕迹对上。",
             "voice_clip": ""
           },
           {
@@ -3544,14 +3565,14 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "不作答，便在生活翼歇息。水与食物照常，无需认任何事。",
+            "text": "阁下可以先在生活翼歇一会。水与食物照常，无需认任何事。",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "这是诸位的权利。",
+            "text": "何时继续查看、何时作答，由阁下自己决定。其他人的去留，不由这次选择决定。",
             "voice_clip": ""
           },
           {
@@ -4181,14 +4202,14 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（厅里另外三扇寝区门的后面，有人声。有人在敲门，有人在喊另一个人的名字。）",
+            "text": "（门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。）",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "门后还有人。他们也醒了，也只记得上船。",
+            "text": "另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。",
             "voice_clip": ""
           },
           {
@@ -4240,7 +4261,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "苏泠",
                 "mood": "",
-                "text": "那把音叉，我没让它再响。我想先用自己的耳朵听这里。",
+                "text": "那把音叉，我没拿它追封存的旧声。我想先用自己的耳朵听这里。",
                 "voice_clip": ""
               }
             ]
@@ -4280,7 +4301,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "沈鼎",
                 "mood": "",
-                "text": "罐子我没碰，照样喂着。走吧，先找吃的。另外三个寝区，人也得吃饭。",
+                "text": "罐子照样喂着，封存的旧事，我没去追。走吧，先找吃的。另外三个寝区，人也得吃饭。",
                 "voice_clip": ""
               }
             ]
@@ -4384,7 +4405,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "铜口",
                     "mood": "",
-                    "text": "诸位一样旧物也没碰。……谨慎是美德。",
+                    "text": "诸位没有借旧物取回封存的记忆。……谨慎是美德。",
                     "voice_clip": ""
                   }
                 ]
@@ -4399,58 +4420,44 @@ public static class Chapter1CompiledDialogue
         "ending_rest": [
           {
             "op": "line",
-            "speaker": "铜口",
+            "speaker": "侦探",
             "mood": "",
-            "text": "如诸位所愿。",
+            "text": "我先坐一会，理清眼前的事。",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "也好。水够，粮够。我去续酵种。",
+            "text": "你歇着。我去看看存粮和水，人得先吃饭。",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "我守铜口。",
+            "text": "我去铜口旁检查接头。有事再问我。",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "……",
+            "text": "我还要去门边听听。……我不歇着。",
             "voice_clip": ""
           },
           {
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（你们留在生活翼。沈鼎烧水做饭，霍铎坐在铜口旁，苏泠在门边坐了很久。）",
+            "text": "（水槽里又响起水声。霍铎走向铜口，苏泠停在门边。桌旁只余侦探，把纷乱的念头慢慢理开。）",
             "voice_clip": ""
           },
           {
             "op": "line",
-            "speaker": "",
+            "speaker": "侦探（心声）",
             "mood": "",
-            "text": "（门一直闩着。门后很静。）",
-            "voice_clip": ""
-          },
-          {
-            "op": "line",
-            "speaker": "",
-            "mood": "",
-            "text": "（沈鼎又喂了一回酵种。罐壁上，又多了一层面痕。）",
-            "voice_clip": ""
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "水与食物照常。……晚安，诸位。",
+            "text": "歇过这一阵，再从能看见、能核验的东西开始。",
             "voice_clip": ""
           },
           {

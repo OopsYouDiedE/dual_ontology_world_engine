@@ -19,7 +19,8 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine_spec import (ChapterSpec, Expr, Instruction, binary, call, choice_option, choices,  # noqa: E402
                          condition, effect, entry, jump, line as dialogue_line, literal, unary)
-from story_script import Line, StoryError, children, read_lines, split_list, split_pair  # noqa: E402
+from story_script import (ECOLOGY_BLOCKS, Line, StoryError, children, read_lines,  # noqa: E402
+                          source_lines, split_list, split_pair)
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,12 @@ COMPARE = {"==": "eq", "!=": "ne", ">": "gt", ">=": "gte", "<": "lt", "<=": "lte
 
 # 设定表：块名 -> (CONTENT_TABLES 键或独立属性, 形式)
 TABLES = {
+    "侦探搜索参数": ("DETECTIVE_SEARCH", "constants"),
+    "侦探调查行动": ("DETECTIVE_ACTIONS", "records"),
+    "侦探痕迹字段": ("DETECTIVE_TRACE_FIELDS", "records"),
+    "侦探动机假设": ("DETECTIVE_MOTIVES", "records"),
+    "侦探论证来源": ("DETECTIVE_ARGUMENTS", "records"),
+    "侦探对白选择意图": ("DETECTIVE_DIALOGUE_CHOICES", "records"),
     "地点名单": ("PLACES", "list"), "人名": ("PERSON_NAMES", "map"), "演员节点": ("ACTOR_NODES", "map"),
     "房间名": ("ROOM_NAMES", "map"), "陈述": ("STATEMENTS", "map"), "低语": ("WHISPERS", "map"),
     "协助说明": ("HELP_NOTES", "map"), "家具旁白": ("FURNITURE_ASIDES", "map"),
@@ -110,7 +117,8 @@ TABLES = {
     "站位候补": ("SPOT_ORDER", "list"), "鞋底对象": ("SOLE_TARGETS", "map"), "点位框": ("SITE_BOXES", "boxes"), "布局常量": ("LAYOUT_CONSTANTS", "constants"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
-                "SOUND_SPOTS", "COMPANION_SPOTS", "SPOT_ORDER", "SOLE_TARGETS")
+                "SOUND_SPOTS", "COMPANION_SPOTS", "SPOT_ORDER", "SOLE_TARGETS",
+                "DETECTIVE_SEARCH", "DETECTIVE_ACTIONS", "DETECTIVE_TRACE_FIELDS", "DETECTIVE_MOTIVES", "DETECTIVE_ARGUMENTS", "DETECTIVE_DIALOGUE_CHOICES")
 
 
 class Chapter1Source:
@@ -605,7 +613,7 @@ def parse_flow(lines: list[Line], depth: int) -> list[dict[str, Any]]:
 
 def read_stage(name: str, body: list[Line]) -> dict[str, Any]:
     stage: dict[str, Any] = {"enter": {}}
-    flags = {"走动": "walk", "检视": "examine", "笔记本": "notebook", "宿舍开放": "dorms", "房间事件": "room_events"}
+    flags = {"走动": "walk", "检视": "examine", "笔记本": "notebook", "宿舍开放": "dorms", "房间事件": "room_events", "日常": "daily"}
     for ln in body:
         key, value = split_pair(ln)
         if key == "说明":
@@ -664,8 +672,74 @@ def optional(fields, key: str) -> str | None:
     return text_of(fields[key][0], fields[key][2]) if key in fields else None
 
 
+def read_scalar_records(body: list[Line]) -> dict[str, Any]:
+    """Nested typed data tables; no code execution or chapter-specific field vocabulary."""
+    result = {}
+    i = 0
+    while i < len(body):
+        item = body[i]
+        key, value = split_pair(item)
+        sub, i = children(body, i + 1, item.indent)
+        if key in result:
+            raise StoryError("数据表重复键：" + key, item.number)
+        if sub:
+            if value:
+                raise StoryError("嵌套数据表键不能同时有标量：" + key, item.number)
+            result[key] = read_scalar_records(sub)
+        else:
+            result[key] = "" if value == "-" else scalar(value)
+    return result
+
+
+def read_duration_table(body: list[Line], what: str) -> dict[str, int]:
+    result = {}
+    for item in body:
+        key, value = split_pair(item)
+        if key in result:
+            raise StoryError(f"{what}重复键：{key}", item.number)
+        duration = num(value, what, item.number)
+        if type(duration) is not int or duration < 0:
+            raise StoryError(f"{what}须为非负整数分钟：{key}", item.number)
+        result[key] = duration
+    return result
+
+
+def read_clock(body: list[Line]) -> dict[str, Any]:
+    fields = read_fields(body)
+    scalars = {"起始分钟": "start_minutes", "预计出门分钟": "expected_exit_minutes",
+               "正常出门最早分钟": "normal_exit_earliest_minutes", "正常出门最晚分钟": "normal_exit_latest_minutes",
+               "默认场面分钟": "default_scene_minutes", "同伴醒来分钟": "companion_start_minutes"}
+    tables = {"场面时长": "scenes", "行动时长": "actions"}
+    unknown = set(fields) - set(scalars) - set(tables) - {"每游戏分钟日常逻辑秒"}
+    if unknown:
+        raise StoryError("未知剧情时长字段：" + "、".join(sorted(unknown)))
+    result = {}
+    for zh, en in scalars.items():
+        if zh not in fields:
+            raise StoryError("剧情时长缺少：" + zh)
+        value, line, sub = fields[zh]
+        result[en] = read_duration_table([Line(line.number, line.indent, zh + "：" + value)], zh)[zh]
+        if sub:
+            raise StoryError(zh + "不能带子表", line.number)
+    if "每游戏分钟日常逻辑秒" not in fields:
+        raise StoryError("剧情时长缺少：每游戏分钟日常逻辑秒")
+    value, line, sub = fields["每游戏分钟日常逻辑秒"]
+    ratio = num(value, "每游戏分钟日常逻辑秒", line.number)
+    if sub or not isinstance(ratio, (int, float)) or not 0 < ratio < float("inf"):
+        raise StoryError("每游戏分钟日常逻辑秒须为正有限数", line.number)
+    result["daily_seconds_per_game_minute"] = ratio
+    for zh, en in tables.items():
+        if zh not in fields:
+            raise StoryError("剧情时长缺少：" + zh)
+        value, line, sub = fields[zh]
+        if value:
+            raise StoryError(zh + "须写为缩进表", line.number)
+        result[en] = read_duration_table(sub, zh)
+    return result
+
+
 def load(path: Path) -> Chapter1Source:
-    lines = read_lines(path.read_text(encoding="utf-8-sig"))
+    lines = source_lines(path)
     source = Chapter1Source()
     content_order: list[str] = []
     i = 0
@@ -680,7 +754,11 @@ def load(path: Path) -> Chapter1Source:
             continue
         word, _, rest = text.partition(" ")
         rest = rest.strip()
-        if text == "文案":
+        if text == "剧情时长":
+            if "DAY_CLOCK" in source.RULES_DATA:
+                raise StoryError("剧情时长重复声明", head.number)
+            source.RULES_DATA["DAY_CLOCK"] = read_clock(body)
+        elif text == "文案":
             for key, value in read_text_map(body).items():
                 texts = source.RULES_DATA.setdefault("TEXT", {})
                 if key in texts:
@@ -715,8 +793,19 @@ def load(path: Path) -> Chapter1Source:
             fields = read_fields(body)
             if "编号" not in fields:
                 raise StoryError(f"人物“{rest}”缺少编号。", head.number)
-            person = read_person(fields)
-            source.RULES_DATA.setdefault("PEOPLE", {})[fields["编号"][0]] = person
+            ident = fields["编号"][0]
+            if ident.startswith("person."):
+                # The shared full profile supplies the original four private desire records.
+                host_id = {"person.Det": "detective", "person.Huo": "huo",
+                           "person.Shen": "shen", "person.Su": "su"}.get(ident)
+                if host_id:
+                    source.RULES_DATA.setdefault("PEOPLE", {})[host_id] = read_person(
+                        {key: field for key, field in fields.items() if key in PERSON_FIELDS})
+            else:
+                source.RULES_DATA.setdefault("PEOPLE", {})[ident] = read_person(fields)
+        elif word in ECOLOGY_BLOCKS or word in {"晨间日常", "出区日常"}:
+            # Full ecology validation and compilation use the shared story_script compiler.
+            continue
         elif word == "话语":
             source.RULES_DATA.setdefault("UTTERANCES", {})[rest] = read_utterance(head, body)
         elif word == "试验句":
@@ -785,6 +874,8 @@ def load(path: Path) -> Chapter1Source:
                 value = tuple(item.text[2:].strip() for item in body)
             elif kind == "map":
                 value = {split_pair(item)[0]: split_pair(item)[1] for item in body}
+            elif kind == "records":
+                value = read_scalar_records(body)
             elif kind == "points":
                 value = {split_pair(item)[0]: tuple(numbers(split_pair(item)[1], "坐标", item.number)) for item in body}
             elif kind == "boxes":

@@ -50,6 +50,14 @@ public partial class AwakeningEngine : Node
         Chapter1CompiledDialogue.Create(), new System.Text.Json.JsonSerializerOptions
         { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower })).AsGodotDictionary();
 
+    public int GameMinutes() => _content.GameMinutes;
+    public string ClockText() => _content.ClockText;
+    public string ExpectedExitText() => _content.ExpectedExitText;
+    public GArray TakeTiming() => new(_content.TakeTiming().Select(entry => Variant.From(new GDict
+    {
+        ["kind"] = entry.Kind, ["id"] = entry.Id, ["start_minutes"] = entry.StartMinutes,
+        ["end_minutes"] = entry.EndMinutes, ["minutes"] = entry.Minutes,
+    })));
     public string ScriptId() => Chapter.Id;
     public string ScriptAssembly() => _morning.GetType().Assembly.GetName().Name!;
 
@@ -186,6 +194,7 @@ public partial class AwakeningEngine : Node
         var v = new NightVariables((SuPlace)(int)variables[0], (HuoPlace)(int)variables[1], (VoiceOrigin)(int)variables[2],
             (VoiceWords)(int)variables[3], (DetectiveHeeds)(int)variables[4], (Acquaintance)(int)variables[5]);
         var seen = examined.Select(x => x.AsString()).ToHashSet();
+        _content.RecordReplayRun();
         var result = NightReplay.Run(v);
         var frames = new GArray();
         foreach (var f in result.Frames)
@@ -231,6 +240,7 @@ public partial class AwakeningEngine : Node
         var map = new Dictionary<Person, Room>();
         foreach (var (key, value) in positions)
             map[(Person)Array.IndexOf(PersonKeys, key.AsString())] = (Room)Array.IndexOf(RoomKeys, value.AsString());
+        _content.RecordSoundTest();
         var heard = _morning.SoundTest(TestSentences.All[Math.Clamp(sentence, 0, TestSentences.All.Length - 1)], map);
         return new GArray(heard.Select(h => Variant.From(new GDict
         {
@@ -258,6 +268,30 @@ public partial class AwakeningEngine : Node
         if (index >= 0) _morning.Locate(PersonOf(who), (Room)index);
     }
     public bool Reach(string who) => _content.Reach(_morning, who);
+    public void SetDetectiveControl(string mode) => _morning.SetDetectiveControl(mode);
+    public string DetectiveControl() => _morning.DetectiveControl;
+    public void SetDailyStage(string stage) => _morning.SetDailyStage(stage);
+    public void SyncMorningClock() => _morning.SetMorningGameMinutes(_content.GameMinutes);
+    public GArray DailyDecisions() => new(_morning.DailyDecisions.Select(p => Variant.From(new GDict
+    { ["time"] = p.Time, ["game_minutes"] = p.GameMinutes, ["person"] = p.Person, ["control"] = p.Control, ["serial"] = p.Serial,
+        ["room"] = p.Room, ["action"] = p.Action, ["score"] = p.Score,
+        ["reasons"] = new GArray(p.Reasons.Select(reason => Variant.From(reason))) })));
+    public GDict DailyTick(double delta, bool active, GArray busy)
+    {
+        SyncMorningClock();
+        return new()
+        {
+            ["actors"] = new GArray(_morning.DailyTick(delta, active, busy.Select(p => p.AsString())).Select(p => Variant.From(new GDict
+            { ["who"] = p.Who, ["serial"] = p.Serial, ["room"] = p.Room, ["target"] = p.Target,
+                ["action"] = p.Action, ["note"] = p.Note, ["seconds"] = p.Seconds, ["speed"] = p.Speed })))
+        };
+    }
+    public bool DailyArrive(string who, int serial, string room) => _morning.DailyArrive(who, serial, room);
+    public void DailySuspend(string who) => _morning.DailySuspend(who);
+    public void DailyBlock(string who, int serial) => _morning.DailyBlock(who, serial);
+    public string DailyWitness(string room) => _morning.DailyWitness(room);
+    public GArray MorningTrajectory() => new(_morning.DailyTrajectory.Select(p => Variant.From(new GDict
+    { ["time"] = p.Time, ["game_minutes"] = p.GameMinutes, ["person"] = p.Person, ["room"] = p.Room, ["action"] = p.Action, ["text"] = p.Text })));
     public bool PutBack(string who) => _morning.PutBack(PersonOf(who));
     public bool IsDisturbed(string evidence) => _morning.IsDisturbed(evidence);
 

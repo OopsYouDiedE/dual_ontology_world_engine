@@ -74,11 +74,23 @@ public sealed partial class AwakeningContentSession
     }
     /// <summary>做试验：流程按证物编号取“实验·E3”之类，没有专写的就用“实验·默认”。</summary>
     public void BeginExperiment(MorningWorld world, string id, string who)
-        => StartFlow(world, HasFlow("实验·" + id) ? "实验·" + id : "实验·默认", ("物", id), ("人", who));
-    public void BeginHelp(MorningWorld world, string id) => StartFlow(world, "请人看看", ("物", id));
+    {
+        // E8 only opens the placement menu; the actual sound run settles its own time.
+        if (id != "E8" && !(id == "E3" && who == "")) ConsumeAction("试验", id);
+        StartFlow(world, HasFlow("实验·" + id) ? "实验·" + id : "实验·默认", ("物", id), ("人", who));
+    }
+    public void BeginHelp(MorningWorld world, string id)
+    {
+        ConsumeAction("协助", id);
+        StartFlow(world, "请人看看", ("物", id));
+    }
     private static Person PersonOf(string who) => who switch { "detective" => Person.Detective, "huo" => Person.Huo, "shen" => Person.Shen, "su" => Person.Su, _ => throw new ArgumentException(who) };
     public void BeginAfterReplay(MorningWorld world) => StartFlow(world, "重演之后");
-    public void BeginTalk(MorningWorld world, string who) => StartFlow(world, "交谈", ("人", who));
+    public void BeginTalk(MorningWorld world, string who)
+    {
+        ConsumeAction("交谈", who);
+        StartFlow(world, "交谈", ("人", who));
+    }
     /// <summary>声路试验里同伴各站哪里：偏好与候补顺序来自 chapter_01.story 的“同伴站位”“站位候补”。</summary>
     public Dictionary<string, string> SoundPositions(string playerRoom)
     {
@@ -158,6 +170,7 @@ public sealed partial class AwakeningContentSession
         StoryRuntime<MorningWorld, Person>? previous;
         do { previous = _story; _story!.Poll(); } while (_presentation == "" && !ReferenceEquals(previous, _story));
         var presentation = _presentation;
+        if (presentation != "") PresentScene(presentation);
         return presentation;
     }
     public void Presented(InteractionPlan plan) => plan.Presentation = "";
@@ -249,6 +262,7 @@ public sealed partial class AwakeningContentSession
     public string RoomTrigger(string room)
     {
         if (room == "") return "";
+        ObserveClockRoom(room);
         var stage = Stage(CurrentStage);
         if (stage.GetProperty("enter").TryGetProperty(room, out var enter))
         {
@@ -261,6 +275,7 @@ public sealed partial class AwakeningContentSession
     public string[] Examine(MorningWorld world, string id)
     {
         if (Session.Has("examined", id)) return [];
+        ConsumeAction("检视", id);
         Session.Set("examined", id, true);
         Session.Observe("detective", id);
         world.Examine(Person.Detective, id);
@@ -425,6 +440,7 @@ public sealed partial class MorningWorld
             });
         }
         foreach (var memory in Memories.Where(m => m.Who != Person.Detective)) WriteMind(memory);
+        InitializeEcology();
     }
 
 }

@@ -82,6 +82,7 @@ public sealed partial class MorningWorld
     public bool StoryBusy(Person who) => _storyActions.TryGetValue(who, out var action) && action.Status == ExecutionStatus.Pending;
     public ActionExecution SubmitStory(Person who, Effect effect)
     {
+        DailySuspend(Names.PersonKeys[(int)who]);
         var self = _runtime.Observe(_souls[who], _runtime.Representations(_bodies[who]), _session.CTB.Now)[0];
         return _storyActions[who] = _session.Submit(_souls[who], new ActionIntent(self, effect, 1));
     }
@@ -207,6 +208,7 @@ public sealed partial class MorningWorld
         if (ReferenceEquals(spatial.Space, _space[room])) return;
         spatial.Space = _space[room];
         _runtime.Sync();
+        if (who == Person.Detective) ClearUnattendedWitnesses();
     }
 
     /// <summary>伸手拿起旧物：经 SimulationSession/ActionRuntime 结算；人不在物件所在的房间时拿不到。</summary>
@@ -239,6 +241,7 @@ public sealed partial class MorningWorld
 
     private bool Execute(Person who, Effect effect)
     {
+        DailySuspend(Names.PersonKeys[(int)who]);
         var mind = _minds[who];
         var execution = _session.Submit(_souls[who], new ActionIntent(mind.Self, effect, 1));
         var steps = 0;

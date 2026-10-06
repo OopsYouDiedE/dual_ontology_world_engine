@@ -288,9 +288,10 @@ public sealed partial class Game
             case Cmd.Ask:
             {
                 var who = this[act.Who!.Value];
-                var did = DetHelpers.Contains(who.Id) || Get(who.Body, T.Did(act.Job!.Value)) > 0;
-                Feed.Add(did ? $"{who.Name}照你说的做了：{Names.Of(act.Job.Value)}。" : $"{who.Name}没有去做（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
-                if (did) Witness(Det, $"侦探请{who.Name}{Names.Of(act.Job.Value)}，事办成了", 0, 0, [who], spread: false);
+                var job = act.Job!.Value;
+                var did = DetHelpers.Contains(who.Id) || Get(who.Body, T.Did(job)) > 0;
+                Feed.Add(did ? $"{who.Name}照你说的做了：{Names.Of(job)}。" : $"{who.Name}没有去做（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
+                if (did) Witness(Det, $"侦探请{who.Name}{Names.Of(job)}，事办成了", 0, 0, [who], spread: false);
                 break;
             }
             case Cmd.GiveKey:
