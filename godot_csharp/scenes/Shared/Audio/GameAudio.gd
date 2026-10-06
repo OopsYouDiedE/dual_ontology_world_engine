@@ -18,9 +18,12 @@ var _fade: Tween
 var _sfx: Array[AudioStreamPlayer] = []
 var _next_sfx := 0
 var _cache := {}
+var _quitting := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().auto_accept_quit = false
+	get_tree().root.close_requested.connect(quit_cleanly)
 	for i in 2:
 		var player := AudioStreamPlayer.new()
 		player.name = "Music%d" % i
@@ -100,3 +103,48 @@ func _load(path: String) -> AudioStream:
 		if _cache[path] == null:
 			push_warning("GameAudio: 缺少音频 " + path)
 	return _cache[path]
+
+## Release playback before the audio server and scene tree are destroyed.
+func release_audio() -> void:
+	if _fade:
+		_fade.kill()
+		_fade = null
+	for player in _music + _sfx:
+		if is_instance_valid(player):
+			player.stop()
+			player.stream = null
+	_cache.clear()
+	_current = ""
+	_ducked = false
+
+## stop() queues playback deletion; the driver must complete later mix steps first.
+func release_audio_and_wait_for_mix() -> bool:
+	var stopped_at := Time.get_ticks_usec()
+	release_audio()
+	var deadline := stopped_at + 500000
+	var last_mix_at := stopped_at
+	var completed_mixes := 0
+	while Time.get_ticks_usec() < deadline:
+		await get_tree().process_frame
+		# Driver mix time is distinct from render frames, including on the dummy driver.
+		var sampled_at := Time.get_ticks_usec()
+		var mix_at := sampled_at - int(AudioServer.get_time_since_last_mix() * 1000000.0)
+		# A 1ms separation rejects timestamp sampling jitter, rather than counting it as a mix.
+		if mix_at > last_mix_at + 1000:
+			last_mix_at = mix_at
+			completed_mixes += 1
+			if completed_mixes == 2:
+				print_verbose("GameAudio: two driver mix steps completed after playback release.")
+				return true
+	push_error("GameAudio: audio driver did not complete two mix steps within the 500ms shutdown bound.")
+	return false
+
+func quit_cleanly(exit_code := 0) -> void:
+	if _quitting: return
+	_quitting = true
+	get_tree().call_group("lifecycle_hosts", "begin_shutdown")
+	var drained: bool = await release_audio_and_wait_for_mix()
+	get_tree().quit(exit_code if drained else (exit_code if exit_code != 0 else 1))
+
+func _exit_tree() -> void:
+	release_audio()

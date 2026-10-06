@@ -1,6 +1,16 @@
-[gd_scene format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/Chapter2/Game/CampusMap.gd" id="campus_map"]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+
+[sub_resource type="StyleBoxFlat" id="location"]
+bg_color = Color(0.952941, 0.92549, 0.847059, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.168627, 0.12549, 0.086275, 0.5)
 
 [node name="CampusMap" type="Control"]
 custom_minimum_size = Vector2(1000, 640)
@@ -17,6 +27,7 @@ offset_bottom = 320.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
+theme = ExtResource("theme")
 script = ExtResource("campus_map")
 map_size = Vector2(1000, 640)
 bg_color = Color(0.921569, 0.886275, 0.784314, 1)
@@ -25,3 +36,455 @@ link_color = Color(0.17, 0.13, 0.09, 0.28)
 node_fill_color = Color(0.952941, 0.92549, 0.847059, 1)
 node_hover_color = Color(0.964706, 0.933333, 0.858824, 1)
 node_current_color = Color(0.913725, 0.85098, 0.690196, 1)
+
+[node name="Locations" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
+
+[node name="ArchiveFront" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 444.0
+offset_top = 52.0
+offset_right = 556.0
+offset_bottom = 88.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/ArchiveFront"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "名录库"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/ArchiveFront"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Hall" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 444.0
+offset_top = 182.0
+offset_right = 556.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Hall"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "中央厅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Hall"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Lecture" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 244.0
+offset_top = 182.0
+offset_right = 356.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Lecture"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "讲堂"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Lecture"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Resonance" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 282.0
+offset_right = 176.0
+offset_bottom = 318.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Resonance"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "星仪院一角"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Resonance"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Commons" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 444.0
+offset_top = 362.0
+offset_right = 556.0
+offset_bottom = 398.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Commons"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "起居厅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Commons"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="DormW" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 314.0
+offset_top = 312.0
+offset_right = 426.0
+offset_bottom = 348.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/DormW"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "甲区"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/DormW"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="DormL" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 574.0
+offset_top = 312.0
+offset_right = 686.0
+offset_bottom = 348.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/DormL"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "丁区"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/DormL"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="DormS" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 314.0
+offset_top = 422.0
+offset_right = 426.0
+offset_bottom = 458.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/DormS"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "丙区"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/DormS"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="DormLife" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 574.0
+offset_top = 422.0
+offset_right = 686.0
+offset_bottom = 458.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/DormLife"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "乙区"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/DormLife"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Logistics" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 764.0
+offset_top = 412.0
+offset_right = 876.0
+offset_bottom = 448.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Logistics"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "后勤院"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Logistics"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Granary" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 844.0
+offset_top = 312.0
+offset_right = 956.0
+offset_bottom = 348.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Granary"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "粮仓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Granary"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Clinic" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 764.0
+offset_top = 202.0
+offset_right = 876.0
+offset_bottom = 238.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Clinic"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "诊疗所"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Clinic"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Greenhouse" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 824.0
+offset_top = 72.0
+offset_right = 936.0
+offset_bottom = 108.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Greenhouse"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "温室"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Greenhouse"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1
+
+[node name="Oath" type="Panel" parent="Locations"]
+layout_mode = 0
+offset_left = 444.0
+offset_top = 542.0
+offset_right = 556.0
+offset_bottom = 578.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("location")
+
+[node name="Name" type="Label" parent="Locations/Oath"]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "誓约庭"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Here" type="Label" parent="Locations/Oath"]
+visible = false
+top_level = false
+layout_mode = 0
+offset_top = -25.0
+offset_right = 112.0
+offset_bottom = -3.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+theme_override_font_sizes/font_size = 13
+text = "你在这里"
+horizontal_alignment = 1

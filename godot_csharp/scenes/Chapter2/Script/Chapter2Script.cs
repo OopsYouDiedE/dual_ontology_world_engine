@@ -7,13 +7,21 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// <summary>一名学员：客观身体（Essence）+ 灵魂（SoulEssence，内含自己的 ProjectionWorld）+ 游戏层的少量持久状态。</summary>
 public sealed class Person
 {
-    public Person(P id, Profile? profile = null)
+    public Person(P id, Profile? profile = null, ContinuingCharacter? inherited = null)
     {
         Id = id;
         Pro = profile ?? Cast.Of(id);
-        Soul = new SoulEssence(Names.Of(id));
-        Body = new Essence(Names.Of(id), ProjectionKind.Body);
+        Soul = inherited?.Soul ?? new SoulEssence(Names.Of(id));
+        Body = inherited?.Body ?? new Essence(Names.Of(id), ProjectionKind.Body);
+        Inherited = inherited is not null;
+        if (inherited is not null)
+        {
+            foreach (var pair in inherited.Known) M[pair.Key] = pair.Value;
+            Self = inherited.Self!;
+            Hooks = inherited.Hooks; Desire = inherited.Desire; KnowsHookCost = inherited.KnowsRecallCost;
+        }
     }
+    public bool Inherited { get; }
     public P Id { get; }
     public Profile Pro { get; }
     public SoulEssence Soul { get; }
@@ -50,7 +58,10 @@ public sealed record Heard(P From, int Hops, ObservationSource Source, int Day, 
 
 public sealed partial class Game
 {
-    public readonly WorldRuntime Rt = new();
+    public readonly WorldRuntime Rt;
+    public LiveChapterWorld? Continuation { get; }
+    private readonly ChapterWorldDefinition? _authored;
+    public bool InheritedChapter1 => Continuation is not null;
     public readonly SimulationSession S;
     public readonly Dictionary<Place, Essence> Space = [], Way = [], Board = [], Litter = [];
     public readonly Dictionary<Essence, Projection> View = [];
@@ -69,19 +80,24 @@ public sealed partial class Game
     public double Now => S.CTB.Now;
     public readonly GameOptions Options;
     public StoryRuntime? Story { get; internal set; }
-    public ChapterSession Chapter { get; } = new();
+    public ChapterSession Chapter { get; }
     /// <summary>作者侧客观日志（调试可见）。</summary>
     public readonly List<string> Log = [];
     /// <summary>本时段侦探可知的信息（感知、听闻、广播）。</summary>
     public readonly List<string> Feed = [];
 
-    public Game(GameOptions? options = null)
+    public Game(GameOptions? options = null, LiveChapterWorld? continuation = null, ChapterWorldDefinition? authored = null)
     {
         Options = options ?? new();
-        S = new SimulationSession(Rt);
+        if (authored is not null) Chapter2Bindings.Validate(authored);
+        _authored = authored;
+        Continuation = continuation;
+        Chapter = continuation?.Progress ?? new ChapterSession();
+        Rt = continuation?.Runtime ?? new WorldRuntime();
+        S = continuation?.Simulation ?? new SimulationSession(Rt);
         S.Completed += OnCompleted;
         S.StageCommitted += CapturePresentation;
-        People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p))).ToArray();
+        People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
         BuildWorld();
         foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
         SyncChapterRooms();
@@ -176,16 +192,19 @@ public sealed partial class Game
         Set(MedCab, T.Medicine, Options.StartMedicine);
         Set(OilStore, T.Oil, Options.StartOil);
 
+        var preexistingTags = People.ToDictionary(p => p.Id,p => p.Body.Get<StateProperty>()?.Values.Keys.ToHashSet() ?? []);
         foreach (var person in People)
         {
-            person.Body.Add(new SpatialProperty { Space = Space[Place.Hall] });
-            var state = person.Body.Add(new StateProperty());
-            foreach (var t in BodyVisible) { state.Values[t] = 0; state.Observable.Add(t); }
-            foreach (var t in BodyHidden) state.Values[t] = 0;
-            foreach (var j in Enum.GetValues<Job>()) { state.Values[T.Did(j)] = 0; state.Observable.Add(T.Did(j)); }
-            person.Soul.Relations.Add((Relations.Controls, person.Body));
-            Rt.Project(person.Soul, person.Name + "之魂");
-            View[person.Body] = Rt.Project(person.Body, person.Name);
+            // Arrival moves the existing body; it does not replace its running state.
+            var spatial = person.Body.Get<SpatialProperty>() ?? person.Body.Add(new SpatialProperty());
+            spatial.Holder = null; spatial.Space = Space[Place.Hall];
+            var state = person.Body.Get<StateProperty>() ?? person.Body.Add(new StateProperty());
+            foreach (var t in BodyVisible) { state.Values.TryAdd(t, 0); state.Observable.Add(t); }
+            foreach (var t in BodyHidden) state.Values.TryAdd(t, 0);
+            foreach (var j in Enum.GetValues<Job>()) { state.Values.TryAdd(T.Did(j), 0); state.Observable.Add(T.Did(j)); }
+            if (!person.Soul.Relations.Contains((Relations.Controls, person.Body))) person.Soul.Relations.Add((Relations.Controls, person.Body));
+            if (Rt.Representations(person.Soul).Count == 0) Rt.Project(person.Soul, person.Name + "之魂");
+            View[person.Body] = Rt.Representations(person.Body).FirstOrDefault() ?? Rt.Project(person.Body, person.Name);
         }
         Set(this[P.Mora].Body, T.GranaryKey, 1);
         Set(this[P.Mora].Body, T.MedKey, 1);
@@ -193,23 +212,59 @@ public sealed partial class Game
         Set(this[P.Ruan].Body, T.OilKey, 1);
         foreach (var person in People)
         {
-            if (person.Pro.Lock >= 3) Set(person.Body, T.Lockpick, 1);
-            if (person.Pro.Craftsman) Set(person.Body, T.Craftsman, 1);
-            if (person.Pro.Structure >= 2) Set(person.Body, T.Structure, 1);
+            if (person.Pro.Lock >= 3 && !preexistingTags[person.Id].Contains(T.Lockpick)) Set(person.Body, T.Lockpick, 1);
+            if (person.Pro.Craftsman && !preexistingTags[person.Id].Contains(T.Craftsman)) Set(person.Body, T.Craftsman, 1);
+            if (person.Pro.Structure >= 2 && !preexistingTags[person.Id].Contains(T.Structure)) Set(person.Body, T.Structure, 1);
         }
+        ApplyAuthoredState();
         Rt.Sync();
         foreach (var person in People) Know(person);
+        ApplyAuthoredBeliefs();
         WriteRules();
         foreach (var person in People) WriteHabits(person);
+    }
+    private void ApplyAuthoredState()
+    {
+        if (_authored is null) return;
+        foreach (var declaration in _authored.Entities)
+        {
+            if (declaration.Kind=="character" && this[Chapter2Bindings.PersonId(declaration)].Inherited) continue;
+            var entity=Chapter2Bindings.Resolve(this,declaration);
+            var state=entity.Get<StateProperty>();
+            foreach (var (key,property) in declaration.Properties)
+            {
+                if(key.StartsWith("state:",StringComparison.Ordinal))
+                { state??=entity.Add(new StateProperty());state.Values[new(key[6..])]=property.Value.GetInt32(); }
+                else if(key.StartsWith("observable:",StringComparison.Ordinal))
+                { state??=entity.Add(new StateProperty());var tag=new Tag(key[11..]);if(property.Value.GetBoolean())state.Observable.Add(tag);else state.Observable.Remove(tag); }
+            }
+        }
+    }
+    private void ApplyAuthoredBeliefs()
+    {
+        if (_authored is null) return;
+        foreach (var declaration in _authored.Entities.Where(d=>d.Kind=="character"))
+        {
+            var person=this[Chapter2Bindings.PersonId(declaration)];
+            var tags=declaration.Properties.Where(p=>p.Key.StartsWith("belief:",StringComparison.Ordinal))
+                .Where(p=>!person.Inherited||!person.Self.Tags.ContainsKey(new Tag(p.Key[7..])))
+                .ToImmutableDictionary(p=>new Tag(p.Key[7..]),p=>(int?)p.Value.Value.GetInt32());
+            if(tags.Count>0)Observation.Observe(person.Soul,new ObservationInput(person.Self.Name,person.Self.Kind)
+            { Target=person.Self,Source=ObservationSource.Introspection,Time=Now,Tags=tags });
+        }
     }
 
     /// <summary>始业日上午十六人在中央厅会合：每人看见全部可指称的对象与彼此；此后的位置与状态只靠感知更新。</summary>
     private void Know(Person p)
     {
-        var sources = View.Keys.ToArray();
-        var mental = Rt.Observe(p.Soul, sources.Select(e => View[e]), 0);
+        var previouslyKnown = p.M.Keys.ToHashSet();
+        var sources = View.Keys.Where(e => !p.Inherited || !previouslyKnown.Contains(e)).ToArray();
+        var mental = Rt.Observe(p.Soul, sources.Select(e => View[e]), Now);
         for (var i = 0; i < sources.Length; i++) p.M[sources[i]] = mental[i];
         p.Self = p.M[p.Body];
+        if (p.Inherited)
+            Observation.Observe(p.Soul, new ObservationInput(p.Self.Name,p.Self.Kind)
+            { Target=p.Self, Source=ObservationSource.Perception, Time=Now, Move=true, Parent=p.M[Space[Place.Hall]] });
         Projection Concept(string name, ProjectionKind kind, ObservationSource source) => Observation.Observe(p.Soul,
             new ObservationInput(name, kind) { Source = source, Existence = Truth.True });
         p.Habit = Concept(p.Name + "的习惯", ProjectionKind.Concept, ObservationSource.Introspection);
@@ -218,12 +273,20 @@ public sealed partial class Game
         // 对他人的认识：信任初值、谁是工匠（公开所长）、钥匙在谁手里（事故当夜的分配，众所周知）。
         foreach (var other in People.Where(o => o != p))
         {
+            if (p.Inherited && previouslyKnown.Contains(other.Body))
+            {
+                var existing=p.M[other.Body];
+                if(!existing.Tags.ContainsKey(Tags.Trust))
+                    Observation.Observe(p.Soul,new ObservationInput(existing.Name,existing.Kind)
+                    { Target=existing,Source=ObservationSource.Recall,Time=Now,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Tags.Trust,Cast.BaseTrust(p.Id,other.Id)) });
+                continue;
+            }
             var them = p.M[other.Body];
             var tags = ImmutableDictionary<Tag, int?>.Empty
-                .Add(Tags.Trust, Cast.BaseTrust(p.Id, other.Id))
+                .Add(Tags.Trust, them.Tags.TryGetValue(Tags.Trust, out var trust) ? trust : Cast.BaseTrust(p.Id, other.Id))
                 .Add(T.Craftsman, other.Pro.Craftsman ? 1 : 0)
                 .Add(T.Picks, other.Pro.Lock >= 3 ? 1 : 0).Add(T.Strong, other.Pro.Strength >= 2 ? 1 : 0).Add(T.Signals, other.Pro.Signal >= 3 ? 1 : 0)
-                .Add(T.Branded, 0).Add(T.Accused, 0).Add(T.Suspect, 0);
+                .Add(T.Branded, them.Tags.GetValueOrDefault(T.Branded)).Add(T.Accused, them.Tags.GetValueOrDefault(T.Accused)).Add(T.Suspect, them.Tags.GetValueOrDefault(T.Suspect));
             // 人物之间的“讲过没讲过”初始一律为否；侦探不在人物互相转述、讲课、讨吃的之列（他是玩家，由玩家自己去问）。
             var marks = Enumerable.Range(1, Fx.MaxSpecs).Select(k => (Fx.Told(k), p.M[Clock])).Concat(new[] { 11, 12, 13, 14 }.Select(l => (Fx.Taught(l), p.M[Clock])))
                 .Append((Fx.AskedFood, p.M[Clock])).ToImmutableHashSet();
@@ -236,8 +299,8 @@ public sealed partial class Game
         }
         // 自知：钥匙、技艺在自己身上（不可见标签，经内省写入）。
         var self = ImmutableDictionary<Tag, int?>.Empty;
-        foreach (var t in BodyHidden) self = self.SetItem(t, Get(p.Body, t));
-        self = self.SetItem(T.Branded, 0).SetItem(T.Shamed, 0).SetItem(Tags.Cooperation, p.Pro.Cooperation)
+        foreach (var t in BodyHidden) self = self.SetItem(t, p.Self.Tags.TryGetValue(t, out var val) ? val : Get(p.Body, t));
+        self = self.SetItem(T.Branded, p.Self.Tags.GetValueOrDefault(T.Branded)).SetItem(T.Shamed, p.Self.Tags.GetValueOrDefault(T.Shamed)).SetItem(Tags.Cooperation, p.Self.Tags.TryGetValue(Tags.Cooperation, out var coop) ? coop : p.Pro.Cooperation)
             .SetItem(T.Duty, Cast.OnDuty(p.Id) ? 1 : 0).SetItem(T.InGroup[p.Pro.Group], 1).SetItem(T.Is[p.Id], 1);
         Observation.Observe(p.Soul, new ObservationInput(p.Self.Name, p.Self.Kind) { Target = p.Self, Source = ObservationSource.Introspection, Tags = self });
         // 文契组的旧答案：“是雀儿。”沃德与顾平章把她当作私取之人（第三部分 §2）。

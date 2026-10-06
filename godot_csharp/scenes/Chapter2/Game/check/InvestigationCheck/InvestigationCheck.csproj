@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
-<ItemGroup><Compile Include="Program.source"/><Reference Include="Chapter2Script"><HintPath>../../../Script/bin/Debug/net8.0/Chapter2Script.dll</HintPath></Reference><Reference Include="ChapterRuntime"><HintPath>../../../../Shared/Story/bin/Debug/net8.0/ChapterRuntime.dll</HintPath></Reference><Reference Include="DualOntologyWorldEngine.Core"><HintPath>../../../../../../csharp/bin/Debug/net8.0/DualOntologyWorldEngine.Core.dll</HintPath></Reference></ItemGroup>
+<ItemGroup><Compile Include="Program.source"/><ProjectReference Include="../../../Script/Chapter2Script.csproj" /></ItemGroup>
 </Project>

@@ -53,16 +53,26 @@ public sealed partial class Game
         if (place == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) text += "\n" + fp.Text + "。";
         return text;
     }
+    public string HostExamineEntity(Essence entity)
+    {
+        if (!View.ContainsKey(entity)) throw new InvalidOperationException("Unknown chapter entity.");
+        if (entity.Get<SpatialProperty>() is not null && SpaceOf(entity) != Space[Where(Det)]) throw new InvalidOperationException("The object is not in the current space.");
+        var observed=Rt.Observe(Det.Soul,[View[entity]],Now);
+        Det.M[entity]=observed.Single();DetSaw(entity);
+        if(entity==Valve)return Get(entity,T.Work)>0?"阀门已有修理的痕迹。":"阀门还没有修好。";
+        if(entity==RelayPost)return Get(entity,T.Worked)>0?"中继站留下了操作痕迹。":"中继站未见操作痕迹。";
+        return Describe(entity);
+    }
 
     /// <summary>问一个人知道什么（不占时段）。他只报告自己的感知与职业判读。</summary>
     public string HostAsk(P who)
         => HostAskPresentation(who).Text;
 
-    public (string Text, string Emotion) HostAskPresentation(P who)
+    public (string Text, string Emotion) HostAskPresentation(P who, bool selectedTestimony = false)
     {
         DetAsked.Add(who);
         AskedOn.Add((Day, who));
-        return TestimonyPresentation(this[who]);
+        return TestimonyPresentation(this[who], selectedTestimony);
     }
 
     /// <summary>侦探读过或听过、可以讲给别人听的规矩。</summary>

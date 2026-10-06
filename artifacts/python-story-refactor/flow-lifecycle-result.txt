@@ -1,0 +1,9 @@
+本次 Godot flow 回归已完成，未重跑：
+
+- 退出码：0；耗时：93.480 秒
+- 断言：`TOTAL 124 checks, 0 failed`
+- 退出清理提示：31 条 `GDScriptFunctionState` 泄漏记录、11 项 orphan `StringName`，并有 `ObjectDB instances leaked at exit` 警告。
+- Godot 输出没有为这些状态提供资源路径或所有者信息，因此无法据此确认真实引用环。报告列出全部泄漏记录和 `StringName` 名称，并标注了相关脚本路径。
+
+完整输出：[verbose.log](C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/python-story-refactor/flow-lifecycle/verbose.log)  
+汇总报告：[report.txt](C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/python-story-refactor/flow-lifecycle/report.txt)

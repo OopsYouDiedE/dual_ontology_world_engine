@@ -51,11 +51,9 @@ func run() -> void:
 	game.story_lock = false
 	game.engine.ReplaceProgress("hand_comparisons", {})
 	game.engine.SetProgress("experiments", "E11", true)
-	game.experiments["E11"] = true
-	check(not str(game._card_notes("E11")).contains(game.HELP_NOTES.E11), "legacy experiment flag cannot produce full host note")
-	check(not str(game.engine.CardNotes("E11")).contains(game.HELP_NOTES.E11), "legacy experiment flag cannot produce full formal note")
+	check(not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "legacy experiment flag cannot produce full host note")
+	check(not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "legacy experiment flag cannot produce full formal note")
 	game.engine.ReplaceProgress("experiments", {})
-	game.experiments.clear()
 	locate(Vector2(640, 368))
 	var before := {}
 	for who in ["huo", "shen", "su"]: before[who] = state(who)
@@ -74,7 +72,7 @@ func run() -> void:
 	game._compare_hand("detective")
 	await drain()
 	check(game.engine.Progress("hand_comparisons").size() == 1 and not game.engine.Progress("experiments").has("E11"), "actual shelf self comparison records only 1/4")
-	check(str(game._card_notes("E11")).contains("1/4") and not str(game._card_notes("E11")).contains(game.HELP_NOTES.E11), "partial progress visible without all-four conclusion")
+	check(str(game.engine.CardNotes("E11")).contains("1/4") and not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "partial progress visible without all-four conclusion")
 	for who in ["huo", "shen", "su"]: check(state(who) == before[who], "self comparison never summons " + who)
 	game.close_modal()
 	game.engine.Locate("detective", "R05")
@@ -94,7 +92,7 @@ func run() -> void:
 	game.engine.SetProgress("hand_comparisons", "outsider", true)
 	game.engine.SetProgress("hand_comparisons", "huo", true)
 	game.engine.SetProgress("hand_comparisons", "shen", true)
-	check(not str(game._card_notes("E11")).contains(game.HELP_NOTES.E11) and not str(game.engine.CardNotes("E11")).contains(game.HELP_NOTES.E11), "four dictionary entries missing su cannot produce full host/formal conclusion")
+	check(not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11) and not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "four dictionary entries missing su cannot produce full host/formal conclusion")
 	for key in ["outsider", "huo", "shen"]: game.engine.RemoveProgress("hand_comparisons", key)
 	for who in ["huo", "shen", "su"]:
 		var actor = game.actor_of(who)
@@ -106,7 +104,7 @@ func run() -> void:
 		check(game.engine.Progress("hand_comparisons").has(who), "physically present individual comparison " + who + " (injected position, drained dialogue)")
 		if who != "su": check(not game.engine.Progress("experiments").has("E11"), "incomplete group cannot set experiment after " + who)
 		actor.position = before[who][0]
-	check(game.engine.Progress("hand_comparisons").size() == 4 and game.engine.Progress("experiments").has("E11") and str(game._card_notes("E11")).contains(game.HELP_NOTES.E11), "all four individual records enable conclusion and experiment")
+	check(game.engine.Progress("hand_comparisons").size() == 4 and game.engine.Progress("experiments").has("E11") and str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "all four individual records enable conclusion and experiment")
 	game.open_card("E11")
 	var card := await render()
 	check(card.save_png(OUT + "current-hand-outline-card.png") == OK, "real rendered E11 result screenshot")
@@ -115,15 +113,15 @@ func run() -> void:
 	var a = game.actor_of("huo")
 	a.position = shelf + Vector2(0, 136)
 	locate(a.position + Vector2(32, 0))
-	game.examined.erase("E11")
+	game.engine.RemoveProgress("examined", "E11")
 	game._invite_hand("huo")
 	check(not a.travelling and not game.hand_invitations.has("huo"), "invitation unavailable before discovery")
-	game.examined["E11"] = true
+	game.engine.SetProgress("examined", "E11", true)
 	var idle := state("huo")
-	game.life["huo"] = {"state": "holding"}
+	game.engine.SetProgress("life", "huo", {"state": "holding"})
 	game._invite_hand("huo")
 	check(not a.travelling and not game.hand_invitations.has("huo") and game.aside.text.contains("正忙"), "busy holding person receives rejection feedback")
-	game.life.erase("huo")
+	game.engine.RemoveProgress("life", "huo")
 	a.travelling = true
 	game._invite_hand("huo")
 	check(not game.hand_invitations.has("huo") and game.aside.text.contains("正忙"), "already travelling person receives busy rejection")

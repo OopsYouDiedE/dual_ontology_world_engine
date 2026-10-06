@@ -1,0 +1,75 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/Awakening/UI/PagePreview.gd" id="preview"]
+
+[node name="Notebook" type="VBoxContainer"]
+offset_right = 932.0
+size_flags_horizontal = 3
+theme = ExtResource("theme")
+script = ExtResource("preview")
+theme_override_constants/separation = 10
+
+[node name="Empty" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_override_font_sizes/normal_font_size = 19
+theme_override_font_sizes/bold_font_size = 19
+theme_override_colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+text = "还没有记下任何东西。"
+
+[node name="Groups" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Others" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Heading" type="RichTextLabel" parent="Others"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+text = "[b]其他[/b]"
+
+[node name="Board" type="Button" parent="Others"]
+layout_mode = 2
+size_flags_horizontal = 0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "活动厅公告框（学园守则）"
+
+[node name="Recalls" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Rule" type="ColorRect" parent="Recalls"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.17, 0.13, 0.09, 0.28)
+
+[node name="Heading" type="RichTextLabel" parent="Recalls"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+text = "[b]回忆所得[/b]"
+
+[node name="Entries" type="VBoxContainer" parent="Recalls"]
+layout_mode = 2
+theme_override_constants/separation = 10

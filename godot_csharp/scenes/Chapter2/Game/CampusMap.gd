@@ -44,9 +44,18 @@ const Paper := preload("res://scenes/Shared/UI/Paper.gd")
 		node_current_color = value
 		queue_redraw()
 
-@export var preview_all_nodes: bool = false:
+@export var preview_all_nodes: bool = true:
 	set(value):
 		preview_all_nodes = value
+		queue_redraw()
+
+@export var preview_here: String = "":
+	set(value):
+		preview_here = value
+		queue_redraw()
+@export var preview_figures: Array[Dictionary] = []:
+	set(value):
+		preview_figures = value
 		queue_redraw()
 
 ## 地点：示意位置、显示名、去往时载入的地图与出生点。键与引擎的 Place 同名（另有几处宿主自有的地点）。
@@ -70,6 +79,33 @@ const LINKS := [["ArchiveFront", "Hall"], ["Hall", "Lecture"], ["Lecture", "Reso
 	["Commons", "DormS"], ["Commons", "DormLife"], ["Commons", "Oath"], ["Commons", "Logistics"], ["Logistics", "Granary"], ["Logistics", "Clinic"],
 	["Clinic", "Greenhouse"], ["Logistics", "Oath"]]
 
+@export var links: Array = LINKS.duplicate(true):
+	set(value):
+		links = value
+		queue_redraw()
+@export var playback_hint: String = "空格 暂停　F 倍速（%sx）　Esc 跳过":
+	set(value):
+		playback_hint = value
+		queue_redraw()
+@export var playback_hint_size: int = 14:
+	set(value):
+		playback_hint_size = value
+		queue_redraw()
+@export var ink_color: Color = Color(0.12, 0.1, 0.09, 0.55):
+	set(value):
+		ink_color = value
+		queue_redraw()
+
+@export var link_width: float = 2.0
+@export var border_inset: float = 6.0
+@export var border_width: float = 1.0
+@export var wing_outline: Rect2 = Rect2(300, 295, 400, 180)
+@export var wing_outline_color: Color = Color(0.168627, 0.12549, 0.086275, 0.18)
+@export var bubble_color: Color = Color(1, 0.98, 0.92, 0.92)
+@export var bubble_border_color: Color = Color(0.168627, 0.12549, 0.086275, 0.5)
+@export var bubble_font_size: int = 13
+@export var figure_font_size: int = 12
+
 signal picked(node: String)
 signal playback_done
 
@@ -85,8 +121,15 @@ var skipping := false
 func _ready() -> void:
 	custom_minimum_size = map_size
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	queue_redraw()
+
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return
 	if mode != "travel":
 		return
 	if event is InputEventMouseMotion:
@@ -108,52 +151,59 @@ func _node_at(p: Vector2) -> String:
 	for key in NODES:
 		if not _shown(key):
 			continue
-		if Rect2(NODES[key].pos - Vector2(58, 20), Vector2(116, 40)).has_point(p):
+		var location := get_node_or_null("Locations/" + key) as Control
+		if location != null and Rect2(location.position - Vector2(2, 2), location.size + Vector2(4, 4)).has_point(p):
 			return key
 	return ""
 
 func _draw() -> void:
 	var draw_size: Vector2 = map_size
 	draw_rect(Rect2(Vector2.ZERO, draw_size), bg_color)
-	draw_rect(Rect2(Vector2(6, 6), draw_size - Vector2(12, 12)), border_color, false, 1.0)
+	draw_rect(Rect2(Vector2.ONE * border_inset, draw_size - Vector2.ONE * border_inset * 2.0), border_color, false, border_width)
 	var font := Paper.font()
-	for link in LINKS:
-		if _shown(link[0]) and _shown(link[1]):
-			draw_line(NODES[link[0]].pos, NODES[link[1]].pos, link_color, 2.0)
-	# 生活翼的外廓：四个寝区围着起居厅。
-	draw_rect(Rect2(Vector2(300, 295), Vector2(400, 180)), Color(Paper.INK, 0.18), false, 1.0)
-	for key in NODES:
-		if not _shown(key):
+	for link in links:
+		if link.size() < 2 or not NODES.has(link[0]) or not NODES.has(link[1]):
 			continue
-		var node: Dictionary = NODES[key]
-		var box := Rect2(node.pos - Vector2(56, 18), Vector2(112, 36))
-		var fill := node_fill_color
-		if key == here:
-			fill = node_current_color
-		if key == hovered:
-			fill = node_hover_color
-		draw_rect(box, fill)
-		draw_rect(box, Color(Paper.SEAL, 0.9) if key == hovered or key == here else Color(Paper.INK, 0.5), false, 1.0)
-		draw_string(font, box.position + Vector2(0, 24), node.label, HORIZONTAL_ALIGNMENT_CENTER, box.size.x, 17, Paper.INK)
-		if key == here:
-			draw_string(font, box.position + Vector2(0, -6), "你在这里", HORIZONTAL_ALIGNMENT_CENTER, box.size.x, 13, Paper.SEAL)
-	for f in figures:
-		_draw_ink(f.pos, float(f.alpha), str(f.label))
+		if _shown(link[0]) and _shown(link[1]):
+			draw_line(_position(link[0]), _position(link[1]), link_color, link_width)
+	# 生活翼的外廓：四个寝区围着起居厅。
+	draw_rect(wing_outline, wing_outline_color, false, border_width)
+	_sync_locations()
+	for f in (preview_figures if Engine.is_editor_hint() else figures):
+		_draw_ink(f.get("pos", Vector2.ZERO), float(f.get("alpha", 1.0)), str(f.get("label", "")))
 		if str(f.get("bubble", "")) != "":
 			var text: String = f.bubble
 			var w := minf(260.0, 14.0 * text.length() + 16.0)
 			var r := Rect2(f.pos + Vector2(-w / 2.0, -78), Vector2(w, 26))
-			draw_rect(r, Color(1, 0.98, 0.92, 0.92))
-			draw_rect(r, Color(Paper.INK, 0.5), false, 1.0)
-			draw_string(font, r.position + Vector2(6, 18), text, HORIZONTAL_ALIGNMENT_LEFT, w - 12, 13, Paper.INK)
+			draw_rect(r, bubble_color)
+			draw_rect(r, bubble_border_color, false, border_width)
+			draw_string(font, r.position + Vector2(6, 18), text, HORIZONTAL_ALIGNMENT_LEFT, w - 12, bubble_font_size, Paper.INK)
 	if mode == "replay":
-		draw_string(font, Vector2(20, draw_size.y - 18), "空格 暂停　F 倍速（%sx）　Esc 跳过" % str(speed), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Paper.MUTED)
+		draw_string(font, Vector2(20, draw_size.y - 18), playback_hint % str(speed), HORIZONTAL_ALIGNMENT_LEFT, -1, playback_hint_size, Paper.MUTED)
+
+func _position(key: String) -> Vector2:
+	var location := get_node_or_null("Locations/" + key) as Control
+	return location.position + location.size / 2.0 if location != null else NODES[key].pos
+
+func _sync_locations() -> void:
+	var current := preview_here if Engine.is_editor_hint() else here
+	for key in NODES:
+		var location := get_node_or_null("Locations/" + key) as Panel
+		if location == null:
+			continue
+		location.visible = _shown(key)
+		var fill := node_hover_color if key == hovered else (node_current_color if key == current else node_fill_color)
+		var box := location.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		box.bg_color = fill
+		box.border_color = Color(Paper.SEAL, 0.9) if key == hovered or key == current else Color(Paper.INK, 0.5)
+		location.add_theme_stylebox_override("panel", box)
+		location.get_node("Here").visible = key == current
 
 func _draw_ink(p: Vector2, alpha: float, label_text: String) -> void:
-	var ink := Color(0.12, 0.1, 0.09, 0.55 * alpha)
+	var ink := Color(ink_color, ink_color.a * alpha)
 	draw_circle(p + Vector2(0, -30), 6, ink)
 	draw_colored_polygon(PackedVector2Array([p + Vector2(-7, -23), p + Vector2(7, -23), p + Vector2(10, 0), p + Vector2(-10, 0)]), ink)
-	draw_string(Paper.font(), p + Vector2(-50, 14), label_text, HORIZONTAL_ALIGNMENT_CENTER, 100, 12, Color(Paper.INK, 0.8 * alpha))
+	draw_string(Paper.font(), p + Vector2(-50, 14), label_text, HORIZONTAL_ALIGNMENT_CENTER, 100, figure_font_size, Color(Paper.INK, 0.8 * alpha))
 
 func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint():
@@ -169,7 +219,26 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 ## 回放一夜：steps = [{t, who, name, build, from, to, act}]；named 为 true 时（全部吻合）写出名字与心声。
+signal playback_cancelled
+var cancelled := false
+const PresentationWait := preload("res://scenes/Shared/PresentationWait.gd")
+
+func cancel_playback() -> void:
+	if cancelled: return
+	cancelled = true
+	playback_cancelled.emit()
+	figures.clear()
+
+func _exit_tree() -> void:
+	cancel_playback()
+
+func _wait_frame() -> void:
+	if cancelled: return
+	await PresentationWait.until(get_tree().process_frame, playback_cancelled)
+
 func play(steps: Array, named: bool) -> void:
+	if Engine.is_editor_hint() or cancelled:
+		return
 	mode = "replay"
 	skipping = false
 	paused = false
@@ -178,14 +247,15 @@ func play(steps: Array, named: bool) -> void:
 		if not by_who.has(s.who):
 			var start: String = _node_key(str(s.from))
 			by_who[s.who] = {"pos": Vector2.ZERO, "slot": by_who.size(), "label": str(s.name) if named else str(s.build), "alpha": 1.0, "bubble": ""}
-			by_who[s.who].pos = NODES[start].pos + _offset(int(by_who[s.who].slot))
+			by_who[s.who].pos = _position(start) + _offset(int(by_who[s.who].slot))
 			figures.append(by_who[s.who])
 	queue_redraw()
 	for s in steps:
+		if cancelled: return
 		if skipping:
 			break
 		var f: Dictionary = by_who[s.who]
-		var target: Vector2 = NODES[_node_key(str(s.to))].pos + _offset(int(f.slot))
+		var target: Vector2 = _position(_node_key(str(s.to))) + _offset(int(f.slot))
 		if str(s.act) == "":
 			await _tween(f, target, 0.55)
 		else:
@@ -193,6 +263,7 @@ func play(steps: Array, named: bool) -> void:
 			queue_redraw()
 			await _wait(1.1 if named else 0.5)
 			f.bubble = ""
+	if cancelled: return
 	figures.clear()
 	queue_redraw()
 	playback_done.emit()
@@ -200,20 +271,20 @@ func play(steps: Array, named: bool) -> void:
 func _tween(f: Dictionary, target: Vector2, duration: float) -> void:
 	var from: Vector2 = f.pos
 	var t := 0.0
-	while t < duration and not skipping:
+	while t < duration and not skipping and not cancelled:
 		if not paused:
 			t += get_process_delta_time() * speed
 			f.pos = from.lerp(target, clampf(t / duration, 0, 1))
 			queue_redraw()
-		await get_tree().process_frame
-	f.pos = target
+		await _wait_frame()
+	if not cancelled: f.pos = target
 
 func _wait(seconds: float) -> void:
 	var t := 0.0
-	while t < seconds and not skipping:
+	while t < seconds and not skipping and not cancelled:
 		if not paused:
 			t += get_process_delta_time() * speed
-		await get_tree().process_frame
+		await _wait_frame()
 
 static func _node_key(place: String) -> String:
 	return place if NODES.has(place) else "Commons"

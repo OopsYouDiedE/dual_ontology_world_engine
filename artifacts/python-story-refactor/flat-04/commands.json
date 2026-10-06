@@ -1,0 +1,139 @@
+[
+  {
+    "name": "verify-script",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "-c",
+      "import os;os.write(1,b'raw\\x00\\xff\\r\\nSCRIPT ERROR: simulated\\r\\n');os.write(2,b'stderr\\x00\\xfe\\r\\n')"
+    ],
+    "child_exit": 0,
+    "seconds": 0.125,
+    "result": false,
+    "expected": false,
+    "detail": "1 engine error(s) (0s)",
+    "raw_stdout_exact": true,
+    "raw_stderr_exact": true
+  },
+  {
+    "name": "verify-resource",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "-c",
+      "import os;os.write(1,b'raw\\x00\\xff\\r\\nERROR: resources still in use at exit\\r\\n');os.write(2,b'stderr\\x00\\xfe\\r\\n')"
+    ],
+    "child_exit": 0,
+    "seconds": 0.10899999999674037,
+    "result": false,
+    "expected": false,
+    "detail": "1 engine error(s) (0s)",
+    "raw_stdout_exact": true,
+    "raw_stderr_exact": true
+  },
+  {
+    "name": "verify-objectdb",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "-c",
+      "import os;os.write(1,b'raw\\x00\\xff\\r\\nWARNING: ObjectDB instances leaked at exit\\r\\n');os.write(2,b'stderr\\x00\\xfe\\r\\n')"
+    ],
+    "child_exit": 0,
+    "seconds": 0.14100000000325963,
+    "result": false,
+    "expected": false,
+    "detail": "1 engine error(s) (0s)",
+    "raw_stdout_exact": true,
+    "raw_stderr_exact": true
+  },
+  {
+    "name": "verify-clean",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "-c",
+      "import os;os.write(1,b'raw\\x00\\xff\\r\\nclean\\r\\n');os.write(2,b'stderr\\x00\\xfe\\r\\n')"
+    ],
+    "child_exit": 0,
+    "seconds": 0.10899999999674037,
+    "result": true,
+    "expected": true,
+    "detail": "ok (0s) ",
+    "raw_stdout_exact": true,
+    "raw_stderr_exact": true
+  },
+  {
+    "name": "only-nonexistent",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "tools/verify.py",
+      "--only",
+      "nonexistent"
+    ],
+    "exit": 2,
+    "seconds": 0.17199999999138527,
+    "timeout": false,
+    "script_error_killed": false,
+    "diagnostics": true
+  },
+  {
+    "name": "only-nav",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "tools/verify.py",
+      "--only",
+      "nav"
+    ],
+    "exit": 2,
+    "seconds": 0.17199999999138527,
+    "timeout": false,
+    "script_error_killed": false,
+    "diagnostics": true
+  },
+  {
+    "name": "skip",
+    "command": [
+      "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "tools/verify.py",
+      "--skip",
+      "core",
+      "scope",
+      "host",
+      "flow",
+      "flow2",
+      "gallery"
+    ],
+    "exit": 0,
+    "seconds": 0.1720000000204891,
+    "timeout": false,
+    "script_error_killed": false,
+    "diagnostics": false
+  },
+  {
+    "name": "build",
+    "command": [
+      "dotnet",
+      "build",
+      "godot_csharp/DualOntologyWorldEngine.sln"
+    ],
+    "exit": 0,
+    "seconds": 1.8429999999934807,
+    "timeout": false,
+    "script_error_killed": false,
+    "diagnostics": false
+  },
+  {
+    "name": "import",
+    "command": [
+      "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+      "--headless",
+      "--editor",
+      "--path",
+      "godot_csharp",
+      "--import",
+      "--quit"
+    ],
+    "exit": 0,
+    "seconds": 6.8439999999827705,
+    "timeout": false,
+    "script_error_killed": false,
+    "diagnostics": false
+  }
+]

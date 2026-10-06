@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/Awakening/UI/PagePreview.gd" id="preview"]
+
+[node name="NameEntry" type="VBoxContainer"]
+theme = ExtResource("theme")
+script = ExtResource("preview")
+theme_override_constants/separation = 10
+offset_right = 492.0
+size_flags_horizontal = 3
+
+
+[node name="Prompt" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+theme_override_font_sizes/normal_font_size = 19
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+text = "三个人在等你开口。登船之前，你叫什么？"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Name" type="LineEdit" parent="."]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+placeholder_text = "你的名字"
+max_length = 8

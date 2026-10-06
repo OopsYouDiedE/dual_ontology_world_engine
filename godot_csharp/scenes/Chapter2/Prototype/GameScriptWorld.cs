@@ -11,6 +11,8 @@ public sealed partial class Game
     {
         var world = new CoreScriptWorld(Rt, S);
         S.Completed += world.RefreshAfter;
+        if (Continuation is not null)
+            foreach (var (id, entity) in Continuation.Entities) world.Register(id, entity);
         foreach (var (id, space) in Space) world.Register("room:" + id, space);
         foreach (var thing in View.Keys.Where(e => e.Kind != DualOntologyWorldEngine.Core.ProjectionKind.Space &&
                      !People.Any(p => ReferenceEquals(p.Body, e))))

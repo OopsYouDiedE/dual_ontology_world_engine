@@ -10,6 +10,7 @@ func check(ok: bool, label: String) -> void:
 	print(("PASS " if ok else "FAIL ") + label)
 func fresh(skip := true) -> Node:
 	if is_instance_valid(holder):
+		holder.get_node("Awakening").begin_shutdown()
 		holder.queue_free()
 		await process_frame
 		await process_frame
@@ -98,7 +99,9 @@ func run() -> void:
 	game.engine.Amplify("huo", "S4")
 	game.player.position = Vector2(930, 200)
 	for i in 4: await physics_frame
-	game.whisper("huo", "自动验证低语")
+	game.engine.Whisper("huo", "自动验证低语")
+	game.engine.SetProgress("nudged", "E7", true)
+	await game.present_dialogue_command("consider", ["huo"])
 	check(await wait_for(func(): return str(game.life.get("huo", {}).get("state", "")) == "done", 3000), "autonomous companion reaches object and completes")
 	check(game.engine.Hooks("huo") == 1 and game.engine.IsDisturbed("E7") and not game.recalls.has("huo"), "autonomous original Core action leaves hook without leaking recall")
 	game = await fresh()
@@ -117,4 +120,13 @@ func run() -> void:
 	check(game.ended and game.flags.has("door_open"), "answer original four-step route reaches finale")
 	print("AUTO REGRESSION ONLY; INJECTED STATE AND AUTOMATED DIALOGUE; NOT BLIND PLAY")
 	print("TOTAL %d checks, %d failed" % [checks, failures])
-	quit(0 if failures == 0 else 1)
+	call_deferred("finish", 0 if failures == 0 else 1)
+
+func finish(exit_code: int) -> void:
+	if is_instance_valid(holder):
+		holder.get_node("Awakening").begin_shutdown()
+		holder.queue_free()
+	holder = null
+	await process_frame
+	await process_frame
+	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(exit_code)

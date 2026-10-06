@@ -1,0 +1,4 @@
+STATUS 未运行
+EXIT_CODE N/A
+ELAPSED_SECONDS 0 (not launched)
+REASON 未生成/执行两个外部示例程序集。SharedRuntimeCheck.csproj 及 compile_world_script.ps1 默认生成的外置示例工程均引用 Chapter1Script.csproj；本轮已实际证实该依赖编译失败。未用旧 DLL 或缺参数调用替代；不是参数缺失导致的实现失败。示例源为 scenes/Shared/Story/Examples/ExampleWorld.cs 与 ExampleAwakening.cs，预期输出 WorldScript.ExampleWorld.dll 与 WorldScript.ExampleAwakening.dll。

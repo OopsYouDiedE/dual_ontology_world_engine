@@ -24,3 +24,15 @@ static func sfx(id: String, volume_db := 0.0, pitch := 1.0) -> void:
 	var hub := _hub()
 	if hub:
 		hub.play_sfx(id, volume_db, pitch)
+
+static func release_audio() -> void:
+	var hub := _hub()
+	if hub: hub.release_audio()
+
+static func quit_cleanly(exit_code := 0) -> void:
+	var hub := _hub()
+	if hub:
+		await hub.quit_cleanly(exit_code)
+	else:
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree: tree.quit(exit_code)

@@ -37,8 +37,13 @@ var rebuilt=Game.Rebuild(scripted.Script,scripted.FreeScript,scripted.Script.Cou
 Check(rebuilt.StoryChoices.SequenceEqual(scripted.StoryChoices) && rebuilt.PlaceScript.SequenceEqual(scripted.PlaceScript) && Game.Get(rebuilt.Det.Body,T.Insight)==1, "rebuild restores choice and visit records");
 var choiceCount=scripted.StoryChoices.Count; var placeCount=scripted.PlaceScript.Count; var insight=Game.Get(scripted.Det.Body,T.Insight);
 rebuilt.SetPlayerPlace(Place.Clinic); Check(scripted.StoryChoices.Count==choiceCount && scripted.PlaceScript.Count==placeCount && Game.Get(scripted.Det.Body,T.Insight)==insight, "rebuild world mutation does not pollute real world");
-var awakening = new DualOntologyWorldEngine.Awakening.AwakeningContentSession();
-awakening.LoadContent(File.ReadAllText("godot_csharp/scenes/Awakening/AwakeningContent.json"));
+var chapter1 = new DualOntologyWorldEngine.Awakening.Chapter1Script();
+var awakening = chapter1.CreateContent();
+Check(awakening.Content.RootElement.GetRawText()==File.ReadAllText("godot_csharp/scenes/Awakening/Script/generated_awakening_content.json").Trim(), "chapter1 generated content exact");
+var compiledDialogue = DualOntologyWorldEngine.Awakening.Chapter1CompiledDialogue.Create();
+Check(compiledDialogue.Entries.ContainsKey("s1_wake"), "chapter1 real generated dialogue document");
+var packetDialogue = chapter1.CreateDialogue(awakening, chapter1.CreateWorld());
+Check(packetDialogue.Start("s1_wake").Lines.Count==1, "chapter1 dialogue factory emits opening packet");
 Check(awakening.Content.RootElement.GetProperty("EVIDENCE").EnumerateObject().Count()==12, "chapter1 content loaded by CSharp session");
 awakening.Session.Locate("detective","room1"); awakening.Session.Place("E12","room1"); awakening.Session.Place("E3","room2");
 Check(awakening.SiteVisible("roam","E12") && !awakening.SiteVisible("investigate","E3"), "chapter1 legal local evidence visibility");
@@ -85,21 +90,6 @@ var execution = gc.Submit(testPerson, new Effect.Set(testPerson.Self, property, 
 gc.Session.CTB.RunUntil(gc.Session.CTB.Now + 5);
 Check(execution.Status == ExecutionStatus.Completed && Game.Get(testPerson.Body, property) == 17,
     "dynamic actor action commits original body state through original session");
-var loadedMorning = new DualOntologyWorldEngine.Awakening.MorningWorld();
-var awakeningOutputs = new List<string>();
-var awakeningRuntime = ChapterScript.Load<DualOntologyWorldEngine.Awakening.MorningWorld, DualOntologyWorldEngine.Awakening.Person>(Path.GetFullPath(args[1]))
-    .CreateRuntime(loadedMorning, new() {
-        Text = (_, text) => awakeningOutputs.Add(text), Present = (_, _) => {},
-        Busy = (w, p) => w.StoryBusy(p), Execute = (w, p, effect) => w.SubmitStory(p, effect), Timeline = w => w.StoryTimeline
-    });
-awakeningRuntime.Pump();
-Check(awakeningRuntime.PendingChoice?.Id == "awakening-start", "chapter1 external compiled script loaded and suspended at real choice");
-awakeningRuntime.Choose("pocket"); awakeningRuntime.Pump();
-Check(awakeningOutputs.Any(t => t.Contains("放大镜")) && loadedMorning.WorldOf(DualOntologyWorldEngine.Awakening.Person.Detective).Projections.Any(p => p.Name == "侦探的外衣口袋" && p.Existence == Truth.True),
-    "chapter1 external script original Core observation action and wait execute");
-loadedMorning.ScriptWorld.Session.CTB.RunUntil(loadedMorning.ScriptWorld.Session.CTB.Now + 8);
-Check(ReferenceEquals(loadedMorning.ScriptWorld["pilot-note"].Get<SpatialProperty>()!.Holder, loadedMorning.ScriptWorld.Characters["witness"].Body),
-    "chapter1 externally defined actor autonomously takes original Core object");
 scripted.S.CTB.RunUntil(scripted.S.CTB.Now + 8);
 Check(ReferenceEquals(scripted.ScriptWorld["note"].Get<SpatialProperty>()!.Holder, scripted.ScriptWorld.Characters["guest"].Body),
     "chapter2 externally defined actor autonomously takes original Core object");

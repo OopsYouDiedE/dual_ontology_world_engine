@@ -1,17 +1,5 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scenes/Shared/ReplayManuscript.gd" id="replay_manuscript"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/ReplayManuscript.tscn" id="scene"]
 
-[node name="ReplayManuscript" type="HBoxContainer"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 26
-script = ExtResource("replay_manuscript")
-page_separation = 26
-page_bg_color = Color(0.921569, 0.886275, 0.784314, 1)
-page_margin = 18
-default_title = "重演推演"
-default_hint = "设定变量后，可与现场留下的痕迹对照。"
+[node name="ReplayManuscript" instance=ExtResource("scene")]

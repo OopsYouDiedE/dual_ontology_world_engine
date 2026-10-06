@@ -1,5 +1,5 @@
 extends Node
-## Shared locale choice for Godot UI and DialogueManager translations.
+## Shared locale choice for Godot UI.
 signal language_changed(code: String)
 
 const LANGUAGES := ["zh_CN", "en", "ja"]

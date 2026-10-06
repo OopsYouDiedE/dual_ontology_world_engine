@@ -193,7 +193,9 @@ func _run() -> void:
 	game.engine.Amplify("huo", "S4")
 	game.player.position = Vector2(930, 200)
 	await settle(10)
-	game.whisper("huo", "图纸就在主楼。")
+	game.engine.Whisper("huo")
+	game.engine.SetProgress("nudged", "E7", true)
+	await game.present_dialogue_command("consider", ["huo"])
 	await finish_dialogue(game)
 	for i in 1500:
 		await process_frame
@@ -215,7 +217,7 @@ func _run() -> void:
 	# 5b 请沈鼎回忆（请求这一路）：犹豫，反问“你说呢？”
 	game.engine.Amplify("shen", "S4")
 	game.engine.Amplify("shen", "nudge")
-	game.nudged["E10"] = true
+	game.engine.SetProgress("nudged", "E10", true)
 	game.player.position = Vector2(470, 600)
 	await settle(5)
 	game._on_recall("E10")
@@ -338,7 +340,7 @@ func _run() -> void:
 	game.player.position = Vector2(536, 300)
 	game.engine.Amplify("huo", "S4")
 	game.engine.Amplify("huo", "nudge")
-	game.nudged["E7"] = true
+	game.engine.SetProgress("nudged", "E7", true)
 	game.open_board()
 	game.close_modal()
 	await finish_dialogue(game)
@@ -351,7 +353,7 @@ func _run() -> void:
 	# 7 答辩（陈述与出示成对，到第 4 步为止）、门开
 	game = await fresh()
 	game.jump_to("replay_match")
-	game._apply_recall("E10", "shen")
+	game.engine.ApplyRecall("E10", "shen")
 	game.answer()
 	var picks := [{"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"}, {"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
 	var captured_pair := false

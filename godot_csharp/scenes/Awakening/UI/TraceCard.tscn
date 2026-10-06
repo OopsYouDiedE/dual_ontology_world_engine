@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/EvidenceCard.tscn" id="base"]
+
+[node name="TraceCard" instance=ExtResource("base")]
+
+[node name="Texts" parent="Row" index="1"]
+theme_override_constants/separation = 4

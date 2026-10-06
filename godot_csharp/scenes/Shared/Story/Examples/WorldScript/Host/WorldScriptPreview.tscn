@@ -1,0 +1,123 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/Shared/Story/Examples/WorldScript/Host/WorldScriptPreview.gd" id="host"]
+[ext_resource type="Script" path="res://scenes/Shared/Story/Examples/WorldScript/Host/WorldSessionEngine.cs" id="engine"]
+
+[node name="WorldScriptPreview" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("host")
+
+[node name="WorldSessionEngine" type="Node" parent="."]
+script = ExtResource("engine")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.07, 0.09, 0.11, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Column" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Margin/Column"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "世界脚本 · 作者预览"
+
+[node name="Status" type="Label" parent="Margin/Column"]
+layout_mode = 2
+text = "正在加载编译后的世界脚本……"
+autowrap_mode = 2
+
+[node name="Chapter2" type="Button" parent="Margin/Column"]
+layout_mode = 2
+text = "加载第二章（沿用当前世界）"
+disabled = true
+
+[node name="RoomView" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 18
+metadata/entity_id = "world:room.foyer"
+
+[node name="RoomName" type="Label" parent="Margin/Column/RoomView"]
+layout_mode = 2
+text = "门厅"
+
+[node name="Detective" type="Label" parent="Margin/Column/RoomView"]
+layout_mode = 2
+text = "侦探 · 在场"
+metadata/entity_id = "world:character.detective"
+metadata/actor = true
+
+[node name="Guard" type="Label" parent="Margin/Column/RoomView"]
+layout_mode = 2
+text = "守夜人 · 在场"
+metadata/entity_id = "world:character.guard"
+metadata/actor = true
+
+[node name="Bolt" type="Button" parent="Margin/Column/RoomView"]
+layout_mode = 2
+text = "内侧插闩 · 查看可选行动"
+metadata/entity_id = "world:object.inner_bolt"
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Refresh" type="Button" parent="Margin/Column/Actions"]
+layout_mode = 2
+text = "查看当前候选"
+disabled = true
+
+[node name="Observe" type="Button" parent="Margin/Column/Actions"]
+layout_mode = 2
+text = "观察所在房间"
+disabled = true
+
+[node name="Transcript" type="RichTextLabel" parent="Margin/Column"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = false
+scroll_following = true
+text = ""
+
+[node name="Next" type="Button" parent="Margin/Column"]
+layout_mode = 2
+text = "继续"
+visible = false
+
+[node name="ChoiceTitle" type="Label" parent="Margin/Column"]
+layout_mode = 2
+text = "当前可选择的行动"
+
+[node name="ChoiceScroll" type="ScrollContainer" parent="Margin/Column"]
+custom_minimum_size = Vector2(0, 190)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Choices" type="VBoxContainer" parent="Margin/Column/ChoiceScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8

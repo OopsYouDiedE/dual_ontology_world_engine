@@ -10,16 +10,46 @@ using GDict = Godot.Collections.Dictionary;
 /// </summary>
 public partial class AwakeningEngine : Node
 {
+    public AwakeningEngine()
+    {
+        ChapterWorldContinuity.Clear();
+        _morning.InitializePlayerPerception();
+    }
     private static readonly Chapter1Script Chapter = new();
     private MorningWorld _morning = Chapter.CreateWorld();
     private AwakeningContentSession _content = Chapter.CreateContent();
+    private Chapter1Dialogue? _dialogue;
+    private Chapter1Interaction? _interaction;
+    private Chapter1Interaction FieldInteraction => _interaction ??= new(_content, _morning);
+    public GDict StartDialogue(string title) => Packet((_dialogue ??= new(_content, _morning)).Start(title));
+    public GDict AdvanceDialogue() => Packet((_dialogue ??= new(_content, _morning)).Next());
+    public GDict Choose(string choiceId) => Packet((_dialogue ??= new(_content, _morning)).Choose(choiceId));
+    public GDict Interact(string siteId) => Packet(FieldInteraction.Interact(siteId));
+    public GDict CardPacket(string id, GArray geometricAvailablePeople) => Packet(FieldInteraction.CardPacket(id, geometricAvailablePeople.Select(p => p.AsString())));
+    public GDict ChooseCard(string choiceId, GArray geometricAvailablePeople) => Packet(FieldInteraction.Choose(choiceId, geometricAvailablePeople.Select(p => p.AsString())));
+    private static GDict Packet(InteractionPacket packet) => new()
+    {
+        ["lines"] = new GArray(packet.Lines.Select(line => Variant.From(new GDict
+        { ["speaker"] = line.Speaker, ["mood"] = line.Mood, ["text"] = line.Text, ["voice_clip"] = line.VoiceClip }))),
+        ["choices"] = new GArray(packet.Choices.Select(choice => Variant.From(new GDict
+        { ["id"] = choice.Id, ["label"] = choice.Label, ["is_available"] = choice.IsAvailable, ["lock_hint"] = choice.LockHint }))),
+        ["commands"] = new GArray(packet.WorldCommands.Select(command => Variant.From(new GDict
+        { ["kind"] = command.Name, ["args"] = new GArray(command.Arguments.Select(value => value is null ? default(Variant) : ToVariant(value))) }))),
+        ["presentation_mode"] = packet.PresentationMode.ToString().ToLowerInvariant(), ["finished"] = packet.IsComplete,
+        ["card"] = packet.Card is not { } card ? new GDict() : new GDict
+        { ["id"] = card.Id, ["title"] = card.Title, ["facts"] = card.Facts, ["source"] = card.Source, ["picture"] = card.Picture,
+            ["notes"] = new GArray(card.Notes.Select(note => Variant.From(note))) },
+    };
 
     public GDict Content()
     {
         return Json.ParseString(_content.Content.RootElement.GetRawText()).AsGodotDictionary();
     }
 
-    public string DialogueText() => Chapter.DialogueText;
+    public GDict CompiledDialogue() => Json.ParseString(System.Text.Json.JsonSerializer.Serialize(
+        Chapter1CompiledDialogue.Create(), new System.Text.Json.JsonSerializerOptions
+        { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower })).AsGodotDictionary();
+
     public string ScriptId() => Chapter.Id;
     public string ScriptAssembly() => _morning.GetType().Assembly.GetName().Name!;
 
@@ -71,9 +101,6 @@ public partial class AwakeningEngine : Node
         _content.Session.Place(id, targetRoom);
         return _content.SiteVisible(stage, id);
     }
-    public bool CanExperiment(string id) => _content.CanExperiment(id);
-    public bool CanHelp(string id) => _content.CanHelp(id);
-    public bool CanRecall(string who, bool moving) => _content.CanRecall(who, moving);
     public GArray Statements(GArray variables, int replayCount, bool bolted)
         => new(_content.Statements(variables.Select(v => v.AsInt32()).ToArray(), replayCount, bolted).Select(s => Variant.From(s)));
     public string Judge(int step, string said, string shown) => _content.Judge(step, said, shown);
@@ -136,37 +163,6 @@ public partial class AwakeningEngine : Node
     }
     public void Presented(int key) => _content.Presented(_plans[key]);
 
-    private StoryRuntime<MorningWorld, Person>? _script;
-    private readonly Queue<GDict> _scriptOutput = new();
-    public void LoadScript(string path)
-    {
-        _scriptOutput.Clear();
-        _script = ChapterScript.Load<MorningWorld, Person>(path).CreateRuntime(_morning, new()
-        {
-            Text = (_, text) => _scriptOutput.Enqueue(new() { ["kind"] = "text", ["content"] = text }),
-            Present = (_, output) => _scriptOutput.Enqueue(new() { ["kind"] = output.Kind.ToString().ToLowerInvariant(), ["content"] = output.Content, ["actor"] = Key(output.Actor) }),
-            Busy = (world, actor) => world.StoryBusy(actor),
-            Execute = (world, actor, effect) => world.SubmitStory(actor, effect),
-            Timeline = world => world.StoryTimeline,
-        });
-    }
-    public GDict NextScript()
-    {
-        _script!.Pump();
-        if (_scriptOutput.Count > 0) return _scriptOutput.Dequeue();
-        if (_script.PendingChoice is { } choice)
-            return new() { ["kind"] = "choice", ["content"] = choice.Prompt,
-                ["options"] = new GArray(choice.Options.Select(o => Variant.From(new GDict { ["id"] = o.Id, ["text"] = o.Text }))) };
-        return new() { ["kind"] = _script.IsRunning ? "wait" : "done" };
-    }
-    public void ChooseScript(string option) => _script!.Choose(option);
-    public bool PollScript()
-    {
-        if (_script is null) return false;
-        _script.Pump();
-        return _scriptOutput.Count > 0 || _script.PendingChoice is not null;
-    }
-
     public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
     public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
 
@@ -175,8 +171,13 @@ public partial class AwakeningEngine : Node
 
     public void Reset()
     {
+        ChapterWorldContinuity.Clear();
         _morning = Chapter.CreateWorld();
+        _morning.InitializePlayerPerception();
         _content = Chapter.CreateContent();
+        _dialogue = null;
+        _interaction = null;
+        _plans.Clear();
     }
 
     /// <summary>变量以选项序号传入（与 NightVariables 的枚举顺序一致）；examined 是玩家已检视的证物编号。</summary>
@@ -238,50 +239,16 @@ public partial class AwakeningEngine : Node
         })));
     }
 
-    /// <summary>触物回忆：返回片段与所证变量（1..6）；同一人只记一次钩。</summary>
-    public GDict Recall(string evidence)
-    {
-        var memory = _morning.Recall(evidence);
-        if (memory is null) return new GDict();
-        return new GDict
-        {
-            ["who"] = Key(memory.Who), ["fragment"] = memory.Fragment,
-            ["confirms"] = new GArray(memory.Confirms.Select(c => Variant.From(c))),
-            ["hooks"] = _morning.Hooks(memory.Who),
-        };
-    }
-
     private static Person PersonOf(string key) => (Person)Array.IndexOf(PersonKeys, key);
 
     /// <summary>恶魔对某人说一句朝向其欲望的真话（Corruption 来源）。</summary>
     public int Amplify(string who, string words) => _morning.Amplify(PersonOf(who), words);
 
-    public void ShowRule1(string who) => _morning.ShowRule1(PersonOf(who));
-    public bool KnowsRule1(string who) => _morning.KnowsRule1(PersonOf(who));
     public int DesireStrength(string who) => _morning.DesireStrength(PersonOf(who));
-
-    /// <summary>同伴碰不碰旧物：choice 为 touch / hesitate / refuse，thought 为自然语言依据。</summary>
-    public GDict DecideRecall(string evidence)
-    {
-        var decision = _morning.DecideRecall(evidence);
-        if (decision is null) return new GDict();
-        return new GDict
-        {
-            ["who"] = Key(decision.Who), ["thought"] = decision.Thought,
-            ["choice"] = decision.Choice switch { RecallChoice.Touch => "touch", RecallChoice.Refuse => "refuse", _ => "hesitate" },
-        };
-    }
 
     /// <summary>恶魔对某同伴低语（Corruption）：欲望加强，并记下“铜口对我说的那句话”。</summary>
     public void Whisper(string who, string words) => _morning.Whisper(PersonOf(who), words);
     public bool Whispered(string who) => _morning.Whispered(PersonOf(who));
-
-    /// <summary>同伴此刻想不想自己去拿旧物：reach（bool）与 thought。</summary>
-    public GDict Intend(string who)
-    {
-        var intention = _morning.Intend(PersonOf(who));
-        return intention is null ? new GDict() : new GDict { ["reach"] = intention.Reach, ["thought"] = intention.Thought };
-    }
 
     /// <summary>宿主把人走到某个房间（房间键）后同步到现实。</summary>
     public void Locate(string who, string room)
@@ -292,37 +259,17 @@ public partial class AwakeningEngine : Node
     }
     public bool Reach(string who) => _content.Reach(_morning, who);
     public bool PutBack(string who) => _morning.PutBack(PersonOf(who));
-    public void Settle(string who) => _morning.Settle(PersonOf(who));
-    public bool Holding(string who) => _morning.Holding(PersonOf(who));
     public bool IsDisturbed(string evidence) => _morning.IsDisturbed(evidence);
-
-    /// <summary>侦探不在场时，同伴自己的取舍（犹豫则放下）。</summary>
-    public GDict DecideAlone(string evidence)
-    {
-        var decision = _morning.DecideAlone(evidence);
-        if (decision is null) return new GDict();
-        return new GDict
-        {
-            ["who"] = Key(decision.Who), ["thought"] = decision.Thought,
-            ["choice"] = decision.Choice switch { RecallChoice.Touch => "touch", RecallChoice.Refuse => "refuse", _ => "hesitate" },
-        };
-    }
-
-    /// <summary>犹豫的同伴反问“你说呢？”：advice 为 touch / decline / own；返回 SocialSystem 的判定。</summary>
-    public string Advise(string who, string advice) => _morning.Advise(PersonOf(who), advice).ToString();
 
     public GArray PostedRules() => new(MorningWorld.PostedRules.Select(c => Variant.From(c)));
 
-    public void Examine(string who, string evidence)
-        => _morning.Examine((Person)Array.IndexOf(PersonKeys, who), evidence);
-
     public int Hooks(string who) => _morning.Hooks((Person)Array.IndexOf(PersonKeys, who));
     public int TotalHooks() => _morning.TotalHooks;
-    public bool HasRecalled(string who) => _morning.HasRecalled((Person)Array.IndexOf(PersonKeys, who));
 
     /// <summary>章节结束状态：钩数、信任（V6 结论）、已公开的物证。供后续章节读取。</summary>
     public GDict ChapterEnd(GArray examined, bool familiar, bool askedHand, bool rested)
     {
+        if (!rested) ChapterWorldContinuity.Publish(_morning.ExportContinuation(_content.Session));
         var hooks = new GDict();
         foreach (var p in Enum.GetValues<Person>()) hooks[Key(p)] = _morning.Hooks(p);
         return new GDict

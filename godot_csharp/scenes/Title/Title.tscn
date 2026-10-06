@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" path="res://scenes/Title/Title.gd" id="title"]
 
+[ext_resource type="Theme" path="res://scenes/Title/TitleTheme.tres" id="theme"]
+
 [node name="Title" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -10,14 +12,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("title")
-title_text = "安眠者有福"
-subtitle_text = "Blessed Are the Sleepers"
-ch1_button_text = "第一章　门的这一侧"
-ch2_button_text = "第二章"
-quit_button_text = "退出"
-background_color = Color(0.113725, 0.101961, 0.121569, 1)
-title_color = Color(0.901961, 0.862745, 0.74902, 1)
-subtitle_color = Color(0.658824, 0.611765, 0.517647, 1)
+theme = ExtResource("theme")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -78,6 +73,13 @@ text = "第一章　门的这一侧"
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "第二章"
+
+[node name="Chapter2Hint" type="Label" parent="MenuBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "请先在本次游戏中完成第一章并前往始业日。"
+horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="QuitButton" type="Button" parent="MenuBox"]
 layout_mode = 2

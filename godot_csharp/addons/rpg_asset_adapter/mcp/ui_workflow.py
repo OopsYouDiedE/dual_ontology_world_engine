@@ -1,4 +1,4 @@
-"""One bounded Godot UI production path: native slices, Theme, scene, actual engine inspection."""
+"""Generate and inspect a native-art UI preview; this is not production UI acceptance."""
 from __future__ import annotations
 
 import hashlib
@@ -17,7 +17,7 @@ from pixel_handoff import _make_aseprite
 
 SOURCE = w.GAME/'AssetsSource/Internal/Props/FirstAwakeningInterior'
 OUTPUT = w.GAME/'ShareAsset/Internal/Props/FirstAwakeningInterior'
-SCENE = w.GAME/'scenes/FirstAwakening/MindThemePreview.tscn'
+SCENE = w.GAME/'scenes/Shared/UI/NativeArtPreview.tscn'
 MANIFEST = SOURCE/'mind-ui.json'
 sys.path.insert(0, str(w.GAME/'tools'))
 from first_awakening_art import mind_ui as native_ui
@@ -212,7 +212,7 @@ text = "从头重演"
 
 
 def build_diegetic_ui(replace: bool = False) -> dict:
-    """Build native pixel nine-slices, editable sources, shared Theme and preview .tscn.
+    """Build native pixel nine-slices, editable sources, shared Theme and generic preview .tscn.
     Fixed registered asset family. Refuses to overwrite unowned or artist-edited files even with replace.
     No runtime scene logic or current dialogue is changed by this tool.
     """
@@ -256,7 +256,7 @@ def build_diegetic_ui(replace: bool = False) -> dict:
         notebook=dict(file='mind-notebook.png',native_size=[640,496],display_scale=2,
                       recipe='tools/first_awakening_art/mind_ui.py',process='native integer dots and lines, no resampling'),
         files={str(p.relative_to(w.REPO)):hashlib.sha256(content).hexdigest() for p,content in outputs.items()},
-        acceptance='requires actual Godot loading, keyboard/focus and layout checks; no artistic approval implied')
+        acceptance='native-art preview only; inspect with Godot for asset and layout diagnostics. This does not certify or replace production in-game UI.')
     w.save_json(MANIFEST,manifest)
     return dict(theme=manifest['theme'],preview=manifest['preview'],slice_manifest=str(MANIFEST),slice_count=len(specs))
 
@@ -285,7 +285,7 @@ def _engine(request):
 
 
 def inspect_godot_ui(viewport: list[int] | None = None) -> dict:
-    """Load the fixed generated UI preview in actual Godot and audit inherited styles/layout."""
+    """Load the generated native-art preview in Godot and inspect its styles/layout, not production UI."""
     size=viewport or [1280,992]
     if len(size)!=2 or any(type(v) is not int for v in size) or not (960<=size[0]<=2560 and 640<=size[1]<=1440):
         raise ValueError('viewport must be integer [width,height] in 960..2560 by 640..1440')

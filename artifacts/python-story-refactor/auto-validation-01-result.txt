@@ -1,0 +1,7 @@
+验收未通过。报告与各项退出码、耗时、日志已保存至 [auto-validation-01.txt](C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/python-story-refactor/auto-validation-01.txt)。
+
+- **通过**：Python 生成检查、原有内容与完整对白分支树比对、确定性、Core 构建、Godot 导入。
+- **失败**：`Chapter1Interaction.cs` 出现 10 个 CS8752，阻断三个 C# 检查；Godot 流程退出 1。另发现编译器错误接受缺参数插值 `{{seen}}`。
+- **未运行**：SharedRuntime、216 组合断言、交互锁定/过期路由验证、两个截图回归，原因已逐项记录。
+
+未修实现、未重跑失败项、未进行盲玩。

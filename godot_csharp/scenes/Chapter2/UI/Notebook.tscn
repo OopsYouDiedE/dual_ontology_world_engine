@@ -1,0 +1,126 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/Chapter2/UI/PagePreview.gd" id="preview"]
+
+[node name="Notebook" type="VBoxContainer"]
+theme = ExtResource("theme")
+script = ExtResource("preview")
+theme_override_constants/separation = 10
+offset_right = 972.0
+size_flags_horizontal = 3
+
+
+[node name="EvidenceHeading" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+bbcode_enabled = true
+text = "[b]看过的[/b]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Empty" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
+text = "还没有记下任何东西。"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Evidence" type="GridContainer" parent="."]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+
+[node name="Rules" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+
+[node name="Rule" type="ColorRect" parent="Rules"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.17, 0.13, 0.09, 0.28)
+
+[node name="Heading" type="RichTextLabel" parent="Rules"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+bbcode_enabled = true
+text = "[b]读过、听过的规矩[/b]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Entries" type="VBoxContainer" parent="Rules"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+
+[node name="People" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+
+[node name="Rule" type="ColorRect" parent="People"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.17, 0.13, 0.09, 0.28)
+
+[node name="Heading" type="RichTextLabel" parent="People"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+bbcode_enabled = true
+text = "[b]人[/b]（你亲耳听到的）"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Entries" type="VBoxContainer" parent="People"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+
+[node name="Journal" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+
+[node name="Rule" type="ColorRect" parent="Journal"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.17, 0.13, 0.09, 0.28)
+
+[node name="Heading" type="RichTextLabel" parent="Journal"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+bbcode_enabled = true
+text = "[b]这几日[/b]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Entries" type="VBoxContainer" parent="Journal"]
+layout_mode = 2
+theme_override_constants/separation = 10
+

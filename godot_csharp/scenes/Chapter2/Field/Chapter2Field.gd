@@ -9,6 +9,7 @@ const FRAMES := preload("res://ShareAsset/Internal/Characters/AnimeCast/detectiv
 
 @export var start_map := "living_hall"
 @export var start_spawn := "north_door"
+@export var hud_scene: PackedScene = preload("res://scenes/Chapter2/Field/FieldHUD.tscn")
 
 var map: Node2D
 var player: CharacterBody2D
@@ -29,14 +30,9 @@ func _ready() -> void:
 	camera.zoom = Vector2(2, 2)
 	camera.position_smoothing_enabled = true
 	player.add_child(camera)
-	var hud := CanvasLayer.new()
+	var hud: CanvasLayer = hud_scene.instantiate()
 	add_child(hud)
-	place_label = Label.new()
-	place_label.position = Vector2(12, 8)
-	place_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.84))
-	place_label.add_theme_color_override("font_outline_color", Color(0.1, 0.08, 0.1))
-	place_label.add_theme_constant_override("outline_size", 6)
-	hud.add_child(place_label)
+	place_label = hud.get_node("Place")
 	var args := OS.get_cmdline_user_args()
 	for a in args:
 		if a.begins_with("--map="): start_map = a.substr(6)

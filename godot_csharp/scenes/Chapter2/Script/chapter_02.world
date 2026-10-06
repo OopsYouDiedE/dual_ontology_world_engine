@@ -1,0 +1,641 @@
+chapter(id="chapter2", requires=["awakening"])
+
+ui_text(
+    replay_title="那一夜重演",
+    replay_hint="设定第 2 日夜里的处境与人心，让那一夜重演一次。谁做了什么，由各人自己的认知推出。",
+    finding_titles=["台账", "粮仓门闩", "诊疗所的碗", "甲区的废纸篓", "贝尔特朗夜巡所见"],
+    confront_questions=[
+        "台账上的缺口，有一份，是谁取的？为何取？",
+        "其余的呢？",
+        "夜里有人动过粮仓的门。",
+        "那台账上，为何不见记录？",
+    ],
+    hungry="你饿得发虚。这个下午做不了要紧的事。（按 T 让它过去）",
+    bed_early="还不到睡的时候。",
+    watch_early="守夜点。入夜后，可以在这里守着。",
+    meal_closed="配给台。午间和傍晚开粮。",
+)
+
+requests([
+    {"label": "修粮仓的门闩", "job": "RepairLatch"},
+    {"label": "去台账上补记", "job": "Inform"},
+    {"label": "给饿着的人送一份口粮", "job": "FeedWeak"},
+    {"label": "去诊疗所照看病人", "job": "Care"},
+    {"label": "夜里守着名录库", "job": "GuardArchive"},
+])
+
+# Stable room and cast identities bind to the existing C# world by their canonical display name.
+hall = room(id="room.Hall", name="中央厅", aliases=["Hall"], scope="world")
+lecture = room(id="room.Lecture", name="讲堂", aliases=["Lecture"], scope="world")
+logistics = room(id="room.Logistics", name="后勤院", aliases=["Logistics"], scope="world")
+clinic = room(id="room.Clinic", name="诊疗所", aliases=["Clinic"], scope="world")
+greenhouse = room(id="room.Greenhouse", name="温室", aliases=["Greenhouse"], scope="world")
+archive = room(id="room.ArchiveFront", name="名录库前厅", aliases=["ArchiveFront"], scope="world")
+oath = room(id="room.Oath", name="誓约庭", aliases=["Oath"], scope="world")
+dorm_life = room(id="room.DormLife", name="乙区", aliases=["DormLife"], scope="world")
+dorm_w = room(id="room.DormW", name="甲区", aliases=["DormW"], scope="world")
+dorm_s = room(id="room.DormS", name="丙区", aliases=["DormS"], scope="world")
+dorm_l = room(id="room.DormL", name="丁区", aliases=["DormL"], scope="world")
+
+det = character(id="person.Det", name="侦探", aliases=["侦探（心声）"], room=hall, scope="world", profile={
+    "group":"Life", "dorm":"DormLife", "speed":1.0, "cooperation":0, "build":"Medium",
+    "desire":"弄清自己是什么", "demon_line":"你的封存匣在名录库里，标签上写着你的名字。", "desire_flags":[],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{}, "prejudice":{}, "demon_prejudice":0, "habits":[], "voice":""
+})
+huo = character(id="person.Huo", name="霍铎", room=hall, scope="world", profile={
+    "group":"Life", "dorm":"DormLife", "speed":1.0, "cooperation":1, "build":"Large",
+    "desire":"超越卡诺循环的动力图纸", "demon_line":"图纸就在名录库，记得它的人，是你。", "desire_flags":["OpenArchive"],
+    "strength":2, "lock":2, "signal":0, "structure":1, "greenhouse_skill":0, "cook":0, "craftsman":True,
+    "values":{"Records":1,"OpenArchive":1,"CentralCook":1,"EvidenceFirst":1}, "prejudice":{"Lucian":-1,"Gu":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":2,"desire":True,"note":"《传声与机械》讲机械"},{"job":"Greenhouse","slots":["Afternoon"],"weight":2},{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":1},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":"工匠口吻，短"
+})
+shen = character(id="person.Shen", name="沈鼎", room=hall, scope="world", profile={
+    "group":"Life", "dorm":"DormLife", "speed":0.9, "cooperation":1, "build":"Large",
+    "desire":"安稳，护住身边的人", "demon_line":"粮仓的钥匙若在你手里，就没人会挨饿。", "desire_flags":["CentralCook"],
+    "strength":1, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":3, "craftsman":False,
+    "values":{"CentralCook":3,"SickPriority":1,"PerHead":1,"TargetsQuer":-1,"SealArchive":1}, "prejudice":{"Lucian":-1}, "demon_prejudice":0,
+    "habits":[{"job":"FetchWater","slots":["Morning"],"weight":4},{"job":"Cook","slots":["Noon","Evening"],"weight":4,"desire":True},{"job":"Collect","slots":["Noon","Evening"],"weight":3},{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":1}],"voice":""
+})
+su = character(id="person.Su", name="苏泠", room=hall, scope="world", profile={
+    "group":"Life", "dorm":"DormLife", "speed":1.3, "cooperation":0, "build":"Small",
+    "desire":"从未听过的声音", "demon_line":"共鸣厅里有一种诸位从未听过的声音。它在名录库的匣子里也响过。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":3, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"OpenArchive":1,"Relay":1,"WardAuthority":-1}, "prejudice":{"Ward":-1,"Lucian":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":2,"desire":True},{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":1},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+lucian = character(id="person.Lucian", name="卢西安", room=hall, scope="world", profile={
+    "group":"Wenqi", "dorm":"DormW", "speed":1.1, "cooperation":1, "build":"Medium",
+    "desire":"言灵的完美韵律", "demon_line":"言灵初阶的词，你会比任何人都念得准。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"EvidenceFirst":1,"TargetsQuer":-2,"Restricts":-1,"SickPriority":1,"OpenArchive":1,"Records":1}, "prejudice":{"Veronica":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":3,"desire":True},{"job":"Socialize","slots":["Afternoon"],"weight":2},{"job":"Defend","slots":["Morning"],"weight":3},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+gu = character(id="person.Gu", name="顾平章", room=hall, scope="world", profile={
+    "group":"Wenqi", "dorm":"DormW", "speed":0.7, "cooperation":0, "build":"Medium",
+    "desire":"读通古代铭文", "demon_line":"誓约庭的石碑上，有你一辈子都想读的那种字。", "desire_flags":["Tradition"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"Records":1,"Tradition":2,"SealArchive":3,"OpenArchive":-2,"EvidenceFirst":1,"PactArchive":1}, "prejudice":{"Quer":-1,"Veronica":-1}, "demon_prejudice":-1,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":2},{"job":"Stele","slots":["Afternoon"],"weight":2,"desire":True},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+quer = character(id="person.Quer", name="雀儿", room=hall, scope="world", profile={
+    "group":"Wenqi", "dorm":"DormW", "speed":1.4, "cooperation":-1, "build":"Small",
+    "desire":"一个不会赶她走的地方", "demon_line":"名录库里有你的匣子。那里面的人，从没赶过你。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":3, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":True,
+    "values":{"TargetsQuer":-4,"Restricts":-2,"Records":-1,"EvidenceFirst":2,"NightException":1,"TwoWitness":1,"OpenArchive":1,"CommitteeArchive":-2,"WardAuthority":-2}, "prejudice":{"Ward":-3,"Gu":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":1},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+ward = character(id="person.Ward", name="沃德", room=hall, scope="world", profile={
+    "group":"Wenqi", "dorm":"DormW", "speed":1.0, "cooperation":0, "build":"Medium",
+    "desire":"成为定规则的人", "demon_line":"这里缺一个定规则的人。诸位迟早要听某个人的。", "desire_flags":["WardAuthority","CommitteeArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"Records":2,"WardAuthority":2,"Restricts":1,"CommitteeArchive":3,"NoException":1,"TwoWitness":1,"OpenArchive":-1,"EvidenceFirst":1}, "prejudice":{"Quer":-2}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":2},{"job":"PostRules","slots":["Evening"],"weight":3,"desire":True},{"job":"Accuse","slots":["Morning"],"weight":4},{"job":"Socialize","slots":["Afternoon"],"weight":2},{"job":"GuardArchive","slots":["Night"],"weight":2,"desire":True},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+selma = character(id="person.Selma", name="赛尔玛", room=hall, scope="world", profile={
+    "group":"Xingyi", "dorm":"DormS", "speed":1.1, "cooperation":1, "build":"Medium",
+    "desire":"为源质这一新物种定名", "demon_line":"温室里的源质在长。你会是第一个给它命名的人。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":3, "cook":0, "craftsman":False,
+    "values":{"OpenArchive":1,"SickPriority":1,"WardAuthority":-1,"EvidenceFirst":1}, "prejudice":{"Ward":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Greenhouse","slots":["Afternoon"],"weight":3,"desire":True},{"job":"Class","slots":["Forenoon"],"weight":2},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+ruan = character(id="person.Ruan", name="阮清越", room=hall, scope="world", profile={
+    "group":"Xingyi", "dorm":"DormS", "speed":1.0, "cooperation":0, "build":"Medium",
+    "desire":"赢下与恶魔的对局", "demon_line":"这局棋你落后一子。名录库里有你忘掉的那几步。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"Records":2,"PerHead":2,"TwoWitness":1,"EvidenceFirst":1,"CommitteeArchive":1,"OpenArchive":1}, "prejudice":{}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":3,"desire":True},{"job":"CountLedger","slots":["Evening"],"weight":4},{"job":"CountLedger","slots":["Morning"],"weight":4},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+elena = character(id="person.Elena", name="伊莲娜", room=hall, scope="world", profile={
+    "group":"Xingyi", "dorm":"DormS", "speed":0.7, "cooperation":0, "build":"Small",
+    "desire":"治好脚踝，查明仪式真相", "demon_line":"那晚的仪式，名录库里记着全程。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"Tradition":1,"EvidenceFirst":1,"PactArchive":1,"Safety":1}, "prejudice":{"Bertrand":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Class","slots":["Forenoon"],"weight":1},{"job":"Rest","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":2},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+moran = character(id="person.Moran", name="莫兰", room=hall, scope="world", profile={
+    "group":"Xingyi", "dorm":"DormS", "speed":0.9, "cooperation":0, "build":"Medium",
+    "desire":"看见更多的以太色层", "demon_line":"有些颜色，你只在封存之前见过。", "desire_flags":["OpenArchive"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"OpenArchive":1}, "prejudice":{}, "demon_prejudice":0,
+    "habits":[{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":2,"desire":True},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+veronica = character(id="person.Veronica", name="维罗妮卡", room=hall, scope="world", profile={
+    "group":"Houqin", "dorm":"DormL", "speed":1.0, "cooperation":0, "build":"Medium",
+    "desire":"独立研究，证明理化能解释一切", "demon_line":"你的试剂柜里，缺的那一瓶，名录库里有记录。", "desire_flags":["EvidenceFirst"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"EvidenceFirst":2,"Records":1,"SealArchive":-1,"OpenArchive":1}, "prejudice":{}, "demon_prejudice":-2,
+    "habits":[{"job":"Work","slots":["Forenoon","Noon","Afternoon","Evening"],"weight":2,"desire":True},{"job":"Class","slots":["Forenoon"],"weight":1},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+bertrand = character(id="person.Bertrand", name="贝尔特朗", room=hall, scope="world", profile={
+    "group":"Houqin", "dorm":"DormL", "speed":1.1, "cooperation":0, "build":"Large",
+    "desire":"护住平民同伴", "demon_line":"夜里只有你醒着。他们睡得着，是因为你。", "desire_flags":["Safety"],
+    "strength":2, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"SickPriority":1,"Records":1,"Restricts":1,"Safety":1}, "prejudice":{"Veronica":-1,"Ward":-1}, "demon_prejudice":0,
+    "habits":[{"job":"Patrol","slots":["Night"],"weight":3,"desire":True},{"job":"FetchWater","slots":["Afternoon"],"weight":2},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+margaret = character(id="person.Margaret", name="玛格丽特", room=hall, scope="world", profile={
+    "group":"Houqin", "dorm":"DormL", "speed":1.0, "cooperation":1, "build":"Medium",
+    "desire":"亲手建成、被人承认", "demon_line":"温室是半成品。修好它的人，会被所有人记住。", "desire_flags":["CentralCook"],
+    "strength":1, "lock":0, "signal":0, "structure":3, "greenhouse_skill":2, "cook":0, "craftsman":False,
+    "values":{"EvidenceFirst":1,"CentralCook":1,"OpenArchive":1,"Records":1}, "prejudice":{"Lucian":-1}, "demon_prejudice":0,
+    "habits":[{"job":"InspectStructure","slots":["Afternoon"],"weight":3,"desire":True},{"job":"Greenhouse","slots":["Afternoon"],"weight":2},{"job":"Collect","slots":["Noon","Evening"],"weight":3}],"voice":""
+})
+mora = character(id="person.Mora", name="茉拉", room=hall, scope="world", profile={
+    "group":"Houqin", "dorm":"DormL", "speed":1.0, "cooperation":0, "build":"Medium",
+    "desire":"不再失去病人", "demon_line":"取回的记忆会伤人。可封着的，也会。", "desire_flags":["SickPriority"],
+    "strength":0, "lock":0, "signal":0, "structure":0, "greenhouse_skill":0, "cook":0, "craftsman":False,
+    "values":{"SickPriority":3,"NoException":-2,"CentralCook":-1,"SealArchive":2,"OpenArchive":-1,"EvidenceFirst":1,"NightException":1,"PactArchive":1}, "prejudice":{"Veronica":-2}, "demon_prejudice":-1,
+    "habits":[{"job":"Collect","slots":["Noon","Evening"],"weight":2}],"voice":""
+})
+# Existing Chapter2Script thing identities and authored observable tags; C# remains authoritative for their dynamic state.
+granary = object(id="object.Granary", name="粮仓", room=logistics, scope="world", observable={"Ration":True,"Locked":True})
+desk = object(id="object.Desk", name="配给台", room=logistics, scope="world", observable={"Open":True})
+stove = object(id="object.Stove", name="灶", room=logistics, scope="world", observable={"Cooked":True})
+jar = object(id="object.Jar", name="水缸", room=logistics, scope="world", observable={"Water":True})
+ledger = object(id="object.Ledger", name="台账", room=logistics, scope="world", observable={"Handed":True,"NightRecorded":True,"Unrecorded":True,"Counted":True})
+bowl = object(id="object.Bowl", name="诊疗所的碗", room=clinic, scope="world", aliases=["碗"], observable={"Porridge":True,"Residue":True})
+bed = object(id="object.Bed", name="病床", room=clinic, scope="world", observable={"Treated":True})
+medcab = object(id="object.MedCab", name="药柜", room=clinic, scope="world", observable={"Medicine":True})
+oilstore = object(id="object.OilStore", name="油库", room=dorm_s, scope="world", observable={"Oil":True})
+valve = object(id="object.Valve", name="温室阀门", room=greenhouse, scope="world", aliases=["阀门"], observable={"Work":True})
+gauge = object(id="object.Gauge", name="温室压力表", room=greenhouse, scope="world", aliases=["压力表"], observable={"Pressure":True})
+blackboard = object(id="object.Blackboard", name="讲堂黑板", room=lecture, scope="world", aliases=["黑板"], observable={"Chalk":True,"Shoe":True})
+stele = object(id="object.Stele", name="誓约庭铺石", room=oath, scope="world", aliases=["铺石"], observable={"Rubbed":True})
+archive_door = object(id="object.ArchiveDoor", name="名录库之门", room=archive, scope="world", observable={"Open":True,"Work":True})
+weight_room = object(id="object.WeightRoom", name="配重室", room=archive, scope="world", observable={"Occupied":True,"Worked":True})
+lock_core = object(id="object.LockCore", name="锁芯", room=archive, scope="world", observable={"Occupied":True,"Worked":True})
+relay_post = object(id="object.RelayPost", name="传声中继", room=archive, scope="world", observable={"Occupied":True,"Worked":True})
+base = object(id="object.Base", name="中央基座", room=hall, scope="world")
+sketch_book = object(id="object.SketchBook", name="莫兰的速写本", room=dorm_s, scope="world", aliases=["速写本"], observable={"Posted":True})
+clock = object(id="object.Clock", name="钟", room=hall, scope="world")
+name_voice = object(id="object.NameVoice", name="以你之名唤你的声音", room=hall, scope="world", aliases=["铜口", "铜柱"])
+board_hall = object(id="Board.Hall", name="中央厅公告板", room=hall, scope="world", aliases=["中央厅公告"], observable={"Accusation":True,"Posted":True})
+board_logistics = object(id="Board.Logistics", name="配给台公告板", room=logistics, scope="world", aliases=["配给台公告"], observable={"Accusation":True,"Posted":True})
+board_lecture = object(id="Board.Lecture", name="讲堂公告板", room=lecture, scope="world", aliases=["讲堂公告"], observable={"Accusation":True,"Posted":True})
+board_life = object(id="Board.DormLife", name="乙区公告板", room=dorm_life, scope="world", aliases=["生活翼公告"], observable={"Accusation":True,"Posted":True})
+board_w = object(id="Board.DormW", name="甲区公告板", room=dorm_w, scope="world", aliases=["文契公告"], observable={"Accusation":True,"Posted":True})
+board_s = object(id="Board.DormS", name="丙区公告板", room=dorm_s, scope="world", aliases=["星仪公告"], observable={"Accusation":True,"Posted":True})
+board_l = object(id="Board.DormL", name="丁区公告板", room=dorm_l, scope="world", aliases=["后勤公告"], observable={"Accusation":True,"Posted":True})
+litter_life = object(id="Litter.DormLife", name="乙区的废纸篓", room=dorm_life, scope="world", observable={"Crumbs":True,"Emptied":True})
+litter_w = object(id="Litter.DormW", name="甲区的废纸篓", room=dorm_w, scope="world", aliases=["文契废纸篓"], observable={"Crumbs":True,"Emptied":True})
+litter_s = object(id="Litter.DormS", name="丙区的废纸篓", room=dorm_s, scope="world", observable={"Crumbs":True,"Emptied":True})
+litter_l = object(id="Litter.DormL", name="丁区的废纸篓", room=dorm_l, scope="world", aliases=["后勤废纸篓"], observable={"Crumbs":True,"Emptied":True})
+
+# Host-map interaction metadata points back to stable room/object identities where one exists.
+site(id="ledger", map="logistics", room=logistics, title="台账", thing=ledger)
+site(id="ration_notice", map="logistics", room=logistics, title="配给台公告", thing=board_logistics)
+site(id="ration_counter", map="logistics", room=logistics, title="配给台", kind="meal")
+site(id="watch_point", map="logistics", room=logistics, title="守夜点", kind="watch")
+site(id="latch", map="granary", room=logistics, title="粮仓门闩", thing=granary)
+site(id="stock", map="granary", room=logistics, title="存粮", thing=granary)
+site(id="empty_bowl", map="clinic", room=clinic, title="莫兰床边的碗", thing=bowl)
+site(id="reagent", map="clinic", room=clinic, title="试剂柜", thing=medcab, lore="白漆试剂柜，标签写着“白塔”。有一格空着。\n茉拉把柜门关得很紧，不让人碰。")
+site(id="central_notice", map="central_hall", room=hall, title="中央厅公告板", thing=board_hall)
+site(id="mouthpiece", map="central_hall", room=hall, title="铜口", kind="tube", lore="铜牌上刻着一行字：\n入夜后，名录库中若有人以你之名唤你，勿应。")
+site(id="relay", map="central_hall", room=hall, title="传声中继", lore="一根铜柱，管道从四面汇进来。\n要开名录库的门，这里得有人按拍子转发信号。")
+site(id="watch_point", map="central_hall", room=hall, title="守夜点", kind="watch")
+site(id="blackboard", map="lecture", room=lecture, title="黑板", thing=blackboard)
+site(id="timetable", map="lecture", room=lecture, title="讲堂门外的公告", thing=board_lecture)
+site(id="lock_core", map="archive", room=archive, title="名录库之门", thing=archive_door)
+site(id="seal_boxes", map="archive", room=archive, title="封存匣", lore="门缝里看得见架子。十六只封存匣排在四座架上，每只贴着名字。\n你的名字也在其中一只上。")
+site(id="name_warning", map="archive", room=archive, title="门边的铜牌", lore="铜牌上刻着一行字：\n入夜后，名录库中若有人以你之名唤你，勿应。")
+site(id="red_ink", map="archive", room=archive, title="规程页的红墨批注", lore="文献规程页的页边，一行红墨批注：“授钥：雀。”字迹端正，是导师的手。\n库门锁芯与那把钥匙的齿上，都没有撬过的痕迹。")
+site(id="watch_point", map="archive", room=archive, title="守夜点", kind="watch")
+site(id="hall_notice", map="living_hall", room=dorm_life, title="起居厅公告板", thing=board_life)
+site(id="fireplace", map="living_hall", room=dorm_life, title="壁炉", lore="壁炉还温着。炉台上摆着十六只杯子，样式都不一样。")
+site(id="watch_point", map="living_hall", room=dorm_life, title="守夜点", kind="watch")
+site(id="zone_rules", map="zone_yi", room=dorm_life, title="公告框（学园守则）", kind="school_rules", lore="一、封存之物，可凭对应之物寻回；寻回者，自负其果。\n二、饮水、炉火、照明照常供给；物资由诸位自行分配。\n三、外闩所封之处，余患未清，清后即启。\n四、我所立之规，皆张贴于此。")
+site(id="bed", map="zone_yi", room=dorm_life, title="你的床（R-05）", kind="bed")
+site(id="zone_rules", map="zone_jia", room=dorm_w, title="甲区公告", thing=board_w)
+site(id="litter", map="zone_jia", room=dorm_w, title="雀儿房里的废纸篓", thing=litter_w)
+site(id="zone_rules", map="zone_bing", room=dorm_s, title="丙区公告", thing=board_s)
+site(id="zone_rules", map="zone_ding", room=dorm_l, title="丁区公告", thing=board_l)
+site(id="step_marks", map="resonance", room=dorm_life, title="沉静室门内的步位标线", lore="门内地上的步位标线，一道不缺，一步也没有踩乱。")
+site(id="silent_door", map="resonance", room=dorm_life, title="沉静室的门", lore="厚木门，内侧有一道浅浅的指痕。门是从外面关上的。")
+site(id="valve", map="greenhouse", room=greenhouse, title="阀门", thing=valve, lore="温室的水压阀门。锈住了。")
+site(id="gauge", map="greenhouse", room=greenhouse, title="压力表", thing=gauge, lore="压力表的指针贴着红线。没有人在修。")
+site(id="oath_court", map="campus_s", room=oath, title="誓约庭", thing=stele, lore="铺石顺坡，设了几级台阶。站在这里，谁站在谁身边，一眼看得清。")
+site(id="gate", map="campus_s", room=oath, title="门楼", lore="门楼外是去港口的路。沿海崖有一段塌了。")
+site(id="drying_yard", map="campus_s", room=oath, title="晾晒场", lore="绳上晾着几件衬衫。地上是泥。")
+site(id="spring", map="campus_s", room=oath, title="汲水泉", lore="泉水照常在流。")
+
+furniture(key="Bed", text="床。")
+furniture(key="Wardrobe", text="衣柜。")
+furniture(key="Crate", text="箱子。")
+furniture(key="Nightstand", text="床头柜。")
+furniture(key="Desk", text="书桌。")
+furniture(key="Chair", text="椅子。")
+furniture(key="Coat", text="衣架。")
+furniture(key="StudyTable", text="长桌。")
+furniture(key="HallBookcase", text="书架。")
+furniture(key="HallLamp", text="落地灯。")
+furniture(key="Armchair", text="扶手椅。")
+furniture(key="Range", text="灶。")
+furniture(key="Sideboard", text="碗柜。")
+furniture(key="Worktable", text="案板。")
+furniture(key="Barrel", text="水桶。满的。")
+furniture(key="Washstand", text="水槽。")
+furniture(key="CoatStand", text="衣架。")
+furniture(key="ShoeBench", text="鞋凳。")
+furniture(key="Store", text="存货。")
+furniture(key="ToolBench", text="工具台。")
+furniture(key="InkShelf", text="墨架。墨块码得整整齐齐。")
+furniture(key="Hood", text="烟罩。")
+furniture(key="DishRack", text="碗架。")
+furniture(key="Pump", text="压水机。")
+furniture(key="Sacks", text="面粉。")
+furniture(key="Table", text="长桌。")
+furniture(key="Bench", text="长凳。")
+
+@option(id="lesson_precise", label="它没写“果”是什么。", selection_only=True)
+def lesson_precise(): pass
+
+@option(id="lesson_who", label="它没写谁可以寻回。", selection_only=True)
+def lesson_who(): pass
+
+@option(id="lesson_where", label="它没写封存之物在哪里。", selection_only=True)
+def lesson_where(): pass
+
+@option(id="mediate", label="出面调停（要花上这一阵）", selection_only=True)
+def mediate_option(): pass
+
+@option(id="skip_dispute", label="不插手，排队领饭", selection_only=True)
+def skip_dispute(): pass
+
+# Core chooses between these flat semantic replies from the NPC's perceived Trust tag.
+@reaction(id="huo_testimony", actor=huo, intent="testimony", goal=state(det, "Trust") >= 0)
+def huo_testimony():
+    ```
+    霍铎：你想问什么？
+    ```
+@reaction(id="huo_decline", actor=huo, intent="decline", goal=state(det, "Trust") < 0)
+def huo_decline():
+    ```
+    霍铎：这件事，我不想说。
+    ```
+@reaction(id="shen_testimony", actor=shen, intent="testimony", goal=state(det, "Trust") >= 0)
+def shen_testimony():
+    ```
+    沈鼎：你想问什么？
+    ```
+@reaction(id="shen_decline", actor=shen, intent="decline", goal=state(det, "Trust") < 0)
+def shen_decline():
+    ```
+    沈鼎：这件事，我不想说。
+    ```
+@reaction(id="su_testimony", actor=su, intent="testimony", goal=state(det, "Trust") >= 0)
+def su_testimony():
+    ```
+    苏泠：你想问什么？
+    ```
+@reaction(id="su_decline", actor=su, intent="decline", goal=state(det, "Trust") < 0)
+def su_decline():
+    ```
+    苏泠：这件事，我不想说。
+    ```
+@reaction(id="lucian_testimony", actor=lucian, intent="testimony", goal=state(det, "Trust") >= 0)
+def lucian_testimony():
+    ```
+    卢西安：你想问什么？
+    ```
+@reaction(id="lucian_decline", actor=lucian, intent="decline", goal=state(det, "Trust") < 0)
+def lucian_decline():
+    ```
+    卢西安：这件事，我不想说。
+    ```
+@reaction(id="gu_testimony", actor=gu, intent="testimony", goal=state(det, "Trust") >= 0)
+def gu_testimony():
+    ```
+    顾平章：你想问什么？
+    ```
+@reaction(id="gu_decline", actor=gu, intent="decline", goal=state(det, "Trust") < 0)
+def gu_decline():
+    ```
+    顾平章：这件事，我不想说。
+    ```
+@reaction(id="quer_testimony", actor=quer, intent="testimony", goal=state(det, "Trust") >= 0)
+def quer_testimony():
+    ```
+    雀儿：你想问什么？
+    ```
+@reaction(id="quer_decline", actor=quer, intent="decline", goal=state(det, "Trust") < 0)
+def quer_decline():
+    ```
+    雀儿：这件事，我不想说。
+    ```
+@reaction(id="ward_testimony", actor=ward, intent="testimony", goal=state(det, "Trust") >= 0)
+def ward_testimony():
+    ```
+    沃德：你想问什么？
+    ```
+@reaction(id="ward_decline", actor=ward, intent="decline", goal=state(det, "Trust") < 0)
+def ward_decline():
+    ```
+    沃德：这件事，我不想说。
+    ```
+@reaction(id="selma_testimony", actor=selma, intent="testimony", goal=state(det, "Trust") >= 0)
+def selma_testimony():
+    ```
+    赛尔玛：你想问什么？
+    ```
+@reaction(id="selma_decline", actor=selma, intent="decline", goal=state(det, "Trust") < 0)
+def selma_decline():
+    ```
+    赛尔玛：这件事，我不想说。
+    ```
+@reaction(id="ruan_testimony", actor=ruan, intent="testimony", goal=state(det, "Trust") >= 0)
+def ruan_testimony():
+    ```
+    阮清越：你想问什么？
+    ```
+@reaction(id="ruan_decline", actor=ruan, intent="decline", goal=state(det, "Trust") < 0)
+def ruan_decline():
+    ```
+    阮清越：这件事，我不想说。
+    ```
+@reaction(id="elena_testimony", actor=elena, intent="testimony", goal=state(det, "Trust") >= 0)
+def elena_testimony():
+    ```
+    伊莲娜：你想问什么？
+    ```
+@reaction(id="elena_decline", actor=elena, intent="decline", goal=state(det, "Trust") < 0)
+def elena_decline():
+    ```
+    伊莲娜：这件事，我不想说。
+    ```
+@reaction(id="moran_testimony", actor=moran, intent="testimony", goal=state(det, "Trust") >= 0)
+def moran_testimony():
+    ```
+    莫兰：你想问什么？
+    ```
+@reaction(id="moran_decline", actor=moran, intent="decline", goal=state(det, "Trust") < 0)
+def moran_decline():
+    ```
+    莫兰：这件事，我不想说。
+    ```
+@reaction(id="veronica_testimony", actor=veronica, intent="testimony", goal=state(det, "Trust") >= 0)
+def veronica_testimony():
+    ```
+    维罗妮卡：你想问什么？
+    ```
+@reaction(id="veronica_decline", actor=veronica, intent="decline", goal=state(det, "Trust") < 0)
+def veronica_decline():
+    ```
+    维罗妮卡：这件事，我不想说。
+    ```
+@reaction(id="bertrand_testimony", actor=bertrand, intent="testimony", goal=state(det, "Trust") >= 0)
+def bertrand_testimony():
+    ```
+    贝尔特朗：你想问什么？
+    ```
+@reaction(id="bertrand_decline", actor=bertrand, intent="decline", goal=state(det, "Trust") < 0)
+def bertrand_decline():
+    ```
+    贝尔特朗：这件事，我不想说。
+    ```
+@reaction(id="margaret_testimony", actor=margaret, intent="testimony", goal=state(det, "Trust") >= 0)
+def margaret_testimony():
+    ```
+    玛格丽特：你想问什么？
+    ```
+@reaction(id="margaret_decline", actor=margaret, intent="decline", goal=state(det, "Trust") < 0)
+def margaret_decline():
+    ```
+    玛格丽特：这件事，我不想说。
+    ```
+@reaction(id="mora_testimony", actor=mora, intent="testimony", goal=state(det, "Trust") >= 0)
+def mora_testimony():
+    ```
+    茉拉：你想问什么？
+    ```
+@reaction(id="mora_decline", actor=mora, intent="decline", goal=state(det, "Trust") < 0)
+def mora_decline():
+    ```
+    茉拉：这件事，我不想说。
+    ```
+
+@sequence(id="arrival", event="begin.arrival", day=2, slot="Morning")
+def arrival():
+    ```
+    铜口：诸位，请到中央厅来。全体。
+    ```
+
+@sequence(id="gather", event="begin.gather", day=2, slot="Forenoon")
+def gather():
+    ```
+    （中央厅。八角形的穹顶下，十六个人站成了几团。铜柱居中，管道从四面汇进来。）
+    侦探（心声）：站成几团，是按寝区站的。没人往别的团里走。
+    铜口：我是此地的代管者，也是诸位的教师。
+    铜口：封存之物，存于名录库。凡学员，皆可取回己物。
+    铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。
+    （它停了一下。接着，一个声音贴着每个人的耳朵，各说了一句。）
+    铜口：你的封存匣在名录库里。标签上，写着你的名字。
+    侦探（心声）：……它对每个人都说了一句。说的是什么，只有各人自己听见。
+    沃德：依据它方才的话，名录库是公物。公物之取用，须有章程。
+    雀儿：你的章程，留着自己念。
+    沃德：我没有点你的名。
+    雀儿：你的眼睛点了。 [#emotion=angry]
+    铜口：诸位，请到讲堂。今日讲守则的读法。
+    ```
+
+@sequence(id="lesson", event="begin.lesson", day=2, slot="Noon")
+def lesson():
+    ```
+    （讲堂。黑板前没有人，粉笔却自己在板上写字。讲台前的灰上，多出一行窄底的鞋印。）
+    铜口：一条规矩写了什么，诸位都会读。今日读它没写什么。
+    铜口：以我自己的守则为例。第一条：封存之物，可凭对应之物寻回；寻回者，自负其果。
+    铜口：这一条没写的，最要紧的是什么？——请那位穿风衣的先生答。
+    ```
+    choice(id="lesson_answer", options=["lesson_precise", "lesson_who", "lesson_where"])
+    ```
+    铜口：本课到此。诸位所立之规，也请这样读。下课。
+    侦探（心声）：读它没写什么。……记下了。
+    ```
+
+@sequence(id="lesson_precise_branch", event="choice:chapter2:lesson_precise", day=2, slot="Forenoon")
+def lesson_precise_branch():
+    action(name="lesson_answer", args=[True])
+    ```
+    铜口：……正是。“自负其果”，果是什么，条文一字未提。读到这里的人，下回会先问。
+    铜口：很好。
+    侦探（心声）：它是真的高兴。几个人看我的眼神变了。不全是好的那种。
+    ```
+
+@sequence(id="lesson_who_branch", event="choice:chapter2:lesson_who", day=2, slot="Forenoon")
+def lesson_who_branch():
+    action(name="lesson_answer", args=[False])
+    ```
+    铜口：写了。“寻回者”——谁寻回，谁便是。不限其人。
+    铜口：再读一遍。
+    ```
+
+@sequence(id="lesson_where_branch", event="choice:chapter2:lesson_where", day=2, slot="Forenoon")
+def lesson_where_branch():
+    action(name="lesson_answer", args=[False])
+    ```
+    铜口：名录库。我方才说过。
+    铜口：读条文，不读我。
+    ```
+
+@sequence(id="free", event="begin.free", day=2, slot="Noon")
+def free():
+    ```
+    侦探（心声）：读不费时辰。看，问，读板上的规矩，都可以慢慢来。
+    侦探（心声）：想让谁改个主意——带他去亲眼看，跟他讲一条规矩，请他做件事——那要花上一阵。一阵过去，大家各忙各的，人就换了地方。
+    侦探（心声）：一天就那么几阵。得想好花在谁身上。
+    ```
+
+@sequence(id="noon_dispute", event="commit.noon_dispute", day=2, slot="Noon")
+def noon_dispute():
+    ```
+    （配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。）
+    阮清越：按人头。十六份，日末清点。
+    茉拉：莫兰脸色不对。病人先领。 [#emotion=worried]
+    阮清越：“先”是多少？说个数。 [#emotion=thoughtful]
+    茉拉：你让开。
+    侦探（心声）：两个人都没说错。队伍在等。
+    ```
+    choice(id="noon_dispute", options=["mediate", "skip_dispute"])
+
+@sequence(id="mediate_branch", event="choice:chapter2:mediate", day=2, slot="Noon")
+def mediate_branch():
+    action(name="mediate", args=[])
+    pass
+
+@sequence(id="skip_dispute_branch", event="choice:chapter2:skip_dispute", day=2, slot="Noon")
+def skip_dispute_branch(): pass
+
+@sequence(id="night_hint", event="commit.night_hint", day=2, slot="Night")
+def night_hint():
+    ```
+    侦探（心声）：入夜了。回 R-05 睡下，或者找个地方守着。
+    侦探（心声）：起居厅、后勤院、名录库前厅、中央厅，都有能坐一夜的地方。
+    ```
+
+@sequence(id="dawn", event="night.dawn", day=3, slot="Morning")
+def dawn():
+    ```
+    （清晨。铜口把众人又叫到了中央厅。阮清越拿着台账站在铜柱旁，沃德站在他身边。）
+    ```
+
+@sequence(id="after", event="night.after", day=3, slot="Forenoon")
+def after():
+    ```
+    侦探（心声）：“昨夜，有人进过后勤院。”——它说的每个字都是真的。
+    侦探（心声）：可“取了而不记”，就一定是偷？
+    侦探（心声）：傍晚对账的时候，人人都会在这里。在那之前，先把账上的缺口查清楚。
+    ```
+
+@sequence(id="no_accuse", event="night.no_accuse", day=3, slot="Forenoon")
+def no_accuse():
+    ```
+    侦探（心声）：账上有缺口，没有人站出来指认谁。这一回，没人先开口。
+    ```
+
+@sequence(id="replay_unlock", event="card.replay_unlock", day=3)
+def replay_unlock():
+    ```
+    侦探（心声）：台账上的缺口，落在一夜之间。
+    侦探（心声）：那一夜每个人读过哪条规矩、认了哪条，各自就会照着去做。……把那一夜重演一遍。
+    侦探（心声）：（按 R 打开重演手稿。）
+    ```
+
+@sequence(id="replay_first", event="after_replay.first")
+def replay_first():
+    ```
+    侦探（心声）：墨影只看得出身量，看不出是谁。
+    侦探（心声）：冲突写的是痕迹之差。哪里对不上，就去哪里再看一眼，或者再问一个人。
+    ```
+
+@sequence(id="replay_match", event="after_replay.match")
+def replay_match():
+    ```
+    侦探（心声）：……全对上了。 [#emotion=thoughtful]
+    侦探（心声）：没有贼。同一件事，照茉拉的规矩是“急需自取，次日告知”；照沃德的规矩，是私取。
+    侦探（心声）：规矩贴在三块板上。没有人读过全部。
+    ```
+
+@sequence(id="evening", event="confront.evening", day=3, slot="Evening")
+def evening():
+    ```
+    （傍晚。中央厅点起了灯。十五个人到了，莫兰还躺在诊疗所。）
+    铜口：诸位要对账。我只旁听。
+    ```
+
+@sequence(id="confront_begin", event="confront.begin", day=3, slot="Evening")
+def confront_begin():
+    ```
+    侦探（心声）：一问一答。说一句，就拿出能支撑它的东西。
+    ```
+
+@sequence(id="confront_pause", event="confront.pause", day=3, slot="Evening")
+def confront_pause():
+    ```
+    侦探（心声）：这一句，先不说。
+    ```
+
+@sequence(id="confront_wrong_say", event="confront.wrong_say", day=3, slot="Evening")
+def confront_wrong_say():
+    ```
+    沃德：这与我问的无关。
+    ```
+
+@sequence(id="confront_wrong_show", event="confront.wrong_show", day=3, slot="Evening")
+def confront_wrong_show():
+    ```
+    沃德：依据何在？{{wrong_name()}}证明不了这句话。 [#emotion=angry]
+    ```
+
+@sequence(id="confront_frame", event="confront.frame", day=3, slot="Evening")
+def confront_frame():
+    ```
+    （众人的目光都落到了雀儿身上。她没有躲。）
+    雀儿：……行。你也这么看。
+    侦探（心声）：每个字都是真的。可我说出它，是在指着她。
+    ```
+
+@sequence(id="confront_rule", event="confront.rule", day=3, slot="Evening")
+def confront_rule():
+    ```
+    沃德：账，算是说清了。依据何在，今后如何？
+    侦探（心声）：该提一条大家都能照着做的规矩了。
+    ```
+
+@sequence(id="whisper", event="confront.whisper", day=3, slot="Night")
+def whisper():
+    ```
+    （散场的时候，铜口没有出声。可走出中央厅的每一个人，脚步都慢了一点，像在听耳边有人说话。）
+    侦探（心声）：它又对每个人说了一遍那样东西。……今夜，名录库前厅不会太安静。
+    ```
+
+@sequence(id="council", event="council.begin", day=4, slot="Morning")
+def council():
+    ```
+    （第三日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。）
+    铜口：今日，诸位要决定名录库的事。我只旁听。
+    沃德：依据昨日之议，凡事须有章程。名录库，由委员会保管。
+    顾平章：回忆即上钩。老朽只一句：封着。 [#emotion=worried]
+    霍铎：……图纸在里面。 [#emotion=hooked]
+    侦探（心声）：每个人会站到哪一边，昨天、前天就定下了大半。看他们这几天亲眼见过什么、饿没饿着、信谁。
+    ```
+
+@sequence(id="box", event="council.box", day=4, slot="Morning")
+def box():
+    ```
+    （库门开了。十六只封存匣排在四座架上，每只贴着名字。）
+    侦探（心声）：我的名字。在第三座架子上，第二格。
+    侦探：{{detective_name}}。
+    （匣子没有动。）
+    侦探：……{{detective_name}}。
+    铜口：那并非你的名字。
+    铜口：……也不是别人的。
+    侦探（心声）：那么，是谁的？
+    ```
+
+@sequence(id="sealed", event="council.sealed", day=4, slot="Morning")
+def sealed():
+    ```
+    （名录库没有开。十六只封存匣留在门后。）
+    侦探（心声）：我的名字也在门后。是不是我的，今天没人知道。
+    ```

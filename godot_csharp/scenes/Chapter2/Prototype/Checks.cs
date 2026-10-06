@@ -246,11 +246,11 @@ public static class Checks
         Console.WriteLine("  读写闭环（写下规则 → 次日清晨的痕迹 → 重演读出是谁因此改了做法）：");
         var bot = Bots.All.First(b => b.Name == "查案对质");
         var g = new Game();
-        while (!(g.Day == 5 && g.Slot == Slot.Morning)) g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
-        g.RunSlot(new PlayerAction(Cmd.Inspect) { Place = Place.Logistics, Thing = "台账" });
+        while (!(g.Day == 4 && g.Slot == Slot.Morning)) g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
+        g.HostExamine("台账");
         var spec = g.CaseRule!;
-        Console.WriteLine($"    第 4 夜后侦探读到：{string.Join("；", g.KnownTraces(4).Values.Select(t => t.Text))}");
-        var outs = Par<List<string>>([() => g.CompareTraces(4, g.ReplayNight(4, [new(P.Mora, spec.Id, true)]).Traces), () => g.CompareTraces(4, g.ReplayNight(4, [new(P.Mora, spec.Id, false)]).Traces)]);
+        Console.WriteLine($"    第 3 夜后侦探读到：{string.Join("；", g.KnownTraces(3).Values.Select(t => t.Text))}");
+        var outs = Par<List<string>>([() => g.CompareTraces(3, g.ReplayNight(3, [new(P.Mora, spec.Id, true)]).Traces), () => g.CompareTraces(3, g.ReplayNight(3, [new(P.Mora, spec.Id, false)]).Traces)]);
         Console.WriteLine("    假设茉拉认了：" + string.Join(" / ", outs[0].Where(l => !l.StartsWith("未查"))));
         Console.WriteLine("    假设茉拉没认：" + string.Join(" / ", outs[1].Where(l => !l.StartsWith("未查"))));
         Check(outs[0].All(l => !l.StartsWith("冲突")) && outs[1].Any(l => l.StartsWith("冲突")), "玩家能从清晨痕迹 + 重演读出：茉拉认了侦探写的规则，因而夜取改为记账");
@@ -260,8 +260,7 @@ public static class Checks
     {
         var g = new Game();
         var bot = Bots.All.First(b => b.Name == "查案对质");
-        while (!(g.Day == 4 && g.Slot == Slot.Morning)) g.RunSlot(bot.Act(g));
-        g.RunSlot(new PlayerAction(Cmd.Confront) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, false) });
+        while (!(g.Day == 4 && g.Slot == Slot.Morning)) g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, false) } : bot.Act(g));
         var keys = new[] { P.Ward, P.Mora, P.Ruan, P.Quer };
         var ok = new List<Card>();
         foreach (var card in Card.All(2).Where(c => c.Behavior == 0))

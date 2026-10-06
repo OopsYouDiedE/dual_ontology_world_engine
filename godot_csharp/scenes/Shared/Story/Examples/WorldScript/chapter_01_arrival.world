@@ -1,0 +1,50 @@
+# 第一章：玩家询问，NPC 守夜人依 Core 候选规则选择回答。
+chapter(id="arrival", requires=[])
+
+foyer = room(id="room.foyer", name="门厅", scope="world")
+bolt = object(
+    id="object.inner_bolt", name="内侧插闩", room=foyer, scope="world",
+    state={"engaged": 1}, observable={"scratched": True},
+)
+detective = character(
+    id="character.detective", name="侦探", room=foyer, scope="world",
+    state={"focus": 1}, observable={"present": True},
+)
+guard = character(
+    id="character.guard", name="守夜人", room=foyer, scope="world",
+    belief={"cautious": 1}, observable={"present": True},
+)
+
+
+@选项(id="inspect_inner_bolt", target=bolt, applicability=known(bolt))
+def inspect_inner_bolt():
+    ```
+侦探：能说说插闩上这道痕吗？
+```
+    inspect(target=bolt)
+
+
+@反应(
+    id="careful_reply", actor=guard,
+    response_to=["inspect_inner_bolt"],
+    applicability=known(bolt),
+    goal=state(guard, "cautious") == 1,
+    weight=5,
+)
+def careful_reply():
+    ```
+守夜人：插闩落在闩槽里。刮痕倒像是从里面留下的。
+```
+
+
+@反应(
+    id="brief_reply", actor=guard,
+    response_to=["inspect_inner_bolt"],
+    applicability=known(bolt),
+    goal=state(guard, "cautious") == 0,
+    weight=1,
+)
+def brief_reply():
+    ```
+守夜人：插闩没有松动。
+```

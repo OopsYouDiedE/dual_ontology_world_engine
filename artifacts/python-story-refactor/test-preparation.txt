@@ -1,0 +1,46 @@
+独立自动验证准备（2026-10-05）
+身份：自动验证代码准备，不是盲玩。未创建其他 Agent。
+严格范围：只读源码、允许的 AGENTS 与工作区状态；未访问 docs、任何 README、历史报告或其他代理会话。只修改测试代码及本报告。没有执行构建、测试、Godot、生产编译器；没有修改生成物或实现。
+
+修改
+1. godot_csharp/scenes/Awakening/check/FormalScriptCheck/Program.cs
+   内容资源字节一致性及运行时原始 JSON 一致性改对 Script/generated_awakening_content.json。
+   旧 DialogueText / Awakening.Dialogue 比对迁移为 Chapter1CompiledDialogue.Create() 与正式 generated_awakening_dialogue.json 的完整类型化文档序列化一致性检查。
+   使用 Chapter1Script.CreateDialogue(content, world) 验证开场首行及有界完成。原世界初始化、宿主流程 ack、第二章和共享 StoryRuntime 检查保留。
+2. check/SharedRuntimeCheck/Program.cs
+   通过 Chapter1Script.CreateContent() 读取真实嵌入内容，对照正式生成内容文件；补充真实编译文档和 CreateDialogue 开场包断言。
+   原证物、进度、会合 ack、Core 引用、外部 C# 示例剧本加载等断言保留。args[0]/args[1] 外部示例参数仍属于独立 ChapterScript 测试，不替换或删除。
+3. check/flow_check.gd
+   移除 game.STORY 与 DialogueText 调用，标题及完整文本检查直接读取正式 Script/generated_awakening_dialogue.json。
+   nudge 台词末尾检查按真实 entries 中铜口 line 指令提取，不依赖旧 .dialogue 文本布局。
+   两处 nudged 快照索引写入改 engine.SetProgress；last_sound/replay_open/full_match_seen 的直接注入也明确走 SetProgress。
+   原全部剧情/可达性/输入/回放/状态断言保留。其他所见字典访问为读操作，无额外嵌套写入需 SetDetail；本轮未造无意义写入。
+4. check/hand_outline_check.gd
+   旧 STORY 标题和台词读取改为正式生成对白 JSON，保留旧手掌文字及结果卡断言，未擅改预期。
+5. check/final_content_check.gd
+   正式内容路径改为 Script/generated_awakening_content.json；原 tmp 源文本对照与 LIFE_TRACES 断言保留。
+6. check/StoryPacketCheck/StoryPacketCheck.csproj 与 Program.cs
+   新 net8.0 / C#12 纯 C# console 项目，引用 ../../Script/Chapter1Script.csproj。
+   使用真实 Chapter1CompiledDialogue.Create 与 Chapter1Script factories，完整比对正式生成对白文档。
+   测试真实 s4_rewards 四人 amplify 的逐行确认时机、恰好一次效果、真实文本。
+   测试 s5_question 调查/歇息两条真实选择分支；talk_huo first/met/replayed/matched 嵌套条件分支。
+   测试 recall_offer_su 两个选择效果；talk_huo_menu 的锁定/未知选择拒绝、不污染待选菜单、正常响应与真实 jump、实时开放条件和禁止重复选择。
+   测试真实 nudge_E7 whisper -> consider 命令参数、命令包暂停、Next ack 完成、不重复执行，以及交互中拒绝重入。
+   测试私语/守则认知隔离、同一世界的新对白会话与全新世界/内容会话的状态和认知重置。
+   遍历均设上限。无模拟伪剧本、无预写包替代运行时。未保留临时快照导出方案：生成文档已在并行编辑期间出现，GDScript 直接读正式生成文件。
+
+发现与待实现收敛事项（静态源码观察，未执行验证）
+A. 手掌旧预期确有基线冲突，已保留以待主代理决定：
+   - hand_outline_check.gd 预期 HELP_NOTES.E11 = “在痕迹旁比对手掌轮廓：半枚手印，比四个人的手掌都窄。”
+     当前真实 generated_awakening_content.json 与 Python 生产源为“在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。”
+   - 旧故事断言要求“把手掌停在痕迹旁，没有碰灰”；真实生成台词为“把手掌停在半枚手印旁，没有碰灰”，侦探另为 R-05 架沿表述。
+   - 旧测试仅 SetProgress("experiments", "E11", true) 后要求卡片显示完整 HELP_NOTES；当前 CardNotes 依据 hand_comparisons 四人记录统计，单独实验标记不足以形成结论。该旧断言没有被放宽，也没有注入四人的伪比对记录。
+B. 本轮最后观察时 Chapter1Script.csproj 仍只 Compile Chapter1Script.cs 与 Night/*.cs，且嵌入 ../AwakeningContent.json 和 ../awakening.dialogue。Chapter1Dialogue/Chapter1CompiledDialogue/Chapter1Interaction 尚未被该项目显式纳入。实现正并行编辑，不改实现、不尝试构建；后续运行前需生产实现收敛至真实新类及 generated_awakening_content.json 嵌入路径。测试仍按现有 CreateContent 的逻辑资源名 Awakening.Content.json 对照字节。
+C. final_content_check 的三个 tmp/original-*.gd 对照文件是既有测试前提，本轮没有读取其内容或重新生成。文件缺失时该检查仍会失败，不删除对照断言。
+D. GDScript 标题/文案检查读取生成 JSON；纯 C# 新项目与 FormalScriptCheck 的完整文档一致性检查负责把生成 JSON 与实际编译类绑定。未声称这等同于实机或盲玩。
+
+后续执行入口（仅列出，未运行）
+从仓库根运行：dotnet run --project godot_csharp/scenes/Awakening/check/StoryPacketCheck/StoryPacketCheck.csproj
+FormalScriptCheck 与 SharedRuntimeCheck 沿用既有启动入口和外部示例参数。
+Godot flow_check / hand_outline_check / final_content_check 沿用既有脚本启动方式；hand_outline 的旧断言基线冲突须先由主代理处理。
+结论：测试迁移与新测试代码已准备；没有任何构建通过、测试通过或实机验收结论。

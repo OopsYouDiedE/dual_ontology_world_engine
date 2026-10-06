@@ -1,6 +1,6 @@
 # 正式剧本：-Source ../scenes/Awakening/Script/Chapter1Script.cs（第二章同理）。
 # 正式入口连同同名工程中的完整原源码、资源一起编译；也可以直接传 .csproj。
-# 外置扩展示例仍编译为 WorldScript.<名称>.dll，交给 --world-script 或 run_script 加载。
+# 第二章外置扩展示例编译为 WorldScript.<名称>.dll，交给 --world-script 加载。
 param(
     [Parameter(Mandatory = $true)][string]$Source,
     [string]$Output,
@@ -27,7 +27,6 @@ if (!$ContractProject) { $ContractProject = Join-Path $godotRoot 'scenes/Chapter
 $contractPath = (Resolve-Path -LiteralPath $ContractProject).Path
 $sourceXml = [System.Security.SecurityElement]::Escape($sourcePath)
 $projectXml = [System.Security.SecurityElement]::Escape($contractPath)
-$chapter1Xml = [System.Security.SecurityElement]::Escape((Join-Path $godotRoot 'scenes/Awakening/Script/Chapter1Script.csproj'))
 $assemblyXml = [System.Security.SecurityElement]::Escape("WorldScript.$scriptName")
 $projectPath = Join-Path $buildDirectory 'WorldScript.csproj'
 @"
@@ -43,7 +42,6 @@ $projectPath = Join-Path $buildDirectory 'WorldScript.csproj'
   <ItemGroup>
     <Compile Include="$sourceXml" />
     <ProjectReference Include="$projectXml" />
-    <ProjectReference Include="$chapter1Xml" />
   </ItemGroup>
 </Project>
 "@ | Set-Content -LiteralPath $projectPath -Encoding utf8

@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://scenes/Shared/UI/FieldUI.tscn" id="field_ui"]
 
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/ChapterHUD.tscn" id="chapter_hud"]
+
 [ext_resource type="Script" path="res://scenes/Chapter2/Game/Chapter2Game.gd" id="game"]
 [ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterDialogue.tscn" id="dialogue"]
 
@@ -18,3 +20,8 @@ script = ExtResource("game")
 [node name="Dialogue" parent="." instance=ExtResource("dialogue")]
 
 [node name="FieldUI" parent="." instance=ExtResource("field_ui")]
+
+[node name="GameplayHUD" parent="." instance=ExtResource("chapter_hud")]
+
+[node name="ModalLayer" type="CanvasLayer" parent="."]
+layer = 15

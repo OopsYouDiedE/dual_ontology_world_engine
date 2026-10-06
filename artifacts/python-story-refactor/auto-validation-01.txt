@@ -1,0 +1,69 @@
+独立自动验收 auto-validation-01
+日期：2026-10-05；工作区：C:\Users\iii\Desktop\dual_ontology_world_engine
+总体结论：失败。Python 内容迁移一致性通过；C# 新交互代码不能编译，宿主流程失败，运行验收未完成。
+边界：未读 docs、任何 README、历史报告或其他 Agent 会话；未创建子 Agent；未修实现或生成物。仅新增两个独立 Python 检查脚本及本轮日志/报告/临时执行器。所有结果是自动回归，不是盲玩或游玩验证。
+执行方式：每个验收命令仅执行一次。subprocess 重定向 stdout/stderr 到独立日志；记录该验收进程真实退出码和单调时钟耗时。Godot flow 限时 180 秒，其余限时详见执行器。没有任何命令超时，无需终止进程；超时预案只 taskkill 该启动 PID 的进程树。
+
+逐命令结果：
+通过 | compile-check | exit=0 | 0.219s | timeout=False
+  command: ['python', 'godot_csharp/tools/compile_story.py', '--check']
+  log: auto-01/compile-check.log
+通过 | core-build | exit=0 | 1.172s | timeout=False
+  command: ['dotnet', 'build', 'csharp/Core.sln']
+  log: auto-01/core-build.log
+失败 | godot-build | exit=1 | 7.953s | timeout=False
+  command: ['dotnet', 'build', 'godot_csharp/DualOntologyWorldEngine.sln']
+  log: auto-01/godot-build.log
+失败 | StoryPacketCheck | exit=1 | 2.344s | timeout=False
+  command: ['dotnet', 'run', '--project', 'godot_csharp/scenes/Awakening/check/StoryPacketCheck']
+  log: auto-01/StoryPacketCheck.log
+失败 | FormalScriptCheck | exit=1 | 1.859s | timeout=False
+  command: ['dotnet', 'run', '--project', 'godot_csharp/scenes/Awakening/check/FormalScriptCheck']
+  log: auto-01/FormalScriptCheck.log
+失败 | ReplayCheck | exit=1 | 1.703s | timeout=False
+  command: ['dotnet', 'run', '--project', 'godot_csharp/scenes/Awakening/check/ReplayCheck']
+  log: auto-01/ReplayCheck.log
+通过 | godot-import | exit=0 | 7.547s | timeout=False
+  command: ['C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\Godot_v4.6.1-stable_mono_win64_console.exe', '--headless', '--editor', '--path', 'godot_csharp', '--import', '--quit']
+  log: auto-01/godot-import.log
+失败 | flow-check | exit=1 | 8.954s | timeout=False
+  command: ['C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\Godot_v4.6.1-stable_mono_win64_console.exe', '--headless', '--path', 'godot_csharp', '--script', 'res://scenes/Awakening/check/flow_check.gd']
+  log: auto-01/flow-check.log
+通过 | independent-story-compare | exit=0 | 0.281s | timeout=False
+  command: ['python', 'godot_csharp/scenes/Awakening/check/independent_story_compare.py']
+  log: auto-01/independent-story-compare.log
+失败 | compiler-edge-check | exit=1 | 0.219s | timeout=False
+  command: ['python', 'godot_csharp/scenes/Awakening/check/independent_compiler_edge_check.py']
+  log: auto-01/compiler-edge-check.log
+
+1. Python 编译、原有内容与完整分支树：
+compile_story.py --check exit=0：4 个生成物与编译器当前输出一致。
+独立比较旧 tmp/python-story-refactor/AwakeningContent.json 与 generated_awakening_content.json：所有原有键和值递归相等，唯一允许的新增键为 SITE_INTERACTIONS。
+旧 awakening.dialogue 使用本轮新写的独立缩进解析器处理；未引用迁移器、旧 StoryDialogue 或编译器解析旧文档。表达式通过标准库 ast 转为结构。逐标题比较完整有序 AST，包括 speaker/text/emotion、choice label 和条件、效果名称/参数、jump 目标、if 的 then/else 及 choice body。elif 递归转为 else 内 if，嵌套分支保留路径。生成 choice id、lock_hint 与空 voice_clip 不属于旧文档比较字段；其余全部字段参与递归比较。
+标题 86 个；instruction counts {'line': 389, 'jump': 113, 'call': 40, 'choices': 16, 'choice_options': 62, 'if': 33, 'elif-shaped-else': 17, 'conditional-options': 21}；最大分支嵌套深度 11。完整跳转路径记录于 auto-01/dialogue-topology.json。
+实际指令：389 台词、113 跳转、16 选项组/62 选项、33 条件节点；详细效果/查询数量见日志（日志的 call=95 含表达式 query，不仅是效果）。
+确定性：两次独立 load_source，比较全部 4 份生成文件的完整字符串一致；未写生成物。
+已实际拒绝：未知嵌套 jump、未知 effect/query、effect/query 错误 arity、重复 entry/choice/evidence/site/trace/prop ID。负例仅在内存构造，不修改正式源。
+额外 arity 负例发现失败：validate_text("{{seen}}", "probe") 被接受，但 seen 要求一个参数。明确 seen() 缺参与 detective_name("x") 多参都被拒绝。定位 tools/compile_story.py:64-78，只在正则匹配为 call 时验证 arity，裸插值名称仅检查名称与语法。Chapter1Dialogue.Evaluate 的 seen 经 Has -> A() 读取 args[0]；裸 seen 插值传空参数。此次属于编译器拒绝检查漏洞；没有声称当前冻结剧情包含该坏插值。
+
+2. C# 构建与自动检查：
+Core.sln 构建通过。Godot 解决方案失败：Chapter1Interaction.cs 的 CS8752 共 10 个错误，WorldCommand[] 不能用作 target-typed new() 目标。准确位置：19:36、20:34、21:33、22:33、23:32、78:38、78:87、79:34、79:82、80:33。Commands(params WorldCommand[]) 单个 new(...) 调用触发该问题；78-79 行 switch arms 亦有相同问题。完整错误保留在 godot-build.log。
+godot-build 同时有 Chapter2/Prototype/Player.cs:282:61、283:64 两个 CS8629 警告；不是本轮阻断原因。
+StoryPacketCheck、FormalScriptCheck、ReplayCheck 命令均退出 1，原因均是同一 Chapter1Script 依赖编译失败。未进入断言，不能解释为玩法/隔离断言失败，也不能声称通过。
+
+3. Godot 实机自动回归：
+headless editor import 退出 0，导入日志 ERROR / SCRIPT ERROR / Parse Error 为 0。导入成功不证明 .NET 编译或游戏运行成功。
+flow_check.gd 在 180 秒限时内于 8.954 秒退出 1。最终 TOTAL 10 checks, 3 failed；对白 900 帧未结束、醒来后不可自由行动、初醒视野失败。900 帧是测试脚本内自动上限，不是游玩时长。
+具体 SCRIPT ERROR：Awakening.gd:82 @stage_getter 调用 Nil.Progress；StoryDialogue.gd:552 start_packet 调用 Node(AwakeningEngine.cs) 中不存在的 StartDialogue。源码存在 StartDialogue（AwakeningEngine.cs:20），但新程序集编译失败，实际运行并未验证冻结的新 C# 实现。日志有 ObjectDB 泄漏警告和退出时 2 resources still in use ERROR。不能把这些下游错误误报成新 GDScript 解析失败。
+未使用旧程序集、注入状态或按帧流程结果宣称新实现可用/游玩通过。
+
+未运行/被阻断项：
+SharedRuntimeCheck：未运行。未生成/执行两个外部示例程序集。SharedRuntimeCheck.csproj 及 compile_world_script.ps1 默认生成的外置示例工程均引用 Chapter1Script.csproj；本轮已实际证实该依赖编译失败。未用旧 DLL 或缺参数调用替代；不是参数缺失导致的实现失败。示例源为 scenes/Shared/Story/Examples/ExampleWorld.cs 与 ExampleAwakening.cs，预期输出 WorldScript.ExampleWorld.dll 与 WorldScript.ExampleAwakening.dll。
+cabinet_fog_current_check：未运行。宿主不可用：flow-check 已实测 StartDialogue 缺失并失败，新程序集又不能编译；不再启动同一不可用场景。已读启动逻辑，此项使用 state injection、RenderingServer.frame_post_draw 和视口截图，需要有窗口 gl_compatibility。未产出本轮截图。
+hand_outline_check：未运行。同上，宿主不可用，未启动窗口截图回归。已读启动逻辑，此项明确使用 SetProgress 注入状态，属于 UI 自动回归；未产出本轮截图。
+Chapter1Interaction additional runtime assertions：未运行。CardPacket / Interact / Choose / ChooseCard 实际路由、锁定及过期选项未执行验证。StoryPacketCheck 当前只覆盖 Chapter1Dialogue；其项目已因 Chapter1Interaction.cs 编译失败而未进入 Main。本轮没有追加不可运行断言，也没有再次重跑该失败项。仅阅读源码不计为通过。
+Chapter1Dialogue Start/Next/Choose assertions：未运行。StoryPacketCheck 已启动但构建失败，因此真实奖励效果、选项、嵌套分支及命令确认等既有断言均未执行，不计为通过。
+ReplayCheck 216 combinations and behavioral isolation：未运行。命令已执行但编译失败，216 组合、感知隔离、回忆隔离、现实不变均未进入运行，不计为通过。
+
+本轮交付：artifacts/python-story-refactor/auto-validation-01.txt；详细日志 auto-01/*.log，真实退出/耗时索引 auto-01/results.jsonl；独立比较脚本位于 godot_csharp/scenes/Awakening/check/independent_story_compare.py 与 independent_compiler_edge_check.py。
+结论：验收未通过。需先解决 C# 编译阻断；本轮未修复、未重跑失败项。SharedRuntime/216 组合/交互锁定过期/截图回归仍无有效运行结论。

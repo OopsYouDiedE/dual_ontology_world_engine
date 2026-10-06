@@ -33,25 +33,46 @@ extends Node2D
 		spark_center_color = value
 		queue_redraw()
 
+@export_group("Editor Preview")
+@export var preview_enabled := true:
+	set(value):
+		preview_enabled = value
+		queue_redraw()
+@export var preview_box := Rect2(20, 20, 48, 48):
+	set(value):
+		preview_box = value
+		queue_redraw()
+@export var preview_spark_position := Vector2(44, 44):
+	set(value):
+		preview_spark_position = value
+		queue_redraw()
+@export_range(1, 8, 1) var preview_spark_radius := 3:
+	set(value):
+		preview_spark_radius = value
+		queue_redraw()
+
 var source: Node2D
 var clock := 0.0
 
 func _ready() -> void:
-	var unlit := CanvasItemMaterial.new()
-	unlit.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
-	material = unlit
+	# Legacy hosts may attach the script directly. Explicit scene/Inspector materials take priority.
+	if not Engine.is_editor_hint() and material == null:
+		var unlit := CanvasItemMaterial.new()
+		unlit.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+		material = unlit
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint(): return
 	clock = fmod(clock + delta, 22.0)
 	queue_redraw()
 
 func _draw() -> void:
-	if source == null or not source.field_active():
-		if Engine.is_editor_hint():
-			# 编辑器预览样本：绘制演示描边与闪烁点
-			_outline(Rect2(Vector2(20, 20), Vector2(48, 48)), hover_color)
-			_spark(Vector2(44, 44), 3)
+	if Engine.is_editor_hint():
+		if preview_enabled:
+			_outline(preview_box, hover_color)
+			_spark(preview_spark_position, preview_spark_radius)
 		return
+	if source == null or not source.field_active(): return
 	for id in source.sites:
 		if not source.site_visible(id):
 			continue

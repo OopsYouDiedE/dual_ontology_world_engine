@@ -1,6 +1,6 @@
 extends SceneTree
 ## Targeted UI regression with explicit state injection; not blind play.
-const OUT := "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/remake-chapter2/shared-runtime/"
+const OUT := "res://../artifacts/python-story-refactor/"
 var failures := 0
 var checks := 0
 func _initialize() -> void: call_deferred("run")
@@ -23,9 +23,10 @@ func run() -> void:
 	game.jump_to("investigate")
 	var content: Dictionary = game.engine.Content()
 	check(content.EVIDENCE.E11.experiment == "比对手掌轮廓", "formal assembly E11 experiment caption")
-	check(content.HELP_NOTES.E11 == "在痕迹旁比对手掌轮廓：半枚手印，比四个人的手掌都窄。", "formal assembly HELP_NOTES side comparison and preserved size conclusion")
-	var story := str(game.STORY.get("lines"))
-	check(game.STORY.get("titles").has("help_E11") and story.contains("把手掌停在痕迹旁，没有碰灰") and story.contains("在半枚手印旁摊开手掌"), "runtime STORY has revised help_E11 side comparison")
+	check(content.HELP_NOTES.E11 == "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。", "formal assembly HELP_NOTES individual side comparison and preserved size conclusion")
+	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Awakening/Script/generated_awakening_dialogue.json"))
+	var story := JSON.stringify(document.entries)
+	check(document.entries.has("help_E11") and story.contains("把手掌停在半枚手印旁，没有碰灰") and story.contains("在半枚手印旁摊开手掌"), "runtime STORY has revised help_E11 side comparison")
 	check(not story.contains("比手？行") and not story.contains("把巴掌按在"), "runtime STORY excludes old gesture wording")
 	game.open_card("E11")
 	for i in 8: await process_frame
@@ -34,8 +35,21 @@ func run() -> void:
 	game.engine.SetProgress("experiments", "E11", true)
 	game.open_card("E11")
 	for i in 8: await process_frame
+	check(not visible_text(holder).contains(content.HELP_NOTES.E11), "legacy experiment flag alone cannot assert four individual comparisons")
+	game.close_modal()
+	for who in ["detective", "huo", "shen"]:
+		game.engine.SetProgress("hand_comparisons", who, true)
+	game.open_card("E11")
+	for i in 8: await process_frame
+	check(not visible_text(holder).contains(content.HELP_NOTES.E11), "three comparisons cannot assert four-person conclusion")
+	game.close_modal()
+	game.engine.SetProgress("hand_comparisons", "su", true)
+	game.open_card("E11")
+	for i in 8: await process_frame
 	check(visible_text(holder).contains(content.HELP_NOTES.E11), "actual E11 result card displays revised HELP_NOTES")
 	await RenderingServer.frame_post_draw
-	check(root.get_texture().get_image().save_png(OUT + "hand-outline-card.png") == OK, "windowed gl_compatibility screenshot saved")
+	var output := ProjectSettings.globalize_path(OUT)
+	DirAccess.make_dir_recursive_absolute(output)
+	check(root.get_texture().get_image().save_png(output + "hand-outline-card.png") == OK, "windowed gl_compatibility screenshot saved")
 	print("TOTAL %d checks, %d failed" % [checks, failures])
 	quit(0 if failures == 0 else 1)

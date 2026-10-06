@@ -1,0 +1,568 @@
+[gd_scene load_steps=44 format=3]
+
+[ext_resource type="Script" path="res://scenes/Shared/UI/UIWorkbench.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/Title/Title.tscn" id="p0"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterDialogue.tscn" id="p1"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/FieldUI.tscn" id="p2"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/PaperModal.tscn" id="p3"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/ReplayManuscript.tscn" id="p4"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/Game/CampusMap.tscn" id="p5"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ReplayOverlay.tscn" id="p6"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ReplayBubble.tscn" id="p7"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/HintOverlay.tscn" id="p8"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/SightMask.tscn" id="p9"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/Field/FieldHUD.tscn" id="p10"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/PaperLabel.tscn" id="p11"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/PaperButton.tscn" id="p12"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/PaperRule.tscn" id="p13"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/DialogueResponse.tscn" id="p14"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/AnswerHeader.tscn" id="p15"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/AnswerList.tscn" id="p16"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/Board.tscn" id="p17"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/ChapterHUD.tscn" id="p18"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/Comparisons.tscn" id="p19"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/Ending.tscn" id="p20"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/EvidenceCard.tscn" id="p21"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/Footer.tscn" id="p22"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/NameEntry.tscn" id="p23"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/Notebook.tscn" id="p24"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/NotebookSection.tscn" id="p25"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/SoleChoice.tscn" id="p26"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/SoundExperiment.tscn" id="p27"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/SoundResults.tscn" id="p28"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/TraceCard.tscn" id="p29"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/TubeMenu.tscn" id="p30"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/AnswerHeader.tscn" id="p31"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/AnswerList.tscn" id="p32"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/ChapterHUD.tscn" id="p33"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/ChoiceList.tscn" id="p34"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/ChoiceOption.tscn" id="p35"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/Confirm.tscn" id="p36"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/Ending.tscn" id="p37"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/EvidenceCard.tscn" id="p38"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/FlashTitle.tscn" id="p39"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/Footer.tscn" id="p40"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/UI/Notebook.tscn" id="p41"]
+
+[node name="UIWorkbench" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("script")
+
+[node name="Pages" type="TabContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+clip_tabs = true
+
+[node name="标题" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/标题"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/标题/Viewport" instance=ExtResource("p0")]
+
+[node name="对白" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/对白"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/对白/Viewport" instance=ExtResource("p1")]
+
+[node name="共享HUD" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/共享HUD"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/共享HUD/Viewport" instance=ExtResource("p2")]
+
+[node name="纸页弹窗" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/纸页弹窗"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/纸页弹窗/Viewport" instance=ExtResource("p3")]
+
+[node name="重演手稿" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/重演手稿"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/重演手稿/Viewport" instance=ExtResource("p4")]
+
+[node name="学园图" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/学园图"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/学园图/Viewport" instance=ExtResource("p5")]
+
+[node name="回放操作" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/回放操作"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/回放操作/Viewport" instance=ExtResource("p6")]
+
+[node name="心声气泡" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/心声气泡"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/心声气泡/Viewport" instance=ExtResource("p7")]
+
+[node name="现场提示" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/现场提示"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/现场提示/Viewport" instance=ExtResource("p8")]
+
+[node name="房间遮罩" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/房间遮罩"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/房间遮罩/Viewport" instance=ExtResource("p9")]
+
+[node name="地图浏览HUD" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/地图浏览HUD"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/地图浏览HUD/Viewport" instance=ExtResource("p10")]
+
+[node name="文字模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/文字模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/文字模板/Viewport" instance=ExtResource("p11")]
+
+[node name="按钮模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/按钮模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/按钮模板/Viewport" instance=ExtResource("p12")]
+
+[node name="分隔线模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/分隔线模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/分隔线模板/Viewport" instance=ExtResource("p13")]
+
+[node name="对白选项模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/对白选项模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/对白选项模板/Viewport" instance=ExtResource("p14")]
+
+[node name="一章AnswerHeader" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章AnswerHeader"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章AnswerHeader/Viewport" instance=ExtResource("p15")]
+
+[node name="一章AnswerList" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章AnswerList"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章AnswerList/Viewport" instance=ExtResource("p16")]
+
+[node name="一章Board" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章Board"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章Board/Viewport" instance=ExtResource("p17")]
+
+[node name="一章ChapterHUD" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章ChapterHUD"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章ChapterHUD/Viewport" instance=ExtResource("p18")]
+
+[node name="一章Comparisons" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章Comparisons"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章Comparisons/Viewport" instance=ExtResource("p19")]
+
+[node name="一章Ending" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章Ending"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章Ending/Viewport" instance=ExtResource("p20")]
+
+[node name="一章EvidenceCard" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章EvidenceCard"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章EvidenceCard/Viewport" instance=ExtResource("p21")]
+
+[node name="一章Footer" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章Footer"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章Footer/Viewport" instance=ExtResource("p22")]
+
+[node name="一章NameEntry" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章NameEntry"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章NameEntry/Viewport" instance=ExtResource("p23")]
+
+[node name="一章Notebook" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章Notebook"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章Notebook/Viewport" instance=ExtResource("p24")]
+
+[node name="一章NotebookSection" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章NotebookSection"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章NotebookSection/Viewport" instance=ExtResource("p25")]
+
+[node name="一章SoleChoice" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章SoleChoice"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章SoleChoice/Viewport" instance=ExtResource("p26")]
+
+[node name="一章SoundExperiment" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章SoundExperiment"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章SoundExperiment/Viewport" instance=ExtResource("p27")]
+
+[node name="一章SoundResults" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章SoundResults"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章SoundResults/Viewport" instance=ExtResource("p28")]
+
+[node name="一章TraceCard" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章TraceCard"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章TraceCard/Viewport" instance=ExtResource("p29")]
+
+[node name="一章TubeMenu" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/一章TubeMenu"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/一章TubeMenu/Viewport" instance=ExtResource("p30")]
+
+[node name="二章AnswerHeader" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章AnswerHeader"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章AnswerHeader/Viewport" instance=ExtResource("p31")]
+
+[node name="二章AnswerList" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章AnswerList"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章AnswerList/Viewport" instance=ExtResource("p32")]
+
+[node name="二章ChapterHUD" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章ChapterHUD"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章ChapterHUD/Viewport" instance=ExtResource("p33")]
+
+[node name="二章ChoiceList" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章ChoiceList"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章ChoiceList/Viewport" instance=ExtResource("p34")]
+
+[node name="二章ChoiceOption" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章ChoiceOption"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章ChoiceOption/Viewport" instance=ExtResource("p35")]
+
+[node name="二章Confirm" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章Confirm"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章Confirm/Viewport" instance=ExtResource("p36")]
+
+[node name="二章Ending" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章Ending"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章Ending/Viewport" instance=ExtResource("p37")]
+
+[node name="二章EvidenceCard" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章EvidenceCard"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章EvidenceCard/Viewport" instance=ExtResource("p38")]
+
+[node name="二章FlashTitle" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章FlashTitle"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章FlashTitle/Viewport" instance=ExtResource("p39")]
+
+[node name="二章Footer" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章Footer"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章Footer/Viewport" instance=ExtResource("p40")]
+
+[node name="二章Notebook" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/二章Notebook"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/二章Notebook/Viewport" instance=ExtResource("p41")]
+
+[editable path="Pages/标题/Viewport/Preview"]
+[editable path="Pages/对白/Viewport/Preview"]
+[editable path="Pages/共享HUD/Viewport/Preview"]
+[editable path="Pages/纸页弹窗/Viewport/Preview"]
+[editable path="Pages/重演手稿/Viewport/Preview"]
+[editable path="Pages/学园图/Viewport/Preview"]
+[editable path="Pages/回放操作/Viewport/Preview"]
+[editable path="Pages/心声气泡/Viewport/Preview"]
+[editable path="Pages/现场提示/Viewport/Preview"]
+[editable path="Pages/房间遮罩/Viewport/Preview"]
+[editable path="Pages/地图浏览HUD/Viewport/Preview"]
+[editable path="Pages/文字模板/Viewport/Preview"]
+[editable path="Pages/按钮模板/Viewport/Preview"]
+[editable path="Pages/分隔线模板/Viewport/Preview"]
+[editable path="Pages/对白选项模板/Viewport/Preview"]
+[editable path="Pages/一章AnswerHeader/Viewport/Preview"]
+[editable path="Pages/一章AnswerList/Viewport/Preview"]
+[editable path="Pages/一章Board/Viewport/Preview"]
+[editable path="Pages/一章ChapterHUD/Viewport/Preview"]
+[editable path="Pages/一章Comparisons/Viewport/Preview"]
+[editable path="Pages/一章Ending/Viewport/Preview"]
+[editable path="Pages/一章EvidenceCard/Viewport/Preview"]
+[editable path="Pages/一章Footer/Viewport/Preview"]
+[editable path="Pages/一章NameEntry/Viewport/Preview"]
+[editable path="Pages/一章Notebook/Viewport/Preview"]
+[editable path="Pages/一章NotebookSection/Viewport/Preview"]
+[editable path="Pages/一章SoleChoice/Viewport/Preview"]
+[editable path="Pages/一章SoundExperiment/Viewport/Preview"]
+[editable path="Pages/一章SoundResults/Viewport/Preview"]
+[editable path="Pages/一章TraceCard/Viewport/Preview"]
+[editable path="Pages/一章TubeMenu/Viewport/Preview"]
+[editable path="Pages/二章AnswerHeader/Viewport/Preview"]
+[editable path="Pages/二章AnswerList/Viewport/Preview"]
+[editable path="Pages/二章ChapterHUD/Viewport/Preview"]
+[editable path="Pages/二章ChoiceList/Viewport/Preview"]
+[editable path="Pages/二章ChoiceOption/Viewport/Preview"]
+[editable path="Pages/二章Confirm/Viewport/Preview"]
+[editable path="Pages/二章Ending/Viewport/Preview"]
+[editable path="Pages/二章EvidenceCard/Viewport/Preview"]
+[editable path="Pages/二章FlashTitle/Viewport/Preview"]
+[editable path="Pages/二章Footer/Viewport/Preview"]
+[editable path="Pages/二章Notebook/Viewport/Preview"]

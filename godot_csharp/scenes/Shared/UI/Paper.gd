@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 ## 手稿界面：羊皮纸底、墨色、印红。所有面板与按钮共用这一套样式。
 
@@ -25,52 +26,14 @@ static func font() -> Font:
 	return _stack
 
 static func theme() -> Theme:
-	var t := Theme.new()
-	t.default_font = font()
-	t.default_font_size = 19
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = {"normal": Color("efe6cc"), "hover": Color("f6eedb"), "pressed": Color("d8c8a0"), "focus": Color("efe6cc"), "disabled": Color("e2d7ba")}[state]
-		box.border_color = SEAL if state in ["hover", "focus"] else Color("8c7a5c")
-		box.set_border_width_all(1)
-		box.border_width_bottom = 2
-		box.set_corner_radius_all(2)
-		box.content_margin_left = 14
-		box.content_margin_right = 14
-		box.content_margin_top = 6
-		box.content_margin_bottom = 6
-		if state == "focus":
-			box.draw_center = false
-		t.set_stylebox(state, "Button", box)
-	t.set_color("font_color", "Button", INK)
-	t.set_color("font_hover_color", "Button", INK)
-	t.set_color("font_pressed_color", "Button", INK)
-	t.set_color("font_focus_color", "Button", INK)
-	t.set_color("font_disabled_color", "Button", Color(INK, 0.4))
-	t.set_color("default_color", "RichTextLabel", INK)
-	t.set_color("font_color", "Label", INK)
-	var line := StyleBoxFlat.new()
-	line.bg_color = Color("f3ecd8")
-	line.border_color = Color("8c7a5c")
-	line.set_border_width_all(1)
-	line.set_content_margin_all(8)
-	t.set_stylebox("normal", "LineEdit", line)
-	t.set_stylebox("focus", "LineEdit", line)
-	t.set_color("font_color", "LineEdit", INK)
-	t.set_color("caret_color", "LineEdit", INK)
-	t.set_color("font_placeholder_color", "LineEdit", MUTED)
-	var bar := StyleBoxFlat.new()
-	bar.bg_color = Color(INK, 0.35)
-	bar.set_corner_radius_all(3)
-	t.set_stylebox("grabber", "VScrollBar", bar)
-	t.set_stylebox("grabber_highlight", "VScrollBar", bar)
-	t.set_stylebox("grabber_pressed", "VScrollBar", bar)
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color(INK, 0.08)
-	track.content_margin_left = 4
-	track.content_margin_right = 4
-	t.set_stylebox("scroll", "VScrollBar", track)
-	return t
+	return preload("res://scenes/Shared/UI/PaperTheme.tres")
+
+## Story sources name semantic colors; the presentation theme owns their values.
+static func story_text(text: String) -> String:
+	for key in {"seal": SEAL, "ink": INK, "muted": MUTED, "match": MATCH}:
+		var color: Color = {"seal": SEAL, "ink": INK, "muted": MUTED, "match": MATCH}[key]
+		text = text.replace("[color=%s]" % key, "[color=#%s]" % color.to_html(false))
+	return text
 
 static func sheet(margin := 34) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
@@ -83,34 +46,29 @@ static func sheet(margin := 34) -> StyleBoxFlat:
 	box.set_content_margin_all(margin)
 	return box
 
-static func label(text: String, size := 19, color := INK) -> RichTextLabel:
-	var l := RichTextLabel.new()
-	l.bbcode_enabled = true
-	l.fit_content = true
-	l.scroll_active = false
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("normal_font_size", size)
-	l.add_theme_font_size_override("bold_font_size", size)
-	l.add_theme_color_override("default_color", color)
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.text = text
+static func label(text: String, size := 0, color := Color(-1, -1, -1, -1)) -> RichTextLabel:
+	var l: RichTextLabel = preload("res://scenes/Shared/UI/PaperLabel.tscn").instantiate()
+	if size > 0:
+		l.add_theme_font_size_override("normal_font_size", size)
+		l.add_theme_font_size_override("bold_font_size", size)
+	if color.a >= 0:
+		l.add_theme_color_override("default_color", color)
+	l.text = story_text(text)
 	return l
 
-static func button(text: String, action: Callable, size := 19) -> Button:
-	var b := Button.new()
+static func button(text: String, action: Callable, size := 0) -> Button:
+	var b: Button = preload("res://scenes/Shared/UI/PaperButton.tscn").instantiate()
 	b.text = text
-	b.add_theme_font_size_override("font_size", size)
-	b.focus_mode = Control.FOCUS_NONE
-	b.pressed.connect(func(): Sound.sfx("ui_click", -4.0))
-	b.pressed.connect(action)
+	if size > 0:
+		b.add_theme_font_size_override("font_size", size)
+	if not Engine.is_editor_hint():
+		b.pressed.connect(func(): Sound.sfx("ui_click", -4.0))
+		if action.is_valid():
+			b.pressed.connect(action)
 	return b
 
 static func rule() -> ColorRect:
-	var r := ColorRect.new()
-	r.color = RULE
-	r.custom_minimum_size = Vector2(0, 1)
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return r
+	return preload("res://scenes/Shared/UI/PaperRule.tscn").instantiate()
 
 const MODAL_SCENE: PackedScene = preload("res://scenes/Shared/UI/PaperModal.tscn")
 

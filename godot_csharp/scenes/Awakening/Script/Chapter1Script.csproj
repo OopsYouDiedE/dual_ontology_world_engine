@@ -6,11 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>Chapter1Script</AssemblyName>
+    <StoryPython Condition="'$(StoryPython)' == ''">python</StoryPython>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Chapter1Script.cs;../Night/*.cs" />
-    <EmbeddedResource Include="../AwakeningContent.json" LogicalName="Awakening.Content.json" />
-    <EmbeddedResource Include="../awakening.dialogue" LogicalName="Awakening.Dialogue" />
+    <Compile Include="Chapter1Script.cs;Chapter1Dialogue.cs;Chapter1Interaction.cs;Chapter1CompiledDialogue.cs;../Night/*.cs" />
+    <EmbeddedResource Include="generated_awakening_content.json" LogicalName="Awakening.Content.json" />
+    <EmbeddedResource Include="generated_awakening_layout.json" LogicalName="Awakening.Layout.json" />
     <ProjectReference Include="../../Shared/Story/ChapterRuntime.csproj" />
   </ItemGroup>
+  <Target Name="CheckGeneratedChapter1Story" BeforeTargets="BeforeBuild">
+    <Exec Command="&quot;$(StoryPython)&quot; &quot;$(MSBuildThisFileDirectory)..\..\..\tools\compile_story.py&quot; --check"
+          WorkingDirectory="$(MSBuildThisFileDirectory)" />
+  </Target>
 </Project>

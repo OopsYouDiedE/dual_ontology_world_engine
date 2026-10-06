@@ -1,8 +1,11 @@
+@tool
 extends Node2D
 ## 昨夜回放：在真实地图上用半透明墨色人影重演，每人头顶一个心声气泡（此刻他听到/相信的东西）。
 ## 同一时刻，四个气泡并排显示四种不同的认知。可暂停、倍速、跳过；跳过与看完的结算相同。
 
 const Paper := preload("res://scenes/Shared/UI/Paper.gd")
+@export var overlay_scene: PackedScene = preload("res://scenes/Shared/UI/ReplayOverlay.tscn")
+@export var bubble_scene: PackedScene = preload("res://scenes/Shared/UI/ReplayBubble.tscn")
 
 const ROOM_ANCHORS := {
 	"R05": Vector2(930, 200), "R06": Vector2(930, 600), "R07": Vector2(706, 600), "R08": Vector2(706, 200),
@@ -71,38 +74,11 @@ func _setup() -> void:
 	host.ui.visible = false
 	host.camera.zoom = Vector2.ONE
 	host.camera.global_position = host.map.get_meta("map_size") / 2.0
-	layer = CanvasLayer.new()
-	layer.layer = 14
+	layer = overlay_scene.instantiate()
 	add_child(layer)
-	var theme := Paper.theme()
-	var bar := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.08, 0.1, 0.86)
-	style.set_content_margin_all(10)
-	bar.add_theme_stylebox_override("panel", style)
-	bar.position = Vector2(0, 0)
-	bar.size = Vector2(1280, 54)
-	bar.custom_minimum_size = Vector2(1280, 54)
-	bar.theme = theme
-	layer.add_child(bar)
-	caption = Paper.label("", 19, Color("e8d6a7"))
-	bar.add_child(caption)
-	controls = Label.new()
-	controls.text = "空格 暂停　F 倍速　Esc 跳过"
-	controls.add_theme_font_override("font", Paper.font())
-	controls.add_theme_font_size_override("font_size", 16)
-	controls.add_theme_color_override("font_color", Color("cfc3a2"))
-	controls.position = Vector2(960, 950)
-	controls.size = Vector2(300, 30)
-	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	layer.add_child(controls)
-	door_label = Label.new()
-	door_label.add_theme_font_override("font", Paper.font())
-	door_label.add_theme_font_size_override("font_size", 16)
-	door_label.add_theme_color_override("font_color", Color("f1e4bd"))
-	door_label.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.06))
-	door_label.add_theme_constant_override("outline_size", 5)
-	layer.add_child(door_label)
+	caption = layer.get_node("Bar/Caption")
+	controls = layer.get_node("Controls")
+	door_label = layer.get_node("Door")
 	for key in ORDER:
 		var actor: CharacterBody2D = host.actor_of(key)
 		var sprite := AnimatedSprite2D.new()
@@ -114,22 +90,7 @@ func _setup() -> void:
 		sprite.z_index = 60
 		add_child(sprite)
 		figures[key] = sprite
-		var bubble := PanelContainer.new()
-		var b := StyleBoxFlat.new()
-		b.bg_color = Color(0.93, 0.89, 0.78, 0.94)
-		b.border_color = Color(0.17, 0.13, 0.09, 0.8)
-		b.set_border_width_all(1)
-		b.set_corner_radius_all(6)
-		b.content_margin_left = 8
-		b.content_margin_right = 8
-		b.content_margin_top = 4
-		b.content_margin_bottom = 4
-		bubble.add_theme_stylebox_override("panel", b)
-		bubble.theme = theme
-		var text := Paper.label("", 15)
-		text.custom_minimum_size = Vector2(196, 0)
-		bubble.add_child(text)
-		bubble.set_meta("text", text)
+		var bubble: PanelContainer = bubble_scene.instantiate()
 		layer.add_child(bubble)
 		bubbles[key] = bubble
 

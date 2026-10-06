@@ -41,6 +41,9 @@ public sealed class WorldRuntime
     }
 
     public IReadOnlyList<Projection> Representations(Essence essence) => _reality.TryGetValue(essence, out var views) ? views.AsReadOnly() : [];
+    /// <summary>Read an existing correspondence without observing or revealing an unknown entity.</summary>
+    public Projection? KnownProjection(SoulEssence soul, Essence essence)
+        => Representations(essence).Select(view => Mental(soul, view)).FirstOrDefault(mental => mental is not null);
     internal Essence? Resolve(Projection? projection) => projection is not null && _binding.TryGetValue(projection, out var essence) && _existing.Contains(essence) ? essence : null;
     internal bool Controls(SoulEssence soul, Essence body) => _existing.Contains(soul) && soul.Relations.Contains((Relations.Controls, body));
     internal void Destroy(Essence essence) => _existing.Remove(essence);

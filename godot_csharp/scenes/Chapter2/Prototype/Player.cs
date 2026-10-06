@@ -259,8 +259,18 @@ public sealed partial class Game
                     foreach (var e in all) { if (Day >= 3) DetLooked.Add(e); DetSaw(e); }
                     if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
                     Feed.Add($"你细看了{Names.Of(here)}：");
-                    foreach (var e in all) Feed.Add("  · " + Describe(e));
-                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) Feed.Add("  · " + fp.Text + "。");
+                    foreach (var e in all)
+                    {
+                        var description = Describe(e);
+                        var key = ReferenceEquals(e, thing) ? act.Thing! : Things_.First(t => ReferenceEquals(t.Value.Thing(this), e)).Key;
+                        InspectionRecords.Add(new(Day, Slot, key, area, description));
+                        Feed.Add("  · " + description);
+                    }
+                    if (area == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp)
+                    {
+                        InspectionRecords.Add(new(Day, Slot, "前厅脚印", area, fp.Text + "。"));
+                        Feed.Add("  · " + fp.Text + "。");
+                    }
                 }
                 else Feed.Add($"你没能走到{Names.Of(area)}。");
                 if (act.Cmd == Cmd.Escort)
@@ -444,7 +454,7 @@ public sealed partial class Game
     public string Testimony(Person p) => TestimonyPresentation(p).Text;
 
     // Presentation accompanies the selected wording; rules and testimony text are unchanged.
-    private (string Text, string Emotion) TestimonyPresentation(Person p) => Day < 3 || p.Id is not (P.Bertrand or P.Margaret or P.Mora or P.Quer or P.Ruan or P.Ward) ? ChatPresentation(p) : p.Id switch
+    private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false) => Day < 3 || p.Id is not (P.Bertrand or P.Margaret or P.Mora or P.Quer or P.Ruan or P.Ward) ? ChatPresentation(p) : p.Id switch
     {
         P.Bertrand => ("“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == 2)).GroupBy(s => (s.Day, s.At))
             .Select(g => $"第{g.Key.Day}日夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”", "thoughtful"),
@@ -452,7 +462,7 @@ public sealed partial class Game
             ? ("“粮仓门闩松了，前天夜里我在后勤院碰见雀儿，请她修的。她修得很干净。……有人说她偷东西？她当时饿着肚子在修门。”", "angry")
             : p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked)) ? ("“门闩松了，我请人修，没人搭理。”", "worried") : ("“后勤院的门闩松着，没人管。”", "worried"),
         P.Mora => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")) ? ("“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”", "worried") : ("“我一直在诊疗所。”", "calm"),
-        P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (TrustIn(p, Det) >= 2 ? ("“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”", "worried") : ("“关你什么事。”", "angry")) : ("“我那晚饿着睡的。”", "worried"),
+        P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (selectedTestimony || TrustIn(p, Det) >= 2 ? ("“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”", "worried") : ("“关你什么事。”", "angry")) : ("“我那晚饿着睡的。”", "worried"),
         P.Ruan => ($"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”", "thoughtful"),
         P.Ward => Accused is not null ? ("“依据台账与所见，事实清楚。”", "calm") : ("“无记录即违规。仅此而已。”", "calm"),
         _ => ("“我那晚睡着了。”", "calm")

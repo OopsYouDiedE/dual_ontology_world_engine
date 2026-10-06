@@ -49,18 +49,9 @@ stdio面向MCP客户端，不是交互命令行。SDK最低版本来自实际使
 - `update_task(task_id,status=null,acceptance_confirmed=null,evidence_paths=null,note=null)`：status为todo/in_progress/done，证据是仓库相对文件路径。done需要依赖有效完成、作者声明验收及存在且哈希一致的证据。文件检查不证明艺术或玩法；验收目标/依赖变化后须重新确认。
 - `next_task()`：返回就绪任务与准备信息，以及证据失效的已完成项。调用代理继续已授权目标内的工作，遇到方向分歧再问用户；MCP本身不唤醒、不扩任务范围。
 
-### 剧情修订与Godot UI
+### Godot UI
 
-- `story_scene_design_contract()`：按剧情弧、场景、行动节拍给出设计卡及审查问题。要求角色有眼前目的，玩家能通过操作取得信息，并让选择或操作有可见结果；心声只承担感受与个人决定，不代替玩家推断。
-- `inventory_story_project()`：列出`godot_csharp/scenes/`下全部`.dialogue`、SHA、段落、对白与选项数。清单不表示该场景从当前入口可达。
-- `audit_story_presentation(path=现行初醒剧情)`：逐段统计对白/选项/动作，给出心声、解释性结论、长台词及连续无脚本交互对白的精确行号和复审问题。静态信号只是候选；运行时代码中的交互、演出及玩家已知事实仍须人工核查。
-- `audit_story_project()`：按相同口径审查全部`.dialogue`，分文件保留SHA与行号，便于先看主线再对照其他样片。
-
-- `story_design_contract()`：当前剧情和三份修订/观察记录的路径、哈希、摘录，公开观察/假设/规则结果边界及空角色卡。运行台词与修订记录可能不一致，不能把摘录当成验收结果。
-- `inspect_story(path=现行初醒剧情)`：只读取`godot_csharp/scenes/`内`.dialogue`。返回真实行号、SHA256、控制指纹和不支持的语法。是保守子集解析，不替代Dialogue Manager编译器。
-- `review_story_revision(source_path,changes,source_sha256,cards=null,known_facts=null)`：changes为`[{line,expected,replacement}]`，expected/replacement均为含原说话者与缩进的整行。只预览现存台词的正文更改；早期知识关键词仅提示，自动检查不等于语义审查。
-- `apply_story_revision(source_path,changes,source_sha256)`：同上输入，原文与源SHA必须匹配。保留标签/插值/内联跳转，拒绝修改选项、条件、do与行结构；未知语法、重复标题或未解析跳转阻止apply。原子替换前复查源；不要多服务或编辑器同时写同一文件。
-- `review_story_beats(beats,characters)`：character为id/known_facts，beat为kind（observation/hypothesis/rule_result）、character、goal、action、information，可附claims/acquires/presented_as_fact；rule_result需source_ref。检查显式知识顺序，假设不转成事实。source_ref只是作者引用声明，工具不执行该机制或证明它支持结论。
+正式剧情维护 `scenes/Awakening/Script/ch1_awakening.py` 与 `scenes/Chapter2/Script/chapter_02.world`；本 MCP 的旧 `.dialogue` 剧情修订工具已退出，使用章节编译器及独立测试流程。
 - `ui_design_contract()`：核实后的Godot样式规则、当前色板和尺寸边界。保留像素焦点，不用低可读性代替低饱和。
 - `build_diegetic_ui(replace=false)`：固定FirstAwakeningInterior族，生成8张PNG切片及Aseprite源、共享Theme、`MindThemePreview.tscn`、带切线与内容边距的源清单。replace也拒绝覆盖未经登记或画师改过的文件。首次生成后用Godot编辑器导入资源；不会自行改玩法脚本或剧情。
 - `inspect_godot_ui(viewport=[1280,992])`：实际Godot加载上述固定样板，允许960–2560×640–1440，审查解析后的样式、布局与Button六态。需要`GODOT_BIN`和已导入的资源；报告固定归`artifacts/tilemap-workflow/`。样板通过不证明动态游戏全界面自适应。
@@ -89,9 +80,6 @@ godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/
 # 格式/量化/来源保护和任务图边界，全部使用临时目录
 godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/addons/rpg_asset_adapter/mcp/check_pixel_handoff.py
 godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/addons/rpg_asset_adapter/mcp/check_production.py
-# 剧情写入边界使用临时目录；集成检查只读取正式剧情
-godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/addons/rpg_asset_adapter/mcp/check_story_workflow.py
-godot_csharp/addons/rpg_asset_adapter/mcp/.venv/Scripts/python.exe godot_csharp/addons/rpg_asset_adapter/mcp/check_ui_story.py
 ```
 
 首次交接可给check_native_art.py加 `--handoff`；已有工程时不重复导出覆盖。验证报告为仓库 `artifacts/tilemap-workflow/native-mcp-check.json`。以下旧样板检查会重导出TileMapWorkflow，不能替代当前初醒验收：

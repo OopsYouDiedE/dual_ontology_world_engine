@@ -1,5 +1,6 @@
 using Godot;
 using DualOntologyWorldEngine.Chapter2.Prototype;
+using DualOntologyWorldEngine.Story;
 using ProtoGame = DualOntologyWorldEngine.Chapter2.Prototype.Game;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
@@ -7,10 +8,9 @@ using GDict = Godot.Collections.Dictionary;
 namespace DualOntologyWorldEngine.Chapter2;
 
 /// <summary>
-/// 第二章宿主与人物推演（Prototype.Game）之间的桥，对应第一章的 AwakeningEngine。
-/// 设计总纲 §四：读（Examine、Ask、读板、重演）不耗时，直接调用；写与等待经 RunSlot 结算下一个时段，
-/// 侦探的这件事就是他这一阵的行动，其余十五人同时依各自的认知行动。
-/// 宿主始终显示“刚结算完的那个时段”（ShownDay/ShownSlot）。
+/// 第二章 Godot 与纯 C# 章节会话之间的语义事件桥。
+/// 宿主通过 Dispatch 发送输入并呈现输出；人物策略、时段结算与剧本候选由 Core/章节层处理。
+/// 显示时钟始终指向刚结算完的时段（ShownDay/ShownSlot）。
 /// </summary>
 public partial class Chapter2Engine : Node
 {
@@ -18,11 +18,60 @@ public partial class Chapter2Engine : Node
     private int _shownDay = 2;
     private Slot _shownSlot = Slot.Morning;
     private bool _started;
+    private Chapter2InteractionSession _interaction = null!;
 
     public void Start()
     {
-        _g = new ProtoGame();
+        if (_started) throw new InvalidOperationException("This chapter session is already running.");
+        var continuation = ChapterWorldContinuity.Current ?? throw new InvalidOperationException("第二章需要第一章的真实会话。请从第一章继续；当前不提供伪造继承的独立起点。");
+        var json = Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json");
+        var options = Chapter2AuthoredProfiles.Apply(json);
+        // Validate all author data before changing the live world.
+        _ = new Chapter2Narrative(json, true);
+        Chapter2InteractionSession.ValidateScript(json);
+        foreach (var character in continuation.Characters.Values)
+            if(character.Self is null || continuation.Runtime.Representations(character.Body).Count!=1 || !ReferenceEquals(continuation.Runtime.KnownProjection(character.Soul,character.Body),character.Self) || continuation.Simulation.IsActing(character.Self))
+                throw new InvalidOperationException("The live awakening character binding is missing or still acting.");
+        _g = new ProtoGame(options, continuation,WorldScriptDocument.Parse(json,allowChapterAdapter:true).Single());
+        _interaction = new(_g, json);
+        ChapterWorldContinuity.Clear(); // The second chapter now owns this live session.
         _started = true;
+    }
+    public bool CanStart() => ChapterWorldContinuity.Current is not null && !_started;
+    public GDict TryStart()
+    {
+        try { Start(); return new() { ["ok"] = true, ["error"] = "" }; }
+        catch (Exception error) { return new() { ["ok"] = false, ["error"] = error.Message }; }
+    }
+    public GArray Dispatch(GDict input)
+    {
+        if (!_started) return new GArray { new GDict { ["kind"]="error",["message"]="章节尚未启动。" } };
+        var source = FromDictionary(input);
+        var events = _interaction.Dispatch(source);
+        _shownDay = _interaction.ShownDay; _shownSlot = _interaction.ShownSlot;
+        return new GArray(events.Select(e => ToGodot(e)));
+    }
+    public GDict Snapshot() => ToGodot(_interaction.Snapshot()).AsGodotDictionary();
+    public GDict SiteDefinitions(string map) => ToGodot(_interaction.SiteDefinitions(map)).AsGodotDictionary();
+    public GDict ReplayMetadata() => ToGodot(_interaction.ReplayMetadata()).AsGodotDictionary();
+    public bool InheritedChapter1() => _g.InheritedChapter1;
+    private static Dictionary<string,object?> FromDictionary(GDict input) => input.ToDictionary(p=>p.Key.AsString(),p=>FromGodot(p.Value));
+    private static object? FromGodot(Variant value) => value.VariantType switch
+    {
+        Variant.Type.Nil => null, Variant.Type.Dictionary => FromDictionary(value.AsGodotDictionary()),
+        Variant.Type.Array => value.AsGodotArray().Select(FromGodot).ToArray(), Variant.Type.Bool => value.AsBool(),
+        Variant.Type.Int => value.AsInt64(), Variant.Type.Float => value.AsDouble(), _ => value.AsString()
+    };
+    private static Variant ToGodot(object? value)
+    {
+        if (value is null) return default;
+        if (value is System.Collections.IDictionary dictionary)
+        {
+            var result=new GDict(); foreach(System.Collections.DictionaryEntry pair in dictionary) result[pair.Key.ToString()!]=ToGodot(pair.Value); return result;
+        }
+        if (value is IReadOnlyDictionary<string,object?> readOnly) { var result=new GDict();foreach(var pair in readOnly)result[pair.Key]=ToGodot(pair.Value);return result; }
+        if (value is System.Collections.IEnumerable sequence && value is not string) { var result=new GArray();foreach(var item in sequence)result.Add(ToGodot(item));return result; }
+        return value switch { bool b=>b,int i=>i,long l=>l,double d=>d,float f=>f,string s=>s,_=>value.ToString()! };
     }
 
     public bool Started() => _started;
@@ -35,71 +84,9 @@ public partial class Chapter2Engine : Node
     public int NextDay() => _g.Day;
     public int NextSlot() => (int)_g.Slot;
 
-    // ------------------------------------------------------------------ 写与等待 --
+    // Read-only presentation queries. Authoritative input goes through Dispatch.
 
-    /// <summary>结算下一个时段。act：{cmd, who, place, thing, job, rule, pairs, proposal, common}。返回侦探看得见的文字。</summary>
-    public GArray RunSlot(GDict act)
-    {
-        var day = _g.Day;
-        var slot = _g.Slot;
-        _g.RunSlot(ToAction(act));
-        _shownDay = day;
-        _shownSlot = slot;
-        return Lines(_g.TakeFeed());
-    }
-
-    private PlayerAction? ToAction(GDict a)
-    {
-        var cmd = a.TryGetValue("cmd", out var c) ? c.AsString() : "stay";
-        P Who() => Enum.Parse<P>(a["who"].AsString());
-        Place PlaceArg() => a.TryGetValue("place", out var pl) && pl.AsString() != "" ? Enum.Parse<Place>(pl.AsString()) : _g.Where(_g.Det);
-        switch (cmd)
-        {
-            case "sleep": return null;
-            case "watch": return new PlayerAction(Cmd.Stakeout) { Place = PlaceArg() };
-            case "collect": return new PlayerAction(Cmd.Collect);
-            case "class": return new PlayerAction(Cmd.Class);
-            case "mediate": return new PlayerAction(Cmd.Mediate);
-            case "escort":
-            {
-                var thing = a["thing"].AsString();
-                return new PlayerAction(Cmd.Escort) { Who = Who(), Place = ProtoGame.Things_[thing].Place, Thing = thing };
-            }
-            case "request": return new PlayerAction(Cmd.Ask) { Who = Who(), Job = Enum.Parse<Job>(a["job"].AsString()) };
-            case "tell_rule":
-            {
-                var spec = _g.Specs.First(s => s.Id == a["rule"].AsInt32());
-                return new PlayerAction(Cmd.TellRule) { Who = Who(), Spec = spec, Card = spec.Card };
-            }
-            case "tell_wording":
-                return new PlayerAction(Cmd.TellRule) { Who = Who(), Card = ProtoGame.CaseWordings[a["wording"].AsInt32()].Card };
-            case "help": return new PlayerAction(Cmd.Help) { Who = Who() };
-            case "share": return new PlayerAction(Cmd.ShareFood) { Who = Who() };
-            case "confront":
-            {
-                var pairs = new List<(int, int)>();
-                foreach (var v in a["pairs"].AsGodotArray()) { var pr = v.AsGodotArray(); pairs.Add((pr[0].AsInt32(), pr[1].AsInt32())); }
-                var prop = a.TryGetValue("proposal", out var pv) ? pv.AsInt32() : -1;
-                var card = prop >= 0 ? ProtoGame.CaseWordings[prop].Card : null;
-                return new PlayerAction(Cmd.Confront) { Plan = new ProtoGame.ConfrontPlan(pairs, card, a.TryGetValue("common", out var cv) && cv.AsBool()) };
-            }
-            default: return new PlayerAction(Cmd.Stay) { Place = PlaceArg() };
-        }
-    }
-
-    // ------------------------------------------------------------------ 读 --
-
-    public void MoveDet(string place) => _g.HostMoveDet(Enum.Parse<Place>(place));
     public string DetPlace() => _g.Where(_g.Det).ToString();
-    public string Examine(string thing) => _g.HostExamine(thing);
-    public string Ask(string who) => _g.HostAsk(Enum.Parse<P>(who));
-    public GDict AskPresentation(string who)
-    {
-        var reply = _g.HostAskPresentation(Enum.Parse<P>(who));
-        return new GDict { ["text"] = reply.Text, ["emotion"] = reply.Emotion };
-    }
-    public void LessonAnswer(bool precise) => _g.HostLessonAnswer(precise);
-    public void SeedHook(string who) => _g.HostSeedHook(Enum.Parse<P>(who));
     public bool DetHungry() => ProtoGame.Get(_g.Det.Body, T.Hungry) > 0;
     public bool DetFed() => ProtoGame.Get(_g.Det.Body, T.Fed) > 0;
 
@@ -153,37 +140,6 @@ public partial class Chapter2Engine : Node
     /// <summary>侦探查清了哪几处痕迹（0 台账、1 门闩、2 碗、3 饼屑、4 夜巡所见）。</summary>
     public GArray CaseKnown() => new(_g.DetEvidence().Select(i => (Variant)i).ToArray());
 
-    public GDict RunCase(GArray vars)
-    {
-        var v = new CaseVars(vars[0].AsInt32(), vars[1].AsInt32(), vars[2].AsInt32(), vars[3].AsInt32());
-        var (traces, world) = _g.ReplayCase(v);
-        var actual = _g.CaseActual ?? traces;
-        var known = _g.DetEvidence();
-        var r = traces.Describe().ToArray();
-        var a = actual.Describe().ToArray();
-        var findings = new GArray();
-        string[] where = ["粮仓门内的台账", "粮仓门", "诊疗所", "甲区", "贝尔特朗（夜巡）"];
-        var full = true;
-        for (var i = 0; i < r.Length; i++)
-        {
-            var same = r[i].Text == a[i].Text;
-            full &= same && known.Contains(i);
-            findings.Add(new GDict
-            {
-                ["index"] = i, ["status"] = !known.Contains(i) ? "unvisited" : same ? "match" : "conflict",
-                ["text"] = !known.Contains(i) ? "还没查过：" + where[i] : same ? a[i].Text : $"重演中：{r[i].Text}；现场：{a[i].Text}",
-            });
-        }
-        var steps = new GArray();
-        foreach (var s in ProtoGame.InkSteps(world, 2))
-            steps.Add(new GDict
-            {
-                ["t"] = s.Time, ["who"] = s.Who.ToString(), ["name"] = Names.Of(s.Who), ["build"] = s.Build switch { Build.Small => "瘦小", Build.Large => "高大", _ => "中等" },
-                ["from"] = s.From.ToString(), ["to"] = s.To.ToString(), ["act"] = s.Act,
-            });
-        return new GDict { ["findings"] = findings, ["full_match"] = full, ["steps"] = steps };
-    }
-
     public GArray Claims() => new(ProtoGame.Claims.Select(c => (Variant)c).ToArray());
     public GArray Evidence()
     {
@@ -200,31 +156,6 @@ public partial class Chapter2Engine : Node
 
     // ------------------------------------------------------------------ 名录库之议 --
 
-    public GArray CouncilPlans(int proposal)
-    {
-        if (proposal >= 0) _g.CardSpec(ProtoGame.ArchiveWordings[proposal].Card, P.Det);
-        var list = new GArray();
-        foreach (var s in _g.ArchivePlans())
-            list.Add(new GDict { ["text"] = s.Text, ["author"] = s.Author is { } a ? Names.Of(a) : "恶魔所立", ["mine"] = s.Author == P.Det });
-        return list;
-    }
-
-    public GDict Council(int back)
-    {
-        var ending = _g.Council(back);
-        var stands = new GDict();
-        foreach (var (p, s) in _g.CouncilChoice) stands[p.ToString()] = ProtoGame.EndingText(ProtoGame.FamilyOf(s));
-        return new GDict
-        {
-            ["log"] = Lines(_g.CouncilLog), ["result"] = ending.ToString(), ["result_text"] = ProtoGame.EndingText(ending), ["stands"] = stands,
-            ["quer"] = _g.QuerCleared ? "雀儿洗清了冤屈，住回甲区" : _g.QuerOstracized ? "雀儿被当成私取之人，搬出甲区独宿" : "雀儿的事没有人再提",
-            ["hooks"] = new GArray(_g.Npcs.Where(p => p.Hooks > 0).Select(p => (Variant)p.Name).ToArray()),
-            ["det_hooks"] = _g.Det.Hooks,
-            ["common_rule"] = _g.CommonRuleEstablished,
-            ["case_rule"] = _g.CaseRule?.Text ?? "",
-        };
-    }
-
     /// <summary>侦探在几个人眼里的样子：只写他亲眼见过的迹象（态度好坏的直观描述，不给数值）。</summary>
     public GArray Impressions()
     {
@@ -239,10 +170,4 @@ public partial class Chapter2Engine : Node
         return list;
     }
 
-    private static GArray Lines(IEnumerable<string> lines)
-    {
-        var a = new GArray();
-        foreach (var l in lines) if (!string.IsNullOrWhiteSpace(l)) a.Add(l);
-        return a;
-    }
 }

@@ -1,0 +1,36 @@
+独立冻结构建自动验收 02
+自动状态注入，不是盲玩。未读取 docs、README、auto-01 或历史报告；未修改生产实现。
+新增检查仅 StoryPacketCheck/Program.cs 的真实 Chapter1Interaction 回归。每项仅运行一次。
+
+通过 | compile-story | exit=0 | 0.204s | log=auto-02/compile-story.log
+通过 | independent-story-compare | exit=0 | 0.203s | log=auto-02/independent-story-compare.log
+通过 | independent-compiler-edge | exit=0 | 0.172s | log=auto-02/independent-compiler-edge.log
+通过 | solution-build | exit=0 | 3.328s | log=auto-02/solution-build.log
+失败 | StoryPacketCheck | exit=3762504530 | 2.640s | log=auto-02/StoryPacketCheck.log
+失败 | FormalScriptCheck | exit=3762504530 | 2.078s | log=auto-02/FormalScriptCheck.log
+通过 | ReplayCheck | exit=0 | 29.782s | log=auto-02/ReplayCheck.log
+通过 | compile-ExampleWorld | exit=0 | 2.843s | log=auto-02/compile-ExampleWorld.log
+通过 | compile-ExampleAwakening | exit=0 | 3.047s | log=auto-02/compile-ExampleAwakening.log
+通过 | SharedRuntimeCheck | exit=0 | 5.797s | log=auto-02/SharedRuntimeCheck.log
+通过 | godot-import | exit=0 | 6.797s | log=auto-02/godot-import.log
+失败 | flow-check | exit=4294967295 | 21.422s | 日志检测到 ERROR/FAIL；log=auto-02/flow-check.log
+未执行 | final-content | exit=N/A | 0.000s | flow/import failed; dependent scene checks stopped
+未执行 | final-shared-runtime | exit=N/A | 0.000s | flow/import failed; dependent scene checks stopped
+未执行 | hand-outline | exit=N/A | 0.000s | flow/import failed; dependent scene checks stopped
+未执行 | cabinet-fog-current | exit=N/A | 0.000s | flow/import failed; dependent scene checks stopped
+未执行 | formal-chapter-host | exit=N/A | 0.000s | flow/import failed; dependent scene checks stopped
+
+失败定位与覆盖限制：
+1. StoryPacketCheck 在 Program.cs:44 的 JsonSerializer.Serialize(document) 抛出 System.InvalidOperationException。堆栈起于 JsonElementConverter.Write；仅先通过「real generated dialogue is present」，后续原有断言和本轮追加断言未抵达。
+2. FormalScriptCheck 在 Program.cs:16 同样由 JsonElementConverter.Write 抛出 System.InvalidOperationException。未修改实现或断言，未重跑。
+3. flow-check 已通过开场对白及 R-05 床上位置断言，随后 Awakening.gd:365 site_point 访问 Dictionary.point 失败，来自 site_visible/_process/_draw/_physics_process。发现重复 SCRIPT ERROR 后主动停止本轮启动的 Godot PID 43320（父 PID 36420），实际退出码 4294967295 是强制停止结果，不是自然退出/180秒超时。相关日志全部保留。
+4. 未执行：追加 Chapter1Interaction 真实现场全路由、E8 主铜口 tube 菜单、E8j/E8r card 路由、证物卡开放、过期实验/异卡/已关闭卡/新现场导致失效选择、几何变化后手掌选择以及有效 compare 命令断言。代码已在首次运行前追加到 check/StoryPacketCheck/Program.cs；因前段序列化异常未抵达，不宣称这些检查通过。新增断言遵循真实契约：锁定选项返回 aside+card；异卡选项抛 ArgumentException；无活动卡抛 InvalidOperationException；均不发 experiment/compare 操作。
+5. 未执行的五项场景检查均因 flow 运行错误停止依赖；本轮没有生成窗口截图，没有盲玩、没有按帧自动通关冒充盲玩。
+6. Godot 导入日志独立扫描 SCRIPT ERROR:/ERROR:/Parse Error/FAIL，未匹配错误；导入通过不是后续场景通过的依据。
+7. ReplayCheck 真实退出0，TOTAL 91 checks, 0 failed；其脚本自行写入 artifacts/remake-belief-replay/solution-space.txt（脚本固有行为）。
+8. SharedRuntimeCheck 使用实际绝对路径：
+C:\Users\iii\Desktop\dual_ontology_world_engine\tmp\python-story-refactor\examples\world\WorldScript.ExampleWorld.dll
+C:\Users\iii\Desktop\dual_ontology_world_engine\tmp\python-story-refactor\examples\awakening\WorldScript.ExampleAwakening.dll
+9. 运行器及完整命令序列：auto-02/run_validation.py；结构化结果：auto-02/results.json。所有已执行检查仅执行一次。独立 Core 没有单独重复构建（解决方案/引用编译按所要求执行）。
+
+结论：冻结构建未通过自动验收。9项通过、3项失败、5项依赖场景未执行；追加交互断言亦未执行。需要新独立 Agent 在修复后复测。本 Agent 未修复生产实现、未重跑失败检查、未创建 Agent。

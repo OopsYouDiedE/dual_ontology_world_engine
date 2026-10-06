@@ -1,26 +1,87 @@
 @tool
 extends CanvasLayer
-## Shared Dialogue Manager presentation; story content stays in .dialogue resources.
+## Shared semantic packet presentation; chapter logic and content remain in C#.
 signal finished
 signal line_shown(character: String)
 
-@export var panel_bg_color: Color = Color("191e23")
-@export var panel_border_color: Color = Color("b59a68")
+@export_group("Editor Preview")
+@export var preview_enabled := true:
+	set(value):
+		preview_enabled = value
+		_refresh_editor_preview()
+@export var preview_speaker := "侦探":
+	set(value):
+		preview_speaker = value
+		_refresh_editor_preview()
+@export_multiline var preview_body := "我想先看看这张纸上写了什么，再听听你的说法。":
+	set(value):
+		preview_body = value
+		_refresh_editor_preview()
+@export var preview_responses := PackedStringArray(["询问来意", "出示线索", "再想一想", "结束交谈"]):
+	set(value):
+		preview_responses = value
+		_refresh_editor_preview()
+@export var preview_portrait: Texture2D:
+	set(value):
+		preview_portrait = value
+		_refresh_editor_preview()
+@export var preview_show_history := true:
+	set(value):
+		preview_show_history = value
+		_refresh_editor_preview()
+@export_multiline var preview_history := "侦探\n门已经打开了。\n\n工程师\n先确认眼前的线索，再决定下一步。":
+	set(value):
+		preview_history = value
+		_refresh_editor_preview()
+@export_group("Dialogue")
+@export var response_scene: PackedScene = preload("res://scenes/Shared/UI/DialogueResponse.tscn")
 @export var base_voice_volume_db: float = -6.0
-
-const INK := Color("191e23")
-const PAPER := Color("e8dfca")
-const GOLD := Color("b59a68")
+@export_range(0.0, 64.0, 1.0) var portrait_text_gap := 8.0
+@export_range(0.0, 64.0, 1.0) var response_row_gap := 10.0
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
+const StoryStyle := preload("res://scenes/Shared/UI/Paper.gd")
 const VOICE_DETECTIVE: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_detective.wav")
 const VOICE_ENGINEER: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_engineer.wav")
 const VOICE_CHEF: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_chef.wav")
 const VOICE_MUSICIAN: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_musician.wav")
 const VOICE_TUBE: AudioStream = preload("res://ShareAsset/Internal/Characters/voices/voice_tube.wav")
 
-var manager: Node
-var resource: Resource
+var packet_engine: Node
+var packet_serial := 0
+
+## Presentation adapter only: conditions, choices and mutations stay in C#.
+class PacketResponse extends RefCounted:
+	var next_id: String
+	var text: String
+	var is_allowed: bool
+	var lock_hint: String
+	func _init(data: Dictionary) -> void:
+		next_id = str(data["id"])
+		text = str(data["label"])
+		is_allowed = bool(data.get("is_available", true))
+		lock_hint = str(data.get("lock_hint", ""))
+
+class PacketLine extends RefCounted:
+	var id: String
+	var next_id := "@packet:next"
+	var character: String
+	var text: String
+	var mood: String
+	var voice_clip: String
+	var responses: Array = []
+	func _init(packet: Dictionary, serial: int) -> void:
+		id = "packet:%d" % serial
+		var lines: Array = packet.get("lines", [])
+		var data: Dictionary = lines[0] if not lines.is_empty() else {}
+		character = str(data.get("speaker", ""))
+		text = str(data.get("text", ""))
+		mood = str(data.get("mood", "calm"))
+		voice_clip = str(data.get("voice_clip", ""))
+		for option in packet.get("choices", []):
+			responses.append(PacketResponse.new(option))
+	func get_tag_value(tag: String) -> String:
+		return mood if tag == "emotion" else ""
 var context: Node
 var line
 var busy := false
@@ -37,10 +98,8 @@ var panel: Panel
 var history_panel: Panel
 var history_text: RichTextLabel
 var history: Array[String] = []
-var history_line_ids: Array[String] = []
 var elapsed := 0.0
 var compact := false
-var locale_refresh_key := ""
 var dialogue_theme: Theme
 var character_portraits: Dictionary = {}
 var character_portrait: TextureRect
@@ -56,7 +115,6 @@ var _visited_responses: Dictionary = {}
 ## Opening dialogue consumes keyboard input before focused GUI buttons.
 var single_press_keyboard_continue := false
 
-const BASE_VOICE_VOLUME_DB := -6.0
 
 ## ISO 226 / Fletcher-Munson equal-loudness baseline compensation (dB).
 ## Compensates for human ear frequency sensitivity differences across character voice pitches:
@@ -138,65 +196,13 @@ var last_voice_char_index := -1
 var voice_char_interval := 2
 
 func _notification(what: int) -> void:
+	if Engine.is_editor_hint(): return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if is_instance_valid(next_button): _refresh_next_caption()
 		if is_instance_valid(history_button): history_button.text = tr("FA_UI_067")
 		if is_instance_valid(history_close_button): history_close_button.text = tr("FA_UI_161")
 		if is_instance_valid(fast_forward_label): fast_forward_label.text = _key_legend()
 		if active: _update_continue_hint()
-	if what == NOTIFICATION_TRANSLATION_CHANGED and active and not busy and line != null:
-		locale_refresh_key = line.id
-		call_deferred("_refresh_active_line_locale", locale_refresh_key)
-		call_deferred("_refresh_history_locale")
-
-func _refresh_active_line_locale(key: String) -> void:
-	if not active or busy or line == null or line.id != key:
-		return
-	var revealed := body.visible_characters < 0
-	var progress := 1.0 if revealed else float(body.visible_characters) / maxf(1.0, float(body.get_total_character_count()))
-	busy = true
-	var refreshed = await manager.get_next_dialogue_line(resource, key, [context], DMConstants.MutationBehaviour.Skip)
-	if not active or line == null or line.id != key or refreshed == null:
-		busy = false
-		return
-	line = refreshed
-	busy = false
-	speaker.text = _localized_speaker(line.character)
-	_refresh_character_portrait()
-	body.text = line.text
-	if revealed:
-		body.visible_characters = -1
-	else:
-		body.visible_characters = int(progress * body.get_total_character_count())
-	history[history.size() - 1] = speaker.text + "\n" + line.text
-	var choices_were_visible := choices.visible
-	var continue_was_visible := next_button.visible
-	for child in choices.get_children():
-		choices.remove_child(child)
-		child.queue_free()
-	for response in line.responses:
-		if not response.is_allowed:
-			continue
-		var button := Button.new()
-		button.text = response.text
-		button.custom_minimum_size = Vector2(538 if compact else 488, 44 if compact else 40)
-		if compact: button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.set_meta("dialogue_next_id", response.next_id)
-		button.pressed.connect(_on_choice_pressed.bind(button))
-		choices.add_child(button)
-	choices.visible = choices_were_visible
-	next_button.visible = continue_was_visible
-
-func _refresh_history_locale() -> void:
-	for index in history_line_ids.size():
-		if index >= history.size():
-			return
-		var key := history_line_ids[index]
-		var refreshed = await manager.get_next_dialogue_line(resource, key, [context], DMConstants.MutationBehaviour.Skip)
-		if refreshed == null:
-			continue
-		var character := _localized_speaker(refreshed.character)
-		history[index] = _escape_rich_text(character) + "\n" + refreshed.text
 
 func _localized_speaker(canonical_name: String) -> String:
 	if is_instance_valid(context) and context.has_method("_localized_speaker"):
@@ -206,28 +212,8 @@ func _localized_speaker(canonical_name: String) -> String:
 		"霍铎":"FA_NAME_002", "沈鼎":"FA_NAME_003", "苏泠":"FA_NAME_004"}
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
 
-## The last line of a conversation says so, so a quick extra press is not a surprise.
 func _refresh_next_caption() -> void:
-	if not compact:
-		next_button.text = tr("FA_UI_149")
-		return
-	if not _line_ends_conversation():
-		next_button.text = tr("FA_UI_148") + "  ▸"
-		return
-	var locale := TranslationServer.get_locale()
-	next_button.text = ("Close" if locale.begins_with("en") else "閉じる" if locale.begins_with("ja") else "结束") + "  ■"
-
-func _line_ends_conversation() -> bool:
-	if line == null or resource == null or not ("lines" in resource) or not line.responses.is_empty(): return false
-	var id := str(line.next_id)
-	for guard in 8:
-		# Runtime ids carry a "<resource>@" prefix that the compiled line table does not.
-		if id.contains("@"): id = id.get_slice("@", id.get_slice_count("@") - 1)
-		if id.is_empty() or id.begins_with("end"): return true
-		var entry: Variant = resource.lines.get(id)
-		if not entry is Dictionary or str(entry.get("type", "")) != "goto" or entry.get("is_snippet", false): return false
-		id = str(entry.get("next_id", ""))
-	return false
+	next_button.text = tr("FA_UI_148") + "  ▸" if compact else tr("FA_UI_149")
 
 func _escape_rich_text(value: String) -> String:
 	return value.replace("[", "[lb]").replace("]", "[rb]")
@@ -263,32 +249,6 @@ func set_character_portraits(mapping: Dictionary) -> void:
 		character_portraits[character] = textures
 	if not is_instance_valid(panel):
 		return
-	if not is_instance_valid(character_portrait):
-		# A framed card sitting on the dialogue box's top edge, so the face
-		# belongs to the box instead of floating over the map.
-		portrait_frame = PanelContainer.new()
-		portrait_frame.name = "PortraitFrame"
-		portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var card := StyleBoxFlat.new()
-		card.bg_color = Color("1b2b23")
-		card.border_color = Color("b49a5e")
-		card.set_border_width_all(2)
-		card.set_corner_radius_all(3)
-		card.set_content_margin_all(3)
-		card.shadow_color = Color(0, 0, 0, 0.35)
-		card.shadow_size = 6
-		portrait_frame.add_theme_stylebox_override("panel", card)
-		portrait_frame.size = Vector2(178, 178)
-		portrait_frame.position = Vector2(28, -186)
-		panel.add_child(portrait_frame)
-		character_portrait = TextureRect.new()
-		character_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		character_portrait.name = "CharacterPortrait"
-		character_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		character_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		character_portrait.custom_minimum_size = Vector2(172, 172)
-		portrait_frame.add_child(character_portrait)
 	character_portrait.texture = null
 	portrait_character = ""
 	portrait_mood = "calm"
@@ -346,14 +306,6 @@ func _refresh_character_portrait() -> void:
 var portrait_monogram: Label
 
 func _refresh_monogram() -> void:
-	if not is_instance_valid(portrait_monogram):
-		portrait_monogram = Label.new()
-		portrait_monogram.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		portrait_monogram.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		portrait_monogram.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		portrait_monogram.add_theme_font_size_override("font_size", 56)
-		portrait_monogram.add_theme_color_override("font_color", Color(GOLD, 0.75))
-		portrait_frame.add_child(portrait_monogram)
 	var name_text := str(speaker.text).strip_edges()
 	portrait_monogram.text = name_text.left(1) if not name_text.is_empty() and not name_text.begins_with("？") else "·"
 	portrait_monogram.visible = not character_portrait.visible
@@ -377,115 +329,36 @@ func apply_locale_font(font: Font, _theme: Theme) -> void:
 			if child is Control:
 				child.theme = dialogue_theme
 
+var _base_panel_rect := Rect2()
+var _base_text_offsets: Dictionary = {}
+var _base_speaker_right := 0.0
+
 func _ready() -> void:
-	layer = 10
+	if not has_node("DialoguePanel"):
+		push_error("StoryDialogue requires the ChapterDialogue.tscn node hierarchy")
+		return
+	_bind_existing()
 	if Engine.is_editor_hint():
-		if has_node("DialoguePanel"):
-			_bind_existing()
+		_refresh_editor_preview()
 		return
-	manager = get_node_or_null("/root/DialogueManager")
-	if has_node("DialoguePanel"):
-		_bind_existing()
-		return
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(["Microsoft YaHei UI", "Noto Sans CJK SC"])
-	dialogue_theme = Theme.new()
-	dialogue_theme.default_font = font
-	dialogue_theme.default_font_size = 18
-	dialogue_theme.set_color("font_color", "Label", PAPER)
-	dialogue_theme.set_color("default_color", "RichTextLabel", PAPER)
-	for state in ["normal", "hover", "pressed", "focus"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = Color("353630") if state == "hover" else INK
-		box.border_color = GOLD if state in ["hover", "focus"] else Color("555044")
-		box.set_border_width_all(1)
-		box.content_margin_left = 16
-		box.content_margin_right = 16
-		box.content_margin_top = 9
-		box.content_margin_bottom = 9
-		dialogue_theme.set_stylebox(state, "Button", box)
-	dialogue_theme.set_color("font_color", "Button", PAPER)
-	panel = Panel.new()
-	panel.theme = dialogue_theme
-	panel.position = Vector2(0, 768)
-	panel.size = Vector2(1280, 224)
-	var background := StyleBoxFlat.new()
-	background.bg_color = INK
-	background.border_color = GOLD
-	background.border_width_top = 2
-	panel.add_theme_stylebox_override("panel", background)
 	panel.gui_input.connect(on_panel_input)
-	add_child(panel)
-	heading = label("FA_UI_087", Vector2(36, 18), 13, GOLD)
-	speaker = RichTextLabel.new()
-	speaker.position = Vector2(36, 50)
-	speaker.size = Vector2(144, 32)
-	speaker.bbcode_enabled = false
-	speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	speaker.add_theme_font_size_override("normal_font_size", 22)
-	speaker.add_theme_color_override("default_color", PAPER)
-	panel.add_child(speaker)
-	body = RichTextLabel.new()
-	body.position = Vector2(206, 48)
-	body.size = Vector2(1030, 84)
-	body.bbcode_enabled = true
-	body.scroll_active = false
-	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_theme_font_size_override("normal_font_size", 20)
-	panel.add_child(body)
-	var rule := ColorRect.new()
-	rule.name = "SpeakerDivider"
-	rule.position = Vector2(180, 52)
-	rule.size = Vector2(1, 72)
-	rule.color = Color("655943")
-	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(rule)
-	choices = GridContainer.new()
-	choices.columns = 2
-	choices.position = Vector2(206, 143)
-	choices.add_theme_constant_override("h_separation", 12)
-	choices.add_theme_constant_override("v_separation", 8)
-	panel.add_child(choices)
-	next_button = Button.new()
-	next_button.text = tr("FA_UI_149")
-	next_button.position = Vector2(1116, 151)
-	next_button.size = Vector2(128, 40)
 	next_button.pressed.connect(advance)
-	panel.add_child(next_button)
-	hint = label("", Vector2(36, 196), 12, Color("9b998d"))
-	history_button = Button.new()
-	history_button.text = tr("FA_UI_067")
-	history_button.position = Vector2(1160, 10)
 	history_button.pressed.connect(toggle_history)
-	panel.add_child(history_button)
-	history_panel = Panel.new()
-	history_panel.theme = dialogue_theme
-	history_panel.position = Vector2(288, 152)
-	history_panel.size = Vector2(704, 464)
-	history_panel.add_theme_stylebox_override("panel", background)
-	add_child(history_panel)
-	history_text = RichTextLabel.new()
-	history_text.bbcode_enabled = true
-	history_text.position = Vector2(24, 24)
-	history_text.size = Vector2(656, 378)
-	history_panel.add_child(history_text)
-	history_close_button = Button.new()
-	history_close_button.text = tr("FA_UI_161")
-	history_close_button.position = Vector2(470, 411)
 	history_close_button.pressed.connect(toggle_history)
-	history_panel.add_child(history_close_button)
-	history_panel.hide()
-	_configure_auxiliary_focus()
 	_setup_voice_player()
+	_clear_responses()
 	idle()
 
 func _bind_existing() -> void:
 	panel = $DialoguePanel
 	history_panel = $HistoryPanel
-	if panel.theme != null:
-		dialogue_theme = panel.theme.duplicate()
+	# Runtime locale changes need a private Theme; native local overrides remain untouched.
+	var authored_theme := panel.theme
+	dialogue_theme = authored_theme.duplicate() if authored_theme != null else Theme.new()
+	if not Engine.is_editor_hint():
 		panel.theme = dialogue_theme
-		history_panel.theme = dialogue_theme
+		if history_panel.theme == authored_theme:
+			history_panel.theme = dialogue_theme
 	heading = $DialoguePanel/Heading
 	speaker = $DialoguePanel/Speaker
 	body = $DialoguePanel/Body
@@ -495,119 +368,81 @@ func _bind_existing() -> void:
 	history_button = $DialoguePanel/HistoryButton
 	history_text = $HistoryPanel/HistoryText
 	history_close_button = $HistoryPanel/Close
-	if not Engine.is_editor_hint():
-		panel.gui_input.connect(on_panel_input)
-		next_button.pressed.connect(advance)
-		history_button.pressed.connect(toggle_history)
-		history_close_button.pressed.connect(toggle_history)
-		_configure_auxiliary_focus()
-		_setup_voice_player()
-		idle()
+	portrait_frame = $DialoguePanel/PortraitFrame
+	character_portrait = $DialoguePanel/PortraitFrame/CharacterPortrait
+	portrait_monogram = $DialoguePanel/PortraitFrame/Monogram
+	fast_forward_label = $DialoguePanel/KeyLegend
+	_base_panel_rect = Rect2(panel.position, panel.size)
+	for node in [speaker, body, choices, fast_forward_label]:
+		_base_text_offsets[node] = node.offset_left
+	_base_speaker_right = speaker.offset_right
 
-func _configure_auxiliary_focus() -> void:
-	# Dialogue keys are handled once in _input; mouse utility buttons must not
-	# retain native ui_accept focus after the history overlay closes.
-	for button in [next_button, history_button, history_close_button]:
-		button.focus_mode = Control.FOCUS_NONE
+func _response_button(text: String) -> Button:
+	var button := response_scene.instantiate() as Button
+	button.text = text
+	return button
+
+func _clear_responses() -> void:
+	if not is_instance_valid(choices): return
+	for child in choices.get_children():
+		choices.remove_child(child)
+		child.queue_free()
+
+func _refresh_editor_preview() -> void:
+	if not Engine.is_editor_hint() or not is_instance_valid(panel):
+		return
+	panel.visible = preview_enabled
+	history_panel.visible = preview_enabled and preview_show_history
+	if not preview_enabled:
+		return
+	speaker.text = preview_speaker
+	body.text = preview_body
+	body.visible_characters = -1
+	character_portrait.texture = preview_portrait
+	character_portrait.visible = preview_portrait != null
+	portrait_frame.show()
+	portrait_monogram.text = preview_speaker.left(1)
+	portrait_monogram.visible = preview_portrait == null
+	history_text.text = preview_history
+	# Authored sample nodes stay in the scene tree. Extra previews have no owner and are not saved.
+	for child in choices.get_children():
+		if child.owner == null:
+			choices.remove_child(child)
+			child.queue_free()
+	var samples := choices.get_children()
+	for index in samples.size():
+		var button := samples[index] as Button
+		button.visible = index < preview_responses.size()
+		if button.visible: button.text = preview_responses[index]
+	for index in range(samples.size(), preview_responses.size()):
+		choices.add_child(_response_button(preview_responses[index]))
+	choices.visible = not preview_responses.is_empty()
+	next_button.visible = preview_responses.is_empty()
+	compact = true
+	layout_compact_line()
 
 func _setup_voice_player() -> void:
-	if not is_instance_valid(voice_player):
-		voice_player = get_node_or_null("VoicePlayer") as AudioStreamPlayer
-		if not is_instance_valid(voice_player):
-			voice_player = AudioStreamPlayer.new()
-			voice_player.name = "VoicePlayer"
-			voice_player.bus = &"Master"
-			voice_player.volume_db = -6.0
-			add_child(voice_player)
-
-## Compact box geometry: a floating card above the bottom edge with the portrait inside it.
-const COMPACT_WIDTH := 1152.0
-const COMPACT_HEIGHT := 172.0
-const COMPACT_MARGIN := 20.0
-const COMPACT_PORTRAIT := 210.0
-const COMPACT_PORTRAIT_HEIGHT := 280.0
-const COMPACT_TEXT_X := 32.0
+	voice_player = $VoicePlayer
 
 func use_compact_layout() -> void:
 	compact = true
-	heading.hide()
-	hint.hide()
-	panel.get_node("SpeakerDivider").hide()
-	panel.position.x = (1280.0 - COMPACT_WIDTH) / 2.0
-	panel.size.x = COMPACT_WIDTH
-	var background := StyleBoxFlat.new()
-	background.bg_color = Color("16231f", 0.96)
-	background.border_color = Color(GOLD, 0.55)
-	background.set_border_width_all(1)
-	background.border_width_top = 2
-	background.set_corner_radius_all(6)
-	background.shadow_color = Color(0, 0, 0, 0.45)
-	background.shadow_size = 10
-	background.shadow_offset = Vector2(0, 3)
-	panel.add_theme_stylebox_override("panel", background)
-	speaker.size = Vector2(480, 28)
-	speaker.add_theme_font_size_override("normal_font_size", 19)
-	speaker.add_theme_color_override("default_color", Color("d9c28c"))
-	body.add_theme_font_size_override("normal_font_size", 24)
-	body.add_theme_constant_override("line_separation", 6)
 	_refresh_next_caption()
-	next_button.size = Vector2(116, 40)
-	next_button.add_theme_color_override("font_color", Color("d9c28c"))
-	for state in ["normal", "hover", "pressed", "focus"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("31433b") if state in ["hover", "pressed"] else Color(0,0,0,0)
-		style.set_content_margin_all(10)
-		style.set_corner_radius_all(4)
-		if state == "focus":
-			style.border_color = GOLD
-			style.border_width_bottom = 1
-		panel.theme.set_stylebox(state, "Button", style)
-	history_button.position = Vector2(COMPACT_WIDTH - 104, 10)
-	history_button.add_theme_color_override("font_color", Color("9fa898"))
-	fast_forward_label = label("", Vector2.ZERO, 14, Color("7f8a7c"))
 	fast_forward_label.text = _key_legend()
 	layout_compact_line()
 
 func layout_compact_line() -> void:
-	## Sizes the box to the line's choices and makes room for the speaker portrait.
-	if not compact: return
-	var count := 0
-	if line != null:
-		for response in line.responses:
-			if response.is_allowed: count += 1
-	var height := COMPACT_HEIGHT + (int(ceil(count / 2.0)) * 54 if count > 0 else 0)
+	if not compact or not is_instance_valid(panel): return
+	var count := preview_responses.size() if Engine.is_editor_hint() else choices.get_child_count()
+	var sample: Control = choices.get_child(0) as Control if count > 0 else null
+	var row_height := sample.custom_minimum_size.y if sample != null else 44.0
+	var height := _base_panel_rect.size.y + ceilf(float(count) / choices.columns) * (row_height + response_row_gap)
 	panel.size.y = height
-	panel.position.y = 992.0 - COMPACT_MARGIN - height
-	var portrait_shown := is_instance_valid(portrait_frame) and portrait_frame.visible
-	var text_x := COMPACT_TEXT_X + (COMPACT_PORTRAIT + 8.0 if portrait_shown else 0.0)
-	var text_width := COMPACT_WIDTH - text_x - 32.0
-	speaker.position = Vector2(text_x, 16)
-	body.position = Vector2(text_x, 48)
-	body.size = Vector2(text_width - 112.0, 84)
-	choices.position = Vector2(text_x, COMPACT_HEIGHT - 16)
-	for button in choices.get_children():
-		(button as Control).custom_minimum_size.x = (text_width - 12.0) / 2.0
-	next_button.position = Vector2(COMPACT_WIDTH - next_button.size.x - 16, height - next_button.size.y - 14)
-	if is_instance_valid(fast_forward_label):
-		fast_forward_label.position = Vector2(text_x, height - 30)
-		fast_forward_label.visible = count == 0
-	if is_instance_valid(portrait_frame):
-		# The upper-body card rises above the compact text box and ends before
-		# the response rows, keeping shoulder/hand gestures readable.
-		portrait_frame.position = Vector2(16, COMPACT_HEIGHT - 16.0 - COMPACT_PORTRAIT_HEIGHT)
-		portrait_frame.size = Vector2(COMPACT_PORTRAIT, COMPACT_PORTRAIT_HEIGHT)
-		character_portrait.custom_minimum_size = Vector2(COMPACT_PORTRAIT - 6.0, COMPACT_PORTRAIT_HEIGHT - 6.0)
-
-
-func label(text: String, at: Vector2, size: int, color: Color) -> Label:
-	var result := Label.new()
-	result.text = tr(text)
-	result.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	result.position = at
-	result.add_theme_font_size_override("font_size", size)
-	result.add_theme_color_override("font_color", color)
-	panel.add_child(result)
-	return result
+	panel.position.y = _base_panel_rect.end.y - height
+	var portrait_space := portrait_frame.size.x + portrait_text_gap if portrait_frame.visible else 0.0
+	for node in _base_text_offsets:
+		node.offset_left = float(_base_text_offsets[node]) + portrait_space
+	speaker.offset_right = _base_speaker_right + portrait_space
+	fast_forward_label.visible = count == 0
 
 func idle(title: String = "", text: String = "") -> void:
 	if is_instance_valid(character_portrait):
@@ -619,13 +454,58 @@ func idle(title: String = "", text: String = "") -> void:
 	next_button.hide()
 	hint.text = tr("FA_UI_010") if not text.is_empty() else ""
 
-func start(story: Resource, title: String, state: Node) -> void:
-	if active:
-		return
-	resource = story
+func cancel_presentation() -> void:
+	var was_active := active
+	active = false
+	busy = false
+	line = null
+	packet_engine = null
+	context = null
+	if is_instance_valid(voice_player):
+		voice_player.stop()
+		voice_player.stream = null
+	current_voice_stream = null
+	_previous_voice_stream = null
+	_clear_responses()
+	if was_active: finished.emit()
+
+func _exit_tree() -> void:
+	cancel_presentation()
+
+func start_packet(source: Node, title: String, state: Node) -> void:
+	if Engine.is_editor_hint() or active: return
+	packet_engine = source
 	context = state
 	active = true
-	await show_line(title)
+	busy = true
+	# Defer presentation so the host can subscribe without retaining a frame-await coroutine.
+	call_deferred("_start_packet_ready", source, title)
+
+func _start_packet_ready(source: Node, title: String) -> void:
+	if not active: return
+	await _show_packet(source.StartDialogue(title))
+
+func _show_packet(packet: Dictionary) -> void:
+	busy = true
+	next_button.hide()
+	choices.hide()
+	while not packet.get("commands", []).is_empty():
+		speaker.text = ""
+		body.text = ""
+		for command in packet["commands"]:
+			await context.present_dialogue_command(str(command["kind"]), command.get("args", []))
+			if not active: return
+		packet = packet_engine.AdvanceDialogue()
+	busy = false
+	if packet.get("finished", false):
+		line = null
+		active = false
+		_refresh_character_portrait()
+		finished.emit()
+		return
+	packet_serial += 1
+	line = PacketLine.new(packet, packet_serial)
+	_present_line()
 
 func _get_character_voice(char_name: String) -> AudioStream:
 	if char_name == "侦探" or char_name == "侦探（心声）":
@@ -641,50 +521,35 @@ func _get_character_voice(char_name: String) -> AudioStream:
 	return VOICE_DETECTIVE
 
 func show_line(key: String) -> void:
-	busy = true
-	line = null
-	_refresh_character_portrait()
-	next_button.hide()
-	# A new branch can await actor movement before producing its next line.
-	# Do not leave an already-read sentence on screen as if it were awaiting input.
-	speaker.text = ""
-	body.text = ""
-	body.visible_characters = -1
-	hint.text = "…"
-	hint.visible = not compact
-	choices.hide()
-	for child in choices.get_children():
-		choices.remove_child(child)
-		child.queue_free()
-	line = await manager.get_next_dialogue_line(resource, key, [context])
-	busy = false
-	if line == null:
-		active = false
-		_refresh_character_portrait()
-		finished.emit()
-		return
+	if Engine.is_editor_hint() or not active or not is_instance_valid(packet_engine): return
+	await _show_packet(packet_engine.AdvanceDialogue() if key == "@packet:next" else packet_engine.Choose(key))
+
+func _present_line() -> void:
+	_clear_responses()
 	speaker.text = _localized_speaker(line.character) if not line.character.is_empty() else ""
 	_refresh_character_portrait()
-	body.text = line.text
+	body.text = StoryStyle.story_text(line.text)
 	body.visible_characters = 0
 	elapsed = 0
 	current_voice_stream = _get_character_voice(line.character)
+	if not line.voice_clip.is_empty():
+		current_voice_stream = {"voice_detective": VOICE_DETECTIVE, "voice_engineer": VOICE_ENGINEER,
+			"voice_chef": VOICE_CHEF, "voice_musician": VOICE_MUSICIAN, "voice_tube": VOICE_TUBE}.get(line.voice_clip, current_voice_stream)
 	if current_voice_stream == VOICE_TUBE and _previous_voice_stream != VOICE_TUBE:
 		Sound.sfx("tube", -6.0)
 	_previous_voice_stream = current_voice_stream
 	last_voice_char_index = -1
-	history.append(_escape_rich_text(speaker.text) + "\n" + line.text)
-	history_line_ids.append(line.id)
+	history.append(_escape_rich_text(speaker.text) + "\n" + body.text)
 	line_shown.emit(line.character)
 	hint.hide()
 	_update_continue_hint()
 	for response in line.responses:
-		if not response.is_allowed:
+		# Conditional story topics remain hidden until learned. Explicit locks carry a hint.
+		if not response.is_allowed and response.lock_hint.is_empty():
 			continue
-		var button := Button.new()
-		button.text = response.text
-		button.custom_minimum_size = Vector2(538 if compact else 488, 44 if compact else 40)
-		if compact: button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var button := _response_button(response.text)
+		button.disabled = not response.is_allowed
+		button.tooltip_text = response.lock_hint
 		button.set_meta("dialogue_next_id", response.next_id)
 		button.pressed.connect(_on_choice_pressed.bind(button))
 		if dim_visited_responses and _visited_responses.has(str(response.next_id)):
@@ -718,8 +583,10 @@ func reveal() -> void:
 	last_voice_char_index = -1
 	choices.show()
 	next_button.visible = line.responses.is_empty()
-	if choices.get_child_count() > 0:
-		choices.get_child(0).grab_focus()
+	for button in choices.get_children():
+		if not button.disabled:
+			button.grab_focus()
+			break
 	_update_continue_hint()
 
 func _update_continue_hint() -> void:
@@ -768,6 +635,7 @@ func _fast_forward(delta: float) -> void:
 	else: show_line(line.next_id)
 
 func _play_typewriter_voice(from_count: int, to_count: int) -> void:
+	if Engine.is_editor_hint(): return
 	if current_voice_stream == null or not is_instance_valid(voice_player):
 		return
 	var text: String = body.text
@@ -786,13 +654,12 @@ func _play_typewriter_voice(from_count: int, to_count: int) -> void:
 			var char_name: String = str(line.character) if line != null else ""
 			var char_comp: float = CHARACTER_PITCH_LOUDNESS_COMPENSATION.get(char_name, 0.0)
 			var pitch_comp := calculate_pitch_loudness_compensation(pitch)
-			voice_player.volume_db = BASE_VOICE_VOLUME_DB + char_comp + pitch_comp
+			voice_player.volume_db = base_voice_volume_db + char_comp + pitch_comp
 			voice_player.play()
 			break
 
 func clear_history() -> void:
 	history.clear()
-	history_line_ids.clear()
 	if is_instance_valid(history_text):
 		history_text.text = ""
 
@@ -824,6 +691,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_handle_dialogue_key(event)
 
 func _handle_dialogue_key(event: InputEvent) -> void:
+	if Engine.is_editor_hint(): return
 	var editor := get_viewport().gui_get_focus_owner()
 	if editor is LineEdit or editor is TextEdit:
 		return
@@ -853,6 +721,7 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 			choice = focused
 		else:
 			choice = choices.get_child(0) as Button
+		if choice.disabled: return
 		_visited_responses[str(choice.get_meta("dialogue_next_id"))] = true
 		choose(str(choice.get_meta("dialogue_next_id")))
 	else:

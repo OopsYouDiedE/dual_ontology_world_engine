@@ -22,11 +22,12 @@ func _finish(exit_code: int) -> void:
 	# _run has returned, releasing its Resource/DialogueLine locals first.
 	# Free the fixture (including its C# engine), then flush queued deletion.
 	if is_instance_valid(holder):
+		holder.get_node("Awakening").begin_shutdown()
 		holder.queue_free()
 	holder = null
 	await process_frame
 	await process_frame
-	quit(exit_code)
+	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(exit_code)
 
 func check(ok: bool, name: String) -> void:
 	checks += 1
@@ -41,6 +42,7 @@ func check(ok: bool, name: String) -> void:
 
 func fresh(skip_intro := true) -> Node:
 	if is_instance_valid(holder):
+		holder.get_node("Awakening").begin_shutdown()
 		holder.queue_free()
 		await process_frame
 		await process_frame
@@ -152,8 +154,9 @@ func _run() -> void:
 	# ---- 0. 对白标题齐全；全章文本不出现第 9、10 条
 	# Inspect the actual embedded Chapter1Script dialogue compiled by the host.
 	var game := await fresh()
-	var story: Resource = game.STORY
-	var titles: Array = story.titles.keys()
+	var story: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Awakening/Script/generated_awakening_dialogue.json"))
+	check(story.has("entries"), "真实生成对白文档存在")
+	var titles: Array = story.entries.keys()
 	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s4_rewards", "s5_question", "s6_begin", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
 		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11", "nudge_E1", "nudge_E5", "nudge_E7", "nudge_E10",
 		"recall_ask_detective", "recall_detective", "recall_su", "recall_huo", "recall_shen",
@@ -166,7 +169,7 @@ func _run() -> void:
 			needed.append(part + who)
 	var missing := needed.filter(func(t): return not titles.has(t))
 	check(missing.is_empty(), "代码引用的对白标题全部存在 %s" % str(missing))
-	var raw: String = game.engine.DialogueText() + JSON.stringify(game.engine.Content())
+	var raw: String = JSON.stringify(story.entries) + JSON.stringify(game.engine.Content())
 	var hits := FORBIDDEN.filter(func(w): return raw.contains(w))
 	check(hits.is_empty(), "台词与证物文本中没有契约第 9、10 条的字样 %s" % str(hits))
 	var retired_raw := raw + FileAccess.get_file_as_string("res://scenes/Awakening/Awakening.gd")
@@ -258,11 +261,20 @@ func _run() -> void:
 	check(game.statements().has("me"), "陈述列表出现“是我闩的门”")
 
 	# ---- 4. 声路试验（含 R-08 听点）
-	game.last_sound = game.engine.SoundTest(0, {"detective": "foyer", "huo": "hall", "shen": "pantry", "su": "R08"})
-	check(game.heard("detective").begins_with("……开门") and game.heard("detective").contains("从那边") and not game.heard("detective").contains("门外"),
+	var sound_result: Array = game.engine.SoundTest(0, {"detective": "foyer", "huo": "hall", "shen": "pantry", "su": "R08"})
+	game.engine.SetProgress("state", "last_sound", sound_result)
+	var sound_by_person := {}
+	for result in sound_result: sound_by_person[str(result.who)] = result
+	check(sound_by_person.size() == 4 and sound_by_person.has_all(["detective", "huo", "shen", "su"]), "声路试验返回四人的独立听闻")
+	var detective_sound: Dictionary = sound_by_person.detective
+	var su_sound: Dictionary = sound_by_person.su
+	var huo_sound: Dictionary = sound_by_person.huo
+	check(detective_sound.room == "foyer" and str(detective_sound.text).begins_with("……开门") and str(detective_sound.direction).contains("从那边")
+		and not str(detective_sound.text).contains("门外") and not str(detective_sound.direction).contains("门外"),
 		"声路试验：门边只听到“……开门”，同伴只说来处的方向（从那边，指向门），不说“像在门外”（修订三·5）")
-	check(game.heard("su").begins_with("……开门") and game.heard("su").contains("墙那边") and not game.heard("su").contains("门外"), "声路试验：R-08 只听到“……开门”，从墙那边")
-	check(game.heard("huo").begins_with("闩上门，不要开门。") and game.heard("huo").contains("从铜口里"), "声路试验：铜口旁听到整句")
+	check(su_sound.room == "R08" and str(su_sound.text).begins_with("……开门") and str(su_sound.direction).contains("墙那边")
+		and not str(su_sound.text).contains("门外") and not str(su_sound.direction).contains("门外"), "声路试验：R-08 只听到“……开门”，从墙那边")
+	check(huo_sound.room == "hall" and str(huo_sound.text).begins_with("闩上门，不要开门。") and str(huo_sound.direction).contains("从铜口里"), "声路试验：铜口旁听到整句")
 	game.close_modal()
 	seen_lines.clear()
 	for round in 2:
@@ -297,7 +309,7 @@ func _run() -> void:
 		game.engine.Amplify(case[1], "S4")
 		# 请求回忆这一路单独检验：恶魔那句话这里只放大欲望，不让他先自己走过去（那一路见 5c）。
 		game.engine.Amplify(case[1], "nudge")
-		game.nudged[case[0]] = true
+		game.engine.SetProgress("nudged", case[0], true)
 		game.open_board()
 		game.close_modal()
 		var choices := [0 if case[2] else 1]
@@ -308,9 +320,8 @@ func _run() -> void:
 		game.close_modal()
 		await run_recall(game, case[0], choices)
 		var touched: bool = game.recalls.has(case[1])
-		var hesitated: bool = "
-".join(seen_lines).contains("你说呢")
-		var thought := str(game.recall_decision.get("thought", ""))
+		var hesitated: bool = "\n".join(seen_lines).contains("你说呢")
+		var thought := str(game.engine.Progress("recall_decision").get("thought", ""))
 		var ok: bool = (touched == (case[4] == "touch")) and int(game.engine.Hooks(case[1])) == (1 if touched else 0) and thought.contains(case[5])
 		var advice_text: String = ["劝碰", "劝别碰", "由他自己"][case[3]] if case[3] >= 0 else ""
 		check(ok, "%s%s：%s%s → %s（%s）" % [Content.PERSON_NAMES[case[1]], "（已被告知守则第 1 条）" if case[2] else "（未被告知）",
@@ -335,24 +346,23 @@ func _run() -> void:
 	game.close_modal()
 	var nudges := {}
 	for id in ["E1", "E5", "E7", "E10"]:
-		var resource: Resource = game.STORY
-		nudges[id] = resource.titles.has("nudge_" + id)
-	var nudge_text: String = game.engine.DialogueText()
+		nudges[id] = story.entries.has("nudge_" + id)
+	var nudge_text: String = JSON.stringify(story.entries)
 	check(nudge_text.contains("门闩记得你昨夜是什么") and nudge_text.contains("后面还有你从未听过的") and nudge_text.contains("图纸就在主楼") and nudge_text.contains("那罐子都替你记着"),
 		"四件物件四句不同的话，各自朝向此人的欲望")
 	var endings := []
 	for id in ["E1", "E5", "E7", "E10"]:
-		var block := nudge_text.substr(nudge_text.find("~ nudge_" + id))
-		var line := block.substr(block.find("铜口:"), block.find("\n", block.find("铜口:")) - block.find("铜口:"))
-		endings.append(line.right(6))
+		var lines: Array = story.entries["nudge_" + id].filter(func(step): return step.op == "line" and step.speaker == "铜口")
+		check(lines.size() == 1 and nudges[id], "诱导标题与铜口台词存在：" + id)
+		endings.append(str(lines[0].text).right(6))
 	var distinct_endings := {}
 	for e in endings:
 		distinct_endings[e] = true
-	check(distinct_endings.size() == 4 and not nudge_text.contains("不妨一试。\ndo"), "四句诱导不以同一句收尾（修订四·6）%s" % str(endings))
+	check(distinct_endings.size() == 4 and not endings.has("不妨一试。"), "四句诱导不以同一句收尾（修订四·6）%s" % str(endings))
 	game = await fresh()
 	game.jump_to("investigate")
 	game.engine.Amplify("huo", "S4")
-	game.nudged["E7"] = true
+	game.engine.SetProgress("nudged", "E7", true)
 	await run_recall(game, "E7", [1])
 	check(game.recall_marks.get(2, "") == "huo" and int(game.replay_vars[1]) == -1, "回忆把 V2 标为“回忆所证”，但不替玩家设定变量")
 	game.close_modal()
@@ -367,13 +377,15 @@ func _run() -> void:
 			game = await fresh()
 			game.jump_to("investigate")
 			game.engine.Amplify(who, "S4")
-			var obj: String = game.OWN_OBJECTS[who]
+			var obj: String = Content.OWN_OBJECTS[who]
 			await stand_near(game, rooms[who], game.site_point(obj), 90.0)
 			for i in 40:
 				await physics_frame
 			var still: bool = not game.life.has(who)
 			seen_lines.clear()
-			game.whisper(who, "（低语）")
+			game.engine.Whisper(who, "（低语）")
+			game.engine.SetProgress("nudged", Content.OWN_OBJECTS[who], true)
+			await game.present_dialogue_command("consider", [who])
 			# 沈鼎任其自便时会犹豫、反问“你说呢？”——这里答“碰吧”。
 			await run_reach(game, who, [answer, 0])
 			var touched: bool = int(game.engine.Hooks(who)) == 1
@@ -381,7 +393,7 @@ func _run() -> void:
 			var ok: bool = still and text.contains(reach_lines[who]) and touched == (expect[who][answer] == "touch") \
 				and bool(game.engine.IsDisturbed(obj)) and game.decided.has(who)
 			check(ok, "%s：低语之前不动；低语后自己走过去伸手；侦探%s → %s（钩 %d，%s）" % [Content.PERSON_NAMES[who], ["劝阻", "说明守则第 1 条", "任其自便"][answer],
-				expect[who][answer], int(game.engine.Hooks(who)), str(game.recall_decision.get("thought", ""))])
+				expect[who][answer], int(game.engine.Hooks(who)), str(game.engine.Progress("recall_decision").get("thought", ""))])
 			if who == "shen" and answer == 2:
 				check(text.contains("你说呢"), "沈鼎被任其自便时犹豫，反问侦探“你说呢？”")
 	# 不在场：只留下痕迹与事后的神色，回来时说一句
@@ -392,9 +404,11 @@ func _run() -> void:
 		game.player.position = Vector2(930, 200)
 		for i in 4:
 			await physics_frame
-		game.whisper(who, "（低语）")
+		game.engine.Whisper(who, "（低语）")
+		game.engine.SetProgress("nudged", Content.OWN_OBJECTS[who], true)
+		await game.present_dialogue_command("consider", [who])
 		await wait_until(func(): return str(game.life.get(who, {}).get("state", "")) == "done" and not game.life[who].get("walking_back", false), 1500)
-		var obj: String = game.OWN_OBJECTS[who]
+		var obj: String = Content.OWN_OBJECTS[who]
 		var touched: bool = int(game.engine.Hooks(who)) == 1
 		var expected_touch: bool = who != "shen"
 		check(touched == expected_touch and bool(game.engine.IsDisturbed(obj)) and not game.recalls.has(who) and bool(game.life[who].alone),
@@ -433,7 +447,7 @@ func _run() -> void:
 	# ---- 5d. 第六个问题起初不写出来（修订四·2）
 	game = await fresh()
 	game.jump_to("investigate")
-	game.replay_open = true
+	game.engine.SetProgress("state", "replay_open", true)
 	game.open_manuscript()
 	await process_frame
 	var page := ""
@@ -444,7 +458,7 @@ func _run() -> void:
 	seen_lines.clear()
 	game.examine("E9")
 	await drain(game)
-	check(not game.v6_open(), "细看一件相熟旁证，第六个问题还不出现")
+	check(not game.engine.V6Open(), "细看一件相熟旁证，第六个问题还不出现")
 	game.examine("E12")
 	await drain(game)
 	game.open_manuscript()
@@ -452,12 +466,12 @@ func _run() -> void:
 	page = ""
 	for l in game.modal_root.find_children("*", "RichTextLabel", true, false):
 		page += str(l.get_parsed_text())
-	check(game.v6_open() and page.contains("昨夜之前，四人彼此") and "\n".join(seen_lines).contains("我们真的是昨天才认识的吗"),
+	check(game.engine.V6Open() and page.contains("昨夜之前，四人彼此") and "\n".join(seen_lines).contains("我们真的是昨天才认识的吗"),
 		"细看两件相熟旁证（杯子、放大镜）后，侦探起疑，手稿出现第六个问题")
 	game.close_modal()
 	game = await fresh()
 	game.jump_to("reversal_one")
-	check(not game.v6_open(), "另一条路：起初没有第六个问题")
+	check(not game.engine.V6Open(), "另一条路：起初没有第六个问题")
 	var first: Dictionary = game.run_replay([0, 0, 0, 0, 0, 0])
 	seen_lines.clear()
 	game.after_replay(first)
@@ -466,7 +480,7 @@ func _run() -> void:
 		if game.modal_kind == "replay":
 			break
 		await process_frame
-	check(game.v6_open() and "\n".join(seen_lines).contains("真是昨天才认识的吗"), "重演中侦探因信任不足拒绝转述后，手稿出现第六个问题")
+	check(game.engine.V6Open() and "\n".join(seen_lines).contains("真是昨天才认识的吗"), "重演中侦探因信任不足拒绝转述后，手稿出现第六个问题")
 	game.close_modal()
 
 	# ---- 5e. 交互一致性与减少重复（修订四·7、8、9）
@@ -547,7 +561,7 @@ func _run() -> void:
 			if RegEx.create_from_string("[0-9０-９]").search(str(frame.thoughts[key])) != null:
 				digits = true
 	check(not digits, "心声气泡不出现数值")
-	game.full_match_seen = false
+	game.engine.SetProgress("state", "full_match_seen", false)
 	game.play_replay(game.replay_result)
 	await process_frame
 	await process_frame
@@ -569,7 +583,7 @@ func _run() -> void:
 	# ---- 7. 始业之答（陈述与出示成对；第五轮修订删去反问）→ 门开
 	game = await fresh()
 	game.jump_to("replay_match")
-	game._apply_recall("E10", "shen")
+	game.engine.ApplyRecall("E10", "shen")
 	seen_lines.clear()
 	game.answer()
 	var picks := [{"say": "me", "show": "E9"}, {"say": "V4_0", "show": "E3"}, {"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"},

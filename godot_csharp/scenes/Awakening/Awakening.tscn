@@ -1,12 +1,12 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/Shared/UI/FieldUI.tscn" id="field_ui"]
+[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/ChapterHUD.tscn" id="field_ui"]
 
 [ext_resource type="Script" path="res://scenes/Awakening/Awakening.gd" id="main"]
 [ext_resource type="Script" path="res://scenes/Awakening/LampFlicker.gd" id="details"]
 [ext_resource type="Script" path="res://scenes/Story/StoryActor.gd" id="actor"]
 [ext_resource type="Script" path="res://scenes/Awakening/RoomDoor.gd" id="room_door"]
-[ext_resource type="Script" path="res://scenes/Shared/UI/HintOverlay.gd" id="hints"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/HintOverlay.tscn" id="hints"]
 [ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterDialogue.tscn" id="dialogue"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/AnimeCast/detective.tres" id="detective_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/AnimeCast/engineer.tres" id="engineer_frames"]
@@ -2167,9 +2167,8 @@ interior_bounds = Rect2(1056, 512, 192, 160)
 position = Vector2(0, -4)
 shape = SubResource("dorm_leaf")
 
-[node name="InteractionHints" type="Node2D" parent="."]
+[node name="InteractionHints" parent="." instance=ExtResource("hints")]
 z_index = 50
-script = ExtResource("hints")
 
 [node name="Dialogue" parent="." instance=ExtResource("dialogue")]
 
@@ -2178,3 +2177,6 @@ script = ExtResource("hints")
 zoom = Vector2(2, 2)
 
 [node name="FieldUI" parent="." instance=ExtResource("field_ui")]
+
+[node name="ModalLayer" type="CanvasLayer" parent="."]
+layer = 15

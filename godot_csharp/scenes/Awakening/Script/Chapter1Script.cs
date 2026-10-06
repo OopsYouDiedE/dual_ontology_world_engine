@@ -585,13 +585,14 @@ public sealed class Chapter1Script
     public string Id => "chapter1";
     public string Title => "门的这一侧";
     public MorningWorld CreateWorld() => new MorningWorld();
+    public Chapter1Dialogue CreateDialogue(AwakeningContentSession content, MorningWorld world) => new(content, world);
+    public Chapter1Interaction CreateInteraction(AwakeningContentSession content, MorningWorld world) => new(content, world);
     public AwakeningContentSession CreateContent()
     {
         var content = new AwakeningContentSession();
         content.LoadContent(ReadText("Awakening.Content.json"));
         return content;
     }
-    public string DialogueText => ReadText("Awakening.Dialogue");
     private static string ReadText(string name)
     {
         using var stream = typeof(Chapter1Script).Assembly.GetManifestResourceStream(name)!;

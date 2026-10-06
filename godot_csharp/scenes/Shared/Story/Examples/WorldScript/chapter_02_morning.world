@@ -1,0 +1,44 @@
+# 第二章：继承前章实体与运行状态，只添加新知识并扩展候选。
+chapter(id="morning", requires=["arrival"])
+
+foyer = ref(id="room.foyer")
+bolt = ref(id="object.inner_bolt")
+detective = ref(id="character.detective")
+guard = ref(id="character.guard")
+
+extend(target=bolt, properties={"observable:oil_residue": True})
+extend(target=detective, properties={"state:trust_huo": 0})
+
+
+@选项(id="inspect_oil_residue", target=bolt, applicability=known(bolt))
+def inspect_oil_residue():
+    ```
+侦探：守夜人，你提到的油痕是这道吗？
+```
+    inspect(target=bolt)
+
+
+@反应(
+    id="connect_oil_to_inside", actor=guard,
+    response_to=["inspect_oil_residue"],
+    applicability=at(guard, foyer) and known(bolt),
+    goal=state(guard, "cautious") >= 1,
+    weight=6,
+)
+def connect_oil_to_inside():
+    ```
+守夜人：是同一道。看起来有人从屋里碰过插闩。
+```
+
+
+@反应(
+    id="defer_oil", actor=guard,
+    response_to=["inspect_oil_residue"],
+    applicability=known(bolt),
+    goal=state(guard, "cautious") == 0,
+    weight=1,
+)
+def defer_oil():
+    ```
+守夜人：我还没看清，先让我确认一下。
+```

@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/Awakening/UI/PagePreview.gd" id="preview"]
+
+[node name="AnswerHeader" type="VBoxContainer"]
+theme = ExtResource("theme")
+script = ExtResource("preview")
+offset_right = 832.0
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+
+[node name="Question" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+bbcode_enabled = true
+text = "提问者问：[b]问题[/b]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Instructions" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
+text = "陈述一句结论，再出示一件能支撑它的东西。"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Summary" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
+text = "陈述：（未选）\n出示：（未选）"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Rule" type="ColorRect" parent="."]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.17, 0.13, 0.09, 0.28)

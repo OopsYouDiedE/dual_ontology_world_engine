@@ -26,6 +26,15 @@ extends Node2D
 		queue_redraw()
 
 var host: Node
+@export_group("编辑器预览")
+@export var preview_unseen_rooms: Array[Rect2] = [Rect2(0, 0, 192, 160)]:
+	set(value):
+		preview_unseen_rooms = value
+		queue_redraw()
+@export var preview_remembered_rooms: Array[Rect2] = [Rect2(224, 0, 192, 160)]:
+	set(value):
+		preview_remembered_rooms = value
+		queue_redraw()
 var visible_cells: Dictionary = {}
 var seen_cells: Dictionary = {}
 var active_region := ""
@@ -51,6 +60,8 @@ func terrain_known(point: Vector2) -> bool:
 	return seen_cells.has(Vector2i((point / cell_size).floor()))
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if host == null:
 		return
 	_clock += delta
@@ -131,6 +142,12 @@ func terrain_shade(cell: Vector2i) -> Color:
 	return remembered_shade
 
 func _draw() -> void:
+	if Engine.is_editor_hint():
+		for room in preview_unseen_rooms:
+			draw_rect(room, unseen_shade)
+		for room in preview_remembered_rooms:
+			draw_rect(room, remembered_shade)
+		return
 	if host == null:
 		return
 	if not _terrain_fog():

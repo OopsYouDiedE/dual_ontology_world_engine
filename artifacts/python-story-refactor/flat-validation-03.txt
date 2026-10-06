@@ -1,0 +1,36 @@
+flat-validation-03 — 独立自动验收，2026-10-05
+工作目录：C:/Users/iii/Desktop/dual_ontology_world_engine
+结论：FAIL。flow 124 项断言全部通过，但退出时存在 ObjectDB 泄漏和 6 项仍在使用的资源；退出码 0 不构成通过。
+
+执行记录（每项仅执行一次，耗时为外部单调时钟墙钟时间）
+1. PASS；exit_code=0；1.875 秒；build.log
+   dotnet build godot_csharp/DualOntologyWorldEngine.sln
+   构建 0 警告、0 错误。构建自身执行既有 generated-files-current 步骤，没有另行执行 Python 检查。
+2. PASS；exit_code=0；6.735 秒；import.log
+   C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe --headless --editor --path godot_csharp --import --quit
+3. FAIL；exit_code=0；93.422 秒；上限 180 秒；flow.log
+   C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe --headless --verbose --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd
+   TOTAL 124 checks, 0 failed
+   无 SCRIPT ERROR，无超时，没有终止进程；进程自然退出。
+   flow.log:5134 WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   flow.log:5136–5153 共 18 条 Leaked instance，类型包括 OggPacketSequencePlayback、OggPacketSequence、AudioStreamOggVorbis、AudioStreamPlaybackOggVorbis。
+   flow.log:5155 ERROR: 6 resources still in use at exit.
+   资源分别为 door_side.ogg 的 OggPacketSequence、tube.ogg 及其 OggPacketSequence、answer_ok.ogg 及其 OggPacketSequence、night.ogg 的 OggPacketSequence。
+4. NOT EXECUTED：final_content_check.gd；flow 失败，按要求不执行；退出码/耗时不适用。
+   计划命令：C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe --headless --verbose --path godot_csharp --script res://scenes/Awakening/check/final_content_check.gd
+5. NOT EXECUTED：final_shared_runtime_check.gd；flow 失败，按要求不执行；退出码/耗时不适用。
+   计划命令：C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe --headless --verbose --path godot_csharp --script res://scenes/Awakening/check/final_shared_runtime_check.gd
+
+完整未过滤 stdout/stderr 合并日志与机器执行记录：artifacts/python-story-refactor/flat-03/{build.log,import.log,flow.log,execution.json}。
+
+只读源码核对
+- GameAudio.gd:105–118：release_audio 杀死淡化 Tween，停止有效播放器并清空 stream，清空缓存与当前曲目；_exit_tree 调用该函数。源码已有退出释放，但本轮运行仍泄漏音频相关对象，不能认定释放修复完成，也不能仅凭日志确定内部根因。
+- 正常音频路径保留：GameAudio.gd:39–55 加载、复制循环音乐并 new.play()；73–82 音效 player.play()；project.godot:21 仍注册 GameAudio 自动加载。Awakening 的 music/sfx 命令仍转发 Sound；StoryDialogue.gd:774 仍播放打字语音。flow 日志实际加载 door_side/main_theme/night 配乐及音效。本轮没有停用音乐、改静音配置或改播放逻辑。无头运行与源码支持播放调用路径存在，不等同人工听感验收；脚本没有专门断言播放器 playing 状态。
+- Awakening.gd:155–193：CancellableWait 同时订阅源信号和 closing，恢复前解除两边订阅；begin_shutdown 首先设置 _closing，再取消对白、发出 closing、停止演员并关闭 modal。主要定时器、对白、移动、modal 等异步等待经过取消封装，恢复后检查 _closing。
+- Awakening.gd:846–860：_play_plan 在异步表现返回后检查 _closing，然后才执行 engine.Presented；答案选择返回后也先检查再 ReplaceProgress。_go_reach/_alone_reach/_finish_reach 等在等待返回后先检查，再 Locate/Reach/CompleteAlone 等。StoryDialogue.gd:574、586–587：延迟启动检查 active，命令等待后检查 active，取消后不会继续 AdvanceDialogue。这些已审阅路径有防止关闭后新增 Core 效果的保护；检查脚本并未提供关闭前后 Core 状态不变的专门动态断言，结论限于源码核对。
+- 覆盖缺口：Awakening.gd:1549 直接 await stage_node.play；ReplayStage.gd:54、60 直接 await process_frame，没有 closing 竞速、关闭检查或自身 _exit_tree 取消；begin_shutdown 没有取消 ReplayStage。若仅 begin_shutdown 而节点仍留在树中，回放仍可继续表现并到 _teardown。宿主返回处 :1550 的 _closing 检查保护后续 Core 结算，但不能据此宣称所有异步表现均在关闭时停止。此为静态发现，未增跑复现测试。
+- flow_check.gd:23–32 在完成时关闭并释放 fixture、冲刷帧、调用 release_audio；这是实际清理动作，没有删除或过滤退出日志。尽管如此仍出现上述真实退出诊断。
+
+范围与纪律
+未读取 docs、README、设计文件、历史报告或其他会话；只读当前源码与检查脚本，先检查既有工作区修改。未修改生产实现，未创建 Agent，未重跑任何检查，未运行额外 Python 或候选 C# 检查。新增仅本轮报告、日志和 tmp/flat_validation_03.py 执行器。构建及导入产生正常工具输出。
+正式章节迁移、独立盲玩均未验证；本轮为自动回归，包含既有脚本的状态注入与自动推进，不宣称这些工作完成。

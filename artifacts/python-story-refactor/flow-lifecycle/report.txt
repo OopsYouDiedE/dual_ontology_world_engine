@@ -1,0 +1,61 @@
+Godot flow lifecycle diagnostic
+Command: C:\Users\iii\Desktop\Godot_v4.6.1-stable_mono_win64\Godot_v4.6.1-stable_mono_win64_console.exe --headless --verbose --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd
+Working directory: C:\Users\iii\Desktop\dual_ontology_world_engine
+Exit code: 0
+Elapsed: 93.480 seconds
+
+TOTAL assertion lines:
+TOTAL 124 checks, 0 failed
+
+Leaked instance records: 31
+Leaked instance: GDScriptFunctionState:9223372636959016598 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372716214585039 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223373040081962837 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372717573539670 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372873937192816 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372834527512439 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372873970747266 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372998591907719 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372794698401767 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223373041877125111 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372955977779192 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372955944224817 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372955138918451 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372834561067238 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372872913783052 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372997551720742 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372756379240766 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223373041843571015 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372793423333719 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372754701519236 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372912172468643 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372998558353867 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372913564977659 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372178387372586 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372178320263741 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372178454481473 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372913531423334 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372794664848021 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372756345686680 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372833051118294 - Reference count: 1
+Leaked instance: GDScriptFunctionState:9223372717607095029 - Reference count: 1
+
+Orphan StringName records: 11 unique entries
+Orphan StringName: _follow (static: 0, total: 3)
+Orphan StringName: arrived (static: 0, total: 12)
+Orphan StringName: physics_frame (static: 1, total: 13)
+Orphan StringName: process_frame (static: 1, total: 3)
+Orphan StringName: _present_reach (static: 0, total: 9)
+Orphan StringName: timeout (static: 1, total: 10)
+Orphan StringName: Master (static: 0, total: 2)
+Orphan StringName: say (static: 0, total: 1)
+Orphan StringName: completed (static: 2, total: 33)
+Orphan StringName: present_dialogue_command (static: 0, total: 9)
+Orphan StringName: walk_actor (static: 0, total: 9)
+
+Resource/ObjectDB warning lines:
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+
+Paths: verbose.log lists leaked instances only as GDScriptFunctionState IDs; it emits no resource path/name for those states. Relevant originating script for async states: res://scenes/Awakening/check/flow_check.gd, with awaited calls into res://scenes/Awakening/Awakening.gd. Runtime output does not establish an owning reference cycle.
+
+Complete combined stdout/stderr is saved in verbose.log.

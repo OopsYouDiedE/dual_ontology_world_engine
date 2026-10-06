@@ -1,4 +1,3 @@
-using System.Runtime.Loader;
 using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Story;
@@ -33,34 +32,6 @@ public abstract record StoryStep<TWorld, TActor>
     public sealed record Choice(string Id, string Prompt, IReadOnlyList<StoryOption<TWorld, TActor>> Options) : StoryStep<TWorld, TActor>;
     public sealed record Parallel(IReadOnlyList<IReadOnlyList<StoryStep<TWorld, TActor>>> Branches) : StoryStep<TWorld, TActor>;
     public sealed record Repeat(int Count, IReadOnlyList<StoryStep<TWorld, TActor>> Steps) : StoryStep<TWorld, TActor>;
-}
-
-/// <summary>普通 C# 脚本接口；TWorld 可以是第一章 MorningWorld 或第二章 Game。</summary>
-public interface IChapterScript<TWorld, TActor>
-{
-    ChapterStoryDefinition<TWorld, TActor> Define();
-}
-
-public sealed class ChapterStoryDefinition<TWorld, TActor>
-{
-    public System.Action<TWorld>? Initialize { get; init; }
-    public IReadOnlyList<StorySequence<TWorld, TActor>> Sequences { get; init; } = [];
-    public StoryRuntime<TWorld, TActor> CreateRuntime(TWorld world, StoryBindings<TWorld, TActor> bindings)
-    {
-        Initialize?.Invoke(world);
-        return new(world, bindings, Sequences);
-    }
-}
-
-public static class ChapterScript
-{
-    public static ChapterStoryDefinition<TWorld, TActor> Load<TWorld, TActor>(string assemblyPath)
-    {
-        var context = AssemblyLoadContext.GetLoadContext(typeof(IChapterScript<TWorld, TActor>).Assembly)!;
-        var assembly = context.LoadFromAssemblyPath(Path.GetFullPath(assemblyPath));
-        var entry = assembly.GetExportedTypes().Single(t => !t.IsAbstract && typeof(IChapterScript<TWorld, TActor>).IsAssignableFrom(t));
-        return ((IChapterScript<TWorld, TActor>)Activator.CreateInstance(entry)!).Define();
-    }
 }
 
 /// <summary>同一执行内核处理触发、顺序、并行、重复、等待与选择。物理动作交给原 Core 会话。</summary>

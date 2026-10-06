@@ -46,11 +46,13 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `AwakeningEngine.cs` | GDScript 与 C# 之间的桥：重演、声路试验、回忆、钩数、章节结束状态 |
 | `Awakening.tscn` / `Awakening.gd` | 生活翼地图（几何、寻路、相机复用旧场景的通用部分），S1–S10 流程、证物卡、笔记本、声路试验、触物回忆、始业之答、结局 |
 | `map_layout.tres` | 地图生成脚本的输出：地面格、家具足迹、书架积灰的种类与位置、窗与地毯等壁饰的心声区域 |
-| `AwakeningContent.gd` | 12 件证物的卡片文字、现场点位、重演变量与陈述 |
+| `AwakeningContent.gd` | 加载 C# 内容与生成布局，转换 Godot 坐标和命中框 |
 | `ReplayManuscript.gd` | 重演手稿：左页六个变量，右页对照；改变量后旧结果标为过期 |
 | `ReplayStage.gd` | 墨影回放：真实地图上的半透明人影与四个并排的心声气泡；暂停、倍速、跳过 |
 | `TraceDecals.gd` | 传声铜管走向、管接头、灰扇、靴印、湿布、门框凹痕、书架无尘方框与窄手印 |
-| `awakening.dialogue` | 全章台词（Dialogue Manager），按玩家已取得的材料分支 |
+| `Script/ch1_awakening.py` | 第一章对白、分支、证物事实与热点的唯一生产源 |
+| `Script/Chapter1Dialogue.cs` / `Shared/Story/InteractionPacket.cs` | 纯 C# 对白查询、效果、选择与交互协议；不依赖 Godot |
+| `Script/generated_awakening_*.json` / `Script/Chapter1CompiledDialogue.cs` | 由 `python godot_csharp/tools/compile_story.py` 生成；`--check` 检查一致性，不手工修改 |
 | `Paper.gd`、`HintOverlay.gd`、`LampFlicker.gd`、`RoomDoor.gd`、`FieldNavigation.gd`、`AwakeningDialogue.tscn` | 手稿样式、交互高亮、灯光、宿舍门、网格寻路、对白框（后四者复制自旧场景的通用节点） |
 | `check/` | 上表的检查与盲玩驱动 |
 

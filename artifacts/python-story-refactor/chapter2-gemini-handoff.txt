@@ -1,0 +1,19 @@
+第二章正式迁移交接（测试负责人：Gemini）
+
+作者源：godot_csharp/scenes/Chapter2/Script/chapter_02.world
+编译产物：godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json
+运行入口：从 Godot 标题页进入第一章，完成正式章节退出后继续第二章；单独进入第二章应显示缺少真实交接会话。
+
+本轮由 Codex 实施迁移，没有运行构建、Godot 导入、回归或实机试玩。以下为 Gemini 待执行的独立验收，不是通过结论：
+
+1. 在独立上下文从作者源重新编译 JSON，核对生成一致性及源位置；构建 Core 与 Godot C# 工程并做 Godot 资源导入。
+2. 执行第二章现役 check_flow.gd、check_gallery.gd，并核对失败退出码和资源清理。它们是自动回归，不是盲玩。
+3. 从第一章实际游玩达成章节交接后进入第二章，核对四人身体、灵魂、主观投影和章节进度的引用连续性；不使用注入状态、预写答案或快进脚本充当盲玩。
+4. 在第二章实际操作房间切换、物件/家具检视、有限 NPC 回应、可用玩家选项、时段推进、重演、对质及结局；确认 Godot 只上报输入并呈现 Core 事件。
+5. 核对不存在旧 .dialogue 入口、陈旧桥接路径或界面重复状态；留意场面关闭、地图淡入淡出与墨影回放后的协程和音频释放。
+6. 独立盲玩应从全新会话开始，只给启动方法与通用输入，不给谜底；完整记录玩家可见轨迹、有效时长、卡顿、剧情推理与重复劳动。自动回归和盲玩分别报告。
+
+正式编译命令：
+python godot_csharp/tools/world_script.py --external-chapter awakening -o godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json godot_csharp/scenes/Chapter2/Script/chapter_02.world
+
+验收结论由 Gemini 填写；本文件不预填通过状态。

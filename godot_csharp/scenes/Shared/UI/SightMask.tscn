@@ -1,10 +1,5 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scenes/Shared/SightMask.gd" id="sight_mask"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/SightMask.tscn" id="sight_mask"]
 
-[node name="SightMask" type="Node2D"]
-script = ExtResource("sight_mask")
-cell_size = 32
-sight_radius = 15
-unseen_shade = Color(0.02, 0.02, 0.03, 1)
-remembered_shade = Color(0.02, 0.02, 0.03, 0.62)
+[node name="SightMask" instance=ExtResource("sight_mask")]

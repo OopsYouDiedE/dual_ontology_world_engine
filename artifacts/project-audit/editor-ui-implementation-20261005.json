@@ -1,0 +1,59 @@
+{
+  "completedAt": "2026-10-05T20:14:52.6737035+08:00",
+  "task": "Native editor-preview UI implementation",
+  "files": [
+    {
+      "path": "godot_csharp/scenes/Shared/UI/FieldUI.gd",
+      "sha256": "D06080FFAFE0F007FBC7143D9E9C7F86E15404F11475822847B5C60F31885BEB"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/UI/FieldUI.tscn",
+      "sha256": "9852A4D597E7A75088E02D729D9BEE41166C968A6B38F337737D7E336C283E50"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/UI/HintOverlay.gd",
+      "sha256": "AEE683A36E808AF654BF69FAF1085328BD3B2B6D726DA3722ED2E39E3088FCB4"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/UI/HintOverlay.tscn",
+      "sha256": "BE40140F83F2C0E68DDE88BC7C7957300958EE2981F7377751744E033116C04A"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/UI/ChapterDialogue.tscn",
+      "sha256": "9AE8A3DFEC634E9941C6FD957CDFF455BC847575F44023EDA45C0008A3BE0A7B"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/UI/DialogueResponse.tscn",
+      "sha256": "DCCB956CD5B8C45835EAA7AA94DA8E5439C2193AE81BAFB185A0FDD239A6E070"
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Game/Chapter2Dialogue.tscn",
+      "sha256": "3A489CBBE0D29744E7A361A07BDF22776E1DBC4D1720FC952ABACA11B65B46EF"
+    },
+    {
+      "path": "godot_csharp/scenes/Story/StoryDialogue.gd",
+      "sha256": "E80DC5D1379D694D3B536E4942681429341BCD0416DB26A1E719AFAE8A21117A"
+    },
+    {
+      "path": "godot_csharp/scenes/Title/Title.gd",
+      "sha256": "2DBBA46B28A8FE3E371591C3F999AE6344E4BDBD4E981885D32CBBD2922D4460"
+    },
+    {
+      "path": "godot_csharp/scenes/Title/Title.tscn",
+      "sha256": "EDE2B465CA11686D01C6BC85F11EBAB19E7AA11D65D8DDEBB2CDB52E29EE26EE"
+    },
+    {
+      "path": "godot_csharp/scenes/Title/TitleTheme.tres",
+      "sha256": "2582D7DFBF99BE7EEF056574FD7343F1F01752454F1EB8BDDD0724F1EDCF73A5"
+    }
+  ],
+  "changes": [
+    "StoryDialogue binds a real ChapterDialogue scene with portrait, monogram, key legend, voice node, history and four authored response-template instances. Runtime response buttons instantiate DialogueResponse.tscn.",
+    "Dialogue editor exports include body/speaker/responses/portrait/history and enable toggles. All editor paths skip story resolution, input and voice/audio execution. Authored response samples are retained during editor refresh; extra dynamic previews have no owner.",
+    "Compact colors/styles/fonts/focus are serialized in native scene Theme and node overrides. Runtime compact sizing only adjusts count-dependent panel height and portrait text flow, using captured authored geometry and configurable gaps.",
+    "FieldUI editor exports affect preview strings only; native HUD layout/theme/gradient nodes remain editable. Runtime labels are set by hosts without ready-time replacement.",
+    "HintOverlay uses editable preview rect/spark coordinates/radius and material; editor draw never asks game source; animation remains runtime-only.",
+    "Title uses native labels, controls, colors and serialized TitleTheme.tres matching existing Paper defaults; ready no longer replaces node colors/text/theme."
+  ],
+  "testing": "Not run, by delegation instruction. Requires independent fresh-agent validation of editor scene loading, Inspector customization persistence, runtime chapter dialogue/response behavior and music/input editor guards."
+}

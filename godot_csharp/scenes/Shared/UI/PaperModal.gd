@@ -26,6 +26,12 @@ const Paper := preload("res://scenes/Shared/UI/Paper.gd")
 		sheet_margin = value
 		_update_sheet_style()
 
+@export_multiline var preview_text: String = "纸页内容预览。运行时由宿主填入。":
+	set(value):
+		preview_text = value
+		if is_node_ready():
+			$PanelContainer/Column/ScrollContainer/Body/Preview.text = value
+
 @onready var dim_rect: ColorRect = $DimRect
 @onready var panel: PanelContainer = $PanelContainer
 @onready var column: VBoxContainer = $PanelContainer/Column
@@ -35,31 +41,32 @@ const Paper := preload("res://scenes/Shared/UI/Paper.gd")
 @onready var body: VBoxContainer = $PanelContainer/Column/ScrollContainer/Body
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	theme = Paper.theme()
-	_update_sheet_style()
+	if sheet_margin != 34:
+		_update_sheet_style()
 	_update_size()
 	_update_title()
 	if is_instance_valid(dim_rect):
 		dim_rect.color = dim_color
+	$PanelContainer/Column/ScrollContainer/Body/Preview.text = preview_text
+	$PanelContainer/Column/ScrollContainer/Body/Preview.visible = Engine.is_editor_hint()
 	set_meta("column", column)
 	set_meta("body", body)
 
 func _update_sheet_style() -> void:
 	if is_instance_valid(panel):
-		panel.add_theme_stylebox_override("panel", Paper.sheet(sheet_margin))
+		var style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		style.set_content_margin_all(sheet_margin)
+		panel.add_theme_stylebox_override("panel", style)
 
 func _update_size() -> void:
 	if not is_instance_valid(panel):
 		return
-	panel.size = modal_size
 	panel.custom_minimum_size = modal_size
-	var parent_size: Vector2 = Vector2(1280, 992)
-	if get_viewport():
-		var vp_size = get_viewport_rect().size
-		if vp_size.x > 0 and vp_size.y > 0:
-			parent_size = vp_size
-	panel.position = (parent_size - modal_size) / 2.0
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -modal_size.x / 2.0
+	panel.offset_right = modal_size.x / 2.0
+	panel.offset_top = -modal_size.y / 2.0
+	panel.offset_bottom = modal_size.y / 2.0
 
 func _update_title() -> void:
 	if not is_instance_valid(title_label) or not is_instance_valid(title_rule):

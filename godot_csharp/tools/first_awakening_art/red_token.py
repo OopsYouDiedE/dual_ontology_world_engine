@@ -265,11 +265,9 @@ def publish(game: Path):
     for target in [source,runtime]:
         target.mkdir(parents=True,exist_ok=True)
         for name,canvas in assets.items(): canvas.save(target/("red_"+name+".png"))
-    data={"fixtures":FIXTURES,"sites":SITES,"replaced":REPLACED,"cell":32}
-    text='[gd_resource type="Resource" format=3]\n\n[ext_resource type="Script" path="res://scenes/FirstAwakening/LayoutResource.gd" id="layout"]\n\n[resource]\nscript = ExtResource("layout")\ndata = '+json.dumps(data,ensure_ascii=False,indent=1)+'\n'
-    (runtime/"red_mechanisms.tres").write_text(text,encoding="utf-8")
     manifest={name:{"size":[canvas.w,canvas.h],"source":str((source/("red_"+name+".png")).relative_to(game)).replace('\\','/'),"runtime":str((runtime/("red_"+name+".png")).relative_to(game)).replace('\\','/'),"process":"native 1x pixels; shared life-wing material ramps; bottom-centre anchor"} for name,canvas in assets.items()}
-    (runtime/"red_mechanisms_manifest.json").write_text(json.dumps({"assets":manifest,**data},ensure_ascii=False,indent=2),encoding="utf-8")
+    metadata={"fixtures":FIXTURES,"sites":SITES,"replaced":REPLACED,"cell":32}
+    (runtime/"red_mechanisms_manifest.json").write_text(json.dumps({"assets":manifest,**metadata},ensure_ascii=False,indent=2),encoding="utf-8")
     report=game.parent/"artifacts/first-awakening"; report.mkdir(parents=True,exist_ok=True)
     sheet=Image.new("RGBA",(768,520),(233,226,208,255)); draw=ImageDraw.Draw(sheet)
     preview_names=[f["name"] for f in FIXTURES if f["name"]!="pressure_route"]+["spring_handle_pressed"]

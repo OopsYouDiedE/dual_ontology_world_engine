@@ -1,0 +1,54 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/Shared/UI/ReplayOverlay.gd" id="1"]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/PaperTheme.tres" id="theme"]
+
+[sub_resource type="StyleBoxFlat" id="BarStyle"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.09, 0.08, 0.1, 0.86)
+
+[node name="ReplayOverlay" type="CanvasLayer"]
+layer = 14
+script = ExtResource("1")
+preview_caption = "[b]昨夜[/b]　回放场面"
+preview_door = "门的状态"
+
+[node name="Bar" type="PanelContainer" parent="."]
+theme = ExtResource("theme")
+custom_minimum_size = Vector2(1280, 54)
+offset_right = 1280.0
+offset_bottom = 54.0
+theme_override_styles/panel = SubResource("BarStyle")
+
+[node name="Caption" type="RichTextLabel" parent="Bar"]
+size_flags_horizontal = 3
+layout_mode = 2
+theme_override_colors/default_color = Color(0.909804, 0.839216, 0.654902, 1)
+theme_override_font_sizes/normal_font_size = 19
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Controls" type="Label" parent="."]
+theme = ExtResource("theme")
+offset_left = 960.0
+offset_top = 950.0
+offset_right = 1260.0
+offset_bottom = 980.0
+theme_override_colors/font_color = Color(0.811765, 0.764706, 0.635294, 1)
+theme_override_font_sizes/font_size = 16
+text = "空格 暂停　F 倍速　Esc 跳过"
+horizontal_alignment = 2
+
+[node name="Door" type="Label" parent="."]
+theme = ExtResource("theme")
+theme_override_colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.06, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16

@@ -1,0 +1,641 @@
+{
+  "format": "dual-ontology-world-script/v1",
+  "chapters": [
+    {
+      "id": "arrival",
+      "requires": [],
+      "entities": [
+        {
+          "id": "room.foyer",
+          "name": "门厅",
+          "kind": "room",
+          "scope": "world",
+          "properties": {},
+          "aliases": [
+            "门厅"
+          ],
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:4:9"
+        },
+        {
+          "id": "object.inner_bolt",
+          "name": "内侧插闩",
+          "kind": "object",
+          "scope": "world",
+          "properties": {
+            "space": {
+              "type": "entity",
+              "value": "world:room.foyer"
+            },
+            "state:engaged": {
+              "type": "integer",
+              "value": 1
+            },
+            "observable:scratched": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "aliases": [
+            "内侧插闩"
+          ],
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:5:8"
+        },
+        {
+          "id": "character.detective",
+          "name": "侦探",
+          "kind": "character",
+          "scope": "world",
+          "properties": {
+            "space": {
+              "type": "entity",
+              "value": "world:room.foyer"
+            },
+            "state:focus": {
+              "type": "integer",
+              "value": 1
+            },
+            "observable:present": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "aliases": [
+            "侦探"
+          ],
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:9:13"
+        },
+        {
+          "id": "character.guard",
+          "name": "守夜人",
+          "kind": "character",
+          "scope": "world",
+          "properties": {
+            "space": {
+              "type": "entity",
+              "value": "world:room.foyer"
+            },
+            "belief:cautious": {
+              "type": "integer",
+              "value": 1
+            },
+            "observable:present": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "aliases": [
+            "守夜人"
+          ],
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:13:9"
+        }
+      ],
+      "patches": [],
+      "candidates": [
+        {
+          "id": "inspect_inner_bolt",
+          "kind": "option",
+          "actor": "player",
+          "target": "world:object.inner_bolt",
+          "label": "能说说插闩上这道痕吗？",
+          "applicability": {
+            "op": "call",
+            "name": "known",
+            "args": [
+              {
+                "op": "literal",
+                "value": "world:object.inner_bolt"
+              }
+            ]
+          },
+          "goal": null,
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.detective",
+              "mood": "neutral",
+              "text": "能说说插闩上这道痕吗？",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:22:1"
+            },
+            {
+              "op": "call",
+              "name": "inspect",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "world:object.inner_bolt"
+                }
+              ],
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:24:5"
+            }
+          ],
+          "response_to": [],
+          "policy": {
+            "mode": "player",
+            "weight": 0
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:19:2"
+        },
+        {
+          "id": "careful_reply",
+          "kind": "reaction",
+          "actor": "world:character.guard",
+          "target": null,
+          "label": null,
+          "applicability": {
+            "op": "call",
+            "name": "known",
+            "args": [
+              {
+                "op": "literal",
+                "value": "world:object.inner_bolt"
+              }
+            ]
+          },
+          "goal": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "state",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:character.guard"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "cautious"
+                  }
+                ]
+              },
+              {
+                "op": "literal",
+                "value": 1
+              }
+            ]
+          },
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.guard",
+              "mood": "neutral",
+              "text": "插闩落在闩槽里。刮痕倒像是从里面留下的。",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:36:1"
+            }
+          ],
+          "response_to": [
+            "arrival:inspect_inner_bolt"
+          ],
+          "policy": {
+            "mode": "core",
+            "weight": 5
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:27:2"
+        },
+        {
+          "id": "brief_reply",
+          "kind": "reaction",
+          "actor": "world:character.guard",
+          "target": null,
+          "label": null,
+          "applicability": {
+            "op": "call",
+            "name": "known",
+            "args": [
+              {
+                "op": "literal",
+                "value": "world:object.inner_bolt"
+              }
+            ]
+          },
+          "goal": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "state",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:character.guard"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "cautious"
+                  }
+                ]
+              },
+              {
+                "op": "literal",
+                "value": 0
+              }
+            ]
+          },
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.guard",
+              "mood": "neutral",
+              "text": "插闩没有松动。",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:49:1"
+            }
+          ],
+          "response_to": [
+            "arrival:inspect_inner_bolt"
+          ],
+          "policy": {
+            "mode": "core",
+            "weight": 1
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:40:2"
+        }
+      ],
+      "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:2:1"
+    },
+    {
+      "id": "morning",
+      "requires": [
+        "arrival"
+      ],
+      "entities": [],
+      "patches": [
+        {
+          "target": "world:object.inner_bolt",
+          "mode": "extend",
+          "properties": {
+            "observable:oil_residue": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:9:1"
+        },
+        {
+          "target": "world:character.detective",
+          "mode": "extend",
+          "properties": {
+            "state:trust_huo": {
+              "type": "integer",
+              "value": 0
+            }
+          },
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:10:1"
+        }
+      ],
+      "candidates": [
+        {
+          "id": "inspect_oil_residue",
+          "kind": "option",
+          "actor": "player",
+          "target": "world:object.inner_bolt",
+          "label": "守夜人，你提到的油痕是这道吗？",
+          "applicability": {
+            "op": "call",
+            "name": "known",
+            "args": [
+              {
+                "op": "literal",
+                "value": "world:object.inner_bolt"
+              }
+            ]
+          },
+          "goal": null,
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.detective",
+              "mood": "neutral",
+              "text": "守夜人，你提到的油痕是这道吗？",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:16:1"
+            },
+            {
+              "op": "call",
+              "name": "inspect",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "world:object.inner_bolt"
+                }
+              ],
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:18:5"
+            }
+          ],
+          "response_to": [],
+          "policy": {
+            "mode": "player",
+            "weight": 0
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:13:2"
+        },
+        {
+          "id": "connect_oil_to_inside",
+          "kind": "reaction",
+          "actor": "world:character.guard",
+          "target": null,
+          "label": null,
+          "applicability": {
+            "op": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "at",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:character.guard"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "world:room.foyer"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "known",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:object.inner_bolt"
+                  }
+                ]
+              }
+            ]
+          },
+          "goal": {
+            "op": "gte",
+            "args": [
+              {
+                "op": "call",
+                "name": "state",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:character.guard"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "cautious"
+                  }
+                ]
+              },
+              {
+                "op": "literal",
+                "value": 1
+              }
+            ]
+          },
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.guard",
+              "mood": "neutral",
+              "text": "是同一道。看起来有人从屋里碰过插闩。",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:30:1"
+            }
+          ],
+          "response_to": [
+            "morning:inspect_oil_residue"
+          ],
+          "policy": {
+            "mode": "core",
+            "weight": 6
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:21:2"
+        },
+        {
+          "id": "defer_oil",
+          "kind": "reaction",
+          "actor": "world:character.guard",
+          "target": null,
+          "label": null,
+          "applicability": {
+            "op": "call",
+            "name": "known",
+            "args": [
+              {
+                "op": "literal",
+                "value": "world:object.inner_bolt"
+              }
+            ]
+          },
+          "goal": {
+            "op": "eq",
+            "args": [
+              {
+                "op": "call",
+                "name": "state",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "world:character.guard"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "cautious"
+                  }
+                ]
+              },
+              {
+                "op": "literal",
+                "value": 0
+              }
+            ]
+          },
+          "response": [
+            {
+              "op": "line",
+              "speaker": "world:character.guard",
+              "mood": "neutral",
+              "text": "我还没看清，先让我确认一下。",
+              "voice_clip": "",
+              "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:43:1"
+            }
+          ],
+          "response_to": [
+            "morning:inspect_oil_residue"
+          ],
+          "policy": {
+            "mode": "core",
+            "weight": 1
+          },
+          "delay": 1.0,
+          "scope": "world",
+          "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:34:2"
+        }
+      ],
+      "source_id": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:2:1"
+    }
+  ],
+  "source_map": {
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:2:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 2,
+      "column": 1,
+      "end_line": 2,
+      "end_column": 35
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:4:9": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 4,
+      "column": 9,
+      "end_line": 4,
+      "end_column": 56
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:5:8": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 5,
+      "column": 8,
+      "end_line": 8,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:9:13": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 9,
+      "column": 13,
+      "end_line": 12,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:13:9": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 13,
+      "column": 9,
+      "end_line": 16,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:22:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 22,
+      "column": 1,
+      "end_line": 22,
+      "end_column": 15
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:24:5": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 24,
+      "column": 5,
+      "end_line": 24,
+      "end_column": 25
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:19:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 19,
+      "column": 2,
+      "end_line": 19,
+      "end_column": 69
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:36:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 36,
+      "column": 1,
+      "end_line": 36,
+      "end_column": 25
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:27:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 27,
+      "column": 2,
+      "end_line": 33,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:49:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 49,
+      "column": 1,
+      "end_line": 49,
+      "end_column": 12
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world:40:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.world",
+      "line": 40,
+      "column": 2,
+      "end_line": 46,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:2:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 2,
+      "column": 1,
+      "end_line": 2,
+      "end_column": 44
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:9:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 9,
+      "column": 1,
+      "end_line": 9,
+      "end_column": 65
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:10:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 10,
+      "column": 1,
+      "end_line": 10,
+      "end_column": 60
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:16:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 16,
+      "column": 1,
+      "end_line": 16,
+      "end_column": 19
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:18:5": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 18,
+      "column": 5,
+      "end_line": 18,
+      "end_column": 25
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:13:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 13,
+      "column": 2,
+      "end_line": 13,
+      "end_column": 70
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:30:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 30,
+      "column": 1,
+      "end_line": 30,
+      "end_column": 23
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:21:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 21,
+      "column": 2,
+      "end_line": 27,
+      "end_column": 2
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:43:1": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 43,
+      "column": 1,
+      "end_line": 43,
+      "end_column": 19
+    },
+    "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world:34:2": {
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.world",
+      "line": 34,
+      "column": 2,
+      "end_line": 40,
+      "end_column": 2
+    }
+  }
+}
