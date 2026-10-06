@@ -19,6 +19,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine_spec import (ChapterSpec, Expr, Instruction, binary, call, choice_option, choices,  # noqa: E402
                          condition, effect, entry, jump, line as dialogue_line, literal, unary)
+from story_base import note_line, split_tags  # noqa: E402
 from story_script import (ECOLOGY_BLOCKS, Line, StoryError, children, read_lines,  # noqa: E402
                           source_lines, split_list, split_pair)
 
@@ -299,7 +300,7 @@ def parse_body(lines: list[Line], start: int, depth: int, entry_id: str) -> tupl
                 else:
                     result.append(effect(name, rest))
             else:
-                result.append(dialogue(line))
+                result.append(dialogue(line, entry_id))
             i += 1
     return result, i
 
@@ -336,22 +337,21 @@ def parse_options(lines: list[Line], depth: int, entry_id: str) -> list[dict[str
             else:
                 hint = restore_interpolation(value)
             sub = sub[1:]
+        label, _, label_id = split_tags(line.text[2:].strip(), line.number)
+        note_line(entry_id, label_id, line.number)
         body, _ = parse_body(sub, 0, depth + 1, entry_id) if sub else ([], 0)
-        options.append(choice_option("", restore_interpolation(line.text[2:].strip()), body, test, hint))
+        options.append(choice_option("", restore_interpolation(label), body, test, hint, label_id))
     return options
 
 
-def dialogue(line: Line):
-    text = line.text
+def dialogue(line: Line, entry_id: str):
+    text, mood, line_id = split_tags(line.text, line.number)
     if text.startswith("（"):
         speaker, content = "", text
     else:
-        speaker, content = split_pair(line)
-    mood = ""
-    m = re.search(r"\s*\[#emotion=([A-Za-z_]+)\]\s*$", content)
-    if m:
-        mood, content = m[1], content[:m.start()]
-    return dialogue_line(restore_interpolation(speaker), restore_interpolation(content), mood)
+        speaker, content = split_pair(Line(line.number, line.indent, text))
+    note_line(entry_id, line_id, line.number)
+    return dialogue_line(restore_interpolation(speaker), restore_interpolation(content), mood, line_id=line_id)
 
 
 # ---- 规则块：文案、阶段、流程、判定 ----
@@ -738,6 +738,24 @@ def read_clock(body: list[Line]) -> dict[str, Any]:
     return result
 
 
+def unique(table: dict, key: str, value: Any, what: str, number: int) -> None:
+    if key in table:
+        raise StoryError(f"{what}“{key}”重复。", number)
+    table[key] = value
+
+
+def merge_table(previous: Any, value: Any, what: str, number: int) -> Any:
+    """Repeated table blocks continue one table: lists append, keyed tables must not repeat keys."""
+    if previous is None:
+        return value
+    if isinstance(previous, (list, tuple)):
+        return type(previous)([*previous, *value])
+    merged = dict(previous)
+    for key, item in value.items():
+        unique(merged, key, item, what, number)
+    return merged
+
+
 def load(path: Path) -> Chapter1Source:
     lines = source_lines(path)
     source = Chapter1Source()
@@ -765,11 +783,13 @@ def load(path: Path) -> Chapter1Source:
                     raise StoryError(f"文案键“{key}”重复。", head.number)
                 texts[key] = value
         elif text == "守则":
-            source.RULES_DATA["POSTED_RULES"] = [item.text[2:].strip() for item in body]
+            source.RULES_DATA.setdefault("POSTED_RULES", []).extend(item.text[2:].strip() for item in body)
         elif word == "阶段":
-            source.RULES_DATA.setdefault("STAGES", {})[rest] = read_stage(rest, body)
+            unique(source.RULES_DATA.setdefault("STAGES", {}), rest, read_stage(rest, body), "阶段", head.number)
         elif text == "阶段事件":
-            source.RULES_DATA["STAGE_EVENTS"] = {split_pair(item)[0]: split_pair(item)[1] for item in body}
+            events = source.RULES_DATA.setdefault("STAGE_EVENTS", {})
+            for item in body:
+                unique(events, split_pair(item)[0], split_pair(item)[1], "阶段事件", item.number)
         elif word == "流程":
             header: dict[str, Any] = {}
             steps_lines = []
@@ -785,10 +805,10 @@ def load(path: Path) -> Chapter1Source:
             flows[rest] = {**header, "steps": parse_flow(steps_lines, 1)}
         elif word == "声路":
             raw = source.RULES_DATA.setdefault("_ACOUSTIC_RAW", {})
-            raw[rest] = [(split_pair(item), item.number) for item in body]
+            unique(raw, rest, [(split_pair(item), item.number) for item in body], "声路", head.number)
         elif text.startswith(("听来像在门外：", "喊声可闻：")):
             key, value = split_pair(head)
-            source.RULES_DATA.setdefault("_ACOUSTIC_LISTS", {})[key] = (split_list(value), head.number)
+            unique(source.RULES_DATA.setdefault("_ACOUSTIC_LISTS", {}), key, (split_list(value), head.number), key, head.number)
         elif word == "人物":
             fields = read_fields(body)
             if "编号" not in fields:
@@ -807,15 +827,17 @@ def load(path: Path) -> Chapter1Source:
             # Full ecology validation and compilation use the shared story_script compiler.
             continue
         elif word == "话语":
-            source.RULES_DATA.setdefault("UTTERANCES", {})[rest] = read_utterance(head, body)
+            unique(source.RULES_DATA.setdefault("UTTERANCES", {}), rest, read_utterance(head, body), "话语", head.number)
         elif word == "试验句":
             source.RULES_DATA.setdefault("TEST_SENTENCES", []).append(read_utterance(head, body))
         elif text == "房间区域":
-            source.RULES_DATA["ROOM_REGIONS"] = read_regions(body)
+            source.RULES_DATA.setdefault("ROOM_REGIONS", []).extend(read_regions(body))
         elif text == "真相":
-            source.RULES_DATA["TRUTH"] = read_truth(body)
+            truth = source.RULES_DATA.setdefault("TRUTH", {})
+            for key, value in read_truth(body).items():
+                unique(truth, key, value, "真相", head.number)
         elif word == "判定":
-            source.RULES_DATA.setdefault("VERDICTS", {})[rest] = read_verdict(rest, head, body)
+            unique(source.RULES_DATA.setdefault("VERDICTS", {}), rest, read_verdict(rest, head, body), "判定", head.number)
         elif word == "证物":
             ident, _, name = rest.partition(" ")
             f = read_fields(body)
@@ -863,7 +885,10 @@ def load(path: Path) -> Chapter1Source:
             variable = {"key": rest, "question": f["问题"][0],
                         "options": [item.text[2:].strip() for item in f["选项"][2]],
                         "evidence": split_list(f["证据"][0])}
-            source.CONTENT_TABLES.setdefault("VARIABLES", []).append(variable)
+            variables = source.CONTENT_TABLES.setdefault("VARIABLES", [])
+            if any(item["key"] == rest for item in variables):
+                raise StoryError(f"推演变量“{rest}”重复。", head.number)
+            variables.append(variable)
             if "VARIABLES" not in content_order:
                 content_order.append("VARIABLES")
         elif word in TABLES or text in TABLES:
@@ -892,12 +917,17 @@ def load(path: Path) -> Chapter1Source:
                                          for group in re.findall(r"\([^)]*\)", v))
                     else:
                         value[k] = num(v, k, item.number)
+            # A table block written again (e.g. in another included fragment) continues it.
             if attr in CONTENT_KEYS:
-                source.CONTENT_TABLES[attr] = list(value) if kind == "list" else value
+                previous = source.CONTENT_TABLES.get(attr)
+                source.CONTENT_TABLES[attr] = merge_table(previous, list(value) if kind == "list" else value, key, head.number)
                 content_order.append(attr)
             else:
-                setattr(source, attr, value)
+                had = attr in source.__dict__ and getattr(source, attr)
+                setattr(source, attr, merge_table(getattr(source, attr) if had else None, value, key, head.number))
         elif word == "场面":
+            if any(existing[0] == rest for existing in source.entries):
+                raise StoryError(f"场面“{rest}”重复。", head.number)
             source.entries.append(entry(rest, *parse_body(body, 0, 1, rest)[0]))
         else:
             raise StoryError(f"未知块“{word}”。", head.number)

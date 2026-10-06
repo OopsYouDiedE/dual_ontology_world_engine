@@ -100,6 +100,7 @@ public static class Chapter2AuthoredProfiles
             DemonPrejudice = source.GetProperty("demon_prejudice").GetInt32(),
             Habits = habits,
             Voice = source.GetProperty("voice").GetString() ?? "",
+            Gender = Member<Gender>(source, "gender"),
         };
     }
 }

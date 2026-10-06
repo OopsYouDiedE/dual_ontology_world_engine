@@ -171,7 +171,7 @@ def compile_time(body: list[Node], vocab: Vocab, line: Line) -> dict[str, Any]:
                 if m[2] not in slot_words:
                     raise StoryError(f"未知时段“{m[2]}”。", kid.number)
                 time["slot_alias"].append({"day": int(m[1]), "slot": slot_words[m[2]], "name": m[3].strip()})
-        elif key in {"时段分钟", "首日時段分钟"}:
+        elif key in {"时段分钟", "首日时段分钟"}:
             ranges = {}
             for kid in node.kids:
                 parts = [part.strip() for part in kid.item.split("|")] if kid.is_item else []
@@ -192,7 +192,7 @@ def compile_time(body: list[Node], vocab: Vocab, line: Line) -> dict[str, Any]:
         elif key in {"开场白", "操作说明"}:
             time["intro" if key == "开场白" else "instructions"] = unescape(value)
         else:
-            raise StoryError(f"时间块不支持“{key}”。可用：日名、时段别称、时段分钟、首日時段分钟、日程、开场白、操作说明。", node.number)
+            raise StoryError(f"时间块不支持“{key}”。可用：日名、时段别称、时段分钟、首日时段分钟、日程、开场白、操作说明。", node.number)
     for need in ("day_other", "intro", "instructions"):
         if need not in time:
             raise StoryError(f"时间块缺少“{ {'day_other': '日名·其余', 'intro': '开场白', 'instructions': '操作说明'}[need] }”。", line.number)

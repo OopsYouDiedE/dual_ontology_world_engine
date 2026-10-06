@@ -179,7 +179,7 @@ public sealed partial class Game
         var machine = _seizeTried.Contains(night) ? "配重链条被人拉动过" : "三处机关没人碰过";
         t.Add(new("前厅机关", Place.ArchiveFront, machine, machine));
         foreach (var p in Npcs.Where(p => _answered.Contains((night, p.Id))))
-            t.Add(new("神情:" + p.Name, Where(p), $"{p.Name}今早神情恍惚，说梦里有人一直叫他的名字"));
+            t.Add(new("神情:" + p.Name, Where(p), $"{p.Name}今早神情恍惚，说梦里有人一直叫{p.Pro.Pronoun}的名字"));
         var bert = Sightings.Where(s => s.Day == night && s.Witness == P.Bertrand).Select(s => $"{Names.Of(s.At)}有个{BuildText(s.Build)}身影").Distinct().ToArray();
         t.Add(new("夜巡", Place.Hall, bert.Length == 0 ? "贝尔特朗：夜巡无异常" : "贝尔特朗：夜里望见" + string.Join("，", bert)));
         return t;
@@ -542,7 +542,7 @@ public sealed partial class Game
     /// <summary>规矩的来历与是否通过（玩家看的说法）。</summary>
     public string SourceOf(RuleSpec s)
     {
-        if (s.ByDemon) return "恶魔的广播";
+        if (s.ByDemon) return "铜口的广播";
         if (s.Author != P.Det) return Names.Of(s.Author!.Value) + "立";
         if (s == CommonRule) return CommonRuleEstablished ? "你提议的共同规则（已成立）" : "你提议过的共同规则（没成立）";
         var nods = DetToldFace.Count(x => x.Spec == s && x.Nodded) + SpreadKnown.Count(k => k.Spec == s && k.Accepted);

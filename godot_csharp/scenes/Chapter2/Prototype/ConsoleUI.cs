@@ -558,7 +558,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             var specs = g.Specs.Where(s => s.PostedAt.Contains(place) && s != g.RuanLedger).ToArray();
             if (!read) { W($"· {Names.Of(place)}公告板：你没去看过。"); continue; }
             var known = specs.Where(s => mental.Rules.Any(r => s.Build(g.FxOf(g.Det)).Any(m => m.Mode == r.Mode && Ast.Equivalent(m.Effect, r.Effect) && Ast.Equivalent(m.Condition, r.Condition)))).ToArray();
-            W($"· {Names.Of(place)}公告板：" + (known.Length == 0 ? "你上次看时是空的。" : string.Join(" ", known.Select(s => $"{g.LabelOf(s)}「{s.Text}」（{(s.Author is { } a ? Names.Of(a) : "恶魔")}）"))));
+            W($"· {Names.Of(place)}公告板：" + (known.Length == 0 ? "你上次看时是空的。" : string.Join(" ", known.Select(s => $"{g.LabelOf(s)}「{s.Text}」（{(s.Author is { } a ? Names.Of(a) : "代管者")}）"))));
         }
     }
 
@@ -751,7 +751,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     {
         W("\n【第7日 · 名录库之议】");
         var plans = g.ArchivePlans().ToArray();
-        for (var i = 0; i < plans.Length; i++) W($"  方案 {i + 1}：{plans[i].Text}（{(plans[i].Author is { } a ? Names.Of(a) : "恶魔所立")}）");
+        for (var i = 0; i < plans.Length; i++) W($"  方案 {i + 1}：{plans[i].Text}（{(plans[i].Author is { } a ? Names.Of(a) : "代管者所立")}）");
         W("你支持哪个方案？写“支持 方案号”，或“不表态”。");
         var choice = -1;
         while (true)

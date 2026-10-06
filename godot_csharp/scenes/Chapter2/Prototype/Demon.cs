@@ -7,7 +7,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 public sealed class DesireAmplifier(Person p, ImmutableArray<Rule> reweighted) : IProjectionTransform
 {
     public ObservationInput? Transform(ObservationInput input)
-        => ReferenceEquals(input.Target, p.Habit) ? input with { Rules = reweighted, Details = "恶魔的话让此事更想要" } : null;
+        => ReferenceEquals(input.Target, p.Habit) ? input with { Rules = reweighted, Details = "铜口的话让此事更想要" } : null;
 }
 
 public sealed partial class Game
@@ -65,7 +65,7 @@ public sealed partial class Game
         }
         Log.Add($"D{Day} 上午 {title}：到课 {string.Join("、", present.Select(p => p.Name))}");
         if (present.Contains(Det))
-            Feed.Add($"【{title}】恶魔显形板书。{teach}（到课：{string.Join("、", present.Where(p => p != Det).Select(p => p.Name))}）");
+            Feed.Add($"【{title}】黑板前没有人，粉笔自己在板上写字。{teach}（到课：{string.Join("、", present.Where(p => p != Det).Select(p => p.Name))}）");
         // 它挑最容易被推动的三个人说话（欲望与钩最高者）。
         foreach (var p in present.Where(p => p != Det).OrderBy(p => p.Whispered).ThenByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id).Take(3)) Whisper(p);
     }
@@ -85,7 +85,7 @@ public sealed partial class Game
         p.Desire += 1;
         p.Whispered++;
         RewriteDesire(p, p.Pro.DemonLine);
-        if (p == Det) Feed.Add($"恶魔低声对你说：“{p.Pro.DemonLine}”");
+        if (p == Det) Feed.Add($"一个声音贴着你的耳朵说：“{p.Pro.DemonLine}”");
     }
 
     public void RewriteDesire(Person p, string why)
@@ -104,7 +104,7 @@ public sealed partial class Game
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
                 Det.Acc[Warning1] = Truth.True;
-                Feed.Add("恶魔逐一对每个人低声说了一句话，说的都是那人最想要的东西。");
+                Feed.Add("那个声音逐一贴着每个人的耳朵说了一句话，说的都是那人最想要的东西。");
                 foreach (var p in People) Whisper(p);
                 break;
             case 3:

@@ -11,7 +11,7 @@ HEAD = ("章节：t\n前置章节：无\n\n" + VOCAB + "地点 门厅\n    编�
         "地点 乙区\n    编号：room.DormLife\n")
 def person(name, pid, extra=""):
     return (f"人物 {name}\n    编号：{pid}\n    所在：门厅\n    阵营：生活翼\n    宿舍：乙区\n    体型：中等\n"
-            f"    速度：1\n    欲望：x\n    魔音台词：y\n{extra}\n")
+            f"    性别：男\n    速度：1\n    欲望：x\n    魔音台词：y\n{extra}\n")
 
 def compile_text(text):
     with tempfile.TemporaryDirectory() as d:

@@ -71,10 +71,11 @@ public sealed partial class MorningWorld
         }
     }
 
-    private static DailyStep[] ReadDailySteps(JsonElement routine) => routine.GetProperty("steps").EnumerateArray()
+    // Story durations are game minutes; the daily CTB runs in logical seconds.
+    private DailyStep[] ReadDailySteps(JsonElement routine) => routine.GetProperty("steps").EnumerateArray()
         .Select(s => new DailyStep(s.GetProperty("room").GetString()!, s.GetProperty("target").GetString()!,
             s.GetProperty("action").GetString()!, s.GetProperty("note").GetString()!, s.GetProperty("weight").GetInt32(),
-            s.GetProperty("seconds").GetDouble(), s.TryGetProperty("allowed_stages", out var stages)
+            s.GetProperty("minutes").GetDouble() * _secondsPerGameMinute, s.TryGetProperty("allowed_stages", out var stages)
                 ? stages.EnumerateArray().Select(stage => stage.GetString()!).ToHashSet(StringComparer.Ordinal) : []))
         .ToArray();
 

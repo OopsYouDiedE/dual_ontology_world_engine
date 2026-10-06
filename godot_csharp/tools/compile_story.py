@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import importlib.util
+import io
 import json
 import re
 import sys
@@ -16,6 +18,7 @@ SOURCE = SCRIPT_DIR / "chapter_01.story"
 sys.path.insert(0, str(HERE))
 
 from engine_spec import Expr, Instruction, dialogue_document  # noqa: E402
+from story_base import AUTHORED_LINES, origin  # noqa: E402
 from story_script import StoryError, compile_story as compile_world_story  # noqa: E402
 from world_script import ScriptError as WorldScriptError  # noqa: E402
 
@@ -49,9 +52,9 @@ FLOW_PROVIDERS = {"协助者", "答辩步", "答辩裁决"}
 EFFECT_ARITY = {"set_flag": 1, "clear_flag": 1, "amplify": 2, "whisper": 2, "share_recall": 1}
 
 
-def load_source():
+def load_source(path: Path = SOURCE):
     import story_chapter1
-    return story_chapter1.load(SOURCE)
+    return story_chapter1.load(path)
 
 
 def validate_expr(expr: Expr, where: str) -> None:
@@ -306,8 +309,89 @@ def layout_data(source) -> dict[str, Any]:
     }
 
 
-def generated_files() -> dict[Path, str]:
-    source = load_source()
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(HERE.parent.parent).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def check_line_ids(lines: list[tuple[str, str, int]], root: Path) -> None:
+    """Every authored line carries one stable, unique ID (translation key)."""
+    seen: dict[str, int] = {}
+    missing = 0
+    for _, line_id, number in lines:
+        if not line_id:
+            missing += 1
+        elif line_id in seen and seen[line_id] != number:
+            file, line = origin(number, root.name)
+            raise ValueError(f"{file}:{line}: 台词编号“{line_id}”重复")
+        else:
+            seen[line_id] = number
+    if missing:
+        raise ValueError(f"{missing} 句台词缺少编号；运行 python godot_csharp/tools/compile_story.py --assign-ids 写回编号")
+
+
+def assign_line_ids(lines: list[tuple[str, str, int]], root: Path) -> int:
+    """Append `[#id=<前缀>.<序号>]` to unnumbered lines in their own files; existing IDs never change."""
+    used = {line_id for _, line_id, _ in lines if line_id}
+    edits: dict[str, dict[int, str]] = {}
+    for prefix, line_id, number in lines:
+        if line_id:
+            continue
+        serial = 1
+        while f"{prefix}.{serial:03d}" in used:
+            serial += 1
+        new_id = f"{prefix}.{serial:03d}"
+        used.add(new_id)
+        file, line = origin(number, root.as_posix())
+        edits.setdefault(file, {})[line] = new_id
+    for file, by_line in edits.items():
+        path = Path(file)
+        raw = path.read_text(encoding='utf-8-sig')
+        physical = raw.split('\n')
+        for line, new_id in by_line.items():
+            text = physical[line - 1]
+            ending = '\r' if text.endswith('\r') else ''
+            physical[line - 1] = text.rstrip() + f' [#id={new_id}]' + ending
+        path.write_text('\n'.join(physical), encoding='utf-8', newline='')
+    return sum(len(by_line) for by_line in edits.values())
+
+
+def line_table(documents: list[tuple[str, Any]]) -> str:
+    """Translation source table: one row per authored line, in authoring order."""
+    rows: list[tuple[str, str, str, str]] = []
+
+    def visit(node: Any, context: str) -> None:
+        if isinstance(node, dict):
+            if node.get("op") == "line" and node.get("line_id"):
+                rows.append((node["line_id"], context, node.get("speaker", ""), node["text"]))
+            if node.get("label_id"):
+                rows.append((node["label_id"], context, "", node["label"]))
+            here = node.get("id") if isinstance(node.get("id"), str) and "steps" in node else context
+            for value in node.values():
+                visit(value, here)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value, context)
+
+    for context, document in documents:
+        if isinstance(document, dict) and "entries" in document:
+            for entry_id, instructions in document["entries"].items():
+                visit(instructions, entry_id)
+        else:
+            visit(document, context)
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(["id", "scene", "speaker", "zh"])
+    writer.writerows(rows)
+    return out.getvalue()
+
+
+def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> dict[Path, str]:
+    """Every output compiled from one root story; `引入` fragments are spliced in order."""
+    AUTHORED_LINES.clear()
+    source = load_source(story)
     if len({entity.id for entity in source.EVIDENCE}) != len(source.EVIDENCE):
         raise ValueError("duplicate evidence id")
     if len({entity.id for entity in source.LIFE_TRACES}) != len(source.LIFE_TRACES):
@@ -323,14 +407,17 @@ def generated_files() -> dict[Path, str]:
     dialogue_json = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
     content_json = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
     layout_json = json.dumps(layout, ensure_ascii=False, indent=2) + "\n"
-    world_json = json.dumps(compile_world_story([SOURCE], set(), ecology_only=True),
+    folder = story.parent.as_posix() + "/"
+    world_json = json.dumps(compile_world_story([story], set(), ecology_only=True),
                             ensure_ascii=False, indent=2) + "\n"
-    world_json = world_json.replace(SOURCE.as_posix(), SOURCE.relative_to(HERE.parent.parent).as_posix())
+    world_json = world_json.replace(folder, display_path(story.parent) + "/")
     continuation_json = json.dumps(
-        compile_world_story([SOURCE], {"awakening"}, section="chapter2"),
+        compile_world_story([story], {"awakening"}, section="chapter2"),
         ensure_ascii=False, indent=2) + "\n"
-    continuation_json = continuation_json.replace(
-        SOURCE.as_posix(), SOURCE.relative_to(HERE.parent.parent).as_posix())
+    continuation_json = continuation_json.replace(folder, display_path(story.parent) + "/")
+    if require_line_ids:
+        check_line_ids(AUTHORED_LINES, story)
+    lines_csv = line_table([("", document), ("chapter2", json.loads(continuation_json))])
     escaped = "\n".join("    " + line for line in dialogue_json.rstrip("\n").splitlines())
     csharp = (
         "using DualOntologyWorldEngine.Story;\n\n"
@@ -347,14 +434,19 @@ def generated_files() -> dict[Path, str]:
         SCRIPT_DIR / "generated_chapter_01_world.json": world_json,
         SCRIPT_DIR / "Chapter1CompiledDialogue.cs": csharp,
         SCRIPT_DIR.parent.parent / "Chapter2" / "Script" / "generated_chapter_02.json": continuation_json,
+        SCRIPT_DIR / "generated_lines_zh.csv": lines_csv,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="fail when generated files are stale; do not write")
+    parser.add_argument("--assign-ids", action="store_true", help="write stable IDs onto unnumbered lines, then compile")
     args = parser.parse_args()
     try:
+        if args.assign_ids:
+            generated_files(require_line_ids=False)
+            print(f"assigned {assign_line_ids(list(AUTHORED_LINES), SOURCE)} line IDs")
         outputs = generated_files()
         stale = []
         for path, content in outputs.items():
@@ -373,7 +465,8 @@ def main() -> int:
             print(f"generated {len(outputs)} outputs from {SOURCE.name}")
         return 0
     except StoryError as error:
-        print(f"{SOURCE.name}:{error.line}: {error}", file=sys.stderr)
+        file, line = origin(error.line, SOURCE.name)
+        print(f"{file}:{line}: {error}", file=sys.stderr)
         return 2
     except WorldScriptError as error:
         location = f"{error.source.path}:{error.source.line}" if error.source else SOURCE.name

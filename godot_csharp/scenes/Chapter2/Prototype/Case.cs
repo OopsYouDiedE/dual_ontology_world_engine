@@ -245,7 +245,7 @@ public sealed partial class Game
             {
                 Witness(Det, "侦探之前对我说的雀儿的事是片面的", -2, 0, [this[m.Target]]);
                 m.Exposed = true;
-                ConfrontLog.Add($"{Names.Of(m.Target)}看了你一眼：你之前对他说的，只说了一半。");
+                ConfrontLog.Add($"{Names.Of(m.Target)}看了你一眼：你之前对{Cast.Of(m.Target).Pronoun}说的，只说了一半。");
             }
         }
         else
@@ -261,7 +261,7 @@ public sealed partial class Game
             ConfrontLog.Add($"你提出新规则{LabelOf(CaseRule)}「{card.Text}」");
             var said = RecordEvent(P.Det, $"在对质中当众提出「{Short(CaseRule)}」", "交谈", Place.Hall, []);
             foreach (var p in room.Where(p => p != Det)) { Tell(p, CaseRule, Channel.Public); _transmit[(CaseRule.Id, p.Id)] = said; }
-            foreach (var p in room.Where(p => p != Det)) NoteFor(p.Id, "规则", $"对质中你提出「{card.Text}」，他{(p.Acc[CaseRule] == Truth.True ? "表示照办" : "摇头")}");
+            foreach (var p in room.Where(p => p != Det)) NoteFor(p.Id, "规则", $"对质中你提出「{card.Text}」，{p.Pro.Pronoun}{(p.Acc[CaseRule] == Truth.True ? "表示照办" : "摇头")}");
             foreach (var key in new[] { P.Ward, P.Mora, P.Ruan, P.Quer })
             {
                 ConfrontLog.Add($"  {Names.Of(key)}：{Voice(this[key], CaseRule, this[key].Acc[CaseRule])}");

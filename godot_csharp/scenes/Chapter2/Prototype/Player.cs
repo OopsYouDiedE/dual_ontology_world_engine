@@ -135,7 +135,7 @@ public sealed partial class Game
 
         _asked[who] = stance.Stance;
         _asks[(P.Det, who)] = RecordEvent(P.Det, $"请{p.Name}：“{text}”", "交谈", Where(Det), []);
-        NoteFor(who, "态度", $"你请他：“{text}”他{(stance.Stance == SocialStance.Accept ? "答应了" : stance.Stance == SocialStance.Negotiate ? "要你先办件事" : "拒绝了")}");
+        NoteFor(who, "态度", $"你请{p.Pro.Pronoun}：“{text}”{p.Pro.Pronoun}{(stance.Stance == SocialStance.Accept ? "答应了" : stance.Stance == SocialStance.Negotiate ? "要你先办件事" : "拒绝了")}");
         Feed.Add($"你对{p.Name}说：“{text}” {p.Name}：{Answer(p, stance.Stance)}");
     }
 
@@ -147,13 +147,13 @@ public sealed partial class Game
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 1), AddRelations = [(Relations.Subject, p.M[Det.Body])]
         });
         Promises.Add((p.Id, Day + 1, false));
-        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找他“帮他一把”即算兑现。）");
+        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找{p.Pro.Pronoun}“帮{p.Pro.Pronoun}一把”即算兑现。）");
     }
 
     private static string Answer(Person p, SocialStance s) => s switch
     {
         SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + "（他想先要你帮他一把。）",
+        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + $"（{p.Pro.Pronoun}想先要你帮{p.Pro.Pronoun}一把。）",
         _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
     };
 
@@ -224,11 +224,11 @@ public sealed partial class Game
                     var q = $"你问：“{Topics[act.Topic]}——{(act.Precise ? "请精确地说" : "那是怎么回事")}？”";
                     var a = AskDemon(act.Topic, act.Precise, out var praised, out var refused);
                     Feed.Add(q);
-                    Feed.Add($"恶魔：“{a}”");
+                    Feed.Add($"铜口：“{a}”");
                     var present = People.Where(p => p != Det && Where(p) == Place.Lecture).ToArray();
                     if (praised)
                     {
-                        Feed.Add("恶魔当众说：“问得好。”");
+                        Feed.Add("铜口当众说：“问得好。”");
                         // 评分是双刃剑：信恶魔或爱学的人更信你，戒备恶魔的人怀疑你是它的宠儿。
                         Witness(Det, "侦探的提问被恶魔当众称赞", 0, 1, present.Where(p => p.Pro.DemonPrejudice >= 0), domain: Dom.Archive);
                         Witness(Det, "侦探被恶魔当众称赞——它的宠儿？", -1, 0, present.Where(p => p.Pro.DemonPrejudice < 0));
@@ -240,8 +240,8 @@ public sealed partial class Game
                     // 当众逐字问出“取回”的真相：它自己说了“接通之后，我离诸位更近一些”。在场的人对它那条“凡学员皆可取回己物”多了一分疑心。
                     if (act.Topic == 0 && act.Precise && Det.Lessons.ContainsKey(14))
                     {
-                        foreach (var p in present) { p.DemonDoubt = Math.Min(2, p.DemonDoubt + 1); NoteFor(p.Id, "恶魔", "听到恶魔亲口说“接通之后，我离诸位更近一些”时，他皱了眉"); }
-                        var word = NewsFrom(Det, NewsKind.DemonWord, "恶魔在课上亲口说：取回即重新接通，接通之后它离我们更近一些");
+                        foreach (var p in present) { p.DemonDoubt = Math.Min(2, p.DemonDoubt + 1); NoteFor(p.Id, "铜口", "听到铜口亲口说“接通之后，我离诸位更近一些”时，他皱了眉"); }
+                        var word = NewsFrom(Det, NewsKind.DemonWord, "铜口在课上亲口说：取回即重新接通，接通之后它离我们更近一些");
                         foreach (var p in present) p.News[word.Id] = new(P.Det, 1, ObservationSource.Perception, Day, word.Text);
                     }
                 }
@@ -280,9 +280,9 @@ public sealed partial class Game
                     if (thing == Base) DetShown.Add(who.Id);
                     DetEscortTried.Add((who.Id, act.Thing!));
                     if (who.Id == P.Ward) WardEscorts += came ? 10 : 1;
-                    if (came && thing == Base && Get(Base, T.Crack) > 0) Feed.Add($"你把那道裂纹指给{who.Name}看。他盯着看了很久。");
+                    if (came && thing == Base && Get(Base, T.Crack) > 0) Feed.Add($"你把那道裂纹指给{who.Name}看。{who.Pro.Pronoun}盯着看了很久。");
                     var saw = who.World.History.Any(h => h.Source == ObservationSource.Perception && ReferenceEquals(h.Target, who.M[thing]) && h.Time >= DayStart(Day));
-                    Feed.Add(came ? $"{who.Name}跟你一起看了。" : saw && thing == Base ? $"{who.Name}没答应同行。他人就在{Names.Of(act.Place!.Value)}，可那道裂纹要凑近细看才看得出，你没能指给他。" : saw ? $"{who.Name}没答应同行，不过他本来就在{Names.Of(act.Place!.Value)}，也看见了。" : $"{who.Name}没有跟来（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
+                    Feed.Add(came ? $"{who.Name}跟你一起看了。" : saw && thing == Base ? $"{who.Name}没答应同行。{who.Pro.Pronoun}人就在{Names.Of(act.Place!.Value)}，可那道裂纹要凑近细看才看得出，你没能指给{who.Pro.Pronoun}。" : saw ? $"{who.Name}没答应同行，不过{who.Pro.Pronoun}本来就在{Names.Of(act.Place!.Value)}，也看见了。" : $"{who.Name}没有跟来（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
                 }
                 break;
             case Cmd.Ask:
@@ -474,7 +474,8 @@ public sealed partial class Game
     {
         var heard = p.News.OrderByDescending(n => n.Key).Where(n => AllNews[n.Key - 1].Kind != NewsKind.Lesson).Select(n => n.Value).Where(h => h.Day >= Day - 1).Take(2).Select(h => h.Hops == 0 ? h.Text : $"{h.Text}（听{Names.Of(h.From)}说的）").ToArray();
         var t = TrustIn(p, Det);
-        var mood = t >= 3 ? "他说话不避着你。" : t >= 1 ? "他还算客气。" : t >= 0 ? "他话不多。" : "他明显不想跟你多说。";
+        var he = p.Pro.Pronoun;
+        var mood = t >= 3 ? $"{he}说话不避着你。" : t >= 1 ? $"{he}还算客气。" : t >= 0 ? $"{he}话不多。" : $"{he}明显不想跟你多说。";
         // Recalling witnessed/heard news uses the thinking pose. Only the wording
         // explicitly saying he does not want to speak selects the annoyed pose.
         return ((heard.Length == 0 ? "“没什么新鲜事。”" : "“" + string.Join("；", heard) + "。”") + mood,
@@ -504,7 +505,7 @@ public sealed partial class Game
         {
             var place = Board.First(b => b.Value == e).Key;
             var specs = Specs.Where(s => s.PostedAt.Contains(place) && s != RuanLedger).ToArray();
-            return specs.Length == 0 ? "板上什么也没贴。" : "板上贴着：" + string.Join(" ", specs.Select(s => $"「{s.Text}」（{(s.Author is { } a ? Names.Of(a) : "恶魔")}）"));
+            return specs.Length == 0 ? "板上什么也没贴。" : "板上贴着：" + string.Join(" ", specs.Select(s => $"「{s.Text}」（{(s.Author is { } a ? Names.Of(a) : "代管者")}）"));
         }
         return e.TrueName;
     }
@@ -540,7 +541,7 @@ public sealed partial class Game
         Wagers.Add((w, null));
         FreeScript.Add((SlotIndex, w));
         var rule = spec is { } id ? Specs.FirstOrDefault(s => s.Id == id) : null;
-        NoteFor(with, "赌约", $"你对他说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，他就认{LabelOf(rule)}「{Short(rule)}」" : "")}");
+        NoteFor(with, "赌约", $"你对{this[with].Pro.Pronoun}说：今晚{Names.Of(who)}会去{Names.Of(where)}{(rule is not null ? $"；说中了，{this[with].Pro.Pronoun}就认{LabelOf(rule)}「{Short(rule)}」" : "")}");
         return $"你对{Names.Of(with)}说：“今晚，{Names.Of(who)}会去{Names.Of(where)}。{(rule is not null ? $"我若说中，你就认{LabelOf(rule)}「{rule.Text}」。" : "")}”{Names.Of(with)}：{(TrustIn(this[with], Det) >= 1 ? "“好，明早见分晓。”" : "“……随你。”")}";
     }
 
@@ -554,7 +555,7 @@ public sealed partial class Game
             Wagers[i] = (w, ok);
             var with = this[w.With];
             var rule = w.Spec is { } id ? Specs.FirstOrDefault(s => s.Id == id) : null;
-            Witness(Det, ok ? $"侦探和我打赌{Names.Of(w.Who)}夜里会去{Names.Of(w.Where)}，他说中了" : $"侦探和我打赌{Names.Of(w.Who)}会去{Names.Of(w.Where)}，没说中", 0, ok ? 2 : -1, [with],
+            Witness(Det, ok ? $"侦探和我打赌{Names.Of(w.Who)}夜里会去{Names.Of(w.Where)}，{Det.Pro.Pronoun}说中了" : $"侦探和我打赌{Names.Of(w.Who)}会去{Names.Of(w.Where)}，没说中", 0, ok ? 2 : -1, [with],
                 domain: rule?.Domain ?? Dom.General);
             if (ok && rule is not null)
             {

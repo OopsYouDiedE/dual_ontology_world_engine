@@ -104,8 +104,10 @@ public sealed class Chapter2InteractionSession
                     Activate("begin.arrival",output);
                     _continuations.Enqueue(o => { Run(new(Cmd.Stay) { Place = Place.Hall },o); Scene(Place.Hall,o); });
                     _continuations.Enqueue(o => Activate("begin.gather",o));
-                    _continuations.Enqueue(o => { Run(new(Cmd.Class),o); Scene(Place.Lecture,o); });
+                    // The lesson is presented inside the forenoon it occupies; attending it then advances the clock.
+                    _continuations.Enqueue(o => Scene(Place.Lecture,o));
                     _continuations.Enqueue(o => Activate("begin.lesson",o));
+                    _continuations.Enqueue(o => Run(new(Cmd.Class),o));
                     _continuations.Enqueue(o => Activate("begin.free",o));
                     _continuations.Enqueue(o => _stage = "field");
                     Pump(output); break;

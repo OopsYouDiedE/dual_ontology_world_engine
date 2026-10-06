@@ -190,7 +190,7 @@ public sealed partial class Game
         if (Result is not Ending.Sealed && mine is not null && FamilyOf(mine) == Ending.Sealed)
             CouncilLog.Add("你支持封闭。尽管多数人打开了名录库，你仍留在门外，没有念匣上的名字，也没有触物回忆。");
         else if (Result is not Ending.Sealed)
-            CouncilLog.Add("侦探的封存匣标签上写着他的名字。他念出来，匣子没有应。恶魔：“那并非你的名字。”停了一下，“……也不是别人的。”");
+            CouncilLog.Add("侦探的封存匣标签上写着侦探的名字。念出来，匣子没有应。铜口：“那并非你的名字。”停了一下，“……也不是别人的。”");
         return Result;
     }
 }

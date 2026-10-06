@@ -7,9 +7,10 @@ stay in one place. Nothing here evaluates author code.
 
 Blocks (top-level, 4-space indented bodies; `#` starts a comment):
   章节：<id>            前置章节：<id>、<id>
+  引入：<相对路径或通配> 就地展开另一个片段文件的全部顶层语句；分段引入与写在同一文件等价
   继承生态：<相对路径>    只继承词汇、常数、地点和人物，不带入案件或晨间循环
-  续篇 <id>             缩进正文声明后续章节；--section 选择，默认只编译主体
-  晨间日常              封锁、旁听与人物有序步骤（房间、目标、动作、说明、权重、秒数）
+  续篇 <id>             缩进正文声明后续章节；--section 选择，默认只编译主体；同名续篇再次出现即续写同一作用域
+  晨间日常              封锁、旁听与人物有序步骤（房间、目标、动作、说明、权重、游戏分钟）
   文案                  <键>：<文字> / <键>： 后接 `- 条目` 列表
   请求                  `- <标签> → <岗位>`
   地点 <名称>           编号 别名 范围
@@ -29,7 +30,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_script as ws  # noqa: E402
-from story_base import Line, StoryError, children, read_lines, split_list, split_pair  # noqa: E402,F401
+from story_base import FILE_STRIDE, Line, StoryError, children, note_line, origin, read_lines, register_file, split_list, split_pair, split_tags  # noqa: E402,F401
 from story_design import DESIGN_BLOCKS, PERSON_FIELDS, VOCAB_BLOCKS, Vocab, compile_design, compile_person, nodes  # noqa: E402
 
 UI_KEYS = {
@@ -49,30 +50,64 @@ def ecology_block(head: Line) -> bool:
     return head.text.split(None, 1)[0] in ECOLOGY_BLOCKS
 
 
-def source_lines(path: Path, *, ecology_only: bool = False,
-                 ancestors: tuple[Path, ...] = (), section: str | None = None) -> list[Line]:
-    """Resolve ecology inheritance without importing the source chapter's case or scenes."""
+def expand_includes(path: Path, ancestors: tuple[Path, ...] = (), base: int = 0) -> list[Line]:
+    """Read a story file and splice every top-level `引入：<相对路径或通配>` in place.
+
+    Feeding a story in pieces equals writing it in one file: an include is replaced by
+    the included file's top-level statements, in order, so declare-before-use holds
+    exactly as it would after concatenation (Python-like sequential semantics).
+    """
     resolved = path.resolve()
     if resolved in ancestors:
-        raise StoryError("继承生态出现循环：" + " → ".join(p.name for p in (*ancestors, resolved)))
+        raise StoryError("引入出现循环：" + " → ".join(p.name for p in (*ancestors, resolved)))
     try:
-        lines = read_lines(path.read_text(encoding="utf-8-sig"))
+        lines = read_lines(path.read_text(encoding="utf-8-sig"), base)
     except OSError as exc:
-        raise StoryError(f"无法读取生态来源“{path}”：{exc}") from exc
-    result = []
-    sections: dict[str, tuple[Line, list[Line]]] = {}
+        raise StoryError(f"无法读取剧本“{path}”：{exc}") from exc
+    result: list[Line] = []
     i = 0
     while i < len(lines):
         head = lines[i]
         body, i = children(lines, i + 1, 0)
         if head.indent != 0:
             raise StoryError("顶层内容必须顶格。", head.number)
+        if head.text.startswith(("引入：", "引入:")):
+            _, pattern = split_pair(head)
+            if not pattern or body:
+                raise StoryError("引入须写成“引入：相对路径或通配”，不带正文。", head.number)
+            if Path(pattern).is_absolute():
+                raise StoryError("引入必须使用相对路径。", head.number)
+            matches = sorted(path.parent.glob(pattern)) if any(c in pattern for c in "*?[") else [path.parent / pattern]
+            if not matches:
+                raise StoryError(f"引入“{pattern}”没有匹配的文件。", head.number)
+            for included in matches:
+                fragment = expand_includes(included, (*ancestors, resolved), register_file(included.as_posix()))
+                for line in fragment:
+                    if line.indent == 0 and line.text.startswith(("章节：", "章节:", "前置章节：", "前置章节:")):
+                        raise StoryError("被引入的片段不能声明章节或前置章节。", line.number)
+                result.extend(fragment)
+        else:
+            result.extend([head, *body])
+    return result
+
+
+def source_lines(path: Path, *, ecology_only: bool = False,
+                 ancestors: tuple[Path, ...] = (), section: str | None = None) -> list[Line]:
+    """Resolve includes and ecology inheritance without importing a source chapter's case or scenes."""
+    resolved = path.resolve()
+    if resolved in ancestors:
+        raise StoryError("继承生态出现循环：" + " → ".join(p.name for p in (*ancestors, resolved)))
+    lines = expand_includes(path)
+    result = []
+    sections: dict[str, tuple[Line, list[Line]]] = {}
+    i = 0
+    while i < len(lines):
+        head = lines[i]
+        body, i = children(lines, i + 1, 0)
         if head.text.split(None, 1)[0] == "续篇":
             name = head.text[len("续篇"):].strip()
             if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9-]*", name):
                 raise StoryError("续篇需要有效的章节编号：续篇 <id>。", head.number)
-            if name in sections:
-                raise StoryError(f"重复的续篇“{name}”。", head.number)
             if not body:
                 raise StoryError("续篇必须有缩进正文。", head.number)
             lifted = [Line(line.number, line.indent - 1, line.text) for line in body]
@@ -80,7 +115,14 @@ def source_lines(path: Path, *, ecology_only: bool = False,
                 if line.indent == 0 and (line.text.startswith(("章节：", "章节:"))
                                          or line.text.split(None, 1)[0] == "续篇"):
                     raise StoryError("续篇编号已声明章节，正文不能再次声明章节或嵌套续篇。", line.number)
-            sections[name] = (head, lifted)
+            if name in sections:
+                # A later block with the same id reopens the scope, as if its body had
+                # been written at the end of the first one.
+                if lifted[0].text.startswith(("前置章节：", "前置章节:")):
+                    raise StoryError("前置章节只能写在该续篇第一次出现的正文开头。", lifted[0].number)
+                sections[name][1].extend(lifted)
+            else:
+                sections[name] = (head, lifted)
         elif head.text.startswith(("继承生态：", "继承生态:")):
             _, relative = split_pair(head)
             if not relative or body:
@@ -138,6 +180,17 @@ def parse_number(word: str, what: str, line: int) -> float | int:
     return int(number) if number.is_integer() and "." not in word else number
 
 
+def duration_minutes(word: str, what: str, line: int) -> float:
+    """时长写游戏分钟：裸数或“N分钟”；运行时再按每游戏分钟逻辑秒换算。"""
+    value = word.strip().removesuffix("分钟").strip()
+    if not re.fullmatch(r"\d+(?:\.\d+)?", value):
+        raise StoryError(f"{what}须写游戏分钟（如 12 或 12分钟）：{word}", line)
+    minutes = float(value)
+    if not minutes > 0:
+        raise StoryError(f"{what}必须大于零：{word}", line)
+    return minutes
+
+
 def parse_bool(word: str, what: str, line: int) -> bool:
     if word in {"是", "真", "可见", "true", "True"}:
         return True
@@ -173,6 +226,7 @@ class Translator:
         self.object_ids: dict[str, str] = {}   # 物件名或别名 -> 编号
         self.person_design: dict[str, dict[str, Any]] = {}   # C# P 枚举名 -> 设计数据（群落、值守、倾向……）
         self.counter = 0
+        self.chapter_id = ""
 
     def emit(self, text: str, line: int) -> None:
         for piece in text.split("\n"):
@@ -208,6 +262,7 @@ class Translator:
                     i += 1
                 self.emit(f"chapter(id={py(chapter_id)}, requires={py(requires)})", line.number)
                 have_chapter = True
+                self.chapter_id = chapter_id
                 continue
             if not have_chapter:
                 raise StoryError("文件必须先写“章节：<id>”。", line.number)
@@ -335,16 +390,16 @@ class Translator:
         for item in lines:
             parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
             if not item.text.startswith("- ") or len(parts) not in {4, 5, 6, 7} or not all(parts):
-                raise StoryError("日常步骤须写成“- 房间 | 目标 | 动作 | 说明 [| 权重 [| 秒数 [| 阶段]]]”。", item.number)
+                raise StoryError("日常步骤须写成“- 房间 | 目标 | 动作 | 说明 [| 权重 [| 分钟 [| 阶段]]]”。", item.number)
             room, target, action, note = parts[:4]
             if action not in {"check", "listen", "work", "rest", "move"}:
                 raise StoryError(f"未知日常动作“{action}”。", item.number)
             weight = parse_int(parts[4], "日常权重", item.number) if len(parts) >= 5 else 1
-            seconds = parse_number(parts[5], "日常秒数", item.number) if len(parts) >= 6 else 10.0
-            if weight <= 0 or not 0 < seconds < float("inf"):
-                raise StoryError("日常权重与秒数必须大于零。", item.number)
+            minutes = duration_minutes(parts[5], "日常时长", item.number) if len(parts) >= 6 else 10.0
+            if weight <= 0:
+                raise StoryError("日常权重必须大于零。", item.number)
             steps.append({"room": room, "target": target, "action": action, "note": note,
-                          "weight": weight, "seconds": float(seconds),
+                          "weight": weight, "minutes": minutes,
                           "allowed_stages": split_list(parts[6]) if len(parts) == 7 else []})
         return steps
 
@@ -414,6 +469,8 @@ class Translator:
     def native(self, head: Line, body: list[Line], raw_lines: list[str]) -> None:
         if not body:
             return
+        if head.number >= FILE_STRIDE:
+            raise StoryError("原生块按根文件的原文行转写，不能放在被引入的片段里。", head.number)
         first, last = body[0].number, body[-1].number
         physical_head = raw_lines[head.number - 1].expandtabs(4)
         trim = len(physical_head) - len(physical_head.lstrip(" ")) + 4
@@ -555,6 +612,8 @@ class Translator:
                 args = [self.scalar(word, line.number) for word in split_list(value)]
                 self.emit(f"    action(name={py(key)}, args={py(args)})", line.number)
             else:
+                _, _, line_id = split_tags(line.text, line.number)
+                note_line(f"{self.chapter_id}.{self.block_id(head, '场面')}", line_id, line.number)
                 run.append(line)
             wrote = True
         flush()
@@ -671,12 +730,13 @@ class Translator:
         dorm = table(self.dorms, need("宿舍")[0], "宿舍", need("宿舍")[1].number)
         build = table(self.vocab.mapping("builds"), need("体型")[0], "体型", need("体型")[1].number)
         speed = parse_number(need("速度")[0], "速度", need("速度")[1].number)
+        gender = table(GENDERS, need("性别")[0], "性别", need("性别")[1].number)
         profile: dict[str, Any] = {
             "group": group, "dorm": dorm, "speed": speed, "cooperation": 0, "build": build,
             "desire": need("欲望")[0], "demon_line": need("魔音台词")[0],
             "desire_flags": [], "strength": 0, "lock": 0, "signal": 0, "structure": 0,
             "greenhouse_skill": 0, "cook": 0, "craftsman": False, "values": {}, "prejudice": {},
-            "demon_prejudice": 0, "habits": [], "voice": "",
+            "demon_prejudice": 0, "habits": [], "voice": "", "gender": gender,
         }
         for key, ir in (("配合", "cooperation"), ("力气", "strength"), ("开锁", "lock"), ("信号", "signal"),
                         ("结构", "structure"), ("温室", "greenhouse_skill"), ("厨艺", "cook"), ("魔偏见", "demon_prejudice")):
@@ -732,7 +792,8 @@ class Translator:
         return habit
 
 
-PROFILE_FIELDS_ZH = {"阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
+GENDERS = {"男": "Male", "女": "Female"}
+PROFILE_FIELDS_ZH = {"性别", "阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
                      "信号", "结构", "温室", "厨艺", "工匠", "看重", "偏见", "魔偏见", "日常", "口吻"}
 
 
@@ -754,7 +815,7 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
             lines = source_lines(path, ecology_only=ecology_only, section=section)
             if ecology_only:
                 # Morning loops belong to this chapter, but are not inherited by later chapters.
-                original = read_lines(raw)
+                original = expand_includes(path)
                 i = 0
                 while i < len(original):
                     head = original[i]
@@ -763,7 +824,8 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
                         lines.extend([head, *body])
             texts[path.as_posix()] = translator.translate(raw, lines)
         except StoryError as exc:
-            source = ws.Source(path.as_posix(), exc.line or 1, 1, exc.line or 1, 1)
+            file, line = origin(exc.line or 1, path.as_posix())
+            source = ws.Source(file, line, 1, line, 1)
             raise ws.ScriptError(str(exc), source) from exc
         maps[path.as_posix()] = translator.map
         designs.append(translator.design)
@@ -775,10 +837,13 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
         for location in document.get("source_map", {}).values():
             mapped = maps.get(location["path"])
             if mapped is not None:
+                root = location["path"]
                 for key in ("line", "end_line"):
                     generated = location[key]
                     if 0 < generated <= len(mapped):
-                        location[key] = mapped[generated - 1]
+                        file, location[key] = origin(mapped[generated - 1], root)
+                        if key == "line":
+                            location["path"] = file
         for chapter, design in zip(document["chapters"], designs):
             if design:
                 chapter["design"] = design
@@ -787,7 +852,8 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
         if exc.source and exc.source.path in maps:
             mapped = maps[exc.source.path]
             line = mapped[exc.source.line - 1] if 0 < exc.source.line <= len(mapped) else exc.source.line
-            exc.source = ws.Source(exc.source.path, line, 1, line, 1)
+            file, line = origin(line, exc.source.path)
+            exc.source = ws.Source(file, line, 1, line, 1)
         raise
 
 

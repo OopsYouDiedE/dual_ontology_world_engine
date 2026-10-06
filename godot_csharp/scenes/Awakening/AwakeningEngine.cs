@@ -30,9 +30,9 @@ public partial class AwakeningEngine : Node
     private static GDict Packet(InteractionPacket packet) => new()
     {
         ["lines"] = new GArray(packet.Lines.Select(line => Variant.From(new GDict
-        { ["speaker"] = line.Speaker, ["mood"] = line.Mood, ["text"] = line.Text, ["voice_clip"] = line.VoiceClip }))),
+        { ["speaker"] = line.Speaker, ["mood"] = line.Mood, ["text"] = line.Text, ["voice_clip"] = line.VoiceClip, ["line_id"] = line.LineId }))),
         ["choices"] = new GArray(packet.Choices.Select(choice => Variant.From(new GDict
-        { ["id"] = choice.Id, ["label"] = choice.Label, ["is_available"] = choice.IsAvailable, ["lock_hint"] = choice.LockHint }))),
+        { ["id"] = choice.Id, ["label"] = choice.Label, ["is_available"] = choice.IsAvailable, ["lock_hint"] = choice.LockHint, ["label_id"] = choice.LabelId }))),
         ["commands"] = new GArray(packet.WorldCommands.Select(command => Variant.From(new GDict
         { ["kind"] = command.Name, ["args"] = new GArray(command.Arguments.Select(value => value is null ? default(Variant) : ToVariant(value))) }))),
         ["presentation_mode"] = packet.PresentationMode.ToString().ToLowerInvariant(), ["finished"] = packet.IsComplete,

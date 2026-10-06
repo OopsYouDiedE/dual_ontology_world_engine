@@ -71,7 +71,7 @@ public sealed partial class Game
         {
             _voicedStance[p.Id] = (Day, s);
             var (who, line0) = s!.Author == P.Det ? ("你", $"你那条{LabelOf(s)}「{Short(s)}」，我看行。")
-                : s.ByDemon ? ("恶魔", "凡学员皆可取回己物——它自己说的。我的东西在里面。")
+                : s.ByDemon ? ("铜口", "凡学员皆可取回己物——它自己说的。我的东西在里面。")
                 : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", "依据：名录库须有人管、有账可查。") : ("沃德", "名录库得有人管、有账可查。沃德这话在理。"))
                 : p.Id == P.Gu ? ("自己", "回忆就是上钩。老朽还是那句话：封着。") : ("顾平章", "回忆就是上钩。还是封着好，顾平章说得对。");
             var line = line0;

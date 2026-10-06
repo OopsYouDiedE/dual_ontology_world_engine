@@ -62,9 +62,31 @@ public sealed partial class Game
 
     // ------------------------------------------------------------------ day --
 
+    private readonly List<(Person Who, Projection Memory)> _failures = [];
+
+    /// <summary>
+    /// A failed authored action enters the actor's own cognition and forbids retrying it unchanged
+    /// for the rest of the day; the next morning the memory lapses and the person may try again.
+    /// </summary>
+    private void RememberFailure(Person p, ActionExecution exec)
+    {
+        var memory = Observation.Observe(p.Soul, new ObservationInput($"今天试过，没做成（{exec.Result?.Failure}）", ProjectionKind.Concept)
+        { Source = ObservationSource.Introspection, Existence = Truth.True, Time = Now, Details = "失败记忆" });
+        Observation.Observe(p.Soul, new ObservationInput(memory.Name, memory.Kind)
+        {
+            Target = memory, Source = ObservationSource.Introspection, Time = Now,
+            Rules = [new Rule(new Condition.Exists(memory), RuleMode.Forbid, exec.Intent.Changes, 1, Truth.True)]
+        });
+        _failures.Add((p, memory));
+    }
+
     private void BeginDay()
     {
         _dayStart[Day] = Now;
+        foreach (var (who, memory) in _failures)
+            Observation.Observe(who.Soul, new ObservationInput(memory.Name, memory.Kind)
+            { Target = memory, Source = ObservationSource.Introspection, Existence = Truth.False, Time = Now });
+        _failures.Clear();
         var hungry = 0;
         foreach (var p in People)
         {
@@ -300,6 +322,7 @@ public sealed partial class Game
             // 试过、没做成：今天不再试同一件事；请求算是答复过了（做不到）。
             // 去开库时那一站被人占着：人已经站在前厅了，等让开了还会再试（不记“做过”）。
             if (job is { } jf && jf is not (Job.Seize or Job.GuardArchive or Job.Relay or Job.Teach)) Set(p.Body, T.Did(jf), 1);
+            else if (job is null) RememberFailure(p, exec);
             ReleaseStation(p);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } req && p.World.Contains(req))
                 Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
@@ -722,7 +745,7 @@ public sealed partial class Game
             DemonSays("温室", Warning2.Text);
             foreach (var p in crew.Where(p => p != Det)) Tell(p, Warning2, Channel.Public);
             Det.Acc[Warning2] = Truth.True;
-            if (crew.Contains(Det)) Feed.Add("恶魔的声音从压力表后面传来：“温室水压表指针过红线时，勿开顶窗。”就这一句。");
+            if (crew.Contains(Det)) Feed.Add("压力表后面传来那个声音：“温室水压表指针过红线时，勿开顶窗。”就这一句。");
         }
         var reckless = crew.Where(p => p != Det && p.Acc.GetValueOrDefault(Warning2) != Truth.True && !WarnedPrecisely).FirstOrDefault();
         if (progress >= 3 && reckless is not null)
@@ -730,7 +753,7 @@ public sealed partial class Game
             reckless.InjuredDays = 2;
             Set(Blackboard, T.Shoe, Get(Blackboard, T.Shoe));
             Log.Add($"D{Day} 下午 {reckless.Name} 在指针过红线时开了顶窗，玻璃碎裂；恶魔显形把人拽开（温室地上留下窄底鞋印）。{reckless.Name}受伤两日");
-            NewsFrom(reckless, NewsKind.Fact, $"{reckless.Name}在温室受了伤，有人说看见一只很窄的手把他拽开");
+            NewsFrom(reckless, NewsKind.Fact, $"{reckless.Name}在温室受了伤，有人说看见一只很窄的手把{reckless.Pro.Pronoun}拽开");
             if (crew.Contains(Det)) Feed.Add($"{reckless.Name}伸手去开顶窗——玻璃炸开。一只很窄的手把人拽了回来。地上多了窄底鞋印。");
             GreenhouseProgress = Math.Max(0, progress - 2);
             Set(Valve, T.Work, GreenhouseProgress);

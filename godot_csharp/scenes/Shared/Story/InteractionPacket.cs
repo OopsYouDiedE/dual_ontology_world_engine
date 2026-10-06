@@ -2,8 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 namespace DualOntologyWorldEngine.Story;
 
-public sealed record InteractionLine(string Speaker, string Mood, string Text, string VoiceClip);
-public sealed record InteractionChoice(string Id, string Label, bool IsAvailable, string LockHint);
+/// <param name="LineId">Stable authored line ID (translation key); empty for generated text.</param>
+public sealed record InteractionLine(string Speaker, string Mood, string Text, string VoiceClip, string LineId = "");
+public sealed record InteractionChoice(string Id, string Label, bool IsAvailable, string LockHint, string LabelId = "");
 public sealed record WorldCommand(string Name, IReadOnlyList<object?> Arguments);
 public enum PresentationMode { Dialogue, EvidenceCard, Menu, World, Done }
 public sealed record EvidenceCard(string Id, string Title, string Facts, string Source, string Picture, IReadOnlyList<string> Notes);
@@ -33,6 +34,7 @@ public sealed class DialogueInstruction
     public string Mood { get; set; } = "";
     public string Text { get; set; } = "";
     public string VoiceClip { get; set; } = "";
+    public string LineId { get; set; } = "";
     public string Name { get; set; } = "";
     public string Target { get; set; } = "";
     public DialogueExpression? Condition { get; set; }
@@ -45,6 +47,7 @@ public sealed class DialogueOption
 {
     public string Id { get; set; } = "";
     public string Label { get; set; } = "";
+    public string LabelId { get; set; } = "";
     public string LockHint { get; set; } = "";
     public DialogueExpression? Condition { get; set; }
     public List<DialogueInstruction> Body { get; set; } = new();
@@ -100,7 +103,7 @@ public sealed class CompiledDialogueRuntime(CompiledDialogueDocument document, D
             switch (step.Op)
             {
                 case "line":
-                    var lines = new InteractionLine[] { new(context.Interpolate(step.Speaker), step.Mood, context.Interpolate(step.Text), step.VoiceClip) };
+                    var lines = new InteractionLine[] { new(context.Interpolate(step.Speaker), step.Mood, context.Interpolate(step.Text), step.VoiceClip, step.LineId) };
                     var next = Read();
                     if (next?.Op == "choices")
                     { _choices = next.Options; return ChoicePacket() with { Lines = lines }; }
@@ -125,7 +128,7 @@ public sealed class CompiledDialogueRuntime(CompiledDialogueDocument document, D
         return new([], [], PresentationMode.Done, [], true);
     }
     private InteractionPacket ChoicePacket() => new([], _choices!.Select(o => new InteractionChoice(o.Id,
-        context.Interpolate(o.Label), Available(o), context.Interpolate(o.LockHint))).ToArray(), PresentationMode.Menu, []);
+        context.Interpolate(o.Label), Available(o), context.Interpolate(o.LockHint), o.LabelId)).ToArray(), PresentationMode.Menu, []);
     private static bool Truth(object? value) => value switch
     { null => false, bool b => b, string s => s.Length > 0, byte n => n != 0, sbyte n => n != 0,
         short n => n != 0, ushort n => n != 0, int n => n != 0, uint n => n != 0, long n => n != 0,

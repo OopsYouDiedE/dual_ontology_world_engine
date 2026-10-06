@@ -93,6 +93,8 @@ public static class Names
 /// <summary>一条习惯：在什么条件下做什么、权重多少、是否与核心欲望相连（恶魔放大欲望时随之加权）。</summary>
 public sealed record HabitSpec(Job Job, Slot[] Slots, int Weight, bool Desire = false, string Note = "");
 
+public enum Gender { Male, Female }
+
 public sealed class Profile
 {
     public required P Id { get; init; }
@@ -116,6 +118,9 @@ public sealed class Profile
     public int DemonPrejudice { get; init; }
     public ImmutableArray<HabitSpec> Habits { get; init; } = [];
     public string Voice { get; init; } = "";
+    public Gender Gender { get; init; }
+    /// <summary>第三人称代词，供程序生成的句子使用。</summary>
+    public string Pronoun => Gender == Gender.Female ? "她" : "他";
 }
 
 public static class Cast

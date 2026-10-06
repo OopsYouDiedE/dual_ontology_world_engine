@@ -33,11 +33,13 @@ ACTION_NAMES = {
 }
 AUTHORITY_ACTIONS = {"lesson_answer": ["boolean"], "mediate": []}
 REACTION_INTENTS = {"testimony", "decline"}
+# A line ID tag may precede or follow the emotion tag at the end of a dialogue line.
+LINE_ID_TAG = re.compile(r"\s*\[#id=([A-Za-z0-9_][A-Za-z0-9_.\-]*)\](?=\s*(?:\[#emotion=[a-z_]+\])?\s*$)")
 COGNITIVE_QUERY_TAGS = {"Trust", "Cooperation", "Sick", "Hungry", "Fed", "Weak"}
 PROFILE_FIELDS = {
     "group", "dorm", "speed", "cooperation", "build", "desire", "demon_line", "desire_flags",
     "strength", "lock", "signal", "structure", "greenhouse_skill", "cook", "craftsman", "values",
-    "prejudice", "demon_prejudice", "habits", "voice",
+    "prejudice", "demon_prejudice", "habits", "voice", "gender",
 }
 
 
@@ -487,9 +489,11 @@ class Compiler:
         if unknown or missing:
             self.fail(node, "profile 字段必须完整且仅包含既定角色画像字段；缺少：" +
                       ("、".join(sorted(missing)) or "无") + "；未知：" + ("、".join(sorted(unknown)) or "无"))
-        string_fields = {"group", "dorm", "build", "desire", "demon_line", "voice"}
+        string_fields = {"group", "dorm", "build", "desire", "demon_line", "voice", "gender"}
         for key in string_fields:
             if not isinstance(profile[key], str): self.fail(node, f"profile.{key} 必须是字符串。")
+        if profile["gender"] not in {"Male", "Female"}:
+            self.fail(node, "profile.gender 必须是 Male 或 Female。")
         if profile["group"] not in {"Life", "Wenqi", "Xingyi", "Houqin"}:
             self.fail(node, "profile.group 必须是 Group 稳定枚举名称。")
         if profile["build"] not in {"Small", "Medium", "Large"}:
@@ -923,6 +927,10 @@ class Compiler:
             original = self.source_lines[line_number - 1] if line_number <= len(self.source_lines) else raw_line
             source = Source(self.current_path, line_number, len(original) - len(original.lstrip()) + 1,
                             line_number, len(original) + 1)
+            line_id = ""
+            tagged = LINE_ID_TAG.search(line)
+            if tagged:
+                line_id, line = tagged.group(1), (line[:tagged.start()] + line[tagged.end():]).rstrip()
             mood = ""
             match = emotion.search(line)
             if match:
@@ -949,7 +957,7 @@ class Compiler:
                     raise ScriptError(f"不支持的对白插值 {placeholder!r}。", source)
             source_ref = self.record_source(source)
             result.append({"op": "line", "speaker": speaker, "text": text, "mood": mood,
-                           "voice_clip": "", "source_id": source_ref})
+                           "voice_clip": "", "line_id": line_id, "source_id": source_ref})
         return result
 
     def compile_candidate_response(self, statements: list[ast.stmt]) -> list[dict[str, Any]]:
@@ -966,6 +974,10 @@ class Compiler:
                     original = self.source_lines[line_number - 1] if line_number <= len(self.source_lines) else raw_line
                     source = Source(self.current_path, line_number, len(original) - len(original.lstrip()) + 1,
                                     line_number, len(original) + 1)
+                    line_id = ""
+                    tagged = LINE_ID_TAG.search(line)
+                    if tagged:
+                        line_id, line = tagged.group(1), (line[:tagged.start()] + line[tagged.end():]).rstrip()
                     separator = "：" if "：" in line else ":" if ":" in line else None
                     if separator is None:
                         raise ScriptError("fence 台词每行请写‘人物名：台词’或‘旁白：台词’。", source)
@@ -985,7 +997,7 @@ class Compiler:
                         speaker = speaker_entity.runtime_id()
                     source_ref = self.record_source(source)
                     response.append({"op": "line", "speaker": speaker, "mood": "neutral", "text": text,
-                                     "voice_clip": "", "source_id": source_ref})
+                                     "voice_clip": "", "line_id": line_id, "source_id": source_ref})
                 continue
             if not (isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call)):
                 self.fail(statement, "候选 response 只允许裸 fence 台词块、line()/台词() 与白名单动作；不支持 if、循环或嵌套答案。")

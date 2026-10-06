@@ -66,10 +66,11 @@ def binary(op: str, left: Expr, right: Expr) -> Expr:
     return Expr(op, args=(left, right))
 
 
-def line(speaker: str, text: str, mood: str = "", voice_clip: str = "") -> Instruction:
+def line(speaker: str, text: str, mood: str = "", voice_clip: str = "", line_id: str = "") -> Instruction:
     if not isinstance(text, str):
         raise TypeError("dialogue line text must be a string")
-    return Instruction("line", {"speaker": speaker, "mood": mood, "text": text, "voice_clip": voice_clip})
+    return Instruction("line", {"speaker": speaker, "mood": mood, "text": text, "voice_clip": voice_clip,
+                                "line_id": line_id})
 
 
 def effect(name: str, *args: Expr | str | int | bool) -> Instruction:
@@ -85,8 +86,9 @@ def condition(test: Expr, then: Iterable[Instruction], otherwise: Iterable[Instr
 
 
 def choice_option(id: str, label: str, body: Iterable[Instruction] = (), test: Expr | None = None,
-                  lock_hint: str = "") -> dict[str, Any]:
-    return {"id": id, "label": label, "condition": test, "lock_hint": lock_hint, "body": list(body)}
+                  lock_hint: str = "", label_id: str = "") -> dict[str, Any]:
+    return {"id": id, "label": label, "label_id": label_id, "condition": test, "lock_hint": lock_hint,
+            "body": list(body)}
 
 
 def choices(options: Iterable[dict[str, Any]]) -> Instruction:
