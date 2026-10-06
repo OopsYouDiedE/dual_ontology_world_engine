@@ -10,6 +10,7 @@
 引入：story/生态/词汇.story
 引入：story/生态/地点.story
 引入：story/生态/人物/*.story
+引入：story/生态/方法库.story
 引入：story/生态/晨间日常.story
 
 # ---- 第一章《门的这一侧》：证物、布局、推演、文案、流程与场面 ----
@@ -23,6 +24,7 @@
 引入：story/第一章/话题.story
 引入：story/第一章/场面/*.story
 引入：story/第一章/模拟侦探.story
+引入：story/第一章/寝区案件.story
 引入：story/第一章/出区日常.story
 
 # ---- 续篇（第二章）：始业与后续案件 ----

@@ -69,7 +69,7 @@ public static class ContinuationSimulation
             var score=basis is not null ? actor.DoingScore.ToString("0.###") : "未提供";
             Emit("人物行动", $"{actor.Name}｜{C.Names.Of(game.Where(actor))}｜{(job is { } j ? C.Names.Of(j) : "剧本候选行动")}｜{execution.Status}；失败原因 {execution.Result?.Failure.ToString() ?? "无"}；依据 {why}；诊断分数 {score}（分数不等于动机合理性）");
             foreach (var item in game.Events.Skip(seenEvents))
-                Emit("行动后果", $"事件 {item.Id}｜{C.Names.Of(item.Who)}：{item.Text}；{C.Names.Of(item.Where)}；因果前项 [{string.Join(",", item.Causes)}]；{(item.Fixed ? "固定节点" : "运行结果")}；侦探{(item.SeenByDet ? "可见" : "不可见，仅评估记录")}", item.Day, item.Slot);
+                Emit("行动后果", $"事件 {item.Id}｜{C.Names.Of(item.Who)}：{item.Text}；{C.Names.Of(item.Where)}；因果前项 [{string.Join(",", item.Causes)}]；{(item.Fixed ? "作者定：" + (item.Reason.Length > 0 ? item.Reason : "未写理由") : item.Reason.Length > 0 ? "运行结果（" + item.Reason + "）" : "运行结果")}；侦探{(item.SeenByDet ? "可见" : "不可见，仅评估记录")}", item.Day, item.Slot);
             seenEvents = game.Events.Count;
         }
         game.S.Completed += Completed;

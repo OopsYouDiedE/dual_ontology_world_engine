@@ -28,6 +28,7 @@ public sealed partial class MorningWorld
         public double Remaining, StartAfter;
         public bool Arrived;
         public int? DepartureMinutes;
+        public string Dorm = "";
         public DailyStep[] DepartureSteps = [];
         public bool Departed;
         public bool DepartureComplete;
@@ -59,10 +60,102 @@ public sealed partial class MorningWorld
         GameMinutes = minutes;
     }
 
+    // ---- 另外三组的寝区案件（总纲 §六 第四期）：各人用同一推理器读自己看见的痕迹，作答问题过半数有把握即答毕 ----
+    public sealed record DormCaseResult(string Case, string Dorm, string Answer, int Minute, IReadOnlyList<string> Beliefs);
+    private sealed class DormCase
+    {
+        public required string Id, Dorm, Title;
+        public required CaseModel Model;
+        public required int Answer;
+        public required (string Key, string Text, int Needs, int Value)[] Traces;
+        public int Progress, Revealed;
+    }
+    private static readonly Tag Trace = new("所见");
+    private readonly Dictionary<string, DormCase> _dormCases = new(StringComparer.Ordinal);
+    private readonly List<DormCaseResult> _dormResults = [];
+    public IReadOnlyList<DormCaseResult> DormCaseResults => _dormResults;
+
+    private void InitializeDormCases()
+    {
+        if (!Chapter1Data.Root.TryGetProperty("DORM_CASES", out var cases)) return;
+        foreach (var item in cases.EnumerateObject())
+        {
+            // 种子 0 用作者版本；其余种子取通过求解器的变体（真相与答案不变）。
+            var c = CaseVariants.Variant(item.Name, item.Value, CaseVariants.Seed);
+            var questions = c.GetProperty("questions").EnumerateArray().ToArray();
+            var traces = c.GetProperty("traces").EnumerateArray().Select(t => (t.GetProperty("key").GetString()!, t.GetProperty("text").GetString()!,
+                t.GetProperty("needs").GetInt32(), c.GetProperty("true_facts").GetProperty(t.GetProperty("key").GetString()!).GetInt32())).ToArray();
+            var model = new CaseModel(item.Name, questions.Select(q => q.GetProperty("key").GetString()!),
+                questions.Select(q => q.GetProperty("options").EnumerateArray().Select(o => o.GetString()!)),
+                traces.Select(t => new CaseField(t.Item1, Trace, t.Item1)),
+                c.GetProperty("hypotheses").EnumerateArray().Select(h => new CaseHypothesis(
+                    [.. h.GetProperty("options").EnumerateArray().Select(o => o.GetInt32())],
+                    h.GetProperty("facts").EnumerateObject().ToImmutableDictionary(f => f.Name, f => f.Value.GetInt32()))));
+            var dorm = c.GetProperty("dorm").GetString()!;
+            _dormCases[dorm] = new DormCase { Id = item.Name, Dorm = dorm, Title = c.GetProperty("title").GetString()!, Model = model,
+                Answer = c.GetProperty("answer").GetInt32(), Traces = traces };
+            // 先入之见写进各人认知，强度可由默认设置微调（“沃德.先入之见.缘由”）；0 即没有成见。
+            foreach (var prior in c.GetProperty("priors").EnumerateArray())
+            {
+                if (!_dailyPeople.TryGetValue(prior.GetProperty("person").GetString()!, out var person)) continue;
+                var question = prior.GetProperty("question").GetInt32();
+                var name = person.Soul.TrueName;
+                var strength = Persona.Overrides.TryGetValue($"{name}.先入之见.{model.Questions[question]}", out var forced)
+                    ? (int)Math.Round(forced) : prior.GetProperty("strength").GetInt32();
+                if (strength <= 0) continue;
+                Observation.Observe(person.Soul, new ObservationInput(model.ClaimName(question, prior.GetProperty("option").GetInt32()), ProjectionKind.Concept)
+                { Source = ObservationSource.Introspection, Existence = Truth.True, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Confidence, strength) });
+            }
+        }
+    }
+
+    /// <summary>本区的调查累计一次；够了就让区里的人看见下一处痕迹，并看他们能否作答。</summary>
+    private void AdvanceDormCase(DailyPerson by)
+    {
+        if (!_dormCases.TryGetValue(by.Dorm, out var c) || _dormOpened.ContainsKey(by.Dorm)) return;
+        c.Progress++;
+        var revealed = false;
+        while (c.Revealed < c.Traces.Length && c.Progress >= c.Traces[c.Revealed].Needs)
+        {
+            var (key, text, _, value) = c.Traces[c.Revealed++];
+            foreach (var person in Residents(c.Dorm))
+                Observation.Observe(person.Soul, new ObservationInput(key, ProjectionKind.Object)
+                { Source = ObservationSource.Perception, Existence = Truth.True, Details = text,
+                  Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Trace, value) });
+            _dailyTrajectory.Add(new(_dailySession.CTB.Now, by.Key, c.Dorm, "trace", $"{_dailySpaces[c.Dorm].TrueName}的人看见：{text}", _dailySettledMinutes));
+            revealed = true;
+        }
+        if (!revealed) return;
+        var residents = Residents(c.Dorm).ToArray();
+        var verdicts = residents.Select(p => Reasoner.Assess(p.Soul.World, c.Model)).ToArray();
+        var votes = verdicts.Select(b => Enumerable.Range(0, c.Model.Options[c.Answer].Length).FirstOrDefault(o => b.Of(c.Answer, o) >= SpeechPolicy.Sure, -1)).ToArray();
+        var winner = votes.Where(v => v >= 0).GroupBy(v => v).MaxBy(g => g.Count());
+        if (winner is null || winner.Count() * 2 <= residents.Length) return;
+        _dormOpened[c.Dorm] = _dailySettledMinutes;
+        var answer = c.Model.Options[c.Answer][winner.Key];
+        var beliefs = residents.Zip(verdicts, (p, b) => p.Soul.TrueName + "：" + string.Join("，", c.Model.Questions.Select((q, i) =>
+        {
+            var best = Enumerable.Range(0, c.Model.Options[i].Length).MaxBy(o => b.Of(i, o));
+            return $"{q}={c.Model.Options[i][best]}（{b.Of(i, best):0.00}）";
+        }))).ToArray();
+        _dormResults.Add(new(c.Id, c.Dorm, answer, _dailySettledMinutes, beliefs));
+        _dailyTrajectory.Add(new(_dailySession.CTB.Now, by.Key, c.Dorm, "answered",
+            $"{_dailySpaces[c.Dorm].TrueName}答始业之问“{c.Title}”：{answer}。外闩抬起。各人心里：{string.Join("；", beliefs)}", _dailySettledMinutes));
+    }
+
+    private IEnumerable<DailyPerson> Residents(string dorm) => _dailyPeople.Values.Where(p => p.Hosted is null && p.Dorm == dorm
+        && ReferenceEquals(p.Body.Get<SpatialProperty>()!.Space, _dailySpaces[dorm]));
+
+    // 低精度的各区答题进度（没有寝区案件的区才用）：本区居民每完成一次查看或听辨记一次；达到 story 声明的所需次数即答毕，外闩抬起。
+    private readonly Dictionary<string, int> _dormNeeds = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _dormProgress = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _dormOpened = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, int> DormOpenedMinutes => _dormOpened;
+
     private void ApplyDailyDepartures(int minutes)
     {
-        foreach (var person in _dailyPeople.Values.Where(p => p.Hosted is null && !p.Departed
-            && p.DepartureMinutes is { } departure && minutes >= departure))
+        foreach (var person in _dailyPeople.Values.Where(p => p.Hosted is null && !p.Departed && p.DepartureSteps.Length > 0
+            && (p.DepartureMinutes is { } departure && minutes >= departure || _dormOpened.ContainsKey(p.Dorm))))
         {
             SuspendDaily(person);
             person.Departed = true;
@@ -189,7 +282,7 @@ public sealed partial class MorningWorld
             var space = body.Get<SpatialProperty>()!.Space!;
             var self = _runtime.Observe(soul, _runtime.Representations(space).Concat(_runtime.Representations(body)), 0)
                 .Single(p => p.Kind == ProjectionKind.Body);
-            var person = new DailyPerson { Key = key, Actor = actor, Soul = soul, Body = body, Self = self,
+            var person = new DailyPerson { Key = key, Actor = actor, Soul = soul, Body = body, Self = self, Dorm = profile.GetProperty("dorm").GetString()!,
                 Hosted = hostedIndex >= 0 ? (Person)hostedIndex : null, Speed = profile.GetProperty("speed").GetDouble() };
             if (!double.IsFinite(person.Speed) || person.Speed <= 0) throw new InvalidOperationException("Invalid authored character speed.");
             _dailyPeople[key] = person;
@@ -199,7 +292,8 @@ public sealed partial class MorningWorld
             {
                 if (person.Hosted is not null || departure.GetProperty("actor").GetString() != actor)
                     throw new InvalidOperationException("Departure must refer to a non-hosted actor.");
-                person.DepartureMinutes = departure.GetProperty("minutes").GetInt32();
+                var minutes = departure.GetProperty("minutes");
+                person.DepartureMinutes = minutes.ValueKind == JsonValueKind.Null ? null : minutes.GetInt32();
                 person.DepartureSteps = ReadDailySteps(departure);
                 if (person.DepartureMinutes < 0 || person.DepartureSteps.Length == 0)
                     throw new InvalidOperationException("Departure requires nonnegative minutes and daily steps.");
@@ -220,10 +314,13 @@ public sealed partial class MorningWorld
                 person.StartAfter = person.Steps[0].Seconds / person.Speed * _dailyPeople.Count
                     / entities.Count(e => e.GetProperty("kind").GetString() == "character");
         }
+        if (morning.TryGetProperty("dorm_answers", out var answers))
+            foreach (var dorm in answers.EnumerateObject()) _dormNeeds[dorm.Name] = dorm.Value.GetInt32();
         if (morning.TryGetProperty("witnesses", out var witnesses))
             foreach (var witness in witnesses.EnumerateArray())
                 _dailyRemoteWitnesses.Add((witness.GetProperty("room").GetString()!, witness.GetProperty("text").GetString()!));
         ObserveDailyRooms();
+        InitializeDormCases();
     }
 
     public IReadOnlyList<DailyPlan> DailyTick(double delta, bool active, IEnumerable<string> busy)
@@ -355,6 +452,16 @@ public sealed partial class MorningWorld
         {
             var record = new MorningTrajectory(_dailySession.CTB.Now, person.Key, step.Room, step.Action, step.Note, _dailySettledMinutes);
             _dailyTrajectory.Add(record);
+            if (person.Hosted is null && !person.Departed && step.Action is "check" or "listen" && _dormCases.ContainsKey(person.Dorm))
+                AdvanceDormCase(person);
+            else if (person.Hosted is null && !person.Departed && step.Action is "check" or "listen"
+                && _dormNeeds.TryGetValue(person.Dorm, out var need) && !_dormOpened.ContainsKey(person.Dorm)
+                && (_dormProgress[person.Dorm] = _dormProgress.GetValueOrDefault(person.Dorm) + 1) >= need)
+            {
+                _dormOpened[person.Dorm] = _dailySettledMinutes;
+                _dailyTrajectory.Add(new(_dailySession.CTB.Now, person.Key, person.Dorm, "answered",
+                    $"{_dailySpaces[person.Dorm].TrueName}的人答完了自己寝区的题（查看与听辨 {need} 次），外闩抬起", _dailySettledMinutes));
+            }
             ObserveDailyRooms();
             foreach (var witness in _dailyPeople.Values.Where(p => ReferenceEquals(p.Body.Get<SpatialProperty>()!.Space, person.Body.Get<SpatialProperty>()!.Space)))
                 Observation.Observe(witness.Soul, new ObservationInput(step.Note, ProjectionKind.Event)

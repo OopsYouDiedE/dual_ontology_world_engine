@@ -33,11 +33,9 @@ public sealed partial class Game
     /// <summary>傍晚：到期的聚落规则张贴出来；每个立规者当面拉两个在场、最信他、还没听过的人（人物也受注意力限制）。</summary>
     private void AllianceEvening()
     {
+        // 到期的聚落规则成为立规者的打算，由他自己走去贴出（总纲 §六 第三期）。
         foreach (var (day, author, spec, where) in _agenda.Where(a => a.Day == Day))
-        {
-            Post(spec, where);
-            if (Where(Det) == where) Feed.Add(X("规矩.聚落张贴", ("人", Names.Of(author)), ("地", Names.Of(where)), ("规矩", spec.Text)));
-        }
+            IntendPost(this[author], spec, where);
         // 拉人不再由作者每晚替立规者“拉两个”：立规者自己傍晚到配给台找同一聚落的人当面讲（GameJobs.TalkRules），占用他的时段。
     }
 

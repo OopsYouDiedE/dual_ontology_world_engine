@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 法则化检查：声学法则与接头、证物毁去后的补救、未建模的保守结果。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Script/Chapter1Script.csproj" />
+    <ProjectReference Include="../../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
+  </ItemGroup>
+</Project>

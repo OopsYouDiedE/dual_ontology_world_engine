@@ -48,6 +48,7 @@ class Evidence:
     repeatable: bool | None = None
     addenda: list | None = None
     compare_when: dict | None = None
+    supports: list | None = None
 
     def json(self) -> dict[str, Any]:
         return {key: value for key, value in self.__dict__.items() if key != "id" and value is not None}
@@ -96,7 +97,7 @@ QUERY_NAMES = {
     "replay_refused": "重演被拒", "in_room": "在房间", "local": "同处", "busy": "忙碌",
     "said": "陈述", "shown": "出示", "is_person": "是同伴", "geo_reach": "几何可达",
     "acquaintance_seen": "相识已查", "replay_var": "重演变量", "bolted": "重演侦探闩门",
-    "credence": "把握", "knows": "知道", "speech": "话题回应",
+    "credence": "把握", "knows": "知道", "speech": "话题回应", "dorms_open": "已出门寝区",
 }
 QUERY_BY_ZH = {zh: en for en, zh in QUERY_NAMES.items()}
 EFFECT_WORDS = {"设旗": "set_flag", "清旗": "clear_flag", "放大": "amplify", "低语": "whisper", "共享回忆": "share_recall"}
@@ -266,6 +267,10 @@ def restore_interpolation(text: str) -> str:
 
 # 话题在读取时登记：须先声明后使用，与人物同一顺序语义。
 TOPICS: dict[str, Any] = {}
+# 地点名、人物名 → 运行时键（来自共享生态的“编号”）。
+PLACES: dict[str, str] = {}
+PERSON_KEYS: dict[str, str] = {}
+VALUE_IDS: dict[str, str] = {}
 
 
 def parse_body(lines: list[Line], start: int, depth: int, entry_id: str) -> tuple[list[Any], int]:
@@ -502,9 +507,69 @@ HEARINGS = {"完整": "Full", "隔门完整": "FullMuffled", "句尾": "Tail", "
 ORIGINS = {"铜口": "Tube", "门外": "OutsideDoor"}
 
 
+def read_acoustic_laws(body: list[Line]) -> dict[str, Any]:
+    """`声学`：铜口所在、隔离门两侧、接头（名 | 房间 | 松/紧）、隔墙低语的房间，以及听感与喊声的两张名单。"""
+    fields = read_fields(body)
+    need = {"铜口所在", "隔离门", "接头", "隔墙低语", "听来像在门外", "喊声可闻"}
+    if set(fields) != need:
+        raise StoryError("声学须写：" + "、".join(sorted(need)))
+    inner, _, outer = fields["隔离门"][0].partition("|")
+    joints = []
+    for item in fields["接头"][2]:
+        parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+        if len(parts) != 3 or parts[2] not in {"松", "紧"}:
+            raise StoryError("接头写成“- 名称 | 房间 | 松或紧”。", item.number)
+        joints.append({"name": parts[0], "room": parts[1], "loose": parts[2] == "松"})
+    return {"tube_room": fields["铜口所在"][0], "door": [inner.strip(), outer.strip()], "joints": joints,
+            "murmur": split_list(fields["隔墙低语"][0]),
+            "seems_outside": split_list(fields["听来像在门外"][0]), "hears_shout": split_list(fields["喊声可闻"][0]),
+            "number": fields["铜口所在"][1].number}
+
+
+def derive_hearing(laws: dict[str, Any], room_key, loose: dict[str, bool] | None = None) -> dict[str, dict[str, str]]:
+    """按声学法则推出两种声源在各房间的听感（与运行时 C# Acoustics 同一套法则）。"""
+    loose = loose if loose is not None else {j["name"]: j["loose"] for j in laws["joints"]}
+    leaking = [room_key(j["room"]) for j in laws["joints"] if loose[j["name"]]]
+    inner, outer = (room_key(r) for r in laws["door"])
+    tube: dict[str, str] = {room_key(laws["tube_room"]): "Full"}
+    for room in leaking:
+        tube.setdefault(room, "Tail")
+    for room in laws["murmur"]:
+        tube.setdefault(room_key(room), "Murmur")
+    tube["*"] = "AlarmOnly"
+    outside: dict[str, str] = {inner: "FullMuffled"}
+    if inner in leaking:
+        for room in leaking:
+            outside.setdefault(room, "FullMuffled")
+    outside[outer] = "Full"
+    outside["*"] = "Nothing"
+    return {"Tube": tube, "OutsideDoor": outside}
+
+
 def finalize_acoustics(source) -> None:
-    """声路表：来源 → 听者房间键 → 听感；房间按 `房间名` 反查，“其他”写作 `*`。"""
+    """声学法则 → 声路表（来源 → 听者房间键 → 听感），房间按 `房间名` 反查；表与法则一并交给运行时。"""
     data = source.RULES_DATA
+    if "_ACOUSTIC_LAWS" in data:
+        laws = data.pop("_ACOUSTIC_LAWS")
+        names = {name: key for key, name in source.CONTENT_TABLES["ROOM_NAMES"].items()}
+
+        def room(name: str) -> str:
+            if name not in names:
+                raise StoryError(f"声学里的房间“{name}”不在房间名表里。", laws["number"])
+            return names[name]
+
+        for hearing in laws["seems_outside"]:
+            if hearing not in HEARINGS:
+                raise StoryError(f"听感“{hearing}”不认识。可用：" + "、".join(HEARINGS), laws["number"])
+        data["ACOUSTICS"] = {
+            "hearing": derive_hearing(laws, room),
+            "seems_outside": [HEARINGS[h] for h in laws["seems_outside"]],
+            "hears_shout": [room(r) for r in laws["hears_shout"]],
+            "laws": {"tube_room": room(laws["tube_room"]), "door": [room(r) for r in laws["door"]],
+                     "joints": [{**j, "room": room(j["room"])} for j in laws["joints"]],
+                     "murmur": [room(r) for r in laws["murmur"]]},
+        }
+        return
     if "_ACOUSTIC_RAW" not in data:
         return
     names = {name: key for key, name in source.CONTENT_TABLES["ROOM_NAMES"].items()}
@@ -535,7 +600,7 @@ def finalize_acoustics(source) -> None:
     }
 
 
-PERSON_FIELDS = {"欲望": "desire", "初醒信任": "initial_trust", "谨慎": "caution", "说话习惯": "speech"}
+PERSON_FIELDS = {"欲望": "desire", "初醒信任": "initial_trust", "谨慎": "caution", "说话习惯": "speech", "心智范围": "mind_ranges"}
 SPEECH_HABITS = {"坦率": "candor", "寡言": "reticence", "好问": "curiosity"}
 
 
@@ -557,6 +622,16 @@ def read_person(fields) -> dict[str, Any]:
             person["initial_trust"] = trust
         elif key == "谨慎":
             person["caution"] = num(value, "谨慎", line.number)
+        elif key == "心智范围":
+            # 隐藏心智抽样的范围：“初醒信任.侦探 -1~1，先入之见.缘由 2~4”；第一局用作者默认值，之后的局在范围内抽取。
+            ranges = {}
+            for entry in split_list(value):
+                name, _, span = entry.rpartition(" ")
+                low, sep, high = span.partition("~")
+                if not name.strip() or not sep:
+                    raise StoryError(f"心智范围写成“键 下限~上限”：{entry}", line.number)
+                ranges[name.strip()] = [num(low, "心智范围", line.number), num(high, "心智范围", line.number)]
+            person["mind_ranges"] = ranges
         elif key == "说话习惯":
             # “坦率 1，寡言 1，好问 1，会撒谎”：说话行为的修正；不写“会撒谎”即从不撒谎。
             speech: dict[str, Any] = {"candor": 0, "reticence": 0, "curiosity": 0, "may_lie": False}
@@ -736,11 +811,149 @@ def read_stage(name: str, body: list[Line]) -> dict[str, Any]:
     return stage
 
 
+def read_supports(text: str, number: int) -> list[dict[str, Any]]:
+    """证物的“支撑”：`命题[ 若 条件][ 须先试验]`，多条以“；”分隔。"""
+    supports = []
+    for part in [p.strip() for p in text.split("；") if p.strip()]:
+        needs_test = part.endswith("须先试验")
+        part = part.removesuffix("须先试验").strip()
+        proposition, _, condition_text = part.partition(" 若 ")
+        supports.append({"proposition": proposition.strip(), "needs_test": needs_test,
+                         "condition": parse_expr(condition_text.strip(), number).json() if condition_text.strip() else None})
+    return supports
+
+
+def read_dorm_case(name: str, head: Line, body: list[Line], places: dict[str, str], people: dict[str, str]) -> dict[str, Any]:
+    """`寝区案件 <名>`：寝区、题目、问题（各选项）、作答的问题、真相、痕迹（名 | 所见 | 条件 | 需查看）、先入之见、门外证据。"""
+    import itertools
+    fields = read_fields(body)
+    need = {"寝区", "题目", "问题", "作答", "真相", "痕迹"}
+    if not need <= set(fields):
+        raise StoryError(f"寝区案件“{name}”缺少：" + "、".join(sorted(need - set(fields))), head.number)
+    dorm = fields["寝区"][0]
+    if dorm not in places:
+        raise StoryError(f"寝区“{dorm}”没有声明为地点。", fields["寝区"][1].number)
+    questions = []
+    for item in fields["问题"][2]:
+        key, options = split_pair(item)
+        questions.append({"key": key, "options": split_list(options)})
+    keys = [q["key"] for q in questions]
+
+    def option_of(text: str, number: int) -> tuple[int, int]:
+        key, _, option = text.partition("=")
+        key, option = key.strip(), option.strip()
+        if key not in keys or option not in questions[keys.index(key)]["options"]:
+            raise StoryError(f"寝区案件里不认识“{text}”。", number)
+        q = keys.index(key)
+        return q, questions[q]["options"].index(option)
+
+    answer = fields["作答"][0]
+    if answer not in keys:
+        raise StoryError(f"作答的问题“{answer}”不在问题里。", fields["作答"][1].number)
+    truth = [None] * len(keys)
+    for part in split_list(fields["真相"][0].replace("，", "、")):
+        q, o = option_of(part, fields["真相"][1].number)
+        truth[q] = o
+    if None in truth:
+        raise StoryError("真相须为每个问题各定一项。", fields["真相"][1].number)
+    traces = []
+    for item in fields["痕迹"][2]:
+        parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+        if len(parts) != 4:
+            raise StoryError("痕迹写成“- 名称 | 所见 | 问题 = 选项（或 ≠）| 需查看次数”。", item.number)
+        negate = "≠" in parts[2]
+        q, o = option_of(parts[2].replace("≠", "="), item.number)
+        traces.append({"key": parts[0], "text": parts[1], "question": q, "option": o, "negate": negate,
+                       "needs": int(num(parts[3], "需查看", item.number))})
+    hypotheses = []
+    for combo in itertools.product(*[range(len(q["options"])) for q in questions]):
+        facts = {t["key"]: int((combo[t["question"]] == t["option"]) != t["negate"]) for t in traces}
+        hypotheses.append({"options": list(combo), "facts": facts})
+    true_facts = next(h["facts"] for h in hypotheses if h["options"] == truth)
+    priors = []
+    for item in (fields["先入之见"][2] if "先入之见" in fields else []):
+        parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+        if len(parts) != 3 or parts[0] not in people:
+            raise StoryError("先入之见写成“- 人物 | 问题 = 选项 | 强度”。", item.number)
+        q, o = option_of(parts[1], item.number)
+        priors.append({"person": people[parts[0]], "question": q, "option": o, "strength": int(num(parts[2], "强度", item.number))})
+    return {"dorm": places[dorm], "title": fields["题目"][0], "questions": questions, "answer": keys.index(answer),
+            "truth": truth, "traces": traces, "true_facts": true_facts, "hypotheses": hypotheses, "priors": priors,
+            "outside": fields["门外证据"][0] if "门外证据" in fields else ""}
+
+
+SKILLS = {"力气": "strength", "开锁": "lock", "信号": "signal", "结构": "structure", "厨艺": "cook", "温室": "greenhouse_skill"}
+
+
+def read_method(name: str, body: list[Line]) -> dict[str, Any]:
+    """`方法 <目标>`：做法、须备（本事 数值）、分解（先要达成的目标）。"""
+    fields = read_fields(body)
+    if "做法" not in fields:
+        raise StoryError(f"方法“{name}”缺少做法。")
+    needs = {}
+    for entry in split_list(fields["须备"][0]) if "须备" in fields else []:
+        skill, _, level = entry.rpartition(" ")
+        if skill not in SKILLS:
+            raise StoryError(f"须备的本事“{skill}”不认识。可用：" + "、".join(SKILLS), fields["须备"][1].number)
+        needs[SKILLS[skill]] = int(num(level, "须备", fields["须备"][1].number))
+    return {"how": fields["做法"][0], "needs": needs, "parts": split_list(fields["分解"][0]) if "分解" in fields else []}
+
+
+def finalize_verdicts(source) -> None:
+    """判定按命题：陈述须是认定的陈述之一；出示须是支撑该命题的证物（满足其条件，须先试验的要已试过）。"""
+    def eq(left: Expr, value: str) -> dict[str, Any]:
+        return binary("eq", left, literal(value)).json()
+
+    def any_of(terms: list[dict[str, Any]]) -> dict[str, Any]:
+        if not terms:
+            return literal(False).json()
+        result = terms[0]
+        for term in terms[1:]:
+            result = {"op": "or", "args": [result, term]}
+        return result
+
+    def both(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
+        return {"op": "and", "args": [left, right]}
+
+    for step, verdict in source.RULES_DATA.get("VERDICTS", {}).items():
+        proposition = verdict.pop("_proposition", None)
+        statements = verdict.pop("_statements", None)
+        if proposition is None:
+            continue
+        say_ok = any_of([eq(call("said"), s) for s in statements])
+        show_terms, need_terms, support = [], [], []
+        for evidence in source.EVIDENCE:
+            for item in evidence.supports or []:
+                if item["proposition"] != proposition:
+                    continue
+                support.append(evidence.id)
+                term = eq(call("shown"), evidence.id)
+                if item["condition"] is not None:
+                    term = both(term, item["condition"])
+                if item["needs_test"]:
+                    tested = call("tested", evidence.id).json()
+                    need_terms.append(both(both(say_ok, eq(call("shown"), evidence.id)), {"op": "not", "args": [tested]}))
+                    term = both(term, tested)
+                show_terms.append(term)
+        if not support:
+            raise StoryError(f"判定 {step} 的命题“{proposition}”没有任何证物支撑。")
+        verdict["proposition"] = proposition
+        verdict["say_ok"] = say_ok
+        verdict["show_ok"] = any_of(show_terms)
+        if need_terms:
+            verdict["need_test"] = any_of(need_terms)
+        verdict["support"] = support
+
+
 def read_verdict(step: str, head: Line, body: list[Line]) -> dict[str, Any]:
     fields = read_fields(body)
     verdict: dict[str, Any] = {"step": num(step, "判定步", head.number)}
     for key, (value, ln, _) in fields.items():
-        if key == "问题":
+        if key == "命题":
+            verdict["_proposition"] = value
+        elif key == "认定陈述":
+            verdict["_statements"] = split_list(value)
+        elif key == "问题":
             verdict["question"] = value
         elif key == "陈述正确":
             verdict["say_ok"] = parse_expr(value, ln.number).json()
@@ -891,6 +1104,9 @@ def merge_table(previous: Any, value: Any, what: str, number: int) -> Any:
 
 def load(path: Path) -> Chapter1Source:
     TOPICS.clear()
+    PLACES.clear()
+    PERSON_KEYS.clear()
+    VALUE_IDS.clear()
     lines = source_lines(path)
     source = Chapter1Source()
     content_order: list[str] = []
@@ -940,6 +1156,10 @@ def load(path: Path) -> Chapter1Source:
             if rest in flows:
                 raise StoryError(f"流程“{rest}”重复。", head.number)
             flows[rest] = {**header, "steps": parse_flow(steps_lines, 1)}
+        elif text == "声学":
+            if "_ACOUSTIC_LAWS" in source.RULES_DATA:
+                raise StoryError("声学只能声明一处。", head.number)
+            source.RULES_DATA["_ACOUSTIC_LAWS"] = read_acoustic_laws(body)
         elif word == "声路":
             raw = source.RULES_DATA.setdefault("_ACOUSTIC_RAW", {})
             unique(raw, rest, [(split_pair(item), item.number) for item in body], "声路", head.number)
@@ -952,6 +1172,9 @@ def load(path: Path) -> Chapter1Source:
                 raise StoryError(f"人物“{rest}”缺少编号。", head.number)
             ident = fields["编号"][0]
             if ident.startswith("person."):
+                PERSON_KEYS[rest] = ident.split(".", 1)[1]
+                if "心智范围" in fields:
+                    source.RULES_DATA.setdefault("MIND_RANGES", {})[rest] = read_person({"心智范围": fields["心智范围"]})["mind_ranges"]
                 # The shared full profile supplies the original four private desire records.
                 host_id = {"person.Det": "detective", "person.Huo": "huo",
                            "person.Shen": "shen", "person.Su": "su"}.get(ident)
@@ -960,7 +1183,35 @@ def load(path: Path) -> Chapter1Source:
                         {key: field for key, field in fields.items() if key in PERSON_FIELDS})
             else:
                 source.RULES_DATA.setdefault("PEOPLE", {})[ident] = read_person(fields)
+        elif word == "方法":
+            unique(source.RULES_DATA.setdefault("METHODS", {}), rest, read_method(rest, body), "方法", head.number)
+        elif text == "心愿":
+            wishes = source.RULES_DATA.setdefault("WISHES", {})
+            for item in body:
+                flag, _, goals = item.text.removeprefix("- ").partition("|")
+                if flag.strip() not in VALUE_IDS:
+                    raise StoryError(f"心愿的欲望标志“{flag.strip()}”不在价值词汇里。", item.number)
+                unique(wishes, VALUE_IDS[flag.strip()], split_list(goals), "心愿", item.number)
+        elif text == "开局人选":
+            openings = source.RULES_DATA.setdefault("OPENINGS", [])
+            for item in body:
+                parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+                if len(parts) != 3 or parts[2] not in {"可选", "待验收"}:
+                    raise StoryError("开局人选写成“- 人物 | 开场场面 | 可选或待验收”。", item.number)
+                openings.append({"person": parts[0], "scene": parts[1], "selectable": parts[2] == "可选"})
+        elif word == "寝区案件":
+            unique(source.RULES_DATA.setdefault("DORM_CASES", {}), rest, read_dorm_case(rest, head, body, PLACES, PERSON_KEYS),
+                   "寝区案件", head.number)
         elif word in ECOLOGY_BLOCKS or word in {"晨间日常", "出区日常"}:
+            if word == "价值":
+                for item in body:
+                    parts = [part.strip() for part in item.text.removeprefix("- ").split("|")]
+                    if len(parts) >= 2:
+                        VALUE_IDS[parts[0]] = parts[1]
+            if word in {"地点", "人物"}:
+                ident = read_fields(body).get("编号", ("", head, []))[0]
+                if "." in ident:
+                    (PLACES if word == "地点" else PERSON_KEYS)[rest] = ident.split(".", 1)[1]
             # Full ecology validation and compilation use the shared story_script compiler.
             continue
         elif word == "话语":
@@ -989,7 +1240,8 @@ def load(path: Path) -> Chapter1Source:
                 repeatable=yes_no(f["可重复"][0], "可重复", f["可重复"][1].number) if "可重复" in f else None,
                 addenda=[parse_addendum(item) for item in f["补注"][2]] if "补注" in f else None,
                 compare_when=parse_expr(f["逐人可用"][0], f["逐人可用"][1].number).json() if "逐人可用" in f else None,
-                recall_confirms=[int(n) for n in split_list(f["回忆证实"][0])] if "回忆证实" in f else None))
+                recall_confirms=[int(n) for n in split_list(f["回忆证实"][0])] if "回忆证实" in f else None,
+                supports=read_supports(f["支撑"][0], f["支撑"][1].number) if "支撑" in f else None))
         elif word == "生活痕迹":
             ident, _, title = rest.partition(" ")
             f = read_fields(body)
@@ -1072,6 +1324,7 @@ def load(path: Path) -> Chapter1Source:
         else:
             raise StoryError(f"未知块“{word}”。", head.number)
     finalize_acoustics(source)
+    finalize_verdicts(source)
     ordered = {key: source.CONTENT_TABLES[key] for key in CONTENT_KEYS if key in source.CONTENT_TABLES}
     source.CONTENT_TABLES = ordered
     source.CHAPTER = ChapterSpec(source.chapter_id, tuple(source.entries),

@@ -21,6 +21,9 @@ if (!args.Contains("--enabled", StringComparer.Ordinal))
     throw new ArgumentException("自主逻辑模拟必须显式传入 --enabled；正常游戏保持玩家控制。");
 var decisionProfile = "default";
 string? durationArgument = null;
+Random? chaos = null;
+string? playAs = null;
+int mindSeed = 0;
 var persona = new Dictionary<string, double>(StringComparer.Ordinal);
 var outputArguments = new List<string>();
 for (var index = 0; index < args.Length; index++)
@@ -39,6 +42,27 @@ for (var index = 0; index < args.Length; index++)
         var (key, value) = (args[index][..args[index].IndexOf('=')], args[index][(args[index].IndexOf('=') + 1)..]);
         persona[key] = double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
     }
+    else if (args[index] == "--play-as")
+    {
+        // 开局任选一人（总纲 §六 第五期）：记录控制者、播其开场独白，结束时给出此人的认知与心愿；不改他人的行为。
+        if (++index >= args.Length) throw new ArgumentException("--play-as 需要人物名。");
+        playAs = args[index];
+    }
+    else if (args[index] == "--mind-seed")
+    {
+        if (++index >= args.Length || !int.TryParse(args[index], out mindSeed)) throw new ArgumentException("--mind-seed 需要整数种子（0 为作者默认值）。");
+    }
+    else if (args[index] == "--case-seed")
+    {
+        if (++index >= args.Length || !int.TryParse(args[index], out var caseSeed)) throw new ArgumentException("--case-seed 需要整数种子（0 为作者版本）。");
+        CaseVariants.Seed = caseSeed;
+    }
+    else if (args[index] == "--chaos")
+    {
+        // 混沌测试：侦探的每一步改由随机代理在公开协议上乱做（含毁物、拧接头、乱重演、乱作答），检查不卡死（总纲 §六 第三期）。
+        if (++index >= args.Length || !int.TryParse(args[index], out var chaosSeed)) throw new ArgumentException("--chaos 需要一个整数种子。");
+        chaos = new Random(chaosSeed);
+    }
     else if (args[index] == "--duration")
     {
         if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
@@ -54,7 +78,8 @@ var outputArgument = outputArguments.FirstOrDefault();
 var output = outputArgument is not null ? Path.GetFullPath(outputArgument) : Path.GetFullPath("artifacts/chapter-one-ecology/unified-game-trajectory.txt");
 if (string.Equals(Path.GetExtension(output), ".json", StringComparison.OrdinalIgnoreCase))
     throw new ArgumentException("完整动作脚本只接受文本输出路径，不生成 JSON 文件。");
-Persona.Overrides = persona;
+var sampled = Persona.Sample(mindSeed);
+Persona.Overrides = sampled.Concat(persona).GroupBy(p => p.Key).ToDictionary(g => g.Key, g => g.Last().Value);
 var world = new MorningWorld();
 world.InitializePlayerPerception();
 var content = new AwakeningContentSession();
@@ -253,6 +278,14 @@ void Command(string name, IReadOnlyList<object?> arguments)
     {
         var step = Convert.ToInt32(content.Session.GetProgress("answer_state")["step"]);
         var argument = answerPrediction is { } prediction ? planner.Argument(step,content,prediction) : null;
+        if (chaos is not null)
+        {
+            // 乱作答：有时什么也不交（暂且不答），有时随便配一句陈述与一件证物。
+            var statements = content.Content.RootElement.GetProperty("STATEMENTS").EnumerateObject().Select(s => s.Name).ToArray();
+            var exhibits = content.Content.RootElement.GetProperty("EVIDENCE").EnumerateObject().Select(e => e.Name).ToArray();
+            argument = Expired() || chaos.NextDouble() < 0.3 ? null : (statements[chaos.Next(statements.Length)], exhibits[chaos.Next(exhibits.Length)]);
+            if (argument is null) { content.Session.GetProgress("answer_pick").Clear(); Story("混沌", "暂且不答"); return; }
+        }
         if (argument is not { } claim)
         { awaitingInput = true; Story("待输入", "没有足够公开依据提交本步陈述与举证，停止答辩"); }
         else
@@ -295,7 +328,7 @@ void PlayDialogue(string title)
         Tick(false);
         if (packet.IsComplete || awaitingInput)
         {
-            if (title.StartsWith("answer_wrong",StringComparison.Ordinal) || title == "answer_need_test")
+            if (chaos is null && (title.StartsWith("answer_wrong",StringComparison.Ordinal) || title == "answer_need_test"))
             { awaitingInput = true; Story("停点", "正式答辩反馈未接受论证；保留失败，不遍历判定猜答案"); }
             return;
         }
@@ -347,16 +380,47 @@ void PlayFlow(Action begin)
 world.SetDetectiveControl("simulation");
 controls.Add(new { Time = time, Mode = world.DetectiveControl, Reason = "新会话开始即启用侦探与住民相同的自主行动机制", SameMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)) });
 if (persona.Count > 0) Story("运行", "人物默认设置微调：" + string.Join("，", persona.Select(p => $"{p.Key}={p.Value}")));
+if (mindSeed != 0) Story("运行", $"隐藏心智抽样：种子 {mindSeed}（{sampled.Count} 项，取值不向玩家显示）");
+if (CaseVariants.Seed != 0) Story("运行", $"寝区案件变体：种子 {CaseVariants.Seed}（真相与答案不变）");
+if (playAs is not null)
+{
+    var opening = content.Content.RootElement.GetProperty("OPENINGS").EnumerateArray().FirstOrDefault(o => o.GetProperty("person").GetString() == playAs);
+    if (opening.ValueKind == JsonValueKind.Undefined) throw new ArgumentException("开局人选里没有：" + playAs);
+    Story("控制切换", $"玩家选择 {playAs}（{(opening.GetProperty("selectable").GetBoolean() ? "可选" : "待验收，仅供验证")}）；侦探与其余人照常自主行动");
+    if (playAs != "侦探") PlayDialogue(opening.GetProperty("scene").GetString()!);
+}
 Story("运行", $"来源：{runSource}；{(stopMinutes is { } limit ? $"运行到游戏第 {limit} 分钟（自起始 {startMinutes} 分钟起 {limit - startMinutes} 分钟）" : "运行到剧情自然结束")}");
 content.Session.Locate("detective", currentRoom);
 SyncStage();
 PlayFlow(() => content.StartFlow(world, "醒来"));
 // Roaming and meeting are advanced through the original public daily/story flow.
 for (var tick = 0; tick < 180 * 4 && !awaitingInput && !Expired() && Stage() != "investigate"; tick++) Tick(true);
-for (var actionIndex = 0; actionIndex < planner.ActionBudget && !awaitingInput && !Expired() && Stage() == "investigate"; actionIndex++)
+int chaosActions = 0;
+NightVariables RandomVariables() => NightVariables.All().ElementAt(chaos!.Next(NightVariables.All().Count()));
+DetectiveAction ChaosAction()
+{
+    // 合法动作与非常规动作混在一起，均匀抽取；不看真相、不看判定。
+    var rooms = new[] { "R05", "R08", "hall", "pantry", "foyer" };
+    var evidence = content.Content.RootElement.GetProperty("EVIDENCE").EnumerateObject().Select(e => e.Name).ToArray();
+    var joints = world.Joints.Keys.ToArray();
+    var pool = planner.Actions.Where(a => a.Kind != "answer" || chaos!.NextDouble() < 0.3).ToList();
+    pool.Add(new("chaos_destroy", "destroy", evidence[chaos!.Next(evidence.Length)], "", "毁掉一件证物", 2, 0, "", "", "", "", true));
+    pool.Add(new("chaos_joint", "joint", joints[chaos.Next(joints.Length)], "", "拧动一个接头", 3, 0, "", "", "", "", true));
+    pool.Add(new("chaos_rest", "rest", "", "", "歇一会儿", 5, 0, "", "", "", "", true));
+    pool.Add(new("chaos_wander", "wander", "", rooms[chaos.Next(rooms.Length)], "到处走走", 1, 0, "", "", "", "", true));
+    pool.Add(new("chaos_unknown", "destroy", "不存在的东西", "", "对未建模的东西下手", 1, 0, "", "", "", "", true));
+    return pool[chaos.Next(pool.Count)];
+}
+for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 400) && !awaitingInput && !Expired() && Stage() == "investigate"; actionIndex++)
 {
     planner.Refresh(mind,content);
     var search = planner.Plan();
+    if (chaos is not null)
+    {
+        var picked = ChaosAction();
+        chaosActions++;
+        search = search with { Action = picked, Prediction = RandomVariables() };
+    }
     searches.Add(new { Time = time, GameMinutes = content.GameMinutes, Decision = search });
     if (search.Action is not { } action)
     { Story("停点", "主观模型无可执行调查，或观测与假设不相容；未提交猜测答辩。"); break; }
@@ -375,6 +439,22 @@ for (var actionIndex = 0; actionIndex < planner.ActionBudget && !awaitingInput &
         Story("宿主", "调查目的地到场代报；未验几何：" + currentRoom);
     }
     if (awaitingInput) break;
+    if (action.Kind is "destroy" or "joint" or "rest" or "wander")
+    {
+        if (action.Kind == "destroy")
+            Story("混沌", (content.DestroyEvidence(world, action.Target) ? "毁掉了 " : "未建模，维持原状：") + action.Target);
+        else if (action.Kind == "joint")
+        {
+            var loose = !world.Joints[action.Target];
+            content.SetJoint(world, action.Target, loose);
+            Story("混沌", $"把{action.Target}{(loose ? "拆松" : "拧紧")}了");
+        }
+        else if (action.Kind == "rest") Command("rest", []);
+        else { content.ConsumeAction("走动"); Story("混沌", "走到 " + action.Room + " 看了看"); }
+        planner.Completed(action);
+        Tick(true);
+        continue;
+    }
     switch (action.Kind)
     {
         case "inspect":
@@ -425,6 +505,16 @@ for (var actionIndex = 0; actionIndex < planner.ActionBudget && !awaitingInput &
 }
 SyncStage();
 foreach (var entry in content.TakeTiming()) timing.Add(new { Time = time, Timing = entry });
+if (chaos is not null)
+    Story("混沌", $"随机动作 {chaosActions} 次；毁物 {content.Session.GetProgress("destroyed").Count} 件；补救 {content.Session.GetProgress("rescue").Count} 次；未建模 {content.Session.GetProgress("unmodeled").Count} 次；终止阶段 {Stage()}；"
+        + (Expired() ? "到达运行时长" : Stage() is "finale" or "ended" ? "走到终局" : "动作预算用尽"));
+if (playAs is not null)
+{
+    foreach (var line in Wishes.For(playAs)) Story("心愿", line);
+    foreach (var dorm in world.DormCaseResults)
+        foreach (var belief in dorm.Beliefs.Where(b => b.StartsWith(playAs + "：", StringComparison.Ordinal)))
+            Story("所控者认知", $"{dorm.Case}：答“{dorm.Answer}”时，{belief}");
+}
 Story("停点", $"当前阶段 {Stage()}；实际自主答辩提交 {answerSubmitted}；正式终局开门 {exitGameMinutes is not null}。预测、动机与搜索值均为主观假设；结果以正式流程反馈为准。");
 ContinuationSimulation.Outcome? continuation = null;
 if (Expired()) Story("运行停点", $"达到运行时长：游戏第 {content.GameMinutes} 分钟；当前阶段 {Stage()}。之后的剧情不在本次运行范围内。");

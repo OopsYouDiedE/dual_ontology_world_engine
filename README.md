@@ -51,6 +51,13 @@ python godot_csharp/tools/compile_story.py --check
 dotnet run --project godot_csharp/scenes/Awakening/check/DetectiveSimulation -- --enabled artifacts/chapter-one-ecology/full-scene-actions.txt
 ```
 
+自动验证参数（均从新会话起跑，不代表游玩体验）：`--duration <时长>` 覆盖 story 的“运行”；`--persona 键=值` 微调人物默认设置（如 `苏泠.初醒信任.侦探=-2`、`沃德.先入之见.缘由=0`，可重复）；`--mind-seed N` 按 story 的心智范围抽样隐藏心智（0 为作者默认）；`--case-seed N` 取寝区案件变体（0 为作者版本）；`--play-as <人名>` 以待验收人物开局（播放其开场独白，结尾列出其心愿与寝区推论）；`--chaos N` 随机代理乱做。批量驱动：
+
+```powershell
+python godot_csharp/tools/check/perturb_simulation.py
+python godot_csharp/tools/check/chaos_simulation.py --seeds 1000 --jobs 8
+```
+
 题面选择歇息只让侦探个人短休，不结束章节；其余三位继续行动。命令加 `--decision-profile rest` 可从新会话覆盖这一公开选择，后续仍由主观规划决定。
 
 世界脚本前端位于 `godot_csharp/tools/world_script.py`，使用 Python 风格声明加三反引号对白的 `.world` 文件；它只解析 AST，不执行作者代码。统一剧本语言 `.story` 由 `godot_csharp/tools/story_script.py` 译成同一份 IR（规范见 `docs/design-standard.md`）；全部正式剧情位于 `scenes/Awakening/Script/chapter_01.story`，人物、物件、文案、请求、选项、反应、场面与交互点均用 `.story` 声明，后续案件置于 `续篇 chapter2` 作用域，示例仍位于 `scenes/Shared/Story/Examples/WorldScript/`。玩家选项与 NPC 反应平铺声明；Core 检查可用性并为 NPC 选择适用反应。第二章借用第一章运行中的 Core 会话及其人物实体和认知，不从存档重建。

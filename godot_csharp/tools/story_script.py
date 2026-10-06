@@ -321,6 +321,7 @@ class Translator:
                 if any(step["room"] in morning["blocked_rooms"] for step in routine["steps"]):
                     raise StoryError("出区日常不能进入封锁生活翼。")
             morning["departures"] = departures
+            morning["dorm_answers"] = self.design.get("dorm_answers", {})
         self.design = compile_design(self.design_blocks, self)
         if morning is not None:
             self.design["morning"] = morning
@@ -379,16 +380,26 @@ class Translator:
         if "departures" in self.design:
             raise StoryError("出区日常块只能有一个。", head.number)
         departures: dict[str, Any] = {}
-        for name, (value, line, sub) in self.fields_of(head, body, set(self.person_enum)).items():
+        for name, (value, line, sub) in self.fields_of(head, body, set(self.person_enum) | {"答题所需"}).items():
+            if name == "答题所需":
+                # 低精度：一区居民完成的查看与听辨次数达到此数，即视为答毕，外闩抬起（第四期由真实案件取代）。
+                needs = {}
+                for entry in split_list(value):
+                    dorm, _, number = entry.rpartition(" ")
+                    needs[table(self.dorms, dorm.strip(), "寝区", line.number)] = parse_int(number, "答题所需", line.number)
+                self.design["dorm_answers"] = needs
+                continue
             if value or not sub:
-                raise StoryError("出区日常人物须缩进声明出门分钟与行动。", line.number)
+                raise StoryError("出区日常人物须缩进声明行动（出门分钟可选）。", line.number)
             fields = self.fields_of(line, sub, {"出门分钟", "行动"})
-            if set(fields) != {"出门分钟", "行动"}:
-                raise StoryError("出区日常人物须同时声明出门分钟与行动。", line.number)
-            minutes_text, minutes_line, minutes_sub = fields["出门分钟"]
-            minutes = parse_int(minutes_text, "出门分钟", minutes_line.number)
-            if minutes_sub or minutes < 0:
-                raise StoryError("出门分钟须为非负整数。", minutes_line.number)
+            if "行动" not in fields:
+                raise StoryError("出区日常人物须声明行动。", line.number)
+            minutes = None
+            if "出门分钟" in fields:
+                minutes_text, minutes_line, minutes_sub = fields["出门分钟"]
+                minutes = parse_int(minutes_text, "出门分钟", minutes_line.number)
+                if minutes_sub or minutes < 0:
+                    raise StoryError("出门分钟须为非负整数。", minutes_line.number)
             actions, action_line, steps = fields["行动"]
             if actions or not steps:
                 raise StoryError("出区行动须使用缩进的步骤列表。", action_line.number)
@@ -806,7 +817,7 @@ class Translator:
 
 GENDERS = {"男": "Male", "女": "Female"}
 # 由章节读取器（story_chapter1.read_person）解释的人物认知初值；世界脚本只放行。
-CHAPTER_PERSONA_FIELDS = {"初醒信任", "谨慎", "说话习惯"}
+CHAPTER_PERSONA_FIELDS = {"初醒信任", "谨慎", "说话习惯", "心智范围"}
 PROFILE_FIELDS_ZH = {"性别", "阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
                      "信号", "结构", "温室", "厨艺", "工匠", "看重", "偏见", "魔偏见", "日常", "口吻"}
 

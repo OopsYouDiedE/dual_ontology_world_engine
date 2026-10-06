@@ -12,6 +12,25 @@ public static class Persona
 {
     public static IReadOnlyDictionary<string, double> Overrides { get; set; } = new Dictionary<string, double>();
 
+    /// <summary>
+    /// 隐藏心智抽样（总纲 §六 第五期）：按各人 story 中的“心智范围”，以种子在范围内抽一组取值；种子 0 是第一局，
+    /// 用作者默认值（不抽）。返回的键与 <see cref="Overrides"/> 相同，可与外部微调合并；玩家看不到这些取值。
+    /// </summary>
+    public static IReadOnlyDictionary<string, double> Sample(int seed)
+    {
+        var result = new Dictionary<string, double>(StringComparer.Ordinal);
+        if (seed == 0 || !Chapter1Data.Root.TryGetProperty("MIND_RANGES", out var ranges)) return result;
+        var random = new Random(seed);
+        foreach (var person in ranges.EnumerateObject())
+            foreach (var range in person.Value.EnumerateObject())
+            {
+                var low = (int)range.Value[0].GetDouble();
+                var high = (int)range.Value[1].GetDouble();
+                result[person.Name + "." + range.Name] = random.Next(low, high + 1);
+            }
+        return result;
+    }
+
     private static JsonElement? Person(Person who)
         => Chapter1Data.Root.GetProperty("PEOPLE").TryGetProperty(Names.PersonKeys[(int)who], out var p) ? p : null;
 

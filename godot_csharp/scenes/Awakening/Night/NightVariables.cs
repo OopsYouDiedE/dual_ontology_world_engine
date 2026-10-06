@@ -63,26 +63,42 @@ public enum Hearing { Nothing, AlarmOnly, Murmur, Tail, Full, FullMuffled }
 /// </summary>
 public static class Acoustics
 {
-    private sealed record Data(IReadOnlyDictionary<string, IReadOnlyDictionary<string, Hearing>> Table,
-        IReadOnlySet<Hearing> SeemsOutside, IReadOnlySet<Room> Shout);
+    public sealed record Joint(string Name, Room Room, bool Loose);
+    private sealed record Data(Room TubeRoom, Room DoorInner, Room DoorOuter, ImmutableArray<Joint> Joints,
+        IReadOnlySet<Room> Murmur, IReadOnlySet<Hearing> SeemsOutside, IReadOnlySet<Room> Shout);
 
     private static readonly Lazy<Data> Loaded = new(() =>
     {
         var root = Chapter1Data.Root.GetProperty("ACOUSTICS");
-        var table = root.GetProperty("hearing").EnumerateObject().ToDictionary(origin => origin.Name,
-            origin => (IReadOnlyDictionary<string, Hearing>)origin.Value.EnumerateObject()
-                .ToDictionary(row => row.Name, row => Enum.Parse<Hearing>(row.Value.GetString()!)));
-        return new(table,
+        var laws = root.GetProperty("laws");
+        var door = laws.GetProperty("door");
+        return new(RoomOf(laws.GetProperty("tube_room").GetString()!), RoomOf(door[0].GetString()!), RoomOf(door[1].GetString()!),
+            [.. laws.GetProperty("joints").EnumerateArray().Select(j => new Joint(j.GetProperty("name").GetString()!,
+                RoomOf(j.GetProperty("room").GetString()!), j.GetProperty("loose").GetBoolean()))],
+            laws.GetProperty("murmur").EnumerateArray().Select(r => RoomOf(r.GetString()!)).ToHashSet(),
             root.GetProperty("seems_outside").EnumerateArray().Select(h => Enum.Parse<Hearing>(h.GetString()!)).ToHashSet(),
             root.GetProperty("hears_shout").EnumerateArray().Select(r => RoomOf(r.GetString()!)).ToHashSet());
     });
 
     private static Room RoomOf(string key) => (Room)Array.IndexOf(Names.RoomKeys, key);
 
-    public static Hearing Hear(VoiceOrigin origin, Room listener)
+    /// <summary>story 声明的接头及其初始松紧（昨夜即如此）。</summary>
+    public static ImmutableArray<Joint> AuthoredJoints => Loaded.Value.Joints;
+
+    /// <summary>
+    /// 按声学法则推出听感：铜口所在完整，松动接头处只剩句尾，隔墙低语处嗡嗡；门外的喊声门内发闷，
+    /// 门内房间若有松动接头，声音钻进管子从别处松动接头发闷漏出。<paramref name="loose"/> 缺省为 story 声明的接头状态。
+    /// </summary>
+    public static Hearing Hear(VoiceOrigin origin, Room listener, IReadOnlyDictionary<string, bool>? loose = null)
     {
-        var rows = Loaded.Value.Table[origin.ToString()];
-        return rows.TryGetValue(Names.RoomKeys[(int)listener], out var hearing) ? hearing : rows["*"];
+        var data = Loaded.Value;
+        var leaking = data.Joints.Where(j => loose?.GetValueOrDefault(j.Name, j.Loose) ?? j.Loose).Select(j => j.Room).ToHashSet();
+        if (origin == VoiceOrigin.Tube)
+            return listener == data.TubeRoom ? Hearing.Full : leaking.Contains(listener) ? Hearing.Tail
+                : data.Murmur.Contains(listener) ? Hearing.Murmur : Hearing.AlarmOnly;
+        if (listener == data.DoorOuter) return Hearing.Full;
+        if (listener == data.DoorInner) return Hearing.FullMuffled;
+        return leaking.Contains(data.DoorInner) && leaking.Contains(listener) ? Hearing.FullMuffled : Hearing.Nothing;
     }
 
     /// <summary>只听见句尾或隔门听见时，声音听来像是从门外来的。</summary>

@@ -53,6 +53,10 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `Script/chapter_01.story` + `Script/story/` | 两章对白、分支、证物事实与热点的唯一生产源。入口文件只写章节、按序 `引入：<相对路径或通配>` 与末尾的 `运行`（声明时长；模拟器 `--duration` 可代替或覆盖）；片段按生态、第一章、续篇分目录，按序引入与写在同一文件等价；每句台词行尾带 `[#id=…]` 稳定编号，新台词用 `python godot_csharp/tools/compile_story.py --assign-ids` 写回 |
 | `Night/AwakeningCase.cs` / `Night/Persona.cs` / `Script/Chapter1Speech.cs` | 共享案件模型（Core `Reasoner` 用）、人物认知初值（读 story，`Persona.Overrides` 仅供微调验证）、话题回应与重演目睹 |
 | `check/CognitionCheck/` | 认知与言语的场景检查和默认设置微调检查 |
+| `check/LawCheck/` | 声路法则、接头松紧、判定按命题支撑、毁证补救与未建模的检查 |
+| `Night/MorningEcology.cs`（寝区案件）/ `Script/story/第一章/寝区案件.story` | 另外三组的始业之问：本区居民的调查累计揭出痕迹，各人用同一推理器读痕迹并带着先入之见作答；答毕即外闩抬起出门 |
+| `Night/CaseVariants.cs` / `Night/Wishes.cs` / `Script/story/生态/方法库.story` / `Script/story/第一章/场面/10_开场独白.story` | 寝区案件的变体生成与求解器（种子 0 为作者版本）；心愿由欲望经方法库分解；开局人选与十六人开场独白（现只有侦探可选） |
+| `check/VariantCheck/` | 开局人选、隐藏心智抽样、心愿与案件变体的检查 |
 | `Script/generated_lines_zh.csv` | 编译器生成的台词表（编号、场面、说话人、中文），供翻译使用；不手工修改 |
 | `Script/Chapter1Dialogue.cs` / `Shared/Story/InteractionPacket.cs` | 纯 C# 对白查询、效果、选择与交互协议；不依赖 Godot |
 | `Script/generated_awakening_*.json` / `Script/Chapter1CompiledDialogue.cs` | 由 `python godot_csharp/tools/compile_story.py` 生成；`--check` 检查一致性，不手工修改 |

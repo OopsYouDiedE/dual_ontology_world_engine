@@ -5452,6 +5452,28 @@ public static class Chapter1CompiledDialogue
             "target": "END"
           }
         ],
+        "answer_rescue": [
+          {
+            "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "能撑住这句话的东西，已经不在了。",
+            "voice_clip": "",
+            "line_id": "answer_rescue.001"
+          },
+          {
+            "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "可我记得它原来的样子。我只问我问过的——阁下这句，与它相符。",
+            "voice_clip": "",
+            "line_id": "answer_rescue.002"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
         "s10_steps": [
           {
             "op": "line",
@@ -5484,20 +5506,56 @@ public static class Chapter1CompiledDialogue
         ],
         "s10_open": [
           {
-            "op": "line",
-            "speaker": "",
-            "mood": "",
-            "text": "（门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。）",
-            "voice_clip": "",
-            "line_id": "s10_open.001"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。",
-            "voice_clip": "",
-            "line_id": "s10_open.002"
+            "op": "if",
+            "condition": {
+              "op": "gt",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "dorms_open"
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "",
+                "mood": "",
+                "text": "（门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。）",
+                "voice_clip": "",
+                "line_id": "s10_open.001"
+              },
+              {
+                "op": "line",
+                "speaker": "侦探（心声）",
+                "mood": "",
+                "text": "另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。",
+                "voice_clip": "",
+                "line_id": "s10_open.002"
+              }
+            ],
+            "else": [
+              {
+                "op": "line",
+                "speaker": "",
+                "mood": "",
+                "text": "（门外的厅里空着，只有烟灰。对面几扇寝区的门，都还闩着。）",
+                "voice_clip": "",
+                "line_id": "s10_open.016"
+              },
+              {
+                "op": "line",
+                "speaker": "侦探（心声）",
+                "mood": "",
+                "text": "别的寝区也还在门里。我们不是最晚的。",
+                "voice_clip": "",
+                "line_id": "s10_open.017"
+              }
+            ]
           },
           {
             "op": "line",
@@ -6518,6 +6576,696 @@ public static class Chapter1CompiledDialogue
                 "line_id": "alone_shen.005"
               }
             ]
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_huo": [
+          {
+            "op": "line",
+            "speaker": "霍铎（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_huo.001"
+          },
+          {
+            "op": "line",
+            "speaker": "霍铎（心声）",
+            "mood": "",
+            "text": "指节上有老茧。手先摸床沿，找螺丝。",
+            "voice_clip": "",
+            "line_id": "opening_huo.002"
+          },
+          {
+            "op": "line",
+            "speaker": "霍铎（心声）",
+            "mood": "",
+            "text": "只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_huo.003"
+          },
+          {
+            "op": "line",
+            "speaker": "霍铎（心声）",
+            "mood": "",
+            "text": "床头挂钩上缠着一圈机油布。是我的缠法。",
+            "voice_clip": "",
+            "line_id": "opening_huo.004"
+          },
+          {
+            "op": "line",
+            "speaker": "霍铎（心声）",
+            "mood": "",
+            "text": "先看这屋子是怎么搭起来的。",
+            "voice_clip": "",
+            "line_id": "opening_huo.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_shen": [
+          {
+            "op": "line",
+            "speaker": "沈鼎（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_shen.001"
+          },
+          {
+            "op": "line",
+            "speaker": "沈鼎（心声）",
+            "mood": "",
+            "text": "两条胳膊发酸，像揉了半宿的面。",
+            "voice_clip": "",
+            "line_id": "opening_shen.002"
+          },
+          {
+            "op": "line",
+            "speaker": "沈鼎（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_shen.003"
+          },
+          {
+            "op": "line",
+            "speaker": "沈鼎（心声）",
+            "mood": "",
+            "text": "桌上一块磨刀石，中间磨出一道深槽。",
+            "voice_clip": "",
+            "line_id": "opening_shen.004"
+          },
+          {
+            "op": "line",
+            "speaker": "沈鼎（心声）",
+            "mood": "",
+            "text": "人醒了，先找水，先找吃的。",
+            "voice_clip": "",
+            "line_id": "opening_shen.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_su": [
+          {
+            "op": "line",
+            "speaker": "苏泠（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_su.001"
+          },
+          {
+            "op": "line",
+            "speaker": "苏泠（心声）",
+            "mood": "",
+            "text": "墙里有声音。很低，一直在。",
+            "voice_clip": "",
+            "line_id": "opening_su.002"
+          },
+          {
+            "op": "line",
+            "speaker": "苏泠（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_su.003"
+          },
+          {
+            "op": "line",
+            "speaker": "苏泠（心声）",
+            "mood": "",
+            "text": "手指在被面上敲着，在数拍子。",
+            "voice_clip": "",
+            "line_id": "opening_su.004"
+          },
+          {
+            "op": "line",
+            "speaker": "苏泠（心声）",
+            "mood": "",
+            "text": "先听清楚，再说话。",
+            "voice_clip": "",
+            "line_id": "opening_su.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_lucian": [
+          {
+            "op": "line",
+            "speaker": "卢西安（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_lucian.001"
+          },
+          {
+            "op": "line",
+            "speaker": "卢西安（心声）",
+            "mood": "",
+            "text": "嘴里有一句没念完的诗，韵脚落在一半。",
+            "voice_clip": "",
+            "line_id": "opening_lucian.002"
+          },
+          {
+            "op": "line",
+            "speaker": "卢西安（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_lucian.003"
+          },
+          {
+            "op": "line",
+            "speaker": "卢西安（心声）",
+            "mood": "",
+            "text": "桌上的笔记是我的字。",
+            "voice_clip": "",
+            "line_id": "opening_lucian.004"
+          },
+          {
+            "op": "line",
+            "speaker": "卢西安（心声）",
+            "mood": "",
+            "text": "先把这一句念完。",
+            "voice_clip": "",
+            "line_id": "opening_lucian.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_gu": [
+          {
+            "op": "line",
+            "speaker": "顾平章（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_gu.001"
+          },
+          {
+            "op": "line",
+            "speaker": "顾平章（心声）",
+            "mood": "",
+            "text": "老花镜搁在枕边，镜片上有一点墨。",
+            "voice_clip": "",
+            "line_id": "opening_gu.002"
+          },
+          {
+            "op": "line",
+            "speaker": "顾平章（心声）",
+            "mood": "",
+            "text": "老朽只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_gu.003"
+          },
+          {
+            "op": "line",
+            "speaker": "顾平章（心声）",
+            "mood": "",
+            "text": "字缺着的地方，不能乱补。",
+            "voice_clip": "",
+            "line_id": "opening_gu.004"
+          },
+          {
+            "op": "line",
+            "speaker": "顾平章（心声）",
+            "mood": "",
+            "text": "先认得清的，认不清的留白。",
+            "voice_clip": "",
+            "line_id": "opening_gu.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_quer": [
+          {
+            "op": "line",
+            "speaker": "雀儿（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_quer.001"
+          },
+          {
+            "op": "line",
+            "speaker": "雀儿（心声）",
+            "mood": "",
+            "text": "先摸门闩。门闩在外面。",
+            "voice_clip": "",
+            "line_id": "opening_quer.002"
+          },
+          {
+            "op": "line",
+            "speaker": "雀儿（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_quer.003"
+          },
+          {
+            "op": "line",
+            "speaker": "雀儿（心声）",
+            "mood": "",
+            "text": "袋口扎得很紧，是我的结法。",
+            "voice_clip": "",
+            "line_id": "opening_quer.004"
+          },
+          {
+            "op": "line",
+            "speaker": "雀儿（心声）",
+            "mood": "",
+            "text": "先看清谁在，再决定说不说话。",
+            "voice_clip": "",
+            "line_id": "opening_quer.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_ward": [
+          {
+            "op": "line",
+            "speaker": "沃德（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_ward.001"
+          },
+          {
+            "op": "line",
+            "speaker": "沃德（心声）",
+            "mood": "",
+            "text": "先找纸笔。纸在，笔也在。",
+            "voice_clip": "",
+            "line_id": "opening_ward.002"
+          },
+          {
+            "op": "line",
+            "speaker": "沃德（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_ward.003"
+          },
+          {
+            "op": "line",
+            "speaker": "沃德（心声）",
+            "mood": "",
+            "text": "没有记录的事，就是还没有发生过的事。",
+            "voice_clip": "",
+            "line_id": "opening_ward.004"
+          },
+          {
+            "op": "line",
+            "speaker": "沃德（心声）",
+            "mood": "",
+            "text": "先把看到的记下来，再谈别的。",
+            "voice_clip": "",
+            "line_id": "opening_ward.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_selma": [
+          {
+            "op": "line",
+            "speaker": "赛尔玛（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_selma.001"
+          },
+          {
+            "op": "line",
+            "speaker": "赛尔玛（心声）",
+            "mood": "",
+            "text": "窗台上有一盆不认识的苗，叶背发亮。",
+            "voice_clip": "",
+            "line_id": "opening_selma.002"
+          },
+          {
+            "op": "line",
+            "speaker": "赛尔玛（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_selma.003"
+          },
+          {
+            "op": "line",
+            "speaker": "赛尔玛（心声）",
+            "mood": "",
+            "text": "笔记本上画着那片叶子，编号空着。",
+            "voice_clip": "",
+            "line_id": "opening_selma.004"
+          },
+          {
+            "op": "line",
+            "speaker": "赛尔玛（心声）",
+            "mood": "",
+            "text": "先采样，再下结论。",
+            "voice_clip": "",
+            "line_id": "opening_selma.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_ruan": [
+          {
+            "op": "line",
+            "speaker": "阮清越（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_ruan.001"
+          },
+          {
+            "op": "line",
+            "speaker": "阮清越（心声）",
+            "mood": "",
+            "text": "枕边有一枚黑棋子。",
+            "voice_clip": "",
+            "line_id": "opening_ruan.002"
+          },
+          {
+            "op": "line",
+            "speaker": "阮清越（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_ruan.003"
+          },
+          {
+            "op": "line",
+            "speaker": "阮清越（心声）",
+            "mood": "",
+            "text": "棋盘上的局摆了一半，下一手想不起来。",
+            "voice_clip": "",
+            "line_id": "opening_ruan.004"
+          },
+          {
+            "op": "line",
+            "speaker": "阮清越（心声）",
+            "mood": "",
+            "text": "先数清楚手里有什么。",
+            "voice_clip": "",
+            "line_id": "opening_ruan.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_elena": [
+          {
+            "op": "line",
+            "speaker": "伊莲娜（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_elena.001"
+          },
+          {
+            "op": "line",
+            "speaker": "伊莲娜（心声）",
+            "mood": "",
+            "text": "左脚踝缠着绷带，一动就疼。",
+            "voice_clip": "",
+            "line_id": "opening_elena.002"
+          },
+          {
+            "op": "line",
+            "speaker": "伊莲娜（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_elena.003"
+          },
+          {
+            "op": "line",
+            "speaker": "伊莲娜（心声）",
+            "mood": "",
+            "text": "脚尖还记得步位，比脑子先动了一下。",
+            "voice_clip": "",
+            "line_id": "opening_elena.004"
+          },
+          {
+            "op": "line",
+            "speaker": "伊莲娜（心声）",
+            "mood": "",
+            "text": "先别站起来。",
+            "voice_clip": "",
+            "line_id": "opening_elena.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_moran": [
+          {
+            "op": "line",
+            "speaker": "莫兰（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_moran.001"
+          },
+          {
+            "op": "line",
+            "speaker": "莫兰（心声）",
+            "mood": "",
+            "text": "窗光是灰的，灰里还有一层别的颜色。",
+            "voice_clip": "",
+            "line_id": "opening_moran.002"
+          },
+          {
+            "op": "line",
+            "speaker": "莫兰（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_moran.003"
+          },
+          {
+            "op": "line",
+            "speaker": "莫兰（心声）",
+            "mood": "",
+            "text": "速写本翻开着，炭笔还在手边。",
+            "voice_clip": "",
+            "line_id": "opening_moran.004"
+          },
+          {
+            "op": "line",
+            "speaker": "莫兰（心声）",
+            "mood": "",
+            "text": "先把这层颜色画下来。",
+            "voice_clip": "",
+            "line_id": "opening_moran.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_veronica": [
+          {
+            "op": "line",
+            "speaker": "维罗妮卡（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_veronica.001"
+          },
+          {
+            "op": "line",
+            "speaker": "维罗妮卡（心声）",
+            "mood": "",
+            "text": "鼻子先闻到试剂味，很淡。",
+            "voice_clip": "",
+            "line_id": "opening_veronica.002"
+          },
+          {
+            "op": "line",
+            "speaker": "维罗妮卡（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_veronica.003"
+          },
+          {
+            "op": "line",
+            "speaker": "维罗妮卡（心声）",
+            "mood": "",
+            "text": "器具都在原位，摆得比我记得的整齐。",
+            "voice_clip": "",
+            "line_id": "opening_veronica.004"
+          },
+          {
+            "op": "line",
+            "speaker": "维罗妮卡（心声）",
+            "mood": "",
+            "text": "未经验证的，不下结论。",
+            "voice_clip": "",
+            "line_id": "opening_veronica.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_bertrand": [
+          {
+            "op": "line",
+            "speaker": "贝尔特朗（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_bertrand.001"
+          },
+          {
+            "op": "line",
+            "speaker": "贝尔特朗（心声）",
+            "mood": "",
+            "text": "提灯放在床边，手先摸到它。",
+            "voice_clip": "",
+            "line_id": "opening_bertrand.002"
+          },
+          {
+            "op": "line",
+            "speaker": "贝尔特朗（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_bertrand.003"
+          },
+          {
+            "op": "line",
+            "speaker": "贝尔特朗（心声）",
+            "mood": "",
+            "text": "左肩的皮垫磨亮了，是常年托枪的地方。",
+            "voice_clip": "",
+            "line_id": "opening_bertrand.004"
+          },
+          {
+            "op": "line",
+            "speaker": "贝尔特朗（心声）",
+            "mood": "",
+            "text": "先看门，看谁醒着。",
+            "voice_clip": "",
+            "line_id": "opening_bertrand.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_margaret": [
+          {
+            "op": "line",
+            "speaker": "玛格丽特（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_margaret.001"
+          },
+          {
+            "op": "line",
+            "speaker": "玛格丽特（心声）",
+            "mood": "",
+            "text": "先看天花板的梁，接缝是斜着搭的。",
+            "voice_clip": "",
+            "line_id": "opening_margaret.002"
+          },
+          {
+            "op": "line",
+            "speaker": "玛格丽特（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_margaret.003"
+          },
+          {
+            "op": "line",
+            "speaker": "玛格丽特（心声）",
+            "mood": "",
+            "text": "卷尺和铅垂挂在腰上，都没解下来过。",
+            "voice_clip": "",
+            "line_id": "opening_margaret.004"
+          },
+          {
+            "op": "line",
+            "speaker": "玛格丽特（心声）",
+            "mood": "",
+            "text": "先量清楚这屋子，再量别的。",
+            "voice_clip": "",
+            "line_id": "opening_margaret.005"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "opening_mora": [
+          {
+            "op": "line",
+            "speaker": "茉拉（心声）",
+            "mood": "",
+            "text": "……",
+            "voice_clip": "",
+            "line_id": "opening_mora.001"
+          },
+          {
+            "op": "line",
+            "speaker": "茉拉（心声）",
+            "mood": "",
+            "text": "手先找药包。药包在。",
+            "voice_clip": "",
+            "line_id": "opening_mora.002"
+          },
+          {
+            "op": "line",
+            "speaker": "茉拉（心声）",
+            "mood": "",
+            "text": "我只记得上船。",
+            "voice_clip": "",
+            "line_id": "opening_mora.003"
+          },
+          {
+            "op": "line",
+            "speaker": "茉拉（心声）",
+            "mood": "",
+            "text": "围裙口袋里有一卷没用完的绷带。",
+            "voice_clip": "",
+            "line_id": "opening_mora.004"
+          },
+          {
+            "op": "line",
+            "speaker": "茉拉（心声）",
+            "mood": "",
+            "text": "先看谁不舒服。",
+            "voice_clip": "",
+            "line_id": "opening_mora.005"
           },
           {
             "op": "jump",

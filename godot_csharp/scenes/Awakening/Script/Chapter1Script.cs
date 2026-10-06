@@ -384,10 +384,35 @@ public sealed partial class AwakeningContentSession
         }
         finally { (_judgeSaid, _judgeShown) = (null, null); }
         if (goodSay && goodShow) return $"answer_ok{step}";
+        // 补救：支撑这一命题的证物在现实中都已毁去，代管者要的是有人作答，便凭记得的原样认下正确的陈述。
+        if (goodSay && Content.RootElement.GetProperty("VERDICTS").GetProperty(step.ToString()).TryGetProperty("support", out var support)
+            && support.EnumerateArray().All(e => Session.Has("destroyed", e.GetString()!)))
+        {
+            Session.Set("rescue", step.ToString(), "支撑“" + Content.RootElement.GetProperty("VERDICTS").GetProperty(step.ToString()).GetProperty("proposition").GetString()
+                + "”的证物都已毁去；代管者要的是有人作答");
+            return "answer_rescue";
+        }
         Session.Set("state", "wrong_name", !goodSay
             ? (Content.RootElement.GetProperty("STATEMENTS").TryGetProperty(said, out var statement) ? statement.GetString()! : "")
-            : Content.RootElement.GetProperty("EVIDENCE").GetProperty(shown).GetProperty("name").GetString()!);
+            : Content.RootElement.GetProperty("EVIDENCE").TryGetProperty(shown, out var card) ? card.GetProperty("name").GetString()! : "");
         return !goodSay ? "answer_wrong_say" : "answer_wrong_show";
+    }
+    /// <summary>毁掉一件证物；没有这件东西时记为“未建模”，给保守结果（什么也不变）。</summary>
+    public bool DestroyEvidence(MorningWorld world, string id)
+    {
+        // 动手毁物与拧接头都是实在的动作，按试验计时。
+        ConsumeAction("试验", "destroy:" + id);
+        if (world.Destroy(id)) { Session.Set("destroyed", id, true); return true; }
+        Session.Set("unmodeled", "destroy:" + id, "没有可毁的“" + id + "”，维持原状");
+        return false;
+    }
+    /// <summary>拧紧或拆松一个接头；没有这个接头时记为“未建模”。</summary>
+    public bool SetJoint(MorningWorld world, string name, bool loose)
+    {
+        ConsumeAction("试验", "joint:" + name);
+        if (world.SetJoint(name, loose)) return true;
+        Session.Set("unmodeled", "joint:" + name, "没有名为“" + name + "”的接头，维持原状");
+        return false;
     }
     public bool CanExperiment(string id) => !Session.Has("experiments", id) || id == "E8";
     public bool CanHelp(string id) => !Session.Has("helped", id);

@@ -82,3 +82,8 @@
 场面 answer_pause
     铜口：不急。答案备好了，再来。 [#id=answer_pause.001]
     跳转 END
+
+场面 answer_rescue
+    铜口：能撑住这句话的东西，已经不在了。 [#id=answer_rescue.001]
+    铜口：可我记得它原来的样子。我只问我问过的——阁下这句，与它相符。 [#id=answer_rescue.002]
+    跳转 END

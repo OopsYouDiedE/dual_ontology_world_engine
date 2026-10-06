@@ -356,10 +356,24 @@ public sealed partial class MorningWorld
     public int Hooks(Person who) => _hooks[who];
     public int TotalHooks => _hooks.Values.Sum();
 
+    private readonly HashSet<string> _destroyed = new(StringComparer.Ordinal);
+    public bool IsDestroyed(string evidence) => _destroyed.Contains(evidence);
+
+    /// <summary>
+    /// 现实中毁掉一件证物（非常规动作，混沌测试与日后的玩法用）：它离开房间，此后谁也看不见；
+    /// 已经看过它的人，认知里的投影不受影响。没有这件证物时返回 false，由调用方记“未建模”。
+    /// </summary>
+    public bool Destroy(string evidence)
+    {
+        if (!_evidence.TryGetValue(evidence, out var essence) || !_destroyed.Add(evidence)) return false;
+        essence.Get<SpatialProperty>()!.Space = null;
+        return true;
+    }
+
     /// <summary>某人亲眼检视一件证物：只把它的可见状态经感知写入此人的认知。</summary>
     public void Examine(Person who, string evidence)
     {
-        if (!_evidence.TryGetValue(evidence, out var essence)) return;
+        if (!_evidence.TryGetValue(evidence, out var essence) || _destroyed.Contains(evidence)) return;
         _runtime.Observe(_souls[who], _runtime.Representations(essence), ++_time);
     }
 
@@ -373,7 +387,7 @@ public sealed partial class MorningWorld
         var heard = ImmutableArray.CreateBuilder<HeardAt>();
         foreach (var (who, room) in positions)
         {
-            var hearing = Acoustics.Hear(VoiceOrigin.Tube, room);
+            var hearing = Acoustics.Hear(VoiceOrigin.Tube, room, _joints);
             // 清晨没有警铃：传不到的地方就是什么也听不到。
             var text = hearing is Hearing.AlarmOnly or Hearing.Nothing ? Chapter1Data.Text("声响·无") : Acoustics.Render(sentence, hearing);
             var outside = Acoustics.SeemsFromOutside(hearing);
@@ -412,6 +426,22 @@ public sealed partial class MorningWorld
     }
 
     public bool HasRecalled(Person who) => _recalled.ContainsKey(who);
+
+    // ---- 现实中可改动的声路：接头（总纲 §六 第三期） ----
+    private readonly Dictionary<string, bool> _joints = Acoustics.AuthoredJoints.ToDictionary(j => j.Name, j => j.Loose);
+    public IReadOnlyDictionary<string, bool> Joints => _joints;
+
+    /// <summary>拧紧（或拆松）一个接头：此后的声路试验按新状态传声，铜口证物上的“接头松动”随之改变；昨夜的痕迹不变。</summary>
+    public bool SetJoint(string name, bool loose)
+    {
+        if (!_joints.ContainsKey(name)) return false;
+        _joints[name] = loose;
+        if (_evidence.TryGetValue("E8", out var tube) && tube.Get<StateProperty>() is { } state)
+            foreach (var tag in state.Values.Keys.Where(t => t.Name == "接头松动").ToArray())
+                state.Values[tag] = _joints.Values.Any(v => v) ? 1 : 0;
+        _runtime.Sync();
+        return true;
+    }
 
     // ---- 推理与言语所需的认知读写（总纲 §六 第二期）：只经 Observation.Observe 写入，只读本人认知 ----
 

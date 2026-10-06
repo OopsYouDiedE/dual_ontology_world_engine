@@ -348,8 +348,38 @@ public sealed partial class Game
 
     // -------------------------------------------------------------- physics --
 
+    // ---- 立规者自己去贴规矩：打算写进他的认知，贴出是他完成的行动 ----
+    private readonly List<(Person Author, RuleSpec Spec, Place Place, Projection Intent, Effect Act)> _postIntents = [];
+
+    private void IntendPost(Person author, RuleSpec spec, Place place)
+    {
+        if (spec.PostedAt.Contains(place) || _postIntents.Any(i => i.Spec == spec && i.Place == place)) return;
+        var fx = new Fx(this, e => author.M[e]);
+        var act = Fx.Seq(fx.Go(place), fx.Change(Board[place], T.Posted, 1));
+        var intent = Observation.Observe(author.Soul, new ObservationInput($"要在{Names.Of(place)}贴出「{Short(spec)}」", ProjectionKind.Concept)
+        { Source = ObservationSource.Introspection, Existence = Truth.True, Time = Now });
+        Observation.Observe(author.Soul, new ObservationInput(intent.Name, intent.Kind)
+        { Target = intent, Source = ObservationSource.Introspection, Time = Now,
+          Rules = [new Rule(new Condition.Exists(intent), RuleMode.Prefer, act, 6, Truth.True)] });
+        _postIntents.Add((author, spec, place, intent, act));
+        Log.Add($"D{Day} {Names.Of(Slot)} {author.Name}打算在{Names.Of(place)}贴出：{spec}");
+    }
+
+    private void CompletePostIntents(Person p, ActionExecution exec)
+    {
+        foreach (var due in _postIntents.Where(i => i.Author == p && Ast.Equivalent(exec.Intent.Changes, i.Act)).ToArray())
+        {
+            _postIntents.Remove(due);
+            Observation.Observe(p.Soul, new ObservationInput(due.Intent.Name, due.Intent.Kind)
+            { Target = due.Intent, Source = ObservationSource.Introspection, Existence = Truth.False, Time = Now });
+            Post(due.Spec, due.Place);
+            if (Where(Det) == due.Place) Feed.Add(X("规矩.聚落张贴", ("人", p.Name), ("地", Names.Of(due.Place)), ("规矩", due.Spec.Text)));
+        }
+    }
+
     private void Physics(Person p, Job? job, ActionExecution exec)
     {
+        CompletePostIntents(p, exec);
         var place = Where(p);
         if (Slot == Slot.Night) p.NightVisited.Add(place);
         NightNoise(p, job);
@@ -633,13 +663,17 @@ public sealed partial class Game
                 break;
             case (2, Slot.Evening):
             {
+                // 沃德当众盯视雀儿出自他自己的成见：他心里对雀儿的信任低到 -2 以下才会这样（不是作者指定）。
+                var ward = this[P.Ward];
                 var quer = this[P.Quer];
+                if (TrustIn(ward, quer) > -2) break;
                 Set(quer.Body, T.Shamed, 1);
                 Rt.Sync();
                 Observation.Observe(quer.Soul, new ObservationInput(quer.Self.Name, quer.Self.Kind)
                 { Target = quer.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Shamed, 1) });
                 Feed.Add("傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。");
-                Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(this[P.Ward]), [], fix: true), P.Ward);
+                Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(ward), [],
+                    reason: $"沃德心里对雀儿的信任 {TrustIn(ward, quer)}"), P.Ward);
                 break;
             }
             case (2, Slot.Afternoon):
@@ -654,7 +688,8 @@ public sealed partial class Game
                 if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Text = "", Origin = P.Selma, FactTag = T.Sick }))
                     Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
                 Log.Add("D2 下午 莫兰发烧，被送去诊疗所（作者固定）");
-                Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true), P.Moran);
+                Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true,
+                    reason: "莫兰的病是《少了一份》的压力源（第三部分 §7）：病由作者定，谁怎样回应由各人决定"), P.Moran);
                 break;
             case (5, Slot.Morning):
                 break;
@@ -668,10 +703,10 @@ public sealed partial class Game
         if (Slot == Slot.Forenoon) TeachClass();
         if (round == 0)
         {
-            // 剧本里标明“集中”张贴的规矩（沃德、茉拉的板），在它们的日子与时段一并贴出，并给一段总括的旁白。
-            var batch = RuleDesign.All.SelectMany(r => r.Posts.Where(p => p.Mode == "集中" && p.Day == Day && p.Slot == Slot).Select(p => (Rule: r, Post: p))).ToArray();
-            foreach (var (rule, post) in batch) Post(RuleById(rule.Id), post.Place);
-            if (batch.Length > 0) Feed.Add(X("规矩.集中张贴"));
+            // 剧本里写的张贴时段是立规者“打算贴”的时候：从这时起他心里有了这件事，由他自己走去贴（总纲 §六 第三期）。
+            foreach (var rule in RuleDesign.All.Where(r => r.Author is not null))
+                foreach (var post in rule.Posts.Where(p => p.Mode == "集中" && p.Day == Day && p.Slot == Slot))
+                    IntendPost(this[rule.Author!.Value], RuleById(rule.Id), post.Place);
         }
         if (Slot == Slot.Evening && round == 0) AllianceEvening();
     }

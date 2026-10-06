@@ -202,7 +202,9 @@ public sealed class DetectivePlanner
             foreach (var evidence in _fields.GroupBy(f => f.Evidence).Where(g => state.Progress.Contains("examined:"+g.Key)))
             {
                 var matches = evidence.All(f => sampled.Facts[f.Field] == proposal.Facts[f.Field]);
-                state.Candidates.RemoveAll(i => evidence.All(f => _hypotheses[i].Facts[f.Field] == proposal.Facts[f.Field]) != matches);
+                // A sampled world that agrees with no remaining candidate tells the rollout nothing; keep the set rather than empty it.
+                if (state.Candidates.Any(i => evidence.All(f => _hypotheses[i].Facts[f.Field] == proposal.Facts[f.Field]) == matches))
+                    state.Candidates.RemoveAll(i => evidence.All(f => _hypotheses[i].Facts[f.Field] == proposal.Facts[f.Field]) != matches);
             }
         }
         if (state.Relaxed)

@@ -29,7 +29,7 @@ QUERIES = {
     "life_thought", "talk_first", "recall_thought", "wrong_name", "addr", "heard", "heard_where",
     "sound_sentence", "has", "count", "value", "replay_count", "full_match", "replay_refused",
     "in_room", "local", "busy", "said", "shown", "is_person", "geo_reach", "acquaintance_seen", "replay_var", "bolted",
-    "credence", "knows", "speech",
+    "credence", "knows", "speech", "dorms_open",
 }
 # 全局剧情进度：只许流程与阶段使用；对白条件须写成说话人自己的认知（总纲 §五.5）。
 GLOBAL_PROGRESS_QUERIES = {"matched", "replayed", "full_match", "replay_count", "replay_refused"}
@@ -43,7 +43,7 @@ CALL_ARITY = {
     "heard_where": 1, "sound_sentence": 0, "has": 2, "count": 1, "value": 2, "replay_count": 0,
     "full_match": 0, "replay_refused": 0, "in_room": 2, "local": 2, "busy": 1, "said": 0, "shown": 0,
     "is_person": 1, "geo_reach": 1, "acquaintance_seen": 0, "replay_var": 1, "bolted": 0,
-    "credence": 2, "knows": 2, "speech": 2,
+    "credence": 2, "knows": 2, "speech": 2, "dorms_open": 0,
 }
 # 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
 HOST_COMMANDS = {
@@ -409,6 +409,17 @@ def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> d
     content = content_data(source)
     validate_rules(source.RULES_DATA, set(document["entries"]))
     validate_clock(content["DAY_CLOCK"], set(document["entries"]))
+    for opening in content.get("OPENINGS", []):
+        if opening["scene"] not in document["entries"]:
+            raise ValueError(f"开局人选 {opening['person']} 的开场场面 {opening['scene']!r} 不存在")
+    for goal, method in content.get("METHODS", {}).items():
+        for part in method["parts"]:
+            if part not in content["METHODS"]:
+                raise ValueError(f"方法 {goal} 分解出未声明的目标 {part!r}")
+    for flag, goals in content.get("WISHES", {}).items():
+        for goal in goals:
+            if goal not in content.get("METHODS", {}):
+                raise ValueError(f"心愿 {flag} 指向未声明的方法 {goal!r}")
     layout = layout_data(source)
     dialogue_json = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
     content_json = json.dumps(content, ensure_ascii=False, indent=2) + "\n"

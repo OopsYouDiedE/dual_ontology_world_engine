@@ -24,6 +24,8 @@ public sealed partial class Game
         public Job? Job { get; init; }
         public double Time { get; init; }
         public bool Fixed { get; init; }
+        /// <summary>作者定的理由（总纲 §五.12“作者覆盖”）：只定过去与呈现时须写明，测试报告单列。</summary>
+        public string Reason { get; init; } = "";
         public bool SeenByDet { get; set; }
         public string Short => $"第{Day}日{Names.Of(Slot)} {Names.Of(Who)}{Text}【{Frame}】";
     }
@@ -48,12 +50,12 @@ public sealed partial class Game
 
     private Person? PersonOf(Person viewer, Projection? proj) => proj is null ? null : EssenceOf(viewer, proj) is { } e ? People.FirstOrDefault(o => o.Body == e) : null;
 
-    public int RecordEvent(P who, string text, string frame, Place where, IEnumerable<int> causes, bool fix = false, Job? job = null)
+    public int RecordEvent(P who, string text, string frame, Place where, IEnumerable<int> causes, bool fix = false, Job? job = null, string reason = "")
     {
         var e = new ActEvent
         {
             Id = Events.Count + 1, Day = Day, Slot = Slot, Who = who, Text = text, Frame = frame, Where = where,
-            Causes = causes.Where(c => c > 0).Distinct().ToArray(), Fixed = fix, Job = job, Time = Now,
+            Causes = causes.Where(c => c > 0).Distinct().ToArray(), Fixed = fix, Job = job, Time = Now, Reason = reason,
         };
         // 侦探看得见：白天同处一地；夜里守在那里（只看得见身影）。
         e.SeenByDet = who != P.Det && Where(Det) == where && (Slot != Slot.Night || LastAction?.Cmd == Cmd.Stakeout && LastAction.Place == where);

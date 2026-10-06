@@ -135,7 +135,10 @@ public static class Reasoner
                 var trust = speaker?.Tags.GetValueOrDefault(Tags.Trust) ?? 0;
                 // Neutral testimony counts a little; distrust makes it worthless, never inverted.
                 return (Math.Max(1, 2 + 0.5 * Math.Clamp(trust, -3, 3)), $"{speaker?.Name ?? "有人"}说的，信任 {trust}");
-            default: return (2, "自知");
+            // 先入之见、自知：强度记在 Confidence 上（缺省 1）。
+            default:
+                var strength = claim.Tags.GetValueOrDefault(Tags.Confidence, 1);
+                return (1 + Math.Max(0, strength), strength == 1 ? "自知" : $"先入之见，强度 {strength}");
         }
     }
 }
