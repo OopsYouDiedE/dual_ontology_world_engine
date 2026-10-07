@@ -3,17 +3,27 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-/// <summary>《少了一份》第 3 日清晨的痕迹。</summary>
-public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, bool QuerCrumbs, bool SmallFigure, bool MediumFigure)
+/// <summary>
+/// 《少了一份》案发次日清晨的痕迹。哪个寝区的废纸篓里有饼屑、夜巡望见什么身量的身影，都按推演的实际结果记，
+/// 不预设是谁（多日交互审核 M1）。
+/// </summary>
+public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, IReadOnlyList<Place> CrumbDorms, IReadOnlyList<Build> Figures)
 {
     public static readonly string[] Labels = [.. CaseDesign.Traces.Select(t => t.Label)];
-    public IEnumerable<(int Item, string Text)> Describe()
+    public static readonly Place[] Dorms = [Place.DormW, Place.DormLife, Place.DormS, Place.DormL];
+    /// <summary>值相等：两组痕迹描述出来完全相同即相等（列表字段按内容比较）。</summary>
+    public bool Equals(CaseTraces? other) => other is not null && Describe().Select(d => d.Text).SequenceEqual(other.Describe().Select(d => d.Text));
+    public override int GetHashCode() => string.Join("|", Describe().Select(d => d.Text)).GetHashCode();
+    /// <summary>lookedLitters：只描述看过的那几个寝区的废纸篓（没看过的不说，避免替侦探看）；null 表示全部。</summary>
+    public IEnumerable<(int Item, string Text)> Describe(IReadOnlyCollection<Place>? lookedLitters = null)
     {
         yield return (0, $"台账：无记录取用×{LedgerShort}");
         yield return (1, LatchFixed ? "粮仓门闩：新的工具痕，已紧固" : "粮仓门闩：仍然松动");
         yield return (2, BowlPorridge ? "诊疗所：莫兰床边空碗，有粥渍" : "诊疗所：碗是干净的");
-        yield return (3, QuerCrumbs ? "甲区废纸篓：一份口粮的包纸与饼屑" : "甲区废纸篓：没有饼屑");
-        yield return (4, SmallFigure ? "夜巡：中央厅望见后勤院有瘦小的身影" + (MediumFigure ? "，还有中等身量的身影" : "") : MediumFigure ? "夜巡：望见后勤院有中等身量的身影" : "夜巡：后勤院没见人影");
+        var dorms = Dorms.Where(d => lookedLitters is null || lookedLitters.Contains(d)).ToArray();
+        yield return (3, string.Join("；", dorms.Select(d => $"{Names.Of(d)}废纸篓：" + (CrumbDorms.Contains(d) ? "一份口粮的包纸与饼屑" : "没有饼屑"))));
+        var builds = Figures.Distinct().OrderBy(b => b).Select(b => Game.BuildText(b) + "身影").ToArray();
+        yield return (4, builds.Length == 0 ? "夜巡：后勤院没见人影" : "夜巡：中央厅望见后勤院有" + string.Join("、", builds));
     }
 }
 
@@ -39,14 +49,16 @@ public sealed partial class Game
         LatchFixed: Get(Granary, T.LatchLoose) == 0,
         LatchToolMarks: Get(Granary, T.ToolMarks) > 0,
         BowlPorridge: Get(Bowl, T.Residue) > 0,
-        QuerCrumbs: Get(Litter[Place.DormW], T.Crumbs) > 0,
-        SmallFigure: Sightings.Any(s => s.Day == 2 && s.Witness == P.Bertrand && s.At == Place.Logistics && s.Build == Build.Small),
-        MediumFigure: Sightings.Any(s => s.Day == 2 && s.Witness == P.Bertrand && s.At == Place.Logistics && s.Build == Build.Medium));
+        CrumbDorms: [.. CaseTraces.Dorms.Where(d => Get(Litter[d], T.Crumbs) > 0)],
+        Figures: [.. Sightings.Where(s => s.Day == CaseDesign.Night && s.Witness == P.Bertrand && s.At == Place.Logistics).Select(s => s.Build).Distinct().OrderBy(b => b)]);
+
+    /// <summary>侦探细看过废纸篓的那几个寝区。</summary>
+    public IReadOnlyCollection<Place> DetLookedLitters() => [.. CaseTraces.Dorms.Where(d => DetLooked.Contains(Litter[d]))];
 
     /// <summary>第 3 日清晨（不跑早上的行动）：结算昨夜并记录痕迹。</summary>
     public CaseTraces Dawn()
     {
-        if (!(Day == 3 && Slot == Slot.Morning)) throw new InvalidOperationException("只在第 3 日清晨取痕迹");
+        if (!(Day == CaseDay && Slot == Slot.Morning)) throw new InvalidOperationException("只在案发次日清晨取痕迹");
         if (!_dawnDone) { BeginDay(); _dawnDone = true; }
         return CaseActual ?? CaptureTraces();
     }
@@ -72,7 +84,7 @@ public sealed partial class Game
             BlockNews = (p, item) => p.Id == P.Mora && v.MoraBelief != 0 && item.FactTag == T.Sick,
             BeforeNight = g =>
             {
-                if (g.Day != 2) return;
+                if (g.Day != CaseNight) return;
                 if (v.MoraBelief == 2) g.Set(g[P.Mora].Body, T.Fed, 0);
                 if (v.QuerRule == 1) g.Tell(g[P.Quer], g.WardNight, Channel.Board);
                 if (v.MargaretRule == 1)
@@ -97,9 +109,10 @@ public sealed partial class Game
             }
         };
         // 现实快照：按侦探真实的行动记录重放第 2 日（§11 第 10 条），只改变量所说的认知与处境。
-        world = Rebuild(Script, FreeScript, 5, options, PlaceScript, StoryChoices, FreeEvents);
-        world.RestoreFree(5, PlaceScript, StoryChoices, FreeEvents);
-        world.RunSlot(Script.Count > 5 ? Script[5] : null);
+        var nightSlot = (CaseNight - FirstDay) * 6 + (int)Slot.Night;
+        world = Rebuild(Script, FreeScript, nightSlot, options, PlaceScript, StoryChoices, FreeEvents);
+        world.RestoreFree(nightSlot, PlaceScript, StoryChoices, FreeEvents);
+        world.RunSlot(Script.Count > nightSlot ? Script[nightSlot] : null);
         return (world.Dawn(), world);
     }
 
@@ -107,7 +120,7 @@ public sealed partial class Game
     public static (CaseTraces Traces, Game World) Replay(CaseVars v)
     {
         var idle = new Game(new GameOptions { Quiet = true });
-        for (var i = 0; i < 6; i++) idle.RunSlot(null);
+        for (var i = 0; i <= (CaseNight - FirstDay) * 6 + (int)Slot.Night; i++) idle.RunSlot(null);
         return idle.ReplayCase(v);
     }
 
@@ -115,8 +128,9 @@ public sealed partial class Game
     public List<string> Compare(CaseTraces replay, CaseTraces actual, ISet<int>? known = null)
     {
         var lines = new List<string>();
-        var r = replay.Describe().ToArray();
-        var a = actual.Describe().ToArray();
+        var looked = known is null ? null : DetLookedLitters();
+        var r = replay.Describe(looked).ToArray();
+        var a = actual.Describe(looked).ToArray();
         string[] where = [.. CaseDesign.Traces.Select(t => t.Where)];
         for (var i = 0; i < r.Length; i++)
         {
@@ -167,7 +181,8 @@ public sealed partial class Game
     public (IReadOnlyList<CaseVars> Fits, IReadOnlyList<int> Claims) DetectiveInference()
     {
         var known = DetEvidence();
-        var key = known.Aggregate(0, (h, i) => h | 1 << i);
+        var litters = DetLookedLitters();
+        var key = known.Aggregate(0, (h, i) => h | 1 << i) | CaseTraces.Dorms.Select((d, i) => litters.Contains(d) ? 1 << (16 + i) : 0).Sum();
         if (_inference is { } cached && cached.Known == key) return (cached.Fits, cached.Claims);
         if (known.Count == 0) return ([], []);
         if (CaseActual is not { } actual) return ([], []);
@@ -181,6 +196,16 @@ public sealed partial class Game
             .Where(c => !CaseDesign.Claims[c].Frames && fits.Count > 0 && fits.All(f => f.World.ClaimTrue(c))).ToArray();
         _inference = (key, fits.Select(f => f.Vars).ToArray(), claims);
         return (_inference.Value.Fits, claims);
+    }
+
+    /// <summary>自动检查用：现实里为真的（不冤枉人的）主张，按对质话题的先后，各配一件侦探手里相关、亲眼查过的优先的证据。</summary>
+    public IReadOnlyList<(int Claim, int Evidence)> ValidConfrontPairs()
+    {
+        var order = new[] { "take", "latch", "ledger" };
+        return [.. Enumerable.Range(0, CaseDesign.Claims.Count)
+            .Where(c => !CaseDesign.Claims[c].Frames && order.Contains(CaseDesign.Claims[c].Topic) && ClaimTrue(c))
+            .OrderBy(c => Array.IndexOf(order, CaseDesign.Claims[c].Topic)).ThenBy(c => c)
+            .Select(c => (c, DetectiveSupport(c).DefaultIfEmpty(-1).First())).Where(p => p.Item2 >= 0)];
     }
 
     /// <summary>侦探手里能撑住这句话的东西：按对质规则与此陈述相关、且他确实持有；亲眼查过的排在前面。</summary>
@@ -207,6 +232,13 @@ public sealed partial class Game
         PerceiveAll();
         var quer = this[Accused ?? P.Quer];
         var logStart = ConfrontLog.Count;
+        // 对账在晚饭之后（场面“晚饭后。中央厅点起了灯”）：侦探来对账，不因此错过这一顿。
+        if (!reopen && Slot == Slot.Evening && Get(Det.Body, T.Fed) == 0 && Get(Granary, T.Ration) > 0)
+        {
+            Add(Granary, T.Ration, -1);
+            Set(Det.Body, T.Fed, 1);
+            Feed.Add("对账之前，你在配给台领了晚饭。");
+        }
         if (!reopen) ConfrontLog.Add(Accused is not null ? $"中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，{quer.Name}私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
         if (plan is null || plan.Pairs.Count == 0)
         {
@@ -236,8 +268,9 @@ public sealed partial class Game
             foreach (var p in room.Where(p => p != Det))
             {
                 var pts = PersonallySaw(p, evidence) ? 2 : TrustIn(p, Det) >= 1 ? 1 : 0;
-                if (claim == 0 && TrustIn(p, this[P.Mora]) >= 1) pts += 1;
-                if (claim == 1 && evidence == 3 && TrustIn(p, this[P.Margaret]) >= 1) pts += 1;
+                // 当事人当场承认（说的是谁，听的人信他）；出示的是某人的话（听的人信说话的人）：各再 +1。
+                if (CaseDesign.Claims[claim].Person is { } about && about != p.Id && TrustIn(p, this[about]) >= 1) pts += 1;
+                else if (CaseDesign.EvidenceList[evidence].Person is { } speaker && speaker != p.Id && TrustIn(p, this[speaker]) >= 1) pts += 1;
                 points[p] += pts;
             }
         }

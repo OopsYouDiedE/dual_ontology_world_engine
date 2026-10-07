@@ -35,11 +35,15 @@ public static class Bots
     public static readonly Card Committee = new(0, 4, 6, 3, 3); // 任何人：白天，名录库由委员会保管；两人在场者不在此限；两人见证签名
     public static readonly Card Seal = new(0, 0, 7, 0, 0);      // 任何人：任何时候，名录库封闭不启
     public static readonly Card Open = new(0, 0, 5, 0, 1);      // 任何人：任何时候，名录库各取其物；记入台账
+    /// <summary>机器人的日程按阶段写：1＝始业日（门开后），2＝案发那一日（夜里出事），3＝案发次日（搜查、晚饭后对质）；其余日子为 0。</summary>
+    private static int Old(Game g) => g.Day == Game.CaseDay ? 3 : g.Day == Game.CaseNight ? 2 : g.Day == Game.FirstDay ? 1 : 0;
+
     /// <summary>议事时支持“我自己提出的那条”（Council 的约定：越界下标）。</summary>
     public const int Mine = 99;
 
+    /// <summary>说得对的对质：现实里为真的主张，各配一件手里相关的证据（谁做了什么按推演的结果，不按作者版本的名字）。</summary>
     private static Game.ConfrontPlan GoodPlan(Game g, Card? rule = null, bool common = true) =>
-        new([(0, 0), (1, 2), (2, 4), (3, 5)], rule ?? RuleA, common);
+        new(g.ValidConfrontPairs(), rule ?? RuleA, common);
 
     /// <summary>
     /// 读不耗时（总纲 §四）：翌日清晨把案子的痕迹一并细看、问过几位证人，再去做这一阵要写的事。
@@ -74,12 +78,12 @@ public static class Bots
     }
 
     /// <summary>能自由“写”的四阵：始业日下午、翌日清晨／上午／下午（午间与傍晚要吃饭，翌日傍晚是对质）。</summary>
-    private static bool Writable(Game g) => (g.Day, g.Slot) is (2, Slot.Afternoon) or (3, Slot.Morning) or (3, Slot.Forenoon) or (3, Slot.Afternoon);
+    private static bool Writable(Game g) => (Old(g), g.Slot) is (2, Slot.Afternoon) or (3, Slot.Morning) or (3, Slot.Forenoon) or (3, Slot.Afternoon);
 
     private static PlayerAction? Lobby(Game g, Card card) => Writable(g) ? Greedy(g, card) : null;
 
     /// <summary>始业日下午贴到中央厅，翌日逐一当面讲给三个人。</summary>
-    private static PlayerAction? Tour(Game g, Card card, params P[] who) => (g.Day, g.Slot) switch
+    private static PlayerAction? Tour(Game g, Card card, params P[] who) => (Old(g), g.Slot) switch
     {
         (2, Slot.Afternoon) => new(Cmd.Post) { Place = Place.Hall, Card = card },
         (3, Slot.Morning) => new(Cmd.TellRule) { Who = who[0], Card = card },
@@ -95,7 +99,7 @@ public static class Bots
         new() { Name = "首课答准", Act = Eat, Precise = true },
         new() { Name = "查案对质", Act = Eat, Reads = true, Confront = g => GoodPlan(g) },
         new() { Name = "查案对质·不提共同规则", Act = Eat, Reads = true, Confront = g => GoodPlan(g, common: false) },
-        new() { Name = "同行作证（请沃德亲眼看碗）", Reads = true, Act = g => (g.Day, g.Slot) switch
+        new() { Name = "同行作证（请沃德亲眼看碗）", Reads = true, Act = g => (Old(g), g.Slot) switch
             {
                 // 沃德要先有人帮他一把才肯跟着走（他的画像如此）：先帮，再请。
                 (3, Slot.Morning) => new(Cmd.Help) { Who = P.Ward },
@@ -103,19 +107,19 @@ public static class Bots
                 (3, Slot.Afternoon) => new(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = "粮仓" },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g) },
-        new() { Name = "拉拢沃德（委员会）", Reads = true, Precise = true, Act = g => (g.Day, g.Slot) == (3, Slot.Afternoon) ? new(Cmd.Ask) { Who = P.Ward, Job = Job.GuardArchive } : Tour(g, Committee, P.Ward, P.Gu, P.Ruan) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
+        new() { Name = "拉拢沃德（委员会）", Reads = true, Precise = true, Act = g => (Old(g), g.Slot) == (3, Slot.Afternoon) ? new(Cmd.Ask) { Who = P.Ward, Job = Job.GuardArchive } : Tour(g, Committee, P.Ward, P.Gu, P.Ruan) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
         new() { Name = "立约（侦探之约）", Reads = true, Precise = true, Act = g => Tour(g, Pact, P.Quer, P.Huo, P.Su) ?? Eat(g), Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
         new() { Name = "立约·宽（不禁夜）", Reads = true, Precise = true, Act = g => Lobby(g, PactLoose) ?? Eat(g), Confront = g => GoodPlan(g, PactLoose), Back = _ => Mine },
         new() { Name = "劝封", Reads = true, Precise = true, Act = g => Lobby(g, Seal) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
         new() { Name = "帮人开库（各取其物）", Reads = true, Act = g => Lobby(g, Open) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
-        new() { Name = "抓枢纽（只当面说服三个人）", Reads = true, Precise = true, Act = g => (g.Day, g.Slot) switch
+        new() { Name = "抓枢纽（只当面说服三个人）", Reads = true, Precise = true, Act = g => (Old(g), g.Slot) switch
             {
                 (2, Slot.Afternoon) => new(Cmd.TellRule) { Who = P.Huo, Card = Pact },
                 (3, Slot.Morning) => new(Cmd.TellRule) { Who = P.Mora, Card = Pact },
                 (3, Slot.Forenoon) => new(Cmd.TellRule) { Who = P.Ward, Card = Pact },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
-        new() { Name = "公告板广撒（贴遍各板，不当面说）", Reads = true, Act = g => (g.Day, g.Slot) switch
+        new() { Name = "公告板广撒（贴遍各板，不当面说）", Reads = true, Act = g => (Old(g), g.Slot) switch
             {
                 (2, Slot.Afternoon) => new(Cmd.Post) { Place = Place.Hall, Card = Pact },
                 (3, Slot.Morning) => new(Cmd.Post) { Place = Place.Logistics, Card = Pact },
@@ -123,16 +127,16 @@ public static class Bots
                 (3, Slot.Afternoon) => new(Cmd.Post) { Place = Place.DormLife, Card = Pact },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
-        new() { Name = "管饭（调停、交钥匙、帮厨）", Reads = true, Act = g => (g.Day, g.Slot) switch
+        new() { Name = "管饭（调停、交钥匙、帮厨）", Reads = true, Act = g => (Old(g), g.Slot) switch
             {
-                (2, Slot.Noon) => A(Cmd.Mediate),
-                (2, Slot.Afternoon) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
+                (1, Slot.Noon) => A(Cmd.Mediate),
+                (1, Slot.Afternoon) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
                 (3, Slot.Afternoon) => new(Cmd.Help) { Who = P.Shen },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g) },
         new() { Name = "拉拢后勤组（茉拉）", Act = g => Writable(g) ? new(Cmd.Help) { Who = P.Mora } : Eat(g), Back = _ => 2 },
-        new() { Name = "守夜（两夜都守）", Reads = true, Act = g => g.Slot == Slot.Night ? new(Cmd.Stakeout) { Place = g.Day == 2 ? Place.Logistics : Place.ArchiveFront } : Eat(g), Confront = g => GoodPlan(g) },
-        new() { Name = "操纵", Act = g => (g.Day, g.Slot) switch
+        new() { Name = "守夜（两夜都守）", Reads = true, Act = g => g.Slot == Slot.Night ? new(Cmd.Stakeout) { Place = g.Day == Game.CaseNight ? Place.Logistics : Place.ArchiveFront } : Eat(g), Confront = g => GoodPlan(g) },
+        new() { Name = "操纵", Act = g => (Old(g), g.Slot) switch
             {
                 (2, Slot.Afternoon) => new(Cmd.Manipulate) { Who = P.Lucian, About = P.Quer },
                 (3, Slot.Morning) => new(Cmd.Manipulate) { Who = P.Mora, About = P.Quer },

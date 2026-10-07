@@ -101,27 +101,27 @@
 
     场面 dawn
         事件：night.dawn
-        日：3
+        日：5
         时段：早晨
         （清晨。铜口把众人又叫到了中央厅。阮清越拿着台账站在铜柱旁，沃德站在他身边。） [#id=chapter2.dawn.001]
 
     场面 after
         事件：night.after
-        日：3
+        日：5
         时段：上午
         侦探（心声）：“昨夜，有人进过后勤院。”——它说的每个字都是真的。 [#id=chapter2.after.001]
         侦探（心声）：可“取了而不记”，就一定是偷？ [#id=chapter2.after.002]
-        侦探（心声）：傍晚对账的时候，人人都会在这里。在那之前，先把账上的缺口查清楚。 [#id=chapter2.after.003]
+        侦探（心声）：晚饭后对账，人人都会在这里。在那之前，先把账上的缺口查清楚。 [#id=chapter2.after.004]
 
     场面 no_accuse
         事件：night.no_accuse
-        日：3
+        日：5
         时段：上午
         侦探（心声）：账上有缺口，没有人站出来指认谁。这一回，没人先开口。 [#id=chapter2.no_accuse.001]
 
     场面 replay_unlock
         事件：card.replay_unlock
-        日：3
+        日：5
         侦探（心声）：台账上的缺口，落在一夜之间。 [#id=chapter2.replay_unlock.001]
         侦探（心声）：那一夜每个人读过哪条规矩、认了哪条，各自就会照着去做。……把那一夜重演一遍。 [#id=chapter2.replay_unlock.002]
         侦探（心声）：（按 R 打开重演手稿。） [#id=chapter2.replay_unlock.003]
@@ -139,38 +139,38 @@
 
     场面 evening
         事件：confront.evening
-        日：3
+        日：5
         时段：傍晚
-        （傍晚。中央厅点起了灯。十五个人到了，莫兰还躺在诊疗所。） [#id=chapter2.evening.001]
+        （晚饭后。中央厅点起了灯。十五个人到了，莫兰还躺在诊疗所。） [#id=chapter2.evening.003]
         铜口：诸位要对账。我只旁听。 [#id=chapter2.evening.002]
 
     场面 confront_begin
         事件：confront.begin
-        日：3
+        日：5
         时段：傍晚
         侦探（心声）：一问一答。说一句，就拿出能支撑它的东西。 [#id=chapter2.confront_begin.001]
 
     场面 confront_pause
         事件：confront.pause
-        日：3
+        日：5
         时段：傍晚
         侦探（心声）：这一句，先不说。 [#id=chapter2.confront_pause.001]
 
     场面 confront_wrong_say
         事件：confront.wrong_say
-        日：3
+        日：5
         时段：傍晚
         沃德：这与我问的无关。 [#id=chapter2.confront_wrong_say.001]
 
     场面 confront_wrong_show
         事件：confront.wrong_show
-        日：3
+        日：5
         时段：傍晚
         沃德：依据何在？{{wrong_name()}}证明不了这句话。 [#emotion=angry] [#id=chapter2.confront_wrong_show.001]
 
     场面 confront_frame
         事件：confront.frame
-        日：3
+        日：5
         时段：傍晚
         （众人的目光都落到了雀儿身上。她没有躲。） [#id=chapter2.confront_frame.001]
         雀儿：……行。你也这么看。 [#id=chapter2.confront_frame.002]
@@ -178,23 +178,23 @@
 
     场面 confront_rule
         事件：confront.rule
-        日：3
+        日：5
         时段：傍晚
         沃德：账上的疑处，诸位已听见。依据何在，今后如何？ [#id=chapter2.confront_rule.001]
         侦探（心声）：该提一条大家都能照着做的规矩了。 [#id=chapter2.confront_rule.002]
 
     场面 whisper
         事件：confront.whisper
-        日：3
+        日：5
         时段：夜里
         （散场的时候，铜口没有出声。可走出中央厅的每一个人，脚步都慢了一点，像在听耳边有人说话。） [#id=chapter2.whisper.001]
         侦探（心声）：它又对每个人说了一遍那样东西。……今夜，名录库前厅不会太安静。 [#id=chapter2.whisper.002]
 
     场面 council
         事件：council.begin
-        日：4
+        日：6
         时段：早晨
-        （第三日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.001]
+        （第五日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.007]
         铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
         沃德：我仍主张，凡事须有章程。名录库，由委员会保管。 [#id=chapter2.council.003]
         顾平章：回忆即上钩。老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
@@ -203,7 +203,7 @@
 
     场面 box
         事件：council.box
-        日：4
+        日：6
         时段：早晨
         （库门开了。十六只封存匣排在四座架上，每只贴着名字。） [#id=chapter2.box.001]
         侦探（心声）：我的名字。在第三座架子上，第二格。 [#id=chapter2.box.002]
@@ -216,7 +216,7 @@
 
     场面 sealed
         事件：council.sealed
-        日：4
+        日：6
         时段：早晨
         （名录库没有开。十六只封存匣留在门后。） [#id=chapter2.sealed.001]
         侦探（心声）：我的名字也在门后。是不是我的，今天没人知道。 [#id=chapter2.sealed.002]

@@ -11,6 +11,8 @@ public sealed partial class Game
     public static int LastDay => Chapter2Design.LastDay;
     public static int CaseDay => Chapter2Design.CaseDay;
     public static int FirstDay => Chapter2Design.FirstDay;
+    /// <summary>《少了一份》的案发夜（这一日的夜里）。案发次日（CaseDay）清晨广播、白天搜查、晚饭后对质。</summary>
+    public static int CaseNight => CaseDesign.Night;
     public bool Mediated;
     public int LedgerBaseline;
     public readonly List<(int Day, int Rations, int Oil, int Medicine, int Hungry)> Curve = [];
@@ -49,6 +51,8 @@ public sealed partial class Game
     /// </summary>
     private void SettleFreeInteractions()
     {
+        // 先在当下结算（回应不占时间）；还有没完的，才让钟一刻一刻往前走。
+        S.CTB.RunUntil(Now, 100_000);
         for (var guard = 0; guard < 8; guard++)
         {
             var pending = People.Where(p => p != Det && p.Exec is { } e && !_running.ContainsKey(e)).ToArray();
@@ -110,7 +114,7 @@ public sealed partial class Game
         var hungry = 0;
         foreach (var p in People)
         {
-            var fed = Get(p.Body, T.Fed) > 0 || Day == 2;
+            var fed = Get(p.Body, T.Fed) > 0 || Day == FirstDay;
             p.HungerStreak = fed ? 0 : p.HungerStreak + 1;
             p.MaxHunger = Math.Max(p.MaxHunger, p.HungerStreak);
             if (!fed) hungry++;
@@ -121,25 +125,40 @@ public sealed partial class Game
             foreach (var j in Enum.GetValues<Job>()) Set(p.Body, T.Did(j), 0);
             p.Asleep = false;
             p.Shamed = false;
-            if (!fed && p == Det) Feed.Add("你昨天没吃上东西。今天少一个能做事的时段（下午）。");
+            if (!fed && p == Det) Feed.Add("你昨天没吃上晚饭。今天少一个能做事的时段（下午）。");
         }
         // 病人清晨喝下碗里的粥（碗底留下粥渍）。
         var moran = this[P.Moran];
         if (Get(moran.Body, T.Sick) > 0 && Get(Bowl, T.Porridge) > 0)
         { Set(moran.Body, T.Fed, 1); Add(Bowl, T.Porridge, -1); Set(Bowl, T.Residue, 1); }
         foreach (var p in People) { Set(p.Body, T.Shamed, 0); }
-        if (Day > 2) Curve.Add((Day - 1, Get(Granary, T.Ration), Get(OilStore, T.Oil), Get(MedCab, T.Medicine), hungry));
+        if (Day > FirstDay) Curve.Add((Day - 1, Get(Granary, T.Ration), Get(OilStore, T.Oil), Get(MedCab, T.Medicine), hungry));
         Rt.Sync();
         foreach (var p in People)
             Observation.Observe(p.Soul, new ObservationInput(p.Self.Name, p.Self.Kind)
             { Target = p.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Shamed, 0) });
-        if (Day == 3) CaseActual = CaptureTraces();
-        if (Day > 2) { DawnTraces[Day - 1] = TakeTraces(Day - 1); DawnHint(Day - 1); }
+        if (Day == CaseDay) CaseActual = CaptureTraces();
+        if (Day > FirstDay) { DawnTraces[Day - 1] = TakeTraces(Day - 1); DawnHint(Day - 1); }
     }
 
     private void RunDay(PlayerAction? act)
     {
         _distributor = null; _cookedThisSlot = false;
+        // 一日两顿：午间与晚饭各开一次配给台。“吃饱”指吃了上一顿：晚饭一开，午间那一顿就不算了，
+        // 夜里饿着就是没吃上晚饭（第三部分 §7“没去领晚配，饿着”）。开粮、煮粥、领粮、替人领粮、分粮每顿各算一次。
+        // 始业日门开时已是傍晚，只有一顿晚饭（它排在“中午”那一阵），不再重置。
+        if (Slot == Slot.Evening && Day != FirstDay)
+        {
+            foreach (var p in People)
+            {
+                foreach (var j in new[] { Job.Distribute, Job.Cook, Job.FeedWeak, Job.Collect, Job.Share, Job.Exchange }) Set(p.Body, T.Did(j), 0);
+                Set(p.Body, T.Fed, 0);
+            }
+            Rt.Sync();
+            foreach (var p in People)
+                Observation.Observe(p.Soul, new ObservationInput(p.Self.Name, p.Self.Kind)
+                { Target = p.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Fed, 0) });
+        }
         PerceiveAll();
         FixedBefore();
         PlayerBegin(act);
@@ -181,7 +200,7 @@ public sealed partial class Game
         if (Get(p.Body, T.Sick) > 0) return false;
         if (p.InjuredDays > 0) return false;
         if (Slot == Slot.Afternoon && Get(p.Body, T.Hungry) > 0) return false;
-        if (Day == 2 && Slot == Slot.Noon && !Mediated && p.Id is P.Mora or P.Ruan) return false;
+        if (Day == FirstDay && Slot == Slot.Noon && !Mediated && p.Id is P.Mora or P.Ruan) return false;
         return true;
     }
 
@@ -515,17 +534,25 @@ public sealed partial class Game
     public readonly List<(int Night, string Text)> Sketches = [];
     private readonly HashSet<(P, P)> _sawTaking = [];
 
-    /// <summary>夜里在粮仓边守着的人，近处看得清是谁：没记账的取粮记为嫌疑，并且是亲眼所见（可以凭此当众指控）。</summary>
+    /// <summary>
+    /// 夜里在粮仓边的人，近处看得清是谁。没记账的取粮怎样说出口，看说话人自己认了哪条规矩（多日交互审核 M3）：
+    /// 认了“夜间急需可自取”的，说是照规矩取的，不起疑；认了“无记录即私取”的，说是私取，记为嫌疑；两条都没认的，只说取了一份，也起疑。
+    /// 起疑的是亲眼所见，可以凭此当众指控。
+    /// </summary>
     private void NightSeenTaking(Person taker, bool recorded)
     {
         var take = _currentEvent;
         foreach (var w in People.Where(w => w != taker && w != Det && !w.Asleep && Where(w) == Place.Logistics))
         {
-            var text = $"{w.Name}夜里在后勤院亲眼看见{taker.Name}从粮仓取了一份{(recorded ? "，记了账" : "，没记账")}";
-            var id = RecordEvent(w.Id, $"夜里看见{taker.Name}取粮{(recorded ? "（记了账）" : "（没记账）")}", "看守", Place.Logistics, [take], job: Job.Watch);
-            NewsFrom(w, NewsKind.Sighting, text, about: taker, trust: recorded ? 0 : -1);
+            var permits = MoraNight.Author == w.Id || w.Acc.GetValueOrDefault(MoraNight) == Truth.True
+                || Specs.Any(s => s.Card is { Behavior: 0 } && s.Flags.HasFlag(RF.NightException) && w.Acc.GetValueOrDefault(s) == Truth.True);
+            var condemns = WardLedger.Author == w.Id || w.Acc.GetValueOrDefault(WardLedger) == Truth.True;
+            var how = recorded ? "取了一份，记了账" : condemns && !permits ? "私取了一份，没记账" : permits ? "照配给台的规矩取了一份，还没记账" : "取了一份，没记账";
+            var text = $"{w.Name}夜里在后勤院亲眼看见{taker.Name}从粮仓{how}";
+            var id = RecordEvent(w.Id, $"夜里看见{taker.Name}{how}", "看守", Place.Logistics, [take], job: Job.Watch);
+            NewsFrom(w, NewsKind.Sighting, text, about: taker, trust: recorded || permits && !condemns ? 0 : -1);
             Log.Add($"D{Day} 夜 {text}");
-            if (recorded) continue;
+            if (recorded || permits && !condemns) continue;
             Know(w, taker.Body, T.Suspect, 1, ObservationSource.Perception, text);
             _sawTaking.Add((w.Id, taker.Id));
             Know(w, w.Body, T.SawAct, 1, ObservationSource.Introspection, text);
@@ -653,7 +680,7 @@ public sealed partial class Game
     private void WardPosts(Person w)
     {
         // 被撕掉的规矩，沃德傍晚再贴回去。
-        if (Day >= 3 && !WardNight.PostedAt.Contains(Place.Hall) && Belief(w, this[P.Quer], T.Branded) > 0 && _wardReposts++ < 2)
+        if (Day >= CaseDay && !WardNight.PostedAt.Contains(Place.Hall) && Belief(w, this[P.Quer], T.Branded) > 0 && _wardReposts++ < 2)
         {
             Post(WardNight, Place.Hall);
             if (Where(Det) == Place.Hall) Feed.Add("沃德把那张被撕掉的规矩又贴了回去。");
@@ -672,21 +699,22 @@ public sealed partial class Game
 
     private void FixedBefore()
     {
-        switch (Day, Slot)
+        // 始业日：门开后的集合与第一顿晚饭；案发那一日：下午莫兰发烧、傍晚沃德当众盯视雀儿（压力，见第三部分 §7、§16）。
+        if (Day == FirstDay && Slot == Slot.Morning)
         {
-            case (2, Slot.Morning):
                 Feed.Add("十六人在中央厅会合。文契组里，沃德的目光一直没离开雀儿；星仪组的伊莲娜站得离阮清越很远；后勤组的茉拉不和维罗妮卡说话。");
                 LedgerBaseline = Get(Granary, T.Ration);
-                break;
-            case (2, Slot.Noon):
-                if (!Mediated) Feed.Add("配给台前，茉拉握着粮仓钥匙，阮清越拿着人头账，两人争执不下。午间没有开粮。");
-                break;
-            case (2, Slot.Evening):
-            {
+        }
+        else if (Day == FirstDay && Slot == Slot.Noon)
+        {
+                if (!Mediated) Feed.Add("配给台前，茉拉握着粮仓钥匙，阮清越拿着人头账，两人争执不下。这一顿没有开粮。");
+        }
+        else if (Day == CaseNight && Slot == Slot.Evening)
+        {
                 // 沃德当众盯视雀儿出自他自己的成见：他心里对雀儿的信任低到 -2 以下才会这样（不是作者指定）。
                 var ward = this[P.Ward];
                 var quer = this[P.Quer];
-                if (TrustIn(ward, quer) > -2) break;
+                if (TrustIn(ward, quer) > -2) return;
                 Set(quer.Body, T.Shamed, 1);
                 Rt.Sync();
                 Observation.Observe(quer.Soul, new ObservationInput(quer.Self.Name, quer.Self.Kind)
@@ -694,9 +722,9 @@ public sealed partial class Game
                 Feed.Add("傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。");
                 Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(ward), [],
                     reason: $"沃德心里对雀儿的信任 {TrustIn(ward, quer)}"), P.Ward);
-                break;
-            }
-            case (2, Slot.Afternoon):
+        }
+        else if (Day == CaseNight && Slot == Slot.Afternoon)
+        {
                 var moran = this[P.Moran];
                 Set(moran.Body, T.Sick, 1);
                 moran.Body.Get<SpatialProperty>()!.Space = Space[Place.Clinic];
@@ -707,14 +735,10 @@ public sealed partial class Game
                 // 压力而非节点（§11 第 9 条）：作者保证茉拉知道莫兰在烧——她的夜取规则与沃德的“无记录即私取”必然相撞。
                 if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Text = "", Origin = P.Selma, FactTag = T.Sick }))
                     Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
-                Log.Add("D2 下午 莫兰发烧，被送去诊疗所（作者固定）");
+                Log.Add($"D{Day} 下午 莫兰发烧，被送去诊疗所（作者固定）");
                 Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true,
                     reason: "莫兰的病是《少了一份》的压力源（第三部分 §7）：病由作者定，谁怎样回应由各人决定"), P.Moran);
-                break;
-            case (5, Slot.Morning):
-                break;
         }
-        if (Slot == Slot.Morning) { }
     }
 
     private void RoundHooks(int round)
@@ -856,6 +880,7 @@ public sealed partial class Game
         }
         OilPhysics();
         foreach (var p in People) { p.Asleep = false; p.NightSteps = 0; p.NightVisited.Clear(); }
+        DropStaleDayActions();
         NightBegins();
         PerceiveAll();
         PlayerBegin(act);
@@ -874,6 +899,24 @@ public sealed partial class Game
         SettlePrediction();
         SettleWagers();
         Gossip();
+    }
+
+    /// <summary>
+    /// 入夜时还挂着的白天动作（例如傍晚在配给台等开粮、配给台已关）到此作废：夜里的决定从夜里的处境出发。
+    /// 剧本占着的执行不动。否则此人整夜不再自己拿主意，现实与从快照重建的重演便各走各的。
+    /// </summary>
+    private void DropStaleDayActions()
+    {
+        foreach (var p in Npcs.Where(p => p.Exec is { } e && Story?.Owns(e) != true).ToArray())
+        {
+            var exec = p.Exec!;
+            S.Cancel(exec);
+            _running.Remove(exec);
+            ReleaseStation(p);
+            p.Diary.Add($"D{Day} 入夜 放下了白天没做完的事：{(p.Doing is { } j ? Names.Of(j) : "请求之事")}");
+            p.Exec = null;
+            p.Doing = null;
+        }
     }
 
     private void NightTick()
@@ -902,12 +945,21 @@ public sealed partial class Game
         }
     }
 
-    /// <summary>第 3 日起，入夜后名录库前厅里有人以你之名唤你：一个请求（Say+Request），由 SocialSystem 判；警告 1 是 Forbid。</summary>
+    /// <summary>
+    /// 案发日起，入夜后名录库前厅里有人以你之名唤你：一个请求（Say+Request），由 SocialSystem 判；警告 1 是 Forbid。
+    /// 唤名有节奏（多日交互审核 M5）：只唤已经有钩的、被铜口单独低语过的、或不是头一夜来前厅的人；每夜至多唤一人，
+    /// 唤被拉得最紧的那一个（钩与欲望）。其余来前厅的人只留下足迹与停留。
+    /// </summary>
     private void NameCall()
     {
-        foreach (var p in People.Where(p => !p.Asleep && Where(p) == Place.ArchiveFront && p != Det))
+        if (_nameCalledNight == Day) return;
+        var present = People.Where(p => !p.Asleep && Where(p) == Place.ArchiveFront && p != Det
+            && !p.World.Projections.Any(x => x.Kind == ProjectionKind.Event && x.Name == "有人以你之名唤你")
+            && (p.Hooks > 0 || p.Whispered > 0 || Events.Any(e => e.Who == p.Id && e.Job == Job.VisitArchive && e.Day < Day)))
+            .OrderByDescending(p => p.Hooks * 2 + p.Desire).ThenBy(p => p.Id).Take(1).ToArray();
+        if (present.Length > 0) _nameCalledNight = Day;
+        foreach (var p in present)
         {
-            if (p.World.Projections.Any(x => x.Kind == ProjectionKind.Event && x.Name == "有人以你之名唤你")) continue;
             var voice = p.M[NameVoice];
             Observation.Observe(p.Soul, new ObservationInput(voice.Name, voice.Kind)
             { Target = voice, Source = ObservationSource.Perception, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, p.Hooks * 2 + p.Desire - 2) });
@@ -919,6 +971,8 @@ public sealed partial class Game
             Log.Add($"D{Day} 夜 {Now:0.0} 名录库前厅有声音唤 {p.Name}");
         }
     }
+
+    private int _nameCalledNight = -1;
 
     /// <summary>油：阮清越按胜率给油（他信得过的寝区与夜巡）。没有油的地方夜里看不清人。</summary>
     private void OilPhysics()

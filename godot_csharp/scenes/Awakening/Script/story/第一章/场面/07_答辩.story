@@ -74,6 +74,8 @@
 场面 answer_wrong_say
     若 错名 == ""：
         铜口：阁下拿出了东西，却没有说它说明什么。 [#id=answer_wrong_say.001]
+    否则 若 (错名 == "我信霍铎。") 或 (错名 == "我们早已相熟。")：
+        铜口：信任，要有来处。阁下与他的来处，在哪里？ [#id=answer_wrong_say.004]
     否则：
         铜口：“{{错名()}}” [#id=answer_wrong_say.002]
         铜口：这句话，回答的是别的问题。 [#id=answer_wrong_say.003]

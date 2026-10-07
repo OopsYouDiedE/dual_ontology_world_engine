@@ -9,7 +9,10 @@ public sealed record DetectiveAction(string Id, string Kind, string Target, stri
 public sealed record DetectiveMotive(string Id, string Person, string Label, double Probability,
     IReadOnlyList<string> Support, IReadOnlyList<string> CounterEvidence, string Source);
 public sealed record DetectiveBranch(string Action, int Visits, double MeanValue);
-public sealed record DetectiveArgument(int Step, int Variable, string[] Evidence, string RequiredGroup, string RequiredKey);
+/// <summary>One answer step. Variable names the replay variable whose predicted value is stated; when Statement is set,
+/// that combined statement is said instead, but only if the prediction meets every "V<n>=<value>" in StatementRequires.</summary>
+public sealed record DetectiveArgument(int Step, int Variable, string[] Evidence, string RequiredGroup, string RequiredKey,
+    string Statement = "", IReadOnlyDictionary<int,int>? StatementRequires = null);
 public sealed record DetectiveSearchDecision(DetectiveAction? Action, NightVariables? Prediction,
     int Iterations, int Nodes, int MaxDepth, int RemainingHypotheses, double Confidence,
     IReadOnlyList<DetectiveBranch> Branches, IReadOnlyList<DetectiveMotive> Motives);
@@ -73,7 +76,12 @@ public sealed class DetectivePlanner
         foreach (var item in content.GetProperty("DETECTIVE_ARGUMENTS").EnumerateObject())
             _arguments.Add(new(item.Value.GetProperty("step").GetInt32(),item.Value.GetProperty("variable").GetInt32(),
                 S(item.Value,"evidence").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries),
-                S(item.Value,"required_group"),S(item.Value,"required_key")));
+                S(item.Value,"required_group"),S(item.Value,"required_key"),
+                item.Value.TryGetProperty("statement",out var st) ? st.GetString()! : "",
+                item.Value.TryGetProperty("statement_requires",out var req)
+                    ? req.GetString()!.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)
+                        .Select(t => t.TrimStart('V').Split('=')).ToDictionary(t => int.Parse(t[0]), t => int.Parse(t[1]))
+                    : null));
         // Predicted traces only, from the shared case model. ReplayResult.FullMatch and Conflicts are never read.
         foreach (var prediction in AwakeningCase.Predictions)
             _hypotheses.Add(new(prediction.Variables, prediction.Facts.ToDictionary(p => p.Key, p => p.Value)));
@@ -178,7 +186,9 @@ public sealed class DetectivePlanner
         var evidence = argument.Evidence.Where(e => content.Session.GetProgress("examined").GetValueOrDefault(e) is true).ToArray();
         if (evidence.Length == 0) return null;
         var values = new[] { (int)prediction.V1,(int)prediction.V2,(int)prediction.V3,(int)prediction.V4,(int)prediction.V5,(int)prediction.V6 };
-        var said = argument.Variable == -1 && _detectiveBolted ? "me" : argument.Variable is >=1 and <=6 ? $"V{argument.Variable}_{values[argument.Variable-1]}" : "";
+        var said = argument.Statement.Length > 0
+            ? (argument.StatementRequires ?? new Dictionary<int,int>()).All(r => values[r.Key-1] == r.Value) ? argument.Statement : ""
+            : argument.Variable == -1 && _detectiveBolted ? "me" : argument.Variable is >=1 and <=6 ? $"V{argument.Variable}_{values[argument.Variable-1]}" : "";
         return said.Length == 0 ? null : (said,evidence[_random.Next(evidence.Length)]);
     }
     private List<DetectiveAction> Available(State state) => _actions.Where(a => (a.Kind != "answer" || _canAnswer)

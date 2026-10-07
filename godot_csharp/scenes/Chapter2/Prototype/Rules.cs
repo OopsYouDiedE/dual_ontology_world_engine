@@ -85,6 +85,8 @@ public sealed partial class Game
 
     private readonly Dictionary<string, RuleSpec> _specById = [];
     /// <summary>按剧本里的编号取规矩（内容、立规者、价值标记读自 chapter_01.story；Core 的 Rule 由 build 编译）。</summary>
+    /// <summary>行动记录里的规矩可能来自另一局（重演时重建的世界）：规矩的 build 捕获了原局的人，须按编号换成本局的同一条。</summary>
+    private RuleSpec? OwnSpec(RuleSpec? spec) => spec is null ? null : Specs.FirstOrDefault(s => s.Id == spec.Id && s.Text == spec.Text) ?? spec;
     public RuleSpec RuleById(string id) => _specById.TryGetValue(id, out var spec) ? spec : throw new InvalidOperationException("规矩尚未建立：" + id);
 
     private RuleSpec Spec(string id, Func<Fx, IEnumerable<Rule>> build, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)
@@ -116,7 +118,7 @@ public sealed partial class Game
         WardNight = Spec("WardNight",
             fx => [new(Fx.All(fx.At(Slot.Night), Fx.Mine(T.Branded)), RuleMode.Forbid, fx.Go(Place.Logistics), 2)]);
         MoraNight = Spec("MoraNight",
-            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3),
+            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed)), fx.NotDone(Job.Share)), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3),
                    new(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 2)]);
         RuanLedger = Spec("RuanLedger",
             fx => [new(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Duty), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);

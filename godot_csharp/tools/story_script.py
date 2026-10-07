@@ -235,6 +235,7 @@ class Translator:
         self.design: dict[str, Any] = {}
         self.object_ids: dict[str, str] = {}   # 物件名或别名 -> 编号
         self.person_design: dict[str, dict[str, Any]] = {}   # C# P 枚举名 -> 设计数据（群落、值守、倾向……）
+        self.person_dorm: dict[str, str] = {}  # 人物显示名 -> 宿舍（地点显示名），供案件模板 {人寝区}
         self.counter = 0
         self.chapter_id = ""
 
@@ -581,7 +582,8 @@ class Translator:
         intent = table(INTENTS, f["意图"][0], "意图", f["意图"][1].number)
         goal = self.condition(f["条件"][0], f["条件"][1].number)
         self.counter += 1
-        self.emit(f"@reaction(id={py(reaction_id)}, actor={actor}, intent={py(intent)}, goal={goal})", head.number)
+        # 回应是“读”：被问的人当场答，不占游戏时间（总纲 §四.2；多日交互审核 M8）。
+        self.emit(f"@reaction(id={py(reaction_id)}, actor={actor}, intent={py(intent)}, goal={goal}, delay=0)", head.number)
         self.emit(f"def f{self.counter}():", head.number)
         self.steps(body[split:], head)
 
@@ -692,6 +694,8 @@ class Translator:
         if keyword == "人物":
             if entity_id.startswith("person."):
                 self.person_enum[name] = entity_id.split(".", 1)[1]
+                if "宿舍" in fields:
+                    self.person_dorm[name] = fields["宿舍"][0]
             for key in ("属性", "认知", "可见", "立绘"):
                 allowed.add(key)
             args.extend(self.extras(fields, "state", "belief", "observable", "sprite", name))

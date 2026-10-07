@@ -119,26 +119,38 @@ public static class ContinuationSimulation
             }
             var tried = new Dictionary<string, HashSet<string>>();
             int lastClaim = -1;
+            var claimQuestion = "";
             (IReadOnlyDictionary<string, object?> Pick, string Why)? Reasoned(IReadOnlyDictionary<string, object?>[] available)
             {
                 IReadOnlyDictionary<string, object?>? Find(string id) => available.FirstOrDefault(o => Text(o, "id") == id);
                 var ids = available.Select(o => Text(o, "id")).ToArray();
-                if (ids.Any(i => i.StartsWith("claim:")))
+                if (ids.Any(i => i.StartsWith("claim:") || i.StartsWith("template:")))
                 {
+                    // 两层菜单：第一层是“什么事”（模板）或不带人的整句，第二层“是谁”。尝试记录按对质的那一问记。
+                    if (menu != "是谁") claimQuestion = menu;
                     var (fits, claims) = game.DetectiveInference();
                     if (fits.Count == 0 && game.CaseActual is { } actualTraces && !tried.ContainsKey("诊断"))
                     {
                         tried["诊断"] = [];
                         // 只作诊断记录（不参与选择）：作者真相假设下的重演与现实逐条对照。
                         foreach (var v in C.CaseVars.All()) { var ls = game.Compare(game.ReplayCase(v).Traces, actualTraces, game.DetEvidence()); var bad = ls.Where(l => l.StartsWith("冲突")).ToArray(); if (bad.Length <= 1) Emit("重演诊断", $"{v}：冲突 {bad.Length}：{string.Join(" / ", bad)}"); }
-                        { var (_, rw) = game.ReplayCase(new C.CaseVars(1, 0, 1, 0)); foreach (var e in rw.Events.Where(e => e.Day == 2 && e.Slot == C.Slot.Night)) Emit("重演诊断", "假设夜里：" + e.Short); Emit("重演诊断", "现实茉拉入夜评估：" + game.NightStartAssessment.GetValueOrDefault(C.P.Mora)); Emit("重演诊断", "重演茉拉入夜评估：" + rw.NightStartAssessment.GetValueOrDefault(C.P.Mora)); foreach (var who in new[] { C.P.Mora, C.P.Quer }) { var st = game.CaseNightSnapshot!.People[who]; Emit("重演诊断", $"快照 {who}：在 {st.Place}；身体 {string.Join(",", st.Body.Where(kv => kv.Value != 0).Select(kv => kv.Key.Name + "=" + kv.Value))}；认下 {string.Join(",", st.Accepted.Where(kv => kv.Value == Truth.True).Select(kv => kv.Key))}"); } }
+                        { var (_, rw) = game.ReplayCase(new C.CaseVars(1, 0, 1, 0)); foreach (var e in rw.Events.Where(e => e.Day == C.Game.CaseNight && e.Slot == C.Slot.Night)) Emit("重演诊断", "假设夜里：" + e.Short); Emit("重演诊断", "现实茉拉入夜评估：" + game.NightStartAssessment.GetValueOrDefault(C.P.Mora)); Emit("重演诊断", "重演茉拉入夜评估：" + rw.NightStartAssessment.GetValueOrDefault(C.P.Mora)); foreach (var who in new[] { C.P.Mora, C.P.Quer }) { var st = game.CaseNightSnapshot!.People[who]; Emit("重演诊断", $"快照 {who}：在 {st.Place}；身体 {string.Join(",", st.Body.Where(kv => kv.Value != 0).Select(kv => kv.Key.Name + "=" + kv.Value))}；认下 {string.Join(",", st.Accepted.Where(kv => kv.Value == Truth.True).Select(kv => kv.Key))}"); } }
                         Emit("重演诊断", $"侦探行动记录 {game.Script.Count} 条：{string.Join(" | ", game.Script.Take(7).Select(a => a?.Describe() ?? "歇着"))}");
                     }
-                    if (!tried.TryGetValue(menu, out var done)) tried[menu] = done = [];
-                    var next = claims.Select(c => "claim:" + c).FirstOrDefault(id => !done.Contains(id) && Find(id) is not null);
-                    if (next is null) return Find("pause") is { } pause ? (pause, $"推断中剩下的陈述都已试过或不适用于此问（吻合的假设 {fits.Count} 组），暂且不答") : null;
-                    done.Add(next); lastClaim = int.Parse(next[6..]);
-                    return (Find(next)!, $"与已查痕迹全部吻合的 {fits.Count} 组重演假设里都成立");
+                    // 一句话在整场对质里只说一次：已经说过的（无论被认下与否）不再拿来答别的问。
+                    if (!tried.TryGetValue("对质陈述", out var done)) tried["对质陈述"] = done = [];
+                    var wanted = claims.FirstOrDefault(c => !done.Contains("claim:" + c) && (Find("claim:" + c) is not null || Find(C.Chapter2InteractionSession.TopId(c)) is not null), -1);
+                    if (wanted < 0)
+                    {
+                        if (Find("back") is { } back) return (back, "这里没有推断里成立的人，换一句");
+                        return Find("pause") is { } pause ? (pause, $"推断中剩下的陈述都已试过或不适用于此问（吻合的假设 {fits.Count} 组），暂且不答") : null;
+                    }
+                    if (Find("claim:" + wanted) is { } direct)
+                    {
+                        done.Add("claim:" + wanted); lastClaim = wanted;
+                        return (direct, $"与已查痕迹全部吻合的 {fits.Count} 组重演假设里都成立");
+                    }
+                    return (Find(C.Chapter2InteractionSession.TopId(wanted))!, "先选这件事，再说是谁");
                 }
                 if (ids.Any(i => i.StartsWith("evidence:")))
                 {
@@ -154,7 +166,7 @@ public static class ContinuationSimulation
                 {
                     var (_, claims) = game.DetectiveInference();
                     // 推出的形状是“夜里急取、白天不记”：提议让夜取补记入账、补记者不算私取的那一条。
-                    return claims.Contains(0) && Find("proposal:0") is { } p0 ? (p0, "推断出夜里的取用合乎急需却没入账，提议补记") : (Find("none")!, "推不出案子的形状，不提新规矩");
+                    return claims.Any(c => C.CaseDesign.Claims[c].Topic == "take") && Find("proposal:0") is { } p0 ? (p0, "推断出夜里的取用合乎急需却没入账，提议补记") : (Find("none")!, "推不出案子的形状，不提新规矩");
                 }
                 if (ids.Contains("yes") && ids.Contains("no") && menu.Contains("可检查的材料"))
                     return (Find("yes")!, "指控须附材料，正是这一案里缺的");

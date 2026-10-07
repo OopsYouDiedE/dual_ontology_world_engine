@@ -211,7 +211,8 @@ public sealed partial class WorldSession
             var basis = Observation.Observe(actor.Soul, new("candidate:" + candidate.Id, ProjectionKind.Concept)
             {
                 Source = ObservationSource.Introspection, Time = Simulation.CTB.Now, Existence = Truth.True,
-                Rules = [new(condition!, RuleMode.Permit, effect!, 0, Truth.True), new(goal, RuleMode.Prefer, effect!, candidate.Weight, Truth.True)],
+                // 适用条件成立即成为候选（权重 0）；目标成立再加候选权重。Permit 只放行禁令，不提出候选，这里不用它。
+                Rules = [new(condition!, RuleMode.Prefer, effect!, 0, Truth.True), new(new Condition.All([condition!, goal]), RuleMode.Prefer, effect!, candidate.Weight, Truth.True)],
             });
             prepared.Add((candidate, basis, effect!, condition!));
         }

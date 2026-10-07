@@ -22,6 +22,7 @@ func _finish(exit_code: int) -> void:
 var latest_lines: Array = []
 var ending_result: Dictionary = {}
 var planned_pairs: Array = []
+var game_ref: Node = null
 var planned_pair_index := 0
 
 func run_action(game: Node, act: Dictionary) -> Array:
@@ -48,14 +49,22 @@ func select_id(game: Node, packets: Array, id: String) -> void:
 func planned_choice(options: Array) -> Dictionary:
 	var available: Array = options.filter(func(option): return bool(option.available))
 	if available.is_empty(): return {}
-	if str(available[0].id).begins_with("claim:") or str(available[0].id).begins_with("evidence:"):
-		var is_claim := str(available[0].id).begins_with("claim:")
+	var first_id := str(available[0].id)
+	if first_id.begins_with("claim:") or first_id.begins_with("template:") or first_id.begins_with("evidence:"):
+		var is_evidence := first_id.begins_with("evidence:")
 		var wanted := "pause"
 		if planned_pair_index < planned_pairs.size():
-			wanted = ("claim:" if is_claim else "evidence:") + str(planned_pairs[planned_pair_index][0 if is_claim else 1])
+			var pair: Array = planned_pairs[planned_pair_index]
+			if is_evidence:
+				wanted = "evidence:" + str(pair[1])
+			else:
+				# 第一层是“什么事”：模板主张先选模板项，第二层才是具体的人。
+				wanted = "claim:" + str(pair[0])
+				if not available.any(func(o): return str(o.id) == wanted):
+					wanted = str(game_ref.engine.ConfrontTopId(int(pair[0])))
 		for option in available:
 			if str(option.id) == wanted:
-				if not is_claim: planned_pair_index += 1
+				if is_evidence: planned_pair_index += 1
 				return option
 		check(false, "原有效陈述/证据对出现在真实候选中：" + wanted)
 		return {}
@@ -137,10 +146,33 @@ func _run() -> void:
 	run_action(game, {"cmd": "collect"})
 	run_action(game, {"cmd": "stay", "place": "Logistics"})
 	dispatch(game, {"kind": "interact", "map": "logistics", "site": "ration_notice", "target": ""})
-	run_action(game, {"cmd": "tell_rule", "who": "Ward", "rule": int(game.engine.KnownRules()[0].id)})
-	check(game.upcoming_slot() == 5, "第 2 日走到夜里")
+	# 始业日门开已近傍晚，余下几阵就地歇到夜里。
+	var first_guard := 0
+	while game.upcoming_slot() < 5 and first_guard < 8:
+		first_guard += 1
+		run_action(game, {"cmd": "stay", "place": "Hall"})
+	check(game.upcoming_day() == int(game.engine.FirstDay()) and game.upcoming_slot() == 5, "始业日走到夜里")
 	run_action(game, {"cmd": "sleep"})
-	check(game.upcoming_day() == 3 and game.upcoming_slot() == 1, "第 3 日清晨已结算")
+	# 五日：始业日之后是日常篇，每一阵就地歇着（饭点领饭），夜里睡下，直到案发次日的清晨。
+	var case_day: int = int(game.engine.CaseDay())
+	var guard := 0
+	var told := false
+	while game.upcoming_day() < case_day and guard < 40:
+		guard += 1
+		# 日常篇里有人贴出规矩后，当面讲给沃德听（讲规矩要同处一地）。
+		var tellable: Array = game.engine.KnownRules().filter(func(r): return bool(r.tellable))
+		if not told and tellable.size() > 0 and game.upcoming_slot() < 5:
+			for person in game.people:
+				if str(person.key) == "Ward": dispatch(game, {"kind": "move", "place": str(person.place)})
+			run_action(game, {"cmd": "tell_rule", "who": "Ward", "rule": int(tellable[0].id)})
+			told = true
+			continue
+		if game.upcoming_slot() == 5:
+			run_action(game, {"cmd": "sleep"})
+		else:
+			run_action(game, {"cmd": "stay", "place": "Hall"})
+	check(told, "日常篇里当面讲过一条规矩")
+	check(game.upcoming_day() == case_day and game.upcoming_slot() == 1, "案发次日清晨已结算（第 %d 日）" % case_day)
 	var lines: Array = latest_lines
 	check(lines.any(func(l): return str(l).contains("台账")), "清晨提到台账")
 	for pair in [["logistics", "ledger"], ["granary", "latch"], ["clinic", "empty_bowl"], ["zone_jia", "litter"], ["central_hall", "central_notice"]]:
@@ -159,18 +191,17 @@ func _run() -> void:
 	run_action(game, {"cmd": "escort", "who": "Ward", "thing": "配给台公告"})
 	run_action(game, {"cmd": "collect"})
 	run_action(game, {"cmd": "stay", "place": "Hall"})
-	check(game.upcoming_day() == 3 and game.upcoming_slot() == 4, "到第 3 日傍晚")
-	var pairs := []
-	for p in [[0, 0], [2, 4], [1, 2], [3, 5]]:
-		if game.engine.PairValid(p[0], p[1]):
-			pairs.append(p)
+	check(game.upcoming_day() == case_day and game.upcoming_slot() == 4, "到案发次日傍晚")
+	# 现实里为真的主张各配一件手里相关的证据（谁做了什么按推演的结果）。
+	var pairs: Array = game.engine.ValidConfrontPairs()
+	game_ref = game
 	planned_pairs = pairs
 	planned_pair_index = 0
 	run_action(game, {"cmd": "stay", "place": "Hall"})
 	check(latest_lines.any(func(l): return str(l).contains("中央厅")), "对账发生（%d 对有效）" % pairs.size())
 	dispatch(game, {"kind": "move", "place": "ArchiveFront"})
 	run_action(game, {"cmd": "watch", "place": "ArchiveFront"})
-	check(game.engine.Ended(), "第 4 日：章节到议事")
+	check(game.engine.Ended(), "议事日：章节到议事")
 	var result: Dictionary = ending_result
 	check(str(result.result_text) != "", "议事结果：" + str(result.result_text))
 	print("用时 %d ms；失败 %d" % [Time.get_ticks_msec() - t0, failures])

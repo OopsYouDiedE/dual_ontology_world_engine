@@ -6,7 +6,8 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// <summary>十六名学员。Det 是玩家（侦探）。</summary>
 public enum P { Det, Huo, Shen, Su, Lucian, Gu, Quer, Ward, Selma, Ruan, Elena, Moran, Veronica, Bertrand, Margaret, Mora }
 public enum Group { Life, Wenqi, Xingyi, Houqin }
-public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL }
+/// <summary>新地点只追加在末尾：已有地点的序号写进了存档与快照。</summary>
+public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL, Resonance }
 public enum Slot { Morning, Forenoon, Noon, Afternoon, Evening, Night }
 public enum Build { Small, Medium, Large }
 /// <summary>跨寝区的价值聚落（§11 第 7 条，初值，可被打破）。</summary>
@@ -86,7 +87,7 @@ public static class Names
     {
         ["hall"] = Place.Hall, ["lecture"] = Place.Lecture, ["logistics"] = Place.Logistics, ["clinic"] = Place.Clinic,
         ["greenhouse"] = Place.Greenhouse, ["archive"] = Place.ArchiveFront, ["oath"] = Place.Oath, ["life"] = Place.DormLife,
-        ["dormw"] = Place.DormW, ["dorms"] = Place.DormS, ["dorml"] = Place.DormL,
+        ["dormw"] = Place.DormW, ["dorms"] = Place.DormS, ["dorml"] = Place.DormL, ["resonance"] = Place.Resonance,
     }.Concat(Enum.GetValues<Place>().Select(p => new KeyValuePair<string, Place>(Of(p), p))).ToImmutableDictionary();
 }
 

@@ -29,7 +29,12 @@ public sealed class Chapter2InteractionSession
     private bool _fullMatch, _replayOpen, _ended, _mediating;
     private Dictionary<string, object?> _replayResult = new();
     private readonly List<(int,int)> _pairs = new();
-    private static readonly int[] ConfrontClaims = [0, 2, 1, 3];
+    /// <summary>对质的议程：每一步问一个话题（取用、门闩、台账），期望的回答是现实里为真、尚未答过的那类主张。</summary>
+    private readonly List<string> _agendaDone = new();
+    private readonly HashSet<int> _answered = new();
+    private readonly HashSet<string> _skippedTopics = new();
+    private string _question="",_topic="";
+    private HashSet<int> _expected=new();
     private readonly Chapter2InteractionContent _content;
     private readonly string[] _confrontQuestions;
     public Dictionary<string,object?> ReplayMetadata()=>new(){["title"]=_content.Text("replay_title"),["hint"]=_content.Text("replay_hint")};
@@ -229,7 +234,7 @@ public sealed class Chapter2InteractionSession
     private void Scene(Place place,List<Dictionary<string,object?>> output)
     {
         _game.HostMoveDet(place); _knownPlaces.Add(place.ToString());
-        var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",_=>"living_hall" };
+        var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",Place.Resonance=>"resonance",_=>"living_hall" };
         output.Add(Event("scene",("map",map),("spawn",place==Place.Logistics?"west":"south")));
     }
     private void Run(PlayerAction? action,List<Dictionary<string,object?>> output)
@@ -242,13 +247,13 @@ public sealed class Chapter2InteractionSession
     private void Commit(PlayerAction? action,List<Dictionary<string,object?>> output)
     {
         if (_game.Ended) { Council(output); return; }
-        if (_game.Day==3 && _game.Slot==Slot.Evening) { BeginConfront(output); return; }
+        if (_game.Day==Game.CaseDay && _game.Slot==Slot.Evening) { BeginConfront(output); return; }
         if (_game.Slot==Slot.Afternoon && Game.Get(_game.Det.Body,T.Hungry)>0 && action?.Cmd!=Cmd.Stay) { Lines([_content.Text("hungry")],output); return; }
         if (_game.Slot==Slot.Night && action is not null && action.Cmd!=Cmd.Stakeout) { Activate("commit.night_hint",output); return; }
         if (action?.Cmd==Cmd.Stay && _game.Slot is Slot.Noon or Slot.Evening)
         {
             action=new(Cmd.Collect);
-            if (_game.Day==2 && _game.Slot==Slot.Noon)
+            if (_game.Day==Game.FirstDay && _game.Slot==Slot.Noon)
             {
                 Scene(Place.Logistics,output); _mediating=false; Activate("commit.noon_dispute",output);
                 _continuations.Enqueue(o=>Run(new(_mediating?Cmd.Mediate:Cmd.Collect),o)); Pump(output); return;
@@ -258,7 +263,7 @@ public sealed class Chapter2InteractionSession
         if (night)
         {
             if (_game.Ended) _continuations.Enqueue(Council);
-            else if (_game.Day==3)
+            else if (_game.Day==Game.CaseDay)
             {
                 _continuations.Enqueue(o=>Activate("night.dawn",o));
                 _continuations.Enqueue(o=> { Run(new(Cmd.Stay){Place=Place.Hall},o); Scene(Place.Hall,o); });
@@ -307,7 +312,7 @@ public sealed class Chapter2InteractionSession
                 Menu(isBed?"睡下":"守夜",[("confirm",isBed?"在这里睡到天亮":"在这里守一夜",()=>_game.Slot==Slot.Night,o=>Commit(isBed?null:new(Cmd.Stakeout){Place=_game.Where(_game.Det)},o)),("cancel","返回现场",()=>true,o=>{})],output); return;
             case "meal":
                 if (_game.Slot is Slot.Noon or Slot.Evening) Commit(new(Cmd.Stay),output); else Lines([_content.Text("meal_closed")],output); return;
-            case "tube": if (_game.Day==3 && _game.Slot==Slot.Evening) { BeginConfront(output); return; } break;
+            case "tube": if (_game.Day==Game.CaseDay && _game.Slot==Slot.Evening) { BeginConfront(output); return; } break;
         }
         var thing=Text(spec,"thing");
         if(authored.Thing is not null)
@@ -320,7 +325,7 @@ public sealed class Chapter2InteractionSession
         var lore=Text(spec,"lore");var text=lore==""?facts:facts==""?lore:lore+"\n"+facts;
         var id=map+":"+site; var card=new Dictionary<string,object?>{["id"]=id,["title"]=Text(spec,"title"),["text"]=text,["place"]=Names.Of(_game.Where(_game.Det)),["thing"]=thing};
         _examined[id]=card; ShowCard(id,card,output);
-        if (thing=="台账" && _game.Day>=3 && !_replayOpen) { _replayOpen=true; _continuations.Enqueue(o=>Activate("card.replay_unlock",o)); }
+        if (thing=="台账" && _game.Day>=Game.CaseDay && !_replayOpen) { _replayOpen=true; _continuations.Enqueue(o=>Activate("card.replay_unlock",o)); }
     }
     private Dictionary<string,string> SiteSpec(Chapter2AuthoredSite site)
     {
@@ -380,7 +385,8 @@ public sealed class Chapter2InteractionSession
     {
         _behavior.RefreshExistingKnowledge();
         var started=_behavior.Process(new RequestReaction(_actorIds[who]));BehaviorEvents(started,output);
-        if(started.Any(e=>e is CandidateActionStarted))BehaviorEvents(_behavior.Process(new AdvanceWorld(_game.Now+5)),output);
+        // 问话是“读”：回应不占时间，在当下结算（总纲 §四.2；多日交互审核 M8）。
+        if(started.Any(e=>e is CandidateActionStarted))BehaviorEvents(_behavior.Process(new AdvanceWorld(_game.Now)),output);
     }
     private void BehaviorEvents(IReadOnlyList<WorldOutput> events,List<Dictionary<string,object?>> output)
     {
@@ -418,24 +424,70 @@ public sealed class Chapter2InteractionSession
     }
     private void BeginConfront(List<Dictionary<string,object?>> output)
     {
-        _stage="confront"; _pairs.Clear(); _confrontIndex=0; Scene(Place.Hall,output); Activate("confront.evening",output);
+        _stage="confront"; _pairs.Clear(); _confrontIndex=0; _answered.Clear(); _agendaDone.Clear(); _skippedTopics.Clear(); Scene(Place.Hall,output); Activate("confront.evening",output);
         _continuations.Enqueue(o=>Activate("confront.begin",o)); _continuations.Enqueue(ConfrontStep); Pump(output);
     }
     private void ConfrontStep(List<Dictionary<string,object?>> output)
     {
-        while(_confrontIndex<ConfrontClaims.Length&&!_game.HostClaimTrue(ConfrontClaims[_confrontIndex])) _confrontIndex++;
-        if(_confrontIndex>=ConfrontClaims.Length) { Activate("confront.rule",output); _continuations.Enqueue(ConfrontProposal); Pump(output); return; }
-        var expected=ConfrontClaims[_confrontIndex];
-        var choices=Game.Claims.Select((claim,i)=>("claim:"+i,claim,(Func<bool>)(()=>true),(Action<List<Dictionary<string,object?>> >)(o=>ConfrontEvidence(expected,i,o)))).ToList();
-        choices.Add(("pause","暂且不答",()=>true,o=>{_confrontIndex++;Activate("confront.pause",o);_continuations.Enqueue(ConfrontStep);}));
-        Menu(_confrontQuestions[_confrontIndex],choices,output);
+        // 议程由现实里为真的主张决定（多日交互审核 M1）：先问取用（有几份问几遍，第二遍起问“其余的呢？”），再问门闩，最后问台账。
+        string? topic=null;HashSet<int> expected=new();
+        foreach(var t in new[]{"take","latch","ledger"})
+        {
+            if(_skippedTopics.Contains(t)) continue;
+            expected=Enumerable.Range(0,CaseDesign.Claims.Count).Where(i=>CaseDesign.Claims[i].Topic==t&&!CaseDesign.Claims[i].Frames&&!_answered.Contains(i)&&_game.HostClaimTrue(i)).ToHashSet();
+            if(expected.Count>0){topic=t;break;}
+        }
+        if(topic is null) { Activate("confront.rule",output); _continuations.Enqueue(ConfrontProposal); Pump(output); return; }
+        _question=topic switch{"take"=>_agendaDone.Contains("take")?_confrontQuestions[1]:_confrontQuestions[0],"latch"=>_confrontQuestions[2],_=>_confrontQuestions[3]};
+        _expected=expected;_topic=topic;
+        Menu(_question,ClaimChoices(),output);
     }
-    private void ConfrontEvidence(int expected,int said,List<Dictionary<string,object?>> output)
+    /// <summary>
+    /// 能说的话：不带人的主张直接列出；“某人……”的模板先选事，再选人（菜单不一次列出几十句，也不替玩家点名）。
+    /// 选中一人的那句才是真正说出口的主张。
+    /// </summary>
+    private List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)> ClaimChoices(string? template=null)
+    {
+        var (expected,topic)=(_expected,_topic);
+        var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>();
+        if(template is not null)
+        {
+            foreach(var (c,i) in CaseDesign.Claims.Select((c,i)=>(c,i)).Where(x=>x.c.Template==template))
+                choices.Add(("claim:"+i,Names.Of(c.Person!.Value),()=>true,o=>ConfrontEvidence(expected,topic,i,o)));
+            choices.Add(("back","换一句",()=>true,o=>Menu(_question,ClaimChoices(),o)));
+            return choices;
+        }
+        foreach(var (c,i) in CaseDesign.Claims.Select((c,i)=>(c,i)))
+        {
+            if(c.Template is null) choices.Add(("claim:"+i,c.Text,()=>true,o=>ConfrontEvidence(expected,topic,i,o)));
+            else if(TopId(i)=="template:"+i)
+            {
+                var t=c.Template;
+                choices.Add((TopId(i),t.Replace("{人}","（谁）"),()=>true,o=>Menu("是谁",ClaimChoices(t),o)));
+            }
+        }
+        choices.Add(("pause","暂且不答",()=>true,o=>{_skippedTopics.Add(topic);_agendaDone.Add(topic);Activate("confront.pause",o);_continuations.Enqueue(ConfrontStep);}));
+        return choices;
+    }
+    /// <summary>某句主张在第一层菜单里的编号：模板主张归到它的模板项。</summary>
+    public static string TopId(int claim)
+    {
+        var c=CaseDesign.Claims[claim];
+        if(c.Template is null) return "claim:"+claim;
+        var first=CaseDesign.Claims.Select((x,j)=>(x,j)).First(x=>x.x.Template==c.Template).j;
+        return "template:"+first;
+    }
+    private void ConfrontEvidence(HashSet<int> expected,string topic,int said,List<Dictionary<string,object?>> output)
     {
         Menu("出示什么",Game.EvidenceNames.Select((name,i)=>(name,i)).Where(p=>_game.DetHasEvidence(p.i)).Select(p=>("evidence:"+p.i,p.name,(Func<bool>)(()=>_game.DetHasEvidence(p.i)),(Action<List<Dictionary<string,object?>> >)(o=>
         {
-            if((said==expected||said==5)&&_game.HostPairValid(said,p.i)) { _pairs.Add((said,p.i));_confrontIndex++; if(said==5) Activate("confront.frame",o); else Lines([_game.HostReaction(said)],o); }
-            else { _wrongName=p.name; Activate(said==expected?"confront.wrong_show":"confront.wrong_say",o); }
+            var frames=CaseDesign.Claims[said].Frames;
+            if((expected.Contains(said)||frames)&&_game.HostPairValid(said,p.i))
+            {
+                _pairs.Add((said,p.i));_answered.Add(said);if(!_agendaDone.Contains(topic))_agendaDone.Add(topic);
+                if(frames) Activate("confront.frame",o); else Lines([_game.HostReaction(said)],o);
+            }
+            else { _wrongName=p.name; Activate(expected.Contains(said)?"confront.wrong_show":"confront.wrong_say",o); }
             _continuations.Enqueue(ConfrontStep);
         }))),output);
     }
@@ -474,7 +526,7 @@ public sealed class Chapter2InteractionSession
             o.Add(Event("end",("result",new Dictionary<string,object?>
             {
                 ["result"]=ending.ToString(),["result_text"]=Game.EndingText(ending),
-                ["quer"]=_game.QuerCleared?"雀儿洗清了冤屈，住回甲区":_game.QuerOstracized?"雀儿被当成私取之人，搬出甲区独宿":"雀儿的事没有人再提",
+                ["quer"]=_game.Accused is not { } accused?"没有人被当众指控":_game.QuerCleared?$"{Names.Of(accused)}洗清了冤屈，住回寝区":_game.QuerOstracized?$"{Names.Of(accused)}被当成私取之人，搬出寝区独宿":$"{Names.Of(accused)}的事没有人再提",
                 ["det_hooks"]=_game.Det.Hooks,["common_rule"]=_game.CommonRuleEstablished,["case_rule"]=_game.CaseRule?.Text??"",
                 ["log"]=_game.CouncilLog.ToArray(),["hooks"]=_game.Npcs.Where(p=>p.Hooks>0).Select(p=>p.Name).ToArray(),["impressions"]=Impressions(),
                 ["stands"]=_game.CouncilChoice.ToDictionary(p=>p.Key.ToString(),p=>Game.EndingText(Game.FamilyOf(p.Value)))
@@ -486,10 +538,10 @@ public sealed class Chapter2InteractionSession
         if(!_replayOpen) throw new InvalidOperationException("尚未获得重演手稿。");
         var values=(input.GetValueOrDefault("vars") as IEnumerable<object?>)?.Select(v=>Convert.ToInt32(v)).ToArray()??throw new InvalidOperationException("缺少重演变量。");
         if(values.Length!=4||values.Where((v,i)=>v<0||v>=CaseVars.Options[i].Length).Any()) throw new InvalidOperationException("重演变量无效。");
-        var (traces,world)=_game.ReplayCase(new(values[0],values[1],values[2],values[3]));var actual=_game.CaseActual??traces;var known=_game.DetEvidence();var r=traces.Describe().ToArray();var a=actual.Describe().ToArray();
+        var (traces,world)=_game.ReplayCase(new(values[0],values[1],values[2],values[3]));var actual=_game.CaseActual??traces;var known=_game.DetEvidence();var looked=_game.DetLookedLitters();var r=traces.Describe(looked).ToArray();var a=actual.Describe(looked).ToArray();
         var findings=r.Select((t,i)=>(object)new Dictionary<string,object?>{["index"]=i,["name"]=_content.Texts("finding_titles",5)[i],["status"]=!known.Contains(i)?"unvisited":t.Text==a[i].Text?"match":"conflict",["text"]=!known.Contains(i)?"还没查过":t.Text==a[i].Text?a[i].Text:$"重演中：{t.Text}；现场：{a[i].Text}"}).ToArray();
         var full=r.Select((t,i)=>known.Contains(i)&&t.Text==a[i].Text).All(v=>v);
-        _replayResult=new(){["findings"]=findings,["full_match"]=full,["steps"]=Game.InkSteps(world,2).Select(s=>(object)new Dictionary<string,object?>{["t"]=s.Time,["who"]=s.Who.ToString(),["name"]=Names.Of(s.Who),["build"]=s.Build switch{Build.Small=>"瘦小",Build.Large=>"高大",_=>"中等"},["from"]=s.From.ToString(),["to"]=s.To.ToString(),["act"]=s.Act}).ToArray()};
+        _replayResult=new(){["findings"]=findings,["full_match"]=full,["steps"]=Game.InkSteps(world,Game.CaseNight).Select(s=>(object)new Dictionary<string,object?>{["t"]=s.Time,["who"]=s.Who.ToString(),["name"]=Names.Of(s.Who),["build"]=s.Build switch{Build.Small=>"瘦小",Build.Large=>"高大",_=>"中等"},["from"]=s.From.ToString(),["to"]=s.To.ToString(),["act"]=s.Act}).ToArray()};
         _replayCount++; if(_replayCount==1&&!full)_continuations.Enqueue(o=>Activate("after_replay.first",o));if(full&&!_fullMatch){_fullMatch=true;_continuations.Enqueue(o=>Activate("after_replay.match",o));} Pump(output);
     }
     private string[] Impressions()=>_game.Npcs.Where(p=>p.Id is P.Ward or P.Quer or P.Mora or P.Huo or P.Ruan or P.Margaret).Select(p=>

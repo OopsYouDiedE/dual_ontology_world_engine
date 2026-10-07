@@ -104,7 +104,7 @@
     物件 传声中继
         编号：object.RelayPost
         范围：世界
-        位置：名录库前厅
+        位置：中央厅
         可见：Occupied、Worked
 
     物件 中央基座

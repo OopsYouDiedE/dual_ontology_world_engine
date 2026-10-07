@@ -34,10 +34,10 @@ public sealed partial class Game
 
     public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
     {
-        [11] = (2, "守则读法", "按字面读它自己的守则与学员立的规，找出条文没写什么。"),
-        [12] = (0, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
+        [11] = (FirstDay, "守则读法", "按字面读它自己的守则与学员立的规，找出条文没写什么。"),
+        [12] = (FirstDay + 1, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
         [13] = (0, "言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
-        [14] = (0, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
+        [14] = (FirstDay + 2, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
     }.ToImmutableDictionary();
 
     public static int LessonOfDay(int day) => Lessons.FirstOrDefault(l => l.Value.Day == day).Key;
@@ -66,8 +66,8 @@ public sealed partial class Game
         Log.Add($"D{Day} 上午 {title}：到课 {string.Join("、", present.Select(p => p.Name))}");
         if (present.Contains(Det))
             Feed.Add($"【{title}】黑板前没有人，粉笔自己在板上写字。{teach}（到课：{string.Join("、", present.Where(p => p != Det).Select(p => p.Name))}）");
-        // 它挑最容易被推动的三个人说话（欲望与钩最高者）。
-        foreach (var p in present.Where(p => p != Det).OrderBy(p => p.Whispered).ThenByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id).Take(3)) Whisper(p);
+        // 它挑最容易被推动的人说话（欲望与钩最高者）：首课人人都在，挑三个；之后的课愿来才来，每课只挑一个（五日里课多了，低语不随之翻倍）。
+        foreach (var p in present.Where(p => p != Det).OrderBy(p => p.Whispered).ThenByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id).Take(lesson == 11 ? 3 : 1)) Whisper(p);
     }
 
     /// <summary>第十四课：讲清回忆为何接上钩。欲望强的人更想去试，欲望弱的人更怕（第三部分 §5.8）。</summary>
@@ -96,9 +96,8 @@ public sealed partial class Game
 
     public void MorningBroadcast()
     {
-        switch (Day)
+        if (Day == FirstDay)
         {
-            case 2:
                 Broadcast("诸位，请到讲堂来。现在讲守则的读法。");
                 Broadcast("封存之物存于名录库，凡学员皆可取回己物。");
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
@@ -106,15 +105,14 @@ public sealed partial class Game
                 Det.Acc[Warning1] = Truth.True;
                 // 它只对不戒备它的人低语（信它的人它多说，戒备它的人它不白费口舌）；低语只有本人听见，旁人看不出谁听到过什么（总纲 恶魔“不自曝”）。
                 foreach (var p in People.Where(p => p == Det || p.Pro.DemonPrejudice >= 0 || p.Hooks > 0)) Whisper(p);
-                break;
-            case 3:
-            {
+        }
+        else if (Day == CaseDay)
+        {
                 var shortBy = CaseActual?.LedgerShort ?? 0;
                 Broadcast(shortBy > 0 ? $"诸位晨安。台账上，少了{Cn(shortBy)}份。昨夜，有人进过后勤院。" : "诸位晨安。今日无新课。");
-                break;
-            }
-            case 4: Broadcast("今日，诸位要决定名录库的事。我只旁听。"); break;
         }
+        else if (Day == LastDay) Broadcast("今日，诸位要决定名录库的事。我只旁听。");
+        else if (LessonOfDay(Day) is var lesson and > 0) Broadcast($"诸位晨安。今日上午讲堂有课：《{Lessons[lesson].Title}》。愿来的请来。");
     }
 
     // --------------------------------------------------------------- Q&A --

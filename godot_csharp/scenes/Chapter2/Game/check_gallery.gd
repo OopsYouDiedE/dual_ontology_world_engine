@@ -79,6 +79,11 @@ func _run() -> void:
 		game._dismiss_modal()
 	for act in [{"cmd": "collect"}, {"cmd": "stay", "place": "Logistics"}, {"cmd": "collect"}, {"cmd": "sleep"}]:
 		await send({"kind": "action", "act": act})
+	var case_day: int = int(game.engine.CaseDay())
+	var guard := 0
+	while game.upcoming_day() < case_day and guard < 40:
+		guard += 1
+		await send({"kind": "action", "act": {"cmd": "sleep"} if game.upcoming_slot() == 5 else {"cmd": "stay", "place": "Logistics"}})
 	for pair in [["logistics", "ledger"], ["granary", "latch"], ["clinic", "empty_bowl"], ["zone_jia", "litter"]]:
 		await send({"kind": "move", "place": game.MAP_PLACE[pair[0]]})
 		await send({"kind": "interact", "map": pair[0], "site": pair[1], "target": ""})
@@ -99,7 +104,7 @@ func _run() -> void:
 	game.open_campus_map()
 	await shot("11_campus_map")
 	game._dismiss_modal()
-	while game.upcoming_day() == 3 and game.upcoming_slot() < 4:
+	while game.upcoming_day() == case_day and game.upcoming_slot() < 4:
 		await send({"kind": "action", "act": {"cmd": "stay", "place": "Hall"}})
 	game._dispatch({"kind": "action", "act": {"cmd": "stay", "place": "Hall"}})
 	await shot("12_confront")

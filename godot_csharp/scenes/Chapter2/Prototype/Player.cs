@@ -97,7 +97,7 @@ public sealed partial class Game
             case Cmd.Rub:
                 if (act.Who is { } helper) Request(helper, "陪我去誓约庭拓那块碑。", fx.Escort(Place.Oath, Stele));
                 break;
-            case Cmd.Mediate when Day == 2 && Slot == Slot.Noon:
+            case Cmd.Mediate when Day == FirstDay && Slot == Slot.Noon:
                 var mora = Evaluate(P.Mora, "先按人头开粮，账我来对。");
                 var ruan = Evaluate(P.Ruan, "先按人头开粮，账我来对。");
                 Mediated = mora != SocialStance.Reject && ruan != SocialStance.Reject && (mora == SocialStance.Accept || ruan == SocialStance.Accept);
@@ -256,7 +256,7 @@ public sealed partial class Game
                     // 同一区域的痕迹一并细看。
                     var all = new List<Essence> { thing };
                     foreach (var name in AreaThings.GetValueOrDefault(area) ?? []) { var e = Things_[name].Thing(this); if (!all.Contains(e)) all.Add(e); }
-                    foreach (var e in all) { if (Day >= 3) DetLooked.Add(e); DetSaw(e); }
+                    foreach (var e in all) { if (Day >= CaseDay) DetLooked.Add(e); DetSaw(e); }
                     if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
                     Feed.Add($"你细看了{Names.Of(here)}：");
                     foreach (var e in all)
@@ -366,7 +366,7 @@ public sealed partial class Game
             case Cmd.TellRule:
             {
                 var who = this[act.Who!.Value];
-                var spec = act.Spec ?? CardSpec(act.Card!, P.Det);
+                var spec = OwnSpec(act.Spec) ?? CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 var v = Tell(who, spec);
                 _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, $"当面对{who.Name}讲「{Short(spec)}」", "交谈", Where(Det), []);
@@ -395,7 +395,7 @@ public sealed partial class Game
             }
             case Cmd.Post:
             {
-                var spec = act.Spec ?? CardSpec(act.Card!, P.Det);
+                var spec = OwnSpec(act.Spec) ?? CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
                 Post(spec, act.Place!.Value);
                 Feed.Add($"你在{Names.Of(act.Place.Value)}贴出{LabelOf(spec)}「{spec.Text}」");
@@ -455,19 +455,43 @@ public sealed partial class Game
     public string Testimony(Person p) => TestimonyPresentation(p).Text;
 
     // Presentation accompanies the selected wording; rules and testimony text are unchanged.
-    private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false) => Day < 3 || p.Id is not (P.Bertrand or P.Margaret or P.Mora or P.Quer or P.Ruan or P.Ward) ? ChatPresentation(p) : p.Id switch
+    /// <summary>
+    /// 案发次日起问一个人“知道些什么”：他说自己那夜做了什么（多日交互审核 M1：谁做了什么由推演定，不按作者版本的名字）。
+    /// 夜里取了口粮的人，信得过侦探才照实说；守夜的贝尔特朗报身影；请人修门闩的玛格丽特说请了谁；记账的、立规的人说账与规矩。
+    /// 那夜什么也没做的人，就是平常的交谈。
+    /// </summary>
+    private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false)
     {
-        P.Bertrand => ("“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == 2)).GroupBy(s => (s.Day, s.At))
-            .Select(g => $"第{g.Key.Day}日夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”", "thoughtful"),
-        P.Margaret => NightTruth.Any(t => t.Contains("雀儿 修粮仓门闩")) && p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked))
-            ? ("“粮仓门闩松了，前天夜里我在后勤院碰见雀儿，请她修的。她修得很干净。……有人说她偷东西？她当时饿着肚子在修门。”", "angry")
-            : p.World.Projections.Any(x => x.Relations.Any(r => r.Relation == Fx.Asked)) ? ("“门闩松了，我请人修，没人搭理。”", "worried") : ("“后勤院的门闩松着，没人管。”", "worried"),
-        P.Mora => NightTruth.Any(t => t.StartsWith("D2 茉拉 夜里为病人取")) ? ("“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”", "worried") : ("“我一直在诊疗所。”", "calm"),
-        P.Quer => NightTruth.Any(t => t.StartsWith("D2 雀儿 夜里自取")) ? (selectedTestimony || TrustIn(p, Det) >= 2 ? ("“……我拿了一份。茉拉的板上写着急需可以自取。门闩是我修的。”", "worried") : ("“关你什么事。”", "angry")) : ("“我那晚饿着睡的。”", "worried"),
-        P.Ruan => ($"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”", "thoughtful"),
-        P.Ward => Accused is not null ? ("“依据台账与所见，事实清楚。”", "calm") : ("“无记录即违规。仅此而已。”", "calm"),
-        _ => ("“我那晚睡着了。”", "calm")
-    };
+        if (Day < CaseDay) return ChatPresentation(p);
+        var prefix = $"D{CaseNight} {p.Name} ";
+        var did = NightTruth.Where(t => t.StartsWith(prefix, StringComparison.Ordinal)).Select(t => t[prefix.Length..]).ToArray();
+        bool Did(params Job[] jobs) => did.Any(d => jobs.Any(j => d.StartsWith(Names.Of(j), StringComparison.Ordinal)));
+        var open = selectedTestimony || TrustIn(p, Det) >= 2;
+        var latch = Did(Job.RepairLatch) ? "门闩是我修的。" : "";
+        switch (p.Id)
+        {
+            case P.Bertrand:
+                return ("“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == CaseNight)).GroupBy(s => (s.Day, s.At))
+                    .Select(g => $"{Chapter2Design.DayName(g.Key.Day)}夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”", "calm");
+            case P.Ruan: return ($"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”", "thoughtful");
+            case P.Ward: return Accused is not null ? ("“依据台账与所见，事实清楚。”", "calm") : ("“无记录即违规。仅此而已。”", "calm");
+            case P.Margaret:
+            {
+                var ask = Events.FirstOrDefault(e => e.Who == P.Margaret && e.Day == CaseNight && e.Job == Job.AskLatchHelp);
+                var asked = ask is null ? null : People.FirstOrDefault(o => o != p && ask.Text.Contains(o.Name));
+                if (asked is not null && NightTruth.Any(t => t.StartsWith($"D{CaseNight} {asked.Name} {Names.Of(Job.RepairLatch)}", StringComparison.Ordinal)))
+                    return ($"“粮仓门闩松了，那天夜里我在后勤院碰见{asked.Name}，请{asked.Pro.Pronoun}修的。修得很干净。”", "calm");
+                if (ask is not null) return ("“门闩松了，我请人修，没人搭理。”", "worried");
+                break;
+            }
+        }
+        if (Did(Job.NightTakeSick, Job.NightTakeSickRec))
+            return open ? ("“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”" , "worried") : ("“我一直在诊疗所。”", "calm");
+        if (Did(Job.NightTakeSelf, Job.NightTakeSelfRec))
+            return open ? ($"“……我拿了一份。茉拉的板上写着急需可以自取。{latch}”", "worried") : ("“关你什么事。”", "angry");
+        if (latch.Length > 0) return ($"“{latch}”", "calm");
+        return did.Length > 0 || p.Id is P.Margaret or P.Mora or P.Quer ? ("“我那晚睡着了。”", "calm") : ChatPresentation(p);
+    }
 
     /// <summary>平常的交谈：他最近听说的两件事（他自己的说法，可能走样），以及他对侦探的态度。</summary>
     private (string Text, string Emotion) ChatPresentation(Person p)

@@ -641,7 +641,7 @@
     "voice_source": {
       "step": 2,
       "variable": 3,
-      "evidence": "E8,E5",
+      "evidence": "E8",
       "required_group": "experiments",
       "required_key": "E8"
     },
@@ -655,6 +655,8 @@
     "trust": {
       "step": 4,
       "variable": 6,
+      "statement": "trust",
+      "statement_requires": "V5=0,V6=1",
       "evidence": "E9,E10,E11,E7",
       "required_group": "helped",
       "required_key": "E9"
@@ -820,7 +822,16 @@
         {
           "proposition": "门外无人",
           "needs_test": false,
-          "condition": null
+          "condition": {
+            "op": "call",
+            "name": "asked",
+            "args": [
+              {
+                "op": "literal",
+                "value": "E5"
+              }
+            ]
+          }
         }
       ]
     },
@@ -998,7 +1009,7 @@
       "name": "架上的无尘方框",
       "place": "四间宿舍",
       "source": "R-05 至 R-08 · 书架",
-      "facts": "四间宿舍的书架都积着灰。灰上留着几块干净的长方形，像相框和书立过很久的位置。\nR-05 的架沿上有半枚手印。",
+      "facts": "四间宿舍的书架都积着灰。灰上留着几块干净的长方形，边缘整齐。\nR-05 的架沿上有半枚手印。",
       "experiment": "比对手掌轮廓",
       "picture": "shelf",
       "room": "R05",
@@ -1201,40 +1212,40 @@
   ],
   "DAY_CLOCK": {
     "start_minutes": 480,
-    "expected_exit_minutes": 720,
-    "normal_exit_earliest_minutes": 740,
-    "normal_exit_latest_minutes": 770,
-    "default_scene_minutes": 1,
+    "expected_exit_minutes": 1050,
+    "normal_exit_earliest_minutes": 1050,
+    "normal_exit_latest_minutes": 1110,
+    "default_scene_minutes": 2,
     "companion_start_minutes": 440,
     "daily_seconds_per_game_minute": 0.5,
     "scenes": {
-      "s1_wake": 8,
-      "s2_meet": 10,
-      "s2_tea": 12,
-      "s3_broadcast": 8,
-      "s4_rewards": 18,
-      "s5_question": 12,
-      "s6_begin": 4,
-      "s6_reversal": 5,
-      "s8_reversal": 8,
-      "s10_steps": 4,
-      "s10_prints": 3,
-      "s10_hand": 2,
-      "s10_open": 6,
-      "ending_rest": 5,
+      "s1_wake": 16,
+      "s2_meet": 20,
+      "s2_tea": 24,
+      "s3_broadcast": 16,
+      "s4_rewards": 36,
+      "s5_question": 24,
+      "s6_begin": 8,
+      "s6_reversal": 10,
+      "s8_reversal": 16,
+      "s10_steps": 8,
+      "s10_prints": 6,
+      "s10_hand": 4,
+      "s10_open": 12,
+      "ending_rest": 10,
       "talk_huo_menu": 0,
       "talk_shen_menu": 0,
       "talk_su_menu": 0
     },
     "actions": {
-      "检视": 3,
-      "试验": 7,
-      "协助": 5,
-      "交谈": 4,
-      "声路": 10,
-      "重演": 12,
-      "答辩": 4,
-      "走动": 1
+      "检视": 7,
+      "试验": 17,
+      "协助": 12,
+      "交谈": 10,
+      "声路": 24,
+      "重演": 29,
+      "答辩": 10,
+      "走动": 2
     }
   },
   "PEOPLE": {
@@ -3164,15 +3175,30 @@
         "op": "or",
         "args": [
           {
-            "op": "eq",
+            "op": "and",
             "args": [
               {
-                "op": "call",
-                "name": "shown"
+                "op": "eq",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "shown"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "E5"
+                  }
+                ]
               },
               {
-                "op": "literal",
-                "value": "E5"
+                "op": "call",
+                "name": "asked",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "E5"
+                  }
+                ]
               }
             ]
           },
@@ -3320,51 +3346,15 @@
       "question": "闩门的人，为何不听门边那位女士的？",
       "proposition": "不听门边那位的缘由",
       "say_ok": {
-        "op": "or",
+        "op": "eq",
         "args": [
           {
-            "op": "or",
-            "args": [
-              {
-                "op": "eq",
-                "args": [
-                  {
-                    "op": "call",
-                    "name": "said"
-                  },
-                  {
-                    "op": "literal",
-                    "value": "V5_0"
-                  }
-                ]
-              },
-              {
-                "op": "eq",
-                "args": [
-                  {
-                    "op": "call",
-                    "name": "said"
-                  },
-                  {
-                    "op": "literal",
-                    "value": "V6_1"
-                  }
-                ]
-              }
-            ]
+            "op": "call",
+            "name": "said"
           },
           {
-            "op": "eq",
-            "args": [
-              {
-                "op": "call",
-                "name": "said"
-              },
-              {
-                "op": "literal",
-                "value": "trust"
-              }
-            ]
+            "op": "literal",
+            "value": "trust"
           }
         ]
       },
@@ -3780,7 +3770,7 @@
           "question": 0,
           "option": 2,
           "negate": true,
-          "needs": 15
+          "needs": 38
         },
         {
           "key": "手稿写满三页",
@@ -3788,7 +3778,7 @@
           "question": 0,
           "option": 3,
           "negate": true,
-          "needs": 30
+          "needs": 75
         },
         {
           "key": "清单上的笔痕",
@@ -3796,7 +3786,7 @@
           "question": 0,
           "option": 1,
           "negate": true,
-          "needs": 46
+          "needs": 115
         }
       ],
       "true_facts": {
@@ -3948,7 +3938,7 @@
           "question": 0,
           "option": 1,
           "negate": true,
-          "needs": 14
+          "needs": 35
         },
         {
           "key": "速写本缺页",
@@ -3956,7 +3946,7 @@
           "question": 0,
           "option": 2,
           "negate": true,
-          "needs": 26
+          "needs": 65
         }
       ],
       "true_facts": {
@@ -4074,7 +4064,7 @@
           "question": 0,
           "option": 1,
           "negate": true,
-          "needs": 12
+          "needs": 30
         },
         {
           "key": "提灯油耗一半",
@@ -4082,21 +4072,21 @@
           "question": 0,
           "option": 3,
           "negate": true,
-          "needs": 24
+          "needs": 60
         },
         {
-          "key": "猎装袖口干净",
-          "text": "贝尔特朗的猎装袖口干净，没沾试剂",
+          "key": "两盏灯互证",
+          "text": "贝尔特朗整夜守在安全线外侧；他的提灯与玛格丽特的灯油耗相同，两人彼此作证没有离开过",
           "question": 0,
           "option": 2,
           "negate": true,
-          "needs": 36
+          "needs": 90
         }
       ],
       "true_facts": {
         "药包封条完好": 1,
         "提灯油耗一半": 1,
-        "猎装袖口干净": 1
+        "两盏灯互证": 1
       },
       "hypotheses": [
         {
@@ -4107,7 +4097,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         },
         {
@@ -4118,7 +4108,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         },
         {
@@ -4129,7 +4119,7 @@
           "facts": {
             "药包封条完好": 0,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         },
         {
@@ -4140,7 +4130,7 @@
           "facts": {
             "药包封条完好": 0,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         },
         {
@@ -4151,7 +4141,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 0
+            "两盏灯互证": 0
           }
         },
         {
@@ -4162,7 +4152,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 1,
-            "猎装袖口干净": 0
+            "两盏灯互证": 0
           }
         },
         {
@@ -4173,7 +4163,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 0,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         },
         {
@@ -4184,7 +4174,7 @@
           "facts": {
             "药包封条完好": 1,
             "提灯油耗一半": 0,
-            "猎装袖口干净": 1
+            "两盏灯互证": 1
           }
         }
       ],

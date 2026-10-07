@@ -24,7 +24,7 @@ class CondParser:
 
       恒真
       夜里 第 N 日 <人> <行动>、<行动> [至少 M 次]     昨夜的人物行动记录
-      夜巡 第 N 日 <地点> <体型> [见证 <人>] [是 <人>]   夜里望见的身影
+      夜巡 第 N 日 <地点> [<体型>] [见证 <人>] [是 <人>]  夜里望见的身影（不写体型即任何身量）
       状态 <物件> <标记> ≥|≤|＜|＞|=|≠ <数>             客观世界里的数值
       见过 <物件> <标记>                               自案发日起亲见过（只要看到过这个标记）
       见到 <物件> <标记>                               自案发日起亲见到它的数值大于 0
@@ -73,12 +73,14 @@ class CondParser:
         if m:
             return {"op": "night_did", "day": int(m[1]), "who": self.person(m[2]),
                     "jobs": [self.job(w) for w in split_list(m[3])], "min": int(m[4]) if m[4] else 1}
-        m = re.fullmatch(r"夜巡 第\s*(\d+)\s*日 (\S+) (\S+)(?: 见证 (\S+))?(?: 是 (\S+))?", text)
+        m = re.fullmatch(r"夜巡 第\s*(\d+)\s*日 (\S+)(?: (?!见证|是)(\S+))?(?: 见证 (\S+))?(?: 是 (\S+))?", text)
         if m:
             builds = self.ctx.vocab.mapping("builds")
-            if m[3] not in builds:
+            if m[3] is not None and m[3] not in builds:
                 fail(f"条件引用了未知体型“{m[3]}”。", self.line)
-            node = {"op": "sighting", "day": int(m[1]), "at": self.place(m[2]), "build": builds[m[3]]}
+            node = {"op": "sighting", "day": int(m[1]), "at": self.place(m[2])}
+            if m[3] is not None:
+                node["build"] = builds[m[3]]
             if m[4]:
                 node["witness"] = self.person(m[4])
             if m[5]:
@@ -251,8 +253,47 @@ def compile_endings(tree: list[Node]) -> list[dict[str, str]]:
 
 # ------------------------------------------------------------------ 案件 --
 
+def _subst(node: Node, mapping: dict[str, str]) -> Node:
+    text = node.line.text
+    for key, value in mapping.items():
+        text = text.replace(key, value)
+    return Node(Line(node.line.number, node.line.indent, text), [_subst(kid, mapping) for kid in node.kids])
+
+
+def expand_templates(items: list[Node], ctx: Any) -> list[tuple[Node, dict[str, str]]]:
+    """主张与证据的模板：条目里写 {人} 即对全体住民（侦探除外）各展开一条，{人寝区} 是此人的寝区；
+    写 {寝区} 即对各寝区各展开一条。不带占位符的条目原样保留。返回 (展开后的条目, 绑定)。"""
+    people = [(name, enum) for name, enum in ctx.person_enum.items() if enum != "Det" and name in ctx.person_dorm]
+    dorms = sorted({dorm for dorm in ctx.person_dorm.values()}, key=lambda d: list(ctx.dorms).index(d) if d in ctx.dorms else 0)
+    result: list[tuple[Node, dict[str, str]]] = []
+    for node in items:
+        whole = node.line.text + "".join(_flatten(node))
+        if "{人}" in whole or "{人寝区}" in whole:
+            for name, enum in people:
+                bind = {"{人}": name, "{人寝区}": ctx.person_dorm[name]}
+                result.append((_subst(node, bind), {"person": enum, "template": node.item}))
+        elif "{寝区}" in whole:
+            for dorm in dorms:
+                result.append((_subst(node, {"{寝区}": dorm}), {"dorm": ctx.dorms[dorm], "template": node.item}))
+        else:
+            result.append((node, {}))
+    return result
+
+
+def _flatten(node: Node) -> list[str]:
+    out = []
+    for kid in node.kids:
+        out.append(kid.line.text)
+        out.extend(_flatten(kid))
+    return out
+
+
+CLAIM_TOPICS = {"取用": "take", "门闩": "latch", "台账": "ledger", "任意": "any"}
+
+
 def compile_case(tree: list[Node], ctx: Any, rules: dict[str, str], head: Line) -> dict[str, Any]:
-    """`案件`：痕迹、事实、重演变量、主张、证据。结构见 chapter_01.story。"""
+    """`案件`：痕迹、事实、重演变量、主张、证据。结构见 chapter_01.story。
+    主张与证据可写模板（{人}、{人寝区}、{寝区}），由编译器按住民与寝区展开；展开项带 person／dorm 与原模板文字。"""
     case: dict[str, Any] = {}
     sections = {n.pair()[0]: n for n in tree}
     unknown = set(sections) - {"案发夜", "痕迹", "事实", "变量", "主张", "证据"}
@@ -298,38 +339,62 @@ def compile_case(tree: list[Node], ctx: Any, rules: dict[str, str], head: Line) 
 
     evidence = []
     names = []
-    for node in sections["证据"].kids:
+    for node, bind in expand_templates(sections["证据"].kids, ctx):
         if not node.is_item:
             fail("证据每项须以“- ”开头。", node.number)
         cells = [cell.strip() for cell in node.item.split("|")]
         if len(cells) != 2:
             fail("证据须写成“- 编号 | 名称”，其下写“已有：…”和可选的“亲见：…”。", node.number)
-        entry: dict[str, Any] = {"key": cells[0], "name": cells[1]}
+        entry: dict[str, Any] = {"key": cells[0] + (":" + bind["person"] if "person" in bind else ":" + bind["dorm"] if "dorm" in bind else ""), "name": cells[1]}
+        if "person" in bind:
+            entry["person"] = bind["person"]
+        if "dorm" in bind:
+            entry["dorm"] = bind["dorm"]
         for sub in node.kids:
             skey, svalue = sub.pair()
             if skey == "已有":
                 entry["have"] = cond(sub, svalue)
             elif skey == "亲见":
                 entry["saw"] = cond(sub, svalue)
+            elif skey == "说话人":
+                if svalue not in ctx.person_enum:
+                    fail(f"说话人“{svalue}”未声明。", sub.number)
+                entry["person"] = ctx.person_enum[svalue]
             else:
                 fail(f"证据不支持“{skey}”。", sub.number)
         if "have" not in entry:
             fail(f"证据“{cells[1]}”缺少“已有”。", node.number)
+        if cells[1] in names:
+            fail(f"证据名称“{cells[1]}”重复。", node.number)
         evidence.append(entry)
         names.append(cells[1])
     case["evidence"] = evidence
 
     claims = []
-    for node in sections["主张"].kids:
+    for node, bind in expand_templates(sections["主张"].kids, ctx):
         if not node.is_item:
             fail("主张每项须以“- ”开头。", node.number)
         entry = {"text": node.item}
+        if "person" in bind:
+            entry["person"] = bind["person"]
+            entry["template"] = bind["template"]
         for sub in node.kids:
             skey, svalue = sub.pair()
-            if skey == "为真":
+            if skey == "问":
+                if svalue not in CLAIM_TOPICS:
+                    fail(f"主张的“问”须是{'、'.join(CLAIM_TOPICS)}之一。", sub.number)
+                entry["topic"] = CLAIM_TOPICS[svalue]
+            elif skey == "为真":
                 entry["true"] = cond(sub, svalue)
             elif skey == "反应":
-                entry["reaction"] = unescape(svalue)
+                entry.setdefault("reaction", unescape(svalue))
+            elif skey.startswith("反应·"):
+                # 某人专属的反应（模板展开到此人时取代通用的那句）。
+                who = skey[3:]
+                if who not in ctx.person_enum:
+                    fail(f"“{skey}”引用了未声明的人物。", sub.number)
+                if bind.get("person") == ctx.person_enum[who]:
+                    entry["reaction"] = unescape(svalue)
             elif skey == "相关证据":
                 refs = split_list(svalue)
                 for ref in refs:
@@ -340,9 +405,9 @@ def compile_case(tree: list[Node], ctx: Any, rules: dict[str, str], head: Line) 
                 entry["frames"] = svalue == "是"
             else:
                 fail(f"主张不支持“{skey}”。", sub.number)
-        for need in ("true", "reaction", "relevant"):
+        for need in ("true", "reaction", "relevant", "topic"):
             if need not in entry:
-                fail(f"主张“{entry['text']}”缺少“{ {'true': '为真', 'reaction': '反应', 'relevant': '相关证据'}[need] }”。", node.number)
+                fail(f"主张“{entry['text']}”缺少“{ {'true': '为真', 'reaction': '反应', 'relevant': '相关证据', 'topic': '问'}[need] }”。", node.number)
         claims.append(entry)
     case["claims"] = claims
     return case

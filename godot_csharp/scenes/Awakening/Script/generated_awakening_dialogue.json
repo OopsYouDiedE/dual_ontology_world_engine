@@ -303,9 +303,9 @@
         "op": "line",
         "speaker": "铜口",
         "mood": "",
-        "text": "记忆有缺，乃履约之初的规则界限，请勿惊惶。",
+        "text": "记忆有缺，乃此地规则所限，请勿惊惶。",
         "voice_clip": "",
-        "line_id": "s3_broadcast.006"
+        "line_id": "s3_broadcast.018"
       },
       {
         "op": "line",
@@ -533,9 +533,9 @@
         "op": "line",
         "speaker": "铜口",
         "mood": "",
-        "text": "记忆有缺，乃履约之初的规则界限。至于阁下所求——阁下自己封了起来。",
+        "text": "记忆有缺，乃此地规则所限。至于阁下所求——阁下自己封了起来。",
         "voice_clip": "",
-        "line_id": "s4_rewards.019"
+        "line_id": "s4_rewards.026"
       },
       {
         "op": "line",
@@ -5408,20 +5408,66 @@
         ],
         "else": [
           {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "“{{wrong_name()}}”",
-            "voice_clip": "",
-            "line_id": "answer_wrong_say.002"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "这句话，回答的是别的问题。",
-            "voice_clip": "",
-            "line_id": "answer_wrong_say.003"
+            "op": "if",
+            "condition": {
+              "op": "or",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "wrong_name"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "我信霍铎。"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "wrong_name"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "我们早已相熟。"
+                    }
+                  ]
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "铜口",
+                "mood": "",
+                "text": "信任，要有来处。阁下与他的来处，在哪里？",
+                "voice_clip": "",
+                "line_id": "answer_wrong_say.004"
+              }
+            ],
+            "else": [
+              {
+                "op": "line",
+                "speaker": "铜口",
+                "mood": "",
+                "text": "“{{wrong_name()}}”",
+                "voice_clip": "",
+                "line_id": "answer_wrong_say.002"
+              },
+              {
+                "op": "line",
+                "speaker": "铜口",
+                "mood": "",
+                "text": "这句话，回答的是别的问题。",
+                "voice_clip": "",
+                "line_id": "answer_wrong_say.003"
+              }
+            ]
           }
         ]
       },
@@ -5924,9 +5970,9 @@
         "op": "line",
         "speaker": "",
         "mood": "",
-        "text": "（灰上有一行鞋印：鞋底窄，鞋尖尖，从厅的北头走到门前，停住，又折了回去。）",
+        "text": "（门前这一片灰上，别人的脚印都绕开了。只有一行鞋印走到门前：鞋底窄，鞋尖尖，停住，又折了回去。）",
         "voice_clip": "",
-        "line_id": "s10_prints.002"
+        "line_id": "s10_prints.003"
       },
       {
         "op": "jump",
@@ -5964,9 +6010,9 @@
                 "op": "line",
                 "speaker": "铜口",
                 "mood": "",
-                "text": "是。诸位授权封存之物，是我取走的。",
+                "text": "是。诸位封存之物，是我取走的。",
                 "voice_clip": "",
-                "line_id": "s10_hand.004"
+                "line_id": "s10_hand.006"
               },
               {
                 "op": "call",

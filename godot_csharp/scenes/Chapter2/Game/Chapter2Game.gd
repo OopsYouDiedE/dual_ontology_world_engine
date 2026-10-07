@@ -44,12 +44,13 @@ const NAMES := {
 const PLACE_MAP := {
 	"Hall": "central_hall", "Lecture": "lecture", "Logistics": "logistics", "Clinic": "clinic", "Greenhouse": "greenhouse",
 	"ArchiveFront": "archive", "Oath": "campus_s", "DormLife": "zone_yi", "DormW": "zone_jia", "DormS": "zone_bing", "DormL": "zone_ding",
+	"Resonance": "resonance",
 }
 ## 地图 → 侦探在引擎里的地点（室外过道不改）。
 const MAP_PLACE := {
 	"central_hall": "Hall", "lecture": "Lecture", "logistics": "Logistics", "granary": "Logistics", "clinic": "Clinic",
 	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "DormLife",
-	"zone_yi": "DormLife", "zone_jia": "DormW", "zone_bing": "DormS", "zone_ding": "DormL",
+	"zone_yi": "DormLife", "zone_jia": "DormW", "zone_bing": "DormS", "zone_ding": "DormL", "resonance": "Resonance",
 }
 const SPAWN_OF := {
 	"central_hall": "south", "lecture": "from_central", "logistics": "west", "granary": "south", "clinic": "south", "greenhouse": "south",

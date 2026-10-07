@@ -56,13 +56,13 @@ public static class Program
                 Console.WriteLine("known: " + string.Join(",", g.DetEvidence()));
                 var t1 = sw.ElapsedMilliseconds;
                 var (tr, replayWorld) = g.ReplayCase(CaseVars.Truth);
-                Console.WriteLine($"replay {sw.ElapsedMilliseconds - t1} ms; match={tr == g.CaseActual}; steps={Game.InkSteps(replayWorld, 2).Count}");
-                foreach (var st in Game.InkSteps(replayWorld, 2).Take(12)) Console.WriteLine($"   {st.Time:0.0} {Names.Of(st.Who)} {st.From}->{st.To} {st.Act}");
+                Console.WriteLine($"replay {sw.ElapsedMilliseconds - t1} ms; match={tr == g.CaseActual}; steps={Game.InkSteps(replayWorld, Game.CaseNight).Count}");
+                foreach (var st in Game.InkSteps(replayWorld, Game.CaseNight).Take(12)) Console.WriteLine($"   {st.Time:0.0} {Names.Of(st.Who)} {st.From}->{st.To} {st.Act}");
                 Run(new PlayerAction(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = "配给台公告" });
                 Run(new PlayerAction(Cmd.Collect));
                 Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
-                var pairs = new List<(int, int)>();
-                foreach (var (c, e) in new[] { (0, 0), (2, 4), (1, 2), (3, 5) }) { Console.WriteLine($"pair {c},{e} valid={g.HostPairValid(c, e)}"); if (g.HostPairValid(c, e)) pairs.Add((c, e)); }
+                var pairs = g.ValidConfrontPairs().ToList();
+                foreach (var (c, e) in pairs) Console.WriteLine($"pair {Game.Claims[c]} / {Game.EvidenceNames[e]}");
                 Run(new PlayerAction(Cmd.Confront) { Plan = new Game.ConfrontPlan(pairs, Game.CaseWordings[0].Card, true) });
                 Run(null);
                 Console.WriteLine($"ended={g.Ended} day={g.Day}");

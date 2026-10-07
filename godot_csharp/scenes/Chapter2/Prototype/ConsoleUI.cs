@@ -23,7 +23,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     public ReplayPresentation? LastReplay { get; private set; }
     public int ReplayNightNumber => g.Day - 1;
     public IReadOnlyList<Game.ReplayOption> ReplayOptions() =>
-        g.Day < 3 ? Array.Empty<Game.ReplayOption>() : g.ReplayMenu(ReplayNightNumber, preview: true);
+        g.Day < Game.CaseDay ? Array.Empty<Game.ReplayOption>() : g.ReplayMenu(ReplayNightNumber, preview: true);
     /// <summary>当前等待的输入：main 主命令、card 拼规矩、yesno 确认、confront 对质、council 名录库之议、ended 结束（Godot 宿主据此给出选项）。</summary>
     public volatile string Mode = "main";
     public int CardCell { get; private set; }
@@ -496,7 +496,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         var det = g.Det;
         W($"{Chapter2Content.TimeName(g.Day, g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。");
         W($"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"《{Game.Lessons[l.Key].Title}》{(l.Value ? "" : "（听人转述，可能走样）")}")))}");
-        if (g.Day >= 3)
+        if (g.Day >= Game.CaseDay)
         {
             var ev = g.DetEvidence();
             W("台账那件事，你查过的：" + (ev.Count == 0 ? "还没有" : string.Join("、", ev.Select(i => CaseTraces.Labels[i]))) + (g.DetAsked.Count > 0 ? "；当面问过：" + string.Join("、", g.DetAsked.Select(Names.Of)) : ""));
@@ -624,7 +624,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     private void Replay(string[] v)
     {
         LastReplay = null;
-        if (g.Day < 3) { W("还没有可以重演的夜。"); return; }
+        if (g.Day < Game.CaseDay) { W("还没有可以重演的夜。"); return; }
         var night = g.Day - 1;
         if (v.Length > 0 && v[0].StartsWith('第') && v[0].EndsWith('夜')) { night = Night(v[0]); v = v[1..]; }
         if (night < 2 || night >= g.Day) throw new PlayerError($"能重演的是第 2—{g.Day - 1} 夜。");

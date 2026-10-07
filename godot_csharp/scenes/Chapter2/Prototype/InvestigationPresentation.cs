@@ -83,7 +83,7 @@ public static class InvestigationPresentation
             $"第{g.Day}日{Names.Of(g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。",
             $"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"《{Game.Lessons[l.Key].Title}》{(l.Value ? "" : "（听人转述，可能走样）")}")))}"
         };
-        if (g.Day >= 3)
+        if (g.Day >= Game.CaseDay)
         {
             var ev = g.DetEvidence();
             self.Add("台账那件事，你查过的：" + (ev.Count == 0 ? "还没有" : string.Join("、", ev.Select(i => CaseTraces.Labels[i]))) + (g.DetAsked.Count > 0 ? "；当面问过：" + string.Join("、", g.DetAsked.Select(Names.Of)) : ""));
@@ -98,7 +98,7 @@ public static class InvestigationPresentation
 
     public static ReplayQuestion[] Questions(Game g, int night)
     {
-        if (g.Day < 3 || night < 2 || night >= g.Day) return [];
+        if (g.Day < Game.CaseDay || night < Game.FirstDay || night >= g.Day) return [];
         var menu = g.ReplayMenu(night, preview: true);
         var known = g.KnownTraces(night);
         return menu.Select((option, index) => (Option: option, Index: index))

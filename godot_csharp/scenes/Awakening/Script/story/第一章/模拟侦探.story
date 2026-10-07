@@ -454,7 +454,7 @@
     voice_source：
         step：2
         variable：3
-        evidence：E8,E5
+        evidence：E8
         required_group：experiments
         required_key：E8
     words：
@@ -466,6 +466,8 @@
     trust：
         step：4
         variable：6
+        statement：trust
+        statement_requires：V5=0,V6=1
         evidence：E9,E10,E11,E7
         required_group：helped
         required_key：E9

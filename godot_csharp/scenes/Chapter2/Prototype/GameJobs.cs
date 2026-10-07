@@ -107,7 +107,8 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         _ => throw new NotSupportedException(job.ToString())
     };
 
-    private Effect SeizeAt(Essence st) => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(0.3, Seq(Change(g.ArchiveDoor, T.Work, 1), Need(Not(Tg(st, T.Occupied))),
+    // 三站分处三地（配重室、锁芯在名录库前厅一带；传声中继在中央厅的管道枢纽）：各人走到自己那一站。
+    private Effect SeizeAt(Essence st) => Seq(Go(g.PlaceOf[st]), Look(g.ArchiveDoor), Wait(0.3, Seq(Change(g.ArchiveDoor, T.Work, 1), Need(Not(Tg(st, T.Occupied))),
         Set(st, T.Occupied, 1), new Effect.Set(Me, T.Prying, 1), Wait(3, Seq(Look(g.ArchiveDoor), Set(st, T.Worked, 1), Set(st, T.Occupied, 0), new Effect.Set(Me, T.Prying, 0),
             new Effect.Think(new Condition.Not(new Condition.Related(Me, Promised, r(g.ArchiveDoor))))))))) ;
 
@@ -190,8 +191,9 @@ public sealed partial class Game
         // 人人都有的底线：夜里回寝区睡；白天无事就歇着。
         Add(Job.Sleep, fx.At(Slot.Night), 1);
         Add(Job.Rest, fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), 0);
-        // 有钥匙或会开锁的人，饿过一天，夜里会多取（恐惧驱动的囤积）。
-        if (p.Pro.Lock >= 3 || p.Id == P.Mora)
+        // 会开锁、又饿过一天的人，夜里会多取（恐惧驱动的囤积）。
+        // 茉拉“病者优先”不是囤积的来由：她为病人备粮走的是夜取病粮。
+        if (p.Pro.Lock >= 3)
             Add(Job.Hoard, Fx.All(fx.At(Slot.Night), Fx.Mine(T.Hungry), fx.NotDone(Job.Hoard)), 2);
         switch (p.Id)
         {
@@ -214,7 +216,7 @@ public sealed partial class Game
                 // 被当众盯视的那天傍晚，不去配给台。
                 rules.Add(new Rule(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Shamed)), RuleMode.Forbid, p.JobFx[Job.Collect], 1, Truth.True));
                 // 被当成“私取之人”的她，入夜把自己寝区废纸篓里的饼屑倒掉（出于动机的清理；清理本身留下痕迹，§12 第 4 条）。
-                Add(Job.Tidy, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, 3), Fx.Mine(T.Branded), fx.Tg(Litter[Place.DormW], T.Crumbs), fx.NotDone(Job.Tidy)), 3);
+                Add(Job.Tidy, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, CaseDay), Fx.Mine(T.Branded), fx.Tg(Litter[Place.DormW], T.Crumbs), fx.NotDone(Job.Tidy)), 3);
                 // 以技艺回报信任她的人：知道哪里坏了就修（请托本身的分量由 SocialSystem 另计）。
                 Add(Job.RepairLatch, Fx.All(fx.AtAny([Slot.Evening, Slot.Night]), fx.Tg(Granary, T.LatchLoose), fx.NotDone(Job.RepairLatch)), 2);
                 break;
@@ -299,7 +301,7 @@ public sealed partial class Game
         }
         var tears = Events.Count(e => e.Who == p.Id && e.Job == Job.Tear);
         if (p.Id == P.Quer && WardNight.PostedAt.Contains(Place.Hall) && tears < 2)
-            rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.Tg(Clock, T.Day, 3), Fx.Mine(T.Branded), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 3, Truth.True));
+            rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.Tg(Clock, T.Day, CaseDay), Fx.Mine(T.Branded), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 3, Truth.True));
         // 别家撕你的方案（§13 第 12 条）：中央厅板上贴着一条他以底线否决过的、侦探的名录库方案，他就去撕。
         if (p.Id is not (P.Quer or P.Lucian) && tears < 1 && Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && s.PostedAt.Contains(Place.Hall) && p.Vetoed.Contains(s)))
             rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Evening]), fx.NotDone(Job.Tear)), RuleMode.Prefer, p.JobFx[Job.Tear], 4, Truth.True));
@@ -311,7 +313,10 @@ public sealed partial class Game
                     new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), Fx.Not(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door)))), RuleMode.Prefer,
                 Fx.Seq(new Effect.Say(Fx.Target, "依据：夜里不得动名录库。请回。", Fx.Seq(new Effect.Set(Fx.Me, T.Prying, 0), fx.Go(Place.Hall))),
                     new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))), Fx.MeChange(T.Did(Job.AskLeave), 1)), 8, Truth.True));
-        if (p.Id == P.Ward && Day <= 4)
+        // 议事前夜，沃德不再守粮仓，改守名录库（委员会的主张：钥匙归章程，夜里谁也不许动）；此前案子没了结的夜里守粮仓看谁来。
+        if (p.Id == P.Ward && Day == LastDay - 1)
+            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), Fx.Not(fx.Tg(WeightRoom, T.Occupied))), RuleMode.Prefer, p.JobFx[Job.GuardArchive], 7, Truth.True));
+        else if (p.Id == P.Ward && Day <= CaseDay + 1)
             rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Ledger, T.Unrecorded), Fx.Any([.. People.Where(o => o != p).Select(o => fx.Tg(o.Body, T.Suspect))]), fx.NotDone(Job.Watch)),
                 RuleMode.Prefer, p.JobFx[Job.Watch], 6, Truth.True));
         // 分粮：心软的人看见身边饿着、今天还没吃上的熟人，把自己那份分出去（自己就少吃一顿）。
@@ -344,7 +349,7 @@ public sealed partial class Game
                 break;
             case P.Selma: Daily(Job.Sample, [Slot.Morning], 4); break;
             case P.Moran:
-                Daily(Job.NightSketch, [Slot.Night], 3, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, 3)));
+                Daily(Job.NightSketch, [Slot.Night], 3, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, CaseDay)));
                 Daily(Job.Sketch, [Slot.Afternoon], 5, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, CaseDay)));
                 break;
         }
@@ -399,7 +404,7 @@ public sealed partial class Game
                 new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedFood, clock)), Fx.MeChange(T.Did(Job.Exchange), 1)), 4, Truth.True));
         rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon]), Fx.Mine(T.OwesWater)), RuleMode.Prefer, Fx.Seq(fx.Job(Job.FetchWater), Fx.MeChange(T.OwesWater, -1)), 5, Truth.True));
         // 跟随：沃德夜里跟着他心里的嫌疑人。
-        if (p.Id == P.Ward && Day <= 5)
+        if (p.Id == P.Ward && Day <= CaseDay + 2)
             rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Suspect, 1),
                     new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Follow)), RuleMode.Prefer,
                 Fx.Seq(new Effect.Act(ActionOp.Inspect, Fx.Target), Fx.Wait(8, new Effect.Act(ActionOp.Inspect, Fx.Target)), Fx.MeChange(T.Did(Job.Follow), 1)), 7, Truth.True));

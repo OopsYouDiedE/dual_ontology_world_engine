@@ -117,6 +117,10 @@ public partial class Chapter2Engine : Node
     public string ClockText() => Chapter2Content.TimeName(_g.Day, _g.Slot);
     /// <summary>下一个要结算的时段（宿主据此决定固定场面）。</summary>
     public int NextDay() => _g.Day;
+    /// <summary>日程（读自剧本）：始业日、案发次日（搜查与对质）、议事日。</summary>
+    public int FirstDay() => ProtoGame.FirstDay;
+    public int CaseDay() => ProtoGame.CaseDay;
+    public int LastDay() => ProtoGame.LastDay;
     public int NextSlot() => (int)_g.Slot;
 
     // Read-only presentation queries. Authoritative input goes through Dispatch.
@@ -184,6 +188,10 @@ public partial class Chapter2Engine : Node
         return list;
     }
     public bool PairValid(int claim, int evidence) => _g.HostPairValid(claim, evidence);
+    /// <summary>自动检查用：现实里为真的主张各配一件侦探手里相关的证据（按对质的话题顺序）。</summary>
+    public GArray ValidConfrontPairs() => new(_g.ValidConfrontPairs().Select(p => (Variant)new GArray(new Variant[] { p.Claim, p.Evidence })).ToArray());
+    /// <summary>某句主张在第一层菜单里的编号（模板主张先选事、再选人）。</summary>
+    public string ConfrontTopId(int claim) => Chapter2InteractionSession.TopId(claim);
     public bool ClaimTrue(int claim) => _g.HostClaimTrue(claim);
     public string Reaction(int claim) => _g.HostReaction(claim);
     public string AccusedName() => _g.Accused is { } a ? Names.Of(a) : "";

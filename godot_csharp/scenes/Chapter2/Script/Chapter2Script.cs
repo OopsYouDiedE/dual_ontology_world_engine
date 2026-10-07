@@ -483,7 +483,8 @@ public sealed partial class Game
             Observation.Observe(p.Soul, new ObservationInput(text, ProjectionKind.Event)
             { Source = ObservationSource.Perception, Existence = Truth.True, Time = Now, Details = text });
             NewsFrom(p, NewsKind.Sighting, text, about: null, build: other.Pro.Build, place: at);
-            if (p == Det) Feed.Add(text + "。");
+            // 侦探自己的守夜所见不逐条报：天亮时由守夜报告按注意力筛选、合并后给出（至多五条）。
+            if (p == Det && Slot != Slot.Night) Feed.Add(text + "。");
             Log.Add($"D{Day} {Now:0.0} {p.Name} 望见 {Names.Of(at)} 的{BuildText(other.Pro.Build)}身影（实为{other.Name}）");
         }
     }
@@ -495,7 +496,8 @@ public sealed record GameOptions
 {
     public IReadOnlyDictionary<P, Profile>? Profiles { get; init; }
     public WorldScriptDefinition? Definition { get; init; }
-    public int StartRations { get; init; } = 80;
+    /// <summary>五日、一日两顿（始业日只一顿晚饭）：不统一煮粥、各自生领就撑不到议事那天的早饭；认真分工煮粥刚好够（第三部分 §16）。</summary>
+    public int StartRations { get; init; } = 115;
     public int StartOil { get; init; } = 30;
     public int StartMedicine { get; init; } = 10;
     public int GreenhouseYield { get; init; } = 6;

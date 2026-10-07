@@ -33,6 +33,11 @@
     别名：Oath
     范围：世界
 
+地点 共鸣厅
+    编号：room.Resonance
+    别名：Resonance
+    范围：世界
+
 地点 乙区
     编号：room.DormLife
     别名：DormLife

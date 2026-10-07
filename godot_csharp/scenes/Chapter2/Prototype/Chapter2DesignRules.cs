@@ -26,7 +26,7 @@ public abstract record Cond
                 return new NightDid(e.GetProperty("day").GetInt32(), Enum.Parse<P>(S("who")),
                     [.. e.GetProperty("jobs").EnumerateArray().Select(j => Enum.Parse<Job>(j.GetString()!))], e.GetProperty("min").GetInt32());
             case "sighting":
-                return new Sighting(e.GetProperty("day").GetInt32(), Enum.Parse<Place>(S("at")), Enum.Parse<Build>(S("build")),
+                return new Sighting(e.GetProperty("day").GetInt32(), Enum.Parse<Place>(S("at")), e.TryGetProperty("build", out var b) ? Enum.Parse<Build>(b.GetString()!) : null,
                     e.TryGetProperty("witness", out var w) ? Enum.Parse<P>(w.GetString()!) : null,
                     e.TryGetProperty("truth", out var t) ? Enum.Parse<P>(t.GetString()!) : null);
             case "state": return new State(S("thing"), new Tag(S("tag")), S("cmp"), e.GetProperty("n").GetInt32());
@@ -55,9 +55,9 @@ public abstract record Cond
         }
     }
 
-    public sealed record Sighting(int Day, Place At, Build Build, P? Witness, P? Truth) : Cond
+    public sealed record Sighting(int Day, Place At, Build? Build, P? Witness, P? Truth) : Cond
     {
-        public override bool Eval(Game g, Person? who = null) => g.Sightings.Any(s => s.Day == Day && s.At == At && s.Build == Build
+        public override bool Eval(Game g, Person? who = null) => g.Sightings.Any(s => s.Day == Day && s.At == At && (Build is null || s.Build == Build)
             && (Witness is null || s.Witness == Witness) && (Truth is null || s.Truth == Truth));
     }
 
@@ -184,8 +184,10 @@ public static class RuleDesign
 /// <summary>《少了一份》：痕迹、事实、重演变量、对质的主张与证据（读自剧本的“案件”）。</summary>
 public static class CaseDesign
 {
-    public sealed record Claim(string Text, Cond True, string Reaction, int[] Relevant, bool Frames);
-    public sealed record Evidence(string Key, string Name, Cond Have, Cond? Saw);
+    /// <summary>一句对质里能说的话。Topic：它回答哪一问（take 取用、latch 门闩、ledger 台账、any 哪一问都能说）；
+    /// Person/Template：由 {人} 模板展开时，说的是谁、原模板文字（界面先选“什么事”，再选“是谁”）。</summary>
+    public sealed record Claim(string Text, Cond True, string Reaction, int[] Relevant, bool Frames, string Topic, P? Person, string? Template);
+    public sealed record Evidence(string Key, string Name, Cond Have, Cond? Saw, P? Person, Place? Dorm);
     public sealed record Trace(string Id, string Label, string Where, Cond Known);
     private sealed class Data
     {
@@ -204,6 +206,11 @@ public static class CaseDesign
     public static IReadOnlyList<(string Question, string[] Options)> Variables => D.Variables;
     public static IReadOnlyList<Claim> Claims => D.Claims;
     public static IReadOnlyList<Evidence> EvidenceList => D.Evidence;
+    /// <summary>按意思找主张：模板文字（或整句）与所说的人。找不到返回 -1。</summary>
+    public static int ClaimIndex(string templateOrText, P? person = null) =>
+        D.Claims.Select((c, i) => (c, i)).FirstOrDefault(x => (x.c.Template ?? x.c.Text) == templateOrText && x.c.Person == person, (null!, -1)).Item2;
+    /// <summary>按编号找证据（模板展开的编号是“原编号:人物”或“原编号:寝区”）。找不到返回 -1。</summary>
+    public static int EvidenceIndex(string key) => D.Evidence.Select((e, i) => (e, i)).FirstOrDefault(x => x.e.Key == key, (null!, -1)).Item2;
 
     private static Data Load()
     {
@@ -215,9 +222,12 @@ public static class CaseDesign
         data.Variables = [.. e.GetProperty("variables").EnumerateArray().Select(v => (v.GetProperty("question").GetString()!,
             v.GetProperty("options").EnumerateArray().Select(o => o.GetString()!).ToArray()))];
         data.Evidence = [.. e.GetProperty("evidence").EnumerateArray().Select(v => new Evidence(v.GetProperty("key").GetString()!, v.GetProperty("name").GetString()!,
-            Cond.Parse(v.GetProperty("have")), v.TryGetProperty("saw", out var saw) ? Cond.Parse(saw) : null))];
+            Cond.Parse(v.GetProperty("have")), v.TryGetProperty("saw", out var saw) ? Cond.Parse(saw) : null,
+            v.TryGetProperty("person", out var vp) ? Enum.Parse<P>(vp.GetString()!) : null, v.TryGetProperty("dorm", out var vd) ? Enum.Parse<Place>(vd.GetString()!) : null))];
         data.Claims = [.. e.GetProperty("claims").EnumerateArray().Select(c => new Claim(c.GetProperty("text").GetString()!, Cond.Parse(c.GetProperty("true")),
-            c.GetProperty("reaction").GetString()!, [.. c.GetProperty("relevant").EnumerateArray().Select(x => x.GetInt32())], c.TryGetProperty("frames", out var fr) && fr.GetBoolean()))];
+            c.GetProperty("reaction").GetString()!, [.. c.GetProperty("relevant").EnumerateArray().Select(x => x.GetInt32())], c.TryGetProperty("frames", out var fr) && fr.GetBoolean(),
+            c.GetProperty("topic").GetString()!, c.TryGetProperty("person", out var cp) ? Enum.Parse<P>(cp.GetString()!) : null,
+            c.TryGetProperty("template", out var ct) ? ct.GetString() : null))];
         return data;
     }
 }

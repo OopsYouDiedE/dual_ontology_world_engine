@@ -3,7 +3,11 @@ namespace DualOntologyWorldEngine.Core;
 public sealed record Decision(Effect Effect, int Score, Projection Basis);
 public sealed record DecisionAssessment(Decision Decision, bool Forbidden, IReadOnlyList<string> Reasons);
 
-/// <summary>候选、条件和偏好全部来自同一内部世界。客观可行性只在激活时检查。</summary>
+/// <summary>
+/// 候选、条件和偏好全部来自同一内部世界。客观可行性只在激活时检查。
+/// Prefer 与 Require 提出候选并加减分；Forbid 禁止；Permit 只放行——它不提出候选、不加分，
+/// 只在条件成立、动作相同且权重不低于禁令时解除那条禁令（“可以做”不等于“想做”）。
+/// </summary>
 public static class DecisionSystem
 {
     public static Decision? Choose(ProjectionWorld world, Projection actor) => Assess(world,actor).FirstOrDefault(a=>!a.Forbidden)?.Decision;
@@ -13,7 +17,7 @@ public static class DecisionSystem
         if (!world.Contains(actor)) return [];
         var rules = world.Projections.SelectMany(p => p.Rules.Where(r => r.Acceptance == Truth.True).Select(r => (Basis: p, Rule: r))).ToArray();
         var candidates = new List<(Effect Effect, ActionContext Context, Projection Basis, int Social)>();
-        foreach (var (basis, rule) in rules.Where(r => r.Rule.Mode != RuleMode.Forbid))
+        foreach (var (basis, rule) in rules.Where(r => r.Rule.Mode is RuleMode.Prefer or RuleMode.Require))
         foreach (var context in Contexts(world, actor, rule))
             if (Ast.Evaluate(rule.Condition, context) == Truth.True)
             {
@@ -38,14 +42,20 @@ public static class DecisionSystem
             var forbidden = false;
             var reasons = new List<string>();
             if(candidate.Social!=0)reasons.Add($"社交意愿 {candidate.Social:+0;-0;0}");
+            var permit = rules.Where(r => r.Rule.Mode == RuleMode.Permit && Applies(world, actor, r.Rule, candidate.Effect))
+                .Select(r => (r.Basis, Weight: r.Rule.Weight)).DefaultIfEmpty((Basis: null!, Weight: -1)).MaxBy(r => r.Weight);
             foreach (var (basis, rule) in rules)
             {
+                if (rule.Mode == RuleMode.Permit) continue;
                 if (rule.Mode == RuleMode.Forbid)
                 {
                     if (Contexts(world, actor, rule).Any(context =>
                         Ast.Evaluate(rule.Condition, context) == Truth.True &&
                         ContainsForbidden(candidate.Effect, Ast.Bind(rule.Effect, context), candidate.Context)))
-                    { forbidden = true; reasons.Add($"{basis.Name}：禁止"); }
+                    {
+                        if (permit.Weight >= rule.Weight) reasons.Add($"{basis.Name}：禁止，但{permit.Basis.Name}放行");
+                        else { forbidden = true; reasons.Add($"{basis.Name}：禁止"); }
+                    }
                     continue;
                 }
                 if (Ast.Nouns(rule).OfType<Noun.Slot>().Any(n => candidate.Context.Resolve(n) is null) || Ast.Evaluate(rule.Condition, candidate.Context) != Truth.True) continue;
@@ -57,6 +67,11 @@ public static class DecisionSystem
         }
         return assessments.OrderBy(a=>a.Forbidden).ThenByDescending(a=>a.Decision.Score).ToArray();
     }
+
+    /// <summary>放行规则在某个上下文里条件成立、且它放行的正是这个候选动作。</summary>
+    private static bool Applies(ProjectionWorld world, Projection actor, Rule rule, Effect candidate) =>
+        Contexts(world, actor, rule).Any(context => Ast.Evaluate(rule.Condition, context) == Truth.True &&
+            Ast.Equivalent(Ast.Bind(rule.Effect, context), candidate));
 
     // 禁令约束行为本身，等待和外层组合不能绕过；传话中的请求不等于已经执行。
     private static bool ContainsForbidden(Effect candidate, Effect forbidden, ActionContext context)

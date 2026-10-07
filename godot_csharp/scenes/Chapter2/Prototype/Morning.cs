@@ -100,6 +100,9 @@ public sealed partial class Game
             if (m.To == at) events.Add((m.Time, $"{NightTime(m.Time)}，一个{build}身影从{From(m.From)}过来", 2 + (cares ? 1 : 0), true));
             else if (m.From == at) events.Add((m.Time, $"{NightTime(m.Time)}，一个{build}身影往{From(m.To)}去了", 1 + (cares ? 1 : 0), true));
         }
+        // 从守夜处望得见的别处（中央厅望得见后勤院与名录库前厅的出入）：只有身量，远处的身影分数低于走到身边的。
+        foreach (var s in Sightings.Where(s => s.Day == day && s.Witness == P.Det && s.From == at))
+            events.Add((s.Time, $"{NightTime(s.Time)}，远远望见{Names.Of(s.At)}有一个{BuildText(s.Build)}身影", 1 + (DetCares(s.At) ? 1 : 0), true));
         foreach (var s in Sounds.Where(s => s.Day == day))
         {
             if (s.Where == at) events.Add((s.Time, $"{NightTime(s.Time)}，{s.Text}", 3 + (cares ? 2 : 0), false));
@@ -251,7 +254,7 @@ public sealed partial class Game
     {
         if (!DawnTraces.TryGetValue(night, out var traces)) return;
         var changed = traces.Where(Changed).Select(t => t.Key.StartsWith("神情:") ? "有人的神色" : Names.Of(t.Where)).Distinct().ToArray();
-        if (Day > 2) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。");
+        if (Day > FirstDay) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。");
         if (Day is 99)
         {
             // 第 7 日的短缺要在第 5—6 日清晨读得到（§13 第 8、13 条）：存量、每日耗用、温室状态。
@@ -260,12 +263,14 @@ public sealed partial class Game
             var days = stock / perDay;
             Feed.Add($"配给台前有人数了数：存粮还剩 {stock} 份，照这几天的吃法，{(days >= 7 - Day + 1 ? "撑得到议事那天" : $"撑不到第 7 日的早饭")}。温室{(GreenhouseRepaired ? "已经修好，每天能添几份" : "还没修好")}。");
         }
-        // 早饭前人们说起的昨天的事（§13 第 2 条）：侦探整天私下说话，清晨也至少读得到两件别人自发做的事。
-        var heard = Events.Where(e => e.Day == night && !e.Fixed && e.Who != P.Det && !e.SeenByDet && e.Job is { } j && MorningWorthy.Contains(j))
+        // 早饭前人们说起的昨天的事（§13 第 2 条；多日交互审核 M11）：侦探整天私下说话，清晨也读得到别人自发做的事。
+        // 说的人就是做事的人自己（或亲眼看见的人，事件即记在他名下），而且他得信得过侦探才肯说；转述带名字。
+        var heard = Events.Where(e => e.Day == night && !e.Fixed && e.Who != P.Det && !e.SeenByDet && e.Job is { } j && MorningWorthy.Contains(j)
+                && TrustIn(this[e.Who], Det) >= 1)
             .OrderByDescending(e => e.Slot == Slot.Night ? 1 : 0).ThenBy(e => e.Id).GroupBy(e => e.Who).Select(g => g.First()).Take(2).ToArray();
         if (heard.Length > 0)
         {
-            Feed.Add("早饭前听人说起：" + string.Join("；", heard.Select(e => (e.Slot == Slot.Night ? "昨夜" : "昨天" + Names.Of(e.Slot)) + Names.Of(e.Who) + e.Text)) + "。");
+            Feed.Add("早饭前，" + string.Join("；", heard.Select(e => $"{Names.Of(e.Who)}跟你说起{(e.Slot == Slot.Night ? "昨夜" : "昨天" + Names.Of(e.Slot))}的事：{Names.Of(e.Who)}{e.Text}")) + "。");
             foreach (var e in heard) { e.SeenByDet = true; MorningHeard.Add(e.Id); }
         }
         var learned = SpreadKnown.Where(k => k.Day == night).GroupBy(k => k.Spec).ToArray();

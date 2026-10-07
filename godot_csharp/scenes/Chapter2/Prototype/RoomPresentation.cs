@@ -15,7 +15,7 @@ public static class RoomPresentation
         var board = g.Board.ContainsKey(here);
         var things = g.RoomThings(here).ToArray();
         var daytime = g.Slot != Slot.Night;
-        var confrontation = g.Day == 4 && g.Slot == Slot.Morning;
+        var confrontation = g.Day == Game.LastDay && g.Slot == Slot.Morning;
         if (daytime && !confrontation)
         {
             foreach (var thing in things) actions.Add(new("细看：" + thing, "查 " + thing, "inspect"));
@@ -28,7 +28,7 @@ public static class RoomPresentation
                     break;
                 case Place.Logistics:
                     if (g.Slot is Slot.Noon or Slot.Evening) actions.Add(new("领今天的口粮", "领粮"));
-                    if (g.Day == 2 && g.Slot == Slot.Noon) actions.Add(new("调停配给的争执", "调停"));
+                    if (g.Day == Game.FirstDay && g.Slot == Slot.Noon) actions.Add(new("调停配给的争执", "调停"));
                     break;
                 case Place.Greenhouse when g.Slot == Slot.Afternoon:
                     actions.Add(new("请两个人一起修温室……", "修温室", "greenhouse"));
@@ -48,14 +48,14 @@ public static class RoomPresentation
         return new(here.ToString(), g.RoomPeople(here).ToArray(), things, board, actions.ToArray());
     }
 
-    public static bool CanReopen(Game g) => g.Day >= 4 && !(g.Day == 4 && g.Slot == Slot.Morning) && !g.QuerCleared && g.Accused is not null;
+    public static bool CanReopen(Game g) => g.Day > Game.CaseDay && !(g.Day == Game.LastDay && g.Slot == Slot.Morning) && !g.QuerCleared && g.Accused is not null;
 
     public static RoomAction[] PersonActions(Game g, P who, Place? place)
     {
         if (place is not { } here || !g.RoomPeople(here).Any(p => p.Id == who)) return [];
         var name = Names.Of(who);
         var actions = new List<RoomAction> { new("看你对" + name + "的笔记", "笔记 " + name, "notes") };
-        if (g.Slot == Slot.Night || g.Day == 4 && g.Slot == Slot.Morning) return actions.ToArray();
+        if (g.Slot == Slot.Night || g.Day == Game.LastDay && g.Slot == Slot.Morning) return actions.ToArray();
         actions.InsertRange(0, [
             new("问" + name + "知道什么", "问 " + name),
             new("请" + name + "做一件事……", "请 " + name, "ask"),
