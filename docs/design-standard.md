@@ -1427,16 +1427,39 @@ Core 不出现专案名词。
 
 交互协议包含说话人、情绪、正文、语音标识、带可用性与锁定提示的选项、呈现形态与舞台命令。协议和章节运行时属于游戏层的无 Godot 依赖 C# 程序集；独立 `csharp/` Core 继续只负责双重本体、观察、决策与行动结算。剧情条件与状态变更由 C# 权威处理，Godot 负责实际位置核验、移动、碰撞、镜头、音效及 UI，并将舞台动作完成反馈给剧情运行时。
 
-**2026-10-06 第二章迁移实现边界。** 唯一正式作者源为 `godot_csharp/scenes/Awakening/Script/chapter_01.story`；生活翼正文及 `续篇 chapter2` 的始业与后续案件共用人物、地点、词汇。`compile_story.py` 一次生成现有两个宿主适配器所需内容；`story_script.py --section chapter2` 也可独立编译续篇作用域，前置阶段标识仍为 `awakening`。作者文件合并不等于两个宿主已合为一个，也不构成人物动机或游戏体验验收。脚本声明房间、现有 Core 人物与物件的稳定身份、人物画像、场景交互点、扁平候选和剧情场面。现有 C# `Game` 仍计算职业行动、感知、案件重演与结局；章节交互会话消费作者数据并发布语义事件，Godot 宿主绑定地图与 UI。第一章退出时交接运行中的 `WorldRuntime`、`SimulationSession`、四人的身体/灵魂/投影及章节进度，第二章不伪造独立继承。跨进程恢复以及仅改脚本即可新增任意房间、人物、底层交互类型仍属后续通用能力验收，不能由此次现有实体绑定推断已经实现。迁移后的构建、流程回归及实机测试由 Gemini 执行；未得结果前不写“验证通过”。宿主瘦身以消除重复业务为准，不为达到行数目标把同一业务换个 GDScript 文件存放。
+**2026-10-06 第二章迁移实现边界。** 唯一正式作者源为 `godot_csharp/scenes/Awakening/Script/chapter_01.story`；生活翼正文及 `续篇 chapter2` 的始业与后续案件共用人物、地点、词汇。`compile_story.py` 一次生成现有两个宿主适配器所需内容；`story_script.py --section chapter2` 也可独立编译续篇作用域，前置阶段标识仍为 `awakening`。作者文件合并不等于两个宿主已合为一个，也不构成人物动机或游戏体验验收（2026-10-07 起两章宿主已合为一个，见本部分 §2）。脚本声明房间、现有 Core 人物与物件的稳定身份、人物画像、场景交互点、扁平候选和剧情场面。现有 C# `Game` 仍计算职业行动、感知、案件重演与结局；章节交互会话消费作者数据并发布语义事件，Godot 宿主绑定地图与 UI。第一章退出时交接运行中的 `WorldRuntime`、`SimulationSession`、四人的身体/灵魂/投影及章节进度，第二章不伪造独立继承。跨进程恢复以及仅改脚本即可新增任意房间、人物、底层交互类型仍属后续通用能力验收，不能由此次现有实体绑定推断已经实现。迁移后的构建、流程回归及实机测试由 Gemini 执行；未得结果前不写“验证通过”。宿主瘦身以消除重复业务为准，不为达到行数目标把同一业务换个 GDScript 文件存放。
 
-### 2. 两章共用的界面（2026-10-04 统一）
+### 2. 所有章节共用的界面与事件接口（2026-10-04 统一；2026-10-07 合为一套，用户要求）
+
+**用户要求（2026-10-07）**：合并第一、二章的界面；主代码只负责接收和转发来自引擎的事件、接收界面回传的事件；界面从第一章到后续任何一章完全一致。界面按模块分门别类，组件一律 `@tool`，在编辑器里改值即可预览。
+
+**分层（硬约束）**
+
+| 层 | 位置 | 职责 | 不做 |
+| :--- | :--- | :--- | :--- |
+| 章节会话（纯 C#） | `IChapterSession`（`Shared/Story/ChapterProtocol.cs`）；第一章 `Awakening/Script/Chapter1Session*.cs`，第二章 `Chapter2/Prototype/Chapter2InteractionSession.cs` 与 `Chapter2SessionView.cs` | 剧情、条件、文字、流程编排（相遇、触物、请人比对、声路、答辩、对质、议事、日常）、快照 | 不引用 Godot；不读宿主坐标，只读输入里现场报告的几何事实 |
+| 桥 | `Shared/ChapterEngine.cs` | `Open(章节)`、`Dispatch`、`Snapshot`；Variant 转换；写 `save` 事件的存档 | 不含章节规则 |
+| 主代码 | `Shared/ChapterHost.gd`（每章同一份） | 现场与界面的事件附上几何后转给章节；章节事件转给现场或界面；快照交给两者；章末换场景 | 不解释任何事件内容 |
+| 现场 | `Shared/Field/ChapterField.gd` + 地图适配器（第一章 `Awakening/AwakeningMap.gd`，学园 `Chapter2/Field/CampusMapView.gd`） | 行走、点击走近、悬停与最近交互点、视线、人物显示、走位与镜头、日常落脚、昨夜回放（地图上） | 不决定谁去哪里、说什么 |
+| 界面 | `Shared/UI/ChapterUI.tscn`；组件在 `Shared/UI/{HUD,Dialogue,Menu,Card,Form,Notebook,Manuscript,CampusMap,Ending,Field,Common}/`，总览页 `Workbench/` | 抬头、对白、菜单、证物卡、表单、笔记本、重演手稿、学园图、章末卡、心声、标题闪现、淡入淡出 | 不自备任何章节的文字、表格或判断 |
+
+章节差异只在入口场景里设置：`Awakening/Chapter1.tscn` 与 `Chapter2/Chapter2.tscn` 是同一个主代码、同一个界面，只换 `chapter_id`、地图适配器与起始地图。新章节只需新增会话实现与（如有）地图适配器。
+
+**输入（现场与界面 → 章节）**：`begin`；`presented{presentation_id, ok?, reason?}`（台词读完、走位或镜头完成、回放看完）；`select{presentation_id, choice_id, token}`；`form{presentation_id, action, values}`；`interact{map, site, target}`；`card{card_id}`（从笔记本或手稿重开卡片）；`furniture{map, nodes, texts}`；`move{map}`；`action{act}`（多日章节的时段行动，T 为 `stay`）；`replay{vars, skip}`、`replay_vars{vars}`；`opened{panel}`；`tick{delta}`（快照 `realtime` 为真时每物理帧一次）；`daily{who, serial, status, room}`。每个输入附 `context`：`field_active`、界面弹窗种类，以及每个在场人物的 `room`、`entered`（脚下实际室内地面）、`room_name`、`visible`、`moving`、与侦探的 `distance`、`near_sites`。章节据此判断“在场”“当面”“够得着”，不另取坐标。
+
+**输出（章节 → 现场或界面）**：`lines{presentation_id, lines[{speaker, speaker_name, mood, text, voice_clip, line_id}], choices?}`；`candidates{title, prompt, options}`；`card{title, picture, facts, source, intro, notes, items, table, options[group=inline?]}`；`form{title, prompt, header, layout: stack|tabs, fields, summary, actions}`；`ending{title, outcome, rows, actions}`；`aside`、`title`、`music`、`sound`、`duck`、`close`、`manuscript`、`error`、`save`、`state{snapshot}`；交给现场的 `scene{map, spawn, mode}`、`stage{op: walk|place|pose|face|sit|stand|halt|camera|prop|group|cancel_click|daily_go|daily_work|daily_release}`、`replay_play{mode: stage|campus}`。带 `presentation_id` 的输出必须回执；同一时刻只有一个阻塞的界面呈现，后台作业等它结束。
+
+**快照**：`chapter{title, window_title}`、`stage`、`ended`、`field_enabled`、`player_control`、`realtime`、`hud{title, time, keys}`、`controls{notebook, manuscript, campus, wait}`、`access`、`sites{id: title, enabled, new}`、`people[{key, name, title, map, sprite, present}]`、`pinned`、`cast`、`notebook{sections}`、`replay{open, title, hint, questions, vars, last_run_vars, result}`、`campus{map, known}`、`daypart`。
+
+**界面行为（两章完全一致）**
 - 现场：点击移动与交互，WASD 移动，E、空格或 Enter 交互；可交互的物件与人统一高亮，悬停显示名称；普通家具一句心声。
 - 证物卡：局部像素图 + 事实 + 来源；可直接试验、请在场的人辨认或“请他看看”；任意键返回。
 - 对白：共享对白框与立绘（十六人皆有立绘）；两章均消费 Core 发出的交互数据包，第二章对白与候选由 `.world` 编译产物供给，人物回应按其认知与策略选取，共用现有呈现组件。
 - 笔记本（Tab）：证物按地点分组；读过的规矩（谁立的、贴在哪）；人（侦探亲眼见过的迹象与来源，可能错）；回忆所得。
-- 重演手稿（R）：两章共用一个组件（`scenes/Shared/ReplayManuscript.gd`），变量与证物名由各章提供；左页变量，右页对照，“重演”后回放。
+- 重演手稿（R）：所有章节共用 `Shared/UI/Manuscript/ReplayManuscript`，问题、选项、对照与证物名全由快照 `replay` 给出；左页变量，右页对照，“重演”后回放（单一地图的章节回放在实景上，多地点的一夜回放在学园手稿图上）。
 - 对质：一问一答；题目与所选的陈述、出示固定在顶部，“陈述”“出示”两列各选一项后“作答”。
-- 第二章另有：顶栏显示“第 N 日 · 时段”；时段交替时短暂转场，众人换到各自的去处；夜里在床前或守夜点选择睡下或守着；议事时选择站在哪一方。
+- 多日章节另有：顶栏显示“第 N 日 · 时段”；时段交替时短暂转场，众人换到各自的去处；夜里在床前或守夜点选择睡下或守着；议事时选择站在哪一方。这些由快照与事件决定，界面不分章节。
+- 挂在墙上的交互点（隔离门、门框接头）其坐标落在墙格：从它朝向的房间看得见（2026-10-07 修正：此前隔离门在门厅里看不见、点不到）。
 
 ## 第五部分：美术与地图
 
@@ -1596,6 +1619,7 @@ Core 不出现专案名词。
 | 一日两顿（主代理，2026-10-07） | 午间与晚饭各开一次配给台；夜里饿着即没吃上晚饭；起始存粮 115 份，认真分工煮粥刚好撑到议事那天的早饭（第三部分 §4） |
 | 议事前夜沃德守库（主代理，2026-10-07） | 第四日夜沃德不守粮仓，改守名录库配重室，作为夜间私占的对手；私占的人须请他让开（第三部分 §5.6） |
 | Permit 只解禁不加分（主代理，2026-10-07） | 放行规则不生成候选、不加分；只在权重不低于禁止时解除该禁止。动机只来自 Prefer 与 Require（总纲 §四） |
+| 界面与主代码统一（用户，2026-10-07） | 主代码只转发事件；界面从第一章到后续章节完全一致，按模块放在 `Shared/UI/`，组件全部 `@tool` 可预览；第一章原宿主里的流程编排迁入 C# 会话（第四部分 §2） |
 
 ### 2. 待定
 

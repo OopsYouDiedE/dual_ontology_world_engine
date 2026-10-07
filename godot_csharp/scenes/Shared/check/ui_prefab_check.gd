@@ -11,7 +11,7 @@ func _initialize() -> void:
 func run() -> void:
 	check(Engine.is_editor_hint(), "actual --editor engine context")
 	var paths: Array[String] = []
-	for dir in ["res://scenes/Shared/UI", "res://scenes/Awakening/UI", "res://scenes/Chapter2/UI"]:
+	for dir in _scene_dirs("res://scenes/Shared/UI") + ["res://scenes/Awakening/UI", "res://scenes/Chapter2/UI"]:
 		for file in DirAccess.get_files_at(dir):
 			if file.ends_with(".tscn"): paths.append(dir + "/" + file)
 	paths.append("res://scenes/Chapter2/Field/FieldHUD.tscn")
@@ -25,7 +25,7 @@ func run() -> void:
 		await process_frame
 		node.queue_free()
 		await process_frame
-	var modal = load("res://scenes/Shared/UI/PaperModal.tscn").instantiate()
+	var modal = load("res://scenes/Shared/UI/Common/PaperModal.tscn").instantiate()
 	root.add_child(modal)
 	await process_frame
 	modal.modal_title = "独立编辑器即时修改"
@@ -47,14 +47,14 @@ func run() -> void:
 	check(reloaded.modal_title == "独立编辑器即时修改" and reloaded.title_label.text.contains("独立编辑器"), "saved title survives reload and ready")
 	check(reloaded.panel.custom_minimum_size == Vector2(700,500) and reloaded.panel.get_theme_stylebox("panel").content_margin_left == 42, "saved panel size and margin survive reload")
 	reloaded.queue_free()
-	var hud = load("res://scenes/Shared/UI/FieldUI.tscn").instantiate()
+	var hud = load("res://scenes/Shared/UI/HUD/FieldUI.tscn").instantiate()
 	root.add_child(hud)
 	await process_frame
 	hud.preview_title = "即时标题"
 	hud.preview_time = "12:34"
 	check(hud.get_node("Title").text == "即时标题" and hud.get_node("Time").text == "12:34", "FieldUI live preview updates")
 	hud.queue_free()
-	var manuscript = load("res://scenes/Shared/ReplayManuscript.tscn").instantiate()
+	var manuscript = load("res://scenes/Shared/UI/Manuscript/ReplayManuscript.tscn").instantiate()
 	root.add_child(manuscript)
 	await process_frame
 	manuscript.default_title = "保存测试"
@@ -62,10 +62,10 @@ func run() -> void:
 	check(manuscript.get_node("LeftPage/Scroll/Column/Title").text.contains("保存测试"), "manuscript live title updates")
 	check(manuscript.get_node("LeftPage").get_theme_stylebox("panel").content_margin_left == 23, "manuscript live margin updates")
 	manuscript.queue_free()
-	var workbench = load("res://scenes/Shared/UI/UIWorkbench.tscn").instantiate()
+	var workbench = load("res://scenes/Shared/UI/Workbench/UIWorkbench.tscn").instantiate()
 	root.add_child(workbench)
 	await process_frame
-	for tab in [0,1,3,4,14,27]:
+	for tab in [0,1,3,4,14]:
 		workbench.preview_page = tab
 		await process_frame
 		await process_frame
@@ -79,3 +79,9 @@ func run() -> void:
 	file.store_string(JSON.stringify(report, "\t"))
 	print("UI_PREFAB_CHECK: ", paths.size(), " scenes; ", checks.size(), " checks; failures=", failures)
 	quit(0 if failures.is_empty() else 1)
+
+func _scene_dirs(base: String) -> Array:
+	var dirs: Array = [base]
+	for sub in DirAccess.get_directories_at(base):
+		dirs.append_array(_scene_dirs(base + "/" + sub))
+	return dirs

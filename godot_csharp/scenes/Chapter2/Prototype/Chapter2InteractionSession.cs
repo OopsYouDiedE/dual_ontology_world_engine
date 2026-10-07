@@ -3,8 +3,9 @@ using DualOntologyWorldEngine.Story;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>Semantic chapter events. Presentation acknowledgements advance text, never authorize client state writes.</summary>
-public sealed class Chapter2InteractionSession
+public sealed partial class Chapter2InteractionSession : IChapterSession
 {
+    public string ChapterId => "chapter2";
     private readonly Game _game;
     private readonly Chapter2Narrative _narrative;
     private readonly WorldSession _behavior;
@@ -99,7 +100,9 @@ public sealed class Chapter2InteractionSession
         try
         {
             if(input.GetValueOrDefault("nearby_people") is IEnumerable<object?> nearby) _nearby=nearby.Select(p=>p?.ToString()??"").ToHashSet(StringComparer.Ordinal);
+            ReadContext(input);
             var kind = Text(input,"kind");
+            if (kind is "tick" or "daily") return output;
             if (_presentation is not null && kind != "presented") throw new InvalidOperationException("请先完成当前呈现。");
             switch (kind)
             {
@@ -143,13 +146,16 @@ public sealed class Chapter2InteractionSession
                     }
                     break;
                 case "move":
-                    if (!Enum.TryParse<Place>(Text(input,"place"),out var place)) throw new InvalidOperationException("未知地点。");
+                    _map = Text(input,"map",_map);
+                    if (!Enum.TryParse<Place>(Text(input,"place",MapPlace(_map)),out var place)) { Invalidate(); break; }
                     _game.HostMoveDet(place); _knownPlaces.Add(place.ToString()); Invalidate(); break;
                 case "action":
                     if (_stage != "field" || _choices.Count != 0) throw new InvalidOperationException("当前不能提交时段行动。");
                     if (input.GetValueOrDefault("act") is not IReadOnlyDictionary<string,object?> action) throw new InvalidOperationException("缺少行动。");
                     Commit(Action(action),output); break;
                 case "replay": Replay(input,output); break;
+                case "replay_vars": _replayVars=(input.GetValueOrDefault("vars") as IEnumerable<object?> ?? []).Select(v=>(object?)Convert.ToInt32(v)).ToArray(); break;
+                case "opened": break;
                 default: throw new InvalidOperationException("未知章节事件：" + kind);
             }
         }
@@ -347,7 +353,7 @@ public sealed class Chapter2InteractionSession
         { var who=person.Id; choices.Add(("show:"+who,"请"+person.Name+"看看（要花上一阵）",()=>Local(who),o=>Commit(new(Cmd.Escort){Who=who,Thing=thing,Place=Game.Things_[thing].Place},o))); }
         choices.Add(("close","返回现场",()=>true,o=>{}));
         Menu(Text(card,"title"),choices,output);
-        var options=output[^1]["options"]; output.RemoveAt(output.Count-1); var result=new Dictionary<string,object?>(card){["kind"]="card",["options"]=options}; output.Add(result);
+        var options=output[^1]["options"]; output.RemoveAt(output.Count-1); var result=new Dictionary<string,object?>(card){["kind"]="card",["options"]=options,["facts"]=card["text"],["source"]=card["place"]}; output.Add(result);
     }
     private void Talk(P who,List<Dictionary<string,object?>> output)
     {
@@ -523,14 +529,14 @@ public sealed class Chapter2InteractionSession
         _continuations.Enqueue(o=>
         {
             _ended=true;_stage="ended";
-            o.Add(Event("end",("result",new Dictionary<string,object?>
+            o.AddRange(EndEvents(new Dictionary<string,object?>
             {
                 ["result"]=ending.ToString(),["result_text"]=Game.EndingText(ending),
                 ["quer"]=_game.Accused is not { } accused?"没有人被当众指控":_game.QuerCleared?$"{Names.Of(accused)}洗清了冤屈，住回寝区":_game.QuerOstracized?$"{Names.Of(accused)}被当成私取之人，搬出寝区独宿":$"{Names.Of(accused)}的事没有人再提",
                 ["det_hooks"]=_game.Det.Hooks,["common_rule"]=_game.CommonRuleEstablished,["case_rule"]=_game.CaseRule?.Text??"",
                 ["log"]=_game.CouncilLog.ToArray(),["hooks"]=_game.Npcs.Where(p=>p.Hooks>0).Select(p=>p.Name).ToArray(),["impressions"]=Impressions(),
                 ["stands"]=_game.CouncilChoice.ToDictionary(p=>p.Key.ToString(),p=>Game.EndingText(Game.FamilyOf(p.Value)))
-            })));
+            }));
         });
     }
     private void Replay(IReadOnlyDictionary<string,object?> input,List<Dictionary<string,object?>> output)
@@ -542,7 +548,16 @@ public sealed class Chapter2InteractionSession
         var findings=r.Select((t,i)=>(object)new Dictionary<string,object?>{["index"]=i,["name"]=_content.Texts("finding_titles",5)[i],["status"]=!known.Contains(i)?"unvisited":t.Text==a[i].Text?"match":"conflict",["text"]=!known.Contains(i)?"还没查过":t.Text==a[i].Text?a[i].Text:$"重演中：{t.Text}；现场：{a[i].Text}"}).ToArray();
         var full=r.Select((t,i)=>known.Contains(i)&&t.Text==a[i].Text).All(v=>v);
         _replayResult=new(){["findings"]=findings,["full_match"]=full,["steps"]=Game.InkSteps(world,Game.CaseNight).Select(s=>(object)new Dictionary<string,object?>{["t"]=s.Time,["who"]=s.Who.ToString(),["name"]=Names.Of(s.Who),["build"]=s.Build switch{Build.Small=>"瘦小",Build.Large=>"高大",_=>"中等"},["from"]=s.From.ToString(),["to"]=s.To.ToString(),["act"]=s.Act}).ToArray()};
-        _replayCount++; if(_replayCount==1&&!full)_continuations.Enqueue(o=>Activate("after_replay.first",o));if(full&&!_fullMatch){_fullMatch=true;_continuations.Enqueue(o=>Activate("after_replay.match",o));} Pump(output);
+        _replayVars=values.Select(v=>(object?)v).ToArray(); _lastRunVars=_replayVars.ToArray();
+        if(!ChapterEvents.Flag(input,"skip"))
+        {
+            _presentation=Guid.NewGuid().ToString("N");
+            output.Add(Event("close"));
+            output.Add(Event("replay_play",("presentation_id",_presentation),("mode","campus"),("steps",_replayResult["steps"]),("full_match",full)));
+        }
+        _replayCount++; if(_replayCount==1&&!full)_continuations.Enqueue(o=>Activate("after_replay.first",o));if(full&&!_fullMatch){_fullMatch=true;_continuations.Enqueue(o=>Activate("after_replay.match",o));}
+        _continuations.Enqueue(o=>o.Add(Event("manuscript")));
+        Pump(output);
     }
     private string[] Impressions()=>_game.Npcs.Where(p=>p.Id is P.Ward or P.Quer or P.Mora or P.Huo or P.Ruan or P.Margaret).Select(p=>
     {
@@ -550,7 +565,7 @@ public sealed class Chapter2InteractionSession
         var text=c>=2?"说话不避着你":c>=1?"对你还算客气":c>=0?"对你话不多":"明显不想跟你多说";
         if(i>=2)text+="，信你的判断"; return p.Name+"："+text;
     }).ToArray();
-    public IReadOnlyDictionary<string,object?> Snapshot()=>new Dictionary<string,object?>
+    private Dictionary<string,object?> LegacySnapshot()=>new Dictionary<string,object?>
     {
         ["detective_name"]=DetectiveName(),["stage"]=_stage,["ended"]=_ended,["replay_open"]=_replayOpen,["replay_result"]=_replayResult,
         ["known_places"]=_knownPlaces.ToDictionary(k=>k,k=>(object?)true),["examined"]=_examined,["talked"]=_talked,["journal"]=_journal,

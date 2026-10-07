@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/Shared/ChapterHost.gd" id="host"]
+[ext_resource type="PackedScene" path="res://scenes/Chapter2/Field/CampusMapView.tscn" id="map"]
+[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterUI.tscn" id="ui"]
+[ext_resource type="Script" path="res://scenes/Shared/Field/ChapterField.gd" id="field"]
+
+[node name="Chapter2" type="Node"]
+script = ExtResource("host")
+chapter_id = "chapter2"
+map_adapter = ExtResource("map")
+start_map = "living_hall"
+start_spawn = "east_south"
+
+[node name="Field" type="Node2D" parent="."]
+texture_filter = 1
+script = ExtResource("field")
+
+[node name="UI" parent="." instance=ExtResource("ui")]

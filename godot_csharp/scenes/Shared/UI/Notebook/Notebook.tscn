@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/Shared/UI/Common/PaperTheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/Shared/UI/Notebook/Notebook.gd" id="script"]
+
+[node name="Notebook" type="VBoxContainer"]
+offset_right = 932.0
+size_flags_horizontal = 3
+theme = ExtResource("theme")
+theme_override_constants/separation = 10
+script = ExtResource("script")
+
+[node name="Empty" type="RichTextLabel" parent="."]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+theme_override_font_sizes/normal_font_size = 19
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+
+[node name="Sections" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10

@@ -7,16 +7,16 @@ Blessed Are Those Who Sleep。当前主线是孤岛学园游戏，目标为可�
 ## 当前入口与状态
 
 - [主控设计与验收规范（重制版）](docs/design-standard.md)：重制分支的唯一设计依据。[设计总纲](docs/design-standard.md#设计总纲)给出核心判断（信念重演为核心动词，真话之敌、记忆之价为另两根支柱）与删除测试；[第二部分](docs/design-standard.md#第二部分第一章门的这一侧)是第一章《门的这一侧》的真相、题面、12 件证物、重演变量、解空间、触物回忆与始业之答；[第三部分](docs/design-standard.md#第三部分系统与界面)是 Core 映射与界面；[第五部分](docs/design-standard.md#第五部分实施与验收)是实施与验收。
-- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Title/Title.tscn` 选章，第一章经 `scenes/Main2D.tscn` 加载[《门的这一侧》](godot_csharp/scenes/Awakening/README.md)：生活翼现场调查、昨夜重演（跑在 Core 上的感知—认知—决策推演，墨影回放与四人心声气泡）、触物回忆与钩、始业之答与退出考题。实现报告与自检截图在 `artifacts/remake-belief-replay/`；第一次独立盲玩（ch1-blind-01）的结论与第三轮修订见[设计第二部分 §9](docs/design-standard.md#9-第一次独立盲玩ch1-blind-01与第三轮修订)。
+- `godot_csharp/project.godot`：Godot C# 游戏工程。默认 `scenes/Title/Title.tscn` 选章，第一章入口 `scenes/Awakening/Chapter1.tscn` 加载[《门的这一侧》](godot_csharp/scenes/Awakening/README.md)：生活翼现场调查、昨夜重演（跑在 Core 上的感知—认知—决策推演，墨影回放与四人心声气泡）、触物回忆与钩、始业之答与退出考题。实现报告与自检截图在 `artifacts/remake-belief-replay/`；第一次独立盲玩（ch1-blind-01）的结论与第三轮修订见[设计第二部分 §9](docs/design-standard.md#9-第一次独立盲玩ch1-blind-01与第三轮修订)。
 - 旧第一章《未归的红筹》已退出运行目录；仍在使用的语言设置与翻译资源原样迁至 `godot_csharp/scenes/Shared/Locale/`。
-- 第二章入口为 `godot_csharp/scenes/Chapter2/Game/Chapter2Game.tscn`（亦可从标题界面 `Title.tscn` 直接进入）。若当前内存中已有第一章通关会话则直接延续；若从标题或独立启动，则自动由第一章标准会话（含本地存档恢复）无缝继承。唯一作者源为 `godot_csharp/scenes/Awakening/Script/chapter_01.story`，其中 `续篇 chapter2` 保存始业与后续案件，编译生成 `generated_chapter_02.json`；C# `Game` 保留人物自主行动与案件推演，`Chapter2InteractionSession` 负责场景事件、候选与剧情推进，Godot 负责几何、输入和呈现。迁移后的实机验证交由 Gemini，尚待结果。
+- 第二章入口为 `godot_csharp/scenes/Chapter2/Chapter2.tscn`（亦可从标题界面 `Title.tscn` 直接进入）。两章入口是同一个主代码 `scenes/Shared/ChapterHost.gd`（只转发事件）、同一套界面 `scenes/Shared/UI/ChapterUI.tscn`（组件按模块放在 `Shared/UI/` 各子目录，全部 `@tool`，总览页 `Shared/UI/Workbench/UIWorkbench.tscn`）与同一个现场 `scenes/Shared/Field/ChapterField.gd`，只换章节会话与地图适配器；事件接口见设计第四部分 §2。若当前内存中已有第一章通关会话则直接延续；若从标题或独立启动，则自动由第一章标准会话（含本地存档恢复）无缝继承。唯一作者源为 `godot_csharp/scenes/Awakening/Script/chapter_01.story`，其中 `续篇 chapter2` 保存始业与后续案件，编译生成 `generated_chapter_02.json`；C# `Game` 保留人物自主行动与案件推演，`Chapter2InteractionSession` 负责场景事件、候选与剧情推进，Godot 负责几何、输入和呈现。迁移后的实机验证交由 Gemini，尚待结果。
 - [宣传前三场人物动作图集](godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md)：每人 111 帧位，含 Godot 资源与各方向动作规范；在[剧情打样场景](godot_csharp/scenes/Story/README.md)中验证。
 - [21人32×48正面站立帧](godot_csharp/ShareAsset/Internal/Characters/README-zh.md)：原生像素角色资源与日常携带规范。
 - 正式第一、二章场内动作使用 `godot_csharp/ShareAsset/Internal/Characters/AnimeCast/` 的半 Q 人物：放大头部与上身、缩短腿部，由 `godot_csharp/tools/build_anime_cast.py` 注册。台词左侧另用 `DialogueCast/` 的正常比例上半身立绘，六种情绪配合姿势，由 `godot_csharp/tools/build_dialogue_cast.py` 注册。两套高分辨率透明源图及提示词分别归 `godot_csharp/AssetsSource/Internal/Characters/` 下的同名目录。地图、脚底坐标与碰撞尺度保持原有逻辑。
 
 ## 构建与验证
 
-UI 的编辑器预览入口为 `godot_csharp/scenes/Shared/UI/UIWorkbench.tscn`。选择根节点，在检视栏的 `Preview Page` 切换界面；各页引用正式使用的预制件。进入原预制件后，静态文案、布局、纹理与主题直接编辑对应子节点；根脚本的预览字段用于显示对白选项、手稿变量等动态内容。UI 脚本使用 GDScript `@tool`，预览不启动剧情或播放音效。共享样式保存在 `scenes/Shared/UI/PaperTheme.tres`；两章专属页位于各章的 `UI/`。
+UI 的编辑器预览入口为 `godot_csharp/scenes/Shared/UI/Workbench/UIWorkbench.tscn`。选择根节点，在检视栏的 `Preview Page` 切换界面；各页引用正式使用的预制件。进入原预制件后，静态文案、布局、纹理与主题直接编辑对应子节点；根脚本的预览字段用于显示对白选项、手稿变量等动态内容。UI 脚本使用 GDScript `@tool`，预览不启动剧情或播放音效。共享样式保存在 `scenes/Shared/UI/Common/PaperTheme.tres`；两章专属页位于各章的 `UI/`。
 
 使用 .NET 8 和 Godot 4.6.1 .NET：
 
@@ -90,7 +90,7 @@ dotnet run --project godot_csharp/scenes/Chapter2/Prototype -- play --room-scope
 
 两章共用延续中的 `WorldRuntime`、`SimulationSession` 及已存在的人物实体与认知；各章的脚本注册表绑定到这些真实引用。逻辑房间声明不包含 Godot 地图几何；职业行动仍由第二章 C# `Game` 执行。
 
-两章使用共同对白、纸页与现场表现组件；本轮采用远端 `scenes/Shared/ReplayManuscript.gd` 与 `scenes/Shared/SightMask.gd`。共同键位为点击／WASD 走动、E 检视交谈、Tab 笔记、R 重演、H 回看、Esc 合页；第二章增加 M 学园图与 T 过一阵。第一章按 story 声明的实际场面、调查、试验、协助、走动、重演和答辩结算游戏分钟，慢读、暂停及回看不重复扣时；第二章改变他人认知的行动结算一个时段。未到访房间内部完全遮蔽，所有墙壁与门保持显示；实际进入室内地面后记录到访，无须检视，门与墙不计入进入范围。室内可见性按房间判断：当前房间整体可见，其他已到访房间只压暗内部，墙与门保持正常显示；宿舍与其他房间共用遮蔽逻辑，不需要迷雾的场景可直接展示环境。室内其他房间的人物与热点不显示；通过门洞不切换当前房间。第二章不再通过 `ConsoleUI` 桥驱动游戏界面；命令行入口独立保留为开发工具。
+所有章节使用同一套界面与现场（设计第四部分 §2）：章节会话实现 `IChapterSession.Dispatch`，主代码 `ChapterHost.gd` 只转发；界面组件在 `scenes/Shared/UI/` 按模块分目录。共同键位为点击／WASD 走动、E 检视交谈、Tab 笔记、R 重演、H 回看、Esc 合页；第二章增加 M 学园图与 T 过一阵。第一章按 story 声明的实际场面、调查、试验、协助、走动、重演和答辩结算游戏分钟，慢读、暂停及回看不重复扣时；第二章改变他人认知的行动结算一个时段。未到访房间内部完全遮蔽，所有墙壁与门保持显示；实际进入室内地面后记录到访，无须检视，门与墙不计入进入范围。室内可见性按房间判断：当前房间整体可见，其他已到访房间只压暗内部，墙与门保持正常显示；宿舍与其他房间共用遮蔽逻辑，不需要迷雾的场景可直接展示环境。室内其他房间的人物与热点不显示；通过门洞不切换当前房间。第二章不再通过 `ConsoleUI` 桥驱动游戏界面；命令行入口独立保留为开发工具。
 
 第二章独立盲玩使用真实命令行，先构建 `godot_csharp/scenes/Chapter2/Prototype/Prototype.csproj`。下列 `start` 须保持运行，在另一终端使用 `snapshot` 与 `send`；每个新盲玩者使用新的会话名。完整输入与输出保存于 `artifacts/remake-chapter2/<会话名>/`。画面验收另用 Godot 脚本截图，不作为盲玩。
 

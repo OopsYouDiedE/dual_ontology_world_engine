@@ -3,10 +3,9 @@ extends Node2D
 ## 昨夜回放：在真实地图上用半透明墨色人影重演，每人头顶一个心声气泡（此刻他听到/相信的东西）。
 ## 同一时刻，四个气泡并排显示四种不同的认知。可暂停、倍速、跳过；跳过与看完的结算相同。
 
-const Paper := preload("res://scenes/Shared/UI/Paper.gd")
-@export var overlay_scene: PackedScene = preload("res://scenes/Shared/UI/ReplayOverlay.tscn")
-@export var bubble_scene: PackedScene = preload("res://scenes/Shared/UI/ReplayBubble.tscn")
-const Content := preload("res://scenes/Awakening/AwakeningContent.gd")
+const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
+@export var overlay_scene: PackedScene = preload("res://scenes/Shared/UI/Field/ReplayOverlay.tscn")
+@export var bubble_scene: PackedScene = preload("res://scenes/Shared/UI/Field/ReplayBubble.tscn")
 
 const ROOM_ANCHORS := {
 	"R05": Vector2(930, 200), "R06": Vector2(930, 600), "R07": Vector2(706, 600), "R08": Vector2(706, 200),
@@ -35,7 +34,12 @@ var paused := false
 var speed := 1.0
 var skipping := false
 
-func play(frames: Array) -> void:
+## 回放所需的文字（标题、人名、门的状态）随事件给出。
+var labels: Dictionary = {}
+
+func play(ev: Dictionary) -> void:
+	var frames: Array = ev.get("frames", [])
+	labels = ev
 	if _cancelled or frames.is_empty():
 		return
 	playing = true
@@ -53,14 +57,14 @@ func play(frames: Array) -> void:
 		var hold := 1.6 if str(frame.actor) == "" else (0.6 if str(frame.label).contains("来到") else 1.3)
 		var waited := 0.0
 		while waited < hold and not skipping:
-			await host._wait_signal_or(get_tree().process_frame, playback_cancelled)
+			await get_tree().process_frame
 			if _cancelled: return
 			if not paused:
 				waited += get_process_delta_time() * speed
 	if not skipping:
 		var waited := 0.0
 		while waited < 1.2 and not skipping:
-			await host._wait_signal_or(get_tree().process_frame, playback_cancelled)
+			await get_tree().process_frame
 			if _cancelled: return
 			waited += get_process_delta_time()
 	_teardown()
@@ -81,10 +85,10 @@ func _setup() -> void:
 	for actor in host.actors.values():
 		actor.modulate.a = 0.0
 	host.decals.modulate.a = 0.35
-	host.ui.visible = false
-	host.follow_camera = false
-	host.camera.zoom = Vector2.ONE
-	host.camera.position = Vector2(640, 352)
+	host.set_bar_visible(false)
+	host.field.follow_camera = false
+	host.field.camera.zoom = Vector2.ONE
+	host.field.camera.position = Vector2(640, 352)
 	layer = overlay_scene.instantiate()
 	add_child(layer)
 	caption = layer.get_node("Bar/Caption")
@@ -112,9 +116,9 @@ func _teardown() -> void:
 	for actor in host.actors.values():
 		if is_instance_valid(actor): actor.modulate.a = 1.0
 	if is_instance_valid(host.decals): host.decals.modulate.a = 1.0
-	if is_instance_valid(host.ui): host.ui.visible = true
-	if is_instance_valid(host.camera): host.camera.zoom = Vector2(2, 2)
-	host.follow_camera = true
+	host.set_bar_visible(true)
+	if is_instance_valid(host.field.camera): host.field.camera.zoom = Vector2(2, 2)
+	host.field.follow_camera = true
 	for node in figures.values():
 		if is_instance_valid(node): node.queue_free()
 	figures.clear()
@@ -133,7 +137,7 @@ func position_of(frame: Dictionary, key: String) -> Vector2:
 
 func _apply(frame: Dictionary, previous: Dictionary) -> void:
 	var who := str(frame.actor)
-	caption.text = "[b]%s[/b]　%s" % [Content.text("重演·昨夜"), str(frame.label)]
+	caption.text = "[b]%s[/b]　%s" % [str(labels.get("caption", "")), str(frame.label)]
 	for key in ORDER:
 		var figure: AnimatedSprite2D = figures[key]
 		var target := position_of(frame, key)
@@ -159,13 +163,14 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 				tween.tween_property(figure, "position", point, maxf(0.02, 0.8 / speed * step.length() / maxf(total, 1.0)))
 				last = point
 			tween.tween_callback(figure.play.bind("idle_" + facing))
-		figure.modulate = INK if who != Content.PERSON_NAMES[key] else Color(0.1, 0.08, 0.14, 0.9)
+		figure.modulate = INK if who != str(labels.names[key]) else Color(0.1, 0.08, 0.14, 0.9)
 		var bubble: PanelContainer = bubbles[key]
 		var text: RichTextLabel = bubble.get_meta("text")
-		text.text = "[b]%s[/b]　%s" % [Content.PERSON_NAMES[key], str(frame.thoughts[key])]
-	var door := Content.text("重演·门开") if bool(frame.door_open) else (Content.text("重演·门闩") if bool(frame.door_bolted) else Content.text("重演·门关"))
+		text.text = "[b]%s[/b]　%s" % [str(labels.names[key]), str(frame.thoughts[key])]
+	var texts: Dictionary = labels.get("door_texts", {})
+	var door := str(texts.get("open", "")) if bool(frame.door_open) else str(texts.get("bolted", "") if bool(frame.door_bolted) else texts.get("closed", ""))
 	if bool(frame.smoke):
-		door += "　·　" + Content.text("重演·烟灰") if bool(frame.ash) else ""
+		door += "　·　" + str(texts.get("ash", "")) if bool(frame.ash) else ""
 	door_label.text = door
 	door_label.position = Vector2(120, 600)
 	call_deferred("_place_bubbles", frame)
@@ -179,8 +184,8 @@ func _place_bubbles(frame: Dictionary) -> void:
 		return
 	var placed: Array[Rect2] = []
 	# 相机在同一帧里刚换了缩放与位置，视口的画布变换要到下一帧才更新：按相机参数直接换算屏幕坐标。
-	var zoom: Vector2 = host.camera.zoom
-	var center: Vector2 = host.camera.position
+	var zoom: Vector2 = host.field.camera.zoom
+	var center: Vector2 = host.field.camera.position
 	var half := Vector2(640, 496)
 	var keys := ORDER.duplicate()
 	keys.sort_custom(func(a, b): return position_of(frame, a).y > position_of(frame, b).y)

@@ -12,6 +12,8 @@
 - 第二章五日结构、日常篇（课开放不强制、团建由欲望推出且跨寝区）、侦探的推理位：第三部分 §16。
 - 多周目与首次体验、先出来的组不开别组的门、非常规动作三层、学园尺度与野外设施与割据：总纲 §五.13—16。
 
+- 两章界面与主代码统一（2026-10-07，分支 `claude/unified-chapter-ui`）：设计第四部分 §2。章节会话实现 `IChapterSession`（第一章 `Awakening/Script/Chapter1Session*.cs`，原宿主的流程编排迁入 C#）；`Shared/ChapterEngine.cs` 一个桥；`Shared/ChapterHost.gd` 只转发；`Shared/UI/ChapterUI.tscn` 与按模块分目录的 `@tool` 组件；`Shared/Field/ChapterField.gd` 加地图适配器。旧宿主、旧 Engine 桥与两章各自的 UI 目录已删除。检查：`dotnet run --project godot_csharp/scenes/Awakening/check/SessionCheck`（无画面协议）、`res://scenes/Shared/check/chapter1_smoke.gd`、`res://scenes/Chapter2/check/check_flow.gd`、`res://scenes/Shared/check/ui_modules_check.gd`。未做：新宿主的独立盲玩。迁移到新宿主但未跑通（用户要求收尾时中止）：`Awakening/check/flow_check.gd`（已按新宿主重写，配套 `check/chapter1_fixture.gd`，尚未完整跑过）、`state_gallery.gd`（出 11 张图后退出时崩溃）；仍是旧宿主写法、需迁移：`final_content_check.gd`、`final_shared_runtime_check.gd`、`hand_outline_check.gd`、`cabinet_fog_current_check.gd`、`Chapter2/Game/check_gallery.gd`、`Shared/check/check_room_fog.gd`、`Shared/check/ui_prefab_check.gd`、`Chapter2/Field/{capture_maps,capture_views,check_transitions}.gd`（后三者仍引用旧 `Chapter2Field.gd`/`FieldHUD`，迁完可删）。盲玩会话 `playtest_session.gd` 已改到新入口，`--chapter=1|2`。
+
 ## 2. 待办（按优先级）
 
 ### 2.1 第二章：先收尾本轮修复

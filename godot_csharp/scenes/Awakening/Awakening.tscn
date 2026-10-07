@@ -1,13 +1,10 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/Awakening/UI/ChapterHUD.tscn" id="field_ui"]
 
-[ext_resource type="Script" path="res://scenes/Awakening/Awakening.gd" id="main"]
+[ext_resource type="Script" path="res://scenes/Awakening/AwakeningMap.gd" id="main"]
 [ext_resource type="Script" path="res://scenes/Awakening/LampFlicker.gd" id="details"]
 [ext_resource type="Script" path="res://scenes/Story/StoryActor.gd" id="actor"]
 [ext_resource type="Script" path="res://scenes/Awakening/RoomDoor.gd" id="room_door"]
-[ext_resource type="PackedScene" path="res://scenes/Shared/UI/HintOverlay.tscn" id="hints"]
-[ext_resource type="PackedScene" path="res://scenes/Shared/UI/ChapterDialogue.tscn" id="dialogue"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/detective.tres" id="detective_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/engineer.tres" id="engineer_frames"]
 [ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/chef.tres" id="chef_frames"]
@@ -2166,17 +2163,3 @@ interior_bounds = Rect2(1056, 512, 192, 160)
 [node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor6/Body"]
 position = Vector2(0, -4)
 shape = SubResource("dorm_leaf")
-
-[node name="InteractionHints" parent="." instance=ExtResource("hints")]
-z_index = 50
-
-[node name="Dialogue" parent="." instance=ExtResource("dialogue")]
-
-
-[node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(2, 2)
-
-[node name="FieldUI" parent="." instance=ExtResource("field_ui")]
-
-[node name="ModalLayer" type="CanvasLayer" parent="."]
-layer = 15

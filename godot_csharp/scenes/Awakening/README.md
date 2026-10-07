@@ -1,6 +1,6 @@
 # 第一章《门的这一侧》（重制版）
 
-标题入口 `scenes/Title/Title.tscn` 选第一章后，经 `scenes/Main2D.tscn` 加载本场景 `Awakening.tscn`。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧章节已退出运行目录，语言设置与翻译资源统一位于 `scenes/Shared/Locale/`。
+标题入口 `scenes/Title/Title.tscn` 选第一章后，加载 `Chapter1.tscn`：共用的主代码 `Shared/ChapterHost.gd`、界面 `Shared/UI/ChapterUI.tscn` 与现场 `Shared/Field/ChapterField.gd`，地图为本目录的 `Awakening.tscn`（适配器 `AwakeningMap.gd`）。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧章节已退出运行目录，语言设置与翻译资源统一位于 `scenes/Shared/Locale/`。
 
 ## 运行
 
@@ -43,11 +43,10 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `Night/NightReplay.cs` | 昨夜重演：每次新建 `WorldRuntime`、四个 `SoulEssence` 与各自 `ProjectionWorld`；声路感知经 `Observation.Observe`；人物习惯是 `Rule`，由 `DecisionSystem` 选择；请求经 `Effect.Say` 携带，`SocialSystem` 依 Trust 判定；行动由 `SimulationSession`/`ActionRuntime` 在 CTB 上结算；宿主层只做寻路（走到行动目标所在房间、到了先看一眼再决定）与烟灰/鞋印/湿布的物理后果。“苏泠守在门边直到门关上”“沈鼎只在门已闭合时压湿布”是规则条件，不靠行动值先后；`NightTiming` 列出全部行动值参数，穷举检查在 39 组参数上复测。心声气泡用自然语言写出决策依据（信谁、为何不全信），不显示数值 |
 | `Night/MorningTraces.cs` | 重演留下的晨间痕迹、今晨现实的证物事实（作者给定），以及对照（吻合／冲突／未查）与冲突文字 |
 | `Night/MorningWorld.cs` | 清晨的现实世界：证物 Essence、四人的认知与核心欲望；公告框上的学园守则四条；恶魔的话以 Corruption 来源放大欲望；恶魔低语之后，同伴要不要自己走过去拿起旧物（`Intend`：拿起它／守着手头的事）与碰不碰旧物，都由其内部世界的 `Rule`（低语、欲望、对恶魔的信任、天性谨慎、是否读到守则第 1 条、是否已拿定主意）经 `DecisionSystem` 决定；伸手拿起与放回由 `SimulationSession`/`ActionRuntime` 结算（人不在物件所在房间就拿不到；放回后现实里留下“被动过”）；声路试验（感知）与触物回忆（Recall，记钩）只写入相应本人的认知 |
-| `AwakeningEngine.cs` | GDScript 与 C# 之间的桥：重演、声路试验、回忆、钩数、章节结束状态 |
-| `Awakening.tscn` / `Awakening.gd` | 生活翼地图（几何、寻路、相机复用旧场景的通用部分），S1–S10 流程、证物卡、笔记本、声路试验、触物回忆、始业之答、结局 |
+| `Script/Chapter1Session.cs` / `Chapter1SessionFlows.cs` / `Chapter1SessionProbe.cs` | 第一章的统一事件会话（`IChapterSession`）：醒来、相遇、证物卡、试验与协助、触物回忆与同伴伸手、请人比对、声路试验、答辩、终局与日常编排；空间动作以 stage 事件交给现场并等回执。探针只供自动回归 |
+| `Chapter1.tscn` | 第一章入口：共用主代码、界面与现场，地图适配器为 `Awakening.tscn` |
+| `Awakening.tscn` / `AwakeningMap.gd` | 生活翼地图与适配器：地面格、家具足迹、宿舍门、房间区域、锚点、交互点位置、道具状态（隔离门、旧物、痕迹）、日常站点与实景回放；不含剧情与文字 |
 | `map_layout.tres` | 地图生成脚本的输出：地面格、家具足迹、书架积灰的种类与位置、窗与地毯等壁饰的心声区域 |
-| `AwakeningContent.gd` | 加载 C# 内容与生成布局，转换 Godot 坐标和命中框 |
-| `ReplayManuscript.gd` | 重演手稿：左页六个变量，右页对照；改变量后旧结果标为过期 |
 | `ReplayStage.gd` | 墨影回放：真实地图上的半透明人影与四个并排的心声气泡；暂停、倍速、跳过 |
 | `TraceDecals.gd` | 传声铜管走向、管接头、灰扇、靴印、湿布、门框凹痕、书架无尘方框与窄手印 |
 | `Script/chapter_01.story` + `Script/story/` | 两章对白、分支、证物事实与热点的唯一生产源。入口文件只写章节、按序 `引入：<相对路径或通配>` 与末尾的 `运行`（声明时长；模拟器 `--duration` 可代替或覆盖）；片段按生态、第一章、续篇分目录，按序引入与写在同一文件等价；每句台词行尾带 `[#id=…]` 稳定编号，新台词用 `python godot_csharp/tools/compile_story.py --assign-ids` 写回 |
@@ -60,14 +59,14 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `Script/generated_lines_zh.csv` | 编译器生成的台词表（编号、场面、说话人、中文），供翻译使用；不手工修改 |
 | `Script/Chapter1Dialogue.cs` / `Shared/Story/InteractionPacket.cs` | 纯 C# 对白查询、效果、选择与交互协议；不依赖 Godot |
 | `Script/generated_awakening_*.json` / `Script/Chapter1CompiledDialogue.cs` | 由 `python godot_csharp/tools/compile_story.py` 生成；`--check` 检查一致性，不手工修改 |
-| `Paper.gd`、`HintOverlay.gd`、`LampFlicker.gd`、`RoomDoor.gd`、`FieldNavigation.gd`、`AwakeningDialogue.tscn` | 手稿样式、交互高亮、灯光、宿舍门、网格寻路、对白框（后四者复制自旧场景的通用节点） |
+| `LampFlicker.gd`、`RoomDoor.gd` | 灯光、宿舍门（纸页样式、交互高亮、对白框、网格寻路在 `scenes/Shared/`） |
 | `check/` | 上表的检查与盲玩驱动 |
 
 美术：`ShareAsset/Internal/Props/AwakeningEvidence/`（运行时）与 `AssetsSource/Internal/Props/AwakeningEvidence/`（生产源），共 18 张场景贴图（含公告框、门开后的窄底鞋印）与 12 张检视卡局部图（96×72，卡上 3 倍显示）。
 
 ## 与设计方案的对应
 
-- **证物 12 件**：E1–E12 见 `AwakeningContent.gd`。可做现场试验的：E1 拔闩推门、E2 木楔比对、E3 检视自己的靴底（触发第一次反转）、E8 声路试验、E11 比手；同伴协助：E4/E9/E10 沈鼎、E5/E6 苏泠、E7 霍铎。
+- **证物 12 件**：E1–E12 见 `Script/generated_awakening_content.json`（由 story 编译）。可做现场试验的：E1 拔闩推门、E2 木楔比对、E3 检视自己的靴底（触发第一次反转）、E8 声路试验、E11 比手；同伴协助：E4/E9/E10 沈鼎、E5/E6 苏泠、E7 霍铎。
 - **重演对照**：E1–E7、E9 参与对照；E8、E10、E11、E12 是旁证（E8 的声路试验与 V3/V4 的感知规则是同一张表）。
 - **第六个问题**：重演手稿起初只有五个问题，“素不相识”是不写出来的默认；重演里侦探因信任不足拒绝转述，或细看过两件相熟旁证（杯子、酵种罐、无尘方框、放大镜）之后，才出现“昨夜之前，四人彼此……”。对照的冲突只写痕迹之差（“重演中……；现场……”）。
 - **唯一解**：穷举确认 216 种组合中只有“她的房间 / 活动厅铜口旁 / 从主楼对着铜口说 / 闩门，别开 / 霍铎 / 早已相熟”全部吻合。

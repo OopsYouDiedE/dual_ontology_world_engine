@@ -4,7 +4,7 @@ func _initialize():
 	call_deferred("run")
 func run():
 	print("EDITOR_HINT=", Engine.is_editor_hint())
-	for item in [["dialogue", "res://scenes/Shared/UI/ChapterDialogue.tscn"], ["manuscript", "res://scenes/Shared/ReplayManuscript.tscn"]]:
+	for item in [["dialogue", "res://scenes/Shared/UI/Dialogue/ChapterDialogue.tscn"], ["manuscript", "res://scenes/Shared/UI/Manuscript/ReplayManuscript.tscn"]]:
 		var viewport = SubViewport.new()
 		viewport.size = Vector2i(1280, 960)
 		viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
