@@ -4,8 +4,10 @@ extends CanvasLayer
 ## 所有章节共用；布局、颜色、字体在场景节点里改。编辑器里 Editor Preview 字段直接驱动同一组 set_* 方法。
 
 const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
-const VIEW_SIZE := Vector2(1280, 992)
 const HOVER_OFFSET := Vector2(16, -34)
+const PresentationWait := preload("res://scenes/Shared/PresentationWait.gd")
+
+signal fade_cancelled
 
 @export_group("Editor Preview")
 @export var preview_title := "生活翼 · 活动厅":
@@ -110,7 +112,8 @@ func show_hover(t: String, screen_pos: Vector2) -> void:
 	tip.text = t
 	tip.reset_size()
 	var at := screen_pos + HOVER_OFFSET
-	tip.position = Vector2(clampf(at.x, 8, VIEW_SIZE.x - 8 - tip.size.x), clampf(at.y, 64, VIEW_SIZE.y - 32))
+	var view_size := get_viewport().get_visible_rect().size
+	tip.position = Vector2(clampf(at.x, 8, maxf(8, view_size.x - 8 - tip.size.x)), clampf(at.y, 64, maxf(64, view_size.y - 32 - tip.size.y)))
 	_hover_on = true
 	_sync()
 
@@ -141,13 +144,19 @@ func flash_title(t: String) -> void:
 func fade_to(alpha: float, seconds: float) -> void:
 	var fade: ColorRect = $Fade
 	if _fade_tween != null and _fade_tween.is_valid():
+		fade_cancelled.emit()
 		_fade_tween.kill()
 	if seconds <= 0.0 or not is_inside_tree():
 		fade.color.a = alpha
 		return
 	_fade_tween = create_tween()
 	_fade_tween.tween_property(fade, "color:a", alpha, seconds)
-	await _fade_tween.finished
+	await PresentationWait.until(_fade_tween.finished, fade_cancelled)
+
+func _exit_tree() -> void:
+	fade_cancelled.emit()
+	for tween in [_flash_tween, _fade_tween]:
+		if tween != null and tween.is_valid(): tween.kill()
 
 ## 过场回放时整条 HUD 收起（黑幕与闪标题不受影响）。
 func set_bar_visible(v: bool) -> void:

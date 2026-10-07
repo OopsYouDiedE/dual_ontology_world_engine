@@ -1,4 +1,5 @@
 @tool
+@static_unload
 extends RefCounted
 ## 手稿界面：羊皮纸底、墨色、印红。所有面板与按钮共用这一套样式。
 
@@ -70,11 +71,10 @@ static func button(text: String, action: Callable, size := 0) -> Button:
 static func rule() -> ColorRect:
 	return preload("res://scenes/Shared/UI/Common/PaperRule.tscn").instantiate()
 
-const MODAL_SCENE: PackedScene = preload("res://scenes/Shared/UI/Common/PaperModal.tscn")
-
-## 两章原样共用的纸页弹窗；流程状态与导航仍由各宿主负责。
+## 通用纸页容器；动态加载避免 Paper 与 PaperModal 互相预加载。
 static func modal(layer: CanvasLayer, title: String, size: Vector2) -> Control:
-	var instance: Control = MODAL_SCENE.instantiate()
+	var scene: PackedScene = load("res://scenes/Shared/UI/Common/PaperModal.tscn")
+	var instance: Control = scene.instantiate()
 	instance.set("modal_title", title)
 	instance.set("modal_size", size)
 	layer.add_child(instance)

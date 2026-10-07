@@ -1,6 +1,6 @@
 @tool
 extends VBoxContainer
-## 章末结算卡：一段结局正文，后接若干行说明（每行一个 RichTextLabel，可含 [color=seal] 等语义色）。
+## 结束卡：一段正文，后接若干行说明（每行一个 RichTextLabel，可含语义色）。
 ## show_data({outcome:String, rows:[String]})
 const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
 

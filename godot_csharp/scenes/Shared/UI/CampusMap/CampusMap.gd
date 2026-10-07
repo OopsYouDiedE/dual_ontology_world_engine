@@ -1,10 +1,7 @@
 @tool
 extends Control
-## 学园手稿图：羊皮纸上的示意平面。两种用途——
-## 1. 去往（M）：点一处地点，直接走到那里（走路不占时段，只是省掉路上的工夫）。只画侦探去过或听人提到过的地方，
-##    不标任何人的位置（设计总纲 §四.6：玩家只知道侦探知道的）。
-## 2. 墨影回放：第二章的一夜跨越多处，重演在这张图上回放（设计总纲 §四.4）：半透明墨影只显身量与去向；
-##    全部吻合之后才写出名字与心声（第三部分 §13 第 11 条）。空格暂停，F 倍速，Esc 跳过。
+## 地图显示与回放：地点、连线、当前位置与可见地点均由宿主数据提供。
+## 编辑器示例仅用于调布局；空格暂停，F 倍速，Esc 跳过回放。
 
 const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
 
@@ -60,30 +57,30 @@ const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
 		queue_redraw()
 
 @export_group("")
-## 地点：示意位置、显示名、去往时载入的地图与出生点。键与引擎的 Place 同名（另有几处宿主自有的地点）。
-const NODES := {
-	"ArchiveFront": {"pos": Vector2(500, 70), "label": "名录库", "map": "archive", "spawn": "south"},
-	"Hall": {"pos": Vector2(500, 200), "label": "中央厅", "map": "central_hall", "spawn": "south"},
-	"Lecture": {"pos": Vector2(300, 200), "label": "讲堂", "map": "lecture", "spawn": "from_central"},
-	"Resonance": {"pos": Vector2(120, 300), "label": "星仪院一角", "map": "resonance", "spawn": "south"},
-	"Commons": {"pos": Vector2(500, 380), "label": "起居厅", "map": "living_hall", "spawn": "north_door"},
-	"DormW": {"pos": Vector2(370, 330), "label": "甲区", "map": "zone_jia", "spawn": "from_hall"},
-	"DormL": {"pos": Vector2(630, 330), "label": "丁区", "map": "zone_ding", "spawn": "from_hall"},
-	"DormS": {"pos": Vector2(370, 440), "label": "丙区", "map": "zone_bing", "spawn": "from_hall"},
-	"DormLife": {"pos": Vector2(630, 440), "label": "乙区", "map": "zone_yi", "spawn": "from_hall"},
-	"Logistics": {"pos": Vector2(820, 430), "label": "后勤院", "map": "logistics", "spawn": "west"},
-	"Granary": {"pos": Vector2(900, 330), "label": "粮仓", "map": "granary", "spawn": "south"},
-	"Clinic": {"pos": Vector2(820, 220), "label": "诊疗所", "map": "clinic", "spawn": "south"},
-	"Greenhouse": {"pos": Vector2(880, 90), "label": "温室", "map": "greenhouse", "spawn": "south"},
-	"Oath": {"pos": Vector2(500, 560), "label": "誓约庭", "map": "campus_s", "spawn": "gate_inside"},
+## 仅编辑器预览的地点模板；运行时不据此解释地点或导航。
+const PREVIEW_NODES := {
+	"ArchiveFront": {"pos": Vector2(500, 70), "label": "名录库"},
+	"Hall": {"pos": Vector2(500, 200), "label": "中央厅"},
+	"Lecture": {"pos": Vector2(300, 200), "label": "讲堂"},
+	"Resonance": {"pos": Vector2(120, 300), "label": "星仪院一角"},
+	"Commons": {"pos": Vector2(500, 380), "label": "起居厅"},
+	"DormW": {"pos": Vector2(370, 330), "label": "甲区"},
+	"DormL": {"pos": Vector2(630, 330), "label": "丁区"},
+	"DormS": {"pos": Vector2(370, 440), "label": "丙区"},
+	"DormLife": {"pos": Vector2(630, 440), "label": "乙区"},
+	"Logistics": {"pos": Vector2(820, 430), "label": "后勤院"},
+	"Granary": {"pos": Vector2(900, 330), "label": "粮仓"},
+	"Clinic": {"pos": Vector2(820, 220), "label": "诊疗所"},
+	"Greenhouse": {"pos": Vector2(880, 90), "label": "温室"},
+	"Oath": {"pos": Vector2(500, 560), "label": "誓约庭"},
 }
-const LINKS := [["ArchiveFront", "Hall"], ["Hall", "Lecture"], ["Lecture", "Resonance"], ["Hall", "Commons"], ["Commons", "DormW"], ["Commons", "DormL"],
+const PREVIEW_LINKS := [["ArchiveFront", "Hall"], ["Hall", "Lecture"], ["Lecture", "Resonance"], ["Hall", "Commons"], ["Commons", "DormW"], ["Commons", "DormL"],
 	["Commons", "DormS"], ["Commons", "DormLife"], ["Commons", "Oath"], ["Commons", "Logistics"], ["Logistics", "Granary"], ["Logistics", "Clinic"],
 	["Clinic", "Greenhouse"], ["Logistics", "Oath"]]
 
-@export var links: Array = LINKS.duplicate(true):
+@export var preview_links: Array = PREVIEW_LINKS.duplicate(true):
 	set(value):
-		links = value
+		preview_links = value
 		queue_redraw()
 @export var playback_hint: String = "空格 暂停　F 倍速（%sx）　Esc 跳过":
 	set(value):
@@ -119,10 +116,48 @@ var hovered := ""
 var paused := false
 var speed := 1.0
 var skipping := false
+var nodes: Dictionary = {}
+var links: Array = []
+
+func show_data(data: Dictionary) -> void:
+	nodes = data.get("nodes", {}).duplicate(true)
+	links = data.get("links", []).duplicate(true)
+	known = data.get("known", {}).duplicate(true)
+	here = str(data.get("here", ""))
+	if here == "":
+		for key in nodes:
+			if str(nodes[key].get("map", "")) == str(data.get("map", "")) and str(data.get("map", "")) != "":
+				here = key
+				break
+	if is_node_ready(): _prepare_locations()
+	queue_redraw()
+
+func _display_nodes() -> Dictionary:
+	return PREVIEW_NODES if Engine.is_editor_hint() else nodes
+
+func _prepare_locations() -> void:
+	var display := _display_nodes()
+	var locations: Control = $Locations
+	for child in locations.get_children():
+		child.visible = display.has(str(child.name))
+	for key in display:
+		var location := locations.get_node_or_null(str(key)) as Panel
+		if location == null:
+			location = locations.get_child(0).duplicate() as Panel
+			location.name = str(key)
+			locations.add_child(location)
+		var position_data = display[key].get("pos", Vector2.ZERO)
+		var center := Vector2.ZERO
+		if position_data is Vector2: center = position_data
+		elif position_data is Array and position_data.size() >= 2: center = Vector2(float(position_data[0]), float(position_data[1]))
+		elif position_data is Dictionary: center = Vector2(float(position_data.get("x", 0)), float(position_data.get("y", 0)))
+		location.position = center - location.size / 2.0
+		location.get_node("Name").text = str(display[key].get("label", key))
 
 func _ready() -> void:
 	custom_minimum_size = map_size
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_prepare_locations()
 	queue_redraw()
 
 func _process(_delta: float) -> void:
@@ -147,10 +182,10 @@ func _gui_input(event: InputEvent) -> void:
 func _shown(key: String) -> bool:
 	if Engine.is_editor_hint():
 		return preview_all_nodes or ["Hall", "Commons", "Lecture", "Oath"].has(key)
-	return mode == "replay" or known.has(key)
+	return nodes.has(key) and (mode == "replay" or known.has(key))
 
 func _node_at(p: Vector2) -> String:
-	for key in NODES:
+	for key in _display_nodes():
 		if not _shown(key):
 			continue
 		var location := get_node_or_null("Locations/" + key) as Control
@@ -163,13 +198,12 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, draw_size), bg_color)
 	draw_rect(Rect2(Vector2.ONE * border_inset, draw_size - Vector2.ONE * border_inset * 2.0), border_color, false, border_width)
 	var font := Paper.font()
-	for link in links:
-		if link.size() < 2 or not NODES.has(link[0]) or not NODES.has(link[1]):
+	for link in (preview_links if Engine.is_editor_hint() else links):
+		if link.size() < 2 or not _display_nodes().has(link[0]) or not _display_nodes().has(link[1]):
 			continue
 		if _shown(link[0]) and _shown(link[1]):
 			draw_line(_position(link[0]), _position(link[1]), link_color, link_width)
-	# 生活翼的外廓：四个寝区围着起居厅。
-	draw_rect(wing_outline, wing_outline_color, false, border_width)
+	if Engine.is_editor_hint(): draw_rect(wing_outline, wing_outline_color, false, border_width)
 	_sync_locations()
 	for f in (preview_figures if Engine.is_editor_hint() else figures):
 		_draw_ink(f.get("pos", Vector2.ZERO), float(f.get("alpha", 1.0)), str(f.get("label", "")))
@@ -185,11 +219,11 @@ func _draw() -> void:
 
 func _position(key: String) -> Vector2:
 	var location := get_node_or_null("Locations/" + key) as Control
-	return location.position + location.size / 2.0 if location != null else NODES[key].pos
+	return location.position + location.size / 2.0 if location != null else Vector2.ZERO
 
 func _sync_locations() -> void:
 	var current := preview_here if Engine.is_editor_hint() else here
-	for key in NODES:
+	for key in _display_nodes():
 		var location := get_node_or_null("Locations/" + key) as Panel
 		if location == null:
 			continue
@@ -230,6 +264,7 @@ func cancel_playback() -> void:
 	cancelled = true
 	playback_cancelled.emit()
 	figures.clear()
+	queue_redraw()
 
 func _exit_tree() -> void:
 	cancel_playback()
@@ -242,22 +277,26 @@ func play(steps: Array, named: bool) -> void:
 	if Engine.is_editor_hint() or cancelled:
 		return
 	mode = "replay"
+	figures.clear()
 	skipping = false
 	paused = false
+	speed = 1.0
 	var by_who := {}
 	for s in steps:
+		if not nodes.has(str(s.get("from", ""))) or not nodes.has(str(s.get("to", ""))): continue
 		if not by_who.has(s.who):
-			var start: String = _node_key(str(s.from))
+			var start := str(s.from)
 			by_who[s.who] = {"pos": Vector2.ZERO, "slot": by_who.size(), "label": str(s.name) if named else str(s.build), "alpha": 1.0, "bubble": ""}
 			by_who[s.who].pos = _position(start) + _offset(int(by_who[s.who].slot))
 			figures.append(by_who[s.who])
 	queue_redraw()
 	for s in steps:
 		if cancelled: return
+		if not by_who.has(s.who) or not nodes.has(str(s.get("to", ""))): continue
 		if skipping:
 			break
 		var f: Dictionary = by_who[s.who]
-		var target: Vector2 = _position(_node_key(str(s.to))) + _offset(int(f.slot))
+		var target: Vector2 = _position(str(s.to)) + _offset(int(f.slot))
 		if str(s.act) == "":
 			await _tween(f, target, 0.55)
 		else:
@@ -287,9 +326,6 @@ func _wait(seconds: float) -> void:
 		if not paused:
 			t += get_process_delta_time() * speed
 		await _wait_frame()
-
-static func _node_key(place: String) -> String:
-	return place if NODES.has(place) else "Commons"
 
 ## 每个身影在地点框下方有自己的位子，免得叠在一起。
 static func _offset(slot: int) -> Vector2:

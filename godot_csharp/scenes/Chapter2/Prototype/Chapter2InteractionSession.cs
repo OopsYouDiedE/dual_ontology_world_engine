@@ -69,8 +69,16 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             }
             entities.Add(id,entity);
         }
-        _behavior=new(game.Rt,game.S);
-        _behavior.BindExisting(chapter,entities,characters,game.InheritedChapter1?["awakening"]:[]);
+        if (game.PersistentSession is { } persistent)
+        {
+            _behavior = persistent;
+            _behavior.AttachExistingContent(chapter, entities, characters);
+        }
+        else
+        {
+            _behavior = new(game.Rt, game.S);
+            _behavior.BindExisting(chapter, entities, characters, game.InheritedChapter1 ? ["awakening"] : []);
+        }
     }
     public static void ValidateScript(string script)
     {
@@ -241,6 +249,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     {
         _game.HostMoveDet(place); _knownPlaces.Add(place.ToString());
         var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",Place.Resonance=>"resonance",_=>"living_hall" };
+        _map = map;
         output.Add(Event("scene",("map",map),("spawn",place==Place.Logistics?"west":"south")));
     }
     private void Run(PlayerAction? action,List<Dictionary<string,object?>> output)
@@ -509,7 +518,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     }
     private void Council(List<Dictionary<string,object?>> output)
     {
-        _stage="council"; _game.HostMoveDet(Place.Oath);_knownPlaces.Add(Place.Oath.ToString()); output.Add(Event("scene",("map","campus_s"),("spawn","gate_inside"),("mode","court"))); Activate("council.begin",output); _continuations.Enqueue(CouncilProposal); Pump(output);
+        _stage="council"; _game.HostMoveDet(Place.Oath);_knownPlaces.Add(Place.Oath.ToString()); _map="campus_s"; output.Add(Event("scene",("map",_map),("spawn","gate_inside"),("mode","court"))); Activate("council.begin",output); _continuations.Enqueue(CouncilProposal); Pump(output);
     }
     private void CouncilProposal(List<Dictionary<string,object?>> output)
     {

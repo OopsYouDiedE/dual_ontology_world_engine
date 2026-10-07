@@ -126,8 +126,11 @@ func _update_preview() -> void:
 func _render() -> void:
 	var questions: Array = _data.get("questions", [])
 	selection = (_data.get("vars", []) as Array).duplicate()
-	while selection.size() < questions.size():
-		selection.append(-1)
+	selection.resize(questions.size())
+	for index in questions.size():
+		var options: Array = questions[index].get("options", [])
+		if selection[index] == null or int(selection[index]) < 0 or int(selection[index]) >= options.size():
+			selection[index] = -1
 	last_run_vars = (_data.get("last_run_vars", []) as Array).duplicate()
 	$LeftPage/Scroll/Column/Title.text = "[b]%s[/b]" % str(_data.get("title", default_title))
 	$LeftPage/Scroll/Column/Hint.text = str(_data.get("hint", default_hint))
@@ -169,8 +172,8 @@ func _choose(index: int, option: int) -> void:
 func _refresh() -> void:
 	for index in option_buttons.size():
 		for option in option_buttons[index].size():
-			option_buttons[index][option].button_pressed = selection[index] == option
-	var ready := not selection.slice(0, option_buttons.size()).has(-1)
+			option_buttons[index][option].set_pressed_no_signal(selection[index] == option)
+	var ready := not selection.is_empty() and not selection.has(-1)
 	for b in run_buttons:
 		b.disabled = not ready
 	for child in results_box.get_children():
@@ -209,6 +212,6 @@ func _refresh() -> void:
 		_connect_button(open, func(): open_card.emit(card_id))
 
 func _run(skip: bool) -> void:
-	if selection.slice(0, option_buttons.size()).has(-1):
+	if selection.is_empty() or selection.has(-1):
 		return
 	run_requested.emit(selection.duplicate(), skip)

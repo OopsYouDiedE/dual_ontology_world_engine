@@ -63,6 +63,7 @@ func _ready() -> void:
 	set_meta("column", column)
 	set_meta("body", body)
 	_update_preview_footer()
+	resized.connect(_update_size)
 
 func _update_sheet_style() -> void:
 	if is_instance_valid(panel):
@@ -73,12 +74,14 @@ func _update_sheet_style() -> void:
 func _update_size() -> void:
 	if not is_instance_valid(panel):
 		return
-	panel.custom_minimum_size = modal_size
+	var available := get_viewport_rect().size - Vector2(32, 32)
+	var fitted := Vector2(minf(modal_size.x, maxf(1, available.x)), minf(modal_size.y, maxf(1, available.y)))
+	panel.custom_minimum_size = fitted
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -modal_size.x / 2.0
-	panel.offset_right = modal_size.x / 2.0
-	panel.offset_top = -modal_size.y / 2.0
-	panel.offset_bottom = modal_size.y / 2.0
+	panel.offset_left = -fitted.x / 2.0
+	panel.offset_right = fitted.x / 2.0
+	panel.offset_top = -fitted.y / 2.0
+	panel.offset_bottom = fitted.y / 2.0
 
 func _update_title() -> void:
 	if not is_instance_valid(title_label) or not is_instance_valid(title_rule):

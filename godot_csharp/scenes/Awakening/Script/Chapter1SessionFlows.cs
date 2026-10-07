@@ -673,7 +673,7 @@ public sealed partial class Chapter1Session
         var kept = Party.Where(who => _world.Hooks(PersonOf(who)) == 0).Select(who => who == "detective" ? T("结局·你自己") : PersonName(who)).ToArray();
         var door = Has("flags", "door_open");
         var actions = new List<object?>();
-        if (door) actions.Add(new Ev { ["id"] = "chapter2", ["label"] = "进入第二章 (C)", ["key"] = "C" });
+        if (door) actions.Add(new Ev { ["id"] = "continue", ["label"] = "继续学园生活 (C)", ["key"] = "C" });
         actions.Add(new Ev { ["id"] = "restart", ["label"] = "重新开始 (R)", ["key"] = "R" });
         _out.Add(Event("ending", ("title", T($"结局·{kind}·标题")), ("outcome", T($"结局·{kind}·正文")),
             ("rows", new object?[]

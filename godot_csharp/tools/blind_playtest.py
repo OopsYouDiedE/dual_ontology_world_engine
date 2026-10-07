@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generic, human-directed client for a fresh input session of a chapter scene (unified ChapterHost; chapter 1 by default).
+"""Generic, human-directed client for a fresh input session of the single BasicUISystem game window.
 
 Start the rendered Godot driver separately with:
   --script res://scenes/Awakening/check/playtest_session.gd -- \
-  --session=<fresh-id> --agent=<canonical-agent-name> [--chapter=1|2]
+  --session=<fresh-id> --agent=<canonical-agent-name>
 
 Use status to read the last acknowledged screenshot, snapshot to request a
 fresh screenshot, or action to send one JSON input object / a list of objects.

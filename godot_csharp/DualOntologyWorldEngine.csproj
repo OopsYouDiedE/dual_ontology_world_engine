@@ -8,11 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Awakening/check/**;scenes/Awakening/Night/**;scenes/Awakening/Script/**;scenes/Chapter2/Prototype/**;scenes/Chapter2/Script/**;scenes/Shared/Story/**" />
-    <ProjectReference Include="scenes/Awakening/Script/Chapter1Script.csproj" />
+    <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Awakening/check/**;scenes/Awakening/Night/**;scenes/Awakening/Script/**;scenes/Chapter2/Prototype/**;scenes/Chapter2/Script/**;scenes/Shared/Story/**;scenes/Shared/Game/**" />
+    <ProjectReference Include="scenes/Shared/Game/GameSession.csproj" />
     <Compile Remove="scenes/Shared/check/WorldScriptCheck/**" />
     <Compile Include="scenes/Shared/Story/Examples/WorldScript/Host/WorldSessionEngine.cs" />
-    <ProjectReference Include="scenes/Chapter2/Prototype/Prototype.csproj" />
     <ProjectReference Include="..\csharp\DualOntologyWorldEngine.Core.csproj" />
   </ItemGroup>
 </Project>

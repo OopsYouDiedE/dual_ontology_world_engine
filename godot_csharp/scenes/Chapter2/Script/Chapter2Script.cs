@@ -60,6 +60,7 @@ public sealed partial class Game
 {
     public readonly WorldRuntime Rt;
     public LiveChapterWorld? Continuation { get; }
+    public WorldSession? PersistentSession { get; }
     /// <summary>从第一章接续时，各人带进本章的初值；重演以此为起点（见 GameOptions.Inherit）。</summary>
     public IReadOnlyDictionary<P, InheritedSeed>? InheritedSnapshot { get; }
     private readonly ChapterWorldDefinition? _authored;
@@ -88,15 +89,20 @@ public sealed partial class Game
     /// <summary>本时段侦探可知的信息（感知、听闻、广播）。</summary>
     public readonly List<string> Feed = [];
 
-    public Game(GameOptions? options = null, LiveChapterWorld? continuation = null, ChapterWorldDefinition? authored = null)
+    public Game(GameOptions? options = null, LiveChapterWorld? continuation = null, ChapterWorldDefinition? authored = null, WorldSession? session = null)
     {
         Options = options ?? new();
         if (authored is not null) Chapter2Bindings.Validate(authored);
         _authored = authored;
         Continuation = continuation;
+        PersistentSession = session ?? continuation?.Session;
+        if (continuation is not null && PersistentSession is not null
+            && (!ReferenceEquals(continuation.Runtime, PersistentSession.Runtime)
+                || !ReferenceEquals(continuation.Simulation, PersistentSession.Simulation)))
+            throw new InvalidOperationException("The persistent session must own the same live world and simulation.");
         Chapter = continuation?.Progress ?? new ChapterSession();
-        Rt = continuation?.Runtime ?? new WorldRuntime();
-        S = continuation?.Simulation ?? new SimulationSession(Rt);
+        Rt = continuation?.Runtime ?? PersistentSession?.Runtime ?? new WorldRuntime();
+        S = continuation?.Simulation ?? PersistentSession?.Simulation ?? new SimulationSession(Rt);
         S.Completed += OnCompleted;
         S.StageCommitted += CapturePresentation;
         People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
@@ -134,14 +140,22 @@ public sealed partial class Game
     private static readonly Tag[] BodyVisible = [T.Fed, T.Hungry, T.Weak, T.Sick, T.NightAte, T.Stash, T.OweNote, T.Guarding, T.Prying, T.OwesWater];
     private static readonly Tag[] BodyHidden = [T.GranaryKey, T.MedKey, T.ArchiveKey, T.OilKey, T.Lockpick, T.Craftsman, T.Structure];
 
-    private Essence NewThing(string name, Place place, Tag[] visible, Tag[]? hidden = null)
+    private readonly HashSet<Essence> _retainedEntities = new();
+    private Essence? Existing(string id)
     {
-        var e = new Essence(name);
-        e.Add(new SpatialProperty { Space = Space[place] });
-        var state = e.Add(new StateProperty());
-        foreach (var t in visible) { state.Values[t] = 0; state.Observable.Add(t); }
-        foreach (var t in hidden ?? []) state.Values[t] = 0;
-        View[e] = Rt.Project(e, name);
+        var entity = PersistentSession is not null && PersistentSession.TryEntity(id, out var registered)
+            ? registered : Continuation?.Entities.GetValueOrDefault(id);
+        if (entity is not null) _retainedEntities.Add(entity);
+        return entity;
+    }
+    private Essence NewThing(string name, Place place, Tag[] visible, Tag[]? hidden = null, string id = "")
+    {
+        var e = (id.Length > 0 ? Existing("world:" + id) : null) ?? new Essence(name);
+        if (e.Get<SpatialProperty>() is null) e.Add(new SpatialProperty { Space = Space[place] });
+        var state = e.Get<StateProperty>() ?? e.Add(new StateProperty());
+        foreach (var t in visible) { state.Values.TryAdd(t, 0); state.Observable.Add(t); }
+        foreach (var t in hidden ?? []) state.Values.TryAdd(t, 0);
+        View[e] = Rt.Representations(e).FirstOrDefault() ?? Rt.Project(e, name);
         PlaceOf[e] = place;
         Things.Add(e);
         return e;
@@ -151,11 +165,11 @@ public sealed partial class Game
     {
         foreach (var place in Enum.GetValues<Place>())
         {
-            var s = new Essence(Names.Of(place), ProjectionKind.Space);
-            s.Add(new StateProperty());
+            var s = Existing("world:room." + place) ?? new Essence(Names.Of(place), ProjectionKind.Space);
+            if (s.Get<StateProperty>() is null) s.Add(new StateProperty());
             Space[place] = s;
             PlaceOf[s] = place;
-            View[s] = Rt.Project(s, Names.Of(place));
+            View[s] = Rt.Representations(s).FirstOrDefault() ?? Rt.Project(s, Names.Of(place));
         }
         // 每个去处一条路：从任何地方都能到。房内几何与寻路属宿主，这里只保留“到哪里”。
         foreach (var place in Enum.GetValues<Place>())
@@ -166,49 +180,47 @@ public sealed partial class Game
             Way[place] = w;
             View[w] = Rt.Project(w, w.TrueName);
         }
-        Clock = new Essence("钟");
-        var clockState = Clock.Add(new StateProperty());
-        foreach (var t in T.SlotTag.Values.Append(T.Day)) { clockState.Values[t] = 0; clockState.Observable.Add(t); }
-        View[Clock] = Rt.Project(Clock, "钟");
+        Clock = Existing("world:object.Clock") ?? new Essence("钟");
+        var clockState = Clock.Get<StateProperty>() ?? Clock.Add(new StateProperty());
+        foreach (var t in T.SlotTag.Values.Append(T.Day)) { clockState.Values.TryAdd(t, 0); clockState.Observable.Add(t); }
+        View[Clock] = Rt.Representations(Clock).FirstOrDefault() ?? Rt.Project(Clock, "钟");
 
-        Granary = NewThing("粮仓", Place.Logistics, [T.Ration, T.Locked], [T.LatchLoose, T.ToolMarks]);
-        Desk = NewThing("配给台", Place.Logistics, [T.Open]);
-        Stove = NewThing("灶", Place.Logistics, [T.Cooked]);
-        Jar = NewThing("水缸", Place.Logistics, [T.Water]);
-        Ledger = NewThing("台账", Place.Logistics, [T.Handed, T.NightRecorded, T.Unrecorded, T.Counted]);
-        Bowl = NewThing("诊疗所的碗", Place.Clinic, [T.Porridge, T.Residue]);
-        Bed = NewThing("病床", Place.Clinic, [T.Treated]);
-        MedCab = NewThing("药柜", Place.Clinic, [T.Medicine]);
-        OilStore = NewThing("油库", Place.DormS, [T.Oil]);
-        Valve = NewThing("温室阀门", Place.Greenhouse, [T.Work]);
-        Gauge = NewThing("温室压力表", Place.Greenhouse, [T.Pressure]);
-        Blackboard = NewThing("讲堂黑板", Place.Lecture, [T.Chalk, T.Shoe]);
-        Stele = NewThing("誓约庭铺石", Place.Oath, [T.Rubbed]);
-        ArchiveDoor = NewThing("名录库之门", Place.ArchiveFront, [T.Open, T.Work]);
+        Granary = NewThing("粮仓", Place.Logistics, [T.Ration, T.Locked], [T.LatchLoose, T.ToolMarks], id: "object.Granary");
+        Desk = NewThing("配给台", Place.Logistics, [T.Open], id: "object.Desk");
+        Stove = NewThing("灶", Place.Logistics, [T.Cooked], id: "object.Stove");
+        Jar = NewThing("水缸", Place.Logistics, [T.Water], id: "object.Jar");
+        Ledger = NewThing("台账", Place.Logistics, [T.Handed, T.NightRecorded, T.Unrecorded, T.Counted], id: "object.Ledger");
+        Bowl = NewThing("诊疗所的碗", Place.Clinic, [T.Porridge, T.Residue], id: "object.Bowl");
+        Bed = NewThing("病床", Place.Clinic, [T.Treated], id: "object.Bed");
+        MedCab = NewThing("药柜", Place.Clinic, [T.Medicine], id: "object.MedCab");
+        OilStore = NewThing("油库", Place.DormS, [T.Oil], id: "object.OilStore");
+        Valve = NewThing("温室阀门", Place.Greenhouse, [T.Work], id: "object.Valve");
+        Gauge = NewThing("温室压力表", Place.Greenhouse, [T.Pressure], id: "object.Gauge");
+        Blackboard = NewThing("讲堂黑板", Place.Lecture, [T.Chalk, T.Shoe], id: "object.Blackboard");
+        Stele = NewThing("誓约庭铺石", Place.Oath, [T.Rubbed], id: "object.Stele");
+        ArchiveDoor = NewThing("名录库之门", Place.ArchiveFront, [T.Open, T.Work], id: "object.ArchiveDoor");
         // 名录库之门的三站：配重室、锁芯、传声中继。一站同一时刻只容一个身体（Occupied）；今夜有人在这一站使过劲（Worked）。
-        WeightRoom = NewThing("配重室", Place.ArchiveFront, [T.Occupied, T.Worked]);
-        LockCore = NewThing("锁芯", Place.ArchiveFront, [T.Occupied, T.Worked]);
-        RelayPost = NewThing("传声中继", Place.ArchiveFront, [T.Occupied, T.Worked]);
+        WeightRoom = NewThing("配重室", Place.ArchiveFront, [T.Occupied, T.Worked], id: "object.WeightRoom");
+        LockCore = NewThing("锁芯", Place.ArchiveFront, [T.Occupied, T.Worked], id: "object.LockCore");
+        RelayPost = NewThing("传声中继", Place.ArchiveFront, [T.Occupied, T.Worked], id: "object.RelayPost");
         // 中央基座：第 5 日起有一道新裂纹（担保衰减的迹象），只有凑近细看才看得见。
-        Base = NewThing("中央基座", Place.Hall, [], [T.Crack]);
-        SketchBook = NewThing("莫兰的速写本", Place.DormS, [T.Posted]);
+        Base = NewThing("中央基座", Place.Hall, [], [T.Crack], id: "object.Base");
+        SketchBook = NewThing("莫兰的速写本", Place.DormS, [T.Posted], id: "object.SketchBook");
         foreach (var place in new[] { Place.Hall, Place.Logistics, Place.Lecture, Place.DormLife, Place.DormW, Place.DormS, Place.DormL })
         {
-            var board = NewThing(place == Place.Logistics ? "配给台公告板" : Names.Of(place) + "公告板", place, [T.Accusation, T.Posted]);
-            board.Add(new RuleProperty());
+            var board = NewThing(place == Place.Logistics ? "配给台公告板" : Names.Of(place) + "公告板", place, [T.Accusation, T.Posted], id: "Board." + place);
+            if (board.Get<RuleProperty>() is null) board.Add(new RuleProperty());
             Board[place] = board;
         }
         foreach (var dorm in new[] { Place.DormLife, Place.DormW, Place.DormS, Place.DormL })
-            Litter[dorm] = NewThing(Names.Of(dorm) + "的废纸篓", dorm, [T.Crumbs, T.Emptied]);
-        NameVoice = new Essence("以你之名唤你的声音");
-        View[NameVoice] = Rt.Project(NameVoice, "以你之名唤你的声音");
+            Litter[dorm] = NewThing(Names.Of(dorm) + "的废纸篓", dorm, [T.Crumbs, T.Emptied], id: "Litter." + dorm);
+        NameVoice = Existing("world:object.NameVoice") ?? new Essence("以你之名唤你的声音");
+        View[NameVoice] = Rt.Representations(NameVoice).FirstOrDefault() ?? Rt.Project(NameVoice, "以你之名唤你的声音");
 
-        Set(Granary, T.Ration, Options.StartRations);
-        Set(Granary, T.Locked, 1);
-        Set(Granary, T.LatchLoose, 1);
-        Set(Jar, T.Water, 2);
-        Set(MedCab, T.Medicine, Options.StartMedicine);
-        Set(OilStore, T.Oil, Options.StartOil);
+        if (!_retainedEntities.Contains(Granary)) { Set(Granary, T.Ration, Options.StartRations); Set(Granary, T.Locked, 1); Set(Granary, T.LatchLoose, 1); }
+        if (!_retainedEntities.Contains(Jar)) Set(Jar, T.Water, 2);
+        if (!_retainedEntities.Contains(MedCab)) Set(MedCab, T.Medicine, Options.StartMedicine);
+        if (!_retainedEntities.Contains(OilStore)) Set(OilStore, T.Oil, Options.StartOil);
 
         var preexistingTags = People.ToDictionary(p => p.Id,p => p.Body.Get<StateProperty>()?.Values.Keys.ToHashSet() ?? []);
         foreach (var person in People)
@@ -224,10 +236,10 @@ public sealed partial class Game
             if (Rt.Representations(person.Soul).Count == 0) Rt.Project(person.Soul, person.Name + "之魂");
             View[person.Body] = Rt.Representations(person.Body).FirstOrDefault() ?? Rt.Project(person.Body, person.Name);
         }
-        Set(this[P.Mora].Body, T.GranaryKey, 1);
-        Set(this[P.Mora].Body, T.MedKey, 1);
-        Set(this[P.Ward].Body, T.ArchiveKey, 1);
-        Set(this[P.Ruan].Body, T.OilKey, 1);
+        if (!preexistingTags[P.Mora].Contains(T.GranaryKey)) Set(this[P.Mora].Body, T.GranaryKey, 1);
+        if (!preexistingTags[P.Mora].Contains(T.MedKey)) Set(this[P.Mora].Body, T.MedKey, 1);
+        if (!preexistingTags[P.Ward].Contains(T.ArchiveKey)) Set(this[P.Ward].Body, T.ArchiveKey, 1);
+        if (!preexistingTags[P.Ruan].Contains(T.OilKey)) Set(this[P.Ruan].Body, T.OilKey, 1);
         foreach (var person in People)
         {
             if (person.Pro.Lock >= 3 && !preexistingTags[person.Id].Contains(T.Lockpick)) Set(person.Body, T.Lockpick, 1);
@@ -248,6 +260,7 @@ public sealed partial class Game
         {
             if (declaration.Kind=="character" && this[Chapter2Bindings.PersonId(declaration)].Inherited) continue;
             var entity=Chapter2Bindings.Resolve(this,declaration);
+            if (_retainedEntities.Contains(entity)) continue;
             var state=entity.Get<StateProperty>();
             foreach (var (key,property) in declaration.Properties)
             {

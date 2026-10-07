@@ -40,6 +40,7 @@ public sealed partial class Chapter1Session : IChapterSession
         ChapterWorldContinuity.Clear();
         _world = Script.CreateWorld();
         _world.InitializePlayerPerception();
+        _ = _world.PersistentSession;
         _content = Script.CreateContent();
         _dialogue = new(_content, _world);
         _interaction = new(_content, _world);

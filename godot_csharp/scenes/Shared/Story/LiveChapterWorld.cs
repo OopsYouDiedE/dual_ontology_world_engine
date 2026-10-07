@@ -7,7 +7,7 @@ public sealed record ContinuingCharacter(SoulEssence Soul, Essence Body, Project
 /// <summary>A live handoff, retaining exact Core references. This is not a reconstructed save.</summary>
 public sealed record LiveChapterWorld(WorldRuntime Runtime, SimulationSession Simulation,
     IReadOnlyDictionary<string, Essence> Entities, IReadOnlyDictionary<string, ContinuingCharacter> Characters,
-    ChapterSession Progress);
+    ChapterSession Progress, WorldSession? Session = null);
 
 public static class ChapterWorldContinuity
 {

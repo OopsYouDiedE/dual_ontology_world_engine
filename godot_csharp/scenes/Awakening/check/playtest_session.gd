@@ -10,14 +10,11 @@ extends SceneTree
 ## and publishes what a player can see: a screenshot, visible text and the
 ## clickable controls. It never reads or writes story state.
 
-const CHAPTER_SCENES := {
-	"1": "res://scenes/Awakening/Chapter1.tscn",
-	"2": "res://scenes/Chapter2/Chapter2.tscn",
-}
+const GAME_SCENE := "res://scenes/BasicUISystem/BasicUISystem.tscn"
 const SETTLE_FRAMES := 6
 
 var session := ""
-var scene_path: String = CHAPTER_SCENES["1"]
+var scene_path: String = GAME_SCENE
 var agent := ""
 var run_id := ""
 var directory := ""
@@ -31,13 +28,6 @@ func _initialize() -> void:
 			session = arg.trim_prefix("--session=")
 		elif arg.begins_with("--agent="):
 			agent = arg.trim_prefix("--agent=")
-		elif arg.begins_with("--chapter="):
-			var chapter := arg.trim_prefix("--chapter=")
-			if not CHAPTER_SCENES.has(chapter):
-				push_error("playtest_session: --chapter must be one of %s" % [CHAPTER_SCENES.keys()])
-				quit(2)
-				return
-			scene_path = CHAPTER_SCENES[chapter]
 		elif arg.begins_with("--scene="):
 			scene_path = arg.trim_prefix("--scene=")
 	var valid := RegEx.create_from_string("^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")

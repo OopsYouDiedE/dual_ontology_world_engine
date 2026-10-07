@@ -124,10 +124,10 @@ func _render() -> void:
 			edit.custom_minimum_size = Vector2(0, 46)
 			edit.add_theme_font_size_override("font_size", 21)
 			edit.placeholder_text = str(field.get("placeholder", ""))
-			edit.text = str(field.get("value", ""))
 			var limit := int(field.get("max_length", 0))
 			if limit > 0:
 				edit.max_length = limit
+			edit.text = str(field.get("value", ""))
 			edit.text_changed.connect(func(_t: String): _on_changed())
 			edit.text_submitted.connect(func(_t: String): submit_requested.emit())
 			group.add_child(edit)
@@ -135,6 +135,11 @@ func _render() -> void:
 		else:
 			var options: Array = field.get("options", [])
 			_selected[id] = str(field.get("value", ""))
+			var valid_default := false
+			for option in options:
+				if str(option.get("id", "")) == _selected[id] and bool(option.get("available", true)):
+					valid_default = true
+			if not valid_default: _selected[id] = ""
 			_buttons[id] = {}
 			if options.is_empty() and str(field.get("empty_text", "")) != "":
 				group.add_child(Paper.label(str(field.get("empty_text", "")), 18, Paper.MUTED))
@@ -145,7 +150,10 @@ func _render() -> void:
 			for option in options:
 				var option_id := str(option.get("id", ""))
 				var b := Paper.button(str(option.get("label", "")), func(): select(id, option_id), option_font_size)
+				if not bool(field.get("flow", false)): b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				b.toggle_mode = true
+				b.disabled = not bool(option.get("available", true))
+				b.tooltip_text = str(option.get("lock_hint", ""))
 				b.button_pressed = option_id == _selected[id]
 				list.add_child(b)
 				_buttons[id][option_id] = b
@@ -168,9 +176,9 @@ func _refresh_summary() -> void:
 	for entry in _data.get("summary", []):
 		var id := str(entry.get("field", ""))
 		var shown := unset
-		var picked := str(_selected.get(id, ""))
+		var picked := str(_edits[id].text).strip_edges() if _edits.has(id) else str(_selected.get(id, ""))
 		if picked != "":
-			shown = _label_of(id, picked)
+			shown = picked if _edits.has(id) else _label_of(id, picked)
 		lines.append("%s：%s" % [str(entry.get("label", "")), shown])
 	$Header/Summary.text = Paper.story_text("\n".join(lines))
 	$Header/Summary.visible = not lines.is_empty()
@@ -191,6 +199,7 @@ func _on_changed() -> void:
 func select(field_id: String, option_id: String) -> void:
 	if not _buttons.has(field_id) or not _buttons[field_id].has(option_id):
 		return
+	if _buttons[field_id][option_id].disabled: return
 	for key in _buttons[field_id]:
 		_buttons[field_id][key].set_pressed_no_signal(key == option_id)
 	if _selected[field_id] == option_id:
@@ -216,8 +225,9 @@ func line_edit_for(field_id: String) -> LineEdit:
 
 func focus_text() -> void:
 	for id in _edits:
-		_edits[id].grab_focus()
-		return
+		if _edits[id].is_visible_in_tree():
+			_edits[id].grab_focus()
+			return
 
 ## 字段 id → 所选选项 id（单选）或文本框内容（文本）。
 func values() -> Dictionary:

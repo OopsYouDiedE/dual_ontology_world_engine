@@ -64,22 +64,10 @@ autowrap_mode = 0
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="Chapter1Button" type="Button" parent="MenuBox"]
+[node name="StartButton" type="Button" parent="MenuBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "第一章　门的这一侧"
-
-[node name="Chapter2Button" type="Button" parent="MenuBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "第二章"
-
-[node name="Chapter2Hint" type="Label" parent="MenuBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "请先在本次游戏中完成第一章并前往始业日。"
-horizontal_alignment = 1
-autowrap_mode = 2
+text = "开始游戏"
 
 [node name="QuitButton" type="Button" parent="MenuBox"]
 layout_mode = 2

@@ -49,6 +49,7 @@ const VOICE_TUBE: AudioStream = preload("res://ShareAsset/Internal/Characters/vo
 
 var packet_engine: Node
 var packet_serial := 0
+var _session_serial := 0
 
 ## Presentation adapter only: conditions, choices and mutations stay in C#.
 class PacketResponse extends RefCounted:
@@ -199,8 +200,8 @@ func _notification(what: int) -> void:
 	if Engine.is_editor_hint(): return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if is_instance_valid(next_button): _refresh_next_caption()
-		if is_instance_valid(history_button): history_button.text = tr("FA_UI_067")
-		if is_instance_valid(history_close_button): history_close_button.text = tr("FA_UI_161")
+		if is_instance_valid(history_button): history_button.text = _caption("回看", "History", "履歴")
+		if is_instance_valid(history_close_button): history_close_button.text = _caption("关闭", "Close", "閉じる")
 		if is_instance_valid(fast_forward_label): fast_forward_label.text = _key_legend()
 		if active: _update_continue_hint()
 
@@ -212,8 +213,12 @@ func _localized_speaker(canonical_name: String) -> String:
 		"霍铎":"FA_NAME_002", "沈鼎":"FA_NAME_003", "苏泠":"FA_NAME_004"}
 	return tr(str(ids[canonical_name])) if ids.has(canonical_name) else canonical_name
 
+func _caption(zh: String, en: String, ja: String) -> String:
+	var locale := TranslationServer.get_locale()
+	return en if locale.begins_with("en") else ja if locale.begins_with("ja") else zh
+
 func _refresh_next_caption() -> void:
-	next_button.text = tr("FA_UI_148") + "  ▸" if compact else tr("FA_UI_149")
+	next_button.text = _caption("继续", "Continue", "続ける") + "  ▸" if compact else _caption("下一句", "Next", "次へ")
 
 func _escape_rich_text(value: String) -> String:
 	return value.replace("[", "[lb]").replace("]", "[rb]")
@@ -274,7 +279,7 @@ func _portrait_character(canonical_name: String) -> String:
 			return "音乐家"
 		"", "铜口":
 			return ""
-	# 其余人物（第二章的十二人）以名字直接对应立绘。
+	# 其余人物按宿主提供的键直接查找立绘。
 	return canonical_name
 
 func _refresh_character_portrait() -> void:
@@ -338,6 +343,8 @@ func _ready() -> void:
 		push_error("StoryDialogue requires the ChapterDialogue.tscn node hierarchy")
 		return
 	_bind_existing()
+	history_button.text = _caption("回看", "History", "履歴")
+	history_close_button.text = _caption("关闭", "Close", "閉じる")
 	if Engine.is_editor_hint():
 		_refresh_editor_preview()
 		return
@@ -452,9 +459,10 @@ func idle(title: String = "", text: String = "") -> void:
 	body.text = tr(text) if not text.is_empty() else ""
 	body.visible_characters = -1
 	next_button.hide()
-	hint.text = tr("FA_UI_010") if not text.is_empty() else ""
+	hint.text = _caption("点击继续", "Click to continue", "クリックで続ける") if not text.is_empty() else ""
 
 func cancel_presentation() -> void:
+	_session_serial += 1
 	var was_active := active
 	active = false
 	busy = false
@@ -467,6 +475,9 @@ func cancel_presentation() -> void:
 	current_voice_stream = null
 	_previous_voice_stream = null
 	_clear_responses()
+	if is_instance_valid(history_panel): history_panel.hide()
+	if is_instance_valid(panel): panel.hide()
+	if is_instance_valid(next_button): next_button.hide()
 	if was_active: finished.emit()
 
 func _exit_tree() -> void:
@@ -476,13 +487,16 @@ func start_packet(source: Node, title: String, state: Node) -> void:
 	if Engine.is_editor_hint() or active or title == "" or title == "<null>": return
 	packet_engine = source
 	context = state
+	_session_serial += 1
 	active = true
 	busy = true
+	panel.show()
+	history_panel.hide()
 	# Defer presentation so the host can subscribe without retaining a frame-await coroutine.
-	call_deferred("_start_packet_ready", source, title)
+	call_deferred("_start_packet_ready", source, title, _session_serial)
 
-func _start_packet_ready(source: Node, title: String) -> void:
-	if not active: return
+func _start_packet_ready(source: Node, title: String, serial: int) -> void:
+	if not active or serial != _session_serial or not is_instance_valid(source): return
 	var packet = source.StartDialogue(title)
 	if packet == null:
 		active = false
@@ -492,6 +506,7 @@ func _start_packet_ready(source: Node, title: String) -> void:
 	await _show_packet(packet)
 
 func _show_packet(packet: Dictionary) -> void:
+	var serial := _session_serial
 	busy = true
 	next_button.hide()
 	choices.hide()
@@ -500,7 +515,7 @@ func _show_packet(packet: Dictionary) -> void:
 		body.text = ""
 		for command in packet["commands"]:
 			await context.present_dialogue_command(str(command["kind"]), command.get("args", []))
-			if not active: return
+			if not active or serial != _session_serial: return
 		packet = packet_engine.AdvanceDialogue()
 	busy = false
 	if packet.get("finished", false):
@@ -527,7 +542,7 @@ func _get_character_voice(char_name: String) -> AudioStream:
 	return VOICE_DETECTIVE
 
 func show_line(key: String) -> void:
-	if Engine.is_editor_hint() or not active or not is_instance_valid(packet_engine): return
+	if Engine.is_editor_hint() or busy or not active or not is_instance_valid(packet_engine): return
 	await _show_packet(packet_engine.AdvanceDialogue() if key == "@packet:next" else packet_engine.Choose(key))
 
 func _present_line() -> void:
@@ -585,6 +600,7 @@ func advance() -> void:
 		await show_line(line.next_id)
 
 func reveal() -> void:
+	if not active or line == null: return
 	body.visible_characters = -1
 	last_voice_char_index = -1
 	choices.show()
@@ -674,7 +690,7 @@ func toggle_history() -> void:
 	if is_instance_valid(focused) and (panel.is_ancestor_of(focused) or history_panel.is_ancestor_of(focused)):
 		focused.release_focus()
 	history_panel.visible = not history_panel.visible
-	history_text.text = tr("FA_UI_081") + "\n\n" + "\n\n".join(history)
+	history_text.text = _caption("对话记录", "Dialogue history", "会話履歴") + "\n\n" + "\n\n".join(history)
 	if history_panel.visible:
 		call_deferred("_scroll_history_to_latest")
 
@@ -726,8 +742,11 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 		if focused is Button and choices.is_ancestor_of(focused):
 			choice = focused
 		else:
-			choice = choices.get_child(0) as Button
-		if choice.disabled: return
+			for button in choices.get_children():
+				if button is Button and not button.disabled:
+					choice = button
+					break
+		if choice == null or choice.disabled: return
 		_visited_responses[str(choice.get_meta("dialogue_next_id"))] = true
 		choose(str(choice.get_meta("dialogue_next_id")))
 	else:

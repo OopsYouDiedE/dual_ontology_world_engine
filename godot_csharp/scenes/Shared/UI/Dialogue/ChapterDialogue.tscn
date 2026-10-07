@@ -189,7 +189,7 @@ offset_top = -54.0
 offset_right = -16.0
 offset_bottom = -14.0
 theme_override_colors/font_color = Color(0.85098, 0.760784, 0.54902, 1)
-text = "FA_UI_148  ▸"
+text = "继续  ▸"
 
 [node name="Hint" type="Label" parent="DialoguePanel"]
 visible = false
@@ -210,7 +210,7 @@ offset_top = 10.0
 offset_right = -20.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.623529, 0.658824, 0.596078, 1)
-text = "FA_UI_067"
+text = "回看"
 
 [node name="KeyLegend" type="Label" parent="DialoguePanel"]
 anchor_top = 1.0
@@ -220,8 +220,8 @@ offset_top = -30.0
 offset_right = 900.0
 offset_bottom = -10.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.498039, 0.541176, 0.486275, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.76, 0.79, 0.71, 1)
+theme_override_font_sizes/font_size = 16
 text = "Space 继续　H 回看　按住 Ctrl 快进"
 
 [node name="PortraitFrame" type="PanelContainer" parent="DialoguePanel"]
@@ -274,7 +274,7 @@ offset_left = 470.0
 offset_top = 411.0
 offset_right = 680.0
 offset_bottom = 451.0
-text = "FA_UI_161"
+text = "关闭"
 
 [node name="VoicePlayer" type="AudioStreamPlayer" parent="."]
 volume_db = -6.0

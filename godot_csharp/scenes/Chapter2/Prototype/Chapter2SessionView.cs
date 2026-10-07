@@ -45,6 +45,7 @@ public sealed partial class Chapter2InteractionSession
     private void ReadContext(IReadOnlyDictionary<string, object?> input)
     {
         if (input.GetValueOrDefault("context") is not IReadOnlyDictionary<string, object?> context) return;
+        _map = ChapterEvents.Text(context, "map", _map);
         var near = new HashSet<string>(StringComparer.Ordinal);
         foreach (var (who, value) in Map(context, "actors"))
         {
@@ -69,7 +70,7 @@ public sealed partial class Chapter2InteractionSession
         rows.Add("你没有交出的：" + (detHooks == 0 ? "你自己" : "无"));
         rows.AddRange(((string[])result["impressions"]!).Cast<object?>());
         yield return Event("music", ("id", "main_theme"), ("fade", 4.0));
-        yield return Event("ending", ("title", "第二章 · 完"), ("outcome", ""), ("rows", rows.ToArray()),
+        yield return Event("ending", ("title", "安眠者有福 · 完"), ("outcome", ""), ("rows", rows.ToArray()),
             ("actions", new object?[] { new Ev { ["id"] = "title", ["label"] = "返回标题（Enter）", ["key"] = "Enter" } }));
         yield return Event("save", ("path", "user://chapter2_end.json"), ("data", new Ev
         {
@@ -86,7 +87,7 @@ public sealed partial class Chapter2InteractionSession
         keys.Add("M  学园图");
         keys.Add("T  过一阵");
         snapshot["chapter"] = new Ev { ["id"] = ChapterId, ["title"] = Chapter2Script.Title, ["window_title"] = "安眠者有福 · 第二章" };
-        snapshot["field_enabled"] = _stage == "field" && !_ended && _presentation is null;
+        snapshot["field_enabled"] = _stage == "field" && !_ended && _presentation is null && _choices.Count == 0;
         snapshot["player_control"] = true;
         snapshot["realtime"] = false;
         snapshot["hud"] = new Ev { ["title"] = Chapter2Content.TimeName(ShownDay, ShownSlot) + "　" + _placeTitle, ["time"] = "", ["keys"] = keys.ToArray() };
@@ -112,7 +113,7 @@ public sealed partial class Chapter2InteractionSession
             };
             return (object?)person;
         }).ToArray();
-        snapshot["campus"] = new Ev { ["map"] = _map, ["known"] = _knownPlaces.ToDictionary(k => k, k => (object?)true) };
+        snapshot["campus"] = CampusSnapshot();
         snapshot["notebook"] = Notebook();
         snapshot["replay"] = new Ev
         {
@@ -130,6 +131,46 @@ public sealed partial class Chapter2InteractionSession
             },
         };
         return snapshot;
+    }
+
+    private Ev CampusSnapshot()
+    {
+        static Ev Node(double x, double y, string label, string map, string spawn) => new()
+        {
+            ["pos"] = new object?[] { x, y }, ["label"] = label, ["map"] = map, ["spawn"] = spawn,
+        };
+        return new Ev
+        {
+            ["map"] = _map,
+            ["known"] = _knownPlaces.ToDictionary(k => k, k => (object?)true),
+            ["nodes"] = new Ev
+            {
+                ["ArchiveFront"] = Node(500, 70, "名录库", "archive", "south"),
+                ["Hall"] = Node(500, 200, "中央厅", "central_hall", "south"),
+                ["Lecture"] = Node(300, 200, "讲堂", "lecture", "from_central"),
+                ["Resonance"] = Node(120, 300, "星仪院一角", "resonance", "south"),
+                ["Commons"] = Node(500, 380, "起居厅", "living_hall", "north_door"),
+                ["DormW"] = Node(370, 330, "甲区", "zone_jia", "from_hall"),
+                ["DormL"] = Node(630, 330, "丁区", "zone_ding", "from_hall"),
+                ["DormS"] = Node(370, 440, "丙区", "zone_bing", "from_hall"),
+                ["DormLife"] = Node(630, 440, "乙区", "zone_yi", "from_hall"),
+                ["Logistics"] = Node(820, 430, "后勤院", "logistics", "west"),
+                ["Granary"] = Node(900, 330, "粮仓", "granary", "south"),
+                ["Clinic"] = Node(820, 220, "诊疗所", "clinic", "south"),
+                ["Greenhouse"] = Node(880, 90, "温室", "greenhouse", "south"),
+                ["Oath"] = Node(500, 560, "誓约庭", "campus_s", "gate_inside"),
+            },
+            ["links"] = new object?[]
+            {
+                new object?[] { "ArchiveFront", "Hall" }, new object?[] { "Hall", "Lecture" },
+                new object?[] { "Lecture", "Resonance" }, new object?[] { "Hall", "Commons" },
+                new object?[] { "Commons", "DormW" }, new object?[] { "Commons", "DormL" },
+                new object?[] { "Commons", "DormS" }, new object?[] { "Commons", "DormLife" },
+                new object?[] { "Commons", "Oath" }, new object?[] { "Commons", "Logistics" },
+                new object?[] { "Logistics", "Granary" }, new object?[] { "Logistics", "Clinic" },
+                new object?[] { "Clinic", "Greenhouse" }, new object?[] { "Logistics", "Oath" },
+            },
+        };
     }
 
     private Ev Notebook()

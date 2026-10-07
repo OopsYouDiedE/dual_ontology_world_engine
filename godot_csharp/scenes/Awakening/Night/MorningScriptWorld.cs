@@ -5,6 +5,41 @@ namespace DualOntologyWorldEngine.Awakening;
 
 public sealed partial class MorningWorld
 {
+    private WorldSession? _persistentSession;
+    public WorldSession PersistentSession => _persistentSession ??= CreatePersistentSession();
+    private Dictionary<string, Essence> PersistentEntities()
+    {
+        var entities = new Dictionary<string, Essence>(StringComparer.Ordinal);
+        foreach (var (room, space) in _dailySpaces) entities["world:room." + room] = space;
+        foreach (var (id, evidence) in _evidence) entities["world:object." + id] = evidence;
+        foreach (var daily in _dailyPeople.Values) entities["world:person." + daily.Key] = daily.Body;
+        return entities;
+    }
+    private WorldSession CreatePersistentSession()
+    {
+        InitializePlayerPerception();
+        var entities = PersistentEntities();
+        var characters = _dailyPeople.Values.ToDictionary(p => "world:person." + p.Key,
+            p => (p.Soul, _runtime.KnownProjection(p.Soul, p.Body)!), StringComparer.Ordinal);
+        var definition = new ChapterWorldDefinition { Id = "awakening" };
+        foreach (var (id, entity) in entities)
+        {
+            var declaration = new WorldEntityDefinition { Id = id, Scope = "world", Name = entity.TrueName,
+                Kind = entity.Kind == ProjectionKind.Space ? "room" : characters.ContainsKey(id) ? "character" : "object" };
+            if (declaration.Kind != "room")
+            {
+                var space = entity.Get<SpatialProperty>()?.Space
+                    ?? throw new InvalidOperationException("A live object is missing its room: " + id);
+                var roomId = entities.First(p => ReferenceEquals(p.Value, space)).Key;
+                declaration.Properties["space"] = new WorldPropertyDefinition { Type = "entity",
+                    Value = System.Text.Json.JsonSerializer.SerializeToElement(roomId) };
+            }
+            definition.Entities.Add(declaration);
+        }
+        var session = new WorldSession(_runtime, _session);
+        session.BindExisting(definition, entities, characters, []);
+        return session;
+    }
     public void InitializePlayerPerception()
     {
         var soul=_souls[Person.Detective];var body=_bodies[Person.Detective];
@@ -28,23 +63,20 @@ public sealed partial class MorningWorld
             if (habit is not null)
                 Observation.Observe(_souls[who], new ObservationInput(habit.Name, habit.Kind) { Target = habit, Source = ObservationSource.Introspection, Time = ++_time, Rules = [] });
         }
-        var entities = new Dictionary<string, Essence>();
-        foreach (var (room, space) in _space) entities["chapter1:room:" + room] = space;
-        foreach (var (id, evidence) in _evidence) entities["chapter1:object:" + id] = evidence;
-        foreach (var (key, space) in _dailySpaces) entities["world:room." + key] = space;
+        var entities = PersistentEntities();
         foreach (var person in Enum.GetValues<Person>())
         {
             var key = person switch { Person.Detective => "Det", Person.Huo => "Huo", Person.Shen => "Shen", _ => "Su" };
-            entities["world:person:" + key] = _bodies[person];
+            entities["world:person." + key] = _bodies[person];
         }
         var people = new Dictionary<string, ContinuingCharacter>();
-        foreach (var daily in _dailyPeople.Values) entities["world:person:" + daily.Key] = daily.Body;
+        foreach (var daily in _dailyPeople.Values) entities["world:person." + daily.Key] = daily.Body;
         foreach (var daily in _dailyPeople.Values)
         {
             var key = daily.Key;
             var soul = daily.Soul;
             var body = daily.Body;
-            entities["world:person:" + key] = body;
+            entities["world:person." + key] = body;
             var known = entities.Values.Distinct().Select(e => (Entity: e, Mental: _runtime.KnownProjection(soul, e)))
                 .Where(p => p.Mental is not null).ToDictionary(p => p.Entity, p => p.Mental!);
             people[key] = new(soul, body, _runtime.KnownProjection(soul, body), known,
@@ -54,7 +86,7 @@ public sealed partial class MorningWorld
         }
         if (_scriptWorld is not null) _session.Completed -= _scriptWorld.RefreshAfter;
         _continuationExported = true;
-        return new(_runtime, _session, entities, people, progress);
+        return new(_runtime, _session, entities, people, progress, PersistentSession);
     }
     private CoreScriptWorld? _scriptWorld;
     public CoreScriptWorld? DefinedScriptWorld => _scriptWorld;

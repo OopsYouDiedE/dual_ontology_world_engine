@@ -1,10 +1,10 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scenes/Shared/UI/ChapterUI.gd" id="ui"]
+[ext_resource type="Script" path="res://scenes/Shared/UI/UISystem.gd" id="ui"]
 [ext_resource type="PackedScene" path="res://scenes/Shared/UI/HUD/FieldHUD.tscn" id="hud"]
 [ext_resource type="PackedScene" path="res://scenes/Shared/UI/Dialogue/ChapterDialogue.tscn" id="dialogue"]
 
-[node name="ChapterUI" type="Node"]
+[node name="UISystem" type="Node"]
 script = ExtResource("ui")
 
 [node name="HUD" parent="." instance=ExtResource("hud")]
