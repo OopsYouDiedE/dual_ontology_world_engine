@@ -61,7 +61,7 @@ public sealed partial class Game
         Game? world = null;
         var options = Options with
         {
-            Quiet = true, StartRations = Options.StartRations,
+            Quiet = true, StartRations = Options.StartRations, Inherit = InheritedSnapshot ?? Options.Inherit, RestoreNight = CaseNightSnapshot ?? Options.RestoreNight,
             ForceAcceptance = (gw, p, s) =>
             {
                 if (p.Id == P.Quer && s == gw.MoraNight) return v.QuerRule == 0 ? Truth.True : Truth.False;
@@ -156,6 +156,36 @@ public sealed partial class Game
         .ToImmutableDictionary(x => x.i, x => x.Relevant);
 
     public bool DetHasEvidence(int evidence) => DetHas(evidence);
+
+    private (int Known, IReadOnlyList<CaseVars> Fits, IReadOnlyList<int> Claims)? _inference;
+
+    /// <summary>
+    /// 侦探自己的推断（与第一章同一种推理：信念重演 + 对照）。把作者侧四变量的每种组合各重演一遍，
+    /// 只与侦探亲自查过的痕迹对照；与所见全部吻合的组合留下。在留下的每个假设世界里都成立的陈述，才是他说得出口的；
+    /// 冤枉人的陈述不在其列（侦探的底线）。没查过任何痕迹时什么也推不出。结果按已查痕迹缓存。
+    /// </summary>
+    public (IReadOnlyList<CaseVars> Fits, IReadOnlyList<int> Claims) DetectiveInference()
+    {
+        var known = DetEvidence();
+        var key = known.Aggregate(0, (h, i) => h | 1 << i);
+        if (_inference is { } cached && cached.Known == key) return (cached.Fits, cached.Claims);
+        if (known.Count == 0) return ([], []);
+        if (CaseActual is not { } actual) return ([], []);
+        var fits = new List<(CaseVars Vars, Game World)>();
+        foreach (var v in CaseVars.All())
+        {
+            var (traces, world) = ReplayCase(v);
+            if (Compare(traces, actual, known).All(l => !l.StartsWith("冲突"))) fits.Add((v, world));
+        }
+        var claims = Enumerable.Range(0, CaseDesign.Claims.Count)
+            .Where(c => !CaseDesign.Claims[c].Frames && fits.Count > 0 && fits.All(f => f.World.ClaimTrue(c))).ToArray();
+        _inference = (key, fits.Select(f => f.Vars).ToArray(), claims);
+        return (_inference.Value.Fits, claims);
+    }
+
+    /// <summary>侦探手里能撑住这句话的东西：按对质规则与此陈述相关、且他确实持有；亲眼查过的排在前面。</summary>
+    public IReadOnlyList<int> DetectiveSupport(int claim)
+        => claim >= 0 && Relevant.TryGetValue(claim, out var rel) ? rel.Where(DetHas).OrderByDescending(e => PersonallySaw(Det, e)).ToArray() : [];
     private bool DetHas(int evidence) => evidence >= 0 && evidence < CaseDesign.EvidenceList.Count && CaseDesign.EvidenceList[evidence].Have.Eval(this);
 
     private bool PersonallySaw(Person p, int evidence) => evidence >= 0 && evidence < CaseDesign.EvidenceList.Count && (CaseDesign.EvidenceList[evidence].Saw?.Eval(this, p) ?? false);
@@ -180,8 +210,10 @@ public sealed partial class Game
         if (!reopen) ConfrontLog.Add(Accused is not null ? $"中央厅。十六人到了十五个（莫兰还在诊疗所）。沃德重申：台账少了，{quer.Name}私取。" : "中央厅。十六人到了十五个。台账上的缺口还没人说清。");
         if (plan is null || plan.Pairs.Count == 0)
         {
-            ConfrontLog.Add(reopen ? "你把人请来了，却什么也没出示。众人各自散去。" : "你没有说话。指控就这样搁着。");
+            // 没有出示：指控照旧搁着；但提议新规则、提议共同规则不依赖出示，照样当众提出（不出示也能说话）。
+            ConfrontLog.Add(reopen ? "你把人请来了，却什么也没出示。" : plan is null ? "你没有说话。指控就这样搁着。" : "你没有出示任何东西。指控就这样搁着。");
             if (Accused is not null && !reopen) Ostracize();
+            if (plan is not null) Propose(plan, room);
             Feed.AddRange(ConfrontLog.Skip(logStart));
             return;
         }
@@ -253,6 +285,18 @@ public sealed partial class Game
             ConfrontLog.Add($"沃德不为所动：“材料不足。”{(revised.Count > 0 ? "改变看法的只有：" + string.Join("、", revised.Select(p => p.Name)) : "没有人改变看法")}。");
             if (!reopen) Ostracize();
         }
+        Propose(plan, room);
+        Feed.AddRange(ConfrontLog.Skip(logStart));
+    }
+
+    /// <summary>
+    /// 共同规则成立的门槛：在场者（侦探除外）过半数接受。规则本身只约束接受它的人；“共同”只说明它已是多数人的规矩，
+    /// 之后重开对质可以援引它（第三部分 §7）。
+    /// </summary>
+    private static bool CommonEnough(int accepted, int present) => accepted * 2 > present;
+
+    private void Propose(ConfrontPlan plan, Person[] room)
+    {
         if (plan.Proposal is { } card)
         {
             CaseRule = CardSpec(card, P.Det);
@@ -277,14 +321,13 @@ public sealed partial class Game
             Det.Acc[CommonRule] = Truth.True;
             Post(CommonRule, Place.Hall);
             foreach (var p in room.Where(p => p != Det)) Tell(p, CommonRule, Channel.Public);
-            var n = room.Count(p => p.Acc.GetValueOrDefault(CommonRule) == Truth.True);
-            CommonRuleEstablished = n >= 12;
+            var n = room.Count(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) == Truth.True);
+            CommonRuleEstablished = CommonEnough(n, room.Count(p => p != Det));
             ConfrontLog.Add($"你提议：「{CommonRule.Text}」点头的有：{string.Join("、", room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) == Truth.True).Select(p => p.Name))}" +
                 (CommonRuleEstablished ? "。十六人的第一条共同规则成立。" : "。人数不够，没有成为共同规则。"));
             var refusers = room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) != Truth.True).ToArray();
             if (refusers.Length > 0) ConfrontLog.Add($"  没接受的：{string.Join("、", refusers.Select(p => $"{p.Name}{Voice(p, CommonRule, Truth.False)}"))}");
         }
-        Feed.AddRange(ConfrontLog.Skip(logStart));
     }
 
     private int _reopenedDay;
@@ -297,7 +340,7 @@ public sealed partial class Game
     private void Reopen(ConfrontPlan? plan)
     {
         if (_reopenedDay == Day) { Feed.Add("今天已经重开过一次对质了。"); return; }
-        if (Day < CaseDay || Day == CaseDay && Slot < Slot.Night) { Feed.Add("第 3 日傍晚的对质还没开始。"); return; }
+        if (Day < CaseDay || Day == CaseDay && Slot < Slot.Night) { Feed.Add("翌日傍晚的对质还没开始。"); return; }
         if (QuerCleared || Accused is null) { Feed.Add("眼下没有悬着的指控要重开。"); return; }
         _reopenedDay = Day;
         var head = $"你援引「{CommonRule.Text}」，请众人回中央厅，把台账的事重新对一遍。";
@@ -307,7 +350,7 @@ public sealed partial class Game
             var room = People.Where(p => p != Det && Get(p.Body, T.Sick) == 0).ToArray();
             foreach (var p in room) Tell(p, CommonRule, Channel.Public);
             Det.Acc[CommonRule] = Truth.True;
-            CommonRuleEstablished = room.Count(p => p.Acc.GetValueOrDefault(CommonRule) == Truth.True) >= 12;
+            CommonRuleEstablished = CommonEnough(room.Count(p => p.Acc.GetValueOrDefault(CommonRule) == Truth.True), room.Length);
             Feed.Add(CommonRuleEstablished ? "这一次，点头的人够了：它成了十六人的第一条共同规则。" : "点头的人还不够；但人都来了，对质照开。");
             if (CommonRuleEstablished && !CommonRule.PostedAt.Contains(Place.Hall)) Post(CommonRule, Place.Hall);
         }

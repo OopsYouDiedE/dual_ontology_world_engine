@@ -143,6 +143,31 @@ public static class Program
                 foreach (var c in Emergence.Interesting(chains, g).GroupBy(Emergence.Trunk).Select(x => x.First()).Take(args.Length > 2 ? int.Parse(args[2]) : 8)) Console.WriteLine("  · " + g.Describe(c));
                 return 0;
             }
+            case "events":
+            {
+                // events 机器人号：按该策略跑完一局，逐条列出人物（非侦探）的非作者动作，供对比不同打法下人物做了什么
+                var r = Bots.Play(Bots.All[int.Parse(args[1])]);
+                foreach (var e in r.World.Events.Where(e => !e.Fixed && e.Who != P.Det)) Console.WriteLine($"D{e.Day} {Names.Of(e.Slot)} {e.Short}");
+                return 0;
+            }
+            case "minds":
+            {
+                // minds 机器人号：跑完一局，列出每人议事时的欲望、钩与是否想开库（调试用）
+                var r = Bots.Play(Bots.All[int.Parse(args[1])]);
+                foreach (var p in r.World.Npcs) Console.WriteLine($"{p.Name} 欲望 {p.Desire} 钩 {p.Hooks} 开库之欲 {p.Pro.DesireFlags.HasFlag(RF.OpenArchive)} 戒备铜口 {p.Pro.DemonPrejudice} 疑它 {p.DemonDoubt} 低语 {p.Whispered}");
+                return 0;
+            }
+            case "infer":
+            {
+                // infer 机器人号：按该策略走到翌日傍晚之前（含读），打印侦探自己的推断与真相假设的对照（调试用）
+                var bot = Bots.All[int.Parse(args[1])];
+                var g = CreateGame();
+                while (!(g.Day == Game.CaseDay && g.Slot == Slot.Evening)) { if (bot.Reads) Bots.Read(g); g.RunSlot(bot.Act(g)); }
+                var (fits, claims) = g.DetectiveInference();
+                Console.WriteLine($"已查痕迹 {string.Join(",", g.DetEvidence())}；吻合 {fits.Count} 组：{string.Join(" | ", fits)}；说得出口的陈述 {string.Join(",", claims)}");
+                foreach (var l in g.Compare(g.ReplayCase(CaseVars.Truth).Traces, g.CaseActual!, g.DetEvidence())) Console.WriteLine("  真相假设：" + l);
+                return 0;
+            }
             case "chains":
             {
                 var r = Bots.Play(Bots.All[args.Length > 1 ? int.Parse(args[1]) : 0]);

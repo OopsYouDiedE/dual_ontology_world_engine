@@ -41,7 +41,7 @@
     跳转 END
 
 场面 answer_ok4
-    铜口：信任，需要时日。 [#id=answer_ok4.001]
+    铜口：信任，要有来处。 [#id=answer_ok4.001]
     跳转 END
 
 场面 answer_wrong_show

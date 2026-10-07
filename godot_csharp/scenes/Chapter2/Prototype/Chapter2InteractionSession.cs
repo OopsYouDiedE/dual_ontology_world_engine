@@ -282,6 +282,7 @@ public sealed class Chapter2InteractionSession
             "escort" when _examined.Values.Any(c=>Text(c,"thing")==Text(a,"thing"))=>new(Cmd.Escort){Who=Who(),Thing=Text(a,"thing"),Place=Game.Things_[Text(a,"thing")].Place},
             "tell_rule"=>TellRule(Who(),Number(a,"rule")),
             "tell_wording"=>new(Cmd.TellRule){Who=Who(),Card=Game.CaseWordings[Number(a,"wording")].Card},
+            "tell_archive_wording"=>new(Cmd.TellRule){Who=Who(),Card=Game.ArchiveWordings[Number(a,"wording")].Card},
             _=>throw new InvalidOperationException("无效或不可用行动："+cmd)
         };
     }
@@ -371,6 +372,8 @@ public sealed class Chapter2InteractionSession
         var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>();
         foreach(var spec in _game.HostTellable()) { var rule=spec; choices.Add(("rule:"+rule.Id,rule.Text,()=>Local(who)&&_game.HostTellable().Contains(rule),o=>Commit(new(Cmd.TellRule){Who=who,Spec=rule,Card=rule.Card},o))); }
         for(var i=0;i<Game.CaseWordings.Length;i++) { var index=i; choices.Add(("wording:"+i,Game.CaseWordings[i].Text,()=>Local(who),o=>Commit(new(Cmd.TellRule){Who=who,Card=Game.CaseWordings[index].Card},o))); }
+        // 名录库的去向也可以白天当面讲给一个人听（第三部分 §5.3），不必等到议事。
+        for(var i=0;i<Game.ArchiveWordings.Length;i++) { var index=i; choices.Add(("archive_wording:"+i,Game.ArchiveWordings[i].Text,()=>Local(who),o=>Commit(new(Cmd.TellRule){Who=who,Card=Game.ArchiveWordings[index].Card},o))); }
         choices.Add(("cancel","返回",()=>true,o=>ResumeTalk(who,o))); Menu("讲哪一条",choices,output);
     }
     private void AskReaction(P who,List<Dictionary<string,object?>> output)

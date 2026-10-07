@@ -75,7 +75,7 @@ public static class ContinuationSimulation
         game.S.Completed += Completed;
         try
         {
-            Emit("交接", $"沿用生活翼的世界、CTB 会话及 {live.Characters.Count} 人身体/灵魂引用。侦探续篇使用公开输入探索策略，尚无同住民规则的自主时段入口；不读取全局人物日志用于选择。种子 {seed}。");
+            Emit("交接", $"沿用生活翼的世界、CTB 会话及 {live.Characters.Count} 人身体/灵魂引用。侦探续篇白天按公开输入探索；对质与议事用自己的推断作答；不读取全局人物日志用于选择。种子 {seed}。");
             void Dispatch(Dictionary<string, object?> input)
             {
                 inputs++;
@@ -117,6 +117,56 @@ public static class ContinuationSimulation
                     else Emit("呈现", Text(e, "text", Text(e, "message", kind)));
                 }
             }
+            var tried = new Dictionary<string, HashSet<string>>();
+            int lastClaim = -1;
+            (IReadOnlyDictionary<string, object?> Pick, string Why)? Reasoned(IReadOnlyDictionary<string, object?>[] available)
+            {
+                IReadOnlyDictionary<string, object?>? Find(string id) => available.FirstOrDefault(o => Text(o, "id") == id);
+                var ids = available.Select(o => Text(o, "id")).ToArray();
+                if (ids.Any(i => i.StartsWith("claim:")))
+                {
+                    var (fits, claims) = game.DetectiveInference();
+                    if (fits.Count == 0 && game.CaseActual is { } actualTraces && !tried.ContainsKey("诊断"))
+                    {
+                        tried["诊断"] = [];
+                        // 只作诊断记录（不参与选择）：作者真相假设下的重演与现实逐条对照。
+                        foreach (var v in C.CaseVars.All()) { var ls = game.Compare(game.ReplayCase(v).Traces, actualTraces, game.DetEvidence()); var bad = ls.Where(l => l.StartsWith("冲突")).ToArray(); if (bad.Length <= 1) Emit("重演诊断", $"{v}：冲突 {bad.Length}：{string.Join(" / ", bad)}"); }
+                        { var (_, rw) = game.ReplayCase(new C.CaseVars(1, 0, 1, 0)); foreach (var e in rw.Events.Where(e => e.Day == 2 && e.Slot == C.Slot.Night)) Emit("重演诊断", "假设夜里：" + e.Short); Emit("重演诊断", "现实茉拉入夜评估：" + game.NightStartAssessment.GetValueOrDefault(C.P.Mora)); Emit("重演诊断", "重演茉拉入夜评估：" + rw.NightStartAssessment.GetValueOrDefault(C.P.Mora)); foreach (var who in new[] { C.P.Mora, C.P.Quer }) { var st = game.CaseNightSnapshot!.People[who]; Emit("重演诊断", $"快照 {who}：在 {st.Place}；身体 {string.Join(",", st.Body.Where(kv => kv.Value != 0).Select(kv => kv.Key.Name + "=" + kv.Value))}；认下 {string.Join(",", st.Accepted.Where(kv => kv.Value == Truth.True).Select(kv => kv.Key))}"); } }
+                        Emit("重演诊断", $"侦探行动记录 {game.Script.Count} 条：{string.Join(" | ", game.Script.Take(7).Select(a => a?.Describe() ?? "歇着"))}");
+                    }
+                    if (!tried.TryGetValue(menu, out var done)) tried[menu] = done = [];
+                    var next = claims.Select(c => "claim:" + c).FirstOrDefault(id => !done.Contains(id) && Find(id) is not null);
+                    if (next is null) return Find("pause") is { } pause ? (pause, $"推断中剩下的陈述都已试过或不适用于此问（吻合的假设 {fits.Count} 组），暂且不答") : null;
+                    done.Add(next); lastClaim = int.Parse(next[6..]);
+                    return (Find(next)!, $"与已查痕迹全部吻合的 {fits.Count} 组重演假设里都成立");
+                }
+                if (ids.Any(i => i.StartsWith("evidence:")))
+                {
+                    var key = menu + ":evidence:" + lastClaim;
+                    if (!tried.TryGetValue(key, out var done)) tried[key] = done = [];
+                    var next = game.DetectiveSupport(lastClaim).Select(e => "evidence:" + e).FirstOrDefault(id => !done.Contains(id) && Find(id) is not null)
+                        ?? ids.FirstOrDefault(id => id.StartsWith("evidence:") && !done.Contains(id));
+                    if (next is null) return null;
+                    done.Add(next);
+                    return (Find(next)!, "手里与这句话相关、亲眼查过的东西优先");
+                }
+                if (ids.Any(i => i.StartsWith("proposal:")))
+                {
+                    var (_, claims) = game.DetectiveInference();
+                    // 推出的形状是“夜里急取、白天不记”：提议让夜取补记入账、补记者不算私取的那一条。
+                    return claims.Contains(0) && Find("proposal:0") is { } p0 ? (p0, "推断出夜里的取用合乎急需却没入账，提议补记") : (Find("none")!, "推不出案子的形状，不提新规矩");
+                }
+                if (ids.Contains("yes") && ids.Contains("no") && menu.Contains("可检查的材料"))
+                    return (Find("yes")!, "指控须附材料，正是这一案里缺的");
+                if (ids.Any(i => i.StartsWith("support:")))
+                {
+                    var plans = game.ArchivePlans().ToArray();
+                    var best = plans.Select((plan, i) => (i, score: game.AcceptScore(game.Det, plan, C.Channel.Public, C.Place.Oath, out _, stance: true)))
+                        .Where(x => x.score >= game.Options.AcceptThreshold).OrderByDescending(x => x.score).ThenBy(x => x.i).FirstOrDefault(x => Find("support:" + x.i) is not null);
+                    return best.score > 0 ? (Find("support:" + best.i)!, $"与住民同一条接受规则（得分 {best.score}）") : (Find("abstain")!, "哪个方案都不肯认");
+                }
+                return null;
+            }
             Dispatch(new() { ["kind"] = "begin" });
             for (var budget = 0; budget < 5000 && !ended && !failed; budget++)
             {
@@ -127,6 +177,14 @@ public static class ContinuationSimulation
                 if (options.Count > 0)
                 {
                     var available = options.Where(o => !o.TryGetValue("available", out var a) || a is true).ToArray();
+                    // 对质、提议与议事：侦探用自己的推断作答（DetectiveInference：重演 × 已查痕迹），不读判定函数或他人认知。
+                    if (Reasoned(available) is { } reasoned)
+                    {
+                        var (pick, why) = reasoned;
+                        selected.Add(menu + ":" + Text(pick, "id"));
+                        Emit("侦探决策", $"菜单 {menu}：选择 {Text(pick, "label")}；依据 {why}。");
+                        Dispatch(new() { ["kind"] = "select", ["choice_id"] = Text(pick, "id"), ["token"] = Text(pick, "token") }); continue;
+                    }
                     // Unsupported argument synthesis must remain an explicit omission.
                     var pause = available.FirstOrDefault(o => Text(o, "id") == "pause");
                     var returning = available.FirstOrDefault(o => Text(o, "id") is "close" or "cancel");
@@ -164,7 +222,7 @@ public static class ContinuationSimulation
             }
             Emit("覆盖范围", $"公开协议输入 {inputs} 条；查看 {inspected.Count} 个日/交互点；询问 {asked.Count} 个日/在场者；结束 {ended}；阶段 {Text(snapshot, "stage")}；结局 {result}。这是一条公开探索策略轨迹，不是全部分支覆盖或人物动机验收。");
             return new(true, ended, Text(snapshot, "stage"), inputs, characterActions, failedActions, result,
-                "续篇侦探使用公开探索回退；未接入与其他住民相同的决策规则，也未合成续篇重演及对质论证。免费阅读与换区未验几何或时长。");
+                "续篇侦探：白天的走动与问话仍是公开探索策略；对质、提议与议事用自己的推断（重演 × 已查痕迹）与住民同一条接受规则。没有为游说他人建模。免费阅读与换区未验几何或时长。");
         }
         finally { game.S.Completed -= Completed; }
     }

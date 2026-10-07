@@ -104,8 +104,8 @@ public sealed partial class Game
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
                 Det.Acc[Warning1] = Truth.True;
-                Feed.Add("那个声音逐一贴着每个人的耳朵说了一句话，说的都是那人最想要的东西。");
-                foreach (var p in People) Whisper(p);
+                // 它只对不戒备它的人低语（信它的人它多说，戒备它的人它不白费口舌）；低语只有本人听见，旁人看不出谁听到过什么（总纲 恶魔“不自曝”）。
+                foreach (var p in People.Where(p => p == Det || p.Pro.DemonPrejudice >= 0 || p.Hooks > 0)) Whisper(p);
                 break;
             case 3:
             {

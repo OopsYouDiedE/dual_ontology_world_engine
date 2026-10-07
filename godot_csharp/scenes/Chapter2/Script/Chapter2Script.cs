@@ -60,6 +60,8 @@ public sealed partial class Game
 {
     public readonly WorldRuntime Rt;
     public LiveChapterWorld? Continuation { get; }
+    /// <summary>从第一章接续时，各人带进本章的初值；重演以此为起点（见 GameOptions.Inherit）。</summary>
+    public IReadOnlyDictionary<P, InheritedSeed>? InheritedSnapshot { get; }
     private readonly ChapterWorldDefinition? _authored;
     public bool InheritedChapter1 => Continuation is not null;
     public readonly SimulationSession S;
@@ -101,6 +103,22 @@ public sealed partial class Game
         BuildWorld();
         foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
         SyncChapterRooms();
+        if (continuation is not null)
+            InheritedSnapshot = People.ToDictionary(p => p.Id, p => new InheritedSeed(p.Hooks, p.Desire, p.KnowsHookCost, People.Where(o => o != p).ToDictionary(o => o.Id, o => TrustIn(p, o))));
+        else if (Options.Inherit is { } seeds)
+            foreach (var p in People)
+            {
+                if (!seeds.TryGetValue(p.Id, out var seed)) continue;
+                p.Hooks = seed.Hooks; p.Desire = seed.Desire; p.KnowsHookCost = seed.KnowsHookCost;
+                foreach (var (other, trust) in seed.Trust)
+                {
+                    var them = p.M[this[other].Body];
+                    var delta = trust - TrustIn(p, this[other]);
+                    if (delta == 0) continue;
+                    Observation.Observe(p.Soul, new ObservationInput(them.Name, them.Kind)
+                    { Target = them, Source = ObservationSource.Recall, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, them.Tags.GetValueOrDefault(Tags.Trust) + delta) });
+                }
+            }
         if (Options.Definition is { } definition)
         {
             definition.Initialize?.Invoke(this);
@@ -489,7 +507,16 @@ public sealed record GameOptions
     public Func<Person, NewsItem, bool>? BlockNews { get; init; }
     public Action<Game>? BeforeNight { get; init; }
     public bool Quiet { get; init; }
+    /// <summary>
+    /// 重演用：第一章留下的、每个人带进本章的初值（钩、欲望强度、是否知道回忆的代价、对每个人的信任）。
+    /// 重演必须新建独立世界，不能共用第一章活着的灵魂引用；但起点要与现实一致，否则任何假设都对不上现实。
+    /// </summary>
+    public IReadOnlyDictionary<P, InheritedSeed>? Inherit { get; init; }
+    /// <summary>重演用：案发夜开始时的现实快照（见 NightSnapshot）。</summary>
+    public NightSnapshot? RestoreNight { get; init; }
 }
+
+public sealed record InheritedSeed(int Hooks, int Desire, bool KnowsHookCost, IReadOnlyDictionary<P, int> Trust);
 
 
 /// <summary>第二章命令行与 Godot 宿主共用的玩家可见剧情。</summary>

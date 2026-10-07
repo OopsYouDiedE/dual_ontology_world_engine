@@ -10,6 +10,7 @@ public sealed partial class Game
     /// <summary>章节的最后一日（第 4 日清晨即议事，见设计第三部分 §15）。</summary>
     public static int LastDay => Chapter2Design.LastDay;
     public static int CaseDay => Chapter2Design.CaseDay;
+    public static int FirstDay => Chapter2Design.FirstDay;
     public bool Mediated;
     public int LedgerBaseline;
     public readonly List<(int Day, int Rations, int Oil, int Medicine, int Hungry)> Curve = [];
@@ -30,12 +31,31 @@ public sealed partial class Game
         if (Slot == Slot.Morning && !_dawnDone) using (Prof.Time("P:BeginDay")) BeginDay();
         _dawnDone = false;
         SetClock();
+        SettleFreeInteractions();
+        // 上一阵留下、还没开始的打算（例如剧本占着人时漏过了阵末清理的领粮）到此作废：每一阵的决定都从这一阵的处境出发。
+        //CANCELTEST CancelAll();
+        NightSnapshotHook();
         if (Slot is Slot.Morning or Slot.Afternoon or Slot.Evening or Slot.Night) RefreshPlans();
         if (Slot is Slot.Noon or Slot.Evening) RefreshStanceContext();
         if (Slot == Slot.Night) RunNight(act);
         else RunDay(act);
         Advance();
         Story?.Poll();
+    }
+
+    /// <summary>
+    /// 读不耗时（总纲 §四）：两阵之间侦探问话、细看时，宿主剧本让被问的人当场回应（一次简短的执行）。
+    /// 这类回应在下一阵开始前就了结，不占住此人这一阵的决定；否则一句问话会让人整夜不再自己拿主意，重演也无从复现。
+    /// </summary>
+    private void SettleFreeInteractions()
+    {
+        for (var guard = 0; guard < 8; guard++)
+        {
+            var pending = People.Where(p => p != Det && p.Exec is { } e && !_running.ContainsKey(e)).ToArray();
+            if (pending.Length == 0) return;
+            S.CTB.RunUntil(Now + TickLength, 100_000);
+        }
+        foreach (var p in People.Where(p => p != Det && p.Exec is { } e && !_running.ContainsKey(e))) { p.Exec = null; p.Doing = null; }
     }
 
     /// <summary>调试：把钟拨到当前时段并重建计划，不推演。</summary>
@@ -817,6 +837,9 @@ public sealed partial class Game
         Rt.Sync();
     }
 
+    /// <summary>诊断：案发夜开始时各人的决策评估前几项。</summary>
+    public readonly Dictionary<P, string> NightStartAssessment = [];
+
     private bool _warned2;
     public int GreenhouseProgress;
 
@@ -827,9 +850,9 @@ public sealed partial class Game
         Options.BeforeNight?.Invoke(this);
         if (Day == LastDay - 1)
         {
-            // 第 6 日夜，恶魔对每个人放大欲望一次（§13 第 12 条）。
+            // 议事前夜，恶魔对每个人放大欲望一次（§13 第 12 条）。只有本人听见，侦探也只知道自己的那一句（恶魔不自曝）。
             foreach (var p in Npcs) { p.Desire = Math.Min(5, p.Desire + 1); RewriteDesire(p, "议事前夜，恶魔在耳边把那样东西又说了一遍"); }
-            Feed.Add("入夜前，广播里没有声音，可每个人都像听见有人在耳边把最想要的东西又说了一遍。");
+            Feed.Add("入夜前，广播里没有声音。可你像听见有人贴着耳朵，把你最想知道的那件事又说了一遍。");
         }
         OilPhysics();
         foreach (var p in People) { p.Asleep = false; p.NightSteps = 0; p.NightVisited.Clear(); }
@@ -837,12 +860,14 @@ public sealed partial class Game
         PerceiveAll();
         PlayerBegin(act);
         var start = Now;
+        if (Day == CaseDay - 1)
+            foreach (var p in Npcs) NightStartAssessment[p.Id] = p.Exec is not null ? $"（入夜时仍在做事：{p.Doing}；{(_running.TryGetValue(p.Exec, out var rr) ? "本章任务 " + rr.Why : "非本章任务")}；状态 {p.Exec.Status}）" : p.Asleep ? "（已睡）" : string.Join("；", DecisionSystem.Assess(p.World, p.Self).Take(4).Select(a => $"{(a.Forbidden ? "禁" : "")}{a.Decision.Score}:{JobOf(p, a.Decision.Effect)?.ToString() ?? "?"}[{string.Join(",", a.Reasons)}]"));
         foreach (var p in Npcs) Decide(p);
         PlayerDo(act);
         for (var t = TickLength; t < NightLength; t += TickLength)
             S.CTB.Schedule(t, NightTick);
         S.CTB.RunUntil(start + NightLength, 200_000);
-        CancelAll();
+        //CANCELTEST CancelAll();
         Seizure();
         foreach (var p in People) p.Asleep = false;
         PlayerEnd(act);

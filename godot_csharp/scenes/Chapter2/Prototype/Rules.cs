@@ -156,7 +156,7 @@ public sealed partial class Game
             // “急病时可取”：病人碗里已经有粥，就不必再取。
             2 => Fx.All(fx.At(Slot.Night), fx.AnySick(null), Fx.Not(fx.Tg(Bowl, T.Porridge))),
             3 => Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))),
-            4 => fx.Tg(Clock, T.Day, 6),
+            4 => Fx.Not(fx.At(Slot.Night)),
             _ => Fx.Constant
         };
         cond = Fx.All(who, cond);
@@ -387,7 +387,8 @@ public sealed partial class Game
     {
         if (s.ByDemon)
         {
-            var d = Math.Min(3, 2 + p.Hooks + (p.Lessons.Count > 0 ? 1 : 0)) + p.Pro.DemonPrejudice - p.DemonDoubt;
+            // 对铜口的信任：没人见过它，起点是 1；上过它的课、上了钩才更信它（最多 3）。它的引力另走欲望一项，不在这里重复计。
+            var d = Math.Min(3, 1 + p.Hooks + (p.Lessons.Count > 0 ? 1 : 0)) + p.Pro.DemonPrejudice - p.DemonDoubt;
             parts.Add($"信恶魔{d:+0;-0;0}");
             return d;
         }

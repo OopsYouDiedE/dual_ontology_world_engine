@@ -24,7 +24,7 @@
     苏泠：我想开门，让他进来。 [#id=recall_su.003]
     （她睁开眼，脸色发白。） [#id=recall_su.004]
     苏泠：那个声音，我当时以为……是门外的人。 [#id=recall_su.005]
-    铜口：欢迎回来，{{称呼("su")}}。我们之间，从此多了一根线。 [#id=recall_su.006]
+    铜口：物件记得的，比人久，{{称呼("su")}}。 [#id=recall_su.006]
     跳转 END
 
 场面 recall_huo
@@ -32,7 +32,7 @@
     霍铎：铜口里的声音……很清楚。 [#id=recall_huo.002]
     霍铎：“等我下一次通知。”◎，铜口。他叫我守铜口。 [#id=recall_huo.003]
     霍铎：……他再也没有来。 [#id=recall_huo.004]
-    铜口：欢迎回来，{{称呼("huo")}}。我们之间，从此多了一根线。 [#id=recall_huo.005]
+    铜口：物件记得的，比人久，{{称呼("huo")}}。 [#id=recall_huo.005]
     跳转 END
 
 场面 recall_shen
@@ -40,7 +40,7 @@
     沈鼎：又该喂了。 [#id=recall_shen.002]
     沈鼎：阿泠的茶不放糖。老霍的放两勺。那位——（他看了你一眼）——清茶，不放奶。 [#id=recall_shen.003]
     沈鼎：……我叫她阿泠。我怎么会叫她阿泠。 [#id=recall_shen.004]
-    铜口：欢迎回来，{{称呼("shen")}}。我们之间，从此多了一根线。 [#id=recall_shen.005]
+    铜口：物件记得的，比人久，{{称呼("shen")}}。 [#id=recall_shen.005]
     跳转 END
 
 场面 recall_offer_su
@@ -168,12 +168,12 @@
             设旗 recall_yes
         - 不。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
             侦探：我只信接触面、先后和形变。别的，等我证明了再说。 [#id=recall_ask_detective.006]
-            铜口：可敬的固执。 [#id=recall_ask_detective.007]
+            铜口：随阁下。 [#id=recall_ask_detective.007]
     跳转 END
 
 场面 recall_detective
     （铁闩是凉的。指腹压上去的一瞬，有什么东西从很远的地方回来了。） [#id=recall_detective.001]
     侦探（心声）：霍铎说闩。我就闩了。……我信他。 [#id=recall_detective.002]
     侦探（心声）：一句转述，我就去闩了门。我凭的是什么？ [#id=recall_detective.003]
-    铜口：欢迎回来，{{称呼("detective")}}。我们之间，从此多了一根线。 [#id=recall_detective.004]
+    铜口：物件记得的，比人久，{{称呼("detective")}}。 [#id=recall_detective.004]
     跳转 END

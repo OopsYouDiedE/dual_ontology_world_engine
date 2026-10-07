@@ -303,7 +303,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "管子那头没有人，霍先生。只有我。",
+            "text": "管子那头，是我，霍先生。",
             "voice_clip": "",
             "line_id": "s3_broadcast.005"
           },
@@ -1490,7 +1490,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "欢迎回来，{{addr(\"su\")}}。我们之间，从此多了一根线。",
+            "text": "物件记得的，比人久，{{addr(\"su\")}}。",
             "voice_clip": "",
             "line_id": "recall_su.006"
           },
@@ -1536,7 +1536,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "欢迎回来，{{addr(\"huo\")}}。我们之间，从此多了一根线。",
+            "text": "物件记得的，比人久，{{addr(\"huo\")}}。",
             "voice_clip": "",
             "line_id": "recall_huo.005"
           },
@@ -1582,7 +1582,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "欢迎回来，{{addr(\"shen\")}}。我们之间，从此多了一根线。",
+            "text": "物件记得的，比人久，{{addr(\"shen\")}}。",
             "voice_clip": "",
             "line_id": "recall_shen.005"
           },
@@ -2341,7 +2341,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "铜口",
                     "mood": "",
-                    "text": "可敬的固执。",
+                    "text": "随阁下。",
                     "voice_clip": "",
                     "line_id": "recall_ask_detective.007"
                   }
@@ -2383,7 +2383,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "欢迎回来，{{addr(\"detective\")}}。我们之间，从此多了一根线。",
+            "text": "物件记得的，比人久，{{addr(\"detective\")}}。",
             "voice_clip": "",
             "line_id": "recall_detective.004"
           },
@@ -5039,7 +5039,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "信任，需要时日。",
+            "text": "信任，要有来处。",
             "voice_clip": "",
             "line_id": "answer_ok4.001"
           },
@@ -5690,7 +5690,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "铜口",
                 "mood": "",
-                "text": "诸位比我预想的，多走了一步。……请。",
+                "text": "问得精确。……请。",
                 "voice_clip": "",
                 "line_id": "s10_open.011"
               }
@@ -5726,7 +5726,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "铜口",
                 "mood": "",
-                "text": "诸位的旧物，我都替诸位收着。想起什么，随时来找我，我的诸位。",
+                "text": "旧物都在原处。诸位想再看，随时可来。",
                 "voice_clip": "",
                 "line_id": "s10_open.013"
               }
@@ -5752,7 +5752,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "铜口",
                     "mood": "",
-                    "text": "碰过旧物的人，我记下了。想起什么，随时来找我。",
+                    "text": "想起什么，可以来铜口问。",
                     "voice_clip": "",
                     "line_id": "s10_open.014"
                   }
@@ -5762,7 +5762,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "铜口",
                     "mood": "",
-                    "text": "诸位没有借旧物取回封存的记忆。……谨慎是美德。",
+                    "text": "门开了。诸位请。",
                     "voice_clip": "",
                     "line_id": "s10_open.015"
                   }

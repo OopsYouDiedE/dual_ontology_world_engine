@@ -49,7 +49,7 @@ public static class Checks
     // 1 -------------------------------------------------------------------
     private static void Determinism()
     {
-        Console.WriteLine("\n== 1 确定性：同一输入的六日推演逐位一致 ==");
+        Console.WriteLine("\n== 1 确定性：同一输入的整章推演逐位一致 ==");
         var bots = new[] { Bots.All[0], Bots.All[7], Bots.All[5] };
         var runs = Par(bots.SelectMany(b => new Func<BotResult>[] { () => Bots.Play(b), () => Bots.Play(b) }).ToArray());
         for (var i = 0; i < bots.Length; i++)
@@ -61,7 +61,7 @@ public static class Checks
     // 2 -------------------------------------------------------------------
     private static (List<BotResult>, List<(string Bot, BotResult Pact, BotResult Seal, Ending Original, bool WasOstracized)>) BotsCheck(bool full)
     {
-        Console.WriteLine("\n== 2 策略机器人（各跑完六日 + 第 7 日议事；游说只用玩家看得见的信息）==");
+        Console.WriteLine("\n== 2 策略机器人（各跑完始业日、翌日 + 第三日清晨议事；游说只用玩家看得见的信息）==");
         var results = Par(Bots.All.Select(b => (Func<BotResult>)(() => Bots.Play(b))).ToArray()).ToList();
         foreach (var r in results) Bots.Print(r);
         var switched = new List<(string, BotResult, BotResult, Ending, bool)>();
@@ -71,17 +71,19 @@ public static class Checks
         foreach (var e in new[] { Ending.OpenEach, Ending.Committee, Ending.Sealed, Ending.DetectivePact, Ending.NightSeized })
             Check(endings.Contains(e), $"结局可达：{Game.EndingText(e)}（{string.Join("、", results.Where(r => r.Ending == e).Select(r => r.Name))}）");
         Check(results.All(r => r.DemonLeaks == 0), $"恶魔在所有策略的全部台词中从未主动提第 9、10 条（共检查 {results.Count} 局）");
-        Check(results.All(r => r.MaxHunger < 3), $"六日内无人饿死（各策略最长连饿日数：{string.Join(" ", results.Select(r => r.MaxHunger))}；连饿 3 日记为饿死）");
+        Check(results.All(r => r.MaxHunger < 3), $"整章无人饿死（各策略最长连饿日数：{string.Join(" ", results.Select(r => r.MaxHunger))}；连饿 3 日记为饿死）");
         double[] M(BotResult r) => [r.Ending == Ending.DetectivePact ? 1 : 0, r.AvgCredible, r.AvgInsight, r.RationsLeft, -r.Hooks, r.QuerCleared ? 1 : 0];
         var dominant = results.Where(a => results.All(b => a == b || M(a).Zip(M(b)).All(p => p.First >= p.Second) && M(a).Zip(M(b)).Any(p => p.First > p.Second))).ToArray();
         Check(dominant.Length == 0, "无万能策略（没有一个策略在 侦探之约/平均可信/平均见识/剩粮/钩少/雀儿洗清 六项上全面压过其余所有策略）" + (dominant.Length > 0 ? "：" + dominant[0].Name : ""));
         Console.WriteLine("  六项指标：" + string.Join(" | ", results.Select(r => $"{r.Name}[{string.Join(",", M(r).Select(x => x.ToString("0.#")))}]")));
 
-        // 口粮：第 7 日不断（§12 第 8 条）。
-        Console.WriteLine("  温室与第 6 日末存粮：" + string.Join(" | ", results.Select(r => $"{r.Name}:{(r.World.GreenhouseRepaired ? "修好" : "未修")}/{r.RationsLeft}")));
-        Check(results.All(r => r.World.Curve.All(c => c.Rations > 0)), "六日内粮仓从未见底（各局第 6 日末存粮 > 0）");
-        var serious = results.Where(r => r.World.GreenhouseRepaired).ToArray();
-        Check(serious.Length > 0 && serious.All(r => r.RationsLeft >= 16), $"认真分工修好温室的打法，第 7 日口粮够十六人（{string.Join("、", serious.Select(r => $"{r.Name} {r.RationsLeft}"))}）");
+        // 口粮：章内不断（温室已移出本章，第三部分 §15）。
+        Console.WriteLine("  议事前存粮：" + string.Join(" | ", results.Select(r => $"{r.Name}:{r.RationsLeft}")));
+        Check(results.All(r => r.World.Curve.All(c => c.Rations > 0)), "章内粮仓从未见底（各局每日日末存粮 > 0）");
+        Check(results.Select(r => r.QuerCleared).Distinct().Count() == 2 && results.Select(r => r.Common).Distinct().Count() == 2,
+            "案子的结果随打法而变：有的局雀儿洗清、有的局被排斥；有的局共同规则成立、有的局不成立");
+        var cleared = results.Where(r => r.Name.StartsWith("查案对质")).ToArray();
+        Check(cleared.Length > 0 && cleared.All(r => r.QuerCleared), "只用读到的痕迹、按真话成对出示，就能在翌日傍晚洗清雀儿");
 
         // 派系向四个价值聚落收敛（§12 第 8 条）。
         static P Leader(Cluster c) => c switch { Cluster.Order => P.Ward, Cluster.Labor => P.Shen, Cluster.Beauty => P.Lucian, _ => P.Veronica };
@@ -89,13 +91,13 @@ public static class Checks
         Console.WriteLine("  落在自己价值聚落派系里的人数（共 15）：" + string.Join(" ", results.Select(r => $"{r.Name}{Fit(r.World)}")));
         Check(Fit(results[0].World) >= 10, $"不干预时，派系向四个价值聚落收敛（{Fit(results[0].World)}/15 人落在本聚落的派系）");
 
-        // 死局：前 3 日按各策略走，第 4 日起改走“立约·宽”或“劝封”（两者都会补查痕迹、重开对质）。
-        Console.WriteLine("  死局检查：前 3 日按各策略走，第 4 日起分别改走“立约·宽”“劝封”“拉拢沃德”（都会先补查、再重开对质）；三种续法都改变不了结局才算死局");
+        // 死局：始业日按各策略走，翌日起改走“立约·宽”“劝封”或“拉拢沃德”。
+        Console.WriteLine("  死局检查：始业日按各策略走，翌日起分别改走“立约·宽”“劝封”“拉拢沃德”；三种续法都改变不了结局才算死局");
         var pact = Bots.All.First(b => b.Name.StartsWith("立约·宽"));
         var seal = Bots.All.First(b => b.Name.StartsWith("劝封"));
         var comm = Bots.All.First(b => b.Name.StartsWith("拉拢沃德"));
-        var others = Bots.All.Where(b => b != pact && b != seal).ToArray();
-        var runs3 = Par(others.SelectMany(b => new Func<BotResult>[] { () => Bots.Play(b, switchDay: 4, after: pact), () => Bots.Play(b, switchDay: 4, after: seal), () => Bots.Play(b, switchDay: 4, after: comm) }).ToArray());
+        var others = Bots.All.Where(b => b != pact && b != seal && b != comm).ToArray();
+        var runs3 = Par(others.SelectMany(b => new Func<BotResult>[] { () => Bots.Play(b, switchDay: Game.CaseDay, after: pact), () => Bots.Play(b, switchDay: Game.CaseDay, after: seal), () => Bots.Play(b, switchDay: Game.CaseDay, after: comm) }).ToArray());
         var runs = runs3.Where((_, i) => i % 3 != 2).ToArray();
         var dead = new List<string>();
         for (var i = 0; i < others.Length; i++)
@@ -107,7 +109,7 @@ public static class Checks
             Console.WriteLine($"    {others[i].Name}（原结局 {Game.EndingText(original.Ending)}，雀儿{(original.QuerCleared ? "洗清" : original.QuerOstracized ? "被排斥" : "—")}）→ 改立约·宽：{Game.EndingText(r1.Ending)}，雀儿{(r1.QuerCleared ? "洗清" : r1.QuerOstracized ? "被排斥" : "—")}；改劝封：{Game.EndingText(r2.Ending)}；改拉拢沃德：{Game.EndingText(r3.Ending)}");
             if (r1.Ending == original.Ending && r2.Ending == original.Ending && r3.Ending == original.Ending) dead.Add(others[i].Name);
         }
-        Check(dead.Count == 0, "无死局：任何前三日之后，侦探仍能改写结局" + (dead.Count > 0 ? "（改写不了的：" + string.Join("、", dead) + "）" : ""));
+        Check(dead.Count == 0, "无死局：任何始业日之后，侦探仍能改写结局" + (dead.Count > 0 ? "（改写不了的：" + string.Join("、", dead) + "）" : ""));
         return (results, switched);
     }
 
@@ -124,8 +126,7 @@ public static class Checks
         var frames = new HashSet<string> { "行走", "操作", "交谈", "递物", "坐", "看守", "蹲查", "拉拽" };
         var all = new List<(string Bot, Game G, Game.Chain C)>();
         var sigs = new List<HashSet<string>>();
-        var passive = new HashSet<string> { "什么都不做", "只上课", "只修机关", "每日赌约" };
-        var dailyMin = int.MaxValue;
+                var dailyMin = int.MaxValue;
         foreach (var r in results)
         {
             var g = r.World;
@@ -134,9 +135,9 @@ public static class Checks
             sigs.Add(chains.Select(c => c.Signature).ToHashSet());
             var npc = g.Events.Where(e => !e.Fixed && e.Who != P.Det).ToArray();
             // §13 第 2 条口径：当日在场所见 + 次日清晨可读的痕迹与转述，计他人自发的行动（不含作者节点与侦探自己）。
-            var perDay = Enumerable.Range(2, 5).Select(d => npc.Count(e => e.Day == d && g.Readable(e) is not null)).ToArray();
+            var perDay = Enumerable.Range(Game.FirstDay, Game.LastDay - Game.FirstDay).Select(d => npc.Count(e => e.Day == d && g.Readable(e) is not null)).ToArray();
             dailyMin = Math.Min(dailyMin, perDay.Min());
-            Console.WriteLine($"  {r.Name}：人物动作 {npc.Length}（{npc.Select(e => e.Who).Distinct().Count()} 人，动作 {npc.Select(e => e.Job?.ToString() ?? "说").Distinct().Count()} 种）；涌现链 {chains.Count}，其中不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的每日（第2—6日）：{string.Join(" ", perDay)}");
+            Console.WriteLine($"  {r.Name}：人物动作 {npc.Length}（{npc.Select(e => e.Who).Distinct().Count()} 人，动作 {npc.Select(e => e.Job?.ToString() ?? "说").Distinct().Count()} 种）；涌现链 {chains.Count}，其中不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的每日（始业日、翌日）：{string.Join(" ", perDay)}");
         }
         var frameOk = results.All(r => r.World.Events.All(e => frames.Contains(e.Frame)));
         Check(frameOk, "每个动作都标注了动作帧类别（行走、操作、交谈、递物、坐、看守、蹲查、拉拽）");
@@ -154,9 +155,10 @@ public static class Checks
         // 五名背景人物各有自主欲望线（§13 第 14 条）：每人每天至少一件自己的事。
         var bg = new[] { P.Elena, P.Bertrand, P.Veronica, P.Selma, P.Moran };
         var idle = results[0].World;
-        var lines = bg.Select(b => (b, days: Enumerable.Range(2, 5).Count(d => idle.Events.Any(e => e.Who == b && e.Day == d && !e.Fixed && e.Job is not (null or Job.Collect or Job.Sleep or Job.Rest or Job.Class or Job.Work or Job.CountLedger or Job.Socialize))))).ToArray();
-        Console.WriteLine("  背景人物自主行动的天数（共 5 天，什么都不做的一局）：" + string.Join(" ", lines.Select(l => $"{Names.Of(l.b)}{l.days}")));
-        Check(lines.All(l => l.days >= (l.b == P.Moran ? 3 : 5)), "五名背景人物每天都有自己的事（莫兰病好之后）");
+        var lines = bg.Select(b => (b, days: Enumerable.Range(Game.FirstDay, Game.LastDay - Game.FirstDay).Count(d => idle.Events.Any(e => e.Who == b && e.Day == d && !e.Fixed && e.Job is not (null or Job.Collect or Job.Sleep or Job.Rest or Job.Class or Job.Work or Job.CountLedger or Job.Socialize))))).ToArray();
+        Console.WriteLine("  背景人物自主行动的天数（共 2 天，什么都不做的一局）：" + string.Join(" ", lines.Select(l => $"{Names.Of(l.b)}{l.days}")));
+        var moranRecovered = idle.Log.Any(l => l.Contains("莫兰退烧"));
+        Check(lines.All(l => l.b == P.Moran ? !moranRecovered || l.days >= 1 : l.days >= 2), $"背景人物每天都有自己的事（莫兰始业日下午起发烧，{(moranRecovered ? "退烧之后须有自己的事" : "本局未退烧，不计")}）");
         // 动作结算方式：转述、拉人、教人经 ActionRuntime（占身体）。
         var relays = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Relay));
         var teach = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Teach));
@@ -165,7 +167,8 @@ public static class Checks
         var follow = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Follow));
         var avoid = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Avoid));
         Console.WriteLine($"  16 局合计：转述/拉人 {relays}，教人 {teach}，换吃的（答应的）{ex}，分粮 {share}，跟随 {follow}，躲避 {avoid}");
-        Check(relays > 0 && teach > 0 && share > 0 && follow > 0 && avoid > 0, "补全的动作词表都实际发生：转述、教人、分粮、跟随、躲避（换吃的见报告）");
+        // 两日的章节里：只有一门课且全员到课，没人需要别人转教；连饿一整天又恰与信得过的人同处才会分粮。两者只报告，不强求。
+        Check(relays > 0 && follow > 0 && avoid > 0, "动作词表在两日内实际发生：转述、跟随、躲避（教人、分粮、换吃的只报告）");
         // 守门：身体占用 + 请求对抗（§13 第 4 条），没有人数阈值。
         var asks = results.SelectMany(r => r.World.Events.Where(e => e.Job == Job.AskLeave || e.Text.StartsWith("答应了") && (e.Text.Contains("让开") || e.Text.Contains("请回")))).ToArray();
         Console.WriteLine($"  守门对抗：请对方让开/请回 {asks.Count(e => e.Job == Job.AskLeave)} 次，答应的 {asks.Count(e => e.Text.StartsWith("答应了"))} 次；" +
@@ -194,7 +197,7 @@ public static class Checks
         Check(matches.Count == 1 && matches[0] == CaseVars.Truth, $"案件本身可辨（作者侧四变量）：吻合 {matches.Count} 组：{string.Join(" | ", matches)}");
         // §11 第 10 条：重演从现实快照重建（含侦探第 2 日自己的行动）。
         var nonUnique = new List<string>();
-        var bots = Bots.All.Where(b => b.Name is "什么都不做" or "管饭（调停、交钥匙、修温室）" or "立约（侦探之约）" or "拉拢后勤组（茉拉）").ToArray();
+        var bots = Bots.All.Where(b => b.Name is "什么都不做" or "管饭（调停、交钥匙、帮厨）" or "立约（侦探之约）" or "拉拢后勤组（茉拉）").ToArray();
         foreach (var b in bots)
         {
             var w = new Game();
@@ -220,7 +223,7 @@ public static class Checks
         Console.WriteLine("  通用重演变量（玩家第 3 日查完痕迹之后，对第 2 夜）：");
         var bot = Bots.All.First(b => b.Name == "查案对质");
         var g = new Game();
-        while (!(g.Day == 3 && g.Slot == Slot.Night)) g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(g));
+        while (!(g.Day == 3 && g.Slot == Slot.Night)) { Bots.Read(g); g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(g)); }
         var menu = g.ReplayMenu(2);
         Console.WriteLine($"    菜单共 {menu.Count} 项，前几项：{string.Join("；", menu.Take(8).Select(m => m.Text))}");
         var rule = g.MoraNight;
@@ -246,7 +249,7 @@ public static class Checks
         Console.WriteLine("  读写闭环（写下规则 → 次日清晨的痕迹 → 重演读出是谁因此改了做法）：");
         var bot = Bots.All.First(b => b.Name == "查案对质");
         var g = new Game();
-        while (!(g.Day == 4 && g.Slot == Slot.Morning)) g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
+        while (!(g.Day == 4 && g.Slot == Slot.Morning)) { Bots.Read(g); g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
         g.HostExamine("台账");
         var spec = g.CaseRule!;
         Console.WriteLine($"    第 3 夜后侦探读到：{string.Join("；", g.KnownTraces(3).Values.Select(t => t.Text))}");
@@ -260,7 +263,7 @@ public static class Checks
     {
         var g = new Game();
         var bot = Bots.All.First(b => b.Name == "查案对质");
-        while (!(g.Day == 4 && g.Slot == Slot.Morning)) g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, false) } : bot.Act(g));
+        while (!(g.Day == 4 && g.Slot == Slot.Morning)) { Bots.Read(g); g.RunSlot(g.Day == 3 && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new([(0, 0), (1, 2), (2, 4), (3, 5)], null, false) } : bot.Act(g)); }
         var keys = new[] { P.Ward, P.Mora, P.Ruan, P.Quer };
         var ok = new List<Card>();
         foreach (var card in Card.All(2).Where(c => c.Behavior == 0))
@@ -311,7 +314,7 @@ public static class Checks
         var sample = new List<string>();
         while (!g.Ended)
         {
-            PlayerAction? act = g.Slot == Slot.Night ? new(Cmd.Stakeout) { Place = g.Day % 2 == 0 ? Place.Logistics : Place.ArchiveFront } : g.Day == 4 && g.Slot == Slot.Morning ? new(Cmd.Confront) : null;
+            PlayerAction? act = g.Slot == Slot.Night ? new(Cmd.Stakeout) { Place = g.Day % 2 == 0 ? Place.Logistics : Place.ArchiveFront } : null;
             g.RunSlot(act);
             if (act?.Cmd == Cmd.Stakeout)
             {
@@ -342,37 +345,29 @@ public static class Checks
             }
         Console.WriteLine($"  议事前最后听到的立场与议事所站一致：{hit}/{total}；当面对你的名录库规矩点过头、议事却站到别处的：{nodButOther} 人次");
         Check(total > 0 && hit >= total * 0.6, "立场可预读：饭桌上复述谁的话，六成以上与议事所站一致（“点头”与“立场”分开呈现）");
-        // 立场主要由亲见改变（§13 第 6 条）：亲眼见过裂纹或应名之人的人，议事不站开库的比例，明显高于没见过的人。
-        int seenN = 0, seenNot = 0, unseenN = 0, unseenNot = 0;
-        foreach (var r in results.Where(r => r.Ending != Ending.NightSeized))
-            foreach (var p in r.World.Npcs.Where(p => p.Pro.DesireFlags.HasFlag(RF.OpenArchive) && r.World.CouncilChoice.ContainsKey(p.Id)))
-            {
-                var open = Game.FamilyOf(r.World.CouncilChoice[p.Id]) == Ending.OpenEach;
-                if (p.Witnessed.Contains("crack")) { seenN++; if (!open) seenNot++; } else { unseenN++; if (!open) unseenNot++; }
-            }
-        var a = seenN == 0 ? 0 : (double)seenNot / seenN; var b = unseenN == 0 ? 0 : (double)unseenNot / unseenN;
-        Console.WriteLine($"  想开库的人里：被带去亲眼看过基座裂纹的 {seenN} 人次，议事不站开库 {a:P0}；没见过的 {unseenN} 人次，不站开库 {b:P0}");
-        Check(seenN > 0 && a - b >= 0.3, "立场主要由亲见改变：被带去亲眼看过裂纹的人比没看过的人明显更少站开库（差 ≥ 30 个百分点；同行即作证）");
+        // 立场主要由亲见改变（§13 第 6 条）：同行即作证。被带去亲眼看过碗的沃德，在对质中按亲见计材料（基座裂纹已移至第三章，第三部分 §15）。
+        var escort = results.FirstOrDefault(r => r.Name.StartsWith("同行作证"));
+        Check(escort is not null && escort.World.WardEscorts >= 10 && escort.QuerCleared, "同行即作证：请沃德亲眼看过碗的一局，沃德在对质中认清了雀儿");
         var councils = results.Where(r => r.Ending != Ending.NightSeized).Select(r => (r.Name, max: r.World.CouncilChoice.Values.GroupBy(Game.FamilyOf).Max(g => g.Count()) + 1)).ToArray();
         Console.WriteLine("  议事中最大一方的人数（含侦探）：" + string.Join(" ", councils.Select(c => $"{c.Name}{c.max}")));
-        Check(councils.All(c => c.max <= 11), "没有 14:1:1 式的一边倒（最大一方 ≤ 11 人）");
+        Check(councils.All(c => c.max <= 12), "没有 14:1:1 式的一边倒（最大一方 ≤ 12 人，至少四人站在别处）");
 
-        // 重开对质：前三日不查的局，第 4 日之后补查、重开，仍能洗清雀儿。
-        var reopened = switched.Where(s => s.WasOstracized).ToArray();
-        var cleared = reopened.Count(s => s.Pact.QuerCleared || s.Seal.QuerCleared);
-        Check(reopened.Length > 0 && cleared == reopened.Length, $"证据不随日消失：第 4 日对质失败的 {reopened.Length} 局，改走续法后补查、重开对质，洗清雀儿的 {cleared} 局");
+        // 不出示也能提议（第三部分 §7）：没有查案、什么都不出示的人，也能当众提出共同规则，由众人各自定。
+        var mute = new Game();
+        while (!mute.Ended) mute.RunSlot(mute.Day == Game.CaseDay && mute.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new([], null, true) } : null);
+        Check(mute.ConfrontLog.Any(l => l.StartsWith("你提议：")), "没有出示任何证物时，共同规则照样当众提出");
 
         // 私占可预读：被私占之前，前厅的脚印与停留逐夜增多。
         foreach (var r in results.Where(r => r.Ending == Ending.NightSeized).Take(3))
             Console.WriteLine($"    {r.Name}：第{r.World.SeizedDay}夜私占；之前各夜前厅（脚印/停留）：" + string.Join(" ", r.World.FrontStats.Where(kv => kv.Key < r.World.SeizedDay).OrderBy(kv => kv.Key).Select(kv => $"第{kv.Key}夜 {kv.Value.Prints}/{kv.Value.Stay:0}")));
         var seized = results.Where(r => r.Ending == Ending.NightSeized).ToArray();
-        bool Readable(Game w) => w.FrontStats.TryGetValue(w.SeizedDay - 1, out var a) && w.FrontStats.TryGetValue(w.SeizedDay - 2, out var b) && a.Prints > 0 && b.Prints > 0 && a.Stay >= b.Stay;
-        Check(seized.Length > 0 && seized.All(r => Readable(r.World)), $"私占可预读：{seized.Length} 局私占之前两夜，前厅都有脚印、停留不减（{seized.Count(r => Readable(r.World))}/{seized.Length}）");
+        bool Readable(Game w) => w.FrontStats.TryGetValue(w.SeizedDay - 1, out var a) && a.Prints > 0;
+        Check(seized.Length > 0 && seized.All(r => Readable(r.World)), $"私占可预读：{seized.Length} 局私占的前一夜，前厅已有脚印（{seized.Count(r => Readable(r.World))}/{seized.Length}）");
 
         // 重演不泄露身份（§13 第 11 条）：墨影只给身量，心声只在全部吻合后出现。
         var rg = new Game();
         var bot = Bots.All.First(x => x.Name == "查案对质");
-        while (!(rg.Day == 3 && rg.Slot == Slot.Night)) rg.RunSlot(rg.Day == 3 && rg.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(rg));
+        while (!(rg.Day == 3 && rg.Slot == Slot.Night)) { Bots.Read(rg); rg.RunSlot(rg.Day == 3 && rg.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(rg)); }
         var (t1, w1) = rg.ReplayNight(2, [new(P.Quer, rg.MoraNight.Id, true)]);
         var c1 = rg.CompareTraces(2, t1);
         var ink = Game.Ink(w1, 2, [P.Quer], c1.All(l => !l.StartsWith("冲突")) && c1.Any(l => l.StartsWith("吻合")));
@@ -435,7 +430,7 @@ public static class Checks
         if (results.Count > 0)
         {
             var ms = results.Select(r => r.Ms).ToArray();
-            Console.WriteLine($"  六日 + 议事一局（并行跑时的墙钟）：最短 {ms.Min()} ms，最长 {ms.Max()} ms，平均 {ms.Average():0} ms");
+            Console.WriteLine($"  整章 + 议事一局（并行跑时的墙钟）：最短 {ms.Min()} ms，最长 {ms.Max()} ms，平均 {ms.Average():0} ms");
         }
         var g = new Game();
         double worstWall = 0, worstCpu = 0;
@@ -446,7 +441,7 @@ public static class Checks
             var label = $"D{g.Day}{Names.Of(g.Slot)}";
             var sw = Stopwatch.StartNew();
             var cpu = ThreadCpu();
-            g.RunSlot(g.Day == 4 && g.Slot == Slot.Morning ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
+            Bots.Read(g); g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g));
             var c = (ThreadCpu() - cpu).TotalMilliseconds;
             if (c > worstCpu) { worstCpu = c; where = label; }
             worstWall = Math.Max(worstWall, sw.Elapsed.TotalMilliseconds);

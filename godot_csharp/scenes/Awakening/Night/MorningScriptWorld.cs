@@ -20,6 +20,14 @@ public sealed partial class MorningWorld
             _runtime.KnownProjection(_souls[p],_bodies[p]) is { } self && _session.IsActing(self)))
             throw new InvalidOperationException("Finish pending chapter actions before handing the live world to the next chapter.");
         StopEcology();
+        // 离开生活翼：拿不拿那件旧物的打算系在本章的物件与场所上，到此失效（本人内省得知，不删记忆、不改钩与欲望）。
+        // 否则其中“守着手头的事”等常数偏好会带进下一章，压过那里的一切日常。
+        foreach (var who in _minds.Keys)
+        {
+            var habit = _souls[who].World.Projections.FirstOrDefault(p => p.Name == Names.Of(who) + "对旧物的习惯");
+            if (habit is not null)
+                Observation.Observe(_souls[who], new ObservationInput(habit.Name, habit.Kind) { Target = habit, Source = ObservationSource.Introspection, Time = ++_time, Rules = [] });
+        }
         var entities = new Dictionary<string, Essence>();
         foreach (var (room, space) in _space) entities["chapter1:room:" + room] = space;
         foreach (var (id, evidence) in _evidence) entities["chapter1:object:" + id] = evidence;

@@ -27,7 +27,7 @@ public sealed partial class Game
         /// <summary>作者定的理由（总纲 §五.12“作者覆盖”）：只定过去与呈现时须写明，测试报告单列。</summary>
         public string Reason { get; init; } = "";
         public bool SeenByDet { get; set; }
-        public string Short => $"第{Day}日{Names.Of(Slot)} {Names.Of(Who)}{Text}【{Frame}】";
+        public string Short => $"{Chapter2Design.DayName(Day)}{Names.Of(Slot)} {Names.Of(Who)}{Text}【{Frame}】";
     }
 
     public readonly List<ActEvent> Events = [];

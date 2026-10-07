@@ -298,7 +298,7 @@ public sealed partial class Game
         var nightSlot = dayStart + (int)Slot.Night;
         var options = Options with
         {
-            Quiet = true, StartRations = Options.StartRations, StartOil = Options.StartOil, StartMedicine = Options.StartMedicine,
+            Quiet = true, StartRations = Options.StartRations, StartOil = Options.StartOil, StartMedicine = Options.StartMedicine, Inherit = InheritedSnapshot ?? Options.Inherit, RestoreNight = night == CaseDay - 1 ? CaseNightSnapshot ?? Options.RestoreNight : null,
             ForceAcceptance = (g, p, s) => g.Day == night && hyp.FirstOrDefault(h => h.Who == p.Id && h.Spec == s.Id) is { } h ? (h.Accept ? Truth.True : Truth.False) : null,
             BeforeNight = g => { if (g.Day == night) foreach (var pr in presence) g.ForcePresence(g[pr.Who], pr.Where, pr.There); },
         };

@@ -16,7 +16,7 @@ public sealed partial class Game
     public static string EndingText(Ending e) => Chapter2Design.EndingText(e);
 
     /// <summary>
-    /// 名录库之门三站：配重（力气，不虚弱不带伤）、锁芯（精细）、传声中继（信号；没学过第十二课规程信号被吃掉一半，
+    /// 名录库之门三站：配重（力气，不虚弱不带伤）、锁芯（精细）、传声中继（信号；不精通传声时信号被吃掉一半，
     /// 锁芯一侧就须最好的手）。前厅要沃德的钥匙，或会开锁的人。同一人只能站一站。
     /// </summary>
     public bool Staff(IReadOnlyCollection<Person> crew, out string report, bool commander = false)
@@ -51,13 +51,15 @@ public sealed partial class Game
     private void Seizure()
     {
         if (SeizedBy is not null) return;
-        var crew = _seizeOk.ToArray();
+        // 答应了守门人“请回”的人，这一夜就不算在开门的人里；他那一站要由别人顶上才算数。
+        var yielded = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && e.Text.StartsWith("答应了") && (e.Text.Contains("请回") || e.Text.Contains("让开"))).Select(e => e.Who).ToHashSet();
+        var crew = _seizeOk.Where(p => !yielded.Contains(p.Id)).ToArray();
         var tried = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job == Job.Seize || e.Job == Job.AskLeave)).Select(e => e.Who).Distinct().ToArray();
         if (crew.Length == 0 && tried.Length == 0) return;
         var leader = (crew.Length > 0 ? crew : tried.Select(t => this[t]).ToArray()).OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
         var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.Text.StartsWith("答应了") && e.Text.Contains("让开"))).Select(e => e.Id).ToArray();
         // 三站都有人使过劲、又有人开得了前厅的锁，门就开了；有一站始终被守门的人占着，就开不了（§13 第 4 条：没有人数阈值）。
-        var worked = new[] { WeightRoom, LockCore, RelayPost }.All(st => Get(st, T.Worked) > 0);
+        var worked = new[] { WeightRoom, LockCore, RelayPost }.All(st => Get(st, T.Worked) > 0 && crew.Any(c => StationFor(c) == st));
         var entry = crew.Any(p => Get(p.Body, T.ArchiveKey) > 0 || p.Pro.Lock >= 3);
         var ok = worked && entry;
         var names = string.Join("、", (crew.Length > 0 ? crew.Select(c => c.Name) : tried.Select(Names.Of)));
@@ -116,7 +118,7 @@ public sealed partial class Game
         foreach (var s in Specs.Where(s => s.Card is { Behavior: >= 5 and <= 8 } && s.Author == P.Det)) yield return s;
     }
 
-    /// <summary>第 7 日名录库之议：每人在已接受的方案中支持最合意的；按支持人数排序，取第一个“办得成”的方案
+    /// <summary>第三日清晨名录库之议：每人在已接受的方案中支持最合意的；按支持人数排序，取第一个“办得成”的方案
     /// （开门类方案须支持者凑得齐三站与钥匙）。封闭不启无须机关。被私占则私占为结局。</summary>
     public Ending Council(int detBacks = -1)
     {
@@ -127,11 +129,11 @@ public sealed partial class Game
         if (SeizedBy is not null)
         {
             Result = Ending.NightSeized;
-            CouncilLog.Add($"议事开始之前，名录库已经被打开过：第{SeizedDay}日夜里，{string.Join("、", SeizedBy.Members.Select(Names.Of))}（领头：{Names.Of(SeizedBy.Leader)}）各占一站，把门撬开了。没人记账，也没人见证。");
+            CouncilLog.Add($"议事开始之前，名录库已经被打开过：{Chapter2Design.DayName(SeizedDay)}夜里，{string.Join("、", SeizedBy.Members.Select(Names.Of))}（领头：{Names.Of(SeizedBy.Leader)}）各占一站，把门撬开了。没人记账，也没人见证。");
             ResultText = EndingText(Result);
             return Result;
         }
-        // 第 7 日的早饭（§13 第 13、16 条）：存粮不够十六人，掌粮的人先给信得过的；没吃上的人多半跟着掌粮的人走。
+        // 议事那天的早饭（§13 第 13、16 条）：存粮不够十六人，掌粮的人先给信得过的；没吃上的人多半跟着掌粮的人走。
         var stock = Get(Granary, T.Ration);
         var holder = People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0) ?? this[P.Mora];
         var unfed = room.Where(p => p != Det && p != holder).OrderBy(p => TrustIn(holder, p)).ThenByDescending(p => p.Id).Take(Math.Max(0, room.Length - stock)).ToArray();
@@ -152,7 +154,8 @@ public sealed partial class Game
             CouncilLog.Add($"  {p.Name}站到了「{Short(best.s)}」一边。");
             DebugLog.Add($"议事 {p.Name} 支持 {best.s}（{best.why}）");
         }
-        var mine = detBacks >= 0 && detBacks < plans.Length ? plans[detBacks] : plans.FirstOrDefault(s => s.Author == P.Det);
+        // detBacks：方案下标；越界表示“支持我自己提出的方案”；负数表示不表态。
+        var mine = detBacks < 0 ? null : detBacks < plans.Length ? plans[detBacks] : plans.FirstOrDefault(s => s.Author == P.Det);
         if (mine is not null) support[mine].Add(Det);
         // 方案按“去向”合并：同是开放取回、同是委员会保管的不同写法，支持者合在一起算；办不办得成看合起来的人手。
         static Ending Family(RuleSpec s) => s.Flags.HasFlag(RF.PactArchive) ? Ending.DetectivePact : s.Flags.HasFlag(RF.CommitteeArchive) ? Ending.Committee
@@ -163,6 +166,14 @@ public sealed partial class Game
             .ThenByDescending(f => f.Who.Any(w => w.Pro.Lock >= 3)).ToArray();
         foreach (var f in families)
             CouncilLog.Add($"【{EndingText(f.Family)}】{f.Who.Count} 人：{string.Join("、", f.Who.Select(w => w.Name))}");
+        // 人数最多的两家打平：谁也没说服谁，门照旧封着（现状），不靠谁手里有钥匙或会开锁来定输赢。
+        var top = families.Where(f => f.Who.Count > 0).ToArray();
+        if (top.Length >= 2 && top[0].Who.Count == top[1].Who.Count && top[0].Family != Ending.Sealed)
+        {
+            Result = Ending.Sealed;
+            CouncilLog.Add($"【{EndingText(top[0].Family)}】与【{EndingText(top[1].Family)}】各 {top[0].Who.Count} 人，谁也没说服谁。门照旧封着。");
+            families = [];
+        }
         foreach (var f in families)
         {
             if (f.Who.Count == 0) continue;
@@ -190,7 +201,7 @@ public sealed partial class Game
         if (Result is not Ending.Sealed && mine is not null && FamilyOf(mine) == Ending.Sealed)
             CouncilLog.Add("你支持封闭。尽管多数人打开了名录库，你仍留在门外，没有念匣上的名字，也没有触物回忆。");
         else if (Result is not Ending.Sealed)
-            CouncilLog.Add("侦探的封存匣标签上写着侦探的名字。念出来，匣子没有应。铜口：“那并非你的名字。”停了一下，“……也不是别人的。”");
+            CouncilLog.Add("侦探的封存匣标签上写着侦探的名字。念出来，匣子没有应。铜口没有出声。");
         return Result;
     }
 }

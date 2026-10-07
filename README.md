@@ -58,6 +58,8 @@ python godot_csharp/tools/check/perturb_simulation.py
 python godot_csharp/tools/check/chaos_simulation.py --seeds 1000 --jobs 8
 ```
 
+第二章原型的命令行：`dotnet run --project godot_csharp/scenes/Chapter2/Prototype -- check`（自动检查）、`bots [-v]`（策略机器人与议事）、`trace N`（第 N 个策略逐阵轨迹）、`events N`（人物动作列表）、`minds N`（议事时各人的欲望与钩）、`infer N`（侦探自己的推断与真相假设的对照）。待办与现状见 [交接清单](artifacts/remake-handoff/HANDOFF.md)。
+
 题面选择歇息只让侦探个人短休，不结束章节；其余三位继续行动。命令加 `--decision-profile rest` 可从新会话覆盖这一公开选择，后续仍由主观规划决定。
 
 世界脚本前端位于 `godot_csharp/tools/world_script.py`，使用 Python 风格声明加三反引号对白的 `.world` 文件；它只解析 AST，不执行作者代码。统一剧本语言 `.story` 由 `godot_csharp/tools/story_script.py` 译成同一份 IR（规范见 `docs/design-standard.md`）；全部正式剧情位于 `scenes/Awakening/Script/chapter_01.story`，人物、物件、文案、请求、选项、反应、场面与交互点均用 `.story` 声明，后续案件置于 `续篇 chapter2` 作用域，示例仍位于 `scenes/Shared/Story/Examples/WorldScript/`。玩家选项与 NPC 反应平铺声明；Core 检查可用性并为 NPC 选择适用反应。第二章借用第一章运行中的 Core 会话及其人物实体和认知，不从存档重建。

@@ -15,9 +15,9 @@
         铜口：我是此地的代管者，也是诸位的教师。 [#id=chapter2.gather.003]
         铜口：封存之物，存于名录库。凡学员，皆可取回己物。 [#id=chapter2.gather.004]
         铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。 [#id=chapter2.gather.005]
-        （它停了一下。接着，一个声音贴着每个人的耳朵，各说了一句。） [#id=chapter2.gather.006]
+        （它停了一下。一个声音贴着你的耳朵，说了一句。） [#id=chapter2.gather.006]
         铜口：你的封存匣在名录库里。标签上，写着你的名字。 [#id=chapter2.gather.007]
-        侦探（心声）：……它对每个人都说了一句。说的是什么，只有各人自己听见。 [#id=chapter2.gather.008]
+        侦探（心声）：只有我听见。别人脸上，看不出听见过什么。 [#id=chapter2.gather.008]
         沃德：依据它方才的话，名录库是公物。公物之取用，须有章程。 [#id=chapter2.gather.009]
         雀儿：你的章程，留着自己念。 [#id=chapter2.gather.010]
         沃德：我没有点你的名。 [#id=chapter2.gather.011]
@@ -210,8 +210,8 @@
         侦探：{{detective_name}}。 [#id=chapter2.box.003]
         （匣子没有动。） [#id=chapter2.box.004]
         侦探：……{{detective_name}}。 [#id=chapter2.box.005]
-        铜口：那并非你的名字。 [#id=chapter2.box.006]
-        铜口：……也不是别人的。 [#id=chapter2.box.007]
+        （铜口里没有声音。它向来有问必答，这一回没有人问，它也就不说。） [#id=chapter2.box.006]
+        侦探（心声）：匣子认得它的主人。它不认我。 [#id=chapter2.box.007]
         侦探（心声）：那么，是谁的？ [#id=chapter2.box.008]
 
     场面 sealed

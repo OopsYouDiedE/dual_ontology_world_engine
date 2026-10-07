@@ -228,22 +228,22 @@ public sealed partial class Game
                 Add(Job.RepairLatch, Fx.All(fx.AtAny([Slot.Afternoon, Slot.Evening]), fx.Tg(Granary, T.LatchLoose), fx.NotDone(Job.RepairLatch)), 2);
                 break;
         }
-        // 想开库的人夜里会去名录库前厅站一站：欲望越强、钩越多，去得越早、站得越久（§12 第 5 条：私占可预读）。第五日起前厅会唤名。
+        // 想开库的人夜里会去名录库前厅站一站：欲望越强、钩越多，去得越早、站得越久（§12 第 5 条：私占可预读）。翌日夜里起前厅会唤名。
         var pull = p.Desire + p.Hooks * 2 - 2;
         var linger = 1.5 + Math.Max(0, p.Desire - 2) + 2 * p.Hooks; // 带半拍，免得与“守在前厅”的动作同形
         p.JobFx[Job.VisitArchive] = Fx.Seq(fx.Go(Place.ArchiveFront), fx.Look(ArchiveDoor), Fx.Wait(linger, fx.Look(ArchiveDoor)));
         p.JobFx[Job.Seize] = fx.Job(Job.Seize, p); // 学了第十二课，会站的那一站可能变
         var opener = p.Pro.DesireFlags.HasFlag(RF.OpenArchive);
         if (p != Det && pull > 0 && (opener && p.Desire >= 3 || p.Hooks > 0))
-            Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, p.Hooks > 0 ? 5 : 3), fx.NotDone(Job.VisitArchive)), pull);
-        else if (p != Det && pull > 0) Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, 5), fx.NotDone(Job.VisitArchive)), pull);
+            Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, p.Hooks > 0 ? FirstDay : CaseDay), fx.NotDone(Job.VisitArchive)), pull);
+        else if (p != Det && pull > 0) Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, CaseDay), fx.NotDone(Job.VisitArchive)), pull);
         if (p != Det) PlanRules(p, fx, rules);
         return [.. rules];
     }
 
     /// <summary>
     /// 人物之间互相“写”与多步计划（§12 第 0 条）。全部是此人心中的规则，经 DecisionSystem 与他人的 SocialSystem 结算，不写成剧本：
-    /// · 开库计划：想开库想得厉害（应过唤名、上了钩）、又没被“夜里不开”的约束住的人，第 4 日起下午、傍晚去约会开锁的、力气大的、懂传声的人
+    /// · 开库计划：想开库想得厉害（应过唤名、上了钩）、又没被“夜里不开”的约束住的人，翌日下午、傍晚去约会开锁的、力气大的、懂传声的人
     ///   “今夜一起去名录库”（Say + 请求）；答应的人心里记下约定，入夜照约去；约过人的人自己入夜也去。被拒就去约下一个；没人答应就只是去前厅站一站。
     /// · 答应过的人入夜赴约（但自己认的规矩仍可禁止：认了“夜里不开”的、主张封库的）。
     /// · 雀儿撕掉点她名的规矩；卢西安撕掉点名任何人的规矩。
@@ -265,14 +265,15 @@ public sealed partial class Game
                 Fx.MeChange(T.Did(Job.AskLeave), 1)), 7, Truth.True));
         var bound = Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && p.Acc.GetValueOrDefault(s) == Truth.True);
         var waits = Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && p.Acc.GetValueOrDefault(s) == Truth.True) && TrustIn(p, Det) >= 2;
-        if (p.Pro.DesireFlags.HasFlag(RF.OpenArchive) && p.Hooks >= 1 && p.Desire >= 4 && !bound && !waits)
+        // 被拉得够紧才会动手：上了钩，或被铜口单独低语过两回（它挑中的人）。
+        if (p.Pro.DesireFlags.HasFlag(RF.OpenArchive) && (p.Hooks >= 1 && p.Desire >= 4 || p.Whispered >= 2 && p.Desire >= 3) && !bound && !waits)
         {
-            Rule Ask(Tag skill, string text, int w) => new(Fx.All(fx.AtAny([Slot.Afternoon, Slot.Evening]), fx.Tg(Clock, T.Day, 4),
+            Rule Ask(Tag skill, string text, int w) => new(Fx.All(fx.AtAny([Slot.Afternoon, Slot.Evening]), fx.Tg(Clock, T.Day, CaseDay),
                     new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, skill, 1), new Condition.Tagged(Fx.Target, Tags.Trust, 1),
                     new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), Fx.Not(new Condition.Related(Fx.Target, Fx.Asked, fx.R(door)))),
                 RuleMode.Prefer, Fx.Seq(new Effect.Say(Fx.Target, text, new Effect.Think(new Condition.Related(Fx.Target, Fx.Promised, fx.R(door)))),
                     new Effect.Think(new Condition.Related(Fx.Target, Fx.Asked, fx.R(door)))), w, Truth.True);
-            var w = p.Desire + p.Hooks;
+            var w = p.Desire + Math.Max(p.Hooks, p.Whispered - 1);
             // 多步：缺哪样本事，就去找他心里最信得过、又有这本事的那个人——走到上次见到对方的地方，开口约；人不在就扑空，下个时段再找。
             void Seek(Tag skill, string text, int weight)
             {
@@ -283,7 +284,7 @@ public sealed partial class Game
                 var where = WorkPlace(cand.Id);
                 // 下午去他平常干活的地方找；傍晚去配给台——饭点人都在那儿。
                 foreach (var (slot, place) in new[] { (Slot.Afternoon, where), (Slot.Evening, Place.Logistics) })
-                    rules.Add(new Rule(Fx.All(fx.At(slot), fx.Tg(Clock, T.Day, 4), Fx.Not(new Condition.Related(fx.R(cand.Body), Fx.Asked, fx.R(door)))), RuleMode.Prefer,
+                    rules.Add(new Rule(Fx.All(fx.At(slot), fx.Tg(Clock, T.Day, CaseDay), Fx.Not(new Condition.Related(fx.R(cand.Body), Fx.Asked, fx.R(door)))), RuleMode.Prefer,
                         Fx.Seq(fx.Go(place), new Effect.Say(fx.R(cand.Body), text, new Effect.Think(new Condition.Related(fx.R(cand.Body), Fx.Promised, fx.R(door)))),
                             new Effect.Think(new Condition.Related(fx.R(cand.Body), Fx.Asked, fx.R(door)))), weight, Truth.True));
             }
@@ -293,8 +294,8 @@ public sealed partial class Game
             if (p.Pro.Lock < 3) rules.Add(Ask(T.Picks, "今夜陪我去名录库前厅，帮我开那道锁。", w));
             if (p.Pro.Strength < 2) rules.Add(Ask(T.Strong, "今夜帮我拉一把名录库的配重。", w - 1));
             if (p.Pro.Signal < 3) rules.Add(Ask(T.Signals, "今夜帮我守名录库的传声中继。", w - 1));
-            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, 4), Fx.Any([.. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]), fx.NotDone(Job.Seize), Fx.Not(myStation)),
-                RuleMode.Prefer, p.JobFx[Job.Seize], 5 + p.Hooks, Truth.True));
+            rules.Add(new Rule(Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, CaseDay), Fx.Any([.. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]), fx.NotDone(Job.Seize), Fx.Not(myStation)),
+                RuleMode.Prefer, p.JobFx[Job.Seize], 5 + Math.Max(p.Hooks, p.Whispered - 1), Truth.True));
         }
         var tears = Events.Count(e => e.Who == p.Id && e.Job == Job.Tear);
         if (p.Id == P.Quer && WardNight.PostedAt.Contains(Place.Hall) && tears < 2)
@@ -344,7 +345,7 @@ public sealed partial class Game
             case P.Selma: Daily(Job.Sample, [Slot.Morning], 4); break;
             case P.Moran:
                 Daily(Job.NightSketch, [Slot.Night], 3, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, 3)));
-                Daily(Job.Sketch, [Slot.Afternoon], 5, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, 4)));
+                Daily(Job.Sketch, [Slot.Afternoon], 5, Fx.All(Fx.Not(Fx.Mine(T.Sick)), fx.Tg(Clock, T.Day, CaseDay)));
                 break;
         }
     }
