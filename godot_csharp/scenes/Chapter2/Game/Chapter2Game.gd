@@ -29,6 +29,8 @@ const SightMask := preload("res://scenes/Shared/SightMask.tscn")
 const PresentationWait := preload("res://scenes/Shared/PresentationWait.gd")
 const EventView := preload("res://scenes/Chapter2/Game/Chapter2EventView.gd")
 const EngineScript := preload("res://scenes/Chapter2/Game/Chapter2Engine.cs")
+# Native pixel atlases replace the downscaled AnimeCast sheets one character at a time.
+const PIXEL_FRAMES_DIR := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
 const FRAMES_DIR := "res://ShareAsset/Internal/Characters/AnimeCast/%s.tres"
 
 const SPRITES := {
@@ -448,7 +450,9 @@ func _spawn_actors(animate: bool) -> void:
 func _make_actor(key: String) -> CharacterBody2D:
 	var actor := CharacterBody2D.new()
 	actor.set_script(ACTOR)
-	var path := FRAMES_DIR % SPRITES.get(key, "detective")
+	var sprite_key: String = SPRITES.get(key, "detective")
+	var path := PIXEL_FRAMES_DIR % sprite_key
+	if not ResourceLoader.exists(path): path = FRAMES_DIR % sprite_key
 	actor.standard = load(path) if ResourceLoader.exists(path) else FRAMES
 	actor.name = key
 	map.get_node("Objects").add_child(actor)

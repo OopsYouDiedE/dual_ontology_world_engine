@@ -5,7 +5,7 @@ extends Node2D
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
-const FRAMES := preload("res://ShareAsset/Internal/Characters/AnimeCast/detective.tres")
+const FRAMES := preload("res://ShareAsset/Internal/Characters/PixelCast/detective.tres")
 
 @export var start_map := "living_hall"
 @export var start_spawn := "north_door"

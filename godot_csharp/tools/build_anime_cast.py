@@ -22,6 +22,8 @@ HEIGHTS = {
     "naturalist": 53, "chessplayer": 55, "dancer": 54, "painter": 55,
     "chemist": 54, "marksman": 59, "architect": 56, "doctor": 52,
 }
+# HEIGHTS are relative body heights; the tallest (60) fills a 32x48 cell's rows 0-46.
+WORLD_HEIGHT_SCALE = 47 / 60
 DIRECTIONS = ("front", "back", "left")
 ANIMATIONS = {
     "idle": ([0], True, 4.0),
@@ -102,7 +104,7 @@ def build(key: str) -> None:
     canvas_width = max(b[2] - b[0] for row in boxes for b in row)
     canvas_height = max(b[3] - b[1] for row in boxes for b in row)
     standing_height = max(row[0][3] - row[0][1] for row in boxes)
-    scale = HEIGHTS[key] / standing_height
+    scale = HEIGHTS[key] * WORLD_HEIGHT_SCALE / standing_height
     uri = f"res://ShareAsset/Internal/Characters/AnimeCast/{key}.png"
     lines = ['[gd_resource type="SpriteFrames" load_steps=20 format=3]', "",
              f'[ext_resource type="Texture2D" path="{uri}" id="sheet"]', ""]
@@ -144,7 +146,7 @@ filter_clip = true
 metadata/portrait_bust = true
 '''
     (OUTPUT / f"{key}_portrait.tres").write_text(portrait, encoding="utf-8")
-    print(f"{key}: registered 18 poses, body {HEIGHTS[key]} world px, scale {scale:.5f}; PNG copied unchanged")
+    print(f"{key}: registered 18 poses, body {HEIGHTS[key] * WORLD_HEIGHT_SCALE:.1f} world px, scale {scale:.5f}; PNG copied unchanged")
 
 
 def main() -> None:
