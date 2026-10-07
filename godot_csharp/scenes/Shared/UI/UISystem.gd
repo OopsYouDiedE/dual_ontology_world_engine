@@ -40,6 +40,7 @@ var _notebook: Control
 var _campus: Control
 var _closing := false
 var _speakers: Dictionary = {}
+var _trace_display: Dictionary = {}
 var _modal_generation := 0
 var _dialogue_generation := 0
 
@@ -120,6 +121,7 @@ func show_hover(text: String, screen_position: Vector2) -> void:
 ## 呈现一个宿主事件。台词等读完后返回回执，其余立即返回空字典。
 func present(ev: Dictionary) -> Dictionary:
 	if _closing: return {}
+	if str(ev.get("kind", "")) in ["lines", "candidates", "card", "form", "ending", "aside", "title"]: _trace_display = ev
 	match str(ev.get("kind", "")):
 		"lines": return await _lines(ev)
 		"candidates": _candidates(ev)
@@ -149,8 +151,12 @@ func _lines(ev: Dictionary) -> Dictionary:
 	var generation := _dialogue_generation
 	if dialogue.active: dialogue.cancel_presentation()
 	var lines: Array = []
+	var line_index := 0
 	for line in ev.get("lines", []):
 		var entry: Dictionary = line.duplicate()
+		entry.trace_id = str(ev.get("trace_id", ""))
+		entry.line_index = line_index
+		line_index += 1
 		entry.speaker = _character(line)
 		_speakers[entry.speaker] = str(line.get("speaker_name", entry.speaker))
 		lines.append(entry)
@@ -460,3 +466,13 @@ func _preview() -> void:
 		var view: Control = MANUSCRIPT.instantiate()
 		view.custom_minimum_size = Vector2(900, 700)
 		body.add_child(view)
+
+## 当前正在展示的来源；正文的可见程度由绘制后的控件读取决定。
+func view_trace_context() -> Dictionary:
+	var event: Dictionary = _modal_event if modal_kind != "" else _trace_display
+	var result := {"trace_id": str(event.get("trace_id", "")), "presentation_id": str(event.get("presentation_id", "")),
+		"panel": modal_kind if modal_kind != "" else "dialogue" if dialogue.active else "field"}
+	if dialogue.active and dialogue.line != null:
+		result.merge(dialogue.line.source)
+		result["phase"] = "full" if dialogue.body.visible_characters < 0 else "partial"
+	return result

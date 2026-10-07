@@ -185,7 +185,7 @@ public sealed partial class WorldSession
             execution.Status == ExecutionStatus.Completed, execution.Result?.Failure ?? ActionFailure.None));
         if (execution.Status != ExecutionStatus.Completed) return;
         var lines = active.Candidate.Response.Where(s => s.Op == "line")
-            .Select(s => new InteractionLine(s.Speaker, s.Mood, s.Text, s.VoiceClip)).ToArray();
+            .Select(s => new InteractionLine(s.Speaker, s.Mood, s.Text, s.VoiceClip, s.LineId, s.SourceId)).ToArray();
         if (lines.Length > 0)
         {
             var presentation = "presentation:" + ++_serial;

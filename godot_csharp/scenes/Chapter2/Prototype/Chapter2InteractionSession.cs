@@ -6,6 +6,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 public sealed partial class Chapter2InteractionSession : IChapterSession
 {
     public string ChapterId => "chapter2";
+    public SimulationSession TraceSimulation => _game.S;
     private readonly Game _game;
     private readonly Chapter2Narrative _narrative;
     private readonly WorldSession _behavior;
@@ -204,7 +205,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             {
                 case "lines":
                     _presentation = frame.PresentationId; _narrativePresentation = frame.PresentationId;
-                    output.Add(Event("lines",("presentation_id",frame.PresentationId),("lines",frame.Lines.Select(l=>(object)new Dictionary<string,object?> { ["speaker"]=l.Speaker,["text"]=l.Text,["mood"]=l.Mood,["voice_clip"]=l.VoiceClip }).ToArray()))); break;
+                    output.Add(Event("lines",("presentation_id",frame.PresentationId),("lines",frame.Lines.Select(l=>(object)new Dictionary<string,object?> { ["speaker"]=l.Speaker,["text"]=l.Text,["mood"]=l.Mood,["voice_clip"]=l.VoiceClip,["line_id"]=l.LineId,["source_id"]=l.SourceId }).ToArray()))); break;
                 case "choice":
                     _behavior.RefreshExistingKnowledge();
                     var offered=_behavior.Process(new RequestCandidates(_actorIds[P.Det])).OfType<CandidatesAvailable>().SelectMany(c=>c.Candidates).ToDictionary(c=>c.Id,StringComparer.Ordinal);
@@ -423,7 +424,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             if(item is SemanticDialogue dialogue)
             {
                 _presentation=dialogue.PresentationId;_behaviorPresentation=dialogue.PresentationId;
-                var lines=dialogue.Lines.Select(l=>(object)new Dictionary<string,object?>{["speaker"]=l.Speaker,["speaker_name"]=_actorIds.FirstOrDefault(p=>p.Value==l.Speaker) is var pair&&pair.Value is not null?Names.Of(pair.Key):l.Speaker,["text"]=l.Text,["mood"]=l.Mood,["voice_clip"]=l.VoiceClip}).ToList();
+                var lines=dialogue.Lines.Select(l=>(object)new Dictionary<string,object?>{["speaker"]=l.Speaker,["speaker_name"]=_actorIds.FirstOrDefault(p=>p.Value==l.Speaker) is var pair&&pair.Value is not null?Names.Of(pair.Key):l.Speaker,["text"]=l.Text,["mood"]=l.Mood,["voice_clip"]=l.VoiceClip,["line_id"]=l.LineId,["source_id"]=l.SourceId}).ToList();
                 foreach(var report in reports.Values)lines.Add(new Dictionary<string,object?>{["speaker"]=report.Actor,["speaker_name"]=report.Name,["text"]=report.Text,["mood"]=report.Mood,["voice_clip"]=""});
                 reports.Clear(); output.Add(Event("lines",("presentation_id",dialogue.PresentationId),("lines",lines)));
             }

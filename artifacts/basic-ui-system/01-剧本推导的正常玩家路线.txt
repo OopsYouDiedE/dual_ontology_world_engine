@@ -1,0 +1,1626 @@
+
+======================================================================
+01 · 剧本原文推导的正常侦探玩家路线（未执行）
+======================================================================
+范围：《安眠者有福》正式侦探开局 → 生活翼调查与四问 → 同一会话学园生活 → 五日名录库终局。
+本文件是读取 .story、生成 JSON 与 C# 后整理的推理运行轨迹，不是实机日志，不是自动回归，也不是盲玩证据。没有启动游戏、测试或模拟。
+默认角色与名字均为“侦探”。选择一条不主动触碰旧物回忆的正常路线；不要求十二件全收集，也不要求 E11 四人手掌比对。人物自主行动仍可能导致回忆、钩、证物移动或不同寝区进度。
+“【路线说明】”及条件括号是整理者说明；有台词 ID 的中文及卡片、规矩文本是源码原文。内部设旗、跳转、Core 放大和宿主命令未当作台词列出。变量与模板保留占位符时明确说明其值依运行状态。
+日序：引擎第2日=玩家第一日（始业日）；第3日=第二日（翌日）；第4日=第三日；第5日=第四日（案发次晨与晚间对质）；第6日=第五日（名录库之议）。第三夜是引擎第4日夜里。
+
+======================================================================
+A1 · 正式醒来，先核对自己的外衣，再到活动厅相遇
+======================================================================
+
+【场面 s1_wake】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:1]
+侦探（心声）：…… [#id=s1_wake.001]
+侦探（心声）：床板很硬。灯油的味道。窗外是灰的。 [#id=s1_wake.002]
+侦探（心声）：我只记得上船。 [#id=s1_wake.003]
+侦探（心声）：船，雾，跳板。再往后，什么也没有。 [#id=s1_wake.004]
+侦探（心声）：门外有人在走动。不止一个。 [#id=s1_wake.005]
+侦探（心声）：风衣挂在衣架上。是我的。袖口磨亮的地方，也是我的习惯。 [#id=s1_wake.006]
+侦探（心声）：先弄清楚自己在哪儿。别的，等看见了再说。 [#id=s1_wake.007]
+
+【检视 E12 · 侦探的外衣口袋】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:182]
+【路线说明】醒后在 R-05 衣架检视。它是本路线开启第六变量所需的第一件相熟旁证。此时尚未检视 E7，不追加圆框与石板小图对照句。
+来源：R-05 · 衣架
+现象：
+衣架上挂着你的深棕长风衣。
+口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。
+放大镜是黄铜圆框，带一截短柄。
+可选标签：返回现场
+
+【场面 s2_meet】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:11]
+沈鼎：又醒一个。我们三个先醒，已经互相认过名字，也各处看了一遍。过来站，别在门口杵着。 [#id=s2_meet.001]
+沈鼎：我姓沈，沈鼎。做菜的。上一份工在远洋货轮上掌勺，再上一份在岭南行会。 [#id=s2_meet.002]
+霍铎：……霍铎。钳工。萨克森，船厂。 [#id=s2_meet.003]
+霍铎：铜口和接头，我先看过了。还没有动它。 [#id=s2_meet.004]
+沈鼎：他就这么说话，一个字掰成两半用。你别介意。 [#id=s2_meet.005]
+苏泠：苏泠。弹琴的。 [#id=s2_meet.006]
+苏泠：我在门边听过一阵。听见了声音，来源还不能认定。 [#id=s2_meet.007]
+沈鼎：你呢？看你这身风衣，不像跑船的。 [#id=s2_meet.008]
+
+【报名表：填“侦探”，选“就叫这个”】
+报上名字 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:33]
+三个人在等你开口。登船之前，你叫什么？ [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:34]
+你的名字 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:35]
+就叫这个 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:36]
+
+【场面 s2_tea】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:22]
+侦探：侦探。……做侦探的。 [#id=s2_tea.001]
+沈鼎：侦探。好嘛，厨子、钳工、琴师、侦探——四个人，正好凑一桌麻将。可惜谁也没带牌。 [#id=s2_tea.002]
+沈鼎：都记得什么？我只记得上船。下了跳板，往后就是一片白。 [#id=s2_tea.003]
+霍铎：一样。 [#id=s2_tea.004]
+苏泠：……一样。 [#id=s2_tea.005]
+侦探：我也是。 [#id=s2_tea.006]
+沈鼎：那就是一样的毛病。毛病一样，就不算毛病。坐，我去烧水。人醒了，先喝口热的。 [#id=s2_tea.007]
+（沈鼎去了备餐间。水声，壶声。过了一会儿，他端着托盘回来。） [#id=s2_tea.008]
+沈鼎：水槽里泡着几只杯子，不知道谁用过的。我拿了柜子里的新杯。 [#id=s2_tea.009]
+沈鼎：烫，小心。 [#id=s2_tea.010]
+（他把茶一杯一杯推过来。推到苏泠面前的那杯，他没有放糖。） [#id=s2_tea.011]
+苏泠：……你怎么知道我不加糖？ [#id=s2_tea.012]
+沈鼎：顺手。 [#id=s2_tea.013]
+苏泠：…………谢谢。 [#id=s2_tea.014]
+沈鼎：谢什么，一壶水的事。人一乱，就得有口热的。这是我们行里的规矩。 [#id=s2_tea.015]
+
+【场面 s3_broadcast】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:40]
+（墙上那只铜口里，传来一声轻咳。四个人都转过头去。） [#id=s3_broadcast.001]
+铜口：诸位晨安。我是此地的代管者，也是诸位的教师。诸位所需之知，我会教。 [#id=s3_broadcast.002]
+沈鼎：……代管者。东家的人？ [#id=s3_broadcast.003]
+霍铎：铜口里的声音。管子那头有人。 [#id=s3_broadcast.004]
+铜口：管子那头，是我，霍先生。 [#id=s3_broadcast.005]
+铜口：记忆有缺，乃此地规则所限，请勿惊惶。 [#id=s3_broadcast.018]
+铜口：我所立之规，已贴在活动厅的公告框里。诸位随时可读。 [#id=s3_broadcast.007]
+苏泠：（看了公告框一眼）……字是新的。 [#id=s3_broadcast.008]
+
+======================================================================
+A2 · 阅读公告卡、核验报偿，接受调查
+======================================================================
+活动厅公告框 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:38]
+框里压着一张新抄的纸，字迹端正，墨色很新。题头写着：学园守则。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:39]
+一、封存之物，可凭对应之物寻回；寻回者，自负其果。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:180]
+二、饮水、炉火、照明照常供给；物资由诸位自行分配。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:181]
+三、外闩所封之处，余患未清，清后即启。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:182]
+四、我所立之规，皆张贴于此。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:183]
+
+【场面 s4_rewards】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:51]
+沈鼎：代管的也好，东家也好，我只问一件事。我上船，是有人许了一份工钱。三年的工钱，先付一半。先见钱。 [#id=s4_rewards.001]
+霍铎：试件。说好的。一块精密试件，我自己画的图。 [#id=s4_rewards.002]
+苏泠：蜡筒。……我母亲弹琴的蜡筒。他们说存在这里。 [#id=s4_rewards.003]
+铜口：诸位的报偿，就在铜口下方的领取柜里，各有名签。请亲手核验。 [#id=s4_rewards.004]
+（领取柜的小门一格一格弹开。） [#id=s4_rewards.005]
+沈鼎：（掂了掂钱袋，抽出一枚银元，放到嘴边咬了一口）……真的。成色足。 [#id=s4_rewards.006]
+铜口：这一半只是开头，沈师傅。护住身边的人，要的远不止一袋银元——岛上的粮仓、水、火，都在。 [#id=s4_rewards.007]
+沈鼎：……你倒会说话。 [#id=s4_rewards.008]
+霍铎：（拆开试件盒，把试件举到灯下，用指甲刮了刮配合面）……公差对。是我画的那件。 [#id=s4_rewards.009]
+铜口：一件试件，不过是一张图纸的一角，霍先生。超越卡诺循环的那一张，此地有人画过。 [#id=s4_rewards.010]
+霍铎：（手停在试件上）……在哪。 [#id=s4_rewards.011]
+铜口：学会了，自然知道在哪。 [#id=s4_rewards.012]
+苏泠：（把蜡筒装进领取柜旁的手摇试听机，摇动曲柄。琴声响起，她闭上眼，听完一整段）……是她。 [#id=s4_rewards.013]
+铜口：那是旧声，苏小姐。此地还有诸位从未听过的声音。 [#id=s4_rewards.014]
+（她把蜡筒抱在怀里，很久没有说话。） [#id=s4_rewards.015]
+侦探：我的呢？ [#id=s4_rewards.016]
+铜口：你所求之物，在你封存的东西里。 [#id=s4_rewards.017]
+侦探：封存？ [#id=s4_rewards.018]
+铜口：记忆有缺，乃此地规则所限。至于阁下所求——阁下自己封了起来。 [#id=s4_rewards.026]
+侦探（心声）：柜子里，写着我名字的那一格，是空的。 [#id=s4_rewards.020]
+侦探（心声）：我把伸出去的手收回来，插进风衣口袋。口袋里的放大镜，是凉的。 [#id=s4_rewards.021]
+沈鼎：东家连个面都不露。钱是真的。……那我留下。 [#id=s4_rewards.022]
+霍铎：留下。 [#id=s4_rewards.023]
+苏泠：……我也留下。 [#id=s4_rewards.024]
+侦探（心声）：我要的东西，被我自己封了起来。……那我也留下。 [#id=s4_rewards.025]
+
+【场面 s5_question】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:83]
+【路线说明】选择“先去查看生活翼。”。另一个歇息标签也列出供对照，但不走它。
+铜口：那么，诸位。 [#id=s5_question.001]
+铜口：昨夜警铃骤起。主楼曾有人向诸位呼喊。 [#id=s5_question.002]
+铜口：通往主楼之门，在诸位这一侧闩上了。那人再没有回来。 [#id=s5_question.003]
+铜口：此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？ [#id=s5_question.004]
+沈鼎：闩门？……谁闩的？我们一觉醒来，什么都不记得。 [#id=s5_question.005]
+沈鼎：你这话问得蹊跷。我们今天才认过名字，你就问我们谁昨晚干了什么？ [#id=s5_question.006]
+霍铎：…… [#id=s5_question.007]
+苏泠：（朝门厅的方向看了一眼，没有说话） [#id=s5_question.008]
+铜口：记不得，并不妨碍作答。物件记得。 [#id=s5_question.009]
+铜口：作答者，我为诸位开启主楼一侧的闩。 [#id=s5_question.010]
+铜口：不愿作答者，可在生活翼歇息。水与食物照常。无需认罪，无需指认任何人。 [#id=s5_question.011]
+铜口：生活翼诸处，诸位尽可查看；彼此相帮，亦无不可。答案备好了，到铜口来。 [#id=s5_question.012]
+选择：
+- 先去查看生活翼。 [#id=s5_question.013]
+侦探：我去看看那扇门。 [#id=s5_question.014]
+- 先在生活翼歇息一阵，暂不作答。 [#id=s5_question.015]
+
+【场面 s6_begin】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story:104]
+沈鼎：一个连脸都不露的东西出题，考我们谁闩的门。……我是来做饭的，不是来给它断案的。 [#id=s6_begin.001]
+霍铎：它问的题，它自己有答案。考人，不是问路。 [#id=s6_begin.002]
+苏泠：它说主楼有人喊。……我不信它。我只信我听见的。 [#id=s6_begin.003]
+沈鼎：罢了。门闩着，粮总有吃完的一天。我去备餐间看看存粮和水。人得先吃饭。有事叫我。 [#id=s6_begin.004]
+霍铎：我在铜口这儿。 [#id=s6_begin.005]
+苏泠：我去门那边。 [#id=s6_begin.006]
+侦探（心声）：我不信没证明过的东西。那就从能摸到的东西开始：接触面，先后，形变。 [#id=s6_begin.007]
+
+======================================================================
+A3 · 自主检视门厅：门、木楔、鞋印、湿布、音叉
+======================================================================
+
+【检视 E1 · 闩上的隔离门】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:3]
+来源：门厅 · 隔离门内侧
+现象：
+门内侧的插闩落在闩槽里。
+门外侧另有一道横闩，从这一侧拉不动。
+门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。
+可选标签：拔闩推门
+实验结果：
+内闩拔得出来。门推不动——外侧的横闩卡着。
+你把内闩插回原处。
+可选标签：返回现场
+另有触碰回想选项；本路线不主动选择。相关低语及可能的自主回忆原文见附录。
+
+【场面 replay_unlock】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/02_试验与第一次反转.story:1]
+【路线说明】首次检视 E1（或 E3）获得重演手稿。此时不急着重演。
+侦探（心声）：内闩在这一侧。昨夜有人站在我现在站的地方。 [#id=replay_unlock.001]
+侦探（心声）：痕迹说明发生了什么。为什么发生，要看当时每个人信了什么。 [#id=replay_unlock.002]
+（重演手稿已打开：按 R，设定当时的处境与人心，让昨夜重演一次。） [#id=replay_unlock.003]
+
+【场面 nudge_E1】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:1]
+【路线说明】仅首次打开带回忆的证物卡时可能接低语；不等于选择触碰。
+铜口：（远远地）门闩记得每一只碰过它的手，侦探先生。你想知道自己是什么——它记得你昨夜是什么。 [#id=nudge_E1.001]
+【本路线选择】拔闩推门。
+
+【场面 exp_E1】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/02_试验与第一次反转.story:7]
+侦探：（拔出内闩，用肩膀抵住门，推） [#id=exp_E1.001]
+（门纹丝不动。门的另一侧，横闩卡得很死。） [#id=exp_E1.002]
+侦探（心声）：外面还有一道。 [#id=exp_E1.003]
+侦探：（把内闩插回原处） [#id=exp_E1.004]
+
+【检视 E2 · 门底的灰与木楔】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:24]
+来源：门厅地面 · 门内与东南墙角
+现象：
+门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。
+东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。
+门底边有一道擦痕。
+可选标签：比对木楔与灰扇
+实验结果：
+楔尖的新磨痕，对得上门底那道擦痕；楔背的厚度，与灰扇窄端的宽度一样。
+两者吻合的，是一道窄缝。
+可选标签：返回现场
+【本路线选择】比对木楔与灰扇。
+
+【场面 exp_E2】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/02_试验与第一次反转.story:14]
+侦探：（捡起木楔，斜着塞进门底） [#id=exp_E2.001]
+（楔尖的磨痕，对上门底那道擦痕。楔背的厚度，与灰扇窄端的宽度一样。） [#id=exp_E2.002]
+
+【检视 E3 · 灰上的靴印】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:41]
+来源：门厅地面 · 插闩下方
+现象：
+灰上有一枚马球靴印，踩得很清楚。
+鞋尖朝着门侧的插闩。
+鞋跟一端被什么东西压过。
+可选标签：比对鞋底
+实验结果：
+你抬起脚。
+马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。
+可选标签：返回现场
+比对鞋底 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:49]
+灰上那枚马球靴印。拿谁的鞋底来比？ [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:54]
+鞋底选择标签：你自己的靴底；霍铎的鞋；沈鼎的鞋；苏泠的鞋。 [来源：第一章/声路与真相.story:1–5]
+【本路线选择】你自己的靴底。
+
+【场面 exp_E3】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/02_试验与第一次反转.story:19]
+侦探：（抬起左脚，翻过来看） [#id=exp_E3.001]
+（马球靴的鞋底纹路，与灰上那枚印一模一样。纹槽里嵌着同样的灰。） [#id=exp_E3.002]
+
+【场面 s6_reversal】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/02_试验与第一次反转.story:24]
+侦探（心声）：…… [#id=s6_reversal.001]
+侦探（心声）：……是我。 [#id=s6_reversal.002]
+侦探（心声）：这双靴子到过门边。可来过，还不能证明闩过；它怎样落下，得和别的痕迹对上。 [#id=s6_reversal.003]
+侦探（心声）：我把脚放下。灰从纹槽里簌簌地落，落回它原来的地方。 [#id=s6_reversal.004]
+（苏泠看了你一眼，没有说话。） [#id=s6_reversal.005]
+
+【检视 E4 · 门底的湿布】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:60]
+来源：门厅 · 门底
+现象：
+一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。
+布的一端压住了靴印的鞋跟边缘。
+可选标签：请沈鼎看看
+可选标签：返回现场
+
+【场面 help_E4】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:1]
+【路线说明】请沈鼎看看，核验的是布的手法；不需要触物回忆。
+沈鼎：（蹲下，捏起布角，翻过来看折痕） [#id=help_E4.001]
+沈鼎：这布是我拧的。先对折，再顺着拧三道，拧到不滴水，再压。船上堵舱门缝的手法。 [#id=help_E4.002]
+沈鼎：我认得自己的手法，跟认得自己的字一样。 [#id=help_E4.003]
+沈鼎：……可我不记得来过这儿。 [#id=help_E4.004]
+核验后卡片新增笔记原文：沈鼎：“这布是我拧的，这手法我认得。” [来源：generated_awakening_content.json / HELP_NOTES/E4]
+
+【检视 E5 · 门框旁的音叉】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:73]
+来源：门厅 · 门框南侧地面
+现象：
+地上一把纯银音叉，柄上刻着“S.L.”。
+门框齐肩高的地方，有一个很小的凹痕。
+可选标签：请苏泠看看
+可选标签：返回现场
+另有触碰回想选项；本路线不主动选择。相关低语及可能的自主回忆原文见附录。
+
+【场面 nudge_E5】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:6]
+铜口：（从墙里，很轻）苏小姐，墙里那个声音，你昨夜听过一次。后面还有你从未听过的——都收在那把音叉里。 [#id=nudge_E5.001]
+
+【场面 help_E5】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:8]
+【路线说明】请苏泠看看，用音叉核验门框空腔；不选触碰回想。
+苏泠：（拾起音叉，在门框的凹痕上轻轻一敲） [#id=help_E5.001]
+（一声细长的嗡鸣，在墙里拖了很久。） [#id=help_E5.002]
+苏泠：（又在桌角敲了一下。声音短，干，立刻就断了） [#id=help_E5.003]
+苏泠：不一样。门框后面是空的。贴着一根管子。 [#id=help_E5.004]
+苏泠：音叉是我的。柄上的字，我母亲刻的。……我不记得把它放在这儿。 [#id=help_E5.005]
+核验后卡片新增笔记原文：苏泠用音叉轻敲凹痕：音色与敲桌面不同。“这里贴着空管。” [来源：generated_awakening_content.json / HELP_NOTES/E5]
+
+======================================================================
+A4 · 自主查乐谱、石板与铜管，作声路试验
+======================================================================
+
+【检视 E6 · 苏泠的乐谱】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:91]
+来源：R-08 · 书桌
+现象：
+一页手写乐谱，只有一小节。
+前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。
+旁注：“门外？”
+下方换了一种墨迹：“他们关了门。”
+可选标签：请苏泠看看
+可选标签：返回现场
+
+【场面 help_E6】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:16]
+苏泠：是我的手。男声，很低。 [#id=help_E6.001]
+苏泠：前两个字太轻，我听不出，只能记问号。后面两个字压得很重——“开门”。 [#id=help_E6.002]
+苏泠：同一小节记了两遍。我听到什么，就记什么。不会多记。 [#id=help_E6.003]
+苏泠：下面那一行，墨不一样。我换过笔。 [#id=help_E6.004]
+（她没有念出那一行。） [#id=help_E6.005]
+核验后卡片新增笔记原文：苏泠读谱：“男声，很低。前两个字太轻，我听不出。” [来源：generated_awakening_content.json / HELP_NOTES/E6]
+
+【检视 E7 · 霍铎的石板】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:107]
+来源：活动厅 · 长桌东端
+现象：
+一块小石板，粉笔速记两行。
+第一行：G：⊥门 ✕开 ◎
+第二行：一个小小的放大镜图样，后面是“⊥✓”。
+可选标签：请霍铎看看
+可选标签：返回现场
+另有触碰回想选项；本路线不主动选择。相关低语及可能的自主回忆原文见附录。
+
+【场面 nudge_E7】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:11]
+铜口：（铜口里，声音放得很低）霍先生，图纸就在主楼。记得它的人是你；记得它在哪的，是你那块石板。 [#id=nudge_E7.001]
+
+【场面 help_E7】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:24]
+霍铎：……我的字。 [#id=help_E7.001]
+霍铎：G，一个人。我记人，先写他的头一个字母。 [#id=help_E7.002]
+霍铎：⊥，闩。✕，禁止。✕开，不许开。 [#id=help_E7.003]
+霍铎：◎……不确定。图纸上见过这个记号。 [#id=help_E7.004]
+霍铎：下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。 [#id=help_E7.005]
+霍铎：这个图……我认不出是谁。 [#id=help_E7.006]
+核验后卡片新增笔记原文：霍铎辨认：“是我的字。⊥ 是闩，✕ 是禁止……◎ 我不确定。”放大镜图样，他认不出指谁。 [来源：generated_awakening_content.json / HELP_NOTES/E7]
+
+【检视 E8 · 铜口与管接头】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:125]
+来源：活动厅北墙铜口 · 活动厅与 R-08 之间的墙 · 隔离门北侧门框
+现象：
+铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。
+一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。
+那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。
+可选标签：声路试验
+可选标签：返回现场
+
+【声路表单：选句“闩上门，不要开门。”，自己站“门边”，选“开始”】
+声路试验 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:55]
+请铜口说一句话。你和三位同伴分别站在铜口旁、R-08、门边、备餐间、R-05 中的四处听。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:57]
+让铜口说哪一句 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:58]
+你自己站在哪里听 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:59]
+句子标签：“闩上门，不要开门。”；“开门，救我。”；“守在铜口旁，等我下一次通知。”
+站位标签：门边；R-08；铜口旁；备餐间；R-05。按钮：算了；开始。 [来源：Chapter1SessionFlows.cs:510–522]
+
+【场面 sound_test】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:1]
+【路线说明】静态推导按本路线门框/墙内接头仍松动；自己占门边，沈鼎转到候补备餐间。若实际接头已拧动，所闻文本必须随状态重新计算。
+（你们各自站好。活动厅的铜口沉默了一会儿。） [#id=sound_test.001]
+铜口：（乐意之至。）闩上门，不要开门。 [#id=sound_test.002]
+侦探（心声）：（门边）……开门 [#id=sound_test.003]
+霍铎：（铜口旁）闩上门，不要开门。 [#id=sound_test.004]
+沈鼎：（备餐间）（有人在说话，听不清） [#id=sound_test.005]
+苏泠：（R-08）……开门 [#id=sound_test.006]
+苏泠：声音走管子，和人站在面前说话，不是一种声音。我只说我听见的，和它从哪边来。 [#id=sound_test.007]
+E8 卡新增笔记（接头状态如上）：声路试验：侦探（门边）听到 ……开门 从那边。（指向门）；霍铎（铜口旁）听到 闩上门，不要开门。 从铜口里。；沈鼎（备餐间）听到 （有人在说话，听不清） 从活动厅那边。；苏泠（R-08）听到 ……开门 从墙那边。（指向门厅的方向）。
+此项事实须经过声路试验记录；只看 E8 卡不能代替试验，也不能通过四问第二问。 [C#依据：Chapter1Script.cs:376–386；Chapter1SessionFlows.cs:525–534]
+
+======================================================================
+A5 · 查杯子，想到相熟问题；用六变量重演昨夜
+======================================================================
+
+【检视 E9 · 四只杯子】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:138]
+来源：备餐间 · 水槽
+现象：
+水槽里四只用过的杯子，各不相同：
+一只青瓷小杯，杯底没有糖渍；
+一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；
+一只缺口白杯；
+一只粗瓷大杯。
+可选标签：请沈鼎看看
+可选标签：返回现场
+
+【场面 help_E9】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:33]
+沈鼎：（一只一只拿起来，对着光看杯底） [#id=help_E9.001]
+沈鼎：青瓷小杯，干净，没糖。锡杯，两勺往上。白杯是清茶，不放奶。粗瓷大杯——这是我的，我喝茶就用大碗。 [#id=help_E9.002]
+沈鼎：我泡茶按人放糖。一向如此，看人下菜碟。 [#id=help_E9.003]
+沈鼎：……可我怎么会知道谁不吃糖？ [#id=help_E9.004]
+核验后卡片新增笔记原文：沈鼎：“我泡茶按人放糖。”——“可我怎么会知道谁不吃糖？” [来源：generated_awakening_content.json / HELP_NOTES/E9]
+
+【场面 v6_doubt】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:60]
+【路线说明】此时 E12+E9 均已检视。C# V6Open 只计 E9/E10/E11/E12，至少两件才开放；E7 不计此门槛。
+侦探（心声）：这些东西，不像是一夜之间留下的。 [#id=v6_doubt.001]
+侦探（心声）：……我们真的是昨天才认识的吗？ [#id=v6_doubt.002]
+（重演手稿多了一个问题。） [#id=v6_doubt.003]
+
+【重演表单】昨夜重演 / 设定当时的处境与人心，让昨夜重演一次。
+问题：警铃响时，苏泠在哪 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:2]
+选项：她的房间（R-08）
+选项：活动厅
+选项：备餐间
+问题：警铃响时，霍铎在哪 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:10]
+选项：活动厅铜口旁
+选项：他的房间
+选项：门厅
+问题：那人是从哪里喊话的 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:18]
+选项：从主楼对着铜口说
+选项：就在门外
+问题：那人说的是什么 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:25]
+选项：“闩门，别开”
+选项：“开门，救我”
+问题：侦探更信谁 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:32]
+选项：霍铎
+选项：苏泠
+选项：谁都不全信，自己去看
+问题：昨夜之前，四人彼此…… [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:40]
+选项：素不相识
+选项：早已相熟
+【本路线设定】苏泠在她的房间（R-08）；霍铎在活动厅铜口旁；声音从主楼对着铜口说；说“闩门，别开”；侦探更信霍铎；四人早已相熟。内部数值为 [0,0,0,0,0,1]。
+【播放顺序说明】以下是 NightReplay C# 对这组处境可推出的主线行动片段原文，按因果整理。人物行走、重叠帧与精确先后由行动值调度生成，本文件没有执行，因此不伪造逐帧秒数或声称以下就是完整实机帧日志。
+【可见条件】以下行动标签只在对应行动确实结算、被采为重演帧且宿主呈现该帧时可见；其旁列心声是 C# thoughts 原文，仅在重演界面展示对应人物心声时可见，不能当作现实中的侦探必然听到的台词。隐蔽人物认知和一般夜间引擎报告不作为玩家必见信息；本文件未执行，无法验证每项心声最终是否在当前 UI 显示。
+主楼警铃大作 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:443]
+主楼有人对着铜口说话 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:468]
+铜口里的话又说了一遍 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:469]
+霍铎在石板上速记：G：⊥门 ✕开 ◎ [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:333]
+格雷厄姆：闩门。禁开。守铜口。记下。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:333]
+霍铎守在铜口旁，朝走廊喊：闩门！ [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:342]
+格雷厄姆叫我守铜口，我不能走。谁来，谁去闩。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:342]
+侦探循着喊声去活动厅 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:304]
+活动厅有人在喊。去看看出了什么事。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:304]
+霍铎给侦探看石板：“格雷厄姆说的。闩门。我得守在这。” [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:348]
+他来了。上头的话我记在石板上，他认得我的字——让他去闩。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:348]
+苏泠拉开门，用木楔撑住，贴缝听 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:401]
+门外有人在喊开门……我得开门让他进来。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:401]
+门缝外的烟灰涌入门厅 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:860]
+苏泠贴着门缝听，用音叉敲门框辨声路 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:404]
+门开着，外面却没声了。声音从哪来？敲一下就知道。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:404]
+苏泠对侦探说：“外面有人在喊开门。” [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:417]
+他是来关门的。外面有人在喊开门——我得告诉他。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:417]
+侦探照霍铎转述的指令，踢开木楔，门自行合上，插上闩，回去报告 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:695]
+霍铎说上头下令闩门……那是他亲手记的速记，我认得他的字。我信他。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:696]
+霍铎在石板速记下补一行：放大镜小图 + ⊥✓ [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:354]
+闩好了。记下：放大镜，⊥✓。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:354]
+苏泠回房记谱：两拍弱音，后两拍“开门”，记了两遍；旁注“门外？” [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:407]
+门关上了。把听到的记下来。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:407]
+苏泠回房，在乐谱下方换了一支笔写：“他们关了门。” [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:420]
+他们关了门。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:420]
+烟味传到备餐间 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:865]
+沈鼎浸湿抹布 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:374]
+烟。先湿布。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:374]
+沈鼎拿着湿布去门厅 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:378]
+烟从门那边来。把缝堵上。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:378]
+沈鼎沿闭合的门底压下湿布 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:381]
+门合上了。顺着门底压一条，烟就进不来。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:381]
+沈鼎泡了四杯茶，按各人的口味放糖 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:384]
+人都吓着了，先泡茶。阿泠不吃糖，老霍要两勺——这我记得。 [来源：godot_csharp/scenes/Awakening/Night/NightReplay.cs:384]
+昨夜主楼完整喊话原文：生活翼！我是格雷厄姆。主楼泄漏。闩上隔离门——无论听到什么，都不要开门。守在铜口旁，等我下一次通知。 [来源：第一章/声路与真相.story:29–33]
+漏出的重读句尾原文：……开门……开门。
+重演可见状态文本：昨夜；门：开着，木楔撑住；门：闩上了；门：关着；烟灰进了门厅。
+【重演对照】已看过的 E1–E9、E12 各显示“{证物名称}：与重演一致。”；未检视 E10/E11 的位置只给“你还没查过这里：{区域}还有东西没看过。”，不能把这些卡写成玩家已获知。世界层 FullMatch 使用现实证据，卡片可见对照还须 examined。
+
+【场面 s8_reversal】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/06_重演之后.story:1]
+【路线说明】首次世界痕迹吻合时播放。无需先触物回忆。
+（重演的墨影一个个淡去。四个人都没有说话。） [#id=s8_reversal.001]
+沈鼎：（看着架上的酵种罐）……这罐子，不是昨天才养的。 [#id=s8_reversal.002]
+霍铎：……我们在这里，不止一天了。 [#id=s8_reversal.003]
+苏泠：（低头看着自己的手） [#id=s8_reversal.004]
+苏泠：他不给我放糖。第一杯就没放。 [#id=s8_reversal.005]
+沈鼎：手比脑子记得牢。……这话我早上说过。 [#id=s8_reversal.006]
+侦探（心声）：昨天才认识的人，凭一句转述，不会去闩那扇门。 [#id=s8_reversal.007]
+
+======================================================================
+A6 · 回铜口，完成四问始业之答
+======================================================================
+铜口 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:44]
+铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:45]
+检视铜口与铜牌 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:46]
+回答始业之问 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:47]
+先在生活翼歇息一阵，暂不作答 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:48]
+【本路线选择】回答始业之问。
+
+【场面 answer_open】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:1]
+【路线说明】称呼不是固定值，按铜口与侦探亲疏填入“我的侦探”或“侦探先生”；见 Chapter1Flows.cs 的 addr 计算。
+铜口：请讲，{{称呼("detective")}}。我一句一句地问。 [#id=answer_open.001]
+铜口：每一问，请阁下说一句结论，再拿出一件撑得住它的东西。说错了不要紧——我只指出它说明的是别的事。 [#id=answer_open.002]
+铜口：我只问我问过的。我所说的每一句，诸位都可以拿来对质。 [#id=answer_open.003]
+每问表单标题：始业之答。提示：陈述一句结论，再出示一件能支撑它的东西。页签/按钮：陈述；出示；暂且不答；作答。
+本路线可陈述原文（只列已取得可选项）：
+是我闩的门。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:47]
+苏泠当时在她房里。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:48]
+霍铎当时守在铜口旁。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:51]
+门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:54]
+他说的是：闩门，别开。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:56]
+我信霍铎。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:58]
+我信霍铎——我们早已相熟。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:61]
+我们早已相熟。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story:63]
+
+【场面 answer_q1】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:7]
+铜口：门，是谁闩上的？ [#id=answer_q1.001]
+表单题头：铜口问：门，是谁闩上的？
+【选择】陈述：是我闩的门。
+出示：灰上的靴印
+按钮：作答
+
+【场面 answer_ok1】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:11]
+铜口：坦率。 [#id=answer_ok1.001]
+铜口：那么——阁下闩门的时候，可曾听见门外的呼喊？ [#id=answer_ok1.002]
+
+【场面 answer_q2】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:16]
+铜口：门外，有人呼喊吗？ [#id=answer_q2.001]
+表单题头：铜口问：门外，有人呼喊吗？
+【选择】陈述：门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。
+出示：铜口与管接头
+按钮：作答
+
+【场面 answer_ok2】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:25]
+铜口：我说，主楼有人向诸位呼喊。 [#id=answer_ok2.001]
+铜口：他确实在主楼。 [#id=answer_ok2.002]
+
+【场面 answer_q3】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:30]
+铜口：他喊的是什么？ [#id=answer_q3.001]
+表单题头：铜口问：他喊的是什么？
+【选择】陈述：他说的是：闩门，别开。
+出示：霍铎的石板
+按钮：作答
+
+【场面 answer_ok3】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:34]
+（铜口沉默了片刻。） [#id=answer_ok3.001]
+铜口：……他要的，是诸位活下去。 [#id=answer_ok3.002]
+
+【场面 answer_q4】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:39]
+铜口：闩门的人，为何不听门边那位女士的？ [#id=answer_q4.001]
+表单题头：铜口问：闩门的人，为何不听门边那位女士的？
+【选择】陈述：我信霍铎——我们早已相熟。
+出示：四只杯子
+按钮：作答
+
+【场面 answer_ok4】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:43]
+铜口：信任，要有来处。 [#id=answer_ok4.001]
+第四问需联合陈述 trust，不是单说“我信霍铎。”或单说“我们早已相熟。”。第三问亦可用 E6；第四问亦可用 E7/E10/E11。 [来源：阶段与流程.story 判定1–4；Chapter1Script.cs:361–398]
+
+======================================================================
+A7 · 门开，生活翼收尾；继续同一会话
+======================================================================
+
+【场面 s10_steps】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:1]
+（铜口安静了。） [#id=s10_steps.001]
+（门的另一侧，传来脚步声。窄底皮鞋，落在石板上，一步，一步，很轻。） [#id=s10_steps.002]
+（那脚步停在门外。外侧的横闩，被一只手抬了起来。） [#id=s10_steps.003]
+
+【场面 s10_prints】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:66]
+（门开了。门外是一座挑高的厅，门楣上的铜牌写着：起居厅。烟灰早已落定，薄薄铺了一层。） [#id=s10_prints.001]
+（门前这一片灰上，别人的脚印都绕开了。只有一行鞋印走到门前：鞋底窄，鞋尖尖，停住，又折了回去。） [#id=s10_prints.003]
+【路线说明】本路线未做 E11 四人完整比对，因此不插入 s10_hand，也不把“手印是你的吗”当作必看。
+
+【场面 s10_open】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:7]
+【路线说明】此处保留全部条件原文备选。选择不主动回忆无法保证其他人自主回忆不存在。寝区解题进度、苏/沈钩数、总钩数必须由实际会话决定。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 已出门寝区 > 0：】
+（门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。） [#id=s10_open.001]
+侦探（心声）：另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。 [#id=s10_open.002]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+（门外的厅里空着，只有烟灰。对面几扇寝区的门，都还闩着。） [#id=s10_open.016]
+侦探（心声）：别的寝区也还在门里。我们不是最晚的。 [#id=s10_open.017]
+侦探（心声）：我站在门槛这一边，比我以为的站得久。 [#id=s10_open.003]
+苏泠：你昨夜没听我的。……你听对了。 [#id=s10_open.004]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 钩数("su") > 0：】
+苏泠：那个声音……我还记得它。它现在也记得我了。 [#id=s10_open.005]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+苏泠：那把音叉，我没拿它追封存的旧声。我想先用自己的耳朵听这里。 [#id=s10_open.006]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 钩数("shen") > 0：】
+沈鼎：那罐子喂过的日子，我想起来一些了。……走吧，先找吃的。另外三个寝区，人也得吃饭。 [#id=s10_open.007]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+沈鼎：罐子照样喂着，封存的旧事，我没去追。走吧，先找吃的。另外三个寝区，人也得吃饭。 [#id=s10_open.008]
+霍铎：（看着厅的北头）……他让我等下一次通知。 [#id=s10_open.009]
+霍铎：不等了。去找。 [#id=s10_open.010]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 旗("asked_hand")：】
+铜口：问得精确。……请。 [#id=s10_open.011]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+铜口：诸位……没有别的想问了吗。 [#id=s10_open.012]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 总钩数 >= 3：】
+铜口：旧物都在原处。诸位想再看，随时可来。 [#id=s10_open.013]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 总钩数 >= 1：】
+铜口：想起什么，可以来铜口问。 [#id=s10_open.014]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+铜口：门开了。诸位请。 [#id=s10_open.015]
+门的这一侧 · 完 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:16]
+门开了。门外是起居厅。 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:17]
+留在恶魔那里的钩：{名单} [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:18]
+你没有交出的：{名单} [来源：godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story:19]
+名单不能从 .story 唯一填定；本路线侦探未主动回忆不等于总钩数为零。
+【同会话转入】在当前 GameSession 继续学园生活，保留同一个世界及人物认知。第一章旧文案“按 C 进入第二章；按 R 重新开始。”是作者结局卡文本，不据此假定 Basic UI 必须切另一宿主。
+
+======================================================================
+B1 · 玩家第一日：始业日傍晚的召集、首课与第一顿晚饭
+======================================================================
+始业日傍晚，始业之问已经答毕。铜口随即召集全体到中央厅，趁天黑前讲第一课。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story:43]
+读不耗时：细看、询问、读板与重演可以慢慢来。写或等待推进一阵，其余十五人也各按自己的认知行动。日程有清晨、上午、午间、下午、傍晚与夜里六个时段；始业日傍晚先集合、上首课、吃头一顿晚饭。之后两日是日常：课愿去才去。夜里的事通过痕迹、身影与转述得知。第五日清晨，十六人在誓约庭决定名录库归谁、怎么开。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story:44]
+
+【场面 c2.arrival】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:3]
+铜口：诸位，请到中央厅来。全体。 [#id=chapter2.arrival.001]
+
+【场面 c2.gather】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:9]
+（中央厅。八角形的穹顶下，十六个人站成了几团。铜柱居中，管道从四面汇进来。） [#id=chapter2.gather.001]
+侦探（心声）：站成几团，是按寝区站的。没人往别的团里走。 [#id=chapter2.gather.002]
+铜口：我是此地的代管者，也是诸位的教师。 [#id=chapter2.gather.003]
+铜口：封存之物，存于名录库。凡学员，皆可取回己物。 [#id=chapter2.gather.004]
+铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。 [#id=chapter2.gather.005]
+（它停了一下。一个声音贴着你的耳朵，说了一句。） [#id=chapter2.gather.006]
+铜口：你的封存匣在名录库里。标签上，写着你的名字。 [#id=chapter2.gather.007]
+侦探（心声）：只有我听见。别人脸上，看不出听见过什么。 [#id=chapter2.gather.008]
+沃德：依据它方才的话，名录库是公物。公物之取用，须有章程。 [#id=chapter2.gather.009]
+雀儿：你的章程，留着自己念。 [#id=chapter2.gather.010]
+沃德：我没有点你的名。 [#id=chapter2.gather.011]
+雀儿：你的眼睛点了。 [#id=chapter2.gather.012]
+铜口：诸位，请到讲堂。今日讲守则的读法。 [#id=chapter2.gather.013]
+
+【场面 c2.lesson】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:27]
+（讲堂。黑板前没有人，粉笔却自己在板上写字。讲台前的灰上，多出一行窄底的鞋印。） [#id=chapter2.lesson.001]
+铜口：一条规矩写了什么，诸位都会读。今日读它没写什么。 [#id=chapter2.lesson.002]
+铜口：以我自己的守则为例。第一条：封存之物，可凭对应之物寻回；寻回者，自负其果。 [#id=chapter2.lesson.003]
+铜口：这一条没写的，最要紧的是什么？——请那位穿风衣的先生答。 [#id=chapter2.lesson.004]
+首课选择标签：它没写“果”是什么。；它没写谁可以寻回。；它没写封存之物在哪里。 [来源：续篇/05_选项与回应.story:3–17]
+【本路线选择】它没写“果”是什么。
+
+【场面 c2.lesson_precise_branch】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:39]
+铜口：……正是。“自负其果”，果是什么，条文一字未提。读到这里的人，下回会先问。 [#id=chapter2.lesson_precise_branch.001]
+铜口：很好。 [#id=chapter2.lesson_precise_branch.002]
+侦探（心声）：它是真的高兴。几个人看我的眼神变了。不全是好的那种。 [#id=chapter2.lesson_precise_branch.003]
+铜口：本课到此。诸位所立之规，也请这样读。下课。 [#id=chapter2.lesson.005]
+侦探（心声）：读它没写什么。……记下了。 [#id=chapter2.lesson.006]
+
+【场面 c2.free】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:64]
+侦探（心声）：读不费时辰。看，问，读板上的规矩，都可以慢慢来。 [#id=chapter2.free.001]
+侦探（心声）：想让谁改个主意——带他去亲眼看，跟他讲一条规矩，请他做件事——那要花上一阵。一阵过去，大家各忙各的，人就换了地方。 [#id=chapter2.free.002]
+侦探（心声）：一天就那么几阵。得想好花在谁身上。 [#id=chapter2.free.003]
+
+【场面 c2.noon_dispute】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:72]
+（配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。） [#id=chapter2.noon_dispute.001]
+阮清越：按人头。十六份，日末清点。 [#id=chapter2.noon_dispute.002]
+茉拉：莫兰脸色不对。病人先领。 [#id=chapter2.noon_dispute.003]
+阮清越：“先”是多少？说个数。 [#id=chapter2.noon_dispute.004]
+茉拉：你让开。 [#id=chapter2.noon_dispute.005]
+侦探（心声）：两个人都没说错。队伍在等。 [#id=chapter2.noon_dispute.006]
+选择标签：出面调停（要花上这一阵）；不插手，排队领饭。
+【本路线选择】出面调停（要花上这一阵）。该分支 .story 没有另写台词，只提交 mediate 动作；领粮数量、双方反应与旁人行动由 Core/C# 决策结算，条件未由 .story 单独确定。
+【晚饭后读卡】可从中央厅、讲堂、名录库前厅依次核对公告、铜牌、三站机关与封存匣；读和询问不耗时。夜里回 R-05，选择“在这里睡到天亮”。
+
+【场面 c2.night_hint】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:95]
+【路线说明】当夜里尝试普通动作时播放；若直接点床睡下则未必另看这两句。
+侦探（心声）：入夜了。回 R-05 睡下，或者找个地方守着。 [#id=chapter2.night_hint.001]
+侦探（心声）：起居厅、后勤院、名录库前厅、中央厅，都有能坐一夜的地方。 [#id=chapter2.night_hint.002]
+
+======================================================================
+B2 · 玩家第二日（引擎第3日，翌日）：上课、读板、按时领粮、与同伴交谈
+======================================================================
+【操作顺序】清晨到中央厅读板并询问同处人物 → 上午到讲堂选“上课” → 午间后勤院领今天口粮 → 下午可询问、细看、帮助/转述 → 傍晚再读中央厅/乙区/丁区公告并领粮 → 夜里在 R-05 睡下。
+这些是普通生活时段，.story 没有为第二日写固定长对白；课程内容、人物位置/回应、张贴是否已到位随会话推理而变。下面列该时刻应去核对的规则原文；未到位时卡片是“板上什么也没贴。”，不据作者张贴意图断言已出现。
+沃德台账规：凡取用公物须登记于台账；无登记取用者视为私取。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:9]
+沃德夜规：私取之人（雀儿）入夜不得入后勤院。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:16]
+阮清越台账规：每日按人头分配，日末清点。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:31]
+沈鼎灶规：粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:57]
+维罗妮卡实物规：指控须有实物为证；取用须有记录。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:64]
+【条件未由 .story 单独确定】集中张贴是人物“打算贴”的时段，C# RoundHooks 给人物意图，再由人物走去张贴；实际地点/已接受规则/粮仓余额与亲疏决定后续。不能把全十六人的知情或站队写死。
+
+======================================================================
+B3 · 玩家第三日（引擎第4日）：病人、夜间规则，第三夜案件
+======================================================================
+【操作顺序】上午可继续上课；午间领粮；下午到诊疗所看病床、碗和药柜并询问茉拉；傍晚到配给台读茉拉夜规，再到中央厅核对沃德规则；夜里回床睡下，或在后勤院/中央厅/名录库前厅/起居厅“在这里守一夜”。本路线选睡下，避免把守夜见证写成玩家既知。
+【作者固定压力】第三日下午莫兰发烧并送诊疗所；这是 C# GameLoop.cs FixedBefore 的固定节点。怎样照顾、谁夜取、谁修门、谁被指控由人物行动推出。
+茉拉夜规：病者伤者优先。夜间急需可自取一份，次日告知。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:24]
+若此时当面看到病床，卡片原文：“莫兰躺着，额头很烫。”；若已退烧/不在病床，备选：“病床空着。” [来源：Chapter2/Prototype/Player.cs:523]
+若沃德对雀儿信任低到 -2 以下，傍晚可见原文：“傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。”；信任未到此门槛则不出现。 [来源：GameLoop.cs FixedBefore]
+【夜间不填答案】不提前宣称“茉拉取病粮、雀儿取自粮、雀儿修门”一定发生。案发记录 NightTruth、粮仓状态、夜巡 Sightings 才决定第四日该说什么。
+
+======================================================================
+B4 · 玩家第四日早晨到下午（引擎第5日）：《少了一份》调查与重演
+======================================================================
+
+【场面 c2.dawn】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:102]
+（清晨。铜口把众人又叫到了中央厅。阮清越拿着台账站在铜柱旁，沃德站在他身边。） [#id=chapter2.dawn.001]
+此后引擎会在中央厅结算一个清晨时段，向玩家显示真实 Feed。台账缺口与可能的公开指控文本均取运行状态。
+
+【场面 c2.no_accuse】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:116]
+【路线说明】仅 _game.Accused 为空时播放；有人已指控则不播放。
+侦探（心声）：账上有缺口，没有人站出来指认谁。这一回，没人先开口。 [#id=chapter2.no_accuse.001]
+
+【场面 c2.after】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:108]
+侦探（心声）：“昨夜，有人进过后勤院。”——它说的每个字都是真的。 [#id=chapter2.after.001]
+侦探（心声）：可“取了而不记”，就一定是偷？ [#id=chapter2.after.002]
+侦探（心声）：晚饭后对账，人人都会在这里。在那之前，先把账上的缺口查清楚。 [#id=chapter2.after.004]
+【操作顺序】后勤院检视台账及粮仓门闩，读配给台公告 → 诊疗所查看碗与病床 → 甲区先查废纸篓，必要时核对其他寝区 → 当面问贝尔特朗和玛格丽特，再问实际取粮/修门的可能人物 → 开 R 手稿，按看见的痕迹和各人接受规矩的证言重演。每个“看/问”可慢慢做，不用凑时长。
+【动态卡片原文模板；条件未由 .story 单独确定】以下花括号是运行时计数/事实的可读占位，不能预填固定数量。
+台账：配给台累计发出 {累计发出} 份；夜间补记 {夜间补记} 份；阮清越的清点字迹：无记录取用×{无记录取用}。 [来源：Player.cs:520]
+存粮还剩 {份数} 份；门闩松动，一推就开。 / 存粮还剩 {份数} 份；门闩有新的工具痕，已经紧固。 / 存粮还剩 {份数} 份；门闩完好。 [来源：Player.cs:519]
+莫兰床边一只空碗，碗底有粥渍。 / 莫兰床边一只空碗，碗底有粥渍；另有一碗粥还温着。 / 碗是干净的。 [来源：Player.cs:521]
+废纸篓里有一份口粮的包纸和饼屑。 / 废纸篓刚被人倒空过；篓底还粘着几粒饼屑和一角口粮包纸。 / 废纸篓里只有废纸。 [来源：Player.cs:538]
+
+【场面 c2.replay_unlock】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:122]
+【路线说明】案发日以后首次检视台账才解锁续篇重演。
+侦探（心声）：台账上的缺口，落在一夜之间。 [#id=chapter2.replay_unlock.001]
+侦探（心声）：那一夜每个人读过哪条规矩、认了哪条，各自就会照着去做。……把那一夜重演一遍。 [#id=chapter2.replay_unlock.002]
+侦探（心声）：（按 R 打开重演手稿。） [#id=chapter2.replay_unlock.003]
+【重演手稿原文】那一夜重演。作者提示：设定第 2 日夜里的处境与人心，让那一夜重演一次。谁做了什么，由各人自己的认知推出。 [来源：续篇/00_时间与文案.story:52–53]
+【源码核对】该提示仍写“第2日”，但当前案件 night=4，session 的重演使用 CaseNight；本路线不把旧提示当作实际案发日。动态表单从已知痕迹与 ReplayMenu 生成“{人}是否接受这条规矩”“{人}昨夜是否在{地}”，并有“暂不设定”。不得据旧四变量 Truth 强制固定操作序列。 [来源：InvestigationPresentation.cs:103–132；Chapter2InteractionSession.cs Replay]
+
+【场面 c2.replay_first】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:129]
+【路线说明】仅 after_replay.first 条件触发，不能保证本路线第一遍一定全吻合。
+侦探（心声）：墨影只看得出身量，看不出是谁。 [#id=chapter2.replay_first.001]
+侦探（心声）：冲突写的是痕迹之差。哪里对不上，就去哪里再看一眼，或者再问一个人。 [#id=chapter2.replay_first.002]
+
+【场面 c2.replay_match】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:134]
+【路线说明】若重演痕迹全吻合，按条件播放以下原文；这三句是作者文本，不保证玩家此前读全三板。
+侦探（心声）：……全对上了。 [#id=chapter2.replay_match.001]
+侦探（心声）：没有贼。同一件事，照茉拉的规矩是“急需自取，次日告知”；照沃德的规矩，是私取。 [#id=chapter2.replay_match.002]
+侦探（心声）：规矩贴在三块板上。没有人读过全部。 [#id=chapter2.replay_match.003]
+
+======================================================================
+B5 · 玩家第四日晚饭后：按真实行动完成对质，提议共同规则
+======================================================================
+
+【场面 c2.evening】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:140]
+（晚饭后。中央厅点起了灯。十五个人到了，莫兰还躺在诊疗所。） [#id=chapter2.evening.003]
+铜口：诸位要对账。我只旁听。 [#id=chapter2.evening.002]
+
+【场面 c2.confront_begin】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:147]
+侦探（心声）：一问一答。说一句，就拿出能支撑它的东西。 [#id=chapter2.confront_begin.001]
+【对质议程】第一问“台账上的缺口，有一份，是谁取的？为何取？”；有尚未答过的真实取用主张，再问“其余的呢？”；有人真实修门才问“夜里有人动过粮仓的门。”；最后“那台账上，为何不见记录？”。每一步先选事情，再选具体的人，再选“出示什么”。只有玩家已取到的证据列入出示菜单。
+【条件未由 .story 单独确定】以下按事实对应出示，{人}、{寝区}必须由实际案发记录与核验填入。没有该行动则略去该问，不能编造认罪。主路线不选择冤枉主张。
+
+主张候选：{人}夜里为病人取了一份 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/04_案件.story:70]
+反应：{人}：“是我取的。病人等不得。我本打算今早告知。”
+反应·茉拉：茉拉皱眉：“是我取的。莫兰烧得厉害。我本打算今早告知——今早走不开。”
+应核验的出示：诊疗所的空碗、配给台公告、{人}的说法
+
+主张候选：{人}照茉拉的规则自取了一份，打算次日告知 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/04_案件.story:76]
+反应：{人}：“板上写着急需可以自取。我打算今天说的。”
+反应·雀儿：雀儿别过脸：“板上写着急需可以自取。我打算今天说的。”
+应核验的出示：{人寝区}房中的饼屑、配给台公告、{人}的说法
+
+主张候选：{人}修好了粮仓门闩 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/04_案件.story:82]
+反应：{人}：“门闩松了，是我修的。”
+反应·雀儿：玛格丽特：“门闩是我请她修的。手艺很干净。”
+应核验的出示：粮仓门闩、玛格丽特的请托、{人}的说法
+
+主张候选：台账只记白天的领取，夜里的自取没有入账 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/04_案件.story:88]
+反应：阮清越：“台账只记配给台发出的。夜里的，我记不到。”
+应核验的出示：台账
+最后选“台账只记白天的领取，夜里的自取没有入账”，出示“台账”。其反应原文：阮清越：“台账只记配给台发出的。夜里的，我记不到。”
+
+【场面 c2.confront_rule】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:179]
+沃德：账上的疑处，诸位已听见。依据何在，今后如何？ [#id=chapter2.confront_rule.001]
+侦探（心声）：该提一条大家都能照着做的规矩了。 [#id=chapter2.confront_rule.002]
+“今后如何”菜单：急病夜取一份，次日补记；补记者不算私取。 / 入夜后，谁也不得入后勤院。 / 夜里取粮须两人在场，两人签名。 / 不提新规矩。
+【本路线选择】急病夜取一份，次日补记；补记者不算私取。
+下一问：“公开指控须附可检查的材料？”；选择标签：“提议共同规则”“不提议”。【本路线选择】提议共同规则。
+共同规则：公开指控须附可检查的材料。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:50]
+对质后洗清/迁出寝区、规则是否获足够接受、亲疏变化与 Feed 原文均由 C# Confront 结算；不能保证“人人已认可共同规则”。
+
+【场面 c2.whisper】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:186]
+（散场的时候，铜口没有出声。可走出中央厅的每一个人，脚步都慢了一点，像在听耳边有人说话。） [#id=chapter2.whisper.001]
+侦探（心声）：它又对每个人说了一遍那样东西。……今夜，名录库前厅不会太安静。 [#id=chapter2.whisper.002]
+【本路线收夜】回 R-05 “在这里睡到天亮”。其他人可能去名录库、应名、守机关或夜间开库；不得写他们一概睡着。
+
+======================================================================
+B6 · 玩家第五日清晨（引擎第6日）：名录库之议与终局
+======================================================================
+
+【场面 c2.council】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:193]
+（第五日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.007]
+铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
+沃德：我仍主张，凡事须有章程。名录库，由委员会保管。 [#id=chapter2.council.003]
+顾平章：回忆即上钩。老朽只一句：封着。 [#id=chapter2.council.004]
+霍铎：……图纸在里面。 [#id=chapter2.council.005]
+侦探（心声）：每个人会站到哪一边，昨天、前天就定下了大半。看他们这几天亲眼见过什么、饿没饿着、信谁。 [#id=chapter2.council.006]
+【名录库之议菜单】名录库须本人亲取，两人见证签名。 / 名录库只在白天开；本人亲取，记入台账。 / 不提新写法。
+【本路线提议】名录库须本人亲取，两人见证签名。
+【支持哪一条】
+开放取回方案：名录库各取其物：凡学员皆可取回己物。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:78]
+封闭不启方案：名录库封闭不启：回忆即上钩，谁也不开。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:84]
+委员会保管方案：名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:90]
+另列已提出的侦探方案，以及“不表态”。本路线支持自己的“名录库须本人亲取，两人见证签名。”。
+【条件未由 .story 单独确定】支持自己不保证侦探之约胜出。C# Council 首先检查是否已被夜间私占；否则据已接受方案、信任、饥饿、支持人数与三站机关人手选出结果。同票保留封门，开门方案须办得成。以下终局原文按该时刻条件列，不是声称本轮已实玩得到它。
+议会可能可见日志模板（Council.cs:123–206）：
+议事开始之前，名录库已经被打开过：{日名}夜里，{成员名单}（领头：{领头人}）各占一站，把门撬开了。没人记账，也没人见证。
+第五日早晨，粮仓还有 {份数} 份，人人吃上了早饭。
+第五日早晨，粮仓只剩 {份数} 份，{掌粮人}按人头分不过来：{名单}没吃上早饭。{有掌粮派系时：饿着的人多半跟着掌粮的人那一边（{去向}）。}
+{人}：哪个方案都不肯认 / {人}站到了「{方案短名}」一边。
+【{去向}】{人数} 人：{名单}
+【{第一去向}】与【{第二去向}】各 {人数} 人，谁也没说服谁。门照旧封着。
+最多的人选择不开。名录库封闭不启。
+【{去向}】办得成：{三站检查结果}。门开了。 / 【{去向}】支持者凑不齐机关：{三站检查结果}。
+没有一方凑得齐三站。名录库只好封着。
+若侦探本人亲取/两人见证方案被采用且办得成：门开了。每个进去的人身后都站着两个见证的人，在门边的纸上签了名。本人亲取：每人只拿标着自己名字的那一只。
+若委员会保管方案采用：沃德拿着钥匙站在门边，{名单}排着队，一个一个登记、一个一个进去。
+若开放各取方案采用：门一开，{名单}就涌了进去，没人记账，也没人等谁。
+侦探的封存匣标签上写着侦探的名字。念出来，匣子没有应。铜口没有出声。
+
+【场面 c2.box】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:204]
+【路线说明】结果不是 Sealed 时由 FinishCouncil 接此场面（包括 NightSeized）。本路线默认名代入。
+（库门开了。十六只封存匣排在四座架上，每只贴着名字。） [#id=chapter2.box.001]
+侦探（心声）：我的名字。在第三座架子上，第二格。 [#id=chapter2.box.002]
+侦探：侦探。 [#id=chapter2.box.003]
+（匣子没有动。） [#id=chapter2.box.004]
+侦探：……侦探。 [#id=chapter2.box.005]
+（铜口里没有声音。它向来有问必答，这一回没有人问，它也就不说。） [#id=chapter2.box.006]
+侦探（心声）：匣子认得它的主人。它不认我。 [#id=chapter2.box.007]
+侦探（心声）：那么，是谁的？ [#id=chapter2.box.008]
+
+【场面 c2.sealed】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:217]
+【路线说明】结果为 Sealed 时改播放这个场面，互斥于 box。
+（名录库没有开。十六只封存匣留在门后。） [#id=chapter2.sealed.001]
+侦探（心声）：我的名字也在门后。是不是我的，今天没人知道。 [#id=chapter2.sealed.002]
+【终局去向原文】
+各取其物：开放取回 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:145]
+委员会保管（沃德主导） [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:146]
+封闭不启（顾平章、茉拉主导） [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:147]
+侦探之约 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:148]
+被某派系夜间私占 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:149]
+未决 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story:150]
+【终局人物说明模板】没有人被当众指控 / {人}洗清了冤屈，住回寝区 / {人}被当成私取之人，搬出寝区独宿 / {人}的事没有人再提。
+侦探钩数、人物钩名单、共同规则是否成立、案件规则正文、各人的站队与印象须读取真实结算，不能用选择“不主动回忆”预填零或固定名单。 [来源：Chapter2InteractionSession.cs:537–550]
+
+======================================================================
+附录 I · 主路线之外的自由调查卡与可选核验（不作为通关前提）
+======================================================================
+
+【检视 E10 · 酵种罐】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:155]
+来源：备餐间 · 碗柜上
+现象：
+罐里的酵种还活着，冒着细泡。
+罐壁上一层摞一层干结的旧面痕，数不清。
+可选标签：请沈鼎看看
+可选标签：返回现场
+另有触碰回想选项；本路线不主动选择。相关低语及可能的自主回忆原文见附录。
+
+【检视 E11 · 架上的无尘方框】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:170]
+来源：R-05 至 R-08 · 书架
+现象：
+四间宿舍的书架都积着灰。灰上留着几块干净的长方形，边缘整齐。
+R-05 的架沿上有半枚手印。
+可选标签：比对手掌轮廓
+可选标签：返回现场
+
+【检视 L6 · 床头的挂钩】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:194]
+现象：
+床头墙上钉着一枚铁钩。钩上缠着一圈发黑的机油布，钩下的墙皮蹭出一道油印。
+要挂很多回，才蹭得出这样一道印子。
+可选标签：返回现场
+
+【检视 L7 · 桌上的磨刀石】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/证物.story:203]
+现象：
+书桌上一块磨刀石，中间磨得凹下去一道深槽，槽边泛着铁色。
+一天两天，磨不出这样的槽。
+可选标签：返回现场
+
+【场面 help_E10】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:40]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+沈鼎：（转着罐子，看罐壁上一层层干结的旧面痕） [#id=help_E10.001]
+沈鼎：是我喂的。续种，刮壁，盖布——这手法我认得。 [#id=help_E10.002]
+沈鼎：罐里是活的。没人喂，三天就塌了。 [#id=help_E10.003]
+沈鼎：……这罐子，不是昨天才养的。 [#id=help_E10.004]
+
+【场面 help_E11】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:47]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+（你看着架沿的半枚手印。还需要在这里逐人核验四个人的手掌。） [#id=help_E11.001]
+
+【场面 help_E11_detective】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:51]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+侦探：（把自己的手掌停在 R-05 架沿的痕迹旁，没有碰灰。） [#id=help_E11_detective.001]
+（半枚手印比你的手掌窄。这次只记下你自己的掌缘。） [#id=help_E11_detective.002]
+
+【场面 help_E11_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:56]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+霍铎：（把手掌停在半枚手印旁，没有碰灰。）宽。 [#id=help_E11_huo.001]
+（你记下霍铎的掌缘：比这枚手印宽。） [#id=help_E11_huo.002]
+
+【场面 help_E11_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:61]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+沈鼎：（在半枚手印旁摊开手掌，没有碰灰。）……我的太宽了。 [#id=help_E11_shen.001]
+（你记下沈鼎的掌缘：比这枚手印宽。） [#id=help_E11_shen.002]
+
+【场面 help_E11_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story:66]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+苏泠：（把手掌停在半枚手印旁，没有碰灰。）我的也比这枚手印宽。 [#id=help_E11_su.001]
+（你记下苏泠的掌缘：比这枚手印宽。） [#id=help_E11_su.002]
+
+【场面 s10_hand】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:71]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+侦探（心声）：鞋底窄。……架上那半枚手印，也窄。 [#id=s10_hand.001]
+选择：
+- （对着铜口）“架上的手印，是你的吗？” [#id=s10_hand.002]
+侦探：架上的手印，是你的吗？ [#id=s10_hand.003]
+铜口：是。诸位封存之物，是我取走的。 [#id=s10_hand.006]
+- 不问。 [#id=s10_hand.005]
+
+【场面 sole_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:1]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+霍铎：（抬起一只脚，鞋底朝你） [#id=sole_huo.001]
+（厚底工装靴，粗齿纹。比灰上那枚宽了一指。） [#id=sole_huo.002]
+
+【场面 sole_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:6]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+沈鼎：看鞋？行。（把布鞋翻过来）千层底，自己纳的。 [#id=sole_shen.001]
+（布底没有纹。灰上那枚，纹路清清楚楚。） [#id=sole_shen.002]
+
+【场面 sole_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:11]
+【路线说明】可选交互。E11 须本人在 R-05 架沿，与实际到场且空闲的人逐人比对；四人比完才记完成。
+苏泠：（犹豫了一下，抬起脚） [#id=sole_su.001]
+（软底小皮鞋，比灰上那枚短了一截。） [#id=sole_su.002]
+E12 若在 E7 后重看才追加原文：“这个圆框带短柄的样子，与石板第二行的小图相同。” [来源：Chapter1Script.cs:309]
+
+======================================================================
+附录 II · 人物交谈、自主伸手与旧物回忆：在实际发生的时刻插入
+======================================================================
+无主动回忆路线只说明玩家没选择触碰；自主取舍的各条件由人物认知、忙闲、信任、意愿与钩决定。以下保留条件与选择原文，不能视作一串必定全出现的对白。
+
+【场面 talk_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:11]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 知道("huo", "侦探重演吻合")：】
+霍铎：你推完了。……我在这儿守了很久，是不是。 [#id=talk_huo.001]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 知道("huo", "侦探在重演昨夜")：】
+霍铎：你在推昨晚。推出什么，跟我说。 [#id=talk_huo.002]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 旗("met_huo")：】
+霍铎：嗯。 [#id=talk_huo.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+霍铎：……什么事。 [#id=talk_huo.004]
+
+【场面 talk_huo_menu】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:23]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+霍铎：你问。 [#id=talk_huo_menu.001]
+选择：
+- 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_huo_menu.002]
+条件：见过("E11")
+- 这个铜口是什么？ [#id=talk_huo_menu.003]
+霍铎：传声口。主楼那边说话，这边听。图纸上这么画。 [#id=talk_huo_menu.004]
+霍铎：管子往门厅走。我看过墙。 [#id=talk_huo_menu.005]
+- 那根铜管的接头。 [#id=talk_huo_menu.006]
+条件：见过("E8")
+霍铎：两个接头都松了。一个在门框边，一个在 R-08 墙上。螺纹滑过。 [#id=talk_huo_menu.007]
+霍铎：管子里说话，松的地方会漏。漏出来多少，漏出来什么——得试。 [#id=talk_huo_menu.008]
+- 那扇门是怎么关的？ [#id=talk_huo_menu.009]
+条件：见过("E1")
+霍铎：配重。门往外开，松手，配重拉它回来，自己合上。 [#id=talk_huo_menu.010]
+霍铎：不撑东西，开不住。 [#id=talk_huo_menu.011]
+- 石板上的字。 [#id=talk_huo_menu.012]
+条件：见过("E7")
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 问过("E7")：】
+霍铎：是我的字。我说了。……那个小图，我认不出。 [#id=talk_huo_menu.013]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+霍铎：石板？在长桌上？我没注意。你拿给我看。 [#id=talk_huo_menu.014]
+- 门是我闩的。 [#id=talk_huo_menu.015]
+条件：旗("reversal_one")
+霍铎：……你闩的。 [#id=talk_huo_menu.016]
+霍铎：闩门，不难。手一推。难的是推之前那一下。 [#id=talk_huo_menu.017]
+霍铎：你那一下，听的是谁，我不知道。 [#id=talk_huo_menu.018]
+- ◎ 是什么？ [#id=talk_huo_menu.019]
+条件：回想过("huo")
+霍铎：铜口。图纸上，传声口画这个。我早该认出来。 [#id=talk_huo_menu.020]
+霍铎：他叫我守。我就守。守到天亮，没有下一次。 [#id=talk_huo_menu.021]
+- 我们在这里很久了。 [#id=talk_huo_menu.022]
+条件：把握("detective", "早已相熟") >= 75
+- 昨晚你在哪？ [#id=talk_huo_menu.026]
+霍铎：不记得。只记得上船。 [#id=talk_huo_menu.027]
+- 没事了。 [#id=talk_huo_menu.028]
+
+【场面 talk_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:72]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 知道("shen", "侦探重演吻合")：】
+沈鼎：推明白了？脸色比早上好。……坐，喝口茶。 [#id=talk_shen.001]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 知道("shen", "侦探在重演昨夜")：】
+沈鼎：在推昨晚的事？推到我那块布了没有？ [#id=talk_shen.002]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 旗("met_shen")：】
+沈鼎：又来了？饿了说一声。 [#id=talk_shen.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+沈鼎：来得正好。水够，粮够，够我们吃半个月。这是头一件事。 [#id=talk_shen.004]
+
+【场面 talk_shen_menu】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:84]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+沈鼎：想问什么？ [#id=talk_shen_menu.001]
+选择：
+- 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_shen_menu.002]
+条件：见过("E11")
+- 你泡茶的时候，怎么知道她不加糖？ [#id=talk_shen_menu.003]
+沈鼎：顺手。真是顺手。手比脑子快，跟颠勺一样。 [#id=talk_shen_menu.004]
+沈鼎：别看我。我也纳闷。 [#id=talk_shen_menu.005]
+- 门底那条湿布。 [#id=talk_shen_menu.006]
+条件：见过("E4")
+沈鼎：堵烟缝，湿布最好。船上一着火，先堵门缝，再说别的。 [#id=talk_shen_menu.007]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 问过("E4")：】
+沈鼎：那是我拧的。我认。可我不记得拧过。 [#id=talk_shen_menu.008]
+- 架上那罐酵种。 [#id=talk_shen_menu.009]
+条件：见过("E10")
+沈鼎：活的。有人天天喂它。 [#id=talk_shen_menu.010]
+沈鼎：这岛上除了我，谁会天天喂酵种？ [#id=talk_shen_menu.011]
+- 水槽里的杯子。 [#id=talk_shen_menu.012]
+条件：见过("E9")
+沈鼎：四只，四个样。用过，没洗。 [#id=talk_shen_menu.013]
+沈鼎：我要是在，不会让杯子过夜。……除非那晚顾不上。 [#id=talk_shen_menu.014]
+- 门是我闩的。 [#id=talk_shen_menu.015]
+条件：旗("reversal_one")
+沈鼎：你闩的？那你闩之前，门是开着的。 [#id=talk_shen_menu.016]
+沈鼎：跟你说个行里的门道：门缝开着，湿布是往缝里塞的；门关死了，才顺着门底压一条。 [#id=talk_shen_menu.017]
+沈鼎：我那块布，是顺着压的。 [#id=talk_shen_menu.018]
+- 铜口那边的声音。 [#id=talk_shen_menu.019]
+条件：试过("E8")
+沈鼎：我在备餐间只听见嗡嗡的，像隔壁有人念经。 [#id=talk_shen_menu.020]
+沈鼎：水一开，连嗡嗡都没了。灶台前的人，耳朵是聋的。 [#id=talk_shen_menu.021]
+- 罐壁上那些面痕。 [#id=talk_shen_menu.022]
+条件：把握("detective", "早已相熟") >= 75
+- 昨晚你在哪？ [#id=talk_shen_menu.026]
+沈鼎：不记得。 [#id=talk_shen_menu.027]
+沈鼎：可我这两条胳膊，早上起来是酸的。像揉了半宿的面。 [#id=talk_shen_menu.028]
+- 没事了。 [#id=talk_shen_menu.029]
+沈鼎：去吧。饭点叫你。 [#id=talk_shen_menu.030]
+
+【场面 talk_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:134]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 知道("su", "侦探重演吻合")：】
+苏泠：……你都推出来了。我听得出来，你走路的声音变了。 [#id=talk_su.001]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 知道("su", "侦探在重演昨夜")：】
+苏泠：你在推昨晚。……推到我开门那里了吗。 [#id=talk_su.002]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 旗("met_su")：】
+苏泠：……嗯。 [#id=talk_su.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+苏泠：（她靠在门厅的墙边，侧着头，像在听什么） [#id=talk_su.004]
+苏泠：墙里有声音。很低，一直在。 [#id=talk_su.005]
+
+【场面 talk_su_menu】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story:147]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+苏泠：你要问什么。 [#id=talk_su_menu.001]
+选择：
+- 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_su_menu.002]
+条件：见过("E11")
+- 墙里的声音？ [#id=talk_su_menu.003]
+苏泠：像风吹过瓶口。又不是风。 [#id=talk_su_menu.004]
+苏泠：门那边没有声音。我早上贴着门听过。一点都没有。 [#id=talk_su_menu.005]
+- 那把音叉。 [#id=talk_su_menu.006]
+条件：见过("E5")
+苏泠：是我的。我走到哪儿都带着。 [#id=talk_su_menu.007]
+苏泠：敲一下，听回声，就知道墙后面是实的还是空的。 [#id=talk_su_menu.008]
+- 你的乐谱。 [#id=talk_su_menu.009]
+条件：见过("E6")
+苏泠：我记下的，就是我听见的。一个音都不会多。 [#id=talk_su_menu.010]
+苏泠：我不知道我什么时候记的。……但那是我的手。 [#id=talk_su_menu.011]
+- 那扇门。 [#id=talk_su_menu.012]
+条件：见过("E1")
+苏泠：门后面很静。 [#id=talk_su_menu.013]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 旗("reversal_one")：】
+苏泠：（她看着你的靴子，没有再说下去） [#id=talk_su_menu.014]
+- 门是我闩的。 [#id=talk_su_menu.015]
+条件：旗("reversal_one")
+苏泠：我知道。你的靴子上有灰。 [#id=talk_su_menu.016]
+苏泠：我没有怪你。 [#id=talk_su_menu.017]
+苏泠：我只是想知道，门外到底有没有人。 [#id=talk_su_menu.018]
+- 铜口试过的那句话。 [#id=talk_su_menu.019]
+条件：试过("E8")
+苏泠：门边那几个字，是从墙里出来的。现在我分得出。 [#id=talk_su_menu.020]
+苏泠：可要是半夜，铃在响，我刚放下琴……我不知道我分没分。 [#id=talk_su_menu.021]
+- 我们早就认识。 [#id=talk_su_menu.022]
+条件：把握("detective", "早已相熟") >= 75
+- 昨晚你在哪？ [#id=talk_su_menu.025]
+苏泠：不记得。 [#id=talk_su_menu.026]
+苏泠：……别人问我，我也是这一句。 [#id=talk_su_menu.027]
+- 没事了。 [#id=talk_su_menu.028]
+
+【场面 alone_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:55]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 独处选择("huo") == "touch"：】
+霍铎：我想起了一点。 [#id=alone_huo.001]
+霍铎：{{片段("huo")}} [#id=alone_huo.002]
+霍铎：那块石板……我刚才一个人碰的。 [#id=alone_huo.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+霍铎：刚才去看了看石板。没碰。 [#id=alone_huo.004]
+霍铎：{{生活所思("huo")}} [#id=alone_huo.005]
+
+【场面 alone_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:66]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 独处选择("su") == "touch"：】
+苏泠：……我想起了一点。 [#id=alone_su.001]
+苏泠：{{片段("su")}} [#id=alone_su.002]
+苏泠：你不在。我自己握的。 [#id=alone_su.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+苏泠：我去拿过那把音叉。……又放下了。 [#id=alone_su.004]
+苏泠：{{生活所思("su")}} [#id=alone_su.005]
+
+【场面 alone_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:77]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 独处选择("shen") == "touch"：】
+沈鼎：我想起了一点。 [#id=alone_shen.001]
+沈鼎：{{片段("shen")}} [#id=alone_shen.002]
+沈鼎：罐子是我自己端的。没人劝，也没人拦。 [#id=alone_shen.003]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+沈鼎：我把罐子端起来，又放回去了。 [#id=alone_shen.004]
+沈鼎：{{生活所思("shen")}} [#id=alone_shen.005]
+
+【场面 reach_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:16]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+（霍铎走到长桌边，拿起了那块石板。他盯着上面的字，拇指慢慢压上粉笔印。） [#id=reach_huo.001]
+霍铎：{{生活所思("huo")}} [#id=reach_huo.002]
+选择：
+- （劝阻）“别碰。” [#id=reach_huo.003]
+侦探：别碰。 [#id=reach_huo.004]
+- （指着公告框）“守则第 1 条。” [#id=reach_huo.005]
+侦探：公告框上的第一条，你看过没有。 [#id=reach_huo.006]
+- （不出声，任他自便） [#id=reach_huo.007]
+
+【场面 reach_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:29]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+（苏泠在门框旁蹲下，拾起了那把音叉。她把它举到耳边，没有敲。） [#id=reach_su.001]
+苏泠：{{生活所思("su")}} [#id=reach_su.002]
+选择：
+- （劝阻）“别碰。” [#id=reach_su.003]
+侦探：别碰。 [#id=reach_su.004]
+- （指着公告框）“守则第 1 条。” [#id=reach_su.005]
+侦探：公告框上的第一条，你看过没有。 [#id=reach_su.006]
+- （不出声，任她自便） [#id=reach_su.007]
+
+【场面 reach_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/09_鞋底伸手与独处.story:42]
+【路线说明】可选/条件交谈，不是主线路线的必做步骤。
+（沈鼎从架上端起酵种罐，拇指搭在罐壁的面痕上。） [#id=reach_shen.001]
+沈鼎：{{生活所思("shen")}} [#id=reach_shen.002]
+选择：
+- （劝阻）“别碰。” [#id=reach_shen.003]
+侦探：别碰。 [#id=reach_shen.004]
+- （指着公告框）“守则第 1 条。” [#id=reach_shen.005]
+侦探：公告框上的第一条，你看过没有。 [#id=reach_shen.006]
+- （不出声，任他自便） [#id=reach_shen.007]
+
+【场面 nudge_E10】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:16]
+【路线说明】条件发生才显示；选项只选择其中一支。
+铜口：（远远地）沈师傅，你护过的每一个人，那罐子都替你记着。你就不想知道，是谁？ [#id=nudge_E10.001]
+
+【场面 recall_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:21]
+【路线说明】条件发生才显示；选项只选择其中一支。
+（她闭上眼。很久。） [#id=recall_su.001]
+苏泠：门边……有人在喊开门。 [#id=recall_su.002]
+苏泠：我想开门，让他进来。 [#id=recall_su.003]
+（她睁开眼，脸色发白。） [#id=recall_su.004]
+苏泠：那个声音，我当时以为……是门外的人。 [#id=recall_su.005]
+铜口：物件记得的，比人久，{{称呼("su")}}。 [#id=recall_su.006]
+
+【场面 recall_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:30]
+【路线说明】条件发生才显示；选项只选择其中一支。
+（粉笔灰沾了他一手。） [#id=recall_huo.001]
+霍铎：铜口里的声音……很清楚。 [#id=recall_huo.002]
+霍铎：“等我下一次通知。”◎，铜口。他叫我守铜口。 [#id=recall_huo.003]
+霍铎：……他再也没有来。 [#id=recall_huo.004]
+铜口：物件记得的，比人久，{{称呼("huo")}}。 [#id=recall_huo.005]
+
+【场面 recall_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:38]
+【路线说明】条件发生才显示；选项只选择其中一支。
+（他的拇指摸过罐壁上一层层干结的面痕。） [#id=recall_shen.001]
+沈鼎：又该喂了。 [#id=recall_shen.002]
+沈鼎：阿泠的茶不放糖。老霍的放两勺。那位——（他看了你一眼）——清茶，不放奶。 [#id=recall_shen.003]
+沈鼎：……我叫她阿泠。我怎么会叫她阿泠。 [#id=recall_shen.004]
+铜口：物件记得的，比人久，{{称呼("shen")}}。 [#id=recall_shen.005]
+
+【场面 recall_offer_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:46]
+【路线说明】条件发生才显示；选项只选择其中一支。
+苏泠：（她低头看着音叉）……握着它，回想昨晚？ [#id=recall_offer_su.001]
+选择：
+- 把公告框上的守则第 1 条指给她看。 [#id=recall_offer_su.002]
+- 什么都不说。 [#id=recall_offer_su.003]
+
+【场面 recall_shown_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:54]
+【路线说明】条件发生才显示；选项只选择其中一支。
+苏泠：（她读出声来）“封存之物，可凭对应之物寻回；寻回者，自负其果。” [#id=recall_shown_su.001]
+苏泠：自负其果。……什么果？ [#id=recall_shown_su.002]
+
+【场面 recall_touch_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:59]
+【路线说明】条件发生才显示；选项只选择其中一支。
+苏泠：{{回想所思()}} [#id=recall_touch_su.001]
+（她把音叉握进掌心。） [#id=recall_touch_su.002]
+
+【场面 recall_refuse_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:64]
+【路线说明】条件发生才显示；选项只选择其中一支。
+苏泠：{{回想所思()}} [#id=recall_refuse_su.001]
+（她把音叉放回原处，手指在柄上停了一下。） [#id=recall_refuse_su.002]
+
+【场面 recall_hesitate_su】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:69]
+【路线说明】条件发生才显示；选项只选择其中一支。
+苏泠：{{回想所思()}} [#id=recall_hesitate_su.001]
+苏泠：……你说呢？ [#id=recall_hesitate_su.002]
+选择：
+- 劝她碰。 [#id=recall_hesitate_su.003]
+侦探：碰吧。我在边上。 [#id=recall_hesitate_su.004]
+- 劝她别碰。 [#id=recall_hesitate_su.005]
+侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_su.006]
+- 由她自己定。 [#id=recall_hesitate_su.007]
+侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_su.008]
+
+【场面 recall_offer_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:84]
+【路线说明】条件发生才显示；选项只选择其中一支。
+霍铎：摸着石板，想？ [#id=recall_offer_huo.001]
+选择：
+- 把公告框上的守则第 1 条指给他看。 [#id=recall_offer_huo.002]
+- 什么都不说。 [#id=recall_offer_huo.003]
+
+【场面 recall_shown_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:92]
+【路线说明】条件发生才显示；选项只选择其中一支。
+霍铎：（他一个字一个字地看）“寻回者，自负其果。” [#id=recall_shown_huo.001]
+霍铎：寻回。……像拆机器。拆开看了，就装不回原样。 [#id=recall_shown_huo.002]
+
+【场面 recall_touch_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:97]
+【路线说明】条件发生才显示；选项只选择其中一支。
+霍铎：{{回想所思()}} [#id=recall_touch_huo.001]
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 告知规则("huo")：】
+霍铎：我读了。果，我自己担。 [#id=recall_touch_huo.002]
+（他把手掌平放在石板上。） [#id=recall_touch_huo.003]
+
+【场面 recall_refuse_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:104]
+【路线说明】条件发生才显示；选项只选择其中一支。
+霍铎：{{回想所思()}} [#id=recall_refuse_huo.001]
+霍铎：不碰。 [#id=recall_refuse_huo.002]
+
+【场面 recall_hesitate_huo】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:109]
+【路线说明】条件发生才显示；选项只选择其中一支。
+霍铎：{{回想所思()}} [#id=recall_hesitate_huo.001]
+霍铎：……你说呢？ [#id=recall_hesitate_huo.002]
+选择：
+- 劝他碰。 [#id=recall_hesitate_huo.003]
+侦探：碰吧。我在边上。 [#id=recall_hesitate_huo.004]
+- 劝他别碰。 [#id=recall_hesitate_huo.005]
+侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_huo.006]
+- 由他自己定。 [#id=recall_hesitate_huo.007]
+侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_huo.008]
+
+【场面 recall_offer_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:124]
+【路线说明】条件发生才显示；选项只选择其中一支。
+沈鼎：摸着罐子想事？我这辈子摸过的罐子比你见过的人多。 [#id=recall_offer_shen.001]
+选择：
+- 把公告框上的守则第 1 条指给他看。 [#id=recall_offer_shen.002]
+- 什么都不说。 [#id=recall_offer_shen.003]
+
+【场面 recall_shown_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:132]
+【路线说明】条件发生才显示；选项只选择其中一支。
+沈鼎：（他眯着眼念）“寻回者，自负其果。” [#id=recall_shown_shen.001]
+沈鼎：自负其果。这四个字，跑江湖的都认得。 [#id=recall_shown_shen.002]
+
+【场面 recall_touch_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:137]
+【路线说明】条件发生才显示；选项只选择其中一支。
+沈鼎：{{回想所思()}} [#id=recall_touch_shen.001]
+（他两只手捧起罐子。） [#id=recall_touch_shen.002]
+
+【场面 recall_refuse_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:142]
+【路线说明】条件发生才显示；选项只选择其中一支。
+沈鼎：{{回想所思()}} [#id=recall_refuse_shen.001]
+沈鼎：罐子我照样喂。回想就免了。 [#id=recall_refuse_shen.002]
+
+【场面 recall_hesitate_shen】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:147]
+【路线说明】条件发生才显示；选项只选择其中一支。
+沈鼎：{{回想所思()}} [#id=recall_hesitate_shen.001]
+沈鼎：罐子是我的。可这事……你说呢？ [#id=recall_hesitate_shen.002]
+选择：
+- 劝他碰。 [#id=recall_hesitate_shen.003]
+侦探：碰吧。我在边上。 [#id=recall_hesitate_shen.004]
+- 劝他别碰。 [#id=recall_hesitate_shen.005]
+侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_shen.006]
+- 由他自己定。 [#id=recall_hesitate_shen.007]
+侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_shen.008]
+
+【场面 recall_ask_detective】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:162]
+【路线说明】条件发生才显示；选项只选择其中一支。
+铜口：闩就在阁下手边。碰一碰，便知道它记得什么。 [#id=recall_ask_detective.001]
+铜口：不妨一试，{{称呼("detective")}}。 [#id=recall_ask_detective.002]
+选择：
+- 触碰插闩。 [#id=recall_ask_detective.003]
+侦探：…… [#id=recall_ask_detective.004]
+- 不。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
+侦探：我只信接触面、先后和形变。别的，等我证明了再说。 [#id=recall_ask_detective.006]
+铜口：随阁下。 [#id=recall_ask_detective.007]
+
+【场面 recall_detective】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story:174]
+【路线说明】条件发生才显示；选项只选择其中一支。
+（铁闩是凉的。指腹压上去的一瞬，有什么东西从很远的地方回来了。） [#id=recall_detective.001]
+侦探（心声）：霍铎说闩。我就闩了。……我信他。 [#id=recall_detective.002]
+侦探（心声）：一句转述，我就去闩了门。我凭的是什么？ [#id=recall_detective.003]
+铜口：物件记得的，比人久，{{称呼("detective")}}。 [#id=recall_detective.004]
+
+【话题回应原文：同一话题只显示人物言语策略选中的一个回应】
+话题 早已相熟 [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:5]
+回应 霍铎： [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:7]
+如实·有把握：嗯。 [#id=talk_huo_menu.023] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:8]
+我在石板上画人，画他手里的家伙。我画了放大镜。 [#id=talk_huo_menu.024] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:9]
+我认得你。只是忘了。 [#id=talk_huo_menu.025] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:10]
+如实·没把握：说不准。 [#id=topic.早已相熟.001] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:11]
+手认得的东西，比脑子多。 [#id=topic.早已相熟.002] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:12]
+如实·否认：昨天才见。我只记得上船。 [#id=topic.早已相熟.003] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:13]
+回应 沈鼎： [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:14]
+如实·有把握：一层面痕，就是喂过一回。我数不过来。 [#id=talk_shen_menu.023] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:15]
+你们的口味，我记在手上，没记在脑子里。 [#id=talk_shen_menu.024] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:16]
+……也好。脑子会被人拿走，手拿不走。 [#id=talk_shen_menu.025] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:17]
+如实·没把握：一层面痕，就是喂过一回。 [#id=topic.早已相熟.004] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:18]
+可喂罐子的是我，喝茶的是谁，罐子不说。 [#id=topic.早已相熟.005] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:19]
+如实·否认：罐子是老的，人是今早才认的。两回事。 [#id=topic.早已相熟.006] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:20]
+回应 苏泠： [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:21]
+如实·有把握：沈鼎不给我放糖。他知道。 [#id=talk_su_menu.023] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:22]
+……我也知道你。想不起来，可是知道。 [#id=talk_su_menu.024] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:23]
+如实·没把握：……我说不上来。 [#id=topic.早已相熟.007] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:24]
+可那杯茶，他没问就没放糖。 [#id=topic.早已相熟.008] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:25]
+如实·否认：我只认得今天早上的你们。 [#id=topic.早已相熟.009] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:26]
+回应 任何人： [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:27]
+如实·没把握：说不上来。 [#id=topic.早已相熟.010] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:28]
+含糊：这事……以后再说。 [#id=topic.早已相熟.011] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:29]
+反问：你为什么这么问？ [#id=topic.早已相熟.012] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:30]
+隐瞒：（目光移开了，没有接话。） [#id=topic.早已相熟.013] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:31]
+拒绝：（没有回答。） [#id=topic.早已相熟.014] [来源：godot_csharp/scenes/Awakening/Script/story/第一章/话题.story:32]
+
+【续篇当面询问的作者回应：条件未由 .story 单独确定】
+回应 huo_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:23]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:26]
+霍铎：你问。我答。能答的。 [#id=chapter2.huo_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:27]
+回应 huo_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:29]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:32]
+霍铎：问吧。看到的，我说。 [#id=chapter2.huo_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:33]
+回应 huo_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:35]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:38]
+霍铎：你先说。为什么问我。 [#id=chapter2.huo_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:39]
+回应 huo_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:41]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:44]
+霍铎：不谈。那一页，不动。 [#id=chapter2.huo_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:45]
+回应 shen_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:47]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:50]
+沈鼎：来，坐下说，锅里还热着。我晓得的，都讲给你听。 [#id=chapter2.shen_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:51]
+回应 shen_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:53]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:56]
+沈鼎：你问吧，我看到什么说什么。 [#id=chapter2.shen_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:57]
+回应 shen_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:59]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:62]
+沈鼎：先说说，你问这个做什么。我话讲一半，火候到了再添。 [#id=chapter2.shen_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:63]
+回应 shen_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:65]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:68]
+沈鼎：这事我不讲。谁拦着人吃饭，我就不帮他添柴。 [#id=chapter2.shen_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:69]
+回应 su_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:71]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:74]
+苏泠：我听到什么，就说什么。你问吧，我不会漏掉音。 [#id=chapter2.su_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:75]
+回应 su_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:77]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:80]
+苏泠：你问。我只说听到的。 [#id=chapter2.su_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:81]
+回应 su_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:83]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:86]
+苏泠：先说你要听哪一段。我不加音，也不减。 [#id=chapter2.su_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:87]
+回应 su_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:89]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:92]
+苏泠：不说。话只冲着一个人去，我不会替它出声。 [#id=chapter2.su_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:93]
+回应 lucian_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:95]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:98]
+卢西安：亲爱的侦探，请讲。我所见所闻，皆愿奉上，如晨露不吝于草叶。 [#id=chapter2.lucian_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:99]
+回应 lucian_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:101]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:104]
+卢西安：请问吧。我记得多少，便说多少。 [#id=chapter2.lucian_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:105]
+回应 lucian_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:107]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:110]
+卢西安：你先说，是谁让你来问的。我只肯说一小半。 [#id=chapter2.lucian_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:111]
+回应 lucian_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:113]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:116]
+卢西安：恕我不答。把规矩磨成刀，去割弱者，我不奉陪。 [#id=chapter2.lucian_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:117]
+回应 gu_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:119]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:122]
+顾平章：老朽所知，尽可相告。请坐，慢慢说。 [#id=chapter2.gu_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:123]
+回应 gu_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:125]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:128]
+顾平章：你问吧，老朽知道多少，说多少。 [#id=chapter2.gu_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:129]
+回应 gu_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:131]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:134]
+顾平章：先说说，所为何事。老朽只能言其大略。 [#id=chapter2.gu_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:135]
+回应 gu_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:137]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:140]
+顾平章：不可说。忌讳之事，岂能轻动。 [#id=chapter2.gu_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:141]
+回应 quer_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:143]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:146]
+雀儿：行，你问。别绕，我也不绕，看到啥说啥。 [#id=chapter2.quer_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:147]
+回应 quer_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:149]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:152]
+雀儿：问吧。我看见的，就这些。 [#id=chapter2.quer_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:153]
+回应 quer_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:155]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:158]
+雀儿：你先说，问这个干嘛。我就说一点点。 [#id=chapter2.quer_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:159]
+回应 quer_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:161]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:164]
+雀儿：没门。你们那套抓人的规矩，我不陪。 [#id=chapter2.quer_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:165]
+回应 ward_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:167]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:170]
+沃德：依据我所知，可以向你说明。请问吧，我知无不言。 [#id=chapter2.ward_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:171]
+回应 ward_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:173]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:176]
+沃德：请问。我就所知范围答复。 [#id=chapter2.ward_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:177]
+回应 ward_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:179]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:182]
+沃德：请先说明目的。在此之前，我只陈述最低限度。 [#id=chapter2.ward_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:183]
+回应 ward_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:185]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:188]
+沃德：不予答复。没有记录，我不作任何陈述。 [#id=chapter2.ward_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:189]
+回应 selma_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:191]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:194]
+赛尔玛：问吧，我这就说。看到什么就说什么，像在林子里报路。 [#id=chapter2.selma_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:195]
+回应 selma_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:197]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:200]
+赛尔玛：你问。我说我看到的。 [#id=chapter2.selma_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:201]
+回应 selma_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:203]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:206]
+赛尔玛：先说清楚，你问这个干什么。我只讲看到的最小一块。 [#id=chapter2.selma_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:207]
+回应 selma_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:209]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:212]
+赛尔玛：不说。要我填一堆表才能开口，那就免了。 [#id=chapter2.selma_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:213]
+回应 ruan_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:215]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:218]
+阮清越：问。我给你全部。 [#id=chapter2.ruan_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:219]
+回应 ruan_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:221]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:224]
+阮清越：问。我答。 [#id=chapter2.ruan_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:225]
+回应 ruan_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:227]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:230]
+阮清越：为什么问。我只给一半。 [#id=chapter2.ruan_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:231]
+回应 ruan_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:233]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:236]
+阮清越：不说。没有记录的，算不清。 [#id=chapter2.ruan_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:237]
+回应 elena_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:239]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:242]
+伊莲娜：请讲，我很乐意回答。我所见所闻，都可以告诉你。 [#id=chapter2.elena_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:243]
+回应 elena_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:245]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:248]
+伊莲娜：请问。我会如实回答。 [#id=chapter2.elena_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:249]
+回应 elena_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:251]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:254]
+伊莲娜：请先说明来意。我只回答必要的部分。 [#id=chapter2.elena_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:255]
+回应 elena_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:257]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:260]
+伊莲娜：恕我不奉告。把人关在门外的话，我不说。 [#id=chapter2.elena_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:261]
+回应 moran_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:263]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:266]
+莫兰：……你问。我看到的，都是真的颜色。 [#id=chapter2.moran_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:267]
+回应 moran_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:269]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:272]
+莫兰：……问吧。我记得的颜色，说给你。 [#id=chapter2.moran_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:273]
+回应 moran_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:275]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:278]
+莫兰：……为什么。……我只说一点点灰。 [#id=chapter2.moran_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:279]
+回应 moran_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:281]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:284]
+莫兰：……不说。……那里，是黑的。 [#id=chapter2.moran_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:285]
+回应 veronica_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:287]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:290]
+维罗妮卡：可以。请提问，我会按观察记录逐条陈述。 [#id=chapter2.veronica_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:291]
+回应 veronica_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:293]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:296]
+维罗妮卡：请提问。我陈述观察结果。 [#id=chapter2.veronica_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:297]
+回应 veronica_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:299]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:302]
+维罗妮卡：请先说明问题。只陈述必要观察，不作推测。 [#id=chapter2.veronica_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:303]
+回应 veronica_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:305]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:308]
+维罗妮卡：拒绝。无法验证的指示，我不采信，也不转述。 [#id=chapter2.veronica_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:309]
+回应 bertrand_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:311]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:314]
+贝尔特朗：报告：愿意配合。请提问，所见所闻，如实陈述。 [#id=chapter2.bertrand_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:315]
+回应 bertrand_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:317]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:320]
+贝尔特朗：报告：请提问。我就所见回答。 [#id=chapter2.bertrand_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:321]
+回应 bertrand_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:323]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:326]
+贝尔特朗：报告：请先说明目的。只汇报最低限度。 [#id=chapter2.bertrand_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:327]
+回应 bertrand_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:329]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:332]
+贝尔特朗：报告：拒绝。我不听政客的号令，也不替他们开口。 [#id=chapter2.bertrand_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:333]
+回应 margaret_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:335]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:338]
+玛格丽特：可以。你问，我把受力点一项项指给你。 [#id=chapter2.margaret_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:339]
+回应 margaret_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:341]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:344]
+玛格丽特：你问。我说我量到的。 [#id=chapter2.margaret_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:345]
+回应 margaret_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:347]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:350]
+玛格丽特：先说你要查哪一处。我只讲我亲眼看到的一块。 [#id=chapter2.margaret_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:351]
+回应 margaret_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:353]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:356]
+玛格丽特：不说。结构没验之前，我不下结论，也不给你结论的材料。 [#id=chapter2.margaret_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:357]
+回应 mora_testimony_close [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:359]
+条件：侦探 信任 ≥ 2 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:362]
+茉拉：问，快点。我知道的都告诉你，别耽误病人。 [#id=chapter2.mora_testimony_close.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:363]
+回应 mora_testimony [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:365]
+条件：侦探 信任 = 1 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:368]
+茉拉：问。我答。 [#id=chapter2.mora_testimony.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:369]
+回应 mora_testimony_guarded [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:371]
+条件：侦探 信任 = 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:374]
+茉拉：先说清楚，为什么问。我只回答和病人无关的部分。 [#id=chapter2.mora_testimony_guarded.001] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:375]
+回应 mora_decline [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:377]
+条件：侦探 信任 < 0 [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:380]
+茉拉：不说。病人等不得，病人的私事我更不会讲。 [#id=chapter2.mora_decline.002] [来源：godot_csharp/scenes/Awakening/Script/story/续篇/05_选项与回应.story:381]
+上述选中作证后 C# 还依据实际 NightTruth 补充：病粮取用者可说“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”；未开放坦言则“我一直在诊疗所。”；自粮取用者可说“……我拿了一份。茉拉的板上写着急需可以自取。{若修门：门闩是我修的。}”；不愿坦言则“关你什么事。”；只修门者说“门闩是我修的。”；无相关行动时可能“我那晚睡着了。”。 [来源：Player.cs:463–501]
+贝尔特朗：“报告：{各夜所见地点、身量、数量}。看不清是谁。” / “报告：夜里没见异常。看不清是谁。”；阮清越：“账面与存量差 {无记录取用}。我只记得到配给台发出去的。”；沃德：“依据台账与所见，事实清楚。”或“无记录即违规。仅此而已。”；玛格丽特：“粮仓门闩松了，那天夜里我在后勤院碰见{人}，请{代词}修的。修得很干净。”或“门闩松了，我请人修，没人搭理。”。 [来源：Player.cs:473–486]
+
+======================================================================
+附录 III · 续篇沿路线可自由读的交互点传说原文
+======================================================================
+
+【试剂柜】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:50]
+白漆试剂柜，标签写着“白塔”。有一格空着。
+茉拉把柜门关得很紧，不让人碰。
+
+【铜口】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:65]
+铜牌上刻着一行字：
+入夜后，名录库中若有人以你之名唤你，勿应。
+
+【传声中继】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:73]
+一根铜柱，管道从四面汇进来。
+要开名录库的门，这里得有人按拍子转发信号。
+
+【封存匣】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:105]
+门缝里看得见架子。十六只封存匣排在四座架上，每只贴着名字。
+你的名字也在其中一只上。
+
+【门边的铜牌】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:113]
+铜牌上刻着一行字：
+入夜后，名录库中若有人以你之名唤你，勿应。
+
+【规程页的红墨批注】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:121]
+文献规程页的页边，一行红墨批注：“授钥：雀。”字迹端正，是导师的手。
+库门锁芯与那把钥匙的齿上，都没有撬过的痕迹。
+
+【壁炉】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:141]
+壁炉还温着。炉台上摆着十六只杯子，样式都不一样。
+
+【公告框（学园守则）】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:154]
+一、封存之物，可凭对应之物寻回；寻回者，自负其果。
+二、饮水、炉火、照明照常供给；物资由诸位自行分配。
+三、外闩所封之处，余患未清，清后即启。
+四、我所立之规，皆张贴于此。
+
+【沉静室门内的步位标线】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:194]
+门内地上的步位标线，一道不缺，一步也没有踩乱。
+
+【沉静室的门】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:200]
+厚木门，内侧有一道浅浅的指痕。门是从外面关上的。
+
+【阀门】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:207]
+温室的水压阀门。锈住了。
+
+【压力表】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:214]
+压力表的指针贴着红线。没有人在修。
+
+【誓约庭】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:221]
+铺石顺坡，设了几级台阶。站在这里，谁站在谁身边，一眼看得清。
+
+【门楼】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:227]
+门楼外是去港口的路。沿海崖有一段塌了。
+
+【晾晒场】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:233]
+绳上晾着几件衬衫。地上是泥。
+
+【汲水泉】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/02_交互点.story:239]
+泉水照常在流。
+
+======================================================================
+附录 IV · 不走主路线时的原文反馈与选择备选
+======================================================================
+
+【场面 rest_confirm】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/06_重演之后.story:11]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：阁下可以先在生活翼歇一会。水与食物照常，无需认任何事。 [#id=rest_confirm.001]
+铜口：何时继续查看、何时作答，由阁下自己决定。其他人的去留，不由这次选择决定。 [#id=rest_confirm.002]
+选择：
+- 就这样吧。歇息。 [#id=rest_confirm.003]
+- 还是再看看。 [#id=rest_confirm.004]
+
+【场面 ending_rest】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:39]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+侦探：我先坐一会，理清眼前的事。 [#id=ending_rest.001]
+沈鼎：你歇着。我去看看存粮和水，人得先吃饭。 [#id=ending_rest.002]
+霍铎：我去铜口旁检查接头。有事再问我。 [#id=ending_rest.003]
+苏泠：我还要去门边听听。……我不歇着。 [#id=ending_rest.004]
+（水槽里又响起水声。霍铎走向铜口，苏泠停在门边。桌旁只余侦探，把纷乱的念头慢慢理开。） [#id=ending_rest.005]
+侦探（心声）：歇过这一阵，再从能看见、能核验的东西开始。 [#id=ending_rest.006]
+
+【场面 replay_first】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:48]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+侦探（心声）：墨影散了。 [#id=replay_first.001]
+侦探（心声）：重演里每个人，都只照自己听见的、自己信的去做。对不上现场的地方，是我设想的处境错了，不是现场错了。 [#id=replay_first.002]
+
+【场面 replay_refused】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story:53]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+侦探（心声）：墨影里的我，站在霍铎面前，没有去闩那扇门。 [#id=replay_refused.001]
+侦探（心声）：可现场的内闩，是落着的。 [#id=replay_refused.002]
+侦探（心声）：“我凭什么信一个昨天才认识的人？”——可我们，真是昨天才认识的吗？ [#id=replay_refused.003]
+（重演手稿多了一个问题。） [#id=replay_refused.004]
+
+【场面 answer_need_test】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:20]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：一根铜管，一个松了的接头。它们说明声音能走哪条路。 [#id=answer_need_test.001]
+铜口：可那条路上会剩下什么，阁下试过吗？ [#id=answer_need_test.002]
+
+【场面 answer_wrong_say】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:74]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 错名 == ""：】
+铜口：阁下拿出了东西，却没有说它说明什么。 [#id=answer_wrong_say.001]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 (错名 == "我信霍铎。") 或 (错名 == "我们早已相熟。")：】
+铜口：信任，要有来处。阁下与他的来处，在哪里？ [#id=answer_wrong_say.004]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+铜口：“{{错名()}}” [#id=answer_wrong_say.002]
+铜口：这句话，回答的是别的问题。 [#id=answer_wrong_say.003]
+
+【场面 answer_wrong_show】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:47]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+【整理者条件说明，非 UI 文字；条件未由 .story 单独确定；原文条件：若 错名 == "苏泠的乐谱"：】
+铜口：乐谱记下的是她听见了什么。它没有说声音从哪里来。 [#id=answer_wrong_show.001]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "门底的灰与木楔"：】
+铜口：灰说明门开过，木楔撑过。是谁撑的、为何撑，它没有说。 [#id=answer_wrong_show.002]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "门底的湿布"：】
+铜口：湿布说明有人堵过门缝。那是另一个人、另一件事。 [#id=answer_wrong_show.003]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 (错名 == "酵种罐") 或 (错名 == "架上的无尘方框")：】
+铜口：这件东西说的是日子，不是那一夜的这一问。 [#id=answer_wrong_show.004]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "侦探的外衣口袋"：】
+铜口：放大镜是阁下的。它自己不会去闩门，也不会去听门。 [#id=answer_wrong_show.005]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "门框旁的音叉"：】
+铜口：音叉说明有人在门边敲过。敲的人想知道的，和我问的，不是一件事。 [#id=answer_wrong_show.006]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "灰上的靴印"：】
+铜口：靴印回答的是谁站在那里。这一问，问的是别的。 [#id=answer_wrong_show.007]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "霍铎的石板"：】
+铜口：石板记着一条指令。指令从哪里来、经过了谁，它没有写。 [#id=answer_wrong_show.008]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "铜口与管接头"：】
+铜口：铜管说明声音能走哪条路。这一问，问的不是路。 [#id=answer_wrong_show.009]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "四只杯子"：】
+铜口：杯子说明有人泡过茶，按人放了糖。它说明的是别的事。 [#id=answer_wrong_show.010]
+【整理者条件备选，非 UI 文字；原文条件：否则 若 错名 == "闩上的隔离门"：】
+铜口：门说明它闩着。我已经说过了。 [#id=answer_wrong_show.011]
+【整理者条件备选，非 UI 文字；原文条件：否则：】
+铜口：{{错名()}}。这件东西说明了别的事。 [#id=answer_wrong_show.012]
+
+【场面 answer_pause】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:84]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：不急。答案备好了，再来。 [#id=answer_pause.001]
+
+【场面 answer_rescue】[来源：godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story:88]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：能撑住这句话的东西，已经不在了。 [#id=answer_rescue.001]
+铜口：可我记得它原来的样子。我只问我问过的——阁下这句，与它相符。 [#id=answer_rescue.002]
+
+【场面 c2.lesson_who_branch】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:48]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：写了。“寻回者”——谁寻回，谁便是。不限其人。 [#id=chapter2.lesson_who_branch.001]
+铜口：再读一遍。 [#id=chapter2.lesson_who_branch.002]
+
+【场面 c2.lesson_where_branch】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:56]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+铜口：名录库。我方才说过。 [#id=chapter2.lesson_where_branch.001]
+铜口：读条文，不读我。 [#id=chapter2.lesson_where_branch.002]
+
+【场面 c2.confront_pause】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:153]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+侦探（心声）：这一句，先不说。 [#id=chapter2.confront_pause.001]
+
+【场面 c2.confront_wrong_say】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:159]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+沃德：这与我问的无关。 [#id=chapter2.confront_wrong_say.001]
+
+【场面 c2.confront_wrong_show】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:165]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+沃德：依据何在？{{wrong_name()}}证明不了这句话。 [#id=chapter2.confront_wrong_show.001]
+
+【场面 c2.confront_frame】[来源：godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story:171]
+【路线说明】可选分支或错误/补救反馈；不与已答对主线混写成同一次唯一轨迹。
+（众人的目光都落到了雀儿身上。她没有躲。） [#id=chapter2.confront_frame.001]
+雀儿：……行。你也这么看。 [#id=chapter2.confront_frame.002]
+侦探（心声）：每个字都是真的。可我说出它，是在指着她。 [#id=chapter2.confront_frame.003]
+
+未覆盖任意游走时的无限状态组合：日常 Feed、交谈消息传播、人物路径、声路被改变、粮仓数值、每夜实际行动、机关人手和结局支持名单。源文本已提供对应路线和条件模板；要把它们填成唯一逐帧全文需另有实际会话证据。本文件不宣称已有这种证据。

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace DualOntologyWorldEngine.Story;
 
 /// <param name="LineId">Stable authored line ID (translation key); empty for generated text.</param>
-public sealed record InteractionLine(string Speaker, string Mood, string Text, string VoiceClip, string LineId = "");
+public sealed record InteractionLine(string Speaker, string Mood, string Text, string VoiceClip, string LineId = "", string SourceId = "");
 public sealed record InteractionChoice(string Id, string Label, bool IsAvailable, string LockHint, string LabelId = "");
 public sealed record WorldCommand(string Name, IReadOnlyList<object?> Arguments);
 public enum PresentationMode { Dialogue, EvidenceCard, Menu, World, Done }
@@ -35,6 +35,7 @@ public sealed class DialogueInstruction
     public string Text { get; set; } = "";
     public string VoiceClip { get; set; } = "";
     public string LineId { get; set; } = "";
+    public string SourceId { get; set; } = "";
     public string Name { get; set; } = "";
     public string Target { get; set; } = "";
     public DialogueExpression? Condition { get; set; }
@@ -103,7 +104,7 @@ public sealed class CompiledDialogueRuntime(CompiledDialogueDocument document, D
             switch (step.Op)
             {
                 case "line":
-                    var lines = new InteractionLine[] { new(context.Interpolate(step.Speaker), step.Mood, context.Interpolate(step.Text), step.VoiceClip, step.LineId) };
+                    var lines = new InteractionLine[] { new(context.Interpolate(step.Speaker), step.Mood, context.Interpolate(step.Text), step.VoiceClip, step.LineId, step.SourceId) };
                     var next = Read();
                     if (next?.Op == "choices")
                     { _choices = next.Options; return ChoicePacket() with { Lines = lines }; }

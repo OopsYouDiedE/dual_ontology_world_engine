@@ -5,8 +5,10 @@ const EngineScript := preload("res://scenes/BasicUISystem/GameEngine.cs")
 const UI_SCENE := preload("res://scenes/Shared/UI/UISystem.tscn")
 const TITLE_SCENE := preload("res://scenes/Title/Title.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
+const VIEW_TRACE := preload("res://scenes/BasicUISystem/PlayerViewTrace.gd")
 const FIELD_EVENTS := ["scene", "stage"]
 
+var view_trace: Node
 var engine: Node
 var ui: Node
 var field: Node2D
@@ -22,6 +24,10 @@ func _ready() -> void:
 	engine = EngineScript.new()
 	engine.name = "Engine"
 	add_child(engine)
+	view_trace = VIEW_TRACE.new()
+	view_trace.name = "PlayerViewTrace"
+	add_child(view_trace)
+	view_trace.configure(self, engine.RecordVisible, engine.RecordInput)
 	_home()
 
 func _dispose_views() -> void:
@@ -78,6 +84,8 @@ func _view(ev: Dictionary) -> void:
 func dispatch(input: Dictionary) -> void:
 	if _closing: return
 	if str(input.get("kind", "")) == "quit":
+		engine.RecordInput({"device": "ui_semantic", "kind": "quit"})
+		begin_shutdown()
 		get_tree().quit()
 		return
 	var message: Dictionary = input.duplicate(true)
@@ -122,9 +130,11 @@ func _apply(snapshot: Dictionary) -> void:
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
+	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	_queue.clear()
 	if is_instance_valid(field): field.begin_shutdown()
 	if is_instance_valid(ui): ui.begin_shutdown()
+	if is_instance_valid(engine): engine.CloseTrace()
 
 func _exit_tree() -> void:
 	begin_shutdown()

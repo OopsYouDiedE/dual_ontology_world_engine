@@ -7,17 +7,55 @@ using GDict = Godot.Collections.Dictionary;
 public partial class GameEngine : Node
 {
     private GameSession? _session;
+    private GameSession Session => _session ??= new GameSession(
+        Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json"),
+        "res://scenes/Awakening/Awakening.tscn",
+        "res://scenes/Chapter2/Field/CampusMapView.tscn",
+        ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces"),
+        message => GD.PushWarning(message), ReadAuthorSources);
+
+    private static IReadOnlyDictionary<string, string> ReadAuthorSources()
+    {
+        var sources = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        try
+        {
+            var repository = System.IO.Path.GetFullPath(ProjectSettings.GlobalizePath("res://../"));
+            var scriptDirectory = ProjectSettings.GlobalizePath("res://scenes/Awakening/Script");
+            var paths = new List<string> { System.IO.Path.Combine(scriptDirectory, "chapter_01.story") };
+            try
+            {
+                paths.AddRange(System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(scriptDirectory, "story"),
+                    "*.story", System.IO.SearchOption.AllDirectories));
+            }
+            catch (Exception error)
+            { GD.PushWarning("Author story snapshot could not enumerate fragments; tracing continues: " + error.Message); }
+            foreach (var path in paths.OrderBy(p => System.IO.Path.GetRelativePath(repository, p).Replace('\\', '/'), StringComparer.Ordinal))
+            {
+                try
+                {
+                    var key = System.IO.Path.GetRelativePath(repository, path).Replace('\\', '/');
+                    sources[key] = System.IO.File.ReadAllText(path, System.Text.Encoding.UTF8);
+                }
+                catch (Exception error)
+                { GD.PushWarning("Author story snapshot could not read " + path + "; tracing continues: " + error.Message); }
+            }
+        }
+        catch (Exception error)
+        { GD.PushWarning("Author story snapshot could not be read; tracing continues: " + error.Message); }
+        return sources;
+    }
+
+    public void RecordVisible(GDict payload) => Session.RecordVisible(FromDictionary(payload));
+    public void RecordInput(GDict payload) => Session.RecordInput(FromDictionary(payload));
+    public void CloseTrace() { _session?.Dispose(); }
+    public override void _ExitTree() => CloseTrace();
 
     public GArray Dispatch(GDict input)
     {
         try
         {
-            _session ??= new GameSession(
-                Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json"),
-                "res://scenes/Awakening/Awakening.tscn",
-                "res://scenes/Chapter2/Field/CampusMapView.tscn");
             var result = new GArray();
-            foreach (var ev in _session.Dispatch(FromDictionary(input)))
+            foreach (var ev in Session.Dispatch(FromDictionary(input)))
             {
                 if (ev.GetValueOrDefault("kind") as string == "save") { Save(ev); continue; }
                 result.Add(ToGodot(ev));
@@ -27,7 +65,9 @@ public partial class GameEngine : Node
         catch (Exception error)
         {
             GD.PushError(error.ToString());
-            return new GArray { new GDict { ["kind"] = "error", ["message"] = error.Message } };
+            var output = new Dictionary<string, object?> { ["kind"] = "error", ["message"] = error.Message };
+            _session?.RecordOutput(output);
+            return new GArray { ToGodot(output) };
         }
     }
 

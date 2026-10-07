@@ -64,6 +64,7 @@ class PacketResponse extends RefCounted:
 		lock_hint = str(data.get("lock_hint", ""))
 
 class PacketLine extends RefCounted:
+	var source: Dictionary
 	var id: String
 	var next_id := "@packet:next"
 	var character: String
@@ -75,6 +76,8 @@ class PacketLine extends RefCounted:
 		id = "packet:%d" % serial
 		var lines: Array = packet.get("lines", [])
 		var data: Dictionary = lines[0] if not lines.is_empty() else {}
+		source = {"line_id": str(data.get("line_id", "")), "source_id": str(data.get("source_id", "")),
+			"trace_id": str(data.get("trace_id", "")), "line_index": int(data.get("line_index", 0))}
 		character = str(data.get("speaker", ""))
 		text = str(data.get("text", ""))
 		mood = str(data.get("mood", "calm"))
@@ -369,6 +372,11 @@ func _bind_existing() -> void:
 	heading = $DialoguePanel/Heading
 	speaker = $DialoguePanel/Speaker
 	body = $DialoguePanel/Body
+	# Long lines remain readable within the authored box; short lines keep its layout.
+	body.scroll_active = true
+	body.scroll_following = false
+	# Receive wheel scrolling while ordinary clicks still bubble to the panel.
+	body.mouse_filter = Control.MOUSE_FILTER_PASS
 	choices = $DialoguePanel/Choices
 	next_button = $DialoguePanel/Next
 	hint = $DialoguePanel/Hint
@@ -458,6 +466,7 @@ func idle(title: String = "", text: String = "") -> void:
 	speaker.text = tr(title) if not title.is_empty() else ""
 	body.text = tr(text) if not text.is_empty() else ""
 	body.visible_characters = -1
+	body.get_v_scroll_bar().value = 0.0
 	next_button.hide()
 	hint.text = _caption("点击继续", "Click to continue", "クリックで続ける") if not text.is_empty() else ""
 
@@ -550,7 +559,9 @@ func _present_line() -> void:
 	speaker.text = _localized_speaker(line.character) if not line.character.is_empty() else ""
 	_refresh_character_portrait()
 	body.text = StoryStyle.story_text(line.text)
+	body.set_meta("player_source", line.source)
 	body.visible_characters = 0
+	body.get_v_scroll_bar().value = 0.0
 	elapsed = 0
 	current_voice_stream = _get_character_voice(line.character)
 	if not line.voice_clip.is_empty():

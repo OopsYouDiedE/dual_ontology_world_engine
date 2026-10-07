@@ -171,6 +171,9 @@ func _build_sites() -> void:
 		if defs.has(site_id) and not bool(defs[site_id].get("enabled", true)): continue
 		if not defs.has(site_id) and not adapter.fixed_actors().is_empty(): continue
 		sites[site_id] = {"person": key, "title": str(person.get("title", person.get("name", key))), "reach": 44.0, "new": false}
+	# 快照可能移除上一帧的人物或热点；同步最近交互点，悬停在下一帧按鼠标重新选取。
+	if not sites.has(hovered): hovered = ""
+	_pick_nearest()
 
 func site_visible(id: String) -> bool:
 	if not sites.has(id): return false
@@ -199,6 +202,236 @@ func site_box(id: String) -> Rect2:
 
 func in_sight(point: Vector2) -> bool:
 	return sight == null or sight.can_see(adapter.sight_point(point))
+
+## 玩家画面记录：只列当前入镜且在视线内的物件；遮挡范围使用 viewport 屏幕坐标。
+func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String]:
+	var result: Array[String] = []
+	if not is_inside_tree() or not is_instance_valid(adapter) or not is_instance_valid(player): return result
+	var objects: Node = adapter.objects_root()
+	if not is_instance_valid(objects): return result
+	var counts := {}
+	var represented_sites := {}
+	var sprites: Array[Sprite2D] = []
+	_player_object_sprites(objects, sprites)
+	for sprite in sprites:
+		if sprite.texture == null or str(sprite.name) == "BedQuiltForeground": continue
+		if not _player_object_drawn(sprite): continue
+		var exposed := _player_object_exposed(sprite.get_global_transform_with_canvas() * sprite.get_rect(), occluded_regions)
+		if exposed.is_empty(): continue
+		var site_id := _player_object_site(sprite)
+		var has_site: bool = site_id != "" and sites.has(site_id) and not sites[site_id].has("person")
+		var visible_site: bool = has_site and site_visible(site_id)
+		var point := to_local(sprite.global_position)
+		# 室内家具仍按所属房间判断，避免高家具的顶端跨墙泄漏另一房间。
+		var object_in_sight: bool = in_sight(point) or visible_site
+		if not adapter.sight_terrain_fog():
+			object_in_sight = _player_object_exposed_in_sight(exposed)
+		if not object_in_sight: continue
+		# nightstand 原生 20×36 纹理同时画了柜体和油灯，分别按像素外观判断入镜。
+		if sprite.texture.resource_path == "res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" and sprite.get_rect().size == Vector2(20, 36):
+			var texture_origin := sprite.get_rect().position
+			var lamp_rect := Rect2(texture_origin + Vector2(6, 4), Vector2(8, 13))
+			var cabinet_rect := Rect2(texture_origin + Vector2(1, 16), Vector2(18, 20))
+			if not _player_object_exposed(sprite.get_global_transform_with_canvas() * lamp_rect, occluded_regions).is_empty():
+				counts["床头柜上的油灯"] = int(counts.get("床头柜上的油灯", 0)) + 1
+			if _player_object_exposed(sprite.get_global_transform_with_canvas() * cabinet_rect, occluded_regions).is_empty(): continue
+		var title := _player_object_readable(str(sites[site_id].title)) if visible_site else _player_object_title(sprite)
+		if title == "": title = _player_object_title(sprite)
+		if str(sprite.name) == "DoorFace": title += "（关闭）"
+		elif str(sprite.name) == "DoorGap": title += "（开启）"
+		counts[title] = int(counts.get(title, 0)) + 1
+		if visible_site: represented_sites[site_id] = true
+	_player_object_floor_decor(counts, occluded_regions)
+	# 宿舍门的门扇由 _draw 绘制，没有 Sprite2D；只读取可见门扇的开合外观。
+	for node in objects.get_children():
+		if node is not Node2D or not node.has_method("door_click_rect") or not _player_object_drawn(node): continue
+		var door := node as Node2D
+		var openness := float(door.get("openness"))
+		var leaf_texture := door.get("left") as Texture2D
+		if leaf_texture == null: continue
+		var width := roundf(32.0 * (1.0 - openness) + 5.0 * openness)
+		var height := float(leaf_texture.get_height())
+		var door_transform := door.get_global_transform_with_canvas()
+		var left_exposed := _player_object_exposed(door_transform * Rect2(-32, -height, width, height), occluded_regions)
+		var right_exposed := _player_object_exposed(door_transform * Rect2(32 - width, -height, width, height), occluded_regions)
+		if left_exposed.is_empty() and right_exposed.is_empty(): continue
+		# 门道和墙面没有室内地板迷雾；按门扇真正露出的像素判断，不以逻辑房间排除。
+		if not _player_object_unshaded(left_exposed) and not _player_object_unshaded(right_exposed): continue
+		var title := "宿舍门（开启）" if openness > 0.05 else "宿舍门（关闭）"
+		counts[title] = int(counts.get(title, 0)) + 1
+	# 痕迹和墙面热点未必是独立精灵，沿用已开放热点当前显示的标题。
+	for id in sites:
+		if sites[id].has("person") or represented_sites.has(id) or not site_visible(id): continue
+		var hidden := false
+		if "spatial" in adapter:
+			var props: Dictionary = adapter.get("spatial").get("objects", {})
+			if props.has(id):
+				var prop := objects.get_node_or_null(str(props[id].get("sprite", ""))) as CanvasItem
+				hidden = prop == null or not _player_object_drawn(prop)
+		if hidden: continue
+		if _player_object_exposed(get_global_transform_with_canvas() * site_box(id), occluded_regions).is_empty(): continue
+		var title := _player_object_readable(str(sites[id].title))
+		if title == str(id): title = "未命名物品"
+		if title != "" and not counts.has(title): counts[title] = 1
+	var titles: Array = counts.keys()
+	titles.sort()
+	for title in titles:
+		result.append(str(title) + (" × %d" % int(counts[title]) if int(counts[title]) > 1 else ""))
+	return result
+
+func _player_object_sprites(node: Node, found: Array[Sprite2D]) -> void:
+	for child in node.get_children():
+		if child is CharacterBody2D or child is Control or child is CanvasLayer: continue
+		if child is Sprite2D: found.append(child)
+		_player_object_sprites(child, found)
+
+func _player_object_floor_decor(counts: Dictionary, occluded_regions: Array[Rect2]) -> void:
+	if adapter.map_key() != "awakening" or not ("layout" in adapter): return
+	var architecture := adapter.get_node_or_null("LifeWingArchitecture") as Sprite2D
+	if architecture == null or architecture.texture == null or not _player_object_drawn(architecture): return
+	var architecture_rect: Rect2 = architecture.get_global_transform_with_canvas() * architecture.get_rect()
+	var map_layout: Dictionary = adapter.get("layout")
+	# 此表的地毯矩形由真实 floor_work 烘焙区域生成，只取物件名，不读取踩痕旁白。
+	for decor in map_layout.get("asides", []):
+		if decor is not Array or decor.size() < 2 or not str(decor[1]).begins_with("地毯。"): continue
+		var raw: Array = decor[0]
+		if raw.size() != 4: continue
+		var decor_rect := Rect2(float(raw[0]), float(raw[1]), float(raw[2]), float(raw[3]))
+		if not in_sight(decor_rect.get_center()): continue
+		var screen_rect: Rect2 = (adapter.get_global_transform_with_canvas() * decor_rect).intersection(architecture_rect)
+		var exposed := _player_object_exposed(screen_rect, occluded_regions)
+		if not exposed.is_empty() and _player_object_exposed_in_sight(exposed):
+			counts["地毯"] = int(counts.get("地毯", 0)) + 1
+	# sconces 锚点为墙格顶端 +36；原生烘焙灯具本体位于锚点(-3,-23)至(4,-6)。
+	for anchor in map_layout.get("sconces", []):
+		if anchor is not Array or anchor.size() != 2: continue
+		var lamp_rect := Rect2(float(anchor[0]) - 3.0, float(anchor[1]) - 23.0, 7.0, 17.0)
+		var screen_rect: Rect2 = (adapter.get_global_transform_with_canvas() * lamp_rect).intersection(architecture_rect)
+		var exposed := _player_object_exposed(screen_rect, occluded_regions)
+		if _player_object_unshaded(exposed): counts["壁灯"] = int(counts.get("壁灯", 0)) + 1
+
+func _player_object_unshaded(pieces: Array[Rect2]) -> bool:
+	var inverse := get_global_transform_with_canvas().affine_inverse()
+	for piece in pieces:
+		var world_rect: Rect2 = inverse * piece
+		for y in range(floori(world_rect.position.y / 32.0), ceili(world_rect.end.y / 32.0)):
+			for x in range(floori(world_rect.position.x / 32.0), ceili(world_rect.end.x / 32.0)):
+				var cell := Vector2i(x, y)
+				var fragment := world_rect.intersection(Rect2(Vector2(cell) * 32.0, Vector2(32, 32)))
+				if fragment.has_area() and (sight == null or not adapter.sight_terrain_fog() or sight.terrain_shade(cell).a < 0.99): return true
+	return false
+
+func _player_object_drawn(item: CanvasItem) -> bool:
+	if not item.is_visible_in_tree() or item.self_modulate.a <= 0.01: return false
+	var ancestor: Node = item
+	var alpha := item.self_modulate.a
+	while ancestor is CanvasItem:
+		alpha *= (ancestor as CanvasItem).modulate.a
+		ancestor = ancestor.get_parent()
+	return alpha > 0.01
+
+## 顺次扣除所有遮挡矩形，联合遮挡也不能留下已完全盖住的物件。
+func _player_object_exposed(screen_rect: Rect2, occluded_regions: Array[Rect2]) -> Array[Rect2]:
+	var pieces: Array[Rect2] = []
+	var clipped := screen_rect.intersection(get_viewport().get_visible_rect())
+	if not clipped.has_area(): return pieces
+	pieces.append(clipped)
+	for cover in occluded_regions:
+		var remaining: Array[Rect2] = []
+		for piece in pieces:
+			var overlap := piece.intersection(cover)
+			if not overlap.has_area():
+				remaining.append(piece)
+				continue
+			for fragment in [
+				Rect2(piece.position, Vector2(piece.size.x, overlap.position.y - piece.position.y)),
+				Rect2(Vector2(piece.position.x, overlap.end.y), Vector2(piece.size.x, piece.end.y - overlap.end.y)),
+				Rect2(Vector2(piece.position.x, overlap.position.y), Vector2(overlap.position.x - piece.position.x, overlap.size.y)),
+				Rect2(Vector2(overlap.end.x, overlap.position.y), Vector2(piece.end.x - overlap.end.x, overlap.size.y))]:
+				if fragment.has_area(): remaining.append(fragment)
+		pieces = remaining
+		if pieces.is_empty(): break
+	return pieces
+
+func _player_object_exposed_in_sight(pieces: Array[Rect2]) -> bool:
+	var inverse := get_global_transform_with_canvas().affine_inverse()
+	for piece in pieces:
+		var world_rect: Rect2 = inverse * piece
+		if in_sight(world_rect.get_center()): return true
+		for y in range(floori(world_rect.position.y / 32.0), ceili(world_rect.end.y / 32.0)):
+			for x in range(floori(world_rect.position.x / 32.0), ceili(world_rect.end.x / 32.0)):
+				var cell_piece := world_rect.intersection(Rect2(Vector2(x, y) * 32.0, Vector2(32, 32)))
+				if cell_piece.has_area() and in_sight(cell_piece.get_center()): return true
+	return false
+
+func _player_object_site(sprite: Sprite2D) -> String:
+	if adapter.map_key() != "awakening": return ""
+	return str({"DoorFace": "E1", "DoorGap": "E1", "CopperTransmitter": "E8", "NoticeFrame": "BOARD",
+		"Slate": "E7", "Score": "E6", "Cups": "E9", "Jar": "E10", "Fork": "E5", "Wedge": "E2",
+		"OilHook": "L6", "Whetstone": "L7", "CoatStandR05": "E12"}.get(str(sprite.name), ""))
+
+func _player_object_title(node: Node) -> String:
+	for key in ["player_visible_name", "title", "label", "text"]:
+		var value = node.get_meta(key, "")
+		if value is String:
+			var title := _player_object_readable(value)
+			if title != "": return title
+	# 同样叫 Bed、Desk、Frame 或 Stand 的地图精灵可能绘制不同物件，依据实际纹理区分。
+	if node is Sprite2D and node.texture != null:
+		var texture_name: String = node.texture.resource_path.get_file().get_basename()
+		var texture_names := {"planter_bed": "种植床", "ward_bed": "病床", "lecture_desk_row": "课桌",
+			"music_stand": "谱架", "tuning_frame": "框架", "lamp_post": "路灯", "piano_stool": "琴凳",
+			"granary_bin": "储物箱", "basin_row": "洗手盆", "bucket_pair": "水桶", "chess_table": "棋盘桌",
+			"doctor_desk": "诊疗桌", "folding_screen": "屏风", "gate_leaf": "门扇", "plant_stand": "花架",
+			"side_table_plain": "边桌", "stone_bench": "石凳", "long_table": "长桌", "timetable_board": "课表板"}
+		if texture_names.has(texture_name): return str(texture_names[texture_name])
+		if texture_name.begins_with("outdoor_hydrangea_"): return "绣球花"
+		if texture_name.begins_with("outdoor_round_"): return "树"
+		if texture_name.begins_with("outdoor_boulder_"): return "岩石"
+	# 只映射物件的外观名称，不使用家具旁白中关于抽屉、柜内或证物内容的事实。
+	var names := {"SheetedBed": "罩着防尘布的床", "EmptyBookcase": "书架", "EmptyWardrobe": "衣柜",
+		"Nightstand": "床头柜", "Bookcase": "书架", "DeskChair": "椅子", "ReadingChair": "扶手椅",
+		"ReadingTable": "小几", "StudyTable": "长桌", "StudyFern": "花架", "StudyConsole": "边桌",
+		"PaperBasket": "纸篓", "WallClock": "挂钟", "LinenChest": "箱子", "Wardrobe": "衣柜",
+		"Dresser": "梳妆台", "Washstand": "水槽", "Sideboard": "碗柜", "Worktable": "案板",
+		"CupTable": "小圆桌", "CoatStand": "衣架", "StoreSack": "袋子", "PantrySack": "袋子",
+		"CorridorConsole": "边桌", "CorridorPlant": "花架", "ShoeBench": "长凳", "ToolBench": "工作台",
+		"DemonPrints": "地上的脚印", "Transmitter": "铜口", "Mouthpiece": "铜口", "ZoneRules": "公告框",
+		"SealRack": "架子", "WorksShelf": "书架", "Shelf": "书架", "VaultDoor": "门", "Warning": "告示",
+		"CopyDesk": "书桌", "PlanCabinet": "柜子", "Pedestal": "台座", "RelayColumn": "柱子",
+		"Piano": "钢琴", "Globe": "地球仪", "Armchair": "扶手椅", "Range": "灶", "Basin": "洗手盆",
+		"Bed": "床", "Chair": "椅子", "Desk": "书桌", "Coat": "衣架", "Crate": "箱子",
+		"Barrel": "水桶", "Sack": "袋子", "Lamp": "灯", "Fern": "盆栽", "Bench": "长凳",
+		"Notice": "公告框", "Pillar": "柱子", "Hydrangea": "绣球花", "Blackboard": "黑板",
+		"ChessChair": "椅子", "Chess": "棋盘桌", "Fireplace": "壁炉", "FireSide": "边桌",
+		"LaundryTub": "洗衣盆", "DishRack": "碗碟架", "Drying": "晾衣绳", "Heater": "热水炉",
+		"Lectern": "讲台", "Ledger": "账簿台", "MedCabinet": "药柜", "MusicStand": "谱架",
+		"Pots": "花盆", "Pump": "手动水泵", "RationCounter": "配给台", "ReagentCabinet": "试剂柜",
+		"Spring": "汲水泉", "Tools": "园艺工具", "Tub": "浴缸", "Valve": "阀门",
+		"Buckets": "水桶", "Bollard": "系缆桩", "Engine": "机械装置", "Hood": "排烟罩",
+		"LaneGate": "门扇", "LongTable": "长桌", "PianoStool": "琴凳", "Plant": "花架",
+		"Rockfall": "岩石", "Screen": "屏风", "Timetable": "课表板", "Trough": "水槽",
+		"Table": "桌子", "Bin": "储物箱", "Frame": "框架", "Stand": "架子", "round": "树"}
+	var node_name := str(node.name)
+	var match_name := node_name.to_lower()
+	var best := ""
+	for key in names:
+		if match_name.contains(str(key).to_lower()) and str(key).length() > best.length(): best = str(key)
+	if best != "": return str(names[best])
+	# 地图已有中文名称可以保留，移除复制实例序号；英文调试名不作为玩家标题。
+	var chinese := false
+	for index in node_name.length():
+		var code := node_name.unicode_at(index)
+		if code >= 0x4e00 and code <= 0x9fff: chinese = true
+	if chinese:
+		while node_name.length() > 0 and (node_name.right(1).is_valid_int() or node_name.ends_with("_")): node_name = node_name.left(-1)
+		return node_name
+	return "未命名物品"
+
+func _player_object_readable(value: String) -> String:
+	var title := value.strip_edges()
+	if title.begins_with("res://") or title.begins_with("user://") or title.contains("/") or title.contains("\\"): return ""
+	return title
 
 # ================================================================ physics ===
 
@@ -293,12 +526,12 @@ func _process(_delta: float) -> void:
 				if d < best:
 					best = d
 					hovered = id
-	var hover_text := str(sites[hovered].title) if hovered != "" else ""
+	var hover_text := str(sites[hovered].title) if sites.has(hovered) else ""
 	if hover_text != _hover_text or hover_text != "":
 		_hover_text = hover_text
 		hover_changed.emit(hover_text, get_viewport().get_mouse_position())
-	var focus := hovered if hovered != "" else nearest
-	var hint := "" if not active or focus == "" else str(sites[focus].title) + ("　［E］" if focus == nearest else "")
+	var focus := hovered if sites.has(hovered) else nearest
+	var hint := "" if not active or not sites.has(focus) else str(sites[focus].title) + ("　［E］" if focus == nearest else "")
 	if hint != _hint_text:
 		_hint_text = hint
 		hint_changed.emit(hint)

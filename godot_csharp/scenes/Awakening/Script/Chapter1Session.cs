@@ -156,8 +156,8 @@ public sealed partial class Chapter1Session : IChapterSession
                 case "furniture": Furniture(input); break;
                 case "move": break; // 房间进入由 tick 的实际落脚判定，与原宿主每帧检查一致。
                 case "daily": DailyReport(input); break;
-                case "replay_vars": State["replay_vars"] = Ints(input.GetValueOrDefault("vars")); break;
-                case "replay": Start(Replay(Ints(input.GetValueOrDefault("vars")), Flag(input, "skip"))); break;
+                case "replay_vars": State["replay_vars"] = ReplayVariables(input); break;
+                case "replay": Start(Replay(ReplayVariables(input), Flag(input, "skip"))); break;
                 case "opened":
                     if (Text(input, "panel") == "manuscript" && _content.V6Open) Session.Set("flags", "v6_seen", true);
                     break;
@@ -559,5 +559,12 @@ public sealed partial class Chapter1Session : IChapterSession
             ["vars"] = State["replay_vars"], ["last_run_vars"] = State["last_run_vars"],
             ["result"] = result.Count == 0 ? new Ev() : new Ev { ["full_match"] = result.GetValueOrDefault("full_match") is true, ["findings"] = findings },
         };
+    }
+    private static object[] ReplayVariables(Input input)
+    {
+        var values = Ints(input.GetValueOrDefault("vars"));
+        if (values.Length == 5) return [.. values, 0];
+        if (values.Length != 6) throw new InvalidOperationException("请先填写重演手稿中的问题。");
+        return values;
     }
 }

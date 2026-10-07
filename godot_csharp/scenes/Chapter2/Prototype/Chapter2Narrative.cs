@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>A line of authored presentation. Rendering, voice playback and layout belong to Godot.</summary>
-public sealed record Chapter2NarrativeLine(string Speaker, string Text, string Mood, string VoiceClip);
+public sealed record Chapter2NarrativeLine(string Speaker, string Text, string Mood, string VoiceClip, string LineId = "", string SourceId = "");
 public sealed record Chapter2NarrativeChoice(string CandidateId, string Label);
 public sealed record Chapter2NarrativeEvent
 {
@@ -200,7 +200,9 @@ public sealed class Chapter2Narrative
                     lines.Add(new(Expand(next.GetProperty("speaker").GetString() ?? ""),
                         Expand(next.GetProperty("text").GetString() ?? ""),
                         next.TryGetProperty("mood", out var mood) ? mood.GetString() ?? "" : "",
-                        next.TryGetProperty("voice_clip", out var clip) ? clip.GetString() ?? "" : ""));
+                        next.TryGetProperty("voice_clip", out var clip) ? clip.GetString() ?? "" : "",
+                        next.TryGetProperty("line_id", out var lineId) ? lineId.GetString() ?? "" : "",
+                        next.TryGetProperty("source_id", out var sourceId) ? sourceId.GetString() ?? "" : ""));
                 }
                 _presentationId = "chapter2-presentation-" + (++_nextPresentation).ToString(CultureInfo.InvariantCulture);
                 emitted.Add(new() { Kind = "lines", PresentationId = _presentationId, Lines = lines });

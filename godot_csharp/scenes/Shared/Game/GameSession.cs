@@ -1,17 +1,52 @@
 using DualOntologyWorldEngine.Awakening;
 using DualOntologyWorldEngine.Chapter2.Prototype;
 using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Core;
+using System.Text.Json;
 using static DualOntologyWorldEngine.Story.ChapterEvents;
 
 namespace DualOntologyWorldEngine.Gameplay;
 
 /// <summary>连续游戏的流程所有者。宿主只执行这里给出的视图、界面和空间事件。</summary>
-public sealed class GameSession(string campusScript, string livingView, string campusView)
+public sealed class GameSession(string campusScript, string livingView, string campusView,
+    string? traceDirectory = null, Action<string>? traceWarning = null,
+    Func<IReadOnlyDictionary<string, string>>? authorSources = null) : IDisposable
 {
     private IChapterSession? _session;
     private bool _waitingForView;
+    private bool _started;
+    private bool _metadataRecorded;
+    private readonly GameTrace _trace = new(traceDirectory, traceWarning);
+    private SimulationSession? _traceSimulation;
+
+    public void RecordVisible(IReadOnlyDictionary<string, object?> payload) { TraceMetadata(); _trace.Visible(payload); }
+    public void RecordInput(IReadOnlyDictionary<string, object?> payload) { TraceMetadata(); _trace.PhysicalInput(payload); }
+    public void RecordOutput(Dictionary<string, object?> output) => _trace.Output(output);
 
     public IReadOnlyList<Dictionary<string, object?>> Dispatch(IReadOnlyDictionary<string, object?> input)
+    {
+        var kind = Text(input, "kind");
+        if ((kind == "start" && _started) || (kind == "navigate" && Text(input, "to") == "restart"))
+        { DetachTrace(); _trace.NewRun(); _metadataRecorded = false; }
+        TraceMetadata();
+        _trace.BeginRequest(input);
+        try
+        {
+            var output = DispatchGame(input);
+            foreach (var ev in output)
+            {
+                _trace.Output(ev);
+            }
+            return output;
+        }
+        catch (Exception error)
+        {
+            _trace.RequestFailed(error);
+            throw;
+        }
+    }
+
+    private IReadOnlyList<Dictionary<string, object?>> DispatchGame(IReadOnlyDictionary<string, object?> input)
     {
         var kind = Text(input, "kind");
         if (kind == "start") return Start();
@@ -21,6 +56,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
             if (destination == "restart") return Start();
             if (destination == "title")
             {
+                DetachTrace();
                 _session = null;
                 _waitingForView = false;
                 ChapterWorldContinuity.Clear();
@@ -57,7 +93,10 @@ public sealed class GameSession(string campusScript, string livingView, string c
 
     private IReadOnlyList<Dictionary<string, object?>> Start()
     {
+        DetachTrace();
         _session = new Chapter1Session();
+        _started = true;
+        AttachTrace(((Chapter1Session)_session).World.PersistentSession.Simulation);
         _waitingForView = true;
         return [Event("view", ("resource", livingView)), Event("state", ("snapshot", Snapshot()))];
     }
@@ -79,6 +118,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
         var game = new DualOntologyWorldEngine.Chapter2.Prototype.Game(options, live,
             WorldScriptDocument.Parse(campusScript, allowChapterAdapter: true).Single());
         _session = new Chapter2InteractionSession(game, campusScript);
+        AttachTrace(game.S);
         ChapterWorldContinuity.Clear();
         _waitingForView = true;
         return [Event("view", ("resource", campusView), ("map", "living_hall"), ("spawn", "east_south")),
@@ -99,4 +139,55 @@ public sealed class GameSession(string campusScript, string livingView, string c
             if (Text(ev, "kind") == "state") ev["snapshot"] = Present(Map(ev, "snapshot"));
         return events;
     }
+
+    private void AttachTrace(SimulationSession simulation)
+    {
+        if (ReferenceEquals(_traceSimulation, simulation)) return;
+        DetachTrace();
+        _traceSimulation = simulation;
+        simulation.Completed += TraceCompleted;
+        simulation.StageCommitted += TraceStage;
+    }
+    private void TraceMetadata()
+    {
+        if (_metadataRecorded) return;
+        _metadataRecorded = true;
+        // Content provenance is read-only and does not initialize any chapter world.
+        IReadOnlyDictionary<string, string> storyFiles = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        try
+        {
+            if (authorSources is not null)
+            {
+                var snapshot = new SortedDictionary<string, string>(StringComparer.Ordinal);
+                foreach (var (path, text) in authorSources()) snapshot[path] = text;
+                storyFiles = snapshot;
+            }
+        }
+        catch (Exception error)
+        {
+            try { traceWarning?.Invoke("Author story snapshot could not be read; tracing continues: " + error.Message); } catch { }
+        }
+        try
+        {
+            using var document = JsonDocument.Parse(campusScript);
+            _trace.Metadata(new
+            {
+                chapter = "chapter2", source_map = document.RootElement.TryGetProperty("source_map", out var map) ? map.Clone() : default(JsonElement?),
+                compiled_sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(campusScript))),
+                story_files = storyFiles
+            });
+        }
+        catch (JsonException error)
+        { _trace.RequestFailed(error); _trace.Metadata(new { story_files = storyFiles }); }
+    }
+    private void TraceCompleted(ActionExecution execution) => _trace.Action("completed", execution, _traceSimulation?.CTB.Now ?? execution.Result?.Time ?? 0);
+    private void TraceStage(ActionExecution execution) => _trace.Action("stage_committed", execution, _traceSimulation?.CTB.Now ?? execution.Result?.Time ?? 0);
+    private void DetachTrace()
+    {
+        if (_traceSimulation is null) return;
+        _traceSimulation.Completed -= TraceCompleted;
+        _traceSimulation.StageCommitted -= TraceStage;
+        _traceSimulation = null;
+    }
+    public void Dispose() { DetachTrace(); _trace.Dispose(); }
 }
