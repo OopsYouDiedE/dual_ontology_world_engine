@@ -109,9 +109,16 @@ public sealed partial class Chapter1Session
             case "board": return PresentBoard();
             case "rest": return PlayPlan(() => _content.BeginRest(_world));
             case "posts":
-                foreach (var who in Companions) Start(WalkTo(who, new Ev { ["anchor"] = "post:" + who }));
+                foreach (var who in Companions) Start(WalkTo(who, new Ev { ["anchor"] = "post:" + who }), immediate: true);
                 break;
-            case "stage_actor": return WalkTo(A(0), new Ev { ["anchor"] = A(1) });
+            case "post":
+                if (!Companions.Contains(A(0))) throw new InvalidOperationException("Unknown companion: " + A(0));
+                Start(WalkTo(A(0), new Ev { ["anchor"] = "post:" + A(0) }), immediate: true);
+                break;
+            case "stage_actor": return WalkTo(A(0), new Ev { ["anchor"] = string.Join(":", args.Skip(1)) });
+            case "stage_action": return StageAction(A(0), A(1), A(2), A(3),
+                args.Length > 4 ? double.Parse(A(4), System.Globalization.CultureInfo.InvariantCulture) : 0.8,
+                args.Length > 5 ? A(5) : "idle");
             case "summon": return Summon(A(0));
             case "consider": Start(Consider(A(0))); break;
             case "finish": return FinishReach(A(0));
@@ -154,6 +161,16 @@ public sealed partial class Chapter1Session
         finally { Unclaim(who); }
     }
     private bool WalkOk => Flag(_reply, "ok", true);
+
+    /// <summary>到位后做一次动作，再保持指定姿态；走位失败时跳过动作，继续剧本。</summary>
+    private IEnumerable<Op> StageAction(string who, string anchor, string animation, string facing, double seconds, string after)
+    {
+        yield return new Run(WalkTo(who, new Ev { ["anchor"] = anchor }, 130.0));
+        if (!WalkOk) yield break;
+        _out.Add(StageOp("pose", ("who", who), ("anim", animation), ("facing", facing)));
+        yield return new Sleep(seconds);
+        _out.Add(StageOp("pose", ("who", who), ("anim", after), ("facing", facing)));
+    }
 
     private void Face(string who, string other)
     {

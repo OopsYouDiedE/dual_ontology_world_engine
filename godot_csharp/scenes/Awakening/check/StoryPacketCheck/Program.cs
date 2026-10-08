@@ -53,17 +53,22 @@ var reward = dialogue.Start("s4_rewards");
 var rewardText = new List<string>();
 var expectedStrength = people.ToDictionary(person => person, _ => 1);
 // The effect belongs after the actual spoken cue; inspecting a packet is not an ack.
-for (var i = 0; !reward.IsComplete && i < 300; i++)
+foreach (var title in new[] { "s4_rewards", "s4_rewards_shen", "s4_rewards_huo", "s4_rewards_su", "s4_rewards_question", "s4_rewards_empty" })
 {
-    Check(reward.Choices.Count == 0 && reward.WorldCommands.Count == 0, "reward opening emits dialogue packets");
-    rewardText.AddRange(reward.Lines.Select(line => line.Text));
-    Check(people.All(person => world.DesireStrength(person) == expectedStrength[person]), "amplify executes at acknowledged script position");
-    var text = string.Join("\n", reward.Lines.Select(line => line.Text));
-    if (text.Contains("这一半只是开头，沈师傅")) expectedStrength[Person.Shen]++;
-    if (text.Contains("一件试件，不过是一张图纸的一角")) expectedStrength[Person.Huo]++;
-    if (text.Contains("那是旧声，苏小姐")) expectedStrength[Person.Su]++;
-    if (text == "与你立约的，不是我。") expectedStrength[Person.Detective]++;
-    reward = dialogue.Next();
+    if (title != "s4_rewards") reward = dialogue.Start(title);
+    for (var i = 0; !reward.IsComplete && i < 300; i++)
+    {
+        Check(reward.Choices.Count == 0 && reward.WorldCommands.Count == 0, "reward opening emits dialogue packets");
+        rewardText.AddRange(reward.Lines.Select(line => line.Text));
+        Check(people.All(person => world.DesireStrength(person) == expectedStrength[person]), "amplify executes at acknowledged script position");
+        var text = string.Join("\n", reward.Lines.Select(line => line.Text));
+        if (text.Contains("这一半只是开头，沈师傅")) expectedStrength[Person.Shen]++;
+        if (text.Contains("一件试件，不过是一张图纸的一角")) expectedStrength[Person.Huo]++;
+        if (text.Contains("那是旧声，苏小姐")) expectedStrength[Person.Su]++;
+        if (text == "与你立约的，不是我。") expectedStrength[Person.Detective]++;
+        reward = dialogue.Next();
+    }
+    Check(reward.IsComplete, "reward segment completes: " + title);
 }
 Check(reward.IsComplete && people.All(person => expectedStrength[person] == 2 && world.DesireStrength(person) == 2), "real reward script amplifies all four people exactly once");
 Check(rewardText.Any(text => text.Contains("超越卡诺循环")) && rewardText.Any(text => text.Contains("揣进风衣口袋")), "real opening retains rewards and detective thought");

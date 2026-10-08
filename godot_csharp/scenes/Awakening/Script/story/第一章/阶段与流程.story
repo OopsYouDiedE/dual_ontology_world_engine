@@ -63,17 +63,38 @@
     演出 s2_meet
     指令 name
     演出 s2_tea
+    指令 stage_action:shen:备餐灶台:interact:back:1.5
+    指令 stage_actor:shen:meeting:Chef
+    演出 s2_tea_return
     演出 s3_broadcast
     指令 board
     演出 s4_rewards
+    指令 stage_action:shen:领取柜:interact:back
+    演出 s4_rewards_shen
+    指令 stage_actor:shen:meeting:Chef
+    指令 stage_action:huo:领取柜:interact:back:0.8:inspect
+    演出 s4_rewards_huo
+    指令 stage_actor:huo:meeting:Engineer
+    指令 stage_action:su:领取柜:interact:back
+    演出 s4_rewards_su
+    指令 stage_actor:su:meeting:Musician
+    演出 s4_rewards_question
+    指令 stage_action:detective:领取柜:interact:back
+    演出 s4_rewards_empty
+    指令 stage_actor:detective:meeting:Detective
     演出 s5_question
     若 旗("rest_chosen")：
         指令 rest
     否则：
-        阶段 investigate
-        指令 posts
-        设旗 posts_assigned
         演出 s6_begin
+        指令 post:shen
+        演出 s6_begin_huo
+        指令 post:huo
+        演出 s6_begin_su
+        指令 post:su
+        设旗 posts_assigned
+        演出 s6_begin_detective
+        阶段 investigate
 
 流程 重演之后
     若 重演次数 == 1 且 非 重演吻合：
