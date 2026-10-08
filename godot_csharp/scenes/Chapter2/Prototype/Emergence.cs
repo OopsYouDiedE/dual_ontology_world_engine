@@ -36,7 +36,7 @@ public sealed partial class Game
     private readonly Dictionary<(int Spec, P Hearer), int> _transmit = [];
     private readonly Dictionary<int, int> _postedEv = [];
     private readonly Dictionary<Person, Dictionary<Projection, Essence>> _rev = [];
-    private readonly List<string> _seenLines = [];
+    private readonly List<(P Who, string Text)> _seenLines = [];
     private int _currentEvent;
 
     /// <summary>平常的动作：不成为涌现链的一环（也不单列给玩家看）。</summary>
@@ -61,7 +61,7 @@ public sealed partial class Game
         e.SeenByDet = who != P.Det && Where(Det) == where && (Slot != Slot.Night || LastAction?.Cmd == Cmd.Stakeout && LastAction.Place == where);
         Events.Add(e);
         _currentEvent = e.Id;
-        if (e.SeenByDet && Slot != Slot.Night && !fix && _seenLines.Count < 4 && !text.StartsWith("答应了侦探")) _seenLines.Add($"{Names.Of(who)}{text}");
+        if (e.SeenByDet && Slot != Slot.Night && !fix && _seenLines.Count < 4 && !text.StartsWith("答应了侦探")) _seenLines.Add((who, text));
         return e.Id;
     }
 
@@ -70,7 +70,10 @@ public sealed partial class Game
     /// <summary>白天在场者的动作以短句呈现（§12 第 0 条：在场即可见）。</summary>
     private void FlushSeen()
     {
-        if (_seenLines.Count > 0) Feed.Add("你看见：" + string.Join("；", _seenLines) + "。");
+        // 几个人做了同一件事，并成一句：“霍铎和雀儿都把自己的口粮分给了饿着的人”。
+        var parts = _seenLines.GroupBy(l => l.Text).Select(g => g.Count() == 1 ? Names.Of(g.First().Who) + g.Key
+            : X("看见.都", ("人们", JoinNames(g.Select(x => Names.Of(x.Who)).Distinct())), ("事", g.Key))).ToArray();
+        if (parts.Length > 0) Feed.Add(X("看见.句", ("事", string.Join("；", parts))));
         _seenLines.Clear();
     }
 

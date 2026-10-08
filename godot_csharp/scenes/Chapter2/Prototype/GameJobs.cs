@@ -359,7 +359,7 @@ public sealed partial class Game
     private static readonly Slot[] DaySlots = [Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening];
     public readonly Dictionary<string, RuleSpec> RelayText = [];
     public static string RelayLine(RuleSpec s) => $"跟你说条规矩：「{s.Text}」";
-    public static string TeachLine(int l) => $"《{Lessons[l].Title}》讲的，我给你讲讲。";
+    public static string TeachLine(int l) => $"《{Lessons[l].Title}》那堂课，我给你说说。";
 
     /// <summary>
     /// 转述、拉人、教人、换吃的、跟随、躲避（§13 第 5、7 条）——全部是此人心中的规则，经 DecisionSystem 选出、ActionRuntime 结算：

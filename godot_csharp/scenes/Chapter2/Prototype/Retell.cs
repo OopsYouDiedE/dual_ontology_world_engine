@@ -56,7 +56,9 @@ public sealed partial class Game
         foreach (var r in _relaysToDet)
         {
             if (_presentedToDet.Contains(r.Item.Claim.Identity)) continue;
-            var g = groups.FirstOrDefault(x => x[0].Item.Claim.Content == r.Item.Claim.Content);
+            // 可合并的所见（夜里望见身影）按“谁看见的”分组；其余按内容分组。
+            string Key(Claim c) => HasMerge(c.Predicate) ? $"{c.Predicate}|{c.Subject}|{c.Night}" : c.Content;
+            var g = groups.FirstOrDefault(x => Key(x[0].Item.Claim) == Key(r.Item.Claim));
             if (g is null) groups.Add([r]);
             else if (!g.Any(i => i.Teller == r.Teller && i.Item.Claim.Identity == r.Item.Claim.Identity)) g.Add(r);
         }
@@ -64,12 +66,8 @@ public sealed partial class Game
         foreach (var g in groups)
         {
             var c = g[0].Item.Claim;
-            var joinTo = g.Count == 1 && HasMerge(c.Predicate)
-                ? entries.FindIndex(e => e.Items[0].Teller == g[0].Teller && e.Items[0].Item.Claim is var o && o.Predicate == c.Predicate && o.Subject == c.Subject && o.Night == c.Night
-                    && (e.Merged || e.Items.Count == 1))
-                : -1;
-            if (joinTo >= 0) { entries[joinTo].Items.Add(g[0]); entries[joinTo] = (entries[joinTo].Items, true); }
-            else entries.Add((g, false));
+            // 同一个人（主语）同一夜的几处所见，不论经谁转述，都并成一句，免得同一个人的所见被拆成几条互相打架的话。
+            entries.Add((g, HasMerge(c.Predicate)));
         }
         var lines = new List<string>();
         foreach (var (items, merged) in entries)
@@ -81,10 +79,18 @@ public sealed partial class Game
             if (merged)
             {
                 // 同一处的几种身形并在一起：“后勤院有一个中等身量的、一个高大的身影”。
-                var places = string.Join("；", items.GroupBy(i => i.Item.Claim.Where).Select(at => X($"知识合并.{claim.Predicate}.每处",
+                // 同一条知识可能经几个人传来，先按知识去重再数身影。
+                var distinct = items.GroupBy(i => i.Item.Claim.Identity).Select(g => g.First()).ToList();
+                var places = string.Join("；", distinct.GroupBy(i => i.Item.Claim.Where).Select(at => X($"知识合并.{claim.Predicate}.每处",
                     ("地", at.Key is { } w ? Names.Of(w) : ""),
                     ("各色", string.Join("、", at.GroupBy(i => i.Item.Claim.Value("身形")).Select(b => X("知识片段.身影一种", ("数", Cn(b.Count())), ("身形", b.Key))))))));
-                lines.Add($"{tellers[0].Name}说：“{Stop(Say(claim.With("各处", places), tellers[0], Det, template: $"知识合并.{claim.Predicate}.句"))}”");
+                var mergedClaim = claim.With("各处", places);
+                var template = $"知识合并.{claim.Predicate}.句";
+                // 看见的人自己也在说，就只听他本人的；别人只是在复述他。
+                if (claim.Subject is { } seer && tellers.Any(t => t.Id == seer)) tellers = [this[seer]];
+                lines.Add(tellers.Count == 1
+                    ? $"{tellers[0].Name}说：“{Stop(Say(mergedClaim, tellers[0], Det, template: template))}”"
+                    : X("知识片段.都说", ("人们", tellerNames), ("话", Stop(Say(mergedClaim, null, Det, template: template)))));
                 continue;
             }
             if (items.Count == 1)

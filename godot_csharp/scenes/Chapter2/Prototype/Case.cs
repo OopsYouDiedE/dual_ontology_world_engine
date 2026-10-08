@@ -364,7 +364,11 @@ public sealed partial class Game
             ConfrontLog.Add(X("对质.共同规则提议", ("规矩", CommonRule.Text)) + (nodders.Length == 0 ? X("对质.共同规则无人点头") : X("对质.共同规则点头", ("人们", JoinNames(nodders))))
                 + X(CommonRuleEstablished ? "对质.共同规则成立" : "对质.共同规则不成"));
             var refusers = room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) != Truth.True).ToArray();
-            if (refusers.Length > 0) ConfrontLog.Add(X("对质.共同规则拒绝", ("各人", string.Join("、", refusers.Select(p => $"{p.Name}{Voice(p, CommonRule, Truth.False)}")))));
+            if (refusers.Length > 0)
+            {
+                var voices = refusers.Where(p => p.Id is P.Ward or P.Ruan or P.Quer or P.Mora or P.Lucian).Take(3).Select(p => $"{p.Name}说{Voice(p, CommonRule, Truth.False)}");
+                ConfrontLog.Add(X("对质.共同规则拒绝", ("各人", JoinNames(refusers.Select(p => p.Name))), ("几句", string.Join("，", voices))));
+            }
         }
     }
 

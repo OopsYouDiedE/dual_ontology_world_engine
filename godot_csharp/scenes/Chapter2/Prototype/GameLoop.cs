@@ -717,12 +717,12 @@ public sealed partial class Game
         // 始业日：门开后的集合与第一顿晚饭；案发那一日：下午莫兰发烧、傍晚沃德当众盯视雀儿（压力，见第三部分 §7、§16）。
         if (Day == FirstDay && Slot == Slot.Morning)
         {
-                Feed.Add("十六人在中央厅会合。文契组里，沃德的目光一直没离开雀儿；星仪组的伊莲娜站得离阮清越很远；后勤组的茉拉不和维罗妮卡说话。");
+                Feed.Add(X("节点.集合"));
                 LedgerBaseline = Get(Granary, T.Ration);
         }
         else if (Day == FirstDay && Slot == Slot.Noon)
         {
-                if (!Mediated) Feed.Add("配给台前，茉拉握着粮仓钥匙，阮清越拿着人头账，两人争执不下。这一顿没有开粮。");
+                if (!Mediated) Feed.Add(X("节点.配给僵住"));
         }
         else if (Day == CaseNight && Slot == Slot.Evening)
         {

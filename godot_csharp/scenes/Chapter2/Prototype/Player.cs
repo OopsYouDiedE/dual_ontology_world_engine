@@ -512,7 +512,7 @@ public sealed partial class Game
         {
             SpeechAct.Refuse => $"“{X("知识片段.不想说")}”",
             SpeechAct.Withhold => $"“{Idle("闲话无新事")}”{X("知识片段.欲言又止", ("他", he))}",
-            _ when lines.Length == 0 && !_idleToDet.Add((p.Id, Day)) => X("知识片段.又问", ("他", he)),
+            _ when lines.Length == 0 && !_idleToDet.Add((p.Id, Day)) => Chapter2Design.HasText($"闲话又问.{p.Id}") ? X($"闲话又问.{p.Id}") : X("知识片段.又问", ("他", he)),
             _ when lines.Length == 0 => $"“{Idle(recent.Length > 0 ? "闲话都听过" : "闲话无新事")}”",
             _ when lines.Length == 1 => $"“{Stop(lines[0])}”",
             _ => $"“{Stop(lines[0])}{X("知识片段.还有")}{Stop(lines[1])}”",
