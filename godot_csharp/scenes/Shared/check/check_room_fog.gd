@@ -1,6 +1,6 @@
 extends SceneTree
 # Independent automatic regression with injected feet positions; not blind play.
-const MASK = preload("res://scenes/Shared/UI/Field/SightMask.gd")
+const MASK = preload("res://scenes/UI/Panels/Field/SightMask.gd")
 const INDOOR = ["central_hall", "lecture", "logistics", "granary", "clinic", "greenhouse", "archive", "counterweight", "living_hall", "resonance", "zone_yi", "zone_jia", "zone_ding", "zone_bing"]
 var checks := 0
 var failures := 0

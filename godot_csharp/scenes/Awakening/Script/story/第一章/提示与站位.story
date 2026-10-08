@@ -98,10 +98,15 @@
     - E12
 
 对白演员
+    # 说话人（台词里写的名字）：立绘与声线键
     侦探：detective
+    侦探（心声）：detective
     工程师：engineer
+    霍铎：engineer
     厨师：chef
+    沈鼎：chef
     音乐家：musician
+    苏泠：musician
 
 点位框
     E1：128, 344, 20, 80

@@ -1,0 +1,183 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/Panels/Dialogue/ChapterDialogue.gd" id="dialogue"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres" id="portrait"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/DialogueResponse.tscn" id="response"]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/DialogueTheme.tres" id="styles_DialogueTheme"]
+
+[node name="Dialogue" type="CanvasLayer"]
+layer = 10
+script = ExtResource("dialogue")
+preview_portrait = ExtResource("portrait")
+response_scene = ExtResource("response")
+
+[node name="DialoguePanel" type="Panel" parent="."]
+offset_left = 64.0
+offset_top = 800.0
+offset_right = 1216.0
+offset_bottom = 972.0
+theme = ExtResource("styles_DialogueTheme")
+theme_type_variation = &"ChapterDialogueDialoguePanel"
+
+[node name="Heading" type="Label" parent="DialoguePanel"]
+visible = false
+offset_left = 36.0
+offset_top = 18.0
+offset_right = 300.0
+offset_bottom = 36.0
+mouse_filter = 2
+text = "对话"
+theme_type_variation = &"ChapterDialogueHeading"
+
+[node name="Speaker" type="RichTextLabel" parent="DialoguePanel"]
+offset_left = 32.0
+offset_top = 16.0
+offset_right = 512.0
+offset_bottom = 44.0
+mouse_filter = 2
+text = "说话人"
+theme_type_variation = &"ChapterDialogueSpeaker"
+
+[node name="Body" type="RichTextLabel" parent="DialoguePanel"]
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 48.0
+offset_right = -144.0
+offset_bottom = 132.0
+mouse_filter = 2
+bbcode_enabled = true
+text = "示例台词。"
+scroll_active = false
+theme_type_variation = &"ChapterDialogueBody"
+
+[node name="SpeakerDivider" type="ColorRect" parent="DialoguePanel"]
+visible = false
+offset_left = 180.0
+offset_top = 52.0
+offset_right = 181.0
+offset_bottom = 124.0
+mouse_filter = 2
+color = Color(0.396078, 0.34902, 0.262745, 1)
+
+[node name="Choices" type="GridContainer" parent="DialoguePanel"]
+anchor_right = 1.0
+offset_right = -32.0
+offset_left = 32.0
+offset_top = 156.0
+columns = 2
+theme_type_variation = &"ChapterDialogueChoices"
+
+[node name="SampleResponse1" parent="DialoguePanel/Choices" instance=ExtResource("response")]
+layout_mode = 2
+text = "询问来意"
+
+[node name="SampleResponse2" parent="DialoguePanel/Choices" instance=ExtResource("response")]
+layout_mode = 2
+text = "出示线索"
+
+[node name="SampleResponse3" parent="DialoguePanel/Choices" instance=ExtResource("response")]
+layout_mode = 2
+text = "再想一想"
+
+[node name="SampleResponse4" parent="DialoguePanel/Choices" instance=ExtResource("response")]
+layout_mode = 2
+text = "结束交谈"
+
+[node name="Next" type="Button" parent="DialoguePanel"]
+focus_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -132.0
+offset_top = -54.0
+offset_right = -16.0
+offset_bottom = -14.0
+text = "继续  ▸"
+theme_type_variation = &"ChapterDialogueNext"
+
+[node name="Hint" type="Label" parent="DialoguePanel"]
+visible = false
+offset_left = 36.0
+offset_top = 196.0
+offset_right = 540.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_type_variation = &"ChapterDialogueHint"
+
+[node name="HistoryButton" type="Button" parent="DialoguePanel"]
+focus_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -104.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = 50.0
+text = "回看"
+theme_type_variation = &"ChapterDialogueHistoryButton"
+
+[node name="KeyLegend" type="Label" parent="DialoguePanel"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -30.0
+offset_right = 900.0
+offset_bottom = -10.0
+mouse_filter = 2
+text = "Space 继续　H 回看　按住 Ctrl 快进"
+theme_type_variation = &"ChapterDialogueKeyLegend"
+
+[node name="PortraitFrame" type="PanelContainer" parent="DialoguePanel"]
+offset_left = 16.0
+offset_top = -124.0
+offset_right = 226.0
+offset_bottom = 156.0
+mouse_filter = 2
+theme_type_variation = &"ChapterDialoguePortraitFrame"
+
+[node name="CharacterPortrait" type="TextureRect" parent="DialoguePanel/PortraitFrame"]
+custom_minimum_size = Vector2(204, 274)
+layout_mode = 2
+texture_filter = 2
+mouse_filter = 2
+texture = ExtResource("portrait")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Monogram" type="Label" parent="DialoguePanel/PortraitFrame"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+text = "说"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_type_variation = &"ChapterDialogueMonogram"
+
+[node name="HistoryPanel" type="Panel" parent="."]
+visible = false
+offset_left = 288.0
+offset_top = 152.0
+offset_right = 992.0
+offset_bottom = 616.0
+theme = ExtResource("styles_DialogueTheme")
+theme_type_variation = &"ChapterDialogueHistoryPanel"
+
+[node name="HistoryText" type="RichTextLabel" parent="HistoryPanel"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 680.0
+offset_bottom = 402.0
+bbcode_enabled = true
+text = "说话人甲\n示例台词。\n\n说话人乙\n另一句示例台词。"
+
+[node name="Close" type="Button" parent="HistoryPanel"]
+focus_mode = 0
+offset_left = 470.0
+offset_top = 411.0
+offset_right = 680.0
+offset_bottom = 451.0
+text = "关闭"
+
+[node name="VoicePlayer" type="AudioStreamPlayer" parent="."]
+volume_db = -6.0

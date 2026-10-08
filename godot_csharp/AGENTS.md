@@ -34,6 +34,19 @@
      - **上行（UI/现场 → Core）**：监听玩家在 UI 与地图上的操作信号，转换为 Core 意图（`ActionIntent` / 决策请求）交由世界引擎权威裁决。
    - **隔离铁律**：UI 控件严禁直接访问 Core 对象引用；Core 严禁依赖任何 Godot 场景节点。
 
+**目录对应（`scenes/`）**：
+
+| 分类 | 目录 | 内容 |
+| :--- | :--- | :--- |
+| 小组件 | `UI/Components/` | `Paper.gd`（组件工厂，只按类型变体创建、读主题色）、`PaperButton`、`PaperLabel`、`PaperRule`、`PaperModal`、`DialogueResponse`、`ReplayBubble` |
+| UI 面板与子系统 | `UI/Panels/<面板>/` | `Dialogue`、`Menu`、`Card`、`Form`、`Notebook`、`Manuscript`、`CampusMap`、`Ending`、`HUD`、`Field`（提示层、回放层、视野遮罩）、`Title` |
+| UI 总装 | `UI/UISystem.tscn` | 整合各面板；只读宿主事件与快照，用 `ui_event` 回传 |
+| 宿主 | `Host/Main.tscn`（主场景）、`Host/GameEngine.cs`、`Host/PlayerViewTrace.gd` | 唯一承接 C# 会话的节点 |
+| 样式 | `UI/Styles/*.tres` | `UITheme.tres`（纸页主题：语义色 `Paper/colors/*`、全部类型变体、自绘控件的颜色与尺寸）、`DialogueTheme.tres`、`TitleTheme.tres`，以及开发场景的 `MapBrowserTheme.tres`、`WorldScriptPreviewTheme.tres` |
+| 编辑器总览 | `UI/Workbench/` | 各面板的预览页 |
+
+现场（地图视图）在 `Shared/Field/`，各章地图适配器在各章目录；现场用到的物件外观名等文字由 `Shared/Field/FieldVocabulary.gd` 从剧本编译物读取。
+
 ---
 
 ## 二、资源类型与样式规范
@@ -41,6 +54,8 @@
 1. **UI Style 统一规范**：
    - 所有 UI 界面的外观、调色板、边框与排版样式，**统一使用 `Style` 类型的 Resource（如继承或封装自 `StyleBox` / `Theme`）进行管理**。
    - 避免在各 `.tscn` 节点内部随意硬编码行内样式覆盖；公共视觉规范统一定义在主题与样式资源中。
+   - 场景节点不写 `theme_override_*`，脚本不调用 `add_theme_*_override`、不 `new` 样式盒；节点用 `theme_type_variation` 引用主题里的类型变体，自绘控件用 `get_theme_color` / `get_theme_constant` / `get_theme_font_size` 读取主题里自定义类型的条目。
+   - 编辑器预览用的样例文字只写中性占位，不写剧情与设定。
 
 2. **Resource 格式约束（.tres）**：
    - **除原生二进制素材（图片 `.png`/`.webp`、音频 `.wav`/`.ogg`、三维模型 `.glb`/`.gltf` 等）外，项目中绝大多数 Resource 统一保存为文本格式的 `.tres`**。

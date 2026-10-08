@@ -11,7 +11,7 @@ func _run() -> void:
 	capture_viewport.size = Vector2i(1280, 992)
 	capture_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	root.add_child(capture_viewport)
-	var packed: PackedScene = load("res://scenes/BasicUISystem/BasicUISystem.tscn")
+	var packed: PackedScene = load("res://scenes/Host/Main.tscn")
 	if packed == null:
 		push_error("Capture could not load the production main scene.")
 		quit(2)
@@ -116,7 +116,7 @@ func _shutdown(scene: Node) -> void:
 
 # Presentation-only sample, explicitly separate from the game's naming flow.
 func _form_component_preview() -> void:
-	var ui: Node = load("res://scenes/Shared/UI/UISystem.tscn").instantiate()
+	var ui: Node = load("res://scenes/UI/UISystem.tscn").instantiate()
 	capture_viewport.add_child(ui)
 	ui.present({"kind": "form", "title": "如何称呼你", "prompt": "你希望大家如何称呼你？",
 		"fields": [{"id": "name", "kind": "text", "heading": "姓名", "value": "侦探", "max_length": 12}],

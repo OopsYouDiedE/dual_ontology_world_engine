@@ -1,7 +1,7 @@
 extends SceneTree
-## 共享 UI 模块自动检查（不是盲玩）：逐个实例化 scenes/Shared/UI 下的组件，喂样例数据，检查节点显隐与内容。
+## 共享 UI 模块自动检查（不是盲玩）：逐个实例化 scenes/UI 下的组件，喂样例数据，检查节点显隐与内容。
 ## 运行：godot --headless --path godot_csharp --script res://scenes/Shared/check/ui_modules_check.gd
-const UI := "res://scenes/Shared/UI/"
+const UI := "res://scenes/UI/"
 const SAMPLE_PICTURE := "res://ShareAsset/Internal/Characters/animation_v2/chef.png"
 
 var failures: Array[String] = []
@@ -33,7 +33,7 @@ func scene_files(base: String) -> Array:
 	return files
 
 func run() -> void:
-	for path in scene_files("res://scenes/Shared/UI"):
+	for path in scene_files("res://scenes/UI"):
 		if path.contains("/Workbench/"):
 			continue
 		var node := spawn(path)
@@ -57,7 +57,7 @@ func run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 func check_hud() -> void:
-	var hud := spawn(UI + "HUD/FieldHUD.tscn")
+	var hud := spawn(UI + "Panels/HUD/FieldHUD.tscn")
 	await process_frame
 	ok(not hud.get_node("Keys").visible and not hud.get_node("Hint").visible and not hud.get_node("Time").visible, "HUD starts with empty pieces hidden")
 	hud.set_title("生活翼 · 活动厅")
@@ -99,7 +99,7 @@ func check_hud() -> void:
 	await process_frame
 
 func check_choice_menu() -> void:
-	var menu := spawn(UI + "Menu/ChoiceMenu.tscn")
+	var menu := spawn(UI + "Panels/Menu/ChoiceMenu.tscn")
 	await process_frame
 	var picked: Array = []
 	menu.chosen.connect(func(id: String): picked.append(id))
@@ -120,12 +120,12 @@ func check_choice_menu() -> void:
 	await process_frame
 
 func check_evidence_card() -> void:
-	var card := spawn(UI + "Card/EvidenceCard.tscn")
+	var card := spawn(UI + "Panels/Card/EvidenceCard.tscn")
 	await process_frame
 	var picked: Array = []
 	card.chosen.connect(func(id: String): picked.append(id))
 	card.show_data({"picture": SAMPLE_PICTURE, "intro": "一份简介", "facts": "亲见的事实。", "source": "现场",
-		"notes": ["回忆：这个声音似曾相识。", "旁人没有提起过它。"], "items": ["第一条", "第二条"],
+		"notes": ["[color=seal]回忆：这个声音似曾相识。[/color]", "旁人没有提起过它。"], "items": ["第一条", "第二条"],
 		"table": [["位置", "谁", "听到"], ["门口", "甲", "脚步"], ["窗边", "乙", "风声"]],
 		"inline": [{"id": "a", "label": "选项甲", "available": true}, {"id": "b", "label": "选项乙", "available": false, "lock_hint": "锁"}]})
 	ok(card.get_node("Row/Picture").visible and card.get_node("Row/Picture").texture != null, "EvidenceCard picture shown")
@@ -133,8 +133,8 @@ func check_evidence_card() -> void:
 	ok(card.get_node("Row/Texts/Source").visible and card.get_node("Row/Texts/Source").text.begins_with("来源："), "EvidenceCard source prefixed")
 	var notes: Control = card.get_node("Notes")
 	ok(notes.visible and notes.get_child_count() == 2, "EvidenceCard notes")
-	ok(notes.get_child(0).get_theme_color("default_color") == card.Paper.SEAL, "EvidenceCard recall note is seal red")
-	ok(notes.get_child(1).get_theme_color("default_color") == card.Paper.INK, "EvidenceCard plain note is ink")
+	ok(notes.get_child(0).text.contains("#" + card.Paper.color("seal").to_html(false)), "EvidenceCard recall note carries the seal color from story markup")
+	ok(notes.get_child(1).get_theme_color("default_color") == card.Paper.color("ink"), "EvidenceCard plain note is ink")
 	ok(card.get_node("Items").get_child_count() == 2, "EvidenceCard items")
 	var table: GridContainer = card.get_node("Table")
 	ok(table.visible and table.columns == 3 and table.get_child_count() == 9, "EvidenceCard table columns follow first row")
@@ -149,7 +149,7 @@ func check_evidence_card() -> void:
 	await process_frame
 
 func check_form() -> void:
-	var form := spawn(UI + "Form/FormPanel.tscn")
+	var form := spawn(UI + "Panels/Form/FormPanel.tscn")
 	await process_frame
 	var changes := [0]
 	var submits := [0]
@@ -200,7 +200,7 @@ func check_form() -> void:
 	await process_frame
 
 func check_notebook() -> void:
-	var notebook := spawn(UI + "Notebook/Notebook.tscn")
+	var notebook := spawn(UI + "Panels/Notebook/Notebook.tscn")
 	await process_frame
 	var opened: Array = []
 	notebook.open_card.connect(func(id: String): opened.append(id))
@@ -221,14 +221,14 @@ func check_notebook() -> void:
 			list = child
 	ok(grid != null and grid.columns == 2 and grid.get_child_count() == 3 and grid.get_child(0) is Button, "Notebook grid of buttons")
 	ok(list != null and list.get_child_count() == 2 and list.get_child(0) is RichTextLabel, "Notebook list of labels")
-	ok(list.get_child(1).get_theme_color("default_color") == notebook.Paper.MUTED, "Notebook muted entry")
+	ok(list.get_child(1).get_theme_color("default_color") == notebook.Paper.color("muted"), "Notebook muted entry")
 	grid.get_child(1).pressed.emit()
 	ok(opened == ["E2"], "Notebook emits open_card")
 	notebook.queue_free()
 	await process_frame
 
 func check_manuscript() -> void:
-	var m := spawn(UI + "Manuscript/ReplayManuscript.tscn")
+	var m := spawn(UI + "Panels/Manuscript/ReplayManuscript.tscn")
 	await process_frame
 	var changed: Array = []
 	var runs: Array = []
@@ -280,7 +280,7 @@ func check_manuscript() -> void:
 	await process_frame
 
 func check_campus_map() -> void:
-	var map := spawn(UI + "CampusMap/CampusMap.tscn")
+	var map := spawn(UI + "Panels/CampusMap/CampusMap.tscn")
 	await process_frame
 	map.here = "Hall"
 	map.known = {"Hall": true, "Commons": true}
@@ -294,7 +294,7 @@ func check_campus_map() -> void:
 	await process_frame
 
 func check_ending() -> void:
-	var ending := spawn(UI + "Ending/EndingCard.tscn")
+	var ending := spawn(UI + "Panels/Ending/EndingCard.tscn")
 	await process_frame
 	ending.show_data({"outcome": "天亮了。", "rows": ["[color=seal]留下的钩：[/color]钥匙", "你没有交出的：名字", "按空格回到标题。"]})
 	ok(ending.get_node("Outcome").visible and ending.get_node("Rows").get_child_count() == 3, "EndingCard outcome and rows")
@@ -305,7 +305,7 @@ func check_ending() -> void:
 	await process_frame
 
 func check_modal() -> void:
-	var modal := spawn(UI + "Common/PaperModal.tscn")
+	var modal := spawn(UI + "Components/PaperModal.tscn")
 	await process_frame
 	var fired := [0]
 	var first: Button = modal.add_footer_button("开始", func(): fired[0] += 1)
@@ -338,7 +338,7 @@ func check_workbench() -> void:
 	for page in pages.get_children():
 		ok(page.get_node("Viewport").get_child_count() > 0, "Workbench page populated: " + page.name)
 		ok(not page.name.begins_with("一章") and not page.name.begins_with("二章"), "Workbench has no per-chapter page: " + page.name)
-	var raw := FileAccess.get_file_as_string("res://scenes/Shared/UI/Workbench/UIWorkbench.tscn")
+	var raw := FileAccess.get_file_as_string("res://scenes/UI/Workbench/UIWorkbench.tscn")
 	ok(not raw.contains("scenes/Awakening/") and not raw.contains("scenes/Chapter2/"), "Workbench references no chapter folders")
 	bench.queue_free()
 	await process_frame

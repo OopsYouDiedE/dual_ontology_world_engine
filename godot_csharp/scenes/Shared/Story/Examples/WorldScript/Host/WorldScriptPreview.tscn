@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/Shared/Story/Examples/WorldScript/Host/WorldScriptPreview.gd" id="host"]
 [ext_resource type="Script" path="res://scenes/Shared/Story/Examples/WorldScript/Host/WorldSessionEngine.cs" id="engine"]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/WorldScriptPreviewTheme.tres" id="styles_UITheme"]
 
 [node name="WorldScriptPreview" type="Control"]
 layout_mode = 3
@@ -11,6 +13,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("host")
+theme = ExtResource("styles_UITheme")
 
 [node name="WorldSessionEngine" type="Node" parent="."]
 script = ExtResource("engine")
@@ -32,19 +35,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 24
+theme_type_variation = &"WorldScriptPreviewMargin"
 
 [node name="Column" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_type_variation = &"WorldScriptPreviewColumn"
 
 [node name="Title" type="Label" parent="Margin/Column"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 text = "世界脚本 · 作者预览"
+theme_type_variation = &"WorldScriptPreviewTitle"
 
 [node name="Status" type="Label" parent="Margin/Column"]
 layout_mode = 2
@@ -58,8 +58,8 @@ disabled = true
 
 [node name="RoomView" type="HBoxContainer" parent="Margin/Column"]
 layout_mode = 2
-theme_override_constants/separation = 18
 metadata/entity_id = "world:room.foyer"
+theme_type_variation = &"WorldScriptPreviewRoomView"
 
 [node name="RoomName" type="Label" parent="Margin/Column/RoomView"]
 layout_mode = 2
@@ -84,7 +84,7 @@ metadata/entity_id = "world:object.inner_bolt"
 
 [node name="Actions" type="HBoxContainer" parent="Margin/Column"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_type_variation = &"WorldScriptPreviewActions"
 
 [node name="Refresh" type="Button" parent="Margin/Column/Actions"]
 layout_mode = 2
@@ -120,4 +120,4 @@ horizontal_scroll_mode = 0
 [node name="Choices" type="VBoxContainer" parent="Margin/Column/ChoiceScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_type_variation = &"EndingCardRows"

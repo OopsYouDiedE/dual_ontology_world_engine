@@ -3,9 +3,9 @@ extends Node2D
 ## 昨夜回放：在真实地图上用半透明墨色人影重演，每人头顶一个心声气泡（此刻他听到/相信的东西）。
 ## 同一时刻，四个气泡并排显示四种不同的认知。可暂停、倍速、跳过；跳过与看完的结算相同。
 
-const Paper := preload("res://scenes/Shared/UI/Common/Paper.gd")
-@export var overlay_scene: PackedScene = preload("res://scenes/Shared/UI/Field/ReplayOverlay.tscn")
-@export var bubble_scene: PackedScene = preload("res://scenes/Shared/UI/Field/ReplayBubble.tscn")
+const Paper := preload("res://scenes/UI/Components/Paper.gd")
+@export var overlay_scene: PackedScene = preload("res://scenes/UI/Panels/Field/ReplayOverlay.tscn")
+@export var bubble_scene: PackedScene = preload("res://scenes/UI/Components/ReplayBubble.tscn")
 
 const ROOM_ANCHORS := {
 	"R05": Vector2(930, 200), "R06": Vector2(930, 600), "R07": Vector2(706, 600), "R08": Vector2(706, 200),

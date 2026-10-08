@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/UI/Panels/Card/EvidenceCard.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Panels/Menu/ChoiceMenu.tscn" id="choice_menu"]
+
+[node name="EvidenceCard" type="VBoxContainer"]
+offset_right = 832.0
+size_flags_horizontal = 3
+theme = ExtResource("theme")
+script = ExtResource("script")
+theme_type_variation = &"PaperModalBody"
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"EvidenceCardRow"
+
+[node name="Picture" type="TextureRect" parent="Row"]
+visible = false
+texture_filter = 1
+custom_minimum_size = Vector2(288, 216)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Texts" type="VBoxContainer" parent="Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"EvidenceCardTexts"
+
+[node name="Intro" type="RichTextLabel" parent="Row/Texts"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"EvidenceCardIntro"
+
+[node name="Facts" type="RichTextLabel" parent="Row/Texts"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"EvidenceCardFacts"
+
+[node name="Source" type="RichTextLabel" parent="Row/Texts"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"EvidenceCardSource"
+
+[node name="Notes" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"EvidenceCardTexts"
+
+[node name="Items" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"PaperModalBody"
+
+[node name="Table" type="GridContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_type_variation = &"EvidenceCardTable"
+
+[node name="Inline" parent="." instance=ExtResource("choice_menu")]
+visible = false
+layout_mode = 2

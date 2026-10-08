@@ -9,6 +9,7 @@
 # ---- 全章共享生态：词汇、地点、十六人画像与晨间日常 ----
 引入：story/生态/词汇.story
 引入：story/生态/地点.story
+引入：story/生态/物件名.story
 引入：story/生态/人物/*.story
 引入：story/生态/方法库.story
 引入：story/生态/晨间日常.story

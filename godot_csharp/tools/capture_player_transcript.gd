@@ -7,9 +7,9 @@ extends SceneTree
 ## Room/near-site contexts lack coordinates: positions are reconstructed from real map
 ## geometry via the production WorldView's public stage/scene commands.
 
-const UI_SCENE := preload("res://scenes/Shared/UI/UISystem.tscn")
+const UI_SCENE := preload("res://scenes/UI/UISystem.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
-const VIEW_TRACE := preload("res://scenes/BasicUISystem/PlayerViewTrace.gd")
+const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 const VIEW_RESOURCES := {
 	"living": "res://scenes/Awakening/Awakening.tscn",
 	"campus": "res://scenes/Chapter2/Field/CampusMapView.tscn",
@@ -289,7 +289,7 @@ func _view(ev: Dictionary) -> void:
 		host.field.load_map(str(ev.map), str(ev.get("spawn", "")))
 	var view_snapshot: Dictionary = _packet_snapshot if not _packet_snapshot.is_empty() else snapshot
 	if not view_snapshot.is_empty():
-		# BasicUISystem._view invokes _apply(engine.Snapshot()) before drawing.
+		# Host/Main._view invokes _apply(engine.Snapshot()) before drawing.
 		host.ui.apply_snapshot(view_snapshot)
 		host.field.apply_snapshot(view_snapshot)
 	await _draw()

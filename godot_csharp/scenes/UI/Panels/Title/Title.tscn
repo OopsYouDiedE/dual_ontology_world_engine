@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/Panels/Title/Title.gd" id="title"]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/TitleTheme.tres" id="theme"]
+
+[node name="Title" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("title")
+theme = ExtResource("theme")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.113725, 0.101961, 0.121569, 1)
+
+[node name="MenuBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -140.0
+offset_right = 160.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"TitleMenuBox"
+
+[node name="TitleLabel" type="RichTextLabel" parent="MenuBox"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[center]安眠者有福[/center]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+theme_type_variation = &"TitleTitleLabel"
+
+[node name="SubtitleLabel" type="RichTextLabel" parent="MenuBox"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[center]Blessed Are the Sleepers[/center]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+theme_type_variation = &"TitleSubtitleLabel"
+
+[node name="Spacer" type="Control" parent="MenuBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="MenuBox"]
+layout_mode = 2
+text = "开始游戏"
+theme_type_variation = &"TitleStartButton"
+
+[node name="QuitButton" type="Button" parent="MenuBox"]
+layout_mode = 2
+text = "退出"
+theme_type_variation = &"TitleQuitButton"

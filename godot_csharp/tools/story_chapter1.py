@@ -118,10 +118,13 @@ TABLES = {
     "回忆物件": ("RECALL_OBJECTS", "list"), "相识证物": ("ACQUAINTANCE_EVIDENCE", "list"),
     "对白演员": ("DIALOGUE_CAST", "map"), "声路站位": ("SOUND_SPOTS", "map"), "同伴站位": ("COMPANION_SPOTS", "map"),
     "站位候补": ("SPOT_ORDER", "list"), "鞋底对象": ("SOLE_TARGETS", "map"), "点位框": ("SITE_BOXES", "boxes"), "布局常量": ("LAYOUT_CONSTANTS", "constants"),
+    "物件外观名": ("OBJECT_NAMES", "map"), "纹理外观名": ("TEXTURE_NAMES", "map"), "纹理前缀外观名": ("TEXTURE_PREFIX_NAMES", "map"),
+    "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
                 "SOUND_SPOTS", "COMPANION_SPOTS", "SPOT_ORDER", "SOLE_TARGETS",
-                "DETECTIVE_SEARCH", "DETECTIVE_ACTIONS", "DETECTIVE_TRACE_FIELDS", "DETECTIVE_MOTIVES", "DETECTIVE_ARGUMENTS", "DETECTIVE_DIALOGUE_CHOICES")
+                "DETECTIVE_SEARCH", "DETECTIVE_ACTIONS", "DETECTIVE_TRACE_FIELDS", "DETECTIVE_MOTIVES", "DETECTIVE_ARGUMENTS", "DETECTIVE_DIALOGUE_CHOICES",
+                "OBJECT_NAMES", "TEXTURE_NAMES", "TEXTURE_PREFIX_NAMES", "FIELD_WORDS", "SPRITE_SITES")
 
 
 class Chapter1Source:

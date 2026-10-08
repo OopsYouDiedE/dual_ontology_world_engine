@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/Chapter2/Field/FieldHUD.gd" id="1"]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/MapBrowserTheme.tres" id="styles_UITheme"]
 
 [node name="FieldHUD" type="CanvasLayer"]
 script = ExtResource("1")
@@ -8,6 +10,5 @@ script = ExtResource("1")
 [node name="Place" type="Label" parent="."]
 offset_left = 12.0
 offset_top = 8.0
-theme_override_colors/font_color = Color(0.95, 0.92, 0.84, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.1, 1)
-theme_override_constants/outline_size = 6
+theme_type_variation = &"FieldHUDPlace"
+theme = ExtResource("styles_UITheme")

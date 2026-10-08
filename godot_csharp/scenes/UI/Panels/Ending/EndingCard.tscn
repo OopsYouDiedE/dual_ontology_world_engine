@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/UI/Panels/Ending/EndingCard.gd" id="script"]
+
+[node name="EndingCard" type="VBoxContainer"]
+offset_right = 752.0
+size_flags_horizontal = 3
+theme = ExtResource("theme")
+script = ExtResource("script")
+theme_type_variation = &"PaperModalBody"
+
+[node name="Outcome" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"EndingCardOutcome"
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"EndingCardRows"

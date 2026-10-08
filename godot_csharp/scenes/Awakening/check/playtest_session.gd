@@ -10,7 +10,7 @@ extends SceneTree
 ## and publishes what a player can see: a screenshot, visible text and the
 ## clickable controls. It never reads or writes story state.
 
-const GAME_SCENE := "res://scenes/BasicUISystem/BasicUISystem.tscn"
+const GAME_SCENE := "res://scenes/Host/Main.tscn"
 const SETTLE_FRAMES := 6
 
 var session := ""

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generic, human-directed client for a fresh input session of the single BasicUISystem game window.
+"""Generic, human-directed client for a fresh input session of the single Host/Main game window.
 
 Start the rendered Godot driver separately with:
   --script res://scenes/Awakening/check/playtest_session.gd -- \

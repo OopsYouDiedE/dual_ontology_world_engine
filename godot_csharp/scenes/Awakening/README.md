@@ -1,6 +1,6 @@
 # 第一章《门的这一侧》（重制版）
 
-标题入口 `scenes/Title/Title.tscn` 选第一章后，加载 `Chapter1.tscn`：共用的主代码 `Shared/ChapterHost.gd`、界面 `Shared/UI/ChapterUI.tscn` 与现场 `Shared/Field/ChapterField.gd`，地图为本目录的 `Awakening.tscn`（适配器 `AwakeningMap.gd`）。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第二、三、五部分。旧章节已退出运行目录，语言设置与翻译资源统一位于 `scenes/Shared/Locale/`。
+主场景 `scenes/Host/Main.tscn` 先显示标题 `scenes/UI/Panels/Title/Title.tscn`；开始游戏后由 `Host/GameEngine.cs` 转发事件给 `Shared/Game/GameSession.cs`，界面为 `scenes/UI/UISystem.tscn`，现场为 `Shared/Field/WorldView.gd`，地图为本目录的 `Awakening.tscn`（适配器 `AwakeningMap.gd`）。设计依据为 [docs/design-standard.md](../../../docs/design-standard.md) 第四、六、七部分。语言设置与翻译资源统一位于 `scenes/Shared/Locale/`。
 
 ## 运行
 

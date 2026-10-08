@@ -6,8 +6,9 @@ extends Node2D
 
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
-const SightMaskScene := preload("res://scenes/Shared/UI/Field/SightMask.tscn")
-const HintOverlayScene := preload("res://scenes/Shared/UI/Field/HintOverlay.tscn")
+const FieldVocabulary := preload("res://scenes/Shared/Field/FieldVocabulary.gd")
+const SightMaskScene := preload("res://scenes/UI/Panels/Field/SightMask.tscn")
+const HintOverlayScene := preload("res://scenes/UI/Panels/Field/HintOverlay.tscn")
 const PIXEL_FRAMES := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
 const ANIME_FRAMES := "res://ShareAsset/Internal/Characters/AnimeCast/%s.tres"
 const CLICK_STOP_RADIUS := 8.0
@@ -233,12 +234,13 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 			var lamp_rect := Rect2(texture_origin + Vector2(6, 4), Vector2(8, 13))
 			var cabinet_rect := Rect2(texture_origin + Vector2(1, 16), Vector2(18, 20))
 			if not _player_object_exposed(sprite.get_global_transform_with_canvas() * lamp_rect, occluded_regions).is_empty():
-				counts["床头柜上的油灯"] = int(counts.get("床头柜上的油灯", 0)) + 1
+				var lamp_title := FieldVocabulary.word("床头油灯")
+				counts[lamp_title] = int(counts.get(lamp_title, 0)) + 1
 			if _player_object_exposed(sprite.get_global_transform_with_canvas() * cabinet_rect, occluded_regions).is_empty(): continue
 		var title := _player_object_readable(str(sites[site_id].title)) if visible_site else _player_object_title(sprite)
 		if title == "": title = _player_object_title(sprite)
-		if str(sprite.name) == "DoorFace": title += "（关闭）"
-		elif str(sprite.name) == "DoorGap": title += "（开启）"
+		if str(sprite.name) == "DoorFace": title += FieldVocabulary.word("门关")
+		elif str(sprite.name) == "DoorGap": title += FieldVocabulary.word("门开")
 		counts[title] = int(counts.get(title, 0)) + 1
 		if visible_site: represented_sites[site_id] = true
 	_player_object_floor_decor(counts, occluded_regions)
@@ -257,7 +259,7 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 		if left_exposed.is_empty() and right_exposed.is_empty(): continue
 		# 门道和墙面没有室内地板迷雾；按门扇真正露出的像素判断，不以逻辑房间排除。
 		if not _player_object_unshaded(left_exposed) and not _player_object_unshaded(right_exposed): continue
-		var title := "宿舍门（开启）" if openness > 0.05 else "宿舍门（关闭）"
+		var title := FieldVocabulary.word("宿舍门开") if openness > 0.05 else FieldVocabulary.word("宿舍门关")
 		counts[title] = int(counts.get(title, 0)) + 1
 	# 痕迹和墙面热点未必是独立精灵，沿用已开放热点当前显示的标题。
 	for id in sites:
@@ -271,7 +273,7 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 		if hidden: continue
 		if _player_object_exposed(get_global_transform_with_canvas() * site_box(id), occluded_regions).is_empty(): continue
 		var title := _player_object_readable(str(sites[id].title))
-		if title == str(id): title = "未命名物品"
+		if title == str(id): title = FieldVocabulary.word("未命名")
 		if title != "" and not counts.has(title): counts[title] = 1
 	var titles: Array = counts.keys()
 	titles.sort()
@@ -293,7 +295,7 @@ func _player_object_floor_decor(counts: Dictionary, occluded_regions: Array[Rect
 	var map_layout: Dictionary = adapter.get("layout")
 	# 此表的地毯矩形由真实 floor_work 烘焙区域生成，只取物件名，不读取踩痕旁白。
 	for decor in map_layout.get("asides", []):
-		if decor is not Array or decor.size() < 2 or not str(decor[1]).begins_with("地毯。"): continue
+		if decor is not Array or decor.size() < 2 or not str(decor[1]).begins_with(FieldVocabulary.word("地毯旁白前缀")): continue
 		var raw: Array = decor[0]
 		if raw.size() != 4: continue
 		var decor_rect := Rect2(float(raw[0]), float(raw[1]), float(raw[2]), float(raw[3]))
@@ -301,14 +303,14 @@ func _player_object_floor_decor(counts: Dictionary, occluded_regions: Array[Rect
 		var screen_rect: Rect2 = (adapter.get_global_transform_with_canvas() * decor_rect).intersection(architecture_rect)
 		var exposed := _player_object_exposed(screen_rect, occluded_regions)
 		if not exposed.is_empty() and _player_object_exposed_in_sight(exposed):
-			counts["地毯"] = int(counts.get("地毯", 0)) + 1
+			counts[FieldVocabulary.word("地毯")] = int(counts.get(FieldVocabulary.word("地毯"), 0)) + 1
 	# sconces 锚点为墙格顶端 +36；原生烘焙灯具本体位于锚点(-3,-23)至(4,-6)。
 	for anchor in map_layout.get("sconces", []):
 		if anchor is not Array or anchor.size() != 2: continue
 		var lamp_rect := Rect2(float(anchor[0]) - 3.0, float(anchor[1]) - 23.0, 7.0, 17.0)
 		var screen_rect: Rect2 = (adapter.get_global_transform_with_canvas() * lamp_rect).intersection(architecture_rect)
 		var exposed := _player_object_exposed(screen_rect, occluded_regions)
-		if _player_object_unshaded(exposed): counts["壁灯"] = int(counts.get("壁灯", 0)) + 1
+		if _player_object_unshaded(exposed): counts[FieldVocabulary.word("壁灯")] = int(counts.get(FieldVocabulary.word("壁灯"), 0)) + 1
 
 func _player_object_unshaded(pieces: Array[Rect2]) -> bool:
 	var inverse := get_global_transform_with_canvas().affine_inverse()
@@ -365,10 +367,7 @@ func _player_object_exposed_in_sight(pieces: Array[Rect2]) -> bool:
 	return false
 
 func _player_object_site(sprite: Sprite2D) -> String:
-	if adapter.map_key() != "awakening": return ""
-	return str({"DoorFace": "E1", "DoorGap": "E1", "CopperTransmitter": "E8", "NoticeFrame": "BOARD",
-		"Slate": "E7", "Score": "E6", "Cups": "E9", "Jar": "E10", "Fork": "E5", "Wedge": "E2",
-		"OilHook": "L6", "Whetstone": "L7", "CoatStandR05": "E12"}.get(str(sprite.name), ""))
+	return str(FieldVocabulary.table("SPRITE_SITES").get(str(sprite.name), "")) if adapter.map_key() == "awakening" else ""
 
 func _player_object_title(node: Node) -> String:
 	for key in ["player_visible_name", "title", "label", "text"]:
@@ -379,39 +378,13 @@ func _player_object_title(node: Node) -> String:
 	# 同样叫 Bed、Desk、Frame 或 Stand 的地图精灵可能绘制不同物件，依据实际纹理区分。
 	if node is Sprite2D and node.texture != null:
 		var texture_name: String = node.texture.resource_path.get_file().get_basename()
-		var texture_names := {"planter_bed": "种植床", "ward_bed": "病床", "lecture_desk_row": "课桌",
-			"music_stand": "谱架", "tuning_frame": "框架", "lamp_post": "路灯", "piano_stool": "琴凳",
-			"granary_bin": "储物箱", "basin_row": "洗手盆", "bucket_pair": "水桶", "chess_table": "棋盘桌",
-			"doctor_desk": "诊疗桌", "folding_screen": "屏风", "gate_leaf": "门扇", "plant_stand": "花架",
-			"side_table_plain": "边桌", "stone_bench": "石凳", "long_table": "长桌", "timetable_board": "课表板"}
+		var texture_names := FieldVocabulary.table("TEXTURE_NAMES")
 		if texture_names.has(texture_name): return str(texture_names[texture_name])
-		if texture_name.begins_with("outdoor_hydrangea_"): return "绣球花"
-		if texture_name.begins_with("outdoor_round_"): return "树"
-		if texture_name.begins_with("outdoor_boulder_"): return "岩石"
+		var prefixes := FieldVocabulary.table("TEXTURE_PREFIX_NAMES")
+		for prefix in prefixes:
+			if texture_name.begins_with(str(prefix)): return str(prefixes[prefix])
 	# 只映射物件的外观名称，不使用家具旁白中关于抽屉、柜内或证物内容的事实。
-	var names := {"SheetedBed": "罩着防尘布的床", "EmptyBookcase": "书架", "EmptyWardrobe": "衣柜",
-		"Nightstand": "床头柜", "Bookcase": "书架", "DeskChair": "椅子", "ReadingChair": "扶手椅",
-		"ReadingTable": "小几", "StudyTable": "长桌", "StudyFern": "花架", "StudyConsole": "边桌",
-		"PaperBasket": "纸篓", "WallClock": "挂钟", "LinenChest": "箱子", "Wardrobe": "衣柜",
-		"Dresser": "梳妆台", "Washstand": "水槽", "Sideboard": "碗柜", "Worktable": "案板",
-		"CupTable": "小圆桌", "CoatStand": "衣架", "StoreSack": "袋子", "PantrySack": "袋子",
-		"CorridorConsole": "边桌", "CorridorPlant": "花架", "ShoeBench": "长凳", "ToolBench": "工作台",
-		"DemonPrints": "地上的脚印", "Transmitter": "铜口", "Mouthpiece": "铜口", "ZoneRules": "公告框",
-		"SealRack": "架子", "WorksShelf": "书架", "Shelf": "书架", "VaultDoor": "门", "Warning": "告示",
-		"CopyDesk": "书桌", "PlanCabinet": "柜子", "Pedestal": "台座", "RelayColumn": "柱子",
-		"Piano": "钢琴", "Globe": "地球仪", "Armchair": "扶手椅", "Range": "灶", "Basin": "洗手盆",
-		"Bed": "床", "Chair": "椅子", "Desk": "书桌", "Coat": "衣架", "Crate": "箱子",
-		"Barrel": "水桶", "Sack": "袋子", "Lamp": "灯", "Fern": "盆栽", "Bench": "长凳",
-		"Notice": "公告框", "Pillar": "柱子", "Hydrangea": "绣球花", "Blackboard": "黑板",
-		"ChessChair": "椅子", "Chess": "棋盘桌", "Fireplace": "壁炉", "FireSide": "边桌",
-		"LaundryTub": "洗衣盆", "DishRack": "碗碟架", "Drying": "晾衣绳", "Heater": "热水炉",
-		"Lectern": "讲台", "Ledger": "账簿台", "MedCabinet": "药柜", "MusicStand": "谱架",
-		"Pots": "花盆", "Pump": "手动水泵", "RationCounter": "配给台", "ReagentCabinet": "试剂柜",
-		"Spring": "汲水泉", "Tools": "园艺工具", "Tub": "浴缸", "Valve": "阀门",
-		"Buckets": "水桶", "Bollard": "系缆桩", "Engine": "机械装置", "Hood": "排烟罩",
-		"LaneGate": "门扇", "LongTable": "长桌", "PianoStool": "琴凳", "Plant": "花架",
-		"Rockfall": "岩石", "Screen": "屏风", "Timetable": "课表板", "Trough": "水槽",
-		"Table": "桌子", "Bin": "储物箱", "Frame": "框架", "Stand": "架子", "round": "树"}
+	var names := FieldVocabulary.table("OBJECT_NAMES")
 	var node_name := str(node.name)
 	var match_name := node_name.to_lower()
 	var best := ""
@@ -426,7 +399,7 @@ func _player_object_title(node: Node) -> String:
 	if chinese:
 		while node_name.length() > 0 and (node_name.right(1).is_valid_int() or node_name.ends_with("_")): node_name = node_name.left(-1)
 		return node_name
-	return "未命名物品"
+	return FieldVocabulary.word("未命名")
 
 func _player_object_readable(value: String) -> String:
 	var title := value.strip_edges()

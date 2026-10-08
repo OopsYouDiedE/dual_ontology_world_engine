@@ -350,7 +350,7 @@ def rewrite_scene(data, items):
                    f'[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor{i}"]\n\n'
                    f'[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor{i}/Body"]\n'
                    f'position = Vector2(0, -4)\nshape = SubResource("dorm_leaf")\n\n')
-    # 地图场景到宿舍门为止：现场、界面与镜头由共用的 BasicUISystem / WorldView / UISystem 提供。
+    # 地图场景到宿舍门为止：现场、界面与镜头由共用的 Host/Main / WorldView / UISystem 提供。
     text = header + "".join(new_ext) + "".join(keep_sub) + "".join(gen_sub) + "".join(out)
     SCENE.write_text(text.rstrip("\n") + "\n", encoding="utf-8", newline="\n")
     return len(walls), len(feet)

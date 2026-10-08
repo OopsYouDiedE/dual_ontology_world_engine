@@ -190,3 +190,19 @@
     foyer：门厅
     lounge：门外
     empty：空房
+
+精灵热点
+    # 生活翼地图上画着某件证物的精灵节点名：证物或热点编号（玩家视野记录合并同一物件用）
+    DoorFace：E1
+    DoorGap：E1
+    CopperTransmitter：E8
+    NoticeFrame：BOARD
+    Slate：E7
+    Score：E6
+    Cups：E9
+    Jar：E10
+    Fork：E5
+    Wedge：E2
+    OilHook：L6
+    Whetstone：L7
+    CoatStandR05：E12

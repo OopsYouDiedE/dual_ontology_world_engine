@@ -1,0 +1,482 @@
+[gd_resource type="Theme" format=3]
+
+[ext_resource type="FontFile" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font"]
+
+[sub_resource type="SystemFont" id="fallback"]
+font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI Symbol")
+
+[sub_resource type="FontVariation" id="stack"]
+base_font = ExtResource("font")
+fallbacks = Array[Font]([SubResource("fallback")])
+
+[sub_resource type="StyleBoxFlat" id="normal"]
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.9372549019607843, 0.9019607843137255, 0.8, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.5490196078431373, 0.47843137254901963, 0.3607843137254902, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.9647058823529412, 0.9333333333333333, 0.8588235294117647, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.5411764705882353, 0.2, 0.1411764705882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.8470588235294118, 0.7843137254901961, 0.6274509803921569, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.5490196078431373, 0.47843137254901963, 0.3607843137254902, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.9372549019607843, 0.9019607843137255, 0.8, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.5411764705882353, 0.2, 0.1411764705882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="disabled"]
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.8862745098039215, 0.8431372549019608, 0.7294117647058823, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.5490196078431373, 0.47843137254901963, 0.3607843137254902, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="line"]
+content_margin_left = 8.0
+content_margin_right = 8.0
+content_margin_top = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.952941, 0.92549, 0.847059, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.54902, 0.478431, 0.360784, 1)
+
+[sub_resource type="StyleBoxFlat" id="bar"]
+bg_color = Color(0.168627, 0.12549, 0.086275, 0.35)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="track"]
+content_margin_left = 4.0
+content_margin_right = 4.0
+bg_color = Color(0.168627, 0.12549, 0.086275, 0.08)
+
+[sub_resource type="StyleBoxEmpty" id="transparent_text"]
+
+[sub_resource type="StyleBoxFlat" id="PaperModal_sheet"]
+content_margin_left = 34.0
+content_margin_right = 34.0
+content_margin_top = 34.0
+content_margin_bottom = 34.0
+bg_color = Color(0.901961, 0.862745, 0.74902, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.490196, 0.415686, 0.298039, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 14
+
+[sub_resource type="StyleBoxFlat" id="ReplayBubble_BubbleStyle"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.93, 0.89, 0.78, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.17, 0.13, 0.09, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="CampusMap_location"]
+bg_color = Color(0.952941, 0.92549, 0.847059, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.168627, 0.12549, 0.086275, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="ReplayOverlay_BarStyle"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.09, 0.08, 0.1, 0.86)
+
+[sub_resource type="StyleBoxFlat" id="FieldHUD_keys"]
+content_margin_left = 12.0
+content_margin_right = 12.0
+bg_color = Color(0.05, 0.06, 0.06, 0.72)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="FieldHUD_tip"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.07, 0.07, 0.08, 0.86)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.83, 0.74, 0.52, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="ReplayManuscript_page"]
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 18.0
+content_margin_bottom = 18.0
+bg_color = Color(0.921569, 0.886275, 0.784314, 1)
+border_width_right = 1
+border_color = Color(0.168627, 0.12549, 0.086275, 0.25)
+
+[sub_resource type="StyleBoxFlat" id="paper_sheet"]
+content_margin_left = 34.0
+content_margin_top = 34.0
+content_margin_right = 34.0
+content_margin_bottom = 34.0
+bg_color = Color(0.9019608, 0.8627451, 0.7490196, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.49019608, 0.41568628, 0.29803923, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 14
+
+[sub_resource type="StyleBoxFlat" id="CampusMap_location_hover"]
+bg_color = Color(0.9647059, 0.93333334, 0.85882354, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5411765, 0.2, 0.14117648, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="CampusMap_location_current"]
+bg_color = Color(0.9137255, 0.8509804, 0.6901961, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5411765, 0.2, 0.14117648, 0.9)
+
+[resource]
+RichTextLabel/styles/normal = SubResource("transparent_text")
+RichTextLabel/styles/focus = SubResource("transparent_text")
+Label/styles/normal = SubResource("transparent_text")
+default_font = SubResource("stack")
+default_font_size = 19
+Button/styles/normal = SubResource("normal")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/focus = SubResource("focus")
+Button/styles/disabled = SubResource("disabled")
+Button/colors/font_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+Button/colors/font_hover_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+Button/colors/font_pressed_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+Button/colors/font_focus_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+Button/colors/font_disabled_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 0.4)
+RichTextLabel/colors/default_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+Label/colors/font_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+LineEdit/colors/font_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+LineEdit/colors/caret_color = Color(0.16862745098039217, 0.12549019607843137, 0.08627450980392157, 1)
+LineEdit/colors/font_placeholder_color = Color(0.4196078431372549, 0.36470588235294116, 0.2823529411764706, 1)
+LineEdit/styles/normal = SubResource("line")
+LineEdit/styles/focus = SubResource("line")
+VScrollBar/styles/grabber = SubResource("bar")
+VScrollBar/styles/grabber_highlight = SubResource("bar")
+VScrollBar/styles/grabber_pressed = SubResource("bar")
+VScrollBar/styles/scroll = SubResource("track")
+PaperLabelPaperLabel/base_type = &"RichTextLabel"
+PaperLabelPaperLabel/font_sizes/normal_font_size = 19
+PaperLabelPaperLabel/font_sizes/bold_font_size = 19
+PaperModalPanelContainer/base_type = &"PanelContainer"
+PaperModalPanelContainer/styles/panel = SubResource("PaperModal_sheet")
+PaperModalColumn/base_type = &"VBoxContainer"
+PaperModalColumn/constants/separation = 12
+PaperModalTitleLabel/base_type = &"RichTextLabel"
+PaperModalTitleLabel/font_sizes/normal_font_size = 25
+PaperModalTitleLabel/font_sizes/bold_font_size = 25
+PaperModalBody/base_type = &"VBoxContainer"
+PaperModalBody/constants/separation = 10
+ReplayBubbleReplayBubble/base_type = &"PanelContainer"
+ReplayBubbleReplayBubble/styles/panel = SubResource("ReplayBubble_BubbleStyle")
+ReplayBubbleText/base_type = &"RichTextLabel"
+ReplayBubbleText/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
+ReplayBubbleText/font_sizes/normal_font_size = 15
+ReplayBubbleText/font_sizes/bold_font_size = 15
+CampusMapLocation/base_type = &"Panel"
+CampusMapLocation/styles/panel = SubResource("CampusMap_location")
+CampusMapName/base_type = &"Label"
+CampusMapName/font_sizes/font_size = 17
+CampusMapHere/base_type = &"Label"
+CampusMapHere/colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+CampusMapHere/font_sizes/font_size = 13
+EvidenceCardRow/base_type = &"HBoxContainer"
+EvidenceCardRow/constants/separation = 22
+EvidenceCardTexts/base_type = &"VBoxContainer"
+EvidenceCardTexts/constants/separation = 6
+EvidenceCardIntro/base_type = &"RichTextLabel"
+EvidenceCardIntro/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+EvidenceCardIntro/font_sizes/normal_font_size = 18
+EvidenceCardIntro/font_sizes/bold_font_size = 18
+EvidenceCardFacts/base_type = &"RichTextLabel"
+EvidenceCardFacts/colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+EvidenceCardFacts/font_sizes/normal_font_size = 20
+EvidenceCardFacts/font_sizes/bold_font_size = 20
+EvidenceCardSource/base_type = &"RichTextLabel"
+EvidenceCardSource/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+EvidenceCardSource/font_sizes/normal_font_size = 16
+EvidenceCardSource/font_sizes/bold_font_size = 16
+EvidenceCardTable/base_type = &"GridContainer"
+EvidenceCardTable/constants/h_separation = 22
+EvidenceCardTable/constants/v_separation = 8
+EndingCardOutcome/base_type = &"RichTextLabel"
+EndingCardOutcome/colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+EndingCardOutcome/font_sizes/normal_font_size = 21
+EndingCardOutcome/font_sizes/bold_font_size = 21
+EndingCardRows/base_type = &"VBoxContainer"
+EndingCardRows/constants/separation = 8
+ReplayOverlayBar/base_type = &"PanelContainer"
+ReplayOverlayBar/styles/panel = SubResource("ReplayOverlay_BarStyle")
+ReplayOverlayCaption/base_type = &"RichTextLabel"
+ReplayOverlayCaption/colors/default_color = Color(0.909804, 0.839216, 0.654902, 1)
+ReplayOverlayCaption/font_sizes/normal_font_size = 19
+ReplayOverlayCaption/font_sizes/bold_font_size = 19
+ReplayOverlayControls/base_type = &"Label"
+ReplayOverlayControls/colors/font_color = Color(0.811765, 0.764706, 0.635294, 1)
+ReplayOverlayControls/font_sizes/font_size = 16
+ReplayOverlayDoor/base_type = &"Label"
+ReplayOverlayDoor/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+ReplayOverlayDoor/colors/font_outline_color = Color(0.05, 0.04, 0.06, 1)
+ReplayOverlayDoor/constants/outline_size = 5
+ReplayOverlayDoor/font_sizes/font_size = 16
+FormPanelPrompt/base_type = &"RichTextLabel"
+FormPanelPrompt/colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+FormPanelPrompt/font_sizes/normal_font_size = 19
+FormPanelPrompt/font_sizes/bold_font_size = 19
+FormPanelQuestion/base_type = &"RichTextLabel"
+FormPanelQuestion/colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
+FormPanelQuestion/font_sizes/normal_font_size = 21
+FormPanelQuestion/font_sizes/bold_font_size = 21
+FormPanelSummary/base_type = &"RichTextLabel"
+FormPanelSummary/colors/default_color = Color(0.16862745, 0.1254902, 0.08627451, 1)
+FormPanelSummary/font_sizes/normal_font_size = 18
+FormPanelSummary/font_sizes/bold_font_size = 18
+FieldHUDTitle/base_type = &"Label"
+FieldHUDTitle/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+FieldHUDTitle/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
+FieldHUDTitle/constants/outline_size = 5
+FieldHUDTitle/font_sizes/font_size = 20
+FieldHUDTime/base_type = &"Label"
+FieldHUDTime/colors/font_color = Color(0.88, 0.83, 0.70, 1)
+FieldHUDTime/font_sizes/font_size = 18
+FieldHUDKeys/base_type = &"Label"
+FieldHUDKeys/colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)
+FieldHUDKeys/font_sizes/font_size = 17
+FieldHUDKeys/styles/normal = SubResource("FieldHUD_keys")
+FieldHUDHint/base_type = &"Label"
+FieldHUDHint/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+FieldHUDHint/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
+FieldHUDHint/constants/outline_size = 5
+FieldHUDHint/font_sizes/font_size = 18
+FieldHUDHoverTip/base_type = &"Label"
+FieldHUDHoverTip/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+FieldHUDHoverTip/font_sizes/font_size = 17
+FieldHUDHoverTip/styles/normal = SubResource("FieldHUD_tip")
+FieldHUDAside/base_type = &"Label"
+FieldHUDAside/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
+FieldHUDAside/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
+FieldHUDAside/constants/outline_size = 6
+FieldHUDAside/font_sizes/font_size = 19
+FieldHUDFlash/base_type = &"RichTextLabel"
+FieldHUDFlash/colors/default_color = Color(0.97, 0.93, 0.84, 1)
+FieldHUDFlash/font_sizes/normal_font_size = 32
+FieldHUDFlash/font_sizes/bold_font_size = 32
+ReplayManuscriptReplayManuscript/base_type = &"HBoxContainer"
+ReplayManuscriptReplayManuscript/constants/separation = 26
+ReplayManuscriptLeftPage/base_type = &"PanelContainer"
+ReplayManuscriptLeftPage/styles/panel = SubResource("ReplayManuscript_page")
+ReplayManuscriptColumn/base_type = &"VBoxContainer"
+ReplayManuscriptColumn/constants/separation = 9
+ReplayManuscriptHint/base_type = &"RichTextLabel"
+ReplayManuscriptHint/font_sizes/normal_font_size = 17
+ReplayManuscriptHint/font_sizes/bold_font_size = 17
+ReplayManuscriptHint/colors/default_color = Color(0.419608, 0.364706, 0.282353, 1)
+ReplayManuscriptActions/base_type = &"HBoxContainer"
+ReplayManuscriptActions/constants/separation = 10
+ReplayManuscriptStale/base_type = &"RichTextLabel"
+ReplayManuscriptStale/font_sizes/normal_font_size = 16
+ReplayManuscriptStale/font_sizes/bold_font_size = 16
+ReplayManuscriptStale/colors/default_color = Color(0.541176, 0.2, 0.141176, 1)
+ReplayManuscriptPreview/base_type = &"RichTextLabel"
+ReplayManuscriptPreview/font_sizes/normal_font_size = 18
+ReplayManuscriptPreview/font_sizes/bold_font_size = 18
+ReplayManuscriptPreview/colors/default_color = Color(0.419608, 0.364706, 0.282353, 1)
+ReplayManuscriptOptions/base_type = &"HFlowContainer"
+ReplayManuscriptOptions/constants/h_separation = 8
+ReplayManuscriptOptions/constants/v_separation = 6
+ReplayManuscriptOption/base_type = &"Button"
+ReplayManuscriptOption/font_sizes/font_size = 17
+ReplayManuscriptFinding/base_type = &"VBoxContainer"
+ReplayManuscriptFinding/constants/separation = 2
+ReplayManuscriptHeading/base_type = &"RichTextLabel"
+ReplayManuscriptHeading/font_sizes/normal_font_size = 18
+ReplayManuscriptHeading/font_sizes/bold_font_size = 18
+ReplayManuscriptDetail/base_type = &"RichTextLabel"
+ReplayManuscriptDetail/font_sizes/normal_font_size = 17
+ReplayManuscriptDetail/font_sizes/bold_font_size = 17
+ReplayManuscriptOpenCard/base_type = &"Button"
+ReplayManuscriptOpenCard/font_sizes/font_size = 15
+ReplayManuscriptFullMatch/base_type = &"RichTextLabel"
+ReplayManuscriptFullMatch/font_sizes/normal_font_size = 21
+ReplayManuscriptFullMatch/font_sizes/bold_font_size = 21
+ReplayManuscriptFullMatch/colors/default_color = Color(0.247059, 0.352941, 0.227451, 1)
+NotebookEmpty/base_type = &"RichTextLabel"
+NotebookEmpty/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+NotebookEmpty/font_sizes/normal_font_size = 19
+NotebookEmpty/font_sizes/bold_font_size = 19
+Paper/colors/paper = Color(0.9019608, 0.8627451, 0.7490196, 1)
+Paper/colors/paper_dark = Color(0.8392157, 0.7882353, 0.6509804, 1)
+Paper/colors/ink = Color(0.16862746, 0.1254902, 0.08627451, 1)
+Paper/colors/seal = Color(0.5411765, 0.2, 0.14117648, 1)
+Paper/colors/muted = Color(0.41960785, 0.3647059, 0.28235295, 1)
+Paper/colors/rule = Color(0.17, 0.13, 0.09, 0.28)
+Paper/colors/match = Color(0.24705882, 0.3529412, 0.22745098, 1)
+PaperSheet/base_type = &"PanelContainer"
+PaperSheet/styles/panel = SubResource("paper_sheet")
+PaperLabelHeading/base_type = &"RichTextLabel"
+PaperLabelHeading/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
+PaperLabelHeading/font_sizes/normal_font_size = 21
+PaperLabelHeading/font_sizes/bold_font_size = 21
+PaperLabelSubheading/base_type = &"RichTextLabel"
+PaperLabelSubheading/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
+PaperLabelSubheading/font_sizes/normal_font_size = 19
+PaperLabelSubheading/font_sizes/bold_font_size = 19
+PaperLabelNote/base_type = &"RichTextLabel"
+PaperLabelNote/font_sizes/normal_font_size = 18
+PaperLabelNote/font_sizes/bold_font_size = 18
+PaperLabelNoteSeal/base_type = &"PaperLabelNote"
+PaperLabelNoteSeal/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
+PaperLabelNoteMuted/base_type = &"PaperLabelNote"
+PaperLabelNoteMuted/colors/default_color = Color(0.41960785, 0.3647059, 0.28235295, 1)
+PaperModal/colors/dim = Color(0.03, 0.03, 0.05, 0.55)
+PaperModalFooter/base_type = &"HFlowContainer"
+PaperModalFooter/constants/h_separation = 12
+PaperModalFooter/constants/v_separation = 8
+ChoiceMenuOption/base_type = &"Button"
+ChoiceMenuOption/font_sizes/font_size = 18
+FormGroup/base_type = &"VBoxContainer"
+FormGroup/constants/separation = 10
+FormLineEdit/base_type = &"LineEdit"
+FormLineEdit/font_sizes/font_size = 21
+FormOptionFlow/base_type = &"HFlowContainer"
+FormOptionFlow/constants/h_separation = 10
+FormOptionFlow/constants/v_separation = 10
+FormOptionColumn/base_type = &"VBoxContainer"
+FormOptionColumn/constants/separation = 10
+NotebookGrid/base_type = &"GridContainer"
+NotebookGrid/constants/h_separation = 10
+NotebookGrid/constants/v_separation = 8
+NotebookColumn/base_type = &"VBoxContainer"
+NotebookColumn/constants/separation = 10
+NotebookEntryButton/base_type = &"Button"
+NotebookEntryButton/font_sizes/font_size = 18
+CampusMapLocationHover/base_type = &"Panel"
+CampusMapLocationHover/styles/panel = SubResource("CampusMap_location_hover")
+CampusMapLocationCurrent/base_type = &"Panel"
+CampusMapLocationCurrent/styles/panel = SubResource("CampusMap_location_current")
+CampusMap/colors/background = Color(0.92156863, 0.8862745, 0.78431374, 1)
+CampusMap/colors/border = Color(0.17, 0.13, 0.09, 0.35)
+CampusMap/colors/link = Color(0.17, 0.13, 0.09, 0.28)
+CampusMap/colors/wing_outline = Color(0.168627, 0.12549, 0.086275, 0.18)
+CampusMap/colors/bubble = Color(1, 0.98, 0.92, 0.92)
+CampusMap/colors/bubble_border = Color(0.168627, 0.12549, 0.086275, 0.5)
+CampusMap/colors/figure = Color(0.12, 0.1, 0.09, 0.55)
+CampusMap/constants/link_width = 2
+CampusMap/constants/border_inset = 6
+CampusMap/constants/border_width = 1
+CampusMap/font_sizes/hint = 14
+CampusMap/font_sizes/bubble = 13
+CampusMap/font_sizes/figure = 12
+HintOverlay/colors/hover = Color(0.95686275, 0.8745098, 0.6156863, 1)
+HintOverlay/colors/near = Color(0.95, 0.88, 0.62, 0.7)
+HintOverlay/colors/shade = Color(0.12, 0.09, 0.07, 0.6)
+HintOverlay/colors/spark_edge = Color(0.45882353, 0.3764706, 0.26666668, 1)
+HintOverlay/colors/spark_light = Color(0.95686275, 0.8745098, 0.6156863, 1)
+HintOverlay/colors/spark_center = Color(1, 0.9490196, 0.7882353, 1)
+SightMask/colors/unseen = Color(0.02, 0.02, 0.03, 1)
+SightMask/colors/remembered = Color(0.02, 0.02, 0.03, 0.62)
