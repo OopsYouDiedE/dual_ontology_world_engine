@@ -124,3 +124,4 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 - 构建、机制、人物行为合理性、游玩体验分别给出结论；后两项以设计规范为评判依据。
 - 结论注明本轮执行的验收级别并引用本轮证据，列明失败项和未验证项；未执行的级别记为未验证，不以单项通过代替整体验收。
 - 报告保存在已有的 `artifacts/<task-name>/` 中，同一任务持续复用该目录。
+- 封存盲玩原始输入、界面记录与录制日志时，保留原始字节；对应证据目录使用 `.gitattributes` 的 `-text` 关闭换行转换，运行日志可用 `-diff` 避免控制字符污染审阅输出。

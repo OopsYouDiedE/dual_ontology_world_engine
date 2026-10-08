@@ -1,16 +1,13 @@
-[gd_resource type="Theme" format=3]
+[gd_resource type="Theme" format=3 uid="uid://c6iaqwqliw75c"]
 
-[sub_resource type="StyleBoxEmpty" id="ChapterDialogue_transparent_text"]
-
-[sub_resource type="SystemFont" id="ChapterDialogue_font"]
-font_names = PackedStringArray("Microsoft YaHei UI", "Noto Sans CJK SC")
-
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_plain"]
+[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_focus"]
 content_margin_left = 10.0
 content_margin_top = 10.0
 content_margin_right = 10.0
 content_margin_bottom = 10.0
 bg_color = Color(0, 0, 0, 0)
+border_width_bottom = 1
+border_color = Color(0.709804, 0.603922, 0.407843, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -27,14 +24,12 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_focus"]
+[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_plain"]
 content_margin_left = 10.0
 content_margin_top = 10.0
 content_margin_right = 10.0
 content_margin_bottom = 10.0
 bg_color = Color(0, 0, 0, 0)
-border_width_bottom = 1
-border_color = Color(0.709804, 0.603922, 0.407843, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -55,6 +50,11 @@ shadow_color = Color(0, 0, 0, 0.45)
 shadow_size = 10
 shadow_offset = Vector2(0, 3)
 
+[sub_resource type="StyleBoxFlat" id="ChapterDialogue_history_panel"]
+bg_color = Color(0.0980392, 0.117647, 0.137255, 1)
+border_width_top = 2
+border_color = Color(0.709804, 0.603922, 0.407843, 1)
+
 [sub_resource type="StyleBoxFlat" id="ChapterDialogue_portrait_frame"]
 content_margin_left = 3.0
 content_margin_top = 3.0
@@ -73,52 +73,52 @@ corner_radius_bottom_left = 3
 shadow_color = Color(0, 0, 0, 0.35)
 shadow_size = 6
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_history_panel"]
-bg_color = Color(0.0980392, 0.117647, 0.137255, 1)
-border_width_top = 2
-border_color = Color(0.709804, 0.603922, 0.407843, 1)
+[sub_resource type="StyleBoxEmpty" id="ChapterDialogue_transparent_text"]
+
+[sub_resource type="SystemFont" id="ChapterDialogue_font"]
+font_names = PackedStringArray("Microsoft YaHei UI", "Noto Sans CJK SC")
 
 [resource]
-RichTextLabel/styles/normal = SubResource("ChapterDialogue_transparent_text")
-RichTextLabel/styles/focus = SubResource("ChapterDialogue_transparent_text")
-Label/styles/normal = SubResource("ChapterDialogue_transparent_text")
 default_font = SubResource("ChapterDialogue_font")
 default_font_size = 18
 Button/colors/font_color = Color(0.909804, 0.87451, 0.792157, 1)
-Button/styles/normal = SubResource("ChapterDialogue_button_plain")
-Button/styles/hover = SubResource("ChapterDialogue_button_hover")
-Button/styles/pressed = SubResource("ChapterDialogue_button_hover")
 Button/styles/focus = SubResource("ChapterDialogue_button_focus")
-Label/colors/font_color = Color(0.909804, 0.87451, 0.792157, 1)
-RichTextLabel/colors/default_color = Color(0.909804, 0.87451, 0.792157, 1)
-ChapterDialogueDialoguePanel/base_type = &"Panel"
-ChapterDialogueDialoguePanel/styles/panel = SubResource("ChapterDialogue_compact_panel")
-ChapterDialogueHeading/base_type = &"Label"
-ChapterDialogueHeading/colors/font_color = Color(0.709804, 0.603922, 0.407843, 1)
-ChapterDialogueHeading/font_sizes/font_size = 13
-ChapterDialogueSpeaker/base_type = &"RichTextLabel"
-ChapterDialogueSpeaker/colors/default_color = Color(0.85098, 0.760784, 0.54902, 1)
-ChapterDialogueSpeaker/font_sizes/normal_font_size = 19
+Button/styles/hover = SubResource("ChapterDialogue_button_hover")
+Button/styles/normal = SubResource("ChapterDialogue_button_plain")
+Button/styles/pressed = SubResource("ChapterDialogue_button_hover")
 ChapterDialogueBody/base_type = &"RichTextLabel"
 ChapterDialogueBody/constants/line_separation = 6
 ChapterDialogueBody/font_sizes/normal_font_size = 24
 ChapterDialogueChoices/base_type = &"GridContainer"
 ChapterDialogueChoices/constants/h_separation = 12
 ChapterDialogueChoices/constants/v_separation = 8
-ChapterDialogueNext/base_type = &"Button"
-ChapterDialogueNext/colors/font_color = Color(0.85098, 0.760784, 0.54902, 1)
+ChapterDialogueDialoguePanel/base_type = &"Panel"
+ChapterDialogueDialoguePanel/styles/panel = SubResource("ChapterDialogue_compact_panel")
+ChapterDialogueHeading/base_type = &"Label"
+ChapterDialogueHeading/colors/font_color = Color(0.709804, 0.603922, 0.407843, 1)
+ChapterDialogueHeading/font_sizes/font_size = 13
 ChapterDialogueHint/base_type = &"Label"
 ChapterDialogueHint/colors/font_color = Color(0.607843, 0.6, 0.552941, 1)
 ChapterDialogueHint/font_sizes/font_size = 12
 ChapterDialogueHistoryButton/base_type = &"Button"
 ChapterDialogueHistoryButton/colors/font_color = Color(0.623529, 0.658824, 0.596078, 1)
+ChapterDialogueHistoryPanel/base_type = &"Panel"
+ChapterDialogueHistoryPanel/styles/panel = SubResource("ChapterDialogue_history_panel")
 ChapterDialogueKeyLegend/base_type = &"Label"
 ChapterDialogueKeyLegend/colors/font_color = Color(0.76, 0.79, 0.71, 1)
 ChapterDialogueKeyLegend/font_sizes/font_size = 16
-ChapterDialoguePortraitFrame/base_type = &"PanelContainer"
-ChapterDialoguePortraitFrame/styles/panel = SubResource("ChapterDialogue_portrait_frame")
 ChapterDialogueMonogram/base_type = &"Label"
 ChapterDialogueMonogram/colors/font_color = Color(0.709804, 0.603922, 0.407843, 0.75)
 ChapterDialogueMonogram/font_sizes/font_size = 56
-ChapterDialogueHistoryPanel/base_type = &"Panel"
-ChapterDialogueHistoryPanel/styles/panel = SubResource("ChapterDialogue_history_panel")
+ChapterDialogueNext/base_type = &"Button"
+ChapterDialogueNext/colors/font_color = Color(0.85098, 0.760784, 0.54902, 1)
+ChapterDialoguePortraitFrame/base_type = &"PanelContainer"
+ChapterDialoguePortraitFrame/styles/panel = SubResource("ChapterDialogue_portrait_frame")
+ChapterDialogueSpeaker/base_type = &"RichTextLabel"
+ChapterDialogueSpeaker/colors/default_color = Color(0.85098, 0.760784, 0.54902, 1)
+ChapterDialogueSpeaker/font_sizes/normal_font_size = 19
+Label/colors/font_color = Color(0.909804, 0.87451, 0.792157, 1)
+Label/styles/normal = SubResource("ChapterDialogue_transparent_text")
+RichTextLabel/colors/default_color = Color(0.909804, 0.87451, 0.792157, 1)
+RichTextLabel/styles/focus = SubResource("ChapterDialogue_transparent_text")
+RichTextLabel/styles/normal = SubResource("ChapterDialogue_transparent_text")

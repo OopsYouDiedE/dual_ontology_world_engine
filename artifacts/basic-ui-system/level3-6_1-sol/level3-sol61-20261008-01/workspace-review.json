@@ -1,0 +1,57 @@
+{
+  "resource_comparisons": [
+    {
+      "file": "godot_csharp/ShareAsset/Internal/Characters/PixelCast/chef.tres",
+      "equivalent_except_resource_header_and_property_order": true
+    },
+    {
+      "file": "godot_csharp/ShareAsset/Internal/Characters/PixelCast/detective.tres",
+      "equivalent_except_resource_header_and_property_order": true
+    },
+    {
+      "file": "godot_csharp/ShareAsset/Internal/Characters/PixelCast/engineer.tres",
+      "equivalent_except_resource_header_and_property_order": true
+    },
+    {
+      "file": "godot_csharp/ShareAsset/Internal/Characters/PixelCast/musician.tres",
+      "equivalent_except_resource_header_and_property_order": true
+    },
+    {
+      "file": "godot_csharp/scenes/UI/Styles/DialogueTheme.tres",
+      "equivalent_except_resource_header_and_property_order": true,
+      "equivalent_with_color_components_rounded_to_6_decimal_places": true,
+      "equivalent_ignoring_color_precision_under_1e-6": true
+    },
+    {
+      "file": "godot_csharp/scenes/UI/Styles/TitleTheme.tres",
+      "equivalent_except_resource_header_and_property_order": true,
+      "equivalent_with_color_components_rounded_to_6_decimal_places": true,
+      "equivalent_ignoring_color_precision_under_1e-6": true
+    },
+    {
+      "file": "godot_csharp/scenes/UI/Styles/UITheme.tres",
+      "equivalent_except_resource_header_and_property_order": false,
+      "equivalent_with_color_components_rounded_to_6_decimal_places": false,
+      "equivalent_ignoring_color_precision_under_1e-6": true
+    }
+  ],
+  "new_scene_missing_dependencies": [
+    {
+      "file": "godot_csharp/scenes/Shared/UI/CampusMap.tscn",
+      "missing": "scenes/Chapter2/Game/CampusMap.tscn"
+    },
+    {
+      "file": "godot_csharp/scenes/Shared/UI/ChapterDialogue.tscn",
+      "missing": "scenes/Story/StoryDialogue.gd"
+    },
+    {
+      "file": "godot_csharp/scenes/Shared/UI/FieldUI.tscn",
+      "missing": "scenes/Shared/UI/FieldUI.gd"
+    },
+    {
+      "file": "godot_csharp/scenes/Shared/UI/HintOverlay.tscn",
+      "missing": "scenes/Shared/UI/HintOverlay.gd"
+    }
+  ],
+  "notes": "Resource headers and property order are ignored; theme color precision is separately compared at 6 decimal places. No product resources were rewritten by this review."
+}

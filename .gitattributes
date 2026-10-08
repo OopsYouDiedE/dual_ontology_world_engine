@@ -1,2 +1,8 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
+
+# Keep this blind session's evidence byte-for-byte, including recorder line endings.
+artifacts/basic-ui-system/level3-6_1-sol/** -text
+artifacts/remake-belief-replay/blind-level3-sol61-20261008-01/** -text
+artifacts/basic-ui-system/level3-6_1-sol/**/*.log -diff
+artifacts/basic-ui-system/level3-6_1-sol/**/progress.txt -diff
