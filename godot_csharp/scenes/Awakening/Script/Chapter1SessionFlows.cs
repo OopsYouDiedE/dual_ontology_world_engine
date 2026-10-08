@@ -146,11 +146,19 @@ public sealed partial class Chapter1Session
 
     // ------------------------------------------------------------- staging --
 
-    /// <summary>把人走到某处（场面调度用）；走不通由现场直接放到那里。完成后归还占用。</summary>
+    /// <summary>场面走位失败时就地站定，继续演出；依赖实际到达的动作另查 WalkOk。完成后归还占用。</summary>
     private IEnumerable<Op> WalkTo(string who, Ev to, double speed = 150.0)
     {
         Claim(who);
-        try { yield return new Await(StageOp("walk", ("who", who), ("to", to), ("speed", speed)), false); }
+        try
+        {
+            yield return new Await(StageOp("walk", ("who", who), ("to", to), ("speed", speed)), false);
+            if (!WalkOk && Text(_reply, "reason") != "cancelled")
+            {
+                _out.Add(StageOp("pose", ("who", who), ("anim", "idle")));
+                if (who != "detective") _out.Add(StageOp("face", ("who", who), ("toward", "detective")));
+            }
+        }
         finally { Unclaim(who); }
     }
     private bool WalkOk => Flag(_reply, "ok", true);
@@ -196,13 +204,14 @@ public sealed partial class Chapter1Session
             while (LifeBusy(who) && waited < 15.0) { yield return new Sleep(0.1); waited += 0.1; }
             if (F(who).Distance > 90)
             {
-                yield return new Await(StageOp("walk", ("who", who), ("speed", 240.0), ("to", new Ev
+                yield return new Run(WalkTo(who, new Ev
                 {
                     ["near_actor"] = "detective", ["avoid"] = true,
                     ["offsets"] = new object?[] { new object?[] { 30.0, 4.0 }, new object?[] { -30.0, 4.0 }, new object?[] { 0.0, -28.0 },
                         new object?[] { 48.0, -10.0 }, new object?[] { -48.0, -10.0 }, new object?[] { 0.0, 30.0 } },
-                })), false);
-                if (!WalkOk) yield break;
+                }, 240.0));
+                // 受阻时在停下的位置交谈；取消则让接管人物的新动作继续。
+                if (!WalkOk && Text(_reply, "reason") == "cancelled") yield break;
             }
             Face(who, "detective");
         }
@@ -375,7 +384,7 @@ public sealed partial class Chapter1Session
             case "no_route": Aside(T("旁白·路不通", name)); break;
             case "stuck": Aside(T("旁白·被挡", name)); break;
             case "cancelled": break;
-            default: Aside(T(AtHandShelf(who) ? "旁白·已到" : "旁白·停下", name)); break;
+            default: Aside(T(WalkOk && AtHandShelf(who) ? "旁白·已到" : "旁白·停下", name)); break;
         }
     }
 

@@ -2,10 +2,17 @@ extends CharacterBody2D
 ## The feet are the world origin. Scripted blocking uses the same collision as walking.
 signal arrived
 
+const ARRIVAL_RADIUS := 0.1
+const STUCK_DISTANCE := 0.5
+const STUCK_SECONDS := 0.5
+
 var sprite: AnimatedSprite2D
 var facing := "front"
 var target := Vector2.ZERO
 var travelling := false
+var travel_result := {"ok": false, "reason": "idle"}
+var _progress_point := Vector2.ZERO
+var _stuck_time := 0.0
 var speed := 90.0
 @export var standard: SpriteFrames
 @export var special: SpriteFrames
@@ -145,31 +152,74 @@ func face_vector(direction: Vector2) -> void:
 	else:
 		facing = "front" if direction.y > 0 else "back"
 
-func walk_to(point: Vector2) -> void:
-	await follow_path(PackedVector2Array([point]))
+func walk_to(point: Vector2) -> Dictionary:
+	return await follow_path(PackedVector2Array([point]))
 
-func follow_path(points: PackedVector2Array) -> void:
+func follow_path(points: PackedVector2Array) -> Dictionary:
+	stop_travel()
 	if points.is_empty():
-		return
-	path = points
+		travel_result = {"ok": false, "reason": "no_route"}
+		return travel_result
+	path = points.duplicate()
 	waypoint = 0
 	target = path[0]
 	travelling = true
+	travel_result = {"ok": false, "reason": "pending"}
+	_progress_point = position
+	_stuck_time = 0.0
 	await arrived
+	return travel_result
+
+## 暂停不结束路线；恢复时重新计受阻时间，原来的 arrived 等待仍然有效。
+func pause_travel() -> void:
+	travelling = false
+	velocity = Vector2.ZERO
+	pose("idle")
+
+func resume_travel() -> void:
+	if path.is_empty(): return
+	travelling = true
+	_progress_point = position
+	_stuck_time = 0.0
+
+## 成功、受阻和取消都释放 arrived 等待者；调用方通过回值或 travel_result 区分结果。
+func stop_travel(reason := "cancelled") -> void:
+	if travelling or not path.is_empty():
+		_finish_travel(false, reason)
+	else:
+		velocity = Vector2.ZERO
+		pose("idle")
+
+func _finish_travel(ok: bool, reason: String) -> void:
+	travelling = false
+	velocity = Vector2.ZERO
+	path.clear()
+	_stuck_time = 0.0
+	travel_result = {"ok": ok, "reason": reason}
+	pose("idle")
+	arrived.emit()
 
 func _physics_process(delta: float) -> void:
 	if not travelling:
 		return
 	var difference := target - position
-	if difference.length() <= speed * delta:
-		position = target
+	if difference.length() > ARRIVAL_RADIUS:
+		# 最后一步也走碰撞检测，不把落在障碍内的终点当成已到达。
+		velocity = difference.normalized() * minf(speed, difference.length() / delta)
+		face_vector(difference)
+		pose("walk")
+		move_and_slide()
+	if position.distance_to(target) <= ARRIVAL_RADIUS:
 		waypoint += 1
 		if waypoint < path.size():
 			target = path[waypoint]
+		else:
+			_finish_travel(true, "arrived")
 			return
-		travelling = false
-		velocity = Vector2.ZERO
-		pose("idle")
-		arrived.emit()
+	if position.distance_to(_progress_point) >= STUCK_DISTANCE:
+		_progress_point = position
+		_stuck_time = 0.0
 	else:
-		move_input(difference.normalized())
+		_stuck_time += delta
+		if _stuck_time >= STUCK_SECONDS:
+			_finish_travel(false, "stuck")
