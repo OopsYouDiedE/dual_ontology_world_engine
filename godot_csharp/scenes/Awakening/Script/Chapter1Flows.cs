@@ -65,15 +65,9 @@ public sealed partial class AwakeningContentSession
 
     private string PickField(string key) => Session.GetProgress("answer_pick").GetValueOrDefault(key, "") as string ?? "";
 
-    /// <summary>重演里侦探对陌生人的请求产生过“不全信”的心声（文案“夜间·怀疑·生人”）。</summary>
+    /// <summary>重演的社交判定记下侦探未接受陌生人的请求；不以显示文案判断。</summary>
     private bool ReplayRefused()
-    {
-        var replay = Session.GetProgress("replay_result");
-        if (!replay.TryGetValue("frames", out var frames)) return false;
-        var doubt = Chapter1Data.Text("夜间·怀疑·生人");
-        return ((object[])frames).Cast<Dictionary<string, object>>().Any(frame =>
-            ((string)((Dictionary<string, object>)frame["thoughts"])["detective"]).Contains(doubt));
-    }
+        => Session.GetProgress("replay_result").GetValueOrDefault("detective_refused_stranger") is true;
 
     private string Address(MorningWorld world, string who)
         => Chapter1Data.Text("称呼·" + who + (world.Hooks(PersonOf(who)) > 0 ? "·亲近" : "·生疏"));

@@ -306,7 +306,7 @@ public sealed partial class AwakeningContentSession
     public string CardFacts(string id)
     {
         var facts = Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).GetProperty("facts").GetString()!;
-        return id == "E12" && Session.Has("examined", "E7") ? facts + "\n这个圆框带短柄的样子，与石板第二行的小图相同。" : facts;
+        return id == "E12" && Session.Has("examined", "E7") ? facts + "\n" + Chapter1Data.Text("卡片·E12·石板小图") : facts;
     }
     public string[] CardNotes(MorningWorld world, string id)
     {
@@ -402,8 +402,7 @@ public sealed partial class AwakeningContentSession
         if (goodSay && Content.RootElement.GetProperty("VERDICTS").GetProperty(step.ToString()).TryGetProperty("support", out var support)
             && support.EnumerateArray().All(e => Session.Has("destroyed", e.GetString()!)))
         {
-            Session.Set("rescue", step.ToString(), "支撑“" + Content.RootElement.GetProperty("VERDICTS").GetProperty(step.ToString()).GetProperty("proposition").GetString()
-                + "”的证物都已毁去；代管者要的是有人作答");
+            Session.Set("rescue", step.ToString(), Chapter1Data.Text("答辩·证物毁去", ("陈述", Content.RootElement.GetProperty("VERDICTS").GetProperty(step.ToString()).GetProperty("proposition").GetString()!)));
             return "answer_rescue";
         }
         Session.Set("state", "wrong_name", !goodSay
@@ -417,7 +416,7 @@ public sealed partial class AwakeningContentSession
         // 动手毁物与拧接头都是实在的动作，按试验计时。
         ConsumeAction("试验", "destroy:" + id);
         if (world.Destroy(id)) { Session.Set("destroyed", id, true); return true; }
-        Session.Set("unmodeled", "destroy:" + id, "没有可毁的“" + id + "”，维持原状");
+        Session.Set("unmodeled", "destroy:" + id, Chapter1Data.Text("系统·缺少证物", ("物", id)));
         return false;
     }
     /// <summary>拧紧或拆松一个接头；没有这个接头时记为“未建模”。</summary>
@@ -425,7 +424,7 @@ public sealed partial class AwakeningContentSession
     {
         ConsumeAction("试验", "joint:" + name);
         if (world.SetJoint(name, loose)) return true;
-        Session.Set("unmodeled", "joint:" + name, "没有名为“" + name + "”的接头，维持原状");
+        Session.Set("unmodeled", "joint:" + name, Chapter1Data.Text("系统·缺少接头", ("物", name)));
         return false;
     }
     public bool CanExperiment(string id) => id == "E8" ? SoundTestThinkable : !Session.Has("experiments", id);
@@ -475,7 +474,7 @@ public sealed partial class MorningWorld
             var body = new Essence(Names.Of(who), ProjectionKind.Body);
             body.Add(new SpatialProperty { Space = _space[who == Person.Detective ? Room.R05 : Room.Hall] });
             soul.Relations.Add((Relations.Controls, body));
-            _runtime.Project(soul, Names.Of(who) + "之魂");
+            _runtime.Project(soul, Chapter1Data.Text("认知·魂名", ("名", Names.Of(who))));
             _runtime.Project(body, Names.Of(who));
             _souls[who] = soul;
             _bodies[who] = body;
@@ -485,7 +484,7 @@ public sealed partial class MorningWorld
             {
                 Source = ObservationSource.Introspection, Existence = Truth.True, Details = Chapter1Data.Text("认知·登船·详")
             });
-            _desires[who] = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·欲望·前缀") + DesireOf(who), ProjectionKind.Concept)
+            _desires[who] = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·欲望", ("欲望", DesireOf(who))), ProjectionKind.Concept)
             {
                 Source = ObservationSource.Introspection, Existence = Truth.True,
                 Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Strength, 1)
@@ -501,7 +500,7 @@ public sealed partial class MorningWorld
 public sealed class Chapter1Script
 {
     public string Id => "chapter1";
-    public string Title => "门的这一侧";
+    public string Title => Chapter1Data.Text("章名");
     public MorningWorld CreateWorld() => new MorningWorld();
     public Chapter1Dialogue CreateDialogue(AwakeningContentSession content, MorningWorld world) => new(content, world);
     public Chapter1Interaction CreateInteraction(AwakeningContentSession content, MorningWorld world) => new(content, world);

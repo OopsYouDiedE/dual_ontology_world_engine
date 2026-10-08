@@ -116,3 +116,6 @@
 
 - 三级实时录像可用 tools/record_blind_session.py run --session=<fresh-id> --agent=<name>，以该 Godot 进程的唯一窗口标题通过 FFmpeg gdigrab 捕获 15fps H.264 CRF29；启动器后台运行，确认 recording.json 为 recording 后才开始输入。stop 子命令发送正常封装请求并验证 MP4 可解码；禁止以截图拼接或 --write-movie 替代实时录像。无游戏回环设备时记录无音轨，不采集麦克风。录像默认保存在 artifacts/basic-ui-system/level3-6_1-sol/<session>/；停止封存时同时复制完整输入和界面记录到录像目录 session/，原始记录保留在驱动的 artifacts/remake-belief-replay/blind-<session>/。
 
+
+- 第一章重演以结构化事件（kind、who、subject、object、room）传给界面；行为进度由重演结果字段记录，界面按事件种类决定播放节奏，不匹配显示文案。事件句型、心声与控制提示只从 `.story` 的文案表读取。
+- `话语` 与 `试验句` 的 `句尾含义` 声明片段听闻的含义（开门、求救；空值表示无）；编译为 `TailWantsOpen` / `TailHelp`，运行时不从整句或句尾文字推断。

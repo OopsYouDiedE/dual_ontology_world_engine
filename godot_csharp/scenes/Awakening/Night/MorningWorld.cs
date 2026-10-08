@@ -59,7 +59,7 @@ public sealed partial class MorningWorld
     {
         public Projection Self = null!, Desire = null!, Demon = null!, Rule1 = null!, Detective = null!, Object = null!;
         public Effect Touch = null!, Decline = null!, Reach = null!, Stay = null!;
-        public Projection AdviceTouch = null!, AdviceDecline = null!, AdviceOwn = null!, Whisper = null!, Settled = null!, Room = null!;
+        public Projection AdviceTouch = null!, AdviceDecline = null!, AdviceOwn = null!, Whisper = null!, Settled = null!, Room = null!, Habits = null!;
         public RecallMemory Memory = null!;
     }
 
@@ -110,25 +110,25 @@ public sealed partial class MorningWorld
         {
             Source = ObservationSource.Introspection, Existence = Truth.False
         });
-        mind.AdviceTouch = Advice("侦探劝我碰");
-        mind.AdviceDecline = Advice("侦探劝我别碰");
-        mind.AdviceOwn = Advice("侦探让我自己拿主意");
-        mind.Demon = Observation.Observe(soul, new ObservationInput("铜口里的那位", ProjectionKind.Soul)
+        mind.AdviceTouch = Advice(Chapter1Data.Text("认知·劝碰"));
+        mind.AdviceDecline = Advice(Chapter1Data.Text("认知·劝别碰"));
+        mind.AdviceOwn = Advice(Chapter1Data.Text("认知·自主取舍"));
+        mind.Demon = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·铜口之人"), ProjectionKind.Soul)
         {
             Source = ObservationSource.Perception, Existence = Truth.True,
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, DemonTrust(who))
         });
-        mind.Rule1 = Observation.Observe(soul, new ObservationInput("守则第一条：寻回者，自负其果", ProjectionKind.Concept)
+        mind.Rule1 = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·守则代价"), ProjectionKind.Concept)
         {
             Source = ObservationSource.Introspection, Existence = Truth.False
         });
         mind.Touch = new Effect.Act(ActionOp.Inspect, mind.Object);
-        mind.Decline = new Effect.Say(mind.Detective, "不碰。");
+        mind.Decline = new Effect.Say(mind.Detective, Chapter1Data.Text("认知·不碰"));
         // 走过去、拿起旧物（Take，由 ActionRuntime 结算：人不在物件所在的房间就拿不到），或者守着手头的事。
         mind.Reach = new Effect.Act(ActionOp.Take, mind.Object);
-        mind.Stay = new Effect.Say(mind.Detective, "我手头还有事。");
-        mind.Whisper = Advice("铜口对我说的那句话");
-        mind.Settled = Advice("这件旧物，我已经拿过主意");
+        mind.Stay = new Effect.Say(mind.Detective, Chapter1Data.Text("认知·有事"));
+        mind.Whisper = Advice(Chapter1Data.Text("认知·铜口低语"));
+        mind.Settled = Advice(Chapter1Data.Text("认知·旧物已定"));
         var rules = new List<Rule>();
         for (var level = 1; level <= 8; level++)
             rules.Add(new Rule(new Condition.Tagged(mind.Desire, Strength, level), RuleMode.Prefer, mind.Touch, 1, Truth.True));
@@ -150,7 +150,7 @@ public sealed partial class MorningWorld
         rules.Add(new Rule(new Condition.Constant(Truth.True), RuleMode.Prefer, mind.Stay, 5, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.Rule1), RuleMode.Prefer, mind.Stay, 2, Truth.True));
         rules.Add(new Rule(new Condition.Exists(mind.Settled), RuleMode.Prefer, mind.Stay, 20, Truth.True));
-        Observation.Observe(soul, new ObservationInput(Names.Of(who) + "对旧物的习惯", ProjectionKind.Concept)
+        mind.Habits = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·旧物习惯", ("名", Names.Of(who))), ProjectionKind.Concept)
         {
             Source = ObservationSource.Introspection, Existence = Truth.True, Rules = [..rules]
         });
@@ -272,9 +272,9 @@ public sealed partial class MorningWorld
         var soul = _souls[who];
         var (text, procedure, concept) = advice switch
         {
-            "touch" => ("碰吧。", (Effect?)mind.Touch, mind.AdviceTouch),
-            "decline" => ("别碰。", mind.Decline, mind.AdviceDecline),
-            _ => ("你自己拿主意。", null, mind.AdviceOwn)
+            "touch" => (Chapter1Data.Text("认知·劝告碰"), (Effect?)mind.Touch, mind.AdviceTouch),
+            "decline" => (Chapter1Data.Text("认知·劝告别碰"), mind.Decline, mind.AdviceDecline),
+            _ => (Chapter1Data.Text("认知·劝告自便"), null, mind.AdviceOwn)
         };
         var said = Observation.Observe(soul, new ObservationInput(text, ProjectionKind.Event)
         {
@@ -391,7 +391,7 @@ public sealed partial class MorningWorld
             // 清晨没有警铃：传不到的地方就是什么也听不到。
             var text = hearing is Hearing.AlarmOnly or Hearing.Nothing ? Chapter1Data.Text("声响·无") : Acoustics.Render(sentence, hearing);
             var outside = Acoustics.SeemsFromOutside(hearing);
-            Observation.Observe(_souls[who], new ObservationInput("铜口试声", ProjectionKind.Event)
+            Observation.Observe(_souls[who], new ObservationInput(Chapter1Data.Text("认知·声路试验"), ProjectionKind.Event)
             {
                 Source = ObservationSource.Perception, Existence = Truth.True, Time = _time, Details = text,
                 Tags = ImmutableDictionary<Tag, int?>.Empty.Add(new Tag("听来像在门外"), outside ? 1 : 0)
@@ -417,7 +417,7 @@ public sealed partial class MorningWorld
         var memory = Memories.FirstOrDefault(m => m.Evidence == evidence);
         if (memory is null) return null;
         if (_recalled.ContainsKey(memory.Who)) return memory;
-        _recalled[memory.Who] = Observation.Observe(_souls[memory.Who], new ObservationInput("昨夜的片段", ProjectionKind.Event)
+        _recalled[memory.Who] = Observation.Observe(_souls[memory.Who], new ObservationInput(Chapter1Data.Text("认知·回忆片段"), ProjectionKind.Event)
         {
             Source = ObservationSource.Recall, Existence = Truth.True, Time = ++_time, Details = memory.Fragment
         });

@@ -33,12 +33,12 @@ public sealed record NightVariables(SuPlace V1, HuoPlace V2, VoiceOrigin V3, Voi
 }
 
 /// <summary>一句话的完整内容、传声管接头漏出的重读句尾，以及听清时可解读出的意思。内容来自 chapter_01.story 的“话语”与“试验句”。</summary>
-public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidOpen, bool HoldTube, bool Open, bool Help)
+public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidOpen, bool HoldTube, bool Open, bool Help, bool TailWantsOpen, bool TailHelp)
 {
     internal static Utterance From(System.Text.Json.JsonElement e) => new(
         e.GetProperty("full").GetString()!, e.GetProperty("tail").GetString()!, e.GetProperty("Bolt").GetBoolean(),
         e.GetProperty("ForbidOpen").GetBoolean(), e.GetProperty("HoldTube").GetBoolean(), e.GetProperty("Open").GetBoolean(),
-        e.GetProperty("Help").GetBoolean());
+        e.GetProperty("Help").GetBoolean(), e.GetProperty("TailWantsOpen").GetBoolean(), e.GetProperty("TailHelp").GetBoolean());
 
     private static readonly Lazy<ImmutableArray<Utterance>> Spoken = new(() =>
         [..Chapter1Data.Root.GetProperty("UTTERANCES").EnumerateObject().Select(p => From(p.Value))]);
@@ -49,9 +49,7 @@ public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidO
 
     public static Utterance Of(VoiceWords words) => Spoken.Value[(int)words];
 
-    /// <summary>只听到重读句尾时，听者能从字面得到的东西：有人要开门，或有人求救。</summary>
-    public bool TailWantsOpen => Tail.Contains("开门") || Tail.Contains("救我");
-    public bool TailHelp => Tail.Contains("救我");
+    // 句尾的含义由剧本声明，改写显示文字不会改变听者认知。
 }
 
 /// <summary>声音到达某个位置时剩下什么。</summary>

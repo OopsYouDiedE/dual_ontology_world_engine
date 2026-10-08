@@ -80,13 +80,13 @@ public sealed partial class AwakeningContentSession
         var here = Session.CharacterRooms.GetValueOrDefault("detective");
         foreach (var who in Companions)
             if (fullMatch || here is not null && Session.CharacterRooms.GetValueOrDefault(who) == here)
-                world.Witness(PersonOf(who), "侦探在重演昨夜");
+                world.Witness(PersonOf(who), Chapter1Data.Text("认知·正在重演"));
         if (!fullMatch) return;
         var claims = AwakeningCase.Claims(variables).ToArray();
         world.Hear(Person.Detective, Person.Detective, claims);
         foreach (var who in Companions)
         {
-            world.Witness(PersonOf(who), "侦探重演吻合");
+            world.Witness(PersonOf(who), Chapter1Data.Text("认知·重演吻合"));
             world.Hear(PersonOf(who), Person.Detective, claims);
         }
     }

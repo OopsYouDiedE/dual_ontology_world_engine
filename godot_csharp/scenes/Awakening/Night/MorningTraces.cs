@@ -56,7 +56,7 @@ public static class Comparison
     /// <summary>“未查”提示具体到区域：只说哪一带还有东西没看过，不说是什么。区域写在证物的“对照区域”。</summary>
     public static string RegionOf(string id) =>
         Chapter1Data.Root.GetProperty("EVIDENCE").TryGetProperty(id, out var evidence) && evidence.TryGetProperty("compare_region", out var region)
-            ? region.GetString()! : "这一带";
+            ? region.GetString()! : T("对照·默认区域");
 
     /// <summary>参与对照的证物、它们所在的地点，以及卡片上的自然语言名称：凡写了“对照地点”的证物，按章节顺序。</summary>
     public static ImmutableArray<(string Id, string Place, string Name)> Items => Compared.Value;
