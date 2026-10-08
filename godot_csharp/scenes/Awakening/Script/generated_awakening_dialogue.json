@@ -956,12 +956,32 @@
         "line_id": "s6_reversal.004"
       },
       {
-        "op": "line",
-        "speaker": "",
-        "mood": "",
-        "text": "（苏泠看了你一眼，没有说话。）",
-        "voice_clip": "",
-        "line_id": "s6_reversal.005"
+        "op": "if",
+        "condition": {
+          "op": "call",
+          "name": "local",
+          "args": [
+            {
+              "op": "literal",
+              "value": "detective"
+            },
+            {
+              "op": "literal",
+              "value": "su"
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（苏泠看了你一眼，没有说话。）",
+            "voice_clip": "",
+            "line_id": "s6_reversal.005"
+          }
+        ],
+        "else": []
       },
       {
         "op": "jump",
@@ -3744,25 +3764,40 @@
             "label": "罐壁上那些面痕。",
             "label_id": "talk_shen_menu.022",
             "condition": {
-              "op": "gte",
+              "op": "and",
               "args": [
                 {
-                  "op": "call",
-                  "name": "credence",
+                  "op": "gte",
                   "args": [
                     {
-                      "op": "literal",
-                      "value": "detective"
+                      "op": "call",
+                      "name": "credence",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "detective"
+                        },
+                        {
+                          "op": "literal",
+                          "value": "早已相熟"
+                        }
+                      ]
                     },
                     {
                       "op": "literal",
-                      "value": "早已相熟"
+                      "value": 75
                     }
                   ]
                 },
                 {
-                  "op": "literal",
-                  "value": 75
+                  "op": "call",
+                  "name": "seen",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "E10"
+                    }
+                  ]
                 }
               ]
             },
@@ -5813,12 +5848,65 @@
         "line_id": "s10_open.003"
       },
       {
-        "op": "line",
-        "speaker": "苏泠",
-        "mood": "",
-        "text": "你昨夜没听我的。（她停了很久，才把目光从门上收回来）……你听对了。",
-        "voice_clip": "",
-        "line_id": "s10_open.004"
+        "op": "if",
+        "condition": {
+          "op": "or",
+          "args": [
+            {
+              "op": "gt",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "hooks",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "su"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "knows",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "su"
+                },
+                {
+                  "op": "literal",
+                  "value": "侦探重演吻合"
+                }
+              ]
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "你昨夜没听我的。（她停了很久，才把目光从门上收回来）……你听对了。",
+            "voice_clip": "",
+            "line_id": "s10_open.004"
+          }
+        ],
+        "else": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "（她看着敞开的门，很久没有动）……外面，真的没有人。",
+            "voice_clip": "",
+            "line_id": "s10_open.013"
+          }
+        ]
       },
       {
         "op": "if",

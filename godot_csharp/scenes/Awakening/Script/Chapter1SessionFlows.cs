@@ -373,6 +373,7 @@ public sealed partial class Chapter1Session
             yield break;
         }
         yield return new Run(PlayPlan(() => _content.BeginExperiment(_world, "E11", who)));
+        _handWait.Remove(who);
         yield return new Run(OpenCard("E11"));
     }
 
@@ -401,7 +402,10 @@ public sealed partial class Chapter1Session
             case "no_route": Aside(T("旁白·路不通", name)); break;
             case "stuck": Aside(T("旁白·被挡", name)); break;
             case "cancelled": break;
-            default: Aside(T(WalkOk && AtHandShelf(who) ? "旁白·已到" : "旁白·停下", name)); break;
+            default:
+                if (WalkOk && AtHandShelf(who)) _handWait.Add(who);
+                Aside(T(WalkOk && AtHandShelf(who) ? "旁白·已到" : "旁白·停下", name));
+                break;
         }
     }
 

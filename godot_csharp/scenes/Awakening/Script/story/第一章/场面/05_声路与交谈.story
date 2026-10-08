@@ -136,7 +136,7 @@
             沈鼎：这是刚才。昨晚我在哪儿听的，听没听见，我自己都说不准。 [#id=talk_shen_menu.021]
             跳转 talk_shen_menu
         - 罐壁上那些面痕。 [#id=talk_shen_menu.022]
-            条件：把握("detective", "早已相熟") >= 75
+            条件：把握("detective", "早已相熟") >= 75 且 见过("E10")
             回应话题 早已相熟：shen
             跳转 talk_shen_menu
         - 昨晚你在哪？ [#id=talk_shen_menu.026]

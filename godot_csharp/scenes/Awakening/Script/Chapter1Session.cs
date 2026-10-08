@@ -46,7 +46,7 @@ public sealed partial class Chapter1Session : IChapterSession
         _interaction = new(_content, _world);
         _jobs.Clear(); _uiOwner = null; _modal = null; _facts.Clear();
         _dialogueActive = _storyLock = _begun = false; _planDepth = 0;
-        _dailyJobs.Clear(); _staged.Clear(); _invites.Clear(); _furnitureSpoken.Clear();
+        _dailyJobs.Clear(); _staged.Clear(); _invites.Clear(); _handWait.Clear(); _furnitureSpoken.Clear();
         _currentRoom = ""; _lastSnapshot = ""; _now = 0; _asideUntil = 0; _witnessAfter = 0;
     }
 
@@ -372,13 +372,15 @@ public sealed partial class Chapter1Session : IChapterSession
     private readonly Dictionary<string, DailyJob> _dailyJobs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _staged = new(StringComparer.Ordinal);
     private readonly HashSet<string> _invites = new(StringComparer.Ordinal);
+    /// <summary>应邀到 R-05 架沿的人，在那儿等侦探来比手，比过才回去做自己的事。</summary>
+    private readonly HashSet<string> _handWait = new(StringComparer.Ordinal);
 
     private IEnumerable<string> DailyKeys => _world.DetectiveControl == "simulation" ? Party : Companions;
     private string LifeState(string who) => Session.GetProgress("life").TryGetValue(who, out var life)
         ? ((Dictionary<string, object>)life).GetValueOrDefault("state") as string ?? "" : "";
     private bool LifeBusy(string who) => LifeState(who) is "going" or "holding";
 
-    private List<string> DailyBusy() => DailyKeys.Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || LifeBusy(who)
+    private List<string> DailyBusy() => DailyKeys.Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || _handWait.Contains(who) || LifeBusy(who)
         || (F(who).Moving && !_dailyJobs.ContainsKey(who))).ToList();
 
     private void ReleaseDaily(string who, bool suspend = false)
@@ -482,7 +484,7 @@ public sealed partial class Chapter1Session : IChapterSession
             {
                 ["key"] = who, ["name"] = PersonName(who), ["title"] = PersonName(who), ["present"] = true,
             }).ToArray(),
-            ["pinned"] = Party.Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || LifeBusy(who)).Cast<object?>().ToArray(),
+            ["pinned"] = Party.Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || _handWait.Contains(who) || LifeBusy(who)).Cast<object?>().ToArray(),
             ["cast"] = JsonSerializer.Deserialize<Dictionary<string, string>>(Layout.GetProperty("dialogue_cast").GetRawText()),
             ["notebook"] = Notebook(),
             ["replay"] = ReplaySnapshot(),

@@ -14,7 +14,8 @@ public sealed partial class AwakeningContentSession
     private JsonElement Clock => Content.RootElement.GetProperty("DAY_CLOCK");
     public int GameMinutes => Convert.ToInt32(Session.GetProgress("clock").GetValueOrDefault("game_minutes", Clock.GetProperty("start_minutes").GetInt32()));
     public int ExpectedExitMinutes => Clock.GetProperty("expected_exit_minutes").GetInt32();
-    public string ClockText => $"{GameMinutes / 60:00}:{GameMinutes % 60:00}";
+    // 过了午夜就从 00:00 接着走；第一章只有一天，钟面不显示 24 点以后。
+    public string ClockText => $"{GameMinutes / 60 % 24:00}:{GameMinutes % 60:00}";
     public string ExpectedExitText => $"{ExpectedExitMinutes / 60:00}:{ExpectedExitMinutes % 60:00}";
 
     private void AdvanceClock(string kind, string id, int minutes)
