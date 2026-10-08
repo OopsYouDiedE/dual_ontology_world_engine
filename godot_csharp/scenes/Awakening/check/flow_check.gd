@@ -1,6 +1,6 @@
 extends SceneTree
 ## 流程跳转回归（统一宿主 Chapter1.tscn）：直接把局面摆到关键状态（醒来、开场广播、学园守则、门厅反转、同伴触物回忆两种分支、
-## 重演全部吻合、始业之答、门开、退出考题），检查可达与无脚本错误。地图为第五轮修订后的乙区（中廊两侧各三间房）。
+## 重演全部吻合、始业之答、门开），检查可达与无脚本错误。地图为第五轮修订后的乙区（中廊两侧各三间房）。
 ## 对白与表单由脚本代为推进；这不是游玩验证，不替代独立盲玩。失败不中止，末尾汇总全部失败项。
 ##   godot --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd
 
@@ -64,9 +64,9 @@ func _run() -> void:
 	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s4_rewards", "s5_question", "s6_begin", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
 		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11", "nudge_E1", "nudge_E5", "nudge_E7", "nudge_E10",
 		"recall_ask_detective", "recall_detective", "recall_su", "recall_huo", "recall_shen",
-		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "rest_confirm", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
+		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
 		"answer_ok2", "answer_need_test", "answer_q3", "answer_ok3", "answer_q4", "answer_ok4",
-		"answer_wrong_show", "answer_wrong_say", "answer_pause", "s10_steps", "s10_prints", "s10_hand", "s10_open", "ending_rest",
+		"answer_wrong_show", "answer_wrong_say", "answer_pause", "s10_steps", "s10_prints", "s10_hand", "s10_open",
 		"replay_first", "replay_refused"]
 	for who in ["su", "huo", "shen"]:
 		for part in ["recall_offer_", "recall_shown_", "recall_touch_", "recall_refuse_", "recall_hesitate_"]:
@@ -579,16 +579,6 @@ func _run() -> void:
 	await process_frame
 	check(fx.dialogue_active(), "过一会儿再按空格，仍能与身边的人交谈")
 	await fx.drain()
-
-	# ---- 8. 退出考题
-	await fresh()
-	await fx.jump("investigate")
-	host.dispatch({"kind": "interact", "site": "E8"})
-	await fx.wait_until(func(): return host.ui.modal_kind == "menu", 5.0)
-	fx.select("rest")
-	await fx.drain([0])
-	await fx.wait_until(func(): return fx.ended(), 10.0)
-	check(fx.ended() and fx.progress("flags").has("rest_chosen"), "退出考题：不作答，在生活翼歇息，以简短收尾结束")
 
 	print("TOTAL %d checks, %d failed" % [checks, failures])
 	for name in failed_names: print("FAILED: " + name)

@@ -5031,60 +5031,6 @@
         "target": "END"
       }
     ],
-    "rest_confirm": [
-      {
-        "op": "line",
-        "speaker": "铜口",
-        "mood": "",
-        "text": "阁下可以先在生活翼歇一会。水与食物照常，无需认任何事。",
-        "voice_clip": "",
-        "line_id": "rest_confirm.001"
-      },
-      {
-        "op": "line",
-        "speaker": "铜口",
-        "mood": "",
-        "text": "何时继续查看、何时作答，由阁下自己决定。其他人的去留，不由这次选择决定。",
-        "voice_clip": "",
-        "line_id": "rest_confirm.002"
-      },
-      {
-        "op": "choices",
-        "options": [
-          {
-            "id": "rest_confirm:choice:0",
-            "label": "就这样吧。歇息。",
-            "label_id": "rest_confirm.003",
-            "condition": null,
-            "lock_hint": "",
-            "body": [
-              {
-                "op": "call",
-                "name": "set_flag",
-                "args": [
-                  {
-                    "op": "literal",
-                    "value": "rest_chosen"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "rest_confirm:choice:1",
-            "label": "还是再看看。",
-            "label_id": "rest_confirm.004",
-            "condition": null,
-            "lock_hint": "",
-            "body": []
-          }
-        ]
-      },
-      {
-        "op": "jump",
-        "target": "END"
-      }
-    ],
     "answer_open": [
       {
         "op": "line",
@@ -5137,14 +5083,6 @@
         "text": "坦率。",
         "voice_clip": "",
         "line_id": "answer_ok1.001"
-      },
-      {
-        "op": "line",
-        "speaker": "铜口",
-        "mood": "",
-        "text": "那么——阁下闩门的时候，可曾听见门外的呼喊？",
-        "voice_clip": "",
-        "line_id": "answer_ok1.002"
       },
       {
         "op": "jump",
@@ -6026,60 +5964,6 @@
         "text": "门开了。诸位请。",
         "voice_clip": "",
         "line_id": "s10_open.015"
-      },
-      {
-        "op": "jump",
-        "target": "END"
-      }
-    ],
-    "ending_rest": [
-      {
-        "op": "line",
-        "speaker": "侦探",
-        "mood": "",
-        "text": "我先坐一会，理清眼前的事。",
-        "voice_clip": "",
-        "line_id": "ending_rest.001"
-      },
-      {
-        "op": "line",
-        "speaker": "沈鼎",
-        "mood": "",
-        "text": "你歇着。我去看看存粮和水，人得先吃饭。",
-        "voice_clip": "",
-        "line_id": "ending_rest.002"
-      },
-      {
-        "op": "line",
-        "speaker": "霍铎",
-        "mood": "",
-        "text": "我去铜口旁检查接头。有事再问我。",
-        "voice_clip": "",
-        "line_id": "ending_rest.003"
-      },
-      {
-        "op": "line",
-        "speaker": "苏泠",
-        "mood": "",
-        "text": "我还要去门边听听。……我不歇着。",
-        "voice_clip": "",
-        "line_id": "ending_rest.004"
-      },
-      {
-        "op": "line",
-        "speaker": "",
-        "mood": "",
-        "text": "（水槽里又响起水声。霍铎走向铜口，苏泠停在门边。桌旁只余侦探，把纷乱的念头慢慢理开。）",
-        "voice_clip": "",
-        "line_id": "ending_rest.005"
-      },
-      {
-        "op": "line",
-        "speaker": "侦探（心声）",
-        "mood": "",
-        "text": "歇一会儿再说。",
-        "voice_clip": "",
-        "line_id": "ending_rest.006"
       },
       {
         "op": "jump",

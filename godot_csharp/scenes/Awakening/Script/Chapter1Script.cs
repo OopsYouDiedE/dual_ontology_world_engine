@@ -17,7 +17,7 @@ public sealed partial class AwakeningContentSession
         Session.Set("state", "full_match_seen", false);
         Session.Set("state", "replay_open", false);
         Session.Set("state", "ended", false);
-        Session.Set("state", "replay_vars", new object[] { -1, -1, -1, -1, -1, 0 });
+        Session.Set("state", "replay_vars", new object[] { -1, -1, -1, -1, -1, -1 });
         Session.Set("state", "last_run_vars", Array.Empty<object>());
         Session.Set("state", "last_sound", Array.Empty<object>());
         Session.Set("state", "last_unheard_ms", -100000L);
@@ -179,8 +179,6 @@ public sealed partial class AwakeningContentSession
     public void Presented(InteractionPlan plan) => plan.Presentation = "";
     public void BeginAnswer(MorningWorld world) => StartFlow(world, "答辩·开始");
     public void BeginFinale(MorningWorld world) => StartFlow(world, "终局");
-    public void BeginRest(MorningWorld world) => StartFlow(world, "歇息");
-    public void BeginConfirmRest(MorningWorld world) => StartFlow(world, "确认歇息");
     public string OwnObject(string who) => Content.RootElement.GetProperty("OWN_OBJECTS").GetProperty(who).GetString()!;
     private bool ContentList(string key, string id) => Content.RootElement.GetProperty(key).EnumerateArray().Any(item => item.GetString() == id);
     private Dictionary<string, object> Life(string who) => (Dictionary<string, object>)Session.GetProgress("life")[who];
@@ -284,12 +282,14 @@ public sealed partial class AwakeningContentSession
         ShareExamination(world, id);
         var events = new List<string> { "evidence" };
         if (id is "E1" or "E3" && !(bool)Session.GetProgress("state")["replay_open"]) events.Add("unlock");
-        if (ContentList("ACQUAINTANCE_EVIDENCE", id) && V6Open && !Session.Has("flags", "v6_revealed"))
-        {
-            Session.Set("flags", "v6_revealed", true);
-            events.Add("v6");
-        }
+        if (ContentList("ACQUAINTANCE_EVIDENCE", id) && RevealV6()) events.Add("v6");
         return events.ToArray();
+    }
+    public bool RevealV6()
+    {
+        if (CurrentStage != "investigate" || State("replay_open", false) is not true || !V6Open || Session.Has("flags", "v6_revealed")) return false;
+        Session.Set("flags", "v6_revealed", true);
+        return true;
     }
     public bool UnlockReplay()
     {

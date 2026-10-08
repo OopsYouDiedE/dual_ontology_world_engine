@@ -223,6 +223,11 @@ public sealed partial class Chapter1Session : IChapterSession
             var progressed = false;
             foreach (var job in _jobs.ToArray()) progressed |= Advance(job);
             _jobs.RemoveAll(job => job.Frames.Count == 0);
+            if (_planDepth == 0 && !_storyLock && !_dialogueActive && _modal is null && _uiOwner is null && _uiModal == "" && _content.RevealV6())
+            {
+                Start(V6Doubt());
+                progressed = true;
+            }
             if (!progressed) return;
         }
         throw new InvalidOperationException("章节作业没有收敛。");
@@ -563,7 +568,7 @@ public sealed partial class Chapter1Session : IChapterSession
     private static object[] ReplayVariables(Input input)
     {
         var values = Ints(input.GetValueOrDefault("vars"));
-        if (values.Length == 5) return [.. values, 0];
+        if (values.Length == 5) return [.. values, -1];
         if (values.Length != 6) throw new InvalidOperationException("请先填写重演手稿中的问题。");
         return values;
     }

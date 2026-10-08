@@ -23,7 +23,6 @@
         s10_prints：6
         s10_hand：4
         s10_open：12
-        ending_rest：10
         talk_huo_menu：0
         talk_shen_menu：0
         talk_su_menu：0

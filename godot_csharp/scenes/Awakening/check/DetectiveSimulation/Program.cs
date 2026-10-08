@@ -125,7 +125,6 @@ string currentRoom = "R05";
 bool awaitingInput = false;
 NightVariables? answerPrediction = null;
 bool answerSubmitted = false;
-int personalRestCount = 0;
 int? exitGameMinutes = null;
 
 void LocateStaged(string who, string spot)
@@ -299,12 +298,6 @@ void Command(string name, IReadOnlyList<object?> arguments)
         }
     }
     else if (name == "finale") PlayFlow(() => content.BeginFinale(world));
-    else if (name == "rest")
-    {
-        PlayFlow(() => content.BeginRest(world));
-        personalRestCount++;
-        Story("个人休息", "侦探短暂独自休息结束，三名同伴仍按各自目标行动，继续查看生活翼");
-    }
     else if (name == "door_open") { exitGameMinutes = content.GameMinutes; Story("出门", "正式终局流程开启隔离门"); }
     else if (name == "tube")
     {
@@ -406,7 +399,6 @@ DetectiveAction ChaosAction()
     var pool = planner.Actions.Where(a => a.Kind != "answer" || chaos!.NextDouble() < 0.3).ToList();
     pool.Add(new("chaos_destroy", "destroy", evidence[chaos!.Next(evidence.Length)], "", "毁掉一件证物", 2, 0, "", "", "", "", true));
     pool.Add(new("chaos_joint", "joint", joints[chaos.Next(joints.Length)], "", "拧动一个接头", 3, 0, "", "", "", "", true));
-    pool.Add(new("chaos_rest", "rest", "", "", "歇一会儿", 5, 0, "", "", "", "", true));
     pool.Add(new("chaos_wander", "wander", "", rooms[chaos.Next(rooms.Length)], "到处走走", 1, 0, "", "", "", "", true));
     pool.Add(new("chaos_unknown", "destroy", "不存在的东西", "", "对未建模的东西下手", 1, 0, "", "", "", "", true));
     return pool[chaos.Next(pool.Count)];
@@ -439,7 +431,7 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
         Story("宿主", "调查目的地到场代报；未验几何：" + currentRoom);
     }
     if (awaitingInput) break;
-    if (action.Kind is "destroy" or "joint" or "rest" or "wander")
+    if (action.Kind is "destroy" or "joint" or "wander")
     {
         if (action.Kind == "destroy")
             Story("混沌", (content.DestroyEvidence(world, action.Target) ? "毁掉了 " : "未建模，维持原状：") + action.Target);
@@ -449,7 +441,6 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
             content.SetJoint(world, action.Target, loose);
             Story("混沌", $"把{action.Target}{(loose ? "拆松" : "拧紧")}了");
         }
-        else if (action.Kind == "rest") Command("rest", []);
         else { content.ConsumeAction("走动"); Story("混沌", "走到 " + action.Room + " 看了看"); }
         planner.Completed(action);
         Tick(true);
@@ -556,7 +547,7 @@ var result = new
     SameDetectiveMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)),
     FinalControl = world.DetectiveControl, FinalStage = Stage(), AwaitingInput = awaitingInput,
     AutonomousAnswerSubmitted = answerSubmitted, ExitGameMinutes = exitGameMinutes,
-    DecisionProfile = decisionProfile, PersonalRestCount = personalRestCount, Continuation = continuation
+    DecisionProfile = decisionProfile, Continuation = continuation
 };
 Directory.CreateDirectory(Path.GetDirectoryName(output)!);
 var recorded = JsonSerializer.SerializeToElement(result);

@@ -1382,7 +1382,6 @@
       "s10_prints": 6,
       "s10_hand": 4,
       "s10_open": 12,
-      "ending_rest": 10,
       "talk_huo_menu": 0,
       "talk_shen_menu": 0,
       "talk_su_menu": 0
@@ -1678,7 +1677,6 @@
     "铜口·描述": "铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。",
     "铜口·检视": "检视铜口与铜牌",
     "铜口·作答": "回答始业之问",
-    "铜口·歇息": "先在生活翼歇息一阵，暂不作答",
     "鞋底·标题": "比对鞋底",
     "鞋底·huo": "霍铎的鞋底：厚底工装靴，粗齿纹，比灰上那枚宽一指。",
     "鞋底·shen": "沈鼎的鞋底：千层布底，没有纹。",
@@ -2175,41 +2173,16 @@
           "scene": "s5_question"
         },
         {
-          "op": "if",
-          "condition": {
-            "op": "call",
-            "name": "flag",
-            "args": [
-              {
-                "op": "literal",
-                "value": "rest_chosen"
-              }
-            ]
-          },
-          "then": [
-            {
-              "op": "show",
-              "scene": "@rest"
-            }
-          ],
-          "else": [
-            {
-              "op": "stage",
-              "value": "investigate"
-            },
-            {
-              "op": "show",
-              "scene": "@posts"
-            },
-            {
-              "op": "set_flag",
-              "key": "posts_assigned"
-            },
-            {
-              "op": "show",
-              "scene": "s6_begin"
-            }
-          ]
+          "op": "stage",
+          "value": "investigate"
+        },
+        {
+          "op": "show",
+          "scene": "@posts"
+        },
+        {
+          "op": "show",
+          "scene": "s6_begin"
         }
       ]
     },
@@ -2782,22 +2755,43 @@
           "value": "answer"
         },
         {
-          "op": "clear",
-          "group": "answer_state"
-        },
-        {
-          "op": "record",
-          "group": "answer_state",
-          "key": "step",
-          "value": 1
-        },
-        {
           "op": "show",
           "scene": "@music:confrontation"
         },
         {
-          "op": "show",
-          "scene": "answer_open"
+          "op": "if",
+          "condition": {
+            "op": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "has",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "answer_state"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "step"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "record",
+              "group": "answer_state",
+              "key": "step",
+              "value": 1
+            },
+            {
+              "op": "show",
+              "scene": "answer_open"
+            }
+          ],
+          "else": []
         },
         {
           "op": "continue",
@@ -3104,95 +3098,6 @@
         {
           "op": "show",
           "scene": "@ending:完成"
-        }
-      ]
-    },
-    "歇息": {
-      "steps": [
-        {
-          "op": "stage",
-          "value": "investigate"
-        },
-        {
-          "op": "show",
-          "scene": "@lock"
-        },
-        {
-          "op": "if",
-          "condition": {
-            "op": "not",
-            "args": [
-              {
-                "op": "call",
-                "name": "flag",
-                "args": [
-                  {
-                    "op": "literal",
-                    "value": "posts_assigned"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": [
-            {
-              "op": "show",
-              "scene": "@posts"
-            },
-            {
-              "op": "set_flag",
-              "key": "posts_assigned"
-            }
-          ],
-          "else": []
-        },
-        {
-          "op": "show",
-          "scene": "ending_rest"
-        },
-        {
-          "op": "clear_flag",
-          "key": "rest_chosen"
-        },
-        {
-          "op": "show",
-          "scene": "@unlock"
-        },
-        {
-          "op": "show",
-          "scene": "@hud"
-        }
-      ]
-    },
-    "确认歇息": {
-      "steps": [
-        {
-          "op": "clear_flag",
-          "key": "rest_chosen"
-        },
-        {
-          "op": "show",
-          "scene": "rest_confirm"
-        },
-        {
-          "op": "if",
-          "condition": {
-            "op": "call",
-            "name": "flag",
-            "args": [
-              {
-                "op": "literal",
-                "value": "rest_chosen"
-              }
-            ]
-          },
-          "then": [
-            {
-              "op": "continue",
-              "flow": "歇息"
-            }
-          ],
-          "else": []
         }
       ]
     }

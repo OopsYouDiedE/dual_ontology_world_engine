@@ -108,6 +108,10 @@ func _render() -> void:
 		if selection[index] == null or int(selection[index]) < 0 or int(selection[index]) >= options.size():
 			selection[index] = -1
 	last_run_vars = (_data.get("last_run_vars", []) as Array).duplicate()
+	last_run_vars.resize(questions.size())
+	for index in questions.size():
+		if last_run_vars[index] == null:
+			last_run_vars[index] = -1
 	$LeftPage/Scroll/Column/Title.text = "[b]%s[/b]" % str(_data.get("title", default_title))
 	$LeftPage/Scroll/Column/Hint.text = str(_data.get("hint", default_hint))
 	_build_questions(questions)

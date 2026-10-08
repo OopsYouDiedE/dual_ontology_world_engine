@@ -69,19 +69,13 @@ Check(reward.IsComplete && people.All(person => expectedStrength[person] == 2 &&
 Check(rewardText.Any(text => text.Contains("超越卡诺循环")) && rewardText.Any(text => text.Contains("揣进风衣口袋")), "real opening retains rewards and detective thought");
 Check(dialogue.Next().IsComplete && people.All(person => world.DesireStrength(person) == 2), "completed interaction cannot repeat effects");
 
-// Both real opening routes are exercised in separate worlds.
-foreach (var rest in new[] { false, true })
+// The opening proceeds directly into investigation.
 {
     var routeWorld = chapter.CreateWorld();
     var routeContent = chapter.CreateContent();
     var routeDialogue = chapter.CreateDialogue(routeContent, routeWorld);
-    var openingChoice = Menu(routeDialogue, routeDialogue.Start("s5_question"));
-    Check(openingChoice.Choices.Count == 2 && openingChoice.Choices.All(choice => choice.IsAvailable), "opening offers investigation and rest routes");
-    var chosen = openingChoice.Choices.Single(choice => rest ? choice.Label.Contains("不作答") : choice.Label.Contains("先去查看"));
-    var routeText = Finish(routeDialogue, routeDialogue.Choose(chosen.Id));
-    Check(routeContent.Session.Has("flags", rest ? "rest_chosen" : "accepted") &&
-        !routeContent.Session.Has("flags", rest ? "accepted" : "rest_chosen"), "opening choice executes only its selected flag branch");
-    Check(rest || routeText.Any(text => text.Contains("我去看看那扇门")), "investigation branch presents its real follow-up line");
+    Finish(routeDialogue, routeDialogue.Start("s5_question"));
+    Check(routeContent.Session.Has("flags", "accepted"), "opening accepts investigation without a rest choice");
 }
 
 // Nested if/else priorities come from the actual talk entry.

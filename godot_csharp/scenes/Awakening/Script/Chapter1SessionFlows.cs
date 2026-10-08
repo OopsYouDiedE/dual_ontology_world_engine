@@ -102,12 +102,11 @@ public sealed partial class Chapter1Session
             case "experiment": return Experiment(A(0));
             case "help": return Help(A(0));
             case "recall": return Recall(A(0));
-            case "flash": return _content.CanFlash(A(0)) ? Recall(A(0)) : Array.Empty<Op>();
+            case "flash": return _content.CanFlash(A(0)) ? Recall(A(0), false) : Array.Empty<Op>();
             case "compare": return CompareHand(A(0));
             case "close": CloseModal(); break;
             case "name": return AskName();
             case "board": return PresentBoard();
-            case "rest": return PlayPlan(() => _content.BeginRest(_world));
             case "posts":
                 foreach (var who in Companions) Start(WalkTo(who, new Ev { ["anchor"] = "post:" + who }));
                 break;
@@ -395,11 +394,11 @@ public sealed partial class Chapter1Session
         yield return new Run(OpenCard(id, true));
     }
 
-    private IEnumerable<Op> Recall(string id)
+    private IEnumerable<Op> Recall(string id, bool openCard = true)
     {
         CloseModal();
         yield return new Run(PlayPlan(() => _content.BeginRecall(_world, id)));
-        yield return new Run(OpenCard(id));
+        if (openCard) yield return new Run(OpenCard(id));
     }
 
     private IEnumerable<Op> UnlockReplay()
@@ -411,7 +410,7 @@ public sealed partial class Chapter1Session
 
     private IEnumerable<Op> V6Doubt()
     {
-        yield return new Until(() => !_storyLock && !_dialogueActive);
+        yield return new Until(() => Stage == "investigate" && ReplayOpen && !_storyLock && !_dialogueActive && _modal is null && _uiOwner is null && _uiModal == "");
         yield return new Run(Say("v6_doubt"));
     }
 
@@ -605,8 +604,13 @@ public sealed partial class Chapter1Session
         pick.Clear();
         if (Text(_reply, "action") == "submit")
         {
-            pick["say"] = values.GetValueOrDefault("say")?.ToString() ?? "";
-            pick["show"] = values.GetValueOrDefault("show")?.ToString() ?? "";
+            var said = values.GetValueOrDefault("say")?.ToString() ?? "";
+            var shown = values.GetValueOrDefault("show")?.ToString() ?? "";
+            if (say.OfType<Ev>().Any(option => Text(option, "id") == said) && show.OfType<Ev>().Any(option => Text(option, "id") == shown))
+            {
+                pick["say"] = said;
+                pick["show"] = shown;
+            }
         }
     }
 
@@ -647,7 +651,7 @@ public sealed partial class Chapter1Session
     private Dictionary<string, object> RunReplay(int[] variables)
     {
         var v = new NightVariables((SuPlace)variables[0], (HuoPlace)variables[1], (VoiceOrigin)variables[2],
-            (VoiceWords)variables[3], (DetectiveHeeds)variables[4], (Acquaintance)variables[5]);
+            (VoiceWords)variables[3], (DetectiveHeeds)variables[4], (Acquaintance)(variables[5] < 0 ? 0 : variables[5]));
         _content.RecordReplayRun();
         var result = NightReplay.Run(v);
         var compared = Comparison.Compare(result.Traces, MorningTraces.Evidence, id => Has("examined", id));
