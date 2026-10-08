@@ -9,7 +9,10 @@ public sealed partial class AwakeningContentSession
     {
         RecordReplayRun();
         var result = NightReplay.Run(variables);
-        WitnessReplay(world, variables, result.FullMatch);
+        var compared = Comparison.Compare(result.Traces, MorningTraces.Evidence, id => Session.Has("examined", id));
+        // 没查过的现场不算吻合：推演再对，也只是猜中。
+        var checkedMatch = result.FullMatch && compared.All(f => f.Status == FindingStatus.Match);
+        WitnessReplay(world, variables, checkedMatch);
         var values = new object[] { (int)variables.V1, (int)variables.V2, (int)variables.V3,
             (int)variables.V4, (int)variables.V5, (int)variables.V6 };
         var state = Session.GetProgress("state");
@@ -18,7 +21,7 @@ public sealed partial class AwakeningContentSession
         state["replay_count"] = Convert.ToInt32(state["replay_count"]) + 1;
         var replay = Session.GetProgress("replay_result");
         replay.Clear();
-        replay["full_match"] = result.FullMatch;
+        replay["full_match"] = checkedMatch;
         replay["detective_bolted"] = result.Log.Any(l => l.Contains("侦探照霍铎转述"));
         replay["frames"] = result.Frames.Select(f => (object)new Dictionary<string, object>
         {
@@ -27,6 +30,6 @@ public sealed partial class AwakeningContentSession
         }).ToArray();
         // Actual facts belong to the public replay host, not the subjective search model.
         // Uninspected cards remain Unvisited and provide only their public location hint.
-        return Comparison.Compare(result.Traces, MorningTraces.Evidence, id => Session.Has("examined", id));
+        return compared;
     }
 }

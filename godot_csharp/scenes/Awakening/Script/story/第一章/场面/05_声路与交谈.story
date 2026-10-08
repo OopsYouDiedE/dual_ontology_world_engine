@@ -93,7 +93,7 @@
         沈鼎：又来了？饿了说一声。 [#id=talk_shen.003]
     否则：
         设旗 met_shen
-        沈鼎：来得正好。水够，粮够，够我们吃半个月。这是头一件事。 [#id=talk_shen.004]
+        沈鼎：来得正好。备餐间我翻了一遍：米、面、腌菜，省着点，够咱四个吃半个月。 [#id=talk_shen.004]
     跳转 talk_shen_menu
 
 场面 talk_shen_menu
@@ -133,7 +133,7 @@
         - 铜口那边的声音。 [#id=talk_shen_menu.019]
             条件：试过("E8")
             沈鼎：刚才我在{{所闻之处("shen")}}，听见的是：{{所闻("shen")}} [#id=talk_shen_menu.020]
-            沈鼎：这是刚才试的。昨晚我听没听见，不能拿这个充数。 [#id=talk_shen_menu.021]
+            沈鼎：这是刚才。昨晚我在哪儿听的，听没听见，我自己都说不准。 [#id=talk_shen_menu.021]
             跳转 talk_shen_menu
         - 罐壁上那些面痕。 [#id=talk_shen_menu.022]
             条件：把握("detective", "早已相熟") >= 75
@@ -199,7 +199,7 @@
         - 铜口试过的那句话。 [#id=talk_su_menu.019]
             条件：试过("E8")
             苏泠：刚才在{{所闻之处("su")}}，我听见的是：{{所闻("su")}} [#id=talk_su_menu.020]
-            苏泠：可昨晚警铃响着，我有没有分清……还得看留下的东西。 [#id=talk_su_menu.021]
+            苏泠：昨晚警铃一直在响。 [#id=talk_su_menu.021]
             跳转 talk_su_menu
         - 我们会不会早就认识？ [#id=talk_su_menu.022]
             条件：把握("detective", "早已相熟") >= 75

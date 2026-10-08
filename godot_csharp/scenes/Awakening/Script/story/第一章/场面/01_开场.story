@@ -43,7 +43,7 @@
     沈鼎：……代管的？东家派来的？ [#id=s3_broadcast.003]
     霍铎：声音是从管子里来的。那头有人。 [#emotion=thoughtful] [#id=s3_broadcast.004]
     铜口：管子那头，是我，霍先生。 [#id=s3_broadcast.005]
-    铜口：记忆有缺，并非伤病，请勿惊惶。 [#id=s3_broadcast.018]
+    铜口：诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。 [#id=s3_broadcast.018]
     铜口：我所立之规，已贴在活动厅的公告框里。诸位随时可读。 [#id=s3_broadcast.007]
     苏泠：（朝公告框看了一眼）……墨还是新的。 [#id=s3_broadcast.008]
     跳转 END

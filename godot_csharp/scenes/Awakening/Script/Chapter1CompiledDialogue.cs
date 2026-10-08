@@ -311,7 +311,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "记忆有缺，并非伤病，请勿惊惶。",
+            "text": "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。",
             "voice_clip": "",
             "line_id": "s3_broadcast.018"
           },
@@ -861,7 +861,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（楔尖的磨痕，对上门底那道擦痕。楔背的厚度，与灰扇窄端的宽度一样。）",
+            "text": "（楔尖那道新磨痕，正对上门底的擦痕。门内那片扇形的灰，窄头恰好是楔背那么宽。）",
             "voice_clip": "",
             "line_id": "exp_E2.002"
           },
@@ -3064,7 +3064,7 @@ public static class Chapter1CompiledDialogue
                                 "op": "line",
                                 "speaker": "霍铎",
                                 "mood": "",
-                                "text": "手认得的东西，比脑子多。",
+                                "text": "这块石板，我拿着顺手。",
                                 "voice_clip": "",
                                 "line_id": "topic.早已相熟.002"
                               }
@@ -3387,7 +3387,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "沈鼎",
                         "mood": "",
-                        "text": "来得正好。水够，粮够，够我们吃半个月。这是头一件事。",
+                        "text": "来得正好。备餐间我翻了一遍：米、面、腌菜，省着点，够咱四个吃半个月。",
                         "voice_clip": "",
                         "line_id": "talk_shen.004"
                       }
@@ -3699,7 +3699,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "这是刚才试的。昨晚我听没听见，不能拿这个充数。",
+                    "text": "这是刚才。昨晚我在哪儿听的，听没听见，我自己都说不准。",
                     "voice_clip": "",
                     "line_id": "talk_shen_menu.021"
                   },
@@ -3784,7 +3784,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "沈鼎",
                         "mood": "",
-                        "text": "……兴许咱们早就在一张桌上吃过饭。手上留着，脑子里接不上。",
+                        "text": "……兴许咱们早就在一张桌上吃过饭。",
                         "voice_clip": "",
                         "line_id": "talk_shen_menu.025"
                       }
@@ -3820,7 +3820,7 @@ public static class Chapter1CompiledDialogue
                             "op": "line",
                             "speaker": "沈鼎",
                             "mood": "",
-                            "text": "罐子是老的，人是今早才认的。两回事。",
+                            "text": "罐子是老罐子。人嘛，我今早才认的。",
                             "voice_clip": "",
                             "line_id": "topic.早已相熟.006"
                           }
@@ -4507,7 +4507,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "可昨晚警铃响着，我有没有分清……还得看留下的东西。",
+                    "text": "昨晚警铃一直在响。",
                     "voice_clip": "",
                     "line_id": "talk_su_menu.021"
                   },
@@ -4584,7 +4584,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "苏泠",
                         "mood": "",
-                        "text": "……也许我也认得你。可我想不起来，不能当作记得。",
+                        "text": "……也许我也认得你。我想不起来。",
                         "voice_clip": "",
                         "line_id": "talk_su_menu.024"
                       }
@@ -4913,12 +4913,28 @@ public static class Chapter1CompiledDialogue
             "line_id": "s8_reversal.001"
           },
           {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "……罐壁上那一层层旧面痕，一天养不出来。",
-            "voice_clip": "",
-            "line_id": "s8_reversal.002"
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "seen",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "E10"
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "沈鼎",
+                "mood": "",
+                "text": "……那罐子。一层面痕喂一回。我数到二十，就不数了。",
+                "voice_clip": "",
+                "line_id": "s8_reversal.002"
+              }
+            ],
+            "else": []
           },
           {
             "op": "line",
@@ -4929,28 +4945,52 @@ public static class Chapter1CompiledDialogue
             "line_id": "s8_reversal.003"
           },
           {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "（低头看着自己的手）",
-            "voice_clip": "",
-            "line_id": "s8_reversal.004"
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "seen",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "E9"
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "苏泠",
+                "mood": "",
+                "text": "（低头看着自己的手）",
+                "voice_clip": "",
+                "line_id": "s8_reversal.004"
+              },
+              {
+                "op": "line",
+                "speaker": "苏泠",
+                "mood": "",
+                "text": "早上那杯茶，你没问我。",
+                "voice_clip": "",
+                "line_id": "s8_reversal.005"
+              },
+              {
+                "op": "line",
+                "speaker": "沈鼎",
+                "mood": "",
+                "text": "……嗯。没问。",
+                "voice_clip": "",
+                "line_id": "s8_reversal.006"
+              }
+            ],
+            "else": []
           },
           {
             "op": "line",
-            "speaker": "苏泠",
+            "speaker": "侦探（心声）",
             "mood": "",
-            "text": "第一杯茶，他就知道不放糖。",
+            "text": "今早铜口说，诸位初涉斯地。……字面上，它没说错。初来乍到的，是今早醒过来的这几个我们。",
             "voice_clip": "",
-            "line_id": "s8_reversal.005"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "我当时还说顺手。……哪有这么巧。",
-            "voice_clip": "",
-            "line_id": "s8_reversal.006"
+            "line_id": "s8_reversal.009"
           },
           {
             "op": "if",
@@ -5772,7 +5812,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "侦探（心声）",
                 "mood": "",
-                "text": "看来已有别的寝区先开了门。",
+                "text": "对面的门，已经有人先开了。",
                 "voice_clip": "",
                 "line_id": "s10_open.002"
               }
@@ -5790,7 +5830,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "侦探（心声）",
                 "mood": "",
-                "text": "别的寝区也还在门里。我们不是最晚的。",
+                "text": "对面也有门，也闩着。……门里也有人吗？",
                 "voice_clip": "",
                 "line_id": "s10_open.017"
               }
@@ -5848,7 +5888,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "苏泠",
                 "mood": "",
-                "text": "……我先不回想了。门外有什么，我会自己听。",
+                "text": "（她侧耳听了一会儿门外）……很静。",
                 "voice_clip": "",
                 "line_id": "s10_open.006"
               }
@@ -5880,7 +5920,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "沈鼎",
                 "mood": "",
-                "text": "那罐子喂过的日子，我想起来一些了。……走吧，先找吃的。另外三个寝区，人也得吃饭。",
+                "text": "喂罐子那些日子，我想起来一点。……走，看看外头有没有灶。",
                 "voice_clip": "",
                 "line_id": "s10_open.007"
               }
@@ -5890,7 +5930,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "沈鼎",
                 "mood": "",
-                "text": "罐子我照样喂，从前的事，先不想了。走吧，先找吃的。另外三个寝区的人也得吃饭。",
+                "text": "（把围裙带子又系紧一道）走，看看外头有没有灶。",
                 "voice_clip": "",
                 "line_id": "s10_open.008"
               }
@@ -5940,7 +5980,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "霍铎",
                 "mood": "",
-                "text": "（看着厅的北头）石板上那个铜口记号，还得查清声音从哪儿来。",
+                "text": "（看着厅的北头）主楼在那边。",
                 "voice_clip": "",
                 "line_id": "s10_open.018"
               },
@@ -5948,7 +5988,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "霍铎",
                 "mood": "",
-                "text": "去找。",
+                "text": "去看看。",
                 "voice_clip": "",
                 "line_id": "s10_open.019"
               }
@@ -6067,7 +6107,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "墨影里的人，只照我给的处境去做。对不上现场，错的是我给的处境。",
+            "text": "墨影里的人，照我设的处境在动。对不上的地方，是我设错了。",
             "voice_clip": "",
             "line_id": "replay_first.002"
           },

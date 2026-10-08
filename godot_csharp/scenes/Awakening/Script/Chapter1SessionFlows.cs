@@ -641,7 +641,8 @@ public sealed partial class Chapter1Session
             (VoiceWords)variables[3], (DetectiveHeeds)variables[4], (Acquaintance)variables[5]);
         _content.RecordReplayRun();
         var result = NightReplay.Run(v);
-        _content.WitnessReplay(_world, v, result.FullMatch);
+        var compared = Comparison.Compare(result.Traces, MorningTraces.Evidence, id => Has("examined", id));
+        _content.WitnessReplay(_world, v, result.FullMatch && compared.All(f => f.Status == FindingStatus.Match));
         string Key(Person p) => Names.PersonKeys[(int)p];
         var frames = result.Frames.Select(f => (object)new Dictionary<string, object>
         {
@@ -651,14 +652,16 @@ public sealed partial class Chapter1Session
             ["thoughts"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)f.Thoughts[p]),
             ["door_open"] = f.DoorOpen, ["door_bolted"] = f.DoorBolted, ["ash"] = f.AshFan, ["smoke"] = f.SmokeIn,
         }).ToArray();
-        var findings = Comparison.Compare(result.Traces, MorningTraces.Evidence, id => Has("examined", id)).Select(finding => (object)new Dictionary<string, object>
+        var findings = compared.Select(finding => (object)new Dictionary<string, object>
         {
             ["id"] = finding.Evidence, ["place"] = finding.Place, ["text"] = finding.Text,
             ["status"] = finding.Status switch { FindingStatus.Match => "match", FindingStatus.Conflict => "conflict", _ => "unvisited" },
         }).ToArray();
+        // “全部吻合”只算侦探亲眼查过的现场：还有没查的地方，推演再对也只是猜中，不触发第二次反转。
+        var checkedMatch = result.FullMatch && findings.Cast<Dictionary<string, object>>().All(f => (string)f["status"] == "match");
         return new()
         {
-            ["frames"] = frames, ["findings"] = findings, ["full_match"] = result.FullMatch,
+            ["frames"] = frames, ["findings"] = findings, ["full_match"] = checkedMatch,
             ["conflicts"] = result.Conflicts.Select(c => (object)c).ToArray(), ["bolted"] = result.Traces.InnerBoltDown,
             ["detective_bolted"] = result.Log.Any(l => l.Contains("侦探照霍铎转述")),
         };
