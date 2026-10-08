@@ -38,7 +38,7 @@
     宿舍开放：是
 
 阶段 finale
-    说明：门开或歇息的收尾演出。
+    说明：门开的收尾演出。
     宿舍开放：是
 
 阶段 ended
@@ -67,13 +67,9 @@
     指令 board
     演出 s4_rewards
     演出 s5_question
-    若 旗("rest_chosen")：
-        指令 rest
-    否则：
-        阶段 investigate
-        指令 posts
-        设旗 posts_assigned
-        演出 s6_begin
+    阶段 investigate
+    指令 posts
+    演出 s6_begin
 
 流程 重演之后
     若 重演次数 == 1 且 非 重演吻合：
@@ -149,10 +145,10 @@
 
 流程 答辩·开始
     阶段 answer
-    清空 answer_state
-    记录 answer_state step = 1
     指令 music:confrontation
-    演出 answer_open
+    若 非 有记录("answer_state", "step")：
+        记录 answer_state step = 1
+        演出 answer_open
     继续 答辩·提问
 
 流程 答辩·提问
@@ -211,23 +207,6 @@
     演出 s10_open
     指令 save:false
     指令 ending:完成
-
-流程 歇息
-    阶段 investigate
-    指令 lock
-    若 非 旗("posts_assigned")：
-        指令 posts
-        设旗 posts_assigned
-    演出 ending_rest
-    清旗 rest_chosen
-    指令 unlock
-    指令 hud
-
-流程 确认歇息
-    清旗 rest_chosen
-    演出 rest_confirm
-    若 旗("rest_chosen")：
-        继续 歇息
 
 # 始业之答：四问各自的标准。陈述、出示是玩家在答辩面板里选的两样东西。
 # 说错时铜口只指出“它说明的是别的事”；没做过声路试验就拿铜管作答，铜口会先问一句。

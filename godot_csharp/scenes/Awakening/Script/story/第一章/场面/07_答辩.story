@@ -10,7 +10,6 @@
 
 场面 answer_ok1
     铜口：坦率。 [#id=answer_ok1.001]
-    铜口：那么——阁下闩门的时候，可曾听见门外的呼喊？ [#id=answer_ok1.002]
     跳转 END
 
 场面 answer_q2

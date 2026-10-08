@@ -47,7 +47,7 @@ CALL_ARITY = {
 }
 # 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
 HOST_COMMANDS = {
-    "name", "board", "rest", "investigate", "summon", "flash", "post", "sound", "music", "sfx", "lock", "unlock", "hud",
+    "name", "board", "investigate", "summon", "flash", "post", "sound", "music", "sfx", "lock", "unlock", "hud",
     "answerpick", "finale", "finale_prepare", "stage_actor", "door_open", "redraw", "su_approach", "save", "ending",
     "aside", "consider", "finish", "posts",
 }
