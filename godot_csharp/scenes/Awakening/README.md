@@ -11,14 +11,14 @@ dotnet build godot_csharp/DualOntologyWorldEngine.sln
 
 新 worktree 先执行一次 `& $env:GODOT --headless --editor --path godot_csharp --import`。
 
-操作：鼠标点击移动与交互（点可交互物件一律走过去并打开，站在够得着处再点直接打开；悬停时只描鼠标所指的那一件并显示名称；点到普通家具、窗、拖鞋、地毯等只给一句极短心声，同一件只说一次；人与人不互相阻挡，被挤到的同伴会让开）；WASD 移动；E / 空格 / Enter 检视或交谈（对白刚结束的 0.6 秒内多按的一下不触发新的交谈）；Tab 笔记本；R 重演手稿（第一次看到闩上的门后开放）。对白一次空格推进，H 回看；已问过的对话选项变灰。证物卡上可做现场试验、请同伴协助、请本人触物回忆；任意键返回现场。回放中空格暂停、F 倍速、Esc 跳过（跳过与看完的结算相同）。答辩在活动厅铜口处进行。
+操作：鼠标点击移动与交互（点可交互物件一律走过去并打开，站在够得着处再点直接打开；悬停时只描鼠标所指的那一件并显示名称；点到普通家具、窗、拖鞋、地毯等只给一句极短心声，同一件只说一次；人与人不互相阻挡，被挤到的同伴会让开）；WASD 移动；E / 空格 / Enter 检视或交谈（对白刚结束的 0.6 秒内多按的一下不触发新的交谈）；Tab 笔记本；R 重演手稿（第一次看到闩上的门后开放）。对白一次空格推进，H 回看；已问过的对话选项变灰。证物卡上可做现场试验、请同伴协助；协助触碰本人的旧物后，或握闩试验后，自动触发闪回，由本人选择是否往下想；任意键返回现场。回放中空格暂停、F 倍速、Esc 跳过（跳过与看完的结算相同）。答辩在活动厅铜口处进行。
 
 ## 检查入口
 
 | 检查 | 命令 | 说明 |
 | :--- | :--- | :--- |
 | 解空间穷举、感知隔离、重演不改现实、回忆只影响本人 | `dotnet run --project godot_csharp/scenes/Awakening/check/ReplayCheck` | 编译游戏内同一份 `Night/*.cs`，跑 216 种组合；输出写入 `artifacts/remake-belief-replay/solution-space.txt` |
-| 流程跳转回归 | `& $env:GODOT --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd` | 直接跳到醒来、广播后公告框、门厅反转、“不妨一试”、同伴回忆、声路试验、重演吻合、答辩、门开（起居厅窄底鞋印、结局名单）、对白后多按空格、退出考题；对白由脚本代推进 |
+| 流程跳转回归 | `& $env:GODOT --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd` | 经 Main 标题页开始第一章，检查醒来、广播后公告框、门厅反转、协助/试验后的自动闪回、声路试验认知前置与真实听位、按检视认知开放答辩陈述、手印比对顺序、重演吻合、答辩与门开、对白后多按空格；同时检查低语和歇息入口不再出现。对白由脚本代推进 |
 | 关键画面截图（开发自检） | `& $env:GODOT --path godot_csharp --script res://scenes/Awakening/check/state_gallery.gd` | 有窗口；PNG 写入 `artifacts/remake-belief-replay/gallery/` |
 | 乙区地图重建 | `python godot_csharp/tools/build_awakening_map.py` | 以第二章 `rooms.zone("乙")` 的几何画地图，写 `ShareAsset/Internal/Props/AwakeningEvidence/life_wing_yi.png`、`map_layout.tres`，并就地重写 `Awakening.tscn` 的地图节点（灯、墙、家具、门）；之后需 Godot 导入 |
 | 证物美术重建 | `python godot_csharp/tools/build_awakening_evidence.py` | 原生像素配方 `tools/first_awakening_art/awakening_evidence.py`；同时写 AssetsSource 与 ShareAsset，之后需 Godot 导入 |
@@ -44,7 +44,7 @@ python godot_csharp/tools/blind_playtest.py --session <新id> action --json '{"t
 | `Night/MorningTraces.cs` | 重演留下的晨间痕迹、今晨现实的证物事实（作者给定），以及对照（吻合／冲突／未查）与冲突文字 |
 | `Night/MorningWorld.cs` | 清晨的现实世界：证物 Essence、四人的认知与核心欲望；公告框上的学园守则四条；恶魔的话以 Corruption 来源放大欲望；恶魔低语之后，同伴要不要自己走过去拿起旧物（`Intend`：拿起它／守着手头的事）与碰不碰旧物，都由其内部世界的 `Rule`（低语、欲望、对恶魔的信任、天性谨慎、是否读到守则第 1 条、是否已拿定主意）经 `DecisionSystem` 决定；伸手拿起与放回由 `SimulationSession`/`ActionRuntime` 结算（人不在物件所在房间就拿不到；放回后现实里留下“被动过”）；声路试验（感知）与触物回忆（Recall，记钩）只写入相应本人的认知 |
 | `Script/Chapter1Session.cs` / `Chapter1SessionFlows.cs` / `Chapter1SessionProbe.cs` | 第一章的统一事件会话（`IChapterSession`）：醒来、相遇、证物卡、试验与协助、触物回忆与同伴伸手、请人比对、声路试验、答辩、终局与日常编排；空间动作以 stage 事件交给现场并等回执。探针只供自动回归 |
-| `Chapter1.tscn` | 第一章入口：共用主代码、界面与现场，地图适配器为 `Awakening.tscn` |
+| `../Host/Main.tscn` / `check/chapter1_fixture.gd` | 正式入口与自动检查夹具：先显示标题，发送 `start` 后由宿主创建第一章现场；加载失败立即退出非零状态 |
 | `Awakening.tscn` / `AwakeningMap.gd` | 生活翼地图与适配器：地面格、家具足迹、宿舍门、房间区域、锚点、交互点位置、道具状态（隔离门、旧物、痕迹）、日常站点与实景回放；不含剧情与文字 |
 | `map_layout.tres` | 地图生成脚本的输出：地面格、家具足迹、书架积灰的种类与位置、窗与地毯等壁饰的心声区域 |
 | `ReplayStage.gd` | 墨影回放：真实地图上的半透明人影与四个并排的心声气泡；暂停、倍速、跳过 |

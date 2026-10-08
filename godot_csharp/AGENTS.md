@@ -97,6 +97,7 @@
 
 ## 四、工具与插件管理
 
+- 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
 - `addons/<plugin_name>/`：编辑器插件（如素材适配器 `rpg_asset_adapter`），代码与资源保持插件内部封闭。
 - 资产迁移或管线变动后，通过 `& $env:GODOT --headless --editor --path godot_csharp --import` 完成重新导入校验。

@@ -1,16 +1,19 @@
 extends RefCounted
-## 第一章回归检查共用的统一宿主夹具（Chapter1.tscn）：开新宿主、代按对白、读写探针、关闭弹窗。
+## 第一章回归检查共用的统一宿主夹具（Main.tscn）：开新宿主、代按对白、读写探针、关闭弹窗。
 ## 自动检查用，不是游玩验证；对白与表单由脚本代为推进。
 
-const SCENE := "res://scenes/Awakening/Chapter1.tscn"
+const SCENE := "res://scenes/Host/Main.tscn"
+const ProbeBridge := preload("res://scenes/Shared/check/ChapterProbe.cs")
 const CONTENT := "res://scenes/Awakening/Script/generated_awakening_content.json"
 const LAYOUT := "res://scenes/Awakening/Script/generated_awakening_layout.json"
 
 var tree: SceneTree
 var host: Node
+var _probe := ProbeBridge.new()
 var seen_lines: Array[String] = []
 var content: Dictionary = {}
 var layout: Dictionary = {}
+var dialogue: Dictionary = {}
 ## 对白推进或选项越界时回报（由检查脚本接上 check）。
 var on_error: Callable = func(_message: String) -> void: push_error(_message)
 
@@ -18,6 +21,7 @@ func _init(scene_tree: SceneTree) -> void:
 	tree = scene_tree
 	content = JSON.parse_string(FileAccess.get_file_as_string(CONTENT))
 	layout = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT))
+	dialogue = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Awakening/Script/generated_awakening_dialogue.json"))
 
 # ------------------------------------------------------------------ content ---
 
@@ -25,6 +29,23 @@ func text(key: String, args: Dictionary = {}) -> String:
 	var value: String = content.TEXT[key]
 	for name in args: value = value.replace("{%s}" % name, str(args[name]))
 	return value
+
+## 用稳定行号核对本轮剧本原文，不把旧文案当成机制断言。
+func line_text(id: String) -> String:
+	for steps in dialogue.entries.values():
+		var result := _find_line(steps, id)
+		if result != "": return result
+	on_error.call("剧本行号不存在：" + id)
+	return ""
+
+func _find_line(steps: Array, id: String) -> String:
+	for step in steps:
+		if str(step.get("line_id", "")) == id: return str(step.text)
+		for key in ["then", "else", "body", "options"]:
+			if step.has(key):
+				var result := _find_line(step[key], id)
+				if result != "": return result
+	return ""
 
 func person_name(who: String) -> String: return str(content.PERSON_NAMES[who])
 
@@ -44,22 +65,51 @@ func shutdown() -> void:
 		await tree.process_frame
 		await tree.process_frame
 
-func fresh(skip_intro := true) -> Node:
+func fresh(skip_intro := true, scene_path := SCENE) -> Node:
 	await shutdown()
-	host = (load(SCENE) as PackedScene).instantiate()
-	if skip_intro: host.set_meta("skip_intro", true)
+	if not ResourceLoader.exists(scene_path):
+		await _fatal("场景不存在：" + scene_path)
+		return null
+	var scene := load(scene_path) as PackedScene
+	if scene == null:
+		await _fatal("无法加载宿主：" + scene_path)
+		return null
+	host = scene.instantiate()
+	if host == null:
+		await _fatal("无法实例化宿主：" + scene_path)
+		return null
 	tree.root.add_child(host)
-	for i in 3: await tree.process_frame
+	if not is_instance_valid(host.engine) or not is_instance_valid(host.title_layer):
+		await _fatal("Main 初始化失败：缺少引擎或标题页")
+		return null
+	# 与标题页相同的 start 输入；Main 自己完成 view_ready 握手。
+	host.title_layer.get_child(0).start_button.pressed.emit()
+	await frames(3)
+	if not is_instance_valid(host.ui) or not is_instance_valid(host.field) or host.field.player == null:
+		await _fatal("Main 开始第一章失败：缺少 UI、现场或玩家")
+		return null
+	# 旧 skip_intro 元数据已没有读取者；检查实际推进醒来对白后再注入局面。
+	if skip_intro:
+		await drain()
+		if stage() != "roam" or dialogue_active():
+			await _fatal("醒来对白未完成：stage=" + stage())
+			return null
 	return host
+
+func _fatal(message: String) -> void:
+	push_error("chapter1 fixture: " + message)
+	tree.quit(1)
+	# quit 在本帧结束时生效；停住调用链，避免 process_frame 先恢复后续检查。
+	await tree.create_timer(60.0).timeout # 树退出时销毁计时器，不持有夹具自身的信号循环。
 
 # ------------------------------------------------------------------- reading ---
 
 func stage() -> String: return str(host.ui.snapshot.get("stage", ""))
 func ended() -> bool: return bool(host.ui.snapshot.get("ended", false))
 func replay_open() -> bool: return bool(host.ui.snapshot.get("replay", {}).get("open", false))
-func progress(group: String) -> Dictionary: return host.engine.Probe("progress", [group])
+func progress(group: String) -> Dictionary: return probe("progress", [group])
 func state(key: String, fallback = null): return progress("state").get(key, fallback)
-func probe(name: String, args: Array = []): return host.engine.Probe(name, args)
+func probe(name: String, args: Array = []): return _probe.Run(host.engine, name, args)
 func set_progress(group: String, key: String, value) -> void: probe("set_progress", [group, key, value])
 func remove_progress(group: String, key: String) -> void: probe("remove_progress", [group, key])
 func hooks(who: String) -> int: return int(probe("hooks", [who]))
@@ -114,6 +164,7 @@ func wait_until(condition: Callable, seconds := 10.0) -> bool:
 func jump(state_name: String) -> void:
 	host.dispatch({"kind": "debug_jump", "state": state_name})
 	await frames(10)
+	await drain()
 	await wait_until(func(): return not busy(), 10.0)
 	await physics(4)
 
@@ -201,10 +252,24 @@ func settle_card(seconds := 60.0) -> bool:
 		await tree.process_frame
 	return false
 
-## 打开证物卡（第一次打开可回忆的物件时先有一句“不妨一试”），推进到卡片出现。
+## 打开证物卡，推进到卡片出现。
 func open_card(id: String) -> bool:
 	open_card_event(id)
 	return await settle_card()
+
+## 终局手印分支的前置：在真实架沿旁逐人选择比对，不直接注入试验完成。
+func compare_hands() -> bool:
+	await stand_near(Vector2(930, 200), host.field.site_point("E11a"), 64.0)
+	for who in ["detective", "huo", "shen", "su"]:
+		if who != "detective":
+			host.field.execute({"kind": "stage", "op": "place", "who": who, "to": {"point": player().position + Vector2(24, 0)}})
+			await physics(4)
+		await open_card("E11")
+		var completed := await card_action("compare:" + who)
+		close_modal()
+		await frames(2)
+		if not completed or not progress("hand_comparisons").has(who): return false
+	return progress("experiments").has("E11")
 
 ## 在证物卡上选一项并推进，直到回到证物卡。
 func card_action(kind: String, choices: Array = []) -> bool:
@@ -214,20 +279,6 @@ func card_action(kind: String, choices: Array = []) -> bool:
 	while Time.get_ticks_msec() < deadline:
 		await drain(choices)
 		if host.ui.modal_kind == "card" and not dialogue_active(): return true
-		await tree.process_frame
-	return false
-
-## 触物回忆：同伴要先走过来，再决定；一直推进到回忆结束、证物卡重新打开为止。
-func run_recall(id: String, choices: Array = []) -> bool:
-	await open_card(id)
-	return await card_action("recall", choices)
-
-## 同伴自己走向旧物的整段过程：对白代为推进，直到他放回旧物。
-func run_reach(who: String, choices: Array = []) -> bool:
-	var deadline := Time.get_ticks_msec() + 90000
-	while Time.get_ticks_msec() < deadline:
-		await drain(choices)
-		if str(life(who).get("state", "")) == "done" and not dialogue_active(): return true
 		await tree.process_frame
 	return false
 

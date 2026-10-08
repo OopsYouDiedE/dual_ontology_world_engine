@@ -1,6 +1,6 @@
 extends SceneTree
-## 流程跳转回归（统一宿主 Chapter1.tscn）：直接把局面摆到关键状态（醒来、开场广播、学园守则、门厅反转、同伴触物回忆两种分支、
-## 重演全部吻合、始业之答、门开），检查可达与无脚本错误。地图为第五轮修订后的乙区（中廊两侧各三间房）。
+## 流程跳转回归（统一宿主 Main.tscn）：直接把局面摆到关键状态（醒来、开场广播、学园守则、门厅反转、协助后自动闪回、
+## 重演全部吻合、始业之答、门开、认知前置条件），检查可达与无脚本错误。地图为第五轮修订后的乙区（中廊两侧各三间房）。
 ## 对白与表单由脚本代为推进；这不是游玩验证，不替代独立盲玩。失败不中止，末尾汇总全部失败项。
 ##   godot --headless --path godot_csharp --script res://scenes/Awakening/check/flow_check.gd
 
@@ -43,7 +43,7 @@ func source_text(path: String) -> String: return FileAccess.get_file_as_string(p
 
 ## 抓一次重演：触发 → 代为推进（含重演之后的对白）→ 手稿重新打开 → 合上，返回结果。
 func run_replay(vars: Array, skip := true) -> Dictionary:
-	host._on_ui_event({"kind": "replay", "vars": vars, "skip": skip})
+	host.dispatch({"kind": "replay", "vars": vars, "skip": skip})
 	for round in 40:
 		await fx.drain()
 		if host.ui.modal_kind == "replay": break
@@ -62,7 +62,7 @@ func _run() -> void:
 	check(story.has("entries"), "真实生成对白文档存在")
 	var titles: Array = story.entries.keys()
 	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s4_rewards", "s5_question", "s6_begin", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
-		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11", "nudge_E1", "nudge_E5", "nudge_E7", "nudge_E10",
+		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11",
 		"recall_ask_detective", "recall_detective", "recall_su", "recall_huo", "recall_shen",
 		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
 		"answer_ok2", "answer_need_test", "answer_q3", "answer_ok3", "answer_q4", "answer_ok4",
@@ -78,7 +78,7 @@ func _run() -> void:
 	var hits := FORBIDDEN.filter(func(w): return raw.contains(w))
 	check(hits.is_empty(), "台词与证物文本中没有契约第 9、10 条的字样 %s" % str(hits))
 	var retired_raw := raw + source_text("res://scenes/Awakening/AwakeningMap.gd") + source_text("res://scenes/Awakening/Script/Chapter1Session.cs") \
-		+ source_text("res://scenes/Awakening/Script/Chapter1SessionFlows.cs") + source_text("res://scenes/Shared/ChapterHost.gd")
+		+ source_text("res://scenes/Awakening/Script/Chapter1SessionFlows.cs") + source_text("res://scenes/Host/Main.gd")
 	var retired := RETIRED.filter(func(w): return retired_raw.contains(w))
 	check(retired.is_empty(), "第五轮修订：不再有“初涉斯地”、可数刻痕、契约条款与“主楼走廊” %s" % str(retired))
 	check(not titles.has("answer_offer_reverse") and not titles.has("answer_reverse"), "第五轮修订：删去答辩第 5 步“反问”")
@@ -158,7 +158,7 @@ func _run() -> void:
 	host.ui._select(host.ui._modal_event, "detective")
 	await fx.settle_card()
 	check(fx.progress("flags").has("reversal_one") and fx.progress("experiments").has("E3"), "门厅反转：对照靴底后触发“……是我”")
-	check(seen().contains("簌簌地落"), "“……是我”处，侦探有一句克制的心声（修订四·10）")
+	check(seen().contains(fx.line_text("s6_reversal.004")), "“……是我”处，侦探有一句克制的心声（修订四·10）")
 	check(fx.probe("statements").has("me"), "陈述列表出现“是我闩的门”")
 
 	# ---- 4. 声路试验（含 R-08 听点）
@@ -170,175 +170,164 @@ func _run() -> void:
 	var detective_sound: Dictionary = sound_by_person.detective
 	var su_sound: Dictionary = sound_by_person.su
 	var huo_sound: Dictionary = sound_by_person.huo
-	check(detective_sound.room == "foyer" and str(detective_sound.text).begins_with("……开门") and str(detective_sound.direction).contains("从那边")
+	check(detective_sound.room == "foyer" and str(detective_sound.text).begins_with("……开门") and str(detective_sound.direction).contains("门那边")
 		and not str(detective_sound.text).contains("门外") and not str(detective_sound.direction).contains("门外"),
-		"声路试验：门边只听到“……开门”，同伴只说来处的方向（从那边，指向门），不说“像在门外”（修订三·5）")
-	check(su_sound.room == "R08" and str(su_sound.text).begins_with("……开门") and str(su_sound.direction).contains("墙那边")
-		and not str(su_sound.text).contains("门外") and not str(su_sound.direction).contains("门外"), "声路试验：R-08 只听到“……开门”，从墙那边")
+		"声路试验：门边只听到“……开门”，同伴只说来处的方向（门那边），不说“像在门外”（修订三·5）")
+	check(su_sound.room == "R08" and str(su_sound.text).begins_with("……开门") and str(su_sound.direction).contains("墙里")
+		and not str(su_sound.text).contains("门外") and not str(su_sound.direction).contains("门外"), "声路试验：R-08 只听到“……开门”，从墙里传来")
 	check(huo_sound.room == "hall" and str(huo_sound.text).begins_with("闩上门，不要开门。") and str(huo_sound.direction).contains("从铜口里"), "声路试验：铜口旁听到整句")
 	fx.close_modal()
 	fx.seen_lines.clear()
-	# 声路试验在 E8 证物卡的“试验”里：表单选句选位 → 开始。
+	# E8 先有两种相反的说法，才出现试验；听位只移动侦探，同伴按真实所在处听。
+	await fx.open_card("E8")
+	check(not fx.select("experiment"), "没看石板与另一种说法时，E8 不提供声路试验")
+	fx.close_modal()
+	await fx.open_card("E7")
+	fx.close_modal()
+	await fx.open_card("E8")
+	check(not fx.select("experiment"), "只看石板时，E8 仍不提供声路试验")
+	fx.close_modal()
+	await fx.open_card("E6")
+	fx.close_modal()
+	await fx.stand_at(fx.map().anchor("site:E8") + Vector2(0, 30))
 	await fx.open_card("E8")
 	for round in 2:
-		check(fx.select("experiment"), "声路试验第 %d 轮：E8 证物卡有试验选项" % (round + 1))
-		await fx.wait_until(func(): return host.ui.modal_kind == "form")
+		check(fx.select("experiment"), "声路试验第 %d 轮：已看 E7/E6，E8 有试验选项" % (round + 1))
+		if not await fx.wait_until(func(): return host.ui.modal_kind == "form"):
+			check(false, "声路试验表单出现")
+			break
+		var spot: String = ["foyer", "R08"][round]
+		await fx.physics(4) # 等表单打开前的日常停步回执落定，再比较听位选择的影响。
+		var trace_path: String = ProjectSettings.globalize_path("res://../artifacts/basic-ui-system/player-traces").path_join(str(host.ui._modal_event.run_id) + ".jsonl")
+		var trace := FileAccess.open(trace_path, FileAccess.READ)
+		var trace_offset := trace.get_length()
+		trace = null
+		var positions := {}
+		for who in ["huo", "shen", "su"]: positions[who] = fx.actor(who).position
 		host.ui._form.select("sentence", "0")
+		host.ui._form.select("spot", spot)
+		fx.seen_lines.clear()
 		for action in host.ui._modal_event.actions:
 			if str(action.id) == "start": host.ui._form_action(host.ui._modal_event, action)
 		await fx.drain()
-		await fx.wait_until(func(): return host.ui.modal_kind == "card")
-		if round == 1:
-			var title := str(host.ui._modal_event.get("title", "")) + str(host.ui._modal_event.get("intro", "")) + fx.modal_text()
-			check(title.contains("第 2 轮") and title.contains("从哪边来"), "声路试验第二轮起以一张小表汇总四处所闻（修订四·8）")
-	check(seen().count("从管子里出来的声音") == 1 or fx.seen_lines.filter(func(l): return l.contains("从管子里出来的声音")).size() == 1, "两轮声路试验，苏泠的点评只说一次")
+		check(await fx.wait_until(func(): return host.ui.modal_kind == "card"), "声路试验完成后返回证物卡")
+		var actual: Array = fx.state("last_sound", [])
+		var context: Dictionary = host.field.context().actors
+		var by_person := {}
+		for heard in actual: by_person[str(heard.who)] = heard
+		for who in positions:
+			print("SOUND_POSITION round=%d who=%s before=%s after=%s delta=%.2f" % [round + 1, who, positions[who], fx.actor(who).position, fx.actor(who).position.distance_to(positions[who])])
+		print("SOUND round=%d chosen=%s actual=%s" % [round + 1, spot, str(actual)])
+		check(context.detective.entered == spot and by_person.get("detective", {}).get("room", "") == spot,
+			"声路试验：侦探实际走到所选听位 " + spot)
+		# 现场让路会小幅挪动同伴；试验不得调度他们去预设听位。
+		trace = FileAccess.open(trace_path, FileAccess.READ)
+		trace.seek(trace_offset)
+		var companion_moves := []
+		while trace.get_position() < trace.get_length():
+			var row: Dictionary = JSON.parse_string(trace.get_line())
+			var output: Dictionary = row.get("data", {})
+			if str(row.kind) == "output" and str(output.get("kind", "")) == "stage" and str(output.get("op", "")) in ["walk", "place"] 					and str(output.get("who", "")) in ["huo", "shen", "su"]:
+				companion_moves.append(output)
+		trace = null
+		print("SOUND_COMPANION_STAGE round=%d moves=%s" % [round + 1, str(companion_moves)])
+		check(companion_moves.is_empty() and ["huo", "shen", "su"].all(func(who): return by_person.get(who, {}).get("room", "") == context[who].entered),
+			"声路试验：不调度同伴换听位，按各自实际站位听")
+		check(fx.seen_lines.size() > 4, "每轮声路试验都演出所说与所闻")
+	fx.close_modal()
+	# E5 协助可代替 E6 检视这一前置条件。
+	await fresh()
+	await fx.jump("investigate")
+	await fx.open_card("E7")
+	fx.close_modal()
+	await fx.open_card("board")
+	fx.close_modal()
+	await fx.open_card("E5")
+	check(await fx.card_action("help"), "E5 协助与自动闪回完成")
+	fx.close_modal()
+	await fx.open_card("E8")
+	check(host.ui._modal_event.options.any(func(o): return str(o.id).ends_with(":experiment")), "已看 E7 且协助 E5 后，E8 提供声路试验")
 	fx.close_modal()
 
-	# ---- 5. 触物回忆：三人倾向各不相同（未告知／已告知守则第 1 条），沈鼎犹豫时侦探的三种回答
-	# [物件, 人, 是否先指给他看守则第 1 条, 犹豫时侦探的回答序号（-1 表示不会犹豫）, 期望结果, 期望心声片段]
-	var cases := [
-		["E7", "huo", false, -1, "touch", "碰一下"],
-		["E7", "huo", true, -1, "touch", "图纸值这个价"],
-		["E5", "su", false, -1, "touch", "碰一下"],
-		["E5", "su", true, -1, "refuse", "握久了就带着此地"],
-		["E10", "shen", true, -1, "refuse", "握久了就带着此地"],
-		["E10", "shen", false, 0, "touch", "我信你"],
-		["E10", "shen", false, 1, "refuse", "你说别碰"],
-		["E10", "shen", false, 2, "refuse", "自己拿主意"],
-	]
+	# ---- 5. 卡片不再提议回忆；协助碰到本人的旧物之后自动闪回。
+	var cases := [["E7", "huo", false], ["E7", "huo", true], ["E5", "su", false], ["E5", "su", true], ["E10", "shen", false]]
 	for case in cases:
 		await fresh()
 		await fx.jump("investigate")
 		fx.probe("amplify", [case[1], "S4"])
-		# 请求回忆这一路单独检验：恶魔那句话这里只放大欲望，不让他先自己走过去（那一路见 5c）。
-		fx.probe("amplify", [case[1], "nudge"])
-		fx.set_progress("nudged", case[0], true)
 		await fx.open_card("board")
 		fx.close_modal()
-		var choices := [0 if case[2] else 1]
-		if case[3] >= 0:
-			choices.append(case[3])
+		if case[2]: fx.set_progress("flags", "price_heard", true)
 		fx.seen_lines.clear()
 		await fx.open_card(case[0])
-		var returned: bool = await fx.card_action("recall", choices)
-		if not returned: check(false, "触物回忆没有返回证物卡：" + case[0])
+		check(not fx.select("recall") and fx.seen_lines.is_empty(), "检视 %s 不触发低语，也没有回忆按钮" % case[0])
+		var choices := [0] if case[2] else []
+		check(await fx.card_action("help", choices), "协助 %s 后，自动闪回并返回证物卡" % case[0])
 		var touched: bool = fx.progress("recalls").has(case[1])
-		var hesitated: bool = seen().contains("你说呢")
-		var thought := str(fx.progress("recall_decision").get("thought", ""))
-		var ok: bool = (touched == (case[4] == "touch")) and fx.hooks(case[1]) == (1 if touched else 0) and thought.contains(case[5])
-		var advice_text: String = ["劝碰", "劝别碰", "由他自己"][case[3]] if case[3] >= 0 else ""
-		check(ok, "%s%s：%s%s → %s（%s）" % [fx.person_name(case[1]), "（已被告知守则第 1 条）" if case[2] else "（未被告知）",
-			"犹豫并反问“你说呢？”，侦探" + advice_text + " " if case[3] >= 0 else "", "", case[4], thought])
-		if case[1] == "shen" and not case[2]:
-			check(hesitated, "沈鼎未被告知时先犹豫，反问侦探“你说呢？”")
-		elif case[3] < 0:
-			check(not hesitated, "%s不犹豫，直接自己决定" % fx.person_name(case[1]))
-	await fresh()
-	await fx.jump("investigate")
-	fx.seen_lines.clear()
-	await fx.open_card("E1")
-	check(host.ui.modal_kind == "card" and seen().contains("你想知道自己为何在此"), "第一次打开插闩的证物卡：先听到恶魔朝向侦探欲望的那句话，然后才出现回忆选项（修订三·3）")
-	check(fx.modal_buttons().any(func(t): return str(t).contains("往下想")), "回忆选项写明“往下想”：闪回由身体触发，取回是本人的选择")
-	fx.close_modal()
-	fx.seen_lines.clear()
-	await fx.open_card("E1")
-	check(not seen().contains("门闩记得"), "同一件物件，恶魔那句话只说一次")
-	fx.close_modal()
-	var nudges := {}
-	for id in ["E1", "E5", "E7", "E10"]:
-		nudges[id] = story.entries.has("nudge_" + id)
-	var nudge_text: String = JSON.stringify(story.entries)
-	check(nudge_text.contains("你想知道自己为何在此") and nudge_text.contains("此地还有你从未听过的声音") and nudge_text.contains("超越卡诺循环") and nudge_text.contains("你护着的人，比你记得的多"),
-		"四件物件四句不同的话，各自朝向此人的欲望")
-	var endings := []
-	for id in ["E1", "E5", "E7", "E10"]:
-		var lines: Array = story.entries["nudge_" + id].filter(func(step): return step.op == "line" and step.speaker == "铜口")
-		check(lines.size() == 1 and nudges[id], "诱导标题与铜口台词存在：" + id)
-		endings.append(str(lines[0].text).right(6))
-	var distinct_endings := {}
-	for e in endings:
-		distinct_endings[e] = true
-	check(distinct_endings.size() == 4 and not endings.has("不妨一试。"), "四句诱导不以同一句收尾（修订四·6）%s" % str(endings))
-	await fresh()
-	await fx.jump("investigate")
-	fx.probe("amplify", ["huo", "S4"])
-	fx.set_progress("nudged", "E7", true)
-	await fx.run_recall("E7", [1])
-	check(str(fx.progress("recall_marks").get("2", "")) == "huo" and int(fx.state("replay_vars")[1]) == -1, "回忆把 V2 标为“回忆所证”，但不替玩家设定变量")
-	fx.close_modal()
-
-	# ---- 5c. 恶魔低语后，同伴自己走向旧物（修订四·1）：在场时三种回应
-	# [人, 物件, 房间中心, 侦探的回应（0 劝阻，1 说明守则第 1 条，2 任其自便）, 期望]
-	var rooms := {"huo": Vector2(440, 340), "su": Vector2(224, 390), "shen": Vector2(448, 652)}
-	var expect := {"huo": ["touch", "touch", "touch"], "su": ["touch", "refuse", "touch"], "shen": ["refuse", "refuse", "touch"]}
-	var reach_lines := {"huo": "拿起了那块石板", "su": "拾起了那把音叉", "shen": "端起酵种罐"}
-	for who in ["huo", "su", "shen"]:
-		for answer in 3:
-			await fresh()
-			await fx.jump("investigate")
-			fx.probe("amplify", [who, "S4"])
-			var obj: String = fx.own_object(who)
-			await fx.stand_near(rooms[who], host.field.site_point(obj), 90.0)
-			await fx.physics(40)
-			var still: bool = not fx.progress("life").has(who)
-			fx.seen_lines.clear()
-			fx.probe("whisper", [who, "（低语）"])
-			fx.set_progress("nudged", obj, true)
-			fx.probe("consider", [who])
-			# 沈鼎任其自便时会犹豫、反问“你说呢？”——这里答“碰吧”。
-			var reached: bool = await fx.run_reach(who, [answer, 0])
-			var touched: bool = fx.hooks(who) == 1
-			var text := seen()
-			var ok: bool = reached and still and text.contains(reach_lines[who]) and touched == (expect[who][answer] == "touch") \
-				and bool(fx.probe("is_disturbed", [obj])) and fx.progress("decided").has(who)
-			check(ok, "%s：低语之前不动；低语后自己走过去伸手；侦探%s → %s（钩 %d，%s）" % [fx.person_name(who), ["劝阻", "说明守则第 1 条", "任其自便"][answer],
-				expect[who][answer], fx.hooks(who), str(fx.progress("recall_decision").get("thought", ""))])
-			if who == "shen" and answer == 2:
-				check(text.contains("你说呢"), "沈鼎被任其自便时犹豫，反问侦探“你说呢？”")
-	# 不在场：只留下痕迹与事后的神色，回来时说一句
-	for who in ["huo", "su", "shen"]:
+		var informed: bool = case[2] or case[1] == "shen"
+		var expected: bool = case[1] == "huo" or (case[1] == "su" and not informed)
+		print("FLASH id=%s person=%s informed=%s recall=%s hooks=%d thought=%s" % [case[0], case[1], informed, touched, fx.hooks(case[1]), str(fx.progress("recall_decision"))])
+		check(fx.progress("helped").has(case[0]) and fx.progress("decided").has(case[1]), "协助与闪回后的本人取舍都有记录：" + case[0])
+		check(touched == expected and fx.hooks(case[1]) == (1 if expected else 0), "自动闪回取舍：%s，已知代价=%s，取回=%s" % [case[1], informed, expected])
+		if case[1] == "shen": check(fx.progress("flags").has("price_heard"), "沈鼎在闪回后自己向铜口问代价")
+		if touched and case[1] == "huo":
+			check(str(fx.progress("recall_marks").get("2", "")) == "huo" and int(fx.state("replay_vars")[1]) == -1, "回忆标记来源，不替玩家设定重演变量")
+		fx.close_modal()
+	# E1 只在拔闩试验中触发身体闪回；选择是否往下想仍在对白里。
+	for accept in [false, true]:
 		await fresh()
 		await fx.jump("investigate")
-		fx.probe("amplify", [who, "S4"])
-		fx.player().position = Vector2(930, 200)
-		await fx.physics(4)
-		fx.probe("whisper", [who, "（低语）"])
-		var obj: String = fx.own_object(who)
-		fx.set_progress("nudged", obj, true)
-		fx.probe("consider", [who])
-		await fx.wait_until(func(): return str(fx.life(who).get("state", "")) == "done" and not fx.life(who).get("walking_back", false), 60.0)
-		var touched: bool = fx.hooks(who) == 1
-		var expected_touch: bool = who != "shen"
-		check(touched == expected_touch and bool(fx.probe("is_disturbed", [obj])) and not fx.progress("recalls").has(who) and bool(fx.life(who).get("alone", false)),
-			"%s：侦探不在场，自己%s（钩 %d）；侦探什么也没听见，物件上留下“被动过”的痕迹" % [fx.person_name(who), "碰了" if expected_touch else "放下了", fx.hooks(who)])
-		await fx.wait_until(func(): return not fx.actor(who).travelling, 30.0)
-		fx.player().position = fx.actor(who).position + Vector2(26, 0)
-		await fx.physics(4)
+		await fx.open_card("E1")
+		check(not fx.select("recall"), "E1 卡片没有主动回忆按钮")
 		fx.seen_lines.clear()
-		host.field.interact("person:" + who)
-		await fx.drain()
-		var said := seen()
-		if expected_touch:
-			check(said.contains("我想起了一点") and fx.progress("recalls").has(who), "%s回来后说“我想起了一点”，片段这时才到侦探手里" % fx.person_name(who))
-		else:
-			check(said.contains("又放回去了"), "沈鼎回来后说他把罐子端起来、又放回去了")
-		await fx.open_card(obj)
-		check(fx.modal_text().contains("被人拿起过"), "%s的证物卡上记着它被人拿起过" % fx.person_name(who))
+		check(await fx.card_action("experiment", [0 if accept else 1]), "E1 试验后自动闪回并返回卡片")
+		check(fx.progress("experiments").has("E1") and fx.progress("recalls").has("detective") == accept 			and fx.hooks("detective") == (1 if accept else 0), "E1 身体闪回：是否往下想由玩家选择 %s" % accept)
 		fx.close_modal()
-	# 恶魔挑侦探不在的时候低语（玩家听不见）：调查过四件后，下一次换房间时，不在场的同伴会被低语
+	check(not titles.any(func(t): return str(t).begins_with("nudge_")), "主动低语 nudge_* 场面已移除")
 	await fresh()
 	await fx.jump("investigate")
 	for id in ["E1", "E2", "E3", "E4"]:
-		fx.probe("examine", [id])
+		await fx.open_card(id)
+		fx.close_modal()
+		await fx.drain()
+	await fx.stand_at(Vector2(930, 200))
+	await fx.physics(40)
+	print("ROOM_CHANGE life=%s nudged=%s recalls=%s" % [str(fx.progress("life")), str(fx.progress("nudged")), str(fx.progress("recalls"))])
+	check(fx.progress("life").is_empty() and fx.progress("recalls").is_empty() and ["huo", "su", "shen"].all(func(who): return not bool(fx.probe("whispered", [who]))), "调查与换房不再触发离场低语或同伴自主回忆")
+
+	# ---- 5c. 答辩陈述从检视认知开放，不要求先重演。
+	await fresh()
+	await fx.jump("investigate")
+	check(fx.probe("statements").is_empty(), "尚未检视时没有答辩陈述")
+	await fx.open_card("E8")
+	fx.close_modal()
+	var statements: Array = fx.probe("statements")
+	check(statements.has("V3_0") and statements.has("V3_1") and not statements.has("V2_0"), "检视 E8 后开放这一问的各种陈述，不代选答案")
+	await fx.open_card("E7")
+	fx.close_modal()
+	await fx.open_card("E12")
+	fx.close_modal()
+	statements = fx.probe("statements")
+	check(statements.has("me") and statements.has("V2_0") and statements.has("V4_0") and int(fx.state("replay_count")) == 0, "检视 E7/E12 后可陈述闩门与指令，重演次数仍为零")
+	await fx.open_card("E9")
+	fx.close_modal()
 	await fx.drain()
-	await fx.wait_until(func(): return fx.progress("life").has("huo"), 10.0)
-	check(fx.progress("life").has("huo") and bool(fx.probe("whispered", ["huo"])) and fx.progress("nudged").has("E7") and not fx.progress("life").has("su"),
-		"侦探在门厅：恶魔对不在场的霍铎低语，他自己走向石板（在场的苏泠没有被低语）")
-	await fx.wait_until(func(): return str(fx.life("huo").get("state", "")) == "done" and not fx.actor("huo").travelling, 60.0)
-	check(fx.hooks("huo") == 1 and not fx.progress("recalls").has("huo"), "玩家不作为也有后果：霍铎独自碰了石板，留下一枚钩，侦探还不知道")
-	fx.player().position = Vector2(440, 340)
-	await fx.wait_until(func(): return fx.aside().visible, 2.0)
-	check(fx.aside().visible and fx.aside().text.contains("恍惚"), "走进活动厅：看见霍铎事后的神色")
+	statements = fx.probe("statements")
+	check(statements.has("V6_0") and statements.has("V6_1") and statements.has("trust"), "两件相熟旁证开放第六问与信任陈述")
+
+	# ---- 5c2. 手印先比自己的手，之后才列在场同伴。
+	await fresh()
+	await fx.jump("investigate")
+	var shelf: Vector2 = host.field.site_point("E11a")
+	await fx.stand_near(Vector2(930, 200), shelf, 64.0)
+	host.field.execute({"kind": "stage", "op": "place", "who": "huo", "to": {"point": fx.player().position + Vector2(24, 0)}})
+	await fx.physics(4)
+	await fx.open_card("E11")
+	check(host.ui._modal_event.options.all(func(o): return not str(o.id).ends_with(":huo")), "手印未比自己前，不列同伴")
+	check(await fx.card_action("compare:detective"), "手印先比侦探自己的手")
+	check(fx.progress("hand_comparisons").has("detective"), "侦探自己的手印比对有记录")
+	check(host.ui._modal_event.options.any(func(o): return str(o.id).ends_with(":huo")), "比过自己的手之后，列出架旁同伴")
+	fx.close_modal()
 
 	# ---- 5d. 第六个问题起初不写出来（修订四·2）
 	await fresh()
@@ -359,15 +348,18 @@ func _run() -> void:
 	host.ui.open_manuscript()
 	await process_frame
 	page = fx.modal_text()
-	check(fx.probe("v6_open") and page.contains("昨夜之前，四人彼此") and seen().contains("我们真的是昨天才认识的吗"),
+	check(fx.probe("v6_open") and page.contains("昨夜之前，四人彼此") and seen().contains(fx.line_text("v6_doubt.002")),
 		"细看两件相熟旁证（杯子、放大镜）后，侦探起疑，手稿出现第六个问题")
 	fx.close_modal()
 	await fresh()
 	await fx.jump("reversal_one")
 	check(not fx.probe("v6_open"), "另一条路：起初没有第六个问题")
 	fx.seen_lines.clear()
-	await run_replay([0, 0, 0, 0, 0, 0])
-	check(fx.probe("v6_open") and seen().contains("真是昨天才认识的吗"), "重演中侦探因信任不足拒绝转述后，手稿出现第六个问题")
+	var refused_path: Dictionary = await run_replay([0, 0, 0, 0, 0, 0])
+	var doubt_text: String = fx.text("夜间·怀疑·生人")
+	var refusal_thoughts: Array = refused_path.frames.map(func(frame): return str(frame.thoughts.detective)).filter(func(thought): return str(thought).contains(doubt_text))
+	print("V6_REPLAY doubt=%s matched_thoughts=%s open=%s flags=%s seen=%s" % [doubt_text, str(refusal_thoughts), fx.probe("v6_open"), str(fx.progress("flags")), seen()])
+	check(fx.probe("v6_open") and seen().contains(fx.line_text("replay_refused.003")), "重演中侦探因信任不足拒绝转述后，手稿出现第六个问题")
 	fx.close_modal()
 
 	# ---- 5e. 交互一致性与减少重复（修订四·7、8、9）
@@ -385,12 +377,11 @@ func _run() -> void:
 	check(helped and brief.contains("这布是我拧的") and not brief.contains("一条拧过的湿抹布"), "请人看过之后只给新得到的那一句，不重显整张原文")
 	fx.close_modal()
 	await fx.physics(2)
-	fx.player().position = host.field.site_point("L6") + Vector2(0, 16)
-	await fx.physics(3)
-	var l6_visible: bool = host.field.site_visible("L6")
-	fx.player().position = host.field.site_point("L7") + Vector2(0, 16)
-	await fx.physics(3)
-	var l7_visible: bool = host.field.site_visible("L7")
+	await fx.stand_near(Vector2(930, 600), host.field.site_point("L6"), 64.0)
+	var l6_visible: bool = await fx.wait_until(func(): return host.field.site_visible("L6"), 2.0)
+	await fx.stand_near(Vector2(706, 600), host.field.site_point("L7"), 64.0)
+	var l7_visible: bool = await fx.wait_until(func(): return host.field.site_visible("L7"), 2.0)
+	print("LIFE_TRACES L6=%s L7=%s player=%s" % [l6_visible, l7_visible, fx.player().position])
 	check(l6_visible and l7_visible, "R-06、R-07 各有一处本人的生活痕迹")
 	fx.player().position = host.field.site_point("L6") + Vector2(0, 16)
 	await fx.physics(3)
@@ -409,10 +400,12 @@ func _run() -> void:
 	fx.close_modal()
 	await fx.physics(2)
 	# 点到窗：现场认出被点中的家具，把点击报给章节，章节回一句心声。
-	var hits_at: Dictionary = fx.map().furniture_hits(Vector2(704, 50))
+	var window: Array = fx.map().layout.asides.filter(func(decor): return str(decor[1]).contains("窗"))[0]
+	var rect: Array = window[0]
+	var hits_at: Dictionary = fx.map().furniture_hits(Vector2(rect[0] + rect[2] / 2.0, rect[1] + rect[3] / 2.0))
 	host.dispatch({"kind": "furniture", "map": fx.map().map_key(), "nodes": hits_at.get("nodes", []), "texts": hits_at.get("texts", {})})
 	await fx.frames(3)
-	check(fx.aside().visible and fx.aside().text.contains("窗"), "点到窗：也给一句心声")
+	check(fx.aside().visible and fx.aside().text == str(window[1]), "点到窗：也给一句心声（取当前地图区域）")
 
 	# ---- 6. 重演：素不相识时的拒绝，与全部吻合
 	fx.set_progress("state", "replay_open", true) # 新宿主：重演须先开放；原宿主的 run_replay 不设此门。
@@ -455,7 +448,7 @@ func _run() -> void:
 	check(not digits, "心声气泡不出现数值")
 	fx.set_progress("state", "full_match_seen", false)
 	# 在地图上播放回放，播放中按 Esc 跳过（与看完相同结算）。
-	host._on_ui_event({"kind": "replay", "vars": [0, 0, 0, 0, 0, 1], "skip": false})
+	host.dispatch({"kind": "replay", "vars": [0, 0, 0, 0, 0, 1], "skip": false})
 	var stage_node: Node = fx.map().stage_node
 	await fx.wait_until(func(): return stage_node.playing, 10.0)
 	await process_frame
@@ -478,6 +471,7 @@ func _run() -> void:
 	# ---- 7. 始业之答（陈述与出示成对；第五轮修订删去反问）→ 门开
 	await fresh()
 	await fx.jump("replay_match")
+	check(await fx.compare_hands(), "终局手印分支：实际完成四人的比对")
 	fx.probe("apply_recall", ["E10", "shen"])
 	fx.seen_lines.clear()
 	var end_started := Time.get_unix_time_from_system()
@@ -534,10 +528,10 @@ func _run() -> void:
 		and not fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/LoungeCover").visible,
 		"门开：门外是起居厅，烟灰上留下一行窄底皮鞋印（恶魔显形才能抬闩，修订三·8、第五轮修订 6）")
 	check(room_name(fx.player().position) == "门厅", "结局时地名显示“门厅”")
-	check(fx.progress("flags").has("asked_hand") and finale.contains("诸位授权封存之物，是我取走的") and not finale.contains("第二条"),
+	check(fx.progress("flags").has("asked_hand") and finale.contains(fx.line_text("s10_hand.006")) and not finale.contains("第二条"),
 		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔承认取物，不提“第二条”（修订四·5、第五轮修订 5）")
 	check(finale.contains("我却没有马上迈出去"), "门开时侦探有一句克制的心声（修订四·10）")
-	check(finale.contains("那罐子喂过的日子，我想起来一些了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
+	check(finale.contains(fx.line_text("s10_open.007")) and finale.contains(fx.line_text("s10_open.006")), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
 	var ending_text := fx.modal_text() + "\n" + "\n".join(host.ui._modal_event.get("rows", []))
 	check(ending_text.contains("想起了一些事的人：沈鼎") and ending_text.contains("没有往下想的：你自己、霍铎、苏泠"), "结局列出取回者与没有往下想的人")
 	check(FileAccess.file_exists("user://chapter1_end.json") and FileAccess.get_modified_time("user://chapter1_end.json") >= int(end_started) - 1,
@@ -579,6 +573,14 @@ func _run() -> void:
 	await process_frame
 	check(fx.dialogue_active(), "过一会儿再按空格，仍能与身边的人交谈")
 	await fx.drain()
+
+	# ---- 8. 铜口菜单不再提供歇息选择。
+	await fresh()
+	await fx.jump("investigate")
+	host.dispatch({"kind": "interact", "site": "E8"})
+	check(await fx.wait_until(func(): return host.ui.modal_kind == "menu", 5.0), "铜口菜单出现")
+	check(not fx.select("rest") and not fx.ended(), "铜口菜单没有歇息选择，不结束章节")
+	fx.close_modal()
 
 	print("TOTAL %d checks, %d failed" % [checks, failures])
 	for name in failed_names: print("FAILED: " + name)
