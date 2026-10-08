@@ -395,8 +395,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			var key := str(action.get("key", ""))
 			if (key == "Enter" and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]) or (key.length() == 1 and OS.get_keycode_string(event.keycode) == key):
 				if not bool(action.get("available", true)): continue
-				_navigate(str(action.id))
+				# 先标记已处理：续章会把本界面移出场景树，之后就拿不到 viewport 了。
 				get_viewport().set_input_as_handled()
+				_navigate(str(action.id))
 				return
 		return
 	if modal_kind == "card" and event.keycode in [KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:

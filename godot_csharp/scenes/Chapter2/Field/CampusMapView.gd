@@ -65,6 +65,9 @@ func load_map(next: String, _spawn: String) -> void:
 func spawn_point(spawn: String) -> Vector2:
 	var marker := map.get_node_or_null("Spawns/" + spawn) as Marker2D
 	if marker: return marker.position
+	# 要的出生点这张图上没有：用图上自己的第一个出生点，不落到图外的固定坐标。
+	var spawns := map.get_node_or_null("Spawns")
+	if spawns and spawns.get_child_count() > 0: return (spawns.get_child(0) as Marker2D).position
 	if map.has_meta("outdoor_core"):
 		return (map.get_meta("outdoor_core") as Rect2).get_center() - (map.get_meta("outdoor_origin") as Vector2)
 	return Vector2(64, 64)
