@@ -111,3 +111,6 @@
 - 表单抬头由 `FormPanel` 持有并更新；正式表单通过 `PaperModal.pin_header()` 将同一节点放在滚动区上方，字段留在滚动区。无抬头表单和组件独立预览沿用原布局。
 
 - 消息的发生日与时段保存在 `NewsItem` 的呈现元数据中；转述模板按事件发生时点绑定，不将呈现时间写进 `Claim` 身份以改变社交去重。完成动作不等于产生后果，完成消息由实际生效的机制分支登记。台账详情只展开真实台账消息，人物的登记状态按本人对应夜晚的取用与登记数量选择剧本模板。
+
+- 三级实时录像可用 tools/record_blind_session.py run --session=<fresh-id> --agent=<name>，以该 Godot 进程的唯一窗口标题通过 FFmpeg gdigrab 捕获 15fps H.264 CRF29；启动器后台运行，确认 recording.json 为 recording 后才开始输入。stop 子命令发送正常封装请求并验证 MP4 可解码；禁止以截图拼接或 --write-movie 替代实时录像。无游戏回环设备时记录无音轨，不采集麦克风。录像默认保存在 artifacts/basic-ui-system/level3-6_1-sol/<session>/；停止封存时同时复制完整输入和界面记录到录像目录 session/，原始记录保留在驱动的 artifacts/remake-belief-replay/blind-<session>/。
+
