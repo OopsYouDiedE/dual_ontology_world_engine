@@ -1,8 +1,9 @@
 extends SceneTree
 ## Presentation replay, not a blind playtest or a collision/playthrough acceptance run.
 ## Requires the production imported resources and a Godot renderer (not --headless).
-## Run after the independent operator runs godot_csharp/tools/draw_player_transcript_layout.py and views its plans:
-## Godot --path godot_csharp --script res://tools/capture_player_transcript.gd -- --layout-reviewed
+## Godot --path godot_csharp --script res://tools/capture_player_transcript.gd
+## Optional auxiliary screenshots: first review draw_player_transcript_layout.py plans,
+## then append -- --screenshots --layout-reviewed. Level-one acceptance needs no screenshots.
 ## No GameEngine instance, Dispatch call, state injection into Core, or save-file writes.
 ## Room/near-site contexts lack coordinates: positions are reconstructed from real map
 ## geometry via the production WorldView's public stage/scene commands.
@@ -67,7 +68,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
-	if not "--layout-reviewed" in OS.get_cmdline_user_args():
+	if "--screenshots" in OS.get_cmdline_user_args() and not "--layout-reviewed" in OS.get_cmdline_user_args():
 		_fail("The independent operator must run godot_csharp/tools/draw_player_transcript_layout.py, view the layout plans, and pass --layout-reviewed before screenshots.")
 		return
 	if DisplayServer.get_name() == "headless":
@@ -90,7 +91,8 @@ func _run() -> void:
 		"geometry_acceptance": false, "world_redispatched": false,
 		"position_source": "recorded room/near_sites reconstructed using actual adapter geometry",
 		"position_reconstruction": "room/near_sites anchors",
-		"layout_plans_reviewed_by_operator": true, "viewport": [1280, 992]})
+		"layout_plans_reviewed_by_operator": "--layout-reviewed" in OS.get_cmdline_user_args(),
+		"auxiliary_screenshots": "--screenshots" in OS.get_cmdline_user_args(), "viewport": [1280, 992]})
 	TranslationServer.set_locale("zh_CN")
 	capture_viewport = SubViewport.new()
 	capture_viewport.size = Vector2i(1280, 992)
@@ -796,6 +798,7 @@ func _screenshot_stage(ev: Dictionary) -> String:
 	return ""
 
 func _capture_stage(ev: Dictionary) -> void:
+	if not "--screenshots" in OS.get_cmdline_user_args(): return
 	var stage := _screenshot_stage(ev)
 	if _failed or stage == "" or _shots_saved.has(stage): return
 	await _draw()

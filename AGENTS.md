@@ -84,13 +84,15 @@ python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是�
 03 的生成步骤（需要渲染器，不能用 `--headless`）：
 
 ```powershell
-python godot_csharp/tools/draw_player_transcript_layout.py   # 先查看生成的布局规划图
-& $env:GODOT --path godot_csharp --script res://tools/capture_player_transcript.gd -- --layout-reviewed
+& $env:GODOT --path godot_csharp --script res://tools/capture_player_transcript.gd
 python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/player-traces/ui-full-output.jsonl
 ```
 
 - 终局界面没有实际画出来时，`export_ui_transcript.py` 会拒绝覆盖 03；这种情况要如实记为未完成。
 - 一级验收不要求截图。以 01、02、03 及实际 UI 渲染记录判断对齐；截图只作辅助，不能因缺少截图而判一级失败或要求重跑。
+- 上述回放默认不截图。如另需辅助截图，先运行 `draw_player_transcript_layout.py` 查看规划图，再为回放添加 `-- --screenshots --layout-reviewed`；这不是一级必做项。
+- 多轮剧情优化时，01 必须展开所选正常路线实际会呈现的对白、叙述、关键选择与物证，不能以梗概代替正文作文学验收。源码尚不能确定的动态结果单列说明，待 02 核对，不虚构结果。
+- 文学验收单独判断人物声口、动机与关系、悬念及揭示、节奏、选择后果和结尾；每轮未通过项回到 `.story` 修订，由全新上下文 Agent 复评。技术对齐通过不是停止条件，直到主代理对照设计且独立文学审评通过才结束多轮优化。
 - 三份文件都不是盲玩证据，也不能用来评价真实游玩时长。
 
 合格标准（三项同时满足）：

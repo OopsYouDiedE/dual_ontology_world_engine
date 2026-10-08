@@ -17,9 +17,9 @@
         铜口：入夜之后，诸位留于室内。外头的气，夜里不养人。 [#id=chapter2.gather.004]
         铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。 [#id=chapter2.gather.005]
         （它停了一下。一个声音贴着你的耳朵，说了一句。） [#id=chapter2.gather.006]
-        铜口：与你立约的人，不在此地。 [#id=chapter2.gather.007]
-        侦探（心声）：只有我听见。别人脸上，看不出听见过什么。 [#id=chapter2.gather.008]
-        沃德：昨夜我们在名录库前厅值守。那里的柜子与匣子，是公物。公物之取用，须有章程。 [#id=chapter2.gather.009]
+        铜口：方才那道题，阁下答得精确。 [#id=chapter2.gather.007]
+        侦探（心声）：我回过头去。铜柱后面没有人。 [#id=chapter2.gather.008]
+        沃德：我们那道题，问的是名录库的柜锁。柜锁开过，谁取过什么，须查明白。 [#id=chapter2.gather.009]
         雀儿：你的章程，留着自己念。 [#id=chapter2.gather.010]
         沃德：我没有点你的名。 [#id=chapter2.gather.011]
         雀儿：你的眼睛点了。 [#emotion=angry] [#id=chapter2.gather.012]
@@ -29,7 +29,7 @@
         事件：begin.lesson
         日：2
         时段：上午
-        （讲堂。黑板前没有人，粉笔却自己在板上写字。讲台前的灰上，多出一行窄底的鞋印。） [#id=chapter2.lesson.001]
+        （讲堂。一个黑衣人背对着众人，在黑板上写字。粉笔停下时，他侧身让出了板上的字；讲台前的灰上，留着一行窄底鞋印。） [#id=chapter2.lesson.001]
         铜口：一条规矩写了什么，诸位都会读。今日读它没写什么。 [#id=chapter2.lesson.002]
         铜口：以我自己的守则为例。第一条：入夜之后，诸位留于室内。 [#id=chapter2.lesson.003]
         铜口：这一条没写的，最要紧的是什么？——请那位穿风衣的先生答。 [#id=chapter2.lesson.004]
@@ -44,7 +44,7 @@
         动作 lesson_answer：真
         铜口：……正是。“室内”二字，条文一字未界。库房、地窖、无窗的厅，都是室内。读到这里的人，下回会先问。 [#id=chapter2.lesson_precise_branch.001]
         铜口：很好。 [#id=chapter2.lesson_precise_branch.002]
-        侦探（心声）：它是真的高兴。几个人看我的眼神变了。不全是好的那种。 [#id=chapter2.lesson_precise_branch.003]
+        侦探（心声）：这一声“很好”，比刚才的长一点。我一时听不出，它是在夸我，还是在等下一句。 [#id=chapter2.lesson_precise_branch.003]
 
     场面 lesson_who_branch
         事件：choice:chapter2:lesson_who
@@ -66,9 +66,9 @@
         事件：begin.free
         日：2
         时段：中午
-        侦探（心声）：读不费时辰。看，问，读板上的规矩，都可以慢慢来。 [#id=chapter2.free.001]
-        侦探（心声）：想让谁改个主意——带他去亲眼看，跟他讲一条规矩，请他做件事——那要花上一阵。一阵过去，大家各忙各的，人就换了地方。 [#id=chapter2.free.002]
-        侦探（心声）：一天就那么几阵。得想好花在谁身上。 [#id=chapter2.free.003]
+        侦探（心声）：先看他们贴了什么，再听他们怎么说。 [#id=chapter2.free.001]
+        侦探（心声）：要叫人陪我走一趟，得先问他肯不肯放下手里的事。 [#id=chapter2.free.002]
+        （检视、询问与读板不推进时段；带人查看、传授规矩和请求行动需要时间。） [#id=chapter2.free.003]
 
     场面 noon_dispute
         事件：commit.noon_dispute
@@ -77,9 +77,9 @@
         （配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。） [#id=chapter2.noon_dispute.001]
         阮清越：按人头。十六份，日末清点。 [#id=chapter2.noon_dispute.002]
         茉拉：莫兰脸色不对。病人先领。 [#emotion=worried] [#id=chapter2.noon_dispute.003]
-        阮清越：“先”是多少？说个数。 [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
-        茉拉：你让开。 [#id=chapter2.noon_dispute.005]
-        侦探（心声）：两个人都没说错。队伍在等。 [#id=chapter2.noon_dispute.006]
+        阮清越：先领，可以。多领多少，从谁的份里扣？ [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
+        茉拉：先把病人的那一份给我。账，等他吃下去，我跟你算。 [#id=chapter2.noon_dispute.005]
+        侦探（心声）：一本账，一把钥匙。队伍已经排到我身后了，饭还没递出一份。 [#id=chapter2.noon_dispute.006]
         选择 noon_dispute：mediate、skip_dispute
 
     场面 mediate_branch
@@ -155,7 +155,9 @@
         事件：confront.pause
         日：5
         时段：傍晚
-        侦探（心声）：这一句，先不说。 [#id=chapter2.confront_pause.001]
+        侦探：这一问，我手里的东西还接不上。 [#id=chapter2.confront_pause.001]
+        沃德：那便仍是疑处。 [#id=chapter2.confront_pause.002]
+        侦探：疑处，先别记到谁的名字底下。 [#id=chapter2.confront_pause.003]
 
     场面 confront_wrong_say
         事件：confront.wrong_say
@@ -181,15 +183,15 @@
         事件：confront.rule
         日：5
         时段：傍晚
-        沃德：账上的疑处，诸位已听见。依据何在，今后如何？ [#id=chapter2.confront_rule.001]
-        侦探（心声）：该提一条大家都能照着做的规矩了。 [#id=chapter2.confront_rule.002]
+        沃德：今晚说的话都在这里。下一次取粮，照谁的规矩？ [#id=chapter2.confront_rule.001]
+        侦探（心声）：写下一条新规矩，抹不掉昨夜的疑处。但下一次，总得有人知道该怎么办。 [#id=chapter2.confront_rule.002]
 
     场面 whisper
         事件：confront.whisper
         日：5
         时段：夜里
         （散场的时候，铜口没有出声。有几个人走得很慢，回头看了一眼北边。） [#id=chapter2.whisper.001]
-        侦探（心声）：它什么也没说。用不着它说。……今夜，名录库前厅不会太安静。 [#id=chapter2.whisper.002]
+        侦探（心声）：铜口没有响。我却还在等它说话。 [#id=chapter2.whisper.002]
 
     场面 council
         事件：council.begin
@@ -197,10 +199,12 @@
         时段：早晨
         （第五日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.007]
         铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
-        沃德：我仍主张，凡事须有章程。名录库，由委员会保管。 [#id=chapter2.council.003]
-        顾平章：想起来的东西，就再也放不下。老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
-        霍铎：……图纸在里面。 [#emotion=hooked] [#id=chapter2.council.005]
-        侦探（心声）：每个人会站到哪一边，昨天、前天就定下了大半。看他们这几天亲眼见过什么、饿没饿着、信谁。 [#id=chapter2.council.006]
+        沃德：谁进门，取走什么，须有账可查。名录库，由委员会保管。 [#id=chapter2.council.003]
+        顾平章：账记得下取走什么，记得下取回以后，人会怎样么？老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
+        霍铎：……我的图纸。给不给我，要先问委员会？ [#emotion=hooked] [#id=chapter2.council.005]
+        沃德：你的，也须登记。 [#id=chapter2.council.008]
+        霍铎：登记。不是准许。两回事。 [#id=chapter2.council.009]
+        侦探（心声）：同一扇门。有人怕开了收不住，有人怕钥匙交出去，就再要不回。 [#id=chapter2.council.006]
 
     场面 box
         事件：council.box
@@ -211,13 +215,13 @@
         侦探：{{detective_name}}。 [#id=chapter2.box.003]
         （匣子没有动。） [#id=chapter2.box.004]
         侦探：……{{detective_name}}。 [#id=chapter2.box.005]
-        （铜口里没有声音。它向来有问必答，这一回没有人问，它也就不说。） [#id=chapter2.box.006]
-        侦探（心声）：匣子认得它的主人。它不认我。 [#id=chapter2.box.007]
-        侦探（心声）：那么，是谁的？ [#id=chapter2.box.008]
+        （第二声落下去。匣子依旧不动，铜口也没有出声。） [#id=chapter2.box.006]
+        侦探（心声）：名字没有念错。 [#id=chapter2.box.007]
+        侦探（心声）：我没有再念第三遍。 [#id=chapter2.box.008]
 
     场面 sealed
         事件：council.sealed
         日：6
         时段：早晨
-        （名录库没有开。十六只封存匣留在门后。） [#id=chapter2.sealed.001]
-        侦探（心声）：我的名字也在门后。是不是我的，今天没人知道。 [#id=chapter2.sealed.002]
+        （议事结束了。名录库的门没有开。） [#id=chapter2.sealed.001]
+        侦探（心声）：门可以继续关着。散会以后，我们还得吃饭，还得跟刚才不肯点头的人过下去。 [#id=chapter2.sealed.002]

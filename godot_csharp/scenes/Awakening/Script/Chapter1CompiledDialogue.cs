@@ -107,7 +107,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "他就这样，问三句答半句。熟了就好。",
+            "text": "他就这样，问三句答半句。你别往心里去。",
             "voice_clip": "",
             "line_id": "s2_meet.005"
           },
@@ -193,7 +193,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "四个人一块儿忘了，那就不是谁脑子出毛病，是这地方不对劲。……算了，先不琢磨。坐着，我烧壶水去，醒了总得喝口热的。",
+            "text": "得，咱们都断在跳板上了。先不追这个，坐着，我烧壶水去。醒了总得喝口热的。",
             "voice_clip": "",
             "line_id": "s2_tea.007"
           },
@@ -257,7 +257,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "谢啥，一壶开水的事。都坐，别站着。",
+            "text": "谢啥，一壶开水的事。趁热喝。",
             "voice_clip": "",
             "line_id": "s2_tea.015"
           },
@@ -573,7 +573,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "我也干。",
+            "text": "我留下。那张图，我得找。",
             "voice_clip": "",
             "line_id": "s4_rewards.023"
           },
@@ -581,7 +581,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "……我也是。",
+            "text": "……我也留下。我想再听听。",
             "voice_clip": "",
             "line_id": "s4_rewards.024"
           },
@@ -589,7 +589,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "跟我立约的，不是它。那是谁，为了什么？……先留下来，弄清楚这个。",
+            "text": "空柜子上贴着我的名字。……那个与我立约的人，我得查出来。",
             "voice_clip": "",
             "line_id": "s4_rewards.025"
           },
@@ -826,7 +826,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "门是从这边闩的，这一点不用猜了。猜不到的是，闩门的人当时心里想的是什么。",
+            "text": "从这边闩的，没错。可那人听见了什么，又为什么动手？",
             "voice_clip": "",
             "line_id": "replay_unlock.002"
           },
@@ -946,7 +946,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "我到过门边。……到过，不等于是我闩的。先别急着认。",
+            "text": "我来过这里。闩是不是我插的，为什么插，鞋印答不上。",
             "voice_clip": "",
             "line_id": "s6_reversal.003"
           },
@@ -1176,7 +1176,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "我泡茶按人放糖。一向如此，看人下菜碟。",
+            "text": "给人倒茶，手比嘴快。谁要几勺，我手里有数。",
             "voice_clip": "",
             "line_id": "help_E9.003"
           },
@@ -1184,7 +1184,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "……可我怎么会知道谁不吃糖？",
+            "text": "……可这几个人，我才刚认识啊。",
             "voice_clip": "",
             "line_id": "help_E9.004"
           },
@@ -1600,7 +1600,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "……我叫她阿泠。我怎么会叫她阿泠。",
+            "text": "阿泠。……这称呼怎么脱口就来了。",
             "voice_clip": "",
             "line_id": "recall_shen.004"
           },
@@ -1676,7 +1676,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "连着此地。……会牵连到什么？我还不知道，不能就这么往下想。",
+            "text": "……连着此地。（她把音叉放低）让我想想。",
             "voice_clip": "",
             "line_id": "recall_shown_su.002"
           },
@@ -4882,7 +4882,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "……备餐间那罐酵种，不像是昨天才养的。",
+            "text": "……罐壁上那一层层旧面痕，一天养不出来。",
             "voice_clip": "",
             "line_id": "s8_reversal.002"
           },
@@ -4906,7 +4906,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "他不给我放糖。第一杯就没放。",
+            "text": "第一杯茶，他就知道不放糖。",
             "voice_clip": "",
             "line_id": "s8_reversal.005"
           },
@@ -4914,7 +4914,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "早上她问我，我说顺手。……哪有那么顺的手。",
+            "text": "我当时还说顺手。……哪有这么巧。",
             "voice_clip": "",
             "line_id": "s8_reversal.006"
           },
@@ -4954,7 +4954,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "侦探（心声）",
                 "mood": "",
-                "text": "若昨夜真是这样，霍铎说闩，我便去闩了门。可我凭什么信他？",
+                "text": "重演里，我听霍铎说了一个字，就把门闩上。我们若真是初见，我怎么会照做？",
                 "voice_clip": "",
                 "line_id": "s8_reversal.008"
               }
@@ -5774,7 +5774,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "你昨夜没听我的。……你听对了。",
+            "text": "你昨夜没听我的。（她停了很久，才把目光从门上收回来）……你听对了。",
             "voice_clip": "",
             "line_id": "s10_open.004"
           },
@@ -5814,7 +5814,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "苏泠",
                 "mood": "",
-                "text": "从前的事，我还没往下想。想听的东西，我想自己去听。",
+                "text": "……我先不回想了。门外有什么，我会自己听。",
                 "voice_clip": "",
                 "line_id": "s10_open.006"
               }
@@ -6063,7 +6063,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "“我凭什么信一个素不相识的人？”——可我们，真的素不相识吗？",
+            "text": "我当时若真不认识霍铎，怎么会听他一句就去闩门？",
             "voice_clip": "",
             "line_id": "replay_refused.003"
           },

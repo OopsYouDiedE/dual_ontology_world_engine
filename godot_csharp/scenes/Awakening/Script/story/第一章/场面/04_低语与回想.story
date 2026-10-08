@@ -37,7 +37,7 @@
     （他的拇指摸过罐壁上一层层干结的面痕。） [#id=recall_shen.001]
     沈鼎：又该喂了。 [#id=recall_shen.002]
     沈鼎：阿泠的茶不放糖。老霍的放两勺。那位——（他看了你一眼）——清茶，不放奶。 [#id=recall_shen.003]
-    沈鼎：……我叫她阿泠。我怎么会叫她阿泠。 [#id=recall_shen.004]
+    沈鼎：阿泠。……这称呼怎么脱口就来了。 [#id=recall_shen.004]
     跳转 END
 
 场面 recall_offer_su
@@ -51,7 +51,7 @@
 场面 recall_shown_su
     苏泠：（她朝墙里问）刚才那是什么？ [#id=recall_shown_su.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_su.003]
-    苏泠：连着此地。……会牵连到什么？我还不知道，不能就这么往下想。 [#id=recall_shown_su.002]
+    苏泠：……连着此地。（她把音叉放低）让我想想。 [#id=recall_shown_su.002]
     跳转 END
 
 场面 recall_touch_su

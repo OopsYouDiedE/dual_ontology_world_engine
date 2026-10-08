@@ -1,0 +1,22 @@
+一级技术验收记录｜Round 01
+
+范围：本轮执行一级记录与技术对齐。未执行二级 UI 截图专项、三级盲玩或全量机制回归；没有修改产品代码，也没有提交。
+
+前置检查：
+- `compile_story.py --check`：通过，7 项生成物与源一致。
+- `test_chapter1_story.py`：3/3 通过（路径为 `godot_csharp/tools/check/test_chapter1_story.py`）。
+- `test_story_split.py`：9/9 通过。
+- `dotnet build godot_csharp/DualOntologyWorldEngine.sln`：成功，0 错误；1 条 CS0414 警告，`Chapter2InteractionSession._confrontIndex` 已赋值但未使用。
+
+02 引擎记录：正式连续会话运行结束，126 项语义操作，末日终局 `安眠者有福 · 完`。已保存固定文件及本轮快照 `round-01-engine-actions.txt`、`round-01-engine-full-output.jsonl`。本局关键动态结果：重演八项证物均吻合并触发第二次反转；声路试验后以“闩门，别开”作答；第五日名录库表决未达成议定，雀儿仍被当作私取者搬出寝区，霍铎与苏泠列入“想起了一些事的人”。
+
+01 → 02（以开跑时保存的 Round 01 路线快照为准）：仅已覆盖片段核对，不能判完整通过。开场、E1—E9 调查、重演与四问的实际路线结果可从 02 核对；动态分支按本局记录如上。发现 01 编排缺陷：首课把包含“本课到此／下课”的整段原文排在 `lesson_precise_branch` 选择分支之前，实际顺序应为提问、选择、分支回应、下课；这是 01 的源路线排序问题，不是引擎输出错误。该快照对续篇中段若干作者源及同伴自动回想分支覆盖不足，因此未用 02 反填，也不把技术片段对齐写成完整路线或文学验收通过。源路线快照保存在 `round-01-source-route.txt`。验收过程中活动 01 路线文件后来发生变化；本报告不把该后续版本纳入 Round 01。
+
+02 → 03：真实 Godot 4.6.1 渲染器回放与导出成功。raw UI trace 的终止标记为 `render_finished=true`、`final_panel=ending`、`ended_component_drawn=true`、源序号 1558。03 尾部完整显示终局标题、名录库未议定、人物结果和返回标题按钮；关键文字与 02 终局一致，没有终局缺画或文字被截断。没有截图，符合一级验收要求。已保存本轮 `round-01-ui-display.txt`、`round-01-ui-full-output.jsonl`。
+
+结论：构建与指定脚本检查通过；02→03 终局显示通过；01→02 完整性未通过（01 排序缺陷和源覆盖不足）。人物行为合理性、文学质量、真实游玩体验未在本轮独立评判；二级、三级未验证。
+
+日志：`round-01-compile-check.log`、`round-01-chapter1-test.log`、`round-01-story-split-test.log`、`round-01-build.log`、`round-01-player-transcript.log`、`round-01-godot-ui-capture.log`、`round-01-ui-export.log`。
+
+
+证据保全更正（主代理）：原验收时的源路线快照 SHA-256 为 5C9A41C20065EBD1363B9B8D4E4AEFC76416837063A0666C1EE214DA1597E3，后续扩写时误被覆盖且无备份。当前同名文件仅是后续修订稿，不能作为该轮原始快照；本轮 01→02 完整性仍未通过，片段核验记录仅保留为测试者报告，不提升为可复核的完整对齐结论。02、03及各自 raw trace 快照仍保留。下一轮冻结独立源稿后先作不可变备份，再验收。
