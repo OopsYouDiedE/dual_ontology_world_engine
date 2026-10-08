@@ -38,9 +38,14 @@ public sealed partial class Game
     /// <summary>名录库的几种去向（还没写成规则的，用一份只供判断的影子方案，不进入任何人的认知）。</summary>
     public IEnumerable<RuleSpec> StancePlans()
     {
-        _openV ??= new() { Id = -101, Text = "名录库各取其物：凡学员皆可取回己物。", ByDemon = true, Flags = RF.OpenArchive, Build = _ => [] };
-        _sealV ??= new() { Id = -102, Text = "名录库封闭不启：回忆即上钩，谁也不开。", Author = P.Gu, Flags = RF.SealArchive | RF.Tradition, Build = _ => [] };
-        _commV ??= new() { Id = -103, Text = "名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", Author = P.Ward, Flags = RF.CommitteeArchive | RF.WardAuthority | RF.Records, Build = _ => [] };
+        static RuleSpec Preview(string key, int id)
+        {
+            var source = RuleDesign.Of(key);
+            return new() { Id = id, Text = source.Text, Author = source.Author, ByDemon = source.ByDemon, Flags = source.Flags, Build = _ => [] };
+        }
+        _openV ??= Preview("OpenPlan", -101);
+        _sealV ??= Preview("SealPlan", -102);
+        _commV ??= Preview("CommitteePlan", -103);
         yield return _openPlan ?? _openV;
         yield return WardCommittee ?? _commV;
         yield return _sealPlan ?? _sealV;
@@ -74,7 +79,7 @@ public sealed partial class Game
         {
             _voicedStance[p.Id] = (Day, s);
             var (who, line0) = s!.Author == P.Det ? ("你", X("立场话.侦探方案", ("标签", LabelOf(s)), ("规矩", Short(s))))
-                : s.ByDemon ? (VoiceName(p), Line("各取其物", p))
+                : FamilyOf(s) == Ending.OpenEach ? (s.Author == p.Id ? "自己" : s.Author is { } author ? Names.Of(author) : VoiceName(p), Line("各取其物", p))
                 : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", Line("委员会自述", p)) : ("沃德", Line("委员会附和", p)))
                 : p.Id == P.Gu ? ("自己", Line("封闭自述", p)) : ("顾平章", Line("封闭附和", p));
             var line = line0;

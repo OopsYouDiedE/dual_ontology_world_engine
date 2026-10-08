@@ -494,20 +494,18 @@ public sealed partial class Game
     /// <summary>此人会怎么说出自己的态度（玩家只看到这句话，看不到分数）。</summary>
     public string Voice(Person p, RuleSpec s, Truth verdict)
     {
-        if (verdict == Truth.True) return p.Id switch
+        var id = p.Id == P.Det ? "其他" : p.Id.ToString();
+        if (verdict == Truth.True) return X("规则表态.接受." + id);
+        if (p.Vetoed.Contains(s)) return "“" + (Veto(p, s) ?? X("规则表态.底线默认")) + "”";
+        if (s == CommonRule)
         {
-            P.Ward => "“依据此条，可行。”", P.Ruan => "“划算。”", P.Quer => "“行吧。”", P.Mora => "“照这个办。”", P.Gu => "“合乎情理。”",
-            P.Lucian => "“善。此规有韵。”", P.Selma => "“像蜂巢的分工，能行。”", P.Veronica => "“结论：可执行。”", P.Bertrand => "“明白。执行。”",
-            P.Margaret => "“结构说得通。”", P.Huo => "“行。”", P.Shen => "“这样大家都有口饭。”", P.Su => "“听着不刺耳。”", P.Elena => "“可以。”", P.Moran => "“……好。”",
-            _ => "“好。”"
-        };
-        if (p.Vetoed.Contains(s)) return "“" + (Veto(p, s) ?? "不。") + "”";
-        return p.Id switch
-        {
-            P.Ward => "“不予采纳。”", P.Ruan => "“不划算。”", P.Quer => "“凭什么。”", P.Mora => "“再说吧。”", P.Gu => "“容老朽再想想。”",
-            P.Lucian => "“此规尚欠一韵。”", P.Selma => "“说不上来，不对劲。”", P.Veronica => "“论据不足。”", P.Bertrand => "“暂不执行。”",
-            P.Margaret => "“哪里受力不对。”", P.Huo => "“没想好。”", P.Shen => "“再看看。”", P.Su => "“……”", P.Elena => "“恕我不能。”", P.Moran => "“……不、不知道。”",
-            _ => "“不了。”"
-        };
+            // 表态不重算总分：后来加入的背书可能与当时判决不同。作者项不随规则接受者变化。
+            var reason = Options.ForceAcceptance is not null ? "中性"
+                : AuthorTerm(p, s, []) < 0 ? "不信提议者"
+                : p.Pro.Values.GetValueOrDefault(RF.EvidenceFirst) > 0 ? "认同未承诺" : "中性";
+            var voice = p.Id is P.Lucian or P.Veronica or P.Ward or P.Quer or P.Ruan or P.Mora ? id : "其他";
+            return X("规则表态.共同." + reason + "." + voice);
+        }
+        return X("规则表态.不接受." + id);
     }
 }

@@ -28,6 +28,8 @@ sealed class Transcript
     bool chapter2, asking, waitingView;
     int request, answer;
     int dispatch;
+    int routeDay;
+    readonly HashSet<(int Day, string Daypart, string Person)> askedThisPeriod = [];
     readonly bool exportOnly;
     string visibleRoom="";
     public Transcript(string root,bool exportOnly=false)
@@ -301,8 +303,13 @@ sealed class Transcript
     void AskLocal(int limit=2)
     {
         var room=campusSites.First(s=>s.Map==map).Room.ToString();
-        var people=Maps((Ev)game.Snapshot(),"people").Where(p=>S(p,"place")==room&&p.GetValueOrDefault("asleep") is not true).Take(limit).ToArray();
-        foreach(var p in people){asking=true;Input("询问 "+S(p,"name"),E(("kind","interact"),("map",map),("target",S(p,"key"))));}
+        var current = (Ev)game.Snapshot();
+        var people=Maps(current,"people").Where(p=>S(p,"place")==room&&p.GetValueOrDefault("asleep") is not true).Take(limit).ToArray();
+        foreach(var p in people)
+        {
+            if (!askedThisPeriod.Add((routeDay, S(current,"daypart"), S(p,"key")))) continue;
+            asking=true;Input("询问 "+S(p,"name"),E(("kind","interact"),("map",map),("target",S(p,"key"))));
+        }
     }
     void Act(string cmd,string label)=>Input(label,E(("kind","action"),("act",E(("cmd",cmd)))));
     void Header()
@@ -406,6 +413,7 @@ sealed class Transcript
             // The two introductory production actions occupy Morning and Forenoon.
             for(int day=2;day<=5;day++)
             {
+                routeDay = day;
                 Note($"\n========== 玩家第{day-1}日 ==========");
                 if(day>2 && day!=5)
                 {

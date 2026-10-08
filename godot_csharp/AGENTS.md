@@ -98,3 +98,6 @@
 - 资产迁移或管线变动后，通过 `& $env:GODOT --headless --editor --path godot_csharp --import` 完成重新导入校验。
 - 一级验收的 `capture_player_transcript.gd` 以正式 UI 实际绘制的文字、物品和末个终局为验收依据；截图只作辅助，不以截图数量或齐全与否阻止导出 03。辅助截图按正式视图、事件类型与结构化字段识别，不绑定 dispatch 序号或中文台词。
 - 一级回放默认不截图、不要求布局图审阅；仅在显式传入 `--screenshots` 时收集辅助图片，此时须先查看 `draw_player_transcript_layout.py` 的规划图并传入 `--layout-reviewed`。二级 UI 专项仍须实际截图查看。
+
+- `PlayerTranscript` 的正常路线在同一日同一时段不重复询问同一人物；时段变化后可以再问。此选择仅减少验收路线的重复操作，不改变正式游戏允许的询问次数。
+- 议事立场预览与正式方案共用剧本规则定义（作者、文本、标记），不得在预览代码保留另一套剧情方案或来源。

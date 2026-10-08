@@ -204,6 +204,7 @@
         霍铎：……我的图纸。给不给我，要先问委员会？ [#emotion=hooked] [#id=chapter2.council.005]
         沃德：你的，也须登记。 [#id=chapter2.council.008]
         霍铎：登记。不是准许。两回事。 [#id=chapter2.council.009]
+        霍铎：各人的东西，各人取。谁要我的那份，我不答应；我的，也别替我扣下。 [#id=chapter2.council.010]
         侦探（心声）：同一扇门。有人怕开了收不住，有人怕钥匙交出去，就再要不回。 [#id=chapter2.council.006]
 
     场面 box
