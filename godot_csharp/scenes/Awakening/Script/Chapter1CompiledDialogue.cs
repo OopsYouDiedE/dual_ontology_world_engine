@@ -193,7 +193,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "得，咱们都断在跳板上了。先不追这个，坐着，我烧壶水去。醒了总得喝口热的。",
+            "text": "得，咱们都断在跳板上了。先不追这个，坐着，我烧壶水去。",
             "voice_clip": "",
             "line_id": "s2_tea.007"
           },
@@ -207,7 +207,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（沈鼎钻进备餐间。很快传来接水的声音，壶底磕在灶台上。过了一阵，他端着托盘出来。）",
+            "text": "（他端着托盘回来，上面四杯热茶。）",
             "voice_clip": "",
             "line_id": "s2_tea.008"
           },
@@ -263,7 +263,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "谢啥，一壶开水的事。趁热喝。",
+            "text": "趁热喝。",
             "voice_clip": "",
             "line_id": "s2_tea.015"
           },
@@ -467,7 +467,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "学会了，自然知道在哪。",
+            "text": "此问，不在我须答之列。",
             "voice_clip": "",
             "line_id": "s4_rewards.012"
           },
@@ -614,14 +614,6 @@ public static class Chapter1CompiledDialogue
             "line_id": "s4_rewards.024"
           },
           {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "空柜子上贴着我的名字。……那个与我立约的人，我得查出来。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.025"
-          },
-          {
             "op": "jump",
             "target": "END"
           }
@@ -751,7 +743,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "一个连脸都不露的东西，出题考我们谁闩的门……我是来烧饭的，又不是来断案的。",
+            "text": "考我们？……我连昨晚睡的哪张床都不记得。",
             "voice_clip": "",
             "line_id": "s6_begin.001"
           },
@@ -775,7 +767,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "得了。门闩着，粮食总有吃完那天。我去备餐间看看还剩多少米和水，人总得吃饭。有事喊我。",
+            "text": "门闩着，米缸可不会自己满。我去备餐间看看还剩多少。有事喊我。",
             "voice_clip": "",
             "line_id": "s6_begin.004"
           },
