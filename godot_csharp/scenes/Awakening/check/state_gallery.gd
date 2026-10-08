@@ -1,9 +1,10 @@
 extends SceneTree
-## 开发自检截图（有窗口）：经统一宿主（Chapter1.tscn）跳到关键状态，存 PNG 到 artifacts/remake-belief-replay/gallery/。
+## 开发自检截图（有窗口）：经统一宿主（Main.tscn）跳到关键状态，存 PNG 到 artifacts/remake-belief-replay/gallery/。
 ## 对白与表单由脚本代按；这是开发自检，不是盲玩。
 ##   godot --path godot_csharp --script res://scenes/Awakening/check/state_gallery.gd
 
-const SCENE := "res://scenes/Awakening/Chapter1.tscn"
+const Fixture := preload("res://scenes/Awakening/check/chapter1_fixture.gd")
+var fx: Fixture
 const Autoplay := preload("res://scenes/Shared/check/chapter_autoplay.gd")
 var host: Node
 var field: Node2D
@@ -11,11 +12,17 @@ var ui: Node
 var auto
 var out_dir := ""
 var shots := 0
+var failures := 0
 
 func _initialize() -> void:
+	fx = Fixture.new(self)
 	out_dir = ProjectSettings.globalize_path("res://").path_join("../artifacts/remake-belief-replay/gallery").simplify_path()
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	call_deferred("_run")
+
+func check(ok: bool, message: String) -> void:
+	print(("PASS " if ok else "FAIL ") + message)
+	if not ok: failures += 1
 
 func _finish() -> void:
 	# 释放 _run 的局部引用后再删宿主；界面与 C# 章节会话的排队删除要在退出前完成。
@@ -25,28 +32,17 @@ func _finish() -> void:
 	host = null
 	await process_frame
 	await process_frame
-	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(0)
+	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(1 if failures > 0 else 0)
 
 func fresh(skip_intro := true) -> Node:
-	if is_instance_valid(host):
-		host.begin_shutdown()
-		host.queue_free()
-		await process_frame
-		await process_frame
-	host = (load(SCENE) as PackedScene).instantiate()
-	if skip_intro:
-		host.set_meta("skip_intro", true)
-	root.add_child(host)
-	for i in 4:
-		await process_frame
+	host = await fx.fresh(skip_intro)
 	field = host.field
 	ui = host.ui
 	auto = Autoplay.new(host)
 	return host
 
 func jump(state: String) -> void:
-	host.dispatch({"kind": "debug_jump", "state": state})
-	await settle(6)
+	await fx.jump(state)
 
 func settle(frames := 20) -> void:
 	for i in frames:
@@ -65,7 +61,8 @@ func shot(name: String) -> void:
 func advance(choices: Array) -> void:
 	var d: CanvasLayer = ui.dialogue
 	if ui.modal_kind == "form":
-		auto.step()
+		if str(ui._modal_event.fields[0].get("id", "")) == "name": fx.name_form_answer("试验")
+		else: auto.step()
 		return
 	if not d.active or d.busy or d.line == null:
 		return
@@ -88,7 +85,7 @@ func show_line(needle: String, choices: Array = [], limit := 1500) -> bool:
 		advance(choices)
 		await process_frame
 	var d: CanvasLayer = ui.dialogue
-	push_warning("gallery: line never shown: %s (dialogue active=%s line=%s modal=%s stage=%s)" % [needle, d.active, str(d.line.text) if d.line != null else "-", ui.modal_kind, ui.snapshot.get("stage", "")])
+	check(false, "gallery: line never shown: %s (dialogue active=%s line=%s modal=%s stage=%s)" % [needle, d.active, str(d.line.text) if d.line != null else "-", ui.modal_kind, ui.snapshot.get("stage", "")])
 	return line_shown(needle)
 
 ## 推进对白直到某种弹窗出现（如广播后自动呈现的公告框）。
@@ -98,6 +95,7 @@ func until_modal(kind: String, limit := 1500) -> bool:
 			return true
 		advance([])
 		await process_frame
+	check(ui.modal_kind == kind, "gallery: modal expected=" + kind + " actual=" + ui.modal_kind)
 	return ui.modal_kind == kind
 
 func finish_dialogue(choices: Array = []) -> void:
@@ -146,7 +144,7 @@ func interact(id: String) -> void:
 
 ## 照常走一遍重演（不跳过）；watch 在回放的每一帧上被调用，可暂停回放截图。
 func run_replay(vars: Array, watch: Callable) -> void:
-	host._on_ui_event({"kind": "replay", "vars": vars, "skip": false})
+	host.dispatch({"kind": "replay", "vars": vars, "skip": false})
 	var stage_node: Node = field.adapter.stage_node
 	for i in 600:
 		await process_frame
@@ -167,7 +165,7 @@ func detective_thought(stage_node: Node) -> String:
 func _run() -> void:
 	# 1 醒来
 	await fresh(false)
-	await show_line("我只记得上船")
+	await show_line(fx.line_text("s1_wake.003"))
 	await settle(10)
 	await shot("01-wake")
 	# 2 开场广播（代管者兼教师）与欲望放大
@@ -217,55 +215,53 @@ func _run() -> void:
 	await shot("07-reversal-one")
 	await finish_dialogue()
 	await close_modal()
-	# 5 恶魔低语后，苏泠自己蹲向音叉；侦探在场，指出守则第 1 条，她放下
-	host.engine.Probe("amplify", ["su", "S4"])
+	# 5 苏泠协助音叉后自动闪回；听过代价时可以转告，她自己取舍。
+	fx.probe("amplify", ["su", "S4"])
+	fx.set_progress("flags", "price_heard", true)
 	await place(Vector2(230, 400))
-	await settle(5)
 	await open_card("E5")
-	await show_line("后面还有你从未听过的")
+	await until_modal("card", 120)
+	pick("help")
+	await show_line("刚才碰到它")
 	await settle(10)
-	await shot("08a-whisper-su")
-	await show_line("拾起了那把音叉")
-	await settle(20)
-	await show_line("它说的那句话")
+	await shot("08a-su-flash-after-help")
+	await show_line("让我想想", [0])
 	await settle(10)
-	await shot("08b-su-reaches-for-fork-three-responses")
-	await show_line("握久了就带着此地", [1])
+	await shot("08b-su-hears-the-price")
+	await show_line("把音叉放回原处")
 	await settle(10)
-	await shot("08-su-refuses-after-rule-1")
+	await shot("08-su-refuses-after-price")
 	await finish_dialogue()
 	await close_modal()
-	# 5a 侦探不在场：霍铎独自碰了石板；回来时的神色与“我想起了一点”
-	host.engine.Probe("amplify", ["huo", "S4"])
-	await place(Vector2(930, 200))
+	# 5a 霍铎协助石板后自动闪回。
+	await fresh()
+	await jump("investigate")
+	fx.probe("amplify", ["huo", "S4"])
+	await open_card("board")
+	await close_modal()
+	await place(Vector2(536, 300))
+	await open_card("E7")
+	await until_modal("card", 120)
+	pick("help")
+	await show_line("手一碰，闪了一下")
 	await settle(10)
-	host.engine.Probe("whisper", ["huo", "S4"])
-	host.engine.Probe("set_progress", ["nudged", "E7", true])
-	await finish_dialogue()
-	await settle(60)
-	var huo: CharacterBody2D = field.actors.get("huo")
-	await place(huo.position + Vector2(60, 40))
-	await settle(30)
-	await shot("09-huo-after-touching-alone")
-	await interact("person:huo")
-	await show_line("我想起了一点")
-	await settle(10)
-	await shot("09a-huo-i-remember-a-little")
+	await shot("09-huo-flash-after-help")
 	await finish_dialogue()
 	await close_modal()
-	# 5b 请沈鼎回忆（请求这一路）：犹豫，反问“你说呢？”
-	host.engine.Probe("amplify", ["shen", "S4"])
-	host.engine.Probe("amplify", ["shen", "nudge"])
-	host.engine.Probe("set_progress", ["nudged", "E10", true])
+	# 5b 沈鼎协助酵种罐后自己问铜口，得知代价。
+	await fresh()
+	await jump("investigate")
+	fx.probe("amplify", ["shen", "S4"])
+	await open_card("board")
+	await close_modal()
 	await place(Vector2(470, 600))
-	await settle(5)
 	await open_card("E10")
-	await until_modal("card", 600)
-	pick("recall")
-	await show_line("你说呢", [1])
+	await until_modal("card", 120)
+	pick("help")
+	await show_line("这种买卖")
 	await settle(10)
-	await shot("09b-recall-shen-asks-you-decide")
-	await finish_dialogue([0])
+	await shot("09b-shen-asks-the-price")
+	await finish_dialogue()
 	await close_modal()
 	# 5d 普通家具与窗：一句心声
 	for node in field.adapter.get_node("ObjectsAndPeople").get_children():
@@ -312,14 +308,14 @@ func _run() -> void:
 			seen.voice = true
 			stage_node.paused = true
 			await settle(20)
-			assert(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
+			check(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
 			await shot("11-playback-four-bubbles")
 			stage_node.paused = false
 		elif not seen.doubt and thought.contains("我凭什么信"):
 			seen.doubt = true
 			stage_node.paused = true
 			await settle(50)
-			assert(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
+			check(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
 			await shot("12-playback-why-trust")
 			stage_node.paused = false)
 	await until_modal("replay", 300)
@@ -333,33 +329,34 @@ func _run() -> void:
 			seen.bolt = true
 			stage_node.paused = true
 			await settle(40)
-			assert(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
+			check(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
 			await shot("13-playback-decision-basis")
 			stage_node.paused = false)
+	check(seen.values().all(func(v): return v), "回放关键画面全部采集 " + str(seen))
 	print("playback captured: ", seen)
 	await close_modal()
-	# 6b 霍铎读到守则第 1 条也照样碰（请求这一路）
+	# 6b 霍铎协助后听到代价，仍选择往下想
 	await fresh()
 	await jump("investigate")
 	await place(Vector2(536, 300))
-	host.engine.Probe("amplify", ["huo", "S4"])
-	host.engine.Probe("amplify", ["huo", "nudge"])
-	host.engine.Probe("set_progress", ["nudged", "E7", true])
+	fx.probe("amplify", ["huo", "S4"])
+	fx.set_progress("flags", "price_heard", true)
 	await open_card("board")
 	await close_modal()
 	await finish_dialogue()
 	await open_card("E7")
 	await until_modal("card", 600)
-	pick("recall")
+	pick("help")
 	await show_line("图纸值这个价", [0])
 	await settle(10)
-	await shot("09c-recall-huo-touches-despite-rule-1")
+	await shot("09c-huo-touches-despite-price")
 	await finish_dialogue()
 	await close_modal()
 	# 7 答辩（陈述与出示成对，到第 4 步为止）、门开
 	await fresh()
 	await jump("replay_match")
-	host.engine.Probe("apply_recall", ["E10", "shen"])
+	check(await fx.compare_hands(), "终局截图前实际完成手印比对")
+	fx.probe("apply_recall", ["E10", "shen"])
 	var picks := [{"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"}, {"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
 	var captured := {"pair": false, "door": false, "prints": false, "hand": false, "hand_answer": false}
 	auto.choose = func(_actions: Array) -> String:
@@ -398,6 +395,7 @@ func _run() -> void:
 		auto.step()
 	await settle(10)
 	await shot("19-ending")
+	check(captured.values().all(func(v): return v) and ui.modal_kind == "ending", "答辩与终局关键画面全部采集 " + str(captured))
 	print("captured: ", captured)
-	print("TOTAL %d shots" % shots)
+	print("TOTAL %d shots, %d failed" % [shots, failures])
 	call_deferred("_finish")

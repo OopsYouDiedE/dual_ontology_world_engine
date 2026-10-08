@@ -3,6 +3,8 @@ extends SceneTree
 ## 对白与表单由脚本代按；这是自动检查，不是游玩验证。
 ##   godot --headless --path godot_csharp --script res://scenes/Shared/check/chapter1_smoke.gd
 
+const Fixture := preload("res://scenes/Awakening/check/chapter1_fixture.gd")
+var fx: Fixture
 const Autoplay := preload("res://scenes/Shared/check/chapter_autoplay.gd")
 var failures := 0
 var host: Node
@@ -17,7 +19,8 @@ func _initialize() -> void:
 
 func settle(condition: Callable, limit := 3000) -> bool:
 	for i in limit:
-		auto.step()
+		if host.ui.modal_kind == "form" and str(host.ui._modal_event.fields[0].get("id", "")) == "name": fx.name_form_answer("试验")
+		else: auto.step()
 		if condition.call(): return true
 		await process_frame
 	return condition.call()
@@ -25,8 +28,8 @@ func settle(condition: Callable, limit := 3000) -> bool:
 func stage() -> String: return str(host.ui.snapshot.get("stage", ""))
 
 func _run() -> void:
-	host = (load("res://scenes/Awakening/Chapter1.tscn") as PackedScene).instantiate()
-	root.add_child(host)
+	fx = Fixture.new(self)
+	host = await fx.fresh(false)
 	auto = Autoplay.new(host)
 	var field: Node2D = host.field
 	check(await settle(func(): return stage() == "roam" and not host.ui.is_busy()), "醒来后可以走动（%d 句）" % auto.lines.size())
@@ -62,7 +65,7 @@ func _run() -> void:
 	check(bool(host.ui.snapshot.replay.result.get("full_match", false)), "重演对照全部吻合")
 	host.ui.open_manuscript()
 	check(host.ui.modal_kind == "replay", "R 打开重演手稿")
-	host._on_ui_event({"kind": "replay", "vars": [0, 0, 0, 0, 0, 1], "skip": false})
+	host.dispatch({"kind": "replay", "vars": [0, 0, 0, 0, 0, 1], "skip": false})
 	var stage_node: Node = field.adapter.stage_node
 	check(await settle(func():
 		if stage_node.playing: stage_node.skipping = true
@@ -71,7 +74,8 @@ func _run() -> void:
 	# 始业之答：成对作答直到门开。
 	var picks := [{"say": "me", "show": "E9"}, {"say": "V4_0", "show": "E3"}, {"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"},
 		{"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
-	host.engine.Probe("apply_recall", ["E10", "shen"])
+	check(await fx.compare_hands(), "答辩前实际完成手印比对")
+	fx.probe("apply_recall", ["E10", "shen"])
 	auto.choose = func(actions: Array) -> String:
 		if host.ui.modal_kind != "form" or str(host.ui._modal_event.get("layout", "")) != "tabs" or picks.is_empty(): return ""
 		var pick: Dictionary = picks.pop_front()
@@ -86,11 +90,11 @@ func _run() -> void:
 	var ended := await settle(func(): return host.ui.modal_kind == "ending", 20000)
 	check(ended, "答辩到门开，出现章末卡")
 	var text := "\n".join(auto.lines)
-	check(text.contains("诸位授权封存之物，是我取走的") or text.contains("我却没有马上迈出去"), "终局台词出现")
+	check(text.contains(fx.line_text("s10_hand.006")) or text.contains("我却没有马上迈出去"), "终局台词出现")
 	check(field.adapter.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "门开：隔离门画面换为开启")
 	check(FileAccess.file_exists("user://chapter1_end.json"), "章节结束状态写入存档")
 	var actions: Array = host.ui._modal_event.get("actions", [])
-	check(actions.any(func(a): return str(a.id) == "chapter2"), "章末卡可进入第二章")
+	check(actions.any(func(a): return str(a.id) == "continue"), "章末卡可进入第二章")
 	print("共 %d 句；失败 %d" % [auto.lines.size(), failures])
 	host.begin_shutdown()
 	host.queue_free()
