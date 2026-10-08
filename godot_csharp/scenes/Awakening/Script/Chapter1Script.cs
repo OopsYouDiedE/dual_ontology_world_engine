@@ -186,7 +186,7 @@ public sealed partial class AwakeningContentSession
     private Dictionary<string, object> Life(string who) => (Dictionary<string, object>)Session.GetProgress("life")[who];
     /// <summary>声路试验里听者所站位置的称呼，来自 chapter_01.story 的“声路站位”。</summary>
     public static string SoundSpot(string room)
-        => Chapter1Data.Root.GetProperty("SOUND_SPOTS").TryGetProperty(room, out var label) ? label.GetString()! : "";
+        => Chapter1Data.Root.GetProperty("SOUND_SPOTS").TryGetProperty(room, out var label) ? label.GetString()! : room == "" ? "" : Chapter1Data.RoomName(room);
     public Intention? Consider(MorningWorld world, string who)
         => Session.Has("life", who) || Session.Has("decided", who) || Session.Has("recalls", who) ? null : world.Intend(PersonOf(who));
     public void BeginReach(string who, string thought) => Session.Set("life", who, new Dictionary<string, object> { ["state"] = "going", ["thought"] = thought });
@@ -245,7 +245,6 @@ public sealed partial class AwakeningContentSession
                 steps.Add(new StoryStep<MorningWorld, Person>.Update(w =>
                 {
                     Session.Set("state", "last_unheard_ms", now);
-                    w.Whisper(PersonOf(who), Content.RootElement.GetProperty("WHISPERS").GetProperty(who).GetString()!);
                     Session.Set("nudged", obj, true);
                 }));
                 steps.AddRange(Show("@consider:" + who));
@@ -320,13 +319,12 @@ public sealed partial class AwakeningContentSession
             var people = new[] { "detective", "huo", "shen", "su" };
             var compared = people.Where(person => Session.Has("hand_comparisons", person)).Select(Name).ToArray();
             var missing = people.Where(person => !Session.Has("hand_comparisons", person)).Select(Name).ToArray();
-            notes.Add(Chapter1Data.Text("笔记·手印·进度", ("数", compared.Length.ToString()),
-                ("名单", compared.Length == 0 ? Chapter1Data.Text("笔记·手印·尚无") : string.Join("、", compared))));
+            // 只记已经比过的手；还没想到要比的人不列出来，结论等四只手都比过才下。
             if (compared.Length == 4) notes.Add(helps.GetProperty("E11").GetString()!);
-            else
+            else if (compared.Length > 0)
             {
-                if (compared.Length > 0) notes.Add(Chapter1Data.Text("笔记·手印·较窄"));
-                notes.Add(Chapter1Data.Text("笔记·手印·待比对", ("名单", string.Join("、", missing))));
+                notes.Add(Chapter1Data.Text("笔记·手印·进度", ("名单", string.Join("、", compared))));
+                notes.Add(Chapter1Data.Text("笔记·手印·较窄"));
             }
         }
         else if (Session.Has("experiments", id))
@@ -361,11 +359,27 @@ public sealed partial class AwakeningContentSession
     }
     public string[] Statements(int[] variables, int replayCount, bool detectiveBolted)
     {
+        // 能说出口的结论来自侦探自己的认知：查过某个处境的任一证物，这一问的各种说法就都能说（对错都有，不替玩家选）；
+        // 重演里设定过的处境同样算想过。不要求先重演。
         var list = new List<string>();
-        if (Session.Has("flags", "reversal_one") || detectiveBolted) list.Add("me");
-        for (var i = 0; i < (V6Open ? 6 : 5); i++)
-            if (variables[i] >= 0 && replayCount > 0) list.Add($"V{i + 1}_{variables[i]}");
-        if (replayCount > 0 && variables[4] == 0 && variables[5] == 1) list.Add("trust");
+        if (Session.Has("flags", "reversal_one") || detectiveBolted || (Session.Has("examined", "E12") && Session.Has("examined", "E7"))) list.Add("me");
+        var known = new bool[6];
+        var index = 0;
+        foreach (var variable in Content.RootElement.GetProperty("VARIABLES").EnumerateArray())
+        {
+            if (index >= 6) break;
+            var open = index < 5 || V6Open;
+            var thought = replayCount > 0 && variables.Length > index && variables[index] >= 0;
+            var seen = variable.GetProperty("evidence").EnumerateArray().Any(e => Session.Has("examined", e.GetString()!));
+            if (open && (seen || thought))
+            {
+                known[index] = true;
+                var count = variable.GetProperty("options").GetArrayLength();
+                for (var k = 0; k < count; k++) list.Add($"V{index + 1}_{k}");
+            }
+            index++;
+        }
+        if (known[4] && known[5]) list.Add("trust");
         return list.ToArray();
     }
     /// <summary>始业之答的一问：答对与否由 chapter_01.story 的“判定”表达式决定；这里只负责记下错在哪里，供铜口的回应引用。</summary>
@@ -414,7 +428,16 @@ public sealed partial class AwakeningContentSession
         Session.Set("unmodeled", "joint:" + name, "没有名为“" + name + "”的接头，维持原状");
         return false;
     }
-    public bool CanExperiment(string id) => !Session.Has("experiments", id) || id == "E8";
+    public bool CanExperiment(string id) => id == "E8" ? SoundTestThinkable : !Session.Has("experiments", id);
+    /// <summary>侦探手里有了两种相反的说法（石板上的“闩门”与乐谱或音叉指向的“开门”、门框后的空管），才会想到让铜口说句话、换地方听。</summary>
+    public bool SoundTestThinkable => Session.Has("examined", "E7") && (Session.Has("examined", "E6") || Session.Has("helped", "E5"));
+    /// <summary>旧物在本人手里闪过一下之后，才有“要不要往下想”。闪回由身体接触引起，不由旁人提议。</summary>
+    public bool CanFlash(string id)
+    {
+        if (!Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).TryGetProperty("recall", out var recall)) return false;
+        var who = recall.GetString()!;
+        return CanRecall(who, false);
+    }
     public bool CanHelp(string id) => !Session.Has("helped", id);
     public bool CanRecall(string who, bool moving) => !Session.Has("recalls", who) && !Session.Has("decided", who) && !moving;
 }

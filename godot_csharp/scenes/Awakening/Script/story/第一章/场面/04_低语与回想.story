@@ -1,23 +1,3 @@
-场面 nudge_E1
-    铜口：（远远地）你想知道自己为何在此，侦探先生。我也想知道，阁下会先问哪一句。 [#id=nudge_E1.001]
-    放大 detective：你想知道自己为何在此。
-    跳转 END
-
-场面 nudge_E5
-    铜口：（从墙里，很轻）苏小姐，此地还有你从未听过的声音。 [#id=nudge_E5.001]
-    低语 su：此地还有你从未听过的声音。
-    跳转 END
-
-场面 nudge_E7
-    铜口：（铜口里，声音放得很低）霍先生，超越卡诺循环的那一张，此地有人画过。画它的人，你见过。 [#id=nudge_E7.001]
-    低语 huo：超越卡诺循环的那一张，此地有人画过。
-    跳转 END
-
-场面 nudge_E10
-    铜口：（远远地）沈师傅，你护着的人，比你记得的多。 [#id=nudge_E10.001]
-    低语 shen：你护着的人，比你记得的多。
-    跳转 END
-
 场面 recall_su
     （她闭上眼。很久。） [#id=recall_su.001]
     苏泠：门边……有人在喊开门。 [#id=recall_su.002]
@@ -41,16 +21,19 @@
     跳转 END
 
 场面 recall_offer_su
-    苏泠：（她低头看着音叉）……刚才碰到它，脑子里闪了一下。握着它，再想想？ [#id=recall_offer_su.001]
-    选择：
-        - 提醒她：先问问铜口，那是什么。 [#id=recall_offer_su.002]
-            设旗 show_rule
-        - 什么都不说。 [#id=recall_offer_su.003]
+    苏泠：（她低头看着音叉）……刚才碰到它，脑子里闪了一下。 [#id=recall_offer_su.001]
+    若 旗("price_heard")：
+        选择：
+            - 把铜口说过的话告诉她。 [#id=recall_offer_su.002]
+                侦探：我听铜口说过：握久了，它会回来；回来的，连同它连着的此地，你都带着。 [#id=recall_offer_su.004]
+                设旗 show_rule
+            - 什么都不说。 [#id=recall_offer_su.003]
     跳转 END
 
 场面 recall_shown_su
     苏泠：（她朝墙里问）刚才那是什么？ [#id=recall_shown_su.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_su.003]
+    设旗 price_heard
     苏泠：……连着此地。（她把音叉放低）让我想想。 [#id=recall_shown_su.002]
     跳转 END
 
@@ -80,16 +63,19 @@
     跳转 END
 
 场面 recall_offer_huo
-    霍铎：手一碰，闪了一下。……摸着它，往下想？ [#id=recall_offer_huo.001]
-    选择：
-        - 提醒他：先问问铜口，那是什么。 [#id=recall_offer_huo.002]
-            设旗 show_rule
-        - 什么都不说。 [#id=recall_offer_huo.003]
+    霍铎：手一碰，闪了一下。 [#id=recall_offer_huo.001]
+    若 旗("price_heard")：
+        选择：
+            - 把铜口说过的话告诉他。 [#id=recall_offer_huo.002]
+                侦探：我听铜口说过：握久了，它会回来；回来的，连同它连着的此地，你都带着。 [#id=recall_offer_huo.004]
+                设旗 show_rule
+            - 什么都不说。 [#id=recall_offer_huo.003]
     跳转 END
 
 场面 recall_shown_huo
     霍铎：（朝铜口）刚才那一下，是什么？ [#id=recall_shown_huo.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_huo.003]
+    设旗 price_heard
     霍铎：……像拆机器。拆开看了，就装不回原样。 [#id=recall_shown_huo.002]
     跳转 END
 
@@ -122,15 +108,14 @@
 
 场面 recall_offer_shen
     沈鼎：端着它，脑子里闪过点什么。……我这辈子摸过的罐子比你见过的人多，没一个这样。 [#id=recall_offer_shen.001]
-    选择：
-        - 提醒他：先问问铜口，那是什么。 [#id=recall_offer_shen.002]
-            设旗 show_rule
-        - 什么都不说。 [#id=recall_offer_shen.003]
+    # 跑江湖的人，碰上怪事先问管事的：他自己冲铜口问。
+    设旗 show_rule
     跳转 END
 
 场面 recall_shown_shen
     沈鼎：（冲墙上的铜口）喂，刚才那是什么？ [#id=recall_shown_shen.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_shen.003]
+    设旗 price_heard
     沈鼎：带着此地。……这种买卖，跑江湖的都认得。 [#id=recall_shown_shen.002]
     跳转 END
 

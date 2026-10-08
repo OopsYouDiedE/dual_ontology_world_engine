@@ -38,6 +38,8 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
         {
             foreach (var who in new[] { "detective", "huo", "shen", "su" })
             {
+                // 先比自己的手；知道“不是我的”之后，才会想到借在场同伴的手来比。不在场的人不列。
+                if (who != "detective" && (!content.Session.Has("hand_comparisons", "detective") || !_geometricPeople.Contains(who))) continue;
                 var compared = content.Session.Has("hand_comparisons", who);
                 var busy = content.Session.GetProgress("life").TryGetValue(who, out var life) &&
                     ((Dictionary<string, object>)life).GetValueOrDefault("state") is "going" or "holding";
@@ -47,19 +49,11 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
                     compared ? Text("卡片·提示·已比对") : Text("提示·比对站位"), who);
             }
         }
-        else if (evidence.TryGetProperty("experiment", out var experiment))
+        else if (evidence.TryGetProperty("experiment", out var experiment) && (id != "E8" || content.SoundTestThinkable))
             Add("experiment", experiment.GetString()! + (id == "E8" && content.Session.Has("experiments", id) ? Text("卡片·再做一次") : ""),
                 content.CanExperiment(id), Text("卡片·提示·试验已做"));
         if (evidence.TryGetProperty("help", out var help))
             Add("help", Text("卡片·请看看", ("人名", Name(help.GetString()!))), content.CanHelp(id), Text("卡片·提示·已请看过"));
-        if (evidence.TryGetProperty("recall", out var recall))
-        {
-            var who = recall.GetString()!;
-            var moving = content.Session.GetProgress("life").TryGetValue(who, out var life) &&
-                ((Dictionary<string, object>)life).GetValueOrDefault("state") is "going" or "holding";
-            Add("recall", who == "detective" ? Text("卡片·触碰自己") : Text("卡片·触碰他人", ("人名", Name(who))),
-                content.CanRecall(who, moving), Text("卡片·提示·不可回想"));
-        }
         Add("close", Text("卡片·返回"), true);
         return new([], choices, PresentationMode.EvidenceCard, [], Card: new(id, evidence.GetProperty("name").GetString()!,
             content.CardFacts(id), evidence.GetProperty("source").GetString()!, evidence.GetProperty("picture").GetString()!, content.CardNotes(world, id)));

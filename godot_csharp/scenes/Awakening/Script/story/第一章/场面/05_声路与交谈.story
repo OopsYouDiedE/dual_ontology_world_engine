@@ -1,10 +1,22 @@
+场面 sound_request
+    侦探：（朝管接头）请说一句：“{{声路句子()}}”等我走到地方再说。各位，待在原处听着。 [#id=sound_request.001]
+    铜口：乐意之至。 [#id=sound_request.002]
+    跳转 END
+
+场面 sound_cancel
+    侦探（心声）：路被挡住了。……下回再试。 [#id=sound_cancel.001]
+    跳转 END
+
 场面 sound_test
-    （你们各自站好。活动厅的铜口沉默了一会儿。） [#id=sound_test.001]
-    铜口：乐意之至。{{声路句子()}} [#id=sound_test.002]
+    （生活翼静了一会儿。） [#id=sound_test.001]
+    铜口：{{声路句子()}} [#id=sound_test.002]
     侦探（心声）：（{{所闻之处("detective")}}）{{所闻("detective")}} [#id=sound_test.003]
-    霍铎：（{{所闻之处("huo")}}）{{所闻("huo")}} [#id=sound_test.004]
-    沈鼎：（{{所闻之处("shen")}}）{{所闻("shen")}} [#id=sound_test.005]
-    苏泠：（{{所闻之处("su")}}）{{所闻("su")}} [#id=sound_test.006]
+    若 所闻("huo") != ""：
+        霍铎：（在{{所闻之处("huo")}}，扬声）{{所闻("huo")}} [#id=sound_test.004]
+    若 所闻("shen") != ""：
+        沈鼎：（在{{所闻之处("shen")}}，扬声）{{所闻("shen")}} [#id=sound_test.005]
+    若 所闻("su") != ""：
+        苏泠：（在{{所闻之处("su")}}，扬声）{{所闻("su")}} [#id=sound_test.006]
     苏泠：从管子里出来的声音，跟人当面说话不一样。发闷，字头容易丢。 [#id=sound_test.007]
     跳转 END
 
@@ -23,8 +35,8 @@
 场面 talk_huo_menu
     霍铎：你问。 [#id=talk_huo_menu.001]
     选择：
-        - 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_huo_menu.002]
-            条件：见过("E11")
+        - 我屋里架子上有半枚手印。借你的手去比一比？ [#id=talk_huo_menu.002]
+            条件：有记录("hand_comparisons", "detective")
             设旗 invite_hand_huo
             跳转 END
         - 这个铜口是什么？ [#id=talk_huo_menu.003]
@@ -87,8 +99,8 @@
 场面 talk_shen_menu
     沈鼎：想问什么？ [#id=talk_shen_menu.001]
     选择：
-        - 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_shen_menu.002]
-            条件：见过("E11")
+        - 我屋里架子上有半枚手印。借你的手去比一比？ [#id=talk_shen_menu.002]
+            条件：有记录("hand_comparisons", "detective")
             设旗 invite_hand_shen
             跳转 END
         - 你泡茶的时候，怎么知道她不加糖？ [#id=talk_shen_menu.003]
@@ -154,8 +166,8 @@
 场面 talk_su_menu
     苏泠：你要问什么。 [#id=talk_su_menu.001]
     选择：
-        - 请到 R-05 书架旁，单独比一下手掌轮廓。 [#id=talk_su_menu.002]
-            条件：见过("E11")
+        - 我屋里架子上有半枚手印。借你的手去比一比？ [#id=talk_su_menu.002]
+            条件：有记录("hand_comparisons", "detective")
             设旗 invite_hand_su
             跳转 END
         - 墙里的声音？ [#id=talk_su_menu.003]

@@ -696,55 +696,22 @@ public static class Chapter1CompiledDialogue
             "line_id": "s5_question.012"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "call",
+            "name": "set_flag",
+            "args": [
               {
-                "id": "s5_question:choice:0",
-                "label": "先去查看生活翼。",
-                "label_id": "s5_question.013",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "accepted"
-                      }
-                    ]
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "我去看看那扇门。",
-                    "voice_clip": "",
-                    "line_id": "s5_question.014"
-                  }
-                ]
-              },
-              {
-                "id": "s5_question:choice:1",
-                "label": "先在生活翼歇息一阵，暂不作答。",
-                "label_id": "s5_question.015",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "rest_chosen"
-                      }
-                    ]
-                  }
-                ]
+                "op": "literal",
+                "value": "accepted"
               }
             ]
+          },
+          {
+            "op": "line",
+            "speaker": "侦探",
+            "mood": "",
+            "text": "我去看看那扇门。",
+            "voice_clip": "",
+            "line_id": "s5_question.014"
           },
           {
             "op": "jump",
@@ -1236,7 +1203,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（你看着架沿的半枚手印。还需要在这里逐人核验四个人的手掌。）",
+            "text": "（你看着架沿的半枚手印。）",
             "voice_clip": "",
             "line_id": "help_E11.001"
           },
@@ -1258,7 +1225,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（半枚手印比你的手掌窄。这次只记下你自己的掌缘。）",
+            "text": "（半枚手印比你的手掌窄一圈。手指也短。不是你的。）",
             "voice_clip": "",
             "line_id": "help_E11_detective.002"
           },
@@ -1369,118 +1336,6 @@ public static class Chapter1CompiledDialogue
             "text": "……等一下，我这就过去。",
             "voice_clip": "",
             "line_id": "help_busy_su.001"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "nudge_E1": [
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "（远远地）你想知道自己为何在此，侦探先生。我也想知道，阁下会先问哪一句。",
-            "voice_clip": "",
-            "line_id": "nudge_E1.001"
-          },
-          {
-            "op": "call",
-            "name": "amplify",
-            "args": [
-              {
-                "op": "literal",
-                "value": "detective"
-              },
-              {
-                "op": "literal",
-                "value": "你想知道自己为何在此。"
-              }
-            ]
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "nudge_E5": [
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "（从墙里，很轻）苏小姐，此地还有你从未听过的声音。",
-            "voice_clip": "",
-            "line_id": "nudge_E5.001"
-          },
-          {
-            "op": "call",
-            "name": "whisper",
-            "args": [
-              {
-                "op": "literal",
-                "value": "su"
-              },
-              {
-                "op": "literal",
-                "value": "此地还有你从未听过的声音。"
-              }
-            ]
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "nudge_E7": [
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "（铜口里，声音放得很低）霍先生，超越卡诺循环的那一张，此地有人画过。画它的人，你见过。",
-            "voice_clip": "",
-            "line_id": "nudge_E7.001"
-          },
-          {
-            "op": "call",
-            "name": "whisper",
-            "args": [
-              {
-                "op": "literal",
-                "value": "huo"
-              },
-              {
-                "op": "literal",
-                "value": "超越卡诺循环的那一张，此地有人画过。"
-              }
-            ]
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "nudge_E10": [
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "（远远地）沈师傅，你护着的人，比你记得的多。",
-            "voice_clip": "",
-            "line_id": "nudge_E10.001"
-          },
-          {
-            "op": "call",
-            "name": "whisper",
-            "args": [
-              {
-                "op": "literal",
-                "value": "shen"
-              },
-              {
-                "op": "literal",
-                "value": "你护着的人，比你记得的多。"
-              }
-            ]
           },
           {
             "op": "jump",
@@ -1614,41 +1469,65 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "（她低头看着音叉）……刚才碰到它，脑子里闪了一下。握着它，再想想？",
+            "text": "（她低头看着音叉）……刚才碰到它，脑子里闪了一下。",
             "voice_clip": "",
             "line_id": "recall_offer_su.001"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "flag",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "price_heard"
+                }
+              ]
+            },
+            "then": [
               {
-                "id": "recall_offer_su:choice:0",
-                "label": "提醒她：先问问铜口，那是什么。",
-                "label_id": "recall_offer_su.002",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
+                "op": "choices",
+                "options": [
                   {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
+                    "id": "recall_offer_su:choice:0",
+                    "label": "把铜口说过的话告诉她。",
+                    "label_id": "recall_offer_su.002",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": [
                       {
-                        "op": "literal",
-                        "value": "show_rule"
+                        "op": "line",
+                        "speaker": "侦探",
+                        "mood": "",
+                        "text": "我听铜口说过：握久了，它会回来；回来的，连同它连着的此地，你都带着。",
+                        "voice_clip": "",
+                        "line_id": "recall_offer_su.004"
+                      },
+                      {
+                        "op": "call",
+                        "name": "set_flag",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "show_rule"
+                          }
+                        ]
                       }
                     ]
+                  },
+                  {
+                    "id": "recall_offer_su:choice:1",
+                    "label": "什么都不说。",
+                    "label_id": "recall_offer_su.003",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": []
                   }
                 ]
-              },
-              {
-                "id": "recall_offer_su:choice:1",
-                "label": "什么都不说。",
-                "label_id": "recall_offer_su.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
               }
-            ]
+            ],
+            "else": []
           },
           {
             "op": "jump",
@@ -1671,6 +1550,16 @@ public static class Chapter1CompiledDialogue
             "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
             "voice_clip": "",
             "line_id": "recall_shown_su.003"
+          },
+          {
+            "op": "call",
+            "name": "set_flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "price_heard"
+              }
+            ]
           },
           {
             "op": "line",
@@ -1842,41 +1731,65 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "手一碰，闪了一下。……摸着它，往下想？",
+            "text": "手一碰，闪了一下。",
             "voice_clip": "",
             "line_id": "recall_offer_huo.001"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "flag",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "price_heard"
+                }
+              ]
+            },
+            "then": [
               {
-                "id": "recall_offer_huo:choice:0",
-                "label": "提醒他：先问问铜口，那是什么。",
-                "label_id": "recall_offer_huo.002",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
+                "op": "choices",
+                "options": [
                   {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
+                    "id": "recall_offer_huo:choice:0",
+                    "label": "把铜口说过的话告诉他。",
+                    "label_id": "recall_offer_huo.002",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": [
                       {
-                        "op": "literal",
-                        "value": "show_rule"
+                        "op": "line",
+                        "speaker": "侦探",
+                        "mood": "",
+                        "text": "我听铜口说过：握久了，它会回来；回来的，连同它连着的此地，你都带着。",
+                        "voice_clip": "",
+                        "line_id": "recall_offer_huo.004"
+                      },
+                      {
+                        "op": "call",
+                        "name": "set_flag",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "show_rule"
+                          }
+                        ]
                       }
                     ]
+                  },
+                  {
+                    "id": "recall_offer_huo:choice:1",
+                    "label": "什么都不说。",
+                    "label_id": "recall_offer_huo.003",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": []
                   }
                 ]
-              },
-              {
-                "id": "recall_offer_huo:choice:1",
-                "label": "什么都不说。",
-                "label_id": "recall_offer_huo.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
               }
-            ]
+            ],
+            "else": []
           },
           {
             "op": "jump",
@@ -1899,6 +1812,16 @@ public static class Chapter1CompiledDialogue
             "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
             "voice_clip": "",
             "line_id": "recall_shown_huo.003"
+          },
+          {
+            "op": "call",
+            "name": "set_flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "price_heard"
+              }
+            ]
           },
           {
             "op": "line",
@@ -2099,34 +2022,12 @@ public static class Chapter1CompiledDialogue
             "line_id": "recall_offer_shen.001"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "call",
+            "name": "set_flag",
+            "args": [
               {
-                "id": "recall_offer_shen:choice:0",
-                "label": "提醒他：先问问铜口，那是什么。",
-                "label_id": "recall_offer_shen.002",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "show_rule"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": "recall_offer_shen:choice:1",
-                "label": "什么都不说。",
-                "label_id": "recall_offer_shen.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
+                "op": "literal",
+                "value": "show_rule"
               }
             ]
           },
@@ -2151,6 +2052,16 @@ public static class Chapter1CompiledDialogue
             "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
             "voice_clip": "",
             "line_id": "recall_shown_shen.003"
+          },
+          {
+            "op": "call",
+            "name": "set_flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "price_heard"
+              }
+            ]
           },
           {
             "op": "line",
@@ -2426,12 +2337,48 @@ public static class Chapter1CompiledDialogue
             "target": "END"
           }
         ],
+        "sound_request": [
+          {
+            "op": "line",
+            "speaker": "侦探",
+            "mood": "",
+            "text": "（朝管接头）请说一句：“{{sound_sentence()}}”等我走到地方再说。各位，待在原处听着。",
+            "voice_clip": "",
+            "line_id": "sound_request.001"
+          },
+          {
+            "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "乐意之至。",
+            "voice_clip": "",
+            "line_id": "sound_request.002"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "sound_cancel": [
+          {
+            "op": "line",
+            "speaker": "侦探（心声）",
+            "mood": "",
+            "text": "路被挡住了。……下回再试。",
+            "voice_clip": "",
+            "line_id": "sound_cancel.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
         "sound_test": [
           {
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（你们各自站好。活动厅的铜口沉默了一会儿。）",
+            "text": "（生活翼静了一会儿。）",
             "voice_clip": "",
             "line_id": "sound_test.001"
           },
@@ -2439,7 +2386,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "乐意之至。{{sound_sentence()}}",
+            "text": "{{sound_sentence()}}",
             "voice_clip": "",
             "line_id": "sound_test.002"
           },
@@ -2452,28 +2399,103 @@ public static class Chapter1CompiledDialogue
             "line_id": "sound_test.003"
           },
           {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "（{{heard_where(\"huo\")}}）{{heard(\"huo\")}}",
-            "voice_clip": "",
-            "line_id": "sound_test.004"
+            "op": "if",
+            "condition": {
+              "op": "ne",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "heard",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "huo"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": ""
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "霍铎",
+                "mood": "",
+                "text": "（在{{heard_where(\"huo\")}}，扬声）{{heard(\"huo\")}}",
+                "voice_clip": "",
+                "line_id": "sound_test.004"
+              }
+            ],
+            "else": []
           },
           {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "（{{heard_where(\"shen\")}}）{{heard(\"shen\")}}",
-            "voice_clip": "",
-            "line_id": "sound_test.005"
+            "op": "if",
+            "condition": {
+              "op": "ne",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "heard",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "shen"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": ""
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "沈鼎",
+                "mood": "",
+                "text": "（在{{heard_where(\"shen\")}}，扬声）{{heard(\"shen\")}}",
+                "voice_clip": "",
+                "line_id": "sound_test.005"
+              }
+            ],
+            "else": []
           },
           {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "（{{heard_where(\"su\")}}）{{heard(\"su\")}}",
-            "voice_clip": "",
-            "line_id": "sound_test.006"
+            "op": "if",
+            "condition": {
+              "op": "ne",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "heard",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "su"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": ""
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "苏泠",
+                "mood": "",
+                "text": "（在{{heard_where(\"su\")}}，扬声）{{heard(\"su\")}}",
+                "voice_clip": "",
+                "line_id": "sound_test.006"
+              }
+            ],
+            "else": []
           },
           {
             "op": "line",
@@ -2609,15 +2631,19 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "talk_huo_menu:choice:0",
-                "label": "请到 R-05 书架旁，单独比一下手掌轮廓。",
+                "label": "我屋里架子上有半枚手印。借你的手去比一比？",
                 "label_id": "talk_huo_menu.002",
                 "condition": {
                   "op": "call",
-                  "name": "seen",
+                  "name": "has",
                   "args": [
                     {
                       "op": "literal",
-                      "value": "E11"
+                      "value": "hand_comparisons"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "detective"
                     }
                   ]
                 },
@@ -3390,15 +3416,19 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "talk_shen_menu:choice:0",
-                "label": "请到 R-05 书架旁，单独比一下手掌轮廓。",
+                "label": "我屋里架子上有半枚手印。借你的手去比一比？",
                 "label_id": "talk_shen_menu.002",
                 "condition": {
                   "op": "call",
-                  "name": "seen",
+                  "name": "has",
                   "args": [
                     {
                       "op": "literal",
-                      "value": "E11"
+                      "value": "hand_comparisons"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "detective"
                     }
                   ]
                 },
@@ -4210,15 +4240,19 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "talk_su_menu:choice:0",
-                "label": "请到 R-05 书架旁，单独比一下手掌轮廓。",
+                "label": "我屋里架子上有半枚手印。借你的手去比一比？",
                 "label_id": "talk_su_menu.002",
                 "condition": {
                   "op": "call",
-                  "name": "seen",
+                  "name": "has",
                   "args": [
                     {
                       "op": "literal",
-                      "value": "E11"
+                      "value": "hand_comparisons"
+                    },
+                    {
+                      "op": "literal",
+                      "value": "detective"
                     }
                   ]
                 },
@@ -6278,71 +6312,60 @@ public static class Chapter1CompiledDialogue
             "line_id": "reach_huo.002"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "flag",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "price_heard"
+                }
+              ]
+            },
+            "then": [
               {
-                "id": "reach_huo:choice:0",
-                "label": "（劝阻）“别碰。”",
-                "label_id": "reach_huo.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
+                "op": "choices",
+                "options": [
                   {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "别碰。",
-                    "voice_clip": "",
-                    "line_id": "reach_huo.004"
-                  },
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
+                    "id": "reach_huo:choice:0",
+                    "label": "把铜口说过的代价告诉他。",
+                    "label_id": "reach_huo.003",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": [
                       {
-                        "op": "literal",
-                        "value": "reach_decline"
+                        "op": "line",
+                        "speaker": "侦探",
+                        "mood": "",
+                        "text": "先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。",
+                        "voice_clip": "",
+                        "line_id": "reach_huo.004"
+                      },
+                      {
+                        "op": "call",
+                        "name": "set_flag",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "reach_rule"
+                          }
+                        ]
                       }
                     ]
-                  }
-                ]
-              },
-              {
-                "id": "reach_huo:choice:1",
-                "label": "（提醒）“先问问铜口，那是什么。”",
-                "label_id": "reach_huo.005",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "先别往下想。问问铜口，那是什么。",
-                    "voice_clip": "",
-                    "line_id": "reach_huo.006"
                   },
                   {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "reach_rule"
-                      }
-                    ]
+                    "id": "reach_huo:choice:1",
+                    "label": "（不出声）",
+                    "label_id": "reach_huo.005",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": []
                   }
                 ]
-              },
-              {
-                "id": "reach_huo:choice:2",
-                "label": "（不出声，任他自便）",
-                "label_id": "reach_huo.007",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
               }
-            ]
+            ],
+            "else": []
           },
           {
             "op": "jump",
@@ -6367,71 +6390,60 @@ public static class Chapter1CompiledDialogue
             "line_id": "reach_su.002"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "flag",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "price_heard"
+                }
+              ]
+            },
+            "then": [
               {
-                "id": "reach_su:choice:0",
-                "label": "（劝阻）“别碰。”",
-                "label_id": "reach_su.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
+                "op": "choices",
+                "options": [
                   {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "别碰。",
-                    "voice_clip": "",
-                    "line_id": "reach_su.004"
-                  },
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
+                    "id": "reach_su:choice:0",
+                    "label": "把铜口说过的代价告诉她。",
+                    "label_id": "reach_su.003",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": [
                       {
-                        "op": "literal",
-                        "value": "reach_decline"
+                        "op": "line",
+                        "speaker": "侦探",
+                        "mood": "",
+                        "text": "先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。",
+                        "voice_clip": "",
+                        "line_id": "reach_su.004"
+                      },
+                      {
+                        "op": "call",
+                        "name": "set_flag",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "reach_rule"
+                          }
+                        ]
                       }
                     ]
-                  }
-                ]
-              },
-              {
-                "id": "reach_su:choice:1",
-                "label": "（提醒）“先问问铜口，那是什么。”",
-                "label_id": "reach_su.005",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "先别往下想。问问铜口，那是什么。",
-                    "voice_clip": "",
-                    "line_id": "reach_su.006"
                   },
                   {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "reach_rule"
-                      }
-                    ]
+                    "id": "reach_su:choice:1",
+                    "label": "（不出声）",
+                    "label_id": "reach_su.005",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": []
                   }
                 ]
-              },
-              {
-                "id": "reach_su:choice:2",
-                "label": "（不出声，任她自便）",
-                "label_id": "reach_su.007",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
               }
-            ]
+            ],
+            "else": []
           },
           {
             "op": "jump",
@@ -6456,71 +6468,60 @@ public static class Chapter1CompiledDialogue
             "line_id": "reach_shen.002"
           },
           {
-            "op": "choices",
-            "options": [
+            "op": "if",
+            "condition": {
+              "op": "call",
+              "name": "flag",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "price_heard"
+                }
+              ]
+            },
+            "then": [
               {
-                "id": "reach_shen:choice:0",
-                "label": "（劝阻）“别碰。”",
-                "label_id": "reach_shen.003",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
+                "op": "choices",
+                "options": [
                   {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "别碰。",
-                    "voice_clip": "",
-                    "line_id": "reach_shen.004"
-                  },
-                  {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
+                    "id": "reach_shen:choice:0",
+                    "label": "把铜口说过的代价告诉他。",
+                    "label_id": "reach_shen.003",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": [
                       {
-                        "op": "literal",
-                        "value": "reach_decline"
+                        "op": "line",
+                        "speaker": "侦探",
+                        "mood": "",
+                        "text": "先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。",
+                        "voice_clip": "",
+                        "line_id": "reach_shen.004"
+                      },
+                      {
+                        "op": "call",
+                        "name": "set_flag",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "reach_rule"
+                          }
+                        ]
                       }
                     ]
-                  }
-                ]
-              },
-              {
-                "id": "reach_shen:choice:1",
-                "label": "（提醒）“先问问铜口，那是什么。”",
-                "label_id": "reach_shen.005",
-                "condition": null,
-                "lock_hint": "",
-                "body": [
-                  {
-                    "op": "line",
-                    "speaker": "侦探",
-                    "mood": "",
-                    "text": "先别往下想。问问铜口，那是什么。",
-                    "voice_clip": "",
-                    "line_id": "reach_shen.006"
                   },
                   {
-                    "op": "call",
-                    "name": "set_flag",
-                    "args": [
-                      {
-                        "op": "literal",
-                        "value": "reach_rule"
-                      }
-                    ]
+                    "id": "reach_shen:choice:1",
+                    "label": "（不出声）",
+                    "label_id": "reach_shen.005",
+                    "condition": null,
+                    "lock_hint": "",
+                    "body": []
                   }
                 ]
-              },
-              {
-                "id": "reach_shen:choice:2",
-                "label": "（不出声，任他自便）",
-                "label_id": "reach_shen.007",
-                "condition": null,
-                "lock_hint": "",
-                "body": []
               }
-            ]
+            ],
+            "else": []
           },
           {
             "op": "jump",

@@ -16,40 +16,34 @@
 场面 reach_huo
     （霍铎走到长桌边，拿起了那块石板。他盯着上面的字，拇指慢慢压上粉笔印。） [#id=reach_huo.001]
     霍铎：{{生活所思("huo")}} [#id=reach_huo.002]
-    选择：
-        - （劝阻）“别碰。” [#id=reach_huo.003]
-            侦探：别碰。 [#id=reach_huo.004]
-            设旗 reach_decline
-        - （提醒）“先问问铜口，那是什么。” [#id=reach_huo.005]
-            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_huo.006]
-            设旗 reach_rule
-        - （不出声，任他自便） [#id=reach_huo.007]
+    若 旗("price_heard")：
+        选择：
+            - 把铜口说过的代价告诉他。 [#id=reach_huo.003]
+                侦探：先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。 [#id=reach_huo.004]
+                设旗 reach_rule
+            - （不出声） [#id=reach_huo.005]
     跳转 END
 
 场面 reach_su
     （苏泠在门框旁蹲下，拾起了那把音叉。她把它举到耳边，没有敲。） [#id=reach_su.001]
     苏泠：{{生活所思("su")}} [#id=reach_su.002]
-    选择：
-        - （劝阻）“别碰。” [#id=reach_su.003]
-            侦探：别碰。 [#id=reach_su.004]
-            设旗 reach_decline
-        - （提醒）“先问问铜口，那是什么。” [#id=reach_su.005]
-            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_su.006]
-            设旗 reach_rule
-        - （不出声，任她自便） [#id=reach_su.007]
+    若 旗("price_heard")：
+        选择：
+            - 把铜口说过的代价告诉她。 [#id=reach_su.003]
+                侦探：先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。 [#id=reach_su.004]
+                设旗 reach_rule
+            - （不出声） [#id=reach_su.005]
     跳转 END
 
 场面 reach_shen
     （沈鼎从架上端起酵种罐，拇指搭在罐壁的面痕上。） [#id=reach_shen.001]
     沈鼎：{{生活所思("shen")}} [#id=reach_shen.002]
-    选择：
-        - （劝阻）“别碰。” [#id=reach_shen.003]
-            侦探：别碰。 [#id=reach_shen.004]
-            设旗 reach_decline
-        - （提醒）“先问问铜口，那是什么。” [#id=reach_shen.005]
-            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_shen.006]
-            设旗 reach_rule
-        - （不出声，任他自便） [#id=reach_shen.007]
+    若 旗("price_heard")：
+        选择：
+            - 把铜口说过的代价告诉他。 [#id=reach_shen.003]
+                侦探：先别急。铜口说过，握久了，它会回来；回来的，连同它连着的此地，都得带着。 [#id=reach_shen.004]
+                设旗 reach_rule
+            - （不出声） [#id=reach_shen.005]
     跳转 END
 
 场面 alone_huo

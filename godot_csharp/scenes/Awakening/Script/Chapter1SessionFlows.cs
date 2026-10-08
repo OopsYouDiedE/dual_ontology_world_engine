@@ -102,6 +102,7 @@ public sealed partial class Chapter1Session
             case "experiment": return Experiment(A(0));
             case "help": return Help(A(0));
             case "recall": return Recall(A(0));
+            case "flash": return _content.CanFlash(A(0)) ? Recall(A(0)) : Array.Empty<Op>();
             case "compare": return CompareHand(A(0));
             case "close": CloseModal(); break;
             case "name": return AskName();
@@ -255,12 +256,6 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> OpenCard(string id, bool brief = false)
     {
         Examine(id);
-        if (_content.NudgeCard(id))
-        {
-            // 恶魔在玩家第一次面对这件物件的回忆选项之前说一句；每件只说一次。
-            CloseModal();
-            yield return new Run(Say("nudge_" + id));
-        }
         var packet = _interaction.CardPacket(id, GeometricCardPeople());
         var card = packet.Card!;
         var picture = Art + "card_" + card.Picture + ".png";
@@ -490,7 +485,6 @@ public sealed partial class Chapter1Session
         [
             (Option("examine", T("铜口·检视")), () => OpenCard("E8")),
             (Option("answer", T("铜口·作答")), () => PlayPlan(() => _content.BeginAnswer(_world))),
-            (Option("rest", T("铜口·歇息")), () => PlayPlan(() => _content.BeginConfirmRest(_world))),
             (Option("close", T("卡片·返回")), Nothing),
         ]);
         yield break;
@@ -507,23 +501,53 @@ public sealed partial class Chapter1Session
 
     // ---------------------------------------------------------------- sound --
 
+    /// <summary>声路试验里侦探走去听的地方：每个听位就近的一处现场物件。</summary>
+    private static readonly Dictionary<string, string> SoundSpotSite = new()
+        { ["foyer"] = "E1", ["R08"] = "E6", ["hall"] = "E7", ["pantry"] = "E9", ["R05"] = "E12" };
+
+    /// <summary>侦探能请铜口说的句子，只来自他已经知道的说法：石板上的指令、乐谱与门边的“开门”、霍铎想起的原话。</summary>
+    private bool SentenceKnown(int index) => index switch
+    {
+        0 => Has("examined", "E7"),
+        1 => Has("examined", "E6") || Has("helped", "E5"),
+        2 => Has("recalls", "huo"),
+        _ => false,
+    };
+
     private IEnumerable<Op> SoundTest()
     {
-        var sentences = TestSentences.All.Select((s, i) => (object?)new Ev { ["id"] = i.ToString(), ["label"] = $"“{s.Full}”" }).ToArray();
+        var sentences = TestSentences.All.Select((s, i) => (s, i)).Where(x => SentenceKnown(x.i))
+            .Select(x => (object?)new Ev { ["id"] = x.i.ToString(), ["label"] = $"“{x.s.Full}”" }).ToArray();
+        if (sentences.Length == 0) yield break;
+        var here = F("detective").Entered;
         var spots = Content.GetProperty("SOUND_SPOTS").EnumerateObject().Select(p => (object?)new Ev { ["id"] = p.Name, ["label"] = p.Value.GetString() }).ToArray();
+        var spotDefault = spots.Any(p => (string)((Ev)p!)["id"]! == here) ? here : (string)((Ev)spots[0]!)["id"]!;
         yield return new Await(Event("form", ("title", T("声路·标题")), ("prompt", T("声路·说明")), ("layout", "stack"),
             ("fields", new object?[]
             {
-                new Ev { ["id"] = "sentence", ["kind"] = "choice", ["heading"] = T("声路·选句"), ["value"] = "0", ["options"] = sentences },
-                new Ev { ["id"] = "spot", ["kind"] = "choice", ["heading"] = T("声路·选位"), ["value"] = ((Ev)spots[0]!)["id"], ["options"] = spots, ["flow"] = true },
+                new Ev { ["id"] = "sentence", ["kind"] = "choice", ["heading"] = T("声路·选句"), ["value"] = ((Ev)sentences[0]!)["id"], ["options"] = sentences },
+                new Ev { ["id"] = "spot", ["kind"] = "choice", ["heading"] = T("声路·选位"), ["value"] = spotDefault, ["options"] = spots, ["flow"] = true },
             }),
             ("actions", new object?[] { new Ev { ["id"] = "cancel", ["label"] = "算了" }, new Ev { ["id"] = "start", ["label"] = "开始", ["default"] = true } })), true);
         if (Text(_reply, "action") != "start") yield break;
         var values = Map(_reply, "values");
-        var sentence = int.TryParse(values.GetValueOrDefault("sentence")?.ToString(), out var s) ? s : 0;
-        var spot = values.GetValueOrDefault("spot")?.ToString() ?? "foyer";
-        var map = new Dictionary<Person, Room>();
-        foreach (var (who, room) in _content.SoundPositions(spot)) map[PersonOf(who)] = (Room)Array.IndexOf(Names.RoomKeys, room);
+        var sentence = int.TryParse(values.GetValueOrDefault("sentence")?.ToString(), out var s) && SentenceKnown(s) ? s : int.Parse((string)((Ev)sentences[0]!)["id"]!);
+        var spot = values.GetValueOrDefault("spot")?.ToString() ?? spotDefault;
+        Session.Set("state", "sound_sentence", sentence);
+        // 先请铜口，再自己走过去；同伴手上的事不打断，在哪儿就在哪儿听。
+        yield return new Run(Say("sound_request"));
+        if (spot != F("detective").Entered && SoundSpotSite.TryGetValue(spot, out var site))
+        {
+            yield return new Run(WalkTo("detective", new Ev { ["approach_site"] = site, ["inset"] = 14.0 }, 150.0));
+            if (!WalkOk) { yield return new Run(Say("sound_cancel")); yield break; }
+        }
+        var map = new Dictionary<Person, Room> { [Person.Detective] = (Room)Array.IndexOf(Names.RoomKeys, F("detective").Entered is var r && r != "" ? r : spot) };
+        foreach (var who in Companions)
+        {
+            var room = F(who).Entered != "" ? F(who).Entered : F(who).Room;
+            var index = Array.IndexOf(Names.RoomKeys, room);
+            if (index >= 0) map[PersonOf(who)] = (Room)index;
+        }
         _content.RecordSoundTest();
         Sfx("tuning_fork", -5.0);
         var heard = _world.SoundTest(TestSentences.All[Math.Clamp(sentence, 0, TestSentences.All.Length - 1)], map);
@@ -533,24 +557,10 @@ public sealed partial class Chapter1Session
             ["hearing"] = h.Hearing.ToString(), ["direction"] = h.Direction,
         }).ToArray());
         Session.Set("experiments", "E8", true);
-        Session.Set("state", "sound_sentence", sentence);
-        var rounds = Convert.ToInt32(State["sound_rounds"]) + 1;
-        Session.Set("state", "sound_rounds", rounds);
-        if (rounds == 1)
-        {
-            yield return new Run(Say("sound_test"));
-            yield return new Run(OpenCard("E8"));
-            yield break;
-        }
-        // 第二轮起不再逐人复述：一张小表汇总四处所闻。
-        var rows = ((object[])State["last_sound"]).Cast<Dictionary<string, object>>().Select(h => (object?)new object?[]
-        {
-            Chapter1Data.RoomName((string)h["room"]), (string)h["who"] == "detective" ? T("声路·你") : PersonName((string)h["who"]),
-            h["text"], h["direction"],
-        }).ToArray();
-        OpenModal(Event("card", ("id", "sound"), ("title", T("声路·轮标题", ("轮", rounds.ToString()))),
-                ("intro", T("声路·铜口说", ("句", TestSentences.All[sentence].Full))), ("table", rows)),
-            [(Option("card", "看证物卡"), () => OpenCard("E8")), (Option("close", T("卡片·返回")), Nothing)]);
+        Session.Set("state", "sound_rounds", Convert.ToInt32(State["sound_rounds"]) + 1);
+        // 每一轮都完整演出：铜口说了什么，每个人在自己所在之处听到了什么。
+        yield return new Run(Say("sound_test"));
+        yield return new Run(OpenCard("E8"));
     }
 
     // --------------------------------------------------------------- answer --

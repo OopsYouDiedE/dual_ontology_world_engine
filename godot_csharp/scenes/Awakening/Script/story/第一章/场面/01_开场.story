@@ -93,12 +93,8 @@
     铜口：作答之后，依隔离门上的规程，主楼一侧的闩便可开启。 [#id=s5_question.010]
     铜口：不愿作答者，可在生活翼歇息。水与食物照常。无需认罪，无需指认任何人。 [#id=s5_question.011]
     铜口：生活翼诸处，诸位尽可查看；彼此相帮，亦无不可。答案备好了，到铜口来。 [#id=s5_question.012]
-    选择：
-        - 先去查看生活翼。 [#id=s5_question.013]
-            设旗 accepted
-            侦探：我去看看那扇门。 [#id=s5_question.014]
-        - 先在生活翼歇息一阵，暂不作答。 [#id=s5_question.015]
-            设旗 rest_chosen
+    设旗 accepted
+    侦探：我去看看那扇门。 [#id=s5_question.014]
     跳转 END
 
 场面 s6_begin

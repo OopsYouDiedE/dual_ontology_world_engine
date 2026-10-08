@@ -45,12 +45,12 @@
     跳转 END
 
 场面 help_E11
-    （你看着架沿的半枚手印。还需要在这里逐人核验四个人的手掌。） [#id=help_E11.001]
+    （你看着架沿的半枚手印。） [#id=help_E11.001]
     跳转 END
 
 场面 help_E11_detective
     侦探：（把自己的手掌停在 R-05 架沿的痕迹旁，没有碰灰。） [#id=help_E11_detective.001]
-    （半枚手印比你的手掌窄。这次只记下你自己的掌缘。） [#id=help_E11_detective.002]
+    （半枚手印比你的手掌窄一圈。手指也短。不是你的。） [#id=help_E11_detective.002]
     跳转 END
 
 场面 help_E11_huo
