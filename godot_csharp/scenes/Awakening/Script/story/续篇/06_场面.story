@@ -77,8 +77,8 @@
         （配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。） [#id=chapter2.noon_dispute.001]
         阮清越：按人头。十六份，日末清点。 [#id=chapter2.noon_dispute.002]
         茉拉：莫兰脸色不对。病人先领。 [#emotion=worried] [#id=chapter2.noon_dispute.003]
-        阮清越：病人先领，可以。代领的是谁，日末找谁对账，先记清楚。 [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
-        茉拉：莫兰等着吃。先把他那一份给我送过去；回来我报名字，陪你对账。 [#id=chapter2.noon_dispute.005]
+        阮清越：病人先领，可以。代领的人先在账上签个名，日末才找得到人对。 [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
+        茉拉：莫兰等着吃。先把他那一份给我送过去；回来我签，陪你对账。 [#id=chapter2.noon_dispute.005]
         侦探（心声）：一本账，一把钥匙。队伍已经排到我身后了，饭还没递出一份。 [#id=chapter2.noon_dispute.006]
         选择 noon_dispute：mediate、skip_dispute
 
@@ -197,7 +197,7 @@
         事件：council.begin
         日：6
         时段：早晨
-        （第五日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.007]
+        （第五日清晨。誓约庭。铺石顺坡，来议事的人散在几级台阶上。） [#id=chapter2.council.007]
         铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
         沃德：谁进门，取走什么，须有账可查。名录库，由委员会保管。 [#id=chapter2.council.003]
         顾平章：账记得下取走什么，记得下取回以后，人会怎样么？老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]

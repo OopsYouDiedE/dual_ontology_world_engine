@@ -166,7 +166,8 @@ func _scan(node: Node, clip: Rect2, items: Array, covered: Array[Rect2] = []) ->
 func _plain_text(control: Control) -> String:
 	if control is RichTextLabel: return control.get_parsed_text()
 	if control is Label or control is Button: return control.atr(control.text)
-	if control is LineEdit or control is TextEdit: return control.text
+	if control is LineEdit or control is TextEdit:
+		return control.text if control.text != "" else control.atr(control.placeholder_text)
 	return ""
 
 func _visible_text(control: Control, regions: Array[Rect2]) -> String:

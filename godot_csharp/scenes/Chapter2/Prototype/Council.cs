@@ -202,8 +202,7 @@ public sealed partial class Game
         ResultText = Deadlocked ? X("议事.僵持结果") : EndingText(Result);
         if (Result is not Ending.Sealed && mine is not null && FamilyOf(mine) == Ending.Sealed)
             CouncilLog.Add("你支持封闭。尽管多数人打开了名录库，你仍留在门外，没有念匣上的名字，也没有触物回忆。");
-        else if (Result is not Ending.Sealed)
-            CouncilLog.Add("侦探的封存匣标签上写着侦探的名字。念出来，匣子没有应。铜口没有出声。");
+        // Individual closing actions are presented once by the authored closing scene.
         return Result;
     }
 }
