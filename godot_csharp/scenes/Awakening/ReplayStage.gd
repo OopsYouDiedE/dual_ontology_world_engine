@@ -54,7 +54,7 @@ func play(ev: Dictionary) -> void:
 		var frame: Dictionary = frames[index]
 		_apply(frame, previous)
 		previous = frame
-		var hold := 1.6 if str(frame.actor) == "" else (0.6 if str(frame.label).contains("来到") else 1.3)
+		var hold := 1.6 if str(frame.actor) == "" else (0.6 if str(frame.get("event", {}).get("kind", "")) == "arrive" else 1.3)
 		var waited := 0.0
 		while waited < hold and not skipping:
 			await get_tree().process_frame
@@ -93,6 +93,7 @@ func _setup() -> void:
 	add_child(layer)
 	caption = layer.get_node("Bar/Caption")
 	controls = layer.get_node("Controls")
+	controls.text = str(labels.get("control_texts", {}).get("normal", ""))
 	door_label = layer.get_node("Door")
 	for key in ORDER:
 		var actor: CharacterBody2D = host.actor_of(key)
@@ -136,7 +137,7 @@ func position_of(frame: Dictionary, key: String) -> Vector2:
 	return ROOM_ANCHORS.get(room, Vector2(640, 500)) + OFFSETS[key]
 
 func _apply(frame: Dictionary, previous: Dictionary) -> void:
-	var who := str(frame.actor)
+	var who := str(frame.get("event", {}).get("who", ""))
 	caption.text = "[b]%s[/b]　%s" % [str(labels.get("caption", "")), str(frame.label)]
 	for key in ORDER:
 		var figure: AnimatedSprite2D = figures[key]
@@ -163,7 +164,7 @@ func _apply(frame: Dictionary, previous: Dictionary) -> void:
 				tween.tween_property(figure, "position", point, maxf(0.02, 0.8 / speed * step.length() / maxf(total, 1.0)))
 				last = point
 			tween.tween_callback(figure.play.bind("idle_" + facing))
-		figure.modulate = INK if who != str(labels.names[key]) else Color(0.1, 0.08, 0.14, 0.9)
+		figure.modulate = INK if who != key else Color(0.1, 0.08, 0.14, 0.9)
 		var bubble: PanelContainer = bubbles[key]
 		var text: RichTextLabel = bubble.get_meta("text")
 		text.text = "[b]%s[/b]　%s" % [str(labels.names[key]), str(frame.thoughts[key])]
@@ -215,10 +216,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_SPACE:
 			paused = not paused
-			controls.text = ("已暂停　" if paused else "") + "空格 暂停　F 倍速　Esc 跳过"
+			controls.text = str(labels.get("control_texts", {}).get("paused" if paused else "normal", ""))
 		KEY_F, KEY_2:
 			speed = 2.5 if speed == 1.0 else 1.0
-			controls.text = ("倍速　" if speed > 1.0 else "") + "空格 暂停　F 倍速　Esc 跳过"
+			controls.text = str(labels.get("control_texts", {}).get("fast" if speed > 1.0 else "normal", ""))
 		KEY_ESCAPE:
 			skipping = true
 	get_viewport().set_input_as_handled()

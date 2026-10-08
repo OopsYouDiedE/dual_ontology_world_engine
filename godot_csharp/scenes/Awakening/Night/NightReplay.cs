@@ -43,7 +43,16 @@ public sealed record ReplayFrame(
     ImmutableDictionary<Person, Room> Rooms,
     ImmutableDictionary<Person, string> Spots,
     ImmutableDictionary<Person, string> Thoughts,
-    bool DoorOpen, bool DoorBolted, bool AshFan, bool SmokeIn);
+    bool DoorOpen, bool DoorBolted, bool AshFan, bool SmokeIn, ReplayEvent Event);
+
+/// <summary>重演事件的身份与参与者；显示句型由剧本文案表定义。</summary>
+public sealed record ReplayEvent(string Kind, Person? Who = null, Person? Subject = null, string Object = "", Room? Room = null)
+{
+    public string Label => Chapter1Data.Text("重演·事件·" + Kind,
+        ("名", Who is { } who ? Names.Of(who) : ""),
+        ("人名", Subject is { } subject ? Names.Of(subject) : Chapter1Data.Text("重演·有人")),
+        ("地点", Room is { } room ? Chapter1Data.RoomName(Names.RoomKeys[(int)room]) : ""));
+}
 
 /// <summary>
 /// 行动值参数（只决定先后，不决定谁做什么）。默认值即游戏所用；穷举检查会在一组参数上复测唯一解，
@@ -59,6 +68,8 @@ public sealed record ReplayResult(NightVariables Variables, MorningTraces Traces
 {
     public ImmutableArray<string> Conflicts => Comparison.Conflicts(Traces, MorningTraces.Evidence);
     public bool FullMatch => Conflicts.IsEmpty;
+    public bool DetectiveBoltedOnHuoRequest { get; init; }
+    public bool DetectiveRefusedStranger { get; init; }
 }
 
 /// <summary>
@@ -97,7 +108,7 @@ public sealed class NightReplay
     private readonly List<string> _log = [];
     private Essence _door = null!, _wedge = null!, _floor = null!, _frame = null!, _fork = null!, _score = null!,
         _slate = null!, _cloth = null!, _cups = null!, _tube = null!;
-    private bool _smokeIn, _decisionQueued;
+    private bool _smokeIn, _decisionQueued, _detectiveBoltedOnHuoRequest, _detectiveRefusedStranger;
     private int _lastShout;
     private (int Open, int Wedged, int Bolted, int CalledOut) _lastDoor;
 
@@ -134,7 +145,7 @@ public sealed class NightReplay
         public Room StartRoom;
     }
 
-    private sealed record Habit(Rule Rule, string Label, string Thought, string Spot);
+    private sealed record Habit(Rule Rule, ReplayEvent Event, string Thought, string Spot);
 
     private Essence Space(Room room)
     {
@@ -172,7 +183,7 @@ public sealed class NightReplay
         body.Add(new SpatialProperty { Space = _space[start] });
         body.Add(new BootProperty(sole));
         soul.Relations.Add((Relations.Controls, body));
-        _runtime.Project(soul, Names.Of(who) + "之魂");
+        _runtime.Project(soul, Chapter1Data.Text("认知·魂名", ("名", Names.Of(who))));
         _view[body] = _runtime.Project(body, Names.Of(who));
         var agent = new Agent(who, soul, body, speed);
         _agents.Add(agent);
@@ -191,16 +202,16 @@ public sealed class NightReplay
             _passage[(a, b)] = _passage[(b, a)] = passage;
             _view[passage] = _runtime.Project(passage, passage.TrueName);
         }
-        _door = Thing("隔离门", Room.Foyer, NightTags.Open, NightTags.Wedged, NightTags.Bolted, NightTags.CalledOut);
-        _wedge = Thing("木楔", Room.Foyer, NightTags.Kicked, NightTags.Soot);
-        _floor = Thing("门厅地面", Room.Foyer, NightTags.AshFan);
+        _door = Thing(Chapter1Data.Text("重演·认知·隔离门"), Room.Foyer, NightTags.Open, NightTags.Wedged, NightTags.Bolted, NightTags.CalledOut);
+        _wedge = Thing(Chapter1Data.Text("重演·认知·木楔"), Room.Foyer, NightTags.Kicked, NightTags.Soot);
+        _floor = Thing(Chapter1Data.Text("重演·认知·门厅地面"), Room.Foyer, NightTags.AshFan);
         _floor.Add(new FloorTraceProperty());
-        _frame = Thing("门框", Room.Foyer, NightTags.Dent);
-        _slate = Thing("石板", Room.Hall, NightTags.Line1, NightTags.Line2);
-        _tube = Thing("铜口", Room.Hall);
-        _score = Thing("乐谱", Room.R08, NightTags.Line1, NightTags.Line2);
-        _cloth = Thing("抹布", Room.Pantry, NightTags.Wet, NightTags.Placed);
-        _cups = Thing("四只杯子", Room.Pantry, NightTags.Sugar);
+        _frame = Thing(Chapter1Data.Text("重演·认知·门框"), Room.Foyer, NightTags.Dent);
+        _slate = Thing(Chapter1Data.Text("重演·认知·石板"), Room.Hall, NightTags.Line1, NightTags.Line2);
+        _tube = Thing(Chapter1Data.Text("重演·认知·铜口"), Room.Hall);
+        _score = Thing(Chapter1Data.Text("重演·认知·乐谱"), Room.R08, NightTags.Line1, NightTags.Line2);
+        _cloth = Thing(Chapter1Data.Text("重演·认知·抹布"), Room.Pantry, NightTags.Wet, NightTags.Placed);
+        _cups = Thing(Chapter1Data.Text("重演·认知·四只杯子"), Room.Pantry, NightTags.Sugar);
 
         var su = _v.V1 switch { SuPlace.OwnRoom => Room.R08, SuPlace.Hall => Room.Hall, _ => Room.Pantry };
         var huo = _v.V2 switch { HuoPlace.ByTube => Room.Hall, HuoPlace.OwnRoom => Room.R06, _ => Room.Foyer };
@@ -209,10 +220,10 @@ public sealed class NightReplay
         var chef = MakePerson(Person.Shen, Room.Pantry, Sole.Soft, _timing.ShenSpeed);
         var musician = MakePerson(Person.Su, su, Sole.Soft, _timing.SuSpeed);
         // 苏泠的音叉在她手里。
-        _fork = new Essence("音叉");
+        _fork = new Essence(Chapter1Data.Text("重演·认知·音叉"));
         _fork.Add(new SpatialProperty { Holder = musician.Body });
         _fork.Add(new StateProperty());
-        _view[_fork] = _runtime.Project(_fork, "音叉");
+        _view[_fork] = _runtime.Project(_fork, Chapter1Data.Text("重演·认知·音叉"));
 
         foreach (var agent in _agents) Know(agent);
         WriteHabits(detective, engineer, chef, musician);
@@ -232,15 +243,15 @@ public sealed class NightReplay
                 Source = ObservationSource.Introspection, Existence = Truth.False,
                 Tags = tags.ToImmutableDictionary(t => t, _ => (int?)0)
             });
-        agent.Alarm = Concept("警铃", ProjectionKind.Event);
-        agent.Outsider = Concept("门外的人", ProjectionKind.Soul, NightTags.WantsOpen, NightTags.Help);
-        agent.Order = Concept("一条指令", ProjectionKind.Procedure, NightTags.Bolt, NightTags.ForbidOpen, NightTags.HoldTube, NightTags.OpenOrder, NightTags.FromTube);
-        agent.Heard = Concept("所闻", ProjectionKind.Event, NightTags.TailOpen, NightTags.TailHelp, NightTags.FullOpen, NightTags.ClearBolt, NightTags.Murmur);
-        agent.Shout = Concept("活动厅的喊声", ProjectionKind.Event, NightTags.Bolt, NightTags.OpenOrder);
-        agent.DoorHeard = Concept("门边所闻", ProjectionKind.Event, NightTags.Silence);
-        agent.Smoke = Concept("烟", ProjectionKind.Material);
-        agent.Report = Concept("门已闩好的回报", ProjectionKind.Event);
-        agent.Claim = Concept("别人对那扇门的说法", ProjectionKind.Event);
+        agent.Alarm = Concept(Chapter1Data.Text("重演·认知·警铃"), ProjectionKind.Event);
+        agent.Outsider = Concept(Chapter1Data.Text("重演·认知·门外的人"), ProjectionKind.Soul, NightTags.WantsOpen, NightTags.Help);
+        agent.Order = Concept(Chapter1Data.Text("重演·认知·一条指令"), ProjectionKind.Procedure, NightTags.Bolt, NightTags.ForbidOpen, NightTags.HoldTube, NightTags.OpenOrder, NightTags.FromTube);
+        agent.Heard = Concept(Chapter1Data.Text("重演·认知·所闻"), ProjectionKind.Event, NightTags.TailOpen, NightTags.TailHelp, NightTags.FullOpen, NightTags.ClearBolt, NightTags.Murmur);
+        agent.Shout = Concept(Chapter1Data.Text("重演·认知·活动厅的喊声"), ProjectionKind.Event, NightTags.Bolt, NightTags.OpenOrder);
+        agent.DoorHeard = Concept(Chapter1Data.Text("重演·认知·门边所闻"), ProjectionKind.Event, NightTags.Silence);
+        agent.Smoke = Concept(Chapter1Data.Text("重演·认知·烟"), ProjectionKind.Material);
+        agent.Report = Concept(Chapter1Data.Text("重演·认知·门已闩好的回报"), ProjectionKind.Event);
+        agent.Claim = Concept(Chapter1Data.Text("重演·认知·别人对那扇门的说法"), ProjectionKind.Event);
 
         // V6：昨夜之前，四人彼此是否相熟。这决定每个人内部世界里对别人的认识，而不是任何人的行动。
         var familiar = _v.V6 == Acquaintance.Familiar;
@@ -288,8 +299,9 @@ public sealed class NightReplay
     private static Effect Set(Projection p, Tag tag, int value) => new Effect.Set(p, tag, value);
     private static Effect When(Condition c, Effect e) => new Effect.When(c, e);
 
-    private void AddHabit(Agent a, string label, string thought, string spot, int weight, Condition condition, Effect effect)
-        => a.Habits.Add(new(new Rule(condition, RuleMode.Prefer, effect, weight, Truth.True), label, thought, spot));
+    private void AddHabit(Agent a, string kind, string spot, int weight, Condition condition, Effect effect)
+        => a.Habits.Add(new(new Rule(condition, RuleMode.Prefer, effect, weight, Truth.True),
+            new(kind, a.Who, Object: spot), Chapter1Data.Text("重演·心声·" + kind), spot));
 
     private void WriteHabits(Agent detective, Agent huo, Agent shen, Agent su)
     {
@@ -301,14 +313,14 @@ public sealed class NightReplay
             var self = _v.V5 == DetectiveHeeds.Himself ? 3 : 0;
             var hall = M(_space[Room.Hall]);
             var foyer = M(_space[Room.Foyer]);
-            AddHabit(a, "侦探循着喊声去活动厅", "活动厅有人在喊。去看看出了什么事。", "", 2,
+            AddHabit(a, "follow_shout", "", 2,
                 All(Ex(a.Alarm), Ex(a.Shout), Not(At(Me, hall)), Not(Ex(a.Claim))), Look(hall));
-            AddHabit(a, "侦探自己去门边看", "说法我听到了。可门是什么样，我得自己去看。", "door", 1 + self,
+            AddHabit(a, "inspect_door", "door", 1 + self,
                 All(Ex(a.Claim), Not(Ex(a.DoorHeard))), Look(M(_door)));
-            AddHabit(a, "侦探撤开木楔，门合上挡烟——没有插闩", "门被楔着，烟在往里灌。先撤楔让门合上挡烟——门外是谁还不知道，闩先不插。", "door", 1 + self,
+            AddHabit(a, "close_smoke", "door", 1 + self,
                 All(Ex(a.DoorHeard), At(Me, foyer), Ex(a.Smoke), T(M(_door), NightTags.Wedged), Not(T(M(_door), NightTags.CalledOut))),
                 Seq(Look(M(_door)), Set(M(_wedge), NightTags.Kicked, 1), Set(M(_door), NightTags.Wedged, 0), Set(M(_door), NightTags.Open, 0)));
-            AddHabit(a, "侦探照门外听清的话，闩上门", "门外的人自己说了：闩门，别开。我亲耳听见的。", "door", 1 + self,
+            AddHabit(a, "bolt_heard", "door", 1 + self,
                 All(Ex(a.DoorHeard), At(Me, foyer), T(a.Heard, NightTags.ClearBolt), Not(T(M(_door), NightTags.Bolted))),
                 Seq(Look(M(_door)), When(T(M(_door), NightTags.Wedged), Seq(Set(M(_wedge), NightTags.Kicked, 1), Set(M(_door), NightTags.Wedged, 0))),
                     Set(M(_door), NightTags.Open, 0), Set(M(_door), NightTags.Bolted, 1)));
@@ -326,41 +338,41 @@ public sealed class NightReplay
                 When(T(door, NightTags.Wedged), Seq(Set(M(_wedge), NightTags.Kicked, 1), Set(door, NightTags.Wedged, 0))),
                 Set(door, NightTags.Open, 0), Set(door, NightTags.Bolted, 1),
                 new Effect.Act(ActionOp.Travel, M(_passage[(Room.Foyer, Room.Hall)])),
-                new Effect.Say(a.Self, "闩好了。"));
+                new Effect.Say(a.Self, "bolt_report"));
             var openAndReport = Seq(Look(door), Set(door, NightTags.Open, 1),
                 new Effect.Act(ActionOp.Travel, M(_passage[(Room.Foyer, Room.Hall)])),
-                new Effect.Say(a.Self, "门开着。"));
-            AddHabit(a, "霍铎在石板上速记：G：⊥门 ✕开 ◎", "格雷厄姆：闩门。禁开。守铜口。记下。", "slate", 3,
+                new Effect.Say(a.Self, "open_report"));
+            AddHabit(a, "slate_bolt_tube", "slate", 3,
                 All(Ex(a.Order), T(a.Order, NightTags.Bolt), T(a.Order, NightTags.HoldTube), Not(T(slate, NightTags.Line1))),
                 Seq(Look(slate), Set(slate, NightTags.Line1, 1)));
-            AddHabit(a, "霍铎在石板上速记：G：开门", "格雷厄姆：开门。记下。", "slate", 3,
+            AddHabit(a, "slate_open", "slate", 3,
                 All(Ex(a.Order), T(a.Order, NightTags.OpenOrder), Not(T(slate, NightTags.Line1))),
                 Seq(Look(slate), Set(slate, NightTags.Line1, 2)));
-            AddHabit(a, "霍铎在石板上速记：⊥门 ✕开", "门外的人说：闩门，别开。记下。", "slate", 1,
+            AddHabit(a, "slate_bolt_outside", "slate", 1,
                 All(Ex(a.Order), T(a.Order, NightTags.Bolt), Not(T(a.Order, NightTags.HoldTube)), Not(T(slate, NightTags.Line1))),
                 Seq(Look(slate), Set(slate, NightTags.Line1, 3)));
-            AddHabit(a, "霍铎守在铜口旁，朝走廊喊：闩门！", "格雷厄姆叫我守铜口，我不能走。谁来，谁去闩。", "tube", 2,
+            AddHabit(a, "shout_bolt", "tube", 2,
                 All(T(a.Order, NightTags.FromTube), T(a.Order, NightTags.Bolt), T(slate, NightTags.Line1), Not(T(hall, NightTags.Shout))),
                 Seq(Look(hall), Set(hall, NightTags.Shout, 1)));
-            AddHabit(a, "霍铎守在铜口旁，朝走廊喊：开门！", "我守着铜口。谁来，谁去开。", "tube", 2,
+            AddHabit(a, "shout_open", "tube", 2,
                 All(T(a.Order, NightTags.FromTube), T(a.Order, NightTags.OpenOrder), T(slate, NightTags.Line1), Not(T(hall, NightTags.Shout))),
                 Seq(Look(hall), Set(hall, NightTags.Shout, 2)));
-            AddHabit(a, "霍铎给侦探看石板：“格雷厄姆说的。闩门。我得守在这。”", "他来了。上头的话我记在石板上，他认得我的字——让他去闩。", "tube", 4,
+            AddHabit(a, "ask_bolt", "tube", 4,
                 All(T(a.Order, NightTags.FromTube), T(a.Order, NightTags.Bolt), At(Me, hall), At(det, hall), Not(Rel(det, NightRelations.Asked, a.Order))),
-                Seq(new Effect.Say(det, "格雷厄姆说的。闩门。我得守在这。", boltAndReport), new Effect.Think(Rel(det, NightRelations.Asked, a.Order))));
-            AddHabit(a, "霍铎对侦探说：“铜口里有人喊开门。你去开。”", "他来了。让他去开。", "tube", 4,
+                Seq(new Effect.Say(det, "bolt_request", boltAndReport), new Effect.Think(Rel(det, NightRelations.Asked, a.Order))));
+            AddHabit(a, "ask_open", "tube", 4,
                 All(T(a.Order, NightTags.FromTube), T(a.Order, NightTags.OpenOrder), At(Me, hall), At(det, hall), Not(Rel(det, NightRelations.Asked, a.Order))),
-                Seq(new Effect.Say(det, "铜口里有人喊开门。你去开。", openAndReport), new Effect.Think(Rel(det, NightRelations.Asked, a.Order))));
-            AddHabit(a, "霍铎在石板速记下补一行：放大镜小图 + ⊥✓", "闩好了。记下：放大镜，⊥✓。", "slate", 3,
+                Seq(new Effect.Say(det, "open_request", openAndReport), new Effect.Think(Rel(det, NightRelations.Asked, a.Order))));
+            AddHabit(a, "slate_glyph", "slate", 3,
                 All(Ex(a.Report), T(det, NightTags.Glyph), Not(T(slate, NightTags.Line2))),
                 Seq(Look(slate), Set(slate, NightTags.Line2, 1)));
-            AddHabit(a, "霍铎在石板速记下补一行：一个问号 + ⊥✓", "闩好了。……这人用什么记号？画个问号。", "slate", 3,
+            AddHabit(a, "slate_question", "slate", 3,
                 All(Ex(a.Report), Not(T(det, NightTags.Glyph)), Not(T(slate, NightTags.Line2))),
                 Seq(Look(slate), Set(slate, NightTags.Line2, 2)));
-            AddHabit(a, "霍铎自己开门查看，用木楔撑住", "门外有人。开门看看。", "door", 3,
+            AddHabit(a, "open_wedge", "door", 3,
                 All(Ex(a.Outsider), T(a.Outsider, NightTags.WantsOpen), At(Me, foyer), Not(T(door, NightTags.Open))),
                 Seq(Look(door), Set(door, NightTags.Open, 1), Set(door, NightTags.Wedged, 1)));
-            AddHabit(a, "霍铎照门外的话，自己闩上门", "门外说闩门。闩。", "door", 2,
+            AddHabit(a, "bolt_outside", "door", 2,
                 All(Ex(a.Order), T(a.Order, NightTags.Bolt), Not(T(a.Order, NightTags.FromTube)), At(Me, foyer), Not(T(door, NightTags.Bolted))),
                 Seq(Look(door), Set(door, NightTags.Open, 0), Set(door, NightTags.Bolted, 1)));
         }
@@ -371,20 +383,20 @@ public sealed class NightReplay
             var cloth = M(_cloth);
             var door = M(_door);
             var cups = M(_cups);
-            AddHabit(a, "沈鼎浸湿抹布", "烟。先湿布。", "sink", 3,
+            AddHabit(a, "wet_cloth", "sink", 3,
                 All(Ex(a.Smoke), Not(T(cloth, NightTags.Wet))),
                 Seq(Look(cloth), new Effect.Act(ActionOp.Take, cloth), Set(cloth, NightTags.Wet, 1)));
             var foyer = M(_space[Room.Foyer]);
-            AddHabit(a, "沈鼎拿着湿布去门厅", "烟从门那边来。把缝堵上。", "door", 3,
+            AddHabit(a, "carry_cloth", "door", 3,
                 All(T(cloth, NightTags.Wet), Not(T(cloth, NightTags.Placed)), Not(At(Me, foyer))), Look(door));
             // 规则：湿布只压在已闭合的门底；门开着，就等它合上。
-            AddHabit(a, "沈鼎沿闭合的门底压下湿布", "门合上了。顺着门底压一条，烟就进不来。", "door", 3,
+            AddHabit(a, "place_cloth", "door", 3,
                 All(T(cloth, NightTags.Wet), At(Me, foyer), Not(T(door, NightTags.Open)), Not(T(cloth, NightTags.Placed))),
                 Seq(Look(door), new Effect.Act(ActionOp.Place, cloth, foyer), Set(cloth, NightTags.Placed, 1)));
-            AddHabit(a, "沈鼎泡了四杯茶，按各人的口味放糖", "人都吓着了，先泡茶。阿泠不吃糖，老霍要两勺——这我记得。", "sink", 2,
+            AddHabit(a, "tea_taste", "sink", 2,
                 All(T(cloth, NightTags.Placed), T(M(su.Body), NightTags.Taste), T(M(huo.Body), NightTags.Taste), T(M(detective.Body), NightTags.Taste), Not(T(cups, NightTags.Sugar))),
                 Seq(Look(cups), Set(cups, NightTags.Sugar, 1)));
-            AddHabit(a, "沈鼎泡了四杯茶，每杯放一样的糖", "人都吓着了，先泡茶。谁爱吃甜，我不知道——一样放。", "sink", 2,
+            AddHabit(a, "tea_equal", "sink", 2,
                 All(T(cloth, NightTags.Placed), Not(T(M(su.Body), NightTags.Taste)), Not(T(cups, NightTags.Sugar))),
                 Seq(Look(cups), Set(cups, NightTags.Sugar, 2)));
         }
@@ -398,31 +410,31 @@ public sealed class NightReplay
             var foyer = M(_space[Room.Foyer]);
             var det = M(detective.Body);
             var keepOpen = Seq(Look(door), Set(door, NightTags.Open, 1), Set(door, NightTags.CalledOut, 1));
-            AddHabit(a, "苏泠拉开门，用木楔撑住，贴缝听", "门外有人在喊开门……我得开门让他进来。", "door", 3,
+            AddHabit(a, "listen_open", "door", 3,
                 All(Ex(a.Outsider), T(a.Outsider, NightTags.WantsOpen), Not(T(door, NightTags.Open)), Not(T(frame, NightTags.Dent))),
                 Seq(Look(door), Set(door, NightTags.Open, 1), Set(door, NightTags.Wedged, 1)));
-            AddHabit(a, "苏泠贴着门缝听，用音叉敲门框辨声路", "门开着，外面却没声了。声音从哪来？敲一下就知道。", "door", 3,
+            AddHabit(a, "fork_frame", "door", 3,
                 All(Ex(a.Outsider), T(a.Outsider, NightTags.WantsOpen), T(door, NightTags.Open), Not(T(frame, NightTags.Dent))),
                 Seq(Look(door), Set(frame, NightTags.Dent, 1), new Effect.Act(ActionOp.Place, M(_fork), foyer)));
-            AddHabit(a, "苏泠回房记谱：两拍弱音，后两拍“开门”，记了两遍；旁注“门外？”", "门关上了。把听到的记下来。", "desk", 2,
+            AddHabit(a, "score_tail_open", "desk", 2,
                 All(T(frame, NightTags.Dent), Ex(a.DoorHeard), T(a.Heard, NightTags.TailOpen), Not(T(door, NightTags.Open)), Not(T(score, NightTags.Line1))),
                 Seq(Look(score), Set(score, NightTags.Line1, 1)));
-            AddHabit(a, "苏泠回房记谱：“救我”", "门关上了。把听到的记下来。", "desk", 2,
+            AddHabit(a, "score_tail_help", "desk", 2,
                 All(T(frame, NightTags.Dent), Ex(a.DoorHeard), T(a.Heard, NightTags.TailHelp), Not(T(door, NightTags.Open)), Not(T(score, NightTags.Line1))),
                 Seq(Look(score), Set(score, NightTags.Line1, 2)));
-            AddHabit(a, "苏泠回房记谱：整句“开门，救我”", "门关上了。那句话，记下来。", "desk", 2,
+            AddHabit(a, "score_full", "desk", 2,
                 All(T(frame, NightTags.Dent), Ex(a.DoorHeard), T(a.Heard, NightTags.FullOpen), Not(T(door, NightTags.Open)), Not(T(score, NightTags.Line1))),
                 Seq(Look(score), Set(score, NightTags.Line1, 3)));
             // 规则：开了门的苏泠没有任何离开门边的习惯，直到门关上（记谱的习惯要求门已闭合）；她就守在那里。
-            AddHabit(a, "苏泠对侦探说：“外面有人在喊开门。”", "他是来关门的。外面有人在喊开门——我得告诉他。", "door", 4,
+            AddHabit(a, "ask_keep_open", "door", 4,
                 All(At(Me, foyer), At(det, foyer), Ex(a.Outsider), T(door, NightTags.Open), Not(Rel(det, NightRelations.Told, a.Outsider))),
-                Seq(new Effect.Say(det, "外面有人在喊开门。", keepOpen), new Effect.Think(Rel(det, NightRelations.Told, a.Outsider))));
-            AddHabit(a, "苏泠回房，在乐谱下方换了一支笔写：“他们关了门。”", "他们关了门。", "desk", 3,
+                Seq(new Effect.Say(det, "keep_open_request", keepOpen), new Effect.Think(Rel(det, NightRelations.Told, a.Outsider))));
+            AddHabit(a, "score_closed", "desk", 3,
                 All(T(score, NightTags.Line1), Not(T(door, NightTags.Open)), Not(T(score, NightTags.Line2))),
                 Seq(Look(score), Set(score, NightTags.Line2, 1)));
         }
         foreach (var agent in _agents)
-            Observation.Observe(agent.Soul, new ObservationInput(Names.Of(agent.Who) + "的习惯", ProjectionKind.Concept)
+            Observation.Observe(agent.Soul, new ObservationInput(Chapter1Data.Text("重演·认知·习惯", ("名", Names.Of(agent.Who))), ProjectionKind.Concept)
             {
                 Source = ObservationSource.Introspection, Existence = Truth.True, Rules = [..agent.Habits.Select(h => h.Rule)]
             });
@@ -438,9 +450,9 @@ public sealed class NightReplay
         {
             foreach (var a in _agents) KnowConcept(a, a.Alarm, ObservationSource.Perception);
             foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Awake = true;
-            _agents[0].Thought = "（警铃。惊醒。）";
+            _agents[0].Thought = Chapter1Data.Text("重演·心声·wake");
             foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Thought = PlainThought(a);
-            Frame("", "主楼警铃大作");
+            Frame(new("alarm"));
             QueueDecisions();
         });
         ctb.Schedule(VoiceFirst, () => Voice(1));
@@ -454,7 +466,8 @@ public sealed class NightReplay
         var steps = 0;
         while (steps++ < 20000 && ctb.Pending.Any() && ctb.Pending.First().Due <= LongestNight && ctb.Step()) { }
         _session.Dispose();
-        return new(_v, Traces(), [.._frames], [.._log]);
+        return new(_v, Traces(), [.._frames], [.._log])
+        { DetectiveBoltedOnHuoRequest = _detectiveBoltedOnHuoRequest, DetectiveRefusedStranger = _detectiveRefusedStranger };
     }
 
     private void Voice(int count)
@@ -465,9 +478,9 @@ public sealed class NightReplay
             var hearing = Acoustics.Hear(_v.V3, RoomOf(a.Body));
             Hear(a, words, hearing);
         }
-        Frame("", _v.V3 == VoiceOrigin.Tube
-            ? (count == 1 ? "主楼有人对着铜口说话" : "铜口里的话又说了一遍")
-            : (count == 1 ? "门外有人喊话" : "门外的人又喊了一遍"));
+        Frame(new(_v.V3 == VoiceOrigin.Tube
+            ? (count == 1 ? "voice_tube" : "voice_tube_repeat")
+            : (count == 1 ? "voice_outside" : "voice_outside_repeat")));
         QueueDecisions();
     }
 
@@ -505,11 +518,11 @@ public sealed class NightReplay
         }
         a.Thought = hearing switch
         {
-            Hearing.Full => "“" + words.Full + "”",
-            Hearing.FullMuffled => "门外有人：“" + words.Full + "”",
-            Hearing.Tail => "“" + words.Tail + "”……门外有人。",
-            Hearing.Murmur => "有人在说话……听不清。",
-            _ => a.Who == Person.Detective ? "只有铃声。" : "只有铃声。……出什么事了？"
+            Hearing.Full => Chapter1Data.Text("重演·心声·full", ("句", words.Full)),
+            Hearing.FullMuffled => Chapter1Data.Text("重演·心声·muffled", ("句", words.Full)),
+            Hearing.Tail => Chapter1Data.Text("重演·心声·tail", ("句", words.Tail)),
+            Hearing.Murmur => Chapter1Data.Text("重演·心声·murmur"),
+            _ => a.Who == Person.Detective ? Chapter1Data.Text("重演·心声·alarm_detective") : Chapter1Data.Text("重演·心声·alarm_other")
         };
     }
 
@@ -574,15 +587,15 @@ public sealed class NightReplay
             if (e.Source != ObservationSource.Testimony) continue;
             switch (e.Details)
             {
-                case "闩好了。":
+                case "bolt_report":
                     KnowConcept(a, a.Report, ObservationSource.Testimony);
                     break;
-                case "外面有人在喊开门。":
+                case "keep_open_request":
                     KnowConcept(a, a.Outsider, ObservationSource.Testimony, (NightTags.WantsOpen, true));
                     KnowConcept(a, a.Claim, ObservationSource.Testimony);
                     break;
-                case "格雷厄姆说的。闩门。我得守在这。":
-                case "铜口里有人喊开门。你去开。":
+                case "bolt_request":
+                case "open_request":
                     KnowConcept(a, a.Claim, ObservationSource.Testimony);
                     break;
             }
@@ -622,7 +635,7 @@ public sealed class NightReplay
         }
         var effect = pick.Effect;
         var habit = a.Habits.FirstOrDefault(h => Ast.Equivalent(Ast.Bind(h.Rule.Effect, new ActionContext(a.Self, Scene: a.Self.Parent)), effect));
-        var (label, thought, spot) = habit is not null ? (habit.Label, habit.Thought, habit.Spot) : RequestText(a, pick.Basis);
+        var (ev, thought, spot) = habit is not null ? (habit.Event, habit.Thought, habit.Spot) : RequestText(a, pick.Basis);
         var weighing = Weighing(a, pick.Basis);
         if (weighing is not null) thought = habit is not null ? weighing + thought : thought + weighing;
         else if (doubt is not null) thought = doubt + thought;
@@ -637,14 +650,14 @@ public sealed class NightReplay
             var passage = a.Mental[_passage[(here, next)]];
             a.Thought = thought;
             a.Spot = "";
-            Submit(a, new Effect.Act(ActionOp.Travel, passage), Hops[Key(here, next)] / a.Speed, null, $"{Names.Of(a.Who)}来到{Names.Of(next)}");
+            Submit(a, new Effect.Act(ActionOp.Travel, passage), Hops[Key(here, next)] / a.Speed, null, new("arrive", a.Who, Room: next));
             return;
         }
         Settle(a, effect, pick.Basis);
         a.Thought = thought;
         a.Spot = spot;
         // 开口说话不占行动值：在场的人看见对方进门，当即开口。
-        Submit(a, effect, effect is Effect.Sequence { Items: [Effect.Say, ..] } ? 0.0 : 1.0, pick.Basis, label);
+        Submit(a, effect, effect is Effect.Sequence { Items: [Effect.Say, ..] } ? 0.0 : 1.0, pick.Basis, ev);
     }
 
     /// <summary>别人请自己做事，但 SocialSystem 没有判为接受：这一刻的心声。</summary>
@@ -658,7 +671,8 @@ public sealed class NightReplay
             if (sender is null || ReferenceEquals(pick?.Basis, request)) continue;
             var stranger = sender.Tags.GetValueOrDefault(NightTags.Acquainted) == 0;
             _log.Add($"{Now:0.0} {Names.Of(a.Who)} 对 {sender.Name} 的请求：{attitude.Stance}（{attitude.Score}）");
-            return stranger ? "我凭什么信一个昨天才认识的人？" : $"{sender.Name}的话，我不全信。";
+            if (stranger && a.Who == Person.Detective) _detectiveRefusedStranger = true;
+            return stranger ? Chapter1Data.Text("重演·心声·stranger") : Chapter1Data.Text("夜间·怀疑·熟人", ("人名", sender.Name));
         }
         return null;
     }
@@ -672,33 +686,34 @@ public sealed class NightReplay
         var pending = a.Soul.World.Projections.Where(p => p.Kind == ProjectionKind.Event && p.Procedure is not null &&
             p.Tags.GetValueOrDefault(Tags.Responded) == 0).ToArray();
         var accepted = pending.Where(r => SocialSystem.Evaluate(a.Soul.World, a.Self, r).Stance == SocialStance.Accept).ToArray();
-        string Sender(Projection r) => r.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target?.Name ?? "有人";
+        string Sender(Projection r) => r.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target?.Name ?? Chapter1Data.Text("重演·有人");
         if (pending.Contains(basis))
         {
             var others = accepted.Where(r => !ReferenceEquals(r, basis)).ToArray();
-            return others.Length == 0 ? null : $"{string.Join("、", others.Select(Sender))}的话我也听了——两边比，我更信{Sender(basis)}。";
+            return others.Length == 0 ? null : Chapter1Data.Text("重演·心声·prefer_sender", ("名单", string.Join("、", others.Select(Sender))), ("人名", Sender(basis)));
         }
         if (accepted.Length >= 1 && ChangesDoorOrLooks(basis))
             return accepted.Length == 1
-                ? $"{Sender(accepted[0])}的话我不是不信，可我得亲眼看过才算数——"
-                : $"{string.Join("、", accepted.Select(Sender))}两边的说法对不上，我谁都不全信——";
+                ? Chapter1Data.Text("重演·心声·inspect_first", ("人名", Sender(accepted[0])))
+                : Chapter1Data.Text("重演·心声·conflicting", ("名单", string.Join("、", accepted.Select(Sender))));
         return null;
     }
 
     private static bool ChangesDoorOrLooks(Projection basis) => basis.Kind == ProjectionKind.Concept;
 
-    private (string Label, string Thought, string Spot) RequestText(Agent a, Projection request)
+    private (ReplayEvent Event, string Thought, string Spot) RequestText(Agent a, Projection request)
     {
-        var sender = request.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target?.Name ?? "有人";
-        return request.Name switch
+        var sender = request.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target;
+        var subject = _agents.FirstOrDefault(other => ReferenceEquals(a.Mental[other.Body], sender))?.Who;
+        var kind = request.Name switch
         {
-            "格雷厄姆说的。闩门。我得守在这。" => ($"{Names.Of(a.Who)}照{sender}转述的指令，踢开木楔，门自行合上，插上闩，回去报告",
-                $"{sender}说上头下令闩门……那是他亲手记的速记，我认得他的字。我信他。", "door"),
-            "铜口里有人喊开门。你去开。" => ($"{Names.Of(a.Who)}照{sender}的话去开门", $"{sender}说铜口里有人喊开门……我信他。去开。", "door"),
-            "外面有人在喊开门。" => ($"{Names.Of(a.Who)}照{sender}的判断，让门开着，朝门外喊话",
-                $"{sender}说门外有人在喊开门……她的耳朵，我信。门先开着，喊一声看看。", "door"),
-            _ => ($"{Names.Of(a.Who)}照{sender}的话做", "", "")
+            "bolt_request" => "request_bolt", "open_request" => "request_open",
+            "keep_open_request" => "request_keep_open", _ => "request_other"
         };
+        var spot = kind == "request_other" ? "" : "door";
+        var ev = new ReplayEvent(kind, a.Who, subject, spot);
+        return (ev, kind == "request_other" ? "" : Chapter1Data.Text("重演·心声·" + kind,
+            ("人名", subject is { } who ? Names.Of(who) : Chapter1Data.Text("重演·有人"))), spot);
     }
 
     /// <summary>对同一扇门的几个请求，一旦作出决定就都算答复过了：照了一个，就是没照另一个。</summary>
@@ -764,24 +779,27 @@ public sealed class NightReplay
         return step;
     }
 
-    private void Submit(Agent a, Effect effect, double delay, Projection? basis, string label)
+    private void Submit(Agent a, Effect effect, double delay, Projection? basis, ReplayEvent ev)
     {
         a.Busy = true;
         a.StartRoom = RoomOf(a.Body);
         var execution = _session.Submit(a.Soul, new ActionIntent(a.Self, effect, delay, Basis: basis));
-        _labels[execution] = label;
+        _events[execution] = ev;
     }
 
-    private readonly Dictionary<ActionExecution, string> _labels = [];
+    private readonly Dictionary<ActionExecution, ReplayEvent> _events = [];
 
     private void OnCompleted(ActionExecution execution)
     {
         var a = _agents.First(x => ReferenceEquals(x.Self, execution.Intent.Actor));
         a.Busy = false;
-        var label = _labels.GetValueOrDefault(execution, "");
+        var ev = _events[execution];
+        if (execution.Status == ExecutionStatus.Completed && a.Who == Person.Detective &&
+            ev.Kind == "request_bolt" && ev.Subject == Person.Huo && Tag(_door, NightTags.Bolted) == 1)
+            _detectiveBoltedOnHuoRequest = true;
         if (execution.Status != ExecutionStatus.Completed)
         {
-            _log.Add($"{Now:0.0} 失败 {label}：{execution.Result?.Failure}");
+            _log.Add($"{Now:0.0} 失败 {ev.Label}：{execution.Result?.Failure}");
             if (++a.Failures > 5) a.Awake = false;
         }
         Physics(a);
@@ -789,14 +807,14 @@ public sealed class NightReplay
         if (execution.Intent.Changes is Effect.Act { Operation: ActionOp.Travel } && a.Approach is { } approach && RoomOf(a.Body) == approach.Room)
         {
             a.Approach = null;
-            Frame(Names.Of(a.Who), label);
+            Frame(ev);
             PerceiveAll();
             a.Spot = SpotOf(approach.Target);
-            Submit(a, Look(approach.Target), LookDelay, null, $"{Names.Of(a.Who)}到了{Names.Of(approach.Room)}，先看一眼");
+            Submit(a, Look(approach.Target), LookDelay, null, new("inspect_arrival", a.Who, Room: approach.Room));
             QueueDecisions();
             return;
         }
-        if (execution.Intent.Changes is not Effect.Act { Operation: ActionOp.Inspect }) Frame(Names.Of(a.Who), label);
+        if (execution.Intent.Changes is not Effect.Act { Operation: ActionOp.Inspect }) Frame(ev);
         QueueDecisions();
     }
 
@@ -835,7 +853,7 @@ public sealed class NightReplay
             foreach (var a in _agents.Where(a => a != actor && Acoustics.HearsShout(RoomOf(a.Body))))
             {
                 KnowConcept(a, a.Shout, ObservationSource.Perception, (NightTags.Bolt, shout == 1), (NightTags.OpenOrder, shout == 2));
-                if (!a.Busy) a.Thought = shout == 1 ? "活动厅有人在喊：“闩门！”" : "活动厅有人在喊：“开门！”";
+                if (!a.Busy) a.Thought = shout == 1 ? Chapter1Data.Text("重演·心声·hear_bolt_shout") : Chapter1Data.Text("重演·心声·hear_open_shout");
             }
         }
     }
@@ -857,12 +875,12 @@ public sealed class NightReplay
         if (Tag(_door, NightTags.Wedged) == 1) _wedge.Get<StateProperty>()!.Values[NightTags.Soot] = 1;
         _runtime.Sync();
         // 鞋印只来自之后在灰上动门的人（见 Physics）；进烟那一刻站着不动的人不留印。
-        Frame("", "门缝外的烟灰涌入门厅");
+        Frame(new("smoke_enter", Object: "floor", Room: Room.Foyer));
         var shen = _agents.First(a => a.Who == Person.Shen);
         _session.CTB.Schedule(SmokeReachesPantry, () =>
         {
             if (RoomOf(shen.Body) == Room.Pantry) KnowConcept(shen, shen.Smoke, ObservationSource.Perception);
-            Frame("", "烟味传到备餐间");
+            Frame(new("smoke_pantry", Room: Room.Pantry));
             QueueDecisions();
         });
     }
@@ -875,30 +893,31 @@ public sealed class NightReplay
         var door = a.Mental[_door];
         var inFoyer = RoomOf(a.Body) == Room.Foyer;
         if (a.Who == Person.Su && inFoyer && door.Tags.GetValueOrDefault(NightTags.Open) == 1 && a.Outsider.Existence == Truth.True)
-            return "门外又没声了……我守在这儿，等它再响。";
+            return Chapter1Data.Text("重演·心声·wait_voice");
         if (a.Who == Person.Shen && inFoyer && a.Mental[_cloth].Tags.GetValueOrDefault(NightTags.Wet) == 1 && door.Tags.GetValueOrDefault(NightTags.Open) == 1)
-            return "门还开着，湿布压不住——等它合上。";
+            return Chapter1Data.Text("重演·心声·wait_door");
         if (a.Who == Person.Huo && RoomOf(a.Body) == Room.Hall && a.Order.Tags.GetValueOrDefault(NightTags.HoldTube) == 1)
-            return "格雷厄姆叫我守在铜口旁，等下一次通知。我等。";
+            return Chapter1Data.Text("重演·心声·wait_tube");
         return null;
     }
 
     private string PlainThought(Agent a) => a.Who switch
     {
-        Person.Su => "铃……",
-        Person.Huo => "铃。",
-        Person.Shen => "铃？酵种还没续完。",
+        Person.Su => Chapter1Data.Text("重演·心声·alarm_su"),
+        Person.Huo => Chapter1Data.Text("重演·心声·alarm_huo"),
+        Person.Shen => Chapter1Data.Text("重演·心声·alarm_shen"),
         _ => ""
     };
 
-    private void Frame(string actor, string label)
+    private void Frame(ReplayEvent ev)
     {
-        _frames.Add(new(Now, actor, label,
+        if (ev.Who is { } who && ev.Room is null) ev = ev with { Room = RoomOf(_agents.First(a => a.Who == who).Body) };
+        _frames.Add(new(Now, ev.Who is { } actor ? Names.Of(actor) : "", ev.Label,
             _agents.ToImmutableDictionary(a => a.Who, a => RoomOf(a.Body)),
             _agents.ToImmutableDictionary(a => a.Who, a => a.Spot),
             _agents.ToImmutableDictionary(a => a.Who, a => a.Thought),
-            Tag(_door, NightTags.Open) == 1, Tag(_door, NightTags.Bolted) == 1, Tag(_floor, NightTags.AshFan) == 1, _smokeIn));
-        _log.Add($"{Now:0.0} {label}");
+            Tag(_door, NightTags.Open) == 1, Tag(_door, NightTags.Bolted) == 1, Tag(_floor, NightTags.AshFan) == 1, _smokeIn, ev));
+        _log.Add($"{Now:0.0} {ev.Label}");
     }
 
     private MorningTraces Traces()

@@ -59,7 +59,7 @@ public sealed partial class MorningWorld
         // 否则其中“守着手头的事”等常数偏好会带进下一章，压过那里的一切日常。
         foreach (var who in _minds.Keys)
         {
-            var habit = _souls[who].World.Projections.FirstOrDefault(p => p.Name == Names.Of(who) + "对旧物的习惯");
+            var habit = _minds[who].Habits;
             if (habit is not null)
                 Observation.Observe(_souls[who], new ObservationInput(habit.Name, habit.Kind) { Target = habit, Source = ObservationSource.Introspection, Time = ++_time, Rules = [] });
         }

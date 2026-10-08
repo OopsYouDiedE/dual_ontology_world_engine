@@ -22,10 +22,17 @@ public sealed partial class AwakeningContentSession
         var replay = Session.GetProgress("replay_result");
         replay.Clear();
         replay["full_match"] = checkedMatch;
-        replay["detective_bolted"] = result.Log.Any(l => l.Contains("侦探照霍铎转述"));
+        replay["detective_bolted"] = result.DetectiveBoltedOnHuoRequest;
+        replay["detective_refused_stranger"] = result.DetectiveRefusedStranger;
         replay["frames"] = result.Frames.Select(f => (object)new Dictionary<string, object>
         {
             ["t"] = f.Time, ["actor"] = f.Actor, ["label"] = f.Label,
+            ["event"] = new Dictionary<string, object>
+            {
+                ["kind"] = f.Event.Kind, ["who"] = f.Event.Who is { } who ? Names.PersonKeys[(int)who] : "",
+                ["subject"] = f.Event.Subject is { } subject ? Names.PersonKeys[(int)subject] : "",
+                ["object"] = f.Event.Object, ["room"] = f.Event.Room is { } room ? Names.RoomKeys[(int)room] : "",
+            },
             ["thoughts"] = f.Thoughts.ToDictionary(p => Names.PersonKeys[(int)p.Key], p => (object)p.Value)
         }).ToArray();
         // Actual facts belong to the public replay host, not the subjective search model.

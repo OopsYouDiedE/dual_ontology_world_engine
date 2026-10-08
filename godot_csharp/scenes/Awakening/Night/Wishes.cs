@@ -10,7 +10,7 @@ public static class Wishes
 {
     private static readonly Dictionary<string, string> SkillNames = new()
     {
-        ["strength"] = "力气", ["lock"] = "开锁", ["signal"] = "信号", ["structure"] = "结构", ["cook"] = "厨艺", ["greenhouse_skill"] = "温室",
+        ["strength"] = Chapter1Data.Text("心愿·技能·strength"), ["lock"] = Chapter1Data.Text("心愿·技能·lock"), ["signal"] = Chapter1Data.Text("心愿·技能·signal"), ["structure"] = Chapter1Data.Text("心愿·技能·structure"), ["cook"] = Chapter1Data.Text("心愿·技能·cook"), ["greenhouse_skill"] = Chapter1Data.Text("心愿·技能·greenhouse_skill"),
     };
 
     private static readonly Lazy<Dictionary<string, JsonElement>> Profiles = new(() =>
@@ -29,7 +29,7 @@ public static class Wishes
         var root = Chapter1Data.Root;
         if (!Profiles.Value.TryGetValue(person, out var profile) || !root.TryGetProperty("WISHES", out var wishes)
             || !root.TryGetProperty("METHODS", out var methods)) return [];
-        var lines = new List<string> { $"{person}想要：{profile.GetProperty("desire").GetString()}" };
+        var lines = new List<string> { Chapter1Data.Text("心愿·标题", ("名", person), ("欲望", profile.GetProperty("desire").GetString()!)) };
         var seen = new HashSet<string>(StringComparer.Ordinal);
         void Goal(string goal, int depth)
         {
@@ -37,9 +37,11 @@ public static class Wishes
             var needs = method.GetProperty("needs").EnumerateObject().Select(n =>
             {
                 var own = profile.TryGetProperty(n.Name, out var level) ? level.GetInt32() : 0;
-                return own >= n.Value.GetInt32() ? $"{SkillNames[n.Name]}：自己够（{own}）" : $"{SkillNames[n.Name]}：须找会的人（自己 {own}，要 {n.Value.GetInt32()}）";
+                return Chapter1Data.Text(own >= n.Value.GetInt32() ? "心愿·自己够" : "心愿·须找人",
+                    ("技能", SkillNames[n.Name]), ("自己", own.ToString()), ("需要", n.Value.GetInt32().ToString()));
             }).ToArray();
-            lines.Add(new string('　', depth) + $"· {goal}：{method.GetProperty("how").GetString()}" + (needs.Length > 0 ? "（" + string.Join("；", needs) + "）" : ""));
+            lines.Add(new string('　', depth) + Chapter1Data.Text("心愿·目标", ("目标", goal), ("方法", method.GetProperty("how").GetString()!))
+                + (needs.Length > 0 ? Chapter1Data.Text("心愿·需求", ("列表", string.Join("；", needs))) : ""));
             foreach (var part in method.GetProperty("parts").EnumerateArray()) Goal(part.GetString()!, depth + 1);
         }
         foreach (var flag in profile.GetProperty("desire_flags").EnumerateArray())

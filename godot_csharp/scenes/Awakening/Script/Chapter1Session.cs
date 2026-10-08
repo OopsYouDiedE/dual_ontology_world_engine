@@ -136,7 +136,7 @@ public sealed partial class Chapter1Session : IChapterSession
             switch (kind)
             {
                 case "begin":
-                    if (_begun) throw new InvalidOperationException("章节已开始。");
+                    if (_begun) throw new InvalidOperationException(Chapter1Data.Text("界面·错误·已开始"));
                     _begun = true;
                     Start(Begin());
                     break;
@@ -231,7 +231,7 @@ public sealed partial class Chapter1Session : IChapterSession
             }
             if (!progressed) return;
         }
-        throw new InvalidOperationException("章节作业没有收敛。");
+        throw new InvalidOperationException(Chapter1Data.Text("界面·错误·未收敛"));
     }
 
     private bool Advance(Job job)
@@ -290,12 +290,12 @@ public sealed partial class Chapter1Session : IChapterSession
         if (_modal is { } modal && modal.Id == id)
         {
             var choice = Text(input, "choice_id");
-            if (!modal.Handlers.TryGetValue(choice, out var handler)) throw new InvalidOperationException("选择已失效或当前不可用。");
+            if (!modal.Handlers.TryGetValue(choice, out var handler)) throw new InvalidOperationException(Chapter1Data.Text("界面·错误·选择失效"));
             _modal = null;
             Start(handler());
             return;
         }
-        throw new InvalidOperationException("呈现凭证已失效。");
+        throw new InvalidOperationException(Chapter1Data.Text("界面·错误·凭证失效"));
     }
 
     // ------------------------------------------------------------ modal --
@@ -570,7 +570,7 @@ public sealed partial class Chapter1Session : IChapterSession
     {
         var values = Ints(input.GetValueOrDefault("vars"));
         if (values.Length == 5) return [.. values, -1];
-        if (values.Length != 6) throw new InvalidOperationException("请先填写重演手稿中的问题。");
+        if (values.Length != 6) throw new InvalidOperationException(Chapter1Data.Text("界面·错误·手稿未填"));
         return values;
     }
 }

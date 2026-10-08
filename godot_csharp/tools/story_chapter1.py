@@ -488,7 +488,13 @@ def read_utterance(head: Line, body: list[Line]) -> dict[str, Any]:
     for word in meanings:
         if word not in VOICE_MEANINGS:
             raise StoryError(f"话语含义不认识“{word}”。可用：" + "、".join(VOICE_MEANINGS), head.number)
-    return {"full": fields["整句"][0], "tail": fields["句尾"][0], **{name: zh in meanings for zh, name in VOICE_MEANINGS.items()}}
+    tail_meanings = split_list(fields["句尾含义"][0]) if "句尾含义" in fields else []
+    for word in tail_meanings:
+        if word not in {"开门", "求救"}:
+            raise StoryError(f"句尾含义不认识“{word}”。可用：开门、求救", head.number)
+    return {"full": fields["整句"][0], "tail": fields["句尾"][0],
+            **{name: zh in meanings for zh, name in VOICE_MEANINGS.items()},
+            "TailWantsOpen": "开门" in tail_meanings or "求救" in tail_meanings, "TailHelp": "求救" in tail_meanings}
 
 
 def read_regions(body: list[Line]) -> list[dict[str, Any]]:

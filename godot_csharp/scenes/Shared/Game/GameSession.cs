@@ -63,9 +63,9 @@ public sealed class GameSession(string campusScript, string livingView, string c
                 return [Event("home")];
             }
             if (destination is "continue" or "chapter2") return Continue();
-            throw new InvalidOperationException("未知游戏去处：" + destination);
+            throw new InvalidOperationException(Chapter1Data.Text("界面·错误·未知去处", ("去处", destination)));
         }
-        if (_session is null) throw new InvalidOperationException("请先开始游戏。");
+        if (_session is null) throw new InvalidOperationException(Chapter1Data.Text("界面·错误·游戏未开始"));
         if (kind == "view_ready")
         {
             if (!_waitingForView) return [];
@@ -82,7 +82,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
             var node = Map(Map(campus, "nodes"), nodeId);
             var known = Map(campus, "known");
             if (node.Count == 0 || !Flag(known, nodeId) || _session.Snapshot().GetValueOrDefault("field_enabled") is not true)
-                return [Event("error", ("message", "这个地点尚未开放。"))];
+                return [Event("error", ("message", Chapter1Data.Text("界面·地点未开放")))];
             return [Event("travel", ("node", node))];
         }
         return Normalize(_session.Dispatch(input));
@@ -104,9 +104,9 @@ public sealed class GameSession(string campusScript, string livingView, string c
     private IReadOnlyList<Dictionary<string, object?>> Continue()
     {
         if (_session is not Chapter1Session || _session.Snapshot().GetValueOrDefault("ended") is not true)
-            throw new InvalidOperationException("当前会话尚未离开宿舍。");
+            throw new InvalidOperationException(Chapter1Data.Text("界面·错误·尚未出区"));
         var live = ChapterWorldContinuity.Current
-            ?? throw new InvalidOperationException("缺少正在运行的世界，无法继续。");
+            ?? throw new InvalidOperationException(Chapter1Data.Text("界面·错误·缺少世界"));
         var options = Chapter2AuthoredProfiles.Apply(campusScript);
         _ = new Chapter2Narrative(campusScript, true);
         Chapter2InteractionSession.ValidateScript(campusScript);
@@ -114,7 +114,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
             if (character.Self is null || live.Runtime.Representations(character.Body).Count != 1
                 || !ReferenceEquals(live.Runtime.KnownProjection(character.Soul, character.Body), character.Self)
                 || live.Simulation.IsActing(character.Self))
-                throw new InvalidOperationException("人物的运行中引用不完整，或仍在行动。");
+                throw new InvalidOperationException(Chapter1Data.Text("界面·错误·人物尚未就绪"));
         var game = new DualOntologyWorldEngine.Chapter2.Prototype.Game(options, live,
             WorldScriptDocument.Parse(campusScript, allowChapterAdapter: true).Single());
         _session = new Chapter2InteractionSession(game, campusScript);
@@ -129,7 +129,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
     {
         var result = snapshot.ToDictionary(p => p.Key, p => p.Value);
         result.Remove("chapter");
-        result["presentation"] = new Dictionary<string, object?> { ["window_title"] = "安眠者有福" };
+        result["presentation"] = new Dictionary<string, object?> { ["window_title"] = Chapter1Data.Text("游戏名") };
         return result;
     }
 

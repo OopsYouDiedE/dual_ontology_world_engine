@@ -122,7 +122,7 @@ public sealed partial class MorningWorld
                 Observation.Observe(person.Soul, new ObservationInput(key, ProjectionKind.Object)
                 { Source = ObservationSource.Perception, Existence = Truth.True, Details = text,
                   Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Trace, value) });
-            _dailyTrajectory.Add(new(_dailySession.CTB.Now, by.Key, c.Dorm, "trace", $"{_dailySpaces[c.Dorm].TrueName}的人看见：{text}", _dailySettledMinutes));
+            _dailyTrajectory.Add(new(_dailySession.CTB.Now, by.Key, c.Dorm, "trace", Chapter1Data.Text("日常·看见痕迹", ("寝区", _dailySpaces[c.Dorm].TrueName), ("文字", text)), _dailySettledMinutes));
             revealed = true;
         }
         if (!revealed) return;
@@ -140,7 +140,7 @@ public sealed partial class MorningWorld
         }))).ToArray();
         _dormResults.Add(new(c.Id, c.Dorm, answer, _dailySettledMinutes, beliefs));
         _dailyTrajectory.Add(new(_dailySession.CTB.Now, by.Key, c.Dorm, "answered",
-            $"{_dailySpaces[c.Dorm].TrueName}答始业之问“{c.Title}”：{answer}。外闩抬起。各人心里：{string.Join("；", beliefs)}", _dailySettledMinutes));
+            Chapter1Data.Text("日常·答完案件", ("寝区", _dailySpaces[c.Dorm].TrueName), ("问题", c.Title), ("答案", answer), ("信念", string.Join("；", beliefs))), _dailySettledMinutes));
     }
 
     private IEnumerable<DailyPerson> Residents(string dorm) => _dailyPeople.Values.Where(p => p.Hosted is null && p.Dorm == dorm
@@ -460,7 +460,7 @@ public sealed partial class MorningWorld
             {
                 _dormOpened[person.Dorm] = _dailySettledMinutes;
                 _dailyTrajectory.Add(new(_dailySession.CTB.Now, person.Key, person.Dorm, "answered",
-                    $"{_dailySpaces[person.Dorm].TrueName}的人答完了自己寝区的题（查看与听辨 {need} 次），外闩抬起", _dailySettledMinutes));
+                    Chapter1Data.Text("日常·答完寝区", ("寝区", _dailySpaces[person.Dorm].TrueName), ("次数", need.ToString())), _dailySettledMinutes));
             }
             ObserveDailyRooms();
             foreach (var witness in _dailyPeople.Values.Where(p => ReferenceEquals(p.Body.Get<SpatialProperty>()!.Space, person.Body.Get<SpatialProperty>()!.Space)))

@@ -75,7 +75,8 @@ public sealed partial class Chapter1Session
     private Ev LinesEvent(InteractionPacket packet)
     {
         string Display(string speaker) => speaker switch
-        { "侦探" => DetectiveName, "侦探（心声）" => DetectiveName + "（心声）", _ => speaker };
+        { var name when name == Names.Of(Person.Detective) => DetectiveName,
+          var name when name == T("称呼·侦探心声") => T("称呼·心声", ("名", DetectiveName)), _ => speaker };
         var ev = Event("lines", ("lines", packet.Lines.Select(line => (object?)new Ev
         {
             ["speaker"] = line.Speaker, ["speaker_name"] = Display(line.Speaker), ["mood"] = line.Mood, ["text"] = line.Text,
@@ -287,7 +288,7 @@ public sealed partial class Chapter1Session
         if (brief)
         {
             OpenModal(Event("card", ("id", id), ("title", card.Title), ("notes", card.Notes.Cast<object?>().ToArray())),
-                [(Option("full", "看整张证物卡"), () => OpenCard(id)), (Option("close", T("卡片·返回")), Nothing)]);
+                [(Option("full", T("卡片·完整")), () => OpenCard(id)), (Option("close", T("卡片·返回")), Nothing)]);
             yield break;
         }
         OpenModal(Event("card", ("id", id), ("title", card.Title), ("picture", picture), ("facts", card.Facts), ("source", card.Source),
@@ -345,7 +346,7 @@ public sealed partial class Chapter1Session
         if (id == "E3")
         {
             var options = Content.GetProperty("SOLE_TARGETS").EnumerateObject().Select(p => (object?)Option(p.Name, p.Value.GetString()!)).ToList();
-            options.Add(Option("cancel", "算了"));
+            options.Add(Option("cancel", T("界面·取消")));
             yield return new Await(Event("candidates", ("title", T("鞋底·标题")), ("prompt", T("鞋底·提示")), ("options", options.ToArray())), true);
             who = Text(_reply, "choice_id") is var picked && picked != "cancel" ? picked : "";
         }
@@ -553,7 +554,7 @@ public sealed partial class Chapter1Session
                 new Ev { ["id"] = "sentence", ["kind"] = "choice", ["heading"] = T("声路·选句"), ["value"] = ((Ev)sentences[0]!)["id"], ["options"] = sentences },
                 new Ev { ["id"] = "spot", ["kind"] = "choice", ["heading"] = T("声路·选位"), ["value"] = spotDefault, ["options"] = spots, ["flow"] = true },
             }),
-            ("actions", new object?[] { new Ev { ["id"] = "cancel", ["label"] = "算了" }, new Ev { ["id"] = "start", ["label"] = "开始", ["default"] = true } })), true);
+            ("actions", new object?[] { new Ev { ["id"] = "cancel", ["label"] = T("界面·取消") }, new Ev { ["id"] = "start", ["label"] = T("声路·开始"), ["default"] = true } })), true);
         if (Text(_reply, "action") != "start") yield break;
         var values = Map(_reply, "values");
         var sentence = int.TryParse(values.GetValueOrDefault("sentence")?.ToString(), out var s) && SentenceKnown(s) ? s : int.Parse((string)((Ev)sentences[0]!)["id"]!);
@@ -611,10 +612,10 @@ public sealed partial class Chapter1Session
             ("unset_label", T("答辩·未选")),
             ("actions", new object?[]
             {
-                new Ev { ["id"] = "tab:say", ["label"] = "陈述", ["tab"] = "say" },
-                new Ev { ["id"] = "tab:show", ["label"] = "出示", ["tab"] = "show" },
-                new Ev { ["id"] = "cancel", ["label"] = "暂且不答" },
-                new Ev { ["id"] = "submit", ["label"] = "作答", ["requires"] = new object?[] { "say", "show" } },
+                new Ev { ["id"] = "tab:say", ["label"] = T("答辩·陈述页"), ["tab"] = "say" },
+                new Ev { ["id"] = "tab:show", ["label"] = T("答辩·出示页"), ["tab"] = "show" },
+                new Ev { ["id"] = "cancel", ["label"] = T("答辩·取消") },
+                new Ev { ["id"] = "submit", ["label"] = T("答辩·作答"), ["requires"] = new object?[] { "say", "show" } },
             })), true);
         var values = Map(_reply, "values");
         var pick = Session.GetProgress("answer_pick");
@@ -635,7 +636,7 @@ public sealed partial class Chapter1Session
 
     private IEnumerable<Op> Replay(object[] vars, bool skip)
     {
-        if (!ReplayOpen) throw new InvalidOperationException("尚未获得重演手稿。");
+        if (!ReplayOpen) throw new InvalidOperationException(Chapter1Data.Text("界面·错误·手稿未得"));
         State["replay_vars"] = vars;
         var result = RunReplay(vars.Select(Convert.ToInt32).ToArray());
         var stored = Session.GetProgress("replay_result");
@@ -653,6 +654,7 @@ public sealed partial class Chapter1Session
             _out.Add(Event("duck", ("on", true)));
             yield return new Await(Event("replay_play", ("mode", "stage"), ("caption", T("重演·昨夜")), ("frames", result["frames"]),
                 ("names", Party.ToDictionary(who => who, who => (object?)PersonName(who))),
+                ("control_texts", new Ev { ["normal"] = T("重演·控制·普通"), ["paused"] = T("重演·控制·暂停"), ["fast"] = T("重演·控制·倍速") }),
                 ("door_texts", new Ev { ["open"] = T("重演·门开"), ["bolted"] = T("重演·门闩"), ["closed"] = T("重演·门关"), ["ash"] = T("重演·烟灰") })), true);
             _out.Add(Event("duck", ("on", false)));
             Stage = _content.StageEvent("重演结束");
@@ -677,6 +679,12 @@ public sealed partial class Chapter1Session
         var frames = result.Frames.Select(f => (object)new Dictionary<string, object>
         {
             ["t"] = f.Time, ["actor"] = f.Actor, ["label"] = f.Label,
+            ["event"] = new Dictionary<string, object>
+            {
+                ["kind"] = f.Event.Kind, ["who"] = f.Event.Who is { } who ? Names.PersonKeys[(int)who] : "",
+                ["subject"] = f.Event.Subject is { } subject ? Names.PersonKeys[(int)subject] : "",
+                ["object"] = f.Event.Object, ["room"] = f.Event.Room is { } room ? Names.RoomKeys[(int)room] : "",
+            },
             ["rooms"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)Names.RoomKeys[(int)f.Rooms[p]]),
             ["spots"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)f.Spots[p]),
             ["thoughts"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)f.Thoughts[p]),
@@ -693,7 +701,8 @@ public sealed partial class Chapter1Session
         {
             ["frames"] = frames, ["findings"] = findings, ["full_match"] = checkedMatch,
             ["conflicts"] = result.Conflicts.Select(c => (object)c).ToArray(), ["bolted"] = result.Traces.InnerBoltDown,
-            ["detective_bolted"] = result.Log.Any(l => l.Contains("侦探照霍铎转述")),
+            ["detective_bolted"] = result.DetectiveBoltedOnHuoRequest,
+            ["detective_refused_stranger"] = result.DetectiveRefusedStranger,
         };
     }
 
@@ -718,8 +727,8 @@ public sealed partial class Chapter1Session
         var kept = Party.Where(who => _world.Hooks(PersonOf(who)) == 0).Select(who => who == "detective" ? T("结局·你自己") : PersonName(who)).ToArray();
         var door = Has("flags", "door_open");
         var actions = new List<object?>();
-        if (door) actions.Add(new Ev { ["id"] = "continue", ["label"] = "继续学园生活 (C)", ["key"] = "C" });
-        actions.Add(new Ev { ["id"] = "restart", ["label"] = "重新开始 (R)", ["key"] = "R" });
+        if (door) actions.Add(new Ev { ["id"] = "continue", ["label"] = T("结局·继续按钮"), ["key"] = "C" });
+        actions.Add(new Ev { ["id"] = "restart", ["label"] = T("结局·重开按钮"), ["key"] = "R" });
         _out.Add(Event("ending", ("title", T($"结局·{kind}·标题")), ("outcome", T($"结局·{kind}·正文")),
             ("rows", new object?[]
             {
