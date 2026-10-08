@@ -1060,7 +1060,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "是我的字。记的是个男声，很低。",
+            "text": "是我的字。按纸上的音高和重音，像是在记一个很低的男声。",
             "voice_clip": "",
             "line_id": "help_E6.001"
           },
@@ -1068,7 +1068,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "前两个字太轻，我听不出，只能记问号。后面两个字压得很重——“开门”。",
+            "text": "前两拍是弱音，只留下两个问号；后两拍重读，写的是“开门”。",
             "voice_clip": "",
             "line_id": "help_E6.002"
           },
@@ -1076,7 +1076,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "同一小节记了两遍。写了一遍，又写一遍，像是怕自己听错。",
+            "text": "（指尖停在第一拍，静了片刻）……我刚读到哪一拍？",
             "voice_clip": "",
             "line_id": "help_E6.003"
           },
@@ -1084,7 +1084,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "下面那一行，墨不一样。我换过笔。",
+            "text": "（重新看向纸面）同一小节写了两遍。下面那一行，墨色不一样。",
             "voice_clip": "",
             "line_id": "help_E6.004"
           },
@@ -1676,7 +1676,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "连着此地。……那就是说，回不去了。",
+            "text": "连着此地。……会牵连到什么？我还不知道，不能就这么往下想。",
             "voice_clip": "",
             "line_id": "recall_shown_su.002"
           },
@@ -2801,7 +2801,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "talk_huo_menu:choice:5",
-                "label": "门是我闩的。",
+                "label": "灰里的靴印，对上了我的鞋底。",
                 "label_id": "talk_huo_menu.015",
                 "condition": {
                   "op": "call",
@@ -2819,7 +2819,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "霍铎",
                     "mood": "",
-                    "text": "……你闩的。",
+                    "text": "……你到过门边。",
                     "voice_clip": "",
                     "line_id": "talk_huo_menu.016"
                   },
@@ -2827,7 +2827,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "霍铎",
                     "mood": "",
-                    "text": "我在铜口这儿。没看见你。",
+                    "text": "可你去做什么，鞋印没写。",
                     "voice_clip": "",
                     "line_id": "talk_huo_menu.017"
                   },
@@ -2885,7 +2885,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "talk_huo_menu:choice:7",
-                "label": "我们在这里很久了。",
+                "label": "我们会不会早就在这里一起生活过？",
                 "label_id": "talk_huo_menu.022",
                 "condition": {
                   "op": "gte",
@@ -2958,7 +2958,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "霍铎",
                         "mood": "",
-                        "text": "我认得你。只是忘了。",
+                        "text": "……也许那时候，我认得你。",
                         "voice_clip": "",
                         "line_id": "talk_huo_menu.025"
                       }
@@ -3215,12 +3215,37 @@ public static class Chapter1CompiledDialogue
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "霍铎",
-                    "mood": "",
-                    "text": "不记得。只记得上船。",
-                    "voice_clip": "",
-                    "line_id": "talk_huo_menu.027"
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "recalled",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "huo"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "霍铎",
+                        "mood": "",
+                        "text": "铜口旁。那句“等我下一次通知”，我想起来了。别的还接不上。",
+                        "voice_clip": "",
+                        "line_id": "talk_huo_menu.029"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "line",
+                        "speaker": "霍铎",
+                        "mood": "",
+                        "text": "不记得。只记得上船。",
+                        "voice_clip": "",
+                        "line_id": "talk_huo_menu.027"
+                      }
+                    ]
                   },
                   {
                     "op": "jump",
@@ -3293,7 +3318,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "在推昨晚的事？推到我那块布了没有？",
+                    "text": "在推昨晚的事？有要我辨认的东西，就拿来。",
                     "voice_clip": "",
                     "line_id": "talk_shen.002"
                   }
@@ -3556,7 +3581,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "talk_shen_menu:choice:5",
-                "label": "门是我闩的。",
+                "label": "灰里的靴印，对上了我的鞋底。",
                 "label_id": "talk_shen_menu.015",
                 "condition": {
                   "op": "call",
@@ -3574,7 +3599,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "你闩的？那你闩之前，门是开着的。",
+                    "text": "你的？那得看看，鞋印跟门底那块布，谁先谁后。",
                     "voice_clip": "",
                     "line_id": "talk_shen_menu.016"
                   },
@@ -3587,12 +3612,28 @@ public static class Chapter1CompiledDialogue
                     "line_id": "talk_shen_menu.017"
                   },
                   {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "我那块布，是顺着压的。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.018"
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "asked",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "E4"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "门底那块布，是顺着压的。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.018"
+                      }
+                    ],
+                    "else": []
                   },
                   {
                     "op": "jump",
@@ -3620,7 +3661,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "我在备餐间只听见嗡嗡的，像隔壁有人念经。",
+                    "text": "刚才我在{{heard_where(\"shen\")}}，听见的是：{{heard(\"shen\")}}",
                     "voice_clip": "",
                     "line_id": "talk_shen_menu.020"
                   },
@@ -3628,7 +3669,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "水一开，连嗡嗡都听不见了。",
+                    "text": "这是刚才试的。昨晚我听没听见，不能拿这个充数。",
                     "voice_clip": "",
                     "line_id": "talk_shen_menu.021"
                   },
@@ -3713,7 +3754,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "沈鼎",
                         "mood": "",
-                        "text": "……也好。脑子里的被拿走了，手上的还在。",
+                        "text": "……兴许咱们早就在一张桌上吃过饭。手上留着，脑子里接不上。",
                         "voice_clip": "",
                         "line_id": "talk_shen_menu.025"
                       }
@@ -3970,20 +4011,45 @@ public static class Chapter1CompiledDialogue
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "不记得。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.027"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "沈鼎",
-                    "mood": "",
-                    "text": "可我这两条胳膊，早上起来是酸的。像揉了半宿的面。",
-                    "voice_clip": "",
-                    "line_id": "talk_shen_menu.028"
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "recalled",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "shen"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "想起一点喂罐子、给你们泡茶的事。整晚怎么过的，还是接不上。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.031"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "不记得。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.027"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "沈鼎",
+                        "mood": "",
+                        "text": "可我这两条胳膊，早上起来是酸的。像揉了半宿的面。",
+                        "voice_clip": "",
+                        "line_id": "talk_shen_menu.028"
+                      }
+                    ]
                   },
                   {
                     "op": "jump",
@@ -4064,7 +4130,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "你在推昨晚。……推到我开门那里了吗。",
+                    "text": "你在推昨晚。……门边的声音，也能试吗。",
                     "voice_clip": "",
                     "line_id": "talk_su.002"
                   }
@@ -4107,7 +4173,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "苏泠",
                         "mood": "",
-                        "text": "（她靠在门厅的墙边，侧着头，像在听什么）",
+                        "text": "（她侧过头，隔了一会儿才应声）",
                         "voice_clip": "",
                         "line_id": "talk_su.004"
                       },
@@ -4115,7 +4181,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "苏泠",
                         "mood": "",
-                        "text": "墙里有声音。很低，一直在。",
+                        "text": "早上在门边，墙里有声音。很低。",
                         "voice_clip": "",
                         "line_id": "talk_su.005"
                       }
@@ -4335,7 +4401,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "talk_su_menu:choice:5",
-                "label": "门是我闩的。",
+                "label": "灰里的靴印，对上了我的鞋底。",
                 "label_id": "talk_su_menu.015",
                 "condition": {
                   "op": "call",
@@ -4353,7 +4419,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "我知道。你的靴子上有灰。",
+                    "text": "……你到过那儿。",
                     "voice_clip": "",
                     "line_id": "talk_su_menu.016"
                   },
@@ -4361,7 +4427,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "我没有怪你。",
+                    "text": "可你听见了什么，灰里看不出来。",
                     "voice_clip": "",
                     "line_id": "talk_su_menu.017"
                   },
@@ -4399,7 +4465,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "门边那几个字，是从墙里出来的。现在我分得出。",
+                    "text": "刚才在{{heard_where(\"su\")}}，我听见的是：{{heard(\"su\")}}",
                     "voice_clip": "",
                     "line_id": "talk_su_menu.020"
                   },
@@ -4407,7 +4473,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "苏泠",
                     "mood": "",
-                    "text": "可要是半夜，铃在响，我刚放下琴……我不知道我分没分。",
+                    "text": "可昨晚警铃响着，我有没有分清……还得看留下的东西。",
                     "voice_clip": "",
                     "line_id": "talk_su_menu.021"
                   },
@@ -4419,7 +4485,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "talk_su_menu:choice:7",
-                "label": "我们早就认识。",
+                "label": "我们会不会早就认识？",
                 "label_id": "talk_su_menu.022",
                 "condition": {
                   "op": "gte",
@@ -4484,7 +4550,7 @@ public static class Chapter1CompiledDialogue
                         "op": "line",
                         "speaker": "苏泠",
                         "mood": "",
-                        "text": "……我也知道你。想不起来，可是知道。",
+                        "text": "……也许我也认得你。可我想不起来，不能当作记得。",
                         "voice_clip": "",
                         "line_id": "talk_su_menu.024"
                       }
@@ -4741,20 +4807,45 @@ public static class Chapter1CompiledDialogue
                 "lock_hint": "",
                 "body": [
                   {
-                    "op": "line",
-                    "speaker": "苏泠",
-                    "mood": "",
-                    "text": "不记得。",
-                    "voice_clip": "",
-                    "line_id": "talk_su_menu.026"
-                  },
-                  {
-                    "op": "line",
-                    "speaker": "苏泠",
-                    "mood": "",
-                    "text": "……别人问我，我也是这一句。",
-                    "voice_clip": "",
-                    "line_id": "talk_su_menu.027"
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "recalled",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "su"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "line",
+                        "speaker": "苏泠",
+                        "mood": "",
+                        "text": "门边。我想起自己要让那个声音进来。……只是一小段。",
+                        "voice_clip": "",
+                        "line_id": "talk_su_menu.029"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "op": "line",
+                        "speaker": "苏泠",
+                        "mood": "",
+                        "text": "不记得。",
+                        "voice_clip": "",
+                        "line_id": "talk_su_menu.026"
+                      },
+                      {
+                        "op": "line",
+                        "speaker": "苏泠",
+                        "mood": "",
+                        "text": "……别人问我，我也是这一句。",
+                        "voice_clip": "",
+                        "line_id": "talk_su_menu.027"
+                      }
+                    ]
                   },
                   {
                     "op": "jump",
@@ -4791,7 +4882,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "（看着架上的酵种罐）……这罐子，不像是昨天才养的。",
+            "text": "……备餐间那罐酵种，不像是昨天才养的。",
             "voice_clip": "",
             "line_id": "s8_reversal.002"
           },
@@ -4828,12 +4919,46 @@ public static class Chapter1CompiledDialogue
             "line_id": "s8_reversal.006"
           },
           {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "霍铎说一句，我就去闩了门。我没有问他第二句。",
-            "voice_clip": "",
-            "line_id": "s8_reversal.007"
+            "op": "if",
+            "condition": {
+              "op": "gt",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "hooks",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "detective"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "侦探（心声）",
+                "mood": "",
+                "text": "我记得霍铎说闩，我就去闩了门。那时我没有问他第二句。",
+                "voice_clip": "",
+                "line_id": "s8_reversal.007"
+              }
+            ],
+            "else": [
+              {
+                "op": "line",
+                "speaker": "侦探（心声）",
+                "mood": "",
+                "text": "若昨夜真是这样，霍铎说闩，我便去闩了门。可我凭什么信他？",
+                "voice_clip": "",
+                "line_id": "s8_reversal.008"
+              }
+            ]
           },
           {
             "op": "jump",
@@ -5605,7 +5730,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "",
                 "mood": "",
-                "text": "（门外的厅里站着人。有人提着桶，有人靠着壁炉。说话声停了，十几道目光一齐转过来。）",
+                "text": "（门外的厅里有人。听见门响，那人转过头来。）",
                 "voice_clip": "",
                 "line_id": "s10_open.001"
               },
@@ -5613,7 +5738,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "侦探（心声）",
                 "mood": "",
-                "text": "另外几个寝区的人早就出来了。他们等了很久，等的是我们。",
+                "text": "看来已有别的寝区先开了门。",
                 "voice_clip": "",
                 "line_id": "s10_open.002"
               }
@@ -5689,7 +5814,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "苏泠",
                 "mood": "",
-                "text": "音叉我没碰。想听的东西，我想自己去听。",
+                "text": "从前的事，我还没往下想。想听的东西，我想自己去听。",
                 "voice_clip": "",
                 "line_id": "s10_open.006"
               }
@@ -5738,20 +5863,62 @@ public static class Chapter1CompiledDialogue
             ]
           },
           {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "（看着厅的北头）……他让我等下一次通知。",
-            "voice_clip": "",
-            "line_id": "s10_open.009"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "不等了。去找。",
-            "voice_clip": "",
-            "line_id": "s10_open.010"
+            "op": "if",
+            "condition": {
+              "op": "gt",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "hooks",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "huo"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            "then": [
+              {
+                "op": "line",
+                "speaker": "霍铎",
+                "mood": "",
+                "text": "（看着厅的北头）……我记得，他让我等下一次通知。",
+                "voice_clip": "",
+                "line_id": "s10_open.009"
+              },
+              {
+                "op": "line",
+                "speaker": "霍铎",
+                "mood": "",
+                "text": "不等了。去找。",
+                "voice_clip": "",
+                "line_id": "s10_open.010"
+              }
+            ],
+            "else": [
+              {
+                "op": "line",
+                "speaker": "霍铎",
+                "mood": "",
+                "text": "（看着厅的北头）石板上那个铜口记号，还得查清声音从哪儿来。",
+                "voice_clip": "",
+                "line_id": "s10_open.018"
+              },
+              {
+                "op": "line",
+                "speaker": "霍铎",
+                "mood": "",
+                "text": "去找。",
+                "voice_clip": "",
+                "line_id": "s10_open.019"
+              }
+            ]
           },
           {
             "op": "if",
@@ -5956,7 +6123,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（门前这一片灰上，别人的脚印都绕开了。只有一行鞋印走到门前：鞋底窄，鞋尖尖，停住，又折了回去。）",
+            "text": "（门前这一片灰上，有一行鞋印走到门前：鞋底窄，鞋尖尖，停住，又折了回去。）",
             "voice_clip": "",
             "line_id": "s10_prints.003"
           },

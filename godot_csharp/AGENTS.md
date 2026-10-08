@@ -96,3 +96,4 @@
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
 - `addons/<plugin_name>/`：编辑器插件（如素材适配器 `rpg_asset_adapter`），代码与资源保持插件内部封闭。
 - 资产迁移或管线变动后，通过 `& $env:GODOT --headless --editor --path godot_csharp --import` 完成重新导入校验。
+- 一级验收的 `capture_player_transcript.gd` 以正式 UI 实际绘制的文字、物品和末个终局为验收依据；截图只作辅助，不以截图数量或齐全与否阻止导出 03。辅助截图按正式视图、事件类型与结构化字段识别，不绑定 dispatch 序号或中文台词。

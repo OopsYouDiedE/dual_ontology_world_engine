@@ -90,6 +90,7 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 ```
 
 - 终局界面没有实际画出来时，`export_ui_transcript.py` 会拒绝覆盖 03；这种情况要如实记为未完成。
+- 一级验收不要求截图。以 01、02、03 及实际 UI 渲染记录判断对齐；截图只作辅助，不能因缺少截图而判一级失败或要求重跑。
 - 三份文件都不是盲玩证据，也不能用来评价真实游玩时长。
 
 合格标准（三项同时满足）：

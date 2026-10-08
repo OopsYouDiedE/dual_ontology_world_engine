@@ -51,7 +51,7 @@
 场面 recall_shown_su
     苏泠：（她朝墙里问）刚才那是什么？ [#id=recall_shown_su.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_su.003]
-    苏泠：连着此地。……那就是说，回不去了。 [#id=recall_shown_su.002]
+    苏泠：连着此地。……会牵连到什么？我还不知道，不能就这么往下想。 [#id=recall_shown_su.002]
     跳转 END
 
 场面 recall_touch_su

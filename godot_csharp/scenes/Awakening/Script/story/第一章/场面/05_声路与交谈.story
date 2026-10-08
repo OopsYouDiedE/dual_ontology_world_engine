@@ -48,10 +48,10 @@
             否则：
                 霍铎：石板？在长桌上？我没注意。你拿给我看。 [#id=talk_huo_menu.014]
             跳转 talk_huo_menu
-        - 门是我闩的。 [#id=talk_huo_menu.015]
+        - 灰里的靴印，对上了我的鞋底。 [#id=talk_huo_menu.015]
             条件：旗("reversal_one")
-            霍铎：……你闩的。 [#id=talk_huo_menu.016]
-            霍铎：我在铜口这儿。没看见你。 [#id=talk_huo_menu.017]
+            霍铎：……你到过门边。 [#id=talk_huo_menu.016]
+            霍铎：可你去做什么，鞋印没写。 [#id=talk_huo_menu.017]
             霍铎：你要问我喊没喊过，我答不上来。 [#id=talk_huo_menu.018]
             跳转 talk_huo_menu
         - ◎ 是什么？ [#id=talk_huo_menu.019]
@@ -59,12 +59,15 @@
             霍铎：铜口。图纸上，传声口画这个。我早该认出来。 [#id=talk_huo_menu.020]
             霍铎：他叫我守着，我就守着。守到天亮，他也没再出声。 [#id=talk_huo_menu.021]
             跳转 talk_huo_menu
-        - 我们在这里很久了。 [#id=talk_huo_menu.022]
+        - 我们会不会早就在这里一起生活过？ [#id=talk_huo_menu.022]
             条件：把握("detective", "早已相熟") >= 75
             回应话题 早已相熟：huo
             跳转 talk_huo_menu
         - 昨晚你在哪？ [#id=talk_huo_menu.026]
-            霍铎：不记得。只记得上船。 [#id=talk_huo_menu.027]
+            若 回想过("huo")：
+                霍铎：铜口旁。那句“等我下一次通知”，我想起来了。别的还接不上。 [#id=talk_huo_menu.029]
+            否则：
+                霍铎：不记得。只记得上船。 [#id=talk_huo_menu.027]
             跳转 talk_huo_menu
         - 没事了。 [#id=talk_huo_menu.028]
             跳转 END
@@ -73,7 +76,7 @@
     若 知道("shen", "侦探重演吻合")：
         沈鼎：推明白了？脸色比早上好。……坐，喝口茶。 [#id=talk_shen.001]
     否则 若 知道("shen", "侦探在重演昨夜")：
-        沈鼎：在推昨晚的事？推到我那块布了没有？ [#id=talk_shen.002]
+        沈鼎：在推昨晚的事？有要我辨认的东西，就拿来。 [#id=talk_shen.002]
     否则 若 旗("met_shen")：
         沈鼎：又来了？饿了说一声。 [#id=talk_shen.003]
     否则：
@@ -108,24 +111,28 @@
             沈鼎：四只，四个样。用过，没洗。 [#id=talk_shen_menu.013]
             沈鼎：我要是在，不会让杯子过夜。……除非那晚顾不上。 [#id=talk_shen_menu.014]
             跳转 talk_shen_menu
-        - 门是我闩的。 [#id=talk_shen_menu.015]
+        - 灰里的靴印，对上了我的鞋底。 [#id=talk_shen_menu.015]
             条件：旗("reversal_one")
-            沈鼎：你闩的？那你闩之前，门是开着的。 [#id=talk_shen_menu.016]
+            沈鼎：你的？那得看看，鞋印跟门底那块布，谁先谁后。 [#id=talk_shen_menu.016]
             沈鼎：跟你说个行里的门道：门缝开着，湿布是往缝里塞的；门关死了，才顺着门底压一条。 [#id=talk_shen_menu.017]
-            沈鼎：我那块布，是顺着压的。 [#id=talk_shen_menu.018]
+            若 问过("E4")：
+                沈鼎：门底那块布，是顺着压的。 [#id=talk_shen_menu.018]
             跳转 talk_shen_menu
         - 铜口那边的声音。 [#id=talk_shen_menu.019]
             条件：试过("E8")
-            沈鼎：我在备餐间只听见嗡嗡的，像隔壁有人念经。 [#id=talk_shen_menu.020]
-            沈鼎：水一开，连嗡嗡都听不见了。 [#id=talk_shen_menu.021]
+            沈鼎：刚才我在{{所闻之处("shen")}}，听见的是：{{所闻("shen")}} [#id=talk_shen_menu.020]
+            沈鼎：这是刚才试的。昨晚我听没听见，不能拿这个充数。 [#id=talk_shen_menu.021]
             跳转 talk_shen_menu
         - 罐壁上那些面痕。 [#id=talk_shen_menu.022]
             条件：把握("detective", "早已相熟") >= 75
             回应话题 早已相熟：shen
             跳转 talk_shen_menu
         - 昨晚你在哪？ [#id=talk_shen_menu.026]
-            沈鼎：不记得。 [#id=talk_shen_menu.027]
-            沈鼎：可我这两条胳膊，早上起来是酸的。像揉了半宿的面。 [#id=talk_shen_menu.028]
+            若 回想过("shen")：
+                沈鼎：想起一点喂罐子、给你们泡茶的事。整晚怎么过的，还是接不上。 [#id=talk_shen_menu.031]
+            否则：
+                沈鼎：不记得。 [#id=talk_shen_menu.027]
+                沈鼎：可我这两条胳膊，早上起来是酸的。像揉了半宿的面。 [#id=talk_shen_menu.028]
             跳转 talk_shen_menu
         - 没事了。 [#id=talk_shen_menu.029]
             沈鼎：去吧。饭点叫你。 [#id=talk_shen_menu.030]
@@ -135,13 +142,13 @@
     若 知道("su", "侦探重演吻合")：
         苏泠：……你都推出来了。我听得出来，你走路的声音变了。 [#id=talk_su.001]
     否则 若 知道("su", "侦探在重演昨夜")：
-        苏泠：你在推昨晚。……推到我开门那里了吗。 [#id=talk_su.002]
+        苏泠：你在推昨晚。……门边的声音，也能试吗。 [#id=talk_su.002]
     否则 若 旗("met_su")：
         苏泠：……嗯。 [#id=talk_su.003]
     否则：
         设旗 met_su
-        苏泠：（她靠在门厅的墙边，侧着头，像在听什么） [#id=talk_su.004]
-        苏泠：墙里有声音。很低，一直在。 [#id=talk_su.005]
+        苏泠：（她侧过头，隔了一会儿才应声） [#id=talk_su.004]
+        苏泠：早上在门边，墙里有声音。很低。 [#id=talk_su.005]
     跳转 talk_su_menu
 
 场面 talk_su_menu
@@ -171,24 +178,27 @@
             若 旗("reversal_one")：
                 苏泠：（她看着你的靴子，没有再说下去） [#id=talk_su_menu.014]
             跳转 talk_su_menu
-        - 门是我闩的。 [#id=talk_su_menu.015]
+        - 灰里的靴印，对上了我的鞋底。 [#id=talk_su_menu.015]
             条件：旗("reversal_one")
-            苏泠：我知道。你的靴子上有灰。 [#id=talk_su_menu.016]
-            苏泠：我没有怪你。 [#id=talk_su_menu.017]
+            苏泠：……你到过那儿。 [#id=talk_su_menu.016]
+            苏泠：可你听见了什么，灰里看不出来。 [#id=talk_su_menu.017]
             苏泠：我只是想知道，门外到底有没有人。 [#id=talk_su_menu.018]
             跳转 talk_su_menu
         - 铜口试过的那句话。 [#id=talk_su_menu.019]
             条件：试过("E8")
-            苏泠：门边那几个字，是从墙里出来的。现在我分得出。 [#id=talk_su_menu.020]
-            苏泠：可要是半夜，铃在响，我刚放下琴……我不知道我分没分。 [#id=talk_su_menu.021]
+            苏泠：刚才在{{所闻之处("su")}}，我听见的是：{{所闻("su")}} [#id=talk_su_menu.020]
+            苏泠：可昨晚警铃响着，我有没有分清……还得看留下的东西。 [#id=talk_su_menu.021]
             跳转 talk_su_menu
-        - 我们早就认识。 [#id=talk_su_menu.022]
+        - 我们会不会早就认识？ [#id=talk_su_menu.022]
             条件：把握("detective", "早已相熟") >= 75
             回应话题 早已相熟：su
             跳转 talk_su_menu
         - 昨晚你在哪？ [#id=talk_su_menu.025]
-            苏泠：不记得。 [#id=talk_su_menu.026]
-            苏泠：……别人问我，我也是这一句。 [#id=talk_su_menu.027]
+            若 回想过("su")：
+                苏泠：门边。我想起自己要让那个声音进来。……只是一小段。 [#id=talk_su_menu.029]
+            否则：
+                苏泠：不记得。 [#id=talk_su_menu.026]
+                苏泠：……别人问我，我也是这一句。 [#id=talk_su_menu.027]
             跳转 talk_su_menu
         - 没事了。 [#id=talk_su_menu.028]
             跳转 END

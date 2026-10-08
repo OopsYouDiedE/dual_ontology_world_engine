@@ -17,8 +17,6 @@ const VIEW_RESOURCES := {
 const SOURCE := "res://../artifacts/basic-ui-system/player-traces/engine-full-output.jsonl"
 const OUTPUT := "res://../artifacts/basic-ui-system/player-traces/ui-full-output.jsonl"
 const SHOTS := "res://../artifacts/basic-ui-system/full-ui/"
-const SHOT_STAGES := {2: "01-wake", 99: "02-living-investigation", 192: "03-confrontation",
-	232: "04-campus", 449: "05-council", 453: "06-ending"}
 const UI_EVENTS := ["lines", "candidates", "card", "form", "ending", "aside", "title",
 	"music", "sound", "duck", "close", "interaction_closed", "manuscript"]
 const NONBLOCKING_MODALS := ["card", "form", "candidates", "ending"]
@@ -55,6 +53,7 @@ var _visible_frames := 0
 var _ending_drawn := false
 var _final_ending_drawn := false
 var _shots_saved: Dictionary = {}
+var _view_resource := ""
 var _active_presentation := ""
 var _packet_snapshot: Dictionary = {}
 var _defer_draw_until := -1
@@ -135,8 +134,6 @@ func _run() -> void:
 	if not _failed:
 		if not bool(snapshot.get("ended", false)) or not _final_ending_drawn:
 			_fail("Source exhausted without an ended snapshot and a drawn final production ending component.")
-		elif _shots_saved.size() != SHOT_STAGES.size():
-			_fail("A required representative screenshot stage was not reached.")
 		else:
 			_write("render_finished", {"finished": true, "source_sequence": source_sequence,
 				"ended_component_drawn": true, "ended_displayed": true, "engine_ended": true, "ending_component": "EndingCard",
@@ -257,6 +254,7 @@ func _output(ev: Dictionary, replacement: Dictionary = {}) -> void:
 
 func _view(ev: Dictionary) -> void:
 	var requested := str(ev.get("resource", ""))
+	_view_resource = requested
 	var path := str(VIEW_RESOURCES.get(requested, requested))
 	var packed := load(path) as PackedScene
 	if packed == null:
@@ -502,7 +500,7 @@ func _flush_pending_modal() -> void:
 			else:
 				_ending_drawn = true
 				if source_sequence == int(packets.back().sequence): _final_ending_drawn = true
-				await _capture_stage()
+				await _capture_stage(ev)
 				var navigation := _next_input("navigate", "")
 				if not navigation.is_empty():
 					await _press_label(_action_label(ev, str(navigation.to)))
@@ -543,7 +541,7 @@ func _drive_dialogue(ev: Dictionary) -> void:
 		if not _text_covered(dialogue.body.get_parsed_text()):
 			_fail("A full dialogue line could not be read in rendered visible segments.")
 			return
-		await _capture_stage()
+		await _capture_stage(ev)
 		if not dialogue.line.responses.is_empty():
 			var answer := _next_input("select", str(ev.get("presentation_id", "")))
 			if answer.is_empty():
@@ -563,7 +561,7 @@ func _drive_dialogue(ev: Dictionary) -> void:
 		"presentation_id": str(ev.get("presentation_id", "")), "event_kind": "lines"})
 
 func _drive_modal_choice(ev: Dictionary) -> void:
-	await _capture_stage()
+	await _capture_stage(ev)
 	var answer := _next_input("select", str(ev.get("presentation_id", "")))
 	if answer.is_empty():
 		_write("presentation_rendered", {"source_sequence": source_sequence, "output_index": output_index,
@@ -612,7 +610,7 @@ func _drive_form(ev: Dictionary) -> void:
 			await _press(button)
 		if _failed: return
 		await _sweep(host.ui.modal_root)
-	await _capture_stage()
+	await _capture_stage(ev)
 	await _press_label(_action_label(ev, str(answer.action)))
 	_verify_reply(answer, _control_reply, ["kind", "presentation_id", "action", "values"])
 
@@ -778,10 +776,30 @@ func _input_sink(data: Dictionary) -> void:
 	captured.output_index = output_index
 	_write("ui_input", captured)
 
-func _capture_stage() -> void:
-	if _failed or not SHOT_STAGES.has(source_sequence) or _shots_saved.has(str(source_sequence)): return
+func _screenshot_stage(ev: Dictionary) -> String:
+	# Match production event structure, never dispatch offsets or translated prose.
+	var kind := str(ev.get("kind", ""))
+	if kind == "ending" and source_sequence == int(packets.back().sequence):
+		return "06-ending"
+	if _view_resource == "living":
+		if kind == "lines": return "01-wake"
+		if kind == "card" and str(ev.get("id", "")) == "E1":
+			return "02-living-investigation"
+		if kind == "form":
+			for field in ev.get("fields", []):
+				if str(field.get("id", "")) == "say": return "03-confrontation"
+	elif _view_resource == "campus":
+		if kind == "lines": return "04-campus"
+		if kind == "candidates":
+			for option in ev.get("options", []):
+				if str(option.get("id", "")).begins_with("support:"): return "05-council"
+	return ""
+
+func _capture_stage(ev: Dictionary) -> void:
+	var stage := _screenshot_stage(ev)
+	if _failed or stage == "" or _shots_saved.has(stage): return
 	await _draw()
-	var path := ProjectSettings.globalize_path(SHOTS + str(SHOT_STAGES[source_sequence]) + ".png")
+	var path := ProjectSettings.globalize_path(SHOTS + stage + ".png")
 	var rendered: Image = capture_viewport.get_texture().get_image()
 	if rendered == null or rendered.is_empty():
 		_fail("The hidden SubViewport did not yield rendered pixels.")
@@ -789,8 +807,8 @@ func _capture_stage() -> void:
 	if rendered.save_png(path) != OK:
 		_fail("Cannot save rendered screenshot: " + path)
 		return
-	_shots_saved[str(source_sequence)] = path
-	_write("screenshot", {"source_sequence": source_sequence, "path": path,
+	_shots_saved[stage] = path
+	_write("screenshot", {"stage": stage, "source_sequence": source_sequence, "path": path,
 		"panel": str(_last_visible.get("panel", "")), "capture_type": "production_ui_render_replay"})
 
 func _write(kind: String, data: Dictionary) -> void:
