@@ -84,7 +84,8 @@ var before = lines.Count;
 Tick(3);
 Check(lines.Count > before + 5, $"走进活动厅触发相遇：{lines.Count - before} 句");
 Check((string)snapshot["detective_name"]! == "测试侦探", "报名表单写入侦探名：" + snapshot["detective_name"]);
-for (var round = 0; round < 20 && (string)snapshot!["stage"]! != "investigate"; round++)
+// 相遇里有烧水、开柜与散去的真实走位和停顿，给足模拟时间。
+for (var round = 0; round < 200 && (string)snapshot!["stage"]! != "investigate"; round++)
 {
     if (openModal is not null) Choose("close");
     Tick(10);
