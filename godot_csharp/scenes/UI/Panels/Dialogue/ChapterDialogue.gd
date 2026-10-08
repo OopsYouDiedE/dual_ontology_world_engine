@@ -325,12 +325,14 @@ func apply_locale_font(font: Font, _theme: Theme) -> void:
 var _base_panel_rect := Rect2()
 var _base_text_offsets: Dictionary = {}
 var _base_speaker_right := 0.0
+var _base_panel_bottom_margin := 0.0
 
 func _ready() -> void:
 	if not has_node("DialoguePanel"):
 		push_error("StoryDialogue requires the ChapterDialogue.tscn node hierarchy")
 		return
 	_bind_existing()
+	get_viewport().size_changed.connect(layout_compact_line)
 	history_button.text = _caption("回看", "History", "履歴")
 	history_close_button.text = _caption("关闭", "Close", "閉じる")
 	if Engine.is_editor_hint():
@@ -373,6 +375,7 @@ func _bind_existing() -> void:
 	portrait_monogram = $DialoguePanel/PortraitFrame/Monogram
 	fast_forward_label = $DialoguePanel/KeyLegend
 	_base_panel_rect = Rect2(panel.position, panel.size)
+	_base_panel_bottom_margin = get_viewport().get_visible_rect().size.y - _base_panel_rect.end.y
 	for node in [speaker, body, choices, fast_forward_label]:
 		_base_text_offsets[node] = node.offset_left
 	_base_speaker_right = speaker.offset_right
@@ -437,7 +440,7 @@ func layout_compact_line() -> void:
 	var row_height := sample.custom_minimum_size.y if sample != null else 44.0
 	var height := _base_panel_rect.size.y + ceilf(float(count) / choices.columns) * (row_height + response_row_gap)
 	panel.size.y = height
-	panel.position.y = _base_panel_rect.end.y - height
+	panel.position.y = get_viewport().get_visible_rect().size.y - _base_panel_bottom_margin - height
 	var portrait_space := portrait_frame.size.x + portrait_text_gap if portrait_frame.visible else 0.0
 	for node in _base_text_offsets:
 		node.offset_left = float(_base_text_offsets[node]) + portrait_space
