@@ -1,66 +1,54 @@
 extends SceneTree
-## 第二章自动事件检查：地图与寻路、正式章节台词、三日推演、重演、对账与议事。
+## 第二章自动流程检查：章一终局续章、地图、正式台词、多日推演、重演、对账与议事。
 ## 用法：& $env:GODOT --headless --path godot_csharp --script res://scenes/Chapter2/check/check_flow.gd
-## 这是注入状态的自动检查，不替代游玩。经统一宿主（ChapterHost / ChapterField / ChapterUI）驱动同一事件接口。
+## 经 Main.tscn 的 dispatch 与正式 UI 回执驱动；调试跳转与代按不替代游玩验收。
 
-const MAP_PLACE := {
-	"central_hall": "Hall", "lecture": "Lecture", "logistics": "Logistics", "granary": "Logistics", "clinic": "Clinic",
-	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "DormLife",
-	"zone_yi": "DormLife", "zone_jia": "DormW", "zone_bing": "DormS", "zone_ding": "DormL", "resonance": "Resonance",
-}
+const Fixture := preload("res://scenes/Chapter2/check/chapter2_fixture.gd")
 const SPAWN_OF := {
 	"central_hall": "south", "lecture": "from_central", "logistics": "west", "granary": "south", "clinic": "south", "greenhouse": "south",
 	"archive": "south", "campus_s": "gate_inside", "living_hall": "north_door", "zone_yi": "from_hall", "zone_jia": "from_hall",
 	"zone_bing": "from_hall", "zone_ding": "from_hall", "resonance": "south", "counterweight": "from_stairs",
 }
-var replay_steps: Array = []
-
+var checks := 0
 var failures := 0
+var failed_names: Array[String] = []
+var fx: Fixture
+var host: Node
+var planned_pairs: Array = []
+var planned_pair_index := 0
 
-func check(ok: bool, what: String) -> void:
+func check(ok: bool, what: String) -> bool:
+	checks += 1
 	print(("  ok  " if ok else "  FAIL ") + what)
 	if not ok:
 		failures += 1
+		failed_names.append(what)
+	return ok
 
 func _initialize() -> void:
 	_run.call_deferred()
 
-func _finish(exit_code: int) -> void:
-	# The driver has returned; allow both chapter fixture nodes to leave the tree.
-	await process_frame
-	await process_frame
-	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(exit_code)
+func _finish() -> void:
+	print("TOTAL %d checks, %d passed, %d failed" % [checks, checks - failures, failures])
+	for name in failed_names: print("FAILED: " + name)
+	await fx.shutdown()
+	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(1 if failures > 0 else 0)
 
-var latest_lines: Array = []
-var ending_result: Dictionary = {}
-var planned_pairs: Array = []
-var game_ref: Node = null
-var planned_pair_index := 0
+func send(input: Dictionary, resolve_choices := false) -> bool:
+	return check(await fx.send(input, resolve_choices), "章节事件在有限时间内完成：" + str(input.kind))
 
-func run_action(game: Node, act: Dictionary) -> Array:
-	return dispatch(game, {"kind": "action", "act": act}, true)
+func run_action(act: Dictionary) -> bool:
+	return await send({"kind": "action", "act": act}, true)
 
-func select_label(game: Node, packets: Array, needle: String) -> void:
-	for packet in packets:
-		if str(packet.kind) != "candidates": continue
-		for option in packet.options:
-			if str(option.label).contains(needle) and bool(option.available):
-				var reply := dispatch(game, {"kind": "select", "choice_id": str(option.id), "token": str(option.token), "presentation_id": str(packet.get("presentation_id", ""))})
-				select_id(game, reply, "cancel")
-				return
-	check(false, "实际候选含所需交谈入口：" + needle)
+func upcoming_day() -> int: return int(fx.probe("next_day"))
+func upcoming_slot() -> int: return int(fx.probe("next_slot"))
 
-func select_id(game: Node, packets: Array, id: String) -> void:
-	for packet in packets:
-		if str(packet.kind) not in ["candidates", "card"]: continue
-		for option in packet.options:
-			if str(option.id) == id:
-				dispatch(game, {"kind": "select", "choice_id": id, "token": str(option.token), "presentation_id": str(packet.get("presentation_id", ""))})
-				return
+func move_to_map(key: String) -> bool:
+	return await fx.move_to_map(key, str(SPAWN_OF.get(key, "")))
 
-func planned_choice(options: Array) -> Dictionary:
-	var available: Array = options.filter(func(option): return bool(option.available))
-	if available.is_empty(): return {}
+func planned_choice(options: Array) -> String:
+	var available: Array = options.filter(func(option): return bool(option.get("available", true)))
+	if available.is_empty(): return ""
 	var first_id := str(available[0].id)
 	if first_id.begins_with("claim:") or first_id.begins_with("template:") or first_id.begins_with("evidence:"):
 		var is_evidence := first_id.begins_with("evidence:")
@@ -70,172 +58,164 @@ func planned_choice(options: Array) -> Dictionary:
 			if is_evidence:
 				wanted = "evidence:" + str(pair[1])
 			else:
-				# 第一层是“什么事”：模板主张先选模板项，第二层才是具体的人。
 				wanted = "claim:" + str(pair[0])
 				if not available.any(func(o): return str(o.id) == wanted):
-					wanted = str(game_ref.engine.Probe("confront_top_id", [int(pair[0])]))
+					wanted = str(fx.probe("confront_top_id", [int(pair[0])]))
 		for option in available:
 			if str(option.id) == wanted:
 				if is_evidence: planned_pair_index += 1
-				return option
+				return wanted
 		check(false, "原有效陈述/证据对出现在真实候选中：" + wanted)
-		return {}
-	if str(available[0].id).begins_with("support:"): return available[-1]
-	return available[0]
+		return ""
+	if first_id.begins_with("support:"): return str(available[-1].id)
+	return first_id
 
-func send(game: Node, input: Dictionary) -> Array:
-	var context: Dictionary = game.field.context()
-	context.modal = ""
-	input.context = context
-	return game.engine.Dispatch(input)
-
-func upcoming_day(game: Node) -> int: return int(game.engine.Probe("next_day", []))
-func upcoming_slot(game: Node) -> int: return int(game.engine.Probe("next_slot", []))
-func people(game: Node) -> Array: return game.ui.snapshot.get("people", [])
-
-func dispatch(game: Node, input: Dictionary, resolve_choices := false) -> Array:
-	var queue: Array = send(game, input)
-	var observed: Array = []
-	latest_lines = []
-	var iterations := 0
-	while not queue.is_empty() and iterations < 256:
-		iterations += 1
-		var packet: Dictionary = queue.pop_front()
-		observed.append(packet)
-		match str(packet.kind):
-			"state": game._apply(packet.snapshot)
-			"scene":
-				game.field._applying_scene = true
-				game.field.load_map(str(packet.map), str(packet.get("spawn", "")))
-				game.field._applying_scene = false
-			"lines":
-				for line in packet.lines: latest_lines.append(str(line.text))
-				queue.append_array(send(game, {"kind": "presented", "presentation_id": str(packet.presentation_id)}))
-			"replay_play":
-				replay_steps = packet.get("steps", [])
-				queue.append_array(send(game, {"kind": "presented", "presentation_id": str(packet.presentation_id)}))
-			"candidates":
-				if resolve_choices:
-					var chosen := planned_choice(packet.options)
-					check(not chosen.is_empty(), "章节选择有实际可用候选")
-					if not chosen.is_empty():
-						queue.append_array(send(game, {"kind": "select", "choice_id": str(chosen.id), "token": str(chosen.token)}))
-			"card":
-				for option in packet.options:
-					if str(option.id) == "close": queue.append_array(send(game, {"kind": "select", "choice_id": "close", "token": str(option.token)}))
-			"ending": ending_result = packet
-			"error": check(false, "Core事件错误：" + str(packet.message))
-	check(queue.is_empty(), "章节事件在有限步骤内完成")
-	return observed
+## 同一 Main 会话完成终局、保存、按 C；不通过 publish 探针伪造章一结束。
+func handoff() -> bool:
+	host = await fx.prepare()
+	fx.set_progress("state", "detective_name", "flow2-fixture")
+	await fx.jump("answer_done")
+	# answer_done 保留已答完的进度但禁用行走；恢复调查阶段后才可从现场打开菜单。
+	await fx.jump("investigate")
+	var ending_started := Time.get_unix_time_from_system()
+	if not await send({"kind": "interact", "site": "E8"}): return false
+	if not check(host.ui.modal_kind == "menu" and fx.select("answer"), "章一调试答题完成后从正式菜单进入终局"): return false
+	if not check(await fx.settle(false, 60.0, func(): return fx.ended() and host.ui.modal_kind == "ending"), "章一开门演出在有限时间内完成"): return false
+	if not check(fx.ended() and fx.progress("flags").has("door_open") and host.ui.modal_kind == "ending", "章一门开、结束状态与章末卡同时成立"): return false
+	check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "章一隔离门实际切换为开启")
+	check(fx.seen_ids.has("s10_open.015"), "章一终局正式台词经过 UI")
+	var saved = JSON.parse_string(FileAccess.get_file_as_string("user://chapter1_end.json")) if FileAccess.file_exists("user://chapter1_end.json") else null
+	check(saved is Dictionary and str(saved.get("detective_name", "")) == "flow2-fixture" and not bool(saved.get("rested", true))
+		and FileAccess.get_modified_time("user://chapter1_end.json") >= int(ending_started),
+		"章一终局写入本轮 user://chapter1_end.json")
+	var actions: Array = host.ui._modal_event.get("actions", [])
+	var continuation := actions.filter(func(a): return str(a.id) == "continue" and bool(a.get("available", true)))
+	if not check(continuation.size() == 1 and str(continuation[0].get("key", "")) == "C"
+		and str(continuation[0].label) == fx.text("结局·继续按钮"), "章一章末卡提供继续进入章二（C）"): return false
+	var engine_id: int = host.engine.get_instance_id()
+	var old_field_id: int = host.field.get_instance_id()
+	fx.clear_observed()
+	var key := InputEventKey.new()
+	key.keycode = KEY_C
+	key.physical_keycode = KEY_C
+	key.pressed = true
+	host.ui._unhandled_input(key)
+	if not await fx.wait_until(fx.campus_loaded, 10.0):
+		check(false, "继续后加载第二章视图（失败即停止）：" + fx.stage())
+		return false
+	check(host.engine.get_instance_id() == engine_id and host.field.get_instance_id() != old_field_id, "同一 Main 引擎替换章一现场为章二视图")
+	if not check(await fx.settle(true), "第二章 view_ready 后正式开场完成"): return false
+	if not check(fx.stage() == "field" and bool(host.ui.snapshot.get("field_enabled", false)) and host.field.field_active()
+		and not host.ui.is_busy() and not fx.ended(), "章一继续后到达章二第一个可操作状态"): return false
+	check(str(host.ui.snapshot.get("detective_name", "")) == "flow2-fixture", "第二章继承本轮章一玩家状态")
+	check(fx.saw_sequence("arrival") and fx.saw_sequence("lesson") and fx.saw_sequence("free"), "正式 .story 章节产生开场、首课与自由行动台词")
+	var walkable: bool = host.field.adapter.walkable(fx.player().position)
+	print("    handoff field: map=%s position=%s walkable=%s stage=%s" % [host.field.adapter.map_key(), fx.player().position, walkable, fx.stage()])
+	check(host.field.adapter.map_key() == "lecture", "章二第一个可操作状态在讲堂")
+	check(walkable, "章二第一个可操作状态的出生点可走")
+	check(host.field.actors.size() > 3, "讲堂里有人（%d）" % host.field.actors.size())
+	return true
 
 func _run() -> void:
-	# Inject a real chapter-one handoff for this standalone automatic fixture.
-	# This is not a completed playthrough or a JSON reconstruction.
-	var first: Node = preload("res://scenes/Shared/ChapterEngine.cs").new()
-	root.add_child(first)
-	first.Open("chapter1")
-	first.Probe("publish", [])
-	var game: Node = (load("res://scenes/Chapter2/Chapter2.tscn") as PackedScene).instantiate()
-	game.set_meta("skip_intro", true)
-	root.add_child(game)
-	await process_frame
-	await process_frame
-	if not game.engine.Started():
-		check(false, "第二章真实继承启动")
-		game.begin_shutdown()
-		game.queue_free()
-		first.queue_free()
-		call_deferred("_finish", 1)
-		return
 	var t0 := Time.get_ticks_msec()
+	fx = Fixture.new(self)
+	fx.on_error = func(message: String) -> void: check(false, "夹具：" + message)
+	fx.choose = planned_choice
+	if not await handoff():
+		await _finish()
+		return
+	# 保留多地图出生点检查；检查换图后恢复讲堂，不再第二次发送 begin。
 	for key in ["zone_yi", "living_hall", "zone_jia", "zone_bing", "zone_ding", "central_hall", "lecture", "logistics", "granary", "clinic", "archive", "counterweight", "resonance", "greenhouse", "campus_s", "campus_n", "campus_sw"]:
 		var t := Time.get_ticks_msec()
-		game.field.load_map(key, SPAWN_OF.get(key, ""))
-		await process_frame
-		check(game.field.adapter.walkable(game.field.player.position), "%s 载入，出生点可走（%d ms，%d 处可检视）" % [key, Time.get_ticks_msec() - t, game.field.sites.size()])
+		if not await move_to_map(key):
+			check(false, "地图切换完成：" + key)
+			await _finish()
+			return
+		check(host.field.adapter.walkable(fx.player().position), "%s 载入，出生点可走（%d ms，%d 处可检视）" % [key, Time.get_ticks_msec() - t, host.field.sites.size()])
+	await move_to_map("lecture")
 	var document = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
-	check(document is Dictionary, "正式 .world 编译文件可读取")
+	if not check(document is Dictionary, "正式 .story 编译文件可读取"):
+		await _finish()
+		return
 	var titles: Dictionary = {}
 	if document is Dictionary:
 		for chapter in document.chapters:
 			for sequence in chapter.sequences: titles[str(sequence.id)] = true
 	for title in ["arrival", "gather", "lesson", "free", "noon_dispute", "after", "replay_unlock", "confront_rule", "council", "box"]:
 		check(titles.has(title), "正式章节段落 " + title)
-	# Drive actual chapter inputs and acknowledge semantic presentations; this is automation.
-	var initial := dispatch(game, {"kind": "begin"}, true)
-	check(initial.any(func(packet): return str(packet.kind) == "lines"), "正式 .world 章节产生语义台词")
-	# 第 2 日
-	check(game.field.actors.size() > 3, "讲堂里有人（%d）" % game.field.actors.size())
-	run_action(game, {"cmd": "collect"})
-	run_action(game, {"cmd": "stay", "place": "Logistics"})
-	dispatch(game, {"kind": "interact", "map": "logistics", "site": "ration_notice", "target": ""})
-	# 始业日门开已近傍晚，余下几阵就地歇到夜里。
+	# 始业日余下的时段。
+	await run_action({"cmd": "collect"})
+	await move_to_map("logistics")
+	await run_action({"cmd": "stay"})
+	await send({"kind": "interact", "map": "logistics", "site": "ration_notice"})
+	await move_to_map("central_hall")
 	var first_guard := 0
-	while upcoming_slot(game) < 5 and first_guard < 8:
+	while upcoming_slot() < 5 and first_guard < 8:
 		first_guard += 1
-		run_action(game, {"cmd": "stay", "place": "Hall"})
-	check(upcoming_day(game) == int(game.engine.Probe("first_day", [])) and upcoming_slot(game) == 5, "始业日走到夜里")
-	run_action(game, {"cmd": "sleep"})
-	# 五日：始业日之后是日常篇，每一阵就地歇着（饭点领饭），夜里睡下，直到案发次日的清晨。
-	var case_day: int = int(game.engine.Probe("case_day", []))
+		if not await run_action({"cmd": "stay"}): break
+	check(upcoming_day() == int(fx.probe("first_day")) and upcoming_slot() == 5, "始业日走到夜里")
+	await run_action({"cmd": "sleep"})
+	# 日常篇：就地等待，夜里睡下；规矩仍通过实际可用的规则编号转述。
+	var case_day := int(fx.probe("case_day"))
 	var guard := 0
 	var told := false
-	while upcoming_day(game) < case_day and guard < 40:
+	while upcoming_day() < case_day and guard < 40:
 		guard += 1
-		# 日常篇里有人贴出规矩后，当面讲给沃德听（讲规矩要同处一地）。
-		var tellable: Array = game.engine.Probe("known_rules", []).filter(func(r): return bool(r.tellable))
-		if not told and tellable.size() > 0 and upcoming_slot(game) < 5:
-			for person in people(game):
-				if str(person.key) == "Ward": dispatch(game, {"kind": "move", "place": str(person.place)})
-			run_action(game, {"cmd": "tell_rule", "who": "Ward", "rule": int(tellable[0].id)})
-			told = true
-			continue
-		if upcoming_slot(game) == 5:
-			run_action(game, {"cmd": "sleep"})
+		var rules: Array = fx.probe("known_rules")
+		var tellable := rules.filter(func(r): return bool(r.tellable))
+		if not told and not tellable.is_empty() and upcoming_slot() < 5:
+			if await fx.move_to_person("Ward", SPAWN_OF):
+				var before := upcoming_slot()
+				await run_action({"cmd": "tell_rule", "who": "Ward", "rule": int(tellable[0].id)})
+				told = upcoming_slot() != before
+				if told: continue
+		if upcoming_slot() == 5:
+			if not await run_action({"cmd": "sleep"}): break
 		else:
-			run_action(game, {"cmd": "stay", "place": "Hall"})
+			await move_to_map("central_hall")
+			if not await run_action({"cmd": "stay"}): break
 	check(told, "日常篇里当面讲过一条规矩")
-	check(upcoming_day(game) == case_day and upcoming_slot(game) == 1, "案发次日清晨已结算（第 %d 日）" % case_day)
-	var lines: Array = latest_lines
-	check(lines.any(func(l): return str(l).contains("台账")), "清晨提到台账")
+	if not check(upcoming_day() == case_day and upcoming_slot() == 1, "案发次日清晨已结算（第 %d 日）" % case_day):
+		await _finish()
+		return
+	check(fx.saw_sequence("dawn", true), "清晨正式台账场面经过 UI")
 	for pair in [["logistics", "ledger"], ["granary", "latch"], ["clinic", "empty_bowl"], ["zone_jia", "litter"], ["central_hall", "central_notice"]]:
-		dispatch(game, {"kind": "move", "place": MAP_PLACE[pair[0]]})
-		dispatch(game, {"kind": "interact", "map": pair[0], "site": pair[1], "target": ""})
+		await move_to_map(pair[0])
+		await send({"kind": "interact", "map": pair[0], "site": pair[1]})
 	for who in ["Bertrand", "Margaret", "Mora", "Quer"]:
-		# 问话要当面：走到此人所在的地图，站到他身边。
-		for person in people(game):
-			if str(person.key) == who and str(person.get("map", "")) != "":
-				game.field.load_map(str(person.map), SPAWN_OF.get(str(person.map), ""))
-		await process_frame
-		var actor: CharacterBody2D = game.field.actors.get(who)
-		check(actor != null, "%s 站在自己的去处" % who)
-		if actor: game.field.player.position = actor.position + Vector2(24, 0)
-		for i in 6: await process_frame
-		var menu := dispatch(game, {"kind": "interact", "map": "", "site": "person:" + who, "target": who})
-		select_label(game, menu, "知道")
-	dispatch(game, {"kind": "replay", "vars": [0, 0, 0, 0]})
-	var r: Dictionary = game.ui.snapshot.replay.result
-	check(replay_steps.size() > 0, "重演有墨影步子（%d），全吻合=%s" % [replay_steps.size(), str(r.get("full_match", false))])
-	for person in people(game):
-		if str(person.key) == "Ward": dispatch(game, {"kind": "move", "place": str(person.place)})
-	run_action(game, {"cmd": "escort", "who": "Ward", "thing": "配给台公告"})
-	run_action(game, {"cmd": "collect"})
-	run_action(game, {"cmd": "stay", "place": "Hall"})
-	check(upcoming_day(game) == case_day and upcoming_slot(game) == 4, "到案发次日傍晚")
-	# 现实里为真的主张各配一件手里相关的证据（谁做了什么按推演的结果）。
-	var pairs: Array = game.engine.Probe("valid_confront_pairs", [])
-	game_ref = game
-	planned_pairs = pairs
+		if not check(await fx.move_to_person(who, SPAWN_OF), "%s 站在自己的去处" % who): continue
+		await send({"kind": "interact", "site": "person:" + who, "target": who})
+		if not check(fx.select("ask"), "实际候选含所需交谈入口：ask（%s）" % who): continue
+		check(await fx.settle(), "%s 的正式问话完成" % who)
+		if host.ui.modal_kind == "menu":
+			check(fx.select("cancel"), "问话后返回现场：" + who)
+			await fx.settle()
+	if not await send({"kind": "replay", "vars": [0, 0, 0, 0]}):
+		await _finish()
+		return
+	var r: Dictionary = host.ui.snapshot.get("replay_result", {})
+	var steps: Array = r.get("steps", [])
+	check(not steps.is_empty(), "重演有墨影步子（%d），全吻合=%s" % [steps.size(), str(r.get("full_match", false))])
+	check(host.ui.modal_kind == "replay", "正式回放回执后回到重演手稿")
+	fx.close_modal()
+	if check(await fx.move_to_person("Ward", SPAWN_OF), "请看物证前与 Ward 同处一地"):
+		var thing := str(host.ui.snapshot.get("examined", {}).get("logistics:ration_notice", {}).get("thing", ""))
+		await run_action({"cmd": "escort", "who": "Ward", "thing": thing})
+	await run_action({"cmd": "collect"})
+	await run_action({"cmd": "stay"})
+	check(upcoming_day() == case_day and upcoming_slot() == 4, "到案发次日傍晚")
+	planned_pairs = fx.probe("valid_confront_pairs")
 	planned_pair_index = 0
-	run_action(game, {"cmd": "stay", "place": "Hall"})
-	check(latest_lines.any(func(l): return str(l).contains("中央厅")), "对账发生（%d 对有效）" % pairs.size())
-	dispatch(game, {"kind": "move", "place": "ArchiveFront"})
-	run_action(game, {"cmd": "watch", "place": "ArchiveFront"})
-	check(bool(game.engine.Probe("ended", [])), "议事日：章节到议事")
-	var result: Dictionary = ending_result
-	check(not result.get("rows", []).is_empty() and str(result.rows[0]).begins_with("名录库："), "议事结果：" + str(result.get("rows", [""])[0]))
-	print("用时 %d ms；失败 %d" % [Time.get_ticks_msec() - t0, failures])
-	game.begin_shutdown()
-	game.queue_free()
-	first.queue_free()
-	call_deferred("_finish", 1 if failures > 0 else 0)
+	await run_action({"cmd": "stay"})
+	check(fx.saw_sequence("evening", true) and fx.saw_sequence("confront_begin", true), "对账发生（%d 对有效）" % planned_pairs.size())
+	check(planned_pair_index == planned_pairs.size(), "有效陈述/证据对全部通过真实候选提交")
+	# 对账结算后是夜晚，守夜必须先在现场走到对应空间。
+	await move_to_map("archive")
+	await run_action({"cmd": "watch", "place": "ArchiveFront"})
+	check(bool(fx.probe("ended")) and fx.ended() and host.ui.modal_kind == "ending", "议事日：章节到议事与正式章末卡")
+	var result: Dictionary = host.ui._modal_event
+	var rows: Array = result.get("rows", [])
+	var template := str(document.chapters[0].design.text["终局.名录库"])
+	check(not rows.is_empty() and str(rows[0]).begins_with(template.get_slice("{", 0)), "议事结果行使用正式剧本文案")
+	print("用时 %d ms" % [Time.get_ticks_msec() - t0])
+	await _finish()
