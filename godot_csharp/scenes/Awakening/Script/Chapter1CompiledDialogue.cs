@@ -198,6 +198,12 @@ public static class Chapter1CompiledDialogue
             "line_id": "s2_tea.007"
           },
           {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s2_tea_return": [
+          {
             "op": "line",
             "speaker": "",
             "mood": "",
@@ -370,13 +376,11 @@ public static class Chapter1CompiledDialogue
             "line_id": "s4_rewards.004"
           },
           {
-            "op": "line",
-            "speaker": "",
-            "mood": "",
-            "text": "（领取柜的小门一格一格弹开。）",
-            "voice_clip": "",
-            "line_id": "s4_rewards.005"
-          },
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s4_rewards_shen": [
           {
             "op": "line",
             "speaker": "沈鼎",
@@ -415,6 +419,12 @@ public static class Chapter1CompiledDialogue
             "voice_clip": "",
             "line_id": "s4_rewards.008"
           },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s4_rewards_huo": [
           {
             "op": "line",
             "speaker": "霍铎",
@@ -462,6 +472,12 @@ public static class Chapter1CompiledDialogue
             "line_id": "s4_rewards.012"
           },
           {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s4_rewards_su": [
+          {
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
@@ -499,6 +515,12 @@ public static class Chapter1CompiledDialogue
             "voice_clip": "",
             "line_id": "s4_rewards.015"
           },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s4_rewards_question": [
           {
             "op": "line",
             "speaker": "侦探",
@@ -545,6 +567,12 @@ public static class Chapter1CompiledDialogue
             "voice_clip": "",
             "line_id": "s4_rewards.026"
           },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s4_rewards_empty": [
           {
             "op": "line",
             "speaker": "侦探（心声）",
@@ -752,6 +780,12 @@ public static class Chapter1CompiledDialogue
             "line_id": "s6_begin.004"
           },
           {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s6_begin_huo": [
+          {
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
@@ -760,6 +794,12 @@ public static class Chapter1CompiledDialogue
             "line_id": "s6_begin.005"
           },
           {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s6_begin_su": [
+          {
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
@@ -767,6 +807,12 @@ public static class Chapter1CompiledDialogue
             "voice_clip": "",
             "line_id": "s6_begin.006"
           },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "s6_begin_detective": [
           {
             "op": "line",
             "speaker": "侦探（心声）",

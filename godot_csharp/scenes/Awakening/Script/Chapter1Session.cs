@@ -209,11 +209,12 @@ public sealed partial class Chapter1Session : IChapterSession
     private Job? _uiOwner;
     private Input _reply = new Dictionary<string, object?>();
 
-    private void Start(IEnumerable<Op> body)
+    private void Start(IEnumerable<Op> body, bool immediate = false)
     {
         var job = new Job();
         job.Frames.Push(body.GetEnumerator());
         _jobs.Add(job);
+        if (immediate) Advance(job);
     }
 
     private void Pump()

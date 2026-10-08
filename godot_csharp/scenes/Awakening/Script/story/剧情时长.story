@@ -12,11 +12,20 @@
     场面时长：
         s1_wake：16
         s2_meet：20
-        s2_tea：24
+        s2_tea：12
+        s2_tea_return：12
         s3_broadcast：16
-        s4_rewards：36
+        s4_rewards：6
+        s4_rewards_shen：6
+        s4_rewards_huo：6
+        s4_rewards_su：6
+        s4_rewards_question：6
+        s4_rewards_empty：6
         s5_question：24
-        s6_begin：8
+        s6_begin：4
+        s6_begin_huo：1
+        s6_begin_su：1
+        s6_begin_detective：2
         s6_reversal：10
         s8_reversal：16
         s10_steps：8

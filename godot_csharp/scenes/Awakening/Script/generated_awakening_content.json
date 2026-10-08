@@ -1371,11 +1371,20 @@
     "scenes": {
       "s1_wake": 16,
       "s2_meet": 20,
-      "s2_tea": 24,
+      "s2_tea": 12,
+      "s2_tea_return": 12,
       "s3_broadcast": 16,
-      "s4_rewards": 36,
+      "s4_rewards": 6,
+      "s4_rewards_shen": 6,
+      "s4_rewards_huo": 6,
+      "s4_rewards_su": 6,
+      "s4_rewards_question": 6,
+      "s4_rewards_empty": 6,
       "s5_question": 24,
-      "s6_begin": 8,
+      "s6_begin": 4,
+      "s6_begin_huo": 1,
+      "s6_begin_su": 1,
+      "s6_begin_detective": 2,
       "s6_reversal": 10,
       "s8_reversal": 16,
       "s10_steps": 8,
@@ -2158,6 +2167,18 @@
         },
         {
           "op": "show",
+          "scene": "@stage_action:shen:备餐灶台:interact:back:1.5"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:shen:meeting:Chef"
+        },
+        {
+          "op": "show",
+          "scene": "s2_tea_return"
+        },
+        {
+          "op": "show",
           "scene": "s3_broadcast"
         },
         {
@@ -2170,19 +2191,95 @@
         },
         {
           "op": "show",
-          "scene": "s5_question"
-        },
-        {
-          "op": "stage",
-          "value": "investigate"
+          "scene": "@stage_action:shen:领取柜:interact:back"
         },
         {
           "op": "show",
-          "scene": "@posts"
+          "scene": "s4_rewards_shen"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:shen:meeting:Chef"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_action:huo:领取柜:interact:back:0.8:inspect"
+        },
+        {
+          "op": "show",
+          "scene": "s4_rewards_huo"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:huo:meeting:Engineer"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_action:su:领取柜:interact:back"
+        },
+        {
+          "op": "show",
+          "scene": "s4_rewards_su"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:su:meeting:Musician"
+        },
+        {
+          "op": "show",
+          "scene": "s4_rewards_question"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_action:detective:领取柜:interact:back"
+        },
+        {
+          "op": "show",
+          "scene": "s4_rewards_empty"
+        },
+        {
+          "op": "show",
+          "scene": "@stage_actor:detective:meeting:Detective"
+        },
+        {
+          "op": "show",
+          "scene": "s5_question"
         },
         {
           "op": "show",
           "scene": "s6_begin"
+        },
+        {
+          "op": "show",
+          "scene": "@post:shen"
+        },
+        {
+          "op": "show",
+          "scene": "s6_begin_huo"
+        },
+        {
+          "op": "show",
+          "scene": "@post:huo"
+        },
+        {
+          "op": "show",
+          "scene": "s6_begin_su"
+        },
+        {
+          "op": "show",
+          "scene": "@post:su"
+        },
+        {
+          "op": "set_flag",
+          "key": "posts_assigned"
+        },
+        {
+          "op": "show",
+          "scene": "s6_begin_detective"
+        },
+        {
+          "op": "stage",
+          "value": "investigate"
         }
       ]
     },

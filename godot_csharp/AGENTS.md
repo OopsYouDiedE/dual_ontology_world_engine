@@ -47,6 +47,8 @@
 
 现场（地图视图）在 `Shared/Field/`，各章地图适配器在各章目录；现场用到的物件外观名等文字由 `Shared/Field/FieldVocabulary.gd` 从剧本编译物读取。
 
+第一章流程中的 `stage_actor:<who>:<anchor>` 等待走位回执，锚点支持 `meeting:`、`post:`、`site:` 前缀；`stage_action:<who>:<anchor>:<anim>:<facing>[:<seconds>[:<after>]]` 到位后播放动作并等待指定秒数，再保持后续姿态（默认 0.8 秒、idle），走位失败则跳过动作。`post:<who>` 非阻塞启动单个同伴的岗位走位，`posts` 保留全体岗位走位；这两种命令用 `Start(..., immediate: true)` 先输出首个走位事件再输出后续对白，避免界面等待对白回执而延迟起步。流程负责安排这些指令与场面的先后。
+
 `scenes/Main2D.tscn` 是只装载第一章现场的旧预览场景，不承接完整游戏会话。`scenes/Shared/UI/*.tscn` 保留旧界面场景文件，归于 UI 面板类；正式界面仍使用 `scenes/UI/`。这些旧文件不作为正式运行或验收入口，启用前必须先检查外部资源引用是否存在并完成实机验证。
 
 ---
