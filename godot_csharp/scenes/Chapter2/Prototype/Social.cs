@@ -19,6 +19,7 @@ public sealed class NewsItem
     public Tag? FactTag { get; init; }
     public int FactValue { get; init; }
     public int Day { get; init; }
+    public Slot Slot { get; init; }
     public Build? Build { get; init; }
     public Place? Place { get; init; }
     public int Lesson { get; init; }
@@ -92,7 +93,7 @@ public sealed partial class Game
         var item = new NewsItem
         {
             Id = AllNews.Count + 1, Kind = kind, Claim = claim, Origin = origin, About = about, TrustDelta = trust, InsightDelta = insight,
-            FactOn = on, FactTag = tag, FactValue = value, Day = Day, Build = build, Place = place, Lesson = lesson, Manipulation = manipulation, Domain = domain
+            FactOn = on, FactTag = tag, FactValue = value, Day = Day, Slot = Slot, Build = build, Place = place, Lesson = lesson, Manipulation = manipulation, Domain = domain
         };
         AllNews.Add(item);
         return item;

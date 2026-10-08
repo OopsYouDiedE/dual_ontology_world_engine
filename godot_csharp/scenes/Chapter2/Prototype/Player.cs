@@ -489,7 +489,17 @@ public sealed partial class Game
             }
         }
         if (Did(Job.NightTakeSick, Job.NightTakeSickRec))
-            return open ? ("“我夜里给莫兰取了一份。板上写着的。今早……我还没顾上去说。”" , "worried") : ("“我一直在诊疗所。”", "calm");
+        {
+            if (!open) return (X("证词.病粮未公开"), "calm");
+            var taken = did.Count(d => new[] { Job.NightTakeSick, Job.NightTakeSickRec, Job.NightTakeSelf, Job.NightTakeSelfRec }
+                .Any(j => d.StartsWith(Names.Of(j), StringComparison.Ordinal)));
+            var recorded = NightLedgerNames.Count(n => n == $"D{CaseNight} {p.Name}")
+                + AllNews.Count(n => n.Kind == NewsKind.Ledger && n.Claim.Predicate == "补记"
+                    && n.Claim.Subject == p.Id && n.Claim.Night == CaseNight);
+            var pending = Math.Max(0, taken - recorded);
+            var key = recorded == 0 ? "病粮未记" : pending > 0 ? "病粮部分已记" : "病粮已记";
+            return (X("证词." + key, ("夜", NightWord(CaseNight)), ("取用", taken), ("已记", recorded), ("待记", pending)), "worried");
+        }
         if (Did(Job.NightTakeSelf, Job.NightTakeSelfRec))
             return open ? ($"“……我拿了一份。茉拉的板上写着急需可以自取。{latch}”", "worried") : ("“关你什么事。”", "angry");
         if (latch.Length > 0) return ($"“{latch}”", "calm");
@@ -529,6 +539,9 @@ public sealed partial class Game
     {
         if (e == Granary) return $"存粮还剩 {Get(Granary, T.Ration)} 份；门闩{(Get(Granary, T.LatchLoose) > 0 ? "松动，一推就开" : Get(Granary, T.ToolMarks) > 0 ? "有新的工具痕，已经紧固" : "完好")}。";
         if (e == Ledger) return X("物件.台账", ("发出", Get(Ledger, T.Handed)), ("补记", Get(Ledger, T.NightRecorded)))
+            + string.Concat(AllNews.Where(n => n.Kind == NewsKind.Ledger && n.Claim.Predicate == "补记")
+                .Select(n => "\n" + X("物件.台账补记记录", ("人", Names.Of(n.Claim.Subject!.Value)),
+                    ("日", Chapter2Design.DayName(n.Day)), ("时段", Names.Of(n.Slot)), ("夜", Chapter2Design.DayName(n.Claim.Night)))))
             + (Get(Ledger, T.Counted) > 0 ? "\n" + (Get(Ledger, T.Unrecorded) > 0 ? X("物件.台账清点", ("缺", Get(Ledger, T.Unrecorded))) : X("物件.台账清点无缺")) : "");
         if (e == Bowl) return Get(Bowl, T.Residue) > 0 ? $"莫兰床边一只空碗，碗底有粥渍{(Get(Bowl, T.Porridge) > 0 ? "；另有一碗粥还温着" : "")}。" : "碗是干净的。";
         if (e == Bed) return Get(this[P.Moran].Body, T.Sick) > 0 ? "莫兰躺着，额头很烫。" : "病床空着。";

@@ -698,12 +698,14 @@ public sealed partial class Game
         if (Day >= CaseDay && !WardNight.PostedAt.Contains(Place.Hall) && Belief(w, this[P.Quer], T.Branded) > 0 && _wardReposts++ < 2)
         {
             Post(WardNight, Place.Hall);
+            NewsFrom(w, NewsKind.Rumor, K("贴规", w.Id), about: w);
             if (Where(Det) == Place.Hall) Feed.Add("沃德把那张被撕掉的规矩又贴了回去。");
         }
         if (Day >= CaseDay && Slot == Slot.Evening && WardCommittee is null)
         {
             WardCommittee = Spec("CommitteePlan", fx => []);
             Post(WardCommittee, Place.Hall);
+            NewsFrom(w, NewsKind.Rumor, K("贴规", w.Id), about: w);
             if (Where(Det) == Place.Hall) Feed.Add($"沃德在中央厅贴出：{WardCommittee.Text}");
         }
     }

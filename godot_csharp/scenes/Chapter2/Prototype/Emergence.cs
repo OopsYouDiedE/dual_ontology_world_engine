@@ -198,7 +198,6 @@ public sealed partial class Game
             null when asker2 is not null && asker2 != Det && request!.Name.Contains("今夜") => K("应约开库", p.Id, asker2.Id),
             Job.Share => K("分粮", p.Id),
             Job.GiveKey => K("交钥匙", p.Id),
-            Job.PostRules => K("贴规", p.Id),
             _ => (Claim?)null
         };
         if (said is not null) NewsFrom(p, NewsKind.Rumor, said, about: p);

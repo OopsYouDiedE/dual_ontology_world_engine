@@ -1,0 +1,12 @@
+第 5 轮一级技术覆盖复核
+Engine packets: 1546; packet_rendered: 1546/1546; unrendered sequences: 0.
+Dialogue output events: 227; dialogue lines: visually covered 371/371; unique line texts present in bound route: 356/356.
+Rendered UI frames: 3102; ending panel frames: 2; render_finished=True; ended_displayed=True; final_panel=ending; screenshots={}.
+Superseded events omitted from per-event text expectations: 1; form placeholders separately checked: 1/1.
+UI text coverage (each engine event matched only to its own rendered UI frames; BBCode removed):
+  candidates: 212/212 strings found in rendered UI text.
+  cards: 323/323 strings found in rendered UI text.
+  forms: 109/109 strings found in rendered UI text.
+  endings: 5/5 strings found in rendered UI text.
+Fixed 03 final marker present: True.
+Method: dialogue coverage follows the capture script's segmented visible-text coverage algorithm; other categories compare each engine event payload only against the same sequence/output-index captured ui_visible frames. This is text/render alignment only, not geometry, collision, literary, or blind-play acceptance.

@@ -38,15 +38,24 @@ public sealed partial class Game
     /// <summary>某人把自己知道的一条知识说给侦探：亲历的照说；听来的说明来源；来源本人就是主语时，说成“某人说他……”。</summary>
     private string Hearsay(Person speaker, NewsItem item, Heard h)
     {
-        var said = Say(item.Claim, speaker, Det);
+        var template = TimedTemplate(item);
+        var claim = PresentedClaim(item);
+        var said = Say(claim, speaker, Det, template: template);
         var slant = SlantText(item, h.Slant, speaker);
         if (h.Hops == 0 || h.From == speaker.Id) return said + slant;
         var from = this[h.From];
         var source = Ref(from.Id, speaker, Det);
-        if (item.Claim.Subject == from.Id && X("知识." + item.Claim.Predicate).StartsWith("{主语}", StringComparison.Ordinal))
-            return X("知识片段.传话人自述", ("来源", source), ("来源他", from == Det ? "" : from.Pro.Pronoun), ("话", Say(item.Claim with { Subject = null }, speaker, Det).TrimStart())) + slant;
+        if (item.Claim.Subject == from.Id && X(template ?? "知识." + item.Claim.Predicate).StartsWith("{主语}", StringComparison.Ordinal))
+            return X("知识片段.传话人自述", ("来源", source), ("来源他", from == Det ? "" : from.Pro.Pronoun), ("话", Say(claim with { Subject = null }, speaker, Det, template: template).TrimStart())) + slant;
         return X("知识片段.听说", ("来源", source), ("话", said)) + slant;
     }
+
+    // Event time is presentation metadata; it must not change social claim identity or trust deduplication.
+    private static string? TimedTemplate(NewsItem item) => Chapter2Design.HasText("知识有时." + item.Claim.Predicate)
+        ? "知识有时." + item.Claim.Predicate : null;
+
+    private static Claim PresentedClaim(NewsItem item) => item.Claim
+        .With("记日", Chapter2Design.DayName(item.Day)).With("记时", Names.Of(item.Slot));
 
     /// <summary>把攒下的转述合并成几句旁白：同样的事只说一遍，列出都有谁这么说。</summary>
     private IEnumerable<string> RenderRelays()
@@ -57,8 +66,9 @@ public sealed partial class Game
         {
             if (_presentedToDet.Contains(r.Item.Claim.Identity)) continue;
             // 可合并的所见（夜里望见身影）按“谁看见的”分组；其余按内容分组。
-            string Key(Claim c) => HasMerge(c.Predicate) ? $"{c.Predicate}|{c.Subject}|{c.Night}" : c.Content;
-            var g = groups.FirstOrDefault(x => Key(x[0].Item.Claim) == Key(r.Item.Claim));
+            string Key(NewsItem item) => HasMerge(item.Claim.Predicate) ? $"{item.Claim.Predicate}|{item.Claim.Subject}|{item.Claim.Night}"
+                : TimedTemplate(item) is not null ? $"{item.Claim.Identity}|{item.Day}|{item.Slot}" : item.Claim.Content;
+            var g = groups.FirstOrDefault(x => Key(x[0].Item) == Key(r.Item));
             if (g is null) groups.Add([r]);
             else if (!g.Any(i => i.Teller == r.Teller && i.Item.Claim.Identity == r.Item.Claim.Identity)) g.Add(r);
         }
@@ -75,7 +85,8 @@ public sealed partial class Game
             foreach (var i in items) _presentedToDet.Add(i.Item.Claim.Identity);
             var tellers = items.Select(i => i.Teller).Distinct().ToList();
             var tellerNames = JoinNames(tellers.Select(t => t.Name));
-            var claim = items[0].Item.Claim;
+            var claim = PresentedClaim(items[0].Item);
+            var timedTemplate = TimedTemplate(items[0].Item);
             if (merged)
             {
                 // 同一处的几种身形并在一起：“后勤院有一个中等身量的、一个高大的身影”。
@@ -101,11 +112,11 @@ public sealed partial class Game
                 continue;
             }
             if (items.All(i => i.Item.Claim.Subject == i.Teller.Id))
-                lines.Add(X("知识片段.同样的话", ("人们", tellerNames), ("话", Stop(Say(claim, tellers[0], Det)))));
+                lines.Add(X("知识片段.同样的话", ("人们", tellerNames), ("话", Stop(Say(claim, tellers[0], Det, template: timedTemplate)))));
             else
             {
                 var subjects = items.Where(i => i.Item.Claim.Subject is not null).Select(i => i.Item.Claim.Subject!.Value).Distinct().ToList();
-                var said = Say(claim, tellers.Count == 1 ? tellers[0] : null, Det, subjects: subjects);
+                var said = Say(claim, tellers.Count == 1 ? tellers[0] : null, Det, subjects: subjects, template: timedTemplate);
                 lines.Add(tellers.Count > 1 ? X("知识片段.都说", ("人们", tellerNames), ("话", Stop(said))) : $"{tellerNames}说：“{Stop(said)}”");
             }
         }
