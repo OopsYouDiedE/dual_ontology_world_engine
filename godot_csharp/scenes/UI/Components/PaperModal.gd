@@ -106,6 +106,13 @@ func clear_footer() -> void:
 	_footer = null
 	_footer_rule = null
 
+## 把现有内容放在滚动区上方；节点仍由其原有面板负责更新。
+func pin_header(header: Control) -> void:
+	if not is_instance_valid(header):
+		return
+	header.reparent(column, false)
+	column.move_child(header, scroll.get_index())
+
 func get_footer() -> HFlowContainer:
 	return _footer
 

@@ -237,6 +237,9 @@ func _render_sample(chosen: Dictionary) -> void:
 		selected_provenance.submitted_to_engine = false
 		_sample_manifest.append(selected_provenance)
 		_write("visible_sample", {"provenance": selected_provenance, "visible": _last_visible})
+	if spec.kind in NONBLOCKING_MODALS:
+		await _capture_scroll_end(_sample_manifest.back())
+		if _failed: return
 	if spec.kind == "lines":
 		# Finish the isolated one-line presentation through its real control so
 		# the next sample does not inherit a suspended dialogue coroutine.
@@ -248,6 +251,24 @@ func _render_sample(chosen: Dictionary) -> void:
 			if Time.get_ticks_msec() > close_deadline:
 				_fail("Sample dialogue did not close: " + _sample_slug)
 				return
+
+func _capture_scroll_end(provenance: Dictionary) -> void:
+	var scroll: ScrollContainer = host.ui.modal_root.get_scroll()
+	var bar := scroll.get_v_scroll_bar()
+	if bar.max_value - bar.page <= 1: return
+	bar.value = bar.max_value
+	observer._last_frame = ""
+	await _draw()
+	var path := ProjectSettings.globalize_path(_sample_dir + _sample_slug + "-scrolled.png")
+	if capture_viewport.get_texture().get_image().save_png(path) != OK:
+		_fail("Cannot save scrolled sample.")
+		return
+	var scrolled := provenance.duplicate(true)
+	scrolled.slug = _sample_slug + "-scrolled"
+	scrolled.screenshot = path
+	scrolled.ui_scroll = {"position": bar.value, "maximum": bar.max_value - bar.page}
+	_sample_manifest.append(scrolled)
+	_write("visible_sample", {"provenance": scrolled, "visible": _last_visible})
 
 func _prior_context(sequence: int, event_index: int) -> Dictionary:
 	var view: Dictionary = {}

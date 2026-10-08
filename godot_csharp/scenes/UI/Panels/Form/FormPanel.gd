@@ -50,6 +50,10 @@ var _buttons: Dictionary = {}
 var _edits: Dictionary = {}
 var _groups: Dictionary = {}
 var _active := ""
+@onready var _header: VBoxContainer = $Header
+@onready var _question: RichTextLabel = $Header/Question
+@onready var _instructions: RichTextLabel = $Header/Instructions
+@onready var _summary: RichTextLabel = $Header/Summary
 
 func _ready() -> void:
 	_render_preview_or_data()
@@ -93,11 +97,11 @@ func _render() -> void:
 	$Prompt.visible = prompt != ""
 	var header: Dictionary = _data.get("header", {})
 	var summary: Array = _data.get("summary", [])
-	$Header.visible = not header.is_empty() or not summary.is_empty()
-	$Header/Question.text = Paper.story_text(str(header.get("question", "")))
-	$Header/Question.visible = str(header.get("question", "")) != ""
-	$Header/Instructions.text = Paper.story_text(str(header.get("instructions", "")))
-	$Header/Instructions.visible = str(header.get("instructions", "")) != ""
+	_header.visible = not header.is_empty() or not summary.is_empty()
+	_question.text = Paper.story_text(str(header.get("question", "")))
+	_question.visible = str(header.get("question", "")) != ""
+	_instructions.text = Paper.story_text(str(header.get("instructions", "")))
+	_instructions.visible = str(header.get("instructions", "")) != ""
 	var fields_box: VBoxContainer = $Fields
 	Paper.clear_children(fields_box)
 	_fields = _data.get("fields", [])
@@ -174,8 +178,12 @@ func _refresh_summary() -> void:
 			shown = picked if _edits.has(id) else _label_of(id, picked)
 		var template := str(entry.get("template", ""))
 		lines.append(template.replace("{内容}", shown) if template != "" else "%s：%s" % [str(entry.get("label", "")), shown])
-	$Header/Summary.text = Paper.story_text("\n".join(lines))
-	$Header/Summary.visible = not lines.is_empty()
+	_summary.text = Paper.story_text("\n".join(lines))
+	_summary.visible = not lines.is_empty()
+
+## 正式模态窗可将同一抬头移到滚动区外；单面板编辑器预览保持原布局。
+func pinned_header() -> Control:
+	return _header if _header.visible else null
 
 func _label_of(field_id: String, option_id: String) -> String:
 	for field in _fields:

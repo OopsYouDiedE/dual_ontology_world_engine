@@ -270,6 +270,8 @@ func _form_open(ev: Dictionary) -> void:
 	_form = FORM_PANEL.instantiate()
 	body.add_child(_form)
 	_form.show_data(ev)
+	var header: Control = _form.pinned_header()
+	if header != null: modal_root.pin_header(header)
 	_form_actions = []
 	for action in ev.get("actions", []):
 		var button := _footer(str(action.label), _form_action.bind(ev, action))
