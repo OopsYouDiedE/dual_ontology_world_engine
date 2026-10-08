@@ -15,6 +15,7 @@ const CLICK_STOP_RADIUS := 8.0
 const HUD_BAR_HEIGHT := 60.0
 const CLICK_REPATH_DELAY := 0.15
 const CLICK_MAX_BLOCKED_REPATHS := 4
+const MAKE_WAY_COOLDOWN_MS := 1000
 const APPROACH := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]
 const NEAR_SITE_RADIUS := 85.0
 const DAYPART_TINT := {"dawn": Color(1.0, 0.96, 0.9), "morning": Color(1, 1, 1), "noon": Color(1, 1, 0.97),
@@ -62,6 +63,7 @@ var _click_anchor := Vector2(INF, INF)
 var _motion: Dictionary = {}         # instance id → generation
 var _daily: Dictionary = {}          # who → job
 var _paused_walks: Dictionary = {}   # who → remaining path
+var _make_way_after: Dictionary = {} # instance id → next allowed sidestep (ticks msec)
 
 # ============================================================== lifecycle ===
 
@@ -678,11 +680,11 @@ func _spawn_people(animate: bool) -> void:
 			_frame_pose(actor, str(p.get("frame", "")))
 
 func _walk_on(actor: CharacterBody2D, spot: Vector2, frame: String) -> void:
-	await _follow_route(actor, spot, true)
+	await _follow_route(actor, spot)
 	if not _closing and is_instance_valid(actor): _frame_pose(actor, frame)
 
 func _walk_off(actor: CharacterBody2D, door: Vector2) -> void:
-	await _follow_route(actor, door, false)
+	await _follow_route(actor, door)
 	if is_instance_valid(actor): actor.queue_free()
 
 func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
@@ -707,11 +709,24 @@ func _make_way() -> void:
 		var actor: CharacterBody2D = actors[key]
 		if actor == player or not is_instance_valid(actor) or _daily.has(key) or key in pinned: continue
 		if actor.travelling or actor.position.distance_to(player.position) > 20.0: continue
+		var id := actor.get_instance_id()
+		if Time.get_ticks_msec() < int(_make_way_after.get(id, 0)): continue
 		var side := player.velocity.normalized().orthogonal() * 28.0
 		for spot in [actor.position + side, actor.position - side]:
-			if adapter.walkable(spot, actor):
-				actor.walk_to(spot)
-				break
+			if not adapter.walkable(spot, actor): continue
+			var route := FieldNavigation.route_on_grid(actor.position, spot, adapter.nav_grid(actor))
+			if route.is_empty(): continue
+			route.append(spot)
+			_make_way_after[id] = Time.get_ticks_msec() + MAKE_WAY_COOLDOWN_MS
+			_step_aside(actor, route)
+			break
+
+func _step_aside(actor: CharacterBody2D, route: PackedVector2Array) -> void:
+	var facing: String = actor.facing
+	var result: Dictionary = await _follow(actor, route)
+	if _closing or not is_instance_valid(actor) or str(result.reason) == "cancelled": return
+	actor.pose("idle", facing)
+	_make_way_after[actor.get_instance_id()] = Time.get_ticks_msec() + MAKE_WAY_COOLDOWN_MS
 
 # ================================================================== maps ===
 
@@ -726,6 +741,7 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 			actor.queue_free()
 		actors.erase(actor_key)
 	_daily.clear()
+	_make_way_after.clear()
 	player.get_parent().remove_child(player)
 	add_child(player)
 	adapter.load_map(key, spawn)
@@ -873,7 +889,7 @@ func _op_walk(ev: Dictionary) -> void:
 			if bool(to.get("avoid", false)) and _taken(spot, actor): continue
 			destination = spot
 			route = FieldNavigation.route_on_grid(actor.position, spot, grid)
-			if not route.is_empty() or not bool(ev.get("stop_when_stuck", false)): break
+			if not route.is_empty(): break
 	elif to.has("approach_site"):
 		var site_id := str(to.approach_site)
 		var point: Vector2 = site_point(site_id) if sites.has(site_id) else adapter.anchor("site:" + site_id)
@@ -884,19 +900,18 @@ func _op_walk(ev: Dictionary) -> void:
 	if destination == null:
 		_ack(ev, {"ok": false, "reason": "no_route"})
 		return
+	if actor.position.distance_to(destination) <= ACTOR.ARRIVAL_RADIUS:
+		_ack(ev, {"reason": "arrived"})
+		return
 	if route.is_empty():
 		route = FieldNavigation.route_on_grid(actor.position, destination, grid)
-	if route.is_empty() or actor.position.distance_to(destination) < 4:
-		if bool(ev.get("stop_when_stuck", false)) and actor.position.distance_to(destination) >= 4:
-			_ack(ev, {"ok": false, "reason": "no_route"})
-			return
-		actor.position = destination
-		_ack(ev, {"reason": "arrived"})
+	if route.is_empty():
+		_ack(ev, {"ok": false, "reason": "no_route"})
 		return
 	route.append(destination)
 	var previous_speed: float = actor.speed
 	if float(ev.get("speed", 0.0)) > 0.0: actor.speed = float(ev.speed)
-	var result: Dictionary = await _follow(actor, route, bool(ev.get("stop_when_stuck", false)), who if bool(ev.get("pausable", false)) else "")
+	var result: Dictionary = await _follow(actor, route, who if bool(ev.get("pausable", false)) else "")
 	if is_instance_valid(actor): actor.speed = previous_speed
 	_ack(ev, result)
 
@@ -928,64 +943,42 @@ func _next_motion(actor: CharacterBody2D) -> int:
 
 func _cancel_motion(actor: CharacterBody2D) -> void:
 	_next_motion(actor)
-	var moving: bool = actor.travelling
-	actor.travelling = false
-	actor.velocity = Vector2.ZERO
-	actor.path.clear()
-	if moving: actor.arrived.emit()
+	for who in _paused_walks.keys():
+		if actors.get(who) == actor: _paused_walks.erase(who)
+	actor.stop_travel()
 
-## 沿路走。默认被卡住时最后几步直接到位；stop_when_stuck 时停下并报告。可暂停的路线在现场不可用时停步。
-func _follow(actor: CharacterBody2D, route: PackedVector2Array, stop_when_stuck := false, pause_key := "") -> Dictionary:
+## 沿路走；受阻由角色停步并报告失败。可暂停的路线在现场不可用时停步。
+func _follow(actor: CharacterBody2D, route: PackedVector2Array, pause_key := "") -> Dictionary:
+	_cancel_motion(actor)
 	var generation := _next_motion(actor)
 	var id := actor.get_instance_id()
 	actor.follow_path(route)
-	var last := actor.position
-	var still := 0.0
-	while true:
+	while actor.travelling or _paused_walks.has(pause_key):
 		await get_tree().physics_frame
 		if _closing or not is_instance_valid(actor) or int(_motion.get(id, 0)) != generation:
 			return {"ok": false, "reason": "cancelled"}
+		if not actor.travelling and not _paused_walks.has(pause_key):
+			break
 		if pause_key != "" and not field_active():
 			if actor.travelling:
 				_paused_walks[pause_key] = actor.path.slice(actor.waypoint)
-				actor.travelling = false
-				actor.velocity = Vector2.ZERO
-				actor.pose("idle")
+				actor.pause_travel()
 			continue
 		if _paused_walks.has(pause_key):
-			actor.follow_path(_paused_walks[pause_key])
+			actor.resume_travel()
 			_paused_walks.erase(pause_key)
-			last = actor.position
-			still = 0.0
-			continue
-		if not actor.travelling: break
-		if actor.position.distance_to(last) < 0.2:
-			still += get_physics_process_delta_time()
-			if stop_when_stuck and still >= 1.0:
-				_cancel_motion(actor)
-				actor.pose("idle")
-				return {"ok": false, "reason": "stuck"}
-			if not stop_when_stuck and still >= 20.0 / 60.0:
-				actor.position = route[route.size() - 1]
-				actor.travelling = false
-				actor.velocity = Vector2.ZERO
-				actor.pose("idle")
-				break
-		else:
-			still = 0.0
-		last = actor.position
-	return {"ok": true, "reason": "arrived"}
+	return actor.travel_result
 
 func _update_paused_walks() -> void:
 	pass
 
-func _follow_route(actor: CharacterBody2D, destination: Vector2, snap: bool) -> void:
+func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 	var route := FieldNavigation.route_on_grid(actor.position, destination, adapter.nav_grid(actor))
 	if route.is_empty():
-		if snap: actor.position = destination
-		return
+		_cancel_motion(actor)
+		return {"ok": false, "reason": "no_route"}
 	route.append(destination)
-	await _follow(actor, route)
+	return await _follow(actor, route)
 
 # ---------------------------------------------------------------- camera ---
 
@@ -1058,6 +1051,7 @@ func _daily_go(ev: Dictionary) -> void:
 	if best_route.is_empty():
 		_daily_report(who, int(ev.serial), "blocked", "")
 		return
+	_cancel_motion(actor)
 	if actor.seated: actor.stand_up()
 	_daily[who] = {"serial": int(ev.serial), "room": str(ev.room), "action": str(ev.get("action", "rest")), "destination": destination,
 		"focus": station.get("focus", station.point), "last": actor.position, "still": 0.0, "working": false, "previous_speed": actor.speed}
@@ -1071,11 +1065,7 @@ func _daily_release(who: String) -> void:
 	var actor := _actor(who)
 	_daily.erase(who)
 	if actor == null: return
-	if actor.travelling:
-		actor.travelling = false
-		actor.velocity = Vector2.ZERO
-		actor.path.clear()
-		actor.arrived.emit()
+	_cancel_motion(actor)
 	actor.speed = float(job.previous_speed)
 	actor.pose("idle")
 
@@ -1086,7 +1076,7 @@ func _update_daily(delta: float) -> void:
 		if actor == null or bool(job.working) or bool(job.get("reported", false)): continue
 		if not actor.travelling:
 			var room: String = adapter.entered_room(actor.position)
-			var arrived: bool = actor.position.distance_to(job.destination) <= 4.0 and room == str(job.room)
+			var arrived: bool = bool(actor.travel_result.ok) and actor.position.distance_to(job.destination) <= 4.0 and room == str(job.room)
 			job.reported = true
 			_daily_report(who, int(job.serial), "arrived" if arrived else "blocked", room, str(job.action))
 			continue

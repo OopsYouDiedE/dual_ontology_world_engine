@@ -1,0 +1,32 @@
+Field actor movement repair
+Branch: codex/ch1-actors. Initial working tree was clean.
+No design file read, story edits, commit, push, or other-worktree access.
+
+Implementation
+- godot_csharp/scenes/Shared/Field/WorldView.gd:705 (_make_way), 724 (_step_aside): use navigation for sidesteps, restore the prior facing after success or obstruction, and allow the next sidestep only after a 1000 ms cooldown. Cancelled generations do not restore facing over a replacement movement.
+- godot_csharp/scenes/Story/StoryActor.gd:155 (walk_to/follow_path), 174 (pause/resume), 186 (stop_travel), 202 (_physics_process): return travel_result dictionaries; success, blockage and cancellation release arrived waiters. Less than 0.5 px progress for roughly 0.5 s stops travel, clears the path/velocity and returns to idle. The final movement step uses move_and_slide, with no position assignment.
+- godot_csharp/scenes/Shared/Field/WorldView.gd:871 (_op_walk), 951 (_follow), 975 (_follow_route): no-route and stuck travel report ok=false with their reason and leave the actor at its physical position. Near destinations are accepted only within the actor arrival radius; later reachable near-site/actor offsets are tried if an earlier offset has no route. Paused paths resume without creating a second arrived waiter, and cancellation also releases paused travel. Daily arrival additionally requires a successful travel result. The place op remains an instant position operation.
+- godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs:150 (WalkTo), 196 (Summon), 363 (InviteHand): add/adjust failure fallbacks without authoring player text outside story files.
+
+C# caller audit and fallbacks
+- posts (112), stage_actor/finale staging (114), su_approach (139): shared WalkTo failure fallback emits idle, faces companions toward detective, releases the claim, and lets the enclosing presentation continue at the actual position. Cancelled movement does not emit pose/face overrides.
+- Meeting (185): WalkTo releases its claim on failure; the existing idle pose and meeting plan still run.
+- Summon (207): uses the shared WalkTo fallback; stuck/no_route still complete mutual facing at the stopped positions and release both nested claims. Cancellation exits without overriding the replacement action.
+- InviteHand (374): finally removes the invitation; no_route/stuck use existing story-key notices, cancelled stays silent, and the generic arrival notice requires both WalkOk and shelf proximity.
+- GoReach (442): existing failure guard removes the life entry and stops before Reach or the taken prop update. The action remains retryable.
+- FinishReach (473): the essential PutBack/returned prop work precedes walking; a failed return walk leaves the actor idle in place and does not undo the return.
+- SoundTest (550): existing failure guard plays sound_cancel and exits before RecordSoundTest, experiment completion or sound-round updates.
+- Chapter2: no C# StageOp("walk"), WalkTo or WalkOk callers found; no Chapter2 source changes needed.
+
+Verification
+Performed by a fresh independent agent without the design file. See verification-report.txt and retained failed/successful logs in this directory.
+- Focused Godot physics regression: 21/21 passed, including real collision, final-step obstruction, no-route/stuck acks, multiple offsets, pause/resume/cancel, facing, cooldown and generation ownership.
+- C# reflection regression: 25/25 passed for shared WalkTo outcomes and Summon failure progression/claim cleanup.
+- Modified scripts parse successfully. Final main-scene headless --quit has no SCRIPT ERROR, but retains certificate-store and exit-resource warnings.
+- Single-process --no-restore host solution build passed (1 NU1900 warning, 0 errors). Default build and verify.py --only host returned exit 1 without compiler diagnostics; these are not reported as passing.
+- Initial parser failure in _follow was fixed; its failed log remains retained.
+- Story outputs checked through the build's compile_story.py --check target. git diff --check passed; modified production files retain LF line endings.
+
+Limits
+Only automated mechanism checks were performed. Acceptance levels 1, 2 and 3, visual presentation and real gameplay remain unverified. The flow step was deliberately not run or repaired, as instructed. No design/aesthetic judgment was made about dialogue delivered from the actual stopping positions after a failed summon or finale walk.
+Changes are left in the working tree for the supervisor to commit. Test-induced changes to tracked translation binaries are restored to their initial bytes after verification.
