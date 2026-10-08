@@ -159,7 +159,7 @@ def main() -> int:
         steps.append(("flow", [godot, "--headless", "--path", str(HOST), "--script",
                                "res://scenes/Awakening/check/flow_check.gd"], 600, True))
         steps.append(("flow2", [godot, "--headless", "--path", str(HOST), "--script",
-                              "res://scenes/Chapter2/Game/check_flow.gd"], 900, True))
+                              "res://scenes/Chapter2/check/check_flow.gd"], 900, True))
         steps.append(("gallery", [godot, "--path", str(HOST), "--rendering-method", "gl_compatibility", "--script",
                                   "res://scenes/Awakening/check/state_gallery.gd"], 600, True))
 
