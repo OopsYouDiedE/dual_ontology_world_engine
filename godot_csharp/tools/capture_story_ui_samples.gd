@@ -81,7 +81,7 @@ func _select_samples() -> Array:
 	var result: Array = []
 	for spec in SAMPLE_SPECS:
 		var best: Dictionary = {}
-	var best_length := -1
+		var best_length := -1
 		for packet in packets:
 			for index in packet.output.size():
 				var ev: Dictionary = packet.output[index]
@@ -210,6 +210,33 @@ func _render_sample(chosen: Dictionary) -> void:
 		"capture_type": "production_ui_render_sample", "blind_playtest": false}
 	_sample_manifest.append(provenance)
 	_write("visible_sample", {"provenance": provenance, "visible": _last_visible})
+	if spec.kind == "form":
+		# Exercise selection and tab presentation only, without submitting an
+		# answer or sending any action to the game session.
+		var actions: Array = []
+		for field in display_event.get("fields", []):
+			var field_id := str(field.get("id", ""))
+			await _press_label(_action_label(display_event, "tab:" + field_id))
+			if _failed: return
+			for option in field.get("options", []):
+				if not bool(option.get("available", true)): continue
+				await _press(host.ui._form.button_for(field_id, str(option.id)))
+				if _failed: return
+				actions.append({"field": field_id, "option": str(option.id)})
+				break
+		observer._last_frame = ""
+		await _draw()
+		var selected_path := ProjectSettings.globalize_path(_sample_dir + _sample_slug + "-selected.png")
+		if capture_viewport.get_texture().get_image().save_png(selected_path) != OK:
+			_fail("Cannot save selected form sample.")
+			return
+		var selected_provenance := provenance.duplicate(true)
+		selected_provenance.slug = _sample_slug + "-selected"
+		selected_provenance.screenshot = selected_path
+		selected_provenance.ui_selections = actions
+		selected_provenance.submitted_to_engine = false
+		_sample_manifest.append(selected_provenance)
+		_write("visible_sample", {"provenance": selected_provenance, "visible": _last_visible})
 	if spec.kind == "lines":
 		# Finish the isolated one-line presentation through its real control so
 		# the next sample does not inherit a suspended dialogue coroutine.

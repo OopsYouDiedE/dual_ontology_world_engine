@@ -7,7 +7,7 @@ extends VBoxContainer
 ##   layout:"stack"|"tabs",   stack：全部字段依次堆叠；tabs：同时只显示一个字段（show_field 切换）,
 ##   fields:[{id, kind:"text"|"choice", heading, placeholder, value, max_length, flow:bool, empty_text,
 ##            options:[{id, label}]}],
-##   summary:[{field:String, label:String}]  (头部逐行显示「label：所选项文案或 unset_label」),
+##   summary:[{field:String, label?:String, template?:String}]  (template 的 {内容} 绑定所选项；否则显示 label：内容),
 ##   unset_label:String
 ## })
 const Paper := preload("res://scenes/UI/Components/Paper.gd")
@@ -172,7 +172,8 @@ func _refresh_summary() -> void:
 		var picked := str(_edits[id].text).strip_edges() if _edits.has(id) else str(_selected.get(id, ""))
 		if picked != "":
 			shown = picked if _edits.has(id) else _label_of(id, picked)
-		lines.append("%s：%s" % [str(entry.get("label", "")), shown])
+		var template := str(entry.get("template", ""))
+		lines.append(template.replace("{内容}", shown) if template != "" else "%s：%s" % [str(entry.get("label", "")), shown])
 	$Header/Summary.text = Paper.story_text("\n".join(lines))
 	$Header/Summary.visible = not lines.is_empty()
 
