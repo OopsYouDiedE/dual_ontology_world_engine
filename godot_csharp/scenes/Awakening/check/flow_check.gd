@@ -8,8 +8,8 @@ const Fixture := preload("res://scenes/Awakening/check/chapter1_fixture.gd")
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
 ## 恶魔在全章都不提契约第 9、10 条。
 const FORBIDDEN := ["第九", "第 9", "第9", "第十条", "第 10", "九、", "十、", "尽忘", "归乡", "放逐", "十五名", "担保耗尽"]
-## 第五轮修订删去的说法：初涉斯地、可数的刻痕、恶魔自报为恶魔或提导师与契约、门外是“主楼走廊”。
-const RETIRED := ["初涉斯地", "二十四", "刻痕", "恶魔亦可", "导师将我拘于", "契约第", "主楼走廊", "依第二条", "第 8 条", "第八条"]
+## 第五轮修订删去的说法：可数的刻痕、恶魔自报为恶魔或提导师与契约、门外是“主楼走廊”。
+const RETIRED := ["二十四", "刻痕", "恶魔亦可", "导师将我拘于", "契约第", "主楼走廊", "依第二条", "第 8 条", "第八条"]
 var checks := 0
 var failures := 0
 var failed_names: Array[String] = []
@@ -80,7 +80,7 @@ func _run() -> void:
 	var retired_raw := raw + source_text("res://scenes/Awakening/AwakeningMap.gd") + source_text("res://scenes/Awakening/Script/Chapter1Session.cs") \
 		+ source_text("res://scenes/Awakening/Script/Chapter1SessionFlows.cs") + source_text("res://scenes/Host/Main.gd")
 	var retired := RETIRED.filter(func(w): return retired_raw.contains(w))
-	check(retired.is_empty(), "第五轮修订：不再有“初涉斯地”、可数刻痕、契约条款与“主楼走廊” %s" % str(retired))
+	check(retired.is_empty(), "第五轮修订：不再有可数刻痕、契约条款与“主楼走廊” %s" % str(retired))
 	check(not titles.has("answer_offer_reverse") and not titles.has("answer_reverse"), "第五轮修订：删去答辩第 5 步“反问”")
 
 	# ---- 1. 醒来 → 相遇 → 自报身份广播 → 核验 → 始业之问 → 调查（完整开场，对白代为推进）
@@ -103,11 +103,11 @@ func _run() -> void:
 	check(fx.stage() == "investigate", "S2–S5 结束后进入调查")
 	var opening := seen()
 	check(opening.contains("我是此地的代管者，也是诸位的教师") and opening.contains("我所立之规") and not opening.contains("恶魔")
-		and not opening.contains("导师") and not opening.contains("契约") and not opening.contains("初涉斯地"),
-		"S3 开场广播：只称代管者与教师，不说自己是什么，不提导师与契约，没有“初涉斯地”（第五轮修订 1、3）")
+		and not opening.contains("导师") and not opening.contains("契约") and opening.contains("诸位初涉斯地"),
+		"S3 开场广播：只称代管者与教师，不说自己是什么，不提导师与契约；“诸位初涉斯地”已恢复（2026-10-08 用户裁定）")
 	check(opening.find("代管者") < opening.find("此为始业之问"), "开场广播在始业之问之前")
 	check(FORBIDDEN.filter(func(w): return opening.contains(w)).is_empty(), "开场全部台词不提第 9、10 条")
-	check(opening.contains("又不是来断案的") and opening.contains("是在试我们") and opening.contains("我还不知道能不能信"),
+	check(opening.contains("我连昨晚睡的哪张床都不记得") and opening.contains("是在试我们") and opening.contains("我还不知道能不能信"),
 		"始业之问后，三人各有一句不同的抵触或怀疑，再开始调查（修订四·11）")
 	check(opening.contains("揣进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
 	check(int(fx.probe("desire", ["huo"])) == 2 and int(fx.probe("desire", ["su"])) == 2 and int(fx.probe("desire", ["shen"])) == 2,
