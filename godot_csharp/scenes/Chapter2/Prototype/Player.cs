@@ -98,10 +98,12 @@ public sealed partial class Game
                 if (act.Who is { } helper) Request(helper, "陪我去誓约庭拓那块碑。", fx.Escort(Place.Oath, Stele));
                 break;
             case Cmd.Mediate when Day == FirstDay && Slot == Slot.Noon:
-                var mora = Evaluate(P.Mora, "先按人头开粮，账我来对。");
-                var ruan = Evaluate(P.Ruan, "先按人头开粮，账我来对。");
+                var request = X("调停.请求");
+                Feed.Add(X("调停.发言", ("话", request)));
+                var mora = Evaluate(P.Mora, request);
+                var ruan = Evaluate(P.Ruan, request);
                 Mediated = mora != SocialStance.Reject && ruan != SocialStance.Reject && (mora == SocialStance.Accept || ruan == SocialStance.Accept);
-                Feed.Add(Mediated ? "茉拉与阮清越各退一步：先开粮，账按人头记。" : "你劝了，没人肯先松手。");
+                Feed.Add(X(Mediated ? "调停.成功" : "调停.失败"));
                 if (Mediated) Witness(Det, K("调停配给", P.Det), 1, 1, People.Where(p => Where(p) == Place.Logistics || p.Id is P.Mora or P.Ruan), domain: Dom.Rations);
                 break;
         }
@@ -116,7 +118,7 @@ public sealed partial class Game
         var req = p.World.Projections.Last(x => x.Kind == ProjectionKind.Event && x.Name == text);
         var stance = SocialSystem.Evaluate(p.World, p.Self, req).Stance;
         Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
-        Feed.Add($"{p.Name}：{Answer(p, stance)}");
+        Feed.Add(X($"调停.{who}.{stance}"));
         return stance;
     }
 

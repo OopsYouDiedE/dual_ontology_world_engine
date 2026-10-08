@@ -34,10 +34,10 @@ public sealed partial class Game
 
     public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
     {
-        [11] = (FirstDay, "守则读法", "按字面读它自己的守则与学员立的规，找出条文没写什么。"),
-        [12] = (FirstDay + 1, "传声与机械", "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。"),
-        [13] = (0, "言灵初阶", "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。"),
-        [14] = (FirstDay + 2, "异象与记忆", "封存与回忆的原理：触物即接通，回忆即上钩。"),
+        [11] = (FirstDay, X("授课.第十一课.题名"), X("授课.第十一课.内容")),
+        [12] = (FirstDay + 1, X("授课.第十二课.题名"), X("授课.第十二课.内容")),
+        [13] = (0, X("授课.第十三课.题名"), X("授课.第十三课.内容")),
+        [14] = (FirstDay + 2, X("授课.第十四课.题名"), X("授课.第十四课.内容")),
     }.ToImmutableDictionary();
 
     public static int LessonOfDay(int day) => Lessons.FirstOrDefault(l => l.Value.Day == day).Key;
@@ -65,15 +65,16 @@ public sealed partial class Game
         }
         Log.Add($"D{Day} 上午 {title}：到课 {string.Join("、", present.Select(p => p.Name))}");
         if (present.Contains(Det))
-            Feed.Add($"【{title}】黑板前没有人，粉笔自己在板上写字。{teach}（到课：{string.Join("、", (present.Contains(Det) ? ["你"] : Array.Empty<string>()).Concat(present.Where(p => p != Det).Select(p => p.Name)))}）");
+            Feed.Add(X("授课.到课回执", ("课", title), ("内容", teach),
+                ("人们", string.Join("、", (present.Contains(Det) ? ["你"] : Array.Empty<string>()).Concat(present.Where(p => p != Det).Select(p => p.Name))))));
         // 它挑最容易被推动的人说话（欲望与钩最高者）：首课人人都在，挑三个；之后的课愿来才来，每课只挑一个（五日里课多了，低语不随之翻倍）。
         foreach (var p in present.Where(p => p != Det).OrderBy(p => p.Whispered).ThenByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id).Take(lesson == 11 ? 3 : 1)) Whisper(p);
     }
 
-    /// <summary>第十四课：讲清回忆为何接上钩。欲望强的人更想去试，欲望弱的人更怕（第三部分 §5.8）。</summary>
+    /// <summary>第十四课后的欲望影响；保留现有认知与警告处理。</summary>
     private void LessonFourteen(Person p)
     {
-        if (p.Desire >= 3) { p.Desire += 1; RewriteDesire(p, "《异象与记忆》让人更想试一试"); }
+        if (p.Desire >= 3) { p.Desire += 1; RewriteDesire(p, X("授课.第十四课.诱因")); }
         if (p != Det) Tell(p, Warning1, Channel.Face);
     }
 
@@ -101,7 +102,6 @@ public sealed partial class Game
         {
                 // 集合场面里铜口当面说了这几句，广播不再给侦探重复一遍（人人照样听到）。
                 Broadcast("诸位，请到讲堂来。现在讲守则的读法。", shown: false);
-                Broadcast("封存之物存于名录库，凡学员皆可取回己物。", shown: false);
                 Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。", shown: false);
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
                 Det.Acc[Warning1] = Truth.True;

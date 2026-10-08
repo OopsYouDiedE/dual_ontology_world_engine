@@ -77,8 +77,8 @@
         （配给台前排起了队。茉拉攥着粮仓钥匙站在台后，阮清越拿着一本人头账，挡在她面前。） [#id=chapter2.noon_dispute.001]
         阮清越：按人头。十六份，日末清点。 [#id=chapter2.noon_dispute.002]
         茉拉：莫兰脸色不对。病人先领。 [#emotion=worried] [#id=chapter2.noon_dispute.003]
-        阮清越：先领，可以。多领多少，从谁的份里扣？ [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
-        茉拉：先把病人的那一份给我。账，等他吃下去，我跟你算。 [#id=chapter2.noon_dispute.005]
+        阮清越：病人先领，可以。代领的是谁，日末找谁对账，先记清楚。 [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
+        茉拉：莫兰等着吃。先把他那一份给我送过去；回来我报名字，陪你对账。 [#id=chapter2.noon_dispute.005]
         侦探（心声）：一本账，一把钥匙。队伍已经排到我身后了，饭还没递出一份。 [#id=chapter2.noon_dispute.006]
         选择 noon_dispute：mediate、skip_dispute
 
