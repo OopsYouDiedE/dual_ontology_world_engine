@@ -1,21 +1,21 @@
 场面 nudge_E1
-    铜口：（远远地）门闩记得每一只碰过它的手，侦探先生。你想知道自己是什么——它记得你昨夜是什么。 [#id=nudge_E1.001]
-    放大 detective：门闩记得你昨夜是什么。
+    铜口：（远远地）你想知道自己为何在此，侦探先生。我也想知道，阁下会先问哪一句。 [#id=nudge_E1.001]
+    放大 detective：你想知道自己为何在此。
     跳转 END
 
 场面 nudge_E5
-    铜口：（从墙里，很轻）苏小姐，墙里那个声音，你昨夜听过一次。后面还有你从未听过的——都收在那把音叉里。 [#id=nudge_E5.001]
-    低语 su：后面还有你从未听过的，都收在那把音叉里。
+    铜口：（从墙里，很轻）苏小姐，此地还有你从未听过的声音。 [#id=nudge_E5.001]
+    低语 su：此地还有你从未听过的声音。
     跳转 END
 
 场面 nudge_E7
-    铜口：（铜口里，声音放得很低）霍先生，图纸就在主楼。记得它的人是你；记得它在哪的，是你那块石板。 [#id=nudge_E7.001]
-    低语 huo：图纸就在主楼。记得它在哪的，是你那块石板。
+    铜口：（铜口里，声音放得很低）霍先生，超越卡诺循环的那一张，此地有人画过。画它的人，你见过。 [#id=nudge_E7.001]
+    低语 huo：超越卡诺循环的那一张，此地有人画过。
     跳转 END
 
 场面 nudge_E10
-    铜口：（远远地）沈师傅，你护过的每一个人，那罐子都替你记着。你就不想知道，是谁？ [#id=nudge_E10.001]
-    低语 shen：你护过的每一个人，那罐子都替你记着。
+    铜口：（远远地）沈师傅，你护着的人，比你记得的多。 [#id=nudge_E10.001]
+    低语 shen：你护着的人，比你记得的多。
     跳转 END
 
 场面 recall_su
@@ -24,7 +24,6 @@
     苏泠：我想开门，让他进来。 [#id=recall_su.003]
     （她睁开眼，脸色发白。） [#id=recall_su.004]
     苏泠：那个声音，我当时以为……是门外的人。 [#id=recall_su.005]
-    铜口：物件记得的，比人久，{{称呼("su")}}。 [#id=recall_su.006]
     跳转 END
 
 场面 recall_huo
@@ -32,7 +31,6 @@
     霍铎：铜口里的声音……很清楚。 [#id=recall_huo.002]
     霍铎：“等我下一次通知。”◎，铜口。他叫我守铜口。 [#id=recall_huo.003]
     霍铎：……他再也没有来。 [#id=recall_huo.004]
-    铜口：物件记得的，比人久，{{称呼("huo")}}。 [#id=recall_huo.005]
     跳转 END
 
 场面 recall_shen
@@ -40,20 +38,20 @@
     沈鼎：又该喂了。 [#id=recall_shen.002]
     沈鼎：阿泠的茶不放糖。老霍的放两勺。那位——（他看了你一眼）——清茶，不放奶。 [#id=recall_shen.003]
     沈鼎：……我叫她阿泠。我怎么会叫她阿泠。 [#id=recall_shen.004]
-    铜口：物件记得的，比人久，{{称呼("shen")}}。 [#id=recall_shen.005]
     跳转 END
 
 场面 recall_offer_su
-    苏泠：（她低头看着音叉）……握着它，回想昨晚？ [#id=recall_offer_su.001]
+    苏泠：（她低头看着音叉）……刚才碰到它，脑子里闪了一下。握着它，再想想？ [#id=recall_offer_su.001]
     选择：
-        - 把公告框上的守则第 1 条指给她看。 [#id=recall_offer_su.002]
+        - 提醒她：先问问铜口，那是什么。 [#id=recall_offer_su.002]
             设旗 show_rule
         - 什么都不说。 [#id=recall_offer_su.003]
     跳转 END
 
 场面 recall_shown_su
-    苏泠：（她读出声来）“封存之物，可凭对应之物寻回；寻回者，自负其果。” [#id=recall_shown_su.001]
-    苏泠：自负其果。……什么果？ [#id=recall_shown_su.002]
+    苏泠：（她朝墙里问）刚才那是什么？ [#id=recall_shown_su.001]
+    铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_su.003]
+    苏泠：连着此地。……那就是说，回不去了。 [#id=recall_shown_su.002]
     跳转 END
 
 场面 recall_touch_su
@@ -74,7 +72,7 @@
             侦探：碰吧。我在边上。 [#id=recall_hesitate_su.004]
             设旗 advice_touch
         - 劝她别碰。 [#id=recall_hesitate_su.005]
-            侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_su.006]
+            侦探：别往下想了。不知道那是什么，先别碰。 [#id=recall_hesitate_su.006]
             设旗 advice_decline
         - 由她自己定。 [#id=recall_hesitate_su.007]
             侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_su.008]
@@ -82,22 +80,23 @@
     跳转 END
 
 场面 recall_offer_huo
-    霍铎：摸着石板，想？ [#id=recall_offer_huo.001]
+    霍铎：手一碰，闪了一下。……摸着它，往下想？ [#id=recall_offer_huo.001]
     选择：
-        - 把公告框上的守则第 1 条指给他看。 [#id=recall_offer_huo.002]
+        - 提醒他：先问问铜口，那是什么。 [#id=recall_offer_huo.002]
             设旗 show_rule
         - 什么都不说。 [#id=recall_offer_huo.003]
     跳转 END
 
 场面 recall_shown_huo
-    霍铎：（他一个字一个字地看）“寻回者，自负其果。” [#id=recall_shown_huo.001]
-    霍铎：寻回。……像拆机器。拆开看了，就装不回原样。 [#id=recall_shown_huo.002]
+    霍铎：（朝铜口）刚才那一下，是什么？ [#id=recall_shown_huo.001]
+    铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_huo.003]
+    霍铎：……像拆机器。拆开看了，就装不回原样。 [#id=recall_shown_huo.002]
     跳转 END
 
 场面 recall_touch_huo
     霍铎：{{回想所思()}} [#id=recall_touch_huo.001]
     若 告知规则("huo")：
-        霍铎：我读了。果，我自己担。 [#id=recall_touch_huo.002]
+        霍铎：代价我听见了。我自己担。 [#id=recall_touch_huo.002]
     （他把手掌平放在石板上。） [#id=recall_touch_huo.003]
     跳转 END
 
@@ -114,7 +113,7 @@
             侦探：碰吧。我在边上。 [#id=recall_hesitate_huo.004]
             设旗 advice_touch
         - 劝他别碰。 [#id=recall_hesitate_huo.005]
-            侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_huo.006]
+            侦探：别往下想了。不知道那是什么，先别碰。 [#id=recall_hesitate_huo.006]
             设旗 advice_decline
         - 由他自己定。 [#id=recall_hesitate_huo.007]
             侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_huo.008]
@@ -122,16 +121,17 @@
     跳转 END
 
 场面 recall_offer_shen
-    沈鼎：摸着罐子想事？我这辈子摸过的罐子比你见过的人多。 [#id=recall_offer_shen.001]
+    沈鼎：端着它，脑子里闪过点什么。……我这辈子摸过的罐子比你见过的人多，没一个这样。 [#id=recall_offer_shen.001]
     选择：
-        - 把公告框上的守则第 1 条指给他看。 [#id=recall_offer_shen.002]
+        - 提醒他：先问问铜口，那是什么。 [#id=recall_offer_shen.002]
             设旗 show_rule
         - 什么都不说。 [#id=recall_offer_shen.003]
     跳转 END
 
 场面 recall_shown_shen
-    沈鼎：（他眯着眼念）“寻回者，自负其果。” [#id=recall_shown_shen.001]
-    沈鼎：自负其果。这四个字，跑江湖的都认得。 [#id=recall_shown_shen.002]
+    沈鼎：（冲墙上的铜口）喂，刚才那是什么？ [#id=recall_shown_shen.001]
+    铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_shen.003]
+    沈鼎：带着此地。……这种买卖，跑江湖的都认得。 [#id=recall_shown_shen.002]
     跳转 END
 
 场面 recall_touch_shen
@@ -152,7 +152,7 @@
             侦探：碰吧。我在边上。 [#id=recall_hesitate_shen.004]
             设旗 advice_touch
         - 劝他别碰。 [#id=recall_hesitate_shen.005]
-            侦探：别碰。守则第一条那几个字，我不放心。 [#id=recall_hesitate_shen.006]
+            侦探：别往下想了。不知道那是什么，先别碰。 [#id=recall_hesitate_shen.006]
             设旗 advice_decline
         - 由他自己定。 [#id=recall_hesitate_shen.007]
             侦探：这是你的东西。你自己拿主意。 [#id=recall_hesitate_shen.008]
@@ -160,20 +160,19 @@
     跳转 END
 
 场面 recall_ask_detective
-    铜口：闩就在阁下手边。碰一碰，便知道它记得什么。 [#id=recall_ask_detective.001]
-    铜口：不妨一试，{{称呼("detective")}}。 [#id=recall_ask_detective.002]
+    （指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。） [#id=recall_ask_detective.001]
+    侦探（心声）：……握住它，往下想？ [#id=recall_ask_detective.002]
     选择：
-        - 触碰插闩。 [#id=recall_ask_detective.003]
+        - 握住插闩，往下想。 [#id=recall_ask_detective.003]
             侦探：…… [#id=recall_ask_detective.004]
             设旗 recall_yes
-        - 不。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
+        - 松手。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
             侦探：不碰。我想知道的事，自己查。 [#id=recall_ask_detective.006]
-            铜口：随阁下。 [#id=recall_ask_detective.007]
+            （铁闩又凉了下去。） [#id=recall_ask_detective.007]
     跳转 END
 
 场面 recall_detective
-    （铁闩是凉的。指腹压上去的一瞬，有什么东西从很远的地方回来了。） [#id=recall_detective.001]
+    （他没有松手。有什么东西从很远的地方回来了。） [#id=recall_detective.001]
     侦探（心声）：霍铎说闩。我就闩了。……我信他。 [#id=recall_detective.002]
     侦探（心声）：一句转述，我就去闩了门。我凭的是什么？ [#id=recall_detective.003]
-    铜口：物件记得的，比人久，{{称呼("detective")}}。 [#id=recall_detective.004]
     跳转 END

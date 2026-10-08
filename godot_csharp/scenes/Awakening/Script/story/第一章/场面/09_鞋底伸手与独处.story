@@ -20,8 +20,8 @@
         - （劝阻）“别碰。” [#id=reach_huo.003]
             侦探：别碰。 [#id=reach_huo.004]
             设旗 reach_decline
-        - （指着公告框）“守则第 1 条。” [#id=reach_huo.005]
-            侦探：公告框上的第一条，你看过没有。 [#id=reach_huo.006]
+        - （提醒）“先问问铜口，那是什么。” [#id=reach_huo.005]
+            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_huo.006]
             设旗 reach_rule
         - （不出声，任他自便） [#id=reach_huo.007]
     跳转 END
@@ -33,8 +33,8 @@
         - （劝阻）“别碰。” [#id=reach_su.003]
             侦探：别碰。 [#id=reach_su.004]
             设旗 reach_decline
-        - （指着公告框）“守则第 1 条。” [#id=reach_su.005]
-            侦探：公告框上的第一条，你看过没有。 [#id=reach_su.006]
+        - （提醒）“先问问铜口，那是什么。” [#id=reach_su.005]
+            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_su.006]
             设旗 reach_rule
         - （不出声，任她自便） [#id=reach_su.007]
     跳转 END
@@ -46,8 +46,8 @@
         - （劝阻）“别碰。” [#id=reach_shen.003]
             侦探：别碰。 [#id=reach_shen.004]
             设旗 reach_decline
-        - （指着公告框）“守则第 1 条。” [#id=reach_shen.005]
-            侦探：公告框上的第一条，你看过没有。 [#id=reach_shen.006]
+        - （提醒）“先问问铜口，那是什么。” [#id=reach_shen.005]
+            侦探：先别往下想。问问铜口，那是什么。 [#id=reach_shen.006]
             设旗 reach_rule
         - （不出声，任他自便） [#id=reach_shen.007]
     跳转 END

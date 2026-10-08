@@ -62,11 +62,11 @@ for (var i = 0; !reward.IsComplete && i < 300; i++)
     if (text.Contains("这一半只是开头，沈师傅")) expectedStrength[Person.Shen]++;
     if (text.Contains("一件试件，不过是一张图纸的一角")) expectedStrength[Person.Huo]++;
     if (text.Contains("那是旧声，苏小姐")) expectedStrength[Person.Su]++;
-    if (text == "你所求之物，在你封存的东西里。") expectedStrength[Person.Detective]++;
+    if (text == "与你立约的，不是我。") expectedStrength[Person.Detective]++;
     reward = dialogue.Next();
 }
 Check(reward.IsComplete && people.All(person => expectedStrength[person] == 2 && world.DesireStrength(person) == 2), "real reward script amplifies all four people exactly once");
-Check(rewardText.Any(text => text.Contains("超越卡诺循环")) && rewardText.Any(text => text.Contains("插进风衣口袋")), "real opening retains rewards and detective thought");
+Check(rewardText.Any(text => text.Contains("超越卡诺循环")) && rewardText.Any(text => text.Contains("揣进风衣口袋")), "real opening retains rewards and detective thought");
 Check(dialogue.Next().IsComplete && people.All(person => world.DesireStrength(person) == 2), "completed interaction cannot repeat effects");
 
 // Both real opening routes are exercised in separate worlds.
@@ -113,7 +113,7 @@ var sayNothing = offer.Choices.Single(choice => choice.Label == "什么都不说
 Finish(dialogue, dialogue.Choose(sayNothing.Id));
 Check(!content.Session.Has("flags", "show_rule"), "silent story choice leaves show-rule flag absent");
 offer = Menu(dialogue, dialogue.Start("recall_offer_su"));
-var showRule = offer.Choices.Single(choice => choice.Label.Contains("守则第 1 条"));
+var showRule = offer.Choices.Single(choice => choice.Label.Contains("先问问铜口"));
 Finish(dialogue, dialogue.Choose(showRule.Id));
 Check(content.Session.Has("flags", "show_rule"), "alternative story choice executes compiled effect");
 
@@ -140,7 +140,7 @@ Reject(() => dialogue.Choose(invite.Id), "choice cannot execute twice after comp
 // Next is the acknowledgement API: command delivery pauses before following completion.
 var beforeWhisper = world.DesireStrength(Person.Huo);
 var nudge = dialogue.Start("nudge_E7");
-Check(nudge.Lines.Any(line => line.Text.Contains("图纸就在主楼")) && world.DesireStrength(Person.Huo) == beforeWhisper, "nudge line precedes effect until ack");
+Check(nudge.Lines.Any(line => line.Text.Contains("卡诺循环")) && world.DesireStrength(Person.Huo) == beforeWhisper, "nudge line precedes effect until ack");
 Reject(() => dialogue.Start("s1_wake"), "active session rejects overlapping start");
 var command = dialogue.Next();
 Check(command.PresentationMode == PresentationMode.World && command.WorldCommands.Count == 1 && !command.IsComplete, "whisper yields command and awaits next ack");
@@ -154,7 +154,7 @@ Check(dialogue.Next().WorldCommands.Count == 0 && world.DesireStrength(Person.Hu
 world.ShowRule1(Person.Su);
 var suRule = Finish(dialogue, dialogue.Start("recall_shown_su"));
 Check(world.KnowsRule1(Person.Su) && !world.KnowsRule1(Person.Huo) && !world.KnowsRule1(Person.Shen), "actor rule cognition stays isolated");
-Check(suRule.Any(text => text.Contains("自负其果")), "real rule-known dialogue branch presents text");
+Check(suRule.Any(text => text.Contains("连着的此地")), "real rule-known dialogue branch presents text");
 var existingWorld = chapter.CreateDialogue(content, world);
 var repeatedTalk = Finish(existingWorld, existingWorld.Start("s1_wake"));
 Check(repeatedTalk.Count > 0 && world.DesireStrength(Person.Huo) == beforeWhisper + 1, "new dialogue session retains supplied world without active frames");

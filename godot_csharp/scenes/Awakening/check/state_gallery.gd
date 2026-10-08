@@ -230,7 +230,7 @@ func _run() -> void:
 	await show_line("它说的那句话")
 	await settle(10)
 	await shot("08b-su-reaches-for-fork-three-responses")
-	await show_line("守则第一条写着", [1])
+	await show_line("握久了就带着此地", [1])
 	await settle(10)
 	await shot("08-su-refuses-after-rule-1")
 	await finish_dialogue()

@@ -14,12 +14,12 @@
         （中央厅。八角形的穹顶下，十六个人站成了几团。铜柱居中，管道从四面汇进来。） [#id=chapter2.gather.001]
         侦探（心声）：站成几团，是按寝区站的。没人往别的团里走。 [#id=chapter2.gather.002]
         铜口：我是此地的代管者，也是诸位的教师。 [#id=chapter2.gather.003]
-        铜口：封存之物，存于名录库。凡学员，皆可取回己物。 [#id=chapter2.gather.004]
+        铜口：入夜之后，诸位留于室内。外头的气，夜里不养人。 [#id=chapter2.gather.004]
         铜口：另：入夜后，名录库中若有人以你之名唤你，勿应。 [#id=chapter2.gather.005]
         （它停了一下。一个声音贴着你的耳朵，说了一句。） [#id=chapter2.gather.006]
-        铜口：你的封存匣在名录库里。标签上，写着你的名字。 [#id=chapter2.gather.007]
+        铜口：与你立约的人，不在此地。 [#id=chapter2.gather.007]
         侦探（心声）：只有我听见。别人脸上，看不出听见过什么。 [#id=chapter2.gather.008]
-        沃德：依据它方才的话，名录库是公物。公物之取用，须有章程。 [#id=chapter2.gather.009]
+        沃德：昨夜我们在名录库前厅值守。那里的柜子与匣子，是公物。公物之取用，须有章程。 [#id=chapter2.gather.009]
         雀儿：你的章程，留着自己念。 [#id=chapter2.gather.010]
         沃德：我没有点你的名。 [#id=chapter2.gather.011]
         雀儿：你的眼睛点了。 [#emotion=angry] [#id=chapter2.gather.012]
@@ -31,7 +31,7 @@
         时段：上午
         （讲堂。黑板前没有人，粉笔却自己在板上写字。讲台前的灰上，多出一行窄底的鞋印。） [#id=chapter2.lesson.001]
         铜口：一条规矩写了什么，诸位都会读。今日读它没写什么。 [#id=chapter2.lesson.002]
-        铜口：以我自己的守则为例。第一条：封存之物，可凭对应之物寻回；寻回者，自负其果。 [#id=chapter2.lesson.003]
+        铜口：以我自己的守则为例。第一条：入夜之后，诸位留于室内。 [#id=chapter2.lesson.003]
         铜口：这一条没写的，最要紧的是什么？——请那位穿风衣的先生答。 [#id=chapter2.lesson.004]
         选择 lesson_answer：lesson_precise、lesson_who、lesson_where
         铜口：本课到此。诸位所立之规，也请这样读。下课。 [#id=chapter2.lesson.005]
@@ -42,7 +42,7 @@
         日：2
         时段：上午
         动作 lesson_answer：真
-        铜口：……正是。“自负其果”，果是什么，条文一字未提。读到这里的人，下回会先问。 [#id=chapter2.lesson_precise_branch.001]
+        铜口：……正是。“室内”二字，条文一字未界。库房、地窖、无窗的厅，都是室内。读到这里的人，下回会先问。 [#id=chapter2.lesson_precise_branch.001]
         铜口：很好。 [#id=chapter2.lesson_precise_branch.002]
         侦探（心声）：它是真的高兴。几个人看我的眼神变了。不全是好的那种。 [#id=chapter2.lesson_precise_branch.003]
 
@@ -51,7 +51,7 @@
         日：2
         时段：上午
         动作 lesson_answer：假
-        铜口：写了。“寻回者”——谁寻回，谁便是。不限其人。 [#id=chapter2.lesson_who_branch.001]
+        铜口：写了。“诸位”。一个不漏。 [#id=chapter2.lesson_who_branch.001]
         铜口：再读一遍。 [#id=chapter2.lesson_who_branch.002]
 
     场面 lesson_where_branch
@@ -59,7 +59,7 @@
         日：2
         时段：上午
         动作 lesson_answer：假
-        铜口：名录库。我方才说过。 [#id=chapter2.lesson_where_branch.001]
+        铜口：规矩不必写为什么。 [#id=chapter2.lesson_where_branch.001]
         铜口：读条文，不读我。 [#id=chapter2.lesson_where_branch.002]
 
     场面 free
@@ -188,8 +188,8 @@
         事件：confront.whisper
         日：5
         时段：夜里
-        （散场的时候，铜口没有出声。可走出中央厅的每一个人，脚步都慢了一点，像在听耳边有人说话。） [#id=chapter2.whisper.001]
-        侦探（心声）：它又挨个对每个人，说了一遍他们最想要的东西。……今夜，名录库前厅不会太安静。 [#id=chapter2.whisper.002]
+        （散场的时候，铜口没有出声。有几个人走得很慢，回头看了一眼北边。） [#id=chapter2.whisper.001]
+        侦探（心声）：它什么也没说。用不着它说。……今夜，名录库前厅不会太安静。 [#id=chapter2.whisper.002]
 
     场面 council
         事件：council.begin
@@ -198,7 +198,7 @@
         （第五日清晨。誓约庭。铺石顺坡，十六个人散在几级台阶上。） [#id=chapter2.council.007]
         铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
         沃德：我仍主张，凡事须有章程。名录库，由委员会保管。 [#id=chapter2.council.003]
-        顾平章：回忆即上钩。老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
+        顾平章：想起来的东西，就再也放不下。老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
         霍铎：……图纸在里面。 [#emotion=hooked] [#id=chapter2.council.005]
         侦探（心声）：每个人会站到哪一边，昨天、前天就定下了大半。看他们这几天亲眼见过什么、饿没饿着、信谁。 [#id=chapter2.council.006]
 

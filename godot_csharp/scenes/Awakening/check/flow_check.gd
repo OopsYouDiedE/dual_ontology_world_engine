@@ -131,7 +131,7 @@ func _run() -> void:
 	await fx.open_card("board")
 	var board: Array = fx.probe("posted_rules")
 	var board_text := "\n".join(board)
-	check(board.size() == 4 and board_text.contains("一、封存之物，可凭对应之物寻回；寻回者，自负其果。") and board_text.contains("四、我所立之规，皆张贴于此。")
+	check(board.size() == 4 and board_text.contains("一、入夜之后，诸位留于室内。") and board_text.contains("四、我所立之规，皆张贴于此。")
 		and not board_text.contains("契约") and not board_text.contains("恶魔"), "活动厅公告框贴的是学园守则四条，不是契约")
 	check(FORBIDDEN.filter(func(w): return board_text.contains(w)).is_empty(), "公告框没有第 9、10 条")
 	fx.close_modal()
@@ -200,8 +200,8 @@ func _run() -> void:
 		["E7", "huo", false, -1, "touch", "碰一下"],
 		["E7", "huo", true, -1, "touch", "图纸值这个价"],
 		["E5", "su", false, -1, "touch", "碰一下"],
-		["E5", "su", true, -1, "refuse", "守则第一条"],
-		["E10", "shen", true, -1, "refuse", "守则第一条"],
+		["E5", "su", true, -1, "refuse", "握久了就带着此地"],
+		["E10", "shen", true, -1, "refuse", "握久了就带着此地"],
 		["E10", "shen", false, 0, "touch", "我信你"],
 		["E10", "shen", false, 1, "refuse", "你说别碰"],
 		["E10", "shen", false, 2, "refuse", "自己拿主意"],
@@ -237,8 +237,8 @@ func _run() -> void:
 	await fx.jump("investigate")
 	fx.seen_lines.clear()
 	await fx.open_card("E1")
-	check(host.ui.modal_kind == "card" and seen().contains("它记得你昨夜是什么"), "第一次打开插闩的证物卡：先听到恶魔朝向侦探欲望的那句话，然后才出现回忆选项（修订三·3）")
-	check(fx.modal_buttons().any(func(t): return str(t).contains("守则第 1 条")), "回忆选项标注“（守则第 1 条）”（修订三·2、第五轮修订 2）")
+	check(host.ui.modal_kind == "card" and seen().contains("你想知道自己为何在此"), "第一次打开插闩的证物卡：先听到恶魔朝向侦探欲望的那句话，然后才出现回忆选项（修订三·3）")
+	check(fx.modal_buttons().any(func(t): return str(t).contains("往下想")), "回忆选项写明“往下想”：闪回由身体触发，取回是本人的选择")
 	fx.close_modal()
 	fx.seen_lines.clear()
 	await fx.open_card("E1")
@@ -248,7 +248,7 @@ func _run() -> void:
 	for id in ["E1", "E5", "E7", "E10"]:
 		nudges[id] = story.entries.has("nudge_" + id)
 	var nudge_text: String = JSON.stringify(story.entries)
-	check(nudge_text.contains("门闩记得你昨夜是什么") and nudge_text.contains("后面还有你从未听过的") and nudge_text.contains("图纸就在主楼") and nudge_text.contains("那罐子都替你记着"),
+	check(nudge_text.contains("你想知道自己为何在此") and nudge_text.contains("此地还有你从未听过的声音") and nudge_text.contains("超越卡诺循环") and nudge_text.contains("你护着的人，比你记得的多"),
 		"四件物件四句不同的话，各自朝向此人的欲望")
 	var endings := []
 	for id in ["E1", "E5", "E7", "E10"]:
@@ -539,7 +539,7 @@ func _run() -> void:
 	check(finale.contains("我却没有马上迈出去"), "门开时侦探有一句克制的心声（修订四·10）")
 	check(finale.contains("那罐子喂过的日子，我想起来一些了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
 	var ending_text := fx.modal_text() + "\n" + "\n".join(host.ui._modal_event.get("rows", []))
-	check(ending_text.contains("留在恶魔那里的钩：沈鼎") and ending_text.contains("你没有交出的：你自己、霍铎、苏泠"), "结局列出“钩”与“你没有交出的”（修订三·4）")
+	check(ending_text.contains("想起了一些事的人：沈鼎") and ending_text.contains("没有往下想的：你自己、霍铎、苏泠"), "结局列出取回者与没有往下想的人")
 	check(FileAccess.file_exists("user://chapter1_end.json") and FileAccess.get_modified_time("user://chapter1_end.json") >= int(end_started) - 1,
 		"章节结束状态写入 user://chapter1_end.json（且是本次写入）")
 

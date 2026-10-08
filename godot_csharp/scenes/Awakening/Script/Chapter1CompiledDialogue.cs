@@ -311,7 +311,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "记忆有缺，乃此地规则所限，请勿惊惶。",
+            "text": "记忆有缺，并非伤病，请勿惊惶。",
             "voice_clip": "",
             "line_id": "s3_broadcast.018"
           },
@@ -511,7 +511,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "你所求之物，在你封存的东西里。",
+            "text": "与你立约的，不是我。",
             "voice_clip": "",
             "line_id": "s4_rewards.017"
           },
@@ -525,7 +525,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "op": "literal",
-                "value": "你所求之物，在你封存的东西里。"
+                "value": "与你立约的，不是我。"
               }
             ]
           },
@@ -533,7 +533,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探",
             "mood": "",
-            "text": "封存？",
+            "text": "……那是谁？",
             "voice_clip": "",
             "line_id": "s4_rewards.018"
           },
@@ -541,7 +541,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "记忆有缺，乃此地规则所限。至于阁下所求——阁下自己封了起来。",
+            "text": "此问，不在我须答之列。",
             "voice_clip": "",
             "line_id": "s4_rewards.026"
           },
@@ -565,7 +565,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "东家连脸都不露……不过钱是真的。行，我留下。",
+            "text": "东家连脸都不露……不过钱是真的。行，这活我接着干。",
             "voice_clip": "",
             "line_id": "s4_rewards.022"
           },
@@ -573,7 +573,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "我也留。",
+            "text": "我也干。",
             "voice_clip": "",
             "line_id": "s4_rewards.023"
           },
@@ -589,7 +589,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "我要的东西，是我自己封起来的。那就留下，看看我封了什么。",
+            "text": "跟我立约的，不是它。那是谁，为了什么？……先留下来，弄清楚这个。",
             "voice_clip": "",
             "line_id": "s4_rewards.025"
           },
@@ -667,7 +667,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "记不得，并不妨碍作答。物件记得。",
+            "text": "记不得，并不妨碍作答。痕迹还在。",
             "voice_clip": "",
             "line_id": "s5_question.009"
           },
@@ -675,7 +675,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "作答者，我为诸位开启主楼一侧的闩。",
+            "text": "作答之后，依隔离门上的规程，主楼一侧的闩便可开启。",
             "voice_clip": "",
             "line_id": "s5_question.010"
           },
@@ -804,7 +804,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "它说物件记得。……那就先去看看，那扇门记得什么。",
+            "text": "它说痕迹还在。……那就先去看看，那扇门上留下了什么。",
             "voice_clip": "",
             "line_id": "s6_begin.007"
           },
@@ -1222,7 +1222,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "……这罐子，不是昨天才养的。",
+            "text": "……这罐子，不像是昨天才养的。",
             "voice_clip": "",
             "line_id": "help_E10.004"
           },
@@ -1380,7 +1380,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "（远远地）门闩记得每一只碰过它的手，侦探先生。你想知道自己是什么——它记得你昨夜是什么。",
+            "text": "（远远地）你想知道自己为何在此，侦探先生。我也想知道，阁下会先问哪一句。",
             "voice_clip": "",
             "line_id": "nudge_E1.001"
           },
@@ -1394,7 +1394,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "op": "literal",
-                "value": "门闩记得你昨夜是什么。"
+                "value": "你想知道自己为何在此。"
               }
             ]
           },
@@ -1408,7 +1408,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "（从墙里，很轻）苏小姐，墙里那个声音，你昨夜听过一次。后面还有你从未听过的——都收在那把音叉里。",
+            "text": "（从墙里，很轻）苏小姐，此地还有你从未听过的声音。",
             "voice_clip": "",
             "line_id": "nudge_E5.001"
           },
@@ -1422,7 +1422,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "op": "literal",
-                "value": "后面还有你从未听过的，都收在那把音叉里。"
+                "value": "此地还有你从未听过的声音。"
               }
             ]
           },
@@ -1436,7 +1436,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "（铜口里，声音放得很低）霍先生，图纸就在主楼。记得它的人是你；记得它在哪的，是你那块石板。",
+            "text": "（铜口里，声音放得很低）霍先生，超越卡诺循环的那一张，此地有人画过。画它的人，你见过。",
             "voice_clip": "",
             "line_id": "nudge_E7.001"
           },
@@ -1450,7 +1450,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "op": "literal",
-                "value": "图纸就在主楼。记得它在哪的，是你那块石板。"
+                "value": "超越卡诺循环的那一张，此地有人画过。"
               }
             ]
           },
@@ -1464,7 +1464,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "（远远地）沈师傅，你护过的每一个人，那罐子都替你记着。你就不想知道，是谁？",
+            "text": "（远远地）沈师傅，你护着的人，比你记得的多。",
             "voice_clip": "",
             "line_id": "nudge_E10.001"
           },
@@ -1478,7 +1478,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "op": "literal",
-                "value": "你护过的每一个人，那罐子都替你记着。"
+                "value": "你护着的人，比你记得的多。"
               }
             ]
           },
@@ -1529,14 +1529,6 @@ public static class Chapter1CompiledDialogue
             "line_id": "recall_su.005"
           },
           {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "物件记得的，比人久，{{addr(\"su\")}}。",
-            "voice_clip": "",
-            "line_id": "recall_su.006"
-          },
-          {
             "op": "jump",
             "target": "END"
           }
@@ -1573,14 +1565,6 @@ public static class Chapter1CompiledDialogue
             "text": "……他再也没有来。",
             "voice_clip": "",
             "line_id": "recall_huo.004"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "物件记得的，比人久，{{addr(\"huo\")}}。",
-            "voice_clip": "",
-            "line_id": "recall_huo.005"
           },
           {
             "op": "jump",
@@ -1621,14 +1605,6 @@ public static class Chapter1CompiledDialogue
             "line_id": "recall_shen.004"
           },
           {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "物件记得的，比人久，{{addr(\"shen\")}}。",
-            "voice_clip": "",
-            "line_id": "recall_shen.005"
-          },
-          {
             "op": "jump",
             "target": "END"
           }
@@ -1638,7 +1614,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "（她低头看着音叉）……握着它，回想昨晚？",
+            "text": "（她低头看着音叉）……刚才碰到它，脑子里闪了一下。握着它，再想想？",
             "voice_clip": "",
             "line_id": "recall_offer_su.001"
           },
@@ -1647,7 +1623,7 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "recall_offer_su:choice:0",
-                "label": "把公告框上的守则第 1 条指给她看。",
+                "label": "提醒她：先问问铜口，那是什么。",
                 "label_id": "recall_offer_su.002",
                 "condition": null,
                 "lock_hint": "",
@@ -1684,15 +1660,23 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "（她读出声来）“封存之物，可凭对应之物寻回；寻回者，自负其果。”",
+            "text": "（她朝墙里问）刚才那是什么？",
             "voice_clip": "",
             "line_id": "recall_shown_su.001"
           },
           {
             "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
+            "voice_clip": "",
+            "line_id": "recall_shown_su.003"
+          },
+          {
+            "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "自负其果。……什么果？",
+            "text": "连着此地。……那就是说，回不去了。",
             "voice_clip": "",
             "line_id": "recall_shown_su.002"
           },
@@ -1803,7 +1787,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "别碰。守则第一条那几个字，我不放心。",
+                    "text": "别往下想了。不知道那是什么，先别碰。",
                     "voice_clip": "",
                     "line_id": "recall_hesitate_su.006"
                   },
@@ -1858,7 +1842,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "摸着石板，想？",
+            "text": "手一碰，闪了一下。……摸着它，往下想？",
             "voice_clip": "",
             "line_id": "recall_offer_huo.001"
           },
@@ -1867,7 +1851,7 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "recall_offer_huo:choice:0",
-                "label": "把公告框上的守则第 1 条指给他看。",
+                "label": "提醒他：先问问铜口，那是什么。",
                 "label_id": "recall_offer_huo.002",
                 "condition": null,
                 "lock_hint": "",
@@ -1904,15 +1888,23 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "（他一个字一个字地看）“寻回者，自负其果。”",
+            "text": "（朝铜口）刚才那一下，是什么？",
             "voice_clip": "",
             "line_id": "recall_shown_huo.001"
           },
           {
             "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
+            "voice_clip": "",
+            "line_id": "recall_shown_huo.003"
+          },
+          {
+            "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "寻回。……像拆机器。拆开看了，就装不回原样。",
+            "text": "……像拆机器。拆开看了，就装不回原样。",
             "voice_clip": "",
             "line_id": "recall_shown_huo.002"
           },
@@ -1947,7 +1939,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "霍铎",
                 "mood": "",
-                "text": "我读了。果，我自己担。",
+                "text": "代价我听见了。我自己担。",
                 "voice_clip": "",
                 "line_id": "recall_touch_huo.002"
               }
@@ -2047,7 +2039,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "别碰。守则第一条那几个字，我不放心。",
+                    "text": "别往下想了。不知道那是什么，先别碰。",
                     "voice_clip": "",
                     "line_id": "recall_hesitate_huo.006"
                   },
@@ -2102,7 +2094,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "摸着罐子想事？我这辈子摸过的罐子比你见过的人多。",
+            "text": "端着它，脑子里闪过点什么。……我这辈子摸过的罐子比你见过的人多，没一个这样。",
             "voice_clip": "",
             "line_id": "recall_offer_shen.001"
           },
@@ -2111,7 +2103,7 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "recall_offer_shen:choice:0",
-                "label": "把公告框上的守则第 1 条指给他看。",
+                "label": "提醒他：先问问铜口，那是什么。",
                 "label_id": "recall_offer_shen.002",
                 "condition": null,
                 "lock_hint": "",
@@ -2148,15 +2140,23 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "（他眯着眼念）“寻回者，自负其果。”",
+            "text": "（冲墙上的铜口）喂，刚才那是什么？",
             "voice_clip": "",
             "line_id": "recall_shown_shen.001"
           },
           {
             "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。",
+            "voice_clip": "",
+            "line_id": "recall_shown_shen.003"
+          },
+          {
+            "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "自负其果。这四个字，跑江湖的都认得。",
+            "text": "带着此地。……这种买卖，跑江湖的都认得。",
             "voice_clip": "",
             "line_id": "recall_shown_shen.002"
           },
@@ -2267,7 +2267,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "别碰。守则第一条那几个字，我不放心。",
+                    "text": "别往下想了。不知道那是什么，先别碰。",
                     "voice_clip": "",
                     "line_id": "recall_hesitate_shen.006"
                   },
@@ -2320,17 +2320,17 @@ public static class Chapter1CompiledDialogue
         "recall_ask_detective": [
           {
             "op": "line",
-            "speaker": "铜口",
+            "speaker": "",
             "mood": "",
-            "text": "闩就在阁下手边。碰一碰，便知道它记得什么。",
+            "text": "（指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。）",
             "voice_clip": "",
             "line_id": "recall_ask_detective.001"
           },
           {
             "op": "line",
-            "speaker": "铜口",
+            "speaker": "侦探（心声）",
             "mood": "",
-            "text": "不妨一试，{{addr(\"detective\")}}。",
+            "text": "……握住它，往下想？",
             "voice_clip": "",
             "line_id": "recall_ask_detective.002"
           },
@@ -2339,7 +2339,7 @@ public static class Chapter1CompiledDialogue
             "options": [
               {
                 "id": "recall_ask_detective:choice:0",
-                "label": "触碰插闩。",
+                "label": "握住插闩，往下想。",
                 "label_id": "recall_ask_detective.003",
                 "condition": null,
                 "lock_hint": "",
@@ -2366,7 +2366,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "recall_ask_detective:choice:1",
-                "label": "不。我不碰没证明过的东西。",
+                "label": "松手。我不碰没证明过的东西。",
                 "label_id": "recall_ask_detective.005",
                 "condition": null,
                 "lock_hint": "",
@@ -2381,9 +2381,9 @@ public static class Chapter1CompiledDialogue
                   },
                   {
                     "op": "line",
-                    "speaker": "铜口",
+                    "speaker": "",
                     "mood": "",
-                    "text": "随阁下。",
+                    "text": "（铁闩又凉了下去。）",
                     "voice_clip": "",
                     "line_id": "recall_ask_detective.007"
                   }
@@ -2401,7 +2401,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "",
             "mood": "",
-            "text": "（铁闩是凉的。指腹压上去的一瞬，有什么东西从很远的地方回来了。）",
+            "text": "（他没有松手。有什么东西从很远的地方回来了。）",
             "voice_clip": "",
             "line_id": "recall_detective.001"
           },
@@ -2420,14 +2420,6 @@ public static class Chapter1CompiledDialogue
             "text": "一句转述，我就去闩了门。我凭的是什么？",
             "voice_clip": "",
             "line_id": "recall_detective.003"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "物件记得的，比人久，{{addr(\"detective\")}}。",
-            "voice_clip": "",
-            "line_id": "recall_detective.004"
           },
           {
             "op": "jump",
@@ -4799,7 +4791,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "（看着架上的酵种罐）……这罐子，不是昨天才养的。",
+            "text": "（看着架上的酵种罐）……这罐子，不像是昨天才养的。",
             "voice_clip": "",
             "line_id": "s8_reversal.002"
           },
@@ -4807,7 +4799,7 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "……我们在这里，不止一天了。",
+            "text": "……我的手认得这块石板。",
             "voice_clip": "",
             "line_id": "s8_reversal.003"
           },
@@ -5613,7 +5605,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "",
                 "mood": "",
-                "text": "（门外的厅里传来走动声。有人把桶放在地上，有人在远处喊另一个人的名字。）",
+                "text": "（门外的厅里站着人。有人提着桶，有人靠着壁炉。说话声停了，十几道目光一齐转过来。）",
                 "voice_clip": "",
                 "line_id": "s10_open.001"
               },
@@ -5621,7 +5613,7 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "侦探（心声）",
                 "mood": "",
-                "text": "另外几个寝区的人已经在外面走动了。我们还在门里核对昨夜的声音。",
+                "text": "另外几个寝区的人早就出来了。他们等了很久，等的是我们。",
                 "voice_clip": "",
                 "line_id": "s10_open.002"
               }
@@ -5795,68 +5787,12 @@ public static class Chapter1CompiledDialogue
             ]
           },
           {
-            "op": "if",
-            "condition": {
-              "op": "gte",
-              "args": [
-                {
-                  "op": "call",
-                  "name": "total_hooks"
-                },
-                {
-                  "op": "literal",
-                  "value": 3
-                }
-              ]
-            },
-            "then": [
-              {
-                "op": "line",
-                "speaker": "铜口",
-                "mood": "",
-                "text": "旧物都在原处。诸位想再看，随时可来。",
-                "voice_clip": "",
-                "line_id": "s10_open.013"
-              }
-            ],
-            "else": [
-              {
-                "op": "if",
-                "condition": {
-                  "op": "gte",
-                  "args": [
-                    {
-                      "op": "call",
-                      "name": "total_hooks"
-                    },
-                    {
-                      "op": "literal",
-                      "value": 1
-                    }
-                  ]
-                },
-                "then": [
-                  {
-                    "op": "line",
-                    "speaker": "铜口",
-                    "mood": "",
-                    "text": "想起什么，可以来铜口问。",
-                    "voice_clip": "",
-                    "line_id": "s10_open.014"
-                  }
-                ],
-                "else": [
-                  {
-                    "op": "line",
-                    "speaker": "铜口",
-                    "mood": "",
-                    "text": "门开了。诸位请。",
-                    "voice_clip": "",
-                    "line_id": "s10_open.015"
-                  }
-                ]
-              }
-            ]
+            "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "门开了。诸位请。",
+            "voice_clip": "",
+            "line_id": "s10_open.015"
           },
           {
             "op": "jump",
@@ -6206,7 +6142,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "reach_huo:choice:1",
-                "label": "（指着公告框）“守则第 1 条。”",
+                "label": "（提醒）“先问问铜口，那是什么。”",
                 "label_id": "reach_huo.005",
                 "condition": null,
                 "lock_hint": "",
@@ -6215,7 +6151,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "公告框上的第一条，你看过没有。",
+                    "text": "先别往下想。问问铜口，那是什么。",
                     "voice_clip": "",
                     "line_id": "reach_huo.006"
                   },
@@ -6295,7 +6231,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "reach_su:choice:1",
-                "label": "（指着公告框）“守则第 1 条。”",
+                "label": "（提醒）“先问问铜口，那是什么。”",
                 "label_id": "reach_su.005",
                 "condition": null,
                 "lock_hint": "",
@@ -6304,7 +6240,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "公告框上的第一条，你看过没有。",
+                    "text": "先别往下想。问问铜口，那是什么。",
                     "voice_clip": "",
                     "line_id": "reach_su.006"
                   },
@@ -6384,7 +6320,7 @@ public static class Chapter1CompiledDialogue
               },
               {
                 "id": "reach_shen:choice:1",
-                "label": "（指着公告框）“守则第 1 条。”",
+                "label": "（提醒）“先问问铜口，那是什么。”",
                 "label_id": "reach_shen.005",
                 "condition": null,
                 "lock_hint": "",
@@ -6393,7 +6329,7 @@ public static class Chapter1CompiledDialogue
                     "op": "line",
                     "speaker": "侦探",
                     "mood": "",
-                    "text": "公告框上的第一条，你看过没有。",
+                    "text": "先别往下想。问问铜口，那是什么。",
                     "voice_clip": "",
                     "line_id": "reach_shen.006"
                   },
