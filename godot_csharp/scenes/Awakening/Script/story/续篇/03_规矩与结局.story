@@ -143,8 +143,8 @@
 
     结局
         - OpenEach | 各取其物：开放取回
-        - Committee | 委员会保管（沃德主导）
-        - Sealed | 封闭不启（顾平章、茉拉主导）
+        - Committee | 委员会保管
+        - Sealed | 封闭不启
         - DetectivePact | 侦探之约
         - NightSeized | 被某派系夜间私占
         - None | 未决

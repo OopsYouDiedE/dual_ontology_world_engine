@@ -54,7 +54,8 @@ public sealed class Person
     public bool Weak => HungerStreak >= 2;
 }
 
-public sealed record Heard(P From, int Hops, ObservationSource Source, int Day, string Text);
+/// <summary>某人知道一条知识的方式：从谁那里、隔了几道手、哪天知道的；Slant 是转述时给它添了定性的那个人（成见走样）。</summary>
+public sealed record Heard(P From, int Hops, ObservationSource Source, int Day, int Item, P? Slant = null);
 
 public sealed partial class Game
 {
@@ -72,7 +73,7 @@ public sealed partial class Game
     public readonly List<Essence> Things = [];
     public Essence WeightRoom = null!, LockCore = null!, RelayPost = null!, Base = null!, SketchBook = null!;
     public Essence Clock = null!, Granary = null!, Desk = null!, Stove = null!, Jar = null!, Ledger = null!, Bowl = null!, Bed = null!,
-        MedCab = null!, OilStore = null!, Valve = null!, Gauge = null!, Blackboard = null!, Stele = null!, ArchiveDoor = null!, NameVoice = null!;
+        MedCab = null!, OilStore = null!, Valve = null!, Gauge = null!, Blackboard = null!, Stele = null!, ArchiveDoor = null!, NameVoice = null!, CopperVoice = null!;
     public readonly Person[] People;
     public Person this[P p] => People[(int)p];
     public Person Det => People[0];
@@ -216,6 +217,10 @@ public sealed partial class Game
             Litter[dorm] = NewThing(Names.Of(dorm) + "的废纸篓", dorm, [T.Crumbs, T.Emptied], id: "Litter." + dorm);
         NameVoice = Existing("world:object.NameVoice") ?? new Essence("以你之名唤你的声音");
         View[NameVoice] = Rt.Representations(NameVoice).FirstOrDefault() ?? Rt.Project(NameVoice, "以你之名唤你的声音");
+        // 铜口背后的那个声音：学员看见的只是墙上的铜口，各人心里对它的称呼是“铜口”。
+        // 只有被人直接告知，或强证据推理以高把握证实，才会改称（设计第七部分裁定）；本章没有这样的事。
+        CopperVoice = Existing("world:object.CopperVoice") ?? new Essence("铜口背后的声音");
+        View[CopperVoice] = Rt.Representations(CopperVoice).FirstOrDefault() ?? Rt.Project(CopperVoice, "铜口");
 
         if (!_retainedEntities.Contains(Granary)) { Set(Granary, T.Ration, Options.StartRations); Set(Granary, T.Locked, 1); Set(Granary, T.LatchLoose, 1); }
         if (!_retainedEntities.Contains(Jar)) Set(Jar, T.Water, 2);
@@ -492,12 +497,13 @@ public sealed partial class Game
             if (Sightings.Any(s => s.Day == Day && s.Witness == p.Id && s.At == at && s.Truth == other.Id)) continue;
             var s = new Sighting(Day, p.Id, here, at, other.Pro.Build, other.Id, Now);
             Sightings.Add(s);
-            var text = $"夜里从{Names.Of(here)}望见{Names.Of(at)}有一个{BuildText(other.Pro.Build)}身影";
+            var glimpse = Prototype.Game.K("望见身影", p.Id, null, at, Day, ("从", Names.Of(here)), ("身形", BuildText(other.Pro.Build)), ("build", other.Pro.Build));
+            var text = Plain(glimpse);
             Observation.Observe(p.Soul, new ObservationInput(text, ProjectionKind.Event)
             { Source = ObservationSource.Perception, Existence = Truth.True, Time = Now, Details = text });
-            NewsFrom(p, NewsKind.Sighting, text, about: null, build: other.Pro.Build, place: at);
+            NewsFrom(p, NewsKind.Sighting, glimpse, about: null, build: other.Pro.Build, place: at);
             // 侦探自己的守夜所见不逐条报：天亮时由守夜报告按注意力筛选、合并后给出（至多五条）。
-            if (p == Det && Slot != Slot.Night) Feed.Add(text + "。");
+            if (p == Det && Slot != Slot.Night) Feed.Add(Stop(Present(glimpse)));
             Log.Add($"D{Day} {Now:0.0} {p.Name} 望见 {Names.Of(at)} 的{BuildText(other.Pro.Build)}身影（实为{other.Name}）");
         }
     }

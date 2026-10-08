@@ -75,7 +75,7 @@ public static class InvestigationPresentation
                 spec.PostedAt.Count > 0 ? string.Join("、", spec.PostedAt.Select(Names.Of)) : "规矩笔记", "规矩",
                 [spec.Text], [g.SourceOf(spec)], ""));
         foreach (var (id, heard) in det.News.OrderBy(kv => kv.Key))
-            entries.Add(new("news:" + id, heard.Hops == 0 ? $"第{heard.Day}日的亲见" : $"{Names.Of(heard.From)}的转述（第{heard.Day}日）", "消息笔记", "听闻", [heard.Text],
+            entries.Add(new("news:" + id, heard.Hops == 0 ? $"第{heard.Day}日的亲见" : $"{Names.Of(heard.From)}的转述（第{heard.Day}日）", "消息笔记", "听闻", [Game.Stop(g.Plain(g.AllNews[heard.Item - 1]))],
                 [heard.Hops == 0 ? "亲见" : $"听{Names.Of(heard.From)}说" + (heard.Hops > 1 ? "（转了几道手）" : "")], ""));
 
         var self = new List<string>

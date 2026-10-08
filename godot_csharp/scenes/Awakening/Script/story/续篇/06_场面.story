@@ -5,6 +5,7 @@
         日：2
         时段：早晨
         铜口：诸位，请到中央厅来。全体。 [#id=chapter2.arrival.001]
+        （起居厅对面的几扇寝区门，先后响起拔闩的声音。有人探出头，又缩回去，过了一会儿才走出来。） [#id=chapter2.arrival.002]
 
     场面 gather
         事件：begin.gather

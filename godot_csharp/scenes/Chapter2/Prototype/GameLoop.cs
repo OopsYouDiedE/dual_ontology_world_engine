@@ -300,7 +300,7 @@ public sealed partial class Game
                 p.Diary.Add($"D{Day} {Names.Of(Slot)} 在配给台没等到开粮");
                 // 开了粮却没轮到自己：对开粮的人不满（分配方案必然让某些人不满，§11 第 8 条）。
                 if (_distributor is { } d && d != p && Get(Granary, T.Ration) == 0)
-                    Witness(d, $"{d.Name}开的粮，没轮到我", -1, 0, [p]);
+                    Witness(d, K("没轮到口粮", d.Id, p.Id), -1, 0, [p]);
             }
             p.Exec = null;
             p.Doing = null;
@@ -342,7 +342,7 @@ public sealed partial class Game
             if (Inspects(exec.Intent.Changes, p.M[Base]) && Get(Base, T.Crack) > 0 && p.Witnessed.Add("crack") && p != Det)
             {
                 Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}凑近看见了中央基座的新裂纹");
-                NewsFrom(p, NewsKind.Fact, $"{p.Name}亲眼看见中央基座裂了一道新缝，像是从里面撑开的");
+                NewsFrom(p, NewsKind.Fact, K("基座裂缝", p.Id));
             }
             if (job is { } j) Set(p.Body, T.Did(j), 1);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } asked && ReferenceEquals(asked.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target, p.M[Det.Body]))
@@ -440,9 +440,9 @@ public sealed partial class Game
             case Job.Inform:
                 _nightRecAtCount += 1; // 补记的是已清点过的旧账，不是新的取用
                 if (Get(Ledger, T.Unrecorded) > 0) Add(Ledger, T.Unrecorded, -1);
-                var text = $"{p.Name}在台账上补记：昨夜取用一份";
-                NewsFrom(p, NewsKind.Ledger, text, about: p, trust: 1, on: Ledger, tag: T.Unrecorded, value: Get(Ledger, T.Unrecorded));
-                Witness(p, text, 1, 0, People.Where(o => Where(o) == place), spread: false);
+                var note = K("补记", p.Id, night: Day - 1);
+                NewsFrom(p, NewsKind.Ledger, note, about: p, trust: 1, on: Ledger, tag: T.Unrecorded, value: Get(Ledger, T.Unrecorded));
+                Witness(p, note, 1, 0, People.Where(o => Where(o) == place), spread: false);
                 break;
             case Job.CountLedger: Count(p); break;
             case Job.Tear:
@@ -452,28 +452,32 @@ public sealed partial class Game
                 foreach (var s in torn) Unpost(s, Place.Hall);
                 if (torn.Length > 0)
                 {
-                    var tornText = $"{p.Name}撕下了中央厅板上的「{Short(torn[0])}」";
-                    NewsFrom(p, NewsKind.Fact, tornText, about: p);
-                    Witness(p, tornText, 0, 0, People.Where(o => o != p && Where(o) == Place.Hall), spread: true);
-                    Log.Add($"D{Day} {Names.Of(Slot)} {tornText}");
+                    var tore = K("撕规", p.Id, values: ("规矩", Short(torn[0])));
+                    NewsFrom(p, NewsKind.Fact, tore, about: p);
+                    Witness(p, tore, 0, 0, People.Where(o => o != p && Where(o) == Place.Hall), spread: true);
+                    Log.Add($"D{Day} {Names.Of(Slot)} {Plain(tore)}");
                 }
                 break;
             }
-            case Job.Treat: NewsFrom(p, NewsKind.Rumor, $"{p.Name}又去诊疗所给脚踝换了药", about: p); break;
-            case Job.Retreat: NewsFrom(p, NewsKind.Rumor, $"{p.Name}一个人在誓约庭坐了一下午", about: p); break;
+            case Job.Treat: NewsFrom(p, NewsKind.Rumor, K("换药", p.Id), about: p); break;
+            case Job.Retreat: NewsFrom(p, NewsKind.Rumor, K("独坐", p.Id), about: p); break;
             case Job.Report:
             {
-                var seen = Sightings.Where(s => s.Day == Day - 1 && s.Witness == P.Bertrand).GroupBy(s => (s.At, s.Build)).Select(g => $"{Names.Of(g.Key.At)}{Cn(g.Count())}个{BuildText(g.Key.Build).TrimEnd('的')}身影").ToArray();
-                var report = $"贝尔特朗在中央厅报告：昨夜{(seen.Length == 0 ? "巡夜无异常" : string.Join("，", seen))}。";
+                var mine = Sightings.Where(s => s.Day == Day - 1 && s.Witness == P.Bertrand).ToArray();
+                // 按地点归拢：“后勤院有两个高大的、一个瘦小的身影”。
+                var seen = mine.GroupBy(s => s.At).Select(at => X("知识片段.身影", ("地", Names.Of(at.Key)),
+                    ("各色", string.Join("、", at.GroupBy(s => s.Build).OrderBy(b => b.Key).Select(b => X("知识片段.身影一种", ("数", Cn(b.Count())), ("身形", BuildText(b.Key)))))))).ToArray();
+                var report = seen.Length == 0 ? K("夜巡无事", p.Id, night: Day - 1)
+                    : K("夜巡报告", p.Id, night: Day - 1, values: [("所见", string.Join("；", seen)), ("builds", string.Join(",", mine.Select(s => s.Build).Distinct()))]);
                 var item = NewsFrom(p, NewsKind.Sighting, report);
-                foreach (var o in People.Where(o => o != p && Where(o) == place)) o.News[item.Id] = new(p.Id, 1, ObservationSource.Testimony, Day, report);
-                if (Where(Det) == place) Feed.Add(report);
+                foreach (var o in People.Where(o => o != p && Where(o) == place)) o.News[item.Id] = new(p.Id, 1, ObservationSource.Testimony, Day, item.Id);
+                if (Where(Det) == place) Feed.Add(Stop(Present(report)));
                 break;
             }
-            case Job.Sample: NewsFrom(p, NewsKind.Rumor, p.Id == P.Selma ? "赛尔玛一早从温室剪了一枝源质样本" : "维罗妮卡在灶边刮炉灰，装进小瓶里贴了标签", about: p); break;
+            case Job.Sample: NewsFrom(p, NewsKind.Rumor, K(p.Id == P.Selma ? "温室采样" : "刮炉灰", p.Id), about: p); break;
             case Job.Needle:
-                Witness(p, "维罗妮卡当面挑我账上的错", -1, 0, [this[P.Mora]], spread: false);
-                NewsFrom(p, NewsKind.Rumor, "维罗妮卡又当面问茉拉夜里的取用误差，茉拉没理她", about: p);
+                Witness(p, K("追问误差", p.Id, P.Mora), -1, 0, [this[P.Mora]], spread: false);
+                NewsFrom(p, NewsKind.Rumor, K("追问误差", p.Id, P.Mora), about: p);
                 break;
             case Job.Sketch:
             {
@@ -481,7 +485,7 @@ public sealed partial class Game
                 var drawing = seen.Length == 0 ? $"第{Day - 1}夜：中央厅空荡荡的，只画了月光" :
                     $"第{Day - 1}夜：" + string.Join("；", seen.Select(s => $"{Names.Of(s.At)}，一个{BuildText(s.Build).TrimEnd('的')}的身影，颜色涂的是{Names.Of(s.Truth)}的颜色"));
                 Sketches.Add((Day - 1, drawing));
-                NewsFrom(p, NewsKind.Rumor, "莫兰画了一张昨夜的速写，压在丙区的枕头底下", about: p);
+                NewsFrom(p, NewsKind.Rumor, K("速写", p.Id, night: Day - 1), about: p);
                 break;
             }
             case Job.Share:
@@ -547,10 +551,11 @@ public sealed partial class Game
             var permits = MoraNight.Author == w.Id || w.Acc.GetValueOrDefault(MoraNight) == Truth.True
                 || Specs.Any(s => s.Card is { Behavior: 0 } && s.Flags.HasFlag(RF.NightException) && w.Acc.GetValueOrDefault(s) == Truth.True);
             var condemns = WardLedger.Author == w.Id || w.Acc.GetValueOrDefault(WardLedger) == Truth.True;
-            var how = recorded ? "取了一份，记了账" : condemns && !permits ? "私取了一份，没记账" : permits ? "照配给台的规矩取了一份，还没记账" : "取了一份，没记账";
-            var text = $"{w.Name}夜里在后勤院亲眼看见{taker.Name}从粮仓{how}";
-            var id = RecordEvent(w.Id, $"夜里看见{taker.Name}{how}", "看守", Place.Logistics, [take], job: Job.Watch);
-            NewsFrom(w, NewsKind.Sighting, text, about: taker, trust: recorded || permits && !condemns ? 0 : -1);
+            // 同一件事，说出口的样子随看见的人认了哪条规矩而不同（他心里的这件事本来就不同）。
+            var seenAs = K(recorded ? "夜见取粮记账" : condemns && !permits ? "夜见私取" : permits ? "夜见照规取粮" : "夜见取粮", w.Id, taker.Id, Place.Logistics, Day);
+            var text = Plain(seenAs);
+            var id = RecordEvent(w.Id, Say(seenAs with { Subject = null, Night = 0 }).Trim(), "看守", Place.Logistics, [take], job: Job.Watch);
+            NewsFrom(w, NewsKind.Sighting, seenAs, about: taker, trust: recorded || permits && !condemns ? 0 : -1);
             Log.Add($"D{Day} 夜 {text}");
             if (recorded || permits && !condemns) continue;
             Know(w, taker.Body, T.Suspect, 1, ObservationSource.Perception, text);
@@ -604,9 +609,10 @@ public sealed partial class Game
         if (unrec > 0)
         {
             Set(Ledger, T.Unrecorded, Get(Ledger, T.Unrecorded) + unrec);
-            var text = $"台账：清点少了{unrec}份，无记录取用×{unrec}";
+            var short_ = K("清点缺口", p.Id, values: ("数", Cn(unrec)));
+            var text = Plain(short_);
             if (_currentEvent > 0) Touch(Ledger, T.Unrecorded, _currentEvent, p.Id); // 清点出了缺口：这本账从此“被人动过”
-            NewsFrom(p, NewsKind.Ledger, text, on: Ledger, tag: T.Unrecorded, value: Get(Ledger, T.Unrecorded));
+            NewsFrom(p, NewsKind.Ledger, short_, on: Ledger, tag: T.Unrecorded, value: Get(Ledger, T.Unrecorded));
             Log.Add($"D{Day} {Names.Of(Slot)} {p.Name} 清点：{text}");
         }
         LedgerBaseline = current;
@@ -624,7 +630,7 @@ public sealed partial class Game
             if (p.Acc.GetValueOrDefault(WardLedger) != Truth.True && WardLedger.Author != p.Id) continue;
             if ((Belief(p, p.M[Ledger], T.Unrecorded) ?? 0) < 1) continue;
             if (Specs.Any(s => s.Card is { Behavior: 0 } && s.Flags.HasFlag(RF.NightException) && s.Flags.HasFlag(RF.Records) && p.Acc.GetValueOrDefault(s) == Truth.True)) continue;
-            var smallSeen = p.News.Values.Any(h => h.Text.Contains("瘦小的身影"));
+            var smallSeen = ClaimsOf(p).Any(c => SawFigure(c, Build.Small));
             foreach (var q in People.Where(q => q != p && q != Det))
             {
                 if ((Belief(p, q, T.Branded) ?? 0) < 1 || (Belief(p, q, T.Suspect) ?? 0) > 0) continue;
@@ -643,11 +649,11 @@ public sealed partial class Game
         var q = suspects[0];
         var n = Belief(w, w.M[Ledger], T.Unrecorded) ?? 0;
         var build = BuildText(q.Pro.Build);
-        var seen = w.News.Values.FirstOrDefault(h => h.Text.Contains(build + "身影"));
-        var text = _sawTaking.Contains((w.Id, q.Id))
-            ? $"{w.Name}当众指控：依据我亲眼所见，昨夜{q.Name}从粮仓取了一份，没有记账；依据台账，无记录取用{n}份；{q.Name}视为私取。"
-            : $"{w.Name}当众指控：依据台账，昨夜无记录取用{n}份{(seen is not null ? $"；依据夜巡所见，有{build}身影出入后勤院" : "")}；{q.Name}视为私取。";
-        var item = NewsFrom(w, NewsKind.Accusation, text, about: q, trust: -2);
+        var sawFigure = ClaimsOf(w).Any(c => SawFigure(c, q.Pro.Build));
+        var charge = K(_sawTaking.Contains((w.Id, q.Id)) ? "指控亲见" : sawFigure ? "指控身影" : "指控台账", w.Id, q.Id, night: Day - 1,
+            values: [("数", Cn(n)), ("身形", build)]);
+        var text = Plain(charge);
+        var item = NewsFrom(w, NewsKind.Accusation, charge, about: q, trust: -2);
         foreach (var l in People.Where(l => l != w && Where(l) == Place.Hall && l != q))
         {
             Receive(w, l, item, w.News[item.Id], Channel.Public);
@@ -655,13 +661,21 @@ public sealed partial class Game
         }
         Know(w, q.Body, T.Accused, 1, ObservationSource.Introspection);
         if (_currentEvent > 0) Touch(q.Body, T.Accused, _currentEvent, w.Id);
-        if (Where(q) == Place.Hall) { Witness(w, $"{w.Name}当众指控我私取", -2, 0, [q], spread: false); q.News[item.Id] = new(w.Id, 1, ObservationSource.Perception, Day, text); }
+        if (Where(q) == Place.Hall) { Witness(w, K("当众指控对象", w.Id, q.Id), -2, 0, [q], spread: false); q.News[item.Id] = new(w.Id, 1, ObservationSource.Perception, Day, item.Id); }
         if (q.Id == P.Quer) AccusedQuer = true;
         Accused ??= q.Id;
         Accusations.Add((Day, w.Id, q.Id, n));
         Log.Add($"D{Day} {Names.Of(Slot)} {text}");
-        if (Where(Det) == Place.Hall) { Feed.Add(text); NoteFor(w.Id, "指控", text); }
+        if (Where(Det) == Place.Hall) { Feed.Add(Stop(Present(charge))); NoteFor(w.Id, "指控", text); }
     }
+
+    /// <summary>这条知识里有没有看见某种身形的身影（夜巡报告或远远望见）。</summary>
+    private static bool SawFigure(Claim c, Build b) => c.Predicate switch
+    {
+        "夜巡报告" => c.Value("builds").Split(',').Contains(b.ToString()),
+        "望见身影" => c.Value("build") == b.ToString(),
+        _ => false
+    };
 
     public readonly List<(int Day, P By, P Whom, int Count)> Accusations = [];
 
@@ -670,11 +684,12 @@ public sealed partial class Game
         var who = People.Where(q => q != l && (Belief(l, q, T.Accused) ?? 0) > 0 && TrustIn(l, q) >= 1).ToArray();
         if (who.Length == 0) return;
         var q = who[0];
-        var text = $"{l.Name}替{q.Name}说话：“未经查验的账，不该落成一个人的罪名。”";
-        var item = NewsFrom(l, NewsKind.Defense, text, about: q, trust: 1);
+        var defense = K("辩护", l.Id, q.Id);
+        var text = Plain(defense);
+        var item = NewsFrom(l, NewsKind.Defense, defense, about: q, trust: 1);
         foreach (var h in People.Where(h => h != l && Where(h) == Place.Hall)) Receive(l, h, item, l.News[item.Id], Channel.Public);
         Log.Add($"D{Day} {Names.Of(Slot)} {text}");
-        if (Where(Det) == Place.Hall) { Feed.Add(text); NoteFor(l.Id, "说话", text); }
+        if (Where(Det) == Place.Hall) { Feed.Add(Present(defense)); NoteFor(l.Id, "说话", text); }
     }
 
     private void WardPosts(Person w)
@@ -730,10 +745,10 @@ public sealed partial class Game
                 moran.Body.Get<SpatialProperty>()!.Space = Space[Place.Clinic];
                 Rt.Sync();
                 var selma = this[P.Selma];
-                NewsFrom(selma, NewsKind.Fact, "莫兰发烧了，送去了诊疗所", about: moran, on: moran.Body, tag: T.Sick, value: 1);
+                NewsFrom(selma, NewsKind.Fact, K("发烧", selma.Id, moran.Id), about: moran, on: moran.Body, tag: T.Sick, value: 1);
                 Know(selma, moran.Body, T.Sick, 1, ObservationSource.Perception);
                 // 压力而非节点（§11 第 9 条）：作者保证茉拉知道莫兰在烧——她的夜取规则与沃德的“无记录即私取”必然相撞。
-                if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Text = "", Origin = P.Selma, FactTag = T.Sick }))
+                if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Claim = K("发烧", P.Selma, P.Moran), Origin = P.Selma, FactTag = T.Sick }))
                     Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
                 Log.Add($"D{Day} 下午 莫兰发烧，被送去诊疗所（作者固定）");
                 Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true,
@@ -832,14 +847,14 @@ public sealed partial class Game
             reckless.InjuredDays = 2;
             Set(Blackboard, T.Shoe, Get(Blackboard, T.Shoe));
             Log.Add($"D{Day} 下午 {reckless.Name} 在指针过红线时开了顶窗，玻璃碎裂；恶魔显形把人拽开（温室地上留下窄底鞋印）。{reckless.Name}受伤两日");
-            NewsFrom(reckless, NewsKind.Fact, $"{reckless.Name}在温室受了伤，有人说看见一只很窄的手把{reckless.Pro.Pronoun}拽开");
+            NewsFrom(reckless, NewsKind.Fact, K("温室受伤", reckless.Id));
             if (crew.Contains(Det)) Feed.Add($"{reckless.Name}伸手去开顶窗——玻璃炸开。一只很窄的手把人拽了回来。地上多了窄底鞋印。");
             GreenhouseProgress = Math.Max(0, progress - 2);
             Set(Valve, T.Work, GreenhouseProgress);
             return;
         }
         // 指针过了红线：得有人知道怎么泄压（懂结构的行家，或问清了泄压办法、又把它带到温室来的人），否则只能停手（§12 第 8 条：认真分工才修得成）。
-        var knows = crew.Any(p => p.Pro.Structure >= 3 || p == Det && WarnedPrecisely || p.News.Values.Any(h => h.Text.StartsWith("温室：先在阀门泄压")));
+        var knows = crew.Any(p => p.Pro.Structure >= 3 || p == Det && WarnedPrecisely || ClaimsOf(p).Any(c => c.Predicate == "温室泄压法"));
         if (progress >= 3 && !knows)
         {
             GreenhouseProgress = Math.Min(GreenhouseProgress, 3);
@@ -854,9 +869,9 @@ public sealed partial class Game
             GreenhouseRepaired = true;
             _repairedDay = Day;
             Log.Add($"D{Day} 下午 温室修好（{string.Join("、", crew.Select(p => p.Name))}）");
-            var item = NewsFrom(crew[0], NewsKind.Fact, $"温室修好了（{string.Join("、", crew.Select(p => p.Name))}）");
-            if (crew.Contains(Det)) Witness(Det, "侦探主持修好了温室", 1, 1, crew, domain: Dom.Rations);
-            foreach (var p in crew.Skip(1)) p.News[item.Id] = new(p.Id, 0, ObservationSource.Perception, Day, item.Text);
+            var item = NewsFrom(crew[0], NewsKind.Fact, K("温室修好", values: ("人们", JoinNames(crew.Select(p => p.Name)))));
+            if (crew.Contains(Det)) Witness(Det, K("主持修温室", P.Det), 1, 1, crew, domain: Dom.Rations);
+            foreach (var p in crew.Skip(1)) p.News[item.Id] = new(p.Id, 0, ObservationSource.Perception, Day, item.Id);
         }
         Rt.Sync();
     }

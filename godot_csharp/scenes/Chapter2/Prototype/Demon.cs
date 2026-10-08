@@ -23,10 +23,10 @@ public sealed partial class Game
     }
 
     /// <summary>集合与后续晨间广播：经铜口传遍学园，人人听到（Testimony）。</summary>
-    public void Broadcast(string text)
+    public void Broadcast(string text, bool shown = true)
     {
         DemonSays("全体", text);
-        Feed.Add("【广播】" + text);
+        if (shown) Feed.Add("【广播】" + text);
         foreach (var p in People)
             Observation.Observe(p.Soul, new ObservationInput("晨间广播", ProjectionKind.Event)
             { Source = ObservationSource.Testimony, Existence = Truth.True, Time = Now, Details = text });
@@ -59,13 +59,13 @@ public sealed partial class Game
             p.Lessons[lesson] = true;
             Observation.Observe(p.Soul, new ObservationInput(p.Lore.Name, p.Lore.Kind)
             { Target = p.Lore, Source = ObservationSource.Testimony, Time = Now, Details = title + "：" + teach });
-            if (item is null) item = NewsFrom(p, NewsKind.Lesson, $"{title}讲了：{teach}", lesson: lesson);
-            else p.News[item.Id] = new(p.Id, 0, ObservationSource.Perception, Day, item.Text);
+            if (item is null) item = NewsFrom(p, NewsKind.Lesson, K("课", values: [("课", title), ("内容", teach)]), lesson: lesson);
+            else p.News[item.Id] = new(p.Id, 0, ObservationSource.Perception, Day, item.Id);
             if (lesson == 14) LessonFourteen(p);
         }
         Log.Add($"D{Day} 上午 {title}：到课 {string.Join("、", present.Select(p => p.Name))}");
         if (present.Contains(Det))
-            Feed.Add($"【{title}】黑板前没有人，粉笔自己在板上写字。{teach}（到课：{string.Join("、", present.Where(p => p != Det).Select(p => p.Name))}）");
+            Feed.Add($"【{title}】黑板前没有人，粉笔自己在板上写字。{teach}（到课：{string.Join("、", (present.Contains(Det) ? ["你"] : Array.Empty<string>()).Concat(present.Where(p => p != Det).Select(p => p.Name)))}）");
         // 它挑最容易被推动的人说话（欲望与钩最高者）：首课人人都在，挑三个；之后的课愿来才来，每课只挑一个（五日里课多了，低语不随之翻倍）。
         foreach (var p in present.Where(p => p != Det).OrderBy(p => p.Whispered).ThenByDescending(p => p.Desire + p.Hooks).ThenBy(p => p.Id).Take(lesson == 11 ? 3 : 1)) Whisper(p);
     }
@@ -85,7 +85,8 @@ public sealed partial class Game
         p.Desire += 1;
         p.Whispered++;
         RewriteDesire(p, p.Pro.DemonLine);
-        if (p == Det) Feed.Add($"一个声音贴着你的耳朵说：“{p.Pro.DemonLine}”");
+        // 始业日集合时这一句由场面当面演出，不再旁白一遍。
+        if (p == Det && !(Day == FirstDay && Slot == Slot.Morning)) Feed.Add($"一个声音贴着你的耳朵说：“{p.Pro.DemonLine}”");
     }
 
     public void RewriteDesire(Person p, string why)
@@ -98,9 +99,10 @@ public sealed partial class Game
     {
         if (Day == FirstDay)
         {
-                Broadcast("诸位，请到讲堂来。现在讲守则的读法。");
-                Broadcast("封存之物存于名录库，凡学员皆可取回己物。");
-                Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。");
+                // 集合场面里铜口当面说了这几句，广播不再给侦探重复一遍（人人照样听到）。
+                Broadcast("诸位，请到讲堂来。现在讲守则的读法。", shown: false);
+                Broadcast("封存之物存于名录库，凡学员皆可取回己物。", shown: false);
+                Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。", shown: false);
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
                 Det.Acc[Warning1] = Truth.True;
                 // 它只对不戒备它的人低语（信它的人它多说，戒备它的人它不白费口舌）；低语只有本人听见，旁人看不出谁听到过什么（总纲 恶魔“不自曝”）。

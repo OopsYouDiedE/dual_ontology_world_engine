@@ -170,13 +170,14 @@ public sealed partial class Game
         var prints = arrivals.Select(m => m.Who).Distinct().Select(p => this[p].Pro.Build).ToArray();
         _frontStats[night] = (prints.Length, stay);
         string front;
-        if (prints.Length == 0) front = "前厅积灰上没有新脚印";
+        if (prints.Length == 0) front = X("物件.前厅无脚印").TrimEnd('。');
         else
         {
-            front = "前厅积灰上有新脚印：" + string.Join("、", prints.GroupBy(b => b).OrderBy(g => g.Key).Select(g => $"{BuildText(g.Key).TrimEnd('的')}×{g.Count()}"));
-            front += stay < 4 ? "；脚印浅，来了就走" : stay < 10 ? "；门前有一片脚印叠在一起，有人站了一阵" : "；门前的积灰被踩实了一大片，有人在那里站了很久";
+            front = X("物件.前厅脚印", ("各色", string.Join("、", prints.GroupBy(b => b).OrderBy(g => g.Key)
+                .Select(g => X("物件.前厅脚印一种", ("数", Cn(g.Count())), ("身形", BuildText(g.Key).TrimEnd('的'))))))).TrimEnd('。');
+            front += "\n" + X(stay < 4 ? "物件.前厅浅" : stay < 10 ? "物件.前厅一阵" : "物件.前厅很久").TrimEnd('。');
             if (_frontStats.TryGetValue(night - 1, out var prev) && prev.Prints > 0)
-                front += prints.Length > prev.Prints || stay > prev.Stay * 1.3 ? "（比前一夜多）" : prints.Length < prev.Prints && stay < prev.Stay ? "（比前一夜少）" : "（和前一夜差不多）";
+                front += "——" + X(prints.Length > prev.Prints || stay > prev.Stay * 1.3 ? "物件.前厅比前夜多" : prints.Length < prev.Prints && stay < prev.Stay ? "物件.前厅比前夜少" : "物件.前厅和前夜差不多").TrimEnd('。');
         }
         t.Add(new("前厅脚印", Place.ArchiveFront, front, front));
         var machine = _seizeTried.Contains(night) ? "配重链条被人拉动过" : "三处机关没人碰过";
@@ -253,8 +254,11 @@ public sealed partial class Game
     private void DawnHint(int night)
     {
         if (!DawnTraces.TryGetValue(night, out var traces)) return;
-        var changed = traces.Where(Changed).Select(t => t.Key.StartsWith("神情:") ? "有人的神色" : Names.Of(t.Where)).Distinct().ToArray();
-        if (Day > FirstDay) Feed.Add(changed.Length == 0 ? "清晨。昨夜似乎什么也没发生。" : $"清晨。昨夜之后，这些地方有了变化：{string.Join("、", changed)}。");
+        var moved = traces.Where(Changed).ToArray();
+        var places = moved.Where(t => !t.Key.StartsWith("神情:")).Select(t => Names.Of(t.Where)).Distinct().ToArray();
+        var faces = moved.Any(t => t.Key.StartsWith("神情:"));
+        if (Day > FirstDay) Feed.Add(places.Length == 0 ? X(faces ? "清晨.只有神色" : "清晨.无事")
+            : X(faces ? "清晨.有变化带神色" : "清晨.有变化", ("地点", JoinNames(places))));
         if (Day is 99)
         {
             // 第 7 日的短缺要在第 5—6 日清晨读得到（§13 第 8、13 条）：存量、每日耗用、温室状态。
@@ -456,7 +460,7 @@ public sealed partial class Game
             var builds = BuildsSeenAt(night, place);
             // 先列侦探有理由联想到这里的人：听人提起过他与此处、白天在此处见过他、他认了与此处相关的规矩（侦探所知）。
             int Relevance(Person p) =>
-                (Det.News.Values.Any(h => h.Text.Contains(p.Name) && h.Text.Contains(Names.Of(place))) ? 4 : 0)
+                (ClaimsOf(Det).Any(c => (c.Subject == p.Id || c.Object == p.Id) && c.Where == place) ? 4 : 0)
                 + (DetSeenAt.GetValueOrDefault(place)?.Contains(p.Id) == true ? 2 : 0)
                 + (SpreadKnown.Any(k => k.Hearer == p.Id && k.Accepted) || DetToldFace.Any(x => x.Who == p.Id && x.Nodded) ? 1 : 0);
             foreach (var p in Npcs.Where(p => cands.Contains(p.Id) && (builds.Count == 0 || builds.Contains(p.Pro.Build))).OrderByDescending(Relevance).ThenBy(p => p.Id).Take(5))

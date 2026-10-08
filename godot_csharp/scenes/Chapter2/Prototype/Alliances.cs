@@ -44,8 +44,8 @@ public sealed partial class Game
     {
         if (s.Author is not { } a || a == P.Det || a == p.Id || Cast.Of(a).Group != p.Pro.Group) return;
         var author = this[a];
-        Witness(author, $"{author.Name}立的规矩，我不认", -1, 0, [p], spread: false);
-        Witness(p, $"{p.Name}不认我立的规矩", -1, 0, [author], spread: false);
+        Witness(author, K("规矩被拒", author.Id, p.Id), -1, 0, [p], spread: false);
+        Witness(p, K("规矩被拒", author.Id, p.Id), -1, 0, [author], spread: false);
     }
 
     private void OnAccepted(Person p, RuleSpec s) { }

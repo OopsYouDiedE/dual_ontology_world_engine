@@ -118,7 +118,7 @@ public sealed partial class Game
         WardNight = Spec("WardNight",
             fx => [new(Fx.All(fx.At(Slot.Night), Fx.Mine(T.Branded)), RuleMode.Forbid, fx.Go(Place.Logistics), 2)]);
         MoraNight = Spec("MoraNight",
-            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed)), fx.NotDone(Job.Share)), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3),
+            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed)), fx.NotDone(Job.Share), fx.NotDone(Job.NightTakeSelf)), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3), // 试过、没做成，今夜不再试
                    new(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 2)]);
         RuanLedger = Spec("RuanLedger",
             fx => [new(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Duty), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);
@@ -359,7 +359,7 @@ public sealed partial class Game
         if (p.Witnessed.Contains("machine")) Add(fam == Ending.DetectivePact ? 2 : 0, "亲眼见过侦探把机关安稳地试开");
         if (p.Acc.GetValueOrDefault(s) == Truth.True) Add(1, "点过头");
         if (p.StanceNudge.TryGetValue(fam, out var n)) Add(Math.Min(1, n), "饭桌上被说动");
-        if (p.News.Values.Any(h => h.Text.Contains("第九、第十条"))) Add(fam switch { Ending.OpenEach => -1, Ending.DetectivePact => 1, _ => 0 }, "听说石碑上还有第九条");
+        if (ClaimsOf(p).Any(c => c.Predicate == "石碑条文")) Add(fam switch { Ending.OpenEach => -1, Ending.DetectivePact => 1, _ => 0 }, "听说石碑上还有第九条");
         if (p.HungryAtCouncil && GrainSide() is { } g && g == fam && People.FirstOrDefault(x => Get(x.Body, T.GranaryKey) > 0) is { } holder && TrustIn(p, holder) >= 1) Add(1, "饿着，跟掌粮的人走");
         if (FactionLeaderOf(p) is { } lead && lead != p && lead != Det && _leaderStance.TryGetValue(lead.Id, out var lf) && lf == fam) Add(1, $"跟着{lead.Name}");
         return score;

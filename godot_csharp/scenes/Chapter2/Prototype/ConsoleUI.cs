@@ -137,7 +137,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     private void Flush()
     {
-        foreach (var f in OrderedFeed(g.Feed))
+        foreach (var f in OrderedFeed(g.TakeFeed()))
         {
             if (f.StartsWith(StoryRuntime.MediaMarker, StringComparison.Ordinal))
             {
@@ -146,7 +146,6 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
             }
             else W("  " + f);
         }
-        g.Feed.Clear();
         if (_debug)
         {
             foreach (var l in g.Log.Skip(_logShown)) W("  [作者侧] " + l);
@@ -564,7 +563,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     public List<int> NewsOrder()
     {
-        foreach (var id in g.Det.News.Keys.Order()) if (!_newsOrder.Contains(id) && _newsOrder.All(x => g.Det.News[x].Text != g.Det.News[id].Text)) _newsOrder.Add(id);
+        foreach (var id in g.Det.News.Keys.Order()) if (!_newsOrder.Contains(id) && _newsOrder.All(x => g.AllNews[x - 1].Claim.Identity != g.AllNews[id - 1].Claim.Identity)) _newsOrder.Add(id);
         return _newsOrder;
     }
 
@@ -575,7 +574,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         for (var i = 0; i < order.Count; i++)
         {
             var h = g.Det.News[order[i]];
-            W($"  {i + 1}. {Chapter2Content.DayName(h.Day)} {h.Text}　——{(h.Hops == 0 ? "亲见" : $"听{Names.Of(h.From)}说" + (h.Hops > 1 ? "（转了几道手）" : ""))}");
+            W($"  {i + 1}. {Chapter2Content.DayName(h.Day)} {g.Plain(g.AllNews[h.Item - 1])}　——{(h.Hops == 0 ? "亲见" : $"听{Names.Of(h.From)}说" + (h.Hops > 1 ? "（转了几道手）" : ""))}");
         }
     }
 

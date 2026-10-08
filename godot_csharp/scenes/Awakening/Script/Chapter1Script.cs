@@ -334,8 +334,8 @@ public sealed partial class AwakeningContentSession
             if (id == "E8")
             {
                 var sound = ((object[])Session.GetProgress("state")["last_sound"]).Cast<Dictionary<string, object>>();
-                notes.Add(Chapter1Data.Text("笔记·声路", ("列表", string.Join("；", sound.Select(h => Chapter1Data.Text("笔记·声路·一条",
-                    ("人名", Name((string)h["who"])), ("地点", SoundSpot((string)h["room"])), ("文字", (string)h["text"]), ("方向", (string)h["direction"])))))));
+                notes.Add(Chapter1Data.Text("笔记·声路", ("列表", string.Join("；", sound.Select(h => Chapter1Data.Text((string)h["direction"] == "" ? "笔记·声路·一条无方向" : "笔记·声路·一条",
+                    ("人名", Name((string)h["who"])), ("地点", SoundSpot((string)h["room"])), ("文字", ((string)h["text"]).TrimEnd('。')), ("方向", ((string)h["direction"]).TrimEnd('。'))))))));
             }
             else notes.Add(Chapter1Data.Text("笔记·试验", ("结果", evidence.GetProperty("experiment_result").GetString()!.Replace("\n", ""))));
         }

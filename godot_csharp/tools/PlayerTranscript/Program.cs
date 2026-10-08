@@ -225,7 +225,7 @@ sealed class Transcript
             foreach(var k in new[]{"items","notes","rows","table"})foreach(var x in A(ev,k))Note(x is IEnumerable<object?> row ? string.Join("｜",row) : x?.ToString()??"");
             Text(M(ev,"header"),"question","instructions");
             Choices(ev,"options");
-            foreach(var field in Maps(ev,"fields")){Text(field,"heading","placeholder","empty_text");Choices(field,"options");}
+            foreach(var field in Maps(ev,"fields")){Text(field,"heading","placeholder");if(!Maps(field,"options").Any())Text(field,"empty_text");Choices(field,"options");}
         }
         if(kind=="aside")Text(ev,"text");
         if(kind=="replay_play")
@@ -283,6 +283,8 @@ sealed class Transcript
         actors["detective"]=(site.GetProperty("x").GetDouble()+15,site.GetProperty("y").GetDouble());
         Input("前往并检视 "+site.GetProperty("title").GetString(),E(("kind","tick"),("delta",.1)));
         desiredCard=option;Input("检视 "+site.GetProperty("title").GetString(),E(("kind","interact"),("site",id)));
+        // 请来的人手上有事时要等一会儿才过来：像玩家一样在原地等，不立刻去点下一件东西。
+        if(option=="help") for(var i=0;i<200;i++){ Send(E(("kind","tick"),("delta",.1))); Drain(); }
     }
     void Move(string map)
     {

@@ -337,11 +337,18 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             if(physical is not null && !ReferenceEquals(physical.Space,_game.Space[_game.Where(_game.Det)]))
                 throw new InvalidOperationException("物件不在当前真实空间。");
         }
-        var facts=thing!=""?_game.HostExamine(thing):authored.Thing is not null?_game.HostExamineEntity(_behavior.Entity(authored.Thing)):"";
+        var facts=thing!=""?GranaryAspect(site,_game.HostExamine(thing)):authored.Thing is not null?_game.HostExamineEntity(_behavior.Entity(authored.Thing)):"";
         var lore=Text(spec,"lore");var text=lore==""?facts:facts==""?lore:lore+"\n"+facts;
         var id=map+":"+site; var card=new Dictionary<string,object?>{["id"]=id,["title"]=Text(spec,"title"),["text"]=text,["place"]=Names.Of(_game.Where(_game.Det)),["thing"]=thing};
         _examined[id]=card; ShowCard(id,card,output);
         if (thing=="台账" && _game.Day>=Game.CaseDay && !_replayOpen) { _replayOpen=true; _continuations.Enqueue(o=>Activate("card.replay_unlock",o)); }
+    }
+    // 粮仓的两个交互点各看一面：门闩只说门闩，存粮只说存量。
+    private static string GranaryAspect(string site,string facts)
+    {
+        var parts=facts.Split('；');
+        if(parts.Length!=2||!parts[0].StartsWith("存粮"))return facts;
+        return site switch { "stock"=>parts[0]+"。","latch"=>parts[1],_=>facts };
     }
     private Dictionary<string,string> SiteSpec(Chapter2AuthoredSite site)
     {
@@ -368,14 +375,14 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     private void Talk(P who,List<Dictionary<string,object?>> output)
     {
         if (!Local(who)) throw new InvalidOperationException("人物当前不在场。");
-        var name=Names.Of(who); var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>
+        var name=Names.Of(who); var he=_game[who].Pro.Pronoun; var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>
         {
             ("ask","问问"+name+"知道些什么",()=>Local(who),o=>{AskReaction(who,o);_continuations.Enqueue(next=>ResumeTalk(who,next));}),
-            ("escort","请他跟你去看一样东西",()=>Local(who),o=>Menu("看什么",_examined.Values.Where(c=>Text(c,"thing")!="").Select(c=>Text(c,"thing")).Distinct().Select(t=>(t,t,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Escort){Who=who,Thing=t,Place=Game.Things_[t].Place},next)))),o)),
-            ("request","请他做一件事",()=>Local(who),o=>Menu("做什么",_content.Requests.Select(r=>(r.Job.ToString(),r.Label,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Ask){Who=who,Job=r.Job},next)))),o)),
-            ("rule","跟他讲一条规矩",()=>Local(who),o=>RuleMenu(who,o)),
-            ("help","帮他干一阵活",()=>Local(who),o=>Commit(new(Cmd.Help){Who=who},o)),
-            ("share","分给他一份口粮",()=>Local(who)&&Game.Get(_game.Det.Body,T.Fed)>0,o=>Commit(new(Cmd.ShareFood){Who=who},o)),
+            ("escort","请"+he+"跟你去看一样东西",()=>Local(who),o=>Menu("看什么",_examined.Values.Where(c=>Text(c,"thing")!="").Select(c=>Text(c,"thing")).Distinct().Select(t=>(t,t,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Escort){Who=who,Thing=t,Place=Game.Things_[t].Place},next)))),o)),
+            ("request","请"+he+"做一件事",()=>Local(who),o=>Menu("做什么",_content.Requests.Select(r=>(r.Job.ToString(),r.Label,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Ask){Who=who,Job=r.Job},next)))),o)),
+            ("rule","跟"+he+"讲一条规矩",()=>Local(who),o=>RuleMenu(who,o)),
+            ("help","帮"+he+"干一阵活",()=>Local(who),o=>Commit(new(Cmd.Help){Who=who},o)),
+            ("share","分给"+he+"一份口粮",()=>Local(who)&&Game.Get(_game.Det.Body,T.Fed)>0,o=>Commit(new(Cmd.ShareFood){Who=who},o)),
             ("cancel","没什么了",()=>true,o=>{})
         };
         Menu("跟"+name+"说什么",choices.Where(c=>c.Item3()),output);
@@ -541,7 +548,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             _ended=true;_stage="ended";
             o.AddRange(EndEvents(new Dictionary<string,object?>
             {
-                ["result"]=ending.ToString(),["result_text"]=Game.EndingText(ending),
+                ["result"]=ending.ToString(),["result_text"]=_game.ResultText,["case_rule_adopted"]=_game.CaseRuleAdopted,["common_rule_proposed"]=_game.CommonRuleProposed,
                 ["quer"]=_game.Accused is not { } accused?"没有人被当众指控":_game.QuerCleared?$"{Names.Of(accused)}洗清了冤屈，住回寝区":_game.QuerOstracized?$"{Names.Of(accused)}被当成私取之人，搬出寝区独宿":$"{Names.Of(accused)}的事没有人再提",
                 ["det_hooks"]=_game.Det.Hooks,["common_rule"]=_game.CommonRuleEstablished,["case_rule"]=_game.CaseRule?.Text??"",
                 ["log"]=_game.CouncilLog.ToArray(),["hooks"]=_game.Npcs.Where(p=>p.Hooks>0).Select(p=>p.Name).ToArray(),["impressions"]=Impressions(),

@@ -50,12 +50,13 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         When(Tg(g.Granary, T.LatchLoose), Set(g.Granary, T.Locked, 0))));
 
     // 取粮要在后勤院待上一会儿（开锁、取、关门），这段时间里别人看得见他；送去诊疗所是下一段。
-    private Effect TakeOne(bool record, bool self) => Seq([
+    // 夜里取粮的人先等一等：晚饭散场、众人回寝区之后才动手，不当着一院子人开粮仓。
+    private Effect TakeOne(bool record, bool self) => Wait(2, Seq([
         Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))),
         Spend(g.Granary, T.Ration, 1),
         .. record ? new[] { Change(g.Ledger, T.NightRecorded, 1) } : new[] { MeChange(T.OweNote, 1) },
         Set(g.Granary, T.Locked, 1),
-        Wait(self ? 3 : 1.5, self ? Seq(MeChange(T.Fed, 1), MeChange(T.NightAte, 1)) : Seq(Go(Place.Clinic), Change(g.Bowl, T.Porridge, 1)))]); // 自取的人就地吃完
+        Wait(self ? 3 : 1.5, self ? Seq(MeChange(T.Fed, 1), MeChange(T.NightAte, 1)) : Seq(Go(Place.Clinic), Change(g.Bowl, T.Porridge, 1)))])); // 自取的人就地吃完
 
     public Effect Job(Job job, Person? who = null) => job switch
     {
@@ -86,7 +87,7 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         Prototype.Job.CountLedger => Seq(Go(Place.Logistics), Look(g.Granary), Look(g.Ledger), Change(g.Ledger, T.Counted, 1)),
         Prototype.Job.Stele => Seq(Go(Place.Oath), Look(g.Stele)),
         Prototype.Job.Scavenge => Wait(2, Seq(Go(Place.Logistics), Look(g.Granary), Wait(2, Look(g.Granary)))),
-        Prototype.Job.Hoard => Seq(Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))), Spend(g.Granary, T.Ration, 2), Set(g.Granary, T.Locked, 1), MeChange(T.Stash, 2)),
+        Prototype.Job.Hoard => Wait(2, Seq(Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))), Spend(g.Granary, T.Ration, 2), Set(g.Granary, T.Locked, 1), MeChange(T.Stash, 2))),
         Prototype.Job.Accuse => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Accusation, 1)),
         Prototype.Job.PostRules => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Posted, 1)),
         Prototype.Job.Defend => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
@@ -341,7 +342,7 @@ public sealed partial class Game
         switch (p.Id)
         {
             case P.Elena: Daily(Job.Treat, [Slot.Morning, Slot.Forenoon], 4); Daily(Job.Retreat, [Slot.Afternoon], 3); break;
-            case P.Bertrand: Daily(Job.Report, [Slot.Morning], 5); break;
+            case P.Bertrand: Daily(Job.Report, [Slot.Morning], 5, fx.Tg(Clock, T.Day, FirstDay + 1)); break; // 始业日前夜各寝区都闩着，没有巡夜可报
             case P.Veronica:
                 Daily(Job.Sample, [Slot.Afternoon], 3);
                 rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), new Condition.At(fx.R(this[P.Mora].Body), new Noun.Slot(RuleSlot.Scene)), fx.NotDone(Job.Needle)), RuleMode.Prefer,
@@ -358,7 +359,7 @@ public sealed partial class Game
     private static readonly Slot[] DaySlots = [Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening];
     public readonly Dictionary<string, RuleSpec> RelayText = [];
     public static string RelayLine(RuleSpec s) => $"跟你说条规矩：「{s.Text}」";
-    public static string TeachLine(int l) => $"第{l}课讲的我给你讲讲。";
+    public static string TeachLine(int l) => $"《{Lessons[l].Title}》讲的，我给你讲讲。";
 
     /// <summary>
     /// 转述、拉人、教人、换吃的、跟随、躲避（§13 第 5、7 条）——全部是此人心中的规则，经 DecisionSystem 选出、ActionRuntime 结算：

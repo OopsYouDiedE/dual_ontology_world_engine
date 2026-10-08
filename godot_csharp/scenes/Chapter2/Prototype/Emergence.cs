@@ -103,12 +103,12 @@ public sealed partial class Game
         }
         if (job == Job.Teach && say is not null && hearer is not null && hearer != Det)
         {
-            var l = int.Parse(new string(say.Text.Skip(1).TakeWhile(char.IsDigit).ToArray()));
+            var l = Lessons.Keys.First(k => TeachLine(k) == say.Text);
             var had = hearer.Lessons.GetValueOrDefault(l);
             hearer.Lessons[l] = true;
             if (!had) Observation.Observe(hearer.Soul, new ObservationInput(hearer.Lore.Name, hearer.Lore.Kind)
             { Target = hearer.Lore, Source = ObservationSource.Testimony, Time = Now, Details = Lessons[l].Title + "：" + Lessons[l].Teach + $"（{p.Name}讲的）" });
-            RecordEvent(p.Id, $"给{hearer.Name}讲第{l}课{(had ? "" : "（他原先没学全）")}", "交谈", Where(p), [], job: Job.Teach);
+            RecordEvent(p.Id, $"给{hearer.Name}讲《{Lessons[l].Title}》{(had ? "" : $"（{hearer.Pro.Pronoun}原先没学全）")}", "交谈", Where(p), [], job: Job.Teach);
             return true;
         }
         if (job == Job.Avoid)
@@ -191,12 +191,12 @@ public sealed partial class Game
         var asker2 = request is not null ? PersonOf(p, request.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target) : null;
         var said = job switch
         {
-            Job.AskOpen when sayTo is not null => $"{p.Name}约{sayTo.Name}今夜去开名录库",
-            null when asker2 is not null && asker2 != Det && request!.Name.Contains("今夜") => $"{asker2.Name}约{p.Name}今夜去开名录库，{p.Name}答应了",
-            Job.Share => $"{p.Name}把自己的口粮分给了饿着的人",
-            Job.GiveKey => $"{p.Name}把粮仓钥匙交了出去",
-            Job.PostRules => $"{p.Name}在中央厅贴规矩",
-            _ => null
+            Job.AskOpen when sayTo is not null => K("约开库", p.Id, sayTo.Id),
+            null when asker2 is not null && asker2 != Det && request!.Name.Contains("今夜") => K("应约开库", p.Id, asker2.Id),
+            Job.Share => K("分粮", p.Id),
+            Job.GiveKey => K("交钥匙", p.Id),
+            Job.PostRules => K("贴规", p.Id),
+            _ => (Claim?)null
         };
         if (said is not null) NewsFrom(p, NewsKind.Rumor, said, about: p);
         // 登记它动过的东西（开粮、煮粥、领粮这类日常不算）。
@@ -300,13 +300,17 @@ public sealed partial class Game
         }
         if (SpreadKnown.Any(k => k.Day == e.Day && k.Hearer != P.Det && e.Text.Contains(Names.Of(k.Hearer)) && k.Teller == e.Who)) return "转述";
         var name = Names.Of(e.Who);
-        if (e.Job is Job.Treat or Job.Retreat or Job.Sample or Job.Needle or Job.Sketch or Job.Report or Job.Share && Det.News.Values.Any(h => h.Day >= e.Day && h.Day <= e.Day + 1 && h.Text.Contains(name))) return "转述";
-        var word = e.Job switch
+        // 侦探在当天或次日听到过以此人为主语、说的正是这类事的知识：他是听人转述知道的。
+        bool HeardOf(params string[] predicates) => Det.News.Values.Any(h => h.Day >= e.Day && h.Day <= e.Day + 1
+            && AllNews[h.Item - 1].Claim is var c && (c.Subject == e.Who || c.Object == e.Who) && (predicates.Length == 0 || predicates.Contains(c.Predicate)));
+        if (e.Job is Job.Treat or Job.Retreat or Job.Sample or Job.Needle or Job.Sketch or Job.Report or Job.Share && HeardOf()) return "转述";
+        string[]? kinds = e.Job switch
         {
-            Job.Accuse => "指控", Job.Defend => "替", Job.Tear => "撕", Job.PostRules => "贴", Job.GiveKey => "钥匙", Job.Share => "口粮", Job.Seize or Job.AskOpen => "名录库",
-            Job.Watch => "亲眼看见", null when e.Text.StartsWith("答应了") => "答应了", null when e.Text.Contains("拦下") => "拦下", _ => null
+            Job.Accuse => ["指控亲见", "指控身影", "指控台账"], Job.Defend => ["辩护"], Job.Tear => ["撕规"], Job.PostRules => ["贴规"], Job.GiveKey => ["交钥匙"],
+            Job.Share => ["分粮"], Job.Seize or Job.AskOpen => ["约开库", "应约开库", "守门挡下", "夜开名录库", "夜开名录库未成"],
+            Job.Watch => ["夜见取粮记账", "夜见私取", "夜见照规取粮", "夜见取粮"], null when e.Text.StartsWith("答应了") => ["应约开库"], _ => null
         };
-        if (word is not null && Det.News.Values.Any(h => h.Day >= e.Day && h.Day <= e.Day + 1 && h.Text.Contains(name) && h.Text.Contains(word))) return "转述";
+        if (kinds is not null && HeardOf(kinds)) return "转述";
         return null;
     }
 

@@ -10,7 +10,7 @@ public sealed class NewsItem
 {
     public required int Id { get; init; }
     public required NewsKind Kind { get; init; }
-    public required string Text { get; init; }
+    public required Claim Claim { get; init; }
     public required P Origin { get; init; }
     public P? About { get; init; }
     public int TrustDelta { get; init; }
@@ -67,43 +67,48 @@ public sealed partial class Game
     }
 
     /// <summary>一件事被人亲眼看见：亲见者心里记一个以当事人为主语的事件（Perception）。没人看见就什么都不改变。</summary>
-    public void Witness(Person subject, string text, int trust, int insight, IEnumerable<Person> witnesses, bool spread = true, bool manipulation = false, Dom domain = Dom.General)
+    public void Witness(Person subject, Claim claim, int trust, int insight, IEnumerable<Person> witnesses, bool spread = true, bool manipulation = false, Dom domain = Dom.General)
     {
         var list = witnesses.Where(w => w != subject).Distinct().ToArray();
+        var plain = Plain(claim);
         foreach (var w in list)
         {
-            Observation.Observe(w.Soul, new ObservationInput(text, ProjectionKind.Event)
+            Observation.Observe(w.Soul, new ObservationInput(plain, ProjectionKind.Event)
             {
-                Source = ObservationSource.Perception, Existence = Truth.True, Time = Now, Details = text,
+                Source = ObservationSource.Perception, Existence = Truth.True, Time = Now, Details = plain,
                 Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, trust).Add(T.Insight, insight).Add(T.Domain, (int)domain),
                 AddRelations = [(Relations.Subject, w.M[subject.Body])]
             });
         }
         if (!spread || list.Length == 0) return;
-        var item = NewItem(NewsKind.Reputation, text, list[0].Id, subject.Id, trust, insight, manipulation: manipulation, domain: domain);
-        foreach (var w in list) w.News[item.Id] = new(w.Id, 0, ObservationSource.Perception, Day, text);
-        Log.Add($"D{Day} {Names.Of(Slot)} 目睹：{text}（信{trust:+0;-0;0} 识{insight:+0;-0;0}）→ {string.Join("、", list.Select(w => w.Name))}");
+        var item = NewItem(NewsKind.Reputation, claim, list[0].Id, subject.Id, trust, insight, manipulation: manipulation, domain: domain);
+        foreach (var w in list) w.News[item.Id] = new(w.Id, 0, ObservationSource.Perception, Day, item.Id);
+        Log.Add($"D{Day} {Names.Of(Slot)} 目睹：{plain}（信{trust:+0;-0;0} 识{insight:+0;-0;0}）→ {string.Join("、", list.Select(w => w.Name))}");
     }
 
-    private NewsItem NewItem(NewsKind kind, string text, P origin, P? about, int trust = 0, int insight = 0, Essence? on = null, Tag? tag = null,
+    private NewsItem NewItem(NewsKind kind, Claim claim, P origin, P? about, int trust = 0, int insight = 0, Essence? on = null, Tag? tag = null,
         int value = 0, Build? build = null, Place? place = null, int lesson = 0, bool manipulation = false, Dom domain = Dom.General)
     {
         var item = new NewsItem
         {
-            Id = AllNews.Count + 1, Kind = kind, Text = text, Origin = origin, About = about, TrustDelta = trust, InsightDelta = insight,
+            Id = AllNews.Count + 1, Kind = kind, Claim = claim, Origin = origin, About = about, TrustDelta = trust, InsightDelta = insight,
             FactOn = on, FactTag = tag, FactValue = value, Day = Day, Build = build, Place = place, Lesson = lesson, Manipulation = manipulation, Domain = domain
         };
         AllNews.Add(item);
         return item;
     }
 
-    public NewsItem NewsFrom(Person origin, NewsKind kind, string text, Person? about = null, int trust = 0, int insight = 0, Essence? on = null,
+    public NewsItem NewsFrom(Person origin, NewsKind kind, Claim claim, Person? about = null, int trust = 0, int insight = 0, Essence? on = null,
         Tag? tag = null, int value = 0, Build? build = null, Place? place = null, int lesson = 0, bool manipulation = false)
     {
-        var item = NewItem(kind, text, origin.Id, about?.Id, trust, insight, on, tag, value, build, place, lesson, manipulation);
-        origin.News[item.Id] = new(origin.Id, 0, ObservationSource.Perception, Day, text);
+        var item = NewItem(kind, claim, origin.Id, about?.Id, trust, insight, on, tag, value, build, place, lesson, manipulation);
+        origin.News[item.Id] = new(origin.Id, 0, ObservationSource.Perception, Day, item.Id);
         return item;
     }
+
+    /// <summary>此人是否已经知道这条知识（同一件事，不论从谁那里听来）。</summary>
+    public bool KnowsClaim(Person p, Claim c) => p.News.Values.Any(h => AllNews[h.Item - 1].Claim.Identity == c.Identity);
+    public IEnumerable<Claim> ClaimsOf(Person p) => p.News.Values.Select(h => AllNews[h.Item - 1].Claim);
 
     /// <summary>
     /// 同处一地的人交换消息。转述经过不信任的人打折；经过成见会走样（对其成见对象的负面消息再加重一分，并带上定性）。
@@ -147,13 +152,19 @@ public sealed partial class Game
             foreach (var s in Specs.Where(s => !s.ByDemon && s.Author is not null && s != RuanLedger && Holds(a, s) && Holds(b, s)))
             {
                 if (!_bonded.Add((a.Id, b.Id, s.Id))) continue;
-                Witness(a, $"{a.Name}和我一样认「{Short(s)}」", 1, 0, [b], spread: false);
-                Witness(b, $"{b.Name}和我一样认「{Short(s)}」", 1, 0, [a], spread: false);
+                Witness(a, K("同认规矩", a.Id, b.Id, values: ("规矩", Short(s))), 1, 0, [b], spread: false);
+                Witness(b, K("同认规矩", b.Id, a.Id, values: ("规矩", Short(s))), 1, 0, [a], spread: false);
             }
     }
 
     private static bool Holds(Person p, RuleSpec s) => s.Author == p.Id || p.Acc.GetValueOrDefault(s) == Truth.True;
-    public static string Short(RuleSpec s) => s.Text.Length > 14 ? s.Text[..14] + "…" : s.Text;
+    /// <summary>规矩的简称：有“：”“；”分出的题头就用题头，否则整句（不截半句）。</summary>
+    public static string Short(RuleSpec s)
+    {
+        var t = s.Text.TrimEnd('。');
+        var cut = t.IndexOfAny(['：', '；']);
+        return cut >= 4 ? t[..cut] : t;
+    }
 
     /// <summary>
     /// 信任链传播（§11 第 3 条）：接受得真心（或自己立的）规则，会被转述给同处一地、信得过自己、还没听过的人。
@@ -199,17 +210,19 @@ public sealed partial class Game
     public void Receive(Person teller, Person hearer, NewsItem item, Heard via, Channel channel = Channel.Relay)
     {
         var trust = TrustIn(hearer, teller);
-        var text = via.Text;
-        if (hearer.News.Values.Any(h => h.Text == text)) { hearer.News[item.Id] = new(teller.Id, via.Hops + 1, ObservationSource.Testimony, Day, text); return; }
+        if (KnowsClaim(hearer, item.Claim)) { hearer.News[item.Id] = new(teller.Id, via.Hops + 1, ObservationSource.Testimony, Day, item.Id, via.Slant); return; }
         var delta = item.TrustDelta;
-        if (item.About is { } about && delta < 0 && teller.Pro.Prejudice.GetValueOrDefault(about) < 0 && !text.Contains("（据"))
+        var slant = via.Slant;
+        if (item.About is { } about && delta < 0 && teller.Pro.Prejudice.GetValueOrDefault(about) < 0 && slant is null && teller.Id != item.Origin)
         {
             delta -= 1;
-            text += $"（据{teller.Name}说，这是{(about == P.Quer ? "私取的老毛病" : "惯常的事")}）";
+            slant = teller.Id;
         }
+        var heard = new Heard(teller.Id, via.Hops + 1, ObservationSource.Testimony, Day, item.Id, slant);
+        var text = Plain(item.Claim);
         var scaled = trust >= 2 ? delta : trust >= 0 ? delta / 2 : 0;
         var insight = trust >= 2 ? item.InsightDelta : trust >= 0 ? item.InsightDelta / 2 : 0;
-        hearer.News[item.Id] = new(teller.Id, via.Hops + 1, ObservationSource.Testimony, Day, text);
+        hearer.News[item.Id] = heard;
         if (item.About is { } a2 && (scaled != 0 || insight != 0))
             Observation.Observe(hearer.Soul, new ObservationInput(text, ProjectionKind.Event)
             {
@@ -226,7 +239,7 @@ public sealed partial class Game
         if (item.FactOn is { } on && item.FactTag is { } tag && trust >= 0) Know(hearer, on, tag, item.FactValue, ObservationSource.Testimony, text);
         // 恶魔亲口承认的话经人转述：信得过转述者，就对它那条“凡学员皆可取回己物”多一分疑心（信任链传播）。
         if (item.Kind == NewsKind.DemonWord && trust >= 1 && hearer.DemonDoubt < 1) hearer.DemonDoubt = 1;
-        if (text.Contains("亲眼看见中央基座裂") && trust >= 2) hearer.Witnessed.Add("crack-heard");
+        if (item.Claim.Predicate == "基座裂缝" && trust >= 2) hearer.Witnessed.Add("crack-heard");
         if (item.Kind == NewsKind.Accusation && item.About is { } acc && trust >= 0) Know(hearer, this[acc].Body, T.Accused, 1, ObservationSource.Testimony, text);
         if (item.Kind == NewsKind.Lesson && !hearer.Lessons.ContainsKey(item.Lesson))
         {
@@ -234,7 +247,7 @@ public sealed partial class Game
             hearer.Lessons[item.Lesson] = full;
             Log.Add($"D{Day} {Names.Of(Slot)} {hearer.Name} 从{teller.Name}处听到第{item.Lesson}课（{(full ? "完整" : "走样")}）");
         }
-        if (hearer == Det) Feed.Add($"{teller.Name}说：{(text.StartsWith(teller.Name) ? "我" + text[teller.Name.Length..] : text)}");
+        if (hearer == Det) QueueRelayToDet(teller, item, heard);
     }
 
     private bool RelayAccepted(Person p) => Specs.Any(s => s.Card?.Behavior == 4 && p.Acc.GetValueOrDefault(s) == Truth.True);

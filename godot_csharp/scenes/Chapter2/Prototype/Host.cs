@@ -96,8 +96,8 @@ public sealed partial class Game
         if (!precise) return;
         // 首课在集合之后、全体随之进讲堂；作答时众人可能还在中央厅，两处都算在场。
         var present = People.Where(p => p != Det && Get(p.Body, T.Sick) == 0 && Where(p) is Place.Lecture or Place.Hall).ToArray();
-        Witness(Det, "侦探的回答被恶魔当众称赞", 0, 1, present.Where(p => p.Pro.DemonPrejudice >= 0), domain: Dom.Archive);
-        Witness(Det, "侦探被恶魔当众称赞——它的宠儿？", -1, 0, present.Where(p => p.Pro.DemonPrejudice < 0));
+        Witness(Det, K("回答受赞", P.Det), 0, 1, present.Where(p => p.Pro.DemonPrejudice >= 0), domain: Dom.Archive);
+        Witness(Det, K("宠儿", P.Det), -1, 0, present.Where(p => p.Pro.DemonPrejudice < 0));
         // 当众读出“自负其果，果是什么，条文一字未提”：本就不偏信它、欲望也不系在名录库上的人对它那条“凡学员皆可取回己物”多了一分疑心。
         foreach (var p in present.Where(p => p.Pro.DemonPrejudice <= 0 && !p.Pro.DesireFlags.HasFlag(RF.OpenArchive)))
         {
@@ -111,7 +111,7 @@ public sealed partial class Game
 
     public List<string> TakeFeed()
     {
-        var lines = Feed.ToList();
+        var lines = ComposeFeed();
         Feed.Clear();
         return lines;
     }

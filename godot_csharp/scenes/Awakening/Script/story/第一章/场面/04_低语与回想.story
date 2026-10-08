@@ -167,7 +167,7 @@
             侦探：…… [#id=recall_ask_detective.004]
             设旗 recall_yes
         - 不。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
-            侦探：我只信接触面、先后和形变。别的，等我证明了再说。 [#id=recall_ask_detective.006]
+            侦探：不碰。我想知道的事，自己查。 [#id=recall_ask_detective.006]
             铜口：随阁下。 [#id=recall_ask_detective.007]
     跳转 END
 

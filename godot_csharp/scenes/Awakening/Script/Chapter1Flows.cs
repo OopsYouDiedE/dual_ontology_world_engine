@@ -83,7 +83,10 @@ public sealed partial class AwakeningContentSession
         var heard = Heard(who);
         if (heard is null) return "";
         var direction = Convert.ToString(heard.GetValueOrDefault("direction", ""));
-        return Convert.ToString(heard["text"]) + (direction == "" ? "" : "　" + direction);
+        var text = Convert.ToString(heard["text"]) ?? "";
+        // 听见的字和它从哪边来，是同一个人嘴里的两句话。
+        if (direction == "") return text;
+        return (text.EndsWith('）') || "。？！".Contains(text[^1]) ? text : text + "。") + direction;
     }
 
     // ------------------------------------------------------- expressions --

@@ -190,6 +190,8 @@ public sealed partial class Chapter1Session
         try
         {
             var waited = 0.0;
+            // 人手上正有事（拿着、走向自己的旧物）：先应一声，忙完再过来。
+            if (LifeBusy(who)) yield return new Run(Say("help_busy_" + who));
             while (LifeBusy(who) && waited < 15.0) { yield return new Sleep(0.1); waited += 0.1; }
             if (F(who).Distance > 90)
             {

@@ -67,25 +67,32 @@ public sealed partial class Game
             .Select(p => (p, s: StanceOf(p))).Where(x => x.s is not null)
             .OrderByDescending(x => _voicedStance.TryGetValue(x.p.Id, out var v) && v.Spec?.Text != x.s!.Text ? 1 : _voicedStance.ContainsKey(x.p.Id) ? 0 : 2)
             .ThenBy(x => x.p.Id).Take(2).ToArray();
+        var said = new List<(Person P, string Line)>();
+        // 本人有专属说法就用本人的。
+        string Line(string key, Person p) => Chapter2Design.HasText($"立场话.{key}.{p.Id}") ? X($"立场话.{key}.{p.Id}") : X($"立场话.{key}");
         foreach (var (p, s) in talkers)
         {
             _voicedStance[p.Id] = (Day, s);
-            var (who, line0) = s!.Author == P.Det ? ("你", $"你那条{LabelOf(s)}「{Short(s)}」，我看行。")
-                : s.ByDemon ? ("铜口", "凡学员皆可取回己物——它自己说的。我的东西在里面。")
-                : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", "依据：名录库须有人管、有账可查。") : ("沃德", "名录库得有人管、有账可查。沃德这话在理。"))
-                : p.Id == P.Gu ? ("自己", "回忆就是上钩。老朽还是那句话：封着。") : ("顾平章", "回忆就是上钩。还是封着好，顾平章说得对。");
+            var (who, line0) = s!.Author == P.Det ? ("你", X("立场话.侦探方案", ("标签", LabelOf(s)), ("规矩", Short(s))))
+                : s.ByDemon ? (VoiceName(p), Line("各取其物", p))
+                : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", Line("委员会自述", p)) : ("沃德", Line("委员会附和", p)))
+                : p.Id == P.Gu ? ("自己", Line("封闭自述", p)) : ("顾平章", Line("封闭附和", p));
             var line = line0;
             // 有人当众驳你的方案（§13 第 12 条）：说的人向着别家，你又有方案在议，他就顺口驳一句；信他的人会被说动一点。
             var mine = Specs.LastOrDefault(x => x.Author == P.Det && x.Card is { Behavior: >= 5 and <= 8 } && Det.Acc.ContainsKey(x));
             var fam = FamilyOf(s!);
             if (mine is not null && FamilyOf(mine) != fam && s!.Author != P.Det)
-                line = $"侦探那条{LabelOf(mine)}？{(fam switch { Ending.OpenEach => "东西本来就是我们的，凭什么等人点头。", Ending.Committee => "没有人管、没有账，迟早出事。", Ending.Sealed => "开了就是上钩，什么条款也拦不住。", _ => "说得好听。" })}" + line;
+                line = X($"立场话.驳.{fam switch { Ending.OpenEach => "各取其物", Ending.Committee => "委员会", Ending.Sealed => "封闭", _ => "其他" }}", ("标签", LabelOf(mine))) + line;
             if (mine is not null && FamilyOf(mine) != fam)
                 foreach (var l in Npcs.Where(l => l != p && Where(l) == here && TrustIn(l, p) >= 2))
                     l.StanceNudge[fam] = Math.Min(1, l.StanceNudge.GetValueOrDefault(fam) + 1);
-            Feed.Add($"{p.Name}在饭桌上说：“{line}”");
+            said.Add((p, line));
             NoteFor(p.Id, "立场", $"复述{who}的话：{line}");
         }
+        // 两个人说的是同一句话，就合成一句。
+        foreach (var g in said.GroupBy(x => x.Line))
+            Feed.Add(g.Count() == 1 ? X("立场话.饭桌", ("人", g.First().P.Name), ("话", g.Key))
+                : X("立场话.饭桌多人", ("人们", JoinNames(g.Select(x => x.P.Name))), ("话", g.Key)));
     }
 
     private void AfterSlot(P? first)

@@ -107,9 +107,9 @@ func _run() -> void:
 		"S3 开场广播：只称代管者与教师，不说自己是什么，不提导师与契约，没有“初涉斯地”（第五轮修订 1、3）")
 	check(opening.find("代管者") < opening.find("此为始业之问"), "开场广播在始业之问之前")
 	check(FORBIDDEN.filter(func(w): return opening.contains(w)).is_empty(), "开场全部台词不提第 9、10 条")
-	check(opening.contains("不是来给它断案的") and opening.contains("考人，不是问路") and opening.contains("我只信我听见的"),
+	check(opening.contains("又不是来断案的") and opening.contains("是在试我们") and opening.contains("我还不知道能不能信"),
 		"始业之问后，三人各有一句不同的抵触或怀疑，再开始调查（修订四·11）")
-	check(opening.contains("插进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
+	check(opening.contains("揣进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
 	check(int(fx.probe("desire", ["huo"])) == 2 and int(fx.probe("desire", ["su"])) == 2 and int(fx.probe("desire", ["shen"])) == 2,
 		"S4 恶魔逐一点到三人的欲望（Corruption 来源，欲望各加强一级）")
 	check(fx.progress("flags").has("board_read"), "S3 广播结束后，公告框上的学园守则完整呈现过一次（修订三·2、第五轮修订 2）")
@@ -191,7 +191,7 @@ func _run() -> void:
 		if round == 1:
 			var title := str(host.ui._modal_event.get("title", "")) + str(host.ui._modal_event.get("intro", "")) + fx.modal_text()
 			check(title.contains("第 2 轮") and title.contains("从哪边来"), "声路试验第二轮起以一张小表汇总四处所闻（修订四·8）")
-	check(seen().count("声音走管子") == 1 or fx.seen_lines.filter(func(l): return l.contains("声音走管子")).size() == 1, "两轮声路试验，苏泠的点评只说一次")
+	check(seen().count("从管子里出来的声音") == 1 or fx.seen_lines.filter(func(l): return l.contains("从管子里出来的声音")).size() == 1, "两轮声路试验，苏泠的点评只说一次")
 	fx.close_modal()
 
 	# ---- 5. 触物回忆：三人倾向各不相同（未告知／已告知守则第 1 条），沈鼎犹豫时侦探的三种回答
@@ -536,7 +536,7 @@ func _run() -> void:
 	check(room_name(fx.player().position) == "门厅", "结局时地名显示“门厅”")
 	check(fx.progress("flags").has("asked_hand") and finale.contains("诸位授权封存之物，是我取走的") and not finale.contains("第二条"),
 		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔承认取物，不提“第二条”（修订四·5、第五轮修订 5）")
-	check(finale.contains("比我以为的站得久"), "门开时侦探有一句克制的心声（修订四·10）")
+	check(finale.contains("我却没有马上迈出去"), "门开时侦探有一句克制的心声（修订四·10）")
 	check(finale.contains("那罐子喂过的日子，我想起来一些了") and finale.contains("我想先用自己的耳朵听这里"), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
 	var ending_text := fx.modal_text() + "\n" + "\n".join(host.ui._modal_event.get("rows", []))
 	check(ending_text.contains("留在恶魔那里的钩：沈鼎") and ending_text.contains("你没有交出的：你自己、霍铎、苏泠"), "结局列出“钩”与“你没有交出的”（修订三·4）")

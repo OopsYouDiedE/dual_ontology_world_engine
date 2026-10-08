@@ -1,11 +1,11 @@
 场面 sound_test
     （你们各自站好。活动厅的铜口沉默了一会儿。） [#id=sound_test.001]
-    铜口：（乐意之至。）{{声路句子()}} [#id=sound_test.002]
+    铜口：乐意之至。{{声路句子()}} [#id=sound_test.002]
     侦探（心声）：（{{所闻之处("detective")}}）{{所闻("detective")}} [#id=sound_test.003]
     霍铎：（{{所闻之处("huo")}}）{{所闻("huo")}} [#id=sound_test.004]
     沈鼎：（{{所闻之处("shen")}}）{{所闻("shen")}} [#id=sound_test.005]
     苏泠：（{{所闻之处("su")}}）{{所闻("su")}} [#id=sound_test.006]
-    苏泠：声音走管子，和人站在面前说话，不是一种声音。我只说我听见的，和它从哪边来。 [#id=sound_test.007]
+    苏泠：从管子里出来的声音，跟人当面说话不一样。发闷，字头容易丢。 [#id=sound_test.007]
     跳转 END
 
 场面 talk_huo
@@ -51,13 +51,13 @@
         - 门是我闩的。 [#id=talk_huo_menu.015]
             条件：旗("reversal_one")
             霍铎：……你闩的。 [#id=talk_huo_menu.016]
-            霍铎：闩门，不难。手一推。难的是推之前那一下。 [#id=talk_huo_menu.017]
-            霍铎：你那一下，听的是谁，我不知道。 [#id=talk_huo_menu.018]
+            霍铎：我在铜口这儿。没看见你。 [#id=talk_huo_menu.017]
+            霍铎：你要问我喊没喊过，我答不上来。 [#id=talk_huo_menu.018]
             跳转 talk_huo_menu
         - ◎ 是什么？ [#id=talk_huo_menu.019]
             条件：回想过("huo")
             霍铎：铜口。图纸上，传声口画这个。我早该认出来。 [#id=talk_huo_menu.020]
-            霍铎：他叫我守。我就守。守到天亮，没有下一次。 [#id=talk_huo_menu.021]
+            霍铎：他叫我守着，我就守着。守到天亮，他也没再出声。 [#id=talk_huo_menu.021]
             跳转 talk_huo_menu
         - 我们在这里很久了。 [#id=talk_huo_menu.022]
             条件：把握("detective", "早已相熟") >= 75
@@ -117,7 +117,7 @@
         - 铜口那边的声音。 [#id=talk_shen_menu.019]
             条件：试过("E8")
             沈鼎：我在备餐间只听见嗡嗡的，像隔壁有人念经。 [#id=talk_shen_menu.020]
-            沈鼎：水一开，连嗡嗡都没了。灶台前的人，耳朵是聋的。 [#id=talk_shen_menu.021]
+            沈鼎：水一开，连嗡嗡都听不见了。 [#id=talk_shen_menu.021]
             跳转 talk_shen_menu
         - 罐壁上那些面痕。 [#id=talk_shen_menu.022]
             条件：把握("detective", "早已相熟") >= 75
@@ -162,7 +162,7 @@
             跳转 talk_su_menu
         - 你的乐谱。 [#id=talk_su_menu.009]
             条件：见过("E6")
-            苏泠：我记下的，就是我听见的。一个音都不会多。 [#id=talk_su_menu.010]
+            苏泠：记谱的习惯改不了，听见几个音，就落几个音。 [#id=talk_su_menu.010]
             苏泠：我不知道我什么时候记的。……但那是我的手。 [#id=talk_su_menu.011]
             跳转 talk_su_menu
         - 那扇门。 [#id=talk_su_menu.012]

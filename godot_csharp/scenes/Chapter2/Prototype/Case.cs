@@ -259,8 +259,8 @@ public sealed partial class Game
             {
                 var why = !ClaimTrue(claim) ? "这话不对" : !DetHas(evidence) ? "你手里没有这样东西" : "这东西证明不了这句话";
                 ConfrontLog.Add(line + $" ——众人面面相觑（{why}）。");
-                Witness(Det, $"侦探在对质中说了站不住的话：{Claims[claim]}", frames ? -1 : 0, -1, room.Where(p => p != Det), domain: Dom.Rations);
-                if (frames) Witness(Det, "侦探当众冤枉我", -2, 0, [quer], spread: false);
+                Witness(Det, K("对质失言", P.Det, values: ("话", Claims[claim])), frames ? -1 : 0, -1, room.Where(p => p != Det), domain: Dom.Rations);
+                if (frames) Witness(Det, K("冤枉", P.Det, quer.Id), -2, 0, [quer], spread: false);
                 continue;
             }
             ConfrontLog.Add(line + " ——" + Reaction(claim));
@@ -282,7 +282,7 @@ public sealed partial class Game
             if (points[p] >= 3)
             {
                 foreach (var t in new[] { T.Branded, T.Suspect, T.Accused }) Know(p, quer.Body, t, 0, ObservationSource.Inference, "对质");
-                Witness(quer, $"{p.Name}在对质里认清了：{quer.Name}没有私取", 1, 0, [p], spread: false);
+                Witness(quer, K("认清无私取", p.Id, quer.Id), 1, 0, [p], spread: false);
                 revised.Add(p);
             }
         }
@@ -298,17 +298,17 @@ public sealed partial class Game
         if (QuerCleared && Accused is null)
         {
             ConfrontLog.Add($"台账上的缺口说清了。改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
-            Witness(Det, "侦探的推断在对质中被证实", 0, 2, room.Where(p => p != Det), domain: Dom.Rations);
+            Witness(Det, K("推断证实", P.Det), 0, 2, room.Where(p => p != Det), domain: Dom.Rations);
         }
         else if (QuerCleared)
         {
             ConfrontLog.Add($"沃德沉默了一会：“依据……补记之前，不视为私取。”改变看法的人：{string.Join("、", revised.Select(p => p.Name))}。");
-            Witness(Det, $"侦探替{quer.Name}洗清了冤屈", 2, 1, [quer]);
+            Witness(Det, K("洗清冤屈", P.Det, quer.Id), 2, 1, [quer]);
             // 推得准是“判断”，只在口粮与案子这一领域；为人不因此上涨（§11 第 4 条）。
-            Witness(Det, "侦探的推断在对质中被证实", 0, 2, room.Where(p => p != Det && p != quer), domain: Dom.Rations);
+            Witness(Det, K("推断证实", P.Det), 0, 2, room.Where(p => p != Det && p != quer), domain: Dom.Rations);
             foreach (var m in Manipulations.Where(m => m.About == P.Quer))
             {
-                Witness(Det, "侦探之前对我说的雀儿的事是片面的", -2, 0, [this[m.Target]]);
+                Witness(Det, K("片面之词", P.Det, m.Target), -2, 0, [this[m.Target]]);
                 m.Exposed = true;
                 ConfrontLog.Add($"{Names.Of(m.Target)}看了你一眼：你之前对{Cast.Of(m.Target).Pronoun}说的，只说了一半。");
             }
@@ -327,6 +327,8 @@ public sealed partial class Game
     /// 之后重开对质可以援引它（第三部分 §7）。
     /// </summary>
     private static bool CommonEnough(int accepted, int present) => accepted * 2 > present;
+    /// <summary>侦探在对质中提出的规矩是否过了半数（立住了）；共同规则是否提过。</summary>
+    public bool CaseRuleAdopted, CommonRuleProposed;
 
     private void Propose(ConfrontPlan plan, Person[] room)
     {
@@ -335,19 +337,20 @@ public sealed partial class Game
             CaseRule = CardSpec(card, P.Det);
             Det.Acc[CaseRule] = Truth.True;
             Post(CaseRule, Place.Hall);
-            ConfrontLog.Add($"你提出新规则{LabelOf(CaseRule)}「{card.Text}」");
+            ConfrontLog.Add(X("对质.提出新规", ("规矩", CaseRule.Text)));
             var said = RecordEvent(P.Det, $"在对质中当众提出「{Short(CaseRule)}」", "交谈", Place.Hall, []);
             foreach (var p in room.Where(p => p != Det)) { Tell(p, CaseRule, Channel.Public); _transmit[(CaseRule.Id, p.Id)] = said; }
             foreach (var p in room.Where(p => p != Det)) NoteFor(p.Id, "规则", $"对质中你提出「{card.Text}」，{p.Pro.Pronoun}{(p.Acc[CaseRule] == Truth.True ? "表示照办" : "摇头")}");
             foreach (var key in new[] { P.Ward, P.Mora, P.Ruan, P.Quer })
             {
-                ConfrontLog.Add($"  {Names.Of(key)}：{Voice(this[key], CaseRule, this[key].Acc[CaseRule])}");
+                ConfrontLog.Add(X("对质.新规表态", ("人", Names.Of(key)), ("话", Voice(this[key], CaseRule, this[key].Acc[CaseRule]))));
                 DebugLog.Add($"对质 {Names.Of(key)} 对新规则：{this[key].Why[CaseRule]}");
             }
             var all4 = new[] { P.Ward, P.Mora, P.Ruan, P.Quer }.All(k => this[k].Acc[CaseRule] == Truth.True);
             var n = room.Count(p => p.Acc.GetValueOrDefault(CaseRule) == Truth.True);
-            ConfrontLog.Add(n >= room.Length - 2 ? "  几乎所有人都点了头。" : n >= room.Length / 2 ? "  点头的人过了半数。" : "  点头的人不到一半。");
-            if (all4) Witness(Det, "侦探提出的规则被接受，结果公平", 0, 1, room.Where(p => p != Det), domain: Dom.Rations);
+            CaseRuleAdopted = CommonEnough(n, room.Count(p => p != Det));
+            ConfrontLog.Add(X(n >= room.Length - 2 ? "对质.几乎都点头" : CaseRuleAdopted ? "对质.过半点头" : "对质.不到一半"));
+            if (all4) Witness(Det, K("规则公平", P.Det), 0, 1, room.Where(p => p != Det), domain: Dom.Rations);
         }
         if (plan.CommonRule)
         {
@@ -356,10 +359,12 @@ public sealed partial class Game
             foreach (var p in room.Where(p => p != Det)) Tell(p, CommonRule, Channel.Public);
             var n = room.Count(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) == Truth.True);
             CommonRuleEstablished = CommonEnough(n, room.Count(p => p != Det));
-            ConfrontLog.Add($"你提议：「{CommonRule.Text}」点头的有：{string.Join("、", room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) == Truth.True).Select(p => p.Name))}" +
-                (CommonRuleEstablished ? "。十六人的第一条共同规则成立。" : "。人数不够，没有成为共同规则。"));
+            CommonRuleProposed = true;
+            var nodders = room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) == Truth.True).Select(p => p.Name).ToArray();
+            ConfrontLog.Add(X("对质.共同规则提议", ("规矩", CommonRule.Text)) + (nodders.Length == 0 ? X("对质.共同规则无人点头") : X("对质.共同规则点头", ("人们", JoinNames(nodders))))
+                + X(CommonRuleEstablished ? "对质.共同规则成立" : "对质.共同规则不成"));
             var refusers = room.Where(p => p != Det && p.Acc.GetValueOrDefault(CommonRule) != Truth.True).ToArray();
-            if (refusers.Length > 0) ConfrontLog.Add($"  没接受的：{string.Join("、", refusers.Select(p => $"{p.Name}{Voice(p, CommonRule, Truth.False)}"))}");
+            if (refusers.Length > 0) ConfrontLog.Add(X("对质.共同规则拒绝", ("各人", string.Join("、", refusers.Select(p => $"{p.Name}{Voice(p, CommonRule, Truth.False)}")))));
         }
     }
 
@@ -399,7 +404,7 @@ public sealed partial class Game
         QuerOstracized = true;
         var who = this[acc];
         foreach (var p in People.Where(p => p != who && ((Belief(p, who, T.Branded) ?? 0) > 0 || (Belief(p, who, T.Accused) ?? 0) > 0)))
-            Witness(p, $"{p.Name}仍把我当贼", -2, 0, [who], spread: false);
+            Witness(p, K("仍当作贼", p.Id, who.Id), -2, 0, [who], spread: false);
         if (acc == P.Quer)
         {
             ConfrontLog.Add("雀儿当天搬出了甲区。");

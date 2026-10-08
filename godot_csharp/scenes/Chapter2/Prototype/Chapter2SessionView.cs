@@ -63,11 +63,12 @@ public sealed partial class Chapter2InteractionSession
         var hooked = ((string[])result["hooks"]!).ToList();
         var detHooks = Convert.ToInt32(result["det_hooks"]);
         if (detHooks > 0) hooked.Insert(0, "你自己");
-        var rows = new List<object?> { "名录库：" + result["result_text"], result["quer"] };
-        if ((string)result["case_rule"]! != "") rows.Add($"你在对账时提出的规矩：「{result["case_rule"]}」");
-        rows.Add("第一条共同规则：" + (result["common_rule"] is true ? "成立" : "没有成立"));
-        rows.Add("留在恶魔那里的钩：" + (hooked.Count == 0 ? "无" : string.Join("、", hooked)));
-        rows.Add("你没有交出的：" + (detHooks == 0 ? "你自己" : "无"));
+        string T(string key, params (string, object?)[] args) => Chapter2Design.Text("终局." + key, args);
+        var rows = new List<object?> { T("名录库", ("结果", result["result_text"])), result["quer"] };
+        if ((string)result["case_rule"]! != "") rows.Add(T(result["case_rule_adopted"] is true ? "对账规矩立住" : "对账规矩没立住", ("规矩", result["case_rule"])));
+        rows.Add(T(result["common_rule"] is true ? "共同规则成立" : result["common_rule_proposed"] is true ? "共同规则不成" : "共同规则未提"));
+        rows.Add(T("钩", ("铜口", _game.VoiceName(null)), ("名单", hooked.Count == 0 ? T("钩无") : string.Join("、", hooked))));
+        rows.Add(T("没交出", ("名单", detHooks == 0 ? "你自己" : T("钩无"))));
         rows.AddRange(((string[])result["impressions"]!).Cast<object?>());
         yield return Event("music", ("id", "main_theme"), ("fade", 4.0));
         yield return Event("ending", ("title", "安眠者有福 · 完"), ("outcome", ""), ("rows", rows.ToArray()),

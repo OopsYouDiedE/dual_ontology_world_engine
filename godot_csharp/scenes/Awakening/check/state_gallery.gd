@@ -183,7 +183,7 @@ func _run() -> void:
 	await show_line("超越卡诺循环的那一张")
 	await settle(10)
 	await shot("03-desire-amplified")
-	await show_line("考人，不是问路")
+	await show_line("是在试我们")
 	await settle(10)
 	await shot("03b-reactions-after-the-question")
 	# 3 公告框

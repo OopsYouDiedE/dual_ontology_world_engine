@@ -9,6 +9,8 @@ public sealed partial class Game
 {
     public Ending Result { get; private set; }
     public string ResultText = "";
+    /// <summary>名录库之议两家打平、谁也没说服谁（门照旧封着，但不是哪一方赢了）。</summary>
+    public bool Deadlocked;
     public readonly List<string> CouncilLog = [];
     public Faction? SeizedBy;
     public bool ArchiveTested;
@@ -67,13 +69,12 @@ public sealed partial class Game
         Log.Add($"D{Day} 夜 名录库：{names} 来过。{(ok ? "三站齐了，门开了" : guard is not null ? $"{guard.Name}占着配重室，没让开" : "三站没凑齐")}");
         if (!ok && guard is not null)
         {
-            var text = $"昨夜有人摸到名录库前厅想开门，{guard.Name}守着配重室没让开：{names}";
-            NewsFrom(guard, NewsKind.Accusation, text, about: leader, trust: -1);
+            NewsFrom(guard, NewsKind.Accusation, K("守门挡下", guard.Id, night: Day, values: ("人们", names)), about: leader, trust: -1);
             var blockEv = RecordEvent(guard.Id, $"守着配重室，没给{names}让开", "看守", Place.ArchiveFront, causes);
             foreach (var c in crew) Touch(c.Body, T.Accused, blockEv, guard.Id);
             return;
         }
-        NewsFrom(leader, NewsKind.Rumor, $"昨夜有人在名录库前厅（{names}）{(ok ? "，门开过" : "，没开成")}");
+        NewsFrom(leader, NewsKind.Rumor, K(ok ? "夜开名录库" : "夜开名录库未成", night: Day, values: ("人们", names)));
         RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
         if (ok) { SeizedBy = new Faction([.. crew.Select(c => c.Id)], leader.Id, []); SeizedPlan = ArchivePlans().First(); SeizedDay = Day; }
     }
@@ -147,11 +148,11 @@ public sealed partial class Game
         {
             var best = plans.Select(s => (s, score: AcceptScore(p, s, Channel.Public, Place.Hall, out var why, stance: true), why))
                 .Where(x => x.score >= Options.AcceptThreshold).OrderByDescending(x => x.score).ThenBy(x => x.s.Id).FirstOrDefault();
-            if (best.s is null) { CouncilLog.Add($"  {p.Name}：哪个方案都不肯认"); continue; }
+            if (best.s is null) { CouncilLog.Add(X("议事.不站", ("人", p.Name))); continue; }
             support[best.s].Add(p);
             CouncilChoice[p.Id] = best.s;
             p.Acc[best.s] = Truth.True;
-            CouncilLog.Add($"  {p.Name}站到了「{Short(best.s)}」一边。");
+            CouncilLog.Add(X("议事.站边", ("人", p.Name), ("方案", Short(best.s))));
             DebugLog.Add($"议事 {p.Name} 支持 {best.s}（{best.why}）");
         }
         // detBacks：方案下标；越界表示“支持我自己提出的方案”；负数表示不表态。
@@ -171,7 +172,8 @@ public sealed partial class Game
         if (top.Length >= 2 && top[0].Who.Count == top[1].Who.Count && top[0].Family != Ending.Sealed)
         {
             Result = Ending.Sealed;
-            CouncilLog.Add($"【{EndingText(top[0].Family)}】与【{EndingText(top[1].Family)}】各 {top[0].Who.Count} 人，谁也没说服谁。门照旧封着。");
+            Deadlocked = true;
+            CouncilLog.Add(X("议事.僵持", ("甲", EndingText(top[0].Family)), ("乙", EndingText(top[1].Family)), ("数", top[0].Who.Count)));
             families = [];
         }
         foreach (var f in families)
@@ -197,7 +199,7 @@ public sealed partial class Game
             CouncilLog.Add($"【{EndingText(f.Family)}】支持者凑不齐机关：{report.TrimEnd('。')}。");
         }
         if (Result == Ending.None) { Result = Ending.Sealed; CouncilLog.Add("没有一方凑得齐三站。名录库只好封着。"); }
-        ResultText = EndingText(Result);
+        ResultText = Deadlocked ? X("议事.僵持结果") : EndingText(Result);
         if (Result is not Ending.Sealed && mine is not null && FamilyOf(mine) == Ending.Sealed)
             CouncilLog.Add("你支持封闭。尽管多数人打开了名录库，你仍留在门外，没有念匣上的名字，也没有触物回忆。");
         else if (Result is not Ending.Sealed)

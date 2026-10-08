@@ -329,7 +329,7 @@ public static class Checks
                 lens.Add(rep.Count(l => !l.StartsWith("还有")));
                 if (sample.Count == 0) sample = rep;
             }
-            g.Feed.Clear();
+            g.TakeFeed();
         }
         Console.WriteLine($"  守夜每夜给出的具体条数：{string.Join(" ", lens)}；第 2 夜守后勤院：{string.Join(" / ", sample)}");
         Check(lens.All(n => n <= 5), "守夜只给最显著的至多五条，其余合成“还有几道身影来去”");

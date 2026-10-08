@@ -106,8 +106,7 @@ public static class Program
                     var act = g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g);
                     Console.WriteLine($"【D{g.Day} {Names.Of(g.Slot)}】{act?.Describe() ?? "歇着"}");
                     g.RunSlot(act);
-                    foreach (var f in g.Feed) Console.WriteLine("   " + f);
-                    g.Feed.Clear();
+                    foreach (var f in g.TakeFeed()) Console.WriteLine("   " + f);
                 }
                 g.Council(bot.Back(g));
                 foreach (var l in g.CouncilLog) Console.WriteLine("   " + l);

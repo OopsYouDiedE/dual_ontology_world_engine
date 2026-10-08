@@ -86,7 +86,7 @@ func _run() -> void:
 	var ended := await settle(func(): return host.ui.modal_kind == "ending", 20000)
 	check(ended, "答辩到门开，出现章末卡")
 	var text := "\n".join(auto.lines)
-	check(text.contains("诸位授权封存之物，是我取走的") or text.contains("比我以为的站得久"), "终局台词出现")
+	check(text.contains("诸位授权封存之物，是我取走的") or text.contains("我却没有马上迈出去"), "终局台词出现")
 	check(field.adapter.get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "门开：隔离门画面换为开启")
 	check(FileAccess.file_exists("user://chapter1_end.json"), "章节结束状态写入存档")
 	var actions: Array = host.ui._modal_event.get("actions", [])
