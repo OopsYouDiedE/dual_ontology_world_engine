@@ -4,7 +4,9 @@
 
 **结论：196 处源码标记和 97 处资源记录归并为 21 组处理建议，不是 293 个独立缺陷。** 相同根因集中在同一组；一段方法涉及多个问题时只登记一个主归属，其他处理由依赖组承接。完整对应关系和依赖见 [solution-groups.json](solution-groups.json)。编号连续范围均包含首尾。
 
-本轮仅审核并新增报告，没有实施引擎、剧本、资源或架构改造。以下优先级表示后续处理顺序：P1 为内容边界、因果、认知或跨章状态相关；P2 为呈现、工具和预览相关。它不表示所有标记都已证明存在运行故障。
+本清单仅作审核并引用现有实现，没有实施引擎、剧本、资源或架构改造。以下优先级表示后续处理顺序：P1 为内容边界、因果、认知或跨章状态相关；P2 为呈现、工具和预览相关。它不表示所有标记都已证明存在运行故障。
+
+引用方式：每组“引用原文”直接列出具体语句及其源码位置；未展开的同组记录见 [全部具体内容摘录](solution-evidence.md)，逐条覆盖 196 处源码与 97 处资源。代码块为原样局部摘录，不用概括代替引文；它们不是完整方法，也不是新增剧情或实现方案。
 
 ## 方案审核的共同边界
 
@@ -47,6 +49,36 @@
 
 **对应标记：** `CSH-001–005`。
 
+**引用原文：** [本组全部 5 条摘录](solution-evidence.md#s01)。
+
+**`CSH-003`：案件痕迹及其文案直接由 Core 生成**（`production` / `logic`）。
+
+**原文位置：** [csharp/HallCausalityRules.cs](../../csharp/HallCausalityRules.cs:78)，L78–L84。
+
+```csharp
+        void MarkWedgeExposure()
+        {
+            if (!smoke || closed || !braced || allowsPassage || sootMaskedAtDoor) return;
+            sootMaskedAtDoor = true;
+            sootOnWedge = true;
+            traces.Add(new("door-mask", "门底形成木楔遮蔽的斜边洁净区。"));
+            traces.Add(new("wedge-soot", "迎灰接触面附着灰黑沉积，背面保留挤压凹痕。"));
+```
+
+**`CSH-005`：旧重演解释器绑定热烟与案件动作**（`production` / `text`）。
+
+**原文位置：** [csharp/HallReplayProgram.cs](../../csharp/HallReplayProgram.cs:30)，L30–L36。
+
+```csharp
+        void Smoke()
+        {
+            if (smoke) return;
+            smoke = true;
+            actions.Add(HallCausalityRules.Action.SmokeArrives);
+            Emit("环境 · 门缝涌入灰黑热烟", "SmokeArrives");
+        }
+```
+
 [HallCausalityRules](../../csharp/HallCausalityRules.cs:4) 和 [HallReplayProgram](../../csharp/HallReplayProgram.cs:4) 包含具体案件动作、物证与反馈，仍被 Core 默认编译纳入。仓内调用搜索只发现 `HallReplayProgram` 对 `HallCausalityRules` 的调用，未见两者之外的源码调用；正式第一章走 `NightReplay`。这是发行边界的问题，不能把这两份实现当作正式第一章重演的替换入口。
 
 **推荐方案：** 优先从 Core 编译与发行中移除，检查 API 文档、回归、工具及包兼容性后清理旧实现。有保留价值的机制再按 S06/S11 提炼，具体示例转换为独立 `.story`。不能将原代码整体移入宿主或另一个类库就算完成。
@@ -56,6 +88,33 @@
 ### S02：语义结果与剧本文案、称呼分离
 
 **对应标记：** `CSH-009`；`AWK-012、016、062`；`CH2-015、023、026、044、046、048、057、058、059、060、066、072、080、081`。
+
+**引用原文：** [本组全部 18 条摘录](solution-evidence.md#s02)。
+
+**`CH2-015`：按整段文字替换教师称呼**（`production` / `text`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs](../../godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs:552)，L552–L553。
+
+```csharp
+    // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
+    public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
+```
+
+**`CSH-009`：证据权重机制直接返回本世界专称**（`production` / `text`）。
+
+**原文位置：** [csharp/Reasoner.cs](../../csharp/Reasoner.cs:130)，L130–L138。
+
+```csharp
+            case ObservationSource.Perception: return (8, "亲见");
+            case ObservationSource.Inference: return (6, "自己推出");
+            case ObservationSource.Recall: return (3, "回忆");
+            case ObservationSource.Corruption: return (1, "铜口之言，不当证据");
+            case ObservationSource.Testimony:
+                var speaker = claim.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target;
+                var trust = speaker?.Tags.GetValueOrDefault(Tags.Trust) ?? 0;
+                // Neutral testimony counts a little; distrust makes it worthless, never inverted.
+                return (Math.Max(1, 2 + 0.5 * Math.Clamp(trust, -3, 3)), $"{speaker?.Name ?? "有人"}说的，信任 {trust}");
+```
 
 同一问题覆盖 Core 反馈、心声、调查描述、口供表达、帮助、人物印象与章末总结。有些已经读取词汇表，但选择某个具体人物的词条、决定其说法的分支仍在源码中。[Chapter2Content.PlayerText](../../godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs:549) 还通过全文替换改变称呼，与按说话人认知称呼的目标不一致。
 
@@ -69,6 +128,42 @@
 
 **对应标记：** `AWK-002、006、007、034、036、063`；`CH2-012、074、075、076、084、085、092、093、094、095、096、097、098、099`。
 
+**引用原文：** [本组全部 20 条摘录](solution-evidence.md#s03)。
+
+**`AWK-063`：人物、房间和六项变量由封闭枚举定义**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/NightVariables.cs](../../godot_csharp/scenes/Awakening/Night/NightVariables.cs:7)，L7–L18。
+
+```csharp
+public enum Person { Detective, Huo, Shen, Su }
+
+/// <summary>乙区的房间与隔离门外的起居厅。地图几何属宿主；这里只有房间拓扑。</summary>
+public enum Room { R05, R06, R07, R08, Corridor, Hall, Pantry, Foyer, Lounge }
+
+// 重演面板的六个变量（设计 §4.1）。每个选项都是“处境与人心”，没有任何一项指定某人做了什么。
+public enum SuPlace { OwnRoom, Hall, Pantry }
+public enum HuoPlace { ByTube, OwnRoom, Foyer }
+public enum VoiceOrigin { Tube, OutsideDoor }
+public enum VoiceWords { BoltKeepShut, OpenSaveMe }
+public enum DetectiveHeeds { Huo, Su, Himself }
+public enum Acquaintance { Strangers, Familiar }
+```
+
+**`CH2-084`：剧本物件仍只能绑定到固定对象字段**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs:9)，L9–L16。
+
+```csharp
+    private static readonly IReadOnlyDictionary<string,Func<Game,Essence>> Objects = new Dictionary<string,Func<Game,Essence>>
+    {
+        ["Granary"]=g=>g.Granary,["Desk"]=g=>g.Desk,["Stove"]=g=>g.Stove,["Jar"]=g=>g.Jar,["Ledger"]=g=>g.Ledger,
+        ["Bowl"]=g=>g.Bowl,["Bed"]=g=>g.Bed,["MedCab"]=g=>g.MedCab,["OilStore"]=g=>g.OilStore,["Valve"]=g=>g.Valve,
+        ["Gauge"]=g=>g.Gauge,["Blackboard"]=g=>g.Blackboard,["Stele"]=g=>g.Stele,["ArchiveDoor"]=g=>g.ArchiveDoor,
+        ["WeightRoom"]=g=>g.WeightRoom,["LockCore"]=g=>g.LockCore,["RelayPost"]=g=>g.RelayPost,["Base"]=g=>g.Base,
+        ["SketchBook"]=g=>g.SketchBook,["Clock"]=g=>g.Clock,["NameVoice"]=g=>g.NameVoice
+    };
+```
+
 人物、地点、通路、状态、行为、群体和别名虽有部分显示名称来自剧本，数量与绑定仍由枚举、固定数组及对象字段限定。[Chapter2Bindings](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs:8) 也列出封闭的专用实体表。改剧本无法独立增加这些内容。
 
 **推荐方案：** 以已有章节命名空间和稳定实体 ID 装载剧本声明，运行时解析为同一会话的对象引用。角色集合、群体、通路耗时、初始物件、反事实变量绑定和专用状态由声明产生；保留通用 `ProjectionKind`、`RuleMode`、`ActionOp` 等机制枚举。初始真相可留在剧本并由装载器建立世界，但不得以真相直接授予玩家知识。个体认知与选择规则交 S04。
@@ -80,6 +175,34 @@
 ### S04：个体信念、习惯与立场编译为主观规则
 
 **对应标记：** `AWK-008、009、017、018、019、020`；`CH2-001、005、008、013、029、034、035、036、041、042、065、073`。
+
+**引用原文：** [本组全部 18 条摘录](solution-evidence.md#s04)。
+
+**`AWK-019`：独处时将犹豫固定改成拒绝**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/MorningWorld.cs](../../godot_csharp/scenes/Awakening/Night/MorningWorld.cs:337)，L337–L342。
+
+```csharp
+    public RecallDecision? DecideAlone(string evidence)
+    {
+        var decision = DecideRecall(evidence);
+        if (decision is null || decision.Choice != RecallChoice.Hesitate) return decision;
+        return decision with { Choice = RecallChoice.Refuse, Thought = decision.Thought + Chapter1Data.Text("取舍·无人可问") };
+    }
+```
+
+**`CH2-035`：按具体人名写定议案偏好和说法**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Rules.cs](../../godot_csharp/scenes/Chapter2/Prototype/Rules.cs:448)，L448–L453。
+
+```csharp
+    private static IEnumerable<(RF Need, int Penalty, string Text)> Requirements(P p) => p switch
+    {
+        P.Ruan => [(RF.Records, 2, "不记账就对不上账")],
+        P.Quer => [(RF.NightException | RF.TwoWitness | RF.EvidenceFirst, 2, "又是一条只抓人的规矩")],
+        _ => []
+    };
+```
 
 这组统一处理按人名安装习惯、熟悉度偏移、取回取舍、议案偏好、否决底线、嫌疑推断和阵营中心。已有 `DecisionSystem` 调用应保留；问题是决定候选、条件和偏好的具体内容仍由宿主编写。
 
@@ -93,6 +216,39 @@
 
 **对应标记：** `AWK-001、011、021`；`CH2-014、037、064`。
 
+**引用原文：** [本组全部 6 条摘录](solution-evidence.md#s05)。
+
+**`AWK-001`：传播结果固定为本案的完整、句尾、隔门等组合**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/NightVariables.cs](../../godot_csharp/scenes/Awakening/Night/NightVariables.cs:94)，L94–L101。
+
+```csharp
+        var data = Loaded.Value;
+        var leaking = data.Joints.Where(j => loose?.GetValueOrDefault(j.Name, j.Loose) ?? j.Loose).Select(j => j.Room).ToHashSet();
+        if (origin == VoiceOrigin.Tube)
+            return listener == data.TubeRoom ? Hearing.Full : leaking.Contains(listener) ? Hearing.Tail
+                : data.Murmur.Contains(listener) ? Hearing.Murmur : Hearing.AlarmOnly;
+        if (listener == data.DoorOuter) return Hearing.Full;
+        if (listener == data.DoorInner) return Hearing.FullMuffled;
+        return leaking.Contains(data.DoorInner) && leaking.Contains(listener) ? Hearing.FullMuffled : Hearing.Nothing;
+```
+
+**`AWK-021`：接头变化固定映射到 E8 和“接头松动”标签**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/MorningWorld.cs](../../godot_csharp/scenes/Awakening/Night/MorningWorld.cs:440)，L440–L448。
+
+```csharp
+    public bool SetJoint(string name, bool loose)
+    {
+        if (!_joints.ContainsKey(name)) return false;
+        _joints[name] = loose;
+        if (_evidence.TryGetValue("E8", out var tube) && tube.Get<StateProperty>() is { } state)
+            foreach (var tag in state.Values.Keys.Where(t => t.Name == "接头松动").ToArray())
+                state.Values[tag] = _joints.Values.Any(v => v) ? 1 : 0;
+        _runtime.Sync();
+        return true;
+```
+
 声路拓扑已有外部声明，但 [Acoustics.Hear](../../godot_csharp/scenes/Awakening/Night/NightVariables.cs:91) 仍固定整句/句尾/隔门组合；话语语义、接头对应物证标签及夜见取物解释也有专案分支。
 
 **推荐方案：** 剧本声明通道、衰减/片段、事件携带的命题、观察条件与解释规则。通用传播器决定谁能得到哪部分信息，经 `Observation.Observe` 保留时间、来源、发送者和原事件关联。误听与成见作用于主体投影，不改客观事件。维修影响当前声路，已封存的昨夜记录保持原状态。
@@ -104,6 +260,36 @@
 ### S06：世界法则声明物理后果和劳作配方
 
 **对应标记：** `AWK-015`；`CH2-040、062、063、068、070`。
+
+**引用原文：** [本组全部 6 条摘录](solution-evidence.md#s06)。
+
+**`AWK-015`：灰扇、鞋印和湿布的具体物理后果**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/NightReplay.cs](../../godot_csharp/scenes/Awakening/Night/NightReplay.cs:854)，L854–L857。
+
+```csharp
+        var trace = _floor.Get<FloorTraceProperty>()!;
+        if (changed && actor.StartRoom == Room.Foyer && Tag(_floor, NightTags.AshFan) == 1)
+            Print(actor, boltedNow ? PrintToward.Bolt : PrintToward.DoorGap);
+        if (Tag(_cloth, NightTags.Placed) == 1 && trace.Prints.Count > 0) trace.ClothOverHeel = true;
+```
+
+**`CH2-068`：温室配方及两人条件写在完成结算中**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs](../../godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs:839)，L839–L848。
+
+```csharp
+        // 这个下午在温室干过活的人（干完活走了也算；阀门与压力表须同时有人守，所以至少两人）。
+        var crew = People.Where(p => Get(p.Body, T.Did(Job.Greenhouse)) > 0 || p == Det && LastAction?.Cmd == Cmd.Greenhouse && Where(p) == Place.Greenhouse).ToArray();
+        if (crew.Length == 0 || GreenhouseRepaired) return;
+        if (crew.Length < 2)
+        {
+            Log.Add($"D{Day} 下午 温室只有一人（{crew[0].Name}），两站没凑齐，白干");
+            if (crew[0] == Det) Feed.Add("温室里只有你一个人。阀门和压力表要两个人同时守，白干了一下午。");
+            return;
+        }
+        var skill = crew.Sum(p => Math.Max(1, p.Pro.GreenhouseSkill + (p.Pro.Structure >= 2 ? 1 : 0)));
+```
 
 门、烟、鞋印、粮、治疗、温室与油料的具体后果散落在动作编译和完成回调中。它们是世界因果模型，不应全部删除，也不应与 NPC 选择一起外置成固定剧情队列。
 
@@ -117,6 +303,44 @@
 
 **对应标记：** `AWK-022、023、024、025、026、027、028、029、030、031、032、033、035`；`CH2-033、078、079`。
 
+**引用原文：** [本组全部 16 条摘录](solution-evidence.md#s07)。
+
+**`AWK-025`：按 E11、E3 编排不同试验流程**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs](../../godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs:374)，L374–L388。
+
+```csharp
+    private IEnumerable<Op> Experiment(string id)
+    {
+        CloseModal();
+        if (id == "E11") { yield return new Run(CompareHand("detective")); yield break; }
+        var who = "";
+        if (id == "E3")
+        {
+            var options = Content.GetProperty("SOLE_TARGETS").EnumerateObject().Select(p => (object?)Option(p.Name, p.Value.GetString()!)).ToList();
+            options.Add(Option("cancel", T("界面·取消")));
+            yield return new Await(Event("candidates", ("title", T("鞋底·标题")), ("prompt", T("鞋底·提示")), ("options", options.ToArray())), true);
+            who = Text(_reply, "choice_id") is var picked && picked != "cancel" ? picked : "";
+        }
+        yield return new Run(PlayPlan(() => _content.BeginExperiment(_world, id, who)));
+        yield return new Run(OpenCard(id));
+    }
+```
+
+**`AWK-027`：按特定证物和霍铎回忆解锁试验句**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs](../../godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs:602)，L602–L608。
+
+```csharp
+    private bool SentenceKnown(int index) => index switch
+    {
+        0 => Has("examined", "E7"),
+        1 => Has("examined", "E6") || Has("helped", "E5"),
+        2 => Has("recalls", "huo"),
+        _ => false,
+    };
+```
+
 同一根因包括物证编号特判、手印前置、鞋底对象菜单、试验句解锁、回忆流程、离场低语、笔记联动以及开场/相遇摆位。现有第一章流程和第二章 `design.flows/schedule` 已可复用，不需再写一套流程所有者。
 
 **推荐方案：** 把候选、前置知识、在场要求、对象参数、时间结算点、笔记模板、触发器和演出步骤写进剧本。C# 保留菜单等待、取消、回执和调用通用行动的解释器；Godot 核验距离、房间与走位，不能代判知识条件。开门世界状态提交与音效/音乐是不同操作，由剧本按成功结果组织。
@@ -128,6 +352,45 @@
 ### S08：结构化事件替代中文日志反解析
 
 **对应标记：** `CH2-007、028、031、038、039、045、050、051、052、082`。
+
+**引用原文：** [本组全部 10 条摘录](solution-evidence.md#s08)。
+
+**`CH2-007`：从中文口供提取门闩事实**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Social.cs](../../godot_csharp/scenes/Chapter2/Prototype/Social.cs:261)，L261–L269。
+
+```csharp
+    public void Interpret(Person p)
+    {
+        var h = p.World.History;
+        for (; p.Interpreted < h.Count; p.Interpreted++)
+        {
+            var e = h[p.Interpreted];
+            if (e.Source != ObservationSource.Testimony || e.Target.Kind != ProjectionKind.Event) continue;
+            if (e.Details.Contains("门闩松了")) Know(p, Granary, T.LatchLoose, 1, ObservationSource.Testimony, e.Details);
+        }
+```
+
+**`CH2-050`：从中文行动文字推断地点**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Morning.cs](../../godot_csharp/scenes/Chapter2/Prototype/Morning.cs:415)，L415–L428。
+
+```csharp
+    private static string InkPlace(string act, Place dorm)
+    {
+        if (act.StartsWith("没做成：")) return "";
+        if (act.Contains("自己寝区")) return dorm.ToString();
+        var places = Enum.GetValues<Place>().Where(place => act.Contains(Names.Of(place))).ToArray();
+        if (places.Length == 1) return places[0].ToString();
+        if (places.Length > 1) return "";
+        if (act.StartsWith("开粮仓") || act.StartsWith("修粮仓门闩") || act.StartsWith("清点粮仓")
+            || act.StartsWith("夜里守在粮仓边上") || act.StartsWith("去配给台") || act.StartsWith("在配给台")
+            || act.StartsWith("在灶上") || act.StartsWith("去台账"))
+            return Place.Logistics.ToString();
+        if (act.StartsWith("夜里去开名录库")) return Place.ArchiveFront.ToString();
+        return "";
+    }
+```
 
 [Social.Interpret](../../godot_csharp/scenes/Chapter2/Prototype/Social.cs:260) 从“门闩松了”提取事实；[Morning.InkPlace](../../godot_csharp/scenes/Chapter2/Prototype/Morning.cs:414) 从文字推地点；[Council.Seizure](../../godot_csharp/scenes/Chapter2/Prototype/Council.cs:54) 从“答应了/请回/让开”识别回应。口供、候选、可读线索与“有变化”过滤也有同类依赖。集中修一个事件通路，比逐处替换字符串可靠。
 
@@ -141,6 +404,41 @@
 
 **对应标记：** `CH2-006、010、011、055、056`。
 
+**引用原文：** [本组全部 5 条摘录](solution-evidence.md#s09)。
+
+**`CH2-010`：封闭的具体行为编号清单**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Chapter2DesignRules.cs](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2DesignRules.cs:120)，L120–L120。
+
+```csharp
+    private static readonly string[] BehaviorIds = ["取粮", "按人头", "交钥匙", "指控须证", "转述", "开库各取", "开库委员会", "开库封闭", "开库约束", "限制入院", "温室"];
+```
+
+**`CH2-010`：加载时还要求剧本行为与该清单同序**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Chapter2DesignRules.cs](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2DesignRules.cs:150)，L150–L150。
+
+```csharp
+        if (!data.Behaviors.Select(b => b.Id).SequenceEqual(BehaviorIds)) throw new InvalidDataException("规矩格的行为顺序与代码认的编号不符：" + string.Join("、", data.Behaviors.Select(b => b.Id)));
+```
+
+**`CH2-006`：按规则卡编号选择本案夜间取粮条件**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Rules.cs](../../godot_csharp/scenes/Chapter2/Prototype/Rules.cs:156)，L156–L165。
+
+```csharp
+        var who = SubjectCondition(card.Subject);
+        Condition cond = card.Cond switch
+        {
+            1 => fx.At(Slot.Night),
+            // “急病时可取”：病人碗里已经有粥，就不必再取。
+            2 => Fx.All(fx.At(Slot.Night), fx.AnySick(null), Fx.Not(fx.Tg(Bowl, T.Porridge))),
+            3 => Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))),
+            4 => Fx.Not(fx.At(Slot.Night)),
+            _ => Fx.Constant
+        };
+```
+
 特定规则卡编号、行为白名单、语义位、社会行动和介入结果依赖本案模型。可保留 Core 社交评估和菜单只读预评估；需要外置的是请求内容、相合依据与实际效果。
 
 **推荐方案：** 剧本声明完整规则、接受条件、目的、成本、可行行动与候选请求，编译为已有 `Condition/Effect/Rule`。通用执行器提交请求、记录接受或拒绝、结算时间、处理承诺与失败。共享同一个相合计算，预览不写入认知，实际执行重新检查当前处境。
@@ -152,6 +450,48 @@
 ### S10：区分历史、制度钟点与人物当前行动
 
 **对应标记：** `AWK-010`；`CH2-027、043、061、067、069`。
+
+**引用原文：** [本组全部 6 条摘录](solution-evidence.md#s10)。
+
+**`CH2-067`：特定时刻、人物信任阈值直接提交盯视后果**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs](../../godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs:743)，L743–L755。
+
+```csharp
+        else if (Day == CaseNight && Slot == Slot.Evening)
+        {
+                // 沃德当众盯视雀儿出自他自己的成见：他心里对雀儿的信任低到 -2 以下才会这样（不是作者指定）。
+                var ward = this[P.Ward];
+                var quer = this[P.Quer];
+                if (TrustIn(ward, quer) > -2) return;
+                Set(quer.Body, T.Shamed, 1);
+                Rt.Sync();
+                Observation.Observe(quer.Soul, new ObservationInput(quer.Self.Name, quer.Self.Kind)
+                { Target = quer.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Shamed, 1) });
+                Feed.Add("傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。");
+                Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(ward), [],
+                    reason: $"沃德心里对雀儿的信任 {TrustIn(ward, quer)}"), P.Ward);
+```
+
+**`CH2-067`：同一时序分支同时发病、移人和授予消息**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs](../../godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs:757)，L757–L769。
+
+```csharp
+        else if (Day == CaseNight && Slot == Slot.Afternoon)
+        {
+                var moran = this[P.Moran];
+                Set(moran.Body, T.Sick, 1);
+                moran.Body.Get<SpatialProperty>()!.Space = Space[Place.Clinic];
+                Rt.Sync();
+                var selma = this[P.Selma];
+                NewsFrom(selma, NewsKind.Fact, K("发烧", selma.Id, moran.Id), about: moran, on: moran.Body, tag: T.Sick, value: 1);
+                Know(selma, moran.Body, T.Sick, 1, ObservationSource.Perception);
+                // 压力而非节点（§11 第 9 条）：作者保证茉拉知道莫兰在烧——她的夜取规则与沃德的“无记录即私取”必然相撞。
+                if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Claim = K("发烧", P.Selma, P.Moran), Origin = P.Selma, FactTag = T.Sick }))
+                    Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
+                Log.Add($"D{Day} 下午 莫兰发烧，被送去诊疗所（作者固定）");
+```
 
 第一章昨夜时序与第二章课程、播报、病例、点名混用定时分支。迁移前必须先按设计分类，不能把所有 `Day/Slot` 条件一概删除或一概搬入流程。
 
@@ -165,6 +505,48 @@
 
 **对应标记：** `AWK-003、004、005、037、038、039、061`；`CH2-003、025、030、032、049、071、086、087`。
 
+**引用原文：** [本组全部 15 条摘录](solution-evidence.md#s11)。
+
+**`CH2-086`：专用痕迹字段与依赖描述文字的相等判定**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Case.cs](../../godot_csharp/scenes/Chapter2/Prototype/Case.cs:11)，L11–L17。
+
+```csharp
+public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, IReadOnlyList<Place> CrumbDorms, IReadOnlyList<Build> Figures)
+{
+    public static readonly string[] Labels = [.. CaseDesign.Traces.Select(t => t.Label)];
+    public static readonly Place[] Dorms = [Place.DormW, Place.DormLife, Place.DormS, Place.DormL];
+    /// <summary>值相等：两组痕迹描述出来完全相同即相等（列表字段按内容比较）。</summary>
+    public bool Equals(CaseTraces? other) => other is not null && Describe().Select(d => d.Text).SequenceEqual(other.Describe().Select(d => d.Text));
+    public override int GetHashCode() => string.Join("|", Describe().Select(d => d.Text)).GetHashCode();
+```
+
+**`CH2-087`：四变量、默认真相和固定取值域**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Case.cs](../../godot_csharp/scenes/Chapter2/Prototype/Case.cs:33)，L33–L40。
+
+```csharp
+public sealed record CaseVars(int MoraBelief, int QuerRule, int MargaretRule, int QuerSupper)
+{
+    public static readonly string[][] Options = [.. CaseDesign.Variables.Select(v => v.Options)];
+    public static readonly string[] Questions = [.. CaseDesign.Variables.Select((v, i) => $"V{i + 1} {v.Question}")];
+    public static readonly CaseVars Truth = new(0, 0, 0, 0);
+    public static IEnumerable<CaseVars> All()
+    {
+        for (var a = 0; a < 3; a++) for (var b = 0; b < 3; b++) for (var c = 0; c < 2; c++) for (var d = 0; d < 2; d++) yield return new(a, b, c, d);
+```
+
+**`AWK-039`：第一章答辩判定固定为四步**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs](../../godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs:178)，L178–L181。
+
+```csharp
+            && _arguments.Count == 4 && _arguments.Select(a => a.Step).Order().SequenceEqual(Enumerable.Range(1,4))
+            && _arguments.All(a => a.Evidence.Any(e => content.Session.GetProgress("examined").GetValueOrDefault(e) is true)
+                && (a.RequiredGroup.Length == 0 || content.Session.GetProgress(a.RequiredGroup).GetValueOrDefault(a.RequiredKey) is true)
+                && (a.Variable != -1 || _detectiveBolted));
+```
+
 六变量、末项隐藏、四步答辩、固定痕迹字段及四项第二章变量是一组案件结构问题。当前存在可复用的 `CaseModel/CaseBelief/Reasoner`，建议以其为计算基础。仅套一个“通用案件”类包住原硬编码不够。
 
 **推荐方案：** 剧本声明变量、取值域、前提修改、隐藏条件、命题、痕迹字段、证物来源及论证支持规则。运行时枚举声明的取值域，复制隔离世界并只修改指定处境/信念，调用同一世界法则和决策机制，比较玩家已知的结构化痕迹。当前案件来自实际发生的事件；原始真相可作为历史声明，不能成为当前事件兜底答案。
@@ -176,6 +558,35 @@
 ### S12：真实集会与个人接受驱动对质、议事
 
 **对应标记：** `CH2-004、047、088、089、090、091`。
+
+**引用原文：** [本组全部 6 条摘录](solution-evidence.md#s12)。
+
+**`CH2-088`：对质开始把非病者全部移到中央厅**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Case.cs](../../godot_csharp/scenes/Chapter2/Prototype/Case.cs:231)，L231–L237。
+
+```csharp
+    public void Confront(ConfrontPlan? plan, bool reopen = false)
+    {
+        var room = People.Where(p => Get(p.Body, T.Sick) == 0).ToArray();
+        foreach (var p in room) p.Body.Get<SpatialProperty>()!.Space = Space[Place.Hall];
+        Rt.Sync();
+        PerceiveAll();
+        var quer = this[Accused ?? P.Quer];
+```
+
+**`CH2-047`：议事开始重复同一直接移人逻辑**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Council.cs](../../godot_csharp/scenes/Chapter2/Prototype/Council.cs:128)，L128–L133。
+
+```csharp
+    public Ending Council(int detBacks = -1)
+    {
+        var room = People.Where(p => Get(p.Body, T.Sick) == 0).ToArray();
+        foreach (var p in room) p.Body.Get<SpatialProperty>()!.Space = Space[Place.Hall];
+        Rt.Sync();
+        var plans = ArchivePlans().ToArray();
+```
 
 议事资格、三站分工、洗清/排斥、重开对质与结果决定集中归到一个社会过程方案。[Confront](../../godot_csharp/scenes/Chapter2/Prototype/Case.cs:230) 和 [Council](../../godot_csharp/scenes/Chapter2/Prototype/Council.cs:127) 会把所有非病者直接移到中央厅；前者还用某个固定人物是否改观决定洗清结果，不能只外置开场文字。
 
@@ -189,6 +600,40 @@
 
 **对应标记：** `AWK-013、014、041、042、043、044、058、059`；`CH2-024、053、054、083、100`；`CSH-033、035`。**资源：** `RES-081–088`。
 
+**引用原文：** [本组全部 23 条摘录](solution-evidence.md#s13)。
+
+**`AWK-059`：人物键固定对应到具体现场节点**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/AwakeningMap.gd](../../godot_csharp/scenes/Awakening/AwakeningMap.gd:15)，L15–L15。
+
+```gdscript
+const ACTOR_NODES := {"detective": "侦探", "huo": "工程师", "shen": "厨师", "su": "音乐家"}
+```
+
+**`CSH-033`：按特定纹理路径识别油灯和柜体**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Shared/Field/WorldView.gd](../../godot_csharp/scenes/Shared/Field/WorldView.gd:235)，L235–L243。
+
+```gdscript
+		# nightstand 原生 20×36 纹理同时画了柜体和油灯，分别按像素外观判断入镜。
+		if sprite.texture.resource_path == "res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" and sprite.get_rect().size == Vector2(20, 36):
+			var texture_origin := sprite.get_rect().position
+			var lamp_rect := Rect2(texture_origin + Vector2(6, 4), Vector2(8, 13))
+			var cabinet_rect := Rect2(texture_origin + Vector2(1, 16), Vector2(18, 20))
+			if not _player_object_exposed(sprite.get_global_transform_with_canvas() * lamp_rect, occluded_regions).is_empty():
+				var lamp_title := FieldVocabulary.word("床头油灯")
+				counts[lamp_title] = int(counts.get(lamp_title, 0)) + 1
+			if _player_object_exposed(sprite.get_global_transform_with_canvas() * cabinet_rect, occluded_regions).is_empty(): continue
+```
+
+**`RES-085`：生成现场固定绑定侦探动画资源**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Awakening.tscn](../../godot_csharp/scenes/Awakening/Awakening.tscn:8)，L8–L8。
+
+```text
+[ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/detective.tres" id="detective_frames"]
+```
+
 这里不能一律按剧情因果删除：像素坐标、管线形状、纹理引用、复合家具局部边界都属于表现实现。需要处理的是具体人物/物证/地点与这些几何、资源或例外的绑定。
 
 **推荐方案：** 在现有剧本布局、人物画像和地图适配数据中声明稳定 ID 到节点/资产键/锚点的关联，纯几何留在资产或地图源。痕迹显示消费权威快照和当前可见范围，不能因“R05”或精灵名称直接决定那里有什么痕迹。复合精灵可声明局部区域与词汇键，替代纹理路径特判。非空间实体以通用属性明确表示表现锚点，替代对 Clock/NameVoice 的具体豁免。
@@ -200,6 +645,47 @@
 ### S14：资源生成器读取剧本显示内容
 
 **资源：** `RES-001–080`；无新增源码标记编号。
+
+**引用原文：** [本组全部 80 条摘录](solution-evidence.md#s14)。
+
+**`RES-001`：生成地图的具体地点标题**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Maps/archive.tscn](../../godot_csharp/scenes/Chapter2/Maps/archive.tscn:188)，L188–L188。
+
+```text
+metadata/title = "名录库·文献工房"
+```
+
+**`RES-002`：生成地图的具体热点标签**（`production` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Maps/archive.tscn](../../godot_csharp/scenes/Chapter2/Maps/archive.tscn:615)，L615–L615。
+
+```text
+metadata/label = "库门锁芯"
+```
+
+**`RES-072`：生成布局的固定环境短句**（`production` / `text`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/map_layout.tres](../../godot_csharp/scenes/Awakening/map_layout.tres:947)，L947–L947。
+
+```text
+   "窗。外面是灰的，什么也看不清。"
+```
+
+**资源生成上游：上述环境短句的手写生成源**（关联 `RES-072–080`，无新增标记）。
+
+**原文位置：** [godot_csharp/tools/build_awakening_map.py](../../godot_csharp/tools/build_awakening_map.py:193)，L193–L200。
+
+```python
+    for d in room["decor"]:
+        if d[0] == "window":
+            cx, top, w = d[1], d[2] * CELL, d[3]
+            asides.append([[cx - w // 2, top + 6, w, 36], "窗。外面是灰的，什么也看不清。" if cx > 600 else "窗。雾贴着玻璃。"])
+    for fw in room["floor_work"]:
+        if fw[0] == "rug":
+            asides.append([[fw[1], fw[2], fw[3], fw[4]], "地毯。踩得发亮的地方，在床边。" if fw[1] == 832 + 72 else "地毯。"])
+    asides.append([[832 + 136, 168, 9, 8], "一双拖鞋。摆得很正，鞋头朝外。"])
+```
 
 `RES-001–071` 是生成地图的标题/热点标签；`RES-072–080` 是布局里的环境短句。它们不能按 80 条独立建议逐处修 `.tscn/.tres`。
 
@@ -213,6 +699,18 @@
 
 **对应标记：** `CSH-022`。
 
+**引用原文：** [本组全部 1 条摘录](solution-evidence.md#s15)。
+
+**`CSH-022`：以铜口声流身份触发附加音效**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/UI/Panels/Dialogue/ChapterDialogue.gd](../../godot_csharp/scenes/UI/Panels/Dialogue/ChapterDialogue.gd:556)，L556–L558。
+
+```gdscript
+	if current_voice_stream == VOICE_TUBE and _previous_voice_stream != VOICE_TUBE:
+		Sound.sfx("tube", -6.0)
+	_previous_voice_stream = current_voice_stream
+```
+
 [ChapterDialogue._present_line](../../godot_csharp/scenes/UI/Panels/Dialogue/ChapterDialogue.gd:555) 根据“当前声流是否是铜口”推断首次开口时的附加音效。这是专用声音表现绑定，优先级低于人物因果改造。
 
 **推荐方案：** 由剧本/声音表现配置提供开口音效、语音组和连续组标识。UI 只按配置与呈现生命周期播放、去重；也可由已有 `sound` 事件明确触发。保持打字音、音量及播放算法在声音系统中。
@@ -222,6 +720,23 @@
 ### S16：按作用域结束章节规则
 
 **对应标记：** `AWK-060`。
+
+**引用原文：** [本组全部 1 条摘录](solution-evidence.md#s16)。
+
+**`AWK-060`：章节交接统一清空旧物习惯的规则**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/Night/MorningScriptWorld.cs](../../godot_csharp/scenes/Awakening/Night/MorningScriptWorld.cs:59)，L59–L66。
+
+```csharp
+        // 离开生活翼：拿不拿那件旧物的打算系在本章的物件与场所上，到此失效（本人内省得知，不删记忆、不改钩与欲望）。
+        // 否则其中“守着手头的事”等常数偏好会带进下一章，压过那里的一切日常。
+        foreach (var who in _minds.Keys)
+        {
+            var habit = _minds[who].Habits;
+            if (habit is not null)
+                Observation.Observe(_souls[who], new ObservationInput(habit.Name, habit.Kind) { Target = habit, Source = ObservationSource.Introspection, Time = ++_time, Rules = [] });
+        }
+```
 
 [ExportContinuation](../../godot_csharp/scenes/Awakening/Night/MorningScriptWorld.cs:51) 为避免旧物习惯压过续章日常，统一清空该习惯投影的 Rules。这是跨章规则生命周期问题，不能只搬迁四个人的清理名单。
 
@@ -235,6 +750,37 @@
 
 **对应标记：** `AWK-045–054、056、057`；`CH2-002、016–022、077`；`CSH-007、010–013、015、016、019、020、036、037`。
 
+**引用原文：** [本组全部 32 条摘录](solution-evidence.md#s17)。
+
+**`AWK-045`：测试夹具中的具体真值和显示名称**（`fixture` / `schema`）。
+
+**原文位置：** [godot_csharp/scenes/Awakening/check/ReplayCheck/ReplayCheckProgram.cs](../../godot_csharp/scenes/Awakening/check/ReplayCheck/ReplayCheckProgram.cs:20)，L20–L27。
+
+```csharp
+var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);
+string Short(NightVariables v) => string.Join(" ",
+    v.V1 switch { SuPlace.OwnRoom => "苏泠在房", SuPlace.Hall => "苏泠在厅", _ => "苏泠在备餐间" },
+    v.V2 switch { HuoPlace.ByTube => "霍铎在铜口", HuoPlace.OwnRoom => "霍铎在房", _ => "霍铎在门厅" },
+    v.V3 == VoiceOrigin.Tube ? "经铜口" : "在门外",
+    v.V4 == VoiceWords.BoltKeepShut ? "闩门别开" : "开门救我",
+    v.V5 switch { DetectiveHeeds.Huo => "听霍铎", DetectiveHeeds.Su => "听苏泠", _ => "听自己" },
+    v.V6 == Acquaintance.Familiar ? "相熟" : "初识");
+```
+
+**`CSH-012`：记录工具按预写答辩与证物映射代选**（`tool` / `logic`）。
+
+**原文位置：** [godot_csharp/tools/PlayerTranscript/Program.cs](../../godot_csharp/tools/PlayerTranscript/Program.cs:169)，L169–L175。
+
+```csharp
+            else if(fields.Any(f=>S(f,"id")=="say"))
+            {
+                string[] texts=["是我闩的门。","门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。","他说的是：闩门，别开。","我信霍铎——我们早已相熟。"];
+                string[] shows=["E3","E8","E7","E9"];
+                var say=Maps(fields.First(f=>S(f,"id")=="say"),"options").Single(o=>S(o,"label")==texts[answer]);
+                values["say"]=say["id"];values["show"]=shows[answer++];action="submit";
+                var evidence=Maps(fields.First(f=>S(f,"id")=="show"),"options").Single(o=>S(o,"id")==shows[answer-1]);
+```
+
 这组共 32 处，覆盖 20 处 fixture 和 12 处 tool。固定答案、预置状态、选项策略与 UI 自动推进属于测试/采集输入，不应误判成正式 NPC 决策，也不能用作盲玩证据。
 
 **推荐方案：** 通用测试/驱动代码只负责输入、等待与断言；具体故事路线、台词预期与情境移入显式测试用途的 `.story` 或译文源，按稳定 ID 查询。机制测试用中性构造验证合同。黄金预期由独立审阅后封存，不能运行时从同一份 TRUTH/同一算法计算期望值，避免实现与预期一起出错仍通过。
@@ -246,6 +792,36 @@
 ### S18：UI 回放与采样器消费正式绑定
 
 **对应标记：** `CSH-006、024、025、026、027`。
+
+**引用原文：** [本组全部 5 条摘录](solution-evidence.md#s18)。
+
+**`CSH-025`：回放器重复维护固定地图到地点的表**（`tool` / `schema`）。
+
+**原文位置：** [godot_csharp/tools/capture_player_transcript.gd](../../godot_csharp/tools/capture_player_transcript.gd:27)，L27–L31。
+
+```gdscript
+const HOST_MAP_PLACES := {
+	"central_hall": "Hall", "lecture": "Lecture", "logistics": "Logistics", "granary": "Logistics", "clinic": "Clinic",
+	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "DormLife",
+	"zone_yi": "DormLife", "zone_jia": "DormW", "zone_bing": "DormS", "zone_ding": "DormL", "resonance": "Resonance",
+}
+```
+
+**`CSH-024`：截图采样器固定选择两章具体场面**（`tool` / `schema`）。
+
+**原文位置：** [godot_csharp/tools/capture_story_ui_samples.gd](../../godot_csharp/tools/capture_story_ui_samples.gd:9)，L9–L17。
+
+```gdscript
+const SAMPLE_SPECS := [
+	{"slug": "01-c1-long-dialogue", "kind": "lines", "line_prefix": "s2_meet.", "prefer_longest": true},
+	{"slug": "02-c1-person-dialogue", "kind": "lines", "line_prefix": "s2_tea.", "require_speaker": true, "prefer_longest": true},
+	{"slug": "03-c1-evidence-card", "kind": "card", "card_id": "E1"},
+	{"slug": "04-c1-defense-form", "kind": "form", "layout": "tabs", "field_ids": ["say", "show"]},
+	{"slug": "05-c2-short-dialogue", "kind": "lines", "line_prefix": "chapter2.noon_dispute.", "require_speaker": true, "prefer_shortest": true},
+	{"slug": "06-c2-council-options", "kind": "candidates", "option_prefix": "support:"},
+	{"slug": "07-ending", "kind": "ending", "prefer_last": true},
+]
+```
 
 这些工具有固定地点映射、场景复原、样本选择及开场节点识别。正式输出的重放与按截图阶段筛样本是两个不同职责。
 
@@ -259,6 +835,27 @@
 
 **对应标记：** `CSH-008、014、017、018、021、038`。**资源：** `RES-089–097`。
 
+**引用原文：** [本组全部 15 条摘录](solution-evidence.md#s19)。
+
+**`CSH-014`：编辑器笔记预览写入具体案件样例**（`preview` / `text`）。
+
+**原文位置：** [godot_csharp/scenes/UI/Panels/Notebook/Notebook.gd](../../godot_csharp/scenes/UI/Panels/Notebook/Notebook.gd:25)，L25–L28。
+
+```gdscript
+@export var preview_sections: Array[Dictionary] = [
+	{"heading": "[b]看过的[/b]", "style": "grid", "entries": [{"label": "窗台的水渍", "card_id": "E1"}, {"label": "桌上的钥匙", "card_id": "E2"}, {"label": "门锁", "card_id": "E3"}]},
+	{"heading": "[b]读过、听过的规矩[/b]", "style": "list", "entries": [{"label": "夜里不得离开房间。"}, {"label": "（还没听说第二条）", "muted": true}]},
+]:
+```
+
+**`RES-089`：工作台预览中的固定昨夜问答**（`preview` / `text`）。
+
+**原文位置：** [godot_csharp/scenes/UI/Workbench/UIWorkbench.tscn](../../godot_csharp/scenes/UI/Workbench/UIWorkbench.tscn:184)，L184–L184。
+
+```text
+preview_question = "提问者问：[b]昨夜是谁关的灯？[/b]"
+```
+
 代码示例、固定实体预览、编辑器笔记、地图节点和旧对白/工作台样例属于同一内容维护问题；不能混入正式世界的默认真相。
 
 **推荐方案：** 有示例故事的 `ExampleWorld` 改为加载独立示例 `.story`，已有 `.world` 示例同步检查作者源格式与编译入口。作者预览从示例声明枚举角色/对象，不预设“侦探/内门闩”。纯 UI 编辑器预览改用中性占位和结构样本；手写 `.tscn` 中对应预览文字直接在源场景修改。
@@ -268,6 +865,39 @@
 ### S20：保留资产造型与姿态生产配方
 
 **对应标记：** `CSH-028、029、030、031`。
+
+**引用原文：** [本组全部 4 条摘录](solution-evidence.md#s20)。
+
+**`CSH-028`：早餐资产工具只执行纹理裁切、缩放和保存**（`tool` / `schema`）。
+
+**原文位置：** [godot_csharp/tools/build_breakfast_exchange.gd](../../godot_csharp/tools/build_breakfast_exchange.gd:25)，L25–L36。
+
+```gdscript
+	var table := Image.load_from_file(ProjectSettings.globalize_path("res://AssetsSource/Internal/Props/breakfast_table_clear.png"))
+	table = table.get_region(bounds(table))
+	table.resize(224, 44, Image.INTERPOLATE_NEAREST)
+	var canvas := Image.create_empty(224, 64, false, Image.FORMAT_RGBA8)
+	canvas.blit_rect(table, Rect2i(Vector2i.ZERO, table.get_size()), Vector2i(0, 8))
+	assert(ResourceSaver.save(ImageTexture.create_from_image(canvas), "res://ShareAsset/Internal/Props/breakfast_table_clear.res") == OK)
+	var soup := Image.load_from_file(ProjectSettings.globalize_path("res://AssetsSource/Internal/Props/breakfast_soup_bowl_source.png"))
+	soup = soup.get_region(bounds(soup))
+	soup.resize(12, 9, Image.INTERPOLATE_NEAREST)
+	var bowl := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
+	bowl.blit_rect(soup, Rect2i(Vector2i.ZERO, soup.get_size()), Vector2i(2, 3))
+	assert(ResourceSaver.save(ImageTexture.create_from_image(bowl), "res://ShareAsset/Internal/Props/breakfast_exchange_bowl.res") == OK)
+```
+
+**`CSH-030`：具体资产名单只用于生产道具与动作资源**（`tool` / `schema`）。
+
+**原文位置：** [godot_csharp/tools/build_story_tiles.gd](../../godot_csharp/tools/build_story_tiles.gd:34)，L34–L38。
+
+```gdscript
+	if "--breakfast-only" in OS.get_cmdline_user_args():
+		build_compact_story_props(["breakfast_table", "prep_island", "closed_door", "side_table"])
+		build_breakfast_bowl()
+		preload("res://tools/build_breakfast_exchange.gd").build()
+		quit()
+```
 
 早餐交换、角色姿态、道具图集和书房生产器描述具体资产的像素造型、摆位及动作帧。已标记绑定，但该内容本身不是运行中的案件逻辑或人物决策。
 
@@ -279,11 +909,39 @@
 
 **对应标记：** `CH2-009`。
 
+**引用原文：** [本组全部 1 条摘录](solution-evidence.md#s21)。
+
+**`CH2-009`：释放宿舍同时把区内 NPC 直接移到起居厅**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs:29)，L29–L35。
+
+```csharp
+    public void HostDormOut(string name)
+    {
+        var dorm = new[] { Place.DormLife, Place.DormW, Place.DormS, Place.DormL }.Single(p => Names.Of(p) == name || p.ToString() == name);
+        if (!_releasedDorms.Add(dorm)) return;
+        foreach (var p in Npcs.Where(p => p.Pro.Dorm == dorm)) p.Body.Get<SpatialProperty>()!.Space = Space[Place.Living];
+        RefreshAccess(); SyncChapterRooms(); PerceiveAll();
+        FreeEvents.Add(new FreeEvent.DormOut(SlotIndex, name));
+```
+
+**`CH2-009`：通行刷新向已有认知投影的人物观察所有通路**（`production` / `logic`）。
+
+**原文位置：** [godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs:49)，L49–L53。
+
+```csharp
+        foreach (var p in People.Where(p => p.M.Count > 0))
+        {
+            var routes = Rt.Observe(p.Soul, Way.Values.Select(w => View[w]), Now);
+            var i = 0; foreach (var way in Way.Values) p.M[way] = routes[i++];
+        }
+```
+
 [Chapter2Access](../../godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs:8) 已集中同步通行状态，值得保留；问题是具体宿舍释放集合、走廊分组和人物出区操作固定。它与 S13 的“如何画/绑定门”不同，是权威世界权限与知识来源问题。
 
 **推荐方案：** 从剧本声明实际通路、边界、初始状态及开放条件，由通用提交更新现实并输出 access。NPC 通过当场观察、已知通路复查或消息获得变化，UI 快照只读权威状态。开门与人走出来分开：`HostDormOut` 不能仅因房间释放就把所有人直接移到起居厅。
 
-**已确认需核对的传播：** `RefreshAccess` 对所有人物调用所有通路的观察；改造时必须核实哪些变化公开可闻、哪些需亲见，不能默认远方人物立即知道所有通路。
+**已确认需核对的传播：** `RefreshAccess` 对 `M.Count > 0` 的每个人调用所有通路的观察；改造时必须核实哪些变化公开可闻、哪些需亲见，不能默认远方人物立即知道所有通路。
 
 **完成标准：** UI、物理通路与尝试行动的现实可行性一致；人物可保留旧认知并在失败/观察后更新，不能靠客观权限替人物选择。实际通路拓扑不被全连接映射抹平，改宿舍/走廊身份不改代码。
 
@@ -296,7 +954,7 @@
 
 依赖不是新架构规范；实际实施涉及架构、工作流或命令调整时，再按现有同步规则更新对应 AGENTS.md。本轮没有改变设计规范或现行管线。
 
-本报告的完成检查仅是清单覆盖、分组唯一性、路径/标记位置与报告链接核对，独立结果保存在 [审核清单验证](verification/solution-review-20261009.md)。未重新构建或运行自动回归；原索引中的构建通过和画廊基线失败属于标记轮证据，不能当成本轮改造证据。
+原审核检查清单覆盖、分组唯一性、路径/标记位置与报告链接，独立结果见 [审核清单验证](verification/solution-review-20261009.md)。本次补引用另核对 21 组代表性引文及全部 293 条摘录的原文、位置与主归属，结果见 [具体内容引用验证](verification/solution-quotes-20261009.md)。未重新构建或运行自动回归；原索引中的构建通过和画廊基线失败属于标记轮证据，不能当成本轮改造证据。
 
 | 结论项 | 本轮结论 |
 | --- | --- |
