@@ -502,6 +502,13 @@ func _process(_delta: float) -> void:
 					best = d
 					hovered = id
 	var hover_text := str(sites[hovered].title) if sites.has(hovered) else ""
+	if active and hover_text == "" and objects:
+		var hits: Dictionary = adapter.furniture_hits(get_global_mouse_position())
+		for object_name in hits.get("nodes", []):
+			var furniture := objects.get_node_or_null(str(object_name)) as Sprite2D
+			if furniture and _player_object_drawn(furniture) and in_sight(furniture.position):
+				hover_text = _player_object_title(furniture)
+				break
 	if hover_text != _hover_text or hover_text != "":
 		_hover_text = hover_text
 		hover_changed.emit(hover_text, get_viewport().get_mouse_position())

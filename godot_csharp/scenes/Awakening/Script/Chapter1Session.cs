@@ -467,7 +467,7 @@ public sealed partial class Chapter1Session : IChapterSession
             ["chapter"] = new Ev { ["id"] = ChapterId, ["title"] = Script.Title, ["window_title"] = T("窗口标题") },
             ["stage"] = Stage, ["ended"] = Ended, ["detective_name"] = DetectiveName,
             ["field_enabled"] = StageFlag("walk") && !_storyLock && !Ended && _uiOwner is null && _modal is null,
-            ["player_control"] = _world.DetectiveControl != "simulation",
+            ["player_control"] = _world.DetectiveControl != "simulation" && !_staged.ContainsKey("detective"),
             ["realtime"] = true,
             ["hud"] = new Ev
             {

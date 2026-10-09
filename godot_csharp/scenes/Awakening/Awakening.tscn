@@ -21,6 +21,7 @@
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand.png" id="coat_stand"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand_coat.png" id="coat_stand_coat"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/crate.png" id="crate"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter1Rewards/cylinder_player.png" id="cylinder_player"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/desk_0.png" id="desk_0"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/floor_lamp.png" id="floor_lamp"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/globe.png" id="globe"]
@@ -28,6 +29,7 @@
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/paper_basket.png" id="paper_basket"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/paper_basket_empty.png" id="paper_basket_empty"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/range_stove.png" id="range_stove"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter1Rewards/reward_locker.png" id="reward_locker"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sack.png" id="sack"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sideboard.png" id="sideboard"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/study_table.png" id="study_table"]
@@ -539,13 +541,13 @@ size = Vector2(40, 16)
 size = Vector2(40, 14)
 
 [sub_resource type="RectangleShape2D" id="foot_35"]
-size = Vector2(132, 46)
+size = Vector2(76, 16)
 
 [sub_resource type="RectangleShape2D" id="foot_36"]
-size = Vector2(14, 10)
+size = Vector2(24, 12)
 
 [sub_resource type="RectangleShape2D" id="foot_37"]
-size = Vector2(14, 10)
+size = Vector2(132, 46)
 
 [sub_resource type="RectangleShape2D" id="foot_38"]
 size = Vector2(14, 10)
@@ -554,54 +556,60 @@ size = Vector2(14, 10)
 size = Vector2(14, 10)
 
 [sub_resource type="RectangleShape2D" id="foot_40"]
-size = Vector2(28, 16)
+size = Vector2(14, 10)
 
 [sub_resource type="RectangleShape2D" id="foot_41"]
-size = Vector2(10, 8)
+size = Vector2(14, 10)
 
 [sub_resource type="RectangleShape2D" id="foot_42"]
-size = Vector2(16, 8)
+size = Vector2(28, 16)
 
 [sub_resource type="RectangleShape2D" id="foot_43"]
-size = Vector2(48, 20)
+size = Vector2(10, 8)
 
 [sub_resource type="RectangleShape2D" id="foot_44"]
-size = Vector2(42, 20)
+size = Vector2(16, 8)
 
 [sub_resource type="RectangleShape2D" id="foot_45"]
-size = Vector2(82, 22)
-
-[sub_resource type="RectangleShape2D" id="foot_46"]
-size = Vector2(96, 30)
-
-[sub_resource type="RectangleShape2D" id="foot_47"]
-size = Vector2(10, 8)
-
-[sub_resource type="RectangleShape2D" id="foot_48"]
-size = Vector2(18, 12)
-
-[sub_resource type="RectangleShape2D" id="foot_49"]
-size = Vector2(22, 10)
-
-[sub_resource type="RectangleShape2D" id="foot_50"]
-size = Vector2(14, 8)
-
-[sub_resource type="RectangleShape2D" id="foot_51"]
-size = Vector2(10, 8)
-
-[sub_resource type="RectangleShape2D" id="foot_52"]
 size = Vector2(48, 20)
 
-[sub_resource type="RectangleShape2D" id="foot_53"]
-size = Vector2(22, 10)
+[sub_resource type="RectangleShape2D" id="foot_46"]
+size = Vector2(42, 20)
 
-[sub_resource type="RectangleShape2D" id="foot_54"]
-size = Vector2(14, 8)
+[sub_resource type="RectangleShape2D" id="foot_47"]
+size = Vector2(82, 22)
 
-[sub_resource type="RectangleShape2D" id="foot_55"]
+[sub_resource type="RectangleShape2D" id="foot_48"]
+size = Vector2(96, 30)
+
+[sub_resource type="RectangleShape2D" id="foot_49"]
+size = Vector2(10, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_50"]
 size = Vector2(18, 12)
 
+[sub_resource type="RectangleShape2D" id="foot_51"]
+size = Vector2(22, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_52"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_53"]
+size = Vector2(10, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_54"]
+size = Vector2(48, 20)
+
+[sub_resource type="RectangleShape2D" id="foot_55"]
+size = Vector2(22, 10)
+
 [sub_resource type="RectangleShape2D" id="foot_56"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_57"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_58"]
 size = Vector2(22, 10)
 
 [node name="Awakening" type="Node2D"]
@@ -1475,137 +1483,149 @@ position = Vector2(350.0, 103.0)
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyBookcase"]
 shape = SubResource("foot_34")
 
+[node name="RewardLocker" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(500.0, 110.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/RewardLocker"]
+shape = SubResource("foot_35")
+
+[node name="CylinderPlayer" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(560.0, 114.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CylinderPlayer"]
+shape = SubResource("foot_36")
+
 [node name="StudyTable" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(448.0, 239.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyTable"]
-shape = SubResource("foot_35")
+shape = SubResource("foot_37")
 
 [node name="StudyChairNW" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(416.0, 211.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairNW"]
-shape = SubResource("foot_36")
+shape = SubResource("foot_38")
 
 [node name="StudyChairNE" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(480.0, 211.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairNE"]
-shape = SubResource("foot_37")
+shape = SubResource("foot_39")
 
 [node name="StudyChairSW" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(416.0, 287.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairSW"]
-shape = SubResource("foot_38")
+shape = SubResource("foot_40")
 
 [node name="StudyChairSE" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(480.0, 287.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairSE"]
-shape = SubResource("foot_39")
+shape = SubResource("foot_41")
 
 [node name="ReadingChair" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(346.0, 166.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/ReadingChair"]
-shape = SubResource("foot_40")
+shape = SubResource("foot_42")
 
 [node name="StudyLamp" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(560.0, 164.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyLamp"]
-shape = SubResource("foot_41")
+shape = SubResource("foot_43")
 
 [node name="Globe" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(340.0, 318.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Globe"]
-shape = SubResource("foot_42")
+shape = SubResource("foot_44")
 
 [node name="Washstand" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(352.0, 526.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Washstand"]
-shape = SubResource("foot_43")
+shape = SubResource("foot_45")
 
 [node name="Range" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(394.0, 522.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Range"]
-shape = SubResource("foot_44")
+shape = SubResource("foot_46")
 
 [node name="Sideboard" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(528.0, 525.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Sideboard"]
-shape = SubResource("foot_45")
+shape = SubResource("foot_47")
 
 [node name="Worktable" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(448.0, 603.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Worktable"]
-shape = SubResource("foot_46")
+shape = SubResource("foot_48")
 
 [node name="PantryLamp" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(562.0, 596.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryLamp"]
-shape = SubResource("foot_47")
+shape = SubResource("foot_49")
 
 [node name="PantryBarrel" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(554.0, 658.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryBarrel"]
-shape = SubResource("foot_48")
+shape = SubResource("foot_50")
 
 [node name="PantryCrate" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(340.0, 659.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryCrate"]
-shape = SubResource("foot_49")
+shape = SubResource("foot_51")
 
 [node name="PantrySack" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(364.0, 664.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantrySack"]
-shape = SubResource("foot_50")
+shape = SubResource("foot_52")
 
 [node name="HallLamp" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(272.0, 330.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/HallLamp"]
-shape = SubResource("foot_51")
+shape = SubResource("foot_53")
 
 [node name="Basin" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(224.0, 106.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Basin"]
-shape = SubResource("foot_52")
+shape = SubResource("foot_54")
 
 [node name="StoreCrate" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(184.0, 595.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreCrate"]
-shape = SubResource("foot_53")
+shape = SubResource("foot_55")
 
 [node name="StoreSack" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(206.0, 604.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreSack"]
-shape = SubResource("foot_54")
+shape = SubResource("foot_56")
 
 [node name="StoreBarrel" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(268.0, 594.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreBarrel"]
-shape = SubResource("foot_55")
+shape = SubResource("foot_57")
 
 [node name="StoreCrateB" type="StaticBody2D" parent="FurnitureSolids"]
 position = Vector2(262.0, 655.0)
 
 [node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreCrateB"]
-shape = SubResource("foot_56")
+shape = SubResource("foot_58")
 
 [node name="RoomDetails" type="Node2D" parent="."]
 script = ExtResource("details")
@@ -1846,6 +1866,18 @@ position = Vector2(350, 110)
 offset = Vector2(-20, -60)
 centered = false
 texture = ExtResource("bookcase_study")
+
+[node name="RewardLocker" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(500, 120)
+offset = Vector2(-40, -32)
+centered = false
+texture = ExtResource("reward_locker")
+
+[node name="CylinderPlayer" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(560, 122)
+offset = Vector2(-16, -40)
+centered = false
+texture = ExtResource("cylinder_player")
 
 [node name="StudyTable" type="Sprite2D" parent="ObjectsAndPeople"]
 position = Vector2(448, 270)

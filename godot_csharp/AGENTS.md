@@ -46,6 +46,9 @@
 | 编辑器总览 | `UI/Workbench/` | 各面板的预览页 |
 
 现场（地图视图）在 `Shared/Field/`，各章地图适配器在各章目录；现场用到的物件外观名等文字由 `Shared/Field/FieldVocabulary.gd` 从剧本编译物读取。
+普通家具悬停复用地图适配器的 `furniture_hits` 与现场词汇表，只对已绘制且在视线内的精灵显示外观名；剧情热点保持优先。
+
+`stage_action` 从开始走位到动作结束持续占用人物，异常或取消时也归还；侦探被演出占用时快照关闭 `player_control`，现场输入循环不得覆盖演出姿态。
 
 第一章流程中的 `stage_actor:<who>:<anchor>` 等待走位回执，锚点支持 `meeting:`、`post:`、`site:` 前缀；`stage_action:<who>:<anchor>:<anim>:<facing>[:<seconds>[:<after>]]` 到位后播放动作并等待指定秒数，再保持后续姿态（默认 0.8 秒、idle），走位失败则跳过动作。`post:<who>` 非阻塞启动单个同伴的岗位走位，`posts` 保留全体岗位走位；这两种命令用 `Start(..., immediate: true)` 先输出首个走位事件再输出后续对白，避免界面等待对白回执而延迟起步。流程负责安排这些指令与场面的先后。
 
@@ -92,6 +95,7 @@
    - 地图基础格为 **32×32 像素**，角色基础设计为 **32×48 像素**（64×64 像素为透明承载格）。
    - 外部素材严格依照原生规格读取并完成切片适配，不可破坏原生网格。
    - 每个资产族在自身目录下附带 README 说明其切片规格、源路径与使用场景。
+   - `Chapter1Rewards` 的原生像素配方位于 `AssetsSource/Internal/Props/Chapter1Rewards/build.py`，逐字节发布到 ShareAsset 同族；重建后运行 `tools/build_awakening_map.py` 统一更新精灵、碰撞和导航足迹，再导入 Godot。
 
 ---
 
@@ -100,6 +104,7 @@
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
 - 第二章 `Chapter2/check/check_flow.gd` 通过 `chapter2_fixture.gd` 复用上述 Main 夹具，先用调试跳转推进第一章终局，再以章末卡 C 键触发连续会话的视图切换与 `view_ready`，检查首个可操作状态。后续输入和 UI 回执仍经过 `Main.dispatch`，不再加载旧章节宿主、调用引擎直通接口或单独注入继承快照；地图加载失败和流程等待超时须报告并退出非零状态。
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
+- `tools/verify_ch1_locker_ui.gd` 经正式 Main 夹具推进开场，采集附加家具的动作、悬停和点击画面，核验共用导航、实体碰撞、演出期间玩家控制权、锁定及视野外悬停抑制和热点标题优先。动作图保留起始帧并等待自然播放到伸手帧另存，不直接设帧；家具指针选真实不透明且未被可见热点占用的像素，保留日常人物活动。Main 从创建时就在独立渲染视口内，复用标题 `start` / `view_ready` 握手，鼠标事件传入同一视口；需要有窗口的渲染器。运行时传 `-- --round=<独立轮次>`，证据保存在 `artifacts/ch1-locker/<轮次>/`；`--pointer-only` 仅用于采集器调试，不能作为完整验收。完整轮次属于二级 UI 专项与开发检查，不作为盲玩记录。
 - `addons/<plugin_name>/`：编辑器插件（如素材适配器 `rpg_asset_adapter`），代码与资源保持插件内部封闭。
 - 资产迁移或管线变动后，通过 `& $env:GODOT --headless --editor --path godot_csharp --import` 完成重新导入校验。
 - 一级验收的 `capture_player_transcript.gd` 以正式 UI 实际绘制的文字、物品和末个终局为验收依据；截图只作辅助，不以截图数量或齐全与否阻止导出 03。辅助截图按正式视图、事件类型与结构化字段识别，不绑定 dispatch 序号或中文台词。
