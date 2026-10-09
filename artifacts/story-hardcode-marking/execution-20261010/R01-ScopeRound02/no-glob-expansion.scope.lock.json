@@ -1,0 +1,22 @@
+{
+  "schema": "scope-lock.v1",
+  "status": "SIGNED_BY_CONTROLLER",
+  "task_id": "no-glob-expansion",
+  "capability_manifest_version": "independent-neutral/v1",
+  "base_sha": "fd66da641e958b37ecb1baef28032bbc68917a04",
+  "branch": "agent/bracket-test",
+  "protected_roots": [
+    "protected"
+  ],
+  "allowed_writes": [
+    {
+      "path": "allowed/[v].txt",
+      "operations": [
+        "create",
+        "modify",
+        "delete"
+      ]
+    }
+  ],
+  "build_output_dirs": []
+}

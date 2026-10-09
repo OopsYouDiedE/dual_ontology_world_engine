@@ -1,0 +1,58 @@
+{
+  "schema": "D01B-lexical-subjective-facet-contract/candidate-v1",
+  "status": "CANDIDATE_NOT_APPROVED_NOT_IMPLEMENTED",
+  "mode": "DETECTION_ONLY",
+  "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+  "architecture": "compile-time vocabulary validation plus subject-scoped immutable snapshot lexicon",
+  "identity_domains": {
+    "EntityId": {"domain": "trusted objective registry", "not_used_for_subjective_disambiguation": true},
+    "FacetId": {"domain": "trusted reality projection binding", "independent_per_representation": true},
+    "ReferentId": {"domain": "subject + session epoch", "stable_during_rename": true, "reuse_after_forget": false, "cross_subject_sharing": false, "derived_from_true_name": false}
+  },
+  "compile_time": {
+    "authored_data": ["vocabulary", "entity declarations", "facet declarations", "supported operations", "capability requirements"],
+    "static_declaration_reference": "unique ID; unknown/duplicate rejected",
+    "runtime_term_cardinality": "zero, one, or multiple subjective referents",
+    "knowledge_creation": "declaration does not establish recognition; aliases require subject-visible cognitive input",
+    "current_world_v1_multi_facet_authoring": "UNSUPPORTED",
+    "current_world_v1_aliases": "UNIQUE_STATIC_SYMBOLS; NOT A SUBJECTIVE LEXICON"
+  },
+  "snapshot": {
+    "key": ["SubjectId", "SessionEpoch", "SnapshotRevision", "VocabularyRevision", "CapabilityRevision"],
+    "required_query_fields": ["ReferentId", "Name", "Kind", "Existence", "ParentReferentId", "Tags", "Relations", "DeniedRelations", "ObservationSourceSummary"],
+    "lexicon": "Chinese term -> immutable candidate ReferentId set",
+    "capture_consistency": "one cognition commit boundary; host serialization or approved Core capture required",
+    "evaluation_mutation": "forbidden; ongoing observation commits affect only later snapshots",
+    "absence_belief": "may remain lexically referable; action applicability is a separate predicate",
+    "prototype_limitations": ["quiescent single-thread capture", "process-local external IDs", "caller-supplied revision", "no rules/procedure copy", "no complete source history", "no persistence"]
+  },
+  "resolution": {
+    "statuses": ["Resolved", "Ambiguous", "UnknownReferent", "Unsupported", "InvalidReference", "StaleSnapshot"],
+    "truth_values": ["True", "False", "Unknown"],
+    "unsupported_is_truth_value": false,
+    "ui_boolean_bridge": "explicit Resolved plus Truth.True; never generic object truthiness for Core Truth enum or result objects",
+    "zero_candidates": "UnknownReferent",
+    "two_viable_candidates": "Ambiguous; return both IDs and subject-visible descriptions",
+    "qualifier_unknown": "retain uncertainty; cannot exclude as false to manufacture uniqueness",
+    "forbidden_fallbacks": ["objective truth/name lookup", "first list item", "silent same-name rebinding", "cross-subject projection", "Reasoner FirstOrDefault on unresolved term"]
+  },
+  "execution": {
+    "handle_fields": ["SubjectId", "SessionEpoch", "ReferentId", "SnapshotRevision", "VocabularyRevision", "CapabilityRevision"],
+    "dispatch_checks": ["same subject and epoch", "currently held referent", "snapshot and vocabulary not stale", "operation supported", "subjective applicability still true"],
+    "bridge": "validated live subjective Projection -> existing Core effect; frozen snapshot references never submitted",
+    "objective_feasibility": "formal Core activation phase; cannot be used to correct prior subjective query",
+    "queued_after_forget_semantics": "REQUIRES_EXPLICIT_APPROVAL_DECISION; CURRENT_CORE_COMPLETES_NEUTRAL_DELAYED_SET",
+    "objective_removed_semantics": "CURRENT_CORE_FAILS_MISSING_OBJECT",
+    "stale_reference_fallback": "never resolve by old term"
+  },
+  "history_and_persistence": {
+    "historical_snapshot_binding": ["old snapshot revision", "old vocabulary revision", "old capability revision"],
+    "current_observation_history": "not sufficient for full immutable rebuild",
+    "core_cross_process_codec": "NOT_VERIFIED_IN_REVIEWED_SCOPE",
+    "initial_candidate_behavior": "explicit Unsupported for rebuild/restore until separately approved",
+    "conditional_future_requirement": ["persistent stable IDs", "monotonic commit ordinals", "complete immutable observation changes", "world ownership and AST reference restore", "pending action scheduler restore", "schema and migration checks"]
+  },
+  "approval_dependencies": ["P01", "P02", "P03"],
+  "conditional_future_dependency": "P04",
+  "production_claim": "NONE"
+}

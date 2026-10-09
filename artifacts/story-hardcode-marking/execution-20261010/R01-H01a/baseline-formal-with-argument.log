@@ -1,0 +1,18 @@
+SCOPE: development world-script examples; not formal chapter migration or blind play.
+PASS actual compiled chapters
+PASS malformed Int32 input rejected before chapter mutation
+PASS only applicable player candidates
+[{"CandidateId":"arrival:careful_reply","Forbidden":false,"Score":5,"Reasons":["candidate:arrival:careful_reply\uFF1A\u002B0","candidate:arrival:careful_reply\uFF1A\u002B5"]},{"CandidateId":"arrival:brief_reply","Forbidden":false,"Score":0,"Reasons":["candidate:arrival:brief_reply\uFF1A\u002B0"]}]
+[{"CandidateId":"arrival:brief_reply","Forbidden":false,"Score":1,"Reasons":["candidate:arrival:brief_reply\uFF1A\u002B0","candidate:arrival:brief_reply\uFF1A\u002B1"]},{"CandidateId":"arrival:careful_reply","Forbidden":false,"Score":0,"Reasons":["candidate:arrival:careful_reply\uFF1A\u002B0"]}]
+PASS Core decision changes with subjective strategy
+PASS unknown reaction not forced
+PASS identity and state survive chapter extend
+PASS duplicate and missing dependency atomic
+PASS invalid reference and action atomic
+PASS duplicate and expired selections
+PASS semantic output assembly has no Godot reference
+PASS legacy behavior rejected
+PASS three valued and subjective applicability
+PASS false belief cannot peek objective
+PASS world candidate survives second chapter load
+RESULT failures=0

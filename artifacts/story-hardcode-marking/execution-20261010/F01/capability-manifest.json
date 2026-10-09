@@ -1,0 +1,4523 @@
+{
+  "schema": "static-capability-audit/F01/v1",
+  "task": "F01 read-only capability audit",
+  "baseline": {
+    "head": "7489db56a714724eb7cb735958dd879dc662d238",
+    "verification": "provided by parent; no Git command executed"
+  },
+  "audit_date": "2026-10-10",
+  "requested_scope": {
+    "current": "前两章约3–5游戏日",
+    "future": "未来40游戏日",
+    "meaning": "范围声明，不作静态时长/性能可行性承诺"
+  },
+  "isolation": {
+    "mode": "DETECTION_ONLY",
+    "hard_acl": false,
+    "claim": "本平台未实施子工具硬ACL；依靠授权精确路径及写入范围，不能宣称强隔离"
+  },
+  "constraints": {
+    "production_writes": 0,
+    "tests_run": 0,
+    "git_operations": 0,
+    "design_documents_read": 0,
+    "story_files_read": 0,
+    "oracle_or_historical_play_data_read": 0
+  },
+  "methodology": "只读静态追踪。SUPPORTED 表示所列边界已有代码路径，不表示本轮实测/批准；PARTIAL 说明Core存在而作者接口或完整性不足；NOT_SUPPORTED_IN_REVIEWED_SCOPE只限所审路径；NOT_VERIFIED说明未闭合调用链。",
+  "forbidden_sources": [
+    "docs/design-standard.md",
+    "AGENTS.md design references",
+    "any project design data file",
+    "complete .story",
+    "historical play records",
+    "sealed golden/oracle content"
+  ],
+  "authorized_expansions": [
+    {
+      "by": "parent",
+      "scope": "compiler module source: engine_spec.py, story_base.py, story_script.py, world_script.py, story_chapter1.py, story_rules.py; story_design.py originally allowed but not read after latest no-project-design constraint",
+      "reason": "compile_story imports/compile chain"
+    },
+    {
+      "by": "parent",
+      "scope": "shared ChapterSession.cs/GameSession.cs; Chapter1SessionFlows.cs; Chapter2SessionFlows.cs/NightSnapshot.cs/Chapter2Access.cs/Social.cs/Council.cs/GameScriptWorld.cs",
+      "reason": "runtime continuity, snapshots, propagation, access"
+    },
+    {
+      "by": "parent",
+      "scope": "Chapter1Session.cs and Chapter1Flows.cs",
+      "reason": "actual chapter interface and flow binder"
+    }
+  ],
+  "missing_authorized_paths": [
+    "godot_csharp/scenes/Awakening/Script/Chapter1InteractionSession.cs (not found by exact check or filename index)"
+  ],
+  "unreviewed_dependencies": [
+    "Chapter1Dialogue concrete context delegates",
+    "NightReplay.Run implementation",
+    "MorningTraces.Evidence contents",
+    "Chapter2Narrative/Chapter2InteractionSession sequence binder",
+    "Chapter2Design contents",
+    "host save file writer/loader",
+    "GameTrace implementation",
+    "Heard/Claim type implementations",
+    "story_design.py contents"
+  ],
+  "versions": {
+    "world_script_format": "dual-ontology-world-script/v1",
+    "world_format_sources": [
+      {
+        "file": "godot_csharp/tools/world_script.py",
+        "line": 18,
+        "end_line": 18,
+        "symbol": "FORMAT"
+      },
+      {
+        "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+        "line": 42,
+        "end_line": 42,
+        "symbol": "format check"
+      }
+    ],
+    "dialogue_version": "not declared",
+    "core_api_version": "not declared",
+    "core_project": {
+      "file": "csharp/DualOntologyWorldEngine.Core.csproj",
+      "target_framework_line": 3,
+      "target_framework": "net8.0",
+      "language_line": 4,
+      "language": "12.0",
+      "assembly_version": "not explicitly declared in reviewed csproj"
+    }
+  },
+  "capability_count": 54,
+  "capabilities": [
+    {
+      "id": "F01-C001",
+      "name": "实体声明与命名空间",
+      "status": "SUPPORTED",
+      "types": [
+        "room/object/character",
+        "Entity",
+        "WorldEntityDefinition",
+        "Essence/SoulEssence/ScriptCharacter"
+      ],
+      "execution_side": "compiler → shared host → Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_script.py",
+            "line": 766,
+            "end_line": 822,
+            "symbol": "Translator.entity"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 611,
+            "end_line": 705,
+            "symbol": "Compiler.declare_entity"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 72,
+            "end_line": 81,
+            "symbol": "Entity.json"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 12,
+            "end_line": 19,
+            "symbol": "WorldEntityDefinition"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 254,
+            "end_line": 264,
+            "symbol": "WorldSession.Read"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 290,
+            "end_line": 307,
+            "symbol": "DeclarationId / Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 153,
+            "end_line": 252,
+            "symbol": "WorldSession.Load"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/CoreScriptWorld.cs",
+            "line": 32,
+            "end_line": 46,
+            "symbol": "Register"
+          }
+        ]
+      },
+      "side_effects": [
+        "注册 Essence、现实表现、角色身体与灵魂；角色初始观察房间/自身；state/belief 初始化。"
+      ],
+      "failure_behavior": [
+        "编译器拒绝重复 ID/别名、未知实体与类型；运行时拒绝重复章节、缺依赖、冲突声明、非房间父节点；在检查后创建对象。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Core 的十种 ProjectionKind 只有三种可由通用 world/v1 声明；编译器实体索引以裸 id 存储（ws:616/699），仍不能同时声明两个章节中相同裸 id。"
+      ]
+    },
+    {
+      "id": "F01-C002",
+      "name": "同一客观身份绑定与多切面",
+      "status": "PARTIAL",
+      "types": [
+        "Essence",
+        "Projection",
+        "SurfaceProperty",
+        "RelationTag"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "通用 .story/world/v1 无 Essence 身份、切面或 SurfaceProperty 声明，只有别名字符串"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 33,
+            "end_line": 49,
+            "symbol": "Essence"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 87,
+            "end_line": 91,
+            "symbol": "SurfaceProperty"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 109,
+            "end_line": 127,
+            "symbol": "Projection"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 20,
+            "end_line": 30,
+            "symbol": "Project"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 34,
+            "end_line": 41,
+            "symbol": "Associate"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 45,
+            "end_line": 46,
+            "symbol": "KnownProjection"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 56,
+            "end_line": 72,
+            "symbol": "Sync"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 76,
+            "end_line": 129,
+            "symbol": "Observe"
+          }
+        ]
+      },
+      "side_effects": [
+        "一个 Essence 可有多个现实 Projection；侧面表面标签/关系可覆盖；引擎维护现实/认知映射，观察不自动判断身份相同。"
+      ],
+      "failure_behavior": [
+        "父节点跨现实世界、Associate 世界不符、旧投影改绑另一个对象时抛异常；WorldSession/VerifiedPerception 强制每脚本实体正好一个现实表现。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Core 能力已有，但通用加载器和候选感知桥无法承载多切面（loader:115、attach:36、behavior:83）。",
+        "作者别名解析 ≠ 角色获知身份；没有已核验的 .story 身份显露/误认/纠正绑定链。"
+      ]
+    },
+    {
+      "id": "F01-C003",
+      "name": "状态/可见字段/初始认知与声明扩展",
+      "status": "SUPPORTED",
+      "types": [
+        "StateProperty",
+        "SpatialProperty",
+        "WorldPropertyDefinition",
+        "Int32"
+      ],
+      "execution_side": "compiler → shared host → Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_script.py",
+            "line": 824,
+            "end_line": 835,
+            "symbol": "Translator.extras"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 582,
+            "end_line": 609,
+            "symbol": "typed_property"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 707,
+            "end_line": 730,
+            "symbol": "compile_extend"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 62,
+            "end_line": 72,
+            "symbol": "StateProperty / SpatialProperty"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 7,
+            "end_line": 11,
+            "symbol": "WorldPropertyDefinition"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 266,
+            "end_line": 285,
+            "symbol": "ReadProperties"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 207,
+            "end_line": 248,
+            "symbol": "Load:staged state/space"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 63,
+            "end_line": 69,
+            "symbol": "RememberInitialCharacter"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 56,
+            "end_line": 72,
+            "symbol": "Sync"
+          }
+        ]
+      },
+      "side_effects": [
+        "客观默认 state；observable 决定现实公开字段；belief 写角色自身投影且 Source=Introspection；extend 新增默认而 TryAdd 不覆盖运行值。"
+      ],
+      "failure_behavior": [
+        "错类型、未支持 property、belief/sprite 给非角色、extend 修改已有属性/空间时明确失败。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "不支持声明关系、锁、通道、流程、规则、临时层；Initial belief 只支持角色自身整数标签；profile 不属于本加载器 DTO。"
+      ]
+    },
+    {
+      "id": "F01-C004",
+      "name": "AST 名词与四行动槽",
+      "status": "SUPPORTED",
+      "types": [
+        "Noun.Reference",
+        "Noun.Slot",
+        "RuleSlot Actor/Target/Tool/Scene",
+        "ActionContext"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 127,
+            "end_line": 146,
+            "symbol": "Parser.Noun"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 5,
+            "end_line": 13,
+            "symbol": "RuleSlot"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 35,
+            "end_line": 49,
+            "symbol": "SimulationSession.Submit"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 56,
+            "end_line": 60,
+            "symbol": "Plan.Resolve"
+          }
+        ]
+      },
+      "side_effects": [
+        "绑定为角色内部 Projection 引用；Say 的 Request 保留接收者后续槽位。"
+      ],
+      "failure_behavior": [
+        "名称零个/歧义、嵌入越界/跨世界报 AstParseException；未填充槽位 Bind 抛异常。Submit 默认只有 Actor/Scene，Target/Tool 需预先绑定。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "无别名到角色认知的自动识别；新条件子类的 Map/CollectNouns 默认处理见 G09。"
+      ]
+    },
+    {
+      "id": "F01-AST-C01",
+      "name": "条件 Constant",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Constant"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 162,
+            "end_line": 162,
+            "symbol": "Parser.Condition: true/false/unknown"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 18,
+            "end_line": 18,
+            "symbol": "Condition.Constant"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 71,
+            "end_line": 71,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 106,
+            "end_line": 106,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C02",
+      "name": "条件 Exists",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Exists"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 165,
+            "end_line": 165,
+            "symbol": "Parser.Condition: exists"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 19,
+            "end_line": 19,
+            "symbol": "Condition.Exists"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 72,
+            "end_line": 72,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 107,
+            "end_line": 107,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C03",
+      "name": "条件 Tagged",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Tagged"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 166,
+            "end_line": 166,
+            "symbol": "Parser.Condition: tag_at_least"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 20,
+            "end_line": 20,
+            "symbol": "Condition.Tagged"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 73,
+            "end_line": 73,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 108,
+            "end_line": 108,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C04",
+      "name": "条件 Related",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Related"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 167,
+            "end_line": 167,
+            "symbol": "Parser.Condition: related"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 21,
+            "end_line": 21,
+            "symbol": "Condition.Related"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 75,
+            "end_line": 75,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 109,
+            "end_line": 109,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C05",
+      "name": "条件 At",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.At"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 168,
+            "end_line": 168,
+            "symbol": "Parser.Condition: at"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 22,
+            "end_line": 22,
+            "symbol": "Condition.At"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 77,
+            "end_line": 77,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 110,
+            "end_line": 110,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C06",
+      "name": "条件 IsKind",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.IsKind"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 169,
+            "end_line": 169,
+            "symbol": "Parser.Condition: kind"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 23,
+            "end_line": 23,
+            "symbol": "Condition.IsKind"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 79,
+            "end_line": 79,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 111,
+            "end_line": 111,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C07",
+      "name": "条件 Not",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Not"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 170,
+            "end_line": 170,
+            "symbol": "Parser.Condition: not"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 24,
+            "end_line": 24,
+            "symbol": "Condition.Not"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 80,
+            "end_line": 80,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 112,
+            "end_line": 112,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C08",
+      "name": "条件 All",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.All"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 171,
+            "end_line": 171,
+            "symbol": "Parser.Condition: all"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 25,
+            "end_line": 25,
+            "symbol": "Condition.All"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 81,
+            "end_line": 81,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 113,
+            "end_line": 113,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-AST-C09",
+      "name": "条件 Any",
+      "status": "SUPPORTED",
+      "types": [
+        "Condition.Any"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 172,
+            "end_line": 172,
+            "symbol": "Parser.Condition: any"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 26,
+            "end_line": 26,
+            "symbol": "Condition.Any"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 99,
+            "end_line": 109,
+            "symbol": "Ast.Map(Condition)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 54,
+            "end_line": 63,
+            "symbol": "ActionContext.Resolve"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 82,
+            "end_line": 82,
+            "symbol": "Ast.Evaluate subjective"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Plan.Evaluate objective"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读求值；认知侧三值，客观侧不存在/未找到通常 False。"
+      ],
+      "failure_behavior": [
+        "未知条件 Parser 报错；Evaluate 不支持类型抛 NotSupportedException；认知缺标签/缺绑定返回 Unknown，客观标签缺失按 0 比较。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 候选只可 known/at/state 与 Int32 比较及 not/and/or；Related/IsKind 不可由该桥声明。"
+      ]
+    },
+    {
+      "id": "F01-C005",
+      "name": "AST 规则 Require/Forbid/Permit/Prefer",
+      "status": "PARTIAL",
+      "types": [
+        "Rule",
+        "RuleMode",
+        "Weight",
+        "Acceptance"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 222,
+            "end_line": 233,
+            "symbol": "Parser.Rules"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 6,
+            "end_line": 6,
+            "symbol": "RuleMode"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 49,
+            "end_line": 50,
+            "symbol": "Rule"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 130,
+            "end_line": 130,
+            "symbol": "Ast.Map(Rule)"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 84,
+            "end_line": 88,
+            "symbol": "ReadRule/preserve acceptance"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/DecisionSystem.cs",
+            "line": 14,
+            "end_line": 68,
+            "symbol": "DecisionSystem.Assess"
+          },
+          {
+            "file": "csharp/DecisionSystem.cs",
+            "line": 72,
+            "end_line": 100,
+            "symbol": "Applies / ContainsForbidden"
+          }
+        ]
+      },
+      "side_effects": [
+        "仅 Acceptance=True 的认知规则参与决策；Require/Prefer 出候选与评分；Permit 只对匹配动作放行；Forbid 遍历组合/等待体。"
+      ],
+      "failure_behavior": [
+        "未登记 mode/parser 语法失败；未认知主体返回空；未填充上下文跳过。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "文本 RULE 语法不含 Weight/Acceptance，只构造默认 Weight=1、Acceptance=Unknown，因此解析本身不会启用规则。",
+        "通用 world/v1 无直接规则声明；负 Rule.Weight 未由公开构造器限制，Permit 默认空 Basis 的边缘风险见 G19。"
+      ]
+    },
+    {
+      "id": "F01-C006",
+      "name": "行动意图提交、身体控制、分阶段事务",
+      "status": "SUPPORTED",
+      "types": [
+        "ActionIntent",
+        "ActionExecution",
+        "ActionResolution",
+        "ActionFailure",
+        "ExecutionStatus"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 5,
+            "end_line": 7,
+            "symbol": "ActionIntent / ActionFailure / ActionResolution"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 5,
+            "end_line": 18,
+            "symbol": "ActionExecution"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 317,
+            "end_line": 345,
+            "symbol": "BuildEffect"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 35,
+            "end_line": 49,
+            "symbol": "Submit"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 73,
+            "end_line": 128,
+            "symbol": "Continue"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 12,
+            "end_line": 24,
+            "symbol": "Resolve"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 118,
+            "end_line": 190,
+            "symbol": "Plan.Prepare"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "单身体排它；客观可行性激活时判断；无等待阶段先准备后提交；阶段通知、结束事件；等待后的前段持久状态保持。"
+      ],
+      "failure_behavior": [
+        "跨内部世界、非Body、重复身体动作在提交抛异常；缺对象/无控制/不可达/条件/资源/未支持/延迟通过 ActionFailure；取消不回滚已提交持久阶段。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Commit 与外部事件回调抛异常无回滚/统一失败转换；等待是阶段边界，不是整个动作原子事务。"
+      ]
+    },
+    {
+      "id": "F01-ACT-01",
+      "name": "物理动作 Unlock",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Unlock"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Unlock"
+          },
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 184,
+            "end_line": 184,
+            "symbol": "Parser.Effect:unlock"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 212,
+            "end_line": 212,
+            "symbol": "Plan.Act: Unlock"
+          }
+        ]
+      },
+      "side_effects": [
+        "持有工具、LockProperty、AcceptsKey/HasIdentity 配对；成功解锁。"
+      ],
+      "failure_behavior": [
+        "MissingObject/OutOfReach/UnsupportedOperation/ConditionFailed"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Lock/identity 声明不在 world/v1；须现有宿主创建。"
+      ]
+    },
+    {
+      "id": "F01-ACT-02",
+      "name": "物理动作 Travel",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Travel"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Travel"
+          },
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 185,
+            "end_line": 185,
+            "symbol": "Parser.Effect:travel"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 220,
+            "end_line": 220,
+            "symbol": "Plan.Act: Travel"
+          }
+        ]
+      },
+      "side_effects": [
+        "经 PassageProperty.Connections 从当前空间到目标空间；更换 actor Space 清 Holder。"
+      ],
+      "failure_behavior": [
+        "锁住/没有连接/当前地点缺失 ConditionFailed；目标不存在 MissingObject。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 不能定义 PassageProperty；Chapter2Access 建图可用。"
+      ]
+    },
+    {
+      "id": "F01-ACT-03",
+      "name": "物理动作 Take",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Take"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Take"
+          },
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 186,
+            "end_line": 186,
+            "symbol": "Parser.Effect:take"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 227,
+            "end_line": 227,
+            "symbol": "Plan.Act: Take"
+          }
+        ]
+      },
+      "side_effects": [
+        "可达 Object 转 Holder=actor。"
+      ],
+      "failure_behavior": [
+        "没有Spatial、非Object/他人持有 UnsupportedOperation；循环 ConditionFailed。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "支持取物，不能从该动作自动获得被遮挡内容。"
+      ]
+    },
+    {
+      "id": "F01-ACT-04",
+      "name": "物理动作 Inspect",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Inspect"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Inspect"
+          },
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 187,
+            "end_line": 187,
+            "symbol": "Parser.Effect:inspect"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 244,
+            "end_line": 244,
+            "symbol": "Plan.Act: Inspect"
+          }
+        ]
+      },
+      "side_effects": [
+        "观察目标的第一现实表现。"
+      ],
+      "failure_behavior": [
+        "不可达或无现实表现 OutOfReach。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "不能选指定切面；依赖 Representation 顺序。"
+      ]
+    },
+    {
+      "id": "F01-ACT-05",
+      "name": "物理动作 Destroy",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Destroy"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Destroy"
+          },
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 188,
+            "end_line": 188,
+            "symbol": "Parser.Effect:destroy"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 248,
+            "end_line": 248,
+            "symbol": "Plan.Act: Destroy"
+          }
+        ]
+      },
+      "side_effects": [
+        "从 existing 集移除，Sync 把其现实表现 Existence=False。"
+      ],
+      "failure_behavior": [
+        "MissingObject/OutOfReach。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "绑定与物理包含关系未整体删除；非级联删除。"
+      ]
+    },
+    {
+      "id": "F01-ACT-06",
+      "name": "物理动作 Place",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Act",
+        "ActionOp.Place"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action:Place"
+          },
+          {
+            "not_found_in_reviewed_scope": "AstDecoder.Parser.Effect 未列出 place"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 7,
+            "end_line": 7,
+            "symbol": "ActionOp"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 31,
+            "end_line": 31,
+            "symbol": "Effect.Act"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 328,
+            "end_line": 330,
+            "symbol": "BuildEffect physical actions"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 114,
+            "end_line": 114,
+            "symbol": "Ast.Map(Effect.Act)"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 42,
+            "end_line": 42,
+            "symbol": "Submit: Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 205,
+            "end_line": 249,
+            "symbol": "Plan.Act"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 233,
+            "end_line": 233,
+            "symbol": "Plan.Act: Place"
+          }
+        ]
+      },
+      "side_effects": [
+        "目标由actor持有，放到可达 Object/Space 支撑上并保持身份。"
+      ],
+      "failure_behavior": [
+        "MissingObject/OutOfReach/ConditionFailed（锁/类型/循环）。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "ActionOp/运行已有，AstDecoder 没有 place 分支。"
+      ]
+    },
+    {
+      "id": "F01-EFF-01",
+      "name": "效果 Set",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Set"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 189,
+            "end_line": 189,
+            "symbol": "Parser.Effect:Set"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 32,
+            "end_line": 32,
+            "symbol": "Effect.Set"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 115,
+            "end_line": 115,
+            "symbol": "Ast.Map(Effect.Set)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 165,
+            "end_line": 165,
+            "symbol": "Plan.Prepare:Set"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "Set(state/tag) 替换 Int32；Locked 如 LockProperty 存在则 value>0 转 bool。"
+      ],
+      "failure_behavior": [
+        "目标不存在 MissingObject；溢出 InsufficientResource。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Plan.Change 无 Reachable 检查；这是公开效果边界，不据此认定设计错误。"
+      ]
+    },
+    {
+      "id": "F01-EFF-02",
+      "name": "效果 Change",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Change"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 190,
+            "end_line": 190,
+            "symbol": "Parser.Effect:Change"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 33,
+            "end_line": 33,
+            "symbol": "Effect.Change"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 118,
+            "end_line": 118,
+            "symbol": "Ast.Map(Effect.Change)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 166,
+            "end_line": 166,
+            "symbol": "Plan.Prepare:Change"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "基础 Int32 相加；不改变临时覆盖层。"
+      ],
+      "failure_behavior": [
+        "目标不存在 MissingObject；溢出 InsufficientResource。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "未知 Tag 自动进入 StateProperty；不需要声明 Observable。"
+      ]
+    },
+    {
+      "id": "F01-EFF-03",
+      "name": "效果 Spend",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Spend"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 193,
+            "end_line": 193,
+            "symbol": "Parser.Effect:Spend"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 36,
+            "end_line": 36,
+            "symbol": "Effect.Spend"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 119,
+            "end_line": 119,
+            "symbol": "Ast.Map(Effect.Spend)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 167,
+            "end_line": 167,
+            "symbol": "Plan.Prepare:Spend"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "基础 Int32 扣资源，禁止负支付和不足。"
+      ],
+      "failure_behavior": [
+        "Parser 负数报错；直接构造负数/不足/溢出 InsufficientResource。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "资源没有独立类型/库存语义，仅Tag整数。"
+      ]
+    },
+    {
+      "id": "F01-EFF-04",
+      "name": "效果 Relate",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Relate"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 194,
+            "end_line": 194,
+            "symbol": "Parser.Effect:Relate"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 37,
+            "end_line": 37,
+            "symbol": "Effect.Relate"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 120,
+            "end_line": 120,
+            "symbol": "Ast.Map(Effect.Relate)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 168,
+            "end_line": 168,
+            "symbol": "Plan.Prepare:Relate"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "增加或移除客观 Essence 关系。"
+      ],
+      "failure_behavior": [
+        "任何引用缺失 MissingObject。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "仅 AstDecoder/direct Core 支持；world/v1 响应白名单无 relate/unrelate；无Reachable检查。"
+      ]
+    },
+    {
+      "id": "F01-EFF-05",
+      "name": "效果 TemporarySet",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.TemporarySet"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 191,
+            "end_line": 191,
+            "symbol": "Parser.Effect:TemporarySet"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 34,
+            "end_line": 34,
+            "symbol": "Effect.TemporarySet"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 116,
+            "end_line": 116,
+            "symbol": "Ast.Map(Effect.TemporarySet)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 151,
+            "end_line": 151,
+            "symbol": "Plan.Prepare:TemporarySet"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "叠加标签覆盖，CTB 到期或Cancel清理，最新层优先。"
+      ],
+      "failure_behavior": [
+        "缺对象/不可达/Locked不支持/非正有限时长失败。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 无接口；临时 Locked 明确 UnsupportedOperation。"
+      ]
+    },
+    {
+      "id": "F01-EFF-06",
+      "name": "效果 TemporarySetUntilEnd",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.TemporarySetUntilEnd"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 192,
+            "end_line": 192,
+            "symbol": "Parser.Effect:TemporarySetUntilEnd"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 35,
+            "end_line": 35,
+            "symbol": "Effect.TemporarySetUntilEnd"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 117,
+            "end_line": 117,
+            "symbol": "Ast.Map(Effect.TemporarySetUntilEnd)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 159,
+            "end_line": 159,
+            "symbol": "Plan.Prepare:TemporarySetUntilEnd"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "叠加到整动作结束的标签覆盖；结束/失败/取消清理。"
+      ],
+      "failure_behavior": [
+        "缺对象/不可达/Locked不支持。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 无接口；不是持久状态。"
+      ]
+    },
+    {
+      "id": "F01-EFF-07",
+      "name": "效果 Sequence",
+      "status": "SUPPORTED",
+      "types": [
+        "Effect.Sequence"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 196,
+            "end_line": 196,
+            "symbol": "Parser.Effect:Sequence"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 38,
+            "end_line": 38,
+            "symbol": "Effect.Sequence"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 121,
+            "end_line": 121,
+            "symbol": "Ast.Map(Effect.Sequence)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 123,
+            "end_line": 123,
+            "symbol": "Plan.Prepare:Sequence"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "顺序阶段；Wait切断后续为 Next；当前阶段失败不提交该阶段。"
+      ],
+      "failure_behavior": [
+        "子效果 ActionFailure 中止；既已提交阶段不回滚。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1 支持平铺调用自动 Sequence，不能嵌套自定义效果体。"
+      ]
+    },
+    {
+      "id": "F01-EFF-08",
+      "name": "效果 When",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.When"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 197,
+            "end_line": 197,
+            "symbol": "Parser.Effect:When"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 39,
+            "end_line": 39,
+            "symbol": "Effect.When"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 122,
+            "end_line": 122,
+            "symbol": "Ast.Map(Effect.When)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 135,
+            "end_line": 135,
+            "symbol": "Plan.Prepare:When"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "条件True才准备Body；False/Unknown直接跳过且阶段可成功。"
+      ],
+      "failure_behavior": [
+        "失败仅来自执行Body；Unknown不报错。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1候选响应禁止if；该跳过不会输出跳过原因。"
+      ]
+    },
+    {
+      "id": "F01-EFF-09",
+      "name": "效果 Require",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Require"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 198,
+            "end_line": 198,
+            "symbol": "Parser.Effect:Require"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 40,
+            "end_line": 40,
+            "symbol": "Effect.Require"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 123,
+            "end_line": 123,
+            "symbol": "Ast.Map(Effect.Require)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 138,
+            "end_line": 138,
+            "symbol": "Plan.Prepare:Require"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "前置命题必须True。"
+      ],
+      "failure_behavior": [
+        "False/Unknown均ConditionFailed。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1无 Require 响应动作。"
+      ]
+    },
+    {
+      "id": "F01-EFF-10",
+      "name": "效果 Wait",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Wait"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 199,
+            "end_line": 199,
+            "symbol": "Parser.Effect:Wait"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 41,
+            "end_line": 41,
+            "symbol": "Effect.Wait"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 124,
+            "end_line": 124,
+            "symbol": "Ast.Map(Effect.Wait)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 141,
+            "end_line": 141,
+            "symbol": "Plan.Prepare:Wait"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "定时等待或认知条件等待；后续阶段保留身体槽。"
+      ],
+      "failure_behavior": [
+        "非法时间InvalidDelay；until无默认超时。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Parser wait_until:200；Until由Soul.World.Changed和主观Ast.Evaluate唤醒，Reality.Sync本身不唤醒。"
+      ]
+    },
+    {
+      "id": "F01-EFF-11",
+      "name": "效果 Say",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Say"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 201,
+            "end_line": 201,
+            "symbol": "Parser.Effect:Say"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 45,
+            "end_line": 45,
+            "symbol": "Effect.Say"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 125,
+            "end_line": 125,
+            "symbol": "Ast.Map(Effect.Say)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 183,
+            "end_line": 183,
+            "symbol": "Plan.Prepare:Say"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 136,
+            "end_line": 154,
+            "symbol": "Deliver"
+          }
+        ]
+      },
+      "side_effects": [
+        "向目标身体控制者发文本，可携带结构化Request；接收者收到Event/Testimony。"
+      ],
+      "failure_behavior": [
+        "缺对象/不可达失败；没有控制该收件身体的Soul时消息列表为空但成功。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "world/v1仅say(recipient,text)，无Request参数；未知请求引用在Deliver中变null，保留文本。"
+      ]
+    },
+    {
+      "id": "F01-EFF-12",
+      "name": "效果 Think",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Think"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 202,
+            "end_line": 202,
+            "symbol": "Parser.Effect:Think"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 46,
+            "end_line": 46,
+            "symbol": "Effect.Think"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 126,
+            "end_line": 126,
+            "symbol": "Ast.Map(Effect.Think)"
+          },
+          {
+            "file": "csharp/Ast.cs",
+            "line": 131,
+            "end_line": 142,
+            "symbol": "Ast.Bind"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 178,
+            "end_line": 178,
+            "symbol": "Plan.Prepare:Think"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 252,
+            "end_line": 287,
+            "symbol": "Plan.Commit"
+          },
+          {
+            "file": "csharp/Cognition.cs",
+            "line": 6,
+            "end_line": 31,
+            "symbol": "Cognition.Input"
+          }
+        ]
+      },
+      "side_effects": [
+        "把已绑定明确命题作为Inference写认知，不校正为客观答案。"
+      ],
+      "failure_behavior": [
+        "Cognition.Input不支持的Condition返回null→UnsupportedOperation。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "infer可解析全部Condition，但实际仅Exists/NotExists/Related/NotRelated/IsKind；Tagged/At/All/Any等不可提交。"
+      ]
+    },
+    {
+      "id": "F01-C007",
+      "name": "观察与六种认知来源",
+      "status": "SUPPORTED",
+      "types": [
+        "ObservationInput",
+        "ObservationEvent",
+        "ObservationSource Perception/Testimony/Inference/Introspection/Corruption/Recall",
+        "ProjectionWorld.History"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "通用 world/v1只有belief；认知输入主要由Core/宿主API提交"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 30,
+            "end_line": 30,
+            "symbol": "ObservationSource"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 143,
+            "end_line": 165,
+            "symbol": "ObservationInput / ObservationEvent"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 195,
+            "end_line": 208,
+            "symbol": "Observation.Validate"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 76,
+            "end_line": 129,
+            "symbol": "WorldRuntime.Observe map/filter"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 170,
+            "end_line": 192,
+            "symbol": "Observation.Observe/ApplyBatch"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 211,
+            "end_line": 241,
+            "symbol": "Commit"
+          }
+        ]
+      },
+      "side_effects": [
+        "变更Tags/关系/父节点/Rules/Procedure/Existence；每次记录History和LastObservation；Forget删投影、涉及它的规则/流程/历史。"
+      ],
+      "failure_behavior": [
+        "先验证引用世界和空间循环；Batch验证后Commit；来源标签由调用方选择，不校验可信证据/授权。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "无认知版本ID；ObservationEvent保留可变Target而无当时Name/Kind/Parent快照；Forget会删除历史，不是不可变来源账本。"
+      ]
+    },
+    {
+      "id": "F01-C008",
+      "name": "认知变形/侵蚀",
+      "status": "PARTIAL",
+      "types": [
+        "IProjectionTransform",
+        "CorruptionProperty"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "world/v1 无 transform 或 corruption 声明"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 5,
+            "end_line": 9,
+            "symbol": "IProjectionTransform"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 103,
+            "end_line": 106,
+            "symbol": "CorruptionProperty"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 105,
+            "end_line": 110,
+            "symbol": "Observe: Transform target continuity"
+          },
+          {
+            "file": "csharp/Cognition.cs",
+            "line": 33,
+            "end_line": 46,
+            "symbol": "Cognition.Corrupt"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 115,
+            "end_line": 127,
+            "symbol": "Observe accepted-filter/ApplyBatch"
+          },
+          {
+            "file": "csharp/Cognition.cs",
+            "line": 37,
+            "end_line": 44,
+            "symbol": "transform.Transform / Observe"
+          }
+        ]
+      },
+      "side_effects": [
+        "C#转换器可改Observation内容或null抑制；保留对象引用；过滤其他对象对被抑制新对象的关系/AST。"
+      ],
+      "failure_behavior": [
+        "换Target抛异常；任意回调异常向上传播；Corrupt逐投影写入，后面失败没有批次回滚。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "这是Core C#扩展能力；未证明安全 .story 编译路径能构造任意转换器。"
+      ]
+    },
+    {
+      "id": "F01-C009",
+      "name": "认知版本与选项版本",
+      "status": "PARTIAL",
+      "types": [
+        "WorldSession._version",
+        "PendingChoice.Version",
+        "Projection.LastObservation",
+        "History"
+      ],
+      "execution_side": "shared host + Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "无 cognition_revision/revision assertion 的 .story 语法"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 125,
+            "end_line": 125,
+            "symbol": "LastObservation"
+          },
+          {
+            "file": "csharp/Model.cs",
+            "line": 136,
+            "end_line": 136,
+            "symbol": "History"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 51,
+            "end_line": 61,
+            "symbol": "PendingChoice"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 161,
+            "end_line": 172,
+            "symbol": "SubmitChoice version/applicability recheck"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 61,
+            "end_line": 61,
+            "symbol": "InvalidateChoiceTokens"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 260,
+            "end_line": 269,
+            "symbol": "RememberState"
+          }
+        ]
+      },
+      "side_effects": [
+        "会话发选项/感知/结束/加载等使菜单凭证失效；提交时重新检查主观条件。"
+      ],
+      "failure_behavior": [
+        "未知/消耗/过期token显式失败；直接Observation/外部Core写入没有绑定的自动版本失效订阅。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "菜单令牌版本不等于每个角色、事实、来源、世界的版本；无因果版本链/快照一致性令牌。"
+      ]
+    },
+    {
+      "id": "F01-C010",
+      "name": "结构化动作/认知事件与协议事件",
+      "status": "PARTIAL",
+      "types": [
+        "ObservationEvent",
+        "WorldInput/WorldOutput",
+        "InteractionPacket",
+        "Dictionary<string,object?>"
+      ],
+      "execution_side": "compiler + shared host + Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 826,
+            "end_line": 866,
+            "symbol": "compile_sequence event/day/slot trigger"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 163,
+            "end_line": 165,
+            "symbol": "ObservationEvent"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 30,
+            "end_line": 44,
+            "symbol": "typed WorldInput/Output"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 6,
+            "end_line": 12,
+            "symbol": "InteractionPacket"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/ChapterProtocol.cs",
+            "line": 8,
+            "end_line": 13,
+            "symbol": "IChapterSession"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 71,
+            "end_line": 104,
+            "symbol": "Process dispatch"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+            "line": 49,
+            "end_line": 88,
+            "symbol": "DispatchGame"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 121,
+            "end_line": 127,
+            "symbol": "action completion Event"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 180,
+            "end_line": 198,
+            "symbol": "BehaviorCompleted"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/ChapterProtocol.cs",
+            "line": 17,
+            "end_line": 41,
+            "symbol": "ChapterEvents.Event"
+          }
+        ]
+      },
+      "side_effects": [
+        "动作成功/失败、主客体关系、时间、认知来源；候选与presentation ID；宿主字典消息。"
+      ],
+      "failure_behavior": [
+        "未知WorldInput/Dialogue operation显式失败；ChapterEvents.Text/Map/Flag/Number错类型/缺字段静默fallback。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "没有统一具有稳定事件ID、actor/action/resource、前后版本、父因果链的Core事件schema；各协议独立；JSON字段未知可丢弃。"
+      ]
+    },
+    {
+      "id": "F01-C011",
+      "name": "消息传播、广播与声路",
+      "status": "PARTIAL",
+      "types": [
+        "Effect.Say",
+        "NewsItem",
+        "Heard (external type)",
+        "NewsKind"
+      ],
+      "execution_side": "Core + chapter adapter",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1033,
+            "end_line": 1066,
+            "symbol": "compile_candidate_action say"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 520,
+            "end_line": 520,
+            "symbol": "read_acoustic_laws interface (indexed)"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 539,
+            "end_line": 539,
+            "symbol": "derive_hearing interface (indexed)"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Ast.cs",
+            "line": 45,
+            "end_line": 45,
+            "symbol": "Effect.Say"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+            "line": 9,
+            "end_line": 28,
+            "symbol": "NewsItem"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 183,
+            "end_line": 187,
+            "symbol": "prepare receiver via Controls"
+          },
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 142,
+            "end_line": 149,
+            "symbol": "Translate request refs"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/WorldRuntime.cs",
+            "line": 136,
+            "end_line": 154,
+            "symbol": "Deliver"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+            "line": 118,
+            "end_line": 143,
+            "symbol": "Gossip"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+            "line": 212,
+            "end_line": 252,
+            "symbol": "Receive"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+            "line": 71,
+            "end_line": 87,
+            "symbol": "Witness"
+          }
+        ]
+      },
+      "side_effects": [
+        "Core点对目标控制灵魂送达；章节2同地消息传递、来源跳数/信任折扣；新闻副本和认知事件。"
+      ],
+      "failure_behavior": [
+        "Core无法翻译的Request静默变null；Say没有收件灵魂仍成功；章节2重复Claim只更新News不重复Observation；Gossip过期/信任/BlockNews过滤。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "未核验通用 .story 声源→声学通道→收件集合→来源链的执行闭环；Gossip是章节机制，不是Core广播AST；BlockNews是C#回调。"
+      ]
+    },
+    {
+      "id": "F01-C012",
+      "name": "通路、锁与动态通行",
+      "status": "PARTIAL",
+      "types": [
+        "PassageProperty",
+        "LockProperty",
+        "AcceptsKey/HasIdentity",
+        "Passable"
+      ],
+      "execution_side": "chapter adapter → Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "world/v1 ReadProperties 白名单不支持Passage/Lock/identity"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Model.cs",
+            "line": 74,
+            "end_line": 84,
+            "symbol": "PassageProperty / LockProperty"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+            "line": 37,
+            "end_line": 53,
+            "symbol": "RefreshAccess connection rebuilding"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 212,
+            "end_line": 225,
+            "symbol": "Unlock / Travel"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+            "line": 23,
+            "end_line": 35,
+            "symbol": "HostCorridor / HostDormOut"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+            "line": 55,
+            "end_line": 67,
+            "symbol": "InitializeAccess Forbid rules"
+          }
+        ]
+      },
+      "side_effects": [
+        "章节宿主改corridor，清/建通路；公布Passable并给角色写禁止Travel规则；Core激活时检查真实Passage和Lock。"
+      ],
+      "failure_behavior": [
+        "未知走廊ArgumentException；HostCanEnter switch未列地点默认true；不存在连接ConditionFailed。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "现有动态通行靠章节专用地点枚举/宿主API，通用 .story 无声明/修改通道效果；RefreshAccess主动向全部角色观察路线。"
+      ]
+    },
+    {
+      "id": "F01-C013",
+      "name": "自主决策与社交请求",
+      "status": "SUPPORTED",
+      "types": [
+        "DecisionAssessment",
+        "Decision",
+        "SocialAttitude",
+        "SimulationSession.Activate"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 732,
+            "end_line": 824,
+            "symbol": "compile_behavior reaction"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/DecisionSystem.cs",
+            "line": 3,
+            "end_line": 4,
+            "symbol": "Decision / DecisionAssessment"
+          },
+          {
+            "file": "csharp/SocialSystem.cs",
+            "line": 3,
+            "end_line": 4,
+            "symbol": "SocialAttitude"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 200,
+            "end_line": 219,
+            "symbol": "Assess reaction bridge"
+          },
+          {
+            "file": "csharp/DecisionSystem.cs",
+            "line": 91,
+            "end_line": 100,
+            "symbol": "Contexts cross product"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/DecisionSystem.cs",
+            "line": 14,
+            "end_line": 68,
+            "symbol": "Assess"
+          },
+          {
+            "file": "csharp/SocialSystem.cs",
+            "line": 11,
+            "end_line": 27,
+            "symbol": "Evaluate / EvaluateSender"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 130,
+            "end_line": 164,
+            "symbol": "Decide / Invoke / Activate / Wake"
+          }
+        ]
+      },
+      "side_effects": [
+        "角色内部规则/目标和收到请求产生候选，评分排序，禁止/放行；观察唤醒CTB；候选桥临时认知Rules调用Core。"
+      ],
+      "failure_behavior": [
+        "无候选休眠；主观Unknown不成为适用；物理不可行直到激活才失败；响应槽不明确跳过。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "没有全局规划器/搜索/反事实回馈；Target×Tool枚举全Projections，性能未验证；reaction桥Intents未用于绑定/执行。"
+      ]
+    },
+    {
+      "id": "F01-C014",
+      "name": "候选请求/选择/有限反应链",
+      "status": "SUPPORTED",
+      "types": [
+        "WorldCandidateDefinition",
+        "BoundCandidate",
+        "choice tokens",
+        "response markers"
+      ],
+      "execution_side": "compiler → shared host → Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 732,
+            "end_line": 824,
+            "symbol": "compile_behavior"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 965,
+            "end_line": 1026,
+            "symbol": "compile_candidate_response"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 12,
+            "end_line": 27,
+            "symbol": "WorldCandidateDefinition"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 48,
+            "end_line": 61,
+            "symbol": "BoundCandidate"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 349,
+            "end_line": 423,
+            "symbol": "ValidateCandidatePlan"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 282,
+            "end_line": 345,
+            "symbol": "BuildCondition"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 145,
+            "end_line": 178,
+            "symbol": "Offer / SubmitChoice / Track"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+            "line": 180,
+            "end_line": 257,
+            "symbol": "BehaviorCompleted / React"
+          }
+        ]
+      },
+      "side_effects": [
+        "展示主观可用选项→令牌→Core意图；option完成触发有限reaction；纯文本响应使用认知marker使意图区分。"
+      ],
+      "failure_behavior": [
+        "旧token拒绝；不支持条件/动作/嵌套响应显式失败；目标未知导致隐藏；动作失败不发成功对白；reaction完成不递归。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "IsCandidateAvailable/Offer→Applies→BuildEffect可能创建持久marker：可用性查询具有认知副作用。",
+        "Intent 字段加载后不进入BoundCandidate；candidate response line复制丢LineId/SourceId。"
+      ]
+    },
+    {
+      "id": "F01-C015",
+      "name": "发言策略与作者覆盖",
+      "status": "PARTIAL",
+      "types": [
+        "SpeechAct",
+        "Stance",
+        "SpeechHabits",
+        "SpeechChoice"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "world/v1 profile在通用加载DTO中未绑定；专用编译器可读取习惯但具体桥未全核验"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Speech.cs",
+            "line": 6,
+            "end_line": 14,
+            "symbol": "SpeechAct / Stance / SpeechHabits / SpeechChoice"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Speech.cs",
+            "line": 52,
+            "end_line": 54,
+            "symbol": "Choose written callback"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Speech.cs",
+            "line": 25,
+            "end_line": 48,
+            "symbol": "StanceOf / Assess"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读评分与按作者已有文案候选筛选；高信任加评分，NeverLies去除Lie候选。"
+      ],
+      "failure_behavior": [
+        "未找到作者written覆盖返回null；无显式credence/habits输入合法区间检验，NaN/Infinity未拒绝。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "Core只选言语行为不生产文字；C#written是能力回调，不等于 .story 执行任意回调。"
+      ]
+    },
+    {
+      "id": "F01-C016",
+      "name": "命题候选与证据权重推理",
+      "status": "PARTIAL",
+      "types": [
+        "CaseModel",
+        "CaseField",
+        "CaseHypothesis",
+        "CaseBelief"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 461,
+            "end_line": 461,
+            "symbol": "read_truth interface only (not inspected)"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 439,
+            "end_line": 439,
+            "symbol": "parse_facts interface only (not inspected)"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 6,
+            "end_line": 9,
+            "symbol": "CaseField / CaseHypothesis"
+          },
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 18,
+            "end_line": 31,
+            "symbol": "CaseModel constructor"
+          },
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 55,
+            "end_line": 59,
+            "symbol": "CaseBelief"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 74,
+            "end_line": 98,
+            "symbol": "projection name/tag matching"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 68,
+            "end_line": 118,
+            "symbol": "Reasoner.Assess"
+          },
+          {
+            "file": "csharp/Reasoner.cs",
+            "line": 125,
+            "end_line": 142,
+            "symbol": "Weight"
+          }
+        ]
+      },
+      "side_effects": [
+        "只读角色认知过滤作者提供Hypotheses，默认假设、最少矛盾回退、来源权重转credence。"
+      ],
+      "failure_behavior": [
+        "问题/选项未知抛；缺事实/维度拒绝；Hypotheses为空或默认过滤空时Min异常；option/default范围未完全验证。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "表格型预测不是Core世界反事实运行；同名Projection FirstOrDefault存在歧义风险；trace字段只看tag，不核查其Observation.Source；源权重使用LastObservation。"
+      ]
+    },
+    {
+      "id": "F01-C017",
+      "name": "CTB调度与延迟/清理",
+      "status": "SUPPORTED",
+      "types": [
+        "CTBSystem",
+        "ScheduledAction",
+        "ActionExecution.Cleanup",
+        "StateLease"
+      ],
+      "execution_side": "Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "csharp/AstDecoder.cs",
+            "line": 105,
+            "end_line": 110,
+            "symbol": "Delay validation"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 794,
+            "end_line": 796,
+            "symbol": "candidate delay validation"
+          }
+        ],
+        "IR": [
+          {
+            "file": "csharp/CTBSystem.cs",
+            "line": 4,
+            "end_line": 19,
+            "symbol": "ScheduledAction / CTBSystem"
+          },
+          {
+            "file": "csharp/TemporaryState.cs",
+            "line": 5,
+            "end_line": 11,
+            "symbol": "StateLease / TemporaryStateProperty"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 47,
+            "end_line": 47,
+            "symbol": "Submit Schedule"
+          },
+          {
+            "file": "csharp/ActionRuntime.cs",
+            "line": 281,
+            "end_line": 282,
+            "symbol": "lease expiry Schedule / retainCleanup"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "csharp/CTBSystem.cs",
+            "line": 28,
+            "end_line": 68,
+            "symbol": "Schedule / Cancel / Reschedule / Step / RunUntil"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 52,
+            "end_line": 63,
+            "symbol": "Cancel"
+          }
+        ]
+      },
+      "side_effects": [
+        "按Due、Sequence确定排序；推进Now；回调一次激活；可取消、重排，清理临时层。"
+      ],
+      "failure_behavior": [
+        "非法delay或反向time显式抛；RunUntil达到maxSteps可停在目标时间之前，仅返回步数；回调异常直接抛。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "ScheduledAction保存任意C#Action无法序列化；没有现有通用save/restore；Step异常后项已出队且Now更新。"
+      ]
+    },
+    {
+      "id": "F01-C018",
+      "name": "剧情纤程与组合调度",
+      "status": "PARTIAL",
+      "types": [
+        "StoryStep Text/Presentation/Action/CoreAction/Wait/Update/Branch/Choice/Parallel/Repeat",
+        "StorySequence",
+        "StoryBindings"
+      ],
+      "execution_side": "shared host + Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 826,
+            "end_line": 918,
+            "symbol": "compile_sequence"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 280,
+            "end_line": 362,
+            "symbol": "parse_body/parse_options"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 6,
+            "end_line": 35,
+            "symbol": "StoryBindings / StoryStep"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1Flows.cs",
+            "line": 197,
+            "end_line": 250,
+            "symbol": "Steps converts typed flow to StoryStep"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 60,
+            "end_line": 67,
+            "symbol": "constructor"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 97,
+            "end_line": 187,
+            "symbol": "Choose / Poll / Advance"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 78,
+            "end_line": 89,
+            "symbol": "Pump"
+          }
+        ]
+      },
+      "side_effects": [
+        "触发一次、选择、并行、重复、wait；Action交Core；Update直接运行宿主Action；Presentation发宿主。"
+      ],
+      "failure_behavior": [
+        "重复sequence Id拒绝；失败/取消Core动作在Advance抛；零可用选项可悬置；Wait没有超时；任意委托异常直接抛；未知StoryStep子类switch无default。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        ".story仅部分编译到通用StoryStep；world/v1 generic loader拒绝sequences；Chapter2序列binder尚未核验；Repeat负数静默零次，无步预算。"
+      ]
+    },
+    {
+      "id": "F01-C019",
+      "name": "编译对话 IR 与一步确认协议",
+      "status": "PARTIAL",
+      "types": [
+        "Expr/Instruction",
+        "CompiledDialogueDocument",
+        "DialogueExpression/Instruction",
+        "DialogueContext",
+        "InteractionPacket"
+      ],
+      "execution_side": "compiler → shared host",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 182,
+            "end_line": 260,
+            "symbol": "ExprParser"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 280,
+            "end_line": 362,
+            "symbol": "parse_body"
+          },
+          {
+            "file": "godot_csharp/tools/compile_story.py",
+            "line": 64,
+            "end_line": 132,
+            "symbol": "validate_expr / validate_instructions"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/tools/engine_spec.py",
+            "line": 9,
+            "end_line": 42,
+            "symbol": "Expr.json / Instruction.json"
+          },
+          {
+            "file": "godot_csharp/tools/engine_spec.py",
+            "line": 125,
+            "end_line": 143,
+            "symbol": "dialogue_document"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 15,
+            "end_line": 55,
+            "symbol": "CompiledDialogueDocument.Parse / DialogueInstruction"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 56,
+            "end_line": 62,
+            "symbol": "DialogueContext callbacks"
+          },
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+            "line": 39,
+            "end_line": 47,
+            "symbol": "Reset Chapter1Dialogue binding"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 71,
+            "end_line": 149,
+            "symbol": "Start / Choose / Next / Evaluate"
+          },
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 49,
+            "end_line": 90,
+            "symbol": "Say / LinesEvent"
+          }
+        ]
+      },
+      "side_effects": [
+        "每包一个line，peek相邻choices；调用宿主白名单语义钩子；明确WorldCommand返回；jump/END；ack后继续。"
+      ],
+      "failure_behavior": [
+        "未知op/expr显式失败；choice重新检查；10000指令预算；literal数组/对象变null；Truth未列对象默认true；expression结构/arg类型由反序列化后执行才失败。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "对话JSON无format/version；运行器C#Context接受任意函数名，编译器白名单提供限制；Chapter1Dialogue具体ExecuteCall实现未授权核验，不能据此认定作者任意代码执行。"
+      ]
+    },
+    {
+      "id": "F01-C020",
+      "name": "章节流程和游戏日/时段",
+      "status": "PARTIAL",
+      "types": [
+        "JsonElement flows/schedule",
+        "ChapterSession progress",
+        "CTB.Now",
+        "CalendarMinutes",
+        "Slot"
+      ],
+      "execution_side": "compiler + chapter adapter",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_script.py",
+            "line": 384,
+            "end_line": 395,
+            "symbol": "Translator flow/schedule"
+          },
+          {
+            "file": "godot_csharp/tools/compile_story.py",
+            "line": 140,
+            "end_line": 167,
+            "symbol": "validate_flow"
+          },
+          {
+            "file": "godot_csharp/tools/story_chapter1.py",
+            "line": 1088,
+            "end_line": 1132,
+            "symbol": "parse_duration / read_clock"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 843,
+            "end_line": 864,
+            "symbol": "sequence trigger day/slot"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/ChapterSession.cs",
+            "line": 4,
+            "end_line": 34,
+            "symbol": "ChapterSession"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1Flows.cs",
+            "line": 144,
+            "end_line": 156,
+            "symbol": "StartFlow / BuildFlow"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SessionFlows.cs",
+            "line": 10,
+            "end_line": 32,
+            "symbol": "LoadFlows / EnterSlot"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1Flows.cs",
+            "line": 197,
+            "end_line": 250,
+            "symbol": "Steps"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SessionFlows.cs",
+            "line": 35,
+            "end_line": 87,
+            "symbol": "FlowCondition / FlowStep / FlowCommand"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+            "line": 69,
+            "end_line": 75,
+            "symbol": "SlotBoundary / AdvanceCalendar"
+          }
+        ]
+      },
+      "side_effects": [
+        "第一章流程直接更新进度并构造剧情Step；第二章从编译json设计字段取时刻表、每day/slot一次进入；游戏分钟与CTB时间独立映射。"
+      ],
+      "failure_behavior": [
+        "编译器第一章clock限制当天<1440；第二章FlowCondition仅accused/布尔，未支持其它call；未知flow/op/命令明确抛。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "未执行3–5日或40日容量验证；不从未读设计推断时长；编译QUERY白名单中部分名不在Chapter1Flows.Query，形成未支持执行路径（G25）。"
+      ]
+    },
+    {
+      "id": "F01-C021",
+      "name": "第一章反事实调用与输出",
+      "status": "PARTIAL",
+      "types": [
+        "NightVariables",
+        "NightReplay.Run external",
+        "frames/findings result"
+      ],
+      "execution_side": "chapter adapter (called implementation not verified)",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "本轮未读取任何case/完整.story/黄金数据；编译器接口中可读变量数据，具体模型未审"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 739,
+            "end_line": 740,
+            "symbol": "NightVariables construction"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 704,
+            "end_line": 712,
+            "symbol": "Replay input binding"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 737,
+            "end_line": 773,
+            "symbol": "RunReplay call/results mapping"
+          }
+        ]
+      },
+      "side_effects": [
+        "调用独立NightReplay入口，结果映射frames/findings；记录replay次数/结果并向现实角色提交所见推论。"
+      ],
+      "failure_behavior": [
+        "vars长度/枚举范围不在RunReplay入口完整校验；依赖函数的失败行为未核验。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "只证明调用边界，NightReplay.Run隔离/克隆/调度机制、比较数据不在本轮范围，NOT_VERIFIED；不将注释等同实证。"
+      ]
+    },
+    {
+      "id": "F01-C022",
+      "name": "第二章夜间专用快照",
+      "status": "PARTIAL",
+      "types": [
+        "NightSnapshot",
+        "PersonState",
+        "Things/Posted/Corridors/ReleasedDorms"
+      ],
+      "execution_side": "chapter adapter → Core",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "不是通用 .story/Core快照IR"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/NightSnapshot.cs",
+            "line": 13,
+            "end_line": 22,
+            "symbol": "NightSnapshot / PersonState"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/NightSnapshot.cs",
+            "line": 30,
+            "end_line": 36,
+            "symbol": "CaptureNight"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/NightSnapshot.cs",
+            "line": 38,
+            "end_line": 76,
+            "symbol": "RestoreNight / NightSnapshotHook"
+          }
+        ]
+      },
+      "side_effects": [
+        "捕获限定角色数值/位置/规则接受/信任及物件标签、公告地点、走廊；恢复以补写/加集合/重新观察方式执行。"
+      ],
+      "failure_behavior": [
+        "缺失People/Things/Posted键静默skip；恢复只添加/覆写现有项，不删除额外标签、公告、已释放地点；Snapshot.Day不匹配不恢复。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "非完整Core快照：无Essence/Projection关系图、全部认知/History/Procedure、临时层、CTB队列、活动动作、新闻来源链、菜单/纤程/trace位置；capture/restore有宿主副作用，无通用版本/序列化契约。"
+      ]
+    },
+    {
+      "id": "F01-C023",
+      "name": "跨章节实时连续世界",
+      "status": "SUPPORTED",
+      "types": [
+        "LiveChapterWorld",
+        "ContinuingCharacter",
+        "ChapterWorldContinuity",
+        "WorldSession.BindExisting/AttachExistingContent"
+      ],
+      "execution_side": "shared game/host → Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/compile_story.py",
+            "line": 470,
+            "end_line": 473,
+            "symbol": "continuation compile second section"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/LiveChapterWorld.cs",
+            "line": 4,
+            "end_line": 10,
+            "symbol": "ContinuingCharacter / LiveChapterWorld"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 100,
+            "end_line": 132,
+            "symbol": "BindExisting"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.Attach.cs",
+            "line": 18,
+            "end_line": 70,
+            "symbol": "AttachExistingContent"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+            "line": 104,
+            "end_line": 125,
+            "symbol": "Continue validation/binding"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/LiveChapterWorld.cs",
+            "line": 15,
+            "end_line": 16,
+            "symbol": "Publish / Clear"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+            "line": 118,
+            "end_line": 122,
+            "symbol": "Game continuation construction"
+          }
+        ]
+      },
+      "side_effects": [
+        "保留Runtime/Simulation/Essence/Soul/Projection/Progress引用，加载行为；已有对象默认不重新初始化。"
+      ],
+      "failure_behavior": [
+        "缺依赖/改身份/多个现实表现/无有效自我投影/忙身体/重复content失败。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "是内存交接；Current静态单槽，没有持久保存/重载证明；BindExisting无disposed检查，AttachExistingContent已有检查。"
+      ]
+    },
+    {
+      "id": "F01-C024",
+      "name": "UI查询快照",
+      "status": "SUPPORTED",
+      "types": [
+        "IChapterSession.Snapshot",
+        "Dictionary<string,object?>",
+        "GameSession.Snapshot"
+      ],
+      "execution_side": "shared game/host",
+      "stages": {
+        "Parse": [
+          {
+            "not_found_in_reviewed_scope": "直接宿主查询，不是 .story/Core存档"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/ChapterProtocol.cs",
+            "line": 12,
+            "end_line": 12,
+            "symbol": "IChapterSession.Snapshot"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+            "line": 128,
+            "end_line": 133,
+            "symbol": "Present snapshot"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+            "line": 486,
+            "end_line": 521,
+            "symbol": "Chapter1Session.Snapshot"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+            "line": 91,
+            "end_line": 92,
+            "symbol": "GameSession.Snapshot"
+          }
+        ]
+      },
+      "side_effects": [
+        "生成面向显示的阶段/进度/控制/人物/笔记/重演数据字典；Normalize装饰state事件。"
+      ],
+      "failure_behavior": [
+        "无会话返回空字典；Chapter1Snapshot依赖若干状态字段/设计只读接口，缺失可抛。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "UI snapshot不是重建整个游戏的save；其所含数据未提供restore API。"
+      ]
+    },
+    {
+      "id": "F01-C025",
+      "name": "存档文件与恢复",
+      "status": "NOT_VERIFIED",
+      "types": [
+        "save host event",
+        "user://chapter1_end.json"
+      ],
+      "execution_side": "chapter adapter → unreviewed host file I/O",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/compile_story.py",
+            "line": 49,
+            "end_line": 52,
+            "symbol": "HOST_COMMANDS includes save"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 782,
+            "end_line": 787,
+            "symbol": "save event partial data"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 152,
+            "end_line": 152,
+            "symbol": "Command save"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+            "line": 778,
+            "end_line": 787,
+            "symbol": "SaveChapterEnd"
+          }
+        ]
+      },
+      "side_effects": [
+        "发宿主save事件，payload为钩/部分进度/名字/休息标志；未休息时另发布内存continuation。"
+      ],
+      "failure_behavior": [
+        "本范围没有实际文件写入、schema/version、重载绑定、引用修复、调度恢复源码；不能推断存在/不存在于全仓。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "已核验仅部分save事件；通用Core保存/恢复、文件I/O与读档完整性NOT_VERIFIED，须另审宿主/codec。"
+      ]
+    },
+    {
+      "id": "F01-C026",
+      "name": "声明能力目录与审批/版本协商",
+      "status": "NOT_SUPPORTED_IN_REVIEWED_SCOPE",
+      "types": [
+        "compiler whitelists",
+        "world format/v1",
+        "net8.0/C#12"
+      ],
+      "execution_side": "compiler + shared host + Core",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/compile_story.py",
+            "line": 25,
+            "end_line": 56,
+            "symbol": "EFFECTS / QUERIES / EXPR_OPS / arities / HOST_COMMANDS"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 18,
+            "end_line": 43,
+            "symbol": "FORMAT / kinds / actions"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 1173,
+            "end_line": 1176,
+            "symbol": "document format + chapters + source_map"
+          },
+          {
+            "file": "godot_csharp/tools/engine_spec.py",
+            "line": 143,
+            "end_line": 143,
+            "symbol": "dialogue entries only"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+            "line": 38,
+            "end_line": 56,
+            "symbol": "Parse format check"
+          }
+        ],
+        "Execute": [
+          {
+            "not_found_in_reviewed_scope": "没有所审API可读取机器能力目录、需求列表、最低Core能力版本或批准记录"
+          }
+        ]
+      },
+      "side_effects": [
+        "只有各模块各自白名单与格式校验；本F01产物是审计清单，不是引擎能力目录。"
+      ],
+      "failure_behavior": [
+        "world格式不符明确失败；未知能力多由局部白名单失败；有字段静默丢失；无统一required-capabilities处理。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "所审源码没有Core功能版本/特性协商/审批凭证；所有增补维持未批准；不能自动将可执行C#扩展视为正式.story能力。"
+      ]
+    },
+    {
+      "id": "F01-C027",
+      "name": "C#回调扩展边界与安全作者语法区别",
+      "status": "PARTIAL",
+      "types": [
+        "Action",
+        "Func",
+        "IProjectionTransform",
+        "DialogueContext",
+        "StoryStep.Update"
+      ],
+      "execution_side": "C# host/API extensions",
+      "stages": {
+        "Parse": [
+          {
+            "file": "godot_csharp/tools/story_script.py",
+            "line": 595,
+            "end_line": 605,
+            "symbol": "native text forwarding"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 183,
+            "end_line": 216,
+            "symbol": "ast.parse and compile_top"
+          },
+          {
+            "file": "godot_csharp/tools/world_script.py",
+            "line": 537,
+            "end_line": 558,
+            "symbol": "static_value whitelist"
+          }
+        ],
+        "IR": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 8,
+            "end_line": 12,
+            "symbol": "StoryBindings delegates"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 24,
+            "end_line": 31,
+            "symbol": "StoryStep callbacks"
+          },
+          {
+            "file": "csharp/CTBSystem.cs",
+            "line": 28,
+            "end_line": 28,
+            "symbol": "Schedule(Action)"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 58,
+            "end_line": 61,
+            "symbol": "DialogueContext callbacks"
+          }
+        ],
+        "Bind": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/CoreScriptWorld.cs",
+            "line": 39,
+            "end_line": 44,
+            "symbol": "RegisterCharacter callbacks"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/CoreScriptWorld.cs",
+            "line": 57,
+            "end_line": 73,
+            "symbol": "DefineObject configure"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/GameScriptWorld.cs",
+            "line": 21,
+            "end_line": 22,
+            "symbol": "RegisterCharacter Busy/Submitted"
+          }
+        ],
+        "Execute": [
+          {
+            "file": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+            "line": 158,
+            "end_line": 158,
+            "symbol": "Update.Apply"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 115,
+            "end_line": 115,
+            "symbol": "context.ExecuteCall"
+          },
+          {
+            "file": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+            "line": 145,
+            "end_line": 145,
+            "symbol": "context.EvaluateCall"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 90,
+            "end_line": 90,
+            "symbol": "StageCommitted.Invoke"
+          },
+          {
+            "file": "csharp/SimulationSession.cs",
+            "line": 127,
+            "end_line": 127,
+            "symbol": "Completed.Invoke"
+          },
+          {
+            "file": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+            "line": 136,
+            "end_line": 136,
+            "symbol": "BlockNews.Invoke"
+          }
+        ]
+      },
+      "side_effects": [
+        "引擎/宿主C#代码可以执行自定义逻辑；typed Effect仅受对应typed执行器解释。"
+      ],
+      "failure_behavior": [
+        "回调无沙箱/类型证明/副作用限制，异常可传播；脚本world编译不执行Python，只ast.parse和白名单；未证实作者可提供任意委托。"
+      ],
+      "current_version": {
+        "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+        "world_ir": "dual-ontology-world-script/v1",
+        "core_api": "no explicit API capability version",
+        "dialogue_ir": "no format/version field"
+      },
+      "approval_record": {
+        "status": "NOT_FOUND_IN_REVIEWED_SCOPE",
+        "meaning": "源码能力不等于批准；没有读取审批目录，也不自行授权 Core 增补"
+      },
+      "minimum_gaps": [
+        "回调存在是扩展边界，不等于 .story RCE；没有调用方注册/批准清单；生产边界要逐条溯源，不能一律判typed Effect不安全。"
+      ]
+    }
+  ]
+}

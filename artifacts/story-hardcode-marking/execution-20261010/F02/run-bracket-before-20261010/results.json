@@ -1,0 +1,23 @@
+{
+  "classification": "IMPLEMENTATION_SMOKE_ONLY",
+  "phase": "before",
+  "guard_sha256": "ac6a34ef73bf70d5b4bb2b4bb8ded5cf0441c3184021f567402f46cfc9cbc6c1",
+  "finished_at": "2026-10-09T17:13:01.596272+00:00",
+  "total": 1,
+  "requirements_met": 0,
+  "commands_recorded": 13,
+  "original_false_positive_preserved": true,
+  "results": [
+    {
+      "id": "B01_literal_brackets",
+      "required_decision": "PASS",
+      "reason": "Windows-legal literal brackets in an exact grant and tracked filename must be accepted.",
+      "actual_decision": "DENY",
+      "returncode": 2,
+      "meets_requirement": false,
+      "command_id": "0013",
+      "stdout": "{\r\n  \"classification\": \"DETECTION_ONLY\",\r\n  \"decision\": \"DENY\",\r\n  \"problems\": [\r\n    \"wildcard in exact path: 'allowed/neutral[value].txt'\"\r\n  ],\r\n  \"external_gates\": {\r\n    \"read_acl\": \"NOT_ENFORCED\",\r\n    \"write_acl\": \"NOT_ENFORCED\",\r\n    \"lock_authenticity\": \"NOT_VERIFIED\",\r\n    \"approval_authenticity\": \"NOT_VERIFIED\",\r\n    \"merge_identity\": \"NOT_VERIFIED\",\r\n    \"semantic_review\": \"NOT_VERIFIED\",\r\n    \"immutable_review_snapshot\": \"NOT_ENFORCED\"\r\n  },\r\n  \"production_write_authorized\": false\r\n}\r\n",
+      "stderr": "DENY: wildcard in exact path: 'allowed/neutral[value].txt'\r\n"
+    }
+  ]
+}

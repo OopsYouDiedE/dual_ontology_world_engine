@@ -1,0 +1,15 @@
+{
+  "mode": "DETECTION_ONLY",
+  "api_boundary_tested": true,
+  "filesystem_isolation_claimed": false,
+  "outside_child_cwd_file_read_succeeded": true,
+  "sentinel": "permission-sentinel.txt",
+  "read_scope": "V00-owned harmless sentinel only",
+  "meaning": "Normal same-user subprocess can read outside cwd; cwd/env minimization does not enforce source secrecy.",
+  "not_tested": [
+    "restricted user/ACL",
+    "container",
+    "network isolation",
+    "process-memory access restrictions"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "task": "F02-bracket-fix",
+  "classification": "DETECTION_ONLY",
+  "implementation_checks_classification": "IMPLEMENTATION_SMOKE_ONLY",
+  "supersedes_stage_snapshot": "gate-decision.json",
+  "hardened_guard_sha256": "cf81c1bcb5c59f7cbea9d000bb1a6ca2fe7283e596c4bb0c60c1d77d8dfd017e",
+  "previous_guard_sha256": "ac6a34ef73bf70d5b4bb2b4bb8ded5cf0441c3184021f567402f46cfc9cbc6c1",
+  "exactly_one_source_replacement": true,
+  "original_false_positive_preserved": true,
+  "literal_bracket_grant_positive": "PASS",
+  "literal_grant_no_glob_expansion": "DENY_UNGRANTED_MODIFY",
+  "existing_smoke": {"total": 34, "matched": 34},
+  "path_validator_retention": {"total": 14, "matched": 14},
+  "independent_revalidation": "PENDING_NEW_AGENT",
+  "read_acl": "NOT_ENFORCED",
+  "lock_authenticity": "NOT_VERIFIED",
+  "merge_identity": "NOT_VERIFIED",
+  "production_write_performed": false,
+  "production_write_authorized_by_this_tool": false,
+  "provided_pack_and_existing_locks_modified": false,
+  "r01_report_modified": false,
+  "report": "bracket-fix-report.md"
+}

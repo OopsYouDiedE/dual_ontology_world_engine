@@ -1,0 +1,83 @@
+{
+  "schema": "resource-contract-design/C08/v1",
+  "status": "DRAFT_NOT_IMPLEMENTED_NOT_APPROVED",
+  "classification": "DETECTION_ONLY",
+  "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+  "production_write_authorized": false,
+  "scope": {
+    "current": "前两章约3–5游戏日",
+    "future": "40游戏日，只有ID命名空间与消费边界预留；没有容量或体验结论"
+  },
+  "resource_index": {
+    "proposed_format": "dual-ontology-resource-index/v1",
+    "authoritative_inputs": "已批准的.story资源/文案声明；本任务不增改声明",
+    "derivation": "正式编译器提供解析后的资源子集；不新增平行.story文本解析器",
+    "required_header_fields": ["format", "source_hashes", "producer_version", "required_consumers"],
+    "text_ref_fields": ["chapter_id", "table", "key", "source_file", "source_line"],
+    "binding_fields": ["binding_id", "chapter_id", "view_id", "slot", "text_ref", "asset_id"],
+    "asset_fields": ["asset_id", "resource_kind", "res_path", "sha256", "required"],
+    "identity_rules": [
+      "章节ID取正式编译结果，不从路径或显示名猜测。",
+      "binding_id与asset_id稳定、大小写敏感且跨章节带命名空间。",
+      "同一显示实体可绑定多视图节点；不可由图像文件名推断世界实体身份。",
+      "资源索引只引用文案键；作者原文仅在.story及译文，现有必要生成物由正式工具派生。",
+      "配置选择不求值剧情条件、不执行任意代码、不生成世界/认知事实。"
+    ],
+    "validation_errors": [
+      "重复或大小写碰撞ID",
+      "缺失文案键、资源文件或强制消费能力",
+      "不匹配资源类型",
+      "未知schema主版本或未知语义字段",
+      "绝对路径、目录穿越或未授权资源根",
+      "不明确的节点/纹理匹配优先级"
+    ]
+  },
+  "resource_config": {
+    "role": "几何与呈现参数，不承载文案、角色归属、具体因果或答案",
+    "retain_in_existing_recipes": [
+      "CELL/坐标变换、rows/regions、材料色彩和像素绘制",
+      "furniture footprint、遮挡、anchor、crop、y-sort",
+      "walls/solids、lighting/particles、stand选点",
+      "图像尺寸、导入类型、编码与既有绘制算法"
+    ],
+    "move_to_story_bindings_after_approval": [
+      "地图标题、场点标签、地图旁白",
+      "角色/房间/热点/物件与节点或资源的具体绑定",
+      "特殊声线与进入一段对白时的音效绑定"
+    ],
+    "initial_compatibility_rule": "首批保持现有tres/tscn/manifest形状；只改变值的上游来源。独立索引先旁路生成和比较，不静默升级公共格式。",
+    "proposed_v1_view_fields": ["view_id", "geometry_recipe_id", "node_path", "asset_id", "text_ref", "position", "footprint", "visual_parameters"]
+  },
+  "presentation_event": {
+    "proposed_format": "dual-ontology-presentation-event/v1",
+    "role": "一次呈现的不可变投映指令；不是世界行动或认知事件",
+    "transport": "基础字符串/数字/布尔/数组/字典；GameEngine.ToGodot不会自动保真转换任意C#record",
+    "required_fields": [
+      "format", "event_id", "session_id", "presentation_instance_id", "occurrence_id",
+      "segment_id", "kind", "resource_index_hash", "resource_id", "source_ref", "replay_policy"
+    ],
+    "source_ref_fields": ["line_id", "source_id", "trace_id", "line_index"],
+    "kinds_in_first_audio_scope": ["voice_profile", "audio_play_once"],
+    "replay_policy": {
+      "live_occurrence": "同一event_id至多启动一次；新的真实呈现发生有新的occurrence_id",
+      "redisplay_or_locale_refresh": "复用原event_id，不启动新音效",
+      "history": "只显示已存文字与资源状态；静默，不执行commands或回调游戏",
+      "cancel": "失效串行任务不播放；本会话去重账本不因关闭窗口而清空"
+    },
+    "identity_requirements": [
+      "ID在宿主创建呈现发生时固定，不能在每次画面绘制时分配。",
+      "PacketLine当前packet:%d仅是UI本地序号，不能用作稳定event_id。",
+      "静态line_id不能单独作event_id，否则新对话发生会被误吞。",
+      "保留F01 G05的line_id/source_id是来源完整性的前置条件。"
+    ],
+    "non_causal_invariant": "消费音效事件不得提交WorldInput、写标签、调用Observation、推进CTB/日历或改变NPC认知。世界中可听见的声音必须由独立、已批准的机制行动产生；不得从UI音效反推。",
+    "delivery_limit": "只要求至多一次启动；Sound.sfx当前void且无hub时静默，不据此承诺声音可闻、播放完成或崩溃恢复后的exactly-once。"
+  },
+  "version_policy": {
+    "current_semantic_resource_versions": "未声明；Godot format=3只表示序列化版本",
+    "current_world_ir": "dual-ontology-world-script/v1（F01审计证据）",
+    "current_dialogue_ir": "无format/version（F01审计证据）",
+    "proposed_capabilities": ["resource.lookup.v1", "presentation.audio_once.v1"],
+    "activation": "需主代理批准具体输入/输出/消费方版本及精确文件锁后才接入；C08不授予权限"
+  }
+}

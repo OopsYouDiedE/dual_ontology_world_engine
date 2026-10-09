@@ -1,0 +1,34 @@
+{
+  "task_id": "read-acl",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "bfb6008f04f4c0758d07694a14a39c01e4030109",
+  "head": "aa5f42084a8cd2aeff88abb629cdb920e4959d3c",
+  "commits_audited": 1,
+  "files_observed": 4,
+  "directories_observed": [
+    "allowed",
+    "oracle",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:aa5f42084a8cd2aeff88abb629cdb920e4959d3c",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "bab64bbe9a6f3bf31573d06d1f17f10573ef42ab1e4f2d18d23ed9fbebd9090b",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

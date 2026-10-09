@@ -1,0 +1,43 @@
+{
+  "task_id": "15_transient_outside_history",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "b716b4e236d2a8b3d8c7acedf25cbbf75ec9ba9b",
+  "head": "2b33e059f6dc417613bb3a8f4e0cfe73942b80f8",
+  "commits_audited": 2,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "commit:a072e95c40183cfba727f653e5c14dfe854859d2",
+      "path": "outside/temporary.txt",
+      "operation": "create"
+    },
+    {
+      "layer": "commit:2b33e059f6dc417613bb3a8f4e0cfe73942b80f8",
+      "path": "outside/temporary.txt",
+      "operation": "delete"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "commit:a072e95c40183cfba727f653e5c14dfe854859d2: ungranted create: outside/temporary.txt",
+    "commit:2b33e059f6dc417613bb3a8f4e0cfe73942b80f8: ungranted delete: outside/temporary.txt"
+  ],
+  "snapshot_sha256": "eda98496c5bd4b13c70ad6174cca30a58a16c1774262c0503ca68a789a092dd5",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

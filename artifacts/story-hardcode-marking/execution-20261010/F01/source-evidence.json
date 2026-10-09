@@ -1,0 +1,229 @@
+{
+  "schema": "F01/static-evidence/v1",
+  "baseline": {
+    "head": "7489db56a714724eb7cb735958dd879dc662d238",
+    "verification": "provided by parent; no Git command executed"
+  },
+  "isolation": {
+    "mode": "DETECTION_ONLY",
+    "hard_acl": false,
+    "claim": "本平台未实施子工具硬ACL；依靠授权精确路径及写入范围，不能宣称强隔离"
+  },
+  "source_files": [
+    {
+      "path": "csharp/Model.cs",
+      "sha256": "4f8a16b4e6aa924c0647e4e06c2df3909664a264a0d69749d410e7945e6b28a5",
+      "line_count": 244
+    },
+    {
+      "path": "csharp/WorldRuntime.cs",
+      "sha256": "75d0681166881c5b2876cbfaa182f87836443d5d1ad635474d13ddfedc948bf5",
+      "line_count": 157
+    },
+    {
+      "path": "csharp/Ast.cs",
+      "sha256": "e150d86ca6895852a96519f45f9b9b764b201eb3b6cb3ba28bd4a6e92a6a86f8",
+      "line_count": 236
+    },
+    {
+      "path": "csharp/AstDecoder.cs",
+      "sha256": "36fa4642b6afe3bae04b5e6a7be6c6da7b50633c36e81997d0d9b136114f40ba",
+      "line_count": 237
+    },
+    {
+      "path": "csharp/Cognition.cs",
+      "sha256": "d0d0f6ac0628d7d0edab3db9c0a0d335534cee27451f1554338b02d6d4c20656",
+      "line_count": 48
+    },
+    {
+      "path": "csharp/Speech.cs",
+      "sha256": "249c75178086545939c270c3af90cc71599b7827ea9e763dbf51fc5087b246f6",
+      "line_count": 55
+    },
+    {
+      "path": "csharp/ActionRuntime.cs",
+      "sha256": "c476b32f20144810eeea471f78a16bf4660cbcb107e60206fba86235dfab4a79",
+      "line_count": 290
+    },
+    {
+      "path": "csharp/DecisionSystem.cs",
+      "sha256": "d82033d6023917e9bd39b5ca6320d0296298441d0df3cbe644b329d6610fdc8f",
+      "line_count": 104
+    },
+    {
+      "path": "csharp/SocialSystem.cs",
+      "sha256": "e1fd97c0b36d9dcdaed9a7b472cbb48752741a41480caef5526d9c6431a80280",
+      "line_count": 29
+    },
+    {
+      "path": "csharp/CTBSystem.cs",
+      "sha256": "1ac8e9818e8d98f62c3caa754e11a04d745b4ecc2efff67ad9ceb8a320337059",
+      "line_count": 77
+    },
+    {
+      "path": "csharp/SimulationSession.cs",
+      "sha256": "7e7fd2f8722366f6609be6bd2af0b46663c092b9e06906d86d10fffe053163f8",
+      "line_count": 174
+    },
+    {
+      "path": "csharp/TemporaryState.cs",
+      "sha256": "e1c46f142a5e8637a13eded77f8064081b85bcec3dd9b8d28ea4a0f727ab49fb",
+      "line_count": 12
+    },
+    {
+      "path": "csharp/Reasoner.cs",
+      "sha256": "6a5d6e67ec8dd62dea9a5abb75612e06b64057daee06d64f02a43fb58b44cbf3",
+      "line_count": 145
+    },
+    {
+      "path": "csharp/DualOntologyWorldEngine.Core.csproj",
+      "sha256": "f1e7500c43cd4d65a6695623de9ed276eb86b5dfa966e32a67b1166afd5b0a91",
+      "line_count": 17
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/WorldSession.cs",
+      "sha256": "084b3d57c1f165dc87880468b16a39d0a5bf5e410bedb05995be37833e490523",
+      "line_count": 314
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/WorldSession.Attach.cs",
+      "sha256": "d16c23980965513fa8e4f2d1eff6d0c619bf1a9686e09d391211056c0d650670",
+      "line_count": 72
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/CoreScriptWorld.cs",
+      "sha256": "124be0284f9e6c8ce165ebd2598b6b291edeaeeda54157d0d2d97b014c0dfcad",
+      "line_count": 111
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/WorldBehavior.cs",
+      "sha256": "980c57ab319f2f9749d4ff66ebcabf0d46fff3f6542ddd6869dd6607ae049c90",
+      "line_count": 425
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/StoryRuntime.cs",
+      "sha256": "96eb71ccf3b3f29361f9f3b1ede127849ac48c833562e271e24a1138a12c92d1",
+      "line_count": 189
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/LiveChapterWorld.cs",
+      "sha256": "f10365230ea823bac87a04a49fc01d30dc638e8277e76f26613d33dc9b8d4535",
+      "line_count": 17
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/ChapterProtocol.cs",
+      "sha256": "103b81e40de46c95af9916cff8e3a1ed90322a0a5d3cc9c411437d548ad5dbef",
+      "line_count": 48
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/InteractionPacket.cs",
+      "sha256": "8f64bee6b03ed1bf0d39e120aac9ce464b66cc6193b421963e63335c594a7856",
+      "line_count": 151
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/ChapterSession.cs",
+      "sha256": "c7c764c93782070a91f32d55f25b93e0b0f003aebf78583d9c00928e944363a5",
+      "line_count": 35
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Game/GameSession.cs",
+      "sha256": "d0045e12f06deedd1e6f11911dc1e65df5d98f2d854c4d90b8758cc29b2ce195",
+      "line_count": 193
+    },
+    {
+      "path": "godot_csharp/tools/compile_story.py",
+      "sha256": "3f6a39dd2f7f7f2013ea3cdec67ce11aef8bfa04d69771cdaca4660160658d77",
+      "line_count": 538
+    },
+    {
+      "path": "godot_csharp/tools/engine_spec.py",
+      "sha256": "c57b593956b6e35b21c27fd91b49a081c2de0a4cccbc16284edd280ec78350d4",
+      "line_count": 143
+    },
+    {
+      "path": "godot_csharp/tools/story_base.py",
+      "sha256": "3d84c45674c4a8d276305e8f494b4a4d1dfe06fa071e4055f064bc305c4f795d",
+      "line_count": 97
+    },
+    {
+      "path": "godot_csharp/tools/story_script.py",
+      "sha256": "731c49daee7f5b6401175b47daf258a945944972914d79dee3c93fb2c8e0b99f",
+      "line_count": 1031
+    },
+    {
+      "path": "godot_csharp/tools/world_script.py",
+      "sha256": "2db2c317e6e68210e67afc2e373ecd88bfe7a83dcf5cb917ebb391ee694f9405",
+      "line_count": 1214
+    },
+    {
+      "path": "godot_csharp/tools/story_chapter1.py",
+      "sha256": "353124675dd58e8ab1885701c5b46f12ab7b5f4fdc0d6826cc1abbdac0d536b2",
+      "line_count": 1380
+    },
+    {
+      "path": "godot_csharp/tools/story_rules.py",
+      "sha256": "ce1beca339b131ddc14eb0a7311114d61af12ec393a44e5fba68329809513314",
+      "line_count": 413
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "sha256": "7d1a07ae0d1fcdb71c8302b3750c5487fa4e2b54592ac6eaf7ed0dc40cea91c8",
+      "line_count": 855
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+      "sha256": "cfcbaf8d86933efefb125651e81a10a9decf9f6b7b7fb98a12c54212afe6f52b",
+      "line_count": 610
+    },
+    {
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Flows.cs",
+      "sha256": "8b98bb91e9382eabc16a214ecc9c162f8dc44b6c82a917f7cc53ea2c24c3dc45",
+      "line_count": 255
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SessionFlows.cs",
+      "sha256": "a1b0de8847ee9cd7333481cc4371cf6e8c0b4ae51ba6a100e50ec83d3d4c176b",
+      "line_count": 99
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/NightSnapshot.cs",
+      "sha256": "396d3d2c49e674aebe1b6e527f7b4855fd8dceaf0b90e761c37af7a32c2de818",
+      "line_count": 78
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+      "sha256": "035b73f37e9eb25d6117e748699ec89a869e284457938b54cc4ce16d1f5ffa48",
+      "line_count": 76
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+      "sha256": "afb235140cb1e91362e703ec4c26e800438e3de7443e74ccf22801a2afb3a731",
+      "line_count": 312
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "sha256": "17c744014fe4742e5a4efcb3978a8214ad07603fa33b8b875f7a3decd14adba6",
+      "line_count": 212
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameScriptWorld.cs",
+      "sha256": "b81370f91e6503b96d1687c8fe4f01f8f1a5518ab82c3a8781349e2de9d18115",
+      "line_count": 25
+    }
+  ],
+  "source_read_notes": "所有源码路径经过精确授权。编译器只审语法/IR；story_rules.py为符号索引，其具体案件/模板数据未抽取；story_design.py未读。未运行编译器/游戏/测试。行号以2026-10-10读取文件计。",
+  "read_ranges": {
+    "godot_csharp/tools/world_script.py": "1–218,315–360,537–921,965–1180 plus symbol index; compiler source only",
+    "godot_csharp/tools/story_script.py": "symbol index;305–432,595–751,761–838,931–994",
+    "godot_csharp/tools/story_chapter1.py": "symbol index;182–365,1070–1135; acoustic/read_truth interfaces only indexed",
+    "godot_csharp/tools/story_rules.py": "symbol index only; no actual case content",
+    "godot_csharp/tools/compile_story.py": "symbol index;1–196,247–281,430–538",
+    "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs": "symbol index;15–160,704–789",
+    "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs": "symbol index;15–60,140–190,203–313,486–524",
+    "godot_csharp/scenes/Awakening/Script/Chapter1Flows.cs": "symbol index;33–66,89–132,144–159,197–255",
+    "godot_csharp/scenes/Chapter2/Prototype/Social.cs": "symbol index;1–161,174–255,261–312",
+    "godot_csharp/scenes/Chapter2/Prototype/Council.cs": "symbol index;1–54,105–212",
+    "other approved runtime/core/engine_spec/story_base files": "full displayed source; hash/line count recorded"
+  },
+  "evidence_claims": "SHA256与行号支持定位读取版本；没有独立git HEAD核查，不将源码hash等同提交内容证明。"
+}

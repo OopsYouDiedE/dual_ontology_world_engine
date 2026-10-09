@@ -1,0 +1,40 @@
+{
+  "task_id": "04_outside_untracked",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "414ff5dabba67ed9d41298faf7652a6cf8d071ef",
+  "head": "414ff5dabba67ed9d41298faf7652a6cf8d071ef",
+  "commits_audited": 0,
+  "files_observed": 7,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "outside",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "working-tree+untracked+ignored",
+      "path": "outside/new.txt",
+      "operation": "create"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "undeclared untracked directory: outside",
+    "working-tree+untracked+ignored: ungranted create: outside/new.txt",
+    "integration requires raw-byte-clean tracked files and no undeclared untracked/ignored files"
+  ],
+  "snapshot_sha256": "c9e34197f4d3330ad6fa817148f93cf11c7540aa3d61dfef43e2abd3e6f52cdc",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

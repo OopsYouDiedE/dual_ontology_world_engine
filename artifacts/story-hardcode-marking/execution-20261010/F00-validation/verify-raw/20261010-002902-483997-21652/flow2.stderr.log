@@ -1,0 +1,25 @@
+ERROR: 交互地点已不在当前空间。
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] present (res://scenes/UI/UISystem.gd:139)
+       [1] _drain (res://scenes/Host/Main.gd:120)
+       [2] dispatch (res://scenes/Host/Main.gd:96)
+       [3] send (res://scenes/Chapter2/check/chapter2_fixture.gd:86)
+       [4] send (res://scenes/Chapter2/check/check_flow.gd:39)
+       [5] _run (res://scenes/Chapter2/check/check_flow.gd:154)
+       [6] run_action (res://scenes/Chapter2/check/check_flow.gd:42)
+       [7] send (res://scenes/Chapter2/check/check_flow.gd:39)
+       [8] send (res://scenes/Chapter2/check/chapter2_fixture.gd:87)
+       [9] settle (res://scenes/Chapter2/check/chapter2_fixture.gd:80)
+ERROR: 无效或不可用行动：escort
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] present (res://scenes/UI/UISystem.gd:139)
+       [1] _drain (res://scenes/Host/Main.gd:120)
+       [2] dispatch (res://scenes/Host/Main.gd:96)
+       [3] send (res://scenes/Chapter2/check/chapter2_fixture.gd:86)
+       [4] send (res://scenes/Chapter2/check/check_flow.gd:39)
+       [5] run_action (res://scenes/Chapter2/check/check_flow.gd:42)
+       [6] _run (res://scenes/Chapter2/check/check_flow.gd:207)
+       [7] move_to_person (res://scenes/Chapter2/check/chapter2_fixture.gd:109)
+       [8] physics (res://scenes/Awakening/check/chapter1_fixture.gd:154)

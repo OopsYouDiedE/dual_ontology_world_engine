@@ -1,0 +1,36 @@
+{
+  "task_id": "build-tracked",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "9854e96f66d411cd42a5554e8e80953538cde8e0",
+  "head": "087115d8d61426f00f38c6a8414a13ef8565a798",
+  "commits_audited": 1,
+  "files_observed": 4,
+  "directories_observed": [
+    "allowed",
+    "oracle",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:087115d8d61426f00f38c6a8414a13ef8565a798",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "build_output_dirs cannot exempt tracked content: allowed/item.txt"
+  ],
+  "snapshot_sha256": "a9d182dfdb0c37c334d7c223b989e1520e763fd17cae1d46e73fff2267ab57c8",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

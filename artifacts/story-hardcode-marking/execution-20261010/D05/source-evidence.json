@@ -1,0 +1,240 @@
+{
+  "schema": "D05/mechanism-evidence/v1",
+  "baseline": {
+    "head": "7489db56a714724eb7cb735958dd879dc662d238",
+    "branch": "codex/solution-review-audit-20261010"
+  },
+  "mode": "DETECTION_ONLY",
+  "hard_acl": false,
+  "design_files_read": false,
+  "story_files_read": false,
+  "golden_or_history_read": false,
+  "source_files": [
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "sha256": "0f3c08d4f2f49cf0ecf889d30a8409a82cda3514910bf3a3d3ef4663617e4bf2",
+      "line_count": 1024,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameJobs.cs",
+      "sha256": "e0519116245bb20d4104523418a92407b39071008adb80d76a2505637d644b2c",
+      "line_count": 431,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "sha256": "17c744014fe4742e5a4efcb3978a8214ad07603fa33b8b875f7a3decd14adba6",
+      "line_count": 212,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+      "sha256": "035b73f37e9eb25d6117e748699ec89a869e284457938b54cc4ce16d1f5ffa48",
+      "line_count": 76,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+      "sha256": "afb235140cb1e91362e703ec4c26e800438e3de7443e74ccf22801a2afb3a731",
+      "line_count": 312,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "sha256": "e7bdf3e7d7b82316de3c2a4f0b02ab9d14347a583b5ce6f68501795dfa74b0a4",
+      "line_count": 158,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "sha256": "4ac6068f86d2ce946cdbdf1f17841cf65555e8c75a4c36876afff9b5fb239f67",
+      "line_count": 619,
+      "read_note": "primary full-source read attempted; initial batched output truncated; relevant precise ranges subsequently reread",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "csharp/ActionRuntime.cs",
+      "sha256": "c476b32f20144810eeea471f78a16bf4660cbcb107e60206fba86235dfab4a79",
+      "line_count": 290,
+      "read_note": "primary full source",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/DecisionSystem.cs",
+      "sha256": "d82033d6023917e9bd39b5ca6320d0296298441d0df3cbe644b329d6610fdc8f",
+      "line_count": 104,
+      "read_note": "primary full source",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/SocialSystem.cs",
+      "sha256": "e1fd97c0b36d9dcdaed9a7b472cbb48752741a41480caef5526d9c6431a80280",
+      "line_count": 29,
+      "read_note": "primary full source",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/Speech.cs",
+      "sha256": "249c75178086545939c270c3af90cc71599b7827ea9e763dbf51fc5087b246f6",
+      "line_count": 55,
+      "read_note": "primary full source",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/SimulationSession.cs",
+      "sha256": "7e7fd2f8722366f6609be6bd2af0b46663c092b9e06906d86d10fffe053163f8",
+      "line_count": 174,
+      "read_note": "approved full public mechanism",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/WorldRuntime.cs",
+      "sha256": "75d0681166881c5b2876cbfaa182f87836443d5d1ad635474d13ddfedc948bf5",
+      "line_count": 157,
+      "read_note": "approved 1-92,121-155",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/Ast.cs",
+      "sha256": "e150d86ca6895852a96519f45f9b9b764b201eb3b6cb3ba28bd4a6e92a6a86f8",
+      "line_count": 236,
+      "read_note": "approved 1-137 and symbol index",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/TemporaryState.cs",
+      "sha256": "e1c46f142a5e8637a13eded77f8064081b85bcec3dd9b8d28ea4a0f727ab49fb",
+      "line_count": 12,
+      "read_note": "approved full source",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/Model.cs",
+      "sha256": "4f8a16b4e6aa924c0647e4e06c2df3909664a264a0d69749d410e7945e6b28a5",
+      "line_count": 244,
+      "read_note": "approved 1-220 constructors/Observation",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/Cognition.cs",
+      "sha256": "d0d0f6ac0628d7d0edab3db9c0a0d335534cee27451f1554338b02d6d4c20656",
+      "line_count": 48,
+      "read_note": "approved full mechanism",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/CTBSystem.cs",
+      "sha256": "1ac8e9818e8d98f62c3caa754e11a04d745b4ecc2efff67ad9ceb8a320337059",
+      "line_count": 77,
+      "read_note": "approved full mechanism",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "csharp/DualOntologyWorldEngine.Core.csproj",
+      "sha256": "f1e7500c43cd4d65a6695623de9ed276eb86b5dfa966e32a67b1166afd5b0a91",
+      "line_count": 17,
+      "read_note": "approved project reference metadata",
+      "f01_hash_matches": true
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Demon.cs",
+      "sha256": "809692b7e36023e68a55a1f7c93c392b28cc50b4569a71adbf6c6442becb788b",
+      "line_count": 177,
+      "read_note": "approved propagation/MorningBroadcast; read 1-82 and 84-to-end, extra AskDemon exposure disclosed to parent",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Emergence.cs",
+      "sha256": "c73e029e753ca63507c102d91865617a70997c409d67b4ebdf29f0a722f20065",
+      "line_count": 346,
+      "read_note": "direct HandleTalk/RecordAction mechanism 85-235; expansion notified before read",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SocialActions.cs",
+      "sha256": "a964e9573cf5b5e3d9a6c79050cb5ff3da89aef0c2a93f08d9b0bd1841d4a309",
+      "line_count": 138,
+      "read_note": "approved social preparation mechanism",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "sha256": "7f1a8da4ea87b7bab610a5e233de2be70ab4dfc2a30d8b1112a54f579008802f",
+      "line_count": 646,
+      "read_note": "approved direct Request mechanism 116-179 and symbol index",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Retell.cs",
+      "sha256": "e2ff01bb06ca6d51a268e275ba8b65f7d5557faa4ed2d58df2d774f5c664898e",
+      "line_count": 141,
+      "read_note": "approved 1-39 presentation propagation mechanism",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "sha256": "1ce6f6d8d6eb3bdca59824c4af9d04d117de977aabc5039048dbfeef778eb9b5",
+      "line_count": 516,
+      "read_note": "approved 235-365 plus Channel type symbol",
+      "f01_hash_matches": null
+    },
+    {
+      "path": "godot_csharp/scenes/Chapter2/Prototype/RoomPresentation.cs",
+      "sha256": "bbbc41b7234a80997b33f89b515ff3a349f99dccb550f40442b6c522b6422581",
+      "line_count": 243,
+      "read_note": "approved FreeEvent records only 98-114",
+      "f01_hash_matches": null
+    }
+  ],
+  "scope_deviation": "Demon.cs adjacent read included AskDemon source; disclosed to parent; no design judgment from that content",
+  "f01_inputs": [
+    {
+      "path": "artifacts/story-hardcode-marking/execution-20261010/F01/capability-manifest.json",
+      "sha256": "b7bfbb72f2d8f83efa5ac36d14c479cd0c69e970a8cfc0ceb59c3c2404a81020"
+    },
+    {
+      "path": "artifacts/story-hardcode-marking/execution-20261010/F01/source-evidence.json",
+      "sha256": "c683b397be62f954616810ba82361de6ab8be9da05cfefe5ced5c5087ea44db2"
+    }
+  ],
+  "verification": {
+    "command": "dotnet run --project artifacts/story-hardcode-marking/execution-20261010/D05/NeutralProbe.csproj",
+    "final_log": "probe-attempt-03.log",
+    "exit_code": 0,
+    "assertions": 15,
+    "all_assertions_passed": true,
+    "production_source_diff_empty": true,
+    "acceptance_levels_run": [],
+    "host_chapter_executed": false,
+    "neutral_simulation_only": true
+  },
+  "logs": [
+    {
+      "path": "probe-attempt-01.log",
+      "sha256": "3faafbb5cc5200791b31f2b0628baa60324c3abe0f79a84e198943e829c735d2",
+      "bytes": 517
+    },
+    {
+      "path": "probe-attempt-02.log",
+      "sha256": "c18f1aba559feb505dfb065d444e9661e0aaf6337b67655908746c96211112d7",
+      "bytes": 3273
+    },
+    {
+      "path": "probe-attempt-03.log",
+      "sha256": "c689f640c753b794f4a201515d57b47d80d81b54e9f9976247e1b39b2e4bd176",
+      "bytes": 3784
+    },
+    {
+      "path": "production-source-diff.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

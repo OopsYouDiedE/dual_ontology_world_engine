@@ -1,0 +1,26 @@
+{
+  "attempts": [
+    {
+      "stage": "permission_detection before build",
+      "error": "OSError [WinError 87] 参数错误",
+      "trigger": "Windows subprocess creation with fully empty env={}",
+      "correction": "Keep SystemRoot only for the harmless permission probe; no change to permissions",
+      "dependent_build_and_suite_run": false,
+      "raw_terminal_trace": "Initial traceback displayed in tool output; this file is a failure summary, not a byte-identical terminal capture"
+    },
+    {
+      "stage": "declaration-only build",
+      "error": "CS8669 (2 errors): generated C# nullable annotations require explicit #nullable",
+      "correction": "Generator now emits #nullable enable; production DTO statements unchanged",
+      "dependent_boundary_suite_run": false,
+      "raw_build_log": "build.previous-1.stdout.log"
+    },
+    {
+      "stage": "independent wire integrity assertion after 41 boundary cases passed",
+      "error": "Assertion expected LF and 20,001 bytes, while Windows emitted CRLF and 20,002 bytes",
+      "correction": "Integrity check now verifies the exact platform line ending and all emitted bytes",
+      "boundary_or_production_behavior_changed": false,
+      "raw_verifier_failure": "verification-failure-1.log"
+    }
+  ]
+}

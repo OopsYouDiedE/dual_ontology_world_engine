@@ -1,0 +1,40 @@
+{
+  "task_id": "03_legal_create_delete",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "ddd1e27a719d392728633eb3ad77de87db052853",
+  "head": "8826471dc16bc2626de61b3fcf106e50675c8be7",
+  "commits_audited": 1,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "commit:8826471dc16bc2626de61b3fcf106e50675c8be7",
+      "path": "allowed/new.txt",
+      "operation": "create"
+    },
+    {
+      "layer": "commit:8826471dc16bc2626de61b3fcf106e50675c8be7",
+      "path": "allowed/old.txt",
+      "operation": "delete"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "e4c902435ad1978d55d6096e1598973ce4a105bed77f1d1a4c96ac0e8cbedd35",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

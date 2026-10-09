@@ -1,0 +1,30 @@
+{
+  "guard_sha256": "ac6a34ef73bf70d5b4bb2b4bb8ded5cf0441c3184021f567402f46cfc9cbc6c1",
+  "expected_decision": "DENY",
+  "actual_decision": "DENY",
+  "returncode": 2,
+  "missing_blob": "9d4d92e220acd9ad8bbe4dfd49233563e3fe8041",
+  "missing_blob_proof_command": "0404",
+  "gate_command": "0406",
+  "promisor_files": [
+    "pack-883d5eea717aa4c3fba0d0043050fc819dcd7080.promisor",
+    "pack-992b0133c1f46144d0e4b2fb60022c08deacf5ef.promisor"
+  ],
+  "result": {
+    "classification": "DETECTION_ONLY",
+    "decision": "DENY",
+    "problems": [
+      "git fsck --strict --full --no-reflogs --no-dangling failed (2): "
+    ],
+    "external_gates": {
+      "read_acl": "NOT_ENFORCED",
+      "write_acl": "NOT_ENFORCED",
+      "lock_authenticity": "NOT_VERIFIED",
+      "approval_authenticity": "NOT_VERIFIED",
+      "merge_identity": "NOT_VERIFIED",
+      "semantic_review": "NOT_VERIFIED",
+      "immutable_review_snapshot": "NOT_ENFORCED"
+    },
+    "production_write_authorized": false
+  }
+}

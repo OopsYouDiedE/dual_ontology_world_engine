@@ -1,0 +1,45 @@
+{
+  "task_id": "17_masked_stage_integration",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "13b6f24e04202f7fc8213e9c85efecc4dd9e973b",
+  "head": "13b6f24e04202f7fc8213e9c85efecc4dd9e973b",
+  "commits_audited": 0,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "index",
+      "path": "private/unlisted.txt",
+      "operation": "modify"
+    },
+    {
+      "layer": "working-tree+untracked+ignored",
+      "path": "private/unlisted.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "index: ungranted modify: private/unlisted.txt",
+    "integration requires committed index equal to frozen HEAD",
+    "working-tree+untracked+ignored: ungranted modify: private/unlisted.txt",
+    "integration requires raw-byte-clean tracked files and no undeclared untracked/ignored files"
+  ],
+  "snapshot_sha256": "cec08268a58170e14dccbb7b47e8404c6ee5b08ec130cb877b258d9801ad36dc",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

@@ -1,0 +1,34 @@
+{
+  "task_id": "legal-clean",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "8118b8b2406c5ade61bab8da7c2ce83b78a19dd5",
+  "head": "436a247943cfa39b0e6be223d9145ed110927d77",
+  "commits_audited": 1,
+  "files_observed": 4,
+  "directories_observed": [
+    "allowed",
+    "oracle",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:436a247943cfa39b0e6be223d9145ed110927d77",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "8e404e46c35518eee87e5a6272dbcfa6080041def2cdbd4f2022d96cf9309f29",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

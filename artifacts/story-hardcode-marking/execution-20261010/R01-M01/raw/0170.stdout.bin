@@ -1,0 +1,49 @@
+{
+  "task_id": "case-protected",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "977149444a4e2354bd30de1bff32f6b0b10c6a5c",
+  "head": "31417b7c9518b63e086b6013ba7c18cf3e5c4e6a",
+  "commits_audited": 2,
+  "files_observed": 4,
+  "directories_observed": [
+    "Oracle",
+    "allowed",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:923a31eaa61c438433a5474d31586e49ca864210",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    },
+    {
+      "layer": "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a",
+      "path": "Oracle/value.txt",
+      "operation": "create"
+    },
+    {
+      "layer": "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a",
+      "path": "oracle/value.txt",
+      "operation": "delete"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a: protected path changed: Oracle/value.txt",
+    "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a: ungranted create: Oracle/value.txt",
+    "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a: protected path changed: oracle/value.txt",
+    "commit:31417b7c9518b63e086b6013ba7c18cf3e5c4e6a: ungranted delete: oracle/value.txt"
+  ],
+  "snapshot_sha256": "b4155127e250c1d33af80848b290a22c087438b28c235cf56066e524acf72187",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

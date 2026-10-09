@@ -1,0 +1,42 @@
+{
+  "task_id": "11_outside_rename",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "051f08adf02858247ccfb74ec7b1517002f1cefd",
+  "head": "432ed1dc0875371cf2f7e905e20b06a74ba7a009",
+  "commits_audited": 1,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "commit:432ed1dc0875371cf2f7e905e20b06a74ba7a009",
+      "path": "allowed/old.txt",
+      "operation": "delete"
+    },
+    {
+      "layer": "commit:432ed1dc0875371cf2f7e905e20b06a74ba7a009",
+      "path": "outside-renamed.txt",
+      "operation": "create"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "commit:432ed1dc0875371cf2f7e905e20b06a74ba7a009: ungranted create: outside-renamed.txt"
+  ],
+  "snapshot_sha256": "9ffaff8da546774c4f842f16564ef01047f763d5a2ded20067aca8adb32034b7",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

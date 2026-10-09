@@ -1,0 +1,37 @@
+{
+  "task_id": "09_delete_denied",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "05efcaee853989d240003413570a5f597e6dc917",
+  "head": "2cd7f6c8a63905645684e54889d9414f7869fd13",
+  "commits_audited": 1,
+  "files_observed": 5,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "commit:2cd7f6c8a63905645684e54889d9414f7869fd13",
+      "path": "allowed/note.txt",
+      "operation": "delete"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "commit:2cd7f6c8a63905645684e54889d9414f7869fd13: ungranted delete: allowed/note.txt"
+  ],
+  "snapshot_sha256": "94a94214de45a8691258f4acce6de0face5c59752b18117c4f3cf80ac6fdb177",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

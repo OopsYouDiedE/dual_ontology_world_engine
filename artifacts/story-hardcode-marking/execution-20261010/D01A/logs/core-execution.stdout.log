@@ -1,0 +1,160 @@
+{
+  "schema": "D01A-neutral-observations/v1",
+  "actualExecutor": "unchanged linked Core source and unchanged shared WorldSession",
+  "results": [
+    {
+      "id": "P01",
+      "observed": {
+        "before": 1,
+        "afterHidden": 1,
+        "mentalAfterHidden": 0,
+        "sameObservation": true,
+        "Succeeded": true,
+        "Failure": "None",
+        "counter": 1,
+        "afterPerception": 0,
+        "mentalAfterPerception": 1
+      }
+    },
+    {
+      "id": "P04_CORE",
+      "observed": {
+        "representations": 2,
+        "separateMentalReferences": true,
+        "sameWord": true,
+        "ambiguous": "AstParseException: 1:12 \u540D\u8BCD \u4EF6 \u6709\u6B67\u4E49\uFF0C\u8BF7\u4F7F\u7528\u5D4C\u5165\u3002",
+        "candidateCount": 2,
+        "executions": [
+          "Completed:None",
+          "Completed:None"
+        ],
+        "objectiveCounter": 2,
+        "inspectStatus": "Completed",
+        "inspectSelectedSecondRefreshed": false,
+        "inspectFirstRefreshed": true,
+        "knownProjectionSelectsFirst": true
+      }
+    },
+    {
+      "id": "P04_SESSION",
+      "observed": {
+        "result": "InvalidOperationException: This binding expects one reality representation per script entity."
+      }
+    },
+    {
+      "id": "P05",
+      "observed": {
+        "coherentBefore": "False",
+        "coherentAfter": "False",
+        "fillerCount": 250000,
+        "attempts": [
+          {
+            "attempt": 1,
+            "result": "False",
+            "mutationAtMs": 18.614,
+            "endedAtMs": 18.9929
+          },
+          {
+            "attempt": 2,
+            "result": "True",
+            "mutationAtMs": 15.3022,
+            "endedAtMs": 17.5753
+          },
+          {
+            "attempt": 3,
+            "result": "False",
+            "mutationAtMs": 13.2951,
+            "endedAtMs": 13.4097
+          },
+          {
+            "attempt": 4,
+            "result": "False",
+            "mutationAtMs": 15.8597,
+            "endedAtMs": 15.9559
+          },
+          {
+            "attempt": 5,
+            "result": "False",
+            "mutationAtMs": 15.4546,
+            "endedAtMs": 15.5659
+          },
+          {
+            "attempt": 6,
+            "result": "False",
+            "mutationAtMs": 15.1221,
+            "endedAtMs": 15.2186
+          }
+        ],
+        "explanation": "True requires the first leaf to read value 1 and the final leaf to read value 2; no Core hook or custom AST node was used."
+      }
+    },
+    {
+      "id": "N02",
+      "observed": {
+        "sameWordDifferentPrivateReference": true,
+        "aCounter": 1,
+        "bCounter": 1,
+        "aStatus": "Completed",
+        "bStatus": "Completed",
+        "foreignEmbedding": "AstParseException: 1:11 \u5D4C\u5165\u5FC5\u987B\u6765\u81EA\u5F53\u524D ProjectionWorld\u3002",
+        "unknownWord": "AstParseException: 1:15 \u672A\u8BA4\u77E5\u540D\u8BCD \u672A\u89C1\u4EF6\u3002",
+        "unsupportedSyntax": "AstParseException: 1:6 \u672A\u77E5\u6548\u679C warp\u3002"
+      }
+    },
+    {
+      "id": "N01",
+      "observed": {
+        "canonicalEquivalentButSeparate": true,
+        "nfcBoundCorrectly": true,
+        "nfdBoundCorrectly": true
+      }
+    },
+    {
+      "id": "H01",
+      "observed": {
+        "oldTagSnapshot": 1,
+        "oldExistenceSnapshot": "True",
+        "oldTargetNameNow": "\u65B0\u79F0",
+        "oldTargetKindNow": "Concept",
+        "oldTargetExistenceNow": "False",
+        "beforeForget": 2,
+        "historyAfterForget": 0,
+        "aliveAfterForget": false,
+        "saveMigration": "NOT_VERIFIED: no historical save fixture or codec supplied"
+      }
+    },
+    {
+      "id": "X01",
+      "observed": {
+        "removedBeforeActivation": "MissingObject",
+        "unboundPrivateReference": "MissingObject",
+        "missingCapability": "UnsupportedOperation",
+        "staleMentalExistence": "True",
+        "deadRealityExistence": "False",
+        "knownProjectionStillReturnsStaleMental": true
+      }
+    },
+    {
+      "id": "E01_CORE",
+      "observed": {
+        "added": 32,
+        "physicalRemoved": 16,
+        "registryEntriesRetained": 32,
+        "usedKind": "Object",
+        "newEnumRequired": false
+      }
+    },
+    {
+      "id": "E01_SESSION",
+      "observed": {
+        "entityReused": true,
+        "soulReused": true,
+        "mentalReused": true,
+        "oldHistoryCount": 3,
+        "newHistoryCount": 3,
+        "newEntityFound": "\u65B0\u4EF6",
+        "saveRoundTrip": "NOT_VERIFIED"
+      }
+    }
+  ]
+}

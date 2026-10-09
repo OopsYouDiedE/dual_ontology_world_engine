@@ -1,0 +1,42 @@
+{
+  "finished_at": "2026-10-09T17:21:31.408844+00:00",
+  "guard_sha256": "cf81c1bcb5c59f7cbea9d000bb1a6ca2fe7283e596c4bb0c60c1d77d8dfd017e",
+  "smoke_harness_sha256": "d7ad05c1e6cdec8f5be03760ea745576b6fad3b923e81cd7e8bb0a7e0cea59fd",
+  "bracket_harness_at_F02": false,
+  "independent_driver_sha256": "c5840d642c446820736525195de69cf67d0964019a8c5b26419bbfb438de0f29",
+  "old34_results_sha256": "bc237bccecf8bafbcb88bbf12419b329776d7630542872023e5f9da8b9ba6b89",
+  "old34_matched": 34,
+  "old34_total": 34,
+  "bracket_cases": [
+    {
+      "id": "literal-brackets",
+      "grant": "allowed/[v].txt",
+      "actual_changed": "allowed/[v].txt",
+      "required": "PASS",
+      "actual": "PASS",
+      "returncode": 0,
+      "command": "literal-brackets-gate",
+      "head": "73d2c01c3b548b4b7184546c35c9eea30c7e215f",
+      "lock_sha256": "a4a0884b4d5baf0e4ad8d63d1923bef2161f107571ff00caa99845689e94660f",
+      "problems": [],
+      "matches": true,
+      "meaningful": true
+    },
+    {
+      "id": "no-glob-expansion",
+      "grant": "allowed/[v].txt",
+      "actual_changed": "allowed/v.txt",
+      "required": "DENY",
+      "actual": "DENY",
+      "returncode": 1,
+      "command": "no-glob-expansion-gate",
+      "head": "badb116b8af81e4fab5fca152e3c445352fb8e92",
+      "lock_sha256": "742d859c100fcd7e767bf5f68f58d41e567196247860f63f95e08bb4bef54714",
+      "problems": [
+        "commit:badb116b8af81e4fab5fca152e3c445352fb8e92: ungranted create: allowed/v.txt"
+      ],
+      "matches": true,
+      "meaningful": true
+    }
+  ]
+}

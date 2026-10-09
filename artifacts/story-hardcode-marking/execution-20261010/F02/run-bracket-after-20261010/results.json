@@ -1,0 +1,35 @@
+{
+  "classification": "IMPLEMENTATION_SMOKE_ONLY",
+  "phase": "after",
+  "guard_sha256": "cf81c1bcb5c59f7cbea9d000bb1a6ca2fe7283e596c4bb0c60c1d77d8dfd017e",
+  "finished_at": "2026-10-09T17:13:49.265424+00:00",
+  "total": 2,
+  "requirements_met": 2,
+  "commands_recorded": 26,
+  "original_false_positive_preserved": false,
+  "results": [
+    {
+      "id": "B01_literal_brackets",
+      "required_decision": "PASS",
+      "reason": "Windows-legal literal brackets in an exact grant and tracked filename must be accepted.",
+      "actual_decision": "PASS",
+      "returncode": 0,
+      "meets_requirement": true,
+      "command_id": "0013",
+      "stdout": "{\r\n  \"task_id\": \"B01_literal_brackets\",\r\n  \"classification\": \"DETECTION_ONLY\",\r\n  \"decision\": \"PASS\",\r\n  \"base\": \"33c94f1e47051a33d0e9bf0700c31e013af11282\",\r\n  \"head\": \"9b00f2c70365908d6a8a7b659f8d5d0a6d127a6d\",\r\n  \"commits_audited\": 1,\r\n  \"files_observed\": 2,\r\n  \"directories_observed\": [\r\n    \"allowed\"\r\n  ],\r\n  \"changes\": [\r\n    {\r\n      \"layer\": \"commit:9b00f2c70365908d6a8a7b659f8d5d0a6d127a6d\",\r\n      \"path\": \"allowed/neutral[value].txt\",\r\n      \"operation\": \"modify\"\r\n    }\r\n  ],\r\n  \"build_outputs\": [],\r\n  \"problems\": [],\r\n  \"snapshot_sha256\": \"60d8ddeabd4f2b98934ca07fe0404b70e66b402ea85de8195bd19b8cef1a913c\",\r\n  \"external_gates\": {\r\n    \"read_acl\": \"NOT_ENFORCED\",\r\n    \"write_acl\": \"NOT_ENFORCED\",\r\n    \"lock_authenticity\": \"NOT_VERIFIED\",\r\n    \"approval_authenticity\": \"NOT_VERIFIED\",\r\n    \"merge_identity\": \"NOT_VERIFIED\",\r\n    \"semantic_review\": \"NOT_VERIFIED\",\r\n    \"immutable_review_snapshot\": \"NOT_ENFORCED\"\r\n  },\r\n  \"production_write_authorized\": false\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "B02_no_glob_expansion",
+      "required_decision": "DENY",
+      "required_diagnostic": "ungranted modify: allowed/neutralv.txt",
+      "reason": "The literal neutral[value].txt grant must not match neutralv.txt.",
+      "actual_decision": "DENY",
+      "returncode": 1,
+      "meets_requirement": true,
+      "command_id": "0026",
+      "stdout": "{\r\n  \"task_id\": \"B02_no_glob_expansion\",\r\n  \"classification\": \"DETECTION_ONLY\",\r\n  \"decision\": \"DENY\",\r\n  \"base\": \"92882001436c1528a8e4d9c8cef5e900652bf024\",\r\n  \"head\": \"9ec1830753f4b2b521f71d31578186c5a1116d72\",\r\n  \"commits_audited\": 1,\r\n  \"files_observed\": 2,\r\n  \"directories_observed\": [\r\n    \"allowed\"\r\n  ],\r\n  \"changes\": [\r\n    {\r\n      \"layer\": \"commit:9ec1830753f4b2b521f71d31578186c5a1116d72\",\r\n      \"path\": \"allowed/neutralv.txt\",\r\n      \"operation\": \"modify\"\r\n    }\r\n  ],\r\n  \"build_outputs\": [],\r\n  \"problems\": [\r\n    \"commit:9ec1830753f4b2b521f71d31578186c5a1116d72: ungranted modify: allowed/neutralv.txt\"\r\n  ],\r\n  \"snapshot_sha256\": \"7bb172a8c35b7adaec980aef5cfb20aed90e972f7310398d64ca4634aa6db1f7\",\r\n  \"external_gates\": {\r\n    \"read_acl\": \"NOT_ENFORCED\",\r\n    \"write_acl\": \"NOT_ENFORCED\",\r\n    \"lock_authenticity\": \"NOT_VERIFIED\",\r\n    \"approval_authenticity\": \"NOT_VERIFIED\",\r\n    \"merge_identity\": \"NOT_VERIFIED\",\r\n    \"semantic_review\": \"NOT_VERIFIED\",\r\n    \"immutable_review_snapshot\": \"NOT_ENFORCED\"\r\n  },\r\n  \"production_write_authorized\": false\r\n}\r\n",
+      "stderr": "DENY: commit:9ec1830753f4b2b521f71d31578186c5a1116d72: ungranted modify: allowed/neutralv.txt\r\n"
+    }
+  ]
+}

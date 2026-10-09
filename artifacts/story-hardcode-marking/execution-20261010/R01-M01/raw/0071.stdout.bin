@@ -1,0 +1,49 @@
+{
+  "task_id": "hidden-intermediate-test",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "8e8716b7bd36d697184eda765af8321f01a3963b",
+  "head": "d39eeec430724e3a7e954818aafb43e84c367e08",
+  "commits_audited": 3,
+  "files_observed": 4,
+  "directories_observed": [
+    "allowed",
+    "oracle",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:7a1c3650a437f7fb13e37f7dc6273f55cff7e4cf",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    },
+    {
+      "layer": "commit:f68c5a6e9be4bb40f70de85886f7ec40317bdf7d",
+      "path": "tests/expected.txt",
+      "operation": "modify"
+    },
+    {
+      "layer": "commit:d39eeec430724e3a7e954818aafb43e84c367e08",
+      "path": "tests/expected.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "commit:f68c5a6e9be4bb40f70de85886f7ec40317bdf7d: protected path changed: tests/expected.txt",
+    "commit:f68c5a6e9be4bb40f70de85886f7ec40317bdf7d: ungranted modify: tests/expected.txt",
+    "commit:d39eeec430724e3a7e954818aafb43e84c367e08: protected path changed: tests/expected.txt",
+    "commit:d39eeec430724e3a7e954818aafb43e84c367e08: ungranted modify: tests/expected.txt"
+  ],
+  "snapshot_sha256": "98d72d6edb7a00a858fa10625cedc855aa1173ce17bcf34c99d62d58a9477eb0",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

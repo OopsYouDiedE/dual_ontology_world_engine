@@ -1,0 +1,35 @@
+{
+  "task_id": "02_legal_modify",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "9d50ae9edf21be87bf0e46d031cdee2deab85065",
+  "head": "c7723c3245e5a153191827a4f45e1642f7947a5f",
+  "commits_audited": 1,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [
+    {
+      "layer": "commit:c7723c3245e5a153191827a4f45e1642f7947a5f",
+      "path": "allowed/note.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "a85a631c3371e7c046666b12967eddb89c109b12beb680b39499e41c7dc2e24f",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

@@ -1,0 +1,32 @@
+{
+  "task_id": "literal-brackets",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "c8e2eeae4c7f76b24d64bc83f0a4e720faf3151a",
+  "head": "73d2c01c3b548b4b7184546c35c9eea30c7e215f",
+  "commits_audited": 1,
+  "files_observed": 1,
+  "directories_observed": [
+    "allowed"
+  ],
+  "changes": [
+    {
+      "layer": "commit:73d2c01c3b548b4b7184546c35c9eea30c7e215f",
+      "path": "allowed/[v].txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "237275acadaa1f3721c0e492a0cc887d42eae2213c254998dfdf79d2fd3ec66a",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

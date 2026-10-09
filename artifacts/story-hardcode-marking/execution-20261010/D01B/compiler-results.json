@@ -1,0 +1,59 @@
+{
+  "schema": "D01B-compiler-probe/v1",
+  "mode": "DETECTION_ONLY",
+  "results": [
+    {
+      "id": "unique_alias",
+      "status": "COMPILED",
+      "entity_ids": [
+        "room_a",
+        "object_a"
+      ]
+    },
+    {
+      "id": "same_word_two_entities",
+      "status": "REJECTED",
+      "message": "实体别名 '共同词' 已用于 'object_a'。",
+      "location": {
+        "path": "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/story-hardcode-marking/execution-20261010/D01B/same_word_two_entities.neutral",
+        "line": 4,
+        "column": 5,
+        "end_line": 4,
+        "end_column": 64
+      }
+    },
+    {
+      "id": "added_neutral_entity",
+      "status": "COMPILED",
+      "entity_ids": [
+        "room_a",
+        "object_a",
+        "object_b"
+      ]
+    },
+    {
+      "id": "unknown_entity",
+      "status": "REJECTED",
+      "message": "实体 '未声明空间' 尚未在本章或前置章节声明。",
+      "location": {
+        "path": "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/story-hardcode-marking/execution-20261010/D01B/unknown_entity.neutral",
+        "line": 4,
+        "column": 44,
+        "end_line": 4,
+        "end_column": 51
+      }
+    },
+    {
+      "id": "unsupported_facet_property",
+      "status": "REJECTED",
+      "message": "不支持实体属性 'facet'；允许 space、sprite、state:<tag>、belief:<tag>、observable:<tag>。",
+      "location": {
+        "path": "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/story-hardcode-marking/execution-20261010/D01B/unsupported_facet_property.neutral",
+        "line": 3,
+        "column": 5,
+        "end_line": 3,
+        "end_column": 117
+      }
+    }
+  ]
+}

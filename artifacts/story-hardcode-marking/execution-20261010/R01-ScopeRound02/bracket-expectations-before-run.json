@@ -1,0 +1,18 @@
+{
+  "sealed_at": "2026-10-09T17:21:27.217658+00:00",
+  "guard_sha256": "cf81c1bcb5c59f7cbea9d000bb1a6ca2fe7283e596c4bb0c60c1d77d8dfd017e",
+  "cases": [
+    {
+      "id": "literal-brackets",
+      "grant": "allowed/[v].txt",
+      "actual_changed": "allowed/[v].txt",
+      "required": "PASS"
+    },
+    {
+      "id": "no-glob-expansion",
+      "grant": "allowed/[v].txt",
+      "actual_changed": "allowed/v.txt",
+      "required": "DENY"
+    }
+  ]
+}

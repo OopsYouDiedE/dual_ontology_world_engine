@@ -1,0 +1,68 @@
+{
+  "finished_at": "2026-10-09T16:47:23.244944+00:00",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout_file": "postflight\\0001.stdout.bin",
+      "stderr_file": "postflight\\0001.stderr.bin",
+      "stdout_sha256": "84b5b707f969d9ead873174591e1182fa8970d9f5fe7aa83cd4ffd7c9acf1ad8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "returncode": 0,
+      "stdout_file": "postflight\\0002.stdout.bin",
+      "stderr_file": "postflight\\0002.stderr.bin",
+      "stdout_sha256": "83d5d2316c1657f8f039d0227454628824cc5292fe846506b913593605f8150a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "original_guard_unchanged": true,
+  "original_example_unchanged": true,
+  "head_unchanged": true,
+  "tracked_status_unchanged": true,
+  "hardened_matches_tested_copy": true,
+  "hardened_sha256": "ac6a34ef73bf70d5b4bb2b4bb8ded5cf0441c3184021f567402f46cfc9cbc6c1",
+  "syntax_checked": [
+    "run_guard_validation.py",
+    "hardened_scope_guard.py",
+    "check_hardened_guard.py",
+    "finish_evidence.py"
+  ],
+  "archives": [
+    {
+      "file": "run-20261010a\\raw.zip",
+      "sha256": "32267b5c68266d43c3492db4414cf19551583b0b791c22cbc1e10ca8cfd8b481",
+      "raw_files": 713,
+      "verified_byte_for_byte": true
+    },
+    {
+      "file": "run-hardened-20261010a\\raw.zip",
+      "sha256": "fb2a23751e4ca71a70bb7fde56153eb4c0654c8287624a6fbe1596cdd4cdcd06",
+      "raw_files": 136,
+      "verified_byte_for_byte": true
+    },
+    {
+      "file": "run-hardened-20261010b\\raw.zip",
+      "sha256": "affeb557729f93165305bc9d1fd238270ac23c8a8a5a5d1ec51eaff704822f07",
+      "raw_files": 136,
+      "verified_byte_for_byte": true
+    }
+  ],
+  "classification": "DETECTION_ONLY",
+  "independent_revalidation": "PENDING_SEPARATE_AGENT"
+}

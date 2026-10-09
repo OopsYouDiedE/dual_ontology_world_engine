@@ -1,0 +1,145 @@
+{
+  "schema": "D01B-neutral-core-experiments/v1",
+  "mode": "DETECTION_ONLY",
+  "baseline": "7489db56a714724eb7cb735958dd879dc662d238",
+  "passedAssertions": true,
+  "results": [
+    {
+      "id": "E01",
+      "actual": {
+        "objective": 9,
+        "subjective": 1,
+        "oldQuery": "False",
+        "newQueryWithoutObservation": "False",
+        "termCandidatesEqual": true
+      }
+    },
+    {
+      "id": "E02",
+      "actual": {
+        "realityRepresentations": 2,
+        "mentalRepresentations": 2,
+        "candidates": [
+          "subject-ref:1",
+          "subject-ref:2"
+        ],
+        "nameDecode": "AstParseException: 1:12 \u540D\u8BCD \u6837\u672C \u6709\u6B67\u4E49\uFF0C\u8BF7\u4F7F\u7528\u5D4C\u5165\u3002",
+        "explicitEmbedding": "SECOND_SUBJECTIVE_PROJECTION",
+        "knownProjectionReturnsFirstOnly": true
+      }
+    },
+    {
+      "id": "E02-Reasoner",
+      "actual": {
+        "candidates": [
+          0
+        ],
+        "observedBehavior": "FIRST_MATCH_USED_DESPITE_TWO_REFERENTS",
+        "warning": "Do not route an unresolved lexical term into CaseField.Projection."
+      }
+    },
+    {
+      "id": "E03",
+      "actual": {
+        "injection": "OBSERVATION_BETWEEN_CORE_ALL_LEAVES",
+        "liveReads": [
+          "True",
+          "False"
+        ],
+        "liveResult": "False",
+        "frozenReads": [
+          "True",
+          "True"
+        ],
+        "frozenResult": "True",
+        "oldSnapshotStillTrue": "True",
+        "captureAtomicity": "QUIESCENT_SINGLE_THREAD_ONLY; NOT_PROVEN_UNDER_CONCURRENT_WRITES"
+      }
+    },
+    {
+      "id": "E04",
+      "actual": {
+        "before": [
+          "subject-ref:1"
+        ],
+        "added": [
+          "subject-ref:2"
+        ],
+        "afterForget": [],
+        "replacement": [
+          "subject-ref:3"
+        ],
+        "oldId": "subject-ref:1",
+        "newId": "subject-ref:3",
+        "hardcodedEntityEnum": false
+      }
+    },
+    {
+      "id": "E05",
+      "actual": {
+        "eventTargetNameAfterRename": "\u65B0\u79F0",
+        "frozenOldName": "\u65E7\u79F0",
+        "oldEventCapturedTag": 1,
+        "historyFields": [
+          "Target",
+          "Source",
+          "Time",
+          "Detected",
+          "Existence",
+          "Details",
+          "Tags",
+          "Relations"
+        ],
+        "historyCountAfterForget": 0,
+        "fullHistoryRebuild": "NOT_SUPPORTED_BY_REVIEWED_HISTORY_SHAPE",
+        "crossProcessCoreSaveRestore": "NOT_VERIFIED; NO_CODEC_IN_REVIEWED_PUBLIC_TYPES",
+        "stableIdAcrossProcesses": "EXPERIMENT_REGISTRY_DOES_NOT_PROVIDE_IT"
+      }
+    },
+    {
+      "id": "E06",
+      "actual": {
+        "unknown": "Unknown",
+        "falseValue": "False",
+        "trueValue": "True",
+        "unsupported": "AstParseException: 1:10 \u672A\u77E5\u6548\u679C identify\u3002",
+        "claim": "UNSUPPORTED_IS_NOT_A_TRUTH_VALUE"
+      }
+    },
+    {
+      "id": "E07",
+      "actual": {
+        "originalId": "subject-ref:1",
+        "renamedId": "subject-ref:1",
+        "name": "\u6539\u540D\u540E",
+        "rebind": "InvalidOperationException: \u5DF2\u6709\u6295\u5F71\u4E0D\u80FD\u9759\u9ED8\u6539\u7ED1\u4E3A\u53E6\u4E00\u4E2A\u5BA2\u89C2\u5BF9\u8C61\u3002"
+      }
+    },
+    {
+      "id": "E08-before-submit",
+      "actual": {
+        "staleRawAstTruth": "True",
+        "embeddingDecode": "AstParseException: 1:11 \u5D4C\u5165\u5FC5\u987B\u6765\u81EA\u5F53\u524D ProjectionWorld\u3002",
+        "submission": "InvalidOperationException: \u884C\u52A8\u540D\u8BCD\u5FC5\u987B\u5C5E\u4E8E\u4E3B\u4F53\u5185\u90E8\u4E16\u754C\uFF0C\u884C\u52A8\u8005\u5FC5\u987B\u662F\u8EAB\u4F53\u6295\u5F71\u3002"
+      }
+    },
+    {
+      "id": "E08-objective-remove",
+      "actual": {
+        "status": "Failed",
+        "failure": "MissingObject",
+        "objectiveValue": 0
+      }
+    },
+    {
+      "id": "E08-forget-after-submit",
+      "actual": {
+        "targetStillInMind": false,
+        "status": "Completed",
+        "failure": "None",
+        "objectiveValue": 7,
+        "contractGap": "PHYSICAL_TARGET_MEMBERSHIP_NOT_RECHECKED_AT_ACTIVATION"
+      }
+    }
+  ]
+}

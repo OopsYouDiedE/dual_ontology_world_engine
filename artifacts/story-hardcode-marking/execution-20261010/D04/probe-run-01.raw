@@ -1,0 +1,248 @@
+{
+  "scope": "D04 neutral isolated mechanism experiment",
+  "mode": "DETECTION_ONLY",
+  "failed": 0,
+  "limitations": [
+    "Existing Core project is referenced unchanged.",
+    "DetectivePlanning.cs is compiled unchanged with neutral minimal adapters.",
+    "No game content, design files, story source, golden expectations or full Godot session is loaded.",
+    "Chapter2 snapshot and inference findings are source diagnosis, not a host runtime test."
+  ],
+  "checks": [
+    {
+      "name": "same-visible-history",
+      "pass": true,
+      "evidence": {
+        "history": "7F7E8B92D9C9C058B72538ED0277552C6346C25667C9A27810AE389D0592BBDB"
+      }
+    },
+    {
+      "name": "different-hidden-truth",
+      "pass": true,
+      "evidence": {
+        "a": 0,
+        "b": 1
+      }
+    },
+    {
+      "name": "reasoner-hidden-truth-noninterference",
+      "pass": true,
+      "evidence": {
+        "a": "{\u0022Candidates\u0022:[0,1],\u0022Credence\u0022:[[0.5,0.5]],\u0022Contradicted\u0022:false,\u0022Basis\u0022:[\u0022\\u4EB2\\u89C1\\uFF1Asurface\\u00B7Signal=7\u0022,\u0022\\u4E0E\\u6240\\u89C1\\u76F8\\u5BB9\\u7684\\u7EC4\\u5408 2/2\u0022]}",
+        "b": "{\u0022Candidates\u0022:[0,1],\u0022Credence\u0022:[[0.5,0.5]],\u0022Contradicted\u0022:false,\u0022Basis\u0022:[\u0022\\u4EB2\\u89C1\\uFF1Asurface\\u00B7Signal=7\u0022,\u0022\\u4E0E\\u6240\\u89C1\\u76F8\\u5BB9\\u7684\\u7EC4\\u5408 2/2\u0022]}"
+      }
+    },
+    {
+      "name": "decision-hidden-truth-noninterference",
+      "pass": true,
+      "evidence": {
+        "a": "{\u0022effect\u0022:\u0022Inspect:surface\u0022,\u0022Score\u0022:3,\u0022basis\u0022:\u0022policy\u0022}",
+        "b": "{\u0022effect\u0022:\u0022Inspect:surface\u0022,\u0022Score\u0022:3,\u0022basis\u0022:\u0022policy\u0022}"
+      }
+    },
+    {
+      "name": "planner-hidden-truth-noninterference",
+      "pass": true,
+      "evidence": {
+        "a": "{\u0022action\u0022:\u0022inspect-neutral\u0022,\u0022Prediction\u0022:{\u0022V1\u0022:1,\u0022V2\u0022:0,\u0022V3\u0022:0,\u0022V4\u0022:0,\u0022V5\u0022:0,\u0022V6\u0022:0},\u0022Iterations\u0022:4,\u0022Nodes\u0022:3,\u0022MaxDepth\u0022:2,\u0022RemainingHypotheses\u0022:2,\u0022Confidence\u0022:0.5,\u0022Branches\u0022:[{\u0022Action\u0022:\u0022inspect-neutral\u0022,\u0022Visits\u0022:4,\u0022MeanValue\u0022:1.62}]}",
+        "b": "{\u0022action\u0022:\u0022inspect-neutral\u0022,\u0022Prediction\u0022:{\u0022V1\u0022:1,\u0022V2\u0022:0,\u0022V3\u0022:0,\u0022V4\u0022:0,\u0022V5\u0022:0,\u0022V6\u0022:0},\u0022Iterations\u0022:4,\u0022Nodes\u0022:3,\u0022MaxDepth\u0022:2,\u0022RemainingHypotheses\u0022:2,\u0022Confidence\u0022:0.5,\u0022Branches\u0022:[{\u0022Action\u0022:\u0022inspect-neutral\u0022,\u0022Visits\u0022:4,\u0022MeanValue\u0022:1.62}]}"
+      }
+    },
+    {
+      "name": "reasoning-does-not-write-source-worlds",
+      "pass": true,
+      "evidence": {
+        "sourceRealityA": "E85FD3E00CDB0A131547E1486D38F944655FD5AE8DA513311010C51C824D4989",
+        "sourceRealityB": "3D087CF105ED8986DF46449C43625BECA119C9CD18F78AF474DB85578D7F99FF",
+        "sourceMind": "6DD3E4E329B2A0B8873902994750C863FA5D496F6FD088FF2050FA88076E7528"
+      }
+    },
+    {
+      "name": "planner-action-budget-not-enforced-in-Plan",
+      "pass": true,
+      "evidence": {
+        "ActionBudget": 0,
+        "action": "inspect-neutral",
+        "Iterations": 4,
+        "MaxDepth": 2,
+        "RemainingHypotheses": 2,
+        "Confidence": 0.5
+      }
+    },
+    {
+      "name": "caller-built-detached-branch-does-not-write-source",
+      "pass": true,
+      "evidence": {
+        "branchSignal": 99,
+        "sourceSignal": 7
+      }
+    },
+    {
+      "name": "oracle-fed-model-can-leak-hidden-truth",
+      "pass": true,
+      "evidence": {
+        "a": "{\u0022Candidates\u0022:[0],\u0022Credence\u0022:[[1,0]],\u0022Contradicted\u0022:false,\u0022Basis\u0022:[\u0022\\u4EB2\\u89C1\\uFF1Asurface\\u00B7Signal=7\u0022,\u0022\\u4E0E\\u6240\\u89C1\\u76F8\\u5BB9\\u7684\\u7EC4\\u5408 1/1\u0022]}",
+        "b": "{\u0022Candidates\u0022:[0],\u0022Credence\u0022:[[0,1]],\u0022Contradicted\u0022:false,\u0022Basis\u0022:[\u0022\\u4EB2\\u89C1\\uFF1Asurface\\u00B7Signal=7\u0022,\u0022\\u4E0E\\u6240\\u89C1\\u76F8\\u5BB9\\u7684\\u7EC4\\u5408 1/1\u0022]}",
+        "limitation": "Synthetic caller construction; does not assert that Core itself reads Essence."
+      }
+    },
+    {
+      "name": "history-loses-prior-rule-version",
+      "pass": true,
+      "evidence": {
+        "identicalRetainedHistory": "07EB10C48056FEE98FBE757C8A3A249A8222B5F1B9169E0BA7DAEFC764C78947",
+        "earlyScoreA": 1,
+        "earlyScoreB": 5,
+        "finalScoreA": 9,
+        "finalScoreB": 9
+      }
+    },
+    {
+      "name": "old-history-target-aliases-current-projection",
+      "pass": true,
+      "evidence": {
+        "recordedTime": 2,
+        "currentNameThroughOldEvent": "item-current",
+        "currentKindThroughOldEvent": "Body",
+        "currentParentThroughOldEvent": "area-b",
+        "retainedTagSnapshot": 7,
+        "currentTagThroughOldEvent": 9
+      }
+    },
+    {
+      "name": "forget-removes-history-instead-of-recording-tombstone",
+      "pass": true,
+      "evidence": {
+        "before": 4,
+        "after": 2,
+        "forgottenTargetStillRecorded": false
+      }
+    },
+    {
+      "name": "search-contract-has-no-stop-status",
+      "pass": true,
+      "evidence": {
+        "scenarios": [
+          {
+            "scenario": "ordinary-unresolved",
+            "actionBudget": 1,
+            "action": "inspect-neutral",
+            "prediction": 1,
+            "Iterations": 4,
+            "Nodes": 3,
+            "MaxDepth": 2,
+            "RemainingHypotheses": 2,
+            "Confidence": 0.5,
+            "resultFields": [
+              "Action",
+              "Prediction",
+              "Iterations",
+              "Nodes",
+              "MaxDepth",
+              "RemainingHypotheses",
+              "Confidence",
+              "Branches",
+              "Motives"
+            ]
+          },
+          {
+            "scenario": "zero-iterations",
+            "actionBudget": 1,
+            "action": null,
+            "prediction": 1,
+            "Iterations": 0,
+            "Nodes": 1,
+            "MaxDepth": 0,
+            "RemainingHypotheses": 2,
+            "Confidence": 0.5,
+            "resultFields": [
+              "Action",
+              "Prediction",
+              "Iterations",
+              "Nodes",
+              "MaxDepth",
+              "RemainingHypotheses",
+              "Confidence",
+              "Branches",
+              "Motives"
+            ]
+          },
+          {
+            "scenario": "zero-depth",
+            "actionBudget": 1,
+            "action": null,
+            "prediction": 1,
+            "Iterations": 4,
+            "Nodes": 1,
+            "MaxDepth": 0,
+            "RemainingHypotheses": 2,
+            "Confidence": 0.5,
+            "resultFields": [
+              "Action",
+              "Prediction",
+              "Iterations",
+              "Nodes",
+              "MaxDepth",
+              "RemainingHypotheses",
+              "Confidence",
+              "Branches",
+              "Motives"
+            ]
+          },
+          {
+            "scenario": "no-available-actions",
+            "actionBudget": 1,
+            "action": null,
+            "prediction": 1,
+            "Iterations": 4,
+            "Nodes": 1,
+            "MaxDepth": 0,
+            "RemainingHypotheses": 2,
+            "Confidence": 0.5,
+            "resultFields": [
+              "Action",
+              "Prediction",
+              "Iterations",
+              "Nodes",
+              "MaxDepth",
+              "RemainingHypotheses",
+              "Confidence",
+              "Branches",
+              "Motives"
+            ]
+          },
+          {
+            "scenario": "zero-action-budget",
+            "actionBudget": 0,
+            "action": "inspect-neutral",
+            "prediction": 1,
+            "Iterations": 4,
+            "Nodes": 3,
+            "MaxDepth": 2,
+            "RemainingHypotheses": 2,
+            "Confidence": 0.5,
+            "resultFields": [
+              "Action",
+              "Prediction",
+              "Iterations",
+              "Nodes",
+              "MaxDepth",
+              "RemainingHypotheses",
+              "Confidence",
+              "Branches",
+              "Motives"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty-case-model-is-untyped-exception",
+      "pass": true,
+      "evidence": {
+        "exception": "System.InvalidOperationException",
+        "Message": "Sequence contains no elements"
+      }
+    }
+  ]
+}

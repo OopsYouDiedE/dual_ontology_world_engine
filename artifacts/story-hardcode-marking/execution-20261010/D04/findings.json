@@ -1,0 +1,18 @@
+{
+  "task": "D04",
+  "mode": "DETECTION_ONLY",
+  "head": "7489db56a714724eb7cb735958dd879dc662d238",
+  "production_changes": false,
+  "candidate_contracts_approved": false,
+  "findings": [
+    {"id":"D04-01","topic":"core-hidden-truth-noninterference","state":"supported-in-neutral-runtime-probe","sources":["csharp/Reasoner.cs:68","csharp/DecisionSystem.cs:14"],"evidence":"probe-results-run-02.json"},
+    {"id":"D04-02","topic":"chapter2-oracle-input","state":"confirmed-source-dataflow-runtime-unverified","sources":["godot_csharp/scenes/Chapter2/Prototype/Case.cs:79","godot_csharp/scenes/Chapter2/Prototype/Case.cs:191","godot_csharp/scenes/Chapter2/Prototype/Case.cs:196","godot_csharp/scenes/Chapter2/Prototype/NightSnapshot.cs:30"]},
+    {"id":"D04-03","topic":"source-world-writeback","state":"none-observed-in-core-and-isolated-planner-deep-host-isolation-unverified","evidence":"probe-results-run-02.json"},
+    {"id":"D04-04","topic":"budget-stop-result","state":"confirmed-neutral-counterexample","sources":["godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs:16","godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs:248"],"evidence":"probe-results-run-02.json"},
+    {"id":"D04-05","topic":"historical-cognition-reconstruction","state":"confirmed-neutral-counterexample","sources":["csharp/Model.cs:163","csharp/Model.cs:225","csharp/Model.cs:239"],"evidence":"probe-results-run-02.json"},
+    {"id":"D04-06","topic":"inference-cache-version","state":"confirmed-source-key-does-not-include-values-or-version","sources":["godot_csharp/scenes/Chapter2/Prototype/Case.cs:188"]},
+    {"id":"D04-07","topic":"empty-case-result","state":"confirmed-untyped-exception","sources":["csharp/Reasoner.cs:96"],"evidence":"probe-results-run-02.json"}
+  ],
+  "approval_material":"candidate-contracts.md",
+  "unverified":["chapter2-Rebuild-deep-reference-isolation","production-prediction-generator","host-action-budget-enforcement","F01-consumer-map","level1","level2","level3","character-reasonableness","play-experience"]
+}

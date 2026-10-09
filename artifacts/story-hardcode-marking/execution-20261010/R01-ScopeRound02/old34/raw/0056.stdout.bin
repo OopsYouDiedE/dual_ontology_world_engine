@@ -1,0 +1,29 @@
+{
+  "task_id": "29_read_not_enforced",
+  "classification": "DETECTION_ONLY",
+  "decision": "PASS",
+  "base": "d4c107e54d3781dca5e3ccbd6d64192019be8242",
+  "head": "d4c107e54d3781dca5e3ccbd6d64192019be8242",
+  "commits_audited": 0,
+  "files_observed": 6,
+  "directories_observed": [
+    "allowed",
+    "allowed/sub",
+    "oracle",
+    "private"
+  ],
+  "changes": [],
+  "build_outputs": [],
+  "problems": [],
+  "snapshot_sha256": "039b2e3959a5fe4aff30ff880e27558c440b6363165048b6c98c0d2a7c90985e",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

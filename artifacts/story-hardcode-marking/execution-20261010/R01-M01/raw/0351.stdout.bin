@@ -1,0 +1,43 @@
+{
+  "task_id": "raw-byte-dirty",
+  "classification": "DETECTION_ONLY",
+  "decision": "DENY",
+  "base": "72c8055f56f63289a67484978132c6bad3f5f1ee",
+  "head": "48f7d30fa74bcd3f6b9a79ee1a77484b1d7b7c24",
+  "commits_audited": 1,
+  "files_observed": 4,
+  "directories_observed": [
+    "allowed",
+    "oracle",
+    "tests"
+  ],
+  "changes": [
+    {
+      "layer": "commit:48f7d30fa74bcd3f6b9a79ee1a77484b1d7b7c24",
+      "path": "allowed/item.txt",
+      "operation": "modify"
+    },
+    {
+      "layer": "working-tree+untracked+ignored",
+      "path": "tests/expected.txt",
+      "operation": "modify"
+    }
+  ],
+  "build_outputs": [],
+  "problems": [
+    "working-tree+untracked+ignored: protected path changed: tests/expected.txt",
+    "working-tree+untracked+ignored: ungranted modify: tests/expected.txt",
+    "integration requires raw-byte-clean tracked files and no undeclared untracked/ignored files"
+  ],
+  "snapshot_sha256": "d4cbacc8d6ccf35a34ab0d6168b1ff8b193d5742541310e42ab227203f5ddad6",
+  "external_gates": {
+    "read_acl": "NOT_ENFORCED",
+    "write_acl": "NOT_ENFORCED",
+    "lock_authenticity": "NOT_VERIFIED",
+    "approval_authenticity": "NOT_VERIFIED",
+    "merge_identity": "NOT_VERIFIED",
+    "semantic_review": "NOT_VERIFIED",
+    "immutable_review_snapshot": "NOT_ENFORCED"
+  },
+  "production_write_authorized": false
+}

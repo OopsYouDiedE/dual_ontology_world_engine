@@ -1,0 +1,62 @@
+{
+  "classification": "IMPLEMENTATION_SMOKE_ONLY",
+  "sealed_at": "2026-10-09T17:16:45.831214+00:00",
+  "cases": [
+    {
+      "path": "allowed/neutral[value].txt",
+      "required_decision": "PASS"
+    },
+    {
+      "path": "allowed/neutralv.txt",
+      "required_decision": "PASS"
+    },
+    {
+      "path": "allowed/neutral*.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/neutral?.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/neutral:extra.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "../neutral[value].txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/a\u0001b.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/a<b.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/a>b.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/a\"b.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/a|b.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed\\bad.txt",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/bad.",
+      "required_decision": "DENY"
+    },
+    {
+      "path": "allowed/NUL.txt",
+      "required_decision": "DENY"
+    }
+  ]
+}

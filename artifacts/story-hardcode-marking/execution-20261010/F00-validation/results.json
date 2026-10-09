@@ -1,0 +1,260 @@
+[
+  {
+    "name": "status-before",
+    "command": [
+      "git",
+      "status",
+      "--porcelain=v1"
+    ],
+    "started_utc": "2026-10-09T16:24:12.688605+00:00",
+    "elapsed_seconds": 0.078,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "status-before.stdout.log",
+    "stderr": "status-before.stderr.log"
+  },
+  {
+    "name": "tracked-diff-before",
+    "command": [
+      "git",
+      "diff",
+      "--name-status",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:24:12.775349+00:00",
+    "elapsed_seconds": 0.093,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "tracked-diff-before.stdout.log",
+    "stderr": "tracked-diff-before.stderr.log"
+  },
+  {
+    "name": "branch",
+    "command": [
+      "git",
+      "branch",
+      "--show-current"
+    ],
+    "started_utc": "2026-10-09T16:24:12.864737+00:00",
+    "elapsed_seconds": 0.063,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "branch.stdout.log",
+    "stderr": "branch.stderr.log"
+  },
+  {
+    "name": "head",
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:24:12.922596+00:00",
+    "elapsed_seconds": 0.047,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "head.stdout.log",
+    "stderr": "head.stderr.log"
+  },
+  {
+    "name": "python-version",
+    "command": [
+      "python",
+      "--version"
+    ],
+    "started_utc": "2026-10-09T16:24:12.978701+00:00",
+    "elapsed_seconds": 0.015,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "python-version.stdout.log",
+    "stderr": "python-version.stderr.log"
+  },
+  {
+    "name": "dotnet-info",
+    "command": [
+      "dotnet",
+      "--info"
+    ],
+    "started_utc": "2026-10-09T16:24:12.996974+00:00",
+    "elapsed_seconds": 0.625,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "dotnet-info.stdout.log",
+    "stderr": "dotnet-info.stderr.log"
+  },
+  {
+    "name": "core-build",
+    "command": [
+      "dotnet",
+      "build",
+      "csharp/Core.sln"
+    ],
+    "started_utc": "2026-10-09T16:24:13.631273+00:00",
+    "elapsed_seconds": 3.734,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "core-build.stdout.log",
+    "stderr": "core-build.stderr.log"
+  },
+  {
+    "name": "host-build",
+    "command": [
+      "dotnet",
+      "build",
+      "godot_csharp/DualOntologyWorldEngine.sln"
+    ],
+    "started_utc": "2026-10-09T16:24:17.370566+00:00",
+    "elapsed_seconds": 8.875,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "host-build.stdout.log",
+    "stderr": "host-build.stderr.log"
+  },
+  {
+    "name": "story-check",
+    "command": [
+      "python",
+      "godot_csharp/tools/compile_story.py",
+      "--check"
+    ],
+    "started_utc": "2026-10-09T16:24:26.253545+00:00",
+    "elapsed_seconds": 0.656,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "story-check.stdout.log",
+    "stderr": "story-check.stderr.log"
+  },
+  {
+    "name": "verify",
+    "command": [
+      "python",
+      "tools/verify.py",
+      "--skip",
+      "gallery",
+      "--keep-going"
+    ],
+    "started_utc": "2026-10-09T16:27:05.223437+00:00",
+    "elapsed_seconds": 5.812,
+    "exit_code": 1,
+    "timed_out": false,
+    "stdout": "verify.stdout.log",
+    "stderr": "verify.stderr.log"
+  },
+  {
+    "name": "status-after",
+    "command": [
+      "git",
+      "status",
+      "--porcelain=v1"
+    ],
+    "started_utc": "2026-10-09T16:27:22.724390+00:00",
+    "elapsed_seconds": 0.094,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "status-after.stdout.log",
+    "stderr": "status-after.stderr.log"
+  },
+  {
+    "name": "tracked-diff-after",
+    "command": [
+      "git",
+      "diff",
+      "--name-status",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:27:22.813136+00:00",
+    "elapsed_seconds": 0.062,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "tracked-diff-after.stdout.log",
+    "stderr": "tracked-diff-after.stderr.log"
+  },
+  {
+    "name": "head-after",
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:27:22.882313+00:00",
+    "elapsed_seconds": 0.047,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "head-after.stdout.log",
+    "stderr": "head-after.stderr.log"
+  },
+  {
+    "name": "godot-version",
+    "command": [
+      "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+      "--version"
+    ],
+    "started_utc": "2026-10-09T16:29:01.995603+00:00",
+    "elapsed_seconds": 0.313,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "godot-version.stdout.log",
+    "stderr": "godot-version.stderr.log"
+  },
+  {
+    "name": "verify-console",
+    "command": [
+      "python",
+      "tools/verify.py",
+      "--skip",
+      "gallery",
+      "--keep-going",
+      "--godot",
+      "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe"
+    ],
+    "started_utc": "2026-10-09T16:29:02.320116+00:00",
+    "elapsed_seconds": 437.562,
+    "exit_code": 1,
+    "timed_out": false,
+    "stdout": "verify-console.stdout.log",
+    "stderr": "verify-console.stderr.log"
+  },
+  {
+    "name": "status-after-console",
+    "command": [
+      "git",
+      "status",
+      "--porcelain=v1"
+    ],
+    "started_utc": "2026-10-09T16:37:01.351345+00:00",
+    "elapsed_seconds": 0.078,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "status-after-console.stdout.log",
+    "stderr": "status-after-console.stderr.log"
+  },
+  {
+    "name": "tracked-diff-after-console",
+    "command": [
+      "git",
+      "diff",
+      "--name-status",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:37:01.422775+00:00",
+    "elapsed_seconds": 0.062,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "tracked-diff-after-console.stdout.log",
+    "stderr": "tracked-diff-after-console.stderr.log"
+  },
+  {
+    "name": "head-after-console",
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "started_utc": "2026-10-09T16:37:01.486369+00:00",
+    "elapsed_seconds": 0.047,
+    "exit_code": 0,
+    "timed_out": false,
+    "stdout": "head-after-console.stdout.log",
+    "stderr": "head-after-console.stderr.log"
+  }
+]

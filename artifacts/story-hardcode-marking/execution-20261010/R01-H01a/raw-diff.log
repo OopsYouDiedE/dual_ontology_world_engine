@@ -1,0 +1,13 @@
+diff --git a/godot_csharp/scenes/Shared/Story/WorldBehavior.cs b/godot_csharp/scenes/Shared/Story/WorldBehavior.cs
+index 7677f4e4..bd24a3ec 100644
+--- a/godot_csharp/scenes/Shared/Story/WorldBehavior.cs
++++ b/godot_csharp/scenes/Shared/Story/WorldBehavior.cs
+@@ -387,7 +387,7 @@ public sealed partial class WorldSession
+                 if (step.Op == "line")
+                 {
+                     if (step.Text.Contains("{{", StringComparison.Ordinal)) throw new NotSupportedException("World candidate dialogue must be literal semantic text.");
+-                    responses.Add(new() { Op = "line", Speaker = step.Speaker, Mood = step.Mood, Text = step.Text, VoiceClip = step.VoiceClip });
++                    responses.Add(new() { Op = "line", Speaker = step.Speaker, Mood = step.Mood, Text = step.Text, VoiceClip = step.VoiceClip, LineId = step.LineId, SourceId = step.SourceId });
+                     continue;
+                 }
+                 if (step.Op != "call") throw new NotSupportedException("Candidates contain only flat action calls and attached lines.");

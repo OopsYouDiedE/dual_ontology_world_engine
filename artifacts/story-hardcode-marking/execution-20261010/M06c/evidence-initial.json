@@ -1,0 +1,1366 @@
+{
+  "task": "M06c",
+  "schema": "M06c.readonly-evidence.v1",
+  "head": "7489db56a714724eb7cb735958dd879dc662d238",
+  "branch": "codex/solution-review-audit-20261010",
+  "isolation": "DETECTION_ONLY: shared host identity and filesystem; no enforced read ACL or protected merge identity.",
+  "collection": "Read-only bytes, PNG IHDR, source geometry checks; never execute generators.",
+  "source_files": [
+    {
+      "path": "godot_csharp/tools/build_breakfast_exchange.gd",
+      "exists": true,
+      "bytes": 3535,
+      "sha256": "2cae920465c1d67c48f97e4d2a2be0d082460314ee5eeb128fa4c4a77816c4c9",
+      "line_count": 61,
+      "matches_head_bytes": true,
+      "markers": [
+        {
+          "line": 17,
+          "id": "CSH-028",
+          "kind": "schema",
+          "scope": "tool",
+          "text": "# STORY-HARDCODE[CSH-028][schema][tool]: 素材工具为早餐交换场景绑定人物姿态、桌面与汤碗资源；不推进剧情或映射答案。"
+        }
+      ]
+    },
+    {
+      "path": "godot_csharp/tools/build_story_tiles.gd",
+      "exists": true,
+      "bytes": 9389,
+      "sha256": "e51e824cc4cb63e4f3a760327d77e9114ebeb9fb448dba3292caca2f13b760f2",
+      "line_count": 183,
+      "matches_head_bytes": false,
+      "markers": [
+        {
+          "line": 23,
+          "id": "CSH-030",
+          "kind": "schema",
+          "scope": "tool",
+          "text": "# STORY-HARDCODE[CSH-030][schema][tool]: 资产工具固定生成项目故事场景道具（钟、传送门、罗盘、早餐桌、书柜、客厅钢琴及横幅等）。"
+        }
+      ]
+    }
+  ],
+  "direct_source_document_metadata": [
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.md",
+      "exists": true,
+      "bytes": 7048,
+      "sha256": "abfde786ca1ff19f2406bb80cdb5ac418a82b69ad212a991102119ee3acdb6a0"
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/AcademyTileMap/README.md",
+      "exists": true,
+      "bytes": 739,
+      "sha256": "8e1db11fe60eb365e9da76e21077867d9600499eff2317a18115abfe84e0a9f5"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Characters/animation_v2/README.md",
+      "exists": true,
+      "bytes": 7425,
+      "sha256": "982880ed9a3e202c04e83a0a4677c41f93b7c34f1b1658d5889e7591f9072ad4"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/README.md",
+      "exists": true,
+      "bytes": 2953,
+      "sha256": "9c36c17efcb113c12efe8f65b3077705ceb7b76819962d7fc10108669dfcaef9"
+    }
+  ],
+  "task_manifest_snapshot": {
+    "id": "M06c",
+    "status": "NOT_STARTED",
+    "execution_mode": "READ_ONLY",
+    "role": "asset_auditor",
+    "source_groups": [
+      "S20"
+    ],
+    "depends_on": [
+      "F00"
+    ],
+    "read_scope_hints": [
+      "asset_builders"
+    ],
+    "candidate_write_paths_NOT_AUTHORIZED": [],
+    "active_write_paths": [],
+    "candidate_branch_NOT_CREATED": "agent/M06c-work",
+    "branch_base_sha": null,
+    "scope_lock_issued": false,
+    "acceptance": [
+      "preserve_valid_artsourcing",
+      "separate_narrative_content"
+    ],
+    "notes": ""
+  },
+  "original_issue_map_records": [
+    {
+      "id": "CSH-028",
+      "group": "S20",
+      "kind": "schema",
+      "scope": "tool",
+      "original_commit": "b608f5b6",
+      "original_path": "godot_csharp/tools/build_breakfast_exchange.gd",
+      "original_line": 17,
+      "current_head": "7489db56a714724eb7cb735958dd879dc662d238",
+      "current_path": "godot_csharp/tools/build_breakfast_exchange.gd",
+      "current_lines": [
+        17
+      ],
+      "location_status": "EXACT",
+      "original_snippet": "# STORY-HARDCODE[CSH-028][schema][tool]: 素材工具为早餐交换场景绑定人物姿态、桌面与汤碗资源；不推进剧情或映射答案。",
+      "current_snippets": [
+        "# STORY-HARDCODE[CSH-028][schema][tool]: 素材工具为早餐交换场景绑定人物姿态、桌面与汤碗资源；不推进剧情或映射答案。"
+      ],
+      "file_sha256": "2cae920465c1d67c48f97e4d2a2be0d082460314ee5eeb128fa4c4a77816c4c9",
+      "root_cause": "S20",
+      "proposed_behavior": "保留资产生产中的造型与姿态配方",
+      "tasks": [
+        "C08",
+        "M06a",
+        "M06c"
+      ],
+      "resolution": "BLOCKED",
+      "resolution_reason": "Inventory only; no production migration authorized or verified in this run.",
+      "code_commit": null,
+      "verification_counterexample": null,
+      "reviewer": null,
+      "source_evidence": "artifacts/story-hardcode-marking/solution-evidence.md"
+    },
+    {
+      "id": "CSH-030",
+      "group": "S20",
+      "kind": "schema",
+      "scope": "tool",
+      "original_commit": "b608f5b6",
+      "original_path": "godot_csharp/tools/build_story_tiles.gd",
+      "original_line": 23,
+      "current_head": "7489db56a714724eb7cb735958dd879dc662d238",
+      "current_path": "godot_csharp/tools/build_story_tiles.gd",
+      "current_lines": [
+        23
+      ],
+      "location_status": "EXACT",
+      "original_snippet": "# STORY-HARDCODE[CSH-030][schema][tool]: 资产工具固定生成项目故事场景道具（钟、传送门、罗盘、早餐桌、书柜、客厅钢琴及横幅等）。",
+      "current_snippets": [
+        "# STORY-HARDCODE[CSH-030][schema][tool]: 资产工具固定生成项目故事场景道具（钟、传送门、罗盘、早餐桌、书柜、客厅钢琴及横幅等）。"
+      ],
+      "file_sha256": "e51e824cc4cb63e4f3a760327d77e9114ebeb9fb448dba3292caca2f13b760f2",
+      "root_cause": "S20",
+      "proposed_behavior": "保留资产生产中的造型与姿态配方",
+      "tasks": [
+        "C08",
+        "M06a",
+        "M06c"
+      ],
+      "resolution": "BLOCKED",
+      "resolution_reason": "Inventory only; no production migration authorized or verified in this run.",
+      "code_commit": null,
+      "verification_counterexample": null,
+      "reviewer": null,
+      "source_evidence": "artifacts/story-hardcode-marking/solution-evidence.md"
+    }
+  ],
+  "compact_prop_target_sizes": {
+    "clock": [
+      96,
+      128
+    ],
+    "portal": [
+      64,
+      128
+    ],
+    "window": [
+      32,
+      128
+    ],
+    "compass": [
+      128,
+      128
+    ],
+    "bench": [
+      80,
+      48
+    ],
+    "statue": [
+      40,
+      64
+    ],
+    "tree": [
+      32,
+      64
+    ],
+    "hearth": [
+      224,
+      128
+    ],
+    "pantry": [
+      64,
+      96
+    ],
+    "breakfast_table": [
+      224,
+      64
+    ],
+    "prep_island": [
+      192,
+      64
+    ],
+    "closed_door": [
+      64,
+      96
+    ],
+    "bookcase": [
+      64,
+      96
+    ],
+    "side_table": [
+      64,
+      64
+    ]
+  },
+  "direct_input_files": [
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.png",
+      "exists": true,
+      "bytes": 1036676,
+      "sha256": "b7ae572d3692177f6f493f55ddea38ee920bea1ebdc515fa7769338fe3b23ab4",
+      "png_ihdr": {
+        "width": 2172,
+        "height": 724,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange_between.png",
+      "exists": true,
+      "bytes": 871702,
+      "sha256": "5e784c0fc513284508b1dd691fcfea1e62ddd07f497d9928bbeb2538bbea3ed2",
+      "png_ihdr": {
+        "width": 1223,
+        "height": 1286,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/breakfast_table_clear.png",
+      "exists": true,
+      "bytes": 668338,
+      "sha256": "82340ed779fba483d16c6ac933d52c2fec0f77c4916b7b9aaae307dd10674815",
+      "png_ihdr": {
+        "width": 2167,
+        "height": 726,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/breakfast_soup_bowl_source.png",
+      "exists": true,
+      "bytes": 348870,
+      "sha256": "a1ff4178c2e8c679b2656b7b3cbf749bd4fd72c71a4b42c50a0db7d16e23ac70",
+      "png_ihdr": {
+        "width": 1254,
+        "height": 1254,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/AcademyTileMap/Academy_Inside_A2.png",
+      "exists": true,
+      "bytes": 767728,
+      "sha256": "2afe680aff65679ad68da43b632026b4ce81d19a28c918b7b1283f3b2cf4d642",
+      "png_ihdr": {
+        "width": 768,
+        "height": 576,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_parlor_projection.png",
+      "exists": true,
+      "bytes": 1509552,
+      "sha256": "918323066ae413ede260f0c3cadd9e4cd4f279967a5e72acbf9f236145eb67b0",
+      "png_ihdr": {
+        "width": 1536,
+        "height": 1024,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_classroom_furniture.png",
+      "exists": true,
+      "bytes": 514671,
+      "sha256": "27411b79888cb605e3949d6490c58e8f80dffecbbbfa2c4782b611c698c288d1",
+      "png_ihdr": {
+        "width": 1254,
+        "height": 1254,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/clock.png",
+      "exists": true,
+      "bytes": 112242,
+      "sha256": "bdda43ed381537ff19dedf81e4a2238e6bfe2b13c6eb0b2eb3eaef12bf719c0c",
+      "png_ihdr": {
+        "width": 224,
+        "height": 224,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/portal.png",
+      "exists": true,
+      "bytes": 42888,
+      "sha256": "f3eea8a0b9ebef5e9aa055bc916cc34e9fa391955f699d25475a5f06a69177be",
+      "png_ihdr": {
+        "width": 128,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/window.png",
+      "exists": true,
+      "bytes": 20861,
+      "sha256": "f19f2d0a23a3327009541e997c0b50344a1e74900f68a468da04cac23a8dd183",
+      "png_ihdr": {
+        "width": 64,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/compass.png",
+      "exists": true,
+      "bytes": 61195,
+      "sha256": "50a4a71bf0b39c37d964a892f09e52477c4dfc5c453be6ac2f15ebc0e0b5eb7d",
+      "png_ihdr": {
+        "width": 192,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/bench.png",
+      "exists": true,
+      "bytes": 10141,
+      "sha256": "9de20f31e383db3b34a028290beb111f5584b63b77604e12859873b658b2ef86",
+      "png_ihdr": {
+        "width": 128,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/statue.png",
+      "exists": true,
+      "bytes": 16288,
+      "sha256": "6f7ed922865d6a4eadf70708b3d448eea9cbc959374076d7da2517a2e55a876e",
+      "png_ihdr": {
+        "width": 64,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/tree.png",
+      "exists": true,
+      "bytes": 12809,
+      "sha256": "47bb92205a08d15b860f75947503474c7377a21945757e9df295a2c7e39e489f",
+      "png_ihdr": {
+        "width": 64,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/hearth.png",
+      "exists": true,
+      "bytes": 130519,
+      "sha256": "802b9c02ddf1b8fe7bc139f279accfecb606b87e8032058137bf99afee7b17ac",
+      "png_ihdr": {
+        "width": 384,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/pantry.png",
+      "exists": true,
+      "bytes": 33879,
+      "sha256": "d5f8859dd90027409b792b3c1eccf1df1fa8d09eee8662290e289dc82de1b3d0",
+      "png_ihdr": {
+        "width": 96,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/breakfast_table.png",
+      "exists": true,
+      "bytes": 69897,
+      "sha256": "63ef11f4bf1ca6d6b449a770c3253ad3fd255b3e9b884520743d1d3dbe6afddf",
+      "png_ihdr": {
+        "width": 448,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/prep_island.png",
+      "exists": true,
+      "bytes": 74605,
+      "sha256": "3f31c4114602db0df1ffafe7a7ca577ebe0f391c6d9bf6f0212cd13442389bc3",
+      "png_ihdr": {
+        "width": 352,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/closed_door.png",
+      "exists": true,
+      "bytes": 35173,
+      "sha256": "95bea03109337a67a90d1c9e3a0e4d704d261467ce8e74936fc35714eb678cce",
+      "png_ihdr": {
+        "width": 128,
+        "height": 192,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/bookcase.png",
+      "exists": true,
+      "bytes": 10588,
+      "sha256": "ac7fd9f0b399db646b69604d5264624087532222e768730be74556aaad9551c0",
+      "png_ihdr": {
+        "width": 64,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/side_table.png",
+      "exists": true,
+      "bytes": 20549,
+      "sha256": "e4707d8fb1029f2a5889859f7942b566b33fba04269444b419bb888802c293f0",
+      "png_ihdr": {
+        "width": 160,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/shot01_banner_1.png",
+      "exists": true,
+      "bytes": 14283,
+      "sha256": "1c770cf3ba9918bb30f5891739bd0150114475fa4f4c59e16c8a24ae5a5dc27d",
+      "png_ihdr": {
+        "width": 64,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/shot01_banner_2.png",
+      "exists": true,
+      "bytes": 14252,
+      "sha256": "e608d431a6749fef4bba7a29239a542d654a65e6043647ddee957af00d9e9a1a",
+      "png_ihdr": {
+        "width": 64,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/shot01_banner_3.png",
+      "exists": true,
+      "bytes": 14297,
+      "sha256": "5909757c5415bf134321c3385d7b81bd0778e1fd79d5bf216d41f4beaa2a8324",
+      "png_ihdr": {
+        "width": 64,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    }
+  ],
+  "declared_output_files": [
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Characters/animation_v2/breakfast_exchange.png",
+      "exists": true,
+      "bytes": 34357,
+      "sha256": "007886cf927b65155467b3fd9da24d98acc60f12eb83e5c66ee2a54b86bbabbe",
+      "png_ihdr": {
+        "width": 512,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/breakfast_table_clear.res",
+      "exists": true,
+      "bytes": 57810,
+      "sha256": "7a7341cf10760db2d9904781c71c0ffe1372aaa5bcdf627dd71d3efd1ac84738"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/breakfast_exchange_bowl.res",
+      "exists": true,
+      "bytes": 1490,
+      "sha256": "8e9647838284ceb4ea6410a405a699383fb4066326f6ac4e752cadcce0bdc11f"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_clock.png",
+      "exists": true,
+      "bytes": 24460,
+      "sha256": "57a328777514694ab9cd6a9ac198d147454ed0ecb372ec30311b72f74aaaf07b",
+      "png_ihdr": {
+        "width": 96,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_clock.res",
+      "exists": true,
+      "bytes": 49618,
+      "sha256": "660fd3bd4ac546ef362f06133447eac61960a5d889f9e8a142ca75ad328e2e13"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_portal.png",
+      "exists": true,
+      "bytes": 12365,
+      "sha256": "794566137792ebf6631f9f3c466e09e973b85706fbd0eb969e6ba82f54ddb14e",
+      "png_ihdr": {
+        "width": 64,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_portal.res",
+      "exists": true,
+      "bytes": 33234,
+      "sha256": "819f6683af9befcda2c291d4eadeeaa3b9a9b4608d23541d5f92c792c8c2051e"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_window.png",
+      "exists": true,
+      "bytes": 6210,
+      "sha256": "6542d6b22b08a9585affd4f98a2195272ad99a0d1559b83d8f444fbb318d617e",
+      "png_ihdr": {
+        "width": 32,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_window.res",
+      "exists": true,
+      "bytes": 16850,
+      "sha256": "936df5b854c4c8dfb410d7b82433884dd29f206ae26c379658156b2043e80bbb"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_compass.png",
+      "exists": true,
+      "bytes": 30314,
+      "sha256": "384152b461938e43e8b596fd487a618dfbd32541a331aff05109bda2fd2b756a",
+      "png_ihdr": {
+        "width": 128,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_compass.res",
+      "exists": true,
+      "bytes": 66002,
+      "sha256": "8ee1a09538747c72ecd0fc4431b1d7044c91d13a6fe9ba1f2847ad1be8286222"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_bench.png",
+      "exists": true,
+      "bytes": 4630,
+      "sha256": "2ea42150fd000575fd3d252e6238e5c76e346c342d79338b78e8708dd0ad1383",
+      "png_ihdr": {
+        "width": 80,
+        "height": 48,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_bench.res",
+      "exists": true,
+      "bytes": 15826,
+      "sha256": "a3c1c2e8dff172eee7b86797eb60bacc85697d468b22554b24f000da00a6a5b0"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_statue.png",
+      "exists": true,
+      "bytes": 4997,
+      "sha256": "5cce12802d6572765b859d93824b8245c65c56ce884428cb91723b908a31262f",
+      "png_ihdr": {
+        "width": 40,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_statue.res",
+      "exists": true,
+      "bytes": 10706,
+      "sha256": "559c5149d775572ac975730deb33f49ee414c6cc08b11fc8f2d37c0b69f54719"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_tree.png",
+      "exists": true,
+      "bytes": 3767,
+      "sha256": "50b6faf0bca3e52aec79283789b672b7caf2d1b16ef15a8404cc5d19c3c063bf",
+      "png_ihdr": {
+        "width": 32,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_tree.res",
+      "exists": true,
+      "bytes": 8658,
+      "sha256": "8deb958ac97bd687cfacef136fdd5021222440b8cc776f017b866f78c8e04245"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_hearth.png",
+      "exists": true,
+      "bytes": 49150,
+      "sha256": "c8f87ed537e9379bbb57942c80d1a397f9759ab735c4b43eb6be61eaa8311008",
+      "png_ihdr": {
+        "width": 224,
+        "height": 128,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_hearth.res",
+      "exists": true,
+      "bytes": 115154,
+      "sha256": "2c850b42867843771f47329ea06cbc15111d793152dc20b44bb0203cf8abc9c3"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_pantry.png",
+      "exists": true,
+      "bytes": 9937,
+      "sha256": "1f1f8fc8ae9fb51d33f8fa6efbc4d2d2aca2056849a7bbe3748d343d58403fa3",
+      "png_ihdr": {
+        "width": 64,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_pantry.res",
+      "exists": true,
+      "bytes": 25042,
+      "sha256": "df94ef2a70a59baf372199a236d27da45e2db76df24e82d28095d6abb8df7737"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_breakfast_table.png",
+      "exists": true,
+      "bytes": 19555,
+      "sha256": "06690b021fc3a8ca155a3e34f975433e333b6b237bbc2e60c07989f0599b7459",
+      "png_ihdr": {
+        "width": 224,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_breakfast_table.res",
+      "exists": true,
+      "bytes": 57810,
+      "sha256": "34729b711143e40de64c52aa1785a99737affc1655ac449516b7f42419769139"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_prep_island.png",
+      "exists": true,
+      "bytes": 22283,
+      "sha256": "6f9f8913c67977d372bf71a9edcbbcdd4954d7b0f56c74fce1bad169dc56670a",
+      "png_ihdr": {
+        "width": 192,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_prep_island.res",
+      "exists": true,
+      "bytes": 49618,
+      "sha256": "d5e17a733b06bcafad3bffb7799df30a35c97e6bee23ed57a32775ed7c964580"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_closed_door.png",
+      "exists": true,
+      "bytes": 10289,
+      "sha256": "a60df97d67a76d645ee40e31690794fd81eb1e4e25619c24d7464f988a579893",
+      "png_ihdr": {
+        "width": 64,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_closed_door.res",
+      "exists": true,
+      "bytes": 25042,
+      "sha256": "4609ebb3bebbe071510b6ca123e9b90a622cc68fac1fe027328f55a69c7621ad"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_bookcase.png",
+      "exists": true,
+      "bytes": 10588,
+      "sha256": "ac7fd9f0b399db646b69604d5264624087532222e768730be74556aaad9551c0",
+      "png_ihdr": {
+        "width": 64,
+        "height": 96,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_bookcase.res",
+      "exists": true,
+      "bytes": 25042,
+      "sha256": "40c47e8351d12d31275644a3a029f30b2e20905760b0129a2c02f298e25f9a76"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_side_table.png",
+      "exists": true,
+      "bytes": 3981,
+      "sha256": "24d94cbdca105f1a2a8f8630ac3ed2218d0281fdb912aed196e0bbec2f41a871",
+      "png_ihdr": {
+        "width": 64,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_side_table.res",
+      "exists": true,
+      "bytes": 16850,
+      "sha256": "6f9ef8463a7641521ae9b23ee173aeeb8257e7acaae47317274f35a0ff789db6"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_soup_bowl.png",
+      "exists": true,
+      "bytes": 1084,
+      "sha256": "fb7e7c4b99fd359076c0b94ffb9596b2929c6e9b7a54054d05c3c97eb4e6aae0",
+      "png_ihdr": {
+        "width": 32,
+        "height": 32,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_soup_bowl.res",
+      "exists": true,
+      "bytes": 4562,
+      "sha256": "312cb88e9e6f28c768a40d76242c15cbfb525ddb22b72d1595652d580aa384ed"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_sofa.png",
+      "exists": true,
+      "bytes": 8663,
+      "sha256": "f18dec377a87e22492f23ae1b4db7991ffae97fa08eabcff96900766b6694bb6",
+      "png_ihdr": {
+        "width": 96,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_sofa.res",
+      "exists": true,
+      "bytes": 25042,
+      "sha256": "d1b6811fff791cad9203103772cea3fa3dec9026748272c66c1e5e995271465a"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_armchair.png",
+      "exists": true,
+      "bytes": 4474,
+      "sha256": "4212d0b4d360a102cf008cc2ae909d066f6da09da37a90b0a27f498d2aa1241e",
+      "png_ihdr": {
+        "width": 48,
+        "height": 56,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_armchair.res",
+      "exists": true,
+      "bytes": 11218,
+      "sha256": "62749db0511c26ba47b50da018f1ea1f1e2085fd7e463f9c3df7b8a6e41b572e"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_tea_table.png",
+      "exists": true,
+      "bytes": 3683,
+      "sha256": "19f6d5d843df71c36c30dff0dc776da29cc7feda655286c05c18c2174faf8029",
+      "png_ihdr": {
+        "width": 64,
+        "height": 40,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_tea_table.res",
+      "exists": true,
+      "bytes": 10706,
+      "sha256": "209d237551a1c379bdfda48bf3a80ce67e7afbd35e9bcd27f43bd509efd5eae7"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_fireplace.png",
+      "exists": true,
+      "bytes": 11320,
+      "sha256": "e950adda94a4f8a39db5a959c9edfdbaa524e758fa87c931e332e7140039d5e3",
+      "png_ihdr": {
+        "width": 80,
+        "height": 80,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_fireplace.res",
+      "exists": true,
+      "bytes": 26066,
+      "sha256": "6eb5bd64603214065f99e7554c4c8d92f73b18ccb6aa63069f65c3cc33b95eec"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_parlor_bookcase.png",
+      "exists": true,
+      "bytes": 7377,
+      "sha256": "140011b9627de07918d4f77ee66ad42c12d8b801a8ee54ffdd936f2d115b527b",
+      "png_ihdr": {
+        "width": 48,
+        "height": 80,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_parlor_bookcase.res",
+      "exists": true,
+      "bytes": 15826,
+      "sha256": "2846835888e605075425e96a5e73f7a0e4445db84e84c1b339843ee72dc8a580"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_parlor_piano.png",
+      "exists": true,
+      "bytes": 9346,
+      "sha256": "b713156e4a1a91c6a4cace719c416ce50d8bfd78f3474ed8166e2d3836b50700",
+      "png_ihdr": {
+        "width": 80,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_parlor_piano.res",
+      "exists": true,
+      "bytes": 20946,
+      "sha256": "45c482f770ed67847b6f9fa47000cb31e878df0cf05bbd0999b5d3f2f3b61793"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_board.png",
+      "exists": true,
+      "bytes": 12486,
+      "sha256": "40f4f18282ee78ab337a525e2931394c1f7f971e2f8d53a47f0eb0127318f0e7",
+      "png_ihdr": {
+        "width": 128,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_board.res",
+      "exists": true,
+      "bytes": 33234,
+      "sha256": "cb90fb64036c3827b9d4057c086af5d05a1624098735b455741d89bc222d14e3"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_lectern.png",
+      "exists": true,
+      "bytes": 4791,
+      "sha256": "c895177794984830c582e53e110b64643819097cd439554980b9f7d288333c14",
+      "png_ihdr": {
+        "width": 96,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_lectern.res",
+      "exists": true,
+      "bytes": 25042,
+      "sha256": "1916da7d84c2a1191b67d9891f04fc41533ee680b79c2749a0dd399768060999"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_desk.png",
+      "exists": true,
+      "bytes": 4325,
+      "sha256": "f8667be3e40f6be3d50a4f595d68da90b248f2d2db76af36f0b945278f0428ee",
+      "png_ihdr": {
+        "width": 64,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_desk.res",
+      "exists": true,
+      "bytes": 16850,
+      "sha256": "d536c01f845fcd09e7a2a3549739a88ea4c8e7754ddabcdc41c7f97c3e8e82fc"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_chair.png",
+      "exists": true,
+      "bytes": 2610,
+      "sha256": "1dd99d8f250222ae74192a4fcaeba130e93ca8d4e8ab18a1d1c753def40d5e9c",
+      "png_ihdr": {
+        "width": 32,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/classroom_chair.res",
+      "exists": true,
+      "bytes": 8658,
+      "sha256": "978a8ba393d630ed72cb048108cc01697087440afcee6219b4b760082c9f4cd6"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/stone_slabs.png",
+      "exists": true,
+      "bytes": 2414,
+      "sha256": "d2c1b243536fee3e0df44d97e4690119ffe2bf9eb7b4e93ba60fc122b5c4f406",
+      "png_ihdr": {
+        "width": 64,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/stone_slabs.res",
+      "exists": true,
+      "bytes": 16850,
+      "sha256": "55ba0a377d087dfb449619e725613d29639c64ac066b1a7abdbf2c3ee4db09c7"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_1.png",
+      "exists": true,
+      "bytes": 4244,
+      "sha256": "adcb74b150f120619245c070e02c204b5ffbee7b20d070a49fed68ac001d81f5",
+      "png_ihdr": {
+        "width": 32,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_1.res",
+      "exists": true,
+      "bytes": 8658,
+      "sha256": "9e59a0a6401e2653d371b4b2fc5edb795ad38716196738817669ae07b753d324"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_2.png",
+      "exists": true,
+      "bytes": 4221,
+      "sha256": "055a589b60def46c208d50156586bf4f2f8f62ce05a0a52d252d3f1811c6edeb",
+      "png_ihdr": {
+        "width": 32,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_2.res",
+      "exists": true,
+      "bytes": 8658,
+      "sha256": "a6bf3a31cf3241b79a9d7233bd87bc4b0619159bfbd131c2162c2059a1d6f835"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_3.png",
+      "exists": true,
+      "bytes": 4363,
+      "sha256": "2f84f1bc9b47f06a7baf5f116896536e71bb93d01f22876e554407f1e141055e",
+      "png_ihdr": {
+        "width": 32,
+        "height": 64,
+        "bit_depth": 8,
+        "color_type": 6,
+        "compression": 0,
+        "filter_method": 0,
+        "interlace": 0
+      }
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/story_banner_3.res",
+      "exists": true,
+      "bytes": 8658,
+      "sha256": "d30f0bb982d5b20697b641c7cba9d068f364b3c7a8c381efccdc57d5a547f7bb"
+    }
+  ],
+  "static_geometry_checks": [
+    {
+      "kind": "source_grid_divisible",
+      "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.png",
+      "columns": 6,
+      "rows": 2,
+      "pass": true
+    },
+    {
+      "kind": "source_grid_divisible",
+      "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange_between.png",
+      "columns": 2,
+      "rows": 2,
+      "pass": false
+    },
+    {
+      "kind": "source_grid_divisible",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_parlor_projection.png",
+      "columns": 3,
+      "rows": 2,
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/AcademyTileMap/Academy_Inside_A2.png",
+      "name": "stone_slabs",
+      "rectangle": [
+        288,
+        432,
+        96,
+        96
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_parlor_projection.png",
+      "name": "sofa",
+      "rectangle": [
+        100,
+        120,
+        445,
+        285
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_parlor_projection.png",
+      "name": "armchair",
+      "rectangle": [
+        650,
+        120,
+        250,
+        285
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_classroom_furniture.png",
+      "name": "classroom_board",
+      "rectangle": [
+        0,
+        0,
+        800,
+        627
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_classroom_furniture.png",
+      "name": "classroom_lectern",
+      "rectangle": [
+        800,
+        350,
+        454,
+        277
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_classroom_furniture.png",
+      "name": "classroom_desk",
+      "rectangle": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "pass": true
+    },
+    {
+      "kind": "explicit_crop_inside_source",
+      "path": "godot_csharp/AssetsSource/Internal/Props/story_classroom_furniture.png",
+      "name": "classroom_chair",
+      "rectangle": [
+        627,
+        627,
+        627,
+        627
+      ],
+      "pass": true
+    }
+  ],
+  "summary": {
+    "source_files": 2,
+    "markers": 2,
+    "compact_props": 14,
+    "direct_inputs": 24,
+    "declared_outputs": 61,
+    "missing_inputs": [],
+    "missing_existing_outputs": [],
+    "failed_static_geometry_checks": [
+      {
+        "kind": "source_grid_divisible",
+        "path": "godot_csharp/AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange_between.png",
+        "columns": 2,
+        "rows": 2,
+        "pass": false
+      }
+    ],
+    "source_matches_head": false
+  },
+  "not_executed": [
+    "asset_generation",
+    "resource_import",
+    "dotnet_build",
+    "automated_regression",
+    "level_1",
+    "level_2",
+    "level_3"
+  ],
+  "not_proved": [
+    "pixel_alpha_bounds",
+    "sprite_cell_fit",
+    "animation_continuity",
+    "runtime_resource_consumers",
+    "byte_identical_regeneration",
+    "design_compliance",
+    "behavior_reasonableness",
+    "play_experience"
+  ]
+}
