@@ -1,0 +1,55 @@
+第一章领取柜交付报告
+
+完成情况
+- 新增80×32原生像素领取柜：四扇独立小门、纸质名签与黄铜门件；32×40手摇试听机独立放在右侧。
+- 使用现有家具色板、轮廓与左上光照。生产源、运行时PNG逐字节一致；名签只画抽象墨痕，玩家文字读取剧本。
+- 柜脚底(500,120)，机器脚底(560,122)；领取锚点(500,132)保持不变并实际可达。柜顶与铜口留4px间隙；未遮住公告框、铜口或门道。
+- 家具使用共用Y排序、脚底实体碰撞与导航足迹。四人正式开场的自然interact_back伸手帧均在柜前正确显示。
+- 新增剧本词汇与短心声，修复普通家具悬停名称路径；热点标题优先，锁定或视野外不显示家具名称。
+- 修复stage_action过早归还人物占用导致侦探动作被idle覆盖的问题；走位至动作结束持续占用，finally归还，演出中的侦探关闭player_control。
+
+新增文件
+- godot_csharp/AssetsSource/Internal/Props/Chapter1Rewards/build.py:16、README.md、reward_locker.png、cylinder_player.png：生产配方与源图。
+- godot_csharp/ShareAsset/Internal/Props/Chapter1Rewards/：两张运行时PNG及.import、manifest.json、README.md。
+- godot_csharp/tools/verify_ch1_locker_ui.gd:1：正式Main连续开场的专项UI采集与机制检查。
+- artifacts/ch1-locker/：独立轮次证据、失败记录、截图与报告。
+
+修改文件
+- godot_csharp/tools/build_awakening_map.py:89：家具放置、家族路径、碰撞足迹。
+- godot_csharp/scenes/Awakening/Script/story/生态/物件名.story:14：两件家具名称。
+- godot_csharp/scenes/Awakening/Script/story/第一章/提示与站位.story:16：两件家具心声。
+- godot_csharp/scenes/Shared/Field/WorldView.gd:504：普通家具悬停名称。
+- godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs:174、Chapter1Session.cs:470：演出占用及玩家控制权。
+- godot_csharp/AGENTS.md：同步上述机制、资产重建与专项验收方法。
+- 工具重生成：scenes/Awakening/Awakening.tscn、map_layout.tres、Script/generated_awakening_content.json、generated_awakening_layout.json，以及ShareAsset/Internal/Props/AwakeningEvidence/life_wing_yi.png（家具投影）。
+- Godot导入单独改写的三个generated_lines_zh.*.translation已恢复为原始字节，不纳入本任务。
+
+验证
+- python godot_csharp/tools/compile_story.py --assign-ids：新增ID为0；随后正常编译。未改动已有场面对话ID。
+- 最终独立Agent：python godot_csharp/tools/compile_story.py --check通过，7个生成物一致。
+- 最终独立Agent：dotnet build godot_csharp/DualOntologyWorldEngine.sln --no-restore -m:1 -nr:false通过，0警告、0错误。
+- 初始常规solution build失败且日志只有0警告/0错误；初始no-restore缺少本树assets。串行csproj restore成功后完成构建，未绕过沙箱。
+- 最终独立Agent二级UI专项ui-v05：退出0，61/61断言通过，20张实际渲染截图均亲自查看。主Agent也查看侦探自然伸手、领取柜悬停与试听机心声截图。
+- 检查涵盖四人动作、控制权、柜前锚点、实际路径、实体碰撞、Y排序、门道、悬停名、点击心声、锁定与视野外抑制。铜口与柜体实际双命中时热点优先；公告框检查只证明原热点标题保持，未构造重叠竞争。
+- git diff --check通过，导入清理后也再次通过。
+- 附加flow回归未完全通过：统一入口默认user://日志写入失败并崩溃；同一flow_check.gd指定树内log-file后运行129项，128通过，唯一失败为user://chapter1_end.json写入。不能宣称flow通过；受限环境的具体底层原因未另行证明。
+
+最终截图与证据
+- artifacts/ch1-locker/ui-v05/north-wall-before-claims.png
+- artifacts/ch1-locker/ui-v05/claim-shen-reach.png
+- artifacts/ch1-locker/ui-v05/claim-huo-reach.png
+- artifacts/ch1-locker/ui-v05/claim-su-reach.png
+- artifacts/ch1-locker/ui-v05/claim-detective-reach.png
+- artifacts/ch1-locker/ui-v05/hover-reward_locker.png
+- artifacts/ch1-locker/ui-v05/aside-cylinder_player.png
+- artifacts/ch1-locker/ui-v05/evidence.json
+- 独立最终报告与命令：artifacts/ch1-locker/final-v05/report.txt、godot-command.txt。
+- 初始失败：ui-diagnostic-report.md及verify-*.log；驱动修正/flow失败：reverify-v03-v04-report.md、reverify-flow-v03/与reverify-dev-v03/。
+
+限制与疑点
+- 柜门为静态像素图，未新增开合或空格状态动画；本次实现地图物件与人物伸手表现。
+- 原公告框高亮盒偏离纸框主体的疑点留在独立报告；本任务未改变既有热点几何。
+- 窗口渲染使用Compatibility/ANGLE，日志仍有系统根证书读取ERROR与ANGLE回退提示。Dummy音频未验证声音。首次Godot导入还遇到树外APPDATA编辑器设置写入限制。
+- 机制正常路径与UI通过；异常/取消释放路径只有源码核查，没有故障注入专项。
+- 未读取设计规范。未进行文学评审、一级三份全程记录、三级盲玩、游玩时长或全量回归；自动推进与flow不作为盲玩证据。
+- 按用户要求未提交、未推送，全部改动留在当前工作树。

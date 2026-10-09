@@ -173,11 +173,16 @@ public sealed partial class Chapter1Session
     /// <summary>到位后做一次动作，再保持指定姿态；走位失败时跳过动作，继续剧本。</summary>
     private IEnumerable<Op> StageAction(string who, string anchor, string animation, string facing, double seconds, string after)
     {
-        yield return new Run(WalkTo(who, new Ev { ["anchor"] = anchor }, 130.0));
-        if (!WalkOk) yield break;
-        _out.Add(StageOp("pose", ("who", who), ("anim", animation), ("facing", facing)));
-        yield return new Sleep(seconds);
-        _out.Add(StageOp("pose", ("who", who), ("anim", after), ("facing", facing)));
+        Claim(who);
+        try
+        {
+            yield return new Run(WalkTo(who, new Ev { ["anchor"] = anchor }, 130.0));
+            if (!WalkOk) yield break;
+            _out.Add(StageOp("pose", ("who", who), ("anim", animation), ("facing", facing)));
+            yield return new Sleep(seconds);
+            _out.Add(StageOp("pose", ("who", who), ("anim", after), ("facing", facing)));
+        }
+        finally { Unclaim(who); }
     }
 
     private void Face(string who, string other)

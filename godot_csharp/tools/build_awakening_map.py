@@ -33,6 +33,7 @@ SHIFT = 4                      # cells of 起居厅 shown west of the isolation 
 OX = SHIFT * CELL
 INTERIOR = "res://ShareAsset/Internal/Props/FirstAwakeningInterior"
 EVIDENCE = "res://ShareAsset/Internal/Props/AwakeningEvidence"
+REWARDS = "res://ShareAsset/Internal/Props/Chapter1Rewards"
 ARCH_PNG = GAME / "ShareAsset/Internal/Props/AwakeningEvidence/life_wing_yi.png"
 LAYOUT_TRES = GAME / "scenes/Awakening/map_layout.tres"
 SCENE = GAME / "scenes/Awakening/Awakening.tscn"
@@ -52,6 +53,7 @@ FOOT = {
     "paper_basket_empty": (12, 8, 0), "study_table": (132, 46, 8), "floor_lamp": (10, 8, 0), "armchair": (28, 16, 2),
     "globe": (16, 8, 0), "washstand": (48, 20, 2), "sideboard": (82, 22, 2), "range_stove": (42, 20, 2),
     "worktable": (96, 30, 8), "barrel": (18, 12, 0), "crate": (22, 10, 0), "sack": (14, 8, 0),
+    "reward_locker": (76, 16, 2), "cylinder_player": (24, 12, 2),
 }
 # Ordinary furniture may sort by its anchor; beds sort 40px higher so a sleeper lies on top of the mattress.
 SORT_LIFT = {"bed_0": 40, "bed_sheeted": 40}
@@ -84,6 +86,8 @@ def furniture():
     items += [
         # 活动厅
         F("StudyBookcase", "bookcase_study", 350, 110),
+        F("RewardLocker", "reward_locker", 500, 120),
+        F("CylinderPlayer", "cylinder_player", 560, 122),
         F("StudyTable", "study_table", 448, 270),
         F("StudyChairNW", "chair_front", 416, 218), F("StudyChairNE", "chair_front", 480, 218),
         F("StudyChairSW", "chair_back", 416, 294), F("StudyChairSE", "chair_back", 480, 294),
@@ -152,12 +156,13 @@ def paint(room):
 
 
 def sprite_size(sprite):
-    root = GAME / ("ShareAsset/Internal/Props/AwakeningEvidence" if sprite == "bed_sheeted" else "ShareAsset/Internal/Props/FirstAwakeningInterior")
-    with Image.open(root / f"{sprite}.png") as im:
+    with Image.open(GAME / texture_path(sprite).removeprefix("res://")) as im:
         return im.size
 
 
 def texture_path(sprite):
+    if sprite in ("reward_locker", "cylinder_player"):
+        return f"{REWARDS}/{sprite}.png"
     return f"{EVIDENCE}/{sprite}.png" if sprite == "bed_sheeted" else f"{INTERIOR}/{sprite}.png"
 
 
