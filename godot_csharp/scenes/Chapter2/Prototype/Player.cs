@@ -3,11 +3,12 @@ using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
-public enum Cmd { Stay, Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize }
+public enum Cmd { Stay, Rest, Class, Collect, Inspect, Escort, Ask, GiveKey, Tell, Post, TellRule, Greenhouse, Archive, Help, Mediate, Stakeout, Sleep, Rub, ShareFood, Manipulate, Confront, AskAbout, Reopen, Apologize, EatPantry }
 
 /// <summary>侦探一个时段的行动。每个时段只能做一件事（第三部分 §4）。</summary>
 public sealed record PlayerAction(Cmd Cmd)
 {
+    public string? Wording { get; init; }
     public P? Who { get; init; }
     public Place? Place { get; init; }
     public string? Thing { get; init; }
@@ -28,7 +29,7 @@ public sealed record PlayerAction(Cmd Cmd)
         Cmd.Escort => $"请{Names.Of(Who!.Value)}同行去{Names.Of(Place!.Value)}看{Thing}",
         Cmd.Ask => $"请{Names.Of(Who!.Value)}{Names.Of(Job!.Value)}",
         Cmd.Post => $"在{Names.Of(Place!.Value)}张贴「{Card!.Text}」",
-        Cmd.TellRule => $"当面告诉{Names.Of(Who!.Value)}「{Card!.Text}」",
+        Cmd.TellRule => Chapter2Design.Text("social.tell_description", ("name", Names.Of(Who!.Value)), ("rule", Spec?.Text ?? Card?.Text ?? "")),
         _ => Cmd.ToString()
     };
 }
@@ -66,6 +67,7 @@ public sealed partial class Game
     private void PlayerBegin(PlayerAction? act)
     {
         LastAction = act;
+        if (ReferenceEquals(_preparedAction, act) && act is not null) { _preparedAction = null; DetHelpers.Clear(); return; }
         _asked.Clear();
         DetHelpers.Clear();
         if (Slot == Slot.Afternoon && Get(Det.Body, T.Hungry) > 0 && act is not null)
@@ -79,10 +81,13 @@ public sealed partial class Game
         switch (act.Cmd)
         {
             case Cmd.Escort:
-                Request(act.Who!.Value, $"跟我去{Names.Of(act.Place!.Value)}看看{act.Thing}。", fx.Escort(act.Place.Value, Things_[act.Thing!].Thing(this)));
+                Request(act.Who!.Value, X("social.escort", ("place", Names.Of(act.Place!.Value)), ("thing", act.Thing)), fx.Escort(act.Place.Value, Things_[act.Thing!].Thing(this)), Compatibility(this[act.Who.Value], act));
                 break;
             case Cmd.Ask:
-                Request(act.Who!.Value, $"能不能请你{Names.Of(act.Job!.Value)}？", fx.Job(act.Job.Value, this[act.Who.Value]) is var e && act.Job is Job.Rest or Job.Sleep or Job.Work ? e : fx.Job(act.Job.Value));
+                var recipient = this[act.Who!.Value];
+                var procedure = RequestProcedure(recipient, act.Job!.Value);
+                if (procedure is null) { _asked[recipient.Id] = SocialStance.Reject; Feed.Add(Answer(recipient, SocialStance.Reject)); break; }
+                Request(recipient.Id, X("social.request", ("job", Names.Of(act.Job.Value))), procedure, Compatibility(recipient, act));
                 break;
             case Cmd.GiveKey:
                 Request(act.Who!.Value, $"把粮仓钥匙交给{Names.Of(act.About!.Value)}，统一煮粥，行吗？",
@@ -97,33 +102,15 @@ public sealed partial class Game
             case Cmd.Rub:
                 if (act.Who is { } helper) Request(helper, "陪我去誓约庭拓那块碑。", fx.Escort(Place.Oath, Stele));
                 break;
-            case Cmd.Mediate when Day == FirstDay && Slot == Slot.Noon:
-                var request = X("调停.请求");
-                Feed.Add(X("调停.发言", ("话", request)));
-                var mora = Evaluate(P.Mora, request);
-                var ruan = Evaluate(P.Ruan, request);
-                Mediated = mora != SocialStance.Reject && ruan != SocialStance.Reject && (mora == SocialStance.Accept || ruan == SocialStance.Accept);
-                Feed.Add(X(Mediated ? "调停.成功" : "调停.失败"));
-                if (Mediated) Witness(Det, K("调停配给", P.Det), 1, 1, People.Where(p => Where(p) == Place.Logistics || p.Id is P.Mora or P.Ruan), domain: Dom.Rations);
+            case Cmd.Mediate when Day == RationFirstDay && Slot == Slot.Noon:
+                HostMediate(act.Wording ?? throw new PlayerError("Missing mediation wording."));
                 break;
         }
         if (_asked.Count > 0) S.CTB.RunUntil(Now + 0.2, 1000);
     }
 
-    private SocialStance Evaluate(P who, string text)
-    {
-        var p = this[who];
-        Observation.Observe(p.Soul, new ObservationInput(text, ProjectionKind.Event)
-        { Source = ObservationSource.Testimony, Existence = Truth.True, Time = Now, AddRelations = [(Relations.Subject, p.M[Det.Body])], Procedure = FxOf(p).Look(p.Body), Details = text });
-        var req = p.World.Projections.Last(x => x.Kind == ProjectionKind.Event && x.Name == text);
-        var stance = SocialSystem.Evaluate(p.World, p.Self, req).Stance;
-        Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
-        Feed.Add(X($"调停.{who}.{stance}"));
-        return stance;
-    }
-
     /// <summary>当面请求：经 SimulationSession 提交侦探的 Say；对方的 SocialSystem 立即给出态度（侦探看得见）。协商 = 对方提条件，侦探答应，记一笔承诺。</summary>
-    private void Request(P who, string text, Effect procedure)
+    private void Request(P who, string text, Effect procedure, int compatibility = 0)
     {
         var p = this[who];
         var fx = FxOf(Det);
@@ -132,13 +119,18 @@ public sealed partial class Game
         var exec = S.Submit(Det.Soul, new ActionIntent(Det.Self, new Effect.Say(fx.R(p.Body), text, procedure), 0.01));
         S.CTB.RunUntil(Now + 0.05, 1000);
         var req = p.World.Projections.LastOrDefault(x => x.Kind == ProjectionKind.Event && x.Name == text && x.Procedure is not null);
-        if (req is null) { Feed.Add($"{p.Name}不在能说话的地方。"); return; }
+        if (req is null) { Feed.Add(X("social.absent", ("name", p.Name))); return; }
+        Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind)
+        {
+            Target = req, Source = ObservationSource.Testimony, Time = Now,
+            Tags = ImmutableDictionary<Tag, int?>.Empty.Add(SocialSystem.RequestCompatibility, compatibility)
+        });
         var stance = SocialSystem.Evaluate(p.World, p.Self, req);
 
         _asked[who] = stance.Stance;
-        _asks[(P.Det, who)] = RecordEvent(P.Det, $"请{p.Name}：“{text}”", "交谈", Where(Det), []);
-        NoteFor(who, "态度", $"你请{p.Pro.Pronoun}：“{text}”{p.Pro.Pronoun}{(stance.Stance == SocialStance.Accept ? "答应了" : stance.Stance == SocialStance.Negotiate ? "要你先办件事" : "拒绝了")}");
-        Feed.Add($"你对{p.Name}说：“{text}” {p.Name}：{Answer(p, stance.Stance)}");
+        _asks[(P.Det, who)] = RecordEvent(P.Det, X("social.request_log", ("name", p.Name), ("text", text)), Names.Of(Job.Socialize), Where(Det), []);
+        NoteFor(who, X("social.note_kind"), X("social.request_note", ("he", p.Pro.Pronoun), ("text", text), ("result", X("social." + (stance.Stance == SocialStance.Accept ? "accepted" : stance.Stance == SocialStance.Negotiate ? "negotiated" : "rejected")))));
+        Feed.Add(X("social.request_feed", ("name", p.Name), ("text", text), ("response", Answer(p, stance.Stance))));
     }
 
     private void Promise(Person p)
@@ -152,12 +144,12 @@ public sealed partial class Game
         Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找{p.Pro.Pronoun}“帮{p.Pro.Pronoun}一把”即算兑现。）");
     }
 
-    private static string Answer(Person p, SocialStance s) => s switch
+    private static string Answer(Person p, SocialStance stance)
     {
-        SocialStance.Accept => p.Id switch { P.Quer => "“行。”", P.Ward => "“依据情理，可以。”", P.Ruan => "“值得。”", P.Mora => "“说吧，快点。”", _ => "“好。”" },
-        SocialStance.Negotiate => (p.Id switch { P.Ward => "“视条件而定。”", P.Ruan => "“代价是什么？”", _ => "“……那你得先替我做点事。”" }) + $"（{p.Pro.Pronoun}想先要你帮{p.Pro.Pronoun}一把。）",
-        _ => p.Id switch { P.Quer => "“凭什么？”", P.Ward => "“不予采纳。”", P.Mora => "“没空。”", P.Veronica => "“理由不足。”", _ => "“不了。”" }
-    };
+        var key = "social." + p.Id + "." + stance;
+        var response = Chapter2Design.HasText(key) ? X(key) : X("social.other." + stance);
+        return stance == SocialStance.Negotiate ? X("social.condition", ("response", response), ("he", p.Pro.Pronoun)) : response;
+    }
 
     /// <summary>侦探自己的身体：做这一时段选定的事（与 NPC 一起在 CTB 上结算）。</summary>
     private void PlayerDo(PlayerAction? act)
@@ -167,7 +159,7 @@ public sealed partial class Game
         if (Slot == Slot.Night)
         {
             if (act?.Cmd == Cmd.Stakeout) { SubmitDet(Fx.Seq(fx.Go(act.Place!.Value), Fx.Wait(NightLength - 2, fx.Look(Space[act.Place.Value]))), 0.5); Det.Asleep = false; }
-            else { SubmitDet(fx.Job(Job.Sleep, Det), 0.5, Job.Sleep); }
+            else { SubmitDet(fx.Look(Space[Where(Det)]), 0.5, Job.Sleep); }
             return;
         }
         if (act is null) { SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); return; }
@@ -176,6 +168,7 @@ public sealed partial class Game
             case Cmd.Stay: SubmitDet(Fx.Seq(fx.Go(act.Place ?? Where(Det)), fx.Look(Space[act.Place ?? Where(Det)])), 0.5); break;
             case Cmd.Class: SubmitDet(fx.Job(Job.Class), 0.5, Job.Class); break;
             case Cmd.Collect: SubmitDet(fx.Job(Job.Collect), 0.8, Job.Collect); break;
+            case Cmd.EatPantry: SubmitDet(fx.Look(Space[Place.DormLife]), 0.5); break;
             case Cmd.Inspect:
                 var (pl, th) = Things_[act.Thing!];
                 SubmitDet(Fx.Seq(fx.Go(pl), fx.Look(th(this))), 0.8);
@@ -370,13 +363,14 @@ public sealed partial class Game
                 var who = this[act.Who!.Value];
                 var spec = OwnSpec(act.Spec) ?? CardSpec(act.Card!, P.Det);
                 Det.Acc[spec] = Truth.True;
-                var v = Tell(who, spec);
-                _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, $"当面对{who.Name}讲「{Short(spec)}」", "交谈", Where(Det), []);
+                var v = _preparedRuleVerdict ?? Tell(who, spec);
+                _preparedRuleVerdict = null;
+                _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, X("social.tell_log", ("name", who.Name), ("rule", Short(spec))), Names.Of(Job.Socialize), Where(Det), []);
                 DetToldFace.Add((spec, who.Id, v == Truth.True, Day));
                 _toDisclose.RemoveAll(d => d.Who == who.Id && d.Spec == spec);
-                Feed.Add($"你当面对{who.Name}说了{LabelOf(spec)}「{spec.Text}」。{who.Name}{(v == Truth.True ? "点了头" : "没有接受")}：{Voice(who, spec, v)}");
-                NoteFor(who.Id, "规矩", $"{(v == Truth.True ? "当面点了头" : "当面没接受")}：{LabelOf(spec)}「{Short(spec)}」");
-                if (spec.Manipulative) Manipulations.Add(new() { Target = who.Id, About = P.Quer, Means = "针对性的规则", Day = Day });
+                Feed.Add(X("social.tell_feed", ("name", who.Name), ("label", LabelOf(spec)), ("rule", spec.Text), ("result", X(v == Truth.True ? "social.tell_yes" : "social.tell_no")), ("response", Voice(who, spec, v))));
+                NoteFor(who.Id, X("social.rule_note_kind"), X("social.tell_note", ("result", X(v == Truth.True ? "social.tell_note_yes" : "social.tell_note_no")), ("label", LabelOf(spec)), ("rule", Short(spec))));
+                if (spec.Manipulative) Manipulations.Add(new() { Target = who.Id, About = P.Quer, Means = X("social.targeted_rule"), Day = Day });
                 break;
             }
             case Cmd.Apologize:

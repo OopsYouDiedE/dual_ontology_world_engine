@@ -282,6 +282,37 @@ func card_action(kind: String, choices: Array = []) -> bool:
 		await tree.process_frame
 	return false
 
+## Select the authored invitation from a companion's dialogue, then let the companion walk.
+func invite_help(id: String, who: String, choices: Array = []) -> bool:
+	var label := ""
+	for step in dialogue.entries.get("talk_" + who + "_menu", []):
+		for option in step.get("options", []):
+			if JSON.stringify(option.get("body", [])).contains("invite_help_" + id):
+				label = str(option.label)
+	if label == "": return false
+	close_modal()
+	await frames(2)
+	host.dispatch({"kind": "interact", "site": who, "target": who})
+	var deadline := Time.get_ticks_msec() + 60000
+	while Time.get_ticks_msec() < deadline:
+		await tree.process_frame
+		var d = host.ui.dialogue
+		if not d.active or d.busy or d.line == null: continue
+		if d.body.visible_characters >= 0:
+			d.reveal()
+			continue
+		var allowed: Array = d.line.responses.filter(func(r): return r.is_allowed)
+		if allowed.is_empty():
+			d.advance()
+			continue
+		for option in allowed:
+			if str(option.text) == label:
+				d.choose(str(option.next_id))
+				await drain(choices)
+				return host.ui.modal_kind == "card" and progress("helped").has(id) and not progress("flags").has("invite_help_" + id)
+		return false
+	return false
+
 ## 一个房间里够得着某个点、又走得到的位置。
 func stand_near(room_center: Vector2, point: Vector2, radius: float) -> void:
 	player().position = room_center

@@ -98,6 +98,7 @@ QUERY_NAMES = {
     "said": "陈述", "shown": "出示", "is_person": "是同伴", "geo_reach": "几何可达",
     "acquaintance_seen": "相识已查", "replay_var": "重演变量", "bolted": "重演侦探闩门",
     "credence": "把握", "knows": "知道", "speech": "话题回应", "dorms_open": "已出门寝区",
+    "dorm_out": "已出门", "accused": "有人被指控",
 }
 QUERY_BY_ZH = {zh: en for en, zh in QUERY_NAMES.items()}
 EFFECT_WORDS = {"设旗": "set_flag", "清旗": "clear_flag", "放大": "amplify", "低语": "whisper", "共享回忆": "share_recall"}
@@ -757,6 +758,23 @@ def parse_flow(lines: list[Line], depth: int) -> list[dict[str, Any]]:
                     break
             steps.append(node)
             continue
+        if text == "选择：":
+            options = []
+            j = 0
+            while j < len(sub):
+                option = sub[j]
+                if option.indent != depth + 1 or not option.text.startswith("- "):
+                    raise StoryError("流程选择须写成缩进的“- 标签”。", option.number)
+                branch, j = children(sub, j + 1, depth + 1)
+                label, _, ident = split_tags(option.text[2:], option.number)
+                if not ident:
+                    raise StoryError("流程选择须有稳定编号。", option.number)
+                note_line("flow", ident, option.number)
+                options.append({"id": ident, "label": label, "label_id": ident,
+                                "steps": parse_flow(branch, depth + 2)})
+            steps.append({"op": "choices", "options": options})
+            i = nxt
+            continue
         if sub:
             raise StoryError(f"“{word}”后面不能再缩进内容。", line.number)
         if word == "否则":
@@ -810,6 +828,9 @@ def read_stage(name: str, body: list[Line]) -> dict[str, Any]:
             stage["sites"] = "all" if value == "全部" else split_list(value)
         elif key.startswith("进入 "):
             room = key[3:].strip()
+            if value.startswith("流程 "):
+                stage["enter"][room] = {"flow": value[3:].strip()}
+                continue
             goto, _, signal = value.partition("，")
             stage["enter"][room] = {"stage": goto.strip().removeprefix("阶段 ").strip(), "signal": signal.strip().removeprefix("信号 ").strip()}
         else:
@@ -886,7 +907,14 @@ def read_dorm_case(name: str, head: Line, body: list[Line], places: dict[str, st
             raise StoryError("先入之见写成“- 人物 | 问题 = 选项 | 强度”。", item.number)
         q, o = option_of(parts[1], item.number)
         priors.append({"person": people[parts[0]], "question": q, "option": o, "strength": int(num(parts[2], "强度", item.number))})
+    earliest = None
+    if "最早出门" in fields:
+        match = re.fullmatch(r"第\s*(\d+)\s*日\s+(\d+)", fields["最早出门"][0])
+        if not match or not 0 <= int(match[2]) < 1440:
+            raise StoryError("最早出门须写成“第 N 日 当日分钟”。", fields["最早出门"][1].number)
+        earliest = {"day": int(match[1]), "minutes": int(match[2])}
     return {"dorm": places[dorm], "title": fields["题目"][0], "questions": questions, "answer": keys.index(answer),
+            "earliest_out": earliest,
             "truth": truth, "traces": traces, "true_facts": true_facts, "hypotheses": hypotheses, "priors": priors,
             "outside": fields["门外证据"][0] if "门外证据" in fields else ""}
 

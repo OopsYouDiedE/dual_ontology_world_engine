@@ -46,7 +46,7 @@ public sealed partial class Chapter1Session : IChapterSession
         _interaction = new(_content, _world);
         _jobs.Clear(); _uiOwner = null; _modal = null; _facts.Clear();
         _dialogueActive = _storyLock = _begun = false; _planDepth = 0;
-        _dailyJobs.Clear(); _staged.Clear(); _invites.Clear(); _handWait.Clear(); _furnitureSpoken.Clear();
+        _dailyJobs.Clear(); _staged.Clear(); _invites.Clear(); _helpInvites.Clear(); _handWait.Clear(); _furnitureSpoken.Clear();
         _currentRoom = ""; _lastSnapshot = ""; _now = 0; _asideUntil = 0; _witnessAfter = 0;
     }
 
@@ -355,10 +355,18 @@ public sealed partial class Chapter1Session : IChapterSession
     {
         if (_storyLock || _dialogueActive || _modal is not null || _uiOwner is not null || _uiModal != "") return;
         var room = F("detective").Entered;
-        if (room == "") return;
+        if (room == "") { _currentRoom = ""; return; }
         var trigger = _content.RoomTrigger(room);
         if (trigger == "meeting") { Start(Meeting()); return; }
-        if (trigger == "room" && room != _currentRoom)
+        if (room == _currentRoom) return;
+        _currentRoom = room;
+        if (trigger.StartsWith("flow:", StringComparison.Ordinal))
+        {
+            Start(PlayPlan(() => _content.StartFlow(_world, trigger[5..])));
+            _content.RoomEntry(room);
+            return;
+        }
+        if (trigger == "room")
         {
             _currentRoom = room;
             Start(RoomChanged(room));

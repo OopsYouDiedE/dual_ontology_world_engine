@@ -1,5 +1,11 @@
 续篇 chapter2
 
+    物件 起居厅公告板
+        编号：Board.Living
+        范围：世界
+        位置：起居厅
+        可见：Accusation、Posted
+
     物件 粮仓
         编号：object.Granary
         范围：世界

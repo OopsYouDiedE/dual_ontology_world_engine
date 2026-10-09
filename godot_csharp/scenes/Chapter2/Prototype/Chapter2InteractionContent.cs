@@ -13,6 +13,12 @@ public sealed class Chapter2InteractionContent
   return items;
  }
  public (string Label,Job Job)[] Requests { get; }
+ public string Format(string key, params (string Name,string Value)[] args)
+ {
+  var text=Text(key);
+  foreach(var (name,value) in args)text=text.Replace("{"+name+"}",value);
+  return text;
+ }
  public Chapter2InteractionContent(string json)
  {
   using var document=JsonDocument.Parse(json);

@@ -8,7 +8,11 @@ Check(s.IsLocalTarget("a", "x") && !s.IsLocalTarget("absent", "x"), "shared loca
 s.Observe("a", "x"); Check(s.HasObservation("a", "x") && !s.HasObservation("b", "x"), "shared observation isolation");
 s.Set("chapter1", "k", 7); Check((int)s.GetProgress("chapter1")["k"] == 7 && !s.Has("chapter2", "k"), "shared progress isolation");
 s.Remove("chapter1", "k"); Check(!s.Has("chapter1", "k"), "shared progress remove");
-var g = new Game(); g.SetPlayerPlace(Place.Clinic); g.SetPlayerPlace(Place.Hall);
+var g = new Game();
+Check(!g.HostCanEnter(Place.Hall) && !g.HostCanEnter(Place.Clinic) && !g.HostCanEnter(Place.ArchiveFront), "chapter2 corridors begin closed");
+Check(g.Npcs.Where(p => p.Pro.Dorm is Place.DormS or Place.DormL).All(p => !g.HostDormReleased(p) && g.Where(p) == p.Pro.Dorm), "unreleased residents remain in their own dorms");
+g.HostCorridor("north", true); g.HostCorridor("east", true);
+g.SetPlayerPlace(Place.Clinic); g.SetPlayerPlace(Place.Hall);
 Check(g.Chapter.CharacterRooms[P.Det.ToString()] == "Hall" && g.Where(g.Det) == Place.Hall, "chapter2 room sync");
 Check(g.Chapter.HasObservation(P.Det.ToString(), "中央基座"), "chapter2 local observations");
 Check(RoomPresentation.For(g, null).Actions.Length == 0 && RoomPresentation.PersonActions(g, P.Huo, null).Length == 0, "unknown room empty action lists");

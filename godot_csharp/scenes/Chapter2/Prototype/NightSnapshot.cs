@@ -16,6 +16,8 @@ public sealed record NightSnapshot(
     IReadOnlyDictionary<string, IReadOnlyDictionary<Tag, int>> Things,
     IReadOnlyDictionary<int, ImmutableHashSet<Place>> Posted)
 {
+    public IReadOnlyDictionary<string,bool> Corridors { get; init; } = new Dictionary<string,bool>();
+    public IReadOnlySet<Place> ReleasedDorms { get; init; } = new HashSet<Place>();
     public sealed record PersonState(Place Place, IReadOnlyDictionary<Tag, int> Body, int Desire, int Hooks, int Whispered, int DemonDoubt, bool KnowsHookCost,
         int HungerStreak, IReadOnlyDictionary<int, Truth> Accepted, IReadOnlyDictionary<P, int> Trust);
 }
@@ -30,10 +32,14 @@ public sealed partial class Game
             new Dictionary<Tag, int>(p.Body.Get<StateProperty>()?.Values ?? []), p.Desire, p.Hooks, p.Whispered, p.DemonDoubt, p.KnowsHookCost, p.HungerStreak,
             p.Acc.ToDictionary(a => a.Key.Id, a => a.Value), People.Where(o => o != p).ToDictionary(o => o.Id, o => TrustIn(p, o)))),
         Things.ToDictionary(t => t.TrueName, t => (IReadOnlyDictionary<Tag, int>)new Dictionary<Tag, int>(t.Get<StateProperty>()?.Values ?? [])),
-        Specs.ToDictionary(s => s.Id, s => s.PostedAt.ToImmutableHashSet()));
+        Specs.ToDictionary(s => s.Id, s => s.PostedAt.ToImmutableHashSet()))
+        { Corridors = new Dictionary<string,bool>(_corridors), ReleasedDorms = _releasedDorms.ToHashSet() };
 
     private void RestoreNight(NightSnapshot snap)
     {
+        foreach (var (key, open) in snap.Corridors) _corridors[key] = open;
+        foreach (var dorm in snap.ReleasedDorms) _releasedDorms.Add(dorm);
+        RefreshAccess();
         foreach (var thing in Things)
             if (snap.Things.TryGetValue(thing.TrueName, out var values))
                 foreach (var (tag, value) in values) Set(thing, tag, value);

@@ -6,7 +6,7 @@ extends Node2D
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
-const EXTRA_SITES := {"zone_yi": {"bed": Vector2(858, 196)}, "zone_jia": {"litter": Vector2(440, 240)}}
+const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
 
@@ -19,6 +19,18 @@ var occluders: Array[Sprite2D] = []
 var _grids: Dictionary = {}
 var _walls: Dictionary = {}
 var _seen: Dictionary = {}
+var _access: Dictionary = {}
+var _last_allowed_position := Vector2.ZERO
+
+func apply_snapshot(snapshot: Dictionary) -> void:
+	_access = snapshot.get("access", {}).get("maps", {})
+
+func can_enter(next: String) -> bool:
+	return bool(_access.get(next, true))
+
+func blocked_entry() -> void:
+	_switching = false
+	if map and map.has_meta("outdoor_core"): field.player.position = _last_allowed_position
 
 func setup() -> void: pass
 func fixed_actors() -> Dictionary: return {}
@@ -100,6 +112,7 @@ func physics_update(_delta: float) -> void:
 	if map == null: return
 	if not armed and not _inside_exit(): armed = true
 	_check_region()
+	if not _switching: _last_allowed_position = field.player.position
 	var head: Vector2 = field.player.global_position + Vector2(0, -24)
 	for s in occluders:
 		var behind: bool = field.player.position.y < s.position.y and s.get_rect().has_point(s.to_local(head))

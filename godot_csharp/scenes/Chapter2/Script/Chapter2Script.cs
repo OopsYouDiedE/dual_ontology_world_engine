@@ -108,6 +108,7 @@ public sealed partial class Game
         S.StageCommitted += CapturePresentation;
         People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
         BuildWorld();
+        InitializeAccess();
         foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
         SyncChapterRooms();
         if (continuation is not null)
@@ -207,7 +208,7 @@ public sealed partial class Game
         // 中央基座：第 5 日起有一道新裂纹（担保衰减的迹象），只有凑近细看才看得见。
         Base = NewThing("中央基座", Place.Hall, [], [T.Crack], id: "object.Base");
         SketchBook = NewThing("莫兰的速写本", Place.DormS, [T.Posted], id: "object.SketchBook");
-        foreach (var place in new[] { Place.Hall, Place.Logistics, Place.Lecture, Place.DormLife, Place.DormW, Place.DormS, Place.DormL })
+        foreach (var place in new[] { Place.Hall, Place.Logistics, Place.Lecture, Place.DormLife, Place.DormW, Place.DormS, Place.DormL, Place.Living })
         {
             var board = NewThing(place == Place.Logistics ? "配给台公告板" : Names.Of(place) + "公告板", place, [T.Accusation, T.Posted], id: "Board." + place);
             if (board.Get<RuleProperty>() is null) board.Add(new RuleProperty());
@@ -232,7 +233,7 @@ public sealed partial class Game
         {
             // Arrival moves the existing body; it does not replace its running state.
             var spatial = person.Body.Get<SpatialProperty>() ?? person.Body.Add(new SpatialProperty());
-            spatial.Holder = null; spatial.Space = Space[Place.Hall];
+            spatial.Holder = null; spatial.Space = Space[HostDormReleased(person) ? Place.Living : person.Pro.Dorm];
             var state = person.Body.Get<StateProperty>() ?? person.Body.Add(new StateProperty());
             foreach (var t in BodyVisible) { state.Values.TryAdd(t, 0); state.Observable.Add(t); }
             foreach (var t in BodyHidden) state.Values.TryAdd(t, 0);
@@ -300,7 +301,7 @@ public sealed partial class Game
         p.Self = p.M[p.Body];
         if (p.Inherited)
             Observation.Observe(p.Soul, new ObservationInput(p.Self.Name,p.Self.Kind)
-            { Target=p.Self, Source=ObservationSource.Perception, Time=Now, Move=true, Parent=p.M[Space[Place.Hall]] });
+            { Target=p.Self, Source=ObservationSource.Perception, Time=Now, Move=true, Parent=p.M[Space[Where(p)]] });
         Projection Concept(string name, ProjectionKind kind, ObservationSource source) => Observation.Observe(p.Soul,
             new ObservationInput(name, kind) { Source = source, Existence = Truth.True });
         p.Habit = Concept(p.Name + "的习惯", ProjectionKind.Concept, ObservationSource.Introspection);
@@ -516,7 +517,7 @@ public sealed record GameOptions
     public IReadOnlyDictionary<P, Profile>? Profiles { get; init; }
     public WorldScriptDefinition? Definition { get; init; }
     /// <summary>五日、一日两顿（始业日只一顿晚饭）：不统一煮粥、各自生领就撑不到议事那天的早饭；认真分工煮粥刚好够（第三部分 §16）。</summary>
-    public int StartRations { get; init; } = 115;
+    public int StartRations { get; init; } = 99;
     public int StartOil { get; init; } = 30;
     public int StartMedicine { get; init; } = 10;
     public int GreenhouseYield { get; init; } = 6;

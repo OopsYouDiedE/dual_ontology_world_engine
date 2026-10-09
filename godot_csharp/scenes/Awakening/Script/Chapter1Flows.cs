@@ -59,6 +59,7 @@ public sealed partial class AwakeningContentSession
             "is_person" => Names.PersonKeys.Contains(A()),
             "credence" => Credence(W(), A(0), A(1)), "knows" => W().Knows(PersonOf(A(0)), A(1)),
             "speech" => SpeechKey(W(), A(0), A(1)), "dorms_open" => W().DormOpenedMinutes.Count,
+            "dorm_out" => W().DormIsOpen(A()),
             _ => throw new InvalidDataException("Unknown chapter query: " + name),
         };
     }
@@ -151,7 +152,7 @@ public sealed partial class AwakeningContentSession
     {
         var flow = Content.RootElement.GetProperty("FLOWS").GetProperty(name);
         if (flow.TryGetProperty("provider", out var provider))
-            foreach (var (key, value) in Provide(provider.GetString()!, world, map)) map[key] = value;
+            foreach (var (key, value) in Provide(provider.GetString()!, world, map)) map.TryAdd(key, value);
         return Steps(flow.GetProperty("steps"), 0, map);
     }
 

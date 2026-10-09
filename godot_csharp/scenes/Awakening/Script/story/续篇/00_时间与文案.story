@@ -1,6 +1,11 @@
 续篇 chapter2
     前置章节：awakening
 
+    地点 起居厅
+        编号：room.Living
+        别名：Living
+        范围：世界
+
     # 始业与后续案件：与生活翼共用本文件中的生态声明。
     # 读法：先词汇与时间，再文案、地点、人物（含画像与倾向）、物件、交互点，最后是场面（剧情顺序）。
     # 词汇、常数、地点、人物与画像共用上文声明。
@@ -69,6 +74,15 @@
         廊关着：廊门关着。灰落着的时候，廊里不养人。
         太早守夜：守夜点。入夜后，可以在这里守着。
         配给台关闭：配给台。午间和傍晚开粮。
+        menu_ask：问问{name}知道些什么
+        menu_cancel：没什么了
+        menu_back：返回
+        menu_return_field：返回现场
+        menu_talk：跟{name}说什么
+        menu_escort：请{name}看看{thing}
+        menu_help：帮{he}干一阵活
+        menu_share：分给{he}一份口粮
+        menu_rule：跟{he}讲「{rule}」
 
     请求
         - 修粮仓的门闩 → 修门闩

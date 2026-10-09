@@ -52,8 +52,6 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
         else if (evidence.TryGetProperty("experiment", out var experiment) && (id != "E8" || content.SoundTestThinkable))
             Add("experiment", experiment.GetString()! + (id == "E8" && content.Session.Has("experiments", id) ? Text("卡片·再做一次") : ""),
                 content.CanExperiment(id), Text("卡片·提示·试验已做"));
-        if (evidence.TryGetProperty("help", out var help))
-            Add("help", Text("卡片·请看看", ("人名", Name(help.GetString()!))), content.CanHelp(id), Text("卡片·提示·已请看过"));
         Add("close", Text("卡片·返回"), true);
         return new([], choices, PresentationMode.EvidenceCard, [], Card: new(id, evidence.GetProperty("name").GetString()!,
             content.CardFacts(id), evidence.GetProperty("source").GetString()!, evidence.GetProperty("picture").GetString()!, content.CardNotes(world, id)));
