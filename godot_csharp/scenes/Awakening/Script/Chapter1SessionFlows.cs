@@ -11,6 +11,7 @@ public sealed partial class Chapter1Session
 {
     // -------------------------------------------------------------- plans --
 
+    // STORY-HARDCODE[AWK-022][logic][production]: 第一章开场固定摆放侦探与三名同伴并启动醒来流程。
     private IEnumerable<Op> Begin()
     {
         foreach (var who in Party)
@@ -137,6 +138,7 @@ public sealed partial class Chapter1Session
                 _out.Add(StageOp("pose", ("who", "detective"), ("anim", "idle"), ("facing", "left")));
                 _out.Add(StageOp("camera", ("to", new Ev { ["anchor"] = "终局镜头" }), ("seconds", 0.0)));
                 break;
+            // STORY-HARDCODE[AWK-023][logic][production]: 开门命令固定联动隔离门状态、音效和主旋律。
             case "door_open":
                 if (Session.Has("clock", "door_open_minutes")) break;
                 _content.RecordDoorOpen();
@@ -211,6 +213,7 @@ public sealed partial class Chapter1Session
         _out.Add(StageOp("face", ("who", other), ("toward", who)));
     }
 
+    // STORY-HARDCODE[AWK-024][logic][production]: 相遇阶段固定角色身份与对应会面锚点。
     private IEnumerable<Op> Meeting()
     {
         PauseDaily();
@@ -367,6 +370,7 @@ public sealed partial class Chapter1Session
         yield return new Await(StageOp("camera", ("to", new Ev { ["follow"] = true }), ("seconds", 0.5)), false);
     }
 
+    // STORY-HARDCODE[AWK-025][logic][production]: E11 手印与 E3 鞋底试验使用本章专属处理分支。
     private IEnumerable<Op> Experiment(string id)
     {
         CloseModal();
@@ -589,10 +593,12 @@ public sealed partial class Chapter1Session
     // ---------------------------------------------------------------- sound --
 
     /// <summary>声路试验里侦探走去听的地方：每个听位就近的一处现场物件。</summary>
+    // STORY-HARDCODE[AWK-026][schema][production]: 把本章声路听位绑定到对应现场证物热点。
     private static readonly Dictionary<string, string> SoundSpotSite = new()
         { ["foyer"] = "E1", ["R08"] = "E6", ["hall"] = "E7", ["pantry"] = "E9", ["R05"] = "E12" };
 
     /// <summary>侦探能请铜口说的句子，只来自他已经知道的说法：石板上的指令、乐谱与门边的“开门”、霍铎想起的原话。</summary>
+    // STORY-HARDCODE[AWK-027][logic][production]: 按已知石板、乐谱、霍铎回忆开放本章试验句。
     private bool SentenceKnown(int index) => index switch
     {
         0 => Has("examined", "E7"),

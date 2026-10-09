@@ -17,6 +17,7 @@ public static class AwakeningCase
 
     public static int[] Values(NightVariables v) => [(int)v.V1, (int)v.V2, (int)v.V3, (int)v.V4, (int)v.V5, (int)v.V6];
 
+    // STORY-HARDCODE[AWK-003][schema][production]: 将本章 V1–V6、证物字段及第六问默认认知装配成案件假设。
     private static (CaseModel, ImmutableArray<Prediction>) Build()
     {
         var root = Chapter1Data.Root;

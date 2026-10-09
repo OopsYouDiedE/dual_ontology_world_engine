@@ -1,0 +1,2037 @@
+{
+  "baseline": "2384076f065acf32c95aad6e1732bd06a94f1bf3",
+  "generated_at_utc": "2026-10-09T13:06:04.882478+00:00",
+  "source_count": 206,
+  "handwritten_source_count": 205,
+  "marker_count": 196,
+  "marked_file_count": 83,
+  "counts": [
+    {
+      "scope": "example",
+      "kind": "logic",
+      "count": 1
+    },
+    {
+      "scope": "example",
+      "kind": "text",
+      "count": 1
+    },
+    {
+      "scope": "fixture",
+      "kind": "logic",
+      "count": 8
+    },
+    {
+      "scope": "fixture",
+      "kind": "schema",
+      "count": 10
+    },
+    {
+      "scope": "fixture",
+      "kind": "text",
+      "count": 2
+    },
+    {
+      "scope": "preview",
+      "kind": "logic",
+      "count": 1
+    },
+    {
+      "scope": "preview",
+      "kind": "schema",
+      "count": 2
+    },
+    {
+      "scope": "preview",
+      "kind": "text",
+      "count": 1
+    },
+    {
+      "scope": "production",
+      "kind": "logic",
+      "count": 80
+    },
+    {
+      "scope": "production",
+      "kind": "schema",
+      "count": 49
+    },
+    {
+      "scope": "production",
+      "kind": "text",
+      "count": 20
+    },
+    {
+      "scope": "tool",
+      "kind": "logic",
+      "count": 12
+    },
+    {
+      "scope": "tool",
+      "kind": "schema",
+      "count": 9
+    }
+  ],
+  "markers": [
+    {
+      "id": "CSH-001",
+      "path": "csharp/HallCausalityRules.cs",
+      "line": 4,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "具体隔离门、木楔、灰烟、纸转印、双锁与擦地证据因果模型。",
+      "anchor": "public static class HallCausalityRules",
+      "audit_note": "定义隔离门、楔子、灰烟、纸转印、两侧锁及擦拭痕的具体案件模型。正式工程默认编译包含该代码；审计搜索未发现正式运行调用。"
+    },
+    {
+      "id": "CSH-002",
+      "path": "csharp/HallCausalityRules.cs",
+      "line": 44,
+      "kind": "text",
+      "scope": "production",
+      "reason": "针对隔离门案件假设输出结构结论与排除边界。",
+      "anchor": "TestHypothesis",
+      "audit_note": "输出具体隔离门假设的物理因果及排除边界。正式工程默认编译包含该代码；审计搜索未发现正式运行调用。"
+    },
+    {
+      "id": "CSH-003",
+      "path": "csharp/HallCausalityRules.cs",
+      "line": 64,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "模拟隔离门案件动作顺序并生成具体证据痕迹和反馈。",
+      "anchor": "Simulate",
+      "audit_note": "将案件专属动作序列转换为证据痕迹、冲突和具体失败反馈。正式工程默认编译包含该代码；审计搜索未发现正式运行调用。"
+    },
+    {
+      "id": "CSH-004",
+      "path": "csharp/HallReplayProgram.cs",
+      "line": 4,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "将案件重演稿编译为音乐家在隔离门观察烟气并操作门楔的固定流程。",
+      "anchor": "public static class HallReplayProgram",
+      "audit_note": "绑定音乐家观察隔离门、等待灰烟与固定动作流。正式工程默认编译包含该代码；审计搜索未发现正式运行调用。"
+    },
+    {
+      "id": "CSH-005",
+      "path": "csharp/HallReplayProgram.cs",
+      "line": 13,
+      "kind": "text",
+      "scope": "production",
+      "reason": "重演事件与失败反馈直接描述门厅音乐家、热烟和案件动作。",
+      "anchor": "Compile",
+      "audit_note": "返回音乐家、门厅、灰烟及行动结果的案件专属回放文字。正式工程默认编译包含该代码；审计搜索未发现正式运行调用。"
+    },
+    {
+      "id": "CSH-009",
+      "path": "csharp/Reasoner.cs",
+      "line": 124,
+      "kind": "text",
+      "scope": "production",
+      "reason": "将腐化来源专称为“铜口之言”，是项目世界专属的证据反馈文案。",
+      "anchor": "Reasoner.Weight",
+      "audit_note": "对腐化来源使用项目世界专属称呼“铜口之言”作为玩家可见证据权重反馈。"
+    },
+    {
+      "id": "AWK-059",
+      "path": "godot_csharp/scenes/Awakening/AwakeningMap.gd",
+      "line": 14,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "本章人物键与正式现场角色节点名称固定绑定。",
+      "anchor": "const ACTOR_NODES := {\"detective\": \"侦探\", \"huo\": \"工程师\", \"shen\": \"厨师\", \"su\": \"音乐家\"}",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-041",
+      "path": "godot_csharp/scenes/Awakening/AwakeningMap.gd",
+      "line": 284,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "日常行动目标映射到本章 piano/tube/sink/door/score 等现场物件。",
+      "anchor": "func station(target: String, who: String) -> Dictionary:",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-003",
+      "path": "godot_csharp/scenes/Awakening/Night/AwakeningCase.cs",
+      "line": 20,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "将本章 V1–V6、证物字段及第六问默认认知装配成案件假设。",
+      "anchor": "private static (CaseModel, ImmutableArray<Prediction>) Build()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-038",
+      "path": "godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs",
+      "line": 63,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "装配本章 V1–V6 假设、证物、陈述步与搜索模型。",
+      "anchor": "public DetectivePlanner(JsonElement content)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-039",
+      "path": "godot_csharp/scenes/Awakening/Night/DetectivePlanning.cs",
+      "line": 177,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "答辩固定为本章四步，并允许 me 作为自闩陈述。",
+      "anchor": "&& _arguments.Count == 4 && _arguments.Select(a => a.Step).Order().SequenceEqual(Enumerable.Range(1,4))",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-060",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningScriptWorld.cs",
+      "line": 51,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "离开生活翼时清除本章旧物牵引习惯，避免它压过后续日常。",
+      "anchor": "public LiveChapterWorld ExportContinuation(ChapterSession progress)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-004",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningTraces.cs",
+      "line": 13,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "字段枚举本案固定证物事实及其编码取值。",
+      "anchor": "public sealed record MorningTraces(",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-005",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningTraces.cs",
+      "line": 95,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E1–E9 的逐件痕迹比较与字段解释是本案专属映射。",
+      "anchor": "private static List<string> Differences(string id, MorningTraces p, MorningTraces a)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-017",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningWorld.cs",
+      "line": 95,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "为有具体旧物回忆的人写入欲望、守则、铜口信任、劝告与触物行为规则。",
+      "anchor": "private void WriteMind(RecallMemory memory)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-020",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningWorld.cs",
+      "line": 254,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "固定以公告框第一条作为角色读到的代价规则。",
+      "anchor": "public void ShowRule1(Person who)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-018",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningWorld.cs",
+      "line": 303,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "将本案角色取舍、知守则与劝告分支映射到专属心声。",
+      "anchor": "public RecallDecision? DecideRecall(string evidence)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-019",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningWorld.cs",
+      "line": 336,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "独处时犹豫即放下是本章角色回忆规则。",
+      "anchor": "public RecallDecision? DecideAlone(string evidence)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-021",
+      "path": "godot_csharp/scenes/Awakening/Night/MorningWorld.cs",
+      "line": 439,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "将现实声路接头状态投影到 E8 铜口证物的固定事实标签。",
+      "anchor": "public bool SetJoint(string name, bool loose)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-006",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 91,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本案九个空间的夜间通行拓扑与行动耗时。",
+      "anchor": "private static readonly ImmutableDictionary<(Room, Room), double> Hops = new Dictionary<(Room, Room), double>",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-007",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 194,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "构造具体案件物件、四名角色的起始地点与鞋底，并将 V1/V2/V6 绑定到世界状态。",
+      "anchor": "private void Build()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-008",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 281,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按 V5/V6 设定侦探对特定同伴的信任偏移与熟人信任。",
+      "anchor": "private int TrustOf(Person self, Person other)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-009",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 309,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "逐人写入昨夜具体行为、认知规则、门/烟/物证互动和请求回应。",
+      "anchor": "private void WriteHabits(Agent detective, Agent huo, Agent shen, Agent su)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-010",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 449,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "固定警铃、两次声音、烟到门与侦探醒来的事件阶段构成本案昨夜时序。",
+      "anchor": "private ReplayResult Execute()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-011",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 493,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "把本案话语的语义标记映射到人物对指令、门外人和求救的认知。",
+      "anchor": "private void Hear(Agent a, Utterance words, Hearing hearing)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-012",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 670,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "将本案熟悉度与拒绝请求映射为专属心声及案件标记。",
+      "anchor": "private string? Doubt(Agent a, Decision? pick)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-013",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 711,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "本案请求类型名映射到固定重演事件与门边站位。",
+      "anchor": "private (ReplayEvent Event, string Thought, string Spot) RequestText(Agent a, Projection request)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-014",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 829,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "案件物件分别映射到门、石板、铜口、书桌和水池回放站位。",
+      "anchor": "private string SpotOf(Projection target)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-015",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 846,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "本案门状态变化、烟灰、鞋印、湿布压痕与喊声听闻的物理后果。",
+      "anchor": "private void Physics(Agent actor)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-016",
+      "path": "godot_csharp/scenes/Awakening/Night/NightReplay.cs",
+      "line": 901,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按苏泠、沈鼎、霍铎在特定场面中的认知生成等待心声。",
+      "anchor": "private string? IdleThought(Agent a)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-063",
+      "path": "godot_csharp/scenes/Awakening/Night/NightVariables.cs",
+      "line": 6,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "本案角色/房间及 V1–V6 选项由连续固定枚举编码。",
+      "anchor": "public enum Person { Detective, Huo, Shen, Su }",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-001",
+      "path": "godot_csharp/scenes/Awakening/Night/NightVariables.cs",
+      "line": 91,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "固定传播表规定铜口完整/接头句尾/隔墙低语/其余警铃，以及门内外喊声组合；拓扑与接头配置读取故事数据。",
+      "anchor": "public static Hearing Hear(VoiceOrigin origin, Room listener, IReadOnlyDictionary<string, bool>? loose = null)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-002",
+      "path": "godot_csharp/scenes/Awakening/Night/NightVariables.cs",
+      "line": 130,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "枚举键与本章人物、房间名称按固定顺序绑定。",
+      "anchor": "public static class Names",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-058",
+      "path": "godot_csharp/scenes/Awakening/RoomDoor.gd",
+      "line": 18,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "宿舍门所有者键与本章角色节点名称固定绑定。",
+      "anchor": "func owner_actor() -> CharacterBody2D:",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-035",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Interaction.cs",
+      "line": 37,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E11 手印卡有先比自己、再比在场同伴的本章专属门槛。",
+      "anchor": "if (id == \"E11\")",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-061",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Replay.cs",
+      "line": 8,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "本章实播重演将固定六项变量、吻合判断和角色见证写入玩家进度。",
+      "anchor": "public ImmutableArray<Finding> RunVisibleReplay(MorningWorld world, NightVariables variables)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-028",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 76,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E8 只开听位菜单且 E3 选对象前不结算；其余试验按证物编号调度。",
+      "anchor": "public void BeginExperiment(MorningWorld world, string id, string who)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-029",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 122,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "侦探与三名同伴的旧物回忆分别走固定角色流程。",
+      "anchor": "public void BeginRecall(MorningWorld world, string id)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-030",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 226,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "固定同伴顺序、调查痕迹阈值与离场低语触发条件属于本章流程。",
+      "anchor": "public void BeginRoomChanged(MorningWorld world, string room, long now)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-031",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 280,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E1/E3 开放重演、指定熟悉旁证揭示 V6 的触发映射。",
+      "anchor": "public string[] Examine(MorningWorld world, string id)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-032",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 312,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "E12 展示 E7 石板小图是本案证物间固定关联。",
+      "anchor": "public string CardFacts(string id)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-033",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 318,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E11 四人手印进度及 E8 声路试验笔记为本案专属摘要逻辑。",
+      "anchor": "public string[] CardNotes(MorningWorld world, string id)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-034",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Script.cs",
+      "line": 463,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "从本章固定案件真相建立清晨证物实体与醒来人物认知。",
+      "anchor": "var truth = Chapter1Data.Root.GetProperty(\"TRUTH\");",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-036",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+      "line": 26,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "登记固定的第一章四人组及三名同伴。",
+      "anchor": "private static readonly string[] Companions = [\"huo\", \"shen\", \"su\"];",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-037",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+      "line": 576,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "手稿固定将第六问作为末项并按认知解锁隐藏显示。",
+      "anchor": "private Ev ReplaySnapshot()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-022",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 14,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "第一章开场固定摆放侦探与三名同伴并启动醒来流程。",
+      "anchor": "private IEnumerable<Op> Begin()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-023",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 141,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "开门命令固定联动隔离门状态、音效和主旋律。",
+      "anchor": "case \"door_open\":",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-024",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 216,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "相遇阶段固定角色身份与对应会面锚点。",
+      "anchor": "private IEnumerable<Op> Meeting()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-025",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 373,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "E11 手印与 E3 鞋底试验使用本章专属处理分支。",
+      "anchor": "private IEnumerable<Op> Experiment(string id)",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-026",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 596,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "把本章声路听位绑定到对应现场证物热点。",
+      "anchor": "private static readonly Dictionary<string, string> SoundSpotSite = new()",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-027",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1SessionFlows.cs",
+      "line": 601,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按已知石板、乐谱、霍铎回忆开放本章试验句。",
+      "anchor": "private bool SentenceKnown(int index) => index switch",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-062",
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Speech.cs",
+      "line": 12,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "回应键把本章言语行为/立场固定映射到剧本词汇键。",
+      "anchor": "private static readonly string[] Companions = [\"huo\", \"shen\", \"su\"];",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-042",
+      "path": "godot_csharp/scenes/Awakening/TraceDecals.gd",
+      "line": 8,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "绘制本案铜管两条具体路径及松动接头位置。",
+      "anchor": "const PIPES := [",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-043",
+      "path": "godot_csharp/scenes/Awakening/TraceDecals.gd",
+      "line": 14,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "绘制本案灰扇、靴印、湿布、接头与门框凹痕的位置方向。",
+      "anchor": "const DECALS := [",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-044",
+      "path": "godot_csharp/scenes/Awakening/TraceDecals.gd",
+      "line": 60,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按本章 R-05 半枚手印、住人房方框与空房均匀灰尘呈现固定证物。",
+      "anchor": "for shelf in host.layout.shelves:",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-047",
+      "path": "godot_csharp/scenes/Awakening/check/CognitionCheck/Program.cs",
+      "line": 45,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "具体人物、证物与预期认知/言语结果仅用于自动测试。",
+      "anchor": "var baseline = Answers();",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-052",
+      "path": "godot_csharp/scenes/Awakening/check/DetectiveSimulation/ContinuationSimulation.cs",
+      "line": 12,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "续篇模拟器按公开菜单、空间与信息制定固定探索策略；未读取正确答案或自动通关。",
+      "anchor": "public static Outcome Run(MorningWorld morning, ChapterSession progress, int seed, double handoffGameMinutes,",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-051",
+      "path": "godot_csharp/scenes/Awakening/check/DetectiveSimulation/Program.cs",
+      "line": 94,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "自动模拟器含固定侦探输入/空间采样与选项策略，仅作工具模拟。",
+      "anchor": "var startMinutes = root.GetProperty(\"DAY_CLOCK\").GetProperty(\"start_minutes\").GetInt32();",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-048",
+      "path": "godot_csharp/scenes/Awakening/check/LawCheck/Program.cs",
+      "line": 7,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "声路和证物破坏检查中的具体状态及答案是自动测试夹具。",
+      "anchor": "var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-045",
+      "path": "godot_csharp/scenes/Awakening/check/ReplayCheck/ReplayCheckProgram.cs",
+      "line": 19,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "穷举检查内的真值组合、逐项反证表和答案是验证夹具数据。",
+      "anchor": "var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-050",
+      "path": "godot_csharp/scenes/Awakening/check/SessionCheck/SessionCheckProgram.cs",
+      "line": 8,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "模拟会话中的角色站位、E1 检视与固定状态跳转属于测试夹具。",
+      "anchor": "var session = new Chapter1Session();",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-049",
+      "path": "godot_csharp/scenes/Awakening/check/StoryPacketCheck/Program.cs",
+      "line": 41,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "预写角色、剧情分支与固定台词断言属于自动测试夹具。",
+      "anchor": "var document = Chapter1CompiledDialogue.Create();",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-046",
+      "path": "godot_csharp/scenes/Awakening/check/VariantCheck/Program.cs",
+      "line": 8,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "选角、心愿以及案件变体中的具体人物与预期答案属于验证夹具。",
+      "anchor": "var root = Chapter1Data.Root;",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-056",
+      "path": "godot_csharp/scenes/Awakening/check/cabinet_fog_current_check.gd",
+      "line": 3,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "E11 固定人物、证物顺序与结论只作专项回归夹具。",
+      "anchor": "const OUT := \"C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/remake-chapter2/shared-runtime/\"",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-053",
+      "path": "godot_csharp/scenes/Awakening/check/flow_check.gd",
+      "line": 10,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "流程回归中的具体台词/场景/答案约束只作 fixture 断言。",
+      "anchor": "const FORBIDDEN := [\"第九\", \"第 9\", \"第9\", \"第十条\", \"第 10\", \"九、\", \"十、\", \"尽忘\", \"归乡\", \"放逐\", \"十五名\", \"担保耗尽\"]",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-057",
+      "path": "godot_csharp/scenes/Awakening/check/hand_outline_check.gd",
+      "line": 17,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "E11 人物、证物和结果断言只作 UI 回归夹具。",
+      "anchor": "func run() -> void:",
+      "audit_note": ""
+    },
+    {
+      "id": "AWK-054",
+      "path": "godot_csharp/scenes/Awakening/check/state_gallery.gd",
+      "line": 17,
+      "kind": "schema",
+      "scope": "fixture",
+      "reason": "诊断画廊注入案件状态并按固定菜单推进，只作 UI 回归夹具。",
+      "anchor": "func _initialize() -> void:",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-021",
+      "path": "godot_csharp/scenes/Chapter2/Game/check_gallery.gd",
+      "line": 43,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "画廊脚本注入章一继承状态并预写第二章场景、行动与日期路线。",
+      "anchor": "func _run() -> void:",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-001",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Alliances.cs",
+      "line": 16,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "聚落阵营规则的具体身份、时段和后果在代码中定义。",
+      "anchor": "private void WriteAllianceRules()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-002",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Bots.cs",
+      "line": 26,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "自动推演目录预写具体策略、时间表、角色与议事选择，仅属开发夹具。",
+      "anchor": "public static class Bots",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-086",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 10,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "定义本案缺粮、门闩、空碗、废纸篓与夜巡身影的证物模型。",
+      "anchor": "public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, IReadOnlyList<Place> CrumbDorms, IReadOnlyList<Build> Figures)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-087",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 32,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本案反事实重演所用的四项人物信念/处境变量。",
+      "anchor": "public sealed record CaseVars(int MoraBelief, int QuerRule, int MargaretRule, int QuerSupper)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-003",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 61,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "案发痕迹、人物知识变量与反事实重演映射为特定案件事实。",
+      "anchor": "public CaseTraces Dawn()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-088",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 230,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算本案公开指控、证据说服、雀儿洗清或排斥及规则提出。",
+      "anchor": "public void Confront(ConfrontPlan? plan, bool reopen = false)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-089",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 344,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "处理案件对质后的特定议案表态、议事站队与共同规则结果。",
+      "anchor": "private void Propose(ConfrontPlan plan, Person[] room)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-090",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 399,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "允许案发后援引本章共同规则重开中央厅对质。",
+      "anchor": "private void Reopen(ConfrontPlan? plan)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-091",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Case.cs",
+      "line": 423,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按本案指控结局改变雀儿的寝区、信任与名誉认知。",
+      "anchor": "private void Ostracize()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-009",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Access.cs",
+      "line": 8,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "具体宿舍、走廊和名录库区域的通行身份硬编码。",
+      "anchor": "private readonly HashSet<Place> _releasedDorms = [Place.DormLife, Place.DormW];",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-083",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2AuthoredSites.cs",
+      "line": 22,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "白名单固定本章专用的站点交互类型。",
+      "anchor": "var kind=Read(\"kind\");if(kind is not (\"\" or \"bed\" or \"watch\" or \"meal\" or \"tube\" or \"school_rules\"))throw new InvalidDataException(\"Unsupported site kind: \"+kind);",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-100",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2AuthoredSites.cs",
+      "line": 30,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "豁免本章时钟和传声物件的房间一致性校验。",
+      "anchor": "if(thing is not (\"world:object.Clock\" or \"world:object.NameVoice\") &&",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-084",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs",
+      "line": 8,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "将剧本里的具体世界物件身份绑定到本章运行对象。",
+      "anchor": "private static readonly IReadOnlyDictionary<string,Func<Game,Essence>> Objects = new Dictionary<string,Func<Game,Essence>>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-096",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs",
+      "line": 38,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "限定本章公告板实体可绑定的具体地点集合。",
+      "anchor": "if(entity.Kind==\"object\"&&local.StartsWith(\"Board.\",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[6..],out var board)&&board is Place.Hall or Place.Logistics or Place.Lecture or Place.DormLife or Place.DormW or Place.DormS or Place.DormL or Place.Living)continue;",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-097",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2Bindings.cs",
+      "line": 40,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "限定本章废纸篓实体只存在于四个宿舍区。",
+      "anchor": "if(entity.Kind==\"object\"&&local.StartsWith(\"Litter.\",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[7..],out var litter)&&litter is Place.DormLife or Place.DormW or Place.DormS or Place.DormL)continue;",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-010",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2DesignRules.cs",
+      "line": 119,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "允许的行为编号清单是本项目规则语义的硬编码 schema。",
+      "anchor": "private static readonly string[] BehaviorIds = [\"取粮\", \"按人头\", \"交钥匙\", \"指控须证\", \"转述\", \"开库各取\", \"开库委员会\", \"开库封闭\", \"开库约束\", \"限制入院\", \"温室\"];",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-033",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2InteractionSession.cs",
+      "line": 331,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "调查台账在案发日后解锁本案重演的预写逻辑。",
+      "anchor": "if (thing==\"台账\" && _game.Day>=Game.CaseDay && !_replayOpen) { _replayOpen=true; _continuations.Enqueue(o=>Activate(\"card.replay_unlock\",o)); }",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-025",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2InteractionSession.cs",
+      "line": 410,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "对质议程固定为本案的取用、门闩、台账及特定人物结局。",
+      "anchor": "private void BeginConfront(List<Dictionary<string,object?>> output)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-026",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2InteractionSession.cs",
+      "line": 542,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "人物印象候选名单固定为本案关键角色。",
+      "anchor": "private string[] Impressions()=>_game.Npcs.Where(p=>p.Id is P.Ward or P.Quer or P.Mora or P.Huo or P.Ruan or P.Margaret).Select(p=>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-024",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SessionView.cs",
+      "line": 20,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "角色身份到专属肖像标识及地图地点的映射写在宿主代码。",
+      "anchor": "private static readonly Dictionary<string, string> Sprites = new()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-080",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SessionView.cs",
+      "line": 61,
+      "kind": "text",
+      "scope": "production",
+      "reason": "构造本章议事结果、角色归宿与章末卡文本。",
+      "anchor": "private IEnumerable<Ev> EndEvents(Ev result)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-011",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Chapter2SocialActions.cs",
+      "line": 3,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "本文件按本章具体社会行动实现角色互动及预写反馈。",
+      "anchor": "namespace DualOntologyWorldEngine.Chapter2.Prototype;",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-022",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Checks.cs",
+      "line": 8,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "自动检查中的预写章节性断言、推演路线和游戏结局策略。",
+      "anchor": "public static class Checks",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-023",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/ConsoleUI.cs",
+      "line": 425,
+      "kind": "text",
+      "scope": "production",
+      "reason": "帮助展示具体人名、物证提示与本章行动例句。",
+      "anchor": "private void Help()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-081",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/ConsoleUI.cs",
+      "line": 494,
+      "kind": "text",
+      "scope": "production",
+      "reason": "状态页显示本案特定证物、指控与石碑阅读结果。",
+      "anchor": "private void Status()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-082",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/ConsoleUI.cs",
+      "line": 621,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "过滤本案清晨跟踪的特定无变文字。",
+      "anchor": "private static bool Changed(TraceItem t) => !(t.Text is \"三处机关没人碰过\" or \"前厅积灰上没有新脚印\" or \"病床边没有新送来的东西\" or \"贝尔特朗：夜巡无异常\" or \"门闩完好\")",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-004",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "line": 24,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "议事前厅三站、角色资格与夜间夺取的具体规则及反馈。",
+      "anchor": "public bool Staff(IReadOnlyCollection<Person> crew, out string report, bool commander = false)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-045",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "line": 54,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按具名人物、地点和本案时间安排议事前的控制与封锁。",
+      "anchor": "private void Seizure()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-046",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "line": 86,
+      "kind": "text",
+      "scope": "production",
+      "reason": "为本章议事结局编写人物组合对应的开场反馈。",
+      "anchor": "private string OpeningScene(Ending fam, RuleSpec plan, List<Person> who)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-047",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Council.cs",
+      "line": 127,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算本章誓约庭议案、具名派系立场及具体结局。",
+      "anchor": "public Ending Council(int detBacks = -1)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-027",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Demon.cs",
+      "line": 35,
+      "kind": "text",
+      "scope": "production",
+      "reason": "具体课次、日期、标题和教师讲授文字写入代码。",
+      "anchor": "public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-043",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Demon.cs",
+      "line": 100,
+      "kind": "text",
+      "scope": "production",
+      "reason": "逐日晨间播报包含本章特定课程与事件。",
+      "anchor": "public void MorningBroadcast()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-044",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Demon.cs",
+      "line": 130,
+      "kind": "text",
+      "scope": "production",
+      "reason": "恶魔对本案各话题的知识边界与回答逐项预写。",
+      "anchor": "public string AskDemon(int topic, bool precise, out bool praised, out bool refused)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-028",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Emergence.cs",
+      "line": 84,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "事件追踪按本章人物与案件谓词生成特定因果链。",
+      "anchor": "private bool HandleTalk(Person p, Job? job, ActionExecution exec)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-038",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Emergence.cs",
+      "line": 138,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "将本章特定人物行动映射为案件因果事件。",
+      "anchor": "private void RecordAction(Person p, Job? job, ActionExecution exec)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-039",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Emergence.cs",
+      "line": 289,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "仅对本章具体人物与行动组合开放可读线索。",
+      "anchor": "public string? Readable(ActEvent e)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-040",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameJobs.cs",
+      "line": 61,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "把具体本章工作映射为案件物证与人物行动结果。",
+      "anchor": "public Effect Job(Job job, Person? who = null) => job switch",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-041",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameJobs.cs",
+      "line": 163,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "为具名人物预置习惯行动及其观察规则。",
+      "anchor": "public ImmutableArray<Rule> HabitRules(Person p)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-042",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameJobs.cs",
+      "line": 259,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按本章人物身份与案件状态配置行动计划。",
+      "anchor": "private void PlanRules(Person p, Fx fx, List<Rule> rules)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-029",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameJobs.cs",
+      "line": 341,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "背景人物按具体身份、日期和关系执行预设专属行为。",
+      "anchor": "private void BackgroundLines(Person p, Fx fx, List<Rule> rules)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-061",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 108,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按本章日序初始化病情、案件发现与线索状态。",
+      "anchor": "private void BeginDay()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-062",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 332,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "把指定案件行动完成映射为本章固定后果。",
+      "anchor": "private void OnCompleted(ActionExecution exec)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-063",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 428,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算本章人物、作案物件与调查线索的专属物理结果。",
+      "anchor": "private void Physics(Person p, Job? job, ActionExecution exec)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-064",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 556,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "判定本案夜间取物是否被特定证据和目击捕捉。",
+      "anchor": "private void NightSeenTaking(Person taker, bool recorded)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-065",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 637,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按本案特定行为积累或消除嫌疑。",
+      "anchor": "private void Suspicions()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-066",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 655,
+      "kind": "text",
+      "scope": "production",
+      "reason": "为本案指控对象选择具名指控反馈。",
+      "anchor": "private void AccuseSpeech(Person w)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-067",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 730,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "执行本案预置的按日/时段线索及人物状态变更。",
+      "anchor": "private void FixedBefore()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-068",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 836,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算本案温室特定事件、人物和物件状态。",
+      "anchor": "private void GreenhousePhysics()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-069",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 985,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "在本案案发后按固定条件触发点名事件。",
+      "anchor": "private void NameCall()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-070",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/GameLoop.cs",
+      "line": 1011,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算阮、贝特朗、莫拉与茉拉相关的专属油料剧情。",
+      "anchor": "private void OilPhysics()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-072",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Host.cs",
+      "line": 48,
+      "kind": "text",
+      "scope": "production",
+      "reason": "为温室阀门与中继站提供本章专属物证反馈。",
+      "anchor": "public string HostExamineEntity(Essence entity)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-073",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Host.cs",
+      "line": 96,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "指定首课答题后特定人群对教师的反应。",
+      "anchor": "public void HostLessonAnswer(bool precise)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-032",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/InvestigationPresentation.cs",
+      "line": 18,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "调查条目与本章具体证物、案件变量的映射逻辑。",
+      "anchor": "public static InvestigationEntry[] Entries(Game g)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-071",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/InvestigationPresentation.cs",
+      "line": 128,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "把案件特定痕迹键映射到对应调查物件。",
+      "anchor": "private static string TraceImage(Game g, TraceItem trace)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-074",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 7,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "定义本章十六位学员的具体身份标识。",
+      "anchor": "public enum P { Det, Huo, Shen, Su, Lucian, Gu, Quer, Ward, Selma, Ruan, Elena, Moran, Veronica, Bertrand, Margaret, Mora }",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-092",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 9,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章具名学员所属的四个社会群体。",
+      "anchor": "public enum Group { Life, Wenqi, Xingyi, Houqin }",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-085",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 12,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "定义本章具名场所与宿舍区身份。",
+      "anchor": "public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL, Resonance, Living }",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-098",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 17,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章价值聚落类别及其社会阵营语义。",
+      "anchor": "public enum Cluster { None, Order, Labor, Beauty, Evidence }",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-093",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 21,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章角色日程可执行的专属行为枚举。",
+      "anchor": "public enum Job",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-099",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 34,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章议事规则语义位，包括具名目标、档案院权限及夜间议案条件。",
+      "anchor": "public enum RF",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-075",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 43,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "定义本案粮仓、痕迹与被指控等专用状态标识。",
+      "anchor": "public static class T",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-094",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 87,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章人物的内部别名与身份映射。",
+      "anchor": "public static readonly ImmutableDictionary<string, P> PersonAlias = new Dictionary<string, P>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-095",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Model.cs",
+      "line": 94,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本章地点的内部别名与地点映射。",
+      "anchor": "public static readonly ImmutableDictionary<string, Place> PlaceAlias = new Dictionary<string, Place>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-048",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 93,
+      "kind": "text",
+      "scope": "production",
+      "reason": "生成针对本案夜间行动与地点的固定守望报告。",
+      "anchor": "public List<string> StakeoutReport(int day, Place at)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-030",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 144,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "清晨生成台账、门闩、病碗、废纸篓与目击等具体案发痕迹。",
+      "anchor": "private List<TraceItem> TakeTraces(int night)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-049",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 211,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "指定本案各类物证达到何种组合才可读全。",
+      "anchor": "private bool FullyRead(int night, TraceItem t)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-050",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 414,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "将本案特定行动地点编码为重演档案中的位置名称。",
+      "anchor": "private static string InkPlace(string act, Place dorm)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-051",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 483,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "用本案预设体型与可见轨迹筛选嫌疑人。",
+      "anchor": "public HashSet<P> ReplayCandidates(int night)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-052",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Morning.cs",
+      "line": 497,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "将案夜特定证词和现场记录折算为可见体型。",
+      "anchor": "public HashSet<Build> BuildsSeenAt(int night, Place place)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-053",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 44,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定本案可调查物件、对应地点和真实实体。",
+      "anchor": "public static readonly ImmutableDictionary<string, (Place Place, Func<Game, Essence> Thing)> Things_ = new Dictionary<string, (Place, Func<Game, Essence>)>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-054",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 58,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "固定各案发相关地点的调查物件集合。",
+      "anchor": "public static readonly ImmutableDictionary<Place, string[]> AreaThings = new Dictionary<Place, string[]>",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-055",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 69,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "处理玩家介入后本案指定人物请求及证据相关分支。",
+      "anchor": "private void PlayerBegin(PlayerAction? act)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-056",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 195,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "结算本章玩家行动、证据反馈与案情特定揭示。",
+      "anchor": "private void PlayerEnd(PlayerAction? act)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-031",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 464,
+      "kind": "text",
+      "scope": "production",
+      "reason": "不同具体角色对案发夜的预写口供反馈直接写在代码中。",
+      "anchor": "private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-057",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Player.cs",
+      "line": 537,
+      "kind": "text",
+      "scope": "production",
+      "reason": "为本案专属物证、人物特征及状态撰写调查描述。",
+      "anchor": "public string Describe(Essence e)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-077",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Program.cs",
+      "line": 40,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "宿主冒烟流程固定演示本章查案、对质与议事。",
+      "anchor": "case \"host\":",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-058",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Report.cs",
+      "line": 67,
+      "kind": "text",
+      "scope": "production",
+      "reason": "按具名人物立场生成议事前的本案反馈。",
+      "anchor": "private void StanceTalk()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-059",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Report.cs",
+      "line": 117,
+      "kind": "text",
+      "scope": "production",
+      "reason": "输出本章案件与议事结局的专属总结。",
+      "anchor": "public static string ChapterEnd(Game g)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-060",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Retell.cs",
+      "line": 30,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "绑定特定人物与本章习惯证词的文本键。",
+      "anchor": "private string SlantText(NewsItem item, P? slant, Person speaker)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-078",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/RoomPresentation.cs",
+      "line": 11,
+      "kind": "text",
+      "scope": "production",
+      "reason": "按本章时段、地点与案件状态提供场景动作选项。",
+      "anchor": "public static RoomView For(Game g, Place? place)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-079",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/RoomPresentation.cs",
+      "line": 54,
+      "kind": "text",
+      "scope": "production",
+      "reason": "定义本章当面交互可执行的具体人物行动。",
+      "anchor": "public static RoomAction[] PersonActions(Game g, P who, Place? place)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-005",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "line": 114,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "为具体人物初始化特定规则、时段、目标与结果。",
+      "anchor": "private void WriteRules()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-006",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "line": 153,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "将本项目特定规则卡编号和行为映射为具体游戏后果。",
+      "anchor": "private IEnumerable<Rule> CompileCard(Fx fx, Card card)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-034",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "line": 353,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "按具体人物身份写入对议案措辞的立场偏好。",
+      "anchor": "private int StanceTerms(Person p, RuleSpec s, List<string> parts)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-035",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "line": 447,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "为各具体人物预设议案条件与反对理由。",
+      "anchor": "private static IEnumerable<(RF Need, int Penalty, string Text)> Requirements(P p) => p switch",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-036",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Rules.cs",
+      "line": 459,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "指定人物对特定议案的否决底线。",
+      "anchor": "public string? Veto(Person p, RuleSpec s)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-037",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+      "line": 211,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "固定本章恶魔词、基座裂缝指认及指控/教训后果。",
+      "anchor": "public void Receive(Person teller, Person hearer, NewsItem item, Heard via, Channel channel = Channel.Relay)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-007",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+      "line": 260,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "对“门闩松了”证词执行本案专属解释。",
+      "anchor": "public void Interpret(Person p)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-008",
+      "path": "godot_csharp/scenes/Chapter2/Prototype/Social.cs",
+      "line": 282,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "阵营成员集合固定引用本章具体人物身份。",
+      "anchor": "public List<Faction> Factions()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-012",
+      "path": "godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs",
+      "line": 93,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "初始化具体角色、案件实体、持钥身份、时空位置与案件状态。",
+      "anchor": "public Game(GameOptions? options = null, LiveChapterWorld? continuation = null, ChapterWorldDefinition? authored = null, WorldSession? session = null)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-076",
+      "path": "godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs",
+      "line": 167,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "初始化本章具体空间、案件物件、持钥人身份与知情模型。",
+      "anchor": "private void BuildWorld()",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-013",
+      "path": "godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs",
+      "line": 297,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "初始化不同具体人物对角色、身份、关系、规则及旧案的认知。",
+      "anchor": "private void Know(Person p)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-014",
+      "path": "godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs",
+      "line": 495,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "限定具体空间的夜间视线并生成身形目击和专案反馈。",
+      "anchor": "private void NightSight(Person p, Place here)",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-015",
+      "path": "godot_csharp/scenes/Chapter2/Script/Chapter2Script.cs",
+      "line": 549,
+      "kind": "text",
+      "scope": "production",
+      "reason": "章节专属教师身份替换与标题常量写在宿主代码中。",
+      "anchor": "public static class Chapter2Content",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-020",
+      "path": "godot_csharp/scenes/Chapter2/check/chapter2_fixture.gd",
+      "line": 46,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "夹具自动填写固定侦探名、代按对白与菜单并跳过回放。",
+      "anchor": "func settle(resolve_choices := false, seconds := 60.0, until := Callable()) -> bool:",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-016",
+      "path": "godot_csharp/scenes/Chapter2/check/check_flow.gd",
+      "line": 7,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "自动流程预写具体地图出生点、角色、案件操作顺序和终局检查。",
+      "anchor": "const SPAWN_OF := {",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-017",
+      "path": "godot_csharp/scenes/Chapter2/check/check_flow.gd",
+      "line": 50,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "自动验收按预定证词、证据、支持与分支策略代选。",
+      "anchor": "func planned_choice(options: Array) -> String:",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-018",
+      "path": "godot_csharp/scenes/Chapter2/check/check_flow.gd",
+      "line": 76,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "测试构造章一继承状态并预置姓名、答案和章二交接。",
+      "anchor": "func handoff() -> bool:",
+      "audit_note": ""
+    },
+    {
+      "id": "CH2-019",
+      "path": "godot_csharp/scenes/Chapter2/check/check_flow.gd",
+      "line": 122,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "测试硬编码第二章时间推进、规则转述、特定人物问话、证物和议事流程。",
+      "anchor": "func _run() -> void:",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-033",
+      "path": "godot_csharp/scenes/Shared/Field/WorldView.gd",
+      "line": 234,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "特定章节纹理到油灯/柜体可见名称的绑定；不是剧情因果规则。",
+      "anchor": "player_visible_objects / nightstand.png branch",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-035",
+      "path": "godot_csharp/scenes/Shared/Field/WorldView.gd",
+      "line": 703,
+      "kind": "schema",
+      "scope": "production",
+      "reason": "专用盟誓庭锚点与侦探位置绑定；名单由外部快照驱动。",
+      "anchor": "_place_court",
+      "audit_note": "专用盟誓庭锚点与侦探位置绑定；名单外部快照驱动。"
+    },
+    {
+      "id": "CSH-008",
+      "path": "godot_csharp/scenes/Shared/Story/Examples/ExampleWorld.cs",
+      "line": 7,
+      "kind": "text",
+      "scope": "example",
+      "reason": "可执行示例定义值夜学员、值夜记录、中央厅与调查选择文案。",
+      "anchor": "ExampleWorld",
+      "audit_note": "可执行故事示例硬编码值夜学员、值夜记录、中央厅、角色声线及调查选择文案。"
+    },
+    {
+      "id": "CSH-038",
+      "path": "godot_csharp/scenes/Shared/Story/Examples/WorldScript/Host/WorldScriptPreview.gd",
+      "line": 15,
+      "kind": "schema",
+      "scope": "preview",
+      "reason": "作者预览固定以侦探与内门闩控件代表编译故事示例中的实体。",
+      "anchor": "Detective and Bolt preview controls",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-017",
+      "path": "godot_csharp/scenes/Shared/check/WorldScriptCheck/Program.cs",
+      "line": 4,
+      "kind": "logic",
+      "scope": "example",
+      "reason": "回归测试实际执行侦探、守卫、内门闩及arrival/morning项目示例章节。",
+      "anchor": "top-level example session checks",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-018",
+      "path": "godot_csharp/scenes/Shared/check/WorldScriptCheck/preview_ui_check_01.gd",
+      "line": 10,
+      "kind": "logic",
+      "scope": "preview",
+      "reason": "逐步呈现并切换实际arrival/morning示例章节内容。",
+      "anchor": "run",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-010",
+      "path": "godot_csharp/scenes/Shared/check/chapter1_smoke.gd",
+      "line": 30,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "自动脚本执行第一章固定调查、重演、始业问答与结尾检查，并预置角色回答。",
+      "anchor": "_run",
+      "audit_note": "检查驱动覆盖第一章调查、隔离门实验、昨夜重演与始业之答，使用固定回答及终局断言。"
+    },
+    {
+      "id": "CSH-019",
+      "path": "godot_csharp/scenes/Shared/check/check_room_fog.gd",
+      "line": 191,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "验证第一章E11a书架痕迹仅在进入其房间后可知。",
+      "anchor": "verify_props chapter1 branch",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-020",
+      "path": "godot_csharp/scenes/Shared/check/check_room_fog.gd",
+      "line": 328,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "用第二章Huo检验未探索宿舍与当前房间人物的可见性。",
+      "anchor": "_run chapter2 Huo branch",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-015",
+      "path": "godot_csharp/scenes/Shared/check/ui_modules_check.gd",
+      "line": 183,
+      "kind": "text",
+      "scope": "fixture",
+      "reason": "UI测试自带的案件问答样例，不视为正式剧情规则。",
+      "anchor": "check_form / tabs show_data",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-016",
+      "path": "godot_csharp/scenes/Shared/check/ui_modules_check.gd",
+      "line": 210,
+      "kind": "text",
+      "scope": "fixture",
+      "reason": "UI测试自带的具体调查样例文本，未证明与正式案件相同。",
+      "anchor": "check_notebook / notebook.show_data",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-021",
+      "path": "godot_csharp/scenes/UI/Panels/CampusMap/CampusMap.gd",
+      "line": 31,
+      "kind": "schema",
+      "scope": "preview",
+      "reason": "编辑器地图预览固定使用项目学园地点及其连线。",
+      "anchor": "PREVIEW_NODES and PREVIEW_LINKS",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-022",
+      "path": "godot_csharp/scenes/UI/Panels/Dialogue/ChapterDialogue.gd",
+      "line": 555,
+      "kind": "logic",
+      "scope": "production",
+      "reason": "铜口之声每段首次开口触发盖片与管道共鸣音。",
+      "anchor": "_present_line: current_voice_stream == VOICE_TUBE",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-014",
+      "path": "godot_csharp/scenes/UI/Panels/Notebook/Notebook.gd",
+      "line": 24,
+      "kind": "text",
+      "scope": "preview",
+      "reason": "编辑器笔记样例写入窗台水渍、桌钥匙、门锁和夜间离室禁令等案件事实。",
+      "anchor": "preview_sections",
+      "audit_note": "编辑器笔记样本包含水渍、钥匙、门锁证物及夜间禁令文本。"
+    },
+    {
+      "id": "CSH-011",
+      "path": "godot_csharp/tools/PlayerTranscript/Program.cs",
+      "line": 14,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "玩家记录器绑定第一章与学园地点、人物、调查路线及条件分支。",
+      "anchor": "Transcript",
+      "audit_note": "正式引擎语义记录工具绑定第一章和学园具体路线、角色与地点。"
+    },
+    {
+      "id": "CSH-012",
+      "path": "godot_csharp/tools/PlayerTranscript/Program.cs",
+      "line": 132,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "预设第一章作答文本/物证映射及第五日学园议事选择策略。",
+      "anchor": "Respond",
+      "audit_note": "预设主角开场/四问答案与物证映射，并写定第五日议事应答优先级。"
+    },
+    {
+      "id": "CSH-013",
+      "path": "godot_csharp/tools/PlayerTranscript/Program.cs",
+      "line": 396,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "固定执行第一章检视顺序与连续五日路线以生成语义记录。",
+      "anchor": "Run",
+      "audit_note": "代码写定第一章检视顺序和连续五日的地点、人物与日常行动。"
+    },
+    {
+      "id": "CSH-028",
+      "path": "godot_csharp/tools/build_breakfast_exchange.gd",
+      "line": 17,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "素材工具为早餐交换场景绑定人物姿态、桌面与汤碗资源；不推进剧情或映射答案。",
+      "anchor": "build",
+      "audit_note": "工具生成项目早餐交换素材的固定人物姿态与桌面/汤碗绑定；属于素材生产，不是剧情推进或答案映射。"
+    },
+    {
+      "id": "CSH-029",
+      "path": "godot_csharp/tools/build_maxwell_intro.gd",
+      "line": 24,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "Maxwell素材工具将开场角色绑定为手按胸口/鞠躬姿态及白手套像素；不推进剧情或映射答案。",
+      "anchor": "build_pose",
+      "audit_note": "工具生成Maxwell开场素材的固定角色动作与手套提示绑定；属于素材生产，不是剧情推进或答案映射。"
+    },
+    {
+      "id": "CSH-030",
+      "path": "godot_csharp/tools/build_story_tiles.gd",
+      "line": 23,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "资产工具固定生成项目故事场景道具（钟、传送门、罗盘、早餐桌、书柜、客厅钢琴及横幅等）。",
+      "anchor": "_initialize/build_compact_story_props/build_parlor_furniture",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-031",
+      "path": "godot_csharp/tools/build_study.gd",
+      "line": 38,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "素材工具绑定推理书房的道具与空间摆位；不推进剧情或映射答案。",
+      "anchor": "build",
+      "audit_note": "工具拼装推理书房的专用物件与位置绑定；属于场景生产，不是剧情推进或答案映射。"
+    },
+    {
+      "id": "CSH-025",
+      "path": "godot_csharp/tools/capture_player_transcript.gd",
+      "line": 26,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "回放工具硬编码学园场景地图与项目地点的对应关系。",
+      "anchor": "HOST_MAP_PLACES",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-026",
+      "path": "godot_csharp/tools/capture_player_transcript.gd",
+      "line": 309,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "用正式快照中的人物/地点（包括侦探及实际热点）复原场景坐标，只重放不执行剧情答案。",
+      "anchor": "_apply_context",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-027",
+      "path": "godot_csharp/tools/capture_player_transcript.gd",
+      "line": 783,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "可选截图阶段按E1、say字段、support选项及两场景对白识别剧情节点。",
+      "anchor": "_screenshot_stage",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-024",
+      "path": "godot_csharp/tools/capture_story_ui_samples.gd",
+      "line": 8,
+      "kind": "schema",
+      "scope": "tool",
+      "reason": "采样清单固定选择两章对白、E1证物、防辩表、午间争执、议事支持项与结局。",
+      "anchor": "SAMPLE_SPECS",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-006",
+      "path": "godot_csharp/tools/capture_ui_start.gd",
+      "line": 9,
+      "kind": "logic",
+      "scope": "tool",
+      "reason": "采集器按正式开场的“开始游戏”与“如何称呼你”剧情节点推进。",
+      "anchor": "_run",
+      "audit_note": "采集器按正式开场特定台词定位剧情节点并推进正式主场景。"
+    },
+    {
+      "id": "CSH-007",
+      "path": "godot_csharp/tools/verify_ch1_locker_ui.gd",
+      "line": 159,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "UI 检查定位第一章领取柜并跟踪固定角色的领取动画。",
+      "anchor": "fx.map().anchor(\"领取柜\")",
+      "audit_note": "UI 夹具绑定第一章领取柜、领取阶段台词和特定角色领取动画。"
+    },
+    {
+      "id": "CSH-037",
+      "path": "godot_csharp/tools/verify_ch1_locker_ui.gd",
+      "line": 164,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "依项目奖励对白行号定位开场与空柜台词，核对固定物证阶段的位置/输入状态。",
+      "anchor": "_run source_targets / locker dialogue checks",
+      "audit_note": ""
+    },
+    {
+      "id": "CSH-036",
+      "path": "godot_csharp/tools/verify_ch1_locker_ui.gd",
+      "line": 233,
+      "kind": "logic",
+      "scope": "fixture",
+      "reason": "用第一章铜口热点E8及黑板热点BOARD验证其相对领取柜的具体命中优先级。",
+      "anchor": "_run E8/BOARD hotspot priority block",
+      "audit_note": ""
+    }
+  ]
+}

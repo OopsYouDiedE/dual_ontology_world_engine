@@ -27,6 +27,7 @@ public sealed partial class Game
     }
 
     /// <summary>成见带来的定性：说话人自己添的，就是他自己的话；别人添的，说“据某人说”。</summary>
+    // STORY-HARDCODE[CH2-060][schema][production]: 绑定特定人物与本章习惯证词的文本键。
     private string SlantText(NewsItem item, P? slant, Person speaker)
     {
         if (slant is not { } s || item.About is not { } about) return "";

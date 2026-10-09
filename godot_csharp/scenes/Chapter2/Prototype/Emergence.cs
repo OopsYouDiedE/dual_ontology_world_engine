@@ -81,6 +81,7 @@ public sealed partial class Game
     /// 转述与教人做完了（说话占过身体）：听的人当场判定认不认这条规矩 / 从此完整学过这一课。返回 true 表示已记成事件。
     /// 转述者对立规者有成见的，话会走样（听者那里多一分折扣，见 AcceptScore）。
     /// </summary>
+    // STORY-HARDCODE[CH2-028][logic][production]: 事件追踪按本章人物与案件谓词生成特定因果链。
     private bool HandleTalk(Person p, Job? job, ActionExecution exec)
     {
         if (job is not (Job.Relay or Job.Teach or Job.Avoid or Job.Follow) || p == Det) return false;
@@ -134,6 +135,7 @@ public sealed partial class Game
     private readonly Dictionary<Person, Person> _following = [];
 
     /// <summary>一个人物动作完成：记成事件，找出它的因，并登记它动过的东西。</summary>
+    // STORY-HARDCODE[CH2-038][logic][production]: 将本章特定人物行动映射为案件因果事件。
     private void RecordAction(Person p, Job? job, ActionExecution exec)
     {
         if (p == Det) return;
@@ -284,6 +286,7 @@ public sealed partial class Game
     }
 
     /// <summary>侦探能否读到这一步、怎么读到：在场、守夜、清晨痕迹、别人转述。读不到返回 null。</summary>
+    // STORY-HARDCODE[CH2-039][logic][production]: 仅对本章具体人物与行动组合开放可读线索。
     public string? Readable(ActEvent e)
     {
         if (e.Who == P.Det) return "自己做的";

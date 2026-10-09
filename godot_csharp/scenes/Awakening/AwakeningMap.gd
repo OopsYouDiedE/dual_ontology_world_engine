@@ -11,6 +11,7 @@ const SPATIAL := "res://scenes/Awakening/Script/generated_awakening_layout.json"
 const CONTENT := "res://scenes/Awakening/Script/generated_awakening_content.json"
 const ART := "res://ShareAsset/Internal/Props/AwakeningEvidence/"
 ## 人物键 → 场景里的人物节点名。
+# STORY-HARDCODE[AWK-059][schema][production]: 本章人物键与正式现场角色节点名称固定绑定。
 const ACTOR_NODES := {"detective": "侦探", "huo": "工程师", "shen": "厨师", "su": "音乐家"}
 
 var field: Node2D
@@ -280,6 +281,7 @@ func furniture_hits(pos: Vector2) -> Dictionary:
 	return {}
 
 ## 日常的去处：热点只供几何定位。
+# STORY-HARDCODE[AWK-041][schema][production]: 日常行动目标映射到本章 piano/tube/sink/door/score 等现场物件。
 func station(target: String, who: String) -> Dictionary:
 	match target:
 		"self":

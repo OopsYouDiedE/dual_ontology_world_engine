@@ -1,6 +1,7 @@
 namespace DualOntologyWorldEngine.Core;
 
 /// <summary>Ordered reconstruction; waiting on smoke advances the environment to that observable event.</summary>
+// STORY-HARDCODE[CSH-004][logic][production]: 将案件重演稿编译为音乐家在隔离门观察烟气并操作门楔的固定流程。
 public static class HallReplayProgram
 {
     public sealed record Result(IReadOnlyList<HallCausalityRules.Action> Actions,
@@ -9,6 +10,7 @@ public static class HallReplayProgram
     public static bool TryAction(string code, out HallCausalityRules.Action action) =>
         Enum.TryParse(code, out action) && Enum.IsDefined(action) && action.ToString() == code;
 
+    // STORY-HARDCODE[CSH-005][text][production]: 重演事件与失败反馈直接描述门厅音乐家、热烟和案件动作。
     public static Result Compile(IReadOnlyList<string> steps)
     {
         ArgumentNullException.ThrowIfNull(steps);

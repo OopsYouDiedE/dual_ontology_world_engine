@@ -19,6 +19,7 @@ public static class Chapter2AuthoredSites
             if(string.IsNullOrWhiteSpace(id)||string.IsNullOrWhiteSpace(map)||!ids.Add(map+":"+id))throw new InvalidDataException("Invalid or duplicate authored site: "+id);
             var roomId=Read("room");
             if(!roomId.StartsWith("world:room.",StringComparison.Ordinal)||!Enum.TryParse<Place>(roomId[11..],out var room)||!Enum.IsDefined(room))throw new InvalidDataException("Unknown site room: "+id);
+            // STORY-HARDCODE[CH2-083][schema][production]: 白名单固定本章专用的站点交互类型。
             var kind=Read("kind");if(kind is not ("" or "bed" or "watch" or "meal" or "tube" or "school_rules"))throw new InvalidDataException("Unsupported site kind: "+kind);
             var title=Read("title");if(string.IsNullOrWhiteSpace(title))throw new InvalidDataException("Missing site title: "+id);
             var thing=Read("thing");
@@ -26,6 +27,7 @@ public static class Chapter2AuthoredSites
             if(thing!="")
             {
                 var declaration=entities[thing];
+                // STORY-HARDCODE[CH2-100][schema][production]: 豁免本章时钟和传声物件的房间一致性校验。
                 // Clock and NameVoice have no Core SpatialProperty; room is their presentation anchor.
                 if(thing is not ("world:object.Clock" or "world:object.NameVoice") &&
                    (!declaration.Properties.TryGetValue("space",out var space)||space.Value.GetString()!=roomId))

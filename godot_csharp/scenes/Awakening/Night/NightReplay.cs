@@ -88,6 +88,7 @@ public sealed class NightReplay
     private double LookDelay => _timing.LookDelay;
 
     // 乙区拓扑（设计第二部分 §11 第 7 条）：四间住房开向中廊，中廊通活动厅；备餐间与门厅都只经活动厅出入。
+    // STORY-HARDCODE[AWK-006][schema][production]: 固定本案九个空间的夜间通行拓扑与行动耗时。
     private static readonly ImmutableDictionary<(Room, Room), double> Hops = new Dictionary<(Room, Room), double>
     {
         [(Room.R05, Room.Corridor)] = 1.2, [(Room.R06, Room.Corridor)] = 1.2,
@@ -190,6 +191,7 @@ public sealed class NightReplay
         return agent;
     }
 
+    // STORY-HARDCODE[AWK-007][logic][production]: 构造具体案件物件、四名角色的起始地点与鞋底，并将 V1/V2/V6 绑定到世界状态。
     private void Build()
     {
         foreach (var room in Enum.GetValues<Room>()) Space(room);
@@ -276,6 +278,7 @@ public sealed class NightReplay
     /// 信任初值。V6 素不相识：对一个昨天才认识的人，不足以凭一句转述去动隔离门（-1）；早已相熟：+2。
     /// V5 是玩家对侦探倾向的假设：他更愿意听谁（+1）。SocialSystem 依此判 Accept / Negotiate / Reject。
     /// </summary>
+    // STORY-HARDCODE[AWK-008][logic][production]: 按 V5/V6 设定侦探对特定同伴的信任偏移与熟人信任。
     private int TrustOf(Person self, Person other)
     {
         var trust = _v.V6 == Acquaintance.Familiar ? 2 : -1;
@@ -303,6 +306,7 @@ public sealed class NightReplay
         => a.Habits.Add(new(new Rule(condition, RuleMode.Prefer, effect, weight, Truth.True),
             new(kind, a.Who, Object: spot), Chapter1Data.Text("重演·心声·" + kind), spot));
 
+    // STORY-HARDCODE[AWK-009][logic][production]: 逐人写入昨夜具体行为、认知规则、门/烟/物证互动和请求回应。
     private void WriteHabits(Agent detective, Agent huo, Agent shen, Agent su)
     {
         // ---- 侦探：物证先于言辞。只有警铃时他不动；听见喊声循声而去；听到关于门的说法而不全信时，自己去门边看。
@@ -442,6 +446,7 @@ public sealed class NightReplay
 
     // ------------------------------------------------------------------- run --
 
+    // STORY-HARDCODE[AWK-010][logic][production]: 固定警铃、两次声音、烟到门与侦探醒来的事件阶段构成本案昨夜时序。
     private ReplayResult Execute()
     {
         Build();
@@ -485,6 +490,7 @@ public sealed class NightReplay
     }
 
     /// <summary>声路把同一句话变成每个人不同的感知，经 Observation.Observe（来源：感知）写入各自的内部世界。</summary>
+    // STORY-HARDCODE[AWK-011][logic][production]: 把本案话语的语义标记映射到人物对指令、门外人和求救的认知。
     private void Hear(Agent a, Utterance words, Hearing hearing)
     {
         switch (hearing)
@@ -661,6 +667,7 @@ public sealed class NightReplay
     }
 
     /// <summary>别人请自己做事，但 SocialSystem 没有判为接受：这一刻的心声。</summary>
+    // STORY-HARDCODE[AWK-012][logic][production]: 将本案熟悉度与拒绝请求映射为专属心声及案件标记。
     private string? Doubt(Agent a, Decision? pick)
     {
         foreach (var request in a.Soul.World.Projections.Where(p => p.Kind == ProjectionKind.Event && p.Procedure is not null && p.Tags.GetValueOrDefault(Tags.Responded) == 0))
@@ -701,6 +708,7 @@ public sealed class NightReplay
 
     private static bool ChangesDoorOrLooks(Projection basis) => basis.Kind == ProjectionKind.Concept;
 
+    // STORY-HARDCODE[AWK-013][schema][production]: 本案请求类型名映射到固定重演事件与门边站位。
     private (ReplayEvent Event, string Thought, string Spot) RequestText(Agent a, Projection request)
     {
         var sender = request.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target;
@@ -818,6 +826,7 @@ public sealed class NightReplay
         QueueDecisions();
     }
 
+    // STORY-HARDCODE[AWK-014][schema][production]: 案件物件分别映射到门、石板、铜口、书桌和水池回放站位。
     private string SpotOf(Projection target)
     {
         var essence = _view.Keys.FirstOrDefault(e => _agents.Any(a => a.Mental.TryGetValue(e, out var m) && ReferenceEquals(m, target)));
@@ -834,6 +843,7 @@ public sealed class NightReplay
     private (int, int, int, int) DoorState() => (Tag(_door, NightTags.Open), Tag(_door, NightTags.Wedged), Tag(_door, NightTags.Bolted), Tag(_door, NightTags.CalledOut));
 
     /// <summary>烟灰、鞋印与湿布：与信念无关的环境后果，由宿主按客观状态结算。</summary>
+    // STORY-HARDCODE[AWK-015][logic][production]: 本案门状态变化、烟灰、鞋印、湿布压痕与喊声听闻的物理后果。
     private void Physics(Agent actor)
     {
         var door = DoorState();
@@ -888,6 +898,7 @@ public sealed class NightReplay
     // ----------------------------------------------------------------- output --
 
     /// <summary>没有任何习惯可用、只能等着时的心声：等什么，由他自己的认知决定。</summary>
+    // STORY-HARDCODE[AWK-016][logic][production]: 按苏泠、沈鼎、霍铎在特定场面中的认知生成等待心声。
     private string? IdleThought(Agent a)
     {
         var door = a.Mental[_door];

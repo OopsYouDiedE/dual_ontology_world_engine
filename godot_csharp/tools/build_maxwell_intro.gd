@@ -21,6 +21,7 @@ func _initialize() -> void:
 		build_pose(spec[0], spec[1], spec[2], palette)
 	quit()
 
+# STORY-HARDCODE[CSH-029][schema][tool]: Maxwell素材工具将开场角色绑定为手按胸口/鞠躬姿态及白手套像素；不推进剧情或映射答案。
 func build_pose(name: String, source_name: String, maximum: Vector2i, palette: Array[Color]) -> void:
 	var source := Image.load_from_file(ProjectSettings.globalize_path(SOURCE + source_name))
 	assert(source != null and not source.is_empty(), "Missing Maxwell pose source: " + source_name)

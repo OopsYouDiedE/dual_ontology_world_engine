@@ -9,6 +9,7 @@ namespace DualOntologyWorldEngine.Awakening;
 /// </summary>
 public sealed partial class AwakeningContentSession
 {
+    // STORY-HARDCODE[AWK-062][schema][production]: 回应键把本章言语行为/立场固定映射到剧本词汇键。
     private static readonly string[] Companions = ["huo", "shen", "su"];
 
     private static readonly IReadOnlyDictionary<(SpeechAct, Stance), string[]> SpeechKeys = new Dictionary<(SpeechAct, Stance), string[]>

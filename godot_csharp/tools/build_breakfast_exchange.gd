@@ -14,6 +14,7 @@ static func bounds(image: Image) -> Rect2i:
 				found = true
 	return result
 
+# STORY-HARDCODE[CSH-028][schema][tool]: 素材工具为早餐交换场景绑定人物姿态、桌面与汤碗资源；不推进剧情或映射答案。
 static func build() -> void:
 	var source := Image.load_from_file(ProjectSettings.globalize_path(SOURCE))
 	var atlas := Image.create_empty(512, 128, false, Image.FORMAT_RGBA8)

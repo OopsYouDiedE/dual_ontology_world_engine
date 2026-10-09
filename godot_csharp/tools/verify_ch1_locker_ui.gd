@@ -156,10 +156,12 @@ func _run() -> void:
 	else:
 		host.field._route_click(Vector2(440, 340))
 		check(await fx.wait_until(func(): return fx.stage() == "meeting", 30.0), "walk from wake into meeting")
+	# STORY-HARDCODE[CSH-007][logic][fixture]: UI 检查定位第一章领取柜并跟踪固定角色的领取动画。
 	var anchor: Vector2 = fx.map().anchor("领取柜")
 	record("geometry", {"anchor": [anchor.x, anchor.y], "furniture": fx.map().layout.furniture})
 	var deadline := Time.get_ticks_msec() + 150000
 	var source_line := ""
+	# STORY-HARDCODE[CSH-037][logic][fixture]: 依项目奖励对白行号定位开场与空柜台词，核对固定物证阶段的位置/输入状态。
 	var source_targets := {
 		"s4_rewards.004": fx.line_text("s4_rewards.004"),
 		"s4_rewards.020": fx.line_text("s4_rewards.020"),
@@ -228,6 +230,7 @@ func _run() -> void:
 		await shot("aside-" + id.to_snake_case())
 		await fx.wait_until(func(): return host.field.click_path.is_empty(), 10.0)
 		await move_player(Vector2(500, 160))
+	# STORY-HARDCODE[CSH-036][logic][fixture]: 用第一章铜口热点E8及黑板热点BOARD验证其相对领取柜的具体命中优先级。
 	for site_id in ["E8", "BOARD"]:
 		check(host.field.sites.has(site_id) and host.field.site_visible(site_id), site_id + " hotspot visible beside new furniture")
 		if not host.field.sites.has(site_id): continue

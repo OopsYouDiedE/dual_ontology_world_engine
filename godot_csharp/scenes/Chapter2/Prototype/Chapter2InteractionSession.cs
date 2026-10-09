@@ -328,6 +328,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         var lore=Text(spec,"lore");var text=lore==""?facts:facts==""?lore:lore+"\n"+facts;
         var id=map+":"+site; var card=new Dictionary<string,object?>{["id"]=id,["title"]=Text(spec,"title"),["text"]=text,["place"]=Names.Of(_game.Where(_game.Det)),["thing"]=thing};
         _examined[id]=card; ShowCard(id,card,output);
+        // STORY-HARDCODE[CH2-033][logic][production]: 调查台账在案发日后解锁本案重演的预写逻辑。
         if (thing=="台账" && _game.Day>=Game.CaseDay && !_replayOpen) { _replayOpen=true; _continuations.Enqueue(o=>Activate("card.replay_unlock",o)); }
     }
     // 粮仓的两个交互点各看一面：门闩只说门闩，存粮只说存量。
@@ -406,6 +407,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         }
         if(completedNarrative is { } selected)Consume(_narrative.Select(selected),output);
     }
+    // STORY-HARDCODE[CH2-025][logic][production]: 对质议程固定为本案的取用、门闩、台账及特定人物结局。
     private void BeginConfront(List<Dictionary<string,object?>> output)
     {
         _stage="confront"; _pairs.Clear(); _answered.Clear(); _agendaDone.Clear(); _skippedTopics.Clear(); Scene(Place.Hall,output);
@@ -537,6 +539,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         _continuations.Enqueue(o=>o.Add(Event("manuscript")));
         Pump(output);
     }
+    // STORY-HARDCODE[CH2-026][logic][production]: 人物印象候选名单固定为本案关键角色。
     private string[] Impressions()=>_game.Npcs.Where(p=>p.Id is P.Ward or P.Quer or P.Mora or P.Huo or P.Ruan or P.Margaret).Select(p=>
     {
         var (c,i)=_game.ImageOfDet(p);

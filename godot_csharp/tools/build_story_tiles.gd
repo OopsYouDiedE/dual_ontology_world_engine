@@ -20,6 +20,7 @@ const COMPACT_STORY_PROPS := {
 	"side_table": Vector2i(64, 64),
 }
 
+# STORY-HARDCODE[CSH-030][schema][tool]: 资产工具固定生成项目故事场景道具（钟、传送门、罗盘、早餐桌、书柜、客厅钢琴及横幅等）。
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	if "--breakfast-exchange-only" in OS.get_cmdline_user_args():

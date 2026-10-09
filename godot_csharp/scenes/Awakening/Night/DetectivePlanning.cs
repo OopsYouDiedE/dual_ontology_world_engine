@@ -60,6 +60,7 @@ public sealed class DetectivePlanner
     private double N(string key) => _search.GetProperty(key).GetDouble();
     private static string S(JsonElement item, string key) => item.GetProperty(key).GetString()!;
     private static string ProgressKey(string group, string key) => group + ":" + key;
+    // STORY-HARDCODE[AWK-038][schema][production]: 装配本章 V1–V6 假设、证物、陈述步与搜索模型。
     public DetectivePlanner(JsonElement content)
     {
         _search = content.GetProperty("DETECTIVE_SEARCH").Clone();
@@ -173,6 +174,7 @@ public sealed class DetectivePlanner
         _canAnswer = !state.Relaxed && state.Candidates.Count > 0 && 1.0/state.Candidates.Count >= N("confidence")
             && _feedback.Count > 0 && _feedback[^1].Findings.Length > 0
             && _feedback[^1].Findings.All(f => f.Status == FindingStatus.Match)
+            // STORY-HARDCODE[AWK-039][schema][production]: 答辩固定为本章四步，并允许 me 作为自闩陈述。
             && _arguments.Count == 4 && _arguments.Select(a => a.Step).Order().SequenceEqual(Enumerable.Range(1,4))
             && _arguments.All(a => a.Evidence.Any(e => content.Session.GetProgress("examined").GetValueOrDefault(e) is true)
                 && (a.RequiredGroup.Length == 0 || content.Session.GetProgress(a.RequiredGroup).GetValueOrDefault(a.RequiredKey) is true)

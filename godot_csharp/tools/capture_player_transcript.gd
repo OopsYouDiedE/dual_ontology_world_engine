@@ -23,6 +23,7 @@ const UI_EVENTS := ["lines", "candidates", "card", "form", "ending", "aside", "t
 const NONBLOCKING_MODALS := ["card", "form", "candidates", "ending"]
 # Exact host map-to-world-place relationship from
 # scenes/Chapter2/Prototype/Chapter2SessionView.cs, MapPlaces.
+# STORY-HARDCODE[CSH-025][schema][tool]: 回放工具硬编码学园场景地图与项目地点的对应关系。
 const HOST_MAP_PLACES := {
 	"central_hall": "Hall", "lecture": "Lecture", "logistics": "Logistics", "granary": "Logistics", "clinic": "Clinic",
 	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "DormLife",
@@ -305,6 +306,7 @@ func _map_exists(key: String) -> bool:
 	_fail("Recorded map has no production scene: " + key)
 	return false
 
+# STORY-HARDCODE[CSH-026][logic][tool]: 用正式快照中的人物/地点（包括侦探及实际热点）复原场景坐标，只重放不执行剧情答案。
 func _apply_context(input: Dictionary) -> void:
 	if not is_instance_valid(host.field): return
 	var context: Dictionary = input.get("context", {})
@@ -778,6 +780,7 @@ func _input_sink(data: Dictionary) -> void:
 	captured.output_index = output_index
 	_write("ui_input", captured)
 
+# STORY-HARDCODE[CSH-027][schema][tool]: 可选截图阶段按E1、say字段、support选项及两场景对白识别剧情节点。
 func _screenshot_stage(ev: Dictionary) -> String:
 	# Match production event structure, never dispatch offsets or translated prose.
 	var kind := str(ev.get("kind", ""))

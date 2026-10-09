@@ -1,6 +1,7 @@
 namespace DualOntologyWorldEngine.Core;
 
 /// <summary>Ordered, engine-independent reconstruction of the hall door evidence.</summary>
+// STORY-HARDCODE[CSH-001][schema][production]: 具体隔离门、木楔、灰烟、纸转印、双锁与擦地证据因果模型。
 public static class HallCausalityRules
 {
     public enum Hypothesis
@@ -40,6 +41,7 @@ public static class HallCausalityRules
         bool DoorIsBraced, IReadOnlyList<string> Failures, bool DoorAllowsPassage);
 
     /// <summary>Evaluate a proposed explanation against door geometry and simulated lock ownership.</summary>
+    // STORY-HARDCODE[CSH-002][text][production]: 针对隔离门案件假设输出结构结论与排除边界。
     public static Conflict TestHypothesis(Hypothesis hypothesis, Result state) => hypothesis switch
     {
         Hypothesis.InnerWedgeStopsOutsidePush => new(ConflictKind.OutwardStopAgainstOutsidePush,
@@ -59,6 +61,7 @@ public static class HallCausalityRules
     };
 
     /// <summary>Actions mutate simulated state in order; no evidence is injected as an answer.</summary>
+    // STORY-HARDCODE[CSH-003][logic][production]: 模拟隔离门案件动作顺序并生成具体证据痕迹和反馈。
     public static Result Simulate(IEnumerable<Action> actions)
     {
         ArgumentNullException.ThrowIfNull(actions);

@@ -28,6 +28,7 @@ const Paper := preload("res://scenes/UI/Components/Paper.gd")
 
 @export_group("")
 ## 仅编辑器预览的地点模板；运行时不据此解释地点或导航。
+# STORY-HARDCODE[CSH-021][schema][preview]: 编辑器地图预览固定使用项目学园地点及其连线。
 const PREVIEW_NODES := {
 	"ArchiveFront": {"pos": Vector2(500, 70), "label": "地点1"},
 	"Hall": {"pos": Vector2(500, 200), "label": "地点2"},

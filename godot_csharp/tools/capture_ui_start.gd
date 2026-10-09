@@ -6,6 +6,7 @@ func _initialize() -> void:
 	root.hide()
 	_run.call_deferred()
 
+# STORY-HARDCODE[CSH-006][logic][tool]: 采集器按正式开场的“开始游戏”与“如何称呼你”剧情节点推进。
 func _run() -> void:
 	capture_viewport = SubViewport.new()
 	capture_viewport.size = Vector2i(1280, 992)

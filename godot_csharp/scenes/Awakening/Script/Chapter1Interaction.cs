@@ -34,6 +34,7 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
         var choices = new List<InteractionChoice>();
         void Add(string kind, string label, bool available, string hint = "", string who = "") =>
             choices.Add(new($"card:{id}:{kind}" + (who == "" ? "" : ":" + who), label, available, available ? "" : hint));
+        // STORY-HARDCODE[AWK-035][logic][production]: E11 手印卡有先比自己、再比在场同伴的本章专属门槛。
         if (id == "E11")
         {
             foreach (var who in new[] { "detective", "huo", "shen", "su" })

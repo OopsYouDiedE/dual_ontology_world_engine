@@ -90,6 +90,7 @@ public sealed partial class Game
     /// 守夜所见（§12 第 1 条）：只有身影（身量、来去方向）与声音，并按注意力筛选——
     /// 离得近、声音大、与侦探在意之事相关的优先，只给 3—5 条，其余合成一句。
     /// </summary>
+    // STORY-HARDCODE[CH2-048][text][production]: 生成针对本案夜间行动与地点的固定守望报告。
     public List<string> StakeoutReport(int day, Place at)
     {
         var cares = DetCares(at);
@@ -140,6 +141,7 @@ public sealed partial class Game
     public IReadOnlyDictionary<int, (int Prints, double Stay)> FrontStats => _frontStats;
     private readonly HashSet<(int, Place)> _tidied = [];
 
+    // STORY-HARDCODE[CH2-030][logic][production]: 清晨生成台账、门闩、病碗、废纸篓与目击等具体案发痕迹。
     private List<TraceItem> TakeTraces(int night)
     {
         var t = new List<TraceItem>();
@@ -206,6 +208,7 @@ public sealed partial class Game
     }
 
     /// <summary>这处痕迹侦探是否细看过（读得到全貌）。</summary>
+    // STORY-HARDCODE[CH2-049][logic][production]: 指定本案各类物证达到何种组合才可读全。
     private bool FullyRead(int night, TraceItem t)
     {
         var looked = DetLookedOn.Where(kv => kv.Key > night).SelectMany(kv => kv.Value).ToHashSet();
@@ -408,6 +411,7 @@ public sealed partial class Game
         return lines;
     }
 
+    // STORY-HARDCODE[CH2-050][schema][production]: 将本案特定行动地点编码为重演档案中的位置名称。
     private static string InkPlace(string act, Place dorm)
     {
         if (act.StartsWith("没做成：")) return "";
@@ -476,6 +480,7 @@ public sealed partial class Game
     /// 那一夜可以被假设的人（§13 第 11 条）：身量与你读到的身影、脚印相符，或者名字出现在你读到的痕迹里（台账签名）；
     /// 你知道那夜病着躺在诊疗所的人排除。你什么都没读到，就没有人可以假设。
     /// </summary>
+    // STORY-HARDCODE[CH2-051][logic][production]: 用本案预设体型与可见轨迹筛选嫌疑人。
     public HashSet<P> ReplayCandidates(int night)
     {
         var known = KnownTraces(night);
@@ -489,6 +494,7 @@ public sealed partial class Game
     }
 
     /// <summary>侦探读到的那一夜某处出现过的身量（守夜、夜巡证言、前厅脚印）。</summary>
+    // STORY-HARDCODE[CH2-052][logic][production]: 将案夜特定证词和现场记录折算为可见体型。
     public HashSet<Build> BuildsSeenAt(int night, Place place)
     {
         var set = new HashSet<Build>();

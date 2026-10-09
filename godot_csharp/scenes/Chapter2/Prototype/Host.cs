@@ -45,6 +45,7 @@ public sealed partial class Game
         if (place == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) text += "\n" + fp.Text + "。";
         return text;
     }
+    // STORY-HARDCODE[CH2-072][text][production]: 为温室阀门与中继站提供本章专属物证反馈。
     public string HostExamineEntity(Essence entity)
     {
         if (!View.ContainsKey(entity)) throw new InvalidOperationException("Unknown chapter entity.");
@@ -92,6 +93,7 @@ public sealed partial class Game
     public ActEvent? LastDoing(P who, int day, Slot slot) => Events.LastOrDefault(e => e.Who == who && e.Day == day && e.Slot == slot);
 
     /// <summary>首课当众答题（设计第三部分 §5.8）：答得精确被当众称赞——信它或爱学的人更信你，戒备它的人疑你是它的宠儿。</summary>
+    // STORY-HARDCODE[CH2-073][logic][production]: 指定首课答题后特定人群对教师的反应。
     public void HostLessonAnswer(bool precise)
     {
         if (!precise) return;

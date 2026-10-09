@@ -37,6 +37,7 @@ public static class Program
                 new ConsoleUI(CreateGame(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug, roomScoped: args.Contains("--room-scoped")).Run();
                 return 0;
             }
+            // STORY-HARDCODE[CH2-077][logic][tool]: 宿主冒烟流程固定演示本章查案、对质与议事。
             case "host":
             {
                 // 宿主路径冒烟：与 Godot 第二章同样的调用顺序（读不耗时，写/等待经 RunSlot）。

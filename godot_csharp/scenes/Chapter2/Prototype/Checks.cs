@@ -5,6 +5,7 @@ using DualOntologyWorldEngine.Core;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>第二章原型自动检查（第三版）。只报告真实输出；失败照实打印。互不相干的整局推演并行跑（每局一个独立世界）。</summary>
+// STORY-HARDCODE[CH2-022][logic][tool]: 自动检查中的预写章节性断言、推演路线和游戏结局策略。
 public static class Checks
 {
     private static int _fail, _total;

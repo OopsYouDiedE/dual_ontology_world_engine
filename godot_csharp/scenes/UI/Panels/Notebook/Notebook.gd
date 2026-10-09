@@ -21,6 +21,7 @@ signal open_card(card_id: String)
 	set(value):
 		preview_empty_text = value
 		_render_preview_or_data()
+# STORY-HARDCODE[CSH-014][text][preview]: 编辑器笔记样例写入窗台水渍、桌钥匙、门锁和夜间离室禁令等案件事实。
 @export var preview_sections: Array[Dictionary] = [
 	{"heading": "[b]看过的[/b]", "style": "grid", "entries": [{"label": "窗台的水渍", "card_id": "E1"}, {"label": "桌上的钥匙", "card_id": "E2"}, {"label": "门锁", "card_id": "E3"}]},
 	{"heading": "[b]读过、听过的规矩[/b]", "style": "list", "entries": [{"label": "夜里不得离开房间。"}, {"label": "（还没听说第二条）", "muted": true}]},

@@ -32,6 +32,7 @@ public sealed partial class Game
             { Source = ObservationSource.Testimony, Existence = Truth.True, Time = Now, Details = text });
     }
 
+    // STORY-HARDCODE[CH2-027][text][production]: 具体课次、日期、标题和教师讲授文字写入代码。
     public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
     {
         [11] = (FirstDay, X("授课.第十一课.题名"), X("授课.第十一课.内容")),
@@ -96,6 +97,7 @@ public sealed partial class Game
         p.Diary.Add($"D{Day} {Names.Of(Slot)} 欲望升至 {p.Desire}：{why}");
     }
 
+    // STORY-HARDCODE[CH2-043][text][production]: 逐日晨间播报包含本章特定课程与事件。
     public void MorningBroadcast()
     {
         if (Day == FirstDay)
@@ -125,6 +127,7 @@ public sealed partial class Game
     /// 答疑：问得含糊，得到字面为真而误导的答案；问得精确，得到精确的真相；可援引第 7 条拒答。
     /// 提问只能用已学的词：精确提问须学过相应的课（或亲见过相关事物）。课堂回答是公开的。
     /// </summary>
+    // STORY-HARDCODE[CH2-044][text][production]: 恶魔对本案各话题的知识边界与回答逐项预写。
     public string AskDemon(int topic, bool precise, out bool praised, out bool refused)
     {
         praised = false; refused = false;

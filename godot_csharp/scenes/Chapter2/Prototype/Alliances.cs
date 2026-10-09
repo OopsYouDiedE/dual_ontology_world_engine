@@ -13,6 +13,7 @@ public sealed partial class Game
     public RuleSpec ShenKitchen = null!, VeronicaEvidence = null!, LucianNoBrand = null!;
     private readonly List<(int Day, P Author, RuleSpec Spec, Place Where)> _agenda = [];
 
+    // STORY-HARDCODE[CH2-001][logic][production]: 聚落阵营规则的具体身份、时段和后果在代码中定义。
     private void WriteAllianceRules()
     {
         // 劳作互助派（沈鼎）：钥匙交给做饭的人，统一煮，先喂饿着的人。接受者若手里有钥匙，就会交出去。

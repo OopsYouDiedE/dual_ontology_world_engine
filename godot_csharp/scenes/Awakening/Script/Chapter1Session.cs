@@ -23,6 +23,7 @@ public sealed partial class Chapter1Session : IChapterSession
         return JsonDocument.Parse(stream);
     });
     private static JsonElement Layout => LayoutDocument.Value.RootElement;
+    // STORY-HARDCODE[AWK-036][schema][production]: 登记固定的第一章四人组及三名同伴。
     private static readonly string[] Companions = ["huo", "shen", "su"];
     private static readonly string[] Party = ["detective", "huo", "shen", "su"];
     private const string Art = "res://ShareAsset/Internal/Props/AwakeningEvidence/";
@@ -572,6 +573,7 @@ public sealed partial class Chapter1Session : IChapterSession
         return new Ev { ["empty_text"] = T("笔记·空"), ["sections"] = sections.ToArray() };
     }
 
+    // STORY-HARDCODE[AWK-037][schema][production]: 手稿固定将第六问作为末项并按认知解锁隐藏显示。
     private Ev ReplaySnapshot()
     {
         var variables = Content.GetProperty("VARIABLES").EnumerateArray().ToArray();

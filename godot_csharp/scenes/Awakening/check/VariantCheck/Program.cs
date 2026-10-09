@@ -5,6 +5,7 @@ using DualOntologyWorldEngine.Story;
 // 第五期检查（总纲 §六）：开局人选与开场独白、隐藏心智抽样、心愿、寝区案件变体与求解器。
 static void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS " + name); }
 
+// STORY-HARDCODE[AWK-046][schema][fixture]: 选角、心愿以及案件变体中的具体人物与预期答案属于验证夹具。
 var root = Chapter1Data.Root;
 var document = Chapter1CompiledDialogue.Create();
 

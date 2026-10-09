@@ -5,6 +5,7 @@ using Ev = System.Collections.Generic.Dictionary<string, object?>;
 var failures = 0;
 void Check(bool ok, string what) { Console.WriteLine((ok ? "  ok  " : "  FAIL ") + what); if (!ok) failures++; }
 
+// STORY-HARDCODE[AWK-050][schema][fixture]: 模拟会话中的角色站位、E1 检视与固定状态跳转属于测试夹具。
 var session = new Chapter1Session();
 var rooms = new Dictionary<string, string> { ["detective"] = "R05", ["huo"] = "R06", ["shen"] = "R07", ["su"] = "R08" };
 var lines = new List<string>();

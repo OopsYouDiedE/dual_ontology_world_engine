@@ -91,6 +91,7 @@ using var layoutStream = typeof(MorningWorld).Assembly.GetManifestResourceStream
 using var hostLayout = JsonDocument.Parse(layoutStream);
 // 运行时长：外部参数优先，否则读入口文件末尾的“运行”；两者都没有时不启动，避免默认跑出无意的长度。
 var root = content.Content.RootElement;
+// STORY-HARDCODE[AWK-051][schema][tool]: 自动模拟器含固定侦探输入/空间采样与选项策略，仅作工具模拟。
 var startMinutes = root.GetProperty("DAY_CLOCK").GetProperty("start_minutes").GetInt32();
 double? stopMinutes;
 string runSource;

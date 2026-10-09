@@ -64,6 +64,7 @@ public sealed partial class Game
     /// “接受规则”与“立场”分开呈现（§12 第 3 条）：第 4 日起，饭点和侦探同处的人，会顺口复述自己向着的那一边的话。
     /// 每人每天最多一次、每个时段最多两人；立场变了的先说。
     /// </summary>
+    // STORY-HARDCODE[CH2-058][text][production]: 按具名人物立场生成议事前的本案反馈。
     private void StanceTalk()
     {
         if (Day < CaseDay || Slot is not (Slot.Noon or Slot.Evening)) return;
@@ -113,6 +114,7 @@ public static class Report
 {
     public static string Image(Game g) => string.Join(" ", g.Npcs.Select(p => { var (c, i) = g.ImageOfDet(p); return $"{p.Name}{c:+0;-0;0}/{i:+0;-0;0}"; }));
 
+    // STORY-HARDCODE[CH2-059][text][production]: 输出本章案件与议事结局的专属总结。
     public static string ChapterEnd(Game g)
     {
         var sb = new StringBuilder();

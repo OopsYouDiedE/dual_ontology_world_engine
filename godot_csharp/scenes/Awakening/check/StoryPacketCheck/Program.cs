@@ -38,6 +38,7 @@ static List<string> Finish(Chapter1Dialogue dialogue, InteractionPacket packet)
     throw new Exception("entry exceeded budget");
 }
 
+// STORY-HARDCODE[AWK-049][schema][fixture]: 预写角色、剧情分支与固定台词断言属于自动测试夹具。
 var document = Chapter1CompiledDialogue.Create();
 Check(document.Entries.Count > 0, "real generated dialogue is present");
 var fileDocument = CompiledDialogueDocument.Parse(File.ReadAllText("godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json"));

@@ -41,6 +41,7 @@ public sealed partial class Game
     public PlayerAction? LastAction;
     private readonly Dictionary<P, SocialStance> _asked = [];
 
+    // STORY-HARDCODE[CH2-053][schema][production]: 固定本案可调查物件、对应地点和真实实体。
     public static readonly ImmutableDictionary<string, (Place Place, Func<Game, Essence> Thing)> Things_ = new Dictionary<string, (Place, Func<Game, Essence>)>
     {
         ["粮仓"] = (Place.Logistics, g => g.Granary), ["台账"] = (Place.Logistics, g => g.Ledger), ["配给台公告"] = (Place.Logistics, g => g.Board[Place.Logistics]),
@@ -54,6 +55,7 @@ public sealed partial class Game
     }.ToImmutableDictionary();
 
     /// <summary>同一区域里一并细看的痕迹物件（§12 第 7 条：查证成本）。</summary>
+    // STORY-HARDCODE[CH2-054][schema][production]: 固定各案发相关地点的调查物件集合。
     public static readonly ImmutableDictionary<Place, string[]> AreaThings = new Dictionary<Place, string[]>
     {
         [Place.Logistics] = ["粮仓", "台账", "配给台公告"], [Place.Clinic] = ["碗", "病床", "药柜"], [Place.DormW] = ["文契废纸篓", "文契公告"],
@@ -64,6 +66,7 @@ public sealed partial class Game
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
 
     /// <summary>时段开头：侦探先找到要说话的人，把请求说出口（Effect.Say 携带 Request），对方再与自己的习惯一起决策。</summary>
+    // STORY-HARDCODE[CH2-055][logic][production]: 处理玩家介入后本案指定人物请求及证据相关分支。
     private void PlayerBegin(PlayerAction? act)
     {
         LastAction = act;
@@ -189,6 +192,7 @@ public sealed partial class Game
     }
 
     /// <summary>时段末：侦探看到自己行动的结果；只写看见了什么、听见了什么。</summary>
+    // STORY-HARDCODE[CH2-056][logic][production]: 结算本章玩家行动、证据反馈与案情特定揭示。
     private void PlayerEnd(PlayerAction? act)
     {
         // 违约检查
@@ -457,6 +461,7 @@ public sealed partial class Game
     /// 夜里取了口粮的人，信得过侦探才照实说；守夜的贝尔特朗报身影；请人修门闩的玛格丽特说请了谁；记账的、立规的人说账与规矩。
     /// 那夜什么也没做的人，就是平常的交谈。
     /// </summary>
+    // STORY-HARDCODE[CH2-031][text][production]: 不同具体角色对案发夜的预写口供反馈直接写在代码中。
     private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false)
     {
         if (Day < CaseDay) return ChatPresentation(p);
@@ -529,6 +534,7 @@ public sealed partial class Game
         return (said, t < 0 ? "angry" : lines.Length > 0 ? "thoughtful" : "calm");
     }
 
+    // STORY-HARDCODE[CH2-057][text][production]: 为本案专属物证、人物特征及状态撰写调查描述。
     public string Describe(Essence e)
     {
         if (e == Granary) return $"存粮还剩 {Get(Granary, T.Ration)} 份；门闩{(Get(Granary, T.LatchLoose) > 0 ? "松动，一推就开" : Get(Granary, T.ToolMarks) > 0 ? "有新的工具痕，已经紧固" : "完好")}。";

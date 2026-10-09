@@ -58,6 +58,7 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         Set(g.Granary, T.Locked, 1),
         Wait(self ? 3 : 1.5, self ? Seq(MeChange(T.Fed, 1), MeChange(T.NightAte, 1)) : Seq(Go(Place.Clinic), Change(g.Bowl, T.Porridge, 1)))])); // 自取的人就地吃完
 
+    // STORY-HARDCODE[CH2-040][logic][production]: 把具体本章工作映射为案件物证与人物行动结果。
     public Effect Job(Job job, Person? who = null) => job switch
     {
         Prototype.Job.Sleep => Seq(Go(who!.Pro.Dorm), Look(g.Space[who.Pro.Dorm])),
@@ -159,6 +160,7 @@ public sealed partial class Game
         { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now, Rules = HabitRules(p) });
     }
 
+    // STORY-HARDCODE[CH2-041][logic][production]: 为具名人物预置习惯行动及其观察规则。
     public ImmutableArray<Rule> HabitRules(Person p)
     {
         var fx = FxOf(p);
@@ -254,6 +256,7 @@ public sealed partial class Game
     /// · 心软的人把自己的口粮分给饿着的熟人（自己就少吃一顿）。
     /// 此方法在每个时段开头重建（规则里引用的是此人此刻的处境：欲望、钩、认了哪条规矩、信不信侦探）。
     /// </summary>
+    // STORY-HARDCODE[CH2-042][logic][production]: 按本章人物身份与案件状态配置行动计划。
     private void PlanRules(Person p, Fx fx, List<Rule> rules)
     {
         var door = ArchiveDoor;
@@ -335,6 +338,7 @@ public sealed partial class Game
     /// 维罗妮卡下午在灶边刮炉灰采样，饭点碰见茉拉就挑她账上的错（旧怨）；赛尔玛清早去温室剪源质样本；
     /// 莫兰病好以后，夜里坐在中央厅看颜色，第二天下午把看见的画成速写（速写认得出是谁，可作证据）。
     /// </summary>
+    // STORY-HARDCODE[CH2-029][logic][production]: 背景人物按具体身份、日期和关系执行预设专属行为。
     private void BackgroundLines(Person p, Fx fx, List<Rule> rules)
     {
         void Daily(Job j, Slot[] slots, int w, Condition? extra = null) =>

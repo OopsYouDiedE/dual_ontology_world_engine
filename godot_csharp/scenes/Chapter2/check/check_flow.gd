@@ -4,6 +4,7 @@ extends SceneTree
 ## 经 Main.tscn 的 dispatch 与正式 UI 回执驱动；调试跳转与代按不替代游玩验收。
 
 const Fixture := preload("res://scenes/Chapter2/check/chapter2_fixture.gd")
+# STORY-HARDCODE[CH2-016][logic][tool]: 自动流程预写具体地图出生点、角色、案件操作顺序和终局检查。
 const SPAWN_OF := {
 	"central_hall": "south", "lecture": "from_central", "logistics": "west", "granary": "south", "clinic": "south", "greenhouse": "south",
 	"archive": "south", "campus_s": "gate_inside", "living_hall": "north_door", "zone_yi": "from_hall", "zone_jia": "from_hall",
@@ -46,6 +47,7 @@ func upcoming_slot() -> int: return int(fx.probe("next_slot"))
 func move_to_map(key: String) -> bool:
 	return await fx.move_to_map(key, str(SPAWN_OF.get(key, "")))
 
+# STORY-HARDCODE[CH2-017][logic][tool]: 自动验收按预定证词、证据、支持与分支策略代选。
 func planned_choice(options: Array) -> String:
 	var available: Array = options.filter(func(option): return bool(option.get("available", true)))
 	if available.is_empty(): return ""
@@ -71,6 +73,7 @@ func planned_choice(options: Array) -> String:
 	return first_id
 
 ## 同一 Main 会话完成终局、保存、按 C；不通过 publish 探针伪造章一结束。
+# STORY-HARDCODE[CH2-018][logic][tool]: 测试构造章一继承状态并预置姓名、答案和章二交接。
 func handoff() -> bool:
 	host = await fx.prepare()
 	fx.set_progress("state", "detective_name", "flow2-fixture")
@@ -116,6 +119,7 @@ func handoff() -> bool:
 	check(host.field.actors.size() > 3, "讲堂里有人（%d）" % host.field.actors.size())
 	return true
 
+# STORY-HARDCODE[CH2-019][logic][tool]: 测试硬编码第二章时间推进、规则转述、特定人物问话、证物和议事流程。
 func _run() -> void:
 	var t0 := Time.get_ticks_msec()
 	fx = Fixture.new(self)

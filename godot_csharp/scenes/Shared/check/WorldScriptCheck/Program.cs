@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DualOntologyWorldEngine.Story;
 using DualOntologyWorldEngine.Core;
+// STORY-HARDCODE[CSH-017][logic][example]: 回归测试实际执行侦探、守卫、内门闩及arrival/morning项目示例章节。
 var json=File.ReadAllText(args[0]);int failures=0;
 Console.WriteLine("SCOPE: development world-script examples; not formal chapter migration or blind play.");
 void Check(string name,Action test){try{test();Console.WriteLine("PASS "+name);}catch(Exception e){failures++;Console.WriteLine("FAIL "+name+" "+e);}}

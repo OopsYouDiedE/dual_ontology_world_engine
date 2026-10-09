@@ -422,6 +422,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     // ------------------------------------------------------------ 查看 --
 
+    // STORY-HARDCODE[CH2-023][text][production]: 帮助展示具体人名、物证提示与本章行动例句。
     private void Help()
     {
         W("""
@@ -490,6 +491,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         foreach (var grp in Game.Things_.Where(t => !roomScoped || HasRoom && t.Value.Place == g.Where(g.Det)).GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
     }
 
+    // STORY-HARDCODE[CH2-081][text][production]: 状态页显示本案特定证物、指控与石碑阅读结果。
     private void Status()
     {
         var det = g.Det;
@@ -616,6 +618,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         if (known.Count == 0 && unseen.Length == 0) W("  · 你读到的地方都没什么变化。");
     }
 
+    // STORY-HARDCODE[CH2-082][logic][production]: 过滤本案清晨跟踪的特定无变文字。
     private static bool Changed(TraceItem t) => !(t.Text is "三处机关没人碰过" or "前厅积灰上没有新脚印" or "病床边没有新送来的东西" or "贝尔特朗：夜巡无异常" or "门闩完好")
         && !t.Text.Contains("没有新东西") && !(t.Key == "台账" && t.Text.StartsWith("账面与存量差 0 份；夜间记账一栏是空的"));
 

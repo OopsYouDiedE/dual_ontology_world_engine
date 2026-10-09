@@ -42,6 +42,7 @@ int Forthcoming(string key) => key switch
     Check(content.Credence(world, "detective", topic) >= 75, "a matched replay, his own inference, convinces the detective");
     Check(companions.All(who => world.Knows(Names.PersonOf(who), "侦探重演吻合")), "companions summoned to the reversal witness the match");
 }
+// STORY-HARDCODE[AWK-047][schema][fixture]: 具体人物、证物与预期认知/言语结果仅用于自动测试。
 var baseline = Answers();
 foreach (var (who, answer) in baseline) Console.WriteLine($"  默认：{who} → {answer.Act}（把握 {answer.Credence}）");
 Check(new[] { "shen", "su" }.All(who => baseline[who].Credence is > 50 and < 100), "testimony alone moves Shen and Su towards the claim without certainty");

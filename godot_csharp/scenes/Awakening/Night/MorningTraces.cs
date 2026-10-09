@@ -10,6 +10,7 @@ public sealed record BootPrint(Sole Sole, PrintToward Toward);
 /// 一次重演结束时，昨夜留下、到清晨仍可检视的痕迹。全部从重演世界的 Essence 读出。
 /// 编码与证物卡一一对应：门(E1)、灰扇与木楔(E2)、靴印(E3)、湿布(E4)、音叉(E5)、乐谱(E6)、石板(E7)、杯子(E9)。
 /// </summary>
+// STORY-HARDCODE[AWK-004][schema][production]: 字段枚举本案固定证物事实及其编码取值。
 public sealed record MorningTraces(
     bool InnerBoltDown,
     bool AshFan,
@@ -91,6 +92,7 @@ public static class Comparison
     /// <summary>
     /// 冲突只描述痕迹之差：重演留下了什么、现场是什么。不描述谁做了什么、没做什么。差在哪一项由此处判定，句子写在 chapter_01.story 的“对照·…”文案。
     /// </summary>
+    // STORY-HARDCODE[AWK-005][logic][production]: E1–E9 的逐件痕迹比较与字段解释是本案专属映射。
     private static List<string> Differences(string id, MorningTraces p, MorningTraces a)
     {
         var d = new List<string>();

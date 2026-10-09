@@ -5,6 +5,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 public sealed partial class Game
 {
     private readonly Dictionary<string,bool> _corridors = new() { ["north"] = false, ["east"] = false, ["archive"] = false };
+    // STORY-HARDCODE[CH2-009][logic][production]: 具体宿舍、走廊和名录库区域的通行身份硬编码。
     private readonly HashSet<Place> _releasedDorms = [Place.DormLife, Place.DormW];
     private static readonly Tag Passable = new("Passable");
     public int CalendarMinutes { get; private set; }

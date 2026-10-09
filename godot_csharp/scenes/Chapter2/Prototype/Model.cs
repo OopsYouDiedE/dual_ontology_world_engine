@@ -4,16 +4,21 @@ using DualOntologyWorldEngine.Core;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>十六名学员。Det 是玩家（侦探）。</summary>
+// STORY-HARDCODE[CH2-074][schema][production]: 定义本章十六位学员的具体身份标识。
 public enum P { Det, Huo, Shen, Su, Lucian, Gu, Quer, Ward, Selma, Ruan, Elena, Moran, Veronica, Bertrand, Margaret, Mora }
+// STORY-HARDCODE[CH2-092][schema][production]: 固定本章具名学员所属的四个社会群体。
 public enum Group { Life, Wenqi, Xingyi, Houqin }
 /// <summary>新地点只追加在末尾：已有地点的序号写进了存档与快照。</summary>
+// STORY-HARDCODE[CH2-085][schema][production]: 定义本章具名场所与宿舍区身份。
 public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL, Resonance, Living }
 public enum Slot { Morning, Forenoon, Noon, Afternoon, Evening, Night }
 public enum Build { Small, Medium, Large }
 /// <summary>跨寝区的价值聚落（§11 第 7 条，初值，可被打破）。</summary>
+// STORY-HARDCODE[CH2-098][schema][production]: 固定本章价值聚落类别及其社会阵营语义。
 public enum Cluster { None, Order, Labor, Beauty, Evidence }
 
 /// <summary>NPC 在一个时段（或夜里的一段）里能做的事。每项编译为 Core Effect，见 Jobs。</summary>
+// STORY-HARDCODE[CH2-093][schema][production]: 固定本章角色日程可执行的专属行为枚举。
 public enum Job
 {
     Sleep, Rest, Class, Collect, Distribute, Cook, FetchWater, Care,
@@ -26,6 +31,7 @@ public enum Job
 
 /// <summary>规则的语义标记：规则接受公式据此与各人的欲望、习惯、利益相比。</summary>
 [Flags]
+// STORY-HARDCODE[CH2-099][schema][production]: 固定本章议事规则语义位，包括具名目标、档案院权限及夜间议案条件。
 public enum RF
 {
     None = 0, Records = 1, SickPriority = 2, PerHead = 4, Restricts = 8, TargetsQuer = 16, CentralCook = 32,
@@ -34,6 +40,7 @@ public enum RF
     Safety = 65536, NoException = 131072, ForbidNightOpen = 262144, ForbidsDesire = 524288, Rations = 1048576, Targets = 2097152
 }
 
+// STORY-HARDCODE[CH2-075][schema][production]: 定义本案粮仓、痕迹与被指控等专用状态标识。
 public static class T
 {
     public static readonly Tag Ration = new("Ration"), Locked = Tags.Locked, LatchLoose = new("LatchLoose"), ToolMarks = new("ToolMarks");
@@ -77,12 +84,14 @@ public static class Names
     public static string Frame(Job j) => Chapter2Design.JobFrame(j);
 
     public static string Of(Job j) => Chapter2Design.JobText(j);
+    // STORY-HARDCODE[CH2-094][schema][production]: 固定本章人物的内部别名与身份映射。
     public static readonly ImmutableDictionary<string, P> PersonAlias = new Dictionary<string, P>
     {
         ["det"] = P.Det, ["huo"] = P.Huo, ["shen"] = P.Shen, ["su"] = P.Su, ["lucian"] = P.Lucian, ["gu"] = P.Gu, ["quer"] = P.Quer,
         ["ward"] = P.Ward, ["selma"] = P.Selma, ["ruan"] = P.Ruan, ["elena"] = P.Elena, ["moran"] = P.Moran, ["veronica"] = P.Veronica,
         ["bertrand"] = P.Bertrand, ["margaret"] = P.Margaret, ["mora"] = P.Mora,
     }.Concat(Enum.GetValues<P>().Select(p => new KeyValuePair<string, P>(Of(p), p))).ToImmutableDictionary();
+    // STORY-HARDCODE[CH2-095][schema][production]: 固定本章地点的内部别名与地点映射。
     public static readonly ImmutableDictionary<string, Place> PlaceAlias = new Dictionary<string, Place>
     {
         ["hall"] = Place.Hall, ["lecture"] = Place.Lecture, ["logistics"] = Place.Logistics, ["clinic"] = Place.Clinic,

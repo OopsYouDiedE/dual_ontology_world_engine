@@ -180,6 +180,7 @@ func check_form() -> void:
 	ok(submits[0] == 1, "FormPanel Enter emits submit_requested")
 	ok(changes[0] >= 3, "FormPanel emits changed")
 	# tabs
+	# STORY-HARDCODE[CSH-015][text][fixture]: UI测试自带的案件问答样例，不视为正式剧情规则。
 	form.show_data({"header": {"question": "提问者问：[b]谁关了灯？[/b]", "instructions": "陈述一句，再出示一件。"}, "layout": "tabs", "unset_label": "（未选）",
 		"summary": [{"field": "say", "label": "陈述"}, {"field": "show", "label": "出示"}],
 		"fields": [
@@ -206,6 +207,7 @@ func check_notebook() -> void:
 	notebook.open_card.connect(func(id: String): opened.append(id))
 	notebook.show_data({"empty_text": "还没有记下任何东西。", "sections": []})
 	ok(notebook.get_node("Empty").visible and notebook.get_node("Sections").get_child_count() == 0, "Notebook empty text")
+	# STORY-HARDCODE[CSH-016][text][fixture]: UI测试自带的具体调查样例文本，未证明与正式案件相同。
 	notebook.show_data({"empty_text": "空", "sections": [
 		{"heading": "[b]看过的[/b]", "style": "grid", "entries": [{"label": "水渍", "card_id": "E1"}, {"label": "钥匙", "card_id": "E2"}, {"label": "门锁", "card_id": "E3"}]},
 		{"heading": "[b]规矩[/b]", "style": "list", "entries": [{"label": "夜里不得离开房间。"}, {"label": "（待查）", "muted": true}]},

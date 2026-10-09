@@ -73,6 +73,7 @@ public sealed partial class AwakeningContentSession
         }, [new("interaction", _ => true, steps)]);
     }
     /// <summary>做试验：流程按证物编号取“实验·E3”之类，没有专写的就用“实验·默认”。</summary>
+    // STORY-HARDCODE[AWK-028][logic][production]: E8 只开听位菜单且 E3 选对象前不结算；其余试验按证物编号调度。
     public void BeginExperiment(MorningWorld world, string id, string who)
     {
         // E8 only opens the placement menu; the actual sound run settles its own time.
@@ -118,6 +119,7 @@ public sealed partial class AwakeningContentSession
         Session.Set("recalls", who, memory.Fragment);
         foreach (var variable in memory.Confirms) Session.Set("recall_marks", variable.ToString(), who);
     }
+    // STORY-HARDCODE[AWK-029][logic][production]: 侦探与三名同伴的旧物回忆分别走固定角色流程。
     public void BeginRecall(MorningWorld world, string id)
     {
         var who = Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).GetProperty("recall").GetString()!;
@@ -221,6 +223,7 @@ public sealed partial class AwakeningContentSession
         Session.Set("decided", who, true);
         life["state"] = "done";
     }
+    // STORY-HARDCODE[AWK-030][logic][production]: 固定同伴顺序、调查痕迹阈值与离场低语触发条件属于本章流程。
     public void BeginRoomChanged(MorningWorld world, string room, long now)
     {
         var steps = new List<StoryStep<MorningWorld, Person>>();
@@ -274,6 +277,7 @@ public sealed partial class AwakeningContentSession
         return stage.GetProperty("room_events").GetBoolean() ? "room" : "";
     }
     public System.Text.Json.JsonElement LifeTrace(string id) => Content.RootElement.GetProperty("LIFE_TRACES").GetProperty(id);
+    // STORY-HARDCODE[AWK-031][logic][production]: E1/E3 开放重演、指定熟悉旁证揭示 V6 的触发映射。
     public string[] Examine(MorningWorld world, string id)
     {
         if (Session.Has("examined", id)) return [];
@@ -305,11 +309,13 @@ public sealed partial class AwakeningContentSession
         Session.Set("nudged", id, true);
         return true;
     }
+    // STORY-HARDCODE[AWK-032][schema][production]: E12 展示 E7 石板小图是本案证物间固定关联。
     public string CardFacts(string id)
     {
         var facts = Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).GetProperty("facts").GetString()!;
         return id == "E12" && Session.Has("examined", "E7") ? facts + "\n" + Chapter1Data.Text("卡片·E12·石板小图") : facts;
     }
+    // STORY-HARDCODE[AWK-033][logic][production]: E11 四人手印进度及 E8 声路试验笔记为本案专属摘要逻辑。
     public string[] CardNotes(MorningWorld world, string id)
     {
         var notes = new List<string>();
@@ -454,6 +460,7 @@ public sealed partial class MorningWorld
             _space[room] = space;
             _runtime.Project(space, Names.Of(room));
         }
+        // STORY-HARDCODE[AWK-034][logic][production]: 从本章固定案件真相建立清晨证物实体与醒来人物认知。
         var truth = Chapter1Data.Root.GetProperty("TRUTH");
         int TruthValue(string field, int? equals)
         {

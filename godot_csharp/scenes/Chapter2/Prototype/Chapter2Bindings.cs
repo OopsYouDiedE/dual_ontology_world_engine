@@ -5,6 +5,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// <summary>Stable author IDs resolved once into actual game references; display names are never identifiers.</summary>
 public static class Chapter2Bindings
 {
+    // STORY-HARDCODE[CH2-084][schema][production]: 将剧本里的具体世界物件身份绑定到本章运行对象。
     private static readonly IReadOnlyDictionary<string,Func<Game,Essence>> Objects = new Dictionary<string,Func<Game,Essence>>
     {
         ["Granary"]=g=>g.Granary,["Desk"]=g=>g.Desk,["Stove"]=g=>g.Stove,["Jar"]=g=>g.Jar,["Ledger"]=g=>g.Ledger,
@@ -34,7 +35,9 @@ public static class Chapter2Bindings
             if(entity.Kind=="character") { _=PersonId(entity);continue; }
             if(entity.Kind=="room"&&local.StartsWith("room.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[5..],out var place)&&Enum.IsDefined(place))continue;
             if(entity.Kind=="object"&&local.StartsWith("object.",StringComparison.Ordinal)&&Objects.ContainsKey(local[7..]))continue;
+            // STORY-HARDCODE[CH2-096][schema][production]: 限定本章公告板实体可绑定的具体地点集合。
             if(entity.Kind=="object"&&local.StartsWith("Board.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[6..],out var board)&&board is Place.Hall or Place.Logistics or Place.Lecture or Place.DormLife or Place.DormW or Place.DormS or Place.DormL or Place.Living)continue;
+            // STORY-HARDCODE[CH2-097][schema][production]: 限定本章废纸篓实体只存在于四个宿舍区。
             if(entity.Kind=="object"&&local.StartsWith("Litter.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[7..],out var litter)&&litter is Place.DormLife or Place.DormW or Place.DormS or Place.DormL)continue;
             throw new InvalidDataException("Unknown formal binding: "+entity.Id);
         }

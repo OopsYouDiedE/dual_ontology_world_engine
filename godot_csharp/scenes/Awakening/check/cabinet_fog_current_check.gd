@@ -1,5 +1,6 @@
 extends SceneTree
 # Independent injection regression. Only invitation travel uses real physics frames.
+# STORY-HARDCODE[AWK-056][schema][fixture]: E11 固定人物、证物顺序与结论只作专项回归夹具。
 const OUT := "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/remake-chapter2/shared-runtime/"
 var checks := 0
 var failures := 0

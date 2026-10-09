@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 namespace DualOntologyWorldEngine.Awakening;
 
 /// <summary>四个人。Detective 是玩家。</summary>
+// STORY-HARDCODE[AWK-063][schema][production]: 本案角色/房间及 V1–V6 选项由连续固定枚举编码。
 public enum Person { Detective, Huo, Shen, Su }
 
 /// <summary>乙区的房间与隔离门外的起居厅。地图几何属宿主；这里只有房间拓扑。</summary>
@@ -87,6 +88,7 @@ public static class Acoustics
     /// 按声学法则推出听感：铜口所在完整，松动接头处只剩句尾，隔墙低语处嗡嗡；门外的喊声门内发闷，
     /// 门内房间若有松动接头，声音钻进管子从别处松动接头发闷漏出。<paramref name="loose"/> 缺省为 story 声明的接头状态。
     /// </summary>
+    // STORY-HARDCODE[AWK-001][logic][production]: 固定传播表规定铜口完整/接头句尾/隔墙低语/其余警铃，以及门内外喊声组合；拓扑与接头配置读取故事数据。
     public static Hearing Hear(VoiceOrigin origin, Room listener, IReadOnlyDictionary<string, bool>? loose = null)
     {
         var data = Loaded.Value;
@@ -125,6 +127,7 @@ public static class TestSentences
 }
 
 /// <summary>人物与房间的称呼来自 chapter_01.story 的“人名”“房间名”；键与枚举同序。</summary>
+// STORY-HARDCODE[AWK-002][schema][production]: 枚举键与本章人物、房间名称按固定顺序绑定。
 public static class Names
 {
     public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];

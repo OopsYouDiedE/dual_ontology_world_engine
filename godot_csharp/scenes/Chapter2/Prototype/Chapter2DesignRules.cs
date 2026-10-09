@@ -116,6 +116,7 @@ public static class CardKit
     public static IReadOnlyList<(Card Card, string Text)> CaseWordings => _data.Value.CaseWordings;
     public static IReadOnlyList<(Card Card, string Text)> ArchiveWordings => _data.Value.ArchiveWordings;
     /// <summary>代码按编号认行为；剧本里行为的先后改了，这里立即报错而不是悄悄串位。</summary>
+    // STORY-HARDCODE[CH2-010][schema][production]: 允许的行为编号清单是本项目规则语义的硬编码 schema。
     private static readonly string[] BehaviorIds = ["取粮", "按人头", "交钥匙", "指控须证", "转述", "开库各取", "开库委员会", "开库封闭", "开库约束", "限制入院", "温室"];
 
     private sealed class Data

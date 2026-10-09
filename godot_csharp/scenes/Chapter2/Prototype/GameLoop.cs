@@ -105,6 +105,7 @@ public sealed partial class Game
         _failures.Add((p, memory));
     }
 
+    // STORY-HARDCODE[CH2-061][logic][production]: 按本章日序初始化病情、案件发现与线索状态。
     private void BeginDay()
     {
         _dayStart[Day] = Now;
@@ -328,6 +329,7 @@ public sealed partial class Game
         foreach (var o in People.Where(o => places.Contains(Where(o)) && !(Slot == Slot.Night && o.Asleep))) Perceive(o);
     }
 
+    // STORY-HARDCODE[CH2-062][logic][production]: 把指定案件行动完成映射为本章固定后果。
     private void OnCompleted(ActionExecution exec)
     {
         using var _ = Prof.Time("C:OnCompleted");
@@ -423,6 +425,7 @@ public sealed partial class Game
         }
     }
 
+    // STORY-HARDCODE[CH2-063][logic][production]: 结算本章人物、作案物件与调查线索的专属物理结果。
     private void Physics(Person p, Job? job, ActionExecution exec)
     {
         CompletePostIntents(p, exec);
@@ -550,6 +553,7 @@ public sealed partial class Game
     /// 认了“夜间急需可自取”的，说是照规矩取的，不起疑；认了“无记录即私取”的，说是私取，记为嫌疑；两条都没认的，只说取了一份，也起疑。
     /// 起疑的是亲眼所见，可以凭此当众指控。
     /// </summary>
+    // STORY-HARDCODE[CH2-064][logic][production]: 判定本案夜间取物是否被特定证据和目击捕捉。
     private void NightSeenTaking(Person taker, bool recorded)
     {
         var take = _currentEvent;
@@ -630,6 +634,7 @@ public sealed partial class Game
     }
 
     /// <summary>接受“无登记取用视为私取”的人：账上有无记录取用，就把心里认定的私取之人列为嫌疑（推断）。夜里瞥见的瘦小身影加重这一推断。</summary>
+    // STORY-HARDCODE[CH2-065][logic][production]: 按本案特定行为积累或消除嫌疑。
     private void Suspicions()
     {
         foreach (var p in Npcs)
@@ -647,6 +652,7 @@ public sealed partial class Game
         }
     }
 
+    // STORY-HARDCODE[CH2-066][text][production]: 为本案指控对象选择具名指控反馈。
     private void AccuseSpeech(Person w)
     {
         // 指控以亲见优先（§13 第 3 条）：先指自己亲眼看见没记账取粮的人，再依转述与成见。
@@ -721,6 +727,7 @@ public sealed partial class Game
 
     // ------------------------------------------------------- fixed nodes --
 
+    // STORY-HARDCODE[CH2-067][logic][production]: 执行本案预置的按日/时段线索及人物状态变更。
     private void FixedBefore()
     {
         // 始业日：门开后的集合与第一顿晚饭；案发那一日：下午莫兰发烧、傍晚沃德当众盯视雀儿（压力，见第三部分 §7、§16）。
@@ -826,6 +833,7 @@ public sealed partial class Game
     public bool GreenhouseRepaired;
 
     /// <summary>温室：阀门与压力表两站须同时有人；指针过红线时，没听过警告的人会开顶窗（受伤，恶魔须显形救人）。</summary>
+    // STORY-HARDCODE[CH2-068][logic][production]: 结算本案温室特定事件、人物和物件状态。
     private void GreenhousePhysics()
     {
         // 这个下午在温室干过活的人（干完活走了也算；阀门与压力表须同时有人守，所以至少两人）。
@@ -974,6 +982,7 @@ public sealed partial class Game
     /// 唤名有节奏（多日交互审核 M5）：只唤已经有钩的、被铜口单独低语过的、或不是头一夜来前厅的人；每夜至多唤一人，
     /// 唤被拉得最紧的那一个（钩与欲望）。其余来前厅的人只留下足迹与停留。
     /// </summary>
+    // STORY-HARDCODE[CH2-069][logic][production]: 在本案案发后按固定条件触发点名事件。
     private void NameCall()
     {
         if (_nameCalledNight == Day) return;
@@ -999,6 +1008,7 @@ public sealed partial class Game
     private int _nameCalledNight = -1;
 
     /// <summary>油：阮清越按胜率给油（他信得过的寝区与夜巡）。没有油的地方夜里看不清人。</summary>
+    // STORY-HARDCODE[CH2-070][logic][production]: 结算阮、贝特朗、莫拉与茉拉相关的专属油料剧情。
     private void OilPhysics()
     {
         var holder = People.FirstOrDefault(p => Get(p.Body, T.OilKey) > 0);

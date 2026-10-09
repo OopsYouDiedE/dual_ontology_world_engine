@@ -4,6 +4,7 @@ using DualOntologyWorldEngine.Awakening;
 // 法则化检查（总纲 §六 第三期）：声路由法则推出、随现实接头改变而昨夜不变；证物毁去后由代管者补救；未建模给保守结果。
 static void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS " + name); }
 
+// STORY-HARDCODE[AWK-048][schema][fixture]: 声路和证物破坏检查中的具体状态及答案是自动测试夹具。
 var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);
 var acoustics = Chapter1Data.Root.GetProperty("ACOUSTICS").GetProperty("hearing");
 

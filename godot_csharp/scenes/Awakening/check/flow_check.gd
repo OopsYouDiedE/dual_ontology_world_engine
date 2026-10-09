@@ -7,6 +7,7 @@ extends SceneTree
 const Fixture := preload("res://scenes/Awakening/check/chapter1_fixture.gd")
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
 ## 恶魔在全章都不提契约第 9、10 条。
+# STORY-HARDCODE[AWK-053][schema][fixture]: 流程回归中的具体台词/场景/答案约束只作 fixture 断言。
 const FORBIDDEN := ["第九", "第 9", "第9", "第十条", "第 10", "九、", "十、", "尽忘", "归乡", "放逐", "十五名", "担保耗尽"]
 ## 第五轮修订删去的说法：可数的刻痕、恶魔自报为恶魔或提导师与契约、门外是“主楼走廊”。
 const RETIRED := ["二十四", "刻痕", "恶魔亦可", "导师将我拘于", "契约第", "主楼走廊", "依第二条", "第 8 条", "第八条"]

@@ -552,6 +552,7 @@ func _present_line() -> void:
 	current_voice_stream = _get_character_voice(line.character)
 	if not line.voice_clip.is_empty():
 		current_voice_stream = VOICES.get(line.voice_clip.trim_prefix("voice_"), current_voice_stream)
+	# STORY-HARDCODE[CSH-022][logic][production]: 铜口之声每段首次开口触发盖片与管道共鸣音。
 	if current_voice_stream == VOICE_TUBE and _previous_voice_stream != VOICE_TUBE:
 		Sound.sfx("tube", -6.0)
 	_previous_voice_stream = current_voice_stream

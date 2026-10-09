@@ -231,6 +231,7 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 		if not adapter.sight_terrain_fog():
 			object_in_sight = _player_object_exposed_in_sight(exposed)
 		if not object_in_sight: continue
+		# STORY-HARDCODE[CSH-033][schema][production]: 特定章节纹理到油灯/柜体可见名称的绑定；不是剧情因果规则。
 		# nightstand 原生 20×36 纹理同时画了柜体和油灯，分别按像素外观判断入镜。
 		if sprite.texture.resource_path == "res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" and sprite.get_rect().size == Vector2(20, 36):
 			var texture_origin := sprite.get_rect().position
@@ -699,6 +700,7 @@ func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
 	actor.pose({"操作": "interact", "递物": "interact", "拉拽": "interact", "交谈": "talk", "蹲查": "inspect"}.get(frame, "idle"), "front")
 
 func _place_court() -> void:
+	# STORY-HARDCODE[CSH-035][schema][production]: 专用盟誓庭锚点与侦探位置绑定；名单由外部快照驱动。
 	var court: Vector2 = adapter.anchor("site:oath_court") if adapter.anchor("site:oath_court") != null else player.position
 	var i := 0
 	for p in snapshot.get("people", []):

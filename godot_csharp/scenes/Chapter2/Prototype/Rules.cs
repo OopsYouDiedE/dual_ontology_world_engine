@@ -111,6 +111,7 @@ public sealed partial class Game
     }
 
     /// <summary>作者侧已知的规则：沃德、茉拉、阮清越的板（第三部分 §7）、恶魔的致命警告（§5.3），以及各价值聚落的立规（§11 第 7 条，见 Alliances.cs）。</summary>
+    // STORY-HARDCODE[CH2-005][logic][production]: 为具体人物初始化特定规则、时段、目标与结果。
     private void WriteRules()
     {
         WardLedger = Spec("WardLedger",
@@ -149,6 +150,7 @@ public sealed partial class Game
         _ => Fx.Mine(T.Is[(P)(subject - 10)])
     };
 
+    // STORY-HARDCODE[CH2-006][schema][production]: 将本项目特定规则卡编号和行为映射为具体游戏后果。
     private IEnumerable<Rule> CompileCard(Fx fx, Card card)
     {
         var who = SubjectCondition(card.Subject);
@@ -348,6 +350,7 @@ public sealed partial class Game
     }
 
     /// <summary>立场的主要来源：亲眼所见、点过头、饭桌上被驳、饥饱、所属派系、知道第九条。</summary>
+    // STORY-HARDCODE[CH2-034][logic][production]: 按具体人物身份写入对议案措辞的立场偏好。
     private int StanceTerms(Person p, RuleSpec s, List<string> parts)
     {
         var fam = FamilyOf(s);
@@ -441,6 +444,7 @@ public sealed partial class Game
         return verdict;
     }
 
+    // STORY-HARDCODE[CH2-035][logic][production]: 为各具体人物预设议案条件与反对理由。
     private static IEnumerable<(RF Need, int Penalty, string Text)> Requirements(P p) => p switch
     {
         P.Ruan => [(RF.Records, 2, "不记账就对不上账")],
@@ -452,6 +456,7 @@ public sealed partial class Game
     /// 底线价值（§11 第 4 条）：每人一至两条，触犯即拒绝。返回此人会说的那句话；没触犯返回 null。
     /// 上了钩的人多一条：名录库“入夜一律不行”——名字在叫他。
     /// </summary>
+    // STORY-HARDCODE[CH2-036][logic][production]: 指定人物对特定议案的否决底线。
     public string? Veto(Person p, RuleSpec s)
     {
         var f = s.Flags;

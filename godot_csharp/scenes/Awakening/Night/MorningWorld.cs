@@ -92,6 +92,7 @@ public sealed partial class MorningWorld
     /// 同伴面对“触碰旧物、回想”的习惯：欲望越强、越信恶魔，越想碰；天性谨慎、读到守则第 1 条“自负其果”，越不肯碰。
     /// 两种选择都是写进他内部世界的 Rule，由 DecisionSystem 取舍。
     /// </summary>
+    // STORY-HARDCODE[AWK-017][logic][production]: 为有具体旧物回忆的人写入欲望、守则、铜口信任、劝告与触物行为规则。
     private void WriteMind(RecallMemory memory)
     {
         var who = memory.Who;
@@ -250,6 +251,7 @@ public sealed partial class MorningWorld
     }
 
     /// <summary>玩家把公告框上的守则第 1 条指给某人看：他亲眼读到（感知）。决定仍是他的。</summary>
+    // STORY-HARDCODE[AWK-020][logic][production]: 固定以公告框第一条作为角色读到的代价规则。
     public void ShowRule1(Person who)
     {
         if (!_minds.TryGetValue(who, out var mind)) return;
@@ -298,6 +300,7 @@ public sealed partial class MorningWorld
     }
 
     /// <summary>此人碰不碰：DecisionSystem 在他自己的内部世界里取舍。两边分量相同则犹豫。</summary>
+    // STORY-HARDCODE[AWK-018][logic][production]: 将本案角色取舍、知守则与劝告分支映射到专属心声。
     public RecallDecision? DecideRecall(string evidence)
     {
         var memory = Memories.FirstOrDefault(m => m.Evidence == evidence);
@@ -330,6 +333,7 @@ public sealed partial class MorningWorld
     }
 
     /// <summary>侦探不在场时的取舍：同样由 DecisionSystem 决定；犹豫的人身边没人可问，便放下。</summary>
+    // STORY-HARDCODE[AWK-019][logic][production]: 独处时犹豫即放下是本章角色回忆规则。
     public RecallDecision? DecideAlone(string evidence)
     {
         var decision = DecideRecall(evidence);
@@ -432,6 +436,7 @@ public sealed partial class MorningWorld
     public IReadOnlyDictionary<string, bool> Joints => _joints;
 
     /// <summary>拧紧（或拆松）一个接头：此后的声路试验按新状态传声，铜口证物上的“接头松动”随之改变；昨夜的痕迹不变。</summary>
+    // STORY-HARDCODE[AWK-021][schema][production]: 将现实声路接头状态投影到 E8 铜口证物的固定事实标签。
     public bool SetJoint(string name, bool loose)
     {
         if (!_joints.ContainsKey(name)) return false;

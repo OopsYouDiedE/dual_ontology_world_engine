@@ -5,11 +5,13 @@ extends Node2D
 const ART := "res://ShareAsset/Internal/Props/AwakeningEvidence/"
 ## 铜管走向：铜口 → 沿活动厅北墙向西 → 门厅北墙 → 贴西墙下到隔离门北侧门框（松动接头）；
 ## 另一路向东，钻进活动厅与 R-08 之间的墙（松动接头在 R-08 墙后）。
+# STORY-HARDCODE[AWK-042][schema][production]: 绘制本案铜管两条具体路径及松动接头位置。
 const PIPES := [
 	[Vector2(500, 40), Vector2(304, 40), Vector2(304, 266), Vector2(164, 266), Vector2(164, 346), Vector2(154, 346)],
 	[Vector2(500, 40), Vector2(592, 40), Vector2(592, 204)],
 ]
 ## [贴图, 位置, 旋转角度]：门在门厅西墙，灰扇向东散开，湿布贴着门竖着压成一条，靴印鞋尖朝北侧的插闩把手。
+# STORY-HARDCODE[AWK-043][schema][production]: 绘制本案灰扇、靴印、湿布、接头与门框凹痕的位置方向。
 const DECALS := [
 	["ash_fan.png", Vector2(184, 322), 90.0],
 	["boot_print.png", Vector2(156, 418), -90.0],
@@ -55,6 +57,7 @@ func _draw() -> void:
 			draw_texture(texture, Vector2.ZERO)
 	draw_set_transform(Vector2.ZERO)
 	# 书架上的灰：R-05 有半枚窄手印；四人的房里有干净的方框；空房的灰落得很匀。
+	# STORY-HARDCODE[AWK-044][logic][production]: 按本章 R-05 半枚手印、住人房方框与空房均匀灰尘呈现固定证物。
 	for shelf in host.layout.shelves:
 		if not _known(Vector2(shelf[0], shelf[1])):
 			continue

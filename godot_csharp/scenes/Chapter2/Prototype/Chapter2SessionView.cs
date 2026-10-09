@@ -17,6 +17,7 @@ public sealed partial class Chapter2InteractionSession
     private object?[] _lastRunVars = [];
 
     /// <summary>人物立绘与场内动作图集的键。</summary>
+    // STORY-HARDCODE[CH2-024][schema][production]: 角色身份到专属肖像标识及地图地点的映射写在宿主代码。
     private static readonly Dictionary<string, string> Sprites = new()
     {
         ["Det"] = "detective", ["Huo"] = "engineer", ["Shen"] = "chef", ["Su"] = "musician", ["Lucian"] = "poet", ["Gu"] = "archaeologist",
@@ -57,6 +58,7 @@ public sealed partial class Chapter2InteractionSession
         _nearby = near;
     }
 
+    // STORY-HARDCODE[CH2-080][text][production]: 构造本章议事结果、角色归宿与章末卡文本。
     private IEnumerable<Ev> EndEvents(Ev result)
     {
         if (result.GetValueOrDefault("stands") is IDictionary<string, string> stands)

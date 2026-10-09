@@ -7,6 +7,7 @@ func fail(message: String) -> void:
 	print("FAIL ", message)
 	quit(1)
 func run() -> void:
+	# STORY-HARDCODE[CSH-018][logic][preview]: 逐步呈现并切换实际arrival/morning示例章节内容。
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://../artifacts/python-story-refactor/world-preview-ui"))
 	host = load("res://scenes/Shared/Story/Examples/WorldScript/Host/WorldScriptPreview.tscn").instantiate()
 	host.compiled_document = ProjectSettings.globalize_path("res://scenes/Shared/Story/Examples/WorldScript/generated_world.json")

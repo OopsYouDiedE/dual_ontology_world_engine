@@ -43,6 +43,7 @@ func campus_loaded() -> bool:
 		and host.field.adapter.get_script().resource_path == CAMPUS_VIEW and host.field.player != null
 
 ## 等 Main 的事件队列与真实对白回执静止。章节菜单按当前候选的凭证选择。
+# STORY-HARDCODE[CH2-020][logic][fixture]: 夹具自动填写固定侦探名、代按对白与菜单并跳过回放。
 func settle(resolve_choices := false, seconds := 60.0, until := Callable()) -> bool:
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
 	var idle_since := -1

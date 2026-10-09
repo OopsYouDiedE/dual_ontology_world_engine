@@ -15,6 +15,7 @@ var right: Texture2D = preload("res://ShareAsset/Internal/Props/FirstAwakeningIn
 func _ready() -> void:
 	refresh_access()
 
+# STORY-HARDCODE[AWK-058][schema][production]: 宿舍门所有者键与本章角色节点名称固定绑定。
 func owner_actor() -> CharacterBody2D:
 	var actor_name: String = {"detective": "侦探", "engineer": "工程师", "cook": "厨师", "musician": "音乐家"}[dorm_owner]
 	return room.actors.get(actor_name)

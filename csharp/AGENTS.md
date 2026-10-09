@@ -16,7 +16,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - **观察、推理与心智转变（Cognition.cs, Reasoner.cs, Speech.cs）**：
   - 主观认知更新统一经由 `Observation.Observe` 接口驱动，认知集合保持封闭。
   - `Cognition.Infer` 沉淀支持的显式命题；`Cognition.Corrupt` 通过输入管道施加 `IProjectionTransform`。
-  - `Reasoner` / `CaseModel` / `CaseBelief`：为共享案件计算表与主观推演过滤层，支持证据链与假设排除，不直接持有剧情。
+  - `Reasoner` / `CaseModel` / `CaseBelief`：为共享案件计算表与主观推演过滤层，支持证据链与假设排除；专用内容的现有残留以源码审计标记定位。
 - **抽象语法树与解析器（Ast.cs, AstDecoder.cs）**：
   - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer 模式及权重）。
   - AST 严格使用类型化节点、槽位、Tag 和 Projection 引用；字符串仅用于名称与描述。
@@ -31,7 +31,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `DecisionSystem` 与 `SocialSystem` 严格基于主体自身内部世界的 ProjectionWorld 展开演算与决策，绝不直接依据客观现实做抉择。
   - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令。
 - **因果规则与重演（HallCausalityRules.cs, HallReplayProgram.cs）**：
-  - 提供无关于具体剧情台词的几何/因果推演逻辑与推演假说冲突校验（`ConflictKind`）。
+  - 提供因果推演与假说冲突校验（`ConflictKind`）；当前实现中的专案绑定以源码审计标记定位，标记阶段不改变编译边界或调用关系。
 - **无剧情硬编码铁律**：
   - 严禁将剧情写入引擎代码；剧情仅存在于 `.story` 和译文。核心逻辑不得硬编码剧情内容或特定剧本文案。
 
@@ -50,3 +50,4 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
 - 系统演进直接在既有架构与文件上持续重构。
+- 源码审计遵循根目录的 `STORY-HARDCODE` 编号、类型与范围约定。仅新增审计注释时，逐文件核对去除标记后与基线一致，并构建 Core；审计清单位于 `artifacts/story-hardcode-marking/`，不把源码中的具体内容写入本规范。

@@ -35,6 +35,7 @@ func old_prop(room: Node, parent: Node, label: String, sheet: String, region: Re
 	var s := Sprite2D.new(); var t := AtlasTexture.new()
 	t.atlas = load("res://ShareAsset/External/Victorian/textures/Victorian_Inside_" + sheet + ".png"); t.region = region
 	s.texture = t; s.position = Vector2(0,-region.size.y/2.0); s.modulate = Color(0.78,0.76,0.68); own(room,a,s)
+# STORY-HARDCODE[CSH-031][schema][tool]: 素材工具绑定推理书房的道具与空间摆位；不推进剧情或映射答案。
 func build() -> void:
 	var room := Node2D.new(); room.name = "StudyRoom"; room.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var ts: TileSet = load(ART + "Study.tres")

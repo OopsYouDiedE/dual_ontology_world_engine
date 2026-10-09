@@ -8,6 +8,7 @@ public sealed record RoomView(string? Place, Person[] People, string[] Things, b
 /// <summary>同一份房间与行动条件供文字入口、地图入口使用，GD只负责呈现及参数输入。</summary>
 public static class RoomPresentation
 {
+    // STORY-HARDCODE[CH2-078][text][production]: 按本章时段、地点与案件状态提供场景动作选项。
     public static RoomView For(Game g, Place? place)
     {
         if (place is not { } here) return new(null, [], [], false, []);
@@ -50,6 +51,7 @@ public static class RoomPresentation
 
     public static bool CanReopen(Game g) => g.Day > Game.CaseDay && !(g.Day == Game.LastDay && g.Slot == Slot.Morning) && !g.QuerCleared && g.Accused is not null;
 
+    // STORY-HARDCODE[CH2-079][text][production]: 定义本章当面交互可执行的具体人物行动。
     public static RoomAction[] PersonActions(Game g, P who, Place? place)
     {
         if (place is not { } here || !g.RoomPeople(here).Any(p => p.Id == who)) return [];

@@ -90,6 +90,7 @@ public sealed partial class Game
     /// <summary>本时段侦探可知的信息（感知、听闻、广播）。</summary>
     public readonly List<string> Feed = [];
 
+    // STORY-HARDCODE[CH2-012][logic][production]: 初始化具体角色、案件实体、持钥身份、时空位置与案件状态。
     public Game(GameOptions? options = null, LiveChapterWorld? continuation = null, ChapterWorldDefinition? authored = null, WorldSession? session = null)
     {
         Options = options ?? new();
@@ -163,6 +164,7 @@ public sealed partial class Game
         return e;
     }
 
+    // STORY-HARDCODE[CH2-076][schema][production]: 初始化本章具体空间、案件物件、持钥人身份与知情模型。
     private void BuildWorld()
     {
         foreach (var place in Enum.GetValues<Place>())
@@ -292,6 +294,7 @@ public sealed partial class Game
     }
 
     /// <summary>始业日上午十六人在中央厅会合：每人看见全部可指称的对象与彼此；此后的位置与状态只靠感知更新。</summary>
+    // STORY-HARDCODE[CH2-013][logic][production]: 初始化不同具体人物对角色、身份、关系、规则及旧案的认知。
     private void Know(Person p)
     {
         var previouslyKnown = p.M.Keys.ToHashSet();
@@ -489,6 +492,7 @@ public sealed partial class Game
     public readonly List<Sighting> Sightings = [];
     public sealed record Sighting(int Day, P Witness, Place From, Place At, Build Build, P Truth, double Time);
 
+    // STORY-HARDCODE[CH2-014][logic][production]: 限定具体空间的夜间视线并生成身形目击和专案反馈。
     private void NightSight(Person p, Place here)
     {
         if (!SightLines.TryGetValue(here, out var lines) || p.Asleep) return;
@@ -542,6 +546,7 @@ public sealed record InheritedSeed(int Hooks, int Desire, bool KnowsHookCost, IR
 
 
 /// <summary>第二章命令行与 Godot 宿主共用的玩家可见剧情。</summary>
+// STORY-HARDCODE[CH2-015][text][production]: 章节专属教师身份替换与标题常量写在宿主代码中。
 public static class Chapter2Content
 {
     // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。

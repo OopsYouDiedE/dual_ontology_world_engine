@@ -121,6 +121,7 @@ public static class Reasoner
     private static bool Holds(ProjectionWorld mind, string name) => mind.Projections.Any(p => p.Name == name && p.Existence == Truth.True);
 
     /// <summary>How much a held claim weighs, by how it entered the mind.</summary>
+    // STORY-HARDCODE[CSH-009][text][production]: 将腐化来源专称为“铜口之言”，是项目世界专属的证据反馈文案。
     public static (double Factor, string Why) Weight(Projection claim)
     {
         var source = claim.LastObservation?.Source ?? ObservationSource.Introspection;

@@ -48,6 +48,7 @@ public sealed partial class MorningWorld
         _runtime.Observe(soul,_runtime.Representations(room).Concat(_runtime.Representations(body)),_session.CTB.Now);
     }
     private bool _continuationExported;
+    // STORY-HARDCODE[AWK-060][logic][production]: 离开生活翼时清除本章旧物牵引习惯，避免它压过后续日常。
     public LiveChapterWorld ExportContinuation(ChapterSession progress)
     {
         if (_continuationExported) throw new InvalidOperationException("This live chapter world has already been handed off.");

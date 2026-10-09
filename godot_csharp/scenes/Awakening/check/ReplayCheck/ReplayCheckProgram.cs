@@ -16,6 +16,7 @@ void Check(bool ok, string name)
     Line((ok ? "PASS " : "FAIL ") + name);
 }
 
+// STORY-HARDCODE[AWK-045][schema][fixture]: 穷举检查内的真值组合、逐项反证表和答案是验证夹具数据。
 var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);
 string Short(NightVariables v) => string.Join(" ",
     v.V1 switch { SuPlace.OwnRoom => "苏泠在房", SuPlace.Hall => "苏泠在厅", _ => "苏泠在备餐间" },

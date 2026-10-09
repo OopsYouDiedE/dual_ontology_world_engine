@@ -5,6 +5,7 @@ extends "res://tools/capture_player_transcript.gd"
 ## Optional: --width=1280 --height=992. A renderer is required; never use --headless.
 
 const SAMPLE_ROOT := "res://../artifacts/basic-ui-system/ui-rounds/"
+# STORY-HARDCODE[CSH-024][schema][tool]: 采样清单固定选择两章对白、E1证物、防辩表、午间争执、议事支持项与结局。
 const SAMPLE_SPECS := [
 	{"slug": "01-c1-long-dialogue", "kind": "lines", "line_prefix": "s2_meet.", "prefer_longest": true},
 	{"slug": "02-c1-person-dialogue", "kind": "lines", "line_prefix": "s2_tea.", "require_speaker": true, "prefer_longest": true},

@@ -23,6 +23,7 @@ public sealed record BotResult(string Name, Ending Ending, string Image, double 
     string Curve, int MaxHunger, string Hungriest, int DemonLeaks, int Hooks, bool QuerCleared, bool QuerOstracized, bool Common, int RationsLeft,
     long Ms, string Fingerprint, string Council, Game World);
 
+// STORY-HARDCODE[CH2-002][logic][fixture]: 自动推演目录预写具体策略、时间表、角色与议事选择，仅属开发夹具。
 public static class Bots
 {
     private static PlayerAction A(Cmd c) => new(c);

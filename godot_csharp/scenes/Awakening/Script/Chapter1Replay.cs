@@ -5,6 +5,7 @@ namespace DualOntologyWorldEngine.Awakening;
 public sealed partial class AwakeningContentSession
 {
     /// <summary>Execute a real player-visible replay; predicted worlds never call this boundary.</summary>
+    // STORY-HARDCODE[AWK-061][logic][production]: 本章实播重演将固定六项变量、吻合判断和角色见证写入玩家进度。
     public ImmutableArray<Finding> RunVisibleReplay(MorningWorld world, NightVariables variables)
     {
         RecordReplayRun();

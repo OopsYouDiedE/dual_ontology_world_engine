@@ -7,6 +7,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// 《少了一份》案发次日清晨的痕迹。哪个寝区的废纸篓里有饼屑、夜巡望见什么身量的身影，都按推演的实际结果记，
 /// 不预设是谁（多日交互审核 M1）。
 /// </summary>
+// STORY-HARDCODE[CH2-086][schema][production]: 定义本案缺粮、门闩、空碗、废纸篓与夜巡身影的证物模型。
 public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchToolMarks, bool BowlPorridge, IReadOnlyList<Place> CrumbDorms, IReadOnlyList<Build> Figures)
 {
     public static readonly string[] Labels = [.. CaseDesign.Traces.Select(t => t.Label)];
@@ -28,6 +29,7 @@ public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchTool
 }
 
 /// <summary>重演变量：全部是“处境与人心”，不指定任何人做了什么。</summary>
+// STORY-HARDCODE[CH2-087][schema][production]: 固定本案反事实重演所用的四项人物信念/处境变量。
 public sealed record CaseVars(int MoraBelief, int QuerRule, int MargaretRule, int QuerSupper)
 {
     public static readonly string[][] Options = [.. CaseDesign.Variables.Select(v => v.Options)];
@@ -56,6 +58,7 @@ public sealed partial class Game
     public IReadOnlyCollection<Place> DetLookedLitters() => [.. CaseTraces.Dorms.Where(d => DetLooked.Contains(Litter[d]))];
 
     /// <summary>第 3 日清晨（不跑早上的行动）：结算昨夜并记录痕迹。</summary>
+    // STORY-HARDCODE[CH2-003][logic][production]: 案发痕迹、人物知识变量与反事实重演映射为特定案件事实。
     public CaseTraces Dawn()
     {
         if (!(Day == CaseDay && Slot == Slot.Morning)) throw new InvalidOperationException("只在案发次日清晨取痕迹");
@@ -224,6 +227,7 @@ public sealed partial class Game
     /// 第 4 日中央厅的公开对质（读与写）。陈述与出示成对；有效的一对让听者积累“材料”：亲见过的 +2，
     /// 信侦探的转述 +1，当事人当场承认按听者对她的信任再 +1。够 3 点的人改写心中对雀儿的认定。
     /// </summary>
+    // STORY-HARDCODE[CH2-088][logic][production]: 结算本案公开指控、证据说服、雀儿洗清或排斥及规则提出。
     public void Confront(ConfrontPlan? plan, bool reopen = false)
     {
         var room = People.Where(p => Get(p.Body, T.Sick) == 0).ToArray();
@@ -337,6 +341,7 @@ public sealed partial class Game
     /// <summary>侦探在对质中提出的规矩是否过了半数（立住了）；共同规则是否提过。</summary>
     public bool CaseRuleAdopted, CommonRuleProposed;
 
+    // STORY-HARDCODE[CH2-089][logic][production]: 处理案件对质后的特定议案表态、议事站队与共同规则结果。
     private void Propose(ConfrontPlan plan, Person[] room)
     {
         if (plan.Proposal is { } card)
@@ -391,6 +396,7 @@ public sealed partial class Game
     /// 重开对质（§12 第 4 条）：第 4 日之后的任一日，援引第一条共同规则“公开指控须附可检查的材料”，请众人回中央厅再对一次。
     /// 共同规则还没成立的，先当众再提一次；证物不随日消失，没被清理的仍在原处，被清理的留下清理的痕迹。
     /// </summary>
+    // STORY-HARDCODE[CH2-090][logic][production]: 允许案发后援引本章共同规则重开中央厅对质。
     private void Reopen(ConfrontPlan? plan)
     {
         if (_reopenedDay == Day) { Feed.Add("今天已经重开过一次对质了。"); return; }
@@ -414,6 +420,7 @@ public sealed partial class Game
     private static string Reaction(int claim) => claim >= 0 && claim < CaseDesign.Claims.Count ? CaseDesign.Claims[claim].Reaction : "";
 
     /// <summary>指控成立或不了了之：雀儿被排斥，对没有改变看法的人更不信任，转而独行。</summary>
+    // STORY-HARDCODE[CH2-091][logic][production]: 按本案指控结局改变雀儿的寝区、信任与名誉认知。
     private void Ostracize()
     {
         if (Accused is not { } acc) return;

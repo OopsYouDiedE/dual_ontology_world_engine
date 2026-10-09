@@ -12,6 +12,7 @@ extends Control
 @onready var refresh_button: Button = $Margin/Column/Actions/Refresh
 @onready var observe_button: Button = $Margin/Column/Actions/Observe
 @onready var room: HBoxContainer = $Margin/Column/RoomView
+# STORY-HARDCODE[CSH-038][schema][preview]: 作者预览固定以侦探与内门闩控件代表编译故事示例中的实体。
 @onready var detective: Label = $Margin/Column/RoomView/Detective
 @onready var target: Button = $Margin/Column/RoomView/Bolt
 

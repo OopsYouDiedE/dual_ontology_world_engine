@@ -9,6 +9,7 @@ public static class ContinuationSimulation
 {
     public sealed record Outcome(bool Started, bool Ended, string Stage, int Inputs, int CharacterActions, int FailedActions, string Result, string Limitation);
 
+    // STORY-HARDCODE[AWK-052][schema][tool]: 续篇模拟器按公开菜单、空间与信息制定固定探索策略；未读取正确答案或自动通关。
     public static Outcome Run(MorningWorld morning, ChapterSession progress, int seed, double handoffGameMinutes,
         double? stopGameMinutes, Action<double, double, int, C.Slot, string, string> record)
     {

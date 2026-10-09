@@ -15,6 +15,7 @@ public sealed partial class Game
 /// <summary>将侦探已经读到的事实投影为宿主可展示的记录；不推进世界或补充假设。</summary>
 public static class InvestigationPresentation
 {
+    // STORY-HARDCODE[CH2-032][schema][production]: 调查条目与本章具体证物、案件变量的映射逻辑。
     public static InvestigationEntry[] Entries(Game g)
     {
         var entries = new List<InvestigationEntry>();
@@ -124,6 +125,7 @@ public static class InvestigationPresentation
             }).ToArray();
     }
 
+    // STORY-HARDCODE[CH2-071][schema][production]: 把案件特定痕迹键映射到对应调查物件。
     private static string TraceImage(Game g, TraceItem trace)
     {
         if (Game.Things_.ContainsKey(trace.Key)) return trace.Key;

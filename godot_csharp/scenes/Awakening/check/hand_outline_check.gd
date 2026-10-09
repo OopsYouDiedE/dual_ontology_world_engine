@@ -14,6 +14,7 @@ func visible_text(node: Node) -> String:
 		result += str(node.text) + "\n"
 	for child in node.get_children(): result += visible_text(child)
 	return result
+# STORY-HARDCODE[AWK-057][schema][fixture]: E11 人物、证物和结果断言只作 UI 回归夹具。
 func run() -> void:
 	var holder: Node = load("res://scenes/Main2D.tscn").instantiate()
 	var game: Node = holder.get_node("Awakening")

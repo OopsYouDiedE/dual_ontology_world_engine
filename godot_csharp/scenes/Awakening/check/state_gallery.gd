@@ -14,6 +14,7 @@ var out_dir := ""
 var shots := 0
 var failures := 0
 
+# STORY-HARDCODE[AWK-054][schema][fixture]: 诊断画廊注入案件状态并按固定菜单推进，只作 UI 回归夹具。
 func _initialize() -> void:
 	fx = Fixture.new(self)
 	out_dir = ProjectSettings.globalize_path("res://").path_join("../artifacts/remake-belief-replay/gallery").simplify_path()

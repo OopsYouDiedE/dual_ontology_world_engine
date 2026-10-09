@@ -27,6 +27,7 @@ func settle(condition: Callable, limit := 3000) -> bool:
 
 func stage() -> String: return str(host.ui.snapshot.get("stage", ""))
 
+# STORY-HARDCODE[CSH-010][logic][fixture]: 自动脚本执行第一章固定调查、重演、始业问答与结尾检查，并预置角色回答。
 func _run() -> void:
 	fx = Fixture.new(self)
 	host = await fx.fresh(false)

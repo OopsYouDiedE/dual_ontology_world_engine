@@ -40,6 +40,7 @@ func send(input: Dictionary) -> void:
 	game._dispatch(input)
 	await finish_events()
 
+# STORY-HARDCODE[CH2-021][logic][tool]: 画廊脚本注入章一继承状态并预写第二章场景、行动与日期路线。
 func _run() -> void:
 	# Inject a real chapter-one handoff for this standalone automatic fixture.
 	# This is not a completed playthrough or a JSON reconstruction.

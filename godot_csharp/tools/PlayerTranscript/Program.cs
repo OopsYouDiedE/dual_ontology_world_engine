@@ -11,6 +11,7 @@ catch(Exception error) {Console.Error.WriteLine(error);Environment.ExitCode=1;}
 
 // One semantic playthrough. All world changes enter the production GameSession.
 // This host replaces only spatial arrival reports, never decisions or game state.
+// STORY-HARDCODE[CSH-011][logic][tool]: 玩家记录器绑定第一章与学园地点、人物、调查路线及条件分支。
 sealed class Transcript
 {
     readonly string root;
@@ -128,6 +129,7 @@ sealed class Transcript
             Send(E(("kind","tick"),("delta",.1)));
         }
     }
+    // STORY-HARDCODE[CSH-012][logic][tool]: 预设第一章作答文本/物证映射及第五日学园议事选择策略。
     void Respond(Ev ev)
     {
         string kind=S(ev,"kind"), pid=S(ev,"presentation_id");
@@ -391,6 +393,7 @@ sealed class Transcript
         }
         finally {log.Dispose();layout.Dispose();content.Dispose();}
     }
+    // STORY-HARDCODE[CSH-013][logic][tool]: 固定执行第一章检视顺序与连续五日路线以生成语义记录。
     public void Run()
     {
         try

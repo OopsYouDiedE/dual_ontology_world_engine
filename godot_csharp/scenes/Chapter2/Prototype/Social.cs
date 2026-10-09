@@ -208,6 +208,7 @@ public sealed partial class Game
     private readonly Dictionary<Person, int> _relayedThisSlot = [];
     private (int, Slot) _relaySlot;
 
+    // STORY-HARDCODE[CH2-037][logic][production]: 固定本章恶魔词、基座裂缝指认及指控/教训后果。
     public void Receive(Person teller, Person hearer, NewsItem item, Heard via, Channel channel = Channel.Relay)
     {
         var trust = TrustIn(hearer, teller);
@@ -256,6 +257,7 @@ public sealed partial class Game
     /// <summary>见面时的即时反应：听懂对自己说的话里的事实（第一章同样以台词解释 Testimony）。</summary>
     private void OnMeet(Person p, Person other) { }
 
+    // STORY-HARDCODE[CH2-007][logic][production]: 对“门闩松了”证词执行本案专属解释。
     public void Interpret(Person p)
     {
         var h = p.World.History;
@@ -277,6 +279,7 @@ public sealed partial class Game
     /// 每个人投向“认了他几条规矩（每条 +2，触犯底线被否一条 −2）+ 信他（上限 2）+ 价值相近（同一聚落 +2）”最高的中心，得分 ≥ 3 才算入派。
     /// 价值相近只是倾向：认了别家的规矩、信别的人，就会被拉走。派系少于两人不计。
     /// </summary>
+    // STORY-HARDCODE[CH2-008][logic][production]: 阵营成员集合固定引用本章具体人物身份。
     public List<Faction> Factions()
     {
         var core = Specs.Where(s => !s.ByDemon && s != RuanLedger && s.Author is not null).ToArray();

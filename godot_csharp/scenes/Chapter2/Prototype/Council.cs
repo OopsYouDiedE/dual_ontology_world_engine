@@ -21,6 +21,7 @@ public sealed partial class Game
     /// 名录库之门三站：配重（力气，不虚弱不带伤）、锁芯（精细）、传声中继（信号；不精通传声时信号被吃掉一半，
     /// 锁芯一侧就须最好的手）。前厅要沃德的钥匙，或会开锁的人。同一人只能站一站。
     /// </summary>
+    // STORY-HARDCODE[CH2-004][logic][production]: 议事前厅三站、角色资格与夜间夺取的具体规则及反馈。
     public bool Staff(IReadOnlyCollection<Person> crew, out string report, bool commander = false)
     {
         var used = new HashSet<Person>();
@@ -50,6 +51,7 @@ public sealed partial class Game
     /// 夜间私占（§12 第 0、5 条）：不再由作者在傍晚替人“约好”。想开库的人自己下午去约会开锁的、有力气的、懂传声的人（见 GameJobs.PlanRules），
     /// 答应的人入夜赴约。天亮前看今夜动过名录库之门的人：凑得齐三站就开了；有人守在前厅（沃德）而他不在其中，就被拦下。
     /// </summary>
+    // STORY-HARDCODE[CH2-045][logic][production]: 按具名人物、地点和本案时间安排议事前的控制与封锁。
     private void Seizure()
     {
         if (SeizedBy is not null) return;
@@ -81,6 +83,7 @@ public sealed partial class Game
     public RuleSpec? SeizedPlan;
 
     /// <summary>开门一幕体现所定方案的条款（§13 第 15 条）。</summary>
+    // STORY-HARDCODE[CH2-046][text][production]: 为本章议事结局编写人物组合对应的开场反馈。
     private string OpeningScene(Ending fam, RuleSpec plan, List<Person> who)
     {
         var names = who.Where(w => w != Det).Select(w => w.Name).Take(4).ToArray();
@@ -121,6 +124,7 @@ public sealed partial class Game
 
     /// <summary>第三日清晨名录库之议：每人在已接受的方案中支持最合意的；按支持人数排序，取第一个“办得成”的方案
     /// （开门类方案须支持者凑得齐三站与钥匙）。封闭不启无须机关。被私占则私占为结局。</summary>
+    // STORY-HARDCODE[CH2-047][logic][production]: 结算本章誓约庭议案、具名派系立场及具体结局。
     public Ending Council(int detBacks = -1)
     {
         var room = People.Where(p => Get(p.Body, T.Sick) == 0).ToArray();

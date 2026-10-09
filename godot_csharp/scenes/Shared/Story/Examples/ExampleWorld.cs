@@ -4,6 +4,7 @@ using DualOntologyWorldEngine.Story;
 using System.Collections.Immutable;
 
 /// <summary>可执行示例：替换侦探档案、初始化物资并在原世界运行带选择的剧情。</summary>
+// STORY-HARDCODE[CSH-008][text][example]: 可执行示例定义值夜学员、值夜记录、中央厅与调查选择文案。
 public sealed class ExampleWorld : IWorldScript
 {
     private ScriptCharacter _guest = null!;

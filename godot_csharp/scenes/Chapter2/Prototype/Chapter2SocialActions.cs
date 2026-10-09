@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DualOntologyWorldEngine.Core;
+// STORY-HARDCODE[CH2-011][logic][production]: 本文件按本章具体社会行动实现角色互动及预写反馈。
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 public sealed partial class Game
