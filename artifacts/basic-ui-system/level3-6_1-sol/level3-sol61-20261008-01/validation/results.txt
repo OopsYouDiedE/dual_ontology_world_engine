@@ -1,9 +1,0 @@
-2026-10-09 提交前检查
-
-PASS dotnet build godot_csharp/DualOntologyWorldEngine.sln -nologo -v q：0 warnings / 0 errors；3.86 秒。此项记录为工具输出结果摘要。
-PASS python godot_csharp/tools/compile_story.py --check：generated files are current (7 outputs)。此项记录为工具输出结果摘要。
-PASS verify.py core：构建通过。
-PASS verify.py scope：TOTAL 24 checks。
-FAIL verify.py flow：缺失 scenes/Awakening/Chapter1.tscn，夹具访问 Nil；诊断确认后停止本轮挂起进程，exit 4294967295 (179s)。完整 stdout/stderr 同目录。
-NOT RUN flow2 / gallery；统一入口在 flow 失败后停止。
-未启动新一轮独立游玩或二级 UI 验收。
