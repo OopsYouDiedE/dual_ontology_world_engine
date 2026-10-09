@@ -1,0 +1,564 @@
+{
+  "review_date": "2026-10-09",
+  "source_commit": "b608f5b6",
+  "status": "proposal_only",
+  "source_index": "index.json",
+  "resource_index": "resource-review.json",
+  "grouping_rule": "Each indexed entry has one primary solution group. Composite methods follow the dependencies recorded for that group.",
+  "groups": [
+    {
+      "id": "S01",
+      "title": "移除 Core 内的旧案件专用实现",
+      "priority": "P1",
+      "decision": "remove_from_core_after_dependency_check",
+      "depends_on": [],
+      "markers": [
+        "CSH-001",
+        "CSH-002",
+        "CSH-003",
+        "CSH-004",
+        "CSH-005"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S02",
+      "title": "统一语义结果与剧本表达，消除源码文案和人物称呼替换",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S08"
+      ],
+      "markers": [
+        "AWK-012",
+        "AWK-016",
+        "AWK-062",
+        "CH2-015",
+        "CH2-023",
+        "CH2-026",
+        "CH2-044",
+        "CH2-046",
+        "CH2-048",
+        "CH2-057",
+        "CH2-058",
+        "CH2-059",
+        "CH2-060",
+        "CH2-066",
+        "CH2-072",
+        "CH2-080",
+        "CH2-081",
+        "CSH-009"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S03",
+      "title": "由剧本实体登记替代人物、地点与状态枚举",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [],
+      "markers": [
+        "AWK-002",
+        "AWK-006",
+        "AWK-007",
+        "AWK-034",
+        "AWK-036",
+        "AWK-063",
+        "CH2-012",
+        "CH2-074",
+        "CH2-075",
+        "CH2-076",
+        "CH2-084",
+        "CH2-085",
+        "CH2-092",
+        "CH2-093",
+        "CH2-094",
+        "CH2-095",
+        "CH2-096",
+        "CH2-097",
+        "CH2-098",
+        "CH2-099"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S04",
+      "title": "将个体信念、习惯和立场编译成主观规则",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S09"
+      ],
+      "markers": [
+        "AWK-008",
+        "AWK-009",
+        "AWK-017",
+        "AWK-018",
+        "AWK-019",
+        "AWK-020",
+        "CH2-001",
+        "CH2-005",
+        "CH2-008",
+        "CH2-013",
+        "CH2-029",
+        "CH2-034",
+        "CH2-035",
+        "CH2-036",
+        "CH2-041",
+        "CH2-042",
+        "CH2-065",
+        "CH2-073"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S05",
+      "title": "用通用感知和传播规则更新认知",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S08"
+      ],
+      "markers": [
+        "AWK-001",
+        "AWK-011",
+        "AWK-021",
+        "CH2-014",
+        "CH2-037",
+        "CH2-064"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S06",
+      "title": "将物理后果和劳作配方声明为世界法则",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S09"
+      ],
+      "markers": [
+        "AWK-015",
+        "CH2-040",
+        "CH2-062",
+        "CH2-063",
+        "CH2-068",
+        "CH2-070"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S07",
+      "title": "将交互门槛、试验和演出编排写入剧本",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S02",
+        "S03",
+        "S09"
+      ],
+      "markers": [
+        "AWK-022",
+        "AWK-023",
+        "AWK-024",
+        "AWK-025",
+        "AWK-026",
+        "AWK-027",
+        "AWK-028",
+        "AWK-029",
+        "AWK-030",
+        "AWK-031",
+        "AWK-032",
+        "AWK-033",
+        "AWK-035",
+        "CH2-033",
+        "CH2-078",
+        "CH2-079"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S08",
+      "title": "以结构化事件替代从中文日志提取事实",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03"
+      ],
+      "markers": [
+        "CH2-007",
+        "CH2-028",
+        "CH2-031",
+        "CH2-038",
+        "CH2-039",
+        "CH2-045",
+        "CH2-050",
+        "CH2-051",
+        "CH2-052",
+        "CH2-082"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S09",
+      "title": "以通用 AST 执行规则与社会请求",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03"
+      ],
+      "markers": [
+        "CH2-006",
+        "CH2-010",
+        "CH2-011",
+        "CH2-055",
+        "CH2-056"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S10",
+      "title": "分开历史时序、制度钟点和人物当前行动",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S04",
+        "S05",
+        "S06",
+        "S07"
+      ],
+      "markers": [
+        "AWK-010",
+        "CH2-027",
+        "CH2-043",
+        "CH2-061",
+        "CH2-067",
+        "CH2-069"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S11",
+      "title": "统一数据驱动的案件、重演和证据判定",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S05",
+        "S06",
+        "S08"
+      ],
+      "markers": [
+        "AWK-003",
+        "AWK-004",
+        "AWK-005",
+        "AWK-037",
+        "AWK-038",
+        "AWK-039",
+        "AWK-061",
+        "CH2-003",
+        "CH2-025",
+        "CH2-030",
+        "CH2-032",
+        "CH2-049",
+        "CH2-071",
+        "CH2-086",
+        "CH2-087"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S12",
+      "title": "以真实集会和个人接受结算对质与议事",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S04",
+        "S07",
+        "S09",
+        "S11"
+      ],
+      "markers": [
+        "CH2-004",
+        "CH2-047",
+        "CH2-088",
+        "CH2-089",
+        "CH2-090",
+        "CH2-091"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S13",
+      "title": "将现场身份绑定声明为表现数据",
+      "priority": "P2",
+      "decision": "change_required",
+      "depends_on": [
+        "S03"
+      ],
+      "markers": [
+        "AWK-013",
+        "AWK-014",
+        "AWK-041",
+        "AWK-042",
+        "AWK-043",
+        "AWK-044",
+        "AWK-058",
+        "AWK-059",
+        "CH2-024",
+        "CH2-053",
+        "CH2-054",
+        "CH2-083",
+        "CH2-100",
+        "CSH-033",
+        "CSH-035"
+      ],
+      "resources": [
+        "RES-081",
+        "RES-082",
+        "RES-083",
+        "RES-084",
+        "RES-085",
+        "RES-086",
+        "RES-087",
+        "RES-088"
+      ]
+    },
+    {
+      "id": "S14",
+      "title": "资源生成器读取剧本中的显示内容",
+      "priority": "P2",
+      "decision": "change_required",
+      "depends_on": [
+        "S02",
+        "S13"
+      ],
+      "markers": [],
+      "resources": [
+        "RES-001",
+        "RES-002",
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-007",
+        "RES-008",
+        "RES-009",
+        "RES-010",
+        "RES-011",
+        "RES-012",
+        "RES-013",
+        "RES-014",
+        "RES-015",
+        "RES-016",
+        "RES-017",
+        "RES-018",
+        "RES-019",
+        "RES-020",
+        "RES-021",
+        "RES-022",
+        "RES-023",
+        "RES-024",
+        "RES-025",
+        "RES-026",
+        "RES-027",
+        "RES-028",
+        "RES-029",
+        "RES-030",
+        "RES-031",
+        "RES-032",
+        "RES-033",
+        "RES-034",
+        "RES-035",
+        "RES-036",
+        "RES-037",
+        "RES-038",
+        "RES-039",
+        "RES-040",
+        "RES-041",
+        "RES-042",
+        "RES-043",
+        "RES-044",
+        "RES-045",
+        "RES-046",
+        "RES-047",
+        "RES-048",
+        "RES-049",
+        "RES-050",
+        "RES-051",
+        "RES-052",
+        "RES-053",
+        "RES-054",
+        "RES-055",
+        "RES-056",
+        "RES-057",
+        "RES-058",
+        "RES-059",
+        "RES-060",
+        "RES-061",
+        "RES-062",
+        "RES-063",
+        "RES-064",
+        "RES-065",
+        "RES-066",
+        "RES-067",
+        "RES-068",
+        "RES-069",
+        "RES-070",
+        "RES-071",
+        "RES-072",
+        "RES-073",
+        "RES-074",
+        "RES-075",
+        "RES-076",
+        "RES-077",
+        "RES-078",
+        "RES-079",
+        "RES-080"
+      ]
+    },
+    {
+      "id": "S15",
+      "title": "用声音表现配置驱动附加音效",
+      "priority": "P2",
+      "decision": "change_required",
+      "depends_on": [
+        "S07"
+      ],
+      "markers": [
+        "CSH-022"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S16",
+      "title": "按声明作用域退出章节规则",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S04"
+      ],
+      "markers": [
+        "AWK-060"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S17",
+      "title": "规范测试夹具和固定路线采集器",
+      "priority": "P2",
+      "decision": "separate_fixture_content_and_keep_independent_assertions",
+      "depends_on": [],
+      "markers": [
+        "AWK-045",
+        "AWK-046",
+        "AWK-047",
+        "AWK-048",
+        "AWK-049",
+        "AWK-050",
+        "AWK-051",
+        "AWK-052",
+        "AWK-053",
+        "AWK-054",
+        "AWK-056",
+        "AWK-057",
+        "CH2-002",
+        "CH2-016",
+        "CH2-017",
+        "CH2-018",
+        "CH2-019",
+        "CH2-020",
+        "CH2-021",
+        "CH2-022",
+        "CH2-077",
+        "CSH-007",
+        "CSH-010",
+        "CSH-011",
+        "CSH-012",
+        "CSH-013",
+        "CSH-015",
+        "CSH-016",
+        "CSH-019",
+        "CSH-020",
+        "CSH-036",
+        "CSH-037"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S18",
+      "title": "让 UI 回放与采样器读取正式表现绑定",
+      "priority": "P2",
+      "decision": "change_required",
+      "depends_on": [
+        "S13"
+      ],
+      "markers": [
+        "CSH-006",
+        "CSH-024",
+        "CSH-025",
+        "CSH-026",
+        "CSH-027"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S19",
+      "title": "将示例故事外置，预览使用中性数据",
+      "priority": "P2",
+      "decision": "change_required",
+      "depends_on": [],
+      "markers": [
+        "CSH-008",
+        "CSH-014",
+        "CSH-017",
+        "CSH-018",
+        "CSH-021",
+        "CSH-038"
+      ],
+      "resources": [
+        "RES-089",
+        "RES-090",
+        "RES-091",
+        "RES-092",
+        "RES-093",
+        "RES-094",
+        "RES-095",
+        "RES-096",
+        "RES-097"
+      ]
+    },
+    {
+      "id": "S20",
+      "title": "保留资产生产中的造型与姿态配方",
+      "priority": "keep",
+      "decision": "retain_art_recipe",
+      "depends_on": [],
+      "markers": [
+        "CSH-028",
+        "CSH-029",
+        "CSH-030",
+        "CSH-031"
+      ],
+      "resources": []
+    },
+    {
+      "id": "S21",
+      "title": "由剧本声明通行状态并同步现实和人物认知",
+      "priority": "P1",
+      "decision": "change_required",
+      "depends_on": [
+        "S03",
+        "S05"
+      ],
+      "markers": [
+        "CH2-009"
+      ],
+      "resources": []
+    }
+  ]
+}

@@ -249,6 +249,7 @@
 
 ## 可复核清单与验证
 
+- [解决方案审核与归并清单](solution-review.md)：将全部源码标记与资源记录按主根因合并为 21 组处理建议；对应关系见 [solution-groups.json](solution-groups.json)。仅提出方案，尚未实施改造。
 - [全部源码覆盖表](file-coverage.csv)：每个文件的审读方式、分类与保留/排除理由。
 - [机器可读标记索引](index.json) 与 [标记表格](index.csv)：源码当前行号、类型、范围和说明；分片原说明如较长则保留在 `audit_note`。
 - [正则候选记录](regex-candidates.json)：记录实际候选模式和命中行；正则筛选之后由独立低级模型分片全文审读、主代理复核边界。
