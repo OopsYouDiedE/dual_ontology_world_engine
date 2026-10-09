@@ -30,8 +30,6 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - 请求相合分可通过 `RequestCompatibility` 标签写入接收者的请求投影；`Evaluate` 未显式传分时读取该标签，使自主决策与菜单预评估保持同一公式。
   - `DecisionSystem` 与 `SocialSystem` 严格基于主体自身内部世界的 ProjectionWorld 展开演算与决策，绝不直接依据客观现实做抉择。
   - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令。
-- **因果规则与重演（HallCausalityRules.cs, HallReplayProgram.cs）**：
-  - 提供因果推演与假说冲突校验（`ConflictKind`）；当前实现中的专案绑定以源码审计标记定位，标记阶段不改变编译边界或调用关系。
 - **无剧情硬编码铁律**：
   - 严禁将剧情写入引擎代码；剧情仅存在于 `.story` 和译文。核心逻辑不得硬编码剧情内容或特定剧本文案。
 
