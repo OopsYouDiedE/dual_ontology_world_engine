@@ -111,6 +111,8 @@
     沈鼎：chef
     音乐家：musician
     苏泠：musician
+    雀儿：thief
+    卢西安：poet
 
 点位框
     E1：128, 344, 20, 80

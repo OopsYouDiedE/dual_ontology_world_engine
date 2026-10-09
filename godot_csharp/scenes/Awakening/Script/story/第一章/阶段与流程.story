@@ -29,6 +29,8 @@
     房间事件：是
     可见热点：全部
     进入 foyer：流程 门外的人
+    # 正午乙区仍未答完、甲区已出门：雀儿挑开外闩（第四部分 §7 S5b）。
+    时刻 720：流程 雀儿撬门
 
 阶段 playback
     说明：昨夜重演播放中。
@@ -200,12 +202,30 @@
     演出 answer_{裁决}
     继续 答辩·提问
 
+# 雀儿撬门（第四部分 §7 S5b）：门开了，题还在；雀儿、卢西安进乙区，此后可以交谈（talk_quer、talk_lucian）。
+流程 雀儿撬门
+    若 旗("door_open") 或 非 已出门("甲区")：
+        结束
+    指令 door_open
+    设旗 door_open
+    设旗 quer_opened
+    指令 redraw
+    指令 enter:quer:门厅
+    指令 enter:lucian:门厅
+    演出 quer_opens
+    指令 hud
+
 流程 终局
     阶段 finale
     指令 finale_prepare
     指令 stage_actor:huo:终局站位·huo
     指令 stage_actor:shen:终局站位·shen
     指令 stage_actor:su:终局站位·su
+    若 旗("quer_opened")：
+        演出 s10_open_early
+        指令 save:false
+        指令 ending:完成
+        结束
     演出 s10_steps
     指令 door_open
     设旗 door_open
