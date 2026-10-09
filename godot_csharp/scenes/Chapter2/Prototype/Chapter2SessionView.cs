@@ -27,7 +27,8 @@ public sealed partial class Chapter2InteractionSession
     private static readonly Dictionary<string, string> MapPlaces = new()
     {
         ["central_hall"] = "Hall", ["lecture"] = "Lecture", ["logistics"] = "Logistics", ["granary"] = "Logistics", ["clinic"] = "Clinic",
-        ["greenhouse"] = "Greenhouse", ["archive"] = "ArchiveFront", ["counterweight"] = "ArchiveFront", ["campus_s"] = "Oath", ["living_hall"] = "DormLife",
+        ["greenhouse"] = "Greenhouse", ["archive"] = "ArchiveFront", ["counterweight"] = "ArchiveFront", ["campus_s"] = "Oath", ["living_hall"] = "Living",
+        ["campus_n"] = "Hall", ["campus_nw"] = "Hall", ["campus_ne"] = "Logistics", ["campus_sw"] = "Hall", ["harbor"] = "Oath",
         ["zone_yi"] = "DormLife", ["zone_jia"] = "DormW", ["zone_bing"] = "DormS", ["zone_ding"] = "DormL", ["resonance"] = "Resonance",
     };
     /// <summary>地点 → 人物站在哪张地图上。</summary>
@@ -35,7 +36,7 @@ public sealed partial class Chapter2InteractionSession
     {
         ["Hall"] = "central_hall", ["Lecture"] = "lecture", ["Logistics"] = "logistics", ["Clinic"] = "clinic", ["Greenhouse"] = "greenhouse",
         ["ArchiveFront"] = "archive", ["Oath"] = "campus_s", ["DormLife"] = "zone_yi", ["DormW"] = "zone_jia", ["DormS"] = "zone_bing", ["DormL"] = "zone_ding",
-        ["Resonance"] = "resonance",
+        ["Resonance"] = "resonance", ["Living"] = "living_hall",
     };
     private static readonly string[] Dayparts = ["dawn", "morning", "noon", "afternoon", "evening", "night"];
 
@@ -93,7 +94,8 @@ public sealed partial class Chapter2InteractionSession
         snapshot["realtime"] = false;
         snapshot["hud"] = new Ev { ["title"] = Chapter2Content.TimeName(ShownDay, ShownSlot) + "　" + _placeTitle, ["time"] = "", ["keys"] = keys.ToArray() };
         snapshot["controls"] = new Ev { ["notebook"] = true, ["manuscript"] = _replayOpen, ["campus"] = true, ["wait"] = true, ["examine"] = true };
-        snapshot["access"] = new Ev { ["dorms"] = true };
+        snapshot["access"] = new Ev { ["dorms"] = true, ["maps"] = MapPlaces.ToDictionary(pair => pair.Key,
+            pair => (object?)_game.HostCanEnter(Enum.Parse<Place>(pair.Value))) };
         snapshot["daypart"] = Dayparts[(int)ShownSlot];
         snapshot["sites"] = SiteDefinitions(_map).ToDictionary(p => p.Key, p => (object?)new Ev
         {
@@ -115,6 +117,7 @@ public sealed partial class Chapter2InteractionSession
             return (object?)person;
         }).ToArray();
         snapshot["campus"] = CampusSnapshot();
+        snapshot["clock"] = _game.CalendarMinutes;
         snapshot["notebook"] = Notebook();
         snapshot["replay"] = new Ev
         {
@@ -150,7 +153,7 @@ public sealed partial class Chapter2InteractionSession
                 ["Hall"] = Node(500, 200, "中央厅", "central_hall", "south"),
                 ["Lecture"] = Node(300, 200, "讲堂", "lecture", "from_central"),
                 ["Resonance"] = Node(120, 300, "星仪院一角", "resonance", "south"),
-                ["Commons"] = Node(500, 380, "起居厅", "living_hall", "north_door"),
+                ["Living"] = Node(500, 380, "起居厅", "living_hall", "north_door"),
                 ["DormW"] = Node(370, 330, "甲区", "zone_jia", "from_hall"),
                 ["DormL"] = Node(630, 330, "丁区", "zone_ding", "from_hall"),
                 ["DormS"] = Node(370, 440, "丙区", "zone_bing", "from_hall"),
@@ -164,10 +167,10 @@ public sealed partial class Chapter2InteractionSession
             ["links"] = new object?[]
             {
                 new object?[] { "ArchiveFront", "Hall" }, new object?[] { "Hall", "Lecture" },
-                new object?[] { "Lecture", "Resonance" }, new object?[] { "Hall", "Commons" },
-                new object?[] { "Commons", "DormW" }, new object?[] { "Commons", "DormL" },
-                new object?[] { "Commons", "DormS" }, new object?[] { "Commons", "DormLife" },
-                new object?[] { "Commons", "Oath" }, new object?[] { "Commons", "Logistics" },
+                new object?[] { "Lecture", "Resonance" }, new object?[] { "Hall", "Living" },
+                new object?[] { "Living", "DormW" }, new object?[] { "Living", "DormL" },
+                new object?[] { "Living", "DormS" }, new object?[] { "Living", "DormLife" },
+                new object?[] { "Living", "Oath" }, new object?[] { "Living", "Logistics" },
                 new object?[] { "Logistics", "Granary" }, new object?[] { "Logistics", "Clinic" },
                 new object?[] { "Clinic", "Greenhouse" }, new object?[] { "Logistics", "Oath" },
             },

@@ -32,6 +32,41 @@
     # ---- 文本：玩家看到的句子（{名} 为代码填入的占位符）--------------------------------------------
 
     文本
+        social：
+            escort：跟我去{place}看看{thing}。
+            request：能不能请你{job}？
+            request_log：请{name}：“{text}”
+            request_note：你请{he}：“{text}”{he}{result}
+            request_feed：你对{name}说：“{text}” {name}：{response}
+            note_kind：态度
+            rule_note_kind：规矩
+            tell_description：当面告诉{name}「{rule}」
+            tell_log：当面对{name}讲「{rule}」
+            tell_feed：你当面对{name}说了{label}「{rule}」。{name}{result}：{response}
+            tell_yes：点了头
+            tell_no：没有接受
+            tell_note：{result}：{label}「{rule}」
+            tell_note_yes：当面点了头
+            tell_note_no：当面没接受
+            targeted_rule：针对性的规则
+            absent：{name}不在能说话的地方。
+            accepted：答应了
+            negotiated：要你先办件事
+            rejected：拒绝了
+            condition：{response}（{he}想先要你帮{he}一把。）
+            Quer.Accept：“行。”
+            Ward.Accept：“依据情理，可以。”
+            Ruan.Accept：“值得。”
+            Mora.Accept：“说吧，快点。”
+            other.Accept：“好。”
+            Ward.Negotiate：“视条件而定。”
+            Ruan.Negotiate：“代价是什么？”
+            other.Negotiate：“……那你得先替我做点事。”
+            Quer.Reject：“凭什么？”
+            Ward.Reject：“不予采纳。”
+            Mora.Reject：“没空。”
+            Veronica.Reject：“理由不足。”
+            other.Reject：“不了。”
         调停：
             请求：莫兰这一份先交茉拉送去；阮清越现在记茉拉代领，日末你们两人对账。
             发言：你说：“{话}”

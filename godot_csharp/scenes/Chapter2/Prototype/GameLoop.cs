@@ -74,6 +74,7 @@ public sealed partial class Game
 
     private void Advance()
     {
+        AdvanceCalendar();
         if (Slot == Slot.Night)
         {
             Day++; Slot = Slot.Morning;
@@ -162,6 +163,11 @@ public sealed partial class Game
         PerceiveAll();
         FixedBefore();
         PlayerBegin(act);
+        if (act?.Cmd == Cmd.EatPantry)
+        {
+            foreach (var p in People.Where(HostDormReleased)) { Set(p.Body, T.Fed, 1); Set(p.Body, T.Hungry, 0); }
+            Rt.Sync(); PerceiveAll();
+        }
         for (var round = 0; round < Rounds(Slot); round++)
         {
             var start = Now;
@@ -197,10 +203,11 @@ public sealed partial class Game
     /// <summary>侦探之外的人此时段能不能自主行动。病人在诊疗所；饿过一天的人下午动不了。</summary>
     private bool Available(Person p)
     {
+        if (!HostDormReleased(p)) return false;
         if (Get(p.Body, T.Sick) > 0) return false;
         if (p.InjuredDays > 0) return false;
         if (Slot == Slot.Afternoon && Get(p.Body, T.Hungry) > 0) return false;
-        if (Day == FirstDay && Slot == Slot.Noon && !Mediated && p.Id is P.Mora or P.Ruan) return false;
+        if (Day == RationFirstDay && Slot == Slot.Noon && !Mediated && p.Id is P.Mora or P.Ruan) return false;
         return true;
     }
 
@@ -717,12 +724,12 @@ public sealed partial class Game
     private void FixedBefore()
     {
         // 始业日：门开后的集合与第一顿晚饭；案发那一日：下午莫兰发烧、傍晚沃德当众盯视雀儿（压力，见第三部分 §7、§16）。
-        if (Day == FirstDay && Slot == Slot.Morning)
+        if (Day == RationFirstDay && Slot == Slot.Forenoon)
         {
                 Feed.Add(X("节点.集合"));
                 LedgerBaseline = Get(Granary, T.Ration);
         }
-        else if (Day == FirstDay && Slot == Slot.Noon)
+        else if (Day == RationFirstDay && Slot == Slot.Noon)
         {
                 if (!Mediated) Feed.Add(X("节点.配给僵住"));
         }

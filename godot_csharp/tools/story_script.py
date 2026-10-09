@@ -38,6 +38,8 @@ UI_KEYS = {
     "回放标题": "replay_title", "回放提示": "replay_hint", "线索标题": "finding_titles",
     "质询问题": "confront_questions", "饥饿": "hungry", "太早睡": "bed_early",
     "太早守夜": "watch_early", "配给台关闭": "meal_closed",
+    "问睡": "sleep_question", "睡下": "sleep_yes", "不睡": "sleep_no", "廊关着": "corridor_closed",
+    **{key: key for key in ("menu_ask", "menu_cancel", "menu_back", "menu_return_field", "menu_talk", "menu_escort", "menu_help", "menu_share", "menu_rule")},
 }
 SCOPES = {"世界": "world", "章节": "chapter"}
 TAGS = {"信任": "Trust", "合作": "Cooperation", "患病": "Sick", "饥饿": "Hungry", "吃饱": "Fed", "虚弱": "Weak"}
@@ -45,6 +47,57 @@ INTENTS = {"作证": "testimony", "拒绝": "decline"}
 OPS = {"≥": ">=", "≤": "<=", "＜": "<", "＞": ">", "<": "<", ">": ">", "=": "==", "＝": "==", "≠": "!="}
 RESERVED_SCENE_FIELDS = {"事件", "日", "时段"}
 ECOLOGY_BLOCKS = set(VOCAB_BLOCKS) | {"常数", "地点", "人物"}
+
+
+def validate_continuation_flows(flows: dict, schedule: list, scenes: set[str] | None = None) -> None:
+    from compile_story import validate_expr, _expression
+    seen = set()
+    def condition(node):
+        op = node["op"]
+        if op == "literal" and isinstance(node["value"], bool):
+            return
+        if op in {"not", "and", "or"}:
+            for arg in node["args"]:
+                condition(arg)
+            return
+        if op == "call" and node["name"] == "accused" and not node.get("args", []):
+            return
+        raise StoryError("Unsupported continuation flow condition.")
+    for row in schedule:
+        key = (row["day"], row["slot"])
+        if key in seen or row["flow"] not in flows:
+            raise StoryError(f"重复时刻或未知流程：{row}")
+        seen.add(key)
+    def visit(steps):
+        for step in steps:
+            op = step["op"]
+            if op == "show":
+                name = step["scene"]
+                if name.startswith("@"):
+                    parts = name[1:].split(":")
+                    if not (len(parts) == 1 and parts[0] in {"field", "confront", "council"}
+                            or len(parts) == 2 and parts[0] in {"scene", "dorm_out"} and parts[1]
+                            or len(parts) == 2 and parts[0] == "run" and parts[1] in {"eat_pantry", "class", "collect", "sleep", "stay"}
+                            or len(parts) == 3 and parts[0] == "corridor" and parts[1] in {"north", "east", "archive"} and parts[2] in {"开", "关"}):
+                        raise StoryError(f"未知续篇指令：{name}")
+                elif scenes is not None and name not in scenes:
+                    raise StoryError(f"未知续篇场面：{name}")
+            elif op == "if":
+                validate_expr(_expression(step["condition"]), "continuation flow")
+                condition(step["condition"])
+                visit(step["then"]); visit(step["else"])
+            elif op == "choices":
+                if not step["options"]:
+                    raise StoryError("流程选择不能为空。")
+                for option in step["options"]:
+                    visit(option["steps"])
+            elif op == "continue":
+                if step["flow"] not in flows:
+                    raise StoryError(f"未知续篇流程：{step['flow']}")
+            elif op != "stop":
+                raise StoryError(f"未知续篇流程步骤：{op}")
+    for flow in flows.values():
+        visit(flow["steps"])
 
 
 def ecology_block(head: Line) -> bool:
@@ -147,6 +200,34 @@ def source_lines(path: Path, *, ecology_only: bool = False,
         elif not ecology_only or ecology_block(head) or head.text.startswith(("章节：", "章节:")):
             result.extend([head, *body])
     if section is None:
+        if ecology_only:
+            # Background departures may use a room declared by a continuation,
+            # even while that room has no first-chapter field map.
+            referenced = set()
+            j = 0
+            while j < len(lines):
+                entry = lines[j]
+                body, j = children(lines, j + 1, 0)
+                if entry.text in {"晨间日常", "出区日常"}:
+                    referenced.update(item.text[2:].split("|", 1)[0].strip()
+                                      for item in body if item.text.startswith("- ") and "|" in item.text)
+            declared = {line.text[3:].strip() for line in result
+                        if line.indent == 0 and line.text.startswith("地点 ")}
+            for _, lifted in sections.values():
+                j = 0
+                while j < len(lifted):
+                    entry = lifted[j]
+                    body, j = children(lifted, j + 1, 0)
+                    if not entry.text.startswith("地点 "):
+                        continue
+                    name = entry.text[3:].strip()
+                    aliases = {name}
+                    for field in body:
+                        if field.indent == 1 and field.text.startswith("别名："):
+                            aliases.update(split_list(split_pair(field)[1]))
+                    if name not in declared and aliases & referenced:
+                        result.extend([entry, *body])
+                        declared.add(name)
         return result
     if section not in sections:
         raise StoryError(f"文件没有续篇“{section}”。")
@@ -256,6 +337,8 @@ class Translator:
         i = 0
         have_chapter = False
         raw_lines = raw.splitlines()
+        flows: dict[str, Any] = {}
+        schedule: list[dict[str, Any]] = []
         while i < len(lines):
             line = lines[i]
             if line.indent != 0:
@@ -298,6 +381,18 @@ class Translator:
                 self.reaction(line, body)
             elif keyword == "场面":
                 self.scene(line, body)
+            elif keyword == "流程":
+                from story_chapter1 import parse_flow
+                name = head[3:].strip()
+                if name in flows:
+                    raise StoryError(f"流程“{name}”重复。", line.number)
+                flows[name] = {"steps": parse_flow(body, 1)}
+            elif head == "时刻：":
+                for item in body:
+                    match = re.fullmatch(r"- 第\s*(\d+)\s*日 (\S+)：流程 (.+)", item.text)
+                    if not match:
+                        raise StoryError("时刻须写成“- 第 N 日 时段：流程 名称”。", item.number)
+                    schedule.append({"day": int(match[1]), "slot": table(self.vocab.mapping("slots"), match[2], "时段", item.number), "flow": match[3]})
             elif keyword == "原生":
                 self.native(line, body, raw_lines)
             elif keyword == "晨间日常":
@@ -324,6 +419,13 @@ class Translator:
             morning["departures"] = departures
             morning["dorm_answers"] = self.design.get("dorm_answers", {})
         self.design = compile_design(self.design_blocks, self)
+        if flows:
+            validate_continuation_flows(flows, schedule)
+            self.design["flows"] = flows
+            self.design["schedule"] = schedule
+            if "夜里·T" not in flows:
+                raise StoryError("续篇流程缺少夜里·T入口。")
+            self.design["flow_events"] = {"night_action": "夜里·T"}
         if morning is not None:
             self.design["morning"] = morning
         return "\n".join(self.out) + "\n"
@@ -875,6 +977,9 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
                             location["path"] = file
         for chapter, design in zip(document["chapters"], designs):
             if design:
+                if "flows" in design:
+                    validate_continuation_flows(design["flows"], design["schedule"],
+                                               {scene["id"] for scene in chapter["sequences"]})
                 chapter["design"] = design
         return document
     except ws.ScriptError as exc:

@@ -32,7 +32,10 @@ public sealed partial class AwakeningContentSession
     {
         if (scene.StartsWith('@') || Session.Has("timed_scenes", scene)) return;
         var scenes = Clock.GetProperty("scenes");
-        var minutes = scenes.TryGetProperty(scene, out var duration) ? duration.GetInt32() : Clock.GetProperty("default_scene_minutes").GetInt32();
+        var minutes = scenes.TryGetProperty(scene, out var duration) ? duration.GetInt32()
+            : scene.StartsWith("talk_", StringComparison.Ordinal) ? Clock.GetProperty("actions").GetProperty("交谈").GetInt32()
+            : scene.StartsWith("help_", StringComparison.Ordinal) ? Clock.GetProperty("actions").GetProperty("协助").GetInt32()
+            : Clock.GetProperty("default_scene_minutes").GetInt32();
         Session.Set("timed_scenes", scene, true);
         AdvanceClock("scene", scene, minutes);
     }

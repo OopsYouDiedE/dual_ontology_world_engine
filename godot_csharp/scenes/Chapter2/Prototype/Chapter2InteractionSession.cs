@@ -22,13 +22,13 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     private readonly Dictionary<string, (string Token, Func<bool> Available, Action<List<Dictionary<string, object?>>> Submit)> _choices = new();
     private readonly Dictionary<string, Dictionary<string, object?>> _examined = new();
     private readonly Dictionary<string, string> _talked = new();
-    private readonly HashSet<string> _knownPlaces = ["DormLife", "Hall"];
+    private readonly HashSet<string> _knownPlaces = ["DormLife", "Living"];
     private readonly List<object> _journal = new();
     private string? _presentation;
     private string? _narrativePresentation;
     private string _stage = "intro";
-    private int _version, _replayCount, _confrontIndex;
-    private bool _fullMatch, _replayOpen, _ended, _mediating;
+    private int _version, _replayCount;
+    private bool _fullMatch, _replayOpen, _ended;
     private Dictionary<string, object?> _replayResult = new();
     private readonly List<(int,int)> _pairs = new();
     /// <summary>对质的议程：每一步问一个话题（取用、门闩、台账），期望的回答是现实里为真、尚未答过的那类主张。</summary>
@@ -51,6 +51,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         _sites=Chapter2AuthoredSites.ReadAll(script);
         using(var document=System.Text.Json.JsonDocument.Parse(script))
         {
+            LoadFlows(document.RootElement.GetProperty("chapters")[0]);
             var furniture=document.RootElement.GetProperty("chapters")[0].GetProperty("furniture");
             _furniture=furniture.EnumerateArray().Select(f=>(f.GetProperty("key").GetString()!,f.GetProperty("text").GetString()!)).OrderByDescending(f=>f.Item1.Length).ToArray();
         }
@@ -118,15 +119,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
                 case "begin":
                     if (_stage != "intro") throw new InvalidOperationException("章节已开始。");
                     _stage = "beginning";
-                    Activate("begin.arrival",output);
-                    _continuations.Enqueue(o => { Run(new(Cmd.Stay) { Place = Place.Hall },o); Scene(Place.Hall,o); });
-                    _continuations.Enqueue(o => Activate("begin.gather",o));
-                    // The lesson is presented inside the forenoon it occupies; attending it then advances the clock.
-                    _continuations.Enqueue(o => Scene(Place.Lecture,o));
-                    _continuations.Enqueue(o => Activate("begin.lesson",o));
-                    _continuations.Enqueue(o => Run(new(Cmd.Class),o));
-                    _continuations.Enqueue(o => Activate("begin.free",o));
-                    _continuations.Enqueue(o => _stage = "field");
+                    EnterSlot();
                     Pump(output); break;
                 case "presented":
                     if (_presentation is null || Text(input,"presentation_id") != _presentation) throw new InvalidOperationException("呈现凭证已失效。");
@@ -154,10 +147,11 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
                         if(furniture.Key is not null&&_furnitureSpoken.Add(Text(input,"map")+":"+hitNode)) { output.Add(Event("aside",("text",furniture.Text)));break; }
                     }
                     break;
+                case "blocked_move": Lines([_content.Text("corridor_closed")],output); break;
                 case "move":
-                    _map = Text(input,"map",_map);
-                    if (!Enum.TryParse<Place>(Text(input,"place",MapPlace(_map)),out var place)) { Invalidate(); break; }
-                    _game.HostMoveDet(place); _knownPlaces.Add(place.ToString()); Invalidate(); break;
+                    var nextMap = Text(input,"map",_map);
+                    if (!Enum.TryParse<Place>(Text(input,"place",MapPlace(nextMap)),out var place)) { Invalidate(); break; }
+                    _game.HostMoveDet(place); _map=nextMap; _knownPlaces.Add(place.ToString()); Invalidate(); break;
                 case "action":
                     if (_stage != "field" || _choices.Count != 0) throw new InvalidOperationException("当前不能提交时段行动。");
                     if (input.GetValueOrDefault("act") is not IReadOnlyDictionary<string,object?> action) throw new InvalidOperationException("缺少行动。");
@@ -176,7 +170,15 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
 
     private void Invalidate() { _choices.Clear(); ++_version; }
     private void Pump(List<Dictionary<string,object?>> output)
-    { while (_presentation is null && _choices.Count == 0 && _continuations.TryDequeue(out var next)) next(output); }
+    {
+        while (_presentation is null && _choices.Count == 0)
+        {
+            if (_continuations.TryDequeue(out var next)) next(output);
+            else if (_flowSteps.TryPop(out var step)) FlowStep(step, output);
+            else if (_stage is "beginning" or "field" && EnterSlot()) continue;
+            else break;
+        }
+    }
     private void Lines(IEnumerable<string> lines,List<Dictionary<string,object?>> output,string speaker = "旁白",string mood = "")
     {
         var array = lines.Where(s=>!string.IsNullOrWhiteSpace(s)).Select(s=>(object)new Dictionary<string,object?> { ["speaker"]=speaker,["text"]=s,["mood"]=mood,["voice_clip"]="" }).ToArray();
@@ -229,7 +231,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
                     switch (frame.ActionName)
                     {
                         case "lesson_answer": _game.HostLessonAnswer(bool.Parse(frame.Args[0])); break;
-                        case "mediate": _mediating = true; break;
+                        case "mediate": Mediate(frame.Args[0]); break;
                         default: throw new InvalidOperationException("未绑定作者行动："+frame.ActionName);
                     }
                     break;
@@ -249,7 +251,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     private void Scene(Place place,List<Dictionary<string,object?>> output)
     {
         _game.HostMoveDet(place); _knownPlaces.Add(place.ToString());
-        var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",Place.Resonance=>"resonance",_=>"living_hall" };
+        var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.DormLife=>"zone_yi",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",Place.Resonance=>"resonance",_=>"living_hall" };
         _map = map;
         output.Add(Event("scene",("map",map),("spawn",place==Place.Logistics?"west":"south")));
     }
@@ -262,31 +264,15 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     }
     private void Commit(PlayerAction? action,List<Dictionary<string,object?>> output)
     {
-        if (_game.Ended) { Council(output); return; }
-        if (_game.Day==Game.CaseDay && _game.Slot==Slot.Evening) { BeginConfront(output); return; }
-        if (_game.Slot==Slot.Afternoon && Game.Get(_game.Det.Body,T.Hungry)>0 && action?.Cmd!=Cmd.Stay) { Lines([_content.Text("hungry")],output); return; }
-        if (_game.Slot==Slot.Night && action is not null && action.Cmd!=Cmd.Stakeout) { Activate("commit.night_hint",output); return; }
-        if (action?.Cmd==Cmd.Stay && _game.Slot is Slot.Noon or Slot.Evening)
-        {
-            action=new(Cmd.Collect);
-            if (_game.Day==Game.FirstDay && _game.Slot==Slot.Noon)
-            {
-                Scene(Place.Logistics,output); _mediating=false; Activate("commit.noon_dispute",output);
-                _continuations.Enqueue(o=>Run(new(_mediating?Cmd.Mediate:Cmd.Collect),o)); Pump(output); return;
-            }
-        }
-        var night=_game.Slot==Slot.Night; Run(action,output);
-        if (night)
-        {
-            if (_game.Ended) _continuations.Enqueue(Council);
-            else if (_game.Day==Game.CaseDay)
-            {
-                _continuations.Enqueue(o=>Activate("night.dawn",o));
-                _continuations.Enqueue(o=> { Run(new(Cmd.Stay){Place=Place.Hall},o); Scene(Place.Hall,o); });
-                _continuations.Enqueue(o=> { if (_game.Accused is null) Activate("night.no_accuse",o); });
-                _continuations.Enqueue(o=>Activate("night.after",o));
-            }
-        }
+        if (_game.Slot == Slot.Night && action?.Cmd != Cmd.Stakeout)
+        { NightAction(output); return; }
+        if (_game.Slot==Slot.Afternoon && Game.Get(_game.Det.Body,T.Hungry)>0 && action?.Cmd!=Cmd.Stay)
+        { Lines([_content.Text("hungry")],output); return; }
+        if (action is not null && !_game.HostPrepareSocialAction(action))
+        { Lines(_game.TakeFeed(), output); return; }
+        if (action?.Cmd == Cmd.Stay && _game.Slot is Slot.Noon or Slot.Evening && _game.Day > Game.FirstDay)
+            action = new(Cmd.Collect);
+        Run(action,output);
         Pump(output);
     }
     private PlayerAction? Action(IReadOnlyDictionary<string,object?> a)
@@ -297,7 +283,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         return cmd switch
         {
             "sleep"=>null,"watch"=>new(Cmd.Stakeout){Place=WatchPlace()},"stay"=>new(Cmd.Stay){Place=_game.Where(_game.Det)},
-            "collect"=>new(Cmd.Collect),"class"=>new(Cmd.Class),"mediate"=>new(Cmd.Mediate),"help"=>new(Cmd.Help){Who=Who()},
+            "collect"=>new(Cmd.Collect),"class"=>new(Cmd.Class),"mediate"=>new(Cmd.Mediate){Wording=Text(a,"wording")},"help"=>new(Cmd.Help){Who=Who()},
             "share" when Game.Get(_game.Det.Body,T.Fed)>0=>new(Cmd.ShareFood){Who=Who()},
             "request"=>new(Cmd.Ask){Who=Who(),Job=Enum.Parse<Job>(Text(a,"job"))},
             "escort" when _examined.Values.Any(c=>Text(c,"thing")==Text(a,"thing"))=>new(Cmd.Escort){Who=Who(),Thing=Text(a,"thing"),Place=Game.Things_[Text(a,"thing")].Place},
@@ -325,9 +311,10 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             case "bed": case "watch":
                 if (_game.Slot!=Slot.Night) { Lines([Text(spec,"kind")=="bed"?_content.Text("bed_early"):_content.Text("watch_early")],output); return; }
                 var isBed=Text(spec,"kind")=="bed";
+                if (isBed) { NightAction(output); return; }
                 Menu(isBed?"睡下":"守夜",[("confirm",isBed?"在这里睡到天亮":"在这里守一夜",()=>_game.Slot==Slot.Night,o=>Commit(isBed?null:new(Cmd.Stakeout){Place=_game.Where(_game.Det)},o)),("cancel","返回现场",()=>true,o=>{})],output); return;
             case "meal":
-                if (_game.Slot is Slot.Noon or Slot.Evening) Commit(new(Cmd.Stay),output); else Lines([_content.Text("meal_closed")],output); return;
+                if (_game.Day >= Game.RationFirstDay && _game.Slot is Slot.Noon or Slot.Evening) Commit(new(Cmd.Stay),output); else Lines([_content.Text("meal_closed")],output); return;
             case "tube": if (_game.Day==Game.CaseDay && _game.Slot==Slot.Evening) { BeginConfront(output); return; } break;
         }
         var thing=Text(spec,"thing");
@@ -366,26 +353,9 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     {
         var thing=Text(card,"thing");
         var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>();
-        if (thing!="") foreach(var person in _game.Npcs.Where(p=>Local(p.Id)).Take(3))
-        { var who=person.Id; choices.Add(("show:"+who,"请"+person.Name+"看看（要花上一阵）",()=>Local(who),o=>Commit(new(Cmd.Escort){Who=who,Thing=thing,Place=Game.Things_[thing].Place},o))); }
-        choices.Add(("close","返回现场",()=>true,o=>{}));
+        choices.Add(("close",_content.Text("menu_return_field"),()=>true,o=>{}));
         Menu(Text(card,"title"),choices,output);
         var options=output[^1]["options"]; output.RemoveAt(output.Count-1); var result=new Dictionary<string,object?>(card){["kind"]="card",["options"]=options,["facts"]=card["text"],["source"]=card["place"]}; output.Add(result);
-    }
-    private void Talk(P who,List<Dictionary<string,object?>> output)
-    {
-        if (!Local(who)) throw new InvalidOperationException("人物当前不在场。");
-        var name=Names.Of(who); var he=_game[who].Pro.Pronoun; var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>
-        {
-            ("ask","问问"+name+"知道些什么",()=>Local(who),o=>{AskReaction(who,o);_continuations.Enqueue(next=>ResumeTalk(who,next));}),
-            ("escort","请"+he+"跟你去看一样东西",()=>Local(who),o=>Menu("看什么",_examined.Values.Where(c=>Text(c,"thing")!="").Select(c=>Text(c,"thing")).Distinct().Select(t=>(t,t,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Escort){Who=who,Thing=t,Place=Game.Things_[t].Place},next)))),o)),
-            ("request","请"+he+"做一件事",()=>Local(who),o=>Menu("做什么",_content.Requests.Select(r=>(r.Job.ToString(),r.Label,(Func<bool>)(()=>Local(who)),(Action<List<Dictionary<string,object?>> >)(next=>Commit(new(Cmd.Ask){Who=who,Job=r.Job},next)))),o)),
-            ("rule","跟"+he+"讲一条规矩",()=>Local(who),o=>RuleMenu(who,o)),
-            ("help","帮"+he+"干一阵活",()=>Local(who),o=>Commit(new(Cmd.Help){Who=who},o)),
-            ("share","分给"+he+"一份口粮",()=>Local(who)&&Game.Get(_game.Det.Body,T.Fed)>0,o=>Commit(new(Cmd.ShareFood){Who=who},o)),
-            ("cancel","没什么了",()=>true,o=>{})
-        };
-        Menu("跟"+name+"说什么",choices.Where(c=>c.Item3()),output);
     }
     private void ResumeTalk(P who,List<Dictionary<string,object?>> output)
     {
@@ -394,15 +364,6 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         // Close stale follow-up menus instead of failing the presentation receipt.
         Invalidate();
         output.Add(Event("interaction_closed",("actor",who.ToString()),("reason","actor_unavailable")));
-    }
-    private void RuleMenu(P who,List<Dictionary<string,object?>> output)
-    {
-        var choices=new List<(string,string,Func<bool>,Action<List<Dictionary<string,object?>>>)>();
-        foreach(var spec in _game.HostTellable()) { var rule=spec; choices.Add(("rule:"+rule.Id,rule.Text,()=>Local(who)&&_game.HostTellable().Contains(rule),o=>Commit(new(Cmd.TellRule){Who=who,Spec=rule,Card=rule.Card},o))); }
-        for(var i=0;i<Game.CaseWordings.Length;i++) { var index=i; choices.Add(("wording:"+i,Game.CaseWordings[i].Text,()=>Local(who),o=>Commit(new(Cmd.TellRule){Who=who,Card=Game.CaseWordings[index].Card},o))); }
-        // 名录库的去向也可以白天当面讲给一个人听（第三部分 §5.3），不必等到议事。
-        for(var i=0;i<Game.ArchiveWordings.Length;i++) { var index=i; choices.Add(("archive_wording:"+i,Game.ArchiveWordings[i].Text,()=>Local(who),o=>Commit(new(Cmd.TellRule){Who=who,Card=Game.ArchiveWordings[index].Card},o))); }
-        choices.Add(("cancel","返回",()=>true,o=>ResumeTalk(who,o))); Menu("讲哪一条",choices,output);
     }
     private void AskReaction(P who,List<Dictionary<string,object?>> output)
     {
@@ -447,7 +408,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     }
     private void BeginConfront(List<Dictionary<string,object?>> output)
     {
-        _stage="confront"; _pairs.Clear(); _confrontIndex=0; _answered.Clear(); _agendaDone.Clear(); _skippedTopics.Clear(); Scene(Place.Hall,output); Activate("confront.evening",output);
+        _stage="confront"; _pairs.Clear(); _answered.Clear(); _agendaDone.Clear(); _skippedTopics.Clear(); Scene(Place.Hall,output);
         _continuations.Enqueue(o=>Activate("confront.begin",o)); _continuations.Enqueue(ConfrontStep); Pump(output);
     }
     private void ConfrontStep(List<Dictionary<string,object?>> output)
@@ -586,6 +547,6 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     {
         ["detective_name"]=DetectiveName(),["stage"]=_stage,["ended"]=_ended,["replay_open"]=_replayOpen,["replay_result"]=_replayResult,
         ["known_places"]=_knownPlaces.ToDictionary(k=>k,k=>(object?)true),["examined"]=_examined,["talked"]=_talked,["journal"]=_journal,
-        ["people"]=_game.Npcs.Select(p=>(object)new Dictionary<string,object?>{["key"]=p.Id.ToString(),["name"]=p.Name,["place"]=_game.Where(p).ToString(),["doing"]=_game.LastDoing(p.Id,ShownDay,ShownSlot)?.Text??"",["frame"]=_game.LastDoing(p.Id,ShownDay,ShownSlot)?.Frame??"",["asleep"]=p.Asleep,["present"]=!p.Asleep,["displayable"]=!p.Asleep,["court_present"]=(_stage is "council" or "closing")&&Game.Get(p.Body,T.Sick)==0,["sick"]=Game.Get(p.Body,T.Sick)>0}).ToArray()
+        ["people"]=_game.Npcs.Select(p=>(object)new Dictionary<string,object?>{["key"]=p.Id.ToString(),["name"]=p.Name,["place"]=_game.Where(p).ToString(),["doing"]=_game.LastDoing(p.Id,ShownDay,ShownSlot)?.Text??"",["frame"]=_game.LastDoing(p.Id,ShownDay,ShownSlot)?.Frame??"",["asleep"]=p.Asleep,["present"]=!p.Asleep&&_game.HostDormReleased(p),["displayable"]=!p.Asleep&&_game.HostDormReleased(p),["court_present"]=(_stage is "council" or "closing")&&Game.Get(p.Body,T.Sick)==0,["sick"]=Game.Get(p.Body,T.Sick)>0}).ToArray()
     };
 }

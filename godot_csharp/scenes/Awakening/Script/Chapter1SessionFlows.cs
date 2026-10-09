@@ -217,6 +217,7 @@ public sealed partial class Chapter1Session
 
     private IEnumerable<Op> Summon(string who)
     {
+        if (_helpInvites.Contains(who)) yield break;
         Claim(who);
         try
         {
@@ -329,6 +330,7 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> OpenBoard()
     {
         Session.Set("flags", "board_read", true);
+        _world.ShowRule1(Person.Detective);
         OpenModal(BoardCard(), [(Option("close", T("卡片·返回")), Nothing)]);
         yield break;
     }
@@ -512,6 +514,30 @@ public sealed partial class Chapter1Session
             Session.Remove("flags", "invite_hand_" + who);
             Start(InviteHand(who));
         }
+        foreach (var evidence in Content.GetProperty("EVIDENCE").EnumerateObject())
+        {
+            var flag = "invite_help_" + evidence.Name;
+            if (!Has("flags", flag)) continue;
+            Session.Remove("flags", flag);
+            Start(InviteHelp(who, evidence.Name), immediate: true);
+        }
+    }
+
+    private readonly HashSet<string> _helpInvites = new();
+    private IEnumerable<Op> InviteHelp(string who, string id)
+    {
+        if (!Has("examined", id) || Has("helped", id) || _invites.Contains(who)) yield break;
+        var site = Layout.GetProperty("sites").EnumerateArray().First(s => s.GetProperty("evidence").GetString() == id).GetProperty("id").GetString()!;
+        ReleaseDaily(who, true);
+        _invites.Add(who);
+        _helpInvites.Add(who);
+        try
+        {
+            yield return new Await(StageOp("walk", ("who", who), ("speed", 0.0), ("pausable", true), ("stop_when_stuck", true),
+                ("to", new Ev { ["near_site"] = site, ["avoid"] = true })), false);
+            if (WalkOk) yield return new Run(PlayPlan(() => _content.BeginHelp(_world, id, who)));
+        }
+        finally { _helpInvites.Remove(who); _invites.Remove(who); }
     }
 
     private IEnumerable<Op> TubeMenu()

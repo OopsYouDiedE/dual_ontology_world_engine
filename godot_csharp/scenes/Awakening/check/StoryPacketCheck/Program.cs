@@ -49,29 +49,25 @@ var content = chapter.CreateContent();
 var dialogue = chapter.CreateDialogue(content, world);
 var people = Enum.GetValues<Person>();
 Check(people.All(person => world.DesireStrength(person) == 1), "opening starts with original desire strength");
-var reward = dialogue.Start("s4_rewards");
+var reward = dialogue.Start("s3_broadcast");
 var rewardText = new List<string>();
 var expectedStrength = people.ToDictionary(person => person, _ => 1);
 // The effect belongs after the actual spoken cue; inspecting a packet is not an ack.
-foreach (var title in new[] { "s4_rewards", "s4_rewards_shen", "s4_rewards_huo", "s4_rewards_su", "s4_rewards_question", "s4_rewards_empty" })
+for (var i = 0; !reward.IsComplete && i < 300; i++)
 {
-    if (title != "s4_rewards") reward = dialogue.Start(title);
-    for (var i = 0; !reward.IsComplete && i < 300; i++)
+    Check(reward.Choices.Count == 0 && reward.WorldCommands.Count == 0, "reward opening emits dialogue packets");
+    rewardText.AddRange(reward.Lines.Select(line => line.Text));
+    Check(people.All(person => world.DesireStrength(person) == expectedStrength[person]), "amplify executes at acknowledged script position");
+    if (reward.Lines.Any(line => line.LineId == "s3_broadcast.021"))
     {
-        Check(reward.Choices.Count == 0 && reward.WorldCommands.Count == 0, "reward opening emits dialogue packets");
-        rewardText.AddRange(reward.Lines.Select(line => line.Text));
-        Check(people.All(person => world.DesireStrength(person) == expectedStrength[person]), "amplify executes at acknowledged script position");
-        var text = string.Join("\n", reward.Lines.Select(line => line.Text));
-        if (text.Contains("这一半只是开头，沈师傅")) expectedStrength[Person.Shen]++;
-        if (text.Contains("一件试件，不过是一张图纸的一角")) expectedStrength[Person.Huo]++;
-        if (text.Contains("那是旧声，苏小姐")) expectedStrength[Person.Su]++;
-        if (text == "与你立约的，不是我。") expectedStrength[Person.Detective]++;
-        reward = dialogue.Next();
+        foreach (var person in new[] { Person.Shen, Person.Huo, Person.Su }) expectedStrength[person]++;
     }
-    Check(reward.IsComplete, "reward segment completes: " + title);
+    if (reward.Lines.Any(line => line.LineId == "s4_rewards.017")) expectedStrength[Person.Detective]++;
+    reward = dialogue.Next();
 }
 Check(reward.IsComplete && people.All(person => expectedStrength[person] == 2 && world.DesireStrength(person) == 2), "real reward script amplifies all four people exactly once");
-Check(rewardText.Any(text => text.Contains("超越卡诺循环")) && rewardText.Any(text => text.Contains("揣进风衣口袋")), "real opening retains rewards and detective thought");
+Check(new[] { "s4_rewards.004", "s4_rewards.016", "s4_rewards.017", "s4_rewards.020", "s4_rewards.023" }
+    .All(id => rewardText.Contains(document.Entries["s3_broadcast"].Single(step => step.LineId == id).Text)), "broadcast retains stable reward line IDs");
 Check(dialogue.Next().IsComplete && people.All(person => world.DesireStrength(person) == 2), "completed interaction cannot repeat effects");
 
 // The opening proceeds directly into investigation.
@@ -117,7 +113,7 @@ Finish(dialogue, dialogue.Choose(showRule.Id));
 Check(content.Session.Has("flags", "show_rule"), "alternative story choice executes compiled effect");
 
 var menu = Menu(dialogue, dialogue.Start("talk_huo_menu"));
-var invite = menu.Choices.Single(choice => choice.Label.Contains("单独比一下手掌轮廓"));
+var invite = menu.Choices.Single(choice => choice.Id == "talk_huo_menu:choice:0");
 Check(!invite.IsAvailable, "unexamined evidence locks hand invitation");
 Reject(() => dialogue.Choose(invite.Id), "runtime rejects locked choice");
 Reject(() => dialogue.Choose("absent-choice"), "runtime rejects unknown choice");
@@ -128,7 +124,7 @@ var answer = dialogue.Choose(pipe.Id);
 Check(answer.Lines.Any(line => line.Text.Contains("传声口")), "available option runs actual response branch");
 menu = Menu(dialogue, answer);
 Check(menu.Choices.Any(choice => choice.Id == invite.Id && !choice.IsAvailable), "actual jump returns to persistent question menu");
-content.Session.Set("examined", "E11", true);
+content.Session.Set("hand_comparisons", "detective", true);
 menu = dialogue.Next();
 invite = menu.Choices.Single(choice => choice.Id == invite.Id);
 Check(invite.IsAvailable, "pending menu reevaluates newly opened evidence gate");
@@ -136,19 +132,13 @@ Finish(dialogue, dialogue.Choose(invite.Id));
 Check(content.Session.Has("flags", "invite_hand_huo"), "unlocked invitation executes actual branch");
 Reject(() => dialogue.Choose(invite.Id), "choice cannot execute twice after completion");
 
-// Next is the acknowledgement API: command delivery pauses before following completion.
 var beforeWhisper = world.DesireStrength(Person.Huo);
-var nudge = dialogue.Start("nudge_E7");
-Check(nudge.Lines.Any(line => line.Text.Contains("卡诺循环")) && world.DesireStrength(Person.Huo) == beforeWhisper, "nudge line precedes effect until ack");
-Reject(() => dialogue.Start("s1_wake"), "active session rejects overlapping start");
-var command = dialogue.Next();
-Check(command.PresentationMode == PresentationMode.World && command.WorldCommands.Count == 1 && !command.IsComplete, "whisper yields command and awaits next ack");
-Check(command.WorldCommands[0].Name == "consider" && command.WorldCommands[0].Arguments.SequenceEqual(new object?[] { "huo" }), "real command retains typed actor argument");
-Check(world.DesireStrength(Person.Huo) == beforeWhisper + 1 && world.Whispered(Person.Huo) && content.Session.Has("nudged", "E7"), "command packet follows real world and chapter effects");
-Check(!world.Whispered(Person.Shen) && !world.Whispered(Person.Su), "private whisper does not leak into other actor cognition");
-var ack = dialogue.Next();
-Check(ack.IsComplete && ack.WorldCommands.Count == 0, "command ack resumes to completion without redelivery");
-Check(dialogue.Next().WorldCommands.Count == 0 && world.DesireStrength(Person.Huo) == beforeWhisper + 1, "repeated completion ack cannot replay whisper");
+Check(!document.Entries.Keys.Any(key => key.StartsWith("nudge_")), "manual nudge entries are absent");
+content.Session.Set("examined", "E7", true);
+menu = Menu(dialogue, dialogue.Start("talk_huo_menu"));
+Finish(dialogue, dialogue.Choose("talk_huo_menu:choice:4"));
+Check(content.Session.Has("flags", "invite_help_E7"), "authored person menu requests evidence assistance");
+Check(dialogue.Next().IsComplete && world.DesireStrength(Person.Huo) == beforeWhisper, "completed invitation cannot replay effects");
 
 world.ShowRule1(Person.Su);
 var suRule = Finish(dialogue, dialogue.Start("recall_shown_su"));
@@ -156,7 +146,7 @@ Check(world.KnowsRule1(Person.Su) && !world.KnowsRule1(Person.Huo) && !world.Kno
 Check(suRule.Any(text => text.Contains("连着的此地")), "real rule-known dialogue branch presents text");
 var existingWorld = chapter.CreateDialogue(content, world);
 var repeatedTalk = Finish(existingWorld, existingWorld.Start("s1_wake"));
-Check(repeatedTalk.Count > 0 && world.DesireStrength(Person.Huo) == beforeWhisper + 1, "new dialogue session retains supplied world without active frames");
+Check(repeatedTalk.Count > 0 && world.DesireStrength(Person.Huo) == beforeWhisper, "new dialogue session retains supplied world without active frames");
 var freshWorld = chapter.CreateWorld();
 var freshContent = chapter.CreateContent();
 var freshDialogue = chapter.CreateDialogue(freshContent, freshWorld);
@@ -183,6 +173,7 @@ Console.WriteLine("AUTO VALIDATION ONLY; NOT BLIND PLAYTEST");
     foreach (var joint in new[] { "E8j", "E8r" }) Check(field.Interact(joint).WorldCommands.Single().Name == "card", joint + " opens E8 evidence card");
     var card = field.CardPacket("E1", []);
     Check(card.PresentationMode == PresentationMode.EvidenceCard && card.Card?.Id == "E1" && card.Choices.Any(x => x.Id == "card:E1:close"), "real evidence card opens");
+    Check(!card.Choices.Any(x => x.Id.EndsWith(":help")), "evidence cards do not offer assistance");
     var experiment = card.Choices.Single(x => x.Id == "card:E1:experiment");
     Check(experiment.IsAvailable, "initial real experiment available");
     c.Session.Set("experiments", "E1", true);

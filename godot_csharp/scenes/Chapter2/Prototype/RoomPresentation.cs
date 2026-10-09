@@ -102,6 +102,9 @@ public abstract record FreeEvent(int Slot)
     public sealed record Visit(int At, Place Place) : FreeEvent(At);
     public sealed record Choice(int At, string Id, string Option) : FreeEvent(At);
     public sealed record Bet(int At, Wager Wager) : FreeEvent(At);
+    public sealed record Corridor(int At, string Name, bool Open) : FreeEvent(At);
+    public sealed record DormOut(int At, string Name) : FreeEvent(At);
+    public sealed record Mediation(int At, string Wording) : FreeEvent(At);
 }
 
 public sealed partial class Game
@@ -164,6 +167,9 @@ public sealed partial class Game
                         if (Story?.PendingChoice?.Id != selected.Id) throw new InvalidOperationException("重演剧情选择与原记录不一致。");
                         ChooseStory(selected.Option); break;
                     case FreeEvent.Bet bet: MakeWager(bet.Wager.With, bet.Wager.Who, bet.Wager.Where, bet.Wager.Spec); break;
+                    case FreeEvent.Corridor corridor: HostCorridor(corridor.Name, corridor.Open); break;
+                    case FreeEvent.DormOut dorm: HostDormOut(dorm.Name); break;
+                    case FreeEvent.Mediation mediation: HostMediate(mediation.Wording); break;
                 }
             }
             return;

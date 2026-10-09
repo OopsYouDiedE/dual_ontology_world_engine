@@ -79,13 +79,14 @@ public sealed partial class AwakeningContentSession
         if (id != "E8" && !(id == "E3" && who == "")) ConsumeAction("试验", id);
         StartFlow(world, HasFlow("实验·" + id) ? "实验·" + id : "实验·默认", ("物", id), ("人", who));
     }
-    public void BeginHelp(MorningWorld world, string id)
+    public void BeginHelp(MorningWorld world, string id, string? who = null)
     {
         ConsumeAction("协助", id);
         // 请来辨认的人亲眼看了这件东西。
         if (Content.RootElement.GetProperty("EVIDENCE").GetProperty(id).TryGetProperty("help", out var helper))
-            world.Examine(PersonOf(helper.GetString()!), id);
-        StartFlow(world, "请人看看", ("物", id));
+            world.Examine(PersonOf(who ?? helper.GetString()!), id);
+        if (who is null) StartFlow(world, "请人看看", ("物", id));
+        else StartFlow(world, "请人看看", ("物", id), ("人", who));
     }
     private static Person PersonOf(string who) => who switch { "detective" => Person.Detective, "huo" => Person.Huo, "shen" => Person.Shen, "su" => Person.Su, _ => throw new ArgumentException(who) };
     public void BeginAfterReplay(MorningWorld world) => StartFlow(world, "重演之后");
@@ -266,6 +267,7 @@ public sealed partial class AwakeningContentSession
         var stage = Stage(CurrentStage);
         if (stage.GetProperty("enter").TryGetProperty(room, out var enter))
         {
+            if (enter.TryGetProperty("flow", out var flow)) return "flow:" + flow.GetString();
             Session.Set("state", "stage", enter.GetProperty("stage").GetString()!);
             return enter.GetProperty("signal").GetString()!;
         }

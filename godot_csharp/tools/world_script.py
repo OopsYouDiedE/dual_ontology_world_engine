@@ -31,7 +31,7 @@ ACTION_NAMES = {
     "place": "place", "放置": "place", "travel": "travel", "前往": "travel",
     "unlock": "unlock", "解锁": "unlock",
 }
-AUTHORITY_ACTIONS = {"lesson_answer": ["boolean"], "mediate": []}
+AUTHORITY_ACTIONS = {"lesson_answer": ["boolean"], "mediate": ["string"]}
 REACTION_INTENTS = {"testimony", "decline"}
 # A line ID tag may precede or follow the emotion tag at the end of a dialogue line.
 LINE_ID_TAG = re.compile(r"\s*\[#id=(\w[\w.\-]*)\](?=\s*(?:\[#emotion=[a-z_]+\])?\s*$)")
@@ -412,9 +412,11 @@ class Compiler:
             values[keyword.arg] = value
         required = {"replay_title", "replay_hint", "finding_titles", "confront_questions",
                     "hungry", "bed_early", "watch_early", "meal_closed"}
-        if values.keys() != required:
+        optional = {"corridor_closed", "sleep_no", "sleep_question", "sleep_yes", "menu_ask", "menu_cancel",
+                    "menu_escort", "menu_help", "menu_share", "menu_rule", "menu_back", "menu_talk", "menu_return_field"}
+        if not required <= values.keys() or values.keys() - required - optional:
             missing = sorted(required - values.keys())
-            extra = sorted(values.keys() - required)
+            extra = sorted(values.keys() - required - optional)
             self.fail(call, "ui_text 键不符合章节宿主契约。缺少：" + ", ".join(missing) + "；未知：" + ", ".join(extra))
         self.current.ui_text = values
 

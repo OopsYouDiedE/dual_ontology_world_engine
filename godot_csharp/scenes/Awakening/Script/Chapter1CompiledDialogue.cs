@@ -13,41 +13,9 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "侦探（心声）",
             "mood": "",
-            "text": "……",
-            "voice_clip": "",
-            "line_id": "s1_wake.001"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "床板硬得硌背。屋里一股灯油味，窗外灰蒙蒙的，雾还没散。",
-            "voice_clip": "",
-            "line_id": "s1_wake.002"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
             "text": "我记得的最后一件事，是上船。",
             "voice_clip": "",
             "line_id": "s1_wake.003"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "雾很大，跳板是湿的，后面有人催我快走。再往后，就接不上了。",
-            "voice_clip": "",
-            "line_id": "s1_wake.004"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "门外有脚步声，来来回回，不止一个人。",
-            "voice_clip": "",
-            "line_id": "s1_wake.005"
           },
           {
             "op": "line",
@@ -75,41 +43,25 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "哟，又醒一个。我们仨比你早一会儿，名字都报过了，屋里也转了一圈。进来进来，别在门口站着。",
+            "text": "哟，又醒一个。进来坐，茶刚泡上。",
             "voice_clip": "",
-            "line_id": "s2_meet.001"
+            "line_id": "s2_meet.009"
           },
           {
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "我姓沈，沈鼎，烧菜的。上一份活在远洋货轮的伙房，再往前在岭南行会掌勺。",
+            "text": "我姓沈，沈鼎，烧菜的。",
             "voice_clip": "",
-            "line_id": "s2_meet.002"
+            "line_id": "s2_meet.010"
           },
           {
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "……霍铎。钳工，萨克森的船厂。",
+            "text": "……霍铎。钳工。",
             "voice_clip": "",
-            "line_id": "s2_meet.003"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "墙上那个铜口，连着的管子和接头，我看过了。没动。",
-            "voice_clip": "",
-            "line_id": "s2_meet.004"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "他就这样，问三句答半句。你别往心里去。",
-            "voice_clip": "",
-            "line_id": "s2_meet.005"
+            "line_id": "s2_meet.011"
           },
           {
             "op": "line",
@@ -118,14 +70,6 @@ public static class Chapter1CompiledDialogue
             "text": "苏泠。弹琴的。",
             "voice_clip": "",
             "line_id": "s2_meet.006"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "刚才我在门那边站了一会儿。门外很静。倒是墙里有点声音，嗡嗡的，说不上是什么。",
-            "voice_clip": "",
-            "line_id": "s2_meet.007"
           },
           {
             "op": "line",
@@ -153,79 +97,9 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "侦探？好家伙。烧菜的、钳工、弹琴的、侦探，正好一桌麻将——可惜没人带牌。",
+            "text": "都还记得啥？我就记得上船。下了跳板往后，脑子里白茫茫一片。",
             "voice_clip": "",
-            "line_id": "s2_tea.002"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "你还记得啥？我就记得上船。下了跳板往后，脑子里白茫茫一片。",
-            "voice_clip": "",
-            "line_id": "s2_tea.003"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "一样。",
-            "voice_clip": "",
-            "line_id": "s2_tea.004"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "……嗯。",
-            "voice_clip": "",
-            "line_id": "s2_tea.005"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探",
-            "mood": "",
-            "text": "我也只记到那儿。",
-            "voice_clip": "",
-            "line_id": "s2_tea.006"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "得，咱们都断在跳板上了。先不追这个，坐着，我烧壶水去。",
-            "voice_clip": "",
-            "line_id": "s2_tea.007"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s2_tea_return": [
-          {
-            "op": "line",
-            "speaker": "",
-            "mood": "",
-            "text": "（他端着托盘回来，上面四杯热茶。）",
-            "voice_clip": "",
-            "line_id": "s2_tea.008"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "水槽里泡着几只杯子，不晓得谁用过的，我没碰。从柜子里拿的新杯子。",
-            "voice_clip": "",
-            "line_id": "s2_tea.009"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "warm",
-            "text": "烫啊，端稳了。",
-            "voice_clip": "",
-            "line_id": "s2_tea.010"
+            "line_id": "s2_tea.016"
           },
           {
             "op": "line",
@@ -252,22 +126,6 @@ public static class Chapter1CompiledDialogue
             "line_id": "s2_tea.013"
           },
           {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "warm",
-            "text": "……谢谢。",
-            "voice_clip": "",
-            "line_id": "s2_tea.014"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "趁热喝。",
-            "voice_clip": "",
-            "line_id": "s2_tea.015"
-          },
-          {
             "op": "jump",
             "target": "END"
           }
@@ -285,87 +143,9 @@ public static class Chapter1CompiledDialogue
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "诸位晨安。我是此地的代管者，也是诸位的教师。诸位所需之知，我会教。",
+            "text": "诸位晨安。我是此地的代管者，也是诸位的教师。诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。",
             "voice_clip": "",
-            "line_id": "s3_broadcast.002"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "……代管的？东家派来的？",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.003"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "thoughtful",
-            "text": "声音是从管子里来的。那头有人。",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.004"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "管子那头，是我，霍先生。",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.005"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.018"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "我所立之规，已贴在活动厅的公告框里。诸位随时可读。",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.007"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "（朝公告框看了一眼）……墨还是新的。",
-            "voice_clip": "",
-            "line_id": "s3_broadcast.008"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards": [
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "管你是代管的还是东家，我就问一句：上船前说好的工钱，三年，先付一半。钱呢？",
-            "voice_clip": "",
-            "line_id": "s4_rewards.001"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "我的是一块试件。精密件，图是我自己画的。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.002"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "……一卷蜡筒。我母亲弹琴时录的。他们说存在这儿。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.003"
+            "line_id": "s3_broadcast.019"
           },
           {
             "op": "line",
@@ -376,26 +156,20 @@ public static class Chapter1CompiledDialogue
             "line_id": "s4_rewards.004"
           },
           {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards_shen": [
-          {
             "op": "line",
-            "speaker": "沈鼎",
+            "speaker": "",
             "mood": "",
-            "text": "（掂了掂钱袋，抽出一枚银元，放到嘴边咬了一口）……真的。成色足。",
+            "text": "（三人几乎同时走到柜前。沈鼎咬了一枚银元，霍铎把试件举到灯下刮配合面，苏泠摇响了柜旁的试听机。）",
             "voice_clip": "",
-            "line_id": "s4_rewards.006"
+            "line_id": "s3_broadcast.020"
           },
           {
             "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "这一半只是开头，沈师傅。护住身边的人，要的远不止一袋银元——岛上的粮仓、水、火，都在。",
+            "text": "一袋银元，护不住身边的人，沈师傅。超越卡诺循环的那一张，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。",
             "voice_clip": "",
-            "line_id": "s4_rewards.007"
+            "line_id": "s3_broadcast.021"
           },
           {
             "op": "call",
@@ -412,36 +186,6 @@ public static class Chapter1CompiledDialogue
             ]
           },
           {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "……嘴倒是会说。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.008"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards_huo": [
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "（拆开试件盒，把试件举到灯下，用指甲刮了刮配合面）……公差对。是我画的那件。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.009"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "一件试件，不过是一张图纸的一角，霍先生。超越卡诺循环的那一张，此地有人画过。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.010"
-          },
-          {
             "op": "call",
             "name": "amplify",
             "args": [
@@ -454,44 +198,6 @@ public static class Chapter1CompiledDialogue
                 "value": "超越卡诺循环的那一张，此地有人画过。"
               }
             ]
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "（手停在试件上）……在哪。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.011"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "此问，不在我须答之列。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.012"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards_su": [
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "（把蜡筒装进领取柜旁的手摇试听机，摇动曲柄。琴声响起，她闭上眼，听完一整段）……是她。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.013"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "那是旧声，苏小姐。此地还有诸位从未听过的声音。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.014"
           },
           {
             "op": "call",
@@ -509,18 +215,12 @@ public static class Chapter1CompiledDialogue
           },
           {
             "op": "line",
-            "speaker": "",
+            "speaker": "侦探（心声）",
             "mood": "",
-            "text": "（她把蜡筒抱在怀里，很久没有说话。）",
+            "text": "柜上有一格贴着我的名字。小门开着，里面什么也没有。",
             "voice_clip": "",
-            "line_id": "s4_rewards.015"
+            "line_id": "s4_rewards.020"
           },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards_question": [
           {
             "op": "line",
             "speaker": "侦探",
@@ -553,49 +253,11 @@ public static class Chapter1CompiledDialogue
           },
           {
             "op": "line",
-            "speaker": "侦探",
-            "mood": "",
-            "text": "……那是谁？",
-            "voice_clip": "",
-            "line_id": "s4_rewards.018"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "此问，不在我须答之列。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.026"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s4_rewards_empty": [
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "柜子上有一格贴着我的名字。小门开着，里面什么也没有。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.020"
-          },
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "我伸出去的手停了一下，又收回来，揣进风衣口袋。放大镜在里面，冰凉。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.021"
-          },
-          {
-            "op": "line",
             "speaker": "沈鼎",
             "mood": "",
-            "text": "东家连脸都不露……不过钱是真的。行，这活我接着干。",
+            "text": "……钱是真的。这活我接着干。",
             "voice_clip": "",
-            "line_id": "s4_rewards.022"
+            "line_id": "s3_broadcast.022"
           },
           {
             "op": "line",
@@ -606,27 +268,11 @@ public static class Chapter1CompiledDialogue
             "line_id": "s4_rewards.023"
           },
           {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "……我也留下。我想再听听。",
-            "voice_clip": "",
-            "line_id": "s4_rewards.024"
-          },
-          {
             "op": "jump",
             "target": "END"
           }
         ],
         "s5_question": [
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "那么，诸位。",
-            "voice_clip": "",
-            "line_id": "s5_question.001"
-          },
           {
             "op": "line",
             "speaker": "铜口",
@@ -653,67 +299,11 @@ public static class Chapter1CompiledDialogue
           },
           {
             "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "闩门？谁闩的？我们一睁眼，什么都不记得了。",
-            "voice_clip": "",
-            "line_id": "s5_question.005"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "你这话问得怪。我们今天才互相报的名字，你倒来问我们谁昨晚干了啥？",
-            "voice_clip": "",
-            "line_id": "s5_question.006"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "……",
-            "voice_clip": "",
-            "line_id": "s5_question.007"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "（朝门厅的方向看了一眼，没有说话）",
-            "voice_clip": "",
-            "line_id": "s5_question.008"
-          },
-          {
-            "op": "line",
             "speaker": "铜口",
             "mood": "",
-            "text": "记不得，并不妨碍作答。痕迹还在。",
+            "text": "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。",
             "voice_clip": "",
-            "line_id": "s5_question.009"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "作答之后，依隔离门上的规程，主楼一侧的闩便可开启。",
-            "voice_clip": "",
-            "line_id": "s5_question.010"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "不愿作答者，可在生活翼歇息。水与食物照常。无需认罪，无需指认任何人。",
-            "voice_clip": "",
-            "line_id": "s5_question.011"
-          },
-          {
-            "op": "line",
-            "speaker": "铜口",
-            "mood": "",
-            "text": "生活翼诸处，诸位尽可查看；彼此相帮，亦无不可。答案备好了，到铜口来。",
-            "voice_clip": "",
-            "line_id": "s5_question.012"
+            "line_id": "s5_question.015"
           },
           {
             "op": "call",
@@ -727,91 +317,11 @@ public static class Chapter1CompiledDialogue
           },
           {
             "op": "line",
-            "speaker": "侦探",
+            "speaker": "",
             "mood": "",
-            "text": "我去看看那扇门。",
+            "text": "（三人各自散开：霍铎守在铜口旁，苏泠去了门厅，沈鼎回了备餐间。）",
             "voice_clip": "",
-            "line_id": "s5_question.014"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s6_begin": [
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "考我们？……我连昨晚睡的哪张床都不记得。",
-            "voice_clip": "",
-            "line_id": "s6_begin.001"
-          },
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "答案它自己知道。还问。……是在试我们。",
-            "voice_clip": "",
-            "line_id": "s6_begin.002"
-          },
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "它说主楼有人喊过。……它说的话，我还不知道能不能信。",
-            "voice_clip": "",
-            "line_id": "s6_begin.003"
-          },
-          {
-            "op": "line",
-            "speaker": "沈鼎",
-            "mood": "",
-            "text": "门闩着，米缸可不会自己满。我去备餐间看看还剩多少。有事喊我。",
-            "voice_clip": "",
-            "line_id": "s6_begin.004"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s6_begin_huo": [
-          {
-            "op": "line",
-            "speaker": "霍铎",
-            "mood": "",
-            "text": "我守着铜口。",
-            "voice_clip": "",
-            "line_id": "s6_begin.005"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s6_begin_su": [
-          {
-            "op": "line",
-            "speaker": "苏泠",
-            "mood": "",
-            "text": "我去门那边。",
-            "voice_clip": "",
-            "line_id": "s6_begin.006"
-          },
-          {
-            "op": "jump",
-            "target": "END"
-          }
-        ],
-        "s6_begin_detective": [
-          {
-            "op": "line",
-            "speaker": "侦探（心声）",
-            "mood": "",
-            "text": "它说痕迹还在。……那就先去看看，那扇门上留下了什么。",
-            "voice_clip": "",
-            "line_id": "s6_begin.007"
+            "line_id": "s5_question.016"
           },
           {
             "op": "jump",
@@ -2864,22 +2374,35 @@ public static class Chapter1CompiledDialogue
                         "text": "是我的字。我说了。……那个小图，我认不出。",
                         "voice_clip": "",
                         "line_id": "talk_huo_menu.013"
+                      },
+                      {
+                        "op": "jump",
+                        "target": "talk_huo_menu"
                       }
                     ],
-                    "else": [
+                    "else": []
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "霍铎",
+                    "mood": "",
+                    "text": "石板？在长桌上？我没注意。……走，我去看。",
+                    "voice_clip": "",
+                    "line_id": "talk_huo_menu.030"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
                       {
-                        "op": "line",
-                        "speaker": "霍铎",
-                        "mood": "",
-                        "text": "石板？在长桌上？我没注意。你拿给我看。",
-                        "voice_clip": "",
-                        "line_id": "talk_huo_menu.014"
+                        "op": "literal",
+                        "value": "invite_help_E7"
                       }
                     ]
                   },
                   {
                     "op": "jump",
-                    "target": "talk_huo_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -3581,13 +3104,35 @@ public static class Chapter1CompiledDialogue
                         "text": "那是我拧的。我认。可我不记得拧过。",
                         "voice_clip": "",
                         "line_id": "talk_shen_menu.008"
+                      },
+                      {
+                        "op": "jump",
+                        "target": "talk_shen_menu"
                       }
                     ],
                     "else": []
                   },
                   {
+                    "op": "line",
+                    "speaker": "沈鼎",
+                    "mood": "",
+                    "text": "门底？走，我去瞧瞧是谁拧的。",
+                    "voice_clip": "",
+                    "line_id": "talk_shen_menu.032"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "invite_help_E4"
+                      }
+                    ]
+                  },
+                  {
                     "op": "jump",
-                    "target": "talk_shen_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -3624,8 +3169,46 @@ public static class Chapter1CompiledDialogue
                     "line_id": "talk_shen_menu.011"
                   },
                   {
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "asked",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "E10"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "jump",
+                        "target": "talk_shen_menu"
+                      }
+                    ],
+                    "else": []
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "沈鼎",
+                    "mood": "",
+                    "text": "等等，我过去摸摸那罐子。",
+                    "voice_clip": "",
+                    "line_id": "talk_shen_menu.033"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "invite_help_E10"
+                      }
+                    ]
+                  },
+                  {
                     "op": "jump",
-                    "target": "talk_shen_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -3662,8 +3245,46 @@ public static class Chapter1CompiledDialogue
                     "line_id": "talk_shen_menu.014"
                   },
                   {
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "asked",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "E9"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "jump",
+                        "target": "talk_shen_menu"
+                      }
+                    ],
+                    "else": []
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "沈鼎",
+                    "mood": "",
+                    "text": "我去看看杯底。谁喝过什么，杯子会说。",
+                    "voice_clip": "",
+                    "line_id": "talk_shen_menu.034"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "invite_help_E9"
+                      }
+                    ]
+                  },
+                  {
                     "op": "jump",
-                    "target": "talk_shen_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -4409,8 +4030,46 @@ public static class Chapter1CompiledDialogue
                     "line_id": "talk_su_menu.008"
                   },
                   {
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "asked",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "E5"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "jump",
+                        "target": "talk_su_menu"
+                      }
+                    ],
+                    "else": []
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "苏泠",
+                    "mood": "",
+                    "text": "……我去门框那儿敲一下给你听。",
+                    "voice_clip": "",
+                    "line_id": "talk_su_menu.030"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "invite_help_E5"
+                      }
+                    ]
+                  },
+                  {
                     "op": "jump",
-                    "target": "talk_su_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -4447,8 +4106,46 @@ public static class Chapter1CompiledDialogue
                     "line_id": "talk_su_menu.011"
                   },
                   {
+                    "op": "if",
+                    "condition": {
+                      "op": "call",
+                      "name": "asked",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "E6"
+                        }
+                      ]
+                    },
+                    "then": [
+                      {
+                        "op": "jump",
+                        "target": "talk_su_menu"
+                      }
+                    ],
+                    "else": []
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "苏泠",
+                    "mood": "",
+                    "text": "我去读给你听。",
+                    "voice_clip": "",
+                    "line_id": "talk_su_menu.031"
+                  },
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "invite_help_E6"
+                      }
+                    ]
+                  },
+                  {
                     "op": "jump",
-                    "target": "talk_su_menu"
+                    "target": "END"
                   }
                 ]
               },
@@ -5798,15 +5495,12 @@ public static class Chapter1CompiledDialogue
           {
             "op": "if",
             "condition": {
-              "op": "gt",
+              "op": "call",
+              "name": "dorm_out",
               "args": [
                 {
-                  "op": "call",
-                  "name": "dorms_open"
-                },
-                {
                   "op": "literal",
-                  "value": 0
+                  "value": "甲区"
                 }
               ]
             },
@@ -5815,17 +5509,66 @@ public static class Chapter1CompiledDialogue
                 "op": "line",
                 "speaker": "",
                 "mood": "",
-                "text": "（门外的厅里有人。听见门响，那人转过头来。）",
+                "text": "（门边蹲着一个瘦小的姑娘，黑短发乱糟糟的，右眉上一道浅疤。她仰起脸看你，手里还捏着一根细铁丝。）",
                 "voice_clip": "",
-                "line_id": "s10_open.001"
+                "line_id": "s10_open.020"
               },
               {
                 "op": "line",
-                "speaker": "侦探（心声）",
+                "speaker": "雀儿",
                 "mood": "",
-                "text": "对面的门，已经有人先开了。",
+                "text": "雀儿。甲区的。……说好了等，我就等了。铁丝是顺手拿的，没碰你们的闩。",
                 "voice_clip": "",
-                "line_id": "s10_open.002"
+                "line_id": "s10_open.021"
+              },
+              {
+                "op": "line",
+                "speaker": "",
+                "mood": "",
+                "text": "（对面墙上靠着一个年轻人，浅栗色的卷发垂到领口，酒红短斗篷。他直起身，欠了欠身。）",
+                "voice_clip": "",
+                "line_id": "s10_open.022"
+              },
+              {
+                "op": "line",
+                "speaker": "卢西安",
+                "mood": "",
+                "text": "卢西安，写诗的。隔着一扇门说话，总像隔着一页没裁开的书——如今裁开了。",
+                "voice_clip": "",
+                "line_id": "s10_open.023"
+              },
+              {
+                "op": "if",
+                "condition": {
+                  "op": "call",
+                  "name": "flag",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "door_voices_heard"
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "op": "line",
+                    "speaker": "侦探（心声）",
+                    "mood": "",
+                    "text": "门外那两个声音。原来是这样两张脸。",
+                    "voice_clip": "",
+                    "line_id": "s10_open.024"
+                  }
+                ],
+                "else": [
+                  {
+                    "op": "line",
+                    "speaker": "侦探（心声）",
+                    "mood": "",
+                    "text": "门外早有人在等。我们在里面，一点都没听见。",
+                    "voice_clip": "",
+                    "line_id": "s10_open.025"
+                  }
+                ]
               }
             ],
             "else": [
@@ -7512,6 +7255,162 @@ public static class Chapter1CompiledDialogue
           {
             "op": "jump",
             "target": "END"
+          }
+        ],
+        "door_voices": [
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（门外有人敲了三下。不重，像在试门板有多厚。）",
+            "voice_clip": "",
+            "line_id": "door_voices.001"
+          },
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（一个年轻的女声，贴着门缝：“里头有人？……真有。我就说听见说话了。”）",
+            "voice_clip": "",
+            "line_id": "door_voices.002"
+          },
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（另一个声音，男声，不紧不慢：“雀儿，贴着门板喊，里头听得见，礼数可就丢了。”）",
+            "voice_clip": "",
+            "line_id": "door_voices.003"
+          },
+          {
+            "op": "line",
+            "speaker": "侦探",
+            "mood": "",
+            "text": "门外是谁？",
+            "voice_clip": "",
+            "line_id": "door_voices.004"
+          },
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（女声：“甲区的。我们那道题答完了，闩自己抬起来的。你们这扇还闩着——这种闩简单，给我三下。”）",
+            "voice_clip": "",
+            "line_id": "door_voices.005"
+          },
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（男声：“门上的规程你也念过：查明事故经过之前，不得开启。墨迹未干，这一句，对门外的人也作数。”）",
+            "voice_clip": "",
+            "line_id": "door_voices.006"
+          },
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（女声：“规矩是写给信规矩的人的。”）",
+            "voice_clip": "",
+            "line_id": "door_voices.007"
+          },
+          {
+            "op": "jump",
+            "target": "door_voices_menu"
+          }
+        ],
+        "door_voices_menu": [
+          {
+            "op": "choices",
+            "options": [
+              {
+                "id": "door_voices_menu:choice:0",
+                "label": "外面是什么样子？",
+                "label_id": "door_voices.008",
+                "condition": null,
+                "lock_hint": "",
+                "body": [
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（男声：“一座挑高的厅，门楣上写着起居厅。地上落着一层灰，从北边那扇门进来的。北门关着，推不开。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.009"
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（女声：“对面还有两扇门，也闩着。里头有人走动。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.010"
+                  },
+                  {
+                    "op": "jump",
+                    "target": "door_voices_menu"
+                  }
+                ]
+              },
+              {
+                "id": "door_voices_menu:choice:1",
+                "label": "你们那道题，问的是什么？",
+                "label_id": "door_voices.011",
+                "condition": null,
+                "lock_hint": "",
+                "body": [
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（女声：“问名录库的柜锁是谁开的。”她停了一下。“答案是我。……剩下的，你去问那个戴眼镜的，他念得比我好听。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.012"
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（男声：“她开了锁，不等于她偷了东西。这一句，我会一直说下去。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.013"
+                  },
+                  {
+                    "op": "jump",
+                    "target": "door_voices_menu"
+                  }
+                ]
+              },
+              {
+                "id": "door_voices_menu:choice:2",
+                "label": "先别开。等我们自己答完。",
+                "label_id": "door_voices.014",
+                "condition": null,
+                "lock_hint": "",
+                "body": [
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（女声：“行。那我们就在外头等。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.015"
+                  },
+                  {
+                    "op": "line",
+                    "speaker": "",
+                    "mood": "",
+                    "text": "（男声：“门开那一刻，再好好见一面。”）",
+                    "voice_clip": "",
+                    "line_id": "door_voices.016"
+                  },
+                  {
+                    "op": "jump",
+                    "target": "END"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

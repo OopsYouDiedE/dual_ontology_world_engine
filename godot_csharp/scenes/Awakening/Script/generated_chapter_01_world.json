@@ -1375,6 +1375,18 @@
             "voice": "",
             "gender": "Female"
           }
+        },
+        {
+          "id": "room.Living",
+          "name": "起居厅",
+          "kind": "room",
+          "scope": "world",
+          "properties": {},
+          "aliases": [
+            "起居厅",
+            "Living"
+          ],
+          "source_id": "godot_csharp/scenes/Awakening/Script/chapter_01.story:30:19"
         }
       ],
       "patches": [],
@@ -2622,10 +2634,10 @@
               "minutes": null,
               "steps": [
                 {
-                  "room": "Hall",
-                  "target": "desk",
-                  "action": "check",
-                  "note": "到中央厅整理言灵笔记，等生活翼的人出来",
+                  "room": "Living",
+                  "target": "door",
+                  "action": "listen",
+                  "note": "在起居厅听见乙区门里有人说话，靠在对面墙上等着",
                   "weight": 1,
                   "minutes": 12.0,
                   "allowed_stages": []
@@ -2637,10 +2649,10 @@
               "minutes": null,
               "steps": [
                 {
-                  "room": "ArchiveFront",
-                  "target": "door",
+                  "room": "Living",
+                  "target": "shelf",
                   "action": "check",
-                  "note": "到名录库前厅核对门上的铭文，不擅自推开库门",
+                  "note": "在起居厅北台的书架前，把认得的书脊一行行抄下来",
                   "weight": 1,
                   "minutes": 12.0,
                   "allowed_stages": []
@@ -2652,10 +2664,10 @@
               "minutes": null,
               "steps": [
                 {
-                  "room": "Hall",
+                  "room": "Living",
                   "target": "door",
                   "action": "check",
-                  "note": "离开甲区到中央厅查看公共门的锁具，只看可见的构件",
+                  "note": "蹲在乙区门外看那道外闩，只看不碰",
                   "weight": 1,
                   "minutes": 12.0,
                   "allowed_stages": []
@@ -2667,10 +2679,10 @@
               "minutes": null,
               "steps": [
                 {
-                  "room": "Hall",
+                  "room": "Living",
                   "target": "board",
                   "action": "check",
-                  "note": "到中央厅读公告，把本组已经核对的条款重新排清",
+                  "note": "在起居厅公告板前读规程，把本组已经核对的条款重新排清",
                   "weight": 1,
                   "minutes": 12.0,
                   "allowed_stages": []
@@ -3006,6 +3018,13 @@
       "column": 19,
       "end_line": 1,
       "end_column": 738
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:30:19": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+      "line": 4,
+      "column": 19,
+      "end_line": 4,
+      "end_column": 88
     }
   }
 }

@@ -61,7 +61,7 @@ func _run() -> void:
 	var story: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Awakening/Script/generated_awakening_dialogue.json"))
 	check(story.has("entries"), "真实生成对白文档存在")
 	var titles: Array = story.entries.keys()
-	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s4_rewards", "s5_question", "s6_begin", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
+	var needed := ["s1_wake", "s2_meet", "s2_tea", "s3_broadcast", "s5_question", "door_voices", "replay_unlock", "exp_E1", "exp_E2", "exp_E3",
 		"s6_reversal", "help_E4", "help_E5", "help_E6", "help_E7", "help_E9", "help_E10", "help_E11",
 		"recall_ask_detective", "recall_detective", "recall_su", "recall_huo", "recall_shen",
 		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
@@ -102,17 +102,16 @@ func _run() -> void:
 		await process_frame
 	check(fx.stage() == "investigate", "S2–S5 结束后进入调查")
 	var opening := seen()
-	check(opening.contains("我是此地的代管者，也是诸位的教师") and opening.contains("我所立之规") and not opening.contains("恶魔")
+	check(opening.contains("我是此地的代管者，也是诸位的教师") and not opening.contains("恶魔")
 		and not opening.contains("导师") and not opening.contains("契约") and opening.contains("诸位初涉斯地"),
 		"S3 开场广播：只称代管者与教师，不说自己是什么，不提导师与契约；“诸位初涉斯地”已恢复（2026-10-08 用户裁定）")
 	check(opening.find("代管者") < opening.find("此为始业之问"), "开场广播在始业之问之前")
 	check(FORBIDDEN.filter(func(w): return opening.contains(w)).is_empty(), "开场全部台词不提第 9、10 条")
-	check(opening.contains("我连昨晚睡的哪张床都不记得") and opening.contains("是在试我们") and opening.contains("我还不知道能不能信"),
-		"始业之问后，三人各有一句不同的抵触或怀疑，再开始调查（修订四·11）")
-	check(opening.contains("揣进风衣口袋"), "报偿空格处，侦探有一句克制的心声（修订四·10）")
+	check(opening.contains(fx.line_text("s5_question.016")), "authored opening dismisses companions into investigation")
+	check(opening.contains(fx.line_text("s4_rewards.020")), "authored broadcast retains the detective thought")
 	check(int(fx.probe("desire", ["huo"])) == 2 and int(fx.probe("desire", ["su"])) == 2 and int(fx.probe("desire", ["shen"])) == 2,
 		"S4 恶魔逐一点到三人的欲望（Corruption 来源，欲望各加强一级）")
-	check(fx.progress("flags").has("board_read"), "S3 广播结束后，公告框上的学园守则完整呈现过一次（修订三·2、第五轮修订 2）")
+	check(not fx.progress("flags").has("board_read"), "opening does not mark the board as read")
 	check(fx.state("detective_name") == "试验", "姓名由玩家输入")
 	check(fx.map().can_access_dorm("musician"), "调查阶段可进入其他宿舍")
 	for dorm in [["R-06", Vector2(930, 600)], ["R-07", Vector2(706, 600)], ["空房", Vector2(1150, 200)]]:
@@ -129,6 +128,7 @@ func _run() -> void:
 
 	# ---- 2. 公告框：学园守则四条（第五轮修订 2）
 	await fx.open_card("board")
+	check(fx.progress("flags").has("board_read"), "reading the board records acknowledgement")
 	var board: Array = fx.probe("posted_rules")
 	var board_text := "\n".join(board)
 	check(board.size() == 4 and board_text.contains("一、入夜之后，诸位留于室内。") and board_text.contains("四、我所立之规，皆张贴于此。")
@@ -243,7 +243,7 @@ func _run() -> void:
 	await fx.open_card("board")
 	fx.close_modal()
 	await fx.open_card("E5")
-	check(await fx.card_action("help"), "E5 协助与自动闪回完成")
+	check(await fx.invite_help("E5", "su"), "E5 assistance starts from the person menu")
 	fx.close_modal()
 	await fx.open_card("E8")
 	check(host.ui._modal_event.options.any(func(o): return str(o.id).ends_with(":experiment")), "已看 E7 且协助 E5 后，E8 提供声路试验")
@@ -262,7 +262,8 @@ func _run() -> void:
 		await fx.open_card(case[0])
 		check(not fx.select("recall") and fx.seen_lines.is_empty(), "检视 %s 不触发低语，也没有回忆按钮" % case[0])
 		var choices := [0] if case[2] else []
-		check(await fx.card_action("help", choices), "协助 %s 后，自动闪回并返回证物卡" % case[0])
+		check(not fx.select("help"), "evidence card has no assistance option")
+		check(await fx.invite_help(case[0], case[1], choices), "person invitation completes assistance: " + case[0])
 		var touched: bool = fx.progress("recalls").has(case[1])
 		var informed: bool = case[2] or case[1] == "shen"
 		var expected: bool = case[1] == "huo" or (case[1] == "su" and not informed)
@@ -372,7 +373,7 @@ func _run() -> void:
 	await fx.frames(3)
 	check(host.ui.modal_kind == "card", "站在够得着的地方点物件：直接打开，不绕到别处")
 	fx.seen_lines.clear()
-	var helped: bool = await fx.card_action("help")
+	var helped: bool = await fx.invite_help("E4", "shen")
 	var brief := fx.modal_text()
 	check(helped and brief.contains("这布是我拧的") and not brief.contains("一条拧过的湿抹布"), "请人看过之后只给新得到的那一句，不重显整张原文")
 	fx.close_modal()

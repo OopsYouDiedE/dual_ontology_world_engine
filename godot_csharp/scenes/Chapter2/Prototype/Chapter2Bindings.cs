@@ -34,7 +34,7 @@ public static class Chapter2Bindings
             if(entity.Kind=="character") { _=PersonId(entity);continue; }
             if(entity.Kind=="room"&&local.StartsWith("room.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[5..],out var place)&&Enum.IsDefined(place))continue;
             if(entity.Kind=="object"&&local.StartsWith("object.",StringComparison.Ordinal)&&Objects.ContainsKey(local[7..]))continue;
-            if(entity.Kind=="object"&&local.StartsWith("Board.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[6..],out var board)&&board is Place.Hall or Place.Logistics or Place.Lecture or Place.DormLife or Place.DormW or Place.DormS or Place.DormL)continue;
+            if(entity.Kind=="object"&&local.StartsWith("Board.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[6..],out var board)&&board is Place.Hall or Place.Logistics or Place.Lecture or Place.DormLife or Place.DormW or Place.DormS or Place.DormL or Place.Living)continue;
             if(entity.Kind=="object"&&local.StartsWith("Litter.",StringComparison.Ordinal)&&Enum.TryParse<Place>(local[7..],out var litter)&&litter is Place.DormLife or Place.DormW or Place.DormS or Place.DormL)continue;
             throw new InvalidDataException("Unknown formal binding: "+entity.Id);
         }

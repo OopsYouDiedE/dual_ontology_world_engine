@@ -1371,22 +1371,12 @@
     "companion_start_minutes": 440,
     "daily_seconds_per_game_minute": 0.5,
     "scenes": {
-      "s1_wake": 16,
-      "s2_meet": 20,
-      "s2_tea": 12,
-      "s2_tea_return": 12,
-      "s3_broadcast": 16,
-      "s4_rewards": 6,
-      "s4_rewards_shen": 6,
-      "s4_rewards_huo": 6,
-      "s4_rewards_su": 6,
-      "s4_rewards_question": 6,
-      "s4_rewards_empty": 6,
-      "s5_question": 24,
-      "s6_begin": 4,
-      "s6_begin_huo": 1,
-      "s6_begin_su": 1,
-      "s6_begin_detective": 2,
+      "s1_wake": 10,
+      "s2_meet": 10,
+      "s2_tea": 10,
+      "s3_broadcast": 20,
+      "s5_question": 15,
+      "door_voices": 6,
       "s6_reversal": 10,
       "s8_reversal": 16,
       "s10_steps": 8,
@@ -1398,10 +1388,10 @@
       "talk_su_menu": 0
     },
     "actions": {
-      "检视": 7,
+      "检视": 0,
       "试验": 17,
-      "协助": 12,
-      "交谈": 10,
+      "协助": 0,
+      "交谈": 0,
       "声路": 24,
       "重演": 29,
       "答辩": 10,
@@ -2252,7 +2242,11 @@
       "sites": []
     },
     "investigate": {
-      "enter": {},
+      "enter": {
+        "foyer": {
+          "flow": "门外的人"
+        }
+      },
       "walk": true,
       "daily": true,
       "examine": true,
@@ -2354,79 +2348,7 @@
         },
         {
           "op": "show",
-          "scene": "@stage_action:shen:备餐灶台:interact:back:1.5"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_actor:shen:meeting:Chef"
-        },
-        {
-          "op": "show",
-          "scene": "s2_tea_return"
-        },
-        {
-          "op": "show",
           "scene": "s3_broadcast"
-        },
-        {
-          "op": "show",
-          "scene": "@board"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_action:shen:领取柜:interact:back"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards_shen"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_actor:shen:meeting:Chef"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_action:huo:领取柜:interact:back:0.8:inspect"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards_huo"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_actor:huo:meeting:Engineer"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_action:su:领取柜:interact:back"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards_su"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_actor:su:meeting:Musician"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards_question"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_action:detective:领取柜:interact:back"
-        },
-        {
-          "op": "show",
-          "scene": "s4_rewards_empty"
-        },
-        {
-          "op": "show",
-          "scene": "@stage_actor:detective:meeting:Detective"
         },
         {
           "op": "show",
@@ -2434,23 +2356,11 @@
         },
         {
           "op": "show",
-          "scene": "s6_begin"
-        },
-        {
-          "op": "show",
           "scene": "@post:shen"
         },
         {
           "op": "show",
-          "scene": "s6_begin_huo"
-        },
-        {
-          "op": "show",
           "scene": "@post:huo"
-        },
-        {
-          "op": "show",
-          "scene": "s6_begin_su"
         },
         {
           "op": "show",
@@ -2461,12 +2371,59 @@
           "key": "posts_assigned"
         },
         {
-          "op": "show",
-          "scene": "s6_begin_detective"
-        },
-        {
           "op": "stage",
           "value": "investigate"
+        }
+      ]
+    },
+    "门外的人": {
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "flag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "door_voices_heard"
+                  }
+                ]
+              },
+              {
+                "op": "not",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "dorm_out",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "甲区"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "set_flag",
+          "key": "door_voices_heard"
+        },
+        {
+          "op": "show",
+          "scene": "door_voices"
         }
       ]
     },
@@ -4124,6 +4081,10 @@
         }
       ],
       "answer": 0,
+      "earliest_out": {
+        "day": 2,
+        "minutes": 540
+      },
       "truth": [
         0,
         0
@@ -4135,7 +4096,7 @@
           "question": 0,
           "option": 2,
           "negate": true,
-          "needs": 38
+          "needs": 15
         },
         {
           "key": "手稿写满三页",
@@ -4143,7 +4104,7 @@
           "question": 0,
           "option": 3,
           "negate": true,
-          "needs": 75
+          "needs": 30
         },
         {
           "key": "清单上的笔痕",
@@ -4151,7 +4112,7 @@
           "question": 0,
           "option": 1,
           "negate": true,
-          "needs": 115
+          "needs": 45
         }
       ],
       "true_facts": {
@@ -4292,6 +4253,10 @@
         }
       ],
       "answer": 0,
+      "earliest_out": {
+        "day": 3,
+        "minutes": 360
+      },
       "truth": [
         0,
         1
@@ -4418,6 +4383,10 @@
         }
       ],
       "answer": 0,
+      "earliest_out": {
+        "day": 3,
+        "minutes": 690
+      },
       "truth": [
         0,
         1

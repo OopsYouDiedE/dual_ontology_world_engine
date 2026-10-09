@@ -178,6 +178,27 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker nodes and manifest sites using existing textures.")
+    args = parser.parse_args()
+    if args.sites_only:
+        manifest_path = OUT / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        authored = {room["key"]: room for room in rooms.all_rooms()}
+        for key in args.sites_only:
+            room = authored[key]
+            path = SCENES / f"{key}.tscn"
+            text = path.read_text(encoding="utf-8").split('[node name="Sites"', 1)[0]
+            lines = ['[node name="Sites" type="Node2D" parent="."]', '']
+            for site in room.get("sites", []):
+                lines += [f'[node name="{site["id"]}" type="Marker2D" parent="Sites"]',
+                          f'position = Vector2({site["point"][0]}, {site["point"][1]})', f'metadata/label = "{site["label"]}"', '']
+            path.write_text(text + "\n".join(lines), encoding="utf-8", newline="\n")
+            manifest["rooms"][key]["sites"] = room.get("sites", [])
+            print(f"generated sites: {key}")
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+        return
     canvases, ch1, fps = sprites_and_footprints()
     (OUT / "rooms").mkdir(parents=True, exist_ok=True)
     (OUT / "props").mkdir(parents=True, exist_ok=True)

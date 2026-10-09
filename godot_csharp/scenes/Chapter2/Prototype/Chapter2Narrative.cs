@@ -109,7 +109,8 @@ public sealed class Chapter2Narrative
             var action = step.GetProperty("name").GetString();
             var args = step.GetProperty("args");
             if (action is not ("lesson_answer" or "mediate") ||
-                args.GetArrayLength() != (action == "lesson_answer" ? 1 : 0) ||
+                args.GetArrayLength() != 1 ||
+                action == "mediate" && (args[0].ValueKind != JsonValueKind.String || args[0].GetString() is not ("sick_first" or "sign_first" or "i_carry")) ||
                 action == "lesson_answer" && args[0].ValueKind is not (JsonValueKind.True or JsonValueKind.False))
                 throw new InvalidDataException($"Unsupported or malformed authored action {action} in {sequence}.");
             foreach (var arg in args.EnumerateArray())
@@ -173,6 +174,17 @@ public sealed class Chapter2Narrative
         foreach (var beat in branch)
             foreach (var step in beat.Steps) _steps.Enqueue(step);
         foreach (var step in continuation) _steps.Enqueue(step);
+        return Drain();
+    }
+
+    public IReadOnlyList<Chapter2NarrativeEvent> Scene(string id, IReadOnlyDictionary<string,string> variables)
+    {
+        if (_presentationId is not null || _pendingChoices is not null || _steps.Count != 0)
+            throw new InvalidOperationException("Complete the current narrative before running a flow scene.");
+        _variables.Clear();
+        foreach (var pair in variables) _variables[pair.Key] = pair.Value;
+        var beat = _beats.Single(b => b.Id == id);
+        foreach (var step in beat.Steps) _steps.Enqueue(step);
         return Drain();
     }
 

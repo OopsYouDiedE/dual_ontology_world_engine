@@ -68,7 +68,8 @@ public sealed partial class MorningWorld
         public required CaseModel Model;
         public required int Answer;
         public required (string Key, string Text, int Needs, int Value)[] Traces;
-        public int Progress, Revealed;
+        public int Progress, Revealed, EarliestOut;
+        public bool Answered;
     }
     private static readonly Tag Trace = new("所见");
     private readonly Dictionary<string, DormCase> _dormCases = new(StringComparer.Ordinal);
@@ -93,7 +94,9 @@ public sealed partial class MorningWorld
                     h.GetProperty("facts").EnumerateObject().ToImmutableDictionary(f => f.Name, f => f.Value.GetInt32()))));
             var dorm = c.GetProperty("dorm").GetString()!;
             _dormCases[dorm] = new DormCase { Id = item.Name, Dorm = dorm, Title = c.GetProperty("title").GetString()!, Model = model,
-                Answer = c.GetProperty("answer").GetInt32(), Traces = traces };
+                Answer = c.GetProperty("answer").GetInt32(), Traces = traces,
+                EarliestOut = c.TryGetProperty("earliest_out", out var earliest) && earliest.ValueKind == JsonValueKind.Object
+                    ? (earliest.GetProperty("day").GetInt32() - 2) * 1440 + earliest.GetProperty("minutes").GetInt32() : 0 };
             // 先入之见写进各人认知，强度可由默认设置微调（“沃德.先入之见.缘由”）；0 即没有成见。
             foreach (var prior in c.GetProperty("priors").EnumerateArray())
             {
@@ -112,7 +115,7 @@ public sealed partial class MorningWorld
     /// <summary>本区的调查累计一次；够了就让区里的人看见下一处痕迹，并看他们能否作答。</summary>
     private void AdvanceDormCase(DailyPerson by)
     {
-        if (!_dormCases.TryGetValue(by.Dorm, out var c) || _dormOpened.ContainsKey(by.Dorm)) return;
+        if (!_dormCases.TryGetValue(by.Dorm, out var c) || c.Answered) return;
         c.Progress++;
         var revealed = false;
         while (c.Revealed < c.Traces.Length && c.Progress >= c.Traces[c.Revealed].Needs)
@@ -131,7 +134,8 @@ public sealed partial class MorningWorld
         var votes = verdicts.Select(b => Enumerable.Range(0, c.Model.Options[c.Answer].Length).FirstOrDefault(o => b.Of(c.Answer, o) >= SpeechPolicy.Sure, -1)).ToArray();
         var winner = votes.Where(v => v >= 0).GroupBy(v => v).MaxBy(g => g.Count());
         if (winner is null || winner.Count() * 2 <= residents.Length) return;
-        _dormOpened[c.Dorm] = _dailySettledMinutes;
+        c.Answered = true;
+        OpenAnsweredDorms(_dailySettledMinutes);
         var answer = c.Model.Options[c.Answer][winner.Key];
         var beliefs = residents.Zip(verdicts, (p, b) => p.Soul.TrueName + "：" + string.Join("，", c.Model.Questions.Select((q, i) =>
         {
@@ -151,9 +155,16 @@ public sealed partial class MorningWorld
     private readonly Dictionary<string, int> _dormProgress = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _dormOpened = new(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, int> DormOpenedMinutes => _dormOpened;
+    public bool DormIsOpen(string name) => _dormOpened.Keys.Any(dorm => dorm == name || _dailySpaces[dorm].TrueName == name);
+    private void OpenAnsweredDorms(int minutes)
+    {
+        foreach (var c in _dormCases.Values.Where(c => c.Answered && minutes >= c.EarliestOut))
+            _dormOpened.TryAdd(c.Dorm, minutes);
+    }
 
     private void ApplyDailyDepartures(int minutes)
     {
+        OpenAnsweredDorms(minutes);
         foreach (var person in _dailyPeople.Values.Where(p => p.Hosted is null && !p.Departed && p.DepartureSteps.Length > 0
             && (p.DepartureMinutes is { } departure && minutes >= departure || _dormOpened.ContainsKey(p.Dorm))))
         {

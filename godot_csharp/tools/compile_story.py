@@ -29,7 +29,7 @@ QUERIES = {
     "life_thought", "talk_first", "recall_thought", "wrong_name", "addr", "heard", "heard_where",
     "sound_sentence", "has", "count", "value", "replay_count", "full_match", "replay_refused",
     "in_room", "local", "busy", "said", "shown", "is_person", "geo_reach", "acquaintance_seen", "replay_var", "bolted",
-    "credence", "knows", "speech", "dorms_open",
+    "credence", "knows", "speech", "dorms_open", "dorm_out", "accused",
 }
 # 全局剧情进度：只许流程与阶段使用；对白条件须写成说话人自己的认知（总纲 §五.5）。
 GLOBAL_PROGRESS_QUERIES = {"matched", "replayed", "full_match", "replay_count", "replay_refused"}
@@ -43,7 +43,7 @@ CALL_ARITY = {
     "heard_where": 1, "sound_sentence": 0, "has": 2, "count": 1, "value": 2, "replay_count": 0,
     "full_match": 0, "replay_refused": 0, "in_room": 2, "local": 2, "busy": 1, "said": 0, "shown": 0,
     "is_person": 1, "geo_reach": 1, "acquaintance_seen": 0, "replay_var": 1, "bolted": 0,
-    "credence": 2, "knows": 2, "speech": 2, "dorms_open": 0,
+    "credence": 2, "knows": 2, "speech": 2, "dorms_open": 0, "dorm_out": 1, "accused": 0,
 }
 # 宿主（Awakening.gd）能执行的演出指令，以及 C# 能执行的流程钩子。流程里写别的名字一律报错。
 HOST_COMMANDS = {
@@ -172,7 +172,10 @@ def validate_rules(rules: dict[str, Any], scenes: set[str]) -> None:
     flows = rules.get("FLOWS", {})
     for name, stage in stages.items():
         for room, target in stage["enter"].items():
-            if target["stage"] not in stages:
+            if "flow" in target:
+                if target["flow"] not in flows:
+                    raise ValueError(f"stage {name}: unknown entry flow {target['flow']!r}")
+            elif target["stage"] not in stages:
                 raise ValueError(f"stage {name}: enter {room} goes to unknown stage {target['stage']!r}")
     for event, stage in rules.get("STAGE_EVENTS", {}).items():
         if stage not in stages:
@@ -226,8 +229,8 @@ def validate_clock(clock: dict[str, Any], scenes: set[str]) -> None:
     required = {"检视", "试验", "协助", "交谈", "声路", "重演", "答辩", "走动"}
     if set(clock["actions"]) != required:
         raise ValueError("DAY_CLOCK actions must declare: " + ", ".join(sorted(required)))
-    if any(type(value) is not int or value <= 0 for value in clock["actions"].values()):
-        raise ValueError("DAY_CLOCK action durations must be positive integer minutes")
+    if any(type(value) is not int or value < 0 for value in clock["actions"].values()):
+        raise ValueError("DAY_CLOCK action durations must be nonnegative integer minutes")
 
 
 def content_data(source) -> dict[str, Any]:
@@ -428,6 +431,11 @@ def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> d
     world_json = json.dumps(compile_world_story([story], set(), ecology_only=True),
                             ensure_ascii=False, indent=2) + "\n"
     world_json = world_json.replace(folder, display_path(story.parent) + "/")
+    for entity in json.loads(world_json)["chapters"][0]["entities"]:
+        sprite = entity.get("properties", {}).get("sprite", {}).get("value")
+        if entity["kind"] == "character" and sprite:
+            layout["dialogue_cast"][entity["name"]] = sprite
+    layout_json = json.dumps(layout, ensure_ascii=False, indent=2) + "\n"
     continuation_json = json.dumps(
         compile_world_story([story], {"awakening"}, section="chapter2"),
         ensure_ascii=False, indent=2) + "\n"

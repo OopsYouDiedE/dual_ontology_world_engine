@@ -19,6 +19,7 @@ public sealed partial class Game
     /// <summary>侦探走到某处（宿主换图时调用）。</summary>
     public void HostMoveDet(Place place)
     {
+        if (!HostCanEnter(place)) throw new PlayerError(Chapter2Design.Chapter.GetProperty("ui_text").GetProperty("corridor_closed").GetString()!);
         if (Where(Det) == place) return;
         Det.Body.Get<SpatialProperty>()!.Space = Space[place];
         RealDirty = true;

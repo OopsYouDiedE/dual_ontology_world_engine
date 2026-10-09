@@ -129,8 +129,8 @@ public static class Bots
             }, Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
         new() { Name = "管饭（调停、交钥匙、帮厨）", Reads = true, Act = g => (Old(g), g.Slot) switch
             {
-                (1, Slot.Noon) => A(Cmd.Mediate),
-                (1, Slot.Afternoon) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
+                (2, Slot.Noon) => new(Cmd.Mediate) { Wording = "i_carry" },
+                (2, Slot.Afternoon) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
                 (3, Slot.Afternoon) => new(Cmd.Help) { Who = P.Shen },
                 _ => Eat(g)
             }, Confront = g => GoodPlan(g) },

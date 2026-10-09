@@ -71,7 +71,7 @@ func run() -> void:
 		if game.modal_kind == "card": game.close_modal()
 		if game.stage == "investigate" and not game.dialogue.active: break
 		await process_frame
-	check(game.stage == "investigate" and game.detective_name == "独立验证" and game.flags.has("board_read"), "meeting name and board acknowledgement reaches investigate")
+	check(game.stage == "investigate" and game.detective_name == "独立验证" and not game.flags.has("board_read"), "meeting reaches investigate before reading the board")
 	game = await fresh()
 	game.jump_to("investigate")
 	game._on_experiment("E2")

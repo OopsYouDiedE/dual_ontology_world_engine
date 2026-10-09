@@ -155,6 +155,8 @@ def zone(label: str) -> dict:
                        {"id": "isolation_gate", "point": P(34, 12, 16, 0), "label": "隔离门"}])
     if z["east"]:
         room = mirror(room)
+    if room["key"] == "zone_yi":
+        room["sites"].append({"id": "bed", "point": (858, 196), "label": "bed"})
     return room
 
 

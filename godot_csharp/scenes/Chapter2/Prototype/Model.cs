@@ -7,7 +7,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 public enum P { Det, Huo, Shen, Su, Lucian, Gu, Quer, Ward, Selma, Ruan, Elena, Moran, Veronica, Bertrand, Margaret, Mora }
 public enum Group { Life, Wenqi, Xingyi, Houqin }
 /// <summary>新地点只追加在末尾：已有地点的序号写进了存档与快照。</summary>
-public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL, Resonance }
+public enum Place { Hall, Lecture, Logistics, Clinic, Greenhouse, ArchiveFront, Oath, DormLife, DormW, DormS, DormL, Resonance, Living }
 public enum Slot { Morning, Forenoon, Noon, Afternoon, Evening, Night }
 public enum Build { Small, Medium, Large }
 /// <summary>跨寝区的价值聚落（§11 第 7 条，初值，可被打破）。</summary>
