@@ -21,6 +21,8 @@ var directory := ""
 var ack_seq := 0
 var started_ms := 0
 var controls_by_id := {}
+var frames := []
+var render_stalled := false
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -81,13 +83,19 @@ func _run(command: Dictionary) -> void:
 		return
 	_status_pending(seq)
 	var error := ""
-	for action in command.get("actions", []):
+	frames = []
+	var actions: Array = command.get("actions", [])
+	for i in actions.size():
+		var action = actions[i]
 		if not action is Dictionary:
 			error = "input must be an object"
 			break
 		error = await _act(action)
 		if error != "":
 			break
+		# A snapshot inside a batch records what the player saw at that point.
+		if str(action.get("type", "")) == "snapshot" and i < actions.size() - 1:
+			await _capture_frame(seq, frames.size() + 1)
 	for i in SETTLE_FRAMES:
 		await process_frame
 	await _publish(seq, str(command.get("name", "input")), error)
@@ -204,6 +212,59 @@ func _key(code: Key, unicode: int, pressed: bool, ctrl := false) -> void:
 const STABLE_FRAMES := 8
 const MAX_STABLE_WAIT := 240
 
+## 批次中途的快照还要等可见文字不再变化（打字机走完），最多约 12 秒。
+const TEXT_STABLE_CAP_MS := 12000
+const TEXT_STILL_MS := 500
+
+## 远程桌面断开/重连时渲染设备可能停摆，frame_post_draw 不再触发；限时等待，超时写入错误而不是挂起会话。
+const DRAW_TIMEOUT_MS := 5000
+
+func _await_drawn() -> bool:
+	var drawn := [false]
+	var mark := func() -> void: drawn[0] = true
+	RenderingServer.frame_post_draw.connect(mark, CONNECT_ONE_SHOT)
+	var deadline := Time.get_ticks_msec() + DRAW_TIMEOUT_MS
+	while not drawn[0] and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	if not drawn[0]:
+		RenderingServer.frame_post_draw.disconnect(mark)
+	return drawn[0]
+
+func _visible_texts() -> Array:
+	# Keeps the IDs from the last published snapshot valid for the rest of the batch.
+	var kept := controls_by_id.duplicate()
+	var texts := []
+	_scan(root, [], texts)
+	controls_by_id = kept
+	return texts
+
+func _wait_text_stable() -> void:
+	var deadline := Time.get_ticks_msec() + TEXT_STABLE_CAP_MS
+	var last := JSON.stringify(_visible_texts())
+	var same := 0
+	var since := Time.get_ticks_msec()
+	while (same < STABLE_FRAMES or Time.get_ticks_msec() - since < TEXT_STILL_MS) and Time.get_ticks_msec() < deadline:
+		await process_frame
+		var now := JSON.stringify(_visible_texts())
+		if now == last:
+			same += 1
+		else:
+			same = 0
+			since = Time.get_ticks_msec()
+		last = now
+
+func _capture_frame(seq: int, index: int) -> void:
+	await _wait_camera_stable()
+	await _wait_text_stable()
+	if not await _await_drawn():
+		render_stalled = true
+	var shot := "%04d-%02d.png" % [seq, index]
+	root.get_texture().get_image().save_png(directory.path_join(shot))
+	var frame := {"screenshot": shot, "visible_text": _visible_texts(),
+		"elapsed_ms": Time.get_ticks_msec() - started_ms}
+	frames.append(frame)
+	_append({"event": "frame", "seq": seq, "frame": frame})
+
 func _wait_camera_stable() -> void:
 	var last := root.get_canvas_transform()
 	var still := 0
@@ -220,7 +281,11 @@ func _wait_camera_stable() -> void:
 
 func _publish(seq: int, name: String, error: String) -> void:
 	await _wait_camera_stable()
-	await RenderingServer.frame_post_draw
+	if seq > 0:
+		await _wait_text_stable()
+	if not await _await_drawn() or render_stalled:
+		render_stalled = false
+		error = (error + "; " if error != "" else "") + "render stalled: no frame drawn within %d ms (display disconnected?)" % DRAW_TIMEOUT_MS
 	var shot := "%04d-%s.png" % [seq, name.validate_filename()]
 	root.get_texture().get_image().save_png(directory.path_join(shot))
 	controls_by_id.clear()
@@ -232,7 +297,7 @@ func _publish(seq: int, name: String, error: String) -> void:
 		"session": session, "run_id": run_id, "ack_seq": seq, "command_seq": seq,
 		"accepted": true, "error": error, "name": name, "screenshot": shot,
 		"elapsed_ms": Time.get_ticks_msec() - started_ms,
-		"controls": controls, "visible_text": texts,
+		"controls": controls, "visible_text": texts, "frames": frames,
 		"pending": {"command_running": false},
 	}
 	_write_json("status.json", status)

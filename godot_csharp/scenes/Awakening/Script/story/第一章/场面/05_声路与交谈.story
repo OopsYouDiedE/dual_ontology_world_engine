@@ -57,9 +57,10 @@
             条件：见过("E7")
             若 问过("E7")：
                 霍铎：是我的字。我说了。……那个小图，我认不出。 [#id=talk_huo_menu.013]
-            否则：
-                霍铎：石板？在长桌上？我没注意。你拿给我看。 [#id=talk_huo_menu.014]
-            跳转 talk_huo_menu
+                跳转 talk_huo_menu
+            霍铎：石板？在长桌上？我没注意。……走，我去看。 [#id=talk_huo_menu.030]
+            设旗 invite_help_E7
+            跳转 END
         - 灰里的靴印，对上了我的鞋底。 [#id=talk_huo_menu.015]
             条件：旗("reversal_one")
             霍铎：……你到过门边。 [#id=talk_huo_menu.016]
@@ -112,17 +113,28 @@
             沈鼎：堵烟缝，湿布最好。船上一着火，先堵门缝，再说别的。 [#id=talk_shen_menu.007]
             若 问过("E4")：
                 沈鼎：那是我拧的。我认。可我不记得拧过。 [#id=talk_shen_menu.008]
-            跳转 talk_shen_menu
+                跳转 talk_shen_menu
+            沈鼎：门底？走，我去瞧瞧是谁拧的。 [#id=talk_shen_menu.032]
+            设旗 invite_help_E4
+            跳转 END
         - 架上那罐酵种。 [#id=talk_shen_menu.009]
             条件：见过("E10")
             沈鼎：活的。有人天天喂它。 [#id=talk_shen_menu.010]
             沈鼎：这岛上除了我，谁会天天喂酵种？ [#id=talk_shen_menu.011]
-            跳转 talk_shen_menu
+            若 问过("E10")：
+                跳转 talk_shen_menu
+            沈鼎：等等，我过去摸摸那罐子。 [#id=talk_shen_menu.033]
+            设旗 invite_help_E10
+            跳转 END
         - 水槽里的杯子。 [#id=talk_shen_menu.012]
             条件：见过("E9")
             沈鼎：四只，四个样。用过，没洗。 [#id=talk_shen_menu.013]
             沈鼎：我要是在，不会让杯子过夜。……除非那晚顾不上。 [#id=talk_shen_menu.014]
-            跳转 talk_shen_menu
+            若 问过("E9")：
+                跳转 talk_shen_menu
+            沈鼎：我去看看杯底。谁喝过什么，杯子会说。 [#id=talk_shen_menu.034]
+            设旗 invite_help_E9
+            跳转 END
         - 灰里的靴印，对上了我的鞋底。 [#id=talk_shen_menu.015]
             条件：旗("reversal_one")
             沈鼎：你的？那得看看，鞋印跟门底那块布，谁先谁后。 [#id=talk_shen_menu.016]
@@ -178,12 +190,20 @@
             条件：见过("E5")
             苏泠：是我的。我走到哪儿都带着。 [#id=talk_su_menu.007]
             苏泠：敲一下，听回声，就知道墙后面是实的还是空的。 [#id=talk_su_menu.008]
-            跳转 talk_su_menu
+            若 问过("E5")：
+                跳转 talk_su_menu
+            苏泠：……我去门框那儿敲一下给你听。 [#id=talk_su_menu.030]
+            设旗 invite_help_E5
+            跳转 END
         - 你的乐谱。 [#id=talk_su_menu.009]
             条件：见过("E6")
             苏泠：记谱的习惯改不了，听见几个音，就落几个音。 [#id=talk_su_menu.010]
             苏泠：我不知道我什么时候记的。……但那是我的手。 [#id=talk_su_menu.011]
-            跳转 talk_su_menu
+            若 问过("E6")：
+                跳转 talk_su_menu
+            苏泠：我去读给你听。 [#id=talk_su_menu.031]
+            设旗 invite_help_E6
+            跳转 END
         - 那扇门。 [#id=talk_su_menu.012]
             条件：见过("E1")
             苏泠：门后面很静。 [#id=talk_su_menu.013]

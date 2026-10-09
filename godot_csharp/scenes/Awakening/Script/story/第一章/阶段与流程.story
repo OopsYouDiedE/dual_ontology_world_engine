@@ -28,6 +28,7 @@
     宿舍开放：是
     房间事件：是
     可见热点：全部
+    进入 foyer：流程 门外的人
 
 阶段 playback
     说明：昨夜重演播放中。
@@ -59,39 +60,26 @@
     指令 unlock
     指令 hud
 
+# 开场预算：强制对白 30 句以内，强制界面只有填名字（第四部分 §7）。守则公告框留给玩家自己去读。
 流程 相遇
     演出 s2_meet
     指令 name
     演出 s2_tea
-    指令 stage_action:shen:备餐灶台:interact:back:1.5
-    指令 stage_actor:shen:meeting:Chef
-    演出 s2_tea_return
     演出 s3_broadcast
-    指令 board
-    演出 s4_rewards
-    指令 stage_action:shen:领取柜:interact:back
-    演出 s4_rewards_shen
-    指令 stage_actor:shen:meeting:Chef
-    指令 stage_action:huo:领取柜:interact:back:0.8:inspect
-    演出 s4_rewards_huo
-    指令 stage_actor:huo:meeting:Engineer
-    指令 stage_action:su:领取柜:interact:back
-    演出 s4_rewards_su
-    指令 stage_actor:su:meeting:Musician
-    演出 s4_rewards_question
-    指令 stage_action:detective:领取柜:interact:back
-    演出 s4_rewards_empty
-    指令 stage_actor:detective:meeting:Detective
     演出 s5_question
-    演出 s6_begin
     指令 post:shen
-    演出 s6_begin_huo
     指令 post:huo
-    演出 s6_begin_su
     指令 post:su
     设旗 posts_assigned
-    演出 s6_begin_detective
     阶段 investigate
+
+# 门外的人（第四部分 §7 S5a）：甲区最先答完，雀儿与卢西安守在乙区门外。
+# 侦探在调查阶段第一次走进门厅、且甲区已出门时演一次。只闻其声，不见其人；她们不开门。
+流程 门外的人
+    若 旗("door_voices_heard") 或 非 已出门("甲区")：
+        结束
+    设旗 door_voices_heard
+    演出 door_voices
 
 流程 重演之后
     若 重演次数 == 1 且 非 重演吻合：

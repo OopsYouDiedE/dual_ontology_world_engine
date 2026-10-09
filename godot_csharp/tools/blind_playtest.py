@@ -21,6 +21,9 @@ Generic input fields (coordinates are viewport pixels):
   {"type":"text_control", "control_id":"visible text field ID",
    "text":"typed text", "replace":true}
   {"type":"text", "text":"typed text"}  # requires an already focused field
+A {"type":"snapshot"} placed inside a batch (not last) waits until the camera and
+visible text settle, saves an extra screenshot and adds it to the result's "frames"
+list, so several dialogue lines or movement steps can be sent and reviewed at once.
 Control IDs refer to current displayed nodes. Use one control action and inspect
 its returned snapshot before choosing another when the UI rebuilds. Space or
 Enter reveals the current dialogue text, then advances on the next press; the

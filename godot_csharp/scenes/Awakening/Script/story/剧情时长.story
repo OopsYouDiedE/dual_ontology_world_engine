@@ -1,6 +1,6 @@
 # 游戏钟按实际场面与行动结算；慢读、暂停和回看不走钟。目标不是开门条件。
-# 生活翼一案约占始业日一整个白天（用户要求，2026-10-07）：四人把每一处痕迹看足、试足、谈透，门在傍晚才开，
-# 与另外三区的十二人只剩傍晚一小段见面的时间。
+# 读不走钟（总纲 §五.2，2026-10-09）：检视、交谈、请人辨认都是 0；时间只随走动、试验、声路试验、重演与答辩流逝。
+# 生活翼一案约占始业日上半天，门约在午后打开；甲区上午先出门，丙、丁两区第二日才出门（第五部分 §4）。
 剧情时长
     每游戏分钟日常逻辑秒：0.5
     同伴醒来分钟：440
@@ -10,22 +10,12 @@
     正常出门最晚分钟：1110
     默认场面分钟：2
     场面时长：
-        s1_wake：16
-        s2_meet：20
-        s2_tea：12
-        s2_tea_return：12
-        s3_broadcast：16
-        s4_rewards：6
-        s4_rewards_shen：6
-        s4_rewards_huo：6
-        s4_rewards_su：6
-        s4_rewards_question：6
-        s4_rewards_empty：6
-        s5_question：24
-        s6_begin：4
-        s6_begin_huo：1
-        s6_begin_su：1
-        s6_begin_detective：2
+        s1_wake：10
+        s2_meet：10
+        s2_tea：10
+        s3_broadcast：20
+        s5_question：15
+        door_voices：6
         s6_reversal：10
         s8_reversal：16
         s10_steps：8
@@ -36,10 +26,10 @@
         talk_shen_menu：0
         talk_su_menu：0
     行动时长：
-        检视：7
+        检视：0
         试验：17
-        协助：12
-        交谈：10
+        协助：0
+        交谈：0
         声路：24
         重演：29
         答辩：10
