@@ -159,7 +159,7 @@
         "op": "line",
         "speaker": "铜口",
         "mood": "",
-        "text": "一袋银元，护不住身边的人，沈师傅。超越卡诺循环的那一张，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。",
+        "text": "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。超越卡诺循环的那一张，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。",
         "voice_clip": "",
         "line_id": "s3_broadcast.021"
       },
@@ -295,7 +295,7 @@
         "mood": "",
         "text": "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。",
         "voice_clip": "",
-        "line_id": "s5_question.015"
+        "line_id": "s5_question.017"
       },
       {
         "op": "call",
@@ -360,20 +360,45 @@
         "line_id": "exp_E1.001"
       },
       {
-        "op": "line",
-        "speaker": "",
-        "mood": "",
-        "text": "（门纹丝不动。门的另一侧，横闩卡得很死。）",
-        "voice_clip": "",
-        "line_id": "exp_E1.002"
-      },
-      {
-        "op": "line",
-        "speaker": "侦探（心声）",
-        "mood": "",
-        "text": "外面还有一道。",
-        "voice_clip": "",
-        "line_id": "exp_E1.003"
+        "op": "if",
+        "condition": {
+          "op": "call",
+          "name": "flag",
+          "args": [
+            {
+              "op": "literal",
+              "value": "door_open"
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（门是开着的。内闩仍在门上。）",
+            "voice_clip": "",
+            "line_id": "exp_E1.open.001"
+          }
+        ],
+        "else": [
+          {
+            "op": "line",
+            "speaker": "",
+            "mood": "",
+            "text": "（门纹丝不动。门的另一侧，横闩卡得很死。）",
+            "voice_clip": "",
+            "line_id": "exp_E1.002"
+          },
+          {
+            "op": "line",
+            "speaker": "侦探（心声）",
+            "mood": "",
+            "text": "外面还有一道。",
+            "voice_clip": "",
+            "line_id": "exp_E1.003"
+          }
+        ]
       },
       {
         "op": "line",
@@ -703,7 +728,7 @@
         "op": "line",
         "speaker": "沈鼎",
         "mood": "",
-        "text": "给人倒茶，手比嘴快。谁要几勺，我手里有数。",
+        "text": "给人倒茶我向来不问，看一眼就知道放几勺。",
         "voice_clip": "",
         "line_id": "help_E9.003"
       },
@@ -1387,7 +1412,7 @@
         "op": "line",
         "speaker": "霍铎",
         "mood": "",
-        "text": "……像拆机器。拆开看了，就装不回原样。",
+        "text": "……带着。行。我听见了。",
         "voice_clip": "",
         "line_id": "recall_shown_huo.002"
       },
@@ -1422,7 +1447,7 @@
             "op": "line",
             "speaker": "霍铎",
             "mood": "",
-            "text": "代价我听见了。我自己担。",
+            "text": "那句话我听见了。……我还是想看看。",
             "voice_clip": "",
             "line_id": "recall_touch_huo.002"
           }
@@ -1627,7 +1652,7 @@
         "op": "line",
         "speaker": "沈鼎",
         "mood": "",
-        "text": "带着此地。……这种买卖，跑江湖的都认得。",
+        "text": "带着此地？……听着像卖身契。你说清楚点。",
         "voice_clip": "",
         "line_id": "recall_shown_shen.002"
       },
@@ -1846,7 +1871,7 @@
                 "op": "line",
                 "speaker": "侦探",
                 "mood": "",
-                "text": "不碰。我想知道的事，自己查。",
+                "text": "先放着。",
                 "voice_clip": "",
                 "line_id": "recall_ask_detective.006"
               },
@@ -3260,7 +3285,7 @@
                 "op": "line",
                 "speaker": "沈鼎",
                 "mood": "",
-                "text": "我去看看杯底。谁喝过什么，杯子会说。",
+                "text": "我去看看杯底，糖渍还在不在。",
                 "voice_clip": "",
                 "line_id": "talk_shen_menu.034"
               },
@@ -3462,7 +3487,7 @@
                     "op": "line",
                     "speaker": "沈鼎",
                     "mood": "",
-                    "text": "你们的口味，我记在手上，没记在脑子里。",
+                    "text": "你们谁喝几勺糖，我一倒茶手上就有数。可脑子里，一个都想不起来。",
                     "voice_clip": "",
                     "line_id": "talk_shen_menu.024"
                   },
@@ -3550,7 +3575,7 @@
                             "op": "line",
                             "speaker": "沈鼎",
                             "mood": "",
-                            "text": "可喂罐子的是我，喝茶的是谁，罐子不说。",
+                            "text": "罐子是我喂的，没错。可跟谁一起喝的茶，我想不起来。",
                             "voice_clip": "",
                             "line_id": "topic.早已相熟.005"
                           }
@@ -4702,7 +4727,7 @@
         "op": "line",
         "speaker": "霍铎",
         "mood": "",
-        "text": "……我的手认得这块石板。",
+        "text": "……这块石板，我一拿起来，就知道该搁在桌上哪儿。",
         "voice_clip": "",
         "line_id": "s8_reversal.003"
       },
@@ -4750,7 +4775,7 @@
         "op": "line",
         "speaker": "侦探（心声）",
         "mood": "",
-        "text": "今早铜口说，诸位初涉斯地。……字面上，它没说错。初来乍到的，是今早醒过来的这几个我们。",
+        "text": "今早铜口说，诸位初涉斯地。它没说我们是昨天才到的。",
         "voice_clip": "",
         "line_id": "s8_reversal.009"
       },
@@ -4944,7 +4969,7 @@
         "op": "line",
         "speaker": "铜口",
         "mood": "",
-        "text": "……他要的，是诸位活下去。",
+        "text": "……他要的，是诸位今早还醒得过来。",
         "voice_clip": "",
         "line_id": "answer_ok3.002"
       },
@@ -4972,7 +4997,7 @@
         "op": "line",
         "speaker": "铜口",
         "mood": "",
-        "text": "信任，要有来处。",
+        "text": "阁下与霍先生，看来不是今早才认识。",
         "voice_clip": "",
         "line_id": "answer_ok4.001"
       },
@@ -5386,7 +5411,7 @@
                 "op": "line",
                 "speaker": "铜口",
                 "mood": "",
-                "text": "信任，要有来处。阁下与他的来处，在哪里？",
+                "text": "阁下信他。凭什么？今早你们才互报了姓名。",
                 "voice_clip": "",
                 "line_id": "answer_wrong_say.004"
               }
@@ -5525,7 +5550,7 @@
             "op": "line",
             "speaker": "卢西安",
             "mood": "",
-            "text": "卢西安，写诗的。隔着一扇门说话，总像隔着一页没裁开的书——如今裁开了。",
+            "text": "卢西安，写诗的。刚才隔着门板跟你说话的，就是我。",
             "voice_clip": "",
             "line_id": "s10_open.023"
           },
@@ -5677,7 +5702,7 @@
             "op": "line",
             "speaker": "苏泠",
             "mood": "",
-            "text": "那个声音……我还记得它。它现在也记得我了。",
+            "text": "那个声音……我想起来一点。现在耳朵里好像还有。",
             "voice_clip": "",
             "line_id": "s10_open.005"
           }
@@ -6764,7 +6789,7 @@
         "op": "line",
         "speaker": "顾平章（心声）",
         "mood": "",
-        "text": "老朽记得上了船。再往后，像一卷被虫蛀断的书。",
+        "text": "老朽记得上了船。再往后，就记不起了。",
         "voice_clip": "",
         "line_id": "opening_gu.003"
       },
@@ -6772,7 +6797,7 @@
         "op": "line",
         "speaker": "顾平章（心声）",
         "mood": "",
-        "text": "断就断了。先不去猜它。",
+        "text": "枕边这摞拓片，是哪里的碑？",
         "voice_clip": "",
         "line_id": "opening_gu.004"
       },
@@ -7002,7 +7027,7 @@
         "op": "line",
         "speaker": "伊莲娜（心声）",
         "mood": "",
-        "text": "脚尖自己绷了一下，像要起步。比我还记得。",
+        "text": "脚尖自己绷了一下，像要起步。",
         "voice_clip": "",
         "line_id": "opening_elena.004"
       },
@@ -7086,7 +7111,7 @@
         "op": "line",
         "speaker": "维罗妮卡（心声）",
         "mood": "",
-        "text": "最后的记录是上船。之后没有数据。",
+        "text": "最后记得的事：上船。之后的，一件也想不起来。",
         "voice_clip": "",
         "line_id": "opening_veronica.003"
       },
@@ -7178,7 +7203,7 @@
         "op": "line",
         "speaker": "玛格丽特（心声）",
         "mood": "",
-        "text": "我记得上船。别的，像图纸被人裁掉了一角。",
+        "text": "我记得上船。之后的事，一点也想不起来。",
         "voice_clip": "",
         "line_id": "opening_margaret.003"
       },
@@ -7294,7 +7319,7 @@
         "op": "line",
         "speaker": "",
         "mood": "",
-        "text": "（男声：“门上的规程你也念过：查明事故经过之前，不得开启。墨迹未干，这一句，对门外的人也作数。”）",
+        "text": "（男声：“我们那扇门里头也贴着一张，一字不差：查明事故经过之前，不得开启。”）",
         "voice_clip": "",
         "line_id": "door_voices.006"
       },
@@ -7302,7 +7327,7 @@
         "op": "line",
         "speaker": "",
         "mood": "",
-        "text": "（女声：“规矩是写给信规矩的人的。”）",
+        "text": "（女声：“那张纸贴在门里头。我在门外头。”）",
         "voice_clip": "",
         "line_id": "door_voices.007"
       },
@@ -7363,7 +7388,7 @@
                 "op": "line",
                 "speaker": "",
                 "mood": "",
-                "text": "（男声：“她开了锁，不等于她偷了东西。这一句，我会一直说下去。”）",
+                "text": "（男声：“锁是她开的。可柜里少了什么，到现在谁也说不出来。”）",
                 "voice_clip": "",
                 "line_id": "door_voices.013"
               },
@@ -7392,7 +7417,7 @@
                 "op": "line",
                 "speaker": "",
                 "mood": "",
-                "text": "（男声：“门开那一刻，再好好见一面。”）",
+                "text": "（男声：“等你们出来，我请诸位喝茶——如果这里找得到茶。”）",
                 "voice_clip": "",
                 "line_id": "door_voices.016"
               },
@@ -7403,6 +7428,466 @@
             ]
           }
         ]
+      }
+    ],
+    "quer_opens": [
+      {
+        "op": "line",
+        "speaker": "",
+        "mood": "",
+        "text": "（门外响起一串细碎的金属声，很轻，很快。停了一下，又响了一串。）",
+        "voice_clip": "",
+        "line_id": "quer_opens.001"
+      },
+      {
+        "op": "line",
+        "speaker": "",
+        "mood": "",
+        "text": "（外侧的横闩“咔”地一声抬了起来。门被拉开一条缝，一只手扒住了门沿。）",
+        "voice_clip": "",
+        "line_id": "quer_opens.002"
+      },
+      {
+        "op": "line",
+        "speaker": "",
+        "mood": "",
+        "text": "（门缝里探进来一个瘦小的姑娘，黑短发乱糟糟的，右眉上一道浅疤，手里捏着一根弯过的细铁丝。）",
+        "voice_clip": "",
+        "line_id": "quer_opens.003"
+      },
+      {
+        "op": "line",
+        "speaker": "雀儿",
+        "mood": "",
+        "text": "雀儿。甲区的。……等到晌午了，你们一直没出来，外头还在落灰。那闩不难，四下。",
+        "voice_clip": "",
+        "line_id": "quer_opens.004"
+      },
+      {
+        "op": "line",
+        "speaker": "",
+        "mood": "",
+        "text": "（她身后跟进来一个年轻人，浅栗色的卷发垂到领口，酒红短斗篷。他欠了欠身，脸上有点无奈。）",
+        "voice_clip": "",
+        "line_id": "quer_opens.005"
+      },
+      {
+        "op": "line",
+        "speaker": "卢西安",
+        "mood": "",
+        "text": "卢西安，写诗的。我拦过她——拦了一上午，韵脚都拦没了。",
+        "voice_clip": "",
+        "line_id": "quer_opens.006"
+      },
+      {
+        "op": "line",
+        "speaker": "铜口",
+        "mood": "",
+        "text": "门开了。题还在。",
+        "voice_clip": "",
+        "line_id": "quer_opens.007"
+      },
+      {
+        "op": "line",
+        "speaker": "铜口",
+        "mood": "",
+        "text": "廊都关着，外头只有一座落灰的厅。答案备好了，仍到铜口来。",
+        "voice_clip": "",
+        "line_id": "quer_opens.008"
+      },
+      {
+        "op": "line",
+        "speaker": "雀儿",
+        "mood": "",
+        "text": "（朝铜口翻了个白眼）听见没，它也没说不许开。",
+        "voice_clip": "",
+        "line_id": "quer_opens.009"
+      },
+      {
+        "op": "line",
+        "speaker": "侦探（心声）",
+        "mood": "",
+        "text": "门是开了。铜口那道题，还得答。",
+        "voice_clip": "",
+        "line_id": "quer_opens.010"
+      },
+      {
+        "op": "jump",
+        "target": "END"
+      }
+    ],
+    "talk_quer": [
+      {
+        "op": "if",
+        "condition": {
+          "op": "call",
+          "name": "flag",
+          "args": [
+            {
+              "op": "literal",
+              "value": "met_quer"
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "雀儿",
+            "mood": "",
+            "text": "又来了？",
+            "voice_clip": "",
+            "line_id": "talk_quer.001"
+          }
+        ],
+        "else": [
+          {
+            "op": "call",
+            "name": "set_flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "met_quer"
+              }
+            ]
+          },
+          {
+            "op": "line",
+            "speaker": "雀儿",
+            "mood": "",
+            "text": "（蹲在门厅，正拿铁丝拨弄那道内闩）别站我背后。说吧。",
+            "voice_clip": "",
+            "line_id": "talk_quer.002"
+          }
+        ]
+      },
+      {
+        "op": "jump",
+        "target": "talk_quer_menu"
+      }
+    ],
+    "talk_quer_menu": [
+      {
+        "op": "choices",
+        "options": [
+          {
+            "id": "talk_quer_menu:choice:0",
+            "label": "这扇门的闩，你看得出什么？",
+            "label_id": "talk_quer_menu.001",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "外头那道闩是从外头落的。落得准，手不重。我挑它用了四下，不是三下——吹牛了。",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.002"
+              },
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "里头这道是插的，插得正。谁插的我看不出来，闩又不记名字。",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.003"
+              },
+              {
+                "op": "jump",
+                "target": "talk_quer_menu"
+              }
+            ]
+          },
+          {
+            "id": "talk_quer_menu:choice:1",
+            "label": "你们那道题，后来怎么样了？",
+            "label_id": "talk_quer_menu.004",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "答对了。沃德说柜锁是我开的，没错。他接着就说我偷了东西。",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.005"
+              },
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "……我不记得我为什么会有那把钥匙。",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.006"
+              },
+              {
+                "op": "jump",
+                "target": "talk_quer_menu"
+              }
+            ]
+          },
+          {
+            "id": "talk_quer_menu:choice:2",
+            "label": "你怎么不等我们答完？",
+            "label_id": "talk_quer_menu.007",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "门里的人一上午不出声，门外一直落灰。换你，你等？",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.008"
+              },
+              {
+                "op": "line",
+                "speaker": "雀儿",
+                "mood": "",
+                "text": "要骂就骂。反正闩我是挑了。",
+                "voice_clip": "",
+                "line_id": "talk_quer_menu.009"
+              },
+              {
+                "op": "jump",
+                "target": "talk_quer_menu"
+              }
+            ]
+          },
+          {
+            "id": "talk_quer_menu:choice:3",
+            "label": "没事了。",
+            "label_id": "talk_quer_menu.010",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "jump",
+                "target": "END"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "talk_lucian": [
+      {
+        "op": "if",
+        "condition": {
+          "op": "call",
+          "name": "flag",
+          "args": [
+            {
+              "op": "literal",
+              "value": "met_lucian"
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "卢西安",
+            "mood": "",
+            "text": "嗯？",
+            "voice_clip": "",
+            "line_id": "talk_lucian.001"
+          }
+        ],
+        "else": [
+          {
+            "op": "call",
+            "name": "set_flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "met_lucian"
+              }
+            ]
+          },
+          {
+            "op": "line",
+            "speaker": "卢西安",
+            "mood": "",
+            "text": "（他正对着门内侧贴的规程看）这印红，是导师的。",
+            "voice_clip": "",
+            "line_id": "talk_lucian.002"
+          }
+        ]
+      },
+      {
+        "op": "jump",
+        "target": "talk_lucian_menu"
+      }
+    ],
+    "talk_lucian_menu": [
+      {
+        "op": "choices",
+        "options": [
+          {
+            "id": "talk_lucian_menu:choice:0",
+            "label": "门上的规程。",
+            "label_id": "talk_lucian_menu.001",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "line",
+                "speaker": "卢西安",
+                "mood": "",
+                "text": "这张规程说，查明之前不得开启。她用铁丝挑了四下。",
+                "voice_clip": "",
+                "line_id": "talk_lucian_menu.002"
+              },
+              {
+                "op": "line",
+                "speaker": "卢西安",
+                "mood": "",
+                "text": "沃德多半要说她违了规。我倒觉得她是怕你们在里头出事——她嘴上不会这么说。",
+                "voice_clip": "",
+                "line_id": "talk_lucian_menu.003"
+              },
+              {
+                "op": "jump",
+                "target": "talk_lucian_menu"
+              }
+            ]
+          },
+          {
+            "id": "talk_lucian_menu:choice:1",
+            "label": "昨夜你记得什么吗？",
+            "label_id": "talk_lucian_menu.004",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "line",
+                "speaker": "卢西安",
+                "mood": "",
+                "text": "上船。然后一句诗念到一半，韵脚找不着了。再往后，想不起来。",
+                "voice_clip": "",
+                "line_id": "talk_lucian_menu.005"
+              },
+              {
+                "op": "jump",
+                "target": "talk_lucian_menu"
+              }
+            ]
+          },
+          {
+            "id": "talk_lucian_menu:choice:2",
+            "label": "没事了。",
+            "label_id": "talk_lucian_menu.006",
+            "condition": null,
+            "lock_hint": "",
+            "body": [
+              {
+                "op": "jump",
+                "target": "END"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "s10_open_early": [
+      {
+        "op": "line",
+        "speaker": "铜口",
+        "mood": "",
+        "text": "……诸位答完了。",
+        "voice_clip": "",
+        "line_id": "s10_open_early.001"
+      },
+      {
+        "op": "if",
+        "condition": {
+          "op": "or",
+          "args": [
+            {
+              "op": "gt",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "hooks",
+                  "args": [
+                    {
+                      "op": "literal",
+                      "value": "su"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "knows",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "su"
+                },
+                {
+                  "op": "literal",
+                  "value": "侦探重演吻合"
+                }
+              ]
+            }
+          ]
+        },
+        "then": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "你昨夜没听我的。（她停了很久，才把目光从门上收回来）……你听对了。",
+            "voice_clip": "",
+            "line_id": "s10_open_early.002"
+          }
+        ],
+        "else": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "（她看着那扇早就开着的门）……外面，真的没有人。",
+            "voice_clip": "",
+            "line_id": "s10_open_early.003"
+          }
+        ]
+      },
+      {
+        "op": "line",
+        "speaker": "雀儿",
+        "mood": "",
+        "text": "（靠在门框上）答完了？那走吧。灰停了没停，我替你们看了一上午。",
+        "voice_clip": "",
+        "line_id": "s10_open_early.004"
+      },
+      {
+        "op": "line",
+        "speaker": "卢西安",
+        "mood": "",
+        "text": "答完了就好。沃德那边，我替她去说。",
+        "voice_clip": "",
+        "line_id": "s10_open_early.005"
+      },
+      {
+        "op": "line",
+        "speaker": "铜口",
+        "mood": "",
+        "text": "诸位请。",
+        "voice_clip": "",
+        "line_id": "s10_open_early.006"
+      },
+      {
+        "op": "jump",
+        "target": "END"
       }
     ]
   }

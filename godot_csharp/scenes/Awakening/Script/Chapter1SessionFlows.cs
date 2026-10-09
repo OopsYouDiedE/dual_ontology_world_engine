@@ -138,10 +138,13 @@ public sealed partial class Chapter1Session
                 _out.Add(StageOp("camera", ("to", new Ev { ["anchor"] = "终局镜头" }), ("seconds", 0.0)));
                 break;
             case "door_open":
+                if (Session.Has("clock", "door_open_minutes")) break;
+                _content.RecordDoorOpen();
                 Sfx("door_unbar", 0);
                 Music("main_theme", 4.0);
                 _out.Add(StageOp("prop", ("id", "isolation_door"), ("state", "open")));
                 break;
+            case "enter": return EnterActor(A(0), A(1));
             case "redraw": _out.Add(StageOp("prop", ("id", "traces"), ("state", "refresh"))); break;
             case "su_approach": return WalkTo("su", new Ev { ["near_actor"] = "detective", ["offsets"] = new object?[] { new object?[] { 34.0, 6.0 } } });
             case "save": SaveChapterEnd(A(0) == "true"); break;
@@ -152,6 +155,23 @@ public sealed partial class Chapter1Session
     }
 
     // ------------------------------------------------------------- staging --
+
+    private IEnumerable<Op> EnterActor(string who, string authoredRoom)
+    {
+        if (Has("entered_actors", who)) yield break;
+        var room = Content.GetProperty("ROOM_NAMES").EnumerateObject()
+            .Where(p => p.Name == authoredRoom || p.Value.GetString() == authoredRoom).Select(p => p.Name).FirstOrDefault();
+        if (string.IsNullOrEmpty(room) || Party.Contains(who))
+            throw new InvalidOperationException("Invalid field actor entry: " + who + ":" + authoredRoom);
+        var name = PersonName(who);
+        var sprite = Layout.GetProperty("dialogue_cast").GetProperty(name).GetString()!;
+        yield return new Await(StageOp("spawn", ("who", who), ("sprite", sprite),
+            ("to", new Ev { ["anchor"] = "enter_" + who + "_" + room })), false);
+        if (!WalkOk) throw new InvalidOperationException("Field actor entry failed: " + who);
+        Session.Set("entered_actors", who, room);
+        Session.Locate(who, room);
+        _world.LocateFieldResident(who, room);
+    }
 
     /// <summary>场面走位失败时就地站定，继续演出；依赖实际到达的动作另查 WalkOk。完成后归还占用。</summary>
     private IEnumerable<Op> WalkTo(string who, Ev to, double speed = 150.0)
@@ -217,6 +237,7 @@ public sealed partial class Chapter1Session
 
     private IEnumerable<Op> Summon(string who)
     {
+        if (!FieldPeople.Contains(who)) yield break;
         if (_helpInvites.Contains(who)) yield break;
         Claim(who);
         try
@@ -246,7 +267,8 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> Interact(string site, string target)
     {
         if (site.StartsWith("person:", StringComparison.Ordinal)) site = site[7..];
-        if (target != "" && Companions.Contains(target)) site = target;
+        if (target != "" && FieldPeople.Contains(target)) site = target;
+        if (Content.GetProperty("PERSON_NAMES").TryGetProperty(site, out _) && !FieldPeople.Contains(site)) yield break;
         var packet = _interaction.Interact(site);
         foreach (var command in packet.WorldCommands)
             yield return new Run(Command(command.Name, command.Arguments.Select(a => a?.ToString() ?? "").ToArray()));
@@ -365,6 +387,7 @@ public sealed partial class Chapter1Session
     private bool HandBusy(string who) => (F(who).Moving && !_dailyJobs.ContainsKey(who)) || LifeBusy(who);
     private bool CanCompareHand(string who)
     {
+        if (!Party.Contains(who)) return false;
         if (!AtHandShelf("detective")) return false;
         if (who == "detective") return true;
         return AtHandShelf(who) && F(who).Visible && !HandBusy(who);
@@ -387,6 +410,7 @@ public sealed partial class Chapter1Session
     /// <summary>谈话里请同伴到书架边比对：真实走路，暂停时停步，受阻即停。</summary>
     private IEnumerable<Op> InviteHand(string who)
     {
+        if (!Companions.Contains(who)) yield break;
         var name = ("人名", PersonName(who));
         if (!Has("examined", "E11") || !F(who).Visible || F(who).Distance > 56.0) { Aside(T("旁白·邀请距离")); yield break; }
         if (HandBusy(who) || _invites.Contains(who)) { Aside(T("旁白·正忙", name)); yield break; }
@@ -505,10 +529,12 @@ public sealed partial class Chapter1Session
 
     private IEnumerable<Op> Talk(string who)
     {
+        if (!FieldPeople.Contains(who)) yield break;
         PauseDaily();
         Face(who, "detective");
         Session.Remove("flags", "invite_hand_" + who);
         yield return new Run(PlayPlan(() => _content.BeginTalk(_world, who)));
+        if (!Companions.Contains(who)) yield break;
         if (Has("flags", "invite_hand_" + who))
         {
             Session.Remove("flags", "invite_hand_" + who);
@@ -526,7 +552,7 @@ public sealed partial class Chapter1Session
     private readonly HashSet<string> _helpInvites = new();
     private IEnumerable<Op> InviteHelp(string who, string id)
     {
-        if (!Has("examined", id) || Has("helped", id) || _invites.Contains(who)) yield break;
+        if (!Companions.Contains(who) || !Has("examined", id) || Has("helped", id) || _invites.Contains(who)) yield break;
         var site = Layout.GetProperty("sites").EnumerateArray().First(s => s.GetProperty("evidence").GetString() == id).GetProperty("id").GetString()!;
         ReleaseDaily(who, true);
         _invites.Add(who);

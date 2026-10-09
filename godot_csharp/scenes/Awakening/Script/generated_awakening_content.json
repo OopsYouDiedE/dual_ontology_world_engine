@@ -11,7 +11,9 @@
     "detective": "侦探",
     "huo": "霍铎",
     "shen": "沈鼎",
-    "su": "苏泠"
+    "su": "苏泠",
+    "quer": "雀儿",
+    "lucian": "卢西安"
   },
   "ACTOR_NODES": {
     "detective": "侦探",
@@ -1343,6 +1345,22 @@
     "person:su": {
       "kind": "person",
       "target": "su"
+    },
+    "quer": {
+      "kind": "person",
+      "target": "quer"
+    },
+    "person:quer": {
+      "kind": "person",
+      "target": "quer"
+    },
+    "lucian": {
+      "kind": "person",
+      "target": "lucian"
+    },
+    "person:lucian": {
+      "kind": "person",
+      "target": "lucian"
     }
   },
   "OWN_OBJECTS": {
@@ -1655,6 +1673,7 @@
     "结局·续章": "按 C 进入第二章；按 R 重新开始。",
     "结局·重开": "按 R 重新开始。",
     "提示·比对站位": "请在 R-05 架沿旁，与实际到场且有空的人逐人比对。",
+    "旁白·门外暂留": "外面只有一座落灰的厅。廊都关着。答完再出去。",
     "旁白·邀请距离": "走到同伴面前交谈，才能邀请他到 R-05 书架旁。",
     "旁白·正忙": "{人名}现在正忙，等他做完眼前的事，再当面邀请。",
     "旁白·已在架沿": "{人名}已在架沿旁；你也到这里，打开证物卡逐人比对。",
@@ -1768,7 +1787,7 @@
     "取舍·不碰·听劝": "你说别碰，那就不碰。",
     "取舍·不碰·自便": "让我自己拿主意……那就不碰。",
     "取舍·不碰·知守则": "铜口说，握久了就带着此地。我想要{想要}，可我不知道那意味着什么。",
-    "取舍·不碰": "这东西认得我。我不一定想认得它。",
+    "取舍·不碰": "我不想碰它。说不上为什么。",
     "取舍·犹豫": "想要{想要}……可碰了，会碰出什么来？",
     "取舍·无人可问": "……没人可问。放下吧。",
     "对照·未查": "你还没查过这里：{区域}还有东西没看过。",
@@ -2205,6 +2224,7 @@
   "STAGES": {
     "wake": {
       "enter": {},
+      "times": [],
       "walk": false,
       "examine": false,
       "notebook": false,
@@ -2220,6 +2240,7 @@
           "signal": "meeting"
         }
       },
+      "times": [],
       "walk": true,
       "daily": true,
       "examine": true,
@@ -2233,6 +2254,7 @@
     },
     "meeting": {
       "enter": {},
+      "times": [],
       "walk": false,
       "examine": false,
       "notebook": false,
@@ -2247,6 +2269,12 @@
           "flow": "门外的人"
         }
       },
+      "times": [
+        {
+          "minutes": 720,
+          "flow": "雀儿撬门"
+        }
+      ],
       "walk": true,
       "daily": true,
       "examine": true,
@@ -2257,6 +2285,7 @@
     },
     "playback": {
       "enter": {},
+      "times": [],
       "dorms": true,
       "walk": false,
       "examine": false,
@@ -2267,6 +2296,7 @@
     },
     "answer": {
       "enter": {},
+      "times": [],
       "dorms": true,
       "walk": false,
       "examine": false,
@@ -2277,6 +2307,7 @@
     },
     "finale": {
       "enter": {},
+      "times": [],
       "dorms": true,
       "walk": false,
       "examine": false,
@@ -2287,6 +2318,7 @@
     },
     "ended": {
       "enter": {},
+      "times": [],
       "walk": false,
       "examine": false,
       "notebook": false,
@@ -2384,12 +2416,27 @@
             "op": "or",
             "args": [
               {
-                "op": "call",
-                "name": "flag",
+                "op": "or",
                 "args": [
                   {
-                    "op": "literal",
-                    "value": "door_voices_heard"
+                    "op": "call",
+                    "name": "flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "door_open"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "door_voices_heard"
+                      }
+                    ]
                   }
                 ]
               },
@@ -3262,6 +3309,81 @@
         }
       ]
     },
+    "雀儿撬门": {
+      "steps": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "flag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "door_open"
+                  }
+                ]
+              },
+              {
+                "op": "not",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "dorm_out",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "甲区"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
+        },
+        {
+          "op": "show",
+          "scene": "@door_open"
+        },
+        {
+          "op": "set_flag",
+          "key": "door_open"
+        },
+        {
+          "op": "set_flag",
+          "key": "quer_opened"
+        },
+        {
+          "op": "show",
+          "scene": "@redraw"
+        },
+        {
+          "op": "show",
+          "scene": "@enter:quer:门厅"
+        },
+        {
+          "op": "show",
+          "scene": "@enter:lucian:门厅"
+        },
+        {
+          "op": "show",
+          "scene": "quer_opens"
+        },
+        {
+          "op": "show",
+          "scene": "@hud"
+        }
+      ]
+    },
     "终局": {
       "steps": [
         {
@@ -3283,6 +3405,37 @@
         {
           "op": "show",
           "scene": "@stage_actor:su:终局站位·su"
+        },
+        {
+          "op": "if",
+          "condition": {
+            "op": "call",
+            "name": "flag",
+            "args": [
+              {
+                "op": "literal",
+                "value": "quer_opened"
+              }
+            ]
+          },
+          "then": [
+            {
+              "op": "show",
+              "scene": "s10_open_early"
+            },
+            {
+              "op": "show",
+              "scene": "@save:false"
+            },
+            {
+              "op": "show",
+              "scene": "@ending:完成"
+            },
+            {
+              "op": "stop"
+            }
+          ],
+          "else": []
         },
         {
           "op": "show",
@@ -3831,7 +3984,7 @@
               "op": "line",
               "speaker": "沈鼎",
               "mood": "",
-              "text": "你们的口味，我记在手上，没记在脑子里。",
+              "text": "你们谁喝几勺糖，我一倒茶手上就有数。可脑子里，一个都想不起来。",
               "voice_clip": "",
               "line_id": "talk_shen_menu.024"
             },
@@ -3857,7 +4010,7 @@
               "op": "line",
               "speaker": "沈鼎",
               "mood": "",
-              "text": "可喂罐子的是我，喝茶的是谁，罐子不说。",
+              "text": "罐子是我喂的，没错。可跟谁一起喝的茶，我想不起来。",
               "voice_clip": "",
               "line_id": "topic.早已相熟.005"
             }

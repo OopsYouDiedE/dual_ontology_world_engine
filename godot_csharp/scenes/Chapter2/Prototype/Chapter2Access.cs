@@ -53,7 +53,9 @@ public sealed partial class Game
     }
     private void InitializeAccess()
     {
-        CalendarMinutes = Math.Max(SlotBoundary(FirstDay, Slot.Morning, false), Convert.ToInt32(Chapter.GetProgress("clock").GetValueOrDefault("game_minutes", 0)));
+        var clock = Chapter.GetProgress("clock");
+        CalendarMinutes = Math.Max(SlotBoundary(FirstDay, Slot.Morning, false),
+            Convert.ToInt32(clock.GetValueOrDefault("door_open_minutes", clock.GetValueOrDefault("game_minutes", 0))));
         RefreshAccess();
         foreach (var p in People)
         {

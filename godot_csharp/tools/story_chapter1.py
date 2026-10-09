@@ -816,7 +816,7 @@ def parse_flow(lines: list[Line], depth: int) -> list[dict[str, Any]]:
 
 
 def read_stage(name: str, body: list[Line]) -> dict[str, Any]:
-    stage: dict[str, Any] = {"enter": {}}
+    stage: dict[str, Any] = {"enter": {}, "times": []}
     flags = {"走动": "walk", "检视": "examine", "笔记本": "notebook", "宿舍开放": "dorms", "房间事件": "room_events", "日常": "daily"}
     for ln in body:
         key, value = split_pair(ln)
@@ -833,11 +833,22 @@ def read_stage(name: str, body: list[Line]) -> dict[str, Any]:
                 continue
             goto, _, signal = value.partition("，")
             stage["enter"][room] = {"stage": goto.strip().removeprefix("阶段 ").strip(), "signal": signal.strip().removeprefix("信号 ").strip()}
+        elif key.startswith("时刻 "):
+            minute_text = key[3:].strip()
+            if not minute_text.isdecimal() or not 0 <= int(minute_text) < 1440:
+                raise StoryError("阶段时刻须是 0 到 1439 的当日分钟。", ln.number)
+            minute = int(minute_text)
+            if not value.startswith("流程 ") or not value[3:].strip():
+                raise StoryError("阶段时刻须写成“时刻 <分钟>：流程 <名>”。", ln.number)
+            if any(item["minutes"] == minute for item in stage["times"]):
+                raise StoryError(f"阶段“{name}”重复声明时刻 {minute}。", ln.number)
+            stage["times"].append({"minutes": minute, "flow": value[3:].strip()})
         else:
             raise StoryError(f"阶段里不认识“{key}”。", ln.number)
     for key in flags.values():
         stage.setdefault(key, False)
     stage.setdefault("sites", [])
+    stage["times"].sort(key=lambda item: item["minutes"])
     return stage
 
 

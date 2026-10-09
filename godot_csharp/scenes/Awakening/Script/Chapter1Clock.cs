@@ -47,6 +47,28 @@ public sealed partial class AwakeningContentSession
     public void RecordReplayRun() => ConsumeAction("重演");
     public void RecordSoundTest() => ConsumeAction("声路");
 
+    public void RecordDoorOpen()
+    {
+        if (!Session.Has("clock", "door_open_minutes"))
+            Session.Set("clock", "door_open_minutes", GameMinutes);
+    }
+
+    /// <summary>Claim due stage flows once, including a boundary crossed by an action.</summary>
+    public string? TakeStageTimeFlow()
+    {
+        var stage = CurrentStage;
+        if (!Stage(stage).TryGetProperty("times", out var times)) return null;
+        foreach (var scheduled in times.EnumerateArray())
+        {
+            var minute = scheduled.GetProperty("minutes").GetInt32();
+            var key = stage + ":" + minute;
+            if (GameMinutes < minute || Session.Has("stage_times", key)) continue;
+            Session.Set("stage_times", key, true);
+            return scheduled.GetProperty("flow").GetString();
+        }
+        return null;
+    }
+
     /// <summary>Drain incremental timing entries for an input/observation trajectory.</summary>
     public IReadOnlyList<Chapter1Timing> TakeTiming()
     {

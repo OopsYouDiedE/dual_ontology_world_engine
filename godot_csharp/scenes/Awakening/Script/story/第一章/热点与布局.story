@@ -109,6 +109,18 @@
     触及：44.0
     标题：苏泠
 
+额外热点 quer
+    种类：person
+    目标：quer
+    触及：44.0
+    标题：雀儿
+
+额外热点 lucian
+    种类：person
+    目标：lucian
+    触及：44.0
+    标题：卢西安
+
 摆设 NoticeFrame
     贴图：notice_frame.png
     位置：400, 80
@@ -172,6 +184,8 @@
     huo：霍铎
     shen：沈鼎
     su：苏泠
+    quer：雀儿
+    lucian：卢西安
 
 演员节点
     detective：侦探

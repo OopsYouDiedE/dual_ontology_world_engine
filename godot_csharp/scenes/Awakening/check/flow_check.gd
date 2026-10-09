@@ -67,7 +67,7 @@ func _run() -> void:
 		"sound_test", "talk_huo", "talk_shen", "talk_su", "s8_reversal", "answer_open", "answer_q1", "answer_ok1", "answer_q2",
 		"answer_ok2", "answer_need_test", "answer_q3", "answer_ok3", "answer_q4", "answer_ok4",
 		"answer_wrong_show", "answer_wrong_say", "answer_pause", "s10_steps", "s10_prints", "s10_hand", "s10_open",
-		"replay_first", "replay_refused"]
+		"replay_first", "replay_refused", "quer_opens", "talk_quer", "talk_lucian", "s10_open_early"]
 	for who in ["su", "huo", "shen"]:
 		for part in ["recall_offer_", "recall_shown_", "recall_touch_", "recall_refuse_", "recall_hesitate_"]:
 			needed.append(part + who)
@@ -525,14 +525,20 @@ func _run() -> void:
 	check(fx.progress("flags").has("door_open") and fx.ended(), "门开：S11 结尾")
 	check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "门开：隔离门画面换为开启")
 	var finale := seen()
-	check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible and finale.contains("鞋底窄") and finale.contains("起居厅")
-		and not fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/LoungeCover").visible,
-		"门开：门外是起居厅，烟灰上留下一行窄底皮鞋印（恶魔显形才能抬闩，修订三·8、第五轮修订 6）")
+	var early: bool = fx.progress("flags").has("quer_opened")
+	check(not fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/LoungeCover").visible, "门开后移除门外遮罩")
+	if early:
+		check(not fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible
+			and finale.contains(fx.line_text("s10_open_early.001")) and finale.contains(fx.line_text("s10_open_early.004")),
+			"提前开门路线使用当前剧本收尾")
+	else:
+		check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints").visible
+			and finale.contains(fx.line_text("s10_prints.003")) and finale.contains(fx.line_text("s10_prints.001")), "通常开门路线显示源剧本的门外痕迹")
 	check(room_name(fx.player().position) == "门厅", "结局时地名显示“门厅”")
-	check(fx.progress("flags").has("asked_hand") and finale.contains(fx.line_text("s10_hand.006")) and not finale.contains("第二条"),
-		"细看过窄手印、又见门外窄底鞋印：可问“架上的手印，是你的吗？”，恶魔承认取物，不提“第二条”（修订四·5、第五轮修订 5）")
-	check(finale.contains("我却没有马上迈出去"), "门开时侦探有一句克制的心声（修订四·10）")
-	check(finale.contains(fx.line_text("s10_open.007")) and finale.contains(fx.line_text("s10_open.006")), "沈鼎（被钩）与苏泠（未被钩）的结尾台词按是否被钩变化（修订三·4）")
+	if not early:
+		check(fx.progress("flags").has("asked_hand") and finale.contains(fx.line_text("s10_hand.006")), "通常开门路线保留手印追问")
+		check(finale.contains(fx.line_text("s10_open.003")), "通常开门路线显示源剧本的侦探心声")
+		check(finale.contains(fx.line_text("s10_open.007")) and finale.contains(fx.line_text("s10_open.006")), "通常开门路线按回忆状态选择源台词")
 	var ending_text := fx.modal_text() + "\n" + "\n".join(host.ui._modal_event.get("rows", []))
 	check(ending_text.contains("想起了一些事的人：沈鼎") and ending_text.contains("没有往下想的：你自己、霍铎、苏泠"), "结局列出取回者与没有往下想的人")
 	check(FileAccess.file_exists("user://chapter1_end.json") and FileAccess.get_modified_time("user://chapter1_end.json") >= int(end_started) - 1,

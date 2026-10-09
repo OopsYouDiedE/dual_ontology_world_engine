@@ -138,6 +138,7 @@ func context() -> Dictionary:
 		for id in sites:
 			if not sites[id].has("person") and actor.position.distance_to(sites[id].point) <= NEAR_SITE_RADIUS:
 				near.append(id)
+		if adapter.has_method("near_doorway") and adapter.near_doorway(actor.position): near.append("doorway")
 		facts[key] = {
 			"room": adapter.room_of(actor.position), "entered": adapter.entered_room(actor.position),
 			"room_name": adapter.room_name(actor.position), "visible": actor == player or (actor.visible and in_sight(actor.position)),
@@ -821,6 +822,16 @@ func _stage(ev: Dictionary) -> void:
 	var actor := _actor(who)
 	match str(ev.op):
 		"walk": _op_walk(ev)
+		"spawn":
+			if actor == null: actor = _make_actor(who, str(ev.sprite))
+			var point = _target_point(ev.to, actor)
+			if point == null:
+				_ack(ev, {"ok": false, "reason": "missing_anchor"})
+				return
+			_cancel_motion(actor)
+			actor.position = point
+			actor.pose("idle", "front")
+			_ack(ev, {})
 		"place":
 			if actor == null:
 				_ack(ev, {"ok": false})

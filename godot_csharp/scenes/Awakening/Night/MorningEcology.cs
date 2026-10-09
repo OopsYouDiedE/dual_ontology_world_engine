@@ -32,6 +32,7 @@ public sealed partial class MorningWorld
         public DailyStep[] DepartureSteps = [];
         public bool Departed;
         public bool DepartureComplete;
+        public bool FieldResident;
         public ActionExecution? Execution;
     }
 
@@ -219,7 +220,22 @@ public sealed partial class MorningWorld
         DetectiveControl = mode;
     }
 
-    private bool DailyControlled(DailyPerson person) => person.Hosted != Person.Detective || DetectiveControl == "simulation";
+    private bool DailyControlled(DailyPerson person) => !person.FieldResident
+        && (person.Hosted != Person.Detective || DetectiveControl == "simulation");
+
+    /// <summary>Bind a visiting resident to field geometry without joining the case party.</summary>
+    public void LocateFieldResident(string actor, string room)
+    {
+        var person = DailyActor(actor) ?? throw new ArgumentException("Unknown resident: " + actor);
+        if (person.Hosted is not null) throw new ArgumentException("Resident is already a case actor: " + actor);
+        if (!_dailySpaces.TryGetValue(room, out var space)) return;
+        if (!person.FieldResident) SuspendDaily(person);
+        person.FieldResident = true;
+        var spatial = person.Body.Get<SpatialProperty>()!;
+        if (ReferenceEquals(spatial.Space, space)) return;
+        spatial.Space = space;
+        _runtime.Sync();
+    }
     private bool DailyAllowed(DailyPerson person) => !person.DepartureComplete
         && (person.Hosted is null || _dailyStages.Contains(_dailyStage))
         && (person.AllowedStages is null || person.AllowedStages.Contains(_dailyStage))

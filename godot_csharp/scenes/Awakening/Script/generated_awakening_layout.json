@@ -168,6 +168,20 @@
       "target": "su",
       "reach": 44.0,
       "title": "苏泠"
+    },
+    "quer": {
+      "id": "quer",
+      "kind": "person",
+      "target": "quer",
+      "reach": 44.0,
+      "title": "雀儿"
+    },
+    "lucian": {
+      "id": "lucian",
+      "kind": "person",
+      "target": "lucian",
+      "reach": 44.0,
+      "title": "卢西安"
     }
   },
   "life_traces": [
@@ -254,6 +268,18 @@
     "终局镜头": [
       320,
       368
+    ],
+    "enter_quer_foyer": [
+      184,
+      368
+    ],
+    "enter_lucian_foyer": [
+      240,
+      432
+    ],
+    "doorway": [
+      144,
+      384
     ]
   },
   "objects": {
@@ -472,6 +498,22 @@
     "person:su": {
       "kind": "person",
       "target": "su"
+    },
+    "quer": {
+      "kind": "person",
+      "target": "quer"
+    },
+    "person:quer": {
+      "kind": "person",
+      "target": "quer"
+    },
+    "lucian": {
+      "kind": "person",
+      "target": "lucian"
+    },
+    "person:lucian": {
+      "kind": "person",
+      "target": "lucian"
     }
   },
   "props": [
@@ -628,9 +670,9 @@
     "沈鼎": "chef",
     "音乐家": "musician",
     "苏泠": "musician",
+    "雀儿": "thief",
     "卢西安": "poet",
     "顾平章": "archaeologist",
-    "雀儿": "thief",
     "沃德": "lawyer",
     "赛尔玛": "naturalist",
     "阮清越": "chessplayer",
@@ -641,6 +683,7 @@
     "玛格丽特": "architect",
     "茉拉": "doctor"
   },
+  "doorway_reach": 42.0,
   "click_stop_radius": 8.0,
   "hud_bar_height": 60.0,
   "click_repath_delay": 0.15,

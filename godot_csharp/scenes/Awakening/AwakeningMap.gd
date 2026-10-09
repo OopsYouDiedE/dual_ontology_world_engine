@@ -28,6 +28,7 @@ var player: CharacterBody2D
 var _seen: Dictionary = {}
 var _ink_grid: AStarGrid2D
 var _dorms_open := false
+var _isolation_open := false
 
 func setup() -> void:
 	layout = LAYOUT.get_meta("data")
@@ -85,6 +86,13 @@ func seen_cells() -> Dictionary: return _seen
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	_dorms_open = bool(snapshot.get("access", {}).get("dorms", false))
+	var opened := bool(snapshot.get("access", {}).get("isolation_open", false))
+	if opened != _isolation_open: set_prop("isolation_door", "open" if opened else "closed")
+	$ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints.visible = bool(snapshot.get("access", {}).get("door_prints", false))
+
+func near_doorway(point: Vector2) -> bool:
+	var doorway = anchor("doorway")
+	return doorway != null and point.distance_to(doorway) <= float(spatial.doorway_reach)
 
 ## RoomDoor：宿舍门是否对玩家开放（主人自己总能进）。
 func can_access_dorm(_owner: String) -> bool: return _dorms_open
@@ -132,11 +140,12 @@ func _build_props() -> void:
 func set_prop(id: String, state: String) -> void:
 	match id:
 		"isolation_door":
+			_isolation_open = state == "open"
 			var door := $ObjectsAndPeople/MechanicalIsolationDoor
 			for node in ["DoorFace", "LoungeCover", "LoungeCoverInner"]: door.get_node(node).visible = state != "open"
 			door.get_node("DoorGap").visible = state == "open"
 			var prints := door.get_node_or_null("DemonPrints")
-			if prints: prints.visible = state == "open"
+			if prints and state != "open": prints.visible = false
 		"traces":
 			decals.queue_redraw()
 		_:

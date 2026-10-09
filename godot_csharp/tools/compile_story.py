@@ -49,7 +49,7 @@ CALL_ARITY = {
 HOST_COMMANDS = {
     "name", "board", "investigate", "summon", "flash", "post", "sound", "music", "sfx", "lock", "unlock", "hud",
     "answerpick", "finale", "finale_prepare", "stage_actor", "stage_action", "door_open", "redraw", "su_approach", "save", "ending",
-    "aside", "consider", "finish", "posts",
+    "aside", "consider", "finish", "posts", "enter",
 }
 FLOW_HOOKS: set[str] = set()
 FLOW_PROVIDERS = {"协助者", "答辩步", "答辩裁决"}
@@ -171,6 +171,9 @@ def validate_rules(rules: dict[str, Any], scenes: set[str]) -> None:
     stages = rules.get("STAGES", {})
     flows = rules.get("FLOWS", {})
     for name, stage in stages.items():
+        for scheduled in stage.get("times", []):
+            if scheduled["flow"] not in flows:
+                raise ValueError(f"stage {name}: unknown timed flow {scheduled['flow']!r}")
         for room, target in stage["enter"].items():
             if "flow" in target:
                 if target["flow"] not in flows:
@@ -188,6 +191,33 @@ def validate_rules(rules: dict[str, Any], scenes: set[str]) -> None:
         for key in ("say_ok", "show_ok", "need_test"):
             if key in verdict:
                 validate_expr(_expression(verdict[key]), f"verdict {step}.{key}")
+
+
+def validate_actor_entries(source) -> None:
+    """Entry commands bind authored people, portraits, rooms and staging anchors."""
+    people = source.CONTENT_TABLES["PERSON_NAMES"]
+    rooms = source.CONTENT_TABLES["ROOM_NAMES"]
+
+    def visit(steps: list[dict[str, Any]], where: str) -> None:
+        for node in steps:
+            if node["op"] == "if":
+                visit(node["then"], where)
+                visit(node["else"], where)
+            elif node["op"] == "show" and node["scene"].startswith("@enter:"):
+                parts = node["scene"][1:].split(":")
+                if len(parts) != 3:
+                    raise ValueError(f"{where}: enter expects a person and a room")
+                _, who, room = parts
+                room = next((key for key, name in rooms.items() if name == room), room)
+                if who not in people or people[who] not in source.DIALOGUE_CAST:
+                    raise ValueError(f"{where}: enter requires a named dialogue actor: {who!r}")
+                if room not in rooms or f"enter_{who}_{room}" not in source.STAGING:
+                    raise ValueError(f"{where}: enter requires a room and staging anchor: {who}:{room}")
+                if source.STAGING[f"enter_{who}_{room}"] is None:
+                    raise ValueError(f"{where}: enter requires a coordinate pair")
+
+    for name, flow in source.RULES_DATA.get("FLOWS", {}).items():
+        visit(flow["steps"], "flow:" + name)
 
 
 def assign_choice_ids(entries: dict[str, list[dict[str, Any]]]) -> None:
@@ -411,6 +441,7 @@ def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> d
         validate_instructions(instructions, entry_id)
     content = content_data(source)
     validate_rules(source.RULES_DATA, set(document["entries"]))
+    validate_actor_entries(source)
     validate_clock(content["DAY_CLOCK"], set(document["entries"]))
     for opening in content.get("OPENINGS", []):
         if opening["scene"] not in document["entries"]:

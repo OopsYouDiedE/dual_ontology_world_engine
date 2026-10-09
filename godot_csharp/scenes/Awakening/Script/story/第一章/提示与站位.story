@@ -78,6 +78,9 @@
     终局站位·shen：270, 370
     终局站位·su：240, 404
     终局镜头：320, 368
+    enter_quer_foyer：184, 368
+    enter_lucian_foyer：240, 432
+    doorway：144, 384
 
 物品立绘
     E7：Slate
@@ -137,6 +140,7 @@
     E11d：随热点
 
 布局常量
+    doorway_reach：42.0
     click_stop_radius：8.0
     hud_bar_height：60.0
     click_repath_delay：0.15

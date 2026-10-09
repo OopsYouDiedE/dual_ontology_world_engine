@@ -47,6 +47,7 @@ public sealed partial class Chapter1Session : IChapterSession
         _jobs.Clear(); _uiOwner = null; _modal = null; _facts.Clear();
         _dialogueActive = _storyLock = _begun = false; _planDepth = 0;
         _dailyJobs.Clear(); _staged.Clear(); _invites.Clear(); _helpInvites.Clear(); _handWait.Clear(); _furnitureSpoken.Clear();
+        _doorwayNear = false;
         _currentRoom = ""; _lastSnapshot = ""; _now = 0; _asideUntil = 0; _witnessAfter = 0;
     }
 
@@ -68,6 +69,8 @@ public sealed partial class Chapter1Session : IChapterSession
     private string DetectiveName => (string)State["detective_name"];
     private bool ReplayOpen => State.GetValueOrDefault("replay_open") is true;
     private bool Has(string group, string key) => Session.Has(group, key);
+    private IEnumerable<string> Visitors => Session.GetProgress("entered_actors").Keys;
+    private IEnumerable<string> FieldPeople => Companions.Concat(Visitors);
     private static string T(string key, params (string, string)[] args) => Chapter1Data.Text(key, args);
     private static string PersonName(string who) => Chapter1Data.PersonName(who);
     private static Person PersonOf(string who) => (Person)Array.IndexOf(Names.PersonKeys, who);
@@ -77,6 +80,7 @@ public sealed partial class Chapter1Session : IChapterSession
     private double _now, _asideUntil, _witnessAfter;
     private string _currentRoom = "";
     private readonly HashSet<string> _furnitureSpoken = new(StringComparer.Ordinal);
+    private bool _doorwayNear;
 
     // ---------------------------------------------------------- context --
 
@@ -109,6 +113,12 @@ public sealed partial class Chapter1Session : IChapterSession
         }
         foreach (var (site, room) in Map(context, "site_rooms")) Session.Place(site, room?.ToString() ?? "");
         foreach (var who in Party) if (_facts.TryGetValue(who, out var fact)) Locate(who, fact.Room);
+        foreach (var who in Visitors)
+            if (_facts.TryGetValue(who, out var fact))
+            {
+                Session.Locate(who, fact.Room);
+                _world.LocateFieldResident(who, fact.Room);
+            }
     }
 
     private void Locate(string who, string room)
@@ -348,6 +358,15 @@ public sealed partial class Chapter1Session : IChapterSession
         foreach (var job in _jobs) if (job.Blocked is Sleep) job.Remaining -= delta;
         Triggers();
         Daily(delta);
+        if (!FieldFree || _uiModal != "" || _jobs.Count > 0) return;
+        if (_content.TakeStageTimeFlow() is { } flow)
+        {
+            Start(PlayPlan(() => _content.StartFlow(_world, flow)));
+            return;
+        }
+        var nearDoor = Has("flags", "door_open") && F("detective").Near.Contains("doorway");
+        if (nearDoor && !_doorwayNear) Aside(T("旁白·门外暂留"));
+        _doorwayNear = nearDoor;
     }
 
     /// <summary>原宿主每帧的 _check_triggers：按脚下实际室内地面判定集会与进房。</summary>
@@ -486,13 +505,14 @@ public sealed partial class Chapter1Session : IChapterSession
                 ["notebook"] = StageFlag("notebook"), ["manuscript"] = ReplayOpen, ["campus"] = false, ["wait"] = false,
                 ["examine"] = StageFlag("examine"),
             },
-            ["access"] = new Ev { ["dorms"] = StageFlag("dorms") },
+            ["access"] = new Ev { ["dorms"] = StageFlag("dorms"), ["isolation_open"] = Has("flags", "door_open"),
+                ["door_prints"] = Has("flags", "door_open") && !Has("flags", "quer_opened") },
             ["sites"] = Sites(),
-            ["people"] = Companions.Select(who => (object?)new Ev
+            ["people"] = FieldPeople.Select(who => (object?)new Ev
             {
                 ["key"] = who, ["name"] = PersonName(who), ["title"] = PersonName(who), ["present"] = true,
             }).ToArray(),
-            ["pinned"] = Party.Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || _handWait.Contains(who) || LifeBusy(who)).Cast<object?>().ToArray(),
+            ["pinned"] = Party.Concat(Visitors).Where(who => _staged.ContainsKey(who) || _invites.Contains(who) || _handWait.Contains(who) || LifeBusy(who)).Cast<object?>().ToArray(),
             ["cast"] = JsonSerializer.Deserialize<Dictionary<string, string>>(Layout.GetProperty("dialogue_cast").GetRawText()),
             ["notebook"] = Notebook(),
             ["replay"] = ReplaySnapshot(),
@@ -520,9 +540,11 @@ public sealed partial class Chapter1Session : IChapterSession
         foreach (var extra in Layout.GetProperty("extra_sites").EnumerateObject())
         {
             var kind = extra.Value.GetProperty("kind").GetString();
-            var id = kind == "person" ? "person:" + extra.Value.GetProperty("target").GetString() : extra.Name;
+            var target = extra.Value.GetProperty("target").GetString()!;
+            var id = kind == "person" ? "person:" + target : extra.Name;
             result[id] = new Ev { ["title"] = extra.Value.GetProperty("title").GetString(), ["enabled"] = Enabled(extra.Name),
                 ["new"] = kind == "board" && !Has("flags", "board_read") };
+            if (kind == "person" && !FieldPeople.Contains(target)) ((Ev)result[id]!)["enabled"] = false;
         }
         return result;
     }
