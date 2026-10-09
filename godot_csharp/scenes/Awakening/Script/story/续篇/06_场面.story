@@ -12,8 +12,8 @@
         铜口：灰落着的时候，廊里不养人。连廊的风门，我已经关上了。风起之后，我一条一条打开。 [#id=chapter2.arrival.006]
         铜口：在那之前，诸位请留在生活翼。水与炉火照常。 [#id=chapter2.arrival.007]
         霍铎：（推了推北门）……配重压死了。从里面打不开。 [#id=chapter2.arrival.008]
-        雀儿：我试过了。这门不是锁着，是压着。我开不了的门，不多。 [#id=chapter2.arrival.009]
-        卢西安：那么今夜，整座岛上，我们只剩这一座厅。——也好。人少的地方，名字记得住。 [#id=chapter2.arrival.010]
+        雀儿：我试过了。这门不是锁着，是配重压着。铁丝没用。 [#id=chapter2.arrival.009]
+        卢西安：那么今夜，我们只能在这座厅里待着了。——诸位不嫌弃的话，名字我先记一记。 [#id=chapter2.arrival.010]
 
     场面 meet_jia
         事件：begin.meet_jia
@@ -24,7 +24,7 @@
         雀儿：见过了。你接着念你的章程。 [#id=chapter2.meet_jia.003]
         沃德：我们那道题，问名录库的柜锁是谁开的。答案是她。柜锁开过，谁取过什么，须查明白。依据规程，查明之前，钥匙由我保管。 [#id=chapter2.meet_jia.004]
         卢西安：答案是她，没错。可题只问了谁开的，没问为什么开。先生把后半句，补得太快了。 [#id=chapter2.meet_jia.005]
-        雀儿：你的眼睛，早替你补完了。 [#emotion=angry] [#id=chapter2.meet_jia.006]
+        雀儿：他那眼神，从早上起就把我当贼看。 [#emotion=angry] [#id=chapter2.meet_jia.006]
         （书架前的老人慢慢转过身来。长髯过胸，圆框眼镜，宝蓝长衫外罩一件黑呢斗篷。） [#id=chapter2.meet_jia.007]
         顾平章：老朽顾平章，读碑的。……二位且慢吵。名录库里立着十六只匣子，每只贴着一个名字。老朽隔着门缝看见的。 [#id=chapter2.meet_jia.008]
         侦探（心声）：十六只。我们四个，甲区四个。……对面那两扇还闩着的门里，还有八个人。 [#id=chapter2.meet_jia.009]
@@ -39,9 +39,9 @@
         （雀儿站在备餐间门口，没进来。） [#id=chapter2.supper.003]
         沈鼎：杵那儿干嘛？进来，碗多着呢。（他盛了满满一碗推到她面前，又往里多压了一勺） [#id=chapter2.supper.004]
         雀儿：……我是甲区的。 [#id=chapter2.supper.005]
-        沈鼎：饭桌不分甲区乙区。吃。 [#emotion=warm] [#id=chapter2.supper.006]
+        沈鼎：管你哪个区，到了我灶边就得吃饱。吃。 [#emotion=warm] [#id=chapter2.supper.006]
         雀儿：（低头扒了一口，过了很久才说）……谢了。 [#id=chapter2.supper.007]
-        侦探（心声）：多压的那一勺，跟早上那杯没放糖的茶一样。顺手。 [#id=chapter2.supper.008]
+        侦探（心声）：沈鼎多压的那一勺，压得很熟练，像早就知道她吃得多。 [#id=chapter2.supper.008]
 
     # ---- 第二日：丙区清晨出门，北廊开通上首课，丁区午间出门 ----
 
@@ -56,7 +56,7 @@
         莫兰：（坐在窗台上，速写本摊在膝头，没有抬头）……莫兰。窗外的灰，是铅白里掺了一点紫。 [#id=chapter2.meet_bing.005]
         赛尔玛：别介意，我们组昨晚吵过。题问的是谁把人留在了沉静室里。答案是她。（朝阮清越扬了扬下巴） [#id=chapter2.meet_bing.006]
         伊莲娜：（没有看阮清越）答案是对的。 [#id=chapter2.meet_bing.007]
-        侦探（心声）：答案是对的。可她说这句话的时候，扶墙的手在抖。 [#id=chapter2.meet_bing.008]
+        侦探（心声）：她扶着墙的那只手，在抖。 [#id=chapter2.meet_bing.008]
 
     场面 gather
         事件：begin.gather
@@ -122,8 +122,8 @@
         时段：中午
         铜口：东廊已开：后勤院、粮仓、诊疗所。配给台午间开粮。 [#id=chapter2.meet_ding.001]
         （丁区的门，就在这时开了。） [#id=chapter2.meet_ding.002]
-        茉拉：（提着急救皮箱，大步穿过起居厅）茉拉，医生。管粮的在哪？丙区有个孩子在发烧。 [#id=chapter2.meet_ding.003]
-        贝尔特朗：（跟在她身后，深绿猎装，左肩一块皮垫）贝尔特朗，丁区。她往哪儿去，我就护到哪儿。 [#id=chapter2.meet_ding.004]
+        茉拉：（提着急救皮箱，大步穿过起居厅）茉拉，医生。刚才隔着门听见有人咳得厉害。谁病了？ [#id=chapter2.meet_ding.003]
+        贝尔特朗：（跟在她身后，深绿猎装，左肩一块皮垫）贝尔特朗，丁区。我跟着医生。 [#id=chapter2.meet_ding.004]
         玛格丽特：（腰上挂着卷尺，抬头看了一眼高侧窗）玛格丽特，盖房子的。这厅的屋架，搭得不坏。 [#id=chapter2.meet_ding.005]
         维罗妮卡：（走在最后，单眼检视镜推到额上）维罗妮卡，化学。……别这样看我。那瓶试剂的事，题已经答过了。 [#id=chapter2.meet_ding.006]
         侦探（心声）：十六个人，到这会儿才算见齐。 [#id=chapter2.meet_ding.007]
@@ -137,7 +137,7 @@
         茉拉：莫兰脸色不对。病人先领。 [#emotion=worried] [#id=chapter2.noon_dispute.003]
         阮清越：病人先领，可以。代领的人先在账上签个名，日末才找得到人对。 [#emotion=thoughtful] [#id=chapter2.noon_dispute.004]
         茉拉：莫兰等着吃。先把他那一份给我送过去；回来我签，陪你对账。 [#id=chapter2.noon_dispute.005]
-        侦探（心声）：一本账，一把钥匙。队伍已经排到我身后了，饭还没递出一份。 [#id=chapter2.noon_dispute.006]
+        侦探（心声）：两人僵在台前。队伍已经排到我身后了，饭还没递出一份。 [#id=chapter2.noon_dispute.006]
         选择 noon_dispute：mediate_sick_first、mediate_sign_first、mediate_i_carry、skip_dispute
 
     # 三种写法各自经茉拉与阮清越本人的判定；谁答应、谁不答应，用他们自己的话当场说出（第五部分 §5.4）。
@@ -164,7 +164,7 @@
 
     场面 mediate_accept_mora
         事件：mediate.accept.mora
-        茉拉：行。病人不等人，签字我回来补。 [#id=chapter2.mediate.004]
+        茉拉：行。我先送过去，签字回来补。 [#id=chapter2.mediate.004]
 
     场面 mediate_reject_mora
         事件：mediate.reject.mora
@@ -172,7 +172,7 @@
 
     场面 mediate_accept_ruan
         事件：mediate.accept.ruan
-        阮清越：有名字，就对得上。可以。 [#id=chapter2.mediate.006]
+        阮清越：签了名，日末我就对得上。可以。 [#id=chapter2.mediate.006]
 
     场面 mediate_reject_ruan
         事件：mediate.reject.ruan
@@ -259,7 +259,7 @@
         时段：傍晚
         侦探：这一问，我手里的东西还接不上。 [#id=chapter2.confront_pause.001]
         沃德：那便仍是疑处。 [#id=chapter2.confront_pause.002]
-        侦探：疑处，先别记到谁的名字底下。 [#id=chapter2.confront_pause.003]
+        侦探：那就先空着，别写谁的名字。 [#id=chapter2.confront_pause.003]
 
     场面 confront_wrong_say
         事件：confront.wrong_say
@@ -279,21 +279,21 @@
         时段：傍晚
         （众人的目光都落到了雀儿身上。她没有躲。） [#id=chapter2.confront_frame.001]
         雀儿：……行。你也这么看。 [#id=chapter2.confront_frame.002]
-        侦探（心声）：每个字都是真的。可我说出它，是在指着她。 [#id=chapter2.confront_frame.003]
+        侦探（心声）：我说的没有一句是假的。可这会儿，所有人都在看她。 [#id=chapter2.confront_frame.003]
 
     场面 confront_rule
         事件：confront.rule
         日：5
         时段：傍晚
         沃德：今晚说的话都在这里。下一次取粮，照谁的规矩？ [#id=chapter2.confront_rule.001]
-        侦探（心声）：写下一条新规矩，抹不掉昨夜的疑处。但下一次，总得有人知道该怎么办。 [#id=chapter2.confront_rule.002]
+        侦探（心声）：昨夜的事还没查清。可下一回谁去取粮、怎么记，今晚得说定。 [#id=chapter2.confront_rule.002]
 
     场面 whisper
         事件：confront.whisper
         日：5
         时段：夜里
         （散场的时候，铜口没有出声。有几个人走得很慢，回头看了一眼北边。） [#id=chapter2.whisper.001]
-        侦探（心声）：铜口没有响。我却还在等它说话。 [#id=chapter2.whisper.002]
+        侦探（心声）：我在铜口下站了一会儿。它没出声。 [#id=chapter2.whisper.002]
 
     场面 council
         事件：council.begin
@@ -302,12 +302,12 @@
         （第五日清晨。誓约庭。铺石顺坡，来议事的人散在几级台阶上。） [#id=chapter2.council.007]
         铜口：今日，诸位要决定名录库的事。我只旁听。 [#id=chapter2.council.002]
         沃德：谁进门，取走什么，须有账可查。名录库，由委员会保管。 [#id=chapter2.council.003]
-        顾平章：账记得下取走什么，记得下取回以后，人会怎样么？老朽只一句：封着。 [#emotion=worried] [#id=chapter2.council.004]
+        顾平章：账上记得了谁取走哪只匣子，记不了他想起来以后做什么。老朽的意思：先封着。 [#emotion=worried] [#id=chapter2.council.004]
         霍铎：……我的图纸。给不给我，要先问委员会？ [#emotion=hooked] [#id=chapter2.council.005]
         沃德：你的，也须登记。 [#id=chapter2.council.008]
-        霍铎：登记。不是准许。两回事。 [#id=chapter2.council.009]
-        霍铎：各人的东西，各人取。谁要我的那份，我不答应；我的，也别替我扣下。 [#id=chapter2.council.010]
-        侦探（心声）：同一扇门。有人怕开了收不住，有人怕钥匙交出去，就再要不回。 [#id=chapter2.council.006]
+        霍铎：登记可以。登了记还得等你们批，不行。 [#id=chapter2.council.009]
+        霍铎：我的匣子我自己去拿。别人的我不碰，我的也别扣着。 [#id=chapter2.council.010]
+        侦探（心声）：顾平章怕开了以后收不住；霍铎怕钥匙一交出去，自己的东西就拿不回来。 [#id=chapter2.council.006]
 
     场面 box
         事件：council.box
@@ -327,4 +327,4 @@
         日：6
         时段：早晨
         （议事结束了。名录库的门没有开。） [#id=chapter2.sealed.001]
-        侦探（心声）：门可以继续关着。散会以后，我们还得吃饭，还得跟刚才不肯点头的人过下去。 [#id=chapter2.sealed.002]
+        侦探（心声）：门没开。散了会，晚饭还是一起吃，刚才不肯点头的那几个也在。 [#id=chapter2.sealed.002]

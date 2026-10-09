@@ -132,7 +132,7 @@
             沈鼎：我要是在，不会让杯子过夜。……除非那晚顾不上。 [#id=talk_shen_menu.014]
             若 问过("E9")：
                 跳转 talk_shen_menu
-            沈鼎：我去看看杯底。谁喝过什么，杯子会说。 [#id=talk_shen_menu.034]
+            沈鼎：我去看看杯底，糖渍还在不在。 [#id=talk_shen_menu.034]
             设旗 invite_help_E9
             跳转 END
         - 灰里的靴印，对上了我的鞋底。 [#id=talk_shen_menu.015]

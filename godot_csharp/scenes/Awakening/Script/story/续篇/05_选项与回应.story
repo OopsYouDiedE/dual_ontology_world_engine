@@ -75,7 +75,7 @@
         角色：沈鼎
         意图：拒绝
         条件：侦探 信任 < 0
-        沈鼎：这事我不讲。谁拦着人吃饭，我就不帮他添柴。 [#id=chapter2.shen_decline.002]
+        沈鼎：这事我不讲。你要是替沃德来问的，别在我灶边问。 [#id=chapter2.shen_decline.002]
 
     回应 su_testimony_close
         角色：苏泠
@@ -99,7 +99,7 @@
         角色：苏泠
         意图：拒绝
         条件：侦探 信任 < 0
-        苏泠：不说。话只冲着一个人去，我不会替它出声。 [#id=chapter2.su_decline.002]
+        苏泠：不说。我不想讲。 [#id=chapter2.su_decline.002]
 
     回应 lucian_testimony_close
         角色：卢西安
@@ -123,7 +123,7 @@
         角色：卢西安
         意图：拒绝
         条件：侦探 信任 < 0
-        卢西安：恕我不答。把规矩磨成刀，去割弱者，我不奉陪。 [#id=chapter2.lucian_decline.002]
+        卢西安：恕我不答。你若是替沃德来查雀儿的，我一个字也不会给。 [#id=chapter2.lucian_decline.002]
 
     回应 gu_testimony_close
         角色：顾平章
@@ -147,7 +147,7 @@
         角色：顾平章
         意图：拒绝
         条件：侦探 信任 < 0
-        顾平章：不可说。忌讳之事，岂能轻动。 [#id=chapter2.gu_decline.002]
+        顾平章：不可说。此事老朽不便开口。 [#id=chapter2.gu_decline.002]
 
     回应 quer_testimony_close
         角色：雀儿
@@ -171,7 +171,7 @@
         角色：雀儿
         意图：拒绝
         条件：侦探 信任 < 0
-        雀儿：没门。你们那套抓人的规矩，我不陪。 [#id=chapter2.quer_decline.002]
+        雀儿：没门。想拿我的话去套谁，找别人去。 [#id=chapter2.quer_decline.002]
 
     回应 ward_testimony_close
         角色：沃德
@@ -201,7 +201,7 @@
         角色：赛尔玛
         意图：作证
         条件：侦探 信任 ≥ 2
-        赛尔玛：问吧，我这就说，像在林子里给人报路。 [#id=chapter2.selma_testimony_close.001] [#emotion=warm]
+        赛尔玛：问吧，我知道的都说。 [#id=chapter2.selma_testimony_close.001] [#emotion=warm]
 
     回应 selma_testimony
         角色：赛尔玛
@@ -243,7 +243,7 @@
         角色：阮清越
         意图：拒绝
         条件：侦探 信任 < 0
-        阮清越：不说。没有记录的，算不清。 [#id=chapter2.ruan_decline.002]
+        阮清越：不说。这事我还没算清楚。 [#id=chapter2.ruan_decline.002]
 
     回应 elena_testimony_close
         角色：伊莲娜
@@ -267,19 +267,19 @@
         角色：伊莲娜
         意图：拒绝
         条件：侦探 信任 < 0
-        伊莲娜：恕我不奉告。把人关在门外的话，我不说。 [#id=chapter2.elena_decline.002]
+        伊莲娜：恕我不奉告。 [#id=chapter2.elena_decline.002]
 
     回应 moran_testimony_close
         角色：莫兰
         意图：作证
         条件：侦探 信任 ≥ 2
-        莫兰：……你问。我看到的，都是真的颜色。 [#id=chapter2.moran_testimony_close.001] [#emotion=warm]
+        莫兰：……你问。我画下来的，都给你看。 [#id=chapter2.moran_testimony_close.001] [#emotion=warm]
 
     回应 moran_testimony
         角色：莫兰
         意图：作证
         条件：侦探 信任 = 1
-        莫兰：……问吧。我记得的颜色，说给你。 [#id=chapter2.moran_testimony.002]
+        莫兰：……问吧。 [#id=chapter2.moran_testimony.002]
 
     回应 moran_testimony_guarded
         角色：莫兰
@@ -291,7 +291,7 @@
         角色：莫兰
         意图：拒绝
         条件：侦探 信任 < 0
-        莫兰：……不说。……那里，是黑的。 [#id=chapter2.moran_decline.002]
+        莫兰：……不说。 [#id=chapter2.moran_decline.002]
 
     回应 veronica_testimony_close
         角色：维罗妮卡
@@ -339,7 +339,7 @@
         角色：贝尔特朗
         意图：拒绝
         条件：侦探 信任 < 0
-        贝尔特朗：拒绝。我不替政客开口。 [#id=chapter2.bertrand_decline.002]
+        贝尔特朗：拒绝。这件事不归我报告。 [#id=chapter2.bertrand_decline.002]
 
     回应 margaret_testimony_close
         角色：玛格丽特
@@ -363,7 +363,7 @@
         角色：玛格丽特
         意图：拒绝
         条件：侦探 信任 < 0
-        玛格丽特：不说。结构没验之前，我不下结论，也不给你结论的材料。 [#id=chapter2.margaret_decline.002]
+        玛格丽特：不说。我还没去看过，不乱讲。 [#id=chapter2.margaret_decline.002]
 
     回应 mora_testimony_close
         角色：茉拉

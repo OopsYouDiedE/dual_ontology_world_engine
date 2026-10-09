@@ -36,8 +36,8 @@
 场面 opening_gu
     顾平章（心声）：…… [#id=opening_gu.001]
     顾平章（心声）：老花镜搁在枕边，镜片上溅了一点墨。 [#id=opening_gu.002]
-    顾平章（心声）：老朽记得上了船。再往后，像一卷被虫蛀断的书。 [#id=opening_gu.003]
-    顾平章（心声）：断就断了。先不去猜它。 [#id=opening_gu.004]
+    顾平章（心声）：老朽记得上了船。再往后，就记不起了。 [#id=opening_gu.003]
+    顾平章（心声）：枕边这摞拓片，是哪里的碑？ [#id=opening_gu.004]
     顾平章（心声）：先把镜片擦干净。 [#id=opening_gu.005]
     跳转 END
 
@@ -77,7 +77,7 @@
     伊莲娜（心声）：…… [#id=opening_elena.001]
     伊莲娜（心声）：左脚踝缠着绷带。一动，疼得眼前发白。 [#id=opening_elena.002]
     伊莲娜（心声）：我是怎么伤的？只记得上船。 [#id=opening_elena.003]
-    伊莲娜（心声）：脚尖自己绷了一下，像要起步。比我还记得。 [#id=opening_elena.004]
+    伊莲娜（心声）：脚尖自己绷了一下，像要起步。 [#id=opening_elena.004]
     伊莲娜（心声）：别站。再躺一会儿。 [#id=opening_elena.005]
     跳转 END
 
@@ -92,7 +92,7 @@
 场面 opening_veronica
     维罗妮卡（心声）：…… [#id=opening_veronica.001]
     维罗妮卡（心声）：一股试剂味，很淡，像是乙醚挥发过。 [#id=opening_veronica.002]
-    维罗妮卡（心声）：最后的记录是上船。之后没有数据。 [#id=opening_veronica.003]
+    维罗妮卡（心声）：最后记得的事：上船。之后的，一件也想不起来。 [#id=opening_veronica.003]
     维罗妮卡（心声）：器具都在架上，摆得比我习惯的还整齐。谁替我摆的？ [#id=opening_veronica.004]
     维罗妮卡（心声）：先查瓶签。 [#id=opening_veronica.005]
     跳转 END
@@ -108,7 +108,7 @@
 场面 opening_margaret
     玛格丽特（心声）：…… [#id=opening_margaret.001]
     玛格丽特（心声）：天花板的梁是斜搭的。这跨度，搭得有点悬。 [#id=opening_margaret.002]
-    玛格丽特（心声）：我记得上船。别的，像图纸被人裁掉了一角。 [#id=opening_margaret.003]
+    玛格丽特（心声）：我记得上船。之后的事，一点也想不起来。 [#id=opening_margaret.003]
     玛格丽特（心声）：卷尺和铅垂还挂在腰上，睡觉都没解。 [#id=opening_margaret.004]
     玛格丽特（心声）：先看看这屋子承不承得住。 [#id=opening_margaret.005]
     跳转 END

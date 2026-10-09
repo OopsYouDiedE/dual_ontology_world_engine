@@ -76,13 +76,13 @@
     霍铎：（朝铜口）刚才那一下，是什么？ [#id=recall_shown_huo.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_huo.003]
     设旗 price_heard
-    霍铎：……像拆机器。拆开看了，就装不回原样。 [#id=recall_shown_huo.002]
+    霍铎：……带着。行。我听见了。 [#id=recall_shown_huo.002]
     跳转 END
 
 场面 recall_touch_huo
     霍铎：{{回想所思()}} [#id=recall_touch_huo.001]
     若 告知规则("huo")：
-        霍铎：代价我听见了。我自己担。 [#id=recall_touch_huo.002]
+        霍铎：那句话我听见了。……我还是想看看。 [#id=recall_touch_huo.002]
     （他把手掌平放在石板上。） [#id=recall_touch_huo.003]
     跳转 END
 
@@ -116,7 +116,7 @@
     沈鼎：（冲墙上的铜口）喂，刚才那是什么？ [#id=recall_shown_shen.001]
     铜口：是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。 [#id=recall_shown_shen.003]
     设旗 price_heard
-    沈鼎：带着此地。……这种买卖，跑江湖的都认得。 [#id=recall_shown_shen.002]
+    沈鼎：带着此地？……听着像卖身契。你说清楚点。 [#id=recall_shown_shen.002]
     跳转 END
 
 场面 recall_touch_shen
@@ -152,7 +152,7 @@
             侦探：…… [#id=recall_ask_detective.004]
             设旗 recall_yes
         - 松手。我不碰没证明过的东西。 [#id=recall_ask_detective.005]
-            侦探：不碰。我想知道的事，自己查。 [#id=recall_ask_detective.006]
+            侦探：先放着。 [#id=recall_ask_detective.006]
             （铁闩又凉了下去。） [#id=recall_ask_detective.007]
     跳转 END
 
