@@ -1,482 +1,1214 @@
-[gd_resource type="Theme" format=3 uid="uid://0xr67dd1psa"]
+[gd_resource type="Theme" load_steps=80 format=3 uid="uid://0xr67dd1psa"]
 
-[ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font"]
+[ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
+[ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
+[ext_resource type="FontFile" uid="uid://b2crko4arpitv" path="res://ShareAsset/External/NotoSansSC/NotoSansSC[wght].ttf" id="font_sans"]
+[ext_resource type="FontFile" uid="uid://b305mue3maiaf" path="res://ShareAsset/External/Yozai/Yozai-Regular.ttf" id="font_yozai"]
+[ext_resource type="FontFile" uid="uid://wxkrrvnps5hn" path="res://ShareAsset/External/ZCOOLQingKeHuangYou/ZCOOLQingKeHuangYou-Regular.ttf" id="font_qingke"]
+[ext_resource type="FontFile" uid="uid://cgux3m6rt3nkc" path="res://ShareAsset/External/zhimangxing/ZhiMangXing-Regular.ttf" id="font_zhimang"]
+[ext_resource type="FontFile" uid="uid://cqoykvtr28he2" path="res://ShareAsset/External/MaterialSymbols/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf" id="font_symbols"]
+[ext_resource type="FontFile" uid="uid://bp2hcr87qwy24" path="res://ShareAsset/External/yujisyuku/YujiSyuku-Regular.ttf" id="font_yuji"]
+[ext_resource type="FontFile" uid="uid://efwuolvoxfi0" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="font_kurenaido"]
+[ext_resource type="FontFile" uid="uid://5taqf2dxpeah" path="res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf" id="font_tegomin"]
+[ext_resource type="Texture2D" uid="uid://di8b1hqq18tsx" path="res://ShareAsset/Internal/Props/UIPaper/paper_pixel.png" id="paper_texture"]
+[ext_resource type="Texture2D" uid="uid://ylmi47d8oubq" path="res://ShareAsset/Internal/Props/UIPaper/paper_ruled.png" id="ruled_texture"]
 
-[sub_resource type="StyleBoxFlat" id="disabled"]
-content_margin_left = 14.0
+[sub_resource type="SystemFont" id="system_fallback"]
+font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC")
+
+[sub_resource type="FontVariation" id="font_icon"]
+base_font = ExtResource("font_symbols")
+variation_opentype = { 2003265652: 300, 1179208780: 0, 1196572996: 0, 1869640570: 24 }
+
+[sub_resource type="FontVariation" id="font_icon_filled"]
+base_font = ExtResource("font_symbols")
+variation_opentype = { 2003265652: 300, 1179208780: 1, 1196572996: 0, 1869640570: 24 }
+
+[sub_resource type="FontVariation" id="font_serif"]
+base_font = ExtResource("font_noto")
+variation_opentype = { 2003265652: 400 }
+
+[sub_resource type="FontVariation" id="font_body"]
+fallbacks = Array[Font]([SubResource("font_icon"), ExtResource("font_tegomin"), SubResource("font_serif"), SubResource("system_fallback")])
+base_font = ExtResource("font_zhaohua")
+
+[sub_resource type="FontVariation" id="font_register"]
+fallbacks = Array[Font]([SubResource("font_icon"), ExtResource("font_tegomin"), SubResource("font_serif"), SubResource("system_fallback")])
+base_font = ExtResource("font_zhaohua")
+spacing_glyph = 2
+
+[sub_resource type="FontVariation" id="font_head"]
+fallbacks = Array[Font]([SubResource("font_icon"), SubResource("system_fallback")])
+base_font = ExtResource("font_sans")
+variation_opentype = { 2003265652: 900 }
+spacing_glyph = 1
+
+[sub_resource type="FontVariation" id="font_deck"]
+fallbacks = Array[Font]([SubResource("font_icon"), SubResource("system_fallback")])
+base_font = ExtResource("font_noto")
+variation_opentype = { 2003265652: 600 }
+spacing_glyph = 1
+
+[sub_resource type="FontVariation" id="font_mast"]
+fallbacks = Array[Font]([ExtResource("font_yuji"), SubResource("font_head")])
+base_font = ExtResource("font_zhimang")
+variation_embolden = 0.35
+spacing_glyph = 6
+
+[sub_resource type="FontVariation" id="font_column"]
+fallbacks = Array[Font]([SubResource("font_head")])
+base_font = ExtResource("font_qingke")
+spacing_glyph = 4
+
+[sub_resource type="FontVariation" id="font_hand"]
+fallbacks = Array[Font]([ExtResource("font_kurenaido"), SubResource("font_body")])
+base_font = ExtResource("font_yozai")
+
+[sub_resource type="StyleBoxEmpty" id="transparent_text"]
+
+[sub_resource type="StyleBoxFlat" id="scroll_grabber"]
+bg_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
+
+[sub_resource type="StyleBoxFlat" id="scroll_grabber_hi"]
+bg_color = Color(0.133333, 0.109804, 0.0823529, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="scroll_track"]
+content_margin_left = 3.0
+content_margin_right = 3.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="line_edit"]
+content_margin_left = 4.0
+content_margin_top = 8.0
+content_margin_right = 4.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="line_edit_focus"]
+content_margin_left = 4.0
+content_margin_top = 8.0
+content_margin_right = 4.0
+content_margin_bottom = 7.0
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxLine" id="col_rule"]
+color = Color(0.494118, 0.435294, 0.345098, 0.7)
+thickness = 1
+vertical = true
+
+[sub_resource type="StyleBoxLine" id="row_rule"]
+color = Color(0.494118, 0.435294, 0.345098, 0.7)
+thickness = 1
+vertical = false
+
+[sub_resource type="StyleBoxFlat" id="btn_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 0.9)
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="btn_normal"]
+content_margin_left = 8.0
 content_margin_top = 6.0
-content_margin_right = 14.0
+content_margin_right = 8.0
 content_margin_bottom = 6.0
-bg_color = Color(0.8862745, 0.84313726, 0.7294118, 1)
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="btn_hover"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.6)
+border_width_bottom = 1
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="btn_pressed"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
+border_width_bottom = 1
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="btn_disabled"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.25)
+
+[sub_resource type="StyleBoxFlat" id="act_normal"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_bottom = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="act_hover"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.6)
+border_width_bottom = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="act_pressed"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
+border_width_bottom = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="act_disabled"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_bottom = 3
+border_color = Color(0.494118, 0.435294, 0.345098, 0.3)
+
+[sub_resource type="StyleBoxFlat" id="opt_normal"]
+content_margin_left = 48.0
+content_margin_top = 8.0
+content_margin_right = 40.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.45)
+
+[sub_resource type="StyleBoxFlat" id="opt_hover"]
+content_margin_left = 48.0
+content_margin_top = 8.0
+content_margin_right = 40.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="opt_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="tab_normal"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="tab_hover"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 1)
+
+[sub_resource type="StyleBoxFlat" id="tab_current"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_left = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxTexture" id="paper_sheet"]
+content_margin_left = 40.0
+content_margin_top = 32.0
+content_margin_right = 40.0
+content_margin_bottom = 32.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="paper_box"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="paper_mount"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
+
+[sub_resource type="StyleBoxFlat" id="paper_plate"]
+content_margin_left = 1.0
+content_margin_top = 1.0
+content_margin_right = 1.0
+content_margin_bottom = 1.0
+bg_color = Color(0.133333, 0.109804, 0.0823529, 0.85)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.47843137, 0.36078432, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_width_bottom = 1
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
 
-[sub_resource type="StyleBoxFlat" id="focus"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 6.0
-bg_color = Color(0.9372549, 0.9019608, 0.8, 1)
+[sub_resource type="StyleBoxFlat" id="stamp_seal"]
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
 draw_center = false
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.5411765, 0.2, 0.14117648, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_width_bottom = 1
+border_color = Color(0.541176, 0.2, 0.141176, 0.9)
 
-[sub_resource type="StyleBoxFlat" id="hover"]
-content_margin_left = 14.0
+[sub_resource type="StyleBoxFlat" id="stamp_match"]
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.247059, 0.352941, 0.227451, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="stamp_muted"]
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.352941, 0.298039, 0.231373, 0.9)
+
+[sub_resource type="StyleBoxTexture" id="hud_bar"]
+content_margin_left = 24.0
+content_margin_right = 24.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="paper_slip"]
+content_margin_left = 16.0
 content_margin_top = 6.0
-content_margin_right = 14.0
+content_margin_right = 16.0
 content_margin_bottom = 6.0
-bg_color = Color(0.9647059, 0.93333334, 0.85882354, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.5411765, 0.2, 0.14117648, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="normal"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 6.0
-bg_color = Color(0.9372549, 0.9019608, 0.8, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.47843137, 0.36078432, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="pressed"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 6.0
-bg_color = Color(0.84705883, 0.78431374, 0.627451, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.47843137, 0.36078432, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="CampusMap_location"]
-bg_color = Color(0.952941, 0.92549, 0.847059, 1)
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.168627, 0.12549, 0.086275, 0.5)
+border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.5)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="CampusMap_location_current"]
-bg_color = Color(0.9137255, 0.8509804, 0.6901961, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.5411765, 0.2, 0.14117648, 0.9)
-
-[sub_resource type="StyleBoxFlat" id="CampusMap_location_hover"]
-bg_color = Color(0.9647059, 0.93333334, 0.85882354, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.5411765, 0.2, 0.14117648, 0.9)
-
-[sub_resource type="StyleBoxFlat" id="FieldHUD_tip"]
-content_margin_left = 5.0
-content_margin_top = 5.0
-content_margin_right = 5.0
-content_margin_bottom = 5.0
-bg_color = Color(0.07, 0.07, 0.08, 0.86)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.83, 0.74, 0.52, 0.7)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxFlat" id="FieldHUD_keys"]
-content_margin_left = 12.0
-content_margin_right = 12.0
-bg_color = Color(0.05, 0.06, 0.06, 0.72)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxEmpty" id="transparent_text"]
-
-[sub_resource type="StyleBoxFlat" id="line"]
+[sub_resource type="StyleBoxFlat" id="paper_slip_small"]
 content_margin_left = 8.0
-content_margin_top = 8.0
+content_margin_top = 2.0
 content_margin_right = 8.0
-content_margin_bottom = 8.0
-bg_color = Color(0.952941, 0.92549, 0.847059, 1)
+content_margin_bottom = 2.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.54902, 0.478431, 0.360784, 1)
+border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.5)
+shadow_size = 4
+shadow_offset = Vector2(0, 1)
 
-[sub_resource type="StyleBoxFlat" id="PaperModal_sheet"]
-content_margin_left = 34.0
-content_margin_top = 34.0
-content_margin_right = 34.0
-content_margin_bottom = 34.0
-bg_color = Color(0.901961, 0.862745, 0.74902, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.490196, 0.415686, 0.298039, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 14
+[sub_resource type="StyleBoxFlat" id="flash_banner"]
+content_margin_left = 32.0
+content_margin_top = 12.0
+content_margin_right = 32.0
+content_margin_bottom = 12.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+border_width_top = 3
+border_width_bottom = 3
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.5)
+shadow_size = 10
+shadow_offset = Vector2(0, 3)
 
-[sub_resource type="StyleBoxFlat" id="paper_sheet"]
-content_margin_left = 34.0
-content_margin_top = 34.0
-content_margin_right = 34.0
-content_margin_bottom = 34.0
-bg_color = Color(0.9019608, 0.8627451, 0.7490196, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.49019608, 0.41568628, 0.29803923, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 14
+[sub_resource type="StyleBoxFlat" id="notebook_page"]
+content_margin_left = 32.0
+draw_center = false
+border_width_left = 8
+border_color = Color(0.882353, 0.835294, 0.709804, 1)
 
-[sub_resource type="StyleBoxFlat" id="ReplayBubble_BubbleStyle"]
+[sub_resource type="StyleBoxFlat" id="bubble"]
 content_margin_left = 8.0
 content_margin_top = 4.0
 content_margin_right = 8.0
 content_margin_bottom = 4.0
-bg_color = Color(0.93, 0.89, 0.78, 0.94)
+bg_color = Color(0.917647, 0.878431, 0.768627, 0.96)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.17, 0.13, 0.09, 0.8)
-corner_radius_top_left = 6
+border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
+
+[sub_resource type="StyleBoxTexture" id="replay_bar"]
+content_margin_left = 24.0
+content_margin_top = 8.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="manuscript_left"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 32.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_right = 8
+border_color = Color(0.882353, 0.835294, 0.709804, 1)
+
+[sub_resource type="StyleBoxFlat" id="manuscript_right"]
+content_margin_left = 32.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+
+[sub_resource type="StyleBoxTexture" id="book_page_left"]
+content_margin_left = 96.0
+content_margin_top = 48.0
+content_margin_right = 40.0
+content_margin_bottom = 40.0
+texture = ExtResource("ruled_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxTexture" id="book_page_right"]
+content_margin_left = 40.0
+content_margin_top = 48.0
+content_margin_right = 96.0
+content_margin_bottom = 40.0
+texture = ExtResource("ruled_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="book_tab"]
+content_margin_left = 8.0
+content_margin_top = 12.0
+content_margin_right = 8.0
+content_margin_bottom = 12.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
+shadow_size = 1
+shadow_offset = Vector2(2, 2)
 
-[sub_resource type="StyleBoxFlat" id="ReplayManuscript_page"]
-content_margin_left = 18.0
-content_margin_top = 18.0
-content_margin_right = 18.0
-content_margin_bottom = 18.0
-bg_color = Color(0.921569, 0.886275, 0.784314, 1)
+[sub_resource type="StyleBoxFlat" id="book_tab_hover"]
+content_margin_left = 8.0
+content_margin_top = 12.0
+content_margin_right = 8.0
+content_margin_bottom = 12.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
+shadow_size = 1
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="StyleBoxFlat" id="book_tab_current"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 8.0
+content_margin_bottom = 12.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
+shadow_size = 1
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="StyleBoxFlat" id="book_tab_off"]
+content_margin_left = 8.0
+content_margin_top = 12.0
+content_margin_right = 8.0
+content_margin_bottom = 12.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="book_tab_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 0.9)
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="book_row"]
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.45)
+
+[sub_resource type="StyleBoxFlat" id="option_plain"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="option_hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="option_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="keycap"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="keycap_hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.6)
+border_width_bottom = 1
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxFlat" id="keycap_off"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+draw_center = false
+
+[sub_resource type="StyleBoxTexture" id="bookmark_slot"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="bookmark_empty"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+draw_center = false
+border_width_left = 1
+border_width_top = 1
 border_width_right = 1
-border_color = Color(0.168627, 0.12549, 0.086275, 0.25)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.5)
 
-[sub_resource type="StyleBoxFlat" id="ReplayOverlay_BarStyle"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
-bg_color = Color(0.09, 0.08, 0.1, 0.86)
-
-[sub_resource type="StyleBoxFlat" id="bar"]
-bg_color = Color(0.168627, 0.12549, 0.086275, 0.35)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-
-[sub_resource type="StyleBoxFlat" id="track"]
-content_margin_left = 4.0
-content_margin_right = 4.0
-bg_color = Color(0.168627, 0.12549, 0.086275, 0.08)
-
-[sub_resource type="SystemFont" id="fallback"]
-font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI Symbol")
-
-[sub_resource type="FontVariation" id="stack"]
-fallbacks = Array[Font]([SubResource("fallback")])
-base_font = ExtResource("font")
+[sub_resource type="StyleBoxFlat" id="bookmark_current"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
 
 [resource]
-default_font = SubResource("stack")
-default_font_size = 19
-Button/colors/font_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-Button/colors/font_disabled_color = Color(0.16862746, 0.1254902, 0.08627451, 0.4)
-Button/colors/font_focus_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-Button/colors/font_hover_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-Button/colors/font_pressed_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-Button/styles/disabled = SubResource("disabled")
-Button/styles/focus = SubResource("focus")
-Button/styles/hover = SubResource("hover")
-Button/styles/normal = SubResource("normal")
-Button/styles/pressed = SubResource("pressed")
-CampusMap/colors/background = Color(0.92156863, 0.8862745, 0.78431374, 1)
-CampusMap/colors/border = Color(0.17, 0.13, 0.09, 0.35)
-CampusMap/colors/bubble = Color(1, 0.98, 0.92, 0.92)
-CampusMap/colors/bubble_border = Color(0.168627, 0.12549, 0.086275, 0.5)
-CampusMap/colors/figure = Color(0.12, 0.1, 0.09, 0.55)
-CampusMap/colors/link = Color(0.17, 0.13, 0.09, 0.28)
-CampusMap/colors/wing_outline = Color(0.168627, 0.12549, 0.086275, 0.18)
-CampusMap/constants/border_inset = 6
+default_font = SubResource("font_body")
+default_font_size = 18
+BookNote/base_type = &"Label"
+BookNote/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookNote/font_sizes/font_size = 18
+BookNote/fonts/font = SubResource("font_hand")
+BookRow/base_type = &"PanelContainer"
+BookRow/styles/panel = SubResource("book_row")
+BookRowLabel/base_type = &"Label"
+BookRowLabel/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookRowLabel/font_sizes/font_size = 18
+BookRowLabel/fonts/font = SubResource("font_register")
+BookRowLine/base_type = &"HBoxContainer"
+BookRowLine/constants/separation = 16
+BookRowValue/base_type = &"Label"
+BookRowValue/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookRowValue/font_sizes/font_size = 18
+BookSection/base_type = &"Label"
+BookSection/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookSection/font_sizes/font_size = 22
+BookSection/fonts/font = SubResource("font_head")
+BookmarkButton/base_type = &"Button"
+BookmarkButton/styles/disabled = SubResource("transparent_text")
+BookmarkButton/styles/focus = SubResource("option_focus")
+BookmarkButton/styles/hover = SubResource("transparent_text")
+BookmarkButton/styles/hover_pressed = SubResource("transparent_text")
+BookmarkButton/styles/normal = SubResource("transparent_text")
+BookmarkButton/styles/pressed = SubResource("transparent_text")
+BookmarkLines/base_type = &"VBoxContainer"
+BookmarkLines/constants/separation = 4
+BookmarkMeta/base_type = &"Label"
+BookmarkMeta/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookmarkMeta/font_sizes/font_size = 14
+BookmarkMeta/fonts/font = SubResource("font_register")
+BookmarkSlot/base_type = &"PanelContainer"
+BookmarkSlot/styles/panel = SubResource("bookmark_slot")
+BookmarkSlotCurrent/base_type = &"PanelContainer"
+BookmarkSlotCurrent/styles/panel = SubResource("bookmark_current")
+BookmarkSlotEmpty/base_type = &"PanelContainer"
+BookmarkSlotEmpty/styles/panel = SubResource("bookmark_empty")
+BookmarkSlots/base_type = &"VBoxContainer"
+BookmarkSlots/constants/separation = 16
+BookmarkTitle/base_type = &"Label"
+BookmarkTitle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookmarkTitle/font_sizes/font_size = 22
+BookmarkTitle/fonts/font = SubResource("font_head")
+Button/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+Button/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/font_sizes/font_size = 18
+Button/fonts/font = SubResource("font_body")
+Button/styles/disabled = SubResource("btn_disabled")
+Button/styles/focus = SubResource("btn_focus")
+Button/styles/hover = SubResource("btn_hover")
+Button/styles/hover_pressed = SubResource("btn_pressed")
+Button/styles/normal = SubResource("btn_normal")
+Button/styles/pressed = SubResource("btn_pressed")
+CampusMap/colors/background = Color(0.917647, 0.878431, 0.768627, 1)
+CampusMap/colors/block = Color(0.882353, 0.835294, 0.709804, 0.8)
+CampusMap/colors/border = Color(0.494118, 0.435294, 0.345098, 0.6)
+CampusMap/colors/bubble = Color(0.917647, 0.878431, 0.768627, 1)
+CampusMap/colors/bubble_border = Color(0.133333, 0.109804, 0.0823529, 0.7)
+CampusMap/colors/figure = Color(0.133333, 0.109804, 0.0823529, 0.8)
+CampusMap/colors/here = Color(0.184314, 0.231373, 0.341176, 1)
+CampusMap/colors/hover = Color(0.882353, 0.835294, 0.709804, 1)
+CampusMap/colors/ink = Color(0.133333, 0.109804, 0.0823529, 1)
+CampusMap/colors/link = Color(0.133333, 0.109804, 0.0823529, 1)
+CampusMap/colors/link_unknown = Color(0.494118, 0.435294, 0.345098, 0.4)
+CampusMap/colors/muted = Color(0.352941, 0.298039, 0.231373, 1)
+CampusMap/colors/station = Color(0.133333, 0.109804, 0.0823529, 1)
+CampusMap/colors/station_fill = Color(0.917647, 0.878431, 0.768627, 1)
+CampusMap/colors/trail = Color(0.352941, 0.298039, 0.231373, 0.7)
+CampusMap/colors/wing_outline = Color(0.882353, 0.835294, 0.709804, 0.8)
+CampusMap/constants/border_inset = 8
 CampusMap/constants/border_width = 1
-CampusMap/constants/link_width = 2
-CampusMap/font_sizes/bubble = 13
-CampusMap/font_sizes/figure = 12
+CampusMap/constants/grid = 32
+CampusMap/constants/link_width = 3
+CampusMap/constants/station_radius = 7
+CampusMap/font_sizes/bubble = 14
+CampusMap/font_sizes/figure = 14
 CampusMap/font_sizes/hint = 14
+CampusMap/fonts/hand = SubResource("font_hand")
+CampusMap/fonts/register = SubResource("font_register")
 CampusMapHere/base_type = &"Label"
-CampusMapHere/colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
-CampusMapHere/font_sizes/font_size = 13
+CampusMapHere/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+CampusMapHere/font_sizes/font_size = 22
+CampusMapHere/fonts/font = SubResource("font_hand")
 CampusMapLocation/base_type = &"Panel"
-CampusMapLocation/styles/panel = SubResource("CampusMap_location")
+CampusMapLocation/styles/panel = SubResource("transparent_text")
 CampusMapLocationCurrent/base_type = &"Panel"
-CampusMapLocationCurrent/styles/panel = SubResource("CampusMap_location_current")
+CampusMapLocationCurrent/styles/panel = SubResource("transparent_text")
 CampusMapLocationHover/base_type = &"Panel"
-CampusMapLocationHover/styles/panel = SubResource("CampusMap_location_hover")
+CampusMapLocationHover/styles/panel = SubResource("transparent_text")
 CampusMapName/base_type = &"Label"
-CampusMapName/font_sizes/font_size = 17
-ChoiceMenuOption/base_type = &"Button"
-ChoiceMenuOption/font_sizes/font_size = 18
+CampusMapName/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+CampusMapName/font_sizes/font_size = 18
+ChoiceMenuOption/base_type = &"PaperEntry"
 EndingCardOutcome/base_type = &"RichTextLabel"
-EndingCardOutcome/colors/default_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-EndingCardOutcome/font_sizes/bold_font_size = 21
-EndingCardOutcome/font_sizes/normal_font_size = 21
+EndingCardOutcome/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+EndingCardOutcome/font_sizes/bold_font_size = 22
+EndingCardOutcome/font_sizes/normal_font_size = 22
+EndingCardOutcome/fonts/bold_font = SubResource("font_deck")
+EndingCardOutcome/fonts/normal_font = SubResource("font_deck")
 EndingCardRows/base_type = &"VBoxContainer"
 EndingCardRows/constants/separation = 8
+EndingCardTitle/base_type = &"RichTextLabel"
+EndingCardTitle/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+EndingCardTitle/font_sizes/bold_font_size = 48
+EndingCardTitle/font_sizes/normal_font_size = 48
+EndingCardTitle/fonts/bold_font = SubResource("font_head")
+EndingCardTitle/fonts/normal_font = SubResource("font_head")
 EvidenceCardFacts/base_type = &"RichTextLabel"
-EvidenceCardFacts/colors/default_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-EvidenceCardFacts/font_sizes/bold_font_size = 20
-EvidenceCardFacts/font_sizes/normal_font_size = 20
+EvidenceCardFacts/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+EvidenceCardFacts/font_sizes/bold_font_size = 18
+EvidenceCardFacts/font_sizes/normal_font_size = 18
 EvidenceCardIntro/base_type = &"RichTextLabel"
-EvidenceCardIntro/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
+EvidenceCardIntro/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
 EvidenceCardIntro/font_sizes/bold_font_size = 18
 EvidenceCardIntro/font_sizes/normal_font_size = 18
+EvidenceCardIntro/fonts/bold_font = SubResource("font_deck")
+EvidenceCardIntro/fonts/normal_font = SubResource("font_deck")
 EvidenceCardRow/base_type = &"HBoxContainer"
-EvidenceCardRow/constants/separation = 22
+EvidenceCardRow/constants/separation = 24
 EvidenceCardSource/base_type = &"RichTextLabel"
-EvidenceCardSource/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
-EvidenceCardSource/font_sizes/bold_font_size = 16
-EvidenceCardSource/font_sizes/normal_font_size = 16
+EvidenceCardSource/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+EvidenceCardSource/font_sizes/bold_font_size = 14
+EvidenceCardSource/font_sizes/normal_font_size = 14
+EvidenceCardSource/fonts/normal_font = SubResource("font_register")
 EvidenceCardTable/base_type = &"GridContainer"
-EvidenceCardTable/constants/h_separation = 22
+EvidenceCardTable/constants/h_separation = 24
 EvidenceCardTable/constants/v_separation = 8
 EvidenceCardTexts/base_type = &"VBoxContainer"
-EvidenceCardTexts/constants/separation = 6
+EvidenceCardTexts/constants/separation = 8
+EvidenceCardTitle/base_type = &"RichTextLabel"
+EvidenceCardTitle/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+EvidenceCardTitle/font_sizes/bold_font_size = 32
+EvidenceCardTitle/font_sizes/normal_font_size = 32
+EvidenceCardTitle/fonts/bold_font = SubResource("font_head")
+EvidenceCardTitle/fonts/normal_font = SubResource("font_head")
 FieldHUDAside/base_type = &"Label"
-FieldHUDAside/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
-FieldHUDAside/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
-FieldHUDAside/constants/outline_size = 6
-FieldHUDAside/font_sizes/font_size = 19
+FieldHUDAside/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+FieldHUDAside/font_sizes/font_size = 22
+FieldHUDAside/fonts/font = SubResource("font_hand")
+FieldHUDAside/styles/normal = SubResource("paper_slip")
+FieldHUDBar/base_type = &"PanelContainer"
+FieldHUDBar/styles/panel = SubResource("hud_bar")
 FieldHUDFlash/base_type = &"RichTextLabel"
-FieldHUDFlash/colors/default_color = Color(0.97, 0.93, 0.84, 1)
+FieldHUDFlash/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
 FieldHUDFlash/font_sizes/bold_font_size = 32
 FieldHUDFlash/font_sizes/normal_font_size = 32
+FieldHUDFlash/fonts/bold_font = SubResource("font_head")
+FieldHUDFlash/fonts/normal_font = SubResource("font_head")
+FieldHUDFlash/styles/normal = SubResource("flash_banner")
 FieldHUDHint/base_type = &"Label"
-FieldHUDHint/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
-FieldHUDHint/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
-FieldHUDHint/constants/outline_size = 5
+FieldHUDHint/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 FieldHUDHint/font_sizes/font_size = 18
+FieldHUDHint/styles/normal = SubResource("paper_slip")
 FieldHUDHoverTip/base_type = &"Label"
-FieldHUDHoverTip/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
-FieldHUDHoverTip/font_sizes/font_size = 17
-FieldHUDHoverTip/styles/normal = SubResource("FieldHUD_tip")
-FieldHUDKeys/base_type = &"Label"
-FieldHUDKeys/colors/font_color = Color(0.909804, 0.839216, 0.654902, 1)
-FieldHUDKeys/font_sizes/font_size = 17
-FieldHUDKeys/styles/normal = SubResource("FieldHUD_keys")
+FieldHUDHoverTip/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+FieldHUDHoverTip/font_sizes/font_size = 14
+FieldHUDHoverTip/styles/normal = SubResource("paper_slip_small")
+FieldHUDPlace/base_type = &"Label"
+FieldHUDPlace/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+FieldHUDPlace/font_sizes/font_size = 22
+FieldHUDPlace/fonts/font = SubResource("font_head")
 FieldHUDTime/base_type = &"Label"
-FieldHUDTime/colors/font_color = Color(0.88, 0.83, 0.7, 1)
+FieldHUDTime/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 FieldHUDTime/font_sizes/font_size = 18
 FieldHUDTitle/base_type = &"Label"
-FieldHUDTitle/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
-FieldHUDTitle/colors/font_outline_color = Color(0.04, 0.03, 0.05, 1)
-FieldHUDTitle/constants/outline_size = 5
-FieldHUDTitle/font_sizes/font_size = 20
+FieldHUDTitle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+FieldHUDTitle/font_sizes/font_size = 22
+FieldHUDTitle/fonts/font = SubResource("font_head")
+FormColumns/base_type = &"HBoxContainer"
+FormColumns/constants/separation = 24
 FormGroup/base_type = &"VBoxContainer"
-FormGroup/constants/separation = 10
+FormGroup/constants/separation = 4
 FormLineEdit/base_type = &"LineEdit"
-FormLineEdit/font_sizes/font_size = 21
+FormLineEdit/font_sizes/font_size = 22
 FormOptionColumn/base_type = &"VBoxContainer"
-FormOptionColumn/constants/separation = 10
+FormOptionColumn/constants/separation = 0
 FormOptionFlow/base_type = &"HFlowContainer"
-FormOptionFlow/constants/h_separation = 10
-FormOptionFlow/constants/v_separation = 10
+FormOptionFlow/constants/h_separation = 8
+FormOptionFlow/constants/v_separation = 0
+FormPanelDeck/base_type = &"RichTextLabel"
+FormPanelDeck/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+FormPanelDeck/font_sizes/bold_font_size = 18
+FormPanelDeck/font_sizes/normal_font_size = 18
+FormPanelDeck/fonts/bold_font = SubResource("font_deck")
+FormPanelDeck/fonts/normal_font = SubResource("font_deck")
 FormPanelPrompt/base_type = &"RichTextLabel"
-FormPanelPrompt/colors/default_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-FormPanelPrompt/font_sizes/bold_font_size = 19
-FormPanelPrompt/font_sizes/normal_font_size = 19
+FormPanelPrompt/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+FormPanelPrompt/font_sizes/bold_font_size = 18
+FormPanelPrompt/font_sizes/normal_font_size = 18
 FormPanelQuestion/base_type = &"RichTextLabel"
-FormPanelQuestion/colors/default_color = Color(0.5411765, 0.2, 0.1411765, 1)
-FormPanelQuestion/font_sizes/bold_font_size = 21
-FormPanelQuestion/font_sizes/normal_font_size = 21
+FormPanelQuestion/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+FormPanelQuestion/font_sizes/bold_font_size = 48
+FormPanelQuestion/font_sizes/normal_font_size = 48
+FormPanelQuestion/fonts/bold_font = SubResource("font_head")
+FormPanelQuestion/fonts/normal_font = SubResource("font_head")
 FormPanelSummary/base_type = &"RichTextLabel"
-FormPanelSummary/colors/default_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-FormPanelSummary/font_sizes/bold_font_size = 18
-FormPanelSummary/font_sizes/normal_font_size = 18
-HintOverlay/colors/hover = Color(0.95686275, 0.8745098, 0.6156863, 1)
-HintOverlay/colors/near = Color(0.95, 0.88, 0.62, 0.7)
-HintOverlay/colors/shade = Color(0.12, 0.09, 0.07, 0.6)
-HintOverlay/colors/spark_center = Color(1, 0.9490196, 0.7882353, 1)
-HintOverlay/colors/spark_edge = Color(0.45882353, 0.3764706, 0.26666668, 1)
-HintOverlay/colors/spark_light = Color(0.95686275, 0.8745098, 0.6156863, 1)
-Label/colors/font_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
+FormPanelSummary/colors/default_color = Color(0.184314, 0.231373, 0.341176, 1)
+FormPanelSummary/font_sizes/bold_font_size = 22
+FormPanelSummary/font_sizes/normal_font_size = 22
+FormPanelSummary/fonts/bold_font = SubResource("font_hand")
+FormPanelSummary/fonts/normal_font = SubResource("font_hand")
+FormRow/base_type = &"HBoxContainer"
+FormRow/constants/separation = 16
+HSeparator/constants/separation = 1
+HSeparator/styles/separator = SubResource("row_rule")
+HintOverlay/colors/hover = Color(0.917647, 0.878431, 0.768627, 1)
+HintOverlay/colors/near = Color(0.917647, 0.878431, 0.768627, 0.7)
+HintOverlay/colors/shade = Color(0.133333, 0.109804, 0.0823529, 0.6)
+HintOverlay/colors/spark_center = Color(0.917647, 0.878431, 0.768627, 1)
+HintOverlay/colors/spark_edge = Color(0.352941, 0.298039, 0.231373, 1)
+HintOverlay/colors/spark_light = Color(0.917647, 0.878431, 0.768627, 0.9)
+Label/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 Label/styles/normal = SubResource("transparent_text")
-LineEdit/colors/caret_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-LineEdit/colors/font_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
-LineEdit/colors/font_placeholder_color = Color(0.41960785, 0.3647059, 0.28235295, 1)
-LineEdit/styles/focus = SubResource("line")
-LineEdit/styles/normal = SubResource("line")
+LineEdit/colors/caret_color = Color(0.184314, 0.231373, 0.341176, 1)
+LineEdit/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+LineEdit/colors/font_placeholder_color = Color(0.352941, 0.298039, 0.231373, 0.7)
+LineEdit/font_sizes/font_size = 22
+LineEdit/fonts/font = SubResource("font_hand")
+LineEdit/styles/focus = SubResource("line_edit_focus")
+LineEdit/styles/normal = SubResource("line_edit")
 NotebookColumn/base_type = &"VBoxContainer"
-NotebookColumn/constants/separation = 10
+NotebookColumn/constants/separation = 0
 NotebookEmpty/base_type = &"RichTextLabel"
-NotebookEmpty/colors/default_color = Color(0.4196078, 0.3647059, 0.2823529, 1)
-NotebookEmpty/font_sizes/bold_font_size = 19
-NotebookEmpty/font_sizes/normal_font_size = 19
-NotebookEntryButton/base_type = &"Button"
-NotebookEntryButton/font_sizes/font_size = 18
+NotebookEmpty/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+NotebookEmpty/font_sizes/bold_font_size = 18
+NotebookEmpty/font_sizes/normal_font_size = 18
+NotebookEntryButton/base_type = &"PaperEntry"
 NotebookGrid/base_type = &"GridContainer"
-NotebookGrid/constants/h_separation = 10
-NotebookGrid/constants/v_separation = 8
-Paper/colors/ink = Color(0.16862746, 0.1254902, 0.08627451, 1)
-Paper/colors/match = Color(0.24705882, 0.3529412, 0.22745098, 1)
-Paper/colors/muted = Color(0.41960785, 0.3647059, 0.28235295, 1)
-Paper/colors/paper = Color(0.9019608, 0.8627451, 0.7490196, 1)
-Paper/colors/paper_dark = Color(0.8392157, 0.7882353, 0.6509804, 1)
-Paper/colors/rule = Color(0.17, 0.13, 0.09, 0.28)
-Paper/colors/seal = Color(0.5411765, 0.2, 0.14117648, 1)
+NotebookGrid/constants/h_separation = 24
+NotebookGrid/constants/v_separation = 0
+NotebookLayout/base_type = &"HBoxContainer"
+NotebookLayout/constants/separation = 0
+NotebookPage/base_type = &"PanelContainer"
+NotebookPage/styles/panel = SubResource("notebook_page")
+NotebookTabs/base_type = &"VBoxContainer"
+NotebookTabs/constants/separation = 0
+Paper/colors/hand = Color(0.184314, 0.231373, 0.341176, 1)
+Paper/colors/ink = Color(0.133333, 0.109804, 0.0823529, 1)
+Paper/colors/match = Color(0.247059, 0.352941, 0.227451, 1)
+Paper/colors/muted = Color(0.352941, 0.298039, 0.231373, 1)
+Paper/colors/paper = Color(0.917647, 0.878431, 0.768627, 1)
+Paper/colors/paper_dark = Color(0.882353, 0.835294, 0.709804, 1)
+Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 1)
+Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 0.7)
+Paper/colors/rule_strong = Color(0.133333, 0.109804, 0.0823529, 1)
+Paper/colors/seal = Color(0.541176, 0.2, 0.141176, 1)
+Paper/colors/shadow = Color(0.133333, 0.109804, 0.0823529, 0.55)
+Paper/constants/baseline = 8
+Paper/constants/module = 32
+Paper/fonts/body = SubResource("font_body")
+Paper/fonts/column = SubResource("font_column")
+Paper/fonts/deck = SubResource("font_deck")
+Paper/fonts/hand = SubResource("font_hand")
+Paper/fonts/head = SubResource("font_head")
+Paper/fonts/icon = SubResource("font_icon")
+Paper/fonts/icon_filled = SubResource("font_icon_filled")
+Paper/fonts/mast = SubResource("font_mast")
+Paper/fonts/register = SubResource("font_register")
+PaperAction/base_type = &"Button"
+PaperAction/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperAction/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+PaperAction/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperAction/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperAction/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperAction/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperAction/font_sizes/font_size = 20
+PaperAction/fonts/font = SubResource("font_deck")
+PaperAction/styles/disabled = SubResource("act_disabled")
+PaperAction/styles/focus = SubResource("btn_focus")
+PaperAction/styles/hover = SubResource("act_hover")
+PaperAction/styles/hover_pressed = SubResource("act_pressed")
+PaperAction/styles/normal = SubResource("act_normal")
+PaperAction/styles/pressed = SubResource("act_pressed")
+PaperBook/colors/board = Color(0.105882, 0.0980392, 0.0862745, 1)
+PaperBook/colors/dim = Color(0.133333, 0.109804, 0.0823529, 0.62)
+PaperBook/colors/gutter = Color(0.133333, 0.109804, 0.0823529, 0.2)
+PaperBook/colors/margin_line = Color(0.352941, 0.298039, 0.231373, 0.35)
+PaperBook/colors/stack_dark = Color(0.768627, 0.705882, 0.560784, 1)
+PaperBook/colors/stack_light = Color(0.847059, 0.8, 0.682353, 1)
+PaperBook/constants/edge = 12
+PaperBook/constants/gutter_step = 8
+PaperBook/constants/gutter_steps = 4
+PaperBook/constants/height = 912
+PaperBook/constants/label_width = 144
+PaperBook/constants/margin_x = 72
+PaperBook/constants/section_gap = 24
+PaperBook/constants/stack = 8
+PaperBook/constants/tab_height = 72
+PaperBook/constants/tab_top = 72
+PaperBook/constants/tab_width = 56
+PaperBook/constants/viewport_margin = 16
+PaperBook/constants/width = 1168
+PaperBookColumn/base_type = &"VBoxContainer"
+PaperBookColumn/constants/separation = 16
+PaperBookContent/base_type = &"VBoxContainer"
+PaperBookContent/constants/separation = 0
+PaperBookFooter/base_type = &"HBoxContainer"
+PaperBookFooter/constants/separation = 32
+PaperBookPageLeft/base_type = &"PanelContainer"
+PaperBookPageLeft/styles/panel = SubResource("book_page_left")
+PaperBookPageRight/base_type = &"PanelContainer"
+PaperBookPageRight/styles/panel = SubResource("book_page_right")
+PaperBookTab/base_type = &"Button"
+PaperBookTab/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperBookTab/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+PaperBookTab/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperBookTab/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperBookTab/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperBookTab/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperBookTab/font_sizes/font_size = 18
+PaperBookTab/fonts/font = SubResource("font_body")
+PaperBookTab/styles/disabled = SubResource("book_tab_off")
+PaperBookTab/styles/focus = SubResource("book_tab_focus")
+PaperBookTab/styles/hover = SubResource("book_tab_hover")
+PaperBookTab/styles/hover_pressed = SubResource("book_tab_current")
+PaperBookTab/styles/normal = SubResource("book_tab")
+PaperBookTab/styles/pressed = SubResource("book_tab_current")
+PaperBookTabs/base_type = &"VBoxContainer"
+PaperBookTabs/constants/separation = 6
+PaperBox/base_type = &"PanelContainer"
+PaperBox/styles/panel = SubResource("paper_box")
+PaperCheck/base_type = &"Button"
+PaperCheck/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperCheck/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.55)
+PaperCheck/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperCheck/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperCheck/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperCheck/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperCheck/colors/mark = Color(0.184314, 0.231373, 0.341176, 1)
+PaperCheck/colors/serial = Color(0.352941, 0.298039, 0.231373, 1)
+PaperCheck/colors/strike = Color(0.352941, 0.298039, 0.231373, 0.8)
+PaperCheck/colors/tint = Color(0.184314, 0.231373, 0.341176, 0.16)
+PaperCheck/font_sizes/font_size = 18
+PaperCheck/fonts/font = SubResource("font_body")
+PaperCheck/styles/disabled = SubResource("opt_normal")
+PaperCheck/styles/focus = SubResource("opt_focus")
+PaperCheck/styles/hover = SubResource("opt_hover")
+PaperCheck/styles/hover_pressed = SubResource("opt_hover")
+PaperCheck/styles/normal = SubResource("opt_normal")
+PaperCheck/styles/pressed = SubResource("opt_normal")
+PaperColumns/base_type = &"HBoxContainer"
+PaperColumns/constants/separation = 24
+PaperEntry/base_type = &"Button"
+PaperEntry/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperEntry/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.55)
+PaperEntry/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperEntry/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperEntry/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperEntry/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperEntry/colors/serial = Color(0.352941, 0.298039, 0.231373, 1)
+PaperEntry/colors/strike = Color(0.352941, 0.298039, 0.231373, 0.8)
+PaperEntry/font_sizes/font_size = 18
+PaperEntry/fonts/font = SubResource("font_body")
+PaperEntry/styles/disabled = SubResource("opt_normal")
+PaperEntry/styles/focus = SubResource("opt_focus")
+PaperEntry/styles/hover = SubResource("opt_hover")
+PaperEntry/styles/hover_pressed = SubResource("opt_hover")
+PaperEntry/styles/normal = SubResource("opt_normal")
+PaperEntry/styles/pressed = SubResource("opt_hover")
+PaperIcon/base_type = &"Label"
+PaperIcon/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIcon/font_sizes/font_size = 24
+PaperIcon/fonts/font = SubResource("font_icon")
+PaperIconFilled/base_type = &"Label"
+PaperIconFilled/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIconFilled/font_sizes/font_size = 24
+PaperIconFilled/fonts/font = SubResource("font_icon_filled")
+PaperIconLarge/base_type = &"Label"
+PaperIconLarge/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIconLarge/font_sizes/font_size = 32
+PaperIconLarge/fonts/font = SubResource("font_icon")
+PaperIndexTab/base_type = &"Button"
+PaperIndexTab/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIndexTab/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.55)
+PaperIndexTab/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIndexTab/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIndexTab/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIndexTab/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperIndexTab/font_sizes/font_size = 18
+PaperIndexTab/fonts/font = SubResource("font_body")
+PaperIndexTab/styles/disabled = SubResource("tab_normal")
+PaperIndexTab/styles/focus = SubResource("opt_focus")
+PaperIndexTab/styles/hover = SubResource("tab_hover")
+PaperIndexTab/styles/hover_pressed = SubResource("tab_current")
+PaperIndexTab/styles/normal = SubResource("tab_normal")
+PaperIndexTab/styles/pressed = SubResource("tab_current")
+PaperKeyCap/base_type = &"Button"
+PaperKeyCap/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperKeyCap/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+PaperKeyCap/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperKeyCap/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperKeyCap/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperKeyCap/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperKeyCap/colors/mark = Color(0.184314, 0.231373, 0.341176, 1)
+PaperKeyCap/font_sizes/font_size = 18
+PaperKeyCap/fonts/font = SubResource("font_body")
+PaperKeyCap/styles/disabled = SubResource("keycap_off")
+PaperKeyCap/styles/focus = SubResource("option_focus")
+PaperKeyCap/styles/hover = SubResource("keycap_hover")
+PaperKeyCap/styles/hover_pressed = SubResource("keycap")
+PaperKeyCap/styles/normal = SubResource("keycap")
+PaperKeyCap/styles/pressed = SubResource("keycap")
+PaperKeyRow/base_type = &"HBoxContainer"
+PaperKeyRow/constants/separation = 12
+PaperLabelDeck/base_type = &"RichTextLabel"
+PaperLabelDeck/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperLabelDeck/font_sizes/bold_font_size = 18
+PaperLabelDeck/font_sizes/normal_font_size = 18
+PaperLabelDeck/fonts/bold_font = SubResource("font_deck")
+PaperLabelDeck/fonts/normal_font = SubResource("font_deck")
+PaperLabelHand/base_type = &"RichTextLabel"
+PaperLabelHand/colors/default_color = Color(0.184314, 0.231373, 0.341176, 1)
+PaperLabelHand/font_sizes/bold_font_size = 22
+PaperLabelHand/font_sizes/normal_font_size = 22
+PaperLabelHand/fonts/bold_font = SubResource("font_hand")
+PaperLabelHand/fonts/normal_font = SubResource("font_hand")
 PaperLabelHeading/base_type = &"RichTextLabel"
-PaperLabelHeading/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
-PaperLabelHeading/font_sizes/bold_font_size = 21
-PaperLabelHeading/font_sizes/normal_font_size = 21
+PaperLabelHeading/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperLabelHeading/font_sizes/bold_font_size = 22
+PaperLabelHeading/font_sizes/normal_font_size = 22
+PaperLabelHeading/fonts/bold_font = SubResource("font_column")
+PaperLabelHeading/fonts/normal_font = SubResource("font_column")
+PaperLabelKicker/base_type = &"PaperLabelSubheading"
 PaperLabelNote/base_type = &"RichTextLabel"
+PaperLabelNote/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
 PaperLabelNote/font_sizes/bold_font_size = 18
 PaperLabelNote/font_sizes/normal_font_size = 18
 PaperLabelNoteMuted/base_type = &"PaperLabelNote"
-PaperLabelNoteMuted/colors/default_color = Color(0.41960785, 0.3647059, 0.28235295, 1)
+PaperLabelNoteMuted/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
 PaperLabelNoteSeal/base_type = &"PaperLabelNote"
-PaperLabelNoteSeal/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
+PaperLabelNoteSeal/colors/default_color = Color(0.541176, 0.2, 0.141176, 1)
+PaperLabelNumeral/base_type = &"Label"
+PaperLabelNumeral/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperLabelNumeral/font_sizes/font_size = 32
+PaperLabelNumeral/fonts/font = SubResource("font_head")
 PaperLabelPaperLabel/base_type = &"RichTextLabel"
-PaperLabelPaperLabel/font_sizes/bold_font_size = 19
-PaperLabelPaperLabel/font_sizes/normal_font_size = 19
+PaperLabelPaperLabel/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperLabelPaperLabel/font_sizes/bold_font_size = 18
+PaperLabelPaperLabel/font_sizes/normal_font_size = 18
+PaperLabelRegister/base_type = &"RichTextLabel"
+PaperLabelRegister/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+PaperLabelRegister/font_sizes/bold_font_size = 14
+PaperLabelRegister/font_sizes/normal_font_size = 14
+PaperLabelRegister/fonts/normal_font = SubResource("font_register")
 PaperLabelSubheading/base_type = &"RichTextLabel"
-PaperLabelSubheading/colors/default_color = Color(0.5411765, 0.2, 0.14117648, 1)
-PaperLabelSubheading/font_sizes/bold_font_size = 19
-PaperLabelSubheading/font_sizes/normal_font_size = 19
-PaperModal/colors/dim = Color(0.03, 0.03, 0.05, 0.55)
+PaperLabelSubheading/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+PaperLabelSubheading/font_sizes/bold_font_size = 14
+PaperLabelSubheading/font_sizes/normal_font_size = 14
+PaperLabelSubheading/fonts/normal_font = SubResource("font_register")
+PaperLabelTitle/base_type = &"RichTextLabel"
+PaperLabelTitle/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperLabelTitle/font_sizes/bold_font_size = 32
+PaperLabelTitle/font_sizes/normal_font_size = 32
+PaperLabelTitle/fonts/bold_font = SubResource("font_head")
+PaperLabelTitle/fonts/normal_font = SubResource("font_head")
+PaperLedger/colors/line = Color(0.494118, 0.435294, 0.345098, 0.35)
+PaperLedger/constants/step = 32
+PaperModal/colors/dim = Color(0.133333, 0.109804, 0.0823529, 0.62)
+PaperModal/constants/viewport_margin = 16
+PaperModal/constants/width_large = 1152
+PaperModal/constants/width_medium = 832
+PaperModal/constants/width_small = 576
 PaperModalBody/base_type = &"VBoxContainer"
-PaperModalBody/constants/separation = 10
+PaperModalBody/constants/separation = 8
 PaperModalColumn/base_type = &"VBoxContainer"
-PaperModalColumn/constants/separation = 12
-PaperModalFooter/base_type = &"HFlowContainer"
-PaperModalFooter/constants/h_separation = 12
-PaperModalFooter/constants/v_separation = 8
+PaperModalColumn/constants/separation = 16
+PaperModalFooter/base_type = &"HBoxContainer"
+PaperModalFooter/constants/separation = 16
 PaperModalPanelContainer/base_type = &"PanelContainer"
-PaperModalPanelContainer/styles/panel = SubResource("PaperModal_sheet")
+PaperModalPanelContainer/styles/panel = SubResource("paper_sheet")
 PaperModalTitleLabel/base_type = &"RichTextLabel"
-PaperModalTitleLabel/font_sizes/bold_font_size = 25
-PaperModalTitleLabel/font_sizes/normal_font_size = 25
+PaperModalTitleLabel/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperModalTitleLabel/font_sizes/bold_font_size = 32
+PaperModalTitleLabel/font_sizes/normal_font_size = 32
+PaperModalTitleLabel/fonts/bold_font = SubResource("font_head")
+PaperModalTitleLabel/fonts/normal_font = SubResource("font_head")
+PaperMount/base_type = &"PanelContainer"
+PaperMount/styles/panel = SubResource("paper_mount")
+PaperOption/base_type = &"Button"
+PaperOption/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperOption/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+PaperOption/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperOption/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperOption/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperOption/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperOption/colors/mark = Color(0.184314, 0.231373, 0.341176, 1)
+PaperOption/colors/strike = Color(0.352941, 0.298039, 0.231373, 0.8)
+PaperOption/constants/mark_width = 2
+PaperOption/font_sizes/font_size = 18
+PaperOption/fonts/font = SubResource("font_body")
+PaperOption/styles/disabled = SubResource("option_plain")
+PaperOption/styles/focus = SubResource("option_focus")
+PaperOption/styles/hover = SubResource("option_hover")
+PaperOption/styles/hover_pressed = SubResource("option_plain")
+PaperOption/styles/normal = SubResource("option_plain")
+PaperOption/styles/pressed = SubResource("option_plain")
+PaperOptionRow/base_type = &"HBoxContainer"
+PaperOptionRow/constants/separation = 8
+PaperPlate/base_type = &"PanelContainer"
+PaperPlate/styles/panel = SubResource("paper_plate")
+PaperScale/colors/focus = Color(0.184314, 0.231373, 0.341176, 0.5)
+PaperScale/colors/line = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperScale/colors/mark = Color(0.184314, 0.231373, 0.341176, 1)
+PaperScale/constants/height = 32
+PaperScale/constants/intervals = 4
+PaperScale/constants/major_tick = 12
+PaperScale/constants/minor_tick = 6
+PaperScale/constants/value_gap = 16
+PaperScale/constants/value_width = 56
+PaperScale/constants/width = 224
+PaperScale/font_sizes/mark = 26
+PaperScale/font_sizes/value = 18
+PaperScale/fonts/mark = SubResource("font_hand")
 PaperSheet/base_type = &"PanelContainer"
 PaperSheet/styles/panel = SubResource("paper_sheet")
+PaperStampOuter/base_type = &"PanelContainer"
+PaperStampOuter/styles/panel = SubResource("stamp_seal")
+PaperStampOuterMatch/base_type = &"PanelContainer"
+PaperStampOuterMatch/styles/panel = SubResource("stamp_match")
+PaperStampOuterMuted/base_type = &"PanelContainer"
+PaperStampOuterMuted/styles/panel = SubResource("stamp_muted")
+PaperStampText/base_type = &"Label"
+PaperStampText/colors/font_color = Color(0.541176, 0.2, 0.141176, 1)
+PaperStampText/font_sizes/font_size = 14
+PaperStampText/fonts/font = SubResource("font_register")
+PaperStampTextMatch/base_type = &"Label"
+PaperStampTextMatch/colors/font_color = Color(0.247059, 0.352941, 0.227451, 1)
+PaperStampTextMatch/font_sizes/font_size = 14
+PaperStampTextMatch/fonts/font = SubResource("font_register")
+PaperStampTextMuted/base_type = &"Label"
+PaperStampTextMuted/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+PaperStampTextMuted/font_sizes/font_size = 14
+PaperStampTextMuted/fonts/font = SubResource("font_register")
+PaperTally/colors/empty = Color(0.133333, 0.109804, 0.0823529, 0.45)
+PaperTally/colors/filled = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperTally/constants/cell = 8
+PaperTally/constants/gap = 4
+PixelColumn/base_type = &"Label"
+PixelColumn/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelColumn/constants/pixel_scale = 2
+PixelColumn/font_sizes/font_size = 22
+PixelColumn/fonts/font = SubResource("font_column")
+PixelDisplay/base_type = &"Label"
+PixelDisplay/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelDisplay/constants/pixel_scale = 2
+PixelDisplay/font_sizes/font_size = 64
+PixelDisplay/fonts/font = SubResource("font_mast")
+PixelHeadline/base_type = &"Label"
+PixelHeadline/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelHeadline/constants/pixel_scale = 2
+PixelHeadline/font_sizes/font_size = 48
+PixelHeadline/fonts/font = SubResource("font_head")
+PixelMast/base_type = &"Label"
+PixelMast/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelMast/constants/pixel_scale = 2
+PixelMast/font_sizes/font_size = 40
+PixelMast/fonts/font = SubResource("font_mast")
+PixelSub/base_type = &"Label"
+PixelSub/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelSub/constants/pixel_scale = 2
+PixelSub/font_sizes/font_size = 22
+PixelSub/fonts/font = SubResource("font_head")
+PixelTitle/base_type = &"Label"
+PixelTitle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelTitle/constants/pixel_scale = 2
+PixelTitle/font_sizes/font_size = 32
+PixelTitle/fonts/font = SubResource("font_head")
 ReplayBubbleReplayBubble/base_type = &"PanelContainer"
-ReplayBubbleReplayBubble/styles/panel = SubResource("ReplayBubble_BubbleStyle")
+ReplayBubbleReplayBubble/styles/panel = SubResource("bubble")
 ReplayBubbleText/base_type = &"RichTextLabel"
-ReplayBubbleText/colors/default_color = Color(0.168627, 0.12549, 0.086275, 1)
-ReplayBubbleText/font_sizes/bold_font_size = 15
-ReplayBubbleText/font_sizes/normal_font_size = 15
+ReplayBubbleText/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ReplayBubbleText/font_sizes/bold_font_size = 14
+ReplayBubbleText/font_sizes/normal_font_size = 14
 ReplayManuscriptActions/base_type = &"HBoxContainer"
-ReplayManuscriptActions/constants/separation = 10
+ReplayManuscriptActions/constants/separation = 16
 ReplayManuscriptColumn/base_type = &"VBoxContainer"
-ReplayManuscriptColumn/constants/separation = 9
+ReplayManuscriptColumn/constants/separation = 8
 ReplayManuscriptDetail/base_type = &"RichTextLabel"
-ReplayManuscriptDetail/font_sizes/bold_font_size = 17
-ReplayManuscriptDetail/font_sizes/normal_font_size = 17
+ReplayManuscriptDetail/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+ReplayManuscriptDetail/font_sizes/bold_font_size = 14
+ReplayManuscriptDetail/font_sizes/normal_font_size = 14
 ReplayManuscriptFinding/base_type = &"VBoxContainer"
-ReplayManuscriptFinding/constants/separation = 2
+ReplayManuscriptFinding/constants/separation = 4
 ReplayManuscriptFullMatch/base_type = &"RichTextLabel"
 ReplayManuscriptFullMatch/colors/default_color = Color(0.247059, 0.352941, 0.227451, 1)
-ReplayManuscriptFullMatch/font_sizes/bold_font_size = 21
-ReplayManuscriptFullMatch/font_sizes/normal_font_size = 21
+ReplayManuscriptFullMatch/font_sizes/bold_font_size = 22
+ReplayManuscriptFullMatch/font_sizes/normal_font_size = 22
+ReplayManuscriptFullMatch/fonts/bold_font = SubResource("font_deck")
+ReplayManuscriptFullMatch/fonts/normal_font = SubResource("font_deck")
 ReplayManuscriptHeading/base_type = &"RichTextLabel"
+ReplayManuscriptHeading/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
 ReplayManuscriptHeading/font_sizes/bold_font_size = 18
 ReplayManuscriptHeading/font_sizes/normal_font_size = 18
 ReplayManuscriptHint/base_type = &"RichTextLabel"
-ReplayManuscriptHint/colors/default_color = Color(0.419608, 0.364706, 0.282353, 1)
-ReplayManuscriptHint/font_sizes/bold_font_size = 17
-ReplayManuscriptHint/font_sizes/normal_font_size = 17
+ReplayManuscriptHint/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+ReplayManuscriptHint/font_sizes/bold_font_size = 18
+ReplayManuscriptHint/font_sizes/normal_font_size = 18
+ReplayManuscriptHint/fonts/bold_font = SubResource("font_deck")
+ReplayManuscriptHint/fonts/normal_font = SubResource("font_deck")
 ReplayManuscriptLeftPage/base_type = &"PanelContainer"
-ReplayManuscriptLeftPage/styles/panel = SubResource("ReplayManuscript_page")
+ReplayManuscriptLeftPage/styles/panel = SubResource("manuscript_left")
 ReplayManuscriptOpenCard/base_type = &"Button"
-ReplayManuscriptOpenCard/font_sizes/font_size = 15
-ReplayManuscriptOption/base_type = &"Button"
-ReplayManuscriptOption/font_sizes/font_size = 17
-ReplayManuscriptOptions/base_type = &"HFlowContainer"
-ReplayManuscriptOptions/constants/h_separation = 8
-ReplayManuscriptOptions/constants/v_separation = 6
+ReplayManuscriptOpenCard/font_sizes/font_size = 14
+ReplayManuscriptOption/base_type = &"PaperCheck"
+ReplayManuscriptOptions/base_type = &"VBoxContainer"
+ReplayManuscriptOptions/constants/separation = 0
 ReplayManuscriptPreview/base_type = &"RichTextLabel"
-ReplayManuscriptPreview/colors/default_color = Color(0.419608, 0.364706, 0.282353, 1)
+ReplayManuscriptPreview/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
 ReplayManuscriptPreview/font_sizes/bold_font_size = 18
 ReplayManuscriptPreview/font_sizes/normal_font_size = 18
+ReplayManuscriptQuestion/base_type = &"HBoxContainer"
+ReplayManuscriptQuestion/constants/separation = 16
 ReplayManuscriptReplayManuscript/base_type = &"HBoxContainer"
-ReplayManuscriptReplayManuscript/constants/separation = 26
+ReplayManuscriptReplayManuscript/constants/separation = 0
+ReplayManuscriptRightPage/base_type = &"PanelContainer"
+ReplayManuscriptRightPage/styles/panel = SubResource("manuscript_right")
 ReplayManuscriptStale/base_type = &"RichTextLabel"
-ReplayManuscriptStale/colors/default_color = Color(0.541176, 0.2, 0.141176, 1)
-ReplayManuscriptStale/font_sizes/bold_font_size = 16
-ReplayManuscriptStale/font_sizes/normal_font_size = 16
+ReplayManuscriptStale/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+ReplayManuscriptStale/font_sizes/bold_font_size = 14
+ReplayManuscriptStale/font_sizes/normal_font_size = 14
 ReplayOverlayBar/base_type = &"PanelContainer"
-ReplayOverlayBar/styles/panel = SubResource("ReplayOverlay_BarStyle")
+ReplayOverlayBar/styles/panel = SubResource("replay_bar")
 ReplayOverlayCaption/base_type = &"RichTextLabel"
-ReplayOverlayCaption/colors/default_color = Color(0.909804, 0.839216, 0.654902, 1)
-ReplayOverlayCaption/font_sizes/bold_font_size = 19
-ReplayOverlayCaption/font_sizes/normal_font_size = 19
+ReplayOverlayCaption/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ReplayOverlayCaption/font_sizes/bold_font_size = 18
+ReplayOverlayCaption/font_sizes/normal_font_size = 18
 ReplayOverlayControls/base_type = &"Label"
-ReplayOverlayControls/colors/font_color = Color(0.811765, 0.764706, 0.635294, 1)
-ReplayOverlayControls/font_sizes/font_size = 16
+ReplayOverlayControls/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+ReplayOverlayControls/font_sizes/font_size = 14
+ReplayOverlayControls/styles/normal = SubResource("paper_slip")
 ReplayOverlayDoor/base_type = &"Label"
-ReplayOverlayDoor/colors/font_color = Color(0.945098, 0.894118, 0.741176, 1)
-ReplayOverlayDoor/colors/font_outline_color = Color(0.05, 0.04, 0.06, 1)
-ReplayOverlayDoor/constants/outline_size = 5
-ReplayOverlayDoor/font_sizes/font_size = 16
-RichTextLabel/colors/default_color = Color(0.16862746, 0.1254902, 0.08627451, 1)
+ReplayOverlayDoor/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ReplayOverlayDoor/font_sizes/font_size = 14
+ReplayOverlayDoor/styles/normal = SubResource("paper_slip")
+RichTextLabel/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+RichTextLabel/font_sizes/bold_font_size = 18
+RichTextLabel/font_sizes/normal_font_size = 18
+RichTextLabel/fonts/bold_font = SubResource("font_deck")
 RichTextLabel/styles/focus = SubResource("transparent_text")
 RichTextLabel/styles/normal = SubResource("transparent_text")
-SightMask/colors/remembered = Color(0.02, 0.02, 0.03, 0.62)
-SightMask/colors/unseen = Color(0.02, 0.02, 0.03, 1)
-VScrollBar/styles/grabber = SubResource("bar")
-VScrollBar/styles/grabber_highlight = SubResource("bar")
-VScrollBar/styles/grabber_pressed = SubResource("bar")
-VScrollBar/styles/scroll = SubResource("track")
+SightMask/colors/remembered = Color(0.105882, 0.094118, 0.082353, 0.62)
+SightMask/colors/unseen = Color(0.105882, 0.094118, 0.082353, 1)
+VScrollBar/styles/grabber = SubResource("scroll_grabber")
+VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber_hi")
+VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber_hi")
+VScrollBar/styles/scroll = SubResource("scroll_track")
+VSeparator/constants/separation = 1
+VSeparator/styles/separator = SubResource("col_rule")

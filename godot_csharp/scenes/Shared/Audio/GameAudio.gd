@@ -27,14 +27,20 @@ func _ready() -> void:
 	for i in 2:
 		var player := AudioStreamPlayer.new()
 		player.name = "Music%d" % i
+		player.bus = _bus_or_master(&"Music")
 		player.volume_db = SILENT_DB
 		add_child(player)
 		_music.append(player)
 	for i in SFX_VOICES:
 		var player := AudioStreamPlayer.new()
 		player.name = "Sfx%d" % i
+		player.bus = _bus_or_master(&"Sfx")
 		add_child(player)
 		_sfx.append(player)
+
+## 配乐/音效/语音走各自的总线（default_bus_layout.tres；音量由 GameSettings 管理），缺总线时退回 Master。
+static func _bus_or_master(bus: StringName) -> StringName:
+	return bus if AudioServer.get_bus_index(bus) != -1 else &"Master"
 
 func current_music() -> String:
 	return _current

@@ -2,8 +2,8 @@
 extends VBoxContainer
 ## 证物 / 痕迹 / 条文 / 对照表卡片。所有章节共用同一张卡。
 ## show_data({
-##   picture:String|Texture2D ("res://" 路径或空), intro:String, facts:String, source:String,
-##   notes:[String]  ("回忆" 开头的行用印红色),
+##   title:String, picture:String|Texture2D ("res://" 路径或空), intro:String, facts:String, source:String,
+##   notes:[String]  (语义色由剧本标注),
 ##   items:[String]  (逐条列出的行，例如张贴的条文),
 ##   table:[[String]]  (首行为表头，列数取首行长度),
 ##   inline:[{id, label, available, lock_hint}]  (卡片内的选项按钮)
@@ -77,7 +77,7 @@ func _render_preview_or_data() -> void:
 			var parts := preview_inline[index].split("|")
 			inline.append({"id": str(index), "label": parts[0], "available": parts.size() < 2, "lock_hint": parts[1] if parts.size() > 1 else ""})
 		_data = {
-			"picture": preview_picture if preview_picture != null else "",
+			"title": "示例证物", "picture": preview_picture if preview_picture != null else "",
 			"intro": preview_intro, "facts": preview_facts, "source": preview_source,
 			"notes": Array(preview_notes), "items": Array(preview_items),
 			"table": table, "inline": inline,
@@ -97,20 +97,30 @@ func _text_or_hide(node: RichTextLabel, text: String, prefix := "") -> void:
 	node.text = Paper.story_text(prefix + text) if text != "" else ""
 
 func _render() -> void:
+	# 报纸两栏（设计规范第六部分 §4.7）：左栏衬纸上的局部图与来源题注；右栏叠题（证物名）、说明、事实、笔记、条目；
+	# 表格通栏。没有内容的栏目不出现。
 	var texture := _texture_of(_data.get("picture", ""))
-	$Row/Picture.texture = texture
-	$Row/Picture.visible = texture != null
+	$Row/Figure/Mount/Plate/Picture.texture = texture
+	$Row/Figure.visible = texture != null
+	$Row/Rule.visible = texture != null
+	_text_or_hide($Row/Figure/Source, str(_data.get("source", "")), "来源　")
+	if texture == null and str(_data.get("source", "")) != "":
+		# 没有局部图时来源题注挪到正文末尾。
+		_text_or_hide($Row/Figure/Source, "")
+	var title := str(_data.get("title", ""))
+	$Row/Texts/Title.text = title
+	$Row/Texts/Title.visible = title != ""
+	$Row/Texts/Dash.visible = title != ""
 	_text_or_hide($Row/Texts/Intro, str(_data.get("intro", "")))
 	_text_or_hide($Row/Texts/Facts, str(_data.get("facts", "")))
-	_text_or_hide($Row/Texts/Source, str(_data.get("source", "")), "来源：")
-	$Row.visible = $Row/Picture.visible or $Row/Texts/Intro.visible or $Row/Texts/Facts.visible or $Row/Texts/Source.visible
-	var notes: VBoxContainer = $Notes
+	var notes: VBoxContainer = $Row/Texts/Notes
 	Paper.clear_children(notes)
 	for note in _data.get("notes", []):
-		var line := str(note)
-		notes.add_child(Paper.label(line, &"PaperLabelNote"))
+		notes.add_child(Paper.label(str(note), &"PaperLabelNote"))
+	if texture == null and str(_data.get("source", "")) != "":
+		notes.add_child(Paper.label("来源　" + str(_data.get("source", "")), &"PaperLabelRegister"))
 	notes.visible = notes.get_child_count() > 0
-	var items: VBoxContainer = $Items
+	var items: VBoxContainer = $Row/Texts/Items
 	Paper.clear_children(items)
 	for item in _data.get("items", []):
 		items.add_child(Paper.label(str(item)))
@@ -124,7 +134,7 @@ func _render() -> void:
 		for r in rows.size():
 			for cell in rows[r]:
 				if r == 0 and table_has_header:
-					grid.add_child(Paper.label("[b]%s[/b]" % str(cell), &"PaperLabelNoteSeal"))
+					grid.add_child(Paper.label(str(cell), &"PaperLabelDeck"))
 				else:
 					grid.add_child(Paper.label(str(cell), &"PaperLabelNote"))
 	var inline: Array = _data.get("inline", [])

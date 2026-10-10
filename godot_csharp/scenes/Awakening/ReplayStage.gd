@@ -211,15 +211,14 @@ func _place_bubbles(frame: Dictionary) -> void:
 		placed.append(rect)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not playing or event is not InputEventKey or not event.pressed or event.echo:
+	if not playing or (event is not InputEventKey and event is not InputEventMouseButton) or not event.is_pressed() or event.is_echo():
 		return
-	match event.keycode:
-		KEY_SPACE:
-			paused = not paused
-			controls.text = str(labels.get("control_texts", {}).get("paused" if paused else "normal", ""))
-		KEY_F, KEY_2:
-			speed = 2.5 if speed == 1.0 else 1.0
-			controls.text = str(labels.get("control_texts", {}).get("fast" if speed > 1.0 else "normal", ""))
-		KEY_ESCAPE:
-			skipping = true
+	if event.is_action_pressed("replay_pause"):
+		paused = not paused
+		controls.text = str(labels.get("control_texts", {}).get("paused" if paused else "normal", ""))
+	elif event.is_action_pressed("replay_speed"):
+		speed = 2.5 if speed == 1.0 else 1.0
+		controls.text = str(labels.get("control_texts", {}).get("fast" if speed > 1.0 else "normal", ""))
+	elif event.is_action_pressed("replay_skip"):
+		skipping = true
 	get_viewport().set_input_as_handled()

@@ -51,9 +51,9 @@ var _edits: Dictionary = {}
 var _groups: Dictionary = {}
 var _active := ""
 @onready var _header: VBoxContainer = $Header
-@onready var _question: RichTextLabel = $Header/Question
+@onready var _question: Control = $Header/Question
 @onready var _instructions: RichTextLabel = $Header/Instructions
-@onready var _summary: RichTextLabel = $Header/Summary
+@onready var _summary: RichTextLabel = $Header/SummaryBox/Summary
 
 func _ready() -> void:
 	_render_preview_or_data()
@@ -98,9 +98,11 @@ func _render() -> void:
 	var header: Dictionary = _data.get("header", {})
 	var summary: Array = _data.get("summary", [])
 	_header.visible = not header.is_empty() or not summary.is_empty()
-	_question.text = Paper.story_text(str(header.get("question", "")))
+	# 通栏问题与副题居中（设计规范第六部分 §4.7 报纸叠题）。
+	_question.text = str(header.get("question", ""))
 	_question.visible = str(header.get("question", "")) != ""
-	_instructions.text = Paper.story_text(str(header.get("instructions", "")))
+	_header.get_node("Dash").visible = _question.visible
+	_instructions.text = "[center]%s[/center]" % Paper.story_text(str(header.get("instructions", "")))
 	_instructions.visible = str(header.get("instructions", "")) != ""
 	var fields_box: VBoxContainer = $Fields
 	Paper.clear_children(fields_box)
@@ -110,17 +112,45 @@ func _render() -> void:
 	_edits.clear()
 	_groups.clear()
 	_active = ""
-	for field in _fields:
+	var columns := uses_columns(_data)
+	var holder: Container = fields_box
+	if columns:
+		holder = HBoxContainer.new()
+		holder.theme_type_variation = &"FormColumns"
+		fields_box.add_child(holder)
+	for field_index in _fields.size():
+		var field: Dictionary = _fields[field_index]
+		if columns and field_index > 0:
+			holder.add_child(VSeparator.new())
 		var id := str(field.get("id", ""))
 		var kind := str(field.get("kind", "choice" if field.has("options") else "text"))
-		var group := VBoxContainer.new()
-		group.theme_type_variation = &"FormGroup"
 		var heading := str(field.get("heading", ""))
-		if heading != "":
-			group.add_child(Paper.label(heading, &"PaperLabelSubheading"))
+		# 并排成栏：字段名在栏顶；堆叠：左列字段名（登记体，4 个模块宽），右列内容。
+		var group: Container
+		var content: VBoxContainer
+		if columns:
+			group = VBoxContainer.new()
+			group.theme_type_variation = &"FormGroup"
+			group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			if heading != "":
+				group.add_child(Paper.pixel(heading, &"PixelColumn"))
+				group.add_child(Paper.rule())
+			content = group
+		else:
+			group = HBoxContainer.new()
+			group.theme_type_variation = &"FormRow"
+			if heading != "":
+				var name_label := Paper.label(heading, &"PaperLabelSubheading")
+				name_label.size_flags_horizontal = Control.SIZE_FILL
+				name_label.custom_minimum_size.x = 128
+				group.add_child(name_label)
+			content = VBoxContainer.new()
+			content.theme_type_variation = &"FormGroup"
+			content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			group.add_child(content)
 		if kind == "text":
 			var edit := LineEdit.new()
-			edit.custom_minimum_size = Vector2(0, 46)
+			edit.custom_minimum_size = Vector2(0, 48)
 			edit.theme_type_variation = &"FormLineEdit"
 			edit.placeholder_text = str(field.get("placeholder", ""))
 			var limit := int(field.get("max_length", 0))
@@ -129,7 +159,7 @@ func _render() -> void:
 			edit.text = str(field.get("value", ""))
 			edit.text_changed.connect(func(_t: String): _on_changed())
 			edit.text_submitted.connect(func(_t: String): submit_requested.emit())
-			group.add_child(edit)
+			content.add_child(edit)
 			_edits[id] = edit
 		else:
 			var options: Array = field.get("options", [])
@@ -141,29 +171,38 @@ func _render() -> void:
 			if not valid_default: _selected[id] = ""
 			_buttons[id] = {}
 			if options.is_empty() and str(field.get("empty_text", "")) != "":
-				group.add_child(Paper.label(str(field.get("empty_text", "")), &"PaperLabelNoteMuted"))
-			var list: Container = HFlowContainer.new() if bool(field.get("flow", false)) else VBoxContainer.new()
-			list.theme_type_variation = &"FormOptionFlow" if list is HFlowContainer else &"FormOptionColumn"
-			for option in options:
+				content.add_child(Paper.label(str(field.get("empty_text", "")), &"PaperLabelNoteMuted"))
+			var flow := bool(field.get("flow", false)) and not columns
+			var list: Container = HFlowContainer.new() if flow else VBoxContainer.new()
+			list.theme_type_variation = &"FormOptionFlow" if flow else &"FormOptionColumn"
+			for option_index in options.size():
+				var option: Dictionary = options[option_index]
 				var option_id := str(option.get("id", ""))
-				var b := Paper.button(str(option.get("label", "")), func(): select(id, option_id))
-				if not bool(field.get("flow", false)): b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				b.toggle_mode = true
+				var b := Paper.check(str(option.get("label", "")), func(): select(id, option_id))
+				b.serial = Paper.roman(option_index + 1)
+				if not flow:
+					b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				b.disabled = not bool(option.get("available", true))
 				b.tooltip_text = str(option.get("lock_hint", ""))
 				b.button_pressed = option_id == _selected[id]
 				list.add_child(b)
 				_buttons[id][option_id] = b
-			group.add_child(list)
+			content.add_child(list)
 		if _active == "":
 			_active = id
-		fields_box.add_child(group)
+		holder.add_child(group)
 		_groups[id] = group
 	_apply_layout()
 	_refresh_summary()
 
+## tabs 布局且字段不超过三组时并排成栏，各组同时可见（设计规范第六部分 §4.6）。
+static func uses_columns(data: Dictionary) -> bool:
+	var count := (data.get("fields", []) as Array).size()
+	return str(data.get("layout", "stack")) == "tabs" and count >= 2 and count <= 3
+
 func _apply_layout() -> void:
-	var tabs := str(_data.get("layout", "stack")) == "tabs"
+	var tabs := str(_data.get("layout", "stack")) == "tabs" and not uses_columns(_data)
 	for id in _groups:
 		_groups[id].visible = not tabs or id == _active
 
@@ -179,7 +218,7 @@ func _refresh_summary() -> void:
 		var template := str(entry.get("template", ""))
 		lines.append(template.replace("{内容}", shown) if template != "" else "%s：%s" % [str(entry.get("label", "")), shown])
 	_summary.text = Paper.story_text("\n".join(lines))
-	_summary.visible = not lines.is_empty()
+	_header.get_node("SummaryBox").visible = not lines.is_empty()
 
 ## 正式模态窗可将同一抬头移到滚动区外；单面板编辑器预览保持原布局。
 func pinned_header() -> Control:
@@ -204,6 +243,7 @@ func select(field_id: String, option_id: String) -> void:
 	if _buttons[field_id][option_id].disabled: return
 	for key in _buttons[field_id]:
 		_buttons[field_id][key].set_pressed_no_signal(key == option_id)
+		_buttons[field_id][key].queue_redraw()
 	if _selected[field_id] == option_id:
 		return
 	_selected[field_id] = option_id

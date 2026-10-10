@@ -50,12 +50,18 @@ func _render() -> void:
 	var list: VBoxContainer = $Choices
 	Paper.clear_children(list)
 	buttons.clear()
-	for option in _data.get("options", []):
+	# 条目行（设计规范第六部分 §4.6）：左对齐、登记体序号；不可用项淡墨删除线，并在下方写出原因。
+	var options: Array = _data.get("options", [])
+	for index in options.size():
+		var option: Dictionary = options[index]
 		var id := str(option.get("id", ""))
-		var b := Paper.button(str(option.get("label", "")), func(): chosen.emit(id), &"ChoiceMenuOption")
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var b := Paper.entry(str(option.get("label", "")), func(): chosen.emit(id), Paper.roman(index + 1), &"ChoiceMenuOption")
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.disabled = not bool(option.get("available", true))
 		b.tooltip_text = str(option.get("lock_hint", ""))
 		list.add_child(b)
 		buttons[id] = b
+		if b.disabled and b.tooltip_text != "":
+			var reason := Paper.label(b.tooltip_text, &"PaperLabelRegister")
+			reason.name = "Reason_" + id.validate_node_name()
+			list.add_child(reason)

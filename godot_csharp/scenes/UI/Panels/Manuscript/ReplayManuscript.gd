@@ -57,7 +57,12 @@ var last_run_vars: Array = []
 var option_buttons: Array = []
 var run_buttons: Array = []
 var _data: Dictionary = {}
+const NUMERALS := ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+## 对照状态到印戳墨色：冲突用印红，相容用相容色，未查用淡墨。
+const STAMP_TONES := {"match": "match", "conflict": "seal", "unvisited": "muted"}
 @onready var results_box: VBoxContainer = $RightPage/Scroll/Column/Results
+@onready var ledger: Control = $RightPage/Scroll/Column/Ledger
+@onready var tally: Control = $LeftPage/Scroll/Column/Tally
 @onready var stale_label: RichTextLabel = $RightPage/Scroll/Column/Stale
 
 func _ready() -> void:
@@ -112,7 +117,7 @@ func _render() -> void:
 	for index in questions.size():
 		if last_run_vars[index] == null:
 			last_run_vars[index] = -1
-	$LeftPage/Scroll/Column/Title.text = "[b]%s[/b]" % str(_data.get("title", default_title))
+	$LeftPage/Scroll/Column/Title.text = str(_data.get("title", default_title))
 	$LeftPage/Scroll/Column/Hint.text = str(_data.get("hint", default_hint))
 	_build_questions(questions)
 	_refresh()
@@ -125,13 +130,14 @@ func _build_questions(questions: Array) -> void:
 	option_buttons.clear()
 	for index in questions.size():
 		var variable: Dictionary = questions[index]
-		var question: VBoxContainer = $Templates/Question.duplicate()
+		var question: HBoxContainer = $Templates/Question.duplicate()
 		question.visible = true
 		column.add_child(question)
 		var mark := str(variable.get("mark", ""))
-		var fresh := "　[color=seal]（新）[/color]" if bool(variable.get("fresh", false)) else ""
-		question.get_node("Prompt").text = Paper.story_text("%s　%s%s%s" % [["一", "二", "三", "四", "五", "六"][index] if index < 6 else str(index + 1), variable.get("question", ""), mark, fresh])
-		var row: HFlowContainer = question.get_node("Options")
+		var fresh := "　[color=muted]（新）[/color]" if bool(variable.get("fresh", false)) else ""
+		question.get_node("Numeral").text = NUMERALS[index] if index < NUMERALS.size() else str(index + 1)
+		question.get_node("Body/Prompt").text = Paper.story_text("%s%s%s" % [variable.get("question", ""), mark, fresh])
+		var row: VBoxContainer = question.get_node("Body/Options")
 		var template: Button = row.get_node("Option")
 		var buttons := []
 		var options: Array = variable.get("options", [])
@@ -139,6 +145,7 @@ func _build_questions(questions: Array) -> void:
 			var button: Button = template.duplicate()
 			button.visible = true
 			button.text = str(options[option])
+			button.serial = Paper.roman(option + 1)
 			row.add_child(button)
 			_connect_button(button, _choose.bind(index, option))
 			buttons.append(button)
@@ -150,9 +157,15 @@ func _choose(index: int, option: int) -> void:
 	_refresh()
 
 func _refresh() -> void:
+	var answered := 0
 	for index in option_buttons.size():
+		if selection[index] != -1: answered += 1
 		for option in option_buttons[index].size():
 			option_buttons[index][option].set_pressed_no_signal(selection[index] == option)
+			option_buttons[index][option].queue_redraw()
+	tally.total = option_buttons.size()
+	tally.filled = answered
+	tally.visible = option_buttons.size() > 0
 	var ready := not selection.is_empty() and not selection.has(-1)
 	for b in run_buttons:
 		b.disabled = not ready
@@ -160,6 +173,7 @@ func _refresh() -> void:
 		results_box.remove_child(child)
 		child.queue_free()
 	var result: Dictionary = _data.get("result", {})
+	ledger.visible = result.is_empty()
 	if result.is_empty():
 		var empty: RichTextLabel = $Templates/EmptyResult.duplicate()
 		empty.visible = true
@@ -174,20 +188,24 @@ func _refresh() -> void:
 		results_box.add_child(match_label)
 	for finding in result.get("findings", []):
 		var status := str(finding.get("status", "unvisited"))
-		var chip: String = str(status_labels.get(status, status))
+		var chip := RegEx.create_from_string("\\[/?[a-z_]+(=[^\\]]*)?\\]").sub(str(status_labels.get(status, status)), "", true)
 		var title := str(finding.get("title", finding.get("name", "")))
 		var row: VBoxContainer = $Templates/Finding.duplicate()
 		row.visible = true
 		results_box.add_child(row)
-		var head: RichTextLabel = row.get_node("Heading")
-		head.text = Paper.story_text("%s　[b]%s[/b]" % [chip, title])
+		var stamp := Paper.stamp(chip, STAMP_TONES.get(status, "muted"))
+		row.get_node("Head").add_child(stamp)
+		row.get_node("Head").move_child(stamp, 0)
+		stamp.modulate.a = 0.55 if stale else 1.0
+		var head: RichTextLabel = row.get_node("Head/Heading")
+		head.text = Paper.story_text(title)
 		head.self_modulate.a = 0.55 if stale else 1.0
 		var detail: RichTextLabel = row.get_node("Detail")
 		detail.visible = status != "match"
 		detail.text = Paper.story_text(str(finding.get("text", "")))
 		detail.self_modulate.a = 0.5 if stale else 1.0
 		var card_id := str(finding.get("card_id", ""))
-		var open: Button = row.get_node("OpenCard")
+		var open: Button = row.get_node("Head/OpenCard")
 		open.visible = status != "unvisited" and card_id != ""
 		_connect_button(open, func(): open_card.emit(card_id))
 

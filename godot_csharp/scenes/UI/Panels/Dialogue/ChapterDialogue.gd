@@ -37,7 +37,7 @@ signal line_shown(character: String)
 @export var response_scene: PackedScene = preload("res://scenes/UI/Components/DialogueResponse.tscn")
 @export var base_voice_volume_db: float = -6.0
 @export_range(0.0, 64.0, 1.0) var portrait_text_gap := 8.0
-@export_range(0.0, 64.0, 1.0) var response_row_gap := 10.0
+@export_range(0.0, 64.0, 1.0) var response_row_gap := 8.0
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const StoryStyle := preload("res://scenes/UI/Components/Paper.gd")
@@ -98,7 +98,6 @@ var choices: GridContainer
 var next_button: Button
 var history_button: Button
 var history_close_button: Button
-var hint: Label
 var heading: Label
 var panel: Panel
 var history_panel: Panel
@@ -110,6 +109,8 @@ var dialogue_theme: Theme
 var character_portraits: Dictionary = {}
 var character_portrait: TextureRect
 var portrait_frame: PanelContainer
+## Photographer's imprint on the cabinet-card mount: the current speaker's display name.
+var portrait_name: Label
 ## Full-length portraits are shown as a head-and-shoulders card (fractions of the image).
 const PORTRAIT_BUST := Rect2(0.2, 0.02, 0.6, 0.4)
 var portrait_character := ""
@@ -203,8 +204,6 @@ func _notification(what: int) -> void:
 		if is_instance_valid(next_button): _refresh_next_caption()
 		if is_instance_valid(history_button): history_button.text = _caption("回看", "History", "履歴")
 		if is_instance_valid(history_close_button): history_close_button.text = _caption("关闭", "Close", "閉じる")
-		if is_instance_valid(fast_forward_label): fast_forward_label.text = _key_legend()
-		if active: _update_continue_hint()
 
 func _localized_speaker(canonical_name: String) -> String:
 	if is_instance_valid(context) and context.has_method("_localized_speaker"):
@@ -292,11 +291,21 @@ func _refresh_character_portrait() -> void:
 		if line_ready: _refresh_monogram()
 	else:
 		character_portrait.visible = shown
+	_refresh_portrait_name()
 	var changed := is_instance_valid(portrait_frame) and portrait_frame.visible != shown
-	if is_instance_valid(portrait_frame): portrait_frame.visible = shown
+	if is_instance_valid(portrait_frame):
+		portrait_frame.visible = shown
+		# 旁白没有说话人时肖像卡隐去但保留位置，正文不随之移动。
+		var narration := compact and active and not busy and line != null and character_portrait.texture == null and str(speaker.text).strip_edges().is_empty()
+		portrait_frame.modulate.a = 0.0 if narration else 1.0
 	if changed and compact: layout_compact_line()
 
 var portrait_monogram: Label
+
+func _refresh_portrait_name() -> void:
+	if not is_instance_valid(portrait_name): return
+	# Blank (not hidden) for narration so the mount keeps one size for every speaker.
+	portrait_name.text = str(speaker.text).strip_edges() if active and not busy and line != null else ""
 
 func _refresh_monogram() -> void:
 	var name_text := str(speaker.text).strip_edges()
@@ -314,7 +323,7 @@ func apply_locale_font(font: Font, _theme: Theme) -> void:
 	dialogue_theme.default_font_size = 18
 	panel.theme = dialogue_theme
 	history_panel.theme = dialogue_theme
-	for control in [speaker, body, hint, next_button, history_text]:
+	for control in [speaker, body, next_button, history_text]:
 		if is_instance_valid(control):
 			control.theme = dialogue_theme
 	for container in [choices, history_panel]:
@@ -366,17 +375,16 @@ func _bind_existing() -> void:
 	body.mouse_filter = Control.MOUSE_FILTER_PASS
 	choices = $DialoguePanel/Choices
 	next_button = $DialoguePanel/Next
-	hint = $DialoguePanel/Hint
 	history_button = $DialoguePanel/HistoryButton
 	history_text = $HistoryPanel/HistoryText
 	history_close_button = $HistoryPanel/Close
 	portrait_frame = $DialoguePanel/PortraitFrame
-	character_portrait = $DialoguePanel/PortraitFrame/CharacterPortrait
-	portrait_monogram = $DialoguePanel/PortraitFrame/Monogram
-	fast_forward_label = $DialoguePanel/KeyLegend
+	character_portrait = $DialoguePanel/PortraitFrame/Column/Stage/CharacterPortrait
+	portrait_monogram = $DialoguePanel/PortraitFrame/Column/Stage/Monogram
+	portrait_name = $DialoguePanel/PortraitFrame/Column/PortraitName
 	_base_panel_rect = Rect2(panel.position, panel.size)
 	_base_panel_bottom_margin = get_viewport().get_visible_rect().size.y - _base_panel_rect.end.y
-	for node in [speaker, body, choices, fast_forward_label]:
+	for node in [speaker, body, choices]:
 		_base_text_offsets[node] = node.offset_left
 	_base_speaker_right = speaker.offset_right
 
@@ -405,6 +413,7 @@ func _refresh_editor_preview() -> void:
 	character_portrait.visible = preview_portrait != null
 	portrait_frame.show()
 	portrait_monogram.text = preview_speaker.left(1)
+	portrait_name.text = preview_speaker
 	portrait_monogram.visible = preview_portrait == null
 	history_text.text = preview_history
 	# Authored sample nodes stay in the scene tree. Extra previews have no owner and are not saved.
@@ -426,11 +435,12 @@ func _refresh_editor_preview() -> void:
 
 func _setup_voice_player() -> void:
 	voice_player = $VoicePlayer
+	# 对白语音走 Voice 总线（音量由 GameSettings 管理），没有这条总线时留在原总线。
+	if AudioServer.get_bus_index(&"Voice") != -1: voice_player.bus = &"Voice"
 
 func use_compact_layout() -> void:
 	compact = true
 	_refresh_next_caption()
-	fast_forward_label.text = _key_legend()
 	layout_compact_line()
 
 func layout_compact_line() -> void:
@@ -445,18 +455,17 @@ func layout_compact_line() -> void:
 	for node in _base_text_offsets:
 		node.offset_left = float(_base_text_offsets[node]) + portrait_space
 	speaker.offset_right = _base_speaker_right + portrait_space
-	fast_forward_label.visible = count == 0
 
 func idle(title: String = "", text: String = "") -> void:
 	if is_instance_valid(character_portrait):
 		character_portrait.hide()
 		if is_instance_valid(portrait_frame): portrait_frame.hide()
 	speaker.text = tr(title) if not title.is_empty() else ""
+	if is_instance_valid(portrait_name): portrait_name.text = ""
 	body.text = tr(text) if not text.is_empty() else ""
 	body.visible_characters = -1
 	body.get_v_scroll_bar().value = 0.0
 	next_button.hide()
-	hint.text = _caption("点击继续", "Click to continue", "クリックで続ける") if not text.is_empty() else ""
 
 func cancel_presentation() -> void:
 	_session_serial += 1
@@ -549,6 +558,7 @@ func _present_line() -> void:
 	body.visible_characters = 0
 	body.get_v_scroll_bar().value = 0.0
 	elapsed = 0
+	_auto_wait = 0.0
 	current_voice_stream = _get_character_voice(line.character)
 	if not line.voice_clip.is_empty():
 		current_voice_stream = VOICES.get(line.voice_clip.trim_prefix("voice_"), current_voice_stream)
@@ -559,8 +569,6 @@ func _present_line() -> void:
 	last_voice_char_index = -1
 	history.append(_escape_rich_text(speaker.text) + "\n" + body.text)
 	line_shown.emit(line.character)
-	hint.hide()
-	_update_continue_hint()
 	for response in line.responses:
 		# Conditional story topics remain hidden until learned. Explicit locks carry a hint.
 		if not response.is_allowed and response.lock_hint.is_empty():
@@ -571,7 +579,7 @@ func _present_line() -> void:
 		button.set_meta("dialogue_next_id", response.next_id)
 		button.pressed.connect(_on_choice_pressed.bind(button))
 		if dim_visited_responses and _visited_responses.has(str(response.next_id)):
-			button.modulate = Color(1, 1, 1, 0.5)
+			button.theme_type_variation = &"ChapterDialogueVisitedResponse"
 		choices.add_child(button)
 	choices.hide()
 	layout_compact_line()
@@ -606,11 +614,6 @@ func reveal() -> void:
 		if not button.disabled:
 			button.grab_focus()
 			break
-	_update_continue_hint()
-
-func _update_continue_hint() -> void:
-	# Visible continue and history buttons already communicate these actions.
-	hint.hide()
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -618,32 +621,78 @@ func _process(delta: float) -> void:
 	_refresh_character_portrait()
 	_fast_forward(delta)
 	if active and not busy and not history_panel.visible and body.visible_characters >= 0:
+		var scale := float(_setting("accessibility", "text_speed", 1.0))
+		if scale <= 0.0:
+			# 文字速度“立即”：整句直接显示。
+			reveal()
+			_auto_advance(delta)
+			return
 		elapsed += delta
 		var loc := TranslationServer.get_locale()
-		var speed := get_locale_typing_speed(loc)
+		var speed := get_locale_typing_speed(loc) * scale
 		var target_chars: int = int(elapsed * speed)
 		if target_chars != body.visible_characters:
 			_play_typewriter_voice(body.visible_characters, target_chars)
 			body.visible_characters = target_chars
 		if body.visible_characters >= body.get_total_character_count():
 			reveal()
+	_auto_advance(delta)
+
+## 辅助功能“自动前进”：整句显示完、没有回应选项时，等待设定秒数后自动翻到下一句。
+var _auto_wait := 0.0
+
+func _auto_advance(delta: float) -> void:
+	if not active or busy or line == null or history_panel.visible or body.visible_characters >= 0 \
+			or not bool(_setting("accessibility", "auto_advance", false)) or not line.responses.is_empty():
+		_auto_wait = 0.0
+		return
+	if get_viewport().gui_get_focus_owner() is LineEdit:
+		return
+	if is_instance_valid(context) and context.has_method("dialogue_has_modal_input") and context.call("dialogue_has_modal_input"):
+		return
+	_auto_wait += delta
+	if _auto_wait < float(_setting("accessibility", "auto_advance_delay", 2.0)): return
+	_auto_wait = 0.0
+	show_line(line.next_id)
 
 ## Holding Ctrl in the compact box reveals and advances plain lines quickly; choices still stop it.
 const FAST_FORWARD_INTERVAL := 0.09
 var fast_forward_wait := 0.0
-var fast_forward_label: Label
 
-func _key_legend() -> String:
-	var locale := TranslationServer.get_locale()
-	if locale.begins_with("en"): return "Space continue   H review   hold Ctrl to skip"
-	if locale.begins_with("ja"): return "Space 続ける　H 履歴　Ctrl 長押しで早送り"
-	return "Space 继续　H 回看　按住 Ctrl 快进"
+## 玩家设置（自动加载 GameSettings）；无头检查脚本里它缺席，读取一律回退到默认值。
+var _settings_hub: Node
+
+func _setting(section: String, key: String, fallback: Variant) -> Variant:
+	if not is_instance_valid(_settings_hub) and is_inside_tree():
+		_settings_hub = get_tree().root.get_node_or_null("GameSettings")
+		if _settings_hub != null and not _settings_hub.setting_changed.is_connected(_on_setting_changed):
+			_settings_hub.setting_changed.connect(_on_setting_changed)
+	if _settings_hub == null: return fallback
+	var value: Variant = _settings_hub.get_value(section, key)
+	return fallback if value == null else value
+
+func _on_setting_changed(section: String, key: String, _value: Variant) -> void:
+	if section == "controls" and key == "hold_fast_forward":
+		_fast_forward_latched = false
+
+## 快进键为“切换”模式（GameSettings controls.hold_fast_forward = false）时，按一下开、再按一下关。
+var _fast_forward_latched := false
+
+func _fast_forward_held() -> bool:
+	if bool(_setting("controls", "hold_fast_forward", true)):
+		return Input.is_action_pressed("fast_forward")
+	return _fast_forward_latched
 
 func _fast_forward(delta: float) -> void:
-	if not compact or not active or busy or line == null or history_panel.visible or not Input.is_key_pressed(KEY_CTRL):
+	if not active: _fast_forward_latched = false
+	if not compact or not active or busy or line == null or history_panel.visible or not _fast_forward_held():
 		fast_forward_wait = 0.0
 		return
-	if not line.responses.is_empty() or get_viewport().gui_get_focus_owner() is LineEdit:
+	if not line.responses.is_empty():
+		# 回应选项处停下；切换模式下顺手关掉，选完后不会自己接着快进。
+		_fast_forward_latched = false
+		return
+	if get_viewport().gui_get_focus_owner() is LineEdit:
 		return
 	if is_instance_valid(context) and context.has_method("dialogue_has_modal_input") and context.call("dialogue_has_modal_input"):
 		return
@@ -701,8 +750,17 @@ func on_panel_input(event: InputEvent) -> void:
 		panel.accept_event()
 
 func _input(event: InputEvent) -> void:
+	_toggle_fast_forward(event)
 	if single_press_keyboard_continue:
 		_handle_dialogue_key(event)
+
+func _toggle_fast_forward(event: InputEvent) -> void:
+	if Engine.is_editor_hint() or not active or bool(_setting("controls", "hold_fast_forward", true)): return
+	if not event.is_action_pressed("fast_forward"): return
+	var editor := get_viewport().gui_get_focus_owner()
+	if editor is LineEdit or editor is TextEdit: return
+	_fast_forward_latched = not _fast_forward_latched
+	fast_forward_wait = 0.0
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Other story hosts keep normal GUI response-button keyboard activation.
@@ -716,13 +774,17 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 		return
 	if is_instance_valid(context) and context.has_method("dialogue_has_modal_input") and context.call("dialogue_has_modal_input"):
 		return
-	if not active or not event is InputEventKey or event.keycode not in [KEY_H, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+	if not active or not (event is InputEventKey or event is InputEventMouseButton):
+		return
+	var is_history := event.is_action("dialogue_history")
+	var is_choose := event.is_action("dialogue_choose")
+	if not (is_history or is_choose or event.is_action("dialogue_continue")):
 		return
 	# Consume down, repeat and up before focused Buttons receive ui_accept.
 	get_viewport().set_input_as_handled()
-	if not event.pressed or event.echo:
+	if not event.is_pressed() or event.is_echo():
 		return
-	if event.keycode == KEY_H:
+	if is_history:
 		toggle_history()
 		return
 	if busy or history_panel.visible:
@@ -733,7 +795,7 @@ func _handle_dialogue_key(event: InputEvent) -> void:
 		else:
 			reveal()
 		return
-	if event.keycode in [KEY_ENTER, KEY_KP_ENTER] and choices.visible and choices.get_child_count() > 0:
+	if is_choose and choices.visible and choices.get_child_count() > 0:
 		var focused := get_viewport().gui_get_focus_owner()
 		var choice: Button
 		if focused is Button and choices.is_ancestor_of(focused):

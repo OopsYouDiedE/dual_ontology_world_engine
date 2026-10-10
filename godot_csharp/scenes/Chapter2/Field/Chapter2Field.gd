@@ -97,10 +97,10 @@ func _physics_process(_delta: float) -> void:
 	_check_region()
 	_fade_occluders()
 	var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	if Input.is_physical_key_pressed(KEY_A): dir.x -= 1
-	if Input.is_physical_key_pressed(KEY_D): dir.x += 1
-	if Input.is_physical_key_pressed(KEY_W): dir.y -= 1
-	if Input.is_physical_key_pressed(KEY_S): dir.y += 1
+	if Input.is_action_pressed("move_left"): dir.x -= 1
+	if Input.is_action_pressed("move_right"): dir.x += 1
+	if Input.is_action_pressed("move_up"): dir.y -= 1
+	if Input.is_action_pressed("move_down"): dir.y += 1
 	dir = dir.limit_length(1.0)
 	player.velocity = dir * 120.0
 	player.move_and_slide()

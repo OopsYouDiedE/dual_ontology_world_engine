@@ -1,7 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
 [ext_resource type="Script" path="res://scenes/UI/Panels/Ending/EndingCard.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
 
 [node name="EndingCard" type="VBoxContainer"]
 offset_right = 752.0
@@ -9,6 +11,24 @@ size_flags_horizontal = 3
 theme = ExtResource("theme")
 script = ExtResource("script")
 theme_type_variation = &"PaperModalBody"
+
+[node name="Figure" type="TextureRect" parent="."]
+visible = false
+texture_filter = 1
+custom_minimum_size = Vector2(0, 192)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" parent="." instance=ExtResource("pixel")]
+visible = false
+layout_mode = 2
+pixel_type = &"PixelHeadline"
+autowrap = true
+
+[node name="TitleRule" parent="." instance=ExtResource("rule")]
+layout_mode = 2
+style = "double"
 
 [node name="Outcome" type="RichTextLabel" parent="."]
 layout_mode = 2

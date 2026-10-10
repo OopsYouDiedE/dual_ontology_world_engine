@@ -1,7 +1,12 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/UI/Panels/Manuscript/ReplayManuscript.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
 [ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperCheck.gd" id="check"]
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperLedger.gd" id="ledger"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperTally.tscn" id="tally"]
 
 [node name="ReplayManuscript" type="HBoxContainer"]
 anchors_preset = 15
@@ -32,7 +37,7 @@ theme_type_variation = &"ReplayManuscriptColumn"
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_type_variation = &"ReplayManuscriptLeftPage"
+theme_type_variation = &"ReplayManuscriptRightPage"
 
 [node name="Scroll" type="ScrollContainer" parent="RightPage"]
 layout_mode = 2
@@ -43,15 +48,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"ReplayManuscriptColumn"
 
-[node name="Title" type="RichTextLabel" parent="LeftPage/Scroll/Column"]
+[node name="Title" parent="LeftPage/Scroll/Column" instance=ExtResource("pixel")]
 layout_mode = 2
-size_flags_horizontal = 3
-bbcode_enabled = true
-text = "[b]重演推演[/b]"
-fit_content = true
-scroll_active = false
-autowrap_mode = 3
-theme_type_variation = &"PaperModalTitleLabel"
+pixel_type = &"PixelTitle"
+align = "left"
 
 [node name="Hint" type="RichTextLabel" parent="LeftPage/Scroll/Column"]
 layout_mode = 2
@@ -63,50 +63,49 @@ scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"ReplayManuscriptHint"
 
-[node name="Rule" type="ColorRect" parent="LeftPage/Scroll/Column"]
+[node name="Tally" parent="LeftPage/Scroll/Column" instance=ExtResource("tally")]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 1)
-mouse_filter = 2
-color = Color(0.17, 0.13, 0.09, 0.28)
+
+[node name="Rule" parent="LeftPage/Scroll/Column" instance=ExtResource("rule")]
+layout_mode = 2
 
 [node name="Questions" type="VBoxContainer" parent="LeftPage/Scroll/Column"]
 layout_mode = 2
 theme_type_variation = &"ReplayManuscriptColumn"
 
-[node name="ActionRule" type="ColorRect" parent="LeftPage/Scroll/Column"]
+[node name="ActionRule" parent="LeftPage/Scroll/Column" instance=ExtResource("rule")]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 1)
-mouse_filter = 2
-color = Color(0.17, 0.13, 0.09, 0.28)
 
 [node name="Actions" type="HBoxContainer" parent="LeftPage/Scroll/Column"]
 layout_mode = 2
 theme_type_variation = &"ReplayManuscriptActions"
-
-[node name="RunPlayback" type="Button" parent="LeftPage/Scroll/Column/Actions"]
-layout_mode = 2
-focus_mode = 0
-text = "重演，看回放"
-
-[node name="RunSkip" type="Button" parent="LeftPage/Scroll/Column/Actions"]
-layout_mode = 2
-focus_mode = 0
-text = "重演，跳过回放"
 
 [node name="Close" type="Button" parent="LeftPage/Scroll/Column/Actions"]
 layout_mode = 2
 focus_mode = 0
 text = "合上（R）"
 
-[node name="Title" type="RichTextLabel" parent="RightPage/Scroll/Column"]
+[node name="Spacer" type="Control" parent="LeftPage/Scroll/Column/Actions"]
 layout_mode = 2
 size_flags_horizontal = 3
-bbcode_enabled = true
-text = "[b]与现场对照[/b]"
-fit_content = true
-scroll_active = false
-autowrap_mode = 3
-theme_type_variation = &"PaperModalTitleLabel"
+mouse_filter = 2
+
+[node name="RunSkip" type="Button" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+focus_mode = 0
+text = "重演，跳过回放"
+
+[node name="RunPlayback" type="Button" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+focus_mode = 0
+text = "重演，看回放"
+theme_type_variation = &"PaperAction"
+
+[node name="Title" parent="RightPage/Scroll/Column" instance=ExtResource("pixel")]
+layout_mode = 2
+pixel_type = &"PixelTitle"
+align = "left"
+text = "与现场对照"
 
 [node name="Stale" type="RichTextLabel" parent="RightPage/Scroll/Column"]
 layout_mode = 2
@@ -118,11 +117,8 @@ scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"ReplayManuscriptStale"
 
-[node name="Rule" type="ColorRect" parent="RightPage/Scroll/Column"]
+[node name="Rule" parent="RightPage/Scroll/Column" instance=ExtResource("rule")]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 1)
-mouse_filter = 2
-color = Color(0.17, 0.13, 0.09, 0.28)
 
 [node name="Results" type="VBoxContainer" parent="RightPage/Scroll/Column"]
 layout_mode = 2
@@ -138,50 +134,84 @@ scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"ReplayManuscriptPreview"
 
+[node name="Ledger" type="Control" parent="RightPage/Scroll/Column"]
+custom_minimum_size = Vector2(0, 512)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("ledger")
+
 [node name="Templates" type="Control" parent="."]
 layout_mode = 2
 visible = false
 mouse_filter = 2
 
-[node name="Question" type="VBoxContainer" parent="Templates"]
+[node name="Question" type="HBoxContainer" parent="Templates"]
 layout_mode = 2
-theme_type_variation = &"ReplayManuscriptColumn"
+theme_type_variation = &"ReplayManuscriptQuestion"
 
-[node name="Prompt" type="RichTextLabel" parent="Templates/Question"]
+[node name="Numeral" type="Label" parent="Templates/Question"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"PaperLabelNumeral"
+text = "一"
+
+[node name="Body" type="VBoxContainer" parent="Templates/Question"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ReplayManuscriptFinding"
+
+[node name="Prompt" type="RichTextLabel" parent="Templates/Question/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
-text = "一　示例变量设定"
+text = "示例变量设定"
 fit_content = true
 scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"PaperLabelPaperLabel"
 
-[node name="Options" type="HFlowContainer" parent="Templates/Question"]
+[node name="Options" type="VBoxContainer" parent="Templates/Question/Body"]
 layout_mode = 2
 theme_type_variation = &"ReplayManuscriptOptions"
 
-[node name="Option" type="Button" parent="Templates/Question/Options"]
+[node name="Option" type="Button" parent="Templates/Question/Body/Options"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 visible = false
 focus_mode = 0
 toggle_mode = true
 text = "选项"
+alignment = 0
 theme_type_variation = &"ReplayManuscriptOption"
+script = ExtResource("check")
 
 [node name="Finding" type="VBoxContainer" parent="Templates"]
 layout_mode = 2
 theme_type_variation = &"ReplayManuscriptFinding"
 
-[node name="Heading" type="RichTextLabel" parent="Templates/Finding"]
+[node name="Head" type="HBoxContainer" parent="Templates/Finding"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptActions"
+
+[node name="Heading" type="RichTextLabel" parent="Templates/Finding/Head"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 bbcode_enabled = true
-text = "吻合　[b]痕迹[/b]"
+text = "痕迹"
 fit_content = true
 scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"ReplayManuscriptHeading"
+
+[node name="OpenCard" type="Button" parent="Templates/Finding/Head"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+focus_mode = 0
+text = "看证物卡"
+theme_type_variation = &"ReplayManuscriptOpenCard"
 
 [node name="Detail" type="RichTextLabel" parent="Templates/Finding"]
 layout_mode = 2
@@ -192,13 +222,6 @@ fit_content = true
 scroll_active = false
 autowrap_mode = 3
 theme_type_variation = &"ReplayManuscriptDetail"
-
-[node name="OpenCard" type="Button" parent="Templates/Finding"]
-layout_mode = 2
-size_flags_horizontal = 0
-focus_mode = 0
-text = "看证物卡"
-theme_type_variation = &"ReplayManuscriptOpenCard"
 
 [node name="EmptyResult" type="RichTextLabel" parent="Templates"]
 layout_mode = 2
