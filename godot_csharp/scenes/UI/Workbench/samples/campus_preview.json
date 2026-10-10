@@ -1,0 +1,37 @@
+{
+"nodes": {
+ "ArchiveFront": {"pos": [500, 70], "label": "地点1"},
+ "Hall": {"pos": [500, 200], "label": "地点2"},
+ "Lecture": {"pos": [300, 200], "label": "地点3"},
+ "Resonance": {"pos": [120, 300], "label": "地点4"},
+ "Commons": {"pos": [500, 380], "label": "地点5"},
+ "DormW": {"pos": [370, 330], "label": "地点6"},
+ "DormL": {"pos": [630, 330], "label": "地点7"},
+ "DormS": {"pos": [370, 440], "label": "地点8"},
+ "DormLife": {"pos": [630, 440], "label": "地点9"},
+ "Logistics": {"pos": [820, 430], "label": "地点10"},
+ "Granary": {"pos": [900, 330], "label": "地点11"},
+ "Clinic": {"pos": [820, 220], "label": "地点12"},
+ "Greenhouse": {"pos": [880, 90], "label": "地点13"},
+ "Oath": {"pos": [500, 560], "label": "地点14"}
+},
+"links": [
+ ["ArchiveFront", "Hall"],
+ ["Hall", "Lecture"],
+ ["Lecture", "Resonance"],
+ ["Hall", "Commons"],
+ ["Commons", "DormW"],
+ ["Commons", "DormL"],
+ ["Commons", "DormS"],
+ ["Commons", "DormLife"],
+ ["Commons", "Oath"],
+ ["Commons", "Logistics"],
+ ["Logistics", "Granary"],
+ ["Logistics", "Clinic"],
+ ["Clinic", "Greenhouse"],
+ ["Logistics", "Oath"]
+],
+"here": "Hall",
+"known": {"Hall": true, "Commons": true, "Lecture": true, "Oath": true},
+"figures": []
+}

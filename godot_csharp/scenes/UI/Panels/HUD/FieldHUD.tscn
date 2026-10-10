@@ -1,11 +1,13 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/UI/Panels/HUD/FieldHUD.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
 [ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
 
 [sub_resource type="Gradient" id="vignette_gradient"]
 offsets = PackedFloat32Array(0, 0.55, 1)
-colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.42)
+colors = PackedColorArray(0.141176, 0.129412, 0.113725, 0, 0.141176, 0.129412, 0.113725, 0, 0.141176, 0.129412, 0.113725, 0.42)
 
 [sub_resource type="GradientTexture2D" id="vignette"]
 gradient = SubResource("vignette_gradient")
@@ -13,18 +15,8 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1.05, 1.05)
 
-[sub_resource type="Gradient" id="top_gradient"]
-colors = PackedColorArray(0.03, 0.02, 0.05, 0.62, 0.03, 0.02, 0.05, 0)
-
 [sub_resource type="Gradient" id="bottom_gradient"]
-colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.62)
-
-[sub_resource type="GradientTexture2D" id="top"]
-gradient = SubResource("top_gradient")
-width = 4
-height = 64
-fill_from = Vector2(0, 0)
-fill_to = Vector2(0, 1)
+colors = PackedColorArray(0.141176, 0.129412, 0.113725, 0, 0.141176, 0.129412, 0.113725, 0.62)
 
 [sub_resource type="GradientTexture2D" id="bottom"]
 gradient = SubResource("bottom_gradient")
@@ -43,12 +35,6 @@ offset_bottom = 992.0
 mouse_filter = 2
 texture = SubResource("vignette")
 
-[node name="TopShade" type="TextureRect" parent="."]
-offset_right = 1280.0
-offset_bottom = 64.0
-mouse_filter = 2
-texture = SubResource("top")
-
 [node name="BottomShade" type="TextureRect" parent="."]
 offset_top = 928.0
 offset_right = 1280.0
@@ -56,45 +42,52 @@ offset_bottom = 992.0
 mouse_filter = 2
 texture = SubResource("bottom")
 
-[node name="Title" type="Label" parent="."]
-offset_left = 32.0
-offset_top = 18.0
-offset_right = 640.0
+[node name="Bar" type="PanelContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
 offset_bottom = 48.0
+grow_horizontal = 2
 mouse_filter = 2
 theme = ExtResource("theme")
-theme_type_variation = &"FieldHUDTitle"
+theme_type_variation = &"FieldHUDBar"
+
+[node name="Rule" parent="." instance=ExtResource("rule")]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 42.0
+offset_bottom = 48.0
+grow_horizontal = 2
+style = "double"
+
+[node name="Title" parent="." instance=ExtResource("pixel")]
+offset_left = 480.0
+offset_top = 6.0
+offset_right = 800.0
+offset_bottom = 38.0
+size_flags_horizontal = 0
+pixel_type = &"PixelSub"
 
 [node name="Time" type="Label" parent="."]
 visible = false
-offset_left = 480.0
-offset_top = 20.0
-offset_right = 630.0
-offset_bottom = 48.0
+offset_left = 1120.0
+offset_top = 6.0
+offset_right = 1256.0
+offset_bottom = 42.0
 mouse_filter = 2
 theme = ExtResource("theme")
 theme_type_variation = &"FieldHUDTime"
-
-[node name="Keys" type="Label" parent="."]
-visible = false
-offset_left = 640.0
-offset_top = 20.0
-offset_right = 1256.0
-offset_bottom = 50.0
-mouse_filter = 2
-theme = ExtResource("theme")
-horizontal_alignment = 2
-theme_type_variation = &"FieldHUDKeys"
+vertical_alignment = 1
 
 [node name="Hint" type="Label" parent="."]
 visible = false
-offset_left = 340.0
-offset_top = 920.0
-offset_right = 940.0
-offset_bottom = 950.0
+offset_left = 560.0
+offset_top = 912.0
+offset_right = 720.0
+offset_bottom = 944.0
 mouse_filter = 2
 theme = ExtResource("theme")
 horizontal_alignment = 1
+vertical_alignment = 1
 theme_type_variation = &"FieldHUDHint"
 
 [node name="HoverTip" type="Label" parent="."]
@@ -105,10 +98,10 @@ theme_type_variation = &"FieldHUDHoverTip"
 
 [node name="Aside" type="Label" parent="."]
 visible = false
-offset_left = 240.0
-offset_top = 880.0
-offset_right = 1040.0
-offset_bottom = 910.0
+offset_left = 160.0
+offset_top = 856.0
+offset_right = 1120.0
+offset_bottom = 896.0
 mouse_filter = 2
 theme = ExtResource("theme")
 horizontal_alignment = 1
@@ -118,14 +111,14 @@ theme_type_variation = &"FieldHUDAside"
 offset_right = 1280.0
 offset_bottom = 992.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0)
+color = Color(0.141176, 0.129412, 0.113725, 0)
 
 [node name="Flash" type="RichTextLabel" parent="."]
 visible = false
-offset_left = 340.0
-offset_top = 400.0
-offset_right = 940.0
-offset_bottom = 440.0
+offset_left = 320.0
+offset_top = 432.0
+offset_right = 960.0
+offset_bottom = 520.0
 mouse_filter = 2
 theme = ExtResource("theme")
 bbcode_enabled = true

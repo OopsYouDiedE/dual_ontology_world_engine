@@ -43,6 +43,7 @@ func run() -> void:
 		await process_frame
 		node.queue_free()
 		await process_frame
+	await check_dialogue_has_no_legend()
 	await check_hud()
 	await check_choice_menu()
 	await check_evidence_card()
@@ -53,24 +54,32 @@ func run() -> void:
 	await check_ending()
 	await check_modal()
 	await check_workbench()
+	await check_settings_book()
+	await check_title_hits()
 	print("UI_MODULES_CHECK: %d checks, %d failures" % [checks, failures.size()])
 	for message in failures:
 		print("  - ", message)
 	quit(0 if failures.is_empty() else 1)
 
+func check_dialogue_has_no_legend() -> void:
+	var dialogue := spawn(UI + "Panels/Dialogue/ChapterDialogue.tscn")
+	await process_frame
+	ok(dialogue.find_child("KeyLegend", true, false) == null and dialogue.find_child("Hint", true, false) == null, "ChapterDialogue has no KeyLegend or click-to-continue Hint")
+	dialogue.queue_free()
+	await process_frame
+
 func check_hud() -> void:
 	var hud := spawn(UI + "Panels/HUD/FieldHUD.tscn")
 	await process_frame
-	ok(not hud.get_node("Keys").visible and not hud.get_node("Hint").visible and not hud.get_node("Time").visible, "HUD starts with empty pieces hidden")
-	hud.set_title(Samples.text("ui-modules-check", "text-001"))
-	ok(hud.get_node("Title").text == Samples.text("ui-modules-check", "text-001"), "HUD title")
+	ok(not hud.get_node("Hint").visible and not hud.get_node("Time").visible, "HUD starts with empty pieces hidden")
+	hud.set_title("生活翼 · 活动厅")
+	ok(hud.get_node("Title").text == "生活翼 · 活动厅", "HUD title")
 	hud.set_time("07:20")
 	ok(hud.get_node("Time").visible and hud.get_node("Time").text == "07:20", "HUD time shown")
 	hud.set_time("")
 	ok(not hud.get_node("Time").visible, "HUD time hidden when empty")
-	hud.set_keys([Samples.text("ui-modules-check", "text-002"), Samples.text("ui-modules-check", "text-003")])
-	ok(hud.get_node("Keys").visible and hud.get_node("Keys").text == Samples.text("ui-modules-check", "text-004"), "HUD keys joined")
-	hud.set_hint(Samples.text("ui-modules-check", "text-005"))
+	ok(not hud.has_node("Keys"), "HUD has no permanent key legend")
+	hud.set_hint("衣架　［E］")
 	ok(hud.get_node("Hint").visible, "HUD hint shown")
 	hud.set_hint("")
 	ok(not hud.get_node("Hint").visible, "HUD hint hidden when empty")
@@ -111,7 +120,8 @@ func check_choice_menu() -> void:
 		{"id": "locked", "label": Samples.text("ui-modules-check", "text-013"), "available": false, "lock_hint": Samples.text("ui-modules-check", "text-014")},
 	]})
 	ok(menu.get_node("Prompt").visible, "ChoiceMenu prompt visible")
-	ok(menu.get_node("Choices").get_child_count() == 3, "ChoiceMenu has 3 buttons")
+	ok(menu.get_node("Choices").get_children().filter(func(c): return c is Button).size() == 3, "ChoiceMenu has 3 buttons")
+	ok(menu.get_node("Choices").get_child_count() == 4, "ChoiceMenu writes the reason under a locked option")
 	var locked: Button = menu.get_node("Choices").get_child(2)
 	ok(locked.disabled and locked.tooltip_text == Samples.text("ui-modules-check", "text-014"), "ChoiceMenu locked option disabled with tooltip")
 	menu.get_node("Choices").get_child(1).pressed.emit()
@@ -126,27 +136,27 @@ func check_evidence_card() -> void:
 	await process_frame
 	var picked: Array = []
 	card.chosen.connect(func(id: String): picked.append(id))
-	card.show_data({"picture": SAMPLE_PICTURE, "intro": Samples.text("ui-modules-check", "text-016"), "facts": Samples.text("ui-modules-check", "text-017"), "source": Samples.text("ui-modules-check", "text-018"),
-		"notes": ["[color=seal]回忆：这个声音似曾相识。[/color]", Samples.text("ui-modules-check", "text-019")], "items": [Samples.text("ui-modules-check", "text-020"), Samples.text("ui-modules-check", "text-021")],
-		"table": [[Samples.text("ui-modules-check", "text-022"), Samples.text("ui-modules-check", "text-023"), Samples.text("ui-modules-check", "text-024")], [Samples.text("ui-modules-check", "text-025"), Samples.text("ui-modules-check", "text-026"), Samples.text("ui-modules-check", "text-027")], [Samples.text("ui-modules-check", "text-028"), Samples.text("ui-modules-check", "text-029"), Samples.text("ui-modules-check", "text-030")]],
-		"inline": [{"id": "a", "label": Samples.text("ui-modules-check", "text-031"), "available": true}, {"id": "b", "label": Samples.text("ui-modules-check", "text-032"), "available": false, "lock_hint": Samples.text("ui-modules-check", "text-033")}]})
-	ok(card.get_node("Row/Picture").visible and card.get_node("Row/Picture").texture != null, "EvidenceCard picture shown")
+	card.show_data({"picture": SAMPLE_PICTURE, "intro": "一份简介", "facts": "亲见的事实。", "source": "现场",
+		"notes": ["[color=seal]回忆：这个声音似曾相识。[/color]", "旁人没有提起过它。"], "items": ["第一条", "第二条"],
+		"table": [["位置", "谁", "听到"], ["门口", "甲", "脚步"], ["窗边", "乙", "风声"]],
+		"inline": [{"id": "a", "label": "选项甲", "available": true}, {"id": "b", "label": "选项乙", "available": false, "lock_hint": "锁"}]})
+	ok(card.get_node("Row/Figure").visible and card.get_node("Row/Figure/Mount/Plate/Picture").texture != null, "EvidenceCard picture shown")
 	ok(card.get_node("Row/Texts/Intro").visible and card.get_node("Row/Texts/Facts").visible, "EvidenceCard intro and facts")
-	ok(card.get_node("Row/Texts/Source").visible and card.get_node("Row/Texts/Source").text.begins_with(Samples.text("ui-modules-check", "text-034")), "EvidenceCard source prefixed")
-	var notes: Control = card.get_node("Notes")
+	ok(card.get_node("Row/Figure/Source").visible and card.get_node("Row/Figure/Source").text.begins_with("来源　"), "EvidenceCard source caption under the picture")
+	var notes: Control = card.get_node("Row/Texts/Notes")
 	ok(notes.visible and notes.get_child_count() == 2, "EvidenceCard notes")
 	ok(notes.get_child(0).text.contains("#" + card.Paper.color("seal").to_html(false)), "EvidenceCard recall note carries the seal color from story markup")
 	ok(notes.get_child(1).get_theme_color("default_color") == card.Paper.color("ink"), "EvidenceCard plain note is ink")
-	ok(card.get_node("Items").get_child_count() == 2, "EvidenceCard items")
+	ok(card.get_node("Row/Texts/Items").get_child_count() == 2, "EvidenceCard items")
 	var table: GridContainer = card.get_node("Table")
 	ok(table.visible and table.columns == 3 and table.get_child_count() == 9, "EvidenceCard table columns follow first row")
-	ok(card.get_node("Inline").visible and card.get_node("Inline/Choices").get_child_count() == 2, "EvidenceCard inline options")
+	ok(card.get_node("Inline").visible and card.get_node("Inline/Choices").get_children().filter(func(c): return c is Button).size() == 2, "EvidenceCard inline options")
 	ok(card.get_node("Inline/Choices").get_child(1).disabled, "EvidenceCard inline lock")
 	card.get_node("Inline/Choices").get_child(0).pressed.emit()
 	ok(picked == ["a"], "EvidenceCard inline emits chosen")
-	card.show_data({"facts": Samples.text("ui-modules-check", "text-035")})
-	ok(not card.get_node("Row/Picture").visible and not card.get_node("Row/Texts/Source").visible and not card.get_node("Row/Texts/Intro").visible, "EvidenceCard hides empty parts")
-	ok(not card.get_node("Notes").visible and not card.get_node("Table").visible and not card.get_node("Inline").visible, "EvidenceCard hides empty lists")
+	card.show_data({"facts": "只有事实"})
+	ok(not card.get_node("Row/Figure").visible and not card.get_node("Row/Texts/Intro").visible and not card.get_node("Row/Texts/Title").visible, "EvidenceCard hides empty parts")
+	ok(not card.get_node("Row/Texts/Notes").visible and not card.get_node("Table").visible and not card.get_node("Inline").visible, "EvidenceCard hides empty lists")
 	card.queue_free()
 	await process_frame
 
@@ -189,11 +199,12 @@ func check_form() -> void:
 			{"id": "show", "kind": "choice", "options": [], "empty_text": Samples.text("ui-modules-check", "text-050")},
 		]})
 	ok(form.get_node("Header").visible and form.get_node("Header/Question").visible, "FormPanel header pinned")
-	var summary: RichTextLabel = form.get_node("Header/Summary")
-	ok(summary.text == Samples.text("ui-modules-check", "text-051"), "FormPanel summary shows unset labels")
-	ok(form.get_node("Fields").get_child(0).visible and not form.get_node("Fields").get_child(1).visible, "FormPanel tabs show first group only")
+	var summary: RichTextLabel = form.get_node("Header/SummaryBox/Summary")
+	ok(summary.text == "陈述：（未选）\n出示：（未选）", "FormPanel summary shows unset labels")
+	var columns: Node = form.get_node("Fields").get_child(0)
+	ok(columns is HBoxContainer and columns.get_child_count() == 3, "FormPanel tabs with two groups sit side by side (group, rule, group)")
+	ok(columns.get_child(0).visible and columns.get_child(2).visible, "FormPanel columns show every group")
 	form.show_field("show")
-	ok(not form.get_node("Fields").get_child(0).visible and form.get_node("Fields").get_child(1).visible, "FormPanel show_field swaps group")
 	form.show_field("say")
 	form.button_for("say", "b").pressed.emit()
 	ok(summary.text == Samples.text("ui-modules-check", "text-052"), "FormPanel summary tracks selection")
@@ -214,18 +225,22 @@ func check_notebook() -> void:
 	]})
 	ok(not notebook.get_node("Empty").visible, "Notebook empty text hidden when sections exist")
 	var sections: Control = notebook.get_node("Sections")
+	var layout: HBoxContainer = sections.get_child(0)
+	var tabs: VBoxContainer = layout.get_child(0)
+	ok(tabs.get_child_count() == 2 and tabs.get_child(0).button_pressed, "Notebook index tab per section, first selected")
 	var grid: GridContainer = null
-	var list: VBoxContainer = null
-	for child in sections.get_children():
-		if child is GridContainer:
-			grid = child
-		elif child is VBoxContainer:
-			list = child
-	ok(grid != null and grid.columns == 2 and grid.get_child_count() == 3 and grid.get_child(0) is Button, "Notebook grid of buttons")
-	ok(list != null and list.get_child_count() == 2 and list.get_child(0) is RichTextLabel, "Notebook list of labels")
-	ok(list.get_child(1).get_theme_color("default_color") == notebook.Paper.color("muted"), "Notebook muted entry")
+	for child in layout.get_child(1).get_child(0).get_children():
+		if child is GridContainer: grid = child
+	ok(grid != null and grid.columns == 2 and grid.get_child_count() == 3 and grid.get_child(0) is Button, "Notebook grid of entries")
 	grid.get_child(1).pressed.emit()
 	ok(opened == ["E2"], "Notebook emits open_card")
+	tabs.get_child(1).pressed.emit()
+	await process_frame
+	var list: VBoxContainer = null
+	for child in sections.get_child(0).get_child(1).get_child(0).get_children():
+		if child is VBoxContainer: list = child
+	ok(list != null and list.get_child_count() == 2 and list.get_child(0) is RichTextLabel, "Notebook second tab shows its list")
+	ok(list != null and list.get_child(1).get_theme_color("default_color") == notebook.Paper.color("muted"), "Notebook muted entry")
 	notebook.queue_free()
 	await process_frame
 
@@ -267,7 +282,7 @@ func check_manuscript() -> void:
 	ok(m.results_box.get_child_count() == 4, "Manuscript full-match banner plus 3 findings")
 	var open_buttons: Array = []
 	for row in m.results_box.get_children():
-		var b := row.get_node_or_null("OpenCard") as Button
+		var b := row.get_node_or_null("Head/OpenCard") as Button
 		if b != null:
 			open_buttons.append(b)
 	ok(open_buttons.size() == 3 and open_buttons[0].visible and open_buttons[1].visible and not open_buttons[2].visible, "Manuscript open-card button only for visited findings")
@@ -298,8 +313,8 @@ func check_campus_map() -> void:
 func check_ending() -> void:
 	var ending := spawn(UI + "Panels/Ending/EndingCard.tscn")
 	await process_frame
-	ending.show_data({"outcome": Samples.text("ui-modules-check", "text-072"), "rows": ["[color=seal]留下的钩：[/color]钥匙", Samples.text("ui-modules-check", "text-073"), Samples.text("ui-modules-check", "text-074")]})
-	ok(ending.get_node("Outcome").visible and ending.get_node("Rows").get_child_count() == 3, "EndingCard outcome and rows")
+	ending.show_data({"outcome": "天亮了。", "rows": ["[color=seal]留下的钩：[/color]钥匙", "你没有交出的：名字", "按空格回到标题。"]})
+	ok(ending.get_node("Outcome").visible and ending.get_node("Rows").get_child_count() == 6, "EndingCard outcome and rows (each row with its rule)")
 	ok(ending.get_node("Rows").get_child(0).text.contains("#8a3324"), "EndingCard semantic colors resolved")
 	ending.show_data({"outcome": "", "rows": []})
 	ok(not ending.get_node("Outcome").visible and ending.get_node("Rows").get_child_count() == 0, "EndingCard empty")
@@ -310,15 +325,17 @@ func check_modal() -> void:
 	var modal := spawn(UI + "Components/PaperModal.tscn")
 	await process_frame
 	var fired := [0]
-	var first: Button = modal.add_footer_button(Samples.text("ui-modules-check", "text-075"), func(): fired[0] += 1)
-	var second: Button = modal.add_footer_button(Samples.text("ui-modules-check", "text-076"), Callable(), true, Samples.text("ui-modules-check", "text-077"))
-	ok(modal.get_footer() != null and modal.get_footer().get_child_count() == 2, "PaperModal footer holds buttons")
-	ok(second.disabled and second.tooltip_text == Samples.text("ui-modules-check", "text-077"), "PaperModal footer disabled + tooltip")
+	var first: Button = modal.add_footer_button("开始", func(): fired[0] += 1)
+	var second: Button = modal.add_footer_button("算了", Callable(), true, "还不行")
+	var buttons: Array = modal.get_footer().get_children().filter(func(c): return c is Button) if modal.get_footer() != null else []
+	ok(buttons.size() == 2, "PaperModal footer holds buttons")
+	ok(second.theme_type_variation == &"PaperAction", "PaperModal last of two footer buttons is the primary action")
+	ok(second.disabled and second.tooltip_text == "还不行", "PaperModal footer disabled + tooltip")
 	first.pressed.emit()
 	ok(fired[0] == 1, "PaperModal footer action fires")
 	var rules := 0
 	for child in modal.get_column().get_children():
-		if child is ColorRect:
+		if child.get_script() == preload("res://scenes/UI/Components/PaperRule.gd"):
 			rules += 1
 	ok(rules == 2, "PaperModal adds one rule for the footer (title rule + footer rule)")
 	modal.clear_footer()
@@ -326,7 +343,7 @@ func check_modal() -> void:
 	await process_frame
 	var count := 0
 	for child in modal.get_column().get_children():
-		if child is HFlowContainer:
+		if child.name == "Footer":
 			count += 1
 	ok(count == 0, "PaperModal footer node removed")
 	modal.queue_free()
@@ -343,4 +360,115 @@ func check_workbench() -> void:
 	var raw := FileAccess.get_file_as_string("res://scenes/UI/Workbench/UIWorkbench.tscn")
 	ok(not raw.contains("scenes/Awakening/") and not raw.contains("scenes/Chapter2/"), "Workbench references no chapter folders")
 	bench.queue_free()
+	await process_frame
+
+func _find(node: Node, predicate: Callable) -> Array:
+	var found: Array = []
+	if predicate.call(node):
+		found.append(node)
+	for child in node.get_children():
+		found.append_array(_find(child, predicate))
+	return found
+
+func check_settings_book() -> void:
+	var book := spawn(UI + "Panels/Settings/SettingsBook.tscn")
+	await process_frame
+	var gs: Node = book._gs()
+	ok(gs != null, "SettingsBook has a settings source without the autoload")
+	ok(book.book.tab_buttons().size() == 3, "SettingsBook has three index tabs")
+	var choices := _find(book, func(n: Node) -> bool: return n.get_script() == preload("res://scenes/UI/Components/PaperChoice.gd"))
+	var scales := _find(book, func(n: Node) -> bool: return n.get_script() == preload("res://scenes/UI/Components/PaperScale.gd"))
+	ok(choices.size() >= 12, "SettingsBook rules page lists choice rows")
+	ok(scales.size() == 4, "SettingsBook rules page has four volume scales")
+	var texts := _find(book, func(n: Node) -> bool: return n is Label or n is RichTextLabel or n is Button)
+	var instruction := false
+	for n in texts:
+		var t := str(n.text)
+		if t.contains("点击") or t.contains("按下") or t.contains("请按"):
+			instruction = true
+	ok(not instruction, "SettingsBook shows no operation instructions")
+	# 圈选项：选“关”写回设置。
+	for choice in choices:
+		for b in choice.get_buttons():
+			if b.text == "关" and str(choice.get_parent().get_child(0).text) == "纸面纹理":
+				b.pressed.emit()
+	ok(gs.get_value("graphics", "paper_texture") == false, "SettingsBook option writes the setting")
+	gs.set_value("graphics", "paper_texture", true)
+	var english := []
+	for choice in choices:
+		for b in choice.get_buttons():
+			if b.text == "English": english.append(b)
+	ok(english.size() == 1 and english[0].disabled, "SettingsBook marks untranslated languages unavailable")
+	# 改键：圈出键帽，按 K 即改绑。
+	book.page = "controls"
+	await process_frame
+	var caps := _find(book, func(n: Node) -> bool: return n is Button and n.theme_type_variation == &"PaperKeyCap")
+	ok(caps.size() >= 18, "SettingsBook controls page lists key caps")
+	var before: String = gs.action_text("wait")
+	var target: Button = null
+	for cap in caps:
+		if str(cap.get_parent().get_parent().get_child(0).text) == str(gs.action_label("wait")):
+			target = cap
+	ok(target != null, "SettingsBook has a key cap for wait")
+	if target != null:
+		target.button_pressed = true
+		ok(book.is_capturing(), "SettingsBook key cap enters capture")
+		var key := InputEventKey.new()
+		key.keycode = KEY_K
+		key.pressed = true
+		book._input(key)
+		await process_frame
+		ok(not book.is_capturing(), "SettingsBook capture ends after a key")
+		ok(gs.action_text("wait") != before and gs.action_text("wait").contains("K"), "SettingsBook rebinds the action")
+		gs.reset_controls()
+	book.page = "bookmarks"
+	await process_frame
+	var footer: Array = book.book.get_footer().get_children()
+	ok(footer.size() == 4, "SettingsBook bookmarks page footer: tear out, mark, read, close")
+	ok(footer[0].disabled and footer[1].disabled and footer[2].disabled, "SettingsBook bookmark actions disabled until saving exists")
+	var closed := [false]
+	book.closed.connect(func() -> void: closed[0] = true)
+	footer[3].pressed.emit()
+	ok(closed[0], "SettingsBook close button emits closed")
+	book.queue_free()
+	await process_frame
+
+## 标题页的册子旋转显示：按封面坐标取每个菜单项四角内侧一点，经封面的屏幕变换换成屏幕坐标点下去，应命中同一项。
+func check_title_hits() -> void:
+	var title := spawn(UI + "Panels/Title/Title.tscn")
+	for i in 3:
+		await process_frame
+	var cover: SubViewportContainer = title.get_node("Lit/Cover")
+	ok(absf(cover.rotation_degrees) > 1.0, "Title cover is tilted")
+	var events: Array = []
+	title.ui_event.connect(func(ev: Dictionary) -> void: events.append(str(ev.kind)))
+	var to_screen := cover.get_global_transform_with_canvas()
+	var buttons: Array = [title.settings_button, title.continue_button, title.start_button]
+	for b: Button in buttons:
+		var rect := b.get_global_rect()
+		for corner in [rect.position + Vector2(3, 3), Vector2(rect.end.x - 3, rect.position.y + 3), rect.end - Vector2(3, 3), Vector2(rect.position.x + 3, rect.end.y - 3)]:
+			var hits := [0]
+			var on_press := func() -> void: hits[0] += 1
+			b.pressed.connect(on_press)
+			var screen: Vector2 = to_screen * corner
+			for pressed in [true, false]:
+				var click := InputEventMouseButton.new()
+				click.button_index = MOUSE_BUTTON_LEFT
+				click.pressed = pressed
+				click.position = screen
+				click.global_position = screen
+				root.push_input(click, true)
+				await process_frame
+			b.pressed.disconnect(on_press)
+			if b == title.continue_button:
+				ok(hits[0] == 0, "Title disabled continue ignores clicks")
+			else:
+				ok(hits[0] == 1, "Title click maps to %s at %s" % [b.name, corner])
+			if b == title.settings_button and is_instance_valid(title._settings):
+				title.close_settings()
+				await process_frame
+			if b == title.start_button:
+				break
+	ok(events.has("start"), "Title start emits start")
+	title.queue_free()
 	await process_frame

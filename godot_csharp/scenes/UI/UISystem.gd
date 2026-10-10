@@ -3,7 +3,8 @@ extends Node
 ## 通用界面：抬头、对白、菜单、证物卡、表单、笔记本、重演手稿、地图与结束卡。
 ## 只读宿主事件与快照，玩家操作以 ui_event 回传；状态与规则由宿主处理。
 ## 各组件在 HUD/、Dialogue/、Menu/、Card/、Form/、Notebook/、
-## Manuscript/、CampusMap/、Ending/ 中，都可在编辑器里改值预览。
+## Manuscript/、CampusMap/、Ending/、Settings/ 中，都可在编辑器里改值预览。
+## 设置册（凡例 / 操作 / 书签）随时按设置键打开，现场空闲时按返回键也打开。
 
 signal ui_event(event: Dictionary)
 
@@ -12,10 +13,13 @@ const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const CHOICE_MENU := preload("res://scenes/UI/Panels/Menu/ChoiceMenu.tscn")
 const EVIDENCE_CARD := preload("res://scenes/UI/Panels/Card/EvidenceCard.tscn")
 const FORM_PANEL := preload("res://scenes/UI/Panels/Form/FormPanel.tscn")
+const FORM_LAYOUT := preload("res://scenes/UI/Panels/Form/FormPanel.gd")
 const NOTEBOOK := preload("res://scenes/UI/Panels/Notebook/Notebook.tscn")
 const MANUSCRIPT := preload("res://scenes/UI/Panels/Manuscript/ReplayManuscript.tscn")
 const CAMPUS_MAP := preload("res://scenes/UI/Panels/CampusMap/CampusMap.tscn")
 const ENDING := preload("res://scenes/UI/Panels/Ending/EndingCard.tscn")
+const SETTINGS_BOOK := preload("res://scenes/UI/Panels/Settings/SettingsBook.tscn")
+const UIAppearance := preload("res://scenes/UI/Components/UIAppearance.gd")
 
 @export_group("Editor Preview")
 ## 在编辑器里切换整套界面的预览页；各组件的细节在其自身场景里改值预览。
@@ -73,6 +77,7 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		_preview()
 		return
+	UIAppearance.bind(self)
 	_presenter = LinesPresenter.new()
 	add_child(_presenter)
 	dialogue.layer = 20
@@ -103,7 +108,6 @@ func apply_snapshot(value: Dictionary) -> void:
 	var head: Dictionary = value.get("hud", {})
 	hud.set_title(str(head.get("title", "")))
 	hud.set_time(str(head.get("time", "")))
-	hud.set_keys(head.get("keys", []))
 	var presentation: Dictionary = value.get("presentation", {})
 	if presentation.has("window_title"): get_window().title = str(presentation.window_title)
 	if cast_changed: dialogue.set_dialogue_cast(value.get("cast", {}))
@@ -225,14 +229,15 @@ func close_modal() -> void:
 	_manuscript = null
 	_notebook = null
 
-func _footer(label: String, action: Callable, disabled := false, tooltip := "") -> Button:
-	var button: Button = modal_root.add_footer_button(label, action, disabled, tooltip)
-	button.custom_minimum_size.x = maxf(140, button.custom_minimum_size.x)
+## role：auto（两项以上时最后一项为主操作）、primary、secondary（设计规范第六部分 §4.4）。
+func _footer(label: String, action: Callable, disabled := false, tooltip := "", role := "auto") -> Button:
+	var button: Button = modal_root.add_footer_button(label, action, disabled, tooltip, role)
+	button.custom_minimum_size.x = maxf(128, button.custom_minimum_size.x)
 	return button
 
 func _candidates(ev: Dictionary) -> void:
 	var options: Array = ev.get("options", [])
-	var body := open_modal(str(ev.get("title", "")), Vector2(860, mini(800, 220 + 56 * options.size())), "menu")
+	var body := open_modal(str(ev.get("title", "")), Vector2(832, 0), "menu")
 	_modal_event = ev
 	_remember_close(ev)
 	var menu: Control = CHOICE_MENU.instantiate()
@@ -241,9 +246,9 @@ func _candidates(ev: Dictionary) -> void:
 	menu.chosen.connect(func(id: String) -> void: _select(ev, id))
 
 func _card(ev: Dictionary) -> void:
-	var text := str(ev.get("facts", ""))
-	var tall: bool = ev.has("picture") or ev.has("table") or not ev.get("notes", []).is_empty()
-	var body := open_modal(str(ev.get("title", "")), Vector2(900, 660 if tall else clampi(340 + 30 * text.length() / 34, 340, 640)), "card")
+	# 证物名作卡内叠题（设计规范第六部分 §4.7），弹窗本身不另起标题。
+	var wide: bool = str(ev.get("picture", "")) != "" or ev.has("table")
+	var body := open_modal("", Vector2(1152 if wide else 832, 0), "card")
 	_modal_event = ev
 	_remember_close(ev)
 	var view: Control = EVIDENCE_CARD.instantiate()
@@ -261,11 +266,8 @@ func _card(ev: Dictionary) -> void:
 		_footer(str(option.label), _select.bind(ev, str(option.id)), not bool(option.get("available", true)), str(option.get("lock_hint", "")))
 
 func _form_open(ev: Dictionary) -> void:
-	var height := 240.0
-	for field_data in ev.get("fields", []):
-		height += 100.0 if str(field_data.get("kind", "choice")) == "text" else 60.0 + 54.0 * field_data.get("options", []).size()
-	if str(ev.get("layout", "")) == "tabs": height = 820.0
-	var body := open_modal(str(ev.get("title", "")), Vector2(900, clampf(height, 360, 820)), "form")
+	var wide: bool = FORM_LAYOUT.uses_columns(ev)
+	var body := open_modal(str(ev.get("title", "")), Vector2(1152 if wide else 832, 0), "form")
 	_modal_event = ev
 	_form = FORM_PANEL.instantiate()
 	body.add_child(_form)
@@ -274,7 +276,9 @@ func _form_open(ev: Dictionary) -> void:
 	if header != null: modal_root.pin_header(header)
 	_form_actions = []
 	for action in ev.get("actions", []):
-		var button := _footer(str(action.label), _form_action.bind(ev, action))
+		# 并排成栏时各组同时可见，切换分组的动作不再显示。
+		if action.has("tab") and wide: continue
+		var button := _footer(str(action.label), _form_action.bind(ev, action), false, "", "secondary" if action.has("tab") else "auto")
 		_form_actions.append([button, action])
 	_form.changed.connect(_refresh_form_actions)
 	_form.submit_requested.connect(_submit_form.bind(ev))
@@ -307,7 +311,8 @@ func _form_action(ev: Dictionary, action: Dictionary) -> void:
 	ui_event.emit({"kind": "form", "presentation_id": str(ev.get("presentation_id", "")), "action": str(action.id), "values": values})
 
 func _ending(ev: Dictionary) -> void:
-	var body := open_modal(str(ev.get("title", "")), Vector2(820, 680), "ending")
+	# 章末卡的标题由卡片自己排在左下（设计规范第六部分 §4.6）。
+	var body := open_modal("", Vector2(832, 0), "ending")
 	_modal_event = ev
 	var view: Control = ENDING.instantiate()
 	body.add_child(view)
@@ -323,25 +328,25 @@ func _navigate(destination: String) -> void:
 # ========================================================== local panels ===
 
 func open_notebook() -> void:
-	var body := open_modal("笔记本", Vector2(1040, 820), "notebook")
+	var body := open_modal("笔记本", Vector2(1152, 0), "notebook")
 	_notebook = NOTEBOOK.instantiate()
 	body.add_child(_notebook)
 	_notebook.show_data(snapshot.get("notebook", {}))
 	_notebook.open_card.connect(func(id: String) -> void:
 		close_modal()
 		ui_event.emit({"kind": "card", "card_id": id}))
-	if bool(snapshot.get("controls", {}).get("manuscript", false)): _footer("重演手稿（R）", open_manuscript)
-	_footer("合上（Tab）", close_modal)
+	if bool(snapshot.get("controls", {}).get("manuscript", false)): _footer("重演手稿（R）", open_manuscript, false, "", "secondary")
+	_footer("合上（Tab）", close_modal, false, "", "secondary")
 
 func _replay_data() -> Dictionary:
 	return snapshot.get("replay", {})
 
 func open_manuscript() -> void:
 	if not bool(_replay_data().get("open", false)): return
-	var body := open_modal("", Vector2(1200, 900), "replay")
+	var body := open_modal("", Vector2(1152, 0), "replay")
 	_manuscript = MANUSCRIPT.instantiate()
 	_manuscript.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_manuscript.custom_minimum_size = Vector2(900, 700)
+	_manuscript.custom_minimum_size = Vector2(0, 704)
 	body.add_child(_manuscript)
 	_manuscript.show_data(_replay_data())
 	_manuscript.vars_changed.connect(func(vars: Array) -> void: ui_event.emit({"kind": "replay_vars", "vars": vars}))
@@ -352,9 +357,21 @@ func open_manuscript() -> void:
 	_manuscript.close_requested.connect(close_modal)
 	ui_event.emit({"kind": "opened", "panel": "manuscript"})
 
+## 设置册：整页册子盖在现场之上；合上后回到原处。
+func open_settings(page := "rules") -> void:
+	close_modal()
+	modal_kind = "settings"
+	Sound.sfx("page", -6.0)
+	var book: Control = SETTINGS_BOOK.instantiate()
+	book.page = page
+	book.can_save = false
+	modal_layer.add_child(book)
+	modal_root = book
+	book.closed.connect(close_modal)
+
 func open_campus_map() -> void:
 	var campus: Dictionary = snapshot.get("campus", {})
-	var body := open_modal(str(campus.get("title", "学园图")), Vector2(1080, 820), "map")
+	var body := open_modal(str(campus.get("title", "学园图")), Vector2(1152, 0), "map")
 	var view: Control = CAMPUS_MAP.instantiate()
 	view.show_data(campus)
 	view.known = campus.get("known", {})
@@ -364,12 +381,12 @@ func open_campus_map() -> void:
 		var selected: Dictionary = view.nodes[node].duplicate(true)
 		close_modal()
 		ui_event.emit({"kind": "travel", "node_id": node, "node": selected}))
-	_footer("合上（M）", close_modal)
+	_footer("合上（M）", close_modal, false, "", "secondary")
 
 ## 学园手稿图上的墨影回放（多地点的一夜）；看完回执。
 func _campus_replay(ev: Dictionary) -> Dictionary:
 	if str(ev.get("mode", "")) != "campus": return _ack(ev)
-	var body := open_modal(str(ev.get("title", "墨影回放")), Vector2(1080, 800), "playback")
+	var body := open_modal(str(ev.get("title", "墨影回放")), Vector2(1152, 0), "playback")
 	var generation := _modal_generation
 	_campus = CAMPUS_MAP.instantiate()
 	_campus.mode = "replay"
@@ -388,40 +405,53 @@ func _campus_replay(ev: Dictionary) -> Dictionary:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if Engine.is_editor_hint() or _closing: return
-	if event is not InputEventKey or not event.pressed or event.echo: return
+	if event is not InputEventKey and event is not InputEventMouseButton: return
+	if not event.is_pressed() or event.is_echo(): return
 	var controls: Dictionary = snapshot.get("controls", {})
 	if modal_kind == "ending":
+		# 结局卡的按钮键（R、C 等）由宿主随事件给出，不是可改键动作；“Enter”按对话继续键处理。
+		if event is not InputEventKey: return
 		for action in _modal_event.get("actions", []):
 			var key := str(action.get("key", ""))
-			if (key == "Enter" and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]) or (key.length() == 1 and OS.get_keycode_string(event.keycode) == key):
+			if (key == "Enter" and event.is_action_pressed("dialogue_continue")) or (key.length() == 1 and OS.get_keycode_string(event.keycode) == key):
 				if not bool(action.get("available", true)): continue
 				# 先标记已处理：续章会把本界面移出场景树，之后就拿不到 viewport 了。
 				get_viewport().set_input_as_handled()
 				_navigate(str(action.id))
 				return
 		return
-	if modal_kind == "card" and event.keycode in [KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
+	if modal_kind == "settings":
+		if event.is_action_pressed("cancel") or event.is_action_pressed("settings"):
+			close_modal()
+			get_viewport().set_input_as_handled()
+		return
+	if modal_kind == "" and event.is_action_pressed("settings"):
+		open_settings()
+		get_viewport().set_input_as_handled()
+		return
+	if modal_kind == "card" and (event.is_action_pressed("cancel") or event.is_action_pressed("dialogue_continue")):
 		_dismiss()
 		get_viewport().set_input_as_handled()
 		return
 	if modal_kind != "":
-		if event.keycode == KEY_ESCAPE or (event.keycode == KEY_TAB and modal_kind == "notebook") \
-				or (event.keycode == KEY_R and modal_kind == "replay") or (event.keycode == KEY_M and modal_kind == "map"):
+		if event.is_action_pressed("cancel") or (event.is_action_pressed("notebook") and modal_kind == "notebook") \
+				or (event.is_action_pressed("manuscript") and modal_kind == "replay") or (event.is_action_pressed("campus_map") and modal_kind == "map"):
 			_dismiss()
 			get_viewport().set_input_as_handled()
 		return
 	if dialogue.active or not bool(snapshot.get("field_enabled", false)): return
-	match event.keycode:
-		KEY_TAB:
-			if bool(controls.get("notebook", false)): open_notebook()
-		KEY_R:
-			if bool(controls.get("manuscript", false)): open_manuscript()
-		KEY_M:
-			if bool(controls.get("campus", false)): open_campus_map()
-		KEY_T:
-			if bool(controls.get("wait", false)): ui_event.emit({"kind": "action", "act": {"cmd": "stay"}})
-		_:
-			return
+	if event.is_action_pressed("notebook"):
+		if bool(controls.get("notebook", false)): open_notebook()
+	elif event.is_action_pressed("manuscript"):
+		if bool(controls.get("manuscript", false)): open_manuscript()
+	elif event.is_action_pressed("campus_map"):
+		if bool(controls.get("campus", false)): open_campus_map()
+	elif event.is_action_pressed("wait"):
+		if bool(controls.get("wait", false)): ui_event.emit({"kind": "action", "act": {"cmd": "stay"}})
+	elif event.is_action_pressed("cancel"):
+		open_settings()
+	else:
+		return
 	get_viewport().set_input_as_handled()
 
 ## 合上：宿主弹窗交还它的“返回”选项；本地面板直接合上。
@@ -460,14 +490,14 @@ func _preview() -> void:
 		"form": _form_open(sample)
 		"ending": _ending(sample)
 	if preview_page == 5:
-		var body := open_modal("笔记本", Vector2(1040, 820), "notebook")
+		var body := open_modal("笔记本", Vector2(1152, 0), "notebook")
 		var view: Control = NOTEBOOK.instantiate()
 		body.add_child(view)
 		view.show_data({"empty_text": "还没有记下任何东西。", "sections": [{"heading": "[b]某处[/b]", "style": "grid", "entries": [{"label": "示例证物", "card_id": "E1"}]}]})
 	elif preview_page == 6:
-		var body := open_modal("", Vector2(1200, 900), "replay")
+		var body := open_modal("", Vector2(1152, 0), "replay")
 		var view: Control = MANUSCRIPT.instantiate()
-		view.custom_minimum_size = Vector2(900, 700)
+		view.custom_minimum_size = Vector2(0, 704)
 		body.add_child(view)
 
 ## 当前正在展示的来源；正文的可见程度由绘制后的控件读取决定。

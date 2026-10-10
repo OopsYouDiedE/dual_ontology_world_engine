@@ -49,11 +49,12 @@
 
 | 分类 | 目录 | 内容 |
 | :--- | :--- | :--- |
-| 小组件 | `UI/Components/` | `Paper.gd`（组件工厂，只按类型变体创建、读主题色）、`PaperButton`、`PaperLabel`、`PaperRule`、`PaperModal`、`DialogueResponse`、`ReplayBubble` |
-| UI 面板与子系统 | `UI/Panels/<面板>/` | `Dialogue`、`Menu`、`Card`、`Form`、`Notebook`、`Manuscript`、`CampusMap`、`Ending`、`HUD`、`Field`（提示层、回放层、视野遮罩）、`Title` |
+| 小组件 | `UI/Components/` | `Paper.gd`（组件工厂，只按类型变体创建、读主题色）、`PaperButton`、`PaperLabel`、`PaperRule`（细线／双线／短线）、`PaperModal`、`PaperCheck`（选项行）、`PaperEntry`（条目行）、`PaperStamp`（印戳）、`PaperTally`（计数）、`PaperLedger`（空白账页）、`PaperPixelText`（像素字：半分辨率无抗锯齿渲染的标题类大字）、`PaperBook`（摊开的册子：横格对开页、书口索引签、页脚）、`PaperOption` / `PaperChoice`（圈选项与一行圈选项）、`PaperScale`（刻度尺）、`UIAppearance.gd`（外观设置落地：只改三份主题里已有条目的字号、颜色、纹理与字形来源）、`DialogueResponse`、`ReplayBubble` |
+| UI 面板与子系统 | `UI/Panels/<面板>/` | `Dialogue`、`Menu`、`Card`、`Form`、`Notebook`、`Manuscript`、`CampusMap`、`Ending`、`HUD`、`Field`（提示层、回放层、视野遮罩）、`Settings`（设置册：凡例 / 操作 / 书签）、`Title`（油灯下桌上的册子；封面在子视口里排版后旋转显示） |
 | UI 总装 | `UI/UISystem.tscn` | 整合各面板；只读宿主事件与快照，用 `ui_event` 回传 |
 | 宿主 | `Host/Main.tscn`（主场景）、`Host/GameEngine.cs`、`Host/PlayerViewTrace.gd` | 唯一承接 C# 会话的节点 |
-| 样式 | `UI/Styles/*.tres` | `UITheme.tres`（纸页主题：语义色 `Paper/colors/*`、全部类型变体、自绘控件的颜色与尺寸）、`DialogueTheme.tres`、`TitleTheme.tres`，以及开发场景的 `MapBrowserTheme.tres`、`WorldScriptPreviewTheme.tres` |
+| 样式 | `UI/Styles/*.tres`（`UITheme`、`DialogueTheme`、`TitleTheme` 由 `tools/build_ui_theme.py` 生成，改外观先改生成器再重建；纸纹与横格页纹理由 `tools/build_ui_paper.py` 生成，标题页的桌面、灯光、光晕与布面封皮由 `tools/build_ui_desk.py` 生成） | `UITheme.tres`（纸页主题：语义色 `Paper/colors/*`、全部类型变体、自绘控件的颜色与尺寸）、`DialogueTheme.tres`、`TitleTheme.tres`，以及开发场景的 `MapBrowserTheme.tres`、`WorldScriptPreviewTheme.tres` |
+| 设置 | `Shared/Settings/GameSettings.gd`（自动加载 `GameSettings`） | 图像、语言、声音、按键与无障碍设置的读写、生效与持久化（`user://settings.cfg`）；界面只经它读写，外观类设置由 `UI/Components/UIAppearance.gd` 落到主题 |
 | 编辑器总览 | `UI/Workbench/` | 各面板的预览页 |
 
 现场（地图视图）在 `Shared/Field/`，各章地图适配器在各章目录；现场用到的物件外观名等文字由 `Shared/Field/FieldVocabulary.gd` 从剧本编译物读取。

@@ -1,124 +1,228 @@
-[gd_resource type="Theme" format=3 uid="uid://c6iaqwqliw75c"]
+[gd_resource type="Theme" load_steps=33 format=3 uid="uid://c6iaqwqliw75c"]
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_focus"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
-bg_color = Color(0, 0, 0, 0)
+[ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
+[ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
+[ext_resource type="FontFile" uid="uid://b2crko4arpitv" path="res://ShareAsset/External/NotoSansSC/NotoSansSC[wght].ttf" id="font_sans"]
+[ext_resource type="FontFile" uid="uid://b305mue3maiaf" path="res://ShareAsset/External/Yozai/Yozai-Regular.ttf" id="font_yozai"]
+[ext_resource type="FontFile" uid="uid://wxkrrvnps5hn" path="res://ShareAsset/External/ZCOOLQingKeHuangYou/ZCOOLQingKeHuangYou-Regular.ttf" id="font_qingke"]
+[ext_resource type="FontFile" uid="uid://cgux3m6rt3nkc" path="res://ShareAsset/External/zhimangxing/ZhiMangXing-Regular.ttf" id="font_zhimang"]
+[ext_resource type="FontFile" uid="uid://cqoykvtr28he2" path="res://ShareAsset/External/MaterialSymbols/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf" id="font_symbols"]
+[ext_resource type="FontFile" uid="uid://bp2hcr87qwy24" path="res://ShareAsset/External/yujisyuku/YujiSyuku-Regular.ttf" id="font_yuji"]
+[ext_resource type="FontFile" uid="uid://efwuolvoxfi0" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="font_kurenaido"]
+[ext_resource type="FontFile" uid="uid://5taqf2dxpeah" path="res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf" id="font_tegomin"]
+[ext_resource type="Texture2D" uid="uid://di8b1hqq18tsx" path="res://ShareAsset/Internal/Props/UIPaper/paper_pixel.png" id="paper_texture"]
+
+[sub_resource type="SystemFont" id="system_fallback"]
+font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC")
+
+[sub_resource type="FontVariation" id="font_icon"]
+base_font = ExtResource("font_symbols")
+variation_opentype = { 2003265652: 300, 1179208780: 0, 1196572996: 0, 1869640570: 24 }
+
+[sub_resource type="FontVariation" id="font_icon_filled"]
+base_font = ExtResource("font_symbols")
+variation_opentype = { 2003265652: 300, 1179208780: 1, 1196572996: 0, 1869640570: 24 }
+
+[sub_resource type="FontVariation" id="font_serif"]
+base_font = ExtResource("font_noto")
+variation_opentype = { 2003265652: 400 }
+
+[sub_resource type="FontVariation" id="font_body"]
+fallbacks = Array[Font]([SubResource("font_icon"), ExtResource("font_tegomin"), SubResource("font_serif"), SubResource("system_fallback")])
+base_font = ExtResource("font_zhaohua")
+
+[sub_resource type="FontVariation" id="font_register"]
+fallbacks = Array[Font]([SubResource("font_icon"), ExtResource("font_tegomin"), SubResource("font_serif"), SubResource("system_fallback")])
+base_font = ExtResource("font_zhaohua")
+spacing_glyph = 2
+
+[sub_resource type="FontVariation" id="font_head"]
+fallbacks = Array[Font]([SubResource("font_icon"), SubResource("system_fallback")])
+base_font = ExtResource("font_sans")
+variation_opentype = { 2003265652: 900 }
+spacing_glyph = 1
+
+[sub_resource type="FontVariation" id="font_deck"]
+fallbacks = Array[Font]([SubResource("font_icon"), SubResource("system_fallback")])
+base_font = ExtResource("font_noto")
+variation_opentype = { 2003265652: 600 }
+spacing_glyph = 1
+
+[sub_resource type="FontVariation" id="font_mast"]
+fallbacks = Array[Font]([ExtResource("font_yuji"), SubResource("font_head")])
+base_font = ExtResource("font_zhimang")
+variation_embolden = 0.35
+spacing_glyph = 6
+
+[sub_resource type="FontVariation" id="font_column"]
+fallbacks = Array[Font]([SubResource("font_head")])
+base_font = ExtResource("font_qingke")
+spacing_glyph = 4
+
+[sub_resource type="FontVariation" id="font_hand"]
+fallbacks = Array[Font]([ExtResource("font_kurenaido"), SubResource("font_body")])
+base_font = ExtResource("font_yozai")
+
+[sub_resource type="StyleBoxEmpty" id="transparent_text"]
+
+[sub_resource type="StyleBoxFlat" id="scroll_grabber"]
+bg_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
+
+[sub_resource type="StyleBoxFlat" id="scroll_grabber_hi"]
+bg_color = Color(0.133333, 0.109804, 0.0823529, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="scroll_track"]
+content_margin_left = 3.0
+content_margin_right = 3.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="resp_plain"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="resp_hover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
 border_width_bottom = 1
-border_color = Color(0.709804, 0.603922, 0.407843, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+border_color = Color(0.133333, 0.109804, 0.0823529, 1)
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_hover"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
-bg_color = Color(0.192157, 0.262745, 0.231373, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[sub_resource type="StyleBoxFlat" id="resp_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_button_plain"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
-bg_color = Color(0, 0, 0, 0)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[sub_resource type="StyleBoxTexture" id="dialogue_panel"]
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_compact_panel"]
-bg_color = Color(0.0862745, 0.137255, 0.121569, 0.96)
+[sub_resource type="StyleBoxTexture" id="history_panel"]
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[sub_resource type="StyleBoxFlat" id="portrait_mount"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
 border_width_left = 1
-border_width_top = 2
+border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.709804, 0.603922, 0.407843, 0.55)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 10
-shadow_offset = Vector2(0, 3)
-
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_history_panel"]
-bg_color = Color(0.0980392, 0.117647, 0.137255, 1)
-border_width_top = 2
-border_color = Color(0.709804, 0.603922, 0.407843, 1)
-
-[sub_resource type="StyleBoxFlat" id="ChapterDialogue_portrait_frame"]
-content_margin_left = 3.0
-content_margin_top = 3.0
-content_margin_right = 3.0
-content_margin_bottom = 3.0
-bg_color = Color(0.105882, 0.168627, 0.137255, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.705882, 0.603922, 0.368627, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-shadow_color = Color(0, 0, 0, 0.35)
-shadow_size = 6
-
-[sub_resource type="StyleBoxEmpty" id="ChapterDialogue_transparent_text"]
-
-[sub_resource type="SystemFont" id="ChapterDialogue_font"]
-font_names = PackedStringArray("Microsoft YaHei UI", "Noto Sans CJK SC")
+border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
 
 [resource]
-default_font = SubResource("ChapterDialogue_font")
+default_font = SubResource("font_body")
 default_font_size = 18
-Button/colors/font_color = Color(0.909804, 0.87451, 0.792157, 1)
-Button/styles/focus = SubResource("ChapterDialogue_button_focus")
-Button/styles/hover = SubResource("ChapterDialogue_button_hover")
-Button/styles/normal = SubResource("ChapterDialogue_button_plain")
-Button/styles/pressed = SubResource("ChapterDialogue_button_hover")
+Button/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.5)
+Button/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/font_sizes/font_size = 18
+Button/fonts/font = SubResource("font_body")
+Button/styles/disabled = SubResource("resp_plain")
+Button/styles/focus = SubResource("resp_focus")
+Button/styles/hover = SubResource("resp_hover")
+Button/styles/hover_pressed = SubResource("resp_hover")
+Button/styles/normal = SubResource("resp_plain")
+Button/styles/pressed = SubResource("resp_hover")
 ChapterDialogueBody/base_type = &"RichTextLabel"
-ChapterDialogueBody/constants/line_separation = 6
-ChapterDialogueBody/font_sizes/normal_font_size = 24
+ChapterDialogueBody/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ChapterDialogueBody/constants/line_separation = 8
+ChapterDialogueBody/font_sizes/bold_font_size = 22
+ChapterDialogueBody/font_sizes/normal_font_size = 22
 ChapterDialogueChoices/base_type = &"GridContainer"
-ChapterDialogueChoices/constants/h_separation = 12
+ChapterDialogueChoices/constants/h_separation = 16
 ChapterDialogueChoices/constants/v_separation = 8
 ChapterDialogueDialoguePanel/base_type = &"Panel"
-ChapterDialogueDialoguePanel/styles/panel = SubResource("ChapterDialogue_compact_panel")
+ChapterDialogueDialoguePanel/styles/panel = SubResource("dialogue_panel")
 ChapterDialogueHeading/base_type = &"Label"
-ChapterDialogueHeading/colors/font_color = Color(0.709804, 0.603922, 0.407843, 1)
-ChapterDialogueHeading/font_sizes/font_size = 13
-ChapterDialogueHint/base_type = &"Label"
-ChapterDialogueHint/colors/font_color = Color(0.607843, 0.6, 0.552941, 1)
-ChapterDialogueHint/font_sizes/font_size = 12
+ChapterDialogueHeading/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueHeading/font_sizes/font_size = 14
+ChapterDialogueHeading/fonts/font = SubResource("font_register")
 ChapterDialogueHistoryButton/base_type = &"Button"
-ChapterDialogueHistoryButton/colors/font_color = Color(0.623529, 0.658824, 0.596078, 1)
+ChapterDialogueHistoryButton/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueHistoryButton/font_sizes/font_size = 14
 ChapterDialogueHistoryPanel/base_type = &"Panel"
-ChapterDialogueHistoryPanel/styles/panel = SubResource("ChapterDialogue_history_panel")
-ChapterDialogueKeyLegend/base_type = &"Label"
-ChapterDialogueKeyLegend/colors/font_color = Color(0.76, 0.79, 0.71, 1)
-ChapterDialogueKeyLegend/font_sizes/font_size = 16
+ChapterDialogueHistoryPanel/styles/panel = SubResource("history_panel")
 ChapterDialogueMonogram/base_type = &"Label"
-ChapterDialogueMonogram/colors/font_color = Color(0.709804, 0.603922, 0.407843, 0.75)
-ChapterDialogueMonogram/font_sizes/font_size = 56
+ChapterDialogueMonogram/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 0.85)
+ChapterDialogueMonogram/font_sizes/font_size = 48
+ChapterDialogueMonogram/fonts/font = SubResource("font_head")
 ChapterDialogueNext/base_type = &"Button"
-ChapterDialogueNext/colors/font_color = Color(0.85098, 0.760784, 0.54902, 1)
+ChapterDialogueNext/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ChapterDialogueNext/font_sizes/font_size = 14
+ChapterDialoguePortraitColumn/base_type = &"VBoxContainer"
+ChapterDialoguePortraitColumn/constants/separation = 8
 ChapterDialoguePortraitFrame/base_type = &"PanelContainer"
-ChapterDialoguePortraitFrame/styles/panel = SubResource("ChapterDialogue_portrait_frame")
+ChapterDialoguePortraitFrame/styles/panel = SubResource("portrait_mount")
+ChapterDialoguePortraitName/base_type = &"Label"
+ChapterDialoguePortraitName/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialoguePortraitName/font_sizes/font_size = 14
+ChapterDialoguePortraitName/fonts/font = SubResource("font_register")
 ChapterDialogueSpeaker/base_type = &"RichTextLabel"
-ChapterDialogueSpeaker/colors/default_color = Color(0.85098, 0.760784, 0.54902, 1)
-ChapterDialogueSpeaker/font_sizes/normal_font_size = 19
-Label/colors/font_color = Color(0.909804, 0.87451, 0.792157, 1)
-Label/styles/normal = SubResource("ChapterDialogue_transparent_text")
-RichTextLabel/colors/default_color = Color(0.909804, 0.87451, 0.792157, 1)
-RichTextLabel/styles/focus = SubResource("ChapterDialogue_transparent_text")
-RichTextLabel/styles/normal = SubResource("ChapterDialogue_transparent_text")
+ChapterDialogueSpeaker/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+ChapterDialogueSpeaker/font_sizes/bold_font_size = 22
+ChapterDialogueSpeaker/font_sizes/normal_font_size = 22
+ChapterDialogueSpeaker/fonts/bold_font = SubResource("font_head")
+ChapterDialogueSpeaker/fonts/normal_font = SubResource("font_head")
+ChapterDialogueVisitedResponse/base_type = &"Button"
+ChapterDialogueVisitedResponse/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueVisitedResponse/colors/font_focus_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueVisitedResponse/colors/font_hover_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueVisitedResponse/colors/font_hover_pressed_color = Color(0.352941, 0.298039, 0.231373, 1)
+ChapterDialogueVisitedResponse/colors/font_pressed_color = Color(0.352941, 0.298039, 0.231373, 1)
+Label/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Label/styles/normal = SubResource("transparent_text")
+Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 0.7)
+Paper/colors/rule_strong = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelColumn/base_type = &"Label"
+PixelColumn/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelColumn/constants/pixel_scale = 2
+PixelColumn/font_sizes/font_size = 22
+PixelColumn/fonts/font = SubResource("font_column")
+PixelDisplay/base_type = &"Label"
+PixelDisplay/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelDisplay/constants/pixel_scale = 2
+PixelDisplay/font_sizes/font_size = 64
+PixelDisplay/fonts/font = SubResource("font_mast")
+PixelHeadline/base_type = &"Label"
+PixelHeadline/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelHeadline/constants/pixel_scale = 2
+PixelHeadline/font_sizes/font_size = 48
+PixelHeadline/fonts/font = SubResource("font_head")
+PixelMast/base_type = &"Label"
+PixelMast/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelMast/constants/pixel_scale = 2
+PixelMast/font_sizes/font_size = 40
+PixelMast/fonts/font = SubResource("font_mast")
+PixelSub/base_type = &"Label"
+PixelSub/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelSub/constants/pixel_scale = 2
+PixelSub/font_sizes/font_size = 22
+PixelSub/fonts/font = SubResource("font_head")
+PixelTitle/base_type = &"Label"
+PixelTitle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PixelTitle/constants/pixel_scale = 2
+PixelTitle/font_sizes/font_size = 32
+PixelTitle/fonts/font = SubResource("font_head")
+RichTextLabel/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+RichTextLabel/font_sizes/bold_font_size = 18
+RichTextLabel/font_sizes/normal_font_size = 18
+RichTextLabel/fonts/bold_font = SubResource("font_deck")
+RichTextLabel/styles/focus = SubResource("transparent_text")
+RichTextLabel/styles/normal = SubResource("transparent_text")
+VScrollBar/styles/grabber = SubResource("scroll_grabber")
+VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber_hi")
+VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber_hi")
+VScrollBar/styles/scroll = SubResource("scroll_track")

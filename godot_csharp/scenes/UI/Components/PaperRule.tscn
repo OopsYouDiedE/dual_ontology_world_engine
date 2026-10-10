@@ -1,9 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperRule.gd" id="script"]
 
-[node name="PaperRule" type="ColorRect"]
-theme = ExtResource("theme")
+[node name="PaperRule" type="Control"]
 custom_minimum_size = Vector2(0, 1)
 mouse_filter = 2
-color = Color(0.17, 0.13, 0.09, 0.28)
+theme = ExtResource("theme")
+script = ExtResource("script")

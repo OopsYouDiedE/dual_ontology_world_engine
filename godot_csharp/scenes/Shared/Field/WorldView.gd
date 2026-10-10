@@ -437,8 +437,8 @@ func _physics_process(delta: float) -> void:
 			if not player.seated: player.pose("idle")
 		return
 	var direction := Vector2(
-		float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
-		float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)))
+		float(Input.is_action_pressed("move_right")) - float(Input.is_action_pressed("move_left")),
+		float(Input.is_action_pressed("move_down")) - float(Input.is_action_pressed("move_up")))
 	var scale := 1.0
 	if direction != Vector2.ZERO:
 		_cancel_click()
@@ -565,9 +565,10 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is not InputEventKey or not event.pressed or event.echo: return
+	if event is not InputEventKey and event is not InputEventMouseButton: return
+	if not event.is_pressed() or event.is_echo(): return
 	if not field_active() or not player_controlled(): return
-	if event.keycode in [KEY_E, KEY_SPACE, KEY_ENTER] and nearest != "":
+	if event.is_action_pressed("interact") and nearest != "":
 		# 对白刚结束时多按的一下只是在推进对白。
 		if Time.get_ticks_msec() - _active_since >= 600:
 			_cancel_click()
@@ -1022,6 +1023,10 @@ func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 func _op_camera(ev: Dictionary) -> void:
 	var to: Dictionary = ev.get("to", {})
 	var seconds := float(ev.get("seconds", 0.5))
+	# 设置里“减少动效”时镜头直接切过去，不平移。
+	var settings := get_node_or_null("/root/GameSettings")
+	if settings != null and bool(settings.get_value("accessibility", "reduce_motion")):
+		seconds = 0.0
 	var target: Vector2
 	if bool(to.get("follow", false)):
 		target = adapter.camera_point(player.position)

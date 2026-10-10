@@ -1,6 +1,6 @@
 @tool
 extends CanvasLayer
-## 场景 HUD：标题、时段、按键提示、底部提示、悬停提示、旁白、整屏渐变与章节闪标题。
+## 场景 HUD：标题、时段、底部提示、悬停提示、旁白、整屏渐变与章节闪标题。
 ## 所有章节共用；布局、颜色、字体在场景节点里改。编辑器里 Editor Preview 字段直接驱动同一组 set_* 方法。
 
 const Paper := preload("res://scenes/UI/Components/Paper.gd")
@@ -17,10 +17,6 @@ signal fade_cancelled
 @export var preview_time := "":
 	set(value):
 		preview_time = value
-		_refresh_preview()
-@export var preview_keys: PackedStringArray = PackedStringArray(["E / 点击  检视", "Tab  笔记本", "M  学园图"]):
-	set(value):
-		preview_keys = value
 		_refresh_preview()
 @export var preview_hint := "":
 	set(value):
@@ -69,7 +65,6 @@ func _refresh_preview() -> void:
 		return
 	set_title(preview_title)
 	set_time(preview_time)
-	set_keys(Array(preview_keys))
 	set_hint(preview_hint)
 	if preview_hover.is_empty():
 		hide_hover()
@@ -84,27 +79,39 @@ func _refresh_preview() -> void:
 	_sync()
 
 func _sync() -> void:
-	for name in ["Vignette", "TopShade", "BottomShade", "Title"]:
+	for name in ["Vignette", "Bar", "Rule", "BottomShade", "Title"]:
 		get_node(name).visible = _bar_visible
 	$Time.visible = _bar_visible and $Time.text != ""
-	$Keys.visible = _bar_visible and $Keys.text != ""
 	$Hint.visible = _bar_visible and $Hint.text != ""
 	$HoverTip.visible = _bar_visible and _hover_on
 	$Aside.visible = _bar_visible and _aside_on
 
+## 日期栏（设计规范第六部分 §4.7）：地点居中用标题字，右端钟点。
 func set_title(t: String) -> void:
 	$Title.text = t
+	_layout()
 
 func set_time(t: String) -> void:
 	$Time.text = t
 	_sync()
+	_layout()
 
-func set_keys(keys: Array) -> void:
-	$Keys.text = "　　".join(PackedStringArray(keys.map(func(k): return str(k))))
-	_sync()
+func _layout() -> void:
+	var view_width := get_viewport().get_visible_rect().size.x if is_inside_tree() else 1280.0
+	var title: Control = $Title
+	title.size = title.get_combined_minimum_size()
+	title.position.x = roundf((view_width - title.size.x) / 2.0)
+	var time: Label = $Time
+	time.size.x = time.get_minimum_size().x
+	time.position.x = view_width - 24.0 - time.size.x
 
+## 近身提示：纸签随文字伸缩，居中在屏底。
 func set_hint(t: String) -> void:
-	$Hint.text = t
+	var hint: Label = $Hint
+	hint.text = t
+	hint.reset_size()
+	var view_width := get_viewport().get_visible_rect().size.x if is_inside_tree() else 1280.0
+	hint.position.x = roundf((view_width - hint.size.x) / 2.0)
 	_sync()
 
 func show_hover(t: String, screen_pos: Vector2) -> void:
@@ -121,8 +128,13 @@ func hide_hover() -> void:
 	_hover_on = false
 	_sync()
 
+## 心声：笔迹写在一张纸条上，随文字伸缩，居中在近身提示上方。
 func show_aside(t: String, seconds := 3.0) -> void:
-	$Aside.text = t
+	var aside: Label = $Aside
+	aside.text = t
+	aside.reset_size()
+	var view_width := get_viewport().get_visible_rect().size.x if is_inside_tree() else 1280.0
+	aside.position.x = roundf((view_width - aside.size.x) / 2.0)
 	_aside_on = true
 	_aside_left = seconds
 	_sync()

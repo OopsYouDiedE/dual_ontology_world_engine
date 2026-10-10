@@ -21,6 +21,9 @@
 [ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperButton.tscn" id="p17"]
 [ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="p18"]
 [ext_resource type="PackedScene" path="res://scenes/UI/Components/DialogueResponse.tscn" id="p19"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Panels/Settings/SettingsBook.tscn" id="p20"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperBook.tscn" id="p21"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperOption.tscn" id="p22"]
 
 [node name="UIWorkbench" type="Control"]
 layout_mode = 3
@@ -382,3 +385,60 @@ size = Vector2i(1280, 992)
 render_target_update_mode = 2
 
 [node name="Preview" parent="Pages/对白选项模板/Viewport" instance=ExtResource("p19")]
+
+[node name="设置册" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/设置册"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/设置册/Viewport" instance=ExtResource("p20")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="册子模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/册子模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Preview" parent="Pages/册子模板/Viewport" instance=ExtResource("p21")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="圈选项模板" type="SubViewportContainer" parent="Pages"]
+layout_mode = 2
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Pages/圈选项模板"]
+transparent_bg = true
+size = Vector2i(1280, 992)
+render_target_update_mode = 2
+
+[node name="Backdrop" type="ColorRect" parent="Pages/圈选项模板/Viewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.901961, 0.862745, 0.74902, 1)
+
+[node name="Preview" parent="Pages/圈选项模板/Viewport/Backdrop" instance=ExtResource("p22")]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 120.0
+offset_bottom = 72.0
+button_pressed = true
