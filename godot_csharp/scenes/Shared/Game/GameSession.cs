@@ -11,7 +11,8 @@ namespace DualOntologyWorldEngine.Gameplay;
 public sealed partial class GameSession(string campusScript, string livingView, string campusView,
     string? traceDirectory = null, Action<string>? traceWarning = null,
     Func<IReadOnlyDictionary<string, string>>? authorSources = null,
-    string? controllerScript = null, int maxAgentSelections = 10000, int maxAgentObservations = 20000) : IDisposable
+    string? controllerScript = null, int maxAgentSelections = 10000, int maxAgentObservations = 20000,
+    bool aiTakesPlayerSeat = false) : IDisposable
 {
     private IChapterSession? _session;
     private bool _waitingForView;
@@ -40,6 +41,9 @@ public sealed partial class GameSession(string campusScript, string livingView, 
             .Observe([Event("player_panel_view", ("rows", view.Text))], view.Offers);
     }
     public void CloseAgent() => _player?.Close();
+    /// <summary>The ordinary input a current token stands for, so the host can show the act being made.</summary>
+    public IReadOnlyDictionary<string, object?> AgentCandidateInput(string token)
+        => (_player ?? throw new PlayerBoundaryException("agent_not_declared")).Peek(token);
     public IReadOnlyList<Dictionary<string, object?>> DispatchField(IReadOnlyDictionary<string, object?> input)
     {
         if (Text(input, "kind") is not ("tick" or "daily" or "presented" or "move" or "blocked_move" or "interact" or "opened"))
@@ -54,7 +58,10 @@ public sealed partial class GameSession(string campusScript, string livingView, 
         var declarations = ReadControllers();
         if (declarations.Any(c => c.Mode == "agent" && c.Actor != role.PlayerActor))
             throw new PlayerBoundaryException("unsupported_player_role");
-        var declaration = declarations.SingleOrDefault(c => c.Mode == "agent" && c.Actor == role.PlayerActor);
+        // The seat's own declared rules decide; a launch only chooses who sits in it.
+        var declaration = declarations.SingleOrDefault(c => c.Actor == role.PlayerActor
+            && (c.Mode == "agent" || aiTakesPlayerSeat && c.Rules.Count > 0));
+        if (declaration is null && aiTakesPlayerSeat) throw new PlayerBoundaryException("agent_rules_missing");
         if (declaration is null) { _player?.Close(); _player = null; AgentDeclaration = null; return; }
         if (_player is not null && AgentDeclaration?.Actor == declaration.Actor) return;
         AgentDeclaration = declaration;
@@ -63,10 +70,13 @@ public sealed partial class GameSession(string campusScript, string livingView, 
     private IReadOnlyList<ActorControllerDefinition> ReadControllers()
     {
         if (controllerScript is not null) return PlayerControllers.Read(controllerScript);
-        if (_session is Chapter2InteractionSession) return PlayerControllers.Read(campusScript);
+        // World-scoped characters are declared once and keep their seat across chapters.
         using var stream = typeof(Chapter1Data).Assembly.GetManifestResourceStream("Awakening.World.json")!;
         using var reader = new StreamReader(stream);
-        return PlayerControllers.Read(reader.ReadToEnd());
+        var declared = PlayerControllers.Read(reader.ReadToEnd()).ToList();
+        if (_session is Chapter2InteractionSession)
+            declared.AddRange(PlayerControllers.Read(campusScript).Where(c => declared.All(d => d.Actor != c.Actor)));
+        return declared;
     }
 
     public void RecordVisible(IReadOnlyDictionary<string, object?> payload) { TraceMetadata(); _trace.Visible(payload); }

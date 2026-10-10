@@ -341,7 +341,7 @@ func open_notebook() -> void:
 func _replay_data() -> Dictionary:
 	return snapshot.get("replay", {})
 
-func open_manuscript() -> void:
+func open_manuscript(announce := true) -> void:
 	if not bool(_replay_data().get("open", false)): return
 	var body := open_modal("", Vector2(1152, 0), "replay")
 	_manuscript = MANUSCRIPT.instantiate()
@@ -355,7 +355,7 @@ func open_manuscript() -> void:
 		close_modal()
 		ui_event.emit({"kind": "card", "card_id": id}))
 	_manuscript.close_requested.connect(close_modal)
-	ui_event.emit({"kind": "opened", "panel": "manuscript"})
+	if announce: ui_event.emit({"kind": "opened", "panel": "manuscript"})
 
 ## 设置册：整页册子盖在现场之上；合上后回到原处。
 func open_settings(page := "rules") -> void:
@@ -400,6 +400,39 @@ func _campus_replay(ev: Dictionary) -> Dictionary:
 	if _closing or generation != _modal_generation: return {}
 	close_modal()
 	return _ack(ev)
+
+# ========================================================== seat control ===
+## 由宿主转达的席位动作（AI 坐在玩家席位时）：只改变画面上已有控件的状态，
+## 不产生回执；选择本身由宿主交回引擎。
+
+## 宿主事件要求打开或合上本人的面板。
+func open_panel(panel: String) -> void:
+	match panel:
+		"notebook": open_notebook()
+		"manuscript": open_manuscript(false)
+		"campus": open_campus_map()
+		_: close_modal()
+
+func dialogue_choices_shown() -> bool:
+	return dialogue.active and dialogue.choices.visible and dialogue.choices.get_child_count() > 0
+
+## 收起正在读的对白，不交回读完回执。
+func release_dialogue() -> void:
+	_dialogue_generation += 1
+	if dialogue.active: dialogue.cancel_presentation()
+	dialogue.panel.hide()
+
+## 在表单上显示正在填的一项或切到的分组。
+func show_form_choice(input: Dictionary) -> void:
+	if modal_kind != "form" or not is_instance_valid(_form): return
+	var field := str(input.get("field", ""))
+	if str(input.get("kind", "")) == "form_tab":
+		_form.show_field(field)
+		return
+	var edit: LineEdit = _form.line_edit_for(field)
+	if edit != null: edit.text = str(input.get("value", ""))
+	else: _form.select(field, str(input.get("value", "")))
+	_refresh_form_actions()
 
 # ================================================================= keyboard ===
 

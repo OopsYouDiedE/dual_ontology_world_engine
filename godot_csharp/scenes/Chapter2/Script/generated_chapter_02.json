@@ -24991,7 +24991,48 @@
         "flow_events": {
           "night_action": "夜里·T"
         }
-      }
+      },
+      "controllers": [
+        {
+          "actor": "world:person.Det",
+          "name": "侦探",
+          "mode": "player",
+          "rules": [
+            {
+              "mode": "prefer",
+              "kind": "new",
+              "weight": 8
+            },
+            {
+              "mode": "prefer",
+              "kind": "untried",
+              "weight": 6
+            },
+            {
+              "mode": "prefer",
+              "kind": "interact",
+              "weight": 3
+            },
+            {
+              "mode": "prefer",
+              "kind": "menu",
+              "weight": 2
+            },
+            {
+              "mode": "prefer",
+              "kind": "move",
+              "weight": 1
+            }
+          ],
+          "reasoning": {
+            "depth": 8,
+            "expansions": 32768,
+            "hypotheses": 128,
+            "argument_weight": 16,
+            "information_weight": 8
+          }
+        }
+      ]
     }
   ],
   "source_map": {

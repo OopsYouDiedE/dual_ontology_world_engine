@@ -63,6 +63,9 @@ Reject("consumed_token", () => port.Submit(new(token)), "unknown_consumed_or_exp
 Reject("closed_after_rejection", () => port.Observe([Menu()]), "boundary_closed");
 port = Port(); token = port.Observe([Menu()]).Candidates.Single().Token; port.Observe([Menu()]);
 Reject("expired_token", () => port.Submit(new(token)), "unknown_consumed_or_expired_token");
+port = Port(); token = port.Observe([Menu()]).Candidates.Single().Token; port.Observe([Event("state", ("snapshot", new Dictionary<string, object?>()))]);
+port.Submit(new(token));
+Check("refresh_keeps_unchanged_offer", true);
 port = Port(); port.Observe([Menu()]);
 Reject("unknown_token", () => port.Submit(new("invented")), "unknown_consumed_or_expired_token");
 port = Port(selections: 0); token = port.Observe([Menu()]).Candidates.Single().Token;

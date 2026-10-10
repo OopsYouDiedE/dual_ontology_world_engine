@@ -51,11 +51,11 @@ def controller(fields, actor, name):
         if not (0 <= depth <= 64 and 1 <= expansions <= 100000 and 1 <= hypotheses <= 4096 and 0 <= argument <= 1000 and 0 <= information <= 1000):
             raise StoryError("推理预算超限：深度0–64、展开1–100000、假设1–4096、权重0–1000。", budget_line.number)
         budget = {"depth": depth, "expansions": expansions, "hypotheses": hypotheses, "argument_weight": argument, "information_weight": information}
-    # Player declarations are validated but compile to the existing default.
-    # Switching to an agent is an explicit authored change, never a CLI route override.
-    if mode == "玩家":
+    # A player seat keeps the character's own rules so an AI can take the seat at
+    # launch; the rules, not the launcher, decide every action.
+    if mode == "玩家" and not compiled:
         return None
-    result = {"actor": actor, "name": name, "mode": "agent", "rules": compiled}
+    result = {"actor": actor, "name": name, "mode": "agent" if mode == "代理" else "player", "rules": compiled}
     if budget is not None:
         result["reasoning"] = budget
     return result

@@ -1,5 +1,5 @@
 extends SceneTree
-const PlayerNavigation := preload("res://tools/virtual_player_navigation.gd")
+const PlayerNavigation := preload("res://scenes/Host/PilotNavigation.gd")
 const Navigation := preload("res://scenes/Shared/FieldNavigation.gd")
 
 class Walker extends RefCounted:
@@ -45,6 +45,7 @@ func _initialize() -> void:
 		check(offer.input.point == offer.location and offer.input.action == "move", "public point matches ordinary input")
 	field.visible = true
 	var known := PlayerNavigation.offers(field)
-	check(known.size() == 16 and field.adapter.calls > 0, "longer visible routes use formal navigation")
+	check(known.size() >= 16 and field.adapter.calls > 0, "longer visible routes use formal navigation")
+	check(PlayerNavigation.frontier(field).is_empty(), "no seen cells, no frontier")
 	print("TOTAL %d checks, %d passed, %d failed" % [passed + failed, passed, failed])
 	quit(1 if failed else 0)

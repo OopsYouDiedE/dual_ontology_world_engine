@@ -194,6 +194,7 @@ public sealed class SubjectivePlayerController
     private readonly HashSet<(string Kind, string Label)> _tried = [];
     private readonly Dictionary<(string Kind, string Label), int> _visits = [];
     private readonly Dictionary<string, PublicPlayerCandidate> _seenPlaces = new(StringComparer.Ordinal);
+    private readonly HashSet<(double X, double Y)> _walked = [];
     private readonly int _revisitWeight;
     private string _knowledgeEpoch = "";
     private readonly ReasoningBudgetV1 _reasoning;
@@ -324,6 +325,18 @@ public sealed class SubjectivePlayerController
                 score -= (long)Math.Min(visits, 1000) * _revisitWeight;
                 why.Add("revisit_without_new_accepted_material:" + visits);
             }
+            if (candidate.Kind == "move" && candidate.Location is { } aim && _revisitWeight > 0 && _walked.Count > 0)
+            {
+                // Curiosity about ground: the farther a step lands from anywhere this actor has
+                // already walked, the more it is worth, so the seat leaves exhausted rooms.
+                var cell = (Math.Floor(aim.X / 64), Math.Floor(aim.Y / 64));
+                var away = _walked.Min(w => Math.Max(Math.Abs(w.X - cell.Item1), Math.Abs(w.Y - cell.Item2)));
+                if (away > 0) { score += (long)Math.Min(away, 4) * _revisitWeight; why.Add("unwalked_ground:" + Math.Min(away, 4)); }
+            }
+            // The edge of what this actor has seen is worth one visit; if standing there showed
+            // nothing new (a wall, not a doorway), the ordinary repeat penalty takes over.
+            if (candidate.Purpose == "frontier" && _revisitWeight > 0 && visits == 0)
+            { score += _revisitWeight; why.Add("edge_of_unseen"); }
             if (candidate.Selected) score -= _argumentWeight * 4L;
             if (candidate.Purpose == "tab" && !candidate.Selected && _argumentGoal is not null) score += _argumentWeight * 2L;
             if (candidate.Purpose == "commit" && _argumentGoal is not null) score += _argumentWeight * (_supportedEvidence ? 3L : -8L);
@@ -384,6 +397,10 @@ public sealed class SubjectivePlayerController
                         why.AddRange(proof.Steps);
                     }
                 }
+            // Showing something that does not hold up the chosen statement is no better than not answering.
+            if (candidate.Purpose == "evidence" && _argumentGoal is not null
+                && !why.Any(w => w.StartsWith("subjective_argument_supported:", StringComparison.Ordinal)))
+            { score -= _argumentWeight; why.Add("evidence_does_not_support_statement"); }
             reasoningScores[candidate.Token] = ((int)Math.Clamp(score, -100000000L, 100000000L), [..why.Distinct()]);
             arguments[candidate.Token] = [..chains];
         }
@@ -439,6 +456,7 @@ public sealed class SubjectivePlayerController
         // the cognition used for this choice, not the state after it.
         var publicBasis = reasoningScores[chosen.Token].Basis.AddRange(matchedRules).Add("authored_subjective_preferences");
         _tried.Add(HistoryKey(chosen));
+        if (chosen.Kind == "move" && chosen.Location is { } walked) _walked.Add((Math.Floor(walked.X / 64), Math.Floor(walked.Y / 64)));
         _visits[HistoryKey(chosen)] = _visits.GetValueOrDefault(HistoryKey(chosen)) + 1;
         var chosenArguments = arguments[chosen.Token];
         if (chosen.Purpose == "evidence")
@@ -481,6 +499,11 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     private readonly Action<IReadOnlyDictionary<string, object?>>? _observeField;
     private readonly string _session = Guid.NewGuid().ToString("N");
     private readonly Dictionary<string, Offer> _offers = new(StringComparer.Ordinal);
+    // A refresh keeps the token of a choice that is still offered unchanged; consumed or withdrawn choices expire.
+    private Dictionary<string, string> _standing = new(StringComparer.Ordinal);
+    // The host's latest field/panel offers stay on the table across lifecycle refreshes until consumed or replaced.
+    private IReadOnlyList<PlayerFieldOffer>? _hostOffers;
+    private readonly Dictionary<string, string> _identities = new(StringComparer.Ordinal);
     private Dictionary<string, object?>? _pending;
     private string _activeField = "";
     private readonly Dictionary<string, object?> _values = new(StringComparer.Ordinal);
@@ -506,7 +529,9 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null)
     {
         if (_offers.Count >= 256) throw Fail("candidate_limit");
-        var token = "player:" + _session + ":" + ++_serial;
+        var identity = JsonSerializer.Serialize(new object?[] { label, kind, isNew, group, publicValue, purpose, selected, location?.X, location?.Y, input, field, value?.ToString(), tab });
+        if (!_standing.TryGetValue(identity, out var token) || _offers.ContainsKey(token)) token = "player:" + _session + ":" + ++_serial;
+        _identities[token] = identity;
         _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location }, input, field, value, tab));
     }
     public PublicPlayerObservation Observe(IReadOnlyList<Dictionary<string, object?>> output,
@@ -514,7 +539,11 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     {
         Open();
         if (_turn >= _maxObservations) throw Fail("observation_budget");
-        _offers.Clear(); LastOutput = output;
+        // Only a refresh without a new presentation keeps standing tokens; a re-presented choice is a new offer.
+        _standing = new(StringComparer.Ordinal);
+        if (!output.Any(e => Text(e, "kind") is "lines" or "card" or "candidates" or "form" or "ending"))
+            foreach (var standing in _offers.Keys) _standing.TryAdd(_identities[standing], standing);
+        _offers.Clear(); _identities.Clear(); LastOutput = output;
         var lines = ImmutableArray.CreateBuilder<PublicPlayerLine>();
         var text = ImmutableArray.CreateBuilder<string>();
         var complete = false;
@@ -564,11 +593,13 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 foreach (var option in Maps(field, "options"))
                     text.Add(Text(option, "label") + (Flag(option, "available", true) ? "" : " " + Text(option, "lock_hint")));
             }
+        if (fieldOffers is not null) _hostOffers = fieldOffers;
+        else if (_standing.Count == 0) _hostOffers = null;
         if (!_closed && !complete)
         {
             if (_pending is { } pending) BuildPending(pending);
-            else if (fieldOffers is not null)
-                foreach (var offer in fieldOffers)
+            else if (_hostOffers is not null)
+                foreach (var offer in _hostOffers)
                 {
                     if (offer.Kind is not ("move" or "interact" or "wait" or "menu" or "form_field" or "form_submit" or "continue")) throw Fail("unsupported_field_offer");
                     Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location);
@@ -627,12 +658,20 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
             Add(Text(option, "label"), "menu", Event("select", ("presentation_id", pid), ("choice_id", Text(option, "id")), ("token", Text(option, "token"))), purpose: Text(option, "purpose"));
         if (options.Length == 0 && pid != "") Add("", "continue", Event("presented", ("presentation_id", pid)));
     }
+    public IReadOnlyDictionary<string, object?> Peek(string token)
+    {
+        Open();
+        if (!_offers.TryGetValue(token, out var offer)) throw new PlayerBoundaryException("unknown_consumed_or_expired_token");
+        if (offer.Field is { } field)
+            return offer.Tab ? Event("form_tab", ("field", field)) : Event("form_field", ("field", field), ("value", offer.Value));
+        return offer.Input.ToDictionary(p => p.Key, p => p.Value);
+    }
     public PublicPlayerObservation Submit(SelectCandidate selection)
     {
         Open();
         if (Selections >= _maxSelections) throw Fail("selection_budget");
         if (!_offers.TryGetValue(selection.Token, out var offer)) throw Fail("unknown_consumed_or_expired_token");
-        _offers.Clear(); Selections++;
+        _offers.Clear(); _identities.Clear(); _hostOffers = null; Selections++;
         if (offer.Field is { } field)
         {
             if (offer.Tab) _activeField = field;

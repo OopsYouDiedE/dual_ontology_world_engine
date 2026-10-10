@@ -10,20 +10,26 @@ public partial class GameEngine : Node
 {
     private GameSession? _session;
     private SubjectivePlayerController? _controller;
-    private string? _controllerScript;
     private int _agentSeed, _maxAgentSelections = 10000, _maxAgentObservations = 20000;
     private GameSession Session => _session ??= new GameSession(
         Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json"),
         "res://scenes/Awakening/Awakening.tscn",
         "res://scenes/Chapter2/Field/CampusMapView.tscn",
-        _controllerScript is null ? ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces") : null,
-        message => GD.PushWarning(message), _controllerScript is null ? ReadAuthorSources : null, _controllerScript, _maxAgentSelections, _maxAgentObservations);
+        _aiSeat ? null : ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces"),
+        message => GD.PushWarning(message), _aiSeat ? null : ReadAuthorSources, null, _maxAgentSelections, _maxAgentObservations,
+        _aiSeat);
+    private bool _aiSeat;
 
-    public void ConfigureAgent(string compiledDeclarations, int seed, int maxSelections, int maxObservations)
+    /// <summary>AI takes the player seat with that character's own declared rules (any role).</summary>
+    public void ConfigureAiSeat(int seed, int maxSelections, int maxObservations)
     {
         if (_session is not null) throw new InvalidOperationException("Configure the controller before starting a session.");
-        _ = PlayerControllers.Read(compiledDeclarations);
-        (_controllerScript, _agentSeed, _maxAgentSelections, _maxAgentObservations) = (compiledDeclarations, seed, maxSelections, maxObservations);
+        (_aiSeat, _agentSeed, _maxAgentSelections, _maxAgentObservations) = (true, seed, maxSelections, maxObservations);
+    }
+    public string AgentCandidateInputJson(string token)
+    {
+        try { return JsonSerializer.Serialize(Session.AgentCandidateInput(token)); }
+        catch (PlayerBoundaryException error) { return JsonSerializer.Serialize(new Dictionary<string, object?> { ["boundary"] = error.Code }); }
     }
     public bool AgentEnabled() => _session?.AgentEnabled ?? false;
     public string AgentObservationJson() => JsonSerializer.Serialize(Session.AgentObservation);
@@ -55,7 +61,7 @@ public partial class GameEngine : Node
             {
                 var point = (o.GetValueOrDefault("location") as IEnumerable<object?> ?? []).ToArray();
                 return new PlayerFieldOffer(ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"),
-                    ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"))
+                    ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"), Purpose: ChapterEvents.Text(o, "purpose"))
                 { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null };
             }).ToArray();
             Session.ObserveAgentField(entries);

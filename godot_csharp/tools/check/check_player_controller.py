@@ -1,8 +1,5 @@
-"""Compiler contract tests and temporary formal agent declaration for headless runs."""
+"""Compiler contract tests for subjective controller declarations."""
 from pathlib import Path
-import argparse
-import json
-import shutil
 import sys
 
 TOOLS = Path(__file__).resolve().parents[1]
@@ -19,9 +16,6 @@ def fields(mode="代理", rule="- 偏好 新选择 6"):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--prepare-agent", type=Path)
-    args = parser.parse_args()
     passed = 0
     def check(name, okay):
         nonlocal passed
@@ -29,14 +23,15 @@ def main():
         passed += 1
         print("PASS", name)
     check("unspecified_is_player", controller({}, "world:actor", "A") is None)
-    check("player_keeps_compiled_default", controller(fields("玩家"), "world:actor", "A") is None)
+    check("player_without_rules_keeps_default", controller({"操控者": ("玩家", Line(1, 1, ""), [])}, "world:actor", "A") is None)
+    check("player_seat_keeps_own_rules", controller(fields("玩家"), "world:actor", "A") == {"actor": "world:actor", "name": "A", "mode": "player", "rules": [{"mode": "prefer", "kind": "untried", "weight": 6}]})
     check("generic_actor", controller(fields(), "world:any-role", "A")["actor"] == "world:any-role")
     check("typed_subjective_rule", controller(fields(), "world:actor", "A")["rules"] == [{"mode": "prefer", "kind": "untried", "weight": 6}])
     budget = {**fields(), "推理预算": ("深度 8 展开 2048 假设 128 论证 16 求知 8", Line(4, 1, ""), [])}
     check("role_reasoning_budget", controller(budget, "world:any-role", "A")["reasoning"] == {"depth": 8, "expansions": 2048, "hypotheses": 128, "argument_weight": 16, "information_weight": 8})
     check("public_label_uses_runtime_wire_name", controller(fields(rule='- 偏好 菜单 7 文案 "neutral-target"'),
           "world:any-role", "A")["rules"] == [{"mode": "prefer", "kind": "menu", "weight": 7, "label_contains": "neutral-target"}])
-    check("player_budget_keeps_default", controller({**budget, "操控者": fields("玩家")["操控者"]}, "world:actor", "A") is None)
+    check("player_seat_keeps_budget", controller({**budget, "操控者": fields("玩家")["操控者"]}, "world:actor", "A")["reasoning"]["depth"] == 8)
     for name, data in [
         ("unknown_controller", fields("任意")),
         ("chapter_id_not_policy", fields(rule="- 偏好 E1 6")),
@@ -58,27 +53,9 @@ def main():
             check(name, True)
         else:
             check(name, False)
-    if args.prepare_agent:
-        destination = args.prepare_agent.resolve()
-        if destination.exists():
-            raise RuntimeError("Refusing to overwrite a fixture directory")
-        source = ROOT / "godot_csharp/scenes/Awakening/Script"
-        destination.mkdir(parents=True)
-        for path in source.rglob("*.story"):
-            target = destination / path.relative_to(source)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(path, target)
-        declarations = []
-        for path in destination.rglob("*.story"):
-            text = path.read_text(encoding="utf-8-sig")
-            if "操控者：玩家" in text:
-                declarations.append(path)
-                path.write_text(text.replace("操控者：玩家", "操控者：代理"), encoding="utf-8", newline="\n")
-        check("one_formal_declared_role", len(declarations) == 1)
-        document = compile_story([destination / "chapter_01.story"], set(), ecology_only=True)
-        check("formal_agent_compiler_chain", len(document["chapters"][0]["controllers"]) == 1)
-        (destination / "agent-world.json").write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
-        print("DECLARATIONS", destination / "agent-world.json")
+    document = compile_story([ROOT / "godot_csharp/scenes/Awakening/Script/chapter_01.story"], set(), ecology_only=True)
+    seats = document["chapters"][0].get("controllers", [])
+    check("formal_player_seat_declared", len(seats) == 1 and seats[0]["mode"] == "player" and seats[0]["rules"])
     print(passed, "checks passed")
 
 
