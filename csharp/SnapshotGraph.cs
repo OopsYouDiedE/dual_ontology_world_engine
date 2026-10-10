@@ -8,6 +8,16 @@ public static class CognitionGraph
 {
     public static ContractResult<DetachedProjectionGraphV1> Rebind(CognitionSnapshotV1 snapshot)
         => Contract.Try(() => SnapshotGraph.Build(snapshot));
+    public static ContractResult<DetachedProjectionGraphV1> Rebind(CognitionGraphArchiveV1 archive)
+        => Contract.Try(() =>
+        {
+            CognitionCodec.ValidateArchive(archive);
+            var graph = SnapshotGraph.Build(archive.SubjectSnapshot);
+            graph.World.Allocated.UnionWith(archive.AllocatedIds);
+            // Persisted reservations are retired: loading must never make an old handle fresh again.
+            graph.World.Used.UnionWith(archive.AllocatedIds);
+            return graph;
+        });
 }
 
 internal static class SnapshotGraph
@@ -78,7 +88,7 @@ internal static class SnapshotGraph
         Contract.Require(origin.StartLine >= 1 && origin.StartColumn >= 1 && origin.EndLine >= origin.StartLine && origin.EndColumn >= 1 &&
             (origin.StartLine != origin.EndLine || origin.EndColumn >= origin.StartColumn), ContractErrorCode.MalformedData, "origin", "来源区间无效。");
     }
-    internal static DetachedProjectionGraphV1 Build(CognitionSnapshotV1 snapshot)
+    internal static DetachedProjectionGraphV1 Build(CognitionSnapshotV1 snapshot, bool detached = true)
     {
         Contract.Require(snapshot is not null, ContractErrorCode.MalformedData, "snapshot", "快照不能为空。");
         Contract.Require(snapshot!.ContractVersion == 1, ContractErrorCode.Unsupported, "contract_version", "不支持的快照版本。");
@@ -86,10 +96,10 @@ internal static class SnapshotGraph
         Contract.Require(snapshot.Revision.Value >= 0 && snapshot.VocabularyRevision.Value >= 0, ContractErrorCode.InvalidRevision, "revision", "版本不能为负。");
         Contract.Array(snapshot.RequiredCapabilities, "required_capabilities");
         foreach (var capability in snapshot.RequiredCapabilities)
-            Contract.Require(capability is "core.stable-identity/1" or "core.cognition-atomic-batch/1" or "core.cognition-snapshot/1" or "core.cognition-audit/1" or "core.frozen-ast/1",
+            Contract.Require(capability is "core.stable-identity/1" or "core.cognition-atomic-batch/1" or "core.cognition-snapshot/1" or "core.cognition-audit/1" or "core.frozen-ast/1" or "core.cognition-graph-codec/1",
                 ContractErrorCode.Unsupported, "required_capabilities", "不支持的必要能力。");
         Contract.Array(snapshot.Projections, "projections"); Contract.Array(snapshot.VisibleHistory, "visible_history");
-        var world = new ProjectionWorld(snapshot.SubjectWorld) { Detached = true };
+        var world = new ProjectionWorld(snapshot.SubjectWorld) { Detached = detached };
         var map = ImmutableDictionary.CreateBuilder<SubjectProjectionId, Projection>();
         foreach (var node in snapshot.Projections)
         {
@@ -185,7 +195,7 @@ internal static class SnapshotGraph
         (a.Relations == b.Relations || a.Relations.ToHashSet().SetEquals(b.Relations)) &&
         (a.DeniedRelations == b.DeniedRelations || a.DeniedRelations.ToHashSet().SetEquals(b.DeniedRelations)) &&
         (a.KnownTerms == b.KnownTerms || a.KnownTerms.ToHashSet().SetEquals(b.KnownTerms)) && (a.Rules == b.Rules || a.Rules.Length == b.Rules.Length && a.Rules.Zip(b.Rules).All(p =>
-            p.First.Mode == p.Second.Mode && p.First.Weight == p.Second.Weight && p.First.Acceptance == p.Second.Acceptance &&
+            p.First.Mode == p.Second.Mode && p.First.Weight == p.Second.Weight && p.First.Acceptance == p.Second.Acceptance && p.First.Lifetime == p.Second.Lifetime && p.First.LifetimeOwner == p.Second.LifetimeOwner &&
             Contract.Value(Ast.Equivalent(p.First.Condition, p.Second.Condition)) && Contract.Value(Ast.Equivalent(p.First.Effect, p.Second.Effect)))) &&
         (ReferenceEquals(a.Procedure, b.Procedure) || a.Procedure is not null && b.Procedure is not null && Contract.Value(Ast.Equivalent(a.Procedure, b.Procedure)));
     internal static bool SameObservation(VisibleObservationV1 a, VisibleObservationV1 b)

@@ -13,7 +13,8 @@ public readonly record struct VocabularyRevision(long Value);
 public enum ContractErrorCode
 {
     InvalidIdentity, DuplicateIdentity, InvalidReference, InvalidRevision, StaleRevision, InvalidBatch,
-    Unsupported, MalformedData, LimitExceeded, RevisionOverflow, NotificationFault, Unrecognized, Ambiguous
+    Unsupported, MalformedData, LimitExceeded, RevisionOverflow, NotificationFault, Unrecognized, Ambiguous,
+    UnsupportedSavePoint
 }
 public sealed record ContractError(ContractErrorCode Code, string Path, string Message,
     string? UnsupportedKind = null, KnowledgeRevision? ExpectedRevision = null,

@@ -61,15 +61,15 @@ public static class WorldScriptDocument
 /// <summary>
 /// One live Core world across chapter loads. Declarations are validated before mutation;
 /// subsequent chapters reuse objective entities and each character's existing cognition.
-/// This is an in-memory session, not a save-file codec.
+/// Versioned persistence is implemented by WorldSession.Save at an explicit idle cut.
 /// </summary>
 public sealed partial class WorldSession : IDisposable
 {
     private sealed record Registered(string Id, string Name, string Kind, string Scope,
         string? Space, string? Sprite, ImmutableDictionary<string, int> Defaults, ImmutableHashSet<string> Observable,
         Essence Entity, ScriptCharacter? Character);
-    private sealed record Planned(string Id, string Name, string Kind, string Scope, string? Space, string? Sprite,
-        ImmutableDictionary<string, int> Defaults, ImmutableHashSet<string> Observable, ImmutableDictionary<string, int> Beliefs);
+    private sealed record Planned([property:System.Text.Json.Serialization.JsonRequired] string Id, [property:System.Text.Json.Serialization.JsonRequired] string Name, [property:System.Text.Json.Serialization.JsonRequired] string Kind, [property:System.Text.Json.Serialization.JsonRequired] string Scope, [property:System.Text.Json.Serialization.JsonRequired] string? Space, [property:System.Text.Json.Serialization.JsonRequired] string? Sprite,
+        [property:System.Text.Json.Serialization.JsonRequired] ImmutableDictionary<string, int> Defaults, [property:System.Text.Json.Serialization.JsonRequired] ImmutableHashSet<string> Observable, [property:System.Text.Json.Serialization.JsonRequired] ImmutableDictionary<string, int> Beliefs);
     private readonly Dictionary<string, Registered> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Planned> _declarations = new(StringComparer.Ordinal);
     private readonly HashSet<string> _loaded = new(StringComparer.Ordinal);
@@ -94,7 +94,7 @@ public sealed partial class WorldSession : IDisposable
     }
     public void Dispose()
     {
-        lock (_gate) { if (_disposed) return; Simulation.Completed -= BehaviorCompleted; if (_ownsSimulation) Simulation.Dispose(); _disposed = true; }
+        lock (_gate) { if (_disposed) return; Simulation.Completed -= BehaviorCompleted; if (_ownsSimulation || _restoreOwnsSimulation) Simulation.Dispose(); _disposed = true; }
     }
 
     /// <summary>Adopts an already running chapter. All bindings are validated before registry mutation;

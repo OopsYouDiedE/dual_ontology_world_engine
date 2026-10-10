@@ -59,6 +59,7 @@ public sealed class SoulEssence : Essence
 {
     public SoulEssence(string name) : base(name, ProjectionKind.Soul) { }
     public SoulEssence(EntityId id, string name) : base(id, name, ProjectionKind.Soul) { }
+    internal SoulEssence(EntityId id, string name, ProjectionWorld world) : base(id, name, ProjectionKind.Soul) => World = world;
     public ProjectionWorld World { get; } = new();
 }
 

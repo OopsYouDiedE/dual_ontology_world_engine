@@ -1,7 +1,7 @@
 namespace DualOntologyWorldEngine.Story;
 
 /// <summary>两章共同的逻辑位置、玩家观察和剧情进度；不依赖宿主坐标或 Godot。</summary>
-public sealed class ChapterSession
+public sealed partial class ChapterSession
 {
     public Dictionary<string, string> CharacterRooms { get; } = new();
     public Dictionary<string, string> ObjectRooms { get; } = new();

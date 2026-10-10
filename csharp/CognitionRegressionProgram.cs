@@ -310,7 +310,7 @@ static class CognitionRegressionProgram
         Check(Error(CognitionGraph.Rebind(indirectMissing)).Code == ContractErrorCode.InvalidReference,
             label + " CB-V07 indirect missing parent rejected as InvalidReference");
         Check(ChineseTermBridge.Interpret(snapshot, new("模块", Qualifier: new ForeignCondition())).Status == TermInterpretationStatus.Unsupported, label + " A Unsupported distinct from Unknown");
-        Console.WriteLine("DEFER CB-V07 wire codec and cross-process roundtrip: next batch");
+        Wire(f, label);
     }
 
     static void Hidden(Fixture f, string label)
@@ -386,7 +386,7 @@ static class CognitionRegressionProgram
         var all = subjects.SelectMany(s => Capture(s).Projections.Select(p => p.Id)).ToArray();
         Check(all.Distinct().Count() == all.Length, label + " CB-V11 multi-entity/facet/subject domains remain distinct");
         Console.WriteLine($"MEASURE {label} seed=0 entities=16 facets=32 subjects=3 operations=144 elapsed_ms={timer.ElapsedMilliseconds} memory_delta_bytes={GC.GetTotalMemory(true) - mem}");
-        Console.WriteLine("DEFER CB-V11 cross-process restore/duplicate receipt protection: save batch");
+        Console.WriteLine("CB-V11 runtime wire cross-process restore is covered by Wire for both structures.");
     }
 
     static void IncrementalPublication(int shape, string label)
@@ -437,11 +437,89 @@ static class CognitionRegressionProgram
             label + " incremental persistent audit reconstructs earlier nested AST exactly");
     }
 
-    static int Main()
+    static void Wire(Fixture f, string label)
+    {
+        var reserved=Ok(f.Soul.World.AllocateSubjectProjectionId());
+        var archive=Ok(f.Runtime.CaptureCognitionGraph(f.Soul)); var before=Capture(f.Soul);
+        var bytes=Ok(CognitionCodec.Encode(archive)); var decoded=Ok(CognitionCodec.Decode(bytes));
+        var graph=Ok(CognitionGraph.Rebind(decoded));
+        var source=before.Projections.Single(p=>p.Id==Id(f.Habit));
+        var restored=graph.Projections[Id(f.Habit)];
+        Check(Ok(Ast.Equivalent(source.Procedure!,Ok(CognitionAst.FreezeEffect(restored.Procedure!,graph.Projections)))) &&
+            graph.Projections[Id(f.A)]!=f.A && graph.Projections[Id(f.A)].SubjectId==Id(f.A) && graph.World.Revision==before.Revision &&
+            decoded.AllocatedIds.SequenceEqual(archive.AllocatedIds.OrderBy(id=>id.SubjectWorld.ToString("D")+"/"+id.Local.ToString("D"),StringComparer.Ordinal)),label+" CB-V07 wire all AST/slots/identity roundtrip");
+        var audit=Ok(f.Runtime.CaptureCognitionAudit(f.Soul));
+        var auditBytes=Ok(CognitionCodec.EncodeAudit(audit)); var auditDecoded=Ok(CognitionCodec.DecodeAudit(auditBytes));
+        Check(Ok(CognitionCodec.EncodeAudit(auditDecoded)).SequenceEqual(auditBytes)&&auditDecoded.Commits.Length==audit.Commits.Length,
+            label+" CB-V07 complete audit wire roundtrip");
+        void Reject(string name,Action<System.Text.Json.Nodes.JsonObject> mutate,ContractErrorCode code)
+        {
+            var root=System.Text.Json.Nodes.JsonNode.Parse(bytes)!.AsObject(); mutate(root);
+            var bad=System.Text.Encoding.UTF8.GetBytes(root.ToJsonString()); var error=Error(CognitionCodec.Decode(bad));
+            Check(error.Code==code&&ReferenceEquals(before,Capture(f.Soul))&&Ok(f.Runtime.CaptureCognitionAudit(f.Soul)).Commits.Length==audit.Commits.Length,
+                label+" CB-V10 "+name+" rejected before publication");
+            Console.WriteLine("EXPECTED "+name+" "+error.Code+" "+error.Path);
+            var dir=Path.Combine("tmp","core-save-wire",label); Directory.CreateDirectory(dir);
+            File.WriteAllBytes(Path.Combine(dir,name+".json"),bad); File.WriteAllText(Path.Combine(dir,name+".error.txt"),error.ToString());
+        }
+        Reject("major",r=>r["format"]="dual-ontology-cognition/v99",ContractErrorCode.Unsupported);
+        Reject("content",r=>r["content_version"]="core.cognition/99",ContractErrorCode.Unsupported);
+        Reject("capability",r=>r["required_capabilities"]!.AsArray().Add("unknown/1"),ContractErrorCode.Unsupported);
+        Reject("property",r=>r["new_field"]=1,ContractErrorCode.Unsupported);
+        Reject("duplicate_id",r=>r["subject_snapshot"]!["projections"]!.AsArray().Add(r["subject_snapshot"]!["projections"]![0]!.DeepClone()),ContractErrorCode.DuplicateIdentity);
+        Reject("duplicate_allocated",r=>r["allocated_ids"]!.AsArray().Add(r["allocated_ids"]![0]!.DeepClone()),ContractErrorCode.DuplicateIdentity);
+        Reject("duplicate_tags",r=> { var a=r["subject_snapshot"]!["projections"]![0]!["tags"]!.AsArray(); a.Add(new System.Text.Json.Nodes.JsonObject { ["tag"]="duplicate",["value"]=0 }); a.Add(new System.Text.Json.Nodes.JsonObject { ["tag"]="duplicate",["value"]=1 }); },ContractErrorCode.MalformedData);
+        Reject("missing_reference",r=>r["subject_snapshot"]!["projections"]![0]!["parent"]=System.Text.Json.Nodes.JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(new { subject_world=before.SubjectWorld.ToString("D"),local=Guid.NewGuid().ToString("D") })),ContractErrorCode.InvalidReference);
+        Reject("foreign_reference",r=>r["subject_snapshot"]!["projections"]![0]!["parent"]=System.Text.Json.Nodes.JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(new { subject_world=Guid.NewGuid().ToString("D"),local=Guid.NewGuid().ToString("D") })),ContractErrorCode.InvalidReference);
+        Reject("enum",r=>r["subject_snapshot"]!["projections"]![0]!["kind"]="unlisted",ContractErrorCode.Unsupported);
+        Reject("ast",r=>r["subject_snapshot"]!["projections"]!.AsArray().Single(p=>p!["id"]!["local"]!.GetValue<string>()==Id(f.Habit).Local.ToString("D"))!["procedure"]!["kind"]="custom",ContractErrorCode.Unsupported);
+        Reject("ast_property",r=>r["subject_snapshot"]!["projections"]!.AsArray().Single(p=>p!["id"]!["local"]!.GetValue<string>()==Id(f.Habit).Local.ToString("D"))!["procedure"]!["extra"]=0,ContractErrorCode.Unsupported);
+        Reject("missing_ast_kind",r=>r["subject_snapshot"]!["projections"]!.AsArray().Single(p=>p!["id"]!["local"]!.GetValue<string>()==Id(f.Habit).Local.ToString("D"))!["procedure"]!.AsObject().Remove("kind"),ContractErrorCode.MalformedData);
+        Reject("missing_field",r=>r["subject_snapshot"]!["projections"]![0]!.AsObject().Remove("tags"),ContractErrorCode.MalformedData);
+        Reject("overflow",r=>r["subject_snapshot"]!["projections"]![0]!["tags"]!.AsArray().Add(new System.Text.Json.Nodes.JsonObject { ["tag"]="overflow",["value"]=2147483648L }),ContractErrorCode.Unsupported);
+        Reject("negative_revision",r=>r["subject_snapshot"]!["revision"]=-1,ContractErrorCode.Unsupported);
+        Reject("negative_duration",r=>r["subject_snapshot"]!["projections"]!.AsArray().Single(p=>p!["id"]!["local"]!.GetValue<string>()==Id(f.Habit).Local.ToString("D"))!["procedure"]=System.Text.Json.Nodes.JsonNode.Parse("{\"kind\":\"wait\",\"delay\":-1,\"body\":{\"kind\":\"sequence\",\"items\":[]},\"until\":null}"),ContractErrorCode.Unsupported);
+        var duplicate=System.Text.Encoding.UTF8.GetBytes("{\"format\":\"duplicate\","+System.Text.Encoding.UTF8.GetString(bytes)[1..]);
+        Check(Error(CognitionCodec.Decode(duplicate)).Code==ContractErrorCode.MalformedData&&Error(CognitionCodec.Decode([0xff])).Code==ContractErrorCode.MalformedData,label+" CB-V10 duplicate JSON keys and bad UTF-8 rejected");
+        foreach(var limit in new[] {new CodecLimitsV1(MaxBytes:bytes.Length-1),new CodecLimitsV1(MaxProjections:0),new CodecLimitsV1(MaxAstNodes:0),new CodecLimitsV1(MaxAstDepth:0),new CodecLimitsV1(MaxHistoryEntries:0)})
+            Check(Error(CognitionCodec.Decode(bytes,limit)).Code==ContractErrorCode.LimitExceeded,label+" CB-V10 explicit codec limit "+limit);
+        Check(Error(CognitionCodec.Encode(archive with { AllocatedIds=default })).Code==ContractErrorCode.MalformedData,
+            label+" CB-V10 Encode rejects malformed manual DTO");
+        var runtimeBytes=Ok(f.Runtime.Save()); var runtime=Ok(WorldRuntime.Restore(runtimeBytes));
+        var soul=(SoulEssence)runtime.Entities[f.Soul.Id];
+        var loadedArchive=Ok(runtime.Runtime.CaptureCognitionGraph(soul));
+        Check(loadedArchive.AllocatedIds.Contains(reserved)&&loadedArchive.AllocatedIds.Contains(Id(f.History))&&!loadedArchive.SubjectSnapshot.Projections.Any(p=>p.Id==Id(f.History))&&
+            Error(Observation.ObserveBatch(soul,[Change(f.Actor) with { Target=reserved,Create=true,Name="retired-reservation",Kind=ProjectionKind.Concept }])).Code==ContractErrorCode.InvalidReference,
+            label+" CB-V11 reserved/forgotten handles survive wire and cannot be reused");
+        Check(Ok(runtime.Runtime.KnownFacet(soul,f.FrontId))==runtime.Projections[Id(f.A)]&&runtime.Runtime.Representations(runtime.Entities[f.Entity.Id]).Count==2&&
+            runtime.Runtime.Representations(runtime.Entities[f.Entity.Id]).All(p=>p.SubjectId is null)&&soul.World.Revision==before.Revision,
+            label+" CB-V11 runtime bindings and separate identity domains restore");
+        var folder=Path.Combine("tmp","core-save-wire",label); Directory.CreateDirectory(folder); var file=Path.GetFullPath(Path.Combine(folder,"runtime.json")); File.WriteAllBytes(file,runtimeBytes);
+        var psi=new ProcessStartInfo(Environment.ProcessPath!) { RedirectStandardOutput=true,RedirectStandardError=true,UseShellExecute=false };
+        if(Path.GetFileNameWithoutExtension(Environment.ProcessPath)=="dotnet") psi.ArgumentList.Add(typeof(CognitionRegressionProgram).Assembly.Location);
+        psi.ArgumentList.Add("--wire-child"); psi.ArgumentList.Add(file);
+        using var child=Process.Start(psi)!; var output=child.StandardOutput.ReadToEnd(); var stderr=child.StandardError.ReadToEnd();
+        Check(child.WaitForExit(60000)&&child.ExitCode==0&&output.Contains("CHILD RESTORED"),label+" CB-V11 fresh process restore: "+stderr);
+        File.WriteAllText(Path.Combine(folder,"child.txt"),output+stderr);
+    }
+
+    static int Main(string[] args)
     {
         try
         {
-            Console.WriteLine("Cognition foundation regression; neutral worlds; codec/C/D/host migration excluded");
+            if(args.Length==2&&args[0]=="--wire-child")
+            {
+                var bytes=File.ReadAllBytes(args[1]); var one=Ok(WorldRuntime.Restore(bytes));
+                var round=Ok(one.Runtime.Save()); var two=Ok(WorldRuntime.Restore(round));
+                Check(one.Entities.Keys.ToHashSet().SetEquals(two.Entities.Keys)&&one.Projections.Keys.ToHashSet().SetEquals(two.Projections.Keys),"child stable identity and retired handles");
+                foreach(var pair in one.Entities.Where(p=>p.Value is SoulEssence))
+                {
+                    var a=(SoulEssence)pair.Value;var b=(SoulEssence)two.Entities[pair.Key];
+                    Check(a.World.Revision==b.World.Revision&&Ok(one.Runtime.CaptureCognitionAudit(a)).Commits.Length==Ok(two.Runtime.CaptureCognitionAudit(b)).Commits.Length,"child no effects/observations replayed");
+                }
+                Console.WriteLine("CHILD RESTORED");return 0;
+            }
+            Console.WriteLine("Cognition foundation + wire/save regression; neutral worlds; C/D excluded");
             for (var shape = 0; shape < 2; shape++)
             {
                 var label = shape == 0 ? "flat" : "nested"; var f = World(shape);

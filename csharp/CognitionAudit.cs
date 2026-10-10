@@ -30,7 +30,7 @@ public sealed partial class WorldRuntime
             Contract.Require(audit is not null, ContractErrorCode.MalformedData, "audit", "审计不能为空。");
             Contract.Require(audit!.ContractVersion == 1, ContractErrorCode.Unsupported, "contract_version", "不支持的审计版本。");
             Contract.Array(audit.Commits, "commits"); Contract.Array(audit.RequiredCapabilities, "required_capabilities");
-            Contract.Require(audit.RequiredCapabilities.IsEmpty, ContractErrorCode.Unsupported, "required_capabilities", "不支持的审计必要能力。");
+            Contract.Require(audit.RequiredCapabilities.All(CognitionCodec.Capabilities.Contains), ContractErrorCode.Unsupported, "required_capabilities", "不支持的审计必要能力。");
             var graph = SnapshotGraph.Build(audit.InitialSnapshot);
             Contract.Require(audit.SubjectWorld == audit.InitialSnapshot.SubjectWorld && audit.InitialSnapshot.Revision.Value == 0,
                 ContractErrorCode.MalformedData, "initial_snapshot", "审计必须从同一主体的零版本开始。");

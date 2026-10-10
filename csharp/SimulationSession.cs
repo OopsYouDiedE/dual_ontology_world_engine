@@ -27,6 +27,15 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
     private readonly Dictionary<Projection, ScheduledAction> _wakeups = [];
     private bool _disposed;
     public CTBSystem CTB { get; } = timeline ?? new();
+    public ContractResult<bool> CheckSavePoint() => Contract.Try(() =>
+    {
+        Contract.Require(!_disposed, ContractErrorCode.UnsupportedSavePoint, "simulation.disposed", "已结束的会话不能保存。");
+        Contract.Require(_active.Count == 0, ContractErrorCode.UnsupportedSavePoint, "simulation.active", "仍有待执行或等待中的行动。");
+        Contract.Require(_effects.Count == 0, ContractErrorCode.UnsupportedSavePoint, "simulation.effects", "仍有等待到期的效果清理。");
+        Contract.Require(_agents.Count == 0 && _wakeups.Count == 0, ContractErrorCode.UnsupportedSavePoint, "simulation.autonomous", "仍有自主主体或唤醒。");
+        Contract.Require(!CTB.Pending.Any(), ContractErrorCode.UnsupportedSavePoint, "simulation.scheduled", "仍有调度回调。");
+        return true;
+    });
     public event Action<ActionExecution>? Completed;
     public bool IsActing(Projection actor) => _active.Any(e => ReferenceEquals(e.Intent.Actor, actor));
     /// <summary>阶段提交后的只读宿主通知；不参与决策或结算。</summary>

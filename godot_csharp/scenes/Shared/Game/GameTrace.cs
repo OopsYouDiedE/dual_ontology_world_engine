@@ -7,6 +7,13 @@ namespace DualOntologyWorldEngine.Gameplay;
 /// <summary>Host-side evidence only. Core execution records never imply player observation.</summary>
 public sealed class GameTrace : IDisposable
 {
+    internal sealed record SaveState([property:System.Text.Json.Serialization.JsonRequired] long Sequence,[property:System.Text.Json.Serialization.JsonRequired] long Request,[property:System.Text.Json.Serialization.JsonRequired] long Output,[property:System.Text.Json.Serialization.JsonRequired] long ExecutionSerial,[property:System.Text.Json.Serialization.JsonRequired] string State);
+    internal SaveState CaptureSave() => new(_sequence,_request,_output,_executionSerial,_state);
+    internal void RestoreSave(SaveState state)
+    {
+        if(state.Sequence<0||state.Request<0||state.Output<0||state.ExecutionSerial<0) throw new InvalidDataException("Invalid trace counters.");
+        _sequence=state.Sequence; _request=state.Request; _output=state.Output; _executionSerial=state.ExecutionSerial; _state=state.State;
+    }
     private readonly string? _directory;
     private readonly Action<string>? _warning;
     private readonly Stopwatch _elapsed = new();

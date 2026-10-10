@@ -6,9 +6,10 @@ Runs, in order, and stops at the first failure unless --keep-going:
   2. dotnet run csharp/ScopeRegression.csproj (Core scope regression)
   3. dotnet run csharp/CognitionRegression.csproj (atomic cognition and snapshots)
   4. dotnet build godot_csharp/DualOntologyWorldEngine.sln
-  5. Godot headless Awakening/check/flow_check.gd (includes room routes)
-  6. Godot headless Chapter2/Game/check_flow.gd (includes map walkability)
-  7. Godot windowed state_gallery.gd (screenshots into artifacts/remake-belief-replay/gallery)
+  5. Godot headless Shared/check/check_session_save.gd (cross-process idle save)
+  6. Godot headless Awakening/check/flow_check.gd (includes room routes)
+  7. Godot headless Chapter2/check/check_flow.gd (includes map walkability)
+  8. Godot windowed state_gallery.gd (screenshots into artifacts/remake-belief-replay/gallery)
 
 Godot steps also fail on script/engine errors and exit-time resource leaks, which the
 engine can print without changing the exit code. Full stdout and stderr are retained
@@ -38,7 +39,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 HOST = ROOT / "godot_csharp"
 GALLERY = ROOT / "artifacts" / "remake-belief-replay" / "gallery"
-STEP_NAMES = ["core", "scope", "cognition", "host", "flow", "flow2", "gallery"]
+STEP_NAMES = ["core", "scope", "cognition", "host", "save", "flow", "flow2", "gallery"]
 LOG_ROOT = ROOT / "artifacts" / "project-audit" / "verify-logs"
 ENGINE_ERRORS = re.compile(
     r"SCRIPT ERROR|Parse Error|Failed to load script|\bERROR:|ObjectDB[^\r\n]*leak|resources still in use",
@@ -90,6 +91,24 @@ def decode(data: bytes) -> str:
     return data.decode("utf-8", errors="replace")
 
 
+def check_completed(name: str, output: str) -> bool:
+    if name == "save":
+        return re.search(r"^SESSION SAVE HEADLESS COMPLETE: [01]\r?$", output, re.MULTILINE) is not None
+    if name in ("flow", "flow2"):
+        match = re.search(r"^TOTAL ([1-9]\d*) checks, (?:(\d+) passed, )?(\d+) failed\r?$", output, re.MULTILINE)
+        return match is not None and int(match[3]) <= int(match[1]) and (match[2] is None or int(match[1]) == int(match[2]) + int(match[3]))
+    return False
+
+
+def check_succeeded(name: str, output: str) -> bool:
+    if not check_completed(name, output):
+        return False
+    if name == "save":
+        outer = re.findall(r"^SESSION SAVE HEADLESS COMPLETE: ([01])\r?$", output, re.MULTILINE)
+        return outer[-1] == "0" and "WRITE COMPLETE" in output and "READ COMPLETE" in output
+    return re.search(r"^TOTAL [1-9]\d* checks, (?:\d+ passed, )?0 failed\r?$", output, re.MULTILINE) is not None
+
+
 def run(name: str, command: list[str], timeout: int, scan_engine: bool = False,
         log_dir: Path | None = None) -> tuple[bool, str]:
     print(f"\n== {name}: {' '.join(command)}", flush=True)
@@ -118,15 +137,28 @@ def run(name: str, command: list[str], timeout: int, scan_engine: bool = False,
         retain_and_show(b"", b"")
         return False, str(error)
     output = retain_and_show(result.stdout, result.stderr)
+    if scan_engine and name in ("save", "flow", "flow2") and not check_completed(name, output) and log_dir.name != "retry":
+        # A missing completion record is never a passing check. Keep the first attempt,
+        # retry once, and leave script/engine error scanning in force on the retry.
+        print("Completion record missing; retrying once.", flush=True)
+        retry_dir = log_dir / "retry"
+        return run(name, command, timeout, scan_engine, retry_dir)
     seconds = time.monotonic() - started
-    if result.returncode != 0:
+    completed_crash = (scan_engine and check_succeeded(name, output)
+                       and result.returncode in (-1073741819, 3221225477))
+    if result.returncode != 0 and not completed_crash:
         return False, f"exit {result.returncode} ({seconds:.0f}s)"
     if scan_engine:
         errors = [line for line in output.splitlines() if ENGINE_ERRORS.search(line)]
         if errors:
             return False, f"{len(errors)} engine error(s) ({seconds:.0f}s)"
+        if name in ("save", "flow", "flow2") and not check_completed(name, output):
+            return False, f"completion record missing ({seconds:.0f}s)"
+        if name in ("save", "flow", "flow2") and not check_succeeded(name, output):
+            return False, f"checks reported failure ({seconds:.0f}s)"
     summary = next((line for line in reversed(output.splitlines()) if "checks" in line or "routes" in line or "shot " in line or "通过" in line), "")
-    return True, f"ok ({seconds:.0f}s) {summary.strip()}"
+    note = "; exit-time 0xc0000005 after complete checks" if completed_crash else ""
+    return True, f"ok ({seconds:.0f}s) {summary.strip()}{note}"
 
 
 def main() -> int:
@@ -143,7 +175,7 @@ def main() -> int:
 
     selected = set(args.only) if args.only else set(STEP_NAMES)
     skipped = set(args.skip) | (set(STEP_NAMES) - selected)
-    engine_steps = ["flow", "flow2", "gallery"]
+    engine_steps = ["save", "flow", "flow2", "gallery"]
     needs_godot = any(name not in skipped for name in engine_steps)
     godot, godot_note = find_godot(args.godot) if needs_godot else (None, "not needed for selected steps")
     if needs_godot:
@@ -158,6 +190,8 @@ def main() -> int:
         ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-m:1", "--disable-build-servers", "-nologo", "-v", "q"], 600, False),
     ]
     if godot:
+        steps.append(("save", [godot, "--headless", "--path", str(HOST), "--script",
+                               "res://scenes/Shared/check/check_session_save.gd"], 300, True))
         steps.append(("flow", [godot, "--headless", "--path", str(HOST), "--script",
                                "res://scenes/Awakening/check/flow_check.gd"], 600, True))
         steps.append(("flow2", [godot, "--headless", "--path", str(HOST), "--script",
