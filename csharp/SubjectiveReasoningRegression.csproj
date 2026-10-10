@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>obj/SubjectiveReasoningRegression/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/SubjectiveReasoningRegression/</BaseOutputPath>
+  </PropertyGroup>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="SubjectiveReasoningRegressionProgram.cs" />
+    <ProjectReference Include="DualOntologyWorldEngine.Core.csproj" />
+  </ItemGroup>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+</Project>

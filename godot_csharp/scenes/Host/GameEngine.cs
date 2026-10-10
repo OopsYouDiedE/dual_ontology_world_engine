@@ -1,5 +1,7 @@
 using DualOntologyWorldEngine.Gameplay;
 using Godot;
+using DualOntologyWorldEngine.Story;
+using System.Text.Json;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
 
@@ -7,12 +9,72 @@ using GDict = Godot.Collections.Dictionary;
 public partial class GameEngine : Node
 {
     private GameSession? _session;
+    private SubjectivePlayerController? _controller;
+    private string? _controllerScript;
+    private int _agentSeed, _maxAgentSelections = 10000, _maxAgentObservations = 20000;
     private GameSession Session => _session ??= new GameSession(
         Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json"),
         "res://scenes/Awakening/Awakening.tscn",
         "res://scenes/Chapter2/Field/CampusMapView.tscn",
-        ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces"),
-        message => GD.PushWarning(message), ReadAuthorSources);
+        _controllerScript is null ? ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces") : null,
+        message => GD.PushWarning(message), _controllerScript is null ? ReadAuthorSources : null, _controllerScript, _maxAgentSelections, _maxAgentObservations);
+
+    public void ConfigureAgent(string compiledDeclarations, int seed, int maxSelections, int maxObservations)
+    {
+        if (_session is not null) throw new InvalidOperationException("Configure the controller before starting a session.");
+        _ = PlayerControllers.Read(compiledDeclarations);
+        (_controllerScript, _agentSeed, _maxAgentSelections, _maxAgentObservations) = (compiledDeclarations, seed, maxSelections, maxObservations);
+    }
+    public bool AgentEnabled() => _session?.AgentEnabled ?? false;
+    public string AgentObservationJson() => JsonSerializer.Serialize(Session.AgentObservation);
+    public string AgentTimeJson() => JsonSerializer.Serialize(Session.AgentTime);
+    public int AgentSelections() => Session.AgentSelections;
+    public string AgentDecideJson()
+    {
+        try
+        {
+            var declaration = Session.AgentDeclaration ?? throw new PlayerBoundaryException("agent_not_declared");
+            _controller ??= new(declaration, _agentSeed);
+            return JsonSerializer.Serialize(_controller.Decide(Session.AgentObservation!, Session.AgentCognition));
+        }
+        catch (PlayerBoundaryException error)
+        { Session.CloseAgent(); return JsonSerializer.Serialize(new PlayerDecision(null, error.Code, null)); }
+        catch (Exception error)
+        { Session.CloseAgent(); GD.PushError(error.ToString()); return JsonSerializer.Serialize(new PlayerDecision(null, "engine_error", null)); }
+    }
+    public string AgentObservePanel(string panel, string runLabel)
+    {
+        try { Session.ObserveAgentPanel(panel, runLabel); return ""; }
+        catch (PlayerBoundaryException error) { Session.CloseAgent(); return error.Code; }
+    }
+    public string AgentObserveField(GArray offers)
+    {
+        try
+        {
+            var entries = offers.Select(v => FromDictionary(v.AsGodotDictionary())).Select(o => new PlayerFieldOffer(
+                ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"), ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"))).ToArray();
+            Session.ObserveAgentField(entries);
+            return "";
+        }
+        catch (PlayerBoundaryException error) { return error.Code; }
+    }
+    public void CloseAgent() => Session.CloseAgent();
+    public GArray DispatchField(GDict input)
+    {
+        try
+        {
+            var output = new GArray();
+            foreach (var ev in Session.DispatchField(FromDictionary(input))) output.Add(ToGodot(ev));
+            return output;
+        }
+        catch (PlayerBoundaryException error)
+        { return new GArray { ToGodot(ChapterEvents.Event("agent_stopped", ("reason", error.Code))) }; }
+        catch (Exception error)
+        {
+            GD.PushError(error.ToString());
+            return new GArray { ToGodot(ChapterEvents.Event("error", ("message", error.Message))) };
+        }
+    }
 
     private static IReadOnlyDictionary<string, string> ReadAuthorSources()
     {
@@ -64,6 +126,8 @@ public partial class GameEngine : Node
         }
         catch (Exception error)
         {
+            if (error is PlayerBoundaryException boundary)
+                return new GArray { ToGodot(ChapterEvents.Event("agent_stopped", ("reason", boundary.Code))) };
             GD.PushError(error.ToString());
             var output = new Dictionary<string, object?> { ["kind"] = "error", ["message"] = error.Message };
             _session?.RecordOutput(output);

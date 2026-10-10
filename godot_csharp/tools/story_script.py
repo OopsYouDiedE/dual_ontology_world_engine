@@ -319,6 +319,7 @@ class Translator:
         self.person_dorm: dict[str, str] = {}  # 人物显示名 -> 宿舍（地点显示名），供案件模板 {人寝区}
         self.counter = 0
         self.chapter_id = ""
+        self.controllers: list[dict[str, Any]] = []
 
     def emit(self, text: str, line: int) -> None:
         for piece in text.split("\n"):
@@ -794,6 +795,11 @@ class Translator:
             args.append(f"room={self.lookup(fields[place_key][0], fields[place_key][1].number, '地点')}")
         args.append(f"scope={py(scope)}")
         if keyword == "人物":
+            from story_controller import controller
+            allowed |= {"操控者", "操控规则", "推理预算"}
+            control = controller(fields, ("world:" if scope == "world" else self.chapter_id + ":") + entity_id, name)
+            if control is not None:
+                self.controllers.append(control)
             if entity_id.startswith("person."):
                 self.person_enum[name] = entity_id.split(".", 1)[1]
                 if "宿舍" in fields:
@@ -938,6 +944,7 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
     texts: dict[str, str] = {}
     maps: dict[str, list[int]] = {}
     designs: list[dict[str, Any]] = []
+    controllers: list[list[dict[str, Any]]] = []
     world_paths = []
     for path in paths:
         try:
@@ -963,6 +970,7 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
             raise ws.ScriptError(str(exc), source) from exc
         maps[path.as_posix()] = translator.map
         designs.append(translator.design)
+        controllers.append(translator.controllers)
         world_paths.append(path)
     try:
         document = ws.Compiler(world_paths, external, texts=texts).parse()
@@ -984,6 +992,9 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
                     validate_continuation_flows(design["flows"], design["schedule"],
                                                {scene["id"] for scene in chapter["sequences"]})
                 chapter["design"] = design
+        for chapter, controls in zip(document["chapters"], controllers):
+            if controls:
+                chapter["controllers"] = controls
         return document
     except ws.ScriptError as exc:
         if exc.source and exc.source.path in maps:

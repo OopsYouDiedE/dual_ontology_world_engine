@@ -61,7 +61,7 @@ public static partial class DecisionSystem
                 .Select(r => (r.Basis, Weight: r.Rule.Weight)).DefaultIfEmpty((Basis: null!, Weight: -1)).MaxBy(r => r.Weight);
             foreach (var (basis, rule) in rules)
             {
-                if (rule.Mode == RuleMode.Permit) continue;
+                if (rule.Mode is RuleMode.Permit or RuleMode.Infer) continue;
                 if (rule.Mode == RuleMode.Forbid)
                 {
                     if (Contexts(world, actor, rule).Any(context =>
@@ -116,4 +116,3 @@ public static partial class DecisionSystem
         }
     }
 }
-

@@ -23,7 +23,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `Cognition.Infer` 沉淀支持的显式命题；`Cognition.Corrupt` 通过输入管道施加 `IProjectionTransform`。
   - `Reasoner` / `CaseModel` / `CaseBelief`：为共享案件计算表与主观推演过滤层，支持证据链与假设排除；专用内容的现有残留以源码审计标记定位。
 - **抽象语法树与解析器（Ast.cs, AstDecoder.cs）**：
-  - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer 模式及权重）。
+  - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer, Infer 模式及权重）。`Infer` 是显式主观信念，效果仅接受 Think 或嵌套 When/Think；冻结／重绑定拒绝可执行动作。AstDecoder 沿枚举解析该模式。
   - AST 严格使用类型化节点、槽位、Tag 和 Projection 引用；字符串仅用于名称与描述。
   - `AstDecoder` 将文本规则解码为强类型 AST。
 - **调度、执行与临时状态（CTBSystem.cs, ActionRuntime.cs, SimulationSession.cs, TemporaryState.cs）**：
@@ -31,11 +31,12 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `ActionRuntime`：两阶段事务机制（先 `Prepare` 后 `Commit`），状态变更仅在提交阶段权威生效。支持普通带时效的 `TemporarySet` 以及执行生命周期绑定的 `TemporarySetUntilEnd` 状态租约覆盖。
   - `SimulationSession`：协调主动/自主动作，支持 `wait_until` 条件挂起恢复、任务取消（`Cancel`）与幂等清理（`Dispose`）。
 - **决策与社交评估（DecisionSystem.cs, SocialSystem.cs）**：
+  - `SubjectiveReasoning.cs`：在一次主体不可变图中进行有界论证、带假设的多步推演、痕迹比较与调查信息价值评估。只使用已获知投影中 Acceptance=True 的 Infer/Think 规则；规则条件与嵌套 When 条件作为前提，恒真前提表示主观断言。普通 Procedure、规范偏好与未接受的规则不作逻辑蕴涵；被扭曲认知仍是主体自己的材料。指定出示材料可限制论证来源；结果保留主体句柄依据、推导步骤、假设标记、冲突与预算停止原因，不读取共享答案表或权威世界，不回写认知。深度、展开数、假设数由调用者的角色参数控制，所有角色使用同一机制。未知预测不计为确定分歧；信息值为可存活假设之间确定预测不同的配对数。此逻辑推演不替代完整行动世界分叉。
   - `SocialSystem.EvaluateSender` 为菜单提供只读预评估；与收到请求后的 `Evaluate` 共用配合、发送者信任、历史与宿主传入的行动相合分，不生成预览认知事件。
   - 请求相合分可通过 `RequestCompatibility` 标签写入接收者的请求投影；`Evaluate` 未显式传分时读取该标签，使自主决策与菜单预评估保持同一公式。
   - `DecisionSystem` 与 `SocialSystem` 严格基于主体自身内部世界的 ProjectionWorld 展开演算与决策，绝不直接依据客观现实做抉择。
   - `SubjectRead.cs` / `SnapshotConsumers.cs`：一次 AST、Decision、Social、Reasoner 求值固定一份主体快照；提交复用完整校验时生成的读图，内部评分直接在该图上求值，避免逐条件重复冻结/重绑定。兼容入口将结果映射回原运行时引用，并附认知版本。新快照入口不读取 runtime/audit。旧字段组合读取与 Reality.Sync 不承诺整图并发一致，Core 不承诺整个 WorldRuntime 跨线程安全。
-  - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令。
+  - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令；`Infer` 不提出行动、不加减行动分，由 SubjectiveReasoner 读取。
 - **无剧情硬编码铁律**：
   - 严禁将剧情写入引擎代码；剧情仅存在于 `.story` 和译文。核心逻辑不得硬编码剧情内容或特定剧本文案。
 
@@ -54,6 +55,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
   - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；评分用不同目标同时保留规则与社交请求候选，覆盖槽位上下文及历史分，避免候选去重掩盖混读。codec/跨进程恢复、主观推演隔离、类型化事件和宿主迁移由后续批验证。
+  - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：独立输出／中间目录；平层与容器两种中性主体图验证论证来源、多步深度、假设组合、痕迹／信息值、冲突／循环、硬展开上限、快照不回写与隐真变形。此步骤单独执行，统一 `verify.py` 的原步骤保持不变。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
 - 系统演进直接在既有架构与文件上持续重构。

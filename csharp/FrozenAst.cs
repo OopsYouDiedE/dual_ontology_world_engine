@@ -79,7 +79,16 @@ public static class CognitionAst
     internal static FrozenRuleV1 Freeze(Rule r, Func<Projection, SubjectProjectionId> id)
     {
         Node(r, 0);
-        return new(Freeze(r.Condition, id), Defined(r.Mode), Freeze(r.Effect, id), r.Weight, Defined(r.Acceptance));
+        var effect = Freeze(r.Effect, id);
+        ValidateInference(r.Mode, effect);
+        return new(Freeze(r.Condition, id), Defined(r.Mode), effect, r.Weight, Defined(r.Acceptance));
+    }
+    private static void ValidateInference(RuleMode mode, FrozenEffectV1 effect)
+    {
+        if (mode != RuleMode.Infer) return;
+        while (effect is FrozenEffectV1.When when) effect = when.Body;
+        Contract.Require(effect is FrozenEffectV1.Think, ContractErrorCode.MalformedData,
+            "infer_effect", "推知规则只接受 Think 或嵌套 When/Think，不是可执行行动。");
     }
 
     internal static Noun Thaw(FrozenNounV1 n, IReadOnlyDictionary<SubjectProjectionId, Projection> map, int d = 0)
@@ -139,6 +148,7 @@ public static class CognitionAst
     internal static Rule Thaw(FrozenRuleV1 r, IReadOnlyDictionary<SubjectProjectionId, Projection> map)
     {
         Node(r, 0);
+        ValidateInference(r.Mode, r.Effect);
         return new(Thaw(r.Condition, map), Defined(r.Mode), Thaw(r.Effect, map), r.Weight, Defined(r.Acceptance));
     }
     internal static void ValidateMap(ImmutableDictionary<SubjectProjectionId, Projection> map)

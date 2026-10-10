@@ -10,7 +10,8 @@ namespace DualOntologyWorldEngine.Gameplay;
 /// <summary>连续游戏的流程所有者。宿主只执行这里给出的视图、界面和空间事件。</summary>
 public sealed class GameSession(string campusScript, string livingView, string campusView,
     string? traceDirectory = null, Action<string>? traceWarning = null,
-    Func<IReadOnlyDictionary<string, string>>? authorSources = null) : IDisposable
+    Func<IReadOnlyDictionary<string, string>>? authorSources = null,
+    string? controllerScript = null, int maxAgentSelections = 10000, int maxAgentObservations = 20000) : IDisposable
 {
     private IChapterSession? _session;
     private bool _waitingForView;
@@ -18,6 +19,52 @@ public sealed class GameSession(string campusScript, string livingView, string c
     private bool _metadataRecorded;
     private readonly GameTrace _trace = new(traceDirectory, traceWarning);
     private SimulationSession? _traceSimulation;
+    private PlayerCandidateSession? _player;
+    private bool _trustedFieldInput;
+    public ActorControllerDefinition? AgentDeclaration { get; private set; }
+    public bool AgentEnabled => AgentDeclaration is not null;
+    public PublicPlayerObservation? AgentObservation => _player?.Current;
+    public PlayerTime? AgentTime => (_session as IPlayerRoleSession)?.PlayerTime;
+    public int AgentSelections => _player?.Selections ?? 0;
+    public PlayerCognition AgentCognition => (_session as IPlayerRoleSession)?.CapturePlayerCognition(AgentDeclaration?.Actor
+        ?? throw new PlayerBoundaryException("agent_not_declared")) ?? throw new PlayerBoundaryException("unsupported_player_role");
+    public PublicPlayerObservation ObserveAgentField(IReadOnlyList<PlayerFieldOffer> offers)
+        => (_player ?? throw new PlayerBoundaryException("agent_not_declared")).Observe([], offers);
+    public PublicPlayerObservation ObserveAgentPanel(string panel, string runLabel)
+    {
+        var view = PlayerPanels.Project(Snapshot(), panel, runLabel);
+        return (_player ?? throw new PlayerBoundaryException("agent_not_declared"))
+            .Observe([Event("player_panel_view", ("rows", view.Text))], view.Offers);
+    }
+    public void CloseAgent() => _player?.Close();
+    public IReadOnlyList<Dictionary<string, object?>> DispatchField(IReadOnlyDictionary<string, object?> input)
+    {
+        if (Text(input, "kind") is not ("tick" or "daily" or "presented" or "move" or "blocked_move" or "interact" or "opened"))
+            throw new PlayerBoundaryException("unsupported_field_feedback");
+        _trustedFieldInput = true;
+        try { return Dispatch(input); }
+        finally { _trustedFieldInput = false; }
+    }
+    private void BindController()
+    {
+        var role = _session as IPlayerRoleSession ?? throw new PlayerBoundaryException("unsupported_player_role");
+        var declarations = ReadControllers();
+        if (declarations.Any(c => c.Mode == "agent" && c.Actor != role.PlayerActor))
+            throw new PlayerBoundaryException("unsupported_player_role");
+        var declaration = declarations.SingleOrDefault(c => c.Mode == "agent" && c.Actor == role.PlayerActor);
+        if (declaration is null) { _player?.Close(); _player = null; AgentDeclaration = null; return; }
+        if (_player is not null && AgentDeclaration?.Actor == declaration.Actor) return;
+        AgentDeclaration = declaration;
+        _player = new(DispatchGame, declaration.Name, maxAgentSelections, maxAgentObservations);
+    }
+    private IReadOnlyList<ActorControllerDefinition> ReadControllers()
+    {
+        if (controllerScript is not null) return PlayerControllers.Read(controllerScript);
+        if (_session is Chapter2InteractionSession) return PlayerControllers.Read(campusScript);
+        using var stream = typeof(Chapter1Data).Assembly.GetManifestResourceStream("Awakening.World.json")!;
+        using var reader = new StreamReader(stream);
+        return PlayerControllers.Read(reader.ReadToEnd());
+    }
 
     public void RecordVisible(IReadOnlyDictionary<string, object?> payload) { TraceMetadata(); _trace.Visible(payload); }
     public void RecordInput(IReadOnlyDictionary<string, object?> payload) { TraceMetadata(); _trace.PhysicalInput(payload); }
@@ -32,7 +79,22 @@ public sealed class GameSession(string campusScript, string livingView, string c
         _trace.BeginRequest(input);
         try
         {
-            var output = DispatchGame(input);
+            IReadOnlyList<Dictionary<string, object?>> output;
+            if (kind == "select_candidate")
+            {
+                var port = _player ?? throw new PlayerBoundaryException("agent_not_declared");
+                port.Submit(new SelectCandidate(Text(input, "token")));
+                output = port.LastOutput;
+            }
+            else
+            {
+                // Once the role is agent-controlled, user decisions can only use
+                // the same current token entry. Trusted lifecycle inputs still run.
+                if (_player is not null && !_trustedFieldInput && kind is not ("start" or "view_ready" or "tick" or "daily" or "presented"))
+                    throw new PlayerBoundaryException("agent_requires_candidate_token");
+                output = DispatchGame(input);
+                _player?.Observe(output);
+            }
             foreach (var ev in output)
             {
                 _trace.Output(ev);
@@ -75,6 +137,17 @@ public sealed class GameSession(string campusScript, string livingView, string c
             return Normalize(_session.Dispatch(begin));
         }
         if (_waitingForView) return [];
+        if (kind == "player_panel")
+        {
+            var panel = Text(input, "panel");
+            if (panel is not ("" or "notebook" or "manuscript" or "campus")
+                || panel != "" && !Flag(Map(_session.Snapshot(), "controls"), panel))
+                throw new PlayerBoundaryException("panel_unavailable");
+            var output = new List<Dictionary<string, object?>> { Event("player_panel", ("panel", panel)) };
+            if (panel == "manuscript") output.AddRange(Normalize(_session.Dispatch(Event("opened", ("panel", panel)))));
+            return output;
+        }
+        if (kind == "field_action") return [Event("player_field", ("input", input))];
         if (kind == "travel")
         {
             var nodeId = Text(input, "node_id");
@@ -95,6 +168,8 @@ public sealed class GameSession(string campusScript, string livingView, string c
     {
         DetachTrace();
         _session = new Chapter1Session();
+        _player?.Close(); _player = null; AgentDeclaration = null;
+        BindController();
         _started = true;
         AttachTrace(((Chapter1Session)_session).World.PersistentSession.Simulation);
         _waitingForView = true;
@@ -118,6 +193,7 @@ public sealed class GameSession(string campusScript, string livingView, string c
         var game = new DualOntologyWorldEngine.Chapter2.Prototype.Game(options, live,
             WorldScriptDocument.Parse(campusScript, allowChapterAdapter: true).Single());
         _session = new Chapter2InteractionSession(game, campusScript);
+        BindController();
         AttachTrace(game.S);
         ChapterWorldContinuity.Clear();
         _waitingForView = true;
