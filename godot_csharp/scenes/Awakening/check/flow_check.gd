@@ -399,7 +399,7 @@ func _run() -> void:
 	fx.player().position = host.field.site_point("L6") + Vector2(0, 16)
 	await fx.physics(3)
 	host.field.interact("L6")
-	await fx.frames(3)
+	await fx.settle_card()
 	var hook := fx.modal_text()
 	check(hook.contains("机油") and hook.contains("挂很多回"), "R-06 床头挂钩上的油渍：相熟与久居的旁证，不编号")
 	fx.close_modal()
