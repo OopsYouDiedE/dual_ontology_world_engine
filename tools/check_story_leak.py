@@ -137,6 +137,7 @@ def main() -> int:
     parser.add_argument("--json")
     parser.add_argument("--report", action="store_true", help="always exit 0")
     args = parser.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     names, ids, lines = load_vocabulary()
     hits = scan(names, ids, lines)
     if args.json:
