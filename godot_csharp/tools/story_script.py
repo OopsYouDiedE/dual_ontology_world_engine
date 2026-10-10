@@ -592,7 +592,7 @@ class Translator:
             if not line.text.startswith("- ") or "→" not in line.text:
                 raise StoryError("请求须写成“- 标签 → 岗位”。", line.number)
             label, job = [part.strip() for part in line.text[2:].split("→", 1)]
-            entries.append({"label": label, "job": table(self.vocab.mapping("jobs"), job, "岗位", line.number)})
+            entries.append({"label": label, "id": job[1:] if job.startswith("@") else table(self.vocab.mapping("jobs"), job, "岗位", line.number)})
         self.emit(f"requests({py(entries)})", head.number)
 
     def native(self, head: Line, body: list[Line], raw_lines: list[str]) -> None:

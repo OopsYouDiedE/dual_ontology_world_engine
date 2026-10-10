@@ -17,7 +17,7 @@ public sealed partial class Chapter2InteractionSession
         foreach(var thing in _examined.Values.Select(c=>Text(c,"thing")).Where(t=>t!="").Distinct())
             Offer("escort:"+thing,_content.Format("menu_escort",("name",name),("thing",thing)),new(Cmd.Escort){Who=who,Thing=thing,Place=_game.Things_[thing].Place});
         foreach(var request in _content.Requests)
-            Offer("request:"+request.Job,request.Label,new(Cmd.Ask){Who=who,Job=request.Job});
+            Offer("request:"+request.Id,request.Label,new(Cmd.Ask){Who=who,ActionId=request.Id});
         foreach(var rule in _game.HostTellable().Where(_game.HostRuleRelevant))
             Offer("rule:"+rule.Id,_content.Format("menu_rule",("he",he),("rule",rule.Text)),new(Cmd.TellRule){Who=who,Spec=rule,Card=rule.Card});
         Offer("help",_content.Format("menu_help",("he",he)),new(Cmd.Help){Who=who});

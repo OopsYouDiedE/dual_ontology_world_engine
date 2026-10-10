@@ -52,6 +52,28 @@
         开场白：始业日午后，生活翼的门开了。主楼的灰还在落，连廊都关着；门外等着的，是甲区的人。
         操作说明：读不耗时：细看、询问、读板与重演可以慢慢来。请人同行、讲规矩、请人做事都在与此人交谈时发起，要花时间；对方不答应，不花时间。T 让时间过到下一件要紧的事；夜里按 T 就地睡下。廊开到哪里，就能走到哪里。夜里的事通过痕迹、身影与转述得知。第五日清晨，十六人决定名录库归谁、怎么开。
 
+    文本
+        social.hungry：你饿得发虚，这个下午什么也做不了。
+        social.give_key：把粮仓钥匙交给{about}，统一煮粥，行吗？
+        social.greenhouse：下午来温室，两人一组修水压。
+        social.archive：来名录库前厅，帮我试开那道门。
+        social.rub：陪我去誓约庭拓那块碑。
+        social.completed：{name}照你说的做了：{job}。
+        social.not_completed：{name}没有去做（答应了，但另有更要紧的事）。
+        social.not_accepted：{name}没有去做（没答应）。
+        social.fulfilled：你替{name}办完了答应的事。
+        social.repaired：{name}点了点头：“行，这事算过去了。”
+        social.help_done：你帮{name}干了一个时段的活。
+        social.share_done：你把自己那份给了{name}。
+        social.share_failed：你自己今天还没领到口粮。
+        social.promise_text：侦探答应明天之前替{name}办一件事
+        social.promise_accepted：（{name}提了条件：明天之前，你得替他们办一件事。你答应了。找{he}“帮{he}一把”即算兑现。）
+        social.promise_failed：你答应{name}的事，没有做到。
+        social.help：帮{name}干一阵活
+        social.share：给{name}分一份口粮
+        social.incomplete：你没能完成答应{name}的事。
+        social.request_description：请{name}{action}
+
     文案
         回放标题：那一夜重演
         回放提示：设定台账出现缺口的那一夜，各人的处境与人心，让那一夜重演一次。谁做了什么，由各人自己的认知推出。

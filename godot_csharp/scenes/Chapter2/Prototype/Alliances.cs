@@ -16,17 +16,11 @@ public sealed partial class Game
     // STORY-HARDCODE[CH2-001][logic][production]: 聚落阵营规则的具体身份、时段和后果在代码中定义。
     private void WriteAllianceRules()
     {
-        // 劳作互助派（沈鼎）：钥匙交给做饭的人，统一煮，先喂饿着的人。接受者若手里有钥匙，就会交出去。
-        ShenKitchen = Spec("ShenKitchen",
-            fx => [new(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Mine(T.GranaryKey), Fx.Not(Fx.Mine(T.Is[P.Shen]))), RuleMode.Prefer, fx.GiveKeyTo(this[P.Shen]), 4)]);
-        // 实证派（维罗妮卡）：指控要有实物。
-        VeronicaEvidence = Spec("VeronicaEvidence",
-            fx => [new(Fx.Not(Fx.Mine(T.SawAct)), RuleMode.Forbid, fx.Job(Job.Accuse), 3)]);
-        // 感官与美派（卢西安）：不得以私取之名限制任何人。
-        LucianNoBrand = Spec("LucianNoBrand",
-            fx => [new(Fx.All(fx.At(Slot.Morning), Fx.Any([.. People.Select(o => fx.Tg(o.Body, T.Accused))])), RuleMode.Prefer, fx.Job(Job.Defend), 2)]);
+        ShenKitchen = RuleById("ShenKitchen");
+        VeronicaEvidence = RuleById("VeronicaEvidence");
+        LucianNoBrand = RuleById("LucianNoBrand");
         // 各聚落领头人何时何处张贴自己的规矩，写在剧本的“规矩”块里（张贴：第 N 日 时段 地点）。
-        foreach (var rule in RuleDesign.All.Where(r => r.Author is not null))
+        foreach (var rule in RuleDesign.Read(AstDesign.GetProperty("rules")).Values.Where(r => r.Author is not null))
             foreach (var post in rule.Posts.Where(p => p.Mode == "单条"))
                 _agenda.Add((post.Day, rule.Author!.Value, RuleById(rule.Id), post.Place));
     }

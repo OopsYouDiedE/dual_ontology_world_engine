@@ -97,11 +97,11 @@ public abstract record Cond
     public sealed record TraceKnown(int Trace) : Cond { public override bool Eval(Game g, Person? who = null) => g.DetEvidence().Contains(Trace); }
 }
 
-/// <summary>剧本里声明的规矩：内容、立规者、价值标记、张贴时间（Core 的 Rule 由代码按编号编译）。</summary>
+/// <summary>剧本里声明的规矩：内容、立规者、价值标记、张贴时间（Core 的 Rule 由声明 AST 绑定）。</summary>
 public sealed record DesignRule(string Id, string Name, string Text, P? Author, bool ByDemon, RF Flags, P? Target, int[]? Card, IReadOnlyList<DesignPost> Posts, string Lifetime);
 public sealed record DesignPost(int Day, Slot Slot, Place Place, string Mode);
 
-public sealed record CardOption(string Text, string Id, RF Flags, RF IfAny, RF ElseFlags);
+public sealed record CardOption(string Text, string Id, RF Flags, RF IfAny, RF ElseFlags, bool Targeted = false);
 
 /// <summary>规矩格的各格选项与价值标记（读自剧本的“规矩格”）。</summary>
 public static class CardKit
@@ -114,10 +114,6 @@ public static class CardKit
     public static IReadOnlyList<CardOption> Accounts => _data.Value.Accounts;
     public static IReadOnlyList<(Card Card, string Text)> CaseWordings => _data.Value.CaseWordings;
     public static IReadOnlyList<(Card Card, string Text)> ArchiveWordings => _data.Value.ArchiveWordings;
-    /// <summary>代码按编号认行为；剧本里行为的先后改了，这里立即报错而不是悄悄串位。</summary>
-    // STORY-HARDCODE[CH2-010][schema][production]: 允许的行为编号清单是本项目规则语义的硬编码 schema。
-    private static readonly string[] BehaviorIds = ["取粮", "按人头", "交钥匙", "指控须证", "转述", "开库各取", "开库委员会", "开库封闭", "开库约束", "限制入院", "温室"];
-
     private sealed class Data
     {
         public string[] Subjects = [];
@@ -132,9 +128,12 @@ public static class CardKit
         return f;
     }
 
-    private static CardOption[] Options(JsonElement kit, string axis) => [.. kit.GetProperty(axis).EnumerateArray().Select(o => new CardOption(
-        o.GetProperty("text").GetString()!, o.TryGetProperty("id", out var id) ? id.GetString()! : "", Flags(o.GetProperty("flags")),
-        o.TryGetProperty("if_any", out var ifAny) ? Flags(ifAny) : RF.None, o.TryGetProperty("else_flags", out var other) ? Flags(other) : RF.None))];
+    public static CardOption Option(JsonElement o) => new(
+        o.GetProperty("text").GetString()!, o.GetProperty("id").GetString()!, Flags(o.GetProperty("flags")),
+        o.TryGetProperty("if_any", out var ifAny) ? Flags(ifAny) : RF.None,
+        o.TryGetProperty("else_flags", out var other) ? Flags(other) : RF.None,
+        o.TryGetProperty("targeted", out var targeted) && targeted.GetBoolean());
+    private static CardOption[] Options(JsonElement kit, string axis) => [..kit.GetProperty(axis).EnumerateArray().Select(Option)];
 
     public static Card ToCard(IReadOnlyList<int> cells) => new(cells[0], cells[1], cells[2], cells[3], cells[4]);
 
@@ -146,7 +145,6 @@ public static class CardKit
             Subjects = [.. kit.GetProperty("subjects").EnumerateArray().Select(o => o.GetProperty("text").GetString()!)],
             Conds = Options(kit, "conds"), Behaviors = Options(kit, "behaviors"), Exceptions = Options(kit, "exceptions"), Accounts = Options(kit, "accounts"),
         };
-        if (!data.Behaviors.Select(b => b.Id).SequenceEqual(BehaviorIds)) throw new InvalidDataException("规矩格的行为顺序与代码认的编号不符：" + string.Join("、", data.Behaviors.Select(b => b.Id)));
         (Card, string)[] Wordings(string name) => [.. kit.GetProperty("wordings").GetProperty(name).EnumerateArray()
             .Select(w => (ToCard([.. w.GetProperty("card").EnumerateArray().Select(c => c.GetInt32())]), w.GetProperty("text").GetString()!))];
         data.CaseWordings = Wordings("case");
@@ -158,25 +156,25 @@ public static class CardKit
 /// <summary>规矩声明表（读自剧本的“规矩”块）。</summary>
 public static class RuleDesign
 {
-    private static readonly Lazy<IReadOnlyDictionary<string, DesignRule>> _byId = new(() =>
+    private static readonly Lazy<IReadOnlyDictionary<string, DesignRule>> _byId = new(() => Read(Chapter2Design.Section("rules")));
+    public static IReadOnlyDictionary<string,DesignRule> Read(JsonElement rows)
     {
-        var map = new Dictionary<string, DesignRule>();
-        foreach (var e in Chapter2Design.Section("rules").EnumerateArray())
+        var map = new Dictionary<string,DesignRule>(StringComparer.Ordinal);
+        foreach (var e in rows.EnumerateArray())
         {
             var posts = e.TryGetProperty("posts", out var list)
-                ? [.. list.EnumerateArray().Select(p => new DesignPost(p.GetProperty("day").GetInt32(), Enum.Parse<Slot>(p.GetProperty("slot").GetString()!),
-                    Enum.Parse<Place>(p.GetProperty("place").GetString()!), p.GetProperty("mode").GetString()!))]
-                : new List<DesignPost>();
+                ? list.EnumerateArray().Select(p => new DesignPost(p.GetProperty("day").GetInt32(), Enum.Parse<Slot>(p.GetProperty("slot").GetString()!),
+                    Enum.Parse<Place>(p.GetProperty("place").GetString()!), p.GetProperty("mode").GetString()!)).ToArray() : [];
             var flags = RF.None;
             foreach (var f in e.GetProperty("flags").EnumerateArray()) flags |= Enum.Parse<RF>(f.GetString()!);
             var id = e.GetProperty("id").GetString()!;
-            map[id] = new(id, e.GetProperty("name").GetString()!, e.GetProperty("text").GetString()!,
+            map.Add(id,new(id, e.GetProperty("name").GetString()!, e.GetProperty("text").GetString()!,
                 e.TryGetProperty("author", out var a) ? Enum.Parse<P>(a.GetString()!) : null, e.TryGetProperty("demon", out var d) && d.GetBoolean(), flags,
                 e.TryGetProperty("target", out var t) ? Enum.Parse<P>(t.GetString()!) : null,
-                e.TryGetProperty("card", out var c) ? [.. c.EnumerateArray().Select(x => x.GetInt32())] : null, posts, e.GetProperty("lifetime").GetString()!);
+                e.TryGetProperty("card", out var c) ? [..c.EnumerateArray().Select(x => x.GetInt32())] : null, posts, e.GetProperty("lifetime").GetString()!));
         }
         return map;
-    });
+    }
     public static IReadOnlyCollection<DesignRule> All => _byId.Value.Values.ToArray();
     public static DesignRule Of(string id) => _byId.Value.TryGetValue(id, out var rule) ? rule : throw new InvalidDataException("chapter_01.story 缺少规矩：" + id);
 }

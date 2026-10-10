@@ -278,7 +278,7 @@ def compile_person(name: str, fields: dict[str, tuple[str, Line, list[Line]]], c
 
 # ---------------------------------------------------------------- 入口汇总 --
 
-DESIGN_BLOCKS = set(VOCAB_BLOCKS) | {"时间", "文本", "常数", "规矩", "规矩格", "结局", "案件", "现场表现", "通行", "规则有效期", "表达"}
+DESIGN_BLOCKS = set(VOCAB_BLOCKS) | {"时间", "文本", "常数", "规矩", "规矩格", "结局", "案件", "现场表现", "通行", "规则有效期", "表达", "执行"}
 
 
 def compile_design(blocks: list[tuple[Line, list[Line]]], ctx: Any) -> dict[str, Any]:
@@ -296,7 +296,13 @@ def compile_design(blocks: list[tuple[Line, list[Line]]], ctx: Any) -> dict[str,
         tree = nodes(body)
         if keyword in VOCAB_BLOCKS or keyword == "规矩":
             continue
-        if keyword == "表达":
+        if keyword == "执行":
+            from story_chapter1 import read_scalar_records
+            from story_ast import program
+            if "execution" in design:
+                raise StoryError("执行块只能有一个。", head.number)
+            design["execution"] = program(read_scalar_records(body), head.number)
+        elif keyword == "表达":
             from story_chapter1 import read_scalar_records
             from story_expression import validate_expression
             expressions = design.setdefault("expression", {})

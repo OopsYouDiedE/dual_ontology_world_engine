@@ -12,7 +12,7 @@ public sealed class Chapter2InteractionContent
   if(items.Length!=count||items.Any(string.IsNullOrWhiteSpace))throw new InvalidDataException("Invalid chapter UI text array: "+key);
   return items;
  }
- public (string Label,Job Job)[] Requests { get; }
+ public (string Label,string Id)[] Requests { get; }
  public string Format(string key, params (string Name,string Value)[] args)
  {
   var text=Text(key);
@@ -24,12 +24,13 @@ public sealed class Chapter2InteractionContent
   using var document=JsonDocument.Parse(json);
   var chapter=document.RootElement.GetProperty("chapters")[0];
   _text=chapter.GetProperty("ui_text").EnumerateObject().ToDictionary(p=>p.Name,p=>p.Value.Clone(),StringComparer.Ordinal);
-  var ids=new HashSet<Job>();
+  var ids=new HashSet<string>(StringComparer.Ordinal);
   Requests=chapter.GetProperty("requests").EnumerateArray().Select(r=>
   {
    var label=r.GetProperty("label").GetString();
-   if(string.IsNullOrWhiteSpace(label)||!Enum.TryParse<Job>(r.GetProperty("job").GetString(),out var job)||!Enum.IsDefined(job)||!ids.Add(job))throw new InvalidDataException("Invalid or duplicate chapter request.");
-   return (label!,job);
+   var id=r.GetProperty("id").GetString();
+   if(string.IsNullOrWhiteSpace(label)||string.IsNullOrWhiteSpace(id)||!ids.Add(id)||!chapter.GetProperty("design").GetProperty("execution").GetProperty("actions").TryGetProperty(id,out _))throw new InvalidDataException("Invalid or duplicate chapter request.");
+   return (label!,id!);
   }).ToArray();
   if(Requests.Length==0)throw new InvalidDataException("Missing chapter requests.");
  }

@@ -426,24 +426,17 @@ class Compiler:
         if self.current.requests is not None:
             self.fail(call, "每章只能声明一次 requests。")
         entries = self.static_value(call.args[0])
-        jobs = {"Sleep", "Rest", "Class", "Collect", "Distribute", "Cook", "FetchWater", "Care",
-                "NightTakeSick", "NightTakeSickRec", "NightTakeSelf", "NightTakeSelfRec", "RepairLatch",
-                "InspectStructure", "Patrol", "GuardArchive", "VisitArchive", "Greenhouse", "Socialize",
-                "Work", "CountLedger", "Stele", "Scavenge", "Hoard", "Accuse", "PostRules", "Defend",
-                "AskLatchHelp", "Seize", "AnswerName", "Escort", "Inform", "FeedWeak", "GiveKey", "Tidy",
-                "Wander", "Share", "Tear", "Watch", "AskOpen", "Relay", "Teach", "Exchange", "Follow",
-                "Avoid", "AskLeave", "Treat", "Retreat", "Report", "Sample", "Needle", "NightSketch", "Sketch"}
         if not isinstance(entries, list) or not entries:
             self.fail(call.args[0], "requests 必须是非空静态列表。")
         compiled: list[dict[str, str]] = []
         seen: set[str] = set()
         for entry in entries:
-            if (not isinstance(entry, dict) or entry.keys() != {"label", "job"}
+            if (not isinstance(entry, dict) or entry.keys() != {"label", "id"}
                     or not isinstance(entry["label"], str) or not entry["label"].strip()
-                    or entry["job"] not in jobs or entry["job"] in seen):
-                self.fail(call.args[0], "每条 request 需有唯一的 C# Job 名与非空 label。")
-            seen.add(entry["job"])
-            compiled.append({"label": entry["label"], "job": entry["job"]})
+                    or not isinstance(entry["id"], str) or not entry["id"] or entry["id"] in seen):
+                self.fail(call.args[0], "每条 request 需有唯一的声明 ID 与非空 label。")
+            seen.add(entry["id"])
+            compiled.append({"label": entry["label"], "id": entry["id"]})
         self.current.requests = compiled
 
     def arguments(self, call: ast.Call, allowed: set[str], required: set[str] = frozenset()) -> dict[str, ast.expr]:
