@@ -55,6 +55,7 @@ public sealed class CaseModel
 public sealed record CaseBelief(CaseModel Model, ImmutableArray<int> Candidates,
     ImmutableArray<ImmutableArray<double>> Credence, bool Contradicted, ImmutableArray<string> Basis)
 {
+    public KnowledgeRevision? Revision { get; init; }
     public double Of(int question, int option) => Credence[question][option];
 }
 
@@ -63,10 +64,15 @@ public sealed record CaseBelief(CaseModel Model, ImmutableArray<int> Candidates,
 /// hypotheses; claims it holds weigh them by source (own inference, recall, testimony scaled by trust
 /// in the speaker). Words of corruption are not evidence. Nothing here touches reality.
 /// </summary>
-public static class Reasoner
+public static partial class Reasoner
 {
     public static CaseBelief Assess(ProjectionWorld mind, CaseModel model)
     {
+        if (!mind.Detached)
+        {
+            var view = SubjectRead.Capture(mind);
+            return Assess(view.Graph.World, model) with { Revision = view.Revision };
+        }
         var basis = new List<string>();
         var seen = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var field in model.Fields)
@@ -124,6 +130,11 @@ public static class Reasoner
     // STORY-HARDCODE[CSH-009][text][production]: 将腐化来源专称为“铜口之言”，是项目世界专属的证据反馈文案。
     public static (double Factor, string Why) Weight(Projection claim)
     {
+        if (!claim.World.Detached)
+        {
+            var view = SubjectRead.Capture(claim.World);
+            return Weight(view.Get(claim));
+        }
         var source = claim.LastObservation?.Source ?? ObservationSource.Introspection;
         switch (source)
         {

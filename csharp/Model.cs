@@ -30,11 +30,18 @@ public enum Truth { Unknown, False, True }
 public enum ObservationSource { Perception, Testimony, Inference, Introspection, Corruption, Recall }
 
 /// <summary>客观对象的身份。可变状态和功能均由 Property 持有。</summary>
-public class Essence(string trueName, ProjectionKind kind = ProjectionKind.Object)
+public class Essence
 {
+    public Essence(string trueName, ProjectionKind kind = ProjectionKind.Object) : this(new EntityId(Contract.Opaque()), trueName, kind) { }
+    public Essence(EntityId id, string trueName, ProjectionKind kind = ProjectionKind.Object)
+    {
+        Contract.Identity(id.Value, "entity.id"); Contract.Text(trueName, "entity.name"); Contract.Enum(kind, "entity.kind");
+        (Id, TrueName, Kind) = (id, trueName, kind);
+    }
+    public EntityId Id { get; }
     private readonly Dictionary<Type, Property> _properties = [];
-    public string TrueName { get; } = trueName;
-    public ProjectionKind Kind { get; } = kind;
+    public string TrueName { get; }
+    public ProjectionKind Kind { get; }
     public HashSet<(RelationTag Relation, Essence Target)> Relations { get; } = [];
     public IEnumerable<Property> Properties => _properties.Values;
     public T? Get<T>() where T : Property => _properties.GetValueOrDefault(typeof(T)) as T;
@@ -48,8 +55,10 @@ public class Essence(string trueName, ProjectionKind kind = ProjectionKind.Objec
     }
 }
 
-public sealed class SoulEssence(string name) : Essence(name, ProjectionKind.Soul)
+public sealed class SoulEssence : Essence
 {
+    public SoulEssence(string name) : base(name, ProjectionKind.Soul) { }
+    public SoulEssence(EntityId id, string name) : base(id, name, ProjectionKind.Soul) { }
     public ProjectionWorld World { get; } = new();
 }
 
@@ -108,8 +117,13 @@ public sealed class CorruptionProperty(IProjectionTransform transform) : Propert
 /// <summary>投影没有指向 Essence 的公开通道。认知变化保留对象引用。</summary>
 public sealed class Projection
 {
-    internal Projection(ProjectionWorld world, string name, ProjectionKind kind)
-        => (World, Name, Kind) = (world, name, kind);
+    internal Projection(ProjectionWorld world, string name, ProjectionKind kind, SubjectProjectionId? id = null)
+    {
+        (World, Name, Kind) = (world, name, kind);
+        SubjectId = world.SubjectWorldId is null ? null : id ?? world.AllocateId();
+    }
+    public SubjectProjectionId? SubjectId { get; }
+    public ImmutableArray<KnownAuthorTermV1> KnownTerms { get; internal set; } = [];
 
     internal ProjectionWorld World { get; }
     public string Name { get; internal set; }
@@ -124,19 +138,6 @@ public sealed class Projection
     public Effect? Procedure { get; internal set; }
     public ObservationEvent? LastObservation { get; internal set; }
     public override string ToString() => Name;
-}
-
-/// <summary>世界仅提供查询；主观世界的增删改通过 Observation.Observe 提交。</summary>
-public sealed class ProjectionWorld
-{
-    internal ProjectionWorld() { }
-    internal event Action? Changed;
-    internal void Notify() => Changed?.Invoke();
-    public ImmutableArray<Projection> Projections { get; internal set; } = [];
-    public ImmutableList<ObservationEvent> History { get; internal set; } = [];
-    public bool Contains(Projection projection) => ReferenceEquals(projection.World, this) && Projections.Contains(projection);
-    public IEnumerable<Projection> Find(Tag tag, int minimum = 1) => Projections.Where(p => p.Tags.TryGetValue(tag, out var value) && value >= minimum);
-    public IEnumerable<Projection> Find(RelationTag relation, Projection target) => Projections.Where(p => p.Relations.Contains((relation, target)));
 }
 
 /// <summary>一次认知输入。null 表示没有新信息；标签值 null 表示明确撤销。</summary>
@@ -158,87 +159,12 @@ public sealed record ObservationInput(string Name, ProjectionKind Kind = Project
     public bool ClearProcedure { get; init; }
     public bool Forget { get; init; }
     public string Details { get; init; } = "";
+    public ImmutableArray<KnownAuthorTermV1>? KnownTerms { get; init; }
+    public SourceLocationV1? Origin { get; init; }
+    public ObservationTimeUnitV1 TimeUnit { get; init; } = ObservationTimeUnitV1.Unspecified;
+    public ImmutableArray<SubjectProjectionId> SourceDependencies { get; init; } = [];
 }
 
 public sealed record ObservationEvent(Projection Target, ObservationSource Source, double Time,
     bool? Detected, Truth? Existence, string Details,
     ImmutableDictionary<Tag, int> Tags, ImmutableHashSet<(RelationTag Relation, Projection Target)> Relations);
-
-public static class Observation
-{
-    /// <summary>先验证世界边界再提交，关系和 AST 的嵌入引用不能跨世界。</summary>
-    public static Projection Observe(SoulEssence soul, ObservationInput input) => Apply(soul.World, input);
-
-    internal static Projection Apply(ProjectionWorld world, ObservationInput input)
-    {
-        Validate(world, input, []);
-        var result = Commit(world, input);
-        world.Notify();
-        return result;
-    }
-
-    internal static void ApplyBatch(ProjectionWorld world, IReadOnlyList<ObservationInput> inputs)
-    {
-        var incoming = inputs.Select(i => i.Target!).ToHashSet();
-        foreach (var input in inputs) Validate(world, input, incoming);
-        var parents = inputs.Where(i => i.Move).ToDictionary(i => i.Target!, i => i.Parent);
-        foreach (var input in inputs)
-        {
-            var visited = new HashSet<Projection>();
-            for (var node = input.Target; node is not null; node = parents.TryGetValue(node, out var parent) ? parent : node.Parent)
-                if (!visited.Add(node)) throw new InvalidOperationException("观察不能形成循环空间关系。");
-        }
-        foreach (var input in inputs.OrderBy(i => i.Forget)) Commit(world, input);
-        if (inputs.Count > 0) world.Notify();
-    }
-
-    private static void Validate(ProjectionWorld world, ObservationInput input, HashSet<Projection> incoming)
-    {
-        void Check(Projection? p)
-        {
-            if (p is not null && !(world.Contains(p) || ReferenceEquals(p.World, world) && incoming.Contains(p)))
-                throw new InvalidOperationException("观察引用必须属于接收者内部世界。");
-        }
-        Check(input.Target);
-        if (input.Forget && input.Target is null) throw new InvalidOperationException("遗忘必须指定已有投影。");
-        Check(input.Parent);
-        foreach (var (_, target) in input.AddRelations.Concat(input.RemoveRelations).Concat(input.DenyRelations)) Check(target);
-        foreach (var reference in (input.Rules ?? []).SelectMany(Ast.References).Concat(Ast.References(input.Procedure))) Check(reference);
-        for (var ancestor = input.Move ? input.Parent : null; ancestor is not null; ancestor = ancestor.Parent)
-            if (ReferenceEquals(ancestor, input.Target)) throw new InvalidOperationException("投影不能成为自己的后代。");
-    }
-
-    private static Projection Commit(ProjectionWorld world, ObservationInput input)
-    {
-        var targetProjection = input.Target ?? new Projection(world, input.Name, input.Kind);
-        if (input.Forget)
-        {
-            world.Projections = world.Projections.Remove(targetProjection);
-            foreach (var p in world.Projections)
-            {
-                if (ReferenceEquals(p.Parent, targetProjection)) p.Parent = null;
-                p.Relations = p.Relations.Except(p.Relations.Where(r => ReferenceEquals(r.Target, targetProjection)));
-                p.DeniedRelations = p.DeniedRelations.Except(p.DeniedRelations.Where(r => ReferenceEquals(r.Target, targetProjection)));
-                p.Rules = [..p.Rules.Where(r => !Ast.References(r).Contains(targetProjection))];
-                if (Ast.References(p.Procedure).Contains(targetProjection)) p.Procedure = null;
-            }
-            world.History = world.History.RemoveAll(h => ReferenceEquals(h.Target, targetProjection) || h.Relations.Any(r => ReferenceEquals(r.Target, targetProjection)));
-            return targetProjection;
-        }
-        if (!world.Contains(targetProjection)) world.Projections = world.Projections.Add(targetProjection);
-        targetProjection.Name = input.Name;
-        targetProjection.Kind = input.Kind;
-        if (input.Existence is { } existence) targetProjection.Existence = existence;
-        if (input.Move) targetProjection.Parent = input.Parent;
-        foreach (var (tag, value) in input.Tags)
-            targetProjection.Tags = value is { } number ? targetProjection.Tags.SetItem(tag, number) : targetProjection.Tags.Remove(tag);
-        targetProjection.Relations = targetProjection.Relations.Except(input.RemoveRelations).Except(input.DenyRelations).Union(input.AddRelations);
-        targetProjection.DeniedRelations = targetProjection.DeniedRelations.Except(input.RemoveRelations).Except(input.AddRelations).Union(input.DenyRelations.Except(input.AddRelations));
-        if (input.Rules is { } rules) targetProjection.Rules = rules;
-        if (input.ClearProcedure || input.Procedure is not null) targetProjection.Procedure = input.Procedure;
-        var observed = new ObservationEvent(targetProjection, input.Source, input.Time, input.Detected, input.Existence, input.Details, targetProjection.Tags, targetProjection.Relations);
-        targetProjection.LastObservation = observed;
-        world.History = world.History.Add(observed);
-        return targetProjection;
-    }
-}

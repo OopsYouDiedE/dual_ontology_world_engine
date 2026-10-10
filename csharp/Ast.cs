@@ -64,9 +64,11 @@ public sealed record ActionContext(Projection Actor, Projection? Target = null, 
 }
 
 /// <summary>AST 的结构操作与三值求值。没有绑定或没有认知信息时返回 Unknown。</summary>
-public static class Ast
+public static partial class Ast
 {
-    public static Truth Evaluate(Condition condition, ActionContext context) => condition switch
+    public static Truth Evaluate(Condition condition, ActionContext context) => SubjectRead.Evaluate(condition, context);
+
+    internal static Truth EvaluateLive(Condition condition, ActionContext context) => condition switch
     {
         Condition.Constant c => c.Value,
         Condition.Exists c => context.Resolve(c.Target)?.Existence ?? Truth.Unknown,
@@ -77,9 +79,9 @@ public static class Ast
         Condition.At c => context.Resolve(c.Target)?.Parent is { } parent && context.Resolve(c.Space) is { } space
             ? From(ReferenceEquals(parent, space)) : Truth.Unknown,
         Condition.IsKind c => context.Resolve(c.Target) is { } p ? From(p.Kind == c.Kind) : Truth.Unknown,
-        Condition.Not c => Negate(Evaluate(c.Operand, context)),
-        Condition.All c => All(c.Items.Select(item => Evaluate(item, context))),
-        Condition.Any c => Negate(All(c.Items.Select(item => Negate(Evaluate(item, context))))),
+        Condition.Not c => Negate(EvaluateLive(c.Operand, context)),
+        Condition.All c => All(c.Items.Select(item => EvaluateLive(item, context))),
+        Condition.Any c => Negate(All(c.Items.Select(item => Negate(EvaluateLive(item, context))))),
         _ => throw new NotSupportedException()
     };
 
