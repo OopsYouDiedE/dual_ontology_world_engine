@@ -72,6 +72,7 @@ public sealed partial class Chapter2InteractionSession
             case "scene": Scene(Enum.Parse<Place>(parts[1]), output); break;
             case "corridor": _game.HostCorridor(parts[1], parts[2] == "\u5f00"); break;
             case "dorm_out": _game.HostDormOut(parts[1]); break;
+            case "summon": _game.HostSummon(parts[1]); break;
             case "field": _stage = "field"; ShownDay = _game.Day; ShownSlot = _game.Slot; break;
             case "confront": BeginConfront(output); break;
             case "council": Council(output); break;

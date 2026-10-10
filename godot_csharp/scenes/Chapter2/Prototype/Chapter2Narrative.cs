@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
@@ -25,7 +27,7 @@ public sealed record Chapter2NarrativeEvent
 /// </summary>
 public sealed class Chapter2Narrative
 {
-    private sealed record Trigger(string Event, int? Day, Slot? Slot, bool Once);
+    private sealed record Trigger(string Event, int? Day, Slot? Slot, bool Once, LifetimeScope Lifetime);
     private sealed record Beat(string Id, Trigger Trigger, IReadOnlyList<JsonElement> Steps);
     private static readonly Regex Variable = new(@"\{\{\s*(detective_name|wrong_name(?:\(\))?)\s*\}\}", RegexOptions.Compiled);
     private static readonly Regex AnyVariable = new(@"\{\{.*?\}\}", RegexOptions.Compiled);
@@ -38,6 +40,15 @@ public sealed class Chapter2Narrative
     private HashSet<string>? _pendingChoices;
     private string? _presentationId;
     private long _nextPresentation;
+    private readonly HashSet<LifetimeScope> _endedLifetimes = [];
+    public void BeginInteraction() => _endedLifetimes.Remove(LifetimeScope.Interaction);
+    public void EndLifetime(LifetimeScope scope)
+    {
+        if (scope == LifetimeScope.World) throw new ArgumentException("World triggers end with the world.");
+        if (_presentationId is not null || _pendingChoices is not null || _steps.Count != 0)
+            throw new InvalidOperationException("Finish the active narrative before ending its lifetime.");
+        _endedLifetimes.Add(scope);
+    }
 
     public Chapter2Narrative(string json, bool awakeningActivated)
     {
@@ -89,7 +100,8 @@ public sealed class Chapter2Narrative
             var once = trigger.TryGetProperty("once", out var onceValue) && onceValue.GetBoolean();
             var steps = sequence.GetProperty("steps").EnumerateArray().Select(step => step.Clone()).ToArray();
             foreach (var step in steps) ValidateStep(id, step);
-            _beats.Add(new(id, new(eventName, day, slot, once), steps));
+            var lifetime = trigger.TryGetProperty("lifetime", out var declared) ? RuleLifetimes.Parse(declared.GetString()!) : LifetimeScope.Chapter;
+            _beats.Add(new(id, new(eventName, day, slot, once, lifetime), steps));
         }
         foreach (var option in _referencedOptions)
             if (_beats.Count(beat => beat.Trigger.Event == "choice:" + option) != 1)
@@ -155,7 +167,7 @@ public sealed class Chapter2Narrative
             foreach (var (key, value) in variables) _variables[key] = value;
         foreach (var beat in _beats)
         {
-            if (beat.Trigger.Event != eventName || beat.Trigger.Day is { } d && d != day ||
+            if (_endedLifetimes.Contains(beat.Trigger.Lifetime) || beat.Trigger.Event != eventName || beat.Trigger.Day is { } d && d != day ||
                 beat.Trigger.Slot is { } s && s != slot || beat.Trigger.Once && !_played.Add(beat.Id)) continue;
             foreach (var step in beat.Steps) _steps.Enqueue(step);
         }
@@ -166,11 +178,12 @@ public sealed class Chapter2Narrative
     {
         if (_pendingChoices is null || !_pendingChoices.Contains(candidateId))
             throw new InvalidOperationException("The chapter option is unavailable or has already been used.");
+        var branch = _beats.Where(b => b.Trigger.Event == "choice:" + candidateId).ToArray();
+        if (branch.Length != 1) throw new InvalidDataException($"Missing unique branch for {candidateId}.");
+        if (_endedLifetimes.Contains(branch[0].Trigger.Lifetime)) throw new InvalidOperationException("The option trigger lifetime has ended.");
         _pendingChoices = null;
         var continuation = _steps.ToArray();
         _steps.Clear();
-        var branch = _beats.Where(b => b.Trigger.Event == "choice:" + candidateId).ToArray();
-        if (branch.Length != 1) throw new InvalidDataException($"Missing unique branch for {candidateId}.");
         foreach (var beat in branch)
             foreach (var step in beat.Steps) _steps.Enqueue(step);
         foreach (var step in continuation) _steps.Enqueue(step);
@@ -184,6 +197,7 @@ public sealed class Chapter2Narrative
         _variables.Clear();
         foreach (var pair in variables) _variables[pair.Key] = pair.Value;
         var beat = _beats.Single(b => b.Id == id);
+        if (_endedLifetimes.Contains(beat.Trigger.Lifetime)) throw new InvalidOperationException("The scene trigger lifetime has ended.");
         foreach (var step in beat.Steps) _steps.Enqueue(step);
         return Drain();
     }

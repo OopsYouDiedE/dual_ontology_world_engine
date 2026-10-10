@@ -107,6 +107,7 @@ public abstract record FreeEvent(int Slot)
     public sealed record Corridor(int At, string Name, bool Open) : FreeEvent(At);
     public sealed record DormOut(int At, string Name) : FreeEvent(At);
     public sealed record Mediation(int At, string Wording) : FreeEvent(At);
+    public sealed record Summon(int At, string Id) : FreeEvent(At);
 }
 
 public sealed partial class Game
@@ -172,6 +173,7 @@ public sealed partial class Game
                     case FreeEvent.Corridor corridor: HostCorridor(corridor.Name, corridor.Open); break;
                     case FreeEvent.DormOut dorm: HostDormOut(dorm.Name); break;
                     case FreeEvent.Mediation mediation: HostMediate(mediation.Wording); break;
+                    case FreeEvent.Summon summon: HostSummon(summon.Id); break;
                 }
             }
             return;

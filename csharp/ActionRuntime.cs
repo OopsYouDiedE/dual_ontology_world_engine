@@ -4,7 +4,7 @@ namespace DualOntologyWorldEngine.Core;
 
 public sealed record ActionIntent(Projection Actor, Effect Changes, double Delay = 1, Condition? Requirements = null, Projection? Basis = null);
 public enum ActionFailure { None, MissingObject, NoControl, OutOfReach, ConditionFailed, InsufficientResource, UnsupportedOperation, InvalidDelay }
-public sealed record ActionResolution(bool Succeeded, ActionFailure Failure, double Time);
+public sealed record ActionResolution(bool Succeeded, ActionFailure Failure, double Time, Effect? FailedEffect = null);
 
 /// <summary>运行时只在动作激活时读取现实。每个无等待阶段先准备，成功后统一提交。</summary>
 public sealed class ActionRuntime(WorldRuntime world)
@@ -19,7 +19,7 @@ public sealed class ActionRuntime(WorldRuntime world)
         if (intent.Requirements is not null && plan.Evaluate(intent.Requirements) != Truth.True)
             return (new(false, ActionFailure.ConditionFailed, time), null, 0, null);
         plan.Prepare(intent.Changes);
-        if (plan.Failure != ActionFailure.None) return (new(false, plan.Failure, time), null, 0, null);
+        if (plan.Failure != ActionFailure.None) return (new(false, plan.Failure, time, plan.FailedEffect), null, 0, null);
         plan.Commit(retainCleanup);
         return (new(true, ActionFailure.None, time), plan.Next, plan.Delay, plan.Until);
     }
@@ -36,6 +36,7 @@ public sealed class ActionRuntime(WorldRuntime world)
         private readonly List<ObservationInput> _thoughts = [];
         private readonly List<(Essence Target, StateLease Lease)> _leases = [];
         public ActionFailure Failure { get; private set; }
+        public Effect? FailedEffect { get; private set; }
         public Effect? Next { get; private set; }
         public double Delay { get; private set; }
         public Condition? Until { get; private set; }
@@ -188,6 +189,7 @@ public sealed class ActionRuntime(WorldRuntime world)
                     break;
                 default: Failure = ActionFailure.UnsupportedOperation; break;
             }
+            if (Failure != ActionFailure.None && FailedEffect is null) FailedEffect = effect;
         }
 
         private void Change(Noun noun, Tag tag, int amount, bool relative, bool spend)

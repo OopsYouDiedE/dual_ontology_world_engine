@@ -157,7 +157,9 @@ public sealed partial class Game
             p.JobFx[j] = fx.Job(j, p);
         }
         Observation.Observe(p.Soul, new ObservationInput(p.Habit.Name, p.Habit.Kind)
-        { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now, Rules = HabitRules(p) });
+        { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now,
+          Rules = DualOntologyWorldEngine.Story.RuleLifetimes.Bind(HabitRules(p),
+              Chapter2Design.Section("rule_lifetimes").GetProperty("daily_habits").GetString()!, Chapter2Script.Id) });
     }
 
     // STORY-HARDCODE[CH2-041][logic][production]: 为具名人物预置习惯行动及其观察规则。

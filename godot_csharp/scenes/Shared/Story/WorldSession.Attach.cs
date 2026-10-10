@@ -43,6 +43,7 @@ public sealed partial class WorldSession
                     throw new InvalidDataException("Persistent character cognition changed: " + item.Id);
             }
             var behaviors = ValidateCandidates(content, ids, kinds);
+            EndChapterLifetime();
             foreach (var item in plan)
             {
                 if (_entities.ContainsKey(item.Id)) continue;

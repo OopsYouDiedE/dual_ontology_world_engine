@@ -368,6 +368,8 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         // A completed response does not keep a moving or sleeping body in place.
         // Close stale follow-up menus instead of failing the presentation receipt.
         Invalidate();
+        _game.EndInteractionLifetime();
+        _narrative.EndLifetime(LifetimeScope.Interaction);
         output.Add(Event("interaction_closed",("actor",who.ToString()),("reason","actor_unavailable")));
     }
     private void AskReaction(P who,List<Dictionary<string,object?>> output)
@@ -512,6 +514,9 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         _continuations.Enqueue(o=>Activate(ending==Ending.Sealed?"council.sealed":"council.box",o));
         _continuations.Enqueue(o=>
         {
+            _game.EndInteractionLifetime();
+            _behavior.EndChapterLifetime();
+            _narrative.EndLifetime(LifetimeScope.Chapter);
             _ended=true;_stage="ended";
             o.AddRange(EndEvents(new Dictionary<string,object?>
             {

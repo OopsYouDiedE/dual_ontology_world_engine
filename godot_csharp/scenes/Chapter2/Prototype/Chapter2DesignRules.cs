@@ -99,7 +99,7 @@ public abstract record Cond
 }
 
 /// <summary>剧本里声明的规矩：内容、立规者、价值标记、张贴时间（Core 的 Rule 由代码按编号编译）。</summary>
-public sealed record DesignRule(string Id, string Name, string Text, P? Author, bool ByDemon, RF Flags, P? Target, int[]? Card, IReadOnlyList<DesignPost> Posts);
+public sealed record DesignRule(string Id, string Name, string Text, P? Author, bool ByDemon, RF Flags, P? Target, int[]? Card, IReadOnlyList<DesignPost> Posts, string Lifetime);
 public sealed record DesignPost(int Day, Slot Slot, Place Place, string Mode);
 
 public sealed record CardOption(string Text, string Id, RF Flags, RF IfAny, RF ElseFlags);
@@ -174,7 +174,7 @@ public static class RuleDesign
             map[id] = new(id, e.GetProperty("name").GetString()!, e.GetProperty("text").GetString()!,
                 e.TryGetProperty("author", out var a) ? Enum.Parse<P>(a.GetString()!) : null, e.TryGetProperty("demon", out var d) && d.GetBoolean(), flags,
                 e.TryGetProperty("target", out var t) ? Enum.Parse<P>(t.GetString()!) : null,
-                e.TryGetProperty("card", out var c) ? [.. c.EnumerateArray().Select(x => x.GetInt32())] : null, posts);
+                e.TryGetProperty("card", out var c) ? [.. c.EnumerateArray().Select(x => x.GetInt32())] : null, posts, e.GetProperty("lifetime").GetString()!);
         }
         return map;
     });

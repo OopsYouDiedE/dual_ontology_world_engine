@@ -1,0 +1,224 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using A = DualOntologyWorldEngine.Awakening;
+
+int checks = 0, failures = 0;
+var passable = new Tag("Passable");
+void Assert(bool condition, string detail = "Assertion failed") { if (!condition) throw new Exception(detail); }
+void Check(string name, Action action)
+{
+    checks++;
+    try { action(); Console.WriteLine("PASS " + name); }
+    catch (Exception error) { failures++; Console.WriteLine("FAIL " + name + ": " + error); }
+}
+void Reject(Action action)
+{
+    try { action(); } catch (InvalidOperationException) { return; }
+    throw new Exception("Expected explicit rejection");
+}
+JsonObject Source() => JsonNode.Parse(Chapter2Design.Json)!.AsObject();
+JsonObject Chapter(JsonObject root) => root["chapters"]![0]!.AsObject();
+JsonObject Access(JsonObject root) => Chapter(root)["design"]!["access"]!.AsObject();
+Place Room(string id) => Enum.Parse<Place>(id["world:room.".Length..]);
+Game From(JsonObject root) => new(authored: WorldScriptDocument.Parse(root.ToJsonString(), allowChapterAdapter: true).Single());
+int Belief(Game game, Person p, Place room) => p.M[game.Way[room]].Tags.GetValueOrDefault(passable, -1);
+Rule RuleFor(Projection self, LifetimeScope lifetime, string? owner) =>
+    new(new Condition.Constant(Truth.True), RuleMode.Prefer, new Effect.Think(new Condition.Exists(self)), 2, Truth.True, lifetime, owner);
+
+Check("declared boundary ID, grouping, initial state and route topology drive reality", () =>
+{
+    var source = Source(); var data = Access(source); var gates = data["boundaries"]!.AsObject();
+    var corridor = gates.First(p => p.Value!["kind"]!.GetValue<string>() == "corridor");
+    var oldRooms = corridor.Value!["rooms"]!.AsArray().Select(n => Room(n!.GetValue<string>())).ToArray();
+    var replacement = corridor.Value.DeepClone(); gates.Remove(corridor.Key); gates.Add("fixture_gate", replacement);
+    replacement["rooms"] = new JsonArray("world:room.Lecture"); replacement["initial"] = true;
+    var route = data["routes"]!.AsObject().First(p => p.Value!["to"]!.GetValue<string>() == "world:room.Lecture");
+    route.Value!["from"] = new JsonArray("world:room.Hall");
+    var game = From(source); Assert(game.HostCanEnter(Place.Lecture));
+    Assert(game.Way[Place.Lecture].Get<PassageProperty>()!.Connections.Keys.SequenceEqual([game.Space[Place.Hall]]));
+    var commits = 0; game.S.StageCommitted += execution => { if (!game.People.Any(p => ReferenceEquals(p.Self, execution.Intent.Actor))) commits++; };
+    game.HostCorridor("fixture_gate", false); game.HostCorridor("fixture_gate", false);
+    Assert(commits == 1 && !game.HostCanEnter(Place.Lecture));
+    foreach (var room in oldRooms.Where(r => r != Place.Lecture)) Assert(game.HostCanEnter(room));
+    Assert(game.Way[Place.Lecture].Id.Value == "world:" + route.Key);
+});
+Check("remote knowledge stays old until a message or failed attempt", () =>
+{
+    var source = Source(); var data = Access(source);
+    var gate = data["boundaries"]!.AsObject().First(p => p.Value!["kind"]!.GetValue<string>() == "corridor");
+    var target = Room(gate.Value!["rooms"]![0]!.GetValue<string>());
+    var route = data["routes"]!.AsObject().First(p => Room(p.Value!["to"]!.GetValue<string>()) == target).Value!;
+    var visible = route["visible_from"]!.AsArray().Select(n => Room(n!.GetValue<string>())).ToHashSet();
+    var distant = data["boundaries"]!.AsObject().First(p => p.Value!["kind"]!.GetValue<string>() == "dorm"
+        && p.Value["initial"]!.GetValue<bool>() && !visible.Contains(Room(p.Value["rooms"]![0]!.GetValue<string>()))).Value!["rooms"]![0]!.GetValue<string>();
+    foreach (var key in data["arrivals"]!.AsObject().Select(p => p.Key).Take(2).ToArray()) data["arrivals"]![key] = distant;
+    var game = From(source); var local = game.People.First(p => visible.Contains(game.Where(p)));
+    var remote = game.People.First(p => !visible.Contains(game.Where(p)) && game.HostDormReleased(p));
+    var before = Belief(game, remote, target); game.HostCorridor(gate.Key, true);
+    Assert(Belief(game, local, target) == 1 && Belief(game, remote, target) == before);
+    Reject(() => game.HostReviewAccess(remote, target));
+    game.Know(remote, game.Way[target], passable, 1, ObservationSource.Testimony);
+    var unaffected = game.People.First(p => p != remote && !visible.Contains(game.Where(p)));
+    game.Know(unaffected, game.Way[target], passable, 1, ObservationSource.Testimony);
+    game.HostCorridor(gate.Key, false);
+    Assert(Belief(game, remote, target) == 1 && Belief(game, unaffected, target) == 1);
+    var at = game.Where(remote);
+    var unattempted = game.S.Submit(remote.Soul, new(remote.Self, new Effect.Sequence([
+        new Effect.Require(new Condition.Constant(Truth.False)), new Effect.Act(ActionOp.Travel, remote.M[game.Way[target]])]), 0));
+    game.S.CTB.RunUntil(game.Now);
+    Assert(unattempted.Status == ExecutionStatus.Failed && unattempted.Result!.FailedEffect is Effect.Require && Belief(game, remote, target) == 1);
+    var attempt = game.S.Submit(remote.Soul, new(remote.Self, new Effect.Act(ActionOp.Travel, remote.M[game.Way[target]]), 0));
+    game.S.CTB.RunUntil(game.Now);
+    Assert(attempt.Status == ExecutionStatus.Failed && game.Where(remote) == at);
+    Assert(Belief(game, remote, target) == 0 && Belief(game, unaffected, target) == 1);
+});
+Check("opening a dorm never moves occupants; invitation uses committed character actions once", () =>
+{
+    var data = Access(Source());
+    var gate = data["boundaries"]!.AsObject().First(p => p.Value!["kind"]!.GetValue<string>() == "dorm" && !p.Value["initial"]!.GetValue<bool>());
+    var game = new Game(); var rooms = gate.Value!["rooms"]!.AsArray().Select(n => Room(n!.GetValue<string>())).ToHashSet();
+    var occupants = game.People.Where(p => rooms.Contains(game.Where(p))).ToArray();
+    Assert(occupants.Length > 0); var before = occupants.ToDictionary(p => p, game.Where);
+    game.HostDormOut(gate.Key); foreach (var person in occupants) Assert(game.Where(person) == before[person]);
+    var summon = data["summons"]!.AsObject().First(p => p.Value!["people"]!.AsArray().Any(n => n!.GetValue<string>() == "world:person." + occupants[0].Id));
+    var destination = Room(summon.Value!["to"]!.GetValue<string>());
+    var commits = new HashSet<Person>(); game.S.StageCommitted += execution =>
+    {
+        foreach (var person in occupants.Where(p => ReferenceEquals(p.Self, execution.Intent.Actor)))
+            if (game.Where(person) == destination) commits.Add(person);
+    };
+    game.HostSummon(summon.Key);
+    Assert(occupants.All(p => game.Where(p) == destination && commits.Contains(p)), "Every arrival must have a committed character action");
+    var histories = occupants.ToDictionary(p => p, p => p.World.History.Count);
+    game.HostSummon(summon.Key); Assert(occupants.All(p => p.World.History.Count == histories[p]));
+});
+Check("night restore preserves independent boundary switches and remote access beliefs", () =>
+{
+    var source = Source(); var data = Access(source); var gates = data["boundaries"]!.AsObject();
+    var gate = gates.First(p => p.Value!["kind"]!.GetValue<string>() == "dorm" && !p.Value["initial"]!.GetValue<bool>());
+    var inner = gate.Value!.DeepClone(); inner["initial"] = true; gates.Add("fixture.inner", inner);
+    var game = From(source); var room = Room(gate.Value!["rooms"]![0]!.GetValue<string>());
+    var hallVisibility = data["routes"]!.AsObject().First(p => p.Value!["to"]!.GetValue<string>() == "world:room.Hall").Value!["visible_from"]!
+        .AsArray().Select(n => Room(n!.GetValue<string>())).ToHashSet();
+    var remote = game.People.First(p => !hallVisibility.Contains(game.Where(p)));
+    game.Know(remote, game.Way[Place.Hall], passable, 1, ObservationSource.Testimony);
+    var capture = typeof(Game).GetMethod("CaptureNight", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+    var restore = typeof(Game).GetMethod("RestoreNight", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+    var snapshot = (NightSnapshot)capture.Invoke(game, null)!;
+    game.HostDormOut(gate.Key); Assert(game.HostCanEnter(room));
+    restore.Invoke(game, [snapshot]); Assert(!game.HostCanEnter(room));
+    var restored = (NightSnapshot)capture.Invoke(game, null)!;
+    Assert(!restored.AccessStates[gate.Key] && restored.AccessStates["fixture.inner"]);
+    Assert(Belief(game, remote, Place.Hall) == 1);
+});
+Check("a person's accepted prohibition can refuse the invitation without being moved", () =>
+{
+    var data = Access(Source()); var game = new Game();
+    var gate = data["boundaries"]!.AsObject().First(p => p.Value!["kind"]!.GetValue<string>() == "dorm" && !p.Value["initial"]!.GetValue<bool>());
+    var room = Room(gate.Value!["rooms"]![0]!.GetValue<string>()); var person = game.People.First(p => game.Where(p) == room);
+    var summon = data["summons"]!.AsObject().First(p => p.Value!["people"]!.AsArray().Any(n => n!.GetValue<string>() == "world:person." + person.Id));
+    var destination = Room(summon.Value!["to"]!.GetValue<string>());
+    Observation.Observe(person.Soul, new("accepted-personal-rule", ProjectionKind.Concept) { Rules = [
+        new(new Condition.Constant(Truth.True), RuleMode.Forbid, new Effect.Act(ActionOp.Travel, person.M[game.Way[destination]]), 100, Truth.True)] });
+    game.HostDormOut(gate.Key); game.HostSummon(summon.Key); Assert(game.Where(person) == room);
+});
+Check("chapter exit preserves mixed persistent habits and live references, repeats safely", () =>
+{
+    var world = new A.MorningWorld(); var actor = world.ScriptWorld.Characters.Values.First(p =>
+        p.Soul.World.Projections.Any(v => v.Rules.Any(r => r.Lifetime == LifetimeScope.Chapter && r.LifetimeOwner == "awakening")));
+    var basis = actor.Soul.World.Projections.First(v => v.Rules.Any(r => r.Lifetime == LifetimeScope.Chapter));
+    Observation.Observe(actor.Soul, new(basis.Name, basis.Kind) { Target = basis,
+        Rules = [..basis.Rules, RuleFor(actor.Self, LifetimeScope.World, null), RuleFor(actor.Self, LifetimeScope.Chapter, "other-chapter")] });
+    var body = actor.Body; var soul = actor.Soul; var tags = actor.Self.Tags;
+    var retained = soul.World.Projections.Where(p => p != basis).ToDictionary(p => p, p => (p.Tags, p.Procedure));
+    var continuation = world.ExportContinuation(new ChapterSession());
+    Assert(continuation.Characters.Values.Any(p => ReferenceEquals(p.Body, body) && ReferenceEquals(p.Soul, soul)));
+    Assert(basis.Rules.Length == 2 && basis.Rules.Any(r => r.Lifetime == LifetimeScope.World) && basis.Rules.Any(r => r.LifetimeOwner == "other-chapter"));
+    Assert(actor.Self.Tags.SequenceEqual(tags) && retained.All(p => p.Key.Tags.SequenceEqual(p.Value.Tags) && p.Key.Procedure == p.Value.Procedure));
+    var revision = soul.World.Revision; Assert(ReferenceEquals(continuation, world.ExportContinuation(new ChapterSession())));
+    Assert(soul.World.Revision == revision && basis.Rules.Length == 2);
+});
+Check("loading expires only owned local rules and rejects repeat or busy load without state loss", () =>
+{
+    using var session = new WorldSession(); var first = new ChapterWorldDefinition { Id = "first" };
+    first.Entities.Add(new() { Id = "room.a", Name = "Room", Kind = "room" });
+    first.Entities.Add(new() { Id = "actor.a", Name = "Actor", Kind = "character", Properties = new()
+        { ["space"] = new() { Type = "entity", Value = JsonSerializer.SerializeToElement("world:room.a") } } });
+    session.Load(first); var actor = session.Character("world:actor.a");
+    var basis = Observation.Observe(actor.Soul, new("mixed", ProjectionKind.Concept)
+        { Rules = [RuleFor(actor.Self, LifetimeScope.World, null), RuleFor(actor.Self, LifetimeScope.Chapter, "first")] });
+    var second = new ChapterWorldDefinition { Id = "second", Requires = ["first"] };
+    var pending = session.Simulation.Submit(actor.Soul, new(actor.Self, new Effect.Wait(1, new Effect.Think(new Condition.Exists(actor.Self))), 0));
+    session.Simulation.CTB.RunUntil(0); Reject(() => session.Load(second)); Assert(basis.Rules.Length == 2 && session.CurrentChapter == "first");
+    session.Simulation.CTB.RunUntil(1); Assert(pending.Status == ExecutionStatus.Completed);
+    session.Load(second); Assert(basis.Rules.Length == 1 && basis.Rules[0].Lifetime == LifetimeScope.World);
+    Assert(ReferenceEquals(actor, session.Character("world:actor.a")));
+    var revision = actor.Soul.World.Revision; Reject(() => session.Load(second));
+    session.EndChapterLifetime(); session.EndChapterLifetime(); Assert(actor.Soul.World.Revision == revision);
+});
+Check("live handoff rejects an unfinished action by any already existing character", () =>
+{
+    var world = new A.MorningWorld(); var session = world.PersistentSession;
+    var original = world.ScriptWorld.Characters.Values.Select(p => p.Body).ToHashSet();
+    var actor = session.World.Characters.Values.First(p => !original.Contains(p.Body));
+    var rules = actor.Soul.World.Projections.Sum(p => p.Rules.Length);
+    var pending = session.Simulation.Submit(actor.Soul, new(actor.Self, new Effect.Wait(2, new Effect.Think(new Condition.Exists(actor.Self))), 0));
+    session.Simulation.CTB.RunUntil(session.Simulation.CTB.Now);
+    Reject(() => world.ExportContinuation(new ChapterSession()));
+    Assert(pending.Status == ExecutionStatus.Pending && actor.Soul.World.Projections.Sum(p => p.Rules.Length) == rules);
+    session.Simulation.CTB.RunUntil(session.Simulation.CTB.Now + 2);
+    Assert(world.ExportContinuation(new ChapterSession()).Characters.Values.Any(p => ReferenceEquals(p.Body, actor.Body)));
+});
+Check("interaction expiry retains chapter and world rules and repeated expiry is silent", () =>
+{
+    var game = new Game(); var person = game.People[0];
+    var board = game.Board[Place.Living]; var source = board.Get<RuleProperty>()!;
+    source.Rules = [..source.Rules, RuleFor(person.Self, LifetimeScope.Interaction, "neutral-interaction")];
+    var basis = Observation.Observe(person.Soul, new("mixed-scopes", ProjectionKind.Concept)
+    { Rules = [RuleFor(person.Self, LifetimeScope.World, null), RuleFor(person.Self, LifetimeScope.Chapter, "chapter2"), RuleFor(person.Self, LifetimeScope.Interaction, "neutral-interaction")] });
+    game.BeginInteractionLifetime("neutral-interaction"); game.EndInteractionLifetime();
+    Assert(basis.Rules.Length == 2 && basis.Rules.All(r => r.Lifetime != LifetimeScope.Interaction));
+    Assert(source.Rules.All(r => r.Lifetime != LifetimeScope.Interaction));
+    var revision = person.World.Revision; game.EndInteractionLifetime(); Assert(person.World.Revision == revision);
+});
+Check("triggers distinguish chapter, interaction and world lifetime", () =>
+{
+    var source = Source(); var chapter = Chapter(source); chapter["sequences"] = new JsonArray();
+    foreach (var scope in new[] { "world", "chapter", "interaction" })
+        chapter["sequences"]!.AsArray().Add(new JsonObject { ["id"] = scope, ["trigger"] = new JsonObject { ["event"] = scope, ["once"] = false, ["lifetime"] = scope },
+            ["steps"] = new JsonArray(new JsonObject { ["op"] = "line", ["speaker"] = "", ["text"] = "neutral fixture" }) });
+    var narrative = new Chapter2Narrative(source.ToJsonString(), true);
+    bool Emit(string id)
+    {
+        var events = narrative.Activate(id, Game.FirstDay, Slot.Morning);
+        if (events.Count == 0) return false;
+        Assert(events.Single().Kind == "lines"); narrative.Presented(events.Single().PresentationId); return true;
+    }
+    Assert(Emit("world") && Emit("chapter") && Emit("interaction"));
+    narrative.EndLifetime(LifetimeScope.Chapter); narrative.EndLifetime(LifetimeScope.Interaction);
+    Assert(Emit("world") && !Emit("chapter") && !Emit("interaction"));
+    narrative.BeginInteraction(); Assert(Emit("interaction") && !Emit("chapter"));
+    narrative.EndLifetime(LifetimeScope.Chapter); Assert(Emit("world"));
+    var prefix = chapter["id"]!.GetValue<string>() + ":";
+    chapter["candidates"] = new JsonArray(); chapter["sequences"] = new JsonArray();
+    foreach (var id in new[] { "expired", "live" })
+    {
+        chapter["candidates"]!.AsArray().Add(new JsonObject { ["id"] = id, ["kind"] = "option" });
+        chapter["sequences"]!.AsArray().Add(new JsonObject { ["id"] = id, ["trigger"] = new JsonObject
+            { ["event"] = "choice:" + prefix + id, ["lifetime"] = id == "expired" ? "chapter" : "world" },
+            ["steps"] = new JsonArray(new JsonObject { ["op"] = "line", ["speaker"] = "", ["text"] = "neutral fixture" }) });
+    }
+    chapter["sequences"]!.AsArray().Add(new JsonObject { ["id"] = "parent", ["trigger"] = new JsonObject { ["event"] = "parent", ["lifetime"] = "world" },
+        ["steps"] = new JsonArray(new JsonObject { ["op"] = "choice", ["id"] = "neutral-choice", ["options"] = new JsonArray(
+            new JsonObject { ["candidate_id"] = prefix + "expired", ["label"] = "expired" },
+            new JsonObject { ["candidate_id"] = prefix + "live", ["label"] = "live" }) }) });
+    var choices = new Chapter2Narrative(source.ToJsonString(), true); choices.EndLifetime(LifetimeScope.Chapter);
+    Assert(choices.Activate("parent", Game.FirstDay, Slot.Morning).Single().Kind == "choice");
+    Reject(() => choices.Select(prefix + "expired"));
+    Assert(choices.Select(prefix + "live").Single().Kind == "lines");
+});
+Console.WriteLine($"Access/lifetimes: {checks} checks, {failures} failures");
+return failures == 0 ? 0 : 1;

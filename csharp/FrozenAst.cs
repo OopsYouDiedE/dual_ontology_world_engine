@@ -79,7 +79,8 @@ public static class CognitionAst
     internal static FrozenRuleV1 Freeze(Rule r, Func<Projection, SubjectProjectionId> id)
     {
         Node(r, 0);
-        return new(Freeze(r.Condition, id), Defined(r.Mode), Freeze(r.Effect, id), r.Weight, Defined(r.Acceptance));
+        ValidateLifetime(r.Lifetime, r.LifetimeOwner);
+        return new(Freeze(r.Condition, id), Defined(r.Mode), Freeze(r.Effect, id), r.Weight, Defined(r.Acceptance), r.Lifetime, r.LifetimeOwner);
     }
 
     internal static Noun Thaw(FrozenNounV1 n, IReadOnlyDictionary<SubjectProjectionId, Projection> map, int d = 0)
@@ -139,7 +140,15 @@ public static class CognitionAst
     internal static Rule Thaw(FrozenRuleV1 r, IReadOnlyDictionary<SubjectProjectionId, Projection> map)
     {
         Node(r, 0);
-        return new(Thaw(r.Condition, map), Defined(r.Mode), Thaw(r.Effect, map), r.Weight, Defined(r.Acceptance));
+        ValidateLifetime(r.Lifetime, r.LifetimeOwner);
+        return new(Thaw(r.Condition, map), Defined(r.Mode), Thaw(r.Effect, map), r.Weight, Defined(r.Acceptance), r.Lifetime, r.LifetimeOwner);
+    }
+    private static void ValidateLifetime(LifetimeScope lifetime, string? owner)
+    {
+        Defined(lifetime);
+        if (owner is not null) Contract.Identity(owner, "ast.lifetime_owner");
+        Contract.Require(lifetime == LifetimeScope.World || owner is not null, ContractErrorCode.MalformedData,
+            "ast.lifetime_owner", "局部规则必须声明有效期所属范围。");
     }
     internal static void ValidateMap(ImmutableDictionary<SubjectProjectionId, Projection> map)
     {

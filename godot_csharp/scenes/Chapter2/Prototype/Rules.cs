@@ -92,7 +92,10 @@ public sealed partial class Game
     private RuleSpec Spec(string id, Func<Fx, IEnumerable<Rule>> build, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)
     {
         var d = RuleDesign.Of(id);
-        var spec = NewSpec(d.Text, d.Author, d.Flags, build, demon: d.ByDemon, card: d.Card is { } cells ? CardKit.ToCard(cells) : null, witnessed: witnessed, manipulative: manipulative, target: d.Target);
+        var spec = NewSpec(d.Text, d.Author, d.Flags,
+            fx => DualOntologyWorldEngine.Story.RuleLifetimes.Bind(build(fx), d.Lifetime,
+                d.Lifetime == "interaction" ? _interactionLifetime ?? throw new InvalidOperationException("An interaction rule requires an active interaction.") : Chapter2Script.Id),
+            demon: d.ByDemon, card: d.Card is { } cells ? CardKit.ToCard(cells) : null, witnessed: witnessed, manipulative: manipulative, target: d.Target);
         _specById[id] = spec;
         return spec;
     }
@@ -261,7 +264,8 @@ public sealed partial class Game
         if (verdict == Truth.True && !p.World.Projections.Any(x => x.Rules.Any(r => mental.Any(m => SameRule(m, r))))) WriteTold(p, spec, verdict);
     }
 
-    private static bool SameRule(Rule a, Rule b) => a.Mode == b.Mode && Ast.Equivalent(a.Condition, b.Condition) && Ast.Equivalent(a.Effect, b.Effect);
+    private static bool SameRule(Rule a, Rule b) => a.Mode == b.Mode && a.Lifetime == b.Lifetime && a.LifetimeOwner == b.LifetimeOwner
+        && Ast.Equivalent(a.Condition, b.Condition) && Ast.Equivalent(a.Effect, b.Effect);
 
     /// <summary>
     /// 读板：规则已经由 WorldRuntime.Observe 以“接受未知”带入读者心中的板投影；这里逐条找出它属于哪条规则，

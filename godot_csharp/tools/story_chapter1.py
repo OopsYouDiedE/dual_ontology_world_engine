@@ -106,6 +106,7 @@ COMPARE = {"==": "eq", "!=": "ne", ">": "gt", ">=": "gte", "<": "lt", "<=": "lte
 
 # 设定表：块名 -> (CONTENT_TABLES 键或独立属性, 形式)
 TABLES = {
+    "规则有效期": ("RULE_LIFETIMES", "map"),
     "现场表现": ("PRESENTATION", "records"),
     "侦探搜索参数": ("DETECTIVE_SEARCH", "constants"),
     "侦探调查行动": ("DETECTIVE_ACTIONS", "records"),
@@ -124,6 +125,7 @@ TABLES = {
     "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
+                "RULE_LIFETIMES",
                 "PRESENTATION",
                 "SOUND_SPOTS", "COMPANION_SPOTS", "SPOT_ORDER", "SOLE_TARGETS",
                 "DETECTIVE_SEARCH", "DETECTIVE_ACTIONS", "DETECTIVE_TRACE_FIELDS", "DETECTIVE_MOTIVES", "DETECTIVE_ARGUMENTS", "DETECTIVE_DIALOGUE_CHOICES",

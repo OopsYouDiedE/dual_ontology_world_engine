@@ -25,6 +25,8 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - **抽象语法树与解析器（Ast.cs, AstDecoder.cs）**：
   - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer 模式及权重）。
   - AST 严格使用类型化节点、槽位、Tag 和 Projection 引用；字符串仅用于名称与描述。
+  - `Rule` 的 `LifetimeScope` 与 `LifetimeOwner` 是独立于实体作用域的生命周期元数据；冻结、重绑定与认知修订保留它们，局部有效期必须有 owner。Core 不调度章节退出，由宿主经认知输入精确撤销到期规则。
+  - `ActionResolution.FailedEffect` 保留导致当前阶段失败的实际效果引用；宿主可以只对实际尝试失败的对象补充认知，不能从整份意图猜测已经执行的效果。
   - `AstDecoder` 将文本规则解码为强类型 AST。
 - **调度、执行与临时状态（CTBSystem.cs, ActionRuntime.cs, SimulationSession.cs, TemporaryState.cs）**：
   - `CTBSystem`：负责离散行动值（CTB）的延迟与激活调度。

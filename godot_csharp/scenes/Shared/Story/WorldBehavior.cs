@@ -104,7 +104,7 @@ public sealed partial class WorldSession
         }
     }
     private IEnumerable<BoundCandidate> CurrentCandidates => _candidates.Values.SelectMany(c => c)
-        .Where(c => c.Scope == "world" || c.Chapter == CurrentChapter);
+        .Where(c => c.Scope == "world" || c.Chapter == CurrentChapter && !_endedChapters.Contains(c.Chapter));
     public bool IsCandidateAvailable(string candidateId, string actorReference)
     {
         lock (_gate)

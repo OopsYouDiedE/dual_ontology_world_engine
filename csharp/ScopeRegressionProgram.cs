@@ -19,6 +19,14 @@ IReadOnlyList<DecisionAssessment> Decide(params (RuleMode Mode,int Weight)[] spe
 Check(Decide((RuleMode.Permit,5)).Count==0,"permit alone proposes nothing");
 var lifted=Decide((RuleMode.Prefer,3),(RuleMode.Forbid,2),(RuleMode.Permit,2));Check(lifted.Count==1&&!lifted[0].Forbidden&&lifted[0].Decision.Score==3,"permit of equal weight lifts a prohibition without adding score");
 var kept=Decide((RuleMode.Prefer,3),(RuleMode.Forbid,3),(RuleMode.Permit,2));Check(kept.Count==1&&kept[0].Forbidden,"weaker permit leaves the prohibition");
+var local=new Rule(new Condition.Constant(Truth.True),RuleMode.Prefer,new Effect.Set(p,done,1),3,Truth.True,LifetimeScope.Chapter,"scope-test");
+Observation.Observe(s,new(p.Name,p.Kind){Target=p,Rules=[local]});
+Observe(s,p,1);
+Check(p.Rules.Single().Lifetime==LifetimeScope.Chapter&&p.Rules.Single().LifetimeOwner=="scope-test","ordinary observations preserve rule lifetime");
+var snapshot=s.World.CaptureSnapshot();
+Check(snapshot is ContractResult<CognitionSnapshotV1>.Success frozen&&frozen.Value.Projections.Single(x=>x.Id==p.SubjectId).Rules.Single().LifetimeOwner=="scope-test","frozen cognition preserves lifetime owner");
+var revision=s.World.Revision;bool invalidScope=false;
+try{Observation.Observe(s,new(p.Name,p.Kind){Target=p,Rules=[local with{LifetimeOwner=null}]});}catch(InvalidOperationException){invalidScope=true;}
+Check(invalidScope&&s.World.Revision==revision&&p.Rules.Single().LifetimeOwner=="scope-test","ownerless local rule is rejected atomically");
 Console.WriteLine($"TOTAL {checks} checks");
 }}
-
