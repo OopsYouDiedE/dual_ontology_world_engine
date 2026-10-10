@@ -564,8 +564,12 @@ public sealed partial class Chapter1Session
         try
         {
             yield return new Await(StageOp("walk", ("who", who), ("speed", 0.0), ("pausable", true), ("stop_when_stuck", true),
-                ("to", new Ev { ["near_site"] = site, ["avoid"] = true })), false);
-            if (WalkOk) yield return new Run(PlayPlan(() => _content.BeginHelp(_world, id, who)));
+                ("to", new Ev { ["approach_site"] = site, ["inset"] = 14.0 })), false);
+            if (WalkOk)
+            {
+                yield return new Run(PlayPlan(() => _content.BeginHelp(_world, id, who)));
+                yield return new Run(OpenCard(id, true));
+            }
         }
         finally { _helpInvites.Remove(who); _invites.Remove(who); }
     }

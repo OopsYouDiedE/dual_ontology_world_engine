@@ -152,7 +152,7 @@ public sealed partial class AwakeningContentSession
     {
         var flow = Content.RootElement.GetProperty("FLOWS").GetProperty(name);
         if (flow.TryGetProperty("provider", out var provider))
-            foreach (var (key, value) in Provide(provider.GetString()!, world, map)) map.TryAdd(key, value);
+            foreach (var (key, value) in Provide(provider.GetString()!, world, map)) map[key] = value;
         return Steps(flow.GetProperty("steps"), 0, map);
     }
 
@@ -163,7 +163,8 @@ public sealed partial class AwakeningContentSession
         switch (provider)
         {
             case "协助者":
-                return new() { ["人"] = Content.RootElement.GetProperty("EVIDENCE").GetProperty(map["物"]).GetProperty("help").GetString()! };
+                return new() { ["人"] = map.TryGetValue("人", out var helper) ? helper
+                    : Content.RootElement.GetProperty("EVIDENCE").GetProperty(map["物"]).GetProperty("help").GetString()! };
             case "答辩步":
                 return new() { ["步"] = AnswerStep().ToString() };
             case "答辩裁决":

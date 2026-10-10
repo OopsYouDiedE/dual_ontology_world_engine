@@ -111,12 +111,12 @@ func handoff() -> bool:
 	if not check(fx.stage() == "field" and bool(host.ui.snapshot.get("field_enabled", false)) and host.field.field_active()
 		and not host.ui.is_busy() and not fx.ended(), "章一继续后到达章二第一个可操作状态"): return false
 	check(str(host.ui.snapshot.get("detective_name", "")) == "flow2-fixture", "第二章继承本轮章一玩家状态")
-	check(fx.saw_sequence("arrival") and fx.saw_sequence("lesson") and fx.saw_sequence("free"), "正式 .story 章节产生开场、首课与自由行动台词")
+	check(fx.saw_sequence("arrival") and not fx.saw_sequence("lesson") and not fx.saw_sequence("free"), "正式 .story 续章先演开场，首课留待次日上午")
 	var walkable: bool = host.field.adapter.walkable(fx.player().position)
 	print("    handoff field: map=%s position=%s walkable=%s stage=%s" % [host.field.adapter.map_key(), fx.player().position, walkable, fx.stage()])
-	check(host.field.adapter.map_key() == "lecture", "章二第一个可操作状态在讲堂")
+	check(host.field.adapter.map_key() == "living_hall", "章二第一个可操作状态在起居厅")
 	check(walkable, "章二第一个可操作状态的出生点可走")
-	check(host.field.actors.size() > 3, "讲堂里有人（%d）" % host.field.actors.size())
+	check(host.field.actors.size() > 3, "起居厅里有人（%d）" % host.field.actors.size())
 	return true
 
 # STORY-HARDCODE[CH2-019][logic][tool]: 测试硬编码第二章时间推进、规则转述、特定人物问话、证物和议事流程。
@@ -128,7 +128,7 @@ func _run() -> void:
 	if not await handoff():
 		await _finish()
 		return
-	# 保留多地图出生点检查；检查换图后恢复讲堂，不再第二次发送 begin。
+	# 保留多地图出生点检查；检查换图后恢复续章起点，不再第二次发送 begin。
 	for key in ["zone_yi", "living_hall", "zone_jia", "zone_bing", "zone_ding", "central_hall", "lecture", "logistics", "granary", "clinic", "archive", "counterweight", "resonance", "greenhouse", "campus_s", "campus_n", "campus_sw"]:
 		var t := Time.get_ticks_msec()
 		if not await move_to_map(key):
@@ -136,7 +136,7 @@ func _run() -> void:
 			await _finish()
 			return
 		check(host.field.adapter.walkable(fx.player().position), "%s 载入，出生点可走（%d ms，%d 处可检视）" % [key, Time.get_ticks_msec() - t, host.field.sites.size()])
-	await move_to_map("lecture")
+	await move_to_map("living_hall")
 	var document = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
 	if not check(document is Dictionary, "正式 .story 编译文件可读取"):
 		await _finish()
@@ -148,17 +148,19 @@ func _run() -> void:
 	for title in ["arrival", "gather", "lesson", "free", "noon_dispute", "after", "replay_unlock", "confront_rule", "council", "box"]:
 		check(titles.has(title), "正式章节段落 " + title)
 	# 始业日余下的时段。
-	await run_action({"cmd": "collect"})
-	await move_to_map("logistics")
-	await run_action({"cmd": "stay"})
-	await send({"kind": "interact", "map": "logistics", "site": "ration_notice"})
-	await move_to_map("central_hall")
 	var first_guard := 0
 	while upcoming_slot() < 5 and first_guard < 8:
 		first_guard += 1
 		if not await run_action({"cmd": "stay"}): break
 	check(upcoming_day() == int(fx.probe("first_day")) and upcoming_slot() == 5, "始业日走到夜里")
+	check(fx.saw_sequence("meet_jia") and fx.saw_sequence("supper") and fx.saw_sequence("first_night"), "始业日按正式日程相识、用存粮晚饭、入夜")
 	await run_action({"cmd": "sleep"})
+	check(fx.saw_sequence("meet_bing", true) and host.field.adapter.map_key() == "living_hall", "次日清晨在起居厅遇见丙区居民")
+	await run_action({"cmd": "stay"})
+	check(fx.saw_sequence("gather", true) and fx.saw_sequence("lesson", true) and fx.saw_sequence("free", true), "次日上午正式 .story 章节产生集合、首课与自由行动台词")
+	check(fx.saw_sequence("meet_ding", true) and fx.saw_sequence("noon_dispute", true) and fx.saw_sequence("open_archive_wing", true), "首课后按正式日程开放配给与库廊")
+	await move_to_map("logistics")
+	await send({"kind": "interact", "map": "logistics", "site": "ration_notice"})
 	# 日常篇：就地等待，夜里睡下；规矩仍通过实际可用的规则编号转述。
 	var case_day := int(fx.probe("case_day"))
 	var guard := 0
@@ -204,13 +206,17 @@ func _run() -> void:
 	fx.close_modal()
 	if check(await fx.move_to_person("Ward", SPAWN_OF), "请看物证前与 Ward 同处一地"):
 		var thing := str(host.ui.snapshot.get("examined", {}).get("logistics:ration_notice", {}).get("thing", ""))
+		check(thing != "", "同行所用物证来自此前的正式检视")
+		var before := upcoming_slot()
 		await run_action({"cmd": "escort", "who": "Ward", "thing": thing})
+		check(upcoming_slot() == before + 1, "Ward 接受同行并结算一个时段")
 	await run_action({"cmd": "collect"})
-	await run_action({"cmd": "stay"})
+	# 傍晚边界立即演对账：先停在真实候选，核对时钟，再配置代选策略。
+	await send({"kind": "action", "act": {"cmd": "stay"}})
 	check(upcoming_day() == case_day and upcoming_slot() == 4, "到案发次日傍晚")
 	planned_pairs = fx.probe("valid_confront_pairs")
 	planned_pair_index = 0
-	await run_action({"cmd": "stay"})
+	check(await fx.settle(true), "傍晚对账的真实候选在有限时间内完成")
 	check(fx.saw_sequence("evening", true) and fx.saw_sequence("confront_begin", true), "对账发生（%d 对有效）" % planned_pairs.size())
 	check(planned_pair_index == planned_pairs.size(), "有效陈述/证据对全部通过真实候选提交")
 	# 对账结算后是夜晚，守夜必须先在现场走到对应空间。

@@ -41,9 +41,11 @@ public sealed partial class Game
 
     private Effect? RequestProcedure(Person recipient, Job job)
     {
-        var fx = FxOf(recipient);
+        var fx = FxOf(Det);
         if (job == Job.FeedWeak)
-            return KnownFoodTarget(recipient) is { } target ? Ast.Bind(fx.FeedWeak(), new ActionContext(recipient.Self, target)) : null;
+            return KnownFoodTarget(recipient) is { } target && EssenceOf(recipient, target) is { } entity
+                && Det.M.TryGetValue(entity, out var knownTarget)
+                ? Ast.Bind(fx.FeedWeak(), new ActionContext(fx.R(recipient.Body), knownTarget)) : null;
         return fx.Job(job, job is Job.Rest or Job.Sleep or Job.Work ? recipient : null);
     }
 
@@ -94,7 +96,7 @@ public sealed partial class Game
         else if (action.Cmd is Cmd.Ask or Cmd.Escort)
         {
             _asked.Clear();
-            var procedure = action.Cmd == Cmd.Escort ? FxOf(p).Escort(action.Place!.Value, Things_[action.Thing!].Thing(this))
+            var procedure = action.Cmd == Cmd.Escort ? FxOf(Det).Escort(action.Place!.Value, Things_[action.Thing!].Thing(this))
                 : RequestProcedure(p, action.Job!.Value) ?? throw new InvalidOperationException("The request has no known target.");
             var text = action.Cmd == Cmd.Escort ? Chapter2Design.Text("social.escort", ("place", Names.Of(action.Place!.Value)), ("thing", action.Thing)) : Chapter2Design.Text("social.request", ("job", Names.Of(action.Job!.Value)));
             Request(who, text, procedure, Compatibility(p, action));
