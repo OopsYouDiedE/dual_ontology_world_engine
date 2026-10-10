@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Awakening;
 
@@ -672,7 +673,6 @@ public sealed class NightReplay
     }
 
     /// <summary>别人请自己做事，但 SocialSystem 没有判为接受：这一刻的心声。</summary>
-    // STORY-HARDCODE[AWK-012][logic][production]: 将本案熟悉度与拒绝请求映射为专属心声及案件标记。
     private string? Doubt(Agent a, Decision? pick)
     {
         foreach (var request in a.Soul.World.Projections.Where(p => p.Kind == ProjectionKind.Event && p.Procedure is not null && p.Tags.GetValueOrDefault(Tags.Responded) == 0))
@@ -684,7 +684,9 @@ public sealed class NightReplay
             var stranger = sender.Tags.GetValueOrDefault(NightTags.Acquainted) == 0;
             _log.Add($"{Now:0.0} {Names.Of(a.Who)} 对 {sender.Name} 的请求：{attitude.Stance}（{attitude.Score}）");
             if (stranger && a.Who == Person.Detective) _detectiveRefusedStranger = true;
-            return stranger ? Chapter1Data.Text("重演·心声·stranger") : Chapter1Data.Text("夜间·怀疑·熟人", ("人名", sender.Name));
+            var response = ResponseCatalog.Select(Chapter1Data.Root.GetProperty("EXPRESSION"), "doubt",
+                name => name == "sender.Acquainted" ? sender.Tags.GetValueOrDefault(NightTags.Acquainted) : null);
+            return response is null ? null : Chapter1Data.Text(response.Text, ("人名", sender.Name));
         }
         return null;
     }
@@ -898,27 +900,25 @@ public sealed class NightReplay
     // ----------------------------------------------------------------- output --
 
     /// <summary>没有任何习惯可用、只能等着时的心声：等什么，由他自己的认知决定。</summary>
-    // STORY-HARDCODE[AWK-016][logic][production]: 按苏泠、沈鼎、霍铎在特定场面中的认知生成等待心声。
     private string? IdleThought(Agent a)
     {
-        var door = a.Mental[_door];
-        var inFoyer = RoomOf(a.Body) == Room.Foyer;
-        if (a.Who == Person.Su && inFoyer && door.Tags.GetValueOrDefault(NightTags.Open) == 1 && a.Outsider.Existence == Truth.True)
-            return Chapter1Data.Text("重演·心声·wait_voice");
-        if (a.Who == Person.Shen && inFoyer && a.Mental[_cloth].Tags.GetValueOrDefault(NightTags.Wet) == 1 && door.Tags.GetValueOrDefault(NightTags.Open) == 1)
-            return Chapter1Data.Text("重演·心声·wait_door");
-        if (a.Who == Person.Huo && RoomOf(a.Body) == Room.Hall && a.Order.Tags.GetValueOrDefault(NightTags.HoldTube) == 1)
-            return Chapter1Data.Text("重演·心声·wait_tube");
-        return null;
+        var response = ResponseCatalog.Select(Chapter1Data.Root.GetProperty("EXPRESSION"), "idle", name => name switch
+        {
+            "speaker" => a.Who.ToString(),
+            "place" => _space.Where(p => ReferenceEquals(a.Self.Parent, a.Mental[p.Value])).Select(p => p.Key.ToString()).FirstOrDefault(),
+            "door.Open" => a.Mental[_door].Tags.GetValueOrDefault(NightTags.Open),
+            "cloth.Wet" => a.Mental[_cloth].Tags.GetValueOrDefault(NightTags.Wet),
+            "outsider" => a.Outsider.Existence.ToString(), "order.HoldTube" => a.Order.Tags.GetValueOrDefault(NightTags.HoldTube),
+            _ => null,
+        });
+        return response is null ? null : Chapter1Data.Text(response.Text);
     }
 
-    private string PlainThought(Agent a) => a.Who switch
+    private string PlainThought(Agent a)
     {
-        Person.Su => Chapter1Data.Text("重演·心声·alarm_su"),
-        Person.Huo => Chapter1Data.Text("重演·心声·alarm_huo"),
-        Person.Shen => Chapter1Data.Text("重演·心声·alarm_shen"),
-        _ => ""
-    };
+        var response = ResponseCatalog.Select(Chapter1Data.Root.GetProperty("EXPRESSION"), "alarm", name => name == "speaker" ? a.Who.ToString() : null);
+        return response is null ? "" : Chapter1Data.Text(response.Text);
+    }
 
     private void Frame(ReplayEvent ev)
     {

@@ -53,11 +53,17 @@ public sealed class CaseModel
 
 /// <summary>A mind's current reading of a case.</summary>
 public sealed record CaseBelief(CaseModel Model, ImmutableArray<int> Candidates,
-    ImmutableArray<ImmutableArray<double>> Credence, bool Contradicted, ImmutableArray<string> Basis)
+    ImmutableArray<ImmutableArray<double>> Credence, bool Contradicted, ImmutableArray<ReasonBasis> Basis)
 {
     public KnowledgeRevision? Revision { get; init; }
     public double Of(int question, int option) => Credence[question][option];
 }
+
+public enum ReasonCode { Observed, DefaultAssumed, Compatible, LeastContradictions, Accepted, Discounted, SelfKnown, Prior }
+public sealed record EvidenceWeight(double Factor, ObservationSource Source, ReasonCode Code,
+    Projection? Speaker = null, int Trust = 0, int Strength = 1);
+public sealed record ReasonBasis(ReasonCode Code, string? Subject = null, string? Field = null,
+    int Value = 0, string? Option = null, int Total = 0, EvidenceWeight? Weight = null);
 
 /// <summary>
 /// The shared reasoning faculty. It reads only the given mind: traces it has perceived narrow the
@@ -73,7 +79,7 @@ public static partial class Reasoner
             var view = SubjectRead.Capture(mind);
             return Assess(view.Graph.World, model) with { Revision = view.Revision };
         }
-        var basis = new List<string>();
+        var basis = new List<ReasonBasis>();
         var seen = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var field in model.Fields)
         {
@@ -81,7 +87,7 @@ public static partial class Reasoner
             if (projection is not null && projection.Tags.TryGetValue(field.Tag, out var value))
             {
                 seen[field.Key] = value;
-                basis.Add($"亲见：{field.Projection}·{field.Tag.Name}={value}");
+                basis.Add(new(ReasonCode.Observed, field.Projection, field.Tag.Name, value));
             }
         }
         // A question the mind has not conceived stays at its unwritten default.
@@ -94,7 +100,7 @@ public static partial class Reasoner
                 || Enumerable.Range(0, model.Options[q].Length).Any(o => Holds(mind, model.ClaimName(question, o)));
             if (conceived) continue;
             assumed[q] = fallback;
-            basis.Add($"尚未想到：{model.Questions[q]}（默认 {model.Options[q][fallback]}）");
+            basis.Add(new(ReasonCode.DefaultAssumed, model.Questions[q], Option: model.Options[q][fallback]));
         }
         var conceivable = Enumerable.Range(0, model.Hypotheses.Length)
             .Where(i => assumed.All(a => model.Hypotheses[i].Options[a.Key] == a.Value)).ToArray();
@@ -102,9 +108,8 @@ public static partial class Reasoner
         var minimum = conceivable.Min(i => Contradictions(model.Hypotheses[i]));
         var contradicted = minimum > 0;
         var candidates = conceivable.Where(i => Contradictions(model.Hypotheses[i]) == minimum).ToImmutableArray();
-        basis.Add(contradicted
-            ? $"所见与任何组合都不完全相容；暂取矛盾最少的 {candidates.Length} 种"
-            : $"与所见相容的组合 {candidates.Length}/{model.Hypotheses.Length}");
+        basis.Add(new(contradicted ? ReasonCode.LeastContradictions : ReasonCode.Compatible,
+            Value: candidates.Length, Total: model.Hypotheses.Length));
 
         var weights = candidates.ToDictionary(i => i, _ => 1.0);
         for (var q = 0; q < model.Questions.Length; q++)
@@ -112,9 +117,10 @@ public static partial class Reasoner
             {
                 var claim = mind.Projections.FirstOrDefault(p => p.Name == model.ClaimName(q, o) && p.Existence == Truth.True);
                 if (claim is null) continue;
-                var (factor, why) = Weight(claim);
-                if (factor <= 1) { basis.Add($"不采信：{claim.Name}（{why}）"); continue; }
-                basis.Add($"采信：{claim.Name}（{why}，权重 {factor:0.##}）");
+                var weight = Weight(claim);
+                var factor = weight.Factor;
+                if (factor <= 1) { basis.Add(new(ReasonCode.Discounted, claim.Name, Weight: weight)); continue; }
+                basis.Add(new(ReasonCode.Accepted, claim.Name, Weight: weight));
                 foreach (var i in candidates)
                     if (model.Hypotheses[i].Options[q] == o) weights[i] *= factor;
             }
@@ -127,30 +133,30 @@ public static partial class Reasoner
     private static bool Holds(ProjectionWorld mind, string name) => mind.Projections.Any(p => p.Name == name && p.Existence == Truth.True);
 
     /// <summary>How much a held claim weighs, by how it entered the mind.</summary>
-    // STORY-HARDCODE[CSH-009][text][production]: 将腐化来源专称为“铜口之言”，是项目世界专属的证据反馈文案。
-    public static (double Factor, string Why) Weight(Projection claim)
+    public static EvidenceWeight Weight(Projection claim)
     {
         if (!claim.World.Detached)
         {
             var view = SubjectRead.Capture(claim.World);
-            return Weight(view.Get(claim));
+            var result = Weight(view.Get(claim));
+            return result with { Speaker = result.Speaker is { } speaker ? view.Original(speaker) : null };
         }
         var source = claim.LastObservation?.Source ?? ObservationSource.Introspection;
         switch (source)
         {
-            case ObservationSource.Perception: return (8, "亲见");
-            case ObservationSource.Inference: return (6, "自己推出");
-            case ObservationSource.Recall: return (3, "回忆");
-            case ObservationSource.Corruption: return (1, "铜口之言，不当证据");
+            case ObservationSource.Perception: return new(8, source, ReasonCode.Accepted);
+            case ObservationSource.Inference: return new(6, source, ReasonCode.Accepted);
+            case ObservationSource.Recall: return new(3, source, ReasonCode.Accepted);
+            case ObservationSource.Corruption: return new(1, source, ReasonCode.Discounted);
             case ObservationSource.Testimony:
                 var speaker = claim.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target;
                 var trust = speaker?.Tags.GetValueOrDefault(Tags.Trust) ?? 0;
                 // Neutral testimony counts a little; distrust makes it worthless, never inverted.
-                return (Math.Max(1, 2 + 0.5 * Math.Clamp(trust, -3, 3)), $"{speaker?.Name ?? "有人"}说的，信任 {trust}");
+                return new(Math.Max(1, 2 + 0.5 * Math.Clamp(trust, -3, 3)), source, ReasonCode.Accepted, speaker, trust);
             // 先入之见、自知：强度记在 Confidence 上（缺省 1）。
             default:
                 var strength = claim.Tags.GetValueOrDefault(Tags.Confidence, 1);
-                return (1 + Math.Max(0, strength), strength == 1 ? "自知" : $"先入之见，强度 {strength}");
+                return new(1 + Math.Max(0, strength), source, strength == 1 ? ReasonCode.SelfKnown : ReasonCode.Prior, Strength: strength);
         }
     }
 }

@@ -44,7 +44,7 @@ public static partial class Reasoner
 {
     public static ContractResult<CaseBelief> Assess(CognitionSnapshotV1 snapshot, CaseModel model)
         => Contract.Try(() => Assess(SnapshotGraph.Build(snapshot).World, model) with { Revision = snapshot.Revision });
-    public static ContractResult<(double Factor, string Why)> Weight(CognitionSnapshotV1 snapshot, SubjectProjectionId claim)
+    public static ContractResult<EvidenceWeight> Weight(CognitionSnapshotV1 snapshot, SubjectProjectionId claim)
         => Contract.Try(() =>
         {
             var graph = SnapshotGraph.Build(snapshot);

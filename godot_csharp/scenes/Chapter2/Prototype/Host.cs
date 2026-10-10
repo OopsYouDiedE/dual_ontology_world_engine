@@ -45,15 +45,12 @@ public sealed partial class Game
         if (place == Place.ArchiveFront && DawnTraces.TryGetValue(Day - 1, out var tr) && tr.FirstOrDefault(t => t.Key == "前厅脚印") is { } fp) text += "\n" + fp.Text + "。";
         return text;
     }
-    // STORY-HARDCODE[CH2-072][text][production]: 为温室阀门与中继站提供本章专属物证反馈。
     public string HostExamineEntity(Essence entity)
     {
         if (!View.ContainsKey(entity)) throw new InvalidOperationException("Unknown chapter entity.");
         if (entity.Get<SpatialProperty>() is not null && SpaceOf(entity) != Space[Where(Det)]) throw new InvalidOperationException("The object is not in the current space.");
         var observed=Rt.Observe(Det.Soul,[View[entity]],Now);
         Det.M[entity]=observed.Single();DetSaw(entity);
-        if(entity==Valve)return Get(entity,T.Work)>0?"阀门已有修理的痕迹。":"阀门还没有修好。";
-        if(entity==RelayPost)return Get(entity,T.Worked)>0?"中继站留下了操作痕迹。":"中继站未见操作痕迹。";
         return Describe(entity);
     }
 

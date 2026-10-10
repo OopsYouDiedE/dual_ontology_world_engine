@@ -2617,7 +2617,7 @@ public static class Chapter1CompiledDialogue
                             },
                             {
                               "op": "literal",
-                              "value": "如实·否认"
+                              "value": "如实·没把握"
                             }
                           ]
                         },
@@ -2626,9 +2626,17 @@ public static class Chapter1CompiledDialogue
                             "op": "line",
                             "speaker": "霍铎",
                             "mood": "",
-                            "text": "今天早上才见。我只记得上船。",
+                            "text": "说不准。",
                             "voice_clip": "",
-                            "line_id": "topic.早已相熟.003"
+                            "line_id": "topic.早已相熟.001"
+                          },
+                          {
+                            "op": "line",
+                            "speaker": "霍铎",
+                            "mood": "",
+                            "text": "这块石板，我拿着顺手。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.002"
                           }
                         ],
                         "else": [
@@ -2653,7 +2661,7 @@ public static class Chapter1CompiledDialogue
                                 },
                                 {
                                   "op": "literal",
-                                  "value": "如实·没把握"
+                                  "value": "如实·否认"
                                 }
                               ]
                             },
@@ -2662,17 +2670,9 @@ public static class Chapter1CompiledDialogue
                                 "op": "line",
                                 "speaker": "霍铎",
                                 "mood": "",
-                                "text": "说不准。",
+                                "text": "今天早上才见。我只记得上船。",
                                 "voice_clip": "",
-                                "line_id": "topic.早已相熟.001"
-                              },
-                              {
-                                "op": "line",
-                                "speaker": "霍铎",
-                                "mood": "",
-                                "text": "这块石板，我拿着顺手。",
-                                "voice_clip": "",
-                                "line_id": "topic.早已相熟.002"
+                                "line_id": "topic.早已相熟.003"
                               }
                             ],
                             "else": [
@@ -3530,7 +3530,7 @@ public static class Chapter1CompiledDialogue
                             },
                             {
                               "op": "literal",
-                              "value": "如实·否认"
+                              "value": "如实·没把握"
                             }
                           ]
                         },
@@ -3539,9 +3539,17 @@ public static class Chapter1CompiledDialogue
                             "op": "line",
                             "speaker": "沈鼎",
                             "mood": "",
-                            "text": "罐子是老罐子。人嘛，我今早才认的。",
+                            "text": "一层面痕，就是喂过一回。",
                             "voice_clip": "",
-                            "line_id": "topic.早已相熟.006"
+                            "line_id": "topic.早已相熟.004"
+                          },
+                          {
+                            "op": "line",
+                            "speaker": "沈鼎",
+                            "mood": "",
+                            "text": "罐子是我喂的，没错。可跟谁一起喝的茶，我想不起来。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.005"
                           }
                         ],
                         "else": [
@@ -3566,7 +3574,7 @@ public static class Chapter1CompiledDialogue
                                 },
                                 {
                                   "op": "literal",
-                                  "value": "如实·没把握"
+                                  "value": "如实·否认"
                                 }
                               ]
                             },
@@ -3575,17 +3583,9 @@ public static class Chapter1CompiledDialogue
                                 "op": "line",
                                 "speaker": "沈鼎",
                                 "mood": "",
-                                "text": "一层面痕，就是喂过一回。",
+                                "text": "罐子是老罐子。人嘛，我今早才认的。",
                                 "voice_clip": "",
-                                "line_id": "topic.早已相熟.004"
-                              },
-                              {
-                                "op": "line",
-                                "speaker": "沈鼎",
-                                "mood": "",
-                                "text": "罐子是我喂的，没错。可跟谁一起喝的茶，我想不起来。",
-                                "voice_clip": "",
-                                "line_id": "topic.早已相熟.005"
+                                "line_id": "topic.早已相熟.006"
                               }
                             ],
                             "else": [
@@ -4406,7 +4406,7 @@ public static class Chapter1CompiledDialogue
                             },
                             {
                               "op": "literal",
-                              "value": "如实·否认"
+                              "value": "如实·没把握"
                             }
                           ]
                         },
@@ -4415,9 +4415,17 @@ public static class Chapter1CompiledDialogue
                             "op": "line",
                             "speaker": "苏泠",
                             "mood": "",
-                            "text": "我只认得今天早上的你们。",
+                            "text": "……我说不上来。",
                             "voice_clip": "",
-                            "line_id": "topic.早已相熟.009"
+                            "line_id": "topic.早已相熟.007"
+                          },
+                          {
+                            "op": "line",
+                            "speaker": "苏泠",
+                            "mood": "",
+                            "text": "可那杯茶，他没问就没放糖。",
+                            "voice_clip": "",
+                            "line_id": "topic.早已相熟.008"
                           }
                         ],
                         "else": [
@@ -4442,7 +4450,7 @@ public static class Chapter1CompiledDialogue
                                 },
                                 {
                                   "op": "literal",
-                                  "value": "如实·没把握"
+                                  "value": "如实·否认"
                                 }
                               ]
                             },
@@ -4451,17 +4459,9 @@ public static class Chapter1CompiledDialogue
                                 "op": "line",
                                 "speaker": "苏泠",
                                 "mood": "",
-                                "text": "……我说不上来。",
+                                "text": "我只认得今天早上的你们。",
                                 "voice_clip": "",
-                                "line_id": "topic.早已相熟.007"
-                              },
-                              {
-                                "op": "line",
-                                "speaker": "苏泠",
-                                "mood": "",
-                                "text": "可那杯茶，他没问就没放糖。",
-                                "voice_clip": "",
-                                "line_id": "topic.早已相熟.008"
+                                "line_id": "topic.早已相熟.009"
                               }
                             ],
                             "else": [

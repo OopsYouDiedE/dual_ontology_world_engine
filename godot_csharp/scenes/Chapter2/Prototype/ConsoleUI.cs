@@ -29,7 +29,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     public int CardCell { get; private set; }
     private int _logShown, _debugShown;
     private readonly List<int> _newsOrder = [];
-    private void W(string s = "") => output.WriteLine(Chapter2Content.PlayerText(s));
+    private void W(string s = "") => output.WriteLine(g.RenderText(s));
 
     // ------------------------------------------------------------ 命令表 --
 
@@ -422,56 +422,9 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     // ------------------------------------------------------------ 查看 --
 
-    // STORY-HARDCODE[CH2-023][text][production]: 帮助展示具体人名、物证提示与本章行动例句。
     private void Help()
     {
-        W("""
-          —— 不占时段（随时可看）——
-            状态                 你的处境、学过的课、答应别人的事
-            笔记 [某人]          人际笔记：他认了你的哪条规矩、他嘴上向着谁、他常与谁同处（只记你亲见亲闻的）
-            规矩                 你知道的规矩。称呼（甲、乙……）是你自己记的，后面的命令里可以用
-            传播 [称呼]          你的规矩传到了谁：当面讲过谁、谁跟你说他从哪里听来的、你亲眼看见谁讲给谁
-            清晨 [第N夜]         某一夜之后的痕迹：细看过的写全，路过的只记明显的变化，没去过的只给地点
-            重演 …               假设昨夜某人认/不认某条规矩、在/不在某处，重放一夜，与你读到的痕迹对照
-                                 （只写“重演”会列出可选的假设；“重演 1 3”选其中几项；
-                                  也可直接写：重演 茉拉 认 甲 / 重演 雀儿 在 后勤院；可加“第3夜”）
-            消息                 你听到的消息（带序号，“转告”用）
-            公告                 你看过的公告板
-            物件                 能细看的东西与地点
-            同行                 你见过谁常和谁在一处
-            证物                 你手里可以出示的东西（对质时也能用）
-            拼规矩               拼规矩的五格选项
-            打赌 某人 谁 何处 [称呼]   和身边的某人打赌“今晚谁会去何处”；说中了，他认你的那条规矩（每天一次）
-          —— 占一个时段（白天每个时段只能做一件事）——
-            歇                   什么也不做
-            上课 [话题 精确|含糊]  上课（上午）；课后可以提问
-            领粮                 去配给台领今天的口粮（午间、傍晚开粮）
-            查 物件|地点          细看一处：同一区域的痕迹一并看
-            同去 某人 物件|地点   请某人一起去看（同去的人就亲眼见过）
-            请 某人 事            请人做事：开粮 煮粥 照看病人 修门闩 修温室 上课 领粮 补记台账 挑水 来中央厅 清点 夜巡 守名录库
-            问 某人               当面问他知道什么（他只说自己看见、听见的）
-            交钥匙 持钥人 交给谁   请拿着粮仓钥匙的人交出去
-            转告 某人 消息序号     把你知道的一条消息告诉他
-            讲 某人 [五格|称呼]   当面对他讲一条规矩（不写五格就按提示选；写称呼就讲一条已有的规矩）
-            贴 地点 [五格]        把一条规矩贴到某处的公告板（看到的人多，但不如当面有分量）
-            修温室 甲 乙          请两个人下午一起修温室
-            开库 甲 乙 丙 …       请人来名录库前厅试开那道门
-            帮 某人               帮他干一个时段的活，或兑现答应他的事
-            分粮 某人             把你今天的口粮给他
-            调停                  （第 2 日午间）调停配给台前的争执
-            片面告知 某人 关于谁   只说一半实话（会被记下）
-            对质                  第 3 日傍晚，中央厅的公开对质
-            重开对质              第 4 日之后：援引共同规则“公开指控须附可检查的材料”，把人请回中央厅再对一次
-            认错                  当众承认你说过的片面话（要被揭穿过才用得上）
-          —— 夜里 ——
-            睡                    睡下
-            守夜 地点             守在某处一夜（只看得见身影、听得见动静）
-          守夜只观察，不会拦住别人。有人夜里凑齐机关便可能私开名录库，最后投票无法撤回已发生的事。
-          白天可以请人“守名录库”、讲规则或张贴公告干预；是否奏效，要看谁接受、谁实际行动，次晨查痕迹确认。
-          温室过红线后可以在上午写“上课 温室 精确”，问清泄压方法；修理仍须两人实际协作。
-          人名：霍铎 沈鼎 苏泠 卢西安 顾平章 雀儿 沃德 赛尔玛 阮清越 伊莲娜 莫兰 维罗妮卡 贝尔特朗 玛格丽特 茉拉
-          地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 文契寝区 星仪寝区 后勤寝区
-          """);
+        W(Chapter2Design.Text("表达.帮助"));
         if (debugAllowed) W("  调试（仅 --debug）：调试 开|关　真相 某人");
     }
 
@@ -491,21 +444,21 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         foreach (var grp in g.Things_.Where(t => !roomScoped || HasRoom && t.Value.Place == g.Where(g.Det)).GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
     }
 
-    // STORY-HARDCODE[CH2-081][text][production]: 状态页显示本案特定证物、指控与石碑阅读结果。
     private void Status()
     {
         var det = g.Det;
-        W($"{Chapter2Content.TimeName(g.Day, g.Slot)}。你在{Names.Of(g.Where(det))}。{(Game.Get(det.Body, T.Hungry) > 0 ? "你饿着（下午做不了事）。" : "")}今天{(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没")}领到口粮。");
-        W($"学过的课：{(det.Lessons.Count == 0 ? "无" : string.Join("、", det.Lessons.Select(l => $"《{Game.Lessons[l.Key].Title}》{(l.Value ? "" : "（听人转述，可能走样）")}")))}");
+        string X(string key, params (string, object?)[] args) => Chapter2Design.Text("表达.状态." + key, args);
+        W(X("处境", ("时", Chapter2Content.TimeName(g.Day, g.Slot)), ("地", Names.Of(g.Where(det))), ("饿", Game.Get(det.Body, T.Hungry) > 0 ? X("饥饿") : ""), ("已", X(Game.Get(det.Body, T.Fed) > 0 ? "已经" : "还没"))));
+        W(X("课程", ("内容", det.Lessons.Count == 0 ? X("无") : string.Join("、", det.Lessons.Select(l => X("课项", ("课", Game.Lessons[l.Key].Title), ("走样", l.Value ? "" : X("走样"))))))));
         if (g.Day >= Game.CaseDay)
         {
             var ev = g.DetEvidence();
-            W("台账那件事，你查过的：" + (ev.Count == 0 ? "还没有" : string.Join("、", ev.Select(i => CaseTraces.Labels[i]))) + (g.DetAsked.Count > 0 ? "；当面问过：" + string.Join("、", g.DetAsked.Select(Names.Of)) : ""));
+            W(X("证物", ("内容", ev.Count == 0 ? X("还没有") : string.Join("、", ev.Select(i => CaseTraces.Labels[i]))), ("问过", g.DetAsked.Count > 0 ? X("问过", ("名单", string.Join("、", g.DetAsked.Select(Names.Of)))) : "")));
         }
-        if (g.Accused is { } acc) W(g.QuerCleared ? $"{Names.Of(acc)}已经洗清。" : g.QuerOstracized ? $"{Names.Of(acc)}被当成私取之人，搬出了寝区。" : "沃德的指控还悬着。");
-        foreach (var (who, due, done) in g.Promises.Where(p => !p.Done)) W($"答应过：第{due}日前替{Names.Of(who)}办一件事（用“帮 {Names.Of(who)}”兑现）");
-        foreach (var (w, right) in g.Wagers) W($"赌约：{Chapter2Content.DayName(w.Day)}和{Names.Of(w.With)}赌{Names.Of(w.Who)}夜里去{Names.Of(w.Where)}——{(right is null ? "待揭晓" : right.Value ? "说中" : "没说中")}");
-        if (g.SteleRubbed) W("你读过石碑上的第九、第十条。");
+        if (g.Accused is { } acc) W(X(g.QuerCleared ? "洗清" : g.QuerOstracized ? "排斥" : "指控", ("人", Names.Of(acc))));
+        foreach (var (who, due, done) in g.Promises.Where(p => !p.Done)) W(X("答应", ("日", due), ("人", Names.Of(who))));
+        foreach (var (w, right) in g.Wagers) W(X("赌约", ("日", Chapter2Content.DayName(w.Day)), ("同", Names.Of(w.With)), ("谁", Names.Of(w.Who)), ("地", Names.Of(w.Where)), ("结果", X(right is null ? "待揭晓" : right.Value ? "说中" : "没说中"))));
+        if (g.SteleRubbed) W(X("石碑"));
     }
 
     /// <summary>人际笔记：只用侦探亲见亲闻的东西；把“认了你的哪条规矩”和“嘴上向着谁”“常与谁同处”分开记（§12 第 3 条）。</summary>

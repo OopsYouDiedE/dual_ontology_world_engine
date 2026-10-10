@@ -10846,6 +10846,736 @@
             }
           ]
         },
+        "expression": {
+          "impression_insight": {
+            "trusted": {
+              "text": "表达.信判断",
+              "when": {
+                "insight": ">=2"
+              }
+            }
+          },
+          "stance_rebuttal": {
+            "open": {
+              "text": "立场话.驳.各取其物",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach"
+              }
+            },
+            "committee": {
+              "text": "立场话.驳.委员会",
+              "priority": 1,
+              "when": {
+                "family": "Committee"
+              }
+            },
+            "sealed": {
+              "text": "立场话.驳.封闭",
+              "priority": 1,
+              "when": {
+                "family": "Sealed"
+              }
+            },
+            "other": {
+              "text": "立场话.驳.其他"
+            }
+          },
+          "identity.voice": {
+            "known": {
+              "text": "表达.identity.teacher.known",
+              "priority": 1,
+              "when": {
+                "tag:voice:IdentityKnown": ">0"
+              }
+            },
+            "projection": {
+              "text": "表达.声音投影名"
+            }
+          },
+          "closing_case": {
+            "none": {
+              "text": "表达.结案.无人",
+              "when": {
+                "accused": false
+              }
+            },
+            "cleared": {
+              "text": "表达.结案.洗清",
+              "priority": 2,
+              "when": {
+                "accused": true,
+                "cleared": true
+              }
+            },
+            "ostracized": {
+              "text": "表达.结案.排斥",
+              "priority": 1,
+              "when": {
+                "accused": true,
+                "ostracized": true
+              }
+            },
+            "unresolved": {
+              "text": "表达.结案.搁置",
+              "when": {
+                "accused": true
+              }
+            }
+          },
+          "identity.teacher": {
+            "known": {
+              "text": "表达.identity.teacher.known",
+              "when": {
+                "tag:voice:IdentityKnown": ">0"
+              },
+              "priority": 1
+            },
+            "unknown": {
+              "text": "表达.identity.teacher.unknown"
+            }
+          },
+          "questions": {
+            "0_vague": {
+              "text": "表达.questions.0_vague",
+              "when": {
+                "topic": 0,
+                "precise": false
+              }
+            },
+            "0_precise": {
+              "text": "表达.questions.0_precise",
+              "when": {
+                "topic": 0,
+                "precise": true,
+                "listener.lesson:14": true
+              },
+              "praised": true
+            },
+            "0_missing": {
+              "text": "表达.questions.0_missing",
+              "when": {
+                "topic": 0,
+                "precise": true,
+                "listener.lesson:14": false
+              }
+            },
+            "1_vague": {
+              "text": "表达.questions.1_vague",
+              "when": {
+                "topic": 1,
+                "precise": false
+              }
+            },
+            "1_precise": {
+              "text": "表达.questions.1_precise",
+              "when": {
+                "topic": 1,
+                "precise": true
+              },
+              "praised": true
+            },
+            "2_vague": {
+              "text": "表达.questions.2_vague",
+              "when": {
+                "topic": 2,
+                "precise": false
+              }
+            },
+            "2_precise": {
+              "text": "表达.questions.2_precise",
+              "when": {
+                "topic": 2,
+                "precise": true,
+                "listener.lesson:12": true
+              },
+              "praised": true,
+              "warning": true
+            },
+            "2_missing": {
+              "text": "表达.questions.2_missing",
+              "when": {
+                "topic": 2,
+                "precise": true,
+                "listener.lesson:12": false
+              }
+            },
+            "3_vague": {
+              "text": "表达.questions.3_vague",
+              "when": {
+                "topic": 3,
+                "precise": false
+              }
+            },
+            "3_precise": {
+              "text": "表达.questions.3_precise",
+              "when": {
+                "topic": 3,
+                "precise": true,
+                "listener.lesson:13": true
+              },
+              "praised": true
+            },
+            "3_missing": {
+              "text": "表达.questions.3_missing",
+              "when": {
+                "topic": 3,
+                "precise": true,
+                "listener.lesson:13": false
+              }
+            },
+            "4_vague": {
+              "text": "表达.questions.4_vague",
+              "when": {
+                "topic": 4,
+                "precise": false
+              }
+            },
+            "4_refuse": {
+              "text": "表达.questions.4_refuse",
+              "when": {
+                "topic": 4,
+                "precise": true
+              },
+              "refused": true
+            },
+            "5_refuse": {
+              "text": "表达.questions.5_refuse",
+              "when": {
+                "topic": 5
+              },
+              "refused": true
+            },
+            "6_refuse": {
+              "text": "表达.questions.6_refuse",
+              "when": {
+                "topic": 6
+              },
+              "refused": true
+            },
+            "7": {
+              "text": "表达.questions.7",
+              "when": {
+                "topic": 7
+              }
+            }
+          },
+          "stance": {
+            "open_Huo": {
+              "text": "立场话.各取其物.Huo",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Huo"
+              }
+            },
+            "open_Su": {
+              "text": "立场话.各取其物.Su",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Su"
+              }
+            },
+            "open_Quer": {
+              "text": "立场话.各取其物.Quer",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Quer"
+              }
+            },
+            "open_Shen": {
+              "text": "立场话.各取其物.Shen",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Shen"
+              }
+            },
+            "open_Lucian": {
+              "text": "立场话.各取其物.Lucian",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Lucian"
+              }
+            },
+            "open_Elena": {
+              "text": "立场话.各取其物.Elena",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Elena"
+              }
+            },
+            "player": {
+              "text": "立场话.侦探方案",
+              "priority": 2,
+              "when": {
+                "author": "Det"
+              }
+            },
+            "open": {
+              "text": "立场话.各取其物",
+              "priority": 0,
+              "when": {
+                "family": "OpenEach"
+              }
+            },
+            "committee_own": {
+              "text": "立场话.委员会自述",
+              "priority": 1,
+              "when": {
+                "family": "Committee",
+                "speaker": "Ward"
+              }
+            },
+            "committee": {
+              "text": "立场话.委员会附和",
+              "priority": 0,
+              "when": {
+                "family": "Committee"
+              }
+            },
+            "sealed_own": {
+              "text": "立场话.封闭自述",
+              "priority": 1,
+              "when": {
+                "family": "Sealed",
+                "speaker": "Gu"
+              }
+            },
+            "sealed": {
+              "text": "立场话.封闭附和",
+              "priority": 0,
+              "when": {
+                "family": "Sealed"
+              }
+            }
+          },
+          "slant": {
+            "own_quer": {
+              "text": "知识片段.走样私取自述",
+              "when": {
+                "about": "Quer",
+                "own": true
+              }
+            },
+            "quer": {
+              "text": "知识片段.走样私取",
+              "when": {
+                "about": "Quer",
+                "own": false
+              }
+            },
+            "own_other": {
+              "text": "知识片段.走样惯常自述",
+              "when": {
+                "about": "!=Quer",
+                "own": true
+              }
+            },
+            "other": {
+              "text": "知识片段.走样惯常",
+              "when": {
+                "about": "!=Quer",
+                "own": false
+              }
+            }
+          },
+          "impressions": {
+            "Ward_trusted": {
+              "text": "表达.impressions.Ward_trusted",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Ward_polite": {
+              "text": "表达.impressions.Ward_polite",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Ward_quiet": {
+              "text": "表达.impressions.Ward_quiet",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Ward_distant": {
+              "text": "表达.impressions.Ward_distant",
+              "when": {
+                "speaker": "Ward",
+                "credibility": "<0"
+              }
+            },
+            "Quer_trusted": {
+              "text": "表达.impressions.Quer_trusted",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Quer_polite": {
+              "text": "表达.impressions.Quer_polite",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Quer_quiet": {
+              "text": "表达.impressions.Quer_quiet",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Quer_distant": {
+              "text": "表达.impressions.Quer_distant",
+              "when": {
+                "speaker": "Quer",
+                "credibility": "<0"
+              }
+            },
+            "Mora_trusted": {
+              "text": "表达.impressions.Mora_trusted",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Mora_polite": {
+              "text": "表达.impressions.Mora_polite",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Mora_quiet": {
+              "text": "表达.impressions.Mora_quiet",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Mora_distant": {
+              "text": "表达.impressions.Mora_distant",
+              "when": {
+                "speaker": "Mora",
+                "credibility": "<0"
+              }
+            },
+            "Huo_trusted": {
+              "text": "表达.impressions.Huo_trusted",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Huo_polite": {
+              "text": "表达.impressions.Huo_polite",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Huo_quiet": {
+              "text": "表达.impressions.Huo_quiet",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Huo_distant": {
+              "text": "表达.impressions.Huo_distant",
+              "when": {
+                "speaker": "Huo",
+                "credibility": "<0"
+              }
+            },
+            "Ruan_trusted": {
+              "text": "表达.impressions.Ruan_trusted",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Ruan_polite": {
+              "text": "表达.impressions.Ruan_polite",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Ruan_quiet": {
+              "text": "表达.impressions.Ruan_quiet",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Ruan_distant": {
+              "text": "表达.impressions.Ruan_distant",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": "<0"
+              }
+            },
+            "Margaret_trusted": {
+              "text": "表达.impressions.Margaret_trusted",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Margaret_polite": {
+              "text": "表达.impressions.Margaret_polite",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Margaret_quiet": {
+              "text": "表达.impressions.Margaret_quiet",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Margaret_distant": {
+              "text": "表达.impressions.Margaret_distant",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": "<0"
+              }
+            }
+          },
+          "describe": {
+            "valve_work": {
+              "text": "表达.describe.valve_work",
+              "when": {
+                "object": "object.Valve",
+                "tag:object.Valve:Work": ">0"
+              }
+            },
+            "valve_none": {
+              "text": "表达.describe.valve_none",
+              "when": {
+                "object": "object.Valve",
+                "tag:object.Valve:Work": 0
+              }
+            },
+            "relay_work": {
+              "text": "表达.describe.relay_work",
+              "when": {
+                "object": "object.RelayPost",
+                "tag:object.RelayPost:Worked": ">0"
+              }
+            },
+            "relay_none": {
+              "text": "表达.describe.relay_none",
+              "when": {
+                "object": "object.RelayPost",
+                "tag:object.RelayPost:Worked": 0
+              }
+            },
+            "bowl_residue": {
+              "text": "表达.describe.bowl_residue",
+              "when": {
+                "object": "object.Bowl",
+                "tag:object.Bowl:Residue": ">0"
+              }
+            },
+            "bowl_clean": {
+              "text": "表达.describe.bowl_clean",
+              "when": {
+                "object": "object.Bowl",
+                "tag:object.Bowl:Residue": 0
+              }
+            },
+            "blackboard": {
+              "text": "表达.describe.blackboard",
+              "when": {
+                "object": "object.Blackboard",
+                "tag:object.Blackboard:Chalk": ">0"
+              }
+            },
+            "blackboard_clean": {
+              "text": "表达.describe.blackboard_clean",
+              "when": {
+                "object": "object.Blackboard",
+                "tag:object.Blackboard:Chalk": 0
+              }
+            },
+            "stele": {
+              "text": "表达.describe.stele",
+              "when": {
+                "object": "object.Stele"
+              }
+            },
+            "gauge_red": {
+              "text": "表达.describe.gauge_red",
+              "when": {
+                "object": "object.Gauge",
+                "tag:object.Gauge:Pressure": ">=2"
+              }
+            },
+            "gauge": {
+              "text": "表达.describe.gauge",
+              "when": {
+                "object": "object.Gauge",
+                "tag:object.Gauge:Pressure": "<2"
+              }
+            },
+            "base_crack": {
+              "text": "表达.describe.base_crack",
+              "when": {
+                "object": "object.Base",
+                "tag:object.Base:Crack": ">0"
+              }
+            },
+            "base": {
+              "text": "表达.describe.base",
+              "when": {
+                "object": "object.Base",
+                "tag:object.Base:Crack": 0
+              }
+            },
+            "archive": {
+              "text": "表达.describe.archive",
+              "when": {
+                "object": "object.ArchiveDoor"
+              }
+            },
+            "oil": {
+              "text": "表达.describe.oil",
+              "when": {
+                "object": "object.OilStore"
+              }
+            }
+          },
+          "direction": {
+            "DormLife": {
+              "text": "表达.direction.DormLife",
+              "when": {
+                "place": "DormLife"
+              }
+            },
+            "DormW": {
+              "text": "表达.direction.DormW",
+              "when": {
+                "place": "DormW"
+              }
+            },
+            "DormS": {
+              "text": "表达.direction.DormS",
+              "when": {
+                "place": "DormS"
+              }
+            },
+            "DormL": {
+              "text": "表达.direction.DormL",
+              "when": {
+                "place": "DormL"
+              }
+            }
+          },
+          "opening": {
+            "committee": {
+              "text": "表达.opening.committee",
+              "when": {
+                "family": "Committee"
+              },
+              "priority": 1
+            },
+            "each": {
+              "text": "表达.opening.each",
+              "when": {
+                "family": "OpenEach"
+              },
+              "priority": 1
+            },
+            "other": {
+              "text": "表达.opening.other"
+            }
+          },
+          "opening_account": {
+            "witnesses": {
+              "text": "表达.opening_account.witnesses",
+              "when": {
+                "account": 3
+              },
+              "priority": 1
+            },
+            "ledger1": {
+              "text": "表达.opening_account.ledger1",
+              "when": {
+                "account": 1
+              },
+              "priority": 1
+            },
+            "ledger2": {
+              "text": "表达.opening_account.ledger2",
+              "when": {
+                "account": 2
+              },
+              "priority": 1
+            },
+            "none": {
+              "text": "表达.opening_account.none"
+            }
+          },
+          "opening_night": {
+            "day": {
+              "text": "表达.opening_night.day",
+              "when": {
+                "exception": 4
+              }
+            },
+            "pair": {
+              "text": "表达.opening_night.pair",
+              "when": {
+                "exception": 3
+              }
+            }
+          },
+          "opening_behavior": {
+            "each": {
+              "text": "表达.opening_behavior.each",
+              "when": {
+                "behavior": 8
+              }
+            },
+            "committee": {
+              "text": "表达.opening_behavior.committee",
+              "when": {
+                "behavior": 6
+              }
+            }
+          }
+        },
         "people": {
           "Det": {
             "sprite": "detective",
@@ -11393,7 +12123,172 @@
           "资源.场点.granary.latch.标签": "门闩",
           "资源.场点.granary.stock.标签": "存粮",
           "资源.场点.greenhouse.valve.标签": "阀门",
-          "资源.场点.greenhouse.gauge.标签": "压力表"
+          "资源.场点.greenhouse.gauge.标签": "压力表",
+          "表达.声音投影名": "{投影名}",
+          "表达.结案.无人": "没有人被当众指控",
+          "表达.结案.洗清": "{人}洗清了冤屈，住回寝区",
+          "表达.结案.排斥": "{人}被当成私取之人，搬出寝区独宿",
+          "表达.结案.搁置": "{人}的事没有人再提",
+          "表达.夜时.0": "入夜不久",
+          "表达.夜时.1": "夜深时",
+          "表达.夜时.2": "后半夜",
+          "表达.报告.标题": "【章节结束状态（交第三章）】",
+          "表达.报告.印象": "各人心中的侦探（可信/见识）：{内容}",
+          "表达.报告.派系": "派系：领头 {领头}｜{成员}｜共享规则：{规则}",
+          "表达.报告.名录库": "名录库：{结果}",
+          "表达.报告.钩欲": "钩与欲望：{内容}",
+          "表达.报告.钩欲项": "{人}欲{欲}钩{钩}",
+          "表达.报告.课程": "已学课程：{内容}",
+          "表达.报告.物资": "物资：口粮 {粮}，灯油 {油}，药品 {药}；温室{温室}",
+          "表达.报告.修好": "已修好",
+          "表达.报告.未修": "未修好",
+          "表达.报告.案件": "《少了一份》：{结果}；新规则：{规矩}；共同规则：{共同}",
+          "表达.报告.无人指控": "无人被指控",
+          "表达.报告.洗清": "{人}洗清",
+          "表达.报告.排斥": "{人}被排斥",
+          "表达.报告.未对质": "未对质",
+          "表达.报告.无": "无",
+          "表达.报告.成立": "成立",
+          "表达.报告.未成立": "未成立",
+          "表达.报告.操纵": "操纵记录：{内容}",
+          "表达.报告.操纵项": "D{日} 对{人}：{手段}{揭穿}",
+          "表达.报告.揭穿": "（已揭穿）",
+          "表达.报告.未实现": "三组旧怨：原型未实现（见报告）",
+          "表达.状态.处境": "{时}。你在{地}。{饿}今天{已}领到口粮。",
+          "表达.状态.饥饿": "你饿着（下午做不了事）。",
+          "表达.状态.已经": "已经",
+          "表达.状态.还没": "还没",
+          "表达.状态.课程": "学过的课：{内容}",
+          "表达.状态.无": "无",
+          "表达.状态.课项": "《{课}》{走样}",
+          "表达.状态.走样": "（听人转述，可能走样）",
+          "表达.状态.证物": "台账那件事，你查过的：{内容}{问过}",
+          "表达.状态.还没有": "还没有",
+          "表达.状态.问过": "；当面问过：{名单}",
+          "表达.状态.洗清": "{人}已经洗清。",
+          "表达.状态.排斥": "{人}被当成私取之人，搬出了寝区。",
+          "表达.状态.指控": "沃德的指控还悬着。",
+          "表达.状态.答应": "答应过：第{日}日前替{人}办一件事（用“帮 {人}”兑现）",
+          "表达.状态.赌约": "赌约：{日}和{同}赌{谁}夜里去{地}——{结果}",
+          "表达.状态.待揭晓": "待揭晓",
+          "表达.状态.说中": "说中",
+          "表达.状态.没说中": "没说中",
+          "表达.状态.石碑": "你读过石碑上的第九、第十条。",
+          "表达.标题": "第十一课",
+          "表达.自己": "自己",
+          "表达.自己听者": "你自己",
+          "表达.终局标题": "安眠者有福 · 完",
+          "表达.返回标题": "返回标题（Enter）",
+          "表达.答疑话题": [
+            "名录库",
+            "唤名",
+            "温室",
+            "封存匣",
+            "守则",
+            "裂纹",
+            "导师",
+            "你想要什么"
+          ],
+          "表达.identity.teacher.known": "恶魔",
+          "表达.identity.teacher.unknown": "教师",
+          "表达.questions.0_vague": "封存之物存于名录库，凡学员皆可取回己物。",
+          "表达.questions.0_precise": "取回，即重新接通。接通之后，我离诸位更近一些。寻回者，自负其果——守则第一条写着。",
+          "表达.questions.0_missing": "此事《异象与记忆》会讲。现在讲，诸位听不懂。",
+          "表达.questions.1_vague": "勿应即可。",
+          "表达.questions.1_precise": "应答即触物回忆，记一枚钩；有钩者，更难抗拒下一次。",
+          "表达.questions.2_vague": "指针过红线时，勿开顶窗。",
+          "表达.questions.2_precise": "先在阀门泄压，指针回落到红线下再开顶窗。红线之上开窗，玻璃会碎。",
+          "表达.questions.2_missing": "你还不认得那张图。学过《传声与机械》再问。",
+          "表达.questions.3_vague": "每只匣子只应其主。",
+          "表达.questions.3_precise": "须以言灵语法念出本名：名词居首，条件居中，动词收尾。念错一个字，它就当你不在。",
+          "表达.questions.3_missing": "你还没有那样的词。",
+          "表达.questions.4_vague": "我所立之规，皆张贴于中央厅的公告框。四条，一字不多。",
+          "表达.questions.4_refuse": "守则之外的事，此知会伤及心志。",
+          "表达.questions.5_refuse": "此知会伤及心志。",
+          "表达.questions.6_refuse": "此知会伤及心志。",
+          "表达.questions.7": "我想教。诸位想学。我们要的东西，没有那么不同。",
+          "表达.impressions.Ward_trusted": "说话不避着你",
+          "表达.impressions.Ward_polite": "对你还算客气",
+          "表达.impressions.Ward_quiet": "对你话不多",
+          "表达.impressions.Ward_distant": "明显不想跟你多说",
+          "表达.impressions.Quer_trusted": "说话不避着你",
+          "表达.impressions.Quer_polite": "对你还算客气",
+          "表达.impressions.Quer_quiet": "对你话不多",
+          "表达.impressions.Quer_distant": "明显不想跟你多说",
+          "表达.impressions.Mora_trusted": "说话不避着你",
+          "表达.impressions.Mora_polite": "对你还算客气",
+          "表达.impressions.Mora_quiet": "对你话不多",
+          "表达.impressions.Mora_distant": "明显不想跟你多说",
+          "表达.impressions.Huo_trusted": "说话不避着你",
+          "表达.impressions.Huo_polite": "对你还算客气",
+          "表达.impressions.Huo_quiet": "对你话不多",
+          "表达.impressions.Huo_distant": "明显不想跟你多说",
+          "表达.impressions.Ruan_trusted": "说话不避着你",
+          "表达.impressions.Ruan_polite": "对你还算客气",
+          "表达.impressions.Ruan_quiet": "对你话不多",
+          "表达.impressions.Ruan_distant": "明显不想跟你多说",
+          "表达.impressions.Margaret_trusted": "说话不避着你",
+          "表达.impressions.Margaret_polite": "对你还算客气",
+          "表达.impressions.Margaret_quiet": "对你话不多",
+          "表达.impressions.Margaret_distant": "明显不想跟你多说",
+          "表达.信判断": "，信你的判断",
+          "表达.describe.valve_work": "阀门已有修理的痕迹。",
+          "表达.describe.valve_none": "阀门还没有修好。",
+          "表达.describe.relay_work": "中继站留下了操作痕迹。",
+          "表达.describe.relay_none": "中继站未见操作痕迹。",
+          "表达.describe.bowl_residue": "莫兰床边一只空碗，碗底有粥渍{温粥}。",
+          "表达.describe.bowl_clean": "碗是干净的。",
+          "表达.describe.blackboard": "黑板上有 {粉笔} 堂课的粉笔字；讲台前的灰上有窄底皮鞋印。",
+          "表达.describe.blackboard_clean": "黑板是干净的。",
+          "表达.describe.stele": "铺石顺坡，几级台阶。石面上刻着磨平的纹样，看不出原本写的是什么。",
+          "表达.describe.gauge_red": "指针已经过了红线。",
+          "表达.describe.gauge": "指针还在红线以下。",
+          "表达.describe.base_crack": "中央基座上有一道新裂纹，像是从里面撑开的。",
+          "表达.describe.base": "中央基座完好，石面上光洁，没有刻字。",
+          "表达.describe.archive": "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。",
+          "表达.describe.oil": "油库：灯油 {油}。",
+          "表达.存粮": "存粮还剩 {数} 份；门闩{状态}。",
+          "表达.闩松": "松动，一推就开",
+          "表达.闩修": "有新的工具痕，已经紧固",
+          "表达.闩好": "完好",
+          "表达.温粥": "；另有一碗粥还温着",
+          "表达.病床": "莫兰躺着，额头很烫。",
+          "表达.空床": "病床空着。",
+          "表达.空速写": "莫兰的速写本里只有几张颜色练习。",
+          "表达.速写": "莫兰的速写本：{内容}。",
+          "表达.废纸粮": "废纸篓里有一份口粮的包纸和饼屑。",
+          "表达.废纸倒": "废纸篓刚被人倒空过；篓底还粘着几粒饼屑和一角口粮包纸。",
+          "表达.废纸": "废纸篓里只有废纸。",
+          "表达.空公告": "板上什么也没贴。",
+          "表达.公告": "板上贴着：{内容}",
+          "表达.公告项": "「{规矩}」（{作者}）",
+          "表达.代管者": "代管者",
+          "表达.方向": "{地}方向",
+          "表达.数道身影": "还有{数}道身影来去，看不真切",
+          "表达.其他动静": "还有几声别的动静",
+          "表达.无事": "一夜无事。没有人来，也没有声音。",
+          "表达.来": "{时}，{数}个{身量}身影从{地}过来",
+          "表达.去": "{时}，{数}个{身量}身影往{地}去了",
+          "表达.远见": "{时}，远远望见{地}有{数}个{身量}身影",
+          "表达.近声": "{时}，{声}",
+          "表达.远声": "{时}，远远地从{地}那边传来：{声}",
+          "表达.direction.DormLife": "乙区方向",
+          "表达.direction.DormW": "甲区方向",
+          "表达.direction.DormS": "丙区方向",
+          "表达.direction.DormL": "丁区方向",
+          "表达.opening.committee": "沃德拿着钥匙站在门边，{名单}排着队，一个一个登记、一个一个进去。",
+          "表达.opening.each": "门一开，{名单}就涌了进去，没人记账，也没人等谁。",
+          "表达.opening.other": "门开了。",
+          "表达.开门拼规矩": "门开了。{登记}{夜条款}。{行为}",
+          "表达.opening_account.witnesses": "每个进去的人身后都站着两个见证的人，在门边的纸上签了名",
+          "表达.opening_account.ledger1": "门边摆着台账，进去的人一个一个记上名字",
+          "表达.opening_account.ledger2": "门边摆着台账，进去的人一个一个记上名字",
+          "表达.opening_account.none": "没人记账，进去的人各自摸黑找自己的匣子",
+          "表达.opening_night.day": "说好只在白天开，天一擦黑门就合上了",
+          "表达.opening_night.pair": "两人一组进去，一个人不许单独进",
+          "表达.opening_behavior.each": "本人亲取：每人只拿标着自己名字的那一只。",
+          "表达.opening_behavior.committee": "钥匙交给了委员会，取回的人先过一遍登记。",
+          "表达.帮助": "—— 不占时段（随时可看）——\n  状态                 你的处境、学过的课、答应别人的事\n  笔记 [某人]          人际笔记：他认了你的哪条规矩、他嘴上向着谁、他常与谁同处（只记你亲见亲闻的）\n  规矩                 你知道的规矩。称呼（甲、乙……）是你自己记的，后面的命令里可以用\n  传播 [称呼]          你的规矩传到了谁：当面讲过谁、谁跟你说他从哪里听来的、你亲眼看见谁讲给谁\n  清晨 [第N夜]         某一夜之后的痕迹：细看过的写全，路过的只记明显的变化，没去过的只给地点\n  重演 …               假设昨夜某人认/不认某条规矩、在/不在某处，重放一夜，与你读到的痕迹对照\n                       （只写“重演”会列出可选的假设；“重演 1 3”选其中几项；\n                        也可直接写：重演 茉拉 认 甲 / 重演 雀儿 在 后勤院；可加“第3夜”）\n  消息                 你听到的消息（带序号，“转告”用）\n  公告                 你看过的公告板\n  物件                 能细看的东西与地点\n  同行                 你见过谁常和谁在一处\n  证物                 你手里可以出示的东西（对质时也能用）\n  拼规矩               拼规矩的五格选项\n  打赌 某人 谁 何处 [称呼]   和身边的某人打赌“今晚谁会去何处”；说中了，他认你的那条规矩（每天一次）\n—— 占一个时段（白天每个时段只能做一件事）——\n  歇                   什么也不做\n  上课 [话题 精确|含糊]  上课（上午）；课后可以提问\n  领粮                 去配给台领今天的口粮（午间、傍晚开粮）\n  查 物件|地点          细看一处：同一区域的痕迹一并看\n  同去 某人 物件|地点   请某人一起去看（同去的人就亲眼见过）\n  请 某人 事            请人做事：开粮 煮粥 照看病人 修门闩 修温室 上课 领粮 补记台账 挑水 来中央厅 清点 夜巡 守名录库\n  问 某人               当面问他知道什么（他只说自己看见、听见的）\n  交钥匙 持钥人 交给谁   请拿着粮仓钥匙的人交出去\n  转告 某人 消息序号     把你知道的一条消息告诉他\n  讲 某人 [五格|称呼]   当面对他讲一条规矩（不写五格就按提示选；写称呼就讲一条已有的规矩）\n  贴 地点 [五格]        把一条规矩贴到某处的公告板（看到的人多，但不如当面有分量）\n  修温室 甲 乙          请两个人下午一起修温室\n  开库 甲 乙 丙 …       请人来名录库前厅试开那道门\n  帮 某人               帮他干一个时段的活，或兑现答应他的事\n  分粮 某人             把你今天的口粮给他\n  调停                  （第 2 日午间）调停配给台前的争执\n  片面告知 某人 关于谁   只说一半实话（会被记下）\n  对质                  第 3 日傍晚，中央厅的公开对质\n  重开对质              第 4 日之后：援引共同规则“公开指控须附可检查的材料”，把人请回中央厅再对一次\n  认错                  当众承认你说过的片面话（要被揭穿过才用得上）\n—— 夜里 ——\n  睡                    睡下\n  守夜 地点             守在某处一夜（只看得见身影、听得见动静）\n守夜只观察，不会拦住别人。有人夜里凑齐机关便可能私开名录库，最后投票无法撤回已发生的事。\n白天可以请人“守名录库”、讲规则或张贴公告干预；是否奏效，要看谁接受、谁实际行动，次晨查痕迹确认。\n温室过红线后可以在上午写“上课 温室 精确”，问清泄压方法；修理仍须两人实际协作。\n人名：霍铎 沈鼎 苏泠 卢西安 顾平章 雀儿 沃德 赛尔玛 阮清越 伊莲娜 莫兰 维罗妮卡 贝尔特朗 玛格丽特 茉拉\n地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 文契寝区 星仪寝区 后勤寝区"
         },
         "vocab": {
           "groups": [

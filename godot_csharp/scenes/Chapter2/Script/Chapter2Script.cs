@@ -540,11 +540,8 @@ public sealed record InheritedSeed(int Hooks, int Desire, bool KnowsHookCost, IR
 
 
 /// <summary>第二章命令行与 Godot 宿主共用的玩家可见剧情。</summary>
-// STORY-HARDCODE[CH2-015][text][production]: 章节专属教师身份替换与标题常量写在宿主代码中。
 public static class Chapter2Content
 {
-    // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
-    public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
     public static string DayName(int day) => Chapter2Design.DayName(day);
     public static string SlotName(int day, Slot slot) => Chapter2Design.SlotDisplay(day, slot);
     public static string TimeName(int day, Slot slot) => $"{DayName(day)} · {SlotName(day, slot)}";
@@ -556,6 +553,6 @@ public static class Chapter2Content
 public static class Chapter2Script
 {
     public const string Id = "chapter2";
-    public const string Title = "第十一课";
+    public static string Title => Chapter2Design.Text("表达.标题");
     public static Game CreateWorld(GameOptions? options = null) => new(options);
 }

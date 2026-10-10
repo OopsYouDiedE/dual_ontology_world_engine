@@ -655,7 +655,6 @@ public sealed partial class Game
         }
     }
 
-    // STORY-HARDCODE[CH2-066][text][production]: 为本案指控对象选择具名指控反馈。
     private void AccuseSpeech(Person w)
     {
         // 指控以亲见优先（§13 第 3 条）：先指自己亲眼看见没记账取粮的人，再依转述与成见。
