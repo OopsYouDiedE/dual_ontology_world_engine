@@ -106,6 +106,9 @@ COMPARE = {"==": "eq", "!=": "ne", ">": "gt", ">=": "gte", "<": "lt", "<=": "lte
 
 # 设定表：块名 -> (CONTENT_TABLES 键或独立属性, 形式)
 TABLES = {
+    "人物兼容编号": ("PERSON_IDS", "constants"),
+    "房间兼容编号": ("ROOM_IDS", "constants"),
+    "重演通路": ("REPLAY_PASSAGES", "records"),
     "表达": ("EXPRESSION", "records"),
     "规则有效期": ("RULE_LIFETIMES", "map"),
     "现场表现": ("PRESENTATION", "records"),
@@ -126,6 +129,7 @@ TABLES = {
     "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
+                "PERSON_IDS", "ROOM_IDS", "REPLAY_PASSAGES",
                 "EXPRESSION",
                 "RULE_LIFETIMES",
                 "PRESENTATION",
@@ -1327,6 +1331,14 @@ def load(path: Path) -> Chapter1Source:
             variable = {"key": rest, "question": f["问题"][0],
                         "options": [item.text[2:].strip() for item in f["选项"][2]],
                         "evidence": split_list(f["证据"][0])}
+            ids = split_list(f["取值编号"][0]) if "取值编号" in f else []
+            bindings = split_list(f["绑定"][0]) if "绑定" in f else []
+            if not ids or len(ids) != len(variable["options"]) or len(bindings) != len(ids):
+                raise StoryError("推演取值编号、绑定与选项数量必须一致。", head.number)
+            if len(set(ids)) != len(ids) or any(not value.strip() for value in ids + bindings):
+                raise StoryError("推演取值编号重复或绑定为空。", head.number)
+            variable["value_ids"] = ids
+            variable["bindings"] = bindings
             variables = source.CONTENT_TABLES.setdefault("VARIABLES", [])
             if any(item["key"] == rest for item in variables):
                 raise StoryError(f"推演变量“{rest}”重复。", head.number)

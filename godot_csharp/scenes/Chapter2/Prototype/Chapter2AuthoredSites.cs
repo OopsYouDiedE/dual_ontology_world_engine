@@ -18,7 +18,7 @@ public static class Chapter2AuthoredSites
             var id=Read("id");var map=Read("map");
             if(string.IsNullOrWhiteSpace(id)||string.IsNullOrWhiteSpace(map)||!ids.Add(map+":"+id))throw new InvalidDataException("Invalid or duplicate authored site: "+id);
             var roomId=Read("room");
-            if(!roomId.StartsWith("world:room.",StringComparison.Ordinal)||!Enum.TryParse<Place>(roomId[11..],out var room)||!Enum.IsDefined(room))throw new InvalidDataException("Unknown site room: "+id);
+            if(!roomId.StartsWith("world:room.",StringComparison.Ordinal)||!Enum.TryParse<Place>(roomId[11..],out var room)||!Enum.IsDefined(room)||room.ToString()!=roomId[11..])throw new InvalidDataException("Unknown site room: "+id);
             // Supported interaction capabilities; each nonempty kind has a session dispatch handler.
             var kind=Read("kind");if(kind is not ("" or "bed" or "watch" or "meal" or "tube" or "school_rules"))throw new InvalidDataException("Unsupported site kind: "+kind);
             var title=Read("title");if(string.IsNullOrWhiteSpace(title))throw new InvalidDataException("Missing site title: "+id);

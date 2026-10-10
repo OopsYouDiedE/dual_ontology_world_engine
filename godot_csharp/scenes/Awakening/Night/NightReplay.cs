@@ -88,15 +88,9 @@ public sealed class NightReplay
     private double DetectiveWakes => _timing.DetectiveWakes;
     private double LookDelay => _timing.LookDelay;
 
-    // 乙区拓扑（设计第二部分 §11 第 7 条）：四间住房开向中廊，中廊通活动厅；备餐间与门厅都只经活动厅出入。
-    // STORY-HARDCODE[AWK-006][schema][production]: 固定本案九个空间的夜间通行拓扑与行动耗时。
-    private static readonly ImmutableDictionary<(Room, Room), double> Hops = new Dictionary<(Room, Room), double>
-    {
-        [(Room.R05, Room.Corridor)] = 1.2, [(Room.R06, Room.Corridor)] = 1.2,
-        [(Room.R07, Room.Corridor)] = 1.2, [(Room.R08, Room.Corridor)] = 1.2,
-        [(Room.Corridor, Room.Hall)] = 2.0, [(Room.Hall, Room.Pantry)] = 2.0,
-        [(Room.Hall, Room.Foyer)] = 2.5,
-    }.ToImmutableDictionary();
+    private static readonly ImmutableDictionary<(Room, Room), double> Hops = Chapter1Data.Root.GetProperty("REPLAY_PASSAGES")
+        .EnumerateObject().ToImmutableDictionary(p => (Names.RoomOf(p.Value.GetProperty("from").GetString()!),
+            Names.RoomOf(p.Value.GetProperty("to").GetString()!)), p => p.Value.GetProperty("cost").GetDouble());
 
     private readonly NightVariables _v;
     private readonly WorldRuntime _runtime = new();
@@ -199,7 +193,7 @@ public sealed class NightReplay
     // STORY-HARDCODE[AWK-007][logic][production]: 构造具体案件物件、四名角色的起始地点与鞋底，并将 V1/V2/V6 绑定到世界状态。
     private void Build()
     {
-        foreach (var room in Enum.GetValues<Room>()) Space(room);
+        foreach (var room in Names.Rooms) Space(room);
         foreach (var ((a, b), _) in Hops)
         {
             var passage = new Essence($"{Names.Of(a)}—{Names.Of(b)}", ProjectionKind.Boundary);
@@ -220,8 +214,8 @@ public sealed class NightReplay
         _cloth = Thing("cloth", Chapter1Data.Text("重演·认知·抹布"), Room.Pantry, NightTags.Wet, NightTags.Placed);
         _cups = Thing("cups", Chapter1Data.Text("重演·认知·四只杯子"), Room.Pantry, NightTags.Sugar);
 
-        var su = _v.V1 switch { SuPlace.OwnRoom => Room.R08, SuPlace.Hall => Room.Hall, _ => Room.Pantry };
-        var huo = _v.V2 switch { HuoPlace.ByTube => Room.Hall, HuoPlace.OwnRoom => Room.R06, _ => Room.Foyer };
+        var su = _v.SuRoom;
+        var huo = _v.HuoRoom;
         var detective = MakePerson(Person.Detective, Room.R05, Sole.PoloBoot, _timing.DetectiveSpeed);
         var engineer = MakePerson(Person.Huo, huo, Sole.WorkBoot, _timing.HuoSpeed);
         var chef = MakePerson(Person.Shen, Room.Pantry, Sole.Soft, _timing.ShenSpeed);
@@ -262,7 +256,7 @@ public sealed class NightReplay
         agent.Claim = Concept(Chapter1Data.Text("重演·认知·别人对那扇门的说法"), ProjectionKind.Event);
 
         // V6：昨夜之前，四人彼此是否相熟。这决定每个人内部世界里对别人的认识，而不是任何人的行动。
-        var familiar = _v.V6 == Acquaintance.Familiar;
+        var familiar = _v.Familiar;
         foreach (var other in _agents.Where(o => o != agent))
         {
             var them = agent.Mental[other.Body];
@@ -287,9 +281,8 @@ public sealed class NightReplay
     // STORY-HARDCODE[AWK-008][logic][production]: 按 V5/V6 设定侦探对特定同伴的信任偏移与熟人信任。
     private int TrustOf(Person self, Person other)
     {
-        var trust = _v.V6 == Acquaintance.Familiar ? 2 : -1;
-        if (self == Person.Detective &&
-            (_v.V5 == DetectiveHeeds.Huo && other == Person.Huo || _v.V5 == DetectiveHeeds.Su && other == Person.Su))
+        var trust = _v.Familiar ? 2 : -1;
+        if (self == Person.Detective && _v.Heeds == other)
             trust += 1;
         return trust;
     }
@@ -320,7 +313,7 @@ public sealed class NightReplay
         {
             var a = detective;
             Projection M(Essence e) => a.Mental[e];
-            var self = _v.V5 == DetectiveHeeds.Himself ? 3 : 0;
+            var self = _v.Heeds == Person.Detective ? 3 : 0;
             var hall = M(_space[Room.Hall]);
             var foyer = M(_space[Room.Foyer]);
             AddHabit(a, "follow_shout", "", 2,
@@ -483,13 +476,13 @@ public sealed class NightReplay
 
     private void Voice(int count)
     {
-        var words = Utterance.Of(_v.V4);
+        var words = _v.Words;
         foreach (var a in _agents)
         {
-            var hearing = Acoustics.Hear(_v.V3, RoomOf(a.Body));
+            var hearing = Acoustics.Hear(_v.Origin, RoomOf(a.Body));
             Hear(a, words, hearing);
         }
-        Frame(new(_v.V3 == VoiceOrigin.Tube
+        Frame(new(_v.Origin == VoiceOrigin.Tube
             ? (count == 1 ? "voice_tube" : "voice_tube_repeat")
             : (count == 1 ? "voice_outside" : "voice_outside_repeat")));
         QueueDecisions();
@@ -504,7 +497,7 @@ public sealed class NightReplay
             case Hearing.Full:
                 KnowConcept(a, a.Order, ObservationSource.Perception,
                     (NightTags.Bolt, words.Bolt), (NightTags.ForbidOpen, words.ForbidOpen), (NightTags.HoldTube, words.HoldTube),
-                    (NightTags.OpenOrder, words.Open), (NightTags.FromTube, _v.V3 == VoiceOrigin.Tube));
+                    (NightTags.OpenOrder, words.Open), (NightTags.FromTube, _v.Origin == VoiceOrigin.Tube));
                 KnowConcept(a, a.Heard, ObservationSource.Perception, (NightTags.ClearBolt, words.Bolt), (NightTags.FullOpen, words.Open));
                 if (words.Open) KnowConcept(a, a.Outsider, ObservationSource.Perception, (NightTags.WantsOpen, true), (NightTags.Help, words.Help));
                 break;

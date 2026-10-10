@@ -23,7 +23,8 @@ public static class Chapter2AuthoredProfiles
             if (entity.GetProperty("kind").GetString() != "character") continue;
             var identity = entity.GetProperty("id").GetString() ?? "";
             var separator = identity.LastIndexOf('.');
-            if (separator < 0 || !Enum.TryParse<P>(identity[(separator + 1)..], false, out var who))
+            if (separator < 0 || !Enum.TryParse<P>(identity[(separator + 1)..], false, out var who)
+                || !Enum.IsDefined(who) || who.ToString() != identity[(separator + 1)..])
                 throw new InvalidDataException($"Unknown cast identity {identity}.");
             if (!entity.TryGetProperty("profile", out var source))
                 throw new InvalidDataException($"Character {identity} has no authored profile.");

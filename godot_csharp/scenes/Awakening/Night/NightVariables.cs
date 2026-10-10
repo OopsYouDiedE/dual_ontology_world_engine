@@ -1,9 +1,10 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace DualOntologyWorldEngine.Awakening;
 
 /// <summary>四个人。Detective 是玩家。</summary>
-// STORY-HARDCODE[AWK-063][schema][production]: 本案角色/房间及 V1–V6 选项由连续固定枚举编码。
+// STORY-HARDCODE[AWK-063][schema][production]: 保留既有角色、房间与六项变量的兼容枚举序号；运行集合及取值域从声明读取。
 public enum Person { Detective, Huo, Shen, Su }
 
 /// <summary>乙区的房间与隔离门外的起居厅。地图几何属宿主；这里只有房间拓扑。</summary>
@@ -19,18 +20,29 @@ public enum Acquaintance { Strangers, Familiar }
 
 public sealed record NightVariables(SuPlace V1, HuoPlace V2, VoiceOrigin V3, VoiceWords V4, DetectiveHeeds V5, Acquaintance V6)
 {
-    public static IEnumerable<NightVariables> All()
+    [JsonIgnore] public ReplayDomains? Domains { get; init; }
+    private ReplayDomains Catalog => Domains ?? ReplayDomains.Default;
+    [JsonIgnore] public Room SuRoom => Names.RoomOf(Catalog.At("V1", (int)V1).Binding);
+    [JsonIgnore] public Room HuoRoom => Names.RoomOf(Catalog.At("V2", (int)V2).Binding);
+    [JsonIgnore] public VoiceOrigin Origin => Enum.Parse<VoiceOrigin>(Catalog.At("V3", (int)V3).Binding);
+    [JsonIgnore] public Utterance Words => Catalog.Words((int)V4);
+    [JsonIgnore] public Person Heeds => Names.PersonOf(Catalog.At("V5", (int)V5).Binding);
+    [JsonIgnore] public bool Familiar => bool.Parse(Catalog.At("V6", (int)V6).Binding);
+    public static IEnumerable<NightVariables> All(ReplayDomains? domains = null)
     {
-        foreach (var v1 in Enum.GetValues<SuPlace>())
-        foreach (var v2 in Enum.GetValues<HuoPlace>())
-        foreach (var v3 in Enum.GetValues<VoiceOrigin>())
-        foreach (var v4 in Enum.GetValues<VoiceWords>())
-        foreach (var v5 in Enum.GetValues<DetectiveHeeds>())
-        foreach (var v6 in Enum.GetValues<Acquaintance>())
-            yield return new(v1, v2, v3, v4, v5, v6);
+        var catalog = domains ?? ReplayDomains.Default;
+        IEnumerable<int> Indices(string key) => Enumerable.Range(0, catalog.Values(key).Length);
+        foreach (var v1 in Indices("V1"))
+        foreach (var v2 in Indices("V2"))
+        foreach (var v3 in Indices("V3"))
+        foreach (var v4 in Indices("V4"))
+        foreach (var v5 in Indices("V5"))
+        foreach (var v6 in Indices("V6"))
+            yield return new((SuPlace)v1, (HuoPlace)v2, (VoiceOrigin)v3, (VoiceWords)v4, (DetectiveHeeds)v5, (Acquaintance)v6) { Domains = domains };
     }
 
-    public override string ToString() => $"V1={V1} V2={V2} V3={V3} V4={V4} V5={V5} V6={V6}";
+    public override string ToString() => string.Join(" ", new[] { (int)V1, (int)V2, (int)V3, (int)V4, (int)V5, (int)V6 }
+        .Select((value, index) => $"V{index + 1}={Catalog.At("V" + (index + 1), value).Id}"));
 }
 
 /// <summary>一句话的完整内容、传声管接头漏出的重读句尾，以及听清时可解读出的意思。内容来自 chapter_01.story 的“话语”与“试验句”。</summary>
@@ -41,14 +53,9 @@ public sealed record Utterance(string Full, string Tail, bool Bolt, bool ForbidO
         e.GetProperty("ForbidOpen").GetBoolean(), e.GetProperty("HoldTube").GetBoolean(), e.GetProperty("Open").GetBoolean(),
         e.GetProperty("Help").GetBoolean(), e.GetProperty("TailWantsOpen").GetBoolean(), e.GetProperty("TailHelp").GetBoolean());
 
-    private static readonly Lazy<ImmutableArray<Utterance>> Spoken = new(() =>
-        [..Chapter1Data.Root.GetProperty("UTTERANCES").EnumerateObject().Select(p => From(p.Value))]);
-
-    /// <summary>变量 V4 的两个选项依次对应“话语”里的两条（与 VoiceWords 枚举同序）。</summary>
-    public static Utterance BoltKeepShut => Spoken.Value[(int)VoiceWords.BoltKeepShut];
-    public static Utterance OpenSaveMe => Spoken.Value[(int)VoiceWords.OpenSaveMe];
-
-    public static Utterance Of(VoiceWords words) => Spoken.Value[(int)words];
+    public static Utterance BoltKeepShut => Of(VoiceWords.BoltKeepShut);
+    public static Utterance OpenSaveMe => Of(VoiceWords.OpenSaveMe);
+    public static Utterance Of(VoiceWords words) => ReplayDomains.Default.Words((int)words);
 
     // 句尾的含义由剧本声明，改写显示文字不会改变听者认知。
 }
@@ -79,7 +86,7 @@ public static class Acoustics
             root.GetProperty("hears_shout").EnumerateArray().Select(r => RoomOf(r.GetString()!)).ToHashSet());
     });
 
-    private static Room RoomOf(string key) => (Room)Array.IndexOf(Names.RoomKeys, key);
+    private static Room RoomOf(string key) => Names.RoomOf(key);
 
     /// <summary>story 声明的接头及其初始松紧（昨夜即如此）。</summary>
     public static ImmutableArray<Joint> AuthoredJoints => Loaded.Value.Joints;
@@ -126,13 +133,24 @@ public static class TestSentences
         [..Chapter1Data.Root.GetProperty("TEST_SENTENCES").EnumerateArray().Select(Utterance.From)]);
 }
 
-/// <summary>人物与房间的称呼来自 chapter_01.story 的“人名”“房间名”；键与枚举同序。</summary>
-// STORY-HARDCODE[AWK-002][schema][production]: 枚举键与本章人物、房间名称按固定顺序绑定。
+/// <summary>Declarations supply collections; numeric compatibility IDs preserve existing snapshots.</summary>
 public static class Names
 {
-    public static readonly string[] PersonKeys = ["detective", "huo", "shen", "su"];
-    public static readonly string[] RoomKeys = ["R05", "R06", "R07", "R08", "corridor", "hall", "pantry", "foyer", "lounge"];
+    public static readonly string[] PersonKeys = Keys("PERSON_IDS", "PERSON_NAMES");
+    public static readonly string[] RoomKeys = Keys("ROOM_IDS", "ROOM_NAMES");
+    public static IEnumerable<Person> People => Enumerable.Range(0, PersonKeys.Length).Select(i => (Person)i);
+    public static IEnumerable<Room> Rooms => Enumerable.Range(0, RoomKeys.Length).Select(i => (Room)i);
+    private static string[] Keys(string table, string names)
+    {
+        var rows = Chapter1Data.Root.GetProperty(table).EnumerateObject().Select(p => (p.Name, Id: p.Value.GetInt32())).OrderBy(p => p.Id).ToArray();
+        if (rows.Length == 0 || !rows.Select(p => p.Id).SequenceEqual(Enumerable.Range(0, rows.Length)))
+            throw new InvalidDataException("Duplicate or non-contiguous compatibility IDs: " + table);
+        foreach (var row in rows)
+            if (!Chapter1Data.Root.GetProperty(names).TryGetProperty(row.Name, out _)) throw new InvalidDataException("Unknown declared entity: " + row.Name);
+        return rows.Select(p => p.Name).ToArray();
+    }
     public static string Of(Person person) => Chapter1Data.PersonName(PersonKeys[(int)person]);
     public static Person PersonOf(string key) => Array.IndexOf(PersonKeys, key) is var i and >= 0 ? (Person)i : throw new ArgumentException("Unknown person key: " + key);
+    public static Room RoomOf(string key) => Array.IndexOf(RoomKeys, key) is var i and >= 0 ? (Room)i : throw new ArgumentException("Unknown room key: " + key);
     public static string Of(Room room) => Chapter1Data.RoomName(RoomKeys[(int)room]);
 }

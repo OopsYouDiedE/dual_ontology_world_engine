@@ -18,10 +18,10 @@ public sealed partial class Game
     public int CalendarMinutes { get; private set; }
     public static int RationFirstDay => FirstDay + 1;
     private static Place AccessPlace(string id) => id.StartsWith("world:room.", StringComparison.Ordinal)
-        && Enum.TryParse<Place>(id[11..], out var place) && Enum.IsDefined(place) ? place
+        && Enum.TryParse<Place>(id[11..], out var place) && Enum.IsDefined(place) && place.ToString() == id[11..] ? place
         : throw new InvalidDataException("Unknown access room: " + id);
     private static P AccessPerson(string id) => id.StartsWith("world:person.", StringComparison.Ordinal)
-        && Enum.TryParse<P>(id[13..], out var person) && Enum.IsDefined(person) ? person
+        && Enum.TryParse<P>(id[13..], out var person) && Enum.IsDefined(person) && person.ToString() == id[13..] ? person
         : throw new InvalidDataException("Unknown access character: " + id);
     private static HashSet<Place> AccessPlaces(JsonElement value)
     {
@@ -48,7 +48,10 @@ public sealed partial class Game
             var to = AccessPlace(entry.Value.GetProperty("to").GetString()!);
             _routes.Add(to, new(entry.Name, entry.Value.GetProperty("name").GetString()!, to, AccessPlaces(entry.Value.GetProperty("from")), AccessPlaces(entry.Value.GetProperty("visible_from"))));
         }
-        if (!_routes.Keys.ToHashSet().SetEquals(Enum.GetValues<Place>())) throw new InvalidDataException("Missing access route.");
+        var routedRooms = _declarations.Keys.Where(id => id.StartsWith("world:room.", StringComparison.Ordinal))
+            .Select(id => Enum.TryParse<Place>(id[11..], out var place) && Enum.IsDefined(place) && place.ToString() == id[11..] ? (Place?)place : null)
+            .Where(p => p.HasValue).Select(p => p!.Value);
+        if (!_routes.Keys.ToHashSet().SetEquals(routedRooms)) throw new InvalidDataException("Missing access route.");
         foreach (var entry in _access.GetProperty("arrivals").EnumerateObject())
         { _ = AccessPerson("world:" + entry.Name); _ = AccessPlace(entry.Value.GetString()!); }
         if (_access.GetProperty("arrivals").EnumerateObject().Count() != People.Length) throw new InvalidDataException("Missing initial character location.");

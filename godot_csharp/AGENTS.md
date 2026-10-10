@@ -11,6 +11,12 @@
 
 ---
 
+第二章 `Prototype/Chapter2Entities.cs` 按剧本稳定 ID 登记同一会话的实际对象引用；`Chapter2Bindings` 只解析登记表并检查类型。声明产生地点、物件、人物、群体及通行集合；现有具名机制通过兼容枚举访问，枚举不充当集合来源。新增地点与物件不要求增加枚举或字段绑定；新增地点的具名行为与通行接口仍有存量枚举边界。登记拒绝重复 ID、未知引用及类型冲突。
+
+第一章人物/地点集合与兼容序号、重演通路从编译内容读取；六项重演变量由 `Night/ReplayDomains.cs` 读取取值编号、显示与绑定。旧取值编号和索引不得重排；新增取值追加并绑定现有机制。变量结构及具体机制的进一步通用化另行迁移。
+
+实体登记合同检查：`python godot_csharp/tools/check/test_entity_registry.py`，再运行同命令的 `--prepare` 与 `dotnet run --project godot_csharp/scenes/Shared/check/EntityRegistryCheck/EntityRegistryCheck.csproj -c Release -- tmp/s03-check`。夹具仅扩展临时剧本，覆盖新增地点/物件、同一引用、未知/重复 ID、类型冲突、数字 ID 兼容边界、六项取值域扩展及原六字段序列化合同；不替代 Godot 或游玩验收。
+
 ## 一、场景（`.tscn`）架构分类
 
 项目中所有场景及预制件必须明确归属于以下三类之一：

@@ -444,7 +444,7 @@ public sealed partial class Game
             foreach (var d in w.ActionRecords.Where(d => d.Actor == p && d.Day == night && d.Slot == Slot.Night && d.Job is not (Job.Sleep or Job.Rest)))
             {
                 var act = d.Succeeded ? d.Text : "没做成：" + d.Text;
-                foreach (var n in Enum.GetValues<P>()) act = act.Replace(Names.Of(n), "某人");
+                foreach (var n in Cast.All.Select(p => p.Id)) act = act.Replace(Names.Of(n), "某人");
                 var basis = d.Basis?.Name ?? "";
                 lines.Add(new($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}", d.Location.ToString(), figure));
             }
@@ -513,7 +513,7 @@ public sealed partial class Game
     {
         var known = KnownTraces(night);
         var builds = new HashSet<Build>();
-        foreach (var place in Enum.GetValues<Place>()) builds.UnionWith(BuildsSeenAt(night, place));
+        foreach (var place in Names.PlaceAlias.Values.Distinct()) builds.UnionWith(BuildsSeenAt(night, place));
         foreach (var t in known.Values) builds.UnionWith(t.Facts.Figures.Select(f => f.Build));
         var set = Npcs.Where(p => builds.Contains(p.Pro.Build) && (Belief(Det, p, T.Sick) ?? 0) == 0).Select(p => p.Id).ToHashSet();
         foreach (var t in known.Values) foreach (var p in t.Facts.Subjects) if (p != Det) set.Add(p.Id);
@@ -571,8 +571,8 @@ public sealed partial class Game
         if (s.Card is { } c)
         {
             if (c.Subject >= 10) Add((P)(c.Subject - 10));
-            if (c.Subject == 1) foreach (var p in Enum.GetValues<P>().Where(Cast.OnDuty)) Add(p);
-            if (c.Subject is >= 2 and <= 5) foreach (var p in Enum.GetValues<P>().Where(p => p != P.Det && Cast.Of(p).Group == (Group)(c.Subject - 2))) Add(p);
+            if (c.Subject == 1) foreach (var p in Cast.All.Select(p => p.Id).Where(Cast.OnDuty)) Add(p);
+            if (c.Subject is >= 2 and <= 5) foreach (var p in Cast.All.Select(p => p.Id).Where(p => p != P.Det && Cast.Of(p).Group == (Group)(c.Subject - 2))) Add(p);
         }
         foreach (var place in s.PostedAt) foreach (var p in DetSeenAt.GetValueOrDefault(place) ?? []) Add(p);
         return list;

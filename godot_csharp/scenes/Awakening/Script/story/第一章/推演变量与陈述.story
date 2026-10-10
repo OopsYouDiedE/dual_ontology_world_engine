@@ -1,4 +1,6 @@
 推演变量 V1
+    取值编号：OwnRoom、Hall、Pantry
+    绑定：R08、hall、pantry
     问题：警铃响时，苏泠在哪
     选项：
         - 她的房间（R-08）
@@ -7,6 +9,8 @@
     证据：E5、E6
 
 推演变量 V2
+    取值编号：ByTube、OwnRoom、Foyer
+    绑定：hall、R06、foyer
     问题：警铃响时，霍铎在哪
     选项：
         - 活动厅铜口旁
@@ -15,6 +19,8 @@
     证据：E7
 
 推演变量 V3
+    取值编号：Tube、OutsideDoor
+    绑定：Tube、OutsideDoor
     问题：那人是从哪里喊话的
     选项：
         - 从主楼对着铜口说
@@ -22,6 +28,8 @@
     证据：E8
 
 推演变量 V4
+    取值编号：BoltKeepShut、OpenSaveMe
+    绑定：闩门别开、开门救我
     问题：那人说的是什么
     选项：
         - “闩门，别开”
@@ -29,6 +37,8 @@
     证据：E6、E7
 
 推演变量 V5
+    取值编号：Huo、Su、Himself
+    绑定：huo、su、detective
     问题：侦探更信谁
     选项：
         - 霍铎
@@ -37,6 +47,8 @@
     证据：E3、E7
 
 推演变量 V6
+    取值编号：Strangers、Familiar
+    绑定：false、true
     问题：昨夜之前，四人彼此……
     选项：
         - 素不相识

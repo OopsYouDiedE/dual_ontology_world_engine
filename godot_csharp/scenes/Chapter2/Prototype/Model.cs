@@ -64,8 +64,9 @@ public static class T
     public static readonly Tag Shamed = new("Shamed"), SawAct = new("SawAct"), Answered = new("Answered"), Credible = new("Credible");
     public static readonly Tag Day = new("Day"), Domain = new("Domain"), Duty = new("Duty");
     /// <summary>自我身份：规则的“主语”格读的就是这些（此人心中自己的标签）。</summary>
-    public static readonly ImmutableDictionary<Group, Tag> InGroup = Enum.GetValues<Group>().ToImmutableDictionary(g => g, g => new Tag("Grp" + g));
-    public static readonly ImmutableDictionary<P, Tag> Is = Enum.GetValues<P>().ToImmutableDictionary(p => p, p => new Tag("Is" + p));
+    public static readonly ImmutableDictionary<Group, Tag> InGroup = Chapter2Design.Section("vocab").GetProperty("groups")
+        .EnumerateArray().Select(g => Enum.Parse<Group>(g.GetProperty("id").GetString()!)).ToImmutableDictionary(g => g, g => new Tag("Grp" + g));
+    public static readonly ImmutableDictionary<P, Tag> Is = Cast.All.ToImmutableDictionary(p => p.Id, p => new Tag("Is" + p.Id));
     public static readonly ImmutableDictionary<Slot, Tag> SlotTag = Enum.GetValues<Slot>().ToImmutableDictionary(s => s, s => new Tag("Slot" + s));
     private static readonly Dictionary<Job, Tag> _did = Enum.GetValues<Job>().ToDictionary(j => j, j => new Tag("Did" + j));
     public static Tag Did(Job job) => _did[job];
@@ -84,20 +85,27 @@ public static class Names
     public static string Frame(Job j) => Chapter2Design.JobFrame(j);
 
     public static string Of(Job j) => Chapter2Design.JobText(j);
-    // STORY-HARDCODE[CH2-094][schema][production]: 固定本章人物的内部别名与身份映射。
-    public static readonly ImmutableDictionary<string, P> PersonAlias = new Dictionary<string, P>
+    public static readonly ImmutableDictionary<string, P> PersonAlias = Aliases<P>("character", "person.");
+    public static readonly ImmutableDictionary<string, Place> PlaceAlias = Aliases<Place>("room", "room.");
+    private static ImmutableDictionary<string, TId> Aliases<TId>(string kind, string prefix) where TId : struct, Enum
     {
-        ["det"] = P.Det, ["huo"] = P.Huo, ["shen"] = P.Shen, ["su"] = P.Su, ["lucian"] = P.Lucian, ["gu"] = P.Gu, ["quer"] = P.Quer,
-        ["ward"] = P.Ward, ["selma"] = P.Selma, ["ruan"] = P.Ruan, ["elena"] = P.Elena, ["moran"] = P.Moran, ["veronica"] = P.Veronica,
-        ["bertrand"] = P.Bertrand, ["margaret"] = P.Margaret, ["mora"] = P.Mora,
-    }.Concat(Enum.GetValues<P>().Select(p => new KeyValuePair<string, P>(Of(p), p))).ToImmutableDictionary();
-    // STORY-HARDCODE[CH2-095][schema][production]: 固定本章地点的内部别名与地点映射。
-    public static readonly ImmutableDictionary<string, Place> PlaceAlias = new Dictionary<string, Place>
-    {
-        ["hall"] = Place.Hall, ["lecture"] = Place.Lecture, ["logistics"] = Place.Logistics, ["clinic"] = Place.Clinic,
-        ["greenhouse"] = Place.Greenhouse, ["archive"] = Place.ArchiveFront, ["oath"] = Place.Oath, ["life"] = Place.DormLife,
-        ["dormw"] = Place.DormW, ["dorms"] = Place.DormS, ["dorml"] = Place.DormL, ["resonance"] = Place.Resonance,
-    }.Concat(Enum.GetValues<Place>().Select(p => new KeyValuePair<string, Place>(Of(p), p))).ToImmutableDictionary();
+        var result = new Dictionary<string, TId>(StringComparer.Ordinal);
+        foreach (var entity in Chapter2Design.Chapter.GetProperty("entities").EnumerateArray())
+        {
+            var id = entity.GetProperty("id").GetString()!;
+            if (entity.GetProperty("kind").GetString() != kind || !id.StartsWith(prefix, StringComparison.Ordinal)
+                || !Enum.TryParse<TId>(id[prefix.Length..], out var legacy) || !Enum.IsDefined(legacy) || legacy.ToString() != id[prefix.Length..]) continue;
+            void Add(string alias)
+            {
+                if (result.TryGetValue(alias, out var old) && !old.Equals(legacy)) throw new InvalidDataException("Conflicting entity alias: " + alias);
+                result[alias] = legacy;
+            }
+            Add(id[prefix.Length..].ToLowerInvariant());
+            foreach (var alias in entity.GetProperty("aliases").EnumerateArray())
+            { var value = alias.GetString()!; Add(value); Add(value.ToLowerInvariant()); }
+        }
+        return result.ToImmutableDictionary(StringComparer.Ordinal);
+    }
 }
 
 /// <summary>一条习惯：在什么条件下做什么、权重多少、是否与核心欲望相连（恶魔放大欲望时随之加权）。</summary>
@@ -138,7 +146,7 @@ public static class Cast
     /// <summary>十六名学员的画像：全部读自 chapter_01.story 的人物块（本事、看重、偏见、日常、欲望……）。</summary>
     public static readonly ImmutableArray<Profile> All = [.. Chapter2AuthoredProfiles.ReadAll(Chapter2Design.Json).Values.OrderBy(p => (int)p.Id)];
 
-    public static Profile Of(P p) => All[(int)p];
+    public static Profile Of(P p) => All.Single(profile => profile.Id == p);
 
     public static Cluster ClusterOf(P p) => Chapter2Design.PersonData(p).Cluster;
     public static string ClusterName(Cluster c) => Chapter2Design.ClusterName(c);
