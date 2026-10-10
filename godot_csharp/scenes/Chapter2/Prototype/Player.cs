@@ -557,35 +557,30 @@ public sealed partial class Game
         return (said, t < 0 ? "angry" : lines.Length > 0 ? "thoughtful" : "calm");
     }
 
-    // STORY-HARDCODE[CH2-057][text][production]: 为本案专属物证、人物特征及状态撰写调查描述。
     public string Describe(Essence e)
     {
-        if (e == Granary) return $"存粮还剩 {Get(Granary, T.Ration)} 份；门闩{(Get(Granary, T.LatchLoose) > 0 ? "松动，一推就开" : Get(Granary, T.ToolMarks) > 0 ? "有新的工具痕，已经紧固" : "完好")}。";
+        var response = Respond("describe", Det, null, new Dictionary<string, object?> { ["object"] = ExpressionObject(e) },
+            ("温粥", Get(e, T.Porridge) > 0 ? X("表达.温粥") : ""), ("粉笔", Get(e, T.Chalk)), ("油", Get(e, T.Oil)));
+        if (response.Responded) return response.Text;
+        if (e == Granary) return X("表达.存粮", ("数", Get(Granary, T.Ration)), ("状态", X(Get(Granary, T.LatchLoose) > 0 ? "表达.闩松" : Get(Granary, T.ToolMarks) > 0 ? "表达.闩修" : "表达.闩好")));
         if (e == Ledger) return X("物件.台账", ("发出", Get(Ledger, T.Handed)), ("补记", Get(Ledger, T.NightRecorded)))
             + string.Concat(AllNews.Where(n => n.Kind == NewsKind.Ledger && n.Claim.Predicate == "补记")
                 .Select(n => "\n" + X("物件.台账补记记录", ("人", Names.Of(n.Claim.Subject!.Value)),
                     ("日", Chapter2Design.DayName(n.Day)), ("时段", Names.Of(n.Slot)), ("夜", Chapter2Design.DayName(n.Claim.Night)))))
             + (Get(Ledger, T.Counted) > 0 ? "\n" + (Get(Ledger, T.Unrecorded) > 0 ? X("物件.台账清点", ("缺", Get(Ledger, T.Unrecorded))) : X("物件.台账清点无缺")) : "");
-        if (e == Bowl) return Get(Bowl, T.Residue) > 0 ? $"莫兰床边一只空碗，碗底有粥渍{(Get(Bowl, T.Porridge) > 0 ? "；另有一碗粥还温着" : "")}。" : "碗是干净的。";
-        if (e == Bed) return Get(this[P.Moran].Body, T.Sick) > 0 ? "莫兰躺着，额头很烫。" : "病床空着。";
-        if (e == Blackboard) return Get(Blackboard, T.Chalk) > 0 ? $"黑板上有 {Get(Blackboard, T.Chalk)} 堂课的粉笔字；讲台前的灰上有窄底皮鞋印。" : "黑板是干净的。";
-        if (e == Stele) return "铺石顺坡，几级台阶。石面上刻着磨平的纹样，看不出原本写的是什么。";
-        if (e == Gauge) return Get(Gauge, T.Pressure) >= 2 ? "指针已经过了红线。" : "指针还在红线以下。";
+        if (e == Bed) return X(Get(this[P.Moran].Body, T.Sick) > 0 ? "表达.病床" : "表达.空床");
         if (e == SketchBook)
         {
             foreach (var (n, _) in Sketches) DetSketchSeen.Add(n);
-            return Sketches.Count == 0 ? "莫兰的速写本里只有几张颜色练习。" : "莫兰的速写本：" + string.Join("　", Sketches.Select(s => s.Text)) + "。";
+            return Sketches.Count == 0 ? X("表达.空速写") : X("表达.速写", ("内容", string.Join("　", Sketches.Select(s => s.Text))));
         }
-        if (e == Base) return Get(Base, T.Crack) > 0 ? "中央基座上有一道新裂纹，像是从里面撑开的。" : "中央基座完好，石面上光洁，没有刻字。";
-        if (e == ArchiveDoor) return "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。";
         if (e == MedCab) return X("物件.药柜", ("数", Get(MedCab, T.Medicine)));
-        if (e == OilStore) return $"油库：灯油 {Get(OilStore, T.Oil)}。";
-        if (Litter.ContainsValue(e)) return Get(e, T.Crumbs) > 0 ? "废纸篓里有一份口粮的包纸和饼屑。" : Get(e, T.Emptied) > 0 ? "废纸篓刚被人倒空过；篓底还粘着几粒饼屑和一角口粮包纸。" : "废纸篓里只有废纸。";
+        if (Litter.ContainsValue(e)) return X(Get(e, T.Crumbs) > 0 ? "表达.废纸粮" : Get(e, T.Emptied) > 0 ? "表达.废纸倒" : "表达.废纸");
         if (Board.ContainsValue(e))
         {
             var place = Board.First(b => b.Value == e).Key;
             var specs = Specs.Where(s => s.PostedAt.Contains(place) && s != RuanLedger).ToArray();
-            return specs.Length == 0 ? "板上什么也没贴。" : "板上贴着：" + string.Join(" ", specs.Select(s => $"「{s.Text}」（{(s.Author is { } a ? Names.Of(a) : "代管者")}）"));
+            return specs.Length == 0 ? X("表达.空公告") : X("表达.公告", ("内容", string.Join(" ", specs.Select(s => X("表达.公告项", ("规矩", s.Text), ("作者", s.Author is { } a ? Names.Of(a) : X("表达.代管者")))))));
         }
         return e.TrueName;
     }

@@ -24,6 +24,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - 主观认知更新统一经由 `Observation.Observe` 接口驱动，认知集合保持封闭。
   - `Cognition.Infer` 沉淀支持的显式命题；`Cognition.Corrupt` 通过输入管道施加 `IProjectionTransform`。
   - `Reasoner` / `CaseModel` / `CaseBelief`：为共享案件计算表与主观推演过滤层，支持证据链与假设排除；专用内容的现有残留以源码审计标记定位。
+  - `Reasoner.Weight` 返回 `EvidenceWeight`（来源、采信因子、理由代码、来源投影引用及参数）；`CaseBelief.Basis` 保存结构化 `ReasonBasis`，`SpeechChoice.Reasons` 保存 `SpeechReason`。Core 不生成这些结果的显示文案；宿主按剧本模板绑定参数，权重与言语评分公式不变。
 - **抽象语法树与解析器（Ast.cs, AstDecoder.cs）**：
   - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer 模式及权重）。
   - AST 严格使用类型化节点、槽位、Tag 和 Projection 引用；字符串仅用于名称与描述。

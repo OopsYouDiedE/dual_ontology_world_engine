@@ -83,23 +83,10 @@ public sealed partial class Game
     }
     public RuleSpec? SeizedPlan;
 
-    /// <summary>开门一幕体现所定方案的条款（§13 第 15 条）。</summary>
-    // STORY-HARDCODE[CH2-046][text][production]: 为本章议事结局编写人物组合对应的开场反馈。
+    /// <summary>只总结已经结算的结果；条款不等于排队、登记或取物的执行回执。</summary>
     private string OpeningScene(Ending fam, RuleSpec plan, List<Person> who)
     {
-        var names = who.Where(w => w != Det).Select(w => w.Name).Take(4).ToArray();
-        if (plan.Card is { } c && plan.Author == P.Det)
-        {
-            var sign = c.Account switch { 3 => "每个进去的人身后都站着两个见证的人，在门边的纸上签了名", 1 or 2 => "门边摆着台账，进去的人一个一个记上名字", _ => "没人记账，进去的人各自摸黑找自己的匣子" };
-            var night = c.Exception == 4 ? "说好只在白天开，天一擦黑门就合上了" : c.Exception == 3 ? "两人一组进去，一个人不许单独进" : "";
-            return $"门开了。{sign}{(night.Length > 0 ? "；" + night : "")}。{(c.Behavior == 8 ? "本人亲取：每人只拿标着自己名字的那一只。" : c.Behavior == 6 ? "钥匙交给了委员会，取回的人先过一遍登记。" : "")}";
-        }
-        return fam switch
-        {
-            Ending.Committee => $"沃德拿着钥匙站在门边，{string.Join("、", names)}排着队，一个一个登记、一个一个进去。",
-            Ending.OpenEach => $"门一开，{string.Join("、", names)}就涌了进去，没人记账，也没人等谁。",
-            _ => "门开了。"
-        };
+        return X("表达.opening.other");
     }
     /// <summary>议事时每个人站到了哪个方案（自动检查用：立场可预读）。</summary>
     public readonly Dictionary<P, RuleSpec> CouncilChoice = [];

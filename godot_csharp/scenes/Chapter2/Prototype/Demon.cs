@@ -121,56 +121,20 @@ public sealed partial class Game
 
     // --------------------------------------------------------------- Q&A --
 
-    public static readonly string[] Topics = ["名录库", "唤名", "温室", "封存匣", "守则", "裂纹", "导师", "你想要什么"];
+    public static string[] Topics => Chapter2Design.TextList("表达.答疑话题").ToArray();
 
     /// <summary>
     /// 答疑：问得含糊，得到字面为真而误导的答案；问得精确，得到精确的真相；可援引第 7 条拒答。
     /// 提问只能用已学的词：精确提问须学过相应的课（或亲见过相关事物）。课堂回答是公开的。
     /// </summary>
-    // STORY-HARDCODE[CH2-044][text][production]: 恶魔对本案各话题的知识边界与回答逐项预写。
     public string AskDemon(int topic, bool precise, out bool praised, out bool refused)
     {
-        praised = false; refused = false;
-        var learned = (int l) => Det.Lessons.ContainsKey(l);
-        string answer;
-        switch (topic)
-        {
-            case 0:
-                answer = !precise ? "封存之物存于名录库，凡学员皆可取回己物。"
-                    : learned(14) ? "取回，即重新接通。接通之后，我离诸位更近一些。寻回者，自负其果——守则第一条写着。" : "此事《异象与记忆》会讲。现在讲，诸位听不懂。";
-                praised = precise && learned(14);
-                break;
-            case 1:
-                answer = !precise ? "勿应即可。" : "应答即触物回忆，记一枚钩；有钩者，更难抗拒下一次。";
-                praised = precise;
-                break;
-            case 2:
-                answer = !precise ? "指针过红线时，勿开顶窗。" : learned(12) ? "先在阀门泄压，指针回落到红线下再开顶窗。红线之上开窗，玻璃会碎。" : "你还不认得那张图。学过《传声与机械》再问。";
-                praised = precise && learned(12);
-                if (precise && learned(12)) WarnedPrecisely = true;
-                break;
-            case 3:
-                answer = !precise ? "每只匣子只应其主。" : learned(13) ? "须以言灵语法念出本名：名词居首，条件居中，动词收尾。念错一个字，它就当你不在。" : "你还没有那样的词。";
-                praised = precise && learned(13);
-                break;
-            case 4:
-                if (!precise) answer = "我所立之规，皆张贴于中央厅的公告框。四条，一字不多。";
-                else { answer = "守则之外的事，此知会伤及心志。"; refused = true; }
-                break;
-            case 5:
-                answer = "此知会伤及心志。";
-                refused = true;
-                break;
-            case 6:
-                answer = "此知会伤及心志。";
-                refused = true;
-                break;
-            default:
-                answer = "我想教。诸位想学。我们要的东西，没有那么不同。";
-                break;
-        }
-        DemonSays("侦探", answer);
-        return answer;
+        var response = Respond("questions", null, Det, new Dictionary<string, object?> { ["topic"] = topic, ["precise"] = precise });
+        bool Flag(string name) => response.Responded && response.Declaration.TryGetProperty(name, out var value) && value.GetBoolean();
+        praised = Flag("praised"); refused = Flag("refused");
+        if (Flag("warning")) WarnedPrecisely = true;
+        if (response.Responded) DemonSays(Det.Name, response.Text);
+        return response.Text;
     }
 
     public bool WarnedPrecisely;

@@ -77,6 +77,10 @@
 第二章的 StructuredEvents 保存实际行动回执及对象引用；请求使用稳定 Topic，口供、履约与地点从回执查询。事件的因果引用连接实际执行回执；转述消息保存其来源事件，玩家只读本人亲见或听说的具体事件，链描述过滤未获知步骤。痕迹分开保存结构化事实、观察权限和渲染文本，候选与比较只读取获知的字段，痕迹事实使用玩家可辨的类别，不暴露原始隐藏时长；比较结果携带枚举状态。CaseTraces 相等比较所有字段与列表值。中文日志仅用于呈现；第一章侦探规划器用实际可见行的稳定来源 ID 查询线索，未署来源的显示文本不提供命题证据。
 `dotnet run --project godot_csharp/scenes/Chapter2/Game/check/EventCheck/EventCheck.csproj -c Release` 验证结构化证物比较、认知来源过滤及日志/对白/人名显示替换后地点、候选、回应与行动选择保持一致；依赖正常剧本编译产物。
 
+两章的 `表达` 数据块由既有剧本编译器生成；共享 `ResponseCatalog` 只筛选声明条件与优先级，不修改世界或认知。说话人、听者与条件读取器由会话提供，第一章仍由 `SpeechPolicy` 选择言语行为。来源及理由显示由第一章表达模板绑定 Core 结构化结果；第二章称呼使用身份占位符与说话人认知条件，禁止全文替换称呼。无适用回应返回 `none`，章末总结不把方案条款当作行动事实。
+表达合同检查：`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/ExpressionCheck/ExpressionCheck.csproj -c Release`；覆盖译文替换不改判定、身份知识与听者条件、明确无反应、结构化来源/理由及总结只读性。它不代替一级、二级或三级验收。
+表达声明编译检查：`python godot_csharp/tools/check/test_story_expression.py`；覆盖中性内容的译文独立性、条件与优先级类型校验，不改既有回归预期。
+
 `scenes/Main2D.tscn` 是只装载第一章现场的旧预览场景，不承接完整游戏会话。`scenes/Shared/UI/*.tscn` 保留旧界面场景文件，归于 UI 面板类；正式界面仍使用 `scenes/UI/`。这些旧文件不作为正式运行或验收入口，启用前必须先检查外部资源引用是否存在并完成实机验证。
 
 ---

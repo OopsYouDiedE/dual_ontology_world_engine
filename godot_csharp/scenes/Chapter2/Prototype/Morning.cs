@@ -85,16 +85,16 @@ public sealed partial class Game
 
     private string NightTime(double t)
     {
-        var f = (t - _nightStart) / NightLength;
-        return f < 0.25 ? "入夜不久" : f < 0.6 ? "夜深时" : "后半夜";
+        return X("表达.夜时." + NightPeriod(t));
     }
+    private int NightPeriod(double t) => (t - _nightStart) / NightLength is var f && f < 0.25 ? 0 : f < 0.6 ? 1 : 2;
     private double _nightStart;
 
-    private static string From(Place p) => p switch
+    private static string From(Place p)
     {
-        Place.DormLife => "乙区方向", Place.DormW => "甲区方向", Place.DormS => "丙区方向", Place.DormL => "丁区方向",
-        _ => Names.Of(p) + "方向"
-    };
+        var selected = DualOntologyWorldEngine.Story.ResponseCatalog.Select(Chapter2Design.Section("expression"), "direction", name => name == "place" ? p.ToString() : null);
+        return selected is null ? X("表达.方向", ("地", Names.Of(p))) : X(selected.Text);
+    }
 
     private static readonly string[] CnNum = ["零", "一", "两", "三", "四", "五", "六", "七", "八", "九", "十"];
     public static string Cn(int n) => n >= 0 && n < CnNum.Length ? CnNum[n] : n.ToString();
@@ -112,43 +112,42 @@ public sealed partial class Game
     /// 守夜所见（§12 第 1 条）：只有身影（身量、来去方向）与声音，并按注意力筛选——
     /// 离得近、声音大、与侦探在意之事相关的优先，只给 3—5 条，其余合成一句。
     /// </summary>
-    // STORY-HARDCODE[CH2-048][text][production]: 生成针对本案夜间行动与地点的固定守望报告。
     public List<string> StakeoutReport(int day, Place at)
     {
         var cares = DetCares(at);
-        var events = new List<(double T, string Text, int Score, bool Figure)>();
+        var events = new List<(double T, string Template, Build? Build, Place Place, string Sound, int Score, bool Figure)>();
         foreach (var m in Moves.Where(m => m.Day == day && m.Who != P.Det))
         {
-            var build = BuildText(this[m.Who].Pro.Build);
-            if (m.To == at) events.Add((m.Time, $"{NightTime(m.Time)}，一个{build}身影从{From(m.From)}过来", 2 + (cares ? 1 : 0), true));
-            else if (m.From == at) events.Add((m.Time, $"{NightTime(m.Time)}，一个{build}身影往{From(m.To)}去了", 1 + (cares ? 1 : 0), true));
+            var build = this[m.Who].Pro.Build;
+            if (m.To == at) events.Add((m.Time, "来", build, m.From, "", 2 + (cares ? 1 : 0), true));
+            else if (m.From == at) events.Add((m.Time, "去", build, m.To, "", 1 + (cares ? 1 : 0), true));
         }
         // 从守夜处望得见的别处（中央厅望得见后勤院与名录库前厅的出入）：只有身量，远处的身影分数低于走到身边的。
         foreach (var s in Sightings.Where(s => s.Day == day && s.Witness == P.Det && s.From == at))
-            events.Add((s.Time, $"{NightTime(s.Time)}，远远望见{Names.Of(s.At)}有一个{BuildText(s.Build)}身影", 1 + (DetCares(s.At) ? 1 : 0), true));
+            events.Add((s.Time, "远见", s.Build, s.At, "", 1 + (DetCares(s.At) ? 1 : 0), true));
         foreach (var s in Sounds.Where(s => s.Day == day))
         {
-            if (s.Where == at) events.Add((s.Time, $"{NightTime(s.Time)}，{s.Text}", 3 + (cares ? 2 : 0), false));
-            else if (Near(s.Where, at)) events.Add((s.Time, $"{NightTime(s.Time)}，远远地从{Names.Of(s.Where)}那边传来：{s.Text}", 1 + (DetCares(s.Where) ? 1 : 0), false));
+            if (s.Where == at) events.Add((s.Time, "近声", null, s.Where, s.Text, 3 + (cares ? 2 : 0), false));
+            else if (Near(s.Where, at)) events.Add((s.Time, "远声", null, s.Where, s.Text, 1 + (DetCares(s.Where) ? 1 : 0), false));
         }
-        if (events.Count == 0) return ["一夜无事。没有人来，也没有声音。"];
+        if (events.Count == 0) return [X("表达.无事")];
         // 同一时候、同一方向的几道身影合成一句（“两个中等身量的身影……”）。
-        var merged = events.GroupBy(e => e.Text).Select(g =>
+        var merged = events.GroupBy(e => (e.Template, Period: NightPeriod(e.T), e.Build, e.Place, e.Sound)).Select(g =>
         {
             var first = g.First();
-            var text = g.Count() > 1 ? ReplaceFirst(first.Text, "一个", Cn(g.Count()) + "个") : first.Text;
+            var text = X("表达." + first.Template, ("时", NightTime(first.T)), ("数", Cn(g.Count())),
+                ("身量", first.Build is { } build ? BuildText(build) : ""), ("地", first.Template is "来" or "去" ? From(first.Place) : Names.Of(first.Place)), ("声", first.Sound));
             return (first.T, Text: text, Score: first.Score + (g.Count() > 1 ? 1 : 0), first.Figure, N: g.Count());
         }).ToList();
         var keep = merged.OrderByDescending(e => e.Score).ThenBy(e => e.T).Take(5).ToHashSet();
         var lines = merged.Where(keep.Contains).OrderBy(e => e.T).Select(e => e.Text).ToList();
         var restFigures = merged.Where(e => !keep.Contains(e) && e.Figure).Sum(e => e.N);
         var restSounds = merged.Count(e => !keep.Contains(e) && !e.Figure);
-        if (restFigures > 0) lines.Add($"还有{Cn(restFigures)}道身影来去，看不真切");
-        if (restSounds > 0) lines.Add("还有几声别的动静");
+        if (restFigures > 0) lines.Add(X("表达.数道身影", ("数", Cn(restFigures))));
+        if (restSounds > 0) lines.Add(X("表达.其他动静"));
         return lines;
     }
 
-    private static string ReplaceFirst(string s, string a, string b) { var i = s.IndexOf(a, StringComparison.Ordinal); return i < 0 ? s : s[..i] + b + s[(i + a.Length)..]; }
 
     private static bool Near(Place a, Place b) => a == Place.Hall && b is Place.Logistics or Place.ArchiveFront || b == Place.Hall && a is Place.Logistics or Place.ArchiveFront;
 
