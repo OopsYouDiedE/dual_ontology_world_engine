@@ -5,6 +5,7 @@ namespace DualOntologyWorldEngine.Awakening;
 
 public sealed class Chapter1Dialogue
 {
+    public bool IsRunning => _runtime.IsRunning;
     private readonly AwakeningContentSession _content;
     private readonly MorningWorld _world;
     private readonly List<WorldCommand> _commands = new();

@@ -15,7 +15,8 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `WorldRuntime`：引擎权威现实管理与现实/认知投射映射。支持 `Project`, `Associate`, `Sync`，但不暴露给角色决策直接读取。
   - `StableIdentity.cs`：`EntityId`、`FacetId`、`AuthorTermId` 与主体句柄分域；显式持久 ID 拒绝非 NFC/首尾空白，按 Ordinal 比较。旧入口分配 opaque ID；删除、遗忘与提交失败的已用保留句柄都不复用 ID。
   - `ProjectionWorld.cs` / `Observation.cs`：认知写入经同一 gate 完整准备、校验与原子发布；成功非空批次只增一版。内部前态已闭合，提交校验本批输入及受影响的 parent 链，遗忘扫描并清除依赖；只准备触及节点，未变 Frozen 节点/AST 与可见历史记录共享。引擎绑定先于通知发布，通知按版本排队，重入回执可为 Pending，订阅者异常保存在 NotificationFaults。
-  - `CognitionSnapshot.cs` / `SnapshotGraph.cs` / `FrozenAst.cs`：主体快照为完整不可变图，AST/关系只含主体句柄；闭合校验与两阶段重绑定拒绝缺引用（含间接 parent 链）、跨域和未知节点。不含源对象、客观身份或回调；本批没有保存 codec。
+  - `CognitionSnapshot.cs` / `SnapshotGraph.cs` / `FrozenAst.cs`：主体快照为完整不可变图，AST/关系只含主体句柄；闭合校验与两阶段重绑定拒绝缺引用（含间接 parent 链）、跨域和未知节点。不含源对象、客观身份或回调。Archive 重绑定保留全部已分配句柄并退休旧保留句柄。
+  - `CognitionCodec.cs` / `RuntimeSave.cs`：版本化 UTF-8 JSON 采用闭合 DTO/AST/Property 分支，拒绝未知能力、字段、类型、重复键、缺引用和限额；完整校验后返回候选，不发布运行会话。认知图与权威审计分别编码；运行时存活/删除身份、切面、属性、各主体图及引擎绑定一起恢复，不执行观察、效果或通知。未知 Property 与活动时效层明确拒绝。
   - `CognitionAudit.cs`：引擎专用追加历史使用持久化 ImmutableList，捕获时转合同数组；审计仅比较触及节点，仍保留变化的完整前后态、可见历史差分与遗忘 tombstone，可按精确版本重建；主体可见历史随遗忘删除结构依赖，不从审计补回。
   - `ChineseTermBridge.cs`：仅在指定主体快照的 KnownTerms 中解释词形/作者词项及限定条件；保留歧义和 Unknown，版本失效明确拒绝。消歧目标仍进入既有执行器。
   - `TypedEvents.cs`：行动、观察、证词、传播与呈现使用独立类型，共用不可变事件字段（事件 ID、时间单位、阶段结果、引用、命题、来源及因果）。权威记录由 WorldRuntime 持有；主体投影须属于感知者且只能保留已知引用、命题与可见因果，快照只保存主体句柄。旧 Event 投影与 ObservationEvent 入口兼容。
@@ -32,7 +33,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - **调度、执行与临时状态（CTBSystem.cs, ActionRuntime.cs, SimulationSession.cs, TemporaryState.cs）**：
   - `CTBSystem`：负责离散行动值（CTB）的延迟与激活调度。
   - `ActionRuntime`：两阶段事务机制（先 `Prepare` 后 `Commit`），状态变更仅在提交阶段权威生效。支持普通带时效的 `TemporarySet` 以及执行生命周期绑定的 `TemporarySetUntilEnd` 状态租约覆盖。
-  - `SimulationSession`：协调主动/自主动作，支持 `wait_until` 条件挂起恢复、任务取消（`Cancel`）与幂等清理（`Dispose`）。
+  - `SimulationSession`：协调主动/自主动作，支持 `wait_until` 条件挂起恢复、任务取消（`Cancel`）与幂等清理（`Dispose`）。`CheckSavePoint` 拒绝 active、等待清理的 effects、自主主体/wakeup 和所有 CTB 回调；空闲 CTB 可恢复 Now/排序序号。
   - ActionExecution 的 Events 为引擎回执；提交、成功阶段、操作与终态独立登记。失败阶段不提交效果，取消仅登记终态并停止后续效果；实际操作记录目的位置。Say 的 Claim/Topic 随 AST 冻结、绑定与翻译，发言产生证词，接收请求与执行分立。
 - **决策与社交评估（DecisionSystem.cs, SocialSystem.cs）**：
   - `SocialSystem.EvaluateSender` 为菜单提供只读预评估；与收到请求后的 `Evaluate` 共用配合、发送者信任、历史与宿主传入的行动相合分，不生成预览认知事件。
@@ -57,7 +58,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - 核心级基准与验证脚本就地保存在 `csharp/` 根层：
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
-  - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；评分用不同目标同时保留规则与社交请求候选，覆盖槽位上下文及历史分，避免候选去重掩盖混读。增量提交回归覆盖读图缓存后的连续追加、父环失败不发布、嵌套 Wait/Say 依赖遗忘、空状态差分与旧版审计重建。EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名。codec/跨进程恢复、主观推演隔离由后续批验证。
+  - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；增量提交、遗忘依赖与旧版审计重建；EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名；codec 覆盖完整 AST/审计 wire 往返、拒绝用例与新进程引用恢复。主观推演隔离由后续批验证。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
 - 系统演进直接在既有架构与文件上持续重构。

@@ -45,9 +45,9 @@ public sealed record CandidateAssessment(string CandidateId, bool Forbidden, int
 
 public sealed partial class WorldSession
 {
-    private sealed record BoundCandidate(string Chapter, string Id, string Kind, string Scope, string Actor, string? Target,
-        string Label, DialogueExpression? Applicability, DialogueExpression? Goal, ImmutableArray<DialogueInstruction> Response,
-        ImmutableArray<string> ResponseTo, int Weight, double Delay);
+    private sealed record BoundCandidate([property:System.Text.Json.Serialization.JsonRequired] string Chapter, [property:System.Text.Json.Serialization.JsonRequired] string Id, [property:System.Text.Json.Serialization.JsonRequired] string Kind, [property:System.Text.Json.Serialization.JsonRequired] string Scope, [property:System.Text.Json.Serialization.JsonRequired] string Actor, [property:System.Text.Json.Serialization.JsonRequired] string? Target,
+        [property:System.Text.Json.Serialization.JsonRequired] string Label, [property:System.Text.Json.Serialization.JsonRequired] DialogueExpression? Applicability, [property:System.Text.Json.Serialization.JsonRequired] DialogueExpression? Goal, [property:System.Text.Json.Serialization.JsonRequired] ImmutableArray<DialogueInstruction> Response,
+        [property:System.Text.Json.Serialization.JsonRequired] ImmutableArray<string> ResponseTo, [property:System.Text.Json.Serialization.JsonRequired] int Weight, [property:System.Text.Json.Serialization.JsonRequired] double Delay);
     private sealed record PendingChoice(BoundCandidate Candidate, string Actor, long Version);
     private sealed record ActiveCandidate(string ExecutionId, string Actor, BoundCandidate Candidate);
     private readonly Dictionary<string, List<BoundCandidate>> _candidates = new(StringComparer.Ordinal);

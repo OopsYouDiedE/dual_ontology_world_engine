@@ -44,6 +44,8 @@ python godot_csharp/tools/compile_story.py          # 修改剧本源后重新�
 python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是否一致
 ```
 
+统一回归的 `save` 步骤运行宿主空闲切点的跨进程保存检查，支持 `--only save` / `--skip save`；不属于 UI 或盲玩验收。
+
 素材迁移或重建后重新导入：
 
 ```powershell
@@ -132,3 +134,8 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 - 结论注明本轮执行的验收级别并引用本轮证据，列明失败项和未验证项；未执行的级别记为未验证，不以单项通过代替整体验收。
 - 报告保存在已有的 `artifacts/<task-name>/` 中，同一任务持续复用该目录。
 - 封存盲玩原始输入、界面记录与录制日志时，保留原始字节；对应证据目录使用 `.gitattributes` 的 `-text` 关闭换行转换，运行日志可用 `-diff` 避免控制字符污染审阅输出。
+
+
+- Godot headless save/flow/flow2 缺少完整结束记录时保留日志并重试一次；完整通过输出后的 0xc0000005 退出崩溃以检查输出为准，脚本/引擎错误仍使回归失败。
+- `python tools/test_verify.py` 验证完整汇总识别、崩溃处理、一次重试与原始日志保留；不替代真实 Godot 检查。
+- 完整汇总含失败断言时直接报告失败，不因失败数非零重试；仅缺少结束记录时重试。
