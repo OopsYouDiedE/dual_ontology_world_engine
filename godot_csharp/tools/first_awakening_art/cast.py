@@ -390,11 +390,12 @@ def walk_pose(i: int) -> Pose:
     a = 2 * math.pi * i / 8
     s = math.sin(a)
     lift = abs(math.cos(a))
-    p = Pose(bob=1 if i % 4 in (1, 2) else 0, stride=s)
-    p.lift_near = 1 if (s < 0 and lift > 0.6) else 0
-    p.lift_far = 1 if (s > 0 and lift > 0.6) else 0
-    p.near = Hand(swing=-2.6 * s)
-    p.far = Hand(swing=2.6 * s)
+    # contact frames (feet widest) sit one pixel low; the passing leg lifts
+    p = Pose(bob=1 if abs(s) > 0.9 else 0, stride=s)
+    p.lift_near = 2 if (s < 0 and lift > 0.6) else (1 if s < -0.5 else 0)
+    p.lift_far = 2 if (s > 0 and lift > 0.6) else (1 if s > 0.5 else 0)
+    p.near = Hand(swing=-3.6 * s)
+    p.far = Hand(swing=3.6 * s)
     return p
 
 
@@ -404,11 +405,11 @@ def action_pose(action: str, i: int) -> Pose:
     if action == "walk":
         return walk_pose(i)
     if action == "talk":
-        return [Pose(near=Hand(out=2, down=-8, fwd=3)),
-                Pose(mouth=True, near=Hand(out=4, down=-11, fwd=4), far=Hand(out=1, down=-2, fwd=1)),
-                Pose(near=Hand(out=2, down=-7, fwd=3))][i]
+        return [Pose(near=Hand(out=-1, down=-8, fwd=4)),
+                Pose(mouth=True, near=Hand(out=2, down=-10, fwd=4), far=Hand(out=0, down=-2, fwd=1)),
+                Pose(near=Hand(out=0, down=-7, fwd=4))][i]
     if action == "inspect":
-        return [Pose(lean=1, look_down=True, near=Hand(out=0, down=-4, fwd=2)),
+        return [Pose(lean=1, look_down=True, near=Hand(out=-2, down=-11, fwd=4)),
                 Pose(crouch=4, lean=2, look_down=True, near=Hand(out=1, down=-3, fwd=4), far=Hand(out=2, down=-3, fwd=2)),
                 Pose(crouch=8, lean=3, look_down=True, near=Hand(out=1, down=-1, fwd=6), far=Hand(out=2, down=-4, fwd=3)),
                 Pose(crouch=3, lean=1, look_down=True, near=Hand(out=1, down=-3, fwd=3))][i]
@@ -418,10 +419,10 @@ def action_pose(action: str, i: int) -> Pose:
                 Pose(lean=1, near=Hand(out=0, down=-7, fwd=7)),
                 Pose(near=Hand(out=1, down=-3, fwd=3))][i]
     if action == "sit":
-        return [Pose(crouch=2),
-                Pose(crouch=5, lean=1, near=Hand(out=1, down=-2, fwd=2), far=Hand(out=1, down=-2, fwd=2)),
-                Pose(sit=True, crouch=8, near=Hand(out=1, down=-4, fwd=3), far=Hand(out=1, down=-4, fwd=3)),
-                Pose(sit=True, crouch=8, near=Hand(out=0, down=-5, fwd=4), far=Hand(out=0, down=-5, fwd=4))][i]
+        return [Pose(crouch=2, near=Hand(out=1, down=-1, fwd=1), far=Hand(out=1, down=-1, fwd=1)),
+                Pose(crouch=5, lean=1, near=Hand(out=0, down=-3, fwd=3), far=Hand(out=0, down=-3, fwd=3)),
+                Pose(sit=True, crouch=8, near=Hand(out=-1, down=-4, fwd=5), far=Hand(out=-1, down=-4, fwd=5)),
+                Pose(sit=True, crouch=8, near=Hand(out=-2, down=-4, fwd=6), far=Hand(out=-2, down=-4, fwd=6))][i]
     if action == "break":
         return [Pose(crouch=1, near=Hand(out=3, down=-4, fwd=1), far=Hand(out=2, down=-3)),
                 Pose(near=Hand(out=5, down=-20, fwd=1), far=Hand(out=2, down=-3)),
@@ -603,14 +604,20 @@ def draw_legs(p: Paint, look: Look, facing: str, pose: Pose, crotch: int, leg_h:
                 p.put(knee_x + ox - 1, GROUND, "sole", 2, layer)
                 p.put(knee_x + ox - 1, GROUND - 1, "boot", 2 + mat_shift, layer)
             return
-        # front/back: foreshortened thighs then shins
+        # front/back: foreshortened lap the width of the hips, then shins
+        half = max(look.hip // 2, lw + 1)
+        for y in range(crotch - 1, crotch + 3):
+            for x in range(cx - half, cx + half):
+                lv = 2
+                if facing == "front" and y == crotch + 2:
+                    lv = 3                                   # knee tops catch the light
+                if x in (cx - 1, cx) and y > crotch - 1:
+                    lv = 1                                   # gap between the knees
+                p.put(x, y, "legs", lv, L_LEG)
         for k, sgn in enumerate((-1, 1)):
             x_in = cx + (0 if sgn > 0 else -1) + sgn * (gap // 2 + (1 if gap % 2 and sgn > 0 else 0))
             xs = [x_in + sgn * d for d in range(lw + 1)]
-            for y in range(crotch - 1, crotch + 2):
-                for x in xs:
-                    p.put(x, y, "legs", 3 if y == crotch - 1 else 2, L_LEG)
-            for y in range(crotch + 2, GROUND + 1):
+            for y in range(crotch + 3, GROUND + 1):
                 boot = y > GROUND - look.boot_h
                 for j, x in enumerate(xs[:lw]):
                     lv = 2 - (1 if sgn > 0 else 0) + (1 if j == 0 and sgn < 0 else 0)
@@ -620,7 +627,7 @@ def draw_legs(p: Paint, look: Look, facing: str, pose: Pose, crotch: int, leg_h:
     if side:
         stride = pose.stride
         for leg, sgn, lift, layer, dim in ((0, 1, pose.lift_near, L_LEG, 0), (1, -1, pose.lift_far, L_FAR_LEG, -1)):
-            foot_dx = -sgn * stride * 3.5
+            foot_dx = -sgn * stride * 4.5
             knee_dx = foot_dx * 0.5 - (pose.crouch * 0.6)
             hip_x = cx - 1 + (0 if leg == 0 else 1)
             knee_y = crotch + leg_h // 2
@@ -676,7 +683,10 @@ def arm_points(look: Look, facing: str, hand: Hand, sgn: int, sy: int, th: int, 
     out_sgn = sgn if facing == "front" else -sgn
     sx = cx + (shoulder_half - 0.5 if sgn > 0 else -shoulder_half - 0.5) - sgn * (look.arm_w // 2) + sgn * 1
     hx = sx + sgn * (hand.out - 0.5) - sgn * hand.fwd * 0.55
-    hy = sy + 1 + reach + hand.down - hand.fwd * 0.25 + abs(hand.swing) * 0.3
+    toward = hand.swing if facing == "front" else -hand.swing
+    hx -= sgn * max(toward, 0) * 0.35
+    hx += sgn * max(-toward, 0) * 0.2
+    hy = sy + 1 + reach + hand.down - hand.fwd * 0.25 - abs(hand.swing) * 0.45
     return sx, sy + 1, hx, hy
 
 
@@ -711,7 +721,10 @@ def draw_arms(p: Paint, look: Look, facing: str, pose: Pose, sy: int, th: int, c
             pref_x = float(sgn)                            # elbows bow away from the body
         if nx * pref_x < 0 or (abs(nx) < 1e-6 and ny > 0):
             nx, ny = -nx, -ny
-        ex, ey = mx + nx * h, my + ny * h
+        if facing == "left":
+            ex, ey = mx + nx * h, my + ny * h
+        else:
+            ex, ey = mx + sgn * min(h * 0.3, 1.5), my + min(h * 0.25, 1.0)
         shade = 1 if sgn > 0 else -1
         if facing == "back":
             shade = -shade

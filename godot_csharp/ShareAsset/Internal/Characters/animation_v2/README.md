@@ -15,6 +15,8 @@
 | `chemist` | 维罗妮卡（化学家） | `marksman` | 贝尔特朗（神射手） |
 | `architect` | 玛格丽特（建筑师） | `doctor` | 茉拉（医生） |
 
+2026-10-03 重绘四人动作（头部与服装不变）：行走改为后脚抬起 1–2px、触地帧下沉 1px，侧向步幅加大，前后向摆臂可见；前后向弯臂改为朝镜头透视，不再外撑成叉腰；坐姿改为与髋同宽的大腿面、膝头受光，双手搁在腿上；说话改为胸前摊掌，查看首帧为托腮。
+
 2026-09-25 早餐专用表演另使用本目录`breakfast_exchange.png`（512×128，8列×2行，16帧），由`BreakfastPerformance.gd`读取，保持原有九人的通用图集不变。制作源、提示词与重建命令见[早餐动作生产说明](../../../../AssetsSource/Internal/Characters/DemoAnimation/breakfast_exchange.md)。它是源稿缩制的专用坐姿表演，不能用于替代全方向行走图集；完整日常片段的验证与限制见[日常三幕记录](../../../../../artifacts/first-three-scenes/daily-montage.md)。
 
 当前有侦探及宣传剧情打样使用的八名角色：音乐家、自然学家、工程师、厨师、诗人、盗贼、律师、画家。每人 PNG 为 512×1536，配套 `.tres` 可赋给 Godot `AnimatedSprite2D.sprite_frames`。
