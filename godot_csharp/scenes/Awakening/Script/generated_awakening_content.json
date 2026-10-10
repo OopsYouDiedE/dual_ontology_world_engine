@@ -45,6 +45,16 @@
       "evidence": [
         "E5",
         "E6"
+      ],
+      "value_ids": [
+        "OwnRoom",
+        "Hall",
+        "Pantry"
+      ],
+      "bindings": [
+        "R08",
+        "hall",
+        "pantry"
       ]
     },
     {
@@ -57,6 +67,16 @@
       ],
       "evidence": [
         "E7"
+      ],
+      "value_ids": [
+        "ByTube",
+        "OwnRoom",
+        "Foyer"
+      ],
+      "bindings": [
+        "hall",
+        "R06",
+        "foyer"
       ]
     },
     {
@@ -68,6 +88,14 @@
       ],
       "evidence": [
         "E8"
+      ],
+      "value_ids": [
+        "Tube",
+        "OutsideDoor"
+      ],
+      "bindings": [
+        "Tube",
+        "OutsideDoor"
       ]
     },
     {
@@ -80,6 +108,14 @@
       "evidence": [
         "E6",
         "E7"
+      ],
+      "value_ids": [
+        "BoltKeepShut",
+        "OpenSaveMe"
+      ],
+      "bindings": [
+        "闩门别开",
+        "开门救我"
       ]
     },
     {
@@ -93,6 +129,16 @@
       "evidence": [
         "E3",
         "E7"
+      ],
+      "value_ids": [
+        "Huo",
+        "Su",
+        "Himself"
+      ],
+      "bindings": [
+        "huo",
+        "su",
+        "detective"
       ]
     },
     {
@@ -107,6 +153,14 @@
         "E10",
         "E11",
         "E12"
+      ],
+      "value_ids": [
+        "Strangers",
+        "Familiar"
+      ],
+      "bindings": [
+        "false",
+        "true"
       ]
     }
   ],
@@ -142,6 +196,60 @@
     "E9": "沈鼎：“我泡茶按人放糖。”——“可我怎么会知道谁不吃糖？”",
     "E10": "沈鼎：“是我喂的。……这罐子，不是这一两天才养的。”",
     "E11": "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。"
+  },
+  "PERSON_IDS": {
+    "detective": 0,
+    "huo": 1,
+    "shen": 2,
+    "su": 3
+  },
+  "ROOM_IDS": {
+    "R05": 0,
+    "R06": 1,
+    "R07": 2,
+    "R08": 3,
+    "corridor": 4,
+    "hall": 5,
+    "pantry": 6,
+    "foyer": 7,
+    "lounge": 8
+  },
+  "REPLAY_PASSAGES": {
+    "r05": {
+      "from": "R05",
+      "to": "corridor",
+      "cost": 1.2
+    },
+    "r06": {
+      "from": "R06",
+      "to": "corridor",
+      "cost": 1.2
+    },
+    "r07": {
+      "from": "R07",
+      "to": "corridor",
+      "cost": 1.2
+    },
+    "r08": {
+      "from": "R08",
+      "to": "corridor",
+      "cost": 1.2
+    },
+    "hall": {
+      "from": "corridor",
+      "to": "hall",
+      "cost": 2.0
+    },
+    "pantry": {
+      "from": "hall",
+      "to": "pantry",
+      "cost": 2.0
+    },
+    "foyer": {
+      "from": "hall",
+      "to": "foyer",
+      "cost": 2.5
+    }
   },
   "EXPRESSION": {
     "speech": {
