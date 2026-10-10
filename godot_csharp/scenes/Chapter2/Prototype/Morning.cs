@@ -1,11 +1,33 @@
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using DualOntologyWorldEngine.Core;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>一处清晨痕迹：键、所在地点、细看到的样子；Glance 是路过时一眼看得出的样子（看不出则为 null）。</summary>
-public sealed record TraceItem(string Key, Place Where, string Text, string? Glance = null);
+public enum TraceKind { Ledger, Latch, Bowl, Litter, Footprints, Mechanism, Expression, Patrol }
+public enum TraceComparisonStatus { Match, Conflict, Unread, Additional }
+public sealed record TraceComparison(TraceComparisonStatus Status, string Text);
+public sealed record TraceFacts
+{
+    public bool HasChange { get; init; }
+    [JsonIgnore] public ImmutableDictionary<Tag, int> Values { get; init; } = ImmutableDictionary<Tag, int>.Empty;
+    public ImmutableArray<(Place At, Build Build)> Figures { get; init; } = [];
+    [JsonIgnore] public ImmutableArray<Person> Subjects { get; init; } = [];
+    public int StayCategory { get; init; }
+    public bool Same(TraceFacts? other) => other is not null && HasChange == other.HasChange && StayCategory == other.StayCategory
+        && Values.Count == other.Values.Count && Values.All(v => other.Values.TryGetValue(v.Key, out var n) && v.Value == n)
+        && Figures.SequenceEqual(other.Figures) && Subjects.Select(p => p.Id).SequenceEqual(other.Subjects.Select(p => p.Id));
+}
+public sealed record TraceItem(string Key, Place Where, string Text, string? Glance = null)
+{
+    public TraceKind Kind { get; init; }
+    [JsonIgnore] public Essence? Object { get; init; }
+    public TraceFacts Facts { get; init; } = new();
+    public TraceFacts? GlanceFacts { get; init; }
+    public bool IsGlance { get; init; }
+    public bool HasChange => Facts.HasChange;
+}
 
 /// <summary>“若我说中，你采纳我的规则”：与某一个人的约定（§11 第 11 条）。</summary>
 public sealed record Wager(int Day, P With, P Who, Place Where, int? Spec);
@@ -146,20 +168,32 @@ public sealed partial class Game
     {
         var t = new List<TraceItem>();
         var shortBy = Math.Max(0, ExpectedRations() - Get(Granary, T.Ration));
-        var names = NightLedgerNames.Where(n => n.StartsWith($"D{night} ")).Select(n => n[(n.IndexOf(' ') + 1)..]).ToArray();
-        t.Add(new("台账", Place.Logistics, $"账面与存量差 {shortBy} 份{(names.Length > 0 ? "；夜间记账一栏有" + string.Join("、", names) + "的签名" : "；夜间记账一栏是空的")}"));
+        var signers = NightLedgerRecords.Where(n => n.Night == night).Select(n => n.Actor).ToArray();
+        var names = signers.Select(p => p.Name).ToArray();
+        t.Add(new("台账", Place.Logistics, $"账面与存量差 {shortBy} 份{(names.Length > 0 ? "；夜间记账一栏有" + string.Join("、", names) + "的签名" : "；夜间记账一栏是空的")}") {
+            Kind = TraceKind.Ledger, Object = Ledger, Facts = new() { HasChange = shortBy > 0 || names.Length > 0,
+                Values = ImmutableDictionary<Tag, int>.Empty.Add(T.Unrecorded, shortBy), Subjects = [..signers] } });
         var latch = Get(Granary, T.LatchLoose) > 0 ? "门闩松动" : Get(Granary, T.ToolMarks) > 0 ? "门闩紧固，有工具痕" : "门闩完好";
         var glance = new List<string>();
         if (_pickedGranary > 0) { latch += "；锁眼边有极细的新划痕"; }
         if (_failedAtGranary > 0) { var push = $"仓门上有{(_failedAtGranary > 3 ? "许多" : _failedAtGranary > 1 ? "几处" : "一处")}新的推痕（有人没打开）"; latch += "；" + push; glance.Add(push); }
-        t.Add(new("门闩", Place.Logistics, latch, glance.Count > 0 ? string.Join("；", glance) : null));
+        t.Add(new("门闩", Place.Logistics, latch, glance.Count > 0 ? string.Join("；", glance) : null) {
+            Kind = TraceKind.Latch, Object = Granary, Facts = new() { HasChange = Get(Granary, T.LatchLoose) > 0 || Get(Granary, T.ToolMarks) > 0 || _pickedGranary > 0 || _failedAtGranary > 0,
+                Values = ImmutableDictionary<Tag, int>.Empty.Add(T.LatchLoose, Get(Granary, T.LatchLoose) > 0 ? 1 : 0).Add(T.ToolMarks, Get(Granary, T.LatchLoose) == 0 && Get(Granary, T.ToolMarks) > 0 ? 1 : 0)
+                    .Add(new("picks"), _pickedGranary > 0 ? 1 : 0).Add(new("attempts"), AttemptAppearance(_failedAtGranary)) },
+            GlanceFacts = new() { HasChange = _failedAtGranary > 0, Values = ImmutableDictionary<Tag, int>.Empty.Add(new("attempts"), AttemptAppearance(_failedAtGranary)) } });
         var bowl = Get(Bowl, T.Porridge) + Get(Bowl, T.Residue) > 0 && _bowlFilledTonight ? "病床边有一碗夜里送来的粥" : "病床边没有新送来的东西";
-        t.Add(new("碗", Place.Clinic, bowl, bowl));
+        var filled = Get(Bowl, T.Porridge) + Get(Bowl, T.Residue) > 0 && _bowlFilledTonight;
+        var bowlFacts = new TraceFacts { HasChange = filled, Values = ImmutableDictionary<Tag, int>.Empty.Add(T.Porridge, filled ? 1 : 0) };
+        t.Add(new("碗", Place.Clinic, bowl, bowl) { Kind = TraceKind.Bowl, Object = Bowl, Facts = bowlFacts, GlanceFacts = bowlFacts });
         foreach (var dorm in Litter.Keys)
         {
             var text = _tidied.Contains((night, dorm)) ? "废纸篓被人倒空过，篓底还粘着几粒饼屑"
                 : Get(Litter[dorm], T.Crumbs) > _crumbsBefore.GetValueOrDefault(dorm) ? "废纸篓里新添口粮包纸与饼屑" : "废纸篓里没有新东西";
-            t.Add(new("饼屑:" + Names.Of(dorm), dorm, text));
+            var tidied = _tidied.Contains((night, dorm));
+            var added = Get(Litter[dorm], T.Crumbs) > _crumbsBefore.GetValueOrDefault(dorm);
+            t.Add(new("饼屑:" + Names.Of(dorm), dorm, text) { Kind = TraceKind.Litter, Object = Litter[dorm],
+                Facts = new() { HasChange = tidied || added, Values = ImmutableDictionary<Tag, int>.Empty.Add(T.Crumbs, added ? 1 : 0).Add(new("emptied"), tidied ? 1 : 0) } });
         }
         // 名录库前厅：脚印（身量）与停留（脚印叠得多密），并与前一夜比较（§12 第 5 条：私占可预读）。
         var arrivals = Moves.Where(m => m.Day == night && m.To == Place.ArchiveFront && m.Who != P.Det).ToList();
@@ -181,15 +215,26 @@ public sealed partial class Game
             if (_frontStats.TryGetValue(night - 1, out var prev) && prev.Prints > 0)
                 front += "——" + X(prints.Length > prev.Prints || stay > prev.Stay * 1.3 ? "物件.前厅比前夜多" : prints.Length < prev.Prints && stay < prev.Stay ? "物件.前厅比前夜少" : "物件.前厅和前夜差不多").TrimEnd('。');
         }
-        t.Add(new("前厅脚印", Place.ArchiveFront, front, front));
+        var density = prints.Length == 0 ? 0 : stay < 4 ? 1 : stay < 10 ? 2 : 3;
+        var relative = _frontStats.TryGetValue(night - 1, out var previous) && previous.Prints > 0 && prints.Length > 0
+            ? prints.Length > previous.Prints || stay > previous.Stay * 1.3 ? 1 : prints.Length < previous.Prints && stay < previous.Stay ? -1 : 0 : 0;
+        var footprintFacts = new TraceFacts { HasChange = prints.Length > 0, StayCategory = density,
+            Values = ImmutableDictionary<Tag, int>.Empty.Add(new("relative-density"), relative), Figures = [..prints.Order().Select(b => (Place.ArchiveFront, b))] };
+        t.Add(new("前厅脚印", Place.ArchiveFront, front, front) { Kind = TraceKind.Footprints, Object = ArchiveDoor, Facts = footprintFacts, GlanceFacts = footprintFacts });
         var machine = _seizeTried.Contains(night) ? "配重链条被人拉动过" : "三处机关没人碰过";
-        t.Add(new("前厅机关", Place.ArchiveFront, machine, machine));
+        var machineFacts = new TraceFacts { HasChange = _seizeTried.Contains(night) };
+        t.Add(new("前厅机关", Place.ArchiveFront, machine, machine) { Kind = TraceKind.Mechanism, Object = ArchiveDoor, Facts = machineFacts, GlanceFacts = machineFacts });
         foreach (var p in Npcs.Where(p => _answered.Contains((night, p.Id))))
-            t.Add(new("神情:" + p.Name, Where(p), $"{p.Name}今早神情恍惚，说梦里有人一直叫{p.Pro.Pronoun}的名字"));
+            t.Add(new("神情:" + p.Name, Where(p), $"{p.Name}今早神情恍惚，说梦里有人一直叫{p.Pro.Pronoun}的名字") {
+                Kind = TraceKind.Expression, Object = p.Body, Facts = new() { HasChange = true, Subjects = [p] } });
         var bert = Sightings.Where(s => s.Day == night && s.Witness == P.Bertrand).Select(s => $"{Names.Of(s.At)}有个{BuildText(s.Build)}身影").Distinct().ToArray();
-        t.Add(new("夜巡", Place.Hall, bert.Length == 0 ? "贝尔特朗：夜巡无异常" : "贝尔特朗：夜里望见" + string.Join("，", bert)));
+        t.Add(new("夜巡", Place.Hall, bert.Length == 0 ? "贝尔特朗：夜巡无异常" : "贝尔特朗：夜里望见" + string.Join("，", bert)) {
+            Kind = TraceKind.Patrol, Facts = new() { HasChange = bert.Length > 0,
+                Figures = [..Sightings.Where(s => s.Day == night && s.Witness == P.Bertrand).Select(s => (s.At, s.Build)).Distinct()] } });
         return t;
     }
+
+    private static int AttemptAppearance(int attempts) => attempts > 3 ? 3 : attempts > 1 ? 2 : attempts;
 
     private readonly Dictionary<Place, int> _crumbsBefore = [];
     private bool _bowlFilledTonight;
@@ -213,16 +258,16 @@ public sealed partial class Game
     {
         var looked = DetLookedOn.Where(kv => kv.Key > night).SelectMany(kv => kv.Value).ToHashSet();
         var met = DetMetOn.Where(kv => kv.Key > night).SelectMany(kv => kv.Value).ToHashSet();
-        var ok = t.Key switch
+        var ok = t.Kind switch
         {
-            "台账" => looked.Contains(Ledger), "门闩" => looked.Contains(Granary), "碗" => looked.Contains(Bowl) || looked.Contains(Bed),
-            "前厅脚印" or "前厅机关" => looked.Contains(ArchiveDoor) || Stakeouts.Contains((night, Place.ArchiveFront)),
-            "夜巡" => AskedOn.Contains((night + 1, P.Bertrand)) || AskedOn.Contains((night + 2, P.Bertrand)) || Stakeouts.Contains((night, Place.Hall)),
-            _ when t.Key.StartsWith("饼屑:") => looked.Contains(Litter[t.Where]),
-            _ when t.Key.StartsWith("神情:") => met.Contains(Names.PersonAlias[t.Key[3..]]),
+            TraceKind.Ledger or TraceKind.Latch or TraceKind.Litter => t.Object is { } obj && looked.Contains(obj),
+            TraceKind.Bowl => looked.Contains(Bowl) || looked.Contains(Bed),
+            TraceKind.Footprints or TraceKind.Mechanism => looked.Contains(ArchiveDoor) || Stakeouts.Contains((night, Place.ArchiveFront)),
+            TraceKind.Patrol => AskedOn.Contains((night + 1, P.Bertrand)) || AskedOn.Contains((night + 2, P.Bertrand)) || Stakeouts.Contains((night, Place.Hall)),
+            TraceKind.Expression => t.Facts.Subjects.Any(p => met.Contains(p.Id)),
             _ => false
         };
-        if (Stakeouts.Contains((night, t.Where)) && (t.Key is "门闩" or "台账" || t.Key.StartsWith("饼屑:"))) ok = true;
+        if (Stakeouts.Contains((night, t.Where)) && t.Kind is TraceKind.Latch or TraceKind.Ledger or TraceKind.Litter) ok = true;
         return ok;
     }
 
@@ -238,7 +283,7 @@ public sealed partial class Game
         foreach (var t in traces)
         {
             if (FullyRead(night, t)) known[t.Key] = t;
-            else if (t.Glance is { } g && passed.Contains(t.Where)) known[t.Key] = t with { Text = g };
+            else if (t.Glance is { } g && passed.Contains(t.Where)) known[t.Key] = t with { Text = g, Facts = t.GlanceFacts ?? new(), IsGlance = true };
         }
         return known;
     }
@@ -258,8 +303,8 @@ public sealed partial class Game
     {
         if (!DawnTraces.TryGetValue(night, out var traces)) return;
         var moved = traces.Where(Changed).ToArray();
-        var places = moved.Where(t => !t.Key.StartsWith("神情:")).Select(t => Names.Of(t.Where)).Distinct().ToArray();
-        var faces = moved.Any(t => t.Key.StartsWith("神情:"));
+        var places = moved.Where(t => t.Kind != TraceKind.Expression).Select(t => Names.Of(t.Where)).Distinct().ToArray();
+        var faces = moved.Any(t => t.Kind == TraceKind.Expression);
         if (Day > FirstDay) Feed.Add(places.Length == 0 ? X(faces ? "清晨.只有神色" : "清晨.无事")
             : X(faces ? "清晨.有变化带神色" : "清晨.有变化", ("地点", JoinNames(places))));
         if (Day is 99)
@@ -289,8 +334,7 @@ public sealed partial class Game
     /// <summary>侦探经清晨闲谈读到的事件（计量用）。</summary>
     public readonly HashSet<int> MorningHeard = [];
 
-    private static bool Changed(TraceItem t) => !(t.Text is "三处机关没人碰过" or "前厅积灰上没有新脚印" or "病床边没有新送来的东西" or "贝尔特朗：夜巡无异常" or "门闩完好")
-        && !t.Text.Contains("没有新东西") && !(t.Key == "台账" && t.Text.StartsWith("账面与存量差 0 份；夜间记账一栏是空的"));
+    private static bool Changed(TraceItem t) => t.HasChange;
 
     // ---------------------------------------------------------------- replay --
 
@@ -346,27 +390,35 @@ public sealed partial class Game
 
     /// <summary>与现实对照：只比你读到的；细看过的比全貌，路过的只比一眼看得出的。</summary>
     public List<string> CompareTraces(int night, List<TraceItem> replay)
+        => CompareTraceResults(night, replay).Select(r => r.Text).ToList();
+
+    public List<TraceComparison> CompareTraceResults(int night, List<TraceItem> replay)
     {
-        var lines = new List<string>();
+        var lines = new List<TraceComparison>();
         var actual = DawnTraces.GetValueOrDefault(night) ?? [];
         var known = KnownTraces(night);
         foreach (var a in actual)
         {
-            var r = replay.FirstOrDefault(x => x.Key == a.Key);
-            if (!known.TryGetValue(a.Key, out var k)) { if (!a.Key.StartsWith("神情:") && Changed(a)) lines.Add($"未查：{Names.Of(a.Where)}（{Label(a.Key)}）"); continue; }
-            var full = k.Text == a.Text;
+            var r = replay.FirstOrDefault(x => TraceIdentity(x, a));
+            if (!known.TryGetValue(a.Key, out var k)) { if (a.Kind != TraceKind.Expression && Changed(a)) lines.Add(new(TraceComparisonStatus.Unread, $"未查：{Names.Of(a.Where)}（{Label(a.Key)}）")); continue; }
+            var full = !k.IsGlance;
             var mine = full ? r?.Text : r?.Glance ?? (r is null ? null : "看不出什么变化");
-            lines.Add(mine == k.Text ? $"吻合：{Label(a.Key)}——{k.Text}" : $"冲突：{Label(a.Key)}——重演是「{mine ?? "没有这回事"}」，现实是「{k.Text}」");
+            var same = (full ? r?.Facts : r?.GlanceFacts)?.Same(k.Facts) is true;
+            lines.Add(new(same ? TraceComparisonStatus.Match : TraceComparisonStatus.Conflict,
+                same ? $"吻合：{Label(a.Key)}——{k.Text}" : $"冲突：{Label(a.Key)}——重演是「{mine ?? "没有这回事"}」，现实是「{k.Text}」"));
         }
-        foreach (var r in replay.Where(r => r.Key.StartsWith("神情:") && actual.All(a => a.Key != r.Key)))
-            lines.Add($"重演里{r.Text}——现实中{(DetMetOn.Where(kv => kv.Key > night).Any(kv => kv.Value.Contains(Names.PersonAlias[r.Key[3..]])) ? "他今早神色如常" : "你今天还没见过他")}");
+        foreach (var r in replay.Where(r => r.Kind == TraceKind.Expression && actual.All(a => !TraceIdentity(a, r))))
+            lines.Add(new(TraceComparisonStatus.Additional, $"重演里{r.Text}——现实中{(DetMetOn.Where(kv => kv.Key > night).Any(kv => r.Facts.Subjects.Any(p => kv.Value.Contains(p.Id))) ? "他今早神色如常" : "你今天还没见过他")}"));
         return lines;
     }
+
+    private static bool TraceIdentity(TraceItem a, TraceItem b) => a.Kind == b.Kind && (a.Kind == TraceKind.Expression || a.Where == b.Where)
+        && (a.Kind != TraceKind.Expression || a.Facts.Subjects.Select(p => p.Id).SequenceEqual(b.Facts.Subjects.Select(p => p.Id)));
 
     public Place[] UnreadTracePlaces(int night)
     {
         var known = KnownTraces(night);
-        return (DawnTraces.GetValueOrDefault(night) ?? []).Where(t => !known.ContainsKey(t.Key) && !t.Key.StartsWith("神情:") && Changed(t))
+        return (DawnTraces.GetValueOrDefault(night) ?? []).Where(t => !known.ContainsKey(t.Key) && t.Kind != TraceKind.Expression && Changed(t))
             .Select(t => t.Where).Distinct().ToArray();
     }
 
@@ -390,19 +442,12 @@ public sealed partial class Game
         {
             var p = w[id];
             var figure = $"一个{BuildText(p.Pro.Build).TrimEnd('的')}的身影";
-            var place = p.Pro.Dorm.ToString();
-            foreach (var d in p.Diary.Where(d => d.StartsWith($"D{night} 夜里") && !d.Contains(" 接受") && !d.Contains("欲望升至") && !d.Contains("回寝区睡下") && !d.Contains("在寝区歇着")))
+            foreach (var d in w.ActionRecords.Where(d => d.Actor == p && d.Day == night && d.Slot == Slot.Night && d.Job is not (Job.Sleep or Job.Rest)))
             {
-                var text = d[(d.IndexOf(' ', 3) + 1)..];
-                var arrow = text.IndexOf(" ← ", StringComparison.Ordinal);
-                var act = Regex.Replace(arrow > 0 ? text[..arrow] : text, "（[A-Za-z]+）", "");
+                var act = d.Succeeded ? d.Text : "没做成：" + d.Text;
                 foreach (var n in Enum.GetValues<P>()) act = act.Replace(Names.Of(n), "某人");
-                var why = arrow > 0 ? text[(arrow + 3)..] : "";
-                var basis = why.Contains('（') ? why[..why.IndexOf('（')] : why;
-                // 日记记的是当时的动作；只定位文字明确的地点，不拿重演结束位置冒充过去。
-                // 不明去处的动作可能移动，停止沿用上一个地点。
-                place = InkPlace(act, p.Pro.Dorm);
-                lines.Add(new($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}", place, figure));
+                var basis = d.Basis?.Name ?? "";
+                lines.Add(new($"  墨影（{figure}）：{act}{(confirmed && basis.Length > 0 ? $"　心声：“{Thought(basis)}”" : "")}", d.Location.ToString(), figure));
             }
         }
         var others = w.Moves.Where(m => m.Day == night && !names.Contains(m.Who) && m.Who != P.Det && m.To is Place.Logistics or Place.ArchiveFront or Place.Clinic)
@@ -411,21 +456,6 @@ public sealed partial class Game
         return lines;
     }
 
-    // STORY-HARDCODE[CH2-050][schema][production]: 将本案特定行动地点编码为重演档案中的位置名称。
-    private static string InkPlace(string act, Place dorm)
-    {
-        if (act.StartsWith("没做成：")) return "";
-        if (act.Contains("自己寝区")) return dorm.ToString();
-        var places = Enum.GetValues<Place>().Where(place => act.Contains(Names.Of(place))).ToArray();
-        if (places.Length == 1) return places[0].ToString();
-        if (places.Length > 1) return "";
-        if (act.StartsWith("开粮仓") || act.StartsWith("修粮仓门闩") || act.StartsWith("清点粮仓")
-            || act.StartsWith("夜里守在粮仓边上") || act.StartsWith("去配给台") || act.StartsWith("在配给台")
-            || act.StartsWith("在灶上") || act.StartsWith("去台账"))
-            return Place.Logistics.ToString();
-        if (act.StartsWith("夜里去开名录库")) return Place.ArchiveFront.ToString();
-        return "";
-    }
 
     private static string Thought(string basis) => basis switch
     {
@@ -459,7 +489,7 @@ public sealed partial class Game
                 opts.Add(new($"{Names.Of(who)} 不认 {LabelOf(spec, labels)}「{Short(spec)}」", new(who, spec.Id, false), null));
             }
         var known = KnownTraces(night);
-        foreach (var place in known.Values.Where(t => Changed(t) && !t.Key.StartsWith("神情:")).Select(t => t.Where).Distinct())
+        foreach (var place in known.Values.Where(t => Changed(t) && t.Kind != TraceKind.Expression).Select(t => t.Where).Distinct())
         {
             var builds = BuildsSeenAt(night, place);
             // 先列侦探有理由联想到这里的人：听人提起过他与此处、白天在此处见过他、他认了与此处相关的规矩（侦探所知）。
@@ -480,29 +510,27 @@ public sealed partial class Game
     /// 那一夜可以被假设的人（§13 第 11 条）：身量与你读到的身影、脚印相符，或者名字出现在你读到的痕迹里（台账签名）；
     /// 你知道那夜病着躺在诊疗所的人排除。你什么都没读到，就没有人可以假设。
     /// </summary>
-    // STORY-HARDCODE[CH2-051][logic][production]: 用本案预设体型与可见轨迹筛选嫌疑人。
     public HashSet<P> ReplayCandidates(int night)
     {
         var known = KnownTraces(night);
         var builds = new HashSet<Build>();
         foreach (var place in Enum.GetValues<Place>()) builds.UnionWith(BuildsSeenAt(night, place));
-        foreach (var t in known.Values) foreach (Build b in Enum.GetValues<Build>()) if (t.Text.Contains(BuildText(b).TrimEnd('的'))) builds.Add(b);
+        foreach (var t in known.Values) builds.UnionWith(t.Facts.Figures.Select(f => f.Build));
         var set = Npcs.Where(p => builds.Contains(p.Pro.Build) && (Belief(Det, p, T.Sick) ?? 0) == 0).Select(p => p.Id).ToHashSet();
-        foreach (var t in known.Values) foreach (var p in Npcs) if (t.Text.Contains(p.Name)) set.Add(p.Id);
+        foreach (var t in known.Values) foreach (var p in t.Facts.Subjects) if (p != Det) set.Add(p.Id);
         if (DetSketchSeen.Contains(night)) foreach (var s in Sightings.Where(s => s.Day == night && s.Witness == P.Moran)) set.Add(s.Truth);
         return set;
     }
 
     /// <summary>侦探读到的那一夜某处出现过的身量（守夜、夜巡证言、前厅脚印）。</summary>
-    // STORY-HARDCODE[CH2-052][logic][production]: 将案夜特定证词和现场记录折算为可见体型。
     public HashSet<Build> BuildsSeenAt(int night, Place place)
     {
         var set = new HashSet<Build>();
         if (Stakeouts.Contains((night, place)))
             foreach (var m in Moves.Where(m => m.Day == night && (m.To == place || m.From == place) && m.Who != P.Det)) set.Add(this[m.Who].Pro.Build);
         foreach (var s in Sightings.Where(s => s.Day == night && s.At == place && (s.Witness == P.Det || AskedOn.Contains((night + 1, s.Witness)) || AskedOn.Contains((night + 2, s.Witness))))) set.Add(s.Build);
-        if (place == Place.ArchiveFront && KnownTraces(night).ContainsKey("前厅脚印"))
-            foreach (var m in Moves.Where(m => m.Day == night && m.To == place && m.Who != P.Det)) set.Add(this[m.Who].Pro.Build);
+        foreach (var trace in KnownTraces(night).Values)
+            foreach (var figure in trace.Facts.Figures.Where(f => f.At == place)) set.Add(figure.Build);
         return set;
     }
 

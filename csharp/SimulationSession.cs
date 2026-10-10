@@ -5,13 +5,20 @@ namespace DualOntologyWorldEngine.Core;
 public enum ExecutionStatus { Pending, Completed, Failed, Cancelled }
 public sealed class ActionExecution
 {
-    internal ActionExecution(SoulEssence soul, ActionIntent intent) => (Soul, Intent) = (soul, intent);
+    internal ActionExecution(SoulEssence soul, ActionIntent intent, Essence? actor) => (Soul, Intent, ActorEntity, RequestEvent) = (soul, intent, actor, intent.Basis?.LastObservation?.Event);
+    internal Essence? ActorEntity { get; }
+    internal TypedEventV1<Projection?>? RequestEvent { get; }
     internal SoulEssence Soul { get; }
     public ActionIntent Intent { get; }
     public ExecutionStatus Status { get; internal set; }
     public ActionResolution? Result { get; internal set; }
     public ScheduledAction? Scheduled { get; internal set; }
     public Condition? WaitingFor { get; internal set; }
+    public EventId Id { get; } = EventId.New();
+    private readonly List<TypedEventV1<Essence?>> _events = [];
+    /// <summary>Engine receipts. Subject decisions read cognition history instead.</summary>
+    public IReadOnlyList<TypedEventV1<Essence?>> Events => _events;
+    internal void AddEvent(TypedEventV1<Essence?> e) => _events.Add(e);
     internal Action? ObservationChanged { get; set; }
     internal List<Action> Cleanup { get; } = [];
     internal HashSet<Action> UntilEndCleanup { get; } = [];
@@ -43,9 +50,10 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
         var body = world.Resolve(intent.Actor);
         if (_active.Any(e => ReferenceEquals(e.Intent.Actor, intent.Actor) || body is not null && ReferenceEquals(world.Resolve(e.Intent.Actor), body)))
             throw new InvalidOperationException("该身体已有未完成动作。");
-        var execution = new ActionExecution(soul, bound);
+        var execution = new ActionExecution(soul, bound, body);
         execution.Scheduled = CTB.Schedule(bound.Delay, () => Continue(execution, bound));
         _active.Add(execution);
+        Lifecycle(execution, EventPhaseV1.Submitted, EventOutcomeV1.Pending);
         return execution;
     }
 
@@ -60,7 +68,28 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
         foreach (var cleanup in execution.Cleanup.ToArray()) cleanup();
         execution.Cleanup.Clear();
         execution.UntilEndCleanup.Clear();
+        Lifecycle(execution, EventPhaseV1.Completed, EventOutcomeV1.Cancelled);
         return true;
+    }
+
+    private void Lifecycle(ActionExecution execution, EventPhaseV1 phase, EventOutcomeV1 outcome)
+    {
+        var actor = execution.ActorEntity;
+        if (actor is null) return;
+        var e = new ActionEventV1<Essence?>(new() {
+            Id = phase == EventPhaseV1.Submitted ? execution.Id : EventId.New(), Time = CTB.Now,
+            TimeUnit = ObservationTimeUnitV1.ActionValue, Subject = actor, Location = world.Space(actor),
+            Source = actor, KnowledgeSource = ObservationSource.Introspection, Phase = phase, Outcome = outcome,
+            Failure = execution.Result?.Failure ?? ActionFailure.None, Perceivers = [execution.Soul],
+            Topic = execution.RequestEvent?.Fields.Topic,
+            Claims = outcome == EventOutcomeV1.Succeeded
+                ? [..execution.Events.Where(e => e.Fields.Phase == EventPhaseV1.Committed)
+                    .SelectMany(e => e.Fields.Claims).GroupBy(c => (c.Predicate, c.Subject, c.Object, c.Location, c.Tag)).Select(g => g.Last())]
+                : [],
+            Causes = execution.Events.Count > 0 ? [execution.Events[^1].Fields.Id]
+                : execution.RequestEvent is { } request && world.HasEvent(request.Fields.Id) ? [request.Fields.Id] : []
+        });
+        world.RecordCommittedEvent(e); execution.AddEvent(e);
     }
 
     private static void StopWaiting(ActionExecution execution)
@@ -85,7 +114,7 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
                 execution.UntilEndCleanup.Remove(cleanup);
                 if (execution.Cleanup.Count == 0) _effects.Remove(execution);
             };
-        });
+        }, execution.Events.LastOrDefault()?.Fields.Id, execution.AddEvent);
         execution.Result = result;
         if (result.Succeeded) StageCommitted?.Invoke(execution);
         if (!_active.Contains(execution)) return;
@@ -110,6 +139,7 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
             return;
         }
         execution.Status = result.Succeeded ? ExecutionStatus.Completed : ExecutionStatus.Failed;
+        Lifecycle(execution, EventPhaseV1.Completed, result.Succeeded ? EventOutcomeV1.Succeeded : EventOutcomeV1.Failed);
         _active.Remove(execution);
         StopWaiting(execution);
         var endingEffects = result.Succeeded ? execution.UntilEndCleanup.ToArray() : execution.Cleanup.ToArray();
@@ -122,7 +152,9 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
         {
             Source = ObservationSource.Introspection, Time = CTB.Now, Existence = Truth.True,
             Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Success, result.Succeeded ? 1 : 0),
-            AddRelations = execution.Soul.World.Contains(intent.Actor) ? [(Relations.Subject, intent.Actor)] : []
+            AddRelations = execution.Soul.World.Contains(intent.Actor) ? [(Relations.Subject, intent.Actor)] : [],
+            TimeUnit = ObservationTimeUnitV1.ActionValue,
+            Event = execution.Events.LastOrDefault() is { } terminal ? world.ProjectEvent(execution.Soul, terminal) : null
         });
         Completed?.Invoke(execution);
     }

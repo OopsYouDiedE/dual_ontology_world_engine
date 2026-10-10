@@ -51,17 +51,16 @@ public sealed partial class Game
     /// 夜间私占（§12 第 0、5 条）：不再由作者在傍晚替人“约好”。想开库的人自己下午去约会开锁的、有力气的、懂传声的人（见 GameJobs.PlanRules），
     /// 答应的人入夜赴约。天亮前看今夜动过名录库之门的人：凑得齐三站就开了；有人守在前厅（沃德）而他不在其中，就被拦下。
     /// </summary>
-    // STORY-HARDCODE[CH2-045][logic][production]: 按具名人物、地点和本案时间安排议事前的控制与封锁。
     private void Seizure()
     {
         if (SeizedBy is not null) return;
         // 答应了守门人“请回”的人，这一夜就不算在开门的人里；他那一站要由别人顶上才算数。
-        var yielded = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && e.Text.StartsWith("答应了") && (e.Text.Contains("请回") || e.Text.Contains("让开"))).Select(e => e.Who).ToHashSet();
+        var yielded = NightActions(Day).Where(e => e.ResponseTo == SpeechTopics.Vacate).Select(e => e.Actor.Id).ToHashSet();
         var crew = _seizeOk.Where(p => !yielded.Contains(p.Id)).ToArray();
         var tried = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job == Job.Seize || e.Job == Job.AskLeave)).Select(e => e.Who).Distinct().ToArray();
         if (crew.Length == 0 && tried.Length == 0) return;
         var leader = (crew.Length > 0 ? crew : tried.Select(t => this[t]).ToArray()).OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
-        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.Text.StartsWith("答应了") && e.Text.Contains("让开"))).Select(e => e.Id).ToArray();
+        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.ResponseTo == SpeechTopics.Vacate)).Select(e => e.Id).ToArray();
         // 三站都有人使过劲、又有人开得了前厅的锁，门就开了；有一站始终被守门的人占着，就开不了（§13 第 4 条：没有人数阈值）。
         var worked = new[] { WeightRoom, LockCore, RelayPost }.All(st => Get(st, T.Worked) > 0 && crew.Any(c => StationFor(c) == st));
         var entry = crew.Any(p => Get(p.Body, T.ArchiveKey) > 0 || p.Pro.Lock >= 3);
@@ -71,13 +70,15 @@ public sealed partial class Game
         Log.Add($"D{Day} 夜 名录库：{names} 来过。{(ok ? "三站齐了，门开了" : guard is not null ? $"{guard.Name}占着配重室，没让开" : "三站没凑齐")}");
         if (!ok && guard is not null)
         {
-            NewsFrom(guard, NewsKind.Accusation, K("守门挡下", guard.Id, night: Day, values: ("人们", names)), about: leader, trust: -1);
+            var news = NewsFrom(guard, NewsKind.Accusation, K("守门挡下", guard.Id, night: Day, values: ("人们", names)), about: leader, trust: -1);
             var blockEv = RecordEvent(guard.Id, $"守着配重室，没给{names}让开", "看守", Place.ArchiveFront, causes);
+            news.SourceEvent = Events[blockEv - 1];
             foreach (var c in crew) Touch(c.Body, T.Accused, blockEv, guard.Id);
             return;
         }
-        NewsFrom(leader, NewsKind.Rumor, K(ok ? "夜开名录库" : "夜开名录库未成", night: Day, values: ("人们", names)));
-        RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
+        var resultNews = NewsFrom(leader, NewsKind.Rumor, K(ok ? "夜开名录库" : "夜开名录库未成", night: Day, values: ("人们", names)));
+        var resultEvent = RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
+        resultNews.SourceEvent = Events[resultEvent - 1];
         if (ok) { SeizedBy = new Faction([.. crew.Select(c => c.Id)], leader.Id, []); SeizedPlan = ArchivePlans().First(); SeizedDay = Day; }
     }
     public RuleSpec? SeizedPlan;

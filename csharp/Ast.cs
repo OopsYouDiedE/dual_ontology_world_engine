@@ -42,7 +42,8 @@ public abstract record Effect
     {
         public Wait(Condition until, Effect body) : this(0, body, until) { }
     }
-    public sealed record Say(Noun Recipient, string Text, Effect? Request = null) : Effect;
+    public sealed record Say(Noun Recipient, string Text, Effect? Request = null,
+        Condition? Claim = null, AuthorTermId? Topic = null) : Effect;
     public sealed record Think(Condition Fact) : Effect;
 }
 
@@ -124,7 +125,8 @@ public static partial class Ast
         Effect.When e => new Effect.When(Map(e.Condition, map), Map(e.Body, map)),
         Effect.Require e => new Effect.Require(Map(e.Condition, map)),
         Effect.Wait e => e with { Body = Map(e.Body, map), Until = e.Until is null ? null : Map(e.Until, map) },
-        Effect.Say e => e with { Recipient = map(e.Recipient), Request = e.Request is null ? null : Map(e.Request, map) },
+        Effect.Say e => e with { Recipient = map(e.Recipient), Request = e.Request is null ? null : Map(e.Request, map),
+            Claim = e.Claim is null ? null : Map(e.Claim, map) },
         Effect.Think e => e with { Fact = Map(e.Fact, map) },
         _ => throw new NotSupportedException()
     };
@@ -136,7 +138,7 @@ public static partial class Ast
         return effect switch
         {
             // 请求中的槽位属于接收者的后续行动，不能在发言者上下文提前填充。
-            Effect.Say say => say with { Recipient = BindNoun(say.Recipient) },
+            Effect.Say say => say with { Recipient = BindNoun(say.Recipient), Claim = say.Claim is null ? null : Map(say.Claim, BindNoun) },
             Effect.Sequence sequence => new Effect.Sequence([..sequence.Items.Select(e => Bind(e, context))]),
             Effect.When conditional => new Effect.When(Map(conditional.Condition, BindNoun), Bind(conditional.Body, context)),
             Effect.Wait wait => wait with { Body = Bind(wait.Body, context), Until = wait.Until is null ? null : Map(wait.Until, BindNoun) },
@@ -209,6 +211,7 @@ public static partial class Ast
             case Effect.Say e:
                 nouns.Add(e.Recipient);
                 if (e.Request is not null) CollectNouns(e.Request, nouns);
+                CollectNouns(e.Claim, nouns);
                 break;
             case Effect.Think e: CollectNouns(e.Fact, nouns); break;
             default: throw new NotSupportedException();
@@ -224,7 +227,9 @@ public static partial class Ast
         (Effect.When a, Effect.When b) => Equivalent(a.Condition, b.Condition) && Equivalent(a.Body, b.Body),
         (Effect.Require a, Effect.Require b) => Equivalent(a.Condition, b.Condition),
         (Effect.Think a, Effect.Think b) => Equivalent(a.Fact, b.Fact),
-        (Effect.Say a, Effect.Say b) => a.Recipient == b.Recipient && a.Text == b.Text &&
+        (Effect.Say a, Effect.Say b) => a.Recipient == b.Recipient &&
+            (a.Topic is not null || a.Claim is not null || a.Text == b.Text) &&
+            a.Topic == b.Topic && (a.Claim is null ? b.Claim is null : b.Claim is not null && Equivalent(a.Claim, b.Claim)) &&
             (a.Request is null ? b.Request is null : b.Request is not null && Equivalent(a.Request, b.Request)),
         _ => left == right
     };

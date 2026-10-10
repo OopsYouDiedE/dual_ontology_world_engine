@@ -163,8 +163,10 @@ public sealed record ObservationInput(string Name, ProjectionKind Kind = Project
     public SourceLocationV1? Origin { get; init; }
     public ObservationTimeUnitV1 TimeUnit { get; init; } = ObservationTimeUnitV1.Unspecified;
     public ImmutableArray<SubjectProjectionId> SourceDependencies { get; init; } = [];
+    public TypedEventV1<Projection?>? Event { get; init; }
 }
 
 public sealed record ObservationEvent(Projection Target, ObservationSource Source, double Time,
     bool? Detected, Truth? Existence, string Details,
-    ImmutableDictionary<Tag, int> Tags, ImmutableHashSet<(RelationTag Relation, Projection Target)> Relations);
+    ImmutableDictionary<Tag, int> Tags, ImmutableHashSet<(RelationTag Relation, Projection Target)> Relations,
+    TypedEventV1<Projection?>? Event = null);

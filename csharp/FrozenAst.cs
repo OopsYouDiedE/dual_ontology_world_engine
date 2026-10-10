@@ -50,12 +50,13 @@ public static class CognitionAst
             case FrozenEffectV1.When n: Collect(n.Condition, ids); Collect(n.Body, ids); break;
             case FrozenEffectV1.Require n: Collect(n.Condition, ids); break;
             case FrozenEffectV1.Wait n: Collect(n.Body, ids); if (n.Until is { } until) Collect(until, ids); break;
-            case FrozenEffectV1.Say n: Collect(n.Recipient, ids); if (n.Request is { } request) Collect(request, ids); break;
+            case FrozenEffectV1.Say n: Collect(n.Recipient, ids); if (n.Request is { } request) Collect(request, ids); if (n.Claim is { } claim) Collect(claim, ids); break;
             case FrozenEffectV1.Think n: Collect(n.Fact, ids); break;
         }
     }
 
     internal static T Defined<T>(T value) where T : struct, Enum { Contract.Enum(value, "ast.enum"); return value; }
+    private static AuthorTermId? Topic(AuthorTermId? topic) { if (topic is { } t) Contract.Identity(t.Value, "ast.topic"); return topic; }
     private static void Node(object? node, int depth)
     {
         Contract.Require(node is not null, ContractErrorCode.MalformedData, "ast", "AST 节点不能为空。");
@@ -121,7 +122,8 @@ public static class CognitionAst
             Effect.When n => new FrozenEffectV1.When(C(n.Condition), E(n.Body)),
             Effect.Require n => new FrozenEffectV1.Require(C(n.Condition)),
             Effect.Wait n => new FrozenEffectV1.Wait(Delay(n.Delay), E(n.Body), n.Until is null ? null : C(n.Until)),
-            Effect.Say n => new FrozenEffectV1.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request)),
+            Effect.Say n => new FrozenEffectV1.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request),
+                n.Claim is null ? null : C(n.Claim), Topic(n.Topic)),
             Effect.Think n => new FrozenEffectV1.Think(C(n.Fact)),
             _ => Unsupported<FrozenEffectV1>()
         };
@@ -181,7 +183,8 @@ public static class CognitionAst
             FrozenEffectV1.When n => new Effect.When(C(n.Condition), E(n.Body)),
             FrozenEffectV1.Require n => new Effect.Require(C(n.Condition)),
             FrozenEffectV1.Wait n => new Effect.Wait(Delay(n.Delay), E(n.Body), n.Until is null ? null : C(n.Until)),
-            FrozenEffectV1.Say n => new Effect.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request)),
+            FrozenEffectV1.Say n => new Effect.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request),
+                n.Claim is null ? null : C(n.Claim), Topic(n.Topic)),
             FrozenEffectV1.Think n => new Effect.Think(C(n.Fact)),
             _ => Unsupported<Effect>()
         };

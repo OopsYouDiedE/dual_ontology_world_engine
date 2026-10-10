@@ -8,6 +8,7 @@ public enum NewsKind { Fact, Sighting, Accusation, Defense, Reputation, Lesson, 
 /// <summary>一条可以被转述的信息。来源链保存在每个听者的 Heard 里。</summary>
 public sealed class NewsItem
 {
+    [System.Text.Json.Serialization.JsonIgnore] public Game.ActEvent? SourceEvent { get; internal set; }
     public required int Id { get; init; }
     public required NewsKind Kind { get; init; }
     public required Claim Claim { get; init; }
@@ -100,9 +101,10 @@ public sealed partial class Game
     }
 
     public NewsItem NewsFrom(Person origin, NewsKind kind, Claim claim, Person? about = null, int trust = 0, int insight = 0, Essence? on = null,
-        Tag? tag = null, int value = 0, Build? build = null, Place? place = null, int lesson = 0, bool manipulation = false)
+        Tag? tag = null, int value = 0, Build? build = null, Place? place = null, int lesson = 0, bool manipulation = false, ActEvent? sourceEvent = null)
     {
         var item = NewItem(kind, claim, origin.Id, about?.Id, trust, insight, on, tag, value, build, place, lesson, manipulation);
+        item.SourceEvent = sourceEvent ?? (_physicsOf is not null && _currentEvent > 0 ? Events[_currentEvent - 1] : null);
         origin.News[item.Id] = new(origin.Id, 0, ObservationSource.Perception, Day, item.Id);
         return item;
     }
@@ -191,7 +193,7 @@ public sealed partial class Game
                 var v = Tell(hearer, spec, Channel.Relay, teller);
                 _relayedThisSlot[teller] = _relayedThisSlot.GetValueOrDefault(teller) + 1;
                 var from = _transmit.TryGetValue((spec.Id, teller.Id), out var tf) ? tf : _postedEv.GetValueOrDefault(spec.Id);
-                _transmit[(spec.Id, hearer.Id)] = RecordEvent(teller.Id, $"向{hearer.Name}转述「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(teller), [from]);
+                _transmit[(spec.Id, hearer.Id)] = RecordEvent(teller.Id, $"向{hearer.Name}转述「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(teller), [from], recipient: hearer, responseTo: SpeechTopics.Rule(spec.Id), propagation: true);
                 RelayLog.Add((Day, Slot, teller.Id, hearer.Id, spec.Id, v == Truth.True));
                 // 信任链留下可读痕迹（§12 第 2 条）：侦探在场就亲眼看见；不在场，听者下次见到侦探会说出是谁跟他讲的。
                 if (spec.Author == P.Det)
@@ -254,18 +256,20 @@ public sealed partial class Game
 
     private bool RelayAccepted(Person p) => Specs.Any(s => s.Card?.Behavior == 4 && p.Acc.GetValueOrDefault(s) == Truth.True);
 
-    /// <summary>见面时的即时反应：听懂对自己说的话里的事实（第一章同样以台词解释 Testimony）。</summary>
+    /// <summary>见面时的即时反应。</summary>
     private void OnMeet(Person p, Person other) { }
 
-    // STORY-HARDCODE[CH2-007][logic][production]: 对“门闩松了”证词执行本案专属解释。
     public void Interpret(Person p)
     {
         var h = p.World.History;
         for (; p.Interpreted < h.Count; p.Interpreted++)
         {
             var e = h[p.Interpreted];
-            if (e.Source != ObservationSource.Testimony || e.Target.Kind != ProjectionKind.Event) continue;
-            if (e.Details.Contains("门闩松了")) Know(p, Granary, T.LatchLoose, 1, ObservationSource.Testimony, e.Details);
+            if (e.Source != ObservationSource.Testimony || e.Event is not TestimonyEventV1<Projection?> testimony) continue;
+            foreach (var claim in testimony.Fields.Claims)
+                if (claim is { Subject: { } target, Tag: { } tag, Value: { } value, Truth: Truth.True }
+                    && EssenceOf(p, target) is { } entity)
+                    Know(p, entity, tag, value, ObservationSource.Testimony, e.Details);
         }
     }
 

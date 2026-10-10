@@ -441,13 +441,14 @@ static class CognitionRegressionProgram
     {
         try
         {
-            Console.WriteLine("Cognition foundation regression; neutral worlds; codec/C/D/host migration excluded");
+            Console.WriteLine("Cognition and typed event regression; neutral worlds; codec/C/host migration excluded");
             for (var shape = 0; shape < 2; shape++)
             {
                 var label = shape == 0 ? "flat" : "nested"; var f = World(shape);
                 Atomic(f, label); Notifications(f, label); Consumers(f, label); HistoryAndTerms(f, label); AstRoundtrip(f, label); Hidden(f, label); Identities(f, label);
                 IncrementalPublication(shape, label);
             }
+            EventRegression.Run(Check);
             Console.WriteLine($"TOTAL {checks} checks"); return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }

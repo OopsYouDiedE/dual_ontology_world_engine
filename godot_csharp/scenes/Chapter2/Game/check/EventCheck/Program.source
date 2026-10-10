@@ -1,0 +1,110 @@
+using System.Collections.Immutable;
+using System.Reflection;
+using System.Text.Json;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using DualOntologyWorldEngine.Awakening;
+using Game = DualOntologyWorldEngine.Chapter2.Prototype.Game;
+using Person = DualOntologyWorldEngine.Awakening.Person;
+
+var checks = 0;
+void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks++; Console.WriteLine("PASS " + name); }
+const string ChangedText = "presentation replaced; punctuation?! renamed actor";
+var first = new CaseTraces(2, true, false, true, [Place.DormW], [Build.Medium]);
+var marks = first with { LatchToolMarks = true };
+Check(first.Describe().Select(d => d.Text).SequenceEqual(marks.Describe().Select(d => d.Text)) && first != marks
+    && !first.MatchesItem(marks, 1), "LatchToolMarks differs despite identical rendering");
+var copy = new CaseTraces(first.LedgerShort, first.LatchFixed, first.LatchToolMarks, first.BowlPorridge,
+    first.CrumbDorms.ToArray(), first.Figures.ToArray());
+Check(first == copy && first.GetHashCode() == copy.GetHashCode(), "all structured case values compare and hash equally");
+Check(first != first with { CrumbDorms = [Place.DormW, Place.DormW] }, "case collection multiplicity participates in equality");
+
+var g = new Game(new() { Quiet = true });
+while (g.Day < 3) g.RunSlot(new(g.Slot == Slot.Night ? Cmd.Stakeout : Cmd.Rest) { Place = Place.Logistics });
+g.BeginDayPublic();
+Check(g.ActionRecords.Count > 0 && g.ActionRecords.All(a => a.Event is ActionEventV1<Essence?>
+    && a.Event.Fields.Phase == EventPhaseV1.Completed), "host captures completed structured action receipts");
+var night = 2;
+var actors = g.People.Select(p => p.Id).ToArray();
+var originalFrames = Game.InkFrames(g, night, actors).Select(f => f.Place).ToArray();
+var originalActions = g.NightActions(night).Select(a => (a.Actor.Id, a.Job, a.ResponseTo, a.Location)).ToArray();
+var originalTraces = g.DawnTraces[night].ToArray();
+var originalCandidates = g.ReplayCandidates(night);
+var originalStatuses = g.CompareTraceResults(night, originalTraces.ToList()).Select(c => c.Status).ToArray();
+var originalUnread = g.UnreadTracePlaces(night);
+g.NightTruth.Clear(); g.NightTruth.Add(ChangedText); g.NightLedgerNames.Clear(); g.NightLedgerNames.Add(ChangedText);
+foreach (var p in g.People) { p.Diary.Clear(); p.Diary.Add(ChangedText); }
+for (var i = 0; i < g.ActionRecords.Count; i++) g.ActionRecords[i] = g.ActionRecords[i] with { Text = ChangedText, BasisText = ChangedText };
+g.DawnTraces[night] = originalTraces.Select(t => t with { Text = ChangedText, Glance = t.Glance is null ? null : ChangedText }).ToList();
+Check(originalFrames.SequenceEqual(Game.InkFrames(g, night, actors).Select(f => f.Place)), "ink locations ignore replaced diary and action descriptions");
+Check(originalActions.SequenceEqual(g.NightActions(night).Select(a => (a.Actor.Id, a.Job, a.ResponseTo, a.Location))), "successful deeds and promise fulfillment ignore legacy night log");
+Check(originalCandidates.SequenceEqual(g.ReplayCandidates(night)), "candidate identity ignores replaced traces and signatures text");
+Check(originalStatuses.SequenceEqual(g.CompareTraceResults(night, originalTraces.ToList()).Select(c => c.Status)), "trace comparison ignores replaced presentation");
+Check(originalUnread.SequenceEqual(g.UnreadTracePlaces(night)), "change filter ignores replaced trace presentation");
+
+var f = new Game(new() { Quiet = true });
+var subject = f.Npcs.First();
+var trace = new TraceItem("neutral-trace", Place.Logistics, ChangedText, ChangedText) { Kind = TraceKind.Patrol,
+    Facts = new() { HasChange = true, Figures = [(Place.Logistics, subject.Pro.Build)] }, GlanceFacts = new() };
+f.DawnTraces[2] = [trace];
+Check(f.KnownTraces(2).Count == 0 && f.ReplayCandidates(2).Count == 0, "unperceived structured traces disclose no candidates");
+f.Stakeouts.Add((2, Place.Hall));
+var candidates = f.ReplayCandidates(2);
+Check(candidates.Contains(subject.Id), "perceived anonymous structured build supplies compatible candidates");
+f.DawnTraces[2] = [trace with { Key = "renamed trace", Text = "no names here!", Glance = "renamed" }];
+Check(candidates.SequenceEqual(f.ReplayCandidates(2)), "trace key and wording do not define candidate identity");
+
+var data = typeof(Chapter2Design).GetProperty("D", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+var dataType = data.GetType();
+var people = (string[])dataType.GetField("People")!.GetValue(data)!;
+var names = people.ToArray();
+var table = (Dictionary<string, JsonElement>)dataType.GetField("TextTable")!.GetValue(data)!;
+var texts = table.ToDictionary(p => p.Key, p => p.Value);
+try
+{
+    for (var i = 0; i < people.Length; i++) people[i] = "display-" + i;
+    foreach (var key in table.Keys.ToArray()) if (table[key].ValueKind == JsonValueKind.String)
+        table[key] = JsonSerializer.SerializeToElement(ChangedText);
+    Check(candidates.SequenceEqual(f.ReplayCandidates(2)), "renamed displayed people preserve candidate identity");
+    Check(originalActions.SequenceEqual(g.NightActions(night).Select(a => (a.Actor.Id, a.Job, a.ResponseTo, a.Location))), "renamed people and text table preserve recorded deed and response");
+    Check(originalStatuses.SequenceEqual(g.CompareTraceResults(night, originalTraces.ToList()).Select(c => c.Status)), "text table changes preserve comparison status");
+    Check(g.Npcs.All(p => g.Testimony(p).Length > 0), "testimony renderer accepts replaced source templates");
+}
+finally { names.CopyTo(people, 0); foreach (var (key, value) in texts) table[key] = value; }
+
+var latchReader = f.Npcs.First();
+var claim = new EventClaimV1<Projection?>(new("core.state"), latchReader.M[f.Granary], null, null, T.LatchLoose, 1, Truth.True);
+Observation.Observe(latchReader.Soul, new(ChangedText, ProjectionKind.Event) { Source = ObservationSource.Testimony, Details = ChangedText,
+    Event = new TestimonyEventV1<Projection?>(new() { Subject = latchReader.Self, KnowledgeSource = ObservationSource.Testimony,
+        Phase = EventPhaseV1.Delivered, Outcome = EventOutcomeV1.Succeeded, Claims = [claim] }) });
+f.Interpret(latchReader);
+Check(Game.Belief(latchReader, latchReader.M[f.Granary], T.LatchLoose) == 1, "report interpretation reads structured claim without matching words");
+var foreign = f.Npcs.First(p => p != latchReader);
+var before = Game.Belief(foreign, foreign.M[f.Granary], T.LatchLoose);
+Observation.Observe(foreign.Soul, new(ChangedText, ProjectionKind.Event) { Source = ObservationSource.Testimony, Details = ChangedText });
+f.Interpret(foreign);
+Check(before == Game.Belief(foreign, foreign.M[f.Granary], T.LatchLoose), "unstructured speech supplies no inferred factual update");
+
+f.SetPlayerPlace(f.Where(subject) == Place.Logistics ? Place.Clinic : Place.Logistics);
+var hiddenId = f.RecordEvent(subject.Id, ChangedText, "neutral-frame", f.Where(subject), [], job: Job.Treat);
+var hiddenAction = f.Events[hiddenId - 1];
+var unrelated = f.NewsFrom(subject, NewsKind.Rumor, new("neutral.claim", subject.Id));
+f.Det.News[unrelated.Id] = new(subject.Id, 1, ObservationSource.Testimony, f.Day, unrelated.Id);
+Check(f.Readable(hiddenAction) is null && f.Describe(new Game.Chain([hiddenAction])).Length == 0, "unrelated known person does not unlock authority event or hidden chain text");
+var specific = f.NewsFrom(subject, NewsKind.Rumor, new("neutral.claim", subject.Id), sourceEvent: hiddenAction);
+f.Det.News[specific.Id] = new(subject.Id, 1, ObservationSource.Testimony, f.Day, specific.Id);
+Check(f.Readable(hiddenAction) is not null && f.Describe(new Game.Chain([hiddenAction])).Contains(ChangedText), "exact heard event source permits its visible account");
+
+var content = new AwakeningContentSession(); var world = new MorningWorld();
+var one = new DetectivePlanner(content.Content.RootElement); var two = new DetectivePlanner(content.Content.RootElement);
+one.RecordVisibleSource("recall_huo.003", "original rendering", "neutral.source");
+two.RecordVisibleSource("recall_huo.003", ChangedText, "neutral.source");
+one.Refresh(world.WorldOf(Person.Detective), content); two.Refresh(world.WorldOf(Person.Detective), content);
+var plan1 = one.Plan(); var plan2 = two.Plan();
+Check(plan1.Motives.Select(m => (m.Id, m.Probability)).SequenceEqual(plan2.Motives.Select(m => (m.Id, m.Probability)))
+    && plan1.Action?.Id == plan2.Action?.Id && plan1.Branches.SequenceEqual(plan2.Branches), "planner source-based motives and action selection survive text replacement");
+var plain = new DetectivePlanner(content.Content.RootElement); plain.RecordVisibleText(ChangedText, "neutral.source");
+plain.Refresh(world.WorldOf(Person.Detective), content); var prior = plain.Plan();
+Check(plan1.Motives.First(m => m.Id == "huo_command").Probability != prior.Motives.First(m => m.Id == "huo_command").Probability,
+    "attributed source provides evidence while unattributed text does not");
+Console.WriteLine($"TOTAL {checks} checks");

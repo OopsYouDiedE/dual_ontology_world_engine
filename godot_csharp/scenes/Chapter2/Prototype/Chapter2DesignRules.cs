@@ -45,13 +45,12 @@ public abstract record Cond
     public sealed record All(Cond[] Items) : Cond { public override bool Eval(Game g, Person? who = null) => Items.All(i => i.Eval(g, who)); }
     public sealed record Any(Cond[] Items) : Cond { public override bool Eval(Game g, Person? who = null) => Items.Any(i => i.Eval(g, who)); }
 
-    /// <summary>人物行动记录（NightTruth 里“D{日} {人} {行动说明}”开头的条数）达到下限。</summary>
+    /// <summary>实际完成的夜间行动按主体与类型计数。</summary>
     public sealed record NightDid(int Day, P Who, Job[] Jobs, int Min) : Cond
     {
         public override bool Eval(Game g, Person? who = null)
         {
-            var prefixes = Jobs.Select(j => $"D{Day} {Names.Of(Who)} {Names.Of(j)}").ToArray();
-            return g.NightTruth.Count(t => prefixes.Any(p => t.StartsWith(p, StringComparison.Ordinal))) >= Min;
+            return g.NightActions(Day, g[Who]).Count(a => a.Job is { } j && Jobs.Contains(j)) >= Min;
         }
     }
 

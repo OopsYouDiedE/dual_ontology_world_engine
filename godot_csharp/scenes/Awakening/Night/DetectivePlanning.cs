@@ -22,7 +22,7 @@ public sealed record DetectiveSearchDecision(DetectiveAction? Action, NightVaria
 public sealed class DetectivePlanner
 {
     private sealed record TraceField(string Evidence, string Field, string Tag, int EqualsValue);
-    private sealed record VisibleObservation(string Text, string Source);
+    private sealed record VisibleObservation(string SourceId, string Text, string Source);
     private sealed record Hypothesis(NightVariables Variables, Dictionary<string, int> Facts);
     private sealed class State
     {
@@ -60,7 +60,6 @@ public sealed class DetectivePlanner
     private double N(string key) => _search.GetProperty(key).GetDouble();
     private static string S(JsonElement item, string key) => item.GetProperty(key).GetString()!;
     private static string ProgressKey(string group, string key) => group + ":" + key;
-    // STORY-HARDCODE[AWK-038][schema][production]: 装配本章 V1–V6 假设、证物、陈述步与搜索模型。
     public DetectivePlanner(JsonElement content)
     {
         _search = content.GetProperty("DETECTIVE_SEARCH").Clone();
@@ -89,8 +88,15 @@ public sealed class DetectivePlanner
     }
     public void RecordVisibleText(string text, string source)
     {
-        var observation = new VisibleObservation(text,source);
+        // Compatibility presentation entry. Unattributed text supplies no proposition evidence.
+        var observation = new VisibleObservation("",text,source);
         if (!_visibleText.Contains(observation)) _visibleText.Add(observation);
+    }
+    public void RecordVisibleSource(string sourceId, string text, string source)
+    {
+        if (string.IsNullOrWhiteSpace(sourceId)) return;
+        var observation = new VisibleObservation(sourceId, text, source);
+        if (!_visibleText.Any(o => o.SourceId == sourceId)) _visibleText.Add(observation);
     }
     public void Completed(DetectiveAction action) => _completed.Add(action.Id);
     public void RecordReplay(NightVariables variables, IEnumerable<Finding> findings)
@@ -112,9 +118,11 @@ public sealed class DetectivePlanner
             var projection = mind.Projections.FirstOrDefault(p => p.Name == name);
             if (projection?.Tags.TryGetValue(new Tag(field.Tag), out var value) is true) state.Seen[field.Field] = value;
         }
-        foreach (var observation in mind.History)
-            if (observation.Details.Length > 0)
-                RecordVisibleText(observation.Details,$"ProjectionWorld:{observation.Source}; kind={observation.Target.Kind}; target={observation.Target.Name}; time={observation.Time}");
+        if (mind.CaptureSnapshot() is not ContractResult<CognitionSnapshotV1>.Success snapshot)
+            throw new InvalidOperationException("Planner requires a subject cognition snapshot.");
+        foreach (var observation in snapshot.Value.VisibleHistory)
+            if (observation.Event?.Fields.Topic is { } topic)
+                RecordVisibleSource(topic.Value, observation.Details,$"ProjectionWorld:{observation.Source}; event={observation.Event.Fields.Id.Value}");
         for (var index = 0; index < _hypotheses.Count; index++)
         {
             var hypothesis = _hypotheses[index];
@@ -154,14 +162,16 @@ public sealed class DetectivePlanner
         _motives = content.Content.RootElement.GetProperty("DETECTIVE_MOTIVES").EnumerateObject().Select(item =>
         {
             var a = item.Value;
-            var cue = S(a,"cue"); var counter = S(a,"counter_cue");
-            var support = _visibleText.Where(t => cue.Length > 0 && t.Text.Contains(cue, StringComparison.Ordinal)).ToArray();
-            var against = _visibleText.Where(t => counter.Length > 0 && t.Text.Contains(counter, StringComparison.Ordinal)).ToArray();
+            string[] Sources(string field) => a.TryGetProperty(field, out var value)
+                ? value.GetString()!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) : [];
+            var cue = Sources("cue_source"); var counter = Sources("counter_source");
+            var support = _visibleText.Where(t => cue.Contains(t.SourceId, StringComparer.Ordinal)).ToArray();
+            var against = _visibleText.Where(t => counter.Contains(t.SourceId, StringComparer.Ordinal)).ToArray();
             var prior = a.GetProperty("prior").GetDouble();
             // Retain every provenance record, but repeated rendering or the same words entering
             // the projection history are not additional independent confirmations.
-            var supportCount = support.Select(t => t.Text).Distinct(StringComparer.Ordinal).Count();
-            var counterCount = against.Select(t => t.Text).Distinct(StringComparer.Ordinal).Count();
+            var supportCount = support.Select(t => t.SourceId).Distinct(StringComparer.Ordinal).Count();
+            var counterCount = against.Select(t => t.SourceId).Distinct(StringComparer.Ordinal).Count();
             var odds = prior / (1-prior) * Math.Pow(N("unknown_reliability"), supportCount-counterCount);
             return new DetectiveMotive(item.Name,S(a,"person"),S(a,"label"), odds/(1+odds),
                 support.Select(t => $"[{t.Source}] {t.Text}").ToArray(),

@@ -22,7 +22,8 @@ internal static class SnapshotGraph
         Projection? Get(SubjectProjectionId? id) => id is { } value ? map[value] : null;
         ObservationEvent Legacy(VisibleObservationV1 o) => new(map[o.Target], o.Source, o.Time, o.Detected,
             o.DeclaredExistence, o.Details, o.ObservedState.Tags,
-            [..o.ObservedState.Relations.Select(r => (r.Relation, map[r.Target]))]);
+            [..o.ObservedState.Relations.Select(r => (r.Relation, map[r.Target]))],
+            o.Event is null ? null : TypedEvents.Map(o.Event, r => r is null ? null : map[r.Value]));
         foreach (var node in snapshot.Projections)
         {
             var p = map[node.Id];
@@ -86,7 +87,7 @@ internal static class SnapshotGraph
         Contract.Require(snapshot.Revision.Value >= 0 && snapshot.VocabularyRevision.Value >= 0, ContractErrorCode.InvalidRevision, "revision", "版本不能为负。");
         Contract.Array(snapshot.RequiredCapabilities, "required_capabilities");
         foreach (var capability in snapshot.RequiredCapabilities)
-            Contract.Require(capability is "core.stable-identity/1" or "core.cognition-atomic-batch/1" or "core.cognition-snapshot/1" or "core.cognition-audit/1" or "core.frozen-ast/1",
+            Contract.Require(capability is "core.stable-identity/1" or "core.cognition-atomic-batch/1" or "core.cognition-snapshot/1" or "core.cognition-audit/1" or "core.frozen-ast/1" or "core.typed-events/1",
                 ContractErrorCode.Unsupported, "required_capabilities", "不支持的必要能力。");
         Contract.Array(snapshot.Projections, "projections"); Contract.Array(snapshot.VisibleHistory, "visible_history");
         var world = new ProjectionWorld(snapshot.SubjectWorld) { Detached = true };
@@ -144,6 +145,11 @@ internal static class SnapshotGraph
             foreach (var dependency in observation.Dependencies) Get(dependency);
             Contract.Require(observation.Dependencies.Distinct().Count() == observation.Dependencies.Length, ContractErrorCode.MalformedData, "dependencies", "来源依赖重复。");
             State(observation.ObservedState);
+            if (observation.Event is { } e) {
+                TypedEvents.Validate(e, r => { Get(r); });
+                Contract.Require(TypedEvents.References(e).OfType<SubjectProjectionId>().All(observation.Dependencies.Contains),
+                    ContractErrorCode.InvalidReference, "event.dependencies", "Event references must be included in source dependencies.");
+            }
         }
         foreach (var node in snapshot.Projections)
         {
@@ -164,7 +170,8 @@ internal static class SnapshotGraph
         }
         foreach (var observation in snapshot.VisibleHistory) Observation(observation);
         ObservationEvent Legacy(VisibleObservationV1 o) => new(projections[o.Target], o.Source, o.Time, o.Detected, o.DeclaredExistence,
-            o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, Get(r.Target)!))]);
+            o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, Get(r.Target)!))],
+            o.Event is null ? null : TypedEvents.Map(o.Event, r => Get(r)));
         world.History = [..snapshot.VisibleHistory.Select(Legacy)];
         foreach (var node in snapshot.Projections)
         {
@@ -190,7 +197,8 @@ internal static class SnapshotGraph
         (ReferenceEquals(a.Procedure, b.Procedure) || a.Procedure is not null && b.Procedure is not null && Contract.Value(Ast.Equivalent(a.Procedure, b.Procedure)));
     internal static bool SameObservation(VisibleObservationV1 a, VisibleObservationV1 b)
         => a.Target == b.Target && a.Source == b.Source && a.Time == b.Time && a.TimeUnit == b.TimeUnit && a.Detected == b.Detected &&
-        a.DeclaredExistence == b.DeclaredExistence && a.Details == b.Details && a.Origin == b.Origin && a.Dependencies.ToHashSet().SetEquals(b.Dependencies) && SameState(a.ObservedState, b.ObservedState);
+        a.DeclaredExistence == b.DeclaredExistence && a.Details == b.Details && a.Origin == b.Origin && a.Dependencies.ToHashSet().SetEquals(b.Dependencies)
+        && TypedEvents.Same(a.Event, b.Event) && SameState(a.ObservedState, b.ObservedState);
     internal static bool SameProjection(FrozenProjectionV1 a, FrozenProjectionV1 b)
         => a.Id == b.Id && SameState(StateOf(a), StateOf(b)) &&
         (a.LastObservation is null ? b.LastObservation is null : b.LastObservation is not null && SameObservation(a.LastObservation, b.LastObservation));

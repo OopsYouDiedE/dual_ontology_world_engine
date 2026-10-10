@@ -9,7 +9,8 @@ public sealed record ActionResolution(bool Succeeded, ActionFailure Failure, dou
 /// <summary>运行时只在动作激活时读取现实。每个无等待阶段先准备，成功后统一提交。</summary>
 public sealed class ActionRuntime(WorldRuntime world)
 {
-    internal (ActionResolution Result, Effect? Next, double Delay, Condition? Until) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline, Func<Action, bool, Action> retainCleanup)
+    internal (ActionResolution Result, Effect? Next, double Delay, Condition? Until) Resolve(SoulEssence soul, ActionIntent intent, double time, CTBSystem timeline, Func<Action, bool, Action> retainCleanup,
+        EventId? cause, Action<TypedEventV1<Essence?>> recorded)
     {
         if (!soul.World.Contains(intent.Actor)) return (new(false, ActionFailure.MissingObject, time), null, 0, null);
         var actor = world.Resolve(intent.Actor);
@@ -20,7 +21,7 @@ public sealed class ActionRuntime(WorldRuntime world)
             return (new(false, ActionFailure.ConditionFailed, time), null, 0, null);
         plan.Prepare(intent.Changes);
         if (plan.Failure != ActionFailure.None) return (new(false, plan.Failure, time), null, 0, null);
-        plan.Commit(retainCleanup);
+        plan.Commit(retainCleanup, cause, recorded);
         return (new(true, ActionFailure.None, time), plan.Next, plan.Delay, plan.Until);
     }
 
@@ -32,7 +33,8 @@ public sealed class ActionRuntime(WorldRuntime world)
         private readonly Dictionary<Essence, State> _states = [];
         private readonly HashSet<Essence> _changed = [];
         private readonly List<Projection> _inspections = [];
-        private readonly List<(SoulEssence Receiver, string Text, Effect? Request)> _messages = [];
+        private readonly List<(SoulEssence Receiver, Effect.Say Speech)> _messages = [];
+        private readonly List<(ActionOp Operation, Essence Target, Essence? Location)> _operations = [];
         private readonly List<ObservationInput> _thoughts = [];
         private readonly List<(Essence Target, StateLease Lease)> _leases = [];
         public ActionFailure Failure { get; private set; }
@@ -184,7 +186,7 @@ public sealed class ActionRuntime(WorldRuntime world)
                     if (Resolve(say.Recipient) is not { } recipient) { Failure = ActionFailure.MissingObject; break; }
                     if (!Reachable(recipient)) { Failure = ActionFailure.OutOfReach; break; }
                     foreach (var receiver in world.Souls.Where(s => s.Relations.Contains((Relations.Controls, recipient))))
-                        _messages.Add((receiver, say.Text, say.Request));
+                        _messages.Add((receiver, say));
                     break;
                 default: Failure = ActionFailure.UnsupportedOperation; break;
             }
@@ -247,9 +249,10 @@ public sealed class ActionRuntime(WorldRuntime world)
                     break;
                 case ActionOp.Destroy: Write(target, state with { Exists = false }); break;
             }
+            if (Failure == ActionFailure.None) _operations.Add((action.Operation, target, Location(actor)));
         }
 
-        public void Commit(Func<Action, bool, Action> retainCleanup)
+        public void Commit(Func<Action, bool, Action> retainCleanup, EventId? cause, Action<TypedEventV1<Essence?>> recorded)
         {
             foreach (var essence in _changed)
             {
@@ -282,9 +285,25 @@ public sealed class ActionRuntime(WorldRuntime world)
                 release = retainCleanup(Remove, lease.ExpiresAt is null);
             }
             world.Sync();
+            var applied = new ActionEventV1<Essence?>(new() {
+                Time = time, TimeUnit = ObservationTimeUnitV1.ActionValue, Subject = actor, Location = Location(actor),
+                Source = actor, KnowledgeSource = ObservationSource.Introspection, Phase = EventPhaseV1.Committed,
+                Outcome = EventOutcomeV1.Succeeded, Perceivers = [soul], Causes = cause is { } id ? [id] : [],
+                Claims = [.._changed.SelectMany(e => _states[e].Tags.Select(t => new EventClaimV1<Essence?>(new("core.state"), e, null, null, t.Key, t.Value, Truth.True)))]
+            });
+            world.RecordCommittedEvent(applied); recorded(applied);
+            var last = applied.Fields.Id;
+            foreach (var (op, target, location) in _operations) {
+                var receipt = new ActionEventV1<Essence?>(new() {
+                    Time = time, TimeUnit = ObservationTimeUnitV1.ActionValue, Subject = actor, Object = target,
+                    Location = location, Source = actor, KnowledgeSource = ObservationSource.Introspection,
+                    Phase = EventPhaseV1.Committed, Outcome = EventOutcomeV1.Succeeded, Operation = op,
+                    Perceivers = [soul], Causes = [last] });
+                world.RecordCommittedEvent(receipt); recorded(receipt); last = receipt.Fields.Id;
+            }
             foreach (var thought in _thoughts) Observation.Observe(soul, thought);
             if (_inspections.Count > 0) world.Observe(soul, _inspections, time);
-            foreach (var (receiver, text, request) in _messages) world.Deliver(receiver, actor, text, request, time);
+            foreach (var (receiver, speech) in _messages) world.Deliver(receiver, actor, speech, time, last);
         }
     }
 }
