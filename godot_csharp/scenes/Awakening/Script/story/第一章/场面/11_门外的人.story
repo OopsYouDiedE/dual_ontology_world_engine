@@ -12,12 +12,17 @@
     跳转 door_voices_menu
 
 场面 door_voices_menu
+    # 问过的话不再列出；“先别开”始终可选。
     选择：
         - 外面是什么样子？ [#id=door_voices.008]
+            条件：非 旗("door_asked_outside")
+            设旗 door_asked_outside
             （男声：“一座挑高的厅，门楣上写着起居厅。地上落着一层灰，从北边那扇门进来的。北门关着，推不开。”） [#id=door_voices.009]
             （女声：“对面还有两扇门，也闩着。里头有人走动。”） [#id=door_voices.010]
             跳转 door_voices_menu
         - 你们那道题，问的是什么？ [#id=door_voices.011]
+            条件：非 旗("door_asked_question")
+            设旗 door_asked_question
             （女声：“问名录库的柜锁是谁开的。”她停了一下。“答案是我。……剩下的，你去问那个戴眼镜的，他念得比我好听。”） [#id=door_voices.012]
             （男声：“锁是她开的。可柜里少了什么，到现在谁也说不出来。”） [#id=door_voices.013]
             跳转 door_voices_menu

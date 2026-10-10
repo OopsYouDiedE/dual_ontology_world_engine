@@ -7534,9 +7534,33 @@ public static class Chapter1CompiledDialogue
                 "id": "door_voices_menu:choice:0",
                 "label": "外面是什么样子？",
                 "label_id": "door_voices.008",
-                "condition": null,
+                "condition": {
+                  "op": "not",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "flag",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "door_asked_outside"
+                        }
+                      ]
+                    }
+                  ]
+                },
                 "lock_hint": "",
                 "body": [
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "door_asked_outside"
+                      }
+                    ]
+                  },
                   {
                     "op": "line",
                     "speaker": "",
@@ -7563,9 +7587,33 @@ public static class Chapter1CompiledDialogue
                 "id": "door_voices_menu:choice:1",
                 "label": "你们那道题，问的是什么？",
                 "label_id": "door_voices.011",
-                "condition": null,
+                "condition": {
+                  "op": "not",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "flag",
+                      "args": [
+                        {
+                          "op": "literal",
+                          "value": "door_asked_question"
+                        }
+                      ]
+                    }
+                  ]
+                },
                 "lock_hint": "",
                 "body": [
+                  {
+                    "op": "call",
+                    "name": "set_flag",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "door_asked_question"
+                      }
+                    ]
+                  },
                   {
                     "op": "line",
                     "speaker": "",
