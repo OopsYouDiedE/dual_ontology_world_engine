@@ -26,7 +26,7 @@ const NONBLOCKING_MODALS := ["card", "form", "candidates", "ending"]
 # STORY-HARDCODE[CSH-025][schema][tool]: 回放工具硬编码学园场景地图与项目地点的对应关系。
 const HOST_MAP_PLACES := {
 	"central_hall": "Hall", "lecture": "Lecture", "logistics": "Logistics", "granary": "Logistics", "clinic": "Clinic",
-	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "DormLife",
+	"greenhouse": "Greenhouse", "archive": "ArchiveFront", "counterweight": "ArchiveFront", "campus_s": "Oath", "living_hall": "Living",
 	"zone_yi": "DormLife", "zone_jia": "DormW", "zone_bing": "DormS", "zone_ding": "DormL", "resonance": "Resonance",
 }
 const DEADLINE_SECONDS := 90.0
