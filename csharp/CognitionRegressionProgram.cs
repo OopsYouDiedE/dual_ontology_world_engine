@@ -389,6 +389,54 @@ static class CognitionRegressionProgram
         Console.WriteLine("DEFER CB-V11 cross-process restore/duplicate receipt protection: save batch");
     }
 
+    static void IncrementalPublication(int shape, string label)
+    {
+        var soul = new SoulEssence("incremental-owner"); var runtime = new WorldRuntime();
+        var root = Add(soul, "root", ProjectionKind.Space);
+        var middle = Add(soul, "middle", ProjectionKind.Space);
+        var leaf = Add(soul, "leaf"); var target = Add(soul, "dependency");
+        Ok(Observation.ObserveBatch(soul, [Change(middle) with { Move = true, Parent = Id(root) },
+            Change(leaf) with { Move = true, Parent = Id(shape == 0 ? root : middle) }]));
+        FrozenEffectV1 effect = new FrozenEffectV1.Sequence([
+            new FrozenEffectV1.Wait(1, new FrozenEffectV1.Set(new FrozenNounV1.Slot(RuleSlot.Actor), Value, 1),
+                new FrozenConditionV1.Not(new FrozenConditionV1.Exists(Ref(target)))),
+            new FrozenEffectV1.Say(new FrozenNounV1.Slot(RuleSlot.Actor), "neutral", new FrozenEffectV1.Think(
+                new FrozenConditionV1.Any([new FrozenConditionV1.Tagged(Ref(target), Mark, 1)])))]);
+        Ok(Observation.ObserveBatch(soul, [Change(leaf) with { Procedure = effect,
+            Rules = [new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Prefer, effect, 1, Truth.True)] }]));
+        // Prime the lazy same-version reader, then change only unrelated data repeatedly.
+        var prior = Capture(soul);
+        var assessed = DecisionSystem.Assess(soul.World, leaf);
+        for (var n = 0; n < 64; n++) Ok(Observation.ObserveBatch(soul,
+            [Change(root) with { Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Value, n) }]));
+        var current = Capture(soul); var rebound = Ok(CognitionGraph.Rebind(current));
+        Check(prior.VisibleHistory.Length + 64 == current.VisibleHistory.Length &&
+            prior.Projections.Single(p => p.Id == Id(root)).Tags.GetValueOrDefault(Value) == 0 &&
+            rebound.Projections[Id(leaf)].Parent == rebound.Projections[Id(shape == 0 ? root : middle)] && assessed.Count == 1,
+            label + " incremental history remains closed and old captured evaluation stays unchanged");
+        var before = Capture(soul); var auditBefore = Ok(runtime.CaptureCognitionAudit(soul));
+        var failed = Observation.ObserveBatch(soul, [Change(root) with { Move = true, Parent = Id(leaf) }]);
+        Check(Error(failed).Code == ContractErrorCode.InvalidBatch && ReferenceEquals(before, Capture(soul)) &&
+            Ok(runtime.CaptureCognitionAudit(soul)).Commits.Length == auditBefore.Commits.Length && root.Parent is null,
+            label + " incremental indirect cycle rolls back warmed reader/state/history/audit");
+        Forget(soul, target);
+        var forgotten = Capture(soul); var node = forgotten.Projections.Single(p => p.Id == Id(leaf));
+        Check(node.Rules.IsEmpty && node.Procedure is null && node.LastObservation is null &&
+            !forgotten.VisibleHistory.Any(o => o.Dependencies.Contains(Id(target))) &&
+            DecisionSystem.Assess(soul.World, leaf).Count == 0 && Ok(CognitionGraph.Rebind(forgotten)).Projections.Count == 3 &&
+            prior.Projections.Single(p => p.Id == Id(leaf)).Procedure is not null,
+            label + " incremental nested Wait.Until and Say.Request dependencies forgotten without audit recovery");
+        Ok(Observation.ObserveBatch(soul, [Change(root)]));
+        Ok(Observation.ObserveBatch(soul, [Change(root)]));
+        var audit = Ok(runtime.CaptureCognitionAudit(soul));
+        Check(audit.Commits[^1].Changes.IsEmpty && audit.Commits[^1].AppendedVisibleHistory.Length == 1 &&
+            auditBefore.Commits.Length + 3 == audit.Commits.Length,
+            label + " incremental identical observations append history with empty state diff and stable prior audit");
+        var restored = Ok(runtime.ReconstructCognitionAudit(audit, prior.Revision));
+        Check(restored.Projections.Any(p => p.Id == Id(target)) && restored.Projections.Single(p => p.Id == Id(leaf)).Procedure is not null,
+            label + " incremental persistent audit reconstructs earlier nested AST exactly");
+    }
+
     static int Main()
     {
         try
@@ -398,6 +446,7 @@ static class CognitionRegressionProgram
             {
                 var label = shape == 0 ? "flat" : "nested"; var f = World(shape);
                 Atomic(f, label); Notifications(f, label); Consumers(f, label); HistoryAndTerms(f, label); AstRoundtrip(f, label); Hidden(f, label); Identities(f, label);
+                IncrementalPublication(shape, label);
             }
             Console.WriteLine($"TOTAL {checks} checks"); return 0;
         }

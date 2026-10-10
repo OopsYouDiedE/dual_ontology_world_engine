@@ -14,9 +14,9 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `SoulEssence`：拥有专属的私有 `ProjectionWorld`，保存主体的认知、规则与历史。
   - `WorldRuntime`：引擎权威现实管理与现实/认知投射映射。支持 `Project`, `Associate`, `Sync`，但不暴露给角色决策直接读取。
   - `StableIdentity.cs`：`EntityId`、`FacetId`、`AuthorTermId` 与主体句柄分域；显式持久 ID 拒绝非 NFC/首尾空白，按 Ordinal 比较。旧入口分配 opaque ID；删除、遗忘与提交失败的已用保留句柄都不复用 ID。
-  - `ProjectionWorld.cs` / `Observation.cs`：认知写入经同一 gate 完整准备、校验与原子发布；成功非空批次只增一版。引擎绑定先于通知发布，通知按版本排队，重入回执可为 Pending，订阅者异常保存在 NotificationFaults。
+  - `ProjectionWorld.cs` / `Observation.cs`：认知写入经同一 gate 完整准备、校验与原子发布；成功非空批次只增一版。内部前态已闭合，提交校验本批输入及受影响的 parent 链，遗忘扫描并清除依赖；只准备触及节点，未变 Frozen 节点/AST 与可见历史记录共享。引擎绑定先于通知发布，通知按版本排队，重入回执可为 Pending，订阅者异常保存在 NotificationFaults。
   - `CognitionSnapshot.cs` / `SnapshotGraph.cs` / `FrozenAst.cs`：主体快照为完整不可变图，AST/关系只含主体句柄；闭合校验与两阶段重绑定拒绝缺引用（含间接 parent 链）、跨域和未知节点。不含源对象、客观身份或回调；本批没有保存 codec。
-  - `CognitionAudit.cs`：引擎专用追加历史保留完整前后态、可见历史差分与遗忘 tombstone，可按精确版本重建；主体可见历史随遗忘删除结构依赖，不从审计补回。
+  - `CognitionAudit.cs`：引擎专用追加历史使用持久化 ImmutableList，捕获时转合同数组；审计仅比较触及节点，仍保留变化的完整前后态、可见历史差分与遗忘 tombstone，可按精确版本重建；主体可见历史随遗忘删除结构依赖，不从审计补回。
   - `ChineseTermBridge.cs`：仅在指定主体快照的 KnownTerms 中解释词形/作者词项及限定条件；保留歧义和 Unknown，版本失效明确拒绝。消歧目标仍进入既有执行器。
 - **观察、推理与心智转变（Cognition.cs, Reasoner.cs, Speech.cs）**：
   - 主观认知更新统一经由 `Observation.Observe` 接口驱动，认知集合保持封闭。
@@ -34,7 +34,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `SocialSystem.EvaluateSender` 为菜单提供只读预评估；与收到请求后的 `Evaluate` 共用配合、发送者信任、历史与宿主传入的行动相合分，不生成预览认知事件。
   - 请求相合分可通过 `RequestCompatibility` 标签写入接收者的请求投影；`Evaluate` 未显式传分时读取该标签，使自主决策与菜单预评估保持同一公式。
   - `DecisionSystem` 与 `SocialSystem` 严格基于主体自身内部世界的 ProjectionWorld 展开演算与决策，绝不直接依据客观现实做抉择。
-  - `SubjectRead.cs` / `SnapshotConsumers.cs`：一次 AST、Decision、Social、Reasoner 求值固定一份主体快照；提交复用完整校验时生成的读图，内部评分直接在该图上求值，避免逐条件重复冻结/重绑定。兼容入口将结果映射回原运行时引用，并附认知版本。新快照入口不读取 runtime/audit。旧字段组合读取与 Reality.Sync 不承诺整图并发一致，Core 不承诺整个 WorldRuntime 跨线程安全。
+  - `SubjectRead.cs` / `SnapshotConsumers.cs`：一次 AST、Decision、Social、Reasoner 求值固定一份主体快照；内部已验证快照在首次读取时延迟构建同版本读图与引用映射，后续复用，每版使用独立对象壳，不重复校验旧历史/AST。外部快照入口与公开 Rebind 仍完整校验；Frozen AST 依赖遍历只读已验证节点，不为找句柄解冻。兼容入口将结果映射回原运行时引用，并附认知版本。新快照入口不读取 runtime/audit。旧字段组合读取与 Reality.Sync 不承诺整图并发一致，Core 不承诺整个 WorldRuntime 跨线程安全。
   - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令。
 - **无剧情硬编码铁律**：
   - 严禁将剧情写入引擎代码；剧情仅存在于 `.story` 和译文。核心逻辑不得硬编码剧情内容或特定剧本文案。
@@ -53,7 +53,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - 核心级基准与验证脚本就地保存在 `csharp/` 根层：
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
-  - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；评分用不同目标同时保留规则与社交请求候选，覆盖槽位上下文及历史分，避免候选去重掩盖混读。codec/跨进程恢复、主观推演隔离、类型化事件和宿主迁移由后续批验证。
+  - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；评分用不同目标同时保留规则与社交请求候选，覆盖槽位上下文及历史分，避免候选去重掩盖混读。增量提交回归覆盖读图缓存后的连续追加、父环失败不发布、嵌套 Wait/Say 依赖遗忘、空状态差分与旧版审计重建。codec/跨进程恢复、主观推演隔离、类型化事件和宿主迁移由后续批验证。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
 - 系统演进直接在既有架构与文件上持续重构。
