@@ -107,6 +107,7 @@ public abstract record FreeEvent(int Slot)
     public sealed record Corridor(int At, string Name, bool Open) : FreeEvent(At);
     public sealed record DormOut(int At, string Name) : FreeEvent(At);
     public sealed record Mediation(int At, string Wording) : FreeEvent(At);
+    public sealed record Summon(int At, string Id) : FreeEvent(At);
 }
 
 public sealed partial class Game
@@ -172,6 +173,7 @@ public sealed partial class Game
                     case FreeEvent.Corridor corridor: HostCorridor(corridor.Name, corridor.Open); break;
                     case FreeEvent.DormOut dorm: HostDormOut(dorm.Name); break;
                     case FreeEvent.Mediation mediation: HostMediate(mediation.Wording); break;
+                    case FreeEvent.Summon summon: HostSummon(summon.Id); break;
                 }
             }
             return;
@@ -216,7 +218,7 @@ public sealed partial class Game
             var firstFrame = _presentedActions.Add((execution, p.Body, frame));
             if (previous == next && !firstFrame) continue;
             var text = anonymous ? "一个" + BuildText(p.Pro.Build) + "身影" : p.Name + (next.Place != previous.Place ? (next.Place == room ? "走进房间" : "离开房间") : next.Job is { } doing ? Names.Of(doing) : "停下了动作");
-            PresentationFrames.Add(new(Now, anonymous ? null : p.Id.ToString(), next.Place == room ? next.Place.ToString() : room.ToString(), frame, Chapter2Content.PlayerText(text), anonymous));
+            PresentationFrames.Add(new(Now, anonymous ? null : p.Id.ToString(), next.Place == room ? next.Place.ToString() : room.ToString(), frame, RenderText(text, p, Det), anonymous));
         }
         if (DefinedScriptWorld is { } scriptWorld)
             foreach (var actor in scriptWorld.Characters.Values.Where(c => !People.Any(p => ReferenceEquals(p.Body, c.Body))))

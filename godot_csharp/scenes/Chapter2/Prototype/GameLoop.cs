@@ -204,7 +204,7 @@ public sealed partial class Game
     /// <summary>侦探之外的人此时段能不能自主行动。病人在诊疗所；饿过一天的人下午动不了。</summary>
     private bool Available(Person p)
     {
-        if (!HostDormReleased(p)) return false;
+        if (p.M[Way[Where(p)]].Tags.GetValueOrDefault(Passable) < 1) return false;
         if (Get(p.Body, T.Sick) > 0) return false;
         if (p.InjuredDays > 0) return false;
         if (Slot == Slot.Afternoon && Get(p.Body, T.Hungry) > 0) return false;
@@ -262,18 +262,18 @@ public sealed partial class Game
         _ => null
     };
 
-    private Place? Destination(Effect effect) => effect switch
+    private Place? Destination(Person actor, Effect effect) => effect switch
     {
-        Effect.Act { Operation: ActionOp.Travel, Target: Noun.Reference r } => Way.FirstOrDefault(w => w.Value.TrueName == r.Projection.Name).Key,
-        Effect.Sequence s => s.Items.Select(Destination).FirstOrDefault(d => d is not null),
-        Effect.Wait w => Destination(w.Body),
+        Effect.Act { Operation: ActionOp.Travel, Target: Noun.Reference r } => Way.Where(w => ReferenceEquals(w.Value, EssenceOf(actor, r.Projection))).Select(w => (Place?)w.Key).FirstOrDefault(),
+        Effect.Sequence s => s.Items.Select(e => Destination(actor, e)).FirstOrDefault(d => d is not null),
+        Effect.Wait w => Destination(actor, w.Body),
         _ => null
     };
 
     private void Submit(Person p, Decision d, IReadOnlyList<string> reasons)
     {
         var job = JobOf(p, d.Effect);
-        var dest = Destination(d.Effect);
+        var dest = Destination(p, d.Effect);
         var delay = (dest is { } x && x != Where(p) ? 2.0 / p.Pro.Speed : 0.3) + 0.5;
         if (p.Weak) delay += 0.5;
         var why = string.Join("；", reasons);
@@ -334,6 +334,7 @@ public sealed partial class Game
     {
         using var _ = Prof.Time("C:OnCompleted");
         var p = People.FirstOrDefault(x => ReferenceEquals(x.Self, exec.Intent.Actor));
+        if (p is not null && exec.Status == ExecutionStatus.Failed) ObserveFailedAccess(p, exec);
         if (Story?.Owns(exec) == true)
         {
             if (p is not null) { p.Exec = null; p.Doing = null; }
@@ -343,6 +344,7 @@ public sealed partial class Game
         if (p is null) return;
         var (job, why, _) = _running.GetValueOrDefault(exec);
         _running.Remove(exec);
+        CaptureAction(p, job, exec, why);
         p.Exec = null;
         p.Doing = null;
         if (exec.Status == ExecutionStatus.Completed)
@@ -439,6 +441,7 @@ public sealed partial class Game
                 NightSeenTaking(p, true);
                 NightTruth.Add($"D{Day} {p.Name} {Names.Of(job.Value)}");
                 NightLedgerNames.Add($"D{Day} {p.Name}");
+                NightLedgerRecords.Add((Day, p));
                 if (job == Job.NightTakeSickRec) _bowlFilledTonight = true;
                 break;
             case Job.NightTakeSick or Job.NightTakeSelf or Job.Hoard or Job.RepairLatch:
@@ -652,7 +655,6 @@ public sealed partial class Game
         }
     }
 
-    // STORY-HARDCODE[CH2-066][text][production]: 为本案指控对象选择具名指控反馈。
     private void AccuseSpeech(Person w)
     {
         // 指控以亲见优先（§13 第 3 条）：先指自己亲眼看见没记账取粮的人，再依转述与成见。

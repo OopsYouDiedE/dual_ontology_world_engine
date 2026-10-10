@@ -143,6 +143,161 @@
     "E10": "沈鼎：“是我喂的。……这罐子，不是这一两天才养的。”",
     "E11": "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。"
   },
+  "EXPRESSION": {
+    "speech": {
+      "tell_affirm": {
+        "text": "如实·有把握",
+        "when": {
+          "act": "Tell",
+          "stance": "Affirm",
+          "written:如实·有把握": true
+        }
+      },
+      "tell_deny": {
+        "text": "如实·否认",
+        "when": {
+          "act": "Tell",
+          "stance": "Deny",
+          "written:如实·否认": true
+        }
+      },
+      "tell_unsure": {
+        "text": "如实·没把握",
+        "when": {
+          "act": "Tell",
+          "stance": "Unsure",
+          "written:如实·没把握": true
+        }
+      },
+      "hedge": {
+        "text": "含糊",
+        "when": {
+          "act": "Hedge",
+          "written:含糊": true
+        }
+      },
+      "ask": {
+        "text": "反问",
+        "when": {
+          "act": "AskBack",
+          "written:反问": true
+        }
+      },
+      "withhold": {
+        "text": "隐瞒",
+        "when": {
+          "act": "Withhold",
+          "written:隐瞒": true
+        }
+      },
+      "refuse": {
+        "text": "拒绝",
+        "when": {
+          "act": "Refuse",
+          "written:拒绝": true
+        }
+      },
+      "lie_affirm": {
+        "text": "撒谎·有把握",
+        "priority": 1,
+        "when": {
+          "act": "Lie",
+          "stance": "Affirm",
+          "written:撒谎·有把握": true
+        }
+      },
+      "lie_deny": {
+        "text": "撒谎·否认",
+        "priority": 1,
+        "when": {
+          "act": "Lie",
+          "stance": "Deny",
+          "written:撒谎·否认": true
+        }
+      },
+      "lie_affirm_fallback": {
+        "text": "如实·有把握",
+        "when": {
+          "act": "Lie",
+          "stance": "Affirm",
+          "written:如实·有把握": true
+        }
+      },
+      "lie_deny_fallback": {
+        "text": "如实·否认",
+        "when": {
+          "act": "Lie",
+          "stance": "Deny",
+          "written:如实·否认": true
+        }
+      }
+    },
+    "idle": {
+      "voice": {
+        "text": "重演·心声·wait_voice",
+        "when": {
+          "speaker": "Su",
+          "place": "Foyer",
+          "door.Open": 1,
+          "outsider": "True"
+        }
+      },
+      "door": {
+        "text": "重演·心声·wait_door",
+        "when": {
+          "speaker": "Shen",
+          "place": "Foyer",
+          "cloth.Wet": 1,
+          "door.Open": 1
+        }
+      },
+      "tube": {
+        "text": "重演·心声·wait_tube",
+        "when": {
+          "speaker": "Huo",
+          "place": "Hall",
+          "order.HoldTube": 1
+        }
+      }
+    },
+    "doubt": {
+      "stranger": {
+        "text": "重演·心声·stranger",
+        "when": {
+          "sender.Acquainted": 0
+        }
+      },
+      "familiar": {
+        "text": "夜间·怀疑·熟人",
+        "when": {
+          "sender.Acquainted": ">0"
+        }
+      }
+    },
+    "alarm": {
+      "su": {
+        "text": "重演·心声·alarm_su",
+        "when": {
+          "speaker": "Su"
+        }
+      },
+      "huo": {
+        "text": "重演·心声·alarm_huo",
+        "when": {
+          "speaker": "Huo"
+        }
+      },
+      "shen": {
+        "text": "重演·心声·alarm_shen",
+        "when": {
+          "speaker": "Shen"
+        }
+      }
+    }
+  },
+  "RULE_LIFETIMES": {
+    "old_object_habits": "chapter"
+  },
   "PRESENTATION": {
     "player_actor": "detective",
     "room_owners": {
@@ -800,6 +955,8 @@
       "label": "霍铎可能把带铜口标记的指令当成可信来源",
       "cue": "◎，铜口",
       "counter_cue": "不等了",
+      "cue_source": "recall_huo.003",
+      "counter_source": "s10_open.010",
       "prior": 0.5
     },
     "shen_care": {
@@ -807,6 +964,8 @@
       "label": "沈鼎可能先保住人的吃食与安全，再考虑其他事",
       "cue": "人得先吃饭",
       "counter_cue": "人不必吃饭",
+      "cue_source": "",
+      "counter_source": "",
       "prior": 0.5
     },
     "su_hearing": {
@@ -814,6 +973,8 @@
       "label": "苏泠可能依靠不完整的听觉片段判断门外情况",
       "cue": "两拍弱音",
       "counter_cue": "我听见了整句话",
+      "cue_source": "replay/score_tail_open",
+      "counter_source": "",
       "prior": 0.5
     }
   },
@@ -2187,7 +2348,31 @@
     "界面·错误·尚未出区": "当前会话尚未离开宿舍。",
     "界面·错误·缺少世界": "缺少正在运行的世界，无法继续。",
     "界面·错误·人物尚未就绪": "人物的运行中引用不完整，或仍在行动。",
-    "界面·错误·未知去处": "未知游戏去处：{去处}"
+    "界面·错误·未知去处": "未知游戏去处：{去处}",
+    "来源·Perception": "亲见",
+    "来源·Inference": "自己推出",
+    "来源·Recall": "回忆",
+    "来源·Corruption": "铜口之言，不当证据",
+    "来源·Testimony": "{说话人}说的，信任 {信任}",
+    "来源·SelfKnown": "自知",
+    "来源·Prior": "先入之见，强度 {强度}",
+    "推理·Observed": "亲见：{对象}·{字段}={值}",
+    "推理·DefaultAssumed": "尚未想到：{对象}（默认 {选项}）",
+    "推理·Compatible": "与所见相容的组合 {值}/{总数}",
+    "推理·LeastContradictions": "所见与任何组合都不完全相容；暂取矛盾最少的 {值} 种",
+    "推理·Accepted": "采信：{对象}（{来源}，权重 {因子}）",
+    "推理·Discounted": "不采信：{对象}（{来源}）",
+    "言语理由·ListenerTrust": "对听者的信任 {值}",
+    "言语理由·Sure": "心里有数",
+    "言语理由·Unsure": "没有把握，照实说不知道",
+    "言语理由·ImplicatedPenalty": "说了会牵连自己 -2",
+    "言语理由·Implicated": "答案牵连自己",
+    "言语理由·HedgeSure": "可以含糊带过",
+    "言语理由·HedgeUnsure": "拿不准，先含糊",
+    "言语理由·Curious": "想先知道对方为何问",
+    "言语理由·Distrust": "不信听者",
+    "言语理由·Refusal": "不想跟此人说话",
+    "言语理由·SelfProtection": "说反话自保"
   },
   "POSTED_RULES": [
     "一、入夜之后，诸位留于室内。",

@@ -4,6 +4,11 @@
 
 **架构与同步规则**：本目录发生架构、路径或管线规范调整时，必须同步修改本文件（`godot_csharp/AGENTS.md`）；严禁将剧情写入宿主代码，剧情仅允许存在于 `.story` 和译文中。C# 与 GDScript 中的设定与逻辑查验统一通过剧本编译物与词汇表，不得硬编码剧情台词或设定。
 
+- 保存接口：`Shared/Story/WorldSession.Save.cs`、`SessionPersistence.cs` 提供完整空闲会话候选、进度值的闭合协议、版本化随机流及原子 Store 发布；重复载入相同字节保留对象与恢复 epoch。外部章节宿主必须注册保存切点 guard，不能仅凭 Core active 为空保存。
+- 章节适配：`Awakening/Script/Chapter1Save.cs` 与 `Awakening/Night/MorningSave.cs` 保存实际章节进度、时钟、生态游标与引用；恢复使用专用构造，绕过初态、观察、效果和 fiber。`Shared/Game/GameSession.Save.cs`、`Host/GameEngine.cs` 暴露无 UI 的导出/载入 API；当前仅支持第一章空闲点，其余章节与活动选择、回执、走位、流程明确 `UnsupportedSavePoint`。
+- headless 保存检查：`godot --headless --path godot_csharp --script res://scenes/Shared/check/check_session_save.gd`；实际推进第一章后保存，启动第二个 Godot 进程恢复并比较连续推进结果。`tools/verify.py` 的 `save` 步骤执行该检查。纯 dotnet 诊断入口为 `dotnet run --project godot_csharp/scenes/Shared/check/SaveCheck/SaveCheck.csproj -c Release -- write tmp/core-save-check` 与同项目 `-- read tmp/core-save-check`。不替代 UI/盲玩验收。
+- 保存检查也核对 WorldSession 中类型化权威事件的全部字段/因果与重复载入不再登记事件；事件身份和权限由 Core 运行时协议保存，宿主不自行复制或补发。
+
 ---
 
 ## 一、场景（`.tscn`）架构分类
@@ -66,7 +71,16 @@
 
 第一章普通交谈、协助场面未单独声明时长时，使用对应行动时长，避免再套用默认剧情场面时长；显式声明的剧情场面仍按编译数据结算。
 
-第二章的时段流程和嵌套选择由 `.story` 编译到 `design.flows`、`design.schedule`；`Chapter2SessionFlows.cs` 执行步骤并等待正式对白或菜单回执。场面与耗时动作由流程组织，会话不得另列一套时段场面表。`Chapter2Access.cs` 统一管理访问权限，在现场快照、实际通路和 NPC 内部通路投影中同步；权限变更与即时调停写入有序 `FreeEvents`，夜间快照保留权限集合。人物菜单通过 Core `SocialSystem` 的只读预览排序，实际收到的请求记录相合分供自主决策复用，拒绝在时段结算之前处理。
+第二章的时段流程和嵌套选择由 `.story` 编译到 `design.flows`、`design.schedule`；`Chapter2SessionFlows.cs` 执行步骤并等待正式对白或菜单回执。场面与耗时动作由流程组织，会话不得另列一套时段场面表。`通行` 编译到 `design.access`，以稳定 ID 声明边界、起终点、可见范围、初始位置及召集消息；`Chapter2Access.cs` 经 Core 提交改变边界状态，再派生实际通路。人物只因当地观察、复查、消息或行动失败更新通路认知；开门不搬动人物。流程的 `summon:<id>` 经社交请求与自主决策提交 Travel。变更、召集与即时调停写入有序 `FreeEvents`，夜间快照分别保留权威权限与人物通路认知。人物菜单通过 Core `SocialSystem` 的只读预览排序，实际收到的请求记录相合分供自主决策复用，拒绝在时段结算之前处理。
+
+`规则有效期`、规矩的 `有效期` 及场面的触发器 `有效期` 接受 world/chapter/interaction；它们独立于实体和候选 scope。`RuleLifetimes` 经 Introspection 精确移除匹配 lifetime/owner 的规则，同时撤销同范围的实体规则源，保留投影、记忆与其余规则。连续世界交接先确认所有已有人物的动作已完成；重复交接返回同一个活世界。剧本与编译器修改须从源重新生成并检查一致性。
+
+第二章的 StructuredEvents 保存实际行动回执及对象引用；请求使用稳定 Topic，口供、履约与地点从回执查询。事件的因果引用连接实际执行回执；转述消息保存其来源事件，玩家只读本人亲见或听说的具体事件，链描述过滤未获知步骤。痕迹分开保存结构化事实、观察权限和渲染文本，候选与比较只读取获知的字段，痕迹事实使用玩家可辨的类别，不暴露原始隐藏时长；比较结果携带枚举状态。CaseTraces 相等比较所有字段与列表值。中文日志仅用于呈现；第一章侦探规划器用实际可见行的稳定来源 ID 查询线索，未署来源的显示文本不提供命题证据。
+`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/EventCheck/EventCheck.csproj -c Release` 验证结构化证物比较、认知来源过滤及日志/对白/人名显示替换后地点、候选、回应与行动选择保持一致；依赖正常剧本编译产物。
+
+两章的 `表达` 数据块由既有剧本编译器生成；共享 `ResponseCatalog` 只筛选声明条件与优先级，不修改世界或认知。说话人、听者与条件读取器由会话提供，第一章仍由 `SpeechPolicy` 选择言语行为。来源及理由显示由第一章表达模板绑定 Core 结构化结果；第二章称呼使用身份占位符与说话人认知条件，禁止全文替换称呼。无适用回应返回 `none`，章末总结不把方案条款当作行动事实。
+表达合同检查：`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/ExpressionCheck/ExpressionCheck.csproj -c Release`；覆盖译文替换不改判定、身份知识与听者条件、明确无反应、结构化来源/理由及总结只读性。它不代替一级、二级或三级验收。
+表达声明编译检查：`python godot_csharp/tools/check/test_story_expression.py`；覆盖中性内容的译文独立性、条件与优先级类型校验，不改既有回归预期。
 
 `scenes/Main2D.tscn` 是只装载第一章现场的旧预览场景，不承接完整游戏会话。`scenes/Shared/UI/*.tscn` 保留旧界面场景文件，归于 UI 面板类；正式界面仍使用 `scenes/UI/`。这些旧文件不作为正式运行或验收入口，启用前必须先检查外部资源引用是否存在并完成实机验证。
 
@@ -119,7 +133,7 @@
 
 - `Shared/Story/PlayerController.cs` 承接 `.story` 的角色操控声明；`玩家` 保留既有默认产物，`代理` 编译为 `controllers`（角色、主观规则）。规则类别只接受通用输入种类、公开新鲜度与自身选择历史，不支持行动序列、章节身份或源位置。编译器位于 `tools/story_controller.py`，由 `story_script.py` 统一调用。
 - `推理预算：深度 N 展开 N 假设 N 论证 N 求知 N` 是通用角色参数；省略时使用浅层小预算，不按角色名分支。代理将可见字段标题／选项文本与本人已获知词项或明确名字绑定，调用 Core `SubjectiveReasoner` 比较出示材料的论证支持、公开变量组合的假设预测与未知命题的调查价值，再与 `DecisionSystem.Assess` 合并；只读取本人已接受的 Infer/Think 信念，不把普通 Procedure 或规范偏好当作事实。没有已获知命题模型时明确记录 `no_acquired_propositional_model`，不从隐藏答案补齐。决策公开实际匹配的操控规则、本人已知依据与推理展开／停止／假设数；规则依据在更新本人选择历史前固定。主体私有句柄只在 Core 内使用，不进入公开轨迹。正式章节尚缺少结构化公开命题接线，不能把通用机制检查说成正式推理通关。
-- `IPlayerRoleSession` 只由可信章节适配器提供当前玩家角色的不可变认知和正式游戏时刻。代理只接收 `PublicPlayerObservation` 与该角色认知，使用 Core 的快照 `DecisionSystem.Assess`；候选评估的临时节点不回写角色。`PlayerCandidateSession` 持有 token 到原菜单、表单与现场输入的映射，经同一 `GameSession` 分派执行；刷新、消费、未知/过期 token、预算或提交异常使 token 失效，错误关闭边界。当前章节只承接其表现声明指定的玩家角色，其余角色操控声明明确拒绝，不静默借用玩家身份。
+- `IPlayerRoleSession` 只由可信章节适配器提供当前玩家角色的不可变认知和正式游戏时刻。代理只接收 `PublicPlayerObservation` 与该角色认知，使用 Core 的快照 `DecisionSystem.Assess`；候选评估的临时节点不回写角色。`PlayerCandidateSession` 持有 token 到原菜单、表单与现场输入的映射，经同一 `GameSession` 分派执行；刷新、消费、未知/过期 token、预算或提交异常使 token 失效，错误关闭边界。当前章节只承接其表现声明指定的玩家角色，其余角色操控声明明确拒绝，不静默借用玩家身份。现有宿主存档只保存章节认知／进度，未保存代理历史、随机状态和候选；声明代理的会话 Save/Restore 在发布前以 UnsupportedSavePoint/host.controller_state 拒绝，避免不完整恢复继续使用旧 token。真实玩家空闲存档通路保留。
 - `PlayerPanels` 由可信宿主按共享面板的呈现合同投影笔记、手稿与学园图；只保留可见问题/选项、已知地点、已经展示的卡片和反馈，私有字段/隐藏变量/未画出的对照详情不进入代理。分标签表单只投影当前字段，页签切换经本地 token 更新，不向引擎提交作答；允许重新编辑已选字段，提交仍核对所有必填项。手稿变量按公开选项索引生成合法 token；重演沿正式 `replay_vars/replay` 通路，回放不跳过，地图沿正式 `travel` 通路。按钮文字从既有共享面板资源读取，不新增 UI 或章节文案。开启面板和作者自动展示产生正式 `opened` 回执。
 - `tools/run_virtual_player.gd` 是无渲染正式连续会话入口：`Godot --headless --path godot_csharp --script res://tools/run_virtual_player.gd -- --declarations=<编译物> --output=<新JSONL> --seed=0 --days=3 --max-selections=10000 --max-observations=20000 --max-seconds=600 --no-progress-seconds=30`。有符号 32 位种子只控制代理同分候选的 `xorshift32-v1` 子流，0 映射为 `0x9E3779B9`；不改变正式剧情或生成世界。现场候选来自正式 `WorldView` 的视线与导航，移动、碰撞和演出回执由真实物理循环处理；代理没有时间推进或探针入口。轨迹不覆盖已有文件，记录公开观察、token、反馈和真实游戏时刻；预算与无进展不能折算为到达游戏日。
 - 代理编译合同检查：`python godot_csharp/tools/check/check_player_controller.py`；加 `--prepare-agent tmp/<新目录>` 只在临时副本把已声明玩家角色改为代理并编译，正式产物仍由统一编译入口生产。运行时边界与隐真变形检查：先 `dotnet build godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj -c Release -m:1 --disable-build-servers`，再 `dotnet run --project godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj -c Release --no-build --no-restore`；等待构建退出后再运行。该检查项目只链接正式模块，不作为盲玩、UI 或剧情验收。Godot 项目排除其独立入口源码。
@@ -137,6 +151,7 @@
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
 - 表现绑定开发检查：`godot --headless --path godot_csharp --script res://scenes/Shared/check/check_presentation_bindings.gd`；验证改演员 ID 后仍绑定同一节点，缺失节点或玩家绑定明确失败，不代替游戏验收。
 - 宿主表现声明合同检查：`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/PresentationCheck/PresentationCheck.csproj -c Release`；覆盖地图改键、缺失肖像/地图、实际调查对象引用与中性非空间锚点，不改既有回归预期。
+- 通路与有效期合同检查：`python godot_csharp/tools/check/test_access_lifetimes.py`、`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/AccessLifetimeCheck/AccessLifetimeCheck.csproj -c Release`；验证声明引用、局部通路认知、开门与实际出行分离、跨章混合规则保留和重复退出，不代替 UI 或盲玩验收。
 - 地图文字更新先在仓库根目录运行 `python godot_csharp/tools/compile_story.py`。`python godot_csharp/tools/build_awakening_map.py --text-only` 从编译 layout 的 `furniture_asides` 与 Content 的 `ROOM_NAMES` 按固定槽键更新既有 `map_layout.tres`，完整校验槽数、房间集合与文字类型，不绘图、不写场景几何。
 - `python godot_csharp/tools/build_chapter2_scenes.py --text-only <室内地图键>...` 从正式 Chapter2 `design.text` 更新既有根节点标题、`Sites/<id>` 标签与 manifest 对应文字。支持 `living_hall`、`zone_jia`、`zone_yi`、`zone_bing`、`zone_ding`、`central_hall`、`lecture`、`archive`、`counterweight`、`resonance`、`clinic`、`logistics`、`granary`、`greenhouse`；整批校验键、节点和场点集合后才写入指定场景与 manifest，仅替换字符串，保持几何、资产、节点顺序与其他序列化字节，文字未变时不写文件。
 - `python godot_csharp/tools/build_chapter2_scenes.py --sites-only <室内地图键>...` 的几何来自 `chapter2_art/rooms.py`，文字来自正式编译物的 `design.text`；更新指定地图的 `Sites` 标记与 manifest，复用既有纹理。该入口仍将 `Sites` 起始处至文件尾重写，仅调整热点时不必重新生产整套美术；标题更新使用 `--text-only`。

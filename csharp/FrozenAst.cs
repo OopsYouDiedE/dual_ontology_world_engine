@@ -5,7 +5,58 @@ namespace DualOntologyWorldEngine.Core;
 /// <summary>Closed AST conversion. No reflection, callbacks or name-based reference recovery.</summary>
 public static class CognitionAst
 {
+    // These walks consume ASTs already checked by Thaw at the input boundary.
+    // Dependency discovery and forgetting need handles, not a second object graph.
+    internal static IEnumerable<SubjectProjectionId> References(FrozenRuleV1 rule)
+    {
+        var ids = new List<SubjectProjectionId>();
+        Collect(rule.Condition, ids); Collect(rule.Effect, ids);
+        return ids;
+    }
+    internal static IEnumerable<SubjectProjectionId> References(FrozenEffectV1 effect)
+    {
+        var ids = new List<SubjectProjectionId>(); Collect(effect, ids); return ids;
+    }
+    private static void Collect(FrozenNounV1 noun, List<SubjectProjectionId> ids)
+    {
+        if (noun is FrozenNounV1.Reference reference) ids.Add(reference.Target);
+    }
+    private static void Collect(FrozenConditionV1 condition, List<SubjectProjectionId> ids)
+    {
+        switch (condition)
+        {
+            case FrozenConditionV1.Exists n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Tagged n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Related n: Collect(n.Target, ids); Collect(n.Other, ids); break;
+            case FrozenConditionV1.At n: Collect(n.Target, ids); Collect(n.Space, ids); break;
+            case FrozenConditionV1.IsKind n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Not n: Collect(n.Operand, ids); break;
+            case FrozenConditionV1.All n: foreach (var child in n.Items) Collect(child, ids); break;
+            case FrozenConditionV1.Any n: foreach (var child in n.Items) Collect(child, ids); break;
+        }
+    }
+    private static void Collect(FrozenEffectV1 effect, List<SubjectProjectionId> ids)
+    {
+        switch (effect)
+        {
+            case FrozenEffectV1.Act n: Collect(n.Target, ids); if (n.Tool is { } tool) Collect(tool, ids); break;
+            case FrozenEffectV1.Set n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Change n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.TemporarySet n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.TemporarySetUntilEnd n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Spend n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Relate n: Collect(n.Target, ids); Collect(n.Other, ids); break;
+            case FrozenEffectV1.Sequence n: foreach (var child in n.Items) Collect(child, ids); break;
+            case FrozenEffectV1.When n: Collect(n.Condition, ids); Collect(n.Body, ids); break;
+            case FrozenEffectV1.Require n: Collect(n.Condition, ids); break;
+            case FrozenEffectV1.Wait n: Collect(n.Body, ids); if (n.Until is { } until) Collect(until, ids); break;
+            case FrozenEffectV1.Say n: Collect(n.Recipient, ids); if (n.Request is { } request) Collect(request, ids); if (n.Claim is { } claim) Collect(claim, ids); break;
+            case FrozenEffectV1.Think n: Collect(n.Fact, ids); break;
+        }
+    }
+
     internal static T Defined<T>(T value) where T : struct, Enum { Contract.Enum(value, "ast.enum"); return value; }
+    private static AuthorTermId? Topic(AuthorTermId? topic) { if (topic is { } t) Contract.Identity(t.Value, "ast.topic"); return topic; }
     private static void Node(object? node, int depth)
     {
         Contract.Require(node is not null, ContractErrorCode.MalformedData, "ast", "AST 节点不能为空。");
@@ -71,7 +122,8 @@ public static class CognitionAst
             Effect.When n => new FrozenEffectV1.When(C(n.Condition), E(n.Body)),
             Effect.Require n => new FrozenEffectV1.Require(C(n.Condition)),
             Effect.Wait n => new FrozenEffectV1.Wait(Delay(n.Delay), E(n.Body), n.Until is null ? null : C(n.Until)),
-            Effect.Say n => new FrozenEffectV1.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request)),
+            Effect.Say n => new FrozenEffectV1.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request),
+                n.Claim is null ? null : C(n.Claim), Topic(n.Topic)),
             Effect.Think n => new FrozenEffectV1.Think(C(n.Fact)),
             _ => Unsupported<FrozenEffectV1>()
         };
@@ -79,9 +131,10 @@ public static class CognitionAst
     internal static FrozenRuleV1 Freeze(Rule r, Func<Projection, SubjectProjectionId> id)
     {
         Node(r, 0);
+        ValidateLifetime(r.Lifetime, r.LifetimeOwner);
         var effect = Freeze(r.Effect, id);
         ValidateInference(r.Mode, effect);
-        return new(Freeze(r.Condition, id), Defined(r.Mode), effect, r.Weight, Defined(r.Acceptance));
+        return new(Freeze(r.Condition, id), Defined(r.Mode), effect, r.Weight, Defined(r.Acceptance), r.Lifetime, r.LifetimeOwner);
     }
     private static void ValidateInference(RuleMode mode, FrozenEffectV1 effect)
     {
@@ -140,7 +193,8 @@ public static class CognitionAst
             FrozenEffectV1.When n => new Effect.When(C(n.Condition), E(n.Body)),
             FrozenEffectV1.Require n => new Effect.Require(C(n.Condition)),
             FrozenEffectV1.Wait n => new Effect.Wait(Delay(n.Delay), E(n.Body), n.Until is null ? null : C(n.Until)),
-            FrozenEffectV1.Say n => new Effect.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request)),
+            FrozenEffectV1.Say n => new Effect.Say(N(n.Recipient), Text(n.Text), n.Request is null ? null : E(n.Request),
+                n.Claim is null ? null : C(n.Claim), Topic(n.Topic)),
             FrozenEffectV1.Think n => new Effect.Think(C(n.Fact)),
             _ => Unsupported<Effect>()
         };
@@ -149,7 +203,15 @@ public static class CognitionAst
     {
         Node(r, 0);
         ValidateInference(r.Mode, r.Effect);
-        return new(Thaw(r.Condition, map), Defined(r.Mode), Thaw(r.Effect, map), r.Weight, Defined(r.Acceptance));
+        ValidateLifetime(r.Lifetime, r.LifetimeOwner);
+        return new(Thaw(r.Condition, map), Defined(r.Mode), Thaw(r.Effect, map), r.Weight, Defined(r.Acceptance), r.Lifetime, r.LifetimeOwner);
+    }
+    private static void ValidateLifetime(LifetimeScope lifetime, string? owner)
+    {
+        Defined(lifetime);
+        if (owner is not null) Contract.Identity(owner, "ast.lifetime_owner");
+        Contract.Require(lifetime == LifetimeScope.World || owner is not null, ContractErrorCode.MalformedData,
+            "ast.lifetime_owner", "局部规则必须声明有效期所属范围。");
     }
     internal static void ValidateMap(ImmutableDictionary<SubjectProjectionId, Projection> map)
     {

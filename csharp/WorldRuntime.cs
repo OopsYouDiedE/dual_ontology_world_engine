@@ -224,8 +224,9 @@ public sealed partial class WorldRuntime
     internal IEnumerable<SoulEssence> Souls => _existing.OfType<SoulEssence>();
 
     /// <summary>陈述只携带接收者可表征的名词，发送者的认知引用不会进入对方世界。</summary>
-    internal void Deliver(SoulEssence receiver, Essence sender, string text, Effect? request, double time)
+    internal void Deliver(SoulEssence receiver, Essence sender, Effect.Say speech, double time, EventId cause)
     {
+        var (text, request) = (speech.Text, speech.Request);
         var senderView = View(sender);
         if (senderView is null) return;
         Observe(receiver, [senderView], time);
@@ -238,10 +239,19 @@ public sealed partial class WorldRuntime
         // 无法指称的请求保留为文本，不自动建立客观名词。
         var translated = request is not null && Ast.References(request).All(p => Translate(p) is not null)
             ? Ast.Map(request, n => n is Noun.Reference r ? new Noun.Reference(Translate(r.Projection)!) : n) : null;
+        var claims = speech.Claim is Condition.Tagged { Target: Noun.Reference r } c && Resolve(r.Projection) is { } on
+            ? ImmutableArray.Create(new EventClaimV1<Essence?>(new("core.state"), on, null, null, c.Tag, c.Minimum, Truth.True)) : [];
+        var testimony = new TestimonyEventV1<Essence?>(new() {
+            Time = time, TimeUnit = ObservationTimeUnitV1.ActionValue, Subject = sender, Object = receiver,
+            Location = Space(sender), Source = sender, KnowledgeSource = ObservationSource.Testimony,
+            Phase = EventPhaseV1.Delivered, Outcome = EventOutcomeV1.Succeeded, Topic = speech.Topic,
+            Claims = claims, Perceivers = [receiver], Causes = [cause] });
+        RecordCommittedEvent(testimony);
         Observation.Observe(receiver, new ObservationInput(text, ProjectionKind.Event)
         {
             Source = ObservationSource.Testimony, Time = time, Existence = Truth.True,
-            AddRelations = [(Relations.Subject, speaker)], Procedure = translated, Details = text
+            AddRelations = [(Relations.Subject, speaker)], Procedure = translated, Details = text,
+            TimeUnit = ObservationTimeUnitV1.ActionValue, Event = ProjectEvent(receiver, testimony)
         });
     }
 }

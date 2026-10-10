@@ -5349,6 +5349,7 @@
           "trigger": {
             "event": "begin.arrival",
             "once": true,
+            "lifetime": "chapter",
             "day": 2,
             "slot": "Morning"
           },
@@ -5433,6 +5434,7 @@
           "trigger": {
             "event": "begin.meet_jia",
             "once": true,
+            "lifetime": "chapter",
             "day": 2,
             "slot": "Forenoon"
           },
@@ -5535,6 +5537,7 @@
           "trigger": {
             "event": "begin.supper",
             "once": true,
+            "lifetime": "chapter",
             "day": 2,
             "slot": "Noon"
           },
@@ -5619,6 +5622,7 @@
           "trigger": {
             "event": "begin.meet_bing",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Morning"
           },
@@ -5703,6 +5707,7 @@
           "trigger": {
             "event": "begin.gather",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -5796,6 +5801,7 @@
           "trigger": {
             "event": "begin.lesson",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -5880,6 +5886,7 @@
           "trigger": {
             "event": "choice:chapter2:lesson_precise",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -5926,6 +5933,7 @@
           "trigger": {
             "event": "choice:chapter2:lesson_who",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -5963,6 +5971,7 @@
           "trigger": {
             "event": "choice:chapter2:lesson_where",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -6000,6 +6009,7 @@
           "trigger": {
             "event": "begin.free",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Forenoon"
           },
@@ -6030,6 +6040,7 @@
           "trigger": {
             "event": "begin.meet_ding",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6105,6 +6116,7 @@
           "trigger": {
             "event": "commit.noon_dispute",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6193,6 +6205,7 @@
           "trigger": {
             "event": "choice:chapter2:mediate_sick_first",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6221,6 +6234,7 @@
           "trigger": {
             "event": "choice:chapter2:mediate_sign_first",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6249,6 +6263,7 @@
           "trigger": {
             "event": "choice:chapter2:mediate_i_carry",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6276,7 +6291,8 @@
           "id": "mediate_accept_mora",
           "trigger": {
             "event": "mediate.accept.mora",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6295,7 +6311,8 @@
           "id": "mediate_reject_mora",
           "trigger": {
             "event": "mediate.reject.mora",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6314,7 +6331,8 @@
           "id": "mediate_accept_ruan",
           "trigger": {
             "event": "mediate.accept.ruan",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6333,7 +6351,8 @@
           "id": "mediate_reject_ruan",
           "trigger": {
             "event": "mediate.reject.ruan",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6353,6 +6372,7 @@
           "trigger": {
             "event": "choice:chapter2:skip_dispute",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Noon"
           },
@@ -6364,6 +6384,7 @@
           "trigger": {
             "event": "begin.open_archive_wing",
             "once": true,
+            "lifetime": "chapter",
             "day": 3,
             "slot": "Afternoon"
           },
@@ -6385,6 +6406,7 @@
           "trigger": {
             "event": "commit.night_hint",
             "once": true,
+            "lifetime": "chapter",
             "slot": "Night"
           },
           "steps": [
@@ -6405,6 +6427,7 @@
           "trigger": {
             "event": "begin.first_night",
             "once": true,
+            "lifetime": "chapter",
             "day": 2,
             "slot": "Night"
           },
@@ -6435,6 +6458,7 @@
           "trigger": {
             "event": "night.dawn",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Morning"
           },
@@ -6456,6 +6480,7 @@
           "trigger": {
             "event": "night.after",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Forenoon"
           },
@@ -6495,6 +6520,7 @@
           "trigger": {
             "event": "night.no_accuse",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Forenoon"
           },
@@ -6516,6 +6542,7 @@
           "trigger": {
             "event": "card.replay_unlock",
             "once": true,
+            "lifetime": "chapter",
             "day": 5
           },
           "steps": [
@@ -6553,7 +6580,8 @@
           "id": "replay_first",
           "trigger": {
             "event": "after_replay.first",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6581,7 +6609,8 @@
           "id": "replay_match",
           "trigger": {
             "event": "after_replay.match",
-            "once": true
+            "once": true,
+            "lifetime": "chapter"
           },
           "steps": [
             {
@@ -6619,6 +6648,7 @@
           "trigger": {
             "event": "confront.evening",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6649,6 +6679,7 @@
           "trigger": {
             "event": "confront.begin",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6670,6 +6701,7 @@
           "trigger": {
             "event": "confront.pause",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6709,6 +6741,7 @@
           "trigger": {
             "event": "confront.wrong_say",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6730,6 +6763,7 @@
           "trigger": {
             "event": "confront.wrong_show",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6751,6 +6785,7 @@
           "trigger": {
             "event": "confront.frame",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6790,6 +6825,7 @@
           "trigger": {
             "event": "confront.rule",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Evening"
           },
@@ -6820,6 +6856,7 @@
           "trigger": {
             "event": "confront.whisper",
             "once": true,
+            "lifetime": "chapter",
             "day": 5,
             "slot": "Night"
           },
@@ -6850,6 +6887,7 @@
           "trigger": {
             "event": "council.begin",
             "once": true,
+            "lifetime": "chapter",
             "day": 6,
             "slot": "Morning"
           },
@@ -6943,6 +6981,7 @@
           "trigger": {
             "event": "council.box",
             "once": true,
+            "lifetime": "chapter",
             "day": 6,
             "slot": "Morning"
           },
@@ -7027,6 +7066,7 @@
           "trigger": {
             "event": "council.sealed",
             "once": true,
+            "lifetime": "chapter",
             "day": 6,
             "slot": "Morning"
           },
@@ -7555,6 +7595,7 @@
               "WardAuthority",
               "Rations"
             ],
+            "lifetime": "world",
             "author": "Ward",
             "posts": [
               {
@@ -7576,6 +7617,7 @@
               "WardAuthority",
               "Rations"
             ],
+            "lifetime": "world",
             "author": "Ward",
             "target": "Quer",
             "posts": [
@@ -7596,6 +7638,7 @@
               "NightException",
               "Rations"
             ],
+            "lifetime": "world",
             "author": "Mora",
             "posts": [
               {
@@ -7615,6 +7658,7 @@
               "Records",
               "Rations"
             ],
+            "lifetime": "world",
             "author": "Ruan",
             "posts": [
               {
@@ -7633,6 +7677,7 @@
               "Safety",
               "ForbidsDesire"
             ],
+            "lifetime": "world",
             "demon": true
           },
           {
@@ -7642,6 +7687,7 @@
             "flags": [
               "Safety"
             ],
+            "lifetime": "world",
             "demon": true
           },
           {
@@ -7651,6 +7697,7 @@
             "flags": [
               "EvidenceFirst"
             ],
+            "lifetime": "world",
             "author": "Det",
             "card": [
               0,
@@ -7670,6 +7717,7 @@
               "SickPriority",
               "Records"
             ],
+            "lifetime": "world",
             "author": "Shen",
             "posts": [
               {
@@ -7688,6 +7736,7 @@
               "EvidenceFirst",
               "Records"
             ],
+            "lifetime": "world",
             "author": "Veronica",
             "posts": [
               {
@@ -7706,6 +7755,7 @@
               "EvidenceFirst",
               "NightException"
             ],
+            "lifetime": "world",
             "author": "Lucian",
             "posts": [
               {
@@ -7723,6 +7773,7 @@
             "flags": [
               "OpenArchive"
             ],
+            "lifetime": "world",
             "author": "Huo"
           },
           {
@@ -7733,6 +7784,7 @@
               "SealArchive",
               "Tradition"
             ],
+            "lifetime": "world",
             "author": "Gu"
           },
           {
@@ -7744,6 +7796,7 @@
               "WardAuthority",
               "Records"
             ],
+            "lifetime": "world",
             "author": "Ward"
           }
         ],
@@ -7846,6 +7899,445 @@
           },
           "intro": "始业日午后，生活翼的门开了。主楼的灰还在落，连廊都关着；门外等着的，是甲区的人。",
           "instructions": "读不耗时：细看、询问、读板与重演可以慢慢来。请人同行、讲规矩、请人做事都在与此人交谈时发起，要花时间；对方不答应，不花时间。T 让时间过到下一件要紧的事；夜里按 T 就地睡下。廊开到哪里，就能走到哪里。夜里的事通过痕迹、身影与转述得知。第五日清晨，十六人决定名录库归谁、怎么开。"
+        },
+        "rule_lifetimes": {
+          "daily_habits": "world",
+          "access": "chapter"
+        },
+        "access": {
+          "boundaries": {
+            "north": {
+              "kind": "corridor",
+              "initial": false,
+              "rooms": [
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Oath"
+              ]
+            },
+            "east": {
+              "kind": "corridor",
+              "initial": false,
+              "rooms": [
+                "world:room.Logistics",
+                "world:room.Clinic",
+                "world:room.Greenhouse"
+              ]
+            },
+            "archive": {
+              "kind": "corridor",
+              "initial": false,
+              "rooms": [
+                "world:room.ArchiveFront",
+                "world:room.Resonance"
+              ]
+            },
+            "DormLife": {
+              "kind": "dorm",
+              "initial": true,
+              "rooms": [
+                "world:room.DormLife"
+              ]
+            },
+            "DormW": {
+              "kind": "dorm",
+              "initial": true,
+              "rooms": [
+                "world:room.DormW"
+              ]
+            },
+            "DormS": {
+              "kind": "dorm",
+              "initial": false,
+              "rooms": [
+                "world:room.DormS"
+              ]
+            },
+            "DormL": {
+              "kind": "dorm",
+              "initial": false,
+              "rooms": [
+                "world:room.DormL"
+              ]
+            }
+          },
+          "routes": {
+            "route.Hall": {
+              "name": "往中央厅",
+              "to": "world:room.Hall",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Living",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Oath"
+              ]
+            },
+            "route.Lecture": {
+              "name": "往讲堂",
+              "to": "world:room.Lecture",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Hall",
+                "world:room.Lecture"
+              ]
+            },
+            "route.Logistics": {
+              "name": "往后勤院",
+              "to": "world:room.Logistics",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Clinic",
+                "world:room.Greenhouse"
+              ]
+            },
+            "route.Clinic": {
+              "name": "往诊疗所",
+              "to": "world:room.Clinic",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Logistics",
+                "world:room.Clinic"
+              ]
+            },
+            "route.Greenhouse": {
+              "name": "往温室",
+              "to": "world:room.Greenhouse",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Logistics",
+                "world:room.Greenhouse"
+              ]
+            },
+            "route.ArchiveFront": {
+              "name": "往名录库前厅",
+              "to": "world:room.ArchiveFront",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Living",
+                "world:room.Hall",
+                "world:room.ArchiveFront",
+                "world:room.Resonance"
+              ]
+            },
+            "route.Oath": {
+              "name": "往誓约庭",
+              "to": "world:room.Oath",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Hall",
+                "world:room.Oath"
+              ]
+            },
+            "route.DormLife": {
+              "name": "往乙区",
+              "to": "world:room.DormLife",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.DormLife",
+                "world:room.Living"
+              ]
+            },
+            "route.DormW": {
+              "name": "往甲区",
+              "to": "world:room.DormW",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.DormW",
+                "world:room.Living"
+              ]
+            },
+            "route.DormS": {
+              "name": "往丙区",
+              "to": "world:room.DormS",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.DormS",
+                "world:room.Living"
+              ]
+            },
+            "route.DormL": {
+              "name": "往丁区",
+              "to": "world:room.DormL",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.DormL",
+                "world:room.Living"
+              ]
+            },
+            "route.Resonance": {
+              "name": "往共鸣厅",
+              "to": "world:room.Resonance",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.ArchiveFront",
+                "world:room.Resonance"
+              ]
+            },
+            "route.Living": {
+              "name": "往起居厅",
+              "to": "world:room.Living",
+              "from": [
+                "world:room.ArchiveFront",
+                "world:room.Clinic",
+                "world:room.DormL",
+                "world:room.DormLife",
+                "world:room.DormS",
+                "world:room.DormW",
+                "world:room.Greenhouse",
+                "world:room.Hall",
+                "world:room.Lecture",
+                "world:room.Living",
+                "world:room.Logistics",
+                "world:room.Oath",
+                "world:room.Resonance"
+              ],
+              "visible_from": [
+                "world:room.Living",
+                "world:room.DormLife",
+                "world:room.DormW",
+                "world:room.DormS",
+                "world:room.DormL"
+              ]
+            }
+          },
+          "arrivals": {
+            "person.Det": "world:room.Living",
+            "person.Huo": "world:room.Living",
+            "person.Shen": "world:room.Living",
+            "person.Su": "world:room.Living",
+            "person.Lucian": "world:room.Living",
+            "person.Gu": "world:room.Living",
+            "person.Quer": "world:room.Living",
+            "person.Ward": "world:room.Living",
+            "person.Selma": "world:room.DormS",
+            "person.Ruan": "world:room.DormS",
+            "person.Elena": "world:room.DormS",
+            "person.Moran": "world:room.DormS",
+            "person.Veronica": "world:room.DormL",
+            "person.Bertrand": "world:room.DormL",
+            "person.Margaret": "world:room.DormL",
+            "person.Mora": "world:room.DormL"
+          },
+          "summons": {
+            "bing": {
+              "sender": "world:person.Det",
+              "people": [
+                "world:person.Selma",
+                "world:person.Ruan",
+                "world:person.Elena",
+                "world:person.Moran"
+              ],
+              "to": "world:room.Living",
+              "text": "丙区的各位，外闩已抬起。做完手头的事，请到起居厅来。",
+              "compatibility": 8
+            },
+            "ding": {
+              "sender": "world:person.Det",
+              "people": [
+                "world:person.Veronica",
+                "world:person.Bertrand",
+                "world:person.Margaret",
+                "world:person.Mora"
+              ],
+              "to": "world:room.Living",
+              "text": "丁区的各位，外闩已抬起。做完手头的事，请到起居厅来。",
+              "compatibility": 8
+            },
+            "gather": {
+              "sender": "world:person.Det",
+              "people": [
+                "world:person.Huo",
+                "world:person.Shen",
+                "world:person.Su",
+                "world:person.Lucian",
+                "world:person.Gu",
+                "world:person.Quer",
+                "world:person.Ward",
+                "world:person.Selma",
+                "world:person.Ruan",
+                "world:person.Elena",
+                "world:person.Moran",
+                "world:person.Veronica",
+                "world:person.Bertrand",
+                "world:person.Margaret",
+                "world:person.Mora"
+              ],
+              "to": "world:room.Hall",
+              "text": "北廊已开。请到中央厅集合，随后去讲堂。",
+              "compatibility": 8
+            }
+          }
         },
         "presentation": {
           "player_actor": "detective",
@@ -10354,6 +10846,736 @@
             }
           ]
         },
+        "expression": {
+          "impression_insight": {
+            "trusted": {
+              "text": "表达.信判断",
+              "when": {
+                "insight": ">=2"
+              }
+            }
+          },
+          "stance_rebuttal": {
+            "open": {
+              "text": "立场话.驳.各取其物",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach"
+              }
+            },
+            "committee": {
+              "text": "立场话.驳.委员会",
+              "priority": 1,
+              "when": {
+                "family": "Committee"
+              }
+            },
+            "sealed": {
+              "text": "立场话.驳.封闭",
+              "priority": 1,
+              "when": {
+                "family": "Sealed"
+              }
+            },
+            "other": {
+              "text": "立场话.驳.其他"
+            }
+          },
+          "identity.voice": {
+            "known": {
+              "text": "表达.identity.teacher.known",
+              "priority": 1,
+              "when": {
+                "tag:voice:IdentityKnown": ">0"
+              }
+            },
+            "projection": {
+              "text": "表达.声音投影名"
+            }
+          },
+          "closing_case": {
+            "none": {
+              "text": "表达.结案.无人",
+              "when": {
+                "accused": false
+              }
+            },
+            "cleared": {
+              "text": "表达.结案.洗清",
+              "priority": 2,
+              "when": {
+                "accused": true,
+                "cleared": true
+              }
+            },
+            "ostracized": {
+              "text": "表达.结案.排斥",
+              "priority": 1,
+              "when": {
+                "accused": true,
+                "ostracized": true
+              }
+            },
+            "unresolved": {
+              "text": "表达.结案.搁置",
+              "when": {
+                "accused": true
+              }
+            }
+          },
+          "identity.teacher": {
+            "known": {
+              "text": "表达.identity.teacher.known",
+              "when": {
+                "tag:voice:IdentityKnown": ">0"
+              },
+              "priority": 1
+            },
+            "unknown": {
+              "text": "表达.identity.teacher.unknown"
+            }
+          },
+          "questions": {
+            "0_vague": {
+              "text": "表达.questions.0_vague",
+              "when": {
+                "topic": 0,
+                "precise": false
+              }
+            },
+            "0_precise": {
+              "text": "表达.questions.0_precise",
+              "when": {
+                "topic": 0,
+                "precise": true,
+                "listener.lesson:14": true
+              },
+              "praised": true
+            },
+            "0_missing": {
+              "text": "表达.questions.0_missing",
+              "when": {
+                "topic": 0,
+                "precise": true,
+                "listener.lesson:14": false
+              }
+            },
+            "1_vague": {
+              "text": "表达.questions.1_vague",
+              "when": {
+                "topic": 1,
+                "precise": false
+              }
+            },
+            "1_precise": {
+              "text": "表达.questions.1_precise",
+              "when": {
+                "topic": 1,
+                "precise": true
+              },
+              "praised": true
+            },
+            "2_vague": {
+              "text": "表达.questions.2_vague",
+              "when": {
+                "topic": 2,
+                "precise": false
+              }
+            },
+            "2_precise": {
+              "text": "表达.questions.2_precise",
+              "when": {
+                "topic": 2,
+                "precise": true,
+                "listener.lesson:12": true
+              },
+              "praised": true,
+              "warning": true
+            },
+            "2_missing": {
+              "text": "表达.questions.2_missing",
+              "when": {
+                "topic": 2,
+                "precise": true,
+                "listener.lesson:12": false
+              }
+            },
+            "3_vague": {
+              "text": "表达.questions.3_vague",
+              "when": {
+                "topic": 3,
+                "precise": false
+              }
+            },
+            "3_precise": {
+              "text": "表达.questions.3_precise",
+              "when": {
+                "topic": 3,
+                "precise": true,
+                "listener.lesson:13": true
+              },
+              "praised": true
+            },
+            "3_missing": {
+              "text": "表达.questions.3_missing",
+              "when": {
+                "topic": 3,
+                "precise": true,
+                "listener.lesson:13": false
+              }
+            },
+            "4_vague": {
+              "text": "表达.questions.4_vague",
+              "when": {
+                "topic": 4,
+                "precise": false
+              }
+            },
+            "4_refuse": {
+              "text": "表达.questions.4_refuse",
+              "when": {
+                "topic": 4,
+                "precise": true
+              },
+              "refused": true
+            },
+            "5_refuse": {
+              "text": "表达.questions.5_refuse",
+              "when": {
+                "topic": 5
+              },
+              "refused": true
+            },
+            "6_refuse": {
+              "text": "表达.questions.6_refuse",
+              "when": {
+                "topic": 6
+              },
+              "refused": true
+            },
+            "7": {
+              "text": "表达.questions.7",
+              "when": {
+                "topic": 7
+              }
+            }
+          },
+          "stance": {
+            "open_Huo": {
+              "text": "立场话.各取其物.Huo",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Huo"
+              }
+            },
+            "open_Su": {
+              "text": "立场话.各取其物.Su",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Su"
+              }
+            },
+            "open_Quer": {
+              "text": "立场话.各取其物.Quer",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Quer"
+              }
+            },
+            "open_Shen": {
+              "text": "立场话.各取其物.Shen",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Shen"
+              }
+            },
+            "open_Lucian": {
+              "text": "立场话.各取其物.Lucian",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Lucian"
+              }
+            },
+            "open_Elena": {
+              "text": "立场话.各取其物.Elena",
+              "priority": 1,
+              "when": {
+                "family": "OpenEach",
+                "speaker": "Elena"
+              }
+            },
+            "player": {
+              "text": "立场话.侦探方案",
+              "priority": 2,
+              "when": {
+                "author": "Det"
+              }
+            },
+            "open": {
+              "text": "立场话.各取其物",
+              "priority": 0,
+              "when": {
+                "family": "OpenEach"
+              }
+            },
+            "committee_own": {
+              "text": "立场话.委员会自述",
+              "priority": 1,
+              "when": {
+                "family": "Committee",
+                "speaker": "Ward"
+              }
+            },
+            "committee": {
+              "text": "立场话.委员会附和",
+              "priority": 0,
+              "when": {
+                "family": "Committee"
+              }
+            },
+            "sealed_own": {
+              "text": "立场话.封闭自述",
+              "priority": 1,
+              "when": {
+                "family": "Sealed",
+                "speaker": "Gu"
+              }
+            },
+            "sealed": {
+              "text": "立场话.封闭附和",
+              "priority": 0,
+              "when": {
+                "family": "Sealed"
+              }
+            }
+          },
+          "slant": {
+            "own_quer": {
+              "text": "知识片段.走样私取自述",
+              "when": {
+                "about": "Quer",
+                "own": true
+              }
+            },
+            "quer": {
+              "text": "知识片段.走样私取",
+              "when": {
+                "about": "Quer",
+                "own": false
+              }
+            },
+            "own_other": {
+              "text": "知识片段.走样惯常自述",
+              "when": {
+                "about": "!=Quer",
+                "own": true
+              }
+            },
+            "other": {
+              "text": "知识片段.走样惯常",
+              "when": {
+                "about": "!=Quer",
+                "own": false
+              }
+            }
+          },
+          "impressions": {
+            "Ward_trusted": {
+              "text": "表达.impressions.Ward_trusted",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Ward_polite": {
+              "text": "表达.impressions.Ward_polite",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Ward_quiet": {
+              "text": "表达.impressions.Ward_quiet",
+              "when": {
+                "speaker": "Ward",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Ward_distant": {
+              "text": "表达.impressions.Ward_distant",
+              "when": {
+                "speaker": "Ward",
+                "credibility": "<0"
+              }
+            },
+            "Quer_trusted": {
+              "text": "表达.impressions.Quer_trusted",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Quer_polite": {
+              "text": "表达.impressions.Quer_polite",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Quer_quiet": {
+              "text": "表达.impressions.Quer_quiet",
+              "when": {
+                "speaker": "Quer",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Quer_distant": {
+              "text": "表达.impressions.Quer_distant",
+              "when": {
+                "speaker": "Quer",
+                "credibility": "<0"
+              }
+            },
+            "Mora_trusted": {
+              "text": "表达.impressions.Mora_trusted",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Mora_polite": {
+              "text": "表达.impressions.Mora_polite",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Mora_quiet": {
+              "text": "表达.impressions.Mora_quiet",
+              "when": {
+                "speaker": "Mora",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Mora_distant": {
+              "text": "表达.impressions.Mora_distant",
+              "when": {
+                "speaker": "Mora",
+                "credibility": "<0"
+              }
+            },
+            "Huo_trusted": {
+              "text": "表达.impressions.Huo_trusted",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Huo_polite": {
+              "text": "表达.impressions.Huo_polite",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Huo_quiet": {
+              "text": "表达.impressions.Huo_quiet",
+              "when": {
+                "speaker": "Huo",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Huo_distant": {
+              "text": "表达.impressions.Huo_distant",
+              "when": {
+                "speaker": "Huo",
+                "credibility": "<0"
+              }
+            },
+            "Ruan_trusted": {
+              "text": "表达.impressions.Ruan_trusted",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Ruan_polite": {
+              "text": "表达.impressions.Ruan_polite",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Ruan_quiet": {
+              "text": "表达.impressions.Ruan_quiet",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Ruan_distant": {
+              "text": "表达.impressions.Ruan_distant",
+              "when": {
+                "speaker": "Ruan",
+                "credibility": "<0"
+              }
+            },
+            "Margaret_trusted": {
+              "text": "表达.impressions.Margaret_trusted",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=2"
+              },
+              "priority": 3
+            },
+            "Margaret_polite": {
+              "text": "表达.impressions.Margaret_polite",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=1"
+              },
+              "priority": 2
+            },
+            "Margaret_quiet": {
+              "text": "表达.impressions.Margaret_quiet",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": ">=0"
+              },
+              "priority": 1
+            },
+            "Margaret_distant": {
+              "text": "表达.impressions.Margaret_distant",
+              "when": {
+                "speaker": "Margaret",
+                "credibility": "<0"
+              }
+            }
+          },
+          "describe": {
+            "valve_work": {
+              "text": "表达.describe.valve_work",
+              "when": {
+                "object": "object.Valve",
+                "tag:object.Valve:Work": ">0"
+              }
+            },
+            "valve_none": {
+              "text": "表达.describe.valve_none",
+              "when": {
+                "object": "object.Valve",
+                "tag:object.Valve:Work": 0
+              }
+            },
+            "relay_work": {
+              "text": "表达.describe.relay_work",
+              "when": {
+                "object": "object.RelayPost",
+                "tag:object.RelayPost:Worked": ">0"
+              }
+            },
+            "relay_none": {
+              "text": "表达.describe.relay_none",
+              "when": {
+                "object": "object.RelayPost",
+                "tag:object.RelayPost:Worked": 0
+              }
+            },
+            "bowl_residue": {
+              "text": "表达.describe.bowl_residue",
+              "when": {
+                "object": "object.Bowl",
+                "tag:object.Bowl:Residue": ">0"
+              }
+            },
+            "bowl_clean": {
+              "text": "表达.describe.bowl_clean",
+              "when": {
+                "object": "object.Bowl",
+                "tag:object.Bowl:Residue": 0
+              }
+            },
+            "blackboard": {
+              "text": "表达.describe.blackboard",
+              "when": {
+                "object": "object.Blackboard",
+                "tag:object.Blackboard:Chalk": ">0"
+              }
+            },
+            "blackboard_clean": {
+              "text": "表达.describe.blackboard_clean",
+              "when": {
+                "object": "object.Blackboard",
+                "tag:object.Blackboard:Chalk": 0
+              }
+            },
+            "stele": {
+              "text": "表达.describe.stele",
+              "when": {
+                "object": "object.Stele"
+              }
+            },
+            "gauge_red": {
+              "text": "表达.describe.gauge_red",
+              "when": {
+                "object": "object.Gauge",
+                "tag:object.Gauge:Pressure": ">=2"
+              }
+            },
+            "gauge": {
+              "text": "表达.describe.gauge",
+              "when": {
+                "object": "object.Gauge",
+                "tag:object.Gauge:Pressure": "<2"
+              }
+            },
+            "base_crack": {
+              "text": "表达.describe.base_crack",
+              "when": {
+                "object": "object.Base",
+                "tag:object.Base:Crack": ">0"
+              }
+            },
+            "base": {
+              "text": "表达.describe.base",
+              "when": {
+                "object": "object.Base",
+                "tag:object.Base:Crack": 0
+              }
+            },
+            "archive": {
+              "text": "表达.describe.archive",
+              "when": {
+                "object": "object.ArchiveDoor"
+              }
+            },
+            "oil": {
+              "text": "表达.describe.oil",
+              "when": {
+                "object": "object.OilStore"
+              }
+            }
+          },
+          "direction": {
+            "DormLife": {
+              "text": "表达.direction.DormLife",
+              "when": {
+                "place": "DormLife"
+              }
+            },
+            "DormW": {
+              "text": "表达.direction.DormW",
+              "when": {
+                "place": "DormW"
+              }
+            },
+            "DormS": {
+              "text": "表达.direction.DormS",
+              "when": {
+                "place": "DormS"
+              }
+            },
+            "DormL": {
+              "text": "表达.direction.DormL",
+              "when": {
+                "place": "DormL"
+              }
+            }
+          },
+          "opening": {
+            "committee": {
+              "text": "表达.opening.committee",
+              "when": {
+                "family": "Committee"
+              },
+              "priority": 1
+            },
+            "each": {
+              "text": "表达.opening.each",
+              "when": {
+                "family": "OpenEach"
+              },
+              "priority": 1
+            },
+            "other": {
+              "text": "表达.opening.other"
+            }
+          },
+          "opening_account": {
+            "witnesses": {
+              "text": "表达.opening_account.witnesses",
+              "when": {
+                "account": 3
+              },
+              "priority": 1
+            },
+            "ledger1": {
+              "text": "表达.opening_account.ledger1",
+              "when": {
+                "account": 1
+              },
+              "priority": 1
+            },
+            "ledger2": {
+              "text": "表达.opening_account.ledger2",
+              "when": {
+                "account": 2
+              },
+              "priority": 1
+            },
+            "none": {
+              "text": "表达.opening_account.none"
+            }
+          },
+          "opening_night": {
+            "day": {
+              "text": "表达.opening_night.day",
+              "when": {
+                "exception": 4
+              }
+            },
+            "pair": {
+              "text": "表达.opening_night.pair",
+              "when": {
+                "exception": 3
+              }
+            }
+          },
+          "opening_behavior": {
+            "each": {
+              "text": "表达.opening_behavior.each",
+              "when": {
+                "behavior": 8
+              }
+            },
+            "committee": {
+              "text": "表达.opening_behavior.committee",
+              "when": {
+                "behavior": 6
+              }
+            }
+          }
+        },
         "people": {
           "Det": {
             "sprite": "detective",
@@ -10778,6 +12000,20 @@
           "终局.没交出": "没有往下想的：{名单}",
           "知识有时.贴规": "{主语}在{记日}{记时}，在中央厅贴了规矩",
           "知识有时.补记": "{主语}在{记日}{记时}，到台账上补记了{夜}取的一份",
+          "证词.修闩": "门闩是我修的。",
+          "证词.守夜报告": "“报告：{所见}。看不清是谁。”",
+          "证词.守夜地点": "{日}夜，{地}有{身影}",
+          "证词.守夜身影": "{数}个{身量}身影",
+          "证词.守夜无事": "夜里没见异常",
+          "证词.账面": "“账面与存量差 {缺}。我只记得到配给台发出去的。”",
+          "证词.事实清楚": "“依据台账与所见，事实清楚。”",
+          "证词.无记录": "“无记录即违规。仅此而已。”",
+          "证词.请人修闩": "“粮仓门闩松了，那天夜里我在后勤院碰见{人}，请{他}修的。修得很干净。”",
+          "证词.请人未成": "“门闩松了，我请人修，没人搭理。”",
+          "证词.自取": "“……我拿了一份。茉拉的板上写着急需可以自取。{修闩}”",
+          "证词.拒答": "“关你什么事。”",
+          "证词.只有修闩": "“{修闩}”",
+          "证词.睡着": "“我那晚睡着了。”",
           "证词.病粮未公开": "“我一直在诊疗所。”",
           "证词.病粮未记": "“{夜}我给莫兰取了一份。板上写着的。那夜我一共取了 {取用} 份，都还没补记。”",
           "证词.病粮部分已记": "“{夜}我给莫兰取了一份。板上写着的。那夜我一共取了 {取用} 份，已经补记 {已记} 份，还有 {待记} 份没补。”",
@@ -10887,7 +12123,172 @@
           "资源.场点.granary.latch.标签": "门闩",
           "资源.场点.granary.stock.标签": "存粮",
           "资源.场点.greenhouse.valve.标签": "阀门",
-          "资源.场点.greenhouse.gauge.标签": "压力表"
+          "资源.场点.greenhouse.gauge.标签": "压力表",
+          "表达.声音投影名": "{投影名}",
+          "表达.结案.无人": "没有人被当众指控",
+          "表达.结案.洗清": "{人}洗清了冤屈，住回寝区",
+          "表达.结案.排斥": "{人}被当成私取之人，搬出寝区独宿",
+          "表达.结案.搁置": "{人}的事没有人再提",
+          "表达.夜时.0": "入夜不久",
+          "表达.夜时.1": "夜深时",
+          "表达.夜时.2": "后半夜",
+          "表达.报告.标题": "【章节结束状态（交第三章）】",
+          "表达.报告.印象": "各人心中的侦探（可信/见识）：{内容}",
+          "表达.报告.派系": "派系：领头 {领头}｜{成员}｜共享规则：{规则}",
+          "表达.报告.名录库": "名录库：{结果}",
+          "表达.报告.钩欲": "钩与欲望：{内容}",
+          "表达.报告.钩欲项": "{人}欲{欲}钩{钩}",
+          "表达.报告.课程": "已学课程：{内容}",
+          "表达.报告.物资": "物资：口粮 {粮}，灯油 {油}，药品 {药}；温室{温室}",
+          "表达.报告.修好": "已修好",
+          "表达.报告.未修": "未修好",
+          "表达.报告.案件": "《少了一份》：{结果}；新规则：{规矩}；共同规则：{共同}",
+          "表达.报告.无人指控": "无人被指控",
+          "表达.报告.洗清": "{人}洗清",
+          "表达.报告.排斥": "{人}被排斥",
+          "表达.报告.未对质": "未对质",
+          "表达.报告.无": "无",
+          "表达.报告.成立": "成立",
+          "表达.报告.未成立": "未成立",
+          "表达.报告.操纵": "操纵记录：{内容}",
+          "表达.报告.操纵项": "D{日} 对{人}：{手段}{揭穿}",
+          "表达.报告.揭穿": "（已揭穿）",
+          "表达.报告.未实现": "三组旧怨：原型未实现（见报告）",
+          "表达.状态.处境": "{时}。你在{地}。{饿}今天{已}领到口粮。",
+          "表达.状态.饥饿": "你饿着（下午做不了事）。",
+          "表达.状态.已经": "已经",
+          "表达.状态.还没": "还没",
+          "表达.状态.课程": "学过的课：{内容}",
+          "表达.状态.无": "无",
+          "表达.状态.课项": "《{课}》{走样}",
+          "表达.状态.走样": "（听人转述，可能走样）",
+          "表达.状态.证物": "台账那件事，你查过的：{内容}{问过}",
+          "表达.状态.还没有": "还没有",
+          "表达.状态.问过": "；当面问过：{名单}",
+          "表达.状态.洗清": "{人}已经洗清。",
+          "表达.状态.排斥": "{人}被当成私取之人，搬出了寝区。",
+          "表达.状态.指控": "沃德的指控还悬着。",
+          "表达.状态.答应": "答应过：第{日}日前替{人}办一件事（用“帮 {人}”兑现）",
+          "表达.状态.赌约": "赌约：{日}和{同}赌{谁}夜里去{地}——{结果}",
+          "表达.状态.待揭晓": "待揭晓",
+          "表达.状态.说中": "说中",
+          "表达.状态.没说中": "没说中",
+          "表达.状态.石碑": "你读过石碑上的第九、第十条。",
+          "表达.标题": "第十一课",
+          "表达.自己": "自己",
+          "表达.自己听者": "你自己",
+          "表达.终局标题": "安眠者有福 · 完",
+          "表达.返回标题": "返回标题（Enter）",
+          "表达.答疑话题": [
+            "名录库",
+            "唤名",
+            "温室",
+            "封存匣",
+            "守则",
+            "裂纹",
+            "导师",
+            "你想要什么"
+          ],
+          "表达.identity.teacher.known": "恶魔",
+          "表达.identity.teacher.unknown": "教师",
+          "表达.questions.0_vague": "封存之物存于名录库，凡学员皆可取回己物。",
+          "表达.questions.0_precise": "取回，即重新接通。接通之后，我离诸位更近一些。寻回者，自负其果——守则第一条写着。",
+          "表达.questions.0_missing": "此事《异象与记忆》会讲。现在讲，诸位听不懂。",
+          "表达.questions.1_vague": "勿应即可。",
+          "表达.questions.1_precise": "应答即触物回忆，记一枚钩；有钩者，更难抗拒下一次。",
+          "表达.questions.2_vague": "指针过红线时，勿开顶窗。",
+          "表达.questions.2_precise": "先在阀门泄压，指针回落到红线下再开顶窗。红线之上开窗，玻璃会碎。",
+          "表达.questions.2_missing": "你还不认得那张图。学过《传声与机械》再问。",
+          "表达.questions.3_vague": "每只匣子只应其主。",
+          "表达.questions.3_precise": "须以言灵语法念出本名：名词居首，条件居中，动词收尾。念错一个字，它就当你不在。",
+          "表达.questions.3_missing": "你还没有那样的词。",
+          "表达.questions.4_vague": "我所立之规，皆张贴于中央厅的公告框。四条，一字不多。",
+          "表达.questions.4_refuse": "守则之外的事，此知会伤及心志。",
+          "表达.questions.5_refuse": "此知会伤及心志。",
+          "表达.questions.6_refuse": "此知会伤及心志。",
+          "表达.questions.7": "我想教。诸位想学。我们要的东西，没有那么不同。",
+          "表达.impressions.Ward_trusted": "说话不避着你",
+          "表达.impressions.Ward_polite": "对你还算客气",
+          "表达.impressions.Ward_quiet": "对你话不多",
+          "表达.impressions.Ward_distant": "明显不想跟你多说",
+          "表达.impressions.Quer_trusted": "说话不避着你",
+          "表达.impressions.Quer_polite": "对你还算客气",
+          "表达.impressions.Quer_quiet": "对你话不多",
+          "表达.impressions.Quer_distant": "明显不想跟你多说",
+          "表达.impressions.Mora_trusted": "说话不避着你",
+          "表达.impressions.Mora_polite": "对你还算客气",
+          "表达.impressions.Mora_quiet": "对你话不多",
+          "表达.impressions.Mora_distant": "明显不想跟你多说",
+          "表达.impressions.Huo_trusted": "说话不避着你",
+          "表达.impressions.Huo_polite": "对你还算客气",
+          "表达.impressions.Huo_quiet": "对你话不多",
+          "表达.impressions.Huo_distant": "明显不想跟你多说",
+          "表达.impressions.Ruan_trusted": "说话不避着你",
+          "表达.impressions.Ruan_polite": "对你还算客气",
+          "表达.impressions.Ruan_quiet": "对你话不多",
+          "表达.impressions.Ruan_distant": "明显不想跟你多说",
+          "表达.impressions.Margaret_trusted": "说话不避着你",
+          "表达.impressions.Margaret_polite": "对你还算客气",
+          "表达.impressions.Margaret_quiet": "对你话不多",
+          "表达.impressions.Margaret_distant": "明显不想跟你多说",
+          "表达.信判断": "，信你的判断",
+          "表达.describe.valve_work": "阀门已有修理的痕迹。",
+          "表达.describe.valve_none": "阀门还没有修好。",
+          "表达.describe.relay_work": "中继站留下了操作痕迹。",
+          "表达.describe.relay_none": "中继站未见操作痕迹。",
+          "表达.describe.bowl_residue": "莫兰床边一只空碗，碗底有粥渍{温粥}。",
+          "表达.describe.bowl_clean": "碗是干净的。",
+          "表达.describe.blackboard": "黑板上有 {粉笔} 堂课的粉笔字；讲台前的灰上有窄底皮鞋印。",
+          "表达.describe.blackboard_clean": "黑板是干净的。",
+          "表达.describe.stele": "铺石顺坡，几级台阶。石面上刻着磨平的纹样，看不出原本写的是什么。",
+          "表达.describe.gauge_red": "指针已经过了红线。",
+          "表达.describe.gauge": "指针还在红线以下。",
+          "表达.describe.base_crack": "中央基座上有一道新裂纹，像是从里面撑开的。",
+          "表达.describe.base": "中央基座完好，石面上光洁，没有刻字。",
+          "表达.describe.archive": "三道机关：配重室（要力气）、锁芯（要细手）、传声中继（要信号）。三处须同时施力。",
+          "表达.describe.oil": "油库：灯油 {油}。",
+          "表达.存粮": "存粮还剩 {数} 份；门闩{状态}。",
+          "表达.闩松": "松动，一推就开",
+          "表达.闩修": "有新的工具痕，已经紧固",
+          "表达.闩好": "完好",
+          "表达.温粥": "；另有一碗粥还温着",
+          "表达.病床": "莫兰躺着，额头很烫。",
+          "表达.空床": "病床空着。",
+          "表达.空速写": "莫兰的速写本里只有几张颜色练习。",
+          "表达.速写": "莫兰的速写本：{内容}。",
+          "表达.废纸粮": "废纸篓里有一份口粮的包纸和饼屑。",
+          "表达.废纸倒": "废纸篓刚被人倒空过；篓底还粘着几粒饼屑和一角口粮包纸。",
+          "表达.废纸": "废纸篓里只有废纸。",
+          "表达.空公告": "板上什么也没贴。",
+          "表达.公告": "板上贴着：{内容}",
+          "表达.公告项": "「{规矩}」（{作者}）",
+          "表达.代管者": "代管者",
+          "表达.方向": "{地}方向",
+          "表达.数道身影": "还有{数}道身影来去，看不真切",
+          "表达.其他动静": "还有几声别的动静",
+          "表达.无事": "一夜无事。没有人来，也没有声音。",
+          "表达.来": "{时}，{数}个{身量}身影从{地}过来",
+          "表达.去": "{时}，{数}个{身量}身影往{地}去了",
+          "表达.远见": "{时}，远远望见{地}有{数}个{身量}身影",
+          "表达.近声": "{时}，{声}",
+          "表达.远声": "{时}，远远地从{地}那边传来：{声}",
+          "表达.direction.DormLife": "乙区方向",
+          "表达.direction.DormW": "甲区方向",
+          "表达.direction.DormS": "丙区方向",
+          "表达.direction.DormL": "丁区方向",
+          "表达.opening.committee": "沃德拿着钥匙站在门边，{名单}排着队，一个一个登记、一个一个进去。",
+          "表达.opening.each": "门一开，{名单}就涌了进去，没人记账，也没人等谁。",
+          "表达.opening.other": "门开了。",
+          "表达.开门拼规矩": "门开了。{登记}{夜条款}。{行为}",
+          "表达.opening_account.witnesses": "每个进去的人身后都站着两个见证的人，在门边的纸上签了名",
+          "表达.opening_account.ledger1": "门边摆着台账，进去的人一个一个记上名字",
+          "表达.opening_account.ledger2": "门边摆着台账，进去的人一个一个记上名字",
+          "表达.opening_account.none": "没人记账，进去的人各自摸黑找自己的匣子",
+          "表达.opening_night.day": "说好只在白天开，天一擦黑门就合上了",
+          "表达.opening_night.pair": "两人一组进去，一个人不许单独进",
+          "表达.opening_behavior.each": "本人亲取：每人只拿标着自己名字的那一只。",
+          "表达.opening_behavior.committee": "钥匙交给了委员会，取回的人先过一遍登记。",
+          "表达.帮助": "—— 不占时段（随时可看）——\n  状态                 你的处境、学过的课、答应别人的事\n  笔记 [某人]          人际笔记：他认了你的哪条规矩、他嘴上向着谁、他常与谁同处（只记你亲见亲闻的）\n  规矩                 你知道的规矩。称呼（甲、乙……）是你自己记的，后面的命令里可以用\n  传播 [称呼]          你的规矩传到了谁：当面讲过谁、谁跟你说他从哪里听来的、你亲眼看见谁讲给谁\n  清晨 [第N夜]         某一夜之后的痕迹：细看过的写全，路过的只记明显的变化，没去过的只给地点\n  重演 …               假设昨夜某人认/不认某条规矩、在/不在某处，重放一夜，与你读到的痕迹对照\n                       （只写“重演”会列出可选的假设；“重演 1 3”选其中几项；\n                        也可直接写：重演 茉拉 认 甲 / 重演 雀儿 在 后勤院；可加“第3夜”）\n  消息                 你听到的消息（带序号，“转告”用）\n  公告                 你看过的公告板\n  物件                 能细看的东西与地点\n  同行                 你见过谁常和谁在一处\n  证物                 你手里可以出示的东西（对质时也能用）\n  拼规矩               拼规矩的五格选项\n  打赌 某人 谁 何处 [称呼]   和身边的某人打赌“今晚谁会去何处”；说中了，他认你的那条规矩（每天一次）\n—— 占一个时段（白天每个时段只能做一件事）——\n  歇                   什么也不做\n  上课 [话题 精确|含糊]  上课（上午）；课后可以提问\n  领粮                 去配给台领今天的口粮（午间、傍晚开粮）\n  查 物件|地点          细看一处：同一区域的痕迹一并看\n  同去 某人 物件|地点   请某人一起去看（同去的人就亲眼见过）\n  请 某人 事            请人做事：开粮 煮粥 照看病人 修门闩 修温室 上课 领粮 补记台账 挑水 来中央厅 清点 夜巡 守名录库\n  问 某人               当面问他知道什么（他只说自己看见、听见的）\n  交钥匙 持钥人 交给谁   请拿着粮仓钥匙的人交出去\n  转告 某人 消息序号     把你知道的一条消息告诉他\n  讲 某人 [五格|称呼]   当面对他讲一条规矩（不写五格就按提示选；写称呼就讲一条已有的规矩）\n  贴 地点 [五格]        把一条规矩贴到某处的公告板（看到的人多，但不如当面有分量）\n  修温室 甲 乙          请两个人下午一起修温室\n  开库 甲 乙 丙 …       请人来名录库前厅试开那道门\n  帮 某人               帮他干一个时段的活，或兑现答应他的事\n  分粮 某人             把你今天的口粮给他\n  调停                  （第 2 日午间）调停配给台前的争执\n  片面告知 某人 关于谁   只说一半实话（会被记下）\n  对质                  第 3 日傍晚，中央厅的公开对质\n  重开对质              第 4 日之后：援引共同规则“公开指控须附可检查的材料”，把人请回中央厅再对一次\n  认错                  当众承认你说过的片面话（要被揭穿过才用得上）\n—— 夜里 ——\n  睡                    睡下\n  守夜 地点             守在某处一夜（只看得见身影、听得见动静）\n守夜只观察，不会拦住别人。有人夜里凑齐机关便可能私开名录库，最后投票无法撤回已发生的事。\n白天可以请人“守名录库”、讲规则或张贴公告干预；是否奏效，要看谁接受、谁实际行动，次晨查痕迹确认。\n温室过红线后可以在上午写“上课 温室 精确”，问清泄压方法；修理仍须两人实际协作。\n人名：霍铎 沈鼎 苏泠 卢西安 顾平章 雀儿 沃德 赛尔玛 阮清越 伊莲娜 莫兰 维罗妮卡 贝尔特朗 玛格丽特 茉拉\n地点：中央厅 讲堂 后勤院 诊疗所 温室 名录库前厅（前厅） 誓约庭 生活翼 文契寝区 星仪寝区 后勤寝区"
         },
         "vocab": {
           "groups": [
@@ -11485,7 +12886,11 @@
             "steps": [
               {
                 "op": "show",
-                "scene": "@dorm_out:丙区"
+                "scene": "@dorm_out:DormS"
+              },
+              {
+                "op": "show",
+                "scene": "@summon:bing"
               },
               {
                 "op": "show",
@@ -11506,6 +12911,10 @@
               {
                 "op": "show",
                 "scene": "@corridor:north:开"
+              },
+              {
+                "op": "show",
+                "scene": "@summon:gather"
               },
               {
                 "op": "show",
@@ -11545,7 +12954,11 @@
               },
               {
                 "op": "show",
-                "scene": "@dorm_out:丁区"
+                "scene": "@dorm_out:DormL"
+              },
+              {
+                "op": "show",
+                "scene": "@summon:ding"
               },
               {
                 "op": "show",
@@ -13327,58 +14740,58 @@
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:441:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 9,
+      "line": 10,
       "column": 5,
-      "end_line": 9,
+      "end_line": 10,
       "end_column": 75
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:442:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 10,
+      "line": 11,
       "column": 5,
-      "end_line": 10,
+      "end_line": 11,
       "end_column": 50
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:443:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 11,
+      "line": 12,
       "column": 5,
-      "end_line": 11,
+      "end_line": 12,
       "end_column": 51
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:444:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 12,
+      "line": 13,
       "column": 5,
-      "end_line": 12,
+      "end_line": 13,
       "end_column": 74
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:445:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 13,
+      "line": 14,
       "column": 5,
-      "end_line": 13,
+      "end_line": 14,
       "end_column": 56
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:446:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 14,
+      "line": 15,
       "column": 5,
-      "end_line": 14,
+      "end_line": 15,
       "end_column": 57
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:447:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 15,
+      "line": 16,
       "column": 5,
-      "end_line": 15,
+      "end_line": 16,
       "end_column": 58
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:448:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 16,
+      "line": 17,
       "column": 5,
-      "end_line": 16,
+      "end_line": 17,
       "end_column": 72
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:438:2": {
@@ -13386,1127 +14799,1127 @@
       "line": 5,
       "column": 2,
       "end_line": 5,
-      "end_column": 70
+      "end_column": 90
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:453:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 22,
-      "column": 5,
-      "end_line": 22,
-      "end_column": 71
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:454:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 23,
-      "column": 5,
-      "end_line": 23,
-      "end_column": 79
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:455:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 24,
       "column": 5,
       "end_line": 24,
-      "end_column": 49
+      "end_column": 71
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:456:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:454:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 25,
       "column": 5,
       "end_line": 25,
-      "end_column": 92
+      "end_column": 79
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:457:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:455:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 26,
       "column": 5,
       "end_line": 26,
-      "end_column": 74
+      "end_column": 49
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:458:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:456:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 27,
       "column": 5,
       "end_line": 27,
-      "end_column": 69
+      "end_column": 92
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:459:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:457:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 28,
       "column": 5,
       "end_line": 28,
-      "end_column": 71
+      "end_column": 74
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:460:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:458:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 29,
       "column": 5,
       "end_line": 29,
-      "end_column": 86
+      "end_column": 69
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:461:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:459:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 30,
       "column": 5,
       "end_line": 30,
-      "end_column": 74
+      "end_column": 71
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:462:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:460:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 31,
       "column": 5,
       "end_line": 31,
+      "end_column": 86
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:461:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 32,
+      "column": 5,
+      "end_line": 32,
+      "end_column": 74
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:462:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 33,
+      "column": 5,
+      "end_line": 33,
       "end_column": 80
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:450:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 18,
+      "line": 19,
       "column": 2,
-      "end_line": 18,
-      "end_column": 73
+      "end_line": 19,
+      "end_column": 93
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:467:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 37,
-      "column": 5,
-      "end_line": 37,
-      "end_column": 53
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:468:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 38,
-      "column": 5,
-      "end_line": 38,
-      "end_column": 54
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:469:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 39,
-      "column": 5,
-      "end_line": 39,
-      "end_column": 47
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:470:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 40,
       "column": 5,
       "end_line": 40,
-      "end_column": 71
+      "end_column": 53
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:471:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:468:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 41,
       "column": 5,
       "end_line": 41,
-      "end_column": 42
+      "end_column": 54
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:472:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:469:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 42,
       "column": 5,
       "end_line": 42,
-      "end_column": 68
+      "end_column": 47
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:473:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:470:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 43,
       "column": 5,
       "end_line": 43,
-      "end_column": 54
+      "end_column": 71
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:474:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:471:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 44,
       "column": 5,
       "end_line": 44,
+      "end_column": 42
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:472:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 45,
+      "column": 5,
+      "end_line": 45,
+      "end_column": 68
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:473:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 46,
+      "column": 5,
+      "end_line": 46,
+      "end_column": 54
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:474:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 47,
+      "column": 5,
+      "end_line": 47,
       "end_column": 63
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:464:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 33,
+      "line": 35,
       "column": 2,
-      "end_line": 33,
-      "end_column": 65
+      "end_line": 35,
+      "end_column": 85
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:479:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 52,
-      "column": 5,
-      "end_line": 52,
-      "end_column": 67
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:480:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 53,
-      "column": 5,
-      "end_line": 53,
-      "end_column": 77
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:481:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 54,
-      "column": 5,
-      "end_line": 54,
-      "end_column": 64
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:482:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 55,
-      "column": 5,
-      "end_line": 55,
-      "end_column": 67
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:483:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 56,
       "column": 5,
       "end_line": 56,
-      "end_column": 77
+      "end_column": 67
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:484:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:480:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 57,
       "column": 5,
       "end_line": 57,
-      "end_column": 81
+      "end_column": 77
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:485:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:481:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 58,
       "column": 5,
       "end_line": 58,
-      "end_column": 52
+      "end_column": 64
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:486:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:482:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 59,
       "column": 5,
       "end_line": 59,
+      "end_column": 67
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:483:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 60,
+      "column": 5,
+      "end_line": 60,
+      "end_column": 77
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:484:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 61,
+      "column": 5,
+      "end_line": 61,
+      "end_column": 81
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:485:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 62,
+      "column": 5,
+      "end_line": 62,
+      "end_column": 52
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:486:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 63,
+      "column": 5,
+      "end_line": 63,
       "end_column": 53
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:476:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 48,
+      "line": 51,
       "column": 2,
-      "end_line": 48,
-      "end_column": 74
+      "end_line": 51,
+      "end_column": 94
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:491:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 65,
-      "column": 5,
-      "end_line": 65,
-      "end_column": 58
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:492:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 66,
-      "column": 5,
-      "end_line": 66,
-      "end_column": 64
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:493:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 67,
-      "column": 5,
-      "end_line": 67,
-      "end_column": 59
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:494:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 68,
-      "column": 5,
-      "end_line": 68,
-      "end_column": 57
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:495:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 69,
-      "column": 5,
-      "end_line": 69,
-      "end_column": 57
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:496:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 70,
       "column": 5,
       "end_line": 70,
-      "end_column": 55
+      "end_column": 58
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:497:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:492:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 71,
       "column": 5,
       "end_line": 71,
-      "end_column": 47
+      "end_column": 64
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:498:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:493:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 72,
       "column": 5,
       "end_line": 72,
-      "end_column": 52
+      "end_column": 59
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:499:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:494:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 73,
       "column": 5,
       "end_line": 73,
+      "end_column": 57
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:495:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 74,
+      "column": 5,
+      "end_line": 74,
+      "end_column": 57
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:496:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 75,
+      "column": 5,
+      "end_line": 75,
+      "end_column": 55
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:497:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 76,
+      "column": 5,
+      "end_line": 76,
+      "end_column": 47
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:498:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 77,
+      "column": 5,
+      "end_line": 77,
+      "end_column": 52
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:499:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 78,
+      "column": 5,
+      "end_line": 78,
       "end_column": 51
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:488:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 61,
+      "line": 65,
       "column": 2,
-      "end_line": 61,
-      "end_column": 69
+      "end_line": 65,
+      "end_column": 89
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:504:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 79,
-      "column": 5,
-      "end_line": 79,
-      "end_column": 87
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:505:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 80,
-      "column": 5,
-      "end_line": 80,
-      "end_column": 58
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:506:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 81,
-      "column": 5,
-      "end_line": 81,
-      "end_column": 60
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:507:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 82,
-      "column": 5,
-      "end_line": 82,
-      "end_column": 62
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:511:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 84,
-      "column": 5,
-      "end_line": 84,
-      "end_column": 55
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:512:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 85,
       "column": 5,
       "end_line": 85,
+      "end_column": 87
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:505:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 86,
+      "column": 5,
+      "end_line": 86,
+      "end_column": 58
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:506:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 87,
+      "column": 5,
+      "end_line": 87,
+      "end_column": 60
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:507:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 88,
+      "column": 5,
+      "end_line": 88,
+      "end_column": 62
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:511:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 90,
+      "column": 5,
+      "end_line": 90,
+      "end_column": 55
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:512:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 91,
+      "column": 5,
+      "end_line": 91,
       "end_column": 51
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:501:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 75,
+      "line": 80,
       "column": 2,
-      "end_line": 75,
-      "end_column": 69
+      "end_line": 80,
+      "end_column": 89
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:518:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 92,
+      "line": 99,
       "column": 5,
-      "end_line": 92,
+      "end_line": 99,
       "end_column": 97
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:519:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 93,
+      "line": 100,
       "column": 5,
-      "end_line": 93,
+      "end_line": 100,
       "end_column": 52
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:520:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 94,
+      "line": 101,
       "column": 5,
-      "end_line": 94,
+      "end_line": 101,
       "end_column": 90
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:514:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 87,
+      "line": 93,
       "column": 2,
-      "end_line": 87,
-      "end_column": 102
+      "end_line": 93,
+      "end_column": 122
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:526:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 101,
-      "column": 5,
-      "end_line": 101,
-      "end_column": 58
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:527:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 102,
-      "column": 5,
-      "end_line": 102,
-      "end_column": 50
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:522:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 96,
-      "column": 2,
-      "end_line": 96,
-      "end_column": 94
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:533:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 109,
       "column": 5,
       "end_line": 109,
-      "end_column": 56
+      "end_column": 58
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:534:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:527:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 110,
       "column": 5,
       "end_line": 110,
+      "end_column": 50
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:522:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 103,
+      "column": 2,
+      "end_line": 103,
+      "end_column": 114
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:533:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 118,
+      "column": 5,
+      "end_line": 118,
+      "end_column": 56
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:534:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 119,
+      "column": 5,
+      "end_line": 119,
       "end_column": 55
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:529:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 104,
-      "column": 2,
-      "end_line": 104,
-      "end_column": 98
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:539:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 116,
-      "column": 5,
-      "end_line": 116,
-      "end_column": 53
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:540:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 117,
-      "column": 5,
-      "end_line": 117,
-      "end_column": 59
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:536:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 112,
       "column": 2,
       "end_line": 112,
-      "end_column": 65
+      "end_column": 118
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:545:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 123,
-      "column": 5,
-      "end_line": 123,
-      "end_column": 61
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:546:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 124,
-      "column": 5,
-      "end_line": 124,
-      "end_column": 48
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:547:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 125,
-      "column": 5,
-      "end_line": 125,
-      "end_column": 77
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:548:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:539:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 126,
       "column": 5,
       "end_line": 126,
-      "end_column": 72
+      "end_column": 53
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:549:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:540:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 127,
       "column": 5,
       "end_line": 127,
-      "end_column": 78
+      "end_column": 59
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:550:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:536:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 128,
-      "column": 5,
-      "end_line": 128,
+      "line": 121,
+      "column": 2,
+      "end_line": 121,
       "end_column": 85
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:551:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:545:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 129,
+      "line": 134,
       "column": 5,
-      "end_line": 129,
-      "end_column": 55
+      "end_line": 134,
+      "end_column": 61
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:542:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 119,
-      "column": 2,
-      "end_line": 119,
-      "end_column": 71
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:556:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:546:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 135,
       "column": 5,
       "end_line": 135,
-      "end_column": 78
+      "end_column": 48
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:557:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:547:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 136,
       "column": 5,
       "end_line": 136,
-      "end_column": 54
+      "end_column": 77
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:558:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:548:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 137,
       "column": 5,
       "end_line": 137,
-      "end_column": 71
+      "end_column": 72
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:559:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:549:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 138,
       "column": 5,
       "end_line": 138,
-      "end_column": 92
+      "end_column": 78
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:560:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:550:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 139,
       "column": 5,
       "end_line": 139,
-      "end_column": 68
+      "end_column": 85
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:561:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:551:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 140,
       "column": 5,
       "end_line": 140,
-      "end_column": 70
+      "end_column": 55
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:553:2": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:542:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 131,
+      "line": 129,
       "column": 2,
-      "end_line": 131,
+      "end_line": 129,
+      "end_column": 91
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:556:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 147,
+      "column": 5,
+      "end_line": 147,
       "end_column": 78
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:567:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:557:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 148,
       "column": 5,
       "end_line": 148,
+      "end_column": 54
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:558:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 149,
+      "column": 5,
+      "end_line": 149,
+      "end_column": 71
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:559:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 150,
+      "column": 5,
+      "end_line": 150,
+      "end_column": 92
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:560:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 151,
+      "column": 5,
+      "end_line": 151,
+      "end_column": 68
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:561:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 152,
+      "column": 5,
+      "end_line": 152,
+      "end_column": 70
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:553:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 142,
+      "column": 2,
+      "end_line": 142,
+      "end_column": 98
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:567:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 161,
+      "column": 5,
+      "end_line": 161,
       "end_column": 52
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:564:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 144,
+      "line": 156,
       "column": 2,
-      "end_line": 144,
-      "end_column": 106
+      "end_line": 156,
+      "end_column": 126
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:573:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 155,
+      "line": 169,
       "column": 5,
-      "end_line": 155,
+      "end_line": 169,
       "end_column": 53
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:570:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 151,
+      "line": 164,
       "column": 2,
-      "end_line": 151,
-      "end_column": 106
+      "end_line": 164,
+      "end_column": 126
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:579:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 162,
+      "line": 177,
       "column": 5,
-      "end_line": 162,
+      "end_line": 177,
       "end_column": 54
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:576:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 158,
+      "line": 172,
       "column": 2,
-      "end_line": 158,
-      "end_column": 100
+      "end_line": 172,
+      "end_column": 120
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:585:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 167,
+      "line": 183,
       "column": 5,
-      "end_line": 167,
+      "end_line": 183,
       "end_column": 49
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:582:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 165,
+      "line": 180,
       "column": 2,
-      "end_line": 165,
-      "end_column": 65
+      "end_line": 180,
+      "end_column": 85
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:590:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 171,
+      "line": 188,
       "column": 5,
-      "end_line": 171,
+      "end_line": 188,
       "end_column": 74
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:587:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 169,
+      "line": 185,
       "column": 2,
-      "end_line": 169,
-      "end_column": 65
+      "end_line": 185,
+      "end_column": 85
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:595:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 175,
+      "line": 193,
       "column": 5,
-      "end_line": 175,
+      "end_line": 193,
       "end_column": 51
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:592:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 173,
+      "line": 190,
       "column": 2,
-      "end_line": 173,
-      "end_column": 65
+      "end_line": 190,
+      "end_column": 85
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:600:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 179,
+      "line": 198,
       "column": 5,
-      "end_line": 179,
+      "end_line": 198,
       "end_column": 60
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:597:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 177,
+      "line": 195,
       "column": 2,
-      "end_line": 177,
-      "end_column": 65
+      "end_line": 195,
+      "end_column": 85
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:602:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 181,
+      "line": 200,
       "column": 2,
-      "end_line": 181,
-      "end_column": 94
+      "end_line": 200,
+      "end_column": 114
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:608:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 190,
+      "line": 211,
       "column": 5,
-      "end_line": 190,
+      "end_line": 211,
       "end_column": 60
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:605:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 186,
+      "line": 206,
       "column": 2,
-      "end_line": 186,
-      "end_column": 92
+      "end_line": 206,
+      "end_column": 112
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:613:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 196,
+      "line": 218,
       "column": 5,
-      "end_line": 196,
+      "end_line": 218,
       "end_column": 84
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:610:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 193,
+      "line": 214,
       "column": 2,
-      "end_line": 193,
-      "end_column": 68
+      "end_line": 214,
+      "end_column": 88
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:618:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 202,
+      "line": 225,
       "column": 5,
-      "end_line": 202,
+      "end_line": 225,
       "end_column": 70
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:619:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 203,
+      "line": 226,
       "column": 5,
-      "end_line": 203,
+      "end_line": 226,
       "end_column": 83
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:615:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 198,
+      "line": 220,
       "column": 2,
-      "end_line": 198,
-      "end_column": 76
+      "end_line": 220,
+      "end_column": 96
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:624:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 209,
+      "line": 233,
       "column": 5,
-      "end_line": 209,
+      "end_line": 233,
       "end_column": 68
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:621:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 205,
+      "line": 228,
       "column": 2,
-      "end_line": 205,
-      "end_column": 64
+      "end_line": 228,
+      "end_column": 84
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:629:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 215,
-      "column": 5,
-      "end_line": 215,
-      "end_column": 63
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:630:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 216,
-      "column": 5,
-      "end_line": 216,
-      "end_column": 52
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:631:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 217,
-      "column": 5,
-      "end_line": 217,
-      "end_column": 67
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:626:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 211,
-      "column": 2,
-      "end_line": 211,
-      "end_column": 67
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:636:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 223,
-      "column": 5,
-      "end_line": 223,
-      "end_column": 67
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:633:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 219,
-      "column": 2,
-      "end_line": 219,
-      "end_column": 75
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:641:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 228,
-      "column": 5,
-      "end_line": 228,
-      "end_column": 59
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:642:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 229,
-      "column": 5,
-      "end_line": 229,
-      "end_column": 83
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:643:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 230,
-      "column": 5,
-      "end_line": 230,
-      "end_column": 58
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:638:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 225,
-      "column": 2,
-      "end_line": 225,
-      "end_column": 65
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:648:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 234,
-      "column": 5,
-      "end_line": 234,
-      "end_column": 59
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:649:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 235,
-      "column": 5,
-      "end_line": 235,
-      "end_column": 77
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:645:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 232,
-      "column": 2,
-      "end_line": 232,
-      "end_column": 57
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:654:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 239,
-      "column": 5,
-      "end_line": 239,
-      "end_column": 73
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:655:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 240,
       "column": 5,
       "end_line": 240,
-      "end_column": 83
+      "end_column": 63
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:656:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:630:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 241,
       "column": 5,
       "end_line": 241,
-      "end_column": 61
+      "end_column": 52
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:651:2": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:631:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 237,
+      "line": 242,
+      "column": 5,
+      "end_line": 242,
+      "end_column": 67
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:626:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 235,
       "column": 2,
-      "end_line": 237,
-      "end_column": 57
+      "end_line": 235,
+      "end_column": 87
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:661:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:636:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 247,
+      "line": 249,
       "column": 5,
-      "end_line": 247,
-      "end_column": 62
+      "end_line": 249,
+      "end_column": 67
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:662:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:633:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 248,
-      "column": 5,
-      "end_line": 248,
-      "end_column": 46
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:658:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 243,
+      "line": 244,
       "column": 2,
-      "end_line": 243,
-      "end_column": 73
+      "end_line": 244,
+      "end_column": 95
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:667:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:641:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 254,
+      "line": 255,
       "column": 5,
-      "end_line": 254,
-      "end_column": 66
+      "end_line": 255,
+      "end_column": 59
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:664:2": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:642:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 250,
+      "line": 256,
+      "column": 5,
+      "end_line": 256,
+      "end_column": 83
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:643:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 257,
+      "column": 5,
+      "end_line": 257,
+      "end_column": 58
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:638:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 251,
       "column": 2,
-      "end_line": 250,
-      "end_column": 78
+      "end_line": 251,
+      "end_column": 85
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:672:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 260,
-      "column": 5,
-      "end_line": 260,
-      "end_column": 57
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:673:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 261,
-      "column": 5,
-      "end_line": 261,
-      "end_column": 49
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:674:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:648:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 262,
       "column": 5,
       "end_line": 262,
-      "end_column": 55
+      "end_column": 59
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:669:2": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:649:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 256,
-      "column": 2,
-      "end_line": 256,
-      "end_column": 78
+      "line": 263,
+      "column": 5,
+      "end_line": 263,
+      "end_column": 77
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:679:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:645:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 259,
+      "column": 2,
+      "end_line": 259,
+      "end_column": 77
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:654:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 268,
       "column": 5,
       "end_line": 268,
+      "end_column": 73
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:655:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 269,
+      "column": 5,
+      "end_line": 269,
+      "end_column": 83
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:656:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 270,
+      "column": 5,
+      "end_line": 270,
+      "end_column": 61
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:651:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 265,
+      "column": 2,
+      "end_line": 265,
+      "end_column": 77
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:661:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 277,
+      "column": 5,
+      "end_line": 277,
+      "end_column": 62
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:662:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 278,
+      "column": 5,
+      "end_line": 278,
+      "end_column": 46
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:658:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 272,
+      "column": 2,
+      "end_line": 272,
+      "end_column": 93
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:667:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 285,
+      "column": 5,
+      "end_line": 285,
+      "end_column": 66
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:664:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 280,
+      "column": 2,
+      "end_line": 280,
+      "end_column": 98
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:672:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 292,
+      "column": 5,
+      "end_line": 292,
+      "end_column": 57
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:673:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 293,
+      "column": 5,
+      "end_line": 293,
+      "end_column": 49
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:674:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 294,
+      "column": 5,
+      "end_line": 294,
+      "end_column": 55
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:669:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 287,
+      "column": 2,
+      "end_line": 287,
+      "end_column": 98
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:679:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 301,
+      "column": 5,
+      "end_line": 301,
       "end_column": 54
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:676:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 264,
+      "line": 296,
       "column": 2,
-      "end_line": 264,
-      "end_column": 86
+      "end_line": 296,
+      "end_column": 106
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:684:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 274,
-      "column": 5,
-      "end_line": 274,
-      "end_column": 93
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:681:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 270,
-      "column": 2,
-      "end_line": 270,
-      "end_column": 88
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:689:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 280,
-      "column": 5,
-      "end_line": 280,
-      "end_column": 60
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:690:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 281,
-      "column": 5,
-      "end_line": 281,
-      "end_column": 52
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:691:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 282,
-      "column": 5,
-      "end_line": 282,
-      "end_column": 70
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:686:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 276,
-      "column": 2,
-      "end_line": 276,
-      "end_column": 78
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:696:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 288,
-      "column": 5,
-      "end_line": 288,
-      "end_column": 63
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:697:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 289,
-      "column": 5,
-      "end_line": 289,
-      "end_column": 73
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:693:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 284,
-      "column": 2,
-      "end_line": 284,
-      "end_column": 76
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:702:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 295,
-      "column": 5,
-      "end_line": 295,
-      "end_column": 65
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:703:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 296,
-      "column": 5,
-      "end_line": 296,
-      "end_column": 55
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:699:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 291,
-      "column": 2,
-      "end_line": 291,
-      "end_column": 71
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:708:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 302,
-      "column": 5,
-      "end_line": 302,
-      "end_column": 62
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:709:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 303,
-      "column": 5,
-      "end_line": 303,
-      "end_column": 54
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:710:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 304,
-      "column": 5,
-      "end_line": 304,
-      "end_column": 61
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:711:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 305,
-      "column": 5,
-      "end_line": 305,
-      "end_column": 91
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:712:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 306,
-      "column": 5,
-      "end_line": 306,
-      "end_column": 72
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:713:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 307,
-      "column": 5,
-      "end_line": 307,
-      "end_column": 43
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:714:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 308,
       "column": 5,
       "end_line": 308,
-      "end_column": 53
+      "end_column": 93
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:715:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:681:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 309,
-      "column": 5,
-      "end_line": 309,
-      "end_column": 59
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:716:5": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 310,
-      "column": 5,
-      "end_line": 310,
-      "end_column": 72
-    },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:705:2": {
-      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 298,
+      "line": 303,
       "column": 2,
-      "end_line": 298,
-      "end_column": 70
+      "end_line": 303,
+      "end_column": 108
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:721:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:689:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 315,
+      "column": 5,
+      "end_line": 315,
+      "end_column": 60
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:690:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 316,
       "column": 5,
       "end_line": 316,
-      "end_column": 55
+      "end_column": 52
     },
-    "godot_csharp/scenes/Awakening/Script/chapter_01.story:722:5": {
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:691:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
       "line": 317,
       "column": 5,
       "end_line": 317,
+      "end_column": 70
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:686:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 310,
+      "column": 2,
+      "end_line": 310,
+      "end_column": 98
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:696:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 324,
+      "column": 5,
+      "end_line": 324,
+      "end_column": 63
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:697:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 325,
+      "column": 5,
+      "end_line": 325,
+      "end_column": 73
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:693:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 319,
+      "column": 2,
+      "end_line": 319,
+      "end_column": 96
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:702:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 332,
+      "column": 5,
+      "end_line": 332,
+      "end_column": 65
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:703:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 333,
+      "column": 5,
+      "end_line": 333,
+      "end_column": 55
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:699:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 327,
+      "column": 2,
+      "end_line": 327,
+      "end_column": 91
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:708:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 340,
+      "column": 5,
+      "end_line": 340,
+      "end_column": 62
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:709:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 341,
+      "column": 5,
+      "end_line": 341,
+      "end_column": 54
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:710:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 342,
+      "column": 5,
+      "end_line": 342,
+      "end_column": 61
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:711:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 343,
+      "column": 5,
+      "end_line": 343,
+      "end_column": 91
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:712:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 344,
+      "column": 5,
+      "end_line": 344,
+      "end_column": 72
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:713:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 345,
+      "column": 5,
+      "end_line": 345,
+      "end_column": 43
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:714:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 346,
+      "column": 5,
+      "end_line": 346,
+      "end_column": 53
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:715:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 347,
+      "column": 5,
+      "end_line": 347,
+      "end_column": 59
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:716:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 348,
+      "column": 5,
+      "end_line": 348,
+      "end_column": 72
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:705:2": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 335,
+      "column": 2,
+      "end_line": 335,
+      "end_column": 90
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:721:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 355,
+      "column": 5,
+      "end_line": 355,
+      "end_column": 55
+    },
+    "godot_csharp/scenes/Awakening/Script/chapter_01.story:722:5": {
+      "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
+      "line": 356,
+      "column": 5,
+      "end_line": 356,
       "end_column": 52
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:723:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 318,
+      "line": 357,
       "column": 5,
-      "end_line": 318,
+      "end_line": 357,
       "end_column": 50
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:724:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 319,
+      "line": 358,
       "column": 5,
-      "end_line": 319,
+      "end_line": 358,
       "end_column": 36
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:725:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 320,
+      "line": 359,
       "column": 5,
-      "end_line": 320,
+      "end_line": 359,
       "end_column": 52
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:726:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 321,
+      "line": 360,
       "column": 5,
-      "end_line": 321,
+      "end_line": 360,
       "end_column": 52
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:727:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 322,
+      "line": 361,
       "column": 5,
-      "end_line": 322,
+      "end_line": 361,
       "end_column": 42
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:728:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 323,
+      "line": 362,
       "column": 5,
-      "end_line": 323,
+      "end_line": 362,
       "end_column": 44
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:718:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 312,
+      "line": 350,
       "column": 2,
-      "end_line": 312,
-      "end_column": 64
+      "end_line": 350,
+      "end_column": 84
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:733:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 329,
+      "line": 369,
       "column": 5,
-      "end_line": 329,
+      "end_line": 369,
       "end_column": 48
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:734:5": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 330,
+      "line": 370,
       "column": 5,
-      "end_line": 330,
+      "end_line": 370,
       "end_column": 67
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:730:2": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/06_场面.story",
-      "line": 325,
+      "line": 364,
       "column": 2,
-      "end_line": 325,
-      "end_column": 70
+      "end_line": 364,
+      "end_column": 90
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:736:1": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/07_家具与文本.story",

@@ -21,8 +21,9 @@ internal static class SubjectRead
         lock (world.Gate)
         {
             var snapshot = Contract.Value(world.CaptureSnapshot());
-            var graph = world.ReaderGraph ??= SnapshotGraph.Build(snapshot);
-            return new(graph, world.Projections.ToImmutableDictionary(p => p.SubjectId!.Value), snapshot.Revision);
+            var graph = world.ReaderGraph ??= SnapshotGraph.BuildRead(snapshot);
+            var originals = world.ReaderOriginals ??= world.Projections.ToImmutableDictionary(p => p.SubjectId!.Value);
+            return new(graph, originals, snapshot.Revision);
         }
     }
     internal static void Context(ProjectionWorld world, Condition c, ActionContext context)

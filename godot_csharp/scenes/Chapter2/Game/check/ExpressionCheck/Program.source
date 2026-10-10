@@ -1,0 +1,103 @@
+using System.Collections.Immutable;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using DualOntologyWorldEngine.Awakening;
+using Game = DualOntologyWorldEngine.Chapter2.Prototype.Game;
+
+var checks = 0;
+void Check(bool value, string name) { if (!value) throw new Exception(name); checks++; Console.WriteLine("PASS " + name); }
+const string Translation = "neutral localized sentence; altered punctuation";
+var game = new Game(new() { Quiet = true });
+var person = game[P.Huo];
+var another = game[P.Shen];
+var initialVoiceName = game.VoiceName(person);
+var before = game.IdentityName("teacher", person, game.Det);
+var voice = person.M[game.CopperVoice];
+Observation.Observe(person.Soul, new(voice.Name, voice.Kind) { Target = voice, Source = ObservationSource.Introspection,
+    Tags = ImmutableDictionary<Tag, int?>.Empty.Add(new("IdentityKnown"), 1) });
+var after = game.IdentityName("teacher", person, game.Det);
+Check(before.Length > 0 && after.Length > 0 && before != after, "same speaker changes address only after identity becomes known");
+Check(game.VoiceName(person) != initialVoiceName && game.VoiceName(another) == initialVoiceName,
+    "production knowledge rendering uses the same speaker-specific identity condition");
+Check(game.IdentityName("teacher", another, game.Det) == before, "identity knowledge stays with its speaker");
+Check(game.RenderText("literal token stays literal", person, game.Det) == "literal token stays literal", "presentation does not replace arbitrary prose");
+var identityWords = Chapter2Design.Section("expression").GetProperty("identity.teacher");
+var knownWord = Chapter2Design.RawText(identityWords.GetProperty("known").GetProperty("text").GetString()!);
+Check(game.RenderText(knownWord, another, game.Det) == knownWord, "unknown listener does not rewrite literal identity words");
+Check(game.RenderText("{称呼:teacher}", person, another) == after && game.RenderText("{称呼:teacher}", another, person) == before,
+    "speaker and listener are supplied separately while binding identity slots");
+Check(!game.Respond("absent_group", person, game.Det).Responded && game.Respond("absent_group", person, game.Det).Id == "none",
+    "absent response is explicit none");
+Check(!game.Respond("questions", game.Det, person, new Dictionary<string, object?> { ["topic"] = 99, ["precise"] = true }).Responded,
+    "existing response group with no applicable declaration returns none");
+
+game.Det.Lessons.Remove(14);
+game.AskDemon(0, true, out var notPraised, out var notRefused);
+Check(!notPraised && !notRefused, "precise question requires learner knowledge");
+game.Det.Lessons[14] = true;
+var answer = game.AskDemon(0, true, out var praised, out var refused);
+Check(praised && !refused, "same question changes applicability after learning");
+var data = typeof(Chapter2Design).GetProperty("D", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+var table = (Dictionary<string, JsonElement>)data.GetType().GetField("TextTable")!.GetValue(data)!;
+var selected = game.Respond("questions", game.Det, game.Det, new Dictionary<string, object?> { ["topic"] = 0, ["precise"] = true });
+var key = selected.Declaration.GetProperty("text").GetString()!;
+var original = table[key];
+var records = game.ActionRecords.Count;
+try
+{
+    table[key] = JsonSerializer.SerializeToElement(Translation);
+    var localized = game.AskDemon(0, true, out var localizedPraise, out var localizedRefusal);
+    Check(localized == Translation && localized != answer && localizedPraise == praised && localizedRefusal == refused,
+        "changed translation changes words while preserving semantic question result");
+    Check(game.ActionRecords.Count == records, "response expression does not create action facts");
+}
+finally { table[key] = original; }
+
+using var conditional = JsonDocument.Parse("""
+{"neutral":{"r":{"text":"localization.key","when":{"speaker":"A","listener":"B","known:identity":true}}}}
+""");
+object? Read(string name) => name switch { "speaker" => "A", "listener" => "B", "known:identity" => true, _ => null };
+Check(ResponseCatalog.Select(conditional.RootElement, "neutral", Read) is not null
+    && ResponseCatalog.Select(conditional.RootElement, "neutral", name => name == "known:identity" ? false : Read(name)) is null
+    && ResponseCatalog.Select(conditional.RootElement, "neutral", name => name == "listener" ? "C" : Read(name)) is null,
+    "response eligibility respects speaker cognition and intended listener");
+
+var soul = new SoulEssence("neutral observer");
+var claim = Observation.Observe(soul, new ObservationInput("neutral claim", ProjectionKind.Concept)
+    { Source = ObservationSource.Corruption, Existence = Truth.True });
+var weight = Reasoner.Weight(claim);
+Check(weight.Factor == 1 && weight.Source == ObservationSource.Corruption && weight.Code == ReasonCode.Discounted,
+    "Core returns source and reason codes without world-specific text");
+var sourceSpeaker = Observation.Observe(soul, new("neutral speaker", ProjectionKind.Body)
+    { Existence = Truth.True, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 2) });
+var testimony = Observation.Observe(soul, new("neutral testimony", ProjectionKind.Concept)
+    { Source = ObservationSource.Testimony, Existence = Truth.True, AddRelations = [(Relations.Subject, sourceSpeaker)] });
+var testimonyWeight = Reasoner.Weight(testimony);
+Check(ReferenceEquals(testimonyWeight.Speaker, sourceSpeaker) && testimonyWeight.Trust == 2 && testimonyWeight.Factor == 3,
+    "structured source carries the actual speaker reference and unchanged trust factor");
+var statement = Observation.Observe(soul, new ObservationInput("model:q=a", ProjectionKind.Concept)
+    { Source = ObservationSource.Recall, Existence = Truth.True });
+var model = new CaseModel("model", ["q"], [["a", "b"]], [],
+    [new([0], ImmutableDictionary<string, int>.Empty), new([1], ImmutableDictionary<string, int>.Empty)]);
+var assessed = Reasoner.Assess(soul.World, model);
+var rendered = assessed.Basis.Select(Chapter1Expression.Basis).ToArray();
+Check(assessed.Credence[0][0] == 0.75 && assessed.Basis.Any(b => b.Weight?.Source == ObservationSource.Recall),
+    "structured evidence keeps existing source factor and credence");
+Check(assessed.Candidates.SequenceEqual(Reasoner.Assess(soul.World, model).Candidates) && rendered.All(t => t.Length > 0),
+    "formatting reasoning does not change model judgment");
+var speech = SpeechPolicy.Assess(0.9, 2, new());
+Check(speech[0].Act == SpeechAct.Tell && speech[0].Reasons.Any(r => r.Code == SpeechReasonCode.ListenerTrust && r.Value == 2),
+    "speech act carries structured reason parameters");
+
+var stage = game.Day; var logCount = game.ActionRecords.Count; var eventCount = game.Events.Count;
+var status = Report.ChapterEnd(game);
+Check(game.Day == stage && game.ActionRecords.Count == logCount && game.Events.Count == eventCount && status.Length > 0,
+    "chapter summary does not produce facts or advance state");
+var opening = (string)typeof(Game).GetMethod("OpeningScene", BindingFlags.NonPublic | BindingFlags.Instance)!
+    .Invoke(game, [Ending.Committee, game.ArchivePlans().First(), game.Npcs.ToList()])!;
+Check(opening == Chapter2Design.Text("表达.opening.other"), "opening summary does not claim unexecuted lineup or registration");
+Console.WriteLine($"TOTAL {checks} checks");

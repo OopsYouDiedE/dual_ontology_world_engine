@@ -64,31 +64,29 @@ public sealed partial class Game
     /// “接受规则”与“立场”分开呈现（§12 第 3 条）：第 4 日起，饭点和侦探同处的人，会顺口复述自己向着的那一边的话。
     /// 每人每天最多一次、每个时段最多两人；立场变了的先说。
     /// </summary>
-    // STORY-HARDCODE[CH2-058][text][production]: 按具名人物立场生成议事前的本案反馈。
     private void StanceTalk()
     {
         if (Day < CaseDay || Slot is not (Slot.Noon or Slot.Evening)) return;
         var here = Where(Det);
         var talkers = Npcs.Where(p => Where(p) == here && Get(p.Body, T.Sick) == 0 && _voicedStance.GetValueOrDefault(p.Id).Day != Day)
             .Select(p => (p, s: StanceOf(p))).Where(x => x.s is not null)
-            .OrderByDescending(x => _voicedStance.TryGetValue(x.p.Id, out var v) && v.Spec?.Text != x.s!.Text ? 1 : _voicedStance.ContainsKey(x.p.Id) ? 0 : 2)
+            .OrderByDescending(x => _voicedStance.TryGetValue(x.p.Id, out var v) && v.Spec?.Id != x.s!.Id ? 1 : _voicedStance.ContainsKey(x.p.Id) ? 0 : 2)
             .ThenBy(x => x.p.Id).Take(2).ToArray();
         var said = new List<(Person P, string Line)>();
-        // 本人有专属说法就用本人的。
-        string Line(string key, Person p) => Chapter2Design.HasText($"立场话.{key}.{p.Id}") ? X($"立场话.{key}.{p.Id}") : X($"立场话.{key}");
         foreach (var (p, s) in talkers)
         {
+            var response = Respond("stance", p, Det, new Dictionary<string, object?>
+                { ["family"] = FamilyOf(s!).ToString(), ["author"] = s!.Author?.ToString() ?? "", ["own"] = s.Author == p.Id },
+                ("标签", LabelOf(s)), ("规矩", Short(s)));
+            if (!response.Responded) continue;
             _voicedStance[p.Id] = (Day, s);
-            var (who, line0) = s!.Author == P.Det ? ("你", X("立场话.侦探方案", ("标签", LabelOf(s)), ("规矩", Short(s))))
-                : FamilyOf(s) == Ending.OpenEach ? (s.Author == p.Id ? "自己" : s.Author is { } author ? Names.Of(author) : VoiceName(p), Line("各取其物", p))
-                : s.Flags.HasFlag(RF.CommitteeArchive) ? (p.Id == P.Ward ? ("自己", Line("委员会自述", p)) : ("沃德", Line("委员会附和", p)))
-                : p.Id == P.Gu ? ("自己", Line("封闭自述", p)) : ("顾平章", Line("封闭附和", p));
-            var line = line0;
+            var who = s.Author == p.Id ? X("表达.自己") : s.Author is { } author ? Ref(author, p, Det) : VoiceName(p);
+            var line = response.Text;
             // 有人当众驳你的方案（§13 第 12 条）：说的人向着别家，你又有方案在议，他就顺口驳一句；信他的人会被说动一点。
             var mine = Specs.LastOrDefault(x => x.Author == P.Det && x.Card is { Behavior: >= 5 and <= 8 } && Det.Acc.ContainsKey(x));
             var fam = FamilyOf(s!);
             if (mine is not null && FamilyOf(mine) != fam && s!.Author != P.Det)
-                line = X($"立场话.驳.{fam switch { Ending.OpenEach => "各取其物", Ending.Committee => "委员会", Ending.Sealed => "封闭", _ => "其他" }}", ("标签", LabelOf(mine))) + line;
+                line = Respond("stance_rebuttal", p, Det, new Dictionary<string, object?> { ["family"] = fam.ToString() }, ("标签", LabelOf(mine))).Text + line;
             if (mine is not null && FamilyOf(mine) != fam)
                 foreach (var l in Npcs.Where(l => l != p && Where(l) == here && TrustIn(l, p) >= 2))
                     l.StanceNudge[fam] = Math.Min(1, l.StanceNudge.GetValueOrDefault(fam) + 1);
@@ -114,20 +112,21 @@ public static class Report
 {
     public static string Image(Game g) => string.Join(" ", g.Npcs.Select(p => { var (c, i) = g.ImageOfDet(p); return $"{p.Name}{c:+0;-0;0}/{i:+0;-0;0}"; }));
 
-    // STORY-HARDCODE[CH2-059][text][production]: 输出本章案件与议事结局的专属总结。
     public static string ChapterEnd(Game g)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("【章节结束状态（交第三章）】");
-        sb.AppendLine("各人心中的侦探（可信/见识）：" + Image(g));
-        foreach (var f in g.Factions()) sb.AppendLine($"派系：领头 {Names.Of(f.Leader)}｜{string.Join("、", f.Members.Select(Names.Of))}｜共享规则：{string.Join("；", f.SharedRules)}");
-        sb.AppendLine($"名录库：{Game.EndingText(g.Result)}");
-        sb.AppendLine("钩与欲望：" + string.Join(" ", g.Npcs.Select(p => $"{p.Name}欲{p.Desire}钩{p.Hooks}")));
-        sb.AppendLine("已学课程：" + string.Join(" ", g.People.Select(p => $"{p.Name}[{string.Join(",", p.Lessons.Select(l => l.Key + (l.Value ? "" : "?")))}]")));
-        sb.AppendLine($"物资：口粮 {Game.Get(g.Granary, T.Ration)}，灯油 {Game.Get(g.OilStore, T.Oil)}，药品 {Game.Get(g.MedCab, T.Medicine)}；温室{(g.GreenhouseRepaired ? "已修好" : "未修好")}");
-        sb.AppendLine($"《少了一份》：{(g.Accused is not { } acc ? "无人被指控" : g.QuerCleared ? $"{Names.Of(acc)}洗清" : g.QuerOstracized ? $"{Names.Of(acc)}被排斥" : "未对质")}；新规则：{g.CaseRule?.Text ?? "无"}；共同规则：{(g.CommonRuleEstablished ? "成立" : "未成立")}");
-        sb.AppendLine("操纵记录：" + (g.Manipulations.Count == 0 ? "无" : string.Join("；", g.Manipulations.Select(m => $"D{m.Day} 对{Names.Of(m.Target)}：{m.Means}{(m.Exposed ? "（已揭穿）" : "")}"))));
-        sb.Append("三组旧怨：原型未实现（见报告）");
+        string X(string key, params (string, object?)[] args) => Chapter2Design.Text("表达.报告." + key, args);
+        sb.AppendLine(X("标题"));
+        sb.AppendLine(X("印象", ("内容", Image(g))));
+        foreach (var f in g.Factions()) sb.AppendLine(X("派系", ("领头", Names.Of(f.Leader)), ("成员", string.Join("、", f.Members.Select(Names.Of))), ("规则", string.Join("；", f.SharedRules))));
+        sb.AppendLine(X("名录库", ("结果", Game.EndingText(g.Result))));
+        sb.AppendLine(X("钩欲", ("内容", string.Join(" ", g.Npcs.Select(p => X("钩欲项", ("人", p.Name), ("欲", p.Desire), ("钩", p.Hooks)))))));
+        sb.AppendLine(X("课程", ("内容", string.Join(" ", g.People.Select(p => $"{p.Name}[{string.Join(",", p.Lessons.Select(l => l.Key + (l.Value ? "" : "?")))}]")))));
+        sb.AppendLine(X("物资", ("粮", Game.Get(g.Granary, T.Ration)), ("油", Game.Get(g.OilStore, T.Oil)), ("药", Game.Get(g.MedCab, T.Medicine)), ("温室", X(g.GreenhouseRepaired ? "修好" : "未修"))));
+        sb.AppendLine(X("案件", ("结果", g.Accused is not { } acc ? X("无人指控") : X(g.QuerCleared ? "洗清" : g.QuerOstracized ? "排斥" : "未对质", ("人", Names.Of(acc)))),
+            ("规矩", g.CaseRule?.Text ?? X("无")), ("共同", X(g.CommonRuleEstablished ? "成立" : "未成立"))));
+        sb.AppendLine(X("操纵", ("内容", g.Manipulations.Count == 0 ? X("无") : string.Join("；", g.Manipulations.Select(m => X("操纵项", ("日", m.Day), ("人", Names.Of(m.Target)), ("手段", m.Means), ("揭穿", m.Exposed ? X("揭穿") : "")))))));
+        sb.Append(X("未实现"));
         return sb.ToString();
     }
 }

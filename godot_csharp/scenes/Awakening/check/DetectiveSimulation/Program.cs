@@ -315,7 +315,10 @@ void PlayDialogue(string title)
     {
         SyncStage();
         foreach (var line in packet.Lines)
+        {
+            planner.RecordVisibleSource(line.LineId, line.Text, line.SourceId);
             Story(SampleText("detective-simulation", "text-019"), (line.Speaker.Length == 0 ? "" : line.Speaker + "：") + line.Text);
+        }
         foreach (var command in packet.WorldCommands) Command(command.Name, command.Arguments);
         foreach (var choice in packet.Choices)
             Story(SampleText("detective-simulation", "text-043"), choice.Label + (choice.IsAvailable ? "" : SampleText("detective-simulation", "text-044") + choice.LockHint + "）"));
@@ -477,6 +480,9 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
             {
                 var frame = (Dictionary<string,object>)item;
                 var thoughts = (Dictionary<string,object>)frame["thoughts"];
+                if (frame.TryGetValue("event", out var eventData) && eventData is Dictionary<string, object> visibleEvent
+                    && visibleEvent.TryGetValue("kind", out var eventKind))
+                    planner.RecordVisibleSource("replay/" + eventKind, Convert.ToString(frame["label"]) ?? "", "visible replay");
                 var voices = thoughts.Select(pair => content.Content.RootElement.GetProperty("PERSON_NAMES").GetProperty(pair.Key).GetString() + SampleText("detective-simulation", "text-077") + pair.Value);
                 Story(SampleText("detective-simulation", "text-078"), $"重演内时刻 {frame["t"]}；{frame["actor"]}：{frame["label"]}；" + string.Join("；",voices) + SampleText("detective-simulation", "text-079"));
             }

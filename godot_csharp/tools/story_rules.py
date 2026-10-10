@@ -130,7 +130,7 @@ def compile_rules(blocks: list[tuple[Line, list[Node]]], ctx: Any) -> list[dict[
     for head, body in blocks:
         name = head.text[2:].strip()
         fields = {n.pair()[0]: (n.pair()[1], n) for n in body if n.pair()[0] != "张贴"}
-        unknown = set(fields) - {"编号", "立规者", "内容", "标记", "格", "针对"}
+        unknown = set(fields) - {"编号", "立规者", "内容", "标记", "格", "针对", "有效期"}
         if unknown:
             fail(f"规矩不支持字段“{sorted(unknown)[0]}”。", head.number)
         for need in ("编号", "立规者", "内容", "标记"):
@@ -139,6 +139,10 @@ def compile_rules(blocks: list[tuple[Line, list[Node]]], ctx: Any) -> list[dict[
         author = fields["立规者"][0]
         entry: dict[str, Any] = {"name": name, "id": fields["编号"][0], "text": unescape(fields["内容"][0]),
                                  "flags": split_flags(ctx, fields["标记"][0], fields["标记"][1].number)}
+        lifetime = fields["有效期"][0] if "有效期" in fields else "world"
+        if lifetime not in {"world", "chapter", "interaction"}:
+            fail("规则有效期须为 world、chapter 或 interaction。", head.number)
+        entry["lifetime"] = lifetime
         if author == "恶魔":
             entry["demon"] = True
         else:

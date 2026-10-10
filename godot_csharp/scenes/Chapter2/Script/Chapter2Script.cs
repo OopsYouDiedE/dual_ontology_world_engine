@@ -108,6 +108,7 @@ public sealed partial class Game
         S.Completed += OnCompleted;
         S.StageCommitted += CapturePresentation;
         People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
+        LoadAccess();
         BuildWorld();
         BindInvestigation(Chapter2Design.Json);
         InitializeAccess();
@@ -175,15 +176,7 @@ public sealed partial class Game
             PlaceOf[s] = place;
             View[s] = Rt.Representations(s).FirstOrDefault() ?? Rt.Project(s, Names.Of(place));
         }
-        // 每个去处一条路：从任何地方都能到。房内几何与寻路属宿主，这里只保留“到哪里”。
-        foreach (var place in Enum.GetValues<Place>())
-        {
-            var w = new Essence("往" + Names.Of(place), ProjectionKind.Boundary);
-            var c = w.Add(new PassageProperty()).Connections;
-            foreach (var from in Space.Values) c[from] = Space[place];
-            Way[place] = w;
-            View[w] = Rt.Project(w, w.TrueName);
-        }
+        BuildAccess();
         Clock = Existing("world:object.Clock") ?? new Essence("钟");
         var clockState = Clock.Get<StateProperty>() ?? Clock.Add(new StateProperty());
         foreach (var t in T.SlotTag.Values.Append(T.Day)) { clockState.Values.TryAdd(t, 0); clockState.Observable.Add(t); }
@@ -235,7 +228,7 @@ public sealed partial class Game
         {
             // Arrival moves the existing body; it does not replace its running state.
             var spatial = person.Body.Get<SpatialProperty>() ?? person.Body.Add(new SpatialProperty());
-            spatial.Holder = null; spatial.Space = Space[HostDormReleased(person) ? Place.Living : person.Pro.Dorm];
+            spatial.Holder = null; spatial.Space = Space[AccessArrival(person)];
             var state = person.Body.Get<StateProperty>() ?? person.Body.Add(new StateProperty());
             foreach (var t in BodyVisible) { state.Values.TryAdd(t, 0); state.Observable.Add(t); }
             foreach (var t in BodyHidden) state.Values.TryAdd(t, 0);
@@ -393,6 +386,7 @@ public sealed partial class Game
         if (RealDirty) using (Prof.Time("C:Sync")) { Rt.Sync(); RealDirty = false; }
         var space = SpaceOf(p.Body);
         var place = PlaceOf[space];
+        ObserveLocalAccess(p);
         var views = new List<Projection> { View[space], View[Clock] };
         foreach (var thing in Things) if (SpaceOf(thing) == space) views.Add(View[thing]);
         foreach (var other in People) if (SpaceOf(other.Body) == space && (other == p || !other.Asleep || Slot != Slot.Night)) views.Add(View[other.Body]);
@@ -546,11 +540,8 @@ public sealed record InheritedSeed(int Hooks, int Desire, bool KnowsHookCost, IR
 
 
 /// <summary>第二章命令行与 Godot 宿主共用的玩家可见剧情。</summary>
-// STORY-HARDCODE[CH2-015][text][production]: 章节专属教师身份替换与标题常量写在宿主代码中。
 public static class Chapter2Content
 {
-    // 学员尚不知道教师的身份；作者侧的称呼只在实现里使用。
-    public static string PlayerText(string text) => text.Replace("恶魔", "教师", StringComparison.Ordinal);
     public static string DayName(int day) => Chapter2Design.DayName(day);
     public static string SlotName(int day, Slot slot) => Chapter2Design.SlotDisplay(day, slot);
     public static string TimeName(int day, Slot slot) => $"{DayName(day)} · {SlotName(day, slot)}";
@@ -562,6 +553,6 @@ public static class Chapter2Content
 public static class Chapter2Script
 {
     public const string Id = "chapter2";
-    public const string Title = "第十一课";
+    public static string Title => Chapter2Design.Text("表达.标题");
     public static Game CreateWorld(GameOptions? options = null) => new(options);
 }

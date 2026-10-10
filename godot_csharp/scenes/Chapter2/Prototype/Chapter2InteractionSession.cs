@@ -378,6 +378,8 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
         // A completed response does not keep a moving or sleeping body in place.
         // Close stale follow-up menus instead of failing the presentation receipt.
         Invalidate();
+        _game.EndInteractionLifetime();
+        _narrative.EndLifetime(LifetimeScope.Interaction);
         output.Add(Event("interaction_closed",("actor",who.ToString()),("reason","actor_unavailable")));
     }
     private void AskReaction(P who,List<Dictionary<string,object?>> output)
@@ -522,11 +524,16 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
         _continuations.Enqueue(o=>Activate(ending==Ending.Sealed?"council.sealed":"council.box",o));
         _continuations.Enqueue(o=>
         {
+            _game.EndInteractionLifetime();
+            _behavior.EndChapterLifetime();
+            _narrative.EndLifetime(LifetimeScope.Chapter);
             _ended=true;_stage="ended";
             o.AddRange(EndEvents(new Dictionary<string,object?>
             {
                 ["result"]=ending.ToString(),["result_text"]=_game.ResultText,["case_rule_adopted"]=_game.CaseRuleAdopted,["common_rule_proposed"]=_game.CommonRuleProposed,
-                ["quer"]=_game.Accused is not { } accused?"没有人被当众指控":_game.QuerCleared?$"{Names.Of(accused)}洗清了冤屈，住回寝区":_game.QuerOstracized?$"{Names.Of(accused)}被当成私取之人，搬出寝区独宿":$"{Names.Of(accused)}的事没有人再提",
+                ["quer"]=_game.Respond("closing_case", _game.Det, null, new Dictionary<string, object?>
+                    { ["accused"] = _game.Accused is not null, ["cleared"] = _game.QuerCleared, ["ostracized"] = _game.QuerOstracized },
+                    ("人", _game.Accused is { } accused ? Names.Of(accused) : "")).Text,
                 ["det_hooks"]=_game.Det.Hooks,["common_rule"]=_game.CommonRuleEstablished,["case_rule"]=_game.CaseRule?.Text??"",
                 ["log"]=_game.CouncilLog.ToArray(),["hooks"]=_game.Npcs.Where(p=>p.Hooks>0).Select(p=>p.Name).ToArray(),["impressions"]=Impressions(),
                 ["stands"]=_game.CouncilChoice.ToDictionary(p=>p.Key.ToString(),p=>Game.EndingText(Game.FamilyOf(p.Value)))
@@ -553,13 +560,15 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
         _continuations.Enqueue(o=>o.Add(Event("manuscript")));
         Pump(output);
     }
-    // STORY-HARDCODE[CH2-026][logic][production]: 人物印象候选名单固定为本案关键角色。
-    private string[] Impressions()=>_game.Npcs.Where(p=>p.Id is P.Ward or P.Quer or P.Mora or P.Huo or P.Ruan or P.Margaret).Select(p=>
+    private string[] Impressions()=>_game.Npcs.Select(p=>
     {
         var (c,i)=_game.ImageOfDet(p);
-        var text=c>=2?"说话不避着你":c>=1?"对你还算客气":c>=0?"对你话不多":"明显不想跟你多说";
-        if(i>=2)text+="，信你的判断"; return p.Name+"："+text;
-    }).ToArray();
+        var response = _game.Respond("impressions", p, _game.Det, new Dictionary<string, object?> { ["credibility"] = c });
+        if (!response.Responded) return null;
+        var text=response.Text;
+        text += _game.Respond("impression_insight", p, _game.Det, new Dictionary<string, object?> { ["insight"] = i }).Text;
+        return p.Name+"："+text;
+    }).OfType<string>().ToArray();
     private Dictionary<string,object?> LegacySnapshot()=>new Dictionary<string,object?>
     {
         ["detective_name"]=DetectiveName(),["stage"]=_stage,["ended"]=_ended,["replay_open"]=_replayOpen,["replay_result"]=_replayResult,

@@ -27,13 +27,11 @@ public sealed partial class Game
     }
 
     /// <summary>成见带来的定性：说话人自己添的，就是他自己的话；别人添的，说“据某人说”。</summary>
-    // STORY-HARDCODE[CH2-060][schema][production]: 绑定特定人物与本章习惯证词的文本键。
     private string SlantText(NewsItem item, P? slant, Person speaker)
     {
         if (slant is not { } s || item.About is not { } about) return "";
-        var key = about == P.Quer ? "走样私取" : "走样惯常";
-        if (s == speaker.Id) return X($"知识片段.{key}自述", ("对象", Ref(about, speaker, Det)));
-        return X($"知识片段.{key}", ("传话人", Ref(s, speaker, Det)));
+        return Respond("slant", speaker, Det, new Dictionary<string, object?> { ["about"] = about.ToString(), ["own"] = s == speaker.Id },
+            ("对象", Ref(about, speaker, Det)), ("传话人", Ref(s, speaker, Det))).Text;
     }
 
     /// <summary>某人把自己知道的一条知识说给侦探：亲历的照说；听来的说明来源；来源本人就是主语时，说成“某人说他……”。</summary>

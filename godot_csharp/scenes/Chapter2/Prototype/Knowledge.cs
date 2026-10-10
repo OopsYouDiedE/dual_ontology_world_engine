@@ -20,7 +20,12 @@ public sealed record Claim(string Predicate, P? Subject = null, P? Object = null
 public sealed partial class Game
 {
     /// <summary>此人心里对铜口背后那个声音的称呼（投影名）。</summary>
-    public string VoiceName(Person? who) => (who ?? Det).M.TryGetValue(CopperVoice, out var v) ? v.Name : View[CopperVoice].Name;
+    public string VoiceName(Person? who)
+    {
+        var speaker = who ?? Det;
+        var name = speaker.M.TryGetValue(CopperVoice, out var v) ? v.Name : "";
+        return Respond("identity.voice", speaker, null, null, ("投影名", name)).Text;
+    }
 
     /// <summary>某人被说起时的称呼：说话人自己是“我”，听者是“你”。</summary>
     private string Ref(P? who, Person? speaker, Person? listener, bool plural = false)
@@ -47,7 +52,7 @@ public sealed partial class Game
             .Replace("{地}", c.Where is { } w ? Names.Of(w) : "").Replace("{夜}", NightWord(c.Night))
             .Replace("{铜口}", VoiceName(speaker));
         foreach (var (k, v) in c.Values ?? ImmutableDictionary<string, string>.Empty) t = t.Replace("{" + k + "}", v);
-        return t;
+        return RenderText(t, speaker, listener);
     }
 
     /// <summary>侦探笔记、日志里的第三人称写法（不带“我/你”）。</summary>

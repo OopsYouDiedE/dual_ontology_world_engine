@@ -35,24 +35,23 @@ public sealed partial class Chapter2InteractionSession
         _nearby = near;
     }
 
-    // STORY-HARDCODE[CH2-080][text][production]: 构造本章议事结果、角色归宿与章末卡文本。
     private IEnumerable<Ev> EndEvents(Ev result)
     {
         if (result.GetValueOrDefault("stands") is IDictionary<string, string> stands)
             yield return Event("stage", ("op", "group"), ("anchor", _fieldPresentation.GatheringAnchor), ("stands", stands.ToDictionary(p => p.Key, p => (object?)p.Value)));
         var hooked = ((string[])result["hooks"]!).ToList();
         var detHooks = Convert.ToInt32(result["det_hooks"]);
-        if (detHooks > 0) hooked.Insert(0, "你自己");
+        if (detHooks > 0) hooked.Insert(0, Chapter2Design.Text("表达.自己听者"));
         string T(string key, params (string, object?)[] args) => Chapter2Design.Text("终局." + key, args);
         var rows = new List<object?> { T("名录库", ("结果", result["result_text"])), result["quer"] };
         if ((string)result["case_rule"]! != "") rows.Add(T(result["case_rule_adopted"] is true ? "对账规矩立住" : "对账规矩没立住", ("规矩", result["case_rule"])));
         rows.Add(T(result["common_rule"] is true ? "共同规则成立" : result["common_rule_proposed"] is true ? "共同规则不成" : "共同规则未提"));
         rows.Add(T("钩", ("铜口", _game.VoiceName(null)), ("名单", hooked.Count == 0 ? T("钩无") : string.Join("、", hooked))));
-        rows.Add(T("没交出", ("名单", detHooks == 0 ? "你自己" : T("钩无"))));
+        rows.Add(T("没交出", ("名单", detHooks == 0 ? Chapter2Design.Text("表达.自己听者") : T("钩无"))));
         rows.AddRange(((string[])result["impressions"]!).Cast<object?>());
         yield return Event("music", ("id", "main_theme"), ("fade", 4.0));
-        yield return Event("ending", ("title", "安眠者有福 · 完"), ("outcome", ""), ("rows", rows.ToArray()),
-            ("actions", new object?[] { new Ev { ["id"] = "title", ["label"] = "返回标题（Enter）", ["key"] = "Enter" } }));
+        yield return Event("ending", ("title", Chapter2Design.Text("表达.终局标题")), ("outcome", ""), ("rows", rows.ToArray()),
+            ("actions", new object?[] { new Ev { ["id"] = "title", ["label"] = Chapter2Design.Text("表达.返回标题"), ["key"] = "Enter" } }));
         yield return Event("save", ("path", "user://chapter2_end.json"), ("data", new Ev
         {
             ["detective_name"] = DetectiveName(), ["result"] = result["result"], ["quer"] = result["quer"], ["case_rule"] = result["case_rule"],

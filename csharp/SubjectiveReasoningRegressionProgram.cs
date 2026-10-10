@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DualOntologyWorldEngine.Core;
 
 var checks = 0;
@@ -83,5 +84,101 @@ foreach (var nested in new[] { false, true })
     try { Reason().Prove(new FrozenConditionV1.Exists(new FrozenNounV1.Reference(new(Guid.NewGuid(), Guid.NewGuid())))); }
     catch (CognitionContractException) { invalid = true; }
     Check(invalid, nested + " foreign_reference_rejected");
+}
+// Merge contract: inference is persisted as subject-owned material, alongside
+// speech and events, without promoting testimony or authoritative causes to facts.
+T Ok<T>(ContractResult<T> result) => result is ContractResult<T>.Success success ? success.Value
+    : throw new Exception("Merge contract failed: " + ((ContractResult<T>.Failure)result).Error);
+foreach (var nested in new[] { false, true })
+{
+    var runtime = new WorldRuntime();
+    var soul = new SoulEssence(new("observer"), "observer");
+    var other = new SoulEssence(new("other"), "other");
+    var root = new Essence(new("root"), "root", ProjectionKind.Space);
+    var room = new Essence(new("room"), "room", ProjectionKind.Space);
+    var body = new Essence(new("body"), "body", ProjectionKind.Body);
+    if (nested) room.Add(new SpatialProperty { Space = root });
+    body.Add(new SpatialProperty { Space = room });
+    runtime.Project(soul, "observer"); runtime.Project(other, "other");
+    var rr = runtime.Project(root, "root"); var rm = runtime.Project(room, "room", nested ? rr : null);
+    var rb = runtime.Project(body, "body");
+    var known = runtime.Observe(soul, [rr, rm, rb]); runtime.Observe(other, [rb]);
+    var actor = known[2]; var id = actor.SubjectId!.Value;
+    Condition P(string tag) => new Condition.Tagged(actor, new(tag), 1);
+    FrozenConditionV1 F(string tag) => new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(id), new(tag), 1);
+    Projection Belief(string name, Effect effect, LifetimeScope lifetime, string? owner)
+        => Observation.Observe(soul, new(name, ProjectionKind.Concept) { Source = ObservationSource.Introspection,
+            Existence = Truth.True, Rules = [new(new Condition.Constant(Truth.True), RuleMode.Infer, effect, 1, Truth.True, lifetime, owner)] });
+    var first = Belief("first", new Effect.Think(P("p")), LifetimeScope.World, null);
+    var law = Belief("law", new Effect.When(P("p"), new Effect.Think(P("q"))), LifetimeScope.Chapter, "neutral.chapter");
+    var last = Belief("last", new Effect.When(P("q"), new Effect.Think(P("r"))), LifetimeScope.Interaction, "neutral.interaction");
+    var speech = Observation.Observe(soul, new("speech", ProjectionKind.Procedure) { Source = ObservationSource.Introspection,
+        Existence = Truth.True, Procedure = new Effect.Say(actor, "neutral", Claim: P("p"), Topic: new("neutral.topic")) });
+    // Also exercise the engine-only reality AST path used by RuntimeSave.
+    body.Add(new RuleProperty { Rules = [new(new Condition.Constant(Truth.True), RuleMode.Infer,
+        new Effect.When(new Condition.Exists(rb), new Effect.Think(new Condition.Exists(rb))),
+        1, Truth.True, LifetimeScope.Interaction, "neutral.runtime")] });
+    runtime.Sync();
+    var cause = new ObservationRecordV1<Essence?>(new() { Id = new("visible.cause"), Subject = body,
+        KnowledgeSource = ObservationSource.Perception, Phase = EventPhaseV1.Delivered,
+        Outcome = EventOutcomeV1.Succeeded, Perceivers = [soul] });
+    runtime.RecordEvent(cause); runtime.PublishEvent(soul, cause);
+    var secret = new ObservationRecordV1<Essence?>(cause.Fields with { Id = new("hidden.cause"), Perceivers = [other] });
+    runtime.RecordEvent(secret); runtime.PublishEvent(other, secret);
+    var testimony = new TestimonyEventV1<Essence?>(cause.Fields with { Id = new("testimony"),
+        KnowledgeSource = ObservationSource.Testimony, Causes = [cause.Fields.Id, secret.Fields.Id],
+        Claims = [new(new("neutral.state"), body, null, room, new("unaccepted"), 1, Truth.True)] });
+    runtime.RecordEvent(testimony); runtime.PublishEvent(soul, testimony);
+    var archive = Ok(runtime.CaptureCognitionGraph(soul));
+    var proof = new SubjectiveReasoner(archive.SubjectSnapshot, id, new(8, 4096, 128)).Prove(F("r"));
+    var bytes = Ok(CognitionCodec.Encode(archive)); var decoded = Ok(CognitionCodec.Decode(bytes));
+    var rebound = Ok(CognitionGraph.Rebind(decoded));
+    var decodedProof = new SubjectiveReasoner(decoded.SubjectSnapshot, id, new(8, 4096, 128)).Prove(F("r"));
+    var loadedSay = rebound.Projections[speech.SubjectId!.Value].Procedure as Effect.Say;
+    Check(Ok(CognitionCodec.Encode(decoded)).SequenceEqual(bytes) && proof.Value == Truth.True && decodedProof.Complete
+        && decodedProof.Value == proof.Value && decodedProof.Basis.SequenceEqual(proof.Basis)
+        && rebound.Projections[first.SubjectId!.Value].Rules.Single().Lifetime == LifetimeScope.World
+        && rebound.Projections[law.SubjectId!.Value].Rules.Single().LifetimeOwner == "neutral.chapter"
+        && rebound.Projections[law.SubjectId!.Value].Rules.Single().Lifetime == LifetimeScope.Chapter
+        && rebound.Projections[last.SubjectId!.Value].Rules.Single().Lifetime == LifetimeScope.Interaction
+        && rebound.Projections[last.SubjectId!.Value].Rules.Single().LifetimeOwner == "neutral.interaction"
+        && loadedSay?.Topic == new AuthorTermId("neutral.topic")
+        && loadedSay.Claim is Condition.Tagged tagged && ((Noun.Reference)tagged.Target).Projection == rebound.Projections[id],
+        nested + " infer_graph_wire_rebind_preserves_lifetime_speech_and_proof");
+    var audit = Ok(CognitionCodec.DecodeAudit(Ok(CognitionCodec.EncodeAudit(Ok(runtime.CaptureCognitionAudit(soul))))));
+    var rebuilt = Ok(runtime.ReconstructCognitionAudit(audit, archive.SubjectSnapshot.Revision));
+    Check(Ok(CognitionCodec.Encode(archive with { SubjectSnapshot = rebuilt })).SequenceEqual(bytes),
+        nested + " infer_audit_wire_reconstructs_subject_material");
+    var restored = Ok(WorldRuntime.Restore(Ok(runtime.Save())));
+    var restoredSoul = (SoulEssence)restored.Entities[soul.Id];
+    var restoredArchive = Ok(restored.Runtime.CaptureCognitionGraph(restoredSoul));
+    var restoredProof = new SubjectiveReasoner(restoredArchive.SubjectSnapshot, id, new(8, 4096, 128)).Prove(F("r"));
+    var runtimeRule = restored.Runtime.Representations(restored.Entities[body.Id]).Single().Rules.Single();
+    Check(Ok(CognitionCodec.Encode(restoredArchive)).SequenceEqual(bytes) && restoredProof.Value == proof.Value
+        && restoredProof.Basis.SequenceEqual(proof.Basis) && runtimeRule.Mode == RuleMode.Infer
+        && runtimeRule.Lifetime == LifetimeScope.Interaction && runtimeRule.LifetimeOwner == "neutral.runtime"
+        && Ast.References(runtimeRule).All(p => p == restored.Runtime.Representations(restored.Entities[body.Id]).Single())
+        && restoredSoul.World.Revision == soul.World.Revision && restored.Runtime.EventAudit.Count == runtime.EventAudit.Count,
+        nested + " infer_runtime_save_restores_new_references_without_replaying");
+    var visible = TypedEvents.Of(restoredArchive.SubjectSnapshot);
+    var shown = visible.Single(e => e.Fields.Id == testimony.Fields.Id);
+    var unknown = new SubjectiveReasoner(restoredArchive.SubjectSnapshot, id, new(8, 4096, 128)).Prove(F("unaccepted"));
+    Check(shown.Fields.Causes.SequenceEqual([cause.Fields.Id]) && !visible.Any(e => e.Fields.Id == secret.Fields.Id)
+        && unknown.Value == Truth.Unknown && restoredProof.Basis.All(b => restoredArchive.SubjectSnapshot.Projections.Any(p => p.Id == b)),
+        nested + " infer_uses_own_material_with_visible_events_not_hidden_causes_or_unaccepted_claims");
+    JsonObject EditedRule() => JsonNode.Parse(bytes)!.AsObject();
+    JsonObject RuleIn(JsonObject document) => document["subject_snapshot"]!["projections"]!.AsArray()
+        .Single(p => p!["id"]!["local"]!.GetValue<string>() == first.SubjectId!.Value.Local.ToString("D"))!["rules"]![0]!.AsObject();
+    var unknownMode = EditedRule(); RuleIn(unknownMode)["mode"] = "unlisted";
+    Check(CognitionCodec.Decode(JsonSerializer.SerializeToUtf8Bytes(unknownMode)) is ContractResult<CognitionGraphArchiveV1>.Failure
+        { Error.Code: ContractErrorCode.Unsupported }, nested + " infer_codec_keeps_unknown_modes_closed");
+    var invalidEffect = EditedRule(); RuleIn(invalidEffect)["effect"] = new JsonObject { ["kind"] = "set",
+        ["target"] = new JsonObject { ["kind"] = "reference", ["target"] = JsonNode.Parse(JsonSerializer.Serialize(new { subject_world = id.SubjectWorld, local = id.Local })) },
+        ["tag"] = "p", ["value"] = 1 };
+    var invalidOwner = EditedRule(); RuleIn(invalidOwner)["lifetime"] = "chapter";
+    Check(CognitionCodec.Decode(JsonSerializer.SerializeToUtf8Bytes(invalidEffect)) is ContractResult<CognitionGraphArchiveV1>.Failure
+        { Error.Code: ContractErrorCode.MalformedData }
+        && CognitionCodec.Decode(JsonSerializer.SerializeToUtf8Bytes(invalidOwner)) is ContractResult<CognitionGraphArchiveV1>.Failure
+        { Error.Code: ContractErrorCode.MalformedData }, nested + " infer_decode_rejects_executable_effect_and_ownerless_lifetime");
 }
 Console.WriteLine($"TOTAL {checks} checks");

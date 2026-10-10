@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Awakening;
 
@@ -9,20 +10,7 @@ namespace DualOntologyWorldEngine.Awakening;
 /// </summary>
 public sealed partial class AwakeningContentSession
 {
-    // STORY-HARDCODE[AWK-062][schema][production]: 回应键把本章言语行为/立场固定映射到剧本词汇键。
     private static readonly string[] Companions = ["huo", "shen", "su"];
-
-    private static readonly IReadOnlyDictionary<(SpeechAct, Stance), string[]> SpeechKeys = new Dictionary<(SpeechAct, Stance), string[]>
-    {
-        [(SpeechAct.Tell, Stance.Affirm)] = ["如实·有把握"], [(SpeechAct.Tell, Stance.Deny)] = ["如实·否认"],
-        [(SpeechAct.Tell, Stance.Unsure)] = ["如实·没把握"],
-        [(SpeechAct.Hedge, Stance.Affirm)] = ["含糊"], [(SpeechAct.Hedge, Stance.Deny)] = ["含糊"], [(SpeechAct.Hedge, Stance.Unsure)] = ["含糊"],
-        [(SpeechAct.AskBack, Stance.Affirm)] = ["反问"], [(SpeechAct.AskBack, Stance.Deny)] = ["反问"], [(SpeechAct.AskBack, Stance.Unsure)] = ["反问"],
-        [(SpeechAct.Withhold, Stance.Affirm)] = ["隐瞒"], [(SpeechAct.Withhold, Stance.Deny)] = ["隐瞒"],
-        [(SpeechAct.Refuse, Stance.Affirm)] = ["拒绝"], [(SpeechAct.Refuse, Stance.Deny)] = ["拒绝"], [(SpeechAct.Refuse, Stance.Unsure)] = ["拒绝"],
-        // 说反话时用写给相反立场的台词；作者另写了“撒谎·…”则优先用它。
-        [(SpeechAct.Lie, Stance.Affirm)] = ["撒谎·有把握", "如实·有把握"], [(SpeechAct.Lie, Stance.Deny)] = ["撒谎·否认", "如实·否认"],
-    };
 
     private JsonElement Topic(string topic) => Content.RootElement.GetProperty("TOPICS").TryGetProperty(topic, out var t) ? t
         : throw new InvalidDataException("Unknown topic: " + topic);
@@ -63,12 +51,19 @@ public sealed partial class AwakeningContentSession
         var responses = data.GetProperty("responses");
         bool Written(string key) => responses.TryGetProperty(who, out var own) && own.TryGetProperty(key, out _)
             || responses.TryGetProperty("any", out var any) && any.TryGetProperty(key, out _);
-        string? KeyOf(SpeechAct act, Stance stance) => SpeechKeys.TryGetValue((act, stance), out var keys) ? keys.FirstOrDefault(Written) : null;
-        var choice = SpeechPolicy.Choose(credence, trust, Persona.Speech(person), implicated, (act, stance) => KeyOf(act, stance) is not null)
-            ?? throw new InvalidDataException($"话题“{topic}”没有任何可用于 {who} 的回应。");
+        string? KeyOf(SpeechAct act, Stance stance) => ResponseCatalog.Select(Chapter1Data.Root.GetProperty("EXPRESSION"), "speech", name => name switch
+        {
+            "act" => act.ToString(), "stance" => stance.ToString(), "speaker" => who, "listener" => "detective",
+            "written" => null,
+            _ when name.StartsWith("written:", StringComparison.Ordinal) => Written(name[8..]),
+            _ when name.StartsWith("known:", StringComparison.Ordinal) => world.Knows(person, name[6..]),
+            _ => null,
+        })?.Text;
+        var choice = SpeechPolicy.Choose(credence, trust, Persona.Speech(person), implicated, (act, stance) => KeyOf(act, stance) is not null);
+        if (choice is null) { Session.Set("speech", who + ":" + topic, "none"); return "none"; }
         var key = KeyOf(choice.Act, choice.Stance)!;
         Session.Set("speech", who + ":" + topic,
-            $"{key}；把握 {credence:0.00}；信任 {trust}；{string.Join("，", choice.Reasons)}；依据：{string.Join("；", belief.Basis)}");
+            $"{key}；把握 {credence:0.00}；信任 {trust}；{string.Join("，", choice.Reasons.Select(Chapter1Expression.SpeechReason))}；依据：{string.Join("；", belief.Basis.Select(Chapter1Expression.Basis))}");
         return key;
     }
 

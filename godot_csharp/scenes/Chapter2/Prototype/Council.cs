@@ -51,17 +51,16 @@ public sealed partial class Game
     /// 夜间私占（§12 第 0、5 条）：不再由作者在傍晚替人“约好”。想开库的人自己下午去约会开锁的、有力气的、懂传声的人（见 GameJobs.PlanRules），
     /// 答应的人入夜赴约。天亮前看今夜动过名录库之门的人：凑得齐三站就开了；有人守在前厅（沃德）而他不在其中，就被拦下。
     /// </summary>
-    // STORY-HARDCODE[CH2-045][logic][production]: 按具名人物、地点和本案时间安排议事前的控制与封锁。
     private void Seizure()
     {
         if (SeizedBy is not null) return;
         // 答应了守门人“请回”的人，这一夜就不算在开门的人里；他那一站要由别人顶上才算数。
-        var yielded = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && e.Text.StartsWith("答应了") && (e.Text.Contains("请回") || e.Text.Contains("让开"))).Select(e => e.Who).ToHashSet();
+        var yielded = NightActions(Day).Where(e => e.ResponseTo == SpeechTopics.Vacate).Select(e => e.Actor.Id).ToHashSet();
         var crew = _seizeOk.Where(p => !yielded.Contains(p.Id)).ToArray();
         var tried = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job == Job.Seize || e.Job == Job.AskLeave)).Select(e => e.Who).Distinct().ToArray();
         if (crew.Length == 0 && tried.Length == 0) return;
         var leader = (crew.Length > 0 ? crew : tried.Select(t => this[t]).ToArray()).OrderByDescending(p => p.Hooks + p.Desire).ThenBy(p => p.Id).First();
-        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.Text.StartsWith("答应了") && e.Text.Contains("让开"))).Select(e => e.Id).ToArray();
+        var causes = Events.Where(e => e.Day == Day && e.Slot == Slot.Night && (e.Job is Job.Seize or Job.AskLeave || e.ResponseTo == SpeechTopics.Vacate)).Select(e => e.Id).ToArray();
         // 三站都有人使过劲、又有人开得了前厅的锁，门就开了；有一站始终被守门的人占着，就开不了（§13 第 4 条：没有人数阈值）。
         var worked = new[] { WeightRoom, LockCore, RelayPost }.All(st => Get(st, T.Worked) > 0 && crew.Any(c => StationFor(c) == st));
         var entry = crew.Any(p => Get(p.Body, T.ArchiveKey) > 0 || p.Pro.Lock >= 3);
@@ -71,34 +70,23 @@ public sealed partial class Game
         Log.Add($"D{Day} 夜 名录库：{names} 来过。{(ok ? "三站齐了，门开了" : guard is not null ? $"{guard.Name}占着配重室，没让开" : "三站没凑齐")}");
         if (!ok && guard is not null)
         {
-            NewsFrom(guard, NewsKind.Accusation, K("守门挡下", guard.Id, night: Day, values: ("人们", names)), about: leader, trust: -1);
+            var news = NewsFrom(guard, NewsKind.Accusation, K("守门挡下", guard.Id, night: Day, values: ("人们", names)), about: leader, trust: -1);
             var blockEv = RecordEvent(guard.Id, $"守着配重室，没给{names}让开", "看守", Place.ArchiveFront, causes);
+            news.SourceEvent = Events[blockEv - 1];
             foreach (var c in crew) Touch(c.Body, T.Accused, blockEv, guard.Id);
             return;
         }
-        NewsFrom(leader, NewsKind.Rumor, K(ok ? "夜开名录库" : "夜开名录库未成", night: Day, values: ("人们", names)));
-        RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
+        var resultNews = NewsFrom(leader, NewsKind.Rumor, K(ok ? "夜开名录库" : "夜开名录库未成", night: Day, values: ("人们", names)));
+        var resultEvent = RecordEvent(leader.Id, ok ? $"和{string.Join("、", crew.Where(c => c != leader).Select(c => c.Name))}夜里打开了名录库" : "夜里没能打开名录库", "拉拽", Place.ArchiveFront, causes);
+        resultNews.SourceEvent = Events[resultEvent - 1];
         if (ok) { SeizedBy = new Faction([.. crew.Select(c => c.Id)], leader.Id, []); SeizedPlan = ArchivePlans().First(); SeizedDay = Day; }
     }
     public RuleSpec? SeizedPlan;
 
-    /// <summary>开门一幕体现所定方案的条款（§13 第 15 条）。</summary>
-    // STORY-HARDCODE[CH2-046][text][production]: 为本章议事结局编写人物组合对应的开场反馈。
+    /// <summary>只总结已经结算的结果；条款不等于排队、登记或取物的执行回执。</summary>
     private string OpeningScene(Ending fam, RuleSpec plan, List<Person> who)
     {
-        var names = who.Where(w => w != Det).Select(w => w.Name).Take(4).ToArray();
-        if (plan.Card is { } c && plan.Author == P.Det)
-        {
-            var sign = c.Account switch { 3 => "每个进去的人身后都站着两个见证的人，在门边的纸上签了名", 1 or 2 => "门边摆着台账，进去的人一个一个记上名字", _ => "没人记账，进去的人各自摸黑找自己的匣子" };
-            var night = c.Exception == 4 ? "说好只在白天开，天一擦黑门就合上了" : c.Exception == 3 ? "两人一组进去，一个人不许单独进" : "";
-            return $"门开了。{sign}{(night.Length > 0 ? "；" + night : "")}。{(c.Behavior == 8 ? "本人亲取：每人只拿标着自己名字的那一只。" : c.Behavior == 6 ? "钥匙交给了委员会，取回的人先过一遍登记。" : "")}";
-        }
-        return fam switch
-        {
-            Ending.Committee => $"沃德拿着钥匙站在门边，{string.Join("、", names)}排着队，一个一个登记、一个一个进去。",
-            Ending.OpenEach => $"门一开，{string.Join("、", names)}就涌了进去，没人记账，也没人等谁。",
-            _ => "门开了。"
-        };
+        return X("表达.opening.other");
     }
     /// <summary>议事时每个人站到了哪个方案（自动检查用：立场可预读）。</summary>
     public readonly Dictionary<P, RuleSpec> CouncilChoice = [];

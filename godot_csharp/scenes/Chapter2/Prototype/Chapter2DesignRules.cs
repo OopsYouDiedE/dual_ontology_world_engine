@@ -45,13 +45,12 @@ public abstract record Cond
     public sealed record All(Cond[] Items) : Cond { public override bool Eval(Game g, Person? who = null) => Items.All(i => i.Eval(g, who)); }
     public sealed record Any(Cond[] Items) : Cond { public override bool Eval(Game g, Person? who = null) => Items.Any(i => i.Eval(g, who)); }
 
-    /// <summary>人物行动记录（NightTruth 里“D{日} {人} {行动说明}”开头的条数）达到下限。</summary>
+    /// <summary>实际完成的夜间行动按主体与类型计数。</summary>
     public sealed record NightDid(int Day, P Who, Job[] Jobs, int Min) : Cond
     {
         public override bool Eval(Game g, Person? who = null)
         {
-            var prefixes = Jobs.Select(j => $"D{Day} {Names.Of(Who)} {Names.Of(j)}").ToArray();
-            return g.NightTruth.Count(t => prefixes.Any(p => t.StartsWith(p, StringComparison.Ordinal))) >= Min;
+            return g.NightActions(Day, g[Who]).Count(a => a.Job is { } j && Jobs.Contains(j)) >= Min;
         }
     }
 
@@ -99,7 +98,7 @@ public abstract record Cond
 }
 
 /// <summary>剧本里声明的规矩：内容、立规者、价值标记、张贴时间（Core 的 Rule 由代码按编号编译）。</summary>
-public sealed record DesignRule(string Id, string Name, string Text, P? Author, bool ByDemon, RF Flags, P? Target, int[]? Card, IReadOnlyList<DesignPost> Posts);
+public sealed record DesignRule(string Id, string Name, string Text, P? Author, bool ByDemon, RF Flags, P? Target, int[]? Card, IReadOnlyList<DesignPost> Posts, string Lifetime);
 public sealed record DesignPost(int Day, Slot Slot, Place Place, string Mode);
 
 public sealed record CardOption(string Text, string Id, RF Flags, RF IfAny, RF ElseFlags);
@@ -174,7 +173,7 @@ public static class RuleDesign
             map[id] = new(id, e.GetProperty("name").GetString()!, e.GetProperty("text").GetString()!,
                 e.TryGetProperty("author", out var a) ? Enum.Parse<P>(a.GetString()!) : null, e.TryGetProperty("demon", out var d) && d.GetBoolean(), flags,
                 e.TryGetProperty("target", out var t) ? Enum.Parse<P>(t.GetString()!) : null,
-                e.TryGetProperty("card", out var c) ? [.. c.EnumerateArray().Select(x => x.GetInt32())] : null, posts);
+                e.TryGetProperty("card", out var c) ? [.. c.EnumerateArray().Select(x => x.GetInt32())] : null, posts, e.GetProperty("lifetime").GetString()!);
         }
         return map;
     });

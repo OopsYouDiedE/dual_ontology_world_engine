@@ -13,6 +13,14 @@ public sealed class ScheduledAction
 /// <summary>离散行动值调度。每项仅激活一次，不选择行动、不解释效果。</summary>
 public sealed class CTBSystem
 {
+    public CTBSystem() { }
+    public CTBSystem(double now, long sequence)
+    {
+        Contract.Number(now, "clock.now", true);
+        Contract.Require(sequence >= 0, ContractErrorCode.Unsupported, "clock.sequence", "调度序号不能为负。");
+        Now = now; _sequence = sequence;
+    }
+    public long Sequence => _sequence;
     private readonly PriorityQueue<ScheduledAction, (double Due, long Sequence)> _queue = new();
     private long _sequence;
     public double Now { get; private set; }

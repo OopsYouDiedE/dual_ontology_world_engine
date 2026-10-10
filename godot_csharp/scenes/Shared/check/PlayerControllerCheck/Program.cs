@@ -197,6 +197,18 @@ Check("subjective_prohibition_reports_stuck", player.Decide(observation, cogniti
 player = new(Declaration(new ControllerRuleDefinition { Mode = "forbid", Kind = "menu", Weight = 1 }, new ControllerRuleDefinition { Mode = "permit", Kind = "menu", Weight = 1 }), 17);
 Check("subjective_permission_releases_ban", player.Decide(observation, cognitive).Token is not null);
 Check("no_candidates_reports_gap", player.Decide(new(1, [], [], [], false), cognitive).Reason == "candidate_missing");
+var agentScript = JsonSerializer.Serialize(new { format = "dual-ontology-world-script/v1", chapters = new[] {
+    new { id = "neutral", entities = new[] { new { id = "character.controlled", name = "A", kind = "character", scope = "world" } },
+        controllers = new[] { Declaration() } }
+} }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower });
+using (var agentSession = new GameSession("{}", "neutral.living", "neutral.campus", controllerScript: agentScript))
+{
+    Check("agent_save_rejects_unpersisted_controller_state", agentSession.Save() is ContractResult<byte[]>.Failure
+        { Error.Code: ContractErrorCode.UnsupportedSavePoint, Error.Path: "host.controller_state" });
+    Check("agent_restore_rejects_partial_state_before_publication", agentSession.Restore([]) is ContractResult<bool>.Failure
+        { Error.Code: ContractErrorCode.UnsupportedSavePoint, Error.Path: "host.controller_state" }
+        && !agentSession.AgentEnabled && agentSession.AgentObservation is null);
+}
 var subject = cognitive.Snapshot.SubjectWorld;
 var goal = new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(cognitive.Actor), new("neutral-goal"), 1);
 FrozenProjectionV1 Material(string name, ProjectionKind kind, FrozenEffectV1? procedure) => new(new(subject, Guid.NewGuid()), name, kind, Truth.True, null,

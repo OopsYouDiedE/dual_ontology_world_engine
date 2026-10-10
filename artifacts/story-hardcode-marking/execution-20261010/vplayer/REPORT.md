@@ -111,3 +111,23 @@ $env:LOCALAPPDATA = "$PWD/tmp/appdata"
 最终预检：`tmp/vplayer-validation/infer-verification/`（Core42）与 `argument-final-check/`（Host51／编译21／7产物／脚本）；默认完整回归：`artifacts/project-audit/verify-logs/20261010-045805-801007-17580/`，flow唯一重试：`20261010-052235-237479-21972/`，汇总在 `tmp/vplayer-validation/infer-host-round2/06、07-results-inspection.json`。L6短诊断：`tmp/vplayer-validation/flow-l6-diagnosis/`；修正后flow原始目录 `artifacts/project-audit/verify-logs/20261010-055315-340476-25556/`，外层记录与保真备份在 `tmp/vplayer-validation/flow-valid-approach/`。最终10种子：`tmp/vplayer-validation/infer-seeds-final/`（逐种子原始stdout／stderr／JSONL、summary、audit-v2及all-seeds.summary.json）。早期失败与旧结果保存在 `reasoning-preflight/、infer-host-final/、resume-seeds/` 及前两次verify原始目录，未覆盖。
 
 `git diff --check`通过，报告113行。正式产物生成、合并、Godot UI专项检查及提交由主代理处理。
+
+**合并整合**
+
+- 在已提交的 `b37e4a60` 上整合 `claude/core-remediation`（MERGE_HEAD=`5cfbb1a9`），不提交。六个冲突工作文件的标记全部清除；没有读取设计文件或修改UI／S18。
+- Ast保留追加的Infer及LifetimeScope，不改变既有枚举序号；FrozenAst同时校验Infer的When/Think边界与LifetimeOwner，保留双方Say.Claim/Topic冻结／重绑定及只读依赖遍历。三个csproj保留双方生产模块和独立检查入口排除项。
+- csharp/AGENTS保留类型化事件、codec、s02结构化理由与core-perf增量／缓存读图说明，并补充Infer持久化合同；godot/AGENTS同步代理存档边界。
+- CognitionCodec的模式白名单采用已定义RuleMode，自动支持Infer；未知模式仍Unsupported，非法Infer可执行效果与缺owner的局部规则仍MalformedData。未放宽任何codec／事件／运行时白名单。
+- SubjectiveReasoner继续仅构建本人快照的图，使用本人已接受Infer规则；类型化证词不会自动成为信念，也不查询EventAudit、其他主体或隐藏因果。vplayer没有调用s02改变返回类型的Reasoner.Weight／SpeechPolicy接口，编译检查其联动。
+- 新增一个往返场景，平层／容器各6条：主体图、审计与RuntimeSave，三种Lifetime、Say.Claim/Topic、新对象引用、推理依据、无观察／事件重放、可见因果过滤及未知模式／非法效果拒绝。原42项保留，总计54项。
+- 新夹具首次在原42项及两项平层往返后异常：ImmutableArray.Add未保存返回值，现实规则未写入；改用正式RuleProperty+Sync，原断言不改，失败原始输出保留。异常后挂起仅结束已核实本轮创建的测试进程，人工终止exit4294967295，不处理未知归属进程。
+- 宿主codec未保存代理历史／随机状态／候选，原恢复会留下旧token；现在声明代理的Save/Restore在发布前返回UnsupportedSavePoint/host.controller_state，真实玩家存档继续使用整合通路。新增两条失败关闭断言（原51+2=53）；代理跨进程恢复仍未实现。
+- 已重新生成7份剧本产物，`compile_story.py --check`通过；Scope构建0警告／错误、27/27，Cognition构建0警告／错误、372/372，均由全新独立Agent执行。
+- 最终独立SubjectiveReasoning构建0警告／错误、54/54；PlayerControllerCheck构建0警告／错误、53/53，均exit0。基础编译合同19/19、正式代理临时副本编译合同21/21、统一回归工具7/7通过；host构建exit0、0错误，2条NU1900（NuGet漏洞元数据不可达），无C#编译警告；7产物一致性复核通过。
+- 首轮完整verify耗时417秒、exit1：core／scope27／cognition372／host通过；save WRITE22／READ1、flow136／flow2 109断言全通过，但分别有2／1／1次系统根证书读取ERROR，因此三步仍判失败。无其他脚本／引擎错误、超时、崩溃或重试，全部所属进程已退出。
+- 环境诊断证实Godot同款CertOpenSystemStoreA返回访问拒绝5；只读导出系统31份公开根证书，用官方证书包配置的独立探针exit0、stderr空。临时override.cfg仅设置network/tls/certificate_bundle_override，保持TLS校验；复核后已核对配置内容并移除，正式项目配置不变。诊断证据：`tmp/vplayer-validation/merge-certificate-probe/`；[官方实现](https://raw.githubusercontent.com/godotengine/godot/4.6.1-stable/modules/mbedtls/crypto_mbedtls.cpp)。
+- 修复环境后的全新独立完整verify耗时399.497秒、实际exit0：core5秒、scope27/27（3秒）、cognition372/372（24秒）、host9秒（2条NU1900、0错误）、save WRITE22／READ1（10秒）、flow136/136（218秒）、flow2 109/109（130秒）全部PASS；gallery按要求SKIP。所有stderr为0字节，9个Godot进程均exit0，无脚本／引擎错误、超时、退出崩溃或测试重试，全部所属进程已退出。
+- 临时记录器曾在替换owned-processes.json时遇到WinError5；verify继续持有原日志文件，全新接续观察器立即保留原verify的OpenProcess句柄至结束，由GetExitCodeProcess取得exit0，不推测退出码、不重启测试；记录器异常与此前失败分开保留。
+- `git add`被沙箱拒绝：Git实际索引位于工作区外的`dual_ontology_world_engine/.git/worktrees/dowe-cx-vplayer/index.lock`。因此`git diff --name-only --diff-filter=U`仍列六项，文件本身已无冲突标记；需主代理在沙箱外暂存六文件才能清除索引U状态，不能声称索引无残留。
+- 本轮证据：`tmp/vplayer-validation/merge-preflight/`（Scope／Cognition及首轮失败）、`merge-final-preflight/`（修正后预检）、`merge-full-regression/`（417秒原轮）、`merge-full-certificate-regression/`（证书环境修复后复核）；逐项原始日志：`artifacts/project-audit/verify-logs/20261010-062028-333972-19548/`（失败原轮）、`20261010-063110-374152-1432/`（最终通过）。本段补充原报告，不覆盖此前失败／通过记录。
+- 最终六文件无冲突标记，git diff --check通过；没有新增临时DEBUG打印，临时证书配置已清理，未提交。Git索引U仍须主代理在沙箱外暂存解决，一级／二级／三级验收仍未执行。

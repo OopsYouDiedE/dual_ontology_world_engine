@@ -3,6 +3,7 @@
     # ---- 始业日午后至夜：生活翼被落灰封着，只认识甲区（第五部分 §4 分批相识） ----
 
     场面 arrival
+        有效期：chapter
         事件：begin.arrival
         日：2
         时段：早晨
@@ -16,6 +17,7 @@
         卢西安：那么今夜，我们只能在这座厅里待着了。——诸位不嫌弃的话，名字我先记一记。 [#id=chapter2.arrival.010]
 
     场面 meet_jia
+        有效期：chapter
         事件：begin.meet_jia
         日：2
         时段：上午
@@ -31,6 +33,7 @@
         雀儿：（压低声音，只对着你）柜子里的东西，我一样没拿。……我只是不记得，我为什么会有那把钥匙。 [#id=chapter2.meet_jia.010]
 
     场面 supper
+        有效期：chapter
         事件：begin.supper
         日：2
         时段：中午
@@ -46,6 +49,7 @@
     # ---- 第二日：丙区清晨出门，北廊开通上首课，丁区午间出门 ----
 
     场面 meet_bing
+        有效期：chapter
         事件：begin.meet_bing
         日：3
         时段：早晨
@@ -59,6 +63,7 @@
         侦探（心声）：她扶着墙的那只手，在抖。 [#id=chapter2.meet_bing.008]
 
     场面 gather
+        有效期：chapter
         事件：begin.gather
         日：3
         时段：上午
@@ -73,6 +78,7 @@
         铜口：诸位，请到讲堂。今日讲守则的读法。 [#id=chapter2.gather.013]
 
     场面 lesson
+        有效期：chapter
         事件：begin.lesson
         日：3
         时段：上午
@@ -85,6 +91,7 @@
         侦探（心声）：读它没写什么。……记下了。 [#id=chapter2.lesson.006]
 
     场面 lesson_precise_branch
+        有效期：chapter
         事件：choice:chapter2:lesson_precise
         日：3
         时段：上午
@@ -94,6 +101,7 @@
         侦探（心声）：这一声“很好”，比刚才的长一点。我一时听不出，它是在夸我，还是在等下一句。 [#id=chapter2.lesson_precise_branch.003]
 
     场面 lesson_who_branch
+        有效期：chapter
         事件：choice:chapter2:lesson_who
         日：3
         时段：上午
@@ -102,6 +110,7 @@
         铜口：再读一遍。 [#id=chapter2.lesson_who_branch.002]
 
     场面 lesson_where_branch
+        有效期：chapter
         事件：choice:chapter2:lesson_where
         日：3
         时段：上午
@@ -110,6 +119,7 @@
         铜口：读条文，不读我。 [#id=chapter2.lesson_where_branch.002]
 
     场面 free
+        有效期：chapter
         事件：begin.free
         日：3
         时段：上午
@@ -117,6 +127,7 @@
         侦探（心声）：要叫人陪我走一趟，得先问他肯不肯放下手里的事。 [#id=chapter2.free.002]
 
     场面 meet_ding
+        有效期：chapter
         事件：begin.meet_ding
         日：3
         时段：中午
@@ -129,6 +140,7 @@
         侦探（心声）：十六个人，到这会儿才算见齐。 [#id=chapter2.meet_ding.007]
 
     场面 noon_dispute
+        有效期：chapter
         事件：commit.noon_dispute
         日：3
         时段：中午
@@ -142,6 +154,7 @@
 
     # 三种写法各自经茉拉与阮清越本人的判定；谁答应、谁不答应，用他们自己的话当场说出（第五部分 §5.4）。
     场面 mediate_sick_first_branch
+        有效期：chapter
         事件：choice:chapter2:mediate_sick_first
         日：3
         时段：中午
@@ -149,6 +162,7 @@
         动作 mediate：sick_first
 
     场面 mediate_sign_first_branch
+        有效期：chapter
         事件：choice:chapter2:mediate_sign_first
         日：3
         时段：中午
@@ -156,6 +170,7 @@
         动作 mediate：sign_first
 
     场面 mediate_i_carry_branch
+        有效期：chapter
         事件：choice:chapter2:mediate_i_carry
         日：3
         时段：中午
@@ -163,27 +178,33 @@
         动作 mediate：i_carry
 
     场面 mediate_accept_mora
+        有效期：chapter
         事件：mediate.accept.mora
         茉拉：行。我先送过去，签字回来补。 [#id=chapter2.mediate.004]
 
     场面 mediate_reject_mora
+        有效期：chapter
         事件：mediate.reject.mora
         茉拉：签完名再送？他烧成那样，等不了你们对账。 [#emotion=worried] [#id=chapter2.mediate.005]
 
     场面 mediate_accept_ruan
+        有效期：chapter
         事件：mediate.accept.ruan
         阮清越：签了名，日末我就对得上。可以。 [#id=chapter2.mediate.006]
 
     场面 mediate_reject_ruan
+        有效期：chapter
         事件：mediate.reject.ruan
         阮清越：先拿走、后补签，日末对不上的那一份，记在谁头上？ [#id=chapter2.mediate.007]
 
     场面 skip_dispute_branch
+        有效期：chapter
         事件：choice:chapter2:skip_dispute
         日：3
         时段：中午
 
     场面 open_archive_wing
+        有效期：chapter
         事件：begin.open_archive_wing
         日：3
         时段：下午
@@ -191,11 +212,13 @@
 
     # 夜里每一晚都适用（第二部分起：夜里按 T 就地睡下，见《时间》文案“问睡”）。
     场面 night_hint
+        有效期：chapter
         事件：commit.night_hint
         时段：夜里
         侦探（心声）：入夜了。按 T 就地睡下；想守一夜，就去起居厅、后勤院、名录库前厅或中央厅的守夜点。 [#id=chapter2.night_hint.003]
 
     场面 first_night
+        有效期：chapter
         事件：begin.first_night
         日：2
         时段：夜里
@@ -203,12 +226,14 @@
         侦探（心声）：今夜哪儿也去不了。回 R-05 睡下，或者在长桌边守着——按 T，就地睡到天亮。 [#id=chapter2.first_night.002]
 
     场面 dawn
+        有效期：chapter
         事件：night.dawn
         日：5
         时段：早晨
         （清晨。铜口把众人又叫到了中央厅。阮清越拿着台账站在铜柱旁，沃德站在他身边。） [#id=chapter2.dawn.001]
 
     场面 after
+        有效期：chapter
         事件：night.after
         日：5
         时段：上午
@@ -217,12 +242,14 @@
         侦探（心声）：晚饭后对账，人人都会在这里。在那之前，先把账上的缺口查清楚。 [#id=chapter2.after.004]
 
     场面 no_accuse
+        有效期：chapter
         事件：night.no_accuse
         日：5
         时段：上午
         侦探（心声）：账上有缺口，没有人站出来指认谁。这一回，没人先开口。 [#id=chapter2.no_accuse.001]
 
     场面 replay_unlock
+        有效期：chapter
         事件：card.replay_unlock
         日：5
         侦探（心声）：台账上的缺口，落在一夜之间。 [#id=chapter2.replay_unlock.001]
@@ -230,17 +257,20 @@
         侦探（心声）：（按 R 打开重演手稿。） [#id=chapter2.replay_unlock.003]
 
     场面 replay_first
+        有效期：chapter
         事件：after_replay.first
         侦探（心声）：墨影只看得出身量，看不出是谁。 [#id=chapter2.replay_first.001]
         侦探（心声）：冲突写的是痕迹之差。哪里对不上，就去哪里再看一眼，或者再问一个人。 [#id=chapter2.replay_first.002]
 
     场面 replay_match
+        有效期：chapter
         事件：after_replay.match
         侦探（心声）：……全对上了。 [#emotion=thoughtful] [#id=chapter2.replay_match.001]
         侦探（心声）：没有贼。同一件事，照茉拉的规矩是“急需自取，次日告知”；照沃德的规矩，是私取。 [#id=chapter2.replay_match.002]
         侦探（心声）：规矩贴在三块板上。没有人读过全部。 [#id=chapter2.replay_match.003]
 
     场面 evening
+        有效期：chapter
         事件：confront.evening
         日：5
         时段：傍晚
@@ -248,12 +278,14 @@
         铜口：诸位要对账。我只旁听。 [#id=chapter2.evening.002]
 
     场面 confront_begin
+        有效期：chapter
         事件：confront.begin
         日：5
         时段：傍晚
         侦探（心声）：一问一答。说一句，就拿出能支撑它的东西。 [#id=chapter2.confront_begin.001]
 
     场面 confront_pause
+        有效期：chapter
         事件：confront.pause
         日：5
         时段：傍晚
@@ -262,18 +294,21 @@
         侦探：那就先空着，别写谁的名字。 [#id=chapter2.confront_pause.003]
 
     场面 confront_wrong_say
+        有效期：chapter
         事件：confront.wrong_say
         日：5
         时段：傍晚
         沃德：这与我问的无关。 [#id=chapter2.confront_wrong_say.001]
 
     场面 confront_wrong_show
+        有效期：chapter
         事件：confront.wrong_show
         日：5
         时段：傍晚
         沃德：依据何在？{{wrong_name()}}证明不了这句话。 [#emotion=angry] [#id=chapter2.confront_wrong_show.001]
 
     场面 confront_frame
+        有效期：chapter
         事件：confront.frame
         日：5
         时段：傍晚
@@ -282,6 +317,7 @@
         侦探（心声）：我说的没有一句是假的。可这会儿，所有人都在看她。 [#id=chapter2.confront_frame.003]
 
     场面 confront_rule
+        有效期：chapter
         事件：confront.rule
         日：5
         时段：傍晚
@@ -289,6 +325,7 @@
         侦探（心声）：昨夜的事还没查清。可下一回谁去取粮、怎么记，今晚得说定。 [#id=chapter2.confront_rule.002]
 
     场面 whisper
+        有效期：chapter
         事件：confront.whisper
         日：5
         时段：夜里
@@ -296,6 +333,7 @@
         侦探（心声）：我在铜口下站了一会儿。它没出声。 [#id=chapter2.whisper.002]
 
     场面 council
+        有效期：chapter
         事件：council.begin
         日：6
         时段：早晨
@@ -310,6 +348,7 @@
         侦探（心声）：顾平章怕开了以后收不住；霍铎怕钥匙一交出去，自己的东西就拿不回来。 [#id=chapter2.council.006]
 
     场面 box
+        有效期：chapter
         事件：council.box
         日：6
         时段：早晨
@@ -323,6 +362,7 @@
         侦探（心声）：我没有再念第三遍。 [#id=chapter2.box.008]
 
     场面 sealed
+        有效期：chapter
         事件：council.sealed
         日：6
         时段：早晨

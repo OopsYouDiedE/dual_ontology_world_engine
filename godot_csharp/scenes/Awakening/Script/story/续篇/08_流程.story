@@ -38,13 +38,15 @@
         指令 field
 
     流程 第二日·丙区
-        指令 dorm_out:丙区
+        指令 dorm_out:DormS
+        指令 summon:bing
         指令 scene:Living
         演出 meet_bing
         指令 field
 
     流程 第二日·北廊与首课
         指令 corridor:north:开
+        指令 summon:gather
         指令 scene:Hall
         演出 gather
         指令 scene:Lecture
@@ -55,7 +57,8 @@
 
     流程 第二日·东廊与配给
         指令 corridor:east:开
-        指令 dorm_out:丁区
+        指令 dorm_out:DormL
+        指令 summon:ding
         演出 meet_ding
         指令 scene:Logistics
         演出 noon_dispute

@@ -21,8 +21,9 @@ public sealed class ProjectionWorld
     public ImmutableList<ObservationEvent> History { get; internal set; } = [];
     internal CognitionSnapshotV1 Snapshot { get; set; }
     internal DetachedProjectionGraphV1? ReaderGraph { get; set; }
+    internal ImmutableDictionary<SubjectProjectionId, Projection>? ReaderOriginals { get; set; }
     internal CognitionSnapshotV1 InitialSnapshot { get; set; }
-    internal ImmutableArray<CognitionAuditCommitV1> Audit { get; set; } = [];
+    internal ImmutableList<CognitionAuditCommitV1> Audit { get; set; } = [];
     internal HashSet<SubjectProjectionId> Allocated { get; } = [];
     internal HashSet<SubjectProjectionId> Used { get; } = [];
     internal event Action? Changed;

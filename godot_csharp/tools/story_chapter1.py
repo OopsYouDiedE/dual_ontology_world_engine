@@ -106,6 +106,8 @@ COMPARE = {"==": "eq", "!=": "ne", ">": "gt", ">=": "gte", "<": "lt", "<=": "lte
 
 # 设定表：块名 -> (CONTENT_TABLES 键或独立属性, 形式)
 TABLES = {
+    "表达": ("EXPRESSION", "records"),
+    "规则有效期": ("RULE_LIFETIMES", "map"),
     "现场表现": ("PRESENTATION", "records"),
     "侦探搜索参数": ("DETECTIVE_SEARCH", "constants"),
     "侦探调查行动": ("DETECTIVE_ACTIONS", "records"),
@@ -124,6 +126,8 @@ TABLES = {
     "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
+                "EXPRESSION",
+                "RULE_LIFETIMES",
                 "PRESENTATION",
                 "SOUND_SPOTS", "COMPANION_SPOTS", "SPOT_ORDER", "SOLE_TARGETS",
                 "DETECTIVE_SEARCH", "DETECTIVE_ACTIONS", "DETECTIVE_TRACE_FIELDS", "DETECTIVE_MOTIVES", "DETECTIVE_ARGUMENTS", "DETECTIVE_DIALOGUE_CHOICES",
@@ -662,7 +666,6 @@ def read_person(fields) -> dict[str, Any]:
 
 
 # ---- 话题：命题、牵涉与各人按言语行为的回应 ----
-SPEECH_KEYS = ("如实·有把握", "如实·否认", "如实·没把握", "含糊", "反问", "隐瞒", "拒绝", "撒谎·有把握", "撒谎·否认")
 HOST_PEOPLE = {"侦探": "detective", "霍铎": "huo", "沈鼎": "shen", "苏泠": "su"}
 
 
@@ -690,8 +693,8 @@ def read_topic(name: str, head: Line, body: list[Line]) -> dict[str, Any]:
             item = sub[j]
             more, j = children(sub, j + 1, item.indent)
             act, _, text = item.text.partition("：")
-            if act not in SPEECH_KEYS:
-                raise StoryError(f"回应的言语行为“{act}”不认识。可用：" + "、".join(SPEECH_KEYS), item.number)
+            if not act.strip():
+                raise StoryError("回应须有稳定的表达键。", item.number)
             if act in responses:
                 raise StoryError(f"回应“{act}”重复。", item.number)
             said = []
@@ -715,7 +718,7 @@ def expand_topic_response(topic: str, who: str, number: int) -> Any:
     own, common = responses.get(who, {}), responses.get("any", {})
     speaker = {host: zh for zh, host in HOST_PEOPLE.items()}.get(who, who)
     branches: list[Any] = []
-    for act in SPEECH_KEYS:
+    for act in dict.fromkeys([*own, *common]):
         lines = own.get(act) or common.get(act)
         if not lines:
             continue
@@ -1340,6 +1343,9 @@ def load(path: Path) -> Chapter1Source:
                 value = {split_pair(item)[0]: split_pair(item)[1] for item in body}
             elif kind == "records":
                 value = read_scalar_records(body)
+                if key == "表达":
+                    from story_expression import validate_expression
+                    value = validate_expression(value, head.number)
             elif kind == "points":
                 value = {split_pair(item)[0]: tuple(numbers(split_pair(item)[1], "坐标", item.number)) for item in body}
             elif kind == "boxes":

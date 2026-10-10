@@ -126,7 +126,8 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
 
     /// <summary>玛格丽特“请工匠协作”：对在场、自己认得的工匠说话，请他修门闩；问过就记下（Think）。</summary>
     public Effect AskLatch(Person asker) => Seq(
-        new Effect.Say(Target, "粮仓门闩松了。你是行家，搭把手？", new Fx(g, e => asker.M[e]).Job(Prototype.Job.RepairLatch)),
+        new Effect.Say(Target, "粮仓门闩松了。你是行家，搭把手？", new Fx(g, e => asker.M[e]).Job(Prototype.Job.RepairLatch),
+            new Condition.Tagged(r(g.Granary), T.LatchLoose, 1), SpeechTopics.Latch),
         new Effect.Think(new Condition.Related(Target, Asked, r(g.Granary))));
 }
 
@@ -157,7 +158,9 @@ public sealed partial class Game
             p.JobFx[j] = fx.Job(j, p);
         }
         Observation.Observe(p.Soul, new ObservationInput(p.Habit.Name, p.Habit.Kind)
-        { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now, Rules = HabitRules(p) });
+        { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now,
+          Rules = DualOntologyWorldEngine.Story.RuleLifetimes.Bind(HabitRules(p),
+              Chapter2Design.Section("rule_lifetimes").GetProperty("daily_habits").GetString()!, Chapter2Script.Id) });
     }
 
     // STORY-HARDCODE[CH2-041][logic][production]: 为具名人物预置习惯行动及其观察规则。
@@ -267,7 +270,7 @@ public sealed partial class Game
         rules.Add(new Rule(Fx.All(fx.At(Slot.Night), Fx.Any([new Condition.Related(Fx.Me, Fx.Promised, fx.R(door)), .. People.Where(o => o != p).Select(o => (Condition)new Condition.Related(fx.R(o.Body), Fx.Asked, fx.R(door)))]),
                 new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Guarding, 1), new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)),
                 Fx.Not(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door)))), RuleMode.Prefer,
-            Fx.Seq(new Effect.Say(Fx.Target, "让开。今夜这道门我们要开。", leave), new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))),
+            Fx.Seq(new Effect.Say(Fx.Target, "让开。今夜这道门我们要开。", leave, Topic: SpeechTopics.Vacate), new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))),
                 Fx.MeChange(T.Did(Job.AskLeave), 1)), 7, Truth.True));
         var bound = Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && p.Acc.GetValueOrDefault(s) == Truth.True);
         var waits = Specs.Any(s => s.Author == P.Det && s.Card is { Behavior: >= 5 and <= 8 } && p.Acc.GetValueOrDefault(s) == Truth.True) && TrustIn(p, Det) >= 2;
@@ -277,7 +280,7 @@ public sealed partial class Game
             Rule Ask(Tag skill, string text, int w) => new(Fx.All(fx.AtAny([Slot.Afternoon, Slot.Evening]), fx.Tg(Clock, T.Day, CaseDay),
                     new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, skill, 1), new Condition.Tagged(Fx.Target, Tags.Trust, 1),
                     new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), Fx.Not(new Condition.Related(Fx.Target, Fx.Asked, fx.R(door)))),
-                RuleMode.Prefer, Fx.Seq(new Effect.Say(Fx.Target, text, new Effect.Think(new Condition.Related(Fx.Target, Fx.Promised, fx.R(door)))),
+                RuleMode.Prefer, Fx.Seq(new Effect.Say(Fx.Target, text, new Effect.Think(new Condition.Related(Fx.Target, Fx.Promised, fx.R(door))), Topic: SpeechTopics.Invitation),
                     new Effect.Think(new Condition.Related(Fx.Target, Fx.Asked, fx.R(door)))), w, Truth.True);
             var w = p.Desire + Math.Max(p.Hooks, p.Whispered - 1);
             // 多步：缺哪样本事，就去找他心里最信得过、又有这本事的那个人——走到上次见到对方的地方，开口约；人不在就扑空，下个时段再找。
@@ -291,7 +294,7 @@ public sealed partial class Game
                 // 下午去他平常干活的地方找；傍晚去配给台——饭点人都在那儿。
                 foreach (var (slot, place) in new[] { (Slot.Afternoon, where), (Slot.Evening, Place.Logistics) })
                     rules.Add(new Rule(Fx.All(fx.At(slot), fx.Tg(Clock, T.Day, CaseDay), Fx.Not(new Condition.Related(fx.R(cand.Body), Fx.Asked, fx.R(door)))), RuleMode.Prefer,
-                        Fx.Seq(fx.Go(place), new Effect.Say(fx.R(cand.Body), text, new Effect.Think(new Condition.Related(fx.R(cand.Body), Fx.Promised, fx.R(door)))),
+                        Fx.Seq(fx.Go(place), new Effect.Say(fx.R(cand.Body), text, new Effect.Think(new Condition.Related(fx.R(cand.Body), Fx.Promised, fx.R(door))), Topic: SpeechTopics.Invitation),
                             new Effect.Think(new Condition.Related(fx.R(cand.Body), Fx.Asked, fx.R(door)))), weight, Truth.True));
             }
             if (p.Pro.Lock < 3) Seek(T.Picks, "今夜陪我去名录库前厅，帮我开那道锁。", w);
@@ -315,7 +318,7 @@ public sealed partial class Game
         if (p.Pro.Habits.Any(h => h.Job == Job.GuardArchive) || Specs.Any(s => s.Flags.HasFlag(RF.ForbidNightOpen) && p.Acc.GetValueOrDefault(s) == Truth.True))
             rules.Add(new Rule(Fx.All(fx.At(Slot.Night), new Condition.IsKind(Fx.Target, ProjectionKind.Body), new Condition.Tagged(Fx.Target, T.Prying, 1),
                     new Condition.At(Fx.Target, new Noun.Slot(RuleSlot.Scene)), Fx.Not(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door)))), RuleMode.Prefer,
-                Fx.Seq(new Effect.Say(Fx.Target, "依据：夜里不得动名录库。请回。", Fx.Seq(new Effect.Set(Fx.Me, T.Prying, 0), fx.Go(Place.Hall))),
+                Fx.Seq(new Effect.Say(Fx.Target, "依据：夜里不得动名录库。请回。", Fx.Seq(new Effect.Set(Fx.Me, T.Prying, 0), fx.Go(Place.Hall)), Topic: SpeechTopics.Vacate),
                     new Effect.Think(new Condition.Related(Fx.Target, Fx.AskedLeave, fx.R(door))), Fx.MeChange(T.Did(Job.AskLeave), 1)), 8, Truth.True));
         // 议事前夜，沃德不再守粮仓，改守名录库（委员会的主张：钥匙归章程，夜里谁也不许动）；此前案子没了结的夜里守粮仓看谁来。
         if (p.Id == P.Ward && Day == LastDay - 1)
@@ -361,7 +364,6 @@ public sealed partial class Game
     }
 
     private static readonly Slot[] DaySlots = [Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening];
-    public readonly Dictionary<string, RuleSpec> RelayText = [];
     public static string RelayLine(RuleSpec s) => $"跟你说条规矩：「{s.Text}」";
     public static string TeachLine(int l) => $"《{Lessons[l].Title}》那堂课，我给你说说。";
 
@@ -385,22 +387,21 @@ public sealed partial class Game
             var fits = own || Enum.GetValues<RF>().Where(f => f != RF.None && s.Flags.HasFlag(f)).Sum(f => p.Pro.Values.GetValueOrDefault(f)) > 0;
             if (!fits || !own && AcceptScore(p, s, Channel.Relay, null, out _) < Options.AcceptThreshold + 1) continue;
             var line = RelayLine(s);
-            RelayText[line] = s;
             var told = Fx.Told(s.Id);
-            var talk = Fx.Seq(new Effect.Say(Fx.Target, line), Fx.Wait(2.5, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1));
+            var talk = Fx.Seq(new Effect.Say(Fx.Target, line, Topic: SpeechTopics.Rule(s.Id)), Fx.Wait(2.5, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1));
             rules.Add(new Rule(Fx.All(fx.AtAny(DaySlots), Near(), Fx.Not(new Condition.Related(Fx.Target, told, clock))), RuleMode.Prefer, talk, own ? 2 : 1, Truth.True));
             if (!own || Cast.ClusterOf(p.Id) == Cluster.None) continue;
             foreach (var mate in Npcs.Where(m => m != p && Cast.ClusterOf(m.Id) == Cast.ClusterOf(p.Id)))
             {
                 var r = fx.R(mate.Body);
                 rules.Add(new Rule(Fx.All(fx.At(Slot.Evening), Fx.Not(new Condition.Related(r, told, clock))), RuleMode.Prefer,
-                    Fx.Seq(fx.Go(Place.Logistics), new Effect.Say(r, line), Fx.Wait(1.5, new Effect.Act(ActionOp.Inspect, r)), new Effect.Think(new Condition.Related(r, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1)), 3, Truth.True));
+                    Fx.Seq(fx.Go(Place.Logistics), new Effect.Say(r, line, Topic: SpeechTopics.Rule(s.Id)), Fx.Wait(1.5, new Effect.Act(ActionOp.Inspect, r)), new Effect.Think(new Condition.Related(r, told, clock)), Fx.MeChange(T.Did(Job.Relay), 1)), 3, Truth.True));
             }
         }
         if (p.Pro.Cooperation >= 1 || p.Pro.Values.GetValueOrDefault(RF.Relay) > 0)
             foreach (var l in p.Lessons.Where(l => l.Value).Select(l => l.Key))
                 if (l is 12 or 14) rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Afternoon, Slot.Evening]), Near(), fx.NotDone(Job.Teach), Fx.Not(new Condition.Related(Fx.Target, Fx.Taught(l), clock))), RuleMode.Prefer,
-                    Fx.Seq(new Effect.Say(Fx.Target, TeachLine(l)), Fx.Wait(2, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, Fx.Taught(l), clock)), Fx.MeChange(T.Did(Job.Teach), 1)),
+                    Fx.Seq(new Effect.Say(Fx.Target, TeachLine(l), Topic: SpeechTopics.Lesson(l)), Fx.Wait(2, new Effect.Act(ActionOp.Inspect, Fx.Target)), new Effect.Think(new Condition.Related(Fx.Target, Fx.Taught(l), clock)), Fx.MeChange(T.Did(Job.Teach), 1)),
                     2, Truth.True));
         // 换吃的：给的人从自己那份里分出来（他答不答应，由他自己的 SocialSystem 决定）。
         rules.Add(new Rule(Fx.All(fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Mine(T.Hungry), Fx.Not(Fx.Mine(T.Fed)), Near(), new Condition.Tagged(Fx.Target, T.Fed, 1),

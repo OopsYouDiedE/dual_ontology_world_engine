@@ -62,6 +62,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
 
     public void Reset()
     {
+        _presentationDomain=Guid.NewGuid(); _presentationSerial=0;
         ChapterWorldContinuity.Clear();
         _world = Script.CreateWorld();
         _world.InitializePlayerPerception();
@@ -309,7 +310,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
 
     private void Emit(Job job, Await wait)
     {
-        var id = Guid.NewGuid().ToString("N");
+        var id = NextPresentationId();
         wait.Event["presentation_id"] = id;
         job.Ack = id; job.Emitted = true;
         if (wait.Ui) _uiOwner = job;
@@ -341,7 +342,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
     /// <summary>非阻塞弹窗（证物卡、菜单）：选项回来时启动对应的作业。</summary>
     private void OpenModal(Ev ev, IEnumerable<(Ev Option, Func<IEnumerable<Op>> Handler)> options)
     {
-        var id = Guid.NewGuid().ToString("N");
+        var id = NextPresentationId();
         var list = options.ToList();
         ev["presentation_id"] = id;
         ev["options"] = list.Select(o => (object?)o.Option).ToArray();

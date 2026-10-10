@@ -836,7 +836,7 @@ class Compiler:
         name = self.call_name(decorator.func)
         if name not in SEQUENCE_NAMES:
             self.fail(decorator, "剧情声明只支持 @sequence/@场面。")
-        values = self.arguments(decorator, {"id", "event", "day", "slot", "once", "condition"}, required={"id", "event"})
+        values = self.arguments(decorator, {"id", "event", "day", "slot", "once", "condition", "lifetime"}, required={"id", "event"})
         sequence_id = self.literal_string(values["id"], decorator)
         self.validate_id(sequence_id, decorator, "sequence")
         if sequence_id in self.sequence_ids:
@@ -844,6 +844,10 @@ class Compiler:
         self.sequence_ids.add(sequence_id)
         event = self.literal_string(values["event"], decorator)
         trigger: dict[str, Any] = {"event": event, "once": True}
+        lifetime = self.static_value(values["lifetime"]) if "lifetime" in values else "chapter"
+        if lifetime not in {"world", "chapter", "interaction"}:
+            self.fail(decorator, "trigger.lifetime 必须为 world/chapter/interaction。")
+        trigger["lifetime"] = lifetime
         if "day" in values:
             day = self.static_value(values["day"])
             self.require_int32(day, values["day"], "剧情 day")

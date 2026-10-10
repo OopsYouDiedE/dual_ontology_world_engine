@@ -8,7 +8,7 @@ using static DualOntologyWorldEngine.Story.ChapterEvents;
 namespace DualOntologyWorldEngine.Gameplay;
 
 /// <summary>连续游戏的流程所有者。宿主只执行这里给出的视图、界面和空间事件。</summary>
-public sealed class GameSession(string campusScript, string livingView, string campusView,
+public sealed partial class GameSession(string campusScript, string livingView, string campusView,
     string? traceDirectory = null, Action<string>? traceWarning = null,
     Func<IReadOnlyDictionary<string, string>>? authorSources = null,
     string? controllerScript = null, int maxAgentSelections = 10000, int maxAgentObservations = 20000) : IDisposable

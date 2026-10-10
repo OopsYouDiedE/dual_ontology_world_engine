@@ -137,6 +137,26 @@ public partial class GameEngine : Node
 
     public GDict Snapshot() => _session is null ? new() : ToGodot(_session.Snapshot()).AsGodotDictionary();
 
+    /// <summary>UI-independent full session API. Buttons and file selection belong to the UI host.</summary>
+    public GDict ExportSession()
+    {
+        return Session.Save() switch
+        {
+            DualOntologyWorldEngine.Core.ContractResult<byte[]>.Success s => new() { ["ok"]=true,["data"]=s.Value },
+            DualOntologyWorldEngine.Core.ContractResult<byte[]>.Failure f => new() { ["ok"]=false,["code"]=f.Error.Code.ToString(),["path"]=f.Error.Path },
+            _ => throw new InvalidOperationException()
+        };
+    }
+    public GDict RestoreSession(byte[] data)
+    {
+        return Session.Restore(data) switch
+        {
+            DualOntologyWorldEngine.Core.ContractResult<bool>.Success => new() { ["ok"]=true,["snapshot"]=Snapshot(),["restore_epoch"]=Session.RestoreEpoch.ToString("D") },
+            DualOntologyWorldEngine.Core.ContractResult<bool>.Failure f => new() { ["ok"]=false,["code"]=f.Error.Code.ToString(),["path"]=f.Error.Path },
+            _ => throw new InvalidOperationException()
+        };
+    }
+
     private static void Save(IReadOnlyDictionary<string, object?> ev)
     {
         using var file = Godot.FileAccess.Open((string)ev["path"]!, Godot.FileAccess.ModeFlags.Write);
