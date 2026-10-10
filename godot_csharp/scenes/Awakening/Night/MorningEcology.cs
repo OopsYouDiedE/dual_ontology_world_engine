@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
 
 namespace DualOntologyWorldEngine.Awakening;
 
@@ -197,6 +198,9 @@ public sealed partial class MorningWorld
         Observation.Observe(person.Soul, new ObservationInput(person.Actor, ProjectionKind.Concept)
         { Source = ObservationSource.Introspection, Existence = Truth.True,
             Rules = [..steps.Select((s, i) => new Rule(new Condition.Exists(person.Ready[i]), RuleMode.Prefer, person.Effects[i], s.Weight, Truth.True))] });
+        StrategyPolicy.Bind(person.Soul, person.Self, StrategiesFor(person.Key),
+            steps.Select((s, i) => new StrategyMethod(i.ToString(), person.Effects[i], new Condition.Exists(person.Ready[i]), s.Action)).ToArray(),
+            "daily-strategy", _dailySession.CTB.Now, "awakening");
     }
 
     private void CheckDailySteps(DailyPerson person, DailyStep[] steps, HashSet<string> blocked, bool departure)
@@ -347,6 +351,9 @@ public sealed partial class MorningWorld
             foreach (var witness in witnesses.EnumerateArray())
                 _dailyRemoteWitnesses.Add((witness.GetProperty("room").GetString()!, witness.GetProperty("text").GetString()!));
         ObserveDailyRooms();
+        foreach (var person in _dailyPeople.Values)
+            StrategyPolicy.Acquire(person.Soul, person.Self, "desire", _dailySession.CTB.Now,
+                DesireOfKey(person.Key), ObservationSource.Introspection);
         InitializeDormCases();
     }
 
@@ -477,6 +484,9 @@ public sealed partial class MorningWorld
         var step = person.Steps[person.Index];
         if (execution.Status == ExecutionStatus.Completed)
         {
+            if (person.Hosted is { } hosted && step.Action == "check" && _evidence.TryGetValue(step.Target, out var objectEntity)
+                && ReferenceEquals(objectEntity.Get<SpatialProperty>()?.Space, person.Body.Get<SpatialProperty>()?.Space))
+                Examine(hosted, step.Target);
             var record = new MorningTrajectory(_dailySession.CTB.Now, person.Key, step.Room, step.Action, step.Note, _dailySettledMinutes);
             _dailyTrajectory.Add(record);
             if (person.Hosted is null && !person.Departed && step.Action is "check" or "listen" && _dormCases.ContainsKey(person.Dorm))

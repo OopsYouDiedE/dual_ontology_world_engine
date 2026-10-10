@@ -33,7 +33,9 @@ def main():
     check("generic_actor", controller(fields(), "world:any-role", "A")["actor"] == "world:any-role")
     check("typed_subjective_rule", controller(fields(), "world:actor", "A")["rules"] == [{"mode": "prefer", "kind": "untried", "weight": 6}])
     budget = {**fields(), "推理预算": ("深度 8 展开 2048 假设 128 论证 16 求知 8", Line(4, 1, ""), [])}
-    check("role_reasoning_budget", controller(budget, "world:any-role", "A")["reasoning"] == {"depth": 8, "expansions": 2048, "hypotheses": 128, "argumentWeight": 16, "informationWeight": 8})
+    check("role_reasoning_budget", controller(budget, "world:any-role", "A")["reasoning"] == {"depth": 8, "expansions": 2048, "hypotheses": 128, "argument_weight": 16, "information_weight": 8})
+    check("public_label_uses_runtime_wire_name", controller(fields(rule='- 偏好 菜单 7 文案 "neutral-target"'),
+          "world:any-role", "A")["rules"] == [{"mode": "prefer", "kind": "menu", "weight": 7, "label_contains": "neutral-target"}])
     check("player_budget_keeps_default", controller({**budget, "操控者": fields("玩家")["操控者"]}, "world:actor", "A") is None)
     for name, data in [
         ("unknown_controller", fields("任意")),

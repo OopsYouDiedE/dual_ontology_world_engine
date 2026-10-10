@@ -27,7 +27,7 @@ def controller(fields, actor, name):
         if len(entries) > 64:
             raise StoryError("操控规则最多 64 条。", rule_line.number)
         for entry in entries:
-            match = re.fullmatch(r"- (偏好|要求|禁止|放行) (\S+) (\d+)", entry.text)
+            match = re.fullmatch(r'- (偏好|要求|禁止|放行) (\S+) (\d+)(?: 文案 "([^"\r\n]+)")?', entry.text)
             if entry.indent != 2 or not match or match[2] not in KINDS:
                 raise StoryError("操控规则须写成“- 偏好/要求/禁止/放行 输入类别 权重”；类别：" +
                                  "、".join(KINDS), entry.number)
@@ -35,6 +35,10 @@ def controller(fields, actor, name):
             if not 0 <= weight <= 1000:
                 raise StoryError("操控规则权重须在 0–1000 之间。", entry.number)
             compiled.append({"mode": MODES[match[1]], "kind": KINDS[match[2]], "weight": weight})
+            if match[4] is not None:
+                if len(match[4]) > 200:
+                    raise StoryError("公开候选文案筛选最多 200 字。", entry.number)
+                compiled[-1]["label_contains"] = match[4]
     if mode == "代理" and not compiled:
         raise StoryError("代理必须声明本人的操控规则，不能默认编造策略。", line.number)
     budget = None
@@ -46,7 +50,7 @@ def controller(fields, actor, name):
         depth, expansions, hypotheses, argument, information = map(int, match.groups())
         if not (0 <= depth <= 64 and 1 <= expansions <= 100000 and 1 <= hypotheses <= 4096 and 0 <= argument <= 1000 and 0 <= information <= 1000):
             raise StoryError("推理预算超限：深度0–64、展开1–100000、假设1–4096、权重0–1000。", budget_line.number)
-        budget = {"depth": depth, "expansions": expansions, "hypotheses": hypotheses, "argumentWeight": argument, "informationWeight": information}
+        budget = {"depth": depth, "expansions": expansions, "hypotheses": hypotheses, "argument_weight": argument, "information_weight": information}
     # Player declarations are validated but compile to the existing default.
     # Switching to an agent is an explicit authored change, never a CLI route override.
     if mode == "玩家":

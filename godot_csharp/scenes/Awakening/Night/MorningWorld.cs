@@ -381,6 +381,10 @@ public sealed partial class MorningWorld
     {
         if (!_evidence.TryGetValue(evidence, out var essence) || _destroyed.Contains(evidence)) return;
         _runtime.Observe(_souls[who], _runtime.Representations(essence), ++_time);
+        var known = _runtime.KnownProjection(_souls[who], essence)!;
+        var facts = Chapter1Data.Root.GetProperty("EVIDENCE").GetProperty(evidence).GetProperty("facts").GetString()!;
+        Observation.Observe(_souls[who], new(known.Name, known.Kind) { Target = known,
+            Source = ObservationSource.Perception, Time = _time, Details = facts });
     }
 
     /// <summary>

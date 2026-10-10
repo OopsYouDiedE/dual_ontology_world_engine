@@ -387,14 +387,17 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
     {
         _now += delta;
         foreach (var job in _jobs) if (job.Blocked is Sleep) job.Remaining -= delta;
+        if (FieldFree && _uiModal == "" && _jobs.Count == 0) _content.AdvanceFieldClock(delta);
         Triggers();
         Daily(delta);
+        ObserveStrategySituation();
         if (!FieldFree || _uiModal != "" || _jobs.Count > 0) return;
         if (_content.TakeStageTimeFlow() is { } flow)
         {
             Start(PlayPlan(() => _content.StartFlow(_world, flow)));
             return;
         }
+        if (TryStrategyAction()) return;
         var nearDoor = Has("flags", "door_open") && F("detective").Near.Contains("doorway");
         if (nearDoor && !_doorwayNear) Aside(T("旁白·门外暂留"));
         _doorwayNear = nearDoor;
@@ -576,7 +579,8 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         foreach (var site in Layout.GetProperty("sites").EnumerateArray())
         {
             var id = site.GetProperty("id").GetString()!;
-            result[id] = new Ev { ["title"] = site.GetProperty("title").GetString(), ["enabled"] = Enabled(id),
+            var evidence = site.GetProperty("evidence").GetString()!;
+            result[id] = new Ev { ["title"] = site.GetProperty("title").GetString(), ["enabled"] = Enabled(id) && !Has("hidden", evidence) && !Has("destroyed", evidence),
                 ["new"] = !Has("examined", site.GetProperty("evidence").GetString()!) };
         }
         foreach (var trace in Layout.GetProperty("life_traces").EnumerateArray())
@@ -613,6 +617,11 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         if (Has("flags", "board_read"))
             sections.Add(new Ev { ["heading"] = "", ["style"] = "grid", ["entries"] = new object?[] { new Ev { ["label"] = T("笔记·公告框"), ["card_id"] = "board" } } });
         var recalls = Session.GetProgress("recalls");
+        var testimony = Session.GetProgress("testimony");
+        if (testimony.Count > 0)
+            sections.Add(new Ev { ["heading"] = T("笔记·证言所得"), ["style"] = "list",
+                ["entries"] = testimony.Values.OfType<Dictionary<string, object>>().Select(p => (object?)new Ev
+                    { ["label"] = PersonName((string)p["speaker"]) + "：" + p["text"] }).ToArray() });
         if (recalls.Count > 0)
             sections.Add(new Ev { ["heading"] = T("笔记·回忆所得"), ["style"] = "list",
                 ["entries"] = recalls.Select(p => (object?)new Ev { ["label"] = $"{PersonName(p.Key)}：{p.Value}" }).ToArray() });

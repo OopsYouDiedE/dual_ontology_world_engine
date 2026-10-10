@@ -8,6 +8,188 @@ public static class Chapter1CompiledDialogue
     private const string Json = """
     {
       "entries": {
+        "clock_question": [
+          {
+            "op": "line",
+            "speaker": "铜口",
+            "mood": "",
+            "text": "此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？",
+            "voice_clip": "",
+            "line_id": "clock_question.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_report_huo": [
+          {
+            "op": "line",
+            "speaker": "霍铎",
+            "mood": "",
+            "text": "（走到你旁边，声音压得很低）题还没答。我看过一样东西，说给你。",
+            "voice_clip": "",
+            "line_id": "strategy_report_huo.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_test_huo": [
+          {
+            "op": "line",
+            "speaker": "霍铎",
+            "mood": "",
+            "text": "光看不行，得试。你要试，我搭手。",
+            "voice_clip": "",
+            "line_id": "strategy_test_huo.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_invite_huo": [
+          {
+            "op": "line",
+            "speaker": "霍铎",
+            "mood": "",
+            "text": "跟我来。有个地方，你该看一眼。",
+            "voice_clip": "",
+            "line_id": "strategy_invite_huo.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_remember_huo": [
+          {
+            "op": "line",
+            "speaker": "霍铎",
+            "mood": "",
+            "text": "这东西动过了。原来什么样，我记得。",
+            "voice_clip": "",
+            "line_id": "strategy_remember_huo.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_report_shen": [
+          {
+            "op": "line",
+            "speaker": "沈鼎",
+            "mood": "",
+            "text": "在这儿干站着，题可不会自己答完。我留意过一样东西，你听听。",
+            "voice_clip": "",
+            "line_id": "strategy_report_shen.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_test_shen": [
+          {
+            "op": "line",
+            "speaker": "沈鼎",
+            "mood": "",
+            "text": "光这么看是看不出来的。要不动手试一回？我给你搭把手，你说了算。",
+            "voice_clip": "",
+            "line_id": "strategy_test_shen.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_invite_shen": [
+          {
+            "op": "line",
+            "speaker": "沈鼎",
+            "mood": "",
+            "text": "来，过来一下。有样东西我一直觉得不对劲，你自己看。",
+            "voice_clip": "",
+            "line_id": "strategy_invite_shen.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_remember_shen": [
+          {
+            "op": "line",
+            "speaker": "沈鼎",
+            "mood": "",
+            "text": "这东西被人动过了。先前它什么样，我记得清楚。",
+            "voice_clip": "",
+            "line_id": "strategy_remember_shen.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_report_su": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "（她犹豫了一下才开口）……有件事，我一直想说给你听。",
+            "voice_clip": "",
+            "line_id": "strategy_report_su.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_test_su": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "……要不要试一次？我可以帮你听。",
+            "voice_clip": "",
+            "line_id": "strategy_test_su.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_invite_su": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "……跟我来一下。那边有样东西，我想让你看看。",
+            "voice_clip": "",
+            "line_id": "strategy_invite_su.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
+        "strategy_remember_su": [
+          {
+            "op": "line",
+            "speaker": "苏泠",
+            "mood": "",
+            "text": "……它原来不是这样的。我记得它先前的样子。",
+            "voice_clip": "",
+            "line_id": "strategy_remember_su.001"
+          },
+          {
+            "op": "jump",
+            "target": "END"
+          }
+        ],
         "s1_wake": [
           {
             "op": "line",

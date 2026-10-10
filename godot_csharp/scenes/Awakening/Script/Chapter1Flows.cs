@@ -37,7 +37,7 @@ public sealed partial class AwakeningContentSession
         MorningWorld W() => world ?? throw new InvalidOperationException("query needs the morning world: " + name);
         return name switch
         {
-            "flag" => Has("flags"), "seen" => Has("examined"), "tested" => Has("experiments"), "asked" => Has("helped"),
+            "flag" => Has("flags"), "seen" => Has("examined"), "known" => KnownMaterial(A()), "tested" => Has("experiments"), "asked" => Has("helped"),
             "recalled" => Has("recalls"), "compared" => Has("soles_compared"), "v6_open" => V6Open,
             "told_rule" => W().KnowsRule1(PersonOf(A())), "hooks" => W().Hooks(PersonOf(A())), "total_hooks" => W().TotalHooks,
             "matched" => State("full_match_seen", false), "replayed" => Convert.ToInt32(State("replay_count", 0)) > 0,

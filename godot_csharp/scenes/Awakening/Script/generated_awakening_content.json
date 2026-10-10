@@ -197,6 +197,85 @@
     "E10": "沈鼎：“是我喂的。……这罐子，不是这一两天才养的。”",
     "E11": "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。"
   },
+  "STRATEGY_TRACK": {
+    "cooldown_minutes": 20,
+    "source_scenes": {
+      "s5_question": [
+        "s5_question",
+        "clock_question"
+      ]
+    },
+    "object_labels": {
+      "hide": "收起物件",
+      "destroy": "毁坏物件"
+    },
+    "object_choices": {
+      "E6": [
+        "hide",
+        "destroy"
+      ],
+      "E7": [
+        "hide",
+        "destroy"
+      ],
+      "E10": [
+        "hide",
+        "destroy"
+      ]
+    },
+    "wrong_scenes": [
+      "answer_wrong_say",
+      "answer_wrong_show",
+      "answer_need_test"
+    ],
+    "world_resolution_scenes": [
+      "quer_opens"
+    ],
+    "decline_choices": {
+      "talk_huo_menu:choice:9": "huo",
+      "talk_shen_menu:choice:9": "shen",
+      "talk_su_menu:choice:9": "su"
+    },
+    "people": {
+      "huo": {
+        "clues": [
+          "E7",
+          "E8"
+        ],
+        "methods": {
+          "report": "strategy_report_huo",
+          "test": "strategy_test_huo",
+          "invite": "strategy_invite_huo",
+          "remember": "strategy_remember_huo"
+        }
+      },
+      "shen": {
+        "clues": [
+          "E10",
+          "E9",
+          "E4"
+        ],
+        "methods": {
+          "report": "strategy_report_shen",
+          "test": "strategy_test_shen",
+          "invite": "strategy_invite_shen",
+          "remember": "strategy_remember_shen"
+        }
+      },
+      "su": {
+        "clues": [
+          "E6",
+          "E5"
+        ],
+        "methods": {
+          "report": "strategy_report_su",
+          "test": "strategy_test_su",
+          "invite": "strategy_invite_su",
+          "remember": "strategy_remember_su"
+        }
+      }
+    }
+  },
   "PERSON_IDS": {
     "detective": 0,
     "huo": 1,
@@ -1508,7 +1587,7 @@
             "args": [
               {
                 "op": "call",
-                "name": "seen",
+                "name": "known",
                 "args": [
                   {
                     "op": "literal",
@@ -1518,7 +1597,7 @@
               },
               {
                 "op": "call",
-                "name": "seen",
+                "name": "known",
                 "args": [
                   {
                     "op": "literal",
@@ -1658,7 +1737,7 @@
             "args": [
               {
                 "op": "call",
-                "name": "seen",
+                "name": "known",
                 "args": [
                   {
                     "op": "literal",
@@ -1668,7 +1747,7 @@
               },
               {
                 "op": "call",
-                "name": "seen",
+                "name": "known",
                 "args": [
                   {
                     "op": "literal",
@@ -1843,6 +1922,7 @@
     "default_scene_minutes": 2,
     "companion_start_minutes": 440,
     "daily_seconds_per_game_minute": 0.5,
+    "field_seconds_per_game_minute": 1,
     "scenes": {
       "s1_wake": 10,
       "s2_meet": 10,
@@ -3268,6 +3348,7 @@
     "笔记·空": "还没有记下任何东西。",
     "笔记·公告框": "活动厅公告框（学园守则）",
     "笔记·回忆所得": "[b]回忆所得[/b]",
+    "笔记·证言所得": "[b]证言所得[/b]",
     "笔记·已试": "已试",
     "铜口·标题": "铜口",
     "铜口·描述": "铜口静静地嵌在墙上。铜牌上的 ◎ 擦得发亮。",
@@ -3840,7 +3921,24 @@
           "signal": "meeting"
         }
       },
-      "times": [],
+      "times": [
+        {
+          "minutes": 600,
+          "flow": "钟点重提题面"
+        },
+        {
+          "minutes": 660,
+          "flow": "钟点重提题面"
+        },
+        {
+          "minutes": 720,
+          "flow": "雀儿撬门"
+        },
+        {
+          "minutes": 780,
+          "flow": "钟点重提题面"
+        }
+      ],
       "walk": true,
       "daily": true,
       "examine": true,
@@ -3871,8 +3969,20 @@
       },
       "times": [
         {
+          "minutes": 600,
+          "flow": "钟点重提题面"
+        },
+        {
+          "minutes": 660,
+          "flow": "钟点重提题面"
+        },
+        {
           "minutes": 720,
           "flow": "雀儿撬门"
+        },
+        {
+          "minutes": 780,
+          "flow": "钟点重提题面"
         }
       ],
       "walk": true,
@@ -5094,6 +5204,14 @@
           "scene": "@ending:完成"
         }
       ]
+    },
+    "钟点重提题面": {
+      "steps": [
+        {
+          "op": "show",
+          "scene": "clock_question"
+        }
+      ]
     }
   },
   "VERDICTS": {
@@ -5154,7 +5272,7 @@
                     "args": [
                       {
                         "op": "call",
-                        "name": "seen",
+                        "name": "known",
                         "args": [
                           {
                             "op": "literal",
@@ -5164,7 +5282,7 @@
                       },
                       {
                         "op": "call",
-                        "name": "seen",
+                        "name": "known",
                         "args": [
                           {
                             "op": "literal",
@@ -5199,7 +5317,7 @@
                 "args": [
                   {
                     "op": "call",
-                    "name": "seen",
+                    "name": "known",
                     "args": [
                       {
                         "op": "literal",
@@ -5209,7 +5327,7 @@
                   },
                   {
                     "op": "call",
-                    "name": "seen",
+                    "name": "known",
                     "args": [
                       {
                         "op": "literal",
