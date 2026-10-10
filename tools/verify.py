@@ -4,10 +4,11 @@
 Runs, in order, and stops at the first failure unless --keep-going:
   1. dotnet build csharp/ScopeRegression.csproj -c Release (includes Core)
   2. dotnet run csharp/ScopeRegression.csproj (Core scope regression)
-  3. dotnet build godot_csharp/DualOntologyWorldEngine.sln
-  4. Godot headless Awakening/check/flow_check.gd (includes room routes)
-  5. Godot headless Chapter2/Game/check_flow.gd (includes map walkability)
-  6. Godot windowed state_gallery.gd (screenshots into artifacts/remake-belief-replay/gallery)
+  3. dotnet run csharp/CognitionRegression.csproj (atomic cognition and snapshots)
+  4. dotnet build godot_csharp/DualOntologyWorldEngine.sln
+  5. Godot headless Awakening/check/flow_check.gd (includes room routes)
+  6. Godot headless Chapter2/Game/check_flow.gd (includes map walkability)
+  7. Godot windowed state_gallery.gd (screenshots into artifacts/remake-belief-replay/gallery)
 
 Godot steps also fail on script/engine errors and exit-time resource leaks, which the
 engine can print without changing the exit code. Full stdout and stderr are retained
@@ -17,7 +18,7 @@ These are automated checks with injected state. They are not playtests and do no
 replace the independent blind playtest required by AGENTS.md.
 
   python tools/verify.py                 # everything
-  python tools/verify.py --skip core     # core, scope, host, flow, flow2, gallery
+  python tools/verify.py --skip core     # skip the build; scope, cognition, host and Godot checks remain
   python tools/verify.py --only flow2    # run a selected subset; host binaries must exist
   python tools/verify.py --godot PATH    # Godot .NET console binary (or env GODOT)
 """
@@ -37,7 +38,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 HOST = ROOT / "godot_csharp"
 GALLERY = ROOT / "artifacts" / "remake-belief-replay" / "gallery"
-STEP_NAMES = ["core", "scope", "host", "flow", "flow2", "gallery"]
+STEP_NAMES = ["core", "scope", "cognition", "host", "flow", "flow2", "gallery"]
 LOG_ROOT = ROOT / "artifacts" / "project-audit" / "verify-logs"
 ENGINE_ERRORS = re.compile(
     r"SCRIPT ERROR|Parse Error|Failed to load script|\bERROR:|ObjectDB[^\r\n]*leak|resources still in use",
@@ -153,6 +154,7 @@ def main() -> int:
     steps = [
         ("core", ["dotnet", "build", "csharp/ScopeRegression.csproj", "-c", "Release", "-nologo", "-v", "q"], 600, False),
         ("scope", scope_command, 600, False),
+        ("cognition", ["dotnet", "run", "--project", "csharp/CognitionRegression.csproj", "-c", "Release"], 600, False),
         ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-nologo", "-v", "q"], 600, False),
     ]
     if godot:

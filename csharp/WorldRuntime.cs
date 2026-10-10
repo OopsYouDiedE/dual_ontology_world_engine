@@ -9,20 +9,33 @@ public interface IProjectionTransform
 }
 
 /// <summary>引擎侧的现实与认知对应。Soul 的决策接口不接收本对象。</summary>
-public sealed class WorldRuntime
+public sealed partial class WorldRuntime
 {
     private readonly HashSet<Essence> _existing = [];
     private readonly Dictionary<Projection, Essence> _binding = [];
     private readonly Dictionary<Essence, List<Projection>> _reality = [];
     private readonly Dictionary<(SoulEssence Soul, Projection Reality), Projection> _mental = [];
-    public ProjectionWorld Reality { get; } = new();
+    private readonly Dictionary<EntityId, Essence> _entities = [];
+    private readonly Dictionary<FacetId, Projection> _facets = [];
+    public ProjectionWorld Reality { get; } = new(null);
 
     public Projection Project(Essence essence, string name, Projection? parent = null)
+        => Project(essence, new FacetId(Contract.Opaque()), name, parent);
+
+    public Projection Project(Essence essence, FacetId facetId, string name, Projection? parent = null)
     {
+        Contract.Identity(facetId.Value, "facet.id");
+        Contract.Identity(essence.Id.Value, "entity.id");
+        Contract.Text(name, "facet.name");
+        Contract.Require(!_facets.ContainsKey(facetId), ContractErrorCode.DuplicateIdentity, "facet.id", "切面身份已登记，不能复用。");
+        Contract.Require(!_entities.TryGetValue(essence.Id, out var old) || ReferenceEquals(old, essence) && _existing.Contains(essence),
+            ContractErrorCode.DuplicateIdentity, "entity.id", "实体身份已登记或已删除，不能复用。");
         if (parent is not null && !Reality.Contains(parent)) throw new InvalidOperationException("现实表现的父节点必须在现实世界。");
         var projection = new Projection(Reality, name, essence.Kind) { Parent = parent };
         Reality.Projections = Reality.Projections.Add(projection);
         _existing.Add(essence);
+        _entities.TryAdd(essence.Id, essence);
+        _facets.Add(facetId, projection);
         _binding.Add(projection, essence);
         if (!_reality.TryGetValue(essence, out var views)) _reality.Add(essence, views = []);
         views.Add(projection);
@@ -33,17 +46,48 @@ public sealed class WorldRuntime
     /// <summary>建立初始记忆或多种身份表征的引擎对应，不改变角色认知。</summary>
     public void Associate(SoulEssence soul, Projection mental, Projection reality)
     {
+        lock (soul.World.Gate)
+        {
         if (!soul.World.Contains(mental) || !Reality.Contains(reality)) throw new InvalidOperationException("绑定的投影世界不匹配。");
         if (_binding.TryGetValue(mental, out var previous) && !ReferenceEquals(previous, _binding[reality]))
             throw new InvalidOperationException("已有投影不能静默改绑为另一个客观对象。");
         _binding[mental] = _binding[reality];
         _mental[(soul, reality)] = mental;
+        }
     }
 
     public IReadOnlyList<Projection> Representations(Essence essence) => _reality.TryGetValue(essence, out var views) ? views.AsReadOnly() : [];
     /// <summary>Read an existing correspondence without observing or revealing an unknown entity.</summary>
     public Projection? KnownProjection(SoulEssence soul, Essence essence)
+        // legacy-first: migrating callers must use KnownFacet or LookupSingleKnown.
         => Representations(essence).Select(view => Mental(soul, view)).FirstOrDefault(mental => mental is not null);
+    public ImmutableArray<Projection> KnownProjections(SoulEssence soul, Essence entity)
+    {
+        lock (soul.World.Gate)
+        {
+            Contract.Require(_entities.TryGetValue(entity.Id, out var registered) && ReferenceEquals(registered, entity),
+                ContractErrorCode.InvalidReference, "entity", "实体未在此引擎登记。");
+            return [..Representations(entity).Select(p => Mental(soul, p)).OfType<Projection>().Distinct().OrderBy(p => Observation.IdKey(p.SubjectId!.Value), StringComparer.Ordinal)];
+        }
+    }
+    public ContractResult<Projection> KnownFacet(SoulEssence soul, FacetId facet) => Contract.Try(() =>
+    {
+        lock (soul.World.Gate)
+        {
+            Contract.Identity(facet.Value, "facet");
+            Contract.Require(_facets.TryGetValue(facet, out var view), ContractErrorCode.InvalidReference, "facet", "切面未登记。");
+            var mental = Mental(soul, view!);
+            Contract.Require(mental is not null, ContractErrorCode.Unrecognized, "facet", "主体尚未认识该切面。");
+            return mental!;
+        }
+    });
+    public ContractResult<Projection> LookupSingleKnown(SoulEssence soul, Essence entity) => Contract.Try(() =>
+    {
+        var known = KnownProjections(soul, entity);
+        Contract.Require(!known.IsEmpty, ContractErrorCode.Unrecognized, "entity", "主体尚未认识该实体。");
+        if (known.Length > 1) throw new CognitionContractException(new(ContractErrorCode.Ambiguous, "entity", "主体保留多个表现。", CandidateIds: [..known.Select(p => p.SubjectId!.Value)]));
+        return known[0];
+    });
     internal Essence? Resolve(Projection? projection) => projection is not null && _binding.TryGetValue(projection, out var essence) && _existing.Contains(essence) ? essence : null;
     internal bool Controls(SoulEssence soul, Essence body) => _existing.Contains(soul) && soul.Relations.Contains((Relations.Controls, body));
     internal void Destroy(Essence essence) => _existing.Remove(essence);
@@ -77,56 +121,103 @@ public sealed class WorldRuntime
     {
         var sources = visible.Distinct().ToArray();
         if (sources.Any(p => !Reality.Contains(p))) throw new InvalidOperationException("感知源必须属于现实世界。");
-        var mapping = sources.ToDictionary(p => p, p => Mental(soul, p) ?? new Projection(soul.World, p.Name, p.Kind));
-        Projection? Known(Projection p) => mapping.GetValueOrDefault(p) ?? Mental(soul, p);
-        Noun MapNoun(Noun noun) => noun is Noun.Reference r
-            ? new Noun.Reference(Known(r.Projection) ?? throw new InvalidOperationException("未观察到 AST 中的名词。")) : noun;
-        Rule ReadRule(Rule rule, Projection mental)
+        KnowledgeRevision start;
+        Dictionary<Projection, Projection> mapping;
+        Dictionary<Projection, Projection> known;
+        HashSet<Projection> inputDomain;
+        lock (soul.World.Gate)
         {
-            var mapped = Ast.Map(rule, MapNoun);
-            var remembered = mental.Rules.FirstOrDefault(r => r.Mode == mapped.Mode && Ast.Equivalent(r.Condition, mapped.Condition) && Ast.Equivalent(r.Effect, mapped.Effect));
-            return mapped with { Acceptance = remembered?.Acceptance ?? Truth.Unknown };
+            start = soul.World.Revision;
+            known = _mental.Where(p => ReferenceEquals(p.Key.Soul, soul) && soul.World.Contains(p.Value)).ToDictionary(p => p.Key.Reality, p => p.Value);
+            mapping = sources.ToDictionary(p => p, p => known.GetValueOrDefault(p) ?? new Projection(soul.World, p.Name, p.Kind));
+            inputDomain = soul.World.Projections.Concat(mapping.Values).ToHashSet();
         }
-        var inputs = new List<(Projection Source, ObservationInput Input)>();
-        foreach (var source in sources)
+        try
         {
-            var mental = mapping[source];
-            var input = new ObservationInput(source.Name, source.Kind)
+            Projection? Known(Projection p) => mapping.GetValueOrDefault(p) ?? known.GetValueOrDefault(p);
+            void ValidateTransformReferences(ObservationInput input)
             {
-                Target = mental, Time = time, Detected = source.Existence == Truth.True, Existence = source.Existence,
-                Move = source.Parent is null || Known(source.Parent) is not null,
-                Parent = source.Parent is null ? null : Known(source.Parent),
-                Tags = source.Tags.ToImmutableDictionary(p => p.Key, p => (int?)p.Value),
-                AddRelations = source.Relations.Where(r => Known(r.Target) is not null).Select(r => (r.Relation, Known(r.Target)!)).ToImmutableHashSet(),
-                // 不完整的规则保持未获知；不能通过解析规则顺带获知隐藏名词。
-                Rules = source.Rules.IsEmpty ? null : [..source.Rules.Where(r => Ast.References(r).All(p => Known(p) is not null)).Select(r => ReadRule(r, mental))],
-                Procedure = source.Procedure is { } procedure && Ast.References(procedure).All(p => Known(p) is not null) ? Ast.Map(procedure, MapNoun) : null
-            };
-            var perceived = transform is null ? input : transform.Transform(input);
-            if (perceived is not null)
+                SubjectProjectionId Reference(Projection reference)
+                {
+                    Contract.Require(reference is not null && ReferenceEquals(reference.World, soul.World) && inputDomain.Contains(reference),
+                        ContractErrorCode.InvalidReference, "transform.reference", "感知转换引用须属于起始主体图或本次感知范围。");
+                    return reference!.SubjectId!.Value;
+                }
+                Contract.Require(input.AddRelations is not null && input.RemoveRelations is not null && input.DenyRelations is not null,
+                    ContractErrorCode.MalformedData, "transform.relations", "感知转换关系集合不能为空。");
+                foreach (var (_, reference) in input.AddRelations!.Concat(input.RemoveRelations!).Concat(input.DenyRelations!)) Reference(reference);
+                if (input.Parent is { } parent) Reference(parent);
+                if (input.Rules is { } rules) { Contract.Array(rules, "transform.rules"); foreach (var rule in rules) CognitionAst.Freeze(rule, Reference); }
+                if (input.Procedure is { } procedure) CognitionAst.Freeze(procedure, Reference);
+            }
+            Noun MapNoun(Noun noun) => noun is Noun.Reference r
+                ? new Noun.Reference(Known(r.Projection) ?? throw new InvalidOperationException("未观察到 AST 中的名词。")) : noun;
+            Rule ReadRule(Rule rule, Projection mental)
             {
-                if (!ReferenceEquals(perceived.Target, mental)) throw new InvalidOperationException("感知转换保留目标连续性。");
-                inputs.Add((source, perceived));
+                var mapped = Ast.Map(rule, MapNoun);
+                var remembered = mental.Rules.FirstOrDefault(r => r.Mode == mapped.Mode && Ast.Equivalent(r.Condition, mapped.Condition) && Ast.Equivalent(r.Effect, mapped.Effect));
+                return mapped with { Acceptance = remembered?.Acceptance ?? Truth.Unknown };
+            }
+            var inputs = new List<(Projection Source, ObservationInput Input)>();
+            foreach (var source in sources)
+            {
+                var mental = mapping[source];
+                var input = new ObservationInput(source.Name, source.Kind)
+                {
+                    Target = mental, Time = time, Detected = source.Existence == Truth.True, Existence = source.Existence,
+                    Move = source.Parent is null || Known(source.Parent) is not null,
+                    Parent = source.Parent is null ? null : Known(source.Parent),
+                    Tags = source.Tags.ToImmutableDictionary(p => p.Key, p => (int?)p.Value),
+                    AddRelations = source.Relations.Where(r => Known(r.Target) is not null).Select(r => (r.Relation, Known(r.Target)!)).ToImmutableHashSet(),
+                    // 不完整的规则保持未获知；不能通过解析规则顺带获知隐藏名词。
+                    Rules = source.Rules.IsEmpty ? null : [..source.Rules.Where(r => Ast.References(r).All(p => Known(p) is not null)).Select(r => ReadRule(r, mental))],
+                    Procedure = source.Procedure is { } procedure && Ast.References(procedure).All(p => Known(p) is not null) ? Ast.Map(procedure, MapNoun) : null
+                };
+                var perceived = transform is null ? input : transform.Transform(input);
+                if (soul.World.Revision != start)
+                    throw new CognitionContractException(new(ContractErrorCode.StaleRevision, "expected_revision", "感知转换期间认知版本已变化。",
+                        ExpectedRevision: start, ActualRevision: soul.World.Revision, CandidateIds: []));
+                if (perceived is not null)
+                {
+                    if (!ReferenceEquals(perceived.Target, mental)) throw new InvalidOperationException("感知转换保留目标连续性。");
+                    ValidateTransformReferences(perceived);
+                    inputs.Add((source, perceived));
+                }
+            }
+            // 被抑制的新投影不能由另一个对象的关系或规则间接进入认知。
+            var accepted = inputs.Select(p => p.Input.Target!).ToHashSet();
+            bool Available(Projection p) => accepted.Contains(p) || soul.World.Contains(p);
+            var committed = inputs.Select(pair => pair.Input with
+            {
+                Move = pair.Input.Move && (pair.Input.Parent is null || Available(pair.Input.Parent)),
+                Parent = pair.Input.Parent is { } parent && Available(parent) ? parent : null,
+                AddRelations = pair.Input.AddRelations.Where(r => Available(r.Target)).ToImmutableHashSet(),
+                Rules = pair.Input.Rules is { } rules ? [..rules.Where(r => Ast.References(r).All(Available))] : null,
+                Procedure = pair.Input.Procedure is { } procedure && Ast.References(procedure).All(Available) ? procedure : null
+            }).ToArray();
+            var bindings = new BindingPublication(this, soul, [..inputs.Select(p => (p.Source, p.Input.Target!, _binding[p.Source]))]);
+            Observation.ApplyBatch(soul.World, committed, start, bindings);
+            return [..inputs.Select(p => p.Input.Target!)];
+        }
+        finally
+        {
+            lock (soul.World.Gate)
+                foreach (var mental in mapping.Values)
+                    if (!soul.World.Contains(mental)) soul.World.Used.Add(mental.SubjectId!.Value);
+        }
+    }
+
+    internal sealed class BindingPublication(WorldRuntime runtime, SoulEssence soul,
+        ImmutableArray<(Projection Source, Projection Mental, Essence Entity)> entries)
+    {
+        internal void Publish()
+        {
+            foreach (var (source, mental, entity) in entries)
+            {
+                runtime._mental[(soul, source)] = mental;
+                runtime._binding[mental] = entity;
             }
         }
-        // 被抑制的新投影不能由另一个对象的关系或规则间接进入认知。
-        var accepted = inputs.Select(p => p.Input.Target!).ToHashSet();
-        bool Available(Projection p) => accepted.Contains(p) || soul.World.Contains(p);
-        var committed = inputs.Select(pair => pair.Input with
-        {
-            Move = pair.Input.Move && (pair.Input.Parent is null || Available(pair.Input.Parent)),
-            Parent = pair.Input.Parent is { } parent && Available(parent) ? parent : null,
-            AddRelations = pair.Input.AddRelations.Where(r => Available(r.Target)).ToImmutableHashSet(),
-            Rules = pair.Input.Rules is { } rules ? [..rules.Where(r => Ast.References(r).All(Available))] : null,
-            Procedure = pair.Input.Procedure is { } procedure && Ast.References(procedure).All(Available) ? procedure : null
-        }).ToArray();
-        Observation.ApplyBatch(soul.World, committed);
-        foreach (var (source, input) in inputs)
-        {
-            _mental[(soul, source)] = input.Target!;
-            _binding[input.Target!] = _binding[source];
-        }
-        return [..inputs.Select(p => p.Input.Target!)];
     }
 
     internal Projection? Mental(SoulEssence soul, Projection reality) => _mental.GetValueOrDefault((soul, reality)) is { } mental && soul.World.Contains(mental) ? mental : null;
@@ -154,4 +245,3 @@ public sealed class WorldRuntime
         });
     }
 }
-

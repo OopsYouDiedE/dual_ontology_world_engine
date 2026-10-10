@@ -1,17 +1,32 @@
 namespace DualOntologyWorldEngine.Core;
 
 public sealed record Decision(Effect Effect, int Score, Projection Basis);
-public sealed record DecisionAssessment(Decision Decision, bool Forbidden, IReadOnlyList<string> Reasons);
+public sealed record DecisionAssessment(Decision Decision, bool Forbidden, IReadOnlyList<string> Reasons)
+{
+    public KnowledgeRevision? Revision { get; init; }
+}
 
 /// <summary>
 /// 候选、条件和偏好全部来自同一内部世界。客观可行性只在激活时检查。
 /// Prefer 与 Require 提出候选并加减分；Forbid 禁止；Permit 只放行——它不提出候选、不加分，
 /// 只在条件成立、动作相同且权重不低于禁令时解除那条禁令（“可以做”不等于“想做”）。
 /// </summary>
-public static class DecisionSystem
+public static partial class DecisionSystem
 {
     public static Decision? Choose(ProjectionWorld world, Projection actor) => Assess(world,actor).FirstOrDefault(a=>!a.Forbidden)?.Decision;
     public static IReadOnlyList<DecisionAssessment> Assess(ProjectionWorld world, Projection actor)
+    {
+        if (world.Detached) return AssessLive(world, actor);
+        if (!ReferenceEquals(actor.World, world)) throw new InvalidOperationException("决策主体不属于内部世界。");
+        var view = SubjectRead.Capture(world);
+        if (actor.SubjectId is not { } id || view.Originals.GetValueOrDefault(id) != actor) return [];
+        return AssessLive(view.Graph.World, view.Get(actor)).Select(a => a with
+        {
+            Decision = a.Decision with { Effect = view.Original(a.Decision.Effect), Basis = view.Original(a.Decision.Basis) },
+            Revision = view.Revision
+        }).ToArray();
+    }
+    internal static IReadOnlyList<DecisionAssessment> AssessLive(ProjectionWorld world, Projection actor)
     {
         if (!ReferenceEquals(actor.World,world)) throw new InvalidOperationException("决策主体不属于内部世界。");
         if (!world.Contains(actor)) return [];
@@ -19,7 +34,7 @@ public static class DecisionSystem
         var candidates = new List<(Effect Effect, ActionContext Context, Projection Basis, int Social)>();
         foreach (var (basis, rule) in rules.Where(r => r.Rule.Mode is RuleMode.Prefer or RuleMode.Require))
         foreach (var context in Contexts(world, actor, rule))
-            if (Ast.Evaluate(rule.Condition, context) == Truth.True)
+            if (Ast.EvaluateLive(rule.Condition, context) == Truth.True)
             {
                 var effect = Ast.Bind(rule.Effect, context);
                 if (!candidates.Any(c => Ast.Equivalent(c.Effect, effect))) candidates.Add((effect, context, basis, 0));
@@ -50,7 +65,7 @@ public static class DecisionSystem
                 if (rule.Mode == RuleMode.Forbid)
                 {
                     if (Contexts(world, actor, rule).Any(context =>
-                        Ast.Evaluate(rule.Condition, context) == Truth.True &&
+                        Ast.EvaluateLive(rule.Condition, context) == Truth.True &&
                         ContainsForbidden(candidate.Effect, Ast.Bind(rule.Effect, context), candidate.Context)))
                     {
                         if (permit.Weight >= rule.Weight) reasons.Add($"{basis.Name}：禁止，但{permit.Basis.Name}放行");
@@ -58,7 +73,7 @@ public static class DecisionSystem
                     }
                     continue;
                 }
-                if (Ast.Nouns(rule).OfType<Noun.Slot>().Any(n => candidate.Context.Resolve(n) is null) || Ast.Evaluate(rule.Condition, candidate.Context) != Truth.True) continue;
+                if (Ast.Nouns(rule).OfType<Noun.Slot>().Any(n => candidate.Context.Resolve(n) is null) || Ast.EvaluateLive(rule.Condition, candidate.Context) != Truth.True) continue;
                 var matches = Ast.Equivalent(Ast.Bind(rule.Effect, candidate.Context), candidate.Effect);
                 if (matches) { score += rule.Weight; reasons.Add($"{basis.Name}：+{rule.Weight}"); }
                 else if (rule.Mode == RuleMode.Require) { score -= rule.Weight; reasons.Add($"{basis.Name}：未满足要求 -{rule.Weight}"); }
@@ -70,7 +85,7 @@ public static class DecisionSystem
 
     /// <summary>放行规则在某个上下文里条件成立、且它放行的正是这个候选动作。</summary>
     private static bool Applies(ProjectionWorld world, Projection actor, Rule rule, Effect candidate) =>
-        Contexts(world, actor, rule).Any(context => Ast.Evaluate(rule.Condition, context) == Truth.True &&
+        Contexts(world, actor, rule).Any(context => Ast.EvaluateLive(rule.Condition, context) == Truth.True &&
             Ast.Equivalent(Ast.Bind(rule.Effect, context), candidate));
 
     // 禁令约束行为本身，等待和外层组合不能绕过；传话中的请求不等于已经执行。
@@ -82,7 +97,7 @@ public static class DecisionSystem
         {
             Effect.Wait delayed => ContainsForbidden(delayed.Body, forbidden, context),
             Effect.Sequence sequence => sequence.Items.Any(item => ContainsForbidden(item, forbidden, context)),
-            Effect.When conditional => Ast.Evaluate(conditional.Condition, context) != Truth.False &&
+            Effect.When conditional => Ast.EvaluateLive(conditional.Condition, context) != Truth.False &&
                 ContainsForbidden(conditional.Body, forbidden, context),
             _ => false
         };
