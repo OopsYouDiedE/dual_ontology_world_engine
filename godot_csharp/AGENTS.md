@@ -117,6 +117,9 @@
 
 ## 四、工具与插件管理
 
+- `Shared/Story/Examples/WorldScript/*.story` 是独立机制示例的作者源；使用正式 `tools/story_script.py` 按章节依赖顺序编译为 `generated_world.json`，不再维护 `.world` 示例。`ExampleWorld.Load(path)` 只接收编译物并创建 `WorldSession`，示例工程只引用 `ChapterRuntime`，不再作为第二章 `IWorldScript` 扩展 DLL。作者预览仅枚举已加载声明，房间与携带对象位置从同一运行时对象读取；文档缺失或加载失败不填入样例。
+- 示例检查：`dotnet run --project godot_csharp/scenes/Shared/check/WorldScriptCheck -- <编译物路径>`；编译命令为 `python godot_csharp/tools/story_script.py godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.story godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.story -o <编译物路径>`，加 `--check` 校验一致性。预览传输自动检查使用 `Shared/check/WorldScriptCheck/preview_ui_check_01.gd`，可通过 `-- --document=<编译物路径>` 使用临时编译结果；该检查不截图，不代替 UI 专项验收。
+
 - 源码内容审计使用根目录的 `STORY-HARDCODE` 标记约定，分别记录正式代码、夹具、工具、示例和编辑器预览。剧本生成的 C#/JSON 只登记来源，不手改；专用绑定与剧情因果分别分类。仅加标记时验证原有源码不变、宿主构建与修改过的 GDScript 语法，不将其当作一级、二级或三级验收。
 
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
