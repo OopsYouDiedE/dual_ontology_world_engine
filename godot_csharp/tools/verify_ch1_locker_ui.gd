@@ -1,4 +1,6 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## Targeted development/UI verification of the production Main scene.
 ## Advances source-backed dialogue; this is not a playthrough or level-three evidence.
 ## Godot --path godot_csharp --script res://tools/verify_ch1_locker_ui.gd -- --round=ui-v01
@@ -156,18 +158,16 @@ func _run() -> void:
 	else:
 		host.field._route_click(Vector2(440, 340))
 		check(await fx.wait_until(func(): return fx.stage() == "meeting", 30.0), "walk from wake into meeting")
-	# STORY-HARDCODE[CSH-007][logic][fixture]: UI 检查定位第一章领取柜并跟踪固定角色的领取动画。
-	var anchor: Vector2 = fx.map().anchor("领取柜")
+	var anchor: Vector2 = fx.map().anchor(Samples.text("locker-ui-check", "text-001"))
 	record("geometry", {"anchor": [anchor.x, anchor.y], "furniture": fx.map().layout.furniture})
 	var deadline := Time.get_ticks_msec() + 150000
 	var source_line := ""
-	# STORY-HARDCODE[CSH-037][logic][fixture]: 依项目奖励对白行号定位开场与空柜台词，核对固定物证阶段的位置/输入状态。
 	var source_targets := {
 		"s4_rewards.004": fx.line_text("s4_rewards.004"),
 		"s4_rewards.020": fx.line_text("s4_rewards.020"),
 	}
 	while Time.get_ticks_msec() < deadline and fx.stage() != "investigate":
-		for who in ["shen", "huo", "su", "detective"]:
+		for who in Samples.array("locker-ui-check", "case-001"):
 			var actor: CharacterBody2D = host.field.actors[who]
 			if not captures.has(who) and actor.position.distance_to(anchor) <= 0.2 and str(actor.sprite.animation) == "interact_back":
 				captures[who] = true
@@ -212,7 +212,7 @@ func _run() -> void:
 	check(fx.player().test_move(fx.player().global_transform, Vector2(0, -40)), "machine blocks movement north from front")
 	await shot("machine-front-and-lamp")
 	check(await move_player(Vector2(500, 160)), "player returns to north-wall viewing position")
-	for id in ["RewardLocker", "CylinderPlayer"]:
+	for id in Samples.array("locker-ui-check", "case-002"):
 		var sprite: Sprite2D = fx.map().objects_root().get_node(id)
 		var point := furniture_pointer(sprite)
 		var expected := str(Vocabulary.table("OBJECT_NAMES").get(id, ""))
@@ -230,8 +230,7 @@ func _run() -> void:
 		await shot("aside-" + id.to_snake_case())
 		await fx.wait_until(func(): return host.field.click_path.is_empty(), 10.0)
 		await move_player(Vector2(500, 160))
-	# STORY-HARDCODE[CSH-036][logic][fixture]: 用第一章铜口热点E8及黑板热点BOARD验证其相对领取柜的具体命中优先级。
-	for site_id in ["E8", "BOARD"]:
+	for site_id in Samples.array("locker-ui-check", "case-003"):
 		check(host.field.sites.has(site_id) and host.field.site_visible(site_id), site_id + " hotspot visible beside new furniture")
 		if not host.field.sites.has(site_id): continue
 		var point: Vector2 = host.field.site_box(site_id).get_center()
@@ -250,7 +249,7 @@ func _run() -> void:
 	check(await move_player(Vector2(600, 368)), "east activity-room doorway remains traversable", {"position": [fx.player().position.x, fx.player().position.y]})
 	await shot("activity-doorway")
 	check(await move_player(Vector2(900, 368)), "player moves into corridor outside north-wall sight", {"position": [fx.player().position.x, fx.player().position.y]})
-	for id in ["RewardLocker", "CylinderPlayer"]:
+	for id in Samples.array("locker-ui-check", "case-004"):
 		var sprite: Sprite2D = fx.map().objects_root().get_node(id)
 		var point := sprite.position + sprite.offset + sprite.texture.get_size() / 2.0
 		check(not host.field.in_sight(sprite.position), id + " is outside current player sight")

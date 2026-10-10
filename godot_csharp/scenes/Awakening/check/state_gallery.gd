@@ -1,4 +1,6 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## 开发自检截图（有窗口）：经统一宿主（Main.tscn）跳到关键状态，存 PNG 到 artifacts/remake-belief-replay/gallery/。
 ## 对白与表单由脚本代按；这是开发自检，不是盲玩。
 ##   godot --path godot_csharp --script res://scenes/Awakening/check/state_gallery.gd
@@ -14,7 +16,6 @@ var out_dir := ""
 var shots := 0
 var failures := 0
 
-# STORY-HARDCODE[AWK-054][schema][fixture]: 诊断画廊注入案件状态并按固定菜单推进，只作 UI 回归夹具。
 func _initialize() -> void:
 	fx = Fixture.new(self)
 	out_dir = ProjectSettings.globalize_path("res://").path_join("../artifacts/remake-belief-replay/gallery").simplify_path()
@@ -62,7 +63,7 @@ func shot(name: String) -> void:
 func advance(choices: Array) -> void:
 	var d: CanvasLayer = ui.dialogue
 	if ui.modal_kind == "form":
-		if str(ui._modal_event.fields[0].get("id", "")) == "name": fx.name_form_answer("试验")
+		if str(ui._modal_event.fields[0].get("id", "")) == "name": fx.name_form_answer(Samples.text("state-gallery", "text-001"))
 		else: auto.step()
 		return
 	if not d.active or d.busy or d.line == null:
@@ -74,20 +75,20 @@ func advance(choices: Array) -> void:
 	else:
 		d.choose(str(d.line.responses[choices.pop_front() if not choices.is_empty() else 0].next_id))
 
-func line_shown(needle: String) -> bool:
+func line_shown(ids: Array) -> bool:
 	var d: CanvasLayer = ui.dialogue
-	return d.active and not d.busy and d.line != null and d.body.visible_characters < 0 and str(d.line.text).contains(needle)
+	return d.active and not d.busy and d.line != null and d.body.visible_characters < 0 and ids.has(str(d.line.id))
 
-## 推进对白直到某一行（行文本包含 needle）完整显示；choices 依次回答遇到的选项。
-func show_line(needle: String, choices: Array = [], limit := 1500) -> bool:
+## 推进对白直到某一行（行 ID 属于 ids）完整显示；choices 依次回答遇到的选项。
+func show_line(ids: Array, choices: Array = [], limit := 1500) -> bool:
 	for i in limit:
-		if line_shown(needle):
+		if line_shown(ids):
 			return true
 		advance(choices)
 		await process_frame
 	var d: CanvasLayer = ui.dialogue
-	check(false, "gallery: line never shown: %s (dialogue active=%s line=%s modal=%s stage=%s)" % [needle, d.active, str(d.line.text) if d.line != null else "-", ui.modal_kind, ui.snapshot.get("stage", "")])
-	return line_shown(needle)
+	check(false, "gallery: line never shown: %s (dialogue active=%s line=%s modal=%s stage=%s)" % [str(ids), d.active, str(d.line.text) if d.line != null else "-", ui.modal_kind, ui.snapshot.get("stage", "")])
+	return line_shown(ids)
 
 ## 推进对白直到某种弹窗出现（如广播后自动呈现的公告框）。
 func until_modal(kind: String, limit := 1500) -> bool:
@@ -114,7 +115,7 @@ func pick(id: String) -> bool:
 	return auto.select(id)
 
 func close_modal() -> void:
-	if ui.modal_kind in ["card", "menu"]:
+	if ui.modal_kind in Samples.array("state-gallery", "case-001"):
 		if not pick("close"):
 			ui.close_modal()
 	elif ui.modal_kind != "":
@@ -166,23 +167,23 @@ func detective_thought(stage_node: Node) -> String:
 func _run() -> void:
 	# 1 醒来
 	await fresh(false)
-	await show_line(fx.line_text("s1_wake.003"))
+	await show_line(["s1_wake.003"])
 	await settle(10)
 	await shot("01-wake")
 	# 2 开场广播（代管者兼教师）与欲望放大
 	await finish_dialogue()
 	await place(Vector2(440, 340))
-	await show_line("我所立之规")
+	await show_line(Samples.array("state-gallery", "lines-text-002"))
 	await settle(10)
 	await shot("02-broadcast-self-introduction")
 	await until_modal("card")
 	await settle(20)
 	await shot("02b-board-presented-after-broadcast")
 	await close_modal()
-	await show_line("超越卡诺循环的那一张")
+	await show_line(Samples.array("state-gallery", "lines-text-003"))
 	await settle(10)
 	await shot("03-desire-amplified")
-	await show_line("是在试我们")
+	await show_line(Samples.array("state-gallery", "lines-text-004"))
 	await settle(10)
 	await shot("03b-reactions-after-the-question")
 	# 3 公告框
@@ -211,25 +212,25 @@ func _run() -> void:
 	await settle(10)
 	await shot("06b-compare-soles-choose-whose")
 	pick("detective")
-	await show_line("……是我")
+	await show_line(Samples.array("state-gallery", "lines-text-005"))
 	await settle(10)
 	await shot("07-reversal-one")
 	await finish_dialogue()
 	await close_modal()
 	# 5 苏泠协助音叉后自动闪回；听过代价时可以转告，她自己取舍。
-	fx.probe("amplify", ["su", "S4"])
+	fx.probe("amplify", Samples.array("state-gallery", "case-002"))
 	fx.set_progress("flags", "price_heard", true)
 	await place(Vector2(230, 400))
 	await open_card("E5")
 	await until_modal("card", 120)
 	pick("help")
-	await show_line("刚才碰到它")
+	await show_line(Samples.array("state-gallery", "lines-text-006"))
 	await settle(10)
 	await shot("08a-su-flash-after-help")
-	await show_line("让我想想", [0])
+	await show_line(Samples.array("state-gallery", "lines-text-007"), [0])
 	await settle(10)
 	await shot("08b-su-hears-the-price")
-	await show_line("把音叉放回原处")
+	await show_line(Samples.array("state-gallery", "lines-text-008"))
 	await settle(10)
 	await shot("08-su-refuses-after-price")
 	await finish_dialogue()
@@ -237,14 +238,14 @@ func _run() -> void:
 	# 5a 霍铎协助石板后自动闪回。
 	await fresh()
 	await jump("investigate")
-	fx.probe("amplify", ["huo", "S4"])
+	fx.probe("amplify", Samples.array("state-gallery", "case-003"))
 	await open_card("board")
 	await close_modal()
 	await place(Vector2(536, 300))
 	await open_card("E7")
 	await until_modal("card", 120)
 	pick("help")
-	await show_line("手一碰，闪了一下")
+	await show_line(Samples.array("state-gallery", "lines-text-009"))
 	await settle(10)
 	await shot("09-huo-flash-after-help")
 	await finish_dialogue()
@@ -252,14 +253,14 @@ func _run() -> void:
 	# 5b 沈鼎协助酵种罐后自己问铜口，得知代价。
 	await fresh()
 	await jump("investigate")
-	fx.probe("amplify", ["shen", "S4"])
+	fx.probe("amplify", Samples.array("state-gallery", "case-004"))
 	await open_card("board")
 	await close_modal()
 	await place(Vector2(470, 600))
 	await open_card("E10")
 	await until_modal("card", 120)
 	pick("help")
-	await show_line("这种买卖")
+	await show_line(Samples.array("state-gallery", "lines-text-010"))
 	await settle(10)
 	await shot("09b-shen-asks-the-price")
 	await finish_dialogue()
@@ -305,14 +306,14 @@ func _run() -> void:
 		if stage_node.caption == null:
 			return
 		var thought := detective_thought(stage_node)
-		if not seen.voice and stage_node.caption.text.contains("铜口说话"):
+		if not seen.voice and stage_node.caption.text.contains(Samples.text("state-gallery", "text-011")):
 			seen.voice = true
 			stage_node.paused = true
 			await settle(20)
 			check(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
 			await shot("11-playback-four-bubbles")
 			stage_node.paused = false
-		elif not seen.doubt and thought.contains("我凭什么信"):
+		elif not seen.doubt and thought.contains(Samples.text("state-gallery", "text-012")):
 			seen.doubt = true
 			stage_node.paused = true
 			await settle(50)
@@ -326,21 +327,21 @@ func _run() -> void:
 	await run_replay([0, 0, 0, 0, 0, 1], func(stage_node: Node) -> void:
 		if stage_node.caption == null:
 			return
-		if not seen.bolt and detective_thought(stage_node).contains("我更信霍铎"):
+		if not seen.bolt and detective_thought(stage_node).contains(Samples.text("state-gallery", "text-013")):
 			seen.bolt = true
 			stage_node.paused = true
 			await settle(40)
 			check(ui.modal_kind == "", "Playback gallery must not have a foreground modal")
 			await shot("13-playback-decision-basis")
 			stage_node.paused = false)
-	check(seen.values().all(func(v): return v), "回放关键画面全部采集 " + str(seen))
+	check(seen.values().all(func(v): return v), Samples.text("state-gallery", "text-014") + str(seen))
 	print("playback captured: ", seen)
 	await close_modal()
 	# 6b 霍铎协助后听到代价，仍选择往下想
 	await fresh()
 	await jump("investigate")
 	await place(Vector2(536, 300))
-	fx.probe("amplify", ["huo", "S4"])
+	fx.probe("amplify", Samples.array("state-gallery", "case-005"))
 	fx.set_progress("flags", "price_heard", true)
 	await open_card("board")
 	await close_modal()
@@ -348,7 +349,7 @@ func _run() -> void:
 	await open_card("E7")
 	await until_modal("card", 600)
 	pick("help")
-	await show_line("图纸值这个价", [0])
+	await show_line(Samples.array("state-gallery", "lines-text-015"), [0])
 	await settle(10)
 	await shot("09c-huo-touches-despite-price")
 	await finish_dialogue()
@@ -356,9 +357,9 @@ func _run() -> void:
 	# 7 答辩（陈述与出示成对，到第 4 步为止）、门开
 	await fresh()
 	await jump("replay_match")
-	check(await fx.compare_hands(), "终局截图前实际完成手印比对")
-	fx.probe("apply_recall", ["E10", "shen"])
-	var picks := [{"say": "me", "show": "E3"}, {"say": "V3_0", "show": "E8"}, {"say": "V4_0", "show": "E7"}, {"say": "trust", "show": "E10"}]
+	check(await fx.compare_hands(), Samples.text("state-gallery", "text-016"))
+	fx.probe("apply_recall", Samples.array("state-gallery", "case-006"))
+	var picks := Samples.array("state-gallery", "case-007")
 	var captured := {"pair": false, "door": false, "prints": false, "hand": false, "hand_answer": false}
 	auto.choose = func(_actions: Array) -> String:
 		if ui.modal_kind != "form" or str(ui._modal_event.get("layout", "")) != "tabs" or picks.is_empty():
@@ -384,10 +385,9 @@ func _run() -> void:
 			auto.step()
 			continue
 		if d.active and d.line != null and not d.busy and d.body.visible_characters < 0:
-			var text := str(d.line.text)
-			for spec in [["prints", "鞋底窄", "18a-door-demon-prints"], ["hand", "架上那半枚手印", "18b-ask-about-the-handprint"],
-					["hand_answer", "是我取走的", "18c-demon-took-what-was-sealed"], ["door", "你听对了", "18-door-open"]]:
-				if not captured[spec[0]] and text.contains(spec[1]):
+			for spec in [["prints", Samples.array("state-gallery", "capture-text-017"), "18a-door-demon-prints"], ["hand", Samples.array("state-gallery", "capture-text-018"), "18b-ask-about-the-handprint"],
+					["hand_answer", Samples.array("state-gallery", "capture-text-019"), "18c-demon-took-what-was-sealed"], ["door", Samples.array("state-gallery", "capture-text-020"), "18-door-open"]]:
+				if not captured[spec[0]] and spec[1].has(str(d.line.id)):
 					await settle(6)
 					await shot(spec[2])
 					captured[spec[0]] = true
@@ -396,7 +396,7 @@ func _run() -> void:
 		auto.step()
 	await settle(10)
 	await shot("19-ending")
-	check(captured.values().all(func(v): return v) and ui.modal_kind == "ending", "答辩与终局关键画面全部采集 " + str(captured))
+	check(captured.values().all(func(v): return v) and ui.modal_kind == "ending", Samples.text("state-gallery", "text-021") + str(captured))
 	print("captured: ", captured)
 	print("TOTAL %d shots, %d failed" % [shots, failures])
 	call_deferred("_finish")

@@ -155,7 +155,7 @@ def main() -> int:
         ("core", ["dotnet", "build", "csharp/ScopeRegression.csproj", "-c", "Release", "-nologo", "-v", "q"], 600, False),
         ("scope", scope_command, 600, False),
         ("cognition", ["dotnet", "run", "--project", "csharp/CognitionRegression.csproj", "-c", "Release"], 600, False),
-        ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-nologo", "-v", "q"], 600, False),
+        ("host", ["dotnet", "build", "godot_csharp/DualOntologyWorldEngine.sln", "-m:1", "--disable-build-servers", "-nologo", "-v", "q"], 600, False),
     ]
     if godot:
         steps.append(("flow", [godot, "--headless", "--path", str(HOST), "--script",

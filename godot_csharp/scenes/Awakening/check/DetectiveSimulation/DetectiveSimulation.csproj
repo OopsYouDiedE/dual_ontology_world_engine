@@ -9,4 +9,9 @@
     <ProjectReference Include="../../Script/Chapter1Script.csproj" />
     <ProjectReference Include="../../../Chapter2/Script/Chapter2Script.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../Shared/check/FixtureData.cs" Link="FixtureData.cs" />
+    <EmbeddedResource Include="../../../Shared/check/Fixtures/detective-simulation.json" LogicalName="Fixtures.detective-simulation.json" />
+    <EmbeddedResource Include="../../../Shared/check/Fixtures/continuation-simulation.json" LogicalName="Fixtures.continuation-simulation.json" />
+  </ItemGroup>
 </Project>

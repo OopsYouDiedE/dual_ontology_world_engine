@@ -119,6 +119,8 @@
 
 - `Shared/Story/Examples/WorldScript/*.story` 是独立机制示例的作者源；使用正式 `tools/story_script.py` 按章节依赖顺序编译为 `generated_world.json`，不再维护 `.world` 示例。`ExampleWorld.Load(path)` 只接收编译物并创建 `WorldSession`，示例工程只引用 `ChapterRuntime`，不再作为第二章 `IWorldScript` 扩展 DLL。作者预览仅枚举已加载声明，房间与携带对象位置从同一运行时对象读取；文档缺失或加载失败不填入样例。
 - 示例检查：`dotnet run --project godot_csharp/scenes/Shared/check/WorldScriptCheck -- <编译物路径>`；编译命令为 `python godot_csharp/tools/story_script.py godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_01_arrival.story godot_csharp/scenes/Shared/Story/Examples/WorldScript/chapter_02_morning.story -o <编译物路径>`，加 `--check` 校验一致性。预览传输自动检查使用 `Shared/check/WorldScriptCheck/preview_ui_check_01.gd`，可通过 `-- --document=<编译物路径>` 使用临时编译结果；该检查不截图，不代替 UI 专项验收。
+- 自动检查与固定路线工具的情境、路线和封存预期存于 `scenes/Shared/check/Fixtures/`，以稳定选项、行号、证物或夹具键查询；读取器 `FixtureData.cs` 仅由检查/工具项目链接，`fixture_data.gd` 仅由自动检查加载。黄金预期不从被测算法或正式真值表在运行时生成。第二章 `Prototype/Bots.cs`、`Checks.cs` 只由 `Prototype.csproj` 编译，正式 `Chapter2Script.csproj` 排除这两份开发代码。
+- `PlayerTranscript` 的调查、相遇/答辩输入及连续日程由 `Fixtures/player-transcript.json` 的路线步骤提供，工具只分派输入、等待与记录，保留两章结束断言；正式输出的房间到场回执仍由空间适配器处理。可在仓库路径后传 `--output <目录>`，把本轮采集放入隔离目录；省略时沿用原记录目录。隔离采集与封存预期各自保存，复测不得覆盖旧证据。
 
 - 源码内容审计使用根目录的 `STORY-HARDCODE` 标记约定，分别记录正式代码、夹具、工具、示例和编辑器预览。剧本生成的 C#/JSON 只登记来源，不手改；专用绑定与剧情因果分别分类。仅加标记时验证原有源码不变、宿主构建与修改过的 GDScript 语法，不将其当作一级、二级或三级验收。
 

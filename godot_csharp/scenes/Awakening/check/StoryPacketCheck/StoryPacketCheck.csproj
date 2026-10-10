@@ -7,4 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../Script/Chapter1Script.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../Shared/check/FixtureData.cs" Link="FixtureData.cs" />
+    <EmbeddedResource Include="../../../Shared/check/Fixtures/story-packet-check.json" LogicalName="Fixtures.story-packet-check.json" />
+  </ItemGroup>
 </Project>
