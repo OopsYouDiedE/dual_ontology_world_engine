@@ -756,9 +756,9 @@ public sealed partial class Chapter1Session
                 ["subject"] = f.Event.Subject is { } subject ? Names.PersonKeys[(int)subject] : "",
                 ["object"] = f.Event.Object, ["room"] = f.Event.Room is { } room ? Names.RoomKeys[(int)room] : "",
             },
-            ["rooms"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)Names.RoomKeys[(int)f.Rooms[p]]),
-            ["spots"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)f.Spots[p]),
-            ["thoughts"] = Enum.GetValues<Person>().ToDictionary(Key, p => (object)f.Thoughts[p]),
+            ["rooms"] = Names.People.ToDictionary(Key, p => (object)Names.RoomKeys[(int)f.Rooms[p]]),
+            ["spots"] = Names.People.ToDictionary(Key, p => (object)f.Spots[p]),
+            ["thoughts"] = Names.People.ToDictionary(Key, p => (object)f.Thoughts[p]),
             ["door_open"] = f.DoorOpen, ["door_bolted"] = f.DoorBolted, ["ash"] = f.AshFan, ["smoke"] = f.SmokeIn,
         }).ToArray();
         var findings = compared.Select(finding => (object)new Dictionary<string, object>

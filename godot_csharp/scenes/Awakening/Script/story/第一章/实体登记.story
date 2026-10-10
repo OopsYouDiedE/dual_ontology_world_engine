@@ -1,0 +1,47 @@
+# 兼容编号只用于既有调用与快照；新增编号追加，已有编号不可重排。
+人物兼容编号
+    detective：0
+    huo：1
+    shen：2
+    su：3
+
+房间兼容编号
+    R05：0
+    R06：1
+    R07：2
+    R08：3
+    corridor：4
+    hall：5
+    pantry：6
+    foyer：7
+    lounge：8
+
+重演通路
+    r05：
+        from：R05
+        to：corridor
+        cost：1.2
+    r06：
+        from：R06
+        to：corridor
+        cost：1.2
+    r07：
+        from：R07
+        to：corridor
+        cost：1.2
+    r08：
+        from：R08
+        to：corridor
+        cost：1.2
+    hall：
+        from：corridor
+        to：hall
+        cost：2.0
+    pantry：
+        from：hall
+        to：pantry
+        cost：2.0
+    foyer：
+        from：hall
+        to：foyer
+        cost：2.5

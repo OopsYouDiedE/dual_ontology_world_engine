@@ -193,13 +193,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     // ------------------------------------------------------------ 解析工具 --
 
-    private static readonly string PeopleList = string.Join(" ", Enum.GetValues<P>().Where(p => p != P.Det).Select(Names.Of));
+    private static readonly string PeopleList = string.Join(" ", Cast.All.Select(p => p.Id).Where(p => p != P.Det).Select(Names.Of));
     private static readonly Dictionary<string, Place> PlaceShort = new()
     {
         ["前厅"] = Place.ArchiveFront, ["名录库"] = Place.ArchiveFront, ["文契"] = Place.DormW, ["星仪"] = Place.DormS, ["后勤"] = Place.DormL,
         ["粮仓"] = Place.Logistics, ["配给台"] = Place.Logistics, ["诊疗"] = Place.Clinic,
     };
-    private static readonly string PlaceList = string.Join(" ", Enum.GetValues<Place>().Select(Names.Of));
+    private static readonly string PlaceList = string.Join(" ", Names.PlaceAlias.Values.Distinct().Select(Names.Of));
 
     private static P Person(string s)
     {

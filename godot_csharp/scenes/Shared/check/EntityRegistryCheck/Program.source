@@ -1,0 +1,75 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using DualOntologyWorldEngine.Awakening;
+
+var folder = args.Length > 0 ? args[0] : "tmp/s03-check";
+var script = File.ReadAllText(Path.Combine(folder, "chapter2.json"));
+var chapter = WorldScriptDocument.Parse(script, allowChapterAdapter: true).Single();
+var game = new Game(Chapter2AuthoredProfiles.Apply(script), authored: chapter);
+var checks = 0;
+void Check(bool value, string label)
+{ if (!value) throw new Exception(label); checks++; Console.WriteLine("PASS " + label); }
+void Reject(Action action, string label)
+{
+    try { action(); } catch (InvalidDataException) { Check(true, label); return; }
+    throw new Exception("Expected explicit rejection: " + label);
+}
+var room = game.ResolveEntity("fixture.room");
+var item = game.ResolveEntity("world:fixture.object");
+var numericChapter = WorldScriptDocument.Parse(script, allowChapterAdapter: true).Single();
+numericChapter.Entities.Add(WorldScriptDocument.Parse(File.ReadAllText(Path.Combine(folder, "numeric.json"))).Single().Entities.Single());
+var numericGame = new Game(Chapter2AuthoredProfiles.Apply(script), authored: numericChapter);
+var numericRoom = numericGame.ResolveEntity("room.0");
+Check(numericGame.Rooms.Contains(numericRoom), "numeric stable ID is registered as a distinct declared room");
+Check(!ReferenceEquals(numericRoom, numericGame.ResolveEntity("room.Hall"))
+    && ReferenceEquals(numericGame.Space[Place.Hall], numericGame.ResolveEntity("room.Hall")), "numeric stable ID cannot overwrite a legacy enum mapping");
+Reject(() => Chapter2Bindings.PersonId(new() { Id = "person.0", Kind = "character" }), "numeric character ID cannot alias a legacy character");
+Check(ReferenceEquals(room, game.ResolveEntity("world:fixture.room")), "qualified IDs reuse the same room");
+Check(game.Rooms.Contains(room) && game.Objects.Contains(item) && game.Things.Contains(item), "new declarations are enumerated");
+Check(ReferenceEquals(item.Get<SpatialProperty>()!.Space, room), "new object binds to the actual new room");
+Check(Game.Get(item, new Tag("FixtureCount")) == 7, "new object uses declared state");
+Check(ReferenceEquals(item, Chapter2Bindings.ResolveId(game, "fixture.object")), "binding accepts arbitrary authored object IDs");
+Reject(() => Chapter2Bindings.ResolveId(game, "fixture.absent"), "unknown ID rejected");
+Reject(() => Chapter2Bindings.Resolve(game, new() { Id = "fixture.object", Kind = "room" }), "binding kind conflict rejected");
+var duplicate = WorldScriptDocument.Parse(script, allowChapterAdapter: true).Single();
+duplicate.Entities.Add(duplicate.Entities.Single(e => e.Id == "fixture.object"));
+Reject(() => new Game(authored: duplicate), "duplicate declaration rejected before construction");
+var invalidSpace = WorldScriptDocument.Parse(script, allowChapterAdapter: true).Single();
+invalidSpace.Entities.Single(e => e.Id == "fixture.room").Kind = "object";
+Reject(() => new Game(authored: invalidSpace), "spatial parent kind conflict rejected");
+using var registry = new WorldSession(game.Rt, game.S);
+registry.BindExisting(chapter, game.Entities, game.People.ToDictionary(p => "world:person." + p.Id, p => (p.Soul, p.Self)), ["awakening"]);
+Check(ReferenceEquals(registry.Entity("fixture.object"), item), "WorldSession adoption preserves the same object reference");
+Check(game.Groups.Count() == chapter.Design.GetProperty("vocab").GetProperty("groups").GetArrayLength(), "groups follow declarations");
+Check(game.Dorms.Count() == chapter.Design.GetProperty("access").GetProperty("boundaries").EnumerateObject().Where(p => p.Value.GetProperty("kind").GetString() == "dorm").SelectMany(p => p.Value.GetProperty("rooms").EnumerateArray().Select(r => r.GetString())).Distinct().Count(), "dorm collection follows boundary declarations");
+var content = JsonNode.Parse(File.ReadAllText(Path.Combine(folder, "domains.json")))!;
+JsonElement Element(JsonNode node) => JsonSerializer.SerializeToElement(node);
+var domains = new ReplayDomains(Element(content));
+var variables = NightVariables.All(domains).ToArray();
+var expected = content["VARIABLES"]!.AsArray().Aggregate(1, (product, row) => product * row!["options"]!.AsArray().Count);
+Check(variables.Length == expected, "all six extended domains participate in enumeration");
+foreach (var row in content["VARIABLES"]!.AsArray())
+    Check(domains.Values(row!["key"]!.GetValue<string>()).Last().Display == "中性附加取值", "display follows authored domain");
+var baseVariables = NightVariables.All().First();
+var appended = variables.Last();
+Check(appended.ToString().Split(' ').All(part => part.EndsWith("=FixtureExtra", StringComparison.Ordinal)), "diagnostic display uses authored value IDs beyond legacy enums");
+var wire = JsonSerializer.SerializeToElement(baseVariables);
+Check(wire.EnumerateObject().Select(p => p.Name).Order().SequenceEqual(new[] { "V1", "V2", "V3", "V4", "V5", "V6" }), "serialized variable shape keeps the original six numeric fields");
+Check(appended.SuRoom == baseVariables.SuRoom && appended.HuoRoom == baseVariables.HuoRoom && appended.Origin == baseVariables.Origin
+    && appended.Words == baseVariables.Words && appended.Heeds == baseVariables.Heeds && appended.Familiar == baseVariables.Familiar, "extended domains bind semantics without adding enums");
+Check(JsonSerializer.Serialize(NightReplay.Run(appended).Traces) == JsonSerializer.Serialize(NightReplay.Run(baseVariables).Traces), "additional domain values execute through the real replay");
+var reordered = content.DeepClone();
+reordered["VARIABLES"]![0]!["value_ids"]![0] = "MovedLegacyValue";
+Reject(() => new ReplayDomains(Element(reordered)), "legacy domain indices cannot be reassigned");
+var duplicateValue = content.DeepClone();
+duplicateValue["VARIABLES"]![0]!["value_ids"]![1] = duplicateValue["VARIABLES"]![0]!["value_ids"]![0]!.GetValue<string>();
+Reject(() => new ReplayDomains(Element(duplicateValue)), "duplicate domain ID rejected");
+Reject(() => domains.At("V1", int.MaxValue), "unknown domain value rejected");
+var badBinding = content.DeepClone();
+badBinding["VARIABLES"]![2]!["bindings"]![0] = "MissingOrigin";
+Reject(() => new ReplayDomains(Element(badBinding)), "unknown semantic binding rejected");
+Check((int)P.Det == 0 && (int)Place.Hall == 0 && (int)DualOntologyWorldEngine.Awakening.Person.Detective == 0, "legacy enum numbers retained");
+Console.WriteLine($"TOTAL {checks} checks, 0 failed");

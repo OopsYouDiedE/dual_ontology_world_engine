@@ -57,7 +57,7 @@ public sealed partial class MorningWorld
         StopEcology();
         RuleLifetimes.End(_dailyPeople.Values.Select(p => p.Soul), LifetimeScope.Chapter, "awakening", ++_time);
         var entities = PersistentEntities();
-        foreach (var person in Enum.GetValues<Person>())
+        foreach (var person in Names.People)
         {
             var key = person switch { Person.Detective => "Det", Person.Huo => "Huo", Person.Shen => "Shen", _ => "Su" };
             entities["world:person." + key] = _bodies[person];

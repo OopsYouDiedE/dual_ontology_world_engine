@@ -23,9 +23,8 @@ public sealed partial class Chapter1Session : IChapterSession
         return JsonDocument.Parse(stream);
     });
     private static JsonElement Layout => LayoutDocument.Value.RootElement;
-    // STORY-HARDCODE[AWK-036][schema][production]: 登记固定的第一章四人组及三名同伴。
-    private static readonly string[] Companions = ["huo", "shen", "su"];
-    private static readonly string[] Party = ["detective", "huo", "shen", "su"];
+    private static readonly string[] Party = Names.PersonKeys;
+    private static readonly string[] Companions = Names.People.Where(p => p != Person.Detective).Select(p => Names.PersonKeys[(int)p]).ToArray();
     private const string Art = "res://ShareAsset/Internal/Props/AwakeningEvidence/";
 
     private MorningWorld _world = null!;

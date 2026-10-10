@@ -454,7 +454,7 @@ public sealed partial class MorningWorld
     public MorningWorld()
     {
         _session = new SimulationSession(_runtime);
-        foreach (var room in Enum.GetValues<Room>())
+        foreach (var room in Names.Rooms)
         {
             var space = new Essence(Names.Of(room), ProjectionKind.Space);
             _space[room] = space;
@@ -477,7 +477,7 @@ public sealed partial class MorningWorld
                     fact.TryGetProperty("value", out var fixedValue) ? fixedValue.GetInt32()
                         : TruthValue(fact.GetProperty("truth").GetString()!, fact.TryGetProperty("equals", out var eq) ? eq.GetInt32() : null))).ToArray());
         }
-        foreach (var who in Enum.GetValues<Person>())
+        foreach (var who in Names.People)
         {
             var soul = new SoulEssence(Names.Of(who));
             var body = new Essence(Names.Of(who), ProjectionKind.Body);

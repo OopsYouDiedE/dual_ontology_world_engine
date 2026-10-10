@@ -25,7 +25,7 @@
 
 地点 名录库前厅
     编号：room.ArchiveFront
-    别名：ArchiveFront
+    别名：ArchiveFront、archive
     范围：世界
 
 地点 誓约庭
@@ -40,7 +40,7 @@
 
 地点 乙区
     编号：room.DormLife
-    别名：DormLife
+    别名：DormLife、life
     范围：世界
 
 地点 甲区

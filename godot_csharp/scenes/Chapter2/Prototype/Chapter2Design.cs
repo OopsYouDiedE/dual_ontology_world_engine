@@ -115,8 +115,8 @@ public static class Chapter2Design
             var name = entity.GetProperty("name").GetString() ?? "";
             switch (entity.GetProperty("kind").GetString())
             {
-                case "character" when id.StartsWith("person.") && Enum.TryParse<P>(id[7..], out var who): data.People[(int)who] = name; break;
-                case "room" when id.StartsWith("room.") && Enum.TryParse<Place>(id[5..], out var place): data.Places[(int)place] = name; break;
+                case "character" when id.StartsWith("person.") && Enum.TryParse<P>(id[7..], out var who) && Enum.IsDefined(who) && who.ToString() == id[7..]: data.People[(int)who] = name; break;
+                case "room" when id.StartsWith("room.") && Enum.TryParse<Place>(id[5..], out var place) && Enum.IsDefined(place) && place.ToString() == id[5..]: data.Places[(int)place] = name; break;
             }
         }
         Require(data.People, "人物"); Require(data.Places, "地点");
