@@ -299,7 +299,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
             "sleep"=>null,"watch"=>new(Cmd.Stakeout){Place=WatchPlace()},"stay"=>new(Cmd.Stay){Place=_game.Where(_game.Det)},
             "collect"=>new(Cmd.Collect),"class"=>new(Cmd.Class),"mediate"=>new(Cmd.Mediate){Wording=Text(a,"wording")},"help"=>new(Cmd.Help){Who=Who()},
             "share" when Game.Get(_game.Det.Body,T.Fed)>0=>new(Cmd.ShareFood){Who=Who()},
-            "request"=>new(Cmd.Ask){Who=Who(),Job=Enum.Parse<Job>(Text(a,"job"))},
+            "request"=>new(Cmd.Ask){Who=Who(),ActionId=Text(a,"id",Text(a,"job"))},
             "escort" when _examined.Values.Any(c=>Text(c,"thing")==Text(a,"thing"))=>new(Cmd.Escort){Who=Who(),Thing=Text(a,"thing"),Place=_game.Things_[Text(a,"thing")].Place},
             "tell_rule"=>TellRule(Who(),Number(a,"rule")),
             "tell_wording"=>new(Cmd.TellRule){Who=Who(),Card=Game.CaseWordings[Number(a,"wording")].Card},

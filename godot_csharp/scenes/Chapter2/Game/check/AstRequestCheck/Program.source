@@ -1,0 +1,729 @@
+using System.Collections.Immutable;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using A = DualOntologyWorldEngine.Awakening;
+
+// Independent mechanism checks. Injected neutral tags are not play or UI evidence.
+int checks = 0, failures = 0;
+void Assert(bool value, string detail = "Assertion failed") { if (!value) throw new Exception(detail); }
+void Check(string name, Action action)
+{
+    checks++;
+    try { action(); Console.WriteLine("PASS " + name); }
+    catch (Exception error) { failures++; Console.WriteLine("FAIL " + name + ": " + error); }
+}
+void Reject(Action action)
+{
+    try { action(); }
+    catch (Exception error) when (error is NotSupportedException or InvalidDataException or InvalidOperationException or ArgumentException) { return; }
+    throw new Exception("Expected an explicit unsupported-data failure");
+}
+JsonObject Literal(object value) => new() { ["op"] = "literal", ["value"] = JsonSerializer.SerializeToNode(value) };
+JsonObject Call(string name, params JsonNode[] arguments) => new()
+    { ["op"] = "call", ["name"] = name, ["args"] = new JsonArray(arguments) };
+JsonElement Element(JsonNode node) => JsonSerializer.SerializeToElement(node);
+
+Check("ScriptAst binds neutral references, slots, collections and nested procedures without writing cognition", () =>
+{
+    var soul = new SoulEssence("neutral subject");
+    var self = Observation.Observe(soul, new("neutral body", ProjectionKind.Body)
+    {
+        Existence = Truth.True,
+        Tags = ImmutableDictionary<Tag,int?>.Empty.Add(new("FixtureReady"), 1)
+    });
+    var before = (soul.World.Revision, soul.World.History.Count, soul.World.Projections.Count());
+    var procedures = new JsonObject { ["neutral"] = Call("set", Literal("$actor"), Literal("FixtureValue"), Literal(1)) };
+    var ast = new ScriptAst(id => id == "neutral" ? new Noun.Reference(self) : throw new InvalidDataException(id),
+        id => id == "neutral_group" ? [new Noun.Reference(self)] : throw new InvalidDataException(id), Element(procedures));
+    var condition = ast.Condition(Element(Call("any_tag", Literal("neutral_group"), Literal("FixtureReady"), Literal(1))));
+    Assert(Ast.Evaluate(condition, new(self)) == Truth.True);
+    var procedure = ast.Procedure("neutral");
+    Assert(procedure is Effect.Set { Target: Noun.Slot { Role: RuleSlot.Actor } });
+    var effect = ast.Effect(Element(Call("seq", Call("require", Call("exists", Literal("neutral"))), Call("procedure", Literal("neutral")))));
+    Assert(effect is Effect.Sequence { Items.Length: 2 });
+    Assert(before == (soul.World.Revision, soul.World.History.Count, soul.World.Projections.Count()));
+});
+
+Check("ScriptAst rejects unknown operations, unknown references and missing or recursive procedures", () =>
+{
+    var procedures = new JsonObject { ["cycle"] = Call("procedure", Literal("cycle")) };
+    var ast = new ScriptAst(id => throw new InvalidDataException("Unknown fixture reference: " + id),
+        id => throw new InvalidDataException("Unknown fixture collection: " + id), Element(procedures));
+    Reject(() => ast.Condition(Element(Call("unimplemented"))));
+    Reject(() => ast.Condition(Element(new JsonObject { ["op"] = "unimplemented" })));
+    Reject(() => ast.Effect(Element(Call("unimplemented"))));
+    Reject(() => ast.Effect(Element(new JsonObject { ["op"] = "unimplemented" })));
+    Reject(() => ast.Condition(Element(Call("exists", Literal("absent")))));
+    Reject(() => ast.Procedure("absent"));
+    Reject(() => ast.Procedure("cycle"));
+});
+
+Check("author option selectors choose declarations and explicitly reject runtime cognition selectors", () =>
+{
+    var ast = new ScriptAst(id => throw new Exception("Selector read runtime reference"),
+        id => throw new Exception("Selector read runtime collection"), Element(new JsonObject()),
+        new Dictionary<string,string> { ["neutral_axis"] = "neutral_option" });
+    Assert(ast.Selected(Element(Call("option", Literal("neutral_axis"), Literal("neutral_option")))));
+    Assert(!ast.Selected(Element(Call("option", Literal("neutral_axis"), Literal("different")))));
+    Reject(() => ast.Selected(Element(Call("tag", Literal("$actor"), Literal("FixtureReady"), Literal(1)))));
+});
+
+Check("historical observation reads only the bound subject history and preserves its source and threshold", () =>
+{
+    var soul = new SoulEssence("neutral history subject"); var tag = new Tag("FixtureObserved");
+    var target = Observation.Observe(soul,new("neutral observed body",ProjectionKind.Body)
+        { Source=ObservationSource.Perception,Existence=Truth.True,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(tag,1) });
+    Observation.Observe(soul,new(target.Name,target.Kind)
+        { Target=target,Source=ObservationSource.Introspection,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(tag,0) });
+    var other = new SoulEssence("neutral other subject");
+    var otherTarget = Observation.Observe(other,new(target.Name,target.Kind)
+        { Source=ObservationSource.Testimony,Existence=Truth.True,Tags=ImmutableDictionary<Tag,int?>.Empty.Add(tag,1) });
+    ScriptAst Binder(Projection p,ProjectionWorld? world=null) => new(_=>new Noun.Reference(p),_=>[],Element(new JsonObject()),world:world);
+    JsonElement Seen(int minimum,string from) => Element(Call("observed",Literal("neutral"),Literal(tag.Name),Literal(minimum),Literal(from)));
+    var before=(soul.World.Revision,soul.World.History.Count,other.World.Revision,other.World.History.Count);
+    Assert(Ast.Evaluate(Binder(target,soul.World).Condition(Seen(1,"Perception")),new(target))==Truth.True);
+    Assert(Ast.Evaluate(Binder(target,soul.World).Condition(Seen(2,"Perception")),new(target))==Truth.False);
+    Assert(Ast.Evaluate(Binder(target,soul.World).Condition(Seen(1,"Testimony")),new(target))==Truth.False);
+    Assert(Ast.Evaluate(Binder(otherTarget,other.World).Condition(Seen(1,"Perception")),new(otherTarget))==Truth.False);
+    Assert(before==(soul.World.Revision,soul.World.History.Count,other.World.Revision,other.World.History.Count));
+    Reject(()=>Binder(target).Condition(Seen(1,"Perception")));
+    Reject(()=>Binder(target,other.World).Condition(Seen(1,"Perception")));
+    Reject(()=>Binder(target,soul.World).Condition(Element(Call("observed",Literal("$actor"),Literal(tag.Name),Literal(1),Literal("Perception")))));
+});
+
+if (args.Contains("--ast-only"))
+{
+    Console.WriteLine($"AST REQUEST CHECK: {checks} checks, {failures} failures (pure binder only)");
+    return failures == 0 ? 0 : 1;
+}
+
+var directory = args.Length > 0 ? Path.GetFullPath(args[0]) : Path.GetFullPath("tmp/s09-ast-check");
+var source = File.ReadAllText(Path.Combine(directory, "chapter2.json"));
+JsonObject Source() => JsonNode.Parse(source)!.AsObject();
+JsonObject Design(JsonObject root) => root["chapters"]![0]!["design"]!.AsObject();
+Game From(JsonObject? root = null) => new(authored: WorldScriptDocument.Parse((root ?? Source()).ToJsonString(), allowChapterAdapter:true).Single());
+var ready = new Tag("FixtureReady");
+var success = new Tag("FixtureSuccess");
+var delayedSuccess = new Tag("FixtureDelayedSuccess");
+var impossibleSuccess = new Tag("FixtureImpossibleSuccess");
+void Know(Person p, Projection target, Tag tag, int value) => Observation.Observe(p.Soul,
+    new(target.Name, target.Kind) { Target = target, Source = ObservationSource.Introspection,
+        Tags = ImmutableDictionary<Tag,int?>.Empty.Add(tag, value) });
+void Ready(Game game, Person p, int value)
+{
+    p.Body.Get<StateProperty>()!.Values[ready] = value;
+    p.Body.Get<StateProperty>()!.Observable.Add(ready);
+    game.Rt.Sync();
+    Know(p, p.Self, ready, value);
+    Know(game.Det, game.Det.M[p.Body], ready, value);
+}
+(Game Game, Person Recipient) Setup(Game? candidate = null)
+{
+    var game = candidate ?? From();
+    var p = game.Npcs.First(p => game.HostDormReleased(p) && !p.Asleep && Game.Get(p.Body, T.Sick) == 0);
+    game.HostMoveDet(game.Where(p));
+    Ready(game, p, 1);
+    Know(p, p.Self, Tags.Cooperation, 100);
+    Know(p, p.M[game.Det.Body], Tags.Trust, 0);
+    return (game, p);
+}
+PlayerAction Ask(Person p, string id) => new(Cmd.Ask) { Who = p.Id, ActionId = id };
+Projection Request(Game game, Person p, string id, PlayerAction? action = null)
+{
+    Assert(game.HostPrepareSocialAction(action ?? Ask(p, id)), "Expected acceptance of neutral fixture request");
+    var request = p.World.Projections.LastOrDefault(x => x.Kind == ProjectionKind.Event && x.Procedure is not null
+        && x.Relations.Contains((Relations.Subject, p.M[game.Det.Body])));
+    Assert(request is not null, "Formal request delivery must create a recipient-owned procedure");
+    return request!;
+}
+ActionExecution Begin(Game game, Person p, Projection request)
+{
+    // Only the impossible-procedure case submits the delivered recipient procedure directly, so
+    // decision preflight cannot silently bypass the actual failed runtime stage.
+    var execution = game.S.Submit(p.Soul, new(p.Self, request.Procedure!, 0, Basis: request));
+    game.S.CTB.RunUntil(game.Now);
+    return execution;
+}
+
+Check("copied story adds a declared rule and nested card behavior that both execute in Game", () =>
+{
+    var game = From(); var p = game.Det;
+    var rule = game.RuleById("FixtureRule");
+    var fx = new Fx(game, e => p.M[e]);
+    var compiled = rule.Build(fx).ToArray();
+    Assert(compiled.Length == 1 && compiled[0].Mode == RuleMode.Prefer && compiled[0].Weight == 11);
+    var run = game.S.Submit(p.Soul, new(p.Self, compiled[0].Effect, 0));
+    game.S.CTB.RunUntil(game.Now);
+    Assert(run.Status == ExecutionStatus.Completed && Game.Get(p.Body, new("FixtureRuleSuccess")) == 1);
+    var kit = Design(Source())["card_kit"]!.AsObject();
+    var index = kit["behaviors"]!.AsArray().Count - 1;
+    var card = new Card(0, 0, index, 0, 0);
+    var spec = game.CardSpec(card, p.Id);
+    var behavior = spec.Build(fx).ToArray();
+    Assert(behavior.Length == 1 && behavior[0].Weight == 9);
+    Assert(Ast.Evaluate(behavior[0].Condition, new(p.Self)) == Truth.True);
+    var cardRun = game.S.Submit(p.Soul, new(p.Self, behavior[0].Effect, 0));
+    game.S.CTB.RunUntil(game.Now);
+    Assert(cardRun.Status == ExecutionStatus.Completed && Game.Get(p.Body, new("FixtureCardSuccess")) == 1);
+});
+
+Check("new request ID is read from compiled data, delivered, selected by Game and committed by its recipient", () =>
+{
+    var (game,p) = Setup();
+    Assert(new Chapter2InteractionContent(source).Requests.Any(r => r.Id == "FixtureSuccess"));
+    var request = Request(game,p,"FixtureSuccess");
+    Assert(Game.Get(p.Body,success) == 0 && Game.Get(game.Det.Body,success) == 0, "Accepting must not execute effects");
+    Assert(Ast.References(request.Procedure).All(p.World.Contains), "Request references must belong to recipient cognition");
+    game.Decide(p); var execution = p.Exec;
+    Assert(execution is not null && ReferenceEquals(execution.Intent.Basis,request), "Game must choose the received request");
+    game.S.CTB.RunUntil(game.Now+4);
+    Assert(execution!.Status == ExecutionStatus.Completed && Game.Get(p.Body,success) == 1);
+    Assert(Game.Get(game.Det.Body,success) == 0 && game.DetHelpers.Contains(p.Id));
+});
+
+Check("social and card menu previews do not write cognition, time or Specs", () =>
+{
+    var (game,p) = Setup();
+    var before = game.People.ToDictionary(p => p, p => (p.World.Revision,p.World.History.Count,p.World.Projections.Count()));
+    var specs = game.Specs.ToArray(); var now = game.Now; var calendar = game.CalendarMinutes;
+    var specState = specs.ToDictionary(s => s, s => (s.PostedAt.ToArray(),s.Endorsers.ToArray()));
+    var card = new Card(0,0,Design(Source())["card_kit"]!["behaviors"]!.AsArray().Count-1,0,0);
+    for (var i=0;i<10;i++)
+    {
+        Assert(game.HostSocialScore(p.Id,Ask(p,"FixtureSuccess")) > 0);
+        game.HostSocialScore(p.Id,new(Cmd.TellRule) { Who=p.Id,Card=card });
+        _ = game.HostTellable().ToArray();
+    }
+    Assert(game.Now == now && game.CalendarMinutes == calendar && game.Specs.SequenceEqual(specs));
+    Assert(specState.All(v => v.Key.PostedAt.SetEquals(v.Value.Item1) && v.Key.Endorsers.SetEquals(v.Value.Item2)));
+    Assert(before.All(v => v.Value == (v.Key.World.Revision,v.Key.World.History.Count,v.Key.World.Projections.Count())));
+});
+
+Check("the formal talk menu creates request candidates without cognition, time or Specs side effects", () =>
+{
+    var first = new A.MorningWorld();
+    var inherited = new Game(continuation:first.ExportContinuation(new ChapterSession()),
+        authored:WorldScriptDocument.Parse(source,allowChapterAdapter:true).Single());
+    var (game,p) = Setup(inherited); var session = new Chapter2InteractionSession(game,source);
+    var before = game.People.ToDictionary(p => p, p => (p.World.Revision,p.World.History.Count,p.World.Projections.Count()));
+    var specs = game.Specs.ToArray(); var now = game.Now; var calendar = game.CalendarMinutes;
+    var specState = specs.ToDictionary(s => s, s => (s.PostedAt.ToArray(),s.Endorsers.ToArray()));
+    var output = new List<Dictionary<string,object?>>();
+    var talk = typeof(Chapter2InteractionSession).GetMethod("Talk",BindingFlags.Instance|BindingFlags.NonPublic)!;
+    talk.Invoke(session,[p.Id,output]);
+    var menu = output.Single(e => e.GetValueOrDefault("kind")?.ToString() == "candidates");
+    var options = ((IEnumerable<object>)menu["options"]!).Cast<Dictionary<string,object?>>().ToArray();
+    Assert(options.Any(o => o["id"]?.ToString() == "request:FixtureSuccess"), "Appended request must be offered by the actual menu producer");
+    Assert(game.Now == now && game.CalendarMinutes == calendar && game.Specs.SequenceEqual(specs));
+    Assert(specState.All(v => v.Key.PostedAt.SetEquals(v.Value.Item1) && v.Key.Endorsers.SetEquals(v.Value.Item2)));
+    Assert(before.All(v => v.Value == (v.Key.World.Revision,v.Key.World.History.Count,v.Key.World.Projections.Count())));
+});
+
+Check("unknown authored action and unknown runtime AST fail explicitly", () =>
+{
+    var (game,p) = Setup();
+    Reject(() => game.HostSocialScore(p.Id,Ask(p,"FixtureAbsent")));
+    var invalid = Source();
+    Design(invalid)["execution"]!["actions"]!["FixtureSuccess"]!["effect"] = Call("unimplemented");
+    Reject(() => { var broken=From(invalid); var other=broken[p.Id]; broken.HostSocialScore(other.Id,Ask(other,"FixtureSuccess")); });
+});
+
+Check("social refusal does not deliver or grant the requested success effect", () =>
+{
+    var (game,p) = Setup(); Know(p,p.Self,Tags.Cooperation,-100);
+    var requestCount = p.World.Projections.Count(x => x.Procedure is not null && x.Kind == ProjectionKind.Event);
+    Assert(!game.HostPrepareSocialAction(Ask(p,"FixtureSuccess")));
+    game.S.CTB.RunUntil(game.Now+4);
+    Assert(Game.Get(p.Body,success) == 0 && !game.DetHelpers.Contains(p.Id));
+    Assert(p.World.Projections.Count(x => x.Procedure is not null && x.Kind == ProjectionKind.Event) == requestCount);
+});
+
+Check("a changed condition after preview is rejected before request delivery", () =>
+{
+    var (game,p) = Setup(); Assert(game.HostSocialScore(p.Id,Ask(p,"FixtureSuccess")) > 0);
+    Ready(game,p,0);
+    Assert(!game.HostPrepareSocialAction(Ask(p,"FixtureSuccess")));
+    game.S.CTB.RunUntil(game.Now+4);
+    Assert(Game.Get(p.Body,success) == 0 && !game.DetHelpers.Contains(p.Id));
+});
+
+Check("cancelling an accepted waiting procedure stops later success effects", () =>
+{
+    var (game,p) = Setup(); var action=Ask(p,"FixtureDelayed"); var request = Request(game,p,"FixtureDelayed",action);
+    game.Decide(p); var execution = p.Exec;
+    Assert(execution is not null && ReferenceEquals(execution.Intent.Basis,request));
+    game.S.CTB.RunUntil(game.Now+1);
+    Assert(execution!.Status == ExecutionStatus.Pending && Game.Get(p.Body,delayedSuccess) == 0);
+    Assert(game.CancelSocialAction(action));
+    Assert(request.Tags.GetValueOrDefault(Tags.Responded)==1);
+    Assert(!game.CancelSocialAction(action));
+    game.Decide(p);
+    Assert(p.Exec is null || !ReferenceEquals(p.Exec.Intent.Basis,request), "Cancelled request must not be selected again");
+    game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution.Status == ExecutionStatus.Cancelled && Game.Get(p.Body,delayedSuccess) == 0 && !game.DetHelpers.Contains(p.Id));
+});
+
+Check("an authored action condition changed after acceptance fails at Core activation", () =>
+{
+    var (game,p) = Setup(); var request = Request(game,p,"FixtureSuccess");
+    game.Decide(p); var execution = p.Exec;
+    Assert(execution is not null && ReferenceEquals(execution.Intent.Basis,request));
+    Ready(game,p,0);
+    game.S.CTB.RunUntil(game.Now+4);
+    Assert(execution!.Status == ExecutionStatus.Failed && execution.Result?.Failure == ActionFailure.ConditionFailed);
+    Assert(Game.Get(p.Body,success) == 0 && !game.DetHelpers.Contains(p.Id));
+});
+
+Check("condition changes during a wait fail the actual stage without granting success", () =>
+{
+    var (game,p) = Setup(); var request = Request(game,p,"FixtureDelayed");
+    game.Decide(p); var execution = p.Exec;
+    Assert(execution is not null && ReferenceEquals(execution.Intent.Basis,request));
+    game.S.CTB.RunUntil(game.Now+1); Ready(game,p,0);
+    game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution!.Status == ExecutionStatus.Failed && execution.Result?.FailedEffect is Effect.Require);
+    Assert(Game.Get(p.Body,delayedSuccess) == 0 && !game.DetHelpers.Contains(p.Id));
+});
+
+Check("an accepted target that becomes ineligible cannot be replaced by another eligible target", () =>
+{
+    var (game,p) = Setup(); var targetReady = new Tag("FixtureTargetReady"); var targetSuccess = new Tag("FixtureTargetSuccess");
+    var candidates = game.Npcs.Where(t => t != p && p.M.ContainsKey(t.Body) && game.Det.M.ContainsKey(t.Body)).Take(2).ToArray();
+    Assert(candidates.Length == 2, "This isolated target test needs two recipient-owned body references");
+    void SetTarget(Person target,int value)
+    {
+        target.Body.Get<StateProperty>()!.Values[targetReady]=value;
+        target.Body.Get<StateProperty>()!.Observable.Add(targetReady);
+        game.Rt.Sync();
+        Know(p,p.M[target.Body],targetReady,value);
+        Know(game.Det,game.Det.M[target.Body],targetReady,value);
+    }
+    foreach(var target in candidates)SetTarget(target,1);
+    var request=Request(game,p,"FixtureTarget");
+    Assert(request.Procedure is Effect.Set { Target:Noun.Reference }, "The delivered effect must retain its accepted concrete target");
+    var bound=((Noun.Reference)((Effect.Set)request.Procedure!).Target).Projection;
+    var selected=candidates.Single(t=>ReferenceEquals(p.M[t.Body],bound));
+    var alternative=candidates.Single(t=>t!=selected);
+    SetTarget(selected,0);
+    Assert(Game.Get(alternative.Body,targetReady)==1 && game.HostSocialScore(p.Id,Ask(p,"FixtureTarget"))>0,
+        "A fresh request still has a valid alternative, so refusing to retarget is observable");
+    game.Decide(p); var execution=p.Exec;
+    Assert(execution is not null && ReferenceEquals(execution.Intent.Basis,request));
+    game.S.CTB.RunUntil(game.Now+4);
+    Assert(execution!.Status==ExecutionStatus.Failed && execution.Result?.Failure==ActionFailure.ConditionFailed);
+    Assert(candidates.All(t=>Game.Get(t.Body,targetSuccess)==0) && !game.DetHelpers.Contains(p.Id),
+        "Neither the original target nor its replacement may receive a successful effect");
+});
+
+Check("an accepted but impossible procedure fails without completion credit or success effects", () =>
+{
+    var (game,p) = Setup(); var request = Request(game,p,"FixtureImpossible");
+    var execution = Begin(game,p,request);
+    Assert(execution.Status == ExecutionStatus.Failed && execution.Result?.Failure == ActionFailure.ConditionFailed);
+    Assert(Game.Get(p.Body,impossibleSuccess) == 0 && !game.DetHelpers.Contains(p.Id));
+});
+
+var finalSource = File.ReadAllText(Path.Combine(directory,"final-contracts","chapter2.json"));
+JsonObject FinalSource() => JsonNode.Parse(finalSource)!.AsObject();
+bool Fulfill(Game game,PlayerAction action) => (bool)typeof(Game)
+    .GetMethod("FulfillCommitment",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(game,[action])!;
+(Game Game,Person Recipient,PlayerAction Action,Projection Request) CommitmentRequest(string id="FixtureDeclaredFulfill")
+{
+    var (game,p)=Setup(From(FinalSource()));
+    var action=Ask(p,id);
+    var request=Request(game,p,id,action);
+    Assert(game.Promises.Count==1 && game.Promises[0].Who==p.Id && !game.Promises[0].Done,
+        "The neutral promise declaration must create an unfinished commitment on acceptance");
+    return (game,p,action,request);
+}
+ActionExecution ChooseRequest(Game game,Person p,Projection request)
+{
+    game.Decide(p);
+    Assert(p.Exec is not null && ReferenceEquals(p.Exec.Intent.Basis,request),
+        "The real recipient decision must select the delivered neutral request");
+    return p.Exec!;
+}
+
+Check("metadata-only story declarations produce empty runtime AST and preserve lifetime contracts", () =>
+{
+    var root=FinalSource(); var game=From(root); var p=game.Det;
+    var declarations=RuleDesign.Read(Element(Design(root)["rules"]!));
+    foreach(var scope in new[]{"world","chapter","interaction"})
+    {
+        var id="FixtureMetadata_"+scope;
+        Assert(declarations[id].Lifetime==scope);
+        game.BeginInteractionLifetime("neutral-metadata-interaction");
+        Assert(!game.RuleById(id).Build(new Fx(game,e=>p.M[e])).Any(),
+            "A declaration with no execution block must not synthesize executable rules");
+        game.EndInteractionLifetime();
+    }
+    Rule Mixed(LifetimeScope lifetime,string? owner)=>new(new Condition.Constant(Truth.True),RuleMode.Prefer,
+        new Effect.Think(new Condition.Exists(p.Self)),2,Truth.True,lifetime,owner);
+    var basis=Observation.Observe(p.Soul,new("neutral mixed metadata lifetime",ProjectionKind.Concept)
+        {Rules=[Mixed(LifetimeScope.World,null),Mixed(LifetimeScope.Chapter,"chapter2"),
+            Mixed(LifetimeScope.Interaction,"neutral-metadata-interaction")]});
+    game.BeginInteractionLifetime("neutral-metadata-interaction");game.EndInteractionLifetime();
+    Assert(basis.Rules.Length==2 && basis.Rules.Any(r=>r.Lifetime==LifetimeScope.World)
+        && basis.Rules.Any(r=>r.Lifetime==LifetimeScope.Chapter && r.LifetimeOwner=="chapter2"));
+    var revision=p.World.Revision;game.EndInteractionLifetime();Assert(p.World.Revision==revision);
+});
+
+Check("sender and recipient use the same declared cost and travel cost in actual ActionIntent.Delay", () =>
+{
+    foreach(var actorName in new[]{"sender","recipient"})
+    foreach(var costs in new[]{(Cost:1.25,Travel:3.75),(Cost:2.5,Travel:7.0)})
+    {
+        var root=FinalSource();var definition=Design(root)["execution"]!["actions"]!["FixtureDeclaredCost"]!;
+        definition["actor"]=actorName;definition["cost"]=costs.Cost;definition["travel_cost"]=costs.Travel;
+        var (game,p)=Setup(From(root));var actor=actorName=="sender"?game.Det:p;
+        var destination=game.Way.Keys.First(to=>to!=game.Where(actor) && game.HostCanEnter(to)
+            && game.Way[to].Get<PassageProperty>()!.Connections.ContainsKey(game.Space[game.Where(actor)]));
+        Know(p,p.M[game.Way[destination]],new("Passable"),1);
+        Know(game.Det,game.Det.M[game.Way[destination]],new("Passable"),1);
+        var action=Ask(p,"FixtureDeclaredCost") with {Place=destination};
+        var request=Request(game,p,"FixtureDeclaredCost",action);
+        ActionExecution execution;
+        if(actorName=="sender")
+        {
+            Assert((bool)typeof(Game).GetMethod("SubmitSenderSocial",BindingFlags.Instance|BindingFlags.NonPublic)!
+                .Invoke(game,[action])!,"The accepted sender declaration must submit an actual action");
+            execution=game.Det.Exec!;
+        }
+        else execution=ChooseRequest(game,p,request);
+        Assert(ReferenceEquals(execution.Intent.Actor,actor.Self));
+        Assert(execution.Intent.Changes is Effect.Act {Operation:ActionOp.Travel});
+        var expected=costs.Cost+costs.Travel/actor.Pro.Speed+(actor.Weak?0.5:0);
+        Assert(Math.Abs(execution.Intent.Delay-expected)<1e-10,
+            $"{actorName}: expected declared delay {expected}, got {execution.Intent.Delay}");
+        Assert(execution.Status==ExecutionStatus.Pending,"Cost must be present before the action activates");
+        game.CancelSocialAction(action);
+    }
+});
+
+Check("physical availability accepts an open route without rewriting a recipient's closed route belief or executing", () =>
+{
+    Projection? hiddenRoute=null;
+    var candidate=new Game(new GameOptions {Hide=(_,view)=>ReferenceEquals(view,hiddenRoute)},
+        authored:WorldScriptDocument.Parse(finalSource,allowChapterAdapter:true).Single());
+    var (game,p)=Setup(candidate);var passable=new Tag("Passable");
+    // Real Say completion normally perceives local routes. The existing perception filter
+    // hides this one route so that normal local observation cannot replace its old belief.
+    var destination=game.Way.Keys.First(to=>to!=game.Where(p) && game.HostCanEnter(to)
+        && game.Way[to].Get<PassageProperty>()!.Connections.ContainsKey(game.Space[game.Where(p)]));
+    hiddenRoute=game.View[game.Way[destination]];
+    Know(p,p.M[game.Way[destination]],passable,0);
+    Know(game.Det,game.Det.M[game.Way[destination]],passable,0);
+    var before=game.People.ToDictionary(person=>person,person=>(person.World.Revision,person.World.History.Count,person.World.Projections.Count()));
+    var now=game.Now;var calendar=game.CalendarMinutes;
+    var action=Ask(p,"FixturePhysical") with {Place=destination};
+    Assert(game.HostSocialScore(p.Id,action)>0,"An open physical route must be available despite old closed-route belief");
+    Assert(game.Now==now && game.CalendarMinutes==calendar);
+    Assert(before.All(v=>v.Value==(v.Key.World.Revision,v.Key.World.History.Count,v.Key.World.Projections.Count())));
+    var request=Request(game,p,"FixturePhysical",action);
+    Assert(p.M[game.Way[destination]].Tags.GetValueOrDefault(passable)==0,
+        "Request acceptance must not replace the recipient's route memory");
+    Assert(Game.Get(p.Body,new("FixturePhysicalSuccess"))==0 && game.Where(p)!=destination,
+        "Acceptance is not execution or arrival");
+    Assert(Ast.References(request.Procedure).All(p.World.Contains));
+    var subjective=FinalSource();Design(subjective)["execution"]!["actions"]!["FixturePhysical"]!["condition_world"]="subjective";
+    var (other,recipient)=Setup(From(subjective));other.HostMoveDet(other.Where(recipient));
+    Know(recipient,recipient.M[other.Way[destination]],passable,0);
+    Assert(other.HostSocialScore(recipient.Id,Ask(recipient,"FixturePhysical") with {Place=destination})==int.MinValue);
+});
+
+Check("changing the story fulfillment ID does not fulfill on request acceptance", () =>
+{
+    var (game,p,action,request)=CommitmentRequest();
+    Assert(!Fulfill(game,action) && !game.Promises[0].Done);
+    Assert(Game.Get(p.Body,delayedSuccess)==0 && request.Procedure is not null);
+});
+
+Check("changing the story fulfillment ID does not fulfill after actual Core failure", () =>
+{
+    var (game,p,action,request)=CommitmentRequest();var execution=ChooseRequest(game,p,request);
+    Ready(game,p,0);game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution.Status==ExecutionStatus.Failed && execution.Result?.Failure==ActionFailure.ConditionFailed);
+    Assert(!Fulfill(game,action) && !game.Promises[0].Done && Game.Get(p.Body,delayedSuccess)==0);
+});
+
+Check("changing the story fulfillment ID does not fulfill after cancellation", () =>
+{
+    var (game,p,action,request)=CommitmentRequest();var execution=ChooseRequest(game,p,request);
+    game.S.CTB.RunUntil(game.Now+1);Assert(execution.Status==ExecutionStatus.Pending);
+    Assert(game.CancelSocialAction(action));game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution.Status==ExecutionStatus.Cancelled);
+    Assert(!Fulfill(game,action) && !game.Promises[0].Done && Game.Get(p.Body,delayedSuccess)==0);
+});
+
+Check("the newly declared fulfillment ID fulfills only after Completed receipt and remains idempotent", () =>
+{
+    var (game,p,action,request)=CommitmentRequest();var execution=ChooseRequest(game,p,request);
+    Assert(!Fulfill(game,action));game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution.Status==ExecutionStatus.Completed && execution.Events.Any(e=>e is ActionEventV1<Essence?>
+        && e.Fields.Phase==EventPhaseV1.Completed && e.Fields.Outcome==EventOutcomeV1.Succeeded));
+    Assert(Game.Get(p.Body,delayedSuccess)==1 && Fulfill(game,action) && game.Promises[0].Done);
+    var count=game.Promises.Count;Assert(!Fulfill(game,action) && game.Promises.Count==count);
+});
+
+Check("a Completed neutral action with a different ID cannot fulfill the renamed declaration", () =>
+{
+    var (game,p,action,request)=CommitmentRequest("FixtureOtherCompleted");var execution=ChooseRequest(game,p,request);
+    game.S.CTB.RunUntil(game.Now+5);Assert(execution.Status==ExecutionStatus.Completed && Game.Get(p.Body,delayedSuccess)==1);
+    Assert(!Fulfill(game,action) && !game.Promises[0].Done);
+});
+
+JsonObject ReceiptSource(int weight) => JsonNode.Parse(File.ReadAllText(
+    Path.Combine(directory,"receipt-contracts",$"weight-{weight}.json")))!.AsObject();
+void SetContractTime(Game game,int day,Slot slot)
+{
+    const BindingFlags binding=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
+    void Set(string name,object value)
+    {
+        if(typeof(Game).GetProperty(name,binding) is {} property)property.SetValue(game,value);
+        else (typeof(Game).GetField(name,binding)??throw new Exception("Missing neutral clock boundary: "+name)).SetValue(game,value);
+    }
+    Set("Day",day);Set("Slot",slot);
+}
+(Game Game,Person Recipient,PlayerAction Action,ActionExecution Execution) CompletedDeadlineRequest()
+{
+    var root=FinalSource();var commitment=Design(root)["execution"]!["commitments"]!;
+    commitment["due_days"]=0;commitment["deadline_slot"]="Forenoon";
+    var (game,p)=Setup(From(root));var action=Ask(p,"FixtureDeclaredFulfill");
+    var request=Request(game,p,"FixtureDeclaredFulfill",action);var execution=ChooseRequest(game,p,request);
+    game.S.CTB.RunUntil(game.Now+5);
+    Assert(execution.Status==ExecutionStatus.Completed && Game.Get(p.Body,delayedSuccess)==1
+        && execution.Events.Any(e=>e is ActionEventV1<Essence?> && e.Fields.Phase==EventPhaseV1.Completed
+            && e.Fields.Outcome==EventOutcomeV1.Succeeded),"This boundary check requires an actual completed action");
+    Assert(game.Promises.Count==1 && !game.Promises[0].Done);
+    return (game,p,action,execution);
+}
+
+Check("a Completed request fulfills before its declared deadline but not at or beyond it", () =>
+{
+    foreach(var test in new (int DayOffset,Slot At,bool Allowed)[]{(0,Slot.Morning,true),(0,Slot.Forenoon,false),
+        (0,Slot.Noon,false),(1,Slot.Morning,false)})
+    {
+        var (game,p,action,execution)=CompletedDeadlineRequest();var due=game.Promises[0].Due;
+        SetContractTime(game,due+test.DayOffset,test.At);
+        Assert(Fulfill(game,action)==test.Allowed && game.Promises[0].Done==test.Allowed);
+        Assert(execution.Status==ExecutionStatus.Completed && Game.Get(p.Body,delayedSuccess)==1,
+            "A valid action result is independent of whether its deadline permits fulfillment");
+    }
+});
+
+Check("the formal end-of-slot path closes expired Completed requests once with failure feedback", () =>
+{
+    foreach(var test in new (int DayOffset,Slot At)[]{(0,Slot.Forenoon),(0,Slot.Noon),(1,Slot.Morning)})
+    {
+        var (game,p,action,execution)=CompletedDeadlineRequest();var due=game.Promises[0].Due;
+        SetContractTime(game,due+test.DayOffset,test.At);Assert(!Fulfill(game,action));
+        game.TakeFeed();game.LastAction=action;
+        var end=typeof(Game).GetMethod("PlayerEnd",BindingFlags.Instance|BindingFlags.NonPublic)!;
+        end.Invoke(game,[action]);var feed=game.TakeFeed();
+        var failedKey=Design(FinalSource())["execution"]!["commitments"]!["failed"]!.GetValue<string>();
+        var failed=Chapter2Design.Text(failedKey,("name",p.Name));
+        Assert(game.Promises[0].Done && feed.Count(line=>line==failed)==1 && !Fulfill(game,action),
+            "Expired completion must close as a failed commitment, never late fulfillment");
+        end.Invoke(game,[action]);Assert(!game.TakeFeed().Contains(failed),"Deadline closure must be idempotent");
+        Assert(execution.Status==ExecutionStatus.Completed);
+    }
+});
+
+void AssertAttitude(Game game,Person p,string policy,bool accepted,int value,int start)
+{
+    var marker=new Tag($"FixtureReceipt_{policy}_{(accepted?"accepted":"rejected")}");
+    var rows=p.World.History.Skip(start).Where(h=>h.Tags.ContainsKey(marker)).ToArray();
+    Assert(rows.Length==1,"The formal path must record the newly declared label exactly once");
+    var row=rows[0];var attitude=row.Event;
+    Assert(row.Tags[marker]==value && row.Tags[Tags.Trust]==value);
+    Assert(row.Relations.Contains((Relations.Subject,p.M[game.Det.Body])),"Attitude must concern the sender");
+    Assert(attitude is TestimonyEventV1<Projection?> && attitude.Fields.Phase==EventPhaseV1.Delivered
+        && attitude.Fields.Outcome==EventOutcomeV1.Succeeded && attitude.Fields.Causes.Length==1,
+        "The attitude is a delivered memory, separate from request execution");
+    var cause=p.World.History.FirstOrDefault(h=>h.Event?.Fields.Id==attitude!.Fields.Causes[0])?.Event;
+    Assert(cause is TestimonyEventV1<Projection?> && cause.Fields.Phase==EventPhaseV1.Accepted
+        && cause.Fields.Outcome==(accepted?EventOutcomeV1.Succeeded:EventOutcomeV1.Failed),
+        "The attitude must cite the actual acceptance or rejection receipt");
+    Assert(!game.Det.World.History.Any(h=>h.Tags.ContainsKey(marker)),"Recipient attitude remains recipient-owned");
+    Assert(!p.World.History.Skip(start).Any(h=>h.Event is ActionEventV1<Projection?> e
+        && e.Fields.Phase==EventPhaseV1.Completed && ReferenceEquals(e.Fields.Subject,p.Self)),
+        "Acceptance and attitude delivery cannot claim that the recipient completed an action");
+}
+
+Check("story-only attitude labels and weights affect formal TellRule acceptance and rejection history", () =>
+{
+    foreach(var weight in new[]{3,9})foreach(var accepted in new[]{true,false})
+    {
+        var (game,p)=Setup(From(ReceiptSource(weight)));
+        Know(p,p.Self,Tags.Cooperation,accepted?100:-100);
+        var action=new PlayerAction(Cmd.TellRule){Who=p.Id,Spec=game.RuleById("FixtureRule")};
+        var score=game.HostSocialScore(p.Id,Ask(p,"FixtureSuccess"));var start=p.World.History.Count;
+        Assert(game.HostPrepareSocialAction(action)==accepted);
+        var value=accepted?weight:-weight;AssertAttitude(game,p,"rules",accepted,value,start);
+        Assert(game.HostSocialScore(p.Id,Ask(p,"FixtureSuccess"))==score+value,
+            "Subsequent formal preview must use the declared sender-history weight");
+        Assert(Game.Get(p.Body,new("FixtureRuleSuccess"))==0 && Game.Get(p.Body,success)==0);
+    }
+});
+
+Check("story-only request attitude acceptance and refusal neither execute effects nor grant fulfillment", () =>
+{
+    foreach(var weight in new[]{3,9})foreach(var accepted in new[]{true,false})
+    {
+        var (game,p)=Setup(From(ReceiptSource(weight)));
+        Know(p,p.Self,Tags.Cooperation,accepted?100:-100);
+        var action=Ask(p,"FixtureSuccess");var score=game.HostSocialScore(p.Id,action);var start=p.World.History.Count;
+        var requests=p.World.Projections.Count(x=>x.Kind==ProjectionKind.Event && x.Procedure is not null);
+        Assert(game.HostPrepareSocialAction(action)==accepted);
+        var value=accepted?weight+4:-weight-4;AssertAttitude(game,p,"requests",accepted,value,start);
+        Assert(game.HostSocialScore(p.Id,action)==score+value);
+        Assert(Game.Get(p.Body,success)==0 && Game.Get(game.Det.Body,success)==0 && p.Exec is null
+            && !game.DetHelpers.Contains(p.Id) && !Fulfill(game,action));
+        Assert(p.World.Projections.Count(x=>x.Kind==ProjectionKind.Event && x.Procedure is not null)
+            ==requests+(accepted?1:0),"Refusal cannot deliver an executable request");
+    }
+});
+
+Check("formal mediation independently records declared accepted and rejected sender attitudes", () =>
+{
+    foreach(var weight in new[]{3,9})
+    {
+        var root=ReceiptSource(weight);var (game,_)=Setup(From(root));
+        var definition=Design(root)["execution"]!["mediation"]!;
+        var participants=definition["participants"]!.AsArray().Select(n=>game[Enum.Parse<P>(n!.GetValue<string>())]).ToArray();
+        Assert(participants.Length>=2);
+        for(var i=0;i<participants.Length;i++)
+        {Know(participants[i],participants[i].Self,Tags.Cooperation,i==0?100:-100);
+            Know(participants[i],participants[i].M[game.Det.Body],Tags.Trust,0);}
+        var before=participants.ToDictionary(p=>p,p=>(p.World.History.Count,
+            SocialSystem.EvaluateSender(p.World,p.Self,p.M[game.Det.Body]).Score));
+        var now=game.Now;var calendar=game.CalendarMinutes;
+        var result=game.HostMediate(definition["wordings"]!.AsObject().First().Key);
+        Assert(result.Any(r=>r.Accepted) && result.Any(r=>!r.Accepted) && !game.Mediated);
+        foreach(var r in result)
+        {
+            var p=game[r.Who];var value=r.Accepted?weight+2:-weight-2;
+            AssertAttitude(game,p,"mediation",r.Accepted,value,before[p].Item1);
+            Assert(SocialSystem.EvaluateSender(p.World,p.Self,p.M[game.Det.Body]).Score==before[p].Score+value);
+        }
+        Assert(game.Now==now && game.CalendarMinutes==calendar && participants.All(p=>p.Exec is null));
+    }
+});
+
+Check("declared receipt policies remain inert during repeated social menu previews", () =>
+{
+    var (game,p)=Setup(From(ReceiptSource(9)));var action=Ask(p,"FixtureSuccess");
+    var before=game.People.ToDictionary(person=>person,person=>(person.World.Revision,person.World.History.Count,
+        person.World.Projections.Count()));var now=game.Now;var specs=game.Specs.ToArray();
+    for(var i=0;i<10;i++)
+    {Assert(game.HostSocialScore(p.Id,action)>0);game.HostSocialScore(p.Id,new(Cmd.TellRule){Who=p.Id,Spec=game.RuleById("FixtureRule")});
+        _=game.HostTellable().ToArray();}
+    Assert(game.Now==now && game.Specs.SequenceEqual(specs)
+        && before.All(v=>v.Value==(v.Key.World.Revision,v.Key.World.History.Count,v.Key.World.Projections.Count())));
+    Assert(Game.Get(p.Body,success)==0 && p.Exec is null && !game.DetHelpers.Contains(p.Id));
+});
+
+Game DeliveryFixture(string actorName)
+{
+    var root=Source();var declaration=Design(root)["execution"]!["actions"]!["FixtureSuccess"]!;
+    declaration["actor"]=actorName;declaration["promise"]=true;
+    return From(root);
+}
+Dictionary<P,SocialStance> Asked(Game game) => (Dictionary<P,SocialStance>)typeof(Game)
+    .GetField("_asked",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(game)!;
+
+foreach(var actorName in new[]{"recipient","sender"})
+{
+    Check($"{actorName}: failed Say cannot reuse a cancelled same-text request or its old acceptance", () =>
+    {
+        var (game,p)=Setup(DeliveryFixture(actorName));var oldAction=Ask(p,"FixtureSuccess");
+        var oldRequest=Request(game,p,"FixtureSuccess",oldAction);var oldProcedure=oldRequest.Procedure;
+        Assert(Asked(game).GetValueOrDefault(p.Id)==SocialStance.Accept && game.Promises.Count==1,
+            "The failure fixture must first retain a real accepted request and commitment");
+        Assert(game.CancelSocialAction(oldAction) && oldRequest.Tags.GetValueOrDefault(Tags.Responded)==1);
+        Assert(Asked(game).GetValueOrDefault(p.Id)==SocialStance.Accept && oldRequest.Procedure is not null,
+            "Cancellation must leave the old acceptance and procedure present for the reuse trap");
+        var requests=p.World.Projections.Where(x=>x.Kind==ProjectionKind.Event && x.Procedure is not null).ToHashSet();
+        var promises=game.Promises.ToArray();var recipientHistory=p.World.History.Count;
+        var senderHistory=game.Det.World.History.Count;var begin=game.Now;
+        var original=game.Where(p);var destination=game.Space.Keys.First(at=>at!=original);
+        var action=Ask(p,"FixtureSuccess");var completions=new List<ActionExecution>();
+        game.S.Completed+=execution=>completions.Add(execution);
+        Assert(game.HostSocialScore(p.Id,action)>0 && game.Where(game.Det)==original,
+            "The new request must pass the normal availability and acceptance preview before movement");
+        double? movedAt=null;
+        game.S.CTB.Schedule(.005,()=>
+        {
+            movedAt=game.Now;
+            p.Body.Get<SpatialProperty>()!.Space=game.Space[destination];
+            game.Rt.Sync();
+        });
+        Assert(!game.HostPrepareSocialAction(action),"Failed delivery must reject the new formal action");
+        var say=completions.Single(execution=>execution.Intent.Changes is Effect.Say speech
+            && speech.Text==oldRequest.Name && ReferenceEquals(execution.Intent.Actor,game.Det.Self));
+        Assert(movedAt is {} moved && Math.Abs(moved-(begin+.005))<1e-10
+            && say.Intent.Delay==.01 && say.Result is {} result && Math.Abs(result.Time-(begin+.01))<1e-10
+            && result.Time>moved && game.Now>=begin+.05 && game.Where(p)!=game.Where(game.Det),
+            "The recipient must move at .005 before the actual .01 Say activation, not before preview");
+        Assert(say.Status==ExecutionStatus.Failed && say.Result?.Failure==ActionFailure.OutOfReach
+            && say.Result.FailedEffect is Effect.Say,
+            "The actual Core Say must fail specifically because its recipient moved out of reach");
+        Assert(say.Events.Count(e=>e is ActionEventV1<Essence?> && e.Fields.Phase==EventPhaseV1.Completed
+            && e.Fields.Outcome==EventOutcomeV1.Failed && e.Fields.Failure==ActionFailure.OutOfReach)==1
+            && !say.Events.Any(e=>e.Fields.Outcome==EventOutcomeV1.Succeeded),
+            "Failure must be proven by Core's terminal receipt and must not include success receipts");
+        Assert(!Asked(game).ContainsKey(p.Id),"A failed delivery must not preserve this recipient's stale acceptance");
+        Assert(game.Promises.SequenceEqual(promises)
+            && p.World.Projections.Where(x=>x.Kind==ProjectionKind.Event && x.Procedure is not null).ToHashSet().SetEquals(requests),
+            "Failed delivery cannot create a new promise or executable request");
+        Assert(ReferenceEquals(oldRequest.Procedure,oldProcedure) && oldRequest.Tags.GetValueOrDefault(Tags.Responded)==1
+            && !p.World.History.Skip(recipientHistory).Any(h=>ReferenceEquals(h.Target,oldRequest)),
+            "The cancelled old request must remain unchanged and must not be bound to the new attempt");
+        bool AcceptedReceipt(ObservationEvent h) => h.Event is TestimonyEventV1<Projection?> e
+            && e.Fields.Phase==EventPhaseV1.Accepted && e.Fields.Outcome==EventOutcomeV1.Succeeded;
+        Assert(!p.World.History.Skip(recipientHistory).Any(AcceptedReceipt)
+            && !game.Det.World.History.Skip(senderHistory).Any(AcceptedReceipt),
+            "Neither participant may receive a successful acceptance for the failed new delivery");
+        Assert(!(bool)typeof(Game).GetMethod("SubmitSenderSocial",BindingFlags.Instance|BindingFlags.NonPublic)!
+            .Invoke(game,[action])!,"The real sender execution entry must reject the failed delivery");
+        Assert(!game.CancelSocialAction(action),"The failed attempt must not own an accepted old request");
+        game.Decide(p);
+        Assert(p.Exec is null || !ReferenceEquals(p.Exec.Intent.Basis,oldRequest),
+            "The recipient's real decision must not reuse the cancelled request");
+        game.S.CTB.RunUntil(game.Now+4);
+        Assert(Game.Get(p.Body,success)==0 && Game.Get(game.Det.Body,success)==0 && !game.DetHelpers.Contains(p.Id)
+            && game.Promises.SequenceEqual(promises),"Neither actor may receive success effects or a new commitment");
+    });
+
+    Check($"{actorName}: a later successful same-text delivery owns a new request and executes that attempt", () =>
+    {
+        var (game,p)=Setup(DeliveryFixture(actorName));var oldAction=Ask(p,"FixtureSuccess");
+        var oldRequest=Request(game,p,"FixtureSuccess",oldAction);var oldProcedure=oldRequest.Procedure;
+        Assert(game.CancelSocialAction(oldAction));var start=p.World.History.Count;
+        var action=Ask(p,"FixtureSuccess");var request=Request(game,p,"FixtureSuccess",action);
+        Assert(request.Name==oldRequest.Name && !ReferenceEquals(request,oldRequest)
+            && oldRequest.Tags.GetValueOrDefault(Tags.Responded)==1 && ReferenceEquals(oldRequest.Procedure,oldProcedure),
+            "Successful repeat delivery must preserve the cancelled old request and create a distinct new request");
+        Assert(p.World.History.Skip(start).Count(h=>h.Event is TestimonyEventV1<Projection?> e
+            && e.Fields.Phase==EventPhaseV1.Accepted && e.Fields.Outcome==EventOutcomeV1.Succeeded)==1
+            && game.Promises.Count==2 && Game.Get(p.Body,success)==0 && Game.Get(game.Det.Body,success)==0);
+        ActionExecution execution;
+        if(actorName=="sender")
+        {
+            Assert((bool)typeof(Game).GetMethod("SubmitSenderSocial",BindingFlags.Instance|BindingFlags.NonPublic)!
+                .Invoke(game,[action])!,"The accepted repeat must reach the real sender execution entry");
+            execution=game.Det.Exec!;
+        }
+        else execution=ChooseRequest(game,p,request);
+        game.S.CTB.RunUntil(game.Now+4);var actor=actorName=="sender"?game.Det:p;var other=actor==p?game.Det:p;
+        Assert(execution.Status==ExecutionStatus.Completed && Game.Get(actor.Body,success)==1 && Game.Get(other.Body,success)==0,
+            "The repeated request must execute successfully only for its declared actor");
+    });
+}
+
+Console.WriteLine($"AST REQUEST CHECK: {checks} checks, {failures} failures");
+return failures == 0 ? 0 : 1;

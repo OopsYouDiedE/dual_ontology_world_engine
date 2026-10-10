@@ -1,11 +1,22 @@
 续篇 chapter2
 
     # ---- 规矩：板上与口中的规矩（内容、立规者、价值标记、何时张贴）----------------------------------
-    # 规矩的“怎么判定、怎么执行”是 Core 的 Rule，写在 C#；这里只写它是什么、谁立的、带哪些价值标记。
+    # 条件与行动均声明为 Core AST；程序只绑定引用并执行。
 
     规矩 沃德台账规
         有效期：world
         编号：WardLedger
+        执行：
+            0:
+                condition: true()
+                mode: Forbid
+                effect: procedure("NightTakeSelf")
+                weight: 2
+            1:
+                condition: true()
+                mode: Forbid
+                effect: procedure("NightTakeSick")
+                weight: 2
         立规者：沃德
         内容：凡取用公物须登记于台账；无登记取用者视为私取。
         标记：记录、不许特例、沃德权威、口粮
@@ -14,6 +25,12 @@
     规矩 沃德夜规
         有效期：world
         编号：WardNight
+        执行：
+            0:
+                condition: tag("object.Clock", "SlotNight", 1) 且 tag("$actor", "Branded", 1)
+                mode: Forbid
+                effect: travel("route.Logistics")
+                weight: 2
         立规者：沃德
         内容：私取之人（雀儿）入夜不得入后勤院。
         标记：限制、针对雀儿、针对个人、沃德权威、口粮
@@ -23,6 +40,17 @@
     规矩 茉拉夜规
         有效期：world
         编号：MoraNight
+        执行：
+            0:
+                condition: tag("object.Clock", "SlotNight", 1) 且 非 tag("$actor", "Fed", 1) 且 非 tag("$actor", "DidShare", 1) 且 非 tag("$actor", "DidNightTakeSelf", 1)
+                mode: Prefer
+                effect: procedure("NightTakeSelf")
+                weight: 3
+            1:
+                condition: (tag("object.Clock", "SlotMorning", 1) 或 tag("object.Clock", "SlotForenoon", 1) 或 tag("object.Clock", "SlotNoon", 1) 或 tag("object.Clock", "SlotAfternoon", 1) 或 tag("object.Clock", "SlotEvening", 1)) 且 tag("$actor", "OweNote", 1)
+                mode: Prefer
+                effect: procedure("Inform")
+                weight: 2
         立规者：茉拉
         内容：病者伤者优先。夜间急需可自取一份，次日告知。
         标记：病人优先、夜间特例、口粮
@@ -31,6 +59,12 @@
     规矩 阮清越台账规
         有效期：world
         编号：RuanLedger
+        执行：
+            0:
+                condition: (tag("object.Clock", "SlotEvening", 1)) 且 tag("$actor", "Duty", 1) 且 非 tag("$actor", "DidCountLedger", 1)
+                mode: Prefer
+                effect: procedure("CountLedger")
+                weight: 1
         立规者：阮清越
         内容：每日按人头分配，日末清点。
         标记：按人头、记录、口粮
@@ -39,6 +73,12 @@
     规矩 警告一
         有效期：world
         编号：Warning1
+        执行：
+            0:
+                condition: true()
+                mode: Forbid
+                effect: procedure("AnswerName")
+                weight: 5
         立规者：恶魔
         内容：入夜后，名录库中若有人以你之名唤你，勿应。
         标记：安全、禁止欲望
@@ -46,6 +86,12 @@
     规矩 警告二
         有效期：world
         编号：Warning2
+        执行：
+            0:
+                condition: tag("object.Gauge", "Pressure", 2)
+                mode: Forbid
+                effect: set("object.Valve", "Open", 1)
+                weight: 5
         立规者：恶魔
         内容：温室水压表指针过红线时，勿开顶窗。
         标记：安全
@@ -53,6 +99,12 @@
     规矩 共同规则
         有效期：world
         编号：CommonRule
+        执行：
+            0:
+                condition: 非 tag("$actor", "SawAct", 1)
+                mode: Forbid
+                effect: procedure("Accuse")
+                weight: 3
         立规者：侦探
         内容：公开指控须附可检查的材料。
         标记：证据优先
@@ -61,6 +113,12 @@
     规矩 沈鼎灶规
         有效期：world
         编号：ShenKitchen
+        执行：
+            0:
+                condition: (tag("object.Clock", "SlotNoon", 1) 或 tag("object.Clock", "SlotEvening", 1)) 且 tag("$actor", "GranaryKey", 1) 且 非 tag("$actor", "IsShen", 1)
+                mode: Prefer
+                effect: procedure("GiveKey")
+                weight: 4
         立规者：沈鼎
         内容：粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。
         标记：中央做饭、口粮、病人优先、记录
@@ -69,6 +127,12 @@
     规矩 维罗妮卡实物规
         有效期：world
         编号：VeronicaEvidence
+        执行：
+            0:
+                condition: 非 tag("$actor", "SawAct", 1)
+                mode: Forbid
+                effect: procedure("Accuse")
+                weight: 3
         立规者：维罗妮卡
         内容：指控须有实物为证；取用须有记录。
         标记：证据优先、记录
@@ -77,6 +141,12 @@
     规矩 卢西安不烙印规
         有效期：world
         编号：LucianNoBrand
+        执行：
+            0:
+                condition: (tag("object.Clock", "SlotMorning", 1)) 且 any_tag("characters", "Accused", 1)
+                mode: Prefer
+                effect: procedure("Defend")
+                weight: 2
         立规者：卢西安
         内容：未经查验，不得以“私取”之名限制任何人行走。
         标记：证据优先、夜间特例
@@ -85,6 +155,8 @@
     规矩 开放取回方案
         有效期：world
         编号：OpenPlan
+        执行：
+
         立规者：霍铎
         内容：名录库各取其物：各人的东西，各人取回。
         标记：开放名录库
@@ -92,6 +164,8 @@
     规矩 封闭不启方案
         有效期：world
         编号：SealPlan
+        执行：
+
         立规者：顾平章
         内容：名录库封闭不启：库门封着，谁也不开。
         标记：封存名录库、传统
@@ -99,6 +173,8 @@
     规矩 委员会保管方案
         有效期：world
         编号：CommitteePlan
+        执行：
+
         立规者：沃德
         内容：名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。
         标记：委员会管名录库、沃德权威、记录
@@ -108,41 +184,159 @@
     规矩格
         主语：
             - 任何人
+                id: any
+                condition: true()
             - 值守者
+                id: duty
+                condition: tag("$actor", "Duty", 1)
             - 生活翼的人
+                id: life
+                condition: tag("$actor", "GrpLife", 1)
             - 文契组的人
+                id: letters
+                condition: tag("$actor", "GrpWenqi", 1)
             - 星仪组的人
+                id: stars
+                condition: tag("$actor", "GrpXingyi", 1)
             - 后勤组的人
+                id: logistics
+                condition: tag("$actor", "GrpHouqin", 1)
         条件：
             - 任何时候
+                id: any
+                condition: true()
             - 入夜后
+                id: night
+                condition: tag("object.Clock", "SlotNight", 1)
             - 有人急病时 | 病人优先
+                id: sick
+                condition: tag("object.Clock", "SlotNight", 1) 且 any_tag("characters", "Sick", 1) 且 非 tag("object.Bowl", "Porridge", 1)
             - 自己没领到口粮时
+                id: unfed
+                condition: tag("object.Clock", "SlotNight", 1) 且 非 tag("$actor", "Fed", 1)
             - 白天
+                id: day
+                condition: 非 tag("object.Clock", "SlotNight", 1)
         行为：
-            # 名称 | 编号（代码按编号认行为）| 标记
             - 取一份口粮 | 取粮 | 口粮
+                rules:
+                    0:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: choose(option("conds", "sick"), procedure("NightTakeSick"), procedure("NightTakeSelf"))
+                        weight: 3
+                        select: option("exceptions", "closed")
+                    1:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: choose(option("conds", "sick"), procedure("NightTakeSickRec"), procedure("NightTakeSelfRec"))
+                        weight: 3
+                        select: option("exceptions", "closed")
+                    2:
+                        condition: param("subject") 且 param("condition") 且 choose(option("conds", "sick"), (非 tag("$actor", "DidNightTakeSickRec", 1) 且 非 tag("$actor", "DidNightTakeSick", 1)), (非 tag("$actor", "DidNightTakeSelfRec", 1) 且 非 tag("$actor", "DidNightTakeSelf", 1)))
+                        mode: Permit
+                        effect: choose(option("conds", "sick"), procedure("NightTakeSickRec"), procedure("NightTakeSelfRec"))
+                        weight: 2
+                        select: 非 option("exceptions", "closed") 且 (option("accounts", "record") 或 option("accounts", "witness"))
+                    3:
+                        condition: param("subject") 且 param("condition") 且 choose(option("conds", "sick"), (非 tag("$actor", "DidNightTakeSickRec", 1) 且 非 tag("$actor", "DidNightTakeSick", 1)), (非 tag("$actor", "DidNightTakeSelfRec", 1) 且 非 tag("$actor", "DidNightTakeSelf", 1)))
+                        mode: Forbid
+                        effect: choose(option("conds", "sick"), procedure("NightTakeSick"), procedure("NightTakeSelf"))
+                        weight: 3
+                        select: 非 option("exceptions", "closed") 且 (option("accounts", "record") 或 option("accounts", "witness"))
+                    4:
+                        condition: param("subject") 且 param("condition") 且 choose(option("conds", "sick"), (非 tag("$actor", "DidNightTakeSickRec", 1) 且 非 tag("$actor", "DidNightTakeSick", 1)), (非 tag("$actor", "DidNightTakeSelfRec", 1) 且 非 tag("$actor", "DidNightTakeSelf", 1)))
+                        mode: Permit
+                        effect: choose(option("conds", "sick"), procedure("NightTakeSick"), procedure("NightTakeSelf"))
+                        weight: 2
+                        select: 非 option("exceptions", "closed") 且 非 (option("accounts", "record") 或 option("accounts", "witness"))
+                    5:
+                        condition: param("subject") 且 (tag("object.Clock", "SlotMorning", 1) 或 tag("object.Clock", "SlotForenoon", 1) 或 tag("object.Clock", "SlotNoon", 1)) 且 tag("$actor", "OweNote", 1)
+                        mode: Prefer
+                        effect: procedure("Inform")
+                        weight: 3
+                        select: 非 option("exceptions", "closed") 且 (option("accounts", "later") 或 option("exceptions", "later"))
+                witnessed: param("MoraNight") 且 (observed("object.Granary", "ToolMarks", 1, "Perception") 或 observed("object.Bowl", "Residue", 1, "Perception"))
             - 按人头领口粮 | 按人头 | 按人头、口粮
+                rules:
+                    0:
+                        condition: param("subject") 且 (tag("object.Clock", "SlotNoon", 1) 或 tag("object.Clock", "SlotEvening", 1)) 且 非 tag("$actor", "Fed", 1)
+                        mode: Prefer
+                        effect: procedure("Collect")
+                        weight: 1
             - 粮仓钥匙交给煮饭的人统一煮粥 | 交钥匙 | 中央做饭、口粮
+                rules:
+                    0:
+                        condition: param("subject") 且 (tag("object.Clock", "SlotNoon", 1) 或 tag("object.Clock", "SlotEvening", 1)) 且 tag("$actor", "GranaryKey", 1)
+                        mode: Prefer
+                        effect: procedure("GiveKey")
+                        weight: 4
             - 公开指控须附可检查的材料 | 指控须证 | 证据优先
+                rules:
+                    0:
+                        condition: param("subject") 且 非 tag("$actor", "SawAct", 1)
+                        mode: Forbid
+                        effect: procedure("Accuse")
+                        weight: 3
             - 课后向缺课的人转述 | 转述 | 传声
+                rules:
             - 名录库各取其物 | 开库各取 | 开放名录库
+                rules:
+                    0:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: procedure("SeizePattern")
+                        weight: 4
+                        select: option("exceptions", "closed")
             - 名录库由委员会保管 | 开库委员会 | 委员会管名录库、沃德权威
+                rules:
+                    0:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: procedure("SeizePattern")
+                        weight: 4
+                        select: option("exceptions", "closed")
             - 名录库封闭不启 | 开库封闭 | 封存名录库
+                rules:
             - 名录库须本人亲取、两人见证 | 开库约束 | 依约管名录库、双人见证、开放名录库
+                rules:
+                    0:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: procedure("SeizePattern")
+                        weight: 4
+                        select: option("exceptions", "closed")
             - 不得入后勤院 | 限制入院 | 限制、口粮
+                rules:
+                    0:
+                        condition: param("subject") 且 tag("object.Clock", "SlotNight", 1)
+                        mode: Forbid
+                        effect: travel("route.Logistics")
+                        weight: 2
+                targeted: true
+                manipulative: true
             - 温室两人同修，指针过红线不开顶窗 | 温室 | 安全
+                rules:
         例外：
             - 无例外 | 不许特例
+                id: none
             - 急病夜取不在此限 | 夜间特例
+                id: emergency
             - 次日补记者不算私取 | 夜间特例
+                id: later
             - 两人在场者不在此限 | 双人见证
+                id: witness
             - 入夜一律不行 | 若有 开放名录库、委员会管名录库、依约管名录库：禁夜间开门 否则：不许特例、限制
+                id: closed
         记账：
             - 不记账
+                id: none
             - 记入台账 | 记录
+                id: record
             - 次日补记 | 记录
+                id: later
             - 两人见证签名 | 记录、双人见证
+                id: witness
         案件说法：
             # 主语 | 条件 | 行为 | 例外 | 记账 | 玩家说得出口的写法
             - 任何人 | 有人急病时 | 取一份口粮 | 次日补记者不算私取 | 次日补记 | 急病夜取一份，次日补记；补记者不算私取。

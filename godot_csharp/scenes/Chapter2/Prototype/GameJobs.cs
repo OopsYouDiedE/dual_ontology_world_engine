@@ -49,53 +49,31 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         When(Mine(T.Lockpick), Set(g.Granary, T.Locked, 0)),
         When(Tg(g.Granary, T.LatchLoose), Set(g.Granary, T.Locked, 0))));
 
-    // 取粮要在后勤院待上一会儿（开锁、取、关门），这段时间里别人看得见他；送去诊疗所是下一段。
-    // 夜里取粮的人先等一等：晚饭散场、众人回寝区之后才动手，不当着一院子人开粮仓。
-    private Effect TakeOne(bool record, bool self) => Wait(2, Seq([
-        Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))),
-        Spend(g.Granary, T.Ration, 1),
-        .. record ? new[] { Change(g.Ledger, T.NightRecorded, 1) } : new[] { MeChange(T.OweNote, 1) },
-        Set(g.Granary, T.Locked, 1),
-        Wait(self ? 3 : 1.5, self ? Seq(MeChange(T.Fed, 1), MeChange(T.NightAte, 1)) : Seq(Go(Place.Clinic), Change(g.Bowl, T.Porridge, 1)))])); // 自取的人就地吃完
-
     // STORY-HARDCODE[CH2-040][logic][production]: 把具体本章工作映射为案件物证与人物行动结果。
-    public Effect Job(Job job, Person? who = null) => job switch
+    public Effect Job(Job job, Person? who = null)
+    {
+        if (g.ExecutionDesign.GetProperty("procedures").TryGetProperty(job.ToString(),out _)) return g.DeclaredProcedure(this,job.ToString(),who);
+        return job switch
     {
         Prototype.Job.Sleep => Seq(Go(who!.Pro.Dorm), Look(g.Space[who.Pro.Dorm])),
         Prototype.Job.Rest => Seq(Go(who!.Pro.Dorm), Look(g.Space[who.Pro.Dorm]), Wait(3, Look(g.Space[who.Pro.Dorm]))),
-        Prototype.Job.Work => Seq(Go(Game.WorkPlace(who!.Id)), Look(g.Space[Game.WorkPlace(who.Id)]), Wait(2.5, Look(g.Space[Game.WorkPlace(who.Id)]))),
         Prototype.Job.Class => Seq(Go(Place.Lecture), Look(g.Blackboard)),
-        Prototype.Job.Collect => Seq(Go(Place.Logistics), new Effect.Wait(Tg(g.Desk, T.Open),
-            Seq(Need(Tg(g.Granary, T.Ration)), Spend(g.Granary, T.Ration, 1), MeChange(T.Fed, 1), Change(g.Ledger, T.Handed, 1)))),
         Prototype.Job.Distribute => Seq(Go(Place.Logistics), Need(Mine(T.GranaryKey)), Set(g.Granary, T.Locked, 0), Set(g.Desk, T.Open, 1), Look(g.Ledger)),
         Prototype.Job.Cook => Seq(Go(Place.Logistics), Need(Tg(g.Jar, T.Water)), Spend(g.Jar, T.Water, 1), Set(g.Stove, T.Cooked, 1)),
         Prototype.Job.FetchWater => Seq(Go(Place.Logistics), Change(g.Jar, T.Water, 3)),
-        Prototype.Job.Care => Seq(Go(Place.Clinic), Look(g.Bed), When(Mine(T.MedKey), Seq(Need(Tg(g.MedCab, T.Medicine)), Spend(g.MedCab, T.Medicine, 1))), Change(g.Bed, T.Treated, 1)),
-        Prototype.Job.NightTakeSick => TakeOne(false, false),
-        Prototype.Job.NightTakeSickRec => TakeOne(true, false),
-        Prototype.Job.NightTakeSelf => TakeOne(false, true),
-        Prototype.Job.NightTakeSelfRec => TakeOne(true, true),
-        Prototype.Job.Inform => Seq(Go(Place.Logistics), Look(g.Ledger), Change(g.Ledger, T.NightRecorded, 1), MeChange(T.OweNote, -1)),
-        Prototype.Job.RepairLatch => Seq(Go(Place.Logistics), Need(Tg(g.Granary, T.LatchLoose)), Set(g.Granary, T.LatchLoose, 0), Set(g.Granary, T.ToolMarks, 1)),
         Prototype.Job.InspectStructure => Seq(Go(Place.Logistics), Look(g.Granary), Wait(5, Look(g.Granary))),
         Prototype.Job.Patrol => Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.ArchiveFront), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Go(Place.DormL))))))))),
         // 守门：走到前厅，占住配重室这一站（同一时刻一站只容一个身体），身上带着“守门”的样子，守一阵再让出来（§13 第 4 条）。
-        Prototype.Job.GuardArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(0.3, Seq(Need(Not(Tg(g.WeightRoom, T.Occupied))), Set(g.WeightRoom, T.Occupied, 1),
-            new Effect.Set(Me, T.Guarding, 1), Wait(8, Seq(Look(g.ArchiveDoor), Set(g.WeightRoom, T.Occupied, 0), new Effect.Set(Me, T.Guarding, 0)))))),
         Prototype.Job.VisitArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(2, Look(g.ArchiveDoor))),
         Prototype.Job.Greenhouse => Seq(Go(Place.Greenhouse), Look(g.Gauge), Change(g.Valve, T.Work, 1)),
         Prototype.Job.Socialize => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
-        Prototype.Job.CountLedger => Seq(Go(Place.Logistics), Look(g.Granary), Look(g.Ledger), Change(g.Ledger, T.Counted, 1)),
         Prototype.Job.Stele => Seq(Go(Place.Oath), Look(g.Stele)),
         Prototype.Job.Scavenge => Wait(2, Seq(Go(Place.Logistics), Look(g.Granary), Wait(2, Look(g.Granary)))),
         Prototype.Job.Hoard => Wait(2, Seq(Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))), Spend(g.Granary, T.Ration, 2), Set(g.Granary, T.Locked, 1), MeChange(T.Stash, 2))),
-        Prototype.Job.Accuse => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Accusation, 1)),
         Prototype.Job.PostRules => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Posted, 1)),
-        Prototype.Job.Defend => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
         // 开库：先走到前厅看一眼（看得见哪一站被人占着），再去占自己会的那一站使劲；那一站被占着就做不成（§13 第 4 条）。
         // 不带人的版本只是“动名录库之门”这个动作本身，供“夜里不许开库”一类的禁令匹配。
         Prototype.Job.Seize => who is null ? Change(g.ArchiveDoor, T.Work, 1) : SeizeAt(g.StationFor(who)),
-        Prototype.Job.AnswerName => Seq(Look(g.ArchiveDoor), MeChange(T.Answered, 1)),
         Prototype.Job.Share => Seq(new Effect.Change(Target, T.Fed, 1), MeChange(T.Fed, -1), MeChange(T.Did(Prototype.Job.Share), 1)),
         Prototype.Job.Tear => Seq(Go(Place.Hall), Look(g.Board[Place.Hall]), Change(g.Board[Place.Hall], T.Torn, 1)),
         Prototype.Job.Watch => Seq(Go(Place.Logistics), Look(g.Granary), Wait(8, Look(g.Granary))),
@@ -107,7 +85,8 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
         Prototype.Job.Sketch => Seq(Go(Place.DormS), Look(g.Space[Place.DormS]), Wait(2, Look(g.Space[Place.DormS]))),
         Prototype.Job.Tidy => Seq(Go(who!.Pro.Dorm), Look(g.Litter[who.Pro.Dorm]), Set(g.Litter[who.Pro.Dorm], T.Crumbs, 0), Set(g.Litter[who.Pro.Dorm], T.Emptied, 1)),
         _ => throw new NotSupportedException(job.ToString())
-    };
+        };
+    }
 
     // 三站分处三地（配重室、锁芯在名录库前厅一带；传声中继在中央厅的管道枢纽）：各人走到自己那一站。
     private Effect SeizeAt(Essence st) => Seq(Go(g.PlaceOf[st]), Look(g.ArchiveDoor), Wait(0.3, Seq(Change(g.ArchiveDoor, T.Work, 1), Need(Not(Tg(st, T.Occupied))),
@@ -115,8 +94,7 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
             new Effect.Think(new Condition.Not(new Condition.Related(Me, Promised, r(g.ArchiveDoor))))))))) ;
 
     /// <summary>沈鼎“先喂弱者”：等开粮，替饿着的人领一份记账送去。</summary>
-    public Effect FeedWeak() => Seq(Go(Place.Logistics), new Effect.Wait(Tg(g.Desk, T.Open),
-        Seq(Need(Tg(g.Granary, T.Ration)), Spend(g.Granary, T.Ration, 1), Change(g.Ledger, T.Handed, 1), new Effect.Change(Target, T.Fed, 1), MeChange(T.Did(Prototype.Job.FeedWeak), 1))));
+    public Effect FeedWeak() => g.DeclaredProcedure(this,"FeedWeak");
 
     /// <summary>把粮仓钥匙交给某人（一个 Core 效果：自己的钥匙标签 −1，对方 +1）。</summary>
     public Effect GiveKeyTo(Person to) => Seq(Need(Mine(T.GranaryKey)), MeChange(T.GranaryKey, -1), Change(to.Body, T.GranaryKey, 1));

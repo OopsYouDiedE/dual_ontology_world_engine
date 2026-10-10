@@ -13,6 +13,7 @@ public sealed record PlayerAction(Cmd Cmd)
     public Place? Place { get; init; }
     public string? Thing { get; init; }
     public Job? Job { get; init; }
+    public string? ActionId { get; init; }
     public Card? Card { get; init; }
     /// <summary>用称呼引用的已有规矩（讲、贴）。</summary>
     public RuleSpec? Spec { get; init; }
@@ -27,7 +28,7 @@ public sealed record PlayerAction(Cmd Cmd)
         Cmd.Class => Topic >= 0 ? $"上课，并就「{Game.Topics[Topic]}」{(Precise ? "精确" : "含糊")}提问" : "上课",
         Cmd.Inspect => $"调查：{Names.Of(Place!.Value)}的{Thing}",
         Cmd.Escort => $"请{Names.Of(Who!.Value)}同行去{Names.Of(Place!.Value)}看{Thing}",
-        Cmd.Ask => $"请{Names.Of(Who!.Value)}{Names.Of(Job!.Value)}",
+        Cmd.Ask => Chapter2Design.Text("social.request_description", ("name",Names.Of(Who!.Value)), ("action",ActionId ?? (Job is { } j ? Names.Of(j) : ""))),
         Cmd.Post => $"在{Names.Of(Place!.Value)}张贴「{Card!.Text}」",
         Cmd.TellRule => Chapter2Design.Text("social.tell_description", ("name", Names.Of(Who!.Value)), ("rule", Spec?.Text ?? Card?.Text ?? "")),
         _ => Cmd.ToString()
@@ -86,7 +87,6 @@ public sealed partial class Game
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
 
     /// <summary>时段开头：侦探先找到要说话的人，把请求说出口（Effect.Say 携带 Request），对方再与自己的习惯一起决策。</summary>
-    // STORY-HARDCODE[CH2-055][logic][production]: 处理玩家介入后本案指定人物请求及证据相关分支。
     private void PlayerBegin(PlayerAction? act)
     {
         LastAction = act;
@@ -95,36 +95,20 @@ public sealed partial class Game
         DetHelpers.Clear();
         if (Slot == Slot.Afternoon && Get(Det.Body, T.Hungry) > 0 && act is not null)
         {
-            Feed.Add("你饿得发虚，这个下午什么也做不了。");
+            Feed.Add(AstText("social.hungry"));
             LastAction = null;
             return;
         }
         if (act is null) return;
         var fx = FxOf(Det);
+        if (DeclaredSocial(act))
+        {
+            if (!HostPrepareSocialAction(act)) LastAction = null;
+            _preparedAction = null;
+            return;
+        }
         switch (act.Cmd)
         {
-            case Cmd.Escort:
-                Request(act.Who!.Value, X("social.escort", ("place", Names.Of(act.Place!.Value)), ("thing", act.Thing)), fx.Escort(act.Place.Value, Things_[act.Thing!].Thing), Compatibility(this[act.Who.Value], act));
-                break;
-            case Cmd.Ask:
-                var recipient = this[act.Who!.Value];
-                var procedure = RequestProcedure(recipient, act.Job!.Value);
-                if (procedure is null) { _asked[recipient.Id] = SocialStance.Reject; Feed.Add(Answer(recipient, SocialStance.Reject)); break; }
-                Request(recipient.Id, X("social.request", ("job", Names.Of(act.Job.Value))), procedure, Compatibility(recipient, act));
-                break;
-            case Cmd.GiveKey:
-                Request(act.Who!.Value, $"把粮仓钥匙交给{Names.Of(act.About!.Value)}，统一煮粥，行吗？",
-                    Fx.Seq(Fx.Need(Fx.Mine(T.GranaryKey)), Fx.MeChange(T.GranaryKey, -1), fx.Change(this[act.About.Value].Body, T.GranaryKey, 1)));
-                break;
-            case Cmd.Greenhouse:
-                foreach (var c in act.Crew) Request(c, "下午来温室，两人一组修水压。", fx.Job(Job.Greenhouse));
-                break;
-            case Cmd.Archive:
-                foreach (var c in act.Crew) Request(c, "来名录库前厅，帮我试开那道门。", fx.Escort(Place.ArchiveFront, ArchiveDoor));
-                break;
-            case Cmd.Rub:
-                if (act.Who is { } helper) Request(helper, "陪我去誓约庭拓那块碑。", fx.Escort(Place.Oath, Stele));
-                break;
             case Cmd.Mediate when Day == RationFirstDay && Slot == Slot.Noon:
                 HostMediate(act.Wording ?? throw new PlayerError("Missing mediation wording."));
                 break;
@@ -133,16 +117,18 @@ public sealed partial class Game
     }
 
     /// <summary>当面请求：经 SimulationSession 提交侦探的 Say；对方的 SocialSystem 立即给出态度（侦探看得见）。协商 = 对方提条件，侦探答应，记一笔承诺。</summary>
-    private void Request(P who, string text, Effect procedure, int compatibility = 0)
+    private Projection? Request(P who, string text, Effect procedure, int compatibility = 0, double cost = 0.01)
     {
         var p = this[who];
         var fx = FxOf(Det);
-        Det.Body.Get<SpatialProperty>()!.Space = SpaceOf(p.Body);
+        if (Where(Det) != Where(p)) return null;
         Rt.Sync();
-        var exec = S.Submit(Det.Soul, new ActionIntent(Det.Self, new Effect.Say(fx.R(p.Body), text, procedure), 0.01));
-        S.CTB.RunUntil(Now + 0.05, 1000);
-        var req = p.World.Projections.LastOrDefault(x => x.Kind == ProjectionKind.Event && x.Name == text && x.Procedure is not null);
-        if (req is null) { Feed.Add(X("social.absent", ("name", p.Name))); return; }
+        var previous = p.World.Projections.ToHashSet();
+        var exec = S.Submit(Det.Soul, new ActionIntent(Det.Self, new Effect.Say(fx.R(p.Body), text, procedure), cost));
+        S.CTB.RunUntil(Now + cost + 0.04, 1000);
+        var req = exec.Status == ExecutionStatus.Completed ? p.World.Projections.LastOrDefault(x => !previous.Contains(x)
+            && x.Kind == ProjectionKind.Event && x.Name == text && x.Procedure is not null) : null;
+        if (req is null) { Feed.Add(X("social.absent", ("name", p.Name))); return null; }
         Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind)
         {
             Target = req, Source = ObservationSource.Testimony, Time = Now,
@@ -151,20 +137,38 @@ public sealed partial class Game
         var stance = SocialSystem.Evaluate(p.World, p.Self, req);
 
         _asked[who] = stance.Stance;
+        ObserveSocialResult(p,text,stance.Stance == SocialStance.Accept,req);
         _asks[(P.Det, who)] = RecordEvent(P.Det, X("social.request_log", ("name", p.Name), ("text", text)), Names.Of(Job.Socialize), Where(Det), []);
         NoteFor(who, X("social.note_kind"), X("social.request_note", ("he", p.Pro.Pronoun), ("text", text), ("result", X("social." + (stance.Stance == SocialStance.Accept ? "accepted" : stance.Stance == SocialStance.Negotiate ? "negotiated" : "rejected")))));
         Feed.Add(X("social.request_feed", ("name", p.Name), ("text", text), ("response", Answer(p, stance.Stance))));
+        return req;
     }
 
     private void Promise(Person p)
     {
-        Observation.Observe(p.Soul, new ObservationInput($"侦探答应明天之前替{p.Name}办一件事", ProjectionKind.Event)
-        {
-            Source = ObservationSource.Testimony, Existence = Truth.True, Time = Now, Details = "承诺",
-            Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, 1), AddRelations = [(Relations.Subject, p.M[Det.Body])]
-        });
-        Promises.Add((p.Id, Day + 1, false));
-        Feed.Add($"（{p.Name}提了条件：明天之前，你得替{(p.Pro.Group == Group.Houqin ? "后勤" : "他们")}办一件事。你答应了。找{p.Pro.Pronoun}“帮{p.Pro.Pronoun}一把”即算兑现。）");
+        var commitment=ExecutionDesign.GetProperty("commitments");
+        var text=AstText(commitment.GetProperty("text").GetString()!, ("name",p.Name));
+        Observation.Observe(p.Soul,new(text,ProjectionKind.Event)
+        {Source=ObservationSource.Testimony,Existence=Truth.True,Time=Now,
+            Tags=ImmutableDictionary<Tag,int?>.Empty.Add(Tags.Trust,1),AddRelations=[(Relations.Subject,p.M[Det.Body])]});
+        Promises.Add((p.Id,Day+commitment.GetProperty("due_days").GetInt32(),false));
+        Feed.Add(AstText(commitment.GetProperty("accepted").GetString()!, ("name",p.Name),("he",p.Pro.Pronoun)));
+    }
+
+    private bool FulfillCommitment(PlayerAction action)
+    {
+        if (!DeclaredSocial(action) || !SocialSucceeded(action) || action.Who is not {} who
+            || SocialId(action) != ExecutionDesign.GetProperty("commitments").GetProperty("fulfill_action").GetString()) return false;
+        var index=Promises.FindIndex(p=>p.Who==who&&!p.Done);
+        if(index<0)return false;
+        var due=Promises[index].Due;
+        var deadline=Enum.Parse<Slot>(ExecutionDesign.GetProperty("commitments").GetProperty("deadline_slot").GetString()!);
+        if(Day>due || Day==due && Slot>=deadline)return false;
+        Promises[index]=(who,Promises[index].Due,true);
+        Witness(Det,K("兑现承诺",P.Det,who),1,0,People.Where(p=>Where(p)==Where(this[who])));
+        if(Repairs.Remove(who)) { Witness(Det,K("认错补过",P.Det),1,0,[this[who]],spread:true); Feed.Add(AstText("social.repaired",("name",Names.Of(who)))); }
+        Feed.Add(AstText("social.fulfilled",("name",Names.Of(who))));
+        return true;
     }
 
     private static string Answer(Person p, SocialStance stance)
@@ -186,6 +190,8 @@ public sealed partial class Game
             return;
         }
         if (act is null) { SubmitDet(fx.Job(Job.Rest, Det), 0.5, Job.Rest); return; }
+        if (DeclaredSocial(act) && SocialDefinition(act).GetProperty("actor").GetString() == "sender")
+        { SubmitSenderSocial(act); return; }
         switch (act.Cmd)
         {
             case Cmd.Stay: SubmitDet(Fx.Seq(fx.Go(act.Place ?? Where(Det)), fx.Look(Space[act.Place ?? Where(Det)])), 0.5); break;
@@ -212,26 +218,27 @@ public sealed partial class Game
     }
 
     /// <summary>时段末：侦探看到自己行动的结果；只写看见了什么、听见了什么。</summary>
-    // STORY-HARDCODE[CH2-056][logic][production]: 结算本章玩家行动、证据反馈与案情特定揭示。
     private void PlayerEnd(PlayerAction? act)
     {
+        var fulfilled=act is not null && LastAction is not null && FulfillCommitment(act);
         // 违约检查
         for (var i = 0; i < Promises.Count; i++)
         {
             var (who, due, done) = Promises[i];
-            if (!done && Day > due || !done && Day == due && Slot == Slot.Night)
+            if (!done && (Day > due || Day == due && Slot >= Enum.Parse<Slot>(ExecutionDesign.GetProperty("commitments").GetProperty("deadline_slot").GetString()!)))
             {
                 Promises[i] = (who, due, true);
                 Witness(Det, K("食言", P.Det, who), -2, 0, [this[who]]);
-                Feed.Add($"你答应{Names.Of(who)}的事，没有做到。");
+                Feed.Add(AstText(ExecutionDesign.GetProperty("commitments").GetProperty("failed").GetString()!, ("name",Names.Of(who))));
             }
         }
         if (act is null || LastAction is null) { AfterSlot(null); return; }
         if (act.Cmd == Cmd.Manipulate && act.Who is { } mw && act.About is { } ma)
             Touch(this[ma].Body, T.Suspect, RecordEvent(P.Det, $"对{Names.Of(mw)}片面告知{Names.Of(ma)}的事", "交谈", Where(Det), []), P.Det);
-        if (act.Cmd == Cmd.ShareFood && act.Who is { } sw)
+        if (act.Cmd == Cmd.ShareFood && SocialSucceeded(act) && act.Who is { } sw)
             Touch(this[sw].Body, T.Fed, RecordEvent(P.Det, $"把口粮分给{Names.Of(sw)}", "递物", Where(Det), []), P.Det);
         var here = Where(Det);
+        // STORY-HARDCODE[CH2-056][logic][production]: 剩余玩家行动的章节反馈与案情揭示；社会请求以实际执行回执结算。
         switch (act.Cmd)
         {
             case Cmd.Collect:
@@ -295,8 +302,8 @@ public sealed partial class Game
                 if (act.Cmd == Cmd.Escort)
                 {
                     var who = this[act.Who!.Value];
-                    var came = DetHelpers.Contains(who.Id);
-                    if (thing == Base) DetShown.Add(who.Id);
+                    var came = SocialSucceeded(act);
+                    if (came && thing == Base) DetShown.Add(who.Id);
                     DetEscortTried.Add((who.Id, act.Thing!));
                     if (who.Id == P.Ward) WardEscorts += came ? 10 : 1;
                     if (came && thing == Base && Get(Base, T.Crack) > 0) Feed.Add($"你把那道裂纹指给{who.Name}看。{who.Pro.Pronoun}盯着看了很久。");
@@ -307,16 +314,16 @@ public sealed partial class Game
             case Cmd.Ask:
             {
                 var who = this[act.Who!.Value];
-                var job = act.Job!.Value;
-                var did = DetHelpers.Contains(who.Id) || Get(who.Body, T.Did(job)) > 0;
-                Feed.Add(did ? $"{who.Name}照你说的做了：{Names.Of(job)}。" : $"{who.Name}没有去做（{(_asked.GetValueOrDefault(who.Id) == SocialStance.Accept ? "答应了，但另有更要紧的事" : "没答应")}）。");
-                if (did) Witness(Det, K("请托办成", P.Det, who.Id, values: ("事", Names.Of(job))), 0, 0, [who], spread: false);
+                var label = SocialDefinition(act).TryGetProperty("job",out var job) ? Names.Of(Enum.Parse<Job>(job.GetString()!)) : SocialId(act);
+                var did = SocialSucceeded(act);
+                Feed.Add(AstText(did ? "social.completed" : _asked.GetValueOrDefault(who.Id)==SocialStance.Accept ? "social.not_completed" : "social.not_accepted", ("name",who.Name),("job",label)));
+                if (did) Witness(Det, K("请托办成", P.Det, who.Id, values: ("事", label)), 0, 0, [who], spread: false);
                 break;
             }
             case Cmd.GiveKey:
             {
                 var holder = this[act.Who!.Value];
-                if (Get(holder.Body, T.GranaryKey) == 0 && Get(this[act.About!.Value].Body, T.GranaryKey) > 0)
+                if (SocialSucceeded(act) && Get(holder.Body, T.GranaryKey) == 0 && Get(this[act.About!.Value].Body, T.GranaryKey) > 0)
                 {
                     Feed.Add($"{holder.Name}把粮仓钥匙交给了{Names.Of(act.About.Value)}。");
                     foreach (var p in new[] { holder, this[act.About.Value] })
@@ -360,19 +367,12 @@ public sealed partial class Game
             case Cmd.Help:
             {
                 var who = act.Who!.Value;
-                var idx = Promises.FindIndex(x => x.Who == who && !x.Done);
-                if (idx >= 0)
-                {
-                    Promises[idx] = (who, Promises[idx].Due, true);
-                    Witness(Det, K("兑现承诺", P.Det, who), 1, 0, People.Where(p => Where(p) == Where(this[who])));
-                    if (Repairs.Remove(who)) { Witness(Det, K("认错补过", P.Det), 1, 0, [this[who]], spread: true); Feed.Add($"{Names.Of(who)}点了点头：“行，这事算过去了。”"); }
-                    Feed.Add($"你替{Names.Of(who)}办完了答应的事。");
-                }
-                else
+                if (!SocialSucceeded(act)) { Feed.Add(X("social.incomplete",("name",Names.Of(who)))); break; }
+                if (!fulfilled)
                 {
                     Witness(Det, K("帮工", P.Det, who), 1, 0, [this[who]], spread: false);
                     DetHelped.Add(who);
-                    Feed.Add($"你帮{Names.Of(who)}干了一个时段的活。");
+                    Feed.Add(AstText("social.help_done",("name",Names.Of(who))));
                 }
                 break;
             }
@@ -437,13 +437,12 @@ public sealed partial class Game
             case Cmd.ShareFood:
             {
                 var who = this[act.Who!.Value];
-                if (Get(Det.Body, T.Fed) > 0)
+                if (SocialSucceeded(act))
                 {
-                    Add(Det.Body, T.Fed, -1); Add(who.Body, T.Fed, 1);
                     Witness(Det, K("分粮给人", P.Det, who.Id), 2, 0, People.Where(p => Where(p) == Where(who)));
-                    Feed.Add($"你把自己那份给了{who.Name}。");
+                    Feed.Add(AstText("social.share_done",("name",who.Name)));
                 }
-                else Feed.Add("你自己今天还没领到口粮。");
+                else Feed.Add(AstText("social.share_failed"));
                 break;
             }
             case Cmd.AskAbout:

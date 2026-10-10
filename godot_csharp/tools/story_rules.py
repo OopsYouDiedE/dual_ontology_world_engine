@@ -130,7 +130,7 @@ def compile_rules(blocks: list[tuple[Line, list[Node]]], ctx: Any) -> list[dict[
     for head, body in blocks:
         name = head.text[2:].strip()
         fields = {n.pair()[0]: (n.pair()[1], n) for n in body if n.pair()[0] != "张贴"}
-        unknown = set(fields) - {"编号", "立规者", "内容", "标记", "格", "针对", "有效期"}
+        unknown = set(fields) - {"编号", "立规者", "内容", "标记", "格", "针对", "有效期", "执行"}
         if unknown:
             fail(f"规矩不支持字段“{sorted(unknown)[0]}”。", head.number)
         for need in ("编号", "立规者", "内容", "标记"):
@@ -143,6 +143,9 @@ def compile_rules(blocks: list[tuple[Line, list[Node]]], ctx: Any) -> list[dict[
         if lifetime not in {"world", "chapter", "interaction"}:
             fail("规则有效期须为 world、chapter 或 interaction。", head.number)
         entry["lifetime"] = lifetime
+        from story_ast import rules as ast_rules
+        # Metadata-only declarations carry no executable rules. Explicit AST rows stay strict.
+        entry["rules"] = ast_rules(_records(fields["执行"][1]) if "执行" in fields else {}, head.number)
         if author == "恶魔":
             entry["demon"] = True
         else:
@@ -183,6 +186,16 @@ AXES = (("主语", "subjects"), ("条件", "conds"), ("行为", "behaviors"), ("
 AXIS_NAME = {axis: word for word, axis in AXES}
 
 
+def _records(node):
+    from story_chapter1 import scalar
+    result = {}
+    for kid in node.kids:
+        key, value = kid.pair()
+        if key in result: fail('重复 AST 字段：'+key,kid.number)
+        result[key] = _records(kid) if kid.kids else scalar(value)
+    return result
+
+
 def compile_card_kit(tree: list[Node], ctx: Any, head: Line) -> dict[str, Any]:
     """规矩格：五格拼规则的各格选项，以及每个选项带的价值标记。
 
@@ -219,7 +232,21 @@ def compile_card_kit(tree: list[Node], ctx: Any, head: Line) -> dict[str, Any]:
                     entry["else_flags"] = split_flags(ctx, m[3], kid.number)
                 else:
                     entry["flags"] = split_flags(ctx, cells[1], kid.number)
+            from story_ast import expression, rules
+            extra = _records(kid)
+            if set(extra)-{'id','condition','rules','witnessed','manipulative','targeted'}:
+                fail('未知规则格 AST 字段。',kid.number)
+            entry.update(extra)
+            if axis in ('subjects','conds'):
+                if 'condition' not in entry: fail('主体和条件格须声明 condition。',kid.number)
+                entry['condition'] = expression(entry['condition'],'c',kid.number)
+            if axis == 'behaviors':
+                if 'rules' not in entry: fail('行为格须声明 rules。',kid.number)
+                entry['rules'] = rules(entry['rules'],kid.number)
+            if 'witnessed' in entry: entry['witnessed'] = expression(entry['witnessed'],'c',kid.number)
+            if 'id' not in entry: fail('规则格选项须声明 id。',kid.number)
             items.append(entry)
+        if len({e['id'] for e in items})!=len(items): fail('规则格选项 ID 重复。',node.number)
         kit[axis] = items
     for _, axis in AXES:
         if axis not in kit:

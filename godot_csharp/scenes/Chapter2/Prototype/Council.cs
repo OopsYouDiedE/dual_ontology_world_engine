@@ -100,9 +100,9 @@ public sealed partial class Game
     public IEnumerable<RuleSpec> ArchivePlans()
     {
         // 开放取回就是恶魔第 2 日广播里那条“它自己所立之规”：凡学员皆可取回己物。接受与否看信不信它、想不想要。
-        _openPlan ??= Spec("OpenPlan", fx => []);
-        _sealPlan ??= Spec("SealPlan", fx => []);
-        WardCommittee ??= Spec("CommitteePlan", fx => []);
+        _openPlan ??= Spec("OpenPlan");
+        _sealPlan ??= Spec("SealPlan");
+        WardCommittee ??= Spec("CommitteePlan");
         _sealPlan.Endorsers.Add(P.Mora);
         yield return _openPlan;
         yield return WardCommittee;

@@ -58,18 +58,18 @@ public sealed record Card(int Subject, int Cond, int Behavior, int Exception, in
             yield return new(s, c, b, e, a);
     }
 
-    public P? Target => Subject >= 10 && Behavior == 9 ? (P)(Subject - 10) : null;
+    public P? Target => Subject >= 10 && CardKit.Behaviors[Behavior].Targeted ? (P)(Subject - 10) : null;
 
     public RF Flags(Game g)
     {
         var f = RF.None;
-        f |= CardKit.Conds[Cond].Flags;
-        f |= CardKit.Behaviors[Behavior].Flags;
-        if (Target is { } t) f |= RF.Targets | (t == P.Quer ? RF.TargetsQuer : RF.None);
-        if (Behavior == 9 && Subject == 0 && g.AccusedQuer) f |= RF.TargetsQuer;
-        var exception = CardKit.Exceptions[Exception];
+        f |= g.CardOption("conds",Cond).Flags;
+        f |= g.CardOption("behaviors",Behavior).Flags;
+        if (g.CardTarget(this) is { } t) f |= RF.Targets | (t == P.Quer ? RF.TargetsQuer : RF.None);
+        if (g.CardOption("behaviors",Behavior).Targeted && Subject == 0 && g.AccusedQuer) f |= RF.TargetsQuer;
+        var exception = g.CardOption("exceptions",Exception);
         f |= exception.IfAny != RF.None ? ((f & exception.IfAny) != 0 ? exception.Flags : exception.ElseFlags) : exception.Flags;
-        f |= CardKit.Accounts[Account].Flags;
+        f |= g.CardOption("accounts",Account).Flags;
         return f;
     }
 }
@@ -84,16 +84,17 @@ public sealed partial class Game
     private int _specId;
 
     private readonly Dictionary<string, RuleSpec> _specById = [];
-    /// <summary>按剧本里的编号取规矩（内容、立规者、价值标记读自 chapter_01.story；Core 的 Rule 由 build 编译）。</summary>
+    /// <summary>按剧本里的编号取规矩，Core Rule 由声明 AST 绑定。</summary>
     /// <summary>行动记录里的规矩可能来自另一局（重演时重建的世界）：规矩的 build 捕获了原局的人，须按编号换成本局的同一条。</summary>
     private RuleSpec? OwnSpec(RuleSpec? spec) => spec is null ? null : Specs.FirstOrDefault(s => s.Id == spec.Id && s.Text == spec.Text) ?? spec;
     public RuleSpec RuleById(string id) => _specById.TryGetValue(id, out var spec) ? spec : throw new InvalidOperationException("规矩尚未建立：" + id);
 
-    private RuleSpec Spec(string id, Func<Fx, IEnumerable<Rule>> build, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)
+    private RuleSpec Spec(string id, Func<Game, Person, bool>? witnessed = null, bool manipulative = false)
     {
-        var d = RuleDesign.Of(id);
+        if (_specById.TryGetValue(id, out var existing)) return existing;
+        var d = RuleDesign.Read(AstDesign.GetProperty("rules"))[id];
         var spec = NewSpec(d.Text, d.Author, d.Flags,
-            fx => DualOntologyWorldEngine.Story.RuleLifetimes.Bind(build(fx), d.Lifetime,
+            fx => DualOntologyWorldEngine.Story.RuleLifetimes.Bind(DeclaredRules(fx,id), d.Lifetime,
                 d.Lifetime == "interaction" ? _interactionLifetime ?? throw new InvalidOperationException("An interaction rule requires an active interaction.") : Chapter2Script.Id),
             demon: d.ByDemon, card: d.Card is { } cells ? CardKit.ToCard(cells) : null, witnessed: witnessed, manipulative: manipulative, target: d.Target);
         _specById[id] = spec;
@@ -117,20 +118,11 @@ public sealed partial class Game
     // STORY-HARDCODE[CH2-005][logic][production]: 为具体人物初始化特定规则、时段、目标与结果。
     private void WriteRules()
     {
-        WardLedger = Spec("WardLedger",
-            fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.NightTakeSelf), 2), new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.NightTakeSick), 2)]);
-        WardNight = Spec("WardNight",
-            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Mine(T.Branded)), RuleMode.Forbid, fx.Go(Place.Logistics), 2)]);
-        MoraNight = Spec("MoraNight",
-            fx => [new(Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed)), fx.NotDone(Job.Share), fx.NotDone(Job.NightTakeSelf)), RuleMode.Prefer, fx.Job(Job.NightTakeSelf), 3), // 试过、没做成，今夜不再试
-                   new(Fx.All(fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon, Slot.Afternoon, Slot.Evening]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 2)]);
-        RuanLedger = Spec("RuanLedger",
-            fx => [new(Fx.All(fx.At(Slot.Evening), Fx.Mine(T.Duty), fx.NotDone(Job.CountLedger)), RuleMode.Prefer, fx.Job(Job.CountLedger), 1)]);
-        Warning1 = Spec("Warning1", fx => [new(Fx.Constant, RuleMode.Forbid, fx.Job(Job.AnswerName), 5)]);
-        Warning2 = Spec("Warning2", fx => [new(fx.Tg(Gauge, T.Pressure, 2), RuleMode.Forbid, fx.Set(Valve, T.Open, 1), 5)]);
-        CommonRule = Spec("CommonRule", fx => [new(Fx.Not(Fx.Mine(T.SawAct)), RuleMode.Forbid, fx.Job(Job.Accuse), 3)]);
+        foreach (var declaration in RuleDesign.Read(AstDesign.GetProperty("rules")).Values) Spec(declaration.Id);
+        WardLedger = RuleById("WardLedger"); WardNight = RuleById("WardNight"); MoraNight = RuleById("MoraNight");
+        RuanLedger = RuleById("RuanLedger"); Warning1 = RuleById("Warning1"); Warning2 = RuleById("Warning2"); CommonRule = RuleById("CommonRule");
         // 开局就贴在老地方的规矩（台账上的旧规则，粮仓门内）。
-        foreach (var rule in RuleDesign.All)
+        foreach (var rule in RuleDesign.Read(AstDesign.GetProperty("rules")).Values)
             foreach (var post in rule.Posts.Where(p => p.Mode == "静默")) Post(RuleById(rule.Id), post.Place, quiet: true);
         WriteAllianceRules();
     }
@@ -139,68 +131,9 @@ public sealed partial class Game
     {
         if (Specs.FirstOrDefault(s => s.Card == card && s.Author == author) is { } existing) return existing;
         var flags = card.Flags(this);
-        return NewSpec(WordingOf(card) ?? card.Text, author, flags, fx => CompileCard(fx, card), card: card,
-            witnessed: card.Behavior == 0 ? (g, p) => g.SawNightPermission(p) : null,
-            manipulative: card.Behavior == 9 && card.Subject != 0, target: card.Target);
-    }
-
-    /// <summary>主语格：编译成“我是不是这个主语”的条件（读的是此人心中自己的身份标签）。</summary>
-    private static Condition SubjectCondition(int subject) => subject switch
-    {
-        0 => Fx.Constant,
-        1 => Fx.Mine(T.Duty),
-        >= 2 and <= 5 => Fx.Mine(T.InGroup[(Group)(subject - 2)]),
-        _ => Fx.Mine(T.Is[(P)(subject - 10)])
-    };
-
-    // STORY-HARDCODE[CH2-006][schema][production]: 将本项目特定规则卡编号和行为映射为具体游戏后果。
-    private IEnumerable<Rule> CompileCard(Fx fx, Card card)
-    {
-        var who = SubjectCondition(card.Subject);
-        Condition cond = card.Cond switch
-        {
-            1 => fx.At(Slot.Night),
-            // “急病时可取”：病人碗里已经有粥，就不必再取。
-            2 => Fx.All(fx.At(Slot.Night), fx.AnySick(null), Fx.Not(fx.Tg(Bowl, T.Porridge))),
-            3 => Fx.All(fx.At(Slot.Night), Fx.Not(Fx.Mine(T.Fed))),
-            4 => Fx.Not(fx.At(Slot.Night)),
-            _ => Fx.Constant
-        };
-        cond = Fx.All(who, cond);
-        switch (card.Behavior)
-        {
-            case 0:
-                var sick = card.Cond == 2;
-                var rec = sick ? Job.NightTakeSickRec : Job.NightTakeSelfRec;
-                var unrec = sick ? Job.NightTakeSick : Job.NightTakeSelf;
-                cond = Fx.All(cond, fx.NotDone(rec), fx.NotDone(unrec)); // 试过、没做成，今夜不再试
-                if (card.Exception == 4) { yield return new(Fx.All(who, fx.At(Slot.Night)), RuleMode.Forbid, fx.Job(unrec), 3); yield return new(Fx.All(who, fx.At(Slot.Night)), RuleMode.Forbid, fx.Job(rec), 3); break; }
-                // “可以取”是许可，不是想要（Core 的 Permit 见报告）。
-                if (card.Account is 1 or 3)
-                {
-                    yield return new(cond, RuleMode.Permit, fx.Job(rec), 2);
-                    yield return new(cond, RuleMode.Forbid, fx.Job(unrec), 3);
-                }
-                else yield return new(cond, RuleMode.Permit, fx.Job(unrec), 2);
-                if (card.Account == 2 || card.Exception == 2)
-                    yield return new(Fx.All(who, fx.AtAny([Slot.Morning, Slot.Forenoon, Slot.Noon]), Fx.Mine(T.OweNote)), RuleMode.Prefer, fx.Job(Job.Inform), 3);
-                break;
-            case 1:
-                yield return new(Fx.All(who, fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Not(Fx.Mine(T.Fed))), RuleMode.Prefer, fx.Job(Job.Collect), 1);
-                break;
-            case 2:
-                yield return new(Fx.All(who, fx.AtAny([Slot.Noon, Slot.Evening]), Fx.Mine(T.GranaryKey)), RuleMode.Prefer, fx.GiveKeyTo(this[P.Shen]), 4);
-                break;
-            case 3:
-                yield return new(Fx.All(who, Fx.Not(Fx.Mine(T.SawAct))), RuleMode.Forbid, fx.Job(Job.Accuse), 3);
-                break;
-            case 5 or 6 or 8 when card.Exception == 4:
-                yield return new(Fx.All(who, fx.At(Slot.Night)), RuleMode.Forbid, fx.Job(Job.Seize), 4);
-                break;
-            case 9:
-                yield return new(Fx.All(who, fx.At(Slot.Night)), RuleMode.Forbid, fx.Go(Place.Logistics), 2);
-                break;
-        }
+        return NewSpec(WordingOf(card) ?? CardText(card), author, flags, fx => CompileCard(fx, card), card: card,
+            witnessed: CardCell("behaviors",card.Behavior).TryGetProperty("witnessed", out var witnessed) ? (g,p) => g.CardWitnessed(p,witnessed) : null,
+            manipulative: CardCell("behaviors",card.Behavior).TryGetProperty("manipulative",out var manipulation) && manipulation.GetBoolean() && card.Subject != 0, target: CardTarget(card));
     }
 
     // ----------------------------------------------------------- posting --

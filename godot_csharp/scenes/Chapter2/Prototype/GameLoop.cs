@@ -275,10 +275,13 @@ public sealed partial class Game
         var job = JobOf(p, d.Effect);
         var dest = Destination(p, d.Effect);
         var delay = (dest is { } x && x != Where(p) ? 2.0 / p.Pro.Speed : 0.3) + 0.5;
-        if (p.Weak) delay += 0.5;
+        var social = _socialAttempts.LastOrDefault(a=>a.Accepted&&ReferenceEquals(a.Request,d.Basis));
+        if(social is not null)delay=SocialCost(p,d.Effect,social.Definition);
+        else if(p.Weak)delay+=0.5;
         var why = string.Join("；", reasons);
         var basis = d.Basis.Kind == ProjectionKind.Event ? $"应{d.Basis.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target?.Name}之请" : d.Basis.Name;
-        p.Exec = S.Submit(p.Soul, new ActionIntent(p.Self, d.Effect, delay, Basis: d.Basis));
+        p.Exec = S.Submit(p.Soul, new ActionIntent(p.Self, d.Effect, delay, Requirements: SocialRequirements(p,d), Basis: d.Basis));
+        TrackSocialExecution(p,p.Exec);
         p.Doing = job;
         p.DoingWhy = $"{basis}（{why}）";
         p.DoingScore = d.Score;
@@ -301,6 +304,7 @@ public sealed partial class Game
         foreach (var p in People.Where(p => p.Exec is not null && Story?.Controls(p.Id) != true).ToArray())
         {
             var exec = p.Exec!;
+            if(_socialAttempts.LastOrDefault(a=>ReferenceEquals(a.Execution,exec)) is {} attempt)CancelSocialAction(attempt.Action);
             S.Cancel(exec);
             ReleaseStation(p);
             if (p.Doing is Job.Collect)
@@ -718,7 +722,7 @@ public sealed partial class Game
         }
         if (Day >= CaseDay && Slot == Slot.Evening && WardCommittee is null)
         {
-            WardCommittee = Spec("CommitteePlan", fx => []);
+            WardCommittee = Spec("CommitteePlan");
             Post(WardCommittee, Place.Hall);
             NewsFrom(w, NewsKind.Rumor, K("贴规", w.Id), about: w);
             if (Where(Det) == Place.Hall) Feed.Add($"沃德在中央厅贴出：{WardCommittee.Text}");
@@ -944,6 +948,7 @@ public sealed partial class Game
         foreach (var p in Npcs.Where(p => p.Exec is { } e && Story?.Owns(e) != true).ToArray())
         {
             var exec = p.Exec!;
+            if(_socialAttempts.LastOrDefault(a=>ReferenceEquals(a.Execution,exec)) is {} attempt)CancelSocialAction(attempt.Action);
             S.Cancel(exec);
             _running.Remove(exec);
             ReleaseStation(p);
