@@ -32,7 +32,9 @@ public sealed partial class Chapter1Session
             var plan = _content.StartPlan(begin);
             while (true)
             {
+                var answerStep = Convert.ToInt32(Session.GetProgress("answer_state").GetValueOrDefault("step", 0));
                 var next = _content.NextMeeting(plan);
+                ObserveAnswerAdvance(answerStep);
                 if (string.IsNullOrEmpty(next)) break;
                 if (next.StartsWith('@'))
                 {
@@ -41,6 +43,7 @@ public sealed partial class Chapter1Session
                 }
                 else yield return new Run(Say(next));
                 _content.Presented(plan);
+                ObserveAnswerAdvance(answerStep);
             }
         }
         finally { _planDepth--; }
@@ -56,6 +59,7 @@ public sealed partial class Chapter1Session
         try
         {
             var packet = _dialogue.Start(title);
+            var engaged = false;
             while (true)
             {
                 if (packet.WorldCommands.Count > 0)
@@ -65,9 +69,21 @@ public sealed partial class Chapter1Session
                     packet = _dialogue.Next();
                     continue;
                 }
-                if (packet.IsComplete || (packet.Lines.Count == 0 && packet.Choices.Count == 0)) break;
+                if (packet.IsComplete || (packet.Lines.Count == 0 && packet.Choices.Count == 0))
+                {
+                    ObserveStrategySource(title);
+                    ObserveStrategyScene(title);
+                    break;
+                }
                 yield return new Await(LinesEvent(packet), true);
-                packet = packet.Choices.Count > 0 ? _dialogue.Choose(Text(_reply, "choice_id")) : _dialogue.Next();
+                if (packet.Choices.Count > 0)
+                {
+                    var selected = Text(_reply, "choice_id");
+                    packet = _dialogue.Choose(selected);
+                    if (!engaged) ObserveStrategyRefusal(selected);
+                    engaged = true;
+                }
+                else packet = _dialogue.Next();
             }
         }
         finally { _dialogueActive = false; _storyLock = false; }
@@ -97,6 +113,8 @@ public sealed partial class Chapter1Session
         switch (kind)
         {
             case "card": return OpenCard(A(0));
+            case "object_hide": return AlterEvidenceObject(A(0), false);
+            case "object_destroy": return AlterEvidenceObject(A(0), true);
             case "talk": return Talk(A(0));
             case "field_board": return OpenBoard();
             case "trace": return OpenTrace(A(0));
@@ -299,7 +317,8 @@ public sealed partial class Chapter1Session
 
     private void Examine(string id)
     {
-        foreach (var signal in _content.Examine(_world, id))
+        ObserveVisibleInvestigation("evidence:" + id);
+        foreach (var signal in _content.Examine(_world, id, Companions.Where(w => F(w).Visible).ToHashSet(StringComparer.Ordinal)))
             switch (signal)
             {
                 case "evidence": Sfx("evidence", -3.0); break;
@@ -313,7 +332,7 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> OpenCard(string id, bool brief = false)
     {
         Examine(id);
-        var packet = _interaction.CardPacket(id, GeometricCardPeople());
+        var packet = _interaction.CardPacket(id, GeometricCardPeople(), AtEvidenceObject(id));
         var card = packet.Card!;
         var picture = Art + "card_" + card.Picture + ".png";
         if (brief)
@@ -331,7 +350,8 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> ChooseCard(string choiceId)
     {
         // 执行时按真实站位与是否在走重新核验。
-        var packet = _interaction.Choose(choiceId, GeometricCardPeople());
+        var parts = choiceId.Split(':');
+        var packet = _interaction.Choose(choiceId, GeometricCardPeople(), parts.Length > 1 && AtEvidenceObject(parts[1]));
         foreach (var command in packet.WorldCommands)
             yield return new Run(Command(command.Name, command.Arguments.Select(a => a?.ToString() ?? "").ToArray()));
     }
@@ -340,6 +360,7 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> OpenTrace(string id)
     {
         Session.Set("examined", id, true);
+        ObserveVisibleInvestigation("trace:" + id);
         Session.Observe("detective", id);
         var trace = _content.LifeTrace(id);
         OpenModal(Event("card", ("id", id), ("title", trace.GetProperty("title").GetString()),
@@ -384,6 +405,7 @@ public sealed partial class Chapter1Session
             who = Text(_reply, "choice_id") is var picked && picked != "cancel" ? picked : "";
         }
         yield return new Run(PlayPlan(() => _content.BeginExperiment(_world, id, who)));
+        if (Has("experiments", id)) ObserveVisibleInvestigation("experiment:" + id);
         yield return new Run(OpenCard(id));
     }
 
@@ -407,6 +429,7 @@ public sealed partial class Chapter1Session
             yield break;
         }
         yield return new Run(PlayPlan(() => _content.BeginExperiment(_world, "E11", who)));
+        if (Session.GetProgress("hand_comparisons").ContainsKey(who)) ObserveVisibleInvestigation("hand_comparison:" + who);
         _handWait.Remove(who);
         yield return new Run(OpenCard("E11"));
     }
@@ -454,7 +477,9 @@ public sealed partial class Chapter1Session
     private IEnumerable<Op> Recall(string id, bool openCard = true)
     {
         CloseModal();
+        var recalls = Session.GetProgress("recalls").Count;
         yield return new Run(PlayPlan(() => _content.BeginRecall(_world, id)));
+        if (Session.GetProgress("recalls").Count > recalls) ObserveVisibleInvestigation("recall:" + id);
         if (openCard) yield return new Run(OpenCard(id));
     }
 
@@ -645,6 +670,7 @@ public sealed partial class Chapter1Session
             var index = Array.IndexOf(Names.RoomKeys, room);
             if (index >= 0) map[PersonOf(who)] = (Room)index;
         }
+        var priorExperiments = Session.GetProgress("experiments").Keys.ToHashSet(StringComparer.Ordinal);
         _content.RecordSoundTest();
         Sfx("tuning_fork", -5.0);
         var heard = _world.SoundTest(TestSentences.All[Math.Clamp(sentence, 0, TestSentences.All.Length - 1)], map);
@@ -657,6 +683,8 @@ public sealed partial class Chapter1Session
         Session.Set("state", "sound_rounds", Convert.ToInt32(State["sound_rounds"]) + 1);
         // 每一轮都完整演出：铜口说了什么，每个人在自己所在之处听到了什么。
         yield return new Run(Say("sound_test"));
+        foreach (var completed in Session.GetProgress("experiments").Keys.Except(priorExperiments))
+            ObserveVisibleInvestigation("experiment:" + completed);
         yield return new Run(OpenCard("E8"));
     }
 
@@ -670,7 +698,7 @@ public sealed partial class Chapter1Session
         var statements = _content.Statements(((object[])State["replay_vars"]).Select(Convert.ToInt32).ToArray(),
             Convert.ToInt32(State["replay_count"]), replay.GetValueOrDefault("detective_bolted") is true);
         var say = statements.Select(key => (object?)new Ev { ["id"] = key, ["label"] = Content.GetProperty("STATEMENTS").GetProperty(key).GetString() }).ToArray();
-        var show = Content.GetProperty("EVIDENCE").EnumerateObject().Where(e => Has("examined", e.Name))
+        var show = Content.GetProperty("EVIDENCE").EnumerateObject().Where(e => _content.KnownMaterial(e.Name))
             .Select(e => (object?)new Ev { ["id"] = e.Name, ["label"] = e.Value.GetProperty("name").GetString() }).ToArray();
         yield return new Await(Event("form", ("title", T("答辩·标题")), ("layout", "tabs"),
             ("header", new Ev { ["question"] = T("答辩·题头", ("问题", verdict)), ["instructions"] = T("答辩·说明") }),

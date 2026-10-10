@@ -486,7 +486,7 @@ class Compiler:
         profile = self.static_value(node)
         if not isinstance(profile, dict):
             self.fail(node, "profile 必须是静态字典。")
-        unknown = profile.keys() - PROFILE_FIELDS
+        unknown = profile.keys() - PROFILE_FIELDS - {"strategies"}
         missing = PROFILE_FIELDS - profile.keys()
         if unknown or missing:
             self.fail(node, "profile 字段必须完整且仅包含既定角色画像字段；缺少：" +

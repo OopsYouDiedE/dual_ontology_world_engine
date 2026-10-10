@@ -180,3 +180,15 @@
 
 - 第一章重演以结构化事件（kind、who、subject、object、room）传给界面；行为进度由重演结果字段记录，界面按事件种类决定播放节奏，不匹配显示文案。事件句型、心声与控制提示只从 `.story` 的文案表读取。
 - `话语` 与 `试验句` 的 `句尾含义` 声明片段听闻的含义（开门、求救；空值表示无）；编译为 `TailWantsOpen` / `TailHelp`，运行时不从整句或句尾文字推断。
+
+- 人物 `策略` 由 `tools/story_strategy.py` 编译；每人 1–3 条，声明对象、姿态、优先度、认知来源、方法类别与本人标签阈值。共享 `StrategyPolicy` 只给当前可用候选绑定章节级 Prefer 规则，不创建行为队列；来源通过正式 Observation 写入本人认知，跨主体候选引用拒绝。
+- 第一章策略适配位于 `Night/MorningStrategies.cs` 与 `Script/Chapter1Strategies.cs`；方法/场面/材料/拒绝选项/物件许可均由 `.story` 牵引表绑定。可选 `source_scenes` 将实际说出的场面映射到认知来源；对白完整结束后只为同场可见的人采集来源，远处/隐藏者不采集，重复听闻不重复创建来源观察。全局案件进度只用于测量，人物的停滞判断只取同场可见活动与本人目睹过的材料；报告使用本人 Perception/Recall 历史，经 Testimony 写入听者。初始化不能为可报告材料新增检视全文；正式宿主分享检视时传入几何可见者集合，纯逻辑调用保留同场抽象。未询问即结束才记拒谈，亲见全新材料解除当前拒谈/答错压力，历史观察保留；重复或未亲见材料不解除。亲见和证言分别存储，`known`/`获知` 查询可读两者；试验、协助仍保留各自门槛。
+- `每游戏分钟现场秒` 控制自由活动现场的游戏钟；模态阅读、暂停和剧情调度不累计现场时间，余秒进 ChapterProgress 保存。存档内容版本同时覆盖内容产物和 world 产物，人物策略变更使旧版本存档失败关闭。
+- 虚拟玩家规则可在末尾加 `文案 "公开子串"`，只筛选公开候选 Label；不读取令牌负载或源位置。第一章驱动的 wait 是真实一秒不操作，不提交章节快进；移动候选标注可见落点房间名。测量保存 player_time、case_progress、strategy_deviation/action、object_changed、world_resolution 事件。
+- 策略合同检查：`dotnet run --project godot_csharp/scenes/Shared/check/StrategyCheck/StrategyCheck.csproj -c Release` 与 `python godot_csharp/tools/check/check_story_strategy.py`。虚拟玩家测量：`python godot_csharp/tools/check/measure_story_strategies.py --godot <console.exe> --output tmp/<new-directory> --seeds 1 2 --seconds 240 --parallel 2`；偏好取 `tools/check/strategy_players.story`，只在测试副本替换操控声明，正式默认玩家不变。与其他 Godot 检查同时运行时把 parallel 降为 1，以全机两组为调度目标；无法协调的外部独立任务负载须记录并列为测量限制，不触碰外部进程，也不宣称全机并发已受控。测量不属于一级/二级/三级验收，也不以候选偏好宣称已实际执行对应策略动作。
+- 集成合同检查：`dotnet run --project godot_csharp/scenes/Shared/check/StrategyIntegrationCheck/StrategyIntegrationCheck.csproj -c Release`；覆盖公开候选筛选、正式编译表类型、证言/亲见边界、物件操作的当前站位复核、主体隔离、存档指纹和策略冷却恢复。默认调用真实 Python 编译器编译同目录中性 `controller-wire.story`，核对操控筛选与预算经 C# 读取后的实际评分；`--controller-wire-json <file>` 可喂入独立命名故障副本，负例预期非零退出，不放宽既有断言。机制夹具的注入状态不属于虚拟玩家测量证据。
+- `Host/Main.gd` 仅截留明确列出的测量事件，原始会话与 headless 驱动仍保留；人物实际对白和动作继续经正常显示接口。未知显示事件仍由原界面合同拒绝，不放宽 UI 或统一回归的错误扫描。
+- 虚拟玩家现场提供可见点击落点及 WASD 方向候选；按键通过 InputEventKey 真实按下 0.35 秒并释放，保留原碰撞、锁定与房间揭示，不预查未知落点房间或直接设置位置。按键计时采用可取消回调，释放前不选下一动作；记录按下/释放及实际位移，退出时取消回调并释放残留按键。停止后锁定现场，等待尚未完成的一秒不操作或演出 drain 返回，再留 0.15 秒清理输入缓冲并释放节点；清理时间不计入 stop 游玩测量，停止后的 drain 不再读取已关闭会话。仅提供可见点击落点不能覆盖跨房间，不能据这种驱动的选择数宣称跨区调查覆盖。
+- 操控 JSON 服从 `WorldScriptDocument` 的 snake_case 读取约定：`label_contains`、`argument_weight`、`information_weight` 必须经真实编译/运行时往返验证，不能仅分别验证 Python 字典和手工 C# 对象。
+- 键盘计时回调同时核对真实墙钟的 350ms 截止点，未到时继续等待，避免上一繁忙帧的 delta 缩短新按键；不补跑物理帧、不推进游戏钟。回调延迟仍按实际轨迹记录，超过合同范围须保留失败，停止时的主动释放另计。
+- 纯轨迹键盘合同检查：`python godot_csharp/tools/check/check_virtual_player_keyboard.py <closed-trace.jsonl> [<trace>...]`；核对配对、持键决策门闩、方向、独立位置记录及完整 stop，`--require-stop-release` 要求实际触发持键停止释放。该工具只读 JSONL；碰撞受阻与跨房间范围仍需据原始轨迹解释。

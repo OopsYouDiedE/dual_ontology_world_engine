@@ -25,7 +25,7 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
             _ => throw new InvalidDataException("Unknown interaction kind: " + kind),
         };
     }
-    public InteractionPacket CardPacket(string id, IEnumerable<string> geometricAvailablePeople)
+    public InteractionPacket CardPacket(string id, IEnumerable<string> geometricAvailablePeople, bool atObject = false)
     {
         var evidence = content.Content.RootElement.GetProperty("EVIDENCE").GetProperty(id);
         _card = id;
@@ -53,14 +53,18 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
         else if (evidence.TryGetProperty("experiment", out var experiment) && (id != "E8" || content.SoundTestThinkable))
             Add("experiment", experiment.GetString()! + (id == "E8" && content.Session.Has("experiments", id) ? Text("卡片·再做一次") : ""),
                 content.CanExperiment(id), Text("卡片·提示·试验已做"));
+        if (content.Content.RootElement.TryGetProperty("STRATEGY_TRACK", out var track) && track.TryGetProperty("object_choices", out var objects)
+            && objects.TryGetProperty(id, out var actions) && atObject && !content.Session.Has("destroyed", id) && !content.Session.Has("hidden", id))
+            foreach (var action in actions.EnumerateArray().Select(a => a.GetString()!))
+                Add(action, track.GetProperty("object_labels").GetProperty(action).GetString()!, true);
         Add("close", Text("卡片·返回"), true);
         return new([], choices, PresentationMode.EvidenceCard, [], Card: new(id, evidence.GetProperty("name").GetString()!,
             content.CardFacts(id), evidence.GetProperty("source").GetString()!, evidence.GetProperty("picture").GetString()!, content.CardNotes(world, id)));
     }
-    public InteractionPacket Choose(string choiceId, IEnumerable<string>? geometricAvailablePeople = null)
+    public InteractionPacket Choose(string choiceId, IEnumerable<string>? geometricAvailablePeople = null, bool atObject = false)
     {
         if (_card is null) throw new InvalidOperationException("No active evidence card.");
-        var packet = CardPacket(_card, geometricAvailablePeople ?? _geometricPeople);
+        var packet = CardPacket(_card, geometricAvailablePeople ?? _geometricPeople, atObject);
         var choice = packet.Choices.SingleOrDefault(c => c.Id == choiceId) ?? throw new ArgumentException("Choice does not belong to the active card.");
         if (!choice.IsAvailable) return Commands(new WorldCommand("aside", [choice.LockHint]), new WorldCommand("card", [_card]));
         var parts = choiceId.Split(':');
@@ -70,6 +74,7 @@ public sealed class Chapter1Interaction(AwakeningContentSession content, Morning
         {
             "experiment" => Commands(new WorldCommand("experiment", [target])), "help" => Commands(new WorldCommand("help", [target])),
             "recall" => Commands(new WorldCommand("recall", [target])), "compare" => Commands(new WorldCommand("compare", [parts[3]])),
+            "hide" => Commands(new WorldCommand("object_hide", [target])), "destroy" => Commands(new WorldCommand("object_destroy", [target])),
             "close" => Commands(new WorldCommand("close", [])), _ => throw new ArgumentException("Unknown evidence choice."),
         };
     }

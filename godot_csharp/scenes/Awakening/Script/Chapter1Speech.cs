@@ -87,12 +87,13 @@ public sealed partial class AwakeningContentSession
         }
     }
 
-    /// <summary>检视时在场的同伴也看见了这件东西（在场即可见）。</summary>
-    private void ShareExamination(MorningWorld world, string id)
+    /// <summary>检视时同场且宿主确认可见的同伴也看见了这件东西；纯逻辑调用沿用同场抽象。</summary>
+    private void ShareExamination(MorningWorld world, string id, IReadOnlySet<string>? visiblePeople)
     {
         var here = Session.CharacterRooms.GetValueOrDefault("detective");
         if (here is null) return;
         foreach (var who in Companions)
-            if (Session.CharacterRooms.GetValueOrDefault(who) == here) world.Examine(PersonOf(who), id);
+            if (Session.CharacterRooms.GetValueOrDefault(who) == here && (visiblePeople is null || visiblePeople.Contains(who)))
+                world.Examine(PersonOf(who), id);
     }
 }

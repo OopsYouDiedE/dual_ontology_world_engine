@@ -278,14 +278,14 @@ public sealed partial class AwakeningContentSession
     }
     public System.Text.Json.JsonElement LifeTrace(string id) => Content.RootElement.GetProperty("LIFE_TRACES").GetProperty(id);
     // STORY-HARDCODE[AWK-031][logic][production]: E1/E3 开放重演、指定熟悉旁证揭示 V6 的触发映射。
-    public string[] Examine(MorningWorld world, string id)
+    public string[] Examine(MorningWorld world, string id, IReadOnlySet<string>? visiblePeople = null)
     {
         if (Session.Has("examined", id)) return [];
         ConsumeAction("检视", id);
         Session.Set("examined", id, true);
         Session.Observe("detective", id);
         world.Examine(Person.Detective, id);
-        ShareExamination(world, id);
+        ShareExamination(world, id, visiblePeople);
         var events = new List<string> { "evidence" };
         if (id is "E1" or "E3" && !(bool)Session.GetProgress("state")["replay_open"]) events.Add("unlock");
         if (ContentList("ACQUAINTANCE_EVIDENCE", id) && RevealV6()) events.Add("v6");
@@ -358,7 +358,8 @@ public sealed partial class AwakeningContentSession
         return notes.ToArray();
     }
     public void BeginWake(MorningWorld world) => StartFlow(world, "醒来");
-    public bool V6Open => Session.Has("flags", "refusal_seen") || Content.RootElement.GetProperty("ACQUAINTANCE_EVIDENCE").EnumerateArray().Count(item => Session.Has("examined", item.GetString()!)) >= 2;
+    public bool KnownMaterial(string id) => Session.Has("examined", id) || Session.GetProgress("testimony").ContainsKey(id);
+    public bool V6Open => Session.Has("flags", "refusal_seen") || Content.RootElement.GetProperty("ACQUAINTANCE_EVIDENCE").EnumerateArray().Count(item => KnownMaterial(item.GetString()!)) >= 2;
     public bool SiteVisible(string stage, string id)
     {
         var sites = Stage(stage).GetProperty("sites");
@@ -370,7 +371,7 @@ public sealed partial class AwakeningContentSession
         // 能说出口的结论来自侦探自己的认知：查过某个处境的任一证物，这一问的各种说法就都能说（对错都有，不替玩家选）；
         // 重演里设定过的处境同样算想过。不要求先重演。
         var list = new List<string>();
-        if (Session.Has("flags", "reversal_one") || detectiveBolted || (Session.Has("examined", "E12") && Session.Has("examined", "E7"))) list.Add("me");
+        if (Session.Has("flags", "reversal_one") || detectiveBolted || (KnownMaterial("E12") && KnownMaterial("E7"))) list.Add("me");
         var known = new bool[6];
         var index = 0;
         foreach (var variable in Content.RootElement.GetProperty("VARIABLES").EnumerateArray())
@@ -378,7 +379,7 @@ public sealed partial class AwakeningContentSession
             if (index >= 6) break;
             var open = index < 5 || V6Open;
             var thought = replayCount > 0 && variables.Length > index && variables[index] >= 0;
-            var seen = variable.GetProperty("evidence").EnumerateArray().Any(e => Session.Has("examined", e.GetString()!));
+            var seen = variable.GetProperty("evidence").EnumerateArray().Any(e => KnownMaterial(e.GetString()!));
             if (open && (seen || thought))
             {
                 known[index] = true;

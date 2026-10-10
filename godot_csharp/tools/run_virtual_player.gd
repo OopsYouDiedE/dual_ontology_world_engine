@@ -6,6 +6,7 @@ const FieldScript := preload("res://scenes/Shared/Field/WorldView.gd")
 const Navigation := preload("res://scenes/Shared/FieldNavigation.gd")
 const ManuscriptPanel := preload("res://scenes/UI/Panels/Manuscript/ReplayManuscript.tscn")
 const CampusPanel := preload("res://scenes/UI/Panels/CampusMap/CampusMap.tscn")
+const MOVE_KEYS := {"W": KEY_W, "A": KEY_A, "S": KEY_S, "D": KEY_D}
 
 var engine: Node
 var field: Node2D
@@ -27,6 +28,12 @@ var started := 0
 var progressed := 0
 var sequence := 0
 var seen_public_states := {}
+var last_time := ""
+var pressed_move_keys: Array[int] = []
+var keyboard_timer: SceneTreeTimer
+var keyboard_start := Vector2.ZERO
+var keyboard_names: Array = []
+var keyboard_release_at := 0
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -96,6 +103,10 @@ func _run() -> void:
 			_stop("wall_budget")
 			return
 		var time: Dictionary = JSON.parse_string(engine.AgentTimeJson())
+		var time_key := JSON.stringify(time)
+		if time_key != last_time:
+			last_time = time_key
+			_record("player_time", time)
 		if int(time.get("Day", 0)) >= target_days:
 			_stop("target_day_reached")
 			return
@@ -103,6 +114,7 @@ func _run() -> void:
 			_stop("no_public_progress")
 			return
 		if draining: continue
+		if not pressed_move_keys.is_empty(): continue
 		var observation: Dictionary = JSON.parse_string(engine.AgentObservationJson())
 		if bool(observation.get("Complete", false)):
 			_stop("story_complete")
@@ -173,6 +185,8 @@ func _drain() -> void:
 	while not queue.is_empty() and not stopping:
 		var ev: Dictionary = queue.pop_front()
 		match str(ev.get("kind", "")):
+			"strategy_action", "strategy_deviation", "case_progress", "object_changed", "world_resolution":
+				_record(str(ev.kind), ev)
 			"view":
 				panel = ""
 				modal = false
@@ -224,7 +238,10 @@ func _drain() -> void:
 				modal = false
 				var input: Dictionary = ev.input
 				if str(input.action) == "interact": field._approach(str(input.site))
-				elif str(input.action) == "move": field._route_click(Vector2(float(input.point[0]), float(input.point[1])))
+				elif str(input.action) == "move":
+					if input.has("keys"): _keyboard_move(input.keys)
+					else: field._route_click(Vector2(float(input.point[0]), float(input.point[1])))
+				elif str(input.action) == "wait": await create_timer(1.0).timeout
 			"lines", "card", "form", "candidates", "ending":
 				panel = ""
 				modal = true
@@ -237,6 +254,9 @@ func _drain() -> void:
 			"agent_stopped":
 				_stop(str(ev.reason))
 	# Local form edits retain their form; consumed continuations release its modal.
+	if stopping:
+		draining = false
+		return
 	var observation = JSON.parse_string(engine.AgentObservationJson())
 	if panel == "" and observation is Dictionary and observation.get("Candidates", []).is_empty(): modal = false
 	draining = false
@@ -251,13 +271,61 @@ func _field_offers() -> Array:
 		var destination: Vector2 = field.player.position + heading.normalized() * 64.0
 		if not field.in_sight(destination) or not field.adapter.walkable(destination, field.player): continue
 		if Navigation.route_on_grid(field.player.position, destination, grid).is_empty(): continue
-		offers.append({"label": "%d,%d" % [destination.x, destination.y], "kind": "move", "new": false, "input": {"kind": "field_action", "action": "move", "point": [destination.x, destination.y]}})
+		offers.append({"label": "%s %d,%d" % [field.adapter.room_name(destination), destination.x, destination.y], "kind": "move", "new": false, "input": {"kind": "field_action", "action": "move", "point": [destination.x, destination.y]}})
+	# Keyboard walking is a public input even when its future landing room is unseen.
+	# Do not use a hidden destination or bypass the field's normal collisions/control locks.
+	for keys in [["W"], ["S"], ["A"], ["D"], ["W", "A"], ["W", "D"], ["S", "A"], ["S", "D"]]:
+		offers.append({"label": "%s %d,%d" % ["+".join(keys), field.player.position.x, field.player.position.y], "kind": "move", "new": false, "input": {"kind": "field_action", "action": "move", "keys": keys}})
 	if bool(snapshot.get("controls", {}).get("wait", false)):
 		offers.append({"label": "T", "kind": "wait", "new": false, "input": {"kind": "action", "act": {"cmd": "stay"}}})
+	else:
+		# Literal inactivity: one real second of physics, without an authored wait command or clock injection.
+		offers.append({"label": "", "kind": "wait", "new": false, "input": {"kind": "field_action", "action": "wait"}})
 	for shortcut in [{"key": "Tab", "panel": "notebook"}, {"key": "R", "panel": "manuscript"}, {"key": "M", "panel": "campus"}]:
 		if bool(snapshot.get("controls", {}).get(shortcut.panel, false)):
 			offers.append({"label": shortcut.key, "kind": "menu", "new": false, "input": {"kind": "player_panel", "panel": shortcut.panel}})
 	return offers
+
+func _keyboard_move(keys: Array) -> void:
+	keyboard_start = field.player.position
+	keyboard_names = keys.duplicate()
+	for key in keys:
+		var code: int = MOVE_KEYS[str(key)]
+		var event := InputEventKey.new()
+		event.keycode = code
+		event.physical_keycode = code
+		event.pressed = true
+		pressed_move_keys.append(code)
+		Input.parse_input_event(event)
+	_record("keyboard_input", {"keys": keys, "pressed": true})
+	keyboard_release_at = Time.get_ticks_msec() + 350
+	keyboard_timer = create_timer(0.35)
+	keyboard_timer.timeout.connect(_finish_keyboard_move, CONNECT_ONE_SHOT)
+
+func _finish_keyboard_move() -> void:
+	keyboard_timer = null
+	if stopping: return
+	var remaining := keyboard_release_at - Time.get_ticks_msec()
+	if remaining > 0:
+		# Scene timers consume frame delta; a busy prior frame must not shorten a new input.
+		keyboard_timer = create_timer(float(remaining) / 1000.0)
+		keyboard_timer.timeout.connect(_finish_keyboard_move, CONNECT_ONE_SHOT)
+		return
+	_release_move_keys()
+	_record("keyboard_move", {"keys": keyboard_names, "start_position": [keyboard_start.x, keyboard_start.y], "end_position": [field.player.position.x, field.player.position.y]})
+
+func _release_move_keys() -> void:
+	if pressed_move_keys.is_empty(): return
+	var keys: Array[String] = []
+	for code in pressed_move_keys:
+		keys.append(str(MOVE_KEYS.find_key(code)))
+		var event := InputEventKey.new()
+		event.keycode = code
+		event.physical_keycode = code
+		event.pressed = false
+		Input.parse_input_event(event)
+	pressed_move_keys.clear()
+	_record("keyboard_input", {"keys": keys, "pressed": false})
 
 func _record(kind: String, value) -> void:
 	sequence += 1
@@ -267,6 +335,10 @@ func _record(kind: String, value) -> void:
 func _stop(reason: String) -> void:
 	if stopping: return
 	stopping = true
+	if keyboard_timer != null:
+		if keyboard_timer.timeout.is_connected(_finish_keyboard_move): keyboard_timer.timeout.disconnect(_finish_keyboard_move)
+		keyboard_timer = null
+	_release_move_keys()
 	var summary := {"seed": seed, "target_days": target_days, "time": JSON.parse_string(engine.AgentTimeJson()) if engine else null, "reason": reason, "selections": engine.AgentSelections() if engine else 0, "elapsed_seconds": float(Time.get_ticks_msec() - started) / 1000.0}
 	if is_instance_valid(field) and field.player != null:
 		summary["visible_position"] = [field.player.position.x, field.player.position.y]
@@ -277,4 +349,19 @@ func _stop(reason: String) -> void:
 		engine.CloseAgent()
 		engine.CloseTrace()
 	output_file.close()
-	quit(1 if reason == "engine_error" else 0)
+	_finish_shutdown.call_deferred(1 if reason == "engine_error" else 0)
+
+func _finish_shutdown(code: int) -> void:
+	# An inactivity selection may still be awaiting its real one-second timer.
+	# Let the suspended drain return before freeing its field and engine references.
+	while draining:
+		await process_frame
+	await create_timer(0.15).timeout
+	queue.clear()
+	if is_instance_valid(field): field.queue_free()
+	if is_instance_valid(engine): engine.queue_free()
+	await process_frame
+	await process_frame
+	field = null
+	engine = null
+	quit(code)

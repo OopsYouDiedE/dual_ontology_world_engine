@@ -87,7 +87,7 @@ class Prop:
 
 
 QUERY_NAMES = {
-    "detective_name": "侦探名", "seen": "见过", "tested": "试过", "asked": "问过", "flag": "旗",
+    "detective_name": "侦探名", "seen": "见过", "known": "获知", "tested": "试过", "asked": "问过", "flag": "旗",
     "recalled": "回想过", "compared": "比对过", "v6_open": "六问已开", "told_rule": "告知规则",
     "hooks": "钩数", "total_hooks": "总钩数", "matched": "已吻合", "replayed": "已重演",
     "fragment": "片段", "alone_choice": "独处选择", "life_thought": "生活所思", "talk_first": "先开口",
@@ -106,6 +106,7 @@ COMPARE = {"==": "eq", "!=": "ne", ">": "gt", ">=": "gte", "<": "lt", "<=": "lte
 
 # 设定表：块名 -> (CONTENT_TABLES 键或独立属性, 形式)
 TABLES = {
+    "策略牵引": ("STRATEGY_TRACK", "records"),
     "表达": ("EXPRESSION", "records"),
     "规则有效期": ("RULE_LIFETIMES", "map"),
     "现场表现": ("PRESENTATION", "records"),
@@ -125,7 +126,7 @@ TABLES = {
     "物件外观名": ("OBJECT_NAMES", "map"), "纹理外观名": ("TEXTURE_NAMES", "map"), "纹理前缀外观名": ("TEXTURE_PREFIX_NAMES", "map"),
     "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
-CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES",
+CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES", "STRATEGY_TRACK",
                 "EXPRESSION",
                 "RULE_LIFETIMES",
                 "PRESENTATION",
@@ -1059,6 +1060,42 @@ def read_scalar_records(body: list[Line]) -> dict[str, Any]:
     return result
 
 
+def read_strategy_track(data: dict[str, Any], number: int) -> dict[str, Any]:
+    """Closed adapter wiring, with explicit lists rather than untyped scalar records."""
+    from story_base import split_list, StoryError
+    fields = {"cooldown_minutes", "wrong_scenes", "world_resolution_scenes", "decline_choices", "object_labels", "object_choices", "people"}
+    if not fields <= set(data) or set(data) - fields - {"source_scenes"} or type(data["cooldown_minutes"]) is not int or data["cooldown_minutes"] <= 0:
+        raise StoryError("策略牵引字段不完整、未知或冷却非法。", number)
+    def strings(value):
+        if not isinstance(value, str) or not value.strip():
+            raise StoryError("策略牵引列表须为非空字串列表。", number)
+        result = split_list(value)
+        if len(result) != len(set(result)):
+            raise StoryError("策略牵引列表不能重复。", number)
+        return result
+    data["wrong_scenes"] = strings(data["wrong_scenes"])
+    data["world_resolution_scenes"] = strings(data["world_resolution_scenes"])
+    if "source_scenes" in data:
+        if not isinstance(data["source_scenes"], dict) or not data["source_scenes"]:
+            raise StoryError("策略来源场面须为非空映射。", number)
+        data["source_scenes"] = {key: strings(scenes) for key, scenes in data["source_scenes"].items()}
+    for key in ("decline_choices", "object_labels", "object_choices", "people"):
+        if not isinstance(data[key], dict):
+            raise StoryError("策略牵引映射字段类型错误：" + key, number)
+    for actions in data["object_choices"].values():
+        if any(a not in {"hide", "destroy"} for a in strings(actions)):
+            raise StoryError("策略牵引包含未知物件动作。", number)
+    data["object_choices"] = {key: strings(actions) for key, actions in data["object_choices"].items()}
+    for actor, person in data["people"].items():
+        if not isinstance(person, dict) or set(person) != {"clues", "methods"} or not isinstance(person["methods"], dict):
+            raise StoryError("策略牵引人物字段错误：" + actor, number)
+        person["clues"] = strings(person["clues"])
+        if not person["methods"] or any(k not in {"report", "test", "invite", "remember"}
+                                      or not isinstance(v, str) or not v for k, v in person["methods"].items()):
+            raise StoryError("策略牵引方法字段错误：" + actor, number)
+    return data
+
+
 def read_duration_table(body: list[Line], what: str) -> dict[str, int]:
     result = {}
     for item in body:
@@ -1109,7 +1146,7 @@ def read_clock(body: list[Line]) -> dict[str, Any]:
                "正常出门最早分钟": "normal_exit_earliest_minutes", "正常出门最晚分钟": "normal_exit_latest_minutes",
                "默认场面分钟": "default_scene_minutes", "同伴醒来分钟": "companion_start_minutes"}
     tables = {"场面时长": "scenes", "行动时长": "actions"}
-    unknown = set(fields) - set(scalars) - set(tables) - {"每游戏分钟日常逻辑秒"}
+    unknown = set(fields) - set(scalars) - set(tables) - {"每游戏分钟日常逻辑秒", "每游戏分钟现场秒"}
     if unknown:
         raise StoryError("未知剧情时长字段：" + "、".join(sorted(unknown)))
     result = {}
@@ -1127,6 +1164,12 @@ def read_clock(body: list[Line]) -> dict[str, Any]:
     if sub or not isinstance(ratio, (int, float)) or not 0 < ratio < float("inf"):
         raise StoryError("每游戏分钟日常逻辑秒须为正有限数", line.number)
     result["daily_seconds_per_game_minute"] = ratio
+    if "每游戏分钟现场秒" in fields:
+        value, line, sub = fields["每游戏分钟现场秒"]
+        ratio = num(value, "每游戏分钟现场秒", line.number)
+        if sub or not isinstance(ratio, (int, float)) or not 0 < ratio < float("inf"):
+            raise StoryError("每游戏分钟现场秒须为正有限数", line.number)
+        result["field_seconds_per_game_minute"] = ratio
     for zh, en in tables.items():
         if zh not in fields:
             raise StoryError("剧情时长缺少：" + zh)
@@ -1343,6 +1386,8 @@ def load(path: Path) -> Chapter1Source:
                 value = {split_pair(item)[0]: split_pair(item)[1] for item in body}
             elif kind == "records":
                 value = read_scalar_records(body)
+                if key == "策略牵引":
+                    value = read_strategy_track(value, head.number)
                 if key == "表达":
                     from story_expression import validate_expression
                     value = validate_expression(value, head.number)

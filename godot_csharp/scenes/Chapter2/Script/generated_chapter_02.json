@@ -195,7 +195,22 @@
             "demon_prejudice": 0,
             "habits": [],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "弄清自己为何在此",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -276,7 +291,56 @@
               }
             ],
             "voice": "工匠口吻，短",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "超越卡诺循环的动力图纸",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              },
+              {
+                "name": "弄清昨夜、答完题出门",
+                "target": "昨夜与隔离门",
+                "stance": "协助调查",
+                "priority": 40,
+                "source": "s5_question",
+                "methods": [
+                  "report",
+                  "test",
+                  "invite"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_stall",
+                    "minimum": 20
+                  }
+                ]
+              },
+              {
+                "name": "用本人记得的内容补位",
+                "target": "本人亲见的物件内容",
+                "stance": "提供证言",
+                "priority": 80,
+                "source": "s5_question",
+                "methods": [
+                  "remember"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_damage",
+                    "minimum": 1
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -364,7 +428,56 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "安稳，护住身边的人",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              },
+              {
+                "name": "弄清昨夜、答完题出门",
+                "target": "昨夜与隔离门",
+                "stance": "协助调查",
+                "priority": 40,
+                "source": "s5_question",
+                "methods": [
+                  "report",
+                  "test",
+                  "invite"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_stall",
+                    "minimum": 20
+                  }
+                ]
+              },
+              {
+                "name": "用本人记得的内容补位",
+                "target": "本人亲见的物件内容",
+                "stance": "提供证言",
+                "priority": 80,
+                "source": "s5_question",
+                "methods": [
+                  "remember"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_damage",
+                    "minimum": 1
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -443,7 +556,56 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "从未听过的声音",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              },
+              {
+                "name": "弄清昨夜、答完题出门",
+                "target": "昨夜与隔离门",
+                "stance": "协助调查",
+                "priority": 40,
+                "source": "s5_question",
+                "methods": [
+                  "report",
+                  "test",
+                  "invite"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_stall",
+                    "minimum": 20
+                  }
+                ]
+              },
+              {
+                "name": "用本人记得的内容补位",
+                "target": "本人亲见的物件内容",
+                "stance": "提供证言",
+                "priority": 80,
+                "source": "s5_question",
+                "methods": [
+                  "remember"
+                ],
+                "conditions": [
+                  {
+                    "tag": "observed_damage",
+                    "minimum": 1
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -528,7 +690,22 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "言灵的完美韵律",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -607,7 +784,22 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "读通古代铭文",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -684,7 +876,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "一个不会赶她走的地方",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -787,7 +994,22 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "成为定规则的人",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -862,7 +1084,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "为源质这一新物种定名",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -944,7 +1181,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "赢下与恶魔的对局",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1023,7 +1275,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "治好脚踝，查明仪式真相",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1090,7 +1357,22 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "看见更多的以太色层",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1167,7 +1449,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "独立研究，证明理化能解释一切",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1244,7 +1541,22 @@
               }
             ],
             "voice": "",
-            "gender": "Male"
+            "gender": "Male",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "护住平民同伴",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1312,7 +1624,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "亲手建成、被人承认",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -1377,7 +1704,22 @@
               }
             ],
             "voice": "",
-            "gender": "Female"
+            "gender": "Female",
+            "strategies": [
+              {
+                "name": "实现本人欲望",
+                "target": "不再失去病人",
+                "stance": "求知与谨慎尝试",
+                "priority": 2,
+                "source": "desire",
+                "methods": [
+                  "check",
+                  "listen",
+                  "rest"
+                ],
+                "conditions": []
+              }
+            ]
           }
         },
         {
@@ -13252,112 +13594,112 @@
       "line": 1,
       "column": 18,
       "end_line": 1,
-      "end_column": 509
+      "end_column": 681
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:15:18": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/02_霍铎.story",
       "line": 1,
       "column": 18,
       "end_line": 1,
-      "end_column": 839
+      "end_column": 1405
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:16:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/03_沈鼎.story",
       "line": 1,
       "column": 19,
       "end_line": 1,
-      "end_column": 880
+      "end_column": 1444
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:17:17": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/04_苏泠.story",
       "line": 1,
       "column": 17,
       "end_line": 1,
-      "end_column": 790
+      "end_column": 1352
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:18:21": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/05_卢西安.story",
       "line": 1,
       "column": 21,
       "end_line": 1,
-      "end_column": 867
+      "end_column": 1038
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:19:17": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/06_顾平章.story",
       "line": 1,
       "column": 17,
       "end_line": 1,
-      "end_column": 821
+      "end_column": 991
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:20:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/07_雀儿.story",
       "line": 1,
       "column": 19,
       "end_line": 1,
-      "end_column": 838
+      "end_column": 1012
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:21:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/08_沃德.story",
       "line": 1,
       "column": 19,
       "end_line": 1,
-      "end_column": 1059
+      "end_column": 1230
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:22:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/09_赛尔玛.story",
       "line": 1,
       "column": 20,
       "end_line": 1,
-      "end_column": 775
+      "end_column": 949
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:23:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/10_阮清越.story",
       "line": 1,
       "column": 19,
       "end_line": 1,
-      "end_column": 856
+      "end_column": 1028
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:24:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/11_伊莲娜.story",
       "line": 1,
       "column": 20,
       "end_line": 1,
-      "end_column": 802
+      "end_column": 977
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:25:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/12_莫兰.story",
       "line": 1,
       "column": 20,
       "end_line": 1,
-      "end_column": 682
+      "end_column": 855
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:26:23": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/13_维罗妮卡.story",
       "line": 1,
       "column": 23,
       "end_line": 1,
-      "end_column": 820
+      "end_column": 998
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:27:23": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story",
       "line": 1,
       "column": 23,
       "end_line": 1,
-      "end_column": 778
+      "end_column": 948
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:28:23": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/15_玛格丽特.story",
       "line": 1,
       "column": 23,
       "end_line": 1,
-      "end_column": 736
+      "end_column": 909
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:29:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/生态/人物/16_茉拉.story",
       "line": 1,
       "column": 19,
       "end_line": 1,
-      "end_column": 736
+      "end_column": 906
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:30:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",

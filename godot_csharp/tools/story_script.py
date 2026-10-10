@@ -862,6 +862,7 @@ class Translator:
         return pairs
 
     def profile(self, name: str, fields, head: Line) -> str:
+        from story_strategy import strategies
         def get(key: str, default=None):
             return fields[key] if key in fields else default
 
@@ -914,6 +915,8 @@ class Translator:
         if "日常" in fields:
             _, line, sub = fields["日常"]
             profile["habits"] = [self.habit(item) for item in sub]
+        if "策略" in fields:
+            profile["strategies"] = strategies(fields["策略"])
         return py(profile)
 
     def habit(self, item: Line) -> dict[str, Any]:
@@ -939,7 +942,7 @@ class Translator:
 GENDERS = {"男": "Male", "女": "Female"}
 # 由章节读取器（story_chapter1.read_person）解释的人物认知初值；世界脚本只放行。
 CHAPTER_PERSONA_FIELDS = {"初醒信任", "谨慎", "说话习惯", "心智范围"}
-PROFILE_FIELDS_ZH = {"性别", "阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
+PROFILE_FIELDS_ZH = {"策略", "性别", "阵营", "宿舍", "速度", "配合", "体型", "欲望", "魔音台词", "欲望标志", "力气", "开锁",
                      "信号", "结构", "温室", "厨艺", "工匠", "看重", "偏见", "魔偏见", "日常", "口吻"}
 
 

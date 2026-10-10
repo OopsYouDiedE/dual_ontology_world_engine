@@ -24,7 +24,7 @@ from world_script import ScriptError as WorldScriptError  # noqa: E402
 
 EFFECTS = {"set_flag", "clear_flag", "amplify", "whisper", "share_recall"}
 QUERIES = {
-    "detective_name", "seen", "tested", "asked", "flag", "recalled", "compared", "v6_open",
+    "detective_name", "seen", "known", "tested", "asked", "flag", "recalled", "compared", "v6_open",
     "told_rule", "hooks", "total_hooks", "matched", "replayed", "fragment", "alone_choice",
     "life_thought", "talk_first", "recall_thought", "wrong_name", "addr", "heard", "heard_where",
     "sound_sentence", "has", "count", "value", "replay_count", "full_match", "replay_refused",
@@ -36,7 +36,7 @@ GLOBAL_PROGRESS_QUERIES = {"matched", "replayed", "full_match", "replay_count", 
 EXPR_OPS = {"literal", "call", "not", "and", "or", "eq", "ne", "gt", "gte", "lt", "lte"}
 INTERPOLATION = re.compile(r"\{\{(.*?)\}\}")
 CALL_ARITY = {
-    "detective_name": 0, "seen": 1, "tested": 1, "asked": 1, "flag": 1, "recalled": 1,
+    "detective_name": 0, "seen": 1, "known": 1, "tested": 1, "asked": 1, "flag": 1, "recalled": 1,
     "compared": 1, "v6_open": 0, "told_rule": 1, "hooks": 1, "total_hooks": 0,
     "matched": 0, "replayed": 0, "fragment": 1, "alone_choice": 1, "life_thought": 1,
     "talk_first": 1, "recall_thought": 0, "wrong_name": 0, "addr": 1, "heard": 1,

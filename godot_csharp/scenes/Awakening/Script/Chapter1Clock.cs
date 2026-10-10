@@ -45,6 +45,17 @@ public sealed partial class AwakeningContentSession
         => AdvanceClock("action", action + (id == "" ? "" : ":" + id), Clock.GetProperty("actions").GetProperty(action).GetInt32());
 
     public void RecordReplayRun() => ConsumeAction("重演");
+    /// <summary>World time runs while the field is controllable; modal reading and paused frames do not count.</summary>
+    public void AdvanceFieldClock(double delta)
+    {
+        if (!double.IsFinite(delta) || delta < 0) throw new ArgumentOutOfRangeException(nameof(delta));
+        if (!Clock.TryGetProperty("field_seconds_per_game_minute", out var ratio)) return;
+        var clock = Session.GetProgress("clock");
+        var remainder = Convert.ToDouble(clock.GetValueOrDefault("field_seconds", 0.0)) + delta;
+        var minutes = (int)Math.Floor(remainder / ratio.GetDouble());
+        Session.Set("clock", "field_seconds", remainder - minutes * ratio.GetDouble());
+        if (minutes > 0) AdvanceClock("world", "field", minutes);
+    }
     public void RecordSoundTest() => ConsumeAction("声路");
 
     public void RecordDoorOpen()

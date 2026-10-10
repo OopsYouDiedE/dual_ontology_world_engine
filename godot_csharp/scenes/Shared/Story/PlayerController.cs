@@ -26,6 +26,7 @@ public sealed class ControllerRuleDefinition
     public string Mode { get; set; } = "";
     public string Kind { get; set; } = "";
     public int Weight { get; set; }
+    public string LabelContains { get; set; } = "";
 }
 public sealed record PlayerTime(int Day, double Minutes, string Phase);
 public sealed record PlayerCognition(CognitionSnapshotV1 Snapshot, SubjectProjectionId Actor);
@@ -157,7 +158,7 @@ public static class PlayerControllers
         foreach (var rule in control.Rules)
             if (rule.Mode is not ("prefer" or "require" or "forbid" or "permit")
                 || rule.Kind is not ("menu" or "form_field" or "form_submit" or "continue" or "interact" or "move" or "wait" or "untried" or "new")
-                || rule.Weight is < 0 or > 1000)
+                || rule.Weight is < 0 or > 1000 || rule.LabelContains is null || rule.LabelContains.Length > 200)
                 throw new InvalidDataException("Unsupported subjective controller rule.");
         var reasoning = control.Reasoning;
         if (reasoning is null || reasoning.Depth is < 0 or > 64 || reasoning.Expansions is < 1 or > 100000
@@ -170,7 +171,7 @@ public static class PlayerControllers
 /// Assess a detached augmentation; never mutate the actor, simulation or authoritative world.</summary>
 public sealed class SubjectivePlayerController
 {
-    private readonly ImmutableArray<(RuleMode Mode, string Kind, int Weight)> _rules;
+    private readonly ImmutableArray<(RuleMode Mode, string Kind, int Weight, string Label)> _rules;
     // Versioned xorshift32 tie stream; independent of wall time and System.Random.
     private uint _tieState;
     private readonly HashSet<(string Kind, string Label)> _tried = [];
@@ -180,7 +181,7 @@ public sealed class SubjectivePlayerController
     public SubjectivePlayerController(ActorControllerDefinition declaration, int seed)
     {
         PlayerControllers.Validate(declaration);
-        _rules = [..declaration.Rules.Select(r => (Enum.Parse<RuleMode>(r.Mode, true), r.Kind, r.Weight))];
+        _rules = [..declaration.Rules.Select(r => (Enum.Parse<RuleMode>(r.Mode, true), r.Kind, r.Weight, r.LabelContains))];
         var r = declaration.Reasoning;
         _reasoning = new(r.Depth, r.Expansions, r.Hypotheses);
         (_argumentWeight, _informationWeight) = (r.ArgumentWeight, r.InformationWeight);
@@ -272,7 +273,8 @@ public sealed class SubjectivePlayerController
             var rules = ImmutableArray.CreateBuilder<FrozenRuleV1>();
             rules.Add(new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Prefer, effect, 0, Truth.True));
             foreach (var rule in _rules)
-                rules.Add(new(new FrozenConditionV1.Tagged(noun, new(rule.Kind), 1), rule.Mode, effect, rule.Weight, Truth.True));
+                if (rule.Label == "" || candidate.Label.Contains(rule.Label, StringComparison.Ordinal))
+                    rules.Add(new(new FrozenConditionV1.Tagged(noun, new(rule.Kind), 1), rule.Mode, effect, rule.Weight, Truth.True));
             nodes.Add(new(id, candidate.Label, ProjectionKind.Concept, Truth.True, null, tags, [], [], rules.ToImmutable(), null, [], null));
             effects.Add((effect, candidate));
         }
@@ -286,10 +288,10 @@ public sealed class SubjectivePlayerController
         var best = available.Max(p => p.Assessment!.Score + reasoningScores[p.Candidate.Token].Score);
         var tied = available.Where(p => p.Assessment!.Score + reasoningScores[p.Candidate.Token].Score == best).ToArray();
         var chosen = tied[TieIndex(tied.Length)].Candidate;
-        var matchedRules = _rules.Where(rule => rule.Kind == chosen.Kind
+        var matchedRules = _rules.Where(rule => (rule.Label == "" || chosen.Label.Contains(rule.Label, StringComparison.Ordinal)) && (rule.Kind == chosen.Kind
             || rule.Kind == "new" && chosen.New
-            || rule.Kind == "untried" && !_tried.Contains((chosen.Kind, chosen.Label)))
-            .Select(rule => "authored_rule:" + rule.Mode.ToString().ToLowerInvariant() + ":" + rule.Kind + ":" + rule.Weight);
+            || rule.Kind == "untried" && !_tried.Contains((chosen.Kind, chosen.Label))))
+            .Select(rule => "authored_rule:" + rule.Mode.ToString().ToLowerInvariant() + ":" + rule.Kind + ":" + rule.Weight + (rule.Label == "" ? "" : ":public_label=" + rule.Label));
         // Materialize before updating choice history: the untried rule describes
         // the cognition used for this choice, not the state after it.
         var publicBasis = reasoningScores[chosen.Token].Basis.AddRange(matchedRules).Add("authored_subjective_preferences");

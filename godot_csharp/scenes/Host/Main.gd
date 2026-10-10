@@ -7,6 +7,7 @@ const TITLE_SCENE := preload("res://scenes/UI/Panels/Title/Title.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
 const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 const FIELD_EVENTS := ["scene", "stage"]
+const MEASUREMENT_EVENTS := ["case_progress", "strategy_deviation", "strategy_action", "object_changed", "world_resolution"]
 
 var view_trace: Node
 var engine: Node
@@ -101,7 +102,10 @@ func _drain() -> void:
 	while not _queue.is_empty() and not _closing:
 		var ev: Dictionary = _queue.pop_front()
 		var kind := str(ev.get("kind", ""))
-		if kind == "home":
+		if kind in MEASUREMENT_EVENTS:
+			# Session tracing and the headless driver retain these; the visual host presents their actual dialogue separately.
+			continue
+		elif kind == "home":
 			_home()
 		elif kind == "view":
 			_view(ev)

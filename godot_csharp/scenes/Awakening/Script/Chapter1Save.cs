@@ -58,7 +58,16 @@ public sealed partial class Chapter1Session
         public required Guid PresentationDomain {get;init;}
         public required long PresentationSerial {get;init;}
     }
-    private static string SaveContentVersion=>"chapter-content/1:"+Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Chapter1Data.Root.GetRawText())));
+    private static string SaveContentVersion
+    {
+        get
+        {
+            using var source = typeof(MorningWorld).Assembly.GetManifestResourceStream("Awakening.World.json")!;
+            using var world = JsonDocument.Parse(source);
+            return "chapter-content/2:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+                Chapter1Data.Root.GetRawText() + "\n" + world.RootElement.GetRawText())));
+        }
+    }
     public ContractResult<bool> CheckSavePoint() => Try(() =>
     {
         Require(_jobs.Count==0&&_planDepth==0&&_probePlans.Count==0,"host.fiber",ContractErrorCode.UnsupportedSavePoint);
