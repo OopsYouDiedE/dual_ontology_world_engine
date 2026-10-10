@@ -7,9 +7,9 @@ internal static class RouteLearningCases
 {
     private static PublicPlayerCandidate Step(string token, double x, double y) =>
         new(token, $"{x},{y}", "move", false) { Location = new(x, y) };
-    private static PublicPlayerCandidate Approach(string token, string destination, double x, double y) =>
+    private static PublicPlayerCandidate Approach(string token, string destination, double x, double y, double travelDistance = 0) =>
         new(token, $"{destination} {x},{y}", "move", false, Value: destination, Purpose: "approach")
-        { Location = new(x, y) };
+        { Location = new(x, y), TravelDistance = travelDistance };
     private static PublicPlayerCandidate Place(string token, string name = "neutral-route-source") =>
         new(token, name, "interact", false) { Location = new(1024, 16) };
     private static PublicPlayerObservation At(long turn, double x, double y, params PublicPlayerCandidate[] candidates) =>
@@ -61,6 +61,12 @@ internal static class RouteLearningCases
             new("neutral-prime", "neutral-prime", "menu", false)), cognition);
     private static bool DirectInvestigation(PlayerDecision decision) =>
         decision.Basis.Any(b => b.StartsWith("seek_current_question_material:") || b.StartsWith("seek_unknown_acquired_proposition:"));
+    private static void Contact(SubjectivePlayerController controller, PublicPlayerObservation observation, PlayerCognition cognition)
+    {
+        var decision = controller.Decide(observation, cognition);
+        if (!controller.CompleteInteraction(decision.Token!, true))
+            throw new InvalidOperationException("Neutral examination contact was not accepted");
+    }
     private static void Observe(string name, object value) => Console.WriteLine("OBSERVATION " + name + " " + JsonSerializer.Serialize(value));
 
     public static void Run(Action<string, bool> check)
@@ -92,9 +98,39 @@ internal static class RouteLearningCases
                 && following.Basis.Contains("follow_observed_route_to_needed_place"));
             check(role + "_waypoints_do_not_receive_direct_investigation_rewards", !DirectInvestigation(first) && !DirectInvestigation(following));
 
+            var costedRoute = new SubjectivePlayerController(declaration, 23);
+            Prime(costedRoute, cognition);
+            var costedFirst = costedRoute.Decide(At(2, 16, 16,
+                Approach("neutral-cost-first", "neutral-route-source", 16, 144, 128),
+                Step("neutral-cost-unrelated-first", 48, 16)), cognition);
+            var costedNext = costedRoute.Decide(At(3, 16, 144,
+                Approach("neutral-cost-next", "neutral-route-source", 144, 144, 128),
+                Step("neutral-cost-unrelated-next", 48, 144)), cognition);
+            Observe(role + " actual-waypoint-cost", new { costedFirst, costedNext });
+            check(role + "_paying_each_actual_waypoint_keeps_needed_route_ahead_of_unrelated_movement",
+                costedFirst.Token == "neutral-cost-first" && costedNext.Token == "neutral-cost-next"
+                && costedFirst.Basis.Contains("observed_route_travel_distance:128.0")
+                && costedNext.Basis.Contains("observed_route_travel_distance:128.0")
+                && !DirectInvestigation(costedFirst) && !DirectInvestigation(costedNext));
+            if (curiosity > 0)
+            {
+                // Same cognition, candidates, input endpoint and seed; only deliberately
+                // corrupted public host cost repeats the full journey for this short input.
+                var overcharged = new SubjectivePlayerController(declaration, 23);
+                Prime(overcharged, cognition);
+                var corruptedCost = overcharged.Decide(At(2, 16, 16,
+                    Approach("neutral-cost-first", "neutral-route-source", 16, 144, 1024),
+                    Step("neutral-cost-unrelated-first", 48, 16)), cognition);
+                Observe(role + " counterfactual-full-route-overcharge", corruptedCost);
+                check(role + "_counterfactual_full_journey_cost_exposes_unrelated_move_bias",
+                    corruptedCost.Token == "neutral-cost-unrelated-first"
+                    && corruptedCost.Alternatives.Single(a => a.Token == "neutral-cost-first").Score
+                        < costedFirst.Alternatives.Single(a => a.Token == "neutral-cost-first").Score);
+            }
+
             var rechecking = new SubjectivePlayerController(declaration, 23);
             Prime(rechecking, cognition);
-            rechecking.Decide(At(2, 1024, 16, Place("neutral-recheck-first-examination")), cognition);
+            Contact(rechecking, At(2, 1024, 16, Place("neutral-recheck-first-examination")), cognition);
             var firstRetry = rechecking.Decide(At(3, 16, 16,
                 Approach("neutral-recheck-first-waypoint", "neutral-route-source", 144, 144)), cognition);
             var nextRetry = rechecking.Decide(At(4, 144, 144,
@@ -108,8 +144,8 @@ internal static class RouteLearningCases
 
             var exhausted = new SubjectivePlayerController(declaration, 23);
             Prime(exhausted, cognition);
-            exhausted.Decide(At(2, 1024, 16, Place("neutral-examine-first")), cognition);
-            exhausted.Decide(At(3, 1024, 16, Place("neutral-examine-second")), cognition);
+            Contact(exhausted, At(2, 1024, 16, Place("neutral-examine-first")), cognition);
+            Contact(exhausted, At(3, 1024, 16, Place("neutral-examine-second")), cognition);
             var alternative = exhausted.Decide(At(4, 16, 16,
                 Approach("neutral-exhausted-new-waypoint", "neutral-route-source", 144, 144),
                 new("neutral-unexamined-interaction", "neutral-unexamined", "interact", false)), cognition);
@@ -121,9 +157,10 @@ internal static class RouteLearningCases
                 && !exhaustedRoute.Basis.Contains("follow_observed_route_to_needed_place"));
             var learned = NewAcceptedMaterial(cognition);
             var reopened = exhausted.Decide(At(6, 1024, 16, Place("neutral-reopened-interaction")), learned);
-            Observe(role + " new-material-reopens-source", reopened);
-            check(role + "_accepted_material_reopens_source_interaction", DirectInvestigation(reopened)
-                && !reopened.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
+            Observe(role + " unrelated-material-preserves-source-history", reopened);
+            check(role + "_unrelated_accepted_material_keeps_source_exhausted", !DirectInvestigation(reopened)
+                && !reopened.Basis.Any(b => b.StartsWith("authored_rule:prefer:untried:")));
+            check(role + "_unchanged_material_fixture_completes_actual_reexamination", exhausted.CompleteInteraction(reopened.Token!, true));
             var relevantLearning = NewAcceptedMaterial(cognition, answersQuestion: true);
             var returnAfterProof = exhausted.Decide(At(7, 16, 16,
                 Approach("neutral-return-after-proof", "neutral-route-source", 16, 144),

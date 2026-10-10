@@ -1,0 +1,57 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+PASS current visible ground enters memory
+PASS unseen U arms remain closed in memory
+PASS remembered place cannot use an unseen U route
+PASS unobserved route cost uses only known coordinate lower bound
+PASS observed U route offers a public destination identity
+PASS U route first moves away from destination along remembered ground
+PASS remembered route keeps a short ordinary click waypoint
+PASS U route move cost covers only the emitted click waypoint
+PASS direct approach cost includes the complete observed U detour less reach
+PASS hidden closure and hidden opening do not change remembered ground
+PASS hidden geometry changes leave all public route candidates unchanged
+PASS remembered navigation samples only current visible points
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"remembered navigation samples only current visible points","unknown_geometry_queries":[]}
+PASS seeing changed passage updates remembered collision
+PASS seeing newly open ground updates memory
+OBSERVATION remembered-U {"grid_cell":[8.0,8.0],"offers":[{"input":{"action":"move","kind":"field_action","point":[60.0,156.0]},"kind":"move","label":"neutral-desk 60,156","location":[60.0,156.0],"new":false,"purpose":"approach","travel_distance":128.0,"value":"neutral-desk"}]}
+PASS both observed endpoints offer their common route prefix
+PASS turned waypoint sends its actual short click endpoint
+PASS extending only the destination leaves the same first-input cost unchanged
+PASS turned input cost uses travelled legs instead of the straight chord
+PASS all short approach prefixes obey the route-length limit
+OBSERVATION turned-common-prefix {"extended":{"input":{"action":"move","kind":"field_action","point":[108.0,108.0]},"kind":"move","label":"neutral-turn 108,108","location":[108.0,108.0],"new":false,"purpose":"approach","travel_distance":128.0,"value":"neutral-turn"},"short":{"input":{"action":"move","kind":"field_action","point":[108.0,108.0]},"kind":"move","label":"neutral-turn 108,108","location":[108.0,108.0],"new":false,"purpose":"approach","travel_distance":128.0,"value":"neutral-turn"},"straight_chord":90.5096664428711}
+PASS direct interactions retain complete turned routes minus interaction reach
+PASS direct interaction costs still reflect observed detours
+PASS off-centre ordinary starting position retains its remembered route
+PASS prefix cost includes the actual connector from an off-centre start
+OBSERVATION off-centre-prefix {"input":{"action":"move","kind":"field_action","point":[100.0,108.0]},"kind":"move","label":"neutral-turn 100,108","location":[100.0,108.0],"new":false,"purpose":"approach","travel_distance":122.82842707634,"value":"neutral-turn"}
+PASS waypoint and direct cost calculations use only remembered geometry
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"waypoint and direct cost calculations use only remembered geometry","unknown_geometry_queries":[]}
+PASS known target coordinates do not invent a route across unknown ground
+PASS missing route calculation never reads unknown ground
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"missing route calculation never reads unknown ground","unknown_geometry_queries":[]}
+OBSERVATION direct-route-costs {"extended":244.0,"short":180.0}
+PASS near visible boundary offers real outward keyboard input
+PASS distant frontier approaches only observed edge by click
+PASS unrevealed threshold retains every unknown keyboard direction at 176
+PASS multi-cell threshold offers further forward input at 176
+PASS unrevealed threshold retains every unknown keyboard direction at 208
+PASS multi-cell threshold offers further forward input at 208
+PASS frontier generation never samples unknown side
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"frontier generation never samples unknown side","unknown_geometry_queries":[]}
+PASS hidden corridor removal leaves public threshold candidates unchanged
+PASS changed hidden corridor still has no geometry queries
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"changed hidden corridor still has no geometry queries","unknown_geometry_queries":[]}
+PASS unknown boundary retains ordinary directional attempts
+PASS unknown directions are short real keyboard inputs
+PASS unknown diagonal carries both ordinary keys
+PASS unknown attempt generation reads no collision or route
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"unknown attempt generation reads no collision or route","unknown_geometry_queries":[]}
+PASS longer visible steps use remembered visible navigation
+PASS visible routes never request actual whole-map grid
+OBSERVATION query-boundary {"actual_nav_grid_queries":0,"label":"visible routes never request actual whole-map grid","unknown_geometry_queries":[]}
+PASS no remembered seen cells means no frontier
+PASS endpoint lookup respects grid frame
+TOTAL 43 checks, 43 passed, 0 failed

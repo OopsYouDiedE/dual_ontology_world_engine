@@ -1,0 +1,51 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+{"actual":{"kind":"select","value":"neutral-A"},"case":"valid_current_token","passed":true,"requirement":"current input is returned intact"}
+{"actual":["alpha"],"case":"valid_current_token","passed":true,"requirement":"valid selected token reaches ordinary host submission"}
+{"actual":["alpha","alpha"],"case":"valid_current_token","passed":true,"requirement":"submission rechecks the token before dispatch"}
+{"actual":{"closed":0,"events":[],"stops":[]},"case":"valid_current_token","passed":true,"requirement":"valid input neither supersedes nor stops"}
+{"actual":[{"kind":"superseded_action","value":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"}}],"case":"direct_public_replacement","passed":true,"requirement":"old input produces one explicit supersession receipt"}
+{"actual":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"},"case":"direct_public_replacement","passed":true,"requirement":"receipt associates the selected token with the earlier and replacement public turns"}
+{"actual":[],"case":"direct_public_replacement","passed":true,"requirement":"old token is never submitted"}
+{"actual":{"closed":0,"stopping":false,"stops":[]},"case":"direct_public_replacement","passed":true,"requirement":"supersession leaves the seat available"}
+{"actual":1,"case":"direct_public_replacement","passed":true,"requirement":"expiry checks the current public observation"}
+{"actual":[{"kind":"superseded_action","value":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"}}],"case":"selection_replaced_while_waiting","passed":true,"requirement":"old input produces one explicit supersession receipt"}
+{"actual":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"},"case":"selection_replaced_while_waiting","passed":true,"requirement":"receipt associates the selected token with the earlier and replacement public turns"}
+{"actual":[],"case":"selection_replaced_while_waiting","passed":true,"requirement":"old token is never submitted"}
+{"actual":{"closed":0,"stopping":false,"stops":[]},"case":"selection_replaced_while_waiting","passed":true,"requirement":"supersession leaves the seat available"}
+{"actual":["alpha","alpha"],"case":"selection_replaced_while_waiting","passed":true,"requirement":"initial read and delayed submission use separate validity checks"}
+{"actual":{"act":[{"kind":"act","value":{"kind":"select","token":"alpha"}}],"closed_modals":1},"case":"selection_replaced_while_waiting","passed":true,"requirement":"ordinary presentation wait executes before submission recheck"}
+{"actual":[{"kind":"superseded_action","value":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"}}],"case":"public_reply_replaced_during_dialogue_read","passed":true,"requirement":"old input produces one explicit supersession receipt"}
+{"actual":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"},"case":"public_reply_replaced_during_dialogue_read","passed":true,"requirement":"receipt associates the selected token with the earlier and replacement public turns"}
+{"actual":[],"case":"public_reply_replaced_during_dialogue_read","passed":true,"requirement":"old token is never submitted"}
+{"actual":{"closed":0,"stopping":false,"stops":[]},"case":"public_reply_replaced_during_dialogue_read","passed":true,"requirement":"supersession leaves the seat available"}
+{"actual":{"advances":1,"reply_token":""},"case":"public_reply_replaced_during_dialogue_read","passed":true,"requirement":"normal dialogue reply finishes before stale token is checked"}
+{"actual":[],"case":"later_observation_with_empty_candidates","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"unknown_consumed_or_expired_token","summary":{"last_reasoning":{"Token":"alpha"},"reason":"unknown_consumed_or_expired_token","selections":0,"time":{}}}]},"case":"later_observation_with_empty_candidates","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"unknown_consumed_or_expired_token","case":"later_observation_with_empty_candidates","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"later_observation_with_empty_candidates","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":[],"case":"same_turn_nonempty_candidates","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"unknown_consumed_or_expired_token","summary":{"last_reasoning":{"Token":"alpha"},"reason":"unknown_consumed_or_expired_token","selections":0,"time":{}}}]},"case":"same_turn_nonempty_candidates","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"unknown_consumed_or_expired_token","case":"same_turn_nonempty_candidates","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"same_turn_nonempty_candidates","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":[],"case":"older_turn_nonempty_candidates","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"unknown_consumed_or_expired_token","summary":{"last_reasoning":{"Token":"alpha"},"reason":"unknown_consumed_or_expired_token","selections":0,"time":{}}}]},"case":"older_turn_nonempty_candidates","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"unknown_consumed_or_expired_token","case":"older_turn_nonempty_candidates","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"older_turn_nonempty_candidates","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":[],"case":"other_boundary_later_nonempty","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"neutral_protocol_error","summary":{"last_reasoning":{"Token":"alpha"},"reason":"neutral_protocol_error","selections":0,"time":{}}}]},"case":"other_boundary_later_nonempty","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"neutral_protocol_error","case":"other_boundary_later_nonempty","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"other_boundary_later_nonempty","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":[],"case":"unselected_token_later_nonempty","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"unknown_consumed_or_expired_token","summary":{"last_reasoning":{"Token":"alpha"},"reason":"unknown_consumed_or_expired_token","selections":0,"time":{}}}]},"case":"unselected_token_later_nonempty","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"unknown_consumed_or_expired_token","case":"unselected_token_later_nonempty","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"unselected_token_later_nonempty","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":[],"case":"no_selected_token_later_nonempty","passed":true,"requirement":"rejected token never reaches the host"}
+{"actual":{"closed":1,"stopping":true,"stops":[{"reason":"unknown_consumed_or_expired_token","summary":{"last_reasoning":{"Token":""},"reason":"unknown_consumed_or_expired_token","selections":0,"time":{}}}]},"case":"no_selected_token_later_nonempty","passed":true,"requirement":"boundary stops and closes the seat"}
+{"actual":"unknown_consumed_or_expired_token","case":"no_selected_token_later_nonempty","passed":true,"requirement":"original boundary reason is retained"}
+{"actual":[],"case":"no_selected_token_later_nonempty","passed":true,"requirement":"boundary is not mislabeled as supersession"}
+{"actual":["beta"],"case":"next_ordinary_observation_decides_new_token","passed":true,"requirement":"next normal decision submits only the replacement token"}
+{"actual":["alpha","beta"],"case":"next_ordinary_observation_decides_new_token","passed":true,"requirement":"production loop returns to observation and chooses the new public token"}
+{"actual":[20,21],"case":"next_ordinary_observation_decides_new_token","passed":true,"requirement":"both decisions use the ordinary public observation path"}
+{"actual":{"closed":0,"stops":[],"supersession":[{"kind":"superseded_action","value":{"current_turn":21.0,"decision_turn":20,"reason":"visible_candidates_changed","token":"alpha"}}]},"case":"next_ordinary_observation_decides_new_token","passed":true,"requirement":"replacement and later submission leave the seat open"}
+PRESENTATION_SUPERSESSION_COMPLETE {"failed_requirements":[],"passed":true}

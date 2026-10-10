@@ -844,6 +844,7 @@ Case("neutral_world_execution_learning_and_save", () => LearningHostCases.WorldF
 Case("neutral_world_finale_cancellation_and_save", () => LearningHostCases.WorldFinaleCancellation(Check));
 Case("neutral_morning_candidate_learning", () => LearningHostCases.MorningCandidateSelection(Check));
 Case("neutral_morning_strategy_interruption", () => LearningHostCases.MorningStrategyInterruption(Check));
+Case("neutral_entered_room_boundary", () => LearningHostCases.EnteredRoomBoundary(Check));
 
 Console.WriteLine($"StrategyIntegrationCheck: {passed} passed, {failed} failed");
 return failed == 0 ? 0 : 1;

@@ -1,0 +1,11 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+BEHAVIOR {"behavior":"selecting_site_only_begins_the_formal_field_approach","holds":true,"observed":{"approached":["neutral-site"],"feedback":[],"submitted":[{"context":{"map":"neutral-map","modal":""},"kind":"select_candidate","token":"neutral-arrival"}]}}
+BEHAVIOR {"behavior":"different_site_map_or_event_kind_cannot_confirm_contact","holds":true,"observed":[{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"neutral-map","site":"different-site"},{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"different-map","site":"neutral-site"},{"context":{"map":"neutral-map","modal":""},"kind":"entered","map":"neutral-map","site":"neutral-site"}]}
+BEHAVIOR {"behavior":"matching_real_field_signal_confirms_contact_once_before_dispatch","holds":true,"observed":{"feedback":[{"accepted":true,"reached":true,"token":"neutral-arrival"}],"order":["dispatch-field","dispatch-field","dispatch-field","feedback:neutral-arrival:true","dispatch-field","dispatch-field"]}}
+BEHAVIOR {"behavior":"unfinished_path_does_not_report_contact","holds":true,"observed":{"click_path":["(48.0, 16.0)"],"feedback":[]}}
+BEHAVIOR {"behavior":"field_becoming_idle_without_contact_reports_failure_once","holds":true,"observed":{"feedback":[{"accepted":true,"reached":false,"token":"neutral-unreached"}],"order":["feedback:neutral-unreached:false","observe-field","observe-field"]}}
+BEHAVIOR {"behavior":"visible_replacement_cancels_pending_token_and_cannot_later_be_success","holds":true,"observed":{"feedback":[{"accepted":true,"reached":false,"token":"neutral-superseded"}],"stopping":false,"submitted":[{"context":{"map":"neutral-map","modal":""},"kind":"select_candidate","token":"neutral-superseded"}]}}
+BEHAVIOR {"behavior":"stopping_after_selection_before_field_input_closes_pending_without_success","holds":true,"observed":{"closed":true,"feedback":[{"accepted":true,"reached":false,"token":"neutral-stop-before-input"}]}}
+BEHAVIOR {"behavior":"stopping_during_path_ends_contact_and_ignores_late_contact","holds":true,"observed":[{"accepted":true,"reached":false,"token":"neutral-stop-during-path"},{"accepted":false,"reached":false,"token":"neutral-stop-during-path"}]}
+INTERACTION_RECEIPTS_COMPLETE true

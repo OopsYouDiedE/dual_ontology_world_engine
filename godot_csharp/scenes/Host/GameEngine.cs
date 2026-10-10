@@ -35,6 +35,8 @@ public partial class GameEngine : Node
     public string AgentObservationJson() => JsonSerializer.Serialize(Session.AgentObservation);
     public string AgentTimeJson() => JsonSerializer.Serialize(Session.AgentTime);
     public int AgentSelections() => Session.AgentSelections;
+    public bool AgentInteractionFeedback(string token, bool reached)
+        => _controller?.CompleteInteraction(token, reached) ?? false;
     public string AgentLocate(string space, double x, double y)
     {
         try { Session.LocateAgent(new(space, new(x, y))); return ""; }
@@ -67,7 +69,8 @@ public partial class GameEngine : Node
                 var point = (o.GetValueOrDefault("location") as IEnumerable<object?> ?? []).ToArray();
                 return new PlayerFieldOffer(ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"),
                     ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"), Value: ChapterEvents.Text(o, "value"), Purpose: ChapterEvents.Text(o, "purpose"))
-                { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null };
+                { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null,
+                    TravelDistance = ChapterEvents.Number(o, "travel_distance") };
             }).ToArray();
             Session.ObserveAgentField(entries);
             return "";

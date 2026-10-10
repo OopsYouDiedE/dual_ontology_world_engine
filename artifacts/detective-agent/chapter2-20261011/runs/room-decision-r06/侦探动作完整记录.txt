@@ -1,0 +1,792 @@
+迁移后的虚拟侦探动作记录
+来源：正式连续会话 trajectory.jsonl；按当时公开候选与实际输入逐条整理。
+这是内置 AI 玩家席位运行，不能作为真人时长或独立盲玩证据。
+
+1.227s | continue | 
+  用途：；当前实际位置：[956.361938476563, 144.0]；请求落点：None
+  分数：6.0；游戏时间：{'Day': 1.0, 'Minutes': 490.0, 'Phase': 'wake'}
+  依据：["authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+1.420s | continue | 
+  用途：；当前实际位置：[956.361938476563, 144.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 490.0, 'Phase': 'wake'}
+  依据：["authored_subjective_preferences"]
+1.583s | continue | 
+  用途：；当前实际位置：[956.361938476563, 144.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 490.0, 'Phase': 'wake'}
+  依据：["authored_subjective_preferences"]
+1.818s | move | 912,272
+  用途：frontier；当前实际位置：[956.361938476563, 144.0]；请求落点：{'X': 912.0, 'Y': 272.0}
+  分数：25.0；游戏时间：{'Day': 1.0, 'Minutes': 490.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:2", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+2.337s | move | 1008,208
+  用途：frontier；当前实际位置：[908.0, 268.0]；请求落点：{'X': 1008.0, 'Y': 208.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 492.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+2.867s | interact | 衣架上的风衣
+  用途：；当前实际位置：[1004.0, 204.0]；请求落点：{'X': 1010.0, 'Y': 244.0}
+  分数：25.0；游戏时间：{'Day': 1.0, 'Minutes': 494.0, 'Phase': 'roam'}
+  依据：["seek_unknown_acquired_proposition:衣架上的风衣", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+3.000s | menu | 返回现场
+  用途：close；当前实际位置：[1004.0, 204.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 494.0, 'Phase': 'roam'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+3.252s | move | 1040,176
+  用途：frontier；当前实际位置：[1004.0, 204.0]；请求落点：{'X': 1040.0, 'Y': 176.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 494.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+3.604s | 实际键盘移动 | {"end_position": [1015.99584960938, 204.0], "keys": ["D"], "start_position": [1004.0, 204.0]}
+3.662s | move | 1040,240
+  用途：frontier；当前实际位置：[1015.99584960938, 204.0]；请求落点：{'X': 1040.0, 'Y': 240.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 496.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+4.021s | 实际键盘移动 | {"end_position": [1015.99578857422, 204.0], "keys": ["D"], "start_position": [1015.99584960938, 204.0]}
+4.067s | move | 1040,208
+  用途：frontier；当前实际位置：[1015.99578857422, 204.0]；请求落点：{'X': 1040.0, 'Y': 208.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 497.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+4.422s | 实际键盘移动 | {"end_position": [1015.99578857422, 204.0], "keys": ["D"], "start_position": [1015.99578857422, 204.0]}
+4.475s | move | 993,181
+  用途：；当前实际位置：[1015.99578857422, 204.0]；请求落点：{'X': 993.368347167969, 'Y': 181.372589111328}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 499.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+4.623s | move | 950,225
+  用途：；当前实际位置：[996.0, 180.0]；请求落点：{'X': 950.745178222656, 'Y': 225.254837036133}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 500.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+4.958s | move | S+D 948,228
+  用途：；当前实际位置：[948.0, 228.0]；请求落点：{'X': 981.941101074219, 'Y': 261.941131591797}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 501.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+5.319s | 实际键盘移动 | {"end_position": [995.99853515625, 255.998229980469], "keys": ["S", "D"], "start_position": [948.0, 228.0]}
+5.382s | move | W+D 995,255
+  用途：；当前实际位置：[995.925231933594, 255.925262451172]；请求落点：{'X': 1029.86633300781, 'Y': 221.984130859375}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 503.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+5.736s | 实际键盘移动 | {"end_position": [1015.92523193359, 154.106552124023], "keys": ["W", "D"], "start_position": [995.925231933594, 255.925262451172]}
+5.798s | move | 1008,240
+  用途：frontier；当前实际位置：[1015.92523193359, 154.106552124023]；请求落点：{'X': 1008.0, 'Y': 240.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 504.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+6.097s | move | 1008,176
+  用途：frontier；当前实际位置：[1004.0, 236.0]；请求落点：{'X': 1008.0, 'Y': 176.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 506.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+6.331s | move | 944,272
+  用途：frontier；当前实际位置：[1012.0, 172.0]；请求落点：{'X': 944.0, 'Y': 272.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 506.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+6.875s | move | 912,304
+  用途：frontier；当前实际位置：[940.0, 268.0]；请求落点：{'X': 912.0, 'Y': 304.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 509.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+7.310s | 实际键盘移动 | {"end_position": [940.0, 434.5], "keys": ["S"], "start_position": [940.0, 268.0]}
+7.445s | move | 1136,432
+  用途：frontier；当前实际位置：[940.0, 434.5]；请求落点：{'X': 1136.0, 'Y': 432.0}
+  分数：31.0；游戏时间：{'Day': 1.0, 'Minutes': 513.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:3", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+8.172s | move | 1168,304
+  用途：frontier；当前实际位置：[1132.0, 428.0]；请求落点：{'X': 1168.0, 'Y': 304.0}
+  分数：25.0；游戏时间：{'Day': 1.0, 'Minutes': 516.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:2", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+8.695s | move | 1168,432
+  用途：frontier；当前实际位置：[1164.0, 300.0]；请求落点：{'X': 1168.0, 'Y': 432.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 518.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+9.131s | move | 1136,304
+  用途：frontier；当前实际位置：[1164.0, 428.0]；请求落点：{'X': 1136.0, 'Y': 304.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 520.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+9.641s | move | 1222,390
+  用途：；当前实际位置：[1132.0, 300.0]；请求落点：{'X': 1222.50964355469, 'Y': 390.509674072266}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 522.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+10.231s | move | 912,432
+  用途：frontier；当前实际位置：[1220.0, 388.0]；请求落点：{'X': 912.0, 'Y': 432.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 524.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+11.353s | move | 688,432
+  用途：frontier；当前实际位置：[908.0, 428.0]；请求落点：{'X': 688.0, 'Y': 432.0}
+  分数：37.0；游戏时间：{'Day': 1.0, 'Minutes': 528.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:4", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+12.174s | move | 720,464
+  用途：frontier；当前实际位置：[684.0, 428.0]；请求落点：{'X': 720.0, 'Y': 464.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 532.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+12.526s | 实际键盘移动 | {"end_position": [684.0, 503.99609375], "keys": ["S"], "start_position": [684.0, 428.0]}
+12.614s | move | 661,526
+  用途：frontier；当前实际位置：[684.0, 503.99609375]；请求落点：{'X': 661.37255859375, 'Y': 526.62353515625}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 533.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+12.971s | 实际键盘移动 | {"end_position": [680.000671386719, 503.998229980469], "keys": ["S", "A"], "start_position": [684.0, 503.99609375]}
+13.103s | move | 702,526
+  用途：frontier；当前实际位置：[680.074768066406, 503.925262451172]；请求落点：{'X': 702.702209472656, 'Y': 526.552673339844}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 535.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+13.457s | 实际键盘移动 | {"end_position": [727.997619628906, 503.998229980469], "keys": ["S", "D"], "start_position": [680.074768066406, 503.925262451172]}
+13.541s | move | 705,526
+  用途：frontier；当前实际位置：[727.925231933594, 503.925262451172]；请求落点：{'X': 705.297790527344, 'Y': 526.552673339844}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 537.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+13.896s | 实际键盘移动 | {"end_position": [680.00146484375, 503.998565673828], "keys": ["S", "A"], "start_position": [727.925231933594, 503.925262451172]}
+14.005s | move | A 680,503
+  用途：；当前实际位置：[680.074768066406, 503.925262451172]；请求落点：{'X': 632.074768066406, 'Y': 503.925262451172}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 539.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+14.362s | 实际键盘移动 | {"end_position": [680.074768066406, 503.925262451172], "keys": ["A"], "start_position": [680.074768066406, 503.925262451172]}
+14.447s | move | S+A 680,503
+  用途：；当前实际位置：[680.074768066406, 503.925262451172]；请求落点：{'X': 646.133666992188, 'Y': 537.866394042969}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 541.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+14.800s | 实际键盘移动 | {"end_position": [680.00146484375, 503.998565673828], "keys": ["S", "A"], "start_position": [680.074768066406, 503.925262451172]}
+14.908s | move | 680,471
+  用途：frontier；当前实际位置：[680.074768066406, 503.925262451172]；请求落点：{'X': 680.074768066406, 'Y': 471.925262451172}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 542.0, 'Phase': 'roam'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+15.262s | 实际键盘移动 | {"end_position": [680.075988769531, 364.002990722656], "keys": ["W"], "start_position": [680.074768066406, 503.925262451172]}
+15.346s | move | 720,432
+  用途：frontier；当前实际位置：[680.075988769531, 364.002990722656]；请求落点：{'X': 720.0, 'Y': 432.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 544.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+15.706s | move | 592,368
+  用途：frontier；当前实际位置：[716.0, 428.0]；请求落点：{'X': 592.0, 'Y': 368.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 546.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+16.297s | move | 560,400
+  用途：frontier；当前实际位置：[588.0, 372.0]；请求落点：{'X': 560.0, 'Y': 400.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 548.0, 'Phase': 'roam'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+16.707s | 实际键盘移动 | {"end_position": [417.0, 372.0], "keys": ["A"], "start_position": [588.0, 372.0]}
+17.518s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+17.619s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+17.719s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+17.823s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+17.931s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+18.109s | form_submit | 就叫这个
+  用途：commit；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：6.0；游戏时间：{'Day': 1.0, 'Minutes': 560.0, 'Phase': 'meeting'}
+  依据：["authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+18.400s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 570.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+18.495s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 570.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+18.676s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 570.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+18.862s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 570.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+19.044s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 570.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+19.381s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+19.556s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+19.746s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+19.926s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.114s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.297s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.478s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.582s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.688s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+20.876s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 590.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+21.231s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+21.406s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+21.585s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+21.771s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+21.954s | continue | 
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'meeting'}
+  依据：["authored_subjective_preferences"]
+22.256s | interact | 铜口
+  用途：；当前实际位置：[448.0, 200.0]；请求落点：{'X': 500.0, 'Y': 92.0}
+  分数：61.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'investigate'}
+  依据：["observed_route_travel_distance:69.7", "seek_unknown_acquired_proposition:铜口", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+22.559s | menu | 检视铜口与铜牌
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+22.752s | menu | 返回现场
+  用途：close；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+23.021s | interact | 铜口
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：{'X': 500.0, 'Y': 92.0}
+  分数：57.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:铜口", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+23.141s | menu | 回答始业之问
+  用途：argument；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 605.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+23.327s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 607.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+23.509s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 607.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+23.693s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 607.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+23.882s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 609.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+23.990s | menu | 出示
+  用途：tab；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 609.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+24.095s | menu | 陈述
+  用途：tab；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 609.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+24.206s | form_submit | 暂且不答
+  用途：cancel；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：6.0；游戏时间：{'Day': 1.0, 'Minutes': 609.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+24.419s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 611.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+24.621s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 613.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+25.129s | interact | 长桌上的石板
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：{'X': 500.0, 'Y': 242.0}
+  分数：71.0；游戏时间：{'Day': 1.0, 'Minutes': 613.0, 'Phase': 'investigate'}
+  依据：["observed_route_travel_distance:131.0", "seek_current_question_material:长桌上的石板", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+25.473s | menu | 返回现场
+  用途：close；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+25.867s | interact | 霍铎
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：{'X': 500.0, 'Y': 138.0}
+  分数：65.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["seek_current_question_material:霍铎", "seek_unknown_acquired_proposition:霍铎", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+25.990s | continue | 
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+31.516s | menu | 石板上的字。
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：56.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["seek_current_question_material:石板上的字。", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+31.593s | continue | 
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+31.909s | interact | 长桌上的石板
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：{'X': 500.0, 'Y': 242.0}
+  分数：57.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["seek_current_question_material:长桌上的石板", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+32.037s | menu | 收起物件
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+32.304s | interact | 霍铎
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：{'X': 500.0, 'Y': 170.0}
+  分数：53.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "seek_current_question_material:霍铎", "seek_unknown_acquired_proposition:霍铎", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+32.427s | continue | 
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+32.523s | menu | 石板上的字。
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：44.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "seek_current_question_material:石板上的字。", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+32.701s | continue | 
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+32.991s | interact | 铜口
+  用途：；当前实际位置：[492.0, 181.5]；请求落点：{'X': 500.0, 'Y': 92.0}
+  分数：67.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["observed_route_travel_distance:1.5", "examine_unexamined_for_open_question", "seek_unknown_acquired_proposition:铜口", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+33.121s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+33.205s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+33.387s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+33.572s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+33.756s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+33.944s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 614.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+34.161s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 616.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+34.340s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 616.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+34.523s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+34.705s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+34.887s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+35.078s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+35.181s | menu | 看整张证物卡
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+35.360s | menu | 返回现场
+  用途：close；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 618.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+35.694s | continue | 
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 620.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+35.927s | interact | 铜口
+  用途：；当前实际位置：[492.0, 169.0]；请求落点：{'X': 500.0, 'Y': 92.0}
+  分数：89.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'investigate'}
+  依据：["return_with_personal_answer:铜口", "seek_unknown_acquired_proposition:铜口", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+36.068s | menu | 回答始业之问
+  用途：argument；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：56.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'investigate'}
+  依据：["return_with_personal_answer:回答始业之问", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+36.215s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+36.335s | form_field |  是我闩的门。
+  用途：statement；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：54.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'answer'}
+  依据：["subjective_argument_supported: 是我闩的门。", "霍铎的石板", "下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。", "侦探的外衣口袋", "acquired_rule", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "conditional_entailment", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+36.439s | menu | 出示
+  用途：tab；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：40.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+36.550s | form_field |  侦探的外衣口袋
+  用途：evidence；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：54.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'answer'}
+  依据：["subjective_argument_supported: 侦探的外衣口袋", "霍铎的石板", "下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。", "侦探的外衣口袋", "acquired_rule", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "conditional_entailment", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+36.657s | form_submit | 作答
+  用途：commit；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：54.0；游戏时间：{'Day': 1.0, 'Minutes': 621.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+36.989s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 633.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+37.147s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+37.242s | menu | 出示
+  用途：tab；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：-4.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'answer'}
+  依据：["revisit_without_new_accepted_material:1", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+37.344s | menu | 陈述
+  用途：tab；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'answer'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+37.452s | form_submit | 暂且不答
+  用途：cancel；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：-6.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'answer'}
+  依据：["revisit_without_new_accepted_material:1", "authored_subjective_preferences"]
+37.632s | continue | 
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'answer'}
+  依据：["authored_subjective_preferences"]
+37.948s | interact | 铜口
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：{'X': 500.0, 'Y': 92.0}
+  分数：61.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "seek_current_question_material:铜口", "seek_unknown_acquired_proposition:铜口", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+38.077s | menu | 检视铜口与铜牌
+  用途：；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+38.230s | menu | 返回现场
+  用途：close；当前实际位置：[492.0, 153.0]；请求落点：None
+  分数：2.0；游戏时间：{'Day': 1.0, 'Minutes': 635.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+38.600s | move | 464,400
+  用途：frontier；当前实际位置：[492.0, 153.0]；请求落点：{'X': 464.0, 'Y': 400.0}
+  分数：41.0；游戏时间：{'Day': 1.0, 'Minutes': 636.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:2", "edge_of_unseen", "approach_observed_question_material", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+42.651s | move | 368,400
+  用途：frontier；当前实际位置：[460.0, 396.0]；请求落点：{'X': 368.0, 'Y': 400.0}
+  分数：41.0；游戏时间：{'Day': 1.0, 'Minutes': 640.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:2", "edge_of_unseen", "look_beyond_seen_for_open_question", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+43.161s | move | 432,400
+  用途：frontier；当前实际位置：[364.0, 396.0]；请求落点：{'X': 432.0, 'Y': 400.0}
+  分数：35.0；游戏时间：{'Day': 1.0, 'Minutes': 641.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "look_beyond_seen_for_open_question", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+43.250s | continue | 
+  用途：；当前实际位置：[371.5, 396.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 643.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+43.548s | move | 304,368
+  用途：frontier；当前实际位置：[371.5, 396.0]；请求落点：{'X': 304.0, 'Y': 368.0}
+  分数：35.0；游戏时间：{'Day': 1.0, 'Minutes': 643.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "look_beyond_seen_for_open_question", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+43.861s | move | 272,400
+  用途：frontier；当前实际位置：[300.0, 372.0]；请求落点：{'X': 272.0, 'Y': 400.0}
+  分数：35.0；游戏时间：{'Day': 1.0, 'Minutes': 644.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "look_beyond_seen_for_open_question", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+44.284s | 实际键盘移动 | {"end_position": [168.003005981445, 372.0], "keys": ["A"], "start_position": [300.0, 372.0]}
+44.412s | interact | 隔离门
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：{'X': 150.0, 'Y': 372.0}
+  分数：57.0；游戏时间：{'Day': 1.0, 'Minutes': 648.0, 'Phase': 'investigate'}
+  依据：["examine_unexamined_for_open_question", "seek_unknown_acquired_proposition:隔离门", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+44.534s | menu | 拔闩推门
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：24.0；游戏时间：{'Day': 1.0, 'Minutes': 648.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:拔闩推门", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+44.988s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 667.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+45.079s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 667.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+45.258s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 667.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+45.364s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 667.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+45.547s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 669.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+45.716s | menu | 握住插闩，往下想。
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：24.0；游戏时间：{'Day': 1.0, 'Minutes': 669.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:握住插闩，往下想。", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+45.976s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 669.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+46.086s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 671.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+46.265s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 671.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+46.449s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 671.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+46.629s | menu | 返回现场
+  用途：close；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 671.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+46.961s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 673.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+47.011s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 673.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+47.196s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 673.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+47.495s | continue | 
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 673.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+47.796s | interact | 灰上的鞋印
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：{'X': 162.0, 'Y': 410.0}
+  分数：25.0；游戏时间：{'Day': 1.0, 'Minutes': 674.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:灰上的鞋印", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+47.925s | menu | 比对鞋底
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：16.0；游戏时间：{'Day': 1.0, 'Minutes': 674.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:比对鞋底", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+48.078s | menu | 苏泠的鞋
+  用途：；当前实际位置：[168.003005981445, 372.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 674.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+48.682s | move | 176,432
+  用途：frontier；当前实际位置：[168.003005981445, 372.0]；请求落点：{'X': 176.0, 'Y': 432.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 691.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+48.801s | continue | 
+  用途：；当前实际位置：[172.0, 421.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+48.984s | continue | 
+  用途：；当前实际位置：[172.0, 421.5]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+49.170s | menu | 返回现场
+  用途：close；当前实际位置：[172.0, 421.5]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+49.963s | interact | 苏泠
+  用途：；当前实际位置：[172.0, 421.5]；请求落点：{'X': 185.213195800781, 'Y': 351.213195800781}
+  分数：51.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["observed_route_travel_distance:45.5", "seek_current_question_material:苏泠", "authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+50.336s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+50.390s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+50.576s | menu | 没事了。
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 693.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+50.946s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 695.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+51.201s | interact | 苏泠
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：{'X': 185.213195800781, 'Y': 351.213195800781}
+  分数：45.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "seek_current_question_material:苏泠", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+51.313s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+51.404s | menu | 那扇门。
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+51.656s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+51.757s | menu | 昨晚你在哪？
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+52.017s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+52.127s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+52.311s | menu | 墙里的声音？
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+52.568s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+52.755s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+52.932s | menu | 墙里的声音？
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：-4.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+53.197s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+53.386s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+53.576s | menu | 那扇门。
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：-4.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+53.836s | continue | 
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：0.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["authored_subjective_preferences"]
+53.948s | menu | 没事了。
+  用途：；当前实际位置：[172.0, 398.0]；请求落点：None
+  分数：-4.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+54.348s | move | 208,432
+  用途：frontier；当前实际位置：[172.0, 398.0]；请求落点：{'X': 208.0, 'Y': 432.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 696.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+54.536s | move | 176,464
+  用途：frontier；当前实际位置：[204.0, 428.0]；请求落点：{'X': 176.0, 'Y': 464.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 697.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+54.891s | 实际键盘移动 | {"end_position": [204.0, 549.5], "keys": ["S"], "start_position": [204.0, 428.0]}
+54.982s | move | 176,656
+  用途：frontier；当前实际位置：[204.0, 549.5]；请求落点：{'X': 176.0, 'Y': 656.0}
+  分数：25.0；游戏时间：{'Day': 1.0, 'Minutes': 699.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:2", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+55.591s | move | 144,624
+  用途：frontier；当前实际位置：[172.0, 652.0]；请求落点：{'X': 144.0, 'Y': 624.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 701.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+55.948s | 实际键盘移动 | {"end_position": [168.004211425781, 652.0], "keys": ["A"], "start_position": [172.0, 652.0]}
+56.024s | move | 272,624
+  用途：frontier；当前实际位置：[168.004211425781, 652.0]；请求落点：{'X': 272.0, 'Y': 624.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 703.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+56.447s | move | 272,560
+  用途：frontier；当前实际位置：[268.0, 620.0]；请求落点：{'X': 272.0, 'Y': 560.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 705.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+56.798s | move | 176,624
+  用途：frontier；当前实际位置：[268.0, 564.0]；请求落点：{'X': 176.0, 'Y': 624.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 706.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+57.343s | move | 176,560
+  用途：frontier；当前实际位置：[172.0, 620.0]；请求落点：{'X': 176.0, 'Y': 560.0}
+  分数：19.0；游戏时间：{'Day': 1.0, 'Minutes': 708.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+57.932s | move | 194,586
+  用途：；当前实际位置：[172.0, 564.0]；请求落点：{'X': 194.627410888672, 'Y': 586.62744140625}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 711.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+58.070s | move | 144,560
+  用途：frontier；当前实际位置：[196.0, 588.0]；请求落点：{'X': 144.0, 'Y': 560.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 711.0, 'Phase': 'investigate'}
+  依据：["edge_of_unseen", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+58.425s | 实际键盘移动 | {"end_position": [168.004211425781, 588.0], "keys": ["A"], "start_position": [196.0, 588.0]}
+58.515s | move | A 168,588
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：{'X': 120.004211425781, 'Y': 588.0}
+  分数：13.0；游戏时间：{'Day': 1.0, 'Minutes': 713.0, 'Phase': 'investigate'}
+  依据：["unwalked_ground:1", "authored_rule:prefer:untried:6", "authored_rule:prefer:move:1", "authored_subjective_preferences"]
+58.868s | 实际键盘移动 | {"end_position": [168.004211425781, 588.0], "keys": ["A"], "start_position": [168.004211425781, 588.0]}
+58.952s | menu | Tab
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 715.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+59.001s | interact | 灰上的靴印
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：9.0；游戏时间：{'Day': 1.0, 'Minutes': 715.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:interact:3", "authored_subjective_preferences"]
+59.173s | menu | 比对鞋底
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：16.0；游戏时间：{'Day': 1.0, 'Minutes': 715.0, 'Phase': 'investigate'}
+  依据：["seek_unknown_acquired_proposition:比对鞋底", "authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+59.350s | menu | 苏泠的鞋
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 715.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+59.811s | menu | R
+  用途：；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：8.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["authored_rule:prefer:untried:6", "authored_rule:prefer:menu:2", "authored_subjective_preferences"]
+59.925s | form_field | 侦探更信谁 霍铎
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：78.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["subjective_argument_supported:侦探更信谁 霍铎", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。", "“等我下一次通知。”◎，铜口。他叫我守铜口。", "acquired_rule", "霍铎说闩。我就闩了。……我信他。", "conditional_entailment", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+60.011s | form_field | 侦探更信谁 苏泠
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：38.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["seek_current_question_material:侦探更信谁 苏泠", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+60.116s | form_field | 侦探更信谁 霍铎
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：58.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "subjective_argument_supported:侦探更信谁 霍铎", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。", "“等我下一次通知。”◎，铜口。他叫我守铜口。", "acquired_rule", "霍铎说闩。我就闩了。……我信他。", "conditional_entailment", "authored_subjective_preferences"]
+60.222s | form_field | 警铃响时，霍铎在哪 活动厅铜口旁
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：30.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["subjective_argument_supported:警铃响时，霍铎在哪 活动厅铜口旁", "“等我下一次通知。”◎，铜口。他叫我守铜口。", "acquired_rule", "acquired_assertion", "conditional_entailment", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+60.338s | form_field | 那人说的是什么 “闩门，别开”
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：30.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["subjective_argument_supported:那人说的是什么 “闩门，别开”", "acquired_rule", "霍铎的石板", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "conditional_entailment", "authored_rule:prefer:new:8", "authored_rule:prefer:untried:6", "authored_subjective_preferences"]
+60.436s | form_field | 侦探更信谁 苏泠
+  用途：hypothesis；当前实际位置：[168.004211425781, 588.0]；请求落点：None
+  分数：26.0；游戏时间：{'Day': 1.0, 'Minutes': 732.0, 'Phase': 'investigate'}
+  依据：["revisit_without_new_accepted_material:1", "seek_current_question_material:侦探更信谁 苏泠", "authored_subjective_preferences"]
+60.536s | 停止 | {"elapsed_seconds": 60.499, "last_reasoning": {"Alternatives": [{"Basis": ["authored_rule:prefer:new:8", "authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "警铃响时，苏泠在哪 她的房间（R-08）", "Score": 14.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2331"}, {"Basis": ["authored_rule:prefer:new:8", "authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "警铃响时，苏泠在哪 活动厅", "Score": 14.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2332"}, {"Basis": ["authored_rule:prefer:new:8", "authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "警铃响时，苏泠在哪 备餐间", "Score": 14.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2333"}, {"Basis": ["revisit_without_new_accepted_material:1", "subjective_argument_supported:警铃响时，霍铎在哪 活动厅铜口旁", "“等我下一次通知。”◎，铜口。他叫我守铜口。", "acquired_rule", "acquired_assertion", "conditional_entailment"], "Kind": "form_field", "Label": "警铃响时，霍铎在哪 活动厅铜口旁", "Score": -54.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2334"}, {"Basis": ["authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "警铃响时，霍铎在哪 他的房间", "Score": -10.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2335"}, {"Basis": ["authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "警铃响时，霍铎在哪 门厅", "Score": -10.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2336"}, {"Basis": ["authored_rule:prefer:new:8", "authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "那人是从哪里喊话的 从主楼对着铜口说", "Score": 14.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2337"}, {"Basis": ["authored_rule:prefer:new:8", "authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "那人是从哪里喊话的 就在门外", "Score": 14.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2338"}, {"Basis": ["revisit_without_new_accepted_material:1", "subjective_argument_supported:那人说的是什么 “闩门，别开”", "acquired_rule", "霍铎的石板", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "conditional_entailment"], "Kind": "form_field", "Label": "那人说的是什么 “闩门，别开”", "Score": -54.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2339"}, {"Basis": ["authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "那人说的是什么 “开门，救我”", "Score": -10.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2340"}, {"Basis": ["revisit_without_new_accepted_material:2", "subjective_argument_supported:侦探更信谁 霍铎", "⊥，闩。✕，禁止。✕开，不许开。", "acquired_assertion", "下面这行。小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。", "“等我下一次通知。”◎，铜口。他叫我守铜口。", "acquired_rule", "霍铎说闩。我就闩了。……我信他。", "conditional_entailment"], "Kind": "form_field", "Label": "侦探更信谁 霍铎", "Score": -12.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2341"}, {"Basis": ["revisit_without_new_accepted_material:1", "seek_current_question_material:侦探更信谁 苏泠"], "Kind": "form_field", "Label": "侦探更信谁 苏泠", "Score": 26.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2342"}, {"Basis": ["authored_rule:prefer:untried:6"], "Kind": "form_field", "Label": "侦探更信谁 谁都不全信，自己去看", "Score": -10.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2343"}, {"Basis": ["authored_rule:prefer:untried:6"], "Kind": "continue", "Label": "Esc", "Score": 6.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2344"}], "Arguments": [{"Complete": true, "Derivations": [], "MaterialSupports": null, "Materials": [], "Missing": ["门框后有空管"], "Proposition": "门框后有空管", "Steps": [], "Value": "Unknown"}, {"Complete": true, "Derivations": [], "MaterialSupports": null, "Materials": [], "Missing": ["管中声音发闷，字头容易丢"], "Proposition": "管中声音发闷，字头容易丢", "Steps": [], "Value": "Unknown"}, {"Complete": true, "Derivations": [], "MaterialSupports": null, "Materials": [], "Missing": ["门框后有空管"], "Proposition": "苏泠", "Steps": [], "Value": "Unknown"}, {"Complete": true, "Derivations": [], "MaterialSupports": null, "Materials": [], "Missing": ["管中声音发闷，字头容易丢"], "Proposition": "苏泠", "Steps": [], "Value": "Unknown"}, {"Complete": true, "Derivations": [{"Conclusion": "我回想起自己信霍铎", "Material": "霍铎说闩。我就闩了。……我信他。", "Premises": []}, {"Conclusion": "我信霍铎", "Material": "acquired_rule", "Premises": ["我回想起自己信霍铎"]}, {"Conclusion": "!我更信苏泠", "Material": "acquired_rule", "Premises": ["我信霍铎"]}], "MaterialSupports": null, "Materials": ["acquired_rule", "霍铎说闩。我就闩了。……我信他。"], "Missing": [], "Proposition": "苏泠", "Steps": ["acquired_assertion", "conditional_entailment"], "Value": "False"}], "Basis": ["revisit_without_new_accepted_material:1", "seek_current_question_material:侦探更信谁 苏泠", "authored_subjective_preferences"], "GameTime": {"Day": 1.0, "Minutes": 732.0, "Phase": "investigate"}, "HypothesesCompared": 36.0, "Reason": "subjective_rules", "ReasoningExpansions": 581.0, "ReasoningStop": "complete", "Score": 26.0, "Token": "player:b1870e53b8d446c8b7e9aed2eb1ab82a:2342"}, "reason": "unknown_consumed_or_expired_token", "screenshots": 29, "selections": 191, "time": {"Day": 1.0, "Minutes": 732.0, "Phase": "investigate"}, "visible_position": [168.004211425781, 588.0]}

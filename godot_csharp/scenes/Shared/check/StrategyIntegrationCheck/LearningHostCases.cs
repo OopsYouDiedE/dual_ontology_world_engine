@@ -110,6 +110,70 @@ internal static class LearningHostCases
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!.SetValue(target, value);
     private static object? Invoke(object target, string method, params object?[] arguments) => target.GetType()
         .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(target, arguments);
+    public static void EnteredRoomBoundary(Action<string, bool> check)
+    {
+        var session = new Chapter1Session();
+        try
+        {
+            var identities = Names.PersonKeys;
+            var rooms = Names.RoomKeys.Take(2).ToArray();
+            var bodies = (IDictionary)Get(session.World, "_bodies");
+            var souls = (IDictionary)Get(session.World, "_souls");
+            var runtime = session.World.PersistentSession.Runtime;
+            void PerceiveOwnRoom()
+            {
+                foreach (var i in Enumerable.Range(0, identities.Length))
+                {
+                    var body = (Essence)bodies[(Person)i]!;
+                    var room = body.Get<SpatialProperty>()!.Space!;
+                    runtime.Observe((SoulEssence)souls[(Person)i]!, runtime.Representations(room).Concat(runtime.Representations(body)), 0);
+                }
+            }
+            void Report(string region, string entered, string roomName)
+            {
+                var actors = identities.ToDictionary(who => who, who => (object?)new Dictionary<string, object?>
+                {
+                    ["room"] = region, ["entered"] = entered, ["room_name"] = roomName,
+                    ["visible"] = true, ["moving"] = true, ["distance"] = 0.0
+                });
+                Invoke(session, "ReadContext", new Dictionary<string, object?>
+                {
+                    ["context"] = new Dictionary<string, object?> { ["field_active"] = false, ["actors"] = actors }
+                });
+            }
+            Report(rooms[0], rooms[0], "neutral-entered-a");
+            PerceiveOwnRoom();
+            var originalBodies = identities.Select((_, i) => ((Essence)bodies[(Person)i]!).Get<SpatialProperty>()!.Space).ToArray();
+            var originalParents = identities.Select((_, i) => runtime.KnownProjection((SoulEssence)souls[(Person)i]!, (Essence)bodies[(Person)i]!)!.Parent).ToArray();
+            Report(rooms[1], "", "neutral-region-b");
+            PerceiveOwnRoom();
+            var facts = (IDictionary)Get(session, "_facts");
+            check("threshold_region_does_not_move_player_or_party_in_logical_world", identities.All(who => session.ContentSession.Session.CharacterRooms[who] == rooms[0]));
+            check("threshold_region_does_not_move_player_or_party_physical_bodies", identities.Select((_, i) => i)
+                .All(i => ReferenceEquals(((Essence)bodies[(Person)i]!).Get<SpatialProperty>()!.Space, originalBodies[i])));
+            check("threshold_region_does_not_move_subjective_self_projections", identities.Select((_, i) => i)
+                .All(i => ReferenceEquals(runtime.KnownProjection((SoulEssence)souls[(Person)i]!, (Essence)bodies[(Person)i]!)!.Parent, originalParents[i])));
+            check("threshold_facts_keep_last_entered_room_and_name", identities.All(who => (string)Get(facts[who]!, "Room") == rooms[0]
+                && (string)Get(facts[who]!, "RoomName") == "neutral-entered-a" && (string)Get(facts[who]!, "Entered") == ""));
+            Report(rooms[1], rooms[1], "neutral-entered-b");
+            PerceiveOwnRoom();
+            check("actual_entry_moves_player_and_party_logical_rooms", identities.All(who => session.ContentSession.Session.CharacterRooms[who] == rooms[1]));
+            check("actual_entry_moves_physical_bodies_and_subjective_self", identities.Select((_, i) => i).All(i =>
+                !ReferenceEquals(((Essence)bodies[(Person)i]!).Get<SpatialProperty>()!.Space, originalBodies[i])
+                && !ReferenceEquals(runtime.KnownProjection((SoulEssence)souls[(Person)i]!, (Essence)bodies[(Person)i]!)!.Parent, originalParents[i])));
+            check("actual_entry_updates_room_facts", identities.All(who => (string)Get(facts[who]!, "Room") == rooms[1]
+                && (string)Get(facts[who]!, "RoomName") == "neutral-entered-b" && (string)Get(facts[who]!, "Entered") == rooms[1]));
+            Observe("entered-room-boundary", new
+            {
+                logicalRooms = identities.Select(who => session.ContentSession.Session.CharacterRooms[who]).ToArray(),
+                factRooms = identities.Select(who => (string)Get(facts[who]!, "Room")).ToArray(),
+                factRoomNames = identities.Select(who => (string)Get(facts[who]!, "RoomName")).ToArray(),
+                subjectiveParentsChanged = identities.Select((_, i) => !ReferenceEquals(runtime.KnownProjection(
+                    (SoulEssence)souls[(Person)i]!, (Essence)bodies[(Person)i]!)!.Parent, originalParents[i])).ToArray()
+            });
+        }
+        finally { Invoke(session.World, "StopEcology"); }
+    }
     private static Array Steps(string room, params (string Target, int Weight)[] steps)
     {
         var type = typeof(MorningWorld).GetNestedType("DailyStep", BindingFlags.NonPublic)!;

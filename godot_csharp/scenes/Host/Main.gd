@@ -113,6 +113,7 @@ func _seat_input(input: Dictionary) -> bool:
 
 func _field_input(input: Dictionary) -> void:
 	if _closing: return
+	if is_instance_valid(pilot): pilot.take_field_reply(input)
 	_send(input, is_instance_valid(pilot))
 
 func submit_token(token: String) -> void:

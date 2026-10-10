@@ -1,0 +1,19 @@
+{"trace":{"kind":"act","value":{"kind":"field_action","token":"neutral-arrival"}}}
+{"trace":{"kind":"interaction_feedback","value":{"accepted":true,"reached":true,"token":"neutral-arrival"}}}
+{"trace":{"kind":"act","value":{"kind":"field_action","token":"neutral-unreached"}}}
+{"trace":{"kind":"interaction_feedback","value":{"accepted":true,"reached":false,"token":"neutral-unreached"}}}
+{"trace":{"kind":"observation","value":{"Candidates":[{"Token":"neutral-current"}],"Complete":false,"Position":[0.0,0.0],"Turn":1.0}}}
+{"trace":{"kind":"observation","value":{"Candidates":[{"Token":"neutral-current"}],"Complete":false,"Position":[0.0,0.0],"Turn":1.0}}}
+{"trace":{"kind":"act","value":{"kind":"field_action","token":"neutral-superseded"}}}
+{"trace":{"kind":"interaction_feedback","value":{"accepted":true,"reached":false,"token":"neutral-superseded"}}}
+{"trace":{"kind":"superseded_action","value":{"current_turn":2.0,"decision_turn":1,"reason":"visible_candidates_changed","token":"neutral-superseded"}}}
+{"trace":{"kind":"act","value":{"kind":"field_action","token":"neutral-stop-during-path"}}}
+{"trace":{"kind":"interaction_feedback","value":{"accepted":true,"reached":false,"token":"neutral-stop-during-path"}}}
+{"behavior":"selecting_site_only_begins_the_formal_field_approach","holds":true,"observed":{"approached":["neutral-site"],"feedback":[{"accepted":true,"reached":true,"token":"neutral-arrival"}],"submitted":[{"context":{"map":"neutral-map","modal":""},"kind":"select_candidate","token":"neutral-arrival"}]}}
+{"behavior":"different_site_map_or_event_kind_cannot_confirm_contact","holds":true,"observed":[{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"neutral-map","site":"different-site"},{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"different-map","site":"neutral-site"},{"context":{"map":"neutral-map","modal":""},"kind":"entered","map":"neutral-map","site":"neutral-site"},{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"neutral-map","site":"neutral-site"},{"context":{"map":"neutral-map","modal":""},"kind":"interact","map":"neutral-map","site":"neutral-site"}]}
+{"behavior":"matching_real_field_signal_confirms_contact_once_before_dispatch","holds":true,"observed":{"feedback":[{"accepted":true,"reached":true,"token":"neutral-arrival"}],"order":["dispatch-field","dispatch-field","dispatch-field","feedback:neutral-arrival:true","dispatch-field","dispatch-field"]}}
+{"behavior":"unfinished_path_does_not_report_contact","holds":true,"observed":{"click_path":["(48.0, 16.0)"],"feedback":[{"accepted":true,"reached":false,"token":"neutral-unreached"}]}}
+{"behavior":"field_becoming_idle_without_contact_reports_failure_once","holds":true,"observed":{"feedback":[{"accepted":true,"reached":false,"token":"neutral-unreached"}],"order":["feedback:neutral-unreached:false","observe-field","observe-field"]}}
+{"behavior":"visible_replacement_cancels_pending_token_and_cannot_later_be_success","holds":true,"observed":{"feedback":[{"accepted":true,"reached":false,"token":"neutral-superseded"}],"stopping":false,"submitted":[{"context":{"map":"neutral-map","modal":""},"kind":"select_candidate","token":"neutral-superseded"}]}}
+{"behavior":"stopping_after_selection_before_field_input_closes_pending_without_success","holds":true,"observed":{"closed":true,"feedback":[{"accepted":true,"reached":false,"token":"neutral-stop-before-input"}]}}
+{"behavior":"stopping_during_path_ends_contact_and_ignores_late_contact","holds":true,"observed":[{"accepted":true,"reached":false,"token":"neutral-stop-during-path"},{"accepted":false,"reached":false,"token":"neutral-stop-during-path"}]}

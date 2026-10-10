@@ -12,6 +12,7 @@ const TICK := 0.1
 
 ## 每句台词停留的秒数；也是菜单等选项落下前的停顿。
 var line_seconds := 0.6
+var before_action := Callable()
 var host: Node
 var engine: Node
 var stopping := false
@@ -21,6 +22,10 @@ var _reply_token := ""
 var _reply: Dictionary = {}
 var _pressed: Array[int] = []
 var _last_decision: Dictionary = {}
+var _decision_turn := 0
+var _interaction_token := ""
+var _interaction_site := ""
+var _interaction_map := ""
 var _last_gate := "-"
 var _spaces: Dictionary = {}
 var _places: Dictionary = {}
@@ -65,11 +70,14 @@ func _loop() -> void:
 		var decision: Dictionary = JSON.parse_string(engine.AgentDecideJson())
 		decision["GameTime"] = JSON.parse_string(engine.AgentTimeJson())
 		_last_decision = decision
+		_decision_turn = int(observation.get("Turn", 0))
 		recorded.emit("decision", decision)
 		if decision.get("Token") == null:
 			stop(str(decision.get("Reason", "agent_cannot_assess")))
 			return
 		_acting = true
+		if before_action.is_valid(): await before_action.call(observation, decision)
+		if stopping: return
 		await _act(str(decision.Token))
 		_acting = false
 
@@ -97,6 +105,7 @@ func _observe() -> Dictionary:
 		var code: String = engine.AgentObservePanel(panel, _run_label)
 		if code != "": stop(code)
 	elif _field_idle():
+		_finish_interaction(false)
 		var code: String = engine.AgentObserveField(_field_offers(field, ui.snapshot))
 		if code != "": stop(code)
 	var observation: Dictionary = JSON.parse_string(engine.AgentObservationJson())
@@ -122,14 +131,53 @@ func _field_idle() -> bool:
 # --------------------------------------------------------------- acting ---
 
 ## 把选中的候选按它代表的普通输入做出来，再交回同一个 token。
-func _act(token: String) -> void:
+func _current_input(token: String) -> Dictionary:
 	var input: Dictionary = JSON.parse_string(engine.AgentCandidateInputJson(token))
 	if input.has("boundary"):
+		if str(input.boundary) == "unknown_consumed_or_expired_token" and token == str(_last_decision.get("Token", "")):
+			var current: Dictionary = JSON.parse_string(engine.AgentObservationJson())
+			if int(current.get("Turn", 0)) > _decision_turn and not current.get("Candidates", []).is_empty():
+				if _interaction_token == token: _finish_interaction(false)
+				else: engine.AgentInteractionFeedback(token, false)
+				recorded.emit("superseded_action", {"token": token, "decision_turn": _decision_turn,
+					"current_turn": current.get("Turn"), "reason": "visible_candidates_changed"})
+				return {}
 		stop(str(input.boundary))
+		return {}
+	return input
+
+func _submit_current(token: String) -> void:
+	# A delayed public presentation may replace an input while it is being read.
+	# Leave the stale input unexecuted and let the next ordinary observation decide.
+	if _current_input(token).is_empty(): return
+	host.submit_token(token)
+
+func take_field_reply(input: Dictionary) -> void:
+	if _interaction_token != "" and str(input.get("kind", "")) == "interact" \
+		and str(input.get("site", "")) == _interaction_site and str(input.get("map", "")) == _interaction_map:
+		_finish_interaction(true)
+
+func _finish_interaction(reached: bool) -> void:
+	if _interaction_token == "": return
+	var token := _interaction_token
+	_interaction_token = ""
+	_interaction_site = ""
+	_interaction_map = ""
+	var accepted: bool = engine.AgentInteractionFeedback(token, reached)
+	recorded.emit("interaction_feedback", {"token": token, "reached": reached, "accepted": accepted})
+
+func _act(token: String) -> void:
+	var input := _current_input(token)
+	if input.is_empty():
 		return
 	recorded.emit("act", {"kind": str(input.get("kind", "")), "token": token})
 	var ui: Node = host.ui
 	var kind := str(input.get("kind", ""))
+	if kind == "field_action" and str(input.get("action", "")) == "interact":
+		_finish_interaction(false)
+		_interaction_token = token
+		_interaction_site = str(input.get("site", ""))
+		_interaction_map = str(host.field.adapter.map_key())
 	if is_instance_valid(ui) and ui.dialogue.active:
 		if kind == "presented":
 			# 一句一句读完台词；对白框读完时自己交回的回执就是这次选择。
@@ -140,7 +188,7 @@ func _act(token: String) -> void:
 				if is_instance_valid(ui): ui.dialogue.advance()
 			_reply_token = ""
 			if stopping: return
-			host.submit_token(token)
+			_submit_current(token)
 			return
 		# 台词带选项：读到出现选项为止，再落下这一项。
 		while not stopping and ui.dialogue.active and not ui.dialogue_choices_shown():
@@ -149,7 +197,7 @@ func _act(token: String) -> void:
 		if stopping: return
 		await get_tree().create_timer(line_seconds).timeout
 		ui.release_dialogue()
-		host.submit_token(token)
+		_submit_current(token)
 		return
 	match kind:
 		"form_field", "form_tab":
@@ -161,7 +209,7 @@ func _act(token: String) -> void:
 			if is_instance_valid(ui): ui.close_modal()
 		"replay", "replay_vars":
 			await get_tree().create_timer(line_seconds * 0.5).timeout
-	host.submit_token(token)
+	_submit_current(token)
 
 ## 对白框读完的回执：属于正在读的那一项就收下，其余界面输入一律不代替角色做决定。
 func take_ui_reply(reply: Dictionary) -> bool:
@@ -208,6 +256,8 @@ static func _key(code: int, pressed: bool) -> InputEventKey:
 func stop(reason: String) -> void:
 	if stopping: return
 	stopping = true
+	_finish_interaction(false)
+	engine.AgentInteractionFeedback(str(_last_decision.get("Token", "")), false)
 	_release_keys()
 	var summary := {"reason": reason, "time": JSON.parse_string(engine.AgentTimeJson()), "selections": engine.AgentSelections(), "last_reasoning": _last_decision}
 	var field: Node = host.field if is_instance_valid(host) else null
@@ -225,19 +275,21 @@ func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 	if not _places.has(space): _places[space] = {}
 	var remembered: Dictionary = _places[space]
 	var visible_labels := {}
+	var known: AStarGrid2D = PilotNavigation.remember_grid(field, _routes.get(space))
+	_routes[space] = known
 	for id in field.sites:
 		if not field.site_visible(id): continue
 		var point: Vector2 = field.site_point(id)
 		var label: String = str(field.sites[id].title)
 		visible_labels[label] = true
 		remembered[label] = {"point": point, "reach": float(field.sites[id].reach)}
-		offers.append({"label": str(field.sites[id].title), "kind": "interact", "new": field.site_is_new(id), "location": [point.x, point.y], "input": {"kind": "field_action", "action": "interact", "site": id}})
+		offers.append({"label": str(field.sites[id].title), "kind": "interact", "new": field.site_is_new(id), "location": [point.x, point.y],
+			"travel_distance": PilotNavigation.travel_distance(field, point, float(field.sites[id].reach), known),
+			"input": {"kind": "field_action", "action": "interact", "site": id}})
 	for label in remembered.keys():
 		if not visible_labels.has(label) and field.in_sight(remembered[label].point): remembered.erase(label)
-	var known: AStarGrid2D = PilotNavigation.remember_grid(field, _routes.get(space))
-	_routes[space] = known
 	offers.append_array(PilotNavigation.approaches(field, remembered, known))
-	offers.append_array(PilotNavigation.offers(field))
+	offers.append_array(PilotNavigation.offers(field, known))
 	# Keyboard walking is a public input even when its landing room is unseen; the field resolves it.
 	for keys in [["W"], ["S"], ["A"], ["D"], ["W", "A"], ["W", "D"], ["S", "A"], ["S", "D"]]:
 		# Offered direction for scoring; actual position is observed separately after execution.
@@ -252,5 +304,5 @@ func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 		offers.append({"label": "", "kind": "wait", "new": false, "input": {"kind": "field_action", "action": "wait"}})
 	for shortcut in [{"key": "Tab", "panel": "notebook"}, {"key": "R", "panel": "manuscript"}, {"key": "M", "panel": "campus"}]:
 		if bool(controls.get(shortcut.panel, false)):
-			offers.append({"label": shortcut.key, "kind": "menu", "new": false, "input": {"kind": "player_panel", "panel": shortcut.panel}})
+			offers.append({"label": shortcut.key, "kind": "menu", "purpose": "panel", "new": false, "input": {"kind": "player_panel", "panel": shortcut.panel}})
 	return offers

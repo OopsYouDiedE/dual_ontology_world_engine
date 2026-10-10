@@ -1,0 +1,22 @@
+本轮独立机制验证已通过。验证范围为公开候选、玩家尝试记忆、门槛入室同步和可见几何导航，属于自动机制回归。没有读取设计规范、其他项目设计文件、章节剧情源或旧试玩轨迹；运行既有检查时仅由正式编译产物提供机制所需身份。
+
+构建通过：Core 构建见 01-core-build.log，最终宿主 Debug 构建见 22-host-build-complete-ast-final.log，最新检查项目 Release 构建见 18-player-complete-ast-build.log 和 19-strategy-perception-build.log。
+
+玩家决策机制通过，证据为 20-player-complete-ast.log。重复同一问题、无关已接受材料和额外但证明状态不变的支持均不刷新已尝试调查；相关证明变化允许对应输入和菜单重新考虑。不同人物的相同菜单标签独立保存尝试，同一人物没有新信息时会退出已问菜单。A 的证明不会刷新 B 的菜单，相同标签但不同主体引用的命题仍保持隔离。命题证明的 Missing 内容变化可以刷新相关输入。小推理预算耗尽不会制造新颖性。公开候选保留路线距离，拒绝非法距离，同等信息收益下优先较近路线，替代候选的完整评分依据包含声明偏好。
+
+入室与宿主机制通过，证据为 21-strategy-perception.log。中性夹具使玩家与同伴先处于已入室房间，再报告另一原始区域但 entered 为空；逻辑房间、物理身体位置和本人实际感知的自身投影均保持原房间，Fact.Room/RoomName 也保持最后实际入室值。真正入室后，逻辑房间、物理身体与事实字段更新，按身体实际所在房间执行明确感知后，本人投影可以更新。该检查遵循 Core 的边界：Sync 只更新现实侧面，认知变化须通过 Observe。既有实际失败、取消、主体隔离及中性存档恢复检查仍通过；最终中性存档样本为 neutral-world-failure-save.bin 和 neutral-world-cancelled-save.bin。
+
+可见几何导航通过，证据为 10-godot-navigation-final.log。夹具只提供 sight_size、seen_cells 与逐点 walkable，实际 nav_grid 入口会记录违规并报错。只有当前 in_sight 的点进入记忆网格。已见 U 形绕行提供真实短点击路径，公开路线距离反映完整绕行；没有已见路径时成本只采用已知坐标的距离下界。未知门槛方向提供真实 WASD keys 输入。隐藏 U 通路开闭和隐藏走廊移除不改变公开候选或记忆，记录的 unknown_geometry_queries 为空，actual_nav_grid_queries 为零。Godot 导航顺序执行，未与其他 Godot 自动检查并发。
+
+本轮发现并验证修复的正式问题：
+- 07-player-budget-negative.log：重复求证耗尽预算，使相同认知和输入错误获得未尝试奖励。主代理修复输入去重、证明复用及不完整证明不得刷新上下文，20-player-complete-ast.log 复测通过。
+- 14-player-final.log 与 17-player-cache-negative.log：默认序列化将不同 FrozenConditionV1 命题都写为 {}，缓存混用 A/B 的证明，错误刷新 B 菜单。主代理改为完整 AST 等价判断，同时对命题与 Missing 集合采用完整结构比较；跨人物、跨引用、缺项变化回归均在 20-player-complete-ast.log 通过。
+
+夹具修正与保留失败日志：
+- 05-player-before-budget-fix.log 的预期过强，另一菜单也已经尝试过时，选择返回某个交互并不能单独证明全局重置。改为直接核对该输入仍保留重复代价且不获未尝试奖励。
+- 08-godot-navigation.log 为新增夹具的换行语法错误；09-godot-navigation-fixture-repair.log 把混合可见/未知方向全部要求为键盘输入，超出合同。修正后只要求每个未知方向提供 keys，最终导航记录完整通过。
+- 15-strategy-final.log 错把现实 Sync 当成认知更新。修正夹具为明确感知本人实际所在房间，21-strategy-perception.log 通过。
+
+验收限制：本轮没有执行一级三份全程记录、二级 UI 专项或三级独立盲玩；没有运行 FullTest，没有以注入中性状态或自动机制输出作为游玩验证。人物行为合理性、剧情审美、真实游玩体验与有效时长未验证。Godot 跨进程宿主保存未重跑，本轮只验证既有中性机制的保存恢复。
+
+本代理仅修改测试文件与本目录证据，未修改正式机制代码或 AGENTS.md，未自行提交。所有运行日志按原始字节保存，局部 .gitattributes 对日志和存档关闭文本换行转换与文本差异。源码与证据哈希见 manifest.json。

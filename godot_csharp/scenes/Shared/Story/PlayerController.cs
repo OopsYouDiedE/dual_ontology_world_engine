@@ -47,6 +47,7 @@ public sealed record PlayerFieldState(string Space, PlayerPoint Position);
 public sealed record PublicPlayerCandidate(string Token, string Label, string Kind, bool New, string Group = "", string Value = "", string Purpose = "", bool Selected = false)
 {
     public PlayerPoint? Location { get; init; }
+    public double TravelDistance { get; init; }
 }
 public sealed record PublicPlayerObservation(long Turn, ImmutableArray<PublicPlayerLine> Lines,
     ImmutableArray<string> Text, ImmutableArray<PublicPlayerCandidate> Candidates, bool Complete)
@@ -60,7 +61,9 @@ public sealed record PlayerDecision(string? Token, string Reason, int? Score)
     public string ReasoningStop { get; init; } = "not_run";
     public int HypothesesCompared { get; init; }
     public ImmutableArray<PlayerArgument> Arguments { get; init; } = [];
+    public ImmutableArray<PlayerAlternative> Alternatives { get; init; } = [];
 }
+public sealed record PlayerAlternative(string Token, string Label, string Kind, int Score, ImmutableArray<string> Basis);
 public sealed record PlayerArgument(string Proposition, string Value, bool Complete, ImmutableArray<string> Materials, ImmutableArray<string> Steps)
 {
     public ImmutableArray<PlayerInference> Derivations { get; init; } = [];
@@ -83,6 +86,7 @@ public sealed record PlayerFieldOffer(string Label, string Kind, bool New,
     IReadOnlyDictionary<string, object?> Input, string Group = "", string Value = "", string Purpose = "", bool Selected = false)
 {
     public PlayerPoint? Location { get; init; }
+    public double TravelDistance { get; init; }
 }
 
 // Trusted projection of exactly the shared panels' presentation contracts.
@@ -199,9 +203,12 @@ public sealed class SubjectivePlayerController
     private readonly Dictionary<(string Space, string Label), PublicPlayerCandidate> _seenPlaces = [];
     private readonly HashSet<(string Space, double X, double Y)> _walked = [];
     private (PlayerFieldState Start, (string Kind, string Label) Key)? _pendingMove;
+    private (string Token, (string Kind, string Label) Key, DecisionExperienceKeyV1 FailureKey, string Label)? _pendingInteraction;
     private string _space = "";
+    private PlayerPoint? _fieldPosition;
     private readonly int _revisitWeight;
-    private string _knowledgeEpoch = "";
+    private readonly Dictionary<(string Space, string Label), SubjectiveProofV1[]> _informationContexts = [];
+    private string _interactionContext = "";
     private readonly ReasoningBudgetV1 _reasoning;
     private readonly int _argumentWeight, _informationWeight;
     private FrozenConditionV1? _argumentGoal;
@@ -230,17 +237,74 @@ public sealed class SubjectivePlayerController
         return (int)(_tieState % (uint)count);
     }
     private (string Kind, string Label) HistoryKey(PublicPlayerCandidate candidate)
-        => candidate.Kind == "move" && candidate.Location is { } point
+        => candidate.Kind == "menu" && candidate.Purpose == "panel"
+            ? ("panel", _space + ":" + candidate.Label)
+            : candidate.Kind == "move" && candidate.Location is { } point
             ? (candidate.Purpose == "frontier" ? "frontier" : candidate.Kind,
                 $"{_space}:{(candidate.Purpose == "approach" ? candidate.Value + ":" : "")}{Math.Floor(point.X / (candidate.Purpose == "frontier" ? 32 : 64))}:{Math.Floor(point.Y / (candidate.Purpose == "frontier" ? 32 : 64))}")
-            : (candidate.Kind, candidate.Kind == "interact" ? _space + ":" + candidate.Label : candidate.Label);
+            : (candidate.Kind, candidate.Kind == "interact" ? _space + ":" + candidate.Label
+                : candidate.Kind == "menu" ? _space + ":" + _interactionContext + ":" + candidate.Label : candidate.Label);
     private static DecisionExperienceKeyV1 MemoryKey((string Kind, string Label) key) => new(key.Kind + ":" + key.Label);
-    private DecisionExperienceV1 Experience(PublicPlayerCandidate candidate) => _experience.Get(MemoryKey(HistoryKey(candidate)));
+    private DecisionExperienceKeyV1 ContactKey(PublicPlayerCandidate candidate)
+    {
+        // Only the actor's public position and the target's observed/remembered
+        // position distinguish an approach. Do not query the target's live body.
+        var start = _fieldPosition is { } point
+            ? FormattableString.Invariant($"{Math.Floor(point.X / 64)}:{Math.Floor(point.Y / 64)}") : "unknown";
+        var target = candidate.Location is { } location
+            ? FormattableString.Invariant($"{Math.Floor(location.X / 64)}:{Math.Floor(location.Y / 64)}") : "unknown";
+        return new("contact:" + _space + ":" + candidate.Label, start + ":" + target);
+    }
+    private DecisionExperienceV1 Experience(PublicPlayerCandidate candidate)
+    {
+        var information = _experience.Get(MemoryKey(HistoryKey(candidate)));
+        if (candidate.Kind != "interact" || candidate.Location is null) return information;
+        var approach = _experience.Get(ContactKey(candidate));
+        // Information examinations persist when bodies move; route failures
+        // apply only to the geometry this actor knew when choosing the route.
+        return information with { Failures = approach.Failures, NoProgress = approach.NoProgress, Interruptions = approach.Interruptions };
+    }
+    private static bool SameClaim(FrozenConditionV1 left, FrozenConditionV1 right)
+        => Ast.Equivalent(left, right) is ContractResult<bool>.Success { Value: true };
+    private static bool SameSet<T>(IReadOnlyList<T> left, IReadOnlyList<T> right, Func<T, T, bool> same)
+    {
+        if (left.Count != right.Count) return false;
+        var matched = new bool[right.Count];
+        foreach (var item in left)
+        {
+            var index = Enumerable.Range(0, right.Count).FirstOrDefault(i => !matched[i] && same(item, right[i]), -1);
+            if (index < 0) return false;
+            matched[index] = true;
+        }
+        return true;
+    }
+    private static bool SameInformation(SubjectiveProofV1 left, SubjectiveProofV1 right)
+        => SameClaim(left.Proposition, right.Proposition) && left.Value == right.Value
+            && left.Complete == right.Complete && left.Hypothetical == right.Hypothetical
+            && left.Contradicted == right.Contradicted && SameSet(left.Missing, right.Missing, SameClaim);
+    /// <summary>A selected field approach is examined only after the host observes actual contact.</summary>
+    public bool CompleteInteraction(string token, bool reached)
+    {
+        if (_pendingInteraction is not { } pending || pending.Token != token) return false;
+        _pendingInteraction = null;
+        if (reached)
+        {
+            _experience.Record(MemoryKey(pending.Key), DecisionOutcomeV1.Attempted);
+            _experience.Record(MemoryKey(pending.Key), DecisionOutcomeV1.Succeeded);
+            _interactionContext = pending.Label;
+        }
+        else _experience.Record(pending.FailureKey, DecisionOutcomeV1.Failed);
+        return true;
+    }
     public PlayerDecision Decide(PublicPlayerObservation observation, PlayerCognition cognition)
     {
+        // Reaching another decision without a contact receipt is an unfinished approach,
+        // not an examination of the target's information.
+        if (_pendingInteraction is { } unfinished) CompleteInteraction(unfinished.Token, false);
         if (observation.Candidates.Length == 0) return new(null, "candidate_missing", null);
         var snapshot = cognition.Snapshot;
         if (!snapshot.Projections.Any(p => p.Id == cognition.Actor)) return new(null, "actor_cognition_missing", null);
+        _fieldPosition = observation.Field?.Position;
         if (observation.Field is { } field)
         {
             _space = field.Space;
@@ -252,19 +316,18 @@ public sealed class SubjectivePlayerController
                 _experience.Record(MemoryKey(successful.Key), DecisionOutcomeV1.Succeeded);
         }
         _pendingMove = null;
-        // Reconsider old inputs after learning new accepted material or hearing a
-        // new question. Movement and ordinary observation revisions do not reset visits.
-        var epoch = string.Join(";", snapshot.Projections.Where(p => p.KnownTerms.Any(t => t.TermId.Value.StartsWith("acquired.", StringComparison.Ordinal))
-            && (p.Rules.Any(r => r.Mode == RuleMode.Infer && r.Acceptance == Truth.True)
-                || p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1))
-            .Select(p => p.Id.ToString() + ":" + p.Rules.Count(r => r.Acceptance == Truth.True)).Order());
-        if (epoch != _knowledgeEpoch)
-        {
-            _experience.ReconsiderAttempts(_experience.Capture().Experiences
-                .Where(e => !e.Key.Method.StartsWith("move:", StringComparison.Ordinal) && !e.Key.Method.StartsWith("frontier:", StringComparison.Ordinal)).Select(e => e.Key));
-            _knowledgeEpoch = epoch;
-        }
         var reasoning = new SubjectiveReasoner(snapshot, cognition.Actor, _reasoning);
+        // Repeated host queries within one decision share the same proof. They
+        // must not spend the actor's budget again or manufacture changed knowledge.
+        var proofs = new List<(FrozenConditionV1 Claim, SubjectiveProofV1 Proof)>();
+        SubjectiveProofV1 ProveOnce(FrozenConditionV1 claim)
+        {
+            foreach (var cached in proofs)
+                if (SameClaim(cached.Claim, claim)) return cached.Proof;
+            var proof = reasoning.Prove(claim);
+            proofs.Add((claim, proof));
+            return proof;
+        }
         if (observation.Candidates.Any(c => c.Purpose == "evidence")) _evidenceRequired = _answersNeedEvidence = true;
         if (_argumentGoal is not null)
             try { reasoning.References(_argumentGoal); }
@@ -286,6 +349,26 @@ public sealed class SubjectivePlayerController
         foreach (var place in observation.Candidates.Where(c => c.Kind == "interact" && c.Location is not null))
             _seenPlaces[(_space, place.Label)] = place;
         PublicPlayerCandidate[] SeenPlaces() => _seenPlaces.Where(p => p.Key.Space == _space).Select(p => p.Value).ToArray();
+        // Reopen only the input whose acquired propositions changed. A new
+        // unrelated question or material cannot make every old interview novel.
+        foreach (var input in SeenPlaces().Concat(observation.Candidates.Where(c => c.Kind != "move"))
+            .DistinctBy(c => (c.Kind, c.Label)))
+        {
+            var claims = Materials(input).SelectMany(p => reasoning.Claims(p.Id)).ToArray();
+            if (claims.Length == 0) continue;
+            var conclusions = claims.Select(ProveOnce).ToArray();
+            if (conclusions.Any(proof => !proof.Complete)) continue;
+            var key = (_space, input.Label);
+            if (_informationContexts.TryGetValue(key, out var previous) && !SameSet(previous, conclusions, SameInformation))
+            {
+                var menuPrefix = "menu:" + _space + ":" + input.Label + ":";
+                var interaction = MemoryKey(("interact", _space + ":" + input.Label));
+                _experience.ReconsiderAttempts(_experience.Capture().Experiences
+                    .Where(e => e.Key == interaction || e.Key == MemoryKey(HistoryKey(input))
+                        || e.Key.Method.StartsWith(menuPrefix, StringComparison.Ordinal)).Select(e => e.Key));
+            }
+            _informationContexts[key] = conclusions;
+        }
         // Standing where something was last seen and it is no longer offered there: it has moved or gone.
         var steps = observation.Candidates.Where(c => c.Kind == "move" && c.Location is not null).ToArray();
         if (steps.Length > 0)
@@ -294,7 +377,7 @@ public sealed class SubjectivePlayerController
                 _seenPlaces.Remove((_space, stale.Label));
         var currentQuestion = snapshot.Projections.LastOrDefault(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1);
         var asked = currentQuestion is null ? null : reasoning.Claims(currentQuestion.Id).FirstOrDefault();
-        var askedProof = asked is null ? null : reasoning.Prove(asked);
+        var askedProof = asked is null ? null : ProveOnce(asked);
         // Where answers have to be shown, a proof resting only on memory is not yet an answer.
         var answerable = askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
             && (!_answersNeedEvidence || askedProof.Basis.Any(id => snapshot.Projections.Any(p => p.Id == id
@@ -381,9 +464,11 @@ public sealed class SubjectivePlayerController
             // Stepping back out is a neutral exit, never a repeated attempt.
             var learned = SubjectiveDecision.Evaluate(new(0, memory,
                 observation.Candidates.Length > 1 && candidate.Purpose != "close" ? _revisitWeight : 0,
+                Cost: (int)Math.Min(1000000, Math.Ceiling(candidate.TravelDistance / 64) * _revisitWeight),
                 NecessaryReturn: followsKnownGoal, FailureWeight: _revisitWeight));
             score += learned.Score;
             why.AddRange(learned.Basis);
+            if (candidate.TravelDistance > 0) why.Add("observed_route_travel_distance:" + candidate.TravelDistance.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
             if (followsKnownGoal) why.Add("follow_observed_route_to_needed_place");
             if (followsKnownGoal && informationVisits > 0 && _revisitWeight > 0)
             {
@@ -440,7 +525,7 @@ public sealed class SubjectivePlayerController
             foreach (var opportunity in held.Where(p => evaluatesMaterial && p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1))
                 foreach (var missing in reasoning.Claims(opportunity.Id))
                 {
-                    var proof = reasoning.Prove(missing);
+                    var proof = ProveOnce(missing);
                     if (proof.Value == Truth.Unknown && !proof.Contradicted && informationVisits < 2)
                     {
                         var relevant = askedProof?.Missing.Any(gap => Ast.Equivalent(gap, missing) is ContractResult<bool>.Success { Value: true }) == true;
@@ -457,7 +542,7 @@ public sealed class SubjectivePlayerController
                 foreach (var goal in goals)
                 {
                     var proof = candidate.Purpose is "statement" or "hypothesis" or "evidence"
-                        ? reasoning.Prove(goal)
+                        ? ProveOnce(goal)
                         : reasoning.Prove(goal, [..ids.Concat(reasoning.StandingKnowledge).Distinct()]);
                     var participates = candidate.Purpose != "evidence" || proof.Basis.Any(ids.Contains)
                         && held.Any(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Presentable) == 1);
@@ -509,7 +594,7 @@ public sealed class SubjectivePlayerController
         var assessments = ((ContractResult<ImmutableArray<SnapshotDecisionAssessmentV1>>.Success)result).Value;
         // Argument submission requires a belief, not merely an offered claim.
         // Experiments/hypotheses and ordinary text forms do not set an argument goal.
-        var argumentProof = _argumentGoal is null ? null : reasoning.Prove(_argumentGoal);
+        var argumentProof = _argumentGoal is null ? null : ProveOnce(_argumentGoal);
         bool CanSubmitArgument() => _argumentGoal is null || argumentProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
             && (!_evidenceRequired || _supportedEvidence);
         bool AnswersCurrentQuestion(PublicPlayerCandidate candidate) => candidate.Purpose != "statement" || asked is null
@@ -529,10 +614,20 @@ public sealed class SubjectivePlayerController
             || rule.Kind == "new" && chosen.New
             || rule.Kind == "untried" && Untried(chosen)))
             .Select(rule => "authored_rule:" + rule.Mode.ToString().ToLowerInvariant() + ":" + rule.Kind + ":" + rule.Weight + (rule.Label == "" ? "" : ":public_label=" + rule.Label));
+        ImmutableArray<string> AlternativeBasis(PublicPlayerCandidate candidate) => reasoningScores[candidate.Token].Basis.AddRange(
+            _rules.Where(rule => (rule.Label == "" || candidate.Label.Contains(rule.Label, StringComparison.Ordinal))
+                && (rule.Kind == candidate.Kind || rule.Kind == "new" && candidate.New || rule.Kind == "untried" && Untried(candidate)))
+            .Select(rule => "authored_rule:" + rule.Mode.ToString().ToLowerInvariant() + ":" + rule.Kind + ":" + rule.Weight
+                + (rule.Label == "" ? "" : ":public_label=" + rule.Label)));
+        var alternatives = available.Select(p => new PlayerAlternative(p.Candidate.Token, p.Candidate.Label, p.Candidate.Kind,
+            p.Assessment!.Score + reasoningScores[p.Candidate.Token].Score, AlternativeBasis(p.Candidate))).ToImmutableArray();
         // Materialize before updating choice history: the untried rule describes
         // the cognition used for this choice, not the state after it.
         var publicBasis = reasoningScores[chosen.Token].Basis.AddRange(matchedRules).Add("authored_subjective_preferences");
-        _experience.Record(MemoryKey(HistoryKey(chosen)), DecisionOutcomeV1.Attempted);
+        if (chosen.Kind == "interact" && chosen.Location is not null)
+            _pendingInteraction = (chosen.Token, HistoryKey(chosen), ContactKey(chosen), chosen.Label);
+        else _experience.Record(MemoryKey(HistoryKey(chosen)), DecisionOutcomeV1.Attempted);
+        if (chosen.Kind == "interact" && chosen.Location is null) _interactionContext = chosen.Label;
         if (chosen.Kind == "move" && observation.Field is { } start) _pendingMove = (start, HistoryKey(chosen));
         var chosenArguments = arguments[chosen.Token];
         if (chosen.Purpose == "evidence")
@@ -559,7 +654,8 @@ public sealed class SubjectivePlayerController
             ReasoningExpansions = reasoning.Expansions,
             ReasoningStop = reasoning.KnownQueries.Length == 0 ? "no_acquired_propositional_model" : reasoning.StopReason,
             HypothesesCompared = exploration.Predictions.Length,
-            Arguments = chosenArguments
+            Arguments = chosenArguments,
+            Alternatives = alternatives
         };
     }
 }
@@ -602,13 +698,14 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     public void Close() { _closed = true; _offers.Clear(); }
     private static IEnumerable<IReadOnlyDictionary<string, object?>> Maps(IReadOnlyDictionary<string, object?> map, string key)
         => (map.GetValueOrDefault(key) as System.Collections.IEnumerable ?? Array.Empty<object>()).Cast<object?>().OfType<IReadOnlyDictionary<string, object?>>();
-    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null)
+    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null, double travelDistance = 0)
     {
         if (_offers.Count >= 256) throw Fail("candidate_limit");
-        var identity = JsonSerializer.Serialize(new object?[] { label, kind, isNew, group, publicValue, purpose, selected, location?.X, location?.Y, input, field, value?.ToString(), tab });
+        if (!double.IsFinite(travelDistance) || travelDistance < 0 || travelDistance > 1000000) throw Fail("invalid_travel_distance");
+        var identity = JsonSerializer.Serialize(new object?[] { label, kind, isNew, group, publicValue, purpose, selected, location?.X, location?.Y, travelDistance, input, field, value?.ToString(), tab });
         if (!_standing.TryGetValue(identity, out var token) || _offers.ContainsKey(token)) token = "player:" + _session + ":" + ++_serial;
         _identities[token] = identity;
-        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location }, input, field, value, tab));
+        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location, TravelDistance = travelDistance }, input, field, value, tab));
     }
     public PublicPlayerObservation Observe(IReadOnlyList<Dictionary<string, object?>> output,
         IReadOnlyList<PlayerFieldOffer>? fieldOffers = null)
@@ -678,7 +775,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 foreach (var offer in _hostOffers)
                 {
                     if (offer.Kind is not ("move" or "interact" or "wait" or "menu" or "form_field" or "form_submit" or "continue")) throw Fail("unsupported_field_offer");
-                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location);
+                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location, travelDistance: offer.TravelDistance);
                 }
         }
         Current = new(++_turn, lines.ToImmutable(), text.ToImmutable(), [.._offers.Values.Select(o => o.Visible)], complete) { Field = Current.Field };

@@ -41,6 +41,9 @@ PlayerCognition Cognition(int truth, bool nested = false)
     return new(snapshot, actor.Self.SubjectId!.Value);
 }
 
+PublicMenuScopeCases.Run(Check);
+InteractionReceiptCases.Run(Check);
+InformationContextCases.Run(Check);
 Check("narrow_port", typeof(IPlayerCandidatePort).GetMethods().Select(m => m.Name).SequenceEqual(["Submit"]));
 Check("controller_has_no_engine_objects", typeof(SubjectivePlayerController).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
     .All(f => f.FieldType != typeof(WorldSession) && f.FieldType != typeof(GameSession) && f.FieldType != typeof(WorldRuntime)));
@@ -153,6 +156,17 @@ Check("field_submit_returns_latest_measured_position", locatedInputs.Count == 1
     && Text(locatedInputs.Single(), "kind") == "field_action"
     && locatedResult.Field == new PlayerFieldState("opaque-field-a", new(80, 96)));
 Check("field_metadata_survives_presentation_refresh", locatedPort.Observe([Menu()]).Field == locatedResult.Field);
+var travelPort = Port();
+var travelObservation = travelPort.Observe([], [new("neutral-route", "move", false,
+    Event("field_action", ("point", new object[] { 16, 144 }))) { Location = new(16, 144), TravelDistance = 720.5 }]);
+Check("port_preserves_observed_route_distance", travelObservation.Candidates.Single().TravelDistance == 720.5
+    && travelPort.Observe([]).Candidates.Single().TravelDistance == 720.5);
+foreach (var invalidDistance in new[] { double.NaN, double.PositiveInfinity, -1.0, 1000001.0 })
+{
+    var invalidTravelPort = Port();
+    Reject("invalid_public_route_distance_" + invalidDistance, () => invalidTravelPort.Observe([], [new("neutral-route", "move", false,
+        Event("field_action", ("point", new object[] { 16, 144 }))) { TravelDistance = invalidDistance }]), "invalid_travel_distance");
+}
 foreach (var invalid in new[]
 {
     new PlayerFieldState("", new(0, 0)), new PlayerFieldState(new string('x', 129), new(0, 0)),
@@ -224,6 +238,9 @@ Check("decision_trace_explains_matched_preferences", firstTrace.Score == 8
     && firstTrace.Basis.Contains("authored_rule:prefer:menu:2")
     && firstTrace.Basis.Contains("authored_rule:prefer:untried:6")
     && !firstTrace.Basis.Contains("authored_rule:prefer:new:8"));
+Check("alternative_trace_explains_full_public_score", firstTrace.Alternatives.Single() is { Score: 8 } scoredAlternative
+    && scoredAlternative.Basis.Contains("authored_rule:prefer:menu:2")
+    && scoredAlternative.Basis.Contains("authored_rule:prefer:untried:6"));
 var repeatedTrace = tracePlayer.Decide(new(2, [], [], [new("next", "A", "menu", false)], false), cognitive);
 Check("decision_trace_uses_history_before_choice", repeatedTrace.Score == 2
     && repeatedTrace.Basis.Contains("authored_rule:prefer:menu:2")
@@ -379,8 +396,9 @@ foreach (var (role, curiosity) in new[] { ("neutral-observer", 6), ("neutral-fee
         Check(role + "_interaction_is_deferred_without_new_material", exhausted.Token == "other-menu");
         var reconsidered = rolePlayer.Decide(At(3, "opaque-room-a", 16, 16,
             new("interaction-after-learning", "neutral-panel", "interact", false), new("other-menu-repeat", "neutral-other-menu", "menu", false)), learnedCognition);
-        Check(role + "_accepted_material_reopens_interaction", reconsidered.Token == "interaction-after-learning"
-            && !reconsidered.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
+        var reconsideredAlternative = reconsidered.Alternatives.Single(a => a.Token == "interaction-after-learning");
+        Check(role + "_unrelated_accepted_material_does_not_reopen_interaction", !reconsideredAlternative.Basis.Contains("authored_rule:prefer:untried:6")
+            && reconsideredAlternative.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
     }
 
     var directionGoal = new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(roleCognition.Actor), new("neutral-direction-goal"), 1);
@@ -408,8 +426,9 @@ foreach (var (role, curiosity) in new[] { ("neutral-observer", 6), ("neutral-fee
     }
 
     var uPlayer = new SubjectivePlayerController(roleDeclaration, 23);
-    uPlayer.Decide(At(1, "opaque-u-space", 16, 16,
+    var uContact = uPlayer.Decide(At(1, "opaque-u-space", 1024, 16,
         new PublicPlayerCandidate("u-seen-place", "neutral-bench", "interact", false) { Location = new(1024, 16) }), directionCognition);
+    Check(role + "_u_route_fixture_completes_prior_examination", uPlayer.CompleteInteraction(uContact.Token!, true));
     var uChoice = uPlayer.Decide(At(2, "opaque-u-space", 16, 16,
         Approach("u-relevant-route", "neutral-bench", 16, 144),
         Approach("u-unrelated-route", "neutral-unused-place", 16, 144),
@@ -430,8 +449,9 @@ foreach (var (role, curiosity) in new[] { ("neutral-observer", 6), ("neutral-fee
     var returningCognition = directionCognition with { Snapshot = directionCognition.Snapshot with {
         Projections = directionCognition.Snapshot.Projections.Add(routeProof) } };
     var returnPlayer = new SubjectivePlayerController(roleDeclaration, 23);
-    returnPlayer.Decide(At(1, "opaque-return-space", 16, 16,
+    var returnContact = returnPlayer.Decide(At(1, "opaque-return-space", 1024, 16,
         new PublicPlayerCandidate("return-seen-place", "neutral-bench", "interact", false) { Location = new(1024, 16) }), returningCognition);
+    Check(role + "_return_fixture_completes_prior_examination", returnPlayer.CompleteInteraction(returnContact.Token!, true));
     returnPlayer.Decide(At(2, "opaque-return-space", 16, 16, Approach("return-first", "neutral-bench", 16, 144)), returningCognition);
     var earlyReturn = returnPlayer.Decide(At(3, "opaque-return-space", 17, 16,
         Approach("return-early", "neutral-bench", 16, 144), new("return-wait-early", "neutral-wait", "wait", false)), returningCognition);

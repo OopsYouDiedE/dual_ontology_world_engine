@@ -1,0 +1,323 @@
+{
+  "final_outcome": "passed_mechanism_regression",
+  "source_files": [
+    {
+      "path": "godot_csharp/scenes/Awakening/Script/Chapter1Session.cs",
+      "bytes": 33029,
+      "sha256": "4e837e1b6b41a0ef3c92b1d0aaf9b48cca5417707448f04f479cd7492c5f2c2d"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/Story/PlayerController.cs",
+      "bytes": 58175,
+      "sha256": "df23b412d1acbf23e63514d52677d218205e411e50426720dc443d9abab2438e"
+    },
+    {
+      "path": "godot_csharp/scenes/Host/PilotNavigation.gd",
+      "bytes": 7188,
+      "sha256": "f92618fc40a48a55fab5d06aed345eedbfbdf840f6046673cb31ae71fb7c9967"
+    },
+    {
+      "path": "godot_csharp/scenes/Host/AgentPilot.gd",
+      "bytes": 11454,
+      "sha256": "60b37067b9d6069a3a71f86e45c8458e4f4a0f3861fa4c0e89ffbbd4ca8f9429"
+    },
+    {
+      "path": "godot_csharp/scenes/Host/GameEngine.cs",
+      "bytes": 11221,
+      "sha256": "de85c919946896c48854503e9a6d7568fe446301bf91ea640dfbd7afd002f697"
+    },
+    {
+      "path": "godot_csharp/tools/check/check_virtual_navigation.gd",
+      "bytes": 9325,
+      "sha256": "5dfe128f79d229a96d2baadf7e1d14fefb043be8eda2f524e4efd2d85a944001"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/check/PlayerControllerCheck/Program.cs",
+      "bytes": 42071,
+      "sha256": "9a6a1886f8546b90b649a43a5585dd3cbedc0d3ea221849edbdfd6a17ac010dd"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/check/PlayerControllerCheck/RouteLearningCases.cs",
+      "bytes": 12654,
+      "sha256": "79a65ed42f10d042c17f5ab61ba0ddfc97f2e519719743b1cef07ca9afac618b"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/check/PlayerControllerCheck/InformationContextCases.cs",
+      "bytes": 11743,
+      "sha256": "54ef41441827b4b4405c167b23cbdec3b8b2d26eb3612198560779ff8b5e8ef7"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/check/StrategyIntegrationCheck/Program.cs",
+      "bytes": 59130,
+      "sha256": "8e777432c3c71e13d9716eca524dc12c7f53466d33f44bd51e36452c15c7da09"
+    },
+    {
+      "path": "godot_csharp/scenes/Shared/check/StrategyIntegrationCheck/LearningHostCases.cs",
+      "bytes": 20168,
+      "sha256": "3a4f484be0824889d809b7234738dbbb9a40c2c36417a8a3d2951a48a0d44040"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/.gitattributes",
+      "bytes": 38,
+      "sha256": "730ea8f85515ff3b2939c141859daaf0c2dba21419e640502522c01ba33066de"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/01-core-build.json",
+      "bytes": 197,
+      "sha256": "a7472d9125d25bd6922c1420f4d3a6c37d12195daa57e4261996d5d3913582e7"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/01-core-build.log",
+      "bytes": 310,
+      "sha256": "a2927bfbf16c908067d166c7f51cb437595ce467329149d0d43dbc75344e37bc"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/02-host-build.json",
+      "bytes": 222,
+      "sha256": "f061e89559f2f77718d5ce3a79d5ea1a050239a643a5cfbdf7609ddcc58206e3"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/02-host-build.log",
+      "bytes": 1094,
+      "sha256": "386aa9f5cfbf6f5da5aa2fe9b010253da3577c5670e0272687083cb541e6fde4"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/03-player-build.json",
+      "bytes": 292,
+      "sha256": "41fdeff20c25a58c77a94f0b86493432428aa71ba1ab81933e5257349d7d91e2"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/03-player-build.log",
+      "bytes": 1134,
+      "sha256": "2fb98125a30abea9b922c1754b5f3f28e22f80411c2400765b49da637595f684"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/04-strategy-build.json",
+      "bytes": 298,
+      "sha256": "f8e755e4d2b842ca4f7f1550143187760877fcbd4f97627e4a0c7c147e1405a9"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/04-strategy-build.log",
+      "bytes": 824,
+      "sha256": "fd5183c22a38786b5750f3dd3bcd3f9a584be89885f29fbcbcdeb64cd0fe09a8"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/05-player-before-budget-fix.json",
+      "bytes": 312,
+      "sha256": "0f5106f608f64918241580a571c790993c434fe0970d0c8d368eb77f1965a78c"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/05-player-before-budget-fix.log",
+      "bytes": 3789,
+      "sha256": "3081bf876a44a57a8d6e7cb49f4ab2c4719e2493a450ab4bbdd9a046123d96a3"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/06-player-fixture-rebuild.json",
+      "bytes": 236,
+      "sha256": "7a1fd11de302fee2f18b4847a9ef99cfec0c79b996e6fd20d438d4a3690c523b"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/06-player-fixture-rebuild.log",
+      "bytes": 1134,
+      "sha256": "35d5f5336eb140d2374c931af67bd5a847efb06aa9dc1fd1834442fffc3efe7d"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/07-player-budget-negative.json",
+      "bytes": 256,
+      "sha256": "fcacaef991a8c7bb6b0379b29fe9098e64f9c783f00fc8c401e25575b8f1c055"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/07-player-budget-negative.log",
+      "bytes": 6275,
+      "sha256": "99cea920cc838aa6f476a48d11c5db567fce678a54efdede847ba2eb25071006"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/08-godot-navigation.json",
+      "bytes": 277,
+      "sha256": "47e28cb4ab98843cf379f6d3af177d42e6b4bed3dc67e85144fe418305270ce0"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/08-godot-navigation.log",
+      "bytes": 382,
+      "sha256": "3f45c09b43f9dab3d88db6a93e35475d3cc3ac4e87977e635d0a8630789022bb"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/09-godot-navigation-fixture-repair.json",
+      "bytes": 277,
+      "sha256": "47e28cb4ab98843cf379f6d3af177d42e6b4bed3dc67e85144fe418305270ce0"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/09-godot-navigation-fixture-repair.log",
+      "bytes": 3228,
+      "sha256": "7a45fe144f3a099235f58ccbb616f245a7657b98d2f4471c86109f271c533102"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/10-godot-navigation-final.json",
+      "bytes": 277,
+      "sha256": "867a2fb1555ffa2cbd79a4b9b632c6c644c05353c2f14d1f5adcabadb2d916dc"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/10-godot-navigation-final.log",
+      "bytes": 2963,
+      "sha256": "690bc394da7270c9f7d5e0091d6c84f29cf7d0ef5d86edb92c78bc7889d56965"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/11-host-build-after-budget-fix.json",
+      "bytes": 166,
+      "sha256": "17165b4151228894750b65d174c29804bd1b0e4a958af4c629275a0523825147"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/11-host-build-after-budget-fix.log",
+      "bytes": 1094,
+      "sha256": "322b33d75bbeb9d9948b958e17fbeec7923c7cd1d7b4c6c05c4321ea70587775"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/12-player-final-build.json",
+      "bytes": 236,
+      "sha256": "7a1fd11de302fee2f18b4847a9ef99cfec0c79b996e6fd20d438d4a3690c523b"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/12-player-final-build.log",
+      "bytes": 1134,
+      "sha256": "a947f49af88802834de2c460581575afb357b90d210745b652e46862de2538ce"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/13-strategy-final-build.json",
+      "bytes": 242,
+      "sha256": "3adbee08aeea8eeaf00cb60e2323a5614a93be9a435ed2ddd969c160a0895333"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/13-strategy-final-build.log",
+      "bytes": 824,
+      "sha256": "8c40025823a52667ba48ffea0b82a07c81879343e9df8a1ab2437f2aeb51c5e1"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/14-player-final.json",
+      "bytes": 256,
+      "sha256": "fcacaef991a8c7bb6b0379b29fe9098e64f9c783f00fc8c401e25575b8f1c055"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/14-player-final.log",
+      "bytes": 3382,
+      "sha256": "784736e8a037099b128747106e0592ca094b3af7066ba32ee130430a57242ef3"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/15-strategy-final.json",
+      "bytes": 253,
+      "sha256": "72a6245e7f7d5e78b095a591218aefb9c055975ed1ecb14b4c2ac389d63edb8a"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/15-strategy-final.log",
+      "bytes": 21998,
+      "sha256": "cc2742dac09e95dc74318bceb0592e4044c2f5ee2b7abed90419e4c5a1952320"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/16-player-cache-negative-build.json",
+      "bytes": 236,
+      "sha256": "7a1fd11de302fee2f18b4847a9ef99cfec0c79b996e6fd20d438d4a3690c523b"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/16-player-cache-negative-build.log",
+      "bytes": 1134,
+      "sha256": "8a00e8657de113dacae048a43bea75b5c30ea90c160edd54191bb933720a5971"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/17-player-cache-negative.json",
+      "bytes": 256,
+      "sha256": "fcacaef991a8c7bb6b0379b29fe9098e64f9c783f00fc8c401e25575b8f1c055"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/17-player-cache-negative.log",
+      "bytes": 4401,
+      "sha256": "bb3cbccdda09effa6e73086c8890da84f552120bc752d648ee549c82890ef488"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/18-player-complete-ast-build.json",
+      "bytes": 236,
+      "sha256": "7a1fd11de302fee2f18b4847a9ef99cfec0c79b996e6fd20d438d4a3690c523b"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/18-player-complete-ast-build.log",
+      "bytes": 1134,
+      "sha256": "a5eb4f19f9c582b327f61a5e7b5433b609f9b511ca791baf4fc4dd871c25617c"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/19-strategy-perception-build.json",
+      "bytes": 242,
+      "sha256": "3adbee08aeea8eeaf00cb60e2323a5614a93be9a435ed2ddd969c160a0895333"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/19-strategy-perception-build.log",
+      "bytes": 824,
+      "sha256": "90a185beb149038b341e724e8dbf701cbcae0ac5d7e5f26c5961f59771515f50"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/20-player-complete-ast.json",
+      "bytes": 247,
+      "sha256": "48f46f76f8839b620f2423a43a108e9984f1f274daadf5c9d513ed220702c184"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/20-player-complete-ast.log",
+      "bytes": 56125,
+      "sha256": "854c2d9284096268a925ef403da859c0b5e45978060060f2a1cec8edff38a88b"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/21-strategy-perception.json",
+      "bytes": 253,
+      "sha256": "d50ab0f82ef147df598d199b822f9b08bd4aaaa1862a33a0053c1c5d25acc718"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/21-strategy-perception.log",
+      "bytes": 21994,
+      "sha256": "917e96288fc496a8fa4bb8d452f5ad1b735dd7184695cfe8e2277df9d318dc03"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/22-host-build-complete-ast-final.json",
+      "bytes": 166,
+      "sha256": "17165b4151228894750b65d174c29804bd1b0e4a958af4c629275a0523825147"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/22-host-build-complete-ast-final.log",
+      "bytes": 1094,
+      "sha256": "5954d3055762438178b3e139eb9ce8ef550720b4d7841e51c2d68ff8a2d78f7d"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/neutral-world-cancelled-save.bin",
+      "bytes": 132535,
+      "sha256": "30514768963aff77a61e26d7d839f12b00a7974a998db9ffbd78cf99430ee999"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/neutral-world-failure-save.bin",
+      "bytes": 344620,
+      "sha256": "9615e3fdd7e8b5ef9928632cfc26fa1a1389995fc67b5c54821f6f81368eb1c6"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/save-before-perception-repair/neutral-world-cancelled-save.bin",
+      "bytes": 132535,
+      "sha256": "30514768963aff77a61e26d7d839f12b00a7974a998db9ffbd78cf99430ee999"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/save-before-perception-repair/neutral-world-failure-save.bin",
+      "bytes": 344620,
+      "sha256": "9615e3fdd7e8b5ef9928632cfc26fa1a1389995fc67b5c54821f6f81368eb1c6"
+    },
+    {
+      "path": "artifacts/detective-agent/chapter2-20261011/verification/room-decision-r06/verification-report.txt",
+      "bytes": 4638,
+      "sha256": "c4b9217528264c29038d7405a44a61ca1fa46e92510b733ac606917e8c797299"
+    }
+  ],
+  "final_logs": [
+    "20-player-complete-ast.log",
+    "21-strategy-perception.log",
+    "10-godot-navigation-final.log",
+    "22-host-build-complete-ast-final.log"
+  ],
+  "acceptance_levels": {
+    "level_1": "not_run",
+    "level_2": "not_run",
+    "level_3": "not_run"
+  }
+}

@@ -133,18 +133,24 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         {
             if (value is not Input data) continue;
             var fact = F(who);
-            fact.Room = Text(data, "room"); fact.Entered = Text(data, "entered"); fact.RoomName = Text(data, "room_name");
+            fact.Entered = Text(data, "entered");
+            if (fact.Entered != "")
+            {
+                fact.Room = fact.Entered;
+                fact.RoomName = Text(data, "room_name");
+            }
             fact.Visible = Flag(data, "visible", true); fact.Moving = Flag(data, "moving");
             fact.Distance = Number(data, "distance", double.PositiveInfinity);
             fact.Near = (data.GetValueOrDefault("near_sites") as IEnumerable<object?> ?? []).Select(s => s?.ToString() ?? "").ToHashSet(StringComparer.Ordinal);
         }
         foreach (var (site, room) in Map(context, "site_rooms")) Session.Place(site, room?.ToString() ?? "");
-        foreach (var who in Party) if (_facts.TryGetValue(who, out var fact)) Locate(who, fact.Room);
+        foreach (var who in Party)
+            if (_facts.TryGetValue(who, out var fact) && fact.Entered != "") Locate(who, fact.Entered);
         foreach (var who in Visitors)
-            if (_facts.TryGetValue(who, out var fact))
+            if (_facts.TryGetValue(who, out var fact) && fact.Entered != "")
             {
-                Session.Locate(who, fact.Room);
-                _world.LocateFieldResident(who, fact.Room);
+                Session.Locate(who, fact.Entered);
+                _world.LocateFieldResident(who, fact.Entered);
             }
         _knowledge.RefreshAvailability(_content.GameMinutes);
     }

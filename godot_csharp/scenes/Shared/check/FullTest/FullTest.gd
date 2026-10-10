@@ -24,6 +24,8 @@ var wall_limit := 1800.0
 var idle_limit := 60.0
 var shot_every := 5.0
 var finished := false
+var last_entered := ""
+var last_visible_region := ""
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -72,6 +74,7 @@ func _run() -> void:
 	pilot = PilotScript.new()
 	pilot.name = "AgentPilot"
 	pilot.line_seconds = float(settings.get("--line-seconds", "0.6"))
+	pilot.before_action = _capture_decision
 	main.enable_pilot(pilot)
 	pilot.recorded.connect(_on_recorded)
 	pilot.stopped.connect(_on_stopped)
@@ -104,6 +107,28 @@ func _on_recorded(kind: String, value: Variant) -> void:
 		seen[key] = true
 		progressed = Time.get_ticks_msec()
 
+## Capture the rendered state before a field input, with the exact decision token.
+## Ordinary rendering continues; no body, clock or scene state is injected.
+func _capture_decision(observation: Dictionary, decision: Dictionary) -> void:
+	var choice := {}
+	for candidate in observation.get("Candidates", []):
+		if candidate.Token == decision.get("Token"): choice = candidate; break
+	if not str(choice.get("Kind", "")) in ["move", "interact"]: return
+	await RenderingServer.frame_post_draw
+	if finished or not is_instance_valid(main.field) or main.field.player == null: return
+	var field: Node = main.field
+	var entered: String = field.adapter.entered_room(field.player.position)
+	var receipt := {"token": decision.get("Token"), "turn": observation.get("Turn"),
+		"position": [field.player.position.x, field.player.position.y], "entered": entered,
+		"room_region": field.adapter.room_of(field.player.position), "visible_region": field.sight.active_region,
+		"interior": field.adapter.sight_interior(Vector2i((field.player.position / 32.0).floor())),
+		"feet_region": field.adapter.sight_region(Vector2i((field.player.position / 32.0).floor()))}
+	_record("decision_frame", receipt)
+	if choice.Kind == "interact" or entered != last_entered or field.sight.active_region != last_visible_region or float(Time.get_ticks_msec() - last_shot) / 1000.0 >= shot_every:
+		_shot("decision", receipt)
+	last_entered = entered
+	last_visible_region = field.sight.active_region
+
 func _on_stopped(reason: String, summary: Dictionary) -> void:
 	if finished: return
 	finished = true
@@ -120,14 +145,16 @@ func _on_stopped(reason: String, summary: Dictionary) -> void:
 	await get_tree().create_timer(0.3, true, false, true).timeout
 	quit(1 if reason == "engine_error" else 0)
 
-func _shot(label: String) -> void:
+func _shot(label: String, receipt: Dictionary = {}) -> void:
 	last_shot = Time.get_ticks_msec()
 	var image := get_viewport().get_texture().get_image()
 	if image == null or image.is_empty(): return
 	shots += 1
 	var name := "%04d-%s.png" % [shots, label]
 	image.save_png(out_dir.path_join("shots").path_join(name))
-	_record("screenshot", {"file": name})
+	var metadata := receipt.duplicate()
+	metadata["file"] = name
+	_record("screenshot", metadata)
 
 func _record(kind: String, value: Variant) -> void:
 	if trace == null or not trace.is_open(): return
