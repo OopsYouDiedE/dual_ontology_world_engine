@@ -1,5 +1,196 @@
 {
   "format": "awakening-layout/v1",
+  "actor_nodes": {
+    "detective": "侦探",
+    "huo": "工程师",
+    "shen": "厨师",
+    "su": "音乐家"
+  },
+  "presentation": {
+    "player_actor": "detective",
+    "room_owners": {
+      "R05": "detective",
+      "R06": "huo",
+      "R07": "shen",
+      "R08": "su",
+      "EN": "",
+      "ES": ""
+    },
+    "stations": {
+      "self": {
+        "anchor": "起点·{who}",
+        "geometry": "start"
+      },
+      "piano": {
+        "node": "Piano",
+        "geometry": "instrument"
+      },
+      "tube": {
+        "anchor": "site:E8",
+        "geometry": "site"
+      },
+      "sink": {
+        "anchor": "site:E9",
+        "geometry": "site"
+      },
+      "door": {
+        "anchor": "site:E8j",
+        "geometry": "site"
+      },
+      "score": {
+        "anchor": "site:E6",
+        "geometry": "site"
+      },
+      "table": {
+        "node": "StudyTable",
+        "geometry": "wide_table"
+      },
+      "prep": {
+        "node": "Worktable",
+        "geometry": "worktop"
+      }
+    },
+    "replay_objects": {
+      "door": "door",
+      "wedge": "door",
+      "floor": "",
+      "frame": "door",
+      "slate": "slate",
+      "tube": "tube",
+      "score": "desk",
+      "cloth": "sink",
+      "cups": "sink",
+      "fork": ""
+    },
+    "replay_requests": {
+      "bolt_request": {
+        "event": "request_bolt",
+        "spot": "door"
+      },
+      "open_request": {
+        "event": "request_open",
+        "spot": "door"
+      },
+      "keep_open_request": {
+        "event": "request_keep_open",
+        "spot": "door"
+      }
+    },
+    "replay_rooms": {
+      "R05": "930,200",
+      "R06": "930,600",
+      "R07": "706,600",
+      "R08": "706,200",
+      "corridor": "800,388",
+      "hall": "440,340",
+      "pantry": "470,652",
+      "foyer": "224,388",
+      "lounge": "64,388"
+    },
+    "replay_spots": {
+      "door": {
+        "room": "foyer",
+        "point": "178,384"
+      },
+      "tube": {
+        "room": "hall",
+        "point": "500,132"
+      },
+      "slate": {
+        "room": "hall",
+        "point": "532,290"
+      },
+      "desk": {
+        "room": "R08",
+        "point": "690,214"
+      },
+      "sink": {
+        "room": "pantry",
+        "point": "352,560"
+      }
+    },
+    "replay_offsets": {
+      "detective": "-22,4",
+      "huo": "22,4",
+      "shen": "-6,18",
+      "su": "10,-12"
+    },
+    "replay_room_layouts": {
+      "corridor": "row"
+    },
+    "traces": {
+      "ash": {
+        "slot": 0,
+        "texture": "ash_fan.png",
+        "truth": "AshFan"
+      },
+      "boots": {
+        "slot": 1,
+        "texture": "boot_print.png",
+        "truth": "Prints"
+      },
+      "cloth": {
+        "slot": 2,
+        "texture": "wet_cloth.png",
+        "truth": "ClothOverHeel"
+      },
+      "joint_west": {
+        "slot": 3,
+        "texture": "pipe_joint.png"
+      },
+      "joint_east": {
+        "slot": 4,
+        "texture": "pipe_joint.png"
+      },
+      "dent": {
+        "slot": 5,
+        "texture": "frame_dent.png",
+        "truth": "FrameDent"
+      },
+      "shelf_R05": {
+        "node": "BookcaseR05",
+        "texture": "shelf_dust_hand.png"
+      },
+      "shelf_R06": {
+        "node": "BookcaseR06",
+        "texture": "shelf_dust.png"
+      },
+      "shelf_R07": {
+        "node": "BookcaseR07",
+        "texture": "shelf_dust.png"
+      },
+      "shelf_R08": {
+        "node": "BookcaseR08",
+        "texture": "shelf_dust.png"
+      },
+      "shelf_EN": {
+        "node": "EmptyBookcaseEN",
+        "texture": "shelf_dust_even.png"
+      },
+      "shelf_ES": {
+        "node": "EmptyBookcaseES",
+        "texture": "shelf_dust_even.png"
+      }
+    },
+    "composites": {
+      "res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png": {
+        "lamp": {
+          "x": 6,
+          "y": 4,
+          "width": 8,
+          "height": 13,
+          "word": "床头油灯"
+        },
+        "cabinet": {
+          "x": 1,
+          "y": 16,
+          "width": 18,
+          "height": 20,
+          "word": "床头柜"
+        }
+      }
+    }
+  },
   "sites": [
     {
       "id": "E1",

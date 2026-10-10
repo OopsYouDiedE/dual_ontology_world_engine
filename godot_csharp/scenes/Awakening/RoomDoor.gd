@@ -2,7 +2,7 @@ extends Node2D
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 ## Dormitory doors: access is granted by the host (can_access_dorm); leaves open when someone is near.
 ## Frame, lintel and number plate are painted into the architecture.
-@export var dorm_owner := "detective"
+@export var dorm_owner := ""
 @export var interior_bounds := Rect2(32, 32, 256, 256)
 @onready var room: Node2D = get_parent().get_parent()
 var openness := 0.0
@@ -15,13 +15,12 @@ var right: Texture2D = preload("res://ShareAsset/Internal/Props/FirstAwakeningIn
 func _ready() -> void:
 	refresh_access()
 
-# STORY-HARDCODE[AWK-058][schema][production]: 宿舍门所有者键与本章角色节点名称固定绑定。
 func owner_actor() -> CharacterBody2D:
-	var actor_name: String = {"detective": "侦探", "engineer": "工程师", "cook": "厨师", "musician": "音乐家"}[dorm_owner]
-	return room.actors.get(actor_name)
+	return null if dorm_owner == "" else room.actor_of(dorm_owner)
 
 func access_allowed() -> bool:
-	return dorm_owner == "detective" or (room.has_method("can_access_dorm") and bool(room.call("can_access_dorm", dorm_owner)))
+	if room.actors.is_empty(): return false
+	return dorm_owner == "" or dorm_owner == room.player_key() or (room.has_method("can_access_dorm") and bool(room.call("can_access_dorm", dorm_owner)))
 
 func threshold_collision_rect() -> Rect2:
 	var size: Vector2 = leaf_collision.shape.size
@@ -37,7 +36,7 @@ func refresh_access() -> void:
 		queue_redraw()
 
 func _physics_process(delta: float) -> void:
-	if not is_instance_valid(room) or not ("actors" in room) or room.actors == null: return
+	if not is_instance_valid(room) or not ("actors" in room) or room.actors.is_empty(): return
 	refresh_access()
 	var owner := owner_actor()
 	if owner != null and owner != room.player:

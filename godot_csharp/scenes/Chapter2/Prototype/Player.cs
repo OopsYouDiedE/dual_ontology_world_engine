@@ -41,27 +41,47 @@ public sealed partial class Game
     public PlayerAction? LastAction;
     private readonly Dictionary<P, SocialStance> _asked = [];
 
-    // STORY-HARDCODE[CH2-053][schema][production]: 固定本案可调查物件、对应地点和真实实体。
-    public static readonly ImmutableDictionary<string, (Place Place, Func<Game, Essence> Thing)> Things_ = new Dictionary<string, (Place, Func<Game, Essence>)>
-    {
-        ["粮仓"] = (Place.Logistics, g => g.Granary), ["台账"] = (Place.Logistics, g => g.Ledger), ["配给台公告"] = (Place.Logistics, g => g.Board[Place.Logistics]),
-        ["中央厅公告"] = (Place.Hall, g => g.Board[Place.Hall]), ["中央基座"] = (Place.Hall, g => g.Base), ["速写本"] = (Place.DormS, g => g.SketchBook), ["碗"] = (Place.Clinic, g => g.Bowl), ["病床"] = (Place.Clinic, g => g.Bed),
-        ["药柜"] = (Place.Clinic, g => g.MedCab), ["黑板"] = (Place.Lecture, g => g.Blackboard), ["铺石"] = (Place.Oath, g => g.Stele),
-        ["压力表"] = (Place.Greenhouse, g => g.Gauge), ["名录库之门"] = (Place.ArchiveFront, g => g.ArchiveDoor), ["油库"] = (Place.DormS, g => g.OilStore),
-        ["文契废纸篓"] = (Place.DormW, g => g.Litter[Place.DormW]), ["星仪废纸篓"] = (Place.DormS, g => g.Litter[Place.DormS]),
-        ["后勤废纸篓"] = (Place.DormL, g => g.Litter[Place.DormL]), ["生活翼废纸篓"] = (Place.DormLife, g => g.Litter[Place.DormLife]), ["文契公告"] = (Place.DormW, g => g.Board[Place.DormW]),
-        ["生活翼公告"] = (Place.DormLife, g => g.Board[Place.DormLife]), ["讲堂公告"] = (Place.Lecture, g => g.Board[Place.Lecture]),
-        ["星仪公告"] = (Place.DormS, g => g.Board[Place.DormS]), ["后勤公告"] = (Place.DormL, g => g.Board[Place.DormL]),
-    }.ToImmutableDictionary();
+    public IReadOnlyDictionary<string, (Place Place, Essence Thing)> Things_ { get; private set; } =
+        new Dictionary<string, (Place, Essence)>();
+    public IReadOnlyDictionary<Place, string[]> AreaThings { get; private set; } =
+        new Dictionary<Place, string[]>();
+    private IReadOnlyDictionary<Essence, string> _notebookImages = new Dictionary<Essence, string>();
+    public string NotebookImage(Essence entity) => _notebookImages.TryGetValue(entity, out var key) ? key
+        : throw new InvalidDataException("Missing notebook image binding: " + entity.TrueName);
 
-    /// <summary>同一区域里一并细看的痕迹物件（§12 第 7 条：查证成本）。</summary>
-    // STORY-HARDCODE[CH2-054][schema][production]: 固定各案发相关地点的调查物件集合。
-    public static readonly ImmutableDictionary<Place, string[]> AreaThings = new Dictionary<Place, string[]>
+    internal void BindInvestigation(string script)
     {
-        [Place.Logistics] = ["粮仓", "台账", "配给台公告"], [Place.Clinic] = ["碗", "病床", "药柜"], [Place.DormW] = ["文契废纸篓", "文契公告"],
-        [Place.DormS] = ["星仪废纸篓", "油库", "速写本", "星仪公告"], [Place.DormL] = ["后勤废纸篓", "后勤公告"], [Place.DormLife] = ["生活翼废纸篓", "生活翼公告"],
-        [Place.ArchiveFront] = ["名录库之门"], [Place.Lecture] = ["黑板", "讲堂公告"], [Place.Greenhouse] = ["压力表"], [Place.Oath] = ["铺石"], [Place.Hall] = ["中央基座", "中央厅公告"],
-    }.ToImmutableDictionary();
+        var authored = DualOntologyWorldEngine.Story.WorldScriptDocument.Parse(script, allowChapterAdapter: true).Single();
+        var declarations = authored.Entities.ToDictionary(Chapter2Bindings.Id, StringComparer.Ordinal);
+        using var document = System.Text.Json.JsonDocument.Parse(script);
+        var presentation = document.RootElement.GetProperty("chapters")[0].GetProperty("design").GetProperty("presentation");
+        var images = new Dictionary<Essence, string>();
+        foreach (var item in presentation.GetProperty("notebook_images").EnumerateObject())
+        {
+            if (!declarations.TryGetValue(item.Name, out var declaration) || declaration.Kind != "object"
+                || item.Value.ValueKind != System.Text.Json.JsonValueKind.String)
+                throw new InvalidDataException("Invalid notebook image binding: " + item.Name);
+            images.Add(Chapter2Bindings.Resolve(this, declaration), item.Value.GetString()!);
+        }
+        foreach (var board in Board.Values)
+            if (!images.ContainsKey(board)) throw new InvalidDataException("Missing notebook image binding: " + board.TrueName);
+        var entries = presentation.GetProperty("investigation").EnumerateObject().Select(item =>
+        {
+            if (!declarations.TryGetValue(item.Name, out var declaration) || declaration.Kind != "object")
+                throw new InvalidDataException("Missing investigation entity: " + item.Name);
+            var entity = Chapter2Bindings.Resolve(this, declaration);
+            var space = entity.Get<SpatialProperty>()?.Space
+                ?? throw new InvalidDataException("Investigation entity has no physical space: " + item.Name);
+            var label = item.Value.GetProperty("label").GetString()!;
+            if (string.IsNullOrWhiteSpace(label)) throw new InvalidDataException("Missing investigation label: " + item.Name);
+            return (Label: label, Place: PlaceOf[space], Thing: entity, Order: item.Value.GetProperty("order").GetInt32());
+        }).ToArray();
+        Things_ = entries.ToDictionary(item => item.Label, item => (item.Place, item.Thing), StringComparer.Ordinal);
+        AreaThings = entries.GroupBy(item => item.Place).ToDictionary(group => group.Key,
+            group => group.OrderBy(item => item.Order).Select(item => item.Label).ToArray());
+        _notebookImages = images;
+        foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
+    }
 
     private Effect SayTo(Fx fx, Person who, string text, Effect request) => Fx.Seq(fx.Go(Where(who)), new Effect.Say(fx.R(who.Body), text, request));
 
@@ -84,7 +104,7 @@ public sealed partial class Game
         switch (act.Cmd)
         {
             case Cmd.Escort:
-                Request(act.Who!.Value, X("social.escort", ("place", Names.Of(act.Place!.Value)), ("thing", act.Thing)), fx.Escort(act.Place.Value, Things_[act.Thing!].Thing(this)), Compatibility(this[act.Who.Value], act));
+                Request(act.Who!.Value, X("social.escort", ("place", Names.Of(act.Place!.Value)), ("thing", act.Thing)), fx.Escort(act.Place.Value, Things_[act.Thing!].Thing), Compatibility(this[act.Who.Value], act));
                 break;
             case Cmd.Ask:
                 var recipient = this[act.Who!.Value];
@@ -174,9 +194,9 @@ public sealed partial class Game
             case Cmd.EatPantry: SubmitDet(fx.Look(Space[Place.DormLife]), 0.5); break;
             case Cmd.Inspect:
                 var (pl, th) = Things_[act.Thing!];
-                SubmitDet(Fx.Seq(fx.Go(pl), fx.Look(th(this))), 0.8);
+                SubmitDet(Fx.Seq(fx.Go(pl), fx.Look(th)), 0.8);
                 break;
-            case Cmd.Escort: SubmitDet(fx.Escort(act.Place!.Value, Things_[act.Thing!].Thing(this)), 1.2); break;
+            case Cmd.Escort: SubmitDet(fx.Escort(act.Place!.Value, Things_[act.Thing!].Thing), 1.2); break;
             case Cmd.Greenhouse: SubmitDet(fx.Job(Job.Greenhouse), 1.0, Job.Greenhouse); break;
             case Cmd.Archive: SubmitDet(fx.Escort(Place.ArchiveFront, ArchiveDoor), 1.2); break;
             case Cmd.Rub: SubmitDet(fx.Escort(Place.Oath, Stele), 1.2); break;
@@ -248,20 +268,20 @@ public sealed partial class Game
             case Cmd.Inspect:
             case Cmd.Escort:
             case Cmd.Archive when false:
-                var thing = Things_[act.Thing!].Thing(this);
+                var thing = Things_[act.Thing!].Thing;
                 var area = Things_[act.Thing!].Place;
                 if (here == area)
                 {
                     // 同一区域的痕迹一并细看。
                     var all = new List<Essence> { thing };
-                    foreach (var name in AreaThings.GetValueOrDefault(area) ?? []) { var e = Things_[name].Thing(this); if (!all.Contains(e)) all.Add(e); }
+                    foreach (var name in AreaThings.GetValueOrDefault(area) ?? []) { var e = Things_[name].Thing; if (!all.Contains(e)) all.Add(e); }
                     foreach (var e in all) { if (Day >= CaseDay) DetLooked.Add(e); DetSaw(e); }
                     if (all.Contains(Granary)) RevealLatch(Det); // 凑近细看，门闩的松紧与工具痕才看得出
                     Feed.Add($"你细看了{Names.Of(here)}：");
                     foreach (var e in all)
                     {
                         var description = Describe(e);
-                        var key = ReferenceEquals(e, thing) ? act.Thing! : Things_.First(t => ReferenceEquals(t.Value.Thing(this), e)).Key;
+                        var key = ReferenceEquals(e, thing) ? act.Thing! : Things_.First(t => ReferenceEquals(t.Value.Thing, e)).Key;
                         InspectionRecords.Add(new(Day, Slot, key, area, description));
                         Feed.Add("  · " + description);
                     }

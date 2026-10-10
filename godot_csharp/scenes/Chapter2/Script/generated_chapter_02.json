@@ -1847,6 +1847,10 @@
             "space": {
               "type": "entity",
               "value": "world:room.Hall"
+            },
+            "presentation_anchor": {
+              "type": "boolean",
+              "value": true
             }
           },
           "aliases": [
@@ -1863,6 +1867,10 @@
             "space": {
               "type": "entity",
               "value": "world:room.Hall"
+            },
+            "presentation_anchor": {
+              "type": "boolean",
+              "value": true
             }
           },
           "aliases": [
@@ -7839,6 +7847,219 @@
           "intro": "始业日午后，生活翼的门开了。主楼的灰还在落，连廊都关着；门外等着的，是甲区的人。",
           "instructions": "读不耗时：细看、询问、读板与重演可以慢慢来。请人同行、讲规矩、请人做事都在与此人交谈时发起，要花时间；对方不答应，不花时间。T 让时间过到下一件要紧的事；夜里按 T 就地睡下。廊开到哪里，就能走到哪里。夜里的事通过痕迹、身影与转述得知。第五日清晨，十六人决定名录库归谁、怎么开。"
         },
+        "presentation": {
+          "player_actor": "detective",
+          "player_identity": "Det",
+          "gathering_anchor": "site:oath_court",
+          "gathering_spawn": "gate_inside",
+          "initial_map": "living_hall",
+          "maps": {
+            "central_hall": {
+              "room": "world:room.Hall",
+              "primary": true,
+              "spawn": "south"
+            },
+            "lecture": {
+              "room": "world:room.Lecture",
+              "primary": true,
+              "spawn": "south"
+            },
+            "logistics": {
+              "room": "world:room.Logistics",
+              "primary": true,
+              "spawn": "west"
+            },
+            "granary": {
+              "room": "world:room.Logistics",
+              "primary": false,
+              "spawn": "south"
+            },
+            "clinic": {
+              "room": "world:room.Clinic",
+              "primary": true,
+              "spawn": "south"
+            },
+            "greenhouse": {
+              "room": "world:room.Greenhouse",
+              "primary": true,
+              "spawn": "south"
+            },
+            "archive": {
+              "room": "world:room.ArchiveFront",
+              "primary": true,
+              "spawn": "south"
+            },
+            "counterweight": {
+              "room": "world:room.ArchiveFront",
+              "primary": false,
+              "spawn": "south"
+            },
+            "campus_s": {
+              "room": "world:room.Oath",
+              "primary": true,
+              "spawn": "south"
+            },
+            "living_hall": {
+              "room": "world:room.Living",
+              "primary": true,
+              "spawn": "south"
+            },
+            "campus_n": {
+              "room": "world:room.Hall",
+              "primary": false,
+              "spawn": "south"
+            },
+            "campus_nw": {
+              "room": "world:room.Hall",
+              "primary": false,
+              "spawn": "south"
+            },
+            "campus_ne": {
+              "room": "world:room.Logistics",
+              "primary": false,
+              "spawn": "south"
+            },
+            "campus_sw": {
+              "room": "world:room.Hall",
+              "primary": false,
+              "spawn": "south"
+            },
+            "harbor": {
+              "room": "world:room.Oath",
+              "primary": false,
+              "spawn": "south"
+            },
+            "zone_yi": {
+              "room": "world:room.DormLife",
+              "primary": true,
+              "spawn": "south"
+            },
+            "zone_jia": {
+              "room": "world:room.DormW",
+              "primary": true,
+              "spawn": "south"
+            },
+            "zone_bing": {
+              "room": "world:room.DormS",
+              "primary": true,
+              "spawn": "south"
+            },
+            "zone_ding": {
+              "room": "world:room.DormL",
+              "primary": true,
+              "spawn": "south"
+            },
+            "resonance": {
+              "room": "world:room.Resonance",
+              "primary": true,
+              "spawn": "south"
+            }
+          },
+          "notebook_images": {
+            "world:Board.Hall": "中央厅公告",
+            "world:Board.Logistics": "配给台公告",
+            "world:Board.Lecture": "讲堂公告",
+            "world:Board.DormLife": "生活翼公告",
+            "world:Board.DormW": "文契公告",
+            "world:Board.DormS": "星仪公告",
+            "world:Board.DormL": "后勤公告",
+            "world:Board.Living": ""
+          },
+          "investigation": {
+            "world:object.Granary": {
+              "label": "粮仓",
+              "order": 0
+            },
+            "world:object.Ledger": {
+              "label": "台账",
+              "order": 1
+            },
+            "world:Board.Logistics": {
+              "label": "配给台公告",
+              "order": 2
+            },
+            "world:Board.Hall": {
+              "label": "中央厅公告",
+              "order": 1
+            },
+            "world:object.Base": {
+              "label": "中央基座",
+              "order": 0
+            },
+            "world:object.SketchBook": {
+              "label": "速写本",
+              "order": 2
+            },
+            "world:object.Bowl": {
+              "label": "碗",
+              "order": 0
+            },
+            "world:object.Bed": {
+              "label": "病床",
+              "order": 1
+            },
+            "world:object.MedCab": {
+              "label": "药柜",
+              "order": 2
+            },
+            "world:object.Blackboard": {
+              "label": "黑板",
+              "order": 0
+            },
+            "world:object.Stele": {
+              "label": "铺石",
+              "order": 0
+            },
+            "world:object.Gauge": {
+              "label": "压力表",
+              "order": 0
+            },
+            "world:object.ArchiveDoor": {
+              "label": "名录库之门",
+              "order": 0
+            },
+            "world:object.OilStore": {
+              "label": "油库",
+              "order": 1
+            },
+            "world:Litter.DormW": {
+              "label": "文契废纸篓",
+              "order": 0
+            },
+            "world:Litter.DormS": {
+              "label": "星仪废纸篓",
+              "order": 0
+            },
+            "world:Litter.DormL": {
+              "label": "后勤废纸篓",
+              "order": 0
+            },
+            "world:Litter.DormLife": {
+              "label": "生活翼废纸篓",
+              "order": 0
+            },
+            "world:Board.DormW": {
+              "label": "文契公告",
+              "order": 1
+            },
+            "world:Board.DormLife": {
+              "label": "生活翼公告",
+              "order": 1
+            },
+            "world:Board.Lecture": {
+              "label": "讲堂公告",
+              "order": 1
+            },
+            "world:Board.DormS": {
+              "label": "星仪公告",
+              "order": 3
+            },
+            "world:Board.DormL": {
+              "label": "后勤公告",
+              "order": 1
+            }
+          }
+        },
         "card_kit": {
           "subjects": [
             {
@@ -11877,90 +12098,90 @@
       "line": 128,
       "column": 20,
       "end_line": 128,
-      "end_column": 89
+      "end_column": 131
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:76:24": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 133,
+      "line": 134,
       "column": 24,
-      "end_line": 133,
-      "end_column": 127
+      "end_line": 134,
+      "end_column": 169
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:77:18": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 139,
+      "line": 141,
       "column": 18,
-      "end_line": 139,
+      "end_line": 141,
       "end_column": 158
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:78:23": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 146,
+      "line": 148,
       "column": 23,
-      "end_line": 146,
+      "end_line": 148,
       "end_column": 173
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:79:21": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 153,
+      "line": 155,
       "column": 21,
-      "end_line": 153,
+      "end_line": 155,
       "end_column": 165
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:80:22": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 160,
+      "line": 162,
       "column": 22,
-      "end_line": 160,
+      "end_line": 162,
       "end_column": 169
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:81:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 167,
+      "line": 169,
       "column": 19,
-      "end_line": 167,
+      "end_line": 169,
       "end_column": 160
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:82:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 174,
+      "line": 176,
       "column": 19,
-      "end_line": 174,
+      "end_line": 176,
       "end_column": 160
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:83:19": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 181,
+      "line": 183,
       "column": 19,
-      "end_line": 181,
+      "end_line": 183,
       "end_column": 160
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:84:23": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 188,
+      "line": 190,
       "column": 23,
-      "end_line": 188,
+      "end_line": 190,
       "end_column": 150
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:85:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 194,
+      "line": 196,
       "column": 20,
-      "end_line": 194,
+      "end_line": 196,
       "end_column": 161
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:86:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 201,
+      "line": 203,
       "column": 20,
-      "end_line": 201,
+      "end_line": 203,
       "end_column": 142
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:87:20": {
       "path": "godot_csharp/scenes/Awakening/Script/story/续篇/01_物件.story",
-      "line": 207,
+      "line": 209,
       "column": 20,
-      "end_line": 207,
+      "end_line": 209,
       "end_column": 161
     },
     "godot_csharp/scenes/Awakening/Script/chapter_01.story:88:1": {

@@ -592,6 +592,8 @@ class Compiler:
             self.fail(node, f"属性 {key!r} 必须是布尔值。")
         if key == "sprite" and item["type"] != "string":
             self.fail(node, "属性 'sprite' 必须是字符串。")
+        if key == "presentation_anchor" and item["type"] != "boolean":
+            self.fail(node, "属性 'presentation_anchor' 必须是布尔值。")
         if key == "space" and item["type"] != "entity":
             self.fail(node, "属性 'space' 必须引用房间实体。")
         if key.startswith(("state:", "observable:")):
@@ -604,7 +606,7 @@ class Compiler:
                 self.fail(node, "belief 标签必须是非空且不含空白的名称。")
         if key in {"state:", "observable:"} or (key.startswith(("state:", "observable:")) and not key.split(":", 1)[1]):
             self.fail(node, "状态标签必须是非空字符串。")
-        if not (key == "space" or key == "sprite" or key.startswith(("state:", "belief:", "observable:"))):
+        if not (key in {"space", "sprite", "presentation_anchor"} or key.startswith(("state:", "belief:", "observable:"))):
             self.fail(node, f"不支持实体属性 {key!r}；允许 space、sprite、state:<tag>、belief:<tag>、observable:<tag>。")
         return item
 

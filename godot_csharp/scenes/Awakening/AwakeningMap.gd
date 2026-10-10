@@ -6,13 +6,14 @@ extends Node2D
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
 const ReplayStage := preload("res://scenes/Awakening/ReplayStage.gd")
 const TraceDecals := preload("res://scenes/Awakening/TraceDecals.gd")
+const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const LAYOUT: Resource = preload("res://scenes/Awakening/map_layout.tres")
 const SPATIAL := "res://scenes/Awakening/Script/generated_awakening_layout.json"
 const CONTENT := "res://scenes/Awakening/Script/generated_awakening_content.json"
 const ART := "res://ShareAsset/Internal/Props/AwakeningEvidence/"
-## 人物键 → 场景里的人物节点名。
-# STORY-HARDCODE[AWK-059][schema][production]: 本章人物键与正式现场角色节点名称固定绑定。
-const ACTOR_NODES := {"detective": "侦探", "huo": "工程师", "shen": "厨师", "su": "音乐家"}
+## 站点能力的纯几何配方；身份到配方的关联由布局声明。
+const STATION_GEOMETRY := {"start": [Vector2.ZERO, 12.0], "instrument": [Vector2(0, 32), 16.0],
+	"wide_table": [Vector2(0, -24), 78.0], "worktop": [Vector2(0, -24), 62.0]}
 
 var field: Node2D
 var layout: Dictionary = {}
@@ -23,7 +24,7 @@ var floors: Dictionary = {}
 var obstacle_rects: Array[Rect2] = []
 var decals: Node2D
 var stage_node: Node2D
-## RoomDoor 读取：按节点名索引的人物、玩家与宿舍门权限。
+## RoomDoor 读取稳定人物键；与现场、回放使用同一组对象引用。
 var actors: Dictionary = {}
 var player: CharacterBody2D
 var _seen: Dictionary = {}
@@ -31,12 +32,16 @@ var _ink_grid: AStarGrid2D
 var _dorms_open := false
 var _isolation_open := false
 
-func setup() -> void:
+func setup() -> bool:
 	layout = LAYOUT.get_meta("data")
 	spatial = JSON.parse_string(FileAccess.get_file_as_string(SPATIAL))
 	var content: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CONTENT))
 	regions = content.ROOM_REGIONS
 	room_names = content.ROOM_NAMES
+	var error := Bindings.actor_error($ObjectsAndPeople, spatial.actor_nodes, player_key())
+	if error != "":
+		Bindings.fail(self, error)
+		return false
 	for y in layout.rows.size():
 		var row: String = layout.rows[y]
 		for x in row.length():
@@ -46,31 +51,36 @@ func setup() -> void:
 		if item.footprint != null:
 			var raw: Array = item.footprint
 			obstacle_rects.append(Rect2(raw[0], raw[1], raw[2], raw[3]))
-	for key in ACTOR_NODES:
-		var actor: CharacterBody2D = $ObjectsAndPeople.get_node(ACTOR_NODES[key])
-		actors[ACTOR_NODES[key]] = actor
+	for key in spatial.actor_nodes:
+		var actor: CharacterBody2D = $ObjectsAndPeople.get_node(str(spatial.actor_nodes[key]))
+		actors[key] = actor
 		actor.collision_mask = 1
-	player = actors["侦探"]
+	player = actors[player_key()]
 	player.standard = player.standard.duplicate()
 	for direction in ["front", "back", "left"]:
 		player.standard.set_animation_speed("walk_" + direction, 7.5)
 	player.sprite.sprite_frames = player.standard
-	_build_props()
+	if not _build_props(): return false
 	stage_node = ReplayStage.new()
 	stage_node.name = "ReplayStage"
 	stage_node.host = self
 	stage_node.z_index = 60
 	add_child(stage_node)
+	return true
 
 func begin_shutdown() -> void:
 	if is_instance_valid(stage_node): stage_node.cancel_playback()
 
 func fixed_actors() -> Dictionary:
-	var result := {}
-	for key in ACTOR_NODES: result[key] = actors[ACTOR_NODES[key]]
-	return result
+	return actors
 
-func actor_of(key: String) -> CharacterBody2D: return actors[ACTOR_NODES[key]]
+func player_key() -> String: return str(spatial.presentation.player_actor)
+func player_sprite() -> String: return str(spatial.dialogue_cast[spatial.actor_nodes[player_key()]])
+func actor_of(key: String) -> CharacterBody2D:
+	if not actors.has(key):
+		Bindings.fail(self, "Missing actor binding: " + key)
+		return null
+	return actors[key]
 func objects_root() -> Node2D: return $ObjectsAndPeople
 func map_key() -> String: return "awakening"
 func load_map(_key: String, _spawn: String) -> void: pass
@@ -90,6 +100,10 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	var opened := bool(snapshot.get("access", {}).get("isolation_open", false))
 	if opened != _isolation_open: set_prop("isolation_door", "open" if opened else "closed")
 	$ObjectsAndPeople/MechanicalIsolationDoor/DemonPrints.visible = bool(snapshot.get("access", {}).get("door_prints", false))
+	if not snapshot.has("traces"):
+		Bindings.fail(self, "Missing authoritative trace snapshot")
+		return
+	decals.apply_snapshot(snapshot.traces)
 
 func near_doorway(point: Vector2) -> bool:
 	var doorway = anchor("doorway")
@@ -100,7 +114,7 @@ func can_access_dorm(_owner: String) -> bool: return _dorms_open
 
 # ------------------------------------------------------------------ props ---
 
-func _build_props() -> void:
+func _build_props() -> bool:
 	decals = TraceDecals.new()
 	decals.name = "TraceDecals"
 	decals.host = self
@@ -114,7 +128,9 @@ func _build_props() -> void:
 	for spec in spatial.props:
 		var texture_path := str(spec.texture)
 		if not texture_path.begins_with("res://"): texture_path = ART + texture_path
-		if not ResourceLoader.exists(texture_path): continue
+		if not ResourceLoader.exists(texture_path):
+			Bindings.fail(self, "Missing prop asset binding: " + str(spec.node) + " -> " + texture_path)
+			return false
 		var sprite := Sprite2D.new()
 		sprite.name = str(spec.node)
 		sprite.texture = load(texture_path)
@@ -136,6 +152,7 @@ func _build_props() -> void:
 			body.add_child(collision)
 			$FurnitureSolids.add_child(body)
 			obstacle_rects.append(footprint)
+	return true
 
 ## 剧情给出的道具状态：隔离门开启、旧物被拿起与放回（放回后摆得和原来不一样）、痕迹重绘。
 func set_prop(id: String, state: String) -> void:
@@ -278,24 +295,27 @@ func furniture_hits(pos: Vector2) -> Dictionary:
 	return {}
 
 ## 日常的去处：热点只供几何定位。
-# STORY-HARDCODE[AWK-041][schema][production]: 日常行动目标映射到本章 piano/tube/sink/door/score 等现场物件。
 func station(target: String, who: String) -> Dictionary:
-	match target:
-		"self":
-			var start = anchor("起点·" + who)
-			return {} if start == null else {"point": start, "radius": 12.0}
-		"piano":
-			var piano := $ObjectsAndPeople.get_node_or_null("Piano") as Node2D
-			return {} if piano == null else {"point": piano.position + Vector2(0, 32), "focus": piano.position, "radius": 16.0}
-	var site := {"tube": "E8", "sink": "E9", "door": "E8j", "score": "E6"}
-	if site.has(target):
-		var geometry := site_geometry({})
-		if geometry.has(site[target]):
-			return {"point": geometry[site[target]].point, "radius": float(geometry[site[target]].reach) - 10.0}
-	var node := str({"table": "StudyTable", "prep": "Worktable"}.get(target, ""))
-	var prop: Node2D = $ObjectsAndPeople.get_node_or_null(node) as Node2D if node != "" else null
-	if prop != null: return {"point": prop.position + Vector2(0, -24), "radius": 78.0 if target == "table" else 62.0}
-	return {}
+	if not spatial.presentation.stations.has(target):
+		Bindings.fail(self, "Missing station binding: " + target)
+		return {}
+	var binding: Dictionary = spatial.presentation.stations[target]
+	var point = anchor(str(binding.anchor).replace("{who}", who)) if binding.has("anchor") else null
+	if binding.has("node"):
+		var node := $ObjectsAndPeople.get_node_or_null(str(binding.node)) as Node2D
+		if node: point = node.position
+	if point == null:
+		Bindings.fail(self, "Missing station anchor/node: " + target)
+		return {}
+	var geometry := str(binding.geometry)
+	if geometry == "site":
+		var site: Dictionary = site_geometry({})[str(binding.anchor).trim_prefix("site:")]
+		return {"point": point, "radius": float(site.reach) - 10.0}
+	if not STATION_GEOMETRY.has(geometry):
+		Bindings.fail(self, "Unknown station geometry: " + geometry)
+		return {}
+	var spec: Array = STATION_GEOMETRY[geometry]
+	return {"point": point + spec[0], "focus": point, "radius": spec[1]}
 
 # ----------------------------------------------------------------- replay ---
 

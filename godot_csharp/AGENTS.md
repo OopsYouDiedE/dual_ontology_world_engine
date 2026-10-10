@@ -46,6 +46,8 @@
 | 编辑器总览 | `UI/Workbench/` | 各面板的预览页 |
 
 现场（地图视图）在 `Shared/Field/`，各章地图适配器在各章目录；现场用到的物件外观名等文字由 `Shared/Field/FieldVocabulary.gd` 从剧本编译物读取。
+两章的 `现场表现` 块声明稳定身份到演员节点、资产、地图、站位及调查对象的绑定；第一章编译到 Content/Layout，续篇编译到 `design.presentation`。地图适配器 `setup()` 返回成功状态，缺失身份、资产、锚点或痕迹快照须报错并终止。复合精灵按资产声明的局部区域与词汇键读取；痕迹按权威快照与当前视线绘制。`presentation_anchor` 是宿主表现元数据，不进入 Core 状态或认知。
+第二章调查对象在世界建立后绑定为实际 `Essence` 引用，区域集合从声明派生；笔记图片另以实际对象绑定声明，明确空值表示无图，不要求该对象可调查。现场人物肖像取实体的 `sprite` 属性，地图归属及集合站位取表现声明。第一章地图生成器从布局读门主人、演员起点与动画资产，只保留书架槽的几何，不按节点名决定痕迹内容。
 普通家具悬停复用地图适配器的 `furniture_hits` 与现场词汇表，只对已绘制且在视线内的精灵显示外观名；剧情热点保持优先。
 
 `stage_action` 从开始走位到动作结束持续占用人物，异常或取消时也归还；侦探被演出占用时快照关闭 `player_control`，现场输入循环不得覆盖演出姿态。
@@ -121,6 +123,8 @@
 - 第二章 `Chapter2/check/check_flow.gd` 通过 `chapter2_fixture.gd` 复用上述 Main 夹具，先用调试跳转推进第一章终局，再以章末卡 C 键触发连续会话的视图切换与 `view_ready`，检查首个可操作状态。后续输入和 UI 回执仍经过 `Main.dispatch`，不再加载旧章节宿主、调用引擎直通接口或单独注入继承快照；地图加载失败和流程等待超时须报告并退出非零状态。
 - 社交请求的流程 AST 使用发言者内部世界的引用提交；接收者认知只用于筛选已知目标，发言传播再将请求映射到接收者内部世界。第二章流程回归按正式日程检查开场与首课，检视物证后再验证同行结算。
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
+- 表现绑定开发检查：`godot --headless --path godot_csharp --script res://scenes/Shared/check/check_presentation_bindings.gd`；验证改演员 ID 后仍绑定同一节点，缺失节点或玩家绑定明确失败，不代替游戏验收。
+- 宿主表现声明合同检查：`dotnet run --project godot_csharp/scenes/Chapter2/Game/check/PresentationCheck/PresentationCheck.csproj -c Release`；覆盖地图改键、缺失肖像/地图、实际调查对象引用与中性非空间锚点，不改既有回归预期。
 - 地图文字更新先在仓库根目录运行 `python godot_csharp/tools/compile_story.py`。`python godot_csharp/tools/build_awakening_map.py --text-only` 从编译 layout 的 `furniture_asides` 与 Content 的 `ROOM_NAMES` 按固定槽键更新既有 `map_layout.tres`，完整校验槽数、房间集合与文字类型，不绘图、不写场景几何。
 - `python godot_csharp/tools/build_chapter2_scenes.py --text-only <室内地图键>...` 从正式 Chapter2 `design.text` 更新既有根节点标题、`Sites/<id>` 标签与 manifest 对应文字。支持 `living_hall`、`zone_jia`、`zone_yi`、`zone_bing`、`zone_ding`、`central_hall`、`lecture`、`archive`、`counterweight`、`resonance`、`clinic`、`logistics`、`granary`、`greenhouse`；整批校验键、节点和场点集合后才写入指定场景与 manifest，仅替换字符串，保持几何、资产、节点顺序与其他序列化字节，文字未变时不写文件。
 - `python godot_csharp/tools/build_chapter2_scenes.py --sites-only <室内地图键>...` 的几何来自 `chapter2_art/rooms.py`，文字来自正式编译物的 `design.text`；更新指定地图的 `Sites` 标记与 manifest，复用既有纹理。该入口仍将 `Sites` 起始处至文件尾重写，仅调整热点时不必重新生产整套美术；标题更新使用 `--text-only`。

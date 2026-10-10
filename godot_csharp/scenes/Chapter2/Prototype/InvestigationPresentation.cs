@@ -69,7 +69,7 @@ public static class InvestigationPresentation
                 .Where(s => mental.Rules.Any(r => s.Build(g.FxOf(det)).Any(m => m.Mode == r.Mode && Ast.Equivalent(m.Effect, r.Effect) && Ast.Equivalent(m.Condition, r.Condition)))).ToArray();
             entries.Add(new("board:" + place, Names.Of(place) + "公告板", Names.Of(place), "规矩",
                 known.Length == 0 ? ["你上次看时是空的。"] : known.Select(s => "「" + s.Text + "」").ToArray(),
-                ["你看过的" + Names.Of(place) + "公告板"], Game.Things_.First(t => ReferenceEquals(t.Value.Thing(g), board)).Key));
+                ["你看过的" + Names.Of(place) + "公告板"], g.NotebookImage(board)));
         }
         foreach (var (label, spec) in g.PreviewKnownRules())
             entries.Add(new("rule:" + spec.Id, "规矩" + label,
@@ -128,11 +128,11 @@ public static class InvestigationPresentation
     // STORY-HARDCODE[CH2-071][schema][production]: 把案件特定痕迹键映射到对应调查物件。
     private static string TraceImage(Game g, TraceItem trace)
     {
-        if (Game.Things_.ContainsKey(trace.Key)) return trace.Key;
+        if (g.Things_.ContainsKey(trace.Key)) return trace.Key;
         if (trace.Key == "门闩") return "粮仓";
         if (trace.Key is "前厅脚印" or "前厅机关") return "名录库之门";
         if (trace.Key.StartsWith("饼屑:"))
-            return Game.Things_.FirstOrDefault(kv => kv.Value.Place == trace.Where && ReferenceEquals(kv.Value.Thing(g), g.Litter.GetValueOrDefault(trace.Where))).Key ?? "";
+            return g.Things_.FirstOrDefault(kv => kv.Value.Place == trace.Where && ReferenceEquals(kv.Value.Thing, g.Litter.GetValueOrDefault(trace.Where))).Key ?? "";
         return "";
     }
 

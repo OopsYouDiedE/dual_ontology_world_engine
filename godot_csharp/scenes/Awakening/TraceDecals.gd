@@ -3,6 +3,7 @@ extends Node2D
 ## 贴图由 tools/build_awakening_evidence.py 以原生像素绘制，放在 ShareAsset/Internal/Props/AwakeningEvidence/。
 
 const ART := "res://ShareAsset/Internal/Props/AwakeningEvidence/"
+const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 ## 铜管走向：铜口 → 沿活动厅北墙向西 → 门厅北墙 → 贴西墙下到隔离门北侧门框（松动接头）；
 ## 另一路向东，钻进活动厅与 R-08 之间的墙（松动接头在 R-08 墙后）。
 # STORY-HARDCODE[AWK-042][schema][production]: 绘制本案铜管两条具体路径及松动接头位置。
@@ -10,37 +11,51 @@ const PIPES := [
 	[Vector2(500, 40), Vector2(304, 40), Vector2(304, 266), Vector2(164, 266), Vector2(164, 346), Vector2(154, 346)],
 	[Vector2(500, 40), Vector2(592, 40), Vector2(592, 204)],
 ]
-## [贴图, 位置, 旋转角度]：门在门厅西墙，灰扇向东散开，湿布贴着门竖着压成一条，靴印鞋尖朝北侧的插闩把手。
-# STORY-HARDCODE[AWK-043][schema][production]: 绘制本案灰扇、靴印、湿布、接头与门框凹痕的位置方向。
+## 局部贴花槽的纯几何；内容与纹理由剧本声明绑定。
 const DECALS := [
-	["ash_fan.png", Vector2(184, 322), 90.0],
-	["boot_print.png", Vector2(156, 418), -90.0],
-	["wet_cloth.png", Vector2(157, 354), 90.0],
-	["pipe_joint.png", Vector2(157, 320), 0.0],
-	["pipe_joint.png", Vector2(585, 186), 0.0],
-	["frame_dent.png", Vector2(157, 344), 0.0],
+	[Vector2(184, 322), 90.0], [Vector2(156, 418), -90.0], [Vector2(157, 354), 90.0],
+	[Vector2(157, 320), 0.0], [Vector2(585, 186), 0.0], [Vector2(157, 344), 0.0],
 ]
 
 var host: Node
 var textures: Dictionary = {}
-var _known_cells := -1
+var states: Dictionary = {}
 
 func _ready() -> void:
-	for name in ["ash_fan.png", "boot_print.png", "wet_cloth.png", "pipe_joint.png", "frame_dent.png", "shelf_dust.png", "shelf_dust_hand.png", "shelf_dust_even.png"]:
-		if ResourceLoader.exists(ART + name):
-			textures[name] = load(ART + name)
+	for id in host.spatial.presentation.traces:
+		var spec: Dictionary = host.spatial.presentation.traces[id]
+		var path := ART + str(spec.texture)
+		if not ResourceLoader.exists(path):
+			Bindings.fail(self, "Missing trace asset: " + str(id) + " -> " + path)
+			return
+		textures[id] = load(path)
+		if spec.has("node") and not host.layout.shelves.has(str(spec.node)):
+			Bindings.fail(self, "Missing trace node: " + str(id) + " -> " + str(spec.node))
+			return
+		if spec.has("slot") and (int(spec.slot) < 0 or int(spec.slot) >= DECALS.size()):
+			Bindings.fail(self, "Missing trace geometry slot: " + str(id))
+			return
+
+func apply_snapshot(value: Dictionary) -> void:
+	for id in value:
+		if not host.spatial.presentation.traces.has(id) or not value[id] is bool:
+			Bindings.fail(self, "Unknown or invalid authoritative trace state: " + str(id))
+			return
+	for id in host.spatial.presentation.traces:
+		if not value.has(id):
+			Bindings.fail(self, "Missing authoritative trace state: " + str(id))
+			return
+	states = value.duplicate()
+	queue_redraw()
 
 func _process(_delta: float) -> void:
 	if host == null or host.sight == null:
 		return
 	# 新进入房间后重新绘制墙边痕迹，未知房间的书架灰痕也不能穿过明亮墙格。
-	var known: int = host.sight.seen_cells.size()
-	if known != _known_cells:
-		_known_cells = known
-		queue_redraw()
+	queue_redraw()
 
 func _known(point: Vector2) -> bool:
-	return host != null and host.sight != null and host.sight.terrain_known(point)
+	return host != null and host.sight != null and host.sight.can_see(point)
 
 func _draw() -> void:
 	var copper := Color("9d7031")
@@ -48,22 +63,22 @@ func _draw() -> void:
 	var shade := Color("44291a")
 	for pipe in PIPES:
 		_pipe(pipe, copper, copper_light, shade)
-	for spec in DECALS:
-		if not _known(spec[1]):
-			continue
-		var texture: Texture2D = textures.get(spec[0])
-		if texture:
-			draw_set_transform(spec[1], deg_to_rad(spec[2]))
-			draw_texture(texture, Vector2.ZERO)
+	for id in states:
+		if not bool(states[id]): continue
+		var spec: Dictionary = host.spatial.presentation.traces[id]
+		var point: Vector2
+		var angle := 0.0
+		if spec.has("slot"):
+			var geometry: Array = DECALS[int(spec.slot)]
+			point = geometry[0]
+			angle = float(geometry[1])
+		else:
+			var shelf: Array = host.layout.shelves[str(spec.node)]
+			point = Vector2(float(shelf[0]), float(shelf[1]))
+		if not _known(point): continue
+		draw_set_transform(point, deg_to_rad(angle))
+		draw_texture(textures[id], Vector2.ZERO)
 	draw_set_transform(Vector2.ZERO)
-	# 书架上的灰：R-05 有半枚窄手印；四人的房里有干净的方框；空房的灰落得很匀。
-	# STORY-HARDCODE[AWK-044][logic][production]: 按本章 R-05 半枚手印、住人房方框与空房均匀灰尘呈现固定证物。
-	for shelf in host.layout.shelves:
-		if not _known(Vector2(shelf[0], shelf[1])):
-			continue
-		var texture: Texture2D = textures.get({"hand": "shelf_dust_hand.png", "plain": "shelf_dust.png", "even": "shelf_dust_even.png"}[shelf[2]])
-		if texture:
-			draw_texture(texture, Vector2(shelf[0], shelf[1]))
 
 func _pipe(points: Array, copper: Color, copper_light: Color, shade: Color) -> void:
 	for i in range(1, points.size()):

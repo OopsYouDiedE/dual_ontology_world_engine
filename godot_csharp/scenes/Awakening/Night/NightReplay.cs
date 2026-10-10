@@ -104,6 +104,7 @@ public sealed class NightReplay
     private readonly Dictionary<Essence, Room> _roomOf = [];
     private readonly Dictionary<(Room, Room), Essence> _passage = [];
     private readonly Dictionary<Essence, Projection> _view = [];
+    private readonly Dictionary<Essence, string> _spots = [];
     private readonly List<Agent> _agents = [];
     private readonly List<ReplayFrame> _frames = [];
     private readonly List<string> _log = [];
@@ -159,12 +160,15 @@ public sealed class NightReplay
         return essence;
     }
 
-    private Essence Thing(string name, Room room, params Tag[] tags)
+    private Essence Thing(string id, string name, Room room, params Tag[] tags)
     {
         var essence = new Essence(name);
         essence.Add(new SpatialProperty { Space = _space[room] });
         Init(essence.Add(new StateProperty()), tags);
         _view[essence] = _runtime.Project(essence, name);
+        var bindings = Chapter1Data.Root.GetProperty("PRESENTATION").GetProperty("replay_objects");
+        if (!bindings.TryGetProperty(id, out var spot)) throw new InvalidDataException("Missing replay object binding: " + id);
+        _spots.Add(essence, spot.GetString()!);
         return essence;
     }
 
@@ -204,16 +208,16 @@ public sealed class NightReplay
             _passage[(a, b)] = _passage[(b, a)] = passage;
             _view[passage] = _runtime.Project(passage, passage.TrueName);
         }
-        _door = Thing(Chapter1Data.Text("重演·认知·隔离门"), Room.Foyer, NightTags.Open, NightTags.Wedged, NightTags.Bolted, NightTags.CalledOut);
-        _wedge = Thing(Chapter1Data.Text("重演·认知·木楔"), Room.Foyer, NightTags.Kicked, NightTags.Soot);
-        _floor = Thing(Chapter1Data.Text("重演·认知·门厅地面"), Room.Foyer, NightTags.AshFan);
+        _door = Thing("door", Chapter1Data.Text("重演·认知·隔离门"), Room.Foyer, NightTags.Open, NightTags.Wedged, NightTags.Bolted, NightTags.CalledOut);
+        _wedge = Thing("wedge", Chapter1Data.Text("重演·认知·木楔"), Room.Foyer, NightTags.Kicked, NightTags.Soot);
+        _floor = Thing("floor", Chapter1Data.Text("重演·认知·门厅地面"), Room.Foyer, NightTags.AshFan);
         _floor.Add(new FloorTraceProperty());
-        _frame = Thing(Chapter1Data.Text("重演·认知·门框"), Room.Foyer, NightTags.Dent);
-        _slate = Thing(Chapter1Data.Text("重演·认知·石板"), Room.Hall, NightTags.Line1, NightTags.Line2);
-        _tube = Thing(Chapter1Data.Text("重演·认知·铜口"), Room.Hall);
-        _score = Thing(Chapter1Data.Text("重演·认知·乐谱"), Room.R08, NightTags.Line1, NightTags.Line2);
-        _cloth = Thing(Chapter1Data.Text("重演·认知·抹布"), Room.Pantry, NightTags.Wet, NightTags.Placed);
-        _cups = Thing(Chapter1Data.Text("重演·认知·四只杯子"), Room.Pantry, NightTags.Sugar);
+        _frame = Thing("frame", Chapter1Data.Text("重演·认知·门框"), Room.Foyer, NightTags.Dent);
+        _slate = Thing("slate", Chapter1Data.Text("重演·认知·石板"), Room.Hall, NightTags.Line1, NightTags.Line2);
+        _tube = Thing("tube", Chapter1Data.Text("重演·认知·铜口"), Room.Hall);
+        _score = Thing("score", Chapter1Data.Text("重演·认知·乐谱"), Room.R08, NightTags.Line1, NightTags.Line2);
+        _cloth = Thing("cloth", Chapter1Data.Text("重演·认知·抹布"), Room.Pantry, NightTags.Wet, NightTags.Placed);
+        _cups = Thing("cups", Chapter1Data.Text("重演·认知·四只杯子"), Room.Pantry, NightTags.Sugar);
 
         var su = _v.V1 switch { SuPlace.OwnRoom => Room.R08, SuPlace.Hall => Room.Hall, _ => Room.Pantry };
         var huo = _v.V2 switch { HuoPlace.ByTube => Room.Hall, HuoPlace.OwnRoom => Room.R06, _ => Room.Foyer };
@@ -226,6 +230,7 @@ public sealed class NightReplay
         _fork.Add(new SpatialProperty { Holder = musician.Body });
         _fork.Add(new StateProperty());
         _view[_fork] = _runtime.Project(_fork, Chapter1Data.Text("重演·认知·音叉"));
+        _spots.Add(_fork, Chapter1Data.Root.GetProperty("PRESENTATION").GetProperty("replay_objects").GetProperty("fork").GetString()!);
 
         foreach (var agent in _agents) Know(agent);
         WriteHabits(detective, engineer, chef, musician);
@@ -708,19 +713,17 @@ public sealed class NightReplay
 
     private static bool ChangesDoorOrLooks(Projection basis) => basis.Kind == ProjectionKind.Concept;
 
-    // STORY-HARDCODE[AWK-013][schema][production]: 本案请求类型名映射到固定重演事件与门边站位。
     private (ReplayEvent Event, string Thought, string Spot) RequestText(Agent a, Projection request)
     {
         var sender = request.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target;
         var subject = _agents.FirstOrDefault(other => ReferenceEquals(a.Mental[other.Body], sender))?.Who;
-        var kind = request.Name switch
-        {
-            "bolt_request" => "request_bolt", "open_request" => "request_open",
-            "keep_open_request" => "request_keep_open", _ => "request_other"
-        };
-        var spot = kind == "request_other" ? "" : "door";
+        var bindings = Chapter1Data.Root.GetProperty("PRESENTATION").GetProperty("replay_requests");
+        if (!bindings.TryGetProperty(request.Name, out var binding))
+            throw new InvalidDataException("Missing replay request binding: " + request.Name);
+        var kind = binding.GetProperty("event").GetString()!;
+        var spot = binding.GetProperty("spot").GetString()!;
         var ev = new ReplayEvent(kind, a.Who, subject, spot);
-        return (ev, kind == "request_other" ? "" : Chapter1Data.Text("重演·心声·" + kind,
+        return (ev, Chapter1Data.Text("重演·心声·" + kind,
             ("人名", subject is { } who ? Names.Of(who) : Chapter1Data.Text("重演·有人"))), spot);
     }
 
@@ -826,16 +829,13 @@ public sealed class NightReplay
         QueueDecisions();
     }
 
-    // STORY-HARDCODE[AWK-014][schema][production]: 案件物件分别映射到门、石板、铜口、书桌和水池回放站位。
     private string SpotOf(Projection target)
     {
         var essence = _view.Keys.FirstOrDefault(e => _agents.Any(a => a.Mental.TryGetValue(e, out var m) && ReferenceEquals(m, target)));
-        if (essence == _door || essence == _frame || essence == _wedge) return "door";
-        if (essence == _slate) return "slate";
-        if (essence == _tube) return "tube";
-        if (essence == _score) return "desk";
-        if (essence == _cups || essence == _cloth) return "sink";
-        return "";
+        if (essence is null) throw new InvalidDataException("Unknown replay projection binding.");
+        if (_spots.TryGetValue(essence, out var spot)) return spot;
+        if (essence.Kind is ProjectionKind.Space or ProjectionKind.Body or ProjectionKind.Boundary) return "";
+        throw new InvalidDataException("Missing replay object station binding: " + essence.TrueName);
     }
 
     // ---------------------------------------------------------------- physics --

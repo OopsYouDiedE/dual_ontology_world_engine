@@ -13,7 +13,7 @@ public sealed partial class Chapter2InteractionSession
             if(score>0)candidates.Add((id,label,action,score));
         }
         foreach(var thing in _examined.Values.Select(c=>Text(c,"thing")).Where(t=>t!="").Distinct())
-            Offer("escort:"+thing,_content.Format("menu_escort",("name",name),("thing",thing)),new(Cmd.Escort){Who=who,Thing=thing,Place=Game.Things_[thing].Place});
+            Offer("escort:"+thing,_content.Format("menu_escort",("name",name),("thing",thing)),new(Cmd.Escort){Who=who,Thing=thing,Place=_game.Things_[thing].Place});
         foreach(var request in _content.Requests)
             Offer("request:"+request.Job,request.Label,new(Cmd.Ask){Who=who,Job=request.Job});
         foreach(var rule in _game.HostTellable().Where(_game.HostRuleRelevant))

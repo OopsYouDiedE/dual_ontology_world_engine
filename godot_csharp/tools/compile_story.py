@@ -298,6 +298,7 @@ def site_interactions(source) -> dict[str, dict[str, str]]:
 
 
 def layout_data(source) -> dict[str, Any]:
+    validate_presentation(source)
     evidence_ids = {item.id for item in source.EVIDENCE}
     site_ids = [site.id for site in source.SITES]
     trace_ids = [trace.id for trace in source.LIFE_TRACES]
@@ -315,6 +316,8 @@ def layout_data(source) -> dict[str, Any]:
         raise ValueError("duplicate prop node id")
     return {
         "format": "awakening-layout/v1",
+        "actor_nodes": source.CONTENT_TABLES["ACTOR_NODES"],
+        "presentation": source.CONTENT_TABLES["PRESENTATION"],
         "sites": [
             {"id": s.id, "evidence": s.evidence, "x": s.x, "y": s.y, "reach": s.reach, "title": s.title}
             for s in source.SITES
@@ -346,6 +349,44 @@ def layout_data(source) -> dict[str, Any]:
         "dialogue_cast": source.DIALOGUE_CAST,
         **source.LAYOUT_CONSTANTS,
     }
+
+
+def validate_presentation(source) -> None:
+    """Validate authored bindings before publishing any chapter outputs."""
+    data = source.CONTENT_TABLES["PRESENTATION"]
+    actors = source.CONTENT_TABLES["ACTOR_NODES"]
+    if not actors or data["player_actor"] not in actors or len(set(actors.values())) != len(actors):
+        raise ValueError("Missing or duplicate player/actor node binding")
+    if set(data["replay_offsets"]) != set(actors):
+        raise ValueError("Replay actor offsets must match the declared actor IDs")
+    for node in actors.values():
+        if node not in source.DIALOGUE_CAST:
+            raise ValueError("Missing actor portrait binding: " + node)
+    for owner in data["room_owners"].values():
+        if owner and owner not in actors:
+            raise ValueError("Unknown room owner binding: " + owner)
+    rooms = data["replay_rooms"]
+    if set(rooms) - set(source.CONTENT_TABLES["ROOM_NAMES"]):
+        raise ValueError("Unknown replay room binding")
+    spots = data["replay_spots"]
+    for key, spec in spots.items():
+        if spec["room"] not in rooms:
+            raise ValueError("Missing replay room for spot: " + key)
+    for key, spot in data["replay_objects"].items():
+        if spot and spot not in spots:
+            raise ValueError("Missing replay object spot: " + key)
+    for key, spec in data["replay_requests"].items():
+        if spec["spot"] not in spots:
+            raise ValueError("Missing replay request spot: " + key)
+    for key, spec in data["traces"].items():
+        if ("slot" in spec) == ("node" in spec) or not spec.get("texture"):
+            raise ValueError("Trace requires one geometry binding and an asset: " + key)
+        if "truth" in spec and spec["truth"] not in source.RULES_DATA["TRUTH"]:
+            raise ValueError("Missing authoritative trace field: " + key)
+    for asset, parts in data["composites"].items():
+        for key, part in parts.items():
+            if part["word"] not in source.CONTENT_TABLES["FIELD_WORDS"] or part["width"] <= 0 or part["height"] <= 0:
+                raise ValueError("Invalid composite region/vocabulary binding: " + asset + ":" + key)
 
 
 def display_path(path: Path) -> str:

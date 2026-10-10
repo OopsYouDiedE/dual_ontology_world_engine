@@ -38,9 +38,9 @@ SCENE = GAME / "scenes/Awakening/Awakening.tscn"
 
 # Room blocks (left pixel of the 6-cell room; floor rows 3-7 north, 16-20 south).
 NORTH_TOP, SOUTH_TOP = 96, 512
-ROOMS = {  # key: (left, north?, owner, ROOM_NAMES key)
-    "R08": (608, True, "musician", "R08"), "R05": (832, True, "detective", "R05"), "EN": (1056, True, "", "empty"),
-    "R07": (608, False, "cook", "R07"), "R06": (832, False, "engineer", "R06"), "ES": (1056, False, "", "empty"),
+ROOMS = {  # key: (left, north?, occupied visual slot?, ROOM_NAMES key)
+    "R08": (608, True, True, "R08"), "R05": (832, True, True, "R05"), "EN": (1056, True, False, "empty"),
+    "R07": (608, False, True, "R07"), "R06": (832, False, True, "R06"), "ES": (1056, False, False, "empty"),
 }
 WINDOW_ASIDE_KEYS = (
     "map.awakening_yi.window.EN", "map.awakening_yi.window.R05",
@@ -91,7 +91,7 @@ def update_text_only(script=SCRIPT, target=LAYOUT_TRES):
         raise ValueError("Unexpected room IDs")
     for key, (left, north, owner, label_key) in ROOMS.items():
         room = actual_rooms[key]
-        if not isinstance(room, dict) or (room.get("left"), room.get("north"), room.get("owner")) != (left, north, owner):
+        if not isinstance(room, dict) or (room.get("left"), room.get("north")) != (left, north):
             raise ValueError(f"Incompatible room slot: {key}")
         changes[("rooms", key, "label")] = labels[label_key]
     candidate = (source[:start] + replace_json_strings(body, changes)).encode("utf-8")
@@ -242,13 +242,17 @@ def wall_rects(rows):
 
 def layout_data(room, game_rows, anchors, text=None):
     aside_text, labels = load_map_text() if text is None else text
+    bindings = read_json(SCRIPT / "generated_awakening_layout.json")
+    owners = bindings["presentation"]["room_owners"]
+    if set(owners) != set(ROOMS): raise ValueError("Incomplete authored room owner bindings")
+    if any(owner and owner not in bindings["actor_nodes"] for owner in owners.values()):
+        raise ValueError("Unknown authored room owner")
     items = room["furniture"]
-    shelves = []
+    shelves = {}
     for f in items:
         if f["sprite"] in ("bookcase_empty",):
             x, y = f["position"]
-            kind = "hand" if f["name"] == "BookcaseR05" else "even" if f["name"].startswith("Empty") else "plain"
-            shelves.append([x - 20, y - 60, kind])
+            shelves[f["name"]] = [x - 20, y - 60]
     asides = []
     windows = [d for d in room["decor"] if d[0] == "window"]
     rugs = [fw for fw in room["floor_work"] if fw[0] == "rug"]
@@ -266,7 +270,7 @@ def layout_data(room, game_rows, anchors, text=None):
         "shelves": shelves, "asides": asides,
         "sconces": [[s["x"], s["y"]] for s in anchors["sconces"]],
         "windows": [[d[1], d[2] * CELL] for d in room["decor"] if d[0] == "window"],
-        "rooms": {k: {"left": L, "north": north, "owner": owner, "label": labels[label_key]} for k, (L, north, owner, label_key) in ROOMS.items()},
+        "rooms": {k: {"left": L, "north": north, "owner": bindings["presentation"]["room_owners"][k], "label": labels[label_key]} for k, (L, north, owner, label_key) in ROOMS.items()},
     }
 
 
@@ -338,7 +342,18 @@ def rewrite_scene(data, items):
     # ext_resources: keep everything that is not a map texture; add the textures this map uses.
     def ext_id(b):
         return re.search(r'id="([^"]+)"', b).group(1)
-    keep_ext = [b for b in ext if 'type="Texture2D"' not in b]
+    keep_ext = [b for b in ext if 'type="Texture2D"' not in b and 'type="SpriteFrames"' not in b]
+    bindings = read_json(SCRIPT / "generated_awakening_layout.json")
+    actor_nodes = bindings["actor_nodes"]
+    frame_assets = set()
+    for key, node in actor_nodes.items():
+        sprite = bindings["dialogue_cast"][node]
+        path = f"res://ShareAsset/Internal/Characters/PixelCast/{sprite}.tres"
+        if not (GAME / path.removeprefix("res://")).is_file(): raise ValueError("Missing actor asset: " + key)
+        if sprite not in frame_assets:
+            keep_ext.append(f'[ext_resource type="SpriteFrames" path="{path}" id="{sprite}_frames"]\n')
+            frame_assets.add(sprite)
+    keep_ext[-1] += "\n"
     sprites = sorted({f["sprite"] for f in items})
     tex_ids = {s: s for s in sprites}
     new_ext = keep_ext + [f'[ext_resource type="Texture2D" path="{texture_path(s)}" id="{s}"]\n' for s in sprites]
@@ -359,6 +374,7 @@ def rewrite_scene(data, items):
     by_name = {node_name(b): b for b in nodes}
 
     def keep(name):
+        if name not in by_name: raise ValueError("Missing scene node binding: " + name)
         return by_name[name]
 
     out = [keep("Awakening")]
@@ -399,21 +415,26 @@ def rewrite_scene(data, items):
                'color = Color(0.203922, 0.156863, 0.196078, 1)\npolygon = PackedVector2Array(-72, -288, 56, -288, 56, 416, -72, 416)\n\n')
     out.append('[node name="LoungeCoverInner" type="Polygon2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]\nz_index = 40\n'
                'color = Color(0.113725, 0.0862745, 0.121569, 1)\npolygon = PackedVector2Array(-72, -288, 54, -288, 54, 414, -72, 414)\n\n')
-    starts = {"侦探": (982, 144), "工程师": (930, 590), "厨师": (706, 590), "音乐家": (706, 210)}
-    for actor in ("侦探", "工程师", "厨师", "音乐家"):
+    for key, actor in actor_nodes.items():
         block = keep(f"ObjectsAndPeople/{actor}")
-        x, y = starts[actor]
+        x, y = bindings["staging"]["起点·" + key]
+        sprite = bindings["dialogue_cast"][actor]
+        block = re.sub(r'standard = ExtResource\("[^"]+"\)', f'standard = ExtResource("{sprite}_frames")', block)
         out.append(re.sub(r"position = Vector2\([^)]*\)", f"position = Vector2({x}, {y})", block, count=1))
         for child in ("CollisionShape2D", "ContactShadow", "Sprite"):
-            out.append(keep(f"ObjectsAndPeople/{actor}/{child}"))
+            child_block = keep(f"ObjectsAndPeople/{actor}/{child}")
+            if child == "Sprite":
+                child_block = re.sub(r'sprite_frames = ExtResource\("[^"]+"\)', f'sprite_frames = ExtResource("{sprite}_frames")', child_block)
+            out.append(child_block)
     out.append('[node name="BedQuiltForeground" type="Sprite2D" parent="ObjectsAndPeople"]\nposition = Vector2(982, 166)\n'
                'offset = Vector2(-18, -34)\ncentered = false\ntexture = SubResource("bed_quilt")\n\n')
     for i, (key, (L, north, owner, _)) in enumerate(ROOMS.items(), start=1):
+        owner = data["rooms"][key]["owner"]
         top = NORTH_TOP if north else SOUTH_TOP
         door_y = 352 if north else 512
         bounds = f"Rect2({L}, 32, 192, 224)" if north else f"Rect2({L}, {top}, 192, 160)"
         out.append(f'[node name="DormitoryDoor{i}" type="Node2D" parent="ObjectsAndPeople"]\nposition = Vector2({L + 96}, {door_y})\n'
-                   f'script = ExtResource("room_door")\ndorm_owner = "{owner or "detective"}"\ninterior_bounds = {bounds}\n\n'
+                   f'script = ExtResource("room_door")\ndorm_owner = "{owner}"\ninterior_bounds = {bounds}\n\n'
                    f'[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor{i}"]\n\n'
                    f'[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor{i}/Body"]\n'
                    f'position = Vector2(0, -4)\nshape = SubResource("dorm_leaf")\n\n')
