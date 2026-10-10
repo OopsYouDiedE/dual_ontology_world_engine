@@ -3,9 +3,19 @@ using DualOntologyWorldEngine.Story;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>Semantic chapter events. Presentation acknowledgements advance text, never authorize client state writes.</summary>
-public sealed partial class Chapter2InteractionSession : IChapterSession
+public sealed partial class Chapter2InteractionSession : IChapterSession, IPlayerRoleSession
 {
     public string ChapterId => "chapter2";
+    public string PlayerActor => _actorIds[Enum.Parse<P>(_fieldPresentation.PlayerIdentity)];
+    public PlayerCognition CapturePlayerCognition(string actor)
+    {
+        if (actor != PlayerActor) throw new PlayerBoundaryException("unsupported_player_role");
+        var character = _behavior.Character(actor);
+        if (character.Soul.World.CaptureSnapshot() is not ContractResult<CognitionSnapshotV1>.Success captured)
+            throw new PlayerBoundaryException("actor_cognition_missing");
+        return new(captured.Value, character.Self.SubjectId!.Value);
+    }
+    public PlayerTime PlayerTime => new(ShownDay, _game.CalendarMinutes, ShownSlot.ToString());
     public SimulationSession TraceSimulation => _game.S;
     private readonly Game _game;
     private readonly Chapter2Narrative _narrative;

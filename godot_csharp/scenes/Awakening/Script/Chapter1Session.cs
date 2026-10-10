@@ -12,9 +12,33 @@ using Input = IReadOnlyDictionary<string, object?>;
 /// 台词、卡片、菜单、表单、走位与镜头作为事件出去。原宿主里的流程编排（相遇、触物、请人比对、
 /// 声路试验、答辩、终局与日常）都在这里，以可等待的作业运行；几何由现场在输入的 context 里报告。
 /// </summary>
-public sealed partial class Chapter1Session : IChapterSession
+public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSession
 {
     public string ChapterId => "chapter1";
+    private string? _playerActor;
+    public string PlayerActor
+    {
+        get
+        {
+            if (_playerActor is not null) return _playerActor;
+            using var stream = typeof(Chapter1Data).Assembly.GetManifestResourceStream("Awakening.World.json")!;
+            using var reader = new StreamReader(stream);
+            var key = Content.GetProperty("PRESENTATION").GetProperty("player_actor").GetString();
+            var declaration = WorldScriptDocument.Parse(reader.ReadToEnd(), true).Single().Entities.Single(e =>
+                e.Kind == "character" && e.Properties.TryGetValue("sprite", out var sprite) && sprite.Value.GetString() == key);
+            return _playerActor = declaration.Id.Contains(':') ? declaration.Id : "world:" + declaration.Id;
+        }
+    }
+    public PlayerCognition CapturePlayerCognition(string actor)
+    {
+        if (actor != PlayerActor) throw new PlayerBoundaryException("unsupported_player_role");
+        var character = _world.PersistentSession.Character(actor);
+        var captured = character.Soul.World.CaptureSnapshot();
+        if (captured is not DualOntologyWorldEngine.Core.ContractResult<DualOntologyWorldEngine.Core.CognitionSnapshotV1>.Success success)
+            throw new PlayerBoundaryException("actor_cognition_missing");
+        return new(success.Value, character.Self.SubjectId!.Value);
+    }
+    public PlayerTime PlayerTime => new(1 + _content.GameMinutes / 1440, _content.GameMinutes, Stage);
     private static readonly Chapter1Script Script = new();
     private static readonly Lazy<JsonDocument> LayoutDocument = new(() =>
     {

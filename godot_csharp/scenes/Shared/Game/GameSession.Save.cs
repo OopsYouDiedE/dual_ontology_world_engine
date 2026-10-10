@@ -21,6 +21,7 @@ public sealed partial class GameSession
     }
     public ContractResult<byte[]> Save(CodecLimitsV1? limits=null) => Try(() =>
     {
+        RequireCompleteControllerSave();
         Require(!_waitingForView,"host.view_receipt",ContractErrorCode.UnsupportedSavePoint);
         Require(_session is Chapter1Session,"host.chapter",ContractErrorCode.UnsupportedSavePoint);
         var d=new GameSave { Format="dual-ontology-game-session/v1",RequiredCapabilities=["story.chapter-idle-save/1"],CampusScript=campusScript,
@@ -31,6 +32,7 @@ public sealed partial class GameSession
     public Guid RestoreEpoch {get;private set;}=Guid.NewGuid();
     public ContractResult<bool> Restore(byte[] bytes,CodecLimitsV1? limits=null) => Try(() =>
     {
+        RequireCompleteControllerSave();
         Value(CognitionCodec.ValidateJson(bytes,limits));
         if(_loadedSave is not null&&bytes.AsSpan().SequenceEqual(_loadedSave)) return true;
         var d=JsonSerializer.Deserialize<GameSave>(bytes,Json)!;
@@ -43,4 +45,11 @@ public sealed partial class GameSession
         DetachTrace(); _session=chapter; _started=d.Started; _waitingForView=false; _trace.RestoreSave(d.Trace!);
         AttachTrace(chapter.World.PersistentSession.Simulation); _loadedSave=bytes.ToArray(); RestoreEpoch=Guid.NewGuid(); return true;
     });
+    private void RequireCompleteControllerSave()
+    {
+        // The chapter codec persists cognition, not controller history/RNG or
+        // candidate batches. Do not publish a partial restore with old tokens.
+        Require(!AgentEnabled && !ReadControllers().Any(c => c.Mode == "agent"),
+            "host.controller_state", ContractErrorCode.UnsupportedSavePoint);
+    }
 }

@@ -27,7 +27,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `Reasoner` / `CaseModel` / `CaseBelief`：为共享案件计算表与主观推演过滤层，支持证据链与假设排除；专用内容的现有残留以源码审计标记定位。
   - `Reasoner.Weight` 返回 `EvidenceWeight`（来源、采信因子、理由代码、来源投影引用及参数）；`CaseBelief.Basis` 保存结构化 `ReasonBasis`，`SpeechChoice.Reasons` 保存 `SpeechReason`。Core 不生成这些结果的显示文案；宿主按剧本模板绑定参数，权重与言语评分公式不变。
 - **抽象语法树与解析器（Ast.cs, AstDecoder.cs）**：
-  - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer 模式及权重）。
+  - 核心包含 `Noun`（`Reference`, `Slot`）、`Condition`（常量、存在、标签、关系、位置、逻辑组合）、`Effect`（操作、设置、增减、临时租借、序列、等待、发言、思考）和 `Rule`（Require, Forbid, Permit, Prefer, Infer 模式及权重）。`Infer` 是显式主观信念，效果仅接受 Think 或嵌套 When/Think；冻结／重绑定拒绝可执行动作。AstDecoder 沿枚举解析该模式。
   - AST 严格使用类型化节点、槽位、Tag 和 Projection 引用；字符串仅用于名称与描述。
   - `Rule` 的 `LifetimeScope` 与 `LifetimeOwner` 是独立于实体作用域的生命周期元数据；冻结、重绑定与认知修订保留它们，局部有效期必须有 owner。Core 不调度章节退出，由宿主经认知输入精确撤销到期规则。
   - `ActionResolution.FailedEffect` 保留导致当前阶段失败的实际效果引用；宿主可以只对实际尝试失败的对象补充认知，不能从整份意图猜测已经执行的效果。
@@ -38,11 +38,12 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `SimulationSession`：协调主动/自主动作，支持 `wait_until` 条件挂起恢复、任务取消（`Cancel`）与幂等清理（`Dispose`）。`CheckSavePoint` 拒绝 active、等待清理的 effects、自主主体/wakeup 和所有 CTB 回调；空闲 CTB 可恢复 Now/排序序号。
   - ActionExecution 的 Events 为引擎回执；提交、成功阶段、操作与终态独立登记。失败阶段不提交效果，取消仅登记终态并停止后续效果；实际操作记录目的位置。Say 的 Claim/Topic 随 AST 冻结、绑定与翻译，发言产生证词，接收请求与执行分立。
 - **决策与社交评估（DecisionSystem.cs, SocialSystem.cs）**：
+  - `SubjectiveReasoning.cs`：在一次主体不可变图中进行有界论证、带假设的多步推演、痕迹比较与调查信息价值评估。只使用已获知投影中 Acceptance=True 的 Infer/Think 规则；规则条件与嵌套 When 条件作为前提，恒真前提表示主观断言。普通 Procedure、规范偏好与未接受的规则不作逻辑蕴涵；被扭曲认知仍是主体自己的材料。指定出示材料可限制论证来源；结果保留主体句柄依据、推导步骤、假设标记、冲突与预算停止原因，不读取共享答案表或权威世界，不回写认知。深度、展开数、假设数由调用者的角色参数控制，所有角色使用同一机制。未知预测不计为确定分歧；信息值为可存活假设之间确定预测不同的配对数。此逻辑推演不替代完整行动世界分叉。
   - `SocialSystem.EvaluateSender` 为菜单提供只读预评估；与收到请求后的 `Evaluate` 共用配合、发送者信任、历史与宿主传入的行动相合分，不生成预览认知事件。
   - 请求相合分可通过 `RequestCompatibility` 标签写入接收者的请求投影；`Evaluate` 未显式传分时读取该标签，使自主决策与菜单预评估保持同一公式。
   - `DecisionSystem` 与 `SocialSystem` 严格基于主体自身内部世界的 ProjectionWorld 展开演算与决策，绝不直接依据客观现实做抉择。
   - `SubjectRead.cs` / `SnapshotConsumers.cs`：一次 AST、Decision、Social、Reasoner 求值固定一份主体快照；内部已验证快照在首次读取时延迟构建同版本读图与引用映射，后续复用，每版使用独立对象壳，不重复校验旧历史/AST。外部快照入口与公开 Rebind 仍完整校验；Frozen AST 依赖遍历只读已验证节点，不为找句柄解冻。兼容入口将结果映射回原运行时引用，并附认知版本。新快照入口不读取 runtime/audit。旧字段组合读取与 Reality.Sync 不承诺整图并发一致，Core 不承诺整个 WorldRuntime 跨线程安全。
-  - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令。
+  - 规则模式中：`Prefer`/`Require` 提出候选与加减分，`Forbid` 实施封禁，`Permit` 依权重放行禁令；`Infer` 不提出行动、不加减行动分，由 SubjectiveReasoner 读取。Infer 冻结／重绑定同时校验并保留 Lifetime/LifetimeOwner；闭合 codec 按已定义 RuleMode 编解码，支持 Infer，仍拒绝未知模式。
 - **无剧情硬编码铁律**：
   - 严禁将剧情写入引擎代码；剧情仅存在于 `.story` 和译文。核心逻辑不得硬编码剧情内容或特定剧本文案。
 
@@ -61,6 +62,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
   - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；增量提交、遗忘依赖与旧版审计重建；EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名；codec 覆盖完整 AST/审计 wire 往返、拒绝用例与新进程引用恢复。主观推演隔离由后续批验证。
+  - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：独立输出／中间目录；平层与容器两种中性主体图验证论证来源、多步深度、假设组合、痕迹／信息值、冲突／循环、硬展开上限、快照不回写与隐真变形；追加 Infer 主体图／审计／运行时存档往返及类型化事件隔离。此步骤单独执行，统一 `verify.py` 的原步骤保持不变。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - `EventSaveRegression.cs` 在 CognitionRegression 中保留既有事件/保存用例并追加两个中性世界的事件 wire、审计、权限、退休引用、因果遗忘及子进程恢复检查；本文件同样从 Core 类库排除。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。

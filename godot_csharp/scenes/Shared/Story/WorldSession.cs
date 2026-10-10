@@ -31,6 +31,7 @@ public sealed class ChapterWorldDefinition
     public List<WorldEntityDefinition> Entities { get; set; } = new();
     public List<WorldEntityExtension> Patches { get; set; } = new();
     public List<WorldCandidateDefinition> Candidates { get; set; } = new();
+    public List<ActorControllerDefinition> Controllers { get; set; } = new();
 }
 
 /// <summary>Loads persistent declarations and flat candidates; unsupported legacy behavior is rejected explicitly.</summary>

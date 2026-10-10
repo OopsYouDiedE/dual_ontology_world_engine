@@ -11,6 +11,7 @@
     <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Awakening/check/**;scenes/Awakening/Night/**;scenes/Awakening/Script/**;scenes/Chapter2/Prototype/**;scenes/Chapter2/Script/**;scenes/Shared/Story/**;scenes/Shared/Game/**" />
     <ProjectReference Include="scenes/Shared/Game/GameSession.csproj" />
     <Compile Remove="scenes/Shared/check/WorldScriptCheck/**;scenes/Shared/check/FixtureData.cs" />
+    <Compile Remove="scenes/Shared/check/PlayerControllerCheck/**" />
     <Compile Remove="scenes/Shared/check/SaveCheck/**" />
     <Compile Remove="tools/PlayerTranscript/**" />
     <Compile Include="scenes/Shared/Story/Examples/WorldScript/Host/WorldSessionEngine.cs" />

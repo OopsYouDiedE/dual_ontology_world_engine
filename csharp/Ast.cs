@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 namespace DualOntologyWorldEngine.Core;
 
 public enum RuleSlot { Actor, Target, Tool, Scene }
-public enum RuleMode { Require, Forbid, Permit, Prefer }
+public enum RuleMode { Require, Forbid, Permit, Prefer, Infer }
 public enum LifetimeScope { World, Chapter, Interaction }
 public enum ActionOp { Unlock, Travel, Take, Inspect, Destroy, Place }
 

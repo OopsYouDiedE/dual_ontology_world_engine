@@ -1,0 +1,133 @@
+﻿# vplayer：角色代理操控者
+
+本轮实现 `.story → 角色操控声明 → 公开候选 token → 正式玩家分派`，并按修订范围新增 Core 的有界主观论证与假设推理。默认仍由玩家操控。未读取设计文件，未修改 `scenes/UI/`、UI 布局／样式资源或 S18 工具；未提交，未重新生成正式剧本产物。同步了两个子目录的 AGENTS.md；新增运行代码无临时DEBUG打印，既有回归诊断与新驱动最终JSON摘要保留。
+
+**新语法与编译器**
+
+人物声明支持以下字段；角色名使用既有声明，规则不含路线、答案、章节 ID 或源行号：
+
+```story
+人物 <已有角色名>
+    操控者：玩家
+    推理预算：深度 8 展开 2048 假设 128 论证 16 求知 8
+    操控规则：
+        - 偏好 新选择 6
+```
+
+- `操控者` 为 `玩家／代理`；缺省或显式玩家保持原编译物。代理必须有本人的操控规则。
+- 规则模式为 `偏好／要求／禁止／放行`，权重0–1000，最多64条；类别为 `菜单、表单选项、表单提交、继续、检视、走位、等待、新选择、未看过`。后两者分别取本人选择历史与正式现场公开标记。
+- 推理预算范围：深度0–64、展开1–100000、假设1–4096、论证／求知权重0–1000；省略则用浅层预算1／256／16及权重1。不按角色名称分支。
+- `tools/story_controller.py` 严格校验，`story_script.py` 编译为角色 `controllers`；错误类别、行动序列、专用 ID、错误／超限预算明确报错。正式人物源声明默认玩家及好奇／探索偏好。测试只在临时副本改为代理并调用正式编译链。
+
+**Core 与运行时接口**
+
+- `SubjectiveReasoner(snapshot, actor, budget)` 只构建一次本人不可变图；支持限定出示材料的 `Prove`、带假设的 `Explore`、痕迹预测／相容性比较、未知命题的调查价值。保留本人材料依据、推导步骤、假设标记、冲突、展开数与停止原因，不读共享答案表／权威世界，不回写认知。
+- 新增 `RuleMode.Infer`，仅接受 Think 或嵌套 When/Think；规则条件是推知前提，恒真前提是主观断言。只把 Acceptance=True 的本人规则当作信念。普通 Procedure、偏好与未接受规则不作事实蕴涵；被扭曲认知仍作为主体自己的材料。冻结／重绑定拒绝可执行 Infer 效果。AstDecoder 沿枚举解析新模式。
+- `DecisionSystem` 排除 Infer 的候选生成与评分，其余四种模式语义保留。深度／展开／假设预算对所有角色通用。Unknown 不当作确定反例，信息值使用相容假设之间确定预测不同的配对数。
+- `IPlayerRoleSession` 仅供可信章节适配器提供当前玩家角色的本人认知与真实游戏时刻；不交给代理。第一章缓存编译声明的角色绑定，避免每步重解析。`SubjectivePlayerController` 用本人已获知词项／名字绑定可见选项，准确匹配优先于包含匹配；合并论证、求知和 `DecisionSystem.Assess` 评分。没有模型时记录 `no_acquired_propositional_model`，不补造证据。
+- `PlayerCandidateSession` 持有 opaque token → 原输入 payload，代理无私有输入、会话、探针或现实引用。刷新／消费使旧 token 失效；未知／过期／已消费 token、预算或提交异常关闭边界。候选≤256，公开观察≤64KiB。
+- 菜单走既有 select；表单字段本地编辑、核对 requires 后走 form；分标签表单只投影当前字段，可切换、重选、取消。走位／检视取真实 WorldView 的视线、导航与碰撞，经正式到场回执处理。
+- 笔记、手稿、学园图采用共享面板呈现合同的白名单投影：已展示卡片走 card、公开变量走 replay_vars/replay（不跳过）、已知地点走 travel。隐藏变量、未画出的详情、私有 ID／资源路径不交给代理。
+- 无代理时保留玩家路径；代理与玩家共用连续 GameSession。代理驱动不写 S18 采集目录。轨迹记录实际匹配的操控规则、本人已知词形和通用推导步骤，不公开主体句柄；“新选择”依据按选择前的本人历史固定。
+
+**Headless 驱动**
+
+`tools/run_virtual_player.gd` 使用正式 GameEngine／WorldView／物理循环，无渲染、状态注入、探针或按帧快进。参数为种子、目标游戏日、选择／观察／墙钟上限、无公开进展上限。JSONL 逐步落盘公开输入、候选、token、决策依据、反馈及可见位置，末尾记录真实时刻与停止原因，拒绝覆盖。
+
+```powershell
+$env:APPDATA = "$PWD/tmp/appdata"
+$env:LOCALAPPDATA = "$PWD/tmp/appdata"
+& $env:GODOT --headless --path godot_csharp --script res://tools/run_virtual_player.gd -- --declarations=<编译物> --output=<新JSONL> --seed=0 --days=3 --max-selections=10000 --max-observations=20000 --max-seconds=600 --no-progress-seconds=30
+```
+
+有符号32位种子只控制同分候选的 xorshift32-v1 子流，0映射到0x9E3779B9；不改变正式世界。无进展按公开内容／候选／量化位置判断，忽略 token／轮次更新；预算不能折算成到达游戏日。
+
+**独立验证**
+
+- 全部由全新上下文 Agent 执行，保留原始日志，不修改预期。最新 Scope Release 构建0警告／错误，24/24；新增 SubjectiveReasoning Release 构建0警告／错误，42/42。
+- 新中性回归覆盖平层／容器两结构：多步论证及来源、出示材料限制、深度／展开／假设上限、组合假设、预测／求知、冲突／循环、不回写、Infer 模式边界、隐藏真值变形。
+- 最终独立预检六步均exit0：候选／推理边界51/51，Release检查构建0警告／错误；Debug宿主构建0错误、2条NU1900；编译合同21/21，正式7份产物一致，GDScript检查成功。六份stderr均空。
+- 默认玩家统一回归：Core／Scope24／Cognition202／host通过；host有2条NU1900（NuGet漏洞数据服务不可达）。flow初次600秒超时，116条PASS、2条FAIL且无TOTAL；唯一重试完整135/136、exit1、506秒。flow2完整109/109、exit0、543秒。两章各有证书库读取ERROR，统一及重试入口均exit1。
+- 修正测试交互准备后，全新Agent仅复测flow：完整136/136、Godot exit0、380.047秒，无重试；L6/L7正文预期不改。最终两章业务断言为136/136与109/109，但最新flow的统一入口仍因1条证书库读取ERROR退出1，不声称 `verify.py` 全绿。未复跑无相关改动的flow2与已通过的构建／中性回归。
+- 反作弊边界检查以中性夹具把未获知客观属性0变91，同样公开输入／种子，平层和容器各前12步选择相同；正式剧本不改真值。
+- 工作区基底 f60bf266 的 Scope24／Cognition202，用户整合基线27／212的新增项不在此基底；合并后需复核，不能声称本工作区跑过27／212。
+- 修订前记录：43项边界、16项编译、7份产物通过；早期统一回归 flow136／flow2 109业务全过但因证书库 ERROR 入口失败；恢复后旧版 flow135/136，床头挂钩旁证断言失败，flow2退出4294967295且缺摘要，保留日志待最终独立重跑。
+- 新 Core 首次夹具把新节点拼入旧快照而未带其可见历史，7项后触发来源一致性异常；已改用正式观察后的完整快照，不改断言。早期编译错误／跨修订构建混用及额度中断日志均保留，不能当作最终通过证据。
+- 新Host夹具两处AddRange重载二义性已改为显式ImmutableArray.Create，47项断言不改；首次构建只有exit1／0错误输出，单进程诊断复现了CS0121，失败日志保留。
+- 后续审阅修正代理切换页签丢失陈述／重选不更新的状态问题；新增2项带公开论证依据与2项规则依据检查全部通过。默认玩家回归中的默认分派／Core／正式产物未再改；此次修正、轨迹依据与角色绑定缓存仅在代理路径调用。
+- flow初次两条FAIL为L6挂钩／L7磨刀石卡片断言，完整重试只剩L6；`story/第一章/证物.story:201–202、210`仍含预期文本，不认定断言过时，不改预期。短诊断复现原L6落点在交互时不可见，正常WorldView门控未发输入；改为半径64站位虽可见，却超出60交互距离，同样未发输入。因此正式测试准备改为可见站位后调用 `_approach`；独立复测的可见性及两条卡片正文断言均通过，全部原预期保留。未处理未知归属进程。
+- 短诊断前两次因临时脚本动态成员类型推断失败而无结果，修正类型后语法检查通过；最后191.531秒完整输出两种落点都失败、fixture无错误。诊断日志目录的Godot相对路径不可打开，未复制会话UUID轨迹，未独立核对C#卡片输出；该记录缺口单列，不能补成成功证据。
+
+**10种子正式会话（最终版本）**
+
+种子0–9，各全新进程，最多2并发；目标3日、选择10000、观察20000、墙钟45秒、无进展30秒，测试器外层75秒。10份均完整停止、exit0，无重试／外层超时／退出崩溃；到达3日为0/10。
+
+| 种子 | 实际日／分钟／阶段 | 终止原因 | 选择数 | 驱动秒 | 进程秒 |
+| --- | --- | --- | ---: | ---: | ---: |
+| 0 | 1／507／roam | wall_budget | 49 | 45.013 | 46.598 |
+| 1 | 1／507／roam | wall_budget | 48 | 45.070 | 46.638 |
+| 2 | 1／507／roam | wall_budget | 49 | 45.001 | 46.715 |
+| 3 | 1／507／roam | wall_budget | 54 | 45.006 | 46.654 |
+| 4 | 1／507／roam | wall_budget | 59 | 45.016 | 46.805 |
+| 5 | 1／507／roam | wall_budget | 49 | 45.005 | 46.675 |
+| 6 | 1／507／roam | wall_budget | 49 | 45.083 | 46.731 |
+| 7 | 1／507／roam | wall_budget | 51 | 45.074 | 46.670 |
+| 8 | 1／507／roam | wall_budget | 48 | 45.023 | 46.740 |
+| 9 | 1／507／roam | wall_budget | 49 | 45.067 | 46.669 |
+
+公开轨迹51432条、观察25651次、决策505次；独立审计无错误，序号／时间／观察轮次单调，token均为最新批次且未复用，决策、输入、停止摘要与stdout一致。实际选择：继续50、检视52、菜单60、移动343；没有表单、等待或面板／重演覆盖。每个进程有一次证书库读取ERROR，合计10次，未见公开引擎错误或其他stderr。
+
+505次决策全部有token，均记录 `no_acquired_propositional_model`，推理展开／假设比较均为0；规则依据实际记录新选择393、未看过20、检视52、菜单60、走位343次。均在公开“生活翼 · R-05／08:27”附近结束，末个非空反馈为手印大小，末份观察 `Candidates=[]、Complete=false`。没有以候选缺失／代理无法评估／引擎错误代码终止；wall_budget本身不能判定卡死，后续进展仍未验证。
+
+首批临时审计误把Godot整数形浮点Turn判错，并读了错误字段名Expansions；修正为整值校验与正式字段ReasoningExpansions，保留旧audit，最终使用audit-v2。未修改／重跑游戏轨迹或放宽token、预算等断言。
+
+**Core 改进空间**
+
+下列以本工作区源码为准，合并后须复核；机制改进候选与未完成覆盖分开，每行包括现象／最小复现、当前处理、改进方向与影响面、本轮状态。
+
+| 现象与最小复现 | 当前处理／建议及影响面 | 本轮 |
+| --- | --- | --- |
+| 行动打分不能说明证据如何支持命题：p→q→r，提交r与出示p | 新增限定来源的 Prove 与完整依据；影响 Core 与候选评估 | 已实现 |
+| 普通 When/Think 是执行流程，不能推断逻辑蕴涵：恒真条件下执行 Think(!p) | 新增显式 Infer，规范／程序不作信念；影响 AST、冻结、解码和决策 | 已实现 |
+| 缺少主体假设／求知入口：p／!p分别预测q／!q，q未知 | Explore保留假设、比较痕迹及确定分歧；完整动作／时空分叉另需预算化模拟，影响 Core 推演 | 逻辑层已实现；行动分叉未实现 |
+| 正式可见文案与命题没有统一类型绑定：选项词形无法对应本人命题 | 仅用已获知词项／名字，缺模型明确记录；建议.story声明可学命题与公开语义适配，不读取案件答案表，影响编译器／观察／协议 | 正式接线未实现 |
+| 候选陈述与已接受断言需要分域：相反选项同时存作已接受Infer会产生冲突 | 当前保留冲突；建议区分“可提出命题”与“相信为真”及证言可靠性，影响认知／论证／表单模型 | 冲突标记已实现；分域未实现 |
+| 来源物体的存在与记忆中的信念未分域：来源Existence=False后其Infer不再参与 | 当前仅用存在为真的来源；建议单独保存已获知命题／记忆来源与可出示性，影响认知与论证来源模型 | 未实现 |
+| 推知缺少槽位统一：Actor槽位结论与同一对象的显式引用不作逻辑匹配，Target／Tool未绑定 | 当前论证用本人图中的明确引用；建议显式推理上下文与主观变量统一，保留未绑定Unknown，影响 AST／推知规则／查询 | 未实现 |
+| 单查询完成度与全轮停止共用状态：先证长链触及深度，再证已知q，后者Value=True但Complete=False | 当前保守不计不完整论证分；建议把每份证明的完成度与整轮预算／深度结果分开，影响 Core 查询及代理评分 | 未实现 |
+| 展开预算不包含整图构建／每个AST内部成本：大图或大条件仍可耗时 | 一次推理复用读图且硬限制逻辑展开；建议按节点计费与可取消deadline，影响快照／求值／宿主 | 复用已实现；计费／deadline未实现 |
+
+**未完成项与风险**
+
+- 接口及声明按任意角色设计；现有两章只提供表现声明指定的玩家角色。其他角色明确失败 unsupported_player_role，尚未实现任意身体切换。
+- 正式章节未把证物、陈述和重演选项接成本人可获知的 Infer 模型；通用机制与夹具通过不证明正式推理能解题。自由文本只用角色本人名字，未知类型拒绝；不提供自然语言推理。
+- 普通堆叠表单依次选择未填字段，尚不能返回已填字段；分标签表单支持切换与重选。正式类型与现场的组合覆盖仍需后续正常输入到达。
+- 正式未到达的表单／面板／第二章及跨章连续性不能算10种子覆盖；正式隐真 checkpoint 未验证。目标3–5日与1000种子矩阵、保存恢复／故障／容量检查未完成。
+- 墙钟在驱动循环检测，没有进程外硬watchdog或同步Core独立deadline；窄接口为进程内可信边界，不是OS隔离。
+- 公开轨迹不采集图像／音频；本轮仅自动机制和headless连续输入，一级／二级／三级验收、文学、人物行为合理性和游玩体验均未验证。
+
+**证据位置**
+
+最终预检：`tmp/vplayer-validation/infer-verification/`（Core42）与 `argument-final-check/`（Host51／编译21／7产物／脚本）；默认完整回归：`artifacts/project-audit/verify-logs/20261010-045805-801007-17580/`，flow唯一重试：`20261010-052235-237479-21972/`，汇总在 `tmp/vplayer-validation/infer-host-round2/06、07-results-inspection.json`。L6短诊断：`tmp/vplayer-validation/flow-l6-diagnosis/`；修正后flow原始目录 `artifacts/project-audit/verify-logs/20261010-055315-340476-25556/`，外层记录与保真备份在 `tmp/vplayer-validation/flow-valid-approach/`。最终10种子：`tmp/vplayer-validation/infer-seeds-final/`（逐种子原始stdout／stderr／JSONL、summary、audit-v2及all-seeds.summary.json）。早期失败与旧结果保存在 `reasoning-preflight/、infer-host-final/、resume-seeds/` 及前两次verify原始目录，未覆盖。
+
+`git diff --check`通过，报告113行。正式产物生成、合并、Godot UI专项检查及提交由主代理处理。
+
+**合并整合**
+
+- 在已提交的 `b37e4a60` 上整合 `claude/core-remediation`（MERGE_HEAD=`5cfbb1a9`），不提交。六个冲突工作文件的标记全部清除；没有读取设计文件或修改UI／S18。
+- Ast保留追加的Infer及LifetimeScope，不改变既有枚举序号；FrozenAst同时校验Infer的When/Think边界与LifetimeOwner，保留双方Say.Claim/Topic冻结／重绑定及只读依赖遍历。三个csproj保留双方生产模块和独立检查入口排除项。
+- csharp/AGENTS保留类型化事件、codec、s02结构化理由与core-perf增量／缓存读图说明，并补充Infer持久化合同；godot/AGENTS同步代理存档边界。
+- CognitionCodec的模式白名单采用已定义RuleMode，自动支持Infer；未知模式仍Unsupported，非法Infer可执行效果与缺owner的局部规则仍MalformedData。未放宽任何codec／事件／运行时白名单。
+- SubjectiveReasoner继续仅构建本人快照的图，使用本人已接受Infer规则；类型化证词不会自动成为信念，也不查询EventAudit、其他主体或隐藏因果。vplayer没有调用s02改变返回类型的Reasoner.Weight／SpeechPolicy接口，编译检查其联动。
+- 新增一个往返场景，平层／容器各6条：主体图、审计与RuntimeSave，三种Lifetime、Say.Claim/Topic、新对象引用、推理依据、无观察／事件重放、可见因果过滤及未知模式／非法效果拒绝。原42项保留，总计54项。
+- 新夹具首次在原42项及两项平层往返后异常：ImmutableArray.Add未保存返回值，现实规则未写入；改用正式RuleProperty+Sync，原断言不改，失败原始输出保留。异常后挂起仅结束已核实本轮创建的测试进程，人工终止exit4294967295，不处理未知归属进程。
+- 宿主codec未保存代理历史／随机状态／候选，原恢复会留下旧token；现在声明代理的Save/Restore在发布前返回UnsupportedSavePoint/host.controller_state，真实玩家存档继续使用整合通路。新增两条失败关闭断言（原51+2=53）；代理跨进程恢复仍未实现。
+- 已重新生成7份剧本产物，`compile_story.py --check`通过；Scope构建0警告／错误、27/27，Cognition构建0警告／错误、372/372，均由全新独立Agent执行。
+- 最终独立SubjectiveReasoning构建0警告／错误、54/54；PlayerControllerCheck构建0警告／错误、53/53，均exit0。基础编译合同19/19、正式代理临时副本编译合同21/21、统一回归工具7/7通过；host构建exit0、0错误，2条NU1900（NuGet漏洞元数据不可达），无C#编译警告；7产物一致性复核通过。
+- 首轮完整verify耗时417秒、exit1：core／scope27／cognition372／host通过；save WRITE22／READ1、flow136／flow2 109断言全通过，但分别有2／1／1次系统根证书读取ERROR，因此三步仍判失败。无其他脚本／引擎错误、超时、崩溃或重试，全部所属进程已退出。
+- 环境诊断证实Godot同款CertOpenSystemStoreA返回访问拒绝5；只读导出系统31份公开根证书，用官方证书包配置的独立探针exit0、stderr空。临时override.cfg仅设置network/tls/certificate_bundle_override，保持TLS校验；复核后已核对配置内容并移除，正式项目配置不变。诊断证据：`tmp/vplayer-validation/merge-certificate-probe/`；[官方实现](https://raw.githubusercontent.com/godotengine/godot/4.6.1-stable/modules/mbedtls/crypto_mbedtls.cpp)。
+- 修复环境后的全新独立完整verify耗时399.497秒、实际exit0：core5秒、scope27/27（3秒）、cognition372/372（24秒）、host9秒（2条NU1900、0错误）、save WRITE22／READ1（10秒）、flow136/136（218秒）、flow2 109/109（130秒）全部PASS；gallery按要求SKIP。所有stderr为0字节，9个Godot进程均exit0，无脚本／引擎错误、超时、退出崩溃或测试重试，全部所属进程已退出。
+- 临时记录器曾在替换owned-processes.json时遇到WinError5；verify继续持有原日志文件，全新接续观察器立即保留原verify的OpenProcess句柄至结束，由GetExitCodeProcess取得exit0，不推测退出码、不重启测试；记录器异常与此前失败分开保留。
+- `git add`被沙箱拒绝：Git实际索引位于工作区外的`dual_ontology_world_engine/.git/worktrees/dowe-cx-vplayer/index.lock`。因此`git diff --name-only --diff-filter=U`仍列六项，文件本身已无冲突标记；需主代理在沙箱外暂存六文件才能清除索引U状态，不能声称索引无残留。
+- 本轮证据：`tmp/vplayer-validation/merge-preflight/`（Scope／Cognition及首轮失败）、`merge-final-preflight/`（修正后预检）、`merge-full-regression/`（417秒原轮）、`merge-full-certificate-regression/`（证书环境修复后复核）；逐项原始日志：`artifacts/project-audit/verify-logs/20261010-062028-333972-19548/`（失败原轮）、`20261010-063110-374152-1432/`（最终通过）。本段补充原报告，不覆盖此前失败／通过记录。
+- 最终六文件无冲突标记，git diff --check通过；没有新增临时DEBUG打印，临时证书配置已清理，未提交。Git索引U仍须主代理在沙箱外暂存解决，一级／二级／三级验收仍未执行。
