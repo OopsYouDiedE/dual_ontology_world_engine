@@ -1,0 +1,85 @@
+{
+ "schema": "C01B-wire-contract/v1",
+ "revision": "r2",
+ "status": "PROPOSED_FOR_CONSUMER_REVIEW",
+ "note": "Typed shape inventory, not executable JSON Schema. All object fields required unless listed optional; fields typed /null must be present with explicit null. CONTRACT.md is normative for cross-field rules.",
+ "policy": {"encoding":"UTF-8 without BOM","unknown_fields":"MalformedData","duplicate_json_fields":"MalformedData","unknown_format_major_capability_node_or_enum":"Unsupported","reflection":"forbidden","optional_fields":["envelope.required_capabilities"],"finite_numbers_only":true,"set_duplicate":"MalformedData"},
+ "formats": {"graph":"dual-ontology-cognition/v1","audit":"dual-ontology-cognition-audit/v1","contract_version":1},
+ "types": {
+   "EntityId":"nonempty NFC string, Ordinal, no leading/trailing whitespace",
+   "FacetId":"nonempty NFC string, Ordinal, no leading/trailing whitespace",
+   "AuthorTermId":"nonempty NFC string, Ordinal, no leading/trailing whitespace",
+   "SubjectProjectionId":{"subject_world":"nonempty Guid lowercase D","local":"nonempty Guid lowercase D"},
+   "KnowledgeRevision":"Int64 >= 0", "VocabularyRevision":"Int64 >= 0",
+   "Tag":"string", "RelationTag":"string",
+   "Truth":["unknown","false","true"],
+   "ProjectionKind":["object","space","boundary","body","soul","concept","procedure","event","area","material"],
+   "ObservationSource":["perception","testimony","inference","introspection","corruption","recall"],
+   "TimeUnit":["unspecified","action_value","game_minutes","game_days"],
+   "RuleSlot":["actor","target","tool","scene"],
+   "RuleMode":["require","forbid","permit","prefer"],
+   "ActionOp":["unlock","travel","take","inspect","destroy","place"],
+   "SourceLocationV1":{"document_id":"string","start_line":"int >= 1","start_column":"int >= 1","end_line":"int >= 1","end_column":"int >= 1"},
+   "KnownAuthorTermV1":{"term_id":"AuthorTermId","raw_lexeme":"string","canonical_lexeme":"NFC(raw_lexeme), preserved separately"},
+   "RelationEdgeV1":{"relation":"RelationTag","target":"SubjectProjectionId"},
+   "TagValueV1":{"tag":"Tag","value":"Int32"},
+   "TagUpdateV1":{"tag":"Tag","value":"Int32/null"}
+ },
+ "nouns": {
+   "reference":{"kind":"literal reference","target":"SubjectProjectionId"},
+   "slot":{"kind":"literal slot","role":"RuleSlot"}
+ },
+ "conditions": {
+   "constant":{"kind":"literal constant","value":"Truth"},
+   "exists":{"kind":"literal exists","target":"Noun"},
+   "tagged":{"kind":"literal tagged","target":"Noun","tag":"Tag","minimum":"Int32"},
+   "related":{"kind":"literal related","target":"Noun","relation":"RelationTag","other":"Noun"},
+   "at":{"kind":"literal at","target":"Noun","space":"Noun"},
+   "is_kind":{"kind":"literal is_kind","target":"Noun","projection_kind":"ProjectionKind"},
+   "not":{"kind":"literal not","operand":"Condition"},
+   "all":{"kind":"literal all","items":"Condition[] ordered"},
+   "any":{"kind":"literal any","items":"Condition[] ordered"}
+ },
+ "effects": {
+   "act":{"kind":"literal act","operation":"ActionOp","target":"Noun","tool":"Noun/null"},
+   "set":{"kind":"literal set","target":"Noun","tag":"Tag","value":"Int32"},
+   "change":{"kind":"literal change","target":"Noun","tag":"Tag","amount":"Int32"},
+   "temporary_set":{"kind":"literal temporary_set","target":"Noun","tag":"Tag","value":"Int32","duration":"finite double"},
+   "temporary_set_until_end":{"kind":"literal temporary_set_until_end","target":"Noun","tag":"Tag","value":"Int32"},
+   "spend":{"kind":"literal spend","target":"Noun","tag":"Tag","amount":"Int32"},
+   "relate":{"kind":"literal relate","target":"Noun","relation":"RelationTag","other":"Noun","remove":"bool"},
+   "sequence":{"kind":"literal sequence","items":"Effect[] ordered"},
+   "when":{"kind":"literal when","condition":"Condition","body":"Effect"},
+   "require":{"kind":"literal require","condition":"Condition"},
+   "wait":{"kind":"literal wait","delay":"finite double","body":"Effect","until":"Condition/null"},
+   "say":{"kind":"literal say","recipient":"Noun","text":"string","request":"Effect/null"},
+   "think":{"kind":"literal think","fact":"Condition"}
+ },
+ "records": {
+   "FrozenRuleV1":{"condition":"Condition","mode":"RuleMode","effect":"Effect","weight":"Int32","acceptance":"Truth"},
+   "ObservedStateV1":{"name":"string","kind":"ProjectionKind","existence":"Truth","parent":"SubjectProjectionId/null","tags":"TagValueV1[] set","relations":"RelationEdgeV1[] set","denied_relations":"RelationEdgeV1[] set","rules":"FrozenRuleV1[] ordered","procedure":"Effect/null","known_terms":"KnownAuthorTermV1[] set"},
+   "VisibleObservationV1":{"target":"SubjectProjectionId","source":"ObservationSource","time":"finite double","time_unit":"TimeUnit","detected":"bool/null","declared_existence":"Truth/null","details":"string","origin":"SourceLocationV1/null","dependencies":"SubjectProjectionId[] set","observed_state":"ObservedStateV1"},
+   "FrozenProjectionV1":{"id":"SubjectProjectionId","name":"string","kind":"ProjectionKind","existence":"Truth","parent":"SubjectProjectionId/null","tags":"TagValueV1[] set","relations":"RelationEdgeV1[] set","denied_relations":"RelationEdgeV1[] set","rules":"FrozenRuleV1[] ordered","procedure":"Effect/null","known_terms":"KnownAuthorTermV1[] set","last_observation":"VisibleObservationV1/null"},
+   "CognitionSnapshotV1":{"contract_version":"literal 1","required_capabilities":"string[] set","subject_world":"Guid","revision":"KnowledgeRevision","vocabulary_revision":"VocabularyRevision","projections":"FrozenProjectionV1[] set keyed id","visible_history":"VisibleObservationV1[] ordered"},
+   "ObservationChangeV1":{"target":"SubjectProjectionId","create":"bool","name":"string","kind":"ProjectionKind","source":"ObservationSource","time":"finite double","time_unit":"TimeUnit","detected":"bool/null","existence":"Truth/null","move":"bool","parent":"SubjectProjectionId/null","tags":"TagUpdateV1[] set","add_relations":"RelationEdgeV1[] set","remove_relations":"RelationEdgeV1[] set","deny_relations":"RelationEdgeV1[] set","rules":"FrozenRuleV1[]/null","procedure":"Effect/null","clear_procedure":"bool","forget":"bool","known_terms":"KnownAuthorTermV1[]/null","details":"string","origin":"SourceLocationV1/null","source_dependencies":"SubjectProjectionId[] set"},
+   "CognitionAuditChangeV1":{"id":"SubjectProjectionId","before":"FrozenProjectionV1/null","after":"FrozenProjectionV1/null"},
+   "CognitionAuditCommitV1":{"previous_revision":"KnowledgeRevision","revision":"KnowledgeRevision","previous_vocabulary_revision":"VocabularyRevision","vocabulary_revision":"VocabularyRevision","inputs":"ObservationChangeV1[] ordered","changes":"CognitionAuditChangeV1[] set keyed id","forgotten_ids":"SubjectProjectionId[] set","removed_visible_history_indices":"int[] strictly increasing prior-history indices","appended_visible_history":"VisibleObservationV1[] ordered"}
+ },
+ "envelopes": {
+   "graph":{"format":"literal dual-ontology-cognition/v1","contract_version":"literal 1","required_capabilities":"string[] set optional default empty","subject_snapshot":"CognitionSnapshotV1","allocated_ids":"SubjectProjectionId[] set engine-only includes reserved/retired"},
+   "audit":{"format":"literal dual-ontology-cognition-audit/v1","contract_version":"literal 1","required_capabilities":"string[] set optional default empty","subject_world":"Guid","initial_snapshot":"CognitionSnapshotV1 revision 0","commits":"CognitionAuditCommitV1[] ordered consecutive revision"}
+ },
+ "validation": [
+  "All SubjectProjectionId values match the enclosing subject_world",
+  "Graph active IDs and visible history dependency IDs must be live and in allocated_ids; retired allocated_ids carry no subject text",
+  "Audit validates each version against its own historical graph; cannot validate all old refs against current known graph",
+  "Parent graph must be acyclic; references, relations, AST and procedures closed",
+  "Unknown AST subclass or enum never silently copied",
+  "Name and arbitrary external text preserved; not normalized into identity",
+  "Batch duplicate Target is InvalidBatch; ID registry collision is DuplicateIdentity",
+  "Visible-history indices and all node before states match prior reconstruction",
+  "All array order and set sorting follow CONTRACT.md; no first-candidate semantic selection"
+ ],
+ "limits_default":{"max_bytes":67108864,"max_projections":100000,"max_ast_nodes":1000000,"max_ast_depth":256,"max_history_entries":1000000},
+ "claims":{"full_game_save":false,"production_implemented":false,"tests_run":false,"OS_ACL":false}
+}

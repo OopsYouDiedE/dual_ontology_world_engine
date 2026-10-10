@@ -1,0 +1,173 @@
+{
+  "schema": "M06a-T1-precise-plan/v1",
+  "status": "PROPOSED_NOT_A_LEASE",
+  "classification": "DETECTION_ONLY",
+  "production_write_authorized": false,
+  "baseline_head": "232bb99aab6d0caac9dcd14edbead0f27347aefc",
+  "scope": {
+    "current": "first two chapters approximately 3-5 game days",
+    "future": "40 game days namespace only, no duration/capacity claim"
+  },
+  "compiler_source_change": false,
+  "runtime_core_audio_format_change": false,
+  "T1a": {
+    "independent_clone_and_single_writer_required": true,
+    "source_write_paths": [
+      "godot_csharp/scenes/Awakening/Script/story/第一章/热点与布局.story",
+      "godot_csharp/tools/build_awakening_map.py",
+      "godot_csharp/AGENTS.md"
+    ],
+    "compiler_write_paths_exact": [
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_content.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_layout.json",
+      "godot_csharp/scenes/Awakening/Script/generated_chapter_01_world.json",
+      "godot_csharp/scenes/Awakening/Script/Chapter1CompiledDialogue.cs",
+      "godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json",
+      "godot_csharp/scenes/Awakening/Script/generated_lines_zh.csv"
+    ],
+    "compiler_expected_changed_paths": [
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_layout.json"
+    ],
+    "compiler_allowed_delta": "append exactly 9 FURNITURE_ASIDES keys at layout.furniture_asides; all preexisting keys/values unchanged",
+    "compiler_must_remain_byte_identical": [
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_content.json",
+      "godot_csharp/scenes/Awakening/Script/generated_chapter_01_world.json",
+      "godot_csharp/scenes/Awakening/Script/Chapter1CompiledDialogue.cs",
+      "godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json",
+      "godot_csharp/scenes/Awakening/Script/generated_lines_zh.csv"
+    ],
+    "map_text_only_write_paths": [
+      "godot_csharp/scenes/Awakening/map_layout.tres"
+    ],
+    "map_expected_changed_paths": [],
+    "map_must_remain_byte_identical": [
+      "godot_csharp/scenes/Awakening/map_layout.tres"
+    ],
+    "must_not_write": [
+      "godot_csharp/scenes/Awakening/Awakening.tscn",
+      "godot_csharp/ShareAsset/Internal/Props/AwakeningEvidence/life_wing_yi.png"
+    ],
+    "text_migration_count": 9,
+    "existing_room_label_binding_count": 6,
+    "pipeline": [
+      "official compile_story.py (all seven existing output paths)",
+      "build_awakening_map.py --text-only (new restricted entry point)"
+    ]
+  },
+  "T1b": {
+    "separate_lease_required": true,
+    "requires_rebaseline_at_lease_after_T1a": true,
+    "source_write_paths": [
+      "godot_csharp/scenes/Awakening/Script/story/续篇/07_家具与文本.story",
+      "godot_csharp/tools/chapter2_art/rooms.py",
+      "godot_csharp/tools/build_chapter2_scenes.py",
+      "godot_csharp/AGENTS.md"
+    ],
+    "compiler_write_paths_exact": [
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_content.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_layout.json",
+      "godot_csharp/scenes/Awakening/Script/generated_chapter_01_world.json",
+      "godot_csharp/scenes/Awakening/Script/Chapter1CompiledDialogue.cs",
+      "godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json",
+      "godot_csharp/scenes/Awakening/Script/generated_lines_zh.csv"
+    ],
+    "compiler_expected_changed_paths": [
+      "godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json"
+    ],
+    "compiler_allowed_delta": "append exactly 54 scalar string keys in chapters[id=chapter2].design.text; no other fields change",
+    "compiler_must_remain_byte_identical": [
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_content.json",
+      "godot_csharp/scenes/Awakening/Script/generated_awakening_layout.json",
+      "godot_csharp/scenes/Awakening/Script/generated_chapter_01_world.json",
+      "godot_csharp/scenes/Awakening/Script/Chapter1CompiledDialogue.cs",
+      "godot_csharp/scenes/Awakening/Script/generated_lines_zh.csv"
+    ],
+    "map_text_only_write_paths": [
+      "godot_csharp/scenes/Chapter2/Maps/living_hall.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_jia.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_yi.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_bing.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_ding.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/central_hall.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/lecture.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/archive.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/counterweight.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/resonance.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/clinic.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/logistics.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/granary.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/greenhouse.tscn",
+      "godot_csharp/ShareAsset/Internal/Props/Chapter2/manifest.json"
+    ],
+    "map_expected_changed_paths": [],
+    "map_must_remain_byte_identical": [
+      "godot_csharp/scenes/Chapter2/Maps/living_hall.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_jia.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_yi.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_bing.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/zone_ding.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/central_hall.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/lecture.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/archive.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/counterweight.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/resonance.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/clinic.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/logistics.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/granary.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/greenhouse.tscn",
+      "godot_csharp/ShareAsset/Internal/Props/Chapter2/manifest.json"
+    ],
+    "interior_room_keys": [
+      "living_hall",
+      "zone_jia",
+      "zone_yi",
+      "zone_bing",
+      "zone_ding",
+      "central_hall",
+      "lecture",
+      "archive",
+      "counterweight",
+      "resonance",
+      "clinic",
+      "logistics",
+      "granary",
+      "greenhouse"
+    ],
+    "room_title_count": 14,
+    "site_label_count": 40,
+    "must_not_write": [
+      "godot_csharp/scenes/Chapter2/Maps/campus_nw.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/campus_n.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/campus_ne.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/campus_sw.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/campus_s.tscn",
+      "godot_csharp/scenes/Chapter2/Maps/harbor.tscn"
+    ],
+    "all_assets_read_hash_only": true,
+    "pipeline": [
+      "official compile_story.py (all seven existing output paths)",
+      "build_chapter2_scenes.py --text-only <reviewed interior keys> (new restricted entry point)"
+    ]
+  },
+  "global_byte_invariants": [
+    "all PNG/audio/import assets",
+    "all preexisting compiler data outside specified new text keys",
+    "all scene/config node IDs, geometry, sprites, walls, collisions, exits, stands, lighting and particles"
+  ],
+  "no_write_wildcards": true,
+  "not_unlocked": [
+    "T2 resource index",
+    "T3 presentation/audio",
+    "S18",
+    "new DSL/public format",
+    "Core",
+    "outdoor recipes",
+    "new narrative/content",
+    "scene geometry regeneration"
+  ],
+  "verification_role": "fresh independent test agent; implementer cannot execute acceptance; pressure separate from this static plan"
+}
