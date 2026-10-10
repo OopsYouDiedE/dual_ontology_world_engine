@@ -27,6 +27,8 @@ public sealed partial class GameSession(string campusScript, string livingView, 
     public PublicPlayerObservation? AgentObservation => _player?.Current;
     public PlayerTime? AgentTime => (_session as IPlayerRoleSession)?.PlayerTime;
     public int AgentSelections => _player?.Selections ?? 0;
+    public void LocateAgent(PlayerFieldState field)
+        => (_player ?? throw new PlayerBoundaryException("agent_not_declared")).Locate(field);
     public PlayerCognition AgentCognition => (_session as IPlayerRoleSession)?.CapturePlayerCognition(AgentDeclaration?.Actor
         ?? throw new PlayerBoundaryException("agent_not_declared")) ?? throw new PlayerBoundaryException("unsupported_player_role");
     public PublicPlayerObservation ObserveAgentField(IReadOnlyList<PlayerFieldOffer> offers)

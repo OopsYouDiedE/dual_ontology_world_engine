@@ -51,11 +51,24 @@ public sealed partial class MorningWorld
             new Condition.Constant(Truth.True))).ToArray();
         // Rebind only the currently feasible methods. Strategies cannot bypass availability or create a queue.
         StrategyPolicy.Bind(person.Soul, person.Self, StrategiesFor(person.Key), available, "field-strategy", ++_time, "awakening");
-        return DecisionSystem.Assess(person.Soul.World, person.Self).FirstOrDefault(a => !a.Forbidden && a.Decision.Score > 0
+        return ActionLearning.Assess(person.Soul.World, person.Self).FirstOrDefault(a => !a.Forbidden && a.Decision.Score > 0
             && available.Any(m => Ast.Equivalent(m.Effect, a.Decision.Effect)));
     }
     public static string StrategyMethodKey(DecisionAssessment decision)
         => ((Effect.Set)decision.Decision.Effect).Tag.Name["strategy-method:".Length..];
+
+    public DecisionExperienceKeyV1 BeginStrategyMethod(string actor, DecisionAssessment decision)
+    {
+        var person = DailyActor(actor) ?? throw new ArgumentException("Unknown strategy actor.");
+        var key = ActionLearning.Key(person.Soul.World, person.Self, decision.Decision.Effect);
+        ActionLearning.Observe(person.Soul, person.Self, key, DecisionOutcomeV1.Attempted, _session.CTB.Now);
+        return key;
+    }
+    public void CompleteStrategyMethod(string actor, DecisionExperienceKeyV1 key, DecisionOutcomeV1 outcome)
+    {
+        var person = DailyActor(actor) ?? throw new ArgumentException("Unknown strategy actor.");
+        ActionLearning.Observe(person.Soul, person.Self, key, outcome, _session.CTB.Now);
+    }
 
     public string KnownEvidenceText(string actor, string id)
     {

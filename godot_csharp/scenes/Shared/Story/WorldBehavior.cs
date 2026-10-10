@@ -49,7 +49,7 @@ public sealed partial class WorldSession
         [property:System.Text.Json.Serialization.JsonRequired] string Label, [property:System.Text.Json.Serialization.JsonRequired] DialogueExpression? Applicability, [property:System.Text.Json.Serialization.JsonRequired] DialogueExpression? Goal, [property:System.Text.Json.Serialization.JsonRequired] ImmutableArray<DialogueInstruction> Response,
         [property:System.Text.Json.Serialization.JsonRequired] ImmutableArray<string> ResponseTo, [property:System.Text.Json.Serialization.JsonRequired] int Weight, [property:System.Text.Json.Serialization.JsonRequired] double Delay);
     private sealed record PendingChoice(BoundCandidate Candidate, string Actor, long Version);
-    private sealed record ActiveCandidate(string ExecutionId, string Actor, BoundCandidate Candidate);
+    private sealed record ActiveCandidate(string ExecutionId, string Actor, BoundCandidate Candidate, DecisionExperienceKeyV1 Experience);
     private readonly Dictionary<string, List<BoundCandidate>> _candidates = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<string, Projection>> _known = new(StringComparer.Ordinal);
     private readonly Dictionary<(string Actor, string Candidate), Projection> _responseMarkers = new();
@@ -174,12 +174,19 @@ public sealed partial class WorldSession
     private void Track(ActionExecution execution, string actor, BoundCandidate candidate)
     {
         var id = "execution:" + ++_serial;
-        _executions.Add(execution, new(id, actor, candidate));
+        var subject = Character(actor);
+        var experience = ActionLearning.Key(subject.Soul.World, subject.Self, execution.Intent.Changes);
+        ActionLearning.Observe(subject.Soul, subject.Self, experience, DecisionOutcomeV1.Attempted, Simulation.CTB.Now);
+        _executions.Add(execution, new(id, actor, candidate, experience));
         _outputs.Enqueue(new CandidateActionStarted(id, actor, candidate.Id));
     }
     private void BehaviorCompleted(ActionExecution execution)
     {
         if (!_executions.Remove(execution, out var active)) return;
+        var subject = Character(active.Actor);
+        ActionLearning.Observe(subject.Soul, subject.Self, active.Experience,
+            execution.Status == ExecutionStatus.Completed ? DecisionOutcomeV1.Succeeded
+            : execution.Status == ExecutionStatus.Cancelled ? DecisionOutcomeV1.Interrupted : DecisionOutcomeV1.Failed, Simulation.CTB.Now);
         InvalidateChoiceTokens();
         _outputs.Enqueue(new CandidateActionFinished(active.ExecutionId, active.Actor, active.Candidate.Id,
             execution.Status == ExecutionStatus.Completed, execution.Result?.Failure ?? ActionFailure.None));
@@ -216,7 +223,7 @@ public sealed partial class WorldSession
             });
             prepared.Add((candidate, basis, effect!, condition!));
         }
-        return (actor, prepared, DecisionSystem.Assess(actor.Soul.World, actor.Self));
+        return (actor, prepared, ActionLearning.Assess(actor.Soul.World, actor.Self));
     }
     private static void ForgetCandidates(ScriptCharacter actor, IEnumerable<Projection> bases)
     {

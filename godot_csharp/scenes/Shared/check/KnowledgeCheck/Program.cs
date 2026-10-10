@@ -221,6 +221,54 @@ if (args.Length == 2 && args[0] == "--fixture")
             Check(Proof().Value == Truth.True && Proof().Derivations.Length > 0, "removed_story_evidence_uses_actual_recall_chain");
         }
 }
+{
+    var soul = new SoulEssence("neutral-question-lifecycle");
+    var actor = Observation.Observe(soul, new("actor", ProjectionKind.Body) { Existence = Truth.True });
+    var declaration = new KnowledgeDeclaration
+    {
+        Propositions = new() { ["p"] = "p", ["q"] = "q" },
+        Bindings = [
+            new() { Kind = "card", Key = "material", Source = "perception", Propositions = ["p"], Reliability = 100, Act = "assert" },
+            new() { Kind = "statement", Key = "claim", Source = "proposal", Propositions = ["q"], Reliability = 100, Act = "propose" },
+            new() { Kind = "question", Key = "asked", Source = "proposal", Propositions = ["q"], Reliability = 100, Act = "propose" }],
+        Implications = [new() { Premises = ["p"], Conclusion = "q" }]
+    };
+    var acquisition = new AcquiredPropositions(declaration, soul);
+    acquisition.Acquire("card", "material", "material", 1);
+    acquisition.Acquire("statement", "claim", "claim", 1);
+    acquisition.Acquire("question", "asked", "asked", 2);
+    var material = soul.World.Projections.Single(p => p.Name == "material");
+    var claim = soul.World.Projections.Single(p => p.Name == "claim");
+    var question = soul.World.Projections.Single(p => p.Name == "asked");
+    SubjectiveProofV1 Proof()
+    {
+        var reasoner = new SubjectiveReasoner(Value(soul.World.CaptureSnapshot()), actor.SubjectId!.Value, new(8, 4096, 16));
+        return reasoner.Prove(reasoner.Claims(claim.SubjectId!.Value).Single());
+    }
+    var proof = Proof();
+    var materialTags = material.Tags;
+    var materialRules = material.Rules;
+    var questionRules = question.Rules;
+    Check(question.Tags[AcquiredPropositions.Question] == 1 && proof.Value == Truth.True && !proof.Derivations.IsEmpty,
+        "neutral_question_has_current_marker_and_an_acquired_material_proof");
+    acquisition.ClearQuestions(3);
+    Check(!soul.World.Projections.Any(p => p.Tags.ContainsKey(AcquiredPropositions.Question)),
+        "clear_questions_removes_all_current_question_markers");
+    Check(ReferenceEquals(material, soul.World.Projections.Single(p => p.Name == "material"))
+        && material.Tags.Count == materialTags.Count && materialTags.All(tag => material.Tags.TryGetValue(tag.Key, out var value) && value == tag.Value)
+        && material.Rules.SequenceEqual(materialRules)
+        && material.Tags[AcquiredPropositions.Presentable] == 1,
+        "clear_questions_preserves_acquired_material_and_its_presentability");
+    Check(ReferenceEquals(question, soul.World.Projections.Single(p => p.Name == "asked"))
+        && question.Rules.SequenceEqual(questionRules) && JsonSerializer.Serialize(Proof()) == JsonSerializer.Serialize(proof),
+        "clear_questions_preserves_propositions_accepted_beliefs_and_proof_chain");
+    var revision = soul.World.Revision;
+    acquisition.ClearQuestions(4);
+    Check(soul.World.Revision == revision, "clearing_an_already_empty_question_set_is_idempotent");
+    acquisition.Acquire("question", "asked", "asked", 5);
+    Check(question.Tags[AcquiredPropositions.Question] == 1 && Proof().Value == Truth.True,
+        "a_later_presented_question_can_become_current_without_relearning_material");
+}
 var spatialPort = new PlayerCandidateSession(_ => [], "actor");
 var spatial = spatialPort.Observe([], [new("point", "move", false, new Dictionary<string, object?> { ["hidden"] = "payload" }) { Location = new(8, 16) }]);
 Check(spatial.Candidates.Single().Location == new PlayerPoint(8, 16) && !JsonSerializer.Serialize(spatial).Contains("payload"),

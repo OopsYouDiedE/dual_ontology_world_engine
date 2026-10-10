@@ -38,6 +38,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `SimulationSession`：协调主动/自主动作，支持 `wait_until` 条件挂起恢复、任务取消（`Cancel`）与幂等清理（`Dispose`）。`CheckSavePoint` 拒绝 active、等待清理的 effects、自主主体/wakeup 和所有 CTB 回调；空闲 CTB 可恢复 Now/排序序号。
   - ActionExecution 的 Events 为引擎回执；提交、成功阶段、操作与终态独立登记。失败阶段不提交效果，取消仅登记终态并停止后续效果；实际操作记录目的位置。Say 的 Claim/Topic 随 AST 冻结、绑定与翻译，发言产生证词，接收请求与执行分立。
 - **决策与社交评估（DecisionSystem.cs, SocialSystem.cs）**：
+  - `SubjectiveDecision.cs`：通用主体行动经历、预期信息/规则/成本组合评分、方向价值与中断重评条件。`SubjectiveDecisionMemory` 保存版本化的尝试、成功、失败、无进展、中断，严格解码拒绝未知版本/字段、重复键/经历及非法计数；相关观察只允许重新尝试，不清空失败历史。`ActionLearning` 只从本人图和已引用对象生成方法/上下文标识，经显式真实反馈写入本人 Introspection；每个方法/情境单独保存经历观察，避免每次向历史复制全份记忆；`Capture` 合并为闭合版本化记忆，普通认知/运行时存档保存全部节点。`Assess` 在同一主体发布锁内合并原 `DecisionSystem` 的禁令、个人规则、已获知目标的信息价值和经历，不读取现实世界、不写剧情或宿主几何。无预算声明者仍用浅层预算；技能差异不由共享经历扩大。
   - `SubjectiveReasoning.cs`：在一次主体不可变图中进行有界论证、带假设的多步推演、痕迹比较与调查信息价值评估。只使用已获知投影中 Acceptance=True 的 Infer/Think 规则；规则条件与嵌套 When 条件作为前提，恒真前提表示主观断言。普通 Procedure、规范偏好与未接受的规则不作逻辑蕴涵；被扭曲认知仍是主体自己的材料。指定出示材料可限制论证来源；结果保留主体句柄依据、推导步骤、假设标记、冲突与预算停止原因，不读取共享答案表或权威世界，不回写认知。深度、展开数、假设数由调用者的角色参数控制，所有角色使用同一机制。未知预测不计为确定分歧；信息值为可存活假设之间确定预测不同的配对数。此逻辑推演不替代完整行动世界分叉。
   - `SocialSystem.EvaluateSender` 为菜单提供只读预评估；与收到请求后的 `Evaluate` 共用配合、发送者信任、历史与宿主传入的行动相合分，不生成预览认知事件。
   - 请求相合分可通过 `RequestCompatibility` 标签写入接收者的请求投影；`Evaluate` 未显式传分时读取该标签，使自主决策与菜单预评估保持同一公式。
@@ -53,6 +54,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - SubjectiveReasoner 的 Actor/Target/Tool/Scene 槽位按显式本人上下文统一到主体引用；未绑定槽位保留 Unknown。证明返回本人规则的前提、结论、来源与缺失命题；每份证明独立传播完成度，整轮仍共享展开预算并记录深度/展开停止原因；已触及深度上限不污染后续短证明。只对匹配的推知条目计展开，查询/前提仍计费。
 
 - Core 作为独立 .NET 类库构建与打包；包元数据和 API 说明与当前 C# 源码保持一致。
+- 行动经历的解码缓存按主体图节点弱引用保存，只复用同一不可变 LastObservation 的已校验 DTO；新观察和恢复后的新节点重新验证。缓存不保存现实对象、宿主状态或跨主体经验。
 - Core 的包说明维护在本目录 `README.md`。
 - Core 的 NuGet 打包输出统一保存在仓库根目录 `artifacts/releases/core/`。
 - 构建命令：`dotnet build csharp/Core.sln -c Release`
@@ -66,6 +68,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `dotnet run --project csharp/ReasonerRegression.csproj`
   - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；增量提交、遗忘依赖与旧版审计重建；EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名；codec 覆盖完整 AST/审计 wire 往返、拒绝用例与新进程引用恢复。主观推演隔离由后续批验证。
   - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：独立输出／中间目录；平层与容器两种中性主体图验证论证来源、多步深度、假设组合、痕迹／信息值、冲突／循环、硬展开上限、快照不回写与隐真变形；追加 Infer 主体图／审计／运行时存档往返及类型化事件隔离。此步骤单独执行，统一 `verify.py` 的原步骤保持不变。
+  - `dotnet run --project csharp/SubjectiveDecisionRegression.csproj -c Release`：独立输出／中间目录；中性主体验证真实反馈分类、条件变化重试、主体隔离、评分禁令、闭合经历 wire 与存档恢复。该入口源码不编入 Core 类库，统一回归的既有入口不变。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - `EventSaveRegression.cs` 在 CognitionRegression 中保留既有事件/保存用例并追加两个中性世界的事件 wire、审计、权限、退休引用、因果遗忘及子进程恢复检查；本文件同样从 Core 类库排除。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。

@@ -2,6 +2,7 @@ extends RefCounted
 ## Geometry queries shared by pointer movement, party paths, and replay staging.
 
 const CLICK_TARGET_WIDTH := 24.0
+const ROUTE_CELL := 8
 
 static func walkable(center: Vector2, floors: Dictionary, obstacles: Array[Rect2]) -> bool:
 	for corner in [Vector2(-10,-14),Vector2(9,-14),Vector2(-10,1),Vector2(9,1)]:
@@ -14,17 +15,17 @@ static func route(start: Vector2, finish: Vector2, floors: Dictionary, obstacles
 	return route_on_grid(start, finish, build_route_grid(floors, obstacles, map_size))
 
 static func build_route_grid(floors: Dictionary, obstacles: Array[Rect2], map_size: Vector2i) -> AStarGrid2D:
-	# Half-cell resolution keeps every footprint from slipping between free centres.
+	# Fine centres preserve narrow routes available to the continuous body.
 	var grid := AStarGrid2D.new()
-	grid.region = Rect2i(Vector2i.ZERO, map_size * 2)
-	grid.cell_size = Vector2(16, 16)
-	grid.offset = Vector2(8, 8)
+	grid.region = Rect2i(Vector2i.ZERO, map_size * (32 / ROUTE_CELL))
+	grid.cell_size = Vector2(ROUTE_CELL, ROUTE_CELL)
+	grid.offset = grid.cell_size / 2.0
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	grid.update()
-	for y in map_size.y * 2:
-		for x in map_size.x * 2:
+	for y in grid.region.size.y:
+		for x in grid.region.size.x:
 			var node := Vector2i(x, y)
-			var center := Vector2(node * 16) + Vector2(8, 8)
+			var center := grid.get_point_position(node)
 			grid.set_point_solid(node, not walkable(center, floors, obstacles))
 	return grid
 
@@ -37,7 +38,7 @@ static func route_on_grid(start: Vector2, finish: Vector2, grid: AStarGrid2D) ->
 	return grid.get_point_path(from, to)
 
 static func _free_endpoint(grid: AStarGrid2D, point: Vector2) -> Vector2i:
-	var cell := Vector2i(point / 16.0)
+	var cell := Vector2i(((point - grid.offset) / grid.cell_size).round())
 	var best := Vector2i(-1, -1)
 	var distance := INF
 	for y in range(-1, 2):

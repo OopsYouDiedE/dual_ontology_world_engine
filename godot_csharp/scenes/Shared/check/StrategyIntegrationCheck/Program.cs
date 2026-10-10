@@ -840,5 +840,10 @@ Case("public_answer_advance_witness_boundary", () =>
     }
 });
 
+Case("neutral_world_execution_learning_and_save", () => LearningHostCases.WorldFailureAndSave(Check));
+Case("neutral_world_finale_cancellation_and_save", () => LearningHostCases.WorldFinaleCancellation(Check));
+Case("neutral_morning_candidate_learning", () => LearningHostCases.MorningCandidateSelection(Check));
+Case("neutral_morning_strategy_interruption", () => LearningHostCases.MorningStrategyInterruption(Check));
+
 Console.WriteLine($"StrategyIntegrationCheck: {passed} passed, {failed} failed");
 return failed == 0 ? 0 : 1;

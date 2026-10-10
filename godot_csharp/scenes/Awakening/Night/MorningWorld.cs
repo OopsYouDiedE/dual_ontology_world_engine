@@ -192,7 +192,7 @@ public sealed partial class MorningWorld
     public Intention? Intend(Person who)
     {
         if (!_minds.TryGetValue(who, out var mind)) return null;
-        var options = DecisionSystem.Assess(_souls[who].World, mind.Self).Where(a => !a.Forbidden).ToArray();
+        var options = ActionLearning.Assess(_souls[who].World, mind.Self).Where(a => !a.Forbidden).ToArray();
         var reach = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Reach))?.Decision.Score ?? 0;
         var stay = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Stay))?.Decision.Score ?? 0;
         var wants = DesireOf(who);
@@ -246,9 +246,15 @@ public sealed partial class MorningWorld
     {
         DailySuspend(Names.PersonKeys[(int)who]);
         var mind = _minds[who];
+        var experience = ActionLearning.Key(_souls[who].World, mind.Self, effect);
+        ActionLearning.Observe(_souls[who], mind.Self, experience, DecisionOutcomeV1.Attempted, _session.CTB.Now);
         var execution = _session.Submit(_souls[who], new ActionIntent(mind.Self, effect, 1));
         var steps = 0;
         while (execution.Status == ExecutionStatus.Pending && steps++ < 100 && _session.CTB.Step()) { }
+        if (execution.Status != ExecutionStatus.Pending)
+            ActionLearning.Observe(_souls[who], mind.Self, experience,
+                execution.Status == ExecutionStatus.Completed ? DecisionOutcomeV1.Succeeded
+                : execution.Status == ExecutionStatus.Cancelled ? DecisionOutcomeV1.Interrupted : DecisionOutcomeV1.Failed, _session.CTB.Now);
         return execution.Status == ExecutionStatus.Completed && execution.Result is { Succeeded: true };
     }
 
@@ -307,7 +313,7 @@ public sealed partial class MorningWorld
     {
         var memory = Memories.FirstOrDefault(m => m.Evidence == evidence);
         if (memory is null || !_minds.TryGetValue(memory.Who, out var mind)) return null;
-        var options = DecisionSystem.Assess(_souls[memory.Who].World, mind.Self).Where(a => !a.Forbidden).ToArray();
+        var options = ActionLearning.Assess(_souls[memory.Who].World, mind.Self).Where(a => !a.Forbidden).ToArray();
         var touch = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Touch))?.Decision.Score ?? 0;
         var decline = options.FirstOrDefault(o => Ast.Equivalent(o.Decision.Effect, mind.Decline))?.Decision.Score ?? 0;
         var choice = touch > decline ? RecallChoice.Touch : touch < decline ? RecallChoice.Refuse : RecallChoice.Hesitate;

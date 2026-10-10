@@ -1,0 +1,31 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+PASS current destination access controls each physical barrier
+PASS barrier reuses authored exit shape and local position
+PASS closed doorway is not a walkable navigation cell
+PASS closed doorway has no route through the isolated upper corridor
+OBSERVATION closed-upper-keyboard {"colliders":["Solids"],"end":[167.999481201172,72.0],"maximum_x":167.999755859375,"start":[88.0,72.0]}
+PASS keyboard movement reaches and physically collides with the closed doorway
+PASS formal click routing refuses the closed doorway
+PASS closing the upper exit preserves the allowed lower route
+OBSERVATION allowed-lower-keyboard {"colliders":[],"end":[356.0,200.0],"maximum_x":356.0,"start":[88.0,200.0]}
+PASS closing another exit preserves actual movement through the allowed doorway
+PASS repeated identical snapshots do not stack collision barriers
+PASS identical access snapshots preserve the existing navigation grid
+PASS changed access disables the opened barrier and rebuilds navigation
+PASS opening the exit restores doorway walkability and a complete route
+OBSERVATION opened-upper-keyboard {"colliders":[],"end":[356.0,72.0],"maximum_x":356.0,"start":[88.0,72.0]}
+PASS opening the exit restores physical passage
+PASS closing the other destination removes only its route
+OBSERVATION closed-lower-keyboard {"colliders":["Solids"],"end":[167.999481201172,200.0],"maximum_x":167.999755859375,"start":[88.0,200.0]}
+PASS the independently closed lower exit also blocks actual movement
+PASS closing an opened exit restores its barrier without duplicate shapes
+PASS opening the exit restores formal click navigation
+PASS formal click movement crosses the opened exit and completes
+OBSERVATION indoor-entry-race {"after_rejection":[168.0,72.0],"blocked_events":[{"kind":"blocked_move","map":"neutral_a"}],"last_allowed":[168.0,72.0],"map":"neutral","position_at_trigger":[172.0,72.0]}
+PASS indoor rejection follows actual entry movement from a remembered valid position
+PASS denied deferred map change preserves the indoor map and releases switching state
+PASS indoor blocked entry restores the last allowed physical position
+PASS denied map change cancels the active click path
+PASS cancelled click path cannot resume movement after rejection
+CAMPUS ACCESS CHECK COMPLETE: PASS

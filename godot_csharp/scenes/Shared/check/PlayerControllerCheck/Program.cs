@@ -134,6 +134,39 @@ observation = port.Observe([], [new("A", "move", false, Event("field_action", ("
 port.Submit(new(observation.Candidates.Single().Token));
 Check("movement_enters_trusted_formal_route", Text(submitted.Single(), "kind") == "field_action" && submitted.Single().ContainsKey("point"));
 
+PlayerCandidateSession? locatedPort = null;
+var locatedInputs = new List<IReadOnlyDictionary<string, object?>>();
+locatedPort = Port(input =>
+{
+    locatedInputs.Add(input);
+    locatedPort!.Locate(new("opaque-field-a", new(80, 96)));
+    return [Event("aside", ("text", "neutral-feedback"))];
+});
+locatedPort.Locate(new("opaque-field-a", new(16, 32)));
+var locatedObservation = locatedPort.Observe([], [new("neutral-step", "move", false,
+    Event("field_action", ("point", new object[] { 800, 900 }), ("private_route", "private-route-sentinel")))
+    { Location = new(800, 900) }]);
+Check("field_locate_observe_uses_actual_position", locatedObservation.Field == new PlayerFieldState("opaque-field-a", new(16, 32))
+    && !JsonSerializer.Serialize(locatedObservation).Contains("private-route-sentinel"));
+var locatedResult = locatedPort.Submit(new(locatedObservation.Candidates.Single().Token));
+Check("field_submit_returns_latest_measured_position", locatedInputs.Count == 1
+    && Text(locatedInputs.Single(), "kind") == "field_action"
+    && locatedResult.Field == new PlayerFieldState("opaque-field-a", new(80, 96)));
+Check("field_metadata_survives_presentation_refresh", locatedPort.Observe([Menu()]).Field == locatedResult.Field);
+foreach (var invalid in new[]
+{
+    new PlayerFieldState("", new(0, 0)), new PlayerFieldState(new string('x', 129), new(0, 0)),
+    new PlayerFieldState("opaque-field-a", new(double.NaN, 0)),
+    new PlayerFieldState("opaque-field-a", new(0, double.PositiveInfinity))
+})
+{
+    var invalidPort = Port();
+    var label = invalid.Space.Length == 0 ? "empty_space" : invalid.Space.Length > 128 ? "overlong_space"
+        : double.IsNaN(invalid.Position.X) ? "nan_position" : "infinite_position";
+    Reject("field_rejects_" + label, () => invalidPort.Locate(invalid), "invalid_field_observation");
+    Reject("field_rejection_closes_" + label, () => invalidPort.Observe([]), "boundary_closed");
+}
+
 var presentation = new Dictionary<string, object?>
 {
     ["hidden"] = "private-truth", ["controls"] = new Dictionary<string, object?> { ["notebook"] = true, ["manuscript"] = true, ["campus"] = true },
@@ -195,6 +228,33 @@ var repeatedTrace = tracePlayer.Decide(new(2, [], [], [new("next", "A", "menu", 
 Check("decision_trace_uses_history_before_choice", repeatedTrace.Score == 2
     && repeatedTrace.Basis.Contains("authored_rule:prefer:menu:2")
     && !repeatedTrace.Basis.Contains("authored_rule:prefer:untried:6"));
+PublicPlayerCandidate Move(string token, double x, double y, string purpose = "") =>
+    new(token, $"{x},{y}", "move", false, Purpose: purpose) { Location = new(x, y) };
+PublicPlayerCandidate Approach(string token, string destination, double x, double y) =>
+    new(token, $"{destination} {x},{y}", "move", false, Value: destination, Purpose: "approach") { Location = new(x, y) };
+var movementPlayer = new SubjectivePlayerController(Declaration(), 17);
+movementPlayer.Decide(new(1, [], [], [Move("ordinary", 16, 16)], false), cognitive);
+var firstFrontier = movementPlayer.Decide(new(2, [], [],
+    [Move("ordinary-again", 16, 16), Move("frontier", 16, 16, "frontier")], false), cognitive);
+Check("ordinary_move_does_not_consume_same_point_frontier", firstFrontier.Token == "frontier"
+    && firstFrontier.Score == 12 && firstFrontier.Basis.Contains("edge_of_unseen")
+    && firstFrontier.Basis.Contains("authored_rule:prefer:untried:6")
+    && !firstFrontier.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
+var nextFrontier = movementPlayer.Decide(new(3, [], [],
+    [Move("frontier-again", 16, 16, "frontier"), Move("adjacent-frontier", 48, 16, "frontier")], false), cognitive);
+Check("adjacent_32_pixel_frontiers_keep_distinct_attempt_history", nextFrontier.Token == "adjacent-frontier"
+    && nextFrontier.Score == 12 && nextFrontier.Basis.Contains("edge_of_unseen")
+    && nextFrontier.Basis.Contains("authored_rule:prefer:untried:6")
+    && !nextFrontier.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
+var repeatFrontier = movementPlayer.Decide(new(4, [], [], [Move("same-frontier", 48, 16, "frontier")], false), cognitive);
+Check("same_frontier_still_consumes_novelty", repeatFrontier.Score == 0
+    && !repeatFrontier.Basis.Contains("edge_of_unseen")
+    && !repeatFrontier.Basis.Contains("authored_rule:prefer:untried:6"));
+movementPlayer = new SubjectivePlayerController(Declaration(), 17);
+movementPlayer.Decide(new(1, [], [], [Move("frontier-first", 16, 16, "frontier")], false), cognitive);
+var ordinaryAfterFrontier = movementPlayer.Decide(new(2, [], [], [Move("ordinary-after-frontier", 16, 16)], false), cognitive);
+Check("frontier_does_not_consume_ordinary_move_history", ordinaryAfterFrontier.Score == 6
+    && ordinaryAfterFrontier.Basis.Contains("authored_rule:prefer:untried:6"));
 player = new(Declaration(new ControllerRuleDefinition { Mode = "forbid", Kind = "menu", Weight = 1 }), 17);
 Check("subjective_prohibition_reports_stuck", player.Decide(observation, cognitive).Reason == "agent_cannot_assess");
 player = new(Declaration(new ControllerRuleDefinition { Mode = "forbid", Kind = "menu", Weight = 1 }, new ControllerRuleDefinition { Mode = "permit", Kind = "menu", Weight = 1 }), 17);
@@ -252,6 +312,157 @@ var inquiryCognition = cognitive with { Snapshot = cognitive.Snapshot with { Pro
 player = new(deepDeclaration, 17);
 var inquiryChoice = player.Decide(new(1, [], [], [new("other-token", "other", "interact", false), new("target-token", "target", "interact", false)], false), inquiryCognition);
 Check("investigation_values_unknown_acquired_material", inquiryChoice.Token == "target-token" && inquiryChoice.Basis.Any(b => b.StartsWith("seek_unknown_acquired_proposition:")));
+PlayerCognition NeutralRole(string role)
+{
+    var runtime = new WorldRuntime();
+    using var simulation = new SimulationSession(runtime);
+    var world = new CoreScriptWorld(runtime, simulation);
+    var room = world.DefineSpace("neutral.movement.room", "neutral-room");
+    var actor = world.DefineCharacter("neutral.movement." + role, role, room);
+    return new(((ContractResult<CognitionSnapshotV1>.Success)actor.Soul.World.CaptureSnapshot()).Value, actor.Self.SubjectId!.Value);
+}
+ActorControllerDefinition NeutralDeclaration(string role, int curiosity, bool interactionPreference = false)
+{
+    var declaration = Declaration(new ControllerRuleDefinition { Mode = "prefer", Kind = curiosity > 0 ? "untried" : "menu", Weight = curiosity });
+    declaration.Actor = "world:character." + role;
+    declaration.Name = role;
+    if (interactionPreference) declaration.Rules.Add(new() { Mode = "prefer", Kind = "interact", Weight = 3 });
+    declaration.Reasoning = new() { Depth = 8, Expansions = 4096, Hypotheses = 128, ArgumentWeight = 16, InformationWeight = 8 };
+    return declaration;
+}
+PublicPlayerObservation At(long turn, string space, double x, double y, params PublicPlayerCandidate[] candidates)
+    => new(turn, [], [], [..candidates], false) { Field = new(space, new(x, y)) };
+PlayerCognition WithAcceptedNeutralMaterial(PlayerCognition held, string name)
+{
+    var material = new FrozenProjectionV1(new(held.Snapshot.SubjectWorld, Guid.NewGuid()), name, ProjectionKind.Concept,
+        Truth.True, null, ImmutableDictionary<Tag, int>.Empty, [], [],
+        [new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Infer,
+            new FrozenEffectV1.Think(new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(held.Actor), new("neutral-learned"), 1)),
+            1, Truth.True)], null, [new(new("acquired.neutral." + name), name, name)], null);
+    return held with { Snapshot = held.Snapshot with { Projections = held.Snapshot.Projections.Add(material) } };
+}
+foreach (var (role, curiosity) in new[] { ("neutral-observer", 6), ("neutral-feedback-only", 0) })
+{
+    var roleCognition = NeutralRole(role);
+    var roleDeclaration = NeutralDeclaration(role, curiosity, interactionPreference: true);
+    var rolePlayer = new SubjectivePlayerController(roleDeclaration, 17);
+    rolePlayer.Decide(At(1, "opaque-room-a", 16, 16, Move("blocked-first", 144, 16)), roleCognition);
+    var alternative = rolePlayer.Decide(At(2, "opaque-room-a", 16, 16,
+        Move("blocked-repeat", 144, 16), Move("viable-alternative", 16, 144)), roleCognition);
+    Check(role + "_failed_move_selects_viable_alternative", alternative.Token == "viable-alternative");
+    var learnedCognition = WithAcceptedNeutralMaterial(roleCognition, role + "-material");
+    var rememberedWall = rolePlayer.Decide(At(3, "opaque-room-a", 16, 144,
+        Move("wall-after-learning", 144, 16)), learnedCognition);
+    Check(role + "_knowledge_update_preserves_observed_wall", rememberedWall.Basis.Any(b => b.StartsWith("observed_movement_stalled:")));
+
+    rolePlayer = new(roleDeclaration, 17);
+    rolePlayer.Decide(At(1, "opaque-room-a", 16, 16, Move("first-space-request", 272, 16)), roleCognition);
+    rolePlayer.Decide(At(2, "opaque-room-a", 272, 16, Move("arrived-space-request", 272, 16)), roleCognition);
+    rolePlayer.Decide(At(3, "opaque-room-a", 272, 16, Move("stalled-first-space", 272, 16)), roleCognition);
+    var otherSpace = rolePlayer.Decide(At(4, "opaque-room-b", 16, 16, Move("same-coordinates-new-space", 272, 16)), roleCognition);
+    Check(role + "_same_coordinates_in_other_space_have_no_stall_history",
+        !otherSpace.Basis.Any(b => b.StartsWith("observed_movement_stalled:") || b.StartsWith("revisit_without_new_accepted_material:")));
+    if (curiosity > 0)
+    {
+        Check(role + "_other_space_does_not_inherit_walked_ground", otherSpace.Basis.Any(b => b.StartsWith("unwalked_ground:"))
+            && otherSpace.Basis.Contains("authored_rule:prefer:untried:6"));
+        rolePlayer = new(roleDeclaration, 17);
+        rolePlayer.Decide(At(1, "opaque-room-a", 16, 16, Move("unreached-request", 144, 16)), roleCognition);
+        var beyondRequest = rolePlayer.Decide(At(2, "opaque-room-a", 16, 16,
+            Move("beyond-unreached-request", 208, 16), Move("other-ground", 16, 144)), roleCognition);
+        Check(role + "_requested_destination_is_not_walked_ground", beyondRequest.Token == "beyond-unreached-request");
+
+        rolePlayer = new(roleDeclaration, 17);
+        rolePlayer.Decide(At(1, "opaque-room-a", 16, 16, new PublicPlayerCandidate("interaction-first", "neutral-panel", "interact", false)), roleCognition);
+        var exhausted = rolePlayer.Decide(At(2, "opaque-room-a", 16, 16,
+            new("interaction-repeat", "neutral-panel", "interact", false), new("other-menu", "neutral-other-menu", "menu", false)), roleCognition);
+        Check(role + "_interaction_is_deferred_without_new_material", exhausted.Token == "other-menu");
+        var reconsidered = rolePlayer.Decide(At(3, "opaque-room-a", 16, 16,
+            new("interaction-after-learning", "neutral-panel", "interact", false), new("other-menu-repeat", "neutral-other-menu", "menu", false)), learnedCognition);
+        Check(role + "_accepted_material_reopens_interaction", reconsidered.Token == "interaction-after-learning"
+            && !reconsidered.Basis.Any(b => b.StartsWith("revisit_without_new_accepted_material:")));
+    }
+
+    var directionGoal = new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(roleCognition.Actor), new("neutral-direction-goal"), 1);
+    FrozenProjectionV1 DirectionMaterial(string name, Tag tag) => new(new(roleCognition.Snapshot.SubjectWorld, Guid.NewGuid()), name,
+        ProjectionKind.Concept, Truth.True, null, ImmutableDictionary<Tag, int>.Empty.Add(tag, 1), [], [],
+        [new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Infer, new FrozenEffectV1.Think(directionGoal), 1, Truth.Unknown)],
+        null, [new(new("acquired.neutral." + name), name, name)], null);
+    var directionCognition = roleCognition with { Snapshot = roleCognition.Snapshot with { Projections = roleCognition.Snapshot.Projections.AddRange(ImmutableArray.Create(
+        DirectionMaterial("neutral-question", AcquiredPropositions.Question), DirectionMaterial("neutral-bench", AcquiredPropositions.Opportunity))) } };
+    foreach (var reverse in new[] { false, true })
+    {
+        var directionalPlayer = new SubjectivePlayerController(NeutralDeclaration(role, 0), 23);
+        directionalPlayer.Decide(At(1, "opaque-direction-space", 16, 16,
+            new PublicPlayerCandidate("seen-bench", "neutral-bench", "interact", false) { Location = new(1024, 16) }), directionCognition);
+        var near = Move("near-distant-goal", 512, 16); var far = Move("far-distant-goal", 128, 16);
+        var directed = directionalPlayer.Decide(At(2, "opaque-direction-space", 16, 16,
+            reverse ? near : far, reverse ? far : near), directionCognition);
+        Console.WriteLine("OBSERVATION " + role + " distant-goal " + JsonSerializer.Serialize(directed));
+        Check(role + "_distant_goal_keeps_directional_order_" + reverse, directed.Token == "near-distant-goal"
+            && directed.Basis.Contains("approach_observed_question_material"));
+        var unrelatedSpace = directionalPlayer.Decide(At(3, "opaque-direction-other", 16, 16,
+            Move("same-point-without-local-lead", 512, 16)), directionCognition);
+        Check(role + "_other_space_does_not_inherit_observed_lead_" + reverse, unrelatedSpace.Score == 0
+            && !unrelatedSpace.Basis.Any(b => b.StartsWith("approach_observed_")));
+    }
+
+    var uPlayer = new SubjectivePlayerController(roleDeclaration, 23);
+    uPlayer.Decide(At(1, "opaque-u-space", 16, 16,
+        new PublicPlayerCandidate("u-seen-place", "neutral-bench", "interact", false) { Location = new(1024, 16) }), directionCognition);
+    var uChoice = uPlayer.Decide(At(2, "opaque-u-space", 16, 16,
+        Approach("u-relevant-route", "neutral-bench", 16, 144),
+        Approach("u-unrelated-route", "neutral-unused-place", 16, 144),
+        Move("u-straight-direction", 48, 16)), directionCognition);
+    Console.WriteLine("OBSERVATION " + role + " U-route " + JsonSerializer.Serialize(uChoice));
+    Check(role + "_known_question_selects_initially_retreating_route", uChoice.Token == "u-relevant-route"
+        && uChoice.Basis.Contains("follow_observed_route_to_needed_place")
+        && uChoice.Basis.Any(b => b.StartsWith("expected_information_at_remembered_goal:"))
+        && !uChoice.Basis.Any(b => b.StartsWith("seek_current_question_material:")
+            || b.StartsWith("seek_unknown_acquired_proposition:") || b.StartsWith("inspect_missing_material:")
+            || b.StartsWith("unwalked_ground:") || b.StartsWith("authored_rule:prefer:untried:")
+            || b == "approach_observed_question_material"));
+
+    var routeProof = new FrozenProjectionV1(new(roleCognition.Snapshot.SubjectWorld, Guid.NewGuid()), "neutral-route-proof",
+        ProjectionKind.Concept, Truth.True, null, ImmutableDictionary<Tag, int>.Empty, [], [],
+        [new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Infer, new FrozenEffectV1.Think(directionGoal), 1, Truth.True)],
+        null, [new(new("acquired.neutral.route-proof"), "neutral-route-proof", "neutral-route-proof")], null);
+    var returningCognition = directionCognition with { Snapshot = directionCognition.Snapshot with {
+        Projections = directionCognition.Snapshot.Projections.Add(routeProof) } };
+    var returnPlayer = new SubjectivePlayerController(roleDeclaration, 23);
+    returnPlayer.Decide(At(1, "opaque-return-space", 16, 16,
+        new PublicPlayerCandidate("return-seen-place", "neutral-bench", "interact", false) { Location = new(1024, 16) }), returningCognition);
+    returnPlayer.Decide(At(2, "opaque-return-space", 16, 16, Approach("return-first", "neutral-bench", 16, 144)), returningCognition);
+    var earlyReturn = returnPlayer.Decide(At(3, "opaque-return-space", 17, 16,
+        Approach("return-early", "neutral-bench", 16, 144), new("return-wait-early", "neutral-wait", "wait", false)), returningCognition);
+    for (var turn = 4; turn <= 28; turn++)
+        returnPlayer.Decide(At(turn, "opaque-return-space", turn % 2 == 0 ? 16 : 17, 16,
+            Approach("return-loop-" + turn, "neutral-bench", 16, 144)), returningCognition);
+    var lateReturn = returnPlayer.Decide(At(29, "opaque-return-space", 17, 16,
+        Approach("return-late", "neutral-bench", 16, 144), new("return-wait-late", "neutral-wait", "wait", false)), returningCognition);
+    Console.WriteLine("OBSERVATION " + role + " necessary-return " + JsonSerializer.Serialize(new { earlyReturn, lateReturn }));
+    Check(role + "_necessary_return_cost_is_bounded", earlyReturn.Token == "return-early" && lateReturn.Token == "return-late"
+        && earlyReturn.Score == lateReturn.Score
+        && lateReturn.Basis.Contains("follow_observed_route_to_needed_place")
+        && !lateReturn.Basis.Any(b => b.StartsWith("observed_movement_stalled:")));
+    if (curiosity > 0)
+        Check(role + "_bounded_return_still_retains_visit_history", earlyReturn.Basis.Contains("revisit_without_new_accepted_material:1")
+            && lateReturn.Basis.Contains("revisit_without_new_accepted_material:27")
+            && !lateReturn.Basis.Contains("authored_rule:prefer:untried:6"));
+
+    var destinationPlayer = new SubjectivePlayerController(roleDeclaration, 23);
+    destinationPlayer.Decide(At(1, "opaque-destination-space", 16, 16,
+        Approach("destination-a-first", "neutral-route-a", 16, 144)), roleCognition);
+    var distinctDestination = destinationPlayer.Decide(At(2, "opaque-destination-space", 16, 16,
+        Approach("destination-b-same-waypoint", "neutral-route-b", 16, 144)), roleCognition);
+    Check(role + "_shared_waypoint_different_destination_has_distinct_retry_identity",
+        !distinctDestination.Basis.Any(b => b.StartsWith("observed_movement_stalled:") || b.StartsWith("revisit_without_new_accepted_material:")));
+    var sameDestination = destinationPlayer.Decide(At(3, "opaque-destination-space", 16, 16,
+        Approach("destination-a-after-learning", "neutral-route-a", 16, 144)), WithAcceptedNeutralMaterial(roleCognition, "neutral-retry-memory"));
+    Check(role + "_new_knowledge_preserves_route_specific_collision_memory",
+        sameDestination.Basis.Contains("observed_movement_stalled:1"));
+}
+RouteLearningCases.Run(Check);
 var invalidBudget = Declaration(); invalidBudget.Reasoning.Depth = 65;
 try { PlayerControllers.Validate(invalidBudget); throw new Exception("invalid depth accepted"); }
 catch (InvalidDataException) { Check("invalid_role_reasoning_budget_rejected", true); }

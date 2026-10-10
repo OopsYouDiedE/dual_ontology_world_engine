@@ -273,7 +273,9 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
     {
         ShownDay=_game.Day; ShownSlot=_game.Slot; _game.RunSlot(action); Invalidate();
         var feed=_game.TakeFeed().ToArray(); _journal.Add(new object[] { Chapter2Content.TimeName(ShownDay,ShownSlot),feed });
-        _knownPlaces.Add(_game.Where(_game.Det).ToString());
+        var resolvedPlace = _game.Where(_game.Det);
+        _knownPlaces.Add(resolvedPlace.ToString());
+        if (MapPlace(_map) != resolvedPlace.ToString()) Scene(resolvedPlace, output);
         Lines(feed,output);
     }
     private void Commit(PlayerAction? action,List<Dictionary<string,object?>> output)

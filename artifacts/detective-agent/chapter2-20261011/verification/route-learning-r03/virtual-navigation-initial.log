@@ -1,0 +1,47 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+PASS current visible ground enters memory
+PASS unseen U arms remain closed in memory
+PASS remembered place cannot use an unseen U route
+PASS observed U route offers a public destination identity
+PASS U route first moves away from the destination along remembered ground
+PASS remembered route keeps a short ordinary click waypoint
+PASS hidden closure and hidden opening do not change remembered ground
+PASS hidden passage changes leave the offered remembered waypoint unchanged
+PASS seeing a changed passage updates its remembered collision
+PASS seeing newly open ground updates memory
+PASS endpoint lookup respects grid cell size offset and nonzero region
+OBSERVATION remembered-U {"grid_cell":[8.0,8.0],"offers":[{"input":{"action":"move","kind":"field_action","point":[60.0,156.0]},"kind":"move","label":"neutral-desk 60,156","location":[60.0,156.0],"new":false,"purpose":"approach","value":"neutral-desk"}]}
+PASS unknown boundary retains ordinary directional attempts
+PASS unknown attempts do not inspect hidden collision or routes
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS short ordinary step
+PASS public point matches ordinary input
+PASS longer visible routes use formal navigation
+PASS no seen cells, no frontier
+PASS near visible boundary extends one cell outward
+PASS outward frontier uses ordinary move input
+PASS distant frontier retains visible edge approach
+PASS unrevealed threshold keeps eight short frontier attempts at 176
+PASS multi-cell threshold offers another ordinary forward step at 176
+PASS ordinary threshold forward step does not query unseen destination at 176
+PASS unrevealed threshold keeps eight short frontier attempts at 208
+PASS multi-cell threshold offers another ordinary forward step at 208
+PASS ordinary threshold forward step does not query unseen destination at 208
+PASS undiscovered ground marks existing short attempts as frontier
+PASS short attempt generation does not read unknown collision or routes
+PASS visible walls do not produce frontier candidates
+TOTAL 43 checks, 43 passed, 0 failed

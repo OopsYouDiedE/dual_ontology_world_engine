@@ -822,6 +822,7 @@ public sealed partial class Chapter1Session
 
     private void Ending(string kind)
     {
+        _knowledge.ClearQuestions(_content.GameMinutes);
         Session.Set("state", "ended", true);
         var hooked = Party.Where(who => _world.Hooks(PersonOf(who)) > 0).Select(PersonName).ToArray();
         var kept = Party.Where(who => _world.Hooks(PersonOf(who)) == 0).Select(who => who == "detective" ? T("结局·你自己") : PersonName(who)).ToArray();

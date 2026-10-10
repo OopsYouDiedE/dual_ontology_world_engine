@@ -35,6 +35,7 @@ public sealed partial class MorningWorld
         public bool DepartureComplete;
         public bool FieldResident;
         public ActionExecution? Execution;
+        public DecisionExperienceKeyV1? Experience;
     }
 
     private readonly Dictionary<string, DailyPerson> _dailyPeople = new(StringComparer.Ordinal);
@@ -243,8 +244,9 @@ public sealed partial class MorningWorld
     private bool DailyAllowed(DailyPerson person) => !person.DepartureComplete
         && (person.Hosted is null || _dailyStages.Contains(_dailyStage))
         && (person.AllowedStages is null || person.AllowedStages.Contains(_dailyStage))
-        && (person.Steps.Length > 0 && (person.Steps[person.Index].AllowedStages.Count == 0
-            || person.Steps[person.Index].AllowedStages.Contains(_dailyStage)));
+        && person.Steps.Length > 0 && (person.Departed || person.Serial != 0
+            ? StepAllowed(person.Steps[person.Index]) : person.Steps.Any(StepAllowed));
+    private bool StepAllowed(DailyStep step) => step.AllowedStages.Count == 0 || step.AllowedStages.Contains(_dailyStage);
 
     public void SetDailyStage(string stage)
     {
@@ -407,9 +409,14 @@ public sealed partial class MorningWorld
                 if (person.StartAfter > 0) continue;
             }
             SetDailyReady(person, true);
-            var assessment = DecisionSystem.Assess(person.Soul.World, person.Self)
-                .FirstOrDefault(a => !a.Forbidden && Ast.Equivalent(a.Decision.Effect, person.Effects[person.Index]));
+            var assessment = ActionLearning.Assess(person.Soul.World, person.Self)
+                .FirstOrDefault(a => !a.Forbidden && person.Effects.Any(e => Ast.Equivalent(a.Decision.Effect, e)));
             if (assessment is null) continue;
+            var index = Array.FindIndex(person.Effects, e => Ast.Equivalent(assessment.Decision.Effect, e));
+            if (index != person.Index) person.Remaining = 0;
+            person.Index = index;
+            person.Experience = ActionLearning.Key(person.Soul.World, person.Self, person.Effects[index]);
+            ActionLearning.Observe(person.Soul, person.Self, person.Experience, DecisionOutcomeV1.Attempted, _dailySession.CTB.Now);
             person.Serial = ++_dailySerial;
             var step = person.Steps[person.Index];
             _dailyDecisions.Add(new(_dailySession.CTB.Now, person.Key, "simulation", person.Serial, step.Room,
@@ -458,6 +465,9 @@ public sealed partial class MorningWorld
             person.Remaining = Math.Max(0, (execution.Scheduled?.Due ?? _dailySession.CTB.Now) - _dailySession.CTB.Now);
             _dailySession.Cancel(execution);
         }
+        if (person.Experience is { } experience)
+            ActionLearning.Observe(person.Soul, person.Self, experience, DecisionOutcomeV1.Interrupted, _dailySession.CTB.Now);
+        person.Experience = null;
         person.Execution = null;
         person.Serial = 0;
         person.Arrived = false;
@@ -466,21 +476,32 @@ public sealed partial class MorningWorld
     public void DailyBlock(string actor, int serial)
     {
         if (DailyActor(actor) is not { } person || serial == 0 || person.Serial != serial) return;
+        if (person.Experience is { } experience)
+            ActionLearning.Observe(person.Soul, person.Self, experience, DecisionOutcomeV1.NoProgress, _dailySession.CTB.Now);
+        person.Experience = null;
         SuspendDaily(person);
         person.StartAfter = person.Steps[person.Index].Seconds / person.Speed;
     }
     private void SetDailyReady(DailyPerson person, bool ready)
     {
-        var concept = person.Ready[person.Index];
-        var existence = ready ? Truth.True : Truth.False;
-        if (concept.Existence == existence) return;
-        Observation.Observe(person.Soul, new ObservationInput(concept.Name, concept.Kind)
-            { Target = concept, Source = ObservationSource.Introspection, Existence = existence, Time = _dailySession.CTB.Now });
+        for (var i = 0; i < person.Ready.Length; i++)
+        {
+            var concept = person.Ready[i];
+            var existence = ready && StepAllowed(person.Steps[i]) && (!person.Departed || i == person.Index) ? Truth.True : Truth.False;
+            if (concept.Existence == existence) continue;
+            Observation.Observe(person.Soul, new ObservationInput(concept.Name, concept.Kind)
+                { Target = concept, Source = ObservationSource.Introspection, Existence = existence, Time = _dailySession.CTB.Now });
+        }
     }
     private void DailyCompleted(ActionExecution execution)
     {
         var person = _dailyPeople.Values.FirstOrDefault(p => ReferenceEquals(p.Execution, execution));
         if (person is null) return;
+        if (person.Experience is { } experience)
+            ActionLearning.Observe(person.Soul, person.Self, experience,
+                execution.Status == ExecutionStatus.Completed ? DecisionOutcomeV1.Succeeded
+                : execution.Status == ExecutionStatus.Cancelled ? DecisionOutcomeV1.Interrupted : DecisionOutcomeV1.Failed, _dailySession.CTB.Now);
+        person.Experience = null;
         var step = person.Steps[person.Index];
         if (execution.Status == ExecutionStatus.Completed)
         {

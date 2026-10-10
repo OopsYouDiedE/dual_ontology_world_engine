@@ -21,19 +21,45 @@ var _grids: Dictionary = {}
 var _walls: Dictionary = {}
 var _seen: Dictionary = {}
 var _access: Dictionary = {}
+var _access_shapes: Dictionary = {}
 var _last_allowed_position := Vector2.ZERO
 var presentation: Dictionary = {}
 var _player_sprite := ""
 
 func apply_snapshot(snapshot: Dictionary) -> void:
-	_access = snapshot.get("access", {}).get("maps", {})
+	var next: Dictionary = snapshot.get("access", {}).get("maps", {})
+	if next == _access: return
+	_access = next.duplicate(true)
+	if map: _refresh_access_geometry.call_deferred()
 
 func can_enter(next: String) -> bool:
 	return bool(_access.get(next, true))
 
 func blocked_entry() -> void:
 	_switching = false
-	if map and map.has_meta("outdoor_core"): field.player.position = _last_allowed_position
+	if map: field.player.position = _last_allowed_position
+
+## A closed destination blocks the same doorway for keyboard movement and navigation.
+## The authored exit shape supplies geometry; availability comes from the live snapshot.
+func _refresh_access_geometry() -> void:
+	if not is_instance_valid(map): return
+	var solids := map.get_node_or_null("Solids")
+	if solids == null: return
+	for exit in map.get_node("Exits").get_children():
+		var barrier: CollisionShape2D = _access_shapes.get(exit.name)
+		if not is_instance_valid(barrier):
+			var source := exit.get_node("Shape") as CollisionShape2D
+			barrier = CollisionShape2D.new()
+			barrier.name = "Access_" + str(exit.name)
+			barrier.shape = source.shape
+			barrier.position = exit.position + source.position
+			barrier.disabled = can_enter(str(exit.get_meta("target")))
+			solids.add_child(barrier)
+			_access_shapes[exit.name] = barrier
+		else:
+			barrier.disabled = can_enter(str(exit.get_meta("target")))
+	_grids.clear()
+	_build_grid()
 
 func setup() -> bool:
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
@@ -76,6 +102,7 @@ func load_map(next: String, _spawn: String) -> void:
 		remove_child(map)
 		map.queue_free()
 	key = next
+	_access_shapes.clear()
 	map = (load(MAPS % next) as PackedScene).instantiate()
 	add_child(map)
 	occluders.clear()
@@ -86,7 +113,7 @@ func load_map(next: String, _spawn: String) -> void:
 	for exit in map.get_node("Exits").get_children():
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
-	_build_grid()
+	_refresh_access_geometry()
 	_build_walls()
 
 func spawn_point(spawn: String) -> Vector2:
@@ -167,7 +194,7 @@ func _build_grid() -> void:
 	if solids == null: return
 	for shape_node in solids.get_children():
 		var cs := shape_node as CollisionShape2D
-		if cs == null or not (cs.shape is RectangleShape2D): continue
+		if cs == null or cs.disabled or not (cs.shape is RectangleShape2D): continue
 		var half: Vector2 = (cs.shape as RectangleShape2D).size / 2.0
 		var rect := Rect2(cs.position - half, half * 2.0).grow_individual(10, 1, 10, 14)
 		var x0 := maxi(0, int(ceil((rect.position.x - 8.0) / 16.0)))

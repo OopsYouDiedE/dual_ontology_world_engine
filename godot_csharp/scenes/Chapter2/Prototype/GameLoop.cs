@@ -87,33 +87,13 @@ public sealed partial class Game
 
     // ------------------------------------------------------------------ day --
 
-    private readonly List<(Person Who, Projection Memory)> _failures = [];
-
-    /// <summary>
-    /// A failed authored action enters the actor's own cognition and forbids retrying it unchanged
-    /// for the rest of the day; the next morning the memory lapses and the person may try again.
-    /// </summary>
-    private void RememberFailure(Person p, ActionExecution exec)
-    {
-        var memory = Observation.Observe(p.Soul, new ObservationInput($"今天试过，没做成（{exec.Result?.Failure}）", ProjectionKind.Concept)
-        { Source = ObservationSource.Introspection, Existence = Truth.True, Time = Now, Details = "失败记忆" });
-        Observation.Observe(p.Soul, new ObservationInput(memory.Name, memory.Kind)
-        {
-            Target = memory, Source = ObservationSource.Introspection, Time = Now,
-            Rules = [new Rule(new Condition.Exists(memory), RuleMode.Forbid, exec.Intent.Changes, 1, Truth.True)]
-        });
-        _failures.Add((p, memory));
-    }
+    private readonly Dictionary<ActionExecution, DecisionExperienceKeyV1> _decisionAttempts = [];
 
     private void BeginDay()
     {
         if(!_institutionHooks.Add((Day,"dawn")))return;
         SetClock();
         _dayStart[Day] = Now;
-        foreach (var (who, memory) in _failures)
-            Observation.Observe(who.Soul, new ObservationInput(memory.Name, memory.Kind)
-            { Target = memory, Source = ObservationSource.Introspection, Existence = Truth.False, Time = Now });
-        _failures.Clear();
         foreach (var p in People)
         {
             foreach (var j in Enum.GetValues<Job>()) Set(p.Body, T.Did(j), 0);
@@ -207,7 +187,7 @@ public sealed partial class Game
         if (p.Exec is not null || p.Asleep || !Available(p)) return;
         Interpret(p);
         IReadOnlyList<DecisionAssessment> assessed;
-        using (Prof.Time("Assess")) assessed = DecisionSystem.Assess(p.World, p.Self);
+        using (Prof.Time("Assess")) assessed = ActionLearning.Assess(p.World, p.Self);
         var top = Pick(assessed);
         if (top is null) return;
         Submit(p, top.Decision, top.Reasons);
@@ -270,7 +250,10 @@ public sealed partial class Game
         else if(p.Weak)delay+=0.5;
         var why = string.Join("；", reasons);
         var basis = d.Basis.Kind == ProjectionKind.Event ? $"应{d.Basis.Relations.FirstOrDefault(r => r.Relation == Relations.Subject).Target?.Name}之请" : d.Basis.Name;
+        var experience = ActionLearning.Key(p.World, p.Self, d.Effect);
         p.Exec = S.Submit(p.Soul, new ActionIntent(p.Self, d.Effect, delay, Requirements: SocialRequirements(p,d), Basis: d.Basis));
+        _decisionAttempts[p.Exec] = experience;
+        ActionLearning.Observe(p.Soul, p.Self, experience, DecisionOutcomeV1.Attempted, Now);
         TrackSocialExecution(p,p.Exec);
         p.Doing = job;
         p.DoingWhy = $"{basis}（{why}）";
@@ -329,6 +312,10 @@ public sealed partial class Game
         using var _ = Prof.Time("C:OnCompleted");
         UpdateWorkOccupancy();
         var p = People.FirstOrDefault(x => ReferenceEquals(x.Self, exec.Intent.Actor));
+        if (p is not null && _decisionAttempts.Remove(exec, out var experience))
+            ActionLearning.Observe(p.Soul, p.Self, experience,
+                exec.Status == ExecutionStatus.Completed ? DecisionOutcomeV1.Succeeded
+                : exec.Status == ExecutionStatus.Cancelled ? DecisionOutcomeV1.Interrupted : DecisionOutcomeV1.Failed, Now);
         if (p is not null && exec.Status == ExecutionStatus.Failed) ObserveFailedAccess(p, exec);
         if (Story?.Owns(exec) == true)
         {
@@ -365,7 +352,6 @@ public sealed partial class Game
             p.Diary.Add($"D{Day} {Names.Of(Slot)} 没做成：{(job is { } j3 ? Names.Of(j3) : "请求之事")}（{exec.Result?.Failure}）");
             // 失败记忆与完成标记分离：当前身体不在场、条件失效或资源不足，均不能登记已经做完。
             // 工位被占时仍可等岗位空出来后再判断。
-            if (job is not (Job.Seize or Job.GuardArchive or Job.Relay or Job.Teach)) RememberFailure(p, exec);
             ReleaseStation(p);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } req && p.World.Contains(req))
                 Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
@@ -856,8 +842,8 @@ public sealed partial class Game
         foreach (var p in Npcs.Where(p => !p.Asleep && p.Exec is not null && p.Doing is { } d && Interruptible.Contains(d)))
         {
             Interpret(p);
-            var top = Pick(DecisionSystem.Assess(p.World, p.Self));
-            if (top is null || top.Decision.Score <= p.DoingScore || JobOf(p, top.Decision.Effect) == p.Doing) continue;
+            var top = Pick(ActionLearning.Assess(p.World, p.Self));
+            if (top is null || !SubjectiveDecision.ShouldReconsider(p.DoingScore, top.Decision.Score, true) || JobOf(p, top.Decision.Effect) == p.Doing) continue;
             CancelExecution(p.Exec!);
             _running.Remove(p.Exec!);
             p.Exec = null;

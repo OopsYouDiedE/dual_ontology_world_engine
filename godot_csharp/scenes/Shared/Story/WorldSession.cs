@@ -263,7 +263,8 @@ public sealed partial class WorldSession : IDisposable
     {
         lock (_gate)
         {
-            foreach (var execution in Simulation.Active) Simulation.Cancel(execution);
+            foreach (var execution in Simulation.Active.ToArray())
+                if (Simulation.Cancel(execution)) BehaviorCompleted(execution);
             EndChapterLifetime();
         }
     }

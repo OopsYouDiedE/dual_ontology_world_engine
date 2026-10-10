@@ -1,0 +1,167 @@
+{
+  "final_runs": [
+    "host-build",
+    "neutral-navigation",
+    "neutral-physics-input-drained",
+    "controller-build-formal-candidates",
+    "controller-runtime-formal-candidates"
+  ],
+  "runs": [
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "-m:1",
+        "--disable-build-servers"
+      ],
+      "started_utc": "2026-10-10T18:41:10.344741+00:00",
+      "elapsed_wall_seconds": 4.64000000001397,
+      "exit_code": 0,
+      "log": "controller-build-formal-candidates.log",
+      "sha256": "26058c859021322aea66bc7f11cab5a38e7f5dc1615414e800caa10d7f50c656"
+    },
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "-m:1",
+        "--disable-build-servers"
+      ],
+      "started_utc": "2026-10-10T18:39:46.061363+00:00",
+      "elapsed_wall_seconds": 14.5,
+      "exit_code": 0,
+      "log": "controller-build.log",
+      "sha256": "7d449dd46850b78c7cada97e5e728d6f8cb6f643899e6133c2bbf4ce41534599"
+    },
+    {
+      "command": [
+        "dotnet",
+        "run",
+        "--project",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "--no-build",
+        "--no-restore"
+      ],
+      "started_utc": "2026-10-10T18:41:18.455913+00:00",
+      "elapsed_wall_seconds": 0.9059999999881256,
+      "exit_code": 0,
+      "log": "controller-runtime-formal-candidates.log",
+      "sha256": "54f885409291e6236585465d8a6b054ae688bf759846f8c1b9f3533e1a2c9cd8"
+    },
+    {
+      "command": [
+        "dotnet",
+        "run",
+        "--project",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "--no-build",
+        "--no-restore"
+      ],
+      "started_utc": "2026-10-10T18:40:14.075575+00:00",
+      "elapsed_wall_seconds": 34.187999999994645,
+      "exit_code": 3762504530,
+      "log": "controller-runtime.log",
+      "sha256": "4e4263b9bf78b229cf01428a558b67ea491f88d353f83f26316b9f07ff12df3b"
+    },
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "godot_csharp/DualOntologyWorldEngine.sln",
+        "-m:1",
+        "--disable-build-servers"
+      ],
+      "started_utc": "2026-10-10T18:36:53.442810+00:00",
+      "elapsed_wall_seconds": 13.780999999988126,
+      "exit_code": 0,
+      "log": "host-build.log",
+      "sha256": "075029fccff5a2c91f588606aaddfe8a9d38447a2472dd1aba30a82d1ed02ea0"
+    },
+    {
+      "command": [
+        "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+        "--headless",
+        "--path",
+        "godot_csharp",
+        "--script",
+        "res://tools/check/check_virtual_navigation.gd"
+      ],
+      "started_utc": "2026-10-10T18:38:50.264849+00:00",
+      "elapsed_wall_seconds": 0.5469999999913853,
+      "exit_code": 0,
+      "log": "neutral-navigation.log",
+      "sha256": "47019758e186e2af476d143ac893cf61c05febba34000399a6b41133754b05f4"
+    },
+    {
+      "command": [
+        "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+        "--headless",
+        "--path",
+        "godot_csharp",
+        "--script",
+        "res://tools/check/check_campus_access.gd"
+      ],
+      "started_utc": "2026-10-10T18:40:24.233964+00:00",
+      "elapsed_wall_seconds": 10.15700000000652,
+      "exit_code": 0,
+      "log": "neutral-physics-input-drained.log",
+      "sha256": "ff129fd2ab11234f86f2732fc4c0949a32c376895c15ae75808d1977c848579e"
+    },
+    {
+      "command": [
+        "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+        "--headless",
+        "--path",
+        "godot_csharp",
+        "--script",
+        "res://tools/check/check_campus_access.gd"
+      ],
+      "started_utc": "2026-10-10T18:39:04.472338+00:00",
+      "elapsed_wall_seconds": 10.15600000001723,
+      "exit_code": 1,
+      "log": "neutral-physics-input-repaired.log",
+      "sha256": "14e57579ea46ef2683f8ba35e2830b23b2c030987682e04bec0a6a32187b7a7d"
+    },
+    {
+      "command": [
+        "C:/Users/iii/Desktop/Godot_v4.6.1-stable_mono_win64/Godot_v4.6.1-stable_mono_win64_console.exe",
+        "--headless",
+        "--path",
+        "godot_csharp",
+        "--script",
+        "res://tools/check/check_campus_access.gd"
+      ],
+      "started_utc": "2026-10-10T18:38:56.290794+00:00",
+      "elapsed_wall_seconds": 0.4379999999946449,
+      "exit_code": 1,
+      "log": "neutral-physics-input.log",
+      "sha256": "c06669a02781b715ccba62ff1912c85089df953617d374013526e2ddc6572284"
+    }
+  ],
+  "source_sha256_at_archive": {
+    "godot_csharp/scenes/Host/PilotNavigation.gd": "024a1dcbd96066adf3a0b6de33851774851456d6fd6d0e006fdb848a736bedfe",
+    "godot_csharp/scenes/Host/AgentPilot.gd": "9e190e6ce304e8e9a9ad3765efcfa9a52c5d8db6eb56bd6177a2459aebc4c308",
+    "godot_csharp/scenes/Host/GameEngine.cs": "ed22f9f05d292e09d37341dce1fc5a95242a7baf8b520730bcd2a73df6f4f3f7",
+    "godot_csharp/scenes/Shared/FieldNavigation.gd": "c7c7bdf804e3ca264d84236c939dc7bcbae7e5deea59754a2b886279ea6ec868",
+    "godot_csharp/scenes/Shared/Story/PlayerController.cs": "2525fd56e33a09eb92249c5ac1b4f809ff53525fd857b3f14d1ce7650c643881",
+    "godot_csharp/scenes/Shared/check/PlayerControllerCheck/Program.cs": "8a06ce7a8b5a1267d394c455da6f5804b00f7ef641dde7bdd51cf9f0f234ca55",
+    "godot_csharp/tools/check/check_virtual_navigation.gd": "a23a6e32cd7840cbd71cf5a6b1c7aa3b18935a186f246a774e377da3710266a9",
+    "godot_csharp/tools/check/check_campus_access.gd": "1e56f2322f6d6cc7de6cd9a806f9c2741e9e408b541b8564f6cddb0b77de02ee"
+  },
+  "raw_logs_preserved": true,
+  "formal_story_read": false,
+  "design_read": false,
+  "full_test_run": false,
+  "ui_acceptance": false,
+  "blind_play": false
+}

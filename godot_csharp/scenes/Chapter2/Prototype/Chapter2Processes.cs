@@ -96,7 +96,11 @@ public sealed partial class Game
 
     private void CancelExecution(ActionExecution execution)
     {
-        S.Cancel(execution);
+        if (S.Cancel(execution) && _decisionAttempts.Remove(execution, out var experience))
+        {
+            var actor = People.Single(p => ReferenceEquals(p.Self, execution.Intent.Actor));
+            ActionLearning.Observe(actor.Soul, actor.Self, experience, DecisionOutcomeV1.Interrupted, Now);
+        }
         UpdateWorkOccupancy();
     }
 

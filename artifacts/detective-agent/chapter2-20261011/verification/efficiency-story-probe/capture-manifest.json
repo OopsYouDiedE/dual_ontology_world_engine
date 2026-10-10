@@ -1,0 +1,64 @@
+{
+  "captured_utc": "2026-10-10T18:24:49.963110+00:00",
+  "mode": "static git baseline and current source only; old runtime probe was not executed",
+  "commands": [
+    {
+      "args": [
+        "git",
+        "show",
+        "HEAD:godot_csharp/scenes/Shared/Story/PlayerController.cs"
+      ],
+      "exit_code": 0,
+      "stdout_file": "git-head-PlayerController.cs",
+      "stdout_sha256": "bc9019fc0262711ff1c736a6ed8bb23713a1eba2a5b949c5e9aa59dd9abda5c5",
+      "stderr_bytes": 0
+    },
+    {
+      "args": [
+        "git",
+        "diff",
+        "--",
+        "godot_csharp/scenes/Shared/Story/PlayerController.cs"
+      ],
+      "exit_code": 0,
+      "stdout_file": "PlayerController.diff",
+      "stdout_sha256": "3d9f2ff205fb7c8aa5c9f6604e5e695f1503e95347b5a8aed33256d9479cd061",
+      "stderr_bytes": 0
+    },
+    {
+      "args": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "stdout_file": "git-state.stdout.log",
+      "stdout_sha256": "3a3a9719445b75012cfac661c7f7ef6998a4a20dc2ee2fbd10bd19fa47fec559",
+      "stderr_bytes": 0
+    },
+    {
+      "args": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "stdout_file": "git-head.stdout.log",
+      "stdout_sha256": "beb501b7ca7535a3a905b5d2cb53902334f6dc22fbc7ef42ab7b1b17921d97f7",
+      "stderr_bytes": 0
+    },
+    {
+      "args": [
+        "git",
+        "branch",
+        "--show-current"
+      ],
+      "exit_code": 0,
+      "stdout_file": "git-branch.stdout.log",
+      "stdout_sha256": "8303ca833b899e5748e17cbf956da395907dc77a3a0b145ddbad07b06d09fee0",
+      "stderr_bytes": 0
+    }
+  ],
+  "current_source_sha256": "1773c057de69328ef9d6031d875f0ee27a612bcb78aeab1180b10c72f1f86209",
+  "current_source_stable_during_capture": true
+}

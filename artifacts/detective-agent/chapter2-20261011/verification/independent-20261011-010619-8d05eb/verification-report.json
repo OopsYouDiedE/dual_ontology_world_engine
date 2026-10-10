@@ -1,0 +1,151 @@
+{
+  "head": "1403465243def4fdc21d148d97208d70ca362b70",
+  "scope": "independent build and mechanism validation only",
+  "results": {
+    "host_build": "passed; 0 warnings, 0 errors",
+    "generated_story_outputs": "current; 7 outputs",
+    "controller_build": "passed; 0 warnings, 0 errors",
+    "controller_runtime": "passed; 54 checks",
+    "controller_compiler": "passed; 22 checks"
+  },
+  "commands": [
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "godot_csharp/DualOntologyWorldEngine.sln",
+        "-m:1",
+        "--disable-build-servers"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 18.172,
+      "stdout": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\01-host-build.stdout.log",
+      "stderr": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\01-host-build.stderr.log"
+    },
+    {
+      "command": [
+        "python",
+        "godot_csharp/tools/compile_story.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.563,
+      "stdout": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\02-story-check.stdout.log",
+      "stderr": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\02-story-check.stderr.log"
+    },
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "-m:1",
+        "--disable-build-servers"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 18.734,
+      "stdout": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\03-controller-build.stdout.log",
+      "stderr": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\03-controller-build.stderr.log"
+    },
+    {
+      "command": [
+        "dotnet",
+        "run",
+        "--project",
+        "godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj",
+        "-c",
+        "Release",
+        "--no-build",
+        "--no-restore"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.188,
+      "stdout": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\04-controller-run.stdout.log",
+      "stderr": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\04-controller-run.stderr.log"
+    },
+    {
+      "command": [
+        "python",
+        "godot_csharp/tools/check/check_player_controller.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.359,
+      "stdout": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\05-controller-python.stdout.log",
+      "stderr": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\verification\\independent-20261011-010619-8d05eb\\05-controller-python.stderr.log"
+    }
+  ],
+  "raw_log_manifest": {
+    "00-head.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "00-head.stdout.log": {
+      "bytes": 41,
+      "sha256": "7e2fa875335874a7f87f2917d821d0641baaa8d2c72c9ee497d57a234e2b12a5"
+    },
+    "00-status-before.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "00-status-before.stdout.log": {
+      "bytes": 335,
+      "sha256": "36f0783079c511fa1f882426cd94a527a860c457259a0ac06c66859ac65e7f0a"
+    },
+    "01-host-build.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "01-host-build.stdout.log": {
+      "bytes": 1094,
+      "sha256": "ec9812f1fc4af39ab515f63505d0898f879e766f281d9577e188fea8ad029087"
+    },
+    "02-story-check.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "02-story-check.stdout.log": {
+      "bytes": 41,
+      "sha256": "a4c3144116be709e99e430821d268f0880fd25c400aca8b3b4e93375f50b5101"
+    },
+    "03-controller-build.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "03-controller-build.stdout.log": {
+      "bytes": 1308,
+      "sha256": "2ac5963e71e59c9785728ec14959aea9fd7a745dd0216c98e5431c0d4721a6ea"
+    },
+    "04-controller-run.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "04-controller-run.stdout.log": {
+      "bytes": 2108,
+      "sha256": "3fa0dde910ac184ef54a64f623b6de0da679acc445ba7a8758f2636b3251124f"
+    },
+    "05-controller-python.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "05-controller-python.stdout.log": {
+      "bytes": 643,
+      "sha256": "c96958053d410fa4d95d6be4986ee40231b8fc5b6eac37d5609c4595fbb5db90"
+    },
+    "06-status-after.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "06-status-after.stdout.log": {
+      "bytes": 335,
+      "sha256": "36f0783079c511fa1f882426cd94a527a860c457259a0ac06c66859ac65e7f0a"
+    }
+  },
+  "not_verified": [
+    "Godot UI rendering",
+    "full game playthrough",
+    "literary or design conformance"
+  ],
+  "source_modified_by_this_agent": false,
+  "godot_started_by_this_agent": false
+}

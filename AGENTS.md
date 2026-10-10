@@ -28,6 +28,8 @@
 | `artifacts/<task-name>/` | 阶段成果、验证报告与交付物 |
 | `tmp/`、`scratch/` | 仅存放一次性临时输出 |
 
+通用主体行动经验与评分由 Core 的 `SubjectiveDecision` / `ActionLearning` 提供；宿主负责公开候选、真实执行反馈与各类 AI 入口接线。主体经历只读取本人已获知信息，独立于地图、界面和章节内容，并保留角色能力预算。模块合同及独立回归入口见各目录 AGENTS.md。
+
 ## 环境
 
 - .NET 8 SDK

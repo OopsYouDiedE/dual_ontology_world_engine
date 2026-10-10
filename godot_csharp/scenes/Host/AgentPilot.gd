@@ -22,6 +22,9 @@ var _reply: Dictionary = {}
 var _pressed: Array[int] = []
 var _last_decision: Dictionary = {}
 var _last_gate := "-"
+var _spaces: Dictionary = {}
+var _places: Dictionary = {}
+var _routes: Dictionary = {}
 
 func attach(main: Node) -> void:
 	host = main
@@ -81,6 +84,14 @@ func _gate() -> String:
 func _observe() -> Dictionary:
 	var field: Node = host.field
 	var ui: Node = host.ui
+	if is_instance_valid(field) and field.player != null:
+		# Opaque coordinate-frame identity; source map IDs remain in the host.
+		var map_key: String = field.adapter.map_key()
+		if not _spaces.has(map_key): _spaces[map_key] = "space:%d" % (_spaces.size() + 1)
+		var located: String = engine.AgentLocate(_spaces[map_key], field.player.position.x, field.player.position.y)
+		if located != "":
+			stop(located)
+			return {}
 	var panel := _open_panel()
 	if panel != "":
 		var code: String = engine.AgentObservePanel(panel, _run_label)
@@ -176,7 +187,9 @@ func _keyboard_move(keys: Array) -> void:
 		var code: int = MOVE_KEYS[str(key)]
 		_pressed.append(code)
 		Input.parse_input_event(_key(code, true))
-	await get_tree().create_timer(0.35).timeout
+	var deadline := Time.get_ticks_msec() + 350
+	while not stopping and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
 	_release_keys()
 	if is_instance_valid(field) and field.player != null:
 		recorded.emit("keyboard_move", {"keys": keys, "start_position": [start.x, start.y], "end_position": [field.player.position.x, field.player.position.y]})
@@ -206,16 +219,28 @@ func stop(reason: String) -> void:
 # --------------------------------------------------------------- offers ---
 
 ## 现场此刻对这名角色公开的输入：视线内的调查点、走得到的短步、键盘方向、等待与面板快捷键。
-static func _field_offers(field: Node, snapshot: Dictionary) -> Array:
+func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 	var offers := []
+	var space: String = field.adapter.map_key()
+	if not _places.has(space): _places[space] = {}
+	var remembered: Dictionary = _places[space]
+	var visible_labels := {}
 	for id in field.sites:
 		if not field.site_visible(id): continue
 		var point: Vector2 = field.site_point(id)
+		var label: String = str(field.sites[id].title)
+		visible_labels[label] = true
+		remembered[label] = {"point": point, "reach": float(field.sites[id].reach)}
 		offers.append({"label": str(field.sites[id].title), "kind": "interact", "new": field.site_is_new(id), "location": [point.x, point.y], "input": {"kind": "field_action", "action": "interact", "site": id}})
+	for label in remembered.keys():
+		if not visible_labels.has(label) and field.in_sight(remembered[label].point): remembered.erase(label)
+	var known: AStarGrid2D = PilotNavigation.remember_grid(field, _routes.get(space))
+	_routes[space] = known
+	offers.append_array(PilotNavigation.approaches(field, remembered, known))
 	offers.append_array(PilotNavigation.offers(field))
 	# Keyboard walking is a public input even when its landing room is unseen; the field resolves it.
 	for keys in [["W"], ["S"], ["A"], ["D"], ["W", "A"], ["W", "D"], ["S", "A"], ["S", "D"]]:
-		# Where the press heads (one short stride): lets the seat remember ground it has already walked.
+		# Offered direction for scoring; actual position is observed separately after execution.
 		var heading := Vector2.ZERO
 		for key in keys: heading += {"W": Vector2.UP, "S": Vector2.DOWN, "A": Vector2.LEFT, "D": Vector2.RIGHT}[key]
 		var aim: Vector2 = field.player.position + heading.normalized() * 48.0

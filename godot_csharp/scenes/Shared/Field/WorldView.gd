@@ -757,6 +757,7 @@ func _step_aside(actor: CharacterBody2D, route: PackedVector2Array) -> void:
 ## 换图（多地图章节）：玩家移进新图，人物按快照重新站位；玩家自己走过去的，告诉章节到了哪里。
 func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -> void:
 	if not _applying_scene and adapter.has_method("can_enter") and not adapter.can_enter(key):
+		_cancel_click()
 		adapter.blocked_entry()
 		field_event.emit({"kind": "blocked_move", "map": key})
 		return

@@ -86,17 +86,21 @@ public sealed partial class Chapter1Session
             _out.Add(Event("strategy_action", ("actor", who), ("method", method), ("source", choice.Decision.Basis.Name),
                 ("reasons", choice.Reasons.ToArray()), ("minutes", _content.GameMinutes),
                 ("cognition", _world.StrategyBasis(who)), ("known_evidence", clue)));
-            Start(StrategyAction(who, method, scene, clue));
+            Start(StrategyAction(who, method, scene, clue, choice));
             return true;
         }
         return false;
     }
 
-    private IEnumerable<Op> StrategyAction(string who, string method, string scene, string? clue)
+    private IEnumerable<Op> StrategyAction(string who, string method, string scene, string? clue, DecisionAssessment choice)
     {
+        var experience = _world.BeginStrategyMethod(who, choice);
+        var outcome = DecisionOutcomeV1.Interrupted;
+        try
+        {
         // Only the initiating actor approaches. The detective retains the choice of where to go and what to answer.
         yield return new Run(Summon(who));
-        if (!Session.IsLocalTarget(who, "detective") || !F(who).Visible) yield break;
+        if (!Session.IsLocalTarget(who, "detective") || !F(who).Visible) { outcome = DecisionOutcomeV1.NoProgress; yield break; }
         yield return new Run(Say(scene));
         if (method is "report" or "remember" && clue is not null && _world.ReportKnownEvidence(who, clue, out var text))
         {
@@ -107,6 +111,9 @@ public sealed partial class Chapter1Session
         }
         else if (method == "invite" && clue is not null)
             yield return new Run(WalkTo(who, new Dictionary<string, object?> { ["approach_site"] = clue, ["inset"] = 14.0 }, 130.0));
+        outcome = DecisionOutcomeV1.Succeeded;
+        }
+        finally { _world.CompleteStrategyMethod(who, experience, outcome); }
     }
 
     private void ObserveAnswerAdvance(int priorStep)
