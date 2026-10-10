@@ -525,7 +525,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession, IPlaye
         _continuations.Enqueue(o=>
         {
             _game.EndInteractionLifetime();
-            _behavior.EndChapterLifetime();
+            _behavior.EndChapterLifetimeAtFinale();
             _narrative.EndLifetime(LifetimeScope.Chapter);
             _ended=true;_stage="ended";
             o.AddRange(EndEvents(new Dictionary<string,object?>

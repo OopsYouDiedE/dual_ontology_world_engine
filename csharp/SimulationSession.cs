@@ -45,6 +45,8 @@ public sealed class SimulationSession(WorldRuntime world, CTBSystem? timeline = 
     });
     public event Action<ActionExecution>? Completed;
     public bool IsActing(Projection actor) => _active.Any(e => ReferenceEquals(e.Intent.Actor, actor));
+    /// <summary>当前未完成（含等待条件）的行动快照。</summary>
+    public IReadOnlyList<ActionExecution> Active => [.. _active];
     /// <summary>阶段提交后的只读宿主通知；不参与决策或结算。</summary>
     public event Action<ActionExecution>? StageCommitted;
 

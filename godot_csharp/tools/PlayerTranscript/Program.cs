@@ -330,6 +330,8 @@ sealed class Transcript
     {
         foreach(var step in steps.EnumerateArray())
         {
+            // 续章到达终局后路线停止；剩余步骤属于未到达的日程。
+            if(routeDay>0&&game.Snapshot().GetValueOrDefault("ended") is true)return;
             string Value(string key)=>step.GetProperty(key).GetString()!;
             string Label()=>SampleText("player-transcript",Value("label"));
             switch(Value("op"))

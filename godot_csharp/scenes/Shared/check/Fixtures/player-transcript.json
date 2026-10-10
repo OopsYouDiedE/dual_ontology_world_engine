@@ -247,7 +247,7 @@
       "steps": [
         {
           "op": "inspect",
-          "map": "logistics"
+          "map": "living_hall"
         },
         {
           "op": "ask",
@@ -260,15 +260,7 @@
         },
         {
           "op": "inspect",
-          "map": "central_hall"
-        },
-        {
-          "op": "ask",
-          "limit": 2
-        },
-        {
-          "op": "inspect",
-          "map": "clinic"
+          "map": "zone_jia"
         },
         {
           "op": "ask",
@@ -280,8 +272,9 @@
           "label": "text-062"
         },
         {
-          "op": "move",
-          "map": "logistics"
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-064"
         },
         {
           "op": "action",
@@ -304,34 +297,13 @@
       "day": 3,
       "steps": [
         {
-          "op": "inspect",
-          "map": "central_hall"
-        },
-        {
-          "op": "ask",
-          "limit": 2
-        },
-        {
           "op": "action",
           "cmd": "stay",
           "label": "text-058"
         },
         {
-          "op": "move",
-          "map": "lecture"
-        },
-        {
-          "op": "ask",
-          "limit": 1
-        },
-        {
-          "op": "action",
-          "cmd": "class",
-          "label": "text-059"
-        },
-        {
           "op": "inspect",
-          "map": "logistics"
+          "map": "central_hall"
         },
         {
           "op": "ask",
@@ -344,11 +316,24 @@
         },
         {
           "op": "inspect",
-          "map": "greenhouse"
+          "map": "logistics"
         },
         {
           "op": "ask",
           "limit": 2
+        },
+        {
+          "op": "inspect",
+          "map": "clinic"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-062"
         },
         {
           "op": "inspect",
@@ -359,9 +344,12 @@
           "limit": 2
         },
         {
-          "op": "action",
-          "cmd": "stay",
-          "label": "text-062"
+          "op": "inspect",
+          "map": "greenhouse"
+        },
+        {
+          "op": "ask",
+          "limit": 2
         },
         {
           "op": "move",

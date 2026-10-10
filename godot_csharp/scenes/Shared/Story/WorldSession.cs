@@ -255,6 +255,18 @@ public sealed partial class WorldSession : IDisposable
             _loaded.Add(chapter.Id); _order.Add(chapter.Id); CurrentChapter = chapter.Id;
         }
     }
+    /// <summary>
+    /// 终局收场：没有后续章节接续时，本章仍未完成的人物行动按取消结束（记录取消事件，按既有清理回滚），
+    /// 再结束本章作用域。章节交接仍走 <see cref="EndChapterLifetime"/>，未完成行动必须先完成。
+    /// </summary>
+    public void EndChapterLifetimeAtFinale()
+    {
+        lock (_gate)
+        {
+            foreach (var execution in Simulation.Active) Simulation.Cancel(execution);
+            EndChapterLifetime();
+        }
+    }
     public void EndChapterLifetime()
     {
         lock (_gate)
