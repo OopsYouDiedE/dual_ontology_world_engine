@@ -1,0 +1,581 @@
+{
+  "purpose": "automatic check/tool; independent frozen expectations and explicit scenario inputs",
+  "texts": {
+    "text-001": "侦探",
+    "text-002": "是我闩的门。",
+    "text-003": "门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。",
+    "text-004": "他说的是：闩门，别开。",
+    "text-005": "我信霍铎——我们早已相熟。",
+    "text-006": "【作答】",
+    "text-007": "；出示：",
+    "text-008": "歇息",
+    "text-009": "出面调停",
+    "text-010": "【回应依据】卡片尚不能确定这个话题的完整因果，选择暂且不答。",
+    "text-011": "登记",
+    "text-012": "封存",
+    "text-013": "【选择】",
+    "text-014": "卡片",
+    "text-015": "作答",
+    "text-016": "终局",
+    "text-017": "可选陈述",
+    "text-018": "隔离门",
+    "text-019": "【物品】",
+    "text-020": "已开启",
+    "text-021": "已被取用",
+    "text-022": "已归还",
+    "text-023": "可选：",
+    "text-024": "【当前文字】",
+    "text-025": "尚未检视",
+    "text-026": "已检视",
+    "text-027": "【场上物品】",
+    "text-028": "【重演手稿文字】\n",
+    "text-029": "【重演反馈】",
+    "text-030": "吻合",
+    "text-031": "冲突",
+    "text-032": "未检视",
+    "text-033": "前往并检视 ",
+    "text-034": "检视 ",
+    "text-035": "前往 ",
+    "text-036": "询问 ",
+    "text-037": "02 · 一局完整正常路线的实际引擎玩家可见文字与场上物品",
+    "text-038": "记录说明：正式连续会话的语义输入记录。",
+    "text-039": "由现有完整原始记录导出，未重新运行游戏。",
+    "text-040": "由正式连续会话的实际输出记录。",
+    "text-041": "逻辑宿主代报公开空间到场与呈现完成，未运行 Godot 几何、碰撞、寻路与画面。\n输入路线：正常醒来、相遇、报名及报偿核验；检视外衣和生活翼物证、比对鞋底、声路试验、昨夜重演与始业四问；继续同一局五日学园生活。\n首课选择精确解释、首餐调停；日常领粮、读板、询问、夜里睡觉；案发次晨查看实际痕迹，未充分确认的对质议题暂不答；末日按实际菜单提案与支持。\n正文只保留玩家文字、选项文本、物品名称及公开状态，按实际顺序排列；这是语义记录，不能用于评价现实游玩时长。",
+    "text-042": "开始",
+    "text-043": "场景就绪",
+    "text-044": "继续同一局学园生活",
+    "text-045": "公开空间",
+    "text-046": "度过当前时段",
+    "text-047": "参加课程",
+    "text-048": "睡到天亮",
+    "text-049": "提交当前行动",
+    "text-050": "按已设处境进行昨夜重演",
+    "text-051": "姓名：",
+    "text-052": "\n【记录完成】本局已到第五日正式终局，完整终局文字见上。",
+    "text-053": "场景就绪；正常醒来",
+    "text-054": "进入活动厅相遇",
+    "text-055": "向铜口提交四问",
+    "text-056": "继续学园生活：继承当前运行世界",
+    "text-057": "学园场景就绪",
+    "text-058": "读板问话后度过清晨",
+    "text-059": "参加上午课程",
+    "text-060": "首餐领粮并调停",
+    "text-061": "午间领粮",
+    "text-062": "度过午后",
+    "text-063": "晚间正常对质",
+    "text-064": "晚间领粮",
+    "text-065": "夜里睡到天亮",
+    "text-066": "\n【记录完成】本局正式会话已到末日终局（ended）；终局文字见上。未另建第二章世界。",
+    "day-heading": "\n========== 玩家第{0}日 =========="
+  },
+  "answers": [
+    {
+      "say": "me",
+      "show": "E3"
+    },
+    {
+      "say": "V3_0",
+      "show": "E8"
+    },
+    {
+      "say": "V4_0",
+      "show": "E7"
+    },
+    {
+      "say": "trust",
+      "show": "E9"
+    }
+  ],
+  "avoid-choices": [],
+  "priority-choices": [
+    "chapter2:lesson_precise"
+  ],
+  "council-choices": [
+    "proposal:0",
+    "archive:0",
+    "support:0"
+  ],
+  "chapter1-route": [
+    {
+      "op": "input",
+      "label": "text-042",
+      "input": {
+        "kind": "start"
+      }
+    },
+    {
+      "op": "input",
+      "label": "text-053",
+      "input": {
+        "kind": "view_ready"
+      }
+    },
+    {
+      "op": "position",
+      "actor": "detective",
+      "point": [
+        480,
+        300
+      ]
+    },
+    {
+      "op": "input",
+      "label": "text-054",
+      "input": {
+        "kind": "tick",
+        "delta": 0.1
+      }
+    },
+    {
+      "op": "site",
+      "id": "E12",
+      "action": "",
+      "wait_ticks": 0
+    },
+    {
+      "op": "site",
+      "id": "E1",
+      "action": "experiment",
+      "wait_ticks": 0
+    },
+    {
+      "op": "site",
+      "id": "E2",
+      "action": "experiment",
+      "wait_ticks": 0
+    },
+    {
+      "op": "site",
+      "id": "E3",
+      "action": "experiment",
+      "wait_ticks": 0
+    },
+    {
+      "op": "site",
+      "id": "E4",
+      "action": "help",
+      "wait_ticks": 200
+    },
+    {
+      "op": "site",
+      "id": "E5",
+      "action": "help",
+      "wait_ticks": 200
+    },
+    {
+      "op": "site",
+      "id": "E6",
+      "action": "help",
+      "wait_ticks": 200
+    },
+    {
+      "op": "site",
+      "id": "E7",
+      "action": "help",
+      "wait_ticks": 200
+    },
+    {
+      "op": "site",
+      "id": "E8j",
+      "action": "experiment",
+      "wait_ticks": 0
+    },
+    {
+      "op": "site",
+      "id": "E9",
+      "action": "help",
+      "wait_ticks": 200
+    },
+    {
+      "op": "input",
+      "label": "text-050",
+      "input": {
+        "kind": "replay",
+        "vars": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "skip": false
+      }
+    },
+    {
+      "op": "position",
+      "actor": "detective",
+      "point": [
+        500,
+        130
+      ]
+    },
+    {
+      "op": "prefer-choice",
+      "id": "answer"
+    },
+    {
+      "op": "input",
+      "label": "text-055",
+      "input": {
+        "kind": "interact",
+        "site": "E8"
+      }
+    }
+  ],
+  "continuation-start": [
+    {
+      "op": "input",
+      "label": "text-056",
+      "input": {
+        "kind": "navigate",
+        "to": "continue"
+      }
+    },
+    {
+      "op": "input",
+      "label": "text-057",
+      "input": {
+        "kind": "view_ready"
+      }
+    }
+  ],
+  "continuation-days": [
+    {
+      "day": 2,
+      "steps": [
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-060"
+        },
+        {
+          "op": "inspect",
+          "map": "central_hall"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "inspect",
+          "map": "clinic"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-062"
+        },
+        {
+          "op": "move",
+          "map": "logistics"
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-064"
+        },
+        {
+          "op": "move",
+          "map": "zone_yi"
+        },
+        {
+          "op": "interact-kind",
+          "map": "zone_yi",
+          "kind": "bed",
+          "label": "text-065"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "steps": [
+        {
+          "op": "inspect",
+          "map": "central_hall"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-058"
+        },
+        {
+          "op": "move",
+          "map": "lecture"
+        },
+        {
+          "op": "ask",
+          "limit": 1
+        },
+        {
+          "op": "action",
+          "cmd": "class",
+          "label": "text-059"
+        },
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-061"
+        },
+        {
+          "op": "inspect",
+          "map": "greenhouse"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "inspect",
+          "map": "archive"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-062"
+        },
+        {
+          "op": "move",
+          "map": "logistics"
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-064"
+        },
+        {
+          "op": "move",
+          "map": "zone_yi"
+        },
+        {
+          "op": "interact-kind",
+          "map": "zone_yi",
+          "kind": "bed",
+          "label": "text-065"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "steps": [
+        {
+          "op": "inspect",
+          "map": "central_hall"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-058"
+        },
+        {
+          "op": "move",
+          "map": "lecture"
+        },
+        {
+          "op": "ask",
+          "limit": 1
+        },
+        {
+          "op": "action",
+          "cmd": "class",
+          "label": "text-059"
+        },
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-061"
+        },
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "inspect",
+          "map": "central_hall"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-062"
+        },
+        {
+          "op": "move",
+          "map": "logistics"
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-064"
+        },
+        {
+          "op": "move",
+          "map": "zone_yi"
+        },
+        {
+          "op": "interact-kind",
+          "map": "zone_yi",
+          "kind": "bed",
+          "label": "text-065"
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "steps": [
+        {
+          "op": "move",
+          "map": "lecture"
+        },
+        {
+          "op": "ask",
+          "limit": 1
+        },
+        {
+          "op": "action",
+          "cmd": "class",
+          "label": "text-059"
+        },
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 2
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-061"
+        },
+        {
+          "op": "inspect",
+          "map": "granary"
+        },
+        {
+          "op": "ask",
+          "limit": 3
+        },
+        {
+          "op": "inspect",
+          "map": "clinic"
+        },
+        {
+          "op": "ask",
+          "limit": 3
+        },
+        {
+          "op": "inspect",
+          "map": "logistics"
+        },
+        {
+          "op": "ask",
+          "limit": 3
+        },
+        {
+          "op": "inspect",
+          "map": "central_hall"
+        },
+        {
+          "op": "ask",
+          "limit": 3
+        },
+        {
+          "op": "inspect",
+          "map": "archive"
+        },
+        {
+          "op": "ask",
+          "limit": 3
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-062"
+        },
+        {
+          "op": "move",
+          "map": "logistics"
+        },
+        {
+          "op": "action",
+          "cmd": "stay",
+          "label": "text-063"
+        },
+        {
+          "op": "move",
+          "map": "zone_yi"
+        },
+        {
+          "op": "interact-kind",
+          "map": "zone_yi",
+          "kind": "bed",
+          "label": "text-065"
+        }
+      ]
+    }
+  ],
+  "sentence-form-values": {
+    "sentence": "0",
+    "spot": "foyer"
+  },
+  "inspection-exclude-kinds": [
+    "bed",
+    "watch",
+    "meal",
+    "tube"
+  ],
+  "chapter1-choices": [
+    "detective",
+    "close"
+  ]
+}

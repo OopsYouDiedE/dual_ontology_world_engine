@@ -1,3 +1,4 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -6,12 +7,13 @@ using DualOntologyWorldEngine.Chapter2.Prototype;
 using Ev = System.Collections.Generic.Dictionary<string, object?>;
 
 var root = Path.GetFullPath(args.Length > 0 ? args[0] : Directory.GetCurrentDirectory());
-try { var transcript=new Transcript(root,args.Contains("--export"));if(args.Contains("--export"))transcript.Export();else transcript.Run(); }
+var outputArgument = Array.IndexOf(args, "--output");
+var outputDirectory = outputArgument < 0 ? null : outputArgument + 1 < args.Length ? args[outputArgument + 1] : throw new ArgumentException("--output requires a directory");
+try { var transcript=new Transcript(root,args.Contains("--export"),outputDirectory);if(args.Contains("--export"))transcript.Export();else transcript.Run(); }
 catch(Exception error) {Console.Error.WriteLine(error);Environment.ExitCode=1;}
 
 // One semantic playthrough. All world changes enter the production GameSession.
 // This host replaces only spatial arrival reports, never decisions or game state.
-// STORY-HARDCODE[CSH-011][logic][tool]: 玩家记录器绑定第一章与学园地点、人物、调查路线及条件分支。
 sealed class Transcript
 {
     readonly string root;
@@ -33,7 +35,7 @@ sealed class Transcript
     readonly HashSet<(int Day, string Daypart, string Person)> askedThisPeriod = [];
     readonly bool exportOnly;
     string visibleRoom="";
-    public Transcript(string root,bool exportOnly=false)
+    public Transcript(string root,bool exportOnly=false,string? outputDirectory=null)
     {
         this.root = root;
         this.exportOnly=exportOnly;
@@ -43,8 +45,10 @@ sealed class Transcript
         var script = Read("godot_csharp/scenes/Chapter2/Script/generated_chapter_02.json");
         campusSites = Chapter2AuthoredSites.ReadAll(script);
         game = exportOnly ? null! : new(script, "living", "campus");
-        log = new(Path.Combine(root, "artifacts/basic-ui-system/02-引擎输出的玩家可见动作.txt"), false, new UTF8Encoding(false)) { AutoFlush = true };
-        var rawDirectory=Path.Combine(root,"artifacts/basic-ui-system/player-traces");Directory.CreateDirectory(rawDirectory);
+        var destination = outputDirectory is null ? Path.Combine(root, "artifacts/basic-ui-system") : Path.GetFullPath(outputDirectory);
+        Directory.CreateDirectory(destination);
+        log = new(Path.Combine(destination, "02-引擎输出的玩家可见动作.txt"), false, new UTF8Encoding(false)) { AutoFlush = true };
+        var rawDirectory=Path.Combine(destination,"player-traces");Directory.CreateDirectory(rawDirectory);
         raw = exportOnly ? null! : new(Path.Combine(rawDirectory,"engine-full-output.jsonl"),false,new UTF8Encoding(false)){AutoFlush=true};
     }
     static Ev E(params (string K, object? V)[] ps) => ps.ToDictionary(p => p.K, p => p.V);
@@ -129,7 +133,6 @@ sealed class Transcript
             Send(E(("kind","tick"),("delta",.1)));
         }
     }
-    // STORY-HARDCODE[CSH-012][logic][tool]: 预设第一章作答文本/物证映射及第五日学园议事选择策略。
     void Respond(Ev ev)
     {
         string kind=S(ev,"kind"), pid=S(ev,"presentation_id");
@@ -164,16 +167,15 @@ sealed class Transcript
         if(kind=="form")
         {
             var fields=Maps(ev,"fields").ToArray(); var values=new Ev(); string action="confirm";
-            if(fields.Any(f=>S(f,"id")=="name")) values["name"]="侦探";
-            else if(fields.Any(f=>S(f,"id")=="sentence")) { values["sentence"]="0";values["spot"]="foyer";action="start"; }
+            if(fields.Any(f=>S(f,"id")=="name")) values["name"]=SampleText("player-transcript", "text-001");
+            else if(fields.Any(f=>S(f,"id")=="sentence")) { values=(Ev)Decode(Sample("player-transcript", "sentence-form-values"))!;action="start"; }
             else if(fields.Any(f=>S(f,"id")=="say"))
             {
-                string[] texts=["是我闩的门。","门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。","他说的是：闩门，别开。","我信霍铎——我们早已相熟。"];
-                string[] shows=["E3","E8","E7","E9"];
-                var say=Maps(fields.First(f=>S(f,"id")=="say"),"options").Single(o=>S(o,"label")==texts[answer]);
-                values["say"]=say["id"];values["show"]=shows[answer++];action="submit";
-                var evidence=Maps(fields.First(f=>S(f,"id")=="show"),"options").Single(o=>S(o,"id")==shows[answer-1]);
-                Note("【作答】"+texts[answer-1]+"；出示："+S(evidence,"label"));
+                var pick=Sample("player-transcript", "answers")[answer++];
+                var say=Maps(fields.First(f=>S(f,"id")=="say"),"options").Single(o=>S(o,"id")==pick.GetProperty("say").GetString());
+                var evidence=Maps(fields.First(f=>S(f,"id")=="show"),"options").Single(o=>S(o,"id")==pick.GetProperty("show").GetString());
+                values["say"]=say["id"];values["show"]=evidence["id"];action="submit";
+                Note(SampleText("player-transcript", "text-006")+S(say,"label")+SampleText("player-transcript", "text-007")+S(evidence,"label"));
             }
             else throw new InvalidOperationException("Unexpected form "+S(ev,"title"));
             Send(E(("kind","form"),("presentation_id",pid),("action",action),("values",values)));
@@ -189,24 +191,22 @@ sealed class Transcript
         if(!chapter2)
         {
             if(card!="")return opts.First(o=>S(o,"id").EndsWith(":close")||S(o,"id")=="close");
-            return Find("detective")??Find("close")??opts.First(o=>!S(o,"label").Contains("歇息"));
+            foreach(var id in SampleStrings("player-transcript", "chapter1-choices"))
+                if(Find(id) is {} preferred)return preferred;
+            return opts.First(o=>!SampleStrings("player-transcript", "avoid-choices").Contains(S(o,"id")));
         }
-        if(opts.FirstOrDefault(o=>S(o,"id").Contains("precise")) is {} precise)return precise;
-        if(opts.FirstOrDefault(o=>S(o,"label").StartsWith("出面调停")) is {} mediate)return mediate;
+        foreach(var id in SampleStrings("player-transcript", "priority-choices"))
+            if(Find(id) is {} preferred)return preferred;
         if(asking && Find("ask") is {} ask) {asking=false;return ask;}
-        if(Find("pause") is {} pause){Note("【回应依据】卡片尚不能确定这个话题的完整因果，选择暂且不答。");return pause;}
+        if(Find("pause") is {} pause){Note(SampleText("player-transcript", "text-010"));return pause;}
         if(Find("yes") is {} yes)return yes;
-        var proposal=opts.FirstOrDefault(o=>S(o,"id").StartsWith("proposal:") && S(o,"label").Contains("登记"));
-        if(proposal is not null)return proposal;
-        var archive=opts.FirstOrDefault(o=>S(o,"id").StartsWith("archive:") && S(o,"label").Contains("封存"));
-        if(archive is not null)return archive;
-        var support=opts.FirstOrDefault(o=>S(o,"id").StartsWith("support:") && S(o,"label").Contains("封存"));
-        if(support is not null)return support;
+        foreach(var id in SampleStrings("player-transcript", "council-choices"))
+            if(Find(id) is {} chosen)return chosen;
         return Find("close")??Find("confirm")??Find("cancel")??opts[0];
     }
     void Select(Ev ev,Ev option)
     {
-        Note("【选择】"+S(option,"label"));
+        Note(SampleText("player-transcript", "text-013")+S(option,"label"));
         Send(E(("kind","select"),("presentation_id",S(ev,"presentation_id")),("choice_id",option["id"]),("token",option.GetValueOrDefault("token"))));
     }
     void Text(Ev ev,params string[] keys) {foreach(var k in keys)if(S(ev,k)!="")Note(S(ev,k));}
@@ -224,7 +224,7 @@ sealed class Transcript
         }
         if(kind is "card" or "candidates" or "form" or "ending")
         {
-            Note("【"+(kind switch {"card"=>"卡片","form"=>"作答","ending"=>"终局",_=>"可选陈述"})+"】"+S(ev,"title"));
+            Note("【"+(kind switch {"card"=>SampleText("player-transcript", "text-014"),"form"=>SampleText("player-transcript", "text-015"),"ending"=>SampleText("player-transcript", "text-016"),_=>SampleText("player-transcript", "text-017")})+"】"+S(ev,"title"));
             Text(ev,"prompt","intro","source","facts","outcome");
             foreach(var k in new[]{"items","notes","rows","table"})foreach(var x in A(ev,k))Note(x is IEnumerable<object?> row ? string.Join("｜",row) : x?.ToString()??"");
             Text(M(ev,"header"),"question","instructions");
@@ -240,16 +240,16 @@ sealed class Transcript
         if(kind=="stage" && S(ev,"op")=="prop")
         {
             var id=S(ev,"id");var status=S(ev,"state");propStates[id]=status;
-            string? name = id=="isolation_door" ? "隔离门" : layout.RootElement.GetProperty("sites").EnumerateArray().FirstOrDefault(s=>s.GetProperty("id").GetString()==id) is var site && site.ValueKind!=JsonValueKind.Undefined ? site.GetProperty("title").GetString() : null;
-            if(name is not null)Note("【物品】"+name+"："+(status switch {"open"=>"已开启","taken"=>"已被取用","returned"=>"已归还",_=>status}));
+            string? name = id=="isolation_door" ? SampleText("player-transcript", "text-018") : layout.RootElement.GetProperty("sites").EnumerateArray().FirstOrDefault(s=>s.GetProperty("id").GetString()==id) is var site && site.ValueKind!=JsonValueKind.Undefined ? site.GetProperty("title").GetString() : null;
+            if(name is not null)Note(SampleText("player-transcript", "text-019")+name+"："+(status switch {"open"=>SampleText("player-transcript", "text-020"),"taken"=>SampleText("player-transcript", "text-021"),"returned"=>SampleText("player-transcript", "text-022"),_=>status}));
         }
         if(kind=="state") VisibleState(M(ev,"snapshot"));
     }
-    void Choices(Ev ev,string key){foreach(var o in Maps(ev,key))Note("可选："+S(o,"label")+(Available(o)?"":"（"+S(o,"lock_hint")+"）"));}
+    void Choices(Ev ev,string key){foreach(var o in Maps(ev,key))Note(SampleText("player-transcript", "text-023")+S(o,"label")+(Available(o)?"":"（"+S(o,"lock_hint")+"）"));}
     void Changed(string key,string text){if(text!=""&&stateText.GetValueOrDefault(key)!=text){stateText[key]=text;Note(text);}}
     void VisibleState(Ev snap)
     {
-        var hud=M(snap,"hud");Changed("time","【当前文字】"+S(hud,"title")+" "+S(hud,"time"));
+        var hud=M(snap,"hud");Changed("time",SampleText("player-transcript", "text-024")+S(hud,"title")+" "+S(hud,"time"));
         var sites=M(snap,"sites");
         var names=new List<string>();
         foreach(var (id,obj) in sites)
@@ -262,45 +262,44 @@ sealed class Transcript
                 if(def.ValueKind==JsonValueKind.Undefined)continue;
                 if(Room((def.GetProperty("x").GetDouble(),def.GetProperty("y").GetDouble()))!=(exportOnly?visibleRoom:Room(actors.GetValueOrDefault("detective"))))continue;
             }
-            var status=!chapter2||S(site,"kind")=="" ? "（"+(site.GetValueOrDefault("new") is true?"尚未检视":"已检视")+"）" : "";
+            var status=!chapter2||S(site,"kind")=="" ? "（"+(site.GetValueOrDefault("new") is true?SampleText("player-transcript", "text-025"):SampleText("player-transcript", "text-026"))+"）" : "";
             names.Add(S(site,"title")+status);
         }
-        if(names.Count>0)Changed("items","【场上物品】"+string.Join("；",names.Distinct()));
+        if(names.Count>0)Changed("items",SampleText("player-transcript", "text-027")+string.Join("；",names.Distinct()));
         var replay=M(snap,"replay");
         if(replay.GetValueOrDefault("open") is true)
         {
-            var sb=new StringBuilder("【重演手稿文字】\n"+S(replay,"title")+"\n"+S(replay,"hint"));
-            foreach(var q in Maps(replay,"questions")){sb.AppendLine().Append(S(q,"question")).Append(S(q,"mark"));foreach(var o in A(q,"options"))sb.AppendLine().Append("可选：").Append(o);}
+            var sb=new StringBuilder(SampleText("player-transcript", "text-028")+S(replay,"title")+"\n"+S(replay,"hint"));
+            foreach(var q in Maps(replay,"questions")){sb.AppendLine().Append(S(q,"question")).Append(S(q,"mark"));foreach(var o in A(q,"options"))sb.AppendLine().Append(SampleText("player-transcript", "text-023")).Append(o);}
             Changed("replayquestions",sb.ToString());
             var result=M(replay,"result");
             if(result.Count>0)
             {
-                var rs=new StringBuilder("【重演反馈】");
-                foreach(var f in Maps(result,"findings"))rs.AppendLine().Append(S(f,"title")).Append("：").Append(S(f,"text")).Append("（").Append(S(f,"status") switch {"match"=>"吻合","conflict"=>"冲突",_=>"未检视"}).Append('）');
+                var rs=new StringBuilder(SampleText("player-transcript", "text-029"));
+                foreach(var f in Maps(result,"findings"))rs.AppendLine().Append(S(f,"title")).Append("：").Append(S(f,"text")).Append("（").Append(S(f,"status") switch {"match"=>SampleText("player-transcript", "text-030"),"conflict"=>SampleText("player-transcript", "text-031"),_=>SampleText("player-transcript", "text-032")}).Append('）');
                 Changed("replayresult",rs.ToString());
             }
         }
     }
-    void C1Site(string id,string option="")
+    void C1Site(string id,string option,int waitTicks)
     {
         var site=layout.RootElement.GetProperty("sites").EnumerateArray().First(s=>s.GetProperty("id").GetString()==id);
         actors["detective"]=(site.GetProperty("x").GetDouble()+15,site.GetProperty("y").GetDouble());
-        Input("前往并检视 "+site.GetProperty("title").GetString(),E(("kind","tick"),("delta",.1)));
-        desiredCard=option;Input("检视 "+site.GetProperty("title").GetString(),E(("kind","interact"),("site",id)));
-        // 请来的人手上有事时要等一会儿才过来：像玩家一样在原地等，不立刻去点下一件东西。
-        if(option=="help") for(var i=0;i<200;i++){ Send(E(("kind","tick"),("delta",.1))); Drain(); }
+        Input(SampleText("player-transcript", "text-033")+site.GetProperty("title").GetString(),E(("kind","tick"),("delta",.1)));
+        desiredCard=option;Input(SampleText("player-transcript", "text-034")+site.GetProperty("title").GetString(),E(("kind","interact"),("site",id)));
+        for(var i=0;i<waitTicks;i++){ Send(E(("kind","tick"),("delta",.1))); Drain(); }
     }
     void Move(string map)
     {
         this.map=map;
         var site=campusSites.First(s=>s.Map==map);
-        Input("前往 "+Names.Of(site.Room),E(("kind","move"),("map",map),("place",site.Room.ToString())));
+        Input(SampleText("player-transcript", "text-035")+Names.Of(site.Room),E(("kind","move"),("map",map),("place",site.Room.ToString())));
     }
     void InspectMap(string map)
     {
         Move(map);
-        foreach(var site in campusSites.Where(s=>s.Map==map&&s.Kind is not ("bed" or "watch" or "meal" or "tube")))
-            Input("检视 "+site.Title,E(("kind","interact"),("map",map),("site",site.LocalId)));
+        foreach(var site in campusSites.Where(s=>s.Map==map&&!SampleStrings("player-transcript", "inspection-exclude-kinds").Contains(s.Kind)))
+            Input(SampleText("player-transcript", "text-034")+site.Title,E(("kind","interact"),("map",map),("site",site.LocalId)));
     }
     void AskLocal(int limit=2)
     {
@@ -310,15 +309,15 @@ sealed class Transcript
         foreach(var p in people)
         {
             if (!askedThisPeriod.Add((routeDay, S(current,"daypart"), S(p,"key")))) continue;
-            asking=true;Input("询问 "+S(p,"name"),E(("kind","interact"),("map",map),("target",S(p,"key"))));
+            asking=true;Input(SampleText("player-transcript", "text-036")+S(p,"name"),E(("kind","interact"),("map",map),("target",S(p,"key"))));
         }
     }
     void Act(string cmd,string label)=>Input(label,E(("kind","action"),("act",E(("cmd",cmd)))));
     void Header()
     {
-        Note("02 · 一局完整正常路线的实际引擎玩家可见文字与场上物品");
-        Note("记录说明：正式连续会话的语义输入记录。"+(exportOnly?"由现有完整原始记录导出，未重新运行游戏。":"由正式连续会话的实际输出记录。"));
-        Note("逻辑宿主代报公开空间到场与呈现完成，未运行 Godot 几何、碰撞、寻路与画面。\n输入路线：正常醒来、相遇、报名及报偿核验；检视外衣和生活翼物证、比对鞋底、声路试验、昨夜重演与始业四问；继续同一局五日学园生活。\n首课选择精确解释、首餐调停；日常领粮、读板、询问、夜里睡觉；案发次晨查看实际痕迹，未充分确认的对质议题暂不答；末日按实际菜单提案与支持。\n正文只保留玩家文字、选项文本、物品名称及公开状态，按实际顺序排列；这是语义记录，不能用于评价现实游玩时长。");
+        Note(SampleText("player-transcript", "text-037"));
+        Note(SampleText("player-transcript", "text-038")+(exportOnly?SampleText("player-transcript", "text-039"):SampleText("player-transcript", "text-040")));
+        Note(SampleText("player-transcript", "text-041"));
     }
     static object? Decode(JsonElement element)=>element.ValueKind switch
     {
@@ -327,6 +326,29 @@ sealed class Transcript
         JsonValueKind.String=>element.GetString(), JsonValueKind.True=>true,JsonValueKind.False=>false,
         JsonValueKind.Number=>element.TryGetInt32(out var number)?(object)number:element.GetDouble(), _=>null
     };
+    void ExecuteSteps(JsonElement steps)
+    {
+        foreach(var step in steps.EnumerateArray())
+        {
+            string Value(string key)=>step.GetProperty(key).GetString()!;
+            string Label()=>SampleText("player-transcript",Value("label"));
+            switch(Value("op"))
+            {
+                case "input": Input(Label(),(Ev)Decode(step.GetProperty("input"))!);break;
+                case "position": actors[Value("actor")]=Point(step.GetProperty("point"));break;
+                case "prefer-choice": desiredChoice=Value("id");break;
+                case "site": C1Site(Value("id"),Value("action"),step.GetProperty("wait_ticks").GetInt32());break;
+                case "move": Move(Value("map"));break;
+                case "inspect": InspectMap(Value("map"));break;
+                case "ask": AskLocal(step.GetProperty("limit").GetInt32());break;
+                case "action": Act(Value("cmd"),Label());break;
+                case "interact-kind":
+                    var site=campusSites.First(s=>s.Map==Value("map")&&s.Kind==Value("kind"));
+                    Input(Label(),E(("kind","interact"),("map",site.Map),("site",site.LocalId)));break;
+                default: throw new InvalidDataException("Unknown route operation: "+Value("op"));
+            }
+        }
+    }
     public void Export()
     {
         var labels=new Dictionary<string,string>();var fields=new Dictionary<string,Dictionary<string,string>>();
@@ -341,35 +363,35 @@ sealed class Transcript
                 var reported=M(M(input,"context"),"actors");var det=M(reported,"detective");
                 if(S(det,"room")!="")visibleRoom=S(det,"room");
                 string title="";
-                if(kind=="start"){waitingView=true;title="开始";}
-                if(kind=="view_ready"){waitingView=false;title="场景就绪";}
-                if(kind=="navigate"){chapter2=true;waitingView=true;title="继续同一局学园生活";}
+                if(kind=="start"){waitingView=true;title=SampleText("player-transcript", "text-042");}
+                if(kind=="view_ready"){waitingView=false;title=SampleText("player-transcript", "text-043");}
+                if(kind=="navigate"){chapter2=true;waitingView=true;title=SampleText("player-transcript", "text-044");}
                 if(kind=="move")
                 {
                     map=S(input,"map");var site=campusSites.FirstOrDefault(s=>s.Map==map);
-                    title="前往 "+(site is null?"公开空间":Names.Of(site.Room));
+                    title=SampleText("player-transcript", "text-035")+(site is null?SampleText("player-transcript", "text-045"):Names.Of(site.Room));
                 }
                 if(kind=="interact")
                 {
                     var target=S(input,"target");var site=S(input,"site");
-                    if(target!="")title="询问 "+(Enum.TryParse<P>(target,out var person)?Names.Of(person):content.RootElement.GetProperty("PERSON_NAMES").GetProperty(target).GetString());
-                    else if(chapter2)title="检视 "+campusSites.First(s=>s.Map==S(input,"map")&&s.LocalId==site).Title;
+                    if(target!="")title=SampleText("player-transcript", "text-036")+(Enum.TryParse<P>(target,out var person)?Names.Of(person):content.RootElement.GetProperty("PERSON_NAMES").GetProperty(target).GetString());
+                    else if(chapter2)title=SampleText("player-transcript", "text-034")+campusSites.First(s=>s.Map==S(input,"map")&&s.LocalId==site).Title;
                     else
                     {
                         var definition=layout.RootElement.GetProperty("sites").EnumerateArray().First(s=>s.GetProperty("id").GetString()==site);
-                        title="检视 "+definition.GetProperty("title").GetString();
+                        title=SampleText("player-transcript", "text-034")+definition.GetProperty("title").GetString();
                     }
                 }
-                if(kind=="action")title=S(M(input,"act"),"cmd") switch{"stay"=>"度过当前时段","class"=>"参加课程","sleep"=>"睡到天亮",_=>"提交当前行动"};
-                if(kind=="replay")title="按已设处境进行昨夜重演";
+                if(kind=="action")title=S(M(input,"act"),"cmd") switch{"stay"=>SampleText("player-transcript", "text-046"),"class"=>SampleText("player-transcript", "text-047"),"sleep"=>SampleText("player-transcript", "text-048"),_=>SampleText("player-transcript", "text-049")};
+                if(kind=="replay")title=SampleText("player-transcript", "text-050");
                 if(title!="")Note($"\n【操作 {++request:D4}】{title}");
-                if(kind=="select"&&labels.TryGetValue(S(input,"choice_id"),out var chosen))Note("【选择】"+chosen);
+                if(kind=="select"&&labels.TryGetValue(S(input,"choice_id"),out var chosen))Note(SampleText("player-transcript", "text-013")+chosen);
                 if(kind=="form")
                 {
                     var values=M(input,"values");var selectedValues=new List<string>();
                     foreach(var (id,value) in values)
-                        selectedValues.Add(id=="name"?"姓名："+value:fields.TryGetValue(id,out var choices)&&choices.TryGetValue(value?.ToString()??"",out var label)?label:"");
-                    Note("【作答】"+string.Join("；",selectedValues.Where(s=>s!="")));
+                        selectedValues.Add(id=="name"?SampleText("player-transcript", "text-051")+value:fields.TryGetValue(id,out var choices)&&choices.TryGetValue(value?.ToString()??"",out var label)?label:"");
+                    Note(SampleText("player-transcript", "text-006")+string.Join("；",selectedValues.Where(s=>s!="")));
                 }
                 foreach(var ev in Maps(data,"output"))
                 {
@@ -388,57 +410,28 @@ sealed class Transcript
                 }
             }
             if(!chapter2||final.GetValueOrDefault("ended") is not true)throw new InvalidDataException("Saved continuous record is incomplete.");
-            Note("\n【记录完成】本局已到第五日正式终局，完整终局文字见上。");
+            Note(SampleText("player-transcript", "text-052"));
             Console.WriteLine("Exported existing complete record; no game dispatch performed.");
         }
         finally {log.Dispose();layout.Dispose();content.Dispose();}
     }
-    // STORY-HARDCODE[CSH-013][logic][tool]: 固定执行第一章检视顺序与连续五日路线以生成语义记录。
     public void Run()
     {
         try
         {
             Header();
-            Input("开始",E(("kind","start")));
-            Input("场景就绪；正常醒来",E(("kind","view_ready")));
-            actors["detective"]=(480,300);
-            Input("进入活动厅相遇",E(("kind","tick"),("delta",.1)));
-            C1Site("E12");
-            foreach(var id in new[]{"E1","E2","E3","E4","E5","E6","E7","E8j","E9"})
-                C1Site(id,id is "E1" or "E2" or "E3" or "E8j"?"experiment":id is "E4" or "E5" or "E6" or "E7" or "E9"?"help":"");
-            Input("按已设处境进行昨夜重演",E(("kind","replay"),("vars",new object?[]{0,0,0,0,0,1}),("skip",false)));
-            actors["detective"]=(500,130);desiredChoice="answer";
-            Input("向铜口提交四问",E(("kind","interact"),("site","E8")));
+            ExecuteSteps(Sample("player-transcript", "chapter1-route"));
             if(game.Snapshot().GetValueOrDefault("ended") is not true)throw new InvalidOperationException("C1 did not end.");
             chapter2=true;
-            Input("继续学园生活：继承当前运行世界",E(("kind","navigate"),("to","continue")));
-            Input("学园场景就绪",E(("kind","view_ready")));
-            // The two introductory production actions occupy Morning and Forenoon.
-            for(int day=2;day<=5;day++)
+            ExecuteSteps(Sample("player-transcript", "continuation-start"));
+            foreach(var day in Sample("player-transcript", "continuation-days").EnumerateArray())
             {
-                routeDay = day;
-                Note($"\n========== 玩家第{day-1}日 ==========");
-                if(day>2 && day!=5)
-                {
-                    InspectMap("central_hall");AskLocal();Act("stay","读板问话后度过清晨");
-                }
-                if(day>2){Move("lecture");AskLocal(1);Act("class","参加上午课程");}
-                InspectMap("logistics");AskLocal();Act("stay",day==2?"首餐领粮并调停":"午间领粮");
-                if(day==5)
-                {
-                    foreach(var m in new[]{"granary","clinic","logistics","central_hall","archive"}){InspectMap(m);AskLocal(3);}
-                }
-                else
-                {
-                    foreach(var m in day==2?new[]{"central_hall","clinic"}:day==3?new[]{"greenhouse","archive"}:new[]{"logistics","central_hall"}){InspectMap(m);AskLocal();}
-                }
-                Act("stay","度过午后");Move("logistics");Act("stay",day==5?"晚间正常对质":"晚间领粮");
-                Move("zone_yi");
-                var bed=campusSites.First(s=>s.Map=="zone_yi"&&s.Kind=="bed");
-                Input("夜里睡到天亮",E(("kind","interact"),("map","zone_yi"),("site",bed.LocalId)));
+                routeDay=day.GetProperty("day").GetInt32();
+                Note(string.Format(SampleText("player-transcript", "day-heading"),routeDay-1));
+                ExecuteSteps(day.GetProperty("steps"));
             }
             if(game.Snapshot().GetValueOrDefault("ended") is not true)throw new InvalidOperationException("Continuous session did not reach ended.");
-            Note("\n【记录完成】本局正式会话已到末日终局（ended）；终局文字见上。未另建第二章世界。");
+            Note(SampleText("player-transcript", "text-066"));
             Console.WriteLine("Complete continuous transcript: "+request+" semantic operations; ended.");
         }
         finally { log.Dispose();raw.Dispose();game.Dispose();layout.Dispose();content.Dispose(); }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Text;
 using DualOntologyWorldEngine.Awakening;
 using DualOntologyWorldEngine.Core;
@@ -16,15 +18,12 @@ void Check(bool ok, string name)
     Line((ok ? "PASS " : "FAIL ") + name);
 }
 
-// STORY-HARDCODE[AWK-045][schema][fixture]: 穷举检查内的真值组合、逐项反证表和答案是验证夹具数据。
-var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);
-string Short(NightVariables v) => string.Join(" ",
-    v.V1 switch { SuPlace.OwnRoom => "苏泠在房", SuPlace.Hall => "苏泠在厅", _ => "苏泠在备餐间" },
-    v.V2 switch { HuoPlace.ByTube => "霍铎在铜口", HuoPlace.OwnRoom => "霍铎在房", _ => "霍铎在门厅" },
-    v.V3 == VoiceOrigin.Tube ? "经铜口" : "在门外",
-    v.V4 == VoiceWords.BoltKeepShut ? "闩门别开" : "开门救我",
-    v.V5 switch { DetectiveHeeds.Huo => "听霍铎", DetectiveHeeds.Su => "听苏泠", _ => "听自己" },
-    v.V6 == Acquaintance.Familiar ? "相熟" : "初识");
+var truth = SampleAs<NightVariables>("replay-check", "golden-variables");
+var variableDisplays = Chapter1Data.Root.GetProperty("VARIABLES").EnumerateArray()
+    .ToDictionary(variable => variable.GetProperty("key").GetString()!, variable => variable.GetProperty("options"));
+string Short(NightVariables v) => string.Join(" ", new[]
+    { ("V1", (int)v.V1), ("V2", (int)v.V2), ("V3", (int)v.V3), ("V4", (int)v.V4), ("V5", (int)v.V5), ("V6", (int)v.V6) }
+    .Select(value => variableDisplays[value.Item1][value.Item2].GetString()));
 
 // ---------------------------------------------------------------- 1. 解空间穷举
 var morning = new MorningWorld();
@@ -36,28 +35,19 @@ var results = all.Select(NightReplay.Run).ToArray();
 var matches = results.Where(r => r.FullMatch).ToArray();
 Check(matches.Length == 1, $"全部证物对照下完全吻合的组合数 = {matches.Length}");
 Check(matches.Length == 1 && matches[0].Variables == truth, "唯一吻合组合 = 设计 §4.4（她的房间 / 活动厅铜口旁 / 从主楼对着铜口说 / 闩门，别开 / 霍铎 / 早已相熟）");
-Check(results.All(r => r.Log.All(l => !l.Contains("失败"))), "216 次重演中没有行动因客观不可行而失败");
-Check(results.All(r => r.Frames.Length >= 3), "每次重演都产生可回放的帧（至少警铃与两次人声）");
+Check(results.All(r => r.Log.All(l => !l.Contains(SampleText("replay-check", "text-001")))), SampleText("replay-check", "text-002"));
+Check(results.All(r => r.Frames.Length >= 3), SampleText("replay-check", "text-003"));
 
 Line("");
-Line("== 每个错误组合被哪些证物否定（全部证物已检视时）");
+Line(SampleText("replay-check", "text-004"));
 foreach (var r in results.Where(r => !r.FullMatch))
     Line($"{Short(r.Variables),-40} -> {string.Join(" ", r.Conflicts)}");
 
 Line("");
-Line("== 单个错误值（其余变量取真值）与设计 §4.4 否定表核对");
-var expected = new (string Name, NightVariables Variables, string[] Evidence)[]
-{
-    ("V1 活动厅", truth with { V1 = SuPlace.Hall }, ["E2", "E5"]),
-    ("V1 备餐间", truth with { V1 = SuPlace.Pantry }, ["E2", "E5"]),
-    ("V2 他的房间", truth with { V2 = HuoPlace.OwnRoom }, ["E7"]),
-    ("V2 门厅", truth with { V2 = HuoPlace.Foyer }, ["E7", "E3"]),
-    ("V3 门外走廊", truth with { V3 = VoiceOrigin.OutsideDoor }, ["E7", "E2"]),
-    ("V4 开门，救我", truth with { V4 = VoiceWords.OpenSaveMe }, ["E7", "E1"]),
-    ("V5 苏泠", truth with { V5 = DetectiveHeeds.Su }, ["E1", "E3"]),
-    ("V5 自己判断", truth with { V5 = DetectiveHeeds.Himself }, ["E1", "E7"]),
-    ("V6 素不相识", truth with { V6 = Acquaintance.Strangers }, ["E1", "E7", "E9"]),
-};
+Line(SampleText("replay-check", "text-005"));
+var expected = Sample("replay-check", "single-wrong-values").EnumerateArray().Select(row => (
+    Name: row.GetProperty("name").GetString()!, Variables: row.GetProperty("variables").Deserialize<NightVariables>()!,
+    Evidence: row.GetProperty("evidence").EnumerateArray().Select(id => id.GetString()!).ToArray()));
 foreach (var (name, variables, evidence) in expected)
 {
     var conflicts = results.First(r => r.Variables == variables).Conflicts;
@@ -66,8 +56,8 @@ foreach (var (name, variables, evidence) in expected)
 
 foreach (var (name, wrong) in new (string, Func<NightVariables, bool>)[]
 {
-    ("V1≠她的房间", v => v.V1 != truth.V1), ("V2≠铜口旁", v => v.V2 != truth.V2), ("V3≠铜口", v => v.V3 != truth.V3),
-    ("V4≠闩门别开", v => v.V4 != truth.V4), ("V5≠霍铎", v => v.V5 != truth.V5), ("V6≠早已相熟", v => v.V6 != truth.V6),
+    (SampleText("replay-check", "text-015"), v => v.V1 != truth.V1), (SampleText("replay-check", "text-016"), v => v.V2 != truth.V2), (SampleText("replay-check", "text-017"), v => v.V3 != truth.V3),
+    (SampleText("replay-check", "text-018"), v => v.V4 != truth.V4), (SampleText("replay-check", "text-019"), v => v.V5 != truth.V5), (SampleText("replay-check", "text-020"), v => v.V6 != truth.V6),
 })
 {
     var subset = results.Where(r => wrong(r.Variables)).ToArray();
@@ -75,7 +65,7 @@ foreach (var (name, wrong) in new (string, Func<NightVariables, bool>)[]
 }
 
 Line("");
-Line("== 删去单件证物后吻合的组合（衡量每件证物在解空间中的必要性）");
+Line(SampleText("replay-check", "text-021"));
 foreach (var (id, _, name) in Comparison.Items)
 {
     var survivors = results.Where(r => r.Conflicts.All(c => c == id)).Select(r => Short(r.Variables)).ToArray();
@@ -84,7 +74,7 @@ foreach (var (id, _, name) in Comparison.Items)
 
 // 唯一解不依赖行动值调参：在一组速度、延迟参数上复测（逐项改一个参数，再加随机组合）。
 Line("");
-Line("== 行动值参数扫描（唯一解是否依赖先后调参）");
+Line(SampleText("replay-check", "text-022"));
 var timings = new List<(string Name, NightTiming Timing)>();
 var baseTiming = NightTiming.Default;
 foreach (var v in new[] { 0.4, 0.6, 1.2, 2.0 }) timings.Add(($"侦探速度 {v}", baseTiming with { DetectiveSpeed = v }));
@@ -112,16 +102,16 @@ foreach (var (name, timing) in timings)
         var truthRunHere = sweep.First(r => r.Variables == truth);
         truthLost.Add($"{name}（真值组合冲突 {string.Join(" ", truthRunHere.Conflicts)}）");
     }
-    Line($"{(wrong.Length > 0 ? "错配" : winners.Contains(truth) ? "唯一" : "真值不再重现")}  {name}  {timing}");
+    Line($"{(wrong.Length > 0 ? SampleText("replay-check", "text-023") : winners.Contains(truth) ? SampleText("replay-check", "text-024") : SampleText("replay-check", "text-025"))}  {name}  {timing}");
 }
-Check(falseMatches.Count == 0, $"{timings.Count} 组行动值参数下，没有任何错误组合吻合现场" + (falseMatches.Count == 0 ? "" : "；错配：" + string.Join("；", falseMatches)));
-Check(results.First(r => r.Variables == truth).FullMatch, "默认行动值下真值组合必须重现现场（苏泠先于侦探到门边是故事前提，主代理裁定接受）");
+Check(falseMatches.Count == 0, $"{timings.Count} 组行动值参数下，没有任何错误组合吻合现场" + (falseMatches.Count == 0 ? "" : SampleText("replay-check", "text-026") + string.Join("；", falseMatches)));
+Check(results.First(r => r.Variables == truth).FullMatch, SampleText("replay-check", "text-027"));
 Line($"仍依赖先后的地方：{timings.Count - truthLost.Count}/{timings.Count} 组参数下真值组合仍全部吻合；其余 {truthLost.Count} 组里真值本身重现不出现场（苏泠须先于侦探到门边开门）：{string.Join("；", truthLost)}");
 
 // 盲目改值能多快试出答案：每次只改一个变量、选冲突最少的那一改（贪心爬山），从每个起点出发要重演几次。
 // 这一项只是度量，不判通过与否：次数越少，越可能退化成“试到全绿”的填空。
 Line("");
-Line("== 贪心试错度量（每次改一个变量，保留冲突最少者）");
+Line(SampleText("replay-check", "text-028"));
 var byVars = results.ToDictionary(r => r.Variables, r => r.Conflicts.Length);
 int[] Sizes = [3, 3, 2, 2, 3, 2];
 NightVariables With(NightVariables v, int index, int value) => index switch
@@ -158,40 +148,40 @@ Line($"错误组合中冲突最少的有 {results.Count(r => r.Conflicts.Length 
 
 // ---------------------------------------------------------------- 2. 引擎推演，而非查表
 Line("");
-Line("== 推演来源");
+Line(SampleText("replay-check", "text-029"));
 var strangers = results.First(r => r.Variables == truth with { V6 = Acquaintance.Strangers });
-Check(strangers.Log.Any(l => l.Contains("侦探 对 霍铎 的请求：Negotiate")), "V6=素不相识时，侦探没有接受霍铎的请求：SocialSystem 判为 Negotiate（信任不足）");
-Check(strangers.Frames.Any(f => f.Thoughts[Person.Detective].Contains("我凭什么信一个昨天才认识的人？")), "回放中侦探的心声气泡出现“我凭什么信一个昨天才认识的人？”");
+Check(strangers.Log.Any(l => l.Contains(SampleText("replay-check", "text-030"))), SampleText("replay-check", "text-031"));
+Check(strangers.Frames.Any(f => f.Thoughts[Person.Detective].Contains(SampleText("replay-check", "text-032"))), SampleText("replay-check", "text-033"));
 var truthRun = results.First(r => r.Variables == truth);
-var voiceFrame = truthRun.Frames.First(f => f.Label.Contains("铜口说话"));
-Check(voiceFrame.Thoughts.Values.Distinct().Count() == 4, "铜口说话的同一刻，四人的心声互不相同：" + string.Join(" / ", voiceFrame.Thoughts.Select(t => $"{Names.Of(t.Key)}：{t.Value}")));
+var voiceFrame = truthRun.Frames.First(f => f.Event.Kind == "voice_tube");
+Check(voiceFrame.Thoughts.Values.Distinct().Count() == 4, SampleText("replay-check", "text-034") + string.Join(" / ", voiceFrame.Thoughts.Select(t => $"{Names.Of(t.Key)}：{t.Value}")));
 var again = NightReplay.Run(truth);
-Check(again.Traces.ToString() == truthRun.Traces.ToString() && again.Log.SequenceEqual(truthRun.Log), "同一组变量重演两次，结果与过程完全相同（每次新建独立世界）");
+Check(again.Traces.ToString() == truthRun.Traces.ToString() && again.Log.SequenceEqual(truthRun.Log), SampleText("replay-check", "text-035"));
 
 // ---------------------------------------------------------------- 3. 感知隔离
 Line("");
-Line("== 感知隔离（清晨的声路试验）");
+Line(SampleText("replay-check", "text-036"));
 var positions = new Dictionary<Person, Room> { [Person.Detective] = Room.Foyer, [Person.Huo] = Room.Hall, [Person.Shen] = Room.Pantry, [Person.Su] = Room.R05 };
 var heard = morning.SoundTest(TestSentences.All[0], positions);
-foreach (var h in heard) Line($"  {Names.Of(h.Who)} 在 {Names.Of(h.Where)}：{h.Text}{(h.SeemsFromOutside ? "（像在门外）" : "")}");
-Check(heard.Select(h => h.Text).Distinct().Count() == 4, "同一句话在四个位置得到四种不同的感知");
-Check(heard.First(h => h.Where == Room.Foyer) is { Hearing: Hearing.Tail, SeemsFromOutside: true, Text: "……开门" }, "门边只听到句尾重读的“……开门”，且像从门外来");
-Check(heard.First(h => h.Where == Room.Hall).Hearing == Hearing.Full, "铜口旁听到整句");
-Check(morning.WorldOf(Person.Detective).History.Last().Details == "……开门" && morning.WorldOf(Person.Huo).History.Last().Details == "闩上门，不要开门。",
-    "各人的感知只写入各自的内部世界");
-Check(morning.RealityFingerprint() == realityBefore, "声路试验不改动客观世界");
+foreach (var h in heard) Line($"  {Names.Of(h.Who)} 在 {Names.Of(h.Where)}：{h.Text}{(h.SeemsFromOutside ? SampleText("replay-check", "text-037") : "")}");
+Check(heard.Select(h => h.Text).Distinct().Count() == 4, SampleText("replay-check", "text-038"));
+Check(heard.First(h => h.Where == Room.Foyer) is { Hearing: Hearing.Tail, SeemsFromOutside: true } foyerHeard && foyerHeard.Text == SampleText("replay-check", "text-039"), SampleText("replay-check", "text-040"));
+Check(heard.First(h => h.Where == Room.Hall).Hearing == Hearing.Full, SampleText("replay-check", "text-041"));
+Check(morning.WorldOf(Person.Detective).History.Last().Details == SampleText("replay-check", "text-039") && morning.WorldOf(Person.Huo).History.Last().Details == SampleText("replay-check", "text-042"),
+    SampleText("replay-check", "text-043"));
+Check(morning.RealityFingerprint() == realityBefore, SampleText("replay-check", "text-044"));
 
 // ---------------------------------------------------------------- 4. 重演不改现实
 Line("");
-Line("== 重演不改动现实世界");
+Line(SampleText("replay-check", "text-045"));
 var mindsBeforeReplay = Enum.GetValues<Person>().ToDictionary(p => p, morning.MindFingerprint);
 foreach (var v in all.Take(40)) NightReplay.Run(v);
-Check(morning.RealityFingerprint() == realityBefore, "跑完 216+40 次重演后，清晨现实世界的证物与人物状态不变");
-Check(Enum.GetValues<Person>().All(p => morning.MindFingerprint(p) == mindsBeforeReplay[p]), "跑完重演后，四人清晨的内部世界不变");
+Check(morning.RealityFingerprint() == realityBefore, SampleText("replay-check", "text-046"));
+Check(Enum.GetValues<Person>().All(p => morning.MindFingerprint(p) == mindsBeforeReplay[p]), SampleText("replay-check", "text-047"));
 
 // ---------------------------------------------------------------- 5. 回忆只影响本人
 Line("");
-Line("== 回忆只影响本人");
+Line(SampleText("replay-check", "text-048"));
 foreach (var memory in MorningWorld.Memories)
 {
     var before = Enum.GetValues<Person>().ToDictionary(p => p, morning.MindFingerprint);
@@ -204,28 +194,23 @@ foreach (var memory in MorningWorld.Memories)
     morning.Recall(memory.Evidence);
     Check(morning.Hooks(memory.Who) == hooks + 1, $"{Names.Of(memory.Who)}重复回忆不再加钩");
 }
-Check(morning.RealityFingerprint() == realityBefore, "回忆不改动客观世界");
+Check(morning.RealityFingerprint() == realityBefore, SampleText("replay-check", "text-049"));
 
 // ---------------------------------------------------------------- 6. 欲望放大与同伴是否触物回忆（引擎决定）
 Line("");
-Line("== 欲望放大（Corruption）与同伴触物回忆的决定");
+Line(SampleText("replay-check", "text-050"));
 RecallDecision Ask(MorningWorld world, string evidence, Person who, bool showRule1)
 {
     if (showRule1) world.ShowRule1(who);
-    world.Amplify(who, "（走近旧物时的一句真话）");
+    world.Amplify(who, SampleText("replay-check", "text-051"));
     return world.DecideRecall(evidence)!;
 }
 var told = new MorningWorld();
-foreach (var who in Enum.GetValues<Person>()) told.Amplify(who, "（S4 核验报偿时的一句真话）");
+foreach (var who in Enum.GetValues<Person>()) told.Amplify(who, SampleText("replay-check", "text-052"));
 Check(told.WorldOf(Person.Huo).History.Any(h => h.Source == ObservationSource.Corruption) && told.DesireStrength(Person.Huo) == 2,
-    "S4 恶魔的话以 Corruption 来源写入霍铎认知，欲望加强");
+    SampleText("replay-check", "text-053"));
 // 三人倾向各不相同（设计 §5）：(物件, 人, 未告知时, 已告知时)
-foreach (var (evidence, who, plainExpected, toldExpected) in new[]
-{
-    ("E7", Person.Huo, RecallChoice.Touch, RecallChoice.Touch),
-    ("E5", Person.Su, RecallChoice.Touch, RecallChoice.Refuse),
-    ("E10", Person.Shen, RecallChoice.Hesitate, RecallChoice.Refuse),
-})
+foreach (var (evidence, who, plainExpected, toldExpected) in Sample("replay-check", "recall-choices").EnumerateArray().Select(row => (row.GetProperty("evidence").GetString()!, Enum.Parse<Person>(row.GetProperty("who").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("plain").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("told").GetString()!))))
 {
     var plain = new MorningWorld();
     plain.Amplify(who, "S4");
@@ -249,33 +234,28 @@ foreach (var (advice, adviceExpected) in new[] { ("touch", RecallChoice.Touch), 
     Check(stance == DualOntologyWorldEngine.Core.SocialStance.Accept && after.Choice == adviceExpected,
         $"沈鼎“你说呢？”——侦探回答 {advice}：SocialSystem 判 {stance}，沈鼎选择 {after.Choice}（{after.Thought}）");
 }
-Check(MorningWorld.PostedRules.Length == 4 && MorningWorld.PostedRules.All(c => !c.Contains("契约") && !c.Contains("导师") && !c.Contains("归乡") && !c.Contains("放逐")),
-    "公告框只贴学园守则四条：不提契约、导师与第 9、10 条");
+Check(MorningWorld.PostedRules.Length == 4 && MorningWorld.PostedRules.All(c => !c.Contains(SampleText("replay-check", "text-054")) && !c.Contains(SampleText("replay-check", "text-055")) && !c.Contains(SampleText("replay-check", "text-056")) && !c.Contains(SampleText("replay-check", "text-057"))),
+    SampleText("replay-check", "text-058"));
 
 // ---------------------------------------------------------------- 6b. 冲突只描述痕迹之差
 Line("");
-Line("== 冲突文字只描述痕迹之差，不描述动作");
+Line(SampleText("replay-check", "text-059"));
 var conflictTexts = results.SelectMany(r => Comparison.Compare(r.Traces, MorningTraces.Evidence, _ => true))
     .Where(f => f.Status == FindingStatus.Conflict).Select(f => f.Text).Distinct().ToArray();
-var actionWords = new[] { "有人", "没有人", "报告", "回来", "敲了", "拿来", "踢", "撑在", "泡茶", "记谱" };
+var actionWords = new[] { SampleText("replay-check", "text-060"), SampleText("replay-check", "text-061"), SampleText("replay-check", "text-062"), SampleText("replay-check", "text-063"), SampleText("replay-check", "text-064"), SampleText("replay-check", "text-065"), SampleText("replay-check", "text-066"), SampleText("replay-check", "text-067"), SampleText("replay-check", "text-068"), SampleText("replay-check", "text-069") };
 var offending = conflictTexts.Where(t => actionWords.Any(t.Contains)).ToArray();
-Check(conflictTexts.Length > 0 && offending.Length == 0 && conflictTexts.All(t => t.StartsWith("重演中") && t.Contains("现场")),
+Check(conflictTexts.Length > 0 && offending.Length == 0 && conflictTexts.All(t => t.StartsWith(SampleText("replay-check", "text-070")) && t.Contains(SampleText("replay-check", "text-071"))),
     $"216 次重演的 {conflictTexts.Length} 种冲突文字都写成“重演中……；现场……”，不出现谁做了什么" + (offending.Length > 0 ? "：" + string.Join(" / ", offending) : ""));
 
 // ---------------------------------------------------------------- 7. 同伴自己会去碰（涌现）
 Line("");
-Line("== 恶魔低语后，同伴自己走向旧物（DecisionSystem 决定去不去、碰不碰；ActionRuntime 结算拿不拿得到）");
-foreach (var (evidence, who, room, wrong) in new[]
-{
-    ("E7", Person.Huo, Room.Hall, Room.Pantry),
-    ("E5", Person.Su, Room.Foyer, Room.Hall),
-    ("E10", Person.Shen, Room.Pantry, Room.Foyer),
-})
+Line(SampleText("replay-check", "text-072"));
+foreach (var (evidence, who, room, wrong) in Sample("replay-check", "reach-cases").EnumerateArray().Select(row => (row.GetProperty("evidence").GetString()!, Enum.Parse<Person>(row.GetProperty("who").GetString()!), Enum.Parse<Room>(row.GetProperty("room").GetString()!), Enum.Parse<Room>(row.GetProperty("wrong").GetString()!))))
 {
     var world = new MorningWorld();
     world.Amplify(who, "S4");
     var before = world.Intend(who)!;
-    world.Whisper(who, "（低语）");
+    world.Whisper(who, SampleText("replay-check", "text-073"));
     var after = world.Intend(who)!;
     Check(!before.Reach && after.Reach && world.WorldOf(who).History.Last().Source == ObservationSource.Corruption,
         $"{Names.Of(who)}：低语之前守着手头的事（{before.Thought}）；低语（Corruption）之后自己要去拿（{after.Thought}）");
@@ -292,23 +272,18 @@ foreach (var (evidence, who, room, wrong) in new[]
     var toldFirst = new MorningWorld();
     toldFirst.Amplify(who, "S4");
     toldFirst.ShowRule1(who);
-    toldFirst.Whisper(who, "（低语）");
+    toldFirst.Whisper(who, SampleText("replay-check", "text-073"));
     var expectGo = who == Person.Huo;
-    Check(toldFirst.Intend(who)!.Reach == expectGo, $"{Names.Of(who)}：事先读过守则第 1 条，低语之后{(expectGo ? "仍然要去" : "不去")}");
+    Check(toldFirst.Intend(who)!.Reach == expectGo, $"{Names.Of(who)}：事先读过守则第 1 条，低语之后{(expectGo ? SampleText("replay-check", "text-074") : SampleText("replay-check", "text-075"))}");
 }
 // 侦探在场时的三种回应：劝阻（Testimony，经 SocialSystem）、说明守则第 1 条（感知）、任其自便（什么也不说）；不在场时他独自取舍。
-foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, aloneExpected) in new[]
-{
-    ("E7", Person.Huo, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch, RecallChoice.Touch),
-    ("E5", Person.Su, RecallChoice.Touch, RecallChoice.Refuse, RecallChoice.Touch, RecallChoice.Touch),
-    ("E10", Person.Shen, RecallChoice.Refuse, RecallChoice.Refuse, RecallChoice.Hesitate, RecallChoice.Refuse),
-})
+foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, aloneExpected) in Sample("replay-check", "recall-responses").EnumerateArray().Select(row => (row.GetProperty("evidence").GetString()!, Enum.Parse<Person>(row.GetProperty("who").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("decline").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("clause").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("none").GetString()!), Enum.Parse<RecallChoice>(row.GetProperty("alone").GetString()!))))
 {
     MorningWorld Fresh()
     {
         var w = new MorningWorld();
         w.Amplify(who, "S4");
-        w.Whisper(who, "（低语）");
+        w.Whisper(who, SampleText("replay-check", "text-073"));
         return w;
     }
     var dissuaded = Fresh();
@@ -326,7 +301,7 @@ foreach (var (evidence, who, declineExpected, clauseExpected, noneExpected, alon
 }
 
 Line("");
-Line("== 真值组合的推演日志");
+Line(SampleText("replay-check", "text-076"));
 foreach (var l in truthRun.Log) Line("  " + l);
 Line("");
 Line($"TOTAL {checks} checks, {failures} failed");

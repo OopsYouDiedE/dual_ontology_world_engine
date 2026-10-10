@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 第二章命令行入口；完整原逻辑编译在正式剧本程序集。 -->
+  <!-- 第二章命令行入口与开发夹具；生产逻辑引用正式剧本程序集。 -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -12,7 +12,13 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Program.cs;Bots.cs;Checks.cs" />
     <ProjectReference Include="../Script/Chapter2Script.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../Shared/check/FixtureData.cs" Link="FixtureData.cs" />
+    <EmbeddedResource Include="../../Shared/check/Fixtures/bots.json" LogicalName="Fixtures.bots.json" />
+    <EmbeddedResource Include="../../Shared/check/Fixtures/chapter2-checks.json" LogicalName="Fixtures.chapter2-checks.json" />
+    <EmbeddedResource Include="../../Shared/check/Fixtures/chapter2-program.json" LogicalName="Fixtures.chapter2-program.json" />
   </ItemGroup>
 </Project>

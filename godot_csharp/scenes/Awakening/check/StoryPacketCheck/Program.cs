@@ -1,4 +1,6 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DualOntologyWorldEngine.Awakening;
 using DualOntologyWorldEngine.Story;
 
@@ -38,32 +40,58 @@ static List<string> Finish(Chapter1Dialogue dialogue, InteractionPacket packet)
     throw new Exception("entry exceeded budget");
 }
 
-// STORY-HARDCODE[AWK-049][schema][fixture]: 预写角色、剧情分支与固定台词断言属于自动测试夹具。
 var document = Chapter1CompiledDialogue.Create();
 Check(document.Entries.Count > 0, "real generated dialogue is present");
 var fileDocument = CompiledDialogueDocument.Parse(File.ReadAllText("godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json"));
 Check(JsonSerializer.Serialize(document) == JsonSerializer.Serialize(fileDocument), "compiled dialogue matches complete generated production document");
 
 var chapter = new Chapter1Script();
+// Changing every translated label must leave the selected compiled branch intact.
+{
+    var renamed = JsonNode.Parse(File.ReadAllText("godot_csharp/scenes/Awakening/Script/generated_awakening_dialogue.json"))!;
+    void RenameLabels(JsonNode node)
+    {
+        if (node is JsonObject obj)
+        {
+            if (obj.ContainsKey("label")) obj["label"] = "translated option";
+            foreach (var value in obj.Select(pair => pair.Value).OfType<JsonNode>().ToArray()) RenameLabels(value);
+        }
+        else if (node is JsonArray array)
+            foreach (var value in array.OfType<JsonNode>()) RenameLabels(value);
+    }
+    RenameLabels(renamed);
+    var runtime = new CompiledDialogueRuntime(CompiledDialogueDocument.Parse(renamed.ToJsonString()), new()
+    {
+        EvaluateCall = (_, _) => false, ExecuteCall = (_, _) => { }, Interpolate = text => text,
+    });
+    runtime.Start("talk_huo_menu");
+    var packet = runtime.Next();
+    for (var i = 0; packet.Choices.Count == 0 && i < 200; i++) packet = runtime.Next();
+    Check(packet.Choices.Single(choice => choice.Id == "talk_huo_menu:choice:1").Label == "translated option",
+        "translation mutation reaches the same stable choice ID");
+    runtime.Choose("talk_huo_menu:choice:1");
+    Check(runtime.Next().Lines.Single().LineId == "talk_huo_menu.004",
+        "translation mutation preserves the chosen response branch");
+}
 // Derived flow parameters must be refreshed when a continuation carries earlier values.
 {
     var flowWorld = chapter.CreateWorld();
     var flowContent = chapter.CreateContent();
     var progress = flowContent.Session;
     progress.Set("answer_state", "step", 3);
-    flowContent.StartFlow(flowWorld, "答辩·提问", ("步", "1"));
+    flowContent.StartFlow(flowWorld, "答辩·提问", (SampleText("story-packet-check", "text-001"), "1"));
     Check(flowContent.NextMeeting() == "answer_q3", "question provider replaces the carried step");
 
     progress.Set("answer_pick", "say", "me");
     progress.Set("answer_pick", "show", "E3");
-    flowContent.StartFlow(flowWorld, "答辩·裁决", ("裁决", "wrong_show"), ("步", "1"), ("下一步", "2"));
+    flowContent.StartFlow(flowWorld, "答辩·裁决", (SampleText("story-packet-check", "text-002"), "wrong_show"), (SampleText("story-packet-check", "text-001"), "1"), (SampleText("story-packet-check", "text-003"), "2"));
     Check(flowContent.NextMeeting() == "@sfx:answer_wrong:-3", "current wrong statement emits failure cue");
     flowContent.Presented();
     Check(flowContent.NextMeeting() == "answer_wrong_say", "verdict provider replaces the carried verdict");
 
     progress.Set("answer_pick", "say", "V4_0");
     progress.Set("answer_pick", "show", "E6");
-    flowContent.StartFlow(flowWorld, "答辩·裁决", ("裁决", "wrong_say"), ("步", "1"), ("下一步", "2"));
+    flowContent.StartFlow(flowWorld, "答辩·裁决", (SampleText("story-packet-check", "text-002"), "wrong_say"), (SampleText("story-packet-check", "text-001"), "1"), (SampleText("story-packet-check", "text-003"), "2"));
     Check(flowContent.NextMeeting() == "@sfx:answer_ok:-4", "corrected answer replaces the previous failure");
     flowContent.Presented();
     Check(flowContent.NextMeeting() == "answer_ok3", "correct answer uses the current question");
@@ -110,20 +138,20 @@ Check(dialogue.Next().IsComplete && people.All(person => world.DesireStrength(pe
 foreach (var branch in new[] { "first", "met", "replayed", "matched" })
 {
     // 霍铎的招呼按他自己的认知分支：看见侦探重演、看见重演吻合（总纲 §六 第二期），而不是全局进度。
-    if (branch == "replayed") world.Witness(Person.Huo, "侦探在重演昨夜");
-    if (branch == "matched") world.Witness(Person.Huo, "侦探重演吻合");
+    if (branch == "replayed") world.Witness(Person.Huo, SampleText("story-packet-check", "text-004"));
+    if (branch == "matched") world.Witness(Person.Huo, SampleText("story-packet-check", "text-005"));
     if (branch == "first") content.Session.Remove("flags", "met_huo");
     else content.Session.Set("flags", "met_huo", true);
     var talk = dialogue.Start("talk_huo");
     var expected = branch switch
     {
-        "first" => "……什么事。", "met" => "嗯。",
-        "replayed" => "你在推昨晚。推出什么，跟我说。",
-        _ => "你推完了。……我在这儿守了很久，是不是。",
+        "first" => SampleText("story-packet-check", "text-006"), "met" => SampleText("story-packet-check", "text-007"),
+        "replayed" => SampleText("story-packet-check", "text-008"),
+        _ => SampleText("story-packet-check", "text-009"),
     };
     Check(talk.Lines.Single().Text == expected, "real nested dialogue condition branch: " + branch);
     var talkMenu = Menu(dialogue, talk);
-    Finish(dialogue, dialogue.Choose(talkMenu.Choices.Single(choice => choice.Label == "没事了。").Id));
+    Finish(dialogue, dialogue.Choose(talkMenu.Choices.Single(choice => choice.Id == "talk_huo_menu:choice:9").Id));
 }
 content.Session.Set("state", "full_match_seen", false);
 content.Session.Set("state", "replay_count", 0);
@@ -132,7 +160,7 @@ content.Session.Set("flags", "price_heard", true);
 var offer = Menu(dialogue, dialogue.Start("recall_offer_su"));
 Check(offer.PresentationMode == PresentationMode.Menu && offer.Lines.Count > 0, "choice packet retains presented line");
 Check(offer.Choices.Count == 2 && offer.Choices.All(choice => choice.IsAvailable), "real recall offer presents both available story options");
-var sayNothing = offer.Choices.Single(choice => choice.Label == "什么都不说。");
+var sayNothing = offer.Choices.Single(choice => choice.Id == "recall_offer_su:choice:1");
 Finish(dialogue, dialogue.Choose(sayNothing.Id));
 Check(!content.Session.Has("flags", "show_rule"), "silent story choice leaves show-rule flag absent");
 offer = Menu(dialogue, dialogue.Start("recall_offer_su"));
@@ -147,9 +175,9 @@ Reject(() => dialogue.Choose(invite.Id), "runtime rejects locked choice");
 Reject(() => dialogue.Choose("absent-choice"), "runtime rejects unknown choice");
 var unchanged = dialogue.Next();
 Check(unchanged.Choices.SequenceEqual(menu.Choices) && !content.Session.Has("flags", "invite_hand_huo"), "rejected choices preserve pending menu and state");
-var pipe = unchanged.Choices.Single(choice => choice.Label == "这个铜口是什么？");
+var pipe = unchanged.Choices.Single(choice => choice.Id == "talk_huo_menu:choice:1");
 var answer = dialogue.Choose(pipe.Id);
-Check(answer.Lines.Any(line => line.Text.Contains("传声口")), "available option runs actual response branch");
+Check(answer.Lines.Any(line => line.Text.Contains(SampleText("story-packet-check", "text-010"))), "available option runs actual response branch");
 menu = Menu(dialogue, answer);
 Check(menu.Choices.Any(choice => choice.Id == invite.Id && !choice.IsAvailable), "actual jump returns to persistent question menu");
 content.Session.Set("hand_comparisons", "detective", true);
@@ -171,7 +199,7 @@ Check(dialogue.Next().IsComplete && world.DesireStrength(Person.Huo) == beforeWh
 world.ShowRule1(Person.Su);
 var suRule = Finish(dialogue, dialogue.Start("recall_shown_su"));
 Check(world.KnowsRule1(Person.Su) && !world.KnowsRule1(Person.Huo) && !world.KnowsRule1(Person.Shen), "actor rule cognition stays isolated");
-Check(suRule.Any(text => text.Contains("连着的此地")), "real rule-known dialogue branch presents text");
+Check(suRule.Any(text => text.Contains(SampleText("story-packet-check", "text-011"))), "real rule-known dialogue branch presents text");
 var existingWorld = chapter.CreateDialogue(content, world);
 var repeatedTalk = Finish(existingWorld, existingWorld.Start("s1_wake"));
 Check(repeatedTalk.Count > 0 && world.DesireStrength(Person.Huo) == beforeWhisper, "new dialogue session retains supplied world without active frames");

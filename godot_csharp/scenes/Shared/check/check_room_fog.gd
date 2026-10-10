@@ -1,7 +1,9 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 # Independent automatic regression with injected feet positions; not blind play.
 const MASK = preload("res://scenes/UI/Panels/Field/SightMask.gd")
-const INDOOR = ["central_hall", "lecture", "logistics", "granary", "clinic", "greenhouse", "archive", "counterweight", "living_hall", "resonance", "zone_yi", "zone_jia", "zone_ding", "zone_bing"]
+var INDOOR: Array = Samples.array("room-fog-check", "case-001")
 var checks := 0
 var failures := 0
 var out := ""
@@ -114,7 +116,7 @@ func verify_host(game: Node, key: String) -> void:
 			var c := Vector2i(x, y)
 			if y < rows.size() and x < rows[y].length():
 				var glyph: String = rows[y].substr(x, 1)
-				native_ok = native_ok and game.sight_interior(c) == (glyph == "." if key == "chapter1" else glyph in [".", "S"])
+				native_ok = native_ok and game.sight_interior(c) == (glyph == "." if key == "chapter1" else glyph in Samples.array("room-fog-check", "case-002"))
 			else: native_ok = false
 			if game.sight_interior(c):
 				floors.append(c)
@@ -188,7 +190,6 @@ func verify_props(game: Node, key: String, floors: Array) -> void:
 	game._process(0.0)
 	check(prop.self_modulate.a == 1.0 and not prop.visible, key + " known prop alpha restores while gameplay visible=false preserved")
 	if key == "chapter1":
-		# STORY-HARDCODE[CSH-019][logic][fixture]: 验证第一章E11a书架痕迹仅在进入其房间后可知。
 		game.sight.seen_cells.clear()
 		var unknown := true
 		for spec in game.decals.DECALS: unknown = unknown and not game.decals._known(spec[1])
@@ -199,7 +200,7 @@ func verify_props(game: Node, key: String, floors: Array) -> void:
 	prop.free()
 	game.sight.seen_cells.clear()
 func _capture() -> void:
-	for key in ["chapter1", "zone_yi"]:
+	for key in Samples.array("room-fog-check", "case-003"):
 		var path: String = "res://scenes/Awakening/Awakening.tscn" if key == "chapter1" else "res://scenes/Chapter2/Game/Chapter2Game.tscn"
 		var host = load(path).instantiate()
 		host.set_meta("skip_intro", true)
@@ -325,7 +326,6 @@ func _run() -> void:
 	game.load_map("zone_yi", "from_hall")
 	game.sight.seen_cells.clear()
 	await move(game, Vector2(112, 368))
-	# STORY-HARDCODE[CSH-020][logic][fixture]: 用第二章Huo检验未探索宿舍与当前房间人物的可见性。
 	if game.actors.is_empty(): game._make_actor("Huo")
 	if not game.actors.is_empty():
 		var npc: Node2D = game.actors.values()[0]
@@ -357,7 +357,6 @@ func _run() -> void:
 	for i in 4: await process_frame
 	print("RESULT automatic checks=", checks, " failures=", failures)
 	quit(0 if failures == 0 else 1)
-
 
 
 

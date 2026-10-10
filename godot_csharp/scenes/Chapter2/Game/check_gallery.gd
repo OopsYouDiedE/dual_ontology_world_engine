@@ -1,4 +1,6 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## 第二章关键画面截图（开发自检，有窗口）：跳到状态后截图，PNG 写入 user_dir 参数所给目录。
 ## 用法：& $env:GODOT --path godot_csharp --script res://scenes/Chapter2/Game/check_gallery.gd -- --out=<目录>
 
@@ -40,7 +42,6 @@ func send(input: Dictionary) -> void:
 	game._dispatch(input)
 	await finish_events()
 
-# STORY-HARDCODE[CH2-021][logic][tool]: 画廊脚本注入章一继承状态并预写第二章场景、行动与日期路线。
 func _run() -> void:
 	# Inject a real chapter-one handoff for this standalone automatic fixture.
 	# This is not a completed playthrough or a JSON reconstruction.
@@ -78,14 +79,14 @@ func _run() -> void:
 		game._dispatch({"kind": "interact", "map": "logistics", "site": "person:" + key, "target": key})
 		await shot("06_talk_menu")
 		game._dismiss_modal()
-	for act in [{"cmd": "collect"}, {"cmd": "stay", "place": "Logistics"}, {"cmd": "collect"}, {"cmd": "sleep"}]:
+	for act in Samples.array("chapter2-gallery", "case-001"):
 		await send({"kind": "action", "act": act})
 	var case_day: int = int(game.engine.CaseDay())
 	var guard := 0
 	while game.upcoming_day() < case_day and guard < 40:
 		guard += 1
 		await send({"kind": "action", "act": {"cmd": "sleep"} if game.upcoming_slot() == 5 else {"cmd": "stay", "place": "Logistics"}})
-	for pair in [["logistics", "ledger"], ["granary", "latch"], ["clinic", "empty_bowl"], ["zone_jia", "litter"]]:
+	for pair in Samples.array("chapter2-gallery", "case-002"):
 		await send({"kind": "move", "place": game.MAP_PLACE[pair[0]]})
 		await send({"kind": "interact", "map": pair[0], "site": pair[1], "target": ""})
 		game._dismiss_modal()

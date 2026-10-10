@@ -8,4 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="../../scenes/Shared/Game/GameSession.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../scenes/Shared/check/FixtureData.cs" Link="FixtureData.cs" />
+    <EmbeddedResource Include="../../scenes/Shared/check/Fixtures/player-transcript.json" LogicalName="Fixtures.player-transcript.json" />
+  </ItemGroup>
 </Project>

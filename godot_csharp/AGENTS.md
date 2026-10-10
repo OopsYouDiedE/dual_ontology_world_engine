@@ -115,6 +115,9 @@
 
 ## 四、工具与插件管理
 
+- 自动检查与固定路线工具的情境、路线和封存预期存于 `scenes/Shared/check/Fixtures/`，以稳定选项、行号、证物或夹具键查询；读取器 `FixtureData.cs` 仅由检查/工具项目链接，`fixture_data.gd` 仅由自动检查加载。黄金预期不从被测算法或正式真值表在运行时生成。第二章 `Prototype/Bots.cs`、`Checks.cs` 只由 `Prototype.csproj` 编译，正式 `Chapter2Script.csproj` 排除这两份开发代码。
+- `PlayerTranscript` 的调查、相遇/答辩输入及连续日程由 `Fixtures/player-transcript.json` 的路线步骤提供，工具只分派输入、等待与记录，保留两章结束断言；正式输出的房间到场回执仍由空间适配器处理。可在仓库路径后传 `--output <目录>`，把本轮采集放入隔离目录；省略时沿用原记录目录。隔离采集与封存预期各自保存，复测不得覆盖旧证据。
+
 - 源码内容审计使用根目录的 `STORY-HARDCODE` 标记约定，分别记录正式代码、夹具、工具、示例和编辑器预览。剧本生成的 C#/JSON 只登记来源，不手改；专用绑定与剧情因果分别分类。仅加标记时验证原有源码不变、宿主构建与修改过的 GDScript 语法，不将其当作一级、二级或三级验收。
 
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。

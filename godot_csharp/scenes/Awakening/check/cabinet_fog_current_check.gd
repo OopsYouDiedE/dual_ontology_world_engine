@@ -1,6 +1,7 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 # Independent injection regression. Only invitation travel uses real physics frames.
-# STORY-HARDCODE[AWK-056][schema][fixture]: E11 固定人物、证物顺序与结论只作专项回归夹具。
 const OUT := "C:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/remake-chapter2/shared-runtime/"
 var checks := 0
 var failures := 0
@@ -57,7 +58,7 @@ func run() -> void:
 	game.engine.ReplaceProgress("experiments", {})
 	locate(Vector2(640, 368))
 	var before := {}
-	for who in ["huo", "shen", "su"]: before[who] = state(who)
+	for who in Samples.array("cabinet-fog-check", "case-001"): before[who] = state(who)
 	game._on_experiment("E11")
 	await drain()
 	for who in before: check(state(who) == before[who], "remote card compare preserves " + who + " position/path/speed/life")
@@ -74,7 +75,7 @@ func run() -> void:
 	await drain()
 	check(game.engine.Progress("hand_comparisons").size() == 1 and not game.engine.Progress("experiments").has("E11"), "actual shelf self comparison records only 1/4")
 	check(str(game.engine.CardNotes("E11")).contains("1/4") and not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "partial progress visible without all-four conclusion")
-	for who in ["huo", "shen", "su"]: check(state(who) == before[who], "self comparison never summons " + who)
+	for who in Samples.array("cabinet-fog-check", "case-002"): check(state(who) == before[who], "self comparison never summons " + who)
 	game.close_modal()
 	game.engine.Locate("detective", "R05")
 	game.engine.Locate("huo", "Hall")
@@ -94,8 +95,8 @@ func run() -> void:
 	game.engine.SetProgress("hand_comparisons", "huo", true)
 	game.engine.SetProgress("hand_comparisons", "shen", true)
 	check(not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11) and not str(game.engine.CardNotes("E11")).contains(game.engine.Content().HELP_NOTES.E11), "four dictionary entries missing su cannot produce full host/formal conclusion")
-	for key in ["outsider", "huo", "shen"]: game.engine.RemoveProgress("hand_comparisons", key)
-	for who in ["huo", "shen", "su"]:
+	for key in Samples.array("cabinet-fog-check", "case-003"): game.engine.RemoveProgress("hand_comparisons", key)
+	for who in Samples.array("cabinet-fog-check", "case-004"):
 		var actor = game.actor_of(who)
 		actor.travelling = false
 		actor.position = shelf + Vector2(32, 40)
@@ -121,23 +122,23 @@ func run() -> void:
 	var idle := state("huo")
 	game.engine.SetProgress("life", "huo", {"state": "holding"})
 	game._invite_hand("huo")
-	check(not a.travelling and not game.hand_invitations.has("huo") and game.aside.text.contains("正忙"), "busy holding person receives rejection feedback")
+	check(not a.travelling and not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-001")), "busy holding person receives rejection feedback")
 	game.engine.RemoveProgress("life", "huo")
 	a.travelling = true
 	game._invite_hand("huo")
-	check(not game.hand_invitations.has("huo") and game.aside.text.contains("正忙"), "already travelling person receives busy rejection")
+	check(not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-001")), "already travelling person receives busy rejection")
 	a.travelling = false
 	locate(Vector2(640, 368))
 	game._invite_hand("huo")
-	check(state("huo") == idle and not game.hand_invitations.has("huo") and game.aside.text.contains("面前"), "remote invisible person receives rejection without movement")
+	check(state("huo") == idle and not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-002")), "remote invisible person receives rejection without movement")
 	locate(a.position + Vector2(64, 0))
 	game._invite_hand("huo")
-	check(not a.travelling and not game.hand_invitations.has("huo") and game.aside.text.contains("面前"), "visible person beyond 56px receives proximity rejection")
+	check(not a.travelling and not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-002")), "visible person beyond 56px receives proximity rejection")
 	locate(a.position + Vector2(32, 0))
 	var saved_floors = game.floors
 	game.floors = {}
 	game._invite_hand("huo")
-	check(state("huo") == idle and not game.hand_invitations.has("huo") and game.aside.text.contains("走不通"), "injected no-walkable-route receives rejection without movement")
+	check(state("huo") == idle and not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-003")), "injected no-walkable-route receives rejection without movement")
 	game.floors = saved_floors
 	var player_start: Vector2 = game.player.position
 	game._invite_hand("huo")
@@ -153,7 +154,7 @@ func run() -> void:
 		previous = a.position
 		game._update_hand_invitations(1.0 / 60.0)
 	check(not a.travelling and game._at_hand_shelf(a) and a.position.distance_to(start) > 32.0 and max_step < 5.0, "real normal physics path arrives at shelf without teleport (max step %.3f)" % max_step)
-	check(game.player.position == player_start and not game.story_lock and game.hand_invitations.is_empty() and game.aside.text.contains("已到"), "arrival feedback and invitation cleanup without forced player movement")
+	check(game.player.position == player_start and not game.story_lock and game.hand_invitations.is_empty() and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-004")), "arrival feedback and invitation cleanup without forced player movement")
 	game.engine.RemoveProgress("hand_comparisons", "huo")
 	game.engine.Locate("detective", "R05")
 	check(formal("huo") == ["help_E11_huo"], "actual invitation arrival synchronizes formal room R05 (no actor room injection)")
@@ -166,6 +167,6 @@ func run() -> void:
 	var stopped: Vector2 = a.position
 	game._update_hand_invitations(0.6)
 	game._update_hand_invitations(0.6)
-	check(not a.travelling and a.position == stopped and not game.hand_invitations.has("huo") and game.aside.text.contains("被挡住"), "accepted invitation with disabled actor cancels without snapping (injected stop)")
+	check(not a.travelling and a.position == stopped and not game.hand_invitations.has("huo") and game.aside.text.contains(Samples.text("cabinet-fog-check", "text-005")), "accepted invitation with disabled actor cancels without snapping (injected stop)")
 	print("RESULT automatic checks=", checks, " failures=", failures)
 	quit(0 if failures == 0 else 1)

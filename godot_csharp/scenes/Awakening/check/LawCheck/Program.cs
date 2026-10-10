@@ -1,11 +1,11 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Text.Json;
 using DualOntologyWorldEngine.Awakening;
 
 // 法则化检查（总纲 §六 第三期）：声路由法则推出、随现实接头改变而昨夜不变；证物毁去后由代管者补救；未建模给保守结果。
 static void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS " + name); }
 
-// STORY-HARDCODE[AWK-048][schema][fixture]: 声路和证物破坏检查中的具体状态及答案是自动测试夹具。
-var truth = new NightVariables(SuPlace.OwnRoom, HuoPlace.ByTube, VoiceOrigin.Tube, VoiceWords.BoltKeepShut, DetectiveHeeds.Huo, Acquaintance.Familiar);
+var truth = SampleAs<NightVariables>("law-check", "golden-variables");
 var acoustics = Chapter1Data.Root.GetProperty("ACOUSTICS").GetProperty("hearing");
 
 // ---- 声学法则与编译出的声路表一致 ----
@@ -24,16 +24,16 @@ foreach (var origin in Enum.GetValues<VoiceOrigin>())
     var before = JsonSerializer.Serialize(NightReplay.Run(truth).Traces);
     var positions = new Dictionary<Person, Room> { [Person.Detective] = Room.R05, [Person.Huo] = Room.Hall, [Person.Shen] = Room.Pantry, [Person.Su] = Room.R08 };
     Check(world.SoundTest(TestSentences.All[0], positions).Single(h => h.Who == Person.Su).Hearing == Hearing.Tail, "a loose wall joint lets Su hear the stressed tail");
-    Check(world.SetJoint("墙内接头", false), "the wall joint can be tightened");
+    Check(world.SetJoint(SampleText("law-check", "text-001"), false), "the wall joint can be tightened");
     Check(world.SoundTest(TestSentences.All[0], positions).Single(h => h.Who == Person.Su).Hearing == Hearing.AlarmOnly, "after tightening, R-08 hears nothing through the pipe");
     Check(Acoustics.Hear(VoiceOrigin.OutsideDoor, Room.R08, world.Joints) == Hearing.Nothing, "an outside voice no longer leaks into R-08");
     Check(JsonSerializer.Serialize(NightReplay.Run(truth).Traces) == before, "last night's traces keep last night's joints");
-    world.SetJoint("门框接头", false);
+    world.SetJoint(SampleText("law-check", "text-002"), false);
     var content = new AwakeningContentSession();
     content.Session.Locate("detective", "hall");
     content.Examine(world, "E8");
-    var tube = world.WorldOf(Person.Detective).Projections.First(p => p.Tags.Keys.Any(t => t.Name == "接头松动"));
-    Check(tube.Tags.First(t => t.Key.Name == "接头松动").Value == 0, "with both joints tight the tube card shows no loose joint");
+    var tube = world.WorldOf(Person.Detective).Projections.First(p => p.Tags.Keys.Any(t => t.Name == SampleText("law-check", "text-003")));
+    Check(tube.Tags.First(t => t.Key.Name == SampleText("law-check", "text-003")).Value == 0, "with both joints tight the tube card shows no loose joint");
 }
 
 // ---- 证物毁去：补救与保守结果 ----
@@ -51,7 +51,7 @@ foreach (var origin in Enum.GetValues<VoiceOrigin>())
     content.Session.Locate("detective", "foyer");
     content.Examine(world, "E3");
     Check(world.MindFingerprint(Person.Detective) == before, "a destroyed item cannot be examined");
-    Check(!content.DestroyEvidence(world, "不存在的东西") && content.Session.GetProgress("unmodeled").Count == 1, "an unmodelled target is reported and nothing changes");
-    Check(!content.SetJoint(world, "不存在的接头", true) && content.Session.GetProgress("unmodeled").Count == 2, "an unknown joint is reported and nothing changes");
+    Check(!content.DestroyEvidence(world, SampleText("law-check", "text-004")) && content.Session.GetProgress("unmodeled").Count == 1, "an unmodelled target is reported and nothing changes");
+    Check(!content.SetJoint(world, SampleText("law-check", "text-005"), true) && content.Session.GetProgress("unmodeled").Count == 2, "an unknown joint is reported and nothing changes");
 }
 Console.WriteLine("AUTO VALIDATION ONLY; NOT BLIND PLAYTEST");

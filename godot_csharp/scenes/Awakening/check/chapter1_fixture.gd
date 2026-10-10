@@ -1,4 +1,6 @@
 extends RefCounted
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## 第一章回归检查共用的统一宿主夹具（Main.tscn）：开新宿主、代按对白、读写探针、关闭弹窗。
 ## 自动检查用，不是游玩验证；对白与表单由脚本代为推进。
 
@@ -191,9 +193,9 @@ func name_form_answer(name: String) -> void:
 			host.ui._form_action(host.ui._modal_event, action)
 			return
 
-## 代为推进对白：揭示整行、推进；遇到选项按 choices 依次选择（默认优先“没事了。”，否则第一个）。
+## 代为推进对白：揭示整行、推进；遇到选项按 choices 依次选择（默认优先仅返回的编译选项，否则第一个）。
 ## quiet：对白、弹窗与走位都静止这么多帧后返回。
-func drain(choices: Array = [], limit := 60.0, quiet := 0.7, name := "试验") -> void:
+func drain(choices: Array = [], limit := 60.0, quiet := 0.7, name := "") -> void:
 	var idle_since := -1
 	var last_id := ""
 	var deadline := Time.get_ticks_msec() + int(limit * 1000.0)
@@ -201,7 +203,7 @@ func drain(choices: Array = [], limit := 60.0, quiet := 0.7, name := "试验") -
 		await tree.process_frame
 		var d = host.ui.dialogue
 		if host.ui.modal_kind == "form" and host.ui._modal_event.has("fields") and str(host.ui._modal_event.fields[0].get("id", "")) == "name":
-			name_form_answer(name)
+			name_form_answer(name if name != "" else Samples.text("chapter1-fixture", "default-name"))
 			idle_since = -1
 			continue
 		if not d.active:
@@ -226,7 +228,7 @@ func drain(choices: Array = [], limit := 60.0, quiet := 0.7, name := "试验") -
 				index = int(choices.pop_front())
 			else:
 				for option in allowed.size():
-					if str(allowed[option].text) == "没事了。":
+					if str(allowed[option].next_id) in Samples.array("chapter1-fixture", "return-choices"):
 						index = option
 						break
 			if index < 0 or index >= allowed.size():
@@ -284,12 +286,12 @@ func card_action(kind: String, choices: Array = []) -> bool:
 
 ## Select the authored invitation from a companion's dialogue, then let the companion walk.
 func invite_help(id: String, who: String, choices: Array = []) -> bool:
-	var label := ""
+	var choice_id := ""
 	for step in dialogue.entries.get("talk_" + who + "_menu", []):
 		for option in step.get("options", []):
 			if JSON.stringify(option.get("body", [])).contains("invite_help_" + id):
-				label = str(option.label)
-	if label == "": return false
+				choice_id = str(option.id)
+	if choice_id == "": return false
 	close_modal()
 	await frames(2)
 	host.dispatch({"kind": "interact", "site": who, "target": who})
@@ -306,7 +308,7 @@ func invite_help(id: String, who: String, choices: Array = []) -> bool:
 			d.advance()
 			continue
 		for option in allowed:
-			if str(option.text) == label:
+			if str(option.next_id) == choice_id:
 				d.choose(str(option.next_id))
 				await drain(choices)
 				return host.ui.modal_kind == "card" and progress("helped").has(id) and not progress("flags").has("invite_help_" + id)

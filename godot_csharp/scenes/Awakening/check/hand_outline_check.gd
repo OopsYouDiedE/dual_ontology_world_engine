@@ -1,4 +1,6 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## Targeted UI regression with explicit state injection; not blind play.
 const OUT := "res://../artifacts/python-story-refactor/"
 var failures := 0
@@ -14,7 +16,6 @@ func visible_text(node: Node) -> String:
 		result += str(node.text) + "\n"
 	for child in node.get_children(): result += visible_text(child)
 	return result
-# STORY-HARDCODE[AWK-057][schema][fixture]: E11 人物、证物和结果断言只作 UI 回归夹具。
 func run() -> void:
 	var holder: Node = load("res://scenes/Main2D.tscn").instantiate()
 	var game: Node = holder.get_node("Awakening")
@@ -23,22 +24,22 @@ func run() -> void:
 	for i in 8: await process_frame
 	game.jump_to("investigate")
 	var content: Dictionary = game.engine.Content()
-	check(content.EVIDENCE.E11.experiment == "比对手掌轮廓", "formal assembly E11 experiment caption")
-	check(content.HELP_NOTES.E11 == "在痕迹旁逐人比对过手掌轮廓：半枚手印，比四个人的手掌都窄。", "formal assembly HELP_NOTES individual side comparison and preserved size conclusion")
+	check(content.EVIDENCE.E11.experiment == Samples.text("hand-outline-check", "text-001"), "formal assembly E11 experiment caption")
+	check(content.HELP_NOTES.E11 == Samples.text("hand-outline-check", "text-002"), "formal assembly HELP_NOTES individual side comparison and preserved size conclusion")
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Awakening/Script/generated_awakening_dialogue.json"))
 	var story := JSON.stringify(document.entries)
-	check(document.entries.has("help_E11") and story.contains("把手掌停在半枚手印旁，没有碰灰") and story.contains("在半枚手印旁摊开手掌"), "runtime STORY has revised help_E11 side comparison")
-	check(not story.contains("比手？行") and not story.contains("把巴掌按在"), "runtime STORY excludes old gesture wording")
+	check(document.entries.has("help_E11") and story.contains(Samples.text("hand-outline-check", "text-003")) and story.contains(Samples.text("hand-outline-check", "text-004")), "runtime STORY has revised help_E11 side comparison")
+	check(not story.contains(Samples.text("hand-outline-check", "text-005")) and not story.contains(Samples.text("hand-outline-check", "text-006")), "runtime STORY excludes old gesture wording")
 	game.open_card("E11")
 	for i in 8: await process_frame
-	check(game.modal_kind == "card" and visible_text(holder).contains("比对手掌轮廓"), "actual E11 card displays revised action button")
+	check(game.modal_kind == "card" and visible_text(holder).contains(Samples.text("hand-outline-check", "text-001")), "actual E11 card displays revised action button")
 	game.close_modal()
 	game.engine.SetProgress("experiments", "E11", true)
 	game.open_card("E11")
 	for i in 8: await process_frame
 	check(not visible_text(holder).contains(content.HELP_NOTES.E11), "legacy experiment flag alone cannot assert four individual comparisons")
 	game.close_modal()
-	for who in ["detective", "huo", "shen"]:
+	for who in Samples.array("hand-outline-check", "case-001"):
 		game.engine.SetProgress("hand_comparisons", who, true)
 	game.open_card("E11")
 	for i in 8: await process_frame

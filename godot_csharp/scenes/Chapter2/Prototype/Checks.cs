@@ -1,3 +1,4 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using DualOntologyWorldEngine.Core;
@@ -5,7 +6,6 @@ using DualOntologyWorldEngine.Core;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 /// <summary>第二章原型自动检查（第三版）。只报告真实输出；失败照实打印。互不相干的整局推演并行跑（每局一个独立世界）。</summary>
-// STORY-HARDCODE[CH2-022][logic][tool]: 自动检查中的预写章节性断言、推演路线和游戏结局策略。
 public static class Checks
 {
     private static int _fail, _total;
@@ -13,7 +13,7 @@ public static class Checks
     {
         _total++;
         if (!ok) _fail++;
-        Console.WriteLine($"[{(ok ? "通过" : "失败")}] {what}");
+        Console.WriteLine($"[{(ok ? SampleText("chapter2-checks", "text-001") : SampleText("chapter2-checks", "text-002"))}] {what}");
     }
 
     [System.Runtime.InteropServices.DllImport("kernel32.dll")] private static extern IntPtr GetCurrentThread();
@@ -50,19 +50,20 @@ public static class Checks
     // 1 -------------------------------------------------------------------
     private static void Determinism()
     {
-        Console.WriteLine("\n== 1 确定性：同一输入的整章推演逐位一致 ==");
-        var bots = new[] { Bots.All[0], Bots.All[7], Bots.All[5] };
+        Console.WriteLine(SampleText("chapter2-checks", "text-003"));
+        var bots = SampleStrings("chapter2-checks", "determinism-bots")
+            .Select(id => Bots.All.Single(bot => bot.Id == id)).ToArray();
         var runs = Par(bots.SelectMany(b => new Func<BotResult>[] { () => Bots.Play(b), () => Bots.Play(b) }).ToArray());
         for (var i = 0; i < bots.Length; i++)
             Check(runs[2 * i].Fingerprint == runs[2 * i + 1].Fingerprint && runs[2 * i].Ending == runs[2 * i + 1].Ending, $"{bots[i].Name}：两次运行指纹 {runs[2 * i].Fingerprint} / {runs[2 * i + 1].Fingerprint}");
-        var r = Par<CaseTraces>([() => Game.Replay(CaseVars.Truth).Traces, () => Game.Replay(CaseVars.Truth).Traces]);
-        Check(r[0] == r[1], "《少了一份》同一组变量重演两次，痕迹一致");
+        var r = Par<CaseTraces>([() => Game.Replay(SampleAs<CaseVars>("chapter2-checks", "golden-variables")).Traces, () => Game.Replay(SampleAs<CaseVars>("chapter2-checks", "golden-variables")).Traces]);
+        Check(r[0] == r[1], SampleText("chapter2-checks", "text-004"));
     }
 
     // 2 -------------------------------------------------------------------
     private static (List<BotResult>, List<(string Bot, BotResult Pact, BotResult Seal, Ending Original, bool WasOstracized)>) BotsCheck(bool full)
     {
-        Console.WriteLine("\n== 2 策略机器人（各跑完始业日、翌日 + 第三日清晨议事；游说只用玩家看得见的信息）==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-005"));
         var results = Par(Bots.All.Select(b => (Func<BotResult>)(() => Bots.Play(b))).ToArray()).ToList();
         foreach (var r in results) Bots.Print(r);
         var switched = new List<(string, BotResult, BotResult, Ending, bool)>();
@@ -76,27 +77,27 @@ public static class Checks
         double[] M(BotResult r) => [r.Ending == Ending.DetectivePact ? 1 : 0, r.AvgCredible, r.AvgInsight, r.RationsLeft, -r.Hooks, r.QuerCleared ? 1 : 0];
         var dominant = results.Where(a => results.All(b => a == b || M(a).Zip(M(b)).All(p => p.First >= p.Second) && M(a).Zip(M(b)).Any(p => p.First > p.Second))).ToArray();
         Check(dominant.Length == 0, "无万能策略（没有一个策略在 侦探之约/平均可信/平均见识/剩粮/钩少/雀儿洗清 六项上全面压过其余所有策略）" + (dominant.Length > 0 ? "：" + dominant[0].Name : ""));
-        Console.WriteLine("  六项指标：" + string.Join(" | ", results.Select(r => $"{r.Name}[{string.Join(",", M(r).Select(x => x.ToString("0.#")))}]")));
+        Console.WriteLine(SampleText("chapter2-checks", "text-006") + string.Join(" | ", results.Select(r => $"{r.Name}[{string.Join(",", M(r).Select(x => x.ToString("0.#")))}]")));
 
         // 口粮：章内不断（温室已移出本章，第三部分 §15）。
-        Console.WriteLine("  议事前存粮：" + string.Join(" | ", results.Select(r => $"{r.Name}:{r.RationsLeft}")));
-        Check(results.All(r => r.World.Curve.All(c => c.Rations > 0)), "章内粮仓从未见底（各局每日日末存粮 > 0）");
+        Console.WriteLine(SampleText("chapter2-checks", "text-007") + string.Join(" | ", results.Select(r => $"{r.Name}:{r.RationsLeft}")));
+        Check(results.All(r => r.World.Curve.All(c => c.Rations > 0)), SampleText("chapter2-checks", "text-008"));
         Check(results.Select(r => r.QuerCleared).Distinct().Count() == 2 && results.Select(r => r.Common).Distinct().Count() == 2,
-            "案子的结果随打法而变：有的局雀儿洗清、有的局被排斥；有的局共同规则成立、有的局不成立");
-        var cleared = results.Where(r => r.Name.StartsWith("查案对质")).ToArray();
-        Check(cleared.Length > 0 && cleared.All(r => r.QuerCleared), "只用读到的痕迹、按真话成对出示，就能在翌日傍晚洗清雀儿");
+            SampleText("chapter2-checks", "text-009"));
+        var cleared = results.Where(r => SampleStrings("chapter2-checks", "cleared-bots").Contains(r.Strategy.Id)).ToArray();
+        Check(cleared.Length > 0 && cleared.All(r => r.QuerCleared), SampleText("chapter2-checks", "text-011"));
 
         // 派系向四个价值聚落收敛（§12 第 8 条）。
         static P Leader(Cluster c) => c switch { Cluster.Order => P.Ward, Cluster.Labor => P.Shen, Cluster.Beauty => P.Lucian, _ => P.Veronica };
         int Fit(Game g) => g.Factions().Sum(f => f.Members.Count(m => m != P.Det && Cast.ClusterOf(m) != Cluster.None && Leader(Cast.ClusterOf(m)) == f.Leader));
-        Console.WriteLine("  落在自己价值聚落派系里的人数（共 15）：" + string.Join(" ", results.Select(r => $"{r.Name}{Fit(r.World)}")));
+        Console.WriteLine(SampleText("chapter2-checks", "text-012") + string.Join(" ", results.Select(r => $"{r.Name}{Fit(r.World)}")));
         Check(Fit(results[0].World) >= 10, $"不干预时，派系向四个价值聚落收敛（{Fit(results[0].World)}/15 人落在本聚落的派系）");
 
         // 死局：始业日按各策略走，翌日起改走“立约·宽”“劝封”或“拉拢沃德”。
-        Console.WriteLine("  死局检查：始业日按各策略走，翌日起分别改走“立约·宽”“劝封”“拉拢沃德”；三种续法都改变不了结局才算死局");
-        var pact = Bots.All.First(b => b.Name.StartsWith("立约·宽"));
-        var seal = Bots.All.First(b => b.Name.StartsWith("劝封"));
-        var comm = Bots.All.First(b => b.Name.StartsWith("拉拢沃德"));
+        Console.WriteLine(SampleText("chapter2-checks", "text-013"));
+        var pact = Bots.All.First(b => b.Id == "pact-loose");
+        var seal = Bots.All.First(b => b.Id == "seal");
+        var comm = Bots.All.First(b => b.Id == "committee");
         var others = Bots.All.Where(b => b != pact && b != seal && b != comm).ToArray();
         var runs3 = Par(others.SelectMany(b => new Func<BotResult>[] { () => Bots.Play(b, switchDay: Game.CaseDay, after: pact), () => Bots.Play(b, switchDay: Game.CaseDay, after: seal), () => Bots.Play(b, switchDay: Game.CaseDay, after: comm) }).ToArray());
         var runs = runs3.Where((_, i) => i % 3 != 2).ToArray();
@@ -107,10 +108,10 @@ public static class Checks
             var (r1, r2) = (runs[2 * i], runs[2 * i + 1]);
             switched.Add((others[i].Name, r1, r2, original.Ending, original.QuerOstracized));
             var r3 = runs3[3 * i + 2];
-            Console.WriteLine($"    {others[i].Name}（原结局 {Game.EndingText(original.Ending)}，雀儿{(original.QuerCleared ? "洗清" : original.QuerOstracized ? "被排斥" : "—")}）→ 改立约·宽：{Game.EndingText(r1.Ending)}，雀儿{(r1.QuerCleared ? "洗清" : r1.QuerOstracized ? "被排斥" : "—")}；改劝封：{Game.EndingText(r2.Ending)}；改拉拢沃德：{Game.EndingText(r3.Ending)}");
+            Console.WriteLine($"    {others[i].Name}（原结局 {Game.EndingText(original.Ending)}，雀儿{(original.QuerCleared ? SampleText("chapter2-checks", "text-017") : original.QuerOstracized ? SampleText("chapter2-checks", "text-018") : "—")}）→ 改立约·宽：{Game.EndingText(r1.Ending)}，雀儿{(r1.QuerCleared ? SampleText("chapter2-checks", "text-017") : r1.QuerOstracized ? SampleText("chapter2-checks", "text-018") : "—")}；改劝封：{Game.EndingText(r2.Ending)}；改拉拢沃德：{Game.EndingText(r3.Ending)}");
             if (r1.Ending == original.Ending && r2.Ending == original.Ending && r3.Ending == original.Ending) dead.Add(others[i].Name);
         }
-        Check(dead.Count == 0, "无死局：任何始业日之后，侦探仍能改写结局" + (dead.Count > 0 ? "（改写不了的：" + string.Join("、", dead) + "）" : ""));
+        Check(dead.Count == 0, SampleText("chapter2-checks", "text-019") + (dead.Count > 0 ? SampleText("chapter2-checks", "text-020") + string.Join("、", dead) + "）" : ""));
         return (results, switched);
     }
 
@@ -122,9 +123,9 @@ public static class Checks
     private static void Emergent(List<BotResult> results)
     {
         Console.WriteLine();
-        Console.WriteLine("== 0 人物动作涌现（§12 第 0 条）==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-021"));
         if (results.Count == 0) return;
-        var frames = new HashSet<string> { "行走", "操作", "交谈", "递物", "坐", "看守", "蹲查", "拉拽" };
+        var frames = new HashSet<string> { SampleText("chapter2-checks", "text-022"), SampleText("chapter2-checks", "text-023"), SampleText("chapter2-checks", "text-024"), SampleText("chapter2-checks", "text-025"), SampleText("chapter2-checks", "text-026"), SampleText("chapter2-checks", "text-027"), SampleText("chapter2-checks", "text-028"), SampleText("chapter2-checks", "text-029") };
         var all = new List<(string Bot, Game G, Game.Chain C)>();
         var sigs = new List<HashSet<string>>();
                 var dailyMin = int.MaxValue;
@@ -138,11 +139,11 @@ public static class Checks
             // §13 第 2 条口径：当日在场所见 + 次日清晨可读的痕迹与转述，计他人自发的行动（不含作者节点与侦探自己）。
             var perDay = Enumerable.Range(Game.FirstDay, Game.LastDay - Game.FirstDay).Select(d => npc.Count(e => e.Day == d && g.Readable(e) is not null)).ToArray();
             dailyMin = Math.Min(dailyMin, perDay.Min());
-            Console.WriteLine($"  {r.Name}：人物动作 {npc.Length}（{npc.Select(e => e.Who).Distinct().Count()} 人，动作 {npc.Select(e => e.Job?.ToString() ?? "说").Distinct().Count()} 种）；涌现链 {chains.Count}，其中不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的每日（始业日、翌日）：{string.Join(" ", perDay)}");
+            Console.WriteLine($"  {r.Name}：人物动作 {npc.Length}（{npc.Select(e => e.Who).Distinct().Count()} 人，动作 {npc.Select(e => e.Job?.ToString() ?? SampleText("chapter2-checks", "text-030")).Distinct().Count()} 种）；涌现链 {chains.Count}，其中不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的每日（始业日、翌日）：{string.Join(" ", perDay)}");
         }
         var frameOk = results.All(r => r.World.Events.All(e => frames.Contains(e.Frame)));
-        Check(frameOk, "每个动作都标注了动作帧类别（行走、操作、交谈、递物、坐、看守、蹲查、拉拽）");
-        Check(results.All(r => r.World.Chains().Count(c => !c.ByDetective) >= 5), "每局都有不经侦探的人物间涌现链（≥ 5 条）");
+        Check(frameOk, SampleText("chapter2-checks", "text-031"));
+        Check(results.All(r => r.World.Chains().Count(c => !c.ByDetective) >= 5), SampleText("chapter2-checks", "text-032"));
         var jac = new List<double>();
         for (var i = 0; i < sigs.Count; i++) for (var j = i + 1; j < sigs.Count; j++)
         {
@@ -151,31 +152,31 @@ public static class Checks
         }
         var distinct = sigs.SelectMany(s => s).Distinct().Count();
         Console.WriteLine($"  多样性：16 局共 {distinct} 种不同的涌现链（签名＝依次是谁做了什么），两两相同比例平均 {jac.Average():0.00}，最高 {jac.Max():0.00}");
-        Check(jac.Average() < 0.8, "同一开局在不同玩家策略下涌现出不同的链（两两相同比例平均 < 0.8）");
+        Check(jac.Average() < 0.8, SampleText("chapter2-checks", "text-033"));
         Check(dailyMin >= 2, $"玩家每日读得到他人自发的行动不少于两件（当日在场 + 次日清晨的痕迹与转述；所有打法含什么都不做，各局各日最少 {dailyMin} 件）");
         // 五名背景人物各有自主欲望线（§13 第 14 条）：每人每天至少一件自己的事。
         var bg = new[] { P.Elena, P.Bertrand, P.Veronica, P.Selma, P.Moran };
         var idle = results[0].World;
         var lines = bg.Select(b => (b, days: Enumerable.Range(Game.FirstDay, Game.LastDay - Game.FirstDay).Count(d => idle.Events.Any(e => e.Who == b && e.Day == d && !e.Fixed && e.Job is not (null or Job.Collect or Job.Sleep or Job.Rest or Job.Class or Job.Work or Job.CountLedger or Job.Socialize))))).ToArray();
-        Console.WriteLine("  背景人物自主行动的天数（共 2 天，什么都不做的一局）：" + string.Join(" ", lines.Select(l => $"{Names.Of(l.b)}{l.days}")));
-        var moranRecovered = idle.Log.Any(l => l.Contains("莫兰退烧"));
-        Check(lines.All(l => l.b == P.Moran ? !moranRecovered || l.days >= 1 : l.days >= 2), $"背景人物每天都有自己的事（莫兰始业日下午起发烧，{(moranRecovered ? "退烧之后须有自己的事" : "本局未退烧，不计")}）");
+        Console.WriteLine(SampleText("chapter2-checks", "text-034") + string.Join(" ", lines.Select(l => $"{Names.Of(l.b)}{l.days}")));
+        var moranRecovered = idle.Log.Any(l => l.Contains(SampleText("chapter2-checks", "text-035")));
+        Check(lines.All(l => l.b == P.Moran ? !moranRecovered || l.days >= 1 : l.days >= 2), $"背景人物每天都有自己的事（莫兰始业日下午起发烧，{(moranRecovered ? SampleText("chapter2-checks", "text-036") : SampleText("chapter2-checks", "text-037"))}）");
         // 动作结算方式：转述、拉人、教人经 ActionRuntime（占身体）。
         var relays = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Relay));
         var teach = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Teach));
-        var ex = results.Sum(r => r.World.Events.Count(e => e.Text.StartsWith("答应了") && e.Text.Contains("分我一口")));
+        var ex = results.Sum(r => r.World.Events.Count(e => e.Text.StartsWith(SampleText("chapter2-checks", "text-038")) && e.Text.Contains(SampleText("chapter2-checks", "text-039"))));
         var share = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Share));
         var follow = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Follow));
         var avoid = results.Sum(r => r.World.Events.Count(e => e.Job == Job.Avoid));
         Console.WriteLine($"  16 局合计：转述/拉人 {relays}，教人 {teach}，换吃的（答应的）{ex}，分粮 {share}，跟随 {follow}，躲避 {avoid}");
         // 两日的章节里：只有一门课且全员到课，没人需要别人转教；连饿一整天又恰与信得过的人同处才会分粮。两者只报告，不强求。
-        Check(relays > 0 && follow > 0 && avoid > 0, "动作词表在两日内实际发生：转述、跟随、躲避（教人、分粮、换吃的只报告）");
+        Check(relays > 0 && follow > 0 && avoid > 0, SampleText("chapter2-checks", "text-040"));
         // 守门：身体占用 + 请求对抗（§13 第 4 条），没有人数阈值。
-        var asks = results.SelectMany(r => r.World.Events.Where(e => e.Job == Job.AskLeave || e.Text.StartsWith("答应了") && (e.Text.Contains("让开") || e.Text.Contains("请回")))).ToArray();
-        Console.WriteLine($"  守门对抗：请对方让开/请回 {asks.Count(e => e.Job == Job.AskLeave)} 次，答应的 {asks.Count(e => e.Text.StartsWith("答应了"))} 次；" +
-            $"被守门拦下的夜 {results.Count(r => r.World.Events.Any(e => e.Text.StartsWith("守着配重室")))} 局");
-        Check(asks.Any(e => e.Job == Job.AskLeave) && asks.Any(e => e.Text.StartsWith("答应了")), "守门与开库都是身体占住机关一站、再以请求对抗，由各自的 SocialSystem 决定让不让");
-        Console.WriteLine("  最有意思的十条涌现链（跨局去重；〔〕里是玩家能否读到、怎么读到）：");
+        var asks = results.SelectMany(r => r.World.Events.Where(e => e.Job == Job.AskLeave || e.Text.StartsWith(SampleText("chapter2-checks", "text-038")) && (e.Text.Contains(SampleText("chapter2-checks", "text-041")) || e.Text.Contains(SampleText("chapter2-checks", "text-042"))))).ToArray();
+        Console.WriteLine($"  守门对抗：请对方让开/请回 {asks.Count(e => e.Job == Job.AskLeave)} 次，答应的 {asks.Count(e => e.Text.StartsWith(SampleText("chapter2-checks", "text-038")))} 次；" +
+            $"被守门拦下的夜 {results.Count(r => r.World.Events.Any(e => e.Text.StartsWith(SampleText("chapter2-checks", "text-043"))))} 局");
+        Check(asks.Any(e => e.Job == Job.AskLeave) && asks.Any(e => e.Text.StartsWith(SampleText("chapter2-checks", "text-038"))), SampleText("chapter2-checks", "text-044"));
+        Console.WriteLine(SampleText("chapter2-checks", "text-045"));
         var top = all.OrderByDescending(x => Emergence.Score(x.C, x.G)).GroupBy(x => Emergence.Trunk(x.C)).Select(g => g.First())
             .GroupBy(x => x.Bot).SelectMany(g => g.Take(2)).OrderByDescending(x => Emergence.Score(x.C, x.G)).Take(10).ToArray();
         for (var i = 0; i < top.Length; i++) Console.WriteLine($"   {i + 1,2}. 〈{top[i].Bot}〉{top[i].G.Describe(top[i].C)}");
@@ -184,38 +185,38 @@ public static class Checks
     // 3 -------------------------------------------------------------------
     private static void CaseCheck()
     {
-        Console.WriteLine("\n== 3 《少了一份》与重演 ==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-046"));
         var actual = new Game();
         while (!(actual.Day == Game.CaseDay && actual.Slot == Slot.Morning)) actual.RunSlot(null);
         var traces = actual.Dawn();
-        Console.WriteLine("  第 3 日清晨（什么都不做的一局）：" + string.Join("；", traces.Describe().Select(d => d.Text)));
-        Console.WriteLine("  作者侧昨夜：" + string.Join("；", actual.NightTruth));
+        Console.WriteLine(SampleText("chapter2-checks", "text-047") + string.Join("；", traces.Describe().Select(d => d.Text)));
+        Console.WriteLine(SampleText("chapter2-checks", "text-048") + string.Join("；", actual.NightTruth));
         var sw = Stopwatch.StartNew();
         var all = CaseVars.All().ToArray();
         var replayRuns = Par(all.Select(v => (Func<(CaseTraces Traces, Game World)>)(() => Game.Replay(v))).ToArray());
         var replays = replayRuns.Select(r => r.Traces).ToArray();
-        var matches = all.Where((v, i) => actual.Compare(replays[i], traces).All(l => !l.StartsWith("冲突"))).ToList();
+        var matches = all.Where((v, i) => actual.Compare(replays[i], traces).All(l => !l.StartsWith(SampleText("chapter2-checks", "text-049")))).ToList();
         var matchWorlds = all.Select((v, i) => (v, i)).Where(x => matches.Contains(x.v)).Select(x => replayRuns[x.i].World).ToArray();
         Console.WriteLine($"  36 组重演用时 {sw.ElapsedMilliseconds} ms（每组新建独立世界，并行）");
         // 推演出来的世界里，某个变量可能已不影响任何痕迹（例如门闩前一夜就修好了，玛格丽特认不认沃德的规矩就无从分辨）。
         // 可辨的标准是：真相在吻合的假设之中，且所有吻合的假设对每一句主张的真假结论一致（侦探说得出口的话不因此含糊）。
         bool Agree(IReadOnlyList<Game> worlds) => worlds.Count > 0 && Enumerable.Range(0, CaseDesign.Claims.Count).All(c => worlds.All(w => w.HostClaimTrue(c)) || worlds.All(w => !w.HostClaimTrue(c)));
-        Check(matches.Contains(CaseVars.Truth) && Agree(matchWorlds), $"案件本身可辨（作者侧四变量）：吻合 {matches.Count} 组，对每一句主张结论一致：{string.Join(" | ", matches)}");
+        Check(matches.Contains(SampleAs<CaseVars>("chapter2-checks", "golden-variables")) && Agree(matchWorlds), $"案件本身可辨（作者侧四变量）：吻合 {matches.Count} 组，对每一句主张结论一致：{string.Join(" | ", matches)}");
         // §11 第 10 条：重演从现实快照重建（含侦探第 2 日自己的行动）。
         var nonUnique = new List<string>();
-        var bots = Bots.All.Where(b => b.Name is "什么都不做" or "管饭（调停、交钥匙、帮厨）" or "立约（侦探之约）" or "拉拢后勤组（茉拉）").ToArray();
+        var bots = Bots.All.Where(b => SampleStrings("chapter2-checks", "replay-bots").Contains(b.Id)).ToArray();
         foreach (var b in bots)
         {
             var w = new Game();
             while (!(w.Day == Game.CaseDay && w.Slot == Slot.Morning)) w.RunSlot(b.Act(w));
             var tr = w.Dawn();
             var runs = Par(all.Select(v => (Func<(CaseTraces Traces, Game World)>)(() => w.ReplayCase(v))).ToArray());
-            var m = all.Where((v, i) => w.Compare(runs[i].Traces, tr).All(l => !l.StartsWith("冲突"))).ToArray();
+            var m = all.Where((v, i) => w.Compare(runs[i].Traces, tr).All(l => !l.StartsWith(SampleText("chapter2-checks", "text-049")))).ToArray();
             var mw = all.Select((v, i) => (v, i)).Where(x => m.Contains(x.v)).Select(x => runs[x.i].World).ToArray();
-            Console.WriteLine($"    {b.Name}：第 2 夜「{string.Join("；", w.NightTruth.DefaultIfEmpty("无人取粮"))}」，吻合 {m.Length} 组");
+            Console.WriteLine($"    {b.Name}：第 2 夜「{string.Join("；", w.NightTruth.DefaultIfEmpty(SampleText("chapter2-checks", "text-054")))}」，吻合 {m.Length} 组");
             if (!Agree(mw) && w.NightTruth.Any(t => t.StartsWith($"D{Game.CaseNight} 雀儿 夜里自取"))) nonUnique.Add(b.Name);
         }
-        Check(nonUnique.Count == 0, "快照重演：凡案件按原形发生的现实，吻合的假设对每一句主张结论一致" + (nonUnique.Count > 0 ? "（不唯一：" + string.Join("、", nonUnique) + "）" : ""));
+        Check(nonUnique.Count == 0, SampleText("chapter2-checks", "text-055") + (nonUnique.Count > 0 ? SampleText("chapter2-checks", "text-056") + string.Join("、", nonUnique) + "）" : ""));
         GenericVariables();
         ReadWriteLoop();
         WritingVariants();
@@ -227,8 +228,8 @@ public static class Checks
     /// </summary>
     private static void GenericVariables()
     {
-        Console.WriteLine("  通用重演变量（玩家第 3 日查完痕迹之后，对第 2 夜）：");
-        var bot = Bots.All.First(b => b.Name == "查案对质");
+        Console.WriteLine(SampleText("chapter2-checks", "text-057"));
+        var bot = Bots.All.First(b => b.Id == "investigate");
         var g = new Game();
         while (!(g.Day == Game.CaseDay && g.Slot == Slot.Night)) { Bots.Read(g); g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(g)); }
         var menu = g.ReplayMenu(Game.CaseNight);
@@ -241,35 +242,35 @@ public static class Checks
         {
             var (tr, w) = g.ReplayNight(Game.CaseNight, [new(P.Quer, rule.Id, c.Item1)], [new(P.Quer, Place.Logistics, c.Item2)]);
             var l = g.CompareTraces(Game.CaseNight, tr);
-            if (c.Item2 && !w.Moves.Any(m => m.Day == Game.CaseNight && m.Who == P.Quer && m.To == Place.Logistics)) l.Insert(0, "冲突：重演里她那夜没去后勤院");
+            if (c.Item2 && !w.Moves.Any(m => m.Day == Game.CaseNight && m.Who == P.Quer && m.To == Place.Logistics)) l.Insert(0, SampleText("chapter2-checks", "text-058"));
             return l;
         })).ToArray());
         for (var i = 0; i < combos.Length; i++)
-            Console.WriteLine($"    雀儿{(combos[i].Item1 ? "认" : "不认")}茉拉的规矩、昨夜{(combos[i].Item2 ? "在" : "不在")}后勤院：{(outs[i].Any(l => l.StartsWith("冲突")) ? string.Join(" / ", outs[i].Where(l => l.StartsWith("冲突"))) : "全部吻合")}");
+            Console.WriteLine($"    雀儿{(combos[i].Item1 ? SampleText("chapter2-checks", "text-059") : SampleText("chapter2-checks", "text-060"))}茉拉的规矩、昨夜{(combos[i].Item2 ? SampleText("chapter2-checks", "text-061") : SampleText("chapter2-checks", "text-062"))}后勤院：{(outs[i].Any(l => l.StartsWith(SampleText("chapter2-checks", "text-049"))) ? string.Join(" / ", outs[i].Where(l => l.StartsWith(SampleText("chapter2-checks", "text-049")))) : SampleText("chapter2-checks", "text-063"))}");
         Check(hasRule && hasWhere, "通用重演菜单里自然出现“雀儿 认/不认 茉拉的规矩”与“雀儿 昨夜在/不在 后勤院”（未为案件单独写变量）");
-        Check(outs[0].All(l => !l.StartsWith("冲突")) && outs.Skip(1).All(o => o.Any(l => l.StartsWith("冲突"))), "四种组合中只有真相（认、在）与读到的痕迹全部吻合");
+        Check(outs[0].All(l => !l.StartsWith(SampleText("chapter2-checks", "text-049"))) && outs.Skip(1).All(o => o.Any(l => l.StartsWith(SampleText("chapter2-checks", "text-049")))), SampleText("chapter2-checks", "text-064"));
     }
 
     /// <summary>§11 第 1 条：读写闭环（用通用重演接口）。</summary>
     private static void ReadWriteLoop()
     {
-        Console.WriteLine("  读写闭环（写下规则 → 次日清晨的痕迹 → 重演读出是谁因此改了做法）：");
-        var bot = Bots.All.First(b => b.Name == "查案对质");
+        Console.WriteLine(SampleText("chapter2-checks", "text-065"));
+        var bot = Bots.All.First(b => b.Id == "investigate");
         var g = new Game();
         while (!(g.Day == Game.LastDay && g.Slot == Slot.Morning)) { Bots.Read(g); g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g)); }
-        g.HostExamine("台账");
+        g.HostExamine(SampleText("chapter2-checks", "text-066"));
         var spec = g.CaseRule!;
         Console.WriteLine($"    第 3 夜后侦探读到：{string.Join("；", g.KnownTraces(Game.CaseDay).Values.Select(t => t.Text))}");
         var outs = Par<List<string>>([() => g.CompareTraces(Game.CaseDay, g.ReplayNight(Game.CaseDay, [new(P.Mora, spec.Id, true)]).Traces), () => g.CompareTraces(Game.CaseDay, g.ReplayNight(Game.CaseDay, [new(P.Mora, spec.Id, false)]).Traces)]);
-        Console.WriteLine("    假设茉拉认了：" + string.Join(" / ", outs[0].Where(l => !l.StartsWith("未查"))));
-        Console.WriteLine("    假设茉拉没认：" + string.Join(" / ", outs[1].Where(l => !l.StartsWith("未查"))));
-        Check(outs[0].All(l => !l.StartsWith("冲突")) && outs[1].Any(l => l.StartsWith("冲突")), "玩家能从清晨痕迹 + 重演读出：茉拉认了侦探写的规则，因而夜取改为记账");
+        Console.WriteLine(SampleText("chapter2-checks", "text-067") + string.Join(" / ", outs[0].Where(l => !l.StartsWith(SampleText("chapter2-checks", "text-068")))));
+        Console.WriteLine(SampleText("chapter2-checks", "text-069") + string.Join(" / ", outs[1].Where(l => !l.StartsWith(SampleText("chapter2-checks", "text-068")))));
+        Check(outs[0].All(l => !l.StartsWith(SampleText("chapter2-checks", "text-049"))) && outs[1].Any(l => l.StartsWith(SampleText("chapter2-checks", "text-049"))), SampleText("chapter2-checks", "text-070"));
     }
 
     private static void WritingVariants()
     {
         var g = new Game();
-        var bot = Bots.All.First(b => b.Name == "查案对质");
+        var bot = Bots.All.First(b => b.Id == "investigate");
         while (!(g.Day == Game.LastDay && g.Slot == Slot.Morning)) { Bots.Read(g); g.RunSlot(g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new(g.ValidConfrontPairs(), null, false) } : bot.Act(g)); }
         var keys = new[] { P.Ward, P.Mora, P.Ruan, P.Quer };
         var ok = new List<Card>();
@@ -285,16 +286,15 @@ public static class Checks
     // 4 -------------------------------------------------------------------
     private static void AcceptanceSample()
     {
-        Console.WriteLine("\n== 4 规则接受抽样（第 2 日清晨之后的认知；侦探当面讲，+1）==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-071"));
         var g = new Game();
         g.RunSlot(null);
-        var cards = new (Card Card, string Label)[]
+        var cards = Sample("chapter2-checks", "acceptance-cards").EnumerateArray().Select(row =>
         {
-            (Bots.RuleA, "值守者急病夜取补记台账"), (new(0, 1, 0, 0, 1), "夜取须记账无例外"), (Bots.BrandQuer, "点名雀儿夜不入后勤"),
-            (new(0, 0, 2, 0, 0), "钥匙交煮饭的人"), (new(0, 0, 3, 0, 0), "指控须附材料"), (Bots.Pact, "名录库亲取见证夜不开"),
-            (Bots.Open, "名录库各取其物记账"), (Bots.Seal, "名录库封闭不启"), (Bots.Committee, "名录库委员会保管"),
-        };
-        Console.WriteLine("  " + "规则".PadRight(12) + string.Join("", g.Npcs.Select(p => p.Name.PadRight(5))));
+            var v = row.GetProperty("card").EnumerateArray().Select(value => value.GetInt32()).ToArray();
+            return (Card: new Card(v[0], v[1], v[2], v[3], v[4]), Label: row.GetProperty("label").GetString()!);
+        }).ToArray();
+        Console.WriteLine("  " + SampleText("chapter2-checks", "text-081").PadRight(12) + string.Join("", g.Npcs.Select(p => p.Name.PadRight(5))));
         foreach (var (card, label) in cards)
         {
             var spec = new RuleSpec { Id = -1, Text = label, Author = P.Det, Flags = card.Flags(g), Build = _ => [], Card = card, Target = card.Target, Manipulative = card.Target is not null };
@@ -304,17 +304,17 @@ public static class Checks
         {
             var spec = new RuleSpec { Id = -1, Text = label, Author = P.Det, Flags = card.Flags(g), Build = _ => [], Card = card, Target = card.Target, Manipulative = card.Target is not null };
             var vetoes = g.Npcs.Select(p => (p, v: g.Veto(p, spec))).Where(x => x.v is not null).Select(x => $"{x.p.Name}“{x.v}”").ToArray();
-            Console.WriteLine($"  否决「{label}」：{(vetoes.Length == 0 ? "无" : string.Join("；", vetoes))}");
+            Console.WriteLine($"  否决「{label}」：{(vetoes.Length == 0 ? SampleText("chapter2-checks", "text-082") : string.Join("；", vetoes))}");
         }
         var archive = cards.Where(c => c.Card.Behavior is >= 5 and <= 8).Select(c => new RuleSpec { Id = -1, Text = c.Label, Author = P.Det, Flags = c.Card.Flags(g), Build = _ => [], Card = c.Card }).ToArray();
-        Check(archive.All(s => g.Npcs.Any(p => g.Veto(p, s) is not null) || s.Flags.HasFlag(RF.PactArchive)), "名录库的每一种去向（约束开库除外）都至少有一个人以底线否决");
+        Check(archive.All(s => g.Npcs.Any(p => g.Veto(p, s) is not null) || s.Flags.HasFlag(RF.PactArchive)), SampleText("chapter2-checks", "text-083"));
     }
 
     // 5 -------------------------------------------------------------------
     /// <summary>§12 的可读性检查：守夜摘要、信任链、立场与接受分开、重开对质、私占可预读、界面不露内部编号。</summary>
     private static void Readability(List<BotResult> results, List<(string Bot, BotResult Pact, BotResult Seal, Ending Original, bool WasOstracized)> switched)
     {
-        Console.WriteLine("\n== 5 可读性（§12）==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-084"));
         // 守夜摘要：最显著的不超过五条，其余合成一句。
         var g = new Game();
         var lens = new List<int>();
@@ -327,13 +327,13 @@ public static class Checks
             {
                 var day = g.Day - 1;
                 var rep = g.StakeoutReport(day, act.Place!.Value);
-                lens.Add(rep.Count(l => !l.StartsWith("还有")));
+                lens.Add(rep.Count(l => !l.StartsWith(SampleText("chapter2-checks", "text-085"))));
                 if (sample.Count == 0) sample = rep;
             }
             g.TakeFeed();
         }
         Console.WriteLine($"  守夜每夜给出的具体条数：{string.Join(" ", lens)}；第 2 夜守后勤院：{string.Join(" / ", sample)}");
-        Check(lens.All(n => n <= 5), "守夜只给最显著的至多五条，其余合成“还有几道身影来去”");
+        Check(lens.All(n => n <= 5), SampleText("chapter2-checks", "text-086"));
 
         // 信任链：侦探经由亲见或他人亲口得知的转述。
         var spreads = results.SelectMany(r => r.World.SpreadKnown.Where(k => k.Teller is not null).Select(k => (r.Name, k))).ToArray();
@@ -351,18 +351,18 @@ public static class Checks
                 if (r.World.DetToldFace.Any(x => x.Who == who && x.Nodded && x.Spec.Card is { Behavior: >= 5 and <= 8 } && Game.FamilyOf(x.Spec) != Game.FamilyOf(chose))) nodButOther++;
             }
         Console.WriteLine($"  议事前最后听到的立场与议事所站一致：{hit}/{total}；当面对你的名录库规矩点过头、议事却站到别处的：{nodButOther} 人次");
-        Check(total > 0 && hit >= total * 0.6, "立场可预读：饭桌上复述谁的话，六成以上与议事所站一致（“点头”与“立场”分开呈现）");
+        Check(total > 0 && hit >= total * 0.6, SampleText("chapter2-checks", "text-087"));
         // 立场主要由亲见改变（§13 第 6 条）：同行即作证。被带去亲眼看过碗的沃德，在对质中按亲见计材料（基座裂纹已移至第三章，第三部分 §15）。
-        var escort = results.FirstOrDefault(r => r.Name.StartsWith("同行作证"));
-        Check(escort is not null && escort.World.WardEscorts >= 10 && escort.QuerCleared, "同行即作证：请沃德亲眼看过碗的一局，沃德在对质中认清了雀儿");
+        var escort = results.FirstOrDefault(r => r.Strategy.Id == "escort");
+        Check(escort is not null && escort.World.WardEscorts >= 10 && escort.QuerCleared, SampleText("chapter2-checks", "text-089"));
         var councils = results.Where(r => r.Ending != Ending.NightSeized).Select(r => (r.Name, max: r.World.CouncilChoice.Values.GroupBy(Game.FamilyOf).Max(g => g.Count()) + 1)).ToArray();
-        Console.WriteLine("  议事中最大一方的人数（含侦探）：" + string.Join(" ", councils.Select(c => $"{c.Name}{c.max}")));
-        Check(councils.All(c => c.max <= 12), "没有 14:1:1 式的一边倒（最大一方 ≤ 12 人，至少四人站在别处）");
+        Console.WriteLine(SampleText("chapter2-checks", "text-090") + string.Join(" ", councils.Select(c => $"{c.Name}{c.max}")));
+        Check(councils.All(c => c.max <= 12), SampleText("chapter2-checks", "text-091"));
 
         // 不出示也能提议（第三部分 §7）：没有查案、什么都不出示的人，也能当众提出共同规则，由众人各自定。
         var mute = new Game();
         while (!mute.Ended) mute.RunSlot(mute.Day == Game.CaseDay && mute.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = new([], null, true) } : null);
-        Check(mute.ConfrontLog.Any(l => l.StartsWith("你提议：")), "没有出示任何证物时，共同规则照样当众提出");
+        Check(mute.ConfrontLog.Any(l => l.StartsWith(SampleText("chapter2-checks", "text-092"))), SampleText("chapter2-checks", "text-093"));
 
         // 私占可预读：被私占之前，前厅的脚印与停留逐夜增多。
         foreach (var r in results.Where(r => r.Ending == Ending.NightSeized).Take(3))
@@ -373,67 +373,48 @@ public static class Checks
 
         // 重演不泄露身份（§13 第 11 条）：墨影只给身量，心声只在全部吻合后出现。
         var rg = new Game();
-        var bot = Bots.All.First(x => x.Name == "查案对质");
+        var bot = Bots.All.First(x => x.Id == "investigate");
         while (!(rg.Day == Game.CaseDay && rg.Slot == Slot.Night)) { Bots.Read(rg); rg.RunSlot(rg.Day == Game.CaseDay && rg.Slot == Slot.Evening ? new PlayerAction(Cmd.AskAbout) { Who = P.Bertrand } : bot.Act(rg)); }
         var (t1, w1) = rg.ReplayNight(Game.CaseNight, [new(P.Quer, rg.MoraNight.Id, true)]);
         var c1 = rg.CompareTraces(Game.CaseNight, t1);
-        var ink = Game.Ink(w1, Game.CaseNight, [P.Quer], c1.All(l => !l.StartsWith("冲突")) && c1.Any(l => l.StartsWith("吻合")));
+        var ink = Game.Ink(w1, Game.CaseNight, [P.Quer], c1.All(l => !l.StartsWith(SampleText("chapter2-checks", "text-049"))) && c1.Any(l => l.StartsWith(SampleText("chapter2-checks", "text-094"))));
         var (t2, w2) = rg.ReplayNight(Game.CaseNight, [new(P.Quer, rg.MoraNight.Id, false)]);
         var ink2 = Game.Ink(w2, Game.CaseNight, [P.Quer], false);
-        Console.WriteLine("  重演墨影（真相假设）：" + string.Join(" / ", ink.Take(3).Select(l => l.Trim())));
-        Check(ink.Concat(ink2).All(l => Enum.GetValues<P>().All(n => !l.Contains(Names.Of(n)))) && ink.Any(l => l.Contains("心声")) && ink2.All(l => !l.Contains("心声")),
-            "重演不泄露身份：墨影只有身量；心声只在与已读痕迹全部吻合时出现");
+        Console.WriteLine(SampleText("chapter2-checks", "text-095") + string.Join(" / ", ink.Take(3).Select(l => l.Trim())));
+        Check(ink.Concat(ink2).All(l => Enum.GetValues<P>().All(n => !l.Contains(Names.Of(n)))) && ink.Any(l => l.Contains(SampleText("chapter2-checks", "text-096"))) && ink2.All(l => !l.Contains(SampleText("chapter2-checks", "text-096"))),
+            SampleText("chapter2-checks", "text-097"));
         var cands = rg.ReplayCandidates(Game.CaseNight);
-        Console.WriteLine("  第 2 夜可假设的人（按所见身量与签名）：" + string.Join(" ", cands.Select(Names.Of)));
-        Check(cands.Count is > 0 and < 15, "可假设的人限定于身量相符、未被排除者（不是全部十五人）");
+        Console.WriteLine(SampleText("chapter2-checks", "text-098") + string.Join(" ", cands.Select(Names.Of)));
+        Check(cands.Count is > 0 and < 15, SampleText("chapter2-checks", "text-099"));
         // 指控以亲见优先（§13 第 3 条）。
-        var acc = results.SelectMany(r => r.World.Log.Where(l => l.Contains("当众指控") && l.Contains("亲眼所见"))).FirstOrDefault();
-        Console.WriteLine("  亲见指控的例子：" + (acc ?? "（本轮没有）"));
-        Check(results.All(r => r.World.Log.Where(l => l.Contains("当众指控") && l.Contains("身影")).All(l => !l.Contains("瘦小身影") || l.Contains("雀儿") || l.Contains("苏泠") || l.Contains("伊莲娜"))),
-            "指控所依的身影与被指控者的身量一致（不再“瘦小身影却指控中等身量的人”）");
+        var acc = results.SelectMany(r => r.World.Log.Where(l => l.Contains(SampleText("chapter2-checks", "text-100")) && l.Contains(SampleText("chapter2-checks", "text-101")))).FirstOrDefault();
+        Console.WriteLine(SampleText("chapter2-checks", "text-102") + (acc ?? SampleText("chapter2-checks", "text-103")));
+        Check(results.All(r => r.World.Log.Where(l => l.Contains(SampleText("chapter2-checks", "text-100")) && l.Contains(SampleText("chapter2-checks", "text-104"))).All(l => !l.Contains(SampleText("chapter2-checks", "text-105")) || l.Contains(SampleText("chapter2-checks", "text-106")) || l.Contains(SampleText("chapter2-checks", "text-107")) || l.Contains(SampleText("chapter2-checks", "text-108")))),
+            SampleText("chapter2-checks", "text-109"));
         // 子提示符遇到文件结束：停下，不代为作答（§13 第 16 条）。
         var eof = new StringWriter();
         var g7 = new Game();
-        var oneDay = string.Concat(Enumerable.Repeat("歇\n", 5)) + "睡\n";
-        new ConsoleUI(g7, new StringReader(string.Concat(Enumerable.Repeat(oneDay, Game.CaseDay - Game.FirstDay + 1)) + "对质\n完\n" + string.Concat(Enumerable.Repeat("歇\n", 4)) + "睡\n" + oneDay + oneDay), eof, echo: true).Run();
+        var oneDay = string.Concat(Enumerable.Repeat(SampleText("chapter2-checks", "text-110"), 5)) + SampleText("chapter2-checks", "text-111");
+        new ConsoleUI(g7, new StringReader(string.Concat(Enumerable.Repeat(oneDay, Game.CaseDay - Game.FirstDay + 1)) + SampleText("chapter2-checks", "text-112") + string.Concat(Enumerable.Repeat(SampleText("chapter2-checks", "text-110"), 4)) + SampleText("chapter2-checks", "text-111") + oneDay + oneDay), eof, echo: true).Run();
         var eofText = eof.ToString();
-        Check((eofText.Contains("没有替你作答") || eofText.Contains("你还没有表态")) && !eofText.Contains("结局："), "子提示符遇到文件结束时停下，不代玩家作答");
+        Check((eofText.Contains(SampleText("chapter2-checks", "text-113")) || eofText.Contains(SampleText("chapter2-checks", "text-114"))) && !eofText.Contains(SampleText("chapter2-checks", "text-115")), SampleText("chapter2-checks", "text-116"));
 
         // 界面：不露内部编号、报错是玩家语言、调试默认关闭、拼规矩用选项文字。
-        var script = """
-            帮助
-            规矩
-            讲 茉拉 值守者 有人急病时 取一份口粮 次日补记者不算私取 记入台账
-            真相 茉拉
-            调试 开
-            查 不存在的东西
-            讲 茉拉 1 2 3
-            请 沃德 跳舞
-            打赌 沃德 沃德 前厅 甲
-            规矩
-            传播
-            领粮
-            守夜 后勤院
-            睡
-            清晨
-            重演
-            重演 茉拉 认 甲
-            笔记 茉拉
-            """;
+        var script = SampleText("chapter2-checks", "console-route-1");
         var output = new StringWriter();
         new ConsoleUI(new Game(), new StringReader(script), output, echo: true).Run();
         var text = output.ToString();
-        var leaks = Regex.Matches(text, @"#\d+|Exception|System\.|at DualOntology|ConditionFailed|OutOfReach|待第七部分|待裁定").Select(m => m.Value).Distinct().ToArray();
-        Console.WriteLine("  界面抽查（不带 --debug 启动，含错误输入）：" + string.Join(" / ", text.Split('\n').Where(l => l.Contains("调试命令") || l.Contains("没有“") || l.Contains("规矩要五格") || l.Contains("不是请求") || l.Contains("拼成")).Select(l => l.Trim()).Distinct().Take(5)));
-        Check(leaks.Length == 0, "界面不露内部编号与程序报错" + (leaks.Length > 0 ? "：" + string.Join(" ", leaks) : ""));
-        Check(text.Contains("调试命令只在以 --debug 启动时可用") && !text.Contains("[真实认知]") && !text.Contains("[作者侧]"), "调试命令（作者侧日志、真实认知）默认关闭");
-        Check(text.Contains("拼成：「值守者：有人急病时，取一份口粮；次日补记者不算私取；记入台账」"), "拼规矩用选项文字（也可用序号），拼好后回显整句");
+        var leaks = Regex.Matches(text, SampleText("chapter2-checks", "text-117")).Select(m => m.Value).Distinct().ToArray();
+        Console.WriteLine(SampleText("chapter2-checks", "text-118") + string.Join(" / ", text.Split('\n').Where(l => l.Contains(SampleText("chapter2-checks", "text-119")) || l.Contains(SampleText("chapter2-checks", "text-120")) || l.Contains(SampleText("chapter2-checks", "text-121")) || l.Contains(SampleText("chapter2-checks", "text-122")) || l.Contains(SampleText("chapter2-checks", "text-123"))).Select(l => l.Trim()).Distinct().Take(5)));
+        Check(leaks.Length == 0, SampleText("chapter2-checks", "text-124") + (leaks.Length > 0 ? "：" + string.Join(" ", leaks) : ""));
+        Check(text.Contains(SampleText("chapter2-checks", "text-125")) && !text.Contains(SampleText("chapter2-checks", "text-126")) && !text.Contains(SampleText("chapter2-checks", "text-127")), SampleText("chapter2-checks", "text-128"));
+        Check(text.Contains(SampleText("chapter2-checks", "text-129")), SampleText("chapter2-checks", "text-130"));
     }
 
     // 6 -------------------------------------------------------------------
     private static void Performance(List<BotResult> results, Stopwatch total)
     {
-        Console.WriteLine("\n== 6 性能 ==");
+        Console.WriteLine(SampleText("chapter2-checks", "text-131"));
         if (results.Count > 0)
         {
             var ms = results.Select(r => r.Ms).ToArray();
@@ -442,7 +423,7 @@ public static class Checks
         var g = new Game();
         double worstWall = 0, worstCpu = 0;
         var where = "";
-        var bot = Bots.All.First(b => b.Name.StartsWith("立约·宽"));
+        var bot = Bots.All.First(b => b.Id == "pact-loose");
         while (!g.Ended)
         {
             var label = $"D{g.Day}{Names.Of(g.Slot)}";
@@ -455,8 +436,8 @@ public static class Checks
         }
         var heaviest = g.People.Max(p => p.World.History.Count);
         Console.WriteLine($"  单个时段（单线程，含夜间推演）最长 CPU {worstCpu:0} ms（{where}），最长墙钟 {worstWall:0} ms；单人认知历史最长 {heaviest} 条");
-        Console.WriteLine("  （若本机同时有别的进程占用 CPU，墙钟会虚高；CPU 时间才是推演本身的开销）");
-        Check(worstCpu < 300, "单个时段推演 < 300 ms（CPU 时间）");
+        Console.WriteLine(SampleText("chapter2-checks", "text-132"));
+        Check(worstCpu < 300, SampleText("chapter2-checks", "text-133"));
         Check(total.Elapsed.TotalMinutes < 5, $"完整检查 < 5 分钟（到此 {total.Elapsed.TotalSeconds:0} s）");
     }
 }

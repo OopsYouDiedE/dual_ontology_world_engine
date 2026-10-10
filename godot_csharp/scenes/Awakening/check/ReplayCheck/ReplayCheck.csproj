@@ -13,4 +13,8 @@
     <Compile Include="ReplayCheckProgram.cs" />
     <ProjectReference Include="../../../../../csharp/DualOntologyWorldEngine.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../Shared/check/FixtureData.cs" Link="FixtureData.cs" />
+    <EmbeddedResource Include="../../../Shared/check/Fixtures/replay-check.json" LogicalName="Fixtures.replay-check.json" />
+  </ItemGroup>
 </Project>

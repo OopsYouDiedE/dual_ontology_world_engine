@@ -1,3 +1,4 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
 public static class Program
@@ -18,7 +19,7 @@ public static class Program
         var worldArgument = Array.IndexOf(args, "--world-script");
         if (worldArgument >= 0)
         {
-            if (worldArgument + 1 >= args.Length) throw new ArgumentException("--world-script 需要已编译的脚本 DLL 路径。");
+            if (worldArgument + 1 >= args.Length) throw new ArgumentException(SampleText("chapter2-program", "text-001"));
             world = WorldScript.Load(args[worldArgument + 1]);
             args = [.. args.Take(worldArgument), .. args.Skip(worldArgument + 2)];
         }
@@ -37,29 +38,27 @@ public static class Program
                 new ConsoleUI(CreateGame(), input, Console.Out, echo: script is not null || Console.IsInputRedirected, debugAllowed: debug, roomScoped: args.Contains("--room-scoped")).Run();
                 return 0;
             }
-            // STORY-HARDCODE[CH2-077][logic][tool]: 宿主冒烟流程固定演示本章查案、对质与议事。
             case "host":
             {
                 // 宿主路径冒烟：与 Godot 第二章同样的调用顺序（读不耗时，写/等待经 RunSlot）。
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 var g = CreateGame();
                 void Run(PlayerAction? act) { var t0 = sw.ElapsedMilliseconds; var d = g.Day; var s = g.Slot; g.RunSlot(act); Console.WriteLine($"-- D{d} {Names.Of(s)} ({sw.ElapsedMilliseconds - t0} ms)"); foreach (var l in g.TakeFeed()) Console.WriteLine("   " + l); }
-                Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
-                Run(new PlayerAction(Cmd.Class));
-                Console.WriteLine(g.HostExamine("配给台公告"));
-                Run(new PlayerAction(Cmd.Collect));
-                Run(new PlayerAction(Cmd.Stay) { Place = Place.Logistics });
-                Run(new PlayerAction(Cmd.Collect));
-                Run(null);
-                Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
-                foreach (var th in new[] { "台账", "粮仓", "碗", "文契废纸篓", "配给台公告", "中央厅公告" }) Console.WriteLine($"[{th}] " + g.HostExamine(th));
+                foreach (var step in Sample("chapter2-program", "host-opening").EnumerateArray())
+                {
+                    if (step.TryGetProperty("examine", out var thing)) Console.WriteLine(g.HostExamine(thing.GetString()!));
+                    else if (step.TryGetProperty("wait", out _)) Run(null);
+                    else Run(new PlayerAction(Enum.Parse<Cmd>(step.GetProperty("cmd").GetString()!))
+                    { Place = step.TryGetProperty("place", out var place) ? Enum.Parse<Place>(place.GetString()!) : null });
+                }
+                foreach (var th in new[] { SampleText("chapter2-program", "text-003"), SampleText("chapter2-program", "text-004"), SampleText("chapter2-program", "text-005"), SampleText("chapter2-program", "text-006"), SampleText("chapter2-program", "text-002"), SampleText("chapter2-program", "text-007") }) Console.WriteLine($"[{th}] " + g.HostExamine(th));
                 foreach (var who in new[] { P.Bertrand, P.Margaret, P.Mora, P.Quer }) Console.WriteLine($"[问{Names.Of(who)}] " + g.HostAsk(who));
                 Console.WriteLine("known: " + string.Join(",", g.DetEvidence()));
                 var t1 = sw.ElapsedMilliseconds;
                 var (tr, replayWorld) = g.ReplayCase(CaseVars.Truth);
                 Console.WriteLine($"replay {sw.ElapsedMilliseconds - t1} ms; match={tr == g.CaseActual}; steps={Game.InkSteps(replayWorld, Game.CaseNight).Count}");
                 foreach (var st in Game.InkSteps(replayWorld, Game.CaseNight).Take(12)) Console.WriteLine($"   {st.Time:0.0} {Names.Of(st.Who)} {st.From}->{st.To} {st.Act}");
-                Run(new PlayerAction(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = "配给台公告" });
+                Run(new PlayerAction(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = SampleText("chapter2-program", "text-002") });
                 Run(new PlayerAction(Cmd.Collect));
                 Run(new PlayerAction(Cmd.Stay) { Place = Place.Hall });
                 var pairs = g.ValidConfrontPairs().ToList();
@@ -82,7 +81,7 @@ public static class Program
                 foreach (var l in g.Log) Console.WriteLine(l);
                 foreach (var l in g.CouncilLog) Console.WriteLine(l);
                 Console.WriteLine(Report.ChapterEnd(g));
-                Console.WriteLine("最长连饿：" + string.Join(" ", g.People.Select(p => $"{p.Name}{p.MaxHunger}")));
+                Console.WriteLine(SampleText("chapter2-program", "text-008") + string.Join(" ", g.People.Select(p => $"{p.Name}{p.MaxHunger}")));
                 return 0;
             }
             case "diary":
@@ -99,13 +98,13 @@ public static class Program
                 var first = Bots.All[int.Parse(args[1])];
                 var then = args.Length > 3 && args[2] == "then" ? Bots.All[int.Parse(args[3])] : null;
                 if (then is not null) args = [.. args.Take(2), .. args.Skip(4)];
-                Bot bot = then is null ? first : new() { Name = first.Name + "→" + then.Name, Act = g => (g.Day >= Game.CaseDay ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
+                Bot bot = then is null ? first : new() { Id = first.Id + ":" + then.Id, Name = first.Name + "→" + then.Name, Act = g => (g.Day >= Game.CaseDay ? then : first).Act(g), Confront = g => then.Confront(g), Back = then.Back };
                 var g = CreateGame();
                 while (!g.Ended)
                 {
                     bot.Free?.Invoke(g);
                     var act = g.Day == Game.CaseDay && g.Slot == Slot.Evening ? new PlayerAction(Cmd.Confront) { Plan = bot.Confront(g) } : bot.Act(g);
-                    Console.WriteLine($"【D{g.Day} {Names.Of(g.Slot)}】{act?.Describe() ?? "歇着"}");
+                    Console.WriteLine($"【D{g.Day} {Names.Of(g.Slot)}】{act?.Describe() ?? SampleText("chapter2-program", "text-009")}");
                     g.RunSlot(act);
                     foreach (var f in g.TakeFeed()) Console.WriteLine("   " + f);
                 }
@@ -139,7 +138,7 @@ public static class Program
                 new ConsoleUI(g, new StringReader(File.ReadAllText(args[1])), TextWriter.Null, echo: false).Run();
                 var chains = g.Chains();
                 Console.WriteLine($"结局 {Game.EndingText(g.Result)}；人物动作 {g.Events.Count(e => !e.Fixed && e.Who != P.Det)}；涌现链 {chains.Count}（不经侦探的 {chains.Count(c => !c.ByDetective)}；玩家读得到的 {chains.Count(g.Visible)}）");
-                Console.WriteLine("每日玩家读得到的涌现链（第2—6日）：" + string.Join(" ", Enumerable.Range(2, 5).Select(d => chains.Count(c => c.Day == d && g.Visible(c)))));
+                Console.WriteLine(SampleText("chapter2-program", "text-010") + string.Join(" ", Enumerable.Range(2, 5).Select(d => chains.Count(c => c.Day == d && g.Visible(c)))));
                 foreach (var c in Emergence.Interesting(chains, g).GroupBy(Emergence.Trunk).Select(x => x.First()).Take(args.Length > 2 ? int.Parse(args[2]) : 8)) Console.WriteLine("  · " + g.Describe(c));
                 return 0;
             }
@@ -165,7 +164,7 @@ public static class Program
                 while (!(g.Day == Game.CaseDay && g.Slot == Slot.Evening)) { if (bot.Reads) Bots.Read(g); g.RunSlot(bot.Act(g)); }
                 var (fits, claims) = g.DetectiveInference();
                 Console.WriteLine($"已查痕迹 {string.Join(",", g.DetEvidence())}；吻合 {fits.Count} 组：{string.Join(" | ", fits)}；说得出口的陈述 {string.Join(",", claims)}");
-                foreach (var l in g.Compare(g.ReplayCase(CaseVars.Truth).Traces, g.CaseActual!, g.DetEvidence())) Console.WriteLine("  真相假设：" + l);
+                foreach (var l in g.Compare(g.ReplayCase(CaseVars.Truth).Traces, g.CaseActual!, g.DetEvidence())) Console.WriteLine(SampleText("chapter2-program", "text-011") + l);
                 return 0;
             }
             case "chains":
@@ -174,8 +173,8 @@ public static class Program
                 var g = r.World;
                 var chains = g.Chains();
                 Console.WriteLine($"{r.Name}：结局 {Game.EndingText(r.Ending)}；事件 {g.Events.Count}，涌现链 {chains.Count}（玩家读得到的 {chains.Count(g.Visible)}）");
-                Console.WriteLine("  动作：" + string.Join(" ", g.Events.Where(e => !e.Fixed).GroupBy(e => e.Job?.ToString() ?? "说/应").OrderByDescending(x => x.Count()).Select(x => $"{x.Key}{x.Count()}")));
-                foreach (var e in g.Events.Where(e => e.Job is Job.AskOpen or Job.Seize || e.Text.StartsWith("答应") || e.Text.Contains("名录库"))) Console.WriteLine("    " + e.Short + " 因：" + string.Join(",", e.Causes));
+                Console.WriteLine(SampleText("chapter2-program", "text-012") + string.Join(" ", g.Events.Where(e => !e.Fixed).GroupBy(e => e.Job?.ToString() ?? "说/应").OrderByDescending(x => x.Count()).Select(x => $"{x.Key}{x.Count()}")));
+                foreach (var e in g.Events.Where(e => e.Job is Job.AskOpen or Job.Seize || e.Text.StartsWith(SampleText("chapter2-program", "text-013")) || e.Text.Contains(SampleText("chapter2-program", "text-014")))) Console.WriteLine("    " + e.Short + SampleText("chapter2-program", "text-015") + string.Join(",", e.Causes));
                 foreach (var d in Enumerable.Range(2, 5)) Console.WriteLine($"  第{d}日：涌现链 {chains.Count(c => c.Day == d)}，玩家读得到 {chains.Count(c => c.Day == d && g.Visible(c))}");
                 foreach (var c in Emergence.Interesting(chains, g).Take(args.Length > 2 ? int.Parse(args[2]) : 12)) Console.WriteLine("  · " + g.Describe(c));
                 return 0;
@@ -190,7 +189,7 @@ public static class Program
                 g.ProbeStart();
                 var p = g[Names.PersonAlias[args[4]]];
                 Console.WriteLine($"{p.Name} 在 {Names.Of(g.Where(p))}；习惯规则 {p.Habit.Rules.Length} 条（说话类 {p.Habit.Rules.Count(r => r.Effect is DualOntologyWorldEngine.Core.Effect.Sequence { Items: [DualOntologyWorldEngine.Core.Effect.Say, ..] })}）；同处：{string.Join("、", g.People.Where(o => o != p && g.Where(o) == g.Where(p)).Select(o => o.Name))}");
-                Console.WriteLine("  心中的钟：" + string.Join(" ", p.M[g.Clock].Tags.Where(t => t.Value != 0).Select(t => $"{t.Key.Name}={t.Value}")) + "；规则：" + string.Join(" | ", p.Habit.Rules.Where(r => g.JobOf(p, r.Effect) == Job.Sleep).Select(r => r.Condition.ToString()[..Math.Min(120, r.Condition.ToString().Length)])));
+                Console.WriteLine(SampleText("chapter2-program", "text-016") + string.Join(" ", p.M[g.Clock].Tags.Where(t => t.Value != 0).Select(t => $"{t.Key.Name}={t.Value}")) + SampleText("chapter2-program", "text-017") + string.Join(" | ", p.Habit.Rules.Where(r => g.JobOf(p, r.Effect) == Job.Sleep).Select(r => r.Condition.ToString()[..Math.Min(120, r.Condition.ToString().Length)])));
                 foreach (var o in g.People.Where(o => o != p && g.Where(o) == g.Where(p)))
                     Console.WriteLine($"  心中的{o.Name}：Trust={p.M[o.Body].Tags.GetValueOrDefault(DualOntologyWorldEngine.Core.Tags.Trust)} Picks={p.M[o.Body].Tags.GetValueOrDefault(T.Picks)}；在{p.M[o.Body].Parent?.Name}；我在{p.Self.Parent?.Name}");
                 foreach (var r in p.Habit.Rules.Where(r => r.Effect is DualOntologyWorldEngine.Core.Effect.Sequence { Items: [DualOntologyWorldEngine.Core.Effect.Say, ..] }))
@@ -201,11 +200,11 @@ public static class Program
                         Console.WriteLine($"  规则（对{o.Name}）条件：{string.Join(" ", parts)} 接受={r.Acceptance}");
                     }
                 foreach (var a in DualOntologyWorldEngine.Core.DecisionSystem.Assess(p.World, p.Self).Take(8))
-                    Console.WriteLine($"  {(a.Forbidden ? "[禁]" : "")}{g.JobOf(p, a.Decision.Effect)?.ToString() ?? a.Decision.Effect.GetType().Name} {a.Decision.Score}：{string.Join("；", a.Reasons)}");
+                    Console.WriteLine($"  {(a.Forbidden ? SampleText("chapter2-program", "text-018") : "")}{g.JobOf(p, a.Decision.Effect)?.ToString() ?? a.Decision.Effect.GetType().Name} {a.Decision.Score}：{string.Join("；", a.Reasons)}");
                 return 0;
             }
             case "check": return Checks.RunAll(args.Skip(1).ToArray());
-            default: Console.WriteLine("用法：play [--debug] [脚本] | bots [-v] | check [1-5] | trace 机器人号 | slots | idle | diary [日] | prof 机器人号"); return 1;
+            default: Console.WriteLine(SampleText("chapter2-program", "text-019")); return 1;
         }
     }
 }

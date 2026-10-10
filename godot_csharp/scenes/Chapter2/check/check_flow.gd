@@ -1,15 +1,12 @@
 extends SceneTree
+
+const Samples := preload("res://scenes/Shared/check/fixture_data.gd")
 ## 第二章自动流程检查：章一终局续章、地图、正式台词、多日推演、重演、对账与议事。
 ## 用法：& $env:GODOT --headless --path godot_csharp --script res://scenes/Chapter2/check/check_flow.gd
 ## 经 Main.tscn 的 dispatch 与正式 UI 回执驱动；调试跳转与代按不替代游玩验收。
 
 const Fixture := preload("res://scenes/Chapter2/check/chapter2_fixture.gd")
-# STORY-HARDCODE[CH2-016][logic][tool]: 自动流程预写具体地图出生点、角色、案件操作顺序和终局检查。
-const SPAWN_OF := {
-	"central_hall": "south", "lecture": "from_central", "logistics": "west", "granary": "south", "clinic": "south", "greenhouse": "south",
-	"archive": "south", "campus_s": "gate_inside", "living_hall": "north_door", "zone_yi": "from_hall", "zone_jia": "from_hall",
-	"zone_bing": "from_hall", "zone_ding": "from_hall", "resonance": "south", "counterweight": "from_stairs",
-}
+var SPAWN_OF := Samples.dictionary("chapter2-flow-check", "spawns")
 var checks := 0
 var failures := 0
 var failed_names: Array[String] = []
@@ -36,7 +33,7 @@ func _finish() -> void:
 	await preload("res://scenes/Shared/Audio/Sound.gd").quit_cleanly(1 if failures > 0 else 0)
 
 func send(input: Dictionary, resolve_choices := false) -> bool:
-	return check(await fx.send(input, resolve_choices), "章节事件在有限时间内完成：" + str(input.kind))
+	return check(await fx.send(input, resolve_choices), Samples.text("chapter2-flow-check", "text-001") + str(input.kind))
 
 func run_action(act: Dictionary) -> bool:
 	return await send({"kind": "action", "act": act}, true)
@@ -47,7 +44,6 @@ func upcoming_slot() -> int: return int(fx.probe("next_slot"))
 func move_to_map(key: String) -> bool:
 	return await fx.move_to_map(key, str(SPAWN_OF.get(key, "")))
 
-# STORY-HARDCODE[CH2-017][logic][tool]: 自动验收按预定证词、证据、支持与分支策略代选。
 func planned_choice(options: Array) -> String:
 	var available: Array = options.filter(func(option): return bool(option.get("available", true)))
 	if available.is_empty(): return ""
@@ -73,7 +69,6 @@ func planned_choice(options: Array) -> String:
 	return first_id
 
 ## 同一 Main 会话完成终局、保存、按 C；不通过 publish 探针伪造章一结束。
-# STORY-HARDCODE[CH2-018][logic][tool]: 测试构造章一继承状态并预置姓名、答案和章二交接。
 func handoff() -> bool:
 	host = await fx.prepare()
 	fx.set_progress("state", "detective_name", "flow2-fixture")
@@ -82,11 +77,11 @@ func handoff() -> bool:
 	await fx.jump("investigate")
 	var ending_started := Time.get_unix_time_from_system()
 	if not await send({"kind": "interact", "site": "E8"}): return false
-	if not check(host.ui.modal_kind == "menu" and fx.select("answer"), "章一调试答题完成后从正式菜单进入终局"): return false
-	if not check(await fx.settle(false, 60.0, func(): return fx.ended() and host.ui.modal_kind == "ending"), "章一开门演出在有限时间内完成"): return false
-	if not check(fx.ended() and fx.progress("flags").has("door_open") and host.ui.modal_kind == "ending", "章一门开、结束状态与章末卡同时成立"): return false
-	check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, "章一隔离门实际切换为开启")
-	check(fx.seen_ids.has("s10_open.015"), "章一终局正式台词经过 UI")
+	if not check(host.ui.modal_kind == "menu" and fx.select("answer"), Samples.text("chapter2-flow-check", "text-002")): return false
+	if not check(await fx.settle(false, 60.0, func(): return fx.ended() and host.ui.modal_kind == "ending"), Samples.text("chapter2-flow-check", "text-003")): return false
+	if not check(fx.ended() and fx.progress("flags").has("door_open") and host.ui.modal_kind == "ending", Samples.text("chapter2-flow-check", "text-004")): return false
+	check(fx.map().get_node("ObjectsAndPeople/MechanicalIsolationDoor/DoorGap").visible, Samples.text("chapter2-flow-check", "text-005"))
+	check(fx.seen_ids.has("s10_open.015"), Samples.text("chapter2-flow-check", "text-006"))
 	var saved = JSON.parse_string(FileAccess.get_file_as_string("user://chapter1_end.json")) if FileAccess.file_exists("user://chapter1_end.json") else null
 	check(saved is Dictionary and str(saved.get("detective_name", "")) == "flow2-fixture" and not bool(saved.get("rested", true))
 		and FileAccess.get_modified_time("user://chapter1_end.json") >= int(ending_started),
@@ -94,7 +89,7 @@ func handoff() -> bool:
 	var actions: Array = host.ui._modal_event.get("actions", [])
 	var continuation := actions.filter(func(a): return str(a.id) == "continue" and bool(a.get("available", true)))
 	if not check(continuation.size() == 1 and str(continuation[0].get("key", "")) == "C"
-		and str(continuation[0].label) == fx.text("结局·继续按钮"), "章一章末卡提供继续进入章二（C）"): return false
+		and str(continuation[0].label) == fx.text(Samples.text("chapter2-flow-check", "text-007")), Samples.text("chapter2-flow-check", "text-008")): return false
 	var engine_id: int = host.engine.get_instance_id()
 	var old_field_id: int = host.field.get_instance_id()
 	fx.clear_observed()
@@ -104,61 +99,60 @@ func handoff() -> bool:
 	key.pressed = true
 	host.ui._unhandled_input(key)
 	if not await fx.wait_until(fx.campus_loaded, 10.0):
-		check(false, "继续后加载第二章视图（失败即停止）：" + fx.stage())
+		check(false, Samples.text("chapter2-flow-check", "text-009") + fx.stage())
 		return false
-	check(host.engine.get_instance_id() == engine_id and host.field.get_instance_id() != old_field_id, "同一 Main 引擎替换章一现场为章二视图")
-	if not check(await fx.settle(true), "第二章 view_ready 后正式开场完成"): return false
+	check(host.engine.get_instance_id() == engine_id and host.field.get_instance_id() != old_field_id, Samples.text("chapter2-flow-check", "text-010"))
+	if not check(await fx.settle(true), Samples.text("chapter2-flow-check", "text-011")): return false
 	if not check(fx.stage() == "field" and bool(host.ui.snapshot.get("field_enabled", false)) and host.field.field_active()
-		and not host.ui.is_busy() and not fx.ended(), "章一继续后到达章二第一个可操作状态"): return false
-	check(str(host.ui.snapshot.get("detective_name", "")) == "flow2-fixture", "第二章继承本轮章一玩家状态")
-	check(fx.saw_sequence("arrival") and not fx.saw_sequence("lesson") and not fx.saw_sequence("free"), "正式 .story 续章先演开场，首课留待次日上午")
+		and not host.ui.is_busy() and not fx.ended(), Samples.text("chapter2-flow-check", "text-012")): return false
+	check(str(host.ui.snapshot.get("detective_name", "")) == "flow2-fixture", Samples.text("chapter2-flow-check", "text-013"))
+	check(fx.saw_sequence("arrival") and not fx.saw_sequence("lesson") and not fx.saw_sequence("free"), Samples.text("chapter2-flow-check", "text-014"))
 	var walkable: bool = host.field.adapter.walkable(fx.player().position)
 	print("    handoff field: map=%s position=%s walkable=%s stage=%s" % [host.field.adapter.map_key(), fx.player().position, walkable, fx.stage()])
-	check(host.field.adapter.map_key() == "living_hall", "章二第一个可操作状态在起居厅")
-	check(walkable, "章二第一个可操作状态的出生点可走")
-	check(host.field.actors.size() > 3, "起居厅里有人（%d）" % host.field.actors.size())
+	check(host.field.adapter.map_key() == "living_hall", Samples.text("chapter2-flow-check", "text-015"))
+	check(walkable, Samples.text("chapter2-flow-check", "text-016"))
+	check(host.field.actors.size() > 3, Samples.text("chapter2-flow-check", "text-017") % host.field.actors.size())
 	return true
 
-# STORY-HARDCODE[CH2-019][logic][tool]: 测试硬编码第二章时间推进、规则转述、特定人物问话、证物和议事流程。
 func _run() -> void:
 	var t0 := Time.get_ticks_msec()
 	fx = Fixture.new(self)
-	fx.on_error = func(message: String) -> void: check(false, "夹具：" + message)
+	fx.on_error = func(message: String) -> void: check(false, Samples.text("chapter2-flow-check", "text-018") + message)
 	fx.choose = planned_choice
 	if not await handoff():
 		await _finish()
 		return
 	# 保留多地图出生点检查；检查换图后恢复续章起点，不再第二次发送 begin。
-	for key in ["zone_yi", "living_hall", "zone_jia", "zone_bing", "zone_ding", "central_hall", "lecture", "logistics", "granary", "clinic", "archive", "counterweight", "resonance", "greenhouse", "campus_s", "campus_n", "campus_sw"]:
+	for key in Samples.array("chapter2-flow-check", "case-001"):
 		var t := Time.get_ticks_msec()
 		if not await move_to_map(key):
-			check(false, "地图切换完成：" + key)
+			check(false, Samples.text("chapter2-flow-check", "text-019") + key)
 			await _finish()
 			return
-		check(host.field.adapter.walkable(fx.player().position), "%s 载入，出生点可走（%d ms，%d 处可检视）" % [key, Time.get_ticks_msec() - t, host.field.sites.size()])
+		check(host.field.adapter.walkable(fx.player().position), Samples.text("chapter2-flow-check", "text-020") % [key, Time.get_ticks_msec() - t, host.field.sites.size()])
 	await move_to_map("living_hall")
 	var document = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
-	if not check(document is Dictionary, "正式 .story 编译文件可读取"):
+	if not check(document is Dictionary, Samples.text("chapter2-flow-check", "text-021")):
 		await _finish()
 		return
 	var titles: Dictionary = {}
 	if document is Dictionary:
 		for chapter in document.chapters:
 			for sequence in chapter.sequences: titles[str(sequence.id)] = true
-	for title in ["arrival", "gather", "lesson", "free", "noon_dispute", "after", "replay_unlock", "confront_rule", "council", "box"]:
-		check(titles.has(title), "正式章节段落 " + title)
+	for title in Samples.array("chapter2-flow-check", "case-002"):
+		check(titles.has(title), Samples.text("chapter2-flow-check", "text-022") + title)
 	# 始业日余下的时段。
 	var first_guard := 0
 	while upcoming_slot() < 5 and first_guard < 8:
 		first_guard += 1
 		if not await run_action({"cmd": "stay"}): break
-	check(upcoming_day() == int(fx.probe("first_day")) and upcoming_slot() == 5, "始业日走到夜里")
-	check(fx.saw_sequence("meet_jia") and fx.saw_sequence("supper") and fx.saw_sequence("first_night"), "始业日按正式日程相识、用存粮晚饭、入夜")
+	check(upcoming_day() == int(fx.probe("first_day")) and upcoming_slot() == 5, Samples.text("chapter2-flow-check", "text-023"))
+	check(fx.saw_sequence("meet_jia") and fx.saw_sequence("supper") and fx.saw_sequence("first_night"), Samples.text("chapter2-flow-check", "text-024"))
 	await run_action({"cmd": "sleep"})
-	check(fx.saw_sequence("meet_bing", true) and host.field.adapter.map_key() == "living_hall", "次日清晨在起居厅遇见丙区居民")
+	check(fx.saw_sequence("meet_bing", true) and host.field.adapter.map_key() == "living_hall", Samples.text("chapter2-flow-check", "text-025"))
 	await run_action({"cmd": "stay"})
-	check(fx.saw_sequence("gather", true) and fx.saw_sequence("lesson", true) and fx.saw_sequence("free", true), "次日上午正式 .story 章节产生集合、首课与自由行动台词")
-	check(fx.saw_sequence("meet_ding", true) and fx.saw_sequence("noon_dispute", true) and fx.saw_sequence("open_archive_wing", true), "首课后按正式日程开放配给与库廊")
+	check(fx.saw_sequence("gather", true) and fx.saw_sequence("lesson", true) and fx.saw_sequence("free", true), Samples.text("chapter2-flow-check", "text-026"))
+	check(fx.saw_sequence("meet_ding", true) and fx.saw_sequence("noon_dispute", true) and fx.saw_sequence("open_archive_wing", true), Samples.text("chapter2-flow-check", "text-027"))
 	await move_to_map("logistics")
 	await send({"kind": "interact", "map": "logistics", "site": "ration_notice"})
 	# 日常篇：就地等待，夜里睡下；规矩仍通过实际可用的规则编号转述。
@@ -180,52 +174,52 @@ func _run() -> void:
 		else:
 			await move_to_map("central_hall")
 			if not await run_action({"cmd": "stay"}): break
-	check(told, "日常篇里当面讲过一条规矩")
-	if not check(upcoming_day() == case_day and upcoming_slot() == 1, "案发次日清晨已结算（第 %d 日）" % case_day):
+	check(told, Samples.text("chapter2-flow-check", "text-028"))
+	if not check(upcoming_day() == case_day and upcoming_slot() == 1, Samples.text("chapter2-flow-check", "text-029") % case_day):
 		await _finish()
 		return
-	check(fx.saw_sequence("dawn", true), "清晨正式台账场面经过 UI")
-	for pair in [["logistics", "ledger"], ["granary", "latch"], ["clinic", "empty_bowl"], ["zone_jia", "litter"], ["central_hall", "central_notice"]]:
+	check(fx.saw_sequence("dawn", true), Samples.text("chapter2-flow-check", "text-030"))
+	for pair in Samples.array("chapter2-flow-check", "case-003"):
 		await move_to_map(pair[0])
 		await send({"kind": "interact", "map": pair[0], "site": pair[1]})
-	for who in ["Bertrand", "Margaret", "Mora", "Quer"]:
-		if not check(await fx.move_to_person(who, SPAWN_OF), "%s 站在自己的去处" % who): continue
+	for who in Samples.array("chapter2-flow-check", "case-004"):
+		if not check(await fx.move_to_person(who, SPAWN_OF), Samples.text("chapter2-flow-check", "text-031") % who): continue
 		await send({"kind": "interact", "site": "person:" + who, "target": who})
-		if not check(fx.select("ask"), "实际候选含所需交谈入口：ask（%s）" % who): continue
-		check(await fx.settle(), "%s 的正式问话完成" % who)
+		if not check(fx.select("ask"), Samples.text("chapter2-flow-check", "text-032") % who): continue
+		check(await fx.settle(), Samples.text("chapter2-flow-check", "text-033") % who)
 		if host.ui.modal_kind == "menu":
-			check(fx.select("cancel"), "问话后返回现场：" + who)
+			check(fx.select("cancel"), Samples.text("chapter2-flow-check", "text-034") + who)
 			await fx.settle()
 	if not await send({"kind": "replay", "vars": [0, 0, 0, 0]}):
 		await _finish()
 		return
 	var r: Dictionary = host.ui.snapshot.get("replay_result", {})
 	var steps: Array = r.get("steps", [])
-	check(not steps.is_empty(), "重演有墨影步子（%d），全吻合=%s" % [steps.size(), str(r.get("full_match", false))])
-	check(host.ui.modal_kind == "replay", "正式回放回执后回到重演手稿")
+	check(not steps.is_empty(), Samples.text("chapter2-flow-check", "text-035") % [steps.size(), str(r.get("full_match", false))])
+	check(host.ui.modal_kind == "replay", Samples.text("chapter2-flow-check", "text-036"))
 	fx.close_modal()
-	if check(await fx.move_to_person("Ward", SPAWN_OF), "请看物证前与 Ward 同处一地"):
+	if check(await fx.move_to_person("Ward", SPAWN_OF), Samples.text("chapter2-flow-check", "text-037")):
 		var thing := str(host.ui.snapshot.get("examined", {}).get("logistics:ration_notice", {}).get("thing", ""))
-		check(thing != "", "同行所用物证来自此前的正式检视")
+		check(thing != "", Samples.text("chapter2-flow-check", "text-038"))
 		var before := upcoming_slot()
 		await run_action({"cmd": "escort", "who": "Ward", "thing": thing})
-		check(upcoming_slot() == before + 1, "Ward 接受同行并结算一个时段")
+		check(upcoming_slot() == before + 1, Samples.text("chapter2-flow-check", "text-039"))
 	await run_action({"cmd": "collect"})
 	# 傍晚边界立即演对账：先停在真实候选，核对时钟，再配置代选策略。
 	await send({"kind": "action", "act": {"cmd": "stay"}})
-	check(upcoming_day() == case_day and upcoming_slot() == 4, "到案发次日傍晚")
+	check(upcoming_day() == case_day and upcoming_slot() == 4, Samples.text("chapter2-flow-check", "text-040"))
 	planned_pairs = fx.probe("valid_confront_pairs")
 	planned_pair_index = 0
-	check(await fx.settle(true), "傍晚对账的真实候选在有限时间内完成")
-	check(fx.saw_sequence("evening", true) and fx.saw_sequence("confront_begin", true), "对账发生（%d 对有效）" % planned_pairs.size())
+	check(await fx.settle(true), Samples.text("chapter2-flow-check", "text-041"))
+	check(fx.saw_sequence("evening", true) and fx.saw_sequence("confront_begin", true), Samples.text("chapter2-flow-check", "text-042") % planned_pairs.size())
 	check(planned_pair_index == planned_pairs.size(), "有效陈述/证据对全部通过真实候选提交")
 	# 对账结算后是夜晚，守夜必须先在现场走到对应空间。
 	await move_to_map("archive")
 	await run_action({"cmd": "watch", "place": "ArchiveFront"})
-	check(bool(fx.probe("ended")) and fx.ended() and host.ui.modal_kind == "ending", "议事日：章节到议事与正式章末卡")
+	check(bool(fx.probe("ended")) and fx.ended() and host.ui.modal_kind == "ending", Samples.text("chapter2-flow-check", "text-043"))
 	var result: Dictionary = host.ui._modal_event
 	var rows: Array = result.get("rows", [])
-	var template := str(document.chapters[0].design.text["终局.名录库"])
-	check(not rows.is_empty() and str(rows[0]).begins_with(template.get_slice("{", 0)), "议事结果行使用正式剧本文案")
-	print("用时 %d ms" % [Time.get_ticks_msec() - t0])
+	var template := str(document.chapters[0].design.text[Samples.text("chapter2-flow-check", "text-044")])
+	check(not rows.is_empty() and str(rows[0]).begins_with(template.get_slice("{", 0)), Samples.text("chapter2-flow-check", "text-045"))
+	print(Samples.text("chapter2-flow-check", "text-046") % [Time.get_ticks_msec() - t0])
 	await _finish()

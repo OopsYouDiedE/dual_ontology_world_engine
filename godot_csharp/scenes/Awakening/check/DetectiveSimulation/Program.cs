@@ -1,3 +1,4 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Text.Json;
 using DualOntologyWorldEngine.Awakening;
 
@@ -6,11 +7,11 @@ using DualOntologyWorldEngine.Awakening;
 if (args.Length > 0 && args[0] == "--render-json")
 {
     if (args.Length is < 2 or > 3)
-        throw new ArgumentException("用法：--render-json <已有JSON> [输出txt路径]");
+        throw new ArgumentException(SampleText("detective-simulation", "text-001"));
     var source = Path.GetFullPath(args[1]);
     var target = args.Length == 3 ? Path.GetFullPath(args[2]) : Path.ChangeExtension(source, ".txt");
     if (string.Equals(source, target, StringComparison.OrdinalIgnoreCase))
-        throw new ArgumentException("文本输出路径不能覆盖源JSON。");
+        throw new ArgumentException(SampleText("detective-simulation", "text-002"));
     using var document = JsonDocument.Parse(File.ReadAllText(source));
     Directory.CreateDirectory(Path.GetDirectoryName(target)!);
     File.WriteAllText(target, TrajectoryText.Render(document.RootElement));
@@ -18,7 +19,7 @@ if (args.Length > 0 && args[0] == "--render-json")
     return;
 }
 if (!args.Contains("--enabled", StringComparer.Ordinal))
-    throw new ArgumentException("自主逻辑模拟必须显式传入 --enabled；正常游戏保持玩家控制。");
+    throw new ArgumentException(SampleText("detective-simulation", "text-003"));
 var decisionProfile = "default";
 string? durationArgument = null;
 Random? chaos = null;
@@ -32,52 +33,52 @@ for (var index = 0; index < args.Length; index++)
     if (args[index] == "--decision-profile")
     {
         if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
-            throw new ArgumentException("--decision-profile 需要一个剧情选择意图名称。");
+            throw new ArgumentException(SampleText("detective-simulation", "text-004"));
         decisionProfile = args[index];
     }
     else if (args[index] == "--persona")
     {
         // 自动验证用：微调某人的默认设置，如 --persona 苏泠.初醒信任.侦探=-2（总纲 §六 第二期）。
-        if (++index >= args.Length || !args[index].Contains('=')) throw new ArgumentException("--persona 写成 人物.字段[.对象]=数值。");
+        if (++index >= args.Length || !args[index].Contains('=')) throw new ArgumentException(SampleText("detective-simulation", "text-005"));
         var (key, value) = (args[index][..args[index].IndexOf('=')], args[index][(args[index].IndexOf('=') + 1)..]);
         persona[key] = double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
     }
     else if (args[index] == "--play-as")
     {
         // 开局任选一人（总纲 §六 第五期）：记录控制者、播其开场独白，结束时给出此人的认知与心愿；不改他人的行为。
-        if (++index >= args.Length) throw new ArgumentException("--play-as 需要人物名。");
+        if (++index >= args.Length) throw new ArgumentException(SampleText("detective-simulation", "text-006"));
         playAs = args[index];
     }
     else if (args[index] == "--mind-seed")
     {
-        if (++index >= args.Length || !int.TryParse(args[index], out mindSeed)) throw new ArgumentException("--mind-seed 需要整数种子（0 为作者默认值）。");
+        if (++index >= args.Length || !int.TryParse(args[index], out mindSeed)) throw new ArgumentException(SampleText("detective-simulation", "text-007"));
     }
     else if (args[index] == "--case-seed")
     {
-        if (++index >= args.Length || !int.TryParse(args[index], out var caseSeed)) throw new ArgumentException("--case-seed 需要整数种子（0 为作者版本）。");
+        if (++index >= args.Length || !int.TryParse(args[index], out var caseSeed)) throw new ArgumentException(SampleText("detective-simulation", "text-008"));
         CaseVariants.Seed = caseSeed;
     }
     else if (args[index] == "--chaos")
     {
         // 混沌测试：侦探的每一步改由随机代理在公开协议上乱做（含毁物、拧接头、乱重演、乱作答），检查不卡死（总纲 §六 第三期）。
-        if (++index >= args.Length || !int.TryParse(args[index], out var chaosSeed)) throw new ArgumentException("--chaos 需要一个整数种子。");
+        if (++index >= args.Length || !int.TryParse(args[index], out var chaosSeed)) throw new ArgumentException(SampleText("detective-simulation", "text-009"));
         chaos = new Random(chaosSeed);
     }
     else if (args[index] == "--duration")
     {
         if (++index >= args.Length || args[index].StartsWith("--",StringComparison.Ordinal))
-            throw new ArgumentException("--duration 需要时长，如 240、90分钟、1天22小时或到结局。");
+            throw new ArgumentException(SampleText("detective-simulation", "text-010"));
         durationArgument = args[index];
     }
     else if (args[index].StartsWith("--",StringComparison.Ordinal))
-        throw new ArgumentException("未知模拟参数：" + args[index]);
+        throw new ArgumentException(SampleText("detective-simulation", "text-011") + args[index]);
     else outputArguments.Add(args[index]);
 }
-if (outputArguments.Count > 1) throw new ArgumentException("模拟只接受一个输出路径。");
+if (outputArguments.Count > 1) throw new ArgumentException(SampleText("detective-simulation", "text-012"));
 var outputArgument = outputArguments.FirstOrDefault();
 var output = outputArgument is not null ? Path.GetFullPath(outputArgument) : Path.GetFullPath("artifacts/chapter-one-ecology/unified-game-trajectory.txt");
 if (string.Equals(Path.GetExtension(output), ".json", StringComparison.OrdinalIgnoreCase))
-    throw new ArgumentException("完整动作脚本只接受文本输出路径，不生成 JSON 文件。");
+    throw new ArgumentException(SampleText("detective-simulation", "text-013"));
 var sampled = Persona.Sample(mindSeed);
 Persona.Overrides = sampled.Concat(persona).GroupBy(p => p.Key).ToDictionary(g => g.Key, g => g.Last().Value);
 var world = new MorningWorld();
@@ -85,24 +86,23 @@ world.InitializePlayerPerception();
 var content = new AwakeningContentSession();
 if (!content.Content.RootElement.GetProperty("DETECTIVE_DIALOGUE_CHOICES").EnumerateObject()
     .Any(rule => rule.Value.GetProperty("profile").GetString() == decisionProfile))
-    throw new ArgumentException("剧情中没有该模拟对白选择意图：" + decisionProfile);
+    throw new ArgumentException(SampleText("detective-simulation", "text-014") + decisionProfile);
 using var layoutStream = typeof(MorningWorld).Assembly.GetManifestResourceStream("Awakening.Layout.json")
     ?? throw new InvalidOperationException("Missing public host layout.");
 using var hostLayout = JsonDocument.Parse(layoutStream);
 // 运行时长：外部参数优先，否则读入口文件末尾的“运行”；两者都没有时不启动，避免默认跑出无意的长度。
 var root = content.Content.RootElement;
-// STORY-HARDCODE[AWK-051][schema][tool]: 自动模拟器含固定侦探输入/空间采样与选项策略，仅作工具模拟。
 var startMinutes = root.GetProperty("DAY_CLOCK").GetProperty("start_minutes").GetInt32();
 double? stopMinutes;
 string runSource;
-if (durationArgument is not null) { stopMinutes = startMinutes + RunDuration.Parse(durationArgument); runSource = "外部参数 --duration " + durationArgument; }
+if (durationArgument is not null) { stopMinutes = startMinutes + RunDuration.Parse(durationArgument); runSource = SampleText("detective-simulation", "text-015") + durationArgument; }
 else if (root.TryGetProperty("RUN", out var run))
 {
     var declared = run.GetProperty("duration_minutes");
     stopMinutes = declared.ValueKind == JsonValueKind.Null ? null : startMinutes + declared.GetInt32();
-    runSource = "剧本的运行语句";
+    runSource = SampleText("detective-simulation", "text-016");
 }
-else throw new ArgumentException("剧本没有“运行”语句时，须用 --duration 指定时长（可写“到结局”）。");
+else throw new ArgumentException(SampleText("detective-simulation", "text-017"));
 if (stopMinutes is not null && double.IsNaN(stopMinutes.Value)) stopMinutes = null;
 bool Expired() => stopMinutes is { } stop && content.GameMinutes >= stop;
 var dialogue = new Chapter1Dialogue(content, world);
@@ -148,14 +148,14 @@ void LocatePublicPoint(string who, JsonElement position, string spot)
     if (room < 0 || actor < 0) throw new InvalidDataException("Public staging point has no logical binding: " + spot);
     world.DailySuspend(who); world.Locate((Person)actor,(Room)room); content.Session.Locate(who,roomKey);
     if (who == "detective") { currentRoom = roomKey; content.RoomTrigger(roomKey); content.RoomEntry(roomKey); }
-    Story("宿主", $"公开剧情站位到场代报：{who}；{spot}（{x},{y}）；{roomKey}；未验几何");
+    Story(SampleText("detective-simulation", "text-018"), $"公开剧情站位到场代报：{who}；{spot}（{x},{y}）；{roomKey}；未验几何");
 }
 
 string Stage() => (string)content.Session.GetProgress("state")["stage"];
 void Story(string kind, string text)
 {
     storyEvents.Add(new(time, content.GameMinutes, kind, text));
-    if (kind is "对白" or "旁白" or "公告" or "证物" or "对照")
+    if (SampleStrings("detective-simulation", "visible-record-kinds").Contains(kind))
         planner.RecordVisibleText(text,$"host:{kind}; game_minutes={content.GameMinutes}; logical_seconds={time}");
 }
 void SyncStage()
@@ -164,7 +164,7 @@ void SyncStage()
     world.SetDailyStage(stage);
     world.SetMorningGameMinutes(content.GameMinutes);
     if (previousStage == stage) return;
-    Story("阶段", stage);
+    Story(SampleText("detective-simulation", "text-024"), stage);
     previousStage = stage;
 }
 void Tick(bool active)
@@ -206,7 +206,7 @@ void Tick(bool active)
                 world.Locate(companion, (Room)room);
                 content.Session.Locate(Names.PersonKeys[(int)companion], plan.Room);
             }
-            Story("宿主", "相遇站位到场代报；未验房内几何");
+            Story(SampleText("detective-simulation", "text-018"), SampleText("detective-simulation", "text-025"));
             PlayFlow(() => content.BeginMeeting(world));
             break; // Presentation suspends pending daily plans.
         }
@@ -221,25 +221,25 @@ void Tick(bool active)
 }
 void Command(string name, IReadOnlyList<object?> arguments)
 {
-    Story("命令", name + (arguments.Count == 0 ? "" : "：" + string.Join("；", arguments)));
+    Story(SampleText("detective-simulation", "text-026"), name + (arguments.Count == 0 ? "" : "：" + string.Join("；", arguments)));
     if (name == "name")
-        Story("模拟输入", "采用报名栏的默认称呼：" + content.Session.GetProgress("state")["detective_name"]);
+        Story(SampleText("detective-simulation", "text-027"), SampleText("detective-simulation", "text-028") + content.Session.GetProgress("state")["detective_name"]);
     else if (name is "board" or "field_board")
     {
         // Same host-side read acknowledgment and public clauses as open_board.
         content.Session.Set("flags", "board_read", true);
-        Story("公告", Chapter1Data.Text("公告框·标题"));
-        Story("公告", Chapter1Data.Text("公告框·引言"));
-        foreach (var clause in MorningWorld.PostedRules) Story("公告", clause);
+        Story(SampleText("detective-simulation", "text-021"), Chapter1Data.Text(SampleText("detective-simulation", "text-029")));
+        Story(SampleText("detective-simulation", "text-021"), Chapter1Data.Text(SampleText("detective-simulation", "text-030")));
+        foreach (var clause in MorningWorld.PostedRules) Story(SampleText("detective-simulation", "text-021"), clause);
     }
-    else if (name == "aside") Story("旁白", string.Join("：", arguments));
+    else if (name == "aside") Story(SampleText("detective-simulation", "text-020"), string.Join("：", arguments));
     else if (name == "stage_actor" && arguments.Count > 1)
         LocateStaged(Convert.ToString(arguments[0])!,Convert.ToString(arguments[1])!);
-    else if (name == "finale_prepare") LocateStaged("detective","终局站位·侦探");
+    else if (name == "finale_prepare") LocateStaged("detective",SampleText("detective-simulation", "text-031"));
     else if (name == "posts")
     {
         foreach (var post in hostLayout.RootElement.GetProperty("posts").EnumerateObject())
-            LocatePublicPoint(post.Name,post.Value,"岗位·"+post.Name);
+            LocatePublicPoint(post.Name,post.Value,SampleText("detective-simulation", "text-032")+post.Name);
     }
     else if (name == "summon" && arguments.Count > 0)
     {
@@ -247,13 +247,13 @@ void Command(string name, IReadOnlyList<object?> arguments)
         var person = Array.IndexOf(Names.PersonKeys, who);
         var room = Array.IndexOf(Names.RoomKeys,currentRoom);
         if (person >= 0 && room >= 0) { world.DailySuspend(who); world.Locate((Person)person,(Room)room); content.Session.Locate(who,currentRoom); }
-        Story("宿主", "公开召集到场代报：" + who);
+        Story(SampleText("detective-simulation", "text-018"), SampleText("detective-simulation", "text-033") + who);
     }
     else if (name == "card" && arguments.Count > 0)
     {
         var id = Convert.ToString(arguments[0])!;
-        Story("证物", content.CardFacts(id));
-        foreach (var note in content.CardNotes(world,id)) Story("证物",note);
+        Story(SampleText("detective-simulation", "text-022"), content.CardFacts(id));
+        foreach (var note in content.CardNotes(world,id)) Story(SampleText("detective-simulation", "text-022"),note);
     }
     else if (name == "sound")
     {
@@ -261,7 +261,7 @@ void Command(string name, IReadOnlyList<object?> arguments)
         var sentence = randomChoices.Next(sentences.Length);
         var spots = content.Content.RootElement.GetProperty("SOUND_SPOTS").EnumerateObject().Select(s => s.Name).ToArray();
         var spot = spots[randomChoices.Next(spots.Length)];
-        Story("模拟输入", "公开声路菜单采样：" + sentences[sentence].Full + "；站位 " + spot);
+        Story(SampleText("detective-simulation", "text-027"), SampleText("detective-simulation", "text-034") + sentences[sentence].Full + SampleText("detective-simulation", "text-035") + spot);
         var positions = content.SoundPositions(spot).ToDictionary(p => (Person)Array.IndexOf(Names.PersonKeys,p.Key), p => (Room)Array.IndexOf(Names.RoomKeys,p.Value));
         var heard = world.SoundTest(sentences[sentence],positions);
         content.RecordSoundTest();
@@ -272,7 +272,7 @@ void Command(string name, IReadOnlyList<object?> arguments)
         content.Session.Set("state","sound_rounds",rounds);
         content.Session.Set("experiments","E8",true);
         if (rounds == 1) PlayDialogue("sound_test");
-        foreach (var perception in heard) Story("证物",Names.Of(perception.Who)+"："+perception.Text+"；"+perception.Direction);
+        foreach (var perception in heard) Story(SampleText("detective-simulation", "text-022"),Names.Of(perception.Who)+"："+perception.Text+"；"+perception.Direction);
     }
     else if (name == "answerpick")
     {
@@ -284,10 +284,10 @@ void Command(string name, IReadOnlyList<object?> arguments)
             var statements = content.Content.RootElement.GetProperty("STATEMENTS").EnumerateObject().Select(s => s.Name).ToArray();
             var exhibits = content.Content.RootElement.GetProperty("EVIDENCE").EnumerateObject().Select(e => e.Name).ToArray();
             argument = Expired() || chaos.NextDouble() < 0.3 ? null : (statements[chaos.Next(statements.Length)], exhibits[chaos.Next(exhibits.Length)]);
-            if (argument is null) { content.Session.GetProgress("answer_pick").Clear(); Story("混沌", "暂且不答"); return; }
+            if (argument is null) { content.Session.GetProgress("answer_pick").Clear(); Story(SampleText("detective-simulation", "text-036"), SampleText("detective-simulation", "text-037")); return; }
         }
         if (argument is not { } claim)
-        { awaitingInput = true; Story("待输入", "没有足够公开依据提交本步陈述与举证，停止答辩"); }
+        { awaitingInput = true; Story(SampleText("detective-simulation", "text-038"), SampleText("detective-simulation", "text-039")); }
         else
         {
             content.Session.Set("answer_pick","say",claim.Said);
@@ -295,16 +295,16 @@ void Command(string name, IReadOnlyList<object?> arguments)
             answerSubmitted = true;
             var statement = content.Content.RootElement.GetProperty("STATEMENTS").GetProperty(claim.Said).GetString();
             var exhibit = content.Content.RootElement.GetProperty("EVIDENCE").GetProperty(claim.Shown).GetProperty("name").GetString();
-            Story("模拟输入", $"提交主观论证：{statement}；举证：{exhibit}（{claim.Shown}，已检视，尚待正式判定）");
+            Story(SampleText("detective-simulation", "text-027"), $"提交主观论证：{statement}；举证：{exhibit}（{claim.Shown}，已检视，尚待正式判定）");
         }
     }
     else if (name == "finale") PlayFlow(() => content.BeginFinale(world));
-    else if (name == "door_open") { exitGameMinutes = content.GameMinutes; Story("出门", "正式终局流程开启隔离门"); }
+    else if (name == "door_open") { exitGameMinutes = content.GameMinutes; Story(SampleText("detective-simulation", "text-040"), SampleText("detective-simulation", "text-041")); }
     else if (name == "tube")
     {
         // No answer, evidence inspection or replay input is invented here.
         awaitingInput = true;
-        Story("待输入", "此宿主演示未提供该交互输入，停止推进流程");
+        Story(SampleText("detective-simulation", "text-038"), SampleText("detective-simulation", "text-042"));
     }
 }
 void PlayDialogue(string title)
@@ -315,15 +315,15 @@ void PlayDialogue(string title)
     {
         SyncStage();
         foreach (var line in packet.Lines)
-            Story("对白", (line.Speaker.Length == 0 ? "" : line.Speaker + "：") + line.Text);
+            Story(SampleText("detective-simulation", "text-019"), (line.Speaker.Length == 0 ? "" : line.Speaker + "：") + line.Text);
         foreach (var command in packet.WorldCommands) Command(command.Name, command.Arguments);
         foreach (var choice in packet.Choices)
-            Story("可见选项", choice.Label + (choice.IsAvailable ? "" : "（不可选：" + choice.LockHint + "）"));
+            Story(SampleText("detective-simulation", "text-043"), choice.Label + (choice.IsAvailable ? "" : SampleText("detective-simulation", "text-044") + choice.LockHint + "）"));
         Tick(false);
         if (packet.IsComplete || awaitingInput)
         {
             if (chaos is null && (title.StartsWith("answer_wrong",StringComparison.Ordinal) || title == "answer_need_test"))
-            { awaitingInput = true; Story("停点", "正式答辩反馈未接受论证；保留失败，不遍历判定猜答案"); }
+            { awaitingInput = true; Story(SampleText("detective-simulation", "text-045"), SampleText("detective-simulation", "text-046")); }
             return;
         }
         if (packet.Choices.Count > 0)
@@ -331,18 +331,18 @@ void PlayDialogue(string title)
             // Repeated question menus keep their public return option, but each question
             // is asked at most once during this actual conversation.
             var available = packet.Choices.Where(c => c.IsAvailable && !selectedChoices.Contains(c.Id)).ToArray();
-            var rules = content.Content.RootElement.GetProperty("DETECTIVE_DIALOGUE_CHOICES").EnumerateObject().Select(r => r.Value)
+            var rules = Sample("detective-simulation", "dialogue-weights").EnumerateArray()
                 .Where(r => r.GetProperty("profile").GetString() == decisionProfile).ToArray();
             var weighted = available.Select(choice =>
             {
                 var matching = rules.Where(r => (r.GetProperty("scene").GetString() == title || r.GetProperty("scene").GetString() == "*")
-                    && choice.Label.Contains(r.GetProperty("label_contains").GetString()!,StringComparison.Ordinal)).ToArray();
+                    && r.GetProperty("choice_ids").EnumerateArray().Any(id => id.GetString() == choice.Id)).ToArray();
                 return new { Choice = choice, Weight = matching.Length == 0 ? 1.0 : matching.Sum(r => r.GetProperty("weight").GetDouble()) };
             }).Where(c => c.Weight > 0).ToArray();
             var draw = randomChoices.NextDouble() * weighted.Sum(c => c.Weight);
             var choice = weighted.FirstOrDefault(c => (draw -= c.Weight) < 0)?.Choice;
-            if (choice is null) { awaitingInput = true; Story("待输入", "当前没有可用选项"); return; }
-            Story("模拟输入", "按剧情中侦探选择意图对当前可见选项采样：" + choice.Label);
+            if (choice is null) { awaitingInput = true; Story(SampleText("detective-simulation", "text-038"), SampleText("detective-simulation", "text-047")); return; }
+            Story(SampleText("detective-simulation", "text-027"), SampleText("detective-simulation", "text-048") + choice.Label);
             selectedChoices.Add(choice.Id);
             packet = dialogue.Choose(choice.Id);
         }
@@ -372,21 +372,21 @@ void PlayFlow(Action begin)
     throw new InvalidDataException("Story flow exceeded host presentation budget.");
 }
 world.SetDetectiveControl("simulation");
-controls.Add(new { Time = time, Mode = world.DetectiveControl, Reason = "新会话开始即启用侦探与住民相同的自主行动机制", SameMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)) });
-if (persona.Count > 0) Story("运行", "人物默认设置微调：" + string.Join("，", persona.Select(p => $"{p.Key}={p.Value}")));
-if (mindSeed != 0) Story("运行", $"隐藏心智抽样：种子 {mindSeed}（{sampled.Count} 项，取值不向玩家显示）");
-if (CaseVariants.Seed != 0) Story("运行", $"寝区案件变体：种子 {CaseVariants.Seed}（真相与答案不变）");
+controls.Add(new { Time = time, Mode = world.DetectiveControl, Reason = SampleText("detective-simulation", "text-049"), SameMind = ReferenceEquals(mind, world.WorldOf(Person.Detective)) });
+if (persona.Count > 0) Story(SampleText("detective-simulation", "text-050"), SampleText("detective-simulation", "text-051") + string.Join("，", persona.Select(p => $"{p.Key}={p.Value}")));
+if (mindSeed != 0) Story(SampleText("detective-simulation", "text-050"), $"隐藏心智抽样：种子 {mindSeed}（{sampled.Count} 项，取值不向玩家显示）");
+if (CaseVariants.Seed != 0) Story(SampleText("detective-simulation", "text-050"), $"寝区案件变体：种子 {CaseVariants.Seed}（真相与答案不变）");
 if (playAs is not null)
 {
     var opening = content.Content.RootElement.GetProperty("OPENINGS").EnumerateArray().FirstOrDefault(o => o.GetProperty("person").GetString() == playAs);
-    if (opening.ValueKind == JsonValueKind.Undefined) throw new ArgumentException("开局人选里没有：" + playAs);
-    Story("控制切换", $"玩家选择 {playAs}（{(opening.GetProperty("selectable").GetBoolean() ? "可选" : "待验收，仅供验证")}）；侦探与其余人照常自主行动");
-    if (playAs != "侦探") PlayDialogue(opening.GetProperty("scene").GetString()!);
+    if (opening.ValueKind == JsonValueKind.Undefined) throw new ArgumentException(SampleText("detective-simulation", "text-052") + playAs);
+    Story(SampleText("detective-simulation", "text-053"), $"玩家选择 {playAs}（{(opening.GetProperty("selectable").GetBoolean() ? SampleText("detective-simulation", "text-054") : SampleText("detective-simulation", "text-055"))}）；侦探与其余人照常自主行动");
+    if (playAs != SampleText("detective-simulation", "text-056")) PlayDialogue(opening.GetProperty("scene").GetString()!);
 }
-Story("运行", $"来源：{runSource}；{(stopMinutes is { } limit ? $"运行到游戏第 {limit} 分钟（自起始 {startMinutes} 分钟起 {limit - startMinutes} 分钟）" : "运行到剧情自然结束")}");
+Story(SampleText("detective-simulation", "text-050"), $"来源：{runSource}；{(stopMinutes is { } limit ? string.Format(System.Globalization.CultureInfo.CurrentCulture, SampleText("detective-simulation", "text-057"), limit, startMinutes, limit - startMinutes) : SampleText("detective-simulation", "text-058"))}");
 content.Session.Locate("detective", currentRoom);
 SyncStage();
-PlayFlow(() => content.StartFlow(world, "醒来"));
+PlayFlow(() => content.StartFlow(world, SampleText("detective-simulation", "text-059")));
 // Roaming and meeting are advanced through the original public daily/story flow.
 for (var tick = 0; tick < 180 * 4 && !awaitingInput && !Expired() && Stage() != "investigate"; tick++) Tick(true);
 int chaosActions = 0;
@@ -398,10 +398,10 @@ DetectiveAction ChaosAction()
     var evidence = content.Content.RootElement.GetProperty("EVIDENCE").EnumerateObject().Select(e => e.Name).ToArray();
     var joints = world.Joints.Keys.ToArray();
     var pool = planner.Actions.Where(a => a.Kind != "answer" || chaos!.NextDouble() < 0.3).ToList();
-    pool.Add(new("chaos_destroy", "destroy", evidence[chaos!.Next(evidence.Length)], "", "毁掉一件证物", 2, 0, "", "", "", "", true));
-    pool.Add(new("chaos_joint", "joint", joints[chaos.Next(joints.Length)], "", "拧动一个接头", 3, 0, "", "", "", "", true));
-    pool.Add(new("chaos_wander", "wander", "", rooms[chaos.Next(rooms.Length)], "到处走走", 1, 0, "", "", "", "", true));
-    pool.Add(new("chaos_unknown", "destroy", "不存在的东西", "", "对未建模的东西下手", 1, 0, "", "", "", "", true));
+    pool.Add(new("chaos_destroy", "destroy", evidence[chaos!.Next(evidence.Length)], "", SampleText("detective-simulation", "text-060"), 2, 0, "", "", "", "", true));
+    pool.Add(new("chaos_joint", "joint", joints[chaos.Next(joints.Length)], "", SampleText("detective-simulation", "text-061"), 3, 0, "", "", "", "", true));
+    pool.Add(new("chaos_wander", "wander", "", rooms[chaos.Next(rooms.Length)], SampleText("detective-simulation", "text-062"), 1, 0, "", "", "", "", true));
+    pool.Add(new("chaos_unknown", "destroy", SampleText("detective-simulation", "text-063"), "", SampleText("detective-simulation", "text-064"), 1, 0, "", "", "", "", true));
     return pool[chaos.Next(pool.Count)];
 }
 for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 400) && !awaitingInput && !Expired() && Stage() == "investigate"; actionIndex++)
@@ -416,8 +416,8 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
     }
     searches.Add(new { Time = time, GameMinutes = content.GameMinutes, Decision = search });
     if (search.Action is not { } action)
-    { Story("停点", "主观模型无可执行调查，或观测与假设不相容；未提交猜测答辩。"); break; }
-    Story("多步推演", $"{action.Label}；树节点 {search.Nodes}，预算 {search.Iterations}，深度 {search.MaxDepth}，候选 {search.RemainingHypotheses}；未来反馈只是采样假设");
+    { Story(SampleText("detective-simulation", "text-045"), SampleText("detective-simulation", "text-065")); break; }
+    Story(SampleText("detective-simulation", "text-066"), $"{action.Label}；树节点 {search.Nodes}，预算 {search.Iterations}，深度 {search.MaxDepth}，候选 {search.RemainingHypotheses}；未来反馈只是采样假设");
     if (action.Room.Length > 0)
     {
         var room = Array.IndexOf(Names.RoomKeys,action.Room);
@@ -429,20 +429,20 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
         SyncStage();
         content.RoomEntry(currentRoom);
         if (signal == "room") PlayFlow(() => content.BeginRoomChanged(world,currentRoom,(long)(time*1000)));
-        Story("宿主", "调查目的地到场代报；未验几何：" + currentRoom);
+        Story(SampleText("detective-simulation", "text-018"), SampleText("detective-simulation", "text-067") + currentRoom);
     }
     if (awaitingInput) break;
     if (action.Kind is "destroy" or "joint" or "wander")
     {
         if (action.Kind == "destroy")
-            Story("混沌", (content.DestroyEvidence(world, action.Target) ? "毁掉了 " : "未建模，维持原状：") + action.Target);
+            Story(SampleText("detective-simulation", "text-036"), (content.DestroyEvidence(world, action.Target) ? SampleText("detective-simulation", "text-068") : SampleText("detective-simulation", "text-069")) + action.Target);
         else if (action.Kind == "joint")
         {
             var loose = !world.Joints[action.Target];
             content.SetJoint(world, action.Target, loose);
-            Story("混沌", $"把{action.Target}{(loose ? "拆松" : "拧紧")}了");
+            Story(SampleText("detective-simulation", "text-036"), $"把{action.Target}{(loose ? SampleText("detective-simulation", "text-070") : SampleText("detective-simulation", "text-071"))}了");
         }
-        else { content.ConsumeAction("走动"); Story("混沌", "走到 " + action.Room + " 看了看"); }
+        else { content.ConsumeAction(SampleText("detective-simulation", "text-072")); Story(SampleText("detective-simulation", "text-036"), SampleText("detective-simulation", "text-073") + action.Room + SampleText("detective-simulation", "text-074")); }
         planner.Completed(action);
         Tick(true);
         continue;
@@ -455,8 +455,8 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
                 if (signal == "unlock") { content.UnlockReplay(); PlayDialogue("replay_unlock"); }
                 else if (signal == "v6") PlayDialogue("v6_doubt");
             }
-            Story("证物",content.CardFacts(action.Target));
-            foreach (var note in content.CardNotes(world,action.Target)) Story("证物",note);
+            Story(SampleText("detective-simulation", "text-022"),content.CardFacts(action.Target));
+            foreach (var note in content.CardNotes(world,action.Target)) Story(SampleText("detective-simulation", "text-022"),note);
             break;
         case "experiment":
             var experimentTarget = action.Target.Split(':');
@@ -470,18 +470,18 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
             var values = new[] { (int)variables.V1,(int)variables.V2,(int)variables.V3,(int)variables.V4,(int)variables.V5,(int)variables.V6 };
             var parameters = content.Content.RootElement.GetProperty("VARIABLES").EnumerateArray().Select((entry,index) =>
                 entry.GetProperty("question").GetString() + "：" + entry.GetProperty("options")[values[index]].GetString());
-            Story("重演设想",string.Join("；",parameters) + "。这些是待检验假设，随后与已检视的现场逐项对照。");
+            Story(SampleText("detective-simulation", "text-075"),string.Join("；",parameters) + SampleText("detective-simulation", "text-076"));
             var findings = content.RunVisibleReplay(world,variables);
             var replayFrames = (object[])content.Session.GetProgress("replay_result")["frames"];
             foreach (var item in replayFrames)
             {
                 var frame = (Dictionary<string,object>)item;
                 var thoughts = (Dictionary<string,object>)frame["thoughts"];
-                var voices = thoughts.Select(pair => content.Content.RootElement.GetProperty("PERSON_NAMES").GetProperty(pair.Key).GetString() + "（墨影心声）：" + pair.Value);
-                Story("昨夜墨影", $"重演内时刻 {frame["t"]}；{frame["actor"]}：{frame["label"]}；" + string.Join("；",voices) + "（由本次设想生成，非晨间现场的新事实）");
+                var voices = thoughts.Select(pair => content.Content.RootElement.GetProperty("PERSON_NAMES").GetProperty(pair.Key).GetString() + SampleText("detective-simulation", "text-077") + pair.Value);
+                Story(SampleText("detective-simulation", "text-078"), $"重演内时刻 {frame["t"]}；{frame["actor"]}：{frame["label"]}；" + string.Join("；",voices) + SampleText("detective-simulation", "text-079"));
             }
             planner.RecordReplay(variables,findings);
-            foreach (var finding in findings) Story("对照",finding.Text);
+            foreach (var finding in findings) Story(SampleText("detective-simulation", "text-023"),finding.Text);
             PlayFlow(() => content.BeginAfterReplay(world));
             break;
         case "answer":
@@ -498,23 +498,23 @@ for (var actionIndex = 0; actionIndex < (chaos is null ? planner.ActionBudget : 
 SyncStage();
 foreach (var entry in content.TakeTiming()) timing.Add(new { Time = time, Timing = entry });
 if (chaos is not null)
-    Story("混沌", $"随机动作 {chaosActions} 次；毁物 {content.Session.GetProgress("destroyed").Count} 件；补救 {content.Session.GetProgress("rescue").Count} 次；未建模 {content.Session.GetProgress("unmodeled").Count} 次；终止阶段 {Stage()}；"
-        + (Expired() ? "到达运行时长" : Stage() is "finale" or "ended" ? "走到终局" : "动作预算用尽"));
+    Story(SampleText("detective-simulation", "text-036"), $"随机动作 {chaosActions} 次；毁物 {content.Session.GetProgress("destroyed").Count} 件；补救 {content.Session.GetProgress("rescue").Count} 次；未建模 {content.Session.GetProgress("unmodeled").Count} 次；终止阶段 {Stage()}；"
+        + (Expired() ? SampleText("detective-simulation", "text-080") : Stage() is "finale" or "ended" ? SampleText("detective-simulation", "text-081") : SampleText("detective-simulation", "text-082")));
 if (playAs is not null)
 {
-    foreach (var line in Wishes.For(playAs)) Story("心愿", line);
+    foreach (var line in Wishes.For(playAs)) Story(SampleText("detective-simulation", "text-083"), line);
     foreach (var dorm in world.DormCaseResults)
         foreach (var belief in dorm.Beliefs.Where(b => b.StartsWith(playAs + "：", StringComparison.Ordinal)))
-            Story("所控者认知", $"{dorm.Case}：答“{dorm.Answer}”时，{belief}");
+            Story(SampleText("detective-simulation", "text-084"), $"{dorm.Case}：答“{dorm.Answer}”时，{belief}");
 }
-Story("停点", $"当前阶段 {Stage()}；实际自主答辩提交 {answerSubmitted}；正式终局开门 {exitGameMinutes is not null}。预测、动机与搜索值均为主观假设；结果以正式流程反馈为准。");
+Story(SampleText("detective-simulation", "text-045"), $"当前阶段 {Stage()}；实际自主答辩提交 {answerSubmitted}；正式终局开门 {exitGameMinutes is not null}。预测、动机与搜索值均为主观假设；结果以正式流程反馈为准。");
 ContinuationSimulation.Outcome? continuation = null;
-if (Expired()) Story("运行停点", $"达到运行时长：游戏第 {content.GameMinutes} 分钟；当前阶段 {Stage()}。之后的剧情不在本次运行范围内。");
+if (Expired()) Story(SampleText("detective-simulation", "text-085"), $"达到运行时长：游戏第 {content.GameMinutes} 分钟；当前阶段 {Stage()}。之后的剧情不在本次运行范围内。");
 else if (exitGameMinutes is { } handoffMinutes && !awaitingInput)
 {
     var handoffSeconds = time;
     var sequence = 0;
-    var finalTimeLabel = "生活翼正式交接后";
+    var finalTimeLabel = SampleText("detective-simulation", "text-086");
     double finalGameMinutes = content.GameMinutes;
     try
     {
@@ -528,15 +528,15 @@ else if (exitGameMinutes is { } handoffMinutes && !awaitingInput)
                 finalTimeLabel = DualOntologyWorldEngine.Chapter2.Prototype.Chapter2Content.TimeName(day, slot);
                 storyEvents.Add(new(time, gameMinutes, kind, text, finalTimeLabel));
             });
-        storyEvents.Add(new(time, finalGameMinutes, "整场结论", $"续篇结束 {continuation.Ended}；结局 {continuation.Result}；续篇人物行动 {continuation.CharacterActions} 条，其中失败 {continuation.FailedActions} 条；限制：{continuation.Limitation}", finalTimeLabel));
+        storyEvents.Add(new(time, finalGameMinutes, SampleText("detective-simulation", "text-087"), $"续篇结束 {continuation.Ended}；结局 {continuation.Result}；续篇人物行动 {continuation.CharacterActions} 条，其中失败 {continuation.FailedActions} 条；限制：{continuation.Limitation}", finalTimeLabel));
     }
     catch (Exception error)
     {
         awaitingInput = true;
-        storyEvents.Add(new(time, finalGameMinutes, "交接或续篇失败", error.GetType().Name + "：" + error.Message + "；保留本轮轨迹，不构造完成会话代替。", finalTimeLabel));
+        storyEvents.Add(new(time, finalGameMinutes, SampleText("detective-simulation", "text-088"), error.GetType().Name + "：" + error.Message + SampleText("detective-simulation", "text-089"), finalTimeLabel));
     }
 }
-else Story("整场停点", "本轮生活翼未正式开门，不能构造另一会话跳过原剧情进入续篇。");
+else Story(SampleText("detective-simulation", "text-090"), SampleText("detective-simulation", "text-091"));
 var result = new
 {
     Source = "AwakeningContentSession and Chapter1Dialogue from wake; MorningWorld autonomous residents and detective; logical host reports immediate arrival",
@@ -558,4 +558,3 @@ Console.WriteLine($"已保存 {world.DailyTrajectory.Count} 条完成事件、{r
 record Arrival(double Time, string Who, int Serial, string Room, bool Accepted);
 
 record StoryEvent(double Time, double GameMinutes, string Kind, string Text, string? TimeLabel = null);
-

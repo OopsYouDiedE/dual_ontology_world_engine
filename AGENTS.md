@@ -38,7 +38,7 @@
 
 ```powershell
 dotnet build csharp/Core.sln
-dotnet build godot_csharp/DualOntologyWorldEngine.sln
+dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers
 python tools/verify.py                              # 统一自动回归；支持 --only / --skip
 python godot_csharp/tools/compile_story.py          # 修改剧本源后重新生成
 python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是否一致

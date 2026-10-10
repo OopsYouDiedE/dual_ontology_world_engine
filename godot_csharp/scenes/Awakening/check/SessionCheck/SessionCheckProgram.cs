@@ -1,3 +1,4 @@
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using DualOntologyWorldEngine.Awakening;
 using Ev = System.Collections.Generic.Dictionary<string, object?>;
 
@@ -5,9 +6,8 @@ using Ev = System.Collections.Generic.Dictionary<string, object?>;
 var failures = 0;
 void Check(bool ok, string what) { Console.WriteLine((ok ? "  ok  " : "  FAIL ") + what); if (!ok) failures++; }
 
-// STORY-HARDCODE[AWK-050][schema][fixture]: 模拟会话中的角色站位、E1 检视与固定状态跳转属于测试夹具。
 var session = new Chapter1Session();
-var rooms = new Dictionary<string, string> { ["detective"] = "R05", ["huo"] = "R06", ["shen"] = "R07", ["su"] = "R08" };
+var rooms = SampleAs<Dictionary<string, string>>("session-check", "initial-rooms");
 var lines = new List<string>();
 var kinds = new List<string>();
 string modal = "";
@@ -51,7 +51,7 @@ void Drive(Ev input, Func<Ev, string?>? chooser = null, int budget = 4000)
                 break;
             case "form":
                 var fields = ((object?[])ev["fields"]!).Cast<Ev>().ToDictionary(f => (string)f["id"]!, f => (object?)(
-                    (string)f["kind"]! == "text" ? "测试侦探" : (f["options"] as object?[])?.Cast<Ev>().Select(o => o["id"]).FirstOrDefault() ?? ""));
+                    (string)f["kind"]! == "text" ? SampleText("session-check", "text-001") : (f["options"] as object?[])?.Cast<Ev>().Select(o => o["id"]).FirstOrDefault() ?? ""));
                 var action = ((object?[])ev["actions"]!).Cast<Ev>().Last(a => !a.ContainsKey("tab") && (string)a["id"]! != "cancel")["id"];
                 Send(new() { ["kind"] = "form", ["presentation_id"] = id, ["action"] = chooser?.Invoke(ev) ?? action, ["values"] = fields });
                 break;
@@ -68,46 +68,46 @@ void Drive(Ev input, Func<Ev, string?>? chooser = null, int budget = 4000)
             case "close": modal = ""; openModal = null; break;
         }
     }
-    Check(budget > 0, "事件在预算内收敛：" + input["kind"]);
+    Check(budget > 0, SampleText("session-check", "text-002") + input["kind"]);
 }
 
 void Tick(int frames = 1) { for (var i = 0; i < frames; i++) Drive(new() { ["kind"] = "tick", ["delta"] = 1.0 / 60 }); }
 void Choose(string choice) { var m = openModal!; choice = ((object?[])m["options"]!).Cast<Ev>().Select(o => (string)o["id"]!).FirstOrDefault(o => o == choice || o.EndsWith(":" + choice)) ?? choice; modal = ""; openModal = null; Drive(new() { ["kind"] = "select", ["presentation_id"] = m["presentation_id"], ["choice_id"] = choice }); }
 
-Console.WriteLine("第一章统一事件协议：");
+Console.WriteLine(SampleText("session-check", "text-003"));
 Drive(new() { ["kind"] = "begin" });
 Check(lines.Count > 3, $"醒来：读到 {lines.Count} 句台词");
-Check((string)snapshot!["stage"]! == "roam", "醒来后可以走动：" + snapshot["stage"]);
-Check(kinds.Contains("stage"), "醒来时发出站位事件");
+Check((string)snapshot!["stage"]! == "roam", SampleText("session-check", "text-004") + snapshot["stage"]);
+Check(kinds.Contains("stage"), SampleText("session-check", "text-005"));
 Tick(5);
 rooms["detective"] = "hall"; rooms["huo"] = rooms["shen"] = rooms["su"] = "hall";
 var before = lines.Count;
 Tick(3);
 Check(lines.Count > before + 5, $"走进活动厅触发相遇：{lines.Count - before} 句");
-Check((string)snapshot["detective_name"]! == "测试侦探", "报名表单写入侦探名：" + snapshot["detective_name"]);
+Check((string)snapshot["detective_name"]! == SampleText("session-check", "text-001"), SampleText("session-check", "text-006") + snapshot["detective_name"]);
 // 相遇里有烧水、开柜与散去的真实走位和停顿，给足模拟时间。
 for (var round = 0; round < 200 && (string)snapshot!["stage"]! != "investigate"; round++)
 {
     if (openModal is not null) Choose("close");
     Tick(10);
 }
-Check((string)snapshot!["stage"]! == "investigate", "相遇与核验后进入调查：" + snapshot["stage"] + $"（{lines.Count - before} 句）");
+Check((string)snapshot!["stage"]! == "investigate", SampleText("session-check", "text-007") + snapshot["stage"] + $"（{lines.Count - before} 句）");
 Tick(30);
 Drive(new() { ["kind"] = "debug_jump", ["state"] = "investigate" });
 rooms["detective"] = "foyer";
 Tick(2);
 Drive(new() { ["kind"] = "interact", ["site"] = "E1" });
-Check(openModal is not null && (string)openModal["kind"]! == "card", "检视门：打开证物卡");
-if (openModal is not null) Check(((object?[])openModal["options"]!).Length >= 2, "证物卡带选项：" + string.Join(",", ((object?[])openModal["options"]!).Cast<Ev>().Select(o => o["id"] + "=" + o["available"])) + " title=" + openModal["title"]);
+Check(openModal is not null && (string)openModal["kind"]! == "card", SampleText("session-check", "text-008"));
+if (openModal is not null) Check(((object?[])openModal["options"]!).Length >= 2, SampleText("session-check", "text-009") + string.Join(",", ((object?[])openModal["options"]!).Cast<Ev>().Select(o => o["id"] + "=" + o["available"])) + " title=" + openModal["title"]);
 if (openModal is not null) Choose("close");
 Tick(120);
-Check(snapshot!.GetValueOrDefault("replay") is Ev replay && replay["open"] is true || true, "手稿状态可读");
+Check(snapshot!.GetValueOrDefault("replay") is Ev replay && replay["open"] is true || true, SampleText("session-check", "text-010"));
 Drive(new() { ["kind"] = "debug_jump", ["state"] = "replay_match" });
 var r = (Ev)snapshot["replay"]!;
-Check(((Ev)r["result"]!)["full_match"] is true, "跳到全部吻合：重演对照全部吻合");
+Check(((Ev)r["result"]!)["full_match"] is true, SampleText("session-check", "text-011"));
 var nb = (Ev)snapshot["notebook"]!;
-Check(((object?[])nb["sections"]!).Length >= 3, "笔记本按地点分组");
+Check(((object?[])nb["sections"]!).Length >= 3, SampleText("session-check", "text-012"));
 Drive(new() { ["kind"] = "replay", ["vars"] = new object?[] { 0L, 0L, 0L, 0L, 0L, 1L }, ["skip"] = false });
-Check(kinds.Contains("replay_play") && kinds.Contains("manuscript"), "重演：回放并回到手稿");
+Check(kinds.Contains("replay_play") && kinds.Contains("manuscript"), SampleText("session-check", "text-013"));
 Console.WriteLine($"共 {lines.Count} 句；失败 {failures}");
 return failures == 0 ? 0 : 1;

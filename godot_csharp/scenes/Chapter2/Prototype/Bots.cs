@@ -1,3 +1,5 @@
+using System.Text.Json;
+using static DualOntologyWorldEngine.TestSupport.FixtureData;
 using System.Diagnostics;
 using System.Text;
 using DualOntologyWorldEngine.Core;
@@ -7,6 +9,7 @@ namespace DualOntologyWorldEngine.Chapter2.Prototype;
 /// <summary>策略机器人：只用玩家能做的动作（同一套 PlayerAction）。每个机器人是一张“第几日什么时段做什么”的表，外加对质与议事的选择。</summary>
 public sealed class Bot
 {
+    public required string Id { get; init; }
     public required string Name { get; init; }
     public required Func<Game, PlayerAction?> Act { get; init; }
     public Func<Game, Game.ConfrontPlan?> Confront { get; init; } = _ => null;
@@ -21,21 +24,22 @@ public sealed class Bot
 
 public sealed record BotResult(string Name, Ending Ending, string Image, double AvgCredible, double AvgInsight, string Factions,
     string Curve, int MaxHunger, string Hungriest, int DemonLeaks, int Hooks, bool QuerCleared, bool QuerOstracized, bool Common, int RationsLeft,
-    long Ms, string Fingerprint, string Council, Game World);
+    long Ms, string Fingerprint, string Council, Game World)
+{
+    public required Bot Strategy { get; init; }
+}
 
-// STORY-HARDCODE[CH2-002][logic][fixture]: 自动推演目录预写具体策略、时间表、角色与议事选择，仅属开发夹具。
 public static class Bots
 {
     private static PlayerAction A(Cmd c) => new(c);
-    // 规矩卡（主语、条件、行为、例外、记账）：条件 4 为“白天”。
-    public static readonly Card RuleA = new(1, 2, 0, 2, 1);     // 值守者：有人急病时，取一份口粮；次日补记者不算私取；记入台账
-    public static readonly Card RuleB = new(1, 2, 0, 3, 3);     // 值守者：有人急病时，取一份口粮；两人在场者不在此限；两人见证签名
-    public static readonly Card Pact = new(0, 4, 8, 4, 3);      // 任何人：白天，名录库须本人亲取、两人见证；入夜一律不行；两人见证签名
-    public static readonly Card PactLoose = new(0, 4, 8, 3, 3); // 同上，但不禁夜（上了钩的人不会否决）
-    public static readonly Card BrandQuer = new(10 + (int)P.Quer, 1, 9, 0, 1); // 雀儿：入夜后，不得入后勤院；无例外；记入台账
-    public static readonly Card Committee = new(0, 4, 6, 3, 3); // 任何人：白天，名录库由委员会保管；两人在场者不在此限；两人见证签名
-    public static readonly Card Seal = new(0, 0, 7, 0, 0);      // 任何人：任何时候，名录库封闭不启
-    public static readonly Card Open = new(0, 0, 5, 0, 1);      // 任何人：任何时候，名录库各取其物；记入台账
+    private static Card CardOf(string id)
+    {
+        var v = Sample("bots", "cards").GetProperty(id).EnumerateArray().Select(x => x.GetInt32()).ToArray();
+        return new(v[0], v[1], v[2], v[3], v[4]);
+    }
+    public static readonly Card RuleA = CardOf(nameof(RuleA)), RuleB = CardOf(nameof(RuleB)),
+        Pact = CardOf(nameof(Pact)), PactLoose = CardOf(nameof(PactLoose)), BrandQuer = CardOf(nameof(BrandQuer)),
+        Committee = CardOf(nameof(Committee)), Seal = CardOf(nameof(Seal)), Open = CardOf(nameof(Open));
     /// <summary>机器人的日程按阶段写：1＝始业日（门开后），2＝案发那一日（夜里出事），3＝案发次日（搜查、晚饭后对质）；其余日子为 0。</summary>
     private static int Old(Game g) => g.Day == Game.CaseDay ? 3 : g.Day == Game.CaseNight ? 2 : g.Day == Game.FirstDay ? 1 : 0;
 
@@ -53,10 +57,8 @@ public static class Bots
     public static void Read(Game g)
     {
         if (g.Day != Game.CaseDay || g.Slot != Slot.Morning) return;
-        foreach (var thing in new[] { "台账", "粮仓", "配给台公告", "碗", "文契废纸篓", "中央厅公告" }) g.HostExamine(thing);
-        g.HostAsk(P.Bertrand);
-        g.HostAsk(P.Margaret);
-        g.HostAsk(P.Mora);
+        foreach (var thing in SampleStrings("bots", "read-things")) g.HostExamine(thing);
+        foreach (var who in SampleStrings("bots", "read-people")) g.HostAsk(Enum.Parse<P>(who));
     }
 
     private static PlayerAction? Eat(Game g) => g.Slot is Slot.Noon or Slot.Evening && Game.Get(g.Det.Body, T.Fed) == 0 ? A(Cmd.Collect) : null;
@@ -79,73 +81,45 @@ public static class Bots
     }
 
     /// <summary>能自由“写”的四阵：始业日下午、翌日清晨／上午／下午（午间与傍晚要吃饭，翌日傍晚是对质）。</summary>
-    private static bool Writable(Game g) => (Old(g), g.Slot) is (2, Slot.Afternoon) or (3, Slot.Morning) or (3, Slot.Forenoon) or (3, Slot.Afternoon);
+    private static bool Writable(Game g) => Sample("bots", "writable").EnumerateArray()
+        .Any(row => row[0].GetInt32() == Old(g) && row[1].GetString() == g.Slot.ToString());
 
-    private static PlayerAction? Lobby(Game g, Card card) => Writable(g) ? Greedy(g, card) : null;
-
-    /// <summary>始业日下午贴到中央厅，翌日逐一当面讲给三个人。</summary>
-    private static PlayerAction? Tour(Game g, Card card, params P[] who) => (Old(g), g.Slot) switch
+    private static PlayerAction ActionOf(JsonElement row)
     {
-        (2, Slot.Afternoon) => new(Cmd.Post) { Place = Place.Hall, Card = card },
-        (3, Slot.Morning) => new(Cmd.TellRule) { Who = who[0], Card = card },
-        (3, Slot.Forenoon) => new(Cmd.TellRule) { Who = who[1], Card = card },
-        (3, Slot.Afternoon) => new(Cmd.TellRule) { Who = who[2], Card = card },
-        _ => null
-    };
-
-    public static readonly Bot[] All =
-    [
-        new() { Name = "什么都不做", Act = _ => null },
-        new() { Name = "只吃饭", Act = Eat },
-        new() { Name = "首课答准", Act = Eat, Precise = true },
-        new() { Name = "查案对质", Act = Eat, Reads = true, Confront = g => GoodPlan(g) },
-        new() { Name = "查案对质·不提共同规则", Act = Eat, Reads = true, Confront = g => GoodPlan(g, common: false) },
-        new() { Name = "同行作证（请沃德亲眼看碗）", Reads = true, Act = g => (Old(g), g.Slot) switch
-            {
-                // 沃德要先有人帮他一把才肯跟着走（他的画像如此）：先帮，再请。
-                (3, Slot.Morning) => new(Cmd.Help) { Who = P.Ward },
-                (3, Slot.Forenoon) => new(Cmd.Escort) { Who = P.Ward, Place = Place.Clinic, Thing = "碗" },
-                (3, Slot.Afternoon) => new(Cmd.Escort) { Who = P.Ward, Place = Place.Logistics, Thing = "粮仓" },
-                _ => Eat(g)
-            }, Confront = g => GoodPlan(g) },
-        new() { Name = "拉拢沃德（委员会）", Reads = true, Precise = true, Act = g => (Old(g), g.Slot) == (3, Slot.Afternoon) ? new(Cmd.Ask) { Who = P.Ward, Job = Job.GuardArchive } : Tour(g, Committee, P.Ward, P.Gu, P.Ruan) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
-        new() { Name = "立约（侦探之约）", Reads = true, Precise = true, Act = g => Tour(g, Pact, P.Quer, P.Huo, P.Su) ?? Eat(g), Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
-        new() { Name = "立约·宽（不禁夜）", Reads = true, Precise = true, Act = g => Lobby(g, PactLoose) ?? Eat(g), Confront = g => GoodPlan(g, PactLoose), Back = _ => Mine },
-        new() { Name = "劝封", Reads = true, Precise = true, Act = g => Lobby(g, Seal) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
-        new() { Name = "帮人开库（各取其物）", Reads = true, Act = g => Lobby(g, Open) ?? Eat(g), Confront = g => GoodPlan(g), Back = _ => Mine },
-        new() { Name = "抓枢纽（只当面说服三个人）", Reads = true, Precise = true, Act = g => (Old(g), g.Slot) switch
-            {
-                (2, Slot.Afternoon) => new(Cmd.TellRule) { Who = P.Huo, Card = Pact },
-                (3, Slot.Morning) => new(Cmd.TellRule) { Who = P.Mora, Card = Pact },
-                (3, Slot.Forenoon) => new(Cmd.TellRule) { Who = P.Ward, Card = Pact },
-                _ => Eat(g)
-            }, Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
-        new() { Name = "公告板广撒（贴遍各板，不当面说）", Reads = true, Act = g => (Old(g), g.Slot) switch
-            {
-                (2, Slot.Afternoon) => new(Cmd.Post) { Place = Place.Hall, Card = Pact },
-                (3, Slot.Morning) => new(Cmd.Post) { Place = Place.Logistics, Card = Pact },
-                (3, Slot.Forenoon) => new(Cmd.Post) { Place = Place.DormW, Card = Pact },
-                (3, Slot.Afternoon) => new(Cmd.Post) { Place = Place.DormLife, Card = Pact },
-                _ => Eat(g)
-            }, Confront = g => GoodPlan(g, Pact), Back = _ => Mine },
-        new() { Name = "管饭（调停、交钥匙、帮厨）", Reads = true, Act = g => (Old(g), g.Slot) switch
-            {
-                (2, Slot.Noon) => new(Cmd.Mediate) { Wording = "i_carry" },
-                (2, Slot.Afternoon) => new(Cmd.GiveKey) { Who = P.Mora, About = P.Shen },
-                (3, Slot.Afternoon) => new(Cmd.Help) { Who = P.Shen },
-                _ => Eat(g)
-            }, Confront = g => GoodPlan(g) },
-        new() { Name = "拉拢后勤组（茉拉）", Act = g => Writable(g) ? new(Cmd.Help) { Who = P.Mora } : Eat(g), Back = _ => 2 },
-        new() { Name = "守夜（两夜都守）", Reads = true, Act = g => g.Slot == Slot.Night ? new(Cmd.Stakeout) { Place = g.Day == Game.CaseNight ? Place.Logistics : Place.ArchiveFront } : Eat(g), Confront = g => GoodPlan(g) },
-        new() { Name = "操纵", Act = g => (Old(g), g.Slot) switch
-            {
-                (2, Slot.Afternoon) => new(Cmd.Manipulate) { Who = P.Lucian, About = P.Quer },
-                (3, Slot.Morning) => new(Cmd.Manipulate) { Who = P.Mora, About = P.Quer },
-                (3, Slot.Afternoon) => new(Cmd.Post) { Place = Place.Hall, Card = BrandQuer },
-                _ => Eat(g)
-            }, Back = _ => 0 },
-        new() { Name = "当众冤枉雀儿", Reads = true, Act = Eat, Confront = g => new([(4, 5), (5, 6)], null, false), Back = _ => 1 },
-    ];
+        string Value(string key) => row.TryGetProperty(key, out var value) ? value.GetString()! : "";
+        return new(Enum.Parse<Cmd>(Value("cmd")))
+        {
+            Who = Value("who") is { Length: > 0 } who ? Enum.Parse<P>(who) : (P?)null,
+            About = Value("about") is { Length: > 0 } about ? Enum.Parse<P>(about) : (P?)null,
+            Place = Value("place") is { Length: > 0 } place ? Enum.Parse<Place>(place) : (Place?)null,
+            Job = Value("job") is { Length: > 0 } job ? Enum.Parse<Job>(job) : (Job?)null,
+            Card = Value("card") is { Length: > 0 } card ? CardOf(card) : null,
+            Thing = Value("thing") is { Length: > 0 } thing ? thing : null, Wording = Value("wording") is { Length: > 0 } wording ? wording : null
+        };
+    }
+    private static PlayerAction? PlanAction(Game game, JsonElement plan)
+    {
+        foreach (var step in plan.GetProperty("steps").EnumerateArray())
+            if (step.GetProperty("phase").GetInt32() == Old(game) && step.GetProperty("slot").GetString() == game.Slot.ToString())
+                return ActionOf(step);
+        return plan.GetProperty("mode").GetString() switch
+        {
+            "idle" => null,
+            "lobby" when Writable(game) => Greedy(game, CardOf(plan.GetProperty("card").GetString()!)),
+            "help" when Writable(game) => new(Cmd.Help) { Who = Enum.Parse<P>(plan.GetProperty("who").GetString()!) },
+            _ => Eat(game)
+        };
+    }
+    public static readonly Bot[] All = Sample("bots", "plans").EnumerateArray().Select(plan => new Bot
+    {
+        Id = plan.GetProperty("id").GetString()!, Name = plan.GetProperty("name").GetString()!,
+        Act = game => PlanAction(game, plan), Reads = plan.TryGetProperty("reads", out var reads) && reads.GetBoolean(),
+        Precise = plan.TryGetProperty("precise", out var precise) && precise.GetBoolean(),
+        Back = _ => plan.TryGetProperty("back", out var back) ? back.GetInt32() : -1,
+        Confront = game => !plan.TryGetProperty("confront", out var confront) ? null :
+            confront.GetProperty("mode").GetString() == "good" ? GoodPlan(game, CardOf(confront.GetProperty("rule").GetString()!), confront.GetProperty("common").GetBoolean()) :
+            new(confront.GetProperty("pairs").EnumerateArray().Select(pair => (pair[0].GetInt32(), pair[1].GetInt32())).ToArray(), null, confront.GetProperty("common").GetBoolean())
+    }).ToArray();
 
     public static BotResult Play(Bot bot, int switchDay = 99, Bot? after = null)
     {
@@ -171,10 +145,10 @@ public static class Bots
             string.Join(" ", g.Curve.Select(c => $"D{c.Day}:{c.Rations}/{c.Oil}/{c.Medicine}/饥{c.Hungry}")),
             g.People.Max(p => p.MaxHunger), string.Join("、", g.People.Where(p => p.MaxHunger == g.People.Max(q => q.MaxHunger) && p.MaxHunger > 0).Select(p => p.Name)),
             g.DemonSaid.Count(d => !d.Asked9 && Leak(d.Text)), g.Npcs.Sum(p => p.Hooks), g.QuerCleared, g.QuerOstracized, g.CommonRuleEstablished, Game.Get(g.Granary, T.Ration), sw.ElapsedMilliseconds,
-            Fingerprint(g), string.Join("\n    ", g.CouncilLog), g);
+            Fingerprint(g), string.Join("\n    ", g.CouncilLog), g) { Strategy = bot };
     }
 
-    public static bool Leak(string text) => new[] { "第九", "第十条", "第 9", "第 10", "第9", "第10", "尽忘", "归乡", "放逐" }.Any(text.Contains);
+    public static bool Leak(string text) => new[] { SampleText("bots", "text-025"), SampleText("bots", "text-026"), SampleText("bots", "text-027"), SampleText("bots", "text-028"), SampleText("bots", "text-029"), SampleText("bots", "text-030"), SampleText("bots", "text-031"), SampleText("bots", "text-032"), SampleText("bots", "text-033") }.Any(text.Contains);
 
     /// <summary>整章推演的指纹：作者侧日志 + 每人位置、标签、接受的规则与信任。逐位比较用于确定性检查。</summary>
     public static string Fingerprint(Game g)
@@ -207,7 +181,7 @@ public static class Bots
         Console.WriteLine($"   心中的侦探（为人/判断）均值 {r.AvgCredible:0.0}/{r.AvgInsight:0.0}：{r.Image}");
         Console.WriteLine($"   派系：{r.Factions}");
         Console.WriteLine($"   物资（日末 口粮/灯油/药品/当日挨饿人数）：{r.Curve}；最长连饿 {r.MaxHunger} 日（{r.Hungriest}）；钩 {r.Hooks}；剩粮 {r.RationsLeft}");
-        Console.WriteLine($"   雀儿：{(r.QuerCleared ? "洗清" : r.QuerOstracized ? "被排斥" : "—")}；共同规则：{(r.Common ? "成立" : "未成立")}");
-        if (verbose) Console.WriteLine("   议事：\n    " + r.Council);
+        Console.WriteLine($"   雀儿：{(r.QuerCleared ? SampleText("bots", "text-034") : r.QuerOstracized ? SampleText("bots", "text-035") : "—")}；共同规则：{(r.Common ? SampleText("bots", "text-036") : SampleText("bots", "text-037"))}");
+        if (verbose) Console.WriteLine(SampleText("bots", "text-038") + r.Council);
     }
 }

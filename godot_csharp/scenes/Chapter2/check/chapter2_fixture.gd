@@ -1,4 +1,5 @@
 extends "res://scenes/Awakening/check/chapter1_fixture.gd"
+
 ## 第二章自动检查：复用 Main 夹具，代按正式 UI；只读状态使用 ChapterProbe。
 ## 不手动回执引擎事件，不重建继承存档；这不是游玩验证。
 
@@ -43,14 +44,13 @@ func campus_loaded() -> bool:
 		and host.field.adapter.get_script().resource_path == CAMPUS_VIEW and host.field.player != null
 
 ## 等 Main 的事件队列与真实对白回执静止。章节菜单按当前候选的凭证选择。
-# STORY-HARDCODE[CH2-020][logic][fixture]: 夹具自动填写固定侦探名、代按对白与菜单并跳过回放。
 func settle(resolve_choices := false, seconds := 60.0, until := Callable()) -> bool:
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
 	var idle_since := -1
 	while Time.get_ticks_msec() < deadline:
 		await tree.process_frame
 		if not is_instance_valid(host.ui) or not is_instance_valid(host.field):
-			on_error.call("Main 缺少 UI 或现场")
+			on_error.call(Samples.text("chapter2-fixture", "text-001"))
 			return false
 		_observe()
 		if host.ui.modal_kind == "form" and str(host.ui._modal_event.get("fields", [{}])[0].get("id", "")) == "name":
@@ -59,13 +59,13 @@ func settle(resolve_choices := false, seconds := 60.0, until := Callable()) -> b
 			auto.step()
 		elif host.ui.modal_kind == "card":
 			if not select("close"):
-				on_error.call("证物卡没有 close 候选")
+				on_error.call(Samples.text("chapter2-fixture", "text-002"))
 				return false
 		elif host.ui.modal_kind == "menu" and resolve_choices:
 			var options: Array = host.ui._modal_event.get("options", [])
 			var picked := str(choose.call(options))
 			if picked == "" or not select(picked):
-				on_error.call("菜单没有计划中的可用候选：" + str(options))
+				on_error.call(Samples.text("chapter2-fixture", "text-003") + str(options))
 				return false
 		elif host.ui.modal_kind == "playback" and is_instance_valid(host.ui._campus):
 			# 和玩家一样按 Escape 略过已开始的回放，由正式 UI 完成回执。
@@ -78,7 +78,7 @@ func settle(resolve_choices := false, seconds := 60.0, until := Callable()) -> b
 			idle_since = -1
 		elif idle_since < 0: idle_since = Time.get_ticks_msec()
 		elif Time.get_ticks_msec() - idle_since >= 100: return true
-	on_error.call("Main 流程未在 %.0f 秒内静止：stage=%s modal=%s draining=%s queue=%d" % [seconds, stage(), host.ui.modal_kind, host._draining, host._queue.size()])
+	on_error.call(Samples.text("chapter2-fixture", "text-004") % [seconds, stage(), host.ui.modal_kind, host._draining, host._queue.size()])
 	return false
 
 func send(input: Dictionary, resolve_choices := false) -> bool:
@@ -90,7 +90,7 @@ func send(input: Dictionary, resolve_choices := false) -> bool:
 func move_to_map(key: String, spawn: String) -> bool:
 	var path := "res://scenes/Chapter2/Maps/%s.tscn" % key
 	if not ResourceLoader.exists(path) or (load(path) as PackedScene) == null:
-		await _fatal("无法加载第二章地图：" + path)
+		await _fatal(Samples.text("chapter2-fixture", "text-005") + path)
 		return false
 	host.field.load_map(key, spawn)
 	await physics(4)
