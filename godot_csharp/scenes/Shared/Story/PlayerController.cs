@@ -18,9 +18,7 @@ public sealed class ControllerReasoningDefinition
     public int Depth { get; set; } = 1;
     public int Expansions { get; set; } = 256;
     public int Hypotheses { get; set; } = 16;
-    [System.Text.Json.Serialization.JsonPropertyName("argumentWeight")]
     public int ArgumentWeight { get; set; } = 1;
-    [System.Text.Json.Serialization.JsonPropertyName("informationWeight")]
     public int InformationWeight { get; set; } = 1;
 }
 public sealed class ControllerRuleDefinition

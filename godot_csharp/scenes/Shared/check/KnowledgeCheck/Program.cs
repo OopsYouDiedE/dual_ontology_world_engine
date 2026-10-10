@@ -11,7 +11,7 @@ var compiledController = PlayerControllers.Read("""
     "entities":[{"id":"actor","kind":"character","scope":"world"}],
     "controllers":[{"actor":"world:actor","name":"actor","mode":"agent",
     "rules":[{"mode":"prefer","kind":"untried","weight":6}],
-    "reasoning":{"depth":8,"expansions":32768,"hypotheses":128,"argumentWeight":16,"informationWeight":8}}]}]}
+    "reasoning":{"depth":8,"expansions":32768,"hypotheses":128,"argument_weight":16,"information_weight":8}}]}]}
     """).Single();
 Check(compiledController.Reasoning is { Depth: 8, Expansions: 32768, Hypotheses: 128, ArgumentWeight: 16, InformationWeight: 8 },
     "compiled_role_reasoning_parameters_survive_the_production_loader");
