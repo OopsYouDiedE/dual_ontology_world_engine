@@ -110,6 +110,8 @@ TABLES = {
     "房间兼容编号": ("ROOM_IDS", "constants"),
     "重演通路": ("REPLAY_PASSAGES", "records"),
     "策略牵引": ("STRATEGY_TRACK", "records"),
+    "昨夜时序": ("REPLAY_TIMELINE", "records"),
+    "重演法则": ("REPLAY_PHYSICS", "records"),
     "表达": ("EXPRESSION", "records"),
     "规则有效期": ("RULE_LIFETIMES", "map"),
     "现场表现": ("PRESENTATION", "records"),
@@ -130,7 +132,7 @@ TABLES = {
     "现场显示词": ("FIELD_WORDS", "map"), "精灵热点": ("SPRITE_SITES", "map"),
 }
 CONTENT_KEYS = ("PLACES", "PERSON_NAMES", "ACTOR_NODES", "ROOM_NAMES", "VARIABLES", "STATEMENTS", "WHISPERS", "HELP_NOTES", "STRATEGY_TRACK",
-                "PERSON_IDS", "ROOM_IDS", "REPLAY_PASSAGES",
+                "PERSON_IDS", "ROOM_IDS", "REPLAY_PASSAGES", "REPLAY_TIMELINE", "REPLAY_PHYSICS",
                 "EXPRESSION",
                 "RULE_LIFETIMES",
                 "PRESENTATION",
@@ -1403,6 +1405,9 @@ def load(path: Path) -> Chapter1Source:
                 value = read_scalar_records(body)
                 if key == "策略牵引":
                     value = read_strategy_track(value, head.number)
+                if key == "重演法则":
+                    from story_ast import expression
+                    value["procedures"] = {k: expression(v, "e", head.number) for k,v in value["procedures"].items()}
                 if key == "表达":
                     from story_expression import validate_expression
                     value = validate_expression(value, head.number)

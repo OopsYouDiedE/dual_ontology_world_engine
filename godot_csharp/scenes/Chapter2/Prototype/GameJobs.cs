@@ -44,54 +44,8 @@ public sealed class Fx(Game g, Func<Essence, Projection> r)
     /// <summary>此人知道有人病着（任何一个他人身上的 Sick 标签为真）。</summary>
     public Condition AnySick(Person? self) => Any([.. g.People.Where(o => o != self).Select(o => Tg(o.Body, T.Sick))]);
 
-    private Effect OpenGranary() => When(Tg(g.Granary, T.Locked), Seq(
-        When(Mine(T.GranaryKey), Set(g.Granary, T.Locked, 0)),
-        When(Mine(T.Lockpick), Set(g.Granary, T.Locked, 0)),
-        When(Tg(g.Granary, T.LatchLoose), Set(g.Granary, T.Locked, 0))));
-
-    // STORY-HARDCODE[CH2-040][logic][production]: 把具体本章工作映射为案件物证与人物行动结果。
     public Effect Job(Job job, Person? who = null)
-    {
-        if (g.ExecutionDesign.GetProperty("procedures").TryGetProperty(job.ToString(),out _)) return g.DeclaredProcedure(this,job.ToString(),who);
-        return job switch
-    {
-        Prototype.Job.Sleep => Seq(Go(who!.Pro.Dorm), Look(g.Space[who.Pro.Dorm])),
-        Prototype.Job.Rest => Seq(Go(who!.Pro.Dorm), Look(g.Space[who.Pro.Dorm]), Wait(3, Look(g.Space[who.Pro.Dorm]))),
-        Prototype.Job.Class => Seq(Go(Place.Lecture), Look(g.Blackboard)),
-        Prototype.Job.Distribute => Seq(Go(Place.Logistics), Need(Mine(T.GranaryKey)), Set(g.Granary, T.Locked, 0), Set(g.Desk, T.Open, 1), Look(g.Ledger)),
-        Prototype.Job.Cook => Seq(Go(Place.Logistics), Need(Tg(g.Jar, T.Water)), Spend(g.Jar, T.Water, 1), Set(g.Stove, T.Cooked, 1)),
-        Prototype.Job.FetchWater => Seq(Go(Place.Logistics), Change(g.Jar, T.Water, 3)),
-        Prototype.Job.InspectStructure => Seq(Go(Place.Logistics), Look(g.Granary), Wait(5, Look(g.Granary))),
-        Prototype.Job.Patrol => Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.ArchiveFront), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Seq(Go(Place.Hall), Wait(2.5, Go(Place.DormL))))))))),
-        // 守门：走到前厅，占住配重室这一站（同一时刻一站只容一个身体），身上带着“守门”的样子，守一阵再让出来（§13 第 4 条）。
-        Prototype.Job.VisitArchive => Seq(Go(Place.ArchiveFront), Look(g.ArchiveDoor), Wait(2, Look(g.ArchiveDoor))),
-        Prototype.Job.Greenhouse => Seq(Go(Place.Greenhouse), Look(g.Gauge), Change(g.Valve, T.Work, 1)),
-        Prototype.Job.Socialize => Seq(Go(Place.Hall), Look(g.Board[Place.Hall])),
-        Prototype.Job.Stele => Seq(Go(Place.Oath), Look(g.Stele)),
-        Prototype.Job.Scavenge => Wait(2, Seq(Go(Place.Logistics), Look(g.Granary), Wait(2, Look(g.Granary)))),
-        Prototype.Job.Hoard => Wait(2, Seq(Go(Place.Logistics), OpenGranary(), Need(Not(Tg(g.Granary, T.Locked))), Spend(g.Granary, T.Ration, 2), Set(g.Granary, T.Locked, 1), MeChange(T.Stash, 2))),
-        Prototype.Job.PostRules => Seq(Go(Place.Hall), Change(g.Board[Place.Hall], T.Posted, 1)),
-        // 开库：先走到前厅看一眼（看得见哪一站被人占着），再去占自己会的那一站使劲；那一站被占着就做不成（§13 第 4 条）。
-        // 不带人的版本只是“动名录库之门”这个动作本身，供“夜里不许开库”一类的禁令匹配。
-        Prototype.Job.Seize => who is null ? Change(g.ArchiveDoor, T.Work, 1) : SeizeAt(g.StationFor(who)),
-        Prototype.Job.Share => Seq(new Effect.Change(Target, T.Fed, 1), MeChange(T.Fed, -1), MeChange(T.Did(Prototype.Job.Share), 1)),
-        Prototype.Job.Tear => Seq(Go(Place.Hall), Look(g.Board[Place.Hall]), Change(g.Board[Place.Hall], T.Torn, 1)),
-        Prototype.Job.Watch => Seq(Go(Place.Logistics), Look(g.Granary), Wait(8, Look(g.Granary))),
-        Prototype.Job.Treat => Seq(Go(Place.Clinic), Look(g.Bed), Need(Tg(g.MedCab, T.Medicine)), Spend(g.MedCab, T.Medicine, 1), Wait(1, Look(g.Bed))),
-        Prototype.Job.Retreat => Seq(Go(Place.Oath), Look(g.Stele), Wait(3, Look(g.Stele))),
-        Prototype.Job.Report => Seq(Go(Place.Hall), Look(g.Board[Place.Hall]), Wait(1, Look(g.Board[Place.Hall]))),
-        Prototype.Job.Sample => who!.Id == P.Selma ? Seq(Go(Place.Greenhouse), Look(g.Gauge), Wait(1.5, Look(g.Gauge))) : Seq(Go(Place.Logistics), Look(g.Stove), Wait(1.5, Look(g.Stove))),
-        Prototype.Job.NightSketch => Seq(Go(Place.Hall), Look(g.Space[Place.Hall]), Wait(6, Look(g.Space[Place.Hall]))),
-        Prototype.Job.Sketch => Seq(Go(Place.DormS), Look(g.Space[Place.DormS]), Wait(2, Look(g.Space[Place.DormS]))),
-        Prototype.Job.Tidy => Seq(Go(who!.Pro.Dorm), Look(g.Litter[who.Pro.Dorm]), Set(g.Litter[who.Pro.Dorm], T.Crumbs, 0), Set(g.Litter[who.Pro.Dorm], T.Emptied, 1)),
-        _ => throw new NotSupportedException(job.ToString())
-        };
-    }
-
-    // 三站分处三地（配重室、锁芯在名录库前厅一带；传声中继在中央厅的管道枢纽）：各人走到自己那一站。
-    private Effect SeizeAt(Essence st) => Seq(Go(g.PlaceOf[st]), Look(g.ArchiveDoor), Wait(0.3, Seq(Change(g.ArchiveDoor, T.Work, 1), Need(Not(Tg(st, T.Occupied))),
-        Set(st, T.Occupied, 1), new Effect.Set(Me, T.Prying, 1), Wait(3, Seq(Look(g.ArchiveDoor), Set(st, T.Worked, 1), Set(st, T.Occupied, 0), new Effect.Set(Me, T.Prying, 0),
-            new Effect.Think(new Condition.Not(new Condition.Related(Me, Promised, r(g.ArchiveDoor))))))))) ;
+        => g.DeclaredProcedure(this, job == Prototype.Job.Seize && who is null ? "SeizePattern" : job.ToString(), who);
 
     /// <summary>沈鼎“先喂弱者”：等开粮，替饿着的人领一份记账送去。</summary>
     public Effect FeedWeak() => g.DeclaredProcedure(this,"FeedWeak");
@@ -224,6 +178,7 @@ public sealed partial class Game
             Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, p.Hooks > 0 ? FirstDay : CaseDay), fx.NotDone(Job.VisitArchive)), pull);
         else if (p != Det && pull > 0) Add(Job.VisitArchive, Fx.All(fx.At(Slot.Night), fx.Tg(Clock, T.Day, CaseDay), fx.NotDone(Job.VisitArchive)), pull);
         if (p != Det) PlanRules(p, fx, rules);
+        rules.AddRange(BindAst(fx).Rules(ExecutionDesign.GetProperty("autonomous")).Select(r => r with { Acceptance = Truth.True }));
         return [.. rules];
     }
 
@@ -406,5 +361,5 @@ public sealed partial class Game
             Observation.Observe(p.Soul, new ObservationInput(p.Habit.Name, p.Habit.Kind) { Target = p.Habit, Source = ObservationSource.Introspection, Time = Now, Rules = HabitRules(p) });
     }
 
-    public const int GreenhouseNeed = 6;
+    public static int GreenhouseNeed => Chapter2Design.Chapter.GetProperty("design").GetProperty("execution").GetProperty("constants").GetProperty(nameof(GreenhouseNeed)).GetInt32();
 }

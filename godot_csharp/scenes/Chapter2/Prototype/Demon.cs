@@ -32,20 +32,17 @@ public sealed partial class Game
             { Source = ObservationSource.Testimony, Existence = Truth.True, Time = Now, Details = text });
     }
 
-    // STORY-HARDCODE[CH2-027][text][production]: 具体课次、日期、标题和教师讲授文字写入代码。
-    public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons = new Dictionary<int, (int, string, string)>
-    {
-        [11] = (FirstDay, X("授课.第十一课.题名"), X("授课.第十一课.内容")),
-        [12] = (FirstDay + 1, X("授课.第十二课.题名"), X("授课.第十二课.内容")),
-        [13] = (0, X("授课.第十三课.题名"), X("授课.第十三课.内容")),
-        [14] = (FirstDay + 2, X("授课.第十四课.题名"), X("授课.第十四课.内容")),
-    }.ToImmutableDictionary();
+    public static readonly ImmutableDictionary<int, (int Day, string Title, string Teach)> Lessons =
+        Chapter2Design.Section("execution").GetProperty("schedule").GetProperty("lessons").EnumerateObject()
+            .ToImmutableDictionary(row => int.Parse(row.Name), row => (row.Value.GetProperty("day").GetInt32(),
+                X(row.Value.GetProperty("title").GetString()!), X(row.Value.GetProperty("text").GetString()!)));
 
     public static int LessonOfDay(int day) => Lessons.FirstOrDefault(l => l.Value.Day == day).Key;
 
     /// <summary>上课：在场者获得本课（完整），认知中写入课上所学；恶魔显形板书，留下粉笔字与窄底鞋印；对到场者各说一句放大欲望的真话。</summary>
     public void TeachClass()
     {
+        if (!_institutionHooks.Add((Day, "lesson"))) return;
         var lesson = LessonOfDay(Day);
         if (lesson == 0) return;
         var (_, title, teach) = Lessons[lesson];
@@ -97,14 +94,16 @@ public sealed partial class Game
         p.Diary.Add($"D{Day} {Names.Of(Slot)} 欲望升至 {p.Desire}：{why}");
     }
 
-    // STORY-HARDCODE[CH2-043][text][production]: 逐日晨间播报包含本章特定课程与事件。
     public void MorningBroadcast()
     {
+        if (!_institutionHooks.Add((Day, "broadcast"))) return;
+        var rows = ExecutionDesign.GetProperty("schedule").GetProperty("broadcasts");
+        string Line(string id, params (string Name, object? Value)[] values) => AstText(rows.GetProperty(id).GetString()!, values);
         if (Day == FirstDay)
         {
                 // 集合场面里铜口当面说了这几句，广播不再给侦探重复一遍（人人照样听到）。
-                Broadcast("诸位，请到讲堂来。现在讲守则的读法。", shown: false);
-                Broadcast("另：入夜后，名录库中若有人以你之名唤你，勿应。", shown: false);
+                Broadcast(Line("first"), shown: false);
+                Broadcast(Line("warning"), shown: false);
                 foreach (var p in People.Where(p => p != Det)) Tell(p, Warning1, Channel.Public);
                 Det.Acc[Warning1] = Truth.True;
                 // 它只对不戒备它的人低语（信它的人它多说，戒备它的人它不白费口舌）；低语只有本人听见，旁人看不出谁听到过什么（总纲 恶魔“不自曝”）。
@@ -113,10 +112,10 @@ public sealed partial class Game
         else if (Day == CaseDay)
         {
                 var shortBy = CaseActual?.LedgerShort ?? 0;
-                Broadcast(shortBy > 0 ? $"诸位晨安。台账上，少了{Cn(shortBy)}份。昨夜，有人进过后勤院。" : "诸位晨安。今日无新课。");
+                Broadcast(shortBy > 0 ? Line("shortage", ("数", Cn(shortBy))) : Line("quiet"));
         }
-        else if (Day == LastDay) Broadcast("今日，诸位要决定名录库的事。我只旁听。");
-        else if (LessonOfDay(Day) is var lesson and > 0) Broadcast($"诸位晨安。今日上午讲堂有课：《{Lessons[lesson].Title}》。愿来的请来。");
+        else if (Day == LastDay) Broadcast(Line("council"));
+        else if (LessonOfDay(Day) is var lesson and > 0) Broadcast(Line("lesson", ("课", Lessons[lesson].Title)));
     }
 
     // --------------------------------------------------------------- Q&A --

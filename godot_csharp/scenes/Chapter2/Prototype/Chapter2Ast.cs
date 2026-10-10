@@ -31,8 +31,29 @@ public sealed partial class Game
             "objects" => Objects.Select(e => (Noun)fx.R(e)), "rooms" => Rooms.Select(e => (Noun)fx.R(e)),
             _ => throw new InvalidDataException("Unknown AST collection: " + id)
         };
-        var world=People.FirstOrDefault(p=>p.World.Contains(fx.R(Clock)))?.World;
-        return new(Resolve, Collection, ExecutionDesign.GetProperty("procedures"), options, parameters, world);
+        var person=People.FirstOrDefault(p=>p.World.Contains(fx.R(Clock)));
+        var world=person?.World;
+        var conditions=parameters is null ? new Dictionary<string,Condition>() : new Dictionary<string,Condition>(parameters);
+        if(person is not null)conditions["is_player"]=new Condition.Constant(ReferenceEquals(person,Det) ? Truth.True : Truth.False);
+        if (person is not null && ExecutionDesign.TryGetProperty("belief_parameters", out var beliefs))
+            foreach (var entry in beliefs.EnumerateObject())
+            {
+                var row=entry.Value;
+                var known=row.TryGetProperty("claim",out var claim)
+                    ? ClaimsOf(person).Any(c=>c.Predicate==claim.GetString())
+                    : person.Acc.GetValueOrDefault(_specById[row.GetProperty("rule").GetString()!])==Truth.True;
+                if(row.TryGetProperty("accepted",out var accepted) && !accepted.GetBoolean())known=!known;
+                conditions[entry.Name]=new Condition.Constant(known ? Truth.True : Truth.False);
+            }
+        int Number(Projection projection, Tag tag)
+            => View.First(v => ReferenceEquals(v.Value, projection)).Key.Get<StateProperty>()?.Values.GetValueOrDefault(tag) ?? 0;
+        int SubjectNumber(Projection projection,Tag tag) => person is not null && ReferenceEquals(projection,person.Self)
+            ? tag.Name switch { nameof(Person.Hooks)=>person.Hooks, nameof(Person.Desire)=>person.Desire, nameof(Person.Whispered)=>person.Whispered,
+                _=>projection.Tags.GetValueOrDefault(tag) }
+            : projection.Tags.GetValueOrDefault(tag);
+        return new(Resolve, Collection, ExecutionDesign.GetProperty("procedures"), options, conditions, world,
+            ReferenceEquals(fx.R(Clock), View[Clock]) ? Number : SubjectNumber,
+            People.FirstOrDefault(p => p.World == world)?.Self ?? View[Clock]);
     }
     internal JsonElement CardCell(string axis, int index) => AstDesign.GetProperty("card_kit").GetProperty(axis)[index];
     internal CardOption CardOption(string axis, int index) => CardKit.Option(CardCell(axis, index));
@@ -41,6 +62,8 @@ public sealed partial class Game
         var declaration = AstDesign.GetProperty("rules").EnumerateArray().Single(r => r.GetProperty("id").GetString() == id);
         return BindAst(fx).Rules(declaration.GetProperty("rules"));
     }
+    private Noun BindReference(Fx fx, string id)
+        => id.StartsWith("route.", StringComparison.Ordinal) ? fx.R(Way[Enum.Parse<Place>(id[6..])]) : fx.R(ResolveEntity(id));
     internal P? CardTarget(Card c) => c.Subject >= 10 && CardOption("behaviors",c.Behavior).Targeted ? (P)(c.Subject-10) : null;
     private bool CardWitnessed(Person p, JsonElement expression)
     {
@@ -50,7 +73,17 @@ public sealed partial class Game
     internal Effect DeclaredProcedure(Fx fx, string id, Person? actor = null)
     {
         Dictionary<string,Noun>? bindings = actor is null ? null : new()
-        { ["$work_route"] = fx.R(Way[WorkPlace(actor.Id)]), ["$work_room"] = fx.R(Space[WorkPlace(actor.Id)]) };
+        {
+            ["$work_route"] = fx.R(Way[WorkPlace(actor.Id)]), ["$work_room"] = fx.R(Space[WorkPlace(actor.Id)]),
+            ["$dorm_route"] = fx.R(Way[actor.Pro.Dorm]), ["$dorm_room"] = fx.R(Space[actor.Pro.Dorm]),
+            ["$litter"] = fx.R(Litter[actor.Pro.Dorm]),
+            ["$station"] = fx.R(StationFor(actor)), ["$station_route"] = fx.R(Way[PlaceOf[StationFor(actor)]])
+        };
+        if (actor is not null && ExecutionDesign.TryGetProperty("bindings", out var rows) && rows.TryGetProperty(id, out var profiles))
+        {
+            var row = profiles.TryGetProperty(actor.Id.ToString(), out var own) ? own : profiles.GetProperty("default");
+            foreach (var entry in row.EnumerateObject()) bindings![entry.Name] = BindReference(fx, entry.Value.GetString()!);
+        }
         return BindAst(fx,bindings).Procedure(id);
     }
     private string CardText(Card c) => Chapter2Design.Text("规矩格.格式",

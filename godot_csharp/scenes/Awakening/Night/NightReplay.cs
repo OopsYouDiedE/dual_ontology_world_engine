@@ -82,7 +82,9 @@ public sealed record ReplayResult(NightVariables Variables, MorningTraces Traces
 public sealed class NightReplay
 {
     // 时间以行动值计，只表示先后。
-    private const double VoiceFirst = 1.0, VoiceSecond = 2.2, SmokeAtDoor = 2.0, LongestNight = 160.0;
+    private static System.Text.Json.JsonElement Timeline => Chapter1Data.Root.GetProperty("REPLAY_TIMELINE");
+    private static double SmokeAtDoor => Timeline.GetProperty("smoke_door").GetProperty("at").GetDouble();
+    private static double LongestNight => Timeline.GetProperty("limit").GetDouble();
     private readonly NightTiming _timing;
     private double SmokeReachesPantry => _timing.SmokeReachesPantry;
     private double DetectiveWakes => _timing.DetectiveWakes;
@@ -445,33 +447,41 @@ public sealed class NightReplay
 
     // ------------------------------------------------------------------- run --
 
-    // STORY-HARDCODE[AWK-010][logic][production]: 固定警铃、两次声音、烟到门与侦探醒来的事件阶段构成本案昨夜时序。
     private ReplayResult Execute()
     {
         Build();
         var ctb = _session.CTB;
-        ctb.Schedule(0, () =>
+        foreach (var input in Timeline.EnumerateObject().Where(v => v.Value.ValueKind == System.Text.Json.JsonValueKind.Object))
         {
-            foreach (var a in _agents) KnowConcept(a, a.Alarm, ObservationSource.Perception);
-            foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Awake = true;
-            _agents[0].Thought = Chapter1Data.Text("重演·心声·wake");
-            foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Thought = PlainThought(a);
-            Frame(new("alarm"));
-            QueueDecisions();
-        });
-        ctb.Schedule(VoiceFirst, () => Voice(1));
-        ctb.Schedule(SmokeAtDoor, () => { UpdateSmoke(); QueueDecisions(); });
-        ctb.Schedule(VoiceSecond, () => Voice(2));
-        ctb.Schedule(DetectiveWakes, () =>
-        {
-            _agents[0].Awake = true;
-            QueueDecisions();
-        });
+            var row = input.Value;
+            var at = row.GetProperty("at");
+            var time = at.ValueKind == System.Text.Json.JsonValueKind.Number ? at.GetDouble() : at.GetString() == "detective_wakes" ? DetectiveWakes : throw new InvalidDataException("Unknown historical timing parameter.");
+            ctb.Schedule(time, () => HistoricalInput(row));
+        }
         var steps = 0;
         while (steps++ < 20000 && ctb.Pending.Any() && ctb.Pending.First().Due <= LongestNight && ctb.Step()) { }
         _session.Dispose();
         return new(_v, Traces(), [.._frames], [.._log])
         { DetectiveBoltedOnHuoRequest = _detectiveBoltedOnHuoRequest, DetectiveRefusedStranger = _detectiveRefusedStranger };
+    }
+
+    private void HistoricalInput(System.Text.Json.JsonElement row)
+    {
+        switch (row.GetProperty("kind").GetString())
+        {
+            case "alarm":
+                foreach (var a in _agents) KnowConcept(a, a.Alarm, ObservationSource.Perception);
+                foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Awake = true;
+                _agents[0].Thought = Chapter1Data.Text("重演·心声·wake");
+                foreach (var a in _agents.Where(a => a.Who != Person.Detective)) a.Thought = PlainThought(a);
+                Frame(new("alarm")); QueueDecisions(); break;
+            case "voice": Voice(row.GetProperty("count").GetInt32()); break;
+            case "smoke": UpdateSmoke(); QueueDecisions(); break;
+            case "wake":
+                _agents.Single(a => a.Who.ToString() == row.GetProperty("actor").GetString()).Awake = true;
+                QueueDecisions(); break;
+            default: throw new InvalidDataException("Unknown historical input kind.");
+        }
     }
 
     private void Voice(int count)
@@ -838,7 +848,6 @@ public sealed class NightReplay
     private (int, int, int, int) DoorState() => (Tag(_door, NightTags.Open), Tag(_door, NightTags.Wedged), Tag(_door, NightTags.Bolted), Tag(_door, NightTags.CalledOut));
 
     /// <summary>烟灰、鞋印与湿布：与信念无关的环境后果，由宿主按客观状态结算。</summary>
-    // STORY-HARDCODE[AWK-015][logic][production]: 本案门状态变化、烟灰、鞋印、湿布压痕与喊声听闻的物理后果。
     private void Physics(Agent actor)
     {
         var door = DoorState();
@@ -846,10 +855,14 @@ public sealed class NightReplay
         var boltedNow = door.Item3 == 1 && _lastDoor.Bolted == 0;
         _lastDoor = door;
         UpdateSmoke();
-        var trace = _floor.Get<FloorTraceProperty>()!;
-        if (changed && actor.StartRoom == Room.Foyer && Tag(_floor, NightTags.AshFan) == 1)
-            Print(actor, boltedNow ? PrintToward.Bolt : PrintToward.DoorGap);
-        if (Tag(_cloth, NightTags.Placed) == 1 && trace.Prints.Count > 0) trace.ClothOverHeel = true;
+        ApplyLaw("footprint", actor, new()
+        {
+            ["door_changed"] = new Condition.Constant(Ast.From(changed)),
+            ["at_origin"] = new Condition.Constant(Ast.From(actor.StartRoom.ToString() == Chapter1Data.Root.GetProperty("REPLAY_PHYSICS").GetProperty("origin").GetString()))
+        }, new() { ["sole"] = actor.Body.Get<BootProperty>()!.Sole.ToString(), ["direction"] = boltedNow ? "Bolt" : "DoorGap" });
+        ReadFloorTraces();
+        ApplyLaw("cloth", actor, new() { ["prints_exist"] = new Condition.Constant(Ast.From(_floor.Get<FloorTraceProperty>()!.Prints.Count > 0)) });
+        ReadFloorTraces();
         // 霍铎朝走廊的喊声：走廊与宿舍里的人都听得见。
         var shout = Tag(_space[Room.Hall], NightTags.Shout);
         if (shout != _lastShout)
@@ -863,22 +876,30 @@ public sealed class NightReplay
         }
     }
 
-    private void Print(Agent actor, PrintToward toward)
+    private bool ApplyLaw(string id, Agent? actor = null, Dictionary<string, Condition>? parameters = null, Dictionary<string, string>? options = null)
     {
-        var sole = actor.Body.Get<BootProperty>()!.Sole;
-        if (sole == Sole.Soft) return;
-        var trace = _floor.Get<FloorTraceProperty>()!;
-        var print = new BootPrint(sole, toward);
-        if (!trace.Prints.Contains(print)) trace.Prints.Add(print);
+        var entities = new Dictionary<string, Essence> { ["door"] = _door, ["floor"] = _floor, ["wedge"] = _wedge, ["cloth"] = _cloth };
+        var ast = new ScriptAst(id => entities.TryGetValue(id, out var e) ? _view[e] : throw new InvalidDataException(id),
+            _ => [], Chapter1Data.Root.GetProperty("REPLAY_PHYSICS").GetProperty("procedures"), options, parameters);
+        return WorldLawTransaction.Apply(_runtime, ast.Procedure(id), p => _view.FirstOrDefault(v => ReferenceEquals(v.Value, p)).Key, Now, out _);
+    }
+    private void ReadFloorTraces()
+    {
+        var traces = _floor.Get<FloorTraceProperty>()!;
+        foreach (var row in Chapter1Data.Root.GetProperty("REPLAY_PHYSICS").GetProperty("traces").EnumerateObject())
+            if (Tag(_floor, new Tag(row.Name)) > 0)
+            {
+                var print = new BootPrint(Enum.Parse<Sole>(row.Value.GetProperty("sole").GetString()!), Enum.Parse<PrintToward>(row.Value.GetProperty("toward").GetString()!));
+                if (!traces.Prints.Contains(print)) traces.Prints.Add(print);
+            }
+        traces.ClothOverHeel = Tag(_floor, new Tag("ClothOverHeel")) > 0;
     }
 
     private void UpdateSmoke()
     {
         if (_smokeIn || Now < SmokeAtDoor || Tag(_door, NightTags.Open) != 1) return;
+        if (!ApplyLaw("smoke", parameters: new() { ["smoke_due"] = new Condition.Constant(Ast.From(Now >= SmokeAtDoor)) })) return;
         _smokeIn = true;
-        _floor.Get<StateProperty>()!.Values[NightTags.AshFan] = 1;
-        if (Tag(_door, NightTags.Wedged) == 1) _wedge.Get<StateProperty>()!.Values[NightTags.Soot] = 1;
-        _runtime.Sync();
         // 鞋印只来自之后在灰上动门的人（见 Physics）；进烟那一刻站着不动的人不留印。
         Frame(new("smoke_enter", Object: "floor", Room: Room.Foyer));
         var shen = _agents.First(a => a.Who == Person.Shen);

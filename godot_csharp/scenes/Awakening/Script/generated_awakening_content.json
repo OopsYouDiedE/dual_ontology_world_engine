@@ -330,6 +330,430 @@
       "cost": 2.5
     }
   },
+  "REPLAY_TIMELINE": {
+    "alarm": {
+      "at": 0,
+      "kind": "alarm"
+    },
+    "voice_first": {
+      "at": 1.0,
+      "kind": "voice",
+      "count": 1
+    },
+    "smoke_door": {
+      "at": 2.0,
+      "kind": "smoke"
+    },
+    "voice_second": {
+      "at": 2.2,
+      "kind": "voice",
+      "count": 2
+    },
+    "wake": {
+      "at": "detective_wakes",
+      "kind": "wake",
+      "actor": "Detective"
+    },
+    "limit": 160.0
+  },
+  "REPLAY_PHYSICS": {
+    "procedures": {
+      "smoke": {
+        "op": "call",
+        "name": "seq",
+        "args": [
+          {
+            "op": "call",
+            "name": "require",
+            "args": [
+              {
+                "op": "call",
+                "name": "param",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "smoke_due"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "require",
+            "args": [
+              {
+                "op": "call",
+                "name": "tag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "door"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "Open"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "set",
+            "args": [
+              {
+                "op": "literal",
+                "value": "floor"
+              },
+              {
+                "op": "literal",
+                "value": "AshFan"
+              },
+              {
+                "op": "literal",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "when",
+            "args": [
+              {
+                "op": "call",
+                "name": "tag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "door"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "Wedged"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "set",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "wedge"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "Soot"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "footprint": {
+        "op": "call",
+        "name": "when",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "param",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "door_changed"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "param",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "at_origin"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "tag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "floor"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "AshFan"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "seq",
+            "args": [
+              {
+                "op": "call",
+                "name": "when",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "option",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "sole"
+                      },
+                      {
+                        "op": "literal",
+                        "value": "PoloBoot"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "choose",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "option",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "direction"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "Bolt"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "set",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "floor"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "PoloBootBolt"
+                          },
+                          {
+                            "op": "literal",
+                            "value": 1
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "set",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "floor"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "PoloBootDoorGap"
+                          },
+                          {
+                            "op": "literal",
+                            "value": 1
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "when",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "option",
+                    "args": [
+                      {
+                        "op": "literal",
+                        "value": "sole"
+                      },
+                      {
+                        "op": "literal",
+                        "value": "WorkBoot"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "choose",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "option",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "direction"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "Bolt"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "set",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "floor"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "WorkBootBolt"
+                          },
+                          {
+                            "op": "literal",
+                            "value": 1
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "set",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": "floor"
+                          },
+                          {
+                            "op": "literal",
+                            "value": "WorkBootDoorGap"
+                          },
+                          {
+                            "op": "literal",
+                            "value": 1
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "cloth": {
+        "op": "call",
+        "name": "when",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "tag",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "cloth"
+                  },
+                  {
+                    "op": "literal",
+                    "value": "Placed"
+                  },
+                  {
+                    "op": "literal",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "param",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": "prints_exist"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "set",
+            "args": [
+              {
+                "op": "literal",
+                "value": "floor"
+              },
+              {
+                "op": "literal",
+                "value": "ClothOverHeel"
+              },
+              {
+                "op": "literal",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "origin": "Foyer",
+    "traces": {
+      "PoloBootBolt": {
+        "sole": "PoloBoot",
+        "toward": "Bolt"
+      },
+      "PoloBootDoorGap": {
+        "sole": "PoloBoot",
+        "toward": "DoorGap"
+      },
+      "WorkBootBolt": {
+        "sole": "WorkBoot",
+        "toward": "Bolt"
+      },
+      "WorkBootDoorGap": {
+        "sole": "WorkBoot",
+        "toward": "DoorGap"
+      }
+    }
+  },
   "EXPRESSION": {
     "speech": {
       "tell_affirm": {
