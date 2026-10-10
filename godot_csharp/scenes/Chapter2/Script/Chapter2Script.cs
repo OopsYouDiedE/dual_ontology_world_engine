@@ -34,7 +34,16 @@ public sealed class Person
     public readonly Dictionary<Job, Effect> JobFx = [];
     public readonly Dictionary<RuleSpec, Truth> Acc = [];
     public readonly Dictionary<RuleSpec, string> Why = [];
-    public int Desire = 1, Hooks, HungerStreak, MaxHunger, InjuredDays;
+    public int Desire = 1, Hooks;
+    private int State(string key) => Body.Get<StateProperty>()?.Values.GetValueOrDefault(new Tag(key)) ?? 0;
+    private void State(string key,int value) => (Body.Get<StateProperty>() ?? Body.Add(new StateProperty())).Values[new Tag(key)] = value;
+    public int HungerStreak { get => State(nameof(HungerStreak)); set => State(nameof(HungerStreak),value); }
+    public int MaxHunger { get => State(nameof(MaxHunger)); set => State(nameof(MaxHunger),value); }
+    public int InjuredDays
+    {
+        get => Body.Get<StateProperty>()?.Values.GetValueOrDefault(new Tag(nameof(InjuredDays))) ?? 0;
+        set => (Body.Get<StateProperty>() ?? Body.Add(new StateProperty())).Values[new Tag(nameof(InjuredDays))] = value;
+    }
     public bool Asleep, Shamed, KnowsHookCost;
     public readonly HashSet<RuleSpec> Vetoed = [], Wagered = [];
     public ActionExecution? Exec;
@@ -51,7 +60,7 @@ public sealed class Person
     /// <summary>饭桌上被信得过的人驳过几回（向某一边的推力，上限 2）。</summary>
     public readonly Dictionary<Ending, int> StanceNudge = [];
     public bool HungryAtCouncil;
-    public bool Weak => HungerStreak >= 2;
+    public bool Weak => HungerStreak >= Chapter2Design.Section("execution").GetProperty("constants").GetProperty("WeakAfterDays").GetInt32();
 }
 
 /// <summary>某人知道一条知识的方式：从谁那里、隔了几道手、哪天知道的；Slant 是转述时给它添了定性的那个人（成见走样）。</summary>
@@ -109,6 +118,7 @@ public sealed partial class Game
         S = continuation?.Simulation ?? PersistentSession?.Simulation ?? new SimulationSession(Rt);
         S.Completed += OnCompleted;
         S.StageCommitted += CapturePresentation;
+        S.StageCommitted += execution => { UpdateWorkOccupancy(execution); DeliverAuthoredClaims(execution); };
         People = _authored.Entities.Where(e => e.Kind == "character").Select(Chapter2Bindings.PersonId)
             .OrderBy(p => (int)p).Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
         _people = People.ToDictionary(p => p.Id);
@@ -147,7 +157,7 @@ public sealed partial class Game
 
     // ------------------------------------------------------------------ build --
 
-    private static readonly Tag[] BodyVisible = [T.Fed, T.Hungry, T.Weak, T.Sick, T.NightAte, T.Stash, T.OweNote, T.Guarding, T.Prying, T.OwesWater];
+    private static readonly Tag[] BodyVisible = [T.Shamed, T.Fed, T.Hungry, T.Weak, T.Sick, T.NightAte, T.Stash, T.OweNote, T.Guarding, T.Prying, T.OwesWater];
     private static readonly Tag[] BodyHidden = [T.GranaryKey, T.MedKey, T.ArchiveKey, T.OilKey, T.Lockpick, T.Craftsman, T.Structure];
 
     private readonly HashSet<Essence> _retainedEntities = new();
@@ -224,6 +234,9 @@ public sealed partial class Game
             var spatial = person.Body.Get<SpatialProperty>() ?? person.Body.Add(new SpatialProperty());
             spatial.Holder = null; spatial.Space = Space[AccessArrival(person)];
             var state = person.Body.Get<StateProperty>() ?? person.Body.Add(new StateProperty());
+            if (ExecutionDesign.TryGetProperty("body_defaults", out var defaults))
+                foreach (var entry in defaults.EnumerateObject())
+                { var tag = new Tag(entry.Name); state.Values.TryAdd(tag, entry.Value.GetInt32()); state.Observable.Add(tag); }
             foreach (var t in BodyVisible) { state.Values.TryAdd(t, 0); state.Observable.Add(t); }
             foreach (var t in BodyHidden) state.Values.TryAdd(t, 0);
             foreach (var j in Enum.GetValues<Job>()) { state.Values.TryAdd(T.Did(j), 0); state.Observable.Add(T.Did(j)); }
@@ -241,6 +254,10 @@ public sealed partial class Game
             if (person.Pro.Craftsman && !preexistingTags[person.Id].Contains(T.Craftsman)) Set(person.Body, T.Craftsman, 1);
             if (person.Pro.Structure >= 2 && !preexistingTags[person.Id].Contains(T.Structure)) Set(person.Body, T.Structure, 1);
         }
+        foreach (var person in People)
+        { Set(person.Body, new Tag("SkillStructure"), person.Pro.Structure); Set(person.Body, new Tag("SkillGreenhouse"), person.Pro.GreenhouseSkill); }
+        foreach (var entry in ExecutionDesign.GetProperty("constants").EnumerateObject()) Set(Clock, new Tag(entry.Name), entry.Value.GetInt32());
+        Set(Clock, new Tag(nameof(GameOptions.GreenhouseYield)), Options.GreenhouseYield);
         ApplyAuthoredState();
         Rt.Sync();
         foreach (var person in People) Know(person);
@@ -512,7 +529,7 @@ public sealed record GameOptions
     public int StartRations { get; init; } = 99;
     public int StartOil { get; init; } = 30;
     public int StartMedicine { get; init; } = 10;
-    public int GreenhouseYield { get; init; } = 6;
+    public int GreenhouseYield { get; init; } = Chapter2Design.Chapter.GetProperty("design").GetProperty("execution").GetProperty("constants").GetProperty(nameof(GreenhouseYield)).GetInt32();
     public int AcceptThreshold { get; init; } = 2;
     /// <summary>重演用：强制某人对某条规则的接受（只改认知，不改行动）。</summary>
     public Func<Game, Person, RuleSpec, Truth?>? ForceAcceptance { get; init; }

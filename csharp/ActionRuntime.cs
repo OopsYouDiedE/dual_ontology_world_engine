@@ -234,6 +234,16 @@ public sealed class ActionRuntime(WorldRuntime world)
                     if (WouldCycle(target, actor)) { Failure = ActionFailure.ConditionFailed; return; }
                     Write(target, state with { Holder = actor, Space = null });
                     break;
+                case ActionOp.Transport:
+                    if (ReferenceEquals(target, actor) || target.Kind != ProjectionKind.Body || action.Tool is null ||
+                        Resolve(action.Tool) is not { } route || !Reachable(route) || Read(route).Locked == true ||
+                        Read(actor).Space is not { } origin || !ReferenceEquals(state.Space, origin) || state.Holder is not null ||
+                        route.Get<PassageProperty>() is not { } transport || !transport.Connections.TryGetValue(origin, out var transportDestination) ||
+                        !Read(transportDestination).Exists)
+                    { Failure = ActionFailure.ConditionFailed; return; }
+                    Write(target, state with { Space = transportDestination, Holder = null });
+                    Write(actor, Read(actor) with { Space = transportDestination, Holder = null });
+                    break;
                 case ActionOp.Place:
                     // Tool names the destination support; placement preserves the existing object identity.
                     if (action.Tool is null || Resolve(action.Tool) is not { } destination)

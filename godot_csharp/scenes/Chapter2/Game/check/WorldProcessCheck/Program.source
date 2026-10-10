@@ -1,0 +1,329 @@
+using System.Collections.Immutable;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Chapter2.Prototype;
+using A = DualOntologyWorldEngine.Awakening;
+
+int checks = 0, failures = 0;
+void Assert(bool value, string message = "Assertion failed") { if (!value) throw new Exception(message); }
+void Check(string name, Action body)
+{
+    checks++;
+    try { body(); Console.WriteLine("PASS " + name); }
+    catch (Exception e) { failures++; Console.WriteLine("FAIL " + name + ": " + e); }
+}
+void Invoke(Game game, string method, params object[] args)
+    => typeof(Game).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(game, args);
+void Move(Game game, Person person, Place place)
+    => person.Body.Get<SpatialProperty>()!.Space = game.Space[place];
+Game OpenGame()
+{
+    var root = JsonNode.Parse(Chapter2Design.Json)!;
+    foreach (var gate in root["chapters"]![0]!["design"]!["access"]!["boundaries"]!.AsObject()) gate.Value!["initial"] = true;
+    return new(authored: WorldScriptDocument.Parse(root.ToJsonString(), allowChapterAdapter: true).Single());
+}
+int Value(Essence entity, string tag) => entity.Get<StateProperty>()!.Values.GetValueOrDefault(new(tag));
+
+Check("world laws prepare all property changes before committing, including insufficient resources", () =>
+{
+    var rt = new WorldRuntime(); var item = new Essence("neutral resource"); item.Add(new StateProperty()).Values[new("Units")] = 1;
+    var view = rt.Project(item, item.TrueName);
+    var effect = new Effect.Sequence([new Effect.Set(view, new("Result"), 1), new Effect.Spend(view, new("Units"), 2)]);
+    Assert(!WorldLawTransaction.Apply(rt, effect, _ => item, 0, out var failed));
+    Assert(failed is null && Value(item, "Result") == 0 && Value(item, "Units") == 1 && rt.EventAudit.Count == 0);
+    Assert(WorldLawTransaction.Apply(rt, new Effect.Sequence([new Effect.Spend(view, new("Units"), 1), new Effect.Set(view, new("Result"), 1)]), _ => item, 0, out var receipt));
+    Assert(Value(item, "Result") == 1 && Value(item, "Units") == 0 && receipt is ObservationRecordV1<Essence?> && receipt.Fields.Subject is null);
+});
+
+Check("environmental transactions explicitly reject character operations", () =>
+{
+    var rt = new WorldRuntime(); var item = new Essence("neutral item"); item.Add(new StateProperty()); var view = rt.Project(item, item.TrueName);
+    try { WorldLawTransaction.Apply(rt, new Effect.Sequence([new Effect.Set(view, new("Result"), 1), new Effect.Act(ActionOp.Inspect, view)]), _ => item, 0, out _); throw new Exception("Accepted character action"); }
+    catch (InvalidDataException) { }
+    Assert(Value(item, "Result") == 0 && rt.EventAudit.Count == 0);
+});
+
+Check("neutral simultaneous occupancy succeeds once and sequential occupancy never succeeds", () =>
+{
+    foreach (var overlap in new[] { false, true })
+    {
+        var f = new WorkFixture(); var tracker = new WorkOccupancy();
+        var a = f.Submit(0, 3); var b = f.Submit(1, 3, overlap ? 0 : 4);
+        f.Session.StageCommitted += _ => tracker.Update(f.Session.CTB.Now, f.Occupied());
+        f.Session.Completed += _ => tracker.Update(f.Session.CTB.Now, f.Occupied());
+        f.Session.CTB.RunUntil(8);
+        var pairs = tracker.CompletedPairs(f.Stations[0], f.Stations[1], 2).ToArray();
+        Assert(pairs.Length == (overlap ? 1 : 0));
+        if (overlap) { tracker.Consume(pairs[0].First, pairs[0].Second); Assert(!tracker.CompletedPairs(f.Stations[0], f.Stations[1], 2).Any()); }
+    }
+});
+
+Check("cancelled worker and replacement execution cannot combine their occupancy into success", () =>
+{
+    var f = new WorkFixture(); var tracker = new WorkOccupancy();
+    f.Session.StageCommitted += _ => tracker.Update(f.Session.CTB.Now, f.Occupied());
+    f.Session.Completed += _ => tracker.Update(f.Session.CTB.Now, f.Occupied());
+    var a = f.Submit(0, 5); f.Submit(1, 3);
+    f.Session.CTB.RunUntil(1); f.Session.Cancel(a); tracker.Update(1, f.Occupied());
+    f.Submit(0, 3, 1); f.Session.CTB.RunUntil(8);
+    Assert(!tracker.CompletedPairs(f.Stations[0], f.Stations[1], 2).Any());
+    Assert(f.Stations.All(s => (s.Get<TemporaryStateProperty>()?.Override(new("Occupied")) ?? 0) == 0));
+});
+
+Check("illness is once-only world state and does not move bodies, deliver speech, or record absent actors", () =>
+{
+    var g = OpenGame(); typeof(Game).GetProperty(nameof(Game.Day))!.SetValue(g, Game.CaseNight); typeof(Game).GetProperty(nameof(Game.Slot))!.SetValue(g, Slot.Afternoon); g.ProbeStart();
+    var patient = g[P.Moran]; Move(g, patient, Place.DormS); Move(g, g[P.Selma], Place.Greenhouse); Move(g, g[P.Mora], Place.Logistics);
+    var before = g.ActionRecords.Count;
+    Invoke(g, "FixedBefore"); var events = g.Rt.EventAudit.Count; Invoke(g, "FixedBefore");
+    Assert(Value(patient.Body, "Sick") == 1 && g.Where(patient) == Place.DormS);
+    Assert(g.Rt.EventAudit.Count == events && g.ActionRecords.Count == before);
+    Assert(!g.Rt.EventAudit.OfType<TestimonyEventV1<Essence?>>().Any(e => e.Fields.Claims.Any(c => c.Tag == T.Sick)));
+});
+
+Check("same illness produces different selected actions from different personal cognition", () =>
+{
+    var g = OpenGame(); typeof(Game).GetProperty(nameof(Game.Day))!.SetValue(g, Game.CaseNight); typeof(Game).GetProperty(nameof(Game.Slot))!.SetValue(g, Slot.Afternoon); g.ProbeStart();
+    var helper = g[P.Selma]; var patient = g[P.Moran]; Move(g, helper, Place.DormS); Move(g, patient, Place.DormS);
+    Invoke(g, "FixedBefore"); g.Rt.Sync(); g.PerceiveAll();
+    g.Rt.Observe(helper.Soul, g.View.Values, g.Now);
+    Observation.Observe(helper.Soul, new(helper.M[patient.Body].Name, ProjectionKind.Body)
+        { Target = helper.M[patient.Body], Source = ObservationSource.Perception, Tags = ImmutableDictionary<Tag,int?>.Empty.Add(T.Sick, 1) });
+    var selected = DecisionSystem.Choose(helper.World, helper.Self)!;
+    if (selected is null) throw new Exception("No candidate: " + string.Join(";", helper.Habit.Rules.Select(r => Ast.Evaluate(r.Condition, new(helper.Self, Scene:helper.Self.Parent)) + ":" + r.Effect)));
+    Assert(Ast.Nouns(selected.Effect).Any() && selected.Effect is Effect.Wait, "Known colocated patient did not select assistance");
+    Observation.Observe(helper.Soul, new(helper.M[patient.Body].Name, ProjectionKind.Body)
+        { Target = helper.M[patient.Body], Source = ObservationSource.Testimony, Tags = ImmutableDictionary<Tag,int?>.Empty.Add(T.Sick, 0) });
+    var changed = DecisionSystem.Choose(helper.World, helper.Self)!;
+    Assert(!Ast.Equivalent(selected.Effect, changed.Effect));
+    Assert(g.Where(patient) == Place.DormS && g.ActionRecords.Count == 0);
+});
+
+Check("transport validates current colocated target and cancellation preserves both positions", () =>
+{
+    foreach (var mode in new[] { "success", "cancel", "absent" })
+    {
+        var f = new WorkFixture(); var route = new Essence("neutral route");
+        route.Add(new PassageProperty()).Connections[f.Room] = f.OtherRoom; f.Runtime.Project(route, route.TrueName);
+        var known = f.Runtime.Observe(f.Souls[0], f.Runtime.Reality.Projections, 0);
+        var target = f.Runtime.KnownProjection(f.Souls[0], f.Bodies[1])!;
+        var tool = f.Runtime.KnownProjection(f.Souls[0], route)!;
+        var action = f.Session.Submit(f.Souls[0], new(f.Selves[0], new Effect.Wait(1, new Effect.Act(ActionOp.Transport, target, tool)), 0));
+        f.Session.CTB.RunUntil(0);
+        if (mode == "cancel") f.Session.Cancel(action);
+        if (mode == "absent") f.Bodies[1].Get<SpatialProperty>()!.Space = f.OtherRoom;
+        f.Session.CTB.RunUntil(2);
+        Assert(ReferenceEquals(f.Bodies[0].Get<SpatialProperty>()!.Space, mode == "success" ? f.OtherRoom : f.Room));
+        Assert(action.Status == (mode == "success" ? ExecutionStatus.Completed : mode == "cancel" ? ExecutionStatus.Cancelled : ExecutionStatus.Failed));
+    }
+});
+
+Check("cancelled declared treatment consumes no medicine and grants no treated state", () =>
+{
+    var g = OpenGame(); var p = g[P.Elena]; Move(g, p, Place.Clinic); g.Rt.Sync(); g.PerceiveAll();
+    var before = Value(g.MedCab, "Medicine");
+    var execution = g.S.Submit(p.Soul, new(p.Self, g.FxOf(p).Job(Job.Treat, p), 0));
+    g.S.CTB.RunUntil(g.Now); g.S.Cancel(execution); g.S.CTB.RunUntil(g.Now + 2);
+    Assert(Value(g.MedCab, "Medicine") == before && execution.Status == ExecutionStatus.Cancelled);
+});
+
+Check("institutional broadcasts and courses do not duplicate on phase reentry", () =>
+{
+    var g = OpenGame(); g.MorningBroadcast(); var count = g.DemonSaid.Count; g.MorningBroadcast(); Assert(g.DemonSaid.Count == count);
+    g.TeachClass(); count = Value(g.Blackboard, "Chalk"); g.TeachClass(); Assert(Value(g.Blackboard, "Chalk") == count);
+});
+
+Check("actual declared two-station recipe requires overlapping completed executions", () =>
+{
+    foreach (var mode in new[] { "success", "sequential", "cancel", "leave" })
+    {
+        var g=OpenGame();
+        typeof(Game).GetProperty(nameof(Game.Slot))!.SetValue(g,Slot.Afternoon); g.ProbeStart();
+        var workers=new[] { g[P.Huo],g[P.Shen] };
+        foreach(var p in workers) { Move(g,p,Place.Greenhouse); g.Set(p.Body,new("SkillStructure"),3); }
+        g.Rt.Sync(); g.PerceiveAll();
+        var first=workers[0].Exec=g.S.Submit(workers[0].Soul,new(workers[0].Self,g.FxOf(workers[0]).Job(Job.Greenhouse,workers[0]),0));
+        workers[1].Exec=g.S.Submit(workers[1].Soul,new(workers[1].Self,g.FxOf(workers[1]).Job(Job.Greenhouse,workers[1]),mode=="sequential" ? 3 : 0));
+        g.S.CTB.RunUntil(1);
+        if(mode=="cancel")Invoke(g,"CancelExecution",first);
+        if(mode=="leave") { Move(g,workers[0],Place.Hall); Invoke(g,"UpdateWorkOccupancy",new object?[] { null }!); }
+        g.S.CTB.RunUntil(7); Invoke(g,"CompleteRecipes");
+        var progress=Value(g.Valve,"Work");
+        Assert(mode=="success" ? progress>0 : progress==0,mode+" produced unexpected work: "+progress);
+        Invoke(g,"CompleteRecipes"); Assert(Value(g.Valve,"Work")==progress,"repeated receipt produced work");
+    }
+});
+
+Check("completed recipe with insufficient resource is atomic and cannot succeed retroactively", () =>
+{
+    var root=JsonNode.Parse(Chapter2Design.Json)!;
+    foreach(var gate in root["chapters"]![0]!["design"]!["access"]!["boundaries"]!.AsObject())gate.Value!["initial"]=true;
+    JsonNode Literal(object value)=>new JsonObject { ["op"]="literal",["value"]=JsonSerializer.SerializeToNode(value) };
+    JsonNode Call(string name,params JsonNode[] a)=>new JsonObject { ["op"]="call",["name"]=name,["args"]=new JsonArray(a) };
+    root["chapters"]![0]!["design"]!["execution"]!["recipes"]!["Greenhouse"]!["effect"] = Call("seq",
+        Call("set",Literal("object.Valve"),Literal("Work"),Literal(99)),Call("spend",Literal("object.Jar"),Literal("Water"),Literal(999)));
+    var g=new Game(authored:WorldScriptDocument.Parse(root.ToJsonString(),allowChapterAdapter:true).Single());
+    foreach(var p in new[] { g[P.Huo],g[P.Shen] })
+    {
+        Move(g,p,Place.Greenhouse); g.Rt.Sync(); g.PerceiveAll();
+        p.Exec=g.S.Submit(p.Soul,new(p.Self,g.FxOf(p).Job(Job.Greenhouse,p),0));
+    }
+    g.S.CTB.RunUntil(4); var before=Value(g.Jar,"Water"); Invoke(g,"CompleteRecipes");
+    Assert(Value(g.Valve,"Work")==0 && Value(g.Jar,"Water")==before);
+    g.Set(g.Jar,new("Water"),1000); Invoke(g,"CompleteRecipes");
+    Assert(Value(g.Valve,"Work")==0 && Value(g.Jar,"Water")==1000);
+});
+
+Check("failed out-of-place and cancelled authored watch never marks the target as acted upon", () =>
+{
+    foreach(var cancelled in new[] { false,true })
+    {
+        var g=OpenGame();var observer=g[P.Ward];var target=g[P.Quer];
+        Move(g,observer,Place.Hall);Move(g,target,Place.Hall);g.Rt.Sync();g.PerceiveAll();
+        var declaration=(JsonElement)typeof(Game).GetProperty("ExecutionDesign",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(g)!;
+        var rows=declaration.GetProperty("autonomous");
+        // Select by its declared result tag, not by an expected timetable.
+        var row=rows.EnumerateArray().Single(r=>r.GetProperty("effect").GetRawText().Contains("Shamed"));
+        var fx=typeof(Game).GetMethod("BindAst",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(g,[g.FxOf(observer),null,null,null]) as ScriptAst;
+        var e=g.S.Submit(observer.Soul,new(observer.Self,fx!.Effect(row.GetProperty("effect")),0));
+        g.S.CTB.RunUntil(0);
+        if(cancelled)g.S.Cancel(e);else Move(g,target,Place.DormL);
+        g.S.CTB.RunUntil(1);
+        Assert(Value(target.Body,"Shamed")==0 && e.Status==(cancelled ? ExecutionStatus.Cancelled : ExecutionStatus.Failed));
+    }
+});
+
+Check("authored illness claim enters only an actually present listener's cognition", () =>
+{
+    foreach(var present in new[] { false,true })
+    {
+        var g=OpenGame();var speaker=g[P.Selma];var listener=g[P.Mora];var patient=g[P.Moran];
+        Move(g,speaker,Place.Clinic);Move(g,listener,present ? Place.Clinic : Place.DormL);g.Rt.Sync();g.PerceiveAll();
+        var condition=new Condition.Tagged(speaker.M[patient.Body],T.Sick,1);
+        var e=g.S.Submit(speaker.Soul,new(speaker.Self,new Effect.Say(speaker.M[listener.Body],"neutral claim",Claim:condition),0));
+        g.S.CTB.RunUntil(g.Now);
+        Assert(e.Status==(present ? ExecutionStatus.Completed : ExecutionStatus.Failed));
+        Assert(listener.M[patient.Body].Tags.GetValueOrDefault(T.Sick)==(present ? 1 : 0));
+    }
+});
+
+Check("daily hunger and environmental consumption do not repeat on reentry", () =>
+{
+    var g=OpenGame();typeof(Game).GetProperty(nameof(Game.Day))!.SetValue(g,Game.FirstDay+1);
+    foreach(var p in g.People)g.Set(p.Body,T.Fed,0);
+    Invoke(g,"BeginDay");var hungry=g.Det.HungerStreak;var receipts=g.Rt.EventAudit.Count;
+    Invoke(g,"BeginDay");Assert(g.Det.HungerStreak==hungry && hungry==1 && g.Rt.EventAudit.Count==receipts);
+    typeof(Game).GetProperty(nameof(Game.Day))!.SetValue(g,Game.FirstDay+2);Invoke(g,"BeginDay");
+    Assert(g.Det.HungerStreak==2 && g.Det.Weak);
+    var before=Value(g.OilStore,"Oil");Invoke(g,"WorldProcesses","night");Invoke(g,"WorldProcesses","night");
+    Assert(Value(g.OilStore,"Oil")==Math.Max(0,before-1));
+});
+
+Check("external request stimulus is typed, once-only, and never submits the recipient's action", () =>
+{
+    foreach(var present in new[] { false,true })
+    {
+        var g=OpenGame();typeof(Game).GetProperty(nameof(Game.Day))!.SetValue(g,Game.CaseDay);
+        typeof(Game).GetProperty(nameof(Game.Slot))!.SetValue(g,Slot.Night);g.ProbeStart();
+        foreach(var p in g.Npcs) { Move(g,p,Place.DormS);p.Hooks=0;p.Whispered=0; }
+        var recipient=g[P.Margaret];recipient.Hooks=1;
+        Move(g,recipient,present ? Place.ArchiveFront : Place.DormS);g.Rt.Sync();g.PerceiveAll();
+        var before=g.ActionRecords.Count;var events=g.Rt.EventAudit.Count;
+        Invoke(g,"RuntimeStimuli","tick");var after=g.Rt.EventAudit.Count;Invoke(g,"RuntimeStimuli","tick");
+        Assert(after==events+(present ? 1 : 0) && g.Rt.EventAudit.Count==after,$"present={present}, audit {events}->{after}->{g.Rt.EventAudit.Count}; room={recipient.Self.Parent?.Name}; day={recipient.M[g.Clock].Tags.GetValueOrDefault(T.Day)}; night={recipient.M[g.Clock].Tags.GetValueOrDefault(T.SlotTag[Slot.Night])}");
+        Assert(recipient.Exec is null && g.ActionRecords.Count==before && recipient.Hooks==1);
+        if(present)Assert(recipient.World.Projections.Any(p=>p.Procedure is not null && p.Kind==ProjectionKind.Event));
+    }
+});
+
+Check("failed declared action is a failed attempt, never a completed-job marker", () =>
+{
+    var g=OpenGame();g.SubmitDet(new Effect.Require(new Condition.Constant(Truth.False)),0,Job.Collect);
+    g.S.CTB.RunUntil(g.Now);
+    Assert(Value(g.Det.Body,T.Did(Job.Collect).Name)==0 && g.Det.Exec is null);
+});
+
+Check("pressure hazard is an actor choice and a cancelled choice produces no accident", () =>
+{
+    foreach(var mode in new[] { "refuses_warning", "accepts_warning", "cancel" })
+    {
+        var g=OpenGame();var actor=g[P.Margaret];Move(g,actor,Place.Greenhouse);
+        g.Set(g.Gauge,T.Pressure,2);g.Set(g.Valve,T.Work,4);
+        actor.Acc[g.Warning2]=mode=="accepts_warning" ? Truth.True : Truth.False;
+        g.Rt.Sync();g.PerceiveAll();g.ProbeStart();
+        var candidates=DecisionSystem.Assess(actor.World,actor.Self);
+        bool Opens(Effect e)=>e switch {
+            Effect.Set { Tag:var t,Value:1 } when t==new Tag("Open")=>true,
+            Effect.Sequence seq=>seq.Items.Any(Opens),Effect.Wait wait=>Opens(wait.Body),_=>false };
+        var action=candidates.FirstOrDefault(c=>!c.Forbidden && Opens(c.Decision.Effect));
+        if(mode=="accepts_warning") { Assert(action is null);continue; }
+        Assert(action is not null);
+        var execution=g.S.Submit(actor.Soul,new(actor.Self,action!.Decision.Effect,0));g.S.CTB.RunUntil(g.Now);
+        if(mode=="cancel")g.S.Cancel(execution);
+        g.S.CTB.RunUntil(g.Now+1);
+        Assert(actor.InjuredDays==(mode=="cancel" ? 0 : 2));
+        Assert(Value(g.Valve,"GlassBroken")== (mode=="cancel" ? 0 : 1));
+    }
+});
+
+Check("large skill increments cannot bypass a recipe's pressure knowledge requirement", () =>
+{
+    foreach(var competent in new[] { false,true })
+    {
+        var g=OpenGame();foreach(var p in new[] { g[P.Huo],g[P.Shen] })
+        {
+            Move(g,p,Place.Greenhouse);g.Set(p.Body,new("SkillStructure"),competent ? 3 : 0);
+            g.Set(p.Body,new("SkillGreenhouse"),20);
+        }
+        g.Rt.Sync();g.PerceiveAll();
+        foreach(var p in new[] { g[P.Huo],g[P.Shen] })p.Exec=g.S.Submit(p.Soul,new(p.Self,g.FxOf(p).Job(Job.Greenhouse,p),0));
+        g.S.CTB.RunUntil(4);Invoke(g,"CompleteRecipes");
+        Assert(competent ? g.GreenhouseRepaired : !g.GreenhouseRepaired && g.GreenhouseProgress==3);
+    }
+});
+
+Check("unknown environmental requirements remain unknown under negation", () =>
+{
+    var rt=new WorldRuntime();var entity=new Essence("neutral entity");entity.Add(new StateProperty());var view=rt.Project(entity,entity.TrueName);
+    var effect=new Effect.Sequence([new Effect.Require(new Condition.Not(new Condition.Constant(Truth.Unknown))),new Effect.Set(view,new("Success"),1)]);
+    Assert(!WorldLawTransaction.Apply(rt,effect,_=>entity,0,out _));
+    Assert(Value(entity,"Success")==0 && rt.EventAudit.Count==0);
+});
+
+Console.WriteLine($"WORLD PROCESS CHECK: {checks} checks, {failures} failures");
+return failures == 0 ? 0 : 1;
+
+sealed class WorkFixture
+{
+    public WorldRuntime Runtime { get; } = new();
+    public SimulationSession Session { get; }
+    public Essence Room { get; } = new("neutral room", ProjectionKind.Space);
+    public Essence OtherRoom { get; } = new("neutral other room", ProjectionKind.Space);
+    public Essence[] Bodies { get; } = [new("neutral first", ProjectionKind.Body), new("neutral second", ProjectionKind.Body)];
+    public Essence[] Stations { get; } = [new("neutral station A"), new("neutral station B")];
+    public SoulEssence[] Souls { get; } = [new("neutral soul A"), new("neutral soul B")];
+    public Projection[] Selves { get; } = new Projection[2];
+    private readonly ActionExecution?[] _executions = new ActionExecution?[2];
+    public WorkFixture()
+    {
+        Session = new(Runtime); Runtime.Project(Room, Room.TrueName); Runtime.Project(OtherRoom, OtherRoom.TrueName);
+        foreach (var e in Bodies.Concat(Stations)) { e.Add(new SpatialProperty { Space = Room }); e.Add(new StateProperty()).Values[new("Occupied")] = 0; Runtime.Project(e, e.TrueName); }
+        for (var i = 0; i < 2; i++)
+        {
+            Souls[i].Relations.Add((Relations.Controls, Bodies[i])); Runtime.Project(Souls[i], Souls[i].TrueName);
+            Runtime.Observe(Souls[i], Runtime.Reality.Projections, 0); Selves[i] = Runtime.KnownProjection(Souls[i], Bodies[i])!;
+        }
+    }
+    public ActionExecution Submit(int i, double duration, double delay = 0)
+    {
+        var station = Runtime.KnownProjection(Souls[i], Stations[i])!;
+        var effect = new Effect.Sequence([new Effect.TemporarySetUntilEnd(station, new("Occupied"), 1), new Effect.Wait(duration, new Effect.Set(Selves[i], new("Result"), 1))]);
+        return _executions[i] = Session.Submit(Souls[i], new(Selves[i], effect, delay));
+    }
+    public IEnumerable<(ActionExecution, Essence, Essence)> Occupied()
+        => Enumerable.Range(0, 2).Where(i => _executions[i] is { Status: ExecutionStatus.Pending } && (Stations[i].Get<TemporaryStateProperty>()?.Override(new("Occupied")) ?? 0) > 0)
+            .Select(i => (_executions[i]!, Bodies[i], Stations[i]));
+}

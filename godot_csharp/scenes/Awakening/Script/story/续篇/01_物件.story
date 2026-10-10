@@ -63,17 +63,19 @@
 
     物件 温室阀门
         编号：object.Valve
+        属性：Occupied 0、Open 0、GlassBroken 0、Repaired 0、RepairedDay 0
         别名：阀门
         范围：世界
         位置：温室
-        可见：Work
+        可见：Work、Occupied、Open、GlassBroken、Repaired
 
     物件 温室压力表
         编号：object.Gauge
+        属性：Occupied 0
         别名：压力表
         范围：世界
         位置：温室
-        可见：Pressure
+        可见：Pressure、Occupied
 
     物件 讲堂黑板
         编号：object.Blackboard

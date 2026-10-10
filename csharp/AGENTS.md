@@ -67,4 +67,5 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - `EventSaveRegression.cs` 在 CognitionRegression 中保留既有事件/保存用例并追加两个中性世界的事件 wire、审计、权限、退休引用、因果遗忘及子进程恢复检查；本文件同样从 Core 类库排除。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
 - 系统演进直接在既有架构与文件上持续重构。
+- `ActionOp.Transport` 是通用同行搬运事务：目标须为可触及、同空间且未被持有的另一身体，工具须为当前空间可达的通路；两身体的位置在同一阶段提交，失败时均不移动。参与动机与前置条件由宿主声明的主体规则负责。
 - 源码审计遵循根目录的 `STORY-HARDCODE` 编号、类型与范围约定。仅新增审计注释时，逐文件核对去除标记后与基线一致，并构建 Core；审计清单位于 `artifacts/story-hardcode-marking/`，不把源码中的具体内容写入本规范。

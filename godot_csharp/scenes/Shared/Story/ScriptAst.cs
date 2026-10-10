@@ -6,7 +6,8 @@ namespace DualOntologyWorldEngine.Story;
 /// <summary>Data-only expressions bound to existing projections; binding never writes cognition.</summary>
 public sealed class ScriptAst(Func<string, Noun> reference, Func<string, IEnumerable<Noun>> collection,
     JsonElement procedures, IReadOnlyDictionary<string, string>? options = null,
-    IReadOnlyDictionary<string, Condition>? parameters = null, ProjectionWorld? world = null)
+    IReadOnlyDictionary<string, Condition>? parameters = null, ProjectionWorld? world = null,
+    Func<Projection, Tag, int>? number = null, Projection? contextActor = null)
 {
     private readonly HashSet<string> _expanding = new(StringComparer.Ordinal);
     private static string Text(JsonElement e) => e.GetProperty("value").GetString()!;
@@ -17,11 +18,33 @@ public sealed class ScriptAst(Func<string, Noun> reference, Func<string, IEnumer
         var id => reference(id)
     };
     private static JsonElement[] Args(JsonElement e) => e.TryGetProperty("args", out var a) ? [..a.EnumerateArray()] : [];
+    private Projection NumericReference(JsonElement e) => Ref(e) switch
+    {
+        Noun.Reference r => r.Projection,
+        Noun.Slot { Role: RuleSlot.Actor } when contextActor is not null => contextActor,
+        Noun.Slot { Role: RuleSlot.Scene } when contextActor?.Parent is { } scene => scene,
+        _ => throw new InvalidDataException("Numeric reads require a bound subject reference.")
+    };
+    private int Integer(JsonElement e)
+    {
+        if (e.GetProperty("op").GetString() == "literal") return e.GetProperty("value").GetInt32();
+        var a = Args(e);
+        return e.GetProperty("name").GetString() switch
+        {
+            "value" => number?.Invoke(NumericReference(a[0]), new Tag(Text(a[1]))) ?? NumericReference(a[0]).Tags.GetValueOrDefault(new Tag(Text(a[1]))),
+            "add" => checked(Integer(a[0]) + Integer(a[1])), "sub" => checked(Integer(a[0]) - Integer(a[1])),
+            "min" => Math.Min(Integer(a[0]), Integer(a[1])), "max" => Math.Max(Integer(a[0]), Integer(a[1])),
+            "div" => Integer(a[1]) > 0 ? Integer(a[0]) / Integer(a[1]) : throw new InvalidDataException("Divisor must be positive."),
+            "int_when" => contextActor is not null ? Ast.Evaluate(Condition(a[0]), new(contextActor, Scene:contextActor.Parent)) == Truth.True ? Integer(a[1]) : Integer(a[2]) : throw new InvalidDataException("Integer condition requires an explicit subject context."),
+            _ => throw new InvalidDataException("Unsupported integer expression.")
+        };
+    }
+    public int ReadInteger(JsonElement e) => Integer(e);
     private Condition Observed(JsonElement[] a)
     {
         if (Ref(a[0]) is not Noun.Reference r) throw new InvalidDataException("Historical observation requires a known reference.");
         if(world is null || !world.Contains(r.Projection))throw new InvalidDataException("Historical observation requires its subject world.");
-        var tag=new Tag(Text(a[1])); var minimum=a[2].GetProperty("value").GetInt32();
+        var tag=new Tag(Text(a[1])); var minimum=Integer(a[2]);
         var source=Enum.Parse<ObservationSource>(Text(a[3]));
         return new Condition.Constant(world.History.Any(h=>ReferenceEquals(h.Target,r.Projection)&&h.Source==source
             &&h.Tags.TryGetValue(tag,out var value)&&value>=minimum) ? Truth.True : Truth.False);
@@ -38,12 +61,13 @@ public sealed class ScriptAst(Func<string, Noun> reference, Func<string, IEnumer
         return e.GetProperty("name").GetString() switch
         {
             "true" => new Condition.Constant(Truth.True), "false" => new Condition.Constant(Truth.False),
+            "gte" => new Condition.Constant(Integer(a[0]) >= Integer(a[1]) ? Truth.True : Truth.False),
             "exists" => new Condition.Exists(Ref(a[0])),
-            "tag" => new Condition.Tagged(Ref(a[0]), new Tag(Text(a[1])), a[2].GetProperty("value").GetInt32()),
+            "tag" => new Condition.Tagged(Ref(a[0]), new Tag(Text(a[1])), Integer(a[2])),
             "at" => new Condition.At(Ref(a[0]), Ref(a[1])),
             "related" => new Condition.Related(Ref(a[0]), new RelationTag(Text(a[1])), Ref(a[2])),
             "kind" => new Condition.IsKind(Ref(a[0]), Enum.Parse<ProjectionKind>(Text(a[1]))),
-            "any_tag" => new Condition.Any([.. collection(Text(a[0])).Select(n => (Condition)new Condition.Tagged(n, new Tag(Text(a[1])), a[2].GetProperty("value").GetInt32()))]),
+            "any_tag" => new Condition.Any([.. collection(Text(a[0])).Select(n => (Condition)new Condition.Tagged(n, new Tag(Text(a[1])), Integer(a[2])))]),
             "observed" => Observed(a),
             "param" => parameters is not null && parameters.TryGetValue(Text(a[0]), out var c) ? c : throw new InvalidDataException("Unknown condition parameter: " + Text(a[0])),
             "option" => new Condition.Constant(options is not null && options.TryGetValue(Text(a[0]), out var v) && v == Text(a[1]) ? Truth.True : Truth.False),
@@ -79,7 +103,7 @@ public sealed class ScriptAst(Func<string, Noun> reference, Func<string, IEnumer
         if (e.GetProperty("op").GetString() != "call") throw new NotSupportedException("Expected Core effect call.");
         var a = Args(e);
         Tag Tag(int i) => new(Text(a[i]));
-        int Int(int i) => a[i].GetProperty("value").GetInt32();
+        int Int(int i) => Integer(a[i]);
         return e.GetProperty("name").GetString() switch
         {
             "seq" => new Effect.Sequence([..a.Select(Effect)]),
@@ -94,6 +118,9 @@ public sealed class ScriptAst(Func<string, Noun> reference, Func<string, IEnumer
             "wait_until" => new Effect.Wait(Condition(a[0]), Effect(a[1])), "think" => new Effect.Think(Condition(a[0])),
             "relate" => new Effect.Relate(Ref(a[0]), new RelationTag(Text(a[1])), Ref(a[2])),
             "temporary" => new Effect.TemporarySet(Ref(a[0]),Tag(1),Int(2),a[3].GetProperty("value").GetDouble()),
+            "occupy" => new Effect.TemporarySetUntilEnd(Ref(a[0]),Tag(1),Int(2)),
+            "transport" => new Effect.Act(ActionOp.Transport,Ref(a[0]),Ref(a[1])),
+            "tell" => new Effect.Say(Ref(a[0]),Text(a[1]),Claim:Condition(a[2])),
             "say" => new Effect.Say(Ref(a[0]),Text(a[1]),Effect(a[2])),
             var name => throw new NotSupportedException("Unsupported Core effect: " + name)
         };

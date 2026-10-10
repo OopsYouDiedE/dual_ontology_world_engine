@@ -97,3 +97,45 @@
     隔墙低语：备餐间
     听来像在门外：句尾、隔门完整
     喊声可闻：活动厅、走廊、R-05、R-06、R-07、R-08
+
+# 昨夜写定的外部输入；人物回应仍由本人规则选择。时间单位是重演行动值。
+昨夜时序
+    alarm:
+        at: 0
+        kind: alarm
+    voice_first:
+        at: 1.0
+        kind: voice
+        count: 1
+    smoke_door:
+        at: 2.0
+        kind: smoke
+    voice_second:
+        at: 2.2
+        kind: voice
+        count: 2
+    wake:
+        at: detective_wakes
+        kind: wake
+        actor: Detective
+    limit: 160.0
+
+重演法则
+    procedures:
+        smoke: seq(require(param("smoke_due")), require(tag("door", "Open", 1)), set("floor", "AshFan", 1), when(tag("door", "Wedged", 1), set("wedge", "Soot", 1)))
+        footprint: when((param("door_changed") 且 param("at_origin") 且 tag("floor", "AshFan", 1)), seq(when(option("sole", "PoloBoot"), choose(option("direction", "Bolt"), set("floor", "PoloBootBolt", 1), set("floor", "PoloBootDoorGap", 1))), when(option("sole", "WorkBoot"), choose(option("direction", "Bolt"), set("floor", "WorkBootBolt", 1), set("floor", "WorkBootDoorGap", 1)))))
+        cloth: when((tag("cloth", "Placed", 1) 且 param("prints_exist")), set("floor", "ClothOverHeel", 1))
+    origin: Foyer
+    traces:
+        PoloBootBolt:
+            sole: PoloBoot
+            toward: Bolt
+        PoloBootDoorGap:
+            sole: PoloBoot
+            toward: DoorGap
+        WorkBootBolt:
+            sole: WorkBoot
+            toward: Bolt
+        WorkBootDoorGap:
+            sole: WorkBoot
+            toward: DoorGap

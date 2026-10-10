@@ -105,34 +105,24 @@ public sealed partial class Game
         _failures.Add((p, memory));
     }
 
-    // STORY-HARDCODE[CH2-061][logic][production]: 按本章日序初始化病情、案件发现与线索状态。
     private void BeginDay()
     {
+        if(!_institutionHooks.Add((Day,"dawn")))return;
+        SetClock();
         _dayStart[Day] = Now;
         foreach (var (who, memory) in _failures)
             Observation.Observe(who.Soul, new ObservationInput(memory.Name, memory.Kind)
             { Target = memory, Source = ObservationSource.Introspection, Existence = Truth.False, Time = Now });
         _failures.Clear();
-        var hungry = 0;
         foreach (var p in People)
         {
-            var fed = Get(p.Body, T.Fed) > 0 || Day == FirstDay;
-            p.HungerStreak = fed ? 0 : p.HungerStreak + 1;
-            p.MaxHunger = Math.Max(p.MaxHunger, p.HungerStreak);
-            if (!fed) hungry++;
-            Set(p.Body, T.Hungry, fed ? 0 : 1);
-            Set(p.Body, T.Weak, p.Weak ? 1 : 0);
-            Set(p.Body, T.Fed, 0);
-            if (Get(p.Body, T.NightAte) > 0) { Add(Litter[p.Pro.Dorm], T.Crumbs, 1); Set(p.Body, T.NightAte, 0); }
             foreach (var j in Enum.GetValues<Job>()) Set(p.Body, T.Did(j), 0);
             p.Asleep = false;
             p.Shamed = false;
-            if (!fed && p == Det) Feed.Add("你昨天没吃上晚饭。今天少一个能做事的时段（下午）。");
         }
-        // 病人清晨喝下碗里的粥（碗底留下粥渍）。
-        var moran = this[P.Moran];
-        if (Get(moran.Body, T.Sick) > 0 && Get(Bowl, T.Porridge) > 0)
-        { Set(moran.Body, T.Fed, 1); Add(Bowl, T.Porridge, -1); Set(Bowl, T.Residue, 1); }
+        WorldProcesses("dawn");
+        var hungry=People.Count(p=>Get(p.Body,T.Hungry)>0);
+        if(Get(Det.Body,T.Hungry)>0)Feed.Add(AstText("physical.hungry"));
         foreach (var p in People) { Set(p.Body, T.Shamed, 0); }
         if (Day > FirstDay) Curve.Add((Day - 1, Get(Granary, T.Ration), Get(OilStore, T.Oil), Get(MedCab, T.Medicine), hungry));
         Rt.Sync();
@@ -161,8 +151,8 @@ public sealed partial class Game
                 Observation.Observe(p.Soul, new ObservationInput(p.Self.Name, p.Self.Kind)
                 { Target = p.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Fed, 0) });
         }
-        PerceiveAll();
         FixedBefore();
+        PerceiveAll();
         PlayerBegin(act);
         if (act?.Cmd == Cmd.EatPantry)
         {
@@ -293,7 +283,7 @@ public sealed partial class Game
 
     public void SubmitDet(Effect effect, double delay = 0.6, Job? job = null)
     {
-        if (Det.Exec is not null) S.Cancel(Det.Exec);
+        if (Det.Exec is not null) CancelExecution(Det.Exec);
         Det.Exec = S.Submit(Det.Soul, new ActionIntent(Det.Self, effect, delay));
         Det.Doing = job;
         _running[Det.Exec] = (job, "玩家", 0);
@@ -305,7 +295,7 @@ public sealed partial class Game
         {
             var exec = p.Exec!;
             if(_socialAttempts.LastOrDefault(a=>ReferenceEquals(a.Execution,exec)) is {} attempt)CancelSocialAction(attempt.Action);
-            S.Cancel(exec);
+            CancelExecution(exec);
             ReleaseStation(p);
             if (p.Doing is Job.Collect)
             {
@@ -337,6 +327,7 @@ public sealed partial class Game
     private void OnCompleted(ActionExecution exec)
     {
         using var _ = Prof.Time("C:OnCompleted");
+        UpdateWorkOccupancy();
         var p = People.FirstOrDefault(x => ReferenceEquals(x.Self, exec.Intent.Actor));
         if (p is not null && exec.Status == ExecutionStatus.Failed) ObserveFailedAccess(p, exec);
         if (Story?.Owns(exec) == true)
@@ -372,23 +363,13 @@ public sealed partial class Game
         {
             Log.Add($"D{Day} {Names.Of(Slot)} {Now:0.0} {p.Name} 未完成：{(job is { } j2 ? Names.Of(j2) : "?")}（{exec.Result?.Failure}）" + (job is Job.GuardArchive or Job.Seize ? $"〔配重室占着={Get(WeightRoom, T.Occupied)} 锁芯={Get(LockCore, T.Occupied)} 中继={Get(RelayPost, T.Occupied)} 在{Names.Of(Where(p))}〕" : ""));
             p.Diary.Add($"D{Day} {Names.Of(Slot)} 没做成：{(job is { } j3 ? Names.Of(j3) : "请求之事")}（{exec.Result?.Failure}）");
-            if (job is Job.Sleep) p.Asleep = true;
-            // 试过、没做成：今天不再试同一件事；请求算是答复过了（做不到）。
-            // 去开库时那一站被人占着：人已经站在前厅了，等让开了还会再试（不记“做过”）。
-            if (job is { } jf && jf is not (Job.Seize or Job.GuardArchive or Job.Relay or Job.Teach)) Set(p.Body, T.Did(jf), 1);
-            else if (job is null) RememberFailure(p, exec);
+            // 失败记忆与完成标记分离：当前身体不在场、条件失效或资源不足，均不能登记已经做完。
+            // 工位被占时仍可等岗位空出来后再判断。
+            if (job is not (Job.Seize or Job.GuardArchive or Job.Relay or Job.Teach)) RememberFailure(p, exec);
             ReleaseStation(p);
             if (exec.Intent.Basis is { Kind: ProjectionKind.Event } req && p.World.Contains(req))
                 Observation.Observe(p.Soul, new ObservationInput(req.Name, req.Kind) { Target = req, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Responded, 1) });
             if (job is Job.RepairLatch) Know(p, Granary, T.LatchLoose, 0, ObservationSource.Perception, "门闩已经修好了");
-            // 夜里去粮仓没打开：人确实走到了仓门前，推了推，留下推痕和声音，再回去。
-            if (Slot == Slot.Night && job is Job.NightTakeSick or Job.NightTakeSickRec or Job.NightTakeSelf or Job.NightTakeSelfRec or Job.Hoard)
-            {
-                p.Body.Get<SpatialProperty>()!.Space = Space[Place.Logistics];
-                RealDirty = true;
-                _failedAtGranary++;
-                Sound(Place.Logistics, "有人推仓门，推不开");
-            }
         }
         // 现实投影的同步推迟到这一刻的感知（FlushPerception / Perceive）之前：同一刻多个动作完成只同步一次。
         using (Prof.Time("C:Track")) { TrackMoves(); RefreshKeys(); }
@@ -733,49 +714,19 @@ public sealed partial class Game
 
     // ------------------------------------------------------- fixed nodes --
 
-    // STORY-HARDCODE[CH2-067][logic][production]: 执行本案预置的按日/时段线索及人物状态变更。
     private void FixedBefore()
     {
-        // 始业日：门开后的集合与第一顿晚饭；案发那一日：下午莫兰发烧、傍晚沃德当众盯视雀儿（压力，见第三部分 §7、§16）。
-        if (Day == RationFirstDay && Slot == Slot.Forenoon)
+        // 制度开场只登记一次；世界过程只改变物理状态，不代人物提交行动。
+        if (Day == RationFirstDay && Slot == Slot.Forenoon && _institutionHooks.Add((Day, "ration_opening")))
         {
                 Feed.Add(X("节点.集合"));
                 LedgerBaseline = Get(Granary, T.Ration);
         }
-        else if (Day == RationFirstDay && Slot == Slot.Noon)
+        else if (Day == RationFirstDay && Slot == Slot.Noon && _institutionHooks.Add((Day, "ration_standoff")))
         {
                 if (!Mediated) Feed.Add(X("节点.配给僵住"));
         }
-        else if (Day == CaseNight && Slot == Slot.Evening)
-        {
-                // 沃德当众盯视雀儿出自他自己的成见：他心里对雀儿的信任低到 -2 以下才会这样（不是作者指定）。
-                var ward = this[P.Ward];
-                var quer = this[P.Quer];
-                if (TrustIn(ward, quer) > -2) return;
-                Set(quer.Body, T.Shamed, 1);
-                Rt.Sync();
-                Observation.Observe(quer.Soul, new ObservationInput(quer.Self.Name, quer.Self.Kind)
-                { Target = quer.Self, Source = ObservationSource.Introspection, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(T.Shamed, 1) });
-                Feed.Add("傍晚，沃德在众人面前盯着雀儿看了很久。雀儿转身走了。");
-                Touch(quer.Body, T.Shamed, RecordEvent(P.Ward, "当众盯着雀儿看了很久", "看守", Where(ward), [],
-                    reason: $"沃德心里对雀儿的信任 {TrustIn(ward, quer)}"), P.Ward);
-        }
-        else if (Day == CaseNight && Slot == Slot.Afternoon)
-        {
-                var moran = this[P.Moran];
-                Set(moran.Body, T.Sick, 1);
-                moran.Body.Get<SpatialProperty>()!.Space = Space[Place.Clinic];
-                Rt.Sync();
-                var selma = this[P.Selma];
-                NewsFrom(selma, NewsKind.Fact, K("发烧", selma.Id, moran.Id), about: moran, on: moran.Body, tag: T.Sick, value: 1);
-                Know(selma, moran.Body, T.Sick, 1, ObservationSource.Perception);
-                // 压力而非节点（§11 第 9 条）：作者保证茉拉知道莫兰在烧——她的夜取规则与沃德的“无记录即私取”必然相撞。
-                if (Options.BlockNews is null || !Options.BlockNews(this[P.Mora], new NewsItem { Id = 0, Kind = NewsKind.Fact, Claim = K("发烧", P.Selma, P.Moran), Origin = P.Selma, FactTag = T.Sick }))
-                    Know(this[P.Mora], moran.Body, T.Sick, 1, ObservationSource.Testimony, "赛尔玛把莫兰送来诊疗所，叫了茉拉");
-                Log.Add($"D{Day} 下午 莫兰发烧，被送去诊疗所（作者固定）");
-                Touch(moran.Body, T.Sick, RecordEvent(P.Moran, "发烧，被送进诊疗所", "坐", Place.Clinic, [], fix: true,
-                    reason: "莫兰的病是《少了一份》的压力源（第三部分 §7）：病由作者定，谁怎样回应由各人决定"), P.Moran);
-        }
+        WorldProcesses("begin");
     }
 
     private void RoundHooks(int round)
@@ -795,115 +746,46 @@ public sealed partial class Game
     /// <summary>时段末的物理与账：烹煮效率、生领损耗、温室进度、病人、物资。</summary>
     private void SlotPhysics()
     {
-        if (Slot is Slot.Noon or Slot.Evening)
-        {
-            var handed = Get(Ledger, T.Handed);
-            var meal = handed - _handedBefore;
-            _handedBefore = handed;
-            if (meal > 0)
-            {
-                if (Get(Stove, T.Cooked) > 0)
-                {
-                    var refund = meal / 5;
-                    Add(Granary, T.Ration, refund);
-                    LedgerBaseline += refund;
-                    if (refund > 0) Log.Add($"D{Day} {Names.Of(Slot)} 沈鼎煮粥，{meal} 人只耗 {meal - refund} 份");
-                }
-                else
-                {
-                    var loss = Math.Min(Get(Granary, T.Ration), (meal + 4) / 8);
-                    Add(Granary, T.Ration, -loss);
-                    LedgerBaseline -= loss;
-                    if (loss > 0) Log.Add($"D{Day} {Names.Of(Slot)} 生领分发损耗 {loss} 份");
-                }
-            }
-            Set(Stove, T.Cooked, 0);
-            Set(Desk, T.Open, 0);
-            Set(Granary, T.Locked, 1);
-            if (Slot == Slot.Evening)
-                foreach (var p in People.Where(p => Get(p.Body, T.Fed) == 0 && Get(p.Body, T.Stash) > 0))
-                { Add(p.Body, T.Stash, -1); Set(p.Body, T.Fed, 1); }
-        }
+        var previous = Get(Granary, T.Ration);
+        WorldProcesses("end");
+        LedgerBaseline += Get(Granary, T.Ration) - previous;
         if (Slot == Slot.Afternoon) GreenhousePhysics();
-        if (Slot == Slot.Evening)
-        {
-            var moran = this[P.Moran];
-            if (Get(moran.Body, T.Sick) > 0 && Get(Bed, T.Treated) >= 3) { Set(moran.Body, T.Sick, 0); Log.Add($"D{Day} 莫兰退烧"); }
-            foreach (var p in People.Where(p => p.InjuredDays > 0)) p.InjuredDays--;
-            if (GreenhouseRepaired && Day >= _repairedDay + 1) { Add(Granary, T.Ration, Options.GreenhouseYield); LedgerBaseline += Options.GreenhouseYield; }
-        }
         Rt.Sync();
     }
 
-    private int _handedBefore, _repairedDay;
-    public bool GreenhouseRepaired;
+    public bool GreenhouseRepaired => Get(Valve, new Tag("Repaired")) > 0;
 
-    /// <summary>温室：阀门与压力表两站须同时有人；指针过红线时，没听过警告的人会开顶窗（受伤，恶魔须显形救人）。</summary>
-    // STORY-HARDCODE[CH2-068][logic][production]: 结算本案温室特定事件、人物和物件状态。
+    /// <summary>消费已有的双工位完成回执；物理条件、技能、产出与修复状态均由配方声明。</summary>
     private void GreenhousePhysics()
     {
-        // 这个下午在温室干过活的人（干完活走了也算；阀门与压力表须同时有人守，所以至少两人）。
-        var crew = People.Where(p => Get(p.Body, T.Did(Job.Greenhouse)) > 0 || p == Det && LastAction?.Cmd == Cmd.Greenhouse && Where(p) == Place.Greenhouse).ToArray();
-        if (crew.Length == 0 || GreenhouseRepaired) return;
-        if (crew.Length < 2)
-        {
-            Log.Add($"D{Day} 下午 温室只有一人（{crew[0].Name}），两站没凑齐，白干");
-            if (crew[0] == Det) Feed.Add("温室里只有你一个人。阀门和压力表要两个人同时守，白干了一下午。");
-            return;
-        }
-        var skill = crew.Sum(p => Math.Max(1, p.Pro.GreenhouseSkill + (p.Pro.Structure >= 2 ? 1 : 0)));
-        GreenhouseProgress += skill;
-        var progress = GreenhouseProgress;
-        Set(Valve, T.Work, progress);
-        Set(Gauge, T.Pressure, progress >= 3 ? 2 : 1);
+        CompleteRecipes();
+        var crew = _recipeCompletions.Where(r => r.Id == Job.Greenhouse.ToString()).SelectMany(r => r.Actors)
+            .Distinct().Select(e => People.Single(p => ReferenceEquals(p.Body, e))).ToArray();
+        _recipeCompletions.Clear();
+        if (crew.Length == 0) return;
         if (!_warned2)
         {
             _warned2 = true;
-            DemonSays("温室", Warning2.Text);
+            DemonSays(Names.Of(Place.Greenhouse), Warning2.Text);
             foreach (var p in crew.Where(p => p != Det)) Tell(p, Warning2, Channel.Public);
             Det.Acc[Warning2] = Truth.True;
-            if (crew.Contains(Det)) Feed.Add("压力表后面传来那个声音：“温室水压表指针过红线时，勿开顶窗。”就这一句。");
+            if (crew.Contains(Det)) Feed.Add(AstText("physical.greenhouse_warning"));
         }
-        var reckless = crew.Where(p => p != Det && p.Acc.GetValueOrDefault(Warning2) != Truth.True && !WarnedPrecisely).FirstOrDefault();
-        if (progress >= 3 && reckless is not null)
+        if (GreenhouseRepaired)
         {
-            reckless.InjuredDays = 2;
-            Set(Blackboard, T.Shoe, Get(Blackboard, T.Shoe));
-            Log.Add($"D{Day} 下午 {reckless.Name} 在指针过红线时开了顶窗，玻璃碎裂；恶魔显形把人拽开（温室地上留下窄底鞋印）。{reckless.Name}受伤两日");
-            NewsFrom(reckless, NewsKind.Fact, K("温室受伤", reckless.Id));
-            if (crew.Contains(Det)) Feed.Add($"{reckless.Name}伸手去开顶窗——玻璃炸开。一只很窄的手把人拽了回来。地上多了窄底鞋印。");
-            GreenhouseProgress = Math.Max(0, progress - 2);
-            Set(Valve, T.Work, GreenhouseProgress);
-            return;
-        }
-        // 指针过了红线：得有人知道怎么泄压（懂结构的行家，或问清了泄压办法、又把它带到温室来的人），否则只能停手（§12 第 8 条：认真分工才修得成）。
-        var knows = crew.Any(p => p.Pro.Structure >= 3 || p == Det && WarnedPrecisely || ClaimsOf(p).Any(c => c.Predicate == "温室泄压法"));
-        if (progress >= 3 && !knows)
-        {
-            GreenhouseProgress = Math.Min(GreenhouseProgress, 3);
-            Set(Valve, T.Work, GreenhouseProgress);
-            Log.Add($"D{Day} 下午 温室指针过了红线，在场的人（{string.Join("、", crew.Select(p => p.Name))}）不知道怎么泄压，只好停手");
-            if (crew.Contains(Det)) Feed.Add("压力表指针过了红线。没人知道该怎么泄压，只好停手。（也许懂结构的人，或问清了办法的人，才修得下去。）");
-            Rt.Sync();
-            return;
-        }
-        if (progress >= GreenhouseNeed)
-        {
-            GreenhouseRepaired = true;
-            _repairedDay = Day;
-            Log.Add($"D{Day} 下午 温室修好（{string.Join("、", crew.Select(p => p.Name))}）");
-            var item = NewsFrom(crew[0], NewsKind.Fact, K("温室修好", values: ("人们", JoinNames(crew.Select(p => p.Name)))));
+            var names=JoinNames(crew.Select(p=>p.Name));
+            Log.Add(AstText("physical.greenhouse_repaired",("人们",names)));
+            var item = NewsFrom(crew[0], NewsKind.Fact, K("温室修好", values: ("人们", names)));
             if (crew.Contains(Det)) Witness(Det, K("主持修温室", P.Det), 1, 1, crew, domain: Dom.Rations);
             foreach (var p in crew.Skip(1)) p.News[item.Id] = new(p.Id, 0, ObservationSource.Perception, Day, item.Id);
         }
-        Rt.Sync();
     }
 
     /// <summary>诊断：案发夜开始时各人的决策评估前几项。</summary>
     public readonly Dictionary<P, string> NightStartAssessment = [];
 
     private bool _warned2;
-    public int GreenhouseProgress;
+    public int GreenhouseProgress => Get(Valve, T.Work);
 
     // ---------------------------------------------------------------- night --
 
@@ -916,7 +798,7 @@ public sealed partial class Game
             foreach (var p in Npcs) { p.Desire = Math.Min(5, p.Desire + 1); RewriteDesire(p, "议事前夜，恶魔在耳边把那样东西又说了一遍"); }
             Feed.Add("入夜前，广播里没有声音。可你像听见有人贴着耳朵，把你最想知道的那件事又说了一遍。");
         }
-        OilPhysics();
+        WorldProcesses("night");
         foreach (var p in People) { p.Asleep = false; p.NightSteps = 0; p.NightVisited.Clear(); }
         DropStaleDayActions();
         NightBegins();
@@ -949,7 +831,7 @@ public sealed partial class Game
         {
             var exec = p.Exec!;
             if(_socialAttempts.LastOrDefault(a=>ReferenceEquals(a.Execution,exec)) is {} attempt)CancelSocialAction(attempt.Action);
-            S.Cancel(exec);
+            CancelExecution(exec);
             _running.Remove(exec);
             ReleaseStation(p);
             p.Diary.Add($"D{Day} 入夜 放下了白天没做完的事：{(p.Doing is { } j ? Names.Of(j) : "请求之事")}");
@@ -968,15 +850,15 @@ public sealed partial class Game
         }
         TrackMoves();
         foreach (var p in People.Where(p => !p.Asleep)) p.NightVisited.Add(Where(p));
-        if (Day >= CaseDay) NameCall();
         PerceiveAll();
+        RuntimeStimuli("tick");
         // 守候中的人看到新情况，重新掂量：更想做的事出现了，就放下手里的等待。
         foreach (var p in Npcs.Where(p => !p.Asleep && p.Exec is not null && p.Doing is { } d && Interruptible.Contains(d)))
         {
             Interpret(p);
             var top = Pick(DecisionSystem.Assess(p.World, p.Self));
             if (top is null || top.Decision.Score <= p.DoingScore || JobOf(p, top.Decision.Effect) == p.Doing) continue;
-            S.Cancel(p.Exec!);
+            CancelExecution(p.Exec!);
             _running.Remove(p.Exec!);
             p.Exec = null;
             ReleaseStation(p);
@@ -984,48 +866,4 @@ public sealed partial class Game
         }
     }
 
-    /// <summary>
-    /// 案发日起，入夜后名录库前厅里有人以你之名唤你：一个请求（Say+Request），由 SocialSystem 判；警告 1 是 Forbid。
-    /// 唤名有节奏（多日交互审核 M5）：只唤已经有钩的、被铜口单独低语过的、或不是头一夜来前厅的人；每夜至多唤一人，
-    /// 唤被拉得最紧的那一个（钩与欲望）。其余来前厅的人只留下足迹与停留。
-    /// </summary>
-    // STORY-HARDCODE[CH2-069][logic][production]: 在本案案发后按固定条件触发点名事件。
-    private void NameCall()
-    {
-        if (_nameCalledNight == Day) return;
-        var present = People.Where(p => !p.Asleep && Where(p) == Place.ArchiveFront && p != Det
-            && !p.World.Projections.Any(x => x.Kind == ProjectionKind.Event && x.Name == "有人以你之名唤你")
-            && (p.Hooks > 0 || p.Whispered > 0 || Events.Any(e => e.Who == p.Id && e.Job == Job.VisitArchive && e.Day < Day)))
-            .OrderByDescending(p => p.Hooks * 2 + p.Desire).ThenBy(p => p.Id).Take(1).ToArray();
-        if (present.Length > 0) _nameCalledNight = Day;
-        foreach (var p in present)
-        {
-            var voice = p.M[NameVoice];
-            Observation.Observe(p.Soul, new ObservationInput(voice.Name, voice.Kind)
-            { Target = voice, Source = ObservationSource.Perception, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Tags.Trust, p.Hooks * 2 + p.Desire - 2) });
-            Observation.Observe(p.Soul, new ObservationInput("有人以你之名唤你", ProjectionKind.Event)
-            {
-                Source = ObservationSource.Perception, Existence = Truth.True, Time = Now, Details = $"“{p.Name}。”",
-                AddRelations = [(Relations.Subject, voice)], Procedure = FxOf(p).Job(Job.AnswerName)
-            });
-            Log.Add($"D{Day} 夜 {Now:0.0} 名录库前厅有声音唤 {p.Name}");
-        }
-    }
-
-    private int _nameCalledNight = -1;
-
-    /// <summary>油：阮清越按胜率给油（他信得过的寝区与夜巡）。没有油的地方夜里看不清人。</summary>
-    // STORY-HARDCODE[CH2-070][logic][production]: 结算阮、贝特朗、莫拉与茉拉相关的专属油料剧情。
-    private void OilPhysics()
-    {
-        var holder = People.FirstOrDefault(p => Get(p.Body, T.OilKey) > 0);
-        var lamps = 0;
-        if (holder is not null)
-        {
-            lamps = 1 + People.Count(p => p != holder && p.Pro.Dorm != holder.Pro.Dorm && TrustIn(holder, p) >= 2 && p.Id is P.Bertrand or P.Mora) ;
-            lamps += Get(this[P.Moran].Body, T.Sick) > 0 ? 1 : 0;
-        }
-        lamps = Math.Min(lamps + 1, Get(OilStore, T.Oil));
-        Add(OilStore, T.Oil, -lamps);
-    }
 }
