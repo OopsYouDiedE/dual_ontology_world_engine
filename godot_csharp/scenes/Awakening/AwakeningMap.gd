@@ -190,10 +190,7 @@ func _closed_room_rects(walker: CharacterBody2D) -> Array[Rect2]:
 	return rects
 
 func walkable(point: Vector2, walker: CharacterBody2D = null) -> bool:
-	if not floors.has(Vector2i(point / 32.0)): return false
-	for rect in obstacle_rects + _closed_room_rects(walker if walker else player):
-		if rect.grow(8.0).has_point(point): return false
-	return true
+	return FieldNavigation.walkable(point, floors, obstacle_rects + _closed_room_rects(walker if walker else player))
 
 func _size() -> Vector2i: return Vector2i(layout.rows[0].length(), layout.rows.size())
 

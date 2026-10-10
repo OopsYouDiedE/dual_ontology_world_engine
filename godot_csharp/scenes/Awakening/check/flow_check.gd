@@ -225,14 +225,25 @@ func _run() -> void:
 		trace = FileAccess.open(trace_path, FileAccess.READ)
 		trace.seek(trace_offset)
 		var companion_moves := []
+		var last_context := {}
+		var hearing_context := {}
 		while trace.get_position() < trace.get_length():
 			var row: Dictionary = JSON.parse_string(trace.get_line())
 			var output: Dictionary = row.get("data", {})
+			if str(row.kind) == "input" and output.has("context"):
+				last_context = output.context.get("actors", {})
+			if str(row.kind) == "output" and str(output.get("kind", "")) == "sound" and str(output.get("id", "")) == "tuning_fork":
+				hearing_context = last_context
 			if str(row.kind) == "output" and str(output.get("kind", "")) == "stage" and str(output.get("op", "")) in ["walk", "place"] 					and str(output.get("who", "")) in ["huo", "shen", "su"]:
 				companion_moves.append(output)
 		trace = null
 		print("SOUND_COMPANION_STAGE round=%d moves=%s" % [round + 1, str(companion_moves)])
-		check(companion_moves.is_empty() and ["huo", "shen", "su"].all(func(who): return by_person.get(who, {}).get("room", "") == context[who].entered),
+		# 比较发声时的正式输入上下文；对白演出之后，日常或让路可能已改变站位。
+		check(companion_moves.is_empty() and ["huo", "shen", "su"].all(func(who):
+			var at_sound: Dictionary = hearing_context.get(who, {})
+			var room: String = str(at_sound.get("entered", ""))
+			if room == "": room = str(at_sound.get("room", ""))
+			return room != "" and by_person.get(who, {}).get("room", "") == room),
 			"声路试验：不调度同伴换听位，按各自实际站位听")
 		check(fx.seen_lines.size() > 4, "每轮声路试验都演出所说与所闻")
 	fx.close_modal()
@@ -396,7 +407,7 @@ func _run() -> void:
 	fx.player().position = host.field.site_point("L7") + Vector2(0, 16)
 	await fx.physics(3)
 	host.field.interact("L7")
-	await fx.frames(3)
+	await fx.settle_card()
 	var stone := fx.modal_text()
 	check(stone.contains("磨刀石") and stone.contains("深槽"), "R-07 桌上磨得凹陷的磨刀石")
 	fx.close_modal()

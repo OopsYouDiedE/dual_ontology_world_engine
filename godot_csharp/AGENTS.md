@@ -54,6 +54,8 @@
 
 第一章阶段的进入规则可以引用流程；会话按实际房间进入执行，重复演出的条件由流程自行管理。人物对话中的协助邀约由会话并行调度走位，流程参数保留当前交谈对象，走位期间不占用侦探控制。
 
+流程参数来源在每次继续时重算并覆盖携带的派生值；交谈对象作为显式输入保留。协助邀约使用可达的物件邻近点，完成后复用增量证物卡。地图连续落点与导航网格共用角色脚印的通行判定。`StoryPacketCheck` 覆盖携带旧参数时的重新提问、重新裁决与步数推进。
+
 第一章阶段的 `时刻 <分钟>：流程 <名>` 编译为有序 `times`；会话在结算共享时钟与远处生态后、现场空闲时执行到期流程，按阶段与时刻记入进度，跨过边界和阶段再进入均不重复执行。`clock.door_open_minutes` 只记录首次开门，续章用该值与其起点取较大值。
 
 `enter:<人>:<地点>` 通过 `stage.spawn` 与现场回执登记来访演员；名称、立绘、交互热点和 `enter_<人>_<房间键>` 锚点来自剧本。来访演员加入现场与交谈注册，现实位置由几何同步并暂停原远处日常；不加入 `Person`、四人案件、回忆、重演或同伴协助集合。行走帧复用共享角色资产。第一章地图保持原有通行边界，门洞邻近提示与开门显示由剧本数据和快照驱动。
@@ -117,6 +119,7 @@
 
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
 - 第二章 `Chapter2/check/check_flow.gd` 通过 `chapter2_fixture.gd` 复用上述 Main 夹具，先用调试跳转推进第一章终局，再以章末卡 C 键触发连续会话的视图切换与 `view_ready`，检查首个可操作状态。后续输入和 UI 回执仍经过 `Main.dispatch`，不再加载旧章节宿主、调用引擎直通接口或单独注入继承快照；地图加载失败和流程等待超时须报告并退出非零状态。
+- 社交请求的流程 AST 使用发言者内部世界的引用提交；接收者认知只用于筛选已知目标，发言传播再将请求映射到接收者内部世界。第二章流程回归按正式日程检查开场与首课，检视物证后再验证同行结算。
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
 - 地图文字更新先在仓库根目录运行 `python godot_csharp/tools/compile_story.py`。`python godot_csharp/tools/build_awakening_map.py --text-only` 从编译 layout 的 `furniture_asides` 与 Content 的 `ROOM_NAMES` 按固定槽键更新既有 `map_layout.tres`，完整校验槽数、房间集合与文字类型，不绘图、不写场景几何。
 - `python godot_csharp/tools/build_chapter2_scenes.py --text-only <室内地图键>...` 从正式 Chapter2 `design.text` 更新既有根节点标题、`Sites/<id>` 标签与 manifest 对应文字。支持 `living_hall`、`zone_jia`、`zone_yi`、`zone_bing`、`zone_ding`、`central_hall`、`lecture`、`archive`、`counterweight`、`resonance`、`clinic`、`logistics`、`granary`、`greenhouse`；整批校验键、节点和场点集合后才写入指定场景与 manifest，仅替换字符串，保持几何、资产、节点顺序与其他序列化字节，文字未变时不写文件。

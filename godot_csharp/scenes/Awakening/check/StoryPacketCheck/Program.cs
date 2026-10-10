@@ -45,6 +45,32 @@ var fileDocument = CompiledDialogueDocument.Parse(File.ReadAllText("godot_csharp
 Check(JsonSerializer.Serialize(document) == JsonSerializer.Serialize(fileDocument), "compiled dialogue matches complete generated production document");
 
 var chapter = new Chapter1Script();
+// Derived flow parameters must be refreshed when a continuation carries earlier values.
+{
+    var flowWorld = chapter.CreateWorld();
+    var flowContent = chapter.CreateContent();
+    var progress = flowContent.Session;
+    progress.Set("answer_state", "step", 3);
+    flowContent.StartFlow(flowWorld, "答辩·提问", ("步", "1"));
+    Check(flowContent.NextMeeting() == "answer_q3", "question provider replaces the carried step");
+
+    progress.Set("answer_pick", "say", "me");
+    progress.Set("answer_pick", "show", "E3");
+    flowContent.StartFlow(flowWorld, "答辩·裁决", ("裁决", "wrong_show"), ("步", "1"), ("下一步", "2"));
+    Check(flowContent.NextMeeting() == "@sfx:answer_wrong:-3", "current wrong statement emits failure cue");
+    flowContent.Presented();
+    Check(flowContent.NextMeeting() == "answer_wrong_say", "verdict provider replaces the carried verdict");
+
+    progress.Set("answer_pick", "say", "V4_0");
+    progress.Set("answer_pick", "show", "E6");
+    flowContent.StartFlow(flowWorld, "答辩·裁决", ("裁决", "wrong_say"), ("步", "1"), ("下一步", "2"));
+    Check(flowContent.NextMeeting() == "@sfx:answer_ok:-4", "corrected answer replaces the previous failure");
+    flowContent.Presented();
+    Check(flowContent.NextMeeting() == "answer_ok3", "correct answer uses the current question");
+    flowContent.Presented();
+    Check(flowContent.NextMeeting() == "answer_q4" && (int)progress.GetProgress("answer_state")["step"] == 4,
+        "correct answer advances once to the next authored question");
+}
 var world = chapter.CreateWorld();
 var content = chapter.CreateContent();
 var dialogue = chapter.CreateDialogue(content, world);
@@ -102,6 +128,7 @@ foreach (var branch in new[] { "first", "met", "replayed", "matched" })
 content.Session.Set("state", "full_match_seen", false);
 content.Session.Set("state", "replay_count", 0);
 
+content.Session.Set("flags", "price_heard", true);
 var offer = Menu(dialogue, dialogue.Start("recall_offer_su"));
 Check(offer.PresentationMode == PresentationMode.Menu && offer.Lines.Count > 0, "choice packet retains presented line");
 Check(offer.Choices.Count == 2 && offer.Choices.All(choice => choice.IsAvailable), "real recall offer presents both available story options");
@@ -109,7 +136,7 @@ var sayNothing = offer.Choices.Single(choice => choice.Label == "什么都不说
 Finish(dialogue, dialogue.Choose(sayNothing.Id));
 Check(!content.Session.Has("flags", "show_rule"), "silent story choice leaves show-rule flag absent");
 offer = Menu(dialogue, dialogue.Start("recall_offer_su"));
-var showRule = offer.Choices.Single(choice => choice.Label.Contains("先问问铜口"));
+var showRule = offer.Choices.Single(choice => choice.Id != sayNothing.Id);
 Finish(dialogue, dialogue.Choose(showRule.Id));
 Check(content.Session.Has("flags", "show_rule"), "alternative story choice executes compiled effect");
 
@@ -188,9 +215,13 @@ Console.WriteLine("AUTO VALIDATION ONLY; NOT BLIND PLAYTEST");
     Reject(() => field.Choose("card:E1:close"), "new field interaction invalidates old card");
     c.Session.Locate("detective", "R05"); c.Session.Locate("huo", "R05");
     var hand = field.CardPacket("E11", new[] { "detective", "huo" });
-    Check(hand.Choices.Single(x => x.Id == "card:E11:compare:huo").IsAvailable, "local geometric hand comparison opens");
-    var gone = field.Choose("card:E11:compare:huo", new[] { "detective" });
-    Check(gone.WorldCommands.Select(x => x.Name).SequenceEqual(new[] { "aside", "card" }) && !c.Session.Has("hand_comparisons", "huo"), "geometry-expired choice performs no comparison");
+    Check(!hand.Choices.Any(x => x.Id == "card:E11:compare:huo"), "companion comparison follows the detective comparison");
     var valid = field.Choose("card:E11:compare:detective", new[] { "detective" });
     Check(valid.WorldCommands.Single().Name == "compare" && valid.WorldCommands.Single().Arguments.Single()?.ToString() == "detective", "available card emits actual compare command");
+    c.Session.Set("hand_comparisons", "detective", true);
+    hand = field.CardPacket("E11", new[] { "detective", "huo" });
+    Check(hand.Choices.Single(x => x.Id == "card:E11:compare:huo").IsAvailable, "local geometric hand comparison opens");
+    try { field.Choose("card:E11:compare:huo", new[] { "detective" }); throw new Exception("absent companion choice accepted"); }
+    catch (ArgumentException) { Check(true, "geometry-expired comparison is no longer an offered choice"); }
+    Check(!c.Session.Has("hand_comparisons", "huo"), "geometry-expired choice performs no comparison");
 }
