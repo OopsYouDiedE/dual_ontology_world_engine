@@ -55,8 +55,9 @@ public sealed partial class WorldRuntime
             _ => throw new CognitionContractException(new(ContractErrorCode.Unsupported,"property","未知现实属性。",CandidateIds:[]))
         };
         var subjects = _entities.Values.OfType<SoulEssence>().ToArray();
-        var root = Obj(("format",W("dual-ontology-runtime/v1")),("content_version",W("core.runtime/1")),("required_capabilities",new JsonArray(W("core.runtime-idle-save/1"))),
+        var root = Obj(("format",W("dual-ontology-runtime/v1")),("content_version",W("core.runtime/1")),("required_capabilities",new JsonArray(W("core.runtime-idle-save/1"),W("core.typed-events/1"))),
             ("reality",W(reality)),
+            ("events",List(_eventAudit,e=>CognitionCodec.WriteEvent(e,r=>W(r?.Id)))),
             ("entities",List(_entities.Values.OrderBy(e=>e.Id.Value,StringComparer.Ordinal),e=>Obj(("id",W(e.Id)),("name",W(e.TrueName)),("kind",W(e.Kind)),("active",W(_existing.Contains(e))),
                 ("relations",List(e.Relations.OrderBy(r=>r.Relation.Name,StringComparer.Ordinal).ThenBy(r=>r.Target.Id.Value,StringComparer.Ordinal),r=>Obj(("relation",W(r.Relation)),("target",W(r.Target.Id))))),
                 ("properties",List(e.Properties.OrderBy(p=>p.GetType().Name,StringComparer.Ordinal),Property))))),
@@ -87,9 +88,14 @@ public sealed partial class WorldRuntime
         string S(JsonElement e)=>e.GetString() ?? throw new CognitionContractException(new(ContractErrorCode.MalformedData,"text","必要文本为空。",CandidateIds:[]));
         EntityId EId(JsonElement e) { var id=new EntityId(S(e)); Contract.Identity(id.Value,"entity.id"); return id; }
         SubjectProjectionId PId(JsonElement e)=>CognitionCodec.ReadSubjectProjectionId(e);
-        F(root,"format","content_version","required_capabilities","reality","entities","facets","subjects","bindings","mental");
+        CognitionCodec.OptionalFields(root,["format","content_version","required_capabilities","reality","entities","facets","subjects","bindings","mental"],"events");
         Require(S(root.GetProperty("format"))=="dual-ontology-runtime/v1" && S(root.GetProperty("content_version"))=="core.runtime/1",ContractErrorCode.Unsupported,"version");
-        if(root.TryGetProperty("required_capabilities",out var caps)) foreach(var c in caps.EnumerateArray()) Require(S(c)=="core.runtime-idle-save/1",ContractErrorCode.Unsupported,"required_capabilities");
+        if(root.TryGetProperty("required_capabilities",out var caps)) foreach(var c in caps.EnumerateArray())
+        {
+            var capability=S(c);
+            Require(capability is "core.runtime-idle-save/1" or "core.typed-events/1",ContractErrorCode.Unsupported,"required_capabilities");
+            if(capability=="core.typed-events/1") Require(root.TryGetProperty("events",out _),ContractErrorCode.MalformedData,"events");
+        }
         var frozen=CognitionCodec.ReadCognitionSnapshotV1(root.GetProperty("reality"));
         var validated=SnapshotGraph.Build(frozen);
         var runtime=new WorldRuntime { _saveRealityDomain=frozen.SubjectWorld };
@@ -188,6 +194,14 @@ public sealed partial class WorldRuntime
             F(m,"soul","facet","projection"); var soul=Entity(m.GetProperty("soul")) as SoulEssence; var facet=Real(m.GetProperty("facet")); var p=Mental(m.GetProperty("projection"));
             Require(soul is not null && ReferenceEquals(soul.World,p.World) && runtime._binding.TryGetValue(p,out var target) && ReferenceEquals(target,runtime._binding[facet]),ContractErrorCode.InvalidReference,"mental");
             Require(runtime._mental.TryAdd((soul!,facet),p),ContractErrorCode.DuplicateIdentity,"mental");
+        }
+        if(root.TryGetProperty("events",out var events))
+        {
+            Require(events.GetArrayLength()<=(limits??new()).MaxHistoryEntries,ContractErrorCode.LimitExceeded,"events");
+            foreach(var e in events.EnumerateArray())
+                // The ordered audit is restored only after all live/retired entity shells exist.
+                // Registration validates IDs and preceding causes; it never publishes an observation.
+                runtime.RecordCommittedEvent(CognitionCodec.ReadEvent<Essence?>(e,r=>r.ValueKind==JsonValueKind.Null?null:Entity(r)));
         }
         // Sync only derives reality. No observation, action, effect or notification is replayed.
         runtime.Sync();

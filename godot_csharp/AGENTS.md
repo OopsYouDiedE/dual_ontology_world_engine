@@ -7,6 +7,7 @@
 - 保存接口：`Shared/Story/WorldSession.Save.cs`、`SessionPersistence.cs` 提供完整空闲会话候选、进度值的闭合协议、版本化随机流及原子 Store 发布；重复载入相同字节保留对象与恢复 epoch。外部章节宿主必须注册保存切点 guard，不能仅凭 Core active 为空保存。
 - 章节适配：`Awakening/Script/Chapter1Save.cs` 与 `Awakening/Night/MorningSave.cs` 保存实际章节进度、时钟、生态游标与引用；恢复使用专用构造，绕过初态、观察、效果和 fiber。`Shared/Game/GameSession.Save.cs`、`Host/GameEngine.cs` 暴露无 UI 的导出/载入 API；当前仅支持第一章空闲点，其余章节与活动选择、回执、走位、流程明确 `UnsupportedSavePoint`。
 - headless 保存检查：`godot --headless --path godot_csharp --script res://scenes/Shared/check/check_session_save.gd`；实际推进第一章后保存，启动第二个 Godot 进程恢复并比较连续推进结果。`tools/verify.py` 的 `save` 步骤执行该检查。纯 dotnet 诊断入口为 `dotnet run --project godot_csharp/scenes/Shared/check/SaveCheck/SaveCheck.csproj -c Release -- write tmp/core-save-check` 与同项目 `-- read tmp/core-save-check`。不替代 UI/盲玩验收。
+- 保存检查也核对 WorldSession 中类型化权威事件的全部字段/因果与重复载入不再登记事件；事件身份和权限由 Core 运行时协议保存，宿主不自行复制或补发。
 
 ---
 

@@ -507,6 +507,7 @@ static class CognitionRegressionProgram
     {
         try
         {
+            if(args.Length==2&&args[0]=="--event-wire-child") return EventSaveRegression.Child(args[1]);
             if(args.Length==2&&args[0]=="--wire-child")
             {
                 var bytes=File.ReadAllBytes(args[1]); var one=Ok(WorldRuntime.Restore(bytes));
@@ -527,6 +528,7 @@ static class CognitionRegressionProgram
                 IncrementalPublication(shape, label);
             }
             EventRegression.Run(Check);
+            EventSaveRegression.Run(Check);
             Console.WriteLine($"TOTAL {checks} checks"); return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }

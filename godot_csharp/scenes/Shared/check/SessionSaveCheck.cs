@@ -146,11 +146,15 @@ public static class SessionSaveCheck
         world.Process(new PresentationCompleted(presentation.PresentationId)); world.Progress.Set("neutral","count",3); world.Progress.Set("clock","minute",10);
         world.NextRandom(); var bytes=Value(world.Save()); var expectedRandom=world.NextRandom();
         var store=new WorldSessionStore(world); var loaded=Value(store.Restore(bytes));
+        string EventState(WorldSession s)=>JsonSerializer.Serialize(s.Runtime.EventAudit.Select(e=>new { kind=e.GetType().Name, fields=TypedEvents.Map(e,r=>r?.Id).Fields }));
+        Check(world.Runtime.EventAudit.Count>0&&EventState(world)==EventState(loaded),"typed authority events/causes survive idle WorldSession restore");
         Check(loaded.NextRandom()==expectedRandom&&Equals(loaded.Progress.GetProgress("neutral")["count"],3)&&loaded.Simulation.CTB.Now==10&&loaded.Simulation.CTB.Sequence==world.Simulation.CTB.Sequence,
             "idle WorldSession progress/clock/random/serial restore");
         var count=loaded.Runtime.PersistenceEntities.Count; var epoch=store.RestoreEpoch;
+        var eventCount=loaded.Runtime.EventAudit.Count; var eventState=EventState(loaded);
         Check(ReferenceEquals(loaded,Value(store.Restore(bytes)))&&store.RestoreEpoch==epoch&&loaded.Runtime.PersistenceEntities.Count==count&&loaded.Entity("actor").Get<StateProperty>()!.Values[new("value")]==1,
             "WorldSession duplicate load does not create objects or grant effects");
+        Check(loaded.Runtime.EventAudit.Count==eventCount&&EventState(loaded)==eventState,"duplicate WorldSession load does not register typed events again");
         var corrupt=JsonNode.Parse(bytes)!.AsObject(); corrupt["now"]=-1;
         Check(Error(store.Restore(JsonSerializer.SerializeToUtf8Bytes(corrupt))).Code==ContractErrorCode.Unsupported&&ReferenceEquals(store.Current,loaded),"WorldSession invalid candidate leaves current unchanged");
     }
