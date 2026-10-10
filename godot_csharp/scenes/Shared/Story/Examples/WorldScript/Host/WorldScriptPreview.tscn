@@ -53,34 +53,29 @@ autowrap_mode = 2
 
 [node name="Chapter2" type="Button" parent="Margin/Column"]
 layout_mode = 2
-text = "加载第二章（沿用当前世界）"
+text = "加载下一章（沿用当前世界）"
 disabled = true
 
 [node name="RoomView" type="HBoxContainer" parent="Margin/Column"]
 layout_mode = 2
-metadata/entity_id = "world:room.foyer"
 theme_type_variation = &"WorldScriptPreviewRoomView"
 
 [node name="RoomName" type="Label" parent="Margin/Column/RoomView"]
 layout_mode = 2
-text = "门厅"
+text = ""
 
-[node name="Detective" type="Label" parent="Margin/Column/RoomView"]
+[node name="Actor" type="Label" parent="Margin/Column/RoomView"]
 layout_mode = 2
-text = "侦探 · 在场"
-metadata/entity_id = "world:character.detective"
-metadata/actor = true
+text = ""
 
-[node name="Guard" type="Label" parent="Margin/Column/RoomView"]
+[node name="Peer" type="Label" parent="Margin/Column/RoomView"]
 layout_mode = 2
-text = "守夜人 · 在场"
-metadata/entity_id = "world:character.guard"
-metadata/actor = true
+text = ""
 
-[node name="Bolt" type="Button" parent="Margin/Column/RoomView"]
+[node name="Object" type="Button" parent="Margin/Column/RoomView"]
 layout_mode = 2
-text = "内侧插闩 · 查看可选行动"
-metadata/entity_id = "world:object.inner_bolt"
+text = ""
+disabled = true
 
 [node name="Actions" type="HBoxContainer" parent="Margin/Column"]
 layout_mode = 2

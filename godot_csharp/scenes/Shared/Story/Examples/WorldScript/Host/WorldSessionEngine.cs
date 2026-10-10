@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Story;
+using DualOntologyWorldEngine.Core;
 using Godot;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
@@ -13,15 +14,30 @@ public partial class WorldSessionEngine : Node
     public GDict EntityNames()
     {
         var names = new GDict();
-        if (_chapters is null) return names;
-        foreach (var chapter in _chapters)
-        foreach (var entity in chapter.Entities)
+        foreach (var entity in Entities())
         {
-            var id = entity.Id.Contains(':') ? entity.Id
-                : entity.Scope == "world" ? "world:" + entity.Id : "chapter:" + chapter.Id + ":" + entity.Id;
-            names[id] = entity.Name;
+            var row = entity.AsGodotDictionary();
+            names[row["id"]] = row["name"];
         }
         return names;
+    }
+    public GArray Entities()
+    {
+        var entities = new GArray();
+        if (_chapters is null) return entities;
+        foreach (var chapter in _chapters.Where(c => _session.LoadedChapters.Contains(c.Id)))
+        foreach (var definition in chapter.Entities)
+        {
+            var id = definition.Id.StartsWith("world:", StringComparison.Ordinal) || definition.Id.StartsWith("chapter:", StringComparison.Ordinal)
+                ? definition.Id : definition.Scope == "world" ? "world:" + definition.Id : "chapter:" + chapter.Id + ":" + definition.Id;
+            if (entities.Any(value => value.AsGodotDictionary()["id"].AsString() == id)) continue;
+            var entity = _session.Entity(id);
+            var spatial = entity.Get<SpatialProperty>();
+            var space = spatial?.Holder?.Get<SpatialProperty>()?.Space ?? spatial?.Space;
+            var roomId = space is null ? "" : _session.World.Objects.Single(pair => ReferenceEquals(pair.Value, space)).Key;
+            entities.Add(new GDict { ["id"] = id, ["name"] = definition.Name, ["kind"] = definition.Kind, ["room"] = roomId });
+        }
+        return entities;
     }
     public GArray OpenDocument(string path)
     {
@@ -29,10 +45,12 @@ public partial class WorldSessionEngine : Node
         {
             if (_chapters is not null) throw new InvalidOperationException("The preview document is already open; this session cannot be reset.");
             if (!Godot.FileAccess.FileExists(path))
-                throw new FileNotFoundException("Missing compiled world script: " + path + ". Generate it with tools/world_script.py from both chapter .world files.");
-            _chapters = WorldScriptDocument.Parse(Godot.FileAccess.GetFileAsString(path));
-            if (_chapters.Count == 0) throw new InvalidDataException("The world document contains no chapters.");
-            return LoadNextChapter();
+                throw new FileNotFoundException("Missing compiled world script: " + path + ". Generate it with tools/story_script.py from ordered .story sources.");
+            var chapters = WorldScriptDocument.Parse(Godot.FileAccess.GetFileAsString(path));
+            if (chapters.Count == 0) throw new InvalidDataException("The world document contains no chapters.");
+            _session.Load(chapters[0]);
+            _chapters = chapters;
+            return new() { new GDict { ["kind"] = "chapter_loaded", ["chapter"] = CurrentChapter() } };
         }
         catch (Exception error) { return Error(error); }
     }
