@@ -17,19 +17,164 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
 GAME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GAME / "tools"))
 
-from first_awakening_art import props as ch1_props                               # noqa: E402
-from chapter2_art import outdoor, painter, props_archive, props_core, props_service, rooms   # noqa: E402
+from chapter2_art import rooms  # noqa: E402
+from map_text import parse_json, publish, read_json, replace_json_strings, replace_spans, require_strings  # noqa: E402
 
 OUT = GAME / "ShareAsset/Internal/Props/Chapter2"
 CH1 = "res://ShareAsset/Internal/Props/FirstAwakeningInterior"
 SCENES = GAME / "scenes/Chapter2/Maps"
 CELL = 32
+COMPILED = GAME / "scenes/Chapter2/Script/generated_chapter_02.json"
+
+
+def title_key(key):
+    return f"资源.地图.{key}.标题"
+
+
+def label_key(key, site):
+    return f"资源.场点.{key}.{site}.标签"
+
+
+def load_room_text(path=COMPILED):
+    compiled = read_json(path)
+    chapters = compiled.get("chapters") if isinstance(compiled, dict) else None
+    if not isinstance(chapters, list) or any(not isinstance(c, dict) for c in chapters):
+        raise ValueError("Compiled chapters must be an array of objects")
+    matching = [c for c in chapters if c.get("id") == "chapter2"]
+    if len(matching) != 1 or not isinstance(matching[0].get("design"), dict):
+        raise ValueError("Expected exactly one chapter2 design")
+    keys = [k for key, sites in rooms.TEXT_SITES.items()
+            for k in (title_key(key), *(label_key(key, site) for site in sites))]
+    return require_strings(matching[0]["design"].get("text"), keys, ("资源.地图.", "资源.场点."))
+
+
+def validate_maps(keys):
+    if not keys or len(set(keys)) != len(keys) or any(key not in rooms.TEXT_SITES for key in keys):
+        raise ValueError("Map batch must contain distinct known interior keys")
+
+
+def site_indices(sites, key):
+    if not isinstance(sites, list) or any(not isinstance(s, dict) or not isinstance(s.get("id"), str) for s in sites):
+        raise ValueError(f"Invalid sites: {key}")
+    ids = [s["id"] for s in sites]
+    if len(set(ids)) != len(ids) or set(ids) != set(rooms.TEXT_SITES[key]):
+        raise ValueError(f"Duplicate, missing or unknown site: {key}")
+    return {site: i for i, site in enumerate(ids)}
+
+
+def resolve_room_text(room, text):
+    key = room["key"]
+    validate_maps([key])
+    site_indices(room.get("sites"), key)
+    if room.get("title_key") != title_key(key):
+        raise ValueError(f"Invalid title binding: {key}")
+    result = {k: v for k, v in room.items() if k != "title_key"}
+    result["title"] = text[room["title_key"]]
+    result["sites"] = []
+    for site in room["sites"]:
+        if site.get("label_key") != label_key(key, site["id"]):
+            raise ValueError(f"Invalid label binding: {key}/{site['id']}")
+        result["sites"].append({**{k: v for k, v in site.items() if k != "label_key"}, "label": text[site["label_key"]]})
+    return result
+
+
+def scene_text(source, key, text):
+    """Edit only the root title and explicit Sites children, retaining node order."""
+    headers = list(re.finditer(r"(?m)^\[[^\r\n]*\][ \t]*\r?$", source))
+    nodes = {}
+    for i, header in enumerate(headers):
+        if not header.group().startswith("[node "):
+            continue
+        attributes = dict(re.findall(r'(\w+)="([^"]*)"', header.group()))
+        name, parent = attributes.get("name"), attributes.get("parent")
+        if name is None or (parent is None and name != key):
+            raise ValueError(f"Unexpected root node: {key}")
+        path = name if parent in (None, ".") else f"{parent}/{name}"
+        if path in nodes:
+            raise ValueError(f"Duplicate scene node: {path}")
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(source)
+        nodes[path] = (attributes, header.end(), end)
+    roots = [path for path, (attrs, _, _) in nodes.items() if "parent" not in attrs]
+    sites = {path.removeprefix("Sites/") for path in nodes if path.startswith("Sites/")}
+    if roots != [key] or "Sites" not in nodes or sites != set(rooms.TEXT_SITES[key]):
+        raise ValueError(f"Missing or unknown scene root/site: {key}")
+    if nodes["Sites"][0].get("parent") != "." or nodes["Sites"][0].get("type") != "Node2D":
+        raise ValueError(f"Invalid Sites container: {key}")
+    edits = []
+    bindings = [(key, "title", title_key(key))] + [(f"Sites/{site}", "label", label_key(key, site)) for site in rooms.TEXT_SITES[key]]
+    for node, field, binding in bindings:
+        attrs, start, end = nodes[node]
+        if field == "label" and attrs.get("type") != "Marker2D":
+            raise ValueError(f"Invalid site node type: {node}")
+        block = source[start:end]
+        properties = list(re.finditer(rf"(?m)^metadata/{field} = ([^\r\n]*)", block))
+        if len(properties) != 1:
+            raise ValueError(f"Missing or duplicate metadata/{field}: {node}")
+        prop = properties[0]
+        value_source = prop.group(1).rstrip(" \t")
+        old = parse_json(value_source)
+        if not isinstance(old, str):
+            raise ValueError(f"Non-string metadata/{field}: {node}")
+        if old != text[binding]:
+            offset = start + prop.start(1)
+            edits.append((offset, offset + len(value_source), json.dumps(text[binding], ensure_ascii=False)))
+    return replace_spans(source, edits)
+
+
+def update_text_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+    validate_maps(keys)
+    text = load_room_text(compiled)
+    manifest_source = manifest_path.read_bytes().decode("utf-8")
+    manifest = parse_json(manifest_source)
+    entries = manifest.get("rooms") if isinstance(manifest, dict) else None
+    if not isinstance(entries, dict):
+        raise ValueError("Manifest rooms must be an object")
+    replacements, candidates = {}, {}
+    for key in keys:
+        entry = entries.get(key)
+        if not isinstance(entry, dict):
+            raise ValueError(f"Missing manifest room: {key}")
+        indices = site_indices(entry.get("sites"), key)
+        replacements[("rooms", key, "title")] = text[title_key(key)]
+        for site, i in indices.items():
+            replacements[("rooms", key, "sites", i, "label")] = text[label_key(key, site)]
+        path = scenes / f"{key}.tscn"
+        candidates[path] = scene_text(path.read_bytes().decode("utf-8"), key, text).encode("utf-8")
+    candidates[manifest_path] = replace_json_strings(manifest_source, replacements).encode("utf-8")
+    return publish(candidates)
+
+
+def update_sites_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+    validate_maps(keys)
+    text_table = load_room_text(compiled)
+    manifest = read_json(manifest_path)
+    authored = {room["key"]: resolve_room_text(room, text_table) for room in rooms.all_rooms()}
+    candidates = {}
+    for key in keys:
+        room = authored[key]
+        if not isinstance(manifest.get("rooms", {}).get(key), dict):
+            raise ValueError(f"Missing manifest room: {key}")
+        path = scenes / f"{key}.tscn"
+        source = path.read_bytes().decode("utf-8")
+        if source.count('[node name="Sites"') != 1:
+            raise ValueError(f"Missing or duplicate Sites container: {key}")
+        prefix = source.split('[node name="Sites"', 1)[0]
+        lines = ['[node name="Sites" type="Node2D" parent="."]', '']
+        for site in room["sites"]:
+            lines += [f'[node name="{site["id"]}" type="Marker2D" parent="Sites"]',
+                      f'position = Vector2({site["point"][0]}, {site["point"][1]})',
+                      f'metadata/label = {json.dumps(site["label"], ensure_ascii=False)}', '']
+        candidates[path] = (prefix + "\n".join(lines)).encode("utf-8")
+        manifest["rooms"][key]["sites"] = room["sites"]
+    candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
+    return publish(candidates)
 
 # Chapter-1 sprite footprints (w, h) measured from its placement table.
 CH1_FP = {
@@ -42,6 +187,9 @@ CH1_FP = {
 
 
 def sprites_and_footprints():
+    from first_awakening_art import props as ch1_props
+    from chapter2_art import props_archive, props_core, props_service
+
     canvases, fps = {}, dict(CH1_FP)
     ch1 = ch1_props.build()
     for mod in (props_core, props_archive, props_service):
@@ -64,6 +212,8 @@ def resolve(furniture, fps):
 
 def stands(room, n=16):
     """Standing points for people: open floor cells away from walls, furniture and doorways, spread out."""
+    from chapter2_art import painter
+
     rows = room["rows"]
     if not rows:
         return room.get("stands", [])
@@ -98,6 +248,8 @@ def stands(room, n=16):
 
 def wall_rects(rows):
     """Solid rectangles for every non-walkable cell, merged into horizontal runs."""
+    from chapter2_art import painter
+
     rects = []
     for y, row in enumerate(rows):
         x = 0
@@ -141,7 +293,7 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     W = len(room["rows"][0]) * CELL if "size_px" not in room else room["size_px"][0]
     H = len(room["rows"]) * CELL if "size_px" not in room else room["size_px"][1]
     lines += [f'[node name="{room["key"]}" type="Node2D"]', 'texture_filter = 1',
-              f'metadata/title = "{room["title"]}"', f'metadata/map_size = Vector2({W}, {H})']
+              f'metadata/title = {json.dumps(room["title"], ensure_ascii=False)}', f'metadata/map_size = Vector2({W}, {H})']
     if room["rows"]:
         lines.append(f'metadata/terrain_rows = {json.dumps(room["rows"])}')
     lines += [f'metadata/{k} = {v}' for k, v in room.get("meta", {}).items()]
@@ -173,32 +325,27 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     lines += ['[node name="Sites" type="Node2D" parent="."]', '']
     for s in room.get("sites", []):
         lines += [f'[node name="{s["id"]}" type="Marker2D" parent="Sites"]', f'position = Vector2({s["point"][0]}, {s["point"][1]})',
-                  f'metadata/label = "{s["label"]}"', '']
+                  f'metadata/label = {json.dumps(s["label"], ensure_ascii=False)}', '']
     return "\n".join(lines)
 
 
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker nodes and manifest sites using existing textures.")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--text-only", nargs="+", metavar="MAP", help="Update existing interior titles and labels without rebuilding geometry.")
+    modes.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker geometry with compiled text, using existing textures.")
     args = parser.parse_args()
-    if args.sites_only:
-        manifest_path = OUT / "manifest.json"
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        authored = {room["key"]: room for room in rooms.all_rooms()}
-        for key in args.sites_only:
-            room = authored[key]
-            path = SCENES / f"{key}.tscn"
-            text = path.read_text(encoding="utf-8").split('[node name="Sites"', 1)[0]
-            lines = ['[node name="Sites" type="Node2D" parent="."]', '']
-            for site in room.get("sites", []):
-                lines += [f'[node name="{site["id"]}" type="Marker2D" parent="Sites"]',
-                          f'position = Vector2({site["point"][0]}, {site["point"][1]})', f'metadata/label = "{site["label"]}"', '']
-            path.write_text(text + "\n".join(lines), encoding="utf-8", newline="\n")
-            manifest["rooms"][key]["sites"] = room.get("sites", [])
-            print(f"generated sites: {key}")
-        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    if args.text_only:
+        print(f"room text: {update_text_only(args.text_only)} file(s) changed")
         return
+    if args.sites_only:
+        print(f"generated sites: {update_sites_only(args.sites_only)} file(s) changed")
+        return
+    from chapter2_art import outdoor, painter
+
+    text_table = load_room_text()
+    all_rooms = [resolve_room_text(room, text_table) for room in rooms.all_rooms()]
     canvases, ch1, fps = sprites_and_footprints()
     (OUT / "rooms").mkdir(parents=True, exist_ok=True)
     (OUT / "props").mkdir(parents=True, exist_ok=True)
@@ -220,7 +367,6 @@ def main():
         can.save(OUT / "props" / f"{name}.png")
         sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"
         sizes[name] = (can.w, can.h)
-    all_rooms = rooms.all_rooms()
     for room in all_rooms:
         for e in room["exits"]:
             if e["target"] == "campus":

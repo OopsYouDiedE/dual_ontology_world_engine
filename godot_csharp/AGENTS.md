@@ -118,7 +118,10 @@
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
 - 第二章 `Chapter2/check/check_flow.gd` 通过 `chapter2_fixture.gd` 复用上述 Main 夹具，先用调试跳转推进第一章终局，再以章末卡 C 键触发连续会话的视图切换与 `view_ready`，检查首个可操作状态。后续输入和 UI 回执仍经过 `Main.dispatch`，不再加载旧章节宿主、调用引擎直通接口或单独注入继承快照；地图加载失败和流程等待超时须报告并退出非零状态。
 - `tools/`：素材批量切片、图集生产、场景组装及 Godot 命令行测试工具。
-- `python tools/build_chapter2_scenes.py --sites-only <地图名>...` 从 `chapter2_art/rooms.py` 更新指定地图的 `Sites` 标记与 manifest，复用既有纹理；仅调整热点时不必重新生产整套美术。
+- 地图文字更新先在仓库根目录运行 `python godot_csharp/tools/compile_story.py`。`python godot_csharp/tools/build_awakening_map.py --text-only` 从编译 layout 的 `furniture_asides` 与 Content 的 `ROOM_NAMES` 按固定槽键更新既有 `map_layout.tres`，完整校验槽数、房间集合与文字类型，不绘图、不写场景几何。
+- `python godot_csharp/tools/build_chapter2_scenes.py --text-only <室内地图键>...` 从正式 Chapter2 `design.text` 更新既有根节点标题、`Sites/<id>` 标签与 manifest 对应文字。支持 `living_hall`、`zone_jia`、`zone_yi`、`zone_bing`、`zone_ding`、`central_hall`、`lecture`、`archive`、`counterweight`、`resonance`、`clinic`、`logistics`、`granary`、`greenhouse`；整批校验键、节点和场点集合后才写入指定场景与 manifest，仅替换字符串，保持几何、资产、节点顺序与其他序列化字节，文字未变时不写文件。
+- `python godot_csharp/tools/build_chapter2_scenes.py --sites-only <室内地图键>...` 的几何来自 `chapter2_art/rooms.py`，文字来自正式编译物的 `design.text`；更新指定地图的 `Sites` 标记与 manifest，复用既有纹理。该入口仍将 `Sites` 起始处至文件尾重写，仅调整热点时不必重新生产整套美术；标题更新使用 `--text-only`。
+- 两章全量生成同样从正式编译物查文字；`tools/map_text.py` 负责拒绝 JSON 重复键与缺键、类型错误，并保留纯文字更新的原序列化。资源文字自检为 `python godot_csharp/tools/check/check_map_text.py`，使用隔离夹具核验整批拒绝、重复执行与文字/几何独立性；它不代替游戏验收。全量资产重生与 Godot import 继续沿既有管线执行。
 - `tools/verify_ch1_locker_ui.gd` 经正式 Main 夹具推进开场，采集附加家具的动作、悬停和点击画面，核验共用导航、实体碰撞、演出期间玩家控制权、锁定及视野外悬停抑制和热点标题优先。动作图保留起始帧并等待自然播放到伸手帧另存，不直接设帧；家具指针选真实不透明且未被可见热点占用的像素，保留日常人物活动。Main 从创建时就在独立渲染视口内，复用标题 `start` / `view_ready` 握手，鼠标事件传入同一视口；需要有窗口的渲染器。运行时传 `-- --round=<独立轮次>`，证据保存在 `artifacts/ch1-locker/<轮次>/`；`--pointer-only` 仅用于采集器调试，不能作为完整验收。完整轮次属于二级 UI 专项与开发检查，不作为盲玩记录。
 - `addons/<plugin_name>/`：编辑器插件（如素材适配器 `rpg_asset_adapter`），代码与资源保持插件内部封闭。
 - 资产迁移或管线变动后，通过 `& $env:GODOT --headless --editor --path godot_csharp --import` 完成重新导入校验。

@@ -220,3 +220,14 @@
     OilHook：L6
     Whetstone：L7
     CoatStandR05：E12
+
+家具旁白
+    map.awakening_yi.window.EN：窗。外面是灰的，什么也看不清。
+    map.awakening_yi.window.R05：窗。外面是灰的，什么也看不清。
+    map.awakening_yi.window.R08：窗。外面是灰的，什么也看不清。
+    map.awakening_yi.window.hall：窗。雾贴着玻璃。
+    map.awakening_yi.rug.R08：地毯。
+    map.awakening_yi.rug.R05：地毯。踩得发亮的地方，在床边。
+    map.awakening_yi.rug.R07：地毯。
+    map.awakening_yi.rug.R06：地毯。踩得发亮的地方，在床边。
+    map.awakening_yi.slippers.R05：一双拖鞋。摆得很正，鞋头朝外。
