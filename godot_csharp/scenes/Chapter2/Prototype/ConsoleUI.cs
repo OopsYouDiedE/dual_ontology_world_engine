@@ -612,15 +612,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         var known = g.KnownTraces(night);
         W($"{Chapter2Content.DayName(night)}夜里之后的痕迹：");
         foreach (var t in traces.Where(t => known.ContainsKey(t.Key)))
-            W($"  · {known[t.Key].Text}{(known[t.Key].Text != t.Text ? "（路过时一眼看到的；细看才知全貌）" : "")}");
-        var unseen = traces.Where(t => !known.ContainsKey(t.Key) && !t.Key.StartsWith("神情:") && Changed(t)).Select(t => Names.Of(t.Where)).Distinct().ToArray();
+            W($"  · {known[t.Key].Text}{(known[t.Key].IsGlance ? "（路过时一眼看到的；细看才知全貌）" : "")}");
+        var unseen = traces.Where(t => !known.ContainsKey(t.Key) && t.Kind != TraceKind.Expression && Changed(t)).Select(t => Names.Of(t.Where)).Distinct().ToArray();
         if (unseen.Length > 0) W($"  · 有变化、你还没去看的地方：{string.Join("、", unseen)}");
         if (known.Count == 0 && unseen.Length == 0) W("  · 你读到的地方都没什么变化。");
     }
 
-    // STORY-HARDCODE[CH2-082][logic][production]: 过滤本案清晨跟踪的特定无变文字。
-    private static bool Changed(TraceItem t) => !(t.Text is "三处机关没人碰过" or "前厅积灰上没有新脚印" or "病床边没有新送来的东西" or "贝尔特朗：夜巡无异常" or "门闩完好")
-        && !t.Text.Contains("没有新东西") && !(t.Key == "台账" && t.Text.StartsWith("账面与存量差 0 份；夜间记账一栏是空的"));
+    private static bool Changed(TraceItem t) => t.HasChange;
 
     /// <summary>重演（§12 第 6 条）：变量由“你知道的规矩 × 你怀疑认了它的人”和“某人那一夜在不在某处”组合而成。</summary>
     private void Replay(string[] v)
@@ -680,12 +678,13 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
         W("  （重演中……）");
         var (tr, world) = g.ReplayNight(night, rules, where);
         var said = rules.Select(r => $"{Names.Of(r.Who)}{(r.Accept ? "认" : "不认")}{g.LabelOf(g.Specs.First(s => s.Id == r.Spec))}").Concat(where.Select(w => $"{Names.Of(w.Who)}{(w.There ? "在" : "不在")}{Names.Of(w.Where)}")).ToArray();
-        var lines = g.CompareTraces(night, tr);
+        var comparisons = g.CompareTraceResults(night, tr);
         foreach (var w in where.Where(w => w.There && !world.Moves.Any(m => m.Day == night && m.Who == w.Who && m.To == w.Where)))
-            lines.Insert(0, $"冲突：照这组假设，那个{Game.BuildText(g[w.Who].Pro.Build).TrimEnd('的')}的身影那夜根本没去{Names.Of(w.Where)}");
-        var conflicts = lines.Count(l => l.StartsWith("冲突"));
-        var unread = lines.Count(l => l.StartsWith("未查"));
-        var confirmed = conflicts == 0 && lines.Any(l => l.StartsWith("吻合"));
+            comparisons.Insert(0, new(TraceComparisonStatus.Conflict, $"冲突：照这组假设，那个{Game.BuildText(g[w.Who].Pro.Build).TrimEnd('的')}的身影那夜根本没去{Names.Of(w.Where)}"));
+        var lines = comparisons.Select(c => c.Text).ToList();
+        var conflicts = comparisons.Count(c => c.Status == TraceComparisonStatus.Conflict);
+        var unread = comparisons.Count(c => c.Status == TraceComparisonStatus.Unread);
+        var confirmed = conflicts == 0 && comparisons.Any(c => c.Status == TraceComparisonStatus.Match);
         var frames = Game.InkFrames(world, night, rules.Select(r => r.Who).Concat(where.Select(w => w.Who)), confirmed).ToArray();
         var ink = frames.Select(frame => frame.Text).ToArray();
         var summary = conflicts == 0 ? $"—— 与你读到的痕迹没有冲突{(unread > 0 ? "（还有没去看的地方）" : "")}。{(confirmed ? "墨影的心声浮了出来。" : "")}" : $"—— 有 {conflicts} 处对不上：昨夜不是这样。";

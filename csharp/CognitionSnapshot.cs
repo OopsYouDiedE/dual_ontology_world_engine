@@ -39,7 +39,8 @@ public abstract record FrozenEffectV1 {
  public sealed record When(FrozenConditionV1 Condition, FrozenEffectV1 Body) : FrozenEffectV1;
  public sealed record Require(FrozenConditionV1 Condition) : FrozenEffectV1;
  public sealed record Wait(double Delay, FrozenEffectV1 Body, FrozenConditionV1? Until = null) : FrozenEffectV1;
- public sealed record Say(FrozenNounV1 Recipient, string Text, FrozenEffectV1? Request = null) : FrozenEffectV1;
+ public sealed record Say(FrozenNounV1 Recipient, string Text, FrozenEffectV1? Request = null,
+     FrozenConditionV1? Claim = null, AuthorTermId? Topic = null) : FrozenEffectV1;
  public sealed record Think(FrozenConditionV1 Fact) : FrozenEffectV1;
 }
 public sealed record FrozenRuleV1(FrozenConditionV1 Condition, RuleMode Mode,
@@ -55,7 +56,8 @@ public sealed record VisibleObservationV1(SubjectProjectionId Target,
  ObservationSource Source, double Time, ObservationTimeUnitV1 TimeUnit,
  bool? Detected, Truth? DeclaredExistence,
  string Details, SourceLocationV1? Origin,
- ImmutableArray<SubjectProjectionId> Dependencies, ObservedStateV1 ObservedState);
+ ImmutableArray<SubjectProjectionId> Dependencies, ObservedStateV1 ObservedState,
+ TypedEventV1<SubjectProjectionId?>? Event = null);
 public sealed record FrozenProjectionV1(SubjectProjectionId Id,
  string Name, ProjectionKind Kind, Truth Existence, SubjectProjectionId? Parent,
  ImmutableDictionary<Tag,int> Tags, ImmutableArray<RelationEdgeV1> Relations,
@@ -83,7 +85,8 @@ public sealed record ObservationChangeV1(SubjectProjectionId Target, bool Create
  ImmutableArray<RelationEdgeV1> DenyRelations, ImmutableArray<FrozenRuleV1>? Rules,
  FrozenEffectV1? Procedure, bool ClearProcedure, bool Forget,
  ImmutableArray<KnownAuthorTermV1>? KnownTerms, string Details,
- SourceLocationV1? Origin, ImmutableArray<SubjectProjectionId> SourceDependencies);
+ SourceLocationV1? Origin, ImmutableArray<SubjectProjectionId> SourceDependencies,
+ TypedEventV1<SubjectProjectionId?>? Event = null);
 public enum NotificationDeliveryV1 { Pending, Completed }
 public sealed record CognitionNotificationReceiptV1(KnowledgeRevision Revision,
  NotificationDeliveryV1 Status, ImmutableArray<ContractError> NotificationFaults);

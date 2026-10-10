@@ -12,9 +12,22 @@ public sealed record CaseTraces(int LedgerShort, bool LatchFixed, bool LatchTool
 {
     public static readonly string[] Labels = [.. CaseDesign.Traces.Select(t => t.Label)];
     public static readonly Place[] Dorms = [Place.DormW, Place.DormLife, Place.DormS, Place.DormL];
-    /// <summary>值相等：两组痕迹描述出来完全相同即相等（列表字段按内容比较）。</summary>
-    public bool Equals(CaseTraces? other) => other is not null && Describe().Select(d => d.Text).SequenceEqual(other.Describe().Select(d => d.Text));
-    public override int GetHashCode() => string.Join("|", Describe().Select(d => d.Text)).GetHashCode();
+    /// <summary>完整结构化值相等；列表保留顺序和重复项。</summary>
+    public bool Equals(CaseTraces? other) => other is not null && LedgerShort == other.LedgerShort
+        && LatchFixed == other.LatchFixed && LatchToolMarks == other.LatchToolMarks && BowlPorridge == other.BowlPorridge
+        && CrumbDorms.SequenceEqual(other.CrumbDorms) && Figures.SequenceEqual(other.Figures);
+    public override int GetHashCode()
+    {
+        var hash = new HashCode(); hash.Add(LedgerShort); hash.Add(LatchFixed); hash.Add(LatchToolMarks); hash.Add(BowlPorridge);
+        foreach (var dorm in CrumbDorms) hash.Add(dorm);
+        foreach (var figure in Figures) hash.Add(figure);
+        return hash.ToHashCode();
+    }
+    public bool MatchesItem(CaseTraces other, int item, IReadOnlyCollection<Place>? litters = null) => item switch {
+        0 => LedgerShort == other.LedgerShort, 1 => LatchFixed == other.LatchFixed && LatchToolMarks == other.LatchToolMarks,
+        2 => BowlPorridge == other.BowlPorridge,
+        3 => litters is null ? CrumbDorms.SequenceEqual(other.CrumbDorms) : litters.All(d => CrumbDorms.Contains(d) == other.CrumbDorms.Contains(d)),
+        4 => Figures.SequenceEqual(other.Figures), _ => throw new ArgumentOutOfRangeException(nameof(item)) };
     /// <summary>lookedLitters：只描述看过的那几个寝区的废纸篓（没看过的不说，避免替侦探看）；null 表示全部。</summary>
     public IEnumerable<(int Item, string Text)> Describe(IReadOnlyCollection<Place>? lookedLitters = null)
     {
@@ -138,7 +151,7 @@ public sealed partial class Game
         for (var i = 0; i < r.Length; i++)
         {
             if (known is not null && !known.Contains(i)) { lines.Add($"未查：你还没查过这里——{where[i]}"); continue; }
-            lines.Add(r[i].Text == a[i].Text ? $"吻合：{a[i].Text}" : $"冲突：重演是「{r[i].Text}」，现实是「{a[i].Text}」");
+            lines.Add(replay.MatchesItem(actual, i, looked) ? $"吻合：{a[i].Text}" : $"冲突：重演是「{r[i].Text}」，现实是「{a[i].Text}」");
         }
         return lines;
     }
@@ -193,7 +206,7 @@ public sealed partial class Game
         foreach (var v in CaseVars.All())
         {
             var (traces, world) = ReplayCase(v);
-            if (Compare(traces, actual, known).All(l => !l.StartsWith("冲突"))) fits.Add((v, world));
+            if (known.All(i => traces.MatchesItem(actual, i, litters))) fits.Add((v, world));
         }
         var claims = Enumerable.Range(0, CaseDesign.Claims.Count)
             .Where(c => !CaseDesign.Claims[c].Frames && fits.Count > 0 && fits.All(f => f.World.ClaimTrue(c))).ToArray();

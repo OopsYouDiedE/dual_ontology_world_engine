@@ -1,4 +1,5 @@
 using DualOntologyWorldEngine.Core;
+using System.Collections.Immutable;
 
 namespace DualOntologyWorldEngine.Chapter2.Prototype;
 
@@ -27,6 +28,9 @@ public sealed partial class Game
         /// <summary>作者定的理由（总纲 §五.12“作者覆盖”）：只定过去与呈现时须写明，测试报告单列。</summary>
         public string Reason { get; init; } = "";
         public bool SeenByDet { get; set; }
+        public required TypedEventV1<Essence?> Contract { get; init; }
+        public Person? Recipient { get; init; }
+        public AuthorTermId? ResponseTo { get; init; }
         public string Short => $"{Chapter2Design.DayName(Day)}{Names.Of(Slot)} {Names.Of(Who)}{Text}【{Frame}】";
     }
 
@@ -50,18 +54,32 @@ public sealed partial class Game
 
     private Person? PersonOf(Person viewer, Projection? proj) => proj is null ? null : EssenceOf(viewer, proj) is { } e ? People.FirstOrDefault(o => o.Body == e) : null;
 
-    public int RecordEvent(P who, string text, string frame, Place where, IEnumerable<int> causes, bool fix = false, Job? job = null, string reason = "")
+    public int RecordEvent(P who, string text, string frame, Place where, IEnumerable<int> causes, bool fix = false, Job? job = null, string reason = "",
+        Person? recipient = null, AuthorTermId? responseTo = null, bool propagation = false, TypedEventV1<Essence?>? actionReceipt = null)
     {
+        var causeIds = causes.Where(c => c > 0 && c <= Events.Count).Distinct().ToArray();
+        var fields = new EventFieldsV1<Essence?> { Time = Now, TimeUnit = ObservationTimeUnitV1.ActionValue,
+            Subject = this[who].Body, Object = recipient?.Body, Location = Space[where], Source = this[who].Body,
+            KnowledgeSource = ObservationSource.Perception, Phase = fix ? EventPhaseV1.Presented : EventPhaseV1.Completed,
+            Outcome = actionReceipt?.Fields.Outcome ?? EventOutcomeV1.Succeeded,
+            Topic = responseTo ?? (job is { } j ? new AuthorTermId("action/" + j) : null),
+            Causes = [..causeIds.Select(c => Events[c - 1].Contract.Fields.Id).Concat(actionReceipt is null ? [] : new[] { actionReceipt.Fields.Id }).Distinct()],
+            Perceivers = [this[who].Soul, ..People.Where(p => p.Id != who && Slot != Slot.Night && Where(p) == where).Select(p => (Essence?)p.Soul)] };
+        TypedEventV1<Essence?> contract = fix ? new PresentationEventV1<Essence?>(fields)
+            : propagation ? new PropagationEventV1<Essence?>(fields) : new ActionEventV1<Essence?>(fields);
+        Rt.RecordEvent(contract);
         var e = new ActEvent
         {
             Id = Events.Count + 1, Day = Day, Slot = Slot, Who = who, Text = text, Frame = frame, Where = where,
-            Causes = causes.Where(c => c > 0).Distinct().ToArray(), Fixed = fix, Job = job, Time = Now, Reason = reason,
+            Causes = causeIds, Fixed = fix, Job = job, Time = Now, Reason = reason,
+            Contract = contract, Recipient = recipient, ResponseTo = responseTo,
         };
         // 侦探看得见：白天同处一地；夜里守在那里（只看得见身影）。
         e.SeenByDet = who != P.Det && Where(Det) == where && (Slot != Slot.Night || LastAction?.Cmd == Cmd.Stakeout && LastAction.Place == where);
         Events.Add(e);
+        foreach (var p in People.Where(p => p.Id == who || Slot != Slot.Night && Where(p) == where)) Rt.PublishEvent(p.Soul, contract);
         _currentEvent = e.Id;
-        if (e.SeenByDet && Slot != Slot.Night && !fix && _seenLines.Count < 4 && !text.StartsWith("答应了侦探")) _seenLines.Add((who, text));
+        if (e.SeenByDet && Slot != Slot.Night && !fix && _seenLines.Count < 4 && !(recipient == Det && responseTo is not null)) _seenLines.Add((who, text));
         return e.Id;
     }
 
@@ -81,13 +99,13 @@ public sealed partial class Game
     /// 转述与教人做完了（说话占过身体）：听的人当场判定认不认这条规矩 / 从此完整学过这一课。返回 true 表示已记成事件。
     /// 转述者对立规者有成见的，话会走样（听者那里多一分折扣，见 AcceptScore）。
     /// </summary>
-    // STORY-HARDCODE[CH2-028][logic][production]: 事件追踪按本章人物与案件谓词生成特定因果链。
     private bool HandleTalk(Person p, Job? job, ActionExecution exec)
     {
         if (job is not (Job.Relay or Job.Teach or Job.Avoid or Job.Follow) || p == Det) return false;
         var say = exec.Intent.Changes is Effect.Sequence seq ? seq.Items.OfType<Effect.Say>().FirstOrDefault() : null;
         var hearer = say?.Recipient is Noun.Reference r ? PersonOf(p, r.Projection) : null;
-        if (job == Job.Relay && say is not null && hearer is not null && RelayText.TryGetValue(say.Text, out var spec))
+        var spec = say?.Topic is { } topic ? Specs.FirstOrDefault(s => SpeechTopics.Rule(s.Id) == topic) : null;
+        if (job == Job.Relay && say is not null && hearer is not null && spec is not null)
         {
             if (hearer == Det) return true;
             var v = Tell(hearer, spec, Channel.Relay, p);
@@ -95,7 +113,7 @@ public sealed partial class Game
             RelayLog.Add((Day, Slot, p.Id, hearer.Id, spec.Id, v == Truth.True));
             var from = _transmit.TryGetValue((spec.Id, p.Id), out var tf) ? tf : _postedEv.GetValueOrDefault(spec.Id);
             var own = spec.Author == p.Id;
-            var id = RecordEvent(p.Id, $"{(own ? "拉" + hearer.Name + "认自己的" : "向" + hearer.Name + "转述")}「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(p), [from], job: Job.Relay);
+            var id = RecordEvent(p.Id, $"{(own ? "拉" + hearer.Name + "认自己的" : "向" + hearer.Name + "转述")}「{Short(spec)}」，{hearer.Name}{(v == Truth.True ? "认了" : "没认")}", "交谈", Where(p), [from], job: Job.Relay, recipient: hearer, responseTo: SpeechTopics.Rule(spec.Id), propagation: true, actionReceipt: exec.Events.LastOrDefault());
             _transmit[(spec.Id, hearer.Id)] = id;
             Log.Add($"D{Day} {Names.Of(Slot)} {p.Name}{(own ? "拉" : "向")}{hearer.Name}{(own ? "认" : "转述")}「{Short(spec)}」：{(v == Truth.True ? "认了" : "没认")}");
             if (spec.Author == P.Det)
@@ -107,12 +125,12 @@ public sealed partial class Game
         }
         if (job == Job.Teach && say is not null && hearer is not null && hearer != Det)
         {
-            var l = Lessons.Keys.First(k => TeachLine(k) == say.Text);
+            var l = Lessons.Keys.First(k => SpeechTopics.Lesson(k) == say.Topic);
             var had = hearer.Lessons.GetValueOrDefault(l);
             hearer.Lessons[l] = true;
             if (!had) Observation.Observe(hearer.Soul, new ObservationInput(hearer.Lore.Name, hearer.Lore.Kind)
             { Target = hearer.Lore, Source = ObservationSource.Testimony, Time = Now, Details = Lessons[l].Title + "：" + Lessons[l].Teach + $"（{p.Name}讲的）" });
-            RecordEvent(p.Id, $"给{hearer.Name}讲《{Lessons[l].Title}》{(had ? "" : $"（{hearer.Pro.Pronoun}原先没学全）")}", "交谈", Where(p), [], job: Job.Teach);
+            RecordEvent(p.Id, $"给{hearer.Name}讲《{Lessons[l].Title}》{(had ? "" : $"（{hearer.Pro.Pronoun}原先没学全）")}", "交谈", Where(p), [], job: Job.Teach, recipient: hearer, responseTo: SpeechTopics.Lesson(l), propagation: true, actionReceipt: exec.Events.LastOrDefault());
             return true;
         }
         if (job == Job.Avoid)
@@ -135,7 +153,6 @@ public sealed partial class Game
     private readonly Dictionary<Person, Person> _following = [];
 
     /// <summary>一个人物动作完成：记成事件，找出它的因，并登记它动过的东西。</summary>
-    // STORY-HARDCODE[CH2-038][logic][production]: 将本章特定人物行动映射为案件因果事件。
     private void RecordAction(Person p, Job? job, ActionExecution exec)
     {
         if (p == Det) return;
@@ -151,7 +168,7 @@ public sealed partial class Game
             sayTo = say.Recipient is Noun.Reference r ? PersonOf(p, r.Projection) : null;
             text = $"对{sayTo?.Name ?? "人"}说：“{say.Text}”";
             frame = "交谈";
-            if (say.Text.Contains("名录库")) job = Job.AskOpen;
+            if (say.Topic == SpeechTopics.Invitation) job = Job.AskOpen;
         }
         else if (job is null && request is not null)
             text = $"答应了{PersonOf(p, request.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target)?.Name ?? "人"}：“{request.Name}”";
@@ -190,19 +207,20 @@ public sealed partial class Game
         if (job == Job.PostRules && Events.LastOrDefault(e => e.Job == Job.Tear && e.Who != p.Id) is { } tearEv && Day - tearEv.Day <= 1) causes.Add(tearEv.Id);
         if (job == Job.Seize) foreach (var ask in _asks.Where(kv => kv.Key.To == p.Id && kv.Key.From != P.Det && Events[kv.Value - 1].Job == Job.AskOpen)) causes.Add(ask.Value);
 
-        var id = RecordEvent(p.Id, text, frame, Where(p), causes, job: job);
+        var response = request?.LastObservation?.Event?.Fields.Topic;
+        var asker2 = request is not null ? PersonOf(p, request.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target) : null;
+        var id = RecordEvent(p.Id, text, frame, Where(p), causes, job: job, recipient: sayTo ?? asker2, responseTo: response, actionReceipt: exec.Events.LastOrDefault());
         if (sayTo is not null) _asks[(p.Id, sayTo.Id)] = id;
         // 有后果的动作会被当事人或旁人说出去（经闲谈到达侦探）。
-        var asker2 = request is not null ? PersonOf(p, request.Relations.FirstOrDefault(x => x.Relation == Relations.Subject).Target) : null;
         var said = job switch
         {
             Job.AskOpen when sayTo is not null => K("约开库", p.Id, sayTo.Id),
-            null when asker2 is not null && asker2 != Det && request!.Name.Contains("今夜") => K("应约开库", p.Id, asker2.Id),
+            null when asker2 is not null && asker2 != Det && response == SpeechTopics.Invitation => K("应约开库", p.Id, asker2.Id),
             Job.Share => K("分粮", p.Id),
             Job.GiveKey => K("交钥匙", p.Id),
             _ => (Claim?)null
         };
-        if (said is not null) NewsFrom(p, NewsKind.Rumor, said, about: p);
+        if (said is not null) NewsFrom(p, NewsKind.Rumor, said, about: p, sourceEvent: Events[id - 1]);
         // 登记它动过的东西（开粮、煮粥、领粮这类日常不算）。
         if (job is not (Job.Distribute or Job.Cook or Job.Collect or Job.CountLedger or Job.InspectStructure or Job.Patrol or Job.GuardArchive or Job.VisitArchive or Job.Watch or null))
             foreach (var (target, tag) in Targets(changes))
@@ -253,7 +271,7 @@ public sealed partial class Game
         public int People => Steps.Where(s => !s.Fixed).Select(s => s.Who).Distinct().Count();
         public int Decisions => Steps.Count(s => !s.Fixed);
         public bool ByDetective => Steps.Any(s => s.Who == P.Det);
-        public string Signature => string.Join(">", Steps.Where(s => !s.Fixed).Select(s => $"{s.Who}:{s.Job?.ToString() ?? s.Text[..Math.Min(4, s.Text.Length)]}"));
+        public string Signature => string.Join(">", Steps.Where(s => !s.Fixed).Select(s => $"{s.Who}:{s.Job?.ToString() ?? s.Contract.Fields.Topic?.Value ?? s.Contract.GetType().Name}"));
         public int Day => Steps[^1].Day;
     }
 
@@ -286,42 +304,25 @@ public sealed partial class Game
     }
 
     /// <summary>侦探能否读到这一步、怎么读到：在场、守夜、清晨痕迹、别人转述。读不到返回 null。</summary>
-    // STORY-HARDCODE[CH2-039][logic][production]: 仅对本章具体人物与行动组合开放可读线索。
     public string? Readable(ActEvent e)
     {
         if (e.Who == P.Det) return "自己做的";
         if (MorningHeard.Contains(e.Id)) return "清晨闲谈";
-        if (e.SeenByDet) return e.Slot == Slot.Night ? "守夜" : "在场";
-        if (e.Slot == Slot.Night && e.Job is { } j)
-        {
-            var known = KnownTraces(e.Day);
-            var key = j switch
-            {
-                Job.NightTakeSick or Job.NightTakeSickRec or Job.NightTakeSelf or Job.NightTakeSelfRec or Job.Hoard => known.ContainsKey("台账") ? "台账" : "门闩",
-                Job.RepairLatch => "门闩", Job.Tidy => "饼屑:" + Names.Of(Cast.Of(e.Who).Dorm), Job.VisitArchive or Job.Seize => "前厅脚印",
-                Job.AnswerName => "神情:" + Names.Of(e.Who), _ => null
-            };
-            if (key is not null && known.ContainsKey(key)) return "清晨痕迹";
-        }
-        if (SpreadKnown.Any(k => k.Day == e.Day && k.Hearer != P.Det && e.Text.Contains(Names.Of(k.Hearer)) && k.Teller == e.Who)) return "转述";
-        var name = Names.Of(e.Who);
-        // 侦探在当天或次日听到过以此人为主语、说的正是这类事的知识：他是听人转述知道的。
-        bool HeardOf(params string[] predicates) => Det.News.Values.Any(h => h.Day >= e.Day && h.Day <= e.Day + 1
-            && AllNews[h.Item - 1].Claim is var c && (c.Subject == e.Who || c.Object == e.Who) && (predicates.Length == 0 || predicates.Contains(c.Predicate)));
-        if (e.Job is Job.Treat or Job.Retreat or Job.Sample or Job.Needle or Job.Sketch or Job.Report or Job.Share && HeardOf()) return "转述";
-        string[]? kinds = e.Job switch
-        {
-            Job.Accuse => ["指控亲见", "指控身影", "指控台账"], Job.Defend => ["辩护"], Job.Tear => ["撕规"], Job.PostRules => ["贴规"], Job.GiveKey => ["交钥匙"],
-            Job.Share => ["分粮"], Job.Seize or Job.AskOpen => ["约开库", "应约开库", "守门挡下", "夜开名录库", "夜开名录库未成"],
-            Job.Watch => ["夜见取粮记账", "夜见私取", "夜见照规取粮", "夜见取粮"], null when e.Text.StartsWith("答应了") => ["应约开库"], _ => null
-        };
-        if (kinds is not null && HeardOf(kinds)) return "转述";
+        if (e.Slot != Slot.Night && Det.World.History.Any(v => v.Event?.Fields.Id == e.Contract.Fields.Id)) return "在场";
+        if (e.Contract is PropagationEventV1<Essence?> && SpreadKnown.Any(k => k.Day == e.Day && k.Hearer != P.Det
+            && e.Recipient == this[k.Hearer] && k.Teller == e.Who && e.Contract.Fields.Topic == SpeechTopics.Rule(k.Spec.Id))) return "转述";
+        if (Det.News.Values.Any(h => ReferenceEquals(AllNews[h.Item - 1].SourceEvent, e))) return "转述";
         return null;
     }
 
     public bool Visible(Chain c) => c.Steps.Count(s => !s.Fixed && Readable(s) is not null) >= 2;
 
-    public string Describe(Chain c, int max = 7) => (c.Steps.Count > max ? $"（前略 {c.Steps.Count - max} 步）… " : "") + string.Join(" → ", c.Steps.TakeLast(max).Select(s => s.Short + (s.Fixed ? "〔作者固定〕" : Readable(s) is { } how ? $"〔玩家：{how}〕" : "〔玩家读不到〕")));
+    public string Describe(Chain c, int max = 7)
+    {
+        var visible = c.Steps.Where(s => Readable(s) is not null).ToArray();
+        return (visible.Length > max ? $"（前略 {visible.Length - max} 步）… " : "")
+            + string.Join(" → ", visible.TakeLast(max).Select(s => s.Short + (s.Fixed ? "〔作者固定〕" : $"〔玩家：{Readable(s)}〕")));
+    }
 }
 
 public static class Emergence
@@ -337,9 +338,9 @@ public static class Emergence
     public static int Score(Game.Chain c, Game g)
     {
         var steps = c.Steps.Where(s => !s.Fixed).ToArray();
-        var talk = steps.Count(s => s.Text.Contains("转述") || s.Text.StartsWith("拉"));
+        var talk = steps.Count(s => s.Contract is PropagationEventV1<Essence?>);
         var deeds = steps.Count(s => s.Job is Job.Seize or Job.AskOpen or Job.Share or Job.Tear or Job.Watch or Job.Accuse or Job.Defend or Job.GiveKey or Job.Tidy
-            or Job.NightTakeSick or Job.NightTakeSelf or Job.NightTakeSickRec or Job.NightTakeSelfRec or Job.RepairLatch || s.Text.StartsWith("答应了"));
+            or Job.NightTakeSick or Job.NightTakeSelf or Job.NightTakeSickRec or Job.NightTakeSelfRec or Job.RepairLatch || s.ResponseTo is not null);
         return c.People * 3 + Math.Min(c.Decisions, 6) * 2 + steps.Select(s => s.Job).Distinct().Count() * 3 + steps.Select(s => s.Frame).Distinct().Count() * 2 + deeds * 3
             + (steps.Any(s => s.Slot == Slot.Night) && steps.Any(s => s.Slot != Slot.Night) ? 3 : 0) + steps.Count(s => g.Readable(s) is not null) - talk * 3;
     }

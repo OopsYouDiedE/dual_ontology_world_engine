@@ -262,18 +262,18 @@ public sealed partial class Game
         _ => null
     };
 
-    private Place? Destination(Effect effect) => effect switch
+    private Place? Destination(Person actor, Effect effect) => effect switch
     {
-        Effect.Act { Operation: ActionOp.Travel, Target: Noun.Reference r } => Way.FirstOrDefault(w => w.Value.TrueName == r.Projection.Name).Key,
-        Effect.Sequence s => s.Items.Select(Destination).FirstOrDefault(d => d is not null),
-        Effect.Wait w => Destination(w.Body),
+        Effect.Act { Operation: ActionOp.Travel, Target: Noun.Reference r } => Way.Where(w => ReferenceEquals(w.Value, EssenceOf(actor, r.Projection))).Select(w => (Place?)w.Key).FirstOrDefault(),
+        Effect.Sequence s => s.Items.Select(e => Destination(actor, e)).FirstOrDefault(d => d is not null),
+        Effect.Wait w => Destination(actor, w.Body),
         _ => null
     };
 
     private void Submit(Person p, Decision d, IReadOnlyList<string> reasons)
     {
         var job = JobOf(p, d.Effect);
-        var dest = Destination(d.Effect);
+        var dest = Destination(p, d.Effect);
         var delay = (dest is { } x && x != Where(p) ? 2.0 / p.Pro.Speed : 0.3) + 0.5;
         if (p.Weak) delay += 0.5;
         var why = string.Join("；", reasons);
@@ -344,6 +344,7 @@ public sealed partial class Game
         if (p is null) return;
         var (job, why, _) = _running.GetValueOrDefault(exec);
         _running.Remove(exec);
+        CaptureAction(p, job, exec, why);
         p.Exec = null;
         p.Doing = null;
         if (exec.Status == ExecutionStatus.Completed)
@@ -440,6 +441,7 @@ public sealed partial class Game
                 NightSeenTaking(p, true);
                 NightTruth.Add($"D{Day} {p.Name} {Names.Of(job.Value)}");
                 NightLedgerNames.Add($"D{Day} {p.Name}");
+                NightLedgerRecords.Add((Day, p));
                 if (job == Job.NightTakeSickRec) _bowlFilledTonight = true;
                 break;
             case Job.NightTakeSick or Job.NightTakeSelf or Job.Hoard or Job.RepairLatch:

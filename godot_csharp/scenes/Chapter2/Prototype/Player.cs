@@ -389,7 +389,7 @@ public sealed partial class Game
                 Det.Acc[spec] = Truth.True;
                 var v = _preparedRuleVerdict ?? Tell(who, spec);
                 _preparedRuleVerdict = null;
-                _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, X("social.tell_log", ("name", who.Name), ("rule", Short(spec))), Names.Of(Job.Socialize), Where(Det), []);
+                _transmit[(spec.Id, who.Id)] = RecordEvent(P.Det, X("social.tell_log", ("name", who.Name), ("rule", Short(spec))), Names.Of(Job.Socialize), Where(Det), [], recipient: who, responseTo: SpeechTopics.Rule(spec.Id), propagation: true);
                 DetToldFace.Add((spec, who.Id, v == Truth.True, Day));
                 _toDisclose.RemoveAll(d => d.Who == who.Id && d.Spec == spec);
                 Feed.Add(X("social.tell_feed", ("name", who.Name), ("label", LabelOf(spec)), ("rule", spec.Text), ("result", X(v == Truth.True ? "social.tell_yes" : "social.tell_no")), ("response", Voice(who, spec, v))));
@@ -481,38 +481,41 @@ public sealed partial class Game
     /// 夜里取了口粮的人，信得过侦探才照实说；守夜的贝尔特朗报身影；请人修门闩的玛格丽特说请了谁；记账的、立规的人说账与规矩。
     /// 那夜什么也没做的人，就是平常的交谈。
     /// </summary>
-    // STORY-HARDCODE[CH2-031][text][production]: 不同具体角色对案发夜的预写口供反馈直接写在代码中。
     private (string Text, string Emotion) TestimonyPresentation(Person p, bool selectedTestimony = false)
     {
         if (Day < CaseDay) return ChatPresentation(p);
-        var prefix = $"D{CaseNight} {p.Name} ";
-        var did = NightTruth.Where(t => t.StartsWith(prefix, StringComparison.Ordinal)).Select(t => t[prefix.Length..]).ToArray();
-        bool Did(params Job[] jobs) => did.Any(d => jobs.Any(j => d.StartsWith(Names.Of(j), StringComparison.Ordinal)));
+        var did = NightActions(CaseNight, p).ToArray();
+        bool Did(params Job[] jobs) => did.Any(d => d.Job is { } j && jobs.Contains(j));
         var open = selectedTestimony || TrustIn(p, Det) >= 2;
-        var latch = Did(Job.RepairLatch) ? "门闩是我修的。" : "";
+        var latch = Did(Job.RepairLatch) ? X("证词.修闩") : "";
         switch (p.Id)
         {
             case P.Bertrand:
-                return ("“报告：" + string.Join("；", Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == CaseNight)).GroupBy(s => (s.Day, s.At))
-                    .Select(g => $"{Chapter2Design.DayName(g.Key.Day)}夜，{Names.Of(g.Key.At)}有{string.Join("、", g.GroupBy(s => s.Build).Select(b => $"{b.Count()}个{BuildText(b.Key).TrimEnd('的')}身影"))}").DefaultIfEmpty("夜里没见异常")) + "。看不清是谁。”", "calm");
-            case P.Ruan: return ($"“账面与存量差 {Get(Ledger, T.Unrecorded)}。我只记得到配给台发出去的。”", "thoughtful");
-            case P.Ward: return Accused is not null ? ("“依据台账与所见，事实清楚。”", "calm") : ("“无记录即违规。仅此而已。”", "calm");
+            {
+                var reports = Sightings.Where(s => s.Witness == P.Bertrand && (s.Day == Day - 1 || s.Day == CaseNight))
+                    .GroupBy(s => (s.Day, s.At)).Select(group => {
+                        var figures = group.GroupBy(s => s.Build).Select(b => X("证词.守夜身影", ("数", b.Count()), ("身量", BuildText(b.Key).TrimEnd('的'))));
+                        return X("证词.守夜地点", ("日", Chapter2Design.DayName(group.Key.Day)), ("地", Names.Of(group.Key.At)), ("身影", string.Join("、", figures)));
+                    }).DefaultIfEmpty(X("证词.守夜无事"));
+                return (X("证词.守夜报告", ("所见", string.Join("；", reports))), "calm");
+            }
+            case P.Ruan: return (X("证词.账面", ("缺", Get(Ledger, T.Unrecorded))), "thoughtful");
+            case P.Ward: return (X(Accused is not null ? "证词.事实清楚" : "证词.无记录"), "calm");
             case P.Margaret:
             {
                 var ask = Events.FirstOrDefault(e => e.Who == P.Margaret && e.Day == CaseNight && e.Job == Job.AskLatchHelp);
-                var asked = ask is null ? null : People.FirstOrDefault(o => o != p && ask.Text.Contains(o.Name));
-                if (asked is not null && NightTruth.Any(t => t.StartsWith($"D{CaseNight} {asked.Name} {Names.Of(Job.RepairLatch)}", StringComparison.Ordinal)))
-                    return ($"“粮仓门闩松了，那天夜里我在后勤院碰见{asked.Name}，请{asked.Pro.Pronoun}修的。修得很干净。”", "calm");
-                if (ask is not null) return ("“门闩松了，我请人修，没人搭理。”", "worried");
+                var asked = ask?.Recipient;
+                if (asked is not null && NightActions(CaseNight, asked).Any(a => a.Job == Job.RepairLatch))
+                    return (X("证词.请人修闩", ("人", asked.Name), ("他", asked.Pro.Pronoun)), "calm");
+                if (ask is not null) return (X("证词.请人未成"), "worried");
                 break;
             }
         }
         if (Did(Job.NightTakeSick, Job.NightTakeSickRec))
         {
             if (!open) return (X("证词.病粮未公开"), "calm");
-            var taken = did.Count(d => new[] { Job.NightTakeSick, Job.NightTakeSickRec, Job.NightTakeSelf, Job.NightTakeSelfRec }
-                .Any(j => d.StartsWith(Names.Of(j), StringComparison.Ordinal)));
-            var recorded = NightLedgerNames.Count(n => n == $"D{CaseNight} {p.Name}")
+            var taken = did.Count(d => d.Job is Job.NightTakeSick or Job.NightTakeSickRec or Job.NightTakeSelf or Job.NightTakeSelfRec);
+            var recorded = NightLedgerRecords.Count(n => n.Night == CaseNight && n.Actor == p)
                 + AllNews.Count(n => n.Kind == NewsKind.Ledger && n.Claim.Predicate == "补记"
                     && n.Claim.Subject == p.Id && n.Claim.Night == CaseNight);
             var pending = Math.Max(0, taken - recorded);
@@ -520,9 +523,9 @@ public sealed partial class Game
             return (X("证词." + key, ("夜", NightWord(CaseNight)), ("取用", taken), ("已记", recorded), ("待记", pending)), "worried");
         }
         if (Did(Job.NightTakeSelf, Job.NightTakeSelfRec))
-            return open ? ($"“……我拿了一份。茉拉的板上写着急需可以自取。{latch}”", "worried") : ("“关你什么事。”", "angry");
-        if (latch.Length > 0) return ($"“{latch}”", "calm");
-        return did.Length > 0 || p.Id is P.Margaret or P.Mora or P.Quer ? ("“我那晚睡着了。”", "calm") : ChatPresentation(p);
+            return open ? (X("证词.自取", ("修闩", latch)), "worried") : (X("证词.拒答"), "angry");
+        if (latch.Length > 0) return (X("证词.只有修闩", ("修闩", latch)), "calm");
+        return did.Length > 0 || p.Id is P.Margaret or P.Mora or P.Quer ? (X("证词.睡着"), "calm") : ChatPresentation(p);
     }
 
     /// <summary>平常的交谈：他最近听说、还没跟侦探讲过的两件事（按他自己的视角说，可能走样）。态度由开口那句回应表现，不再旁注。</summary>

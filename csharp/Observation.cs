@@ -47,13 +47,20 @@ public static class Observation
             var changes = inputs.Select((i, n) =>
             {
                 var p = incoming[n];
+                if (i.Event is { } supplied) TypedEvents.Validate(supplied, r => { if (r is not null) Id(r); });
                 ImmutableArray<FrozenRuleV1>? rules = null;
                 if (i.Rules is { } rs) { Contract.Array(rs, "rules"); rules = [..rs.Select(r => CognitionAst.Freeze(r, Id))]; }
                 return new ObservationChangeV1(Id(p), !world.Contains(p), i.Name, i.Kind, i.Source, i.Time, i.TimeUnit,
                     i.Detected, i.Existence, i.Move, i.Parent is null ? null : Id(i.Parent), i.Tags,
                     Edges(i.AddRelations), Edges(i.RemoveRelations), Edges(i.DenyRelations), rules,
                     i.Procedure is null ? null : CognitionAst.Freeze(i.Procedure, Id), i.ClearProcedure, i.Forget,
-                    i.KnownTerms, i.Details, i.Origin, i.SourceDependencies);
+                    i.KnownTerms, i.Details, i.Origin, i.SourceDependencies,
+                    TypedEvents.Map(i.Event ?? (i.Target is { Kind: ProjectionKind.Event } ? i.Target.LastObservation?.Event : null)
+                        ?? new ObservationRecordV1<Projection?>(new() {
+                        Subject = p, Time = i.Time, TimeUnit = i.TimeUnit, KnowledgeSource = i.Source,
+                        Origin = i.Origin, Phase = EventPhaseV1.Delivered, Outcome = EventOutcomeV1.Succeeded,
+                        Claims = [..i.Tags.Where(t => t.Value is not null).Select(t => new EventClaimV1<Projection?>(new("core.state"), p, null, null, t.Key, t.Value, Truth.True))]
+                    }), r => r is null ? (SubjectProjectionId?)null : Id(r)));
             }).ToImmutableArray();
             Publish(world, changes, live, expectedRevision, bindings);
             targets = [..incoming];
@@ -153,9 +160,11 @@ public static class Observation
                 DeniedRelations = c.AddRelations.IsEmpty && c.RemoveRelations.IsEmpty && c.DenyRelations.IsEmpty ? p.DeniedRelations : SortEdges(denied),
                 Rules = c.Rules ?? p.Rules, Procedure = c.ClearProcedure || c.Procedure is not null ? c.Procedure : p.Procedure,
                 KnownTerms = c.KnownTerms ?? p.KnownTerms };
-            var dependencies = Dependencies(p).Union(c.SourceDependencies).Append(p.Id).Distinct().OrderBy(IdKey).ToImmutableArray();
+            var dependencies = Dependencies(p).Union(c.SourceDependencies)
+                .Concat(c.Event is null ? [] : TypedEvents.References(c.Event).OfType<SubjectProjectionId>())
+                .Append(p.Id).Distinct().OrderBy(IdKey).ToImmutableArray();
             var observation = new VisibleObservationV1(p.Id, c.Source, c.Time, c.TimeUnit, c.Detected, c.Existence, c.Details,
-                c.Origin, dependencies, SnapshotGraph.StateOf(p));
+                c.Origin, dependencies, SnapshotGraph.StateOf(p), c.Event);
             appended.Add(observation); nodes[p.Id] = p with { LastObservation = observation }; touched.Add(p.Id);
         }
         var forgotten = changes.Where(c => c.Forget).Select(c => c.Target).ToHashSet();
@@ -195,7 +204,8 @@ public static class Observation
         var finalMap = forgotten.Count == 0 && !changes.Any(c => c.Create) && world.ReaderOriginals is { } originals
             ? originals : live.Where(p => nodes.ContainsKey(p.Key)).ToImmutableDictionary();
         ObservationEvent Legacy(VisibleObservationV1 o) => new(finalMap[o.Target], o.Source, o.Time, o.Detected, o.DeclaredExistence,
-            o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, finalMap[r.Target]))]);
+            o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, finalMap[r.Target]))],
+            o.Event is null ? null : TypedEvents.Map(o.Event, r => r is null ? null : finalMap[r.Value]));
         var prepared = touched.Select(id =>
         {
             var p = nodes[id]; var original = finalMap[id]; var old = previous.GetValueOrDefault(id);
@@ -268,5 +278,6 @@ public static class Observation
         Contract.Require(c.SourceDependencies.Distinct().Count() == c.SourceDependencies.Length, ContractErrorCode.MalformedData,
             "source_dependencies", "来源依赖不能重复。");
         SnapshotGraph.Origin(c.Origin);
+        if (c.Event is { } e) TypedEvents.Validate(e, r => { if (r is { } id) Ref(id); });
     }
 }
