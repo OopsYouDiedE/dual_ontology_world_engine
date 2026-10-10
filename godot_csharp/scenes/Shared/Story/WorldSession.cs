@@ -25,6 +25,7 @@ public sealed class WorldEntityExtension
 }
 public sealed class ChapterWorldDefinition
 {
+    public JsonElement Design { get; set; }
     public string Id { get; set; } = "";
     public List<string> Requires { get; set; } = new();
     public List<WorldEntityDefinition> Entities { get; set; } = new();
@@ -73,6 +74,7 @@ public sealed partial class WorldSession : IDisposable
     private readonly Dictionary<string, Planned> _declarations = new(StringComparer.Ordinal);
     private readonly HashSet<string> _loaded = new(StringComparer.Ordinal);
     private readonly List<string> _order = new();
+    private readonly HashSet<string> _endedChapters = new(StringComparer.Ordinal);
     private readonly object _gate = new();
     private bool _disposed;
     public WorldRuntime Runtime { get; }
@@ -217,6 +219,7 @@ public sealed partial class WorldSession : IDisposable
                 }
                 if (item.Space is not null) entity.Add(new SpatialProperty { Space = Find(item.Space) });
             }
+            EndChapterLifetime();
             foreach (var item in plan.Where(p => staged.ContainsKey(p.Id)).OrderBy(p => p.Kind == "room" ? 0 : p.Kind == "object" ? 1 : 2))
             {
                 var entity = staged[item.Id];
@@ -249,6 +252,20 @@ public sealed partial class WorldSession : IDisposable
             RegisterCandidates(chapter.Id, behaviors);
             InvalidateChoiceTokens();
             _loaded.Add(chapter.Id); _order.Add(chapter.Id); CurrentChapter = chapter.Id;
+        }
+    }
+    public void EndChapterLifetime()
+    {
+        lock (_gate)
+        {
+            if (CurrentChapter is not { } owner || _endedChapters.Contains(owner)) return;
+            if (_entities.Values.Any(e => e.Character is { } actor && Simulation.IsActing(actor.Self)))
+                throw new InvalidOperationException("Finish pending actions before ending the chapter lifetime.");
+            RuleLifetimes.End(_entities.Values.Where(e => e.Character is not null).Select(e => e.Character!.Soul), LifetimeScope.Chapter, owner, Simulation.CTB.Now);
+            RuleLifetimes.EndSources(_entities.Values.Select(e => e.Entity), LifetimeScope.Chapter, owner);
+            Runtime.Sync();
+            _endedChapters.Add(owner);
+            InvalidateChoiceTokens();
         }
     }
     private static Planned Read(string id, WorldEntityDefinition definition, string chapter, HashSet<string> known)

@@ -153,7 +153,9 @@ public sealed partial class MorningWorld
         rules.Add(new Rule(new Condition.Exists(mind.Settled), RuleMode.Prefer, mind.Stay, 20, Truth.True));
         mind.Habits = Observation.Observe(soul, new ObservationInput(Chapter1Data.Text("认知·旧物习惯", ("名", Names.Of(who))), ProjectionKind.Concept)
         {
-            Source = ObservationSource.Introspection, Existence = Truth.True, Rules = [..rules]
+            Source = ObservationSource.Introspection, Existence = Truth.True,
+            Rules = DualOntologyWorldEngine.Story.RuleLifetimes.Bind(rules,
+                Chapter1Data.Root.GetProperty("RULE_LIFETIMES").GetProperty("old_object_habits").GetString()!, "awakening")
         });
         _minds[who] = mind;
     }

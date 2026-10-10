@@ -265,6 +265,9 @@ def validate_clock(clock: dict[str, Any], scenes: set[str]) -> None:
 
 def content_data(source) -> dict[str, Any]:
     result = dict(source.CONTENT_TABLES)
+    for scope in result.get("RULE_LIFETIMES", {}).values():
+        if scope not in {"world", "chapter", "interaction"}:
+            raise ValueError("规则有效期须为 world、chapter 或 interaction。")
     result["EVIDENCE"] = {record.id: record.json() for record in source.EVIDENCE}
     result["LIFE_TRACES"] = {
         record.id: {"title": record.title, "room": record.room, "picture": record.picture, "facts": record.facts}

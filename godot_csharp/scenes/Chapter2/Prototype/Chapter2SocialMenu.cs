@@ -5,6 +5,8 @@ public sealed partial class Chapter2InteractionSession
     private void Talk(P who,List<Dictionary<string,object?>> output)
     {
         if (!Local(who)) throw new InvalidOperationException("The actor is not nearby.");
+        _game.BeginInteractionLifetime("talk:" + _game.SlotIndex + ":" + who);
+        _narrative.BeginInteraction();
         var name=Names.Of(who); var he=_game[who].Pro.Pronoun;
         var candidates=new List<(string Id,string Label,PlayerAction Action,int Score)>();
         void Offer(string id,string label,PlayerAction action)
@@ -26,7 +28,7 @@ public sealed partial class Chapter2InteractionSession
         };
         choices.AddRange(candidates.OrderByDescending(c=>c.Score).ThenBy(c=>c.Id,StringComparer.Ordinal).Take(5)
             .Select(c=>(c.Id,c.Label,(Func<bool>)(()=>Local(who)&&_game.HostSocialScore(who,c.Action)>0),(Action<List<Dictionary<string,object?>> >)(o=>Commit(c.Action,o)))));
-        choices.Add(("cancel",_content.Text("menu_cancel"),()=>true,o=>{}));
+        choices.Add(("cancel",_content.Text("menu_cancel"),()=>true,o=> { _game.EndInteractionLifetime(); _narrative.EndLifetime(DualOntologyWorldEngine.Core.LifetimeScope.Interaction); }));
         Menu(_content.Format("menu_talk",("name",name)),choices,output);
     }
 }

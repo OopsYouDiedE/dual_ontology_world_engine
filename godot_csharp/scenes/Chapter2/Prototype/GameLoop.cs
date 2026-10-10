@@ -204,7 +204,7 @@ public sealed partial class Game
     /// <summary>侦探之外的人此时段能不能自主行动。病人在诊疗所；饿过一天的人下午动不了。</summary>
     private bool Available(Person p)
     {
-        if (!HostDormReleased(p)) return false;
+        if (p.M[Way[Where(p)]].Tags.GetValueOrDefault(Passable) < 1) return false;
         if (Get(p.Body, T.Sick) > 0) return false;
         if (p.InjuredDays > 0) return false;
         if (Slot == Slot.Afternoon && Get(p.Body, T.Hungry) > 0) return false;
@@ -334,6 +334,7 @@ public sealed partial class Game
     {
         using var _ = Prof.Time("C:OnCompleted");
         var p = People.FirstOrDefault(x => ReferenceEquals(x.Self, exec.Intent.Actor));
+        if (p is not null && exec.Status == ExecutionStatus.Failed) ObserveFailedAccess(p, exec);
         if (Story?.Owns(exec) == true)
         {
             if (p is not null) { p.Exec = null; p.Doing = null; }

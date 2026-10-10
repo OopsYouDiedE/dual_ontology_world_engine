@@ -47,23 +47,15 @@ public sealed partial class MorningWorld
         var room=body.Get<SpatialProperty>()!.Space!;
         _runtime.Observe(soul,_runtime.Representations(room).Concat(_runtime.Representations(body)),_session.CTB.Now);
     }
-    private bool _continuationExported;
-    // STORY-HARDCODE[AWK-060][logic][production]: 离开生活翼时清除本章旧物牵引习惯，避免它压过后续日常。
+    private LiveChapterWorld? _continuation;
     public LiveChapterWorld ExportContinuation(ChapterSession progress)
     {
-        if (_continuationExported) throw new InvalidOperationException("This live chapter world has already been handed off.");
-        if (Enum.GetValues<Person>().Any(p => StoryBusy(p) ||
-            _runtime.KnownProjection(_souls[p],_bodies[p]) is { } self && _session.IsActing(self)))
+        if (_continuation is not null) return _continuation;
+        if (_dailyPeople.Values.Any(p => p.Hosted is { } person && StoryBusy(person) ||
+            _runtime.KnownProjection(p.Soul, p.Body) is { } self && _session.IsActing(self)))
             throw new InvalidOperationException("Finish pending chapter actions before handing the live world to the next chapter.");
         StopEcology();
-        // 离开生活翼：拿不拿那件旧物的打算系在本章的物件与场所上，到此失效（本人内省得知，不删记忆、不改钩与欲望）。
-        // 否则其中“守着手头的事”等常数偏好会带进下一章，压过那里的一切日常。
-        foreach (var who in _minds.Keys)
-        {
-            var habit = _minds[who].Habits;
-            if (habit is not null)
-                Observation.Observe(_souls[who], new ObservationInput(habit.Name, habit.Kind) { Target = habit, Source = ObservationSource.Introspection, Time = ++_time, Rules = [] });
-        }
+        RuleLifetimes.End(_dailyPeople.Values.Select(p => p.Soul), LifetimeScope.Chapter, "awakening", ++_time);
         var entities = PersistentEntities();
         foreach (var person in Enum.GetValues<Person>())
         {
@@ -86,8 +78,7 @@ public sealed partial class MorningWorld
                 daily.Hosted is { } rulePerson && KnowsRule1(rulePerson));
         }
         if (_scriptWorld is not null) _session.Completed -= _scriptWorld.RefreshAfter;
-        _continuationExported = true;
-        return new(_runtime, _session, entities, people, progress, PersistentSession);
+        return _continuation = new(_runtime, _session, entities, people, progress, PersistentSession);
     }
     private CoreScriptWorld? _scriptWorld;
     public CoreScriptWorld? DefinedScriptWorld => _scriptWorld;

@@ -4,6 +4,7 @@ namespace DualOntologyWorldEngine.Core;
 
 public enum RuleSlot { Actor, Target, Tool, Scene }
 public enum RuleMode { Require, Forbid, Permit, Prefer }
+public enum LifetimeScope { World, Chapter, Interaction }
 public enum ActionOp { Unlock, Travel, Take, Inspect, Destroy, Place }
 
 public abstract record Noun
@@ -47,7 +48,7 @@ public abstract record Effect
 }
 
 public sealed record Rule(Condition Condition, RuleMode Mode, Effect Effect, int Weight = 1,
-    Truth Acceptance = Truth.Unknown);
+    Truth Acceptance = Truth.Unknown, LifetimeScope Lifetime = LifetimeScope.World, string? LifetimeOwner = null);
 
 public sealed record ActionContext(Projection Actor, Projection? Target = null, Projection? Tool = null, Projection? Scene = null)
 {

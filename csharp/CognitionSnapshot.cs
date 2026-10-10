@@ -43,7 +43,7 @@ public abstract record FrozenEffectV1 {
  public sealed record Think(FrozenConditionV1 Fact) : FrozenEffectV1;
 }
 public sealed record FrozenRuleV1(FrozenConditionV1 Condition, RuleMode Mode,
- FrozenEffectV1 Effect, int Weight, Truth Acceptance);
+ FrozenEffectV1 Effect, int Weight, Truth Acceptance, LifetimeScope Lifetime = LifetimeScope.World, string? LifetimeOwner = null);
 
 // Contains complete state, but no LastObservation, avoiding recursive history.
 public sealed record ObservedStateV1(string Name, ProjectionKind Kind, Truth Existence,
@@ -118,4 +118,3 @@ public sealed record CognitionForkV1(DetachedProjectionGraphV1 Graph,
 public sealed record CodecLimitsV1(long MaxBytes = 67108864,
  int MaxProjections = 100000, int MaxAstNodes = 1000000,
  int MaxAstDepth = 256, int MaxHistoryEntries = 1000000);
-

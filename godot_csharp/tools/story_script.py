@@ -45,11 +45,11 @@ SCOPES = {"世界": "world", "章节": "chapter"}
 TAGS = {"信任": "Trust", "合作": "Cooperation", "患病": "Sick", "饥饿": "Hungry", "吃饱": "Fed", "虚弱": "Weak"}
 INTENTS = {"作证": "testimony", "拒绝": "decline"}
 OPS = {"≥": ">=", "≤": "<=", "＜": "<", "＞": ">", "<": "<", ">": ">", "=": "==", "＝": "==", "≠": "!="}
-RESERVED_SCENE_FIELDS = {"事件", "日", "时段"}
+RESERVED_SCENE_FIELDS = {"事件", "日", "时段", "有效期"}
 ECOLOGY_BLOCKS = set(VOCAB_BLOCKS) | {"常数", "地点", "人物"}
 
 
-def validate_continuation_flows(flows: dict, schedule: list, scenes: set[str] | None = None) -> None:
+def validate_continuation_flows(flows: dict, schedule: list, scenes: set[str] | None = None, access: dict | None = None) -> None:
     from compile_story import validate_expr, _expression
     seen = set()
     def condition(node):
@@ -76,9 +76,11 @@ def validate_continuation_flows(flows: dict, schedule: list, scenes: set[str] | 
                 if name.startswith("@"):
                     parts = name[1:].split(":")
                     if not (len(parts) == 1 and parts[0] in {"field", "confront", "council"}
-                            or len(parts) == 2 and parts[0] in {"scene", "dorm_out"} and parts[1]
+                            or len(parts) == 2 and parts[0] == "scene" and parts[1]
+                            or len(parts) == 2 and parts[0] == "dorm_out" and access is not None and parts[1] in access["boundaries"] and access["boundaries"][parts[1]]["kind"] == "dorm"
+                            or len(parts) == 2 and parts[0] == "summon" and access is not None and parts[1] in access["summons"]
                             or len(parts) == 2 and parts[0] == "run" and parts[1] in {"eat_pantry", "class", "collect", "sleep", "stay"}
-                            or len(parts) == 3 and parts[0] == "corridor" and parts[1] in {"north", "east", "archive"} and parts[2] in {"开", "关"}):
+                            or len(parts) == 3 and parts[0] == "corridor" and access is not None and parts[1] in access["boundaries"] and access["boundaries"][parts[1]]["kind"] == "corridor" and parts[2] in {"开", "关"}):
                         raise StoryError(f"未知续篇指令：{name}")
                 elif scenes is not None and name not in scenes:
                     raise StoryError(f"未知续篇场面：{name}")
@@ -420,7 +422,7 @@ class Translator:
             morning["dorm_answers"] = self.design.get("dorm_answers", {})
         self.design = compile_design(self.design_blocks, self)
         if flows:
-            validate_continuation_flows(flows, schedule)
+            validate_continuation_flows(flows, schedule, access=self.design.get("access"))
             self.design["flows"] = flows
             self.design["schedule"] = schedule
             if "夜里·T" not in flows:
@@ -707,6 +709,10 @@ class Translator:
             args.append(f"day={parse_int(found['日'], '日', head.number)}")
         if "时段" in found:
             args.append(f"slot={py(table(self.vocab.mapping('slots'), found['时段'], '时段', head.number))}")
+        scope = found.get("有效期", "chapter")
+        if scope not in {"world", "chapter", "interaction"}:
+            raise StoryError("触发器有效期须为 world、chapter 或 interaction。", head.number)
+        args.append(f"lifetime={py(scope)}")
         self.counter += 1
         self.emit("@sequence(" + ", ".join(args) + ")", head.number)
         self.emit(f"def f{self.counter}():", head.number)
@@ -982,7 +988,7 @@ def compile_story(paths: list[Path], external: set[str], *, ecology_only: bool =
             if design:
                 if "flows" in design:
                     validate_continuation_flows(design["flows"], design["schedule"],
-                                               {scene["id"] for scene in chapter["sequences"]})
+                                               {scene["id"] for scene in chapter["sequences"]}, design.get("access"))
                 chapter["design"] = design
         return document
     except ws.ScriptError as exc:

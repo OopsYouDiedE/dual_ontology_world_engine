@@ -16,10 +16,12 @@ public sealed record NightSnapshot(
     IReadOnlyDictionary<string, IReadOnlyDictionary<Tag, int>> Things,
     IReadOnlyDictionary<int, ImmutableHashSet<Place>> Posted)
 {
-    public IReadOnlyDictionary<string,bool> Corridors { get; init; } = new Dictionary<string,bool>();
-    public IReadOnlySet<Place> ReleasedDorms { get; init; } = new HashSet<Place>();
+    public IReadOnlyDictionary<string,bool> AccessStates { get; init; } = new Dictionary<string,bool>();
     public sealed record PersonState(Place Place, IReadOnlyDictionary<Tag, int> Body, int Desire, int Hooks, int Whispered, int DemonDoubt, bool KnowsHookCost,
-        int HungerStreak, IReadOnlyDictionary<int, Truth> Accepted, IReadOnlyDictionary<P, int> Trust);
+        int HungerStreak, IReadOnlyDictionary<int, Truth> Accepted, IReadOnlyDictionary<P, int> Trust)
+    {
+        public IReadOnlyDictionary<Place, int> Access { get; init; } = new Dictionary<Place, int>();
+    }
 }
 
 public sealed partial class Game
@@ -30,16 +32,15 @@ public sealed partial class Game
     private NightSnapshot CaptureNight() => new(Day,
         People.ToDictionary(p => p.Id, p => new NightSnapshot.PersonState(Where(p),
             new Dictionary<Tag, int>(p.Body.Get<StateProperty>()?.Values ?? []), p.Desire, p.Hooks, p.Whispered, p.DemonDoubt, p.KnowsHookCost, p.HungerStreak,
-            p.Acc.ToDictionary(a => a.Key.Id, a => a.Value), People.Where(o => o != p).ToDictionary(o => o.Id, o => TrustIn(p, o)))),
+            p.Acc.ToDictionary(a => a.Key.Id, a => a.Value), People.Where(o => o != p).ToDictionary(o => o.Id, o => TrustIn(p, o)))
+            { Access = Way.ToDictionary(w => w.Key, w => p.M[w.Value].Tags.GetValueOrDefault(Passable)) }),
         Things.ToDictionary(t => t.TrueName, t => (IReadOnlyDictionary<Tag, int>)new Dictionary<Tag, int>(t.Get<StateProperty>()?.Values ?? [])),
         Specs.ToDictionary(s => s.Id, s => s.PostedAt.ToImmutableHashSet()))
-        { Corridors = new Dictionary<string,bool>(_corridors), ReleasedDorms = _releasedDorms.ToHashSet() };
+        { AccessStates = _boundaries.ToDictionary(b => b.Key, b => BoundaryOpen(b.Value)) };
 
     private void RestoreNight(NightSnapshot snap)
     {
-        foreach (var (key, open) in snap.Corridors) _corridors[key] = open;
-        foreach (var dorm in snap.ReleasedDorms) _releasedDorms.Add(dorm);
-        RefreshAccess();
+        CommitAccess(_boundaries.Select(b => (b.Value, snap.AccessStates.GetValueOrDefault(b.Key, BoundaryOpen(b.Value)))));
         foreach (var thing in Things)
             if (snap.Things.TryGetValue(thing.TrueName, out var values))
                 foreach (var (tag, value) in values) Set(thing, tag, value);
@@ -50,6 +51,12 @@ public sealed partial class Game
         {
             if (!snap.People.TryGetValue(p.Id, out var s)) continue;
             p.Body.Get<SpatialProperty>()!.Space = Space[s.Place];
+            foreach (var (to, passable) in s.Access)
+            {
+                var route = p.M[Way[to]];
+                Observation.Observe(p.Soul, new ObservationInput(route.Name, route.Kind)
+                { Target = route, Source = ObservationSource.Recall, Time = Now, Tags = ImmutableDictionary<Tag, int?>.Empty.Add(Passable, passable) });
+            }
             foreach (var (tag, value) in s.Body) Set(p.Body, tag, value);
             p.Desire = s.Desire; p.Hooks = s.Hooks; p.Whispered = s.Whispered; p.DemonDoubt = s.DemonDoubt; p.KnowsHookCost = s.KnowsHookCost; p.HungerStreak = s.HungerStreak;
             foreach (var spec in Specs)
