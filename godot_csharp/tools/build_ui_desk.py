@@ -4,7 +4,7 @@
 木桌与黄铜油灯；光照分 7 级，级间 4×4 有序抖色，光池以灯脚为中心、纵向略压。
 灯光取低饱和暖白，不用琥珀（恶魔专属）。原生 640×496，按最近邻放大 2 倍到 1280×992；随机种子固定，可重建。
 
-    desk.png        桌面×灯光，含油灯与桌上物件（墨水瓶与蘸水笔、手记与剪报、放大镜、石墨笔；不含光晕）
+    desk.png        整块木桌面×灯光，含油灯与桌上物件（墨水瓶与蘸水笔、放大镜，尺寸按册子定比例；不含光晕）
                     物件按法线逐像素着色，量化到材质色阶，级间同样用有序抖色
     glow.png        灯焰光晕（RGBA，叠加混合；标题页让它轻微闪动）
     book_light.png  册子表面的乘色光照（屏幕坐标，标题页的册子着色器按屏幕 UV 取样）
@@ -24,9 +24,12 @@ OUT = Path(__file__).resolve().parents[1] / "ShareAsset" / "Internal" / "Props" 
 W, H, S = 640, 496, 2
 ELEV_K = 0.5               # 竖直高度在画面上的缩短（cos 60°）
 ELEV_Q = 0.87              # 水平圆的纵横比（sin 60°）
-LAMP_SCALE = 1.4           # 油灯尺寸倍率
-INK_SCALE = 1.5            # 墨水瓶尺寸倍率
-FOOT = (92, 150)           # 灯脚（光池中心）
+# 尺寸按册子定比例：册子 A5（148 mm 宽）在原生画面上 290 px，约 1.96 px/mm。
+MM = 1.96
+LAMP_SCALE = 3.2           # 油灯尺寸倍率（底盘约 80 mm）
+INK_SCALE = 3.2            # 墨水瓶尺寸倍率（瓶身约 42 mm）
+MAG_SCALE = 2.9            # 放大镜尺寸倍率（镜片约 50 mm）
+FOOT = (52, 170)           # 灯脚（光池中心），靠左上外移，灯身一部分出画
 FLAME_HEIGHT = round(38 * LAMP_SCALE)   # 火焰离桌面的高度（原生像素）
 FLAME = (FOOT[0], FOOT[1] - round(FLAME_HEIGHT * ELEV_K))
 SQUASH = 1 / ELEV_Q
@@ -50,28 +53,53 @@ def ell(x: float, y: float, rx: float, ry: float) -> bool:
     return (x / rx) ** 2 + (y / ry) ** 2 <= 1
 
 
+def value_noise(seed: int, cell: float):
+    rng = random.Random(seed)
+    table = {}
+
+    def at(ix: int, iy: int) -> float:
+        key = (ix, iy)
+        if key not in table:
+            table[key] = rng.random()
+        return table[key]
+
+    def sample(x: float, y: float) -> float:
+        cx, cy = x / cell, y / cell
+        ix, iy = math.floor(cx), math.floor(cy)
+        tx, ty = cx - ix, cy - iy
+        sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
+        a = at(ix, iy) * (1 - sx) + at(ix + 1, iy) * sx
+        b = at(ix, iy + 1) * (1 - sx) + at(ix + 1, iy + 1) * sx
+        return a * (1 - sy) + b * sy
+    return sample
+
+
 def wood() -> Image.Image:
-    rng = random.Random(7)
+    """整块木桌面：一块板，没有拼缝。纹线近乎平行、贯穿全宽，间距不匀、缓慢漂移；
+    细纤维沿横向拉长；右下一个节疤，纹线绕开它。三档明暗，档间有序抖色。"""
+    drift = value_noise(7, 260.0)       # 纹线整体的缓慢起伏
+    spacing = value_noise(11, 60.0)     # 纹距的疏密
+    fibre = value_noise(19, 3.0)        # 细纤维（横向拉长取样）
+    knot = (520, 410)
     im = Image.new("RGB", (W, H))
     px = im.load()
-    base = [(120, 78, 50), (112, 72, 46), (126, 84, 54)]
-    plank_h = 40
-    seams = {row: rng.randrange(0, W) for row in range(H // plank_h + 2)}
-    phase = [rng.random() * 6.28 for _ in range(32)]
+    tones = [(96, 60, 38), (112, 72, 46), (126, 84, 54)]
     for y in range(H):
-        row, yy = y // plank_h, y % plank_h
-        c0 = base[row % 3]
         for x in range(W):
-            g = math.sin(x * 0.045 + phase[row % 32] + math.sin(x * 0.011 + row) * 2.2 + yy * 0.42)
-            k = 0.88 + (0.12 if g > 0.55 else 0) - (0.08 if g < -0.75 else 0)
-            c = tuple(int(v * k) for v in c0)
-            if yy == 0:
-                c = (46, 28, 20)
-            elif yy == 1:
-                c = tuple(int(v * 0.8) for v in c0)
-            if x == seams[row]:
-                c = (52, 32, 22)
-            px[x, y] = c
+            kx, ky = (x - knot[0]) / 2.2, y - knot[1]
+            kd = math.hypot(kx, ky)
+            bend = 18.0 * math.exp(-kd / 20.0) * (1 if ky >= 0 else -1)
+            yy = y + 30.0 * drift(x, y * 0.6) + bend
+            phase = yy * 0.22 + 6.0 * spacing(x * 0.4, yy)
+            line = abs(math.sin(phase)) ** 6           # 细而暗的纹线
+            band = spacing(x * 0.25, yy * 1.5)          # 早材晚材的宽窄色带
+            g = 0.55 * line + 0.3 * band + 0.25 * fibre(x * 0.12, y)
+            if kd < 9:
+                g = 0.25 + 0.6 * (math.sin(kd * 1.1) * 0.5 + 0.5)
+            v = max(0.0, min(1.0, 1.0 - g)) * (len(tones) - 1)
+            lo = int(v)
+            i = min(len(tones) - 1, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))
+            px[x, y] = tones[i]
     return im
 
 
@@ -82,12 +110,7 @@ def wood() -> Image.Image:
 BRASS = [(44, 30, 18), (78, 56, 30), (120, 90, 46), (166, 128, 66), (206, 170, 98), (236, 212, 150), (255, 244, 212)]
 INK_GLASS = [(10, 12, 18), (20, 24, 36), (34, 40, 60), (52, 62, 90), (84, 98, 128), (150, 162, 186), (226, 230, 236)]
 WOOD_DARK = [(26, 16, 10), (44, 28, 18), (68, 44, 28), (96, 64, 40), (128, 90, 58), (170, 128, 86)]
-CEDAR = [(54, 36, 22), (92, 62, 38), (132, 94, 58), (172, 128, 82), (206, 162, 108), (232, 196, 140)]
-PAPER = [(60, 52, 46), (96, 84, 72), (136, 120, 100), (176, 158, 130), (210, 194, 160), (232, 220, 188), (246, 238, 214)]
-GRAPHITE = [(22, 22, 26), (40, 40, 46), (62, 62, 70), (96, 96, 106), (150, 150, 160)]
 GLASS = [(96, 84, 70), (150, 136, 112), (200, 188, 160), (232, 222, 196), (248, 242, 224), (255, 252, 240)]
-HAND_INK = (47, 59, 87)
-PRINT_INK = (40, 34, 30)
 
 
 def ramp(colors, v: float, x: int, y: int):
@@ -114,7 +137,7 @@ def light_at(x: float, y: float, lift: float = 24.0):
     return norm((FLAME[0] - x, FLAME[1] - y, lift))
 
 
-def lit(n, x: int, y: int, ambient=0.18, gloss=0.0, power=24, lift=40.0) -> float:
+def lit(n, x: int, y: int, ambient=0.18, gloss=0.0, power=24, lift=90.0) -> float:
     """漫反射 + 高光，乘上此处的灯光强度。"""
     L = light_at(x, y, lift)
     diffuse = max(0.0, dot(n, L))
@@ -215,7 +238,7 @@ def lamp3d(cv: Canvas) -> None:
     k = LAMP_SCALE
     y_at = lambda h: fy - h * k * ELEV_K
     shadow_ellipse(cv, cx + 3 * k, fy + 2 * k, 30 * k, 30 * k * ELEV_Q, 0.45)
-    cylinder(cv, cx, y_at(6), y_at(0), 24 * k, 24 * k * ELEV_Q, BRASS, gloss=0.35, top_v=0.62)
+    cylinder(cv, cx, y_at(6), y_at(0), 24 * k, 24 * k * ELEV_Q, BRASS, gloss=0.15)
     sphere(cv, cx, y_at(22), 17 * k, 17 * k, BRASS, gloss=0.55)
     cylinder(cv, cx, y_at(44), y_at(36), 8 * k, 8 * k * ELEV_Q, BRASS, gloss=0.6)
     cylinder(cv, cx, y_at(48), y_at(44), 11 * k, 11 * k * ELEV_Q, BRASS, gloss=0.6, top_v=0.7)
@@ -274,8 +297,8 @@ def inkwell(cv: Canvas, cx: int, fy: int) -> None:
     cylinder(cv, cx, fy - 18 * k * ELEV_K, fy, 13 * k, 13 * k * ELEV_Q, INK_GLASS, gloss=0.45, top_v=0.3)
     cylinder(cv, cx, fy - 24 * k * ELEV_K, fy - 18 * k * ELEV_K, 5 * k, 5 * k * ELEV_Q, INK_GLASS, gloss=0.45, top_v=0.38)
     mouth = fy - 24 * k * ELEV_K
-    for y in range(int(mouth) - 6, int(mouth) + 7):
-        for x in range(cx - 6, cx + 7):
+    for y in range(int(mouth - 4 * k), int(mouth + 4 * k) + 1):
+        for x in range(int(cx - 4 * k), int(cx + 4 * k) + 1):
             if ell(x - cx, y - mouth, 3 * k, 3 * k * ELEV_Q):
                 cv.put(x, y, (8, 9, 14))
     # 瓶肩一道弧形反光（朝灯一侧）
@@ -285,71 +308,16 @@ def inkwell(cv: Canvas, cx: int, fy: int) -> None:
         cv.put(int(round(cx + 11 * k * math.cos(theta))), int(round(top + 11 * k * ELEV_Q * math.sin(theta))), INK_GLASS[5])
 
 
-def sheet(cv: Canvas, cx, cy, w, h, angle_deg, kind: str, seed: int) -> list:
-    """一页散纸：kind = hand（本人手记，笔迹色短划）或 print（剪报，两栏印刷灰块与一道标题）。返回四角。"""
-    rng = random.Random(seed)
-    a = math.radians(angle_deg)
-    ca, sa = math.cos(a), math.sin(a)
-    def to_local(x, y):
-        dx, dy = x - cx, y - cy
-        return dx * ca + dy * sa + w / 2, -dx * sa + dy * ca + h / 2
-    corners = [(cx + (u - w / 2) * ca - (v - h / 2) * sa, cy + (u - w / 2) * sa + (v - h / 2) * ca) for u, v in ((0, 0), (w, 0), (w, h), (0, h))]
-    xs = [p[0] for p in corners]
-    ys = [p[1] for p in corners]
-    # 纸很薄：影子只偏 2、3 像素
-    for y in range(int(min(ys)), int(max(ys)) + 4):
-        for x in range(int(min(xs)), int(max(xs)) + 4):
-            u, v = to_local(x - 2, y - 3)
-            if 0 <= u < w and 0 <= v < h:
-                cv.darken(x, y, 0.6)
-    marks = {}
-    if kind == "hand":
-        for row in range(12, h - 8, 7):
-            u = 10 + rng.randint(0, 4)
-            while u < w - 10:
-                length = rng.randint(4, 14)
-                if rng.random() > 0.12:
-                    for k in range(length):
-                        marks[(u + k, row + (1 if rng.random() < 0.15 else 0))] = HAND_INK
-                u += length + rng.randint(2, 4)
-            if rng.random() < 0.25:
-                row += 3
-    else:
-        for u in range(8, w - 8):
-            for v in (9, 10, 11):
-                if rng.random() < 0.85:
-                    marks[(u, v)] = PRINT_INK
-        col_w = (w - 22) // 2
-        for col in range(2):
-            u0 = 8 + col * (col_w + 6)
-            for row in range(18, h - 6, 3):
-                for u in range(u0, u0 + col_w):
-                    if rng.random() < 0.55:
-                        marks[(u, row)] = PRINT_INK
-    for y in range(int(min(ys)) - 1, int(max(ys)) + 2):
-        for x in range(int(min(xs)) - 1, int(max(xs)) + 2):
-            u, v = to_local(x, y)
-            if not (0 <= u < w and 0 <= v < h):
-                continue
-            light = desk_light(x, y) * 1.08
-            ink = marks.get((int(u), int(v)))
-            if ink is not None:
-                k = 0.35 + 0.65 * light
-                cv.put(x, y, tuple(int(c * k) for c in ink))
-            else:
-                cv.put(x, y, ramp(PAPER, light, x, y))
-    return corners
-
-
 def magnifier(cv: Canvas, cx: int, cy: int) -> None:
     """侦探的放大镜：黄铜圆框（3/4 俯视成椭圆）、短柄；镜片下的纸被放大得更亮，内缘一道高光。"""
-    rx, ring = 17.0, 3.2
+    k = MAG_SCALE
+    rx, ring = 17.0 * k, 3.2 * k
     ry = rx * ELEV_Q
     handle_a = (cx + rx * 0.72, cy + ry * 0.72)
-    handle_b = (cx + rx * 0.72 + 15, cy + ry * 0.72 + 11)
-    stroke(cv, (handle_a[0] - 2, handle_a[1] - 1.5), (handle_a[0] + 3, handle_a[1] + 2), 4, BRASS)
-    stroke(cv, (handle_a[0] + 3, handle_a[1] + 2), handle_b, 4, WOOD_DARK)
-    shadow_ellipse(cv, cx + 3, cy + 4, rx + 1, ry + 1, 0.7)
+    handle_b = (cx + rx * 0.72 + 15 * k, cy + ry * 0.72 + 11 * k)
+    shadow_ellipse(cv, cx + 4 * k, cy + 5 * k, rx + 1, ry + 1, 0.62)
+    stroke(cv, (handle_a[0] - 2 * k, handle_a[1] - 1.5 * k), (handle_a[0] + 3 * k, handle_a[1] + 2 * k), 4 * k, BRASS, shadow=(3, 5))
+    stroke(cv, (handle_a[0] + 3 * k, handle_a[1] + 2 * k), handle_b, 4 * k, WOOD_DARK, shadow=(3, 5))
     for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
         for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
             outer = ell(x - cx, y - cy, rx, ry)
@@ -363,37 +331,23 @@ def magnifier(cv: Canvas, cx: int, cy: int) -> None:
             theta = math.atan2((y - cy) / ry, (x - cx) / rx)
             n = norm((math.cos(theta), math.sin(theta) - 0.3, 0.8))
             cv.put(x, y, ramp(BRASS, lit(n, x, y, gloss=0.9), x, y))
-    for i in range(14):
-        theta = math.radians(200 + i * 4)
+    for i in range(40):
+        theta = math.radians(198 + i * 1.5)
         x = int(round(cx + (rx - ring - 1.5) * math.cos(theta)))
         y = int(round(cy + (ry - ring * ELEV_Q - 1.2) * math.sin(theta)))
         cv.put(x, y, (252, 246, 228))
 
 
-def pencil(cv: Canvas, a, b) -> None:
-    """石墨笔：木杆，削尖的一端露出木色锥面与笔芯。"""
-    def colors(s):
-        if s > 0.94:
-            return GRAPHITE
-        if s > 0.84:
-            return CEDAR[2:]
-        return CEDAR
-    stroke(cv, a, b, 3, colors)
-
-
-def dip_pen(cv: Canvas, a, b) -> None:
-    """蘸水笔：深色木杆，前端一截黄铜笔舌。"""
-    stroke(cv, a, b, 3, lambda s: BRASS if s > 0.86 else WOOD_DARK)
+def dip_pen(cv: Canvas, a, b, width: float = 9) -> None:
+    """蘸水笔：深色木杆渐细，前端一截黄铜笔舌（约 160 mm 长、5 mm 粗）。"""
+    stroke(cv, a, b, width, lambda s: BRASS if s > 0.84 else WOOD_DARK, shadow=(3, 5))
 
 
 def desk_objects(cv: Canvas) -> None:
+    magnifier(cv, 150, 318)
+    inkwell(cv, 86, 452)
+    dip_pen(cv, (150, 492), (300, 404))
     lamp3d(cv)
-    sheet(cv, 178, 302, 96, 124, 7, "print", 3)
-    sheet(cv, 146, 286, 92, 120, -9, "hand", 5)
-    pencil(cv, (100, 240), (166, 222))
-    magnifier(cv, 170, 350)
-    inkwell(cv, 74, 446)
-    dip_pen(cv, (104, 468), (186, 438))
 
 
 def glow() -> Image.Image:
@@ -403,11 +357,11 @@ def glow() -> Image.Image:
     for y in range(H):
         for x in range(W):
             d = math.hypot(x - FLAME[0], (y - FLAME[1]) * 1.05)
-            v = max(0.0, 1 - d / 120.0) ** 1.4 * 3
+            v = max(0.0, 1 - d / 170.0) ** 1.4 * 3
             lo = int(v)
             lv = min(3, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))
             if lv:
-                px[x, y] = (255, 238, 200, (0, 34, 70, 120)[lv])
+                px[x, y] = (255, 238, 200, (0, 24, 50, 88)[lv])
     return im
 
 
