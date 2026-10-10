@@ -181,4 +181,48 @@ foreach (var nested in new[] { false, true })
         && CognitionCodec.Decode(JsonSerializer.SerializeToUtf8Bytes(invalidOwner)) is ContractResult<CognitionGraphArchiveV1>.Failure
         { Error.Code: ContractErrorCode.MalformedData }, nested + " infer_decode_rejects_executable_effect_and_ownerless_lifetime");
 }
+foreach (var nested in new[] { false, true })
+{
+    var soul = new SoulEssence("neutral observer");
+    Projection Add(string name, ProjectionKind kind = ProjectionKind.Concept, Projection? parent = null)
+        => Observation.Observe(soul, new(name, kind) { Existence = Truth.True, Parent = parent, Move = parent is not null });
+    var room = Add("room", ProjectionKind.Space);
+    var actor = Add("actor", ProjectionKind.Body, nested ? room : null);
+    var target = Add("target"); var tool = Add("tool");
+    var material = Add("material", ProjectionKind.Object);
+    var candidate = Add("candidate");
+    Condition P(Noun noun, string tag) => new Condition.Tagged(noun, new(tag), 1);
+    var p = P(actor, "p"); var q = P(actor, "q");
+    Observation.Observe(soul, new(candidate.Name, candidate.Kind) { Target = candidate,
+        Rules = [new(new Condition.Constant(Truth.True), RuleMode.Infer, new Effect.Think(q), Acceptance: Truth.Unknown)] });
+    Observation.Observe(soul, new(material.Name, material.Kind) { Target = material,
+        Rules = [new(new Condition.Constant(Truth.True), RuleMode.Infer, new Effect.Think(p), Acceptance: Truth.True)] });
+    FrozenConditionV1 F(Condition condition) => Ok(CognitionAst.FreezeCondition(condition, soul.World.Projections.ToImmutableDictionary(p => p.SubjectId!.Value)));
+    CognitionSnapshotV1 Capture() => Ok(soul.World.CaptureSnapshot());
+    SubjectiveReasoner Reason(int depth = 8) => new(Capture(), actor.SubjectId!.Value, new(depth, 4096, 16));
+    Check(Reason().Claims(candidate.SubjectId!.Value).Length == 1 && Reason().Prove(F(q)).Value == Truth.Unknown,
+        nested + " proposed_claim_is_not_accepted_belief");
+    Observation.Observe(soul, new(material.Name, material.Kind) { Target = material, Existence = Truth.False });
+    var remembered = Reason();
+    Check(remembered.Prove(F(p)).Value == Truth.True && !remembered.Presentable(material.SubjectId!.Value),
+        nested + " destroyed_source_retains_content_but_cannot_be_presented");
+    var law = Add("law", ProjectionKind.Procedure);
+    Observation.Observe(soul, new(law.Name, law.Kind) { Target = law,
+        Rules = [new(P(new Noun.Slot(RuleSlot.Actor), "p"), RuleMode.Infer, new Effect.Think(q), Acceptance: Truth.True),
+            new(new Condition.Constant(Truth.True), RuleMode.Infer, new Effect.Think(P(new Noun.Slot(RuleSlot.Target), "target-known")), Acceptance: Truth.True),
+            new(new Condition.Constant(Truth.True), RuleMode.Infer, new Effect.Think(P(new Noun.Slot(RuleSlot.Tool), "tool-known")), Acceptance: Truth.True)] });
+    Check(Reason().Prove(F(q)).Value == Truth.True, nested + " actor_slot_matches_explicit_subject_reference");
+    var bound = new SubjectiveReasoner(Capture(), actor.SubjectId!.Value, new(8, 4096, 16), target.SubjectId, tool.SubjectId);
+    Check(bound.Prove(F(P(target, "target-known"))).Value == Truth.True && bound.Prove(F(P(tool, "tool-known"))).Value == Truth.True,
+        nested + " target_and_tool_slots_match_explicit_context");
+    Check(Reason().Prove(F(P(new Noun.Slot(RuleSlot.Target), "target-known"))).Value == Truth.Unknown
+        && Reason().Prove(F(P(target, "target-known"))).Value == Truth.Unknown,
+        nested + " unbound_slots_remain_unknown");
+    var shallow = Reason(0); var longProof = shallow.Prove(F(q)); var shortProof = shallow.Prove(F(p));
+    Check(!longProof.Complete && shortProof.Value == Truth.True && shortProof.Complete && shallow.StopReason == "depth_budget",
+        nested + " query_completion_is_independent_of_round_depth_stop");
+    var one = new SubjectiveReasoner(Capture(), actor.SubjectId!.Value, new(8, 1, 16));
+    Check(!one.Prove(F(q)).Complete && !one.Prove(F(p)).Complete && one.Expansions == 1,
+        nested + " round_expansion_exhaustion_remains_shared");
+}
 Console.WriteLine($"TOTAL {checks} checks");

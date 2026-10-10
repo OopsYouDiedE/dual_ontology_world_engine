@@ -51,8 +51,13 @@ public partial class GameEngine : Node
     {
         try
         {
-            var entries = offers.Select(v => FromDictionary(v.AsGodotDictionary())).Select(o => new PlayerFieldOffer(
-                ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"), ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"))).ToArray();
+            var entries = offers.Select(v => FromDictionary(v.AsGodotDictionary())).Select(o =>
+            {
+                var point = (o.GetValueOrDefault("location") as IEnumerable<object?> ?? []).ToArray();
+                return new PlayerFieldOffer(ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"),
+                    ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"))
+                { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null };
+            }).ToArray();
             Session.ObserveAgentField(entries);
             return "";
         }

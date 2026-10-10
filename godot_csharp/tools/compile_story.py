@@ -481,6 +481,26 @@ def generated_files(story: Path = SOURCE, *, require_line_ids: bool = True) -> d
         raise ValueError("duplicate life trace id")
     document = dialogue_document(source.CHAPTER.entries)
     assign_choice_ids(document["entries"])
+    if "KNOWLEDGE" in source.RULES_DATA:
+        from story_knowledge import validate_knowledge
+        speakers, choices = {}, set()
+        def visible_nodes(node):
+            if isinstance(node, dict):
+                if node.get("op") == "line":
+                    speakers[node.get("line_id", "")] = node.get("speaker", "")
+                if node.get("label_id"):
+                    choices.add(node["id"])
+                for value in node.values(): visible_nodes(value)
+            elif isinstance(node, list):
+                for value in node: visible_nodes(value)
+        visible_nodes(document)
+        for evidence in source.EVIDENCE:
+            choices.add("card:" + evidence.id + ":experiment")
+            for person in source.CONTENT_TABLES["PERSON_NAMES"]:
+                choices.add("card:" + evidence.id + ":compare:" + person)
+        validate_knowledge(source.RULES_DATA["KNOWLEDGE"], {e.id for e in source.EVIDENCE},
+            source.CONTENT_TABLES["STATEMENTS"], {v["key"]: len(v["options"]) for v in source.CONTENT_TABLES["VARIABLES"]}, speakers, choices,
+            {s.id for s in source.SITES} | {s["id"] for s in source.EXTRA_SITES})
     for entry_id, instructions in document["entries"].items():
         validate_instructions(instructions, entry_id)
     content = content_data(source)

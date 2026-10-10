@@ -3,7 +3,7 @@ extends SceneTree
 ## stage acknowledgements and continuous GameSession; never loads a probe.
 const EngineScript := preload("res://scenes/Host/GameEngine.cs")
 const FieldScript := preload("res://scenes/Shared/Field/WorldView.gd")
-const Navigation := preload("res://scenes/Shared/FieldNavigation.gd")
+const PlayerNavigation := preload("res://tools/virtual_player_navigation.gd")
 const ManuscriptPanel := preload("res://scenes/UI/Panels/Manuscript/ReplayManuscript.tscn")
 const CampusPanel := preload("res://scenes/UI/Panels/CampusMap/CampusMap.tscn")
 
@@ -19,14 +19,17 @@ var replay_run_label := ""
 var snapshot: Dictionary = {}
 var seed := 0
 var target_days := 3
+var chapter_limit := 0
+var completed_chapters := 0
 var selection_limit := 10000
-var observation_limit := 20000
+var observation_limit := 100000
 var wall_limit := 600.0
 var idle_limit := 30.0
 var started := 0
 var progressed := 0
 var sequence := 0
 var seen_public_states := {}
+var last_decision: Dictionary = {}
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -35,12 +38,12 @@ func _run() -> void:
 	var settings := {}
 	for argument in OS.get_cmdline_user_args():
 		var pieces := argument.split("=", true, 1)
-		if pieces.size() != 2 or not pieces[0] in ["--seed", "--days", "--max-selections", "--max-observations", "--max-seconds", "--no-progress-seconds", "--declarations", "--output"] or settings.has(pieces[0]):
+		if pieces.size() != 2 or not pieces[0] in ["--seed", "--days", "--max-chapters", "--max-selections", "--max-observations", "--max-seconds", "--no-progress-seconds", "--declarations", "--output"] or settings.has(pieces[0]):
 			push_error("Invalid or duplicate virtual-player argument: " + argument)
 			quit(2)
 			return
 		settings[pieces[0]] = pieces[1]
-	for key in ["--seed", "--days", "--max-selections", "--max-observations"]:
+	for key in ["--seed", "--days", "--max-chapters", "--max-selections", "--max-observations"]:
 		if settings.has(key) and not str(settings[key]).is_valid_int():
 			push_error("Expected an integer: " + key)
 			quit(2)
@@ -56,11 +59,12 @@ func _run() -> void:
 		quit(2)
 		return
 	target_days = int(settings.get("--days", "3"))
+	chapter_limit = int(settings.get("--max-chapters", "0"))
 	selection_limit = int(settings.get("--max-selections", "10000"))
-	observation_limit = int(settings.get("--max-observations", "20000"))
+	observation_limit = int(settings.get("--max-observations", "100000"))
 	wall_limit = float(settings.get("--max-seconds", "600"))
 	idle_limit = float(settings.get("--no-progress-seconds", "30"))
-	if not settings.has("--declarations") or not settings.has("--output") or target_days < 1 or selection_limit < 0 or observation_limit < 1 or wall_limit <= 0 or idle_limit <= 0:
+	if not settings.has("--declarations") or not settings.has("--output") or target_days < 1 or chapter_limit < 0 or selection_limit < 0 or observation_limit < 1 or wall_limit <= 0 or idle_limit <= 0:
 		push_error("Required: --declarations=<compiled story> --output=<new JSONL>; budgets must be nonnegative/positive.")
 		quit(2)
 		return
@@ -83,7 +87,7 @@ func _run() -> void:
 	engine = EngineScript.new()
 	root.add_child(engine)
 	engine.ConfigureAgent(FileAccess.get_file_as_string(settings["--declarations"]), seed, selection_limit, observation_limit)
-	_record("start", {"seed": seed, "rng": "xorshift32-v1", "target_days": target_days, "max_selections": selection_limit, "max_observations": observation_limit, "max_seconds": wall_limit, "no_progress_seconds": idle_limit})
+	_record("start", {"seed": seed, "rng": "xorshift32-v1", "target_days": target_days, "max_chapters": chapter_limit, "max_selections": selection_limit, "max_observations": observation_limit, "max_seconds": wall_limit, "no_progress_seconds": idle_limit})
 	_send({"kind": "start"})
 	if not engine.AgentEnabled():
 		_stop("agent_not_declared")
@@ -99,7 +103,7 @@ func _run() -> void:
 		if int(time.get("Day", 0)) >= target_days:
 			_stop("target_day_reached")
 			return
-		if float(now - progressed) / 1000.0 >= idle_limit:
+		if not draining and float(now - progressed) / 1000.0 >= idle_limit:
 			_stop("no_public_progress")
 			return
 		if draining: continue
@@ -132,6 +136,8 @@ func _run() -> void:
 			_stop("selection_budget")
 			return
 		var decision: Dictionary = JSON.parse_string(engine.AgentDecideJson())
+		decision["GameTime"] = JSON.parse_string(engine.AgentTimeJson())
+		last_decision = decision
 		_record("decision", decision)
 		if decision.get("Token") == null:
 			_stop(str(decision.get("Reason", "agent_cannot_assess")))
@@ -225,7 +231,14 @@ func _drain() -> void:
 				var input: Dictionary = ev.input
 				if str(input.action) == "interact": field._approach(str(input.site))
 				elif str(input.action) == "move": field._route_click(Vector2(float(input.point[0]), float(input.point[1])))
-			"lines", "card", "form", "candidates", "ending":
+			"ending":
+				panel = ""
+				modal = true
+				completed_chapters += 1
+				_record("chapter_end", {"count": completed_chapters, "observation": JSON.parse_string(engine.AgentObservationJson())})
+				if chapter_limit > 0 and completed_chapters >= chapter_limit:
+					_stop("chapter_limit")
+			"lines", "card", "form", "candidates":
 				panel = ""
 				modal = true
 			"close":
@@ -245,13 +258,9 @@ func _field_offers() -> Array:
 	var offers := []
 	for id in field.sites:
 		if not field.site_visible(id): continue
-		offers.append({"label": str(field.sites[id].title), "kind": "interact", "new": field.site_is_new(id), "input": {"kind": "field_action", "action": "interact", "site": id}})
-	var grid: AStarGrid2D = field.adapter.nav_grid(field.player)
-	for heading in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
-		var destination: Vector2 = field.player.position + heading.normalized() * 64.0
-		if not field.in_sight(destination) or not field.adapter.walkable(destination, field.player): continue
-		if Navigation.route_on_grid(field.player.position, destination, grid).is_empty(): continue
-		offers.append({"label": "%d,%d" % [destination.x, destination.y], "kind": "move", "new": false, "input": {"kind": "field_action", "action": "move", "point": [destination.x, destination.y]}})
+		var point: Vector2 = field.site_point(id)
+		offers.append({"label": str(field.sites[id].title), "kind": "interact", "new": field.site_is_new(id), "location": [point.x, point.y], "input": {"kind": "field_action", "action": "interact", "site": id}})
+	offers.append_array(PlayerNavigation.offers(field))
 	if bool(snapshot.get("controls", {}).get("wait", false)):
 		offers.append({"label": "T", "kind": "wait", "new": false, "input": {"kind": "action", "act": {"cmd": "stay"}}})
 	for shortcut in [{"key": "Tab", "panel": "notebook"}, {"key": "R", "panel": "manuscript"}, {"key": "M", "panel": "campus"}]:
@@ -268,6 +277,8 @@ func _stop(reason: String) -> void:
 	if stopping: return
 	stopping = true
 	var summary := {"seed": seed, "target_days": target_days, "time": JSON.parse_string(engine.AgentTimeJson()) if engine else null, "reason": reason, "selections": engine.AgentSelections() if engine else 0, "elapsed_seconds": float(Time.get_ticks_msec() - started) / 1000.0}
+	summary["last_reasoning"] = last_decision
+	summary["chapters_completed"] = completed_chapters
 	if is_instance_valid(field) and field.player != null:
 		summary["visible_position"] = [field.player.position.x, field.player.position.y]
 	_record("stop", summary)

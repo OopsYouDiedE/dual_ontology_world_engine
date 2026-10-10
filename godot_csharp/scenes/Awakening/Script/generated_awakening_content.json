@@ -2109,6 +2109,1127 @@
       "封着名录库"
     ]
   },
+  "KNOWLEDGE": {
+    "propositions": {
+      "bolt_down": "内闩落在闩槽里",
+      "ash_wedge": "木楔和灰对应门缝",
+      "boots_toward_bolt": "靴印朝着插闩",
+      "boots_fit": "靴印与我的鞋底相同",
+      "cloth_after_boots": "湿布压住鞋跟边缘",
+      "fork_dent": "音叉与门框的凹痕",
+      "frame_hollow": "门框后有空管",
+      "score_partial": "乐谱的字头缺失且记了两遍",
+      "score_in_room": "乐谱留在苏泠房间",
+      "slate_marks": "石板两行速记与放大镜图样",
+      "slate_code": "⊥是闩，✕开是不许开，⊥✓是闩好了",
+      "slate_person": "石板小图代人，画手里常拿的东西",
+      "lens_mine": "我的口袋有放大镜",
+      "pipe_layout": "铜管通到门框与苏泠房间，接头松动",
+      "sound_trial": "我实际听过声路试验",
+      "heads_lost": "管中声音发闷，字头容易丢",
+      "cups_preferences": "四只杯子留下不同饮茶习惯",
+      "cups_known": "沈鼎不用问就知道各人怎样喝茶",
+      "starter_layers": "活酵种罐有层层旧面痕",
+      "starter_kept": "沈鼎认出长期续养的手法",
+      "shelf_old": "架上物件曾摆过很久",
+      "hand_not_mine": "架沿手印不是我的",
+      "recalled_bolt": "我回想起听霍铎的话闩门",
+      "recalled_trust": "我回想起自己信霍铎",
+      "recalled_copper": "霍铎回想起守在铜口旁",
+      "recalled_names": "沈鼎回想起各人的称呼与饮茶习惯",
+      "me": "是我闩的门",
+      "remote_voice": "声音从主楼铜口经管接头漏到门边",
+      "words_bolt": "喊的是闩门别开",
+      "familiar": "四人早已相熟",
+      "trust_reason": "我因早已相熟而信霍铎",
+      "su_room": "警铃响时苏泠在她房里",
+      "su_hall": "警铃响时苏泠在活动厅",
+      "su_pantry": "警铃响时苏泠在备餐间",
+      "huo_copper": "警铃响时霍铎在铜口旁",
+      "huo_room": "警铃响时霍铎在他房里",
+      "huo_foyer": "警铃响时霍铎在门厅",
+      "heed_huo": "我信霍铎",
+      "heed_su": "我更信苏泠",
+      "heed_neither": "我谁都不全信，自己去看"
+    },
+    "bindings": [
+      {
+        "kind": "card",
+        "key": "E1",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "bolt_down"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E2",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "ash_wedge"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E3",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "boots_toward_bolt"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E4",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "cloth_after_boots"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E5",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "fork_dent"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E6",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "score_partial",
+          "score_in_room"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E7",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "slate_marks"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E8",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "pipe_layout"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E9",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "cups_preferences"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E10",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "starter_layers"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E11",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "shelf_old"
+        ]
+      },
+      {
+        "kind": "card",
+        "key": "E12",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "lens_mine"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "exp_E3.002",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "boots_fit"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E5.004",
+        "source": "testimony",
+        "reliability": 90,
+        "speaker": "苏泠",
+        "act": "assert",
+        "propositions": [
+          "frame_hollow"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E7.003",
+        "source": "testimony",
+        "reliability": 90,
+        "speaker": "霍铎",
+        "act": "assert",
+        "propositions": [
+          "slate_code"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E7.005",
+        "source": "testimony",
+        "reliability": 90,
+        "speaker": "霍铎",
+        "act": "assert",
+        "propositions": [
+          "slate_person"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E9.003",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "沈鼎",
+        "act": "assert",
+        "propositions": [
+          "cups_known"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E10.002",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "沈鼎",
+        "act": "assert",
+        "propositions": [
+          "starter_kept"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "help_E11_detective.002",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "",
+        "act": "assert",
+        "propositions": [
+          "hand_not_mine"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "sound_test.003",
+        "source": "perception",
+        "reliability": 100,
+        "speaker": "侦探（心声）",
+        "act": "assert",
+        "propositions": [
+          "sound_trial"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "sound_test.007",
+        "source": "testimony",
+        "reliability": 90,
+        "speaker": "苏泠",
+        "act": "assert",
+        "propositions": [
+          "heads_lost"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "recall_detective.002",
+        "source": "memory",
+        "reliability": 85,
+        "speaker": "侦探（心声）",
+        "act": "recall",
+        "propositions": [
+          "recalled_bolt",
+          "recalled_trust"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "recall_huo.003",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "霍铎",
+        "act": "assert",
+        "propositions": [
+          "recalled_copper"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "recall_shen.003",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "沈鼎",
+        "act": "assert",
+        "propositions": [
+          "recalled_names"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "alone_huo.002",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "霍铎",
+        "act": "assert",
+        "propositions": [
+          "recalled_copper"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "alone_shen.002",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "沈鼎",
+        "act": "assert",
+        "propositions": [
+          "recalled_names"
+        ]
+      },
+      {
+        "kind": "line",
+        "key": "talk_huo_menu.029",
+        "source": "testimony",
+        "reliability": 85,
+        "speaker": "霍铎",
+        "act": "assert",
+        "propositions": [
+          "recalled_copper"
+        ]
+      },
+      {
+        "kind": "question",
+        "key": "answer_q1.001",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "铜口",
+        "act": "ask",
+        "propositions": [
+          "me"
+        ]
+      },
+      {
+        "kind": "question",
+        "key": "answer_q2.001",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "铜口",
+        "act": "ask",
+        "propositions": [
+          "remote_voice"
+        ]
+      },
+      {
+        "kind": "question",
+        "key": "answer_q3.001",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "铜口",
+        "act": "ask",
+        "propositions": [
+          "words_bolt"
+        ]
+      },
+      {
+        "kind": "question",
+        "key": "answer_q4.001",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "铜口",
+        "act": "ask",
+        "propositions": [
+          "trust_reason"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "me",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "me"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V1_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_room"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V1_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_hall"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V1_2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_pantry"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V2_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_copper"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V2_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_room"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V2_2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_foyer"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V3_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "remote_voice"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V3_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!remote_voice"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V4_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "words_bolt"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V4_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!words_bolt"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V5_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_huo"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V5_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_su"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V5_2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_neither"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "trust",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "trust_reason"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V6_0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!familiar"
+        ]
+      },
+      {
+        "kind": "statement",
+        "key": "V6_1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "familiar"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V1:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_room"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V1:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_hall"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V1:2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "su_pantry"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V2:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_copper"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V2:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_room"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V2:2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "huo_foyer"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V3:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "remote_voice"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V3:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!remote_voice"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V4:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "words_bolt"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V4:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!words_bolt"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V5:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_huo"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V5:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_su"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V5:2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "heed_neither"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V6:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "!familiar"
+        ]
+      },
+      {
+        "kind": "variable",
+        "key": "V6:1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "familiar"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "card:E1:experiment",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "recalled_bolt",
+          "recalled_trust"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "card:E3:experiment",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "boots_fit"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "card:E8:experiment",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "sound_trial",
+          "heads_lost"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "recall_ask_detective:choice:0",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "recalled_bolt",
+          "recalled_trust"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "talk_huo_menu:choice:4",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "slate_code",
+          "slate_person"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "talk_huo_menu:choice:8",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "recalled_copper"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "talk_shen_menu:choice:3",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "starter_kept"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "talk_shen_menu:choice:4",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "cups_known"
+        ]
+      },
+      {
+        "kind": "choice",
+        "key": "talk_su_menu:choice:2",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "frame_hollow"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E1",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "bolt_down",
+          "recalled_bolt",
+          "recalled_trust"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E3",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "boots_toward_bolt"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E6",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "score_partial",
+          "score_in_room"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E7",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "slate_marks",
+          "slate_code",
+          "slate_person"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E8",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "pipe_layout",
+          "sound_trial",
+          "heads_lost",
+          "me",
+          "remote_voice",
+          "words_bolt",
+          "trust_reason"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E9",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "cups_preferences",
+          "cups_known"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E10",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "starter_layers",
+          "starter_kept"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "E12",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "lens_mine"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "huo",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "slate_code",
+          "slate_person",
+          "recalled_copper"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "shen",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "cups_known",
+          "starter_kept",
+          "recalled_names"
+        ]
+      },
+      {
+        "kind": "field",
+        "key": "su",
+        "source": "proposal",
+        "reliability": 0,
+        "speaker": "",
+        "act": "propose",
+        "propositions": [
+          "frame_hollow",
+          "heads_lost"
+        ]
+      }
+    ],
+    "implications": [
+      {
+        "premises": [
+          "recalled_bolt",
+          "boots_toward_bolt",
+          "boots_fit"
+        ],
+        "conclusion": "me"
+      },
+      {
+        "premises": [
+          "slate_marks",
+          "slate_code",
+          "slate_person",
+          "lens_mine"
+        ],
+        "conclusion": "me"
+      },
+      {
+        "premises": [
+          "recalled_bolt"
+        ],
+        "conclusion": "me"
+      },
+      {
+        "premises": [
+          "recalled_bolt",
+          "bolt_down"
+        ],
+        "conclusion": "me"
+      },
+      {
+        "premises": [
+          "pipe_layout",
+          "sound_trial",
+          "heads_lost"
+        ],
+        "conclusion": "remote_voice"
+      },
+      {
+        "premises": [
+          "frame_hollow",
+          "pipe_layout",
+          "heads_lost"
+        ],
+        "conclusion": "remote_voice"
+      },
+      {
+        "premises": [
+          "slate_code",
+          "slate_marks"
+        ],
+        "conclusion": "words_bolt"
+      },
+      {
+        "premises": [
+          "score_partial",
+          "heads_lost",
+          "slate_code"
+        ],
+        "conclusion": "words_bolt"
+      },
+      {
+        "premises": [
+          "recalled_copper"
+        ],
+        "conclusion": "huo_copper"
+      },
+      {
+        "premises": [
+          "cups_preferences",
+          "cups_known"
+        ],
+        "conclusion": "familiar"
+      },
+      {
+        "premises": [
+          "starter_layers",
+          "starter_kept"
+        ],
+        "conclusion": "familiar"
+      },
+      {
+        "premises": [
+          "recalled_names"
+        ],
+        "conclusion": "familiar"
+      },
+      {
+        "premises": [
+          "recalled_trust"
+        ],
+        "conclusion": "heed_huo"
+      },
+      {
+        "premises": [
+          "recalled_trust",
+          "familiar"
+        ],
+        "conclusion": "trust_reason"
+      },
+      {
+        "premises": [
+          "su_room"
+        ],
+        "conclusion": "!su_hall"
+      },
+      {
+        "premises": [
+          "su_room"
+        ],
+        "conclusion": "!su_pantry"
+      },
+      {
+        "premises": [
+          "huo_copper"
+        ],
+        "conclusion": "!huo_room"
+      },
+      {
+        "premises": [
+          "huo_copper"
+        ],
+        "conclusion": "!huo_foyer"
+      },
+      {
+        "premises": [
+          "heed_huo"
+        ],
+        "conclusion": "!heed_su"
+      },
+      {
+        "premises": [
+          "heed_huo"
+        ],
+        "conclusion": "!heed_neither"
+      }
+    ]
+  },
   "TEXT": {
     "章名": "门的这一侧",
     "认知·登船·名": "登船",

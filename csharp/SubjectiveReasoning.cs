@@ -5,7 +5,13 @@ namespace DualOntologyWorldEngine.Core;
 public sealed record ReasoningBudgetV1(int Depth = 1, int Expansions = 256, int Hypotheses = 16);
 public sealed record SubjectiveProofV1(FrozenConditionV1 Proposition, Truth Value, bool Contradicted,
     bool Hypothetical, ImmutableArray<SubjectProjectionId> Basis, ImmutableArray<string> Steps)
-{ public bool Complete { get; init; } = true; }
+{
+    public bool Complete { get; init; } = true;
+    public ImmutableArray<SubjectiveDerivationV1> Derivations { get; init; } = [];
+    public ImmutableArray<FrozenConditionV1> Missing { get; init; } = [];
+}
+public sealed record SubjectiveDerivationV1(FrozenConditionV1 Conclusion, SubjectProjectionId Source,
+    ImmutableArray<FrozenConditionV1> Premises);
 public sealed record SubjectiveHypothesisV1(string Label, ImmutableArray<FrozenConditionV1> Assumptions);
 public sealed record SubjectivePredictionV1(string Label, bool Compatible, ImmutableArray<SubjectiveProofV1> Predictions);
 public sealed record SubjectiveInquiryV1(FrozenConditionV1 Proposition, int DiscriminatingPairs,
@@ -25,6 +31,7 @@ public sealed class SubjectiveReasoner
     private readonly ActionContext _context;
     private readonly ReasoningBudgetV1 _budget;
     private readonly List<Implication> _beliefs = [];
+    private readonly List<Implication> _claims = [];
     private int _expanded;
     private string _stop = "complete";
     public ImmutableArray<FrozenConditionV1> KnownQueries { get; }
@@ -32,29 +39,48 @@ public sealed class SubjectiveReasoner
     public int Expansions => _expanded;
     public string StopReason => _stop;
 
-    public SubjectiveReasoner(CognitionSnapshotV1 snapshot, SubjectProjectionId actor, ReasoningBudgetV1 budget)
+    public SubjectiveReasoner(CognitionSnapshotV1 snapshot, SubjectProjectionId actor, ReasoningBudgetV1 budget,
+        SubjectProjectionId? target = null, SubjectProjectionId? tool = null, SubjectProjectionId? scene = null)
     {
         if (budget.Depth is < 0 or > 64 || budget.Expansions is < 1 or > 100000 || budget.Hypotheses is < 1 or > 4096)
             throw new ArgumentOutOfRangeException(nameof(budget));
         _snapshot = snapshot; _budget = budget; _graph = SnapshotGraph.Build(snapshot);
         Contract.Id(actor, snapshot.SubjectWorld, "actor");
         Contract.Require(_graph.Projections.ContainsKey(actor), ContractErrorCode.InvalidReference, "actor", "推理主体不在认知图。");
-        _context = new(_graph.Projections[actor], Scene: _graph.Projections[actor].Parent);
-        foreach (var p in snapshot.Projections.Where(p => p.Existence == Truth.True))
-            foreach (var rule in p.Rules.Where(r => r.Mode == RuleMode.Infer && r.Acceptance == Truth.True))
-                Learn(rule.Effect, Premises(rule.Condition), p.Id);
-        KnownQueries = [.._beliefs.SelectMany(b => b.Premises.Append(b.Conclusion)).Distinct()];
+        Projection? Bound(SubjectProjectionId? id) => id is null ? null : _graph.Projections.TryGetValue(id.Value, out var p) ? p
+            : throw new CognitionContractException(new(ContractErrorCode.InvalidReference, "context", "槽位引用须属于本人认知图。"));
+        _context = new(_graph.Projections[actor], Bound(target), Bound(tool), scene is null ? _graph.Projections[actor].Parent : Bound(scene));
+        // An acquired assertion is remembered even when its physical source ceases
+        // to exist. Forgetting explicitly removes it; existence only gates display.
+        foreach (var p in snapshot.Projections)
+            foreach (var rule in p.Rules.Where(r => r.Mode == RuleMode.Infer && r.Acceptance != Truth.False))
+                Learn(rule.Effect, Premises(Normalize(rule.Condition)), p.Id, rule.Acceptance == Truth.True);
+        KnownQueries = [.._claims.SelectMany(b => b.Premises.Append(b.Conclusion)).Distinct()];
     }
     private static ImmutableArray<FrozenConditionV1> Premises(FrozenConditionV1 condition)
         => condition is FrozenConditionV1.Constant { Value: Truth.True } ? []
             : condition is FrozenConditionV1.All all ? all.Items : [condition];
     public ImmutableArray<FrozenConditionV1> Claims(SubjectProjectionId source)
-        => [.._beliefs.Where(b => b.Basis == source && b.Premises.Length == 0).Select(b => b.Conclusion)];
-    private void Learn(FrozenEffectV1? effect, ImmutableArray<FrozenConditionV1> premises, SubjectProjectionId basis)
+        => [.._claims.Where(b => b.Basis == source && b.Premises.Length == 0).Select(b => b.Conclusion)];
+    public bool Presentable(SubjectProjectionId source) => _graph.Projections.TryGetValue(source, out var p) && p.Existence == Truth.True;
+    private FrozenConditionV1 Normalize(FrozenConditionV1 condition)
+        => CognitionAst.Freeze(Ast.Map(CognitionAst.Thaw(condition, _graph.Projections), noun =>
+            _context.Resolve(noun) is { } p ? new Noun.Reference(p) : noun), p => p.SubjectId!.Value);
+    private bool Unbound(FrozenConditionV1 condition)
     {
-        if (effect is FrozenEffectV1.Think thought) _beliefs.Add(new(premises, thought.Fact, basis));
+        var missing = false;
+        Ast.Map(CognitionAst.Thaw(condition, _graph.Projections), noun => { missing |= _context.Resolve(noun) is null; return noun; });
+        return missing;
+    }
+    private void Learn(FrozenEffectV1? effect, ImmutableArray<FrozenConditionV1> premises, SubjectProjectionId basis, bool accepted)
+    {
+        if (effect is FrozenEffectV1.Think thought)
+        {
+            var claim = new Implication(premises, Normalize(thought.Fact), basis);
+            _claims.Add(claim); if (accepted) _beliefs.Add(claim);
+        }
         else if (effect is FrozenEffectV1.When when)
-            Learn(when.Body, premises.AddRange(Premises(when.Condition)), basis);
+            Learn(when.Body, premises.AddRange(Premises(Normalize(when.Condition))), basis, accepted);
         // Other executable effects and preferences never become knowledge rules.
     }
     private bool Equal(FrozenConditionV1 a, FrozenConditionV1 b) => Contract.Value(Ast.Equivalent(a, b));
@@ -75,20 +101,23 @@ public sealed class SubjectiveReasoner
         _expanded++; return true;
     }
     public SubjectiveProofV1 Prove(FrozenConditionV1 proposition, ImmutableArray<SubjectProjectionId>? evidence = null)
-        => Prove(proposition, [], evidence, 0, []);
+        => Prove(Normalize(proposition), [], evidence, 0, []);
     private SubjectiveProofV1 Prove(FrozenConditionV1 goal, ImmutableArray<FrozenConditionV1> assumptions,
         ImmutableArray<SubjectProjectionId>? evidence, int depth, List<FrozenConditionV1> visiting)
     {
         var refs = References(goal); // validates all references in this subject, even when a budget is exhausted
         if (evidence is { } restricted)
             foreach (var id in restricted) Contract.Require(_graph.Projections.ContainsKey(id), ContractErrorCode.InvalidReference, "evidence", "证据不在本人认知图。");
-        SubjectiveProofV1 Unknown(string reason) => new(goal, Truth.Unknown, false, false, [], [reason]) { Complete = reason == "cycle" };
+        SubjectiveProofV1 Unknown(string reason) => new(goal, Truth.Unknown, false, false, [], [reason]) { Complete = reason == "cycle", Missing = [goal] };
         if (!Spend()) return Unknown("expansion_budget");
         if (depth > _budget.Depth) { if (_stop == "complete") _stop = "depth_budget"; return Unknown("depth_budget"); }
+        if (Unbound(goal)) return new(goal, Truth.Unknown, false, false, [], ["unbound_slot"]) { Missing = [goal] };
         if (visiting.Any(p => Equal(p, goal))) return Unknown("cycle");
         var value = evidence is null || refs.All(evidence.Value.Contains) ? Observed(goal) : Truth.Unknown;
         var basis = value == Truth.Unknown ? new HashSet<SubjectProjectionId>() : refs.ToHashSet();
-        var steps = new List<string>(); var supported = value == Truth.True; var denied = value == Truth.False; var hypothetical = false;
+        var steps = new List<string>(); var supported = value == Truth.True; var denied = value == Truth.False; var hypothetical = false; var complete = true;
+        var derivations = new List<SubjectiveDerivationV1>(); var missing = new List<FrozenConditionV1>();
+        void Include(SubjectiveProofV1 proof) { derivations.AddRange(proof.Derivations); missing.AddRange(proof.Missing); }
         if (value != Truth.Unknown) steps.Add("acquired_state");
         if (assumptions.Any(p => Equal(p, goal))) { supported = true; hypothetical = true; steps.Add("assumption"); }
         if (assumptions.Any(p => p is FrozenConditionV1.Not n && Equal(n.Operand, goal)))
@@ -101,7 +130,8 @@ public sealed class SubjectiveReasoner
             var components = conjunction.Items.Select(p => Prove(p, assumptions, evidence, depth + 1, next)).ToArray();
             if (components.All(p => p.Value == Truth.True && !p.Contradicted)) supported = true;
             if (components.Any(p => p.Value == Truth.False)) denied = true;
-            foreach (var proof in components) { basis.UnionWith(proof.Basis); hypothetical |= proof.Hypothetical; }
+            foreach (var proof in components) { basis.UnionWith(proof.Basis); hypothetical |= proof.Hypothetical; Include(proof); }
+            complete &= components.All(p => p.Complete);
             steps.Add("conjunction");
         }
         if (goal is FrozenConditionV1.Any disjunction)
@@ -109,7 +139,8 @@ public sealed class SubjectiveReasoner
             var components = disjunction.Items.Select(p => Prove(p, assumptions, evidence, depth + 1, next)).ToArray();
             if (components.Any(p => p.Value == Truth.True && !p.Contradicted)) supported = true;
             if (components.All(p => p.Value == Truth.False)) denied = true;
-            foreach (var proof in components) { basis.UnionWith(proof.Basis); hypothetical |= proof.Hypothetical; }
+            foreach (var proof in components) { basis.UnionWith(proof.Basis); hypothetical |= proof.Hypothetical; Include(proof); }
+            complete &= components.All(p => p.Complete);
             steps.Add("disjunction");
         }
         if (goal is FrozenConditionV1.Not not)
@@ -118,26 +149,32 @@ public sealed class SubjectiveReasoner
             if (operand.Value == Truth.False || operand.Contradicted) supported = true;
             if (operand.Value == Truth.True || operand.Contradicted) denied = true;
             basis.UnionWith(operand.Basis); hypothetical |= operand.Hypothetical; steps.Add("negation");
+            complete &= operand.Complete;
+            Include(operand);
         }
         foreach (var belief in _beliefs)
         {
-            if (!Spend()) break;
             if (evidence is { } allowed && !allowed.Contains(belief.Basis)) continue;
             var positive = Equal(belief.Conclusion, goal);
             var negative = belief.Conclusion is FrozenConditionV1.Not n && Equal(n.Operand, goal)
                 || goal is FrozenConditionV1.Not g && Equal(belief.Conclusion, g.Operand);
             if (!positive && !negative) continue;
+            if (Unbound(belief.Conclusion)) continue;
+            if (!Spend()) { complete = false; break; }
             var proofs = belief.Premises.Select(p => Prove(p, assumptions, evidence, depth + 1, next)).ToArray();
-            if (!proofs.All(p => p.Value == Truth.True && !p.Contradicted)) continue;
+            complete &= proofs.All(p => p.Complete);
+            if (!proofs.All(p => p.Value == Truth.True && !p.Contradicted)) { foreach (var proof in proofs) missing.AddRange(proof.Missing); continue; }
             if (positive) supported = true; if (negative) denied = true;
             basis.Add(belief.Basis);
-            foreach (var proof in proofs) { basis.UnionWith(proof.Basis); steps.AddRange(proof.Steps); hypothetical |= proof.Hypothetical; }
+            foreach (var proof in proofs) { basis.UnionWith(proof.Basis); steps.AddRange(proof.Steps); hypothetical |= proof.Hypothetical; Include(proof); }
+            derivations.Add(new(belief.Conclusion, belief.Basis, belief.Premises));
             steps.Add(belief.Premises.Length == 0 ? "acquired_assertion" : "conditional_entailment");
         }
         if (supported && denied) steps.Add("conflicting_acquired_material");
         return new(goal, supported == denied ? Truth.Unknown : supported ? Truth.True : Truth.False,
             supported && denied, hypothetical, [..basis.OrderBy(id => id.Local)], [..steps.Distinct()])
-            { Complete = _stop == "complete" };
+            { Complete = complete, Derivations = [..derivations.Distinct()],
+                Missing = supported != denied ? [] : missing.Count > 0 ? [..missing.Distinct()] : [goal] };
     }
     public SubjectiveReasoningResultV1 Explore(ImmutableArray<FrozenConditionV1> traces,
         ImmutableArray<SubjectiveHypothesisV1> hypotheses)
@@ -148,7 +185,8 @@ public sealed class SubjectiveReasoner
         {
             if (_stop == "expansion_budget") break;
             foreach (var assumption in hypothesis.Assumptions) References(assumption);
-            var predicted = traces.Select(q => Prove(q, hypothesis.Assumptions, null, 0, [])).ToImmutableArray();
+            var assumptions = hypothesis.Assumptions.Select(Normalize).ToImmutableArray();
+            var predicted = traces.Select(q => Prove(Normalize(q), assumptions, null, 0, [])).ToImmutableArray();
             var compatible = hypothesis.Assumptions.All(p => Observed(p) != Truth.False)
                 && predicted.All(p => !p.Contradicted)
                 && !proofs.Zip(predicted).Any(pair => pair.First.Value != Truth.Unknown && pair.Second.Value != Truth.Unknown && pair.First.Value != pair.Second.Value);

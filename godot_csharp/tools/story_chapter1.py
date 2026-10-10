@@ -1283,6 +1283,9 @@ def load(path: Path) -> Chapter1Source:
                 unique(truth, key, value, "真相", head.number)
         elif word == "判定":
             unique(source.RULES_DATA.setdefault("VERDICTS", {}), rest, read_verdict(rest, head, body), "判定", head.number)
+        elif text in {"认知命题", "认知接线", "推知关系"}:
+            from story_knowledge import read_knowledge_block
+            read_knowledge_block(source.RULES_DATA.setdefault("KNOWLEDGE", {}), head, body)
         elif word == "证物":
             ident, _, name = rest.partition(" ")
             f = read_fields(body)
