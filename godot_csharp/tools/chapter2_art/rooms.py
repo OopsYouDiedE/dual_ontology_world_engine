@@ -9,6 +9,24 @@ from __future__ import annotations
 
 CELL = 32
 
+# Stable text slots; geometry recipes below remain independent of their wording.
+TEXT_SITES = {
+    "living_hall": ('watch_point', 'hall_notice', 'fireplace'),
+    "zone_jia": ('transmitter', 'zone_rules', 'isolation_gate'),
+    "zone_yi": ('transmitter', 'zone_rules', 'isolation_gate', 'bed'),
+    "zone_bing": ('transmitter', 'zone_rules', 'isolation_gate'),
+    "zone_ding": ('transmitter', 'zone_rules', 'isolation_gate'),
+    "central_hall": ('relay', 'mouthpiece', 'central_notice', 'watch_point'),
+    "lecture": ('blackboard', 'timetable'),
+    "archive": ('lock_core', 'seal_boxes', 'name_warning', 'red_ink', 'watch_point'),
+    "counterweight": ('counterweight',),
+    "resonance": ('step_marks', 'silent_door'),
+    "clinic": ('reagent', 'empty_bowl'),
+    "logistics": ('ration_counter', 'ledger', 'ration_notice', 'watch_point'),
+    "granary": ('latch', 'stock'),
+    "greenhouse": ('valve', 'gauge'),
+}
+
 
 class Plan:
     def __init__(self, w: int, h: int, fill: str = "#"):
@@ -142,7 +160,7 @@ def zone(label: str) -> dict:
              "drape": [F("Screen", "folding_screen", P(28, 11, 0, 26)), F("MusicStand", "music_stand", P(24, 12, 0, 20))],
              "tile": [F("MedCabinet", "medicine_cabinet", P(23, 11, 30, 26))]}[z["extra"]]
     furniture += extra
-    room = dict(key=ZONE_KEY[label], title=f"{label}区", rows=p.rows(), regions=regions,
+    room = dict(key=ZONE_KEY[label], title_key=f"资源.地图.{ZONE_KEY[label]}.标题", rows=p.rows(), regions=regions,
                 floor={"room": z["floor"], "corridor": "plank", "hall": z["floor"], "prep": "quarry", "wc": "whitetile",
                        "foyer": "flagstone", "store": "plank", "default": "plank"},
                 wall={"room": z["wall"], "corridor": ("plaster", "CREAM"), "hall": z["wall"], "prep": ("tile",),
@@ -150,13 +168,13 @@ def zone(label: str) -> dict:
                 decor=decor, floor_work=floor_work, furniture=furniture,
                 exits=[exit_("isolation_gate", 35, 11, 36, 13, "living_hall", HALL_DOOR[label])],
                 spawns={"from_hall": P(34, 12, 0, 16)},
-                sites=[{"id": "transmitter", "point": P(25, 4, 0, 8), "label": "铜口"},
-                       {"id": "zone_rules", "point": P(28, 4, 0, 8), "label": "公告框"},
-                       {"id": "isolation_gate", "point": P(34, 12, 16, 0), "label": "隔离门"}])
+                sites=[{"id": "transmitter", "point": P(25, 4, 0, 8), "label_key": f"资源.场点.{ZONE_KEY[label]}.transmitter.标签"},
+                       {"id": "zone_rules", "point": P(28, 4, 0, 8), "label_key": f"资源.场点.{ZONE_KEY[label]}.zone_rules.标签"},
+                       {"id": "isolation_gate", "point": P(34, 12, 16, 0), "label_key": f"资源.场点.{ZONE_KEY[label]}.isolation_gate.标签"}])
     if z["east"]:
         room = mirror(room)
     if room["key"] == "zone_yi":
-        room["sites"].append({"id": "bed", "point": (858, 196), "label": "bed"})
+        room["sites"].append({"id": "bed", "point": (858, 196), "label_key": "资源.场点.zone_yi.bed.标签"})
     return room
 
 
@@ -238,9 +256,9 @@ def living_hall() -> dict:
     spawns = {"north_door": P(8, 3, 0, 8), "west_north": P(1, 8, 20, 16), "west_south": P(1, 24, 20, 16),
               "east_north": P(14, 8, 12, 16), "east_south": P(14, 24, 12, 16), "west_lane": P(1, 16, 20, 16),
               "east_lane": P(14, 16, 12, 16)}
-    sites = [{"id": "watch_point", "point": P(8, 19, 0, 16), "label": "守夜点"}, {"id": "hall_notice", "point": P(11, 4, 0, 8), "label": "生活翼公告板"},
-             {"id": "fireplace", "point": P(4, 4, 0, 8), "label": "壁炉"}]
-    return dict(key="living_hall", title="起居厅", rows=p.rows(), regions=regions,
+    sites = [{"id": "watch_point", "point": P(8, 19, 0, 16), "label_key": "资源.场点.living_hall.watch_point.标签"}, {"id": "hall_notice", "point": P(11, 4, 0, 8), "label_key": "资源.场点.living_hall.hall_notice.标签"},
+             {"id": "fireplace", "point": P(4, 4, 0, 8), "label_key": "资源.场点.living_hall.fireplace.标签"}]
+    return dict(key="living_hall", title_key="资源.地图.living_hall.标题", rows=p.rows(), regions=regions,
                 floor={"hall": "parquet", "bath": "whitetile"}, wall={"hall": ("plaster", "CREAM"), "bath": ("tile",)},
                 decor=decor, floor_work=floor_work, furniture=furniture, exits=exits, spawns=spawns, sites=sites)
 
@@ -279,15 +297,15 @@ def central_hall() -> dict:
                  F("NoticeN", "timetable_board", P(9, 3, 8, 30)), F("PillarSW", "notice_pillar", P(7, 18, 0, 20)),
                  F("PillarSE", "notice_pillar", P(19, 18, 0, 20)), F("BenchW", "bench", P(5, 12, 0, 20)),
                  F("BenchE", "bench", P(21, 12, 0, 20)), F("BenchSW", "bench", P(8, 21, 0, 10)), F("BenchSE", "bench", P(18, 21, 0, 10))]
-    return dict(key="central_hall", title="中央厅", rows=p.rows(), regions=[],
+    return dict(key="central_hall", title_key="资源.地图.central_hall.标题", rows=p.rows(), regions=[],
                 floor={"default": "flagstone"}, wall={"default": ("paper", "SAGE", "stars", "BRASS")},
                 decor=[("sconce", 9 * CELL, 2), ("sconce", 17 * CELL, 2), ("painting", 10 * CELL + 16, 2, "lighthouse"), ("painting", 16 * CELL - 16, 2, "sea")],
                 floor_work=[("mosaic", 13 * CELL, 13 * CELL + 8, 104)], furniture=furniture,
                 exits=[exit_("north", 12, 0, 14, 1, "campus", "hall_north"), exit_("south", 12, 25, 14, 26, "campus", "hall_south"),
                        exit_("west", 0, 12, 1, 14, "lecture", "from_central"), exit_("east", 25, 12, 26, 14, "campus", "hall_east")],
                 spawns={"north": P(13, 3, 0, 16), "south": P(13, 23, 0, 8), "west": P(2, 13, 16, 16), "east": P(24, 13, 0, 16)},
-                sites=[{"id": "relay", "point": P(13, 14, 0, 8), "label": "传声中继"}, {"id": "mouthpiece", "point": P(11, 15, 0, 0), "label": "铜口"},
-                       {"id": "central_notice", "point": P(6, 7, 0, 0), "label": "中央公告板"}, {"id": "watch_point", "point": P(13, 20, 0, 0), "label": "守夜点"}])
+                sites=[{"id": "relay", "point": P(13, 14, 0, 8), "label_key": "资源.场点.central_hall.relay.标签"}, {"id": "mouthpiece", "point": P(11, 15, 0, 0), "label_key": "资源.场点.central_hall.mouthpiece.标签"},
+                       {"id": "central_notice", "point": P(6, 7, 0, 0), "label_key": "资源.场点.central_hall.central_notice.标签"}, {"id": "watch_point", "point": P(13, 20, 0, 0), "label_key": "资源.场点.central_hall.watch_point.标签"}])
 
 
 # ----------------------------------------------------------------- 讲堂 ----
@@ -304,12 +322,12 @@ def lecture() -> dict:
     floor_work = [("stage", CELL, 3 * CELL, 20 * CELL, 2 * CELL + 8)]
     for row in (8, 10, 12, 14):
         floor_work.append(("steps", CELL, row * CELL + 34, 20 * CELL, 1, False))
-    return dict(key="lecture", title="讲堂", rows=p.rows(), regions=[], floor={"default": "plank"},
+    return dict(key="lecture", title_key="资源.地图.lecture.标题", rows=p.rows(), regions=[], floor={"default": "plank"},
                 wall={"default": ("panel",)}, decor=[("sconce", 4 * CELL, 1), ("sconce", 17 * CELL, 1), ("side_door", 21, 9, 2, "e")],
                 floor_work=floor_work, furniture=furniture,
                 exits=[exit_("east", 21, 9, 22, 11, "central_hall", "west")],
                 spawns={"from_central": P(20, 10, 0, 16)},
-                sites=[{"id": "blackboard", "point": P(11, 5, 0, 8), "label": "黑板"}, {"id": "timetable", "point": P(18, 4, 0, 8), "label": "课表"}])
+                sites=[{"id": "blackboard", "point": P(11, 5, 0, 8), "label_key": "资源.场点.lecture.blackboard.标签"}, {"id": "timetable", "point": P(18, 4, 0, 8), "label_key": "资源.场点.lecture.timetable.标签"}])
 
 
 # ------------------------------------------------------------- 名录库 ----
@@ -334,7 +352,7 @@ def archive() -> dict:
                  F("ChairA", "chair_back", P(19, 14, 0, 26)), F("ChairB", "chair_back", P(24, 14, 0, 26)),
                  F("PlanCabinet", "plan_cabinet", P(18, 12, 0, 14)), F("WorksShelfA", "archive_shelf", P(22, 12, 0, 14)),
                  F("WorksShelfB", "archive_shelf", P(25, 12, 0, 14))]
-    return dict(key="archive", title="名录库·文献工房", rows=p.rows(), regions=regions,
+    return dict(key="archive", title_key="资源.地图.archive.标题", rows=p.rows(), regions=regions,
                 floor={"vault": "slate", "works": "honey", "foyer": "flagstone"},
                 wall={"vault": ("panel",), "works": ("paper", "LINEN", "lattice", "CLARET"), "foyer": ("ashlar", "STONE")},
                 decor=[("sconce", 4 * CELL, 10), ("sconce", 12 * CELL, 10), ("window", 21 * CELL, 10, 28), ("sconce", 25 * CELL, 10),
@@ -342,21 +360,21 @@ def archive() -> dict:
                 floor_work=[("stairwell", CELL + 4, 14 * CELL + 4, 2 * CELL - 8, 4 * CELL - 8)], furniture=furniture,
                 exits=[exit_("south", 7, 18, 9, 19, "campus", "archive_front"), exit_("down", 1, 16, 3, 18, "counterweight", "from_stairs")],
                 spawns={"south": P(8, 17, 0, 16), "stairs": P(3, 15, 16, 16)},
-                sites=[{"id": "lock_core", "point": P(8, 12, 0, 0), "label": "库门锁芯"}, {"id": "seal_boxes", "point": P(8, 5, 0, 0), "label": "封存匣"},
-                       {"id": "name_warning", "point": P(5, 12, 0, 0), "label": "唤名警告"}, {"id": "red_ink", "point": P(19, 15, 0, 0), "label": "规程页"},
-                       {"id": "watch_point", "point": P(10, 16, 0, 0), "label": "守夜点"}])
+                sites=[{"id": "lock_core", "point": P(8, 12, 0, 0), "label_key": "资源.场点.archive.lock_core.标签"}, {"id": "seal_boxes", "point": P(8, 5, 0, 0), "label_key": "资源.场点.archive.seal_boxes.标签"},
+                       {"id": "name_warning", "point": P(5, 12, 0, 0), "label_key": "资源.场点.archive.name_warning.标签"}, {"id": "red_ink", "point": P(19, 15, 0, 0), "label_key": "资源.场点.archive.red_ink.标签"},
+                       {"id": "watch_point", "point": P(10, 16, 0, 0), "label_key": "资源.场点.archive.watch_point.标签"}])
 
 
 def counterweight() -> dict:
     p = Plan(14, 11)
     p.room(1, 1, 13, 10)
     p.fill(1, 7, 3, 10, "S")
-    return dict(key="counterweight", title="配重室", rows=p.rows(), regions=[], floor={"default": "slate"},
+    return dict(key="counterweight", title_key="资源.地图.counterweight.标题", rows=p.rows(), regions=[], floor={"default": "slate"},
                 wall={"default": ("ashlar", "STONE")}, decor=[("sconce", 10 * CELL, 1)],
                 floor_work=[("steps", CELL, 7 * CELL, 2 * CELL, 3, False)],
                 furniture=[F("Engine", "counterweight_engine", P(7, 5, 0, 20))],
                 exits=[exit_("up", 1, 7, 3, 8, "archive", "stairs")], spawns={"from_stairs": P(2, 8, 16, 16)},
-                sites=[{"id": "counterweight", "point": P(7, 6, 0, 0), "label": "配重"}])
+                sites=[{"id": "counterweight", "point": P(7, 6, 0, 0), "label_key": "资源.场点.counterweight.counterweight.标签"}])
 
 
 # --------------------------------------------------------------- 共鸣厅 ----
@@ -373,14 +391,14 @@ def resonance() -> dict:
     for row in (9, 11):
         for i, x in enumerate((4, 6, 8, 13, 15, 17)):
             furniture.append(F(f"Chair{row}{i}", "chair_front", P(x, row, 0, 20)))
-    return dict(key="resonance", title="共鸣厅·沉静室", rows=p.rows(), regions=regions,
+    return dict(key="resonance", title_key="资源.地图.resonance.标题", rows=p.rows(), regions=regions,
                 floor={"hall": "herringbone", "silent": "oak"}, wall={"hall": ("paper", "BOTTLE", "stars", "OCHRE"), "silent": ("plaster", "LINEN")},
                 decor=[("window", 4 * CELL, 1, 30), ("window", 17 * CELL, 1, 30), ("sconce", 10 * CELL, 1), ("sconce", 11 * CELL, 1),
                        ("side_door", 21, 5, 2, "w")],
                 floor_work=[("stage", CELL, 3 * CELL, 20 * CELL, 3 * CELL), ("chalk", 23 * CELL + 8, 3 * CELL + 8, 4 * CELL, 4 * CELL)],
                 furniture=furniture, exits=[exit_("south", 10, 15, 12, 16, "campus", "resonance_front")],
                 spawns={"south": P(11, 14, 0, 16)},
-                sites=[{"id": "step_marks", "point": P(25, 5, 0, 0), "label": "门内步位标线"}, {"id": "silent_door", "point": P(21, 6, 0, 0), "label": "沉静室门"}])
+                sites=[{"id": "step_marks", "point": P(25, 5, 0, 0), "label_key": "资源.场点.resonance.step_marks.标签"}, {"id": "silent_door", "point": P(21, 6, 0, 0), "label_key": "资源.场点.resonance.silent_door.标签"}])
 
 
 # ------------------------------------------------------- 诊疗所·安全端 ----
@@ -396,12 +414,12 @@ def clinic() -> dict:
         F("MedCabinet", "medicine_cabinet", P(17, 3, 0, 22)), F("DoctorDesk", "doctor_desk", P(15, 8, 0, 8)),
         F("Screen", "folding_screen", P(4, 8, 0, 12)), F("ReagentCabinet", "reagent_cabinet", P(22, 3, 16, 22)),
         F("Trough", "wash_trough", P(23, 7, 0, 10))]
-    return dict(key="clinic", title="诊疗所·安全端", rows=p.rows(), regions=regions,
+    return dict(key="clinic", title_key="资源.地图.clinic.标题", rows=p.rows(), regions=regions,
                 floor={"ward": "whitetile", "safety": "quarry"}, wall={"ward": ("tile",), "safety": ("tile",)},
                 decor=[("window", 5 * CELL, 1, 28), ("window", 11 * CELL, 1, 28), ("sconce", 8 * CELL, 1), ("side_door", 19, 6, 2, "e")],
                 floor_work=[], furniture=furniture, exits=[exit_("south", 8, 10, 10, 11, "campus", "clinic_front")],
                 spawns={"south": P(9, 9, 0, 16)},
-                sites=[{"id": "reagent", "point": P(22, 5, 16, 0), "label": "试剂柜"}, {"id": "empty_bowl", "point": P(5, 6, 0, 0), "label": "病床"}])
+                sites=[{"id": "reagent", "point": P(22, 5, 16, 0), "label_key": "资源.场点.clinic.reagent.标签"}, {"id": "empty_bowl", "point": P(5, 6, 0, 0), "label_key": "资源.场点.clinic.empty_bowl.标签"}])
 
 
 # --------------------------------------------------------------- 后勤院 ----
@@ -422,27 +440,27 @@ def logistics() -> dict:
                  F("RationNotice", "notice_board", P(16, 3, 0, 2)),
                  F("TableA", "long_table", P(22, 6, 0, 10)), F("BenchA1", "long_bench", P(22, 5, 0, 8)), F("BenchA2", "long_bench", P(22, 7, 0, 4)),
                  F("TableB", "long_table", P(22, 10, 0, 10)), F("BenchB1", "long_bench", P(22, 9, 0, 8)), F("BenchB2", "long_bench", P(22, 11, 0, 4))]
-    return dict(key="logistics", title="后勤院", rows=p.rows(), regions=regions,
+    return dict(key="logistics", title_key="资源.地图.logistics.标题", rows=p.rows(), regions=regions,
                 floor={"kitchen": "quarry", "dining": "plank"}, wall={"kitchen": ("tile",), "dining": ("plaster", "CREAM")},
                 decor=[("window", 20 * CELL, 1, 30), ("window", 26 * CELL, 1, 30), ("sconce", 23 * CELL, 1), ("pans", 7 * CELL, 54),
                        ("side_door", 0, 9, 2, "w"), ("side_door", 30, 9, 2, "e")],
                 floor_work=[], furniture=furniture,
                 exits=[exit_("west", 0, 9, 1, 11, "campus", "logistics_west"), exit_("east", 30, 9, 31, 11, "campus", "logistics_east")],
                 spawns={"west": P(1, 10, 20, 16), "east": P(29, 10, 12, 16)},
-                sites=[{"id": "ration_counter", "point": P(14, 9, 16, 0), "label": "配给台"}, {"id": "ledger", "point": P(16, 8, 0, 0), "label": "台账"},
-                       {"id": "ration_notice", "point": P(16, 4, 0, 0), "label": "配给台公告板"}, {"id": "watch_point", "point": P(18, 9, 0, 0), "label": "守夜点"}])
+                sites=[{"id": "ration_counter", "point": P(14, 9, 16, 0), "label_key": "资源.场点.logistics.ration_counter.标签"}, {"id": "ledger", "point": P(16, 8, 0, 0), "label_key": "资源.场点.logistics.ledger.标签"},
+                       {"id": "ration_notice", "point": P(16, 4, 0, 0), "label_key": "资源.场点.logistics.ration_notice.标签"}, {"id": "watch_point", "point": P(18, 9, 0, 0), "label_key": "资源.场点.logistics.watch_point.标签"}])
 
 
 def granary() -> dict:
     p = Plan(10, 9)
     p.room(1, 1, 9, 8)
     p.door_h(4, 8, depth=1)
-    return dict(key="granary", title="粮仓", rows=p.rows(), regions=[], floor={"default": "plank"}, wall={"default": ("ashlar", "STONE")},
+    return dict(key="granary", title_key="资源.地图.granary.标题", rows=p.rows(), regions=[], floor={"default": "plank"}, wall={"default": ("ashlar", "STONE")},
                 decor=[("sconce", 2 * CELL, 1)], floor_work=[],
                 furniture=[F("BinA", "granary_bin", P(3, 3, 0, 22)), F("BinB", "granary_bin", P(7, 3, 0, 22)),
                            F("SackA", "sack", P(2, 6, 8, 10)), F("SackB", "sack", P(3, 6, 0, 16)), F("Barrel", "barrel", P(7, 6, 8, 10))],
                 exits=[exit_("south", 4, 8, 6, 9, "campus", "granary_front")], spawns={"south": P(5, 7, 0, 16)},
-                sites=[{"id": "latch", "point": P(5, 7, 0, 8), "label": "门闩"}, {"id": "stock", "point": P(5, 4, 0, 0), "label": "存粮"}])
+                sites=[{"id": "latch", "point": P(5, 7, 0, 8), "label_key": "资源.场点.granary.latch.标签"}, {"id": "stock", "point": P(5, 4, 0, 0), "label_key": "资源.场点.granary.stock.标签"}])
 
 
 def greenhouse() -> dict:
@@ -455,11 +473,11 @@ def greenhouse() -> dict:
     for i, row in enumerate((6, 9, 15, 18, 24, 27)):
         furniture.append(F(f"Bed{i}", "planter_bed", P(5, row, 0, 20)))
     furniture += [F("Pots", "seedling_pots", P(9, 13, 0, 20)), F("Tools", "garden_tools", P(9, 22, 8, 20))]
-    return dict(key="greenhouse", title="温室", rows=p.rows(), regions=[], floor={"default": "gravel"},
+    return dict(key="greenhouse", title_key="资源.地图.greenhouse.标题", rows=p.rows(), regions=[], floor={"default": "gravel"},
                 wall={"default": ("glass",)}, decor=[], furniture=furniture,
                 floor_work=[("steps", CELL, 11 * CELL, 10 * CELL, 3, True), ("steps", CELL, 20 * CELL, 10 * CELL, 3, True)],
                 exits=[exit_("south", 5, 30, 7, 31, "campus", "greenhouse_front")], spawns={"south": P(6, 29, 0, 16)},
-                sites=[{"id": "valve", "point": P(6, 4, 0, 0), "label": "阀门"}, {"id": "gauge", "point": P(7, 4, 0, 0), "label": "压力表"}])
+                sites=[{"id": "valve", "point": P(6, 4, 0, 0), "label_key": "资源.场点.greenhouse.valve.标签"}, {"id": "gauge", "point": P(7, 4, 0, 0), "label_key": "资源.场点.greenhouse.gauge.标签"}])
 
 
 def all_rooms() -> list[dict]:

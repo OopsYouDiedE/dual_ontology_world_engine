@@ -15,18 +15,16 @@ Writes
 """
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
 from pathlib import Path
 
-from PIL import Image
-
 GAME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GAME / "tools"))
 
-from chapter2_art import painter, rooms  # noqa: E402
-from first_awakening_art import architecture as A  # noqa: E402
+from map_text import parse_json, publish, read_json, replace_json_strings, require_strings  # noqa: E402
 
 CELL = 32
 SHIFT = 4                      # cells of 起居厅 shown west of the isolation door
@@ -40,10 +38,64 @@ SCENE = GAME / "scenes/Awakening/Awakening.tscn"
 
 # Room blocks (left pixel of the 6-cell room; floor rows 3-7 north, 16-20 south).
 NORTH_TOP, SOUTH_TOP = 96, 512
-ROOMS = {  # key: (left, north?, owner, label)
-    "R08": (608, True, "musician", "R-08"), "R05": (832, True, "detective", "R-05"), "EN": (1056, True, "", "空房"),
-    "R07": (608, False, "cook", "R-07"), "R06": (832, False, "engineer", "R-06"), "ES": (1056, False, "", "空房"),
+ROOMS = {  # key: (left, north?, owner, ROOM_NAMES key)
+    "R08": (608, True, "musician", "R08"), "R05": (832, True, "detective", "R05"), "EN": (1056, True, "", "empty"),
+    "R07": (608, False, "cook", "R07"), "R06": (832, False, "engineer", "R06"), "ES": (1056, False, "", "empty"),
 }
+WINDOW_ASIDE_KEYS = (
+    "map.awakening_yi.window.EN", "map.awakening_yi.window.R05",
+    "map.awakening_yi.window.R08", "map.awakening_yi.window.hall",
+)
+RUG_ASIDE_KEYS = (
+    "map.awakening_yi.rug.R08", "map.awakening_yi.rug.R05",
+    "map.awakening_yi.rug.R07", "map.awakening_yi.rug.R06",
+)
+SLIPPERS_ASIDE_KEY = "map.awakening_yi.slippers.R05"
+ASIDE_KEYS = (*WINDOW_ASIDE_KEYS, *RUG_ASIDE_KEYS, SLIPPERS_ASIDE_KEY)
+# Existing resource slot geometry, used only to reject an incompatible text-only target.
+ASIDE_RECTS = (
+    [1138, 38, 28, 36], [914, 38, 28, 36], [690, 38, 28, 36], [431, 38, 34, 36],
+    [680, 136, 56, 72], [904, 136, 56, 72], [680, 552, 56, 72], [904, 552, 56, 72], [968, 168, 9, 8],
+)
+SCRIPT = GAME / "scenes/Awakening/Script"
+
+
+def load_map_text(script=SCRIPT):
+    layout = read_json(script / "generated_awakening_layout.json")
+    content = read_json(script / "generated_awakening_content.json")
+    if not isinstance(layout, dict) or not isinstance(content, dict):
+        raise ValueError("Compiled map data must be objects")
+    asides = require_strings(layout.get("furniture_asides"), ASIDE_KEYS, ("map.awakening_yi.",))
+    labels = require_strings(content.get("ROOM_NAMES"), dict.fromkeys(r[3] for r in ROOMS.values()))
+    return asides, labels
+
+
+def update_text_only(script=SCRIPT, target=LAYOUT_TRES):
+    asides, labels = load_map_text(script)
+    source = target.read_bytes().decode("utf-8")
+    matches = list(re.finditer(r"(?m)^metadata/data = ", source))
+    if len(matches) != 1:
+        raise ValueError("Expected exactly one metadata/data")
+    start = matches[0].end()
+    body = source[start:]
+    data = parse_json(body)
+    if not isinstance(data, dict) or not isinstance(data.get("asides"), list) or len(data["asides"]) != len(ASIDE_KEYS):
+        raise ValueError("Unexpected aside slots")
+    changes = {}
+    for i, (entry, rect, key) in enumerate(zip(data["asides"], ASIDE_RECTS, ASIDE_KEYS)):
+        if not isinstance(entry, list) or len(entry) != 2 or entry[0] != rect or not isinstance(entry[1], str):
+            raise ValueError(f"Incompatible aside slot: {key}")
+        changes[("asides", i, 1)] = asides[key]
+    actual_rooms = data.get("rooms")
+    if not isinstance(actual_rooms, dict) or set(actual_rooms) != set(ROOMS):
+        raise ValueError("Unexpected room IDs")
+    for key, (left, north, owner, label_key) in ROOMS.items():
+        room = actual_rooms[key]
+        if not isinstance(room, dict) or (room.get("left"), room.get("north"), room.get("owner")) != (left, north, owner):
+            raise ValueError(f"Incompatible room slot: {key}")
+        changes[("rooms", key, "label")] = labels[label_key]
+    candidate = (source[:start] + replace_json_strings(body, changes)).encode("utf-8")
+    return publish({target: candidate})
 
 # Footprint (w, h, d): the solid base under a sprite anchored at its bottom centre, d pixels above the anchor.
 FOOT = {
@@ -125,6 +177,8 @@ def decor_and_floor(base):
 
 
 def plan():
+    from chapter2_art import rooms
+
     base = rooms.zone("乙")
     paint_rows = [" " * SHIFT + r for r in base["rows"]]
     # Game rows: the isolation doorway is shut (the door node draws it); everything west of it is outside.
@@ -140,6 +194,9 @@ def plan():
 
 
 def paint(room):
+    from chapter2_art import painter
+    from first_awakening_art import architecture as A
+
     canvas, anchors = painter.paint(room)
     # Slippers by the R-05 bed (baked like the chapter-one floor work).
     A.bake_floor_work(canvas, [], [], [(832 + 136, 168)])
@@ -156,6 +213,8 @@ def paint(room):
 
 
 def sprite_size(sprite):
+    from PIL import Image
+
     with Image.open(GAME / texture_path(sprite).removeprefix("res://")) as im:
         return im.size
 
@@ -181,7 +240,8 @@ def wall_rects(rows):
     return rects
 
 
-def layout_data(room, game_rows, anchors):
+def layout_data(room, game_rows, anchors, text=None):
+    aside_text, labels = load_map_text() if text is None else text
     items = room["furniture"]
     shelves = []
     for f in items:
@@ -190,21 +250,23 @@ def layout_data(room, game_rows, anchors):
             kind = "hand" if f["name"] == "BookcaseR05" else "even" if f["name"].startswith("Empty") else "plain"
             shelves.append([x - 20, y - 60, kind])
     asides = []
-    for d in room["decor"]:
-        if d[0] == "window":
-            cx, top, w = d[1], d[2] * CELL, d[3]
-            asides.append([[cx - w // 2, top + 6, w, 36], "窗。外面是灰的，什么也看不清。" if cx > 600 else "窗。雾贴着玻璃。"])
-    for fw in room["floor_work"]:
-        if fw[0] == "rug":
-            asides.append([[fw[1], fw[2], fw[3], fw[4]], "地毯。踩得发亮的地方，在床边。" if fw[1] == 832 + 72 else "地毯。"])
-    asides.append([[832 + 136, 168, 9, 8], "一双拖鞋。摆得很正，鞋头朝外。"])
+    windows = [d for d in room["decor"] if d[0] == "window"]
+    rugs = [fw for fw in room["floor_work"] if fw[0] == "rug"]
+    if len(windows) != len(WINDOW_ASIDE_KEYS) or len(rugs) != len(RUG_ASIDE_KEYS):
+        raise ValueError("Geometry recipe no longer matches the authored aside slots")
+    for d, key in zip(windows, WINDOW_ASIDE_KEYS):
+        cx, top, w = d[1], d[2] * CELL, d[3]
+        asides.append([[cx - w // 2, top + 6, w, 36], aside_text[key]])
+    for fw, key in zip(rugs, RUG_ASIDE_KEYS):
+        asides.append([[fw[1], fw[2], fw[3], fw[4]], aside_text[key]])
+    asides.append([[832 + 136, 168, 9, 8], aside_text[SLIPPERS_ASIDE_KEY]])
     return {
         "cell": CELL, "size": [len(game_rows[0]), len(game_rows)], "rows": game_rows,
         "furniture": [{"name": f["name"], "sprite": f["sprite"], "position": f["position"], "footprint": f["footprint"]} for f in items],
         "shelves": shelves, "asides": asides,
         "sconces": [[s["x"], s["y"]] for s in anchors["sconces"]],
         "windows": [[d[1], d[2] * CELL] for d in room["decor"] if d[0] == "window"],
-        "rooms": {k: {"left": L, "north": north, "owner": owner, "label": label} for k, (L, north, owner, label) in ROOMS.items()},
+        "rooms": {k: {"left": L, "north": north, "owner": owner, "label": labels[label_key]} for k, (L, north, owner, label_key) in ROOMS.items()},
     }
 
 
@@ -362,11 +424,18 @@ def rewrite_scene(data, items):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--text-only", action="store_true", help="Update existing map text without painting or rebuilding geometry.")
+    args = parser.parse_args()
+    if args.text_only:
+        print(f"map text: {update_text_only()} file(s) changed")
+        return
+    text = load_map_text()
     room, game_rows = plan()
     canvas, anchors = paint(room)
     ARCH_PNG.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(ARCH_PNG)
-    data = layout_data(room, game_rows, anchors)
+    data = layout_data(room, game_rows, anchors, text)
     body = json.dumps(data, ensure_ascii=False, indent=1)
     LAYOUT_TRES.write_text('[gd_resource type="Resource" format=3]\n\n[resource]\nmetadata/data = ' + body + "\n", encoding="utf-8", newline="\n")
     walls, feet = rewrite_scene(data, room["furniture"])
