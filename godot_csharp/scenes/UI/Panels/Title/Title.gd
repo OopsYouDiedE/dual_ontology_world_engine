@@ -1,8 +1,10 @@
 @tool
 extends Control
-## 标题页（设计规范第六部分 §4.7）：油灯下桌上合着的一本册子，竖开 1 : √2，斜放约 4°，与地图同为 3/4 俯视。
-## 封面在不旋转的子视口里排版，显示时旋转、最近邻取样；SubViewportContainer 用同一变换的逆变换把点击映回封面坐标。
-## 近侧书页厚度向下露出，硬边投影偏右下；册子按屏幕坐标乘灯光图；灯焰光晕轻微闪动（“减少动效”时静止）。
+## 标题页（设计规范第六部分 §4.7）：油灯下桌上合着的一本册子，竖开 1 : √2，斜放约 4°；近俯视（约 60°）。
+## 封面在不旋转的子视口里排版；显示时先在桌面上转 4°，再随桌面平面（Plane）纵向缩短到 0.87，最近邻取样；
+## SubViewportContainer 用整条变换的逆变换把点击映回封面坐标。册子的位置、尺寸、转角、厚度与纵深缩短取主题 Title
+## 常量（由 tools/build_ui_desk.py 给出，与桌面渲染同一套数）；册子的投影已在桌面图里按同一光源烘好。
+## 近侧书页厚度向下露出；册子按屏幕坐标乘灯光图；灯焰光晕轻微闪动（“减少动效”时静止）。
 ## 菜单：开始阅读 / 续读（尚无书签时不可点）/ 凡例（打开设置册）/ 合卷。只回传输入，由宿主处理会话与退出；不放剧情文字。
 
 signal ui_event(event: Dictionary)
@@ -24,20 +26,20 @@ const TITLE_TYPES := {"zh_CN": &"PixelDisplay", "en": &"PixelMast", "ja": &"Pixe
 @onready var continue_button: Button = %ContinueButton
 @onready var settings_button: Button = %SettingsButton
 @onready var quit_button: Button = %QuitButton
-@onready var cover: SubViewportContainer = $Lit/Cover
-@onready var viewport: SubViewport = $Lit/Cover/Viewport
+@onready var cover: SubViewportContainer = $Lit/Plane/Cover
+@onready var viewport: SubViewport = $Lit/Plane/Cover/Viewport
 
 var _settings: Control
 var _flicker_wait := 0.0
 var _labels := {}
 
 func _ready() -> void:
-	$Shadow.draw.connect(_draw_shadow)
+	_place_book()
 	$Lit/Pages.draw.connect(_draw_pages)
 	cover.item_rect_changed.connect(_redraw_book)
-	$Lit/Cover/Viewport/CoverRoot/Spine.color = get_theme_color("spine", "Title")
-	$Lit/Cover/Viewport/CoverRoot/SlipShadow.color = get_theme_color("slip_shadow", "Title")
-	$Lit/Cover/Viewport/CoverRoot/Slip.resized.connect(_place_slip_shadow)
+	$Lit/Plane/Cover/Viewport/CoverRoot/Spine.color = get_theme_color("spine", "Title")
+	$Lit/Plane/Cover/Viewport/CoverRoot/SlipShadow.color = get_theme_color("slip_shadow", "Title")
+	$Lit/Plane/Cover/Viewport/CoverRoot/Slip.resized.connect(_place_slip_shadow)
 	_place_slip_shadow()
 	_localize()
 	for b: Button in [start_button, continue_button, settings_button, quit_button]:
@@ -65,7 +67,7 @@ func _language() -> String:
 
 func _localize() -> void:
 	var texts: Array = TEXTS[_language()]
-	var title_label := $Lit/Cover/Viewport/CoverRoot/Slip/Column/TitleLabel
+	var title_label := $Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/TitleLabel
 	title_label.pixel_type = TITLE_TYPES[_language()]
 	title_label.text = texts[0]
 	var buttons: Array[Button] = [start_button, continue_button, settings_button, quit_button]
@@ -93,19 +95,30 @@ func _hover(b: Button) -> void:
 		b.grab_focus()
 
 func _place_slip_shadow() -> void:
-	var slip: Control = $Lit/Cover/Viewport/CoverRoot/Slip
-	var shadow: Control = $Lit/Cover/Viewport/CoverRoot/SlipShadow
+	var slip: Control = $Lit/Plane/Cover/Viewport/CoverRoot/Slip
+	var shadow: Control = $Lit/Plane/Cover/Viewport/CoverRoot/SlipShadow
 	var k := float(get_theme_constant("slip_shadow", "Title"))
 	shadow.position = slip.position + Vector2(k, k)
 	shadow.size = slip.size
 
 func _redraw_book() -> void:
-	$Shadow.queue_redraw()
 	$Lit/Pages.queue_redraw()
 
-## 封面四角（左上、右上、右下、左下）在屏幕上的位置：封面自身的变换（含旋转与轴心）。
+## 按主题常量摆放册子：封面先在桌面上转角，再随桌面平面纵向缩短（轴心都在封面中心）。
+func _place_book() -> void:
+	var center := Vector2(get_theme_constant("book_x", "Title"), get_theme_constant("book_y", "Title"))
+	var book_size := Vector2(get_theme_constant("book_w", "Title"), get_theme_constant("book_h", "Title"))
+	var plane: Control = $Lit/Plane
+	plane.pivot_offset = center
+	plane.scale = Vector2(1.0, float(get_theme_constant("elev_q", "Title")) / 100.0)
+	cover.position = center - book_size / 2.0
+	cover.size = book_size
+	cover.pivot_offset = book_size / 2.0
+	cover.rotation_degrees = float(get_theme_constant("book_angle", "Title")) / 10.0
+
+## 封面四角（左上、右上、右下、左下）在本页坐标里的位置：封面的整条变换（桌面上的转角与桌面平面的纵深缩短）。
 func cover_corners() -> PackedVector2Array:
-	var xf := cover.get_transform()
+	var xf := get_global_transform().affine_inverse() * cover.get_global_transform()
 	var s := cover.size
 	return PackedVector2Array([xf * Vector2.ZERO, xf * Vector2(s.x, 0), xf * s, xf * Vector2(0, s.y)])
 
@@ -122,14 +135,6 @@ func _draw_pages() -> void:
 		var d0 := Vector2(0, k - 1)
 		var d1 := Vector2(0, k)
 		pages.draw_colored_polygon(PackedVector2Array([c[3] + d0, c[2] + d0, c[2] + d1, c[3] + d1]), color)
-
-## 硬边投影：册子连同厚度整体偏向右下（灯在左上）。
-func _draw_shadow() -> void:
-	var c := cover_corners()
-	var down := Vector2(0, get_theme_constant("thickness", "Title"))
-	var offset := Vector2(get_theme_constant("shadow_x", "Title"), get_theme_constant("shadow_y", "Title"))
-	$Shadow.draw_colored_polygon(PackedVector2Array([c[0] + offset, c[1] + offset, c[2] + down + offset, c[3] + down + offset]),
-		get_theme_color("shadow", "Title"))
 
 # ================================================================ settings ===
 
