@@ -1,14 +1,31 @@
 """生成标题页的桌面、灯光与册子封皮（设计规范第六部分 §4.7 标题页）。
 
-近俯视（约 60° 往下看，与地图同为俯视为主）：竖直高度按 ELEV_K 缩短，水平的圆按 ELEV_Q 压成接近正圆的椭圆。
-木桌与黄铜油灯；光照分 7 级，级间 4×4 有序抖色，光池以灯脚为中心、纵向略压。
-灯光取低饱和暖白，不用琥珀（恶魔专属）。原生 640×496，按最近邻放大 2 倍到 1280×992；随机种子固定，可重建。
+整张桌面是一次渲染，而不是逐件手绘：桌面、油灯、墨水瓶、蘸水笔、放大镜与册子都按毫米建模，
+用同一台正交相机、同一个点光源算出来，所以投影、明暗与投影方向全图一致。
 
-    desk.png        整块木桌面×灯光，含油灯与桌上物件（墨水瓶与蘸水笔、放大镜，尺寸按册子定比例；不含光晕）
-                    物件按法线逐像素着色，量化到材质色阶，级间同样用有序抖色
+相机：近俯视，往下 60°，正交。桌面坐标 (X, Y, Z) 以原生像素计（未缩短），画面坐标
+      x = X、y = Y·ELEV_Q − Z·ELEV_K。册子在 Godot 里按同一缩短（Plane 纵向 0.87）显示。
+比例：册子 A5（148 mm 宽）在原生画面上 290 px，约 1.96 px/mm。
+光源：火焰为点光源，照度 = cos θ / d²（以灯脚正下方为 1）；每个可见点向火焰发一条光线判断遮挡，
+      半影宽度按火焰大小与遮挡体、受光面的距离比算。灯光取低饱和暖白，不用琥珀（恶魔专属）。
+着色：每种材质几级色阶；明暗、玻璃的透光与反光都按 4×4 有序抖色量化，不出现平滑渐变。
+
+参照的历史实物（尺寸取自馆藏记录）：
+- 油灯：约 1900 年德国带 Kosmos 灯头的煤油灯（玻璃油壶、Kosmos 灯头、玻璃灯罩），高 33.5 cm、直径 12.5 cm
+  （westfalen.museum-digital.de）。灯罩取 Kosmos 式：下部鼓、火焰上方收腰、上接直筒。
+- 墨水瓶：美国 1820–1845 年模吹铅玻璃墨水台，高 4.9 cm、直径 5.575 cm（Winterthur Museum）。
+- 蘸水笔：19 世纪木杆蘸水笔，连笔尖全长 19 cm（馆藏木杆 18.4–19 cm）。
+- 放大镜：侦探的黄铜圆框、短柄放大镜，镜片约 5 cm（与证物卡的描述一致）。
+
+原生 640×496，按最近邻放大 2 倍到 1280×992；随机种子固定，可重建。
+
+    desk.png        整块木桌面与桌上物件（册子不在图里，由 Godot 画；册子的投影已烘在桌面上）
     glow.png        灯焰光晕（RGBA，叠加混合；标题页让它轻微闪动）
     book_light.png  册子表面的乘色光照（屏幕坐标，标题页的册子着色器按屏幕 UV 取样）
     cloth.png       册子布面封皮（128 原生像素可平铺，放大 2 倍）
+
+册子的位置、尺寸、转角、厚度与纵深缩短由 tools/build_ui_theme.py 从本文件读出写进 TitleTheme，
+标题页脚本按这些常量摆放册子，与烘焙的投影对齐。
 
     python godot_csharp/tools/build_ui_desk.py
 """
@@ -18,351 +35,583 @@ import math
 import random
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 OUT = Path(__file__).resolve().parents[1] / "ShareAsset" / "Internal" / "Props" / "UIDesk"
 W, H, S = 640, 496, 2
-ELEV_K = 0.5               # 竖直高度在画面上的缩短（cos 60°）
-ELEV_Q = 0.87              # 水平圆的纵横比（sin 60°）
-# 尺寸按册子定比例：册子 A5（148 mm 宽）在原生画面上 290 px，约 1.96 px/mm。
-MM = 1.96
-LAMP_SCALE = 3.2           # 油灯尺寸倍率（底盘约 80 mm）
-INK_SCALE = 3.2            # 墨水瓶尺寸倍率（瓶身约 42 mm）
-MAG_SCALE = 2.9            # 放大镜尺寸倍率（镜片约 50 mm）
-FOOT = (52, 170)           # 灯脚（光池中心），靠左上外移，灯身一部分出画
-FLAME_HEIGHT = round(38 * LAMP_SCALE)   # 火焰离桌面的高度（原生像素）
-FLAME = (FOOT[0], FOOT[1] - round(FLAME_HEIGHT * ELEV_K))
-SQUASH = 1 / ELEV_Q
-BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-LEVELS = 7
-DESK_TINTS = [(40, 34, 40), (62, 52, 52), (94, 78, 70), (132, 110, 90), (172, 146, 114), (210, 182, 140), (240, 220, 180)]
-BOOK_TINTS = [(92, 78, 72), (124, 104, 90), (156, 132, 110), (188, 162, 130), (218, 194, 154), (240, 220, 182), (255, 242, 212)]
+ELEV_K = 0.5                # 竖直高度在画面上的缩短（cos 60°）
+ELEV_Q = 0.87               # 桌面纵深在画面上的缩短（sin 60°）
+MM = 1.96                   # 原生像素 / 毫米
+VIEW = np.array([0.0, ELEV_K, ELEV_Q]) / math.hypot(ELEV_K, ELEV_Q)
+BAYER = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], dtype=float)
+THRESH = (BAYER + 0.5) / 16.0
+
+# ---- 册子（屏幕像素 1280×992；与 Godot 的摆放同一套数，经 TitleTheme 传过去） ----
+BOOK_CENTER = (842, 468)    # 封面中心
+BOOK_SIZE = (580, 820)      # 封面尺寸 = 148 × 210 mm
+BOOK_ANGLE = 4.0            # 桌面上的转角（度，顺时针）
+BOOK_THICK_MM = 4.0         # 册子厚度
+
+# ---- 物件位置（原生画面像素，取桌面高度处） ----
+LAMP_FOOT = (20, 272)
+INK_FOOT = (104, 440)
+PEN_START = (150, 494)
+PEN_ANGLE = -30.0
+MAG_CENTER = (200, 330)
+MAG_HANDLE_ANGLE = -35.0
+
+FLAME_HEIGHT_MM = 209.0     # Kosmos 圆芯火焰中心离桌面高度
+FLAME_RADIUS_MM = 6.0       # 半影用的火焰大小
+
+DESK_TINTS = np.array([(34, 28, 34), (56, 46, 48), (88, 72, 64), (126, 104, 86), (168, 142, 110), (208, 180, 138), (240, 220, 180)], dtype=float)
+BOOK_TINTS = [(84, 72, 66), (118, 100, 86), (152, 130, 108), (186, 160, 128), (216, 192, 152), (240, 220, 182), (255, 242, 212)]
+WOOD_TONES = np.array([(96, 60, 38), (112, 72, 46), (126, 84, 54)], dtype=float)
+RAMPS = {
+    "brass": [(40, 28, 16), (74, 52, 28), (116, 86, 44), (162, 124, 64), (204, 168, 96), (236, 212, 150), (255, 244, 212)],
+    "ink": [(8, 9, 14), (16, 19, 30), (28, 33, 50), (44, 52, 78), (70, 82, 112), (120, 132, 160)],
+    "wood_dark": [(22, 13, 8), (40, 24, 15), (62, 40, 25), (90, 60, 37), (122, 86, 55), (164, 124, 82)],
+    "horn": [(18, 14, 12), (34, 27, 22), (56, 45, 36), (84, 68, 54), (118, 98, 78)],
+    "iron": [(14, 13, 14), (28, 26, 27), (46, 43, 42), (70, 66, 62), (100, 95, 88), (140, 134, 124)],
+    "soot": [(18, 15, 12), (34, 29, 23), (56, 48, 38), (84, 72, 56), (118, 102, 80)],
+    "steel": [(30, 30, 34), (56, 56, 62), (92, 92, 100), (140, 140, 150), (200, 200, 210)],
+}
 
 
-def dither_level(v: float, x: int, y: int) -> int:
-    v = max(0.0, min(1.0, v)) * (LEVELS - 1)
-    lo = int(v)
-    return min(LEVELS - 1, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))
+def mm(v: float) -> float:
+    return v * MM
 
 
-def dist(x: int, y: int) -> float:
-    return math.hypot(x - FOOT[0], (y - FOOT[1]) * SQUASH)
+def to_desk(x: float, y: float) -> tuple[float, float]:
+    return x, y / ELEV_Q
 
 
-def ell(x: float, y: float, rx: float, ry: float) -> bool:
-    return (x / rx) ** 2 + (y / ry) ** 2 <= 1
+def to_screen(X: float, Y: float, Z: float = 0.0) -> tuple[float, float]:
+    return X, Y * ELEV_Q - Z * ELEV_K
 
+
+LAMP = to_desk(*LAMP_FOOT)
+FLAME3 = np.array([LAMP[0], LAMP[1], mm(FLAME_HEIGHT_MM)])
+FLAME = tuple(round(v) for v in to_screen(*FLAME3))
+BOOK_H = mm(BOOK_THICK_MM)
+# 封面中心（屏幕，原生像素）在册子顶面高度处 → 桌面坐标
+BOOK_DESK = (BOOK_CENTER[0] / S, (BOOK_CENTER[1] / S + BOOK_H * ELEV_K) / ELEV_Q)
+BOOK_DESK_SIZE = (BOOK_SIZE[0] / S, BOOK_SIZE[1] / S)
+
+YS, XS = np.mgrid[0:H, 0:W]
+XC = XS + 0.5
+Y0 = (YS + 0.5) / ELEV_Q
+TH = THRESH[YS % 4, XS % 4]
+
+
+def quantize(v: np.ndarray, n: int) -> np.ndarray:
+    """0..1 → 0..n-1 级，级间按有序抖色取整。"""
+    f = np.clip(v, 0.0, 1.0) * (n - 1)
+    lo = np.floor(f)
+    return np.minimum(n - 1, lo + (f - lo > TH)).astype(int)
+
+
+def brightness(e: np.ndarray) -> np.ndarray:
+    """照度到感知亮度：压缩动态范围，离灯远处不至于全黑。"""
+    return np.clip(np.maximum(e, 0.0) ** 0.36, 0.0, 1.0)
+
+
+# ================================================================ 桌面 ===
 
 def value_noise(seed: int, cell: float):
-    rng = random.Random(seed)
-    table = {}
+    rng = np.random.default_rng(seed)
+    table = rng.random((256, 256))
 
-    def at(ix: int, iy: int) -> float:
-        key = (ix, iy)
-        if key not in table:
-            table[key] = rng.random()
-        return table[key]
-
-    def sample(x: float, y: float) -> float:
+    def sample(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         cx, cy = x / cell, y / cell
-        ix, iy = math.floor(cx), math.floor(cy)
+        ix, iy = np.floor(cx).astype(int), np.floor(cy).astype(int)
         tx, ty = cx - ix, cy - iy
         sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
-        a = at(ix, iy) * (1 - sx) + at(ix + 1, iy) * sx
-        b = at(ix, iy + 1) * (1 - sx) + at(ix + 1, iy + 1) * sx
+        t = lambda a, b: table[a % 256, b % 256]
+        a = t(ix, iy) * (1 - sx) + t(ix + 1, iy) * sx
+        b = t(ix, iy + 1) * (1 - sx) + t(ix + 1, iy + 1) * sx
         return a * (1 - sy) + b * sy
     return sample
 
 
-def wood() -> Image.Image:
-    """整块木桌面：一块板，没有拼缝。纹线近乎平行、贯穿全宽，间距不匀、缓慢漂移；
-    细纤维沿横向拉长；右下一个节疤，纹线绕开它。三档明暗，档间有序抖色。"""
-    drift = value_noise(7, 260.0)       # 纹线整体的缓慢起伏
-    spacing = value_noise(11, 60.0)     # 纹距的疏密
-    fibre = value_noise(19, 3.0)        # 细纤维（横向拉长取样）
-    knot = (520, 410)
-    im = Image.new("RGB", (W, H))
-    px = im.load()
-    tones = [(96, 60, 38), (112, 72, 46), (126, 84, 54)]
-    for y in range(H):
-        for x in range(W):
-            kx, ky = (x - knot[0]) / 2.2, y - knot[1]
-            kd = math.hypot(kx, ky)
-            bend = 18.0 * math.exp(-kd / 20.0) * (1 if ky >= 0 else -1)
-            yy = y + 30.0 * drift(x, y * 0.6) + bend
-            phase = yy * 0.22 + 6.0 * spacing(x * 0.4, yy)
-            line = abs(math.sin(phase)) ** 6           # 细而暗的纹线
-            band = spacing(x * 0.25, yy * 1.5)          # 早材晚材的宽窄色带
-            g = 0.55 * line + 0.3 * band + 0.25 * fibre(x * 0.12, y)
-            if kd < 9:
-                g = 0.25 + 0.6 * (math.sin(kd * 1.1) * 0.5 + 0.5)
-            v = max(0.0, min(1.0, 1.0 - g)) * (len(tones) - 1)
-            lo = int(v)
-            i = min(len(tones) - 1, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))
-            px[x, y] = tones[i]
-    return im
+def wood_albedo() -> np.ndarray:
+    """整块木板的纹理，在桌面坐标里生成（所以随桌面一起纵向缩短）：纹线近乎平行、贯穿全宽、间距不匀，
+    右下一个节疤。三档颜色，档间有序抖色。"""
+    X, Y = XC, Y0
+    drift, spacing, fibre = value_noise(7, 260.0), value_noise(11, 60.0), value_noise(19, 3.0)
+    kx, ky = (X - 520) / 2.2, Y - 470
+    kd = np.hypot(kx, ky)
+    bend = 18.0 * np.exp(-kd / 20.0) * np.where(ky >= 0, 1, -1)
+    yy = Y + 30.0 * drift(X, Y * 0.6) + bend
+    phase = yy * 0.22 + 6.0 * spacing(X * 0.4, yy)
+    line = np.abs(np.sin(phase)) ** 6
+    band = spacing(X * 0.25, yy * 1.5)
+    g = 0.55 * line + 0.3 * band + 0.25 * fibre(X * 0.12, Y)
+    g = np.where(kd < 9, 0.25 + 0.6 * (np.sin(kd * 1.1) * 0.5 + 0.5), g)
+    return WOOD_TONES[quantize(1.0 - g, 3)]
 
 
-# ------------------------------------------------------------- 立体着色 ---
-# 物件按法线逐像素算明暗（火焰为光源），再量化到各自材质的几级色阶，级间 4×4 有序抖色——
-# 与桌面光照同一手法，所以物件有体积、又不出现平滑渐变。坐标：x 向右、y 向下（屏幕），z 朝向观者。
+# ================================================================ 建模 ===
 
-BRASS = [(44, 30, 18), (78, 56, 30), (120, 90, 46), (166, 128, 66), (206, 170, 98), (236, 212, 150), (255, 244, 212)]
-INK_GLASS = [(10, 12, 18), (20, 24, 36), (34, 40, 60), (52, 62, 90), (84, 98, 128), (150, 162, 186), (226, 230, 236)]
-WOOD_DARK = [(26, 16, 10), (44, 28, 18), (68, 44, 28), (96, 64, 40), (128, 90, 58), (170, 128, 86)]
-GLASS = [(96, 84, 70), (150, 136, 112), (200, 188, 160), (232, 222, 196), (248, 242, 224), (255, 252, 240)]
+class Revolution:
+    """绕竖直轴的回转体：profile(z_mm) → 半径 mm（0 为空）。kind：opaque / glass / flame。"""
+    def __init__(self, name, axis, profile, z0_mm, z1_mm, material, kind="opaque", gloss=0.5):
+        self.name, self.axis, self.profile = name, axis, profile
+        self.z0, self.z1 = mm(z0_mm), mm(z1_mm)
+        self.material, self.kind, self.gloss = material, kind, gloss
 
+    def r(self, z: float) -> float:
+        return mm(self.profile(z / MM))
 
-def ramp(colors, v: float, x: int, y: int):
-    v = max(0.0, min(1.0, v)) * (len(colors) - 1)
-    lo = int(v)
-    return colors[min(len(colors) - 1, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))]
-
-
-def norm(v):
-    n = math.sqrt(sum(c * c for c in v)) or 1.0
-    return tuple(c / n for c in v)
-
-
-def dot(a, b):
-    return sum(p * q for p, q in zip(a, b))
-
-
-def desk_light(x: int, y: int) -> float:
-    return max(0.0, min(1.0, 1.0 - (dist(x, y) / 560.0) ** 0.62))
-
-
-def light_at(x: float, y: float, lift: float = 24.0):
-    """从 (x, y) 指向火焰的光线方向；lift 为火焰朝观者一侧的高度。"""
-    return norm((FLAME[0] - x, FLAME[1] - y, lift))
-
-
-def lit(n, x: int, y: int, ambient=0.18, gloss=0.0, power=24, lift=90.0) -> float:
-    """漫反射 + 高光，乘上此处的灯光强度。"""
-    L = light_at(x, y, lift)
-    diffuse = max(0.0, dot(n, L))
-    spec = 0.0
-    if gloss:
-        h = norm((L[0], L[1], L[2] + 1.0))
-        spec = gloss * max(0.0, dot(n, h)) ** power
-    return (ambient + (1 - ambient) * diffuse) * max(0.35, desk_light(x, y)) + spec
-
-
-class Canvas:
-    def __init__(self, im: Image.Image):
-        self.im = im
-        self.px = im.load()
-
-    def put(self, x, y, c):
-        if 0 <= x < W and 0 <= y < H:
-            self.px[x, y] = c
-
-    def get(self, x, y):
-        return self.px[min(W - 1, max(0, x)), min(H - 1, max(0, y))]
-
-    def darken(self, x, y, k):
-        if 0 <= x < W and 0 <= y < H:
-            r, g, b = self.px[x, y]
-            self.px[x, y] = (int(r * k), int(g * k), int(b * k))
+    def trace(self):
+        """自上而下逐层找每条视线最先进入回转体的高度；返回（切片、掩码、z、法线 x、y、z），只在包围盒里算。"""
+        cx, cy = self.axis
+        rmax = max(self.r(z) for z in np.arange(self.z0, self.z1 + 0.5, 0.5))
+        x0, x1 = max(0, int(cx - rmax) - 1), min(W, int(cx + rmax) + 2)
+        y0 = max(0, int((cy - rmax) * ELEV_Q - self.z1 * ELEV_K) - 1)
+        y1 = min(H, int((cy + rmax) * ELEV_Q - self.z0 * ELEV_K) + 2)
+        if x1 <= x0 or y1 <= y0:
+            return None
+        sl = (slice(y0, y1), slice(x0, x1))
+        dx = XC[sl] - cx
+        yb = Y0[sl]
+        hit = np.zeros(dx.shape, bool)
+        zhit = np.zeros(dx.shape)
+        nx, ny, nz = np.zeros(dx.shape), np.zeros(dx.shape), np.zeros(dx.shape)
+        dz = 0.5
+        prev_r = 0.0
+        z = self.z1
+        while z >= self.z0:
+            r = self.r(z)
+            if r > 0:
+                dy = yb + z * ELEV_K / ELEV_Q - cy
+                rho = np.hypot(dx, dy)
+                new = (rho <= r) & ~hit
+                if new.any():
+                    zhit[new] = z
+                    # 只有真正的台阶（相邻两层半径突增）或最顶一层才是朝上的平面；其余按轮廓斜率求法线
+                    top = new & ((r - prev_r > 2.0) | (z >= self.z1 - 1e-6))
+                    side = new & ~top
+                    nz[top] = 1.0
+                    if side.any():
+                        slope = (self.r(min(self.z1, z + dz)) - self.r(max(self.z0, z - dz))) / (2 * dz)
+                        rr = np.maximum(rho[side], 1e-6)
+                        vx, vy, vz = dx[side] / rr, dy[side] / rr, np.full(rr.shape, -slope)
+                        nn = np.sqrt(vx * vx + vy * vy + vz * vz)
+                        nx[side], ny[side], nz[side] = vx / nn, vy / nn, vz / nn
+                    hit |= new
+            prev_r = r
+            z -= dz
+        return sl, hit, zhit, nx, ny, nz
 
 
-def shadow_ellipse(cv: Canvas, cx, cy, rx, ry, k=0.5):
-    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
-        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
-            if ell(x - cx, y - cy, rx, ry):
-                # 影子边缘用抖色收一圈，不用平滑渐变
-                edge = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
-                if edge < 0.7 or (BAYER[y % 4][x % 4] + 0.5) / 16 > (edge - 0.7) / 0.3:
-                    cv.darken(x, y, k)
+class Capsule:
+    """平放在桌上的圆杆：桌面线段 a—b，离桌高 = 半径。"""
+    def __init__(self, name, a, b, radius_mm, material, gloss=0.5):
+        self.name, self.material, self.gloss = name, material, gloss
+        self.r = mm(radius_mm)
+        self.a = np.array([a[0], a[1], self.r])
+        self.b = np.array([b[0], b[1], self.r])
+
+    def trace(self):
+        d = self.b - self.a
+        length = np.linalg.norm(d)
+        d = d / length
+        pts = [to_screen(*self.a), to_screen(*self.b)]
+        x0 = max(0, int(min(p[0] for p in pts) - self.r) - 2)
+        x1 = min(W, int(max(p[0] for p in pts) + self.r) + 3)
+        y0 = max(0, int(min(p[1] for p in pts) - self.r * 2) - 2)
+        y1 = min(H, int(max(p[1] for p in pts) + self.r * 2) + 3)
+        if x1 <= x0 or y1 <= y0:
+            return None
+        sl = (slice(y0, y1), slice(x0, x1))
+        P0 = np.stack([XC[sl], Y0[sl], np.zeros_like(XC[sl])], -1)
+        V = np.array([0.0, ELEV_K, ELEV_Q])
+        Wv = P0 - self.a
+        Vp = V - V.dot(d) * d
+        Wp = Wv - (Wv @ d)[..., None] * d
+        A = Vp.dot(Vp)
+        B = 2 * (Wp @ Vp)
+        C = (Wp * Wp).sum(-1) - self.r ** 2
+        disc = B * B - 4 * A * C
+        ok = disc >= 0
+        s = np.where(ok, (-B + np.sqrt(np.maximum(disc, 0))) / (2 * A), 0.0)
+        Pt = P0 + s[..., None] * V
+        u = (Pt - self.a) @ d
+        hit = ok & (u >= 0) & (u <= length) & (s > 0)
+        axis_pt = self.a + u[..., None] * d
+        n = (Pt - axis_pt) / self.r
+        return sl, hit, Pt[..., 2], n[..., 0], n[..., 1], n[..., 2]
 
 
-def cylinder(cv: Canvas, cx, top, bottom, rx, ry, colors, gloss=0.6, top_colors=None, top_v=None):
-    """竖直圆柱：侧面按法线着色，顶面是椭圆（3/4 俯视）。top 为顶面椭圆中心 y，bottom 为底面椭圆中心 y。"""
-    for y in range(int(top), int(bottom + ry) + 1):
-        for x in range(int(cx - rx), int(cx + rx) + 1):
-            t = (x - cx) / rx
-            if abs(t) > 1:
-                continue
-            below_bottom = y > bottom and not ell(x - cx, y - bottom, rx, ry)
-            if below_bottom:
-                continue
-            side = math.sqrt(max(0.0, 1 - t * t))
-            n = (t, side * ELEV_Q, side * ELEV_K)
-            cv.put(x, y, ramp(colors, lit(n, x, y, gloss=gloss), x, y))
-    for y in range(int(top - ry) - 1, int(top + ry) + 2):
-        for x in range(int(cx - rx), int(cx + rx) + 1):
-            if ell(x - cx, y - top, rx, ry):
-                n = (0.0, -ELEV_K, ELEV_Q)
-                v = lit(n, x, y, gloss=gloss * 0.6) if top_v is None else top_v
-                cv.put(x, y, ramp(top_colors or colors, v, x, y))
+class Torus:
+    """平放的圆框（放大镜）：中心 c、环半径 R、管半径 rt。"""
+    def __init__(self, name, c, R_mm, rt_mm, material, gloss=0.9):
+        self.name, self.c, self.R, self.rt = name, c, mm(R_mm), mm(rt_mm)
+        self.material, self.gloss = material, gloss
+
+    def trace(self):
+        cx, cy = self.c
+        ext = self.R + self.rt
+        zc = self.rt
+        x0, x1 = max(0, int(cx - ext) - 1), min(W, int(cx + ext) + 2)
+        y0, y1 = max(0, int((cy - ext) * ELEV_Q - 2 * zc * ELEV_K) - 1), min(H, int((cy + ext) * ELEV_Q) + 2)
+        sl = (slice(y0, y1), slice(x0, x1))
+        dx = XC[sl] - cx
+        yb = Y0[sl]
+        hit = np.zeros(dx.shape, bool)
+        zhit, nx, ny, nz = np.zeros(dx.shape), np.zeros(dx.shape), np.zeros(dx.shape), np.zeros(dx.shape)
+        z = 2 * zc
+        while z >= 0:
+            dy = yb + z * ELEV_K / ELEV_Q - cy
+            rho = np.hypot(dx, dy)
+            q = (rho - self.R) ** 2 + (z - zc) ** 2
+            new = (q <= self.rt ** 2) & ~hit
+            if new.any():
+                rr = np.maximum(rho[new], 1e-6)
+                k = (rho[new] - self.R) / self.rt
+                nx[new], ny[new], nz[new] = k * dx[new] / rr, k * dy[new] / rr, (z - zc) / self.rt
+                zhit[new] = z
+                hit |= new
+            z -= 0.25
+        return sl, hit, zhit, nx, ny, nz
 
 
-def sphere(cv: Canvas, cx, cy, rx, ry, colors, gloss=0.9):
-    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
-        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
-            u, w = (x - cx) / rx, (y - cy) / ry
-            d = u * u + w * w
-            if d > 1:
-                continue
-            n = (u, w, math.sqrt(1 - d))
-            cv.put(x, y, ramp(colors, lit(n, x, y, gloss=gloss, power=48), x, y))
+# ---- 遮挡体（投影用，向量化） ----
+
+def soft_edge(edge: np.ndarray, t: np.ndarray) -> np.ndarray:
+    """edge > 0 在遮挡体内；半影宽度按火焰大小 × 遮挡体到受光面 / 火焰到遮挡体。"""
+    width = np.maximum(1.0, mm(FLAME_RADIUS_MM) * t / np.maximum(1e-3, 1 - t))
+    return np.clip(0.5 + edge / (2 * width), 0.0, 1.0)
 
 
-def stroke(cv: Canvas, a, b, width, colors, shade_side=True, shadow=(1, 2)):
-    """一根细长物件（笔杆、铅笔、手柄）：沿长轴画，横截面按圆柱着色；先在下方偏移处压一道影子。"""
-    ax, ay = a
-    bx, by = b
-    length = math.hypot(bx - ax, by - ay)
-    ux, uy = (bx - ax) / length, (by - ay) / length
-    px_, py_ = -uy, ux
-    steps = int(length * 2) + 1
-    if shadow:
-        for i in range(steps):
-            s = i / (steps - 1)
-            for j in range(-int(width / 2), int(width / 2) + 1):
-                cv.darken(int(round(ax + ux * length * s + px_ * j + shadow[0])), int(round(ay + uy * length * s + py_ * j + shadow[1])), 0.62)
-    for i in range(steps):
-        s = i / (steps - 1)
-        for j10 in range(-int(width * 5), int(width * 5) + 1):
-            j = j10 / 10
-            x = int(round(ax + ux * length * s + px_ * j))
-            y = int(round(ay + uy * length * s + py_ * j))
-            t = j / (width / 2) if width else 0
-            n = norm((px_ * t, py_ * t - 0.3, math.sqrt(max(0.05, 1 - t * t))))
-            cv.put(x, y, ramp(colors(s) if callable(colors) else colors, lit(n, x, y, gloss=0.5), x, y))
+class OcCylinder:
+    def __init__(self, part, c, r_mm, z0_mm, z1_mm, opacity=1.0):
+        self.part, self.c, self.r, self.z0, self.z1, self.opacity = part, c, mm(r_mm), mm(z0_mm), mm(z1_mm), opacity
+
+    def block(self, P):
+        dz = FLAME3[2] - P[2]
+        safe = np.maximum(dz, 1e-6)
+        t0 = np.clip((self.z0 - P[2]) / safe, 0, 1)
+        t1 = np.clip((self.z1 - P[2]) / safe, 0, 1)
+        dx, dy = FLAME3[0] - P[0], FLAME3[1] - P[1]
+        ox, oy = P[0] - self.c[0], P[1] - self.c[1]
+        dd = np.maximum(dx * dx + dy * dy, 1e-6)
+        t = np.clip(-(ox * dx + oy * dy) / dd, t0, t1)
+        dist = np.hypot(ox + t * dx, oy + t * dy)
+        return soft_edge(self.r - dist, t) * (t1 > t0) * (dz > 0) * self.opacity
 
 
-def lamp3d(cv: Canvas) -> None:
-    """黄铜油灯（近俯视）：圆形底盘、球形油壶、灯颈、灯头、短短一截玻璃灯罩，火焰从灯罩里透出。光从火焰来。"""
-    cx, fy = FOOT
-    k = LAMP_SCALE
-    y_at = lambda h: fy - h * k * ELEV_K
-    shadow_ellipse(cv, cx + 3 * k, fy + 2 * k, 30 * k, 30 * k * ELEV_Q, 0.45)
-    cylinder(cv, cx, y_at(6), y_at(0), 24 * k, 24 * k * ELEV_Q, BRASS, gloss=0.15)
-    sphere(cv, cx, y_at(22), 17 * k, 17 * k, BRASS, gloss=0.55)
-    cylinder(cv, cx, y_at(44), y_at(36), 8 * k, 8 * k * ELEV_Q, BRASS, gloss=0.6)
-    cylinder(cv, cx, y_at(48), y_at(44), 11 * k, 11 * k * ELEV_Q, BRASS, gloss=0.6, top_v=0.7)
-    # 玻璃灯罩：自下而上一圈圈画，越高越近观者、后画；内里被火焰照亮，左侧一道反光，右缘偏暗
-    h = 48.0
-    while h <= 100.0:
-        q = (h - 64) / 12
-        r = (5.5 + 8 * math.exp(-q * q) if h < 86 else 5.5) * k
-        cy = y_at(h)
-        for y in range(int(cy - r * ELEV_Q) - 1, int(cy + r * ELEV_Q) + 2):
-            for x in range(int(cx - r), int(cx + r) + 1):
-                if not ell(x - cx, y - cy, r, r * ELEV_Q):
-                    continue
-                t = (x - cx) / r
-                glow = max(0.0, 1 - math.hypot(x - FLAME[0], y - FLAME[1]) / (22 * k))
-                v = 0.3 + 0.55 * glow + 0.35 * abs(t) ** 6
-                if -0.62 < t < -0.42:
-                    v += 0.28
-                if t > 0.86:
-                    v -= 0.18
-                cv.put(x, y, ramp(GLASS, v, x, y))
-        h += 0.5
-    # 火焰：从上往下看得到焰心与一圈内焰，透过玻璃
-    fx, f0 = FLAME
-    for y in range(f0 - round(7 * k), f0 + round(4 * k)):
-        t = (y - f0 + 7 * k) / (11 * k)
-        hw = 1 + 3.2 * k * math.sin(math.pi * max(0.0, t) ** 0.8)
-        for x in range(int(fx - hw), int(fx + hw) + 1):
-            d = abs(x - fx) / max(hw, 1)
-            if y >= f0 + 2 * k:
-                c = (92, 104, 140) if d < 0.6 else (150, 120, 92)
-            elif d < 0.45 and y > f0 - 4 * k:
-                c = (255, 253, 244)
-            elif d < 0.8:
-                c = (255, 240, 202)
-            else:
-                c = (244, 218, 160)
-            cv.put(x, y, c)
-    # 灯罩顶口：一圈亮边，口里看得见下面的光
-    top = y_at(100)
-    for y in range(int(top - 6 * k), int(top + 6 * k) + 1):
-        for x in range(int(cx - 7 * k), int(cx + 7 * k) + 1):
-            outer = ell(x - cx, y - top, 6.5 * k, 6.5 * k * ELEV_Q)
-            inner = ell(x - cx, y - top, 4.6 * k, 4.6 * k * ELEV_Q)
-            if outer and not inner:
-                cv.put(x, y, ramp(GLASS, 0.9 if x < cx else 0.6, x, y))
-            elif inner:
-                cv.put(x, y, ramp(GLASS, 0.42 + 0.3 * max(0.0, 1 - math.hypot(x - FLAME[0], y - FLAME[1]) / (30 * k)), x, y))
+class OcEllipsoid:
+    def __init__(self, part, c, rx_mm, rz_mm, opacity=1.0):
+        self.part, self.c, self.rx, self.rz, self.opacity = part, np.array(c), mm(rx_mm), mm(rz_mm), opacity
+
+    def block(self, P):
+        sc = (1.0, 1.0, self.rx / self.rz)
+        a = [(P[i] - self.c[i]) * sc[i] for i in range(3)]
+        b = [(FLAME3[i] - self.c[i]) * sc[i] for i in range(3)]
+        ab = [b[i] - a[i] for i in range(3)]
+        denom = np.maximum(ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2, 1e-6)
+        t = np.clip(-(a[0] * ab[0] + a[1] * ab[1] + a[2] * ab[2]) / denom, 0, 1)
+        dist = np.sqrt(sum((a[i] + t * ab[i]) ** 2 for i in range(3)))
+        return soft_edge(self.rx - dist, t) * self.opacity
 
 
-def inkwell(cv: Canvas, cx: int, fy: int) -> None:
-    """玻璃墨水瓶（圆柱），瓶里是笔迹色的墨；影子投向远离灯的一侧。"""
-    away = norm((cx - FOOT[0], (fy - FOOT[1]) * 1.4))
-    k = INK_SCALE
-    shadow_ellipse(cv, cx + away[0] * 6 * k, fy + 1 + away[1] * 4 * k, 15 * k, 15 * k * ELEV_Q, 0.5)
-    cylinder(cv, cx, fy - 18 * k * ELEV_K, fy, 13 * k, 13 * k * ELEV_Q, INK_GLASS, gloss=0.45, top_v=0.3)
-    cylinder(cv, cx, fy - 24 * k * ELEV_K, fy - 18 * k * ELEV_K, 5 * k, 5 * k * ELEV_Q, INK_GLASS, gloss=0.45, top_v=0.38)
-    mouth = fy - 24 * k * ELEV_K
-    for y in range(int(mouth - 4 * k), int(mouth + 4 * k) + 1):
-        for x in range(int(cx - 4 * k), int(cx + 4 * k) + 1):
-            if ell(x - cx, y - mouth, 3 * k, 3 * k * ELEV_Q):
-                cv.put(x, y, (8, 9, 14))
-    # 瓶肩一道弧形反光（朝灯一侧）
-    top = fy - 18 * k * ELEV_K
-    for i in range(10):
-        theta = math.radians(200 + i * 5)
-        cv.put(int(round(cx + 11 * k * math.cos(theta))), int(round(top + 11 * k * ELEV_Q * math.sin(theta))), INK_GLASS[5])
+class OcCapsule:
+    def __init__(self, part, a, b, r_mm):
+        self.part, self.a, self.b, self.r = part, a, b, mm(r_mm)
+
+    def block(self, P):
+        dz = FLAME3[2] - P[2]
+        t = (self.r - P[2]) / np.maximum(dz, 1e-6)
+        qx, qy = P[0] + t * (FLAME3[0] - P[0]), P[1] + t * (FLAME3[1] - P[1])
+        ax, ay = self.a
+        bx, by = self.b
+        vx, vy = bx - ax, by - ay
+        s = np.clip(((qx - ax) * vx + (qy - ay) * vy) / (vx * vx + vy * vy), 0, 1)
+        dist = np.hypot(qx - ax - s * vx, qy - ay - s * vy)
+        return soft_edge(self.r - dist, t) * ((t > 0) & (t < 1))
 
 
-def magnifier(cv: Canvas, cx: int, cy: int) -> None:
-    """侦探的放大镜：黄铜圆框（3/4 俯视成椭圆）、短柄；镜片下的纸被放大得更亮，内缘一道高光。"""
-    k = MAG_SCALE
-    rx, ring = 17.0 * k, 3.2 * k
-    ry = rx * ELEV_Q
-    handle_a = (cx + rx * 0.72, cy + ry * 0.72)
-    handle_b = (cx + rx * 0.72 + 15 * k, cy + ry * 0.72 + 11 * k)
-    shadow_ellipse(cv, cx + 4 * k, cy + 5 * k, rx + 1, ry + 1, 0.62)
-    stroke(cv, (handle_a[0] - 2 * k, handle_a[1] - 1.5 * k), (handle_a[0] + 3 * k, handle_a[1] + 2 * k), 4 * k, BRASS, shadow=(3, 5))
-    stroke(cv, (handle_a[0] + 3 * k, handle_a[1] + 2 * k), handle_b, 4 * k, WOOD_DARK, shadow=(3, 5))
-    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
-        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
-            outer = ell(x - cx, y - cy, rx, ry)
-            inner = ell(x - cx, y - cy, rx - ring, ry - ring * ELEV_Q)
-            if not outer:
-                continue
-            if inner:
-                r, g, b = cv.get(x, y)
-                cv.put(x, y, (min(255, int(r * 1.12 + 6)), min(255, int(g * 1.12 + 6)), min(255, int(b * 1.1 + 4))))
-                continue
-            theta = math.atan2((y - cy) / ry, (x - cx) / rx)
-            n = norm((math.cos(theta), math.sin(theta) - 0.3, 0.8))
-            cv.put(x, y, ramp(BRASS, lit(n, x, y, gloss=0.9), x, y))
-    for i in range(40):
-        theta = math.radians(198 + i * 1.5)
-        x = int(round(cx + (rx - ring - 1.5) * math.cos(theta)))
-        y = int(round(cy + (ry - ring * ELEV_Q - 1.2) * math.sin(theta)))
-        cv.put(x, y, (252, 246, 228))
+class OcRing:
+    def __init__(self, part, c, r_in_mm, r_out_mm, z_mm):
+        self.part, self.c, self.r_in, self.r_out, self.z = part, c, mm(r_in_mm), mm(r_out_mm), mm(z_mm)
+
+    def block(self, P):
+        dz = FLAME3[2] - P[2]
+        t = (self.z - P[2]) / np.maximum(dz, 1e-6)
+        d = np.hypot(P[0] + t * (FLAME3[0] - P[0]) - self.c[0], P[1] + t * (FLAME3[1] - P[1]) - self.c[1])
+        return np.minimum(soft_edge(self.r_out - d, t), soft_edge(d - self.r_in, t)) * ((t > 0) & (t < 1))
 
 
-def dip_pen(cv: Canvas, a, b, width: float = 9) -> None:
-    """蘸水笔：深色木杆渐细，前端一截黄铜笔舌（约 160 mm 长、5 mm 粗）。"""
-    stroke(cv, a, b, width, lambda s: BRASS if s > 0.84 else WOOD_DARK, shadow=(3, 5))
+class OcBox:
+    """册子：桌面上转过 angle 的长方体，高 h。"""
+    def __init__(self, part, c, size, angle_deg, h):
+        self.part, self.c, self.hw, self.hh, self.h = part, c, size[0] / 2, size[1] / 2, h
+        a = math.radians(angle_deg)
+        self.ca, self.sa = math.cos(a), math.sin(a)
+
+    def block(self, P):
+        dz = FLAME3[2] - P[2]
+        t = (self.h - P[2]) / np.maximum(dz, 1e-6)
+        qx, qy = P[0] + t * (FLAME3[0] - P[0]) - self.c[0], P[1] + t * (FLAME3[1] - P[1]) - self.c[1]
+        lx, ly = qx * self.ca + qy * self.sa, -qx * self.sa + qy * self.ca
+        edge = -np.maximum(np.abs(lx) - self.hw, np.abs(ly) - self.hh)
+        return soft_edge(edge, t) * ((t > 0) & (t < 1))
 
 
-def desk_objects(cv: Canvas) -> None:
-    magnifier(cv, 150, 318)
-    inkwell(cv, 86, 452)
-    dip_pen(cv, (150, 492), (300, 404))
-    lamp3d(cv)
+# ================================================================ 场景 ===
+
+def kosmos_foot(z: float) -> float:
+    """Kosmos 煤油灯的铸铁座与灯柱（毫米）：圆座、锥台、灯柱与中间一道小节。"""
+    if z < 5: return 62.5
+    if z < 18: return 62.5 - (z - 5) * 1.6
+    if z < 80: return 15.0 if 46 <= z <= 54 else 10.0
+    return 0.0
+
+
+def kosmos_collar(z: float) -> float:
+    """油壶下的黄铜托与油壶上的黄铜灯头座（毫米）。"""
+    if 80 <= z < 88: return 22.0
+    if 165 <= z < 172: return 22.0
+    return 0.0
+
+
+def kosmos_gallery(z: float) -> float:
+    """Kosmos 灯头的托架（夹灯罩的一圈），顶面被烟熏黑。"""
+    return 24.0 if 172 <= z <= 188 else 0.0
+
+
+def kosmos_font(z: float) -> float:
+    """玻璃油壶：88–165 mm，最宽处半径 55 mm。"""
+    if 88 <= z <= 165:
+        return 22.0 + 33.0 * math.sin(math.pi * (z - 88) / 77) ** 0.8
+    return 0.0
+
+
+def kosmos_chimney(z: float) -> float:
+    """Kosmos 灯罩：188–200 下部鼓起，火焰上方 214 收腰，226 以上直筒。"""
+    if z < 188 or z > 335: return 0.0
+    if z < 200: return 21.0
+    if z < 214: return 21.0 - 6.5 * (1 - math.cos(math.pi * (z - 200) / 14)) / 2
+    if z < 226: return 14.5 + 2.5 * (1 - math.cos(math.pi * (z - 214) / 12)) / 2
+    return 17.0
+
+
+def flame_profile(z: float) -> float:
+    if 196 <= z <= 222:
+        t = (z - 196) / 26
+        return 9.0 * math.sin(math.pi * t ** 0.7)
+    return 0.0
+
+
+def inkwell_glass(z: float) -> float:
+    """Winterthur 墨水台：Ø55.75 × 49 mm；直身、圆肩、短颈、唇口。"""
+    if z < 0 or z > 49: return 0.0
+    if z < 32: return 27.9 - z * 0.03
+    if z < 42: return 9.0 + 18.0 * math.cos((z - 32) / 10 * math.pi / 2)
+    if z < 47: return 8.5
+    return 10.0
+
+
+def inkwell_ink(z: float) -> float:
+    return max(0.0, inkwell_glass(z) - 2.6) if z < 30 else 0.0
+
+
+def build_scene():
+    lamp_axis = to_desk(*LAMP_FOOT)
+    ink_axis = to_desk(*INK_FOOT)
+    pen_a = np.array(to_desk(*PEN_START))
+    pen_dir = np.array([math.cos(math.radians(PEN_ANGLE)), math.sin(math.radians(PEN_ANGLE))])
+    holder_b = pen_a + pen_dir * mm(150)
+    ferrule_b = pen_a + pen_dir * mm(168)
+    nib_b = pen_a + pen_dir * mm(190)
+    mag_c = to_desk(*MAG_CENTER)
+    hd = np.array([math.cos(math.radians(MAG_HANDLE_ANGLE)), math.sin(math.radians(MAG_HANDLE_ANGLE))])
+    h_a = np.array(mag_c) + hd * mm(28)
+    h_f = h_a + hd * mm(10)
+    h_b = h_f + hd * mm(80)
+
+    opaque = [
+        Revolution("lamp", lamp_axis, kosmos_foot, 0, 80, "iron", gloss=0.35),
+        Revolution("lamp", lamp_axis, kosmos_collar, 80, 172, "brass", gloss=0.6),
+        Revolution("lamp", lamp_axis, kosmos_gallery, 172, 188, "soot", gloss=0.2),
+        Revolution("ink", ink_axis, inkwell_ink, 0, 30, "ink", gloss=0.8),
+        Capsule("pen", pen_a, holder_b, 4.0, "wood_dark"),
+        Capsule("pen", holder_b, ferrule_b, 3.6, "brass", gloss=0.8),
+        Capsule("pen", ferrule_b, nib_b, 1.6, "steel", gloss=0.9),
+        Torus("mag", mag_c, 26.0, 2.6, "brass"),
+        Capsule("mag", h_a, h_f, 4.0, "brass", gloss=0.8),
+        Capsule("mag", h_f, h_b, 5.0, "horn", gloss=0.6),
+    ]
+    flame = Revolution("flame", lamp_axis, flame_profile, 196, 222, "flame", kind="flame")
+    glass = [
+        ("ink_glass", Revolution("ink_glass", ink_axis, inkwell_glass, 0, 49, "glass", kind="glass"), (0.96, 0.98, 1.0)),
+        ("font", Revolution("font", lamp_axis, kosmos_font, 88, 165, "glass", kind="glass"), (1.0, 0.97, 0.9)),
+        ("chimney", Revolution("chimney", lamp_axis, kosmos_chimney, 188, 335, "glass", kind="glass"), (1.0, 1.0, 1.0)),
+    ]
+    occluders = [
+        OcCylinder("lamp", lamp_axis, 62.5, 0, 18),
+        OcCylinder("lamp", lamp_axis, 10.0, 18, 88),
+        OcEllipsoid("font", (lamp_axis[0], lamp_axis[1], mm(126.5)), 55.0, 38.5, opacity=0.4),
+        OcCylinder("lamp", lamp_axis, 24.0, 165, 188),
+        OcCylinder("ink", ink_axis, 27.9, 0, 32),
+        OcCylinder("ink", ink_axis, 10.0, 32, 49),
+        OcCapsule("pen", pen_a, nib_b, 4.0),
+        OcRing("mag", mag_c, 23.4, 28.6, 2.6),
+        OcCapsule("mag", h_a, h_b, 5.0),
+        OcBox("book", BOOK_DESK, BOOK_DESK_SIZE, BOOK_ANGLE, BOOK_H),
+    ]
+    lens = (mag_c, mm(23.4), mm(2.6))
+    return opaque, flame, glass, occluders, lens
+
+
+# ================================================================ 渲染 ===
+
+OCCLUDERS: list = []
+
+
+def visibility(P, part):
+    vis = np.ones(P[0].shape)
+    for o in OCCLUDERS:
+        mask = part != o.part
+        if o.part == "font":
+            mask &= part != "lamp"
+        if not mask.any():
+            continue
+        b = o.block(P)
+        vis = np.where(mask, vis * (1 - 0.88 * b), vis)
+    return vis
+
+
+def render() -> np.ndarray:
+    global OCCLUDERS
+    opaque, flame, glass, OCCLUDERS, lens = build_scene()
+    depth = np.zeros((H, W))                 # 视线参数 s = z / ELEV_Q；桌面为 0
+    zbuf = np.zeros((H, W))
+    part = np.full((H, W), "desk", dtype=object)
+    mat = np.full((H, W), "desk", dtype=object)
+    gloss = np.zeros((H, W))
+    N = np.zeros((H, W, 3))
+    N[..., 2] = 1.0
+    for obj in opaque:
+        res = obj.trace()
+        if res is None:
+            continue
+        sl, hit, zh, nx, ny, nz = res
+        s = zh / ELEV_Q
+        front = hit & (s > depth[sl])
+        depth[sl][front] = s[front]
+        zbuf[sl][front] = zh[front]
+        part[sl][front] = obj.name
+        mat[sl][front] = obj.material
+        gloss[sl][front] = obj.gloss
+        N[sl][front] = np.stack([nx, ny, nz], -1)[front]
+    # 每个可见点的桌面坐标、受光与遮挡
+    P = (XC, Y0 + zbuf * ELEV_K / ELEV_Q, zbuf)
+    vis = visibility(P, part)
+    L = np.stack([FLAME3[0] - P[0], FLAME3[1] - P[1], FLAME3[2] - P[2]], -1)
+    dist2 = (L * L).sum(-1)
+    Lh = L / np.sqrt(dist2)[..., None]
+    fz2 = FLAME3[2] ** 2
+    cos = np.clip((N * Lh).sum(-1), 0, 1)
+    light = brightness(cos * fz2 / dist2) * vis
+    img = np.zeros((H, W, 3))
+    desk_mask = mat == "desk"
+    tint = DESK_TINTS[quantize(light, len(DESK_TINTS))]
+    img[desk_mask] = (wood_albedo() * tint / 255.0)[desk_mask]
+    Hh = Lh + VIEW
+    Hh /= np.linalg.norm(Hh, axis=-1, keepdims=True)
+    spec = np.clip((N * Hh).sum(-1), 0, 1) ** 36 * vis * brightness(fz2 / dist2)
+    for name, colors in RAMPS.items():
+        m = mat == name
+        if not m.any():
+            continue
+        # 曝光：受光最强处落在倒数第二级，最亮一级留给高光
+        v = 0.08 + 0.7 * light + 0.8 * gloss * spec
+        img[m] = np.array(colors, dtype=float)[quantize(v, len(colors))][m]
+    # 火焰（自发光）
+    res = flame.trace()
+    if res is not None:
+        sl, hit, zh, nx, ny, nz = res
+        s = zh / ELEV_Q
+        front = hit & (s > depth[sl])
+        cx, cy = flame.axis
+        rho = np.hypot(XC[sl] - cx, Y0[sl] + zh * ELEV_K / ELEV_Q - cy)
+        zmm = zh / MM
+        rr = np.vectorize(lambda z: max(1e-3, flame_profile(z)))(zmm) * MM
+        f = rho / rr
+        t = (zmm - 196) / 26
+        col = np.where((t < 0.14)[..., None], np.array([92, 104, 140.0]),
+              np.where(((f < 0.5) & (t > 0.25))[..., None], np.array([255, 253, 244.0]),
+              np.where((f < 0.82)[..., None], np.array([255, 240, 202.0]), np.array([244, 218, 160.0]))))
+        img[sl][front] = col[front]
+        depth[sl][front] = s[front]
+    # 镜片：把框里看到的东西放大 1.6 倍（取已渲好的画面）；朝灯对侧的内缘压一道框影，朝灯一侧一道高光
+    (lcx, lcy), lr, lz = lens
+    scx, scy = to_screen(lcx, lcy, lz)
+    ux, wy = (XC - scx) / lr, (YS + 0.5 - scy) / (lr * ELEV_Q)
+    rim = np.hypot(ux, wy)
+    inside = (rim <= 1) & (depth <= lz / ELEV_Q + 0.5)
+    src = img.copy()
+    sx = np.clip((scx + (XC - scx) / 1.6).astype(int), 0, W - 1)
+    sy = np.clip((scy + (YS + 0.5 - scy) / 1.6 + lz * ELEV_K).astype(int), 0, H - 1)
+    mag = src[sy, sx] * 1.06
+    fl = np.hypot(scx - FLAME[0], scy - FLAME[1])
+    away = (ux * (scx - FLAME[0]) + wy * (scy - FLAME[1])) / (fl * np.maximum(rim, 1e-6))
+    mag = np.where(((rim > 0.84) & (away > 0.25))[..., None], mag * 0.62, mag)
+    mag = np.where(((rim > 0.86) & (rim < 0.95) & (away < -0.75))[..., None], np.array([252, 246, 228.0]), mag)
+    img[inside] = mag[inside]
+    # 玻璃：不填色，透出后面的东西；掠射处反光、朝灯处一点高光、灯罩里被火焰照亮
+    for name, g, tint_rgb in glass:
+        res = g.trace()
+        if res is None:
+            continue
+        sl, hit, zh, nx, ny, nz = res
+        s = zh / ELEV_Q
+        front = hit & (s > depth[sl])
+        n = np.stack([nx, ny, nz], -1)
+        fres = (1 - np.abs(n @ VIEW)) ** 3
+        Pg = (XC[sl], Y0[sl] + zh * ELEV_K / ELEV_Q, zh)
+        Lg = np.stack([FLAME3[0] - Pg[0], FLAME3[1] - Pg[1], FLAME3[2] - Pg[2]], -1)
+        Lg /= np.linalg.norm(Lg, axis=-1, keepdims=True)
+        hg = Lg + VIEW
+        hg /= np.linalg.norm(hg, axis=-1, keepdims=True)
+        sp = np.clip((n * hg).sum(-1), 0, 1) ** 60
+        glow = np.zeros(zh.shape)
+        if name == "chimney":
+            glow = np.clip(1 - np.hypot(XC[sl] - FLAME[0], YS[sl] + 0.5 - FLAME[1]) / mm(34), 0, 1)
+        # 透过玻璃看到的颜色保持原样（已是量化过的色阶）；只叠加分级抖色的反光、高光与灯罩里的火光
+        behind = img[sl] * np.array(tint_rgb)
+        # 只有接近掠射的轮廓处才反光，玻璃因此显出一道道细边，不会在缓曲面上分出色带
+        reflect = np.clip((fres - 0.3) * 3.0, 0, 1) + np.clip(sp * 1.4, 0, 1)
+        levels = np.minimum(3, np.floor(reflect * 3 + TH[sl]))[..., None] / 3.0
+        col = behind + levels * (np.array([236, 228, 206.0]) - behind)
+        if name == "chimney":
+            g = np.minimum(3, np.floor(glow * 3 + TH[sl]))[..., None] / 3.0
+            col = col + g * (np.array([255, 236, 196.0]) - col) * 0.55
+        img[sl][front] = np.clip(col, 0, 255)[front]
+    return np.clip(img, 0, 255).astype(np.uint8)
 
 
 def glow() -> Image.Image:
-    """灯焰周围三圈同心抖色光晕（RGBA）。"""
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    px = im.load()
-    for y in range(H):
-        for x in range(W):
-            d = math.hypot(x - FLAME[0], (y - FLAME[1]) * 1.05)
-            v = max(0.0, 1 - d / 170.0) ** 1.4 * 3
-            lo = int(v)
-            lv = min(3, lo + (1 if v - lo > (BAYER[y % 4][x % 4] + 0.5) / 16 else 0))
-            if lv:
-                px[x, y] = (255, 238, 200, (0, 24, 50, 88)[lv])
-    return im
+    d = np.hypot(XC - FLAME[0], (YS + 0.5 - FLAME[1]) * 1.05)
+    v = np.clip(1 - d / 170.0, 0, 1) ** 1.4 * 3
+    lv = np.minimum(3, np.floor(v) + (v - np.floor(v) > TH)).astype(int)
+    rgba = np.zeros((H, W, 4), np.uint8)
+    rgba[..., 0], rgba[..., 1], rgba[..., 2] = 255, 238, 200
+    rgba[..., 3] = np.array([0, 24, 50, 88])[lv]
+    return Image.fromarray(rgba, "RGBA")
+
+
+def book_light() -> Image.Image:
+    """册子顶面（离桌 BOOK_THICK_MM）的乘色光照：同一光源，册子比桌面亮，是画面主体。"""
+    Z = BOOK_H
+    X, Y = XC, (YS + 0.5 + Z * ELEV_K) / ELEV_Q
+    dx, dy, dz = FLAME3[0] - X, FLAME3[1] - Y, FLAME3[2] - Z
+    e = dz * FLAME3[2] ** 2 / (dx * dx + dy * dy + dz * dz) ** 1.5
+    v = 0.12 + 0.95 * brightness(e)
+    return Image.fromarray(np.array(BOOK_TINTS, np.uint8)[quantize(v, len(BOOK_TINTS))], "RGB")
 
 
 def cloth() -> Image.Image:
@@ -390,20 +639,7 @@ def cloth() -> Image.Image:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    desk = wood()
-    px = desk.load()
-    for y in range(H):
-        for x in range(W):
-            t = DESK_TINTS[dither_level(1.0 - (dist(x, y) / 560.0) ** 0.62, x, y)]
-            r, g, b = px[x, y]
-            px[x, y] = (r * t[0] // 255, g * t[1] // 255, b * t[2] // 255)
-    desk_objects(Canvas(desk))
-    book = Image.new("RGB", (W, H))
-    bp = book.load()
-    for y in range(H):
-        for x in range(W):
-            bp[x, y] = BOOK_TINTS[dither_level(1.0 - (dist(x, y) - 140) / 440.0, x, y)]
-    outputs = {"desk.png": desk, "glow.png": glow(), "book_light.png": book}
+    outputs = {"desk.png": Image.fromarray(render(), "RGB"), "glow.png": glow(), "book_light.png": book_light()}
     for name, im in outputs.items():
         im.resize((W * S, H * S), Image.NEAREST).save(OUT / name)
         print(f"wrote {OUT / name}")

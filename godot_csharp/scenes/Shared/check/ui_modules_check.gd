@@ -438,7 +438,7 @@ func check_title_hits() -> void:
 	var title := spawn(UI + "Panels/Title/Title.tscn")
 	for i in 3:
 		await process_frame
-	var cover: SubViewportContainer = title.get_node("Lit/Cover")
+	var cover: SubViewportContainer = title.get_node("Lit/Plane/Cover")
 	ok(absf(cover.rotation_degrees) > 1.0, "Title cover is tilted")
 	var events: Array = []
 	title.ui_event.connect(func(ev: Dictionary) -> void: events.append(str(ev.kind)))

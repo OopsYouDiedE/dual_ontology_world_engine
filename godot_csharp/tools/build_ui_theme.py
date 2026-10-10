@@ -12,6 +12,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import build_ui_desk as desk  # noqa: E402  标题页的灯脚、火焰高度与投影缩短，与桌面图同一套数
+
 STYLES = Path(__file__).resolve().parents[1] / "scenes" / "UI" / "Styles"
 
 # ---------------------------------------------------------------- 语义色 ---
@@ -700,13 +703,18 @@ def title_theme() -> Theme:
     paper_basics(t, f, c("ink"))
     pixel_types(t, f)
     t.set("Title/colors/background", Color_dark())
-    t.set("Title/colors/shadow", hexc("080503", 0.7))
     t.set("Title/colors/slip_shadow", hexc("0A0604", 0.45))
     t.set("Title/colors/page_light", hexc("D6CAAC"))
     t.set("Title/colors/page_dark", hexc("BCAE8E"))
     t.set("Title/colors/cover_edge", hexc("22241E"))
     t.set("Title/colors/spine", hexc("000000", 0.28))
-    for key, value in (("thickness", 8), ("shadow_x", 14), ("shadow_y", 12), ("slip_shadow", 4)):
+    # 册子的摆放与桌面渲染同一套数（build_ui_desk.py）：封面中心与尺寸（屏幕像素）、桌面上的转角（十分之一度）、
+    # 近侧书页厚度（毫米厚度按近俯视竖直减半后的屏幕像素）、纵深缩短（百分之一）。册子投影已烘在桌面图里。
+    for key, value in (("book_x", desk.BOOK_CENTER[0]), ("book_y", desk.BOOK_CENTER[1]),
+                       ("book_w", desk.BOOK_SIZE[0]), ("book_h", desk.BOOK_SIZE[1]),
+                       ("book_angle", round(desk.BOOK_ANGLE * 10)),
+                       ("thickness", round(desk.mm(desk.BOOK_THICK_MM) * desk.ELEV_K * desk.S)),
+                       ("elev_q", round(desk.ELEV_Q * 100)), ("slip_shadow", 4)):
         t.set(f"Title/constants/{key}", value)
     cloth = t.texture_file("cloth_texture", "res://ShareAsset/Internal/Props/UIDesk/cloth.png", "uid://318jfwph0wi7")
     t.type("TitleCover", "PanelContainer")
