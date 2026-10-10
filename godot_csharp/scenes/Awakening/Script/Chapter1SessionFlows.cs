@@ -344,7 +344,8 @@ public sealed partial class Chapter1Session
         OpenModal(Event("card", ("id", id), ("title", card.Title), ("picture", picture), ("facts", card.Facts), ("source", card.Source),
                 ("notes", card.Notes.Cast<object?>().ToArray())),
             packet.Choices.Select(choice => (Option(choice.Id, choice.Label, choice.IsAvailable, choice.LockHint,
-                choice.Id.Contains(":compare:") ? "inline" : ""), (Func<IEnumerable<Op>>)(() => ChooseCard(choice.Id)))));
+                choice.Id.Contains(":compare:") ? "inline" : "", choice.Id.EndsWith(":destroy", StringComparison.Ordinal) ? "destroy" : ""),
+                (Func<IEnumerable<Op>>)(() => ChooseCard(choice.Id)))));
     }
 
     private IEnumerable<Op> ChooseCard(string choiceId)

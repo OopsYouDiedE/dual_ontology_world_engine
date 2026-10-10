@@ -204,6 +204,8 @@ public sealed class SubjectivePlayerController
     private ImmutableArray<PlayerArgument> _lastArgument = [];
     private bool _supportedEvidence;
     private bool _evidenceRequired;
+    // Learned from the answer forms this actor has actually seen: statements must come with something shown.
+    private bool _answersNeedEvidence;
     public SubjectivePlayerController(ActorControllerDefinition declaration, int seed)
     {
         PlayerControllers.Validate(declaration);
@@ -239,7 +241,7 @@ public sealed class SubjectivePlayerController
             .Select(p => p.Id.ToString() + ":" + p.Rules.Count(r => r.Acceptance == Truth.True)).Order());
         if (epoch != _knowledgeEpoch) { _visits.Clear(); _knowledgeEpoch = epoch; }
         var reasoning = new SubjectiveReasoner(snapshot, cognition.Actor, _reasoning);
-        if (observation.Candidates.Any(c => c.Purpose == "evidence")) _evidenceRequired = true;
+        if (observation.Candidates.Any(c => c.Purpose == "evidence")) _evidenceRequired = _answersNeedEvidence = true;
         if (_argumentGoal is not null)
             try { reasoning.References(_argumentGoal); }
             catch (CognitionContractException) { _argumentGoal = null; }
@@ -259,11 +261,21 @@ public sealed class SubjectivePlayerController
         var materials = observation.Candidates.ToDictionary(c => c.Token, Materials);
         foreach (var place in observation.Candidates.Where(c => c.Kind == "interact" && c.Location is not null))
             _seenPlaces[place.Label] = place;
+        // Standing where something was last seen and it is no longer offered there: it has moved or gone.
+        var steps = observation.Candidates.Where(c => c.Kind == "move" && c.Location is not null).ToArray();
+        if (steps.Length > 0)
+            foreach (var stale in _seenPlaces.Values.Where(p => observation.Candidates.All(c => c.Label != p.Label)
+                && steps.Any(m => Math.Abs(m.Location!.X - p.Location!.X) + Math.Abs(m.Location.Y - p.Location.Y) <= 48)).ToArray())
+                _seenPlaces.Remove(stale.Label);
         var currentQuestion = snapshot.Projections.LastOrDefault(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1);
         var asked = currentQuestion is null ? null : reasoning.Claims(currentQuestion.Id).FirstOrDefault();
         var askedProof = asked is null ? null : reasoning.Prove(asked);
+        // Where answers have to be shown, a proof resting only on memory is not yet an answer.
+        var answerable = askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+            && (!_answersNeedEvidence || askedProof.Basis.Any(id => snapshot.Projections.Any(p => p.Id == id
+                && p.Tags.GetValueOrDefault(AcquiredPropositions.Presentable) == 1)));
         bool ReadyOpportunity(PublicPlayerCandidate candidate, IEnumerable<FrozenProjectionV1> held) => asked is not null
-            && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+            && answerable
             && held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1
                 && (p.Name == candidate.Label || p.Name == candidate.Value))
                 .SelectMany(p => reasoning.Claims(p.Id)).Any(goal => Ast.Equivalent(asked, goal) is ContractResult<bool>.Success { Value: true });
@@ -272,8 +284,15 @@ public sealed class SubjectivePlayerController
             && held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1)
                 .SelectMany(p => reasoning.Claims(p.Id)).Any(claim => askedProof.Missing.Any(gap =>
                     Ast.Equivalent(gap, claim) is ContractResult<bool>.Success { Value: true }));
-        var wantedPlaces = readyPlaces.Length > 0 ? readyPlaces
-            : _seenPlaces.Values.Where(p => NeededOpportunity(Materials(p))).ToArray();
+        // A needed place stays a lead until examined twice without learning anything new
+        // (a second look covers a person's other topics).
+        var neededPlaces = readyPlaces.Length > 0 ? readyPlaces
+            : _seenPlaces.Values.Where(p => NeededOpportunity(Materials(p)) && _visits.GetValueOrDefault(HistoryKey(p)) < 2).ToArray();
+        // An open question this actor cannot yet ground, with no known place to ground it:
+        // look where it has not looked — seen but unexamined places, unseen ground.
+        var starving = (askedProof is { Value: Truth.Unknown } || askedProof is { Value: Truth.True } && !answerable) && neededPlaces.Length == 0;
+        var wantedPlaces = !starving ? neededPlaces
+            : _seenPlaces.Values.Where(p => !_tried.Contains(HistoryKey(p))).ToArray();
         var moves = observation.Candidates.Where(c => c.Kind == "move" && c.Location is not null).ToArray();
         double Distance(PlayerPoint a, PlayerPoint b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         double GoalDistance(PublicPlayerCandidate c) => wantedPlaces.Min(p => Distance(c.Location!, p.Location!));
@@ -320,7 +339,8 @@ public sealed class SubjectivePlayerController
             var chains = new List<PlayerArgument>();
             var visits = _visits.GetValueOrDefault(HistoryKey(candidate));
             // A mandatory acknowledgement has no alternative to explore.
-            if (visits > 0 && _revisitWeight > 0 && observation.Candidates.Length > 1)
+            // Stepping back out is a neutral exit, never a repeated attempt.
+            if (visits > 0 && _revisitWeight > 0 && observation.Candidates.Length > 1 && candidate.Purpose != "close")
             {
                 score -= (long)Math.Min(visits, 1000) * _revisitWeight;
                 why.Add("revisit_without_new_accepted_material:" + visits);
@@ -340,9 +360,13 @@ public sealed class SubjectivePlayerController
             if (candidate.Selected) score -= _argumentWeight * 4L;
             if (candidate.Purpose == "tab" && !candidate.Selected && _argumentGoal is not null) score += _argumentWeight * 2L;
             if (candidate.Purpose == "commit" && _argumentGoal is not null) score += _argumentWeight * (_supportedEvidence ? 3L : -8L);
-            if (candidate.Purpose == "cancel") score -= _argumentWeight;
-            if (ReadyOpportunity(candidate, held) || candidate.Purpose == "argument"
-                && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false })
+            // Destroying something one has seen loses material that could later be shown;
+            // only an actor whose own rules want it (a declared preference) outweighs this.
+            if (candidate.Purpose == "destroy") { score -= _argumentWeight * 2L; why.Add("destroys_seen_material"); }
+            // Holding off costs something only when this actor could already answer.
+            if (candidate.Purpose == "cancel"
+                && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }) score -= _argumentWeight;
+            if (ReadyOpportunity(candidate, held) || candidate.Purpose == "argument" && answerable)
             {
                 score += _argumentWeight * 3L;
                 why.Add("return_with_personal_answer:" + candidate.Label);
@@ -354,7 +378,13 @@ public sealed class SubjectivePlayerController
                 // The real field still resolves collisions; repeat penalties permit detours.
                 var weight = readyPlaces.Length > 0 ? _argumentWeight : _informationWeight;
                 score += (long)Math.Clamp((farthestMove - GoalDistance(candidate)) / 64 * weight, 0, weight * 2);
-                why.Add(readyPlaces.Length > 0 ? "approach_observed_answer_opportunity" : "approach_observed_question_material");
+                why.Add(readyPlaces.Length > 0 ? "approach_observed_answer_opportunity"
+                    : starving ? "approach_unexamined_place_for_open_question" : "approach_observed_question_material");
+            }
+            if (starving && visits == 0 && (candidate.Kind == "interact" || candidate.Purpose == "frontier"))
+            {
+                score += _informationWeight * 2L;
+                why.Add(candidate.Kind == "interact" ? "examine_unexamined_for_open_question" : "look_beyond_seen_for_open_question");
             }
             foreach (var inquiry in exploration.Inquiries.Where(q => q.Targets.Any(ids.Contains)))
             {
@@ -398,7 +428,7 @@ public sealed class SubjectivePlayerController
                     }
                 }
             // Showing something that does not hold up the chosen statement is no better than not answering.
-            if (candidate.Purpose == "evidence" && _argumentGoal is not null
+            if (candidate.Purpose == "evidence"
                 && !why.Any(w => w.StartsWith("subjective_argument_supported:", StringComparison.Ordinal)))
             { score -= _argumentWeight; why.Add("evidence_does_not_support_statement"); }
             reasoningScores[candidate.Token] = ((int)Math.Clamp(score, -100000000L, 100000000L), [..why.Distinct()]);
@@ -655,7 +685,13 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
         }
         var options = Maps(pending, kind == "lines" ? "choices" : "options").ToArray();
         foreach (var option in options.Where(o => Flag(o, "available", true)))
-            Add(Text(option, "label"), "menu", Event("select", ("presentation_id", pid), ("choice_id", Text(option, "id")), ("token", Text(option, "token"))), purpose: Text(option, "purpose"));
+        {
+            // The same exits the shared UI treats as its back button.
+            var id = Text(option, "id");
+            var purpose = Text(option, "purpose") is { Length: > 0 } declared ? declared
+                : id is "close" or "cancel" || id.EndsWith(":close", StringComparison.Ordinal) ? "close" : "";
+            Add(Text(option, "label"), "menu", Event("select", ("presentation_id", pid), ("choice_id", id), ("token", Text(option, "token"))), purpose: purpose);
+        }
         if (options.Length == 0 && pid != "") Add("", "continue", Event("presented", ("presentation_id", pid)));
     }
     public IReadOnlyDictionary<string, object?> Peek(string token)

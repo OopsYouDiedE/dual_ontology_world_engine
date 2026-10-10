@@ -20,8 +20,8 @@ static func offers(field) -> Array:
 	result.append_array(frontier(field, grid))
 	return result
 
-## 已见与未见的交界：本人见过、走得上去、紧挨着还没见过的地方的格子。
-## 只用本人已见的格子，不预读未见处；门口、拐角自然在其中。
+## 已见与未见的交界：本人见过、走得上去、且地面明显通往未见处的格子（门洞、拐角）。
+## 墙面看得见、不是去路，挨着墙的格子不算交界。
 static func frontier(field, grid: AStarGrid2D = null, limit := 6) -> Array:
 	if not field.adapter.has_method("seen_cells"): return []
 	var seen: Dictionary = field.adapter.seen_cells()
@@ -30,7 +30,7 @@ static func frontier(field, grid: AStarGrid2D = null, limit := 6) -> Array:
 		var point := (Vector2(cell) + Vector2(0.5, 0.5)) * 32.0
 		if point.distance_to(field.player.position) < 48.0: continue
 		for step in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-			if not seen.has(cell + step):
+			if not seen.has(cell + step) and field.adapter.walkable((Vector2(cell + step) + Vector2(0.5, 0.5)) * 32.0, field.player):
 				edges.append(point)
 				break
 	edges.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(field.player.position) < b.distance_squared_to(field.player.position))

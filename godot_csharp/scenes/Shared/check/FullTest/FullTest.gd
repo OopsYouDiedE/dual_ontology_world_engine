@@ -85,6 +85,11 @@ func _run() -> void:
 		if float(now - started) / 1000.0 >= wall_limit: pilot.stop("wall_budget")
 		elif float(now - progressed) / 1000.0 >= idle_limit: pilot.stop("no_public_progress")
 
+## 窗口被关掉也如实记一笔再退出。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and is_instance_valid(pilot) and not finished:
+		pilot.stop("window_closed")
+
 func _on_recorded(kind: String, value: Variant) -> void:
 	_record(kind, value)
 	if kind != "observation": return
