@@ -274,6 +274,8 @@ public sealed partial class WorldSession : IDisposable
         {
             if (key == "space" && allowSpatial && property.Type == "entity" && property.Value.ValueKind == JsonValueKind.String) space = property.Value.GetString();
             else if (key == "sprite" && allowSpatial && property.Type == "string" && property.Value.ValueKind == JsonValueKind.String) sprite = property.Value.GetString();
+            // Presentation metadata is validated here, but never becomes a Core state or belief.
+            else if (key == "presentation_anchor" && allowSpatial && property.Type == "boolean" && property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False) { }
             else if (key.StartsWith("state:", StringComparison.Ordinal) && property.Type == "integer" && property.Value.TryGetInt32(out var value))
             { ValidateName(key[6..], "state tag"); defaults.Add(key[6..], value); }
             else if (allowSpatial && key.StartsWith("belief:", StringComparison.Ordinal) && property.Type == "integer" && property.Value.TryGetInt32(out var belief))

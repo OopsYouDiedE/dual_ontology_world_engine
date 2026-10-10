@@ -806,8 +806,11 @@ class Translator:
             if entity_id.startswith("person."):
                 self.person_design[entity_id.split(".", 1)[1]] = compile_person(name, fields, self, head)
         elif keyword == "物件":
-            allowed |= {"属性", "可见"}
+            allowed |= {"属性", "可见", "表现锚点"}
             args.extend(self.extras(fields, "state", None, "observable", None, name))
+            if "表现锚点" in fields:
+                value, line, _ = fields["表现锚点"]
+                args.append("properties=" + py({"presentation_anchor": parse_bool(value, "表现锚点", line.number)}))
         for key, (_, line, _) in fields.items():
             if key not in allowed:
                 raise StoryError(f"{keyword}不支持字段“{key}”。", line.number)

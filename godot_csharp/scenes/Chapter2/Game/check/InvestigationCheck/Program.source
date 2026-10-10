@@ -11,12 +11,12 @@ Check(InvestigationPresentation.Questions(g,1).Length==0,"Questions unavailable 
 while(g.Day<3) { Step(g,new(g.Slot==Slot.Night?Cmd.Sleep:Cmd.Rest)); Console.WriteLine($"ADVANCE original action: day {g.Day}, {g.Slot}"); }
 Check(g.Day==3,"Original RunSlot actions advance to day three without clock injection");
 g.SetPlayerPlace(Place.Logistics);
-var key=Game.Things_.First(k=>k.Value.Place==Place.Logistics && ReferenceEquals(k.Value.Thing(g),g.Ledger)).Key;
+var key=g.Things_.First(k=>k.Value.Place==Place.Logistics && ReferenceEquals(k.Value.Thing,g.Ledger)).Key;
 Step(g,new(Cmd.Inspect){Place=Place.Logistics,Thing=key});
 var saved=g.InspectionRecords.ToArray();
 Check(saved.Length>0,"Original Inspect creates records");
 Check(saved.All(r=>g.Feed.Contains("  · "+r.Text)),"Every saved record exactly matches original Feed text");
-Check(saved.All(r=>r.Text==g.Describe(Game.Things_[r.Key].Thing(g))),"Saved inspection matches original Describe at completion");
+Check(saved.All(r=>r.Text==g.Describe(g.Things_[r.Key].Thing)),"Saved inspection matches original Describe at completion");
 var entries=InvestigationPresentation.Entries(g); var notebook=entries.Single(e=>e.Id=="inspection:Logistics");
 Check(notebook.Facts.SequenceEqual(saved.Select(r=>r.Text)),"Grouped inspection retains original area facts and order");
 Check(notebook.Sources.Single().Contains($"第{saved[0].Day}日{Names.Of(saved[0].Slot)}") && notebook.Sources[0].Contains("亲自细看"),"Saved card records original time/place/perception source");
@@ -36,7 +36,7 @@ Check(after.Facts.SequenceEqual(prior.Facts) && after.Facts[0].Contains(seen),"P
 // Use a fresh world to keep objective injection tests separate from legal replay eligibility.
 var replayWorld=Chapter2Script.CreateWorld();Pump(replayWorld);
 while(replayWorld.Day<3) Step(replayWorld,replayWorld.Slot==Slot.Night?new(Cmd.Stakeout){Place=Place.Logistics}:new(Cmd.Rest));
-foreach(var place in new[]{Place.Logistics,Place.Clinic}) {replayWorld.SetPlayerPlace(place);var target=Game.Things_.First(k=>k.Value.Place==place && ReferenceEquals(k.Value.Thing(replayWorld),place==Place.Logistics?replayWorld.Ledger:replayWorld.Bowl)).Key;Step(replayWorld,new(Cmd.Inspect){Place=place,Thing=target});}
+foreach(var place in new[]{Place.Logistics,Place.Clinic}) {replayWorld.SetPlayerPlace(place);var target=replayWorld.Things_.First(k=>k.Value.Place==place && ReferenceEquals(k.Value.Thing,place==Place.Logistics?replayWorld.Ledger:replayWorld.Bowl)).Key;Step(replayWorld,new(Cmd.Inspect){Place=place,Thing=target});}
 Console.WriteLine("KNOWN "+JsonSerializer.Serialize(replayWorld.KnownTraces(2))); Console.WriteLine("CAND "+JsonSerializer.Serialize(replayWorld.ReplayCandidates(2))); var menu=replayWorld.ReplayMenu(2,true);var questions=InvestigationPresentation.Questions(replayWorld,2);
 Check(replayWorld.KnownTraces(2).Count>0 && menu.Count>0,"Original day-three Logistics/Clinic inspections yield real known traces and legal candidates");
 Check(questions.Length>0,"Nonempty original candidates produce semantic questions");

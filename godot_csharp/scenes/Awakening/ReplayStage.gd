@@ -7,18 +7,8 @@ const Paper := preload("res://scenes/UI/Components/Paper.gd")
 @export var overlay_scene: PackedScene = preload("res://scenes/UI/Panels/Field/ReplayOverlay.tscn")
 @export var bubble_scene: PackedScene = preload("res://scenes/UI/Components/ReplayBubble.tscn")
 
-const ROOM_ANCHORS := {
-	"R05": Vector2(930, 200), "R06": Vector2(930, 600), "R07": Vector2(706, 600), "R08": Vector2(706, 200),
-	"corridor": Vector2(800, 388), "hall": Vector2(440, 340), "pantry": Vector2(470, 652), "foyer": Vector2(224, 388),
-	"lounge": Vector2(64, 388),
-}
-const SPOTS := {
-	"door": ["foyer", Vector2(178, 384)], "tube": ["hall", Vector2(500, 132)], "slate": ["hall", Vector2(532, 290)],
-	"desk": ["R08", Vector2(690, 214)], "sink": ["pantry", Vector2(352, 560)],
-}
-const OFFSETS := {"detective": Vector2(-22, 4), "huo": Vector2(22, 4), "shen": Vector2(-6, 18), "su": Vector2(10, -12)}
-const ORDER := ["detective", "huo", "shen", "su"]
 const INK := Color(0.16, 0.13, 0.2, 0.74)
+const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 
 signal playback_cancelled
 var _cancelled := false
@@ -95,7 +85,7 @@ func _setup() -> void:
 	controls = layer.get_node("Controls")
 	controls.text = str(labels.get("control_texts", {}).get("normal", ""))
 	door_label = layer.get_node("Door")
-	for key in ORDER:
+	for key in host.spatial.actor_nodes:
 		var actor: CharacterBody2D = host.actor_of(key)
 		var sprite := AnimatedSprite2D.new()
 		sprite.sprite_frames = actor.standard
@@ -128,18 +118,37 @@ func _teardown() -> void:
 		layer.queue_free()
 
 func position_of(frame: Dictionary, key: String) -> Vector2:
+	var data: Dictionary = host.spatial.presentation
+	if not frame.rooms.has(key) or not data.replay_offsets.has(key):
+		Bindings.fail(self, "Missing replay actor room/offset binding: " + key)
+		return Vector2.ZERO
 	var room: String = frame.rooms[key]
 	var spot: String = frame.spots.get(key, "")
-	if SPOTS.has(spot) and SPOTS[spot][0] == room:
-		return SPOTS[spot][1] + OFFSETS[key] * 0.6
-	if room == "corridor":
-		return Vector2(650 + ORDER.find(key) * 90, 388)
-	return ROOM_ANCHORS.get(room, Vector2(640, 500)) + OFFSETS[key]
+	var offset := _point(str(data.replay_offsets[key]))
+	if spot != "":
+		if not data.replay_spots.has(spot):
+			Bindings.fail(self, "Missing replay spot binding: " + spot)
+			return Vector2.ZERO
+		var binding: Dictionary = data.replay_spots[spot]
+		if str(binding.room) == room: return _point(str(binding.point)) + offset * 0.6
+	if str(data.replay_room_layouts.get(room, "")) == "row":
+		return Vector2(650 + host.spatial.actor_nodes.keys().find(key) * 90, 388)
+	if not data.replay_rooms.has(room):
+		Bindings.fail(self, "Missing replay room binding: " + room)
+		return Vector2.ZERO
+	return _point(str(data.replay_rooms[room])) + offset
+
+func _point(value: String) -> Vector2:
+	var parts := value.split(",")
+	if parts.size() != 2 or not parts[0].is_valid_float() or not parts[1].is_valid_float():
+		Bindings.fail(self, "Invalid replay point binding: " + value)
+		return Vector2.ZERO
+	return Vector2(float(parts[0]), float(parts[1]))
 
 func _apply(frame: Dictionary, previous: Dictionary) -> void:
 	var who := str(frame.get("event", {}).get("who", ""))
 	caption.text = "[b]%s[/b]　%s" % [str(labels.get("caption", "")), str(frame.label)]
-	for key in ORDER:
+	for key in host.spatial.actor_nodes:
 		var figure: AnimatedSprite2D = figures[key]
 		var target := position_of(frame, key)
 		if previous.is_empty():
@@ -188,7 +197,7 @@ func _place_bubbles(frame: Dictionary) -> void:
 	var zoom: Vector2 = host.field.camera.zoom
 	var center: Vector2 = host.field.camera.position
 	var half := Vector2(640, 496)
-	var keys := ORDER.duplicate()
+	var keys: Array = host.spatial.actor_nodes.keys()
 	keys.sort_custom(func(a, b): return position_of(frame, a).y > position_of(frame, b).y)
 	for key in keys:
 		var bubble: PanelContainer = bubbles[key]

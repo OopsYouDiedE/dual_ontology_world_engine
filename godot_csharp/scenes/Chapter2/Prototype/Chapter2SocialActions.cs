@@ -94,7 +94,7 @@ public sealed partial class Game
         else if (action.Cmd is Cmd.Ask or Cmd.Escort)
         {
             _asked.Clear();
-            var procedure = action.Cmd == Cmd.Escort ? FxOf(p).Escort(action.Place!.Value, Things_[action.Thing!].Thing(this))
+            var procedure = action.Cmd == Cmd.Escort ? FxOf(p).Escort(action.Place!.Value, Things_[action.Thing!].Thing)
                 : RequestProcedure(p, action.Job!.Value) ?? throw new InvalidOperationException("The request has no known target.");
             var text = action.Cmd == Cmd.Escort ? Chapter2Design.Text("social.escort", ("place", Names.Of(action.Place!.Value)), ("thing", action.Thing)) : Chapter2Design.Text("social.request", ("job", Names.Of(action.Job!.Value)));
             Request(who, text, procedure, Compatibility(p, action));

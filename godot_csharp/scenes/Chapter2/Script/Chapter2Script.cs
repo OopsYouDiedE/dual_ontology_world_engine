@@ -109,8 +109,8 @@ public sealed partial class Game
         S.StageCommitted += CapturePresentation;
         People = Enum.GetValues<P>().Select(p => new Person(p, Options.Profiles?.GetValueOrDefault(p), continuation?.Characters.GetValueOrDefault(p.ToString()))).ToArray();
         BuildWorld();
+        BindInvestigation(Chapter2Design.Json);
         InitializeAccess();
-        foreach (var (key, thing) in Things_) Chapter.Place(key, thing.Place.ToString());
         SyncChapterRooms();
         if (continuation is not null)
             InheritedSnapshot = People.ToDictionary(p => p.Id, p => new InheritedSeed(p.Hooks, p.Desire, p.KnowsHookCost, People.Where(o => o != p).ToDictionary(o => o.Id, o => TrustIn(p, o))));
@@ -398,7 +398,7 @@ public sealed partial class Game
         foreach (var other in People) if (SpaceOf(other.Body) == space && (other == p || !other.Asleep || Slot != Slot.Night)) views.Add(View[other.Body]);
         if (Options.Hide is { } hide) views.RemoveAll(v => hide(p, v));
         foreach (var (name, item) in Things_)
-            if (item.Place == place && views.Contains(View[item.Thing(this)])) Chapter.Observe(p.Id.ToString(), name);
+            if (item.Place == place && views.Contains(View[item.Thing])) Chapter.Observe(p.Id.ToString(), name);
         // 每个时段第一次看，全部看一遍；同一时段里再看，只看状态变了的、或心里位置对不上的对象（性能：§12 第 10 条）。
         var full = Options.Hide is not null || !_fullAt.TryGetValue(p, out var fa) || fa != (Day, Slot);
         if (full) _fullAt[p] = (Day, Slot);

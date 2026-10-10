@@ -509,6 +509,7 @@ public sealed partial class Chapter1Session : IChapterSession
             ["access"] = new Ev { ["dorms"] = StageFlag("dorms"), ["isolation_open"] = Has("flags", "door_open"),
                 ["door_prints"] = Has("flags", "door_open") && !Has("flags", "quer_opened") },
             ["sites"] = Sites(),
+            ["traces"] = TraceSnapshot(),
             ["people"] = FieldPeople.Select(who => (object?)new Ev
             {
                 ["key"] = who, ["name"] = PersonName(who), ["title"] = PersonName(who), ["present"] = true,
@@ -518,6 +519,21 @@ public sealed partial class Chapter1Session : IChapterSession
             ["notebook"] = Notebook(),
             ["replay"] = ReplaySnapshot(),
             ["daypart"] = "",
+        };
+    }
+
+    private Ev TraceSnapshot()
+    {
+        var truth = JsonSerializer.SerializeToElement(MorningTraces.Evidence);
+        return Content.GetProperty("PRESENTATION").GetProperty("traces").EnumerateObject().ToDictionary(
+            item => item.Name, item => (object?)(!item.Value.TryGetProperty("truth", out var field)
+                || TracePresent(truth.GetProperty(field.GetString()!))), StringComparer.Ordinal);
+        static bool TracePresent(JsonElement value) => value.ValueKind switch
+        {
+            JsonValueKind.True => true, JsonValueKind.False => false,
+            JsonValueKind.Array => value.GetArrayLength() > 0,
+            JsonValueKind.Number => value.GetDouble() > 0,
+            _ => throw new InvalidDataException("Invalid authoritative trace field type.")
         };
     }
 

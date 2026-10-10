@@ -29,7 +29,7 @@ public sealed partial class Game
     public string HostExamine(string thing)
     {
         var (place, of) = Things_[thing];
-        var e = of(this);
+        var e = of;
         HostMoveDet(place);
         Perceive(Det);
         if (Day >= CaseDay) DetLooked.Add(e);

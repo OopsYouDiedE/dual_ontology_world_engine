@@ -7,6 +7,7 @@ extends Node2D
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
 const FieldVocabulary := preload("res://scenes/Shared/Field/FieldVocabulary.gd")
+const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const SightMaskScene := preload("res://scenes/UI/Panels/Field/SightMask.tscn")
 const HintOverlayScene := preload("res://scenes/UI/Panels/Field/HintOverlay.tscn")
 const PIXEL_FRAMES := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
@@ -51,6 +52,7 @@ var _active_since := 0
 var _closing := false
 var _court_layout := false
 var _applying_scene := false
+var _player_key := ""
 
 var click_path := PackedVector2Array()
 var click_waypoint := 0
@@ -88,12 +90,17 @@ func setup(map_adapter: Node2D) -> void:
 	hints.z_index = 50
 	add_child(hints)
 	hints.set("source", self)
-	adapter.setup()
+	if not adapter.setup(): return
+	_player_key = adapter.player_key()
 	for key in adapter.fixed_actors():
 		actors[key] = adapter.fixed_actors()[key]
-	player = actors.get("detective")
+	player = actors.get(_player_key)
 	if player == null:
-		player = _make_actor("detective", "detective")
+		if not adapter.fixed_actors().is_empty():
+			Bindings.fail(self, "Missing player actor binding: " + _player_key)
+			return
+		player = _make_actor(_player_key, adapter.player_sprite())
+	if player == null: return
 	camera.position = adapter.camera_point(player.position)
 	camera.position_smoothing_enabled = adapter.camera_smoothing()
 	_after_map_load()
@@ -170,7 +177,7 @@ func _build_sites() -> void:
 		sites[id] = site
 	for person in snapshot.get("people", []):
 		var key := str(person.key)
-		if not actors.has(key) or key == "detective": continue
+		if not actors.has(key) or key == _player_key: continue
 		var site_id := "person:" + key
 		if defs.has(site_id) and not bool(defs[site_id].get("enabled", true)): continue
 		if not defs.has(site_id) and not adapter.fixed_actors().is_empty(): continue
@@ -231,16 +238,13 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 		if not adapter.sight_terrain_fog():
 			object_in_sight = _player_object_exposed_in_sight(exposed)
 		if not object_in_sight: continue
-		# STORY-HARDCODE[CSH-033][schema][production]: 特定章节纹理到油灯/柜体可见名称的绑定；不是剧情因果规则。
-		# nightstand 原生 20×36 纹理同时画了柜体和油灯，分别按像素外观判断入镜。
-		if sprite.texture.resource_path == "res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" and sprite.get_rect().size == Vector2(20, 36):
-			var texture_origin := sprite.get_rect().position
-			var lamp_rect := Rect2(texture_origin + Vector2(6, 4), Vector2(8, 13))
-			var cabinet_rect := Rect2(texture_origin + Vector2(1, 16), Vector2(18, 20))
-			if not _player_object_exposed(sprite.get_global_transform_with_canvas() * lamp_rect, occluded_regions).is_empty():
-				var lamp_title := FieldVocabulary.word("床头油灯")
-				counts[lamp_title] = int(counts.get(lamp_title, 0)) + 1
-			if _player_object_exposed(sprite.get_global_transform_with_canvas() * cabinet_rect, occluded_regions).is_empty(): continue
+		var parts := FieldVocabulary.sprite_parts(sprite)
+		if not parts.is_empty():
+			for part in parts:
+				if _player_object_exposed(sprite.get_global_transform_with_canvas() * (part.rect as Rect2), occluded_regions).is_empty(): continue
+				counts[part.title] = int(counts.get(part.title, 0)) + 1
+			if visible_site: represented_sites[site_id] = true
+			continue
 		var title := _player_object_readable(str(sites[site_id].title)) if visible_site else _player_object_title(sprite)
 		if title == "": title = _player_object_title(sprite)
 		if str(sprite.name) == "DoorFace": title += FieldVocabulary.word("门关")
@@ -646,12 +650,15 @@ func _make_actor(key: String, sprite_key: String) -> CharacterBody2D:
 	actor.set_script(ACTOR)
 	var path := PIXEL_FRAMES % sprite_key
 	if not ResourceLoader.exists(path): path = ANIME_FRAMES % sprite_key
-	if not ResourceLoader.exists(path): path = PIXEL_FRAMES % "detective"
+	if not ResourceLoader.exists(path):
+		actor.free()
+		Bindings.fail(self, "Missing actor asset binding: " + key + " -> " + sprite_key)
+		return null
 	actor.standard = load(path)
 	actor.name = key
 	adapter.objects_root().add_child(actor)
 	actor.collision_mask = 1
-	actor.speed = 130.0 if key == "detective" else 110.0
+	actor.speed = 130.0 if key == _player_key else 110.0
 	actors[key] = actor
 	return actor
 
@@ -664,7 +671,7 @@ func _spawn_people(animate: bool) -> void:
 	var stands: Array = adapter.stands()
 	var door: Vector2 = adapter.door_point(player.position)
 	for key in actors.keys():
-		if key == "detective" or shown.has(key): continue
+		if key == _player_key or shown.has(key): continue
 		var leaving: CharacterBody2D = actors[key]
 		actors.erase(key)
 		if animate and is_instance_valid(leaving): _walk_off(leaving, door)
@@ -678,7 +685,8 @@ func _spawn_people(animate: bool) -> void:
 		index += 1
 		var actor: CharacterBody2D = actors.get(key)
 		if actor == null:
-			actor = _make_actor(key, str(p.get("sprite", "detective")))
+			actor = _make_actor(key, str(p.get("sprite", "")))
+			if actor == null: return
 			if animate:
 				actor.position = door
 				_walk_on(actor, spot, str(p.get("frame", "")))
@@ -700,13 +708,18 @@ func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
 	actor.pose({"操作": "interact", "递物": "interact", "拉拽": "interact", "交谈": "talk", "蹲查": "inspect"}.get(frame, "idle"), "front")
 
 func _place_court() -> void:
-	# STORY-HARDCODE[CSH-035][schema][production]: 专用盟誓庭锚点与侦探位置绑定；名单由外部快照驱动。
-	var court: Vector2 = adapter.anchor("site:oath_court") if adapter.anchor("site:oath_court") != null else player.position
+	var anchor_key := str(snapshot.get("gathering", {}).get("anchor", ""))
+	var point = adapter.anchor(anchor_key) if anchor_key != "" else null
+	if point == null:
+		Bindings.fail(self, "Missing gathering anchor binding: " + anchor_key)
+		return
+	var court: Vector2 = point
 	var i := 0
 	for p in snapshot.get("people", []):
 		if not bool(p.get("court_present", false)): continue
 		var actor: CharacterBody2D = actors.get(str(p.key))
-		if not is_instance_valid(actor): actor = _make_actor(str(p.key), str(p.get("sprite", "detective")))
+		if not is_instance_valid(actor): actor = _make_actor(str(p.key), str(p.get("sprite", "")))
+		if actor == null: return
 		actor.position = court + Vector2((i % 5) * 34 - 68, (i / 5) * 34 - 30)
 		i += 1
 	player.position = court + Vector2(0, 110)
@@ -748,7 +761,7 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 		return
 	_cancel_click()
 	for actor_key in actors.keys():
-		if actor_key == "detective": continue
+		if actor_key == _player_key: continue
 		var actor: CharacterBody2D = actors[actor_key]
 		if is_instance_valid(actor):
 			_cancel_motion(actor)
@@ -1025,8 +1038,10 @@ func _op_camera(ev: Dictionary) -> void:
 	_ack(ev, {})
 
 func _group(ev: Dictionary) -> void:
-	var court = adapter.anchor(str(ev.get("anchor", "site:oath_court")))
-	if court == null: court = player.position
+	var court = adapter.anchor(str(ev.get("anchor", "")))
+	if court == null:
+		Bindings.fail(self, "Missing group anchor binding: " + str(ev.get("anchor", "")))
+		return
 	var groups := {}
 	for key in ev.stands:
 		var g: String = ev.stands[key]

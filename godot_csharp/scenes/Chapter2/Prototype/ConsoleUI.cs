@@ -287,8 +287,8 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
                 return new(Cmd.Class) { Topic = Array.IndexOf(Game.Topics, topics[t]), Precise = precise };
             }
             case "ration": return new(Cmd.Collect);
-            case "inspect": { var t = ThingOf(Arg(1, "要看的东西或地点")); if (roomScoped && Game.Things_[t].Place != g.Where(g.Det)) throw new PlayerError("请先去" + Names.Of(Game.Things_[t].Place) + "。"); return new(Cmd.Inspect) { Place = Game.Things_[t].Place, Thing = t }; }
-            case "escort": { var t = ThingOf(Arg(2, "要去看的东西或地点")); return new(Cmd.Escort) { Who = Person(Arg(1, "请谁同去")), Place = Game.Things_[t].Place, Thing = t }; }
+            case "inspect": { var t = ThingOf(Arg(1, "要看的东西或地点")); if (roomScoped && g.Things_[t].Place != g.Where(g.Det)) throw new PlayerError("请先去" + Names.Of(g.Things_[t].Place) + "。"); return new(Cmd.Inspect) { Place = g.Things_[t].Place, Thing = t }; }
+            case "escort": { var t = ThingOf(Arg(2, "要去看的东西或地点")); return new(Cmd.Escort) { Who = Person(Arg(1, "请谁同去")), Place = g.Things_[t].Place, Thing = t }; }
             case "ask": return new(Cmd.Ask) { Who = Person(Arg(1, "请谁")), Job = JobOf(Arg(2, "请他做什么")) };
             case "askabout":
                 if (a.Length > 2) throw new PlayerError("问人会听他当下愿意说的事：写“问 某人”。课堂提问才选择话题：写“上课 温室 精确”等。此次没有花掉时段。");
@@ -341,12 +341,12 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
 
     private List<string> Topics() => [.. Game.Topics];
 
-    private static string ThingOf(string s)
+    private string ThingOf(string s)
     {
-        if (Game.Things_.ContainsKey(s)) return s;
+        if (g.Things_.ContainsKey(s)) return s;
         if (Names.PlaceAlias.TryGetValue(s, out var place) || PlaceShort.TryGetValue(s, out place))
-            if (Game.AreaThings.TryGetValue(place, out var list)) return list[0];
-        var hits = Game.Things_.Keys.Where(k => k.Contains(s)).ToArray();
+            if (g.AreaThings.TryGetValue(place, out var list)) return list[0];
+        var hits = g.Things_.Keys.Where(k => k.Contains(s)).ToArray();
         if (hits.Length == 1) return hits[0];
         throw new PlayerError($"没有“{s}”这样东西。输入“物件”看能细看什么（也可以直接写地点）。");
     }
@@ -488,7 +488,7 @@ public sealed class ConsoleUI(Game g, TextReader input, TextWriter output, bool 
     private void Things()
     {
         W("能细看的东西（“查”东西或地点都行；同一处的痕迹会一并看）：");
-        foreach (var grp in Game.Things_.Where(t => !roomScoped || HasRoom && t.Value.Place == g.Where(g.Det)).GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
+        foreach (var grp in g.Things_.Where(t => !roomScoped || HasRoom && t.Value.Place == g.Where(g.Det)).GroupBy(t => t.Value.Place)) W($"  {Names.Of(grp.Key)}：{string.Join(" ", grp.Select(t => t.Key))}");
     }
 
     // STORY-HARDCODE[CH2-081][text][production]: 状态页显示本案特定证物、指控与石碑阅读结果。

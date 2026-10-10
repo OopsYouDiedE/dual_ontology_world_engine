@@ -12,6 +12,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     private readonly WorldSession _behavior;
     private readonly Dictionary<P,string> _actorIds;
     private readonly IReadOnlyList<Chapter2AuthoredSite> _sites;
+    private readonly Chapter2Presentation _fieldPresentation;
     private readonly IReadOnlyDictionary<string,string> _reactionIntents;
     private readonly IReadOnlyList<(string Key,string Text)> _furniture;
     private readonly HashSet<string> _furnitureSpoken = new(StringComparer.Ordinal);
@@ -49,6 +50,9 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         _game = game; _narrative = new(script, game.InheritedChapter1);
         _content=new(script); _confrontQuestions=_content.Texts("confront_questions",4);
         _sites=Chapter2AuthoredSites.ReadAll(script);
+        _fieldPresentation = new(script);
+        _map = _fieldPresentation.InitialMap;
+        _game.BindInvestigation(script);
         using(var document=System.Text.Json.JsonDocument.Parse(script))
         {
             LoadFlows(document.RootElement.GetProperty("chapters")[0]);
@@ -251,9 +255,9 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     private void Scene(Place place,List<Dictionary<string,object?>> output)
     {
         _game.HostMoveDet(place); _knownPlaces.Add(place.ToString());
-        var map = place switch { Place.Hall=>"central_hall",Place.Lecture=>"lecture",Place.Logistics=>"logistics",Place.Clinic=>"clinic",Place.Greenhouse=>"greenhouse",Place.ArchiveFront=>"archive",Place.DormLife=>"zone_yi",Place.Oath=>"campus_s",Place.DormW=>"zone_jia",Place.DormS=>"zone_bing",Place.DormL=>"zone_ding",Place.Resonance=>"resonance",_=>"living_hall" };
+        var map = _fieldPresentation.PlaceMap(place.ToString());
         _map = map;
-        output.Add(Event("scene",("map",map),("spawn",place==Place.Logistics?"west":"south")));
+        output.Add(Event("scene",("map",map),("spawn",_fieldPresentation.MapSpawn(map))));
     }
     private void Run(PlayerAction? action,List<Dictionary<string,object?>> output)
     {
@@ -286,7 +290,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
             "collect"=>new(Cmd.Collect),"class"=>new(Cmd.Class),"mediate"=>new(Cmd.Mediate){Wording=Text(a,"wording")},"help"=>new(Cmd.Help){Who=Who()},
             "share" when Game.Get(_game.Det.Body,T.Fed)>0=>new(Cmd.ShareFood){Who=Who()},
             "request"=>new(Cmd.Ask){Who=Who(),Job=Enum.Parse<Job>(Text(a,"job"))},
-            "escort" when _examined.Values.Any(c=>Text(c,"thing")==Text(a,"thing"))=>new(Cmd.Escort){Who=Who(),Thing=Text(a,"thing"),Place=Game.Things_[Text(a,"thing")].Place},
+            "escort" when _examined.Values.Any(c=>Text(c,"thing")==Text(a,"thing"))=>new(Cmd.Escort){Who=Who(),Thing=Text(a,"thing"),Place=_game.Things_[Text(a,"thing")].Place},
             "tell_rule"=>TellRule(Who(),Number(a,"rule")),
             "tell_wording"=>new(Cmd.TellRule){Who=Who(),Card=Game.CaseWordings[Number(a,"wording")].Card},
             "tell_archive_wording"=>new(Cmd.TellRule){Who=Who(),Card=Game.ArchiveWordings[Number(a,"wording")].Card},
@@ -344,7 +348,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
         if(site.Thing is not null)
         {
             var entity=_behavior.Entity(site.Thing);
-            thing=Game.Things_.FirstOrDefault(p=>ReferenceEquals(p.Value.Thing(_game),entity)).Key??"";
+            thing=_game.Things_.FirstOrDefault(p=>ReferenceEquals(p.Value.Thing,entity)).Key??"";
         }
         return new(){["title"]=site.Title,["kind"]=site.Kind,["lore"]=site.Lore,["thing"]=thing};
     }
@@ -489,7 +493,7 @@ public sealed partial class Chapter2InteractionSession : IChapterSession
     }
     private void Council(List<Dictionary<string,object?>> output)
     {
-        _stage="council"; _game.HostMoveDet(Place.Oath);_knownPlaces.Add(Place.Oath.ToString()); _map="campus_s"; output.Add(Event("scene",("map",_map),("spawn","gate_inside"),("mode","court"))); Activate("council.begin",output); _continuations.Enqueue(CouncilProposal); Pump(output);
+        _stage="council"; _game.HostMoveDet(Place.Oath);_knownPlaces.Add(Place.Oath.ToString()); _map=_fieldPresentation.GatheringMap; output.Add(Event("scene",("map",_map),("spawn",_fieldPresentation.GatheringSpawn),("mode","court"))); Activate("council.begin",output); _continuations.Enqueue(CouncilProposal); Pump(output);
     }
     private void CouncilProposal(List<Dictionary<string,object?>> output)
     {

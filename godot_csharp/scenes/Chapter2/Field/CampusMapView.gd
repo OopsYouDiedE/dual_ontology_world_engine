@@ -4,6 +4,7 @@ extends Node2D
 ## 剧情与文字不在这里。
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
+const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
 const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
@@ -21,6 +22,8 @@ var _walls: Dictionary = {}
 var _seen: Dictionary = {}
 var _access: Dictionary = {}
 var _last_allowed_position := Vector2.ZERO
+var presentation: Dictionary = {}
+var _player_sprite := ""
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	_access = snapshot.get("access", {}).get("maps", {})
@@ -32,7 +35,19 @@ func blocked_entry() -> void:
 	_switching = false
 	if map and map.has_meta("outdoor_core"): field.player.position = _last_allowed_position
 
-func setup() -> void: pass
+func setup() -> bool:
+	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
+	var chapter: Dictionary = document.chapters[0]
+	presentation = chapter.design.presentation
+	for entity in chapter.entities:
+		if str(entity.id) == "person." + str(presentation.player_identity):
+			_player_sprite = str(entity.properties.get("sprite", {}).get("value", ""))
+	if _player_sprite == "":
+		Bindings.fail(self, "Missing player portrait binding: " + str(presentation.player_identity))
+		return false
+	return true
+func player_key() -> String: return str(presentation.player_actor)
+func player_sprite() -> String: return _player_sprite
 func fixed_actors() -> Dictionary: return {}
 func objects_root() -> Node2D: return map.get_node("Objects") if map else self
 func map_key() -> String: return key

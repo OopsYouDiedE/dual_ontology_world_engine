@@ -11,37 +11,14 @@ using Ev = Dictionary<string, object?>;
 /// </summary>
 public sealed partial class Chapter2InteractionSession
 {
-    private string _map = "living_hall";
+    private string _map = "";
     private string _placeTitle = "";
     private object?[] _replayVars = [-1, -1, -1, -1];
     private object?[] _lastRunVars = [];
 
-    /// <summary>人物立绘与场内动作图集的键。</summary>
-    // STORY-HARDCODE[CH2-024][schema][production]: 角色身份到专属肖像标识及地图地点的映射写在宿主代码。
-    private static readonly Dictionary<string, string> Sprites = new()
-    {
-        ["Det"] = "detective", ["Huo"] = "engineer", ["Shen"] = "chef", ["Su"] = "musician", ["Lucian"] = "poet", ["Gu"] = "archaeologist",
-        ["Quer"] = "thief", ["Ward"] = "lawyer", ["Selma"] = "naturalist", ["Ruan"] = "chessplayer", ["Elena"] = "dancer", ["Moran"] = "painter",
-        ["Veronica"] = "chemist", ["Bertrand"] = "marksman", ["Margaret"] = "architect", ["Mora"] = "doctor",
-    };
-    /// <summary>地图 → 侦探在引擎里的地点（室外过道不改）。</summary>
-    private static readonly Dictionary<string, string> MapPlaces = new()
-    {
-        ["central_hall"] = "Hall", ["lecture"] = "Lecture", ["logistics"] = "Logistics", ["granary"] = "Logistics", ["clinic"] = "Clinic",
-        ["greenhouse"] = "Greenhouse", ["archive"] = "ArchiveFront", ["counterweight"] = "ArchiveFront", ["campus_s"] = "Oath", ["living_hall"] = "Living",
-        ["campus_n"] = "Hall", ["campus_nw"] = "Hall", ["campus_ne"] = "Logistics", ["campus_sw"] = "Hall", ["harbor"] = "Oath",
-        ["zone_yi"] = "DormLife", ["zone_jia"] = "DormW", ["zone_bing"] = "DormS", ["zone_ding"] = "DormL", ["resonance"] = "Resonance",
-    };
-    /// <summary>地点 → 人物站在哪张地图上。</summary>
-    private static readonly Dictionary<string, string> PlaceMaps = new()
-    {
-        ["Hall"] = "central_hall", ["Lecture"] = "lecture", ["Logistics"] = "logistics", ["Clinic"] = "clinic", ["Greenhouse"] = "greenhouse",
-        ["ArchiveFront"] = "archive", ["Oath"] = "campus_s", ["DormLife"] = "zone_yi", ["DormW"] = "zone_jia", ["DormS"] = "zone_bing", ["DormL"] = "zone_ding",
-        ["Resonance"] = "resonance", ["Living"] = "living_hall",
-    };
     private static readonly string[] Dayparts = ["dawn", "morning", "noon", "afternoon", "evening", "night"];
 
-    private static string MapPlace(string map) => MapPlaces.GetValueOrDefault(map, "");
+    private string MapPlace(string map) => _fieldPresentation.MapPlace(map);
 
     /// <summary>现场报告的几何：侦探所在地图的标题，以及谁在视线内、离得近（问话与请人看要当面）。</summary>
     private void ReadContext(IReadOnlyDictionary<string, object?> input)
@@ -52,7 +29,7 @@ public sealed partial class Chapter2InteractionSession
         foreach (var (who, value) in Map(context, "actors"))
         {
             if (value is not IReadOnlyDictionary<string, object?> data) continue;
-            if (who == "detective") { _placeTitle = ChapterEvents.Text(data, "room_name", _placeTitle); continue; }
+            if (who == _fieldPresentation.PlayerKey) { _placeTitle = ChapterEvents.Text(data, "room_name", _placeTitle); continue; }
             if (Flag(data, "visible", true) && ChapterEvents.Number(data, "distance", double.PositiveInfinity) < 220.0) near.Add(who);
         }
         _nearby = near;
@@ -62,7 +39,7 @@ public sealed partial class Chapter2InteractionSession
     private IEnumerable<Ev> EndEvents(Ev result)
     {
         if (result.GetValueOrDefault("stands") is IDictionary<string, string> stands)
-            yield return Event("stage", ("op", "group"), ("anchor", "site:oath_court"), ("stands", stands.ToDictionary(p => p.Key, p => (object?)p.Value)));
+            yield return Event("stage", ("op", "group"), ("anchor", _fieldPresentation.GatheringAnchor), ("stands", stands.ToDictionary(p => p.Key, p => (object?)p.Value)));
         var hooked = ((string[])result["hooks"]!).ToList();
         var detHooks = Convert.ToInt32(result["det_hooks"]);
         if (detHooks > 0) hooked.Insert(0, "你自己");
@@ -96,7 +73,7 @@ public sealed partial class Chapter2InteractionSession
         snapshot["realtime"] = false;
         snapshot["hud"] = new Ev { ["title"] = Chapter2Content.TimeName(ShownDay, ShownSlot) + "　" + _placeTitle, ["time"] = "", ["keys"] = keys.ToArray() };
         snapshot["controls"] = new Ev { ["notebook"] = true, ["manuscript"] = _replayOpen, ["campus"] = true, ["wait"] = true, ["examine"] = true };
-        snapshot["access"] = new Ev { ["dorms"] = true, ["maps"] = MapPlaces.ToDictionary(pair => pair.Key,
+        snapshot["access"] = new Ev { ["dorms"] = true, ["maps"] = _fieldPresentation.MapPlaces.ToDictionary(pair => pair.Key,
             pair => (object?)_game.HostCanEnter(Enum.Parse<Place>(pair.Value))) };
         snapshot["daypart"] = Dayparts[(int)ShownSlot];
         snapshot["sites"] = SiteDefinitions(_map).ToDictionary(p => p.Key, p => (object?)new Ev
@@ -104,16 +81,16 @@ public sealed partial class Chapter2InteractionSession
             ["title"] = p.Value["title"], ["enabled"] = true, ["kind"] = p.Value["kind"],
             ["new"] = p.Value["kind"] == "" && !_examined.ContainsKey(_map + ":" + p.Key),
         });
-        var cast = new Ev { ["侦探"] = "detective", ["工程师"] = "engineer", ["厨师"] = "chef", ["音乐家"] = "musician" };
-        foreach (var person in _game.Npcs) if (person.Id is not (P.Huo or P.Shen or P.Su)) cast[person.Name] = Sprites[person.Id.ToString()];
+        var cast = _fieldPresentation.Cast.ToDictionary(pair => pair.Key, pair => (object?)pair.Value, StringComparer.Ordinal);
+        snapshot["gathering"] = new Ev { ["anchor"] = _fieldPresentation.GatheringAnchor };
         snapshot["cast"] = cast;
         snapshot["people"] = ((object[])snapshot["people"]!).Cast<Ev>().Select(p =>
         {
             var doing = (string)p["doing"]!;
             var person = new Ev(p)
             {
-                ["sprite"] = Sprites.GetValueOrDefault((string)p["key"]!, "detective"),
-                ["map"] = PlaceMaps.GetValueOrDefault((string)p["place"]!, ""),
+                ["sprite"] = _fieldPresentation.SpriteOf((string)p["key"]!),
+                ["map"] = _fieldPresentation.PlaceMap((string)p["place"]!),
                 ["title"] = (string)p["name"]! + (doing == "" ? "" : "（" + (doing.Length <= 14 ? doing : doing[..14] + "…") + "）"),
             };
             return (object?)person;
