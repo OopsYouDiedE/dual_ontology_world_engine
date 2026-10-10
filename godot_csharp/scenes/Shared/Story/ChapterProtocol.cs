@@ -14,6 +14,8 @@ public interface IChapterSession
 
 public static class ChapterEvents
 {
+    public static string SourceSite(string runtimeSite) => runtimeSite.StartsWith("person:", StringComparison.Ordinal)
+        ? runtimeSite[7..] : runtimeSite;
     public static Dictionary<string, object?> Event(string kind, params (string Key, object? Value)[] args)
     {
         var result = new Dictionary<string, object?> { ["kind"] = kind };
@@ -21,10 +23,11 @@ public static class ChapterEvents
         return result;
     }
 
-    public static Dictionary<string, object?> Option(string id, string label, bool available = true, string lockHint = "", string group = "")
+    public static Dictionary<string, object?> Option(string id, string label, bool available = true, string lockHint = "", string group = "", string purpose = "")
     {
         var option = new Dictionary<string, object?> { ["id"] = id, ["label"] = label, ["available"] = available, ["lock_hint"] = lockHint };
         if (group != "") option["group"] = group;
+        if (purpose != "") option["purpose"] = purpose;
         return option;
     }
 

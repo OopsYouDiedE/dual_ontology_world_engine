@@ -579,7 +579,7 @@ public sealed partial class Chapter1Session
         OpenModal(Event("candidates", ("title", T("铜口·标题")), ("prompt", T("铜口·描述"))),
         [
             (Option("examine", T("铜口·检视")), () => OpenCard("E8")),
-            (Option("answer", T("铜口·作答")), () => PlayPlan(() => _content.BeginAnswer(_world))),
+            (Option("answer", T("铜口·作答"), purpose: "argument"), () => PlayPlan(() => _content.BeginAnswer(_world))),
             (Option("close", T("卡片·返回")), Nothing),
         ]);
         yield break;
@@ -670,14 +670,14 @@ public sealed partial class Chapter1Session
         var statements = _content.Statements(((object[])State["replay_vars"]).Select(Convert.ToInt32).ToArray(),
             Convert.ToInt32(State["replay_count"]), replay.GetValueOrDefault("detective_bolted") is true);
         var say = statements.Select(key => (object?)new Ev { ["id"] = key, ["label"] = Content.GetProperty("STATEMENTS").GetProperty(key).GetString() }).ToArray();
-        var show = Content.GetProperty("EVIDENCE").EnumerateObject().Where(e => Has("examined", e.Name))
+        var show = Content.GetProperty("EVIDENCE").EnumerateObject().Where(e => Has("examined", e.Name) && !_world.IsDestroyed(e.Name))
             .Select(e => (object?)new Ev { ["id"] = e.Name, ["label"] = e.Value.GetProperty("name").GetString() }).ToArray();
         yield return new Await(Event("form", ("title", T("答辩·标题")), ("layout", "tabs"),
             ("header", new Ev { ["question"] = T("答辩·题头", ("问题", verdict)), ["instructions"] = T("答辩·说明") }),
             ("fields", new object?[]
             {
-                new Ev { ["id"] = "say", ["kind"] = "choice", ["options"] = say, ["empty_text"] = T("答辩·无陈述"), ["value"] = "" },
-                new Ev { ["id"] = "show", ["kind"] = "choice", ["options"] = show, ["empty_text"] = T("答辩·无笔记"), ["value"] = "" },
+                new Ev { ["id"] = "say", ["kind"] = "choice", ["purpose"] = "statement", ["options"] = say, ["empty_text"] = T("答辩·无陈述"), ["value"] = "" },
+                new Ev { ["id"] = "show", ["kind"] = "choice", ["purpose"] = "evidence", ["options"] = show, ["empty_text"] = T("答辩·无笔记"), ["value"] = "" },
             }),
             ("summary", new object?[] { new Ev { ["field"] = "say", ["template"] = T("答辩·陈述行") }, new Ev { ["field"] = "show", ["template"] = T("答辩·出示行") } }),
             ("unset_label", T("答辩·未选")),

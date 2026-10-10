@@ -18,7 +18,9 @@ public sealed class ControllerReasoningDefinition
     public int Depth { get; set; } = 1;
     public int Expansions { get; set; } = 256;
     public int Hypotheses { get; set; } = 16;
+    [System.Text.Json.Serialization.JsonPropertyName("argumentWeight")]
     public int ArgumentWeight { get; set; } = 1;
+    [System.Text.Json.Serialization.JsonPropertyName("informationWeight")]
     public int InformationWeight { get; set; } = 1;
 }
 public sealed class ControllerRuleDefinition
@@ -36,10 +38,16 @@ public interface IPlayerRoleSession
     string PlayerActor { get; }
     PlayerCognition CapturePlayerCognition(string actor);
     PlayerTime PlayerTime { get; }
+    void ObservePlayerOffers(IReadOnlyList<PlayerFieldOffer> offers) { }
+    void ObservePlayerFormField(IReadOnlyDictionary<string, object?> field) { }
 }
 
 public sealed record PublicPlayerLine(string Speaker, string Mood, string Text);
-public sealed record PublicPlayerCandidate(string Token, string Label, string Kind, bool New, string Group = "", string Value = "");
+public sealed record PlayerPoint(double X, double Y);
+public sealed record PublicPlayerCandidate(string Token, string Label, string Kind, bool New, string Group = "", string Value = "", string Purpose = "", bool Selected = false)
+{
+    public PlayerPoint? Location { get; init; }
+}
 public sealed record PublicPlayerObservation(long Turn, ImmutableArray<PublicPlayerLine> Lines,
     ImmutableArray<string> Text, ImmutableArray<PublicPlayerCandidate> Candidates, bool Complete);
 public sealed record PlayerDecision(string? Token, string Reason, int? Score)
@@ -48,7 +56,15 @@ public sealed record PlayerDecision(string? Token, string Reason, int? Score)
     public int ReasoningExpansions { get; init; }
     public string ReasoningStop { get; init; } = "not_run";
     public int HypothesesCompared { get; init; }
+    public ImmutableArray<PlayerArgument> Arguments { get; init; } = [];
 }
+public sealed record PlayerArgument(string Proposition, string Value, bool Complete, ImmutableArray<string> Materials, ImmutableArray<string> Steps)
+{
+    public ImmutableArray<PlayerInference> Derivations { get; init; } = [];
+    public ImmutableArray<string> Missing { get; init; } = [];
+    public bool? MaterialSupports { get; init; }
+}
+public sealed record PlayerInference(string Conclusion, ImmutableArray<string> Premises, string Material);
 public sealed class PlayerBoundaryException(string code) : InvalidOperationException(code)
 {
     public string Code { get; } = code;
@@ -61,7 +77,10 @@ public interface IPlayerCandidatePort
 // Host-generated offers must already pass the real field's visibility/navigation gates.
 // Their payload is retained by the trusted port, never exposed to the controller.
 public sealed record PlayerFieldOffer(string Label, string Kind, bool New,
-    IReadOnlyDictionary<string, object?> Input, string Group = "", string Value = "");
+    IReadOnlyDictionary<string, object?> Input, string Group = "", string Value = "", string Purpose = "", bool Selected = false)
+{
+    public PlayerPoint? Location { get; init; }
+}
 
 // Trusted projection of exactly the shared panels' presentation contracts.
 // IDs, numeric option indices and maps remain in private submission payloads.
@@ -114,11 +133,11 @@ public static class PlayerPanels
                 {
                     var next = values.Cast<object?>().ToArray(); next[i] = j;
                     offers.Add(new(Text(question, "question") + " " + options[j], "form_field", values[i] == -1,
-                        Event("replay_vars", ("vars", next)), Text(question, "question"), options[j]));
+                        Event("replay_vars", ("vars", next)), Text(question, "question"), options[j], "hypothesis", values[i] == j));
                 }
             }
             if (values.Length > 0 && values.All(v => v >= 0))
-                offers.Add(new(runLabel, "form_submit", false, Event("replay", ("vars", values.Cast<object?>().ToArray()), ("skip", false))));
+                offers.Add(new(runLabel, "form_submit", false, Event("replay", ("vars", values.Cast<object?>().ToArray()), ("skip", false)), Purpose: "commit"));
             foreach (var finding in Entries(Map(data, "result"), "findings"))
             {
                 Line(Text(finding, "title")); Line(Text(finding, "status"));
@@ -174,13 +193,22 @@ public sealed class SubjectivePlayerController
     // Versioned xorshift32 tie stream; independent of wall time and System.Random.
     private uint _tieState;
     private readonly HashSet<(string Kind, string Label)> _tried = [];
+    private readonly Dictionary<(string Kind, string Label), int> _visits = [];
+    private readonly Dictionary<string, PublicPlayerCandidate> _seenPlaces = new(StringComparer.Ordinal);
+    private readonly int _revisitWeight;
+    private string _knowledgeEpoch = "";
     private readonly ReasoningBudgetV1 _reasoning;
     private readonly int _argumentWeight, _informationWeight;
     private FrozenConditionV1? _argumentGoal;
+    private string _argumentLabel = "";
+    private ImmutableArray<PlayerArgument> _lastArgument = [];
+    private bool _supportedEvidence;
+    private bool _evidenceRequired;
     public SubjectivePlayerController(ActorControllerDefinition declaration, int seed)
     {
         PlayerControllers.Validate(declaration);
         _rules = [..declaration.Rules.Select(r => (Enum.Parse<RuleMode>(r.Mode, true), r.Kind, r.Weight))];
+        _revisitWeight = _rules.Where(r => r.Mode == RuleMode.Prefer && r.Kind == "untried").Select(r => r.Weight).DefaultIfEmpty(0).Max();
         var r = declaration.Reasoning;
         _reasoning = new(r.Depth, r.Expansions, r.Hypotheses);
         (_argumentWeight, _informationWeight) = (r.ArgumentWeight, r.InformationWeight);
@@ -194,12 +222,24 @@ public sealed class SubjectivePlayerController
         _tieState ^= _tieState << 5;
         return (int)(_tieState % (uint)count);
     }
+    private static (string Kind, string Label) HistoryKey(PublicPlayerCandidate candidate)
+        => candidate.Kind == "move" && candidate.Location is { } point
+            ? (candidate.Kind, $"{Math.Floor(point.X / 64)}:{Math.Floor(point.Y / 64)}")
+            : (candidate.Kind, candidate.Label);
     public PlayerDecision Decide(PublicPlayerObservation observation, PlayerCognition cognition)
     {
         if (observation.Candidates.Length == 0) return new(null, "candidate_missing", null);
         var snapshot = cognition.Snapshot;
         if (!snapshot.Projections.Any(p => p.Id == cognition.Actor)) return new(null, "actor_cognition_missing", null);
+        // Reconsider old inputs after learning new accepted material or hearing a
+        // new question. Movement and ordinary observation revisions do not reset visits.
+        var epoch = string.Join(";", snapshot.Projections.Where(p => p.KnownTerms.Any(t => t.TermId.Value.StartsWith("acquired.", StringComparison.Ordinal))
+            && (p.Rules.Any(r => r.Mode == RuleMode.Infer && r.Acceptance == Truth.True)
+                || p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1))
+            .Select(p => p.Id.ToString() + ":" + p.Rules.Count(r => r.Acceptance == Truth.True)).Order());
+        if (epoch != _knowledgeEpoch) { _visits.Clear(); _knowledgeEpoch = epoch; }
         var reasoning = new SubjectiveReasoner(snapshot, cognition.Actor, _reasoning);
+        if (observation.Candidates.Any(c => c.Purpose == "evidence")) _evidenceRequired = true;
         if (_argumentGoal is not null)
             try { reasoning.References(_argumentGoal); }
             catch (CognitionContractException) { _argumentGoal = null; }
@@ -210,10 +250,34 @@ public sealed class SubjectivePlayerController
             var exact = snapshot.Projections.Where(p => p.Name.Length > 0 && (c.Value == p.Name || c.Label == p.Name)
                 || p.KnownTerms.Any(t => t.CanonicalLexeme.Length > 0 && (c.Value == t.CanonicalLexeme || c.Label == t.CanonicalLexeme))).ToArray();
             if (exact.Length > 0) return exact;
-            return snapshot.Projections.Where(p => p.KnownTerms.Any(t => t.CanonicalLexeme.Length > 0
+            // An observed entrance is a particular offered input. A person's
+            // name inside another menu label does not promise the same material.
+            return snapshot.Projections.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) != 1
+                && p.KnownTerms.Any(t => t.CanonicalLexeme.Length > 0
                 && c.Label.Contains(t.CanonicalLexeme, StringComparison.Ordinal))).ToArray();
         }
         var materials = observation.Candidates.ToDictionary(c => c.Token, Materials);
+        foreach (var place in observation.Candidates.Where(c => c.Kind == "interact" && c.Location is not null))
+            _seenPlaces[place.Label] = place;
+        var currentQuestion = snapshot.Projections.LastOrDefault(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1);
+        var asked = currentQuestion is null ? null : reasoning.Claims(currentQuestion.Id).FirstOrDefault();
+        var askedProof = asked is null ? null : reasoning.Prove(asked);
+        bool ReadyOpportunity(PublicPlayerCandidate candidate, IEnumerable<FrozenProjectionV1> held) => asked is not null
+            && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+            && held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1
+                && (p.Name == candidate.Label || p.Name == candidate.Value))
+                .SelectMany(p => reasoning.Claims(p.Id)).Any(goal => Ast.Equivalent(asked, goal) is ContractResult<bool>.Success { Value: true });
+        var readyPlaces = _seenPlaces.Values.Where(p => ReadyOpportunity(p, Materials(p))).ToArray();
+        bool NeededOpportunity(IEnumerable<FrozenProjectionV1> held) => askedProof is { Value: Truth.Unknown }
+            && held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1)
+                .SelectMany(p => reasoning.Claims(p.Id)).Any(claim => askedProof.Missing.Any(gap =>
+                    Ast.Equivalent(gap, claim) is ContractResult<bool>.Success { Value: true }));
+        var wantedPlaces = readyPlaces.Length > 0 ? readyPlaces
+            : _seenPlaces.Values.Where(p => NeededOpportunity(Materials(p))).ToArray();
+        var moves = observation.Candidates.Where(c => c.Kind == "move" && c.Location is not null).ToArray();
+        double Distance(PlayerPoint a, PlayerPoint b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+        double GoalDistance(PublicPlayerCandidate c) => wantedPlaces.Min(p => Distance(c.Location!, p.Location!));
+        var farthestMove = wantedPlaces.Length == 0 || moves.Length == 0 ? 0 : moves.Max(GoalDistance);
         var groups = observation.Candidates.Where(c => c.Kind == "form_field" && c.Group != "").GroupBy(c => c.Group).ToArray();
         var hypotheses = new List<SubjectiveHypothesisV1>();
         void Combinations(int index, ImmutableArray<FrozenConditionV1> assumptions, string label)
@@ -227,36 +291,105 @@ public sealed class SubjectivePlayerController
             }
         }
         Combinations(0, [], "");
-        var exploration = reasoning.Explore([..reasoning.KnownQueries.Take(_reasoning.Expansions)], [..hypotheses]);
+        var inquiries = asked is null ? reasoning.KnownQueries.Take(16).ToImmutableArray() : ImmutableArray.Create(asked);
+        var exploration = reasoning.Explore(inquiries, []);
         var reasoningScores = new Dictionary<string, (int Score, ImmutableArray<string> Basis)>();
+        var arguments = new Dictionary<string, ImmutableArray<PlayerArgument>>();
+        string MaterialName(SubjectProjectionId id)
+        {
+            var material = snapshot.Projections.First(p => p.Id == id);
+            if (material.KnownTerms.Any(t => t.TermId.Value.StartsWith("acquired.laws.", StringComparison.Ordinal))) return "acquired_rule";
+            return material.Name.Length > 0 ? material.Name : material.KnownTerms.FirstOrDefault()?.RawLexeme ?? "acquired_material";
+        }
+        string PropositionName(FrozenConditionV1 claim) => claim switch
+        {
+            FrozenConditionV1.Not negated => "!" + PropositionName(negated.Operand),
+            FrozenConditionV1.All all => string.Join(" & ", all.Items.Select(PropositionName)),
+            FrozenConditionV1.Any any => string.Join(" | ", any.Items.Select(PropositionName)),
+            _ => string.Join(" / ", reasoning.References(claim).Select(MaterialName)) is { Length: > 0 } label ? label : "acquired_proposition"
+        };
+        PlayerArgument Trace(string label, SubjectiveProofV1 proof, bool? participates = null) => new(label,
+            proof.Value.ToString(), proof.Complete, [..proof.Basis.Select(MaterialName).Distinct()], proof.Steps)
+        { Derivations = [..proof.Derivations.Select(d => new PlayerInference(PropositionName(d.Conclusion),
+            [..d.Premises.Select(PropositionName)], MaterialName(d.Source)))],
+            Missing = [..proof.Missing.Select(PropositionName).Distinct()], MaterialSupports = participates };
         foreach (var candidate in observation.Candidates)
         {
             var held = materials[candidate.Token]; var ids = held.Select(p => p.Id).ToHashSet();
             var why = new List<string>(); long score = 0;
+            var chains = new List<PlayerArgument>();
+            var visits = _visits.GetValueOrDefault(HistoryKey(candidate));
+            // A mandatory acknowledgement has no alternative to explore.
+            if (visits > 0 && _revisitWeight > 0 && observation.Candidates.Length > 1)
+            {
+                score -= (long)Math.Min(visits, 1000) * _revisitWeight;
+                why.Add("revisit_without_new_accepted_material:" + visits);
+            }
+            if (candidate.Selected) score -= _argumentWeight * 4L;
+            if (candidate.Purpose == "tab" && !candidate.Selected && _argumentGoal is not null) score += _argumentWeight * 2L;
+            if (candidate.Purpose == "commit" && _argumentGoal is not null) score += _argumentWeight * (_supportedEvidence ? 3L : -8L);
+            if (candidate.Purpose == "cancel") score -= _argumentWeight;
+            if (ReadyOpportunity(candidate, held) || candidate.Purpose == "argument"
+                && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false })
+            {
+                score += _argumentWeight * 3L;
+                why.Add("return_with_personal_answer:" + candidate.Label);
+                chains.Add(Trace(PropositionName(asked!), askedProof!));
+            }
+            if (candidate.Kind == "move" && candidate.Location is not null && wantedPlaces.Length > 0)
+            {
+                // Soft directional preference toward a place actually seen before.
+                // The real field still resolves collisions; repeat penalties permit detours.
+                var weight = readyPlaces.Length > 0 ? _argumentWeight : _informationWeight;
+                score += (long)Math.Clamp((farthestMove - GoalDistance(candidate)) / 64 * weight, 0, weight * 2);
+                why.Add(readyPlaces.Length > 0 ? "approach_observed_answer_opportunity" : "approach_observed_question_material");
+            }
             foreach (var inquiry in exploration.Inquiries.Where(q => q.Targets.Any(ids.Contains)))
             {
                 score += _informationWeight * (1 + Math.Min(inquiry.DiscriminatingPairs, 1000));
                 why.Add("seek_unknown_acquired_proposition:" + candidate.Label);
             }
-            var goals = _argumentGoal is null ? held.Where(p => p.Kind == ProjectionKind.Concept).SelectMany(p => reasoning.Claims(p.Id))
+            foreach (var opportunity in held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1))
+                foreach (var missing in reasoning.Claims(opportunity.Id))
+                {
+                    var proof = reasoning.Prove(missing);
+                    if (proof.Value == Truth.Unknown && !proof.Contradicted && visits == 0)
+                    {
+                        var relevant = askedProof?.Missing.Any(gap => Ast.Equivalent(gap, missing) is ContractResult<bool>.Success { Value: true }) == true;
+                        score += _informationWeight * (relevant ? 3L : 1L);
+                        why.Add((relevant ? "seek_current_question_material:" : "seek_unknown_acquired_proposition:") + candidate.Label);
+                        chains.Add(Trace(PropositionName(missing), proof));
+                    }
+                }
+            var goals = candidate.Purpose == "evidence" && _argumentGoal is null ? Enumerable.Empty<FrozenConditionV1>()
+                : _argumentGoal is null || candidate.Purpose is "statement" or "hypothesis" ? held.Where(p => p.Kind == ProjectionKind.Concept).SelectMany(p => reasoning.Claims(p.Id))
                 : new[] { _argumentGoal }.AsEnumerable();
             if (candidate.Kind == "form_field")
                 foreach (var goal in goals)
                 {
-                    var proof = reasoning.Prove(goal, [..ids.Concat(reasoning.StandingKnowledge).Distinct()]);
+                    var proof = candidate.Purpose is "statement" or "hypothesis" or "evidence"
+                        ? reasoning.Prove(goal)
+                        : reasoning.Prove(goal, [..ids.Concat(reasoning.StandingKnowledge).Distinct()]);
+                    var participates = candidate.Purpose != "evidence" || proof.Basis.Any(ids.Contains)
+                        && held.Any(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Presentable) == 1);
+                    chains.Add(Trace(candidate.Purpose == "evidence" ? _argumentLabel : candidate.Value == "" ? candidate.Label : candidate.Value,
+                        proof, candidate.Purpose == "evidence" ? participates : null));
                     if (!proof.Complete || proof.Hypothetical) continue;
                     if (proof.Contradicted || proof.Value == Truth.False) score -= _argumentWeight;
-                    else if (proof.Value == Truth.True)
+                    else if (proof.Value == Truth.True && participates)
                     {
                         score += _argumentWeight;
+                        if (asked is not null && Ast.Equivalent(asked, goal) is ContractResult<bool>.Success { Value: true }) score += _argumentWeight * 2L;
                         why.Add("subjective_argument_supported:" + candidate.Label);
-                        why.AddRange(proof.Basis.Select(id => snapshot.Projections.First(p => p.Id == id))
-                            .Select(p => p.KnownTerms.FirstOrDefault()?.RawLexeme ?? "acquired_material"));
+                        why.AddRange(proof.Basis.Select(MaterialName));
                         why.AddRange(proof.Steps);
                     }
                 }
             reasoningScores[candidate.Token] = ((int)Math.Clamp(score, -100000000L, 100000000L), [..why.Distinct()]);
+            arguments[candidate.Token] = [..chains];
         }
+        if (hypotheses.Count > 0)
+            exploration = reasoning.Explore(asked is null ? [..reasoning.KnownQueries.Take(4)] : inquiries, [..hypotheses]);
         var nodes = snapshot.Projections.ToBuilder();
         var effects = new List<(FrozenEffectV1 Effect, PublicPlayerCandidate Candidate)>();
         foreach (var candidate in observation.Candidates)
@@ -268,7 +401,7 @@ public sealed class SubjectivePlayerController
             var effect = new FrozenEffectV1.Think(new FrozenConditionV1.Exists(noun));
             var tags = ImmutableDictionary<Tag, int>.Empty.Add(new(candidate.Kind), 1)
                 .Add(new("new"), candidate.New ? 1 : 0)
-                .Add(new("untried"), _tried.Contains((candidate.Kind, candidate.Label)) ? 0 : 1);
+                .Add(new("untried"), _tried.Contains(HistoryKey(candidate)) ? 0 : 1);
             var rules = ImmutableArray.CreateBuilder<FrozenRuleV1>();
             rules.Add(new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Prefer, effect, 0, Truth.True));
             foreach (var rule in _rules)
@@ -280,36 +413,59 @@ public sealed class SubjectivePlayerController
         if (result is ContractResult<ImmutableArray<SnapshotDecisionAssessmentV1>>.Failure failure)
             return new(null, "cognition_unsupported:" + failure.Error.Code, null);
         var assessments = ((ContractResult<ImmutableArray<SnapshotDecisionAssessmentV1>>.Success)result).Value;
+        // Argument submission requires a belief, not merely an offered claim.
+        // Experiments/hypotheses and ordinary text forms do not set an argument goal.
+        var argumentProof = _argumentGoal is null ? null : reasoning.Prove(_argumentGoal);
+        bool CanSubmitArgument() => _argumentGoal is null || argumentProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+            && (!_evidenceRequired || _supportedEvidence);
+        bool AnswersCurrentQuestion(PublicPlayerCandidate candidate) => candidate.Purpose != "statement" || asked is null
+            || arguments[candidate.Token].Any(a => a.Value == "True" && a.Complete)
+                && materials[candidate.Token].SelectMany(p => reasoning.Claims(p.Id)).Any(goal =>
+                    Ast.Equivalent(asked, goal) is ContractResult<bool>.Success { Value: true });
+        bool SupportsSelectedArgument(PublicPlayerCandidate candidate) => candidate.Purpose != "evidence" || _argumentGoal is null
+            || arguments[candidate.Token].Any(a => a.Value == "True" && a.Complete && a.MaterialSupports == true);
         var available = effects.Select(pair => (pair.Candidate, Assessment: assessments.FirstOrDefault(a => a.Effect == pair.Effect)))
-            .Where(pair => pair.Assessment is { Forbidden: false }).ToArray();
+            .Where(pair => pair.Assessment is { Forbidden: false } && AnswersCurrentQuestion(pair.Candidate) && SupportsSelectedArgument(pair.Candidate)
+                && (pair.Candidate.Purpose != "commit" || CanSubmitArgument())).ToArray();
         if (available.Length == 0) return new(null, "agent_cannot_assess", null);
         var best = available.Max(p => p.Assessment!.Score + reasoningScores[p.Candidate.Token].Score);
         var tied = available.Where(p => p.Assessment!.Score + reasoningScores[p.Candidate.Token].Score == best).ToArray();
         var chosen = tied[TieIndex(tied.Length)].Candidate;
         var matchedRules = _rules.Where(rule => rule.Kind == chosen.Kind
             || rule.Kind == "new" && chosen.New
-            || rule.Kind == "untried" && !_tried.Contains((chosen.Kind, chosen.Label)))
+            || rule.Kind == "untried" && !_tried.Contains(HistoryKey(chosen)))
             .Select(rule => "authored_rule:" + rule.Mode.ToString().ToLowerInvariant() + ":" + rule.Kind + ":" + rule.Weight);
         // Materialize before updating choice history: the untried rule describes
         // the cognition used for this choice, not the state after it.
         var publicBasis = reasoningScores[chosen.Token].Basis.AddRange(matchedRules).Add("authored_subjective_preferences");
-        _tried.Add((chosen.Kind, chosen.Label));
-        if (chosen.Kind == "form_field")
+        _tried.Add(HistoryKey(chosen));
+        _visits[HistoryKey(chosen)] = _visits.GetValueOrDefault(HistoryKey(chosen)) + 1;
+        var chosenArguments = arguments[chosen.Token];
+        if (chosen.Purpose == "evidence")
+        {
+            _supportedEvidence = reasoningScores[chosen.Token].Basis.Any(b => b.StartsWith("subjective_argument_supported:", StringComparison.Ordinal));
+            _lastArgument = chosenArguments;
+        }
+        if (chosen.Kind == "form_field" && chosen.Purpose is "statement" or "")
         {
             var selectedClaims = materials[chosen.Token].Where(p => p.Kind == ProjectionKind.Concept)
                 .SelectMany(p => reasoning.Claims(p.Id)).Distinct().ToArray();
-            if (selectedClaims.Length == 1) _argumentGoal = selectedClaims[0];
+            if (selectedClaims.Length == 1 && chosen.Purpose != "evidence") { _argumentGoal = selectedClaims[0]; _argumentLabel = chosen.Value == "" ? chosen.Label : chosen.Value; _supportedEvidence = false; _lastArgument = chosenArguments; }
             else if (selectedClaims.Length > 1) _argumentGoal = null;
         }
         // A page switch is a menu input inside the same visible form. Retain the
         // statement until submission or leaving the form; editing it replaces it.
-        if (chosen.Kind == "form_submit" || !observation.Candidates.Any(c => c.Kind == "form_field")) _argumentGoal = null;
+        if (chosen.Purpose == "commit" && chosenArguments.IsEmpty) chosenArguments = _lastArgument;
+        if (chosenArguments.IsEmpty && askedProof is not null) chosenArguments = [Trace(PropositionName(asked!), askedProof)];
+        if (chosen.Kind == "form_submit" || !observation.Candidates.Any(c => c.Kind == "form_field"))
+        { _argumentGoal = null; _supportedEvidence = false; _evidenceRequired = false; _lastArgument = []; _argumentLabel = ""; }
         return new(chosen.Token, "subjective_rules", best)
         {
             Basis = publicBasis,
             ReasoningExpansions = reasoning.Expansions,
             ReasoningStop = reasoning.KnownQueries.Length == 0 ? "no_acquired_propositional_model" : reasoning.StopReason,
-            HypothesesCompared = exploration.Predictions.Length
+            HypothesesCompared = exploration.Predictions.Length,
+            Arguments = chosenArguments
         };
     }
 }
@@ -322,6 +478,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     private readonly Func<IReadOnlyDictionary<string, object?>, IReadOnlyList<Dictionary<string, object?>>> _dispatch;
     private readonly string _selfName;
     private readonly int _maxSelections, _maxObservations;
+    private readonly Action<IReadOnlyDictionary<string, object?>>? _observeField;
     private readonly string _session = Guid.NewGuid().ToString("N");
     private readonly Dictionary<string, Offer> _offers = new(StringComparer.Ordinal);
     private Dictionary<string, object?>? _pending;
@@ -334,21 +491,23 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     public IReadOnlyList<Dictionary<string, object?>> LastOutput { get; private set; } = [];
     public IReadOnlyDictionary<string, object?>? LastInput { get; private set; }
     public PlayerCandidateSession(Func<IReadOnlyDictionary<string, object?>, IReadOnlyList<Dictionary<string, object?>>> dispatch,
-        string selfName, int maxSelections = 10000, int maxObservations = 20000)
+        string selfName, int maxSelections = 10000, int maxObservations = 20000,
+        Action<IReadOnlyDictionary<string, object?>>? observeField = null)
     {
         if (maxSelections < 0 || maxObservations < 1) throw new ArgumentOutOfRangeException(nameof(maxSelections));
         (_dispatch, _selfName, _maxSelections, _maxObservations) = (dispatch, selfName, maxSelections, maxObservations);
+        _observeField = observeField;
     }
     private void Open() { if (_closed) throw new PlayerBoundaryException("boundary_closed"); }
     private PlayerBoundaryException Fail(string code) { _closed = true; _offers.Clear(); return new(code); }
     public void Close() { _closed = true; _offers.Clear(); }
     private static IEnumerable<IReadOnlyDictionary<string, object?>> Maps(IReadOnlyDictionary<string, object?> map, string key)
         => (map.GetValueOrDefault(key) as System.Collections.IEnumerable ?? Array.Empty<object>()).Cast<object?>().OfType<IReadOnlyDictionary<string, object?>>();
-    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "")
+    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null)
     {
         if (_offers.Count >= 256) throw Fail("candidate_limit");
         var token = "player:" + _session + ":" + ++_serial;
-        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue), input, field, value, tab));
+        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location }, input, field, value, tab));
     }
     public PublicPlayerObservation Observe(IReadOnlyList<Dictionary<string, object?>> output,
         IReadOnlyList<PlayerFieldOffer>? fieldOffers = null)
@@ -412,7 +571,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 foreach (var offer in fieldOffers)
                 {
                     if (offer.Kind is not ("move" or "interact" or "wait" or "menu" or "form_field" or "form_submit" or "continue")) throw Fail("unsupported_field_offer");
-                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value);
+                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location);
                 }
         }
         Current = new(++_turn, lines.ToImmutable(), text.ToImmutable(), [.._offers.Values.Select(o => o.Visible)], complete);
@@ -431,9 +590,10 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 var id = Text(field, "id");
                 if (tabs && id != _activeField || !tabs && _values.ContainsKey(id)) continue;
                 var fieldKind = Text(field, "kind");
+                _observeField?.Invoke(field);
                 if (fieldKind == "choice")
                     foreach (var option in Maps(field, "options").Where(o => Flag(o, "available", true)))
-                        Add(Text(field, "heading") + " " + Text(option, "label"), "form_field", [], field: id, value: Text(option, "id"), group: Text(field, "heading"), publicValue: Text(option, "label"));
+                        Add(Text(field, "heading") + " " + Text(option, "label"), "form_field", [], field: id, value: Text(option, "id"), group: Text(field, "heading"), publicValue: Text(option, "label"), purpose: Text(field, "purpose"), selected: _values.GetValueOrDefault(id)?.ToString() == Text(option, "id"));
                 else if (fieldKind == "text")
                     Add(Text(field, "placeholder") + " " + _selfName, "form_field", [], field: id, value: _selfName);
                 else throw Fail("unsupported_form_field");
@@ -449,10 +609,10 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 {
                     var target = Text(action, "tab");
                     if (Maps(pending, "fields").Any(f => Text(f, "id") == target))
-                        Add(Text(action, "label"), "menu", [], field: target, tab: true);
+                        Add(Text(action, "label"), "menu", [], field: target, tab: true, purpose: "tab", selected: target == _activeField);
                     continue;
                 }
-                Add(Text(action, "label"), "form_submit", Event("form", ("presentation_id", pid), ("action", Text(action, "id")), ("values", new Dictionary<string, object?>(_values))));
+                Add(Text(action, "label"), "form_submit", Event("form", ("presentation_id", pid), ("action", Text(action, "id")), ("values", new Dictionary<string, object?>(_values))), purpose: required.Any() || Flag(action, "default") ? "commit" : "cancel");
             }
             return;
         }
@@ -464,7 +624,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
         }
         var options = Maps(pending, kind == "lines" ? "choices" : "options").ToArray();
         foreach (var option in options.Where(o => Flag(o, "available", true)))
-            Add(Text(option, "label"), "menu", Event("select", ("presentation_id", pid), ("choice_id", Text(option, "id")), ("token", Text(option, "token"))));
+            Add(Text(option, "label"), "menu", Event("select", ("presentation_id", pid), ("choice_id", Text(option, "id")), ("token", Text(option, "token"))), purpose: Text(option, "purpose"));
         if (options.Length == 0 && pid != "") Add("", "continue", Event("presented", ("presentation_id", pid)));
     }
     public PublicPlayerObservation Submit(SelectCandidate selection)

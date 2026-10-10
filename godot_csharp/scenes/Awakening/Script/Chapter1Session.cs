@@ -56,6 +56,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
     private AwakeningContentSession _content = null!;
     private Chapter1Dialogue _dialogue = null!;
     private Chapter1Interaction _interaction = null!;
+    private AcquiredPropositions _knowledge = null!;
     private JsonElement Content => _content.Content.RootElement;
 
     public Chapter1Session() => Reset();
@@ -68,6 +69,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         _world.InitializePlayerPerception();
         _ = _world.PersistentSession;
         _content = Script.CreateContent();
+        _knowledge = new(AcquiredPropositions.Read(_content.Content.RootElement), _world.PersistentSession.Character(PlayerActor).Soul);
         _dialogue = new(_content, _world);
         _interaction = new(_content, _world);
         _jobs.Clear(); _uiOwner = null; _modal = null; _facts.Clear();
@@ -145,6 +147,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
                 Session.Locate(who, fact.Room);
                 _world.LocateFieldResident(who, fact.Room);
             }
+        _knowledge.RefreshAvailability(_content.GameMinutes);
     }
 
     private void Locate(string who, string room)
@@ -195,6 +198,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
                 case "replay_vars": State["replay_vars"] = ReplayVariables(input); break;
                 case "replay": Start(Replay(ReplayVariables(input), Flag(input, "skip"))); break;
                 case "opened":
+                    ObserveOpenedPanel(Text(input, "panel"));
                     if (Text(input, "panel") == "manuscript" && _content.V6Open) Session.Set("flags", "v6_seen", true);
                     break;
                 case "control": SetControl(Text(input, "mode")); break;
@@ -314,6 +318,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         wait.Event["presentation_id"] = id;
         job.Ack = id; job.Emitted = true;
         if (wait.Ui) _uiOwner = job;
+        ObserveShown(wait.Event);
         _out.Add(wait.Event);
     }
 
@@ -347,6 +352,7 @@ public sealed partial class Chapter1Session : IChapterSession, IPlayerRoleSessio
         ev["presentation_id"] = id;
         ev["options"] = list.Select(o => (object?)o.Option).ToArray();
         _modal = new(id, list.ToDictionary(o => (string)o.Option["id"]!, o => o.Handler, StringComparer.Ordinal));
+        ObserveShown(ev);
         _out.Add(ev);
     }
 

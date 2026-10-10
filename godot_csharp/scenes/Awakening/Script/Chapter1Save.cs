@@ -86,6 +86,7 @@ public sealed partial class Chapter1Session
     private Chapter1Session(ChapterSave d,WorldSession session)
     {
         _world=MorningWorld.RestoreSave(session,d.Morning); _content=AwakeningContentSession.RestoreSave(d.Content);
+        _knowledge=new(AcquiredPropositions.Read(_content.Content.RootElement),_world.PersistentSession.Character(PlayerActor).Soul);
         _dialogue=new(_content,_world); _interaction=new(_content,_world);
         _begun=d.Begun; _now=d.Now; _asideUntil=d.AsideUntil; _witnessAfter=d.WitnessAfter; _currentRoom=d.CurrentRoom;
         _furnitureSpoken.UnionWith(d.FurnitureSpoken); _doorwayNear=d.DoorwayNear;

@@ -18,6 +18,7 @@
 引入：story/第一章/证物.story
 引入：story/第一章/热点与布局.story
 引入：story/第一章/推演变量与陈述.story
+引入：story/第一章/可习得命题.story
 引入：story/第一章/提示与站位.story
 引入：story/第一章/文案与守则.story
 引入：story/第一章/声路与真相.story

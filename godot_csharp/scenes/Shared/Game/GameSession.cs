@@ -29,7 +29,10 @@ public sealed partial class GameSession(string campusScript, string livingView, 
     public PlayerCognition AgentCognition => (_session as IPlayerRoleSession)?.CapturePlayerCognition(AgentDeclaration?.Actor
         ?? throw new PlayerBoundaryException("agent_not_declared")) ?? throw new PlayerBoundaryException("unsupported_player_role");
     public PublicPlayerObservation ObserveAgentField(IReadOnlyList<PlayerFieldOffer> offers)
-        => (_player ?? throw new PlayerBoundaryException("agent_not_declared")).Observe([], offers);
+    {
+        (_session as IPlayerRoleSession)?.ObservePlayerOffers(offers);
+        return (_player ?? throw new PlayerBoundaryException("agent_not_declared")).Observe([], offers);
+    }
     public PublicPlayerObservation ObserveAgentPanel(string panel, string runLabel)
     {
         var view = PlayerPanels.Project(Snapshot(), panel, runLabel);
@@ -55,7 +58,7 @@ public sealed partial class GameSession(string campusScript, string livingView, 
         if (declaration is null) { _player?.Close(); _player = null; AgentDeclaration = null; return; }
         if (_player is not null && AgentDeclaration?.Actor == declaration.Actor) return;
         AgentDeclaration = declaration;
-        _player = new(DispatchGame, declaration.Name, maxAgentSelections, maxAgentObservations);
+        _player = new(DispatchGame, declaration.Name, maxAgentSelections, maxAgentObservations, role.ObservePlayerFormField);
     }
     private IReadOnlyList<ActorControllerDefinition> ReadControllers()
     {
