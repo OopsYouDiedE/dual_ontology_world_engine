@@ -7,7 +7,7 @@ public sealed partial class WorldRuntime
     public ContractResult<CognitionAuditHistoryV1> CaptureCognitionAudit(SoulEssence soul) => Contract.Try(() =>
     {
         lock (soul.World.Gate) return new CognitionAuditHistoryV1(1, soul.World.SubjectWorldId!.Value,
-            soul.World.InitialSnapshot, soul.World.Audit, []);
+            soul.World.InitialSnapshot, [..soul.World.Audit], []);
     });
     public ContractResult<CognitionGraphArchiveV1> CaptureCognitionGraph(SoulEssence soul) => Contract.Try(() =>
     {

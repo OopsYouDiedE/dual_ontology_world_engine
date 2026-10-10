@@ -5,6 +5,56 @@ namespace DualOntologyWorldEngine.Core;
 /// <summary>Closed AST conversion. No reflection, callbacks or name-based reference recovery.</summary>
 public static class CognitionAst
 {
+    // These walks consume ASTs already checked by Thaw at the input boundary.
+    // Dependency discovery and forgetting need handles, not a second object graph.
+    internal static IEnumerable<SubjectProjectionId> References(FrozenRuleV1 rule)
+    {
+        var ids = new List<SubjectProjectionId>();
+        Collect(rule.Condition, ids); Collect(rule.Effect, ids);
+        return ids;
+    }
+    internal static IEnumerable<SubjectProjectionId> References(FrozenEffectV1 effect)
+    {
+        var ids = new List<SubjectProjectionId>(); Collect(effect, ids); return ids;
+    }
+    private static void Collect(FrozenNounV1 noun, List<SubjectProjectionId> ids)
+    {
+        if (noun is FrozenNounV1.Reference reference) ids.Add(reference.Target);
+    }
+    private static void Collect(FrozenConditionV1 condition, List<SubjectProjectionId> ids)
+    {
+        switch (condition)
+        {
+            case FrozenConditionV1.Exists n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Tagged n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Related n: Collect(n.Target, ids); Collect(n.Other, ids); break;
+            case FrozenConditionV1.At n: Collect(n.Target, ids); Collect(n.Space, ids); break;
+            case FrozenConditionV1.IsKind n: Collect(n.Target, ids); break;
+            case FrozenConditionV1.Not n: Collect(n.Operand, ids); break;
+            case FrozenConditionV1.All n: foreach (var child in n.Items) Collect(child, ids); break;
+            case FrozenConditionV1.Any n: foreach (var child in n.Items) Collect(child, ids); break;
+        }
+    }
+    private static void Collect(FrozenEffectV1 effect, List<SubjectProjectionId> ids)
+    {
+        switch (effect)
+        {
+            case FrozenEffectV1.Act n: Collect(n.Target, ids); if (n.Tool is { } tool) Collect(tool, ids); break;
+            case FrozenEffectV1.Set n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Change n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.TemporarySet n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.TemporarySetUntilEnd n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Spend n: Collect(n.Target, ids); break;
+            case FrozenEffectV1.Relate n: Collect(n.Target, ids); Collect(n.Other, ids); break;
+            case FrozenEffectV1.Sequence n: foreach (var child in n.Items) Collect(child, ids); break;
+            case FrozenEffectV1.When n: Collect(n.Condition, ids); Collect(n.Body, ids); break;
+            case FrozenEffectV1.Require n: Collect(n.Condition, ids); break;
+            case FrozenEffectV1.Wait n: Collect(n.Body, ids); if (n.Until is { } until) Collect(until, ids); break;
+            case FrozenEffectV1.Say n: Collect(n.Recipient, ids); if (n.Request is { } request) Collect(request, ids); break;
+            case FrozenEffectV1.Think n: Collect(n.Fact, ids); break;
+        }
+    }
+
     internal static T Defined<T>(T value) where T : struct, Enum { Contract.Enum(value, "ast.enum"); return value; }
     private static void Node(object? node, int depth)
     {

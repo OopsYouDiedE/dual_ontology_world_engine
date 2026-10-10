@@ -129,9 +129,13 @@ public static class Observation
             }
             else Contract.Require(allowed.Contains(c.Target), ContractErrorCode.InvalidReference, "target", "目标已经失效或未获知。");
         }
-        var validationMap = live.Where(p => allowed.Contains(p.Key)).ToImmutableDictionary();
+        // live consists of the preceding published nodes plus this batch's reserved creations.
+        // All targets were checked above; do not copy the same reference map for each input validation.
+        var validationMap = live;
         foreach (var c in changes) ValidateInput(c, world.SubjectWorldId!.Value, allowed, validationMap);
-        var nodes = before.Projections.ToDictionary(p => p.Id);
+        var previous = before.Projections.ToDictionary(p => p.Id);
+        var nodes = new Dictionary<SubjectProjectionId, FrozenProjectionV1>(previous);
+        var touched = new HashSet<SubjectProjectionId>();
         var appended = new List<VisibleObservationV1>();
         foreach (var c in changes.Where(c => !c.Forget))
         {
@@ -144,65 +148,88 @@ public static class Observation
             relations.ExceptWith(remove); relations.ExceptWith(deny); relations.UnionWith(add);
             denied.ExceptWith(remove); denied.ExceptWith(add); denied.UnionWith(deny.Except(add));
             p = p with { Name = c.Name, Kind = c.Kind, Existence = c.Existence ?? p.Existence,
-                Parent = c.Move ? c.Parent : p.Parent, Tags = tags, Relations = SortEdges(relations), DeniedRelations = SortEdges(denied),
+                Parent = c.Move ? c.Parent : p.Parent, Tags = tags,
+                Relations = c.AddRelations.IsEmpty && c.RemoveRelations.IsEmpty && c.DenyRelations.IsEmpty ? p.Relations : SortEdges(relations),
+                DeniedRelations = c.AddRelations.IsEmpty && c.RemoveRelations.IsEmpty && c.DenyRelations.IsEmpty ? p.DeniedRelations : SortEdges(denied),
                 Rules = c.Rules ?? p.Rules, Procedure = c.ClearProcedure || c.Procedure is not null ? c.Procedure : p.Procedure,
                 KnownTerms = c.KnownTerms ?? p.KnownTerms };
-            var dependencies = Dependencies(p, validationMap).Union(c.SourceDependencies).Append(p.Id).Distinct().OrderBy(IdKey).ToImmutableArray();
+            var dependencies = Dependencies(p).Union(c.SourceDependencies).Append(p.Id).Distinct().OrderBy(IdKey).ToImmutableArray();
             var observation = new VisibleObservationV1(p.Id, c.Source, c.Time, c.TimeUnit, c.Detected, c.Existence, c.Details,
                 c.Origin, dependencies, SnapshotGraph.StateOf(p));
-            appended.Add(observation); nodes[p.Id] = p with { LastObservation = observation };
+            appended.Add(observation); nodes[p.Id] = p with { LastObservation = observation }; touched.Add(p.Id);
         }
         var forgotten = changes.Where(c => c.Forget).Select(c => c.Target).ToHashSet();
         foreach (var id in forgotten) nodes.Remove(id);
-        foreach (var p in nodes.Values.ToArray())
+        if (forgotten.Count != 0) foreach (var p in nodes.Values.ToArray())
         {
-            bool Mentions(FrozenRuleV1 r) => Ast.References(CognitionAst.Thaw(r, validationMap)).Any(n => forgotten.Contains(n.SubjectId!.Value));
+            var rules = p.Rules.Where(r => !CognitionAst.References(r).Any(forgotten.Contains)).ToImmutableArray();
+            var procedure = p.Procedure is not null && CognitionAst.References(p.Procedure).Any(forgotten.Contains) ? null : p.Procedure;
+            var parent = p.Parent is { } oldParent && forgotten.Contains(oldParent) ? null : p.Parent;
+            var relations = p.Relations.Where(r => !forgotten.Contains(r.Target)).ToImmutableArray();
+            var denied = p.DeniedRelations.Where(r => !forgotten.Contains(r.Target)).ToImmutableArray();
+            if (parent == p.Parent && relations.Length == p.Relations.Length && denied.Length == p.DeniedRelations.Length &&
+                rules.Length == p.Rules.Length && ReferenceEquals(procedure, p.Procedure)) continue;
             nodes[p.Id] = p with
             {
-                Parent = p.Parent is { } parent && forgotten.Contains(parent) ? null : p.Parent,
-                Relations = [..p.Relations.Where(r => !forgotten.Contains(r.Target))],
-                DeniedRelations = [..p.DeniedRelations.Where(r => !forgotten.Contains(r.Target))],
-                Rules = [..p.Rules.Where(r => !Mentions(r))],
-                Procedure = p.Procedure is not null && Ast.References(CognitionAst.Thaw(p.Procedure, validationMap)).Any(n => forgotten.Contains(n.SubjectId!.Value)) ? null : p.Procedure
+                Parent = parent, Relations = relations, DeniedRelations = denied, Rules = rules, Procedure = procedure
             };
+            touched.Add(p.Id);
         }
         bool Retained(VisibleObservationV1 o) => !forgotten.Contains(o.Target) && !o.Dependencies.Any(forgotten.Contains);
-        var removed = before.VisibleHistory.Select((o, n) => (o, n)).Where(p => !Retained(p.o)).Select(p => p.n).ToImmutableArray();
-        var history = before.VisibleHistory.Where(Retained).Concat(appended.Where(Retained)).ToImmutableArray();
-        foreach (var p in nodes.Values.ToArray())
-            if (p.LastObservation is { } last && !Retained(last)) nodes[p.Id] = p with { LastObservation = null };
-        var vocabularyChanged = forgotten.Count != 0 || changes.Any(c => c.Create) || nodes.Values.Any(p =>
-            before.Projections.FirstOrDefault(n => n.Id == p.Id) is { } old && (old.Name != p.Name || !old.KnownTerms.ToHashSet().SetEquals(p.KnownTerms)));
+        var removed = forgotten.Count == 0 ? [] : before.VisibleHistory.Select((o, n) => (o, n))
+            .Where(p => !Retained(p.o)).Select(p => p.n).ToImmutableArray();
+        var retainedAppended = appended.Where(Retained).ToImmutableArray();
+        var history = (forgotten.Count == 0 ? before.VisibleHistory : before.VisibleHistory.Where(Retained).ToImmutableArray()).AddRange(retainedAppended);
+        if (forgotten.Count != 0) foreach (var p in nodes.Values.ToArray())
+            if (p.LastObservation is { } last && !Retained(last))
+            { nodes[p.Id] = p with { LastObservation = null }; touched.Add(p.Id); }
+        // The preceding revision is closed and validated. Only a changed parent can introduce a new cycle.
+        SnapshotGraph.ValidateParents(nodes, touched);
+        var vocabularyChanged = forgotten.Count != 0 || changes.Any(c => c.Create) || touched.Any(id =>
+            previous.TryGetValue(id, out var old) && (old.Name != nodes[id].Name ||
+                old.KnownTerms != nodes[id].KnownTerms && !old.KnownTerms.ToHashSet().SetEquals(nodes[id].KnownTerms)));
         Contract.Require(!vocabularyChanged || before.VocabularyRevision.Value < long.MaxValue, ContractErrorCode.RevisionOverflow, "vocabulary_revision", "词典版本溢出。");
         var after = new CognitionSnapshotV1(1, before.SubjectWorld, new(before.Revision.Value + 1),
             new(before.VocabularyRevision.Value + (vocabularyChanged ? 1 : 0)),
             [..before.Projections.Where(p => nodes.ContainsKey(p.Id)).Select(p => nodes[p.Id]).Concat(changes.Where(c => c.Create).Select(c => nodes[c.Target]))], history, []);
-        var readerGraph = SnapshotGraph.Build(after); // Validate once; the published readers reuse this same-version graph.
-        var finalMap = live.Where(p => nodes.ContainsKey(p.Key)).ToImmutableDictionary();
-        var prepared = after.Projections.Select(p => (State: p, Rules: p.Rules.Select(r => CognitionAst.Thaw(r, finalMap)).ToImmutableArray(),
-            Procedure: p.Procedure is null ? null : CognitionAst.Thaw(p.Procedure, finalMap))).ToArray();
+        var finalMap = forgotten.Count == 0 && !changes.Any(c => c.Create) && world.ReaderOriginals is { } originals
+            ? originals : live.Where(p => nodes.ContainsKey(p.Key)).ToImmutableDictionary();
         ObservationEvent Legacy(VisibleObservationV1 o) => new(finalMap[o.Target], o.Source, o.Time, o.Detected, o.DeclaredExistence,
             o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, finalMap[r.Target]))]);
-        var legacyHistory = history.Select(Legacy).ToImmutableList();
-        var legacyLast = prepared.ToDictionary(p => p.State.Id, p => p.State.LastObservation is null ? null : Legacy(p.State.LastObservation));
-        var auditChanges = before.Projections.Select(p => p.Id).Concat(after.Projections.Select(p => p.Id)).Distinct()
-            .Select(id => new CognitionAuditChangeV1(id, before.Projections.FirstOrDefault(p => p.Id == id), after.Projections.FirstOrDefault(p => p.Id == id)))
+        var prepared = touched.Select(id =>
+        {
+            var p = nodes[id]; var original = finalMap[id]; var old = previous.GetValueOrDefault(id);
+            return (State: p, Parent: p.Parent is { } parent ? finalMap[parent] : null,
+                Relations: old is not null && old.Relations == p.Relations ? original.Relations :
+                    p.Relations.Select(r => (r.Relation, finalMap[r.Target])).ToImmutableHashSet(),
+                Denied: old is not null && old.DeniedRelations == p.DeniedRelations ? original.DeniedRelations :
+                    p.DeniedRelations.Select(r => (r.Relation, finalMap[r.Target])).ToImmutableHashSet(),
+                Rules: old is not null && old.Rules == p.Rules ? original.Rules : p.Rules.Select(r => CognitionAst.Thaw(r, finalMap)).ToImmutableArray(),
+                Procedure: old is not null && ReferenceEquals(old.Procedure, p.Procedure) ? original.Procedure :
+                    p.Procedure is null ? null : CognitionAst.Thaw(p.Procedure, finalMap),
+                Last: p.LastObservation is null ? null : Legacy(p.LastObservation));
+        }).ToArray();
+        var removedSet = removed.ToHashSet();
+        var legacyHistory = (removed.IsEmpty ? world.History : world.History.Where((_, n) => !removedSet.Contains(n)).ToImmutableList())
+            .AddRange(retainedAppended.Select(Legacy));
+        var auditChanges = before.Projections.Where(p => touched.Contains(p.Id) || forgotten.Contains(p.Id)).Select(p => p.Id)
+            .Concat(changes.Where(c => c.Create).Select(c => c.Target))
+            .Select(id => new CognitionAuditChangeV1(id, previous.GetValueOrDefault(id), nodes.GetValueOrDefault(id)))
             .Where(c => c.Before is null || c.After is null || !SnapshotGraph.SameProjection(c.Before, c.After)).ToImmutableArray();
         var audit = new CognitionAuditCommitV1(before.Revision, after.Revision, before.VocabularyRevision, after.VocabularyRevision,
-            changes, auditChanges, [..forgotten.OrderBy(IdKey)], removed, [..appended.Where(Retained)]);
+            changes, auditChanges, [..forgotten.OrderBy(IdKey)], removed, retainedAppended);
         var allAudit = world.Audit.Add(audit);
         var projections = after.Projections.Select(p => finalMap[p.Id]).ToImmutableArray();
-        foreach (var (state, rules, procedure) in prepared)
+        foreach (var (state, parent, relations, denied, rules, procedure, last) in prepared)
         {
             var p = finalMap[state.Id];
             p.Name = state.Name; p.Kind = state.Kind; p.Existence = state.Existence;
-            p.Parent = state.Parent is { } parent ? finalMap[parent] : null; p.Tags = state.Tags;
-            p.Relations = [..state.Relations.Select(r => (r.Relation, finalMap[r.Target]))];
-            p.DeniedRelations = [..state.DeniedRelations.Select(r => (r.Relation, finalMap[r.Target]))];
-            p.Rules = rules; p.Procedure = procedure; p.KnownTerms = state.KnownTerms; p.LastObservation = legacyLast[state.Id];
+            p.Parent = parent; p.Tags = state.Tags; p.Relations = relations; p.DeniedRelations = denied;
+            p.Rules = rules; p.Procedure = procedure; p.KnownTerms = state.KnownTerms; p.LastObservation = last;
         }
         foreach (var c in changes.Where(c => c.Create)) world.Used.Add(c.Target);
-        world.Projections = projections; world.History = legacyHistory; world.Snapshot = after; world.Audit = allAudit; world.ReaderGraph = readerGraph;
+        world.Projections = projections; world.History = legacyHistory; world.Snapshot = after; world.Audit = allAudit;
+        world.ReaderGraph = null; world.ReaderOriginals = finalMap;
         bindings?.Publish();
         world.QueueNotification();
         return new(before.Revision, after.Revision, after.VocabularyRevision, [..changes.Select(c => c.Target)], NotificationDeliveryV1.Pending, []);
@@ -210,9 +237,9 @@ public static class Observation
     internal static string IdKey(SubjectProjectionId id) => id.SubjectWorld.ToString("D") + "/" + id.Local.ToString("D");
     private static ImmutableArray<RelationEdgeV1> SortEdges(IEnumerable<RelationEdgeV1> edges)
         => [..edges.OrderBy(r => r.Relation.Name, StringComparer.Ordinal).ThenBy(r => IdKey(r.Target), StringComparer.Ordinal)];
-    private static IEnumerable<SubjectProjectionId> Dependencies(FrozenProjectionV1 p, IReadOnlyDictionary<SubjectProjectionId, Projection> map)
+    private static IEnumerable<SubjectProjectionId> Dependencies(FrozenProjectionV1 p)
         => p.Relations.Concat(p.DeniedRelations).Select(r => r.Target).Concat(p.Parent is { } parent ? [parent] : [])
-            .Concat(p.Rules.SelectMany(r => Ast.References(CognitionAst.Thaw(r, map))).Concat(p.Procedure is null ? [] : Ast.References(CognitionAst.Thaw(p.Procedure, map))).Select(p => p.SubjectId!.Value));
+            .Concat(p.Rules.SelectMany(CognitionAst.References)).Concat(p.Procedure is null ? [] : CognitionAst.References(p.Procedure));
 
     internal static void ValidateInput(ObservationChangeV1 c, Guid world, HashSet<SubjectProjectionId> allowed,
         IReadOnlyDictionary<SubjectProjectionId, Projection> map)
