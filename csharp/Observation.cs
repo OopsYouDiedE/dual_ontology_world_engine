@@ -144,6 +144,25 @@ public static class Observation
         var nodes = new Dictionary<SubjectProjectionId, FrozenProjectionV1>(previous);
         var touched = new HashSet<SubjectProjectionId>();
         var appended = new List<VisibleObservationV1>();
+        Dictionary<EventId, VisibleObservationV1>? causalHistory = null;
+        IEnumerable<SubjectProjectionId> CausalDependencies(TypedEventV1<SubjectProjectionId?>? e)
+        {
+            if(e is null || e.Fields.Causes.IsEmpty) return [];
+            if(causalHistory is null)
+            {
+                causalHistory = [];
+                foreach(var o in before.VisibleHistory.Concat(appended))
+                    if(o.Event is { } known) causalHistory[known.Fields.Id] = o;
+            }
+            return e.Fields.Causes.SelectMany(id =>
+            {
+                Contract.Require(causalHistory.TryGetValue(id, out var cause), ContractErrorCode.InvalidReference,
+                    "event.causes", "主体因果引用必须指向已获知的前置事件。");
+                // Include transitive source dependencies, so forgetting a cause cannot leave a
+                // visible successor that reveals a removed step through the authoritative audit.
+                return cause!.Dependencies;
+            });
+        }
         foreach (var c in changes.Where(c => !c.Forget))
         {
             var p = c.Create ? new FrozenProjectionV1(c.Target, c.Name, c.Kind, Truth.Unknown, null,
@@ -162,10 +181,12 @@ public static class Observation
                 KnownTerms = c.KnownTerms ?? p.KnownTerms };
             var dependencies = Dependencies(p).Union(c.SourceDependencies)
                 .Concat(c.Event is null ? [] : TypedEvents.References(c.Event).OfType<SubjectProjectionId>())
+                .Concat(CausalDependencies(c.Event))
                 .Append(p.Id).Distinct().OrderBy(IdKey).ToImmutableArray();
             var observation = new VisibleObservationV1(p.Id, c.Source, c.Time, c.TimeUnit, c.Detected, c.Existence, c.Details,
                 c.Origin, dependencies, SnapshotGraph.StateOf(p), c.Event);
             appended.Add(observation); nodes[p.Id] = p with { LastObservation = observation }; touched.Add(p.Id);
+            if(causalHistory is not null && c.Event is { } known) causalHistory[known.Fields.Id] = observation;
         }
         var forgotten = changes.Where(c => c.Forget).Select(c => c.Target).ToHashSet();
         foreach (var id in forgotten) nodes.Remove(id);

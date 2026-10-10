@@ -20,6 +20,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `CognitionAudit.cs`：引擎专用追加历史使用持久化 ImmutableList，捕获时转合同数组；审计仅比较触及节点，仍保留变化的完整前后态、可见历史差分与遗忘 tombstone，可按精确版本重建；主体可见历史随遗忘删除结构依赖，不从审计补回。
   - `ChineseTermBridge.cs`：仅在指定主体快照的 KnownTerms 中解释词形/作者词项及限定条件；保留歧义和 Unknown，版本失效明确拒绝。消歧目标仍进入既有执行器。
   - `TypedEvents.cs`：行动、观察、证词、传播与呈现使用独立类型，共用不可变事件字段（事件 ID、时间单位、阶段结果、引用、命题、来源及因果）。权威记录由 WorldRuntime 持有；主体投影须属于感知者且只能保留已知引用、命题与可见因果，快照只保存主体句柄。旧 Event 投影与 ObservationEvent 入口兼容。
+  - `CognitionEventCodec.cs` 将五类事件的全部字段按闭合 schema 编码；主体引用仍为主体句柄，运行时权威记录按实体 ID 在对象分配后重绑定。审计输入/历史与 Say.Claim/Topic 一并持久化，未知事件种类拒绝。因果依赖包含前置可见记录的传递来源依赖，遗忘不从权威记录补回。
 - **观察、推理与心智转变（Cognition.cs, Reasoner.cs, Speech.cs）**：
   - 主观认知更新统一经由 `Observation.Observe` 接口驱动，认知集合保持封闭。
   - `Cognition.Infer` 沉淀支持的显式命题；`Cognition.Corrupt` 通过输入管道施加 `IProjectionTransform`。
@@ -60,6 +61,7 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
   - `dotnet run --project csharp/ReasonerRegression.csproj`
   - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；增量提交、遗忘依赖与旧版审计重建；EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名；codec 覆盖完整 AST/审计 wire 往返、拒绝用例与新进程引用恢复。主观推演隔离由后续批验证。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
+- `EventSaveRegression.cs` 在 CognitionRegression 中保留既有事件/保存用例并追加两个中性世界的事件 wire、审计、权限、退休引用、因果遗忘及子进程恢复检查；本文件同样从 Core 类库排除。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
 - 系统演进直接在既有架构与文件上持续重构。
 - 源码审计遵循根目录的 `STORY-HARDCODE` 编号、类型与范围约定。仅新增审计注释时，逐文件核对去除标记后与基线一致，并构建 Core；审计清单位于 `artifacts/story-hardcode-marking/`，不把源码中的具体内容写入本规范。

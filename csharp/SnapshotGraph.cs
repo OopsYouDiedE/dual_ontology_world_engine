@@ -178,7 +178,16 @@ internal static class SnapshotGraph
                 Contract.Require(visited.Add(id.Value), ContractErrorCode.InvalidBatch, "parent", "主体空间关系不能形成循环。");
             }
         }
-        foreach (var observation in snapshot.VisibleHistory) Observation(observation);
+        var causalHistory = new Dictionary<EventId, VisibleObservationV1>();
+        foreach (var observation in snapshot.VisibleHistory)
+        {
+            Observation(observation);
+            if(observation.Event is not { } e) continue;
+            foreach(var id in e.Fields.Causes)
+                Contract.Require(causalHistory.TryGetValue(id, out var cause) && cause.Dependencies.All(observation.Dependencies.Contains),
+                    ContractErrorCode.InvalidReference, "event.causes", "因果引用必须包含前置可见事件及其来源依赖。");
+            causalHistory[e.Fields.Id] = observation;
+        }
         ObservationEvent Legacy(VisibleObservationV1 o) => new(projections[o.Target], o.Source, o.Time, o.Detected, o.DeclaredExistence,
             o.Details, o.ObservedState.Tags, [..o.ObservedState.Relations.Select(r => (r.Relation, Get(r.Target)!))],
             o.Event is null ? null : TypedEvents.Map(o.Event, r => Get(r)));

@@ -6,12 +6,12 @@ using System.Text.Json.Nodes;
 namespace DualOntologyWorldEngine.Core;
 
 /// <summary>Strict UTF-8 JSON, closed DTO/AST whitelist. Decode never publishes a live session.</summary>
-public static class CognitionCodec
+public static partial class CognitionCodec
 {
     public const string Format = "dual-ontology-cognition/v1";
     public const string AuditFormat = "dual-ontology-cognition-audit/v1";
     public const string ContentVersion = "core.cognition/1";
-    public static ImmutableArray<string> Capabilities { get; } = ["core.stable-identity/1", "core.cognition-atomic-batch/1", "core.cognition-snapshot/1", "core.cognition-audit/1", "core.cognition-graph-codec/1", "core.frozen-ast/1"];
+    public static ImmutableArray<string> Capabilities { get; } = ["core.stable-identity/1", "core.cognition-atomic-batch/1", "core.cognition-snapshot/1", "core.cognition-audit/1", "core.cognition-graph-codec/1", "core.frozen-ast/1", "core.typed-events/1"];
     private static readonly UTF8Encoding Utf8 = new(false, true);
     private static ContractResult<T> Try<T>(Func<T> action)
     {
@@ -39,6 +39,7 @@ public static class CognitionCodec
     {
         Contract.Require(audit is not null, ContractErrorCode.MalformedData, "audit", "审计不能为空。");
         var body = (JsonObject)Write(audit)!; body["format"] = Write(AuditFormat); body["content_version"] = Write(ContentVersion);
+        body["required_capabilities"] = Items(audit!.RequiredCapabilities.Union(["core.typed-events/1"]).ToImmutableArray());
         var bytes = Utf8.GetBytes(body.ToJsonString()); Contract.Value(DecodeAudit(bytes, limits)); return bytes;
     });
     public static ContractResult<CognitionAuditHistoryV1> DecodeAudit(byte[] bytes, CodecLimitsV1? limits = null) => Try(() =>
@@ -85,7 +86,7 @@ public static class CognitionCodec
                         if (p.Value.ValueKind == JsonValueKind.Array)
                         {
                             if (p.Name == "projections") projections += p.Value.GetArrayLength();
-                            if (p.Name is "visible_history" or "commits") history += p.Value.GetArrayLength();
+                            if (p.Name is "visible_history" or "commits" or "events") history += p.Value.GetArrayLength();
                         }
                         Contract.Require(projections <= l.MaxProjections && history <= l.MaxHistoryEntries, ContractErrorCode.LimitExceeded, "collections", "图或历史超限。");
                         Walk(p.Value, depth);
@@ -140,7 +141,7 @@ public static class CognitionCodec
         null => null,
         string n => JsonValue.Create(n), bool n => JsonValue.Create(n), int n => JsonValue.Create(n), long n => JsonValue.Create(n),
         double n when double.IsFinite(n) => JsonValue.Create(n), Guid n => JsonValue.Create(n.ToString("D")),
-        EntityId n => Write(n.Value), FacetId n => Write(n.Value), AuthorTermId n => Write(n.Value), Tag n => Write(n.Name), RelationTag n => Write(n.Name),
+        EntityId n => Write(n.Value), FacetId n => Write(n.Value), AuthorTermId n => Write(n.Value), EventId n => Write(n.Value), Tag n => Write(n.Name), RelationTag n => Write(n.Name),
         KnowledgeRevision n => Write(n.Value), VocabularyRevision n => Write(n.Value),
         ImmutableDictionary<Tag,int> n => new JsonArray(n.OrderBy(p=>p.Key.Name,StringComparer.Ordinal).Select(p=> (JsonNode?)Object(("tag",Write(p.Key)),("value",Write(p.Value)))).ToArray()),
         ImmutableDictionary<Tag,int?> n => new JsonArray(n.OrderBy(p=>p.Key.Name,StringComparer.Ordinal).Select(p=> (JsonNode?)Object(("tag",Write(p.Key)),("value",Write(p.Value)))).ToArray()),
@@ -152,17 +153,21 @@ public static class CognitionCodec
         LifetimeScope n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
         ObservationSource n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
         ObservationTimeUnitV1 n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
+        EventPhaseV1 n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
+        EventOutcomeV1 n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
+        ActionFailure n when Enum.IsDefined(n) => Write(EnumName(n.ToString())),
+        TypedEventV1<SubjectProjectionId?> n => WriteEvent(n, r => Write(r)),
         SubjectProjectionId n => Object(("subject_world", Write(n.SubjectWorld)), ("local", Write(n.Local))),
         SourceLocationV1 n => Object(("document_id", Write(n.DocumentId)), ("start_line", Write(n.StartLine)), ("start_column", Write(n.StartColumn)), ("end_line", Write(n.EndLine)), ("end_column", Write(n.EndColumn))),
         KnownAuthorTermV1 n => Object(("term_id", Write(n.TermId)), ("raw_lexeme", Write(n.RawLexeme)), ("canonical_lexeme", Write(n.CanonicalLexeme))),
         RelationEdgeV1 n => Object(("relation", Write(n.Relation)), ("target", Write(n.Target))),
         FrozenRuleV1 n => Object(("condition", Write(n.Condition)), ("mode", Write(n.Mode)), ("effect", Write(n.Effect)), ("weight", Write(n.Weight)), ("acceptance", Write(n.Acceptance)), ("lifetime", Write(n.Lifetime)), ("lifetime_owner", Write(n.LifetimeOwner))),
         ObservedStateV1 n => Object(("name", Write(n.Name)), ("kind", Write(n.Kind)), ("existence", Write(n.Existence)), ("parent", Write(n.Parent)), ("tags", Write(n.Tags)), ("relations", Items(n.Relations)), ("denied_relations", Items(n.DeniedRelations)), ("rules", Items(n.Rules)), ("procedure", Write(n.Procedure)), ("known_terms", Items(n.KnownTerms))),
-        VisibleObservationV1 n => Object(("target", Write(n.Target)), ("source", Write(n.Source)), ("time", Write(n.Time)), ("time_unit", Write(n.TimeUnit)), ("detected", Write(n.Detected)), ("declared_existence", Write(n.DeclaredExistence)), ("details", Write(n.Details)), ("origin", Write(n.Origin)), ("dependencies", Items(n.Dependencies)), ("observed_state", Write(n.ObservedState))),
+        VisibleObservationV1 n => Object(("target", Write(n.Target)), ("source", Write(n.Source)), ("time", Write(n.Time)), ("time_unit", Write(n.TimeUnit)), ("detected", Write(n.Detected)), ("declared_existence", Write(n.DeclaredExistence)), ("details", Write(n.Details)), ("origin", Write(n.Origin)), ("dependencies", Items(n.Dependencies)), ("observed_state", Write(n.ObservedState)), ("event", Write(n.Event))),
         FrozenProjectionV1 n => Object(("id", Write(n.Id)), ("name", Write(n.Name)), ("kind", Write(n.Kind)), ("existence", Write(n.Existence)), ("parent", Write(n.Parent)), ("tags", Write(n.Tags)), ("relations", Items(n.Relations)), ("denied_relations", Items(n.DeniedRelations)), ("rules", Items(n.Rules)), ("procedure", Write(n.Procedure)), ("known_terms", Items(n.KnownTerms)), ("last_observation", Write(n.LastObservation))),
         CognitionSnapshotV1 n => Object(("contract_version", Write(n.ContractVersion)), ("subject_world", Write(n.SubjectWorld)), ("revision", Write(n.Revision)), ("vocabulary_revision", Write(n.VocabularyRevision)), ("projections", Items(n.Projections)), ("visible_history", Items(n.VisibleHistory)), ("required_capabilities", Items(n.RequiredCapabilities))),
         CognitionGraphArchiveV1 n => Object(("subject_snapshot", Write(n.SubjectSnapshot)), ("allocated_ids", Items(n.AllocatedIds))),
-        ObservationChangeV1 n => Object(("target", Write(n.Target)), ("create", Write(n.Create)), ("name", Write(n.Name)), ("kind", Write(n.Kind)), ("source", Write(n.Source)), ("time", Write(n.Time)), ("time_unit", Write(n.TimeUnit)), ("detected", Write(n.Detected)), ("existence", Write(n.Existence)), ("move", Write(n.Move)), ("parent", Write(n.Parent)), ("tags", Write(n.Tags)), ("add_relations", Items(n.AddRelations)), ("remove_relations", Items(n.RemoveRelations)), ("deny_relations", Items(n.DenyRelations)), ("rules", (n.Rules is { } aRules ? Items(aRules) : null)), ("procedure", Write(n.Procedure)), ("clear_procedure", Write(n.ClearProcedure)), ("forget", Write(n.Forget)), ("known_terms", (n.KnownTerms is { } aKnownTerms ? Items(aKnownTerms) : null)), ("details", Write(n.Details)), ("origin", Write(n.Origin)), ("source_dependencies", Items(n.SourceDependencies))),
+        ObservationChangeV1 n => Object(("target", Write(n.Target)), ("create", Write(n.Create)), ("name", Write(n.Name)), ("kind", Write(n.Kind)), ("source", Write(n.Source)), ("time", Write(n.Time)), ("time_unit", Write(n.TimeUnit)), ("detected", Write(n.Detected)), ("existence", Write(n.Existence)), ("move", Write(n.Move)), ("parent", Write(n.Parent)), ("tags", Write(n.Tags)), ("add_relations", Items(n.AddRelations)), ("remove_relations", Items(n.RemoveRelations)), ("deny_relations", Items(n.DenyRelations)), ("rules", (n.Rules is { } aRules ? Items(aRules) : null)), ("procedure", Write(n.Procedure)), ("clear_procedure", Write(n.ClearProcedure)), ("forget", Write(n.Forget)), ("known_terms", (n.KnownTerms is { } aKnownTerms ? Items(aKnownTerms) : null)), ("details", Write(n.Details)), ("origin", Write(n.Origin)), ("source_dependencies", Items(n.SourceDependencies)), ("event", Write(n.Event))),
         CognitionAuditChangeV1 n => Object(("id", Write(n.Id)), ("before", Write(n.Before)), ("after", Write(n.After))),
         CognitionAuditCommitV1 n => Object(("previous_revision", Write(n.PreviousRevision)), ("revision", Write(n.Revision)), ("previous_vocabulary_revision", Write(n.PreviousVocabularyRevision)), ("vocabulary_revision", Write(n.VocabularyRevision)), ("inputs", Items(n.Inputs)), ("changes", Items(n.Changes)), ("forgotten_ids", Items(n.ForgottenIds)), ("removed_visible_history_indices", Items(n.RemovedVisibleHistoryIndices)), ("appended_visible_history", Items(n.AppendedVisibleHistory))),
         CognitionAuditHistoryV1 n => Object(("contract_version", Write(n.ContractVersion)), ("subject_world", Write(n.SubjectWorld)), ("initial_snapshot", Write(n.InitialSnapshot)), ("commits", Items(n.Commits)), ("required_capabilities", Items(n.RequiredCapabilities))),
@@ -188,7 +193,7 @@ public static class CognitionCodec
         FrozenEffectV1.When n => Object(("kind", Write("when")), ("condition", Write(n.Condition)), ("body", Write(n.Body))),
         FrozenEffectV1.Require n => Object(("kind", Write("require")), ("condition", Write(n.Condition))),
         FrozenEffectV1.Wait n => Object(("kind", Write("wait")), ("delay", Write(n.Delay)), ("body", Write(n.Body)), ("until", Write(n.Until))),
-        FrozenEffectV1.Say n => Object(("kind", Write("say")), ("recipient", Write(n.Recipient)), ("text", Write(n.Text)), ("request", Write(n.Request))),
+        FrozenEffectV1.Say n => Object(("kind", Write("say")), ("recipient", Write(n.Recipient)), ("text", Write(n.Text)), ("request", Write(n.Request)), ("claim", Write(n.Claim)), ("topic", Write(n.Topic))),
         FrozenEffectV1.Think n => Object(("kind", Write("think")), ("fact", Write(n.Fact))),
         _ => throw new CognitionContractException(new(ContractErrorCode.Unsupported,"wire","未知 DTO/AST 或无效枚举。", CandidateIds: []))
     };
@@ -224,8 +229,8 @@ public static class CognitionCodec
     }
     internal static VisibleObservationV1 ReadVisibleObservationV1(JsonElement e)
     {
-        Fields(e, "target", "source", "time", "time_unit", "detected", "declared_existence", "details", "origin", "dependencies", "observed_state");
-        return new(ReadSubjectProjectionId(e.GetProperty("target")), EnumValue<ObservationSource>(e.GetProperty("source")), Number(e.GetProperty("time")), EnumValue<ObservationTimeUnitV1>(e.GetProperty("time_unit")), (e.GetProperty("detected").ValueKind == JsonValueKind.Null ? null : (Boolean(e.GetProperty("detected")))), (e.GetProperty("declared_existence").ValueKind == JsonValueKind.Null ? null : (EnumValue<Truth>(e.GetProperty("declared_existence")))), String(e.GetProperty("details")), (e.GetProperty("origin").ValueKind == JsonValueKind.Null ? null : (ReadSourceLocationV1(e.GetProperty("origin")))), Array(e.GetProperty("dependencies"), x => ReadSubjectProjectionId(x)), ReadObservedStateV1(e.GetProperty("observed_state")));
+        OptionalFields(e, ["target", "source", "time", "time_unit", "detected", "declared_existence", "details", "origin", "dependencies", "observed_state"], "event");
+        return new(ReadSubjectProjectionId(e.GetProperty("target")), EnumValue<ObservationSource>(e.GetProperty("source")), Number(e.GetProperty("time")), EnumValue<ObservationTimeUnitV1>(e.GetProperty("time_unit")), (e.GetProperty("detected").ValueKind == JsonValueKind.Null ? null : (Boolean(e.GetProperty("detected")))), (e.GetProperty("declared_existence").ValueKind == JsonValueKind.Null ? null : (EnumValue<Truth>(e.GetProperty("declared_existence")))), String(e.GetProperty("details")), (e.GetProperty("origin").ValueKind == JsonValueKind.Null ? null : (ReadSourceLocationV1(e.GetProperty("origin")))), Array(e.GetProperty("dependencies"), x => ReadSubjectProjectionId(x)), ReadObservedStateV1(e.GetProperty("observed_state")), ReadOptionalEvent(e));
     }
     internal static FrozenProjectionV1 ReadFrozenProjectionV1(JsonElement e)
     {
@@ -244,8 +249,8 @@ public static class CognitionCodec
     }
     internal static ObservationChangeV1 ReadObservationChangeV1(JsonElement e)
     {
-        Fields(e, "target", "create", "name", "kind", "source", "time", "time_unit", "detected", "existence", "move", "parent", "tags", "add_relations", "remove_relations", "deny_relations", "rules", "procedure", "clear_procedure", "forget", "known_terms", "details", "origin", "source_dependencies");
-        return new(ReadSubjectProjectionId(e.GetProperty("target")), Boolean(e.GetProperty("create")), String(e.GetProperty("name")), EnumValue<ProjectionKind>(e.GetProperty("kind")), EnumValue<ObservationSource>(e.GetProperty("source")), Number(e.GetProperty("time")), EnumValue<ObservationTimeUnitV1>(e.GetProperty("time_unit")), (e.GetProperty("detected").ValueKind == JsonValueKind.Null ? null : (Boolean(e.GetProperty("detected")))), (e.GetProperty("existence").ValueKind == JsonValueKind.Null ? null : (EnumValue<Truth>(e.GetProperty("existence")))), Boolean(e.GetProperty("move")), (e.GetProperty("parent").ValueKind == JsonValueKind.Null ? null : (ReadSubjectProjectionId(e.GetProperty("parent")))), NullableTags(e.GetProperty("tags")), Array(e.GetProperty("add_relations"), x => ReadRelationEdgeV1(x)), Array(e.GetProperty("remove_relations"), x => ReadRelationEdgeV1(x)), Array(e.GetProperty("deny_relations"), x => ReadRelationEdgeV1(x)), (e.GetProperty("rules").ValueKind == JsonValueKind.Null ? null : (Array(e.GetProperty("rules"), x => ReadFrozenRuleV1(x)))), (e.GetProperty("procedure").ValueKind == JsonValueKind.Null ? null : (ReadFrozenEffectV1(e.GetProperty("procedure"), 0))), Boolean(e.GetProperty("clear_procedure")), Boolean(e.GetProperty("forget")), (e.GetProperty("known_terms").ValueKind == JsonValueKind.Null ? null : (Array(e.GetProperty("known_terms"), x => ReadKnownAuthorTermV1(x)))), String(e.GetProperty("details")), (e.GetProperty("origin").ValueKind == JsonValueKind.Null ? null : (ReadSourceLocationV1(e.GetProperty("origin")))), Array(e.GetProperty("source_dependencies"), x => ReadSubjectProjectionId(x)));
+        OptionalFields(e, ["target", "create", "name", "kind", "source", "time", "time_unit", "detected", "existence", "move", "parent", "tags", "add_relations", "remove_relations", "deny_relations", "rules", "procedure", "clear_procedure", "forget", "known_terms", "details", "origin", "source_dependencies"], "event");
+        return new(ReadSubjectProjectionId(e.GetProperty("target")), Boolean(e.GetProperty("create")), String(e.GetProperty("name")), EnumValue<ProjectionKind>(e.GetProperty("kind")), EnumValue<ObservationSource>(e.GetProperty("source")), Number(e.GetProperty("time")), EnumValue<ObservationTimeUnitV1>(e.GetProperty("time_unit")), (e.GetProperty("detected").ValueKind == JsonValueKind.Null ? null : (Boolean(e.GetProperty("detected")))), (e.GetProperty("existence").ValueKind == JsonValueKind.Null ? null : (EnumValue<Truth>(e.GetProperty("existence")))), Boolean(e.GetProperty("move")), (e.GetProperty("parent").ValueKind == JsonValueKind.Null ? null : (ReadSubjectProjectionId(e.GetProperty("parent")))), NullableTags(e.GetProperty("tags")), Array(e.GetProperty("add_relations"), x => ReadRelationEdgeV1(x)), Array(e.GetProperty("remove_relations"), x => ReadRelationEdgeV1(x)), Array(e.GetProperty("deny_relations"), x => ReadRelationEdgeV1(x)), (e.GetProperty("rules").ValueKind == JsonValueKind.Null ? null : (Array(e.GetProperty("rules"), x => ReadFrozenRuleV1(x)))), (e.GetProperty("procedure").ValueKind == JsonValueKind.Null ? null : (ReadFrozenEffectV1(e.GetProperty("procedure"), 0))), Boolean(e.GetProperty("clear_procedure")), Boolean(e.GetProperty("forget")), (e.GetProperty("known_terms").ValueKind == JsonValueKind.Null ? null : (Array(e.GetProperty("known_terms"), x => ReadKnownAuthorTermV1(x)))), String(e.GetProperty("details")), (e.GetProperty("origin").ValueKind == JsonValueKind.Null ? null : (ReadSourceLocationV1(e.GetProperty("origin")))), Array(e.GetProperty("source_dependencies"), x => ReadSubjectProjectionId(x)), ReadOptionalEvent(e));
     }
     internal static CognitionAuditChangeV1 ReadCognitionAuditChangeV1(JsonElement e)
     {
@@ -308,7 +313,11 @@ public static class CognitionCodec
             case "when": Fields(e, "kind", "condition", "body"); return new FrozenEffectV1.When(ReadFrozenConditionV1(e.GetProperty("condition"), depth+1), ReadFrozenEffectV1(e.GetProperty("body"), depth+1));
             case "require": Fields(e, "kind", "condition"); return new FrozenEffectV1.Require(ReadFrozenConditionV1(e.GetProperty("condition"), depth+1));
             case "wait": Fields(e, "kind", "delay", "body", "until"); return new FrozenEffectV1.Wait(Duration(e.GetProperty("delay")), ReadFrozenEffectV1(e.GetProperty("body"), depth+1), (e.GetProperty("until").ValueKind == JsonValueKind.Null ? null : (ReadFrozenConditionV1(e.GetProperty("until"), depth+1))));
-            case "say": Fields(e, "kind", "recipient", "text", "request"); return new FrozenEffectV1.Say(ReadFrozenNounV1(e.GetProperty("recipient"), depth+1), String(e.GetProperty("text")), (e.GetProperty("request").ValueKind == JsonValueKind.Null ? null : (ReadFrozenEffectV1(e.GetProperty("request"), depth+1))));
+            case "say":
+                OptionalFields(e, ["kind", "recipient", "text", "request"], "claim", "topic");
+                return new FrozenEffectV1.Say(ReadFrozenNounV1(e.GetProperty("recipient"), depth+1), String(e.GetProperty("text")), (e.GetProperty("request").ValueKind == JsonValueKind.Null ? null : ReadFrozenEffectV1(e.GetProperty("request"), depth+1)),
+                    e.TryGetProperty("claim", out var claim) && claim.ValueKind != JsonValueKind.Null ? ReadFrozenConditionV1(claim, depth+1) : null,
+                    e.TryGetProperty("topic", out var topic) && topic.ValueKind != JsonValueKind.Null ? Term(topic) : null);
             case "think": Fields(e, "kind", "fact"); return new FrozenEffectV1.Think(ReadFrozenConditionV1(e.GetProperty("fact"), depth+1));
             default: throw new CognitionContractException(new(ContractErrorCode.Unsupported,"ast.kind","未知 AST 节点。", CandidateIds: []));
         }
