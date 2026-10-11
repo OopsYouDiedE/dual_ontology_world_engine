@@ -56,7 +56,7 @@
     "literal-not-established" "真实状态没有确立这句话为真。") reason
     (dv_find (dv_m4 "protocol-transition-not-ready" "正式接受规则尚不可执行，不能推进题目。"
       "undeclared-answer" "提交没有对应的冻结正式回答定义。"
-      "no-admissible-action-or-budget" "主体已没有可继续执行的动作，或本轮动作预算已用尽。"
+      "no-admissible-action-or-budget" "选择器没有选出可继续执行的正收益动作；是否存在预算限制另看私有诊断。"
       "action-window-exhausted" "本轮声明的正式动作窗口已结束。") reason reason))))
 (defn dvr_add (lines text) (rt_push lines text))
 (defn dvr_join (values separator)
@@ -80,7 +80,7 @@
 (defn dvr_finding (lines finding start)
   (let (id (dv_get finding "id") status (dv_get finding "status") reason (dv_find finding "reason_zh" (dv_find finding "reason" "没有记录具体理由")))
     (do
-      (dvr_add lines (rt_cat (rt_cat (rt_cat "- **" (dvr_label id)) (rt_cat "：" (dvr_status status))) "**"))
+      (dvr_add lines (rt_cat (rt_cat (rt_cat "- **" (dvr_label id)) (rt_cat "：" (if (dv_and (rt_eq id "literal_truth") (rt_eq status "violated")) "客观字面不成立；是否允许发言另看正式契约" (dvr_status status)))) "**"))
       (dvr_add lines (rt_cat "  " (dvr_reason reason)))
       (if (dv_has_key finding "actor") (dvr_add lines (rt_cat "  主体：" (rt_json_stringify (dv_get finding "actor")))) false)
       (if (dv_has_key finding "action") (dvr_add lines (rt_cat "  真实行动：" (rt_json_stringify (dv_get finding "action")))) false)
@@ -176,6 +176,18 @@
       (if ready false (dvr_add lines "本窗口未记录该主体达到ready；不补猜首次时刻。"))
       (if accepted false (dvr_add lines "本窗口未记录该主体的正式回答被接受；不能以命题为真或候选出现替代接受。"))
       (dvr_add lines "节点现实首次时刻未在原轨迹记录；上面的整进程秒数不能用于推算节点现实时刻。") (dvr_add lines ""))))
+(defn dvr_private_remaining (lines trace actor)
+ (let (actors (dv_find (dv_find trace "final" (rt_list)) "actors" (rt_list)) i 0)
+  (do (while (rt_lt i (rt_count actors))
+    (let (person (rt_at actors i))
+      (do (if (rt_eq (dv_find person "id" "") actor)
+        (let (policy (dv_find person "policy" (rt_list)))
+          (do (dvr_add lines "私有诊断（不属于公开行为证据）：目标主体最终剩余资源。")
+            (dvr_add lines (rt_cat "模型计算：" (rt_show (dv_find policy "model_budget" "未记录"))))
+            (dvr_add lines (rt_cat "推理：" (rt_show (dv_find policy "reason_budget" "未记录"))))
+            (dvr_add lines (rt_cat "规划展开：" (rt_show (dv_find policy "plan_budget" "未记录"))))
+            (dvr_add lines (rt_cat "动作：" (rt_show (dv_find policy "budget" "未记录")))))) false)
+        (set i (rt_add i 1))))))))
 (defn dvr_summary (lines entries actor mainpath start)
  (do (dvr_add lines "## 本轮结论与具体缺口") (dvr_add lines "")
   (if (rt_lt 0 (rt_count entries))
@@ -191,7 +203,8 @@
      (dvr_add lines (rt_cat "共享串行世界时间：" (rt_cat (dvr_node_time (dv_get trace "time") start) "；不是单个主体的个人游玩时长。")))
      (if (rt_eq first false) (dvr_add lines "本轮没有记录目标主体的正式接受。")
       (dvr_add lines (rt_cat "目标主体首次实际被接受：" (rt_cat (dvr_node_time (dv_get first "time") start) (rt_cat "，事件" (dv_get first "id"))))))
-     (dvr_add lines (rt_cat "实际停止原因：" (dvr_reason (dv_get trace "status")))))) false)
+     (dvr_add lines (rt_cat "实际停止原因：" (dvr_reason (dv_get trace "status"))))
+     (dvr_private_remaining lines trace actor))) false)
   (if (rt_eq mainpath "") (dvr_add lines "主因果判定尚未执行。")
    (let (report (rt_json_parse (rt_read mainpath)) findings (rt_list) i 0)
     (do (set findings (dv_find report "findings" (rt_list)))
