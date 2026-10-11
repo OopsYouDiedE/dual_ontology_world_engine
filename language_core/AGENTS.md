@@ -75,3 +75,8 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 ## 原生模型论证模块（r6 封存迭代）
 
 core/95-model-argument.dv 提供通用可撤回估计论证；verification/session/35-model-argument.dv 协调实际付费模型、联合候选覆盖、输入及已采纳规则签名与公开提交。session/25-simulation.dv 保持重演计算资源、游戏行动代价与展开预算分域。领域声明位于原生 DV 作者模块；oracle 独立导出，不链接主体。r6 的新主体包实际完成生成与构建，但正式进程在外部 240 秒限额停止，未写终局 trace；不得据此给出领域验收结论。后续源码与本轮隔离快照分别封存。
+
+
+## r7 主体机制封存范围
+
+00-data 的 dv_with_many 合并同轮字段更新并保留输入隔离，10-subjective 的事件构造避免重复复制；30-runner 仅按通用字段批次调用。工作解释选择与静态答辩候选分域，不通过提高先验或预算消除静态候选。20-speech 支持实际带来源估计提案与付费本人范围复核；35-model-argument 必须沿本人真实题目收闻信息链提取来源，不穿越全局调度父边。论证实例和动作可用性来自 native DV，独立 oracle 不进入主体。实现被编译不代表该轮完成分享或目标论证；以真实轨迹及独立判定报告为准。

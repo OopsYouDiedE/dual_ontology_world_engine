@@ -129,6 +129,7 @@
           (let (choice (dv_find (dv_find actor "speech_choice_values" (rt_list)) (dv_get action "id") (rt_list)))
             (if (rt_eq (dv_find choice "status" "") "ready") (set progress (dv_get choice "utility")) false))
           (set progress 1)) false)
+      (if (dvp_communication_progress actor action) (set progress 1) false)
       (if (rt_eq (dv_get action "kind") "replay")
         (if (rt_lt 0 (dv_find policy "model_budget" 0))
           (if (rt_eq hypothesis false) false
@@ -208,3 +209,16 @@
 (defn dvp_find_action (actions id)
   (let (i 0 result false) (do (while (rt_lt i (rt_count actions))
     (do (if (rt_eq (dv_get (rt_at actions i) "id") id) (set result (rt_at actions i)) false) (set i (rt_add i 1)))) result)))
+
+; Public transmission progress never predicts another subject's acceptance.
+(defn dvp_communication_progress (actor action)
+  (let (goals (dv_find (dv_get actor "policy") "goals" (rt_list)) i 0 value false)
+    (do (while (rt_lt i (rt_count goals))
+      (let (goal (rt_at goals i))
+        (do (if (rt_eq (dv_find goal "kind" "") "communicate")
+          (if (dv_and (rt_eq (dv_find goal "method_id" "") (dv_get action "id"))
+            (dv_and (rt_lt 0 (rt_count (dv_find goal "basis" (rt_list))))
+              (rt_eq (dv_truth (dv_get actor "mind") (dv_find goal "available_when" (dv_m2 "op" "constant" "value" "true"))) "true")))
+            (if (dv_and (dv_find goal "requires_argument" false) (dv_find action "speech_from_argument" false))
+              (if (dv_find action "argument_available" false) (set value true) false) false) false) false)
+          (set i (rt_add i 1))))) value)))

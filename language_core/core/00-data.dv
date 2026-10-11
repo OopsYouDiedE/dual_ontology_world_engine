@@ -112,3 +112,23 @@
     (dv_object id "channel"
       (dv_m2 "link" (dv_m4 "from" (dv_field (dv_entity_ref from)) "to" (dv_field (dv_entity_ref to)) "medium" (dv_field medium) "gate" (dv_field gate))
         "transport" (dv_m3 "enabled" (dv_field enabled) "gain" (dv_field gain) "bands" (dv_field (rt_list)))))))
+
+; Ordered multi-field copy update. Inputs and all output branches stay independent.
+(defn dv_with_many (record updates)
+  (if (rt_eq (rt_count updates) 0) record
+  (let (result (rt_list) keys (rt_list) i 0)
+    (do
+      (while (rt_lt i (rt_count record))
+        (let (entry (rt_at record i) key (rt_at (rt_at record i) 0))
+          (do
+            (if (dv_has_key updates key)
+              (rt_push result (dv_pair key (dv_clone (dv_get updates key))))
+              (rt_push result (dv_clone entry)))
+            (rt_push keys key) (set i (rt_add i 1)))))
+      (set i 0)
+      (while (rt_lt i (rt_count updates))
+        (let (key (rt_at (rt_at updates i) 0))
+          (do
+            (if (dv_has keys key) false
+              (do (rt_push result (dv_pair key (dv_clone (dv_get updates key)))) (rt_push keys key)))
+            (set i (rt_add i 1))))) result))))
