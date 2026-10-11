@@ -1,0 +1,15 @@
+{
+  "scope": "Only compiler source exception diagnostics; identical r7 domain/input/plan; not formal acceptance",
+  "changes": {
+    "language_core/compiler/compiler.dv": {
+      "before_sha256": "8eaa41ff7c6911796456d70130ca8694c16cc6adaa3836957699bb38a5ada985",
+      "after_sha256": "af4fb890abc44c8a7fe79c2d89449cfa91d5be1e41db1e06d9dc03c8607b0661",
+      "diff": "--- r7/language_core/compiler/compiler.dv\n+++ diagnostic/language_core/compiler/compiler.dv\n@@ -246,7 +246,7 @@\n             (set result (rt_cat result\r\n               (if (rt_eq (sym (rt_at xs 0)) \"defn\") (emit_function n signatures)\r\n                 (rt_cat \"public static int Main(string[] args) { R.Arguments=args; try { _ = \"\r\n-                  (rt_cat (emit (rt_at xs 1) (rt_list) signatures) \"; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.Message); return 1; } }\\n\")))))\r\n+                  (rt_cat (emit (rt_at xs 1) (rt_list) signatures) \"; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.ToString()); return 1; } }\\n\")))))\r\n             (set i (rt_add i 1)))))\r\n       (rt_cat result \"}\\n\"))))\r\n (main (rt_write (rt_arg 1) (compile (rt_read (rt_arg 0)))))\r\n"
+    },
+    "language_core/compiler/seed/Program.cs": {
+      "before_sha256": "ac4c7acbf1053938e5c50b1eda4139ded2a29050197311e148b960cfb5a9e3d6",
+      "after_sha256": "e6fed33d9eb4876e74fb8ce1d16b3fc4afcff3bb5be16f152a58f6eed88f0c11",
+      "diff": "--- r7/language_core/compiler/seed/Program.cs\n+++ diagnostic/language_core/compiler/seed/Program.cs\n@@ -57,13 +57,13 @@\n             {\n                 var xs = Value.ItemsOf(f);\n                 if (xs.Length == 4 && Value.SymbolOf(xs[0]) == \"defn\") output += \"static object F_\" + Name(xs[1]) + \"(\" + string.Join(\",\", Value.ItemsOf(xs[2]).Select(p => \"object v_\" + Name(p))) + \") => \" + Expr(xs[3]) + \";\\n\";\n-                else if (xs.Length == 2 && Value.SymbolOf(xs[0]) == \"main\" && !main) { main = true; output += \"public static int Main(string[] args) { R.Arguments=args; try { _ = \" + Expr(xs[1]) + \"; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.Message); return 1; } }\\n\"; }\n+                else if (xs.Length == 2 && Value.SymbolOf(xs[0]) == \"main\" && !main) { main = true; output += \"public static int Main(string[] args) { R.Arguments=args; try { _ = \" + Expr(xs[1]) + \"; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.ToString()); return 1; } }\\n\"; }\n                 else throw new Exception(\"Invalid top-level declaration\");\n             }\n             if (!main) throw new Exception(\"Missing main\");\n             File.WriteAllText(args[1], output + \"}\\n\", new System.Text.UTF8Encoding(false));\n             return 0;\n         }\n-        catch (Exception e) { Console.Error.WriteLine(e.Message); return 1; }\n+        catch (Exception e) { Console.Error.WriteLine(e.ToString()); return 1; }\n     }\n }\n"
+    }
+  }
+}
