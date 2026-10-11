@@ -70,7 +70,7 @@ public partial class GameEngine : Node
                 return new PlayerFieldOffer(ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"),
                     ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"), Value: ChapterEvents.Text(o, "value"), Purpose: ChapterEvents.Text(o, "purpose"))
                 { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null,
-                    TravelDistance = ChapterEvents.Number(o, "travel_distance") };
+                    TravelDistance = ChapterEvents.Number(o, "travel_distance"), KnownGround = ChapterEvents.Flag(o, "known_ground") };
             }).ToArray();
             Session.ObserveAgentField(entries);
             return "";

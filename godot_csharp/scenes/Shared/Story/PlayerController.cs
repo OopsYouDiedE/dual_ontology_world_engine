@@ -48,6 +48,7 @@ public sealed record PublicPlayerCandidate(string Token, string Label, string Ki
 {
     public PlayerPoint? Location { get; init; }
     public double TravelDistance { get; init; }
+    public bool KnownGround { get; init; }
 }
 public sealed record PublicPlayerObservation(long Turn, ImmutableArray<PublicPlayerLine> Lines,
     ImmutableArray<string> Text, ImmutableArray<PublicPlayerCandidate> Candidates, bool Complete)
@@ -87,6 +88,7 @@ public sealed record PlayerFieldOffer(string Label, string Kind, bool New,
 {
     public PlayerPoint? Location { get; init; }
     public double TravelDistance { get; init; }
+    public bool KnownGround { get; init; }
 }
 
 // Trusted projection of exactly the shared panels' presentation contracts.
@@ -458,7 +460,9 @@ public sealed class SubjectivePlayerController
             : SeenPlaces().Where(p => Experience(p).Attempts == 0).ToArray();
         bool Untried(PublicPlayerCandidate candidate) => candidate.Kind == "move" && candidate.Purpose == "approach"
             && _seenPlaces.TryGetValue((_space, candidate.Value), out var destination)
-                ? Experience(destination).Attempts == 0 : Experience(candidate).Attempts == 0;
+                ? Experience(destination).Attempts == 0
+                : (candidate.Kind != "move" || !candidate.KnownGround || candidate.Purpose == "frontier")
+                    && Experience(candidate).Attempts == 0;
         var moves = observation.Candidates.Where(c => c.Kind == "move" && c.Location is not null).ToArray();
         double Distance(PlayerPoint a, PlayerPoint b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         double GoalDistance(PublicPlayerCandidate c) => wantedPlaces.Min(p => Distance(c.Location!, p.Location!));
@@ -530,10 +534,13 @@ public sealed class SubjectivePlayerController
                 score -= (long)Math.Min(informationVisits, 1000) * _revisitWeight;
                 why.Add("remembered_goal_already_examined:" + informationVisits);
             }
-            if (candidate.Kind == "move" && candidate.Purpose != "approach" && candidate.Location is { } aim && _revisitWeight > 0 && walkedHere.Length > 0)
+            if (candidate.Kind == "move" && candidate.Purpose != "approach"
+                && (!candidate.KnownGround || candidate.Purpose == "frontier")
+                && candidate.Location is { } aim && _revisitWeight > 0 && walkedHere.Length > 0)
             {
-                // Curiosity about ground: the farther a step lands from anywhere this actor has
-                // already walked, the more it is worth, so the seat leaves exhausted rooms.
+                // Only unknown ground or an observed frontier can promise new
+                // visibility. Walking across an already seen room is a means,
+                // not a fresh information source at every unstepped floor cell.
                 var cell = (Math.Floor(aim.X / 64), Math.Floor(aim.Y / 64));
                 var away = walkedHere.Min(w => Math.Max(Math.Abs(w.X - cell.Item1), Math.Abs(w.Y - cell.Item2)));
                 if (away > 0) { score += (long)Math.Min(away, 4) * _revisitWeight; why.Add("unwalked_ground:" + Math.Min(away, 4)); }
@@ -774,14 +781,14 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     private static bool UsesColumns(IReadOnlyDictionary<string, object?> form) => Text(form, "layout") == "tabs"
         && Maps(form, "fields").Count() is >= 2 and <= 3;
     private static bool UsesTabs(IReadOnlyDictionary<string, object?> form) => Text(form, "layout") == "tabs" && !UsesColumns(form);
-    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null, double travelDistance = 0)
+    private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null, double travelDistance = 0, bool knownGround = false)
     {
         if (_offers.Count >= 256) throw Fail("candidate_limit");
         if (!double.IsFinite(travelDistance) || travelDistance < 0 || travelDistance > 1000000) throw Fail("invalid_travel_distance");
-        var identity = JsonSerializer.Serialize(new object?[] { label, kind, isNew, group, publicValue, purpose, selected, location?.X, location?.Y, travelDistance, input, field, value?.ToString(), tab });
+        var identity = JsonSerializer.Serialize(new object?[] { label, kind, isNew, group, publicValue, purpose, selected, location?.X, location?.Y, travelDistance, knownGround, input, field, value?.ToString(), tab });
         if (!_standing.TryGetValue(identity, out var token) || _offers.ContainsKey(token)) token = "player:" + _session + ":" + ++_serial;
         _identities[token] = identity;
-        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location, TravelDistance = travelDistance }, input, field, value, tab));
+        _offers.Add(token, new(new(token, label, kind, isNew, group, publicValue, purpose, selected) { Location = location, TravelDistance = travelDistance, KnownGround = knownGround }, input, field, value, tab));
     }
     public PublicPlayerObservation Observe(IReadOnlyList<Dictionary<string, object?>> output,
         IReadOnlyList<PlayerFieldOffer>? fieldOffers = null)
@@ -859,7 +866,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 foreach (var offer in _hostOffers)
                 {
                     if (offer.Kind is not ("move" or "interact" or "wait" or "menu" or "form_field" or "form_submit" or "continue")) throw Fail("unsupported_field_offer");
-                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location, travelDistance: offer.TravelDistance);
+                    Add(offer.Label, offer.Kind, offer.Input.ToDictionary(p => p.Key, p => p.Value), offer.New, group: offer.Group, publicValue: offer.Value, purpose: offer.Purpose, selected: offer.Selected, location: offer.Location, travelDistance: offer.TravelDistance, knownGround: offer.KnownGround);
                 }
         }
         Current = new(++_turn, lines.ToImmutable(), text.ToImmutable(), [.._offers.Values.Select(o => o.Visible)], complete) { Field = Current.Field };

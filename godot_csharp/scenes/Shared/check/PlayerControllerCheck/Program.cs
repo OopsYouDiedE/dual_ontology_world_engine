@@ -41,6 +41,7 @@ PlayerCognition Cognition(int truth, bool nested = false)
     return new(snapshot, actor.Self.SubjectId!.Value);
 }
 
+GroundKnowledgeCases.Run(Check);
 PublicMenuScopeCases.Run(Check);
 InteractionReceiptCases.Run(Check);
 InformationContextCases.Run(Check);

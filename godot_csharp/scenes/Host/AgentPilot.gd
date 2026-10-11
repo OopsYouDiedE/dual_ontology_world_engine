@@ -313,6 +313,13 @@ func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 		for key in offer.input.keys: direction += {"W": Vector2.UP, "S": Vector2.DOWN, "A": Vector2.LEFT, "D": Vector2.RIGHT}[key]
 		var endpoint: Vector2 = field.player.position + direction.normalized() * float(field.player.speed) * KEY_MOVE_SECONDS
 		offer.location = [endpoint.x, endpoint.y]
+	for offer in offers:
+		if offer.kind != "move" or not offer.has("location"): continue
+		var endpoint := Vector2(float(offer.location[0]), float(offer.location[1]))
+		var cell := Vector2i((endpoint / known.cell_size).floor())
+		# A public visibility observation or a previously observed walkable
+		# cell is enough. Never inspect unseen collision geometry here.
+		offer.known_ground = field.in_sight(endpoint) or (known.region.has_point(cell) and not known.is_point_solid(cell))
 	var controls: Dictionary = snapshot.get("controls", {})
 	if bool(controls.get("wait", false)):
 		offers.append({"label": "T", "kind": "wait", "new": false, "input": {"kind": "action", "act": {"cmd": "stay"}}})
