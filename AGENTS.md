@@ -7,6 +7,13 @@
 - 本文件只规定工作流程、命令、验证方法和报告方式。
 - 修改工作流程、命令、验证方法、报告方式或调整项目架构时，必须在同一轮改动中同步修改对应目录的 AGENTS.md（主 AGENTS.md 记录全局架构，子目录 AGENTS.md 记录模块架构）；变更只影响某个子目录时，改该子目录的 AGENTS.md。
 
+## 测评方式约束（用户裁定 2026-10-11）
+
+- 本项目禁止使用流程回归测评，包括 `flow`、`flow2`、`flow_check.gd`、`check_flow.gd`，以及通过其他入口调用这些流程。不得默认运行包含它们的统一回归。
+- 禁止用“xx 项通过”、断言数量、通过率或“全绿”评价本项目、判断修改效果或代替实际验收。既有检查脚本和历史报告的存在不构成采用这种测评方式的依据。
+- 修改效果必须依据新正式会话中实际发生的行为、玩家可见结果和具体问题判断：逐段核对行动前的信息与目的、真实输入与执行、后续结果，以及停滞、折返、重复查看或推进是否改善；涉及画面时实际查看对应截图。
+- 构建、语法与生成物一致性检查仅用于必要的工程排错，报告说明具体事实与限制，不把检查汇总当作游戏、人物或机制改善的证明。下文及子目录的旧检查入口均受本节约束。
+
 ## 内容判断边界
 
 - 剧情、人物、世界设定、谜题与玩法的判断依据只有用户指令和 [设计规范](docs/design-standard.md)。
@@ -22,7 +29,7 @@
 | `csharp/` | 独立 Core 类库，不依赖 Godot，见 [csharp/AGENTS.md](csharp/AGENTS.md) |
 | `godot_csharp/` | Godot 游戏宿主，单向引用 Core，见 [godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) |
 | `docs/design-standard.md` | 唯一的设计规范文件 |
-| `tools/` | 仓库级通用工具，含统一回归入口 `verify.py` |
+| `tools/` | 仓库级通用工程工具；使用方式受测评方式约束 |
 | `godot_csharp/tools/` | 资产生产、剧本编译与 Godot 工具 |
 | `music/` | 音乐工程与原声 |
 | `artifacts/<task-name>/` | 阶段成果、验证报告与交付物 |
@@ -41,12 +48,11 @@
 ```powershell
 dotnet build csharp/Core.sln
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers
-python tools/verify.py                              # 统一自动回归；支持 --only / --skip
 python godot_csharp/tools/compile_story.py          # 修改剧本源后重新生成
 python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是否一致
 ```
 
-统一回归的 `save` 步骤运行宿主空闲切点的跨进程保存检查，支持 `--only save` / `--skip save`；不属于 UI 或盲玩验收。
+必要的跨进程保存排错可单独使用 `python tools/verify.py --only save`；不得混入流程回归，也不能作为 UI、人物行为或盲玩验收。
 
 素材迁移或重建后重新导入：
 
@@ -62,7 +68,7 @@ python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是�
 2. 依据用户要求、设计规范、README 和相关源码，明确本轮验收项。
 3. 生成文件通过对应工具从源重新生成，不直接手改。
 4. 路径或资源调整后，同步核对场景、资源依赖、代码中的动态路径、插件配置和生成脚本。
-5. 执行与改动相关的构建和自动回归，记录结果、失败项和未覆盖项。
+5. 按测评方式约束执行必要的工程排错与实际行为复测，记录具体问题、实际结果和未验证内容；不执行流程回归，不以通过项计数作结论。
 6. 涉及游戏呈现或交互时，实机检查资源、布局、遮挡、碰撞、输入和运行表现。
 7. 每当完成一轮修改后，直接提交并推送。
 
@@ -80,7 +86,7 @@ python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是�
 ### 通用要求
 
 - 每轮测试由全新、独立上下文的 Agent 执行。子代理不得访问项目设计文件；主代理负责核对设计并作出实现取舍。
-- 自动回归、三份全程记录、UI 专项验收与独立盲玩分别记录。注入状态、预写答案或按帧快进的自动化通关不得作为游玩验证。
+- 工程排错、实际行为复测、三份全程记录、UI 专项验收与独立盲玩分别记录。注入状态、预写答案或按帧快进的自动化通关不得作为游玩验证。
 
 ### 一级：剧情与引擎验收
 
@@ -138,6 +144,4 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 - 封存盲玩原始输入、界面记录与录制日志时，保留原始字节；对应证据目录使用 `.gitattributes` 的 `-text` 关闭换行转换，运行日志可用 `-diff` 避免控制字符污染审阅输出。
 
 
-- Godot headless save/flow/flow2 缺少完整结束记录时保留日志并重试一次；完整通过输出后的 0xc0000005 退出崩溃以检查输出为准，脚本/引擎错误仍使回归失败。
-- `python tools/test_verify.py` 验证完整汇总识别、崩溃处理、一次重试与原始日志保留；不替代真实 Godot 检查。
-- 完整汇总含失败断言时直接报告失败，不因失败数非零重试；仅缺少结束记录时重试。
+- 工程排错遇到脚本或引擎错误、退出崩溃、缺少实际完成记录时，直接说明发生的错误与未验证内容；不得用通过汇总或旧记录宣布本轮改善。

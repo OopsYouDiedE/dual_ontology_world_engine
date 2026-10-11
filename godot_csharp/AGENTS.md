@@ -4,6 +4,14 @@
 
 **架构与同步规则**：本目录发生架构、路径或管线规范调整时，必须同步修改本文件（`godot_csharp/AGENTS.md`）；严禁将剧情写入宿主代码，剧情仅允许存在于 `.story` 和译文中。C# 与 GDScript 中的设定与逻辑查验统一通过剧本编译物与词汇表，不得硬编码剧情台词或设定。
 
+## 测评方式约束
+
+- 遵循根目录的用户裁定：禁止执行第一章、第二章流程回归，包括 `flow`、`flow2`、`flow_check.gd`、`check_flow.gd`，也不得通过统一工具或其他入口间接调用。
+- 禁止以“xx 项通过”、断言数量、通过率或“全绿”评估游戏、人物或修改效果；下文既有机制检查只可用于定位具体工程问题，不构成验收依据。
+- 复测使用新的正式会话，逐段核对玩家实际可见信息、输入、到场与执行回执、后续画面及推进；涉及停滞、折返或重复查看时必须说明当时信息和实际结果，并查看对应截图。
+
+## 宿主合同
+
 - 保存接口：`Shared/Story/WorldSession.Save.cs`、`SessionPersistence.cs` 提供完整空闲会话候选、进度值的闭合协议、版本化随机流及原子 Store 发布；重复载入相同字节保留对象与恢复 epoch。外部章节宿主必须注册保存切点 guard，不能仅凭 Core active 为空保存。
 - 章节适配：`Awakening/Script/Chapter1Save.cs` 与 `Awakening/Night/MorningSave.cs` 保存实际章节进度、时钟、生态游标与引用；恢复使用专用构造，绕过初态、观察、效果和 fiber。`Shared/Game/GameSession.Save.cs`、`Host/GameEngine.cs` 暴露无 UI 的导出/载入 API；当前仅支持第一章空闲点，其余章节与活动选择、回执、走位、流程明确 `UnsupportedSavePoint`。
 - headless 保存检查：`godot --headless --path godot_csharp --script res://scenes/Shared/check/check_session_save.gd`；实际推进第一章后保存，启动第二个 Godot 进程恢复并比较连续推进结果。`tools/verify.py` 的 `save` 步骤执行该检查。纯 dotnet 诊断入口为 `dotnet run --project godot_csharp/scenes/Shared/check/SaveCheck/SaveCheck.csproj -c Release -- write tmp/core-save-check` 与同项目 `-- read tmp/core-save-check`。不替代 UI/盲玩验收。
@@ -165,7 +173,7 @@
 - 坐席按空间记忆实际见过的地点与地面通行；`PilotNavigation.remember_grid` 只以当前视线更新格子，未知地面保持封闭，`approaches` 提供通往已见地点的短路标候选（`purpose=approach`、`value` 为公开地点名）。控制器按本人问题评价地点，路标的预期材料价值与目标的实际检视记录绑定，不将不同路标当作新调查，也不重复叠加地面探索与直线方向奖励。必要返回不因已有走位经验累积无界惩罚，目标的检视经历及碰壁经验仍保留。共享导航以 8 像素中心采样，保留连续身体可通过的窄通路，端点按网格自身分辨率选取；仍由正式点击、碰撞与回执执行。
 - 章节结束清除玩家已结束的当前问题标记，保留已获知命题和信念；耗时动作结束后，若侦探实际空间与当前地图的声明空间不同，章节适配器按实际空间输出正式 `scene` 事件再呈现行动回执，不把旧地图几何覆盖到权威状态。
 - 第二章现场按地图出口已有形状及实时通行快照创建关闭出口的碰撞阻挡，并同步导航网格；通行变化时延后刷新几何，开放后撤销阻挡。拒绝换图时取消点击路径并退回本图最后的有效位置，键盘移动与点击移动共用实际碰撞，不允许从关闭的出口走到图外。
-- 全量测试：`python godot_csharp/tools/full_test.py --name <新名> [--time-scale 4] [--max-seconds 1800] [--no-progress-seconds 45]`，启动 `scenes/Shared/check/FullTest/FullTest.tscn`（子节点即正式 `Main.tscn`）。只由主代理运行，同一时刻只跑一个 Godot。画面即正式游戏画面；轨迹与截图写入 `tmp/full-test/<名>/`。`--time-scale` 整体加快引擎时间并同比提高物理步数（单步时长不变），不改 Core 与事件顺序。无公开进展（台词/文字/非走位候选/64 像素格位置均无新内容）、缺候选、未被更晚公开观察替代的 token 失效或引擎错误即停并记录原因；卡住立即停下修复后从头再跑。外层 Python 看门狗在墙钟预算外再给 120 秒后强制结束。运行前须先对工作区执行一次 `godot --headless --path godot_csharp --import`。
+- 实际行为复测：`python godot_csharp/tools/full_test.py --name <新名> [--time-scale 4] [--max-seconds 1800] [--no-progress-seconds 45]`，启动 `scenes/Shared/check/FullTest/FullTest.tscn`（子节点即正式 `Main.tscn`）。只由主代理运行，同一时刻只跑一个 Godot。画面即正式游戏画面；轨迹与截图写入 `tmp/full-test/<名>/`。`--time-scale` 整体加快引擎时间并同比提高物理步数（单步时长不变），不改 Core 与事件顺序。无公开进展（台词/文字/非走位候选/64 像素格位置均无新内容）、缺候选、未被更晚公开观察替代的 token 失效或引擎错误即停并记录原因；卡住立即停下修复后从头再跑。外层 Python 看门狗在墙钟预算外再给 120 秒后强制结束。运行前须先对工作区执行一次 `godot --headless --path godot_csharp --import`。结论须逐段审查实际行为与画面，不采用输入次数或通过项汇总。
 - 代理导航中性合同：`Godot --headless --path godot_csharp --script res://tools/check/check_virtual_navigation.gd`，检查视野外仍可尝试短步、未知路线不预读、长步保留正式可见寻路，以及已见 U 形绕行、未知地面封闭、隐藏变化不改记忆和不同网格分辨率/偏移；不注入到场回执。
 - 呈现替代中性合同：`python artifacts/detective-agent/chapter2-20261011/verification/presentation-supersession-r07/run_fixture.py <Godot控制台程序> <新运行名>`；独立 SceneTree 使用正式 AgentPilot 与中性宿主，验证等待期间新公开候选替代旧输入后正常重新决策，以及其他边界错误仍停止。日志不可复用，不代替正式窗口或盲玩。
 - 关闭出口中性场景树合同：`Godot --headless --path godot_csharp --script res://tools/check/check_campus_access.gd`；自行构造中性地图，验证实时通行的实体碰撞与导航、重新开放、重复快照、独立出口和室内拒绝换图的退回与点击取消；同时使用正式角色身体验证窄通路和邻墙碰撞、真实按键的墙钟保持与主动停止释放。不调用章节 setup，不注入到场回执，不代替 UI 或盲玩验收。
@@ -180,8 +188,7 @@
 - 源码内容审计使用根目录的 `STORY-HARDCODE` 标记约定，分别记录正式代码、夹具、工具、示例和编辑器预览。剧本生成的 C#/JSON 只登记来源，不手改；专用绑定与剧情因果分别分类。仅加标记时验证原有源码不变、宿主构建与修改过的 GDScript 语法，不将其当作一级、二级或三级验收。
 
 - 第一章 Godot 自动检查统一通过 `Awakening/check/chapter1_fixture.gd` 加载 `Host/Main.tscn`，发送标题页 `start` 并等待正式视图握手；需要略过开场时实际推进对白，不使用 `skip_intro` 元数据。宿主或视图加载失败立即退出非零状态。`Shared/check/ChapterProbe.cs` 仅供检查，反射访问统一会话持有的 `IChapterProbe` 并复用宿主 Variant 转换；正式输入接口不开放状态注入。自动检查结论不代替任何一级、二级或三级验收。
-- 第二章 `Chapter2/check/check_flow.gd` 通过 `chapter2_fixture.gd` 复用上述 Main 夹具，先用调试跳转推进第一章终局，再以章末卡 C 键触发连续会话的视图切换与 `view_ready`，检查首个可操作状态。后续输入和 UI 回执仍经过 `Main.dispatch`，不再加载旧章节宿主、调用引擎直通接口或单独注入继承快照；地图加载失败和流程等待超时须报告并退出非零状态。
-- 社交请求的流程 AST 使用发言者内部世界的引用提交；接收者认知只用于筛选已知目标，发言传播再将请求映射到接收者内部世界。第二章流程回归按正式日程检查开场与首课，检视物证后再验证同行结算。
+- 社交请求的流程 AST 使用发言者内部世界的引用提交；接收者认知只用于筛选已知目标，发言传播再将请求映射到接收者内部世界。实际章节衔接与同行结果通过新的正式连续会话观察。
 - 第二章规矩、规则格的主体/条件/行为及社会行动由剧本声明，`tools/story_ast.py` 复用表达式解析器校验类型，`Shared/Story/ScriptAst.cs` 绑定到已有 `Condition/Effect/Rule`，不注册专案行为回调。规则格以作者选项 ID 选取 AST 分支；历史条件只读当前引用所属内部世界的观察记录。纯元信息规矩未声明执行块时携带空 AST，不产生行动；显式 AST 行须完整声明条件、模式、效果与权重。未知节点、过程、引用与递归过程明确拒绝。
 - 社交菜单与提交共用相合计算；预览只读，提交时重新读取当前条件和目的。声明的 `condition_world` 区分当前物理可行性与本人认知条件，默认 subjective；physical 检查不替人物写入通路知识，收到请求后仍由本人规则选择、Core 当前条件验证实际执行。请求提交须本次 Say 完成并产生新请求，不复用旧接受记录；接受事件与 Core 行动执行事件分离，成功反馈、履约和后果须有 Completed 回执；取消会关闭收到的请求，不能下一轮重选同一请求。成本、目标筛选、承诺期限及履约行动 ID 从声明读取。`receipt_attitudes` 声明正式接受/拒绝后对发送者的态度记录标签；该记忆以 Delivered 事件因果关联接受回执，不表示请求动作已执行，也不参与预览写入。
 - AST/请求合同检查：先运行 `python godot_csharp/tools/check/test_ast_requests.py`（同时编译隔离扩展副本），再构建 `dotnet build godot_csharp/scenes/Chapter2/Game/check/AstRequestCheck/AstRequestCheck.csproj -c Release -m:1 --disable-build-servers`，构建成功后运行 `dotnet run --project godot_csharp/scenes/Chapter2/Game/check/AstRequestCheck/AstRequestCheck.csproj -c Release --no-build --no-restore`。覆盖仅改剧本新增规则/行为/请求、预览只读及拒绝/取消/处境变化/不能完成；不代替 UI、文学或盲玩验收。
@@ -227,7 +234,7 @@
 - 虚拟玩家规则可在末尾加 `文案 "公开子串"`，只筛选公开候选 Label；不读取令牌负载或源位置。第一章驱动的 wait 是真实一秒不操作，不提交章节快进；移动候选标注可见落点房间名。测量保存 player_time、case_progress、strategy_deviation/action、object_changed、world_resolution 事件。
 - 策略合同检查：`dotnet run --project godot_csharp/scenes/Shared/check/StrategyCheck/StrategyCheck.csproj -c Release` 与 `python godot_csharp/tools/check/check_story_strategy.py`。
 - 集成合同检查：`dotnet run --project godot_csharp/scenes/Shared/check/StrategyIntegrationCheck/StrategyIntegrationCheck.csproj -c Release`；覆盖公开候选筛选、正式编译表类型、证言/亲见边界、物件操作的当前站位复核、主体隔离、存档指纹和策略冷却恢复。默认调用真实 Python 编译器编译同目录中性 `controller-wire.story`，核对操控筛选与预算经 C# 读取后的实际评分；`--controller-wire-json <file>` 可喂入独立命名故障副本，负例预期非零退出，不放宽既有断言。机制夹具的注入状态不属于虚拟玩家测量证据。
-- `Host/Main.gd` 仅截留明确列出的测量事件，原始会话与 headless 驱动仍保留；人物实际对白和动作继续经正常显示接口。未知显示事件仍由原界面合同拒绝，不放宽 UI 或统一回归的错误扫描。
+- `Host/Main.gd` 仅截留明确列出的测量事件，原始会话与 headless 驱动仍保留；人物实际对白和动作继续经正常显示接口。未知显示事件仍由原界面合同拒绝，工程排错如实记录 UI 与引擎错误。
 - 虚拟玩家现场提供可见点击落点及 WASD 方向候选；按键通过 InputEventKey 在物理帧边界真实按下，累计 0.35 模拟秒后释放，保留原碰撞、锁定与房间揭示，不预查未知落点房间或直接设置位置。按键计时采用可取消回调，释放前不选下一动作；记录按下/释放及实际位移，退出时取消回调并释放残留按键。停止后锁定现场，等待尚未完成的一秒不操作或演出 drain 返回，再留 0.15 秒清理输入缓冲并释放节点；清理时间不计入 stop 游玩测量，停止后的 drain 不再读取已关闭会话。仅提供可见点击落点不能覆盖跨房间，不能据这种驱动的选择数宣称跨区调查覆盖。
 - 操控 JSON 服从 `WorldScriptDocument` 的 snake_case 读取约定：`label_contains`、`argument_weight`、`information_weight` 必须经真实编译/运行时往返验证，不能仅分别验证 Python 字典和手工 C# 对象。
 - 键盘候选位移由当前身体速度乘以 0.35 模拟秒给出，输入从下一物理帧边界开始按模拟时间累计，按下和释放均刷新输入缓冲，不改全局累积输入设置；不再在加速测试中保持固定 350ms 墙钟；不得补跑物理帧、修改身体位置或单独推进游戏钟。1 倍与 4 倍的中性输入测试允许一个物理步误差，分别验证真实位移、碰撞和停止释放。

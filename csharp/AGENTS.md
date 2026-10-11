@@ -4,6 +4,12 @@
 
 **同步修改规则**：只要 Core 部分源码或结构发生修改，本文件（`csharp/AGENTS.md`）必须同步修改更新，确保规范与实际使用结构完全一致。
 
+## 测评方式约束
+
+- 遵循根目录的用户裁定：禁止流程回归，以及“xx 项通过”、断言数量、通过率或“全绿”式测评；不得通过 Core 或宿主的其他入口绕开此限制。
+- 下文保留的机制检查入口仅可用于定位具体工程问题，须解释实际输入、执行与结果，不能用汇总计数证明人物行为、章节推进或修改效果。
+- 共同决策的改善应在正式连续会话中核对主体实际可知信息、所选行动、真实反馈和玩家可见结果。
+
 ## 现行核心架构与模块结构
 
 Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时循环、几何与 UI 分立。包含以下现行使用结构：
@@ -60,15 +66,15 @@ Core 是完全独立的 .NET 类库，保持纯粹性，与渲染引擎、实时
 - 构建命令：`dotnet build csharp/Core.sln -c Release`
 - 打包命令：`dotnet pack csharp/DualOntologyWorldEngine.Core.csproj -c Release -o artifacts/releases/core`
 
-## 目录纯净性与回归验证
+## 目录纯净性与工程诊断
 
 - 本目录专属于 Core 独立逻辑与核心基准测试，游戏呈现与交互资源属于 `godot_csharp/`。
 - 核心级基准与验证脚本就地保存在 `csharp/` 根层：
   - `dotnet run --project csharp/ScopeRegression.csproj`
   - `dotnet run --project csharp/ReasonerRegression.csproj`
   - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：两种中性结构验证身份、原子认知、快照、审计、词项与整轮评分；增量提交、遗忘依赖与旧版审计重建；EventRegression 覆盖五种事件的权限投影、快照依赖、稳定 ID、发言与接受不提交效果、失败/取消、实际到场及呈现改名；codec 覆盖完整 AST/审计 wire 往返、拒绝用例与新进程引用恢复。主观推演隔离由后续批验证。
-  - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：独立输出／中间目录；平层与容器两种中性主体图验证论证来源、多步深度、假设组合、痕迹／信息值、冲突／循环、硬展开上限、快照不回写与隐真变形；追加 Infer 主体图／审计／运行时存档往返及类型化事件隔离。此步骤单独执行，统一 `verify.py` 的原步骤保持不变。
-  - `dotnet run --project csharp/SubjectiveDecisionRegression.csproj -c Release`：独立输出／中间目录；中性主体验证真实反馈分类、条件变化重试、主体隔离、评分禁令、闭合经历 wire 与存档恢复。该入口源码不编入 Core 类库，统一回归的既有入口不变。
+  - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：独立输出／中间目录；平层与容器两种中性主体图验证论证来源、多步深度、假设组合、痕迹／信息值、冲突／循环、硬展开上限、快照不回写与隐真变形；追加 Infer 主体图／审计／运行时存档往返及类型化事件隔离。此入口仅用于具体机制排错，服从本文件的测评方式约束。
+  - `dotnet run --project csharp/SubjectiveDecisionRegression.csproj -c Release`：独立输出／中间目录；中性主体验证真实反馈分类、条件变化重试、主体隔离、评分禁令、闭合经历 wire 与存档恢复。该入口源码不编入 Core 类库，仅用于具体机制排错。
 - `tools/verify.py` 在 scope 后运行 cognition 步骤；Core csproj 排除各独立回归程序源，避免把测试入口打入类库。
 - `EventSaveRegression.cs` 在 CognitionRegression 中保留既有事件/保存用例并追加两个中性世界的事件 wire、审计、权限、退休引用、因果遗忘及子进程恢复检查；本文件同样从 Core 类库排除。
 - CognitionRegression 在 SDK 导入前设置独立 `obj/CognitionRegression/`、`bin/CognitionRegression/`，避免共享 apphost/还原缓存导致启动其他回归入口。Scope/Reasoner 原构建路径保留。
