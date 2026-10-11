@@ -2,13 +2,13 @@
 
 语言名称为 **DuelView**，简称 **DV**，源码后缀为 **`.dv`**。新目录中的可运行原型位于分支 `codex/partial-bootstrap-core`，不引用旧 Core。最终目标是**编译器与全部引擎推演核心均以 DV 编写，并由 DV 编译器编译成 C#；其他目标语言通过后端扩展**。
 
-[DESIGN.md](DESIGN.md) 给出语言结构、类型化 AST、解析树、后端与编译器自举链。该文件中的正式类型化语法是待实现设计；当前仅有解释子集和部分解释自举，尚无 DV→C# 编译器，也不是旧 Core 的完整替换。
+[DESIGN.md](DESIGN.md) 给出语言结构、类型化 AST、解析树、后端与编译器自举链。该文件中的正式类型化语法是待实现设计；当前已新增可自编译的通用计算启动子集，见 [compiler/README.md](compiler/README.md)。完整静态类型、能力系统、目标无关 IR 和推演库编译迁移仍待实现；不是旧 Core 的完整替换。
 
 ## 自举的实际含义
 
 启动 C# 内核读取 S 表达式，载入 `10-evaluator.dv`。这个语言写的解释器再解释全部 `bootstrap/*.dv`，其中包括解释器自己的源码。所得函数在新环境中运行；`InferenceProgram` 和正式 `WorldCore` 调用这些自解释载入的函数。演示还取出新载入的解释器函数并实际调用它。
 
-没有提供 native `eval`、案例求解、规则打分、信念更新或规划 primitive。语言代码实际执行这些算法。基本数值、列表、函数调用、不透明函数包装、局部 cell 和预算仍由 .NET 提供。Reader、内存管理和宿主执行边界也保留在 C# 中，因此目前是部分自举，不是完全自托管的编译器。
+没有提供 native `eval`、案例求解、规则打分、信念更新或规划 primitive。语言代码实际执行这些算法。基本数值、列表、函数调用、不透明函数包装、局部 cell 和预算仍由 .NET 提供。Reader、内存管理和宿主执行边界也保留在 C# 中，这描述的是原解释链路。新增编译链路的扫描、解析、名称/调用检查和 C# 生成已全部放入 `compiler/compiler.dv`，能够编译自身；其数据与平台 ABI 仍由 C# 提供。完整语言自托管目标尚未完成。
 
 成熟参考采用 [MAL 的 C# 与自身语言实现](https://github.com/kanaka/mal/tree/2bbfaa54cca4908efc90b4173b1406e260788e8a/impls)：词法环境、quote、闭包、尾调用与自解释载入。源码是本目录的新实现，并未复制或引入整套 MAL；不宣称完整 MAL/Scheme 兼容。参考与语义依据见 [REFERENCES.md](REFERENCES.md)。
 

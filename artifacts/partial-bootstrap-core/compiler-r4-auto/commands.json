@@ -1,0 +1,278 @@
+[
+  {
+    "label": "toolchain",
+    "command": [
+      "dotnet",
+      "--version"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "runtimes",
+    "command": [
+      "dotnet",
+      "--list-runtimes"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "seed-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\Seed.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c1-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\bin\\Release\\net8.0\\Seed.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c1\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c1-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c1\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c2-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c1\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c2\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c2-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c2\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c3-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c2\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "c3-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "sample-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\sample.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\sample\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "sample-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\sample\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "sample-execute",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\sample\\bin\\Release\\net8.0\\Program.dll"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "unicode-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unicode.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unicode\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "unicode-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unicode\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "unicode-execute",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unicode\\bin\\Release\\net8.0\\Program.dll"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "mutation-generate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\mutated-compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\mutated\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "mutated-build",
+    "command": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\mutated\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "mutation-compile-sample",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\mutated\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\sample.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\mutated-sample.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "diagnostic-unbound",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unbound.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unbound.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-arity",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\arity.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\arity.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-duplicate",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\duplicate.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\duplicate.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-scope",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\scope.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\scope.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-escape",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\escape.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\escape.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-unfinished",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unfinished.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\unfinished.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-foreign",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\foreign.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\foreign.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-reserved-runtime",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\reserved-runtime.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\reserved-runtime.cs"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "diagnostic-shadow",
+    "command": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\shadow.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\compiler-r4-auto\\shadow.cs"
+    ],
+    "exit": 1
+  }
+]

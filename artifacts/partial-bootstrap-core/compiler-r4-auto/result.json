@@ -1,0 +1,47 @@
+{
+  "verdict": "bootstrap_compiler_self_hosted",
+  "scope": "DV named-function dynamic-value bootstrap subset -> C#",
+  "stages": {
+    "c1": {
+      "source": "97b09c03fb98989371cb1b2642142b813122ed7d2f095434ddeb1420e34cd201",
+      "assembly": "6a197846e56364fe42807c3a8af30bf1e5c6c350b32c4fa93d179fa9bea433f3"
+    },
+    "c2": {
+      "source": "ac75e3068052e23caf5073ab2e026d04c3ffa88182dd78855afdd685db76ab8a",
+      "assembly": "ae2f55acadd1966c013e9abea694b590c80c9cdd1704e8e39a291682808625c8"
+    },
+    "c3": {
+      "source": "ac75e3068052e23caf5073ab2e026d04c3ffa88182dd78855afdd685db76ab8a",
+      "assembly": "054235ec642c16fce69ee751e6aa3e367a6524f531a45d1082a968bcb4eb75f0"
+    }
+  },
+  "criteria": {
+    "same_compiler_source_compiled_by_c0_c1_c2": "7d85613c338d088f6f64a5ae2d47a7b24611d2cb4436effe6aa0e9df424fa99f",
+    "c1_c2_c3_built_and_c3_executed": true,
+    "c2_c3_generated_source_byte_equal": true,
+    "generated_stages_have_no_seed_or_interpreter_assembly_dependency": true,
+    "fresh_program_compiled_and_executed": "65\r\n",
+    "compiler_source_change_affects_new_output": "DVChanged",
+    "unicode_preserved_through_compilation_and_execution": true,
+    "invalid_sources_rejected_without_target_files": [
+      "unbound",
+      "arity",
+      "duplicate",
+      "scope",
+      "escape",
+      "unfinished",
+      "foreign",
+      "reserved-runtime",
+      "shadow"
+    ],
+    "frozen_sources_unchanged": true
+  },
+  "full_language_specification_complete": false,
+  "remaining": [
+    "static types",
+    "capability checking",
+    "target-neutral IR",
+    "modules and closures",
+    "inference library compilation migration"
+  ]
+}

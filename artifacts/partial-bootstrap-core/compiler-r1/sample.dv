@@ -1,0 +1,2 @@
+(defn sum (n) (if (rt_lt n 1) 0 (rt_add n (sum (rt_sub n 1)))))
+(main (let (i 0 total 0) (do (while (rt_lt i 5) (do (set total (rt_add total i)) (set i (rt_add i 1)))) (rt_print (rt_add total (sum 10))))))

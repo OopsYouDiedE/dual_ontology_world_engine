@@ -1,0 +1,16 @@
+System.InvalidOperationException: Cannot open Service Control Manager on computer '.'. This operation might require other privileges.
+ ---> System.ComponentModel.Win32Exception (5): 拒绝访问。
+   --- End of inner exception stack trace ---
+   at System.ServiceProcess.ServiceController.GetDataBaseHandleWithAccess(String machineName, Int32 serviceControlManagerAccess)
+   at System.ServiceProcess.ServiceController.GetServices[T](String machineName, Int32 serviceType, String group, Func`2 selector)
+   at System.ServiceProcess.ServiceController.GetServicesOfType(String machineName, Int32 serviceType)
+   at Microsoft.DotNet.Installer.Windows.WindowsUpdateAgent..ctor(ISetupLogger logger)
+   at Microsoft.DotNet.Installer.Windows.MsiInstallerBase..ctor(InstallElevationContextBase elevationContext, ISetupLogger logger, Boolean verifySignatures, IReporter reporter)
+   at Microsoft.DotNet.Workloads.Workload.Install.NetSdkMsiInstallerClient..ctor(InstallElevationContextBase elevationContext, ISetupLogger logger, Boolean verifySignatures, IWorkloadResolver workloadResolver, SdkFeatureBand sdkFeatureBand, INuGetPackageDownloader nugetPackageDownloader, VerbosityOptions verbosity, PackageSourceLocation packageSourceLocation, IReporter reporter)
+   at Microsoft.DotNet.Workloads.Workload.Install.NetSdkMsiInstallerClient.Create(Boolean verifySignatures, SdkFeatureBand sdkFeatureBand, IWorkloadResolver workloadResolver, INuGetPackageDownloader nugetPackageDownloader, VerbosityOptions verbosity, PackageSourceLocation packageSourceLocation, IReporter reporter, String tempDirPath, RestoreActionConfig restoreActionConfig, Boolean shouldLog)
+   at Microsoft.DotNet.Workloads.Workload.Install.WorkloadInstallerFactory.GetWorkloadInstaller(IReporter reporter, SdkFeatureBand sdkFeatureBand, IWorkloadResolver workloadResolver, VerbosityOptions verbosity, String userProfileDir, Boolean verifySignatures, INuGetPackageDownloader nugetPackageDownloader, String dotnetDir, String tempDirPath, PackageSourceLocation packageSourceLocation, RestoreActionConfig restoreActionConfig, Boolean elevationRequired, Boolean shouldLog)
+   at Microsoft.DotNet.Workloads.Workload.List.WorkloadInfoHelper..ctor(Boolean isInteractive, VerbosityOptions verbosity, String targetSdkVersion, Nullable`1 verifySignatures, IReporter reporter, IWorkloadInstallationRecordRepository workloadRecordRepo, String currentSdkVersion, String dotnetDir, String userProfileDir, IWorkloadResolver workloadResolver)
+   at Microsoft.DotNet.Cli.WorkloadCommandParser.GetWorkloadsVersion(WorkloadInfoHelper workloadInfoHelper)
+   at Microsoft.DotNet.Cli.CommandLineInfo.PrintInfo()
+   at Microsoft.DotNet.Cli.Program.ProcessArgs(String[] args, TimeSpan startupTime, ITelemetry telemetryClient)
+   at Microsoft.DotNet.Cli.Program.Main(String[] args)

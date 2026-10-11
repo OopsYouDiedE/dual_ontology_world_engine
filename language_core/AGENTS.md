@@ -8,6 +8,8 @@
 
 ## 模块边界
 
+- `compiler/compiler.dv` 是编译器启动子集：扫描、AST、名称/作用域/元数检查和 C# 后端均用 DV 实现。`compiler/seed/` 的 C# C0 只负责启动；生成 C1/C2/C3 仅使用 `compiler/Runtime.cs` 的数据与平台 ABI，不引用解释器。当前子集采用运行时值域检查，尚无静态类型/能力系统和目标无关 IR，不能与 DESIGN 的完整语言混称。原解释语法尚未统一到编译语法。
+
 - `Kernel/Value.cs`、`Reader.cs`、`Interpreter.cs` 为启动内核：基本数据、词法/列表读入、词法作用域、函数调用和资源预算。
 - `bootstrap/*.dv` 为语言自身实现的解释器、条件语义、规则评价、推理、信念更新、规划、社交与学习。新增推演能力在此实现；不得在 native table 中加入决策、推理、案例求解或概率推断算法。
 - `InferenceProgram` 用语言解释器载入上述模块；正式 `WorldCore` 的推演调用经此实例执行，不调用旧 Core。
@@ -22,11 +24,16 @@
 dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers
 dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- demo
 python language_core/tools/record_mechanisms.py --out artifacts/partial-bootstrap-core/engineering-<new-run>
+python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstrap-core/compiler-<new-run>
 ```
 
 记录工具只允许新增证据目录，先存源码指纹；构建失败时不继续依赖该构建的机制演示。stdout/stderr 保留原始字节，结束后再次核对源码。它不调用游戏、统一回归或 flow 系列入口。
 
+编译器记录工具另外保存原始源码归档、工具链信息、每阶段生成源码和程序集指纹；核对 C2/C3 目标源码固定点、生成项目依赖、独立程序实际运行和编译器源码变体对新生成结果的影响。后端修改后必须从 DV 重新生成，不手改目标文件。固定点不等于编译正确性证明；完整静态类型、能力、IR 与推演库编译迁移须单独记录缺口。
+
 每轮机制验证由全新上下文审查者核对具体输入、输出、缺陷与未覆盖边界；审查者不得读取设计文档。主代理独立对照设计规范。修复后重新冻结源码，再用新的审查上下文复评。
+
+用户 2026-10-12 对本轮编译器自举明确要求停止独立复评，直接按自举要求自动判定。本轮以 `bootstrap_compiler.py` 的真实阶段执行、固定点、依赖、源变体和独立程序输出作判定；停止后的审查片段保留，但不作为完成审评或验收条件。该裁定不把启动子集等同于完整 DV 规格。
 
 ## 完整迁移的结束条件
 
