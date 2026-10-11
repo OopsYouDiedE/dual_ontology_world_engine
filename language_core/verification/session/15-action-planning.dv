@@ -119,12 +119,12 @@
       (if (dv_has_key action "speech") (set progress 1) false)
       (if (rt_eq (dv_get action "kind") "replay")
         (if (rt_lt 0 (dv_find policy "model_budget" 0))
-          (let (candidates (dv_find policy "hypotheses" (rt_list)) j 0)
-            (do (while (rt_lt j (rt_count candidates))
-              (let (candidate (rt_at candidates j))
-                (do (if (dv_and (dvp_topic actor candidate) (rt_eq (dv_truth mind (dv_find candidate "available_when" (dv_true))) "true"))
-                  (if (rt_eq (dv_find (dvs_cached_model actor candidate) "status" "unknown") "stale-or-unavailable") (set verification (rt_add verification 1)) false) false)
-                  (set j (rt_add j 1))))))) false) false)
+          (if (rt_eq hypothesis false) false
+            (if (dv_and (dvp_topic actor hypothesis)
+              (dv_and (rt_lt 0 (rt_count (dv_find hypothesis "features" (rt_list))))
+                (rt_lt 0 (rt_count (dvs_sim_plan hypothesis)))))
+              (if (rt_eq (dv_find (dvs_cached_model actor hypothesis) "status" "unknown") "stale-or-unavailable")
+                (set verification (rt_add verification 1)) false) false)) false) false)
       (dv_m4 "information" information "verification" verification "progress" progress "value"
         (rt_add (rt_mul (rt_add information verification) (dv_find policy "information_weight" 1)) (rt_mul progress (dv_find policy "progress_weight" 1)))))))
 (defn dvp_state_key (mind)
