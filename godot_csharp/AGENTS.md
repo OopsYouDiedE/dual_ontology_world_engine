@@ -9,6 +9,7 @@
 - 遵循根目录的用户裁定：禁止执行第一章、第二章流程回归，包括 `flow`、`flow2`、`flow_check.gd`、`check_flow.gd`，也不得通过统一工具或其他入口间接调用。
 - 禁止以“xx 项通过”、断言数量、通过率或“全绿”评估游戏、人物或修改效果；下文既有机制检查只可用于定位具体工程问题，不构成验收依据。
 - 复测使用新的正式会话，逐段核对玩家实际可见信息、输入、到场与执行回执、后续画面及推进；涉及停滞、折返或重复查看时必须说明当时信息和实际结果，并查看对应截图。
+- 三级测试默认由引擎自身的侦探替代玩家输入，沿正式现场与 UI 执行；测试 Agent 负责独立审查，不代选动作。只有用户明确要求盲玩时才使用盲玩 Agent；要求三级测试或测试最终效果本身不表示要求盲玩。
 
 ## 宿主合同
 
@@ -222,7 +223,7 @@
 
 - 消息的发生日与时段保存在 `NewsItem` 的呈现元数据中；转述模板按事件发生时点绑定，不将呈现时间写进 `Claim` 身份以改变社交去重。完成动作不等于产生后果，完成消息由实际生效的机制分支登记。台账详情只展开真实台账消息，人物的登记状态按本人对应夜晚的取用与登记数量选择剧本模板。
 
-- 三级实时录像可用 tools/record_blind_session.py run --session=<fresh-id> --agent=<name>，以该 Godot 进程的唯一窗口标题通过 FFmpeg gdigrab 捕获 15fps H.264 CRF29；启动器后台运行，确认 recording.json 为 recording 后才开始输入。stop 子命令发送正常封装请求并验证 MP4 可解码；禁止以截图拼接或 --write-movie 替代实时录像。无游戏回环设备时记录无音轨，不采集麦克风。录像默认保存在 artifacts/basic-ui-system/level3-6_1-sol/<session>/；停止封存时同时复制完整输入和界面记录到录像目录 session/，原始记录保留在驱动的 artifacts/remake-belief-replay/blind-<session>/。
+- 仅在用户明确要求盲玩时，盲玩实时录像可用 tools/record_blind_session.py run --session=<fresh-id> --agent=<name>，以该 Godot 进程的唯一窗口标题通过 FFmpeg gdigrab 捕获 15fps H.264 CRF29；启动器后台运行，确认 recording.json 为 recording 后才开始输入。stop 子命令发送正常封装请求并验证 MP4 可解码；禁止以截图拼接或 --write-movie 替代实时录像。无游戏回环设备时记录无音轨，不采集麦克风。录像默认保存在 artifacts/basic-ui-system/level3-6_1-sol/<session>/；停止封存时同时复制完整输入和界面记录到录像目录 session/，原始记录保留在驱动的 artifacts/remake-belief-replay/blind-<session>/。
 
 
 - 第一章重演以结构化事件（kind、who、subject、object、room）传给界面；行为进度由重演结果字段记录，界面按事件种类决定播放节奏，不匹配显示文案。事件句型、心声与控制提示只从 `.story` 的文案表读取。
