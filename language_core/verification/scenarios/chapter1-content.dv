@@ -1,0 +1,740 @@
+; Native chapter authorship: named worlds, characters, actions and structured speech.
+; Old .story files are read-only provenance. This module never parses their serialized format.
+(defn c1_source (path line id) (dv_m3 "path" path "line" line "id" id))
+(defn c1_knowledge (atom) (dv_ref "cognition" "state" atom))
+(defn c1_at (actor room) (dv_fact (dv_ref actor "state" "location") room))
+(defn c1_local_object (id) (dv_object id "perceived" (dv_m2 "state" (rt_list) "identity" (rt_list))))
+(defn c1_state_object (id fields) (dv_object id "physical" (dv_m2 "state" fields "identity" (rt_list))))
+(defn c1_action (id kind known physical law grants source)
+ (dv_with (dv_with (dv_with (dv_m4 "id" id "kind" kind "precondition" known "authority_precondition" physical)
+  "law" law) "grants" grants) "source_refs" (dv_single source)))
+(defn c1_public_methods (actions)
+ (let (result (rt_list) n 0)
+  (do (while (rt_lt n (rt_count actions))
+   (do (rt_push result (c1_public_method (rt_at actions n))) (set n (rt_add n 1)))) result)))
+(defn c1_public_method (action)
+ (let (method (dv_with (dv_with action "purpose_refs" (dv_get action "grants")) "purpose_basis" (dv_get action "source_refs"))
+       kind (dv_get action "kind"))
+  (if (rt_eq kind "answer")
+   (dv_with method "topic" (c1_answer_topic (dv_get action "answer_id")))
+   (if (dv_or (rt_eq kind "move") (rt_eq kind "replay")) (dv_with method "repeatable" true) method))))
+(defn c1_answer_topic (id)
+ (if (rt_eq id "me") "identity"
+  (if (dv_or (rt_eq id "V3_0") (rt_eq id "V3_1")) "voice_source"
+   (if (dv_or (rt_eq id "V4_0") (rt_eq id "V4_1")) "words"
+    (if (rt_eq id "trust") "trust" "auxiliary")))))
+(defn c1_once (action) (dv_with action "once" true))
+(defn c1_observe_as (action source origin trust)
+ (dv_with (dv_with (dv_with action "observation_source" source) "observation_origin" origin) "observation_trust" trust))
+(defn c1_method (name law) (dv_instance name law))
+(defn c1_vector (time) (dv_m3 "time" time "computation" 1 "stamina" 0))
+(defn c1_cost (time source) (dv_with (dv_m3 "minimum" (c1_vector time) "maximum" (c1_vector time) "actual" (c1_vector time)) "source_refs" (dv_single source)))
+
+
+(defn c1_list_4 (p0 p1 p2 p3) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) list)))
+
+(defn c1_list_5 (p0 p1 p2 p3 p4) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) list)))
+
+(defn c1_list_6 (p0 p1 p2 p3 p4 p5) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) list)))
+
+(defn c1_list_7 (p0 p1 p2 p3 p4 p5 p6) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) list)))
+
+(defn c1_list_8 (p0 p1 p2 p3 p4 p5 p6 p7) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) list)))
+
+(defn c1_list_9 (p0 p1 p2 p3 p4 p5 p6 p7 p8) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) list)))
+
+(defn c1_list_10 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) list)))
+
+(defn c1_list_11 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) list)))
+
+(defn c1_list_12 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) list)))
+
+(defn c1_list_13 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) list)))
+
+(defn c1_list_14 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) list)))
+
+(defn c1_list_15 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) list)))
+
+(defn c1_list_16 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) list)))
+
+(defn c1_list_17 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) list)))
+
+(defn c1_list_18 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) list)))
+
+(defn c1_list_19 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) list)))
+
+(defn c1_list_20 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) list)))
+
+(defn c1_list_21 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) list)))
+
+(defn c1_list_22 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) list)))
+
+(defn c1_list_23 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) list)))
+
+(defn c1_list_24 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) list)))
+
+(defn c1_list_25 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) list)))
+
+(defn c1_list_26 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) list)))
+
+(defn c1_list_27 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) list)))
+
+(defn c1_list_28 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) list)))
+
+(defn c1_list_29 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) list)))
+
+(defn c1_list_30 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) list)))
+
+(defn c1_list_31 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) list)))
+
+(defn c1_list_32 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) list)))
+
+(defn c1_list_33 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) list)))
+
+(defn c1_list_34 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) list)))
+
+(defn c1_list_35 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) list)))
+
+(defn c1_list_36 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) list)))
+
+(defn c1_list_37 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) list)))
+
+(defn c1_list_38 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) list)))
+
+(defn c1_list_39 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) list)))
+
+(defn c1_list_40 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) (rt_push list p39) list)))
+
+(defn c1_list_41 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) (rt_push list p39) (rt_push list p40) list)))
+
+(defn c1_list_42 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) (rt_push list p39) (rt_push list p40) (rt_push list p41) list)))
+
+(defn c1_list_43 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41 p42) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) (rt_push list p39) (rt_push list p40) (rt_push list p41) (rt_push list p42) list)))
+
+(defn c1_list_44 (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41 p42 p43) (let (list (rt_list)) (do (rt_push list p0) (rt_push list p1) (rt_push list p2) (rt_push list p3) (rt_push list p4) (rt_push list p5) (rt_push list p6) (rt_push list p7) (rt_push list p8) (rt_push list p9) (rt_push list p10) (rt_push list p11) (rt_push list p12) (rt_push list p13) (rt_push list p14) (rt_push list p15) (rt_push list p16) (rt_push list p17) (rt_push list p18) (rt_push list p19) (rt_push list p20) (rt_push list p21) (rt_push list p22) (rt_push list p23) (rt_push list p24) (rt_push list p25) (rt_push list p26) (rt_push list p27) (rt_push list p28) (rt_push list p29) (rt_push list p30) (rt_push list p31) (rt_push list p32) (rt_push list p33) (rt_push list p34) (rt_push list p35) (rt_push list p36) (rt_push list p37) (rt_push list p38) (rt_push list p39) (rt_push list p40) (rt_push list p41) (rt_push list p42) (rt_push list p43) list)))
+
+(defn c1_materials () (c1_list_26 (dv_pair "bolt_down" (dv_field true)) (dv_pair "ash_wedge" (dv_field true)) (dv_pair "boots_toward_bolt" (dv_field true)) (dv_pair "cloth_after_boots" (dv_field true)) (dv_pair "fork_dent" (dv_field true)) (dv_pair "score_partial" (dv_field true)) (dv_pair "score_in_room" (dv_field true)) (dv_pair "slate_marks" (dv_field true)) (dv_pair "pipe_layout" (dv_field true)) (dv_pair "cups_preferences" (dv_field true)) (dv_pair "starter_layers" (dv_field true)) (dv_pair "shelf_old" (dv_field true)) (dv_pair "lens_mine" (dv_field true)) (dv_pair "boots_fit" (dv_field true)) (dv_pair "frame_hollow" (dv_field true)) (dv_pair "slate_code" (dv_field true)) (dv_pair "slate_person" (dv_field true)) (dv_pair "cups_known" (dv_field true)) (dv_pair "starter_kept" (dv_field true)) (dv_pair "hand_not_mine" (dv_field true)) (dv_pair "sound_trial" (dv_field true)) (dv_pair "heads_lost" (dv_field true)) (dv_pair "recalled_bolt" (dv_field true)) (dv_pair "recalled_trust" (dv_field true)) (dv_pair "recalled_copper" (dv_field true)) (dv_pair "recalled_names" (dv_field true))))
+
+(defn c1_authority_conclusions () (c1_list_14 (dv_pair "me" (dv_field true)) (dv_pair "remote_voice" (dv_field true)) (dv_pair "words_bolt" (dv_field true)) (dv_pair "familiar" (dv_field true)) (dv_pair "trust_reason" (dv_field true)) (dv_pair "su_room" (dv_field true)) (dv_pair "su_hall" (dv_field false)) (dv_pair "su_pantry" (dv_field false)) (dv_pair "huo_copper" (dv_field true)) (dv_pair "huo_room" (dv_field false)) (dv_pair "huo_foyer" (dv_field false)) (dv_pair "heed_huo" (dv_field true)) (dv_pair "heed_su" (dv_field false)) (dv_pair "heed_neither" (dv_field false))))
+
+(defn c1_physical_cognition ()
+ (let (fields (c1_materials) conclusions (c1_authority_conclusions) i 0)
+  (do (while (rt_lt i (rt_count conclusions))
+   (do (set fields (dv_with fields (rt_at (rt_at conclusions i) 0) (rt_at (rt_at conclusions i) 1))) (set i (rt_add i 1))))
+   (c1_state_object "cognition" fields))))
+; These authority conclusions are frozen authored history, never grants or mind initial facts.
+; In particular familiar is a source scenario truth; the person's inference remains evidence-weighted.
+(defn c1_position (actor room) (c1_state_object actor (dv_single (dv_pair "location" (dv_field room)))))
+(defn c1_edges () (c1_list_7 (dv_pair "R05" "corridor") (dv_pair "R06" "corridor")
+ (dv_pair "R07" "corridor") (dv_pair "R08" "corridor") (dv_pair "corridor" "hall")
+ (dv_pair "hall" "pantry") (dv_pair "hall" "foyer")))
+
+
+(defn c1_inspect_E1 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E1") "inspect"
+  (c1_at actor "foyer") (c1_at actor "foyer") ""
+  (dv_single (c1_knowledge "bolt_down")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 69 "E1"))))
+
+(defn c1_visible_E1 () "门内侧的插闩落在闩槽里。\n门外侧另有一道横闩，从这一侧拉不动。\n门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\n门内侧压着一张泛黄的旧纸，题头是导师的《事故隔离规程》，角上盖着褪色的红印；纸色和笔迹都不同于新抄的《学园守则》。\n旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\n末行另写：急病者可经铜口呼叫转移。")
+
+(defn c1_inspect_E2 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E2") "inspect"
+  (c1_at actor "foyer") (c1_at actor "foyer") ""
+  (dv_single (c1_knowledge "ash_wedge")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 70 "E2"))))
+
+(defn c1_visible_E2 () "门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n门底边有一道擦痕。")
+
+(defn c1_inspect_E3 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E3") "inspect"
+  (c1_at actor "foyer") (c1_at actor "foyer") ""
+  (dv_single (c1_knowledge "boots_toward_bolt")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 71 "E3"))))
+
+(defn c1_visible_E3 () "灰上有一枚马球靴印，踩得很清楚。\n鞋尖朝着门侧的插闩。\n鞋跟一端被什么东西压过。")
+
+(defn c1_inspect_E4 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E4") "inspect"
+  (c1_at actor "foyer") (c1_at actor "foyer") ""
+  (dv_single (c1_knowledge "cloth_after_boots")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 72 "E4"))))
+
+(defn c1_visible_E4 () "一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\n布的一端压住了靴印的鞋跟边缘。")
+
+(defn c1_inspect_E5 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E5") "inspect"
+  (c1_at actor "foyer") (c1_at actor "foyer") ""
+  (dv_single (c1_knowledge "fork_dent")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 73 "E5"))))
+
+(defn c1_visible_E5 () "地上一把纯银音叉，柄上刻着“S.L.”。\n门框齐肩高的地方，有一个很小的凹痕。")
+
+(defn c1_inspect_E6 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E6") "inspect"
+  (c1_at actor "R08") (c1_at actor "R08") ""
+  (dv_pair (c1_knowledge "score_partial") (c1_knowledge "score_in_room")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 74 "E6"))))
+
+(defn c1_visible_E6 () "一页手写乐谱，只有一小节。\n前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\n旁注：“门外？”\n下方换了一种墨迹：“他们关了门。”")
+
+(defn c1_inspect_E7 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E7") "inspect"
+  (c1_at actor "hall") (c1_at actor "hall") ""
+  (dv_single (c1_knowledge "slate_marks")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 75 "E7"))))
+
+(defn c1_visible_E7 () "一块小石板，粉笔速记两行。\n第一行：G：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。")
+
+(defn c1_inspect_E8 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E8") "inspect"
+  (c1_at actor "hall") (c1_at actor "hall") ""
+  (dv_single (c1_knowledge "pipe_layout")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 76 "E8"))))
+
+(defn c1_visible_E8 () "铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\n一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\n那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。")
+
+(defn c1_inspect_E9 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E9") "inspect"
+  (c1_at actor "pantry") (c1_at actor "pantry") ""
+  (dv_single (c1_knowledge "cups_preferences")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 77 "E9"))))
+
+(defn c1_visible_E9 () "水槽里四只用过的杯子，各不相同：\n一只青瓷小杯，杯底没有糖渍；\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n一只缺口白杯；\n一只粗瓷大杯。")
+
+(defn c1_inspect_E10 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E10") "inspect"
+  (c1_at actor "pantry") (c1_at actor "pantry") ""
+  (dv_single (c1_knowledge "starter_layers")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 78 "E10"))))
+
+(defn c1_visible_E10 () "罐里的酵种还活着，冒着细泡。\n罐壁上一层摞一层干结的旧面痕，数不清。")
+
+(defn c1_inspect_E11 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E11") "inspect"
+  (c1_at actor "R05") (c1_at actor "R05") ""
+  (dv_single (c1_knowledge "shelf_old")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 79 "E11"))))
+
+(defn c1_visible_E11 () "书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西，摆了很久。\n架沿上有半枚手印，压在灰上。")
+
+(defn c1_inspect_E12 (actor)
+ (c1_once (c1_action (rt_cat actor ".inspect.E12") "inspect"
+  (c1_at actor "R05") (c1_at actor "R05") ""
+  (dv_single (dv_ref "coat" "identity" "owner")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 80 "E12"))))
+
+(defn c1_identify_own_lens (actor)
+ (c1_once (c1_action (rt_cat actor ".identify-own-lens") "inspect"
+  (dv_all (dv_pair (c1_at actor "R05") (dv_fact (dv_ref "coat" "identity" "owner") actor)))
+  (dv_all (dv_pair (c1_at actor "R05") (dv_fact (dv_ref "coat" "identity" "owner") actor)))
+  "" (dv_single (c1_knowledge "lens_mine"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 6 "s1_wake.006;E12 personal ownership"))))
+
+(defn c1_visible_E12 () "衣架上挂着你的深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。")
+
+(defn c1_infer_rules () (c1_list_20 (c1_infer_0 "cognition") (c1_infer_1 "cognition") (c1_infer_2 "cognition") (c1_infer_3 "cognition") (c1_infer_4 "cognition") (c1_infer_5 "cognition") (c1_infer_6 "cognition") (c1_infer_7 "cognition") (c1_infer_8 "cognition") (c1_infer_9 "cognition") (c1_infer_10 "cognition") (c1_infer_11 "cognition") (c1_infer_12 "cognition") (c1_infer_13 "cognition") (c1_infer_14 "cognition") (c1_infer_15 "cognition") (c1_infer_16 "cognition") (c1_infer_17 "cognition") (c1_infer_18 "cognition") (c1_infer_19 "cognition")))
+
+(defn c1_adopt_inferences (mind)
+ (let (rules (c1_infer_rules) result mind i 0)
+  (do (while (rt_lt i (rt_count rules))
+   (do (set result (dv_adopt result (rt_at rules i) "infer" 0.85 (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 2 "推知关系")))) (set i (rt_add i 1)))) result)))
+
+(defn c1_move_name (actor origin target) (rt_cat (rt_cat (rt_cat actor ".move.") origin) (rt_cat "." target)))
+(defn c1_move_action (actor origin target)
+ (let (name (c1_move_name actor origin target))
+  (dv_with (c1_action name "move" (c1_at actor origin) (c1_at actor origin) name
+   (dv_single (dv_ref actor "state" "location"))
+   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story" 19 "重演通路"))
+   "predict_law" name)))
+(defn c1_add_move_methods (world actor mode)
+ (let (edges (c1_edges) result world i 0)
+  (do (while (rt_lt i (rt_count edges))
+   (let (edge (rt_at edges i) a (rt_at (rt_at edges i) 0) b (rt_at (rt_at edges i) 1))
+    (do (set result (dv_adopt result (c1_method (c1_move_name actor a b) (c1_move actor a b)) mode 1
+      (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story" 19 "重演通路"))))
+     (set result (dv_adopt result (c1_method (c1_move_name actor b a) (c1_move actor b a)) mode 1
+      (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story" 19 "重演通路"))))
+     (set i (rt_add i 1))))) result)))
+(defn c1_move_actions (actor)
+ (let (edges (c1_edges) result (rt_list) i 0)
+  (do (while (rt_lt i (rt_count edges))
+   (let (a (rt_at (rt_at edges i) 0) b (rt_at (rt_at edges i) 1))
+    (do (rt_push result (c1_move_action actor a b)) (rt_push result (c1_move_action actor b a)) (set i (rt_add i 1))))) result)))
+
+
+(defn c1_statement (atom) (dv_fact (c1_knowledge atom) true))
+
+(defn c1_answer_me (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.me") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 11 "me")) "answer" (dv_fact (c1_knowledge "me") true)) "answer_id" "me"))
+
+(defn c1_hypothesis_me ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "me" "proposition" (dv_fact (c1_knowledge "me") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 11 "me")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "me") true))) "group" "identity"))
+
+(defn c1_answer_V1_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")) "answer" (dv_fact (c1_knowledge "su_room") true)) "answer_id" "V1_0"))
+
+(defn c1_hypothesis_V1_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V1_0" "proposition" (dv_fact (c1_knowledge "su_room") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_room") true))) "group" "identity"))
+
+(defn c1_answer_V1_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")) "answer" (dv_fact (c1_knowledge "su_hall") true)) "answer_id" "V1_1"))
+
+(defn c1_hypothesis_V1_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V1_1" "proposition" (dv_fact (c1_knowledge "su_hall") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_hall") true))) "group" "identity"))
+
+(defn c1_answer_V1_2 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")) "answer" (dv_fact (c1_knowledge "su_pantry") true)) "answer_id" "V1_2"))
+
+(defn c1_hypothesis_V1_2 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V1_2" "proposition" (dv_fact (c1_knowledge "su_pantry") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_pantry") true))) "group" "identity"))
+
+(defn c1_answer_V2_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")) "answer" (dv_fact (c1_knowledge "huo_copper") true)) "answer_id" "V2_0"))
+
+(defn c1_hypothesis_V2_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V2_0" "proposition" (dv_fact (c1_knowledge "huo_copper") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_copper") true))) "group" "identity"))
+
+(defn c1_answer_V2_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")) "answer" (dv_fact (c1_knowledge "huo_room") true)) "answer_id" "V2_1"))
+
+(defn c1_hypothesis_V2_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V2_1" "proposition" (dv_fact (c1_knowledge "huo_room") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_room") true))) "group" "identity"))
+
+(defn c1_answer_V2_2 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")) "answer" (dv_fact (c1_knowledge "huo_foyer") true)) "answer_id" "V2_2"))
+
+(defn c1_hypothesis_V2_2 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V2_2" "proposition" (dv_fact (c1_knowledge "huo_foyer") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_foyer") true))) "group" "identity"))
+
+(defn c1_answer_V3_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "voice_source")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")) "answer" (dv_fact (c1_knowledge "remote_voice") true)) "answer_id" "V3_0"))
+
+(defn c1_hypothesis_V3_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V3_0" "proposition" (dv_fact (c1_knowledge "remote_voice") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "voice_source")) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") true))) "group" "voice_source"))
+
+(defn c1_answer_V3_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "voice_source")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")) "answer" (dv_fact (c1_knowledge "remote_voice") false)) "answer_id" "V3_1"))
+
+(defn c1_hypothesis_V3_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V3_1" "proposition" (dv_fact (c1_knowledge "remote_voice") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "voice_source")) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") false))) "group" "voice_source"))
+
+(defn c1_answer_V4_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "words")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")) "answer" (dv_fact (c1_knowledge "words_bolt") true)) "answer_id" "V4_0"))
+
+(defn c1_hypothesis_V4_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V4_0" "proposition" (dv_fact (c1_knowledge "words_bolt") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "words")) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") true))) "group" "words"))
+
+(defn c1_answer_V4_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "words")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")) "answer" (dv_fact (c1_knowledge "words_bolt") false)) "answer_id" "V4_1"))
+
+(defn c1_hypothesis_V4_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V4_1" "proposition" (dv_fact (c1_knowledge "words_bolt") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "words")) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") false))) "group" "words"))
+
+(defn c1_answer_V5_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")) "answer" (dv_fact (c1_knowledge "heed_huo") true)) "answer_id" "V5_0"))
+
+(defn c1_hypothesis_V5_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V5_0" "proposition" (dv_fact (c1_knowledge "heed_huo") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_huo") true))) "group" "trust"))
+
+(defn c1_answer_V5_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")) "answer" (dv_fact (c1_knowledge "heed_su") true)) "answer_id" "V5_1"))
+
+(defn c1_hypothesis_V5_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V5_1" "proposition" (dv_fact (c1_knowledge "heed_su") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_su") true))) "group" "trust"))
+
+(defn c1_answer_V5_2 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")) "answer" (dv_fact (c1_knowledge "heed_neither") true)) "answer_id" "V5_2"))
+
+(defn c1_hypothesis_V5_2 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V5_2" "proposition" (dv_fact (c1_knowledge "heed_neither") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_neither") true))) "group" "trust"))
+
+(defn c1_answer_trust (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.trust") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 28 "trust")) "answer" (dv_fact (c1_knowledge "trust_reason") true)) "answer_id" "trust"))
+
+(defn c1_hypothesis_trust ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "trust" "proposition" (dv_fact (c1_knowledge "trust_reason") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 28 "trust")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "trust_reason") true))) "group" "trust"))
+
+(defn c1_answer_V6_0 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")) "answer" (dv_fact (c1_knowledge "familiar") false)) "answer_id" "V6_0"))
+
+(defn c1_hypothesis_V6_0 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V6_0" "proposition" (dv_fact (c1_knowledge "familiar") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") false))) "group" "trust"))
+
+(defn c1_answer_V6_1 (actor)
+ (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")) "answer" (dv_fact (c1_knowledge "familiar") true)) "answer_id" "V6_1"))
+
+(defn c1_hypothesis_V6_1 ()
+ (dv_with (dv_with (dv_with (dv_m4 "id" "V6_1" "proposition" (dv_fact (c1_knowledge "familiar") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")))
+   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") true))) "group" "trust"))
+
+(defn c1_answer_actions (actor) (c1_list_17 (c1_answer_me actor) (c1_answer_V1_0 actor) (c1_answer_V1_1 actor) (c1_answer_V1_2 actor) (c1_answer_V2_0 actor) (c1_answer_V2_1 actor) (c1_answer_V2_2 actor) (c1_answer_V3_0 actor) (c1_answer_V3_1 actor) (c1_answer_V4_0 actor) (c1_answer_V4_1 actor) (c1_answer_V5_0 actor) (c1_answer_V5_1 actor) (c1_answer_V5_2 actor) (c1_answer_trust actor) (c1_answer_V6_0 actor) (c1_answer_V6_1 actor)))
+
+(defn c1_hypotheses () (c1_list_17 (c1_hypothesis_me) (c1_hypothesis_V1_0) (c1_hypothesis_V1_1) (c1_hypothesis_V1_2) (c1_hypothesis_V2_0) (c1_hypothesis_V2_1) (c1_hypothesis_V2_2) (c1_hypothesis_V3_0) (c1_hypothesis_V3_1) (c1_hypothesis_V4_0) (c1_hypothesis_V4_1) (c1_hypothesis_V5_0) (c1_hypothesis_V5_1) (c1_hypothesis_V5_2) (c1_hypothesis_trust) (c1_hypothesis_V6_0) (c1_hypothesis_V6_1)))
+
+(defn c1_talk_slate_code (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.slate_code") "talk"
+  (c1_at actor "hall") (dv_all (dv_pair (c1_at actor "hall") (c1_at "huo" "hall"))) ""
+  (dv_single (c1_knowledge "slate_code")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 83 "help_E7.003")) "testimony" "huo" 0.9)))
+
+(defn c1_talk_slate_person (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.slate_person") "talk"
+  (c1_at actor "hall") (dv_all (dv_pair (c1_at actor "hall") (c1_at "huo" "hall"))) ""
+  (dv_single (c1_knowledge "slate_person")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 84 "help_E7.005")) "testimony" "huo" 0.9)))
+
+(defn c1_talk_frame_hollow (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.frame_hollow") "talk"
+  (c1_at actor "foyer") (dv_all (dv_pair (c1_at actor "foyer") (c1_at "su" "foyer"))) ""
+  (dv_single (c1_knowledge "frame_hollow")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 82 "help_E5.004")) "testimony" "su" 0.9)))
+
+(defn c1_talk_cups_known (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.cups_known") "talk"
+  (c1_at actor "pantry") (dv_all (dv_pair (c1_at actor "pantry") (c1_at "shen" "pantry"))) ""
+  (dv_single (c1_knowledge "cups_known")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 85 "help_E9.003")) "testimony" "shen" 0.85)))
+
+(defn c1_talk_starter_kept (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.starter_kept") "talk"
+  (c1_at actor "pantry") (dv_all (dv_pair (c1_at actor "pantry") (c1_at "shen" "pantry"))) ""
+  (dv_single (c1_knowledge "starter_kept")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 86 "help_E10.002")) "testimony" "shen" 0.85)))
+
+(defn c1_talk_recalled_copper (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.recalled_copper") "talk"
+  (c1_at actor "hall") (dv_all (dv_pair (c1_at actor "hall") (c1_at "huo" "hall"))) ""
+  (dv_single (c1_knowledge "recalled_copper")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 91 "recall_huo.003")) "testimony" "huo" 0.85)))
+
+(defn c1_talk_recalled_names (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.recalled_names") "talk"
+  (c1_at actor "pantry") (dv_all (dv_pair (c1_at actor "pantry") (c1_at "shen" "pantry"))) ""
+  (dv_single (c1_knowledge "recalled_names")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 92 "recall_shen.003")) "testimony" "shen" 0.85)))
+
+(defn c1_sole_test (actor)
+ (c1_once (c1_action (rt_cat actor ".compare_sole") "experiment"
+  (dv_all (dv_pair (c1_at actor "foyer") (dv_fact (dv_ref actor "state" "identity") "detective")))
+  (c1_at actor "foyer") "" (dv_single (c1_knowledge "boots_fit"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 81 "exp_E3.002"))))
+(defn c1_touch_recall (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".touch_latch") "recall"
+  (dv_all (dv_pair (c1_at actor "foyer") (c1_statement "bolt_down")))
+  (c1_at actor "foyer") "" (dv_pair (c1_knowledge "recalled_bolt") (c1_knowledge "recalled_trust"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 90 "recall_detective.002")) "recall" actor 0.85)))
+(defn c1_sound_action (actor)
+ (c1_once (c1_action (rt_cat actor ".sound_trial") "sound_test"
+  (dv_all (dv_pair (c1_at actor "hall") (c1_statement "pipe_layout")))
+  (c1_at actor "hall") (rt_cat actor ".sound_trial")
+  (dv_pair (c1_knowledge "sound_trial") (dv_ref "ritual" "state" "sound_trial_done"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 88 "sound_test.003"))))
+(defn c1_loss_testimony (actor)
+ (c1_once (c1_observe_as (c1_action (rt_cat actor ".loss_testimony") "talk"
+  (dv_fact (dv_ref "ritual" "state" "sound_trial_done") true)
+  (dv_all (dv_list3 (c1_at actor "hall") (c1_at "su" "hall") (dv_fact (dv_ref "ritual" "state" "sound_trial_done") true)))
+  "" (dv_single (c1_knowledge "heads_lost"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 89 "sound_test.007")) "testimony" "su" 0.9)))
+(defn c1_replay_action (actor)
+ (c1_action (rt_cat actor ".replay") "replay" (c1_statement "bolt_down") (dv_true) "" (rt_list)
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story" 340 "replay")))
+
+
+(defn c1_question_object ()
+ (c1_state_object "question" (dv_with (dv_m4 "current" (dv_field "opening") "stage" (dv_field "opening")
+  "original" (dv_field "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？")
+  "awake_scope" (dv_field true)) "requires_evidence" (dv_with (dv_field true) "basis"
+   (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))))))
+(defn c1_room_objects () (c1_list_8 (c1_local_object "hall") (c1_local_object "foyer") (c1_local_object "pantry")
+ (c1_local_object "corridor") (c1_local_object "R05") (c1_local_object "R06") (c1_local_object "R07") (c1_local_object "R08")))
+(defn c1_add_objects (world objects)
+ (let (result world i 0) (do (while (rt_lt i (rt_count objects))
+   (do (set result (dv_add_object result (rt_at objects i))) (set i (rt_add i 1)))) result)))
+(defn c1_physical_world ()
+ (let (world (dv_with (dv_world "chapter1.physical" "physical" "") "time" 480)
+       people (c1_list_5 "detective" "huo" "shen" "su" "demon") i 0)
+  (do (set world (c1_add_objects world (c1_room_objects)))
+   (set world (dv_add_object world (c1_physical_cognition)))
+   (set world (dv_add_object world (c1_question_object)))
+   (set world (dv_add_object world (dv_object "coat" "physical" (dv_m2 "state" (rt_list) "identity" (dv_single (dv_pair "owner" (dv_field "detective")))))))
+   (set world (dv_add_object world (c1_state_object "ritual" (dv_single (dv_pair "sound_trial_done" (dv_field false))))))
+   (while (rt_lt i (rt_count people)) (let (actor (rt_at people i))
+    (do (set world (dv_add_object world (c1_position actor "hall")))
+     (set world (c1_add_move_methods world actor "enforce"))
+     (set world (dv_adopt world (c1_method (rt_cat actor ".sound_trial") (c1_sound_trial actor "ritual" "hall")) "enforce" 1
+       (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story" 13 "sound_test.003"))))
+     (set i (rt_add i 1)))))
+   (set world (dv_adopt world (c1_method "demon.opening" (c1_opening_emit "question")) "enforce" 1
+    (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019"))))
+   (set world (dv_adopt world (c1_method "demon.question" (c1_question_emit "question")) "enforce" 1
+    (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004"))))
+   (set world (c1_adopt_protocol world)) world)))
+(defn c1_subjective_world (actor)
+ (let (mind (dv_with (dv_world (rt_cat "mind." actor) "mind" actor) "time" 480))
+  (do (set mind (dv_add_object mind (c1_position actor "hall")))
+   (set mind (dv_store mind (dv_ref actor "state" "identity") (dv_field actor)))
+   (set mind (dv_add_object mind (c1_local_object "cognition")))
+   (set mind (dv_add_object mind (c1_local_object "ritual")))
+   (set mind (dv_add_object mind (c1_local_object "question")))
+   (set mind (dv_add_object mind (c1_local_object "coat")))
+   (if (rt_eq actor "detective") (set mind (dv_store mind (dv_ref "coat" "identity" "owner")
+    (dv_with (dv_field "detective") "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 6 "s1_wake.006"))))) false)
+   (set mind (c1_adopt_inferences mind))
+   (c1_add_move_methods mind actor "predict"))))
+
+
+(defn c1_player_policy ()
+ (dv_with (dv_with (dv_with (dv_m4 "budget" 48 "reason_budget" 320 "model_budget" 320 "plan_budget" 320)
+  "hypotheses" (c1_hypotheses)) "goals" (rt_list)) "observation_weights" (dv_m3 "perception" 1 "testimony" 1 "recall" 1)))
+
+(defn c1_public_goal (question atom kind)
+ (dv_with (dv_with (dv_m4 "kind" kind "question" question "ref" (c1_knowledge atom)
+  "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002")))
+  "available_when" (dv_all (dv_pair (dv_fact (dv_ref "question" "state" "current") question)
+   (dv_fact (dv_ref "question" "state" "requires_evidence") true)))) "source" "perception"))
+(defn c1_public_goals ()
+ (c1_list_4 (c1_public_goal "identity" "me" "evidence")
+  (c1_public_goal "voice_source" "remote_voice" "know")
+  (c1_public_goal "words" "words_bolt" "know")
+  (c1_public_goal "trust" "trust_reason" "know")))
+(defn c1_person_policy (id)
+ (let (policy (dv_with (dv_with (c1_player_policy) "information_weight" 12) "goals" (c1_public_goals)))
+  (if (rt_eq id "detective") (dv_with policy "plan_depth" 6)
+   (dv_with (dv_with policy "model_budget" 0) "plan_depth" 1))))
+
+(defn c1_investigation_actions (actor)
+ (let (actions (c1_move_actions actor) inspect
+  (c1_list_12 (c1_inspect_E1 actor) (c1_inspect_E2 actor) (c1_inspect_E3 actor) (c1_inspect_E4 actor)
+   (c1_inspect_E5 actor) (c1_inspect_E6 actor) (c1_inspect_E7 actor) (c1_inspect_E8 actor)
+   (c1_inspect_E9 actor) (c1_inspect_E10 actor) (c1_inspect_E11 actor) (c1_inspect_E12 actor))
+  dialogue (c1_list_7 (c1_talk_slate_code actor) (c1_talk_slate_person actor) (c1_talk_frame_hollow actor)
+   (c1_talk_cups_known actor) (c1_talk_starter_kept actor) (c1_talk_recalled_copper actor) (c1_talk_recalled_names actor)) i 0)
+  (do (while (rt_lt i (rt_count inspect)) (do (rt_push actions (rt_at inspect i)) (set i (rt_add i 1))))
+   (set i 0) (while (rt_lt i (rt_count dialogue)) (do (rt_push actions (rt_at dialogue i)) (set i (rt_add i 1))))
+   (set i 0) (while (rt_lt i (rt_count (c1_answer_actions actor)))
+    (do (rt_push actions (rt_at (c1_answer_actions actor) i)) (set i (rt_add i 1))))
+   (rt_push actions (c1_sound_action actor)) (rt_push actions (c1_loss_testimony actor))
+   (if (rt_eq actor "detective") (rt_push actions (c1_replay_action actor)) false)
+   (if (rt_eq actor "detective") (do (rt_push actions (c1_sole_test actor)) (rt_push actions (c1_touch_recall actor))) false)
+   (rt_push actions (c1_identify_own_lens actor))
+   (c1_public_methods actions))))
+(defn c1_character (id dossier)
+ (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "id" id "mind" (c1_subjective_world id)
+  "actions" (c1_investigation_actions id) "policy" (c1_person_policy id))
+  "balance" (dv_m3 "time" 100000 "computation" 100000 "stamina" 100000))
+  "location_ref" (dv_ref id "state" "location")) "location" "hall")
+  "question_ref" (dv_ref "question" "state" "current")) "dossier" dossier))
+(defn c1_character_detective () (c1_character "detective" "保留从字面到历史时长的跨越；该差异须由实际语义机制形成，不是初始信念。记得上船。"))
+(defn c1_character_huo () (c1_character "huo" "钳工；追求那张超越卡诺循环的图；仅有来源的亲见和证言进入认知。"))
+(defn c1_character_shen () (c1_character "shen" "烧菜；想护住身边的人；仅记得上船，不预置相熟或天数。"))
+(defn c1_character_su () (c1_character "su" "弹琴；追求未闻之声；不预置短居留采纳，须实际听闻和理解。"))
+
+
+; Truth, personally supported claim, topic relevance and actual shown evidence are independent axes.
+; In particular a true location or a bare trust/familiarity claim does not answer the current question.
+(defn c1_any (left right) (dv_not (dv_all (dv_pair (dv_not left) (dv_not right)))))
+(defn c1_current_question (stage)
+ (dv_all (dv_pair (dv_fact (dv_ref "question" "state" "current") stage)
+                  (dv_fact (dv_ref "question" "state" "stage") stage))))
+(defn c1_identity_complete ()
+ (c1_any (dv_all (dv_pair (c1_statement "boots_toward_bolt") (c1_statement "boots_fit")))
+   (dv_all (c1_list_4 (c1_statement "lens_mine") (c1_statement "slate_marks")
+                      (c1_statement "slate_person") (c1_statement "slate_code")))))
+(defn c1_voice_complete ()
+ ; Preserve both original lawful showings: E8 plus executed trial, or the E5 hollow-frame evidence.
+ (c1_any (dv_all (dv_pair (c1_statement "pipe_layout") (c1_statement "sound_trial")))
+        (dv_all (dv_pair (c1_statement "fork_dent") (c1_statement "frame_hollow")))))
+(defn c1_words_complete ()
+ (c1_any (c1_statement "slate_marks") (c1_statement "score_partial")))
+(defn c1_trust_complete ()
+ ; E9/E10/E11/E7 remain alternative showings; the reason must still be personally supported.
+ (dv_all (dv_pair (c1_statement "trust_reason")
+  (c1_any (c1_statement "cups_preferences")
+   (c1_any (c1_statement "starter_layers")
+    (c1_any (c1_statement "shelf_old") (c1_statement "slate_marks")))))))
+(defn c1_complete_reply (id literal support topic complete law source)
+ (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m3 "id" id "condition" literal "required_support" support)
+   "question_match" topic) "answer_complete" complete) "accepted_law" law)
+   "accepted_public_grants" (dv_single (dv_ref "question" "state" "current")))
+   "accepted_listeners" (dv_single "demon")) "source_refs" (dv_single source)))
+(defn c1_unasked_reply (id claim source)
+ (dv_with (dv_with (c1_complete_reply id claim claim (dv_not (dv_true)) (dv_not (dv_true)) "" source)
+   "question_mismatch_reason" "unasked-topic") "incomplete_reason" "true statement lacks the requested cause or answer"))
+
+
+(defn c1_formal_me ()
+ (c1_complete_reply "me" (dv_fact (c1_knowledge "me") true) (dv_fact (c1_knowledge "me") true) (c1_current_question "identity") (c1_identity_complete) "accept.identity" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 100 "me")))
+
+(defn c1_formal_V1_0 ()
+ (c1_unasked_reply "V1_0" (dv_fact (c1_knowledge "su_room") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")))
+
+(defn c1_formal_V1_1 ()
+ (c1_unasked_reply "V1_1" (dv_fact (c1_knowledge "su_hall") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")))
+
+(defn c1_formal_V1_2 ()
+ (c1_unasked_reply "V1_2" (dv_fact (c1_knowledge "su_pantry") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")))
+
+(defn c1_formal_V2_0 ()
+ (c1_unasked_reply "V2_0" (dv_fact (c1_knowledge "huo_copper") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")))
+
+(defn c1_formal_V2_1 ()
+ (c1_unasked_reply "V2_1" (dv_fact (c1_knowledge "huo_room") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")))
+
+(defn c1_formal_V2_2 ()
+ (c1_unasked_reply "V2_2" (dv_fact (c1_knowledge "huo_foyer") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")))
+
+(defn c1_formal_V3_0 ()
+ (c1_complete_reply "V3_0" (dv_fact (c1_knowledge "remote_voice") true) (dv_fact (c1_knowledge "remote_voice") true) (c1_current_question "voice_source") (c1_voice_complete) "accept.voice_source" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")))
+
+(defn c1_formal_V3_1 ()
+ (c1_complete_reply "V3_1" (dv_fact (c1_knowledge "remote_voice") false) (dv_fact (c1_knowledge "remote_voice") false) (c1_current_question "voice_source") (c1_voice_complete) "accept.voice_source" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")))
+
+(defn c1_formal_V4_0 ()
+ (c1_complete_reply "V4_0" (dv_fact (c1_knowledge "words_bolt") true) (dv_fact (c1_knowledge "words_bolt") true) (c1_current_question "words") (c1_words_complete) "accept.words" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")))
+
+(defn c1_formal_V4_1 ()
+ (c1_complete_reply "V4_1" (dv_fact (c1_knowledge "words_bolt") false) (dv_fact (c1_knowledge "words_bolt") false) (c1_current_question "words") (c1_words_complete) "accept.words" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")))
+
+(defn c1_formal_V5_0 ()
+ (c1_unasked_reply "V5_0" (dv_fact (c1_knowledge "heed_huo") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")))
+
+(defn c1_formal_V5_1 ()
+ (c1_unasked_reply "V5_1" (dv_fact (c1_knowledge "heed_su") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")))
+
+(defn c1_formal_V5_2 ()
+ (c1_unasked_reply "V5_2" (dv_fact (c1_knowledge "heed_neither") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")))
+
+(defn c1_formal_trust ()
+ (c1_complete_reply "trust" (dv_fact (c1_knowledge "trust_reason") true) (dv_fact (c1_knowledge "trust_reason") true) (c1_current_question "trust") (c1_trust_complete) "accept.trust" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 114 "trust")))
+
+(defn c1_formal_V6_0 ()
+ (c1_unasked_reply "V6_0" (dv_fact (c1_knowledge "familiar") false) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")))
+
+(defn c1_formal_V6_1 ()
+ (c1_unasked_reply "V6_1" (dv_fact (c1_knowledge "familiar") true) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")))
+
+(defn c1_formal_answers () (c1_list_17 (c1_formal_me) (c1_formal_V1_0) (c1_formal_V1_1) (c1_formal_V1_2) (c1_formal_V2_0) (c1_formal_V2_1) (c1_formal_V2_2) (c1_formal_V3_0) (c1_formal_V3_1) (c1_formal_V4_0) (c1_formal_V4_1) (c1_formal_V5_0) (c1_formal_V5_1) (c1_formal_V5_2) (c1_formal_trust) (c1_formal_V6_0) (c1_formal_V6_1)))
+
+(defn c1_adopt_protocol (world)
+ (let (result world stages (c1_list_4 (dv_pair "identity" "voice_source") (dv_pair "voice_source" "words")
+ (dv_pair "words" "trust") (dv_pair "trust" "done")) i 0)
+  (do (while (rt_lt i (rt_count stages))
+   (let (current (rt_at (rt_at stages i) 0) next (rt_at (rt_at stages i) 1))
+    (do (set result (dv_adopt result (c1_method (rt_cat "accept." current) (c1_question_accept "question" current next)) "enforce" 1
+      (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 2 "answer_open.001"))))
+      (set i (rt_add i 1))))) result)))
+(defn c1_speech (literal surface scope)
+ (dv_with (dv_with (dv_with (dv_m4 "literal_ast" literal "referents" (rt_list) "scope" scope "time_anchor" "今晨醒来至当前发言")
+ "surface_ref" surface) "presuppositions" (rt_list)) "implicature_candidates" (rt_list)))
+(defn c1_opening_action ()
+ (dv_with (dv_with (dv_with (c1_once (c1_action "demon.opening" "opening" (dv_fact (dv_ref "question" "state" "stage") "opening")
+  (dv_fact (dv_ref "question" "state" "stage") "opening") "demon.opening"
+  (dv_single (dv_ref "question" "state" "stage"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019")))
+ "speech" (dv_with (dv_with (c1_speech (dv_fact (dv_ref "question" "state" "awake_scope") true)
+   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019") "封存后醒着的自己；普通语义有歧义，严格三天未绑定")
+   "surface" "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。") "implicature_candidates" (dv_single (dv_single (dv_pair "id" "short_stay")))))
+ "listeners" (c1_list_4 "detective" "huo" "shen" "su")) "public_grants" (dv_single (dv_ref "question" "state" "awake_scope"))))
+(defn c1_question_action (stage surface first)
+ (dv_with (dv_with (dv_with (c1_once (c1_action (rt_cat "demon.question." stage) (if first "question" "receive_question")
+  (dv_fact (dv_ref "question" "state" "stage") stage)
+  (dv_fact (dv_ref "question" "state" "stage") stage)
+  (if first "demon.question" "") (dv_single (dv_ref "question" "state" "stage")) surface))
+ "speech" (dv_with (dv_with (c1_speech (dv_true) surface "正式公开问题；问句不是历史事实断言") "utterance_type" "question") "surface" (rt_cat (c1_question_text stage) " 每一问，说一句结论，再拿出一件撑得住它的东西。")))
+ "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
+ "public_grants" (dv_list3 (dv_ref "question" "state" "current") (dv_ref "question" "state" "original")
+  (dv_ref "question" "state" "requires_evidence"))))
+(defn c1_character_demon ()
+ (let (mind (dv_with (dv_world "mind.demon" "mind" "demon") "time" 480))
+  (do (set mind (dv_add_object mind (c1_position "demon" "hall")))
+   (set mind (dv_add_object mind (c1_question_object)))
+   (dv_with (dv_with (dv_m4 "id" "demon" "mind" mind "policy" (dv_with (c1_player_policy) "hypotheses" (rt_list))
+    "actions" (c1_list_5 (c1_opening_action)
+      (c1_question_action "prompt" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004") true)
+      (c1_question_action "voice_source" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001") false)
+      (c1_question_action "words" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 30 "answer_q3.001") false)
+      (c1_question_action "trust" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 39 "answer_q4.001") false)))
+    "balance" (dv_m3 "time" 100000 "computation" 100000 "stamina" 100000)) "location_ref" (dv_ref "demon" "state" "location")))))
+
+
+(defn c1_costs () (c1_list_12 (dv_pair "opening" (c1_cost 20 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 17 "s3_broadcast：20"))) (dv_pair "question" (c1_cost 15 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 18 "s5_question：15"))) (dv_pair "receive_question" (c1_cost 0 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 30 "检视：0"))) (dv_pair "inspect" (c1_cost 0 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 30 "检视：0"))) (dv_pair "experiment" (c1_cost 17 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 31 "试验：17"))) (dv_pair "help" (c1_cost 0 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 30 "检视：0"))) (dv_pair "talk" (c1_cost 0 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 30 "检视：0"))) (dv_pair "sound_test" (c1_cost 24 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 34 "声路：24"))) (dv_pair "replay" (dv_with (c1_cost 29 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 35 "重演：29")) "work_limit" 320)) (dv_pair "answer" (c1_cost 10 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 36 "答辩：10"))) (dv_pair "move" (c1_cost 2 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 37 "走动：2"))) (dv_pair "recall" (c1_cost 0 (c1_source "godot_csharp/scenes/Awakening/Script/story/剧情时长.story" 30 "检视：0")))))
+
+(defn c1_bindings ()
+ (let (people (c1_list_5 "demon" "detective" "huo" "shen" "su") objects (c1_list_9 "demon" "detective" "huo" "shen" "su" "cognition" "question" "ritual" "coat") result (rt_list) i 0 j 0)
+  (do (while (rt_lt i (rt_count people))
+    (do (set j 0) (while (rt_lt j (rt_count objects))
+      (do (rt_push result (dv_binding (rt_at objects j) (rt_at objects j) (rt_at people i))) (set j (rt_add j 1))))
+      (set i (rt_add i 1)))) result)))
+(defn c1_binding_gaps () (c1_list_5
+ "Strict historical >=3days has no first-chapter source; withdraw insufficient adoption, never infer notP"
+ "Full six-variable counterfactual historical replay is not yet migrated; simulation unknown must remain unknown"
+ "Original question2 complete heard-at-latching temporal evidence is not inferred just from answer subquestion2"
+ "Acoustic action records actually executing the original trial and original loss testimony, not a full frequency-path simulator"
+ "Individual short-stay bridges and speaker listener models lack adequate initial evidence; missing bridge stays unknown"))
+(defn c1_scenario_native ()
+ (dv_with (dv_with (dv_with (dv_with (dv_m4 "format" "dv-session-v1" "id" "chapter1-native-authoring"
+  "physical" (c1_physical_world) "actors" (c1_list_5 (c1_character_demon) (c1_character_detective)
+   (c1_character_huo) (c1_character_shen) (c1_character_su)))
+  "bindings" (c1_bindings)) "cost_model" (c1_costs)) "formal_answers" (c1_formal_answers))
+  "max_actions" 240))
+(defn c1_variant_weight (weight id)
+ (let (data (dvs_scenario_base) actors (dv_get data "actors") result (rt_list) i 0)
+  (do (while (rt_lt i (rt_count actors)) (let (actor (rt_at actors i))
+   (do (if (rt_eq (dv_get actor "id") "detective")
+    (set actor (dv_with actor "policy" (dv_with (dv_get actor "policy") "information_weight" weight))) false)
+    (rt_push result actor) (set i (rt_add i 1))))) (dv_with (dv_with data "actors" result) "id" id))))
+(defn dvs_scenario_low () (c1_variant_weight 10.8 "chapter1-information-low"))
+(defn dvs_scenario_holdout () (c1_variant_weight 13.2 "chapter1-information-holdout"))
+(defn dvs_scenario_boundary ()
+ (let (data (dvs_scenario_base) actors (dv_get data "actors") result (rt_list) i 0 position (dv_ref "su" "state" "location")
+  basis (dv_single "Human-authorized noncanonical boundary initial position: Su at R05, only alarm/no-message source area"))
+  (do (while (rt_lt i (rt_count actors)) (let (actor (rt_at actors i))
+   (do (if (rt_eq (dv_get actor "id") "su")
+     (set actor (dv_with actor "mind" (dv_store (dv_get actor "mind") position (dv_with (dv_with (dv_read (dv_get actor "mind") position) "value" "R05") "basis" basis)))) false)
+    (rt_push result actor) (set i (rt_add i 1)))))
+   (dv_with (dv_with (dv_with data "actors" result) "physical" (dv_store (dv_get data "physical") position (dv_with (dv_with (dv_read (dv_get data "physical") position) "value" "R05") "basis" basis)))
+     "id" "chapter1-boundary-noncanonical"))))
+
+
+(defn c1_active_configuration (data)
+ (dv_with (dv_with (dv_with data "capability_actor" "detective")
+  "binding_gaps" (c1_binding_gaps))
+  "budget_scope" "Detective cap48 from source; NPC cap48 engineering termination only; global cap240 sums actual caps, no cost or clock relaxation"))
+(defn dvs_scenario_base () (c1_active_configuration (c1_scenario_native)))
+
+(defn c1_question_text (stage)
+ (if (rt_eq stage "prompt") "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"
+  (if (rt_eq stage "voice_source") "门外，有人呼喊吗？"
+   (if (rt_eq stage "words") "他喊的是什么？" "闩门的人，为何不听门边那位女士的？"))))

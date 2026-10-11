@@ -1,0 +1,181 @@
+{
+  "files": [
+    "AGENTS.md",
+    "docs/design-standard.md",
+    "godot_csharp/scenes/Awakening/Script/story/\u5267\u60c5\u65f6\u957f.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u53ef\u4e60\u5f97\u547d\u9898.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/01_\u5f00\u573a.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/05_\u58f0\u8def\u4e0e\u4ea4\u8c08.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/07_\u7b54\u8fa9.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u5b9e\u4f53\u767b\u8bb0.story",
+    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u6a21\u62df\u4fa6\u63a2.story"
+  ],
+  "copies": {},
+  "exports": [
+    {
+      "id": "scenario-base",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv"
+      ],
+      "function": "dvs_scenario_base",
+      "output": "{inputs}/scenario-base.json"
+    },
+    {
+      "id": "scenario-boundary",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv"
+      ],
+      "function": "dvs_scenario_boundary",
+      "output": "{inputs}/scenario-boundary.json"
+    },
+    {
+      "id": "scenario-low",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv"
+      ],
+      "function": "dvs_scenario_low",
+      "output": "{inputs}/scenario-low.json"
+    },
+    {
+      "id": "scenario-holdout",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv"
+      ],
+      "function": "dvs_scenario_holdout",
+      "output": "{inputs}/scenario-holdout.json"
+    },
+    {
+      "id": "oracle",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-oracle.dv"
+      ],
+      "function": "dvs_chapter1_oracle",
+      "output": "{inputs}/chapter1-oracle.json"
+    },
+    {
+      "id": "manifest-enabled",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_manifest_enabled",
+      "output": "{inputs}/template-enabled.json"
+    },
+    {
+      "id": "manifest-disabled",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_manifest_disabled",
+      "output": "{inputs}/template-disabled.json"
+    },
+    {
+      "id": "manifest-boundary",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_manifest_boundary",
+      "output": "{inputs}/template-boundary.json"
+    },
+    {
+      "id": "manifest-low",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_manifest_low",
+      "output": "{inputs}/template-low.json"
+    },
+    {
+      "id": "manifest-holdout",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_manifest_holdout",
+      "output": "{inputs}/template-holdout.json"
+    },
+    {
+      "id": "comparison-capability",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_compare_capability",
+      "output": "{inputs}/template-comparison-capability.json"
+    },
+    {
+      "id": "comparison-boundary",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_compare_boundary",
+      "output": "{inputs}/template-comparison-boundary.json"
+    },
+    {
+      "id": "comparison-parameters",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-verification-config.dv"
+      ],
+      "function": "dvs_compare_parameters",
+      "output": "{inputs}/template-comparison-parameters.json"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "enabled",
+      "args": [
+        "{inputs}/scenario-base.json",
+        "{out}/trace-enabled.json",
+        "enabled"
+      ]
+    }
+  ],
+  "platform_manifests": {
+    "manifest-enabled.json": "{inputs}/template-enabled.json",
+    "manifest-disabled.json": "{inputs}/template-disabled.json",
+    "manifest-boundary.json": "{inputs}/template-boundary.json",
+    "manifest-low.json": "{inputs}/template-low.json",
+    "manifest-holdout.json": "{inputs}/template-holdout.json"
+  },
+  "path_documents": {
+    "comparison-capability.json": "{inputs}/template-comparison-capability.json",
+    "comparison-boundary.json": "{inputs}/template-comparison-boundary.json",
+    "comparison-parameters.json": "{inputs}/template-comparison-parameters.json"
+  },
+  "checks": {
+    "main-causal": [
+      "{inputs}/manifest-enabled.json",
+      "{out}/trace-enabled.json",
+      "{inputs}/chapter1-oracle.json"
+    ],
+    "compare-capability": [
+      "{inputs}/comparison-capability.json"
+    ],
+    "check-evidence-boundary": [
+      "{inputs}/comparison-boundary.json"
+    ],
+    "sweep-parameters": [
+      "{inputs}/comparison-parameters.json"
+    ]
+  },
+  "archives": [
+    "{out}/trace-enabled.json"
+  ]
+}

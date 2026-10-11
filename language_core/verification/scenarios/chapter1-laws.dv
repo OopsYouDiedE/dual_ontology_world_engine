@@ -1,0 +1,166 @@
+; Native chapter law definitions. The original .story files are provenance only.
+; Rule premises and effects are authoritative DV expressions, not imported records.
+
+; 可习得命题.story:47, recalled_bolt + boots_toward_bolt + boots_fit => me
+(axiom c1_infer_0 1 (knowledge)
+  (dv_all (dv_list3
+    (dv_fact (dv_ref knowledge "state" "recalled_bolt") true)
+    (dv_fact (dv_ref knowledge "state" "boots_toward_bolt") true)
+    (dv_fact (dv_ref knowledge "state" "boots_fit") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "me") true)))
+
+; 可习得命题.story:48, slate_marks + slate_code + slate_person + lens_mine => me
+(axiom c1_infer_1 1 (knowledge)
+  (dv_all (dv_append (dv_list3
+    (dv_fact (dv_ref knowledge "state" "slate_marks") true)
+    (dv_fact (dv_ref knowledge "state" "slate_code") true)
+    (dv_fact (dv_ref knowledge "state" "slate_person") true))
+    (dv_fact (dv_ref knowledge "state" "lens_mine") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "me") true)))
+
+; 可习得命题.story:49, recalled_bolt => me
+(axiom c1_infer_2 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "recalled_bolt") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "me") true)))
+
+; 可习得命题.story:50, recalled_bolt + bolt_down => me
+(axiom c1_infer_3 1 (knowledge)
+  (dv_all (dv_pair
+    (dv_fact (dv_ref knowledge "state" "recalled_bolt") true)
+    (dv_fact (dv_ref knowledge "state" "bolt_down") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "me") true)))
+
+; 可习得命题.story:51, pipe_layout + sound_trial + heads_lost => remote_voice
+(axiom c1_infer_4 1 (knowledge)
+  (dv_all (dv_list3
+    (dv_fact (dv_ref knowledge "state" "pipe_layout") true)
+    (dv_fact (dv_ref knowledge "state" "sound_trial") true)
+    (dv_fact (dv_ref knowledge "state" "heads_lost") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "remote_voice") true)))
+
+; 可习得命题.story:52, frame_hollow + pipe_layout + heads_lost => remote_voice
+(axiom c1_infer_5 1 (knowledge)
+  (dv_all (dv_list3
+    (dv_fact (dv_ref knowledge "state" "frame_hollow") true)
+    (dv_fact (dv_ref knowledge "state" "pipe_layout") true)
+    (dv_fact (dv_ref knowledge "state" "heads_lost") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "remote_voice") true)))
+
+; 可习得命题.story:53, slate_code + slate_marks => words_bolt
+(axiom c1_infer_6 1 (knowledge)
+  (dv_all (dv_pair
+    (dv_fact (dv_ref knowledge "state" "slate_code") true)
+    (dv_fact (dv_ref knowledge "state" "slate_marks") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "words_bolt") true)))
+
+; 可习得命题.story:54, score_partial + heads_lost + slate_code => words_bolt
+(axiom c1_infer_7 1 (knowledge)
+  (dv_all (dv_list3
+    (dv_fact (dv_ref knowledge "state" "score_partial") true)
+    (dv_fact (dv_ref knowledge "state" "heads_lost") true)
+    (dv_fact (dv_ref knowledge "state" "slate_code") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "words_bolt") true)))
+
+; 可习得命题.story:55, recalled_copper => huo_copper
+(axiom c1_infer_8 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "recalled_copper") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "huo_copper") true)))
+
+; 可习得命题.story:56, cups_preferences + cups_known => familiar
+(axiom c1_infer_9 1 (knowledge)
+  (dv_all (dv_pair
+    (dv_fact (dv_ref knowledge "state" "cups_preferences") true)
+    (dv_fact (dv_ref knowledge "state" "cups_known") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "familiar") true)))
+
+; 可习得命题.story:57, starter_layers + starter_kept => familiar
+(axiom c1_infer_10 1 (knowledge)
+  (dv_all (dv_pair
+    (dv_fact (dv_ref knowledge "state" "starter_layers") true)
+    (dv_fact (dv_ref knowledge "state" "starter_kept") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "familiar") true)))
+
+; 可习得命题.story:58, recalled_names => familiar
+(axiom c1_infer_11 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "recalled_names") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "familiar") true)))
+
+; 可习得命题.story:59, recalled_trust => heed_huo
+(axiom c1_infer_12 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "recalled_trust") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "heed_huo") true)))
+
+; 可习得命题.story:60, recalled_trust + familiar => trust_reason
+(axiom c1_infer_13 1 (knowledge)
+  (dv_all (dv_pair
+    (dv_fact (dv_ref knowledge "state" "recalled_trust") true)
+    (dv_fact (dv_ref knowledge "state" "familiar") true)))
+  (dv_single (dv_assign (dv_ref knowledge "state" "trust_reason") true)))
+
+; 可习得命题.story:61, su_room => !su_hall
+(axiom c1_infer_14 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "su_room") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "su_hall") false)))
+
+; 可习得命题.story:62, su_room => !su_pantry
+(axiom c1_infer_15 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "su_room") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "su_pantry") false)))
+
+; 可习得命题.story:63, huo_copper => !huo_room
+(axiom c1_infer_16 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "huo_copper") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "huo_room") false)))
+
+; 可习得命题.story:64, huo_copper => !huo_foyer
+(axiom c1_infer_17 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "huo_copper") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "huo_foyer") false)))
+
+; 可习得命题.story:65, heed_huo => !heed_su
+(axiom c1_infer_18 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "heed_huo") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "heed_su") false)))
+
+; 可习得命题.story:66, heed_huo => !heed_neither
+(axiom c1_infer_19 1 (knowledge)
+  (dv_fact (dv_ref knowledge "state" "heed_huo") true)
+  (dv_single (dv_assign (dv_ref knowledge "state" "heed_neither") false)))
+
+; 热点与布局.story:340-349, 房间名; room adjacency is supplied by instance adoption.
+; Only directed edges declared in content setup may be adopted. No global teleport law.
+(axiom c1_move 1 (actor origin target)
+  (dv_fact (dv_ref actor "state" "location") origin)
+  (dv_single (dv_assign (dv_ref actor "state" "location") target)))
+
+; 场面/01_开场.story:28, s3_broadcast.019; opening advances the public protocol only.
+(axiom c1_opening_emit 1 (question)
+  (dv_fact (dv_ref question "state" "stage") "opening")
+  (dv_single (dv_assign (dv_ref question "state" "stage") "prompt")))
+
+; 场面/07_答辩.story:8, answer_q1.001; dispatching a question does not answer it.
+(axiom c1_question_emit 1 (question)
+  (dv_fact (dv_ref question "state" "stage") "prompt")
+  (dv_pair (dv_assign (dv_ref question "state" "current") "identity")
+           (dv_assign (dv_ref question "state" "stage") "identity")))
+
+; 场面/07_答辩.story:12/25/34/43, answer_ok1/2/3/4; formal acceptance gates execution.
+; This scheduling law has no authority to decide literal truth or support sufficiency.
+(axiom c1_question_accept 1 (question current next)
+  (dv_all (dv_pair (dv_fact (dv_ref question "state" "current") current)
+                   (dv_fact (dv_ref question "state" "stage") current)))
+  (dv_pair (dv_assign (dv_ref question "state" "current") next)
+           (dv_assign (dv_ref question "state" "stage") next)))
+
+; 可习得命题.story:74-88: helper testimony is received through a co-located action.
+; Concrete testimony and its evidential source are supplied by content, not this law.
+(axiom c1_meeting 1 (requester speaker room)
+  (dv_all (dv_pair (dv_fact (dv_ref requester "state" "location") room)
+                   (dv_fact (dv_ref speaker "state" "location") room)))
+  (rt_list))
+
+; 场面/05_声路与交谈.story:13, sound_test.003; explicit formal action marker.
+; This marker does not simulate acoustic bands or infer unheard sound contents.
+(axiom c1_sound_trial 1 (actor ritual room)
+  (dv_fact (dv_ref actor "state" "location") room)
+  (dv_single (dv_assign (dv_ref ritual "state" "sound_trial_done") true)))

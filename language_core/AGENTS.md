@@ -9,7 +9,7 @@
 ## 模块边界
 
 - `core/*.dv` 是可编译的领域语义库：公理采纳、物体切片、观察、传播、价值、回应、论证代价与检查点查询均用 DV 实现。axiom 声明在 DV 前端展开；不得把领域算法移到 Runtime.cs。JSON 编解码和参数计数仅服务平台 I/O。
-- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。动态数据函数仍属于可信调用协议，不能称为静态能力安全边界。人物参数和章节实例仍从 .story 装载。
+- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。动态数据函数仍属于可信调用协议，不能称为静态能力安全边界。人物参数和章节实例由原生 DV 具名声明与构造函数定义；旧 .story 只读保留迁移来源，不参与新执行。
 
 - `compiler/compiler.dv` 是编译器启动子集：扫描、AST、名称/作用域/元数检查和 C# 后端均用 DV 实现。`compiler/seed/` 的 C# C0 只负责启动；生成 C1/C2/C3 仅使用 `compiler/Runtime.cs` 的数据与平台 ABI，不引用解释器。当前子集采用运行时值域检查，尚无静态类型/能力系统和目标无关 IR，不能与 DESIGN 的完整语言混称。原解释语法尚未统一到编译语法。
 
@@ -56,3 +56,7 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 ## Temporal model and action-cost module
 
 `core/90-action-cost.dv` provides DV quotes, resource reservations, settlement and actual action-time advancement; model work units are separate from frozen method-call charges. `verification/session/25-simulation.dv` runs hypothetical laws on local model time, compares explicitly modeled times with subjective observations, and rechecks frozen paid predictions after new subjective evidence without rerunning effects. Total model expansion and frozen method work limits are recorded independently. Engineering evidence is under `artifacts/partial-bootstrap-core/simulation-engineering-r10/`; it does not establish chapter causal outcomes or game acceptance. Generated C# remains compiler output.
+
+## 编译会话与可读报告的当前实施
+
+`verification/session/10-subjective.dv`、`15-action-planning.dv`、`20-speech.dv`、`30-runner.dv` 实现主体本人推知、有界行动规划、话语解析与真实会话调度。原生内容与 oracle 分包；Python 仅冻结、编译与进程/文件 I/O。`verification/report/*.dv` 依据真实只读判定与事件生成中文报告，缺记录不补猜。本轮已授权实际运行与迭代，不恢复独立复评；早期仅设计/未实现说明是历史状态。先前首答360条件的隔离工程会话保留并标 superseded，新总预算必须全新会话。历史判定重执行与新会话分列，未执行的补充不报成立。

@@ -157,3 +157,10 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 
 
 - 工程排错遇到脚本或引擎错误、退出崩溃、缺少实际完成记录时，直接说明发生的错误与未验证内容；不得用通过汇总或旧记录宣布本轮改善。
+
+
+## 新 DV 内容格式与机制边界（用户裁定 2026-10-12）
+
+本节只覆盖 `language_core/` 新实现的内容格式。人物、世界、话语、公理实例、验收场景与权威 oracle 均使用真实可编译的 `.dv` 内容声明，分置于 `language_core/verification/scenarios/` 或后续内容目录。通用 core、session、checks 不得硬编码专案剧情；权威 oracle 独立分包，不提供给主体。
+
+原生 DV 的具名 `axiom` 与 `defn`／领域构造函数是逻辑权威源，源 `.dv` 经 DV 编译器生成 C# 执行。不得把旧段落语法、序列化 `world` 巨树或 JSON 字符串改扩展名当作迁移完成；中间 JSON 仅为原生 DV 编译执行后导出的 DTO 数据交换生成物。旧 `.story` 不参与新执行，仅供迁移溯源及仍使用它的现役旧宿主；本次不改变旧宿主的全仓格式。此处对新 DV 内容格式的规定覆盖此前关于内容仅存 `.story` 的约束，其余机制与内容隔离要求继续适用。
