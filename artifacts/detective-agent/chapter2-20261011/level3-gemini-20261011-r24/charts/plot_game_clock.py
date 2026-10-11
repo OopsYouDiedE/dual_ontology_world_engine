@@ -91,8 +91,8 @@ for name, path in RUNS.items():
                         clock_precision='recorded_or_equal_brackets' if lo == hi else 'bracket_only_no_interpolation')
         all_nodes.append(item)
 
-(OUT/'key-nodes.json').write_text(json.dumps({'method': 'Only public decision.GameTime and stop.time; bracket other events with surrounding observed clocks; no wall-time multiplication or interpolation.', 'inputs': metadata, 'nodes': all_nodes}, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-with (OUT/'key-nodes.csv').open('w', encoding='utf-8-sig', newline='') as f:
+(OUT/'auxiliary-events.json').write_text(json.dumps({'method': 'Only public decision.GameTime and stop.time; bracket other events with surrounding observed clocks; no wall-time multiplication or interpolation.', 'inputs': metadata, 'nodes': all_nodes}, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+with (OUT/'auxiliary-events.csv').open('w', encoding='utf-8-sig', newline='') as f:
     fields = ['run', 'node', 'reached', 'sequence', 'wall_seconds', 'game_clock', 'game_elapsed_low', 'game_elapsed_high', 'clock_precision']
     w = csv.DictWriter(f, fieldnames=fields, extrasaction='ignore'); w.writeheader(); w.writerows(all_nodes)
 with (OUT/'game-clock-samples.csv').open('w', encoding='utf-8-sig', newline='') as f:
@@ -134,7 +134,7 @@ bx.set_xticks(range(len(common)),['进入走廊','进入空房','活动厅开场
 bx.set_ylabel('自初始 08:10 累积的游戏分钟')
 bx.set_ylim(-10, 140)
 bx.set_yticks(range(0,141,20))
-bx.set_title('共同节点的游戏时间：误差线保留相邻时钟范围，不虚构精确值')
+bx.set_title('共同空间参照的游戏时间：误差线保留记录范围，不代替推理进展')
 bx.grid(alpha=.2); bx.legend(loc='upper left')
 fig.text(.02,.012,'折线只连接已记录的时钟点。游戏时间含剧情跳时；不能用现实秒数 × 4 推算。未到达的节点不绘制为零。',fontsize=10)
 fig.tight_layout(rect=(0,.04,1,1))
