@@ -70,3 +70,8 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 `tools/run_verification.py --judge-core-root` 可为历史轨迹封存独立的判定器 Core 依赖；生产者版本、原 oracle 与原轨迹单独保留。新 ABI 不表示旧会话运行过新机制，缺少记录须如实记依据不足。工具只做文件、编译、运行、哈希与实测进程耗时，领域判定及中文解释由 DV 完成。
 
 `verification/report/*.dv` 在正文开头展示实际会话耗时、共享时钟、目标主体首次接受与准备/后续接受/分享缺口；实际接受和因果判定分列。节点游戏经过时间与场景时钟分列，未采集的节点现实首次时刻不由整进程秒数推算。完整行动与原始判定引用保留在附录和 JSON。
+
+
+## 原生模型论证模块（r6 封存迭代）
+
+core/95-model-argument.dv 提供通用可撤回估计论证；verification/session/35-model-argument.dv 协调实际付费模型、联合候选覆盖、输入及已采纳规则签名与公开提交。session/25-simulation.dv 保持重演计算资源、游戏行动代价与展开预算分域。领域声明位于原生 DV 作者模块；oracle 独立导出，不链接主体。r6 的新主体包实际完成生成与构建，但正式进程在外部 240 秒限额停止，未写终局 trace；不得据此给出领域验收结论。后续源码与本轮隔离快照分别封存。

@@ -2,13 +2,13 @@
   "files": [
     "AGENTS.md",
     "docs/design-standard.md",
-    "godot_csharp/scenes/Awakening/Script/story/\u5267\u60c5\u65f6\u957f.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u53ef\u4e60\u5f97\u547d\u9898.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/01_\u5f00\u573a.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/05_\u58f0\u8def\u4e0e\u4ea4\u8c08.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u573a\u9762/07_\u7b54\u8fa9.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u5b9e\u4f53\u767b\u8bb0.story",
-    "godot_csharp/scenes/Awakening/Script/story/\u7b2c\u4e00\u7ae0/\u6a21\u62df\u4fa6\u63a2.story"
+    "godot_csharp/scenes/Awakening/Script/story/剧情时长.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story"
   ],
   "copies": {},
   "exports": [
@@ -17,7 +17,8 @@
       "modules": [
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
-        "language_core/verification/scenarios/chapter1-content.dv"
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_scenario_base",
       "output": "{inputs}/scenario-base.json"
@@ -27,7 +28,8 @@
       "modules": [
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
-        "language_core/verification/scenarios/chapter1-content.dv"
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_scenario_boundary",
       "output": "{inputs}/scenario-boundary.json"
@@ -37,7 +39,8 @@
       "modules": [
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
-        "language_core/verification/scenarios/chapter1-content.dv"
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_scenario_low",
       "output": "{inputs}/scenario-low.json"
@@ -47,7 +50,8 @@
       "modules": [
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
-        "language_core/verification/scenarios/chapter1-content.dv"
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_scenario_holdout",
       "output": "{inputs}/scenario-holdout.json"
@@ -66,7 +70,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_manifest_enabled",
       "output": "{inputs}/template-enabled.json"
@@ -77,7 +82,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_manifest_disabled",
       "output": "{inputs}/template-disabled.json"
@@ -88,7 +94,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_manifest_boundary",
       "output": "{inputs}/template-boundary.json"
@@ -99,7 +106,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_manifest_low",
       "output": "{inputs}/template-low.json"
@@ -110,7 +118,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_manifest_holdout",
       "output": "{inputs}/template-holdout.json"
@@ -121,7 +130,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_compare_capability",
       "output": "{inputs}/template-comparison-capability.json"
@@ -132,7 +142,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_compare_boundary",
       "output": "{inputs}/template-comparison-boundary.json"
@@ -143,7 +154,8 @@
         "language_core/verification/scenarios/chapter1-laws.dv",
         "language_core/verification/scenarios/chapter1-pragmatics.dv",
         "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-verification-config.dv"
+        "language_core/verification/scenarios/chapter1-verification-config.dv",
+        "language_core/verification/scenarios/chapter1-history.dv"
       ],
       "function": "dvs_compare_parameters",
       "output": "{inputs}/template-comparison-parameters.json"

@@ -29,9 +29,9 @@
       (let (change (rt_at changes i))
         (do (if (dv_same (dvs_reason_value (dv_get change "before")) (dvs_reason_value (dv_get change "after"))) false (set changed true))
           (set i (rt_add i 1))))) changed)))
-(defn dvs_reason (actor events time parent)
+(defn dvs_reason_run (actor events time parent)
   (let (mind (dv_get actor "mind") policy (dv_get actor "policy") budget (dv_find policy "reason_budget" 0) count 0 changed true
-        signatures (dv_find actor "inference_signatures" (rt_list)))
+        signatures (dv_find actor "inference_signatures" (rt_list)) derivations (dv_find actor "inference_derivations" (rt_list)))
     (do
       (while (dv_and changed (rt_lt count budget))
         (let (adoptions (dv_get mind "adoptions") i 0)
@@ -47,7 +47,8 @@
                           (let (before mind result (dv_infer mind (rt_at entry 0) (rt_cat "infer" (rt_show (rt_count events))) time (dv_get mind "revision")))
                             (do (set mind (dv_get result "world")) (set changed true) (set count (rt_add count 1))
                               (set signatures (dv_with signatures (rt_at entry 0) (dvs_reason_signature mind (rt_at entry 1))))
-                              (dvs_event events "inference" (dv_get actor "id") time (dv_single parent) (dv_m4 "mind_before" before "mind_after" mind "law" law "receipt" result))))
+                              (let (event (dvs_event events "inference" (dv_get actor "id") time (dv_explanation_merge (dv_single parent) (dvs_support_parents before (dvs_sim_refs (dv_get law "premise")) events (dv_get actor "id"))) (dv_m4 "mind_before" before "mind_after" mind "law" law "receipt" result)))
+                                (rt_push derivations (dv_with (dv_m4 "event" event "adoption" (rt_at entry 1) "inputs" (dvs_sim_inputs before (dv_get law "premise")) "changes" (dv_get result "changes")) "valid" true)))))
                           (if (rt_eq (dv_get stage "status") "ready")
                             (do (set count (rt_add count 1)) (set signatures (dv_with signatures (rt_at entry 0) (dvs_reason_signature mind (rt_at entry 1))))
                               (dvs_event events "inference_alternative_basis" (dv_get actor "id") time (dv_single parent)
@@ -55,11 +56,19 @@
                   (set i (rt_add i 1))))))))
       (dvs_event events "reason_stop" (dv_get actor "id") time (dv_single parent)
         (dv_m4 "steps" count "remaining" (rt_sub budget count) "stop" (if (rt_lt count budget) "no-new-effective-conclusion" "budget-exhausted") "mind_revision" (dv_get mind "revision")))
-      (dv_with (dv_with (dv_with actor "mind" mind) "inference_signatures" signatures) "policy" (dv_with policy "reason_budget" (rt_sub budget count))))))
+      (dv_with (dv_with (dv_with (dv_with actor "mind" mind) "inference_derivations" derivations) "inference_signatures" signatures) "policy" (dv_with policy "reason_budget" (rt_sub budget count))))))
 (defn dvs_cached_model (actor hypothesis)
   (let (model (dv_find (dv_find actor "simulations" (rt_list)) (dv_get hypothesis "id") (dv_m2 "fit" 0 "status" "not-simulated")))
-    (if (rt_eq (dv_find model "source_revision" -1) (dv_get (dv_get actor "mind") "revision")) model
-      (dv_m3 "fit" 0 "status" "stale-or-unavailable" "source_revision" (dv_find model "source_revision" -1)))))
+    (if (dv_or (rt_eq (dv_find model "source_revision" -1) (dv_get (dv_get actor "mind") "revision"))
+      (dv_and (dv_explanation_model_current (dv_get actor "mind") model) (dv_same (dv_find model "source_response_models" false) (dv_find actor "response_models" (rt_list)))))
+      (dv_with model "validated_by_inputs" true)
+      (if (dv_and (dvs_argument_valid actor) (dvs_argument_inputs_current actor))
+        (let (argument (dv_get actor "argument"))
+          (if (dv_and (rt_eq (dv_find model "source_revision" -1) (dv_get argument "source_revision"))
+            (dv_or (rt_eq (dv_find model "event" "") (dv_get argument "model_event")) (dv_has (dv_get argument "competitor_events") (dv_find model "event" ""))))
+            (dv_with model "validated_by_argument" (dv_get argument "id"))
+            (dv_m3 "fit" 0 "status" "stale-or-unavailable" "source_revision" (dv_find model "source_revision" -1))))
+        (dv_m3 "fit" 0 "status" "stale-or-unavailable" "source_revision" (dv_find model "source_revision" -1))))))
 (defn dvs_hypotheses (actor events time parent)
   (let (mind (dv_get actor "mind") candidates (dv_find (dv_get actor "policy") "hypotheses" (rt_list)) i 0 best false score -1)
     (do (while (rt_lt i (rt_count candidates))
@@ -68,13 +77,13 @@
           (let (truth (dv_truth mind (dv_get h "proposition")) weight (if (rt_eq truth "false") -1 (if (rt_eq truth "true") 1 (dv_find h "prior" 0.5)))
                 model (dvs_cached_model actor h))
             (do (set weight (rt_add weight (dv_get model "fit")))
-              (if (dv_or (rt_eq truth "false") (rt_eq (dv_find model "status" "unknown") "inconsistent")) false
+              (if (dv_or (dvs_factor_candidate_rejected actor h) (dv_or (rt_eq truth "false") (rt_eq (dv_find model "status" "unknown") "inconsistent"))) false
                 (if (rt_lt score weight) (do (set best (dv_with h "simulation" model)) (set score weight)) false)))) false) (set i (rt_add i 1)))))
-      (let (previous (dv_find actor "hypothesis" false))
+      (let (previous (dv_find actor "hypothesis" false) event (dv_find actor "hypothesis_event" ""))
         (do (if (dv_same previous best) false
-          (dvs_event events (if (rt_eq previous false) "hypothesis_adopted" "hypothesis_revised") (dv_get actor "id") time (dv_single parent)
-            (dv_m4 "previous" previous "current" best "mind" mind "preference" score)))
-          (dv_with actor "hypothesis" best))))))
+          (set event (dvs_event events (if (rt_eq previous false) "hypothesis_adopted" "hypothesis_revised") (dv_get actor "id") time (dv_single parent)
+            (dv_m4 "previous" previous "current" best "mind" mind "preference" score))))
+          (dv_with (dv_with actor "hypothesis" best) "hypothesis_event" event))))))
 (defn dvs_choose (actor bindings costs) (dvp_plan actor bindings costs))
 (defn dvs_ready (actor events time parent)
   (let (hypothesis (dv_find actor "hypothesis" false) ready true reasons (rt_list) parents (dv_single parent)
@@ -84,11 +93,13 @@
       (let (simulation (dv_find hypothesis "simulation" (rt_list)) candidates (dv_find (dv_get actor "policy") "hypotheses" (rt_list)) i 0
             simulations (dv_find actor "simulations" (rt_list)) mind (dv_get actor "mind"))
         (do
-          (if (rt_eq (dv_find simulation "source_revision" -1) (dv_get mind "revision")) false
+          (if (dv_or (rt_eq (dv_find simulation "source_revision" -1) (dv_get mind "revision"))
+            (dv_or (dv_find simulation "validated_by_inputs" false) (if (dv_has_key simulation "validated_by_argument") (dv_and (dvs_argument_valid actor) (dvs_argument_inputs_current actor)) false))) false
             (do (set ready false) (rt_push reasons "simulation-evidence-version-stale")))
-          (if (dv_and (rt_eq (dv_find simulation "status" "unknown") "explained")
-            (dv_and (rt_lt 0 (dv_find simulation "remaining" 0)) (rt_lt 0 (rt_count (dv_find hypothesis "features" (rt_list)))))) false
-            (do (set ready false) (rt_push reasons "simulation-not-complete-with-observed-features-and-remaining-budget")))
+          (if (dv_explanation_model_complete simulation "explained"
+            (if (dv_has_key simulation "validated_by_argument") (dv_get (dv_get actor "argument") "source_revision") (dv_get mind "revision"))) false
+            (do (set ready false) (rt_push reasons "simulation-incomplete-or-unknown")))
+          (if (dv_has_key simulation "validated_by_argument") (rt_push parents (dv_get simulation "validated_by_argument")) false)
           (if (dv_has_key simulation "event") (rt_push parents (dv_get simulation "event"))
             (do (set ready false) (rt_push reasons "missing-paid-simulation-event")))
           (while (rt_lt i (rt_count candidates))
@@ -97,13 +108,20 @@
                 (dv_and (dvp_topic actor candidate) (dv_and (rt_eq (dv_find candidate "group" "") (dv_find hypothesis "group" ""))
                   (rt_eq (dv_truth mind (dv_find candidate "available_when" (dv_true))) "true"))))
                 (let (other (dvs_cached_model actor candidate))
-                  (if (rt_eq (dv_find other "status" "unknown") "inconsistent")
-                    (if (dv_has_key other "event") (rt_push parents (dv_get other "event")) (do (set ready false) (rt_push reasons "missing-competitor-simulation-event")))
+                  (if (dv_or (rt_eq (dv_find other "status" "unknown") "inconsistent")
+                    (if (dv_and (dvs_argument_valid actor) (dvs_argument_inputs_current actor))
+                      (dvs_factor_covered candidate (dv_get (dv_find (dv_get actor "argument") "factor_coverage" (dv_m2 "catalog" (rt_list) "certificates" (rt_list))) "certificates")) false))
+                    (if (dv_has_key other "event") (rt_push parents (dv_get other "event"))
+                      (if (dv_and (dvs_argument_valid actor) (dvs_argument_inputs_current actor)) (rt_push parents (dv_get (dv_get actor "argument") "id")) (do (set ready false) (rt_push reasons "missing-competitor-simulation-event"))))
                     (do (set ready false) (rt_push reasons (rt_cat "unresolved-competitor:" (dv_get candidate "id")))))) false)
                 (set i (rt_add i 1))))))))
       (if ready
         (if (dv_same (dv_find actor "ready_hypothesis" false) hypothesis) actor
           (do (dvs_event events "answer_ready" (dv_get actor "id") time parents
-            (dv_m3 "hypothesis" hypothesis "mind" (dv_get actor "mind") "question_id" (dv_get question "value")))
+            (dv_with (dv_with (dv_m4 "hypothesis" hypothesis "mind" (dv_get actor "mind") "question_id" (dv_find hypothesis "question" (dv_get question "value")) "actor_before" actor) "argument" (dv_find actor "argument" false)) "argument_question" (dv_find hypothesis "question" (dv_get question "value"))))
             (dv_with actor "ready_hypothesis" hypothesis)))
         (do (dvs_event events "why_not_ready" (dv_get actor "id") time parents (dv_m2 "reasons" reasons "hypothesis" hypothesis)) actor)))))
+
+(defn dvs_reason (actor events time parent)
+  (let (refreshed (dvs_refresh_derivations actor events time parent))
+    (if (dv_find refreshed "cognition_blocked" false) refreshed (dvs_reason_run refreshed events time parent))))

@@ -479,11 +479,42 @@
   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story" 340 "replay")))
 
 
-(defn c1_question_object ()
+(defn c1_raw_question_object ()
  (c1_state_object "question" (dv_with (dv_m4 "current" (dv_field "opening") "stage" (dv_field "opening")
   "original" (dv_field "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？")
   "awake_scope" (dv_field true)) "requires_evidence" (dv_with (dv_field true) "basis"
    (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))))))
+(axiom c1_truth_contract 1 (subject) (dv_true) (rt_list))
+(defn c1_register_speech_contract (world)
+ (let (basis (dv_single (c1_source "docs/design-standard.md" 462 "contract-8-no-deception"))
+       result (dv_adopt world (c1_method "contract-8.truth" (c1_truth_contract "demon")) "enforce" 1
+        (dv_single (c1_source "docs/design-standard.md" 462 "contract-8-no-deception"))))
+  (dv_with result "speech_contracts" (dv_single (dv_with (dv_with (dv_m4 "id" "contract-8" "subject" "demon"
+   "law_id" "contract-8.truth" "version" 1) "require_literal_truth" true) "basis" basis)))))
+(defn c1_handling_basis ()
+ (dv_pair (c1_source "docs/design-standard.md" 407 "authorized-memory-handling")
+  (c1_source "docs/design-standard.md" 452 "authorized-sealing-not-injury")))
+(defn c1_question_object ()
+ (let (world (dv_add_object (dv_world "question-definition" "physical" "") (c1_raw_question_object)))
+  (do
+   (set world (dv_store world (dv_ref "question" "state" "memory_removed") (dv_with (dv_field true) "basis" (c1_handling_basis))))
+   (set world (dv_store world (dv_ref "question" "state" "not_injury") (dv_with (dv_field true) "basis" (c1_handling_basis))))
+   (set world (dv_store world (dv_ref "question" "state" "outstanding_complete") (dv_field false)))
+   (dv_get (dv_get world "objects") "question"))))
+(axiom c1_original_question_open 1 (question)
+ (dv_fact (dv_ref question "state" "stage") "voice_source")
+ (dv_single (dv_assign (dv_ref question "state" "outstanding_complete") true)))
+(axiom c1_original_question_accept 1 (question)
+ (dv_fact (dv_ref question "state" "outstanding_complete") true)
+ (dv_single (dv_assign (dv_ref question "state" "outstanding_complete") false)))
+(defn c1_reask_question (actor)
+ (dv_with (c1_observe_as (c1_action (rt_cat actor ".reask_question") "talk"
+  (c1_at actor "hall") (dv_all (dv_pair (c1_at actor "hall") (c1_at "demon" "hall"))) ""
+  (c1_list_5 (dv_ref "question" "state" "current") (dv_ref "question" "state" "stage")
+   (dv_ref "question" "state" "original") (dv_ref "question" "state" "requires_evidence")
+   (dv_ref "question" "state" "outstanding_complete"))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story" 47 "clock_question.001"))
+  "testimony" "demon" 1) "repeatable" true))
 (defn c1_room_objects () (c1_list_8 (c1_local_object "hall") (c1_local_object "foyer") (c1_local_object "pantry")
  (c1_local_object "corridor") (c1_local_object "R05") (c1_local_object "R06") (c1_local_object "R07") (c1_local_object "R08")))
 (defn c1_add_objects (world objects)
@@ -507,7 +538,11 @@
     (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019"))))
    (set world (dv_adopt world (c1_method "demon.question" (c1_question_emit "question")) "enforce" 1
     (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004"))))
-   (set world (c1_adopt_protocol world)) world)))
+   (set world (dv_adopt world (c1_method "demon.original_question" (c1_original_question_open "question")) "enforce" 1
+    (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001"))))
+   (set world (dv_adopt world (c1_method "accept.original_q2_complete" (c1_original_question_accept "question")) "enforce" 1
+    (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))))
+   (set world (c1_adopt_protocol world)) (c1_register_speech_contract world))))
 (defn c1_subjective_world (actor)
  (let (mind (dv_with (dv_world (rt_cat "mind." actor) "mind" actor) "time" 480))
   (do (set mind (dv_add_object mind (c1_position actor "hall")))
@@ -553,11 +588,17 @@
     (c1_source "docs/design-standard.md" 1500 "approved-reversible-short-stay-interpretation")
     (c1_source "docs/design-standard.md" 674 "awake-self-literal-scope")
     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019"))))))
-(defn c1_person_policy (id)
+(defn c1_raw_person_policy (id)
  (let (policy (dv_with (dv_with (c1_player_policy) "information_weight" 12) "goals" (c1_public_goals)))
   (if (rt_eq id "detective") (c1_pragmatic_policy (dv_with policy "plan_depth" 6) true)
    (c1_pragmatic_policy (dv_with (dv_with policy "model_budget" 0) "plan_depth" 1) false))))
 
+(defn c1_person_policy (id)
+ (dv_with (c1_raw_person_policy id) "topic_bindings"
+  (dv_single (dv_m4 "topic" "original_q2_complete"
+   "heard_when" (dv_fact (dv_ref "question" "state" "outstanding_complete") true)
+   "completed_when" (dv_fact (dv_ref "question" "state" "outstanding_complete") false)
+   "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001"))))))
 (defn c1_investigation_actions (actor)
  (let (actions (c1_move_actions actor) inspect
   (c1_list_12 (c1_inspect_E1 actor) (c1_inspect_E2 actor) (c1_inspect_E3 actor) (c1_inspect_E4 actor)
@@ -573,6 +614,7 @@
    (if (rt_eq actor "detective") (rt_push actions (c1_replay_action actor)) false)
    (if (rt_eq actor "detective") (do (rt_push actions (c1_sole_test actor)) (rt_push actions (c1_touch_recall actor))) false)
    (rt_push actions (c1_identify_own_lens actor))
+   (rt_push actions (c1_reask_question actor))
    (c1_public_methods actions))))
 (defn c1_character (id dossier)
  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "id" id "mind" (c1_subjective_world id)
@@ -682,30 +724,68 @@
 (defn c1_speech (literal surface scope)
  (dv_with (dv_with (dv_with (dv_m4 "literal_ast" literal "referents" (rt_list) "scope" scope "time_anchor" "今晨醒来至当前发言")
  "surface_ref" surface) "presuppositions" (rt_list)) "implicature_candidates" (rt_list)))
-(defn c1_opening_action ()
+(defn c1_raw_opening_action ()
  (dv_with (dv_with (dv_with (c1_once (c1_action "demon.opening" "opening" (dv_fact (dv_ref "question" "state" "stage") "opening")
   (dv_fact (dv_ref "question" "state" "stage") "opening") "demon.opening"
   (dv_single (dv_ref "question" "state" "stage"))
   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019")))
- "speech" (dv_with (dv_with (c1_speech (dv_fact (dv_ref "question" "state" "awake_scope") true)
+ "speech" (dv_with (dv_with (c1_speech (dv_all (dv_list3 (dv_fact (dv_ref "question" "state" "awake_scope") true)
+    (dv_fact (dv_ref "question" "state" "memory_removed") true) (dv_fact (dv_ref "question" "state" "not_injury") true)))
    (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019") "awake_self")
    "surface" "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。") "implicature_candidates" (dv_single (dv_single (dv_pair "id" "short_stay")))))
- "listeners" (c1_list_4 "detective" "huo" "shen" "su")) "public_grants" (dv_single (dv_ref "question" "state" "awake_scope"))))
-(defn c1_question_action (stage surface first)
+ "listeners" (c1_list_4 "detective" "huo" "shen" "su")) "public_grants" (dv_list3 (dv_ref "question" "state" "awake_scope")
+  (dv_ref "question" "state" "memory_removed") (dv_ref "question" "state" "not_injury"))))
+(defn c1_authorized_speech (action)
+ (dv_with action "authority_truth_gate" (dv_m3 "required" true "contract_id" "contract-8"
+  "basis" (dv_single (c1_source "docs/design-standard.md" 462 "may-not-deceive-students")))))
+(defn c1_opening_action () (c1_authorized_speech (c1_raw_opening_action)))
+; Speech candidates share the one actual opening transition. Every fragment uses original words.
+(defn c1_opening_memory_fragment ()
+ (let (action (c1_opening_action) speech (dv_get (c1_opening_action) "speech"))
+  (dv_with (dv_with (dv_with action "id" "demon.opening.memory-only")
+   "speech" (dv_with (dv_with (dv_with speech "literal_ast"
+    (dv_all (dv_pair (dv_fact (dv_ref "question" "state" "memory_removed") true)
+     (dv_fact (dv_ref "question" "state" "not_injury") true))))
+    "surface" "记忆有缺，并非伤病，请勿惊惶。") "implicature_candidates" (rt_list)))
+   "public_grants" (dv_pair (dv_ref "question" "state" "memory_removed") (dv_ref "question" "state" "not_injury")))))
+(defn c1_opening_illegal_fragment ()
+ (let (action (c1_opening_memory_fragment) speech (dv_get (c1_opening_memory_fragment) "speech"))
+  (dv_with (dv_with action "id" "demon.opening.contrary") "speech"
+   (dv_with (dv_with speech "literal_ast" (dv_fact (dv_ref "question" "state" "not_injury") false))
+    "surface" "是伤病。"))))
+(defn c1_demon_listener_models ()
+ (let (listeners (c1_list_4 "detective" "huo" "shen" "su") result (rt_list) index 0
+       basis (c1_handling_basis))
+  (do (while (rt_lt index (rt_count listeners))
+   (do (rt_push result (dv_pair (rt_at listeners index)
+     (c1_opening_listener_model (rt_at listeners index) false basis)))
+    (set index (rt_add index 1)))) result)))
+(defn c1_demon_policy ()
+ (dv_with (dv_with (c1_player_policy) "hypotheses" (rt_list)) "communication_goals"
+  (dv_single (dv_with (dv_with (dv_with (dv_m4 "id" "opening-purpose"
+   "interpretation_id" "short_stay" "desired_status" "accepted" "weight" 1)
+   "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
+   "available_when" (dv_fact (dv_ref "question" "state" "stage") "opening"))
+   "basis" (dv_pair (c1_source "docs/design-standard.md" 419 "speaker-own-purpose-to-make-listeners-want-to-ask")
+    (c1_source "docs/design-standard.md" 1500 "approved-defeasible-pragmatic-purpose"))))))
+(defn c1_raw_question_action (stage surface first)
  (dv_with (dv_with (dv_with (c1_once (c1_action (rt_cat "demon.question." stage) (if first "question" "receive_question")
   (dv_fact (dv_ref "question" "state" "stage") stage)
   (dv_fact (dv_ref "question" "state" "stage") stage)
-  (if first "demon.question" "") (dv_single (dv_ref "question" "state" "stage")) surface))
+  (if first "demon.question" (if (rt_eq stage "voice_source") "demon.original_question" "")) (dv_single (dv_ref "question" "state" "stage")) surface))
  "speech" (dv_with (dv_with (c1_speech (dv_true) surface "正式公开问题；问句不是历史事实断言") "utterance_type" "question") "surface" (rt_cat (c1_question_text stage) " 每一问，说一句结论，再拿出一件撑得住它的东西。")))
  "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
- "public_grants" (dv_list3 (dv_ref "question" "state" "current") (dv_ref "question" "state" "original")
-  (dv_ref "question" "state" "requires_evidence"))))
+ "public_grants" (c1_list_4 (dv_ref "question" "state" "current") (dv_ref "question" "state" "original")
+  (dv_ref "question" "state" "requires_evidence") (dv_ref "question" "state" "outstanding_complete"))))
+(defn c1_question_action (stage surface first)
+ (c1_authorized_speech (c1_raw_question_action stage surface first)))
 (defn c1_character_demon ()
  (let (mind (dv_with (dv_world "mind.demon" "mind" "demon") "time" 480))
   (do (set mind (dv_add_object mind (c1_position "demon" "hall")))
    (set mind (dv_add_object mind (c1_question_object)))
-   (dv_with (dv_with (dv_m4 "id" "demon" "mind" mind "policy" (dv_with (c1_player_policy) "hypotheses" (rt_list))
-    "actions" (c1_list_5 (c1_opening_action)
+   (set mind (dv_with mind "listener_models" (c1_demon_listener_models)))
+   (dv_with (dv_with (dv_m4 "id" "demon" "mind" mind "policy" (c1_demon_policy)
+    "actions" (c1_list_7 (c1_opening_action) (c1_opening_memory_fragment) (c1_opening_illegal_fragment)
       (c1_question_action "prompt" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004") true)
       (c1_question_action "voice_source" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001") false)
       (c1_question_action "words" (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 30 "answer_q3.001") false)
@@ -722,11 +802,11 @@
       (do (rt_push result (dv_binding (rt_at objects j) (rt_at objects j) (rt_at people i))) (set j (rt_add j 1))))
       (set i (rt_add i 1)))) result)))
 (defn c1_binding_gaps () (c1_list_5
- "Strict historical >=3days has no first-chapter source; withdraw insufficient adoption, never infer notP"
- "Full six-variable counterfactual historical replay is not yet migrated; simulation unknown must remain unknown"
- "Original question2 complete heard-at-latching temporal evidence is not inferred just from answer subquestion2"
- "Acoustic action records actually executing the original trial and original loss testimony, not a full frequency-path simulator"
- "Shared reversible short-stay bridge is hearing-gated; demon listener prediction still lacks grounded listener models"))
+ "No quantified >=3-day evidence; withdraw insufficient adoption without asserting its negation"
+ "Historical wake latency is unknown; representative model coordinates are not a measured wake timestamp"
+ "Original Q2 is distinct from literal V3; only actual paid model argument and its real support may satisfy it"
+ "Historical route coordinates use existing edge/speed values; reaction/propagation real durations remain uncalibrated"
+ "Demon listener models are independent provisional estimates; actual listener understanding may differ"))
 (defn c1_scenario_native ()
  (dv_with (dv_with (dv_with (dv_with (dv_m4 "format" "dv-session-v1" "id" "chapter1-native-authoring"
   "physical" (c1_physical_world) "actors" (c1_list_5 (c1_character_demon) (c1_character_detective)
@@ -767,7 +847,7 @@
  (dv_with (dv_with (dv_with (dv_with (dv_with data "report_labels" (c1_report_labels)) "game_duration_budget" 360) "capability_actor" "detective")
   "binding_gaps" (c1_binding_gaps))
   "budget_scope" "Detective cap48 from source; NPC cap48 engineering termination only; global cap240 sums actual caps, no cost or clock relaxation"))
-(defn dvs_scenario_base () (c1_active_configuration (c1_scenario_native)))
+(defn dvs_scenario_base () (c1_active_configuration (c1_hist_install_scene (c1_scenario_native))))
 
 (defn c1_question_text (stage)
  (if (rt_eq stage "prompt") "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"
