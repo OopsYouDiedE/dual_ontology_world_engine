@@ -15,6 +15,9 @@ def main():
         if json.loads((ROOT/args.seal).read_bytes())!=manifest:raise RuntimeError('Committed seal altered')
         changed=[n for n,h in manifest['files'].items() if not (ROOT/n).is_file() or sha(ROOT/n)!=h]
         if changed:raise RuntimeError('Protected sources/runtime changed: '+str(changed))
+        names=subprocess.check_output(['git','ls-files','-z','--cached','--others','--exclude-standard'],cwd=ROOT).decode().split('\0')
+        added=[n for n in names if n and (n.startswith(('csharp/','godot_csharp/','tools/','docs/')) or n=='AGENTS.md') and (ROOT/n).is_file() and n not in manifest['files']]
+        if added:raise RuntimeError('Unsealed source added: '+str(added))
     check()
     out=ROOT/'artifacts/detective-agent/chapter2-20261011/timing-optimization/branch-trials'/args.name
     out.mkdir(parents=True,exist_ok=False)
