@@ -1,0 +1,74 @@
+[
+  {
+    "label": "main-causal-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-postprocess-r1\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\main-causal\\bundle.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\main-causal\\Program.cs"
+    ],
+    "start_monotonic_ns": 251664687000000,
+    "exit": 0,
+    "end_monotonic_ns": 251666312000000,
+    "duration_seconds": 1.625
+  },
+  {
+    "label": "main-causal-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\main-causal\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-m:1"
+    ],
+    "start_monotonic_ns": 251666328000000,
+    "exit": 0,
+    "end_monotonic_ns": 251670265000000,
+    "duration_seconds": 3.937
+  },
+  {
+    "label": "readable-report-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-postprocess-r1\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\readable-report\\bundle.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\readable-report\\Program.cs"
+    ],
+    "start_monotonic_ns": 251670281000000,
+    "exit": 0,
+    "end_monotonic_ns": 251670921000000,
+    "duration_seconds": 0.64
+  },
+  {
+    "label": "readable-report-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\readable-report\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-m:1"
+    ],
+    "start_monotonic_ns": 251670937000000,
+    "exit": 0,
+    "end_monotonic_ns": 251674000000000,
+    "duration_seconds": 3.063
+  },
+  {
+    "label": "main-causal-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\main-causal\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\inputs/manifest-enabled.json",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1/trace-enabled.json",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-judgment-r1\\inputs/chapter1-oracle.json"
+    ],
+    "start_monotonic_ns": 251674015000000,
+    "exit": 0,
+    "end_monotonic_ns": 251715218000000,
+    "duration_seconds": 41.203
+  }
+]

@@ -22,6 +22,15 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def pair_record(value):
+    """Encode opaque platform metadata for DV's array-based persistence ABI."""
+    if isinstance(value, dict):
+        return [[k, pair_record(v)] for k, v in value.items()]
+    if isinstance(value, (list, tuple)):
+        return [pair_record(v) for v in value]
+    return value
+
+
 def main():
     global ROOT, LANGUAGE
     workspace = ROOT
