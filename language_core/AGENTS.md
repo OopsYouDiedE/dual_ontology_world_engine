@@ -52,3 +52,7 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 ## 自动验证设计的当前授权
 
 用户 2026-10-12 明确授权开始正式自动验证设计；本轮仅落盘 `verification/DESIGN.md` 和模块边界，不实现或运行验收器，不恢复独立复评。拟议主程序及最多三个补充程序全部用 DV，C# ABI 仅平台 I/O，章节实例与答案只由 `.story` 装载。`verification/` 负责 manifest、因果记录、正式会话接口、只读判定、代价审计和报告的通用合同，拟议接口不得冒称现有能力。后续实现与运行授权分别记录，交付持续使用 `artifacts/partial-bootstrap-core/`。
+
+## Temporal model and action-cost module
+
+`core/90-action-cost.dv` provides DV quotes, resource reservations, settlement and actual action-time advancement; model work units are separate from frozen method-call charges. `verification/session/25-simulation.dv` runs hypothetical laws on local model time, compares explicitly modeled times with subjective observations, and rechecks frozen paid predictions after new subjective evidence without rerunning effects. Total model expansion and frozen method work limits are recorded independently. Engineering evidence is under `artifacts/partial-bootstrap-core/simulation-engineering-r10/`; it does not establish chapter causal outcomes or game acceptance. Generated C# remains compiler output.
