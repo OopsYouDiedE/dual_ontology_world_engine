@@ -42,10 +42,9 @@
    - `ActionRuntime`：两阶段事务机制（`Prepare` 与 `Commit`），状态变更仅在提交阶段生效；支持普通与执行生命周期绑定的状态租约。
    - `SimulationSession`：协调主动/自主动作，管理条件挂起与幂等清理。
 
-6. **主体决策与行为学习（SubjectiveAgent.cs, SubjectiveAgentState.cs, SubjectiveDecision.cs, SocialSystem.cs, ActionLearning）**：
-   - `SubjectiveAgent`：玩家席位、NPC 与其他主体共用的语义行动政策；输入为本人快照、推理预算、动机与可见方法机会。
-   - `SubjectiveAgentState` / `SubjectiveAgentStorage`：持久化主体的经历、已知方法、证明基线与回执；状态按变更片段原子持久化，支持版本化编解码。
-   - `ActionLearning`：负责 AST 与语义 offer 的双向转换，转接共同决策政策；真实阶段由宿主提交稳定回执。
+6. **主体决策与行为学习（SubjectiveDecision.cs, SocialSystem.cs, ActionLearning）**：
+   - 当前按用户要求恢复 `5b8c7dbe` 的 r20 时期生产实现；未提交的 `SubjectiveAgent` 与存储改写已封存并移出活动源码，不混用两版接口。
+   - `SubjectiveDecision` 提供基于本人认知、动机与真实反馈的决策；`ActionLearning` 适配方法 AST 与经历。旧版结构不作为满足设计规范的证明，优化必须继续审查调用者与输入边界。
    - `SocialSystem`：基于主体私有认知展开社交请求评估与相合度计算，不直接依据客观现实。
    - `SubjectRead` / `SnapshotConsumers`：单次求值复用同一不可变快照读图，保证评估一致性。
 
@@ -66,10 +65,8 @@
 - `dotnet run --project csharp/CognitionRegression.csproj -c Release`：身份、原子认知、快照与编解码排错。
 - `dotnet run --project csharp/SubjectiveReasoningRegression.csproj -c Release`：主体推理、多步深度与假设隔离排错。
 - `dotnet run --project csharp/SubjectiveDecisionRegression.csproj -c Release`：主体决策反馈、经历 wire 与存档恢复排错。
-- `dotnet run --project csharp/SubjectiveAgentRegression.csproj -c Release`：主体 Agent 语义机会、回执幂等与状态 wire 排错。
 
 ## 可选同步性能诊断
 
-- `CorePerformance.Begin(stage)` 提供线程局部的可选诊断作用域；无显式订阅时不产生开销，不改变主体状态。
-- 覆盖主体读图构建、快照校验、推演初始化、决策评分与状态持久化等关键阶段。
+- r20 恢复基线不包含新版 `CorePerformance` 诊断器，不再调用该接口。后续新增采样须独立审查，不影响认知、决策与执行。
 - 仅供排查性能热点，不进入存档或公开状态；阶段耗时不能简单相加为总 CPU，不作为整体帧率改善证明。

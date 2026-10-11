@@ -19,7 +19,7 @@
    - `Host/Main.tscn` 与 `Host/GameEngine.cs` 是唯一胶水，负责双向数据转发：将 Core 演算结果与回执转为纯数据派发给 UI 和现场，将玩家/坐席操作转为 Core 意图交由世界引擎裁决。
 
 2. **主体共同决策与适配**：
-   - 正式主体（玩家席位与 NPC）统一通过 Core `SubjectiveAgent` 共享决策政策。
+   - 当前生产源码按用户要求恢复 `5b8c7dbe` 的 r20 时期提交；使用该版 Core 主体决策与宿主坐席适配，未提交的新版 `SubjectiveAgent`/Diagnostics 合同封存后移出。设计合规需另行核对，不因旧版推进较快而推定合格。
    - 宿主（`PlayerController`、`AgentPilot`、`ActionLearning`）仅负责将界面/现场当前可见的选项与操作转换为语义候选，并将真实执行阶段（开始、接触、完成、失败、无进展、中断）反馈给 Core，回执保持幂等。
    - 宿主严禁按席位另设行为评分或主观偏好，角色差异完全由 `.story` 声明的个人动机、已知信息与能力预算决定。
 
@@ -108,7 +108,7 @@
 - `godot --headless --path godot_csharp --script res://scenes/Shared/check/check_session_save.gd`：保存与恢复底层检查。
 - `dotnet run --project godot_csharp/scenes/Shared/check/SaveCheck/SaveCheck.csproj -c Release -- write <tmp_dir>`：纯 .NET 保存机制排错。
 - `dotnet run --project godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj -c Release`：玩家输入适配器边界排错。
-- `dotnet run --project godot_csharp/tests/UnifiedHostCheck`：宿主生命周期机制排错。
+- 新版 `UnifiedHostCheck` 与新增合同检查已随新版源码封存，不用于此恢复基线。
 
 ## 六、严禁硬编码剧情
 

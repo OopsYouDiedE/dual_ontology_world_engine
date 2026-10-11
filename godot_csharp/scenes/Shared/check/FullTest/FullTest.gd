@@ -14,6 +14,7 @@ const ARGS := ["--output", "--seed", "--time-scale", "--max-seconds", "--no-prog
 var pilot: Node
 var out_dir := ""
 var trace: FileAccess
+var milestone_trace: FileAccess
 var started := 0
 var progressed := 0
 var last_shot := 0
@@ -34,6 +35,7 @@ var perf_phases := {}
 
 func _process(_delta: float) -> void:
 	if started == 0 or finished: return
+	_capture_milestones()
 	var now := Time.get_ticks_usec()
 	if perf_last_frame == 0:
 		perf_last_frame = now
@@ -86,6 +88,7 @@ func _run() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(out_dir.path_join("shots"))
 	trace = FileAccess.open(out_dir.path_join("trajectory.jsonl"), FileAccess.WRITE)
+	milestone_trace = FileAccess.open(out_dir.path_join("milestone-progress.jsonl"), FileAccess.WRITE)
 	wall_limit = float(settings.get("--max-seconds", "1800"))
 	idle_limit = float(settings.get("--no-progress-seconds", "60"))
 	shot_every = float(settings.get("--shot-seconds", "5"))
@@ -184,6 +187,8 @@ func _on_stopped(reason: String, summary: Dictionary) -> void:
 	summary["screenshots"] = shots + 1
 	_shot("stop")
 	_record("stop", summary)
+	_capture_milestones()
+	if milestone_trace != null: milestone_trace.close()
 	trace.close()
 	var file := FileAccess.open(out_dir.path_join("summary.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(summary, "\t"))
@@ -211,3 +216,10 @@ func _record(kind: String, value: Variant) -> void:
 	sequence += 1
 	trace.store_line(JSON.stringify({"sequence": sequence, "elapsed_ms": Time.get_ticks_msec() - started, "kind": kind, "value": value}))
 	trace.flush()
+
+# Passive reader; never supplied to the detective or input path.
+func _capture_milestones() -> void:
+	if milestone_trace == null or not milestone_trace.is_open(): return
+	var data = JSON.parse_string(main.engine.ReadMilestoneProgressJson())
+	milestone_trace.store_line(JSON.stringify({"elapsed_ms": Time.get_ticks_msec() - started, "value": data}))
+	milestone_trace.flush()
