@@ -44,6 +44,8 @@ PlayerCognition Cognition(int truth, bool nested = false)
 PublicMenuScopeCases.Run(Check);
 InteractionReceiptCases.Run(Check);
 InformationContextCases.Run(Check);
+FormEfficiencyCases.Run(Check);
+ScopedDeferredAnswerCases.Run(Check);
 Check("narrow_port", typeof(IPlayerCandidatePort).GetMethods().Select(m => m.Name).SequenceEqual(["Submit"]));
 Check("controller_has_no_engine_objects", typeof(SubjectivePlayerController).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
     .All(f => f.FieldType != typeof(WorldSession) && f.FieldType != typeof(GameSession) && f.FieldType != typeof(WorldRuntime)));
@@ -95,7 +97,9 @@ Check("form_uses_visible_values", Text(submitted.Single(), "kind") == "form" && 
 var tabForm = Event("form", ("presentation_id", "private-tab-form"), ("layout", "tabs"),
     ("fields", new object[] {
         new Dictionary<string, object?> { ["id"] = "private-first", ["kind"] = "choice", ["heading"] = "first-heading", ["options"] = new object[] { Option("A1", "first-option"), Option("A2", "first-other") } },
-        new Dictionary<string, object?> { ["id"] = "private-second", ["kind"] = "choice", ["heading"] = "second-heading", ["options"] = new object[] { Option("B1", "second-option") } } }),
+        new Dictionary<string, object?> { ["id"] = "private-second", ["kind"] = "choice", ["heading"] = "second-heading", ["options"] = new object[] { Option("B1", "second-option") } },
+        new Dictionary<string, object?> { ["id"] = "private-third", ["kind"] = "choice", ["heading"] = "third-heading", ["value"] = "C1", ["options"] = new object[] { Option("C1", "third-option") } },
+        new Dictionary<string, object?> { ["id"] = "private-fourth", ["kind"] = "choice", ["heading"] = "fourth-heading", ["value"] = "D1", ["options"] = new object[] { Option("D1", "fourth-option") } } }),
     ("actions", new object[] {
         new Dictionary<string, object?> { ["id"] = "tab-a", ["label"] = "page A", ["tab"] = "private-first" },
         new Dictionary<string, object?> { ["id"] = "tab-b", ["label"] = "page B", ["tab"] = "private-second" },

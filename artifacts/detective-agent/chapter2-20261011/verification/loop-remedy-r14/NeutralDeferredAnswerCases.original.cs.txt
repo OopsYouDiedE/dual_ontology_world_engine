@@ -1,0 +1,314 @@
+using System.Collections.Immutable;
+using System.Text.Json;
+using DualOntologyWorldEngine.Core;
+using DualOntologyWorldEngine.Story;
+using static DualOntologyWorldEngine.Story.ChapterEvents;
+
+// Independent neutral public-input regression. No chapter content or answer table is loaded.
+internal static class NeutralDeferredAnswerCases
+{
+    private const string Entrance = "neutral-answer-entrance";
+    private const string OtherEntrance = "neutral-other-entrance";
+    private const string Space = "neutral-answer-space";
+    private const string Statement = "neutral-statement";
+    private const string Material1 = "neutral-material-one";
+    private const string Material2 = "neutral-material-two";
+
+    private static FrozenConditionV1 Premise(PlayerCognition cognition, string suffix) =>
+        new FrozenConditionV1.Tagged(new FrozenNounV1.Reference(cognition.Actor), new("neutral-required-" + suffix), 1);
+    private static FrozenConditionV1 Goal(PlayerCognition cognition) =>
+        new FrozenConditionV1.All([Premise(cognition, "one"), Premise(cognition, "two")]);
+    private static PlayerCognition Add(PlayerCognition held, string name, ProjectionKind kind,
+        FrozenConditionV1 claim, Truth acceptance, params Tag[] markers)
+    {
+        var material = new FrozenProjectionV1(new(held.Snapshot.SubjectWorld, Guid.NewGuid()), name,
+            kind, Truth.True, null, markers.ToImmutableDictionary(t => t, _ => 1), [], [],
+            [new(new FrozenConditionV1.Constant(Truth.True), RuleMode.Infer,
+                new FrozenEffectV1.Think(claim), 1, acceptance)], null,
+            [new(new("acquired.neutral." + name), name, name)], null);
+        return held with { Snapshot = held.Snapshot with { Projections = held.Snapshot.Projections.Add(material) } };
+    }
+    private static PlayerCognition Initial()
+    {
+        var runtime = new WorldRuntime();
+        using var simulation = new SimulationSession(runtime);
+        var world = new CoreScriptWorld(runtime, simulation);
+        var actor = world.DefineCharacter("neutral.answer.actor", "neutral-actor",
+            world.DefineSpace("neutral.answer.room", "neutral-room"));
+        var snapshot = ((ContractResult<CognitionSnapshotV1>.Success)actor.Soul.World.CaptureSnapshot()).Value;
+        var cognition = new PlayerCognition(snapshot, actor.Self.SubjectId!.Value);
+        cognition = Add(cognition, "neutral-question", ProjectionKind.Concept, Goal(cognition), Truth.Unknown, AcquiredPropositions.Question);
+        cognition = Add(cognition, Statement, ProjectionKind.Concept, Goal(cognition), Truth.Unknown);
+        cognition = Add(cognition, Entrance, ProjectionKind.Concept, Goal(cognition), Truth.Unknown, AcquiredPropositions.Opportunity);
+        cognition = Add(cognition, OtherEntrance, ProjectionKind.Concept, Goal(cognition), Truth.Unknown, AcquiredPropositions.Opportunity);
+        cognition = Add(cognition, Material1, ProjectionKind.Object, Premise(cognition, "one"), Truth.True, AcquiredPropositions.Presentable);
+        return Add(cognition, Material2, ProjectionKind.Object, Premise(cognition, "two"), Truth.Unknown, AcquiredPropositions.Presentable);
+    }
+    private static PlayerCognition Accepted(PlayerCognition held, bool presentable = true) => held with
+    {
+        Snapshot = held.Snapshot with { Projections = [.. held.Snapshot.Projections.Select(p => p with
+        {
+            Rules = p.Name == Material2 ? [.. p.Rules.Select(r => r with { Acceptance = Truth.True })] : p.Rules,
+            Tags = !presentable ? p.Tags.Remove(AcquiredPropositions.Presentable) : p.Tags
+        })] }
+    };
+    private static PlayerCognition NoQuestion(PlayerCognition held) => held with
+    { Snapshot = held.Snapshot with { Projections = [.. held.Snapshot.Projections.Select(p => p with { Tags = p.Tags.Remove(AcquiredPropositions.Question) })] } };
+    private static SubjectivePlayerController Controller(bool preferEntrance = false, int expansions = 4096) => new(new()
+    {
+        Actor = "neutral.answer.actor", Name = "neutral-actor", Mode = "agent",
+        Rules = [new() { Mode = "prefer", Kind = "untried", Weight = 6 },
+            .. preferEntrance ? new ControllerRuleDefinition[] { new() { Mode = "prefer", Kind = "interact", Weight = 200, LabelContains = Entrance } } : []],
+        Reasoning = new() { Depth = 8, Expansions = expansions, Hypotheses = 128, ArgumentWeight = 16, InformationWeight = 8 }
+    }, 23);
+    private static PublicPlayerCandidate Place(string token, string label = Entrance) =>
+        new(token, label, "interact", false) { Location = new(100, 100) };
+    private static PublicPlayerObservation At(long turn, string space, params PublicPlayerCandidate[] candidates) =>
+        new(turn, [], [], [.. candidates], false) { Field = new(space, new(100, 100)) };
+    private static void Contact(SubjectivePlayerController controller, PlayerCognition cognition, string label = Entrance,
+        string space = Space, bool reached = true)
+    {
+        var choice = controller.Decide(At(1, space, Place("neutral-contact-" + label, label)), cognition);
+        if (choice.Token is null || !controller.CompleteInteraction(choice.Token, reached))
+            throw new InvalidOperationException("Neutral contact did not accept its own public token");
+    }
+    private static Dictionary<string, object?> Field(string id, string purpose, string name, bool selected) => new()
+    {
+        ["id"] = id, ["kind"] = "choice", ["heading"] = "neutral-field-" + id,
+        ["purpose"] = purpose, ["value"] = selected ? id + "-value" : "",
+        ["options"] = new object[] { Option(id + "-value", name) }
+    };
+    private static Dictionary<string, object?> Form(bool selected = false, bool ordinary = false, bool evidenceOnly = false)
+    {
+        var fields = new List<object>();
+        if (!evidenceOnly) fields.Add(Field("statement", ordinary ? "" : "statement", ordinary ? "neutral-ordinary-value" : Statement, selected));
+        fields.Add(Field("evidence", ordinary ? "" : "evidence", Material1, selected));
+        return Event("form", ("presentation_id", "neutral-private-form"), ("layout", "tabs"),
+            ("header", Event("header", ("question", "neutral-visible-question"))), ("fields", fields.ToArray()),
+            ("actions", new object[]
+            {
+                new Dictionary<string, object?> { ["id"] = "cancel", ["label"] = "neutral-cancel" },
+                new Dictionary<string, object?> { ["id"] = "submit", ["label"] = "neutral-submit",
+                    ["requires"] = evidenceOnly ? new object[] { "evidence" } : new object[] { "statement", "evidence" } }
+            }));
+    }
+    private static (PlayerDecision Decision, PublicPlayerObservation After, IReadOnlyDictionary<string, object?>? Input) FormDecision(
+        SubjectivePlayerController controller, PlayerCognition cognition, Dictionary<string, object?> form, string space = Space)
+    {
+        var port = new PlayerCandidateSession(_ => [Event("close")], "neutral-actor");
+        port.Locate(new(space, new(100, 100)));
+        var observation = port.Observe([form]);
+        var decision = controller.Decide(observation, cognition);
+        var after = decision.Token is null ? observation : port.Submit(new(decision.Token));
+        return (decision, after, port.LastInput);
+    }
+    private static PlayerDecision EntranceDecision(SubjectivePlayerController controller, PlayerCognition cognition,
+        string token, string label = Entrance, string space = Space) => controller.Decide(At(10, space,
+            Place(token, label), new("neutral-wait-" + token, "neutral-wait", "wait", false)), cognition);
+    private static PlayerAlternative EntranceAlternative(PlayerDecision decision, string token) =>
+        decision.Alternatives.Single(a => a.Token == token);
+    private static bool Inquiry(PlayerAlternative alternative) => alternative.Basis.Any(b =>
+        b.StartsWith("seek_current_question_material:", StringComparison.Ordinal)
+        || b.StartsWith("seek_unknown_acquired_proposition:", StringComparison.Ordinal)
+        || b.StartsWith("expected_information_at_remembered_goal:", StringComparison.Ordinal)
+        || b.StartsWith("examine_unexamined_for_open_question", StringComparison.Ordinal));
+    private static bool Return(PlayerAlternative alternative) => alternative.Basis.Any(b =>
+        b.StartsWith("return_with_personal_answer:", StringComparison.Ordinal));
+    private static bool Waiting(PlayerAlternative alternative) => alternative.Basis.Contains("observed_answer_still_missing_support");
+    private static void Observe(string name, object value) =>
+        Console.WriteLine("OBSERVATION deferred-answer " + name + " " + JsonSerializer.Serialize(value));
+
+    public static void Run(Action<string, bool> check)
+    {
+        var results = new List<(string Name, bool Holds)>();
+        void Record(string name, bool holds) => results.Add(("deferred_" + name, holds));
+        var held = Initial();
+        var complete = Accepted(held);
+        var partialProof = new SubjectiveReasoner(held.Snapshot, held.Actor, new(8, 4096, 128)).Prove(Goal(held));
+        var completeProof = new SubjectiveReasoner(complete.Snapshot, complete.Actor, new(8, 4096, 128)).Prove(Goal(complete));
+        Observe("neutral-proof-boundaries", new { partialProof, completeProof });
+        Record("fixture_partial_support_is_unknown_and_full_support_is_complete", partialProof.Value == Truth.Unknown
+            && completeProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false });
+
+        var deferred = Controller();
+        Contact(deferred, held);
+        var cancelled = FormDecision(deferred, held, Form());
+        Observe("unsupported-public-form-cancel", cancelled.Decision);
+        Record("no_believed_statement_does_not_randomly_fill_evidence", cancelled.Decision.Token is not null
+            && cancelled.Input is not null && Text(cancelled.Input, "action") == "cancel"
+            && !cancelled.Decision.Alternatives.Any(a => a.Kind == "form_field")
+            && !Map(cancelled.Input, "values").Any());
+        Record("hypothesis_comparison_does_not_become_a_believed_answer", cancelled.Decision.HypothesesCompared > 0
+            && cancelled.Decision.Arguments.All(a => a.Value != "True"));
+        var waiting = EntranceDecision(deferred, held, "waiting");
+        var waitingEntrance = EntranceAlternative(waiting, "waiting");
+        Observe("incomplete-same-entrance", waiting);
+        Record("cancelled_answer_entry_keeps_candidate_without_inquiry_or_return_reward",
+            Waiting(waitingEntrance) && !Inquiry(waitingEntrance) && !Return(waitingEntrance));
+        deferred.CompleteInteraction("waiting", false);
+
+        var unrelated = Add(held, "neutral-unrelated-proof", ProjectionKind.Object, Premise(held, "other"), Truth.True,
+            AcquiredPropositions.Presentable);
+        unrelated = Add(unrelated, "neutral-unrelated-question", ProjectionKind.Concept, Premise(held, "other"), Truth.Unknown,
+            AcquiredPropositions.Question);
+        var stillWaiting = EntranceDecision(deferred, unrelated, "unrelated");
+        Observe("unrelated-new-proposition-and-question", stillWaiting);
+        Record("unrelated_new_proof_and_current_question_do_not_refresh_waiting_entrance",
+            Waiting(EntranceAlternative(stillWaiting, "unrelated")) && !Inquiry(EntranceAlternative(stillWaiting, "unrelated"))
+            && !Return(EntranceAlternative(stillWaiting, "unrelated")));
+        deferred.CompleteInteraction("unrelated", false);
+
+        var memoryOnly = Accepted(held, presentable: false);
+        var withoutMaterial = EntranceDecision(deferred, memoryOnly, "memory-only");
+        Observe("complete-proof-without-presentable-material", withoutMaterial);
+        Record("complete_memory_proof_without_presentable_material_keeps_waiting",
+            Waiting(EntranceAlternative(withoutMaterial, "memory-only")) && !Inquiry(EntranceAlternative(withoutMaterial, "memory-only"))
+            && !Return(EntranceAlternative(withoutMaterial, "memory-only")));
+        deferred.CompleteInteraction("memory-only", false);
+
+        var denied = Add(held, "neutral-denial", ProjectionKind.Object, new FrozenConditionV1.Not(Premise(held, "two")), Truth.True,
+            AcquiredPropositions.Presentable);
+        var contradicted = Add(complete, "neutral-conflict", ProjectionKind.Object, new FrozenConditionV1.Not(Premise(held, "two")), Truth.True,
+            AcquiredPropositions.Presentable);
+        foreach (var pair in new[] { (Name: "denied", Cognition: denied), (Name: "conflicted", Cognition: contradicted) })
+        {
+            var response = EntranceDecision(deferred, pair.Cognition, pair.Name);
+            Observe(pair.Name + "-support", response);
+            Record(pair.Name + "_support_does_not_restore_answer_return", Waiting(EntranceAlternative(response, pair.Name))
+                && !Return(EntranceAlternative(response, pair.Name)) && !Inquiry(EntranceAlternative(response, pair.Name)));
+            deferred.CompleteInteraction(pair.Name, false);
+        }
+
+        var recovered = EntranceDecision(deferred, complete, "recovered");
+        Observe("related-complete-proof-and-presentable-material", recovered);
+        Record("related_complete_presentable_support_restores_necessary_return", recovered.Token == "recovered"
+            && !Waiting(EntranceAlternative(recovered, "recovered")) && Return(EntranceAlternative(recovered, "recovered")));
+        Record("recovered_entry_uses_real_contact_receipt", deferred.CompleteInteraction("recovered", true));
+        var committed = FormDecision(deferred, complete, Form(selected: true));
+        Observe("normal-complete-commit", committed.Decision);
+        Record("complete_public_selection_commits_through_formal_port", committed.Input is not null
+            && Text(committed.Input, "action") == "submit" && Text(Map(committed.Input, "values"), "statement") == "statement-value"
+            && Text(Map(committed.Input, "values"), "evidence") == "evidence-value");
+        var reopenedAfterCommit = EntranceDecision(deferred, held, "after-commit-retraction");
+        Observe("proof-retracted-after-normal-commit", reopenedAfterCommit);
+        Record("normal_commit_clears_waiting_if_subject_later_loses_support", !Waiting(EntranceAlternative(reopenedAfterCommit, "after-commit-retraction"))
+            && Inquiry(EntranceAlternative(reopenedAfterCommit, "after-commit-retraction")));
+
+        var menuController = Controller();
+        Contact(menuController, held);
+        FormDecision(menuController, held, Form());
+        var menu = menuController.Decide(At(20, Space, new("neutral-answer-menu", "neutral-answer-option", "menu", false, Purpose: "argument"),
+            new("neutral-menu-close", "neutral-close", "menu", false, Purpose: "close")), complete);
+        Record("answer_menu_restores_return_when_actual_required_support_is_ready", Return(EntranceAlternative(menu, "neutral-answer-menu"))
+            && !Waiting(EntranceAlternative(menu, "neutral-answer-menu")));
+        var missingMenuController = Controller();
+        Contact(missingMenuController, held);
+        FormDecision(missingMenuController, held, Form());
+        var missingMenu = missingMenuController.Decide(At(21, Space,
+            new("neutral-missing-answer-menu", "neutral-answer-option", "menu", false, Purpose: "argument"),
+            new("neutral-missing-menu-close", "neutral-close", "menu", false, Purpose: "close")), memoryOnly);
+        Observe("answer-menu-with-memory-only-support", missingMenu);
+        Record("waiting_answer_menu_has_no_return_reward", Waiting(EntranceAlternative(missingMenu, "neutral-missing-answer-menu"))
+            && !Return(EntranceAlternative(missingMenu, "neutral-missing-answer-menu")));
+
+        var preferred = Controller(preferEntrance: true);
+        Contact(preferred, held);
+        FormDecision(preferred, held, Form());
+        var stillPreferred = EntranceDecision(preferred, held, "preferred-waiting");
+        Observe("authored-preference-still-selects-waiting-entry", stillPreferred);
+        Record("declared_preference_can_still_choose_waiting_ordinary_candidate", stillPreferred.Token == "preferred-waiting"
+            && Waiting(EntranceAlternative(stillPreferred, "preferred-waiting"))
+            && stillPreferred.Basis.Contains("authored_rule:prefer:interact:200:public_label=" + Entrance));
+
+        var isolated = Controller();
+        Contact(isolated, held);
+        FormDecision(isolated, held, Form());
+        var other = EntranceDecision(isolated, held, "other-entry", OtherEntrance);
+        Observe("other-entry-isolated", other);
+        Record("different_public_entry_keeps_its_investigation_reward", !Waiting(EntranceAlternative(other, "other-entry"))
+            && Inquiry(EntranceAlternative(other, "other-entry")));
+        isolated.CompleteInteraction("other-entry", false);
+        var otherSpace = EntranceDecision(isolated, held, "other-space", space: "neutral-other-space");
+        Observe("same-entry-in-other-space-isolated", otherSpace);
+        Record("same_entry_in_different_space_keeps_its_investigation_reward", !Waiting(EntranceAlternative(otherSpace, "other-space"))
+            && Inquiry(EntranceAlternative(otherSpace, "other-space")));
+        isolated.CompleteInteraction("other-space", false);
+        var back = EntranceDecision(isolated, held, "back-original");
+        Record("returning_original_space_keeps_original_waiting_state", Waiting(EntranceAlternative(back, "back-original"))
+            && !Inquiry(EntranceAlternative(back, "back-original")));
+
+        var ordinary = Controller();
+        Contact(ordinary, held);
+        var ordinaryForm = Form(selected: true, ordinary: true);
+        ordinaryForm["actions"] = new object[] { new Dictionary<string, object?> { ["id"] = "cancel", ["label"] = "neutral-cancel" } };
+        var ordinaryCancel = FormDecision(ordinary, held, ordinaryForm);
+        Observe("ordinary-form-cancel", ordinaryCancel.Decision);
+        var ordinaryAgain = EntranceDecision(ordinary, held, "ordinary-revisit");
+        Record("ordinary_form_cancel_does_not_suppress_investigation", ordinaryCancel.Input is not null
+            && Text(ordinaryCancel.Input, "action") == "cancel" && !Waiting(EntranceAlternative(ordinaryAgain, "ordinary-revisit"))
+            && Inquiry(EntranceAlternative(ordinaryAgain, "ordinary-revisit")));
+
+        var initiallyMemoryOnly = Controller();
+        Contact(initiallyMemoryOnly, memoryOnly);
+        var memoryPort = new PlayerCandidateSession(_ => [Event("close")], "neutral-actor");
+        memoryPort.Locate(new(Space, new(100, 100)));
+        var memoryForm = memoryPort.Observe([Form()]);
+        var memoryChoices = new List<string>();
+        for (var step = 0; step < 4; step++)
+        {
+            var choice = initiallyMemoryOnly.Decide(memoryForm, memoryOnly);
+            var candidate = memoryForm.Candidates.Single(c => c.Token == choice.Token);
+            memoryChoices.Add(candidate.Purpose);
+            Observe("initial-memory-only-form-" + step, choice);
+            memoryForm = memoryPort.Submit(new(candidate.Token));
+            if (candidate.Purpose == "cancel") break;
+        }
+        var initiallyMemoryReturn = EntranceDecision(initiallyMemoryOnly, memoryOnly, "initial-memory-only-return");
+        Record("initial_complete_memory_proof_without_material_is_deferred_on_actual_cancel", memoryChoices.Last() == "cancel"
+            && !memoryChoices.Contains("evidence") && !memoryChoices.Contains("commit")
+            && Waiting(EntranceAlternative(initiallyMemoryReturn, "initial-memory-only-return"))
+            && !Return(EntranceAlternative(initiallyMemoryReturn, "initial-memory-only-return")));
+
+        var freshSubject = EntranceDecision(Controller(), held, "fresh-subject");
+        Record("another_controller_does_not_inherit_answer_waiting", !Waiting(EntranceAlternative(freshSubject, "fresh-subject"))
+            && Inquiry(EntranceAlternative(freshSubject, "fresh-subject")));
+
+        var noKnownQuestion = Controller();
+        Contact(noKnownQuestion, NoQuestion(held));
+        FormDecision(noKnownQuestion, NoQuestion(held), Form());
+        var laterQuestion = EntranceDecision(noKnownQuestion, held, "newly-known-question");
+        Record("cancel_without_known_question_does_not_invent_deferred_requirement", !Waiting(EntranceAlternative(laterQuestion, "newly-known-question"))
+            && Inquiry(EntranceAlternative(laterQuestion, "newly-known-question")));
+
+        var onlyEvidence = Controller();
+        Contact(onlyEvidence, held);
+        var evidenceCancel = FormDecision(onlyEvidence, held, Form(evidenceOnly: true));
+        Observe("evidence-only-visible-form", evidenceCancel.Decision);
+        Record("visible_evidence_without_selected_statement_is_never_randomly_filled", evidenceCancel.Input is not null
+            && Text(evidenceCancel.Input, "action") == "cancel" && !evidenceCancel.Decision.Alternatives.Any(a => a.Kind == "form_field"));
+
+        var receiptContext = Controller();
+        Contact(receiptContext, held, OtherEntrance);
+        Contact(receiptContext, held, Entrance, reached: false);
+        FormDecision(receiptContext, held, Form());
+        var failedEntry = EntranceDecision(receiptContext, held, "failed-entry", Entrance);
+        Record("failed_contact_does_not_replace_last_successful_answer_entry", !Waiting(EntranceAlternative(failedEntry, "failed-entry"))
+            && Inquiry(EntranceAlternative(failedEntry, "failed-entry")));
+        receiptContext.CompleteInteraction("failed-entry", false);
+        var successfulEntry = EntranceDecision(receiptContext, held, "successful-entry", OtherEntrance);
+        Observe("last-successful-entry-context", successfulEntry);
+        Record("cancel_memory_binds_to_last_successful_entry", Waiting(EntranceAlternative(successfulEntry, "successful-entry"))
+            && !Inquiry(EntranceAlternative(successfulEntry, "successful-entry")));
+
+        var limited = Controller(expansions: 1);
+        Contact(limited, held);
+        FormDecision(limited, held, Form());
+        var limitedReturn = EntranceDecision(limited, complete, "limited-return");
+        Observe("proof-budget-not-complete", limitedReturn);
+        Record("incomplete_budget_result_does_not_restore_return", Waiting(EntranceAlternative(limitedReturn, "limited-return"))
+            && !Return(EntranceAlternative(limitedReturn, "limited-return")));
+
+        Observe("neutral-case-results", results.Select(r => new { r.Name, r.Holds }).ToArray());
+        foreach (var result in results) check(result.Name, result.Holds);
+    }
+}

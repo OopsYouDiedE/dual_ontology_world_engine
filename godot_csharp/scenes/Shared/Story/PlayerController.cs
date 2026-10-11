@@ -203,6 +203,9 @@ public sealed class SubjectivePlayerController
     private readonly Dictionary<(string Space, string Label), PublicPlayerCandidate> _seenPlaces = [];
     private readonly HashSet<(string Space, double X, double Y)> _walked = [];
     private (PlayerFieldState Start, (string Kind, string Label) Key)? _pendingMove;
+    private ((string Kind, string Label) Key, string Visible)? _pendingWait;
+    private static string VisibleResult(PublicPlayerObservation observation)
+        => JsonSerializer.Serialize(new { observation.Lines, observation.Text, observation.Complete });
     private (string Token, (string Kind, string Label) Key, DecisionExperienceKeyV1 FailureKey, string Label)? _pendingInteraction;
     private string _space = "";
     private PlayerPoint? _fieldPosition;
@@ -218,6 +221,10 @@ public sealed class SubjectivePlayerController
     private bool _evidenceRequired;
     // Learned from the answer forms this actor has actually seen: statements must come with something shown.
     private bool _answersNeedEvidence;
+    private readonly List<FrozenConditionV1> _argumentQuestions = [];
+    private int _questionContext = -1;
+    private readonly Dictionary<(string Space, string Source, string Input), FrozenConditionV1> _deferredAnswers = [];
+    private string _answerEntry = "";
     public SubjectivePlayerController(ActorControllerDefinition declaration, int seed)
     {
         PlayerControllers.Validate(declaration);
@@ -242,7 +249,9 @@ public sealed class SubjectivePlayerController
             : candidate.Kind == "move" && candidate.Location is { } point
             ? (candidate.Purpose == "frontier" ? "frontier" : candidate.Kind,
                 $"{_space}:{(candidate.Purpose == "approach" ? candidate.Value + ":" : "")}{Math.Floor(point.X / (candidate.Purpose == "frontier" ? 32 : 64))}:{Math.Floor(point.Y / (candidate.Purpose == "frontier" ? 32 : 64))}")
-            : (candidate.Kind, candidate.Kind == "interact" ? _space + ":" + candidate.Label
+            : (candidate.Kind, candidate.Kind is "form_field" or "form_submit" || candidate.Purpose == "tab"
+                ? _space + ":" + _interactionContext + ":question:" + _questionContext + ":" + candidate.Label
+                : candidate.Kind == "interact" ? _space + ":" + candidate.Label
                 : candidate.Kind == "menu" ? _space + ":" + _interactionContext + ":" + candidate.Label : candidate.Label);
     private static DecisionExperienceKeyV1 MemoryKey((string Kind, string Label) key) => new(key.Kind + ":" + key.Label);
     private DecisionExperienceKeyV1 ContactKey(PublicPlayerCandidate candidate)
@@ -292,6 +301,7 @@ public sealed class SubjectivePlayerController
             _experience.Record(MemoryKey(pending.Key), DecisionOutcomeV1.Attempted);
             _experience.Record(MemoryKey(pending.Key), DecisionOutcomeV1.Succeeded);
             _interactionContext = pending.Label;
+            _answerEntry = "";
         }
         else _experience.Record(pending.FailureKey, DecisionOutcomeV1.Failed);
         return true;
@@ -316,6 +326,19 @@ public sealed class SubjectivePlayerController
                 _experience.Record(MemoryKey(successful.Key), DecisionOutcomeV1.Succeeded);
         }
         _pendingMove = null;
+        if (_pendingWait is { } waiting)
+        {
+            // A repeated input can have a new, actually observed result (for
+            // example a changed public time or a reply). Successful waiting
+            // must not accumulate the cost of waiting without any result.
+            var key = MemoryKey(waiting.Key);
+            if (waiting.Visible != VisibleResult(observation))
+            {
+                _experience.Record(key, DecisionOutcomeV1.Succeeded);
+                _experience.ReconsiderAttempts([key]);
+            }
+            _pendingWait = null;
+        }
         var reasoning = new SubjectiveReasoner(snapshot, cognition.Actor, _reasoning);
         // Repeated host queries within one decision share the same proof. They
         // must not spend the actor's budget again or manufacture changed knowledge.
@@ -329,6 +352,11 @@ public sealed class SubjectivePlayerController
             return proof;
         }
         if (observation.Candidates.Any(c => c.Purpose == "evidence")) _evidenceRequired = _answersNeedEvidence = true;
+        var currentQuestion = snapshot.Projections.LastOrDefault(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1);
+        var asked = currentQuestion is null ? null : reasoning.Claims(currentQuestion.Id).FirstOrDefault();
+        _questionContext = asked is null ? -1 : _argumentQuestions.FindIndex(q => SameClaim(q, asked));
+        if (asked is not null && _questionContext < 0)
+        { _questionContext = _argumentQuestions.Count; _argumentQuestions.Add(asked); }
         if (_argumentGoal is not null)
             try { reasoning.References(_argumentGoal); }
             catch (CognitionContractException) { _argumentGoal = null; }
@@ -346,6 +374,29 @@ public sealed class SubjectivePlayerController
                 && c.Label.Contains(t.CanonicalLexeme, StringComparison.Ordinal))).ToArray();
         }
         var materials = observation.Candidates.ToDictionary(c => c.Token, Materials);
+        // A form can arrive with an existing public selection. Use what is
+        // actually displayed, including edits made before this observation.
+        var selectedStatement = observation.Candidates.FirstOrDefault(c => c.Purpose == "statement" && c.Selected);
+        if (selectedStatement is not null)
+        {
+            var selectedClaims = materials[selectedStatement.Token].Where(p => p.Kind == ProjectionKind.Concept)
+                .SelectMany(p => reasoning.Claims(p.Id)).Distinct().ToArray();
+            if (selectedClaims.Length == 1)
+            {
+                if (_argumentGoal is null || !SameClaim(_argumentGoal, selectedClaims[0]))
+                { _argumentGoal = selectedClaims[0]; _supportedEvidence = false; }
+                _argumentLabel = selectedStatement.Value == "" ? selectedStatement.Label : selectedStatement.Value;
+            }
+        }
+        if (_argumentGoal is not null && observation.Candidates.Any(c => c.Purpose == "evidence"))
+        {
+            var selectedEvidence = observation.Candidates.FirstOrDefault(c => c.Purpose == "evidence" && c.Selected);
+            var selectedProof = ProveOnce(_argumentGoal);
+            _supportedEvidence = selectedEvidence is not null
+                && selectedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+                && materials[selectedEvidence.Token].Any(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Presentable) == 1
+                    && selectedProof.Basis.Contains(p.Id));
+        }
         foreach (var place in observation.Candidates.Where(c => c.Kind == "interact" && c.Location is not null))
             _seenPlaces[(_space, place.Label)] = place;
         PublicPlayerCandidate[] SeenPlaces() => _seenPlaces.Where(p => p.Key.Space == _space).Select(p => p.Value).ToArray();
@@ -375,13 +426,17 @@ public sealed class SubjectivePlayerController
             foreach (var stale in SeenPlaces().Where(p => observation.Candidates.All(c => c.Label != p.Label)
                 && steps.Any(m => Math.Abs(m.Location!.X - p.Location!.X) + Math.Abs(m.Location.Y - p.Location.Y) <= 48)).ToArray())
                 _seenPlaces.Remove((_space, stale.Label));
-        var currentQuestion = snapshot.Projections.LastOrDefault(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Question) == 1);
-        var asked = currentQuestion is null ? null : reasoning.Claims(currentQuestion.Id).FirstOrDefault();
         var askedProof = asked is null ? null : ProveOnce(asked);
         // Where answers have to be shown, a proof resting only on memory is not yet an answer.
-        var answerable = askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
-            && (!_answersNeedEvidence || askedProof.Basis.Any(id => snapshot.Projections.Any(p => p.Id == id
+        bool GroundedAnswer(SubjectiveProofV1? proof) => proof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }
+            && (!_answersNeedEvidence || proof.Basis.Any(id => snapshot.Projections.Any(p => p.Id == id
                 && p.Tags.GetValueOrDefault(AcquiredPropositions.Presentable) == 1)));
+        var answerable = GroundedAnswer(askedProof);
+        // Leaving an actual answer form teaches what is still required there.
+        // A later unrelated proposition cannot make the same answer input ready.
+        // Other investigation methods at that physical source remain available.
+        bool DeferredAnswer(string label) => _deferredAnswers.TryGetValue((_space, _interactionContext, label), out var required)
+            && !GroundedAnswer(ProveOnce(required));
         bool ReadyOpportunity(PublicPlayerCandidate candidate, IEnumerable<FrozenProjectionV1> held) => asked is not null
             && answerable
             && held.Where(p => p.Tags.GetValueOrDefault(AcquiredPropositions.Opportunity) == 1
@@ -488,15 +543,23 @@ public sealed class SubjectivePlayerController
             if (candidate.Purpose == "frontier" && _revisitWeight > 0 && visits == 0)
             { score += _revisitWeight; why.Add("edge_of_unseen"); }
             if (candidate.Selected) score -= _argumentWeight * 4L;
-            if (candidate.Purpose == "tab" && !candidate.Selected && _argumentGoal is not null) score += _argumentWeight * 2L;
-            if (candidate.Purpose == "commit" && _argumentGoal is not null) score += _argumentWeight * (_supportedEvidence ? 3L : -8L);
+            // A page switch is useful only to reach the next missing part of an
+            // argument. Switching away from the evidence page is not progress.
+            if (candidate.Purpose == "tab" && !candidate.Selected
+                && (_argumentGoal is null && !observation.Candidates.Any(c => c.Purpose == "statement")
+                    || _argumentGoal is not null && !_supportedEvidence && !observation.Candidates.Any(c => c.Purpose == "evidence")))
+                score += _argumentWeight * 2L;
+            if (candidate.Purpose == "commit" && _argumentGoal is not null) score += _argumentWeight * (_supportedEvidence ? 4L : -8L);
             // Destroying something one has seen loses material that could later be shown;
             // only an actor whose own rules want it (a declared preference) outweighs this.
             if (candidate.Purpose == "destroy") { score -= _argumentWeight * 2L; why.Add("destroys_seen_material"); }
             // Holding off costs something only when this actor could already answer.
             if (candidate.Purpose == "cancel"
                 && askedProof is { Value: Truth.True, Complete: true, Hypothetical: false, Contradicted: false }) score -= _argumentWeight;
-            if ((candidate.Kind != "move" || followsKnownGoal) && ReadyOpportunity(candidate, held) || candidate.Purpose == "argument" && answerable)
+            if (candidate.Purpose == "argument" && DeferredAnswer(candidate.Label))
+            { score -= _argumentWeight * 2L; why.Add("observed_answer_still_missing_support"); }
+            if ((candidate.Kind != "move" || followsKnownGoal) && ReadyOpportunity(candidate, held)
+                || candidate.Purpose == "argument" && answerable && !DeferredAnswer(candidate.Label))
             {
                 score += _argumentWeight * 3L;
                 why.Add("return_with_personal_answer:" + candidate.Label);
@@ -601,8 +664,8 @@ public sealed class SubjectivePlayerController
             || arguments[candidate.Token].Any(a => a.Value == "True" && a.Complete)
                 && materials[candidate.Token].SelectMany(p => reasoning.Claims(p.Id)).Any(goal =>
                     Ast.Equivalent(asked, goal) is ContractResult<bool>.Success { Value: true });
-        bool SupportsSelectedArgument(PublicPlayerCandidate candidate) => candidate.Purpose != "evidence" || _argumentGoal is null
-            || arguments[candidate.Token].Any(a => a.Value == "True" && a.Complete && a.MaterialSupports == true);
+        bool SupportsSelectedArgument(PublicPlayerCandidate candidate) => candidate.Purpose != "evidence"
+            || _argumentGoal is not null && arguments[candidate.Token].Any(a => a.Value == "True" && a.Complete && a.MaterialSupports == true);
         var available = effects.Select(pair => (pair.Candidate, Assessment: assessments.FirstOrDefault(a => a.Effect == pair.Effect)))
             .Where(pair => pair.Assessment is { Forbidden: false } && AnswersCurrentQuestion(pair.Candidate) && SupportsSelectedArgument(pair.Candidate)
                 && (pair.Candidate.Purpose != "commit" || CanSubmitArgument())).ToArray();
@@ -627,8 +690,11 @@ public sealed class SubjectivePlayerController
         if (chosen.Kind == "interact" && chosen.Location is not null)
             _pendingInteraction = (chosen.Token, HistoryKey(chosen), ContactKey(chosen), chosen.Label);
         else _experience.Record(MemoryKey(HistoryKey(chosen)), DecisionOutcomeV1.Attempted);
-        if (chosen.Kind == "interact" && chosen.Location is null) _interactionContext = chosen.Label;
+        if (chosen.Kind == "interact" && chosen.Location is null)
+        { _interactionContext = chosen.Label; _answerEntry = ""; }
+        if (chosen.Purpose == "argument") _answerEntry = chosen.Label;
         if (chosen.Kind == "move" && observation.Field is { } start) _pendingMove = (start, HistoryKey(chosen));
+        if (chosen.Kind == "wait") _pendingWait = (HistoryKey(chosen), VisibleResult(observation));
         var chosenArguments = arguments[chosen.Token];
         if (chosen.Purpose == "evidence")
         {
@@ -646,6 +712,11 @@ public sealed class SubjectivePlayerController
         // statement until submission or leaving the form; editing it replaces it.
         if (chosen.Purpose == "commit" && chosenArguments.IsEmpty) chosenArguments = _lastArgument;
         if (chosenArguments.IsEmpty && askedProof is not null) chosenArguments = [Trace(PropositionName(asked!), askedProof)];
+        if (chosen.Purpose == "cancel" && asked is not null && !answerable && _answerEntry != ""
+            && observation.Candidates.Any(c => c.Purpose is "statement" or "evidence"))
+            _deferredAnswers[(_space, _interactionContext, _answerEntry)] = asked;
+        if (chosen.Purpose == "commit" && _argumentGoal is not null && CanSubmitArgument())
+            _deferredAnswers.Remove((_space, _interactionContext, _answerEntry));
         if (chosen.Kind == "form_submit" || !observation.Candidates.Any(c => c.Kind == "form_field"))
         { _argumentGoal = null; _supportedEvidence = false; _evidenceRequired = false; _lastArgument = []; _argumentLabel = ""; }
         return new(chosen.Token, "subjective_rules", best)
@@ -698,6 +769,11 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
     public void Close() { _closed = true; _offers.Clear(); }
     private static IEnumerable<IReadOnlyDictionary<string, object?>> Maps(IReadOnlyDictionary<string, object?> map, string key)
         => (map.GetValueOrDefault(key) as System.Collections.IEnumerable ?? Array.Empty<object>()).Cast<object?>().OfType<IReadOnlyDictionary<string, object?>>();
+    // Mirrors FormPanel.uses_columns: small tab forms are rendered side by side.
+    // Their fields are simultaneously visible and the UI has no tab buttons.
+    private static bool UsesColumns(IReadOnlyDictionary<string, object?> form) => Text(form, "layout") == "tabs"
+        && Maps(form, "fields").Count() is >= 2 and <= 3;
+    private static bool UsesTabs(IReadOnlyDictionary<string, object?> form) => Text(form, "layout") == "tabs" && !UsesColumns(form);
     private void Add(string label, string kind, Dictionary<string, object?> input, bool isNew = false, string? field = null, object? value = null, bool tab = false, string group = "", string publicValue = "", string purpose = "", bool selected = false, PlayerPoint? location = null, double travelDistance = 0)
     {
         if (_offers.Count >= 256) throw Fail("candidate_limit");
@@ -741,6 +817,14 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 foreach (var option in Maps(ev, kind == "lines" ? "choices" : "options").Where(o => !Flag(o, "available", true)))
                     text.Add(Text(option, "label") + " " + Text(option, "lock_hint"));
                 _pending = ev; _values.Clear();
+                if (kind == "form")
+                    foreach (var field in Maps(ev, "fields"))
+                    {
+                        var initial = Text(field, "value");
+                        if (initial.Length > 0 && (Text(field, "kind") == "text"
+                            || Maps(field, "options").Any(o => Text(o, "id") == initial && Flag(o, "available", true))))
+                            _values[Text(field, "id")] = initial;
+                    }
                 _activeField = Maps(ev, "fields").Select(f => Text(f, "id")).FirstOrDefault() ?? "";
                 if (kind == "ending") complete = !Maps(ev, "actions").Any(a => Text(a, "id") is "continue" or "chapter2");
             }
@@ -759,7 +843,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
             if (kind == "replay_play" && Text(ev, "mode") is not ("stage" or "campus")) throw Fail("unsupported_replay_presentation");
         }
         if (_pending is { } form && Text(form, "kind") == "form")
-            foreach (var field in Maps(form, "fields").Where(f => Text(form, "layout") != "tabs" || Text(f, "id") == _activeField))
+            foreach (var field in Maps(form, "fields").Where(f => !UsesTabs(form) || Text(f, "id") == _activeField))
             {
                 foreach (var key in new[] { "heading", "placeholder", "empty_text" })
                     if (Text(field, key) is { Length: > 0 } value) text.Add(value);
@@ -795,11 +879,12 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
         var pid = Text(pending, "presentation_id");
         if (kind == "form")
         {
-            var tabs = Text(pending, "layout") == "tabs";
+            var tabs = UsesTabs(pending);
+            var columns = UsesColumns(pending);
             foreach (var field in Maps(pending, "fields"))
             {
                 var id = Text(field, "id");
-                if (tabs && id != _activeField || !tabs && _values.ContainsKey(id)) continue;
+                if (tabs && id != _activeField || !tabs && !columns && _values.ContainsKey(id)) continue;
                 var fieldKind = Text(field, "kind");
                 _observeField?.Invoke(field);
                 if (fieldKind == "choice")
@@ -810,7 +895,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 else throw Fail("unsupported_form_field");
                 // One field at a time, as in the ordinary form. Empty fields stay empty;
                 // action requirements below must still pass before submission.
-                if (_offers.Count > 0) break;
+                if (!columns && _offers.Count > 0) break;
             }
             foreach (var action in Maps(pending, "actions").Where(a => Flag(a, "available", true)))
             {
@@ -818,6 +903,7 @@ public sealed class PlayerCandidateSession : IPlayerCandidatePort
                 if (required.Any(id => !_values.TryGetValue(id, out var value) || string.IsNullOrEmpty(value?.ToString()))) continue;
                 if (action.ContainsKey("tab"))
                 {
+                    if (columns) continue;
                     var target = Text(action, "tab");
                     if (Maps(pending, "fields").Any(f => Text(f, "id") == target))
                         Add(Text(action, "label"), "menu", [], field: target, tab: true, purpose: "tab", selected: target == _activeField);

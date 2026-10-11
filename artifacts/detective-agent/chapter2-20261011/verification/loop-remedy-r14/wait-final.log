@@ -1,0 +1,21 @@
+PASS same_wait_score
+PASS same_preserves_menu:::other
+PASS same_preserves_wait:other-wait
+PASS same_success_receipt
+{"Token":"other","Reason":"subjective_rules","Score":-6,"Basis":["revisit_without_new_accepted_material:1","authored_subjective_preferences"],"ReasoningExpansions":0,"ReasoningStop":"no_acquired_propositional_model","HypothesesCompared":0,"Arguments":[],"Alternatives":[{"Token":"wait","Label":"wait","Kind":"wait","Score":-6,"Basis":["revisit_without_new_accepted_material:1"]},{"Token":"other","Label":"other","Kind":"menu","Score":-6,"Basis":["revisit_without_new_accepted_material:1"]}]}
+PASS text_wait_score
+PASS text_preserves_menu:::other
+PASS text_preserves_wait:other-wait
+PASS text_success_receipt
+{"Token":"wait","Reason":"subjective_rules","Score":6,"Basis":["authored_rule:prefer:untried:6","authored_subjective_preferences"],"ReasoningExpansions":0,"ReasoningStop":"no_acquired_propositional_model","HypothesesCompared":0,"Arguments":[],"Alternatives":[{"Token":"wait","Label":"wait","Kind":"wait","Score":6,"Basis":["authored_rule:prefer:untried:6"]},{"Token":"other","Label":"other","Kind":"menu","Score":-6,"Basis":["revisit_without_new_accepted_material:1"]}]}
+PASS lines_wait_score
+PASS lines_preserves_menu:::other
+PASS lines_preserves_wait:other-wait
+PASS lines_success_receipt
+{"Token":"wait","Reason":"subjective_rules","Score":6,"Basis":["authored_rule:prefer:untried:6","authored_subjective_preferences"],"ReasoningExpansions":0,"ReasoningStop":"no_acquired_propositional_model","HypothesesCompared":0,"Arguments":[],"Alternatives":[{"Token":"wait","Label":"wait","Kind":"wait","Score":6,"Basis":["authored_rule:prefer:untried:6"]},{"Token":"other","Label":"other","Kind":"menu","Score":-6,"Basis":["revisit_without_new_accepted_material:1"]}]}
+PASS complete_wait_score
+PASS complete_preserves_menu:::other
+PASS complete_preserves_wait:other-wait
+PASS complete_success_receipt
+{"Token":"wait","Reason":"subjective_rules","Score":6,"Basis":["authored_rule:prefer:untried:6","authored_subjective_preferences"],"ReasoningExpansions":0,"ReasoningStop":"no_acquired_propositional_model","HypothesesCompared":0,"Arguments":[],"Alternatives":[{"Token":"wait","Label":"wait","Kind":"wait","Score":6,"Basis":["authored_rule:prefer:untried:6"]},{"Token":"other","Label":"other","Kind":"menu","Score":-6,"Basis":["revisit_without_new_accepted_material:1"]}]}
+Neutral wait checks: 16 passed, 0 failed

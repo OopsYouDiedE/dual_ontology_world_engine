@@ -1,0 +1,22 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+
+PASS all_key_candidates_length_1.0
+PASS frontier_key_candidate_present_1.0
+MEASURE {"delta":0.0166666666666667,"distance":31.5,"expected":31.5,"keys":["D"],"rate":1.0,"step":1.51}
+PASS movement_1.0["D"]
+PASS released_1.0["D"]
+MEASURE {"delta":0.0166666666666667,"distance":31.4998073577881,"expected":31.5,"keys":["W","D"],"rate":1.0,"step":1.51}
+PASS movement_1.0["W", "D"]
+PASS released_1.0["W", "D"]
+PASS collision_1.0
+PASS all_key_candidates_length_4.0
+PASS frontier_key_candidate_present_4.0
+MEASURE {"delta":0.0666666666666667,"distance":36.0,"expected":31.5,"keys":["D"],"rate":4.0,"step":6.01}
+PASS movement_4.0["D"]
+PASS released_4.0["D"]
+MEASURE {"delta":0.0666666666666667,"distance":36.0000381469727,"expected":31.5,"keys":["W","D"],"rate":4.0,"step":6.01}
+PASS movement_4.0["W", "D"]
+PASS released_4.0["W", "D"]
+PASS collision_4.0
+PASS stop_releases
+Neutral physics checks: 15 total, 0 failed

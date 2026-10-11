@@ -9,6 +9,7 @@ const PilotNavigation := preload("res://scenes/Host/PilotNavigation.gd")
 const ManuscriptPanel := preload("res://scenes/UI/Panels/Manuscript/ReplayManuscript.tscn")
 const MOVE_KEYS := {"W": KEY_W, "A": KEY_A, "S": KEY_S, "D": KEY_D}
 const TICK := 0.1
+const KEY_MOVE_SECONDS := 0.35
 
 ## 每句台词停留的秒数；也是菜单等选项落下前的停顿。
 var line_seconds := 0.6
@@ -231,19 +232,26 @@ func perform_field(input: Dictionary) -> void:
 func _keyboard_move(keys: Array) -> void:
 	var field: Node = host.field
 	var start: Vector2 = field.player.position
+	# Start at a physics boundary; scaled simulation time and the offered
+	# displacement describe the same action at every test speed.
+	await get_tree().physics_frame
+	if stopping: return
 	for key in keys:
 		var code: int = MOVE_KEYS[str(key)]
 		_pressed.append(code)
 		Input.parse_input_event(_key(code, true))
-	var deadline := Time.get_ticks_msec() + 350
-	while not stopping and Time.get_ticks_msec() < deadline:
-		await get_tree().process_frame
+	Input.flush_buffered_events()
+	var elapsed := 0.0
+	while not stopping and elapsed < KEY_MOVE_SECONDS:
+		await get_tree().physics_frame
+		elapsed += get_physics_process_delta_time()
 	_release_keys()
 	if is_instance_valid(field) and field.player != null:
 		recorded.emit("keyboard_move", {"keys": keys, "start_position": [start.x, start.y], "end_position": [field.player.position.x, field.player.position.y]})
 
 func _release_keys() -> void:
 	for code in _pressed: Input.parse_input_event(_key(code, false))
+	Input.flush_buffered_events()
 	_pressed.clear()
 
 static func _key(code: int, pressed: bool) -> InputEventKey:
@@ -295,8 +303,16 @@ func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 		# Offered direction for scoring; actual position is observed separately after execution.
 		var heading := Vector2.ZERO
 		for key in keys: heading += {"W": Vector2.UP, "S": Vector2.DOWN, "A": Vector2.LEFT, "D": Vector2.RIGHT}[key]
-		var aim: Vector2 = field.player.position + heading.normalized() * 48.0
+		var aim: Vector2 = field.player.position + heading.normalized() * float(field.player.speed) * KEY_MOVE_SECONDS
 		offers.append({"label": "%s %d,%d" % ["+".join(keys), field.player.position.x, field.player.position.y], "kind": "move", "new": false, "location": [aim.x, aim.y], "input": {"kind": "field_action", "action": "move", "keys": keys}})
+	# Frontier offers may also use ordinary keyboard input. Their scored
+	# endpoint must describe that input, not the unrelated clicked edge point.
+	for offer in offers:
+		if not offer.input.has("keys"): continue
+		var direction := Vector2.ZERO
+		for key in offer.input.keys: direction += {"W": Vector2.UP, "S": Vector2.DOWN, "A": Vector2.LEFT, "D": Vector2.RIGHT}[key]
+		var endpoint: Vector2 = field.player.position + direction.normalized() * float(field.player.speed) * KEY_MOVE_SECONDS
+		offer.location = [endpoint.x, endpoint.y]
 	var controls: Dictionary = snapshot.get("controls", {})
 	if bool(controls.get("wait", false)):
 		offers.append({"label": "T", "kind": "wait", "new": false, "input": {"kind": "action", "act": {"cmd": "stay"}}})
