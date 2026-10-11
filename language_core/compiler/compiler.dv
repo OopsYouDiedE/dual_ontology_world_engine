@@ -101,8 +101,8 @@
 (defn reserved (name) (has (words "if let set while do true false") name))
 (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
 (defn native_arity (name)
-  (if (has (words "rt_list") name) 0
-    (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_fail rt_arg rt_read rt_print") name) 1
+  (if (has (words "rt_list rt_arg_count") name) 0
+    (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify") name) 1
       (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_cat rt_chr rt_push rt_at rt_write") name) 2
         (if (rt_eq name "rt_slice") 3 -1)))))
 (defn lookup (signatures name)
@@ -213,8 +213,32 @@
             (if (rt_lt 0 i) (set result (rt_cat result ",")) false)
             (set result (rt_cat result (rt_cat "object v_" (sym p)))) (set i (rt_add i 1)))))
       (rt_cat result (rt_cat ") => " (rt_cat (emit (rt_at xs 3) scope signatures) ";\n"))))))
+(defn lower_declarations (forms)
+  (let (result (rt_list) i 0)
+    (do
+      (while (rt_lt i (rt_count forms))
+        (let (n (rt_at forms i) xs (children n) offset (rt_at n 2))
+          (do
+            (if (rt_eq (rt_count xs) 0) (bad n "empty declaration") false)
+            (if (rt_eq (sym (rt_at xs 0)) "axiom")
+              (do
+                (arity n xs 6)
+                (let (name (sym (rt_at xs 1)) body (rt_list) declaration (rt_list))
+                  (do
+                    (rt_push body (node "sym" "dv_axiom" offset))
+                    (rt_push body (node "str" (rt_cat (rt_cat "\"" name) "\"") offset))
+                    (rt_push body (rt_at xs 2))
+                    (rt_push body (rt_at xs 4))
+                    (rt_push body (rt_at xs 5))
+                    (rt_push declaration (node "sym" "defn" offset))
+                    (rt_push declaration (rt_at xs 1))
+                    (rt_push declaration (rt_at xs 3))
+                    (rt_push declaration (node "list" body offset))
+                    (rt_push result (node "list" declaration offset)))))
+              (rt_push result n))
+            (set i (rt_add i 1))))) result)))
 (defn compile (source)
-  (let (forms (parse source) signatures (signatures_of forms) i 0 result "using DuelView.Compiled;\npublic static class DVProgram {\n")
+  (let (forms (lower_declarations (parse source)) signatures (signatures_of forms) i 0 result "using DuelView.Compiled;\npublic static class DVProgram {\n")
     (do
       (while (rt_lt i (rt_count forms))
         (let (n (rt_at forms i) xs (children n))

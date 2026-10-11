@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 
 namespace DuelView.Compiled;
 
@@ -34,6 +35,22 @@ public static class R
     public static object is_list(object a) => a is List<object>;
     public static object fail(object a) => throw new Exception(Text(a));
     public static object arg(object i) => Arguments[Index(i)];
+    public static object arg_count() => (double)Arguments.Length;
+    public static object json_parse(object text)
+    {
+        using var document = JsonDocument.Parse(Text(text), new JsonDocumentOptions { MaxDepth = 256 });
+        return ReadJson(document.RootElement);
+    }
+    private static object ReadJson(JsonElement item) => item.ValueKind switch
+    {
+        JsonValueKind.Array => item.EnumerateArray().Select(ReadJson).ToList(),
+        JsonValueKind.String => item.GetString()!,
+        JsonValueKind.Number => Num(item.GetDouble()),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
+    };
+    public static object json_stringify(object value) => JsonSerializer.Serialize(value);
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));
     public static object write(object p, object s) { File.WriteAllText(Text(p), Text(s), new UTF8Encoding(false, true)); return s; }
     public static object print(object a) { Console.WriteLine(Text(show(a))); return a; }

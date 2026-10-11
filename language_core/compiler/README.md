@@ -50,3 +50,7 @@ AST 是 `[kind, payload, offset]`，kind 为 `list / sym / num / str`。签名�
 `Runtime.cs` 只提供有限数运算、严格 Bool、文本切片/字符转换、列表容器、文件与命令行 I/O、错误抛出和普通 C# 闭包调用辅助 `Block`。`Block` 执行已经生成的委托，不读取 AST 或解释程序。所有语法识别、标识符规则、作用域检查、C# 转义和代码布局均在 DV 中。运行时没有任意 C# 注入、反射、动态编译或 eval 接口。
 
 编译器当前是受信任的命令行程序，HostIO 尚未受静态能力检查约束。不能将这个启动子集当作不可信主体沙箱，也不能用它宣称全部推演核心迁移、旧 Core 等价或游戏验收完成。
+
+## 本轮前端扩展
+
+支持 `(axiom Name Version (Parameters...) Premise Effects)`；DV 前端展开为调用领域库 `dv_axiom` 的具名函数，继续执行名称/元数检查。实例化返回数据，不自动执行或证明命题。新增的 `rt_arg_count / rt_json_parse / rt_json_stringify` 仅为命令行与数据持久化 ABI；领域实现见 `../core/README.md`。

@@ -1,0 +1,128 @@
+; Appraisal-inspired game mechanism, not a clinical or psychometric model.
+; Intent, instrumental value and expression are separate outputs.
+(defn dv_request (id requester self)
+  (dv_m3 "id" id "requester" requester "self" self))
+(defn dv_feature_refs (request)
+  (let (speaker (dv_get request "requester") self (dv_get request "self") id (dv_get request "id") refs (rt_list))
+    (do
+      (rt_push refs (dv_pair "trust" (dv_ref speaker "relationship" "trust")))
+      (rt_push refs (dv_pair "closeness" (dv_ref speaker "relationship" "closeness")))
+      (rt_push refs (dv_pair "respect" (dv_ref speaker "relationship" "respect")))
+      (rt_push refs (dv_pair "reciprocity" (dv_ref speaker "relationship" "reciprocity")))
+      (rt_push refs (dv_pair "valence" (dv_ref self "affect" "valence")))
+      (rt_push refs (dv_pair "arousal" (dv_ref self "affect" "arousal")))
+      (rt_push refs (dv_pair "fatigue" (dv_ref self "resources" "fatigue")))
+      (rt_push refs (dv_pair "stress" (dv_ref self "resources" "stress")))
+      (rt_push refs (dv_pair "attention" (dv_ref self "resources" "attention")))
+      (rt_push refs (dv_pair "threat" (dv_ref id "appraisal" "threat")))
+      (rt_push refs (dv_pair "fairness" (dv_ref id "appraisal" "fairness")))
+      (rt_push refs (dv_pair "control" (dv_ref id "appraisal" "control")))
+      (rt_push refs (dv_pair "certainty" (dv_ref id "appraisal" "certainty")))
+      (rt_push refs (dv_pair "importance" (dv_ref id "appraisal" "importance"))) refs)))
+(defn dv_appraise_request (mind request)
+  (do
+    (dv_domain mind "mind")
+    (let (refs (dv_feature_refs request) features (rt_list) unknown (rt_list) basis (rt_list) i 0)
+      (do
+        (while (rt_lt i (rt_count refs))
+          (let (entry (rt_at refs i) key (rt_at entry 0) cell (dv_read mind (rt_at entry 1)))
+            (do
+              (if (dv_and (dv_get cell "known") (rt_not (dv_get cell "conflicted")))
+                (do
+                  (rt_push features (dv_pair key (dv_get cell "value")))
+                  (rt_push basis (dv_m3 "feature" key "ref" (rt_at entry 1) "cell" cell)))
+                (rt_push unknown key))
+              (set i (rt_add i 1)))))
+        (dv_with (dv_with (dv_m4 "features" features "unknown" unknown "basis" basis "revision" (dv_get mind "revision")) "subject" (dv_get mind "subject")) "request" (dv_get request "id"))))))
+(defn dv_dot (features weights)
+  (let (i 0 score 0 terms (rt_list) unknown (rt_list))
+    (do
+      (while (rt_lt i (rt_count weights))
+        (let (entry (rt_at weights i) key (rt_at entry 0))
+          (do
+            (if (dv_has_key features key)
+              (let (contribution (rt_mul (dv_get features key) (rt_at entry 1)))
+                (do (set score (rt_add score contribution)) (rt_push terms (dv_pair key contribution))))
+              (rt_push unknown key))
+            (set i (rt_add i 1)))))
+      (dv_m3 "score" score "terms" terms "unknown" unknown))))
+(defn dv_clamp_signed (value) (if (rt_lt value -1) -1 (if (rt_lt 1 value) 1 value)))
+(defn dv_expression (appraisal expression_policy)
+  (let (axes (rt_list) i 0)
+    (do
+      (while (rt_lt i (rt_count expression_policy))
+        (let (axis (rt_at expression_policy i) evaluation (dv_dot (dv_get appraisal "features") (rt_at axis 1)))
+          (do (rt_push axes (dv_pair (rt_at axis 0) (dv_with (dv_with evaluation "value" (dv_clamp_signed (dv_get evaluation "score"))) "complete" (rt_eq (rt_count (dv_get evaluation "unknown")) 0)))) (set i (rt_add i 1))))) axes)))
+(defn dv_no_change_prediction (mind)
+  (do (dv_domain mind "mind") (dv_with (dv_with mind "domain" "prediction") "source_revision" (dv_get mind "revision"))))
+(defn dv_response_option (id intent feasible prediction effort feature_weights)
+  (do
+    (dv_require (rt_not (rt_lt effort 0)) "Negative effort")
+    (dv_with (dv_with (dv_m4 "id" id "intent" intent "feasible" feasible "prediction" prediction) "effort" effort) "feature_weights" feature_weights)))
+(defn dv_person_policy (subject values effort_cost uncertainty_cost expression_policy)
+  (do
+    (dv_require (dv_and (rt_not (rt_lt effort_cost 0)) (rt_not (rt_lt uncertainty_cost 0))) "Negative policy cost")
+    (dv_with (dv_m4 "subject" subject "values" values "effort_cost" effort_cost "uncertainty_cost" uncertainty_cost) "expression" expression_policy)))
+(defn dv_accept_policy (mind id policy basis)
+  (do
+    (dv_domain mind "mind")
+    (dv_require (rt_eq (dv_get mind "subject") (dv_get policy "subject")) "Foreign value policy")
+    (dv_require (rt_lt 0 (rt_count basis)) "Value policy needs an acceptance basis")
+    (let (policies (dv_find mind "policies" (rt_list)))
+      (do
+        (dv_require (rt_not (dv_has_key policies id)) "Duplicate accepted policy")
+        (dv_with (dv_with mind "policies" (dv_with policies id (dv_m3 "policy" policy "basis" basis "active" true)))
+          "revision" (rt_add (dv_get mind "revision") 1))))))
+(defn dv_respond_adopted (mind request options policy_id)
+  (let (accepted (dv_get (dv_get mind "policies") policy_id))
+    (do (dv_require (dv_get accepted "active") "Response policy is not adopted")
+      (dv_with (dv_respond mind request options (dv_get accepted "policy")) "policy_basis" (dv_get accepted "basis")))))
+(defn dv_response_score (mind option appraisal policy)
+  (let (prediction (dv_get option "prediction"))
+    (do
+      (dv_domain prediction "prediction")
+      (dv_require (rt_eq (dv_get prediction "source_revision") (dv_get mind "revision")) "Stale response prediction")
+      (let (value (dv_value_change mind prediction (dv_get policy "values"))
+            relation_and_state (dv_dot (dv_get appraisal "features") (dv_get option "feature_weights"))
+            effort (rt_mul (dv_get option "effort") (dv_get policy "effort_cost"))
+            uncertainty (rt_mul (rt_add (rt_count (dv_get relation_and_state "unknown")) (rt_count (dv_get (dv_get value "after") "unknown"))) (dv_get policy "uncertainty_cost")))
+        (dv_with
+          (dv_m4 "score" (rt_sub (rt_add (dv_get value "delta") (dv_get relation_and_state "score")) (rt_add effort uncertainty))
+            "value" value "relationship_and_state" relation_and_state "effort" effort)
+          "uncertainty_cost" uncertainty)))))
+(defn dv_respond (mind request options policy)
+  (do
+    (dv_domain mind "mind")
+    (dv_require (rt_eq (dv_get mind "subject") (dv_get policy "subject")) "Foreign person policy")
+    (let (appraisal (dv_appraise_request mind request) i 0 found false best 0 chosen false evaluated (rt_list) rejected (rt_list) ids (rt_list))
+      (do
+        (while (rt_lt i (rt_count options))
+          (let (option (rt_at options i) id (dv_get option "id") legal (dv_truth mind (dv_get option "feasible")))
+            (do
+              (dv_require (rt_not (dv_has ids id)) "Duplicate response identity") (rt_push ids id)
+              (if (rt_eq legal "true")
+                (let (evaluation (dv_response_score mind option appraisal policy))
+                  (do
+                    (rt_push evaluated (dv_pair id evaluation))
+                    (if (if found (rt_lt best (dv_get evaluation "score")) true)
+                      (do (set found true) (set best (dv_get evaluation "score")) (set chosen option)) false)))
+                (rt_push rejected (dv_pair id legal)))
+              (set i (rt_add i 1)))))
+        (dv_with (dv_with (dv_with
+          (dv_m4 "status" (if found "selected" "no-response") "choice" chosen "appraisal" appraisal "evaluated" evaluated)
+          "rejected" rejected) "expression" (dv_expression appraisal (dv_get policy "expression"))) "committed" false)))))
+(defn dv_relax (current baseline retention)
+  (rt_add baseline (rt_mul (rt_sub current baseline) (dv_unit retention))))
+(defn dv_affect_proposal (mind request policy)
+  (let (appraisal (dv_appraise_request mind request) features (dv_get appraisal "features") self (dv_get request "self")
+        valence_ref (dv_ref self "affect" "valence") arousal_ref (dv_ref self "affect" "arousal")
+        valence (dv_read mind valence_ref) arousal (dv_read mind arousal_ref))
+    (do
+      (dv_require (dv_and (dv_get valence "known") (dv_get arousal "known")) "Unknown current affect")
+      (let (v_delta (dv_dot features (dv_get policy "valence_weights")) a_delta (dv_dot features (dv_get policy "arousal_weights")))
+        (dv_m3 "source_revision" (dv_get mind "revision") "basis" appraisal
+          "effects" (dv_pair
+            (dv_assign valence_ref (dv_clamp_signed (rt_add
+              (dv_relax (dv_get valence "value") (dv_get policy "baseline_valence") (dv_get policy "retention")) (dv_get v_delta "score"))))
+            (dv_assign arousal_ref (dv_clamp_signed (rt_add
+              (dv_relax (dv_get arousal "value") (dv_get policy "baseline_arousal") (dv_get policy "retention")) (dv_get a_delta "score"))))))))))

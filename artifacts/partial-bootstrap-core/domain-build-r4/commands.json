@@ -1,0 +1,124 @@
+[
+  {
+    "label": "seed-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\Seed.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\bin\\Release\\net8.0\\Seed.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-c2-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c2\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-c2-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c2\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-c3-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c2\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c3\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "compiler-c3-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c3\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "library-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\library\\library.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\library\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "library-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\library\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "inspector-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\compiler-c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\inspector\\inspector.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\inspector\\Program.cs"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "inspector-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\domain-build-r4\\inspector\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  }
+]
