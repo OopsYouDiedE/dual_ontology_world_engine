@@ -408,7 +408,14 @@
 
 (defn c1_answer_actions (actor) (c1_list_17 (c1_answer_me actor) (c1_answer_V1_0 actor) (c1_answer_V1_1 actor) (c1_answer_V1_2 actor) (c1_answer_V2_0 actor) (c1_answer_V2_1 actor) (c1_answer_V2_2 actor) (c1_answer_V3_0 actor) (c1_answer_V3_1 actor) (c1_answer_V4_0 actor) (c1_answer_V4_1 actor) (c1_answer_V5_0 actor) (c1_answer_V5_1 actor) (c1_answer_V5_2 actor) (c1_answer_trust actor) (c1_answer_V6_0 actor) (c1_answer_V6_1 actor)))
 
-(defn c1_hypotheses () (c1_list_17 (c1_hypothesis_me) (c1_hypothesis_V1_0) (c1_hypothesis_V1_1) (c1_hypothesis_V1_2) (c1_hypothesis_V2_0) (c1_hypothesis_V2_1) (c1_hypothesis_V2_2) (c1_hypothesis_V3_0) (c1_hypothesis_V3_1) (c1_hypothesis_V4_0) (c1_hypothesis_V4_1) (c1_hypothesis_V5_0) (c1_hypothesis_V5_1) (c1_hypothesis_V5_2) (c1_hypothesis_trust) (c1_hypothesis_V6_0) (c1_hypothesis_V6_1)))
+(defn c1_raw_hypotheses () (c1_list_17 (c1_hypothesis_me) (c1_hypothesis_V1_0) (c1_hypothesis_V1_1) (c1_hypothesis_V1_2) (c1_hypothesis_V2_0) (c1_hypothesis_V2_1) (c1_hypothesis_V2_2) (c1_hypothesis_V3_0) (c1_hypothesis_V3_1) (c1_hypothesis_V4_0) (c1_hypothesis_V4_1) (c1_hypothesis_V5_0) (c1_hypothesis_V5_1) (c1_hypothesis_V5_2) (c1_hypothesis_trust) (c1_hypothesis_V6_0) (c1_hypothesis_V6_1)))
+
+(defn c1_hypotheses ()
+ (let (items (c1_raw_hypotheses) result (rt_list) n 0)
+  (do (while (rt_lt n (rt_count items))
+   (let (item (rt_at items n))
+    (do (rt_push result (dv_with item "question" (dv_get (dv_get item "available_when") "value")))
+     (set n (rt_add n 1))))) result)))
 
 (defn c1_talk_slate_code (actor)
  (c1_once (c1_observe_as (c1_action (rt_cat actor ".talk.slate_code") "talk"
