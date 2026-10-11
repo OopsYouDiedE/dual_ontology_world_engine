@@ -60,3 +60,7 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 ## 编译会话与可读报告的当前实施
 
 `verification/session/10-subjective.dv`、`15-action-planning.dv`、`20-speech.dv`、`30-runner.dv` 实现主体本人推知、有界行动规划、话语解析与真实会话调度。原生内容与 oracle 分包；Python 仅冻结、编译与进程/文件 I/O。`verification/report/*.dv` 依据真实只读判定与事件生成中文报告，缺记录不补猜。本轮已授权实际运行与迭代，不恢复独立复评；早期仅设计/未实现说明是历史状态。先前首答360条件的隔离工程会话保留并标 superseded，新总预算必须全新会话。历史判定重执行与新会话分列，未执行的补充不报成立。
+
+## 运行起点预算与逻辑状态缓存（已执行迭代）
+
+`verification/session/15-action-planning.dv` 缓存本人公开目标依赖闭包，没有相关目标时不展开多步路径；循环/同层合并依据逻辑状态，易变时间戳与来源记录仍保留在完整原快照，不充当新目标状态。`30-runner.dv` 从初始物理时刻建立time_origin，按原生实例game_duration_budget计算硬终点；规划报价上界与实际执行分别受剩余累计时间约束，不从首答重启计时。工程fixture与新enabled会话分别保存，主判定的因果不足与接受轴不混称。

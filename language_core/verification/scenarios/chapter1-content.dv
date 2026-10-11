@@ -508,6 +508,7 @@
    (set mind (dv_add_object mind (c1_local_object "cognition")))
    (set mind (dv_add_object mind (c1_local_object "ritual")))
    (set mind (dv_add_object mind (c1_local_object "question")))
+   (set mind (dv_add_object mind (c1_memory_object actor)))
    (set mind (dv_add_object mind (c1_local_object "coat")))
    (if (rt_eq actor "detective") (set mind (dv_store mind (dv_ref "coat" "identity" "owner")
     (dv_with (dv_field "detective") "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 6 "s1_wake.006"))))) false)
@@ -529,10 +530,26 @@
   (c1_public_goal "voice_source" "remote_voice" "know")
   (c1_public_goal "words" "words_bolt" "know")
   (c1_public_goal "trust" "trust_reason" "know")))
+(defn c1_memory_source (actor)
+ (if (rt_eq actor "detective")
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 5 "s1_wake.003")
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story"
+   (if (rt_eq actor "huo") 7 (if (rt_eq actor "shen") 15 23))
+   (if (rt_eq actor "huo") "opening_huo.003" (if (rt_eq actor "shen") "opening_shen.003" "opening_su.003")))))
+(defn c1_memory_object (actor)
+ (c1_state_object "memory" (dv_single (dv_pair "empty_school_recall"
+  (dv_with (dv_field true) "basis" (dv_single (c1_memory_source actor)))))))
+(defn c1_pragmatic_policy (policy scope_check)
+ (dv_with (dv_with policy "scope_reference_check" scope_check) "implicature_bridges"
+  (dv_single (c1_short_stay_rule "cognition" "question" "memory"
+   (dv_list3
+    (c1_source "docs/design-standard.md" 1500 "approved-reversible-short-stay-interpretation")
+    (c1_source "docs/design-standard.md" 674 "awake-self-literal-scope")
+    (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019"))))))
 (defn c1_person_policy (id)
  (let (policy (dv_with (dv_with (c1_player_policy) "information_weight" 12) "goals" (c1_public_goals)))
-  (if (rt_eq id "detective") (dv_with policy "plan_depth" 6)
-   (dv_with (dv_with policy "model_budget" 0) "plan_depth" 1))))
+  (if (rt_eq id "detective") (c1_pragmatic_policy (dv_with policy "plan_depth" 6) true)
+   (c1_pragmatic_policy (dv_with (dv_with policy "model_budget" 0) "plan_depth" 1) false))))
 
 (defn c1_investigation_actions (actor)
  (let (actions (c1_move_actions actor) inspect
@@ -664,7 +681,7 @@
   (dv_single (dv_ref "question" "state" "stage"))
   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019")))
  "speech" (dv_with (dv_with (c1_speech (dv_fact (dv_ref "question" "state" "awake_scope") true)
-   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019") "封存后醒着的自己；普通语义有歧义，严格三天未绑定")
+   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019") "awake_self")
    "surface" "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。") "implicature_candidates" (dv_single (dv_single (dv_pair "id" "short_stay")))))
  "listeners" (c1_list_4 "detective" "huo" "shen" "su")) "public_grants" (dv_single (dv_ref "question" "state" "awake_scope"))))
 (defn c1_question_action (stage surface first)
@@ -702,7 +719,7 @@
  "Full six-variable counterfactual historical replay is not yet migrated; simulation unknown must remain unknown"
  "Original question2 complete heard-at-latching temporal evidence is not inferred just from answer subquestion2"
  "Acoustic action records actually executing the original trial and original loss testimony, not a full frequency-path simulator"
- "Individual short-stay bridges and speaker listener models lack adequate initial evidence; missing bridge stays unknown"))
+ "Shared reversible short-stay bridge is hearing-gated; demon listener prediction still lacks grounded listener models"))
 (defn c1_scenario_native ()
  (dv_with (dv_with (dv_with (dv_with (dv_m4 "format" "dv-session-v1" "id" "chapter1-native-authoring"
   "physical" (c1_physical_world) "actors" (c1_list_5 (c1_character_demon) (c1_character_detective)
@@ -728,8 +745,19 @@
      "id" "chapter1-boundary-noncanonical"))))
 
 
+(defn c1_report_labels ()
+ (dv_m3 "actors" (c1_list_5 (dv_pair "detective" "侦探") (dv_pair "huo" "霍铎")
+  (dv_pair "shen" "沈鼎") (dv_pair "su" "苏泠") (dv_pair "demon" "铜口代管者"))
+ "objects" (c1_list_12 (dv_pair "E1" "内闩") (dv_pair "E2" "木楔") (dv_pair "E3" "灰上的靴印")
+  (dv_pair "E4" "湿布") (dv_pair "E5" "音叉与门框") (dv_pair "E6" "苏泠的乐谱")
+  (dv_pair "E7" "霍铎的石板") (dv_pair "E8" "铜口与传声管") (dv_pair "E9" "四只茶杯")
+  (dv_pair "E10" "酵种罐") (dv_pair "E11" "积灰书架") (dv_pair "E12" "风衣与放大镜"))
+ "action_kinds" (c1_list_12 (dv_pair "opening" "开场广播") (dv_pair "question" "提出始业之问")
+  (dv_pair "receive_question" "听取问题") (dv_pair "inspect" "检视") (dv_pair "experiment" "实验")
+  (dv_pair "help" "请人辨认") (dv_pair "talk" "询问证言") (dv_pair "sound_test" "声路试验")
+  (dv_pair "replay" "重演昨夜") (dv_pair "answer" "提交答辩") (dv_pair "move" "走动") (dv_pair "recall" "触物回想"))))
 (defn c1_active_configuration (data)
- (dv_with (dv_with (dv_with data "capability_actor" "detective")
+ (dv_with (dv_with (dv_with (dv_with (dv_with data "report_labels" (c1_report_labels)) "game_duration_budget" 360) "capability_actor" "detective")
   "binding_gaps" (c1_binding_gaps))
   "budget_scope" "Detective cap48 from source; NPC cap48 engineering termination only; global cap240 sums actual caps, no cost or clock relaxation"))
 (defn dvs_scenario_base () (c1_active_configuration (c1_scenario_native)))

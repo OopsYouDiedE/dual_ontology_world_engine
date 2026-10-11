@@ -1,0 +1,18 @@
+; Shared defeasible rule. The caller adopts it openly into each person's policy.
+; Provenance: design §4.2/§4.7 and the user's explicit 2026-10-12 pragmatic choice.
+; Each speaker/listener's opening .003 supplies their own empty school recall.
+; Initial school-memory absence is not a physical duration fact.
+(defn c1_short_stay_rule (knowledge question memory basis)
+  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
+    (dv_m4 "id" "short_stay" "cue" "short_stay"
+      "premise" (dv_all (dv_pair
+        (dv_fact (dv_ref question "state" "awake_scope") true)
+        (dv_fact (dv_ref memory "state" "empty_school_recall") true)))
+      "proposition" (dv_fact (dv_ref knowledge "state" "short_stay") true))
+    "prior" 0.6) "basis" basis) "source_scope" "awake_self") "target_scope" "body_history")
+    "scope_bridge" (dv_m2 "op" "constant" "value" "unknown"))
+    "available_when" (dv_true))
+    "withdraw_when" (dv_not (dv_all (dv_list3
+      (dv_not (dv_fact (dv_ref knowledge "state" "familiar") true))
+      (dv_not (dv_fact (dv_ref knowledge "state" "long_residence_traces") true))
+      (dv_not (dv_fact (dv_ref knowledge "state" "replay_reason_complete") true)))))))

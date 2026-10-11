@@ -62,7 +62,7 @@
 
 
 (defn v_judge (manifest raw_trace oracle)
-  (let (trace (v_prepare_evidence_cache raw_trace) events (v_events trace) result (dv_single (v_integrity manifest trace)) i 0)
+  (let (trace (v_prepare_evidence_cache manifest raw_trace) events (v_events trace) result (dv_single (v_integrity manifest trace)) i 0)
     (do
       (let (extra (v_milestones events oracle) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1)))))
       (let (extra (v_observations trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1)))))
@@ -77,6 +77,7 @@
         (let (e (rt_at events j)) (do
           (if (dv_or (rt_eq (dv_get e "type") "answer_accepted") (rt_eq (dv_get e "type") "answer_rejected"))
             (rt_push result (v_answer_validation manifest trace e)) false) (set j (rt_add j 1))))))
+      (let (model_findings (v_model_checks manifest trace) model_index 0) (while (rt_lt model_index (rt_count model_findings)) (do (rt_push result (rt_at model_findings model_index)) (set model_index (rt_add model_index 1)))))
       (let (stage_times (v_run_stage_times manifest trace oracle) stage_index 0) (while (rt_lt stage_index (rt_count stage_times)) (do (rt_push result (rt_at stage_times stage_index)) (set stage_index (rt_add stage_index 1)))))
       (rt_push result (v_ready_deadline manifest trace oracle)) (dv_m3 "mode" "read_only" "findings" result "limitations" "No gameplay, aesthetic, or statistical conclusion is inferred from engineering output"))))
 (defn v_main ()
@@ -99,17 +100,22 @@
       (if (rt_eq (rt_count found) 0) (v_first events (dv_get spec "type") (dv_find spec "actor" "")) found))))
 
 
+(defn v_origin_execution (events e)
+  (let (i (rt_count events) found (rt_list) speech (dv_find (dv_find e "data" (rt_list)) "speech" (rt_list)))
+    (do (while (dv_and (rt_lt 0 i) (rt_eq (rt_count found) 0))
+      (do (set i (rt_sub i 1))
+        (let (candidate (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
+          (if (dv_and (rt_eq (dv_get candidate "type") "action_execution")
+            (dv_and (rt_eq (dv_get candidate "actor") (dv_get e "actor")) (v_ancestor events (dv_get e "id") (dv_get candidate "id"))))
+            (if (if (rt_lt 0 (rt_count speech)) (dv_same speech (dv_find (dv_find data "action" (rt_list)) "speech" false)) true)
+              (set found candidate) false) false)))) found)))
 (defn v_context_event (events e)
-  (let (data (dv_find e "data" (rt_list)) i 0)
-    (do (while (rt_lt i (rt_count events))
-      (let (parent (rt_at events i)) (do
-        (if (dv_and (rt_eq (dv_get parent "type") "action_execution") (dv_has (dv_find e "parents" (rt_list)) (dv_get parent "id")))
-          (let (pd (dv_find parent "data" (rt_list)) keys (dv_list3 "physical_before" "mind_before" "physical_after") j 0)
-            (while (rt_lt j (rt_count keys))
-              (let (key (rt_at keys j)) (do
-                (if (dv_and (rt_not (dv_has_key data key)) (dv_has_key pd key)) (set data (dv_with data key (dv_get pd key))) false) (set j (rt_add j 1)))))) false)
-        (set i (rt_add i 1))))) (dv_with e "data" data))))
-
-
-
-
+  (let (data (dv_find e "data" (rt_list)) origin (v_origin_execution events e))
+    (do
+      (if (rt_lt 0 (rt_count origin))
+        (let (pd (dv_get origin "data") keys (dv_list3 "physical_before" "mind_before" "physical_after") j 0)
+          (while (rt_lt j (rt_count keys))
+            (let (key (rt_at keys j)) (do
+              (if (dv_and (rt_not (dv_has_key data key)) (dv_has_key pd key)) (set data (dv_with data key (dv_get pd key))) false)
+              (set j (rt_add j 1)))))) false)
+      (dv_with e "data" data))))

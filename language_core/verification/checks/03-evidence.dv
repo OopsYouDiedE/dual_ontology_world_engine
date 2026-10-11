@@ -54,9 +54,9 @@
             physical (dv_find data "physical" (dv_find data "physical_before" (rt_list)))
             mind (dv_find data "mind" (dv_find data "mind_before" (rt_list))) claim (if speech (dv_find data "claim" literal) literal))
         (do
-          (rt_push result (v_finding "literal_truth" (if (dv_and (rt_lt 0 (rt_count literal)) (rt_lt 0 (rt_count physical))) (v_truth_status (dv_truth physical literal)) "insufficient_evidence") "Recomputed structured literal at its recorded authority anchor" refs))
+          (rt_push result (v_finding "literal_truth" (if (dv_and (rt_lt 0 (rt_count literal)) (rt_lt 0 (rt_count physical))) (v_truth_status (dv_truth physical literal)) "insufficient_evidence") "在真实权威快照和记录时刻独立计算结构化字面真值" refs))
           (rt_push result (v_finding "epistemic_support" (if (dv_and (rt_lt 0 (rt_count literal)) (rt_lt 0 (rt_count mind)))
-            (if (v_support trace mind (dv_get e "actor") claim (rt_list)) (v_truth_status (dv_truth mind claim)) "insufficient_evidence") "insufficient_evidence") "Source recursion uses sealed initial view and actual observations or replayed accepted inference, with cycle rejection" refs))
+            (if (v_support trace mind (dv_get e "actor") claim (rt_list)) (v_truth_status (dv_truth mind claim)) "insufficient_evidence") "insufficient_evidence") "递归核验冻结初始认知、真实观察及已采纳推理的前提来源，拒绝循环作证" refs))
           (if speech
             (rt_push result (v_finding "utterance_causal_scope" "insufficient_evidence" "Answer causality is not applicable to an opening expression; implicature is audited separately" refs))
             (let (contract (v_question_contract oracle (v_question e)) required (dv_find (v_question_contract oracle (v_question e)) "causal_requirements" (rt_list)) competitors (dv_find (v_question_contract oracle (v_question e)) "competing_requirements" (rt_list)) i 0 status "supported")

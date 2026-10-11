@@ -46,10 +46,11 @@
       (do (if (rt_eq (dv_get (rt_at actors i) "id") actor_id) (set policy (dv_get (rt_at actors i) "policy")) false) (set i (rt_add i 1))))
       (dv_observation_profile (dv_find policy "observation_weights" (dv_m3 "perception" 1 "testimony" 1 "recall" 1)) (dv_find policy "observation_threshold" 0.5)))))
 
-(defn v_prepare_evidence_cache (trace)
+(defn v_prepare_evidence_cache (manifest trace)
   (let (cached (rt_list) i 0)
     (do
       (while (rt_lt i (rt_count trace))
-        (do (if (dv_has (dv_pair "judge_observation_findings" "judge_reception_findings") (rt_at (rt_at trace i) 0)) false (rt_push cached (rt_at trace i))) (set i (rt_add i 1))))
+        (do (if (dv_has (dv_list3 "judge_observation_findings" "judge_reception_findings" "judge_model_findings") (rt_at (rt_at trace i) 0)) false (rt_push cached (rt_at trace i))) (set i (rt_add i 1))))
       (rt_push cached (dv_pair "judge_observation_findings" (v_observations_compute cached)))
-      (rt_push cached (dv_pair "judge_reception_findings" (v_receptions_compute cached))) cached)))
+      (rt_push cached (dv_pair "judge_reception_findings" (v_receptions_compute cached)))
+      (rt_push cached (dv_pair "judge_model_findings" (v_model_checks_compute manifest cached))) cached)))

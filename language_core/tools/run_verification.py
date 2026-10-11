@@ -380,7 +380,7 @@ def judge_history(args, workspace, historical_root, out, plan):
             for item in plan['sessions']:
                 command = next(record for record in history if record['label'] == 'session-' + item['id'])
                 sessions.append([['id', item['id']], ['trace', str(out / ('trace-' + item['id'] + '.json'))], ['real_elapsed_seconds', command['duration_seconds']], ['scenario', command['argv'][2]]])
-            index = [['scope', result['scope']], ['oracle', str(inputs / 'chapter1-oracle.json')], ['sessions', sessions]]
+            index = [['scope', result['scope']], ['producer_run', str(original)], ['judgment_run', str(out)], ['judgment_processes', [[['id', record['label']], ['real_elapsed_seconds', record['duration_seconds']]] for record in commands if record['label'].endswith('-execute')]], ['oracle', str(inputs / 'chapter1-oracle.json')], ['sessions', sessions]]
             (inputs / 'report-index.json').write_text(json.dumps(index, ensure_ascii=False), encoding='utf-8')
             run('readable-report-execute', ['dotnet', programs['readable-report']] + [str(out / (name + '-execute.stdout.txt')) if name in successful else '' for name in ENTRIES] + [inputs / 'report-index.json', out / 'readable-report.md'])
         result['status'] = ('primary_executed_supplements_deferred' if args.primary_only else 'executed') if all(name in successful for name in entries) else 'incomplete'
