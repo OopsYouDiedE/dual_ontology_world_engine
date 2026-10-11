@@ -1,0 +1,613 @@
+{
+  "method": "Only public decision.GameTime and stop.time; bracket other events with surrounding observed clocks; no wall-time multiplication or interpolation.",
+  "inputs": {
+    "修改前 r21": {
+      "input": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\runs\\unified-r21\\trajectory.jsonl",
+      "sha256": "9eb3446deced8114269b4a26443cad4b780042a92d5634e74a13da46e30ef06a",
+      "initial_game_minutes": 490,
+      "time_scale": 4.0
+    },
+    "修改后 r24": {
+      "input": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\detective-agent\\chapter2-20261011\\level3-gemini-20261011-r24\\raw\\trajectory.jsonl",
+      "sha256": "34088553640cdad8d4176441d88d8251ac79477e85e6a132b8114b60ef2fd115",
+      "initial_game_minutes": 490,
+      "time_scale": 4.0
+    }
+  },
+  "nodes": [
+    {
+      "run": "修改前 r21",
+      "node": "初始时钟",
+      "reached": true,
+      "sequence": 7,
+      "wall_seconds": 1.297,
+      "clock_before": {
+        "wall_seconds": 1.297,
+        "sequence": 7,
+        "game_minutes": 490,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 490.0,
+          "Phase": "wake"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 1.297,
+        "sequence": 7,
+        "game_minutes": 490,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 490.0,
+          "Phase": "wake"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 490,
+      "game_minutes_high": 490,
+      "game_elapsed_low": 0,
+      "game_elapsed_high": 0,
+      "game_clock": "08:10",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "实际进入走廊",
+      "reached": true,
+      "sequence": 133,
+      "wall_seconds": 4.917,
+      "clock_before": {
+        "wall_seconds": 4.84,
+        "sequence": 130,
+        "game_minutes": 498,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 498.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 5.329,
+        "sequence": 155,
+        "game_minutes": 500,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 500.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 498,
+      "game_minutes_high": 500,
+      "game_elapsed_low": 8,
+      "game_elapsed_high": 10,
+      "game_clock": "08:18–08:20",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "实际进入空房",
+      "reached": true,
+      "sequence": 421,
+      "wall_seconds": 9.763,
+      "clock_before": {
+        "wall_seconds": 9.747,
+        "sequence": 418,
+        "game_minutes": 520,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 520.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 9.918,
+        "sequence": 431,
+        "game_minutes": 520,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 520.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 520,
+      "game_minutes_high": 520,
+      "game_elapsed_low": 30,
+      "game_elapsed_high": 30,
+      "game_clock": "08:40",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "活动厅见面对白开始",
+      "reached": true,
+      "sequence": 945,
+      "wall_seconds": 18.634,
+      "clock_before": {
+        "wall_seconds": 17.855,
+        "sequence": 890,
+        "game_minutes": 554,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 554.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 18.809,
+        "sequence": 948,
+        "game_minutes": 566,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 566.0,
+          "Phase": "meeting"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 554,
+      "game_minutes_high": 566,
+      "game_elapsed_low": 64,
+      "game_elapsed_high": 76,
+      "game_clock": "09:14–09:26",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "开场结束且已在活动厅内",
+      "reached": true,
+      "sequence": 1136,
+      "wall_seconds": 25.729,
+      "clock_before": {
+        "wall_seconds": 25.679,
+        "sequence": 1133,
+        "game_minutes": 611,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 611.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 26.416,
+        "sequence": 1175,
+        "game_minutes": 611,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 611.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 611,
+      "game_minutes_high": 611,
+      "game_elapsed_low": 121,
+      "game_elapsed_high": 121,
+      "game_clock": "10:11",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "实际进入门厅",
+      "reached": true,
+      "sequence": 1521,
+      "wall_seconds": 34.096,
+      "clock_before": {
+        "wall_seconds": 34.053,
+        "sequence": 1518,
+        "game_minutes": 639,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 639.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 34.566,
+        "sequence": 1544,
+        "game_minutes": 641,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 641.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 639,
+      "game_minutes_high": 641,
+      "game_elapsed_low": 149,
+      "game_elapsed_high": 151,
+      "game_clock": "10:39–10:41",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "首次打开石板卡",
+      "reached": false
+    },
+    {
+      "run": "修改前 r21",
+      "node": "首次打开靴印卡",
+      "reached": true,
+      "sequence": 1830,
+      "wall_seconds": 43.385,
+      "clock_before": {
+        "wall_seconds": 43.066,
+        "sequence": 1817,
+        "game_minutes": 676,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 676.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 43.486,
+        "sequence": 1835,
+        "game_minutes": 679,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 679.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 676,
+      "game_minutes_high": 679,
+      "game_elapsed_low": 186,
+      "game_elapsed_high": 189,
+      "game_clock": "11:16–11:19",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改前 r21",
+      "node": "实际进入 R06",
+      "reached": false
+    },
+    {
+      "run": "修改前 r21",
+      "node": "第一章终局",
+      "reached": false
+    },
+    {
+      "run": "修改前 r21",
+      "node": "本轮结束",
+      "reached": true,
+      "sequence": 6149,
+      "wall_seconds": 102.848,
+      "clock_before": {
+        "wall_seconds": 102.848,
+        "sequence": 6149,
+        "game_minutes": 679,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 679.0,
+          "Phase": "investigate"
+        },
+        "kind": "stop"
+      },
+      "clock_after": {
+        "wall_seconds": 102.848,
+        "sequence": 6149,
+        "game_minutes": 679,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 679.0,
+          "Phase": "investigate"
+        },
+        "kind": "stop"
+      },
+      "stop_reason": "no_public_progress",
+      "reported_duration_seconds": 102.793,
+      "game_minutes_low": 679,
+      "game_minutes_high": 679,
+      "game_elapsed_low": 189,
+      "game_elapsed_high": 189,
+      "game_clock": "11:19",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "初始时钟",
+      "reached": true,
+      "sequence": 7,
+      "wall_seconds": 1.29,
+      "clock_before": {
+        "wall_seconds": 1.29,
+        "sequence": 7,
+        "game_minutes": 490,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 490.0,
+          "Phase": "wake"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 1.29,
+        "sequence": 7,
+        "game_minutes": 490,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 490.0,
+          "Phase": "wake"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 490,
+      "game_minutes_high": 490,
+      "game_elapsed_low": 0,
+      "game_elapsed_high": 0,
+      "game_clock": "08:10",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "实际进入走廊",
+      "reached": true,
+      "sequence": 90,
+      "wall_seconds": 5.48,
+      "clock_before": {
+        "wall_seconds": 5.428,
+        "sequence": 87,
+        "game_minutes": 499,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 499.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 5.83,
+        "sequence": 102,
+        "game_minutes": 501,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 501.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 499,
+      "game_minutes_high": 501,
+      "game_elapsed_low": 9,
+      "game_elapsed_high": 11,
+      "game_clock": "08:19–08:21",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "实际进入空房",
+      "reached": true,
+      "sequence": 189,
+      "wall_seconds": 8.749,
+      "clock_before": {
+        "wall_seconds": 8.715,
+        "sequence": 186,
+        "game_minutes": 514,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 514.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 9.475,
+        "sequence": 200,
+        "game_minutes": 519,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 519.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 514,
+      "game_minutes_high": 519,
+      "game_elapsed_low": 24,
+      "game_elapsed_high": 29,
+      "game_clock": "08:34–08:39",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "活动厅见面对白开始",
+      "reached": true,
+      "sequence": 538,
+      "wall_seconds": 61.344,
+      "clock_before": {
+        "wall_seconds": 57.948,
+        "sequence": 489,
+        "game_minutes": 544,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 544.0,
+          "Phase": "roam"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 61.643,
+        "sequence": 542,
+        "game_minutes": 556,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 556.0,
+          "Phase": "meeting"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 544,
+      "game_minutes_high": 556,
+      "game_elapsed_low": 54,
+      "game_elapsed_high": 66,
+      "game_clock": "09:04–09:16",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "开场结束且已在活动厅内",
+      "reached": true,
+      "sequence": 728,
+      "wall_seconds": 68.179,
+      "clock_before": {
+        "wall_seconds": 68.034,
+        "sequence": 725,
+        "game_minutes": 601,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 601.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 69.287,
+        "sequence": 745,
+        "game_minutes": 601,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 601.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 601,
+      "game_minutes_high": 601,
+      "game_elapsed_low": 111,
+      "game_elapsed_high": 111,
+      "game_clock": "10:01",
+      "clock_precision": "recorded_or_equal_brackets"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "实际进入门厅",
+      "reached": false
+    },
+    {
+      "run": "修改后 r24",
+      "node": "首次打开石板卡",
+      "reached": true,
+      "sequence": 951,
+      "wall_seconds": 103.244,
+      "clock_before": {
+        "wall_seconds": 102.048,
+        "sequence": 937,
+        "game_minutes": 623,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 623.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 103.422,
+        "sequence": 955,
+        "game_minutes": 625,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 625.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 623,
+      "game_minutes_high": 625,
+      "game_elapsed_low": 133,
+      "game_elapsed_high": 135,
+      "game_clock": "10:23–10:25",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "首次打开靴印卡",
+      "reached": false
+    },
+    {
+      "run": "修改后 r24",
+      "node": "实际进入 R06",
+      "reached": true,
+      "sequence": 1685,
+      "wall_seconds": 159.886,
+      "clock_before": {
+        "wall_seconds": 159.52,
+        "sequence": 1682,
+        "game_minutes": 700,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 700.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "clock_after": {
+        "wall_seconds": 161.751,
+        "sequence": 1695,
+        "game_minutes": 702,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 702.0,
+          "Phase": "investigate"
+        },
+        "kind": "decision"
+      },
+      "game_minutes_low": 700,
+      "game_minutes_high": 702,
+      "game_elapsed_low": 210,
+      "game_elapsed_high": 212,
+      "game_clock": "11:40–11:42",
+      "clock_precision": "bracket_only_no_interpolation"
+    },
+    {
+      "run": "修改后 r24",
+      "node": "第一章终局",
+      "reached": false
+    },
+    {
+      "run": "修改后 r24",
+      "node": "本轮结束",
+      "reached": true,
+      "sequence": 1919,
+      "wall_seconds": 180.062,
+      "clock_before": {
+        "wall_seconds": 180.062,
+        "sequence": 1919,
+        "game_minutes": 722,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 722.0,
+          "Phase": "investigate"
+        },
+        "kind": "stop"
+      },
+      "clock_after": {
+        "wall_seconds": 180.062,
+        "sequence": 1919,
+        "game_minutes": 722,
+        "clock": {
+          "Day": 1.0,
+          "Minutes": 722.0,
+          "Phase": "investigate"
+        },
+        "kind": "stop"
+      },
+      "stop_reason": "wall_budget",
+      "reported_duration_seconds": 180.005,
+      "game_minutes_low": 722,
+      "game_minutes_high": 722,
+      "game_elapsed_low": 232,
+      "game_elapsed_high": 232,
+      "game_clock": "12:02",
+      "clock_precision": "recorded_or_equal_brackets"
+    }
+  ]
+}
