@@ -48,3 +48,7 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 编译器自举亦是最终必需条件：词法/解析、名称与类型/能力检查、IR 转换和目标后端都用 DV 实现。依照 DESIGN.md 冻结各阶段源码与依赖，由启动编译器产生 C1，再由 C1/C2 编译同一份编译器源码，记录确定目标源码的固定点比较与实际语义。当前元循环解释器不能代替该条件。生成 C# 等目标代码必须由源重新生成；外部目标工具链与最小平台 ABI 依赖须列明。
 
 架构、合同、命令或验证方式调整时同步本文件；报告持续使用 `artifacts/partial-bootstrap-core/`。仅提交本轮目录和明确的全局架构增量，保留既有未提交修改。
+
+## 自动验证设计的当前授权
+
+用户 2026-10-12 明确授权开始正式自动验证设计；本轮仅落盘 `verification/DESIGN.md` 和模块边界，不实现或运行验收器，不恢复独立复评。拟议主程序及最多三个补充程序全部用 DV，C# ABI 仅平台 I/O，章节实例与答案只由 `.story` 装载。`verification/` 负责 manifest、因果记录、正式会话接口、只读判定、代价审计和报告的通用合同，拟议接口不得冒称现有能力。后续实现与运行授权分别记录，交付持续使用 `artifacts/partial-bootstrap-core/`。
