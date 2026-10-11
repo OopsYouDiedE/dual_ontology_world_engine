@@ -1,0 +1,47 @@
+; First-order finite-term unification with occurs check. A variable is (var name).
+; The bounded solver uses ground Horn clauses: (clause head (body ...)).
+; General variable clauses are NOT supported until standardization-apart is implemented.
+(def! variable? (fn* (x) (if (list? x) (if (= (count x) 2) (= (first x) 'var) false) false)))
+(def! walk (fn* (term bindings)
+  (if (variable? term)
+    (let* (entry (assoc term bindings)) (if entry (walk (nth entry 1) bindings) term)) term)))
+(def! occurs? (fn* (variable term bindings)
+  (let* (value (walk term bindings))
+    (if (= variable value) true
+      (if (list? value) (not (empty? (filter (fn* (x) (occurs? variable x bindings)) value))) false)))))
+(def! unify-list (fn* (left right bindings)
+  (if (= (count left) (count right))
+    (if (empty? left) bindings
+      (let* (next (unify (first left) (first right) bindings))
+        (if (= next nil) nil (unify-list (rest left) (rest right) next)))) nil)))
+(def! unify (fn* (left right bindings)
+  (let* (a (walk left bindings) b (walk right bindings))
+    (if (= a b) bindings
+      (if (variable? a) (if (occurs? a b bindings) nil (put bindings a b))
+      (if (variable? b) (if (occurs? b a bindings) nil (put bindings b a))
+      (if (list? a) (if (list? b) (unify-list a b bindings) nil) nil)))))))
+(def! ground? (fn* (term)
+  (if (variable? term) false (if (list? term) (every? ground? term) true))))
+(def! clause? (fn* (c)
+  (if (list? c) (if (= (count c) 3) (if (= (first c) 'clause)
+    (if (list? (nth c 2)) (ground? c) false) false) false) false)))
+; Result: (proved proof-tree), (unknown no-clause), (unknown depth), (unknown cycle).
+; Missing facts are Unknown, never negation-as-failure or objective truth.
+(def! prove-body (fn* (goals clauses depth trail)
+  (if (empty? goals) '(proved ())
+    (let* (head (prove-ground (first goals) clauses depth trail))
+      (if (= (first head) 'proved)
+        (let* (tail (prove-body (rest goals) clauses depth trail))
+          (if (= (first tail) 'proved) (list 'proved (cons (nth head 1) (nth tail 1))) tail)) head)))))
+(def! try-clauses (fn* (goal candidates clauses depth trail)
+  (if (empty? candidates) '(unknown no-clause)
+    (let* (body (prove-body (nth (first candidates) 2) clauses (- depth 1) (cons goal trail)))
+      (if (= (first body) 'proved) (list 'proved (list goal (nth body 1)))
+        (if (empty? (rest candidates)) body (try-clauses goal (rest candidates) clauses depth trail)))))))
+(def! prove-ground (fn* (goal clauses depth trail)
+  (do (ensure (ground? goal) "Non-ground goal unsupported")
+      (ensure (every? clause? clauses) "Only ground Horn clauses supported")
+      (ensure (if (integer? depth) (not (< depth 0)) false) "Invalid proof depth")
+      (if (= depth 0) '(unknown depth)
+        (if (member? goal trail) '(unknown cycle)
+          (try-clauses goal (filter (fn* (c) (= goal (nth c 1))) clauses) clauses depth trail))))))

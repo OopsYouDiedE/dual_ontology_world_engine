@@ -1,0 +1,15 @@
+A object observed stock>=7: True
+A facet observed stock>=7: False
+A missing facet tag remains Unknown: Unknown
+A object stock>=11 before B mutation: False
+B same local object handle stock>=11: True
+A alias write receipt: ActionReceipt { Succeeded = True, Failure = , WorldRevision = 6 }
+A authority after 3+1+1: 5
+A old snapshot after authority write: (("facet" ((exists true) (kind object) (at "room") (tags ((stock 2))) (relations ()))) ("object" ((exists true) (kind object) (at "room") (tags ((stock 7))) (relations ()))) ("other-body" ((exists true) (kind body) (at "room") (tags ()) (relations ()))) ("room" ((exists true) (kind space) (tags ()) (relations ()))) ("self" ((exists true) (kind body) (at "room") (tags ()) (relations ()))))
+A new snapshot after authority write: (("facet" ((exists true) (kind object) (at "room") (tags ((stock 2))) (relations ()))) ("object" ((exists true) (kind object) (at "room") (tags ((stock 7))) (relations ()))) ("other-body" ((exists true) (kind body) (at "room") (tags ()) (relations ()))) ("room" ((exists true) (kind space) (tags ()) (relations ()))) ("self" ((exists true) (kind body) (at "room") (tags ()) (relations ()))))
+B authority after A commit: 11
+B old snapshot stock>=15: False
+B new snapshot stock>=15: True
+A object stock>=11 after B mutation: False
+A trying B body actor: no-control
+snapshot includes authority entity ID text: False

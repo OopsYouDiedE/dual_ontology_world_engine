@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "artifacts/partial-bootstrap-core/review-dv-r2/boundary/BoundaryReview.csproj",
+        "-c",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "dotnet",
+        "run",
+        "--project",
+        "artifacts/partial-bootstrap-core/review-dv-r2/boundary/BoundaryReview.csproj",
+        "-c",
+        "Release",
+        "--no-build"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged": true,
+  "production_assemblies_unchanged": true
+}

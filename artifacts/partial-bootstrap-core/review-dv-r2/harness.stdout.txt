@@ -1,0 +1,26 @@
+Independent generic language/host review; no game, story or old Core access.
+alias cumulative spend INPUT (seq (spend object stock 2) (spend facet stock 2)) authority stock=3: Succeeded=False, Failure=resource, stock=3, worldRevision=3
+alias cumulative change INPUT (seq (change object stock 1) (change facet stock 1)) authority stock=3: Succeeded=True, Failure=<none>, stock=5, worldRevision=4
+alias ban INPUT ban change object; execute same entity via facet: Succeeded=False, Failure=forbidden, stock=3, worldRevision=3
+unknown numeric prediction INPUT missing observed stock; prefer change stock 1: first=, edges=(), score=0, depth=0, comparedDepth=0, expanded=1, stop=no-action, predictionFailures=[unknown-state]
+unknown numeric authority unchanged: 3
+unknown conditional prediction INPUT when unseen sets known flag, successor needs flag still 0: first=, edges=(), score=0, depth=0, comparedDepth=0, expanded=1, stop=no-action, predictionFailures=[unknown-condition]
+unknown conditional snapshot retained: (("object" ((exists true) (kind object) (at "room") (tags ((flag 0) (progress 0) (stock 3))) (relations ()))) ("room" ((exists true) (kind space) (tags ()) (relations ()))) ("self" ((exists true) (kind body) (at "room") (tags ()) (relations ()))))
+planning budget INPUT depth=1, expansions=1, two root candidates: first=Change { Target = Reference { Handle = object }, Tag = progress, Amount = 1 }, edges=(((change (ref "object") progress 1) 2 2 (first-b))), score=2, depth=1, comparedDepth=1, expanded=1, stop=depth, predictionFailures=[]
+planning budget INPUT depth=2, expansions=1, two root candidates: first=Change { Target = Reference { Handle = object }, Tag = progress, Amount = 1 }, edges=(((change (ref "object") progress 1) 2 2 (first-b))), score=2, depth=1, comparedDepth=1, expanded=1, stop=complete-layer-budget, predictionFailures=[]
+planning budget INPUT depth=3, expansions=1, two root candidates: first=Change { Target = Reference { Handle = object }, Tag = progress, Amount = 1 }, edges=(((change (ref "object") progress 1) 2 2 (first-b))), score=2, depth=1, comparedDepth=1, expanded=1, stop=complete-layer-budget, predictionFailures=[]
+planning budget INPUT depth=2, expansions=2, two root candidates: first=Change { Target = Reference { Handle = object }, Tag = progress, Amount = 1 }, edges=(((change (ref "object") progress 1) 2 2 (first-b))), score=2, depth=1, comparedDepth=1, expanded=1, stop=complete-layer-budget, predictionFailures=[]
+planning budget INPUT depth=2, expansions=3, two root candidates: first=Change { Target = Reference { Handle = object }, Tag = stock, Amount = 1 }, edges=(((change (ref "object") stock 1) 1 1 (first-a)) ((change (ref "object") progress 1) 2 2 (first-b))), score=3, depth=2, comparedDepth=2, expanded=3, stop=depth, predictionFailures=[]
+planning invalid budget INPUT expansions=0: LanguageException: "Invalid expansion budget"
+token first commit: Succeeded=True, Failure=<none>, stock=4, worldRevision=4
+token second competing commit: Succeeded=False, Failure=stale-world, stock=4, worldRevision=4
+token repeat commit: Succeeded=False, Failure=already-committed, stock=4, worldRevision=4
+snapshot remains old after commit: False
+token after cognition mutation: Succeeded=False, Failure=stale-cognition, stock=4, worldRevision=4
+foreign token: LanguageException: Foreign prepared action.
+foreign subject view: LanguageException: Snapshot belongs to another authority boundary.
+authority identifier in subject view: LanguageException: Reference is outside subject view.
+remote require INPUT secret >= 0: out-of-reach
+remote require INPUT secret >= 2: out-of-reach
+remote existence INPUT require exists remote (subject Unknown): out-of-reach
+remote existence INPUT require exists remote-absent (subject Unknown): out-of-reach

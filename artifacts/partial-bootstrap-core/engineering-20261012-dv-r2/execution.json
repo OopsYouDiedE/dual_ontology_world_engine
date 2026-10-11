@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "command": [
+        "dotnet",
+        "build",
+        "language_core/LanguageCore.sln",
+        "-c",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "dotnet",
+        "run",
+        "--project",
+        "language_core/Cli/Language.Cli.csproj",
+        "-c",
+        "Release",
+        "--no-build",
+        "--",
+        "demo"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged": true,
+  "assemblies": {
+    "language_core/Cli/bin/Release/net8.0/Language.Cli.dll": "b6f339bef4a84996525f458b43c480b5e981c4a6f27f2b6f6d23d70e66e5bb78",
+    "language_core/Cli/bin/Release/net8.0/Language.Core.dll": "f5d9c923b746e49895b4c471c07ee18b9e84bd03e4e9ac44ddc9b17f215ced1b"
+  },
+  "scope": "language mechanisms only; no game acceptance"
+}

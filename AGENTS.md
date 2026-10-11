@@ -33,6 +33,7 @@
 | `csharp/` | 独立 Core 类库，不依赖 Godot，见 [csharp/AGENTS.md](csharp/AGENTS.md) |
 | `godot_csharp/` | Godot 游戏宿主，单向引用 Core，见 [godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) |
 | `docs/design-standard.md` | 唯一的设计规范文件 |
+| `language_core/` | 隔离的 DuelView（DV）语言 Core；不引用旧 Core，见该目录的 AGENTS.md |
 | `tools/` | 仓库级通用工程工具；使用方式受测评方式约束 |
 | `godot_csharp/tools/` | 资产生产、剧本编译与 Godot 工具 |
 | `music/` | 音乐工程与原声 |
@@ -42,6 +43,8 @@
 当前生产实现恢复到 `5b8c7dbe` 的 r20 时期提交，保留当前只读测量旁路、测试规则与保护工具。该提交不能冒称与历史 r20 未提交工作区完全一致；旧版行为和新会话分别记录。Core 提供主体推理与决策，宿主保留该基线的坐席候选适配；设计约束继续依据设计规范，历史架构不自动成为设计合格的证明。后续优化从此明确基线逐项审查，不重新混入封存的新版实现。
 
 ## 环境
+
+独立 DuelView（DV）语言重写位于 `language_core/`，源码后缀 `.dv`；目标是全部推演核心与编译器均由 DV 实现，经统一类型化 AST/IR 与目标后端生成 C# 或其他语言。当前启动内核与宿主权威边界仍使用 C#，仅实现部分解释自举；编译器自举合同见该目录 DESIGN.md，完整迁移缺口见 README。现役宿主仍引用 `csharp/`，语言机制或编译固定点证据不能替代旧 Core 对齐或游戏验收。
 
 - .NET 8 SDK
 - Godot 4.6.1 .NET；用环境变量 `GODOT` 或 `--godot` 参数指定控制台程序

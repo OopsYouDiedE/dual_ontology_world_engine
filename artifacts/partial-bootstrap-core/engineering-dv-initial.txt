@@ -1,0 +1,5 @@
+DuelView rename/repair engineering diagnostics, 2026-10-12.
+The first post-edit build completed, but the mechanism demo stopped while reading 50-planning.dv:
+50-planning.dv: 43:94: Unexpected closing parenthesis.
+The recursive layer call had one extra closing delimiter after adding the rejection argument.
+This failed run is not current mechanism evidence. A new source freeze and independent review follow the repair.
