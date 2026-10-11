@@ -1,0 +1,111 @@
+{
+  "status": "incomplete",
+  "scope": "Fresh rerun of identical frozen producer package; external process limit changed only",
+  "source_root": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-source",
+  "frozen_rerun_from": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\core-iteration-r6-enabled",
+  "process_timeout_seconds": 600.0,
+  "previous_process_timeout_seconds": null,
+  "compiler_execution": "Reused exact sealed compiler package; no new bootstrap execution",
+  "programs": {
+    "session-runner": {
+      "assembly_sha256": "74a6120ee684824e3db7866a2f8c98796a5435c0eede2dbfdf8b99065c8fc9b4",
+      "generated_source_sha256": "ecf771f87ce352d1d442489322bbb0c8c82b45c1d4fd9616e598a084941aa4a5"
+    }
+  },
+  "compiler_stages": {
+    "c1": {
+      "source_sha256": "c4b71e4054cb0976095825f084a6a3f6248fa45b7f43464d175a560c750dc86a",
+      "assembly_sha256": "c15315f241149162f473694faa8e447f5f0a4b96d47e0b09990f7553125a2fbf"
+    },
+    "c2": {
+      "source_sha256": "e299eabb100983ac163489a06a09bba3f8f0673971e36104c265e4d46a5bdf42",
+      "assembly_sha256": "3a21c17d8a40377287122729571ea1f86f5facdd7521997de06fdcf8405ef163"
+    },
+    "c3": {
+      "source_sha256": "e299eabb100983ac163489a06a09bba3f8f0673971e36104c265e4d46a5bdf42",
+      "assembly_sha256": "11119583ea0431c2e34f907f8c2af8985a59cdf1b2d0cd3d9e82e368b1201626"
+    }
+  },
+  "compiler_fixed_point": true,
+  "exports": {
+    "export-scenario-base": {
+      "assembly_sha256": "698f68b0641510dd270d1cce6860f429e2b624528022bf807cc949844990aecb",
+      "generated_source_sha256": "4d79b04c7b5aad0324f46800d18b36dad7f6f94d4190238a99a4a29ce9aa5e3f",
+      "functions": [
+        "dvs_scenario_base",
+        "dvs_scenario_boundary",
+        "dvs_scenario_low",
+        "dvs_scenario_holdout"
+      ]
+    },
+    "export-oracle": {
+      "assembly_sha256": "adbe49be41a2dfc27edfafeeb3de726690c9abac90f9ef481a9fb57b14b0e838",
+      "generated_source_sha256": "d744a574373ef777d8c5afd038a2737d0906dbe2447393124d74c271728aed08",
+      "functions": [
+        "dvs_chapter1_oracle"
+      ]
+    },
+    "export-manifest-enabled": {
+      "assembly_sha256": "d3b934c3226a3411037eb210489c99aea9c11da2d28472d2e58b990a8c25f8ae",
+      "generated_source_sha256": "622a8a0dc1cb2774db63f99eee591a1e754a65b6a0c5ba252f3d363e1ff1979e",
+      "functions": [
+        "dvs_manifest_enabled",
+        "dvs_manifest_disabled",
+        "dvs_manifest_boundary",
+        "dvs_manifest_low",
+        "dvs_manifest_holdout",
+        "dvs_compare_capability",
+        "dvs_compare_boundary",
+        "dvs_compare_parameters"
+      ]
+    }
+  },
+  "platform_orchestrator_sha256": "7289e520f314371df5526b8bab7ce2df53f7cf51fe7b41cf3388509349e9cb7d",
+  "real_window_performance_comparison": false,
+  "error": "name 'pair_record' is not defined",
+  "sources_unchanged": true,
+  "elapsed_seconds": 306.672,
+  "outputs": {
+    ".gitattributes": "af71b523c5d6170f4f89e7487795e0938ae859b799dfa5c4d322bcc5689a4229",
+    "commands.json": "4a8885e9c89f7690ad6257d61eae1262f69219aac1ddcf33aa7014bab2a13a41",
+    "platform-orchestrator.py": "7289e520f314371df5526b8bab7ce2df53f7cf51fe7b41cf3388509349e9cb7d",
+    "session-enabled.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "session-enabled.stdout.txt": "2d6e63a43905c4e28211d713abaee83e1787ad3b0462641270b46e81733965c9",
+    "sources.json": "fb918fda50737f116968065fedaea71994e4fe4cde3b78579aab02715e755681",
+    "sources.zip": "a0b95216e41bfadce0cb2cfe7b8ed54bfbe5dd8ecd75817717ad500fff2a4985",
+    "trace-enabled.json": "a4c8be1c389a2080e7bccc9b046204d6ece1ea5e5923c9b4ac85ed60fc915133",
+    "c3/Program.cs": "e299eabb100983ac163489a06a09bba3f8f0673971e36104c265e4d46a5bdf42",
+    "c3/Program.csproj": "ed3d3a27db78adda2e1f74c8067ea0cf04d411824bed61cfa5e9caf276651c0f",
+    "c3/Runtime.cs": "a0f5b3a30fff9460801150663e4140faab298c5c63c6b564ca816c57d3527647",
+    "c3/bin/Release/net8.0/Program.deps.json": "ce5107219d48213610e286ce0c819b35513b8c032791f0be2e99a37dc96ec49b",
+    "c3/bin/Release/net8.0/Program.dll": "11119583ea0431c2e34f907f8c2af8985a59cdf1b2d0cd3d9e82e368b1201626",
+    "c3/bin/Release/net8.0/Program.exe": "391facef51092100971ab58a6343a544300e36b5940f54245376ec5b95c7b1aa",
+    "c3/bin/Release/net8.0/Program.pdb": "a32551d3fe42fb26650a4d04ebeeb1d2b106c85464bf97b26ecd290a05fda677",
+    "c3/bin/Release/net8.0/Program.runtimeconfig.json": "28329cf08f6505e73806b17558b187c02f0c1c516fe47ebfb7a013d082aaa306",
+    "inputs/chapter1-oracle.json": "2aec2607fa16d163ee353d59efe54f74c421f857955514040c73a97adf8e1f88",
+    "inputs/comparison-boundary.json": "91322899e9c86eed132ee7e9b4c230ae7370f4371d14e1e05434d2a85847d003",
+    "inputs/comparison-capability.json": "3b0a217c06aaf32ea3d0412ab9594ccf53ec9c22c117e63e49b7abdd4d54a052",
+    "inputs/comparison-parameters.json": "5b9d698707dfc6dd7ca795ab98bbb40be750764f211a903402c28f24437dedb8",
+    "inputs/scenario-base.json": "702318b1f6ea298a8b498da65187780672f2a262e587165cc49c6e6cc81fee22",
+    "inputs/scenario-boundary.json": "bc34ad9718e6a20b70f5139098929276a2c220fafa5fd652987175a38015a6d8",
+    "inputs/scenario-holdout.json": "f3364959a3b76e6bcf8cad66e310a0f7bca21109bd1bfbbac1a02b4f07effb22",
+    "inputs/scenario-low.json": "246a59d5c03a1500fd57220ac663cc1ee46d03240b7f06319ec19719d2fcb814",
+    "inputs/template-boundary.json": "27de94264678dbd24e6ab628b60a0e4b4f7ef6bc0347c45950b334d9c4ec95bf",
+    "inputs/template-comparison-boundary.json": "2c89abcd77719c65d41a44b31d1733ecdeff4985fc783de71ea9d862b3fb39f0",
+    "inputs/template-comparison-capability.json": "654e7adda4684b94e9c1f8bd6789785527c7febce726b2f22bf6094047f3ce15",
+    "inputs/template-comparison-parameters.json": "1ea30295bab8bd64df1405544a1eae2665467e75cb1ec73868c192f126ae3b00",
+    "inputs/template-disabled.json": "627a30e267ca519b2fc1449f8ded4064632cb1aa0b824df1c73e4b8d62bfa92e",
+    "inputs/template-enabled.json": "66951caa9dc1fa85314d61b26539600989b1599fc700a7e5fad427dcbdf572e6",
+    "inputs/template-holdout.json": "22765d715dd6778b128394c16e5edf2bd2fb38a98a36a78e44d605fee87c50ad",
+    "inputs/template-low.json": "5c744dcd6903c655c57a6d70012e0284c6801a88277eb3a1660d75eab1d9d1bf",
+    "session-runner/bundle.dv": "df101900fa7c9a66b66d9c460182cd8b94622cc795ff4c6c46d69dc926965a20",
+    "session-runner/Program.cs": "ecf771f87ce352d1d442489322bbb0c8c82b45c1d4fd9616e598a084941aa4a5",
+    "session-runner/Program.csproj": "ed3d3a27db78adda2e1f74c8067ea0cf04d411824bed61cfa5e9caf276651c0f",
+    "session-runner/Runtime.cs": "a0f5b3a30fff9460801150663e4140faab298c5c63c6b564ca816c57d3527647",
+    "session-runner/bin/Release/net8.0/Program.deps.json": "ce5107219d48213610e286ce0c819b35513b8c032791f0be2e99a37dc96ec49b",
+    "session-runner/bin/Release/net8.0/Program.dll": "74a6120ee684824e3db7866a2f8c98796a5435c0eede2dbfdf8b99065c8fc9b4",
+    "session-runner/bin/Release/net8.0/Program.exe": "391facef51092100971ab58a6343a544300e36b5940f54245376ec5b95c7b1aa",
+    "session-runner/bin/Release/net8.0/Program.pdb": "506dc8dc2b0ca96e8194eea38951b7da6798259eb6236eaeb8fb5986dcaaf5ca",
+    "session-runner/bin/Release/net8.0/Program.runtimeconfig.json": "28329cf08f6505e73806b17558b187c02f0c1c516fe47ebfb7a013d082aaa306"
+  }
+}

@@ -6,6 +6,7 @@ condition, answer, parameter range or finding is interpreted here.
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -27,7 +28,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', required=True)
     parser.add_argument('--config', required=True, help='JSON process/file plan; not domain rules')
-    parser.add_argument('--timeout', type=float, default=180)
+    timeout_args = parser.add_mutually_exclusive_group()
+    timeout_args.add_argument('--timeout', type=float, help='Legacy explicit process timeout alias')
+    timeout_args.add_argument('--process-timeout-seconds', type=float, default=240, help='External engineering process limit; does not change game time or domain budgets')
+    parser.add_argument('--rerun-frozen-session', help='Execute unchanged sealed producer binaries and inputs again; no compilation or domain export')
     parser.add_argument('--reuse-sessions', help='Judge sealed historical traces without repeating unchanged sessions')
     parser.add_argument('--primary-only', action='store_true', help='Historical judgment executes only main; supplement purposes remain unexecuted')
     parser.add_argument('--session-only', action='store_true', help='Execute planned sessions now; judgment is explicitly deferred')
@@ -35,6 +39,8 @@ def main():
     parser.add_argument('--judge-core-root', help='Explicit separately sealed read-only checker Core dependency root; producer source remains unchanged')
     parser.add_argument('--source-root', help='Isolated extracted source archive; does not read the changing workspace core')
     args = parser.parse_args()
+    args.timeout = args.process_timeout_seconds if args.timeout is None else args.timeout
+    if not math.isfinite(args.timeout) or args.timeout <= 0: parser.error("Process timeout must be finite and positive")
     out = (workspace / args.out).resolve()
     previous_run = (workspace / args.reuse_sessions).resolve() if args.reuse_sessions else None
     if args.source_root:
@@ -42,6 +48,9 @@ def main():
         LANGUAGE = ROOT / 'language_core'
     config = (ROOT / args.config).resolve()
     plan = json.loads(config.read_text(encoding='utf-8-sig'))
+    if args.rerun_frozen_session:
+        rerun_frozen_session(args, workspace, ROOT, out, plan, config)
+        return
     if args.judge_only:
         judge_history(args, workspace, ROOT, out, plan)
         return
@@ -73,7 +82,8 @@ def main():
     commands = []
     origin = time.monotonic_ns()
     result = {'status': 'incomplete', 'scope': 'compiled DV logic sessions; no Godot or old Core integration',
-              'independent_review': 'not performed by user instruction', 'source_root': str(ROOT),
+              'independent_review': 'not performed by user instruction',
+        'process_timeout_seconds': args.timeout, 'source_root': str(ROOT),
               'platform_orchestrator_sha256': orchestrator_hash}
 
     def run(label, argv):
@@ -280,6 +290,107 @@ def main():
     print(out)
 
 
+def rerun_frozen_session(args, workspace, source_root, out, plan, config):
+    """Pure I/O rerun of sealed producer bytes under an explicit external limit."""
+    if not args.session_only:
+        raise ValueError('Frozen rerun requires --session-only; judgment is separate')
+    previous = (workspace / args.rerun_frozen_session).resolve()
+    prior = json.loads((previous / 'result.json').read_text(encoding='utf-8'))
+    if not prior.get('sources_unchanged') or str(source_root) != prior['source_root']:
+        raise ValueError('Frozen producer source seal/root differs')
+    seal = json.loads((previous / 'sources.json').read_text(encoding='utf-8'))
+    config_name = config.relative_to(source_root).as_posix()
+    if config_name not in seal or sha(config) != seal[config_name]:
+        raise ValueError('Rerun plan is not in the sealed producer configuration')
+    with zipfile.ZipFile(previous / 'sources.zip') as archive:
+        if archive.read(config_name) != config.read_bytes():
+            raise ValueError('Rerun plan differs from archived producer configuration')
+    packages = {}
+    def protected():
+        names = {p.relative_to(source_root).as_posix() for p in (source_root / 'language_core').rglob('*') if p.is_file() and not {'bin', 'obj', '__pycache__', '.git'}.intersection(p.parts)}
+        expected = {name for name in seal if name.startswith('language_core/')}
+        return names == expected and all((source_root / name).is_file() and sha(source_root / name) == value for name, value in seal.items()) and all(path.is_file() and sha(path) == value for path, value in packages.items())
+    if not protected(): raise RuntimeError('Frozen producer source differs')
+    out.mkdir(parents=True, exist_ok=False)
+    for name in ['.gitattributes', 'sources.json', 'sources.zip']:
+        shutil.copyfile(previous / name, out / name)
+    shutil.copytree(previous / 'inputs', out / 'inputs')
+    for package in ['session-runner', 'c3']:
+        shutil.copytree(previous / package, out / package, ignore=shutil.ignore_patterns('obj'))
+    for name, expected in prior['outputs'].items():
+        if name.startswith(('inputs/', 'session-runner/', 'c3/')) and '/obj/' not in name:
+            target = out / name
+            if not target.is_file() or sha(target) != expected: raise RuntimeError('Producer package differs: ' + name)
+            packages[target] = expected
+    binary = out / 'session-runner/bin/Release/net8.0/Program.dll'
+    if sha(binary) != prior['programs']['session-runner']['assembly_sha256']:
+        raise RuntimeError('Producer assembly fingerprint differs')
+    shutil.copyfile(Path(__file__).resolve(), out / 'platform-orchestrator.py')
+    platform_hash = sha(Path(__file__).resolve())
+    inputs = out / 'inputs'
+    def expand(value):
+        return value.replace('{inputs}', str(inputs)).replace('{out}', str(out)).replace('{root}', str(source_root))
+    def expand_paths(value):
+        if isinstance(value, str): return expand(value)
+        if isinstance(value, list): return [expand_paths(x) for x in value]
+        if isinstance(value, dict): return {k: expand_paths(v) for k, v in value.items()}
+        return value
+    result = {'status': 'incomplete', 'scope': 'Fresh rerun of identical frozen producer package; external process limit changed only',
+        'source_root': str(source_root), 'frozen_rerun_from': str(previous), 'process_timeout_seconds': args.timeout,
+        'previous_process_timeout_seconds': next((x.get('timeout_seconds') for x in json.loads((previous / 'commands.json').read_text()) if x['label'].startswith('session-')), None),
+        'compiler_execution': 'Reused exact sealed compiler package; no new bootstrap execution',
+        'programs': prior['programs'], 'compiler_stages': prior['compiler_stages'], 'compiler_fixed_point': prior['compiler_fixed_point'],
+        'exports': prior['exports'], 'platform_orchestrator_sha256': platform_hash, 'real_window_performance_comparison': False}
+    commands = []
+    origin = time.monotonic_ns()
+    try:
+        for session in plan['sessions']:
+            if not protected() or sha(Path(__file__).resolve()) != platform_hash: raise RuntimeError('Protected rerun source changed')
+            record = {'label': 'session-' + session['id'], 'argv': ['dotnet', str(binary)] + [expand(x) for x in session['args']], 'start_monotonic_ns': time.monotonic_ns()}
+            try:
+                process = subprocess.run(record['argv'], capture_output=True, timeout=args.timeout)
+                record['exit'] = process.returncode
+                stdout, stderr = process.stdout, process.stderr
+            except subprocess.TimeoutExpired as exc:
+                record['exit'] = None
+                record['timeout_seconds'] = args.timeout
+                stdout, stderr = exc.stdout or b'', exc.stderr or b''
+            record['end_monotonic_ns'] = time.monotonic_ns()
+            record['duration_seconds'] = (record['end_monotonic_ns'] - record['start_monotonic_ns']) / 1e9
+            for suffix, data in [('stdout', stdout), ('stderr', stderr)]: (out / (record['label'] + '.' + suffix + '.txt')).write_bytes(data)
+            commands.append(record)
+            (out / 'commands.json').write_text(json.dumps(commands, indent=2), encoding='utf-8')
+            if record['exit'] != 0: raise RuntimeError('Frozen session incomplete; original diagnostics retained')
+        if not protected(): raise RuntimeError('Frozen producer source changed')
+        generated_names = set(plan.get('path_documents', {})) | set(plan.get('platform_manifests', {}))
+        session_inputs = {Path(expand(x)).resolve() for session in plan['sessions'] for x in session['args'] if '{inputs}' in x}
+        if any((inputs / name).resolve() in session_inputs for name in generated_names):
+            raise ValueError('Platform documents cannot overwrite frozen session inputs')
+        for name in generated_names:
+            packages.pop(inputs / name, None)
+        for name, reference in plan.get('path_documents', {}).items():
+            (inputs / name).write_text(json.dumps(expand_paths(json.loads(Path(expand(reference)).read_text(encoding='utf-8-sig'))), ensure_ascii=False, indent=2), encoding='utf-8')
+        for name, reference in plan.get('platform_manifests', {}).items():
+            value = expand_paths(json.loads(Path(expand(reference)).read_text(encoding='utf-8-sig')))
+            metadata = [['integrity', 'verified'], ['source_fingerprints', list(seal.items())], ['runtime_fingerprints', pair_record(prior['programs'])], ['export_fingerprints', pair_record(prior['exports'])], ['scope', result['scope']]]
+            if not isinstance(value, list) or any(x[0] in {p[0] for p in metadata} for x in value): raise ValueError('Manifest cannot overwrite platform metadata')
+            (inputs / name).write_text(json.dumps(value + metadata, ensure_ascii=False, indent=2), encoding='utf-8')
+        with zipfile.ZipFile(out / 'raw-traces.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+            for reference in plan.get('archives', []):
+                path = Path(expand(reference)); archive.write(path, path.relative_to(out).as_posix())
+        result['status'] = 'sessions_executed_judgment_deferred'
+    except Exception as exc:
+        result['error'] = str(exc)
+        raise
+    finally:
+        result['sources_unchanged'] = protected()
+        if not result['sources_unchanged']: result['status'] = 'invalid_run'
+        result['elapsed_seconds'] = (time.monotonic_ns() - origin) / 1e9
+        result['outputs'] = {p.relative_to(out).as_posix(): sha(p) for p in out.rglob('*') if p.is_file() and p.name != 'result.json'}
+        (out / 'result.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
+    print(out)
+
+
 def judge_history(args, workspace, historical_root, out, plan):
     """I/O-only historical judgment with independently sealed checker dependencies."""
     entries = ENTRIES[:1] if args.primary_only else ENTRIES
@@ -331,7 +442,7 @@ def judge_history(args, workspace, historical_root, out, plan):
     commands = []
     result = {'status': 'incomplete', 'scope': 'New read-only DV checker contract over unchanged historical traces; not fresh sessions',
               'historical_judgment': str(previous), 'historical_source_root': str(historical_root),
-              'checker_dependency_root': str(checker_root), 'producer_runtime_changed': False, 'trace_fingerprints': trace_seal,
+              'checker_dependency_root': str(checker_root), 'producer_runtime_changed': False, 'process_timeout_seconds': args.timeout, 'trace_fingerprints': trace_seal,
               'checker_source_fingerprints': seal, 'oracle_condition': 'Copied original oracle bytes/domain values; no current scenario or oracle export'}
     def run(label, argv):
         if any(sha(snapshot / name) != expected for name, expected in seal.items()): raise RuntimeError('Judgment snapshot changed')
