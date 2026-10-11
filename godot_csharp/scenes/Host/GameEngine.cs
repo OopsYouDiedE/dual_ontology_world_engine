@@ -2,12 +2,18 @@ using DualOntologyWorldEngine.Gameplay;
 using Godot;
 using DualOntologyWorldEngine.Story;
 using System.Text.Json;
+using System.Diagnostics;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
 
 /// <summary>只读取资源、转换事件和写存档；游戏流程由无 Godot 依赖的 GameSession 负责。</summary>
 public partial class GameEngine : Node
 {
+    public override async void _Ready()
+    {
+        try { await GameSession.PrepareAsync(); }
+        catch (Exception error) { GD.PushError(error.ToString()); }
+    }
     private GameSession? _session;
     private SubjectivePlayerController? _controller;
     private int _agentSeed, _maxAgentSelections = 10000, _maxAgentObservations = 20000;
@@ -19,6 +25,21 @@ public partial class GameEngine : Node
         message => GD.PushWarning(message), _aiSeat ? null : ReadAuthorSources, null, _maxAgentSelections, _maxAgentObservations,
         _aiSeat);
     private bool _aiSeat;
+    private readonly Dictionary<string, (int Calls, double Total, double Max)> _performance = [];
+    private void Measure(string stage, long started)
+    {
+        if (!_aiSeat) return;
+        var ms = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        var previous = _performance.GetValueOrDefault(stage);
+        _performance[stage] = (previous.Calls + 1, previous.Total + ms, Math.Max(previous.Max, ms));
+    }
+    public string TakeAgentPerformanceJson()
+    {
+        var data = _performance.ToDictionary(p => p.Key, p => new { calls = p.Value.Calls, total_ms = p.Value.Total, max_ms = p.Value.Max });
+        _performance.Clear();
+        return JsonSerializer.Serialize(data);
+    }
+
 
     /// <summary>AI takes the player seat with that character's own declared rules (any role).</summary>
     public void ConfigureAiSeat(int seed, int maxSelections, int maxObservations)
@@ -48,7 +69,13 @@ public partial class GameEngine : Node
         {
             var declaration = Session.AgentDeclaration ?? throw new PlayerBoundaryException("agent_not_declared");
             _controller ??= new(declaration, _agentSeed);
-            return JsonSerializer.Serialize(_controller.Decide(Session.AgentObservation!, Session.AgentCognition));
+            var started = Stopwatch.GetTimestamp();
+            var cognition = Session.AgentCognition;
+            Measure("cognition_snapshot", started);
+            started = Stopwatch.GetTimestamp();
+            var decision = _controller.Decide(Session.AgentObservation!, cognition);
+            Measure("decision", started);
+            return JsonSerializer.Serialize(decision);
         }
         catch (PlayerBoundaryException error)
         { Session.CloseAgent(); return JsonSerializer.Serialize(new PlayerDecision(null, error.Code, null)); }
@@ -80,6 +107,7 @@ public partial class GameEngine : Node
     public void CloseAgent() => Session.CloseAgent();
     public GArray DispatchField(GDict input)
     {
+        var started = Stopwatch.GetTimestamp();
         try
         {
             var output = new GArray();
@@ -93,6 +121,7 @@ public partial class GameEngine : Node
             GD.PushError(error.ToString());
             return new GArray { ToGodot(ChapterEvents.Event("error", ("message", error.Message))) };
         }
+        finally { Measure("dispatch:" + (input.TryGetValue("kind", out var kind) ? kind.AsString() : "unknown"), started); }
     }
 
     private static IReadOnlyDictionary<string, string> ReadAuthorSources()
@@ -133,6 +162,7 @@ public partial class GameEngine : Node
 
     public GArray Dispatch(GDict input)
     {
+        var started = Stopwatch.GetTimestamp();
         try
         {
             var result = new GArray();
@@ -152,6 +182,7 @@ public partial class GameEngine : Node
             _session?.RecordOutput(output);
             return new GArray { ToGodot(output) };
         }
+        finally { Measure("dispatch:" + (input.TryGetValue("kind", out var kind) ? kind.AsString() : "unknown"), started); }
     }
 
     public GDict Snapshot() => _session is null ? new() : ToGodot(_session.Snapshot()).AsGodotDictionary();

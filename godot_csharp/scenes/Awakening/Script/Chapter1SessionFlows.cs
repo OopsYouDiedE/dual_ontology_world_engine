@@ -102,7 +102,7 @@ public sealed partial class Chapter1Session
         // 条件未满足且没有锁定提示的话题保持隐藏（原对白框的规则）。
         var choices = packet.Choices.Where(c => c.IsAvailable || c.LockHint != "").ToArray();
         if (choices.Length > 0)
-            ev["choices"] = choices.Select(c => (object?)Option(c.Id, c.Label, c.IsAvailable, c.LockHint)).ToArray();
+            ev["choices"] = choices.Select(c => (object?)Option(c.Id, c.Label, c.IsAvailable, c.LockHint, purpose: c.Purpose)).ToArray();
         return ev;
     }
 

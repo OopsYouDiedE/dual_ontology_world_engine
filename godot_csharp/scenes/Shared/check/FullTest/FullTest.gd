@@ -27,6 +27,36 @@ var finished := false
 var last_entered := ""
 var last_visible_region := ""
 
+var perf_last_frame := 0
+var perf_window_start := 0
+var perf_frames: Array[float] = []
+var perf_phases := {}
+
+func _process(_delta: float) -> void:
+	if started == 0 or finished: return
+	var now := Time.get_ticks_usec()
+	if perf_last_frame == 0:
+		perf_last_frame = now
+		perf_window_start = now
+		return
+	var interval := (now - perf_last_frame) / 1000.0
+	perf_last_frame = now
+	perf_frames.append(interval)
+	var phase: String = pilot.performance_phase if is_instance_valid(pilot) else "startup"
+	perf_phases[phase] = float(perf_phases.get(phase, 0.0)) + interval
+	if now - perf_window_start < 1000000: return
+	var seconds := (now - perf_window_start) / 1000000.0
+	perf_frames.sort()
+	_record("performance", {"window_seconds": seconds, "fps": perf_frames.size() / seconds,
+		"engine_fps": Engine.get_frames_per_second(), "frame_p95_ms": perf_frames[int((perf_frames.size() - 1) * 0.95)],
+		"frame_max_ms": perf_frames[-1], "phases_ms": perf_phases.duplicate(),
+		"process_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+		"physics_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		"managed": JSON.parse_string(main.engine.TakeAgentPerformanceJson())})
+	perf_frames.clear()
+	perf_phases.clear()
+	perf_window_start = now
+
 func _ready() -> void:
 	_run.call_deferred()
 
@@ -107,6 +137,24 @@ func _on_recorded(kind: String, value: Variant) -> void:
 		seen[key] = true
 		progressed = Time.get_ticks_msec()
 
+## Distinguish a renderer wait from an executed action that made no progress.
+func _await_rendered_frame(token: String) -> bool:
+	var state := {"drawn": false}
+	var drawn := func(): state.drawn = true
+	RenderingServer.frame_post_draw.connect(drawn, CONNECT_ONE_SHOT)
+	var began := Time.get_ticks_msec()
+	_record("render_wait_start", {"token": token})
+	while not state.drawn and not finished and Time.get_ticks_msec() - began < 3000:
+		await get_tree().process_frame
+	if RenderingServer.frame_post_draw.is_connected(drawn): RenderingServer.frame_post_draw.disconnect(drawn)
+	if finished: return false
+	if not state.drawn:
+		_record("render_wait_timeout", {"token": token})
+		pilot.stop("render_capture_timeout")
+		return false
+	_record("render_wait_complete", {"token": token})
+	return true
+
 ## Capture the rendered state before a field input, with the exact decision token.
 ## Ordinary rendering continues; no body, clock or scene state is injected.
 func _capture_decision(observation: Dictionary, decision: Dictionary) -> void:
@@ -114,7 +162,7 @@ func _capture_decision(observation: Dictionary, decision: Dictionary) -> void:
 	for candidate in observation.get("Candidates", []):
 		if candidate.Token == decision.get("Token"): choice = candidate; break
 	if not str(choice.get("Kind", "")) in ["move", "interact"]: return
-	await RenderingServer.frame_post_draw
+	if not await _await_rendered_frame(str(decision.get("Token", ""))): return
 	if finished or not is_instance_valid(main.field) or main.field.player == null: return
 	var field: Node = main.field
 	var entered: String = field.adapter.entered_room(field.player.position)
@@ -146,6 +194,7 @@ func _on_stopped(reason: String, summary: Dictionary) -> void:
 	quit(1 if reason == "engine_error" else 0)
 
 func _shot(label: String, receipt: Dictionary = {}) -> void:
+	var capture_began := Time.get_ticks_usec()
 	last_shot = Time.get_ticks_msec()
 	var image := get_viewport().get_texture().get_image()
 	if image == null or image.is_empty(): return
@@ -155,6 +204,7 @@ func _shot(label: String, receipt: Dictionary = {}) -> void:
 	var metadata := receipt.duplicate()
 	metadata["file"] = name
 	_record("screenshot", metadata)
+	_record("timing", {"stage": "screenshot", "ms": (Time.get_ticks_usec() - capture_began) / 1000.0})
 
 func _record(kind: String, value: Variant) -> void:
 	if trace == null or not trace.is_open(): return

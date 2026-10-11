@@ -1,0 +1,25 @@
+r16 机制工程验证（非独立验收）
+
+独立性说明：本代理未读取设计规范或历史游玩轨迹；定位机制类时误读取 Chapter1CompiledDialogue.cs 前130行，实际属于生成剧情。立即停止并向主代理披露，不使用其内容编写中性夹具。本报告不能作为严格独立验收；需全新上下文代理复验。
+
+已修改测试：
+- 新增 RepetitionResultCases.cs，Program.cs 增加调用。
+- 自身结果不重开已做方法、不再求知；外部依据只重开相应方法；未执行方法保持返回价值；已耗尽入口不再获得固定第二次奖励；已证明假设不切换到未知项；全未知假设编辑也不获求知奖励。
+- 无副作用且唯一 jump END 的菜单才标 close，并验证公开候选透传。此处不冒充 Chapter1SessionFlows 整链运行覆盖。
+- InteractionReceiptCases 原固定第二次求知断言按主代理明确新合同改为无自动第二奖；原失败保留。
+- InformationContextCases 菜单 Value 明确绑定已知相关命题；外部改变缺项前先关闭自身方法，区分自身结果与外部观察。不同人物相同菜单仍独立。
+- ScopedDeferredAnswerCases 首次菜单真实公开未执行 inspect，以1分声明偏好先选 argument；保留同入口其他调查可返查断言。
+
+工程验证：
+- godot-debug-build.log：正式 Debug 构建成功，0警告0错误。
+- godot-import.log：Godot 4.6.1 .NET 导入成功，退出0；未发现脚本/解析错误。已释放Godot。此后主代理仍有生产修正，Debug成功不代表后续修正已进入该版本。
+- core-decision.log：SUBJECTIVE_DECISION_REGRESSION: PASS。
+- strategy-integration.log：324 passed, 3 failed；均为既有房间自身观察匹配断言，未修改。
+- controller-revised-5.log：新增r16测试与全部前置Cases通过；完整控制器检查仍失败于 Program.cs 的 neutral-observer_known_question_selects_initially_retreating_route。夹具此前已完成bench检视但未实际见过未执行方法，依旧期待二次返查；已报告主代理接手。不能宣称完整控制器通过。
+- git diff --check：测试文件无空白错误（仅换行警告）。
+
+已暴露并由主代理修正：普通menu误继承带答案返回奖励；失败接触仍被当作自身结果抑制外部依据重开。前者 controller-new.log、后者 controller-revised-3.log 保留失败，后续控制器通过这些断言。
+
+失败日志索引：controller-baseline.log 为旧固定二次求知失败；controller-new.log 为普通menu重复奖励；controller-revised.log 为新夹具choice拼写错误；controller-revised-2.log 为对已被过滤未知假设使用Single的夹具错误；controller-revised-3.log 为失败接触误抑制；controller-revised-4.log 为未曾公开其他方法的旧返查夹具；controller-revised-5.log 为当前完整检查失败。原日志不覆盖。
+
+本轮只属机制工程检查；一级、二级、三级均未执行。人物行为合理性、设计符合性、游玩体验未验证。未提交、未推送。

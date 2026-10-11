@@ -109,7 +109,7 @@ internal static class InteractionReceiptCases
             !duplicateSuccess && !duplicateFailure && Memory(unreachable) == afterContact && RouteFailures(unreachable) == 4);
 
         var second = unreachable.Decide(At(6, Place("second-actual-contact")), held);
-        Record("one_actual_examination_retains_second_inquiry", Inquiry(second.Alternatives.Single()));
+        Record("one_actual_examination_has_no_automatic_second_inquiry", !Inquiry(second.Alternatives.Single()));
         Record("second_actual_contact_is_accepted", unreachable.CompleteInteraction(second.Token!, true));
         var exhausted = unreachable.Decide(At(7, Place("exhausted-source")), held);
         Observe("actual-examinations-exhaust-source", new { second, exhausted, history = Memory(unreachable) });

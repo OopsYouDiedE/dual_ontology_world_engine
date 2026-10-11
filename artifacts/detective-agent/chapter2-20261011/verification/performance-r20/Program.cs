@@ -1,0 +1,32 @@
+using System.Diagnostics;
+using System.Reflection;
+using DualOntologyWorldEngine.Awakening;
+using DualOntologyWorldEngine.Gameplay;
+var total = Stopwatch.StartNew();
+var session = new Chapter1Session();
+var before = session.CapturePlayerCognition(session.PlayerActor).Snapshot;
+var clock = session.PlayerTime;
+var built = typeof(AwakeningCase).GetField("Built", BindingFlags.NonPublic|BindingFlags.Static)!.GetValue(null)!;
+bool Created() => (bool)built.GetType().GetProperty("IsValueCreated")!.GetValue(built)!;
+void Check(bool ok, string label) { Console.WriteLine($"{(ok ? "PASS" : "FAIL")} {label}"); if (!ok) Environment.ExitCode = 1; }
+Check(!Created(), "fresh process model not yet built after session creation");
+var sw = Stopwatch.StartNew();
+var first = GameSession.PrepareAsync();
+var callMs = sw.Elapsed.TotalMilliseconds;
+Console.WriteLine($"initial_call_ms={callMs:F3}; complete_at_return={first.IsCompleted}");
+Check(!first.IsCompleted, "prepare returns while initialization pending");
+Check(callMs < 500, "initial call below 500ms diagnostic bound");
+var calls = await Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Factory.StartNew(() => GameSession.PrepareAsync())));
+Check(calls.All(t => ReferenceEquals(first, t)), "32 concurrent callers receive identical task");
+await first;
+Console.WriteLine($"total_elapsed_ms={total.Elapsed.TotalMilliseconds:F3}");
+var models = await Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Run(() => AwakeningCase.Model)));
+Check(models.All(m => ReferenceEquals(models[0], m)), "32 readers receive identical model");
+sw.Restart();
+for (var i=0; i<100000; ++i) { _ = AwakeningCase.Model; _ = AwakeningCase.Predictions; }
+Console.WriteLine($"prepared_100000_paired_reads_ms={sw.Elapsed.TotalMilliseconds:F3}");
+Check(ReferenceEquals(first, GameSession.PrepareAsync()) && first.IsCompletedSuccessfully, "completed preparation task retained");
+var after = session.CapturePlayerCognition(session.PlayerActor).Snapshot;
+Check(before.SubjectWorld == after.SubjectWorld && before.Revision == after.Revision && before.VocabularyRevision == after.VocabularyRevision && before.Projections.SequenceEqual(after.Projections) && before.VisibleHistory.SequenceEqual(after.VisibleHistory), "live session cognition unchanged");
+Check(clock == session.PlayerTime, "live session clock and phase unchanged");
+Console.WriteLine($"DONE exit={Environment.ExitCode}");

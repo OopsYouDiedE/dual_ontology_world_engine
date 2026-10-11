@@ -58,6 +58,7 @@ internal static class ScopedDeferredAnswerCases
     {
         Actor = "neutral.answer.actor", Name = "neutral-actor", Mode = "agent",
         Rules = [new() { Mode = "prefer", Kind = "untried", Weight = 6 },
+            new() { Mode = "prefer", Kind = "menu", Weight = 1, LabelContains = "neutral-answer" },
             .. preferEntrance ? new ControllerRuleDefinition[] { new() { Mode = "prefer", Kind = "interact", Weight = 200, LabelContains = Entrance } } : []],
         Reasoning = new() { Depth = 8, Expansions = expansions, Hypotheses = 128, ArgumentWeight = 16, InformationWeight = 8 }
     }, 23);
@@ -129,7 +130,7 @@ internal static class ScopedDeferredAnswerCases
         }
         SubjectivePlayerController Deferred() {
             var c=Controller(); Contact(c,held);
-            check("scoped_select_actual_argument",c.Decide(At(2,Space,Answer("enter")),held).Token=="enter");
+            check("scoped_select_actual_argument",c.Decide(At(2,Space,Answer("enter"),new PublicPlayerCandidate("inspect-visible","neutral-inspect","menu",false,Purpose:"inspect")),held).Token=="enter");
             var cancelled=FormDecision(c,held,Form());
             check("scoped_cancel_unsupported_without_random_evidence",cancelled.Input is not null && Text(cancelled.Input,"action")=="cancel" && !Map(cancelled.Input,"values").Any());
             check("scoped_hypothesis_is_not_belief",cancelled.Decision.HypothesesCompared>0 && cancelled.Decision.Arguments.All(a=>a.Value!="True"));

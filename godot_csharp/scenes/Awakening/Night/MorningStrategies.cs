@@ -7,6 +7,7 @@ namespace DualOntologyWorldEngine.Awakening;
 
 public sealed partial class MorningWorld
 {
+    private readonly StrategyAssessmentCache _strategyAssessments = new();
     private static readonly Lazy<Dictionary<string, JsonElement>> StrategyProfiles = new(() =>
     {
         using var stream = typeof(MorningWorld).Assembly.GetManifestResourceStream("Awakening.World.json")!;
@@ -51,7 +52,7 @@ public sealed partial class MorningWorld
             new Condition.Constant(Truth.True))).ToArray();
         // Rebind only the currently feasible methods. Strategies cannot bypass availability or create a queue.
         StrategyPolicy.Bind(person.Soul, person.Self, StrategiesFor(person.Key), available, "field-strategy", ++_time, "awakening");
-        return ActionLearning.Assess(person.Soul.World, person.Self).FirstOrDefault(a => !a.Forbidden && a.Decision.Score > 0
+        return _strategyAssessments.Assess(person.Soul.World, person.Self).FirstOrDefault(a => !a.Forbidden && a.Decision.Score > 0
             && available.Any(m => Ast.Equivalent(m.Effect, a.Decision.Effect)));
     }
     public static string StrategyMethodKey(DecisionAssessment decision)

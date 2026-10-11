@@ -19,6 +19,7 @@ var engine: Node
 var stopping := false
 var _run_label := ""
 var _acting := false
+var performance_phase := "idle"
 var _reply_token := ""
 var _reply: Dictionary = {}
 var _pressed: Array[int] = []
@@ -55,8 +56,13 @@ func _loop() -> void:
 		if gate != _last_gate:
 			_last_gate = gate
 			recorded.emit("seat_wait", {"gate": gate})
-		if gate != "": continue
+		if gate != "":
+			performance_phase = gate
+			continue
+		performance_phase = "observe"
+		var observation_began := Time.get_ticks_usec()
 		var observation: Dictionary = _observe()
+		recorded.emit("timing", {"stage": "observe", "ms": (Time.get_ticks_usec() - observation_began) / 1000.0})
 		if stopping: return
 		if bool(observation.get("Complete", false)):
 			stop("story_complete")
@@ -68,6 +74,7 @@ func _loop() -> void:
 				stop("candidate_missing")
 				return
 			continue
+		performance_phase = "decision"
 		var decision: Dictionary = JSON.parse_string(engine.AgentDecideJson())
 		decision["GameTime"] = JSON.parse_string(engine.AgentTimeJson())
 		_last_decision = decision
@@ -77,9 +84,12 @@ func _loop() -> void:
 			stop(str(decision.get("Reason", "agent_cannot_assess")))
 			return
 		_acting = true
+		performance_phase = "capture"
 		if before_action.is_valid(): await before_action.call(observation, decision)
 		if stopping: return
+		performance_phase = "action"
 		await _act(str(decision.Token))
+		performance_phase = "idle"
 		_acting = false
 
 ## 席位此刻为什么还不能决定（空串表示可以）；记入轨迹，卡住时据此查原因。
@@ -185,7 +195,7 @@ func _act(token: String) -> void:
 			_reply_token = token
 			_reply = {}
 			while not stopping and _reply.is_empty() and ui.dialogue.active:
-				await get_tree().create_timer(line_seconds * 0.5).timeout
+				await _wait_simulation(line_seconds * 0.5, "reading")
 				if is_instance_valid(ui): ui.dialogue.advance()
 			_reply_token = ""
 			if stopping: return
@@ -193,23 +203,23 @@ func _act(token: String) -> void:
 			return
 		# 台词带选项：读到出现选项为止，再落下这一项。
 		while not stopping and ui.dialogue.active and not ui.dialogue_choices_shown():
-			await get_tree().create_timer(line_seconds * 0.5).timeout
+			await _wait_simulation(line_seconds * 0.5, "reading")
 			if is_instance_valid(ui): ui.dialogue.advance()
 		if stopping: return
-		await get_tree().create_timer(line_seconds).timeout
+		await _wait_simulation(line_seconds, "reading")
 		ui.release_dialogue()
 		_submit_current(token)
 		return
 	match kind:
 		"form_field", "form_tab":
 			if is_instance_valid(ui): ui.show_form_choice(input)
-			await get_tree().create_timer(line_seconds * 0.5).timeout
+			await _wait_simulation(line_seconds * 0.5, "reading")
 		"select", "form", "navigate", "card", "travel":
 			# 与界面自己的按钮一致：落下选项时合上当前弹窗。
-			await get_tree().create_timer(line_seconds).timeout
+			await _wait_simulation(line_seconds, "reading")
 			if is_instance_valid(ui): ui.close_modal()
 		"replay", "replay_vars":
-			await get_tree().create_timer(line_seconds * 0.5).timeout
+			await _wait_simulation(line_seconds * 0.5, "reading")
 	_submit_current(token)
 
 ## 对白框读完的回执：属于正在读的那一项就收下，其余界面输入一律不代替角色做决定。
@@ -227,7 +237,7 @@ func perform_field(input: Dictionary) -> void:
 		"move":
 			if input.has("keys"): await _keyboard_move(input.keys)
 			else: field._route_click(Vector2(float(input.point[0]), float(input.point[1])))
-		"wait": await get_tree().create_timer(1.0).timeout
+		"wait": await _wait_simulation(1.0, "deliberate_wait")
 
 func _keyboard_move(keys: Array) -> void:
 	var field: Node = host.field
@@ -329,3 +339,13 @@ func _field_offers(field: Node, snapshot: Dictionary) -> Array:
 		if bool(controls.get(shortcut.panel, false)):
 			offers.append({"label": shortcut.key, "kind": "menu", "purpose": "panel", "new": false, "input": {"kind": "player_panel", "panel": shortcut.panel}})
 	return offers
+
+## A scaled presentation delay is wall-clock waiting, not CPU work.
+func _wait_simulation(seconds: float, reason: String) -> void:
+	var began := Time.get_ticks_usec()
+	var previous := performance_phase
+	performance_phase = reason
+	var expected_ms := seconds / Engine.time_scale * 1000.0
+	await get_tree().create_timer(seconds).timeout
+	performance_phase = previous
+	recorded.emit("timing", {"stage": reason, "ms": (Time.get_ticks_usec() - began) / 1000.0, "expected_ms": expected_ms})

@@ -4,7 +4,7 @@ namespace DualOntologyWorldEngine.Story;
 
 /// <param name="LineId">Stable authored line ID (translation key); empty for generated text.</param>
 public sealed record InteractionLine(string Speaker, string Mood, string Text, string VoiceClip, string LineId = "", string SourceId = "");
-public sealed record InteractionChoice(string Id, string Label, bool IsAvailable, string LockHint, string LabelId = "");
+public sealed record InteractionChoice(string Id, string Label, bool IsAvailable, string LockHint, string LabelId = "", string Purpose = "");
 public sealed record WorldCommand(string Name, IReadOnlyList<object?> Arguments);
 public enum PresentationMode { Dialogue, EvidenceCard, Menu, World, Done }
 public sealed record EvidenceCard(string Id, string Title, string Facts, string Source, string Picture, IReadOnlyList<string> Notes);
@@ -129,7 +129,8 @@ public sealed class CompiledDialogueRuntime(CompiledDialogueDocument document, D
         return new([], [], PresentationMode.Done, [], true);
     }
     private InteractionPacket ChoicePacket() => new([], _choices!.Select(o => new InteractionChoice(o.Id,
-        context.Interpolate(o.Label), Available(o), context.Interpolate(o.LockHint), o.LabelId)).ToArray(), PresentationMode.Menu, []);
+        context.Interpolate(o.Label), Available(o), context.Interpolate(o.LockHint), o.LabelId,
+        o.Body is [{ Op: "jump", Target: "END" }] ? "close" : "")).ToArray(), PresentationMode.Menu, []);
     private static bool Truth(object? value) => value switch
     { null => false, bool b => b, string s => s.Length > 0, byte n => n != 0, sbyte n => n != 0,
         short n => n != 0, ushort n => n != 0, int n => n != 0, uint n => n != 0, long n => n != 0,

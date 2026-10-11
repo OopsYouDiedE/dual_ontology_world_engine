@@ -137,8 +137,9 @@ internal static class RouteLearningCases
                 Approach("neutral-recheck-next-waypoint", "neutral-route-source", 272, 144)), cognition);
             Observe(role + " one-examination-new-waypoints", new { firstRetry, nextRetry });
             check(role + "_changing_waypoint_does_not_refresh_target_novelty", firstRetry.Score == nextRetry.Score
-                && (curiosity == 0 || firstRetry.Basis.Contains("remembered_goal_already_examined:1")
-                    && nextRetry.Basis.Contains("remembered_goal_already_examined:1"))
+                && !firstRetry.Basis.Contains("follow_observed_route_to_needed_place")
+                && !nextRetry.Basis.Contains("follow_observed_route_to_needed_place")
+                && !DirectInvestigation(firstRetry) && !DirectInvestigation(nextRetry)
                 && !firstRetry.Basis.Any(b => b.StartsWith("authored_rule:prefer:untried:"))
                 && !nextRetry.Basis.Any(b => b.StartsWith("authored_rule:prefer:untried:")));
 

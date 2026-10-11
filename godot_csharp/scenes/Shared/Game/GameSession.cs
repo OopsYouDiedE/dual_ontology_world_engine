@@ -14,6 +14,7 @@ public sealed partial class GameSession(string campusScript, string livingView, 
     string? controllerScript = null, int maxAgentSelections = 10000, int maxAgentObservations = 20000,
     bool aiTakesPlayerSeat = false) : IDisposable
 {
+    public static Task PrepareAsync() => AwakeningCase.PrepareAsync();
     private IChapterSession? _session;
     private bool _waitingForView;
     private bool _started;

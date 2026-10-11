@@ -12,6 +12,9 @@ public static class AwakeningCase
     public sealed record Prediction(NightVariables Variables, ImmutableDictionary<string, int> Facts);
 
     private static readonly Lazy<(CaseModel Model, ImmutableArray<Prediction> Predictions)> Built = new(Build);
+    private static readonly Lazy<Task> Preparation = new(() => Task.Run(() => { _ = Built.Value; }));
+    // Each prediction owns its isolated replay world. No live session or Godot object is touched.
+    public static Task PrepareAsync() => Preparation.Value;
     public static CaseModel Model => Built.Value.Model;
     public static ImmutableArray<Prediction> Predictions => Built.Value.Predictions;
 

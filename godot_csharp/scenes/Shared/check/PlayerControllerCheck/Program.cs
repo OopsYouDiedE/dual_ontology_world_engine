@@ -41,6 +41,7 @@ PlayerCognition Cognition(int truth, bool nested = false)
     return new(snapshot, actor.Self.SubjectId!.Value);
 }
 
+RepetitionResultCases.Run(Check);
 GroundKnowledgeCases.Run(Check);
 PublicMenuScopeCases.Run(Check);
 InteractionReceiptCases.Run(Check);
@@ -430,11 +431,17 @@ foreach (var (role, curiosity) in new[] { ("neutral-observer", 6), ("neutral-fee
             && !unrelatedSpace.Basis.Any(b => b.StartsWith("approach_observed_")));
     }
 
-    var uPlayer = new SubjectivePlayerController(roleDeclaration, 23);
+    var uDeclaration = NeutralDeclaration(role, curiosity, interactionPreference: true);
+    uDeclaration.Rules.Add(new() { Mode = "prefer", Kind = "menu", LabelContains = "neutral-depart", Weight = 100 });
+    var uPlayer = new SubjectivePlayerController(uDeclaration, 23);
     var uContact = uPlayer.Decide(At(1, "opaque-u-space", 1024, 16,
         new PublicPlayerCandidate("u-seen-place", "neutral-bench", "interact", false) { Location = new(1024, 16) }), directionCognition);
     Check(role + "_u_route_fixture_completes_prior_examination", uPlayer.CompleteInteraction(uContact.Token!, true));
-    var uChoice = uPlayer.Decide(At(2, "opaque-u-space", 16, 16,
+    var uDeparture = uPlayer.Decide(At(2, "opaque-u-space", 1024, 16,
+        new("u-untried-inspect", "neutral-inspect", "menu", false, Purpose: "inspect"),
+        new("u-close", "neutral-depart", "menu", false, Purpose: "close")), directionCognition);
+    Check(role + "_u_route_remembers_visible_untried_method_after_departure", uDeparture.Token == "u-close");
+    var uChoice = uPlayer.Decide(At(3, "opaque-u-space", 16, 16,
         Approach("u-relevant-route", "neutral-bench", 16, 144),
         Approach("u-unrelated-route", "neutral-unused-place", 16, 144),
         Move("u-straight-direction", 48, 16)), directionCognition);

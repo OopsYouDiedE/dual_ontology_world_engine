@@ -36,7 +36,7 @@ internal static class InformationContextCases
     }, 23);
     private static PublicPlayerCandidate Person(string token, string person) =>
         new(token, person, "interact", false) { Location = new(100, 100) };
-    private static PublicPlayerCandidate Topic(string token) => new(token, "neutral-topic", "menu", false);
+    private static PublicPlayerCandidate Topic(string token, string source = "neutral-person-a") => new(token, "neutral-topic", "menu", false, Value: source);
     private static PublicPlayerCandidate Close(string token) => new(token, "neutral-close", "menu", false, Purpose: "close");
     private static PublicPlayerObservation At(long turn, params PublicPlayerCandidate[] candidates) =>
         new(turn, [], [], [.. candidates], false) { Field = new("neutral-context-field", new(100, 100)) };
@@ -78,20 +78,20 @@ internal static class InformationContextCases
         Contact(isolated, At(1, Person("isolated-a", "neutral-person-a")), held);
         isolated.Decide(At(2, Topic("isolated-a-topic"), Close("isolated-a-close")), held);
         Contact(isolated, At(3, Person("isolated-b", "neutral-person-b")), held);
-        var otherPerson = isolated.Decide(At(4, Topic("isolated-b-topic"), Close("isolated-b-close")), held);
+        var otherPerson = isolated.Decide(At(4, Topic("isolated-b-topic", "neutral-person-b"), Close("isolated-b-close")), held);
         check("different_people_with_same_menu_label_have_independent_attempts", otherPerson.Token == "isolated-b-topic"
             && Novel(otherPerson.Alternatives.Single(a => a.Token == "isolated-b-topic")));
         var noRepeatedQuestion = true;
         PlayerDecision? last = null;
         for (var turn = 5; turn <= 28; turn++)
         {
-            last = isolated.Decide(At(turn, Topic("b-topic-" + turn), Close("b-close-" + turn)), held);
+            last = isolated.Decide(At(turn, Topic("b-topic-" + turn, "neutral-person-b"), Close("b-close-" + turn)), held);
             noRepeatedQuestion &= last.Token == "b-close-" + turn
                 && !Novel(last.Alternatives.Single(a => a.Token == "b-topic-" + turn));
         }
         Observe("same-person-no-new-information", last!);
         check("same_person_without_new_information_does_not_keep_reasking", noRepeatedQuestion);
-        var bAfterAProof = isolated.Decide(At(29, Topic("b-topic-after-a-proof"), Close("b-close-after-a-proof")), answer);
+        var bAfterAProof = isolated.Decide(At(29, Topic("b-topic-after-a-proof", "neutral-person-b"), Close("b-close-after-a-proof")), answer);
         Observe("proof-for-other-person-keeps-current-topic-history", bAfterAProof);
         Observe("neutral-distinct-proposition-serialization", new
         {
@@ -110,9 +110,9 @@ internal static class InformationContextCases
         Contact(targetIsolation, At(1, Person("reference-a", "neutral-person-a")), referenced);
         targetIsolation.Decide(At(2, Topic("reference-a-topic")), referenced);
         Contact(targetIsolation, At(3, Person("reference-b", "neutral-person-b")), referenced);
-        targetIsolation.Decide(At(4, Topic("reference-b-topic")), referenced);
+        targetIsolation.Decide(At(4, Topic("reference-b-topic", "neutral-person-b")), referenced);
         var actorOnlyProof = Add(referenced, "neutral-actor-only-proof", "goal-a", Truth.True);
-        var referenceAfterProof = targetIsolation.Decide(At(5, Topic("reference-b-repeat"), Close("reference-b-close")), actorOnlyProof);
+        var referenceAfterProof = targetIsolation.Decide(At(5, Topic("reference-b-repeat", "neutral-person-b"), Close("reference-b-close")), actorOnlyProof);
         Observe("same-tag-distinct-subject-reference", referenceAfterProof);
         check("same_tag_on_distinct_subject_reference_keeps_interview_history", referenceAfterProof.Token == "reference-b-close"
             && !Novel(referenceAfterProof.Alternatives.Single(a => a.Token == "reference-b-repeat")));
@@ -128,6 +128,7 @@ internal static class InformationContextCases
         var changedMissing = Controller();
         Contact(changedMissing, At(1, Person("missing-person", "neutral-person-a")), conditional);
         changedMissing.Decide(At(2, Topic("missing-first-topic")), conditional);
+        changedMissing.Decide(At(3, Close("close-before-external-change")), conditional);
         var nextRequired = Requirement(conditional, "required-b");
         var afterMissingChange = changedMissing.Decide(At(3, Topic("missing-changed-topic"), Close("missing-close")), nextRequired);
         Observe("same-claim-different-missing-proposition", afterMissingChange);

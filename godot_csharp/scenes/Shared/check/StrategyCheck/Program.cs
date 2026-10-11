@@ -184,6 +184,91 @@ foreach (var (name, json) in new[] {
     using var profile = JsonDocument.Parse(json);
     Reject(name, () => StrategyPolicy.Read(profile.RootElement));
 }
+foreach (var nested in new[] { false, true })
+{
+    using var f = new NeutralFixture(nested);
+    var soul = f.Actor.Soul;
+    var self = f.Actor.Self;
+    var world = soul.World;
+    var prefix = "cache_" + (nested ? "nested_" : "flat_");
+    var strategy = Strategy("A", 20);
+    var method = new StrategyMethod("method.a", new Effect.Set(self, new("neutral.choice"), 1), new Condition.Constant(Truth.True));
+    void Bind() => StrategyPolicy.Bind(soul, self, [strategy], [method], "neutral.cache", 20, "neutral.owner");
+    StrategyPolicy.Acquire(soul, self, "source.a", 0, "neutral");
+    Bind();
+    var node = world.Projections.Single(p => p.Name == "neutral.cache:A");
+    var revision = world.Revision;
+    var history = world.History.Count;
+    var last = node.LastObservation;
+    for (var i = 0; i < 10; i++)
+        StrategyPolicy.Bind(soul, self, [strategy with { }], [method with { Effect = new Effect.Set(self, new("neutral.choice"), 1),
+            Available = new Condition.Constant(Truth.True) }], "neutral.cache", 100 + i, "neutral.owner");
+    Check(prefix + "equivalent_rebind_preserves_revision_history_and_observation", world.Revision == revision
+        && world.History.Count == history && ReferenceEquals(last, node.LastObservation));
+    var cache = new StrategyAssessmentCache();
+    var initial = cache.Assess(world, self);
+    Check(prefix + "same_revision_reuses_assessment_without_observation", ReferenceEquals(initial, cache.Assess(world, self))
+        && world.Revision == revision && world.History.Count == history);
+    strategy = strategy with { Priority = 45 };
+    Bind();
+    var changed = cache.Assess(world, self);
+    Check(prefix + "priority_change_publishes_and_invalidates", world.Revision != revision
+        && world.History.Count == history + 1 && !ReferenceEquals(initial, changed) && changed.Single().Decision.Score == 45);
+    revision = world.Revision;
+    strategy = strategy with { Target = "neutral.target.changed", Stance = "neutral.stance.changed" };
+    Bind();
+    Check(prefix + "description_change_publishes", world.Revision != revision
+        && node.LastObservation!.Details == "neutral.target.changed/neutral.stance.changed");
+    revision = world.Revision;
+    method = method with { Available = new Condition.Constant(Truth.False) };
+    Bind();
+    Check(prefix + "availability_change_removes_candidate", world.Revision != revision && cache.Assess(world, self).Count == 0);
+    method = method with { Available = new Condition.Constant(Truth.True), Effect = new Effect.Set(self, new("neutral.choice"), 2) };
+    Bind();
+    Check(prefix + "effect_change_replaces_candidate", Choice(cache.Assess(world, self).Single().Decision) == "2");
+    revision = world.Revision;
+    StrategyPolicy.Bind(soul, self, [strategy], [method], "neutral.cache", 21, "neutral.owner.changed");
+    Check(prefix + "lifetime_owner_change_publishes", world.Revision != revision
+        && node.Rules.Single().LifetimeOwner == "neutral.owner.changed");
+    Observation.Observe(soul, new(node.Name, node.Kind) { Target = node, Source = ObservationSource.Introspection,
+        Rules = [node.Rules.Single() with { Lifetime = LifetimeScope.Interaction }] });
+    revision = world.Revision;
+    Bind();
+    Check(prefix + "changed_lifetime_scope_is_restored", world.Revision != revision
+        && node.Rules.Single().Lifetime == LifetimeScope.Chapter);
+    Observation.Observe(soul, new(node.Name, node.Kind) { Target = node, Source = ObservationSource.Introspection,
+        Rules = [node.Rules.Single() with { Acceptance = Truth.False }] });
+    revision = world.Revision;
+    Bind();
+    Check(prefix + "changed_acceptance_is_restored", world.Revision != revision && node.Rules.Single().Acceptance == Truth.True);
+    strategy = strategy with { Conditions = [new("neutral.gate", 2)] };
+    Bind();
+    var gated = cache.Assess(world, self);
+    Tags(soul, self, (new("neutral.gate"), 2));
+    var unblocked = cache.Assess(world, self);
+    Check(prefix + "cognition_change_invalidates_and_updates_availability", gated.Count == 0
+        && !ReferenceEquals(gated, unblocked) && unblocked.Count == 1);
+    var score = unblocked.Single().Decision.Score;
+    ActionLearning.Observe(soul, self, ActionLearning.Key(world, self, method.Effect), DecisionOutcomeV1.Failed);
+    var learned = cache.Assess(world, self);
+    Check(prefix + "action_feedback_invalidates_and_changes_score", !ReferenceEquals(unblocked, learned)
+        && learned.Single().Decision.Score < score && ReferenceEquals(learned, cache.Assess(world, self)));
+    var other = f.Other;
+    StrategyPolicy.Acquire(other.Soul, other.Self, "source.a", 0, "neutral");
+    StrategyPolicy.Bind(other.Soul, other.Self, [Strategy("A", 90)],
+        [new("method.a", new Effect.Set(other.Self, new("neutral.choice"), 3), new Condition.Constant(Truth.True))], "neutral.cache", 0);
+    var otherResult = cache.Assess(other.Soul.World, other.Self);
+    Check(prefix + "subjects_are_isolated", otherResult.Single().Decision.Score == 90
+        && Choice(otherResult.Single().Decision) == "3" && ReferenceEquals(learned, cache.Assess(world, self))
+        && ActionLearning.Capture(other.Soul.World, other.Self).Experiences.Length == 0);
+    Reject(prefix + "foreign_actor_rejected_even_when_cached", () => cache.Assess(other.Soul.World, self));
+    var saved = Ok(WorldRuntime.Restore(Ok(f.Runtime.Save())));
+    var restoredSoul = (SoulEssence)saved.Entities[soul.Id];
+    var restoredSelf = saved.Projections[self.SubjectId!.Value];
+    var restoredResult = cache.Assess(restoredSoul.World, restoredSelf);
+    Check(prefix + "restored_session_gets_fresh_assessment", !ReferenceEquals(learned, restoredResult)
+        && restoredResult.Single().Decision.Score == learned.Single().Decision.Score);
+}
 Console.WriteLine($"StrategyCheck: {passed} passed, {failed} failed");
 return failed == 0 ? 0 : 1;
 

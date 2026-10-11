@@ -76,12 +76,36 @@ public static class StrategyPolicy
                 active = new Condition.All([active, new Condition.Tagged(self, new Tag(threshold.Tag), threshold.Minimum)]);
             var rules = methods.Where(m => strategy.Methods.Contains(m.Kind ?? m.Key, StringComparer.Ordinal)).Select(m =>
                 new Rule(new Condition.All([active, m.Available]), RuleMode.Prefer, m.Effect, strategy.Priority, Truth.True,
-                    LifetimeScope.Chapter, lifetimeOwner ?? domain));
+                    LifetimeScope.Chapter, lifetimeOwner ?? domain)).ToImmutableArray();
             var name = domain + ":" + strategy.Name;
             var known = soul.World.Projections.FirstOrDefault(p => p.Name == name);
+            // Rebinding an unchanged offer is not a new introspective experience.
+            if (known is not null && known.Existence == Truth.True
+                && known.LastObservation?.Details == strategy.Target + "/" + strategy.Stance
+                && known.Rules.Length == rules.Length && known.Rules.Zip(rules).All(p =>
+                    p.First.Mode == p.Second.Mode && p.First.Weight == p.Second.Weight
+                    && p.First.Acceptance == p.Second.Acceptance && p.First.Lifetime == p.Second.Lifetime
+                    && p.First.LifetimeOwner == p.Second.LifetimeOwner
+                    && Ast.Equivalent(p.First.Condition, p.Second.Condition)
+                    && Ast.Equivalent(p.First.Effect, p.Second.Effect))) continue;
             Observation.Observe(soul, new(name, ProjectionKind.Concept) { Target = known,
                 Source = ObservationSource.Introspection, Time = time, Existence = Truth.True,
                 Details = strategy.Target + "/" + strategy.Stance, Rules = [.. rules] });
         }
+    }
+}
+
+/// <summary>Session-local derived results; any observation or action feedback invalidates them.</summary>
+public sealed class StrategyAssessmentCache
+{
+    private readonly Dictionary<Projection, (KnowledgeRevision Revision, IReadOnlyList<DecisionAssessment> Result)> _entries = [];
+    public IReadOnlyList<DecisionAssessment> Assess(ProjectionWorld world, Projection self)
+    {
+        if (!world.Contains(self)) throw new ArgumentException("Foreign strategy actor.");
+        var revision = world.Revision;
+        if (_entries.TryGetValue(self, out var previous) && previous.Revision == revision) return previous.Result;
+        var result = ActionLearning.Assess(world, self);
+        _entries[self] = (revision, result);
+        return result;
     }
 }
