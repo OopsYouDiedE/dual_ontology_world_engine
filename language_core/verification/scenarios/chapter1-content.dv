@@ -604,7 +604,7 @@
 (defn c1_complete_reply (id literal support topic complete law source)
  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m3 "id" id "condition" literal "required_support" support)
    "question_match" topic) "answer_complete" complete) "accepted_law" law)
-   "accepted_public_grants" (dv_single (dv_ref "question" "state" "current")))
+   "accepted_public_grants" (dv_pair (dv_ref "question" "state" "current") (dv_ref "question" "state" "stage")))
    "accepted_listeners" (dv_single "demon")) "source_refs" (dv_single source)))
 (defn c1_unasked_reply (id claim source)
  (dv_with (dv_with (c1_complete_reply id claim claim (dv_not (dv_true)) (dv_not (dv_true)) "" source)
