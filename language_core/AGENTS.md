@@ -64,3 +64,9 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 ## 运行起点预算与逻辑状态缓存（已执行迭代）
 
 `verification/session/15-action-planning.dv` 缓存本人公开目标依赖闭包，没有相关目标时不展开多步路径；循环/同层合并依据逻辑状态，易变时间戳与来源记录仍保留在完整原快照，不充当新目标状态。`30-runner.dv` 从初始物理时刻建立time_origin，按原生实例game_duration_budget计算硬终点；规划报价上界与实际执行分别受剩余累计时间约束，不从首答重启计时。工程fixture与新enabled会话分别保存，主判定的因果不足与接受轴不混称。
+
+## 只读判定依赖与报告实施
+
+`tools/run_verification.py --judge-core-root` 可为历史轨迹封存独立的判定器 Core 依赖；生产者版本、原 oracle 与原轨迹单独保留。新 ABI 不表示旧会话运行过新机制，缺少记录须如实记依据不足。工具只做文件、编译、运行、哈希与实测进程耗时，领域判定及中文解释由 DV 完成。
+
+`verification/report/*.dv` 在正文开头展示实际会话耗时、共享时钟、目标主体首次接受与准备/后续接受/分享缺口；实际接受和因果判定分列。节点游戏经过时间与场景时钟分列，未采集的节点现实首次时刻不由整进程秒数推算。完整行动与原始判定引用保留在附录和 JSON。

@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--primary-only', action='store_true', help='Historical judgment executes only main; supplement purposes remain unexecuted')
     parser.add_argument('--session-only', action='store_true', help='Execute planned sessions now; judgment is explicitly deferred')
     parser.add_argument('--judge-only', help='New checker/report snapshot judges the sealed inputs and traces of this previous judgment directory')
+    parser.add_argument('--judge-core-root', help='Explicit separately sealed read-only checker Core dependency root; producer source remains unchanged')
     parser.add_argument('--source-root', help='Isolated extracted source archive; does not read the changing workspace core')
     args = parser.parse_args()
     out = (workspace / args.out).resolve()
@@ -280,7 +281,7 @@ def main():
 
 
 def judge_history(args, workspace, historical_root, out, plan):
-    """I/O-only historical judgment: old core/ABI, newly snapshotted DV checks."""
+    """I/O-only historical judgment with independently sealed checker dependencies."""
     entries = ENTRIES[:1] if args.primary_only else ENTRIES
     previous = (workspace / args.judge_only).resolve()
     prior = json.loads((previous / 'result.json').read_text(encoding='utf-8'))
@@ -290,14 +291,15 @@ def judge_history(args, workspace, historical_root, out, plan):
     (out / '.gitattributes').write_text('*.txt -text -diff\n*.json -text\n*.zip -text -diff\n', encoding='utf-8')
     snapshot = out / 'source-snapshot'
     snapshot.mkdir()
-    files = sorted((historical_root / 'language_core/core').glob('*.dv'))
+    checker_root = (workspace / args.judge_core_root).resolve() if args.judge_core_root else historical_root
+    files = sorted((checker_root / 'language_core/core').glob('*.dv'))
     live = workspace / 'language_core/verification'
     files += sorted((live / 'checks').glob('*.dv')) + sorted((live / 'report').glob('*.dv'))
     files += [live / (name + '.dv') for name in ENTRIES]
-    files += [historical_root / 'language_core/compiler/Runtime.cs']
+    files += [checker_root / 'language_core/compiler/Runtime.cs']
     seal = {}
     for source in files:
-        relative = source.relative_to(historical_root if source.is_relative_to(historical_root) else workspace)
+        relative = source.relative_to(checker_root if source.is_relative_to(checker_root) else workspace)
         target = snapshot / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
@@ -328,7 +330,8 @@ def judge_history(args, workspace, historical_root, out, plan):
     origin = time.monotonic_ns()
     commands = []
     result = {'status': 'incomplete', 'scope': 'New read-only DV checker contract over unchanged historical traces; not fresh sessions',
-              'historical_judgment': str(previous), 'historical_source_root': str(historical_root), 'trace_fingerprints': trace_seal,
+              'historical_judgment': str(previous), 'historical_source_root': str(historical_root),
+              'checker_dependency_root': str(checker_root), 'producer_runtime_changed': False, 'trace_fingerprints': trace_seal,
               'checker_source_fingerprints': seal, 'oracle_condition': 'Copied original oracle bytes/domain values; no current scenario or oracle export'}
     def run(label, argv):
         if any(sha(snapshot / name) != expected for name, expected in seal.items()): raise RuntimeError('Judgment snapshot changed')

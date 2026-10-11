@@ -23,3 +23,6 @@ process-plan 只描述文件与进程 I/O，不含领域正文：`files` 指定�
 `--source-root` 使用独立封存源码，避免其它工作区迭代污染本轮。`--session-only` 实际运行计划中的会话并明确延后判定；`--judge-only <previous-directory>` 将新只读checker与报告模块单独封存，以原core/ABI重新判断原字节轨迹。`--primary-only` 只执行主检验，中文报告明确其余目的未执行。新判定合同与原会话/原oracle分别记录，不冒称重新游玩或满足后来改变的条件。
 
 `report/10-readable.dv` 读取真实DV判定、原轨迹及仅含路径/现实进程耗时的I/O索引，输出中文节点、行动、来源、正式拒答轴与缺口。空判定路径明确显示未执行，不生成替代判定。Python只编译、传参和写文件；报告本身仍由DV执行。原始trace无损zip与SHA保留，原字节不删除；禁止提交大型裸trace或bin/obj。
+
+
+历史只读重判可显式使用 `--judge-core-root` 独立封存判定器的 Core 依赖。原生产者、oracle与轨迹保持原封存版本，新ABI不得冒称旧会话运行过新机制；输出分别记录生产者与checker依赖来源。通用DV报告开头给简短实测结论及具体因果缺口，完整轨迹/原判定JSON保留。
