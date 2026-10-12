@@ -370,7 +370,7 @@
    (dv_accept_policy mind "joint-response"
     (dv_person_policy "modeled.detective"
      (dv_single (dv_criterion "relative-outcome" (dv_ref "response.outcome" "state" "value") "numeric" 0 1))
-     0 1 (dv_m2 "tone" "reserved" "basis" basis)) basis))))
+     0 1 (rt_list)) basis))))
 (defn c1_hist_response_option (id received predict bridge)
  (dv_with (dv_with (dv_with (dv_m4 "id" id "intent" id "feasible"
   (dv_fact (dv_ref "joint.request" "state" received) true) "effort" 0)
@@ -700,11 +700,17 @@
     "prune_confidence_limit" 0.85)
     "abduction" (dv_m3 "active" true "confidence_cap" 0.85
      "basis" (dv_single (c1_source "docs/design-standard.md" 1500 "approved-paid-model-best-explanation-not-certainty")))))))
+(defn c1_hist_expected_answer ()
+ (dv_all (dv_list3
+  (dv_fact (c1_hist_claim_ref "actual_heard") "Huo-relay-and-Su-report")
+  (dv_fact (c1_hist_claim_ref "voice_source") "Tube")
+  (dv_fact (c1_hist_claim_ref "transmission_loss") "stressed-tail-without-leading-qualification"))))
 (defn c1_hist_complete_action (actor)
- (dv_with (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.original_q2_complete") "answer"
+ (dv_with (dv_with (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.original_q2_complete") "answer"
    (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "outstanding_complete") true)))
    (c1_at actor "hall") "" (rt_list)
    (c1_source "docs/design-standard.md" 1509 "original-second-question-three-causal-axes"))
+   "answer" (c1_hist_expected_answer))
    "answer_id" "original_q2_complete") "argument_question" "original_q2_complete")
    "topic" "original_q2_complete") "argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss")))
 ; An existing V3 statement may be offered toward the standing original question.
@@ -732,11 +738,6 @@
   "required_argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss"))
   "accepted_public_grants" (dv_single (dv_ref "question" "state" "outstanding_complete")))
   "incomplete_reason" "The source statement does not supply the original question's three causal argument slots."))
-(defn c1_hist_expected_answer ()
- (dv_all (dv_list3
-  (dv_fact (c1_hist_claim_ref "actual_heard") "Huo-relay-and-Su-report")
-  (dv_fact (c1_hist_claim_ref "voice_source") "Tube")
-  (dv_fact (c1_hist_claim_ref "transmission_loss") "stressed-tail-without-leading-qualification"))))
 (defn c1_hist_formal_answer ()
  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
   (dv_m4 "id" "original_q2_complete" "condition" (c1_hist_expected_answer)

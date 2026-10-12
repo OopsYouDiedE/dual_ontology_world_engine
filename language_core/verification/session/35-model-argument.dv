@@ -74,8 +74,9 @@
       (if (rt_lt 0 (rt_count restored)) (set world (dv_with world "revision" (rt_add (dv_get world "revision") 1))) false)
       (set updated (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with actor "mind" world) "argument" (if blocked argument false)) "ready_hypothesis" false)
         "inference_derivations" derivations) "cognition_blocked" blocked) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)))
+      (set updated (dv_with updated "last_cognitive_event" (rt_cat "e" (rt_show (rt_count events)))))
       (dvs_event events (if blocked "model_argument_revocation_pending" "model_argument_revoked") (dv_get actor "id") time
-        (dv_explanation_merge (dv_pair parent (dv_get argument "id")) descendants)
+        (dvs_cognitive_parents actor (dv_explanation_merge (dv_pair parent (dv_get argument "id")) descendants))
         (dv_with (dv_with (dv_with (dv_with (dv_m4 "argument" argument "mind_before" (dv_get actor "mind") "mind_after" world "restored" restored) "checked" checked) "remaining" remaining) "actor_before" actor) "actor_after" updated))
       updated)))
 (defn dvs_factor_coverage (actor hypothesis events)
@@ -129,12 +130,12 @@
                   (while (rt_lt c (rt_count certificates))
                     (do (set policy (dv_with policy "confidence_cap" (dv_min (dv_find policy "confidence_cap" 0) (dv_get (rt_at certificates c) "confidence")))) (set c (rt_add c 1)))))
                 (let (result (dvs_factor_argument (dv_accept_explanation (dv_get actor "mind") model competitors slots (dvs_argument_sources events (dv_get actor "id")) policy
-                  (dv_find (dv_get actor "policy") "reason_budget" 0) time (rt_cat "e" (rt_show (rt_count events)))) coverage) parents (dv_single parent))
+                  (dv_find (dv_get actor "policy") "reason_budget" 0) time (rt_cat "e" (rt_show (rt_count events)))) coverage) parents (dvs_cognitive_parents actor (dv_single parent)))
                   (do (if (dv_has_key model "event") (set parents (dv_explanation_merge parents (dv_single (dv_get model "event")))) false)
                     (set parents (dv_explanation_merge parents (dv_get (dv_get result "argument") "source_event_ids")))
                     (set parents (dv_explanation_merge parents (dv_get (dv_get result "argument") "competitor_events")))
-                    (dvs_event events (if (dv_get result "accepted") "model_argument_accepted" "model_argument_unavailable") (dv_get actor "id") time parents
-                      (dv_m4 "actor_before" actor "hypothesis" hypothesis "competitors" competitors "result" result))
+                    (set actor (dv_with actor "last_cognitive_event" (dvs_event events (if (dv_get result "accepted") "model_argument_accepted" "model_argument_unavailable") (dv_get actor "id") time parents
+                      (dv_m4 "actor_before" actor "hypothesis" hypothesis "competitors" competitors "result" result))))
                     (set actor (dv_with (dv_with actor "argument_attempt" signature) "policy" (dv_with (dv_get actor "policy") "reason_budget" (dv_get result "remaining"))))
                     (if (dv_get result "accepted")
                       (dv_with (dv_with actor "mind" (dv_get result "world")) "argument"
@@ -188,7 +189,7 @@
                   (if (dv_has (dv_find cell "basis" (rt_list)) (dv_get event "id")) (set parents (dv_explanation_merge parents (dv_single (dv_get event "id")))) false) false)) false)
               (set j (rt_add j 1))))) (set i (rt_add i 1))))) parents)))
 (defn dvs_selection_parents (actor action choice events parent)
-  (let (refs (dv_get choice "relevant_refs") parents (dv_single parent))
+  (let (refs (dv_get choice "relevant_refs") parents (dvs_cognitive_parents actor (dv_single parent)))
     (do (set refs (dvp_merge_refs refs (dvs_sim_refs (dv_get action "precondition"))))
       (if (dv_has_key action "answer") (set refs (dvp_merge_refs refs (dvs_sim_refs (dv_get action "answer")))) false)
       (if (dv_has_key actor "question_ref") (set refs (dvp_add_ref refs (dv_get actor "question_ref"))) false)
@@ -199,7 +200,7 @@
           (set parents (dv_explanation_merge parents (dv_find prediction "prediction_events" (rt_list))))) false)
       (if (dv_has_key action "argument") (set parents (dv_explanation_merge parents (dv_single (dv_get (dv_get action "argument") "id")))) false) parents)))
 (defn dvs_model_parent_ids (actor parent prior)
-  (let (result (dv_single parent))
+  (let (result (dvs_cognitive_parents actor (dv_single parent)))
     (do (if (rt_eq (dv_find actor "model_paid_event" "") "") false (set result (dv_explanation_merge result (dv_single (dv_get actor "model_paid_event")))))
       (if (rt_eq (dv_find actor "model_previous_event" "") "") false (set result (dv_explanation_merge result (dv_single (dv_get actor "model_previous_event")))))
       (if (rt_eq prior "") false (set result (dv_explanation_merge result (dv_single prior)))) result)))
@@ -234,7 +235,7 @@
 
 (defn dvs_refresh_derivations (actor events time parent)
   (let (derivations (dv_find actor "inference_derivations" (rt_list)) world (dv_get actor "mind") i (rt_sub (rt_count (dv_find actor "inference_derivations" (rt_list))) 1)
-    contaminated (rt_list) restored (rt_list) parents (dv_single parent) remaining (dv_find (dv_get actor "policy") "reason_budget" 0) checked 0 blocked false updated false)
+    contaminated (rt_list) restored (rt_list) parents (dvs_cognitive_parents actor (dv_single parent)) remaining (dv_find (dv_get actor "policy") "reason_budget" 0) checked 0 blocked false updated false)
     (do (while (dv_and (rt_not (rt_lt i 0)) (rt_not blocked))
       (let (derivation (rt_at derivations i) inputs (dv_get (rt_at derivations i) "inputs") stale false j 0)
         (do (if (dv_find derivation "valid" true)
@@ -263,6 +264,8 @@
       (set updated (dv_with (dv_with (dv_with (dv_with actor "mind" world) "inference_derivations" derivations) "cognition_blocked" blocked)
         "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)))
       (if (dv_or blocked (rt_lt 0 checked))
+        (set updated (dv_with updated "last_cognitive_event" (rt_cat "e" (rt_show (rt_count events))))) false)
+      (if (dv_or blocked (rt_lt 0 checked))
         (set parent (dvs_event events "inference_dependencies_invalidated" (dv_get actor "id") time parents
           (dv_with (dv_with (dv_with (dv_with (dv_m4 "mind_before" (dv_get actor "mind") "mind_after" world "restored" restored "checked" checked) "budget_blocked" blocked) "remaining" remaining) "actor_before" actor) "actor_after" updated))) false)
       (if (dv_and (rt_not blocked) (rt_lt 0 checked)) (dvs_refresh_derivations updated events time parent) updated))))
@@ -286,7 +289,7 @@
                   (dv_and (rt_eq (dv_get paid "actor") subject) (rt_eq (dv_get paid "type") "action_execution")))
                   (let (data (dv_get paid "data"))
                     (if (dv_and (rt_eq (dv_find (dv_find data "action" (rt_list)) "kind" "") "replay")
-                      (dv_and (rt_eq (dv_get (dv_get data "execution") "status") "applied")
+                      (dv_and (rt_eq (dv_get (dv_get (dv_get data "receipt") "execution") "status") "applied")
                         (dv_and (rt_eq (dv_find result "status" "") "explained") (dv_find result "plan_complete" false))))
                       (set valid true) false)) false) (set j (rt_add j 1))))))) false) (set i (rt_add i 1))))) valid)))
 (defn dvs_public_argument_valid (action rule events subject)

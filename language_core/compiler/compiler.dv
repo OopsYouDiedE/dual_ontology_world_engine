@@ -246,7 +246,7 @@
             (set result (rt_cat result
               (if (rt_eq (sym (rt_at xs 0)) "defn") (emit_function n signatures)
                 (rt_cat "public static int Main(string[] args) { R.Arguments=args; try { _ = "
-                  (rt_cat (emit (rt_at xs 1) (rt_list) signatures) "; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.Message); return 1; } }\n")))))
+                  (rt_cat (emit (rt_at xs 1) (rt_list) signatures) "; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.ToString()); return 1; } }\n")))))
             (set i (rt_add i 1)))))
       (rt_cat result "}\n"))))
 (main (rt_write (rt_arg 1) (compile (rt_read (rt_arg 0)))))

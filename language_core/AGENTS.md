@@ -9,7 +9,10 @@
 ## 模块边界
 
 - `core/*.dv` 是可编译的领域语义库：公理采纳、物体切片、观察、传播、价值、回应、论证代价与检查点查询均用 DV 实现。axiom 声明在 DV 前端展开；不得把领域算法移到 Runtime.cs。JSON 编解码和参数计数仅服务平台 I/O。
-- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。动态数据函数仍属于可信调用协议，不能称为静态能力安全边界。人物参数和章节实例由原生 DV 具名声明与构造函数定义；旧 .story 只读保留迁移来源，不参与新执行。
+- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。动态数据函数仍属于可信调用协议，不能称为静态能力安全边界。人物参数、章节实例与规则由原生 DV 定义；旧 `.story` 仅作只读迁移来源，新链路不装载它。
+- `core/95-model-argument.dv` 与 `verification/session/35-model-argument.dv` 区分最佳解释的可撤销主观支持与直接观察。只允许有付费预测轨迹、真实本人观察、完整竞争排除及明确采纳策略的 estimated 论证；槽位来自轨迹实际效果，不能把假设或评分作为事实。动态答辩按实际提交的命题独立核验字面真假。
+- `verification/session/15-action-planning.dv` 仅使用本人实际已闻问题、公开目标、方法可观察范围和本人已采纳法则做完整深度层比较；未知观察结果不得写入预测，答辩重试按相关有效依据签名判别。模型比较与付费方法的展开限额分列，不能免费重演。正式会话时长以初始世界时刻为固定起点，冻结 game_duration_budget 决定终止时刻；报价上界和实际代价都不能越界，不能把预算改从首次答辩开始计。
+- `core/90-action-cost.dv` 提供分维报价、最大额预留、真实执行与结算；会话核对冻结 catalog 并持有最新 ledger。`verification/session/*.dv` 组织隔离的编译 DV 逻辑会话，`verification/checks/*.dv` 与四个入口只读判定。`tools/run_verification.py` 仅冻结、编译、平台 I/O 与记录，不承载领域算法。
 
 - `compiler/compiler.dv` 是编译器启动子集：扫描、AST、名称/作用域/元数检查和 C# 后端均用 DV 实现。`compiler/seed/` 的 C# C0 只负责启动；生成 C1/C2/C3 仅使用 `compiler/Runtime.cs` 的数据与平台 ABI，不引用解释器。当前子集采用运行时值域检查，尚无静态类型/能力系统和目标无关 IR，不能与 DESIGN 的完整语言混称。原解释语法尚未统一到编译语法。
 
@@ -35,13 +38,11 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 
 编译器记录工具另外保存原始源码归档、工具链信息、每阶段生成源码和程序集指纹；核对 C2/C3 目标源码固定点、生成项目依赖、独立程序实际运行和编译器源码变体对新生成结果的影响。后端修改后必须从 DV 重新生成，不手改目标文件。固定点不等于编译正确性证明；完整静态类型、能力、IR 与推演库编译迁移须单独记录缺口。
 
-每轮机制验证由全新上下文审查者核对具体输入、输出、缺陷与未覆盖边界；审查者不得读取设计文档。主代理独立对照设计规范。修复后重新冻结源码，再用新的审查上下文复评。
-
-用户 2026-10-12 对本轮编译器自举明确要求停止独立复评，直接按自举要求自动判定。本轮以 `bootstrap_compiler.py` 的真实阶段执行、固定点、依赖、源变体和独立程序输出作判定；停止后的审查片段保留，但不作为完成审评或验收条件。该裁定不把启动子集等同于完整 DV 规格。
+用户 2026-10-12 对本轮编译器自举及自动验证明确要求停止独立 Agent 复评，直接按真实程序运行判定；主代理对照设计规范核对具体输入、输出、缺陷与未覆盖边界。本轮编译器工程事实依 `bootstrap_compiler.py` 与记录工具的真实阶段执行、固定点、依赖、源变体和独立程序输出；停止后的审查片段保留但不作为完成审评条件。该裁定不把启动子集等同完整 DV 规格，自动验证仍需自己的实际会话与只读判定证据。
 
 ## 完整迁移的结束条件
 
-用户对本轮世界语义、人物回应、合理度和检查器要求实现后先汇报，随后再提供验收代码方案。本轮仅做必要的语法/生成构建与编译器固定点排错，不启动独立复评或预先编写领域验收场景；不能依据构建宣布第一章行为或心理模型合格。
+用户先要求世界语义、人物回应、合理度和检查器实现后汇报，随后已授权自动验证设计及实际实现与运行。当前授权范围按下方自动验证章节记录，不恢复独立复评；不能依据构建宣布第一章行为或心理模型合格。
 
 以 README 的旧 Core 能力清单逐项核对，保留独立反例与差异；全部推演能力必须有本语言实现，不能通过 native primitive、旧程序集调用或隐藏答案补齐。语言表达能力、算法行为对齐、宿主接入和正式游戏验收分别记录。有限机制示例不能代替完整迁移或形式化证明。当前原型未实现的执行语法应明确拒绝。
 
@@ -51,32 +52,27 @@ python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstr
 
 ## 自动验证设计的当前授权
 
-用户 2026-10-12 明确授权开始正式自动验证设计；本轮仅落盘 `verification/DESIGN.md` 和模块边界，不实现或运行验收器，不恢复独立复评。拟议主程序及最多三个补充程序全部用 DV，C# ABI 仅平台 I/O，章节实例与答案只由 `.story` 装载。`verification/` 负责 manifest、因果记录、正式会话接口、只读判定、代价审计和报告的通用合同，拟议接口不得冒称现有能力。后续实现与运行授权分别记录，交付持续使用 `artifacts/partial-bootstrap-core/`。
+用户随后明确纠正本轮内容语言边界：人物、世界、话语、规则、参数及 oracle 均使用真实 DV 声明/函数；旧 `.story` 只读用于迁移溯源，JSON 只作 DV 生成的运行交换物。本轮新裁定优先本文件其他旧 `.story` 装载规定。独立导出程序不得把 oracle 编进主体运行器；Python 编排计划只含文件、函数与进程 I/O，不含领域正文。
 
-## Temporal model and action-cost module
+用户进一步排除旧 record 树的格式化转换：因果、推知、移动法则用具名 DV axiom；世界、人物、策略、观察和动作通过命名构造函数调用 core。导出只是原生定义执行后的 DTO 边界，不能把旧 `.story` 翻译装载当作主要实现。
 
-`core/90-action-cost.dv` provides DV quotes, resource reservations, settlement and actual action-time advancement; model work units are separate from frozen method-call charges. `verification/session/25-simulation.dv` runs hypothetical laws on local model time, compares explicitly modeled times with subjective observations, and rechecks frozen paid predictions after new subjective evidence without rerunning effects. Total model expansion and frozen method work limits are recorded independently. Engineering evidence is under `artifacts/partial-bootstrap-core/simulation-engineering-r10/`; it does not establish chapter causal outcomes or game acceptance. Generated C# remains compiler output.
-
-## 编译会话与可读报告的当前实施
-
-`verification/session/10-subjective.dv`、`15-action-planning.dv`、`20-speech.dv`、`30-runner.dv` 实现主体本人推知、有界行动规划、话语解析与真实会话调度。原生内容与 oracle 分包；Python 仅冻结、编译与进程/文件 I/O。`verification/report/*.dv` 依据真实只读判定与事件生成中文报告，缺记录不补猜。本轮已授权实际运行与迭代，不恢复独立复评；早期仅设计/未实现说明是历史状态。先前首答360条件的隔离工程会话保留并标 superseded，新总预算必须全新会话。历史判定重执行与新会话分列，未执行的补充不报成立。
-
-## 运行起点预算与逻辑状态缓存（已执行迭代）
-
-`verification/session/15-action-planning.dv` 缓存本人公开目标依赖闭包，没有相关目标时不展开多步路径；循环/同层合并依据逻辑状态，易变时间戳与来源记录仍保留在完整原快照，不充当新目标状态。`30-runner.dv` 从初始物理时刻建立time_origin，按原生实例game_duration_budget计算硬终点；规划报价上界与实际执行分别受剩余累计时间约束，不从首答重启计时。工程fixture与新enabled会话分别保存，主判定的因果不足与接受轴不混称。
+用户 2026-10-12 在设计后明确授权实际实现与运行；不恢复独立复评。主程序及最多三个补充程序全部用 DV，C# ABI 仅平台 I/O，章节实例与答案按上述新裁定由 DV 数据源独立导出。`verification/README.md` 记录当前运行合同与缺口，`DESIGN.md` 保留目标合同，交付持续使用 `artifacts/partial-bootstrap-core/`。编译 DV 正式逻辑会话与 Godot、旧 Core 接线及游戏验收分别记录；必要工程排错不评价人物或体验。
 
 ## 只读判定依赖与报告实施
 
-`tools/run_verification.py --judge-core-root` 可为历史轨迹封存独立的判定器 Core 依赖；生产者版本、原 oracle 与原轨迹单独保留。新 ABI 不表示旧会话运行过新机制，缺少记录须如实记依据不足。工具只做文件、编译、运行、哈希与实测进程耗时，领域判定及中文解释由 DV 完成。
+`tools/run_verification.py --judge-core-root` 可为历史轨迹封存独立的判定器 Core 依赖；生产者版本、原 oracle 与原轨迹单独保留。新判定器使用新 ABI 不表示旧会话运行过新机制，缺少模型输入、本人快照或正式论证字段须如实记依据不足。工具仅收集文件、编译、运行、哈希及实测进程耗时，判定和中文解释由 DV 完成。
 
-`verification/report/*.dv` 在正文开头展示实际会话耗时、共享时钟、目标主体首次接受与准备/后续接受/分享缺口；实际接受和因果判定分列。节点游戏经过时间与场景时钟分列，未采集的节点现实首次时刻不由整进程秒数推算。完整行动与原始判定引用保留在附录和 JSON。
+`verification/report/*.dv` 在正文开头展示实际会话耗时、共享时钟、目标主体首次接受与准备/后续接受/分享缺口；实际接受和因果判定分别列明。节点游戏经过时间与场景时钟分列，未采集的节点现实首次时刻不由整进程秒数推算。详细行动与完整原始判定引用保留在附录和 JSON。
 
-
-## 原生模型论证模块（r6 封存迭代）
-
-core/95-model-argument.dv 提供通用可撤回估计论证；verification/session/35-model-argument.dv 协调实际付费模型、联合候选覆盖、输入及已采纳规则签名与公开提交。session/25-simulation.dv 保持重演计算资源、游戏行动代价与展开预算分域。领域声明位于原生 DV 作者模块；oracle 独立导出，不链接主体。r6 的新主体包实际完成生成与构建，但正式进程在外部 240 秒限额停止，未写终局 trace；不得据此给出领域验收结论。后续源码与本轮隔离快照分别封存。
+`core/95-model-argument.dv` 提供付费模型结果、竞争解释及本人实际来源的估计论证接受/撤回；`verification/session/35-model-argument.dv` 接入本人解释选择和动态提交。匿名工程证明与真实章节会话分别封存；只有实际运行过的模块版本才能纳入该轮行为结论，不把生成或机制反例当作整章完成。原生话语模型计算逐节点记录工作单位，使用已有总模型预算；条件分支复用不另算一次模型演算，实际发言须引用原付费预测父链。
 
 
-## r7 主体机制封存范围
+## 编译后运行错误日志
 
-00-data 的 dv_with_many 合并同轮字段更新并保留输入隔离，10-subjective 的事件构造避免重复复制；30-runner 仅按通用字段批次调用。工作解释选择与静态答辩候选分域，不通过提高先验或预算消除静态候选。20-speech 支持实际带来源估计提案与付费本人范围复核；35-model-argument 必须沿本人真实题目收闻信息链提取来源，不穿越全局调度父边。论证实例和动作可用性来自 native DV，独立 oracle 不进入主体。实现被编译不代表该轮完成分享或目标论证；以真实轨迹及独立判定报告为准。
+compiler.dv 与启动 seed 的生成入口捕获异常时输出完整异常文本及调用栈，领域条件与 ABI 不变。修改该输出须经源码重新自编译生成，不手改 C# 生成物。正式报告用中文解释实际错误，原始调用栈保留在工程日志附录；缺终局 trace 不作领域验收结论。
+
+## 回应策略结构与本人认知来源链
+
+`core/50-response.dv` 的人物策略构造器在运行时校验表达策略为“轴名 → 特征名 → 有限数值权重”的记录矩阵；空矩阵合法，文案或来源元数据须保留在独立字段。结构不合法时报告具体字段，不以空值回退跳过回应演算。该检查使用现有有限值 ABI，不代表静态类型检查或语言内核形式化验证已经完成。
+
+正式会话记录通过 `last_cognitive_event` 保存本人真实认知收据；观察、收闻、推知、实际模型工作、论证及撤回产生的事件连接本人前序收据，同时保留实际公共输入、付费执行和来源父边。该字段仅用于证据记录，不写入命题、不增减预算、不改变调度评分；共享预算的 `model_previous_event` 另作串行计费来源。问题来源关联只使用声明的实际来源字段，不把全局调度或其他人物的兄弟事件当作本人已获知识。新版本修复不回填历史轨迹缺边。

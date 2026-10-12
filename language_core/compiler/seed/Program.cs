@@ -57,13 +57,13 @@ static class Seed
             {
                 var xs = Value.ItemsOf(f);
                 if (xs.Length == 4 && Value.SymbolOf(xs[0]) == "defn") output += "static object F_" + Name(xs[1]) + "(" + string.Join(",", Value.ItemsOf(xs[2]).Select(p => "object v_" + Name(p))) + ") => " + Expr(xs[3]) + ";\n";
-                else if (xs.Length == 2 && Value.SymbolOf(xs[0]) == "main" && !main) { main = true; output += "public static int Main(string[] args) { R.Arguments=args; try { _ = " + Expr(xs[1]) + "; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.Message); return 1; } }\n"; }
+                else if (xs.Length == 2 && Value.SymbolOf(xs[0]) == "main" && !main) { main = true; output += "public static int Main(string[] args) { R.Arguments=args; try { _ = " + Expr(xs[1]) + "; return 0; } catch(System.Exception e) { System.Console.Error.WriteLine(e.ToString()); return 1; } }\n"; }
                 else throw new Exception("Invalid top-level declaration");
             }
             if (!main) throw new Exception("Missing main");
             File.WriteAllText(args[1], output + "}\n", new System.Text.UTF8Encoding(false));
             return 0;
         }
-        catch (Exception e) { Console.Error.WriteLine(e.Message); return 1; }
+        catch (Exception e) { Console.Error.WriteLine(e.ToString()); return 1; }
     }
 }

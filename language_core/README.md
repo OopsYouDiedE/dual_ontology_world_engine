@@ -6,11 +6,13 @@
 
 ## 可编译的世界语义库
 
-新增 [core/README.md](core/README.md)：公理分域采纳、物体/门/通道与切片、观察更新、主客观价值、心理评价式回应、论证代价和历史检查器。实现采用 DV 编译子集；尚未接入现役第一章，本轮等待用户提供领域验收方案。
+新增 [core/README.md](core/README.md)：公理分域采纳、物体/门/通道与切片、观察更新、主客观价值、心理评价式回应、论证代价和历史检查器。实现采用 DV 编译子集；尚未接入现役第一章。当前已获准在隔离 DV 会话中实现并运行自动验证，具体证据范围见 verification README。
 
 ## 自举的实际含义
 
-正式会话自动验证的拟议模块、四个 DV 入口、因果事件、数据分域和动作代价合同见 [verification/DESIGN.md](verification/DESIGN.md)。当前只完成正式设计，未实现或运行验收器，不能宣称机制或游戏验收完成。
+正式会话自动验证的目标合同见 [verification/DESIGN.md](verification/DESIGN.md)，当前实现与运行方式见 [verification/README.md](verification/README.md)。用户已授权实际实现：会话和四个只读入口使用编译 DV，Python 只编排冻结、编译与文件/进程 I/O。具体执行证据和限制保存在 `artifacts/partial-bootstrap-core/`；不能宣称 Godot 接入、旧 Core 等价或游戏验收完成。
+
+用户随后明确本轮人物、世界、话语、规则、参数及 oracle 均为真实 DV 声明/函数，JSON 仅由独立 DV 程序导出作运行交换。oracle 与主体包分离；旧 `.story` 只读作迁移溯源。此裁定覆盖本目录旧内容装载规定，未修改现役宿主的剧本链路。
 
 启动 C# 内核读取 S 表达式，载入 `10-evaluator.dv`。这个语言写的解释器再解释全部 `bootstrap/*.dv`，其中包括解释器自己的源码。所得函数在新环境中运行；`InferenceProgram` 和正式 `WorldCore` 调用这些自解释载入的函数。演示还取出新载入的解释器函数并实际调用它。
 

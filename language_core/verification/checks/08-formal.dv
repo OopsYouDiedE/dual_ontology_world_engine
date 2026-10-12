@@ -30,12 +30,14 @@
                 (do (set status (if (rt_eq (dv_get e "type") "answer_rejected") "supported" "violated"))
                   (set reason "提交答案未列于冻结答辩目录，正式系统应驳回")) false) false)
             (if (dv_and (dv_and (rt_lt 0 (rt_count rule)) (dv_has_key data "mind")) (dv_has_key data "physical"))
-              (let (literal (dv_truth (dv_get data "physical") (dv_get rule "condition"))
+              (let (literal (dv_truth (dv_get data "physical") (if (dv_find rule "condition_from_answer" false) (v_physical_proposition (dv_get (v_submission_action submit) "answer") (dv_find (dv_find trace "configuration" (rt_list)) "bindings" (rt_list)) (dv_get (dv_get data "mind") "subject")) (dv_get rule "condition")))
                     support (dv_truth (dv_get data "mind") (dv_get rule "required_support"))
                     match (if (dv_has_key rule "question_match") (dv_truth (dv_get data "physical") (dv_get rule "question_match")) "unknown")
                     complete (if (dv_has_key rule "answer_complete") (dv_truth (dv_get data "mind") (dv_get rule "answer_complete")) "unknown")
                     executable (v_transition_executable (dv_get data "physical") rule (dv_get e "time")) accepted false)
                 (do
+                  (if (dv_find rule "require_argument" false)
+                    (if (v_submitted_argument_valid manifest trace submit) false (set complete "unknown")) false)
                   (set accepted (dv_and (dv_and (rt_eq literal "true") (rt_eq support "true"))
                     (dv_and (rt_eq match "true") (dv_and (rt_eq complete "true") (rt_eq executable "true")))))
                   (set axes (dv_with (dv_m4 "literal_truth" literal "epistemic_support" support "question_match" match "answer_complete" complete) "transition_executable" executable))
@@ -51,7 +53,7 @@
                         (v_support trace (dv_get data "mind") (dv_get e "actor") (dv_get rule "answer_complete") (rt_list))) false (set status "insufficient_evidence"))
                       (if (rt_eq (dv_find (dv_get e "data") "accepted_law" "") (dv_get rule "accepted_law")) false
                         (do (set status "violated") (set reason "接受记录指向的交接法则与冻结答辩规则不同")))) false))) false))) false)
-      (dv_with (v_finding "formal_answer_validity" status reason refs) "axes" axes))))
+      (dv_with (dv_with (v_finding "formal_answer_validity" status reason refs) "axes" axes) "question_id" (if (rt_lt 0 (rt_count submit)) (v_question submit) false)))))
 (defn v_axis_supported (axes id)
   (let (i 0 found false) (do (while (rt_lt i (rt_count axes))
     (do (if (rt_eq (dv_get (rt_at axes i) "id") id) (set found (rt_eq (dv_get (rt_at axes i) "status") "supported")) false) (set i (rt_add i 1)))) found)))
@@ -59,7 +61,7 @@
   (let (events (v_events trace) actor (dv_find oracle "actor" "") first_id (dv_find oracle "first_question_id" "") target_id (dv_find oracle "target_question_id" "")
         t0 (rt_list) ready (rt_list) i 0 status "not_observed" reason "指定首题接受或目标题独立就绪事件尚未发生")
     (do
-      (if (dv_or (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start")) (dv_or (rt_eq actor "") (dv_or (rt_eq first_id "") (rt_eq target_id ""))))
+      (if (dv_or (dv_or (rt_not (dv_has_key (dv_find oracle "limit" (rt_list)) "maximum_game_minutes")) (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start"))) (dv_or (rt_eq actor "") (dv_or (rt_eq first_id "") (rt_eq target_id ""))))
         (do (set status "insufficient_evidence") (set reason "验收配置须绑定本人、首题与目标题，并声明从正式运行起点计时"))
         (do
           (while (rt_lt i (rt_count events))
@@ -75,23 +77,23 @@
                       (if (rt_eq (v_question e) target_id) (set ready e) false) false)) false)
                 (set i (rt_add i 1)))))
           (if (dv_and (rt_lt 0 (rt_count t0)) (rt_lt 0 (rt_count ready)))
-            (let (data (dv_get ready "data") axes (v_axis_bundle manifest trace (dv_with ready "type" "answer_submitted") oracle) elapsed (rt_sub (dv_get ready "time") (dv_get (dv_get (dv_get trace "initial") "physical") "time")))
+            (let (data (dv_get (v_ready_context trace ready) "data") axes (v_axis_bundle manifest trace (dv_with (v_ready_context trace ready) "type" "answer_submitted") oracle) elapsed (rt_sub (dv_get ready "time") (dv_get (dv_get (dv_get trace "initial") "physical") "time")))
               (do
                 (set status "insufficient_evidence") (set reason "就绪需要独立来源及当前题目的真值、本人证据与完整因果链；局部模型解释不能替代全题")
                 (if (dv_and (dv_and (dv_has_key data "basis_event_ids") (rt_lt 0 (rt_count (dv_find data "basis_event_ids" (rt_list)))))
-                    (dv_and (v_axis_supported axes "literal_truth") (dv_and (v_axis_supported axes "epistemic_support") (v_axis_supported axes "causal_completeness"))))
+                    (dv_and (v_submitted_argument_valid manifest trace (v_ready_context trace ready)) (dv_and (v_axis_supported axes "literal_truth") (dv_and (v_axis_supported axes "epistemic_support") (v_axis_supported axes "causal_completeness")))))
                   (let (basis (dv_get data "basis_event_ids") j 0 valid (v_ancestor events (dv_get ready "id") (dv_get t0 "id")))
                     (do (while (rt_lt j (rt_count basis))
                       (do (set valid (dv_and valid (v_ancestor events (dv_get ready "id") (rt_at basis j)))) (set j (rt_add j 1))))
                       (if (dv_and valid (rt_eq (dv_find trace "game_time_unit" "") "minute"))
-                        (do (set status (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 360) elapsed))) "supported" "violated"))
-                          (set reason "Source-complete readiness for exact target question measured from immutable run-start authority time in game minutes")) false))) false))) false)))
+                        (do (set status (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 0) elapsed))) "supported" "violated"))
+                          (set reason "本题完整来源就绪时刻按不可变的正式运行起点及冻结游戏分钟预算核验")) false))) false))) false)))
       (dv_with (dv_with (v_finding "ready_deadline" status reason (dv_pair (dv_find t0 "id" false) (dv_find ready "id" false)))
         "first_acceptance_game_time" (dv_find t0 "time" false)) "ready_game_time" (dv_find ready "time" false)))))
 
 (defn v_run_stage_times (manifest trace oracle)
   (let (events (v_events trace) actor (dv_find oracle "actor" "") target (dv_find oracle "target_question_id" "")
-        start (dv_get (dv_get (dv_get trace "initial") "physical") "time") maximum (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 360)
+        start (dv_get (dv_get (dv_get trace "initial") "physical") "time") maximum (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 0)
         kinds (dv_list3 "answer_submitted" "answer_accepted" "speech_literal") result (rt_list) k 0 accepted (rt_list))
     (do
       (while (rt_lt k (rt_count kinds))
@@ -110,7 +112,10 @@
             (if (rt_eq kind "answer_accepted") (set accepted chosen) false)
             (let (elapsed (if (rt_eq (rt_count chosen) 0) false (rt_sub (dv_get chosen "time") start)))
               (rt_push result (dv_with (dv_with (v_finding (rt_cat "run_start_time_" kind)
-                (if (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start")) "invalid_run" (if (rt_eq (rt_count chosen) 0) "not_observed" (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt maximum elapsed))) "supported" "violated")))
+                (if (dv_or (rt_not (dv_has_key (dv_find oracle "limit" (rt_list)) "maximum_game_minutes")) (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start"))) "invalid_run" (if (rt_eq (rt_count chosen) 0) "not_observed" (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt maximum elapsed))) "supported" "violated")))
                 "从真实运行起点记录本题实际提交、接受或后续分享时刻；这是时限记录，合法性与完整论证由独立轴核验" (dv_single (dv_find chosen "id" false)))
                 "run_start_game_time" start) "elapsed_game_minutes" elapsed)))
             (set k (rt_add k 1))))) result)))
+
+
+

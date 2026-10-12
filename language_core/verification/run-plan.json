@@ -169,6 +169,38 @@
         "{out}/trace-enabled.json",
         "enabled"
       ]
+    },
+    {
+      "id": "disabled",
+      "args": [
+        "{inputs}/scenario-base.json",
+        "{out}/trace-disabled.json",
+        "disabled"
+      ]
+    },
+    {
+      "id": "boundary",
+      "args": [
+        "{inputs}/scenario-boundary.json",
+        "{out}/trace-boundary.json",
+        "enabled"
+      ]
+    },
+    {
+      "id": "low",
+      "args": [
+        "{inputs}/scenario-low.json",
+        "{out}/trace-low.json",
+        "enabled"
+      ]
+    },
+    {
+      "id": "holdout",
+      "args": [
+        "{inputs}/scenario-holdout.json",
+        "{out}/trace-holdout.json",
+        "enabled"
+      ]
     }
   ],
   "platform_manifests": {
@@ -200,6 +232,10 @@
     ]
   },
   "archives": [
-    "{out}/trace-enabled.json"
+    "{out}/trace-enabled.json",
+    "{out}/trace-disabled.json",
+    "{out}/trace-boundary.json",
+    "{out}/trace-low.json",
+    "{out}/trace-holdout.json"
   ]
 }

@@ -54,6 +54,25 @@
             (set basis (dv_append basis (dv_m2 "bridge" (dv_get bridge "id") "basis" bridge_basis))))))
       (dv_with (dv_with (dv_with (dv_with (dv_m4 "id" (dv_get candidate "id") "proposition" proposition "status" status "confidence" confidence)
         "basis" basis) "missing_bridge" missing) "scope_check" scope_check) "kind" "defeasible-interpretation"))))
+(defn v_model_interpretations (mind policy speech bindings)
+  (let (candidates (v_parse_candidates policy speech) result (rt_list) i 0)
+    (do (while (rt_lt i (rt_count candidates))
+      (do (rt_push result (v_parse_interpret mind policy (rt_at candidates i) bindings)) (set i (rt_add i 1)))) result)))
+; Model reception is hypothetical testimony into a private copied prediction world.
+; Neither the model nor its alternatives is sourced from another actor's real mind.
+(defn v_speaker_model_prediction (model speech speaker source time)
+  (let (before (dv_clone (dv_get model "mind")) policy (dv_get model "policy") bindings (dv_find speech "referents" (rt_list))
+        parsed (v_language_map (dv_get model "mind") (dv_get speech "literal_ast") (dv_find speech "referents" (rt_list))))
+    (let (observations (v_testimony before parsed (rt_cat "prediction-" source) speaker time
+            (dv_find (dv_find policy "speaker_trust" (rt_list)) speaker 0.5))
+          profile (dv_observation_profile (dv_m3 "perception" 1 "testimony" 1 "recall" 1) (dv_find policy "observation_threshold" 0.5)))
+      (let (receipt (dv_update_mind before observations (dv_get before "revision") profile) after (dv_get receipt "world"))
+        (dv_with (dv_with (dv_with (dv_with (dv_m4 "model_before" before "model_after" after "predicted_literal" parsed "observations" observations)
+          "observation_profile" profile) "prediction" (v_model_interpretations after policy speech bindings))
+          "conditional_prediction" (dv_m2
+            "scope_reference_check_false" (v_model_interpretations after (dv_with policy "scope_reference_check" false) speech bindings)
+            "scope_reference_check_true" (v_model_interpretations after (dv_with policy "scope_reference_check" true) speech bindings)))
+          "assumptions" (dv_find model "assumptions" (rt_list)))))))
 (defn v_prediction_check (trace e)
   (let (data (dv_get e "data") source (v_event (v_events trace) (dv_find (dv_get e "data") "source_event" "")) status "insufficient_evidence" reason "缺少说话者当时本人模型与真实话语来源")
     (do
@@ -62,14 +81,17 @@
           (if (dv_has_key models listener)
             (let (model (dv_get models listener) speech (dv_get source_data "speech") predicted (rt_list) candidates (rt_list) i 0 valid true)
               (do
-                (set candidates (v_parse_candidates (dv_get model "policy") speech))
-                (while (rt_lt i (rt_count candidates))
-                  (do (rt_push predicted (v_parse_interpret (dv_get model "mind") (dv_get model "policy") (rt_at candidates i) (dv_find speech "referents" (rt_list)))) (set i (rt_add i 1))))
-                (set valid (dv_and (dv_same model (dv_find data "model" false)) (dv_same predicted (dv_find data "prediction" false))))
+                (set predicted (v_speaker_model_prediction model speech (dv_get source "actor") (dv_get source "id") (dv_get e "time")))
+                (set valid (dv_same model (dv_find data "model" false)))
+                (let (keys (dv_list3 "model_before" "model_after" "predicted_literal") j 0)
+                  (do (rt_push keys "observations") (rt_push keys "observation_profile") (rt_push keys "prediction") (rt_push keys "conditional_prediction") (rt_push keys "assumptions")
+                    (while (rt_lt j (rt_count keys))
+                      (do (set valid (dv_and valid (dv_same (dv_find predicted (rt_at keys j) false) (dv_find data (rt_at keys j) false)))) (set j (rt_add j 1))))))
                 (set valid (dv_and valid (rt_lt 0 (rt_count (dv_find model "basis" (rt_list))))))
                 (set valid (dv_and valid (v_ancestor (v_events trace) (dv_get e "id") (dv_get source "id"))))
                 (set status (if valid "supported" "violated"))
-                (set reason "预测只依据说话者本人当时持有模型重算，未读取听者实际脑内；缺模型不能冒报确定理解")))
+                (set reason "预测只依据说话者本人当时持有模型重算，未读取听者实际脑内；缺模型不能冒报确定理解")
+                (if (dv_and (dv_has_key data "model_before") (dv_has_key data "model_after")) false (do (set status "insufficient_evidence") (set reason "旧预测记录缺模型内实际收闻前后快照，不能把旧schema缺口判为错误理解")))))
             (do (set status (if (rt_eq (dv_find data "status" "") "unknown-no-model") "supported" "violated"))
               (set reason "本人无该听者模型，只能保留未知预测，不用事后真实解析替代")))) false)
       (dv_with (dv_with (v_finding "speaker_prediction_boundary" status reason (dv_single (dv_get e "id"))) "actor" (dv_get e "actor")) "action" "speaker_prediction"))))
@@ -82,7 +104,7 @@
           (if (dv_and (rt_eq (dv_find data "status" "") "accepted") (v_ancestor events (dv_get e "id") (dv_get prior "id")))
             (if (dv_same before_entry (dv_find (dv_find data "interpretations_after" (rt_list)) id false)) (set found true) false) false) false)
           (set i (rt_add i 1))))) found)))
-(defn v_interpretation_check (trace e)
+(defn v_interpretation_check_legacy (trace e)
   (let (data (dv_get e "data") source (v_event (v_events trace) (dv_find (dv_get e "data") "source_event" "")) actor (v_frozen_actor trace (dv_get e "actor"))
         status "insufficient_evidence" reason "缺少实际话语、本人的解析后快照或解释采纳前后记录" refs (dv_single (dv_get e "id")))
     (do
@@ -97,7 +119,8 @@
             (if (rt_eq (rt_count candidate) 0)
               (do (set status "violated") (set reason "采纳了本人冻结策略与真实话语未提供的解释候选"))
               (do
-                (set expected (v_parse_interpret (dv_get data "mind_before") policy candidate (dv_find speech "referents" (rt_list))))
+                (set expected (v_paid_speech_interpret (dv_get data "mind_before") policy candidate (dv_find speech "referents" (rt_list))))
+                (if (dv_has_key data "calculation_units") false (set expected (dv_without expected "calculation_units")))
                 (set expected (dv_with (dv_with expected "source_event" (dv_get source "id")) "referents" (dv_find speech "referents" (rt_list))))
                 (if (rt_eq (dv_get expected "status") "withdrawn")
                   (if (rt_eq (dv_find (dv_find before (dv_get candidate "id") (rt_list)) "status" "") "accepted") false
@@ -125,9 +148,17 @@
           (if (dv_or (rt_eq type "listener_parse") (rt_eq type "observation"))
             (let (extra (v_testimony_dependency trace e) j 0)
               (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) false)
-          (if (dv_or (rt_eq type "implicature") (rt_eq type "implicature_withdrawn")) (rt_push result (v_interpretation_check trace e)) false)
-          (if (rt_eq type "speaker_prediction") (rt_push result (v_prediction_check trace e)) false)
+          (if (dv_or (rt_eq type "proposal_scope_reassessment") (dv_or (rt_eq type "implicature") (rt_eq type "implicature_withdrawn"))) (rt_push result (v_interpretation_check trace e)) false)
+          (if (dv_has (dv_pair "proposal_receipt" "proposal_adoption") type) (rt_push result (v_proposal_reception_check trace e)) false)
+          (if (rt_eq type "speech_choice_prediction") (rt_push result (v_paid_prediction_check trace e)) false)
+          (if (rt_eq type "speaker_prediction") (rt_push result (if (dv_has_key (dv_get e "data") "paid_forecast") (v_paid_execution_prediction_check trace e) (v_prediction_check trace e))) false)
           (if (dv_or (rt_eq type "answer_accepted") (rt_eq type "answer_rejected"))
             (let (submit (v_parent_submission events e))
               (rt_push result (dv_with (v_finding "formal_answer_dependency" (if (rt_eq (rt_count submit) 0) "insufficient_evidence" "supported") "正式回答结果必须直接引用本人的真实提交；不能拿任何先前答题替代本次提交" (dv_pair (dv_get e "id") (dv_find submit "id" false))) "actor" (dv_get e "actor")))) false)
           (set i (rt_add i 1))))) result)))
+
+
+
+(defn v_interpretation_check (trace e)
+  (if (dv_and (dv_has_key (dv_get e "data") "proposal") (dv_has_key (dv_get e "data") "charged_units"))
+    (v_proposal_reassessment_check trace e) (v_interpretation_check_legacy trace e)))

@@ -72,24 +72,40 @@
       (let (ref (rt_at grants i) local (dv_local bindings (dv_get (rt_at grants i) "object") (dv_get actor "id")))
         (do (if (rt_eq local "") false (set refs (dvp_add_ref refs (dv_ref local (dv_get ref "facet") (dv_get ref "field")))))
           (set i (rt_add i 1))))) refs)))
+(defn dvp_answer_reward (actor action mind)
+  (if (dv_has_key action "answer")
+    (if (rt_eq (dv_truth mind (dv_get action "answer")) "true") 1.0
+      (if (dv_and (dv_has_key actor "argument") (rt_eq (dv_find (dv_find actor "argument" (rt_list)) "question" "") (dv_find action "argument_question" ""))) 1.0
+        (let (hypothesis (dv_find actor "hypothesis" false))
+          (if (rt_eq hypothesis false) 0
+            (if (dv_same (dv_get hypothesis "proposition") (dv_get action "answer"))
+              (dv_find hypothesis "prior" 0.5) 0))))) 0))
 (defn dvp_input_signature (actor action refs)
   (let (mind (dv_get actor "mind") inputs (rt_list) i 0 selected (dvp_merge_refs refs (if (dv_has_key action "answer") (dvs_sim_refs (dv_get action "answer")) (rt_list))))
     (do (if (dv_has_key action "support") (set selected (dvp_merge_refs selected (dvs_sim_refs (dv_get action "support")))) false)
       (while (rt_lt i (rt_count selected))
         (do (rt_push inputs (dv_m2 "ref" (rt_at selected i) "cell" (dvs_reason_cell (dv_read mind (rt_at selected i))))) (set i (rt_add i 1))))
-      (dv_m3 "question" (dvp_question actor) "claim" (dv_find action "answer" false) "inputs" inputs))))
+      (dv_with (dv_m3 "question" (dvp_question actor) "claim" (dv_find action "answer" false) "inputs" inputs)
+        "reward" (dvp_answer_reward actor action mind)))))
 (defn dvp_answer_relevant (actor action)
   (if (dv_has_key action "topic") (dvp_topic actor action)
     (let (refs (dvs_sim_refs (dv_get action "answer")) goals (dvp_goal_refs actor) i 0 found false)
       (do (while (rt_lt i (rt_count refs))
         (do (if (dv_has goals (rt_at refs i)) (set found true) false) (set i (rt_add i 1)))) found))))
+(defn dvp_answer_attempt_allowed (prev_sig cur_sig)
+  (if (rt_eq prev_sig false) true
+    (if (rt_not (dv_same (dv_get prev_sig "inputs") (dv_get cur_sig "inputs"))) true
+      (if (rt_not (dv_same (dv_get prev_sig "claim") (dv_get cur_sig "claim"))) true
+        (if (rt_not (dv_same (dv_get prev_sig "question") (dv_get cur_sig "question"))) true
+          (let (r1 (dv_find prev_sig "reward" 0) r2 (dv_find cur_sig "reward" 0) diff (if (rt_lt r1 r2) (rt_sub r2 r1) (rt_sub r1 r2)))
+            (rt_not (rt_lt diff 0.2))))))))
 (defn dvp_eligible (actor action mind relevant)
   (let (id (dv_get action "id") used (dv_find actor "used" (rt_list)))
     (if (dv_and (rt_not (dv_find actor "cognition_blocked" false)) (dv_and (dv_find action "argument_available" true) (rt_eq (dv_truth mind (dv_get action "precondition")) "true")))
       (if (dv_has_key action "answer")
         (if (dvp_answer_relevant actor action)
           (dv_and (rt_not (rt_eq (dv_truth (dv_get actor "mind") (dv_get action "answer")) "false"))
-            (rt_not (dv_same (dv_find (dv_find actor "answer_attempt_signatures" (rt_list)) id false) (dvp_input_signature actor action relevant)))) false)
+            (dvp_answer_attempt_allowed (dv_find (dv_find actor "answer_attempt_signatures" (rt_list)) id false) (dvp_input_signature actor action relevant))) false)
         (if (dv_has_key action "speech")
           (dv_and (rt_eq (dvs_speech_truth (dv_get actor "mind") (dv_get action "speech")) "true") (rt_not (dv_has used id)))
           (if (rt_eq (dv_get action "kind") "replay")
@@ -121,9 +137,7 @@
           (do (if (dv_has relevant ref) (set information (rt_add information 1)) false)
             (if (dv_has probes ref) (set verification (rt_add verification 1)) false)) false) (set i (rt_add i 1)))))
       (if (dv_has_key action "answer")
-        (if (rt_eq (dv_truth mind (dv_get action "answer")) "true") (set progress 1)
-          (if (rt_eq hypothesis false) false
-            (if (dv_same (dv_get hypothesis "proposition") (dv_get action "answer")) (set progress (dv_find hypothesis "prior" 0.5)) false))) false)
+        (set progress (dvp_answer_reward actor action mind)) false)
       (if (dv_has_key action "speech")
         (if (rt_lt 0 (rt_count (dvs_speech_goals actor)))
           (let (choice (dv_find (dv_find actor "speech_choice_values" (rt_list)) (dv_get action "id") (rt_list)))

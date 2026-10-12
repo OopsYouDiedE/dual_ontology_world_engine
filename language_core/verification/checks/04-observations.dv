@@ -50,7 +50,8 @@
   (let (cached (rt_list) i 0)
     (do
       (while (rt_lt i (rt_count trace))
-        (do (if (dv_has (dv_list3 "judge_observation_findings" "judge_reception_findings" "judge_model_findings") (rt_at (rt_at trace i) 0)) false (rt_push cached (rt_at trace i))) (set i (rt_add i 1))))
+        (do (if (dv_has (dv_append (dv_list3 "judge_observation_findings" "judge_reception_findings" "judge_model_findings") "judge_argument_findings") (rt_at (rt_at trace i) 0)) false (rt_push cached (rt_at trace i))) (set i (rt_add i 1))))
       (rt_push cached (dv_pair "judge_observation_findings" (v_observations_compute cached)))
       (rt_push cached (dv_pair "judge_reception_findings" (v_receptions_compute cached)))
-      (rt_push cached (dv_pair "judge_model_findings" (v_model_checks_compute manifest cached))) cached)))
+      (rt_push cached (dv_pair "judge_model_findings" (v_model_checks_compute manifest cached)))
+      (rt_push cached (dv_pair "judge_argument_findings" (v_argument_checks_compute manifest cached))) cached)))

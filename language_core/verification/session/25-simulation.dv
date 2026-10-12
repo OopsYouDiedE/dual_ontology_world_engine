@@ -196,7 +196,7 @@
           (set result (dv_with (dv_with result "calculation_unit" "one-assumption-predict-rule-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison") "stop_reason" (if (rt_lt (dv_get result "remaining") 1) "budget-exhausted" "declared-plan-complete")))
           (set result (dv_with (dv_with result "work_remaining" (dv_get result "remaining")) "remaining" (rt_sub total_budget (dv_get result "expanded"))))
           (set result (dv_with (dv_with result "original_expanded" (dv_get result "expanded")) "total_expanded" (dv_get result "expanded")))
-          (let (parents (dv_single parent) paid (dv_find actor "model_paid_event" "") previous (dv_find actor "model_previous_event" ""))
+          (let (parents (dvs_cognitive_parents actor (dv_single parent)) paid (dv_find actor "model_paid_event" "") previous (dv_find actor "model_previous_event" ""))
             (do (if (dv_and (rt_not (rt_eq paid "")) (rt_not (dv_has parents paid))) (rt_push parents paid) false)
               (if (dv_and (rt_not (rt_eq previous "")) (rt_not (dv_has parents previous))) (rt_push parents previous) false)
               (dvs_event events "mind_simulation" (dv_get actor "id") time parents
@@ -492,7 +492,7 @@
           (set i (rt_add i 1)))))
       (set result (dv_with (dv_with (dv_with (dv_m4 "certificates" certificates "rejections" rejections "expanded" (rt_sub initial remaining) "remaining" (rt_sub (dv_find policy "model_budget" 0) (rt_sub initial remaining)))
         "work_remaining" remaining) "current_revision" (dv_get mind "revision")) "actor_before" actor))
-      (let (parents (dv_single parent) j 0)
+      (let (parents (dvs_cognitive_parents actor (dv_single parent)) j 0)
         (do (if (rt_eq (dv_find actor "model_paid_event" "") "") false (if (dv_has parents (dv_get actor "model_paid_event")) false (rt_push parents (dv_get actor "model_paid_event"))))
           (if (rt_eq (dv_find actor "model_previous_event" "") "") false (if (dv_has parents (dv_get actor "model_previous_event")) false (rt_push parents (dv_get actor "model_previous_event"))))
           (while (rt_lt j (rt_count certificates))

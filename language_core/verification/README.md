@@ -25,10 +25,9 @@ process-plan 只描述文件与进程 I/O，不含领域正文：`files` 指定�
 `report/10-readable.dv` 读取真实DV判定、原轨迹及仅含路径/现实进程耗时的I/O索引，输出中文节点、行动、来源、正式拒答轴与缺口。空判定路径明确显示未执行，不生成替代判定。Python只编译、传参和写文件；报告本身仍由DV执行。原始trace无损zip与SHA保留，原字节不删除；禁止提交大型裸trace或bin/obj。
 
 
-历史只读重判可显式使用 `--judge-core-root` 独立封存判定器的 Core 依赖。原生产者、oracle与轨迹保持原封存版本，新ABI不得冒称旧会话运行过新机制；输出分别记录生产者与checker依赖来源。通用DV报告开头给简短实测结论及具体因果缺口，完整轨迹/原判定JSON保留。
+只读历史重判可显式使用 `--judge-core-root` 封存判定器自身的新Core依赖；生产者源码、原始oracle与轨迹保持原封存版本。结果分别记录 producer 来源和 checker_dependency_root，新ABI不冒称旧会话运行过新机制；旧轨迹缺字段如实返回不足。
+
+当前后续实例导出的构建模块包含 `chapter1-laws.dv`、`chapter1-pragmatics.dv`、`chapter1-content.dv` 与 `chapter1-history.dv`。历史候选和已接入实例已独立编译执行导出；完整正式会话的论证、提交与分享仍须在新冻结源上实际运行，不以 DTO 导出证明完成。此前 r1–r5 快照保持各自当时依赖，不加入新模块后冒称旧运行。
 
 
-r6 已将原生历史模块与模型论证机制纳入独立主体构建，oracle 仍单独导出。该轮主体在 240 现实秒外部限额停止；部分行动日志保留，但没有最终 trace，主因果与三补充目的尚不能给出本轮判定。源码、生成物及实际运行日志均在 core-iteration-r6-enabled 中封存；后续运行另建目录。
-
-
-外部现实秒限制使用 `--process-timeout-seconds`，默认240，拒绝非有限或非正数；旧 `--timeout` 保留显式别名。`--rerun-frozen-session <既有目录> --session-only` 在新输出目录复用原封存输入、主体程序集与C3包；必须指定原隔离 `--source-root` 及原封存 `--config`。不重编、不重新导出，输入与包逐字节指纹核验。不同现实限额与未改变的游戏预算分别记录，原失败目录保留。
+工程进程默认外部限额240现实秒，可显式 `--process-timeout-seconds` 另开目录记录不同工程限额；它不改变任何游戏预算或代价。`--rerun-frozen-session <prior-run> --session-only --source-root <same-source>` 只重执行原封存程序和原始输入，逐字节核对程序集、编译器包与源指纹，不重编译、不重新导出领域内容。不同现实进程限额不能称同窗口性能改善；超时缺最终trace时主判定未完成。

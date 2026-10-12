@@ -26,6 +26,20 @@
                       (do (rt_push queue (rt_at parents j)) (set j (rt_add j 1))))))))
             (set cursor (rt_add cursor 1)))))
       found)))
+ ; Full read-only causal closure for repeated membership queries on one child.
+(defn v_ancestors (events child)
+  (let (queue (dv_single child) visited (rt_list) cursor 0)
+    (do
+      (while (rt_lt cursor (rt_count queue))
+        (let (id (rt_at queue cursor))
+          (do
+            (if (dv_has visited id) false
+              (let (e (v_event events id) j 0)
+                (do (rt_push visited id)
+                  (let (parents (dv_find e "parents" (rt_list)))
+                    (while (rt_lt j (rt_count parents))
+                      (do (rt_push queue (rt_at parents j)) (set j (rt_add j 1))))))))
+            (set cursor (rt_add cursor 1))))) visited)))
 (defn v_integrity (manifest trace)
   (let (events (v_events trace) ids (rt_list) status "supported" reason "Unique events and explicit earlier causal parents" i 0)
     (do
@@ -33,7 +47,8 @@
       (while (rt_lt i (rt_count events))
         (let (e (rt_at events i) id (dv_find (rt_at events i) "id" false) parents (dv_find (rt_at events i) "parents" (rt_list)) j 0)
           (do
-            (if (dv_or (dv_same id false) (dv_has ids id)) (do (set status "invalid_run") (set reason "Missing or duplicate immutable event identity")) false)
+            (if (dv_and (dv_has_key e "type") (dv_and (dv_has_key e "actor") (dv_and (dv_has_key e "time") (dv_has_key e "data")))) false (if (rt_eq status "supported") (do (set status "insufficient_evidence") (set reason "事件缺少类型、本人、时刻或完整记录，不能进入重演")) false))
+              (if (dv_or (dv_same id false) (dv_has ids id)) (do (set status "invalid_run") (set reason "Missing or duplicate immutable event identity")) false)
             (while (rt_lt j (rt_count parents))
               (do (if (rt_not (dv_has ids (rt_at parents j))) (do (set status "invalid_run") (set reason "Causal parent absent or forward reference"))
                 (if (rt_lt (dv_find e "time" -1) (dv_find (v_event events (rt_at parents j)) "time" -1)) (do (set status "invalid_run") (set reason "Child precedes causal parent")) false)) (set j (rt_add j 1))))
@@ -44,12 +59,12 @@
       (v_finding "run_integrity" status reason ids))))
 (defn v_truth_status (truth) (if (rt_eq truth "true") "supported" (if (rt_eq truth "false") "violated" "insufficient_evidence")))
 
-(defn v_milestones (events oracle)
-  (let (specs (dv_find oracle "milestones" (rt_list)) chosen (rt_list) result (rt_list) i 0)
+(defn v_milestones (manifest trace oracle)
+  (let (events (v_events trace) specs (dv_find oracle "milestones" (rt_list)) chosen (rt_list) prior_statuses (rt_list) result (rt_list) i 0)
     (do
       (if (rt_eq (rt_count specs) 0) (rt_push result (v_finding "milestone_contract" "insufficient_evidence" "Story oracle milestone binding absent" (rt_list))) false)
       (while (rt_lt i (rt_count specs))
-        (let (spec (rt_at specs i) id (dv_get (rt_at specs i) "id") e (v_first_after events (rt_at specs i) chosen) status "supported" reason "Observed with causal predecessors" refs (rt_list) j 0)
+        (let (spec (rt_at specs i) id (dv_get (rt_at specs i) "id") e (v_select_milestone manifest trace oracle (rt_at specs i) chosen) status "supported" reason "Observed with causal predecessors" refs (rt_list) j 0)
           (do
             (if (rt_eq (rt_count e) 0) (do (set status "not_observed") (set reason "Required event did not occur in recorded window"))
               (do (rt_push refs (dv_get e "id"))
@@ -57,14 +72,16 @@
                   (while (rt_lt j (rt_count after))
                     (let (prior (dv_find chosen (rt_at after j) (rt_list)))
                       (do (if (rt_eq (rt_count prior) 0) (do (set status "insufficient_evidence") (set reason "Required predecessor not recorded"))
-                        (if (rt_not (v_ancestor events (dv_get e "id") (dv_get prior "id"))) (do (set status "violated") (set reason "Required causal predecessor not an ancestor")) false)) (set j (rt_add j 1))))))))
-            (set chosen (dv_with chosen id e)) (rt_push result (dv_with (v_finding id status reason refs) "first_game_time" (dv_find e "time" false))) (set i (rt_add i 1))))) result)))
+                        (if (rt_not (v_event_precedes events prior e)) (do (set status "violated") (set reason "必需偏序前驱未在该事件之前实际发生"))
+                            (if (rt_not (rt_eq (dv_find prior_statuses (rt_at after j) "insufficient_evidence") "supported")) (do (set status "insufficient_evidence") (set reason "前驱自身尚未由真实语义证据建立，下游不能宣称成立")) false))) (set j (rt_add j 1))))))))
+            (if (dv_and (rt_lt 0 (rt_count e)) (rt_eq status "supported")) (let (semantic (v_milestone_semantics manifest trace oracle spec e)) (do (set status (dv_get semantic "status")) (set reason (dv_get semantic "reason")))) false)
+              (set chosen (dv_with chosen id e)) (set prior_statuses (dv_with prior_statuses id status)) (rt_push result (dv_with (v_finding id status reason refs) "first_game_time" (dv_find e "time" false))) (set i (rt_add i 1))))) result)))
 
 
-(defn v_judge (manifest raw_trace oracle)
+(defn v_judge_full (manifest raw_trace oracle)
   (let (trace (v_prepare_evidence_cache manifest raw_trace) events (v_events trace) result (dv_single (v_integrity manifest trace)) i 0)
     (do
-      (let (extra (v_milestones events oracle) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1)))))
+      (let (extra (v_milestones manifest trace oracle) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1)))))
       (let (extra (v_observations trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1)))))
       (while (rt_lt i (rt_count events))
         (let (e (rt_at events i)) (do
@@ -73,13 +90,23 @@
           (if (dv_or (rt_eq (dv_get e "type") "answer_accepted") (rt_eq (dv_get e "type") "answer_rejected"))
             (rt_push result (v_finding "answer_event_observed" "supported" (dv_get e "type") (dv_single (dv_get e "id")))) false)
           (set i (rt_add i 1)))))
-      (let (extra (v_cost_check manifest trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) (let (extra (v_social_check trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) (let (j 0) (while (rt_lt j (rt_count events))
+      (rt_push result (v_game_budget_check trace oracle)) (let (extra (v_retraction_checks trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) (let (extra (v_cost_check manifest trace oracle) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) (let (extra (v_social_check trace) j 0) (while (rt_lt j (rt_count extra)) (do (rt_push result (rt_at extra j)) (set j (rt_add j 1))))) (let (j 0) (while (rt_lt j (rt_count events))
         (let (e (rt_at events j)) (do
           (if (dv_or (rt_eq (dv_get e "type") "answer_accepted") (rt_eq (dv_get e "type") "answer_rejected"))
             (rt_push result (v_answer_validation manifest trace e)) false) (set j (rt_add j 1))))))
       (let (model_findings (v_model_checks manifest trace) model_index 0) (while (rt_lt model_index (rt_count model_findings)) (do (rt_push result (rt_at model_findings model_index)) (set model_index (rt_add model_index 1)))))
+      (let (argument_findings (v_argument_checks manifest trace) argument_index 0) (while (rt_lt argument_index (rt_count argument_findings)) (do (rt_push result (rt_at argument_findings argument_index)) (set argument_index (rt_add argument_index 1)))))
       (let (stage_times (v_run_stage_times manifest trace oracle) stage_index 0) (while (rt_lt stage_index (rt_count stage_times)) (do (rt_push result (rt_at stage_times stage_index)) (set stage_index (rt_add stage_index 1)))))
       (rt_push result (v_ready_deadline manifest trace oracle)) (dv_m3 "mode" "read_only" "findings" result "limitations" "No gameplay, aesthetic, or statistical conclusion is inferred from engineering output"))))
+(defn v_judge (manifest raw_trace oracle)
+  (if (dv_record_like raw_trace)
+    (let (initial (dv_find raw_trace "initial" (rt_list)) integrity (v_integrity manifest raw_trace))
+      (if (rt_not (rt_eq (dv_get integrity "status") "supported"))
+        (dv_m3 "mode" "read_only" "findings" (dv_single integrity) "limitations" "损坏的来源或事件基线不进入领域重演")
+        (if (if (dv_record_like initial) (dv_and (dv_has_key initial "physical") (dv_has_key initial "actors")) false)
+          (v_judge_full manifest raw_trace oracle)
+          (dv_m3 "mode" "read_only" "findings" (dv_single (v_finding "run_intake" "insufficient_evidence" "缺少完整冻结初始物理与人物快照，不能重演来源或给出全局成立结论" (rt_list))) "limitations" "未进入领域重演"))))
+    (dv_m3 "mode" "read_only" "findings" (dv_single (v_finding "run_intake" "invalid_run" "轨迹交换数据不是合法只读记录" (rt_list))) "limitations" "未进入领域重演")))
 (defn v_main ()
   (do (dv_require (rt_eq (rt_arg_count) 3) "Usage: main-causal manifest.json trace.json oracle.json")
     (rt_print (rt_json_stringify (v_judge (rt_json_parse (rt_read (rt_arg 0))) (rt_json_parse (rt_read (rt_arg 1))) (rt_json_parse (rt_read (rt_arg 2))))))))
@@ -87,26 +114,38 @@
 
 
 
+(defn v_event_precedes (events prior current)
+  (let (i 0 seen false precedes false)
+    (do (while (rt_lt i (rt_count events))
+      (do (if (rt_eq (dv_get (rt_at events i) "id") (dv_get current "id")) (set precedes seen) false)
+        (if (rt_eq (dv_get (rt_at events i) "id") (dv_get prior "id")) (set seen true) false)
+        (set i (rt_add i 1)))) (dv_and precedes (rt_not (rt_lt (dv_get current "time") (dv_get prior "time")))))))
+(defn v_spec_scope (events spec event)
+  (let (subject (if (dv_has (dv_pair "answer_accepted" "answer_rejected") (dv_get event "type")) (v_parent_submission events event) event) valid true)
+    (do
+      (if (dv_has_key spec "question_id") (set valid (dv_and valid (rt_eq (dv_get spec "question_id") (v_question subject)))) false)
+      (if (dv_has_key spec "answer_id") (set valid (dv_and valid (rt_eq (dv_get spec "answer_id") (dv_find (v_submission_action subject) "answer_id" "")))) false)
+      valid)))
 (defn v_first_after (events spec chosen)
-  (let (i 0 found (rt_list) after (dv_find spec "after" (rt_list)))
+  (let (i 0 found (rt_list) fallback (rt_list) after (dv_find spec "after" (rt_list)))
     (do (while (dv_and (rt_eq (rt_count found) 0) (rt_lt i (rt_count events)))
-      (let (e (rt_at events i) j 0 eligible true)
+      (let (event (rt_at events i) j 0 eligible true)
         (do
-          (set eligible (dv_and (rt_eq (dv_get e "type") (dv_get spec "type")) (dv_or (rt_eq (dv_find spec "actor" "") "") (rt_eq (dv_get e "actor") (dv_get spec "actor")))))
+          (set eligible (dv_and (rt_eq (dv_get event "type") (dv_get spec "type")) (dv_or (rt_eq (dv_find spec "actor" "") "") (rt_eq (dv_get event "actor") (dv_get spec "actor")))))
+          (if eligible (set eligible (v_spec_scope events spec event)) false)
+          (if (dv_and eligible (rt_eq (rt_count fallback) 0)) (set fallback event) false)
           (while (dv_and eligible (rt_lt j (rt_count after)))
             (let (prior (dv_find chosen (rt_at after j) (rt_list)))
-              (do (if (rt_eq (rt_count prior) 0) false (set eligible (v_ancestor events (dv_get e "id") (dv_get prior "id")))) (set j (rt_add j 1)))))
-          (if (dv_and eligible (rt_eq (rt_count found) 0)) (set found e) false) (set i (rt_add i 1)))))
-      (if (rt_eq (rt_count found) 0) (v_first events (dv_get spec "type") (dv_find spec "actor" "")) found))))
-
-
+              (do (if (rt_eq (rt_count prior) 0) (set eligible false) (set eligible (v_event_precedes events prior event))) (set j (rt_add j 1)))))
+          (if eligible (set found event) false) (set i (rt_add i 1)))))
+      (if (rt_eq (rt_count found) 0) fallback found))))
 (defn v_origin_execution (events e)
-  (let (i (rt_count events) found (rt_list) speech (dv_find (dv_find e "data" (rt_list)) "speech" (rt_list)))
+  (let (i (rt_count events) found (rt_list) speech (dv_find (dv_find e "data" (rt_list)) "speech" (rt_list)) ancestors (v_ancestors events (dv_get e "id")))
     (do (while (dv_and (rt_lt 0 i) (rt_eq (rt_count found) 0))
       (do (set i (rt_sub i 1))
         (let (candidate (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
           (if (dv_and (rt_eq (dv_get candidate "type") "action_execution")
-            (dv_and (rt_eq (dv_get candidate "actor") (dv_get e "actor")) (v_ancestor events (dv_get e "id") (dv_get candidate "id"))))
+            (dv_and (rt_eq (dv_get candidate "actor") (dv_get e "actor")) (dv_has ancestors (dv_get candidate "id"))))
             (if (if (rt_lt 0 (rt_count speech)) (dv_same speech (dv_find (dv_find data "action" (rt_list)) "speech" false)) true)
               (set found candidate) false) false)))) found)))
 (defn v_context_event (events e)
@@ -119,3 +158,6 @@
               (if (dv_and (rt_not (dv_has_key data key)) (dv_has_key pd key)) (set data (dv_with data key (dv_get pd key))) false)
               (set j (rt_add j 1)))))) false)
       (dv_with e "data" data))))
+
+
+

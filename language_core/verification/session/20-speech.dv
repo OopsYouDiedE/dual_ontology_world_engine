@@ -1,4 +1,6 @@
 ; Structured speech: authority is checked by execution, cognition by each owner.
+(defn dvs_speech_cognitive_parents (parents previous)
+  (if (dv_or (rt_eq previous "") (dv_has parents previous)) parents (dv_append parents previous)))
 (defn dvs_speech_ast_nodes (ast)
   (let (op (dv_get ast "op") count 1)
     (do (if (rt_eq op "not") (set count (rt_add count (dvs_speech_ast_nodes (dv_get ast "item"))))
@@ -223,7 +225,7 @@
   (let (goals (dvs_speech_goals actor) actions (dv_get actor "actions") mind (dv_get actor "mind")
         models (dv_find (dv_get actor "mind") "listener_models" (rt_list)) cache (dv_find actor "speech_choice_values" (rt_list))
         candidates (rt_list) eligible (rt_list) total 0 i 0 before actor remaining (dv_find (dv_get actor "policy") "model_budget" 0)
-        budget_parent (dv_find actor "model_previous_event" ""))
+        budget_parent (dv_find actor "model_previous_event" "") choice_cognitive (dv_find actor "last_cognitive_event" ""))
     (do
       (if (rt_eq (rt_count goals) 0) false
         (while (rt_lt i (rt_count actions))
@@ -267,27 +269,29 @@
                       (set value (rt_add value (dvs_speech_goal_value goals listener data))))
                     (set data (dv_m2 "status" "unknown-no-model" "prediction" (rt_list))))
                   (set data (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with data "listener" listener) "action" action)
-                    "actor_before" (dv_with (dv_with actor "policy" (dv_with (dv_get actor "policy") "model_budget" remaining)) "model_previous_event" budget_parent))
+                    "actor_before" (dv_with (dv_with (dv_with actor "policy" (dv_with (dv_get actor "policy") "model_budget" remaining)) "model_previous_event" budget_parent) "last_cognitive_event" choice_cognitive))
                     "budget_before" remaining) "charged_units" units) "goals" goals))
                   (set remaining (rt_sub remaining units))
                   (set data (dv_with data "budget_after" remaining))
                   (set data (dv_with data "prediction_time" time))
-                  (set data (dv_with data "actor_after" (dv_with (dv_with actor "policy" (dv_with (dv_get actor "policy") "model_budget" remaining))
-                    "model_previous_event" (if (rt_lt 0 units) (rt_cat "e" (rt_show (rt_count events))) budget_parent))))
+                  (set data (dv_with data "actor_after" (dv_with (dv_with (dv_with actor "policy" (dv_with (dv_get actor "policy") "model_budget" remaining))
+                    "model_previous_event" (if (rt_lt 0 units) (rt_cat "e" (rt_show (rt_count events))) budget_parent))
+                      "last_cognitive_event" (if (rt_lt 0 units) (rt_cat "e" (rt_show (rt_count events))) choice_cognitive))))
                   (let (prediction_id (dvs_event events "speech_choice_prediction" (dv_get actor "id") time
-                    (if (rt_eq budget_parent "") (dv_single parent) (dv_pair parent budget_parent)) data))
-                    (do (rt_push event_ids prediction_id) (if (rt_lt 0 units) (set budget_parent prediction_id) false)))
+                    (dvs_speech_cognitive_parents (if (rt_eq budget_parent "") (dv_single parent) (dv_pair parent budget_parent)) choice_cognitive) data))
+                    (do (rt_push event_ids prediction_id) (if (rt_lt 0 units) (do (set budget_parent prediction_id) (set choice_cognitive prediction_id)) false)))
                   (rt_push forecasts (dv_pair listener data)) (set j (rt_add j 1)))))
               (set cache (dv_with cache (dv_get action "id") (dv_with (dv_with (dv_m4 "status" "ready" "utility" value "signature" (dv_get entry "signature") "forecasts" forecasts)
                 "prediction_events" event_ids) "charged_units" (dv_get entry "units"))))
               (set i (rt_add i 1))))))
-      (dv_with (dv_with (dv_with actor "speech_choice_values" cache) "policy" (dv_with (dv_get actor "policy") "model_budget" remaining))
-        "model_previous_event" budget_parent))))
+      (dv_with (dv_with (dv_with (dv_with actor "speech_choice_values" cache) "policy" (dv_with (dv_get actor "policy") "model_budget" remaining))
+        "model_previous_event" budget_parent) "last_cognitive_event" choice_cognitive))))
 ; Reassessment consumes personal reasoning and withdraws only a scoped interpretation.
 (defn dvs_proposal_reassess (actor decision events time parent)
   (let (rule (dv_find (dv_get actor "policy") "proposal_reassessment" false)
         proposal (dv_get decision "proposal") interpretations (dv_find actor "interpretations" (rt_list))
         remaining (dv_find (dv_get actor "policy") "reason_budget" 0) last (dv_find actor "last_interpretation_event" "")
+        cognitive (dv_find actor "last_cognitive_event" "")
         seen (dv_find actor "reassessed_proposals" (rt_list)) proposal_id (if (rt_eq (dv_get decision "proposal") false) "" (dv_find (dv_get decision "proposal") "argument_id" "")))
     (do
       (if (dv_and (rt_eq (dv_get decision "status") "accepted") (rt_not (dv_has seen proposal_id)))
@@ -305,7 +309,7 @@
                 (set i 0)
                 (while (rt_lt i (rt_count targets))
                   (let (id (rt_at targets i) old (dv_find interpretations (rt_at targets i) false) status "insufficient-origin" charged 0
-                        before (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)) "last_interpretation_event" last))
+                        before (dv_with (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)) "last_interpretation_event" last) "last_cognitive_event" cognitive))
                     (do
                       (if (rt_eq old false) (set status "no-personal-interpretation")
                         (let (scope (dv_find old "scope_check" (rt_list)) source (dv_find old "source_event" ""))
@@ -323,26 +327,28 @@
                                     (do (set status "withdrawn")
                                       (set interpretations (dv_with interpretations id (dv_with (dv_with (dv_with old "status" "withdrawn") "withdrawal_reason" "paid-scope-bridge-unsupported") "proposal_event" parent))))
                                     (set status "retained-supported-bridge"))))) false))))
-                      (let (after (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)) "last_interpretation_event" (rt_cat "e" (rt_show (rt_count events)))))
+                      (let (after (dv_with (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)) "last_interpretation_event" (rt_cat "e" (rt_show (rt_count events)))) "last_cognitive_event" (rt_cat "e" (rt_show (rt_count events)))))
                         (do
                           (set last (dvs_event events (if (rt_eq status "withdrawn") "implicature_withdrawn" "proposal_scope_reassessment") (dv_get actor "id") time
-                            (if (rt_eq last "") (dv_pair parent (if (rt_eq old false) "" (dv_find old "source_event" "")))
-                              (dv_list3 parent (if (rt_eq old false) "" (dv_find old "source_event" "")) last))
+                            (dvs_speech_cognitive_parents
+                              (if (rt_eq last "") (dv_pair parent (if (rt_eq old false) "" (dv_find old "source_event" "")))
+                                (dv_list3 parent (if (rt_eq old false) "" (dv_find old "source_event" "")) last)) cognitive)
                             (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "status" status "actor_before" before "actor_after" after "charged_units" charged)
                               "mind_before" (dv_get actor "mind")) "mind_after" (dv_get actor "mind"))
                               "interpretations_before" (dv_find before "interpretations" (rt_list))) "interpretations_after" interpretations)
                               "source_event" (if (rt_eq old false) "" (dv_find old "source_event" ""))) "proposal" proposal)))
+                          (set cognitive last)
                           (set i (rt_add i 1)))))))
                 (set seen (dv_append seen proposal_id)))) false)) false)
-      (dv_with (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining))
-        "last_interpretation_event" last) "reassessed_proposals" seen))))
+      (dv_with (dv_with (dv_with (dv_with (dv_with actor "interpretations" interpretations) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining))
+        "last_interpretation_event" last) "reassessed_proposals" seen) "last_cognitive_event" cognitive))))
 (defn dvs_speech (actors speaker_index action events time parent)
   (let (speaker (rt_at actors speaker_index) speech (dv_get action "speech") speaker_mind (dv_get speaker "mind")
         bindings (dv_find speech "referents" (rt_list)) literal (dv_get speech "literal_ast")
         claim (dvs_speech_map speaker_mind literal bindings) listeners (dv_find action "listeners" (rt_list))
         next (dv_clone actors) i 0 source false visited (rt_list))
     (do
-      (set source (dvs_event events "speech_literal" (dv_get speaker "id") time (dv_single parent)
+      (set source (dvs_event events "speech_literal" (dv_get speaker "id") time (dvs_speech_cognitive_parents (dv_single parent) (dv_find speaker "last_cognitive_event" ""))
         (dv_with (dv_m4 "literal" literal "claim" claim "mind_before" speaker_mind "speech" speech) "speaker_truth" (dv_truth speaker_mind claim))))
       (if (rt_not (rt_eq (dv_truth speaker_mind claim) "true"))
         (dvs_event events "speech_rejected" (dv_get speaker "id") time (dv_single source) (dv_m2 "reason" "speaker-truth-not-supported" "source_event" source))
@@ -378,11 +384,12 @@
                         (do
                           (if (rt_eq (dv_get decision "status") "ordinary") false
                             (do
-                              (set proposal_event (dvs_event events "proposal_receipt" listener_id time (dv_single source)
+                              (set proposal_event (dvs_event events "proposal_receipt" listener_id time (dvs_speech_cognitive_parents (dv_single source) (dv_find listener "last_cognitive_event" ""))
                                 (dv_with (dv_with (dv_with decision "source_event" source) "mind_before" before) "mind_after" before)))
                               (set proposal_event (dvs_event events "proposal_adoption" listener_id time (dv_pair source proposal_event)
                                 (dv_with (dv_with (dv_with decision "source_event" source) "mind_before" before) "mind_after" after)))))
-                          (set parse_event (dvs_event events "listener_parse" listener_id time (if (rt_eq proposal_event false) (dv_single source) (dv_pair source proposal_event))
+                          (set parse_event (dvs_event events "listener_parse" listener_id time
+                            (dvs_speech_cognitive_parents (if (rt_eq proposal_event false) (dv_single source) (dv_pair source proposal_event)) (dv_find listener "last_cognitive_event" ""))
                             (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "mind_before" before "mind_after" after "literal" parsed "observations" observations)
                               "source_event" source) "speech" speech) "presuppositions" (dvs_speech_presuppositions before speech))
                               "audibility" (dv_m3 "speaker_location" (dv_find speaker "location" "") "listener_location" (dv_find listener "location" "")
@@ -402,9 +409,9 @@
                                   (dv_with (dv_with (dv_with (dv_with (dv_with interpretation "source_event" source) "mind_before" after) "mind_after" after)
                                     "interpretations_before" interpretations_before) "interpretations_after" interpretations)))
                                 (set n (rt_add n 1)))))
-                          (set next (dvs_replace next target_index (dvs_proposal_reassess (dv_with (dv_with (dv_with (dv_with listener "mind" after) "interpretations" interpretations) "last_interpretation_event" last_interpretation)
+                          (set next (dvs_replace next target_index (dvs_proposal_reassess (dv_with (dv_with (dv_with (dv_with (dv_with listener "mind" after) "interpretations" interpretations) "last_interpretation_event" last_interpretation)
                             "proposals" (if (rt_eq (dv_get decision "status") "ordinary") (dv_find listener "proposals" (rt_list))
-                              (dv_append (dv_find listener "proposals" (rt_list)) (dv_with decision "source_event" source)))) decision events time parse_event)))))))))
+                              (dv_append (dv_find listener "proposals" (rt_list)) (dv_with decision "source_event" source)))) "last_cognitive_event" parse_event) decision events time parse_event)))))))))
               (set i (rt_add i 1))))))
       next)))
 
@@ -412,7 +419,8 @@
 ; This operation never writes observations or negates the interpreted proposition.
 (defn dvs_pragmatics_reconsider (actor events time parent)
   (let (mind (dv_get actor "mind") policy (dv_get actor "policy") interpretations (dv_find actor "interpretations" (rt_list))
-        entries (dv_clone (dv_find actor "interpretations" (rt_list))) i 0 last (dv_find actor "last_interpretation_event" ""))
+        entries (dv_clone (dv_find actor "interpretations" (rt_list))) i 0 last (dv_find actor "last_interpretation_event" "")
+        cognitive (dv_find actor "last_cognitive_event" ""))
     (do
       (while (rt_lt i (rt_count entries))
         (let (entry (rt_at entries i) old (rt_at (rt_at entries i) 1))
@@ -427,8 +435,9 @@
                       (set revised (dv_with (dv_with revised "source_event" source) "referents" bindings))
                       (set interpretations (dv_with interpretations (rt_at entry 0) revised))
                       (set last (dvs_event events "implicature_withdrawn" (dv_get actor "id") time
-                        (if (rt_eq last "") (dv_pair parent source) (dv_list3 parent source last))
+                        (dvs_speech_cognitive_parents (if (rt_eq last "") (dv_pair parent source) (dv_list3 parent source last)) cognitive)
                         (dv_with (dv_with (dv_with (dv_with revised "mind_before" mind) "mind_after" mind)
-                          "interpretations_before" before_interpretations) "interpretations_after" interpretations)))) false))) false)
+                          "interpretations_before" before_interpretations) "interpretations_after" interpretations)))
+                      (set cognitive last)) false))) false)
             (set i (rt_add i 1)))))
-      (dv_with (dv_with actor "interpretations" interpretations) "last_interpretation_event" last))))
+      (dv_with (dv_with (dv_with actor "interpretations" interpretations) "last_interpretation_event" last) "last_cognitive_event" cognitive))))

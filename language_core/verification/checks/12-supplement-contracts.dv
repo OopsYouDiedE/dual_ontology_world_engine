@@ -12,6 +12,7 @@
           (set relevant (dv_has (dv_list3 "run_integrity" "action_cost_settlement" "observation_provenance") id))
           (set relevant (dv_or relevant (dv_has (dv_list3 "formal_answer_validity" "speech_reception_boundary" "speaker_prediction_boundary") id)))
           (set relevant (dv_or relevant (dv_has (dv_list3 "evidence_dependency_identity" "testimony_common_origin" "listener_interpretation") id)))
+          (set relevant (dv_or relevant (v_extended_provenance_id id)))
           (if (dv_and (rt_eq id "literal_truth") (rt_eq (dv_find f "phase" "") "utterance")) (set relevant true) false)
           (if relevant
             (do (set observed true) (set status (v_status_join status (dv_get f "status"))) (rt_push refs f)) false)
@@ -75,3 +76,4 @@
     (do (if (rt_eq (rt_count items) 0) (set status "not_observed") false)
       (while (rt_lt i (rt_count items))
         (do (set status (v_status_join status (dv_get (rt_at items i) "status"))) (set i (rt_add i 1)))) status)))
+

@@ -4,7 +4,7 @@
     (do (while (rt_lt i (rt_count actors)) (do
       (if (rt_eq (dv_get (rt_at actors i) "id") actor) (set found (dv_get (rt_at actors i) "mind")) false)
       (set i (rt_add i 1)))) found)))
-(defn v_support (trace mind actor proposition visiting)
+(defn v_support_atom (trace mind actor proposition visiting)
   (if (rt_not (rt_eq (dv_truth mind proposition) "true")) false
     (if (dv_has visiting proposition) false
     (let (op (dv_get proposition "op") next (dv_append visiting proposition))
@@ -17,6 +17,7 @@
             (do
               (if (rt_lt 0 (rt_count initial))
                 (if (rt_eq (dv_truth initial proposition) "true") (set valid true) false) false)
+              (if (v_argument_cell_supported trace mind actor proposition) (set valid true) false)
               (while (dv_and (rt_not valid) (rt_lt i (rt_count events)))
                 (let (event (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
                   (do
@@ -25,13 +26,13 @@
                         (let (observations (dv_find data "observations" (rt_list)) j 0)
                           (while (rt_lt j (rt_count observations))
                             (let (observation (rt_at observations j))
-                              (do (if (if (rt_eq op "not") false (dv_same (dv_get observation "ref") (dv_get proposition "ref")))
+                              (do (if (dv_same (dv_get observation "ref") (if (rt_eq op "not") (dv_get (dv_get proposition "item") "ref") (dv_get proposition "ref")))
                                 (if (dv_and (if (rt_eq (dv_get event "type") "listener_parse") (v_reception_verified trace (dv_get event "id")) (v_observation_verified trace (dv_get event "id"))) (dv_and (dv_has (dv_get mind "seen") (dv_get observation "id")) (dv_and (dv_same (dv_get observation "value") (dv_get (dv_read mind (dv_get observation "ref")) "value")) (rt_eq (dv_truth (dv_find data "mind_after" mind) proposition) "true")))) (set valid true) false) false)
                                 (set j (rt_add j 1))))))
                         (if (rt_eq (dv_get event "type") "inference")
                           (if (dv_and (dv_and (dv_has_key data "law") (dv_has_key data "mind_before")) (dv_has_key data "receipt"))
                             (let (law (dv_get data "law") before (dv_get data "mind_before") receipt (dv_get data "receipt") name (dv_get (dv_get data "law") "name"))
-                              (if (dv_and (dv_rule_concludes law proposition) (dv_has (dv_get mind "seen") (dv_get receipt "event")))
+                              (if (dv_and (dv_rule_concludes law (if (rt_eq op "not") (dv_fact (dv_get (dv_get proposition "item") "ref") (dv_get (dv_read mind (dv_get (dv_get proposition "item") "ref")) "value")) proposition)) (dv_has (dv_get mind "seen") (dv_get receipt "event")))
                                 (let (adoption (dv_find (dv_get before "adoptions") name (rt_list)))
                                   (if (if (rt_eq (rt_count adoption) 0) false (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "infer")))
                                     (if (dv_and (dv_same law (dv_get adoption "law")) (v_support trace before actor (dv_get law "premise") next))
@@ -39,7 +40,9 @@
                                         (if (dv_same derived receipt) (set valid true) false)) false) false)) false)) false) false)) false)
                     (set i (rt_add i 1))))) valid))))))))
 (defn v_submission_action (e) (dv_find (dv_find e "data" (rt_list)) "action" (rt_list)))
-(defn v_question (e) (dv_find (v_submission_action e) "question_id" (dv_find (dv_find e "data" (rt_list)) "question_id" (dv_find (v_submission_action e) "answer_id" ""))))
+(defn v_question (e)
+  (dv_find (dv_find e "data" (rt_list)) "argument_question" (dv_find (v_submission_action e) "argument_question"
+    (dv_find (v_submission_action e) "question_id" (dv_find (dv_find e "data" (rt_list)) "question_id" (dv_find (v_submission_action e) "topic" (dv_find (v_submission_action e) "answer_id" "")))))))
 (defn v_question_contract (oracle question) (dv_find (dv_find oracle "questions" (rt_list)) question (rt_list)))
 (defn v_formal_rules (manifest trace)
   (dv_find manifest "formal_answers" (dv_find (dv_find trace "configuration" (rt_list)) "formal_answers" (rt_list))))
@@ -50,29 +53,30 @@
   (let (data (dv_find e "data" (rt_list)) action (v_submission_action e) refs (dv_single (dv_get e "id")) result (rt_list)
         speech (rt_eq (dv_get e "type") "speech_literal"))
     (do
-      (let (literal (if speech (dv_find data "literal" (dv_find (dv_find action "speech" (rt_list)) "literal_ast" (rt_list))) (dv_find action "answer" (rt_list)))
+      (let (literal (if speech (dv_find data "literal" (dv_find (dv_find action "speech" (rt_list)) "literal_ast" (rt_list))) (if (dv_find (v_formal_rule (v_formal_rules manifest trace) (dv_find action "answer_id" "")) "condition_from_answer" false) (v_physical_proposition (dv_find action "answer" (rt_list)) (dv_find (dv_find trace "configuration" (rt_list)) "bindings" (rt_list)) (dv_find (dv_find data "mind" (rt_list)) "subject" "")) (dv_find action "answer" (rt_list))))
             physical (dv_find data "physical" (dv_find data "physical_before" (rt_list)))
-            mind (dv_find data "mind" (dv_find data "mind_before" (rt_list))) claim (if speech (dv_find data "claim" literal) literal))
+            mind (dv_find data "mind" (dv_find data "mind_before" (rt_list))) claim (if speech (dv_find data "claim" literal) (dv_find action "answer" (rt_list))))
         (do
           (rt_push result (v_finding "literal_truth" (if (dv_and (rt_lt 0 (rt_count literal)) (rt_lt 0 (rt_count physical))) (v_truth_status (dv_truth physical literal)) "insufficient_evidence") "在真实权威快照和记录时刻独立计算结构化字面真值" refs))
           (rt_push result (v_finding "epistemic_support" (if (dv_and (rt_lt 0 (rt_count literal)) (rt_lt 0 (rt_count mind)))
-            (if (v_support trace mind (dv_get e "actor") claim (rt_list)) (v_truth_status (dv_truth mind claim)) "insufficient_evidence") "insufficient_evidence") "递归核验冻结初始认知、真实观察及已采纳推理的前提来源，拒绝循环作证" refs))
+            (if (v_support trace mind (dv_get e "actor") claim (rt_list)) (v_truth_status (dv_truth mind claim)) "insufficient_evidence") "insufficient_evidence") "递归核验冻结初始认知、真实观察、合法推理及独立重演的可撤回模型解释；估计支持不冒充直接观察，拒绝循环作证" refs))
           (if speech
-            (rt_push result (v_finding "utterance_causal_scope" "insufficient_evidence" "Answer causality is not applicable to an opening expression; implicature is audited separately" refs))
+            (rt_push result (v_finding "utterance_causal_scope" "insufficient_evidence" "开场话语不套用答题因果条件；隐含理解另据真实收闻与本人解释记录审查" refs))
             (let (contract (v_question_contract oracle (v_question e)) required (dv_find (v_question_contract oracle (v_question e)) "causal_requirements" (rt_list)) competitors (dv_find (v_question_contract oracle (v_question e)) "competing_requirements" (rt_list)) i 0 status "supported")
               (do
                 (if (dv_or (rt_eq (rt_count required) 0) (dv_or (rt_not (dv_has_key contract "competing_requirements")) (rt_eq (rt_count mind) 0))) (set status "insufficient_evidence") false)
                 (while (rt_lt i (rt_count required))
-                  (do (let (p (rt_at required i))
-                    (if (rt_eq (rt_count mind) 0) false
+                  (do (let (p (rt_at required i)) (do
+                    (let (objective (if (rt_lt 0 (rt_count physical)) (dv_truth physical (v_physical_proposition p (dv_find (dv_find trace "configuration" (rt_list)) "bindings" (rt_list)) (dv_find mind "subject" ""))) "unknown"))
+                      (if (rt_eq objective "false") (set status "violated") (if (rt_eq objective "unknown") (if (rt_eq status "supported") (set status "insufficient_evidence") false) false)))                    (if (rt_eq (rt_count mind) 0) false
                       (if (rt_eq (dv_truth mind p) "false") (set status "violated")
                         (if (dv_and (rt_eq (dv_truth mind p) "true") (v_support trace mind (dv_get e "actor") p (rt_list))) false
-                          (if (rt_eq status "supported") (set status "insufficient_evidence") false))))) (set i (rt_add i 1))))
+                          (if (rt_eq status "supported") (set status "insufficient_evidence") false)))))) (set i (rt_add i 1))))
                 (set i 0)
                 (while (rt_lt i (rt_count competitors))
                   (do (if (dv_and (rt_lt 0 (rt_count mind)) (v_support trace mind (dv_get e "actor") (rt_at competitors i) (rt_list))) false
                     (if (rt_eq status "supported") (set status "insufficient_evidence") false)) (set i (rt_add i 1))))
-                (rt_push result (v_finding "causal_completeness" status "Question-specific causal and competing-explanation requirements; no confidence shortcut" refs)))))))
+                (rt_push result (v_finding "causal_completeness" status "按本次所问题核对完整因果与竞争解释；置信度不能替代缺失的来源或因果环节" refs)))))))
       (let (tagged (rt_list) i 0)
         (do (while (rt_lt i (rt_count result))
           (do (rt_push tagged (dv_with (dv_with (rt_at result i) "phase" (if speech "utterance" "answer")) "question_id" (if speech false (v_question e))))
@@ -81,6 +85,40 @@
 (defn v_action_frozen (trace actor_id action)
   (let (actors (dv_get (dv_get trace "initial") "actors") i 0 valid false)
     (do (while (rt_lt i (rt_count actors))
-      (do (if (rt_eq (dv_get (rt_at actors i) "id") actor_id)
-        (set valid (dv_has (dv_get (rt_at actors i) "actions") action)) false) (set i (rt_add i 1)))) valid)))
+      (let (actor (rt_at actors i))
+        (do (if (rt_eq (dv_get actor "id") actor_id)
+          (let (actions (dv_get actor "actions") j 0)
+            (while (rt_lt j (rt_count actions))
+              (let (declared (rt_at actions j))
+                (do (if (if (dv_find declared "speech_from_argument" false) (v_sharing_action_shape declared action) (dv_same declared action)) (set valid true)
+                  (if (dv_has_key declared "argument_slots")
+                    (if (dv_same (v_record_without declared (dv_list3 "answer" "argument" "argument_available")) (v_record_without action (dv_list3 "answer" "argument" "argument_available")))
+                      (if (dv_find action "argument_available" false)
+                        (let (materialized (v_argument_action_answer action))
+                          (if (dv_and (dv_get materialized "valid") (dv_same (dv_get materialized "answer") (dv_find action "answer" false))) (set valid true) false))
+                        (if (dv_same (dv_find declared "answer" false) (dv_find action "answer" false)) (set valid true) false)) false) false))
+                  (set j (rt_add j 1)))))) false)
+          (set i (rt_add i 1))))) valid)))
 
+
+
+
+
+
+; Structural logical support preserves source witnesses for conjunction, negation and encoded disjunction.
+(defn v_support_negative (trace mind actor proposition visiting)
+  (if (rt_not (rt_eq (dv_truth mind proposition) "false")) false
+    (let (op (dv_get proposition "op"))
+      (if (rt_eq op "constant") (rt_eq (dv_get proposition "value") "false")
+        (if (rt_eq op "not") (v_support trace mind actor (dv_get proposition "item") visiting)
+          (if (rt_eq op "all")
+            (let (items (dv_get proposition "items") i 0 found false)
+              (do (while (dv_and (rt_not found) (rt_lt i (rt_count items)))
+                (do (if (v_support_negative trace mind actor (rt_at items i) visiting) (set found true) false) (set i (rt_add i 1)))) found))
+            (v_support_atom trace mind actor (dv_not proposition) visiting)))))))
+(defn v_support (trace mind actor proposition visiting)
+  (if (dv_has visiting proposition) false
+    (if (rt_not (rt_eq (dv_truth mind proposition) "true")) false
+      (if (rt_eq (dv_get proposition "op") "not")
+        (v_support_negative trace mind actor (dv_get proposition "item") visiting)
+        (v_support_atom trace mind actor proposition visiting)))))
