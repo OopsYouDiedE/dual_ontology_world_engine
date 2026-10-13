@@ -9,9 +9,9 @@
 ## 模块边界
 
 - `core/*.dv` 是可编译的领域语义库：公理采纳、物体切片、观察、传播、价值、回应、论证代价与检查点查询均用 DV 实现。axiom 声明在 DV 前端展开；不得把领域算法移到 Runtime.cs。JSON 编解码和参数计数仅服务平台 I/O。
-- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。动态数据函数仍属于可信调用协议，不能称为静态能力安全边界。人物参数、章节实例与规则由原生 DV 定义；旧 `.story` 仅作只读迁移来源，新链路不装载它。
+- `core/` 世界与检查点按返回副本维护；主体输入、客观提交和只读检查分开。严格分离物理变更 (`dv_execute`)、假设预测 (`dv_predict`) 与认知推知 (`dv_infer`)：推知产生依据声明，置信度取前提与采纳规则之 min，与既有观察/反证共同进入聚合并标记冲突，禁止静默覆盖；冲突状态数值预测显式拒绝 (`conflicted-state`)；证据聚合区分支持份额、来源信度与认识置信度，置信度上限严格传递；递归类型化投影所有实体与字段引用，未映射标识符禁止越界泄露；观察时间与命题有效时间解耦，证词不因到达时刻较晚而抹杀历史直接观察。
 - `core/95-model-argument.dv` 与 `verification/session/35-model-argument.dv` 区分最佳解释的可撤销主观支持与直接观察。只允许有付费预测轨迹、真实本人观察、完整竞争排除及明确采纳策略的 estimated 论证；槽位来自轨迹实际效果，不能把假设或评分作为事实。动态答辩按实际提交的命题独立核验字面真假。
-- `verification/session/15-action-planning.dv` 仅使用本人实际已闻问题、公开目标、方法可观察范围和本人已采纳法则做完整深度层比较；未知观察结果不得写入预测，答辩重试按相关有效依据签名判别。模型比较与付费方法的展开限额分列，不能免费重演。正式会话时长以初始世界时刻为固定起点，冻结 game_duration_budget 决定终止时刻；报价上界和实际代价都不能越界，不能把预算改从首次答辩开始计。
+- `verification/session/15-action-planning.dv` 仅使用本人实际已闻问题、公开目标、方法可观察范围和本人已采纳法则做完整深度层比较；搜索前沿采用 Pareto 支配剪枝（分数与已耗时间双维度非支配保留，不因即期分微高而误删低耗时可行分支）；行动评价依据节点预测后的认知状态结算；未知观察结果不得写入预测，答辩重试按相关有效依据签名判别。模型比较与付费方法的展开限额分列，不能免费重演。正式会话时长以初始世界时刻为固定起点，冻结 game_duration_budget 决定终止时刻；报价上界和实际代价都不能越界，不能把预算改从首次答辩开始计。
 - `core/90-action-cost.dv` 提供分维报价、最大额预留、真实执行与结算；会话核对冻结 catalog 并持有最新 ledger。`verification/session/*.dv` 组织隔离的编译 DV 逻辑会话，`verification/checks/*.dv` 与四个入口只读判定。`tools/run_verification.py` 仅冻结、编译、平台 I/O 与记录，不承载领域算法。
 
 - `compiler/compiler.dv` 是编译器启动子集：扫描、AST、名称/作用域/元数检查和 C# 后端均用 DV 实现。`compiler/seed/` 的 C# C0 只负责启动；生成 C1/C2/C3 仅使用 `compiler/Runtime.cs` 的数据与平台 ABI，不引用解释器。当前子集采用运行时值域检查，尚无静态类型/能力系统和目标无关 IR，不能与 DESIGN 的完整语言混称。原解释语法尚未统一到编译语法。
@@ -29,6 +29,7 @@
 ```powershell
 dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers
 dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- demo
+python language_core/tools/run_semantic_tests.py                                    # 语义反例与性质回归验证
 python language_core/tools/record_mechanisms.py --out artifacts/partial-bootstrap-core/engineering-<new-run>
 python language_core/tools/build_core.py --out artifacts/partial-bootstrap-core/domain-build-<new-run>
 python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstrap-core/compiler-<new-run>

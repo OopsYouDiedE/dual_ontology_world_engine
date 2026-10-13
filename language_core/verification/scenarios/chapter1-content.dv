@@ -254,157 +254,157 @@
 (defn c1_statement (atom) (dv_fact (c1_knowledge atom) true))
 
 (defn c1_answer_me (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.me") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 11 "me")) "answer" (dv_fact (c1_knowledge "me") true)) "answer_id" "me"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.me") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 11 "me")) "answer" (dv_fact (c1_knowledge "me") true)) "answer_id" "me") "topic" "identity"))
 
 (defn c1_hypothesis_me ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "me" "proposition" (dv_fact (c1_knowledge "me") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 11 "me")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "me") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "me") true))) "group" "identity"))
 
 (defn c1_answer_V1_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")) "answer" (dv_fact (c1_knowledge "su_room") true)) "answer_id" "V1_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")) "answer" (dv_fact (c1_knowledge "su_room") true)) "answer_id" "V1_0") "topic" "identity"))
 
 (defn c1_hypothesis_V1_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V1_0" "proposition" (dv_fact (c1_knowledge "su_room") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 101 "V1_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_room") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "su_room") true))) "group" "identity"))
 
 (defn c1_answer_V1_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")) "answer" (dv_fact (c1_knowledge "su_hall") true)) "answer_id" "V1_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")) "answer" (dv_fact (c1_knowledge "su_hall") true)) "answer_id" "V1_1") "topic" "identity"))
 
 (defn c1_hypothesis_V1_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V1_1" "proposition" (dv_fact (c1_knowledge "su_hall") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 102 "V1_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_hall") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "su_hall") true))) "group" "identity"))
 
 (defn c1_answer_V1_2 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_2") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")) "answer" (dv_fact (c1_knowledge "su_pantry") true)) "answer_id" "V1_2"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V1_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")) "answer" (dv_fact (c1_knowledge "su_pantry") true)) "answer_id" "V1_2") "topic" "identity"))
 
 (defn c1_hypothesis_V1_2 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V1_2" "proposition" (dv_fact (c1_knowledge "su_pantry") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 103 "V1_2")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "su_pantry") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "su_pantry") true))) "group" "identity"))
 
 (defn c1_answer_V2_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")) "answer" (dv_fact (c1_knowledge "huo_copper") true)) "answer_id" "V2_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")) "answer" (dv_fact (c1_knowledge "huo_copper") true)) "answer_id" "V2_0") "topic" "identity"))
 
 (defn c1_hypothesis_V2_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V2_0" "proposition" (dv_fact (c1_knowledge "huo_copper") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 104 "V2_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_copper") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_copper") true))) "group" "identity"))
 
 (defn c1_answer_V2_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")) "answer" (dv_fact (c1_knowledge "huo_room") true)) "answer_id" "V2_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")) "answer" (dv_fact (c1_knowledge "huo_room") true)) "answer_id" "V2_1") "topic" "identity"))
 
 (defn c1_hypothesis_V2_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V2_1" "proposition" (dv_fact (c1_knowledge "huo_room") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 105 "V2_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_room") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_room") true))) "group" "identity"))
 
 (defn c1_answer_V2_2 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_2") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "identity")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")) "answer" (dv_fact (c1_knowledge "huo_foyer") true)) "answer_id" "V2_2"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V2_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_identity") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")) "answer" (dv_fact (c1_knowledge "huo_foyer") true)) "answer_id" "V2_2") "topic" "identity"))
 
 (defn c1_hypothesis_V2_2 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V2_2" "proposition" (dv_fact (c1_knowledge "huo_foyer") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 106 "V2_2")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "identity")) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_foyer") true))) "group" "identity"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_identity") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "huo_foyer") true))) "group" "identity"))
 
 (defn c1_answer_V3_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "voice_source")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")) "answer" (dv_fact (c1_knowledge "remote_voice") true)) "answer_id" "V3_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_voice_source") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")) "answer" (dv_fact (c1_knowledge "remote_voice") true)) "answer_id" "V3_0") "topic" "voice_source"))
 
 (defn c1_hypothesis_V3_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V3_0" "proposition" (dv_fact (c1_knowledge "remote_voice") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 107 "V3_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "voice_source")) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") true))) "group" "voice_source"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_voice_source") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") true))) "group" "voice_source"))
 
 (defn c1_answer_V3_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "voice_source")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")) "answer" (dv_fact (c1_knowledge "remote_voice") false)) "answer_id" "V3_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V3_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_voice_source") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")) "answer" (dv_fact (c1_knowledge "remote_voice") false)) "answer_id" "V3_1") "topic" "voice_source"))
 
 (defn c1_hypothesis_V3_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V3_1" "proposition" (dv_fact (c1_knowledge "remote_voice") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 108 "V3_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "voice_source")) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") false))) "group" "voice_source"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_voice_source") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "remote_voice") false))) "group" "voice_source"))
 
 (defn c1_answer_V4_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "words")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")) "answer" (dv_fact (c1_knowledge "words_bolt") true)) "answer_id" "V4_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_words") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")) "answer" (dv_fact (c1_knowledge "words_bolt") true)) "answer_id" "V4_0") "topic" "words"))
 
 (defn c1_hypothesis_V4_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V4_0" "proposition" (dv_fact (c1_knowledge "words_bolt") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 109 "V4_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "words")) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") true))) "group" "words"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_words") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") true))) "group" "words"))
 
 (defn c1_answer_V4_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "words")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")) "answer" (dv_fact (c1_knowledge "words_bolt") false)) "answer_id" "V4_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V4_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_words") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")) "answer" (dv_fact (c1_knowledge "words_bolt") false)) "answer_id" "V4_1") "topic" "words"))
 
 (defn c1_hypothesis_V4_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V4_1" "proposition" (dv_fact (c1_knowledge "words_bolt") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 110 "V4_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "words")) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") false))) "group" "words"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_words") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "words_bolt") false))) "group" "words"))
 
 (defn c1_answer_V5_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")) "answer" (dv_fact (c1_knowledge "heed_huo") true)) "answer_id" "V5_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")) "answer" (dv_fact (c1_knowledge "heed_huo") true)) "answer_id" "V5_0") "topic" "trust"))
 
 (defn c1_hypothesis_V5_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V5_0" "proposition" (dv_fact (c1_knowledge "heed_huo") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 111 "V5_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_huo") true))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_huo") true))) "group" "trust"))
 
 (defn c1_answer_V5_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")) "answer" (dv_fact (c1_knowledge "heed_su") true)) "answer_id" "V5_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")) "answer" (dv_fact (c1_knowledge "heed_su") true)) "answer_id" "V5_1") "topic" "trust"))
 
 (defn c1_hypothesis_V5_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V5_1" "proposition" (dv_fact (c1_knowledge "heed_su") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 112 "V5_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_su") true))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_su") true))) "group" "trust"))
 
 (defn c1_answer_V5_2 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_2") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")) "answer" (dv_fact (c1_knowledge "heed_neither") true)) "answer_id" "V5_2"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V5_2") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")) "answer" (dv_fact (c1_knowledge "heed_neither") true)) "answer_id" "V5_2") "topic" "trust"))
 
 (defn c1_hypothesis_V5_2 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V5_2" "proposition" (dv_fact (c1_knowledge "heed_neither") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 113 "V5_2")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_neither") true))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "heed_neither") true))) "group" "trust"))
 
 (defn c1_answer_trust (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.trust") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 28 "trust")) "answer" (dv_fact (c1_knowledge "trust_reason") true)) "answer_id" "trust"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.trust") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 28 "trust")) "answer" (dv_fact (c1_knowledge "trust_reason") true)) "answer_id" "trust") "topic" "trust"))
 
 (defn c1_hypothesis_trust ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "trust" "proposition" (dv_fact (c1_knowledge "trust_reason") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 28 "trust")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "trust_reason") true))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "trust_reason") true))) "group" "trust"))
 
 (defn c1_answer_V6_0 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_0") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")) "answer" (dv_fact (c1_knowledge "familiar") false)) "answer_id" "V6_0"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_0") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")) "answer" (dv_fact (c1_knowledge "familiar") false)) "answer_id" "V6_0") "topic" "trust"))
 
 (defn c1_hypothesis_V6_0 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V6_0" "proposition" (dv_fact (c1_knowledge "familiar") false) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 115 "V6_0")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") false))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") false))) "group" "trust"))
 
 (defn c1_answer_V6_1 (actor)
- (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_1") "answer"
-  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "current") "trust")))
-  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")) "answer" (dv_fact (c1_knowledge "familiar") true)) "answer_id" "V6_1"))
+ (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.V6_1") "answer"
+  (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "open_trust") true)))
+  (c1_at actor "hall") "" (rt_list) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")) "answer" (dv_fact (c1_knowledge "familiar") true)) "answer_id" "V6_1") "topic" "trust"))
 
 (defn c1_hypothesis_V6_1 ()
  (dv_with (dv_with (dv_with (dv_m4 "id" "V6_1" "proposition" (dv_fact (c1_knowledge "familiar") true) "prior" 0.5 "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 116 "V6_1")))
-   "available_when" (dv_fact (dv_ref "question" "state" "current") "trust")) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") true))) "group" "trust"))
+   "available_when" (dv_fact (dv_ref "question" "state" "open_trust") true)) "assumptions" (dv_single (dv_fact (c1_knowledge "familiar") true))) "group" "trust"))
 
 (defn c1_answer_actions (actor) (c1_list_17 (c1_answer_me actor) (c1_answer_V1_0 actor) (c1_answer_V1_1 actor) (c1_answer_V1_2 actor) (c1_answer_V2_0 actor) (c1_answer_V2_1 actor) (c1_answer_V2_2 actor) (c1_answer_V3_0 actor) (c1_answer_V3_1 actor) (c1_answer_V4_0 actor) (c1_answer_V4_1 actor) (c1_answer_V5_0 actor) (c1_answer_V5_1 actor) (c1_answer_V5_2 actor) (c1_answer_trust actor) (c1_answer_V6_0 actor) (c1_answer_V6_1 actor)))
 
@@ -480,10 +480,11 @@
 
 
 (defn c1_raw_question_object ()
- (c1_state_object "question" (dv_with (dv_m4 "current" (dv_field "opening") "stage" (dv_field "opening")
+ (c1_state_object "question" (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "current" (dv_field "opening") "stage" (dv_field "opening")
   "original" (dv_field "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？")
   "awake_scope" (dv_field true)) "requires_evidence" (dv_with (dv_field true) "basis"
-   (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))))))
+   (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))))
+   "open_identity" (dv_field false)) "open_voice_source" (dv_field false)) "open_words" (dv_field false)) "open_trust" (dv_field false))))
 (axiom c1_truth_contract 1 (subject) (dv_true) (rt_list))
 (defn c1_register_speech_contract (world)
  (let (basis (dv_single (c1_source "docs/design-standard.md" 462 "contract-8-no-deception"))
@@ -500,6 +501,14 @@
    (set world (dv_store world (dv_ref "question" "state" "memory_removed") (dv_with (dv_field true) "basis" (c1_handling_basis))))
    (set world (dv_store world (dv_ref "question" "state" "not_injury") (dv_with (dv_field true) "basis" (c1_handling_basis))))
    (set world (dv_store world (dv_ref "question" "state" "outstanding_complete") (dv_field false)))
+   (set world (dv_store world (dv_ref "question" "state" "level_identity") (dv_field 0)))
+   (set world (dv_store world (dv_ref "question" "state" "level_voice_source") (dv_field 0)))
+   (set world (dv_store world (dv_ref "question" "state" "level_words") (dv_field 0)))
+   (set world (dv_store world (dv_ref "question" "state" "level_trust") (dv_field 0)))
+   (set world (dv_store world (dv_ref "question" "state" "solved_identity") (dv_field false)))
+   (set world (dv_store world (dv_ref "question" "state" "solved_voice_source") (dv_field false)))
+   (set world (dv_store world (dv_ref "question" "state" "solved_words") (dv_field false)))
+   (set world (dv_store world (dv_ref "question" "state" "solved_trust") (dv_field false)))
    (dv_get (dv_get world "objects") "question"))))
 (axiom c1_original_question_open 1 (question)
  (dv_fact (dv_ref question "state" "stage") "voice_source")
@@ -565,7 +574,7 @@
 (defn c1_public_goal (question atom kind)
  (dv_with (dv_with (dv_m4 "kind" kind "question" question "ref" (c1_knowledge atom)
   "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002")))
-  "available_when" (dv_all (dv_pair (dv_fact (dv_ref "question" "state" "current") question)
+  "available_when" (dv_all (dv_pair (dv_fact (dv_ref "question" "state" (rt_cat "open_" question)) true)
    (dv_fact (dv_ref "question" "state" "requires_evidence") true)))) "source" "perception"))
 (defn c1_public_goals ()
  (c1_list_4 (c1_public_goal "identity" "me" "evidence")
@@ -632,8 +641,7 @@
 ; In particular a true location or a bare trust/familiarity claim does not answer the current question.
 (defn c1_any (left right) (dv_not (dv_all (dv_pair (dv_not left) (dv_not right)))))
 (defn c1_current_question (stage)
- (dv_all (dv_pair (dv_fact (dv_ref "question" "state" "current") stage)
-                  (dv_fact (dv_ref "question" "state" "stage") stage))))
+ (dv_fact (dv_ref "question" "state" (rt_cat "open_" stage)) true))
 (defn c1_identity_complete ()
  (c1_any (dv_all (dv_pair (c1_statement "boots_toward_bolt") (c1_statement "boots_fit")))
    (dv_all (c1_list_4 (c1_statement "lens_mine") (c1_statement "slate_marks")
@@ -714,11 +722,10 @@
 (defn c1_formal_answers () (c1_list_17 (c1_formal_me) (c1_formal_V1_0) (c1_formal_V1_1) (c1_formal_V1_2) (c1_formal_V2_0) (c1_formal_V2_1) (c1_formal_V2_2) (c1_formal_V3_0) (c1_formal_V3_1) (c1_formal_V4_0) (c1_formal_V4_1) (c1_formal_V5_0) (c1_formal_V5_1) (c1_formal_V5_2) (c1_formal_trust) (c1_formal_V6_0) (c1_formal_V6_1)))
 
 (defn c1_adopt_protocol (world)
- (let (result world stages (c1_list_4 (dv_pair "identity" "voice_source") (dv_pair "voice_source" "words")
- (dv_pair "words" "trust") (dv_pair "trust" "done")) i 0)
+ (let (result world stages (c1_list_4 "identity" "voice_source" "words" "trust") i 0)
   (do (while (rt_lt i (rt_count stages))
-   (let (current (rt_at (rt_at stages i) 0) next (rt_at (rt_at stages i) 1))
-    (do (set result (dv_adopt result (c1_method (rt_cat "accept." current) (c1_question_accept "question" current next)) "enforce" 1
+   (let (stage (rt_at stages i))
+    (do (set result (dv_adopt result (c1_method (rt_cat "accept." stage) (c1_question_accept "question" stage)) "enforce" 1
       (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 2 "answer_open.001"))))
       (set i (rt_add i 1))))) result)))
 (defn c1_speech (literal surface scope)
@@ -775,7 +782,9 @@
   (if first "demon.question" (if (rt_eq stage "voice_source") "demon.original_question" "")) (dv_single (dv_ref "question" "state" "stage")) surface))
  "speech" (dv_with (dv_with (c1_speech (dv_true) surface "正式公开问题；问句不是历史事实断言") "utterance_type" "question") "surface" (rt_cat (c1_question_text stage) " 每一问，说一句结论，再拿出一件撑得住它的东西。")))
  "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
- "public_grants" (c1_list_4 (dv_ref "question" "state" "current") (dv_ref "question" "state" "original")
+ "public_grants" (c1_list_8 (dv_ref "question" "state" "open_identity") (dv_ref "question" "state" "open_voice_source")
+  (dv_ref "question" "state" "open_words") (dv_ref "question" "state" "open_trust")
+  (dv_ref "question" "state" "current") (dv_ref "question" "state" "original")
   (dv_ref "question" "state" "requires_evidence") (dv_ref "question" "state" "outstanding_complete"))))
 (defn c1_question_action (stage surface first)
  (c1_authorized_speech (c1_raw_question_action stage surface first)))

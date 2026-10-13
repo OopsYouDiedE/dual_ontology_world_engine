@@ -12,7 +12,8 @@
       (rt_mul (dv_measure (dv_get cell "value") criterion) (dv_get cell "confidence"))
       (do (while (rt_lt i (rt_count alternatives))
         (let (alternative (rt_at alternatives i))
-          (do (set sum (rt_add sum (rt_mul (dv_measure (rt_at alternative 0) criterion) (rt_at alternative 1)))) (set i (rt_add i 1))))) sum))))
+          (do (set sum (rt_add sum (rt_mul (dv_measure (rt_at alternative 0) criterion) (rt_at alternative 1)))) (set i (rt_add i 1)))))
+        (rt_mul sum (dv_get cell "confidence"))))))
 (defn dv_value (world criteria subjective)
   (let (i 0 score 0 details (rt_list) unknown (rt_list) ids (rt_list))
     (do

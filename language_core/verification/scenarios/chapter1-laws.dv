@@ -138,19 +138,23 @@
   (dv_fact (dv_ref question "state" "stage") "opening")
   (dv_single (dv_assign (dv_ref question "state" "stage") "prompt")))
 
-; 场面/07_答辩.story:8, answer_q1.001; dispatching a question does not answer it.
+; 场面/07_答辩.story:8, answer_q1.001; dispatching four questions simultaneously.
 (axiom c1_question_emit 1 (question)
   (dv_fact (dv_ref question "state" "stage") "prompt")
-  (dv_pair (dv_assign (dv_ref question "state" "current") "identity")
-           (dv_assign (dv_ref question "state" "stage") "identity")))
+  (dv_append (dv_append (dv_append (dv_list3
+    (dv_assign (dv_ref question "state" "open_identity") true)
+    (dv_assign (dv_ref question "state" "open_voice_source") true)
+    (dv_assign (dv_ref question "state" "open_words") true))
+    (dv_assign (dv_ref question "state" "open_trust") true))
+    (dv_assign (dv_ref question "state" "current") "questions_open"))
+    (dv_assign (dv_ref question "state" "stage") "questions_open")))
 
 ; 场面/07_答辩.story:12/25/34/43, answer_ok1/2/3/4; formal acceptance gates execution.
-; This scheduling law has no authority to decide literal truth or support sufficiency.
-(axiom c1_question_accept 1 (question current next)
-  (dv_all (dv_pair (dv_fact (dv_ref question "state" "current") current)
-                   (dv_fact (dv_ref question "state" "stage") current)))
-  (dv_pair (dv_assign (dv_ref question "state" "current") next)
-           (dv_assign (dv_ref question "state" "stage") next)))
+; This scheduling law operates independently for any open question topic.
+(axiom c1_question_accept 1 (question stage)
+  (dv_fact (dv_ref question "state" (rt_cat "open_" stage)) true)
+  (dv_pair (dv_assign (dv_ref question "state" (rt_cat "solved_" stage)) true)
+           (dv_assign (dv_ref question "state" "last_accepted") stage)))
 
 ; 可习得命题.story:74-88: helper testimony is received through a co-located action.
 ; Concrete testimony and its evidential source are supplied by content, not this law.

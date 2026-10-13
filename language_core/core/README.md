@@ -13,25 +13,25 @@ DV 前端将声明展开为返回公理数据的 DV 函数，仍检查名称和�
 | 采纳方式 | 入口 | 语义 |
 | --- | --- | --- |
 | physical / enforce | dv_execute | 真实条件、原子阶段变更、事件和世界版本 |
-| mind / predict | dv_predict | 仅本人状态；返回 prediction 副本 |
-| mind / infer | dv_infer | 本人接受的规则，显式更新本人认识 |
+| mind / predict | dv_predict | 仅本人状态；返回 prediction 副本；冲突数值变更显式拒绝 (conflicted-state) |
+| mind / infer | dv_infer | 本人接受的推知规则，产生依据派生声明，置信度取前提与规则 min，保留反证与冲突 |
 | mind / norm | dv_norm | 规范条件，不自动成为物理限制 |
 
 `dv_adopt` 要求依据，物理规律置信度为 1；主体可不采纳、以不同方式/置信度采纳，使用 `dv_reconsider` 修订或 `dv_suspend` 暂停。修订保留前后依据。这借鉴声明与环境的组织方式，不声称已有 Lean 的形式证明内核。
 
 ## 物体、状态与通道
 
-`dv_world / dv_object / dv_ref / dv_slice` 统一表达世界、物体、字段引用和切片。普通物体、门、通道使用同一字段存取。切片注明世界、主体、版本、物体和切面；字段保留 known/value/confidence/time/claims/conflicted。未知不等于 false 或零。
+`dv_world / dv_object / dv_ref / dv_scoped_ref / dv_slice` 统一表达世界、物体、字段引用和切片。普通物体、门、通道使用同一字段存取。切片注明世界、主体、版本、物体和切面；字段保留 known/value/confidence/time/claims/conflicted/support_share/source_reliability。未知不等于 false 或零。跨主体引用带有主体所属约束，防止未经翻译的隐式指代替换。
 
 门有闭合、支撑、内外闩、自动闭合、缝隙和封缝状态；通道有端点、介质、启用、增益、门控命题及可选频段。种类属于可观察的 identity 切面。写入返回副本；调用者不能使用 `rt_push` 擅自修改库的输入记录。
 
 `dv_transport` 是纯传播计算，领域入口 `dv_transmit` 另外检查规律采纳、模式和前提。`dv_transport_theory` 为声明显式选择衰减/过滤语义。输入路径逐段检查连通性、介质、门控和当前参数，只输出实际保留的片段，不恢复丢失全文。路径搜索、多径叠加、声学标定和第一章宿主接线尚未实现。
 
-## 观察更新
+## 观察更新与指代投影
 
-`dv_perceive` 根据可信适配器提供的 bindings 与 grants 生成观察；`dv_perceive_changes` 只映射已提交且获准暴露的变化。未感知者保留旧认识。entity-ref 跨边界映射为主体本地引用，无法映射则不下发。适配器须持续维护稳定绑定；库拒绝当前批次绑定歧义，尚非宿主访问安全沙箱。
+`dv_perceive` 根据可信适配器提供的 bindings 与 grants 生成观察；`dv_perceive_changes` 只映射已提交且获准暴露的变化。未感知者保留旧认识。`dv_project_value` 递归类型化投影所有实体引用 (`entity-ref`) 与字段引用 (`ref`)；复合命题中引用的客观标识符若未在本主体 bindings 声明，则整项判定为未知，拒绝泄漏客观 ID，不留未投影的客观名称。
 
-`dv_update_mind` 不接收客观世界，只接收带主体、本地引用、来源、时间、信任和依赖身份的观察。核对认知版本及重复事件；同一相关证据组替换而不累加，同一时刻不同证据保留竞争解释，旧材料不覆盖新状态。新时刻重新聚合，历史保留。`dv_observation_profile` 明确提供来源权重和阈值；这是加权支持度，不是一般贝叶斯后验。证据依赖图、证词时间的外部核验和遗忘机制仍待完善。
+`dv_update_mind` 不接收客观世界，只接收带主体、本地引用、来源、时间、信任和依赖身份的观察。核对认知版本及重复事件；同一相关证据组替换而不累加，历史事实与当前状态分离：仅直接物理感知在更晚时刻到达时产生现时状态覆盖，证词、回想及推知作为独立材料合并与竞争，不因接收时刻较晚而抹杀历史直接观察。`dv_aggregate` 明确区分支持份额 (`support_share`)、来源信度 (`source_reliability`) 与认识置信度 (`epistemic_confidence`)，置信度上限在聚合后得以严格保持。新时刻重新聚合，历史材料完备保留。
 
 ## 价值与人物回应
 
