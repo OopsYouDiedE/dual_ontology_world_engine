@@ -1,22 +1,19 @@
-; Generic operational axioms. No chapter identities, answers or authored dialogue.
-(axiom door_open 1 (door)
-  (dv_all (dv_pair (dv_fact (dv_ref door "mechanical" "inside_latch") false)
-                  (dv_fact (dv_ref door "mechanical" "outside_latch") false)))
-  (dv_single (dv_assign (dv_ref door "mechanical" "closed") false)))
-(axiom door_self_close 1 (door)
-  (dv_all (dv_pair (dv_fact (dv_ref door "mechanical" "automatic") true)
-                  (dv_fact (dv_ref door "mechanical" "held") false)))
-  (dv_pair (dv_assign (dv_ref door "mechanical" "closed") true)
-           (dv_assign (dv_ref door "mechanical" "gap") 0)))
-(axiom door_latch 1 (door)
-  (dv_fact (dv_ref door "mechanical" "closed") true)
-  (dv_single (dv_assign (dv_ref door "mechanical" "inside_latch") true)))
-(axiom door_seal 1 (door)
-  (dv_fact (dv_ref door "mechanical" "closed") true)
-  (dv_single (dv_assign (dv_ref door "mechanical" "sealed") true)))
-(axiom channel_reconfigure 1 (channel gain)
-  (dv_true)
-  (dv_single (dv_assign (dv_ref channel "transport" "gain") (dv_unit gain))))
-(axiom channel_flow 1 (channel)
-  (dv_fact (dv_ref channel "transport" "enabled") true)
-  (rt_list))
+// Generic operational axioms. No chapter identities, answers or authored dialogue.
+
+axiom door_open(door):
+    return dv_axiom("door_open", 1, dv_all(dv_pair(dv_fact(dv_ref(door, "mechanical", "inside_latch"), false), dv_fact(dv_ref(door, "mechanical", "outside_latch"), false))), dv_single(dv_assign(dv_ref(door, "mechanical", "closed"), false)))
+
+axiom door_self_close(door):
+    return dv_axiom("door_self_close", 1, dv_all(dv_pair(dv_fact(dv_ref(door, "mechanical", "automatic"), true), dv_fact(dv_ref(door, "mechanical", "held"), false))), dv_pair(dv_assign(dv_ref(door, "mechanical", "closed"), true), dv_assign(dv_ref(door, "mechanical", "gap"), 0)))
+
+axiom door_latch(door):
+    return dv_axiom("door_latch", 1, dv_fact(dv_ref(door, "mechanical", "closed"), true), dv_single(dv_assign(dv_ref(door, "mechanical", "inside_latch"), true)))
+
+axiom door_seal(door):
+    return dv_axiom("door_seal", 1, dv_fact(dv_ref(door, "mechanical", "closed"), true), dv_single(dv_assign(dv_ref(door, "mechanical", "sealed"), true)))
+
+axiom channel_reconfigure(channel, gain):
+    return dv_axiom("channel_reconfigure", 1, dv_true(), dv_single(dv_assign(dv_ref(channel, "transport", "gain"), dv_unit(gain))))
+
+axiom channel_flow(channel):
+    return dv_axiom("channel_flow", 1, dv_fact(dv_ref(channel, "transport", "enabled"), true), [])

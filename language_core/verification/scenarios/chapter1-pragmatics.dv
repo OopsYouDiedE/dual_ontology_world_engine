@@ -1,36 +1,19 @@
-; Shared defeasible rule. The caller adopts it openly into each person's policy.
-; Provenance: design §4.2/§4.7 and the user's explicit 2026-10-12 pragmatic choice.
-; Each speaker/listener's opening .003 supplies their own empty school recall.
-; Initial school-memory absence is not a physical duration fact.
-(defn c1_short_stay_rule (knowledge question memory basis)
-  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
-    (dv_m4 "id" "short_stay" "cue" "short_stay"
-      "premise" (dv_all (dv_pair
-        (dv_fact (dv_ref question "state" "awake_scope") true)
-        (dv_fact (dv_ref memory "state" "empty_school_recall") true)))
-      "proposition" (dv_fact (dv_ref knowledge "state" "short_stay") true))
-    "prior" 0.6) "basis" basis) "source_scope" "awake_self") "target_scope" "body_history")
-    "scope_bridge" (dv_m2 "op" "constant" "value" "unknown"))
-    "available_when" (dv_true))
-    "withdraw_when" (dv_not (dv_all (dv_list3
-      (dv_not (dv_fact (dv_ref knowledge "state" "familiar") true))
-      (dv_not (dv_fact (dv_ref knowledge "state" "long_residence_traces") true))
-      (dv_not (dv_fact (dv_ref knowledge "state" "replay_reason_complete") true)))))))
+// Shared defeasible rule. The caller adopts it openly into each person's policy.
+// Provenance: design §4.2/§4.7 and the user's explicit 2026-10-12 pragmatic choice.
+// Each speaker/listener's opening .003 supplies their own empty school recall.
+// Initial school-memory absence is not a physical duration fact.
+// The speaker's own memory-object handling and audible-channel knowledge are basis.
+// No constructor argument is a real listener mind or a real listener policy.
+// Scope-check capability is an uncertain estimate, never asserted as listener fact.
 
-; The speaker's own memory-object handling and audible-channel knowledge are basis.
-; No constructor argument is a real listener mind or a real listener policy.
-; Scope-check capability is an uncertain estimate, never asserted as listener fact.
-(defn c1_opening_listener_model (listener scope_check_estimate basis)
-  (let (mind (dv_world (rt_cat "opening-listener-model-" listener) "mind" listener)
-        assumption (dv_m3 "kind" "provisional-model-assumption" "scope_reference_check" scope_check_estimate "basis" basis))
-    (do
-      (dv_require (rt_lt 0 (rt_count basis)) "Listener model needs speaker-owned handling/channel basis")
-      (set mind (dv_add_object mind (dv_object "question" "perceived" (dv_single (dv_pair "state" (rt_list))))))
-      (set mind (dv_add_object mind (dv_object "cognition" "perceived" (dv_single (dv_pair "state" (rt_list))))))
-      (set mind (dv_add_object mind (dv_object "memory" "perceived" (dv_single (dv_pair "state"
-        (dv_single (dv_pair "empty_school_recall" (dv_cell true 0.6 0 (dv_single (dv_m2 "model_source" "speaker-owned-memory-handling" "basis" basis))))))))))
-      (dv_with (dv_with (dv_with (dv_m4 "mind" mind
-        "policy" (dv_m3 "scope_reference_check" scope_check_estimate "implicature_threshold" 0.5
-          "implicature_bridges" (dv_single (c1_short_stay_rule "cognition" "question" "memory" basis)))
-        "basis" basis "model_status" "provisional") "assumptions" (dv_single assumption))
-        "uncertainty_cost" 1) "domain" "speaker-owned-prediction-model"))))
+fn c1_short_stay_rule(knowledge, question, memory, basis):
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": "short_stay", "cue": "short_stay", "premise": dv_all(dv_pair(dv_fact(dv_ref(question, "state", "awake_scope"), true), dv_fact(dv_ref(memory, "state", "empty_school_recall"), true))), "proposition": dv_fact(dv_ref(knowledge, "state", "short_stay"), true)}, "prior", 0.6), "basis", basis), "source_scope", "awake_self"), "target_scope", "body_history"), "scope_bridge", {"op": "constant", "value": "unknown"}), "available_when", dv_true()), "withdraw_when", dv_not(dv_all(dv_list3(dv_not(dv_fact(dv_ref(knowledge, "state", "familiar"), true)), dv_not(dv_fact(dv_ref(knowledge, "state", "long_residence_traces"), true)), dv_not(dv_fact(dv_ref(knowledge, "state", "replay_reason_complete"), true))))))
+
+fn c1_opening_listener_model(listener, scope_check_estimate, basis):
+    var mind = dv_world(rt_cat("opening-listener-model-", listener), "mind", listener)
+    var assumption = {"kind": "provisional-model-assumption", "scope_reference_check": scope_check_estimate, "basis": basis}
+    dv_require((0 < rt_count(basis)), "Listener model needs speaker-owned handling/channel basis")
+    mind = dv_add_object(mind, dv_object("question", "perceived", dv_single(dv_pair("state", []))))
+    mind = dv_add_object(mind, dv_object("cognition", "perceived", dv_single(dv_pair("state", []))))
+    mind = dv_add_object(mind, dv_object("memory", "perceived", dv_single(dv_pair("state", dv_single(dv_pair("empty_school_recall", dv_cell(true, 0.6, 0, dv_single({"model_source": "speaker-owned-memory-handling", "basis": basis}))))))))
+    return dv_with(dv_with(dv_with({"mind": mind, "policy": {"scope_reference_check": scope_check_estimate, "implicature_threshold": 0.5, "implicature_bridges": dv_single(c1_short_stay_rule("cognition", "question", "memory", basis))}, "basis": basis, "model_status": "provisional"}, "assumptions", dv_single(assumption)), "uncertainty_cost", 1), "domain", "speaker-owned-prediction-model")

@@ -1,128 +1,259 @@
-; Explicit, defeasible acceptance of a paid explanation. This is not an observation adapter.
-(defn dv_explanation_model_complete (model status revision)
-  (dv_and (rt_eq (dv_find model "status" "unknown") status)
-    (dv_and (dv_or (rt_eq (dv_find model "source_revision" -1) revision) (dv_find model "validated_by_inputs" false))
-      (dv_and (dv_find model "plan_complete" false)
-        (dv_and (rt_not (rt_lt (dv_find model "remaining" -1) 0))
-          (dv_and (rt_not (rt_lt (dv_find model "work_remaining" -1) 0))
-            (dv_and (rt_eq (rt_count (dv_find model "failures" (rt_list))) 0)
-              (dv_and (rt_lt 0 (rt_count (dv_find model "predictions" (rt_list))))
-                (dv_and (rt_eq (rt_count (dv_find model "predictions" (rt_list))) (rt_count (dv_find model "comparisons" (rt_list))))
-                  (dv_has_key model "event"))))))))))
-(defn dv_explanation_observation_sources (mind comparison sources)
-  (let (observed (dv_get comparison "observed_cells") i 0 valid true ids (rt_list) inputs (rt_list))
-    (do (if (rt_eq (rt_count observed) 0) (set valid false) false)
-      (while (rt_lt i (rt_count observed))
-        (let (item (rt_at observed i) ref (dv_get (rt_at observed i) "ref") cell (dv_read mind (dv_get (rt_at observed i) "ref")) j 0 found false)
-          (do (if (dv_same cell (dv_get item "cell")) false (set valid false))
-            (while (rt_lt j (rt_count sources))
-              (let (source (rt_at sources j) observation (dv_get (rt_at sources j) "observation"))
-                (do (if (dv_and (rt_eq (dv_get observation "subject") (dv_get mind "subject"))
-                  (dv_and (dv_same (dv_get observation "ref") ref) (dv_same (dv_get observation "value") (dv_get cell "value"))))
-                  (if (dv_has (dv_find cell "claims" (rt_list)) observation)
-                    (do (set found true) (if (dv_has ids (dv_get source "event_id")) false (set ids (dv_append ids (dv_get source "event_id"))))) false) false)
-                  (set j (rt_add j 1)))))
-            (if found false (set valid false))
-            (rt_push inputs item) (set i (rt_add i 1)))))
-      (dv_m3 "valid" valid "source_event_ids" ids "inputs" inputs))))
-(defn dv_explanation_trace_changes (step)
-  (if (dv_has_key step "changes") (dv_get step "changes")
-    (if (dv_has_key step "response")
-      (let (response (dv_get step "response"))
-        (if (dv_has_key response "bridge") (dv_find (dv_get response "bridge") "changes" (rt_list)) (rt_list))) (rt_list))))
-(defn dv_explanation_slot (model slot)
-  (let (predictions (dv_get model "predictions") index (dv_get slot "feature_index") valid false value false confidence 0 trace_step -1 trace (dv_get model "trace") j 0)
-    (do (if (dv_and (rt_not (rt_lt index 0)) (rt_lt index (rt_count predictions)))
-      (let (prediction (rt_at predictions index))
-        (do (while (rt_lt j (rt_count trace))
-          (let (step (rt_at trace j) changes (dv_explanation_trace_changes (rt_at trace j)) k 0)
-            (do (if (rt_eq (dv_get step "at") (dv_get slot "trace_at"))
-              (while (rt_lt k (rt_count changes))
-                (let (change (rt_at changes k))
-                  (do (if (dv_and (dv_same (dv_get change "ref") (dv_get slot "ref"))
-                    (dv_and (dv_uncontested (dv_get change "after"))
-                      (dv_and (dv_get prediction "covered") (dv_find slot "value_from_prediction" false))))
-                    (do (set valid true) (set value (dv_get (dv_get change "after") "value"))
-                      (set confidence (dv_min (dv_get prediction "confidence") (dv_get (dv_get change "after") "confidence"))) (set trace_step j)) false)
-                    (set k (rt_add k 1))))) false) (set j (rt_add j 1))))) )) false)
-      (dv_with (dv_m4 "valid" valid "value" value "confidence" confidence "trace_step" trace_step) "slot" slot))))
-(defn dv_explanation_model_inputs (mind model)
-  (let (trace (dv_find model "trace" (rt_list)) result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count trace))
-      (let (refs (dv_find (rt_at trace i) "inputs" (rt_list)) j 0)
-        (do (while (rt_lt j (rt_count refs))
-          (let (ref (dv_get (rt_at refs j) "ref"))
-            (do (set result (dv_explanation_merge result (dv_single (dv_m2 "ref" ref "cell" (dv_read mind ref)))))
-              (set j (rt_add j 1))))) (set i (rt_add i 1))))) result)))
-(defn dv_explanation_model_current (mind model)
-  (let (inputs (dv_find model "validation_inputs" (rt_list)) valid (dv_same (dv_find model "source_adoptions" false) (dv_get mind "adoptions")) i 0)
-    (do (while (rt_lt i (rt_count inputs))
-      (let (input (rt_at inputs i))
-        (do (if (dv_same (dv_without (dv_get input "cell") "time") (dv_without (dv_read mind (dv_get input "ref")) "time")) false (set valid false)) (set i (rt_add i 1))))) valid)))
-(defn dv_accept_explanation (mind model competitors slots sources policy budget time id)
-  (let (valid true reason "accepted-estimated" comparisons (dv_find model "comparisons" (rt_list)) i 0 source_ids (rt_list)
-        inputs (rt_list) competitor_ids (rt_list) claims (rt_list) effects (rt_list) remaining budget confidence (dv_find policy "confidence_cap" 0))
-    (do (dv_domain mind "mind")
-      (if (dv_and (dv_find policy "active" false) (dv_and (rt_lt 0 confidence) (dv_and (rt_lt confidence 1) (rt_lt 0 (rt_count (dv_find policy "basis" (rt_list))))))) false
-        (do (set valid false) (set reason "abduction-strategy-not-adopted")))
-      (if (dv_and (dv_explanation_model_complete model "explained" (dv_get mind "revision")) (if (dv_find model "validated_by_inputs" false) (dv_explanation_model_current mind model) true)) false
-        (do (set valid false) (set reason "model-incomplete-or-stale")))
-      (while (rt_lt i (rt_count comparisons))
-        (let (comparison (rt_at comparisons i) observed (dv_explanation_observation_sources mind (rt_at comparisons i) sources))
-          (do (if (dv_and (rt_eq (dv_get comparison "result") "match") (dv_get observed "valid")) false
-            (do (set valid false) (set reason "unobserved-or-unmatched-feature")))
-            (set confidence (dv_min confidence (dv_get comparison "confidence")))
-            (set source_ids (dv_explanation_merge source_ids (dv_get observed "source_event_ids")))
-            (set inputs (dv_explanation_merge inputs (dv_get observed "inputs"))) (set i (rt_add i 1)))))
-      (set inputs (dv_explanation_merge inputs (dv_explanation_model_inputs mind model)))
-      (set i 0)
-      (while (rt_lt i (rt_count competitors))
-        (let (other (rt_at competitors i) j 0 other_comparisons (dv_find (rt_at competitors i) "comparisons" (rt_list)) contradiction false)
-          (do (if (dv_and (dv_explanation_model_complete other "inconsistent" (dv_get mind "revision")) (if (dv_find other "validated_by_inputs" false) (dv_explanation_model_current mind other) true)) false
-            (do (set valid false) (set reason "unresolved-competitor")))
-            (while (rt_lt j (rt_count other_comparisons))
-              (let (comparison (rt_at other_comparisons j) observed (dv_explanation_observation_sources mind (rt_at other_comparisons j) sources))
-                (do (if (dv_and (rt_not (rt_eq (dv_get comparison "result") "unknown")) (dv_get observed "valid")) false
-                  (do (set valid false) (set reason "competitor-feature-unresolved")))
-                  (if (rt_eq (dv_get comparison "result") "contradiction") (set contradiction true) false)
-                  (set source_ids (dv_explanation_merge source_ids (dv_get observed "source_event_ids")))
-                  (set inputs (dv_explanation_merge inputs (dv_get observed "inputs"))) (set j (rt_add j 1)))))
-            (set inputs (dv_explanation_merge inputs (dv_explanation_model_inputs mind other)))
-            (if contradiction false (do (set valid false) (set reason "competitor-not-refuted")))
-            (if (dv_has_key other "event") (set competitor_ids (dv_append competitor_ids (dv_get other "event"))) false) (set i (rt_add i 1)))))
-      (if (rt_eq (rt_count slots) 0) (do (set valid false) (set reason "no-public-claim-slots")) false)
-      (set i 0)
-      (while (dv_and valid (rt_lt i (rt_count slots)))
-        (if (rt_lt remaining 1) (do (set valid false) (set reason "argument-reason-budget"))
-          (let (slot (rt_at slots i) resolved (dv_explanation_slot model (rt_at slots i)))
-            (do (set remaining (rt_sub remaining 1))
-              (if (dv_get resolved "valid")
-                (let (ref (dv_get slot "ref") existing (dv_read mind (dv_get slot "ref")))
-                  (do (if (dv_has_key (dv_get mind "objects") (dv_get ref "object")) false (do (set valid false) (set reason "unknown-local-claim-object")))
-                    (if (dv_and (dv_uncontested existing) (rt_not (dv_same (dv_get existing "value") (dv_get resolved "value"))))
-                      (do (set valid false) (set reason "claim-conflicts-with-current-evidence")) false)
-                    (set confidence (dv_min confidence (dv_get resolved "confidence")))
-                    (rt_push claims (dv_with (dv_m4 "slot_id" (dv_get slot "slot_id") "ref" ref "value" (dv_get resolved "value") "trace_step" (dv_get resolved "trace_step")) "feature_index" (dv_get slot "feature_index")))
-                    (if (dv_uncontested existing) false (rt_push effects (dv_assign ref (dv_get resolved "value"))))))
-                (do (set valid false) (set reason "claim-not-covered-by-actual-predictive-trace")))
-              (set i (rt_add i 1))))))
-      (if (rt_lt 0 confidence) false (do (set valid false) (set reason "unsupported-zero-confidence")))
-      (let (basis (dv_explanation_merge (dv_find policy "basis" (rt_list)) (dv_explanation_merge source_ids (dv_append competitor_ids (dv_find model "event" "")))) world mind changes (rt_list))
-        (do (if valid
-          (let (stage (dv_stage mind effects time (dv_append basis id) confidence) j 0)
-            (if (rt_eq (dv_get stage "status") "ready")
-              (do (set world (dv_get stage "world")) (set changes (dv_get stage "changes"))
-                (while (rt_lt j (rt_count changes))
-                  (let (ref (dv_get (rt_at changes j) "ref"))
-                    (do (set world (dv_store world ref (dv_with (dv_with (dv_read world ref) "source" "abduction") "estimated" true))) (set j (rt_add j 1)))))
-                (if (rt_lt 0 (rt_count changes)) (set world (dv_with world "revision" (rt_add (dv_get mind "revision") 1))) false))
-              (do (set valid false) (set reason (dv_get stage "status"))))) false)
-          (let (argument (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
-            (dv_m4 "id" id "estimated" true "confidence" confidence "claims" claims) "model_event" (dv_find model "event" ""))
-              "source_event_ids" source_ids) "competitor_events" competitor_ids) "source_revision" (dv_get mind "revision"))
-              "mind_revision_after" (dv_get world "revision")) "inputs" inputs) "changes" changes) "basis" basis))
-            (do (if valid (set world (dv_with world "history" (dv_append (dv_get world "history") (dv_m3 "kind" "estimated-model-argument" "argument" argument "time" time)))) false)
-              (dv_with (dv_with (dv_m4 "accepted" valid "reason" reason "world" world "argument" argument) "remaining" remaining) "expanded" (rt_sub budget remaining)))))))))
-(defn dv_explanation_merge (a b)
-  (let (result a i 0) (do (while (rt_lt i (rt_count b))
-    (do (if (dv_has result (rt_at b i)) false (set result (dv_append result (rt_at b i)))) (set i (rt_add i 1)))) result)))
+// Explicit, defeasible acceptance of a paid explanation. This is not an observation adapter.
+
+fn dv_explanation_model_complete(model, status, revision):
+    return dv_and((dv_find(model, "status", "unknown") == status), dv_and(dv_or((dv_find(model, "source_revision", -1) == revision), dv_find(model, "validated_by_inputs", false)), dv_and(dv_find(model, "plan_complete", false), dv_and((not (dv_find(model, "remaining", -1) < 0)), dv_and((not (dv_find(model, "work_remaining", -1) < 0)), dv_and((rt_count(dv_find(model, "failures", [])) == 0), dv_and((0 < rt_count(dv_find(model, "predictions", []))), dv_and((rt_count(dv_find(model, "predictions", [])) == rt_count(dv_find(model, "comparisons", []))), dv_has_key(model, "event")))))))))
+
+fn dv_explanation_observation_sources(mind, comparison, sources):
+    var observed = comparison.observed_cells
+    var i = 0
+    var valid = true
+    var ids = []
+    var inputs = []
+    if (rt_count(observed) == 0):
+        valid = false
+    while (i < rt_count(observed)):
+        var item = observed[i]
+        var ref = observed[i].ref
+        var cell = dv_read(mind, observed[i].ref)
+        var j = 0
+        var found = false
+        if dv_same(cell, item.cell):
+            false
+        else:
+            valid = false
+        while (j < rt_count(sources)):
+            var source = sources[j]
+            var observation = sources[j].observation
+            if dv_and((observation.subject == mind.subject), dv_and(dv_same(observation.ref, ref), dv_same(observation.value, cell.value))):
+                if dv_has(dv_find(cell, "claims", []), observation):
+                    found = true
+                    if dv_has(ids, source.event_id):
+                        false
+                    else:
+                        ids = dv_append(ids, source.event_id)
+            j = (j + 1)
+        if found:
+            false
+        else:
+            valid = false
+        rt_push(inputs, item)
+        i = (i + 1)
+    return {"valid": valid, "source_event_ids": ids, "inputs": inputs}
+
+fn dv_explanation_trace_changes(step):
+    if dv_has_key(step, "changes"):
+        return step.changes
+    else:
+        if dv_has_key(step, "response"):
+            var response = step.response
+            if dv_has_key(response, "bridge"):
+                return dv_find(response.bridge, "changes", [])
+            else:
+                return []
+        else:
+            return []
+
+fn dv_explanation_slot(model, slot):
+    var predictions = model.predictions
+    var index = slot.feature_index
+    var valid = false
+    var value = false
+    var confidence = 0
+    var trace_step = -1
+    var trace = model.trace
+    var j = 0
+    if dv_and((not (index < 0)), (index < rt_count(predictions))):
+        var prediction = predictions[index]
+        while (j < rt_count(trace)):
+            var step = trace[j]
+            var changes = dv_explanation_trace_changes(trace[j])
+            var k = 0
+            if (step.at == slot.trace_at):
+                while (k < rt_count(changes)):
+                    var change = changes[k]
+                    if dv_and(dv_same(change.ref, slot.ref), dv_and(dv_uncontested(change.after), dv_and(prediction.covered, dv_find(slot, "value_from_prediction", false)))):
+                        valid = true
+                        value = change.after.value
+                        confidence = dv_min(prediction.confidence, change.after.confidence)
+                        trace_step = j
+                    k = (k + 1)
+            j = (j + 1)
+    return dv_with({"valid": valid, "value": value, "confidence": confidence, "trace_step": trace_step}, "slot", slot)
+
+fn dv_explanation_model_inputs(mind, model):
+    var trace = dv_find(model, "trace", [])
+    var result = []
+    var i = 0
+    while (i < rt_count(trace)):
+        var refs = dv_find(trace[i], "inputs", [])
+        var j = 0
+        while (j < rt_count(refs)):
+            var ref = refs[j].ref
+            result = dv_explanation_merge(result, dv_single({"ref": ref, "cell": dv_read(mind, ref)}))
+            j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn dv_explanation_model_current(mind, model):
+    var inputs = dv_find(model, "validation_inputs", [])
+    var valid = dv_same(dv_find(model, "source_adoptions", false), mind.adoptions)
+    var i = 0
+    while (i < rt_count(inputs)):
+        var input = inputs[i]
+        if dv_same(dv_without(input.cell, "time"), dv_without(dv_read(mind, input.ref), "time")):
+            false
+        else:
+            valid = false
+        i = (i + 1)
+    return valid
+
+fn dv_accept_explanation(mind, model, competitors, slots, sources, policy, budget, time, id):
+    var valid = true
+    var reason = "accepted-estimated"
+    var comparisons = dv_find(model, "comparisons", [])
+    var i = 0
+    var source_ids = []
+    var inputs = []
+    var competitor_ids = []
+    var claims = []
+    var effects = []
+    var remaining = budget
+    var confidence = dv_find(policy, "confidence_cap", 0)
+    dv_domain(mind, "mind")
+    if dv_and(dv_find(policy, "active", false), dv_and((0 < confidence), dv_and((confidence < 1), (0 < rt_count(dv_find(policy, "basis", [])))))):
+        false
+    else:
+        valid = false
+        reason = "abduction-strategy-not-adopted"
+    var local_1 = false
+    if dv_find(model, "validated_by_inputs", false):
+        local_1 = dv_explanation_model_current(mind, model)
+    else:
+        local_1 = true
+    if dv_and(dv_explanation_model_complete(model, "explained", mind.revision), local_1):
+        false
+    else:
+        valid = false
+        reason = "model-incomplete-or-stale"
+    while (i < rt_count(comparisons)):
+        var comparison = comparisons[i]
+        var observed = dv_explanation_observation_sources(mind, comparisons[i], sources)
+        if dv_and((comparison.result == "match"), observed.valid):
+            false
+        else:
+            valid = false
+            reason = "unobserved-or-unmatched-feature"
+        confidence = dv_min(confidence, comparison.confidence)
+        source_ids = dv_explanation_merge(source_ids, observed.source_event_ids)
+        inputs = dv_explanation_merge(inputs, observed.inputs)
+        i = (i + 1)
+    inputs = dv_explanation_merge(inputs, dv_explanation_model_inputs(mind, model))
+    i = 0
+    while (i < rt_count(competitors)):
+        var other = competitors[i]
+        var j = 0
+        var other_comparisons = dv_find(competitors[i], "comparisons", [])
+        var contradiction = false
+        var local_2 = false
+        if dv_find(other, "validated_by_inputs", false):
+            local_2 = dv_explanation_model_current(mind, other)
+        else:
+            local_2 = true
+        if dv_and(dv_explanation_model_complete(other, "inconsistent", mind.revision), local_2):
+            false
+        else:
+            valid = false
+            reason = "unresolved-competitor"
+        while (j < rt_count(other_comparisons)):
+            var comparison = other_comparisons[j]
+            var observed = dv_explanation_observation_sources(mind, other_comparisons[j], sources)
+            if dv_and((not (comparison.result == "unknown")), observed.valid):
+                false
+            else:
+                valid = false
+                reason = "competitor-feature-unresolved"
+            if (comparison.result == "contradiction"):
+                contradiction = true
+            source_ids = dv_explanation_merge(source_ids, observed.source_event_ids)
+            inputs = dv_explanation_merge(inputs, observed.inputs)
+            j = (j + 1)
+        inputs = dv_explanation_merge(inputs, dv_explanation_model_inputs(mind, other))
+        if contradiction:
+            false
+        else:
+            valid = false
+            reason = "competitor-not-refuted"
+        if dv_has_key(other, "event"):
+            competitor_ids = dv_append(competitor_ids, other.event)
+        i = (i + 1)
+    if (rt_count(slots) == 0):
+        valid = false
+        reason = "no-public-claim-slots"
+    i = 0
+    while dv_and(valid, (i < rt_count(slots))):
+        if (remaining < 1):
+            valid = false
+            reason = "argument-reason-budget"
+        else:
+            var slot = slots[i]
+            var resolved = dv_explanation_slot(model, slots[i])
+            remaining = (remaining - 1)
+            if resolved.valid:
+                var ref = slot.ref
+                var existing = dv_read(mind, slot.ref)
+                if dv_has_key(mind.objects, ref.object):
+                    false
+                else:
+                    valid = false
+                    reason = "unknown-local-claim-object"
+                if dv_and(dv_uncontested(existing), (not dv_same(existing.value, resolved.value))):
+                    valid = false
+                    reason = "claim-conflicts-with-current-evidence"
+                confidence = dv_min(confidence, resolved.confidence)
+                rt_push(claims, dv_with({"slot_id": slot.slot_id, "ref": ref, "value": resolved.value, "trace_step": resolved.trace_step}, "feature_index", slot.feature_index))
+                if dv_uncontested(existing):
+                    false
+                else:
+                    rt_push(effects, dv_assign(ref, resolved.value))
+            else:
+                valid = false
+                reason = "claim-not-covered-by-actual-predictive-trace"
+            i = (i + 1)
+    if (0 < confidence):
+        false
+    else:
+        valid = false
+        reason = "unsupported-zero-confidence"
+    var basis = dv_explanation_merge(dv_find(policy, "basis", []), dv_explanation_merge(source_ids, dv_append(competitor_ids, dv_find(model, "event", ""))))
+    var world = mind
+    var changes = []
+    if valid:
+        var stage = dv_stage(mind, effects, time, dv_append(basis, id), confidence)
+        var j = 0
+        if (stage.status == "ready"):
+            world = stage.world
+            changes = stage.changes
+            while (j < rt_count(changes)):
+                var ref = changes[j].ref
+                world = dv_store(world, ref, dv_with(dv_with(dv_read(world, ref), "source", "abduction"), "estimated", true))
+                j = (j + 1)
+            if (0 < rt_count(changes)):
+                world = dv_with(world, "revision", (mind.revision + 1))
+        else:
+            valid = false
+            reason = stage.status
+    var argument = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": id, "estimated": true, "confidence": confidence, "claims": claims}, "model_event", dv_find(model, "event", "")), "source_event_ids", source_ids), "competitor_events", competitor_ids), "source_revision", mind.revision), "mind_revision_after", world.revision), "inputs", inputs), "changes", changes), "basis", basis)
+    if valid:
+        world = dv_with(world, "history", dv_append(world.history, {"kind": "estimated-model-argument", "argument": argument, "time": time}))
+    return dv_with(dv_with({"accepted": valid, "reason": reason, "world": world, "argument": argument}, "remaining", remaining), "expanded", (budget - remaining))
+
+fn dv_explanation_merge(a, b):
+    var result = a
+    var i = 0
+    while (i < rt_count(b)):
+        if dv_has(result, b[i]):
+            false
+        else:
+            result = dv_append(result, b[i])
+        i = (i + 1)
+    return result

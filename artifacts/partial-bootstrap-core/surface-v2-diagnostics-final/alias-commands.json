@@ -1,0 +1,23 @@
+[
+  {
+    "label": "alias-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "tmp\\dv-alias\\Program.csproj",
+      "-c",
+      "Release",
+      "--no-restore",
+      "--disable-build-servers"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "alias-execute",
+    "argv": [
+      "dotnet",
+      "tmp\\dv-alias\\bin\\Release\\net8.0\\Program.dll"
+    ],
+    "exit": 0
+  }
+]

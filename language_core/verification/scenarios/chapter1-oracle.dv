@@ -1,49 +1,43 @@
-; Independent read-only oracle. Never linked into the session or subjective policy.
-(defn c1_oracle_source (path line id) (dv_m3 "path" path "line" line "id" id))
-(defn c1_oracle_fact (atom) (dv_fact (dv_ref "cognition" "state" atom) true))
-(defn c1_original_heard_requirement ()
- (dv_all (dv_list3
-  (dv_fact (dv_ref "history_claims" "state" "actual_heard") "Huo-relay-and-Su-report")
-  (dv_fact (dv_ref "history_claims" "state" "voice_source") "Tube")
-  (dv_fact (dv_ref "history_claims" "state" "transmission_loss") "stressed-tail-without-leading-qualification"))))
-(defn c1_milestone (id type after)
- (dv_m4 "id" id "type" type "actor" "detective" "after" after))
-(defn c1_oracle_milestones ()
- (let (events (rt_list))
-  (do (rt_push events (dv_m4 "id" "opening" "type" "speech_literal" "actor" "demon" "after" (rt_list)))
-   (rt_push events (dv_with (dv_with (c1_milestone "first_answer" "answer_accepted" (dv_single "opening")) "answer_id" "me") "semantic_kind" "formal_answer"))
-   (rt_push events (dv_with (dv_with (c1_milestone "genuine_rejection" "answer_rejected" (dv_single "first_answer")) "question_id" "original_q2_complete") "semantic_kind" "genuine_rejection"))
-   (rt_push events (dv_with (c1_milestone "serious_wrong_use" "mind_simulation" (dv_single "genuine_rejection")) "semantic_kind" "serious_wrong_model_use"))
-   (rt_push events (dv_with (c1_milestone "new_evidence" "observation" (dv_single "serious_wrong_use")) "requirement" (c1_oracle_fact "cups_precise")))
-   (rt_push events (c1_milestone "ready" "answer_ready" (dv_single "new_evidence")))
-   (rt_push events (dv_with (dv_with (c1_milestone "second_submit" "answer_submitted" (dv_single "ready")) "answer_id" "original_q2_complete") "semantic_kind" "formal_answer"))
-   (rt_push events (dv_with (dv_with (c1_milestone "second_accept" "answer_accepted" (dv_single "second_submit")) "answer_id" "original_q2_complete") "semantic_kind" "formal_answer"))
-   (rt_push events (dv_with (c1_milestone "sharing" "speech_literal" (dv_single "second_accept")) "semantic_kind" "sharing_withdrawal")) events)))
-(defn c1_oracle_questions ()
- (dv_m2 "identity" (dv_m2 "causal_requirements" (dv_single (c1_oracle_fact "me")) "competing_requirements" (rt_list))
- "original_q2_complete" (dv_with (dv_m2 "causal_requirements" (dv_single (c1_original_heard_requirement))
-   "competing_requirements" (rt_list)) "coverage_limit" "Six declared discrete variables; unknown personal wake latency is not claimed or used as a verified timestamp")))
-(defn c1_raw_chapter1_oracle ()
- (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4
-  "format" "dv-oracle-v1" "actor" "detective" "first_question_id" "identity" "target_question_id" "original_q2_complete")
-  "milestones" (c1_oracle_milestones)) "questions" (c1_oracle_questions))
-  "causal_requirements" (dv_single (c1_original_heard_requirement)))
-  "limit" (dv_m4 "origin" "run_start" "destinations" (c1_oracle_destinations) "maximum_game_minutes" 360 "destination" "second_accept"))
-  "source_refs" (dv_pair
-   (c1_oracle_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004")
-   (c1_oracle_source "docs/design-standard.md" 1509 "原题第二问"))))
+// Independent read-only oracle. Never linked into the session or subjective policy.
 
-(defn c1_oracle_destinations ()
- (let (result (dv_list3 "ready" "second_submit" "second_accept"))
-  (do (rt_push result "sharing") result)))
+fn c1_oracle_source(path, line, id):
+    return {"path": path, "line": line, "id": id}
 
-(defn c1_oracle_temporal_contract ()
- (dv_list3
-  (dv_m4 "id" "fixed-alarm-history" "kind" "fixed_history" "actor" "detective"
-   "not_bound" "The alarm is a fixed source-order anchor; no absolute personal wake timestamp is observed")
-  (dv_with (dv_m4 "id" "body-residence-duration" "kind" "body_cumulative" "actor" "detective"
-   "minimum_duration" 3) "not_bound" "No first-chapter quantified >=3-day body-history record; unsupported pragmatic adoption may be withdrawn without notP")
-  (dv_m4 "id" "recalled-latching-history" "kind" "recall" "actor" "detective"
-   "not_bound" "Actual touch recall has source and acquisition time, but no exact past occurrence timestamp; acquisition time is not the past anchor")))
-(defn dvs_chapter1_oracle ()
- (dv_with (c1_raw_chapter1_oracle) "temporal_contract" (c1_oracle_temporal_contract)))
+fn c1_oracle_fact(atom):
+    return dv_fact(dv_ref("cognition", "state", atom), true)
+
+fn c1_original_heard_requirement():
+    return dv_all(dv_list3(dv_fact(dv_ref("history_claims", "state", "actual_heard"), "Huo-relay-and-Su-report"), dv_fact(dv_ref("history_claims", "state", "voice_source"), "Tube"), dv_fact(dv_ref("history_claims", "state", "transmission_loss"), "stressed-tail-without-leading-qualification")))
+
+fn c1_milestone(id, type, after):
+    return {"id": id, "type": type, "actor": "detective", "after": after}
+
+fn c1_oracle_milestones():
+    var events = []
+    rt_push(events, {"id": "opening", "type": "speech_literal", "actor": "demon", "after": []})
+    rt_push(events, dv_with(dv_with(c1_milestone("first_answer", "answer_accepted", dv_single("opening")), "answer_id", "me"), "semantic_kind", "formal_answer"))
+    rt_push(events, dv_with(dv_with(c1_milestone("genuine_rejection", "answer_rejected", dv_single("first_answer")), "question_id", "original_q2_complete"), "semantic_kind", "genuine_rejection"))
+    rt_push(events, dv_with(c1_milestone("serious_wrong_use", "mind_simulation", dv_single("genuine_rejection")), "semantic_kind", "serious_wrong_model_use"))
+    rt_push(events, dv_with(c1_milestone("new_evidence", "observation", dv_single("serious_wrong_use")), "requirement", c1_oracle_fact("cups_precise")))
+    rt_push(events, c1_milestone("ready", "answer_ready", dv_single("new_evidence")))
+    rt_push(events, dv_with(dv_with(c1_milestone("second_submit", "answer_submitted", dv_single("ready")), "answer_id", "original_q2_complete"), "semantic_kind", "formal_answer"))
+    rt_push(events, dv_with(dv_with(c1_milestone("second_accept", "answer_accepted", dv_single("second_submit")), "answer_id", "original_q2_complete"), "semantic_kind", "formal_answer"))
+    rt_push(events, dv_with(c1_milestone("sharing", "speech_literal", dv_single("second_accept")), "semantic_kind", "sharing_withdrawal"))
+    return events
+
+fn c1_oracle_questions():
+    return {"identity": {"causal_requirements": dv_single(c1_oracle_fact("me")), "competing_requirements": []}, "original_q2_complete": dv_with({"causal_requirements": dv_single(c1_original_heard_requirement()), "competing_requirements": []}, "coverage_limit", "Six declared discrete variables; unknown personal wake latency is not claimed or used as a verified timestamp")}
+
+fn c1_raw_chapter1_oracle():
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"format": "dv-oracle-v1", "actor": "detective", "first_question_id": "identity", "target_question_id": "original_q2_complete"}, "milestones", c1_oracle_milestones()), "questions", c1_oracle_questions()), "causal_requirements", dv_single(c1_original_heard_requirement())), "limit", {"origin": "run_start", "destinations": c1_oracle_destinations(), "maximum_game_minutes": 360, "destination": "second_accept"}), "source_refs", dv_pair(c1_oracle_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 46, "s5_question.004"), c1_oracle_source("docs/design-standard.md", 1509, "原题第二问")))
+
+fn c1_oracle_destinations():
+    var result = dv_list3("ready", "second_submit", "second_accept")
+    rt_push(result, "sharing")
+    return result
+
+fn c1_oracle_temporal_contract():
+    return dv_list3({"id": "fixed-alarm-history", "kind": "fixed_history", "actor": "detective", "not_bound": "The alarm is a fixed source-order anchor; no absolute personal wake timestamp is observed"}, dv_with({"id": "body-residence-duration", "kind": "body_cumulative", "actor": "detective", "minimum_duration": 3}, "not_bound", "No first-chapter quantified >=3-day body-history record; unsupported pragmatic adoption may be withdrawn without notP"), {"id": "recalled-latching-history", "kind": "recall", "actor": "detective", "not_bound": "Actual touch recall has source and acquisition time, but no exact past occurrence timestamp; acquisition time is not the past anchor"})
+
+fn dvs_chapter1_oracle():
+    return dv_with(c1_raw_chapter1_oracle(), "temporal_contract", c1_oracle_temporal_contract())

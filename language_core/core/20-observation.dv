@@ -1,177 +1,272 @@
-; Observation adaptation is an explicit trusted boundary. Minds receive no world pointer.
-(defn dv_binding (physical local subject) (dv_m3 "physical" physical "local" local "subject" subject))
-(defn dv_local (bindings physical subject)
-  (let (i 0 result "")
-    (do (while (rt_lt i (rt_count bindings))
-      (let (binding (rt_at bindings i))
-        (do (if (dv_and (rt_eq (dv_get binding "physical") physical) (rt_eq (dv_get binding "subject") subject))
-          (do (dv_require (rt_eq result "") "Ambiguous projection binding") (set result (dv_get binding "local"))) false)
-          (set i (rt_add i 1))))) result)))
-(defn dv_validate_bindings (bindings subject)
-  (let (i 0 locals (rt_list) physicals (rt_list))
-    (do (while (rt_lt i (rt_count bindings))
-      (let (b (rt_at bindings i))
-        (do
-          (if (rt_eq (dv_get b "subject") subject)
-            (do
-              (dv_require (rt_lt 0 (rt_length (dv_get b "local"))) "Empty local identity")
-              (dv_require (rt_not (dv_has locals (dv_get b "local"))) "Local projection cannot bind two objects")
-              (dv_require (rt_not (dv_has physicals (dv_get b "physical"))) "Ambiguous physical binding")
-              (rt_push locals (dv_get b "local")) (rt_push physicals (dv_get b "physical"))) false)
-          (set i (rt_add i 1))))) true)))
-(defn dv_project_value (value bindings subject)
-  (if (rt_is_list value)
-    (if (dv_record_like value)
-      (if (dv_same (dv_find value "type" "") "entity-ref")
-        (let (local (dv_local bindings (dv_get value "id") subject))
-          (if (rt_eq local "") (dv_m2 "known" false "value" false) (dv_m2 "known" true "value" (dv_entity_ref local))))
-        (if (dv_or (dv_same (dv_find value "type" "") "ref") (dv_and (dv_has_key value "object") (dv_and (dv_has_key value "facet") (dv_has_key value "field"))))
-          (let (local (dv_local bindings (dv_get value "object") subject))
-            (if (rt_eq local "") (dv_m2 "known" false "value" false) (dv_m2 "known" true "value" (dv_scoped_ref subject local (dv_get value "facet") (dv_get value "field")))))
-          (if (dv_has_key value "op")
-            (let (op (dv_get value "op"))
-              (if (rt_eq op "constant") (dv_m2 "known" true "value" value)
-                (if (dv_or (rt_eq op "equals") (rt_eq op "at_least"))
-                  (let (p_ref (dv_project_value (dv_get value "ref") bindings subject)
-                        p_val (dv_project_value (dv_get value "value") bindings subject))
-                    (if (dv_and (dv_get p_ref "known") (dv_get p_val "known"))
-                      (dv_m2 "known" true "value" (dv_with (dv_with value "ref" (dv_get p_ref "value")) "value" (dv_get p_val "value")))
-                      (dv_m2 "known" false "value" false)))
-                  (if (rt_eq op "not")
-                    (let (p_item (dv_project_value (dv_get value "item") bindings subject))
-                      (if (dv_get p_item "known")
-                        (dv_m2 "known" true "value" (dv_with value "item" (dv_get p_item "value")))
-                        (dv_m2 "known" false "value" false)))
-                    (if (rt_eq op "all")
-                      (let (items (dv_get value "items") i 0 p_items (rt_list) all_known true)
-                        (do (while (rt_lt i (rt_count items))
-                          (let (p_sub (dv_project_value (rt_at items i) bindings subject))
-                            (do (set all_known (dv_and all_known (dv_get p_sub "known")))
-                              (rt_push p_items (dv_get p_sub "value"))
-                              (set i (rt_add i 1)))))
-                          (if all_known (dv_m2 "known" true "value" (dv_with value "items" p_items)) (dv_m2 "known" false "value" false))))
-                      (dv_m2 "known" false "value" false))))))
-            (let (i 0 items (rt_list) known true)
-              (do (while (rt_lt i (rt_count value))
-                (let (projected (dv_project_value (rt_at value i) bindings subject))
-                  (do (set known (dv_and known (dv_get projected "known"))) (rt_push items (dv_get projected "value")) (set i (rt_add i 1)))))
-                (dv_m2 "known" known "value" items))))))
-      (let (i 0 items (rt_list) known true)
-        (do (while (rt_lt i (rt_count value))
-          (let (projected (dv_project_value (rt_at value i) bindings subject))
-            (do (set known (dv_and known (dv_get projected "known"))) (rt_push items (dv_get projected "value")) (set i (rt_add i 1)))))
-          (dv_m2 "known" known "value" items))))
-    (dv_m2 "known" true "value" value)))
-(defn dv_observation (id subject ref value source origin time trust dependency)
-  (do
-    (dv_unit trust)
-    (dv_require (rt_not (rt_lt time 0)) "Negative observation time")
-    (dv_require (dv_has (dv_append (dv_list3 "perception" "testimony" "recall") (dv_pair "inference" "initial")) source)
-      "Observations use perception, testimony, recall, inference or initial")
-    (dv_with (dv_with (dv_with (dv_with (dv_with
-      (dv_m4 "id" id "subject" subject "ref" ref "value" (dv_clone value))
-      "source" source) "origin" origin) "time" time) "trust" trust) "dependency" dependency)))
-(defn dv_perceive (physical mind bindings grants event_id time)
-  (do
-    (dv_domain physical "physical") (dv_domain mind "mind")
-    (dv_validate_bindings bindings (dv_get mind "subject"))
-    (let (observations (rt_list) i 0 subject (dv_get mind "subject"))
-      (do (while (rt_lt i (rt_count grants))
-        (let (ref (rt_at grants i) local (dv_local bindings (dv_get ref "object") subject) cell (dv_read physical ref))
-          (do
-            (if (dv_and (rt_not (rt_eq local "")) (dv_get cell "known"))
-              (let (mapped (dv_project_value (dv_get cell "value") bindings subject)
-                    local_ref (dv_scoped_ref subject local (dv_get ref "facet") (dv_get ref "field")))
-                (if (dv_get mapped "known")
-                  (rt_push observations (dv_observation (dv_list3 event_id subject local_ref) subject local_ref (dv_get mapped "value")
-                    "perception" "direct" time 1 (dv_pair event_id local_ref))) false)) false)
-            (set i (rt_add i 1))))) observations))))
-(defn dv_perceive_changes (receipt mind bindings grants)
-  (do
-    (dv_require (rt_eq (dv_get receipt "status") "applied") "Only applied world changes can be perceived")
-    (let (changes (dv_get receipt "changes") exposed (rt_list) i 0)
-      (do (while (rt_lt i (rt_count changes))
-        (let (ref (dv_get (rt_at changes i) "ref"))
-          (do (if (dv_has grants ref) (rt_push exposed ref) false) (set i (rt_add i 1)))))
-        (dv_perceive (dv_get receipt "world") mind bindings exposed (dv_get receipt "event") (dv_get receipt "time"))))))
-(defn dv_observation_profile (source_weights threshold)
-  (dv_m2 "weights" source_weights "threshold" (dv_unit threshold)))
-(defn dv_weight (observation profile)
-  (let (weights (dv_get profile "weights")
-        source (dv_get observation "source")
-        weight (dv_find weights source 1))
-    (do (dv_require (rt_not (rt_lt weight 0)) "Negative evidence weight") (rt_mul weight (dv_unit (dv_get observation "trust"))))))
-(defn dv_replace_claim (claims observation)
-  (let (result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count claims))
-      (let (old (rt_at claims i))
-        (do (if (dv_same (dv_get old "dependency") (dv_get observation "dependency")) false (rt_push result (dv_clone old))) (set i (rt_add i 1)))))
-      (rt_push result (dv_clone observation)) result)))
-(defn dv_aggregate (claims profile time)
-  (let (alternatives (rt_list) i 0 total 0 best 0 chosen false best_rel 0)
-    (do
-      (while (rt_lt i (rt_count claims))
-        (let (claim (rt_at claims i) weight (dv_weight claim profile) value (dv_get claim "value") j 0 found false new_items (rt_list))
-          (do
-            (while (rt_lt j (rt_count alternatives))
-              (let (alternative (rt_at alternatives j))
-                (do
-                  (if (dv_same (rt_at alternative 0) value)
-                    (do (rt_push new_items (dv_list3 value (rt_add (rt_at alternative 1) weight) (dv_max (rt_at alternative 2) (dv_unit (dv_get claim "trust"))))) (set found true))
-                    (rt_push new_items alternative)) (set j (rt_add j 1)))))
-            (if (dv_or found (rt_eq weight 0)) false (rt_push new_items (dv_list3 value weight (dv_unit (dv_get claim "trust")))))
-            (set alternatives new_items) (set total (rt_add total weight)) (set i (rt_add i 1)))))
-      (set i 0)
-      (let (distribution (rt_list))
-        (do
-          (while (rt_lt i (rt_count alternatives))
-            (let (alternative (rt_at alternatives i) weight (rt_at alternative 1) rel (rt_at alternative 2))
-              (do
-                (if (rt_lt best weight) (do (set best weight) (set chosen (rt_at alternative 0)) (set best_rel rel)) false)
-                (rt_push distribution (dv_pair (rt_at alternative 0) (if (rt_eq total 0) 0 (rt_div weight total))))
-                (set i (rt_add i 1)))))
-          (let (support_share (if (rt_eq total 0) 0 (rt_div best total))
-                effective_rel (dv_min 1 (dv_max best_rel (dv_min 1 best)))
-                epistemic_confidence (rt_mul support_share effective_rel)
-                cell (dv_cell chosen epistemic_confidence time claims))
-            (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with cell
-              "known" (dv_and (rt_lt 0 total) (rt_not (rt_lt epistemic_confidence (dv_get profile "threshold")))))
-              "conflicted" (rt_lt 1 (rt_count alternatives)))
-              "claims" claims)
-              "alternatives" distribution)
-              "support_share" support_share)
-              "source_reliability" best_rel)))))))
-(defn dv_update_mind (mind observations expected_revision profile)
-  (do
-    (dv_domain mind "mind")
-    (dv_require (rt_eq (dv_get mind "revision") expected_revision) "Stale cognition revision")
-    (let (next (dv_clone mind) i 0 accepted (rt_list) dispositions (rt_list))
-      (do
-        (while (rt_lt i (rt_count observations))
-          (let (observation (rt_at observations i) id (dv_get observation "id") ref (dv_get observation "ref") object_id (dv_get ref "object"))
-            (do
-              (dv_require (rt_eq (dv_get observation "subject") (dv_get mind "subject")) "Foreign observation")
-              (dv_require (rt_not (dv_has (dv_get next "seen") id)) "Repeated observation")
-              (dv_weight observation profile)
-              (if (dv_has_key (dv_get next "objects") object_id) false
-                (set next (dv_add_object next (dv_object object_id "perceived" (rt_list)))))
-              (let (old (dv_read next ref) time (dv_get observation "time"))
-                (if (rt_lt time (dv_get old "time")) (rt_push dispositions (dv_pair id "older-than-current"))
-                  (let (is_perception (rt_eq (dv_get observation "source") "perception")
-                        claims (if (dv_and is_perception (rt_lt (dv_get old "time") time)) (rt_list) (dv_get old "claims")))
-                    (do
-                      (if (dv_and (dv_get old "known") (rt_eq (rt_count claims) 0))
-                        (if (rt_not (dv_and is_perception (rt_lt (dv_get old "time") time)))
-                          (set claims (dv_single (dv_with (dv_with (dv_with (dv_with (dv_with
-                            (dv_m4 "id" (dv_pair "initial" ref) "subject" (dv_get next "subject") "ref" ref "value" (dv_get old "value"))
-                            "source" "initial") "origin" "initial") "time" (dv_get old "time")) "trust" (dv_get old "confidence")) "dependency" (dv_pair "initial" ref)))) false) false)
-                      (let (new_time (dv_max (dv_get old "time") time))
-                        (do
-                          (set next (dv_store next ref (dv_aggregate (dv_replace_claim claims observation) profile new_time)))
-                          (rt_push dispositions (dv_pair id "updated"))))))))
-              (set next (dv_with next "seen" (dv_append (dv_get next "seen") id)))
-              (rt_push accepted (dv_clone observation))
-              (set i (rt_add i 1)))))
-        (set next (dv_with next "revision" (if (rt_eq (rt_count observations) 0) expected_revision (rt_add expected_revision 1))))
-        (set next (dv_with next "history" (dv_append (dv_get mind "history") (dv_m3 "kind" "observation-batch" "observations" accepted "dispositions" dispositions))))
-        (dv_m3 "world" next "dispositions" dispositions "revision" (dv_get next "revision"))))))
+// Observation adaptation is an explicit trusted boundary. Minds receive no world pointer.
+
+fn dv_binding(physical, local, subject):
+    return {"physical": physical, "local": local, "subject": subject}
+
+fn dv_local(bindings, physical, subject):
+    var i = 0
+    var result = ""
+    while (i < rt_count(bindings)):
+        var binding = bindings[i]
+        if dv_and((binding.physical == physical), (binding.subject == subject)):
+            dv_require((result == ""), "Ambiguous projection binding")
+            result = binding.local
+        i = (i + 1)
+    return result
+
+fn dv_validate_bindings(bindings, subject):
+    var i = 0
+    var locals = []
+    var physicals = []
+    while (i < rt_count(bindings)):
+        var b = bindings[i]
+        if (b.subject == subject):
+            dv_require((0 < rt_length(b.local)), "Empty local identity")
+            dv_require((not dv_has(locals, b.local)), "Local projection cannot bind two objects")
+            dv_require((not dv_has(physicals, b.physical)), "Ambiguous physical binding")
+            rt_push(locals, b.local)
+            rt_push(physicals, b.physical)
+        i = (i + 1)
+    return true
+
+fn dv_project_value(value, bindings, subject):
+    if rt_is_list(value):
+        if dv_record_like(value):
+            if dv_same(dv_find(value, "type", ""), "entity-ref"):
+                var local = dv_local(bindings, value.id, subject)
+                if (local == ""):
+                    return {"known": false, "value": false}
+                else:
+                    return {"known": true, "value": dv_entity_ref(local)}
+            else:
+                if dv_or(dv_same(dv_find(value, "type", ""), "ref"), dv_and(dv_has_key(value, "object"), dv_and(dv_has_key(value, "facet"), dv_has_key(value, "field")))):
+                    var local = dv_local(bindings, value.object, subject)
+                    if (local == ""):
+                        return {"known": false, "value": false}
+                    else:
+                        return {"known": true, "value": dv_scoped_ref(subject, local, value.facet, value.field)}
+                else:
+                    if dv_has_key(value, "op"):
+                        var op = value.op
+                        if (op == "constant"):
+                            return {"known": true, "value": value}
+                        else:
+                            if dv_or((op == "equals"), (op == "at_least")):
+                                var p_ref = dv_project_value(value.ref, bindings, subject)
+                                var p_val = dv_project_value(value.value, bindings, subject)
+                                if dv_and(p_ref.known, p_val.known):
+                                    return {"known": true, "value": dv_with(dv_with(value, "ref", p_ref.value), "value", p_val.value)}
+                                else:
+                                    return {"known": false, "value": false}
+                            else:
+                                if (op == "not"):
+                                    var p_item = dv_project_value(value.item, bindings, subject)
+                                    if p_item.known:
+                                        return {"known": true, "value": dv_with(value, "item", p_item.value)}
+                                    else:
+                                        return {"known": false, "value": false}
+                                else:
+                                    if (op == "all"):
+                                        var items = value.items
+                                        var i = 0
+                                        var p_items = []
+                                        var all_known = true
+                                        while (i < rt_count(items)):
+                                            var p_sub = dv_project_value(items[i], bindings, subject)
+                                            all_known = dv_and(all_known, p_sub.known)
+                                            rt_push(p_items, p_sub.value)
+                                            i = (i + 1)
+                                        if all_known:
+                                            return {"known": true, "value": dv_with(value, "items", p_items)}
+                                        else:
+                                            return {"known": false, "value": false}
+                                    else:
+                                        return {"known": false, "value": false}
+                    else:
+                        var i = 0
+                        var items = []
+                        var known = true
+                        while (i < rt_count(value)):
+                            var projected = dv_project_value(value[i], bindings, subject)
+                            known = dv_and(known, projected.known)
+                            rt_push(items, projected.value)
+                            i = (i + 1)
+                        return {"known": known, "value": items}
+        else:
+            var i = 0
+            var items = []
+            var known = true
+            while (i < rt_count(value)):
+                var projected = dv_project_value(value[i], bindings, subject)
+                known = dv_and(known, projected.known)
+                rt_push(items, projected.value)
+                i = (i + 1)
+            return {"known": known, "value": items}
+    else:
+        return {"known": true, "value": value}
+
+fn dv_observation(id, subject, ref, value, source, origin, time, trust, dependency):
+    dv_unit(trust)
+    dv_require((not (time < 0)), "Negative observation time")
+    dv_require(dv_has(dv_append(dv_list3("perception", "testimony", "recall"), dv_pair("inference", "initial")), source), "Observations use perception, testimony, recall, inference or initial")
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"id": id, "subject": subject, "ref": ref, "value": dv_clone(value)}, "source", source), "origin", origin), "time", time), "trust", trust), "dependency", dependency)
+
+fn dv_perceive(physical, mind, bindings, grants, event_id, time):
+    dv_domain(physical, "physical")
+    dv_domain(mind, "mind")
+    dv_validate_bindings(bindings, mind.subject)
+    var observations = []
+    var i = 0
+    var subject = mind.subject
+    while (i < rt_count(grants)):
+        var ref = grants[i]
+        var local = dv_local(bindings, ref.object, subject)
+        var cell = dv_read(physical, ref)
+        if dv_and((not (local == "")), cell.known):
+            var mapped = dv_project_value(cell.value, bindings, subject)
+            var local_ref = dv_scoped_ref(subject, local, ref.facet, ref.field)
+            if mapped.known:
+                rt_push(observations, dv_observation(dv_list3(event_id, subject, local_ref), subject, local_ref, mapped.value, "perception", "direct", time, 1, dv_pair(event_id, local_ref)))
+        i = (i + 1)
+    return observations
+
+fn dv_perceive_changes(receipt, mind, bindings, grants):
+    dv_require((receipt.status == "applied"), "Only applied world changes can be perceived")
+    var changes = receipt.changes
+    var exposed = []
+    var i = 0
+    while (i < rt_count(changes)):
+        var ref = changes[i].ref
+        if dv_has(grants, ref):
+            rt_push(exposed, ref)
+        i = (i + 1)
+    return dv_perceive(receipt.world, mind, bindings, exposed, receipt.event, receipt.time)
+
+fn dv_observation_profile(source_weights, threshold):
+    return {"weights": source_weights, "threshold": dv_unit(threshold)}
+
+fn dv_weight(observation, profile):
+    var weights = profile.weights
+    var source = observation.source
+    var weight = dv_find(weights, source, 1)
+    dv_require((not (weight < 0)), "Negative evidence weight")
+    return (weight * dv_unit(observation.trust))
+
+fn dv_replace_claim(claims, observation):
+    var result = []
+    var i = 0
+    while (i < rt_count(claims)):
+        var old = claims[i]
+        if dv_same(old.dependency, observation.dependency):
+            false
+        else:
+            rt_push(result, dv_clone(old))
+        i = (i + 1)
+    rt_push(result, dv_clone(observation))
+    return result
+
+fn dv_aggregate(claims, profile, time):
+    var alternatives = []
+    var i = 0
+    var total = 0
+    var best = 0
+    var chosen = false
+    var best_rel = 0
+    while (i < rt_count(claims)):
+        var claim = claims[i]
+        var weight = dv_weight(claim, profile)
+        var value = claim.value
+        var j = 0
+        var found = false
+        var new_items = []
+        while (j < rt_count(alternatives)):
+            var alternative = alternatives[j]
+            if dv_same(alternative[0], value):
+                rt_push(new_items, dv_list3(value, (alternative[1] + weight), dv_max(alternative[2], dv_unit(claim.trust))))
+                found = true
+            else:
+                rt_push(new_items, alternative)
+            j = (j + 1)
+        if dv_or(found, (weight == 0)):
+            false
+        else:
+            rt_push(new_items, dv_list3(value, weight, dv_unit(claim.trust)))
+        alternatives = new_items
+        total = (total + weight)
+        i = (i + 1)
+    i = 0
+    var distribution = []
+    while (i < rt_count(alternatives)):
+        var alternative = alternatives[i]
+        var weight = alternative[1]
+        var rel = alternative[2]
+        if (best < weight):
+            best = weight
+            chosen = alternative[0]
+            best_rel = rel
+        var local_1 = false
+        if (total == 0):
+            local_1 = 0
+        else:
+            local_1 = (weight / total)
+        rt_push(distribution, dv_pair(alternative[0], local_1))
+        i = (i + 1)
+    var local_2 = false
+    if (total == 0):
+        local_2 = 0
+    else:
+        local_2 = (best / total)
+    var support_share = local_2
+    var effective_rel = dv_min(1, dv_max(best_rel, dv_min(1, best)))
+    var epistemic_confidence = (support_share * effective_rel)
+    var cell = dv_cell(chosen, epistemic_confidence, time, claims)
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(cell, "known", dv_and((0 < total), (not (epistemic_confidence < profile.threshold)))), "conflicted", (1 < rt_count(alternatives))), "claims", claims), "alternatives", distribution), "support_share", support_share), "source_reliability", best_rel)
+
+fn dv_update_mind(mind, observations, expected_revision, profile):
+    dv_domain(mind, "mind")
+    dv_require((mind.revision == expected_revision), "Stale cognition revision")
+    var next = dv_clone(mind)
+    var i = 0
+    var accepted = []
+    var dispositions = []
+    while (i < rt_count(observations)):
+        var observation = observations[i]
+        var id = observation.id
+        var ref = observation.ref
+        var object_id = ref.object
+        dv_require((observation.subject == mind.subject), "Foreign observation")
+        dv_require((not dv_has(next.seen, id)), "Repeated observation")
+        dv_weight(observation, profile)
+        if dv_has_key(next.objects, object_id):
+            false
+        else:
+            next = dv_add_object(next, dv_object(object_id, "perceived", []))
+        var old = dv_read(next, ref)
+        var time = observation.time
+        if (time < old.time):
+            rt_push(dispositions, dv_pair(id, "older-than-current"))
+        else:
+            var is_perception = (observation.source == "perception")
+            var local_1 = false
+            if dv_and(is_perception, (old.time < time)):
+                local_1 = []
+            else:
+                local_1 = old.claims
+            var claims = local_1
+            if dv_and(old.known, (rt_count(claims) == 0)):
+                if (not dv_and(is_perception, (old.time < time))):
+                    claims = dv_single(dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_pair("initial", ref), "subject": next.subject, "ref": ref, "value": old.value}, "source", "initial"), "origin", "initial"), "time", old.time), "trust", old.confidence), "dependency", dv_pair("initial", ref)))
+            var new_time = dv_max(old.time, time)
+            next = dv_store(next, ref, dv_aggregate(dv_replace_claim(claims, observation), profile, new_time))
+            rt_push(dispositions, dv_pair(id, "updated"))
+        next = dv_with(next, "seen", dv_append(next.seen, id))
+        rt_push(accepted, dv_clone(observation))
+        i = (i + 1)
+    var local_2 = false
+    if (rt_count(observations) == 0):
+        local_2 = expected_revision
+    else:
+        local_2 = (expected_revision + 1)
+    next = dv_with(next, "revision", local_2)
+    next = dv_with(next, "history", dv_append(mind.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions}))
+    return {"world": next, "dispositions": dispositions, "revision": next.revision}

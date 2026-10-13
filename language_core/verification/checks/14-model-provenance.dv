@@ -1,129 +1,241 @@
-(defn v_event_prefix (events stop) (let (items (rt_list) i 0) (do (while (rt_lt i stop) (do (rt_push items (rt_at events i)) (set i (rt_add i 1)))) items)))
-(defn v_record_without (record keys)
-  (let (copy (rt_list) i 0)
-    (do (while (rt_lt i (rt_count record))
-      (do (if (dv_has keys (rt_at (rt_at record i) 0)) false (rt_push copy (rt_at record i))) (set i (rt_add i 1)))) copy)))
-(defn v_model_hypothesis (actor id)
-  (let (items (dv_find (dv_get actor "policy") "hypotheses" (rt_list)) i 0 found (rt_list))
-    (do (while (rt_lt i (rt_count items))
-      (do (if (rt_eq (dv_get (rt_at items i) "id") id) (set found (rt_at items i)) false) (set i (rt_add i 1)))) found)))
-(defn v_model_result (event)
-  (let (data (dv_find event "data" (rt_list)))
-    (dv_find data "result" (v_record_without data (dv_list3 "actor_before" "model_before" "hypothesis")))))
-(defn v_cognitive_before (trace event)
-  (let (events (v_events trace) mind (v_initial_mind trace (dv_get event "actor")) i 0 ancestors (v_ancestors (v_events trace) (dv_get event "id")))
-    (do (while (rt_lt i (rt_count events))
-      (let (prior (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
-        (do (if (dv_and (rt_eq (dv_get prior "actor") (dv_get event "actor")) (dv_has ancestors (dv_get prior "id")))
-          (let (candidate (dv_find data "mind_after" (if (rt_eq (dv_get prior "type") "model_argument_accepted") (dv_find (dv_find data "result" (rt_list)) "world" (rt_list)) (if (rt_eq (dv_get prior "type") "inference") (dv_find (dv_find data "receipt" (rt_list)) "world" (rt_list)) (rt_list)))))
-            (if (rt_lt 0 (rt_count candidate))
-              (if (rt_lt (dv_get mind "revision") (dv_get candidate "revision")) (set mind candidate) false) false)) false)
-          (set i (rt_add i 1))))) mind)))
-(defn v_model_checks_compute (manifest trace)
-  (let (events (v_events trace) result (rt_list) states (rt_list) i 0 catalog (v_frozen_catalog manifest trace))
-    (do (while (rt_lt i (rt_count events))
-      (let (event (rt_at events i) data (dv_get (rt_at events i) "data") kind (dv_get (rt_at events i) "type"))
-        (do
-          (if (rt_eq kind "speech_choice_prediction")
-            (let (id (dv_get event "actor") state (dv_find states (dv_get event "actor") (rt_list)) frozen (v_frozen_actor trace (dv_get event "actor"))
-                  total (dv_find (dv_get (v_frozen_actor trace (dv_get event "actor")) "policy") "model_budget" 0) valid (rt_eq (dv_get (v_paid_prediction_check trace event) "status") "supported"))
-              (do (if (rt_lt 0 (rt_count state))
-                (do (set total (dv_get state "remaining"))
-                  (set valid (dv_and valid (dv_and (rt_eq (dv_get state "status") "supported") (v_ancestor events (dv_get event "id") (dv_get state "event")))))) false)
-                (set valid (dv_and valid (rt_eq total (dv_find data "budget_before" -1))))
-                (if (rt_lt 0 (dv_find data "charged_units" 0))
-                (set states (dv_with states id (dv_with (dv_m4 "remaining" (dv_find data "budget_after" total) "work_remaining" (dv_find state "work_remaining" 0) "paid" (dv_find state "paid" "") "event" (dv_get event "id")) "status" (if valid "supported" "violated")))) false)
-                (rt_push result (v_finding "speech_model_budget_provenance" (if valid "supported" "violated") "发言预选与模型演算共用真实串行预算；核对前次预算事件父边和实际逐节点扣费" (dv_single (dv_get event "id")))))) false)
-          (if (dv_has (dv_list3 "mind_simulation" "model_recheck" "factor_prune") kind)
-          (let (frozen (v_frozen_actor trace (dv_get event "actor")) before (dv_find data "actor_before" (rt_list))
-                origin (v_origin_execution events event) actual (v_model_result event) status "insufficient_evidence"
-                reason "缺少真实模型输入、付费执行或当前本人快照，不能按explained标签判定" expected (rt_list) checks (rt_list))
-            (do
-              (if (dv_and (rt_lt 0 (rt_count before)) (dv_and (rt_lt 0 (rt_count frozen)) (rt_lt 0 (rt_count origin))))
-                (let (id (dv_get event "actor") state (dv_find states (dv_get event "actor") (rt_list))
-                      paid (dv_get origin "data") policy (dv_get before "policy") total (dv_find (dv_get frozen "policy") "model_budget" 0)
-                      work (dv_find (dv_find catalog (dv_find (dv_get (dv_get origin "data") "action") "kind" "") (rt_list)) "work_limit" 0)
-                      hypothesis (dv_find data "hypothesis" (rt_list)) valid true missing false)
-                  (do
-                    (if (rt_lt 0 (rt_count state))
-                      (do (set total (dv_get state "remaining"))
-                        (if (rt_eq (dv_get state "paid") (dv_get origin "id")) (set work (dv_get state "work_remaining")) false)) false)
-                    (if (rt_eq kind "factor_prune")
-                      (do (set expected (v_record_without (v_prune_factor_prune before (v_event_prefix events i) (dv_get event "time") "judge-local") (dv_single "actor_before")))
-                        (set valid (dv_and valid (dv_same (dv_find policy "factor_domains" (rt_list)) (dv_find (dv_get frozen "policy") "factor_domains" (rt_list)))))
-                        (set valid (dv_and valid (dv_same (dv_find policy "factor_constraints" (rt_list)) (dv_find (dv_get frozen "policy") "factor_constraints" (rt_list)))))
-                        (set valid (dv_and valid (rt_eq (dv_find policy "prune_confidence_limit" -1) (dv_find (dv_get frozen "policy") "prune_confidence_limit" -2)))))
-                    (if (rt_eq kind "model_recheck")
-                      (let (old (dv_find data "model_before" (rt_list)))
-                        (if (rt_lt 0 (rt_count old))
-                          (do (set expected (v_model_model_recheck before old))
-                            (set valid (dv_and valid (v_ancestor events (dv_get event "id") (dv_find old "event" ""))))
-                            (set valid (dv_and valid (v_model_cache_matches trace old))))
-                          (do (set missing true) (set valid false))))
-                      (if (rt_lt 0 (rt_count hypothesis))
-                        (do (set valid (dv_and valid (dv_same hypothesis (v_model_hypothesis frozen (dv_get hypothesis "id")))))
-                          (set expected (v_model_model before hypothesis i (dv_get event "time") "judge-local")))
-                        (do (set missing true) (set valid false)))))
-                    (if (rt_eq kind "factor_prune")
-                      (let (certificates (dv_find actual "certificates" (rt_list)) j 0 ancestors (v_ancestors events (dv_get event "id")))
-                        (do (while (rt_lt j (rt_count certificates))
-                          (let (roots (dv_get (rt_at certificates j) "source_event_ids") k 0)
-                            (do (while (rt_lt k (rt_count roots))
-                              (do (if (dv_has ancestors (rt_at roots k)) false (set missing true)) (set k (rt_add k 1)))) (set j (rt_add j 1))))) )) false)
-                    (set checks (dv_m4 "actual_replay" (dv_same expected actual) "mind_origin" (dv_same (dv_get before "mind") (v_cognitive_before trace event))
-                      "total_budget" (rt_eq total (dv_find policy "model_budget" -1)) "method_work_budget" (rt_eq work (dv_find policy "model_work_remaining" -1))))
-                    (set valid (dv_and valid (dv_and (dv_get checks "actual_replay") (dv_and (dv_get checks "mind_origin") (dv_and (dv_get checks "total_budget") (dv_get checks "method_work_budget"))))))
-                    (set valid (dv_and valid (dv_and (rt_eq (dv_find (dv_get paid "action") "kind" "") "replay")
-                      (dv_and (v_action_frozen trace id (dv_get paid "action")) (rt_eq (dv_get (dv_get (dv_get paid "receipt") "execution") "status") "applied")))))
-                    (set valid (dv_and valid (dv_same (dv_find before "response_models" (rt_list)) (dv_find frozen "response_models" (rt_list)))))
-                    (if (rt_lt 0 (rt_count state)) (set valid (dv_and valid (dv_and (rt_eq (dv_find state "status" "") "supported") (v_ancestor events (dv_get event "id") (dv_get state "event"))))) false)
-                    (set status (if missing "insufficient_evidence" (if valid "supported" "violated")))
-                    (set reason "独立重演本人的假设、时序法则、条件回应及逐特征观测比较；核对真实付费执行、认知来源和串行模型预算")
-                    (set states (dv_with states id (dv_with (dv_m4 "remaining" (dv_find actual "remaining" total) "work_remaining" (dv_find actual "work_remaining" work) "paid" (dv_get origin "id") "event" (dv_get event "id")) "status" status))))) false)
-              (rt_push result (dv_with (dv_with (v_finding (if (rt_eq kind "factor_prune") "factor_prune_provenance" "model_replay_provenance") status reason (dv_pair (dv_get event "id") (dv_find origin "id" false))) "actor" (dv_get event "actor")) "checks" checks)))) false)
-          (set i (rt_add i 1))))) result)))
-(defn v_model_checks (manifest trace)
-  (if (dv_has_key trace "judge_model_findings") (dv_get trace "judge_model_findings") (v_model_checks_compute manifest trace)))
-(defn v_model_verified (manifest trace id)
-  (let (findings (v_model_checks manifest trace) i 0 valid false)
-    (do (while (rt_lt i (rt_count findings))
-      (let (finding (rt_at findings i))
-        (do (if (dv_and (rt_eq (rt_at (dv_get finding "evidence_refs") 0) id) (rt_eq (dv_get finding "status") "supported")) (set valid true) false)
-          (set i (rt_add i 1))))) valid)))
+fn v_event_prefix(events, stop):
+    var items = []
+    var i = 0
+    while (i < stop):
+        rt_push(items, events[i])
+        i = (i + 1)
+    return items
 
+fn v_record_without(record, keys):
+    var copy = []
+    var i = 0
+    while (i < rt_count(record)):
+        if dv_has(keys, record[i][0]):
+            false
+        else:
+            rt_push(copy, record[i])
+        i = (i + 1)
+    return copy
 
+fn v_model_hypothesis(actor, id):
+    var items = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    var found = []
+    while (i < rt_count(items)):
+        if (items[i].id == id):
+            found = items[i]
+        i = (i + 1)
+    return found
 
+fn v_model_result(event):
+    var data = dv_find(event, "data", [])
+    return dv_find(data, "result", v_record_without(data, dv_list3("actor_before", "model_before", "hypothesis")))
 
+fn v_cognitive_before(trace, event):
+    var events = v_events(trace)
+    var mind = v_initial_mind(trace, event.actor)
+    var i = 0
+    var ancestors = v_ancestors(v_events(trace), event.id)
+    while (i < rt_count(events)):
+        var prior = events[i]
+        var data = dv_find(events[i], "data", [])
+        if dv_and((prior.actor == event.actor), dv_has(ancestors, prior.id)):
+            var local_1 = false
+            if (prior.type == "model_argument_accepted"):
+                local_1 = dv_find(dv_find(data, "result", []), "world", [])
+            else:
+                if (prior.type == "inference"):
+                    local_1 = dv_find(dv_find(data, "receipt", []), "world", [])
+                else:
+                    local_1 = []
+            var candidate = dv_find(data, "mind_after", local_1)
+            if (0 < rt_count(candidate)):
+                if (mind.revision < candidate.revision):
+                    mind = candidate
+        i = (i + 1)
+    return mind
 
-(defn v_model_cache_matches (trace cached)
-  (let (event (v_event (v_events trace) (dv_find cached "event" "")) body (v_record_without cached (dv_list3 "event" "validated_by_inputs" "validated_by_argument")) raw (v_model_result (v_event (v_events trace) (dv_find cached "event" ""))) before (dv_find (dv_find (v_event (v_events trace) (dv_find cached "event" "")) "data" (rt_list)) "actor_before" (rt_list)))
-    (if (dv_has_key body "validation_inputs")
-      (let (inputs (dv_explanation_model_inputs (dv_get before "mind") raw) comparisons (dv_find raw "comparisons" (rt_list)) i 0)
-        (do (while (rt_lt i (rt_count comparisons)) (do (set inputs (dv_explanation_merge inputs (dv_find (rt_at comparisons i) "observed_cells" (rt_list)))) (set i (rt_add i 1))))
-          (dv_same body (dv_with (dv_with (dv_with raw "validation_inputs" inputs) "source_adoptions" (dv_get (dv_get before "mind") "adoptions")) "source_response_models" (dv_find before "response_models" (rt_list))))))
-      (dv_same body raw))))
+fn v_model_checks_compute(manifest, trace):
+    var events = v_events(trace)
+    var result = []
+    var states = []
+    var i = 0
+    var catalog = v_frozen_catalog(manifest, trace)
+    while (i < rt_count(events)):
+        var event = events[i]
+        var data = events[i].data
+        var kind = events[i].type
+        if (kind == "speech_choice_prediction"):
+            var id = event.actor
+            var state = dv_find(states, event.actor, [])
+            var frozen = v_frozen_actor(trace, event.actor)
+            var total = dv_find(v_frozen_actor(trace, event.actor).policy, "model_budget", 0)
+            var valid = (v_paid_prediction_check(trace, event).status == "supported")
+            if (0 < rt_count(state)):
+                total = state.remaining
+                valid = dv_and(valid, dv_and((state.status == "supported"), v_ancestor(events, event.id, state.event)))
+            valid = dv_and(valid, (total == dv_find(data, "budget_before", -1)))
+            if (0 < dv_find(data, "charged_units", 0)):
+                var local_1 = false
+                if valid:
+                    local_1 = "supported"
+                else:
+                    local_1 = "violated"
+                states = dv_with(states, id, dv_with({"remaining": dv_find(data, "budget_after", total), "work_remaining": dv_find(state, "work_remaining", 0), "paid": dv_find(state, "paid", ""), "event": event.id}, "status", local_1))
+            var local_2 = false
+            if valid:
+                local_2 = "supported"
+            else:
+                local_2 = "violated"
+            rt_push(result, v_finding("speech_model_budget_provenance", local_2, "发言预选与模型演算共用真实串行预算；核对前次预算事件父边和实际逐节点扣费", dv_single(event.id)))
+        if dv_has(dv_list3("mind_simulation", "model_recheck", "factor_prune"), kind):
+            var frozen = v_frozen_actor(trace, event.actor)
+            var before = dv_find(data, "actor_before", [])
+            var origin = v_origin_execution(events, event)
+            var actual = v_model_result(event)
+            var status = "insufficient_evidence"
+            var reason = "缺少真实模型输入、付费执行或当前本人快照，不能按explained标签判定"
+            var expected = []
+            var checks = []
+            if dv_and((0 < rt_count(before)), dv_and((0 < rt_count(frozen)), (0 < rt_count(origin)))):
+                var id = event.actor
+                var state = dv_find(states, event.actor, [])
+                var paid = origin.data
+                var policy = before.policy
+                var total = dv_find(frozen.policy, "model_budget", 0)
+                var work = dv_find(dv_find(catalog, dv_find(origin.data.action, "kind", ""), []), "work_limit", 0)
+                var hypothesis = dv_find(data, "hypothesis", [])
+                var valid = true
+                var missing = false
+                if (0 < rt_count(state)):
+                    total = state.remaining
+                    if (state.paid == origin.id):
+                        work = state.work_remaining
+                if (kind == "factor_prune"):
+                    expected = v_record_without(v_prune_factor_prune(before, v_event_prefix(events, i), event.time, "judge-local"), dv_single("actor_before"))
+                    valid = dv_and(valid, dv_same(dv_find(policy, "factor_domains", []), dv_find(frozen.policy, "factor_domains", [])))
+                    valid = dv_and(valid, dv_same(dv_find(policy, "factor_constraints", []), dv_find(frozen.policy, "factor_constraints", [])))
+                    valid = dv_and(valid, (dv_find(policy, "prune_confidence_limit", -1) == dv_find(frozen.policy, "prune_confidence_limit", -2)))
+                else:
+                    if (kind == "model_recheck"):
+                        var old = dv_find(data, "model_before", [])
+                        if (0 < rt_count(old)):
+                            expected = v_model_model_recheck(before, old)
+                            valid = dv_and(valid, v_ancestor(events, event.id, dv_find(old, "event", "")))
+                            valid = dv_and(valid, v_model_cache_matches(trace, old))
+                        else:
+                            missing = true
+                            valid = false
+                    else:
+                        if (0 < rt_count(hypothesis)):
+                            valid = dv_and(valid, dv_same(hypothesis, v_model_hypothesis(frozen, hypothesis.id)))
+                            expected = v_model_model(before, hypothesis, i, event.time, "judge-local")
+                        else:
+                            missing = true
+                            valid = false
+                if (kind == "factor_prune"):
+                    var certificates = dv_find(actual, "certificates", [])
+                    var j = 0
+                    var ancestors = v_ancestors(events, event.id)
+                    while (j < rt_count(certificates)):
+                        var roots = certificates[j].source_event_ids
+                        var k = 0
+                        while (k < rt_count(roots)):
+                            if dv_has(ancestors, roots[k]):
+                                false
+                            else:
+                                missing = true
+                            k = (k + 1)
+                        j = (j + 1)
+                checks = {"actual_replay": dv_same(expected, actual), "mind_origin": dv_same(before.mind, v_cognitive_before(trace, event)), "total_budget": (total == dv_find(policy, "model_budget", -1)), "method_work_budget": (work == dv_find(policy, "model_work_remaining", -1))}
+                valid = dv_and(valid, dv_and(checks.actual_replay, dv_and(checks.mind_origin, dv_and(checks.total_budget, checks.method_work_budget))))
+                valid = dv_and(valid, dv_and((dv_find(paid.action, "kind", "") == "replay"), dv_and(v_action_frozen(trace, id, paid.action), (paid.receipt.execution.status == "applied"))))
+                valid = dv_and(valid, dv_same(dv_find(before, "response_models", []), dv_find(frozen, "response_models", [])))
+                if (0 < rt_count(state)):
+                    valid = dv_and(valid, dv_and((dv_find(state, "status", "") == "supported"), v_ancestor(events, event.id, state.event)))
+                var local_3 = false
+                if missing:
+                    local_3 = "insufficient_evidence"
+                else:
+                    if valid:
+                        local_3 = "supported"
+                    else:
+                        local_3 = "violated"
+                status = local_3
+                reason = "独立重演本人的假设、时序法则、条件回应及逐特征观测比较；核对真实付费执行、认知来源和串行模型预算"
+                states = dv_with(states, id, dv_with({"remaining": dv_find(actual, "remaining", total), "work_remaining": dv_find(actual, "work_remaining", work), "paid": origin.id, "event": event.id}, "status", status))
+            var local_4 = false
+            if (kind == "factor_prune"):
+                local_4 = "factor_prune_provenance"
+            else:
+                local_4 = "model_replay_provenance"
+            rt_push(result, dv_with(dv_with(v_finding(local_4, status, reason, dv_pair(event.id, dv_find(origin, "id", false))), "actor", event.actor), "checks", checks))
+        i = (i + 1)
+    return result
 
+fn v_model_checks(manifest, trace):
+    if dv_has_key(trace, "judge_model_findings"):
+        return trace.judge_model_findings
+    else:
+        return v_model_checks_compute(manifest, trace)
 
+fn v_model_verified(manifest, trace, id):
+    var findings = v_model_checks(manifest, trace)
+    var i = 0
+    var valid = false
+    while (i < rt_count(findings)):
+        var finding = findings[i]
+        if dv_and((finding.evidence_refs[0] == id), (finding.status == "supported")):
+            valid = true
+        i = (i + 1)
+    return valid
 
-(defn v_runtime_policy_valid (trace event policy)
-  (let (frozen (dv_get (v_frozen_actor trace (dv_get event "actor")) "policy") events (v_events trace) i 0 stopped false
-        remaining (dv_find (dv_get (v_frozen_actor trace (dv_get event "actor")) "policy") "plan_budget" 0) valid true
-        keys (dv_list3 "model_budget" "model_work_remaining" "reason_budget") origin (dv_find (dv_find trace "configuration" (rt_list)) "time_origin" (rt_list))
-        policy_time (dv_get event "time") receiver (dv_has (dv_pair "implicature_withdrawn" "proposal_scope_reassessment") (dv_get event "type")))
-    (do (rt_push keys "plan_budget") (rt_push keys "remaining_game_time")
-      (if receiver (set policy_time (dv_get (dv_get (dv_get trace "initial") "physical") "time")) false)
-      (while (dv_and (rt_not stopped) (rt_lt i (rt_count events)))
-        (let (prior (rt_at events i))
-          (do (if (rt_eq (dv_get prior "id") (dv_get event "id")) (set stopped true) false)
-            (if (dv_and (rt_not stopped) (dv_and (rt_eq (dv_get prior "actor") (dv_get event "actor"))
-              (dv_has (dv_pair "planning_choice" "planning_stop") (dv_get prior "type"))))
-            (let (spent (dv_find (dv_get prior "data") "plan_expansions" 0))
-              (do (set valid (dv_and valid (dv_and (rt_not (rt_lt spent 0)) (rt_not (rt_lt remaining spent)))))
-                (set remaining (rt_sub remaining spent))
-                (if receiver (set policy_time (dv_get prior "time")) false))) false) (set i (rt_add i 1)))))
-      (set valid (dv_and stopped (dv_and valid (rt_eq remaining (dv_find policy "plan_budget" 0)))))
-      (if (dv_has_key policy "remaining_game_time")
-        (if (dv_has_key origin "horizon")
-          (set valid (dv_and valid (rt_eq (dv_get policy "remaining_game_time") (rt_sub (dv_get origin "horizon") policy_time))))
-          (set valid false)) false)
-      (dv_and valid (dv_same (v_record_without policy keys) (v_record_without frozen keys))))))
+fn v_model_cache_matches(trace, cached):
+    var event = v_event(v_events(trace), dv_find(cached, "event", ""))
+    var body = v_record_without(cached, dv_list3("event", "validated_by_inputs", "validated_by_argument"))
+    var raw = v_model_result(v_event(v_events(trace), dv_find(cached, "event", "")))
+    var before = dv_find(dv_find(v_event(v_events(trace), dv_find(cached, "event", "")), "data", []), "actor_before", [])
+    if dv_has_key(body, "validation_inputs"):
+        var inputs = dv_explanation_model_inputs(before.mind, raw)
+        var comparisons = dv_find(raw, "comparisons", [])
+        var i = 0
+        while (i < rt_count(comparisons)):
+            inputs = dv_explanation_merge(inputs, dv_find(comparisons[i], "observed_cells", []))
+            i = (i + 1)
+        return dv_same(body, dv_with(dv_with(dv_with(raw, "validation_inputs", inputs), "source_adoptions", before.mind.adoptions), "source_response_models", dv_find(before, "response_models", [])))
+    else:
+        return dv_same(body, raw)
+
+fn v_runtime_policy_valid(trace, event, policy):
+    var frozen = v_frozen_actor(trace, event.actor).policy
+    var events = v_events(trace)
+    var i = 0
+    var stopped = false
+    var remaining = dv_find(v_frozen_actor(trace, event.actor).policy, "plan_budget", 0)
+    var valid = true
+    var keys = dv_list3("model_budget", "model_work_remaining", "reason_budget")
+    var origin = dv_find(dv_find(trace, "configuration", []), "time_origin", [])
+    var policy_time = event.time
+    var receiver = dv_has(dv_pair("implicature_withdrawn", "proposal_scope_reassessment"), event.type)
+    rt_push(keys, "plan_budget")
+    rt_push(keys, "remaining_game_time")
+    if receiver:
+        policy_time = trace.initial.physical.time
+    while dv_and((not stopped), (i < rt_count(events))):
+        var prior = events[i]
+        if (prior.id == event.id):
+            stopped = true
+        if dv_and((not stopped), dv_and((prior.actor == event.actor), dv_has(dv_pair("planning_choice", "planning_stop"), prior.type))):
+            var spent = dv_find(prior.data, "plan_expansions", 0)
+            valid = dv_and(valid, dv_and((not (spent < 0)), (not (remaining < spent))))
+            remaining = (remaining - spent)
+            if receiver:
+                policy_time = prior.time
+        i = (i + 1)
+    valid = dv_and(stopped, dv_and(valid, (remaining == dv_find(policy, "plan_budget", 0))))
+    if dv_has_key(policy, "remaining_game_time"):
+        if dv_has_key(origin, "horizon"):
+            valid = dv_and(valid, (policy.remaining_game_time == (origin.horizon - policy_time)))
+        else:
+            valid = false
+    return dv_and(valid, dv_same(v_record_without(policy, keys), v_record_without(frozen, keys)))

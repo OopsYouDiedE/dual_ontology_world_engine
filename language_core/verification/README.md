@@ -31,6 +31,15 @@ report/10-readable.dv根据判定和轨迹生成中文报告。全部领域算�
 
 ## 内容模块
 
-chapter1-laws、chapter1-pragmatics、chapter1-content、chapter1-history提供章节实例；chapter1-verification-config提供运行配置，chapter1-oracle提供独立判定内容。新的语法样例位于surface-v1-proposal。
+chapter1-laws、chapter1-pragmatics、chapter1-content、chapter1-history提供章节实例；chapter1-verification-config提供运行配置，chapter1-oracle提供独立判定内容。正式 chapter1 源码已经使用 surface-v2；surface-v1-proposal 是历史提案。
 
 模块结构见[DESIGN.md](DESIGN.md)，新书写格式见[SYNTAX.md](../SYNTAX.md)。
+
+
+新语法正式单局入口：
+
+```powershell
+python language_core/tools/run_verification.py --config language_core/verification/run-surface-v2.json --out artifacts/partial-bootstrap-core/surface-v2-run-<new> --session-only --process-timeout-seconds 600
+```
+
+该计划另行编译执行 cognitive-semantics.dv，输出 inputs/cognitive-semantics.json。它是独立的刻画机制示例，不代表第一章发生了新增刻画事件。工程进程时限不改变游戏预算。完整执行链与原始轨迹保存在新输出目录。

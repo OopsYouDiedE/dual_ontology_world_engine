@@ -1,831 +1,684 @@
-; Historical physical rules. Source references are provenance, not runtime imports.
-; Replaying these bodies does not assert that their premises occurred.
-; 声路与真相.story:125 smoke procedure.
-(axiom c1_hist_smoke 1 (history knowledge)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "smoke_due") true)
-  (dv_fact (dv_ref history "state" "door_open") true)))
- (dv_pair (dv_assign (dv_ref knowledge "state" "predicted_ash_fan") true)
-  (dv_assign (dv_ref history "state" "smoke_entered") true)))
-(axiom c1_hist_wedge_soot 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref history "state" "smoke_due") true)
-  (dv_fact (dv_ref history "state" "door_open") true)
-  (dv_fact (dv_ref history "state" "door_wedged") true)))
- (dv_single (dv_assign (dv_ref knowledge "state" "predicted_wedge_soot") true)))
-; 声路与真相.story:126 footprint procedure. Each sole and direction is a candidate input.
-(axiom c1_hist_footprint 1 (history knowledge sole direction result_field)
- (dv_all (c1_list_5
-  (dv_fact (dv_ref history "state" "door_changed") true)
-  (dv_fact (dv_ref history "state" "at_origin") true)
-  (dv_fact (dv_ref knowledge "state" "predicted_ash_fan") true)
-  (dv_fact (dv_ref history "state" "sole") sole)
-  (dv_fact (dv_ref history "state" "direction") direction)))
- (dv_single (dv_assign (dv_ref knowledge "state" result_field) true)))
-; 声路与真相.story:127 cloth procedure. Placing the cloth is a separate conditional response.
-(axiom c1_hist_cloth 1 (history knowledge)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "cloth_placed") true)
-  (dv_fact (dv_ref history "state" "prints_exist") true)))
- (dv_single (dv_assign (dv_ref knowledge "state" "predicted_cloth_over_heel") true)))
-; 声路与真相.story:87-99. Intelligibility and received meaning are distinct.
-(axiom c1_hist_tube_full 1 (history listener words)
- (dv_all (dv_list3
-  (dv_fact (dv_ref history "state" "voice_source") "Tube")
-  (dv_fact (dv_ref history "state" "words") words)
-  (dv_fact (dv_ref listener "state" "location") "hall")))
- (dv_list3
-  (dv_assign (dv_ref history "heard_form" listener) "full")
-  (dv_assign (dv_ref history "heard_words" listener) words)
-  (dv_assign (dv_ref history "heard_origin" listener) "Tube")))
-(axiom c1_hist_tube_tail 1 (history listener room words tail)
- (dv_all (c1_list_4
-  (dv_fact (dv_ref history "state" "voice_source") "Tube")
-  (dv_fact (dv_ref history "state" "words") words)
-  (dv_fact (dv_ref listener "state" "location") room)
-  (dv_fact (dv_ref history "loose_junction" room) true)))
- (dv_list3
-  (dv_assign (dv_ref history "heard_form" listener) "tail")
-  (dv_assign (dv_ref history "heard_words" listener) tail)
-  (dv_assign (dv_ref history "heard_origin" listener) "unresolved")))
-(axiom c1_hist_tube_hum 1 (history listener)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "voice_source") "Tube")
-  (dv_fact (dv_ref listener "state" "location") "pantry")))
- (dv_pair
-  (dv_assign (dv_ref history "heard_form" listener) "hum")
-  (dv_assign (dv_ref history "heard_words" listener) "unintelligible")))
-(axiom c1_hist_tube_alarm_only 1 (history listener)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "voice_source") "Tube")
-  (dv_fact (dv_ref listener "state" "location") "R05")))
- (dv_pair
-  (dv_assign (dv_ref history "heard_form" listener) "alarm-only")
-  (dv_assign (dv_ref history "heard_words" listener) "unintelligible")))
-; No historical response, timing, exact-day evidence or accepted answer is manufactured here.
+// Historical physical rules. Source references are provenance, not runtime imports.
+// Replaying these bodies does not assert that their premises occurred.
+// 声路与真相.story:125 smoke procedure.
+// 声路与真相.story:126 footprint procedure. Each sole and direction is a candidate input.
+// 声路与真相.story:127 cloth procedure. Placing the cloth is a separate conditional response.
+// 声路与真相.story:87-99. Intelligibility and received meaning are distinct.
+// No historical response, timing, exact-day evidence or accepted answer is manufactured here.
+// Outside caller alternatives remain separate from copper-transmitted speech.
+// 声路与真相.story:89 outside full / door-interior muffled / loose-junction propagation.
+// The input variables are assumptions, not endpoint conclusions.
+// Origin setup defines episode occurrence registers, not the physical presence of old traces.
+// Fixed external input. Smoke remains due after its source time; it is not retroactively cancelled.
+// Content conditions from design §4.2. Nobody receives the original full words after only a tail.
+// Fork marks require the pianist's own actual fork action, not any actor opening a door.
+// No request is created before the requester actually has a full instruction and is present.
+// A branch validates the shared response choice. Trust does not directly trigger a world effect.
+// Encoding existing six-variable propositions as scalar coordinates adds no new conclusion.
+// No strangers->zero rule. Missing historical relationship stays unknown.
+// A joint request model compares the two actually received reports with inspection.
+// Empty weighted appraisal terms are deliberate: trust enters the modeled outcome,
+// not a second source-specific bonus. Unknown relationships never become zero.
+// Source event 0 is the alarm, not a generic all-bells wake axiom.
+// This named episodic model is usable only with the actor's independently obtained anchor.
+// Stable event ordering retains all same-time rules. Times below are model coordinates,
+// not claimed measurements of an individual's forgotten reaction latency.
+// Author sequence 6: smoke reaches the pantry. This is an event-order rule;
+// no number of minutes, concentration threshold or response delay is asserted.
+// These are local modeling assumptions, not observations or factor evidence.
+// An existing V3 statement may be offered toward the standing original question.
+// Its literal source claim is not a complete causal account of what the latch actor heard.
+// The sharing goal concerns an actual transmission, never a predicted listener acceptance.
 
-; Outside caller alternatives remain separate from copper-transmitted speech.
-; 声路与真相.story:89 outside full / door-interior muffled / loose-junction propagation.
-(axiom c1_hist_outside_full 1 (history listener words)
- (dv_all (dv_list3
-  (dv_fact (dv_ref history "state" "voice_source") "OutsideDoor")
-  (dv_fact (dv_ref history "state" "words") words)
-  (dv_fact (dv_ref listener "state" "location") "outside_door")))
- (dv_list3
-  (dv_assign (dv_ref history "heard_form" listener) "full")
-  (dv_assign (dv_ref history "heard_words" listener) words)
-  (dv_assign (dv_ref history "heard_origin" listener) "OutsideDoor")))
-(axiom c1_hist_outside_muffled 1 (history listener)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "voice_source") "OutsideDoor")
-  (dv_fact (dv_ref listener "state" "location") "foyer")))
- (dv_pair
-  (dv_assign (dv_ref history "heard_form" listener) "muffled-full")
-  (dv_assign (dv_ref history "heard_origin" listener) "unresolved")))
-(axiom c1_hist_outside_junction 1 (history listener room)
- (dv_all (c1_list_4
-  (dv_fact (dv_ref history "state" "voice_source") "OutsideDoor")
-  (dv_fact (dv_ref listener "state" "location") room)
-  (dv_fact (dv_ref history "loose_junction" "foyer") true)
-  (dv_fact (dv_ref history "loose_junction" room) true)))
- (dv_pair
-  (dv_assign (dv_ref history "heard_form" listener) "muffled-full")
-  (dv_assign (dv_ref history "heard_origin" listener) "unresolved")))
+axiom c1_hist_smoke(history, knowledge):
+    return dv_axiom("c1_hist_smoke", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "smoke_due"), true), dv_fact(dv_ref(history, "state", "door_open"), true))), dv_pair(dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_assign(dv_ref(history, "state", "smoke_entered"), true)))
 
-; The input variables are assumptions, not endpoint conclusions.
-; Origin setup defines episode occurrence registers, not the physical presence of old traces.
-(axiom c1_hist_origin 1 (history knowledge su_room huo_room)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "inputs" "su_origin") su_room)
-  (dv_fact (dv_ref history "inputs" "huo_origin") huo_room)))
- (c1_list_12
-  (dv_assign (dv_ref "past.su" "state" "location") su_room)
-  (dv_assign (dv_ref "past.huo" "state" "location") huo_room)
-  (dv_assign (dv_ref "past.detective" "state" "location") "R05")
-  (dv_assign (dv_ref "past.shen" "state" "location") "pantry")
-  (dv_assign (dv_ref history "state" "door_open") false)
-  (dv_assign (dv_ref history "state" "door_wedged") false)
-  (dv_assign (dv_ref history "state" "door_changed") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_bolt") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_ash_fan") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_wedge_soot") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_boots_bolt") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_cloth_over_heel") false)))
-(axiom c1_hist_reset_records 1 (history knowledge)
- (dv_fact (dv_ref "past.detective" "state" "location") "R05")
- (c1_list_6
-  (dv_assign (dv_ref knowledge "state" "predicted_fork_dent") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_slate_first") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_slate_second") false)
-  (dv_assign (dv_ref knowledge "state" "predicted_score_tail") false)
-  (dv_assign (dv_ref history "state" "smoke_due") false)
-  (dv_assign (dv_ref history "state" "cloth_placed") false)))
-; Fixed external input. Smoke remains due after its source time; it is not retroactively cancelled.
-(axiom c1_hist_smoke_due 1 (history)
- (dv_true) (dv_single (dv_assign (dv_ref history "state" "smoke_due") true)))
-(axiom c1_hist_voice_input 1 (history source words)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "inputs" "source") source)
-  (dv_fact (dv_ref history "inputs" "words") words)))
- (dv_pair (dv_assign (dv_ref history "state" "voice_source") source)
-  (dv_assign (dv_ref history "state" "words") words)))
-; Content conditions from design §4.2. Nobody receives the original full words after only a tail.
-(axiom c1_hist_open_interpretation 1 (history listener)
- (dv_fact (dv_ref history "heard_words" listener) "Open")
- (dv_single (dv_assign (dv_ref listener "belief" "outside_wants_open") true)))
-(axiom c1_hist_su_open_intent 1 (history)
- (dv_fact (dv_ref "past.su" "belief" "outside_wants_open") true)
- (dv_single (dv_assign (dv_ref "past.su" "state" "intent") "open-and-listen")))
-(axiom c1_hist_huo_tail_open_intent 1 (history)
- (dv_all (dv_pair
-  (dv_fact (dv_ref "past.huo" "belief" "outside_wants_open") true)
-  (dv_fact (dv_ref "past.huo" "state" "location") "foyer")))
- (dv_single (dv_assign (dv_ref "past.huo" "state" "intent") "open-and-listen")))
-(axiom c1_hist_instruction_record 1 (history knowledge words)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "heard_form" "past.huo") "full")
-  (dv_fact (dv_ref history "heard_words" "past.huo") words)))
- (dv_pair (dv_assign (dv_ref knowledge "state" "predicted_slate_first") true)
-  (dv_assign (dv_ref history "state" "huo_instruction") words)))
-(axiom c1_hist_guard_call 1 (history)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "state" "huo_instruction") "BoltKeepShut")
-  (dv_fact (dv_ref "past.huo" "state" "location") "hall")))
- (dv_pair (dv_assign (dv_ref "past.huo" "state" "intent") "guard-tube")
-  (dv_assign (dv_ref history "state" "huo_called_corridor") true)))
-(axiom c1_hist_travel 1 (actor origin target permitted_intent)
- (dv_all (dv_pair (dv_fact (dv_ref actor "state" "location") origin)
-  (dv_fact (dv_ref actor "state" "intent") permitted_intent)))
- (dv_single (dv_assign (dv_ref actor "state" "location") target)))
-(axiom c1_hist_open_door 1 (history actor knowledge)
- (dv_all (dv_pair (dv_fact (dv_ref actor "state" "location") "foyer")
-  (dv_fact (dv_ref actor "state" "intent") "open-and-listen")))
- (dv_list3 (dv_assign (dv_ref history "state" "door_open") true)
-  (dv_assign (dv_ref history "state" "door_wedged") true)
-  (dv_assign (dv_ref actor "state" "intent") "wait-at-door")))
-; Fork marks require the pianist's own actual fork action, not any actor opening a door.
-(axiom c1_hist_fork_tap 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.su" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.su" "state" "intent") "wait-at-door")
-  (dv_fact (dv_ref history "state" "door_open") true)))
- (dv_single (dv_assign (dv_ref knowledge "state" "predicted_fork_dent") true)))
-; No request is created before the requester actually has a full instruction and is present.
-(axiom c1_hist_receive_request 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.detective" "state" "location") "hall")
-  (dv_fact (dv_ref "past.huo" "state" "location") "hall")
-  (dv_fact (dv_ref history "state" "huo_instruction") "BoltKeepShut")))
- (dv_pair (dv_assign (dv_ref history "state" "request_received") true)
-  (dv_assign (dv_ref history "state" "det_heard_relay") true)))
-; A branch validates the shared response choice. Trust does not directly trigger a world effect.
-(axiom c1_hist_response_bridge 1 (history choice intent)
- (dv_all (dv_pair (dv_fact (dv_ref history "response" "detective") choice)
-  (dv_fact (dv_ref history "state" "request_received") true)))
- (dv_single (dv_assign (dv_ref "past.detective" "state" "intent") intent)))
-(axiom c1_hist_latch 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.detective" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.detective" "state" "intent") "latch-request")
-  (dv_fact (dv_ref history "state" "det_heard_relay") true)))
- (c1_list_6 (dv_assign (dv_ref history "state" "door_open") false)
-  (dv_assign (dv_ref history "state" "door_wedged") false)
-  (dv_assign (dv_ref history "state" "door_changed") true)
-  (dv_assign (dv_ref history "state" "at_origin") true)
-  (dv_assign (dv_ref knowledge "state" "predicted_bolt") true)
-  (dv_assign (dv_ref history "state" "latching_complete") true)))
-(axiom c1_hist_close_for_smoke 1 (history)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.detective" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.detective" "state" "intent") "inspect-first")
-  (dv_fact (dv_ref "cognition" "state" "predicted_ash_fan") true)))
- (dv_list3 (dv_assign (dv_ref history "state" "door_open") false)
-  (dv_assign (dv_ref history "state" "door_wedged") false)
-  (dv_assign (dv_ref history "state" "door_changed") true)))
-(axiom c1_hist_report 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref knowledge "state" "predicted_bolt") true)
-  (dv_fact (dv_ref "past.detective" "state" "location") "hall")
-  (dv_fact (dv_ref "past.huo" "state" "location") "hall")))
- (dv_single (dv_assign (dv_ref knowledge "state" "predicted_slate_second") true)))
-(axiom c1_hist_score 1 (history knowledge)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.su" "state" "location") "R08")
-  (dv_fact (dv_ref "past.su" "state" "intent") "write-score")
-  (dv_fact (dv_ref history "state" "door_open") false)))
- (dv_single (dv_assign (dv_ref knowledge "state" "predicted_score_tail") true)))
-(axiom c1_hist_cloth_response 1 (history knowledge)
- (dv_all (c1_list_4
-  (dv_fact (dv_ref "past.shen" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.shen" "state" "intent") "place-wet-cloth")
-  (dv_fact (dv_ref knowledge "state" "predicted_ash_fan") true)
-  (dv_fact (dv_ref history "state" "door_open") false)))
- (dv_single (dv_assign (dv_ref history "state" "cloth_placed") true)))
-(axiom c1_hist_argument_source 1 (history knowledge source loss)
- (dv_all (c1_list_4
-  (dv_fact (dv_ref history "state" "voice_source") source)
-  (dv_fact (dv_ref history "heard_form" "past.su") (if (rt_eq source "Tube") "tail" "muffled-full"))
-  (dv_fact (dv_ref history "heard_words" "past.su") (if (rt_eq source "Tube") "Open" "OpenSaveMe"))
-  (dv_fact (dv_ref knowledge "state" "predicted_bolt") true)))
- (dv_pair (dv_assign (c1_hist_claim_ref "voice_source") source)
-  (dv_assign (c1_hist_claim_ref "transmission_loss") loss)))
+axiom c1_hist_wedge_soot(history, knowledge):
+    return dv_axiom("c1_hist_wedge_soot", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "smoke_due"), true), dv_fact(dv_ref(history, "state", "door_open"), true), dv_fact(dv_ref(history, "state", "door_wedged"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), true)))
 
-; Encoding existing six-variable propositions as scalar coordinates adds no new conclusion.
-(axiom c1_hist_coordinate 1 (knowledge history atom polarity variable value)
- (dv_fact (dv_ref knowledge "state" atom) polarity)
- (dv_single (dv_assign (dv_ref history "actual" variable) value)))
-(axiom c1_hist_su_report 1 (history)
- (dv_all (dv_list3
-  (dv_fact (dv_ref "past.su" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.detective" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.su" "belief" "outside_wants_open") true)))
- (dv_single (dv_assign (dv_ref history "state" "det_heard_su_report") true)))
-(axiom c1_hist_heard_argument 1 (history knowledge su_report heard)
- (dv_all (dv_list3
-  (dv_fact (dv_ref history "state" "latching_complete") true)
-  (dv_fact (dv_ref history "state" "det_heard_relay") true)
-  (dv_fact (dv_ref history "state" "det_heard_su_report") su_report)))
- (dv_single (dv_assign (c1_hist_claim_ref "actual_heard") heard)))
-(axiom c1_hist_familiar_relations 1 (history preference huo_trust su_trust)
- (dv_all (dv_pair
-  (dv_fact (dv_ref history "inputs" "familiar") true)
-  (dv_fact (dv_ref history "inputs" "trust_choice") preference)))
- (dv_pair (dv_assign (dv_ref history "relationships" "trust_huo") huo_trust)
-  (dv_assign (dv_ref history "relationships" "trust_su") su_trust)))
-; No strangers->zero rule. Missing historical relationship stays unknown.
-(axiom c1_hist_social_preview 1 (speaker expected result)
- (dv_fact (dv_ref speaker "relationship" "trust") expected)
- (dv_single (dv_assign (dv_ref "response.outcome" "state" "value") result)))
-(axiom c1_hist_inspection_preview 1 (priority)
- (dv_true)
- (dv_single (dv_assign (dv_ref "response.outcome" "state" "value") priority)))
+axiom c1_hist_footprint(history, knowledge, sole, direction, result_field):
+    return dv_axiom("c1_hist_footprint", 1, dv_all(c1_list_5(dv_fact(dv_ref(history, "state", "door_changed"), true), dv_fact(dv_ref(history, "state", "at_origin"), true), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "sole"), sole), dv_fact(dv_ref(history, "state", "direction"), direction))), dv_single(dv_assign(dv_ref(knowledge, "state", result_field), true)))
 
-(defn c1_hist_variable_specs ()
- (c1_list_15
-  (c1_list_5 "V1" "R08" "su_room" true 1)
-  (c1_list_5 "V1" "hall" "su_hall" true 1)
-  (c1_list_5 "V1" "pantry" "su_pantry" true 1)
-  (c1_list_5 "V2" "hall" "huo_copper" true 11)
-  (c1_list_5 "V2" "R06" "huo_room" true 11)
-  (c1_list_5 "V2" "foyer" "huo_foyer" true 11)
-  (c1_list_5 "V3" "Tube" "remote_voice" true 21)
-  (c1_list_5 "V3" "OutsideDoor" "remote_voice" false 21)
-  (c1_list_5 "V4" "BoltKeepShut" "words_bolt" true 30)
-  (c1_list_5 "V4" "OpenSaveMe" "words_bolt" false 30)
-  (c1_list_5 "V5" "huo" "heed_huo" true 39)
-  (c1_list_5 "V5" "su" "heed_su" true 39)
-  (c1_list_5 "V5" "self" "heed_neither" true 39)
-  (c1_list_5 "V6" false "familiar" false 49)
-  (c1_list_5 "V6" true "familiar" true 50)))
-(defn c1_hist_domain (id values)
- (dv_m4 "id" id "version" 1 "ref" (dv_ref "history" "actual" id) "values" values))
-(defn c1_hist_domains ()
- (c1_list_6 (c1_hist_domain "V1" (dv_list3 "R08" "hall" "pantry"))
-  (c1_hist_domain "V2" (dv_list3 "hall" "R06" "foyer"))
-  (c1_hist_domain "V3" (dv_pair "Tube" "OutsideDoor"))
-  (c1_hist_domain "V4" (dv_pair "BoltKeepShut" "OpenSaveMe"))
-  (c1_hist_domain "V5" (dv_list3 "huo" "su" "self"))
-  (c1_hist_domain "V6" (dv_pair false true))))
-(defn c1_hist_coordinate_name (index) (rt_cat "history.coordinate." (rt_show index)))
-(defn c1_hist_constraints ()
- (let (specs (c1_hist_variable_specs) result (rt_list) index 0)
-  (do (while (rt_lt index (rt_count specs))
-   (let (spec (rt_at specs index) variable (rt_at (rt_at specs index) 0)
-         value (rt_at (rt_at specs index) 1))
-    (do (rt_push result
-     (dv_with (dv_with (dv_with (dv_with (dv_m4
-      "id" (rt_cat "history.exclude." (rt_show index))
-      "domain_versions" (dv_single (dv_pair variable 1)) "scope" (dv_single variable)
-      "assignments" (dv_single (dv_m2 "variable" variable "value" value)))
-      "condition" (dv_fact (dv_ref "history" "actual" variable) value))
-      "support" (dv_not (dv_fact (dv_ref "history" "actual" variable) value)))
-      "infer_laws" (c1_hist_coordinate_versions variable))
-      "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story"
-        (rt_at spec 4) variable))))
-     (set index (rt_add index 1))))) result)))
-(defn c1_hist_coordinate_versions (variable)
- (let (specs (c1_hist_variable_specs) result (rt_list) index 0)
-  (do (while (rt_lt index (rt_count specs))
-   (do (if (rt_eq (rt_at (rt_at specs index) 0) variable)
-    (rt_push result (dv_m2 "id" (c1_hist_coordinate_name index) "version" 1)) false)
-    (set index (rt_add index 1)))) result)))
-(defn c1_hist_add_coordinates (mind)
- (let (specs (c1_hist_variable_specs) result mind index 0)
-  (do (while (rt_lt index (rt_count specs))
-   (let (spec (rt_at specs index))
-    (do (set result (dv_adopt result
-     (c1_method (c1_hist_coordinate_name index)
-      (c1_hist_coordinate "cognition" "history" (rt_at spec 2) (rt_at spec 3) (rt_at spec 0) (rt_at spec 1)))
-      "infer" 0.85 (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story"
-        (rt_at spec 4) (rt_at spec 0)))))
-     (set index (rt_add index 1))))) result)))
-(defn c1_hist_assignments (su_room huo_room source words preference familiar)
- (c1_list_6 (dv_m2 "variable" "V1" "value" su_room) (dv_m2 "variable" "V2" "value" huo_room)
-  (dv_m2 "variable" "V3" "value" source) (dv_m2 "variable" "V4" "value" words)
-  (dv_m2 "variable" "V5" "value" preference) (dv_m2 "variable" "V6" "value" familiar)))
-(defn c1_hist_assumptions (su_room huo_room source words preference familiar)
- (c1_list_6 (dv_fact (dv_ref "history" "inputs" "su_origin") su_room)
-  (dv_fact (dv_ref "history" "inputs" "huo_origin") huo_room)
-  (dv_fact (dv_ref "history" "inputs" "source") source)
-  (dv_fact (dv_ref "history" "inputs" "words") words)
-  (dv_fact (dv_ref "history" "inputs" "trust_choice") preference)
-  (dv_fact (dv_ref "history" "inputs" "familiar") familiar)))
-(defn c1_hist_claim_slots ()
- (dv_list3
-  (dv_with (dv_m4 "slot_id" "actual_heard" "ref" (c1_hist_claim_ref "actual_heard") "trace_at" 160 "feature_index" 0) "value_from_prediction" true)
-  (dv_with (dv_m4 "slot_id" "voice_source" "ref" (c1_hist_claim_ref "voice_source") "trace_at" 160 "feature_index" 4) "value_from_prediction" true)
-  (dv_with (dv_m4 "slot_id" "transmission_loss" "ref" (c1_hist_claim_ref "transmission_loss") "trace_at" 160 "feature_index" 6) "value_from_prediction" true)))
-(defn c1_hist_feature (predicted observed)
- (dv_m3 "proposition" (dv_fact (c1_knowledge predicted) true)
-  "observation" (dv_fact (c1_knowledge observed) true) "at" 160))
-(defn c1_hist_features ()
- (c1_list_7 (c1_hist_feature "predicted_bolt" "bolt_down")
-  (c1_hist_feature "predicted_wedge_soot" "ash_wedge")
-  (c1_hist_feature "predicted_boots_bolt" "boots_toward_bolt")
-  (c1_hist_feature "predicted_cloth_over_heel" "cloth_after_boots")
-  (c1_hist_feature "predicted_slate_first" "slate_marks")
-  (c1_hist_feature "predicted_slate_second" "slate_person")
-  (c1_hist_feature "predicted_score_tail" "score_partial")))
+axiom c1_hist_cloth(history, knowledge):
+    return dv_axiom("c1_hist_cloth", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "cloth_placed"), true), dv_fact(dv_ref(history, "state", "prints_exist"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), true)))
 
-; A joint request model compares the two actually received reports with inspection.
-; Empty weighted appraisal terms are deliberate: trust enters the modeled outcome,
-; not a second source-specific bonus. Unknown relationships never become zero.
-(defn c1_hist_response_world (preference)
- (let (mind (dv_world (rt_cat "history-response-" preference) "mind" "modeled.detective")
-       basis (dv_pair (c1_source "docs/design-standard.md" 713 "V5-trust-plus-one-not-action")
-        (c1_source "docs/design-standard.md" 723 "competing-reports-and-SocialSystem")))
-  (do (set mind (c1_add_objects mind (c1_list_5 (c1_local_object "modeled.detective")
-    (c1_local_object "modeled.huo") (c1_local_object "modeled.su")
-    (c1_local_object "joint.request") (c1_local_object "response.outcome"))))
-   (set mind (dv_store mind (dv_ref "response.outcome" "state" "value")
-    (dv_with (dv_field 0) "basis" basis)))
-   (set mind (dv_adopt mind (c1_method "huo.value" (c1_hist_social_preview "modeled.huo"
-    (if (rt_eq preference "huo") 4 3) (if (rt_eq preference "huo") 4 3))) "predict" 0.85 basis))
-   (set mind (dv_adopt mind (c1_method "su.value" (c1_hist_social_preview "modeled.su"
-    (if (rt_eq preference "su") 4 3) (if (rt_eq preference "su") 4 3))) "predict" 0.85 basis))
-   (set mind (dv_adopt mind (c1_method "inspect.value" (c1_hist_inspection_preview
-    (if (rt_eq preference "self") 3 2))) "predict" 0.85
-    (dv_pair (c1_source "docs/design-standard.md" 713 "own-inspection-strengthens-evidence-preference")
-     (c1_source "godot_csharp/scenes/Awakening/Script/story/生态/人物/01_侦探.story" 29 "existing-caution-two"))))
-   (dv_accept_policy mind "joint-response"
-    (dv_person_policy "modeled.detective"
-     (dv_single (dv_criterion "relative-outcome" (dv_ref "response.outcome" "state" "value") "numeric" 0 1))
-     0 1 (rt_list)) basis))))
-(defn c1_hist_response_option (id received predict bridge)
- (dv_with (dv_with (dv_with (dv_m4 "id" id "intent" id "feasible"
-  (dv_fact (dv_ref "joint.request" "state" received) true) "effort" 0)
-  "feature_weights" (rt_list)) "predict_law" predict) "bridge_law" bridge))
-(defn c1_hist_response_model (preference)
- (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "owner" "detective"
-  "basis" (dv_pair (c1_source "docs/design-standard.md" 713 "V5-V6-model-not-fact")
-   (c1_source "docs/design-standard.md" 723 "joint-contradictory-reports"))
-  "confidence" 0.85 "world" (c1_hist_response_world preference))
-  "context" (c1_list_4
-   (dv_m2 "from" (dv_ref "history" "relationships" "trust_huo") "to" (dv_ref "modeled.huo" "relationship" "trust"))
-   (dv_m2 "from" (dv_ref "history" "relationships" "trust_su") "to" (dv_ref "modeled.su" "relationship" "trust"))
-   (dv_m2 "from" (dv_ref "history" "state" "request_received") "to" (dv_ref "joint.request" "state" "huo_received"))
-   (dv_m2 "from" (dv_ref "history" "state" "det_heard_su_report") "to" (dv_ref "joint.request" "state" "su_received"))))
-  "requests" (dv_single (dv_pair "competing-reports" (dv_request "joint.request" "modeled.huo" "modeled.detective"))))
-  "options" (dv_list3
-   (dv_pair "accept-huo" (c1_hist_response_option "accept-huo" "huo_received" "huo.value" "history.response.huo"))
-   (dv_pair "accept-su" (c1_hist_response_option "accept-su" "su_received" "su.value" "history.response.su"))
-   (dv_pair "inspect" (c1_hist_response_option "inspect" "huo_received" "inspect.value" "history.response.self"))))
-  "policy_id" "joint-response") "choice_ref" (dv_ref "history" "response" "detective")))
-(defn c1_hist_response_models ()
- (dv_list3 (dv_pair "history.huo" (c1_hist_response_model "huo"))
-  (dv_pair "history.su" (c1_hist_response_model "su"))
-  (dv_pair "history.self" (c1_hist_response_model "self"))))
+axiom c1_hist_tube_full(history, listener, words):
+    return dv_axiom("c1_hist_tube_full", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), "hall"))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "Tube")))
 
-; Source event 0 is the alarm, not a generic all-bells wake axiom.
-; This named episodic model is usable only with the actor's independently obtained anchor.
-(axiom c1_hist_alarm_wake 1 (knowledge)
- (dv_fact (dv_ref knowledge "state" "own_alarm_anchor") true)
- (dv_single (dv_assign (dv_ref "past.detective" "state" "intent") "seek-instruction")))
-(axiom c1_hist_visit_door 1 (history)
- (dv_all (dv_pair (dv_fact (dv_ref "past.detective" "state" "location") "hall")
-  (dv_fact (dv_ref history "state" "request_received") true)))
- (dv_single (dv_assign (dv_ref "past.detective" "state" "intent") "visit-door")))
-(axiom c1_hist_begin_return 1 (history knowledge)
- (dv_all (dv_pair (dv_fact (dv_ref "past.detective" "state" "location") "foyer")
-  (dv_fact (dv_ref knowledge "state" "predicted_bolt") true)))
- (dv_single (dv_assign (dv_ref "past.detective" "state" "intent") "return-report")))
-(axiom c1_hist_su_begin_score 1 (history)
- (dv_all (dv_list3 (dv_fact (dv_ref "past.su" "state" "location") "foyer")
-  (dv_fact (dv_ref "past.su" "state" "intent") "wait-at-door")
-  (dv_fact (dv_ref history "state" "door_open") false)))
- (dv_single (dv_assign (dv_ref "past.su" "state" "intent") "write-score")))
-(axiom c1_hist_print_occurrence 1 (history knowledge)
- (dv_fact (dv_ref knowledge "state" "predicted_boots_bolt") true)
- (dv_single (dv_assign (dv_ref history "state" "prints_exist") true)))
-(axiom c1_hist_shen_smoke_response 1 (history)
- (dv_all (dv_pair (dv_fact (dv_ref "past.shen" "belief" "smoke") true)
-  (dv_fact (dv_ref history "state" "door_open") false)))
- (dv_single (dv_assign (dv_ref "past.shen" "state" "intent") "place-wet-cloth")))
-(axiom c1_hist_episode_registers 1 (history)
- (dv_true)
- (c1_list_12 (dv_assign (dv_ref history "state" "request_received") false)
-  (dv_assign (dv_ref history "state" "det_heard_relay") false)
-  (dv_assign (dv_ref history "state" "det_heard_su_report") false)
-  (dv_assign (dv_ref history "state" "prints_exist") false)
-  (dv_assign (dv_ref "past.su" "state" "intent") "idle")
-  (dv_assign (dv_ref "past.huo" "state" "intent") "idle")
-  (dv_assign (dv_ref "past.shen" "state" "intent") "idle")
-  (dv_assign (dv_ref "past.detective" "state" "intent") "idle")
-  (dv_assign (dv_ref "past.su" "belief" "outside_wants_open") false)
-  (dv_assign (dv_ref "past.huo" "belief" "outside_wants_open") false)
-  (dv_assign (dv_ref history "state" "at_origin") false)
-  (dv_assign (dv_ref history "state" "latching_complete") false)))
-(defn c1_hist_setup (mind)
- (let (result (c1_add_objects mind (c1_list_6 (c1_local_object "history_claims") (c1_local_object "history")
-  (c1_local_object "past.su") (c1_local_object "past.huo")
-  (c1_local_object "past.detective") (c1_local_object "past.shen"))))
-  (c1_hist_add_coordinates result)))
-(defn c1_hist_predicate_basis ()
- (dv_list3 (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story" 125 "smoke-footprints-cloth")
-  (c1_source "docs/design-standard.md" 718 "heard-words-by-channel")
-  (c1_source "docs/design-standard.md" 724 "perception-cognition-response")))
-(defn c1_hist_adopt (mind id rule)
- (dv_adopt mind (c1_method id rule) "predict" 0.85 (c1_hist_predicate_basis)))
-(defn c1_hist_adopt_shared (mind)
- (let (result mind)
-  (do
-   (set result (c1_hist_adopt result "history.reset" (c1_hist_episode_registers "history")))
-   (set result (c1_hist_adopt result "history.reset.records" (c1_hist_reset_records "history" "cognition")))
-   (set result (c1_hist_adopt result "history.wake" (c1_hist_alarm_wake "cognition")))
-   (set result (c1_hist_adopt result "history.smoke.due" (c1_hist_smoke_due "history")))
-   (set result (c1_hist_adopt result "history.smoke" (c1_hist_smoke "history" "cognition")))
-   (set result (c1_hist_adopt result "history.soot" (c1_hist_wedge_soot "history" "cognition")))
-   (set result (c1_hist_adopt result "history.su.intent" (c1_hist_su_open_intent "history")))
-   (set result (c1_hist_adopt result "history.huo.intent" (c1_hist_huo_tail_open_intent "history")))
-   (set result (c1_hist_adopt result "history.huo.guard" (c1_hist_guard_call "history")))
-   (set result (c1_hist_adopt result "history.request" (c1_hist_receive_request "history" "cognition")))
-   (set result (c1_hist_adopt result "history.visit" (c1_hist_visit_door "history")))
-   (set result (c1_hist_adopt result "history.su.report" (c1_hist_su_report "history")))
-   (set result (c1_hist_adopt result "history.response.huo" (c1_hist_response_bridge "history" "accept-huo" "latch-request")))
-   (set result (c1_hist_adopt result "history.response.su" (c1_hist_response_bridge "history" "accept-su" "keep-open")))
-   (set result (c1_hist_adopt result "history.response.self" (c1_hist_response_bridge "history" "inspect" "inspect-first")))
-   (set result (c1_hist_adopt result "history.latch" (c1_hist_latch "history" "cognition")))
-   (set result (c1_hist_adopt result "history.close-smoke" (c1_hist_close_for_smoke "history")))
-   (set result (c1_hist_adopt result "history.return" (c1_hist_begin_return "history" "cognition")))
-   (set result (c1_hist_adopt result "history.report" (c1_hist_report "history" "cognition")))
-   (set result (c1_hist_adopt result "history.su.return" (c1_hist_su_begin_score "history")))
-   (set result (c1_hist_adopt result "history.score" (c1_hist_score "history" "cognition")))
-   (set result (c1_hist_adopt result "history.fork" (c1_hist_fork_tap "history" "cognition")))
-   (set result (c1_hist_adopt result "history.prints" (c1_hist_print_occurrence "history" "cognition")))
-   (set result (c1_hist_adopt result "history.shen.intent" (c1_hist_shen_smoke_response "history")))
-   (set result (c1_hist_adopt result "history.cloth.place" (c1_hist_cloth_response "history" "cognition")))
-   (set result (c1_hist_adopt result "history.cloth" (c1_hist_cloth "history" "cognition")))
-   result)))
+axiom c1_hist_tube_tail(history, listener, room, words, tail):
+    return dv_axiom("c1_hist_tube_tail", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", room), true))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "tail"), dv_assign(dv_ref(history, "heard_words", listener), tail), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
-(axiom c1_hist_open_full_interpretation 1 (history listener)
- (dv_fact (dv_ref history "heard_words" listener) "OpenSaveMe")
- (dv_single (dv_assign (dv_ref listener "belief" "outside_wants_open") true)))
-(axiom c1_hist_layout_known 1 (knowledge history)
- (dv_all (dv_pair (dv_fact (dv_ref knowledge "state" "pipe_layout") true)
-  (dv_fact (dv_ref knowledge "state" "heads_lost") true)))
- (dv_pair (dv_assign (dv_ref history "loose_junction" "R08") true)
-  (dv_assign (dv_ref history "loose_junction" "foyer") true)))
-(defn c1_hist_source_id (source words)
- (rt_cat (rt_cat source ".") words))
-(defn c1_hist_origin_id (su_room huo_room)
- (rt_cat (rt_cat "history.origin." su_room) (rt_cat "." huo_room)))
-(defn c1_hist_acoustic_id (source words listener room)
- (rt_cat (rt_cat (rt_cat "history.hearing." (c1_hist_source_id source words)) (rt_cat "." listener)) (rt_cat "." room)))
-(defn c1_hist_add_source_laws (mind)
- (let (result mind origins (dv_list3 "R08" "hall" "pantry") huos (dv_list3 "hall" "R06" "foyer")
-       sources (dv_pair "Tube" "OutsideDoor") words_list (dv_pair "BoltKeepShut" "OpenSaveMe")
-       listeners (dv_pair "past.su" "past.huo") rooms (c1_list_6 "hall" "R08" "foyer" "pantry" "R05" "R06")
-       i 0 j 0 k 0 n 0)
-  (do
-   (while (rt_lt i 3)
-    (do (set j 0) (while (rt_lt j 3)
-     (do (set result (c1_hist_adopt result (c1_hist_origin_id (rt_at origins i) (rt_at huos j))
-       (c1_hist_origin "history" "cognition" (rt_at origins i) (rt_at huos j))))
-      (set j (rt_add j 1)))) (set i (rt_add i 1))))
-   (set i 0)
-   (while (rt_lt i 2)
-    (do (set j 0) (while (rt_lt j 2)
-     (let (source (rt_at sources i) words (rt_at words_list j))
-      (do (set result (c1_hist_adopt result (rt_cat "history.voice." (c1_hist_source_id source words))
-        (c1_hist_voice_input "history" source words)))
-       (set k 0) (while (rt_lt k 2)
-        (do (set n 0) (while (rt_lt n 6)
-         (let (listener (rt_at listeners k) room (rt_at rooms n))
-          (do (set result (c1_hist_adopt result (c1_hist_acoustic_id source words listener room)
-           (if (rt_eq source "Tube")
-            (if (rt_eq room "hall") (c1_hist_tube_full "history" listener words)
-             (if (dv_or (rt_eq room "R08") (rt_eq room "foyer")) (c1_hist_tube_tail "history" listener room words (if (rt_eq words "BoltKeepShut") "Open" "SaveMe"))
-              (if (rt_eq room "pantry") (c1_hist_tube_hum "history" listener)
-               (c1_hist_room_alarm "history" listener room))))
-            (if (dv_or (rt_eq room "R08") (rt_eq room "foyer")) (c1_hist_outside_received "history" listener room words)
-             (c1_hist_room_silence "history" listener room)))))
-           (set n (rt_add n 1))))) (set k (rt_add k 1))))
-       (set j (rt_add j 1))))) (set i (rt_add i 1))))
-   result)))
-(axiom c1_hist_room_alarm 1 (history listener room)
- (dv_all (dv_pair (dv_fact (dv_ref history "state" "voice_source") "Tube")
-  (dv_fact (dv_ref listener "state" "location") room)))
- (dv_pair (dv_assign (dv_ref history "heard_form" listener) "alarm-only")
-  (dv_assign (dv_ref history "heard_words" listener) "unintelligible")))
-(axiom c1_hist_outside_received 1 (history listener room words)
- (dv_all (dv_list3 (dv_fact (dv_ref history "state" "voice_source") "OutsideDoor")
-  (dv_fact (dv_ref history "state" "words") words)
-  (dv_fact (dv_ref listener "state" "location") room)))
- (dv_list3 (dv_assign (dv_ref history "heard_form" listener) "muffled-full")
-  (dv_assign (dv_ref history "heard_words" listener) words)
-  (dv_assign (dv_ref history "heard_origin" listener) "unresolved")))
-(axiom c1_hist_room_silence 1 (history listener room)
- (dv_all (dv_pair (dv_fact (dv_ref history "state" "voice_source") "OutsideDoor")
-  (dv_fact (dv_ref listener "state" "location") room)))
- (dv_pair (dv_assign (dv_ref history "heard_form" listener) "no-intelligible-voice")
-  (dv_assign (dv_ref history "heard_words" listener) "unintelligible")))
+axiom c1_hist_tube_hum(history, listener):
+    return dv_axiom("c1_hist_tube_hum", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), "pantry"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "hum"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
 
-(defn c1_hist_stage (at laws) (dv_m3 "at" at "laws" laws "optional" true))
-(defn c1_hist_travel_id (actor origin target intent)
- (rt_cat (rt_cat (rt_cat (rt_cat "history.travel." actor) (rt_cat "." origin)) (rt_cat "." target)) (rt_cat "." intent)))
-(defn c1_hist_add_travel (mind actor origin target intent)
- (c1_hist_adopt mind (c1_hist_travel_id actor origin target intent) (c1_hist_travel actor origin target intent)))
-(defn c1_hist_adopt_routes (mind)
- (let (result mind routes (c1_list_12
-  (c1_list_4 "past.detective" "R05" "corridor" "seek-instruction")
-  (c1_list_4 "past.detective" "corridor" "hall" "seek-instruction")
-  (c1_list_4 "past.detective" "hall" "foyer" "visit-door")
-  (c1_list_4 "past.detective" "foyer" "hall" "return-report")
-  (c1_list_4 "past.su" "R08" "corridor" "open-and-listen")
-  (c1_list_4 "past.su" "corridor" "hall" "open-and-listen")
-  (c1_list_4 "past.su" "hall" "foyer" "open-and-listen")
-  (c1_list_4 "past.su" "foyer" "hall" "write-score")
-  (c1_list_4 "past.su" "hall" "corridor" "write-score")
-  (c1_list_4 "past.su" "corridor" "R08" "write-score")
-  (c1_list_4 "past.shen" "pantry" "hall" "place-wet-cloth")
-  (c1_list_4 "past.shen" "hall" "foyer" "place-wet-cloth")) index 0)
-  (do (while (rt_lt index (rt_count routes))
-   (let (route (rt_at routes index))
-    (do (set result (c1_hist_add_travel result (rt_at route 0) (rt_at route 1) (rt_at route 2) (rt_at route 3)))
-     (set index (rt_add index 1))))) result)))
-(defn c1_hist_add_variant_laws (mind)
- (let (result mind listeners (dv_pair "past.su" "past.huo") preferences (dv_list3 "huo" "su" "self") index 0)
-  (do (while (rt_lt index 2)
-   (let (listener (rt_at listeners index))
-    (do (set result (c1_hist_adopt result (rt_cat "history.tail-belief." listener) (c1_hist_open_interpretation "history" listener)))
-     (set result (c1_hist_adopt result (rt_cat "history.open-belief." listener) (c1_hist_open_full_interpretation "history" listener)))
-     (set result (c1_hist_adopt result (rt_cat "history.open-door." listener) (c1_hist_open_door "history" listener "cognition")))
-     (set index (rt_add index 1)))))
-   (set index 0) (while (rt_lt index 3)
-    (let (preference (rt_at preferences index))
-     (do (set result (c1_hist_adopt result (rt_cat "history.relations." preference)
-       (c1_hist_familiar_relations "history" preference (if (rt_eq preference "huo") 4 3) (if (rt_eq preference "su") 4 3))))
-      (set index (rt_add index 1)))))
-   (set result (c1_hist_adopt result "history.layout" (c1_hist_layout_known "cognition" "history")))
-   (set result (c1_hist_adopt result "history.slate.BoltKeepShut" (c1_hist_instruction_record "history" "cognition" "BoltKeepShut")))
-   (set result (c1_hist_adopt result "history.slate.OpenSaveMe" (c1_hist_instruction_record "history" "cognition" "OpenSaveMe")))
-   (set result (c1_hist_adopt result "history.footprint" (c1_hist_footprint "history" "cognition" "PoloBoot" "Bolt" "predicted_boots_bolt")))
-   (set result (c1_hist_adopt result "history.argument.source.Tube" (c1_hist_argument_source "history" "cognition" "Tube" "stressed-tail-without-leading-qualification")))
-   (set result (c1_hist_adopt result "history.argument.source.OutsideDoor" (c1_hist_argument_source "history" "cognition" "OutsideDoor" "muffled-full-speech")))
-   (set result (c1_hist_adopt result "history.argument.heard.both" (c1_hist_heard_argument "history" "cognition" true "Huo-relay-and-Su-report")))
-   (set result (c1_hist_adopt result "history.argument.heard.relay" (c1_hist_heard_argument "history" "cognition" false "Huo-relay-only")))
-   result)))
-(defn c1_hist_hearing_ids (source words)
- (let (result (rt_list) listeners (dv_pair "past.su" "past.huo")
-       rooms (c1_list_6 "hall" "R08" "foyer" "pantry" "R05" "R06") i 0 j 0)
-  (do (while (rt_lt i 2)
-   (do (set j 0) (while (rt_lt j 6)
-    (do (rt_push result (c1_hist_acoustic_id source words (rt_at listeners i) (rt_at rooms j)))
-     (set j (rt_add j 1)))) (set i (rt_add i 1)))) result)))
-; Stable event ordering retains all same-time rules. Times below are model coordinates,
-; not claimed measurements of an individual's forgotten reaction latency.
-(defn c1_hist_order (stages)
- (let (result (rt_list) used (rt_list) count 0)
-  (do (while (rt_lt count (rt_count stages))
-   (let (found false best 0 best_at 0 index 0)
-    (do (while (rt_lt index (rt_count stages))
-      (do (if (dv_has used index) false
-       (if (if found (rt_lt (dv_get (rt_at stages index) "at") best_at) true)
-        (do (set found true) (set best index) (set best_at (dv_get (rt_at stages index) "at"))) false))
-       (set index (rt_add index 1))))
-     (rt_push used best) (rt_push result (rt_at stages best)) (set count (rt_add count 1))))) result)))
+axiom c1_hist_tube_alarm_only(history, listener):
+    return dv_axiom("c1_hist_tube_alarm_only", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), "R05"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "alarm-only"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
 
-; Author sequence 6: smoke reaches the pantry. This is an event-order rule;
-; no number of minutes, concentration threshold or response delay is asserted.
-(axiom c1_hist_smoke_pantry 1 (history)
- (dv_fact (dv_ref history "state" "smoke_entered") true)
- (dv_single (dv_assign (dv_ref "past.shen" "belief" "smoke") true)))
-(defn c1_hist_timeline (su_room huo_room source words preference)
- (let (stages (rt_list) su_start 1 su_corridor (rt_add 1 (rt_div 1.2 1.3))
-       su_hall (rt_add 1 (rt_div 3.2 1.3)) su_foyer (rt_add 1 (rt_div 5.7 1.3)))
-  (do
-   (rt_push stages (c1_hist_stage 0 (c1_list_5 (c1_hist_origin_id su_room huo_room)
-    "history.reset" "history.reset.records" "history.layout" "history.wake")))
-   (rt_push stages (c1_hist_stage 1 (dv_single (rt_cat "history.voice." (c1_hist_source_id source words)))))
-   (rt_push stages (c1_hist_stage 1 (c1_hist_hearing_ids source words)))
-   (rt_push stages (c1_hist_stage 1 (c1_list_10 "history.tail-belief.past.su" "history.open-belief.past.su"
-    "history.tail-belief.past.huo" "history.open-belief.past.huo" "history.su.intent" "history.huo.intent"
-    (rt_cat "history.slate." words) "history.huo.guard" "history.open-door.past.huo"
-    (rt_cat "history.relations." preference))))
-   (rt_push stages (c1_hist_stage 1.2 (dv_single (c1_hist_travel_id "past.detective" "R05" "corridor" "seek-instruction"))))
-   (rt_push stages (c1_hist_stage 2 (dv_single "history.smoke.due")))
-   (rt_push stages (c1_hist_stage 2.2 (c1_hist_hearing_ids source words)))
-   (rt_push stages (c1_hist_stage 3.2 (dv_list3
-    (c1_hist_travel_id "past.detective" "corridor" "hall" "seek-instruction") "history.request" "history.visit")))
-   (if (rt_eq su_room "R08")
-    (do (rt_push stages (c1_hist_stage su_corridor (dv_single (c1_hist_travel_id "past.su" "R08" "corridor" "open-and-listen"))))
-     (rt_push stages (c1_hist_stage su_hall (dv_single (c1_hist_travel_id "past.su" "corridor" "hall" "open-and-listen"))))) false)
-   (if (rt_eq su_room "hall") (set su_foyer (rt_add 1 (rt_div 2.5 1.3))) false)
-   (rt_push stages (c1_hist_stage su_foyer (c1_list_5
-    (c1_hist_travel_id "past.su" "hall" "foyer" "open-and-listen")
-    "history.open-door.past.su" "history.fork" "history.smoke" "history.soot")))
-   (rt_push stages (c1_hist_stage 5.7 (dv_list3
-    (c1_hist_travel_id "past.detective" "hall" "foyer" "visit-door") "history.su.report" "history.smoke")))
-   (rt_push stages (dv_with (dv_m3 "at" 5.7 "response" (dv_m3 "model" (rt_cat "history." preference)
-     "request" "competing-reports" "options" (dv_list3 "accept-huo" "accept-su" "inspect")) "optional" true)
-     "available_when" (dv_fact (dv_ref "history" "state" "request_received") true)))
-   (rt_push stages (c1_hist_stage 5.7 (c1_list_8 "history.latch" "history.close-smoke" "history.footprint"
-    "history.prints" "history.return" "history.su.return" "history.argument.heard.both" "history.argument.heard.relay")))
-   (rt_push stages (c1_hist_stage 8.2 (dv_pair
-    (c1_hist_travel_id "past.detective" "foyer" "hall" "return-report") "history.report")))
-   (rt_push stages (c1_hist_stage (rt_add 5.7 (rt_div 2.5 1.3))
-    (dv_single (c1_hist_travel_id "past.su" "foyer" "hall" "write-score"))))
-   (rt_push stages (c1_hist_stage (rt_add 5.7 (rt_div 4.5 1.3))
-    (dv_single (c1_hist_travel_id "past.su" "hall" "corridor" "write-score"))))
-   (rt_push stages (c1_hist_stage (rt_add 5.7 (rt_div 5.7 1.3))
-    (dv_pair (c1_hist_travel_id "past.su" "corridor" "R08" "write-score") "history.score")))
-   (rt_push stages (c1_hist_stage (rt_add 5.7 (rt_div 5.7 1.3)) (dv_pair "history.smoke.pantry" "history.shen.intent")))
-   (rt_push stages (c1_hist_stage (rt_add (rt_add 5.7 (rt_div 5.7 1.3)) (rt_div 2 0.9)) (dv_single (c1_hist_travel_id "past.shen" "pantry" "hall" "place-wet-cloth"))))
-   (rt_push stages (c1_hist_stage (rt_add (rt_add 5.7 (rt_div 5.7 1.3)) (rt_div 4.5 0.9)) (dv_list3
-    (c1_hist_travel_id "past.shen" "hall" "foyer" "place-wet-cloth") "history.cloth.place" "history.cloth")))
-   (rt_push stages (c1_hist_stage 160 (dv_list3
-    (rt_cat "history.argument.source." source) "history.argument.heard.both" "history.argument.heard.relay")))
-   (c1_hist_order stages))))
+axiom c1_hist_outside_full(history, listener, words):
+    return dv_axiom("c1_hist_outside_full", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), "outside_door"))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "OutsideDoor")))
 
-(defn c1_hist_candidate (number su_room huo_room source words preference familiar)
- (let (assumptions (c1_hist_assumptions su_room huo_room source words preference familiar))
-  (do
-   ; These are local modeling assumptions, not observations or factor evidence.
-   (rt_push assumptions (dv_fact (c1_knowledge "own_alarm_anchor") true))
-   (rt_push assumptions (dv_fact (dv_ref "history" "state" "sole") "PoloBoot"))
-   (rt_push assumptions (dv_fact (dv_ref "history" "state" "direction") "Bolt"))
-   (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
-    (dv_m4 "id" (rt_cat "history-case-" (rt_show number)) "question" "original_q2_complete"
-     "group" "six-variable-history" "prior" 0.5)
-    "proposition" (dv_all (c1_hist_assumptions su_room huo_room source words preference familiar)))
-    "basis" (dv_pair (c1_source "docs/design-standard.md" 703 "public-six-variable-candidate-space")
-     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story" 102 "fixed-external-event-catalog")))
-    "available_when" (dv_fact (dv_ref "question" "state" "outstanding_complete") true))
-    "assumptions" assumptions) "variable_assignments" (c1_hist_assignments su_room huo_room source words preference familiar))
-    "timeline" (c1_hist_timeline su_room huo_room source words preference)) "start_time" 0)
-    "features" (c1_hist_features))
-    "claim_slots" (c1_hist_claim_slots)))))
-(defn c1_hist_candidates ()
- (let (result (rt_list) domains (c1_hist_domains) a 0 b 0 c 0 d 0 e 0 f 0 number 0)
-  (do (while (rt_lt a 3) (do (set b 0)
-   (while (rt_lt b 3) (do (set c 0)
-    (while (rt_lt c 2) (do (set d 0)
-     (while (rt_lt d 2) (do (set e 0)
-      (while (rt_lt e 3) (do (set f 0)
-       (while (rt_lt f 2)
-        (do (rt_push result (c1_hist_candidate number
-          (rt_at (dv_get (rt_at domains 0) "values") a) (rt_at (dv_get (rt_at domains 1) "values") b)
-          (rt_at (dv_get (rt_at domains 2) "values") c) (rt_at (dv_get (rt_at domains 3) "values") d)
-          (rt_at (dv_get (rt_at domains 4) "values") e) (rt_at (dv_get (rt_at domains 5) "values") f)))
-         (set number (rt_add number 1)) (set f (rt_add f 1)))) (set e (rt_add e 1))))
-      (set d (rt_add d 1)))) (set c (rt_add c 1)))) (set b (rt_add b 1)))) (set a (rt_add a 1)))) result)))
-(defn c1_hist_policy (policy)
- (let (hypotheses (dv_get policy "hypotheses") candidates (c1_hist_candidates) combined (rt_list) index 0)
-  (do (while (rt_lt index (rt_count hypotheses))
-    (do (rt_push combined (rt_at hypotheses index)) (set index (rt_add index 1))))
-   (set index 0) (while (rt_lt index (rt_count candidates))
-    (do (rt_push combined (rt_at candidates index)) (set index (rt_add index 1))))
-   (dv_with (dv_with (dv_with (dv_with (dv_with policy "hypotheses" combined)
-    "factor_domains" (c1_hist_domains)) "factor_constraints" (c1_hist_constraints))
-    "prune_confidence_limit" 0.85)
-    "abduction" (dv_m3 "active" true "confidence_cap" 0.85
-     "basis" (dv_single (c1_source "docs/design-standard.md" 1500 "approved-paid-model-best-explanation-not-certainty")))))))
-(defn c1_hist_expected_answer ()
- (dv_all (dv_list3
-  (dv_fact (c1_hist_claim_ref "actual_heard") "Huo-relay-and-Su-report")
-  (dv_fact (c1_hist_claim_ref "voice_source") "Tube")
-  (dv_fact (c1_hist_claim_ref "transmission_loss") "stressed-tail-without-leading-qualification"))))
-(defn c1_hist_complete_action (actor)
- (dv_with (dv_with (dv_with (dv_with (dv_with (c1_action (rt_cat actor ".answer.original_q2_complete") "answer"
-   (dv_all (dv_pair (c1_at actor "hall") (dv_fact (dv_ref "question" "state" "outstanding_complete") true)))
-   (c1_at actor "hall") "" (rt_list)
-   (c1_source "docs/design-standard.md" 1509 "original-second-question-three-causal-axes"))
-   "answer" (c1_hist_expected_answer))
-   "answer_id" "original_q2_complete") "argument_question" "original_q2_complete")
-   "topic" "original_q2_complete") "argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss")))
-; An existing V3 statement may be offered toward the standing original question.
-; Its literal source claim is not a complete causal account of what the latch actor heard.
-(defn c1_hist_partial_action (actor)
- (dv_with (dv_with (dv_with (dv_with (dv_with
-  (c1_action (rt_cat actor ".answer.original_q2_partial") "answer"
-   (dv_all (dv_list3 (c1_at actor "hall")
-    (dv_fact (dv_ref "question" "state" "outstanding_complete") true)
-    (dv_fact (c1_knowledge "remote_voice") true)))
-   (c1_at actor "hall") "" (rt_list)
-   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story" 66 "V3_0"))
-  "answer" (dv_fact (c1_knowledge "remote_voice") true)) "answer_id" "original_q2_partial")
-  "topic" "original_q2_complete") "argument_question" "original_q2_complete")
-  "surface" "门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。"))
-(defn c1_hist_partial_formal ()
- (dv_with (dv_with (dv_with (dv_with
-  (c1_complete_reply "original_q2_partial"
-   (dv_fact (c1_knowledge "remote_voice") true)
-   (dv_fact (c1_knowledge "remote_voice") true)
-   (dv_fact (dv_ref "question" "state" "outstanding_complete") true)
-   (c1_hist_expected_answer) "accept.original_q2_complete"
-   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 3 "answer_open.002"))
-  "require_argument" true)
-  "required_argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss"))
-  "accepted_public_grants" (dv_single (dv_ref "question" "state" "outstanding_complete")))
-  "incomplete_reason" "The source statement does not supply the original question's three causal argument slots."))
-(defn c1_hist_formal_answer ()
- (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
-  (dv_m4 "id" "original_q2_complete" "condition" (c1_hist_expected_answer)
-   "required_support" (c1_hist_expected_answer)
-   "question_match" (dv_fact (dv_ref "question" "state" "outstanding_complete") true))
-  "answer_complete" (c1_hist_expected_answer)) "require_argument" true)
-  "condition_from_answer" true) "required_argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss"))
-  "accepted_law" "accept.original_q2_complete")
-  "accepted_public_grants" (dv_single (dv_ref "question" "state" "outstanding_complete")))
-  "accepted_listeners" (c1_list_5 "demon" "detective" "huo" "shen" "su")))
+axiom c1_hist_outside_muffled(history, listener):
+    return dv_axiom("c1_hist_outside_muffled", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), "foyer"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
-(defn c1_hist_claim_ref (field) (dv_ref "history_claims" "state" field))
-(defn c1_hist_author_truth ()
- (c1_state_object "history_claims"
-  (dv_m3 "actual_heard" (dv_with (dv_field "Huo-relay-and-Su-report") "basis"
-    (dv_single (c1_source "docs/design-standard.md" 1509 "original-Q2-author-history")))
-   "voice_source" (dv_with (dv_field "Tube") "basis"
-    (dv_single (c1_source "docs/design-standard.md" 640 "author-event-1-main-building-copper-source")))
-   "transmission_loss" (dv_with (dv_field "stressed-tail-without-leading-qualification") "basis"
-    (dv_single (c1_source "docs/design-standard.md" 718 "transmission-table"))))))
-(defn c1_hist_install_mind (mind)
- (let (result (c1_hist_adopt_shared (c1_hist_setup mind)))
-  (do (set result (c1_hist_add_source_laws result))
-   (set result (c1_hist_adopt_routes result))
-   (set result (c1_hist_add_variant_laws result))
-   (c1_hist_adopt result "history.smoke.pantry" (c1_hist_smoke_pantry "history")))))
-; The sharing goal concerns an actual transmission, never a predicted listener acceptance.
-(defn c1_hist_share_basis ()
- (dv_single (c1_source "docs/design-standard.md" 1500 "approved-estimated-argument-sharing-and-paid-scope-reassessment")))
-(defn c1_hist_share_action (actor)
- (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with
-  (c1_action (rt_cat actor ".share.original_q2_complete") "talk"
-   (c1_at actor "hall") (c1_at actor "hall") "" (rt_list)
-   (c1_source "docs/design-standard.md" 1500 "approved-actual-argument-sharing"))
-  "speech_from_argument" true) "argument_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss"))
-  "argument_question" "original_q2_complete") "topic" "original_q2_complete")
-  "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
-  "speech" (dv_with (c1_speech (dv_true) "本人形成的历史解释；估计性、置信度与来源由实际论证生成。" "estimated-history-argument") "channel" "speech"))
-  "reassessment_source_scope" "awake_self")
-  "reassessment_scope_refs" (dv_single (dv_ref "question" "state" "awake_scope"))))
-(defn c1_hist_share_goal (actor)
- (dv_with (dv_m4 "kind" "communicate" "method_id" (rt_cat actor ".share.original_q2_complete")
-  "requires_argument" true "basis" (c1_hist_share_basis)) "available_when" (c1_at actor "hall")))
-(defn c1_hist_proposal_policy (policy)
- (dv_with (dv_with policy "proposal_acceptance"
-  (dv_with (dv_m4 "enabled" true "basis" (c1_hist_share_basis)
-   "required_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss")
-   "confidence_threshold" 0.5) "available_when" (dv_true)))
-  "proposal_reassessment" (dv_with (dv_with
-   (dv_m4 "enabled" true "basis" (c1_hist_share_basis)
-    "required_slots" (dv_list3 "actual_heard" "voice_source" "transmission_loss")
-    "interpretation_ids" (dv_single "short_stay"))
-   "source_scope" "awake_self") "target_scope" "body_history")))
-(defn c1_hist_install_character (actor)
- (let (result actor actions (dv_get actor "actions") new_actions (rt_list) index 0)
-  (do (while (rt_lt index (rt_count actions))
-   (do (rt_push new_actions (rt_at actions index)) (set index (rt_add index 1))))
-   (if (rt_eq (dv_get actor "id") "detective")
-    (do (rt_push new_actions (c1_hist_complete_action (dv_get actor "id")))
-     (rt_push new_actions (c1_hist_partial_action (dv_get actor "id")))) false)
-   (rt_push new_actions (c1_hist_share_action (dv_get actor "id")))
-   (set result (dv_with result "actions" new_actions))
-   (set result (dv_with result "policy" (c1_hist_proposal_policy (dv_get result "policy"))))
-   (if (rt_eq (dv_get actor "id") "detective")
-    (do (set result (dv_with result "mind" (c1_hist_install_mind (dv_get result "mind"))))
-     (let (policy (c1_hist_policy (dv_get result "policy")) goals (dv_get (dv_get result "policy") "goals") new_goals (rt_list) goal_index 0)
-      (do (while (rt_lt goal_index (rt_count goals))
-       (do (rt_push new_goals (rt_at goals goal_index)) (set goal_index (rt_add goal_index 1))))
-       (rt_push new_goals (c1_hist_goal))
-       (rt_push new_goals (c1_hist_share_goal (dv_get actor "id")))
-       (set result (dv_with result "policy" (dv_with policy "goals" new_goals)))))
-     (set result (dv_with result "response_models" (c1_hist_response_models))))
-    (dv_with result "mind" (dv_add_object (dv_get result "mind") (c1_local_object "history_claims")))))))
+axiom c1_hist_outside_junction(history, listener, room):
+    return dv_axiom("c1_hist_outside_junction", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", "foyer"), true), dv_fact(dv_ref(history, "loose_junction", room), true))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
-(defn c1_hist_goal ()
- (dv_m4 "kind" "know" "question" "original_q2_complete" "ref" (c1_hist_claim_ref "actual_heard")
-  "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 46 "s5_question.004"))))
-(defn c1_hist_install_scene (scene)
- (let (actors (dv_get scene "actors") result (rt_list) index 0
-       formal (dv_get scene "formal_answers") new_formal (rt_list) world (dv_get scene "physical"))
-  (do
-   (while (rt_lt index (rt_count actors))
-    (let (actor (rt_at actors index))
-     (do (rt_push result (if (rt_eq (dv_get actor "id") "demon") actor (c1_hist_install_character actor)))
-      (set index (rt_add index 1)))))
-   (set index 0) (while (rt_lt index (rt_count formal))
-    (do (rt_push new_formal (rt_at formal index)) (set index (rt_add index 1))))
-   (rt_push new_formal (c1_hist_formal_answer))
-   (rt_push new_formal (c1_hist_partial_formal))
-   (set world (dv_add_object world (c1_hist_author_truth)))
-   (dv_with (dv_with (dv_with scene "actors" result) "physical" world) "formal_answers" new_formal))))
+axiom c1_hist_origin(history, knowledge, su_room, huo_room):
+    return dv_axiom("c1_hist_origin", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "su_origin"), su_room), dv_fact(dv_ref(history, "inputs", "huo_origin"), huo_room))), c1_list_12(dv_assign(dv_ref("past.su", "state", "location"), su_room), dv_assign(dv_ref("past.huo", "state", "location"), huo_room), dv_assign(dv_ref("past.detective", "state", "location"), "R05"), dv_assign(dv_ref("past.shen", "state", "location"), "pantry"), dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), false), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), false), dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), false), dv_assign(dv_ref(knowledge, "state", "predicted_boots_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), false)))
+
+axiom c1_hist_reset_records(history, knowledge):
+    return dv_axiom("c1_hist_reset_records", 1, dv_fact(dv_ref("past.detective", "state", "location"), "R05"), c1_list_6(dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), false), dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), false), dv_assign(dv_ref(history, "state", "smoke_due"), false), dv_assign(dv_ref(history, "state", "cloth_placed"), false)))
+
+axiom c1_hist_smoke_due(history):
+    return dv_axiom("c1_hist_smoke_due", 1, dv_true(), dv_single(dv_assign(dv_ref(history, "state", "smoke_due"), true)))
+
+axiom c1_hist_voice_input(history, source, words):
+    return dv_axiom("c1_hist_voice_input", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "source"), source), dv_fact(dv_ref(history, "inputs", "words"), words))), dv_pair(dv_assign(dv_ref(history, "state", "voice_source"), source), dv_assign(dv_ref(history, "state", "words"), words)))
+
+axiom c1_hist_open_interpretation(history, listener):
+    return dv_axiom("c1_hist_open_interpretation", 1, dv_fact(dv_ref(history, "heard_words", listener), "Open"), dv_single(dv_assign(dv_ref(listener, "belief", "outside_wants_open"), true)))
+
+axiom c1_hist_su_open_intent(history):
+    return dv_axiom("c1_hist_su_open_intent", 1, dv_fact(dv_ref("past.su", "belief", "outside_wants_open"), true), dv_single(dv_assign(dv_ref("past.su", "state", "intent"), "open-and-listen")))
+
+axiom c1_hist_huo_tail_open_intent(history):
+    return dv_axiom("c1_hist_huo_tail_open_intent", 1, dv_all(dv_pair(dv_fact(dv_ref("past.huo", "belief", "outside_wants_open"), true), dv_fact(dv_ref("past.huo", "state", "location"), "foyer"))), dv_single(dv_assign(dv_ref("past.huo", "state", "intent"), "open-and-listen")))
+
+axiom c1_hist_instruction_record(history, knowledge, words):
+    return dv_axiom("c1_hist_instruction_record", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "heard_form", "past.huo"), "full"), dv_fact(dv_ref(history, "heard_words", "past.huo"), words))), dv_pair(dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), true), dv_assign(dv_ref(history, "state", "huo_instruction"), words)))
+
+axiom c1_hist_guard_call(history):
+    return dv_axiom("c1_hist_guard_call", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "huo_instruction"), "BoltKeepShut"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"))), dv_pair(dv_assign(dv_ref("past.huo", "state", "intent"), "guard-tube"), dv_assign(dv_ref(history, "state", "huo_called_corridor"), true)))
+
+axiom c1_hist_travel(actor, origin, target, permitted_intent):
+    return dv_axiom("c1_hist_travel", 1, dv_all(dv_pair(dv_fact(dv_ref(actor, "state", "location"), origin), dv_fact(dv_ref(actor, "state", "intent"), permitted_intent))), dv_single(dv_assign(dv_ref(actor, "state", "location"), target)))
+
+axiom c1_hist_open_door(history, actor, knowledge):
+    return dv_axiom("c1_hist_open_door", 1, dv_all(dv_pair(dv_fact(dv_ref(actor, "state", "location"), "foyer"), dv_fact(dv_ref(actor, "state", "intent"), "open-and-listen"))), dv_list3(dv_assign(dv_ref(history, "state", "door_open"), true), dv_assign(dv_ref(history, "state", "door_wedged"), true), dv_assign(dv_ref(actor, "state", "intent"), "wait-at-door")))
+
+axiom c1_hist_fork_tap(history, knowledge):
+    return dv_axiom("c1_hist_fork_tap", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "state", "intent"), "wait-at-door"), dv_fact(dv_ref(history, "state", "door_open"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), true)))
+
+axiom c1_hist_receive_request(history, knowledge):
+    return dv_axiom("c1_hist_receive_request", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"), dv_fact(dv_ref(history, "state", "huo_instruction"), "BoltKeepShut"))), dv_pair(dv_assign(dv_ref(history, "state", "request_received"), true), dv_assign(dv_ref(history, "state", "det_heard_relay"), true)))
+
+axiom c1_hist_response_bridge(history, choice, intent):
+    return dv_axiom("c1_hist_response_bridge", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "response", "detective"), choice), dv_fact(dv_ref(history, "state", "request_received"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), intent)))
+
+axiom c1_hist_latch(history, knowledge):
+    return dv_axiom("c1_hist_latch", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "latch-request"), dv_fact(dv_ref(history, "state", "det_heard_relay"), true))), c1_list_6(dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true), dv_assign(dv_ref(history, "state", "at_origin"), true), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_assign(dv_ref(history, "state", "latching_complete"), true)))
+
+axiom c1_hist_close_for_smoke(history):
+    return dv_axiom("c1_hist_close_for_smoke", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "inspect-first"), dv_fact(dv_ref("cognition", "state", "predicted_ash_fan"), true))), dv_list3(dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true)))
+
+axiom c1_hist_report(history, knowledge):
+    return dv_axiom("c1_hist_report", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), true)))
+
+axiom c1_hist_score(history, knowledge):
+    return dv_axiom("c1_hist_score", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "R08"), dv_fact(dv_ref("past.su", "state", "intent"), "write-score"), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), true)))
+
+axiom c1_hist_cloth_response(history, knowledge):
+    return dv_axiom("c1_hist_cloth_response", 1, dv_all(c1_list_4(dv_fact(dv_ref("past.shen", "state", "location"), "foyer"), dv_fact(dv_ref("past.shen", "state", "intent"), "place-wet-cloth"), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref(history, "state", "cloth_placed"), true)))
+
+axiom c1_hist_argument_source(history, knowledge, source, loss):
+    var local_1 = false
+    if (source == "Tube"):
+        local_1 = "tail"
+    else:
+        local_1 = "muffled-full"
+    var local_2 = false
+    if (source == "Tube"):
+        local_2 = "Open"
+    else:
+        local_2 = "OpenSaveMe"
+    return dv_axiom("c1_hist_argument_source", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), source), dv_fact(dv_ref(history, "heard_form", "past.su"), local_1), dv_fact(dv_ref(history, "heard_words", "past.su"), local_2), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true))), dv_pair(dv_assign(c1_hist_claim_ref("voice_source"), source), dv_assign(c1_hist_claim_ref("transmission_loss"), loss)))
+
+axiom c1_hist_coordinate(knowledge, history, atom, polarity, variable, value):
+    return dv_axiom("c1_hist_coordinate", 1, dv_fact(dv_ref(knowledge, "state", atom), polarity), dv_single(dv_assign(dv_ref(history, "actual", variable), value)))
+
+axiom c1_hist_su_report(history):
+    return dv_axiom("c1_hist_su_report", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "belief", "outside_wants_open"), true))), dv_single(dv_assign(dv_ref(history, "state", "det_heard_su_report"), true)))
+
+axiom c1_hist_heard_argument(history, knowledge, su_report, heard):
+    return dv_axiom("c1_hist_heard_argument", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "latching_complete"), true), dv_fact(dv_ref(history, "state", "det_heard_relay"), true), dv_fact(dv_ref(history, "state", "det_heard_su_report"), su_report))), dv_single(dv_assign(c1_hist_claim_ref("actual_heard"), heard)))
+
+axiom c1_hist_familiar_relations(history, preference, huo_trust, su_trust):
+    return dv_axiom("c1_hist_familiar_relations", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "familiar"), true), dv_fact(dv_ref(history, "inputs", "trust_choice"), preference))), dv_pair(dv_assign(dv_ref(history, "relationships", "trust_huo"), huo_trust), dv_assign(dv_ref(history, "relationships", "trust_su"), su_trust)))
+
+axiom c1_hist_social_preview(speaker, expected, result):
+    return dv_axiom("c1_hist_social_preview", 1, dv_fact(dv_ref(speaker, "relationship", "trust"), expected), dv_single(dv_assign(dv_ref("response.outcome", "state", "value"), result)))
+
+axiom c1_hist_inspection_preview(priority):
+    return dv_axiom("c1_hist_inspection_preview", 1, dv_true(), dv_single(dv_assign(dv_ref("response.outcome", "state", "value"), priority)))
+
+fn c1_hist_variable_specs():
+    return c1_list_15(c1_list_5("V1", "R08", "su_room", true, 1), c1_list_5("V1", "hall", "su_hall", true, 1), c1_list_5("V1", "pantry", "su_pantry", true, 1), c1_list_5("V2", "hall", "huo_copper", true, 11), c1_list_5("V2", "R06", "huo_room", true, 11), c1_list_5("V2", "foyer", "huo_foyer", true, 11), c1_list_5("V3", "Tube", "remote_voice", true, 21), c1_list_5("V3", "OutsideDoor", "remote_voice", false, 21), c1_list_5("V4", "BoltKeepShut", "words_bolt", true, 30), c1_list_5("V4", "OpenSaveMe", "words_bolt", false, 30), c1_list_5("V5", "huo", "heed_huo", true, 39), c1_list_5("V5", "su", "heed_su", true, 39), c1_list_5("V5", "self", "heed_neither", true, 39), c1_list_5("V6", false, "familiar", false, 49), c1_list_5("V6", true, "familiar", true, 50))
+
+fn c1_hist_domain(id, values):
+    return {"id": id, "version": 1, "ref": dv_ref("history", "actual", id), "values": values}
+
+fn c1_hist_domains():
+    return c1_list_6(c1_hist_domain("V1", dv_list3("R08", "hall", "pantry")), c1_hist_domain("V2", dv_list3("hall", "R06", "foyer")), c1_hist_domain("V3", dv_pair("Tube", "OutsideDoor")), c1_hist_domain("V4", dv_pair("BoltKeepShut", "OpenSaveMe")), c1_hist_domain("V5", dv_list3("huo", "su", "self")), c1_hist_domain("V6", dv_pair(false, true)))
+
+fn c1_hist_coordinate_name(index):
+    return rt_cat("history.coordinate.", rt_show(index))
+
+fn c1_hist_constraints():
+    var specs = c1_hist_variable_specs()
+    var result = []
+    var index = 0
+    while (index < rt_count(specs)):
+        var spec = specs[index]
+        var variable = specs[index][0]
+        var value = specs[index][1]
+        rt_push(result, dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history.exclude.", rt_show(index)), "domain_versions": dv_single(dv_pair(variable, 1)), "scope": dv_single(variable), "assignments": dv_single({"variable": variable, "value": value})}, "condition", dv_fact(dv_ref("history", "actual", variable), value)), "support", dv_not(dv_fact(dv_ref("history", "actual", variable), value))), "infer_laws", c1_hist_coordinate_versions(variable)), "basis", dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story", spec[4], variable))))
+        index = (index + 1)
+    return result
+
+fn c1_hist_coordinate_versions(variable):
+    var specs = c1_hist_variable_specs()
+    var result = []
+    var index = 0
+    while (index < rt_count(specs)):
+        if (specs[index][0] == variable):
+            rt_push(result, {"id": c1_hist_coordinate_name(index), "version": 1})
+        index = (index + 1)
+    return result
+
+fn c1_hist_add_coordinates(mind):
+    var specs = c1_hist_variable_specs()
+    var result = mind
+    var index = 0
+    while (index < rt_count(specs)):
+        var spec = specs[index]
+        result = dv_adopt(result, c1_method(c1_hist_coordinate_name(index), c1_hist_coordinate("cognition", "history", spec[2], spec[3], spec[0], spec[1])), "infer", 0.85, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story", spec[4], spec[0])))
+        index = (index + 1)
+    return result
+
+fn c1_hist_assignments(su_room, huo_room, source, words, preference, familiar):
+    return c1_list_6({"variable": "V1", "value": su_room}, {"variable": "V2", "value": huo_room}, {"variable": "V3", "value": source}, {"variable": "V4", "value": words}, {"variable": "V5", "value": preference}, {"variable": "V6", "value": familiar})
+
+fn c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar):
+    return c1_list_6(dv_fact(dv_ref("history", "inputs", "su_origin"), su_room), dv_fact(dv_ref("history", "inputs", "huo_origin"), huo_room), dv_fact(dv_ref("history", "inputs", "source"), source), dv_fact(dv_ref("history", "inputs", "words"), words), dv_fact(dv_ref("history", "inputs", "trust_choice"), preference), dv_fact(dv_ref("history", "inputs", "familiar"), familiar))
+
+fn c1_hist_claim_slots():
+    return dv_list3(dv_with({"slot_id": "actual_heard", "ref": c1_hist_claim_ref("actual_heard"), "trace_at": 160, "feature_index": 0}, "value_from_prediction", true), dv_with({"slot_id": "voice_source", "ref": c1_hist_claim_ref("voice_source"), "trace_at": 160, "feature_index": 4}, "value_from_prediction", true), dv_with({"slot_id": "transmission_loss", "ref": c1_hist_claim_ref("transmission_loss"), "trace_at": 160, "feature_index": 6}, "value_from_prediction", true))
+
+fn c1_hist_feature(predicted, observed):
+    return {"proposition": dv_fact(c1_knowledge(predicted), true), "observation": dv_fact(c1_knowledge(observed), true), "at": 160}
+
+fn c1_hist_features():
+    return c1_list_7(c1_hist_feature("predicted_bolt", "bolt_down"), c1_hist_feature("predicted_wedge_soot", "ash_wedge"), c1_hist_feature("predicted_boots_bolt", "boots_toward_bolt"), c1_hist_feature("predicted_cloth_over_heel", "cloth_after_boots"), c1_hist_feature("predicted_slate_first", "slate_marks"), c1_hist_feature("predicted_slate_second", "slate_person"), c1_hist_feature("predicted_score_tail", "score_partial"))
+
+fn c1_hist_response_world(preference):
+    var mind = dv_world(rt_cat("history-response-", preference), "mind", "modeled.detective")
+    var basis = dv_pair(c1_source("docs/design-standard.md", 713, "V5-trust-plus-one-not-action"), c1_source("docs/design-standard.md", 723, "competing-reports-and-SocialSystem"))
+    mind = c1_add_objects(mind, c1_list_5(c1_local_object("modeled.detective"), c1_local_object("modeled.huo"), c1_local_object("modeled.su"), c1_local_object("joint.request"), c1_local_object("response.outcome")))
+    mind = dv_store(mind, dv_ref("response.outcome", "state", "value"), dv_with(dv_field(0), "basis", basis))
+    var local_1 = false
+    if (preference == "huo"):
+        local_1 = 4
+    else:
+        local_1 = 3
+    var local_2 = false
+    if (preference == "huo"):
+        local_2 = 4
+    else:
+        local_2 = 3
+    mind = dv_adopt(mind, c1_method("huo.value", c1_hist_social_preview("modeled.huo", local_1, local_2)), "predict", 0.85, basis)
+    var local_3 = false
+    if (preference == "su"):
+        local_3 = 4
+    else:
+        local_3 = 3
+    var local_4 = false
+    if (preference == "su"):
+        local_4 = 4
+    else:
+        local_4 = 3
+    mind = dv_adopt(mind, c1_method("su.value", c1_hist_social_preview("modeled.su", local_3, local_4)), "predict", 0.85, basis)
+    var local_5 = false
+    if (preference == "self"):
+        local_5 = 3
+    else:
+        local_5 = 2
+    mind = dv_adopt(mind, c1_method("inspect.value", c1_hist_inspection_preview(local_5)), "predict", 0.85, dv_pair(c1_source("docs/design-standard.md", 713, "own-inspection-strengthens-evidence-preference"), c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/01_侦探.story", 29, "existing-caution-two")))
+    return dv_accept_policy(mind, "joint-response", dv_person_policy("modeled.detective", dv_single(dv_criterion("relative-outcome", dv_ref("response.outcome", "state", "value"), "numeric", 0, 1)), 0, 1, []), basis)
+
+fn c1_hist_response_option(id, received, predict, bridge):
+    return dv_with(dv_with(dv_with({"id": id, "intent": id, "feasible": dv_fact(dv_ref("joint.request", "state", received), true), "effort": 0}, "feature_weights", []), "predict_law", predict), "bridge_law", bridge)
+
+fn c1_hist_response_model(preference):
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"owner": "detective", "basis": dv_pair(c1_source("docs/design-standard.md", 713, "V5-V6-model-not-fact"), c1_source("docs/design-standard.md", 723, "joint-contradictory-reports")), "confidence": 0.85, "world": c1_hist_response_world(preference)}, "context", c1_list_4({"from": dv_ref("history", "relationships", "trust_huo"), "to": dv_ref("modeled.huo", "relationship", "trust")}, {"from": dv_ref("history", "relationships", "trust_su"), "to": dv_ref("modeled.su", "relationship", "trust")}, {"from": dv_ref("history", "state", "request_received"), "to": dv_ref("joint.request", "state", "huo_received")}, {"from": dv_ref("history", "state", "det_heard_su_report"), "to": dv_ref("joint.request", "state", "su_received")})), "requests", dv_single(dv_pair("competing-reports", dv_request("joint.request", "modeled.huo", "modeled.detective")))), "options", dv_list3(dv_pair("accept-huo", c1_hist_response_option("accept-huo", "huo_received", "huo.value", "history.response.huo")), dv_pair("accept-su", c1_hist_response_option("accept-su", "su_received", "su.value", "history.response.su")), dv_pair("inspect", c1_hist_response_option("inspect", "huo_received", "inspect.value", "history.response.self")))), "policy_id", "joint-response"), "choice_ref", dv_ref("history", "response", "detective"))
+
+fn c1_hist_response_models():
+    return dv_list3(dv_pair("history.huo", c1_hist_response_model("huo")), dv_pair("history.su", c1_hist_response_model("su")), dv_pair("history.self", c1_hist_response_model("self")))
+
+axiom c1_hist_alarm_wake(knowledge):
+    return dv_axiom("c1_hist_alarm_wake", 1, dv_fact(dv_ref(knowledge, "state", "own_alarm_anchor"), true), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "seek-instruction")))
+
+axiom c1_hist_visit_door(history):
+    return dv_axiom("c1_hist_visit_door", 1, dv_all(dv_pair(dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref(history, "state", "request_received"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "visit-door")))
+
+axiom c1_hist_begin_return(history, knowledge):
+    return dv_axiom("c1_hist_begin_return", 1, dv_all(dv_pair(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "return-report")))
+
+axiom c1_hist_su_begin_score(history):
+    return dv_axiom("c1_hist_su_begin_score", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "state", "intent"), "wait-at-door"), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref("past.su", "state", "intent"), "write-score")))
+
+axiom c1_hist_print_occurrence(history, knowledge):
+    return dv_axiom("c1_hist_print_occurrence", 1, dv_fact(dv_ref(knowledge, "state", "predicted_boots_bolt"), true), dv_single(dv_assign(dv_ref(history, "state", "prints_exist"), true)))
+
+axiom c1_hist_shen_smoke_response(history):
+    return dv_axiom("c1_hist_shen_smoke_response", 1, dv_all(dv_pair(dv_fact(dv_ref("past.shen", "belief", "smoke"), true), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref("past.shen", "state", "intent"), "place-wet-cloth")))
+
+axiom c1_hist_episode_registers(history):
+    return dv_axiom("c1_hist_episode_registers", 1, dv_true(), c1_list_12(dv_assign(dv_ref(history, "state", "request_received"), false), dv_assign(dv_ref(history, "state", "det_heard_relay"), false), dv_assign(dv_ref(history, "state", "det_heard_su_report"), false), dv_assign(dv_ref(history, "state", "prints_exist"), false), dv_assign(dv_ref("past.su", "state", "intent"), "idle"), dv_assign(dv_ref("past.huo", "state", "intent"), "idle"), dv_assign(dv_ref("past.shen", "state", "intent"), "idle"), dv_assign(dv_ref("past.detective", "state", "intent"), "idle"), dv_assign(dv_ref("past.su", "belief", "outside_wants_open"), false), dv_assign(dv_ref("past.huo", "belief", "outside_wants_open"), false), dv_assign(dv_ref(history, "state", "at_origin"), false), dv_assign(dv_ref(history, "state", "latching_complete"), false)))
+
+fn c1_hist_setup(mind):
+    var result = c1_add_objects(mind, c1_list_6(c1_local_object("history_claims"), c1_local_object("history"), c1_local_object("past.su"), c1_local_object("past.huo"), c1_local_object("past.detective"), c1_local_object("past.shen")))
+    return c1_hist_add_coordinates(result)
+
+fn c1_hist_predicate_basis():
+    return dv_list3(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 125, "smoke-footprints-cloth"), c1_source("docs/design-standard.md", 718, "heard-words-by-channel"), c1_source("docs/design-standard.md", 724, "perception-cognition-response"))
+
+fn c1_hist_adopt(mind, id, rule):
+    return dv_adopt(mind, c1_method(id, rule), "predict", 0.85, c1_hist_predicate_basis())
+
+fn c1_hist_adopt_shared(mind):
+    var result = mind
+    result = c1_hist_adopt(result, "history.reset", c1_hist_episode_registers("history"))
+    result = c1_hist_adopt(result, "history.reset.records", c1_hist_reset_records("history", "cognition"))
+    result = c1_hist_adopt(result, "history.wake", c1_hist_alarm_wake("cognition"))
+    result = c1_hist_adopt(result, "history.smoke.due", c1_hist_smoke_due("history"))
+    result = c1_hist_adopt(result, "history.smoke", c1_hist_smoke("history", "cognition"))
+    result = c1_hist_adopt(result, "history.soot", c1_hist_wedge_soot("history", "cognition"))
+    result = c1_hist_adopt(result, "history.su.intent", c1_hist_su_open_intent("history"))
+    result = c1_hist_adopt(result, "history.huo.intent", c1_hist_huo_tail_open_intent("history"))
+    result = c1_hist_adopt(result, "history.huo.guard", c1_hist_guard_call("history"))
+    result = c1_hist_adopt(result, "history.request", c1_hist_receive_request("history", "cognition"))
+    result = c1_hist_adopt(result, "history.visit", c1_hist_visit_door("history"))
+    result = c1_hist_adopt(result, "history.su.report", c1_hist_su_report("history"))
+    result = c1_hist_adopt(result, "history.response.huo", c1_hist_response_bridge("history", "accept-huo", "latch-request"))
+    result = c1_hist_adopt(result, "history.response.su", c1_hist_response_bridge("history", "accept-su", "keep-open"))
+    result = c1_hist_adopt(result, "history.response.self", c1_hist_response_bridge("history", "inspect", "inspect-first"))
+    result = c1_hist_adopt(result, "history.latch", c1_hist_latch("history", "cognition"))
+    result = c1_hist_adopt(result, "history.close-smoke", c1_hist_close_for_smoke("history"))
+    result = c1_hist_adopt(result, "history.return", c1_hist_begin_return("history", "cognition"))
+    result = c1_hist_adopt(result, "history.report", c1_hist_report("history", "cognition"))
+    result = c1_hist_adopt(result, "history.su.return", c1_hist_su_begin_score("history"))
+    result = c1_hist_adopt(result, "history.score", c1_hist_score("history", "cognition"))
+    result = c1_hist_adopt(result, "history.fork", c1_hist_fork_tap("history", "cognition"))
+    result = c1_hist_adopt(result, "history.prints", c1_hist_print_occurrence("history", "cognition"))
+    result = c1_hist_adopt(result, "history.shen.intent", c1_hist_shen_smoke_response("history"))
+    result = c1_hist_adopt(result, "history.cloth.place", c1_hist_cloth_response("history", "cognition"))
+    result = c1_hist_adopt(result, "history.cloth", c1_hist_cloth("history", "cognition"))
+    return result
+
+axiom c1_hist_open_full_interpretation(history, listener):
+    return dv_axiom("c1_hist_open_full_interpretation", 1, dv_fact(dv_ref(history, "heard_words", listener), "OpenSaveMe"), dv_single(dv_assign(dv_ref(listener, "belief", "outside_wants_open"), true)))
+
+axiom c1_hist_layout_known(knowledge, history):
+    return dv_axiom("c1_hist_layout_known", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "pipe_layout"), true), dv_fact(dv_ref(knowledge, "state", "heads_lost"), true))), dv_pair(dv_assign(dv_ref(history, "loose_junction", "R08"), true), dv_assign(dv_ref(history, "loose_junction", "foyer"), true)))
+
+fn c1_hist_source_id(source, words):
+    return rt_cat(rt_cat(source, "."), words)
+
+fn c1_hist_origin_id(su_room, huo_room):
+    return rt_cat(rt_cat("history.origin.", su_room), rt_cat(".", huo_room))
+
+fn c1_hist_acoustic_id(source, words, listener, room):
+    return rt_cat(rt_cat(rt_cat("history.hearing.", c1_hist_source_id(source, words)), rt_cat(".", listener)), rt_cat(".", room))
+
+fn c1_hist_add_source_laws(mind):
+    var result = mind
+    var origins = dv_list3("R08", "hall", "pantry")
+    var huos = dv_list3("hall", "R06", "foyer")
+    var sources = dv_pair("Tube", "OutsideDoor")
+    var words_list = dv_pair("BoltKeepShut", "OpenSaveMe")
+    var listeners = dv_pair("past.su", "past.huo")
+    var rooms = c1_list_6("hall", "R08", "foyer", "pantry", "R05", "R06")
+    var i = 0
+    var j = 0
+    var k = 0
+    var n = 0
+    while (i < 3):
+        j = 0
+        while (j < 3):
+            result = c1_hist_adopt(result, c1_hist_origin_id(origins[i], huos[j]), c1_hist_origin("history", "cognition", origins[i], huos[j]))
+            j = (j + 1)
+        i = (i + 1)
+    i = 0
+    while (i < 2):
+        j = 0
+        while (j < 2):
+            var source = sources[i]
+            var words = words_list[j]
+            result = c1_hist_adopt(result, rt_cat("history.voice.", c1_hist_source_id(source, words)), c1_hist_voice_input("history", source, words))
+            k = 0
+            while (k < 2):
+                n = 0
+                while (n < 6):
+                    var listener = listeners[k]
+                    var room = rooms[n]
+                    var local_1 = false
+                    if (source == "Tube"):
+                        if (room == "hall"):
+                            local_1 = c1_hist_tube_full("history", listener, words)
+                        else:
+                            if dv_or((room == "R08"), (room == "foyer")):
+                                var local_2 = false
+                                if (words == "BoltKeepShut"):
+                                    local_2 = "Open"
+                                else:
+                                    local_2 = "SaveMe"
+                                local_1 = c1_hist_tube_tail("history", listener, room, words, local_2)
+                            else:
+                                if (room == "pantry"):
+                                    local_1 = c1_hist_tube_hum("history", listener)
+                                else:
+                                    local_1 = c1_hist_room_alarm("history", listener, room)
+                    else:
+                        if dv_or((room == "R08"), (room == "foyer")):
+                            local_1 = c1_hist_outside_received("history", listener, room, words)
+                        else:
+                            local_1 = c1_hist_room_silence("history", listener, room)
+                    result = c1_hist_adopt(result, c1_hist_acoustic_id(source, words, listener, room), local_1)
+                    n = (n + 1)
+                k = (k + 1)
+            j = (j + 1)
+        i = (i + 1)
+    return result
+
+axiom c1_hist_room_alarm(history, listener, room):
+    return dv_axiom("c1_hist_room_alarm", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), room))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "alarm-only"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+
+axiom c1_hist_outside_received(history, listener, room, words):
+    return dv_axiom("c1_hist_outside_received", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+
+axiom c1_hist_room_silence(history, listener, room):
+    return dv_axiom("c1_hist_room_silence", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "no-intelligible-voice"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+
+fn c1_hist_stage(at, laws):
+    return {"at": at, "laws": laws, "optional": true}
+
+fn c1_hist_travel_id(actor, origin, target, intent):
+    return rt_cat(rt_cat(rt_cat(rt_cat("history.travel.", actor), rt_cat(".", origin)), rt_cat(".", target)), rt_cat(".", intent))
+
+fn c1_hist_add_travel(mind, actor, origin, target, intent):
+    return c1_hist_adopt(mind, c1_hist_travel_id(actor, origin, target, intent), c1_hist_travel(actor, origin, target, intent))
+
+fn c1_hist_adopt_routes(mind):
+    var result = mind
+    var routes = c1_list_12(c1_list_4("past.detective", "R05", "corridor", "seek-instruction"), c1_list_4("past.detective", "corridor", "hall", "seek-instruction"), c1_list_4("past.detective", "hall", "foyer", "visit-door"), c1_list_4("past.detective", "foyer", "hall", "return-report"), c1_list_4("past.su", "R08", "corridor", "open-and-listen"), c1_list_4("past.su", "corridor", "hall", "open-and-listen"), c1_list_4("past.su", "hall", "foyer", "open-and-listen"), c1_list_4("past.su", "foyer", "hall", "write-score"), c1_list_4("past.su", "hall", "corridor", "write-score"), c1_list_4("past.su", "corridor", "R08", "write-score"), c1_list_4("past.shen", "pantry", "hall", "place-wet-cloth"), c1_list_4("past.shen", "hall", "foyer", "place-wet-cloth"))
+    var index = 0
+    while (index < rt_count(routes)):
+        var route = routes[index]
+        result = c1_hist_add_travel(result, route[0], route[1], route[2], route[3])
+        index = (index + 1)
+    return result
+
+fn c1_hist_add_variant_laws(mind):
+    var result = mind
+    var listeners = dv_pair("past.su", "past.huo")
+    var preferences = dv_list3("huo", "su", "self")
+    var index = 0
+    while (index < 2):
+        var listener = listeners[index]
+        result = c1_hist_adopt(result, rt_cat("history.tail-belief.", listener), c1_hist_open_interpretation("history", listener))
+        result = c1_hist_adopt(result, rt_cat("history.open-belief.", listener), c1_hist_open_full_interpretation("history", listener))
+        result = c1_hist_adopt(result, rt_cat("history.open-door.", listener), c1_hist_open_door("history", listener, "cognition"))
+        index = (index + 1)
+    index = 0
+    while (index < 3):
+        var preference = preferences[index]
+        var local_1 = false
+        if (preference == "huo"):
+            local_1 = 4
+        else:
+            local_1 = 3
+        var local_2 = false
+        if (preference == "su"):
+            local_2 = 4
+        else:
+            local_2 = 3
+        result = c1_hist_adopt(result, rt_cat("history.relations.", preference), c1_hist_familiar_relations("history", preference, local_1, local_2))
+        index = (index + 1)
+    result = c1_hist_adopt(result, "history.layout", c1_hist_layout_known("cognition", "history"))
+    result = c1_hist_adopt(result, "history.slate.BoltKeepShut", c1_hist_instruction_record("history", "cognition", "BoltKeepShut"))
+    result = c1_hist_adopt(result, "history.slate.OpenSaveMe", c1_hist_instruction_record("history", "cognition", "OpenSaveMe"))
+    result = c1_hist_adopt(result, "history.footprint", c1_hist_footprint("history", "cognition", "PoloBoot", "Bolt", "predicted_boots_bolt"))
+    result = c1_hist_adopt(result, "history.argument.source.Tube", c1_hist_argument_source("history", "cognition", "Tube", "stressed-tail-without-leading-qualification"))
+    result = c1_hist_adopt(result, "history.argument.source.OutsideDoor", c1_hist_argument_source("history", "cognition", "OutsideDoor", "muffled-full-speech"))
+    result = c1_hist_adopt(result, "history.argument.heard.both", c1_hist_heard_argument("history", "cognition", true, "Huo-relay-and-Su-report"))
+    result = c1_hist_adopt(result, "history.argument.heard.relay", c1_hist_heard_argument("history", "cognition", false, "Huo-relay-only"))
+    return result
+
+fn c1_hist_hearing_ids(source, words):
+    var result = []
+    var listeners = dv_pair("past.su", "past.huo")
+    var rooms = c1_list_6("hall", "R08", "foyer", "pantry", "R05", "R06")
+    var i = 0
+    var j = 0
+    while (i < 2):
+        j = 0
+        while (j < 6):
+            rt_push(result, c1_hist_acoustic_id(source, words, listeners[i], rooms[j]))
+            j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn c1_hist_order(stages):
+    var result = []
+    var used = []
+    var count = 0
+    while (count < rt_count(stages)):
+        var found = false
+        var best = 0
+        var best_at = 0
+        var index = 0
+        while (index < rt_count(stages)):
+            if dv_has(used, index):
+                false
+            else:
+                var local_1 = false
+                if found:
+                    local_1 = (stages[index].at < best_at)
+                else:
+                    local_1 = true
+                if local_1:
+                    found = true
+                    best = index
+                    best_at = stages[index].at
+            index = (index + 1)
+        rt_push(used, best)
+        rt_push(result, stages[best])
+        count = (count + 1)
+    return result
+
+axiom c1_hist_smoke_pantry(history):
+    return dv_axiom("c1_hist_smoke_pantry", 1, dv_fact(dv_ref(history, "state", "smoke_entered"), true), dv_single(dv_assign(dv_ref("past.shen", "belief", "smoke"), true)))
+
+fn c1_hist_timeline(su_room, huo_room, source, words, preference):
+    var stages = []
+    var su_start = 1
+    var su_corridor = (1 + (1.2 / 1.3))
+    var su_hall = (1 + (3.2 / 1.3))
+    var su_foyer = (1 + (5.7 / 1.3))
+    rt_push(stages, c1_hist_stage(0, c1_list_5(c1_hist_origin_id(su_room, huo_room), "history.reset", "history.reset.records", "history.layout", "history.wake")))
+    rt_push(stages, c1_hist_stage(1, dv_single(rt_cat("history.voice.", c1_hist_source_id(source, words)))))
+    rt_push(stages, c1_hist_stage(1, c1_hist_hearing_ids(source, words)))
+    rt_push(stages, c1_hist_stage(1, c1_list_10("history.tail-belief.past.su", "history.open-belief.past.su", "history.tail-belief.past.huo", "history.open-belief.past.huo", "history.su.intent", "history.huo.intent", rt_cat("history.slate.", words), "history.huo.guard", "history.open-door.past.huo", rt_cat("history.relations.", preference))))
+    rt_push(stages, c1_hist_stage(1.2, dv_single(c1_hist_travel_id("past.detective", "R05", "corridor", "seek-instruction"))))
+    rt_push(stages, c1_hist_stage(2, dv_single("history.smoke.due")))
+    rt_push(stages, c1_hist_stage(2.2, c1_hist_hearing_ids(source, words)))
+    rt_push(stages, c1_hist_stage(3.2, dv_list3(c1_hist_travel_id("past.detective", "corridor", "hall", "seek-instruction"), "history.request", "history.visit")))
+    if (su_room == "R08"):
+        rt_push(stages, c1_hist_stage(su_corridor, dv_single(c1_hist_travel_id("past.su", "R08", "corridor", "open-and-listen"))))
+        rt_push(stages, c1_hist_stage(su_hall, dv_single(c1_hist_travel_id("past.su", "corridor", "hall", "open-and-listen"))))
+    if (su_room == "hall"):
+        su_foyer = (1 + (2.5 / 1.3))
+    rt_push(stages, c1_hist_stage(su_foyer, c1_list_5(c1_hist_travel_id("past.su", "hall", "foyer", "open-and-listen"), "history.open-door.past.su", "history.fork", "history.smoke", "history.soot")))
+    rt_push(stages, c1_hist_stage(5.7, dv_list3(c1_hist_travel_id("past.detective", "hall", "foyer", "visit-door"), "history.su.report", "history.smoke")))
+    rt_push(stages, dv_with({"at": 5.7, "response": {"model": rt_cat("history.", preference), "request": "competing-reports", "options": dv_list3("accept-huo", "accept-su", "inspect")}, "optional": true}, "available_when", dv_fact(dv_ref("history", "state", "request_received"), true)))
+    rt_push(stages, c1_hist_stage(5.7, c1_list_8("history.latch", "history.close-smoke", "history.footprint", "history.prints", "history.return", "history.su.return", "history.argument.heard.both", "history.argument.heard.relay")))
+    rt_push(stages, c1_hist_stage(8.2, dv_pair(c1_hist_travel_id("past.detective", "foyer", "hall", "return-report"), "history.report")))
+    rt_push(stages, c1_hist_stage((5.7 + (2.5 / 1.3)), dv_single(c1_hist_travel_id("past.su", "foyer", "hall", "write-score"))))
+    rt_push(stages, c1_hist_stage((5.7 + (4.5 / 1.3)), dv_single(c1_hist_travel_id("past.su", "hall", "corridor", "write-score"))))
+    rt_push(stages, c1_hist_stage((5.7 + (5.7 / 1.3)), dv_pair(c1_hist_travel_id("past.su", "corridor", "R08", "write-score"), "history.score")))
+    rt_push(stages, c1_hist_stage((5.7 + (5.7 / 1.3)), dv_pair("history.smoke.pantry", "history.shen.intent")))
+    rt_push(stages, c1_hist_stage(((5.7 + (5.7 / 1.3)) + (2 / 0.9)), dv_single(c1_hist_travel_id("past.shen", "pantry", "hall", "place-wet-cloth"))))
+    rt_push(stages, c1_hist_stage(((5.7 + (5.7 / 1.3)) + (4.5 / 0.9)), dv_list3(c1_hist_travel_id("past.shen", "hall", "foyer", "place-wet-cloth"), "history.cloth.place", "history.cloth")))
+    rt_push(stages, c1_hist_stage(160, dv_list3(rt_cat("history.argument.source.", source), "history.argument.heard.both", "history.argument.heard.relay")))
+    return c1_hist_order(stages)
+
+fn c1_hist_candidate(number, su_room, huo_room, source, words, preference, familiar):
+    var assumptions = c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar)
+    rt_push(assumptions, dv_fact(c1_knowledge("own_alarm_anchor"), true))
+    rt_push(assumptions, dv_fact(dv_ref("history", "state", "sole"), "PoloBoot"))
+    rt_push(assumptions, dv_fact(dv_ref("history", "state", "direction"), "Bolt"))
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history-case-", rt_show(number)), "question": "original_q2_complete", "group": "six-variable-history", "prior": 0.5}, "proposition", dv_all(c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar))), "basis", dv_pair(c1_source("docs/design-standard.md", 703, "public-six-variable-candidate-space"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 102, "fixed-external-event-catalog"))), "available_when", dv_fact(dv_ref("question", "state", "outstanding_complete"), true)), "assumptions", assumptions), "variable_assignments", c1_hist_assignments(su_room, huo_room, source, words, preference, familiar)), "timeline", c1_hist_timeline(su_room, huo_room, source, words, preference)), "start_time", 0), "features", c1_hist_features()), "claim_slots", c1_hist_claim_slots())
+
+fn c1_hist_candidates():
+    var result = []
+    var domains = c1_hist_domains()
+    var a = 0
+    var b = 0
+    var c = 0
+    var d = 0
+    var e = 0
+    var f = 0
+    var number = 0
+    while (a < 3):
+        b = 0
+        while (b < 3):
+            c = 0
+            while (c < 2):
+                d = 0
+                while (d < 2):
+                    e = 0
+                    while (e < 3):
+                        f = 0
+                        while (f < 2):
+                            rt_push(result, c1_hist_candidate(number, domains[0].values[a], domains[1].values[b], domains[2].values[c], domains[3].values[d], domains[4].values[e], domains[5].values[f]))
+                            number = (number + 1)
+                            f = (f + 1)
+                        e = (e + 1)
+                    d = (d + 1)
+                c = (c + 1)
+            b = (b + 1)
+        a = (a + 1)
+    return result
+
+fn c1_hist_policy(policy):
+    var hypotheses = policy.hypotheses
+    var candidates = c1_hist_candidates()
+    var combined = []
+    var index = 0
+    while (index < rt_count(hypotheses)):
+        rt_push(combined, hypotheses[index])
+        index = (index + 1)
+    index = 0
+    while (index < rt_count(candidates)):
+        rt_push(combined, candidates[index])
+        index = (index + 1)
+    return dv_with(dv_with(dv_with(dv_with(dv_with(policy, "hypotheses", combined), "factor_domains", c1_hist_domains()), "factor_constraints", c1_hist_constraints()), "prune_confidence_limit", 0.85), "abduction", {"active": true, "confidence_cap": 0.85, "basis": dv_single(c1_source("docs/design-standard.md", 1500, "approved-paid-model-best-explanation-not-certainty"))})
+
+fn c1_hist_expected_answer():
+    return dv_all(dv_list3(dv_fact(c1_hist_claim_ref("actual_heard"), "Huo-relay-and-Su-report"), dv_fact(c1_hist_claim_ref("voice_source"), "Tube"), dv_fact(c1_hist_claim_ref("transmission_loss"), "stressed-tail-without-leading-qualification")))
+
+fn c1_hist_complete_action(actor):
+    return dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.original_q2_complete"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "outstanding_complete"), true))), c1_at(actor, "hall"), "", [], c1_source("docs/design-standard.md", 1509, "original-second-question-three-causal-axes")), "answer", c1_hist_expected_answer()), "answer_id", "original_q2_complete"), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss"))
+
+fn c1_hist_partial_action(actor):
+    return dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.original_q2_partial"), "answer", dv_all(dv_list3(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "outstanding_complete"), true), dv_fact(c1_knowledge("remote_voice"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story", 66, "V3_0")), "answer", dv_fact(c1_knowledge("remote_voice"), true)), "answer_id", "original_q2_partial"), "topic", "original_q2_complete"), "argument_question", "original_q2_complete"), "surface", "门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。")
+
+fn c1_hist_partial_formal():
+    return dv_with(dv_with(dv_with(dv_with(c1_complete_reply("original_q2_partial", dv_fact(c1_knowledge("remote_voice"), true), dv_fact(c1_knowledge("remote_voice"), true), dv_fact(dv_ref("question", "state", "outstanding_complete"), true), c1_hist_expected_answer(), "accept.original_q2_complete", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")), "require_argument", true), "required_argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "accepted_public_grants", dv_single(dv_ref("question", "state", "outstanding_complete"))), "incomplete_reason", "The source statement does not supply the original question's three causal argument slots.")
+
+fn c1_hist_formal_answer():
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": "original_q2_complete", "condition": c1_hist_expected_answer(), "required_support": c1_hist_expected_answer(), "question_match": dv_fact(dv_ref("question", "state", "outstanding_complete"), true)}, "answer_complete", c1_hist_expected_answer()), "require_argument", true), "condition_from_answer", true), "required_argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "accepted_law", "accept.original_q2_complete"), "accepted_public_grants", dv_single(dv_ref("question", "state", "outstanding_complete"))), "accepted_listeners", c1_list_5("demon", "detective", "huo", "shen", "su"))
+
+fn c1_hist_claim_ref(field):
+    return dv_ref("history_claims", "state", field)
+
+fn c1_hist_author_truth():
+    return c1_state_object("history_claims", {"actual_heard": dv_with(dv_field("Huo-relay-and-Su-report"), "basis", dv_single(c1_source("docs/design-standard.md", 1509, "original-Q2-author-history"))), "voice_source": dv_with(dv_field("Tube"), "basis", dv_single(c1_source("docs/design-standard.md", 640, "author-event-1-main-building-copper-source"))), "transmission_loss": dv_with(dv_field("stressed-tail-without-leading-qualification"), "basis", dv_single(c1_source("docs/design-standard.md", 718, "transmission-table")))})
+
+fn c1_hist_install_mind(mind):
+    var result = c1_hist_adopt_shared(c1_hist_setup(mind))
+    result = c1_hist_add_source_laws(result)
+    result = c1_hist_adopt_routes(result)
+    result = c1_hist_add_variant_laws(result)
+    return c1_hist_adopt(result, "history.smoke.pantry", c1_hist_smoke_pantry("history"))
+
+fn c1_hist_share_basis():
+    return dv_single(c1_source("docs/design-standard.md", 1500, "approved-estimated-argument-sharing-and-paid-scope-reassessment"))
+
+fn c1_hist_share_action(actor):
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".share.original_q2_complete"), "talk", c1_at(actor, "hall"), c1_at(actor, "hall"), "", [], c1_source("docs/design-standard.md", 1500, "approved-actual-argument-sharing")), "speech_from_argument", true), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "listeners", c1_list_4("detective", "huo", "shen", "su")), "speech", dv_with(c1_speech(dv_true(), "本人形成的历史解释；估计性、置信度与来源由实际论证生成。", "estimated-history-argument"), "channel", "speech")), "reassessment_source_scope", "awake_self"), "reassessment_scope_refs", dv_single(dv_ref("question", "state", "awake_scope")))
+
+fn c1_hist_share_goal(actor):
+    return dv_with({"kind": "communicate", "method_id": rt_cat(actor, ".share.original_q2_complete"), "requires_argument": true, "basis": c1_hist_share_basis()}, "available_when", c1_at(actor, "hall"))
+
+fn c1_hist_proposal_policy(policy):
+    return dv_with(dv_with(policy, "proposal_acceptance", dv_with({"enabled": true, "basis": c1_hist_share_basis(), "required_slots": dv_list3("actual_heard", "voice_source", "transmission_loss"), "confidence_threshold": 0.5}, "available_when", dv_true())), "proposal_reassessment", dv_with(dv_with({"enabled": true, "basis": c1_hist_share_basis(), "required_slots": dv_list3("actual_heard", "voice_source", "transmission_loss"), "interpretation_ids": dv_single("short_stay")}, "source_scope", "awake_self"), "target_scope", "body_history"))
+
+fn c1_hist_install_character(actor):
+    var result = actor
+    var actions = actor.actions
+    var new_actions = []
+    var index = 0
+    while (index < rt_count(actions)):
+        rt_push(new_actions, actions[index])
+        index = (index + 1)
+    if (actor.id == "detective"):
+        rt_push(new_actions, c1_hist_complete_action(actor.id))
+        rt_push(new_actions, c1_hist_partial_action(actor.id))
+    rt_push(new_actions, c1_hist_share_action(actor.id))
+    result = dv_with(result, "actions", new_actions)
+    result = dv_with(result, "policy", c1_hist_proposal_policy(result.policy))
+    if (actor.id == "detective"):
+        result = dv_with(result, "mind", c1_hist_install_mind(result.mind))
+        var policy = c1_hist_policy(result.policy)
+        var goals = result.policy.goals
+        var new_goals = []
+        var goal_index = 0
+        while (goal_index < rt_count(goals)):
+            rt_push(new_goals, goals[goal_index])
+            goal_index = (goal_index + 1)
+        rt_push(new_goals, c1_hist_goal())
+        rt_push(new_goals, c1_hist_share_goal(actor.id))
+        result = dv_with(result, "policy", dv_with(policy, "goals", new_goals))
+        result = dv_with(result, "response_models", c1_hist_response_models())
+        return result
+    else:
+        return dv_with(result, "mind", dv_add_object(result.mind, c1_local_object("history_claims")))
+
+fn c1_hist_goal():
+    return {"kind": "know", "question": "original_q2_complete", "ref": c1_hist_claim_ref("actual_heard"), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 46, "s5_question.004"))}
+
+fn c1_hist_install_scene(scene):
+    var actors = scene.actors
+    var result = []
+    var index = 0
+    var formal = scene.formal_answers
+    var new_formal = []
+    var world = scene.physical
+    while (index < rt_count(actors)):
+        var actor = actors[index]
+        var local_1 = false
+        if (actor.id == "demon"):
+            local_1 = actor
+        else:
+            local_1 = c1_hist_install_character(actor)
+        rt_push(result, local_1)
+        index = (index + 1)
+    index = 0
+    while (index < rt_count(formal)):
+        rt_push(new_formal, formal[index])
+        index = (index + 1)
+    rt_push(new_formal, c1_hist_formal_answer())
+    rt_push(new_formal, c1_hist_partial_formal())
+    world = dv_add_object(world, c1_hist_author_truth())
+    return dv_with(dv_with(dv_with(scene, "actors", result), "physical", world), "formal_answers", new_formal)

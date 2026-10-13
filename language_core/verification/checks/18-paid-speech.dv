@@ -1,261 +1,498 @@
-(defn v_paid_speech_ast_nodes (ast)
-  (let (op (dv_get ast "op") count 1)
-    (do (if (rt_eq op "not") (set count (rt_add count (v_paid_speech_ast_nodes (dv_get ast "item"))))
-      (if (rt_eq op "all") (let (items (dv_get ast "items") i 0)
-        (do (while (rt_lt i (rt_count items)) (do (set count (rt_add count (v_paid_speech_ast_nodes (rt_at items i)))) (set i (rt_add i 1)))))) false)) count)))
-(defn v_paid_speech_map (mind proposition bindings)
-  (let (op (dv_get proposition "op"))
-    (if (rt_eq op "constant") proposition
-      (if (rt_eq op "all")
-        (let (mapped (rt_list) i 0 items (dv_get proposition "items"))
-          (do (while (rt_lt i (rt_count items))
-            (do (rt_push mapped (v_paid_speech_map mind (rt_at items i) bindings)) (set i (rt_add i 1)))) (dv_all mapped)))
-        (if (rt_eq op "not") (dv_not (v_paid_speech_map mind (dv_get proposition "item") bindings))
-          (let (ref (dv_get proposition "ref") local (dv_local bindings (dv_get ref "object") (dv_get mind "subject")))
-            (if (rt_eq local "")
-              (if (dv_has_key (dv_get mind "objects") (dv_get ref "object")) proposition (dv_m2 "op" "constant" "value" "unknown"))
-              (dv_with proposition "ref" (dv_ref local (dv_get ref "facet") (dv_get ref "field"))))))))))
-(defn v_paid_speech_truth (mind speech)
-  (dv_truth mind (v_paid_speech_map mind (dv_get speech "literal_ast") (dv_find speech "referents" (rt_list)))))
-(defn v_paid_speech_presuppositions (mind speech)
-  (let (items (dv_find speech "presuppositions" (rt_list)) bindings (dv_find speech "referents" (rt_list)) i 0 result (rt_list))
-    (do (while (rt_lt i (rt_count items))
-      (let (proposition (v_paid_speech_map mind (rt_at items i) bindings))
-        (do (rt_push result (dv_m2 "proposition" proposition "truth" (dv_truth mind proposition))) (set i (rt_add i 1))))) result)))
-(defn v_paid_speech_hearing (speaker listener speech)
-  (let (source (dv_get speaker "id") channel (dv_find speech "channel" "")
-        source_location (dv_find speaker "location" "") target_location (dv_find listener "location" "")
-        grants (dv_find listener "hearing_grants" (rt_list)) i 0 heard false)
-    (do
-      (if (dv_and (rt_not (rt_eq source_location "")) (dv_same source_location target_location)) (set heard true) false)
-      (while (rt_lt i (rt_count grants))
-        (let (grant (rt_at grants i))
-          (do (if (dv_and (rt_eq (dv_get grant "speaker") source) (rt_eq (dv_get grant "channel") channel)) (set heard true) false)
-            (set i (rt_add i 1)))))
-      heard)))
-; Only positive equals atoms support testimony cells. Other ASTs remain speech records.
-(defn v_paid_speech_observations (mind proposition source origin time trust)
-  (let (op (dv_get proposition "op") observations (rt_list))
-    (do
-      (if (rt_eq op "all")
-        (let (items (dv_get proposition "items") i 0)
-          (do (while (rt_lt i (rt_count items))
-            (let (part (v_paid_speech_observations mind (rt_at items i) source origin time trust) j 0)
-              (do (while (rt_lt j (rt_count part))
-                (do (if (dv_has observations (rt_at part j)) false (rt_push observations (rt_at part j))) (set j (rt_add j 1))))
-                (set i (rt_add i 1)))))))
-        (if (rt_eq op "equals")
-          (let (ref (dv_get proposition "ref"))
-            (rt_push observations (dv_observation (dv_list3 source (dv_get mind "subject") ref) (dv_get mind "subject") ref
-              (dv_get proposition "value") "testimony" origin time trust (dv_pair origin ref)))) false))
-      observations)))
-; A received estimated proposal is a public record before any personal adoption.
-; Only an owner's declared policy can authorize its bounded testimony support.
-(defn v_paid_speech_proposal_decision (mind policy speech trust)
-  (let (proposal (dv_find speech "proposal" false) status "ordinary" reason "ordinary-testimony"
-        confidence trust units 0 acceptance (dv_find policy "proposal_acceptance" false))
-    (do
-      (if (rt_eq proposal false) false
-        (let (claims (dv_find proposal "claims" (rt_list)) required (if (rt_eq acceptance false) (rt_list) (dv_find acceptance "required_slots" (rt_list)))
-              propositions (rt_list) allowed true i 0 available "unknown")
-          (do
-            (set status "retained") (set reason "missing-personal-proposal-policy") (set units 1)
-            (set confidence (dv_min trust (dv_find proposal "confidence" 0)))
-            (while (rt_lt i (rt_count claims))
-              (let (claim (rt_at claims i))
-                (do (rt_push propositions (dv_fact (dv_get claim "ref") (dv_get claim "value")))
-                  (set units (rt_add units 1)) (set i (rt_add i 1)))))
-            (set i 0)
-            (while (rt_lt i (rt_count required))
-              (let (j 0 found false)
-                (do (while (rt_lt j (rt_count claims))
-                  (do (if (rt_eq (rt_at required i) (dv_get (rt_at claims j) "slot_id")) (set found true) false)
-                    (set units (rt_add units 1)) (set j (rt_add j 1))))
-                  (if found false (set allowed false)) (set i (rt_add i 1)))))
-            (if (rt_eq acceptance false) false
-              (do
-                (set available (dv_truth mind (v_paid_speech_map mind (dv_find acceptance "available_when" (dv_true)) (dv_find speech "referents" (rt_list)))))
-                (set units (rt_add units (rt_mul 2 (v_paid_speech_ast_nodes (dv_find acceptance "available_when" (dv_true))))))
-                (set reason "personal-proposal-policy-withheld")
-                (if (dv_find acceptance "enabled" false) false (set allowed false))
-                (if (rt_lt 0 (rt_count (dv_find acceptance "basis" (rt_list)))) false (set allowed false))
-                (if (rt_eq available "true") false (set allowed false))
-                (if (rt_lt 0 (rt_count required)) false (set allowed false))
-                (if (rt_lt 0 (rt_count claims)) false (set allowed false))
-                (if (dv_find proposal "estimated" false) false (set allowed false))
-                (if (rt_eq (dv_find proposal "argument_id" "") "") (set allowed false) false)
-                (if (dv_and (rt_lt 0 (dv_find proposal "confidence" 0)) (rt_lt (dv_find proposal "confidence" 0) 1)) false (set allowed false))
-                (if (rt_lt 0 (rt_count (dv_find proposal "source_event_ids" (rt_list)))) false (set allowed false))
-                (if (rt_eq (dv_find proposal "model_event" "") "") (set allowed false) false)
-                (if (dv_same (dv_all propositions) (dv_get speech "literal_ast")) false (set allowed false))
-                (if (rt_lt confidence (dv_find acceptance "confidence_threshold" 0.5)) (set allowed false) false)
-                (if allowed (do (set status "accepted") (set reason "personal-bounded-proposal-adoption")) false))))))
-      (dv_with (dv_with (dv_m4 "status" status "reason" reason "confidence_cap" confidence "proposal" proposal)
-        "policy_basis" (if (rt_eq acceptance false) (rt_list) (dv_find acceptance "basis" (rt_list)))) "calculation_units" units))))
-(defn v_paid_speech_received_observations (mind parsed source speaker time decision)
-  (if (rt_eq (dv_get decision "status") "retained") (rt_list)
-    (let (items (v_paid_speech_observations mind parsed source speaker time (dv_get decision "confidence_cap")) i 0 result (rt_list))
-      (do (while (rt_lt i (rt_count items))
-        (do (rt_push result (if (rt_eq (dv_get decision "status") "ordinary") (rt_at items i)
-          (dv_with (dv_with (rt_at items i) "estimated" true) "proposal_source" (dv_get decision "proposal"))))
-          (set i (rt_add i 1)))) result))))
-; Speech exposes cue identity only. Conclusions and priors belong to local rules.
-(defn v_paid_speech_candidates (policy speech)
-  (let (cues (dv_find speech "implicature_candidates" (rt_list)) rules (dv_find policy "implicature_bridges" (rt_list))
-        result (rt_list) ids (rt_list) local_ids (rt_list) i 0)
-    (do
-      (while (rt_lt i (rt_count rules))
-        (let (rule (rt_at rules i) id (dv_get (rt_at rules i) "id") required (dv_find (rt_at rules i) "cue" "") j 0 matched false)
-          (do
-            (rt_push local_ids id)
-            (if (rt_eq required "") (set matched true) false)
-            (while (rt_lt j (rt_count cues))
-              (do (if (rt_eq (dv_get (rt_at cues j) "id") required) (set matched true) false) (set j (rt_add j 1))))
-            (if matched (do (rt_push result (dv_m3 "id" id "rule_source" (dv_find rule "basis" (rt_list)) "utterance_scope" (dv_find speech "scope" ""))) (rt_push ids id)) false)
-            (set i (rt_add i 1)))))
-      (set i 0)
-      (while (rt_lt i (rt_count cues))
-        (let (cue_id (dv_get (rt_at cues i) "id"))
-          (do (if (dv_or (dv_has ids cue_id) (dv_has local_ids cue_id)) false (do (rt_push result (dv_m3 "id" cue_id "rule_source" (rt_list) "utterance_scope" (dv_find speech "scope" ""))) (rt_push ids cue_id))) (set i (rt_add i 1)))))
-      result)))
-(defn v_paid_speech_interpret (mind policy candidate bindings)
-  (let (bridges (dv_find policy "implicature_bridges" (rt_list)) i 0 bridge false
-        proposition (dv_m2 "op" "constant" "value" "unknown") available (dv_true)
-        threshold (dv_find policy "implicature_threshold" 0.5) confidence 0
-        basis (rt_list) status "rejected" missing "missing-bridge" scope_check (rt_list) work 0)
-    (do
-      (while (rt_lt i (rt_count bridges))
-        (let (item (rt_at bridges i))
-          (do (if (rt_eq (dv_get item "id") (dv_get candidate "id"))
-            (do (dv_require (rt_eq bridge false) "Ambiguous interpretation bridge") (set bridge item)) false) (set i (rt_add i 1)))))
-      (if (rt_eq bridge false) false
-        (let (premise (v_paid_speech_map mind (dv_get bridge "premise") bindings)
-              bridge_basis (dv_find bridge "basis" (rt_list))
-              withdrawal (v_paid_speech_map mind (dv_find bridge "withdraw_when" (dv_not (dv_true))) bindings)
-              scope_ast (v_paid_speech_map mind (dv_find bridge "scope_bridge" (dv_m2 "op" "constant" "value" "unknown")) bindings))
-          (do
-            (set proposition (v_paid_speech_map mind (dv_get bridge "proposition") bindings))
-            (set available (v_paid_speech_map mind (dv_find bridge "available_when" (dv_true)) bindings))
-            (set confidence (dv_unit (dv_find bridge "prior" 0.5)))
-            (set basis bridge_basis)
-            (set work (rt_add 1 (rt_mul 2 (rt_add (rt_add (v_paid_speech_ast_nodes premise) (v_paid_speech_ast_nodes proposition))
-              (rt_add (v_paid_speech_ast_nodes available) (rt_add (v_paid_speech_ast_nodes withdrawal) (v_paid_speech_ast_nodes scope_ast)))))))
-            (let (literal_scope (dv_find candidate "utterance_scope" (dv_find bridge "source_scope" ""))
-                  interpreted_scope (dv_find bridge "target_scope" (dv_find bridge "source_scope" ""))
-                  scope_truth (dv_truth mind scope_ast)
-                  withdraw_truth (dv_truth mind withdrawal) available_truth (dv_truth mind available)
-                  premise_truth (dv_truth mind premise) proposition_truth (dv_truth mind proposition))
-              (do
-              (set scope_check (dv_with (dv_m4 "literal_scope" literal_scope "interpretation_scope" interpreted_scope "bridge_truth" scope_truth
-                "check_enabled" (dv_find policy "scope_reference_check" false)) "gap" (dv_and (rt_not (rt_eq literal_scope interpreted_scope)) (rt_not (rt_eq scope_truth "true")))))
-            (if (rt_eq withdraw_truth "true")
-              (do (set status "withdrawn") (set missing "explicit-withdrawal-evidence"))
-              (if (rt_not (rt_eq available_truth "true")) (set missing "availability-not-known")
-                (if (rt_eq (rt_count bridge_basis) 0) (set missing "bridge-without-source")
-                  (if (rt_not (rt_eq premise_truth "true")) (set missing "bridge-premise-not-known")
-                    (if (rt_eq (rt_count basis) 0) (set missing "candidate-without-source")
-                      (if (rt_eq proposition_truth "false") (set missing "contrary-evidence")
-                        (if (rt_lt confidence threshold) (set missing "below-policy-threshold")
-                          (do (set status "accepted") (set missing "")))))))))))
-            (if (dv_and (rt_eq status "accepted") (dv_and (dv_get scope_check "check_enabled") (dv_get scope_check "gap")))
-              (do (set status "retained") (set missing "scope-reference-bridge-not-supported")) false)
-            (set basis (dv_append basis (dv_m2 "bridge" (dv_get bridge "id") "basis" bridge_basis))))))
-      (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "id" (dv_get candidate "id") "proposition" proposition "status" status "confidence" confidence)
-        "basis" basis) "missing_bridge" missing) "scope_check" scope_check) "kind" "defeasible-interpretation") "calculation_units" work))))
-(defn v_paid_speech_model_interpretations (mind policy speech bindings)
-  (let (candidates (v_paid_speech_candidates policy speech) result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count candidates))
-      (do (rt_push result (v_paid_speech_interpret mind policy (rt_at candidates i) bindings)) (set i (rt_add i 1)))) result)))
-; Model reception is hypothetical testimony into a private copied prediction world.
-; Neither the model nor its alternatives is sourced from another actor's real mind.
-(defn v_paid_speech_model_prediction (model speech speaker source time)
-  (let (before (dv_clone (dv_get model "mind")) policy (dv_get model "policy") bindings (dv_find speech "referents" (rt_list))
-        parsed (v_paid_speech_map (dv_get model "mind") (dv_get speech "literal_ast") (dv_find speech "referents" (rt_list))))
-    (let (decision (v_paid_speech_proposal_decision before policy speech (dv_find (dv_find policy "speaker_trust" (rt_list)) speaker 0.5))
-          observations (v_paid_speech_received_observations before parsed (rt_cat "prediction-" source) speaker time decision)
-          profile (dv_observation_profile (dv_m3 "perception" 1 "testimony" 1 "recall" 1) (dv_find policy "observation_threshold" 0.5)))
-      (let (receipt (dv_update_mind before observations (dv_get before "revision") profile) after (dv_get receipt "world"))
-        (let (primary (v_paid_speech_model_interpretations after policy speech bindings)
-              checked (dv_find policy "scope_reference_check" false))
-        (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "model_before" before "model_after" after "predicted_literal" parsed "observations" observations)
-          "observation_profile" profile) "prediction" primary)
-          "conditional_prediction" (dv_m2
-            "scope_reference_check_false" (if checked (v_paid_speech_model_interpretations after (dv_with policy "scope_reference_check" false) speech bindings) primary)
-            "scope_reference_check_true" (if checked primary (v_paid_speech_model_interpretations after (dv_with policy "scope_reference_check" true) speech bindings))))
-          "assumptions" (dv_find model "assumptions" (rt_list)))
-          "conditional_reuse" (if checked "scope_reference_check_true=primary" "scope_reference_check_false=primary")) "proposal_decision" decision))))))
-(defn v_paid_speech_rule_units (rule)
-  (rt_add 1 (rt_mul 2 (rt_add (rt_add (v_paid_speech_ast_nodes (dv_get rule "premise")) (v_paid_speech_ast_nodes (dv_get rule "proposition")))
-    (rt_add (v_paid_speech_ast_nodes (dv_find rule "available_when" (dv_true)))
-      (rt_add (v_paid_speech_ast_nodes (dv_find rule "withdraw_when" (dv_not (dv_true))))
-        (v_paid_speech_ast_nodes (dv_find rule "scope_bridge" (dv_m2 "op" "constant" "value" "unknown")))))))))
-(defn v_paid_speech_prediction_units (model speech)
-  (let (rules (dv_find (dv_get model "policy") "implicature_bridges" (rt_list)) candidates (v_paid_speech_candidates (dv_get model "policy") speech)
-        work (rt_add (dv_get (v_paid_speech_proposal_decision (dv_get model "mind") (dv_get model "policy") speech 0.5) "calculation_units")
-          (rt_add 1 (rt_mul 2 (v_paid_speech_ast_nodes (dv_get speech "literal_ast"))))) i 0)
-    (do (while (rt_lt i (rt_count candidates))
-      (let (j 0 id (dv_get (rt_at candidates i) "id"))
-        (do (while (rt_lt j (rt_count rules))
-          (do (if (rt_eq (dv_get (rt_at rules j) "id") id) (set work (rt_add work (rt_mul 2 (v_paid_speech_rule_units (rt_at rules j))))) false) (set j (rt_add j 1)))) (set i (rt_add i 1))))) work)))
-(defn v_paid_speech_goals (actor)
-  (let (goals (dv_find (dv_get actor "policy") "communication_goals" (rt_list)) active (rt_list) i 0)
-    (do (while (rt_lt i (rt_count goals))
-      (let (goal (rt_at goals i))
-        (do (if (dv_and (rt_lt 0 (rt_count (dv_find goal "basis" (rt_list))))
-          (rt_eq (dv_truth (dv_get actor "mind") (dv_find goal "available_when" (dv_true))) "true"))
-          (do (dv_require (rt_not (rt_lt (dv_get goal "weight") 0)) "Negative communication weight") (rt_push active goal)) false) (set i (rt_add i 1))))) active)))
-(defn v_paid_speech_choice_signature (actor action goals)
-  (dv_m4 "mind" (dv_get actor "mind") "speech" (dv_get action "speech") "goals" goals "listeners" (dv_find action "listeners" (rt_list))))
-(defn v_paid_speech_goal_value (goals listener prediction)
-  (let (value 0 i 0 interpretations (dv_get prediction "prediction"))
-    (do (while (rt_lt i (rt_count goals))
-      (let (goal (rt_at goals i) targets (dv_find (rt_at goals i) "listeners" (rt_list)) j 0)
-        (do (if (dv_or (rt_eq (rt_count targets) 0) (dv_has targets listener))
-          (while (rt_lt j (rt_count interpretations))
-            (let (interpretation (rt_at interpretations j))
-              (do (if (dv_and (rt_eq (dv_get interpretation "id") (dv_get goal "interpretation_id"))
-                (rt_eq (dv_get interpretation "status") (dv_get goal "desired_status")))
-                (set value (rt_add value (rt_mul (dv_get goal "weight") (dv_get interpretation "confidence")))) false) (set j (rt_add j 1))))) false) (set i (rt_add i 1))))) value)))
-; A complete candidate layer is quoted before any prediction is evaluated.
-; Work draws only from the existing total model budget, never replay-work allowance.
-(defn v_paid_prediction_check (trace e)
-  (let (data (dv_get e "data") before (dv_find (dv_get e "data") "actor_before" (rt_list)) status "insufficient_evidence" valid true)
-    (do
-      (if (dv_and (rt_lt 0 (rt_count before)) (dv_has_key data "action"))
-        (let (action (dv_get data "action") listener (dv_get data "listener") models (dv_find (dv_get before "mind") "listener_models" (rt_list)) expected (dv_m2 "status" "unknown-no-model" "prediction" (rt_list)) units 0 keys (rt_list))
-          (do
-            (if (if (dv_has_key models listener) (rt_lt 0 (rt_count (dv_find (dv_get models listener) "basis" (rt_list)))) false)
-              (do (set expected (dv_with (dv_with (v_paid_speech_model_prediction (dv_get models listener) (dv_get action "speech") (dv_get e "actor") (rt_cat "preselect-" (dv_get action "id")) (dv_get e "time")) "status" "model-based") "model" (dv_get models listener)))
-                (set units (v_paid_speech_prediction_units (dv_get models listener) (dv_get action "speech")))) false)
-            (rt_push keys "listener") (rt_push keys "action") (rt_push keys "actor_before") (rt_push keys "actor_after") (rt_push keys "budget_before") (rt_push keys "budget_after") (rt_push keys "charged_units") (rt_push keys "goals") (rt_push keys "prediction_time")
-            (set valid (dv_same expected (v_record_without data keys)))
-            (set valid (dv_and valid (dv_and (v_action_frozen trace (dv_get e "actor") action) (dv_same (dv_get before "mind") (v_cognitive_before trace e)))))
-            (set valid (dv_and valid (dv_and (rt_eq units (dv_get data "charged_units")) (dv_and (rt_eq (dv_get data "budget_before") (dv_get (dv_get before "policy") "model_budget")) (rt_eq (dv_get data "budget_after") (rt_sub (dv_get data "budget_before") units))))))
-            (set valid (dv_and valid (dv_same (dv_get data "actor_after") (dv_with (dv_with before "policy" (dv_with (dv_get before "policy") "model_budget" (dv_get data "budget_after"))) "model_previous_event" (if (rt_lt 0 units) (dv_get e "id") (dv_find before "model_previous_event" ""))))))
-            (set valid (dv_and valid (dv_same (dv_get data "goals") (v_paid_speech_goals before))))
-            (set valid (dv_and valid (v_runtime_policy_valid trace e (dv_get before "policy"))))
-            (set status (if valid "supported" "violated")))) false)
-      (v_finding "paid_speech_prediction" status "独立重算本人预选时的听者模型、条件分支复用及逐节点收费；保留实际预算前后与本人可知来源" (dv_single (dv_get e "id"))))))
-(defn v_paid_execution_prediction_check (trace e)
-  (let (data (dv_get e "data") paid (dv_find (dv_get e "data") "paid_forecast" (rt_list)) ids (dv_find (dv_get e "data") "paid_prediction_events" (rt_list)) i 0 found false valid true)
-    (do (while (rt_lt i (rt_count ids))
-      (let (prior (v_event (v_events trace) (rt_at ids i)))
-        (do (if (rt_eq (dv_find prior "type" "") "speech_choice_prediction")
-          (do (set valid (dv_and valid (dv_and (rt_eq (dv_get prior "actor") (dv_get e "actor")) (v_ancestor (v_events trace) (dv_get e "id") (dv_get prior "id")))))
-            (set valid (dv_and valid (rt_eq (dv_get (v_paid_prediction_check trace prior) "status") "supported")))
-            (if (dv_same (dv_get prior "data") paid) (set found true) false)) (set valid false)) (set i (rt_add i 1)))))
-      (let (keys (dv_list3 "source_event" "paid_prediction_events" "paid_forecast"))
-        (do (rt_push keys "charged_units") (rt_push keys "execution_charged_units") (rt_push keys "speaker_after") (rt_push keys "preselection_source_revision")
-          (set valid (dv_and valid (dv_same (v_record_without data keys) (v_record_without paid (dv_single "charged_units")))))))
-      (if (rt_lt 0 (rt_count paid))
-        (let (source (v_event (v_events trace) (dv_find data "source_event" "")))
-          (do (set valid (dv_and valid (dv_and (rt_eq (dv_find source "actor" "") (dv_get e "actor")) (v_ancestor (v_events trace) (dv_get e "id") (dv_find source "id" "")))))
-            (set valid (dv_and valid (dv_and (dv_same (dv_find (dv_find source "data" (rt_list)) "speech" false) (dv_get (dv_get paid "action") "speech")) (rt_eq (dv_find data "listener" "") (dv_get paid "listener"))))))) false)      (v_finding "speaker_prediction_boundary" (if (rt_eq (rt_count paid) 0) "insufficient_evidence" (if (dv_and found (dv_and valid (dv_and (rt_eq (dv_find data "charged_units" -1) 0) (rt_eq (dv_find data "execution_charged_units" -1) 0)))) "supported" "violated"))
-        "实际发言复用已付费的本人预选记录；核对真实父链与原付费结果，执行时不再免费预测或重复收费" (dv_append ids (dv_get e "id"))))))
+// Only positive equals atoms support testimony cells. Other ASTs remain speech records.
+// A received estimated proposal is a public record before any personal adoption.
+// Only an owner's declared policy can authorize its bounded testimony support.
+// Speech exposes cue identity only. Conclusions and priors belong to local rules.
+// Model reception is hypothetical testimony into a private copied prediction world.
+// Neither the model nor its alternatives is sourced from another actor's real mind.
+// A complete candidate layer is quoted before any prediction is evaluated.
+// Work draws only from the existing total model budget, never replay-work allowance.
 
+fn v_paid_speech_ast_nodes(ast):
+    var op = ast.op
+    var count = 1
+    if (op == "not"):
+        count = (count + v_paid_speech_ast_nodes(ast.item))
+    else:
+        if (op == "all"):
+            var items = ast.items
+            var i = 0
+            while (i < rt_count(items)):
+                count = (count + v_paid_speech_ast_nodes(items[i]))
+                i = (i + 1)
+    return count
 
+fn v_paid_speech_map(mind, proposition, bindings):
+    var op = proposition.op
+    if (op == "constant"):
+        return proposition
+    else:
+        if (op == "all"):
+            var mapped = []
+            var i = 0
+            var items = proposition.items
+            while (i < rt_count(items)):
+                rt_push(mapped, v_paid_speech_map(mind, items[i], bindings))
+                i = (i + 1)
+            return dv_all(mapped)
+        else:
+            if (op == "not"):
+                return dv_not(v_paid_speech_map(mind, proposition.item, bindings))
+            else:
+                var ref = proposition.ref
+                var local = dv_local(bindings, ref.object, mind.subject)
+                if (local == ""):
+                    if dv_has_key(mind.objects, ref.object):
+                        return proposition
+                    else:
+                        return {"op": "constant", "value": "unknown"}
+                else:
+                    return dv_with(proposition, "ref", dv_ref(local, ref.facet, ref.field))
 
+fn v_paid_speech_truth(mind, speech):
+    return dv_truth(mind, v_paid_speech_map(mind, speech.literal_ast, dv_find(speech, "referents", [])))
 
+fn v_paid_speech_presuppositions(mind, speech):
+    var items = dv_find(speech, "presuppositions", [])
+    var bindings = dv_find(speech, "referents", [])
+    var i = 0
+    var result = []
+    while (i < rt_count(items)):
+        var proposition = v_paid_speech_map(mind, items[i], bindings)
+        rt_push(result, {"proposition": proposition, "truth": dv_truth(mind, proposition)})
+        i = (i + 1)
+    return result
 
+fn v_paid_speech_hearing(speaker, listener, speech):
+    var source = speaker.id
+    var channel = dv_find(speech, "channel", "")
+    var source_location = dv_find(speaker, "location", "")
+    var target_location = dv_find(listener, "location", "")
+    var grants = dv_find(listener, "hearing_grants", [])
+    var i = 0
+    var heard = false
+    if dv_and((not (source_location == "")), dv_same(source_location, target_location)):
+        heard = true
+    while (i < rt_count(grants)):
+        var grant = grants[i]
+        if dv_and((grant.speaker == source), (grant.channel == channel)):
+            heard = true
+        i = (i + 1)
+    return heard
 
+fn v_paid_speech_observations(mind, proposition, source, origin, time, trust):
+    var op = proposition.op
+    var observations = []
+    if (op == "all"):
+        var items = proposition.items
+        var i = 0
+        while (i < rt_count(items)):
+            var part = v_paid_speech_observations(mind, items[i], source, origin, time, trust)
+            var j = 0
+            while (j < rt_count(part)):
+                if dv_has(observations, part[j]):
+                    false
+                else:
+                    rt_push(observations, part[j])
+                j = (j + 1)
+            i = (i + 1)
+    else:
+        if (op == "equals"):
+            var ref = proposition.ref
+            rt_push(observations, dv_observation(dv_list3(source, mind.subject, ref), mind.subject, ref, proposition.value, "testimony", origin, time, trust, dv_pair(origin, ref)))
+    return observations
 
+fn v_paid_speech_proposal_decision(mind, policy, speech, trust):
+    var proposal = dv_find(speech, "proposal", false)
+    var status = "ordinary"
+    var reason = "ordinary-testimony"
+    var confidence = trust
+    var units = 0
+    var acceptance = dv_find(policy, "proposal_acceptance", false)
+    if (proposal == false):
+        false
+    else:
+        var claims = dv_find(proposal, "claims", [])
+        var local_1 = false
+        if (acceptance == false):
+            local_1 = []
+        else:
+            local_1 = dv_find(acceptance, "required_slots", [])
+        var required = local_1
+        var propositions = []
+        var allowed = true
+        var i = 0
+        var available = "unknown"
+        status = "retained"
+        reason = "missing-personal-proposal-policy"
+        units = 1
+        confidence = dv_min(trust, dv_find(proposal, "confidence", 0))
+        while (i < rt_count(claims)):
+            var claim = claims[i]
+            rt_push(propositions, dv_fact(claim.ref, claim.value))
+            units = (units + 1)
+            i = (i + 1)
+        i = 0
+        while (i < rt_count(required)):
+            var j = 0
+            var found = false
+            while (j < rt_count(claims)):
+                if (required[i] == claims[j].slot_id):
+                    found = true
+                units = (units + 1)
+                j = (j + 1)
+            if found:
+                false
+            else:
+                allowed = false
+            i = (i + 1)
+        if (acceptance == false):
+            false
+        else:
+            available = dv_truth(mind, v_paid_speech_map(mind, dv_find(acceptance, "available_when", dv_true()), dv_find(speech, "referents", [])))
+            units = (units + (2 * v_paid_speech_ast_nodes(dv_find(acceptance, "available_when", dv_true()))))
+            reason = "personal-proposal-policy-withheld"
+            if dv_find(acceptance, "enabled", false):
+                false
+            else:
+                allowed = false
+            if (0 < rt_count(dv_find(acceptance, "basis", []))):
+                false
+            else:
+                allowed = false
+            if (available == "true"):
+                false
+            else:
+                allowed = false
+            if (0 < rt_count(required)):
+                false
+            else:
+                allowed = false
+            if (0 < rt_count(claims)):
+                false
+            else:
+                allowed = false
+            if dv_find(proposal, "estimated", false):
+                false
+            else:
+                allowed = false
+            if (dv_find(proposal, "argument_id", "") == ""):
+                allowed = false
+            if dv_and((0 < dv_find(proposal, "confidence", 0)), (dv_find(proposal, "confidence", 0) < 1)):
+                false
+            else:
+                allowed = false
+            if (0 < rt_count(dv_find(proposal, "source_event_ids", []))):
+                false
+            else:
+                allowed = false
+            if (dv_find(proposal, "model_event", "") == ""):
+                allowed = false
+            if dv_same(dv_all(propositions), speech.literal_ast):
+                false
+            else:
+                allowed = false
+            if (confidence < dv_find(acceptance, "confidence_threshold", 0.5)):
+                allowed = false
+            if allowed:
+                status = "accepted"
+                reason = "personal-bounded-proposal-adoption"
+    var local_2 = false
+    if (acceptance == false):
+        local_2 = []
+    else:
+        local_2 = dv_find(acceptance, "basis", [])
+    return dv_with(dv_with({"status": status, "reason": reason, "confidence_cap": confidence, "proposal": proposal}, "policy_basis", local_2), "calculation_units", units)
+
+fn v_paid_speech_received_observations(mind, parsed, source, speaker, time, decision):
+    if (decision.status == "retained"):
+        return []
+    else:
+        var items = v_paid_speech_observations(mind, parsed, source, speaker, time, decision.confidence_cap)
+        var i = 0
+        var result = []
+        while (i < rt_count(items)):
+            var local_1 = false
+            if (decision.status == "ordinary"):
+                local_1 = items[i]
+            else:
+                local_1 = dv_with(dv_with(items[i], "estimated", true), "proposal_source", decision.proposal)
+            rt_push(result, local_1)
+            i = (i + 1)
+        return result
+
+fn v_paid_speech_candidates(policy, speech):
+    var cues = dv_find(speech, "implicature_candidates", [])
+    var rules = dv_find(policy, "implicature_bridges", [])
+    var result = []
+    var ids = []
+    var local_ids = []
+    var i = 0
+    while (i < rt_count(rules)):
+        var rule = rules[i]
+        var id = rules[i].id
+        var required = dv_find(rules[i], "cue", "")
+        var j = 0
+        var matched = false
+        rt_push(local_ids, id)
+        if (required == ""):
+            matched = true
+        while (j < rt_count(cues)):
+            if (cues[j].id == required):
+                matched = true
+            j = (j + 1)
+        if matched:
+            rt_push(result, {"id": id, "rule_source": dv_find(rule, "basis", []), "utterance_scope": dv_find(speech, "scope", "")})
+            rt_push(ids, id)
+        i = (i + 1)
+    i = 0
+    while (i < rt_count(cues)):
+        var cue_id = cues[i].id
+        if dv_or(dv_has(ids, cue_id), dv_has(local_ids, cue_id)):
+            false
+        else:
+            rt_push(result, {"id": cue_id, "rule_source": [], "utterance_scope": dv_find(speech, "scope", "")})
+            rt_push(ids, cue_id)
+        i = (i + 1)
+    return result
+
+fn v_paid_speech_interpret(mind, policy, candidate, bindings):
+    var bridges = dv_find(policy, "implicature_bridges", [])
+    var i = 0
+    var bridge = false
+    var proposition = {"op": "constant", "value": "unknown"}
+    var available = dv_true()
+    var threshold = dv_find(policy, "implicature_threshold", 0.5)
+    var confidence = 0
+    var basis = []
+    var status = "rejected"
+    var missing = "missing-bridge"
+    var scope_check = []
+    var work = 0
+    while (i < rt_count(bridges)):
+        var item = bridges[i]
+        if (item.id == candidate.id):
+            dv_require((bridge == false), "Ambiguous interpretation bridge")
+            bridge = item
+        i = (i + 1)
+    if (bridge == false):
+        false
+    else:
+        var premise = v_paid_speech_map(mind, bridge.premise, bindings)
+        var bridge_basis = dv_find(bridge, "basis", [])
+        var withdrawal = v_paid_speech_map(mind, dv_find(bridge, "withdraw_when", dv_not(dv_true())), bindings)
+        var scope_ast = v_paid_speech_map(mind, dv_find(bridge, "scope_bridge", {"op": "constant", "value": "unknown"}), bindings)
+        proposition = v_paid_speech_map(mind, bridge.proposition, bindings)
+        available = v_paid_speech_map(mind, dv_find(bridge, "available_when", dv_true()), bindings)
+        confidence = dv_unit(dv_find(bridge, "prior", 0.5))
+        basis = bridge_basis
+        work = (1 + (2 * ((v_paid_speech_ast_nodes(premise) + v_paid_speech_ast_nodes(proposition)) + (v_paid_speech_ast_nodes(available) + (v_paid_speech_ast_nodes(withdrawal) + v_paid_speech_ast_nodes(scope_ast))))))
+        var literal_scope = dv_find(candidate, "utterance_scope", dv_find(bridge, "source_scope", ""))
+        var interpreted_scope = dv_find(bridge, "target_scope", dv_find(bridge, "source_scope", ""))
+        var scope_truth = dv_truth(mind, scope_ast)
+        var withdraw_truth = dv_truth(mind, withdrawal)
+        var available_truth = dv_truth(mind, available)
+        var premise_truth = dv_truth(mind, premise)
+        var proposition_truth = dv_truth(mind, proposition)
+        scope_check = dv_with({"literal_scope": literal_scope, "interpretation_scope": interpreted_scope, "bridge_truth": scope_truth, "check_enabled": dv_find(policy, "scope_reference_check", false)}, "gap", dv_and((not (literal_scope == interpreted_scope)), (not (scope_truth == "true"))))
+        if (withdraw_truth == "true"):
+            status = "withdrawn"
+            missing = "explicit-withdrawal-evidence"
+        else:
+            if (not (available_truth == "true")):
+                missing = "availability-not-known"
+            else:
+                if (rt_count(bridge_basis) == 0):
+                    missing = "bridge-without-source"
+                else:
+                    if (not (premise_truth == "true")):
+                        missing = "bridge-premise-not-known"
+                    else:
+                        if (rt_count(basis) == 0):
+                            missing = "candidate-without-source"
+                        else:
+                            if (proposition_truth == "false"):
+                                missing = "contrary-evidence"
+                            else:
+                                if (confidence < threshold):
+                                    missing = "below-policy-threshold"
+                                else:
+                                    status = "accepted"
+                                    missing = ""
+        if dv_and((status == "accepted"), dv_and(scope_check.check_enabled, scope_check.gap)):
+            status = "retained"
+            missing = "scope-reference-bridge-not-supported"
+        basis = dv_append(basis, {"bridge": bridge.id, "basis": bridge_basis})
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"id": candidate.id, "proposition": proposition, "status": status, "confidence": confidence}, "basis", basis), "missing_bridge", missing), "scope_check", scope_check), "kind", "defeasible-interpretation"), "calculation_units", work)
+
+fn v_paid_speech_model_interpretations(mind, policy, speech, bindings):
+    var candidates = v_paid_speech_candidates(policy, speech)
+    var result = []
+    var i = 0
+    while (i < rt_count(candidates)):
+        rt_push(result, v_paid_speech_interpret(mind, policy, candidates[i], bindings))
+        i = (i + 1)
+    return result
+
+fn v_paid_speech_model_prediction(model, speech, speaker, source, time):
+    var before = dv_clone(model.mind)
+    var policy = model.policy
+    var bindings = dv_find(speech, "referents", [])
+    var parsed = v_paid_speech_map(model.mind, speech.literal_ast, dv_find(speech, "referents", []))
+    var decision = v_paid_speech_proposal_decision(before, policy, speech, dv_find(dv_find(policy, "speaker_trust", []), speaker, 0.5))
+    var observations = v_paid_speech_received_observations(before, parsed, rt_cat("prediction-", source), speaker, time, decision)
+    var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(policy, "observation_threshold", 0.5))
+    var receipt = dv_update_mind(before, observations, before.revision, profile)
+    var after = receipt.world
+    var primary = v_paid_speech_model_interpretations(after, policy, speech, bindings)
+    var checked = dv_find(policy, "scope_reference_check", false)
+    var local_1 = false
+    if checked:
+        local_1 = v_paid_speech_model_interpretations(after, dv_with(policy, "scope_reference_check", false), speech, bindings)
+    else:
+        local_1 = primary
+    var local_2 = false
+    if checked:
+        local_2 = primary
+    else:
+        local_2 = v_paid_speech_model_interpretations(after, dv_with(policy, "scope_reference_check", true), speech, bindings)
+    var local_3 = false
+    if checked:
+        local_3 = "scope_reference_check_true=primary"
+    else:
+        local_3 = "scope_reference_check_false=primary"
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"model_before": before, "model_after": after, "predicted_literal": parsed, "observations": observations}, "observation_profile", profile), "prediction", primary), "conditional_prediction", {"scope_reference_check_false": local_1, "scope_reference_check_true": local_2}), "assumptions", dv_find(model, "assumptions", [])), "conditional_reuse", local_3), "proposal_decision", decision)
+
+fn v_paid_speech_rule_units(rule):
+    return (1 + (2 * ((v_paid_speech_ast_nodes(rule.premise) + v_paid_speech_ast_nodes(rule.proposition)) + (v_paid_speech_ast_nodes(dv_find(rule, "available_when", dv_true())) + (v_paid_speech_ast_nodes(dv_find(rule, "withdraw_when", dv_not(dv_true()))) + v_paid_speech_ast_nodes(dv_find(rule, "scope_bridge", {"op": "constant", "value": "unknown"})))))))
+
+fn v_paid_speech_prediction_units(model, speech):
+    var rules = dv_find(model.policy, "implicature_bridges", [])
+    var candidates = v_paid_speech_candidates(model.policy, speech)
+    var work = (v_paid_speech_proposal_decision(model.mind, model.policy, speech, 0.5).calculation_units + (1 + (2 * v_paid_speech_ast_nodes(speech.literal_ast))))
+    var i = 0
+    while (i < rt_count(candidates)):
+        var j = 0
+        var id = candidates[i].id
+        while (j < rt_count(rules)):
+            if (rules[j].id == id):
+                work = (work + (2 * v_paid_speech_rule_units(rules[j])))
+            j = (j + 1)
+        i = (i + 1)
+    return work
+
+fn v_paid_speech_goals(actor):
+    var goals = dv_find(actor.policy, "communication_goals", [])
+    var active = []
+    var i = 0
+    while (i < rt_count(goals)):
+        var goal = goals[i]
+        if dv_and((0 < rt_count(dv_find(goal, "basis", []))), (dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true")):
+            dv_require((not (goal.weight < 0)), "Negative communication weight")
+            rt_push(active, goal)
+        i = (i + 1)
+    return active
+
+fn v_paid_speech_choice_signature(actor, action, goals):
+    return {"mind": actor.mind, "speech": action.speech, "goals": goals, "listeners": dv_find(action, "listeners", [])}
+
+fn v_paid_speech_goal_value(goals, listener, prediction):
+    var value = 0
+    var i = 0
+    var interpretations = prediction.prediction
+    while (i < rt_count(goals)):
+        var goal = goals[i]
+        var targets = dv_find(goals[i], "listeners", [])
+        var j = 0
+        if dv_or((rt_count(targets) == 0), dv_has(targets, listener)):
+            while (j < rt_count(interpretations)):
+                var interpretation = interpretations[j]
+                if dv_and((interpretation.id == goal.interpretation_id), (interpretation.status == goal.desired_status)):
+                    value = (value + (goal.weight * interpretation.confidence))
+                j = (j + 1)
+        i = (i + 1)
+    return value
+
+fn v_paid_prediction_check(trace, e):
+    var data = e.data
+    var before = dv_find(e.data, "actor_before", [])
+    var status = "insufficient_evidence"
+    var valid = true
+    if dv_and((0 < rt_count(before)), dv_has_key(data, "action")):
+        var action = data.action
+        var listener = data.listener
+        var models = dv_find(before.mind, "listener_models", [])
+        var expected = {"status": "unknown-no-model", "prediction": []}
+        var units = 0
+        var keys = []
+        var local_1 = false
+        if dv_has_key(models, listener):
+            local_1 = (0 < rt_count(dv_find(dv_get(models, listener), "basis", [])))
+        else:
+            local_1 = false
+        if local_1:
+            expected = dv_with(dv_with(v_paid_speech_model_prediction(dv_get(models, listener), action.speech, e.actor, rt_cat("preselect-", action.id), e.time), "status", "model-based"), "model", dv_get(models, listener))
+            units = v_paid_speech_prediction_units(dv_get(models, listener), action.speech)
+        rt_push(keys, "listener")
+        rt_push(keys, "action")
+        rt_push(keys, "actor_before")
+        rt_push(keys, "actor_after")
+        rt_push(keys, "budget_before")
+        rt_push(keys, "budget_after")
+        rt_push(keys, "charged_units")
+        rt_push(keys, "goals")
+        rt_push(keys, "prediction_time")
+        valid = dv_same(expected, v_record_without(data, keys))
+        valid = dv_and(valid, dv_and(v_action_frozen(trace, e.actor, action), dv_same(before.mind, v_cognitive_before(trace, e))))
+        valid = dv_and(valid, dv_and((units == data.charged_units), dv_and((data.budget_before == before.policy.model_budget), (data.budget_after == (data.budget_before - units)))))
+        var local_2 = false
+        if (0 < units):
+            local_2 = e.id
+        else:
+            local_2 = dv_find(before, "model_previous_event", "")
+        valid = dv_and(valid, dv_same(data.actor_after, dv_with(dv_with(before, "policy", dv_with(before.policy, "model_budget", data.budget_after)), "model_previous_event", local_2)))
+        valid = dv_and(valid, dv_same(data.goals, v_paid_speech_goals(before)))
+        valid = dv_and(valid, v_runtime_policy_valid(trace, e, before.policy))
+        var local_3 = false
+        if valid:
+            local_3 = "supported"
+        else:
+            local_3 = "violated"
+        status = local_3
+    return v_finding("paid_speech_prediction", status, "独立重算本人预选时的听者模型、条件分支复用及逐节点收费；保留实际预算前后与本人可知来源", dv_single(e.id))
+
+fn v_paid_execution_prediction_check(trace, e):
+    var data = e.data
+    var paid = dv_find(e.data, "paid_forecast", [])
+    var ids = dv_find(e.data, "paid_prediction_events", [])
+    var i = 0
+    var found = false
+    var valid = true
+    while (i < rt_count(ids)):
+        var prior = v_event(v_events(trace), ids[i])
+        if (dv_find(prior, "type", "") == "speech_choice_prediction"):
+            valid = dv_and(valid, dv_and((prior.actor == e.actor), v_ancestor(v_events(trace), e.id, prior.id)))
+            valid = dv_and(valid, (v_paid_prediction_check(trace, prior).status == "supported"))
+            if dv_same(prior.data, paid):
+                found = true
+        else:
+            valid = false
+        i = (i + 1)
+    var keys = dv_list3("source_event", "paid_prediction_events", "paid_forecast")
+    rt_push(keys, "charged_units")
+    rt_push(keys, "execution_charged_units")
+    rt_push(keys, "speaker_after")
+    rt_push(keys, "preselection_source_revision")
+    valid = dv_and(valid, dv_same(v_record_without(data, keys), v_record_without(paid, dv_single("charged_units"))))
+    if (0 < rt_count(paid)):
+        var source = v_event(v_events(trace), dv_find(data, "source_event", ""))
+        valid = dv_and(valid, dv_and((dv_find(source, "actor", "") == e.actor), v_ancestor(v_events(trace), e.id, dv_find(source, "id", ""))))
+        valid = dv_and(valid, dv_and(dv_same(dv_find(dv_find(source, "data", []), "speech", false), paid.action.speech), (dv_find(data, "listener", "") == paid.listener)))
+    var local_1 = false
+    if (rt_count(paid) == 0):
+        local_1 = "insufficient_evidence"
+    else:
+        if dv_and(found, dv_and(valid, dv_and((dv_find(data, "charged_units", -1) == 0), (dv_find(data, "execution_charged_units", -1) == 0)))):
+            local_1 = "supported"
+        else:
+            local_1 = "violated"
+    return v_finding("speaker_prediction_boundary", local_1, "实际发言复用已付费的本人预选记录；核对真实父链与原付费结果，执行时不再免费预测或重复收费", dv_append(ids, e.id))

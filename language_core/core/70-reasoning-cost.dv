@@ -1,98 +1,122 @@
-; Validity is checked before cost. Cost is not truth, probability or action utility.
-(defn dv_proof_step (id kind conclusion parents law)
-  (dv_with (dv_m4 "id" id "kind" kind "conclusion" conclusion "parents" parents) "law" law))
-(defn dv_cost_policy (step evidence assumption conflict reference maximum allow_assumptions budget)
-  (do
-    (dv_require (dv_and (dv_and (rt_not (rt_lt step 0)) (rt_not (rt_lt evidence 0)))
-      (dv_and (dv_and (rt_lt 0 assumption) (rt_not (rt_lt conflict 0))) (dv_and (rt_lt 0 reference) (rt_not (rt_lt maximum 0))))) "Invalid reasoning costs")
-    (dv_require (rt_lt 0 budget) "Invalid proof budget")
-    (dv_with (dv_with (dv_with (dv_with (dv_m4 "step" step "evidence" evidence "assumption" assumption "conflict" conflict)
-      "reference" reference) "maximum" maximum) "allow_assumptions" allow_assumptions) "budget" budget)))
-(defn dv_rule_concludes (law conclusion)
-  (let (effects (dv_get law "effects") i 0 found false)
-    (do (while (rt_lt i (rt_count effects))
-      (let (effect (rt_at effects i))
-        (do (if (rt_eq (dv_get effect "op") "assign")
-          (if (dv_same conclusion (dv_fact (dv_get effect "ref") (dv_get effect "value"))) (set found true) false) false)
-          (set i (rt_add i 1))))) found)))
-(defn dv_match_premises (premise supplied)
-  (if (dv_same premise (dv_true)) (rt_eq (rt_count supplied) 0)
-    (if (rt_eq (dv_get premise "op") "all")
-      (let (required (dv_get premise "items") i 0 valid (rt_eq (rt_count supplied) (rt_count required)))
-        (do (while (rt_lt i (rt_count required))
-          (do (set valid (dv_and valid (dv_has supplied (rt_at required i)))) (set i (rt_add i 1)))) valid))
-      (dv_same supplied (dv_single premise)))))
-(defn dv_check_step (world step checked policy)
-  (let (kind (dv_get step "kind") conclusion (dv_get step "conclusion") parents (dv_get step "parents")
-        supplied (rt_list) confidence 1 i 0 hypothetical false)
-    (do
-      (while (rt_lt i (rt_count parents))
-        (let (parent (dv_get checked (rt_at parents i)))
-          (do (rt_push supplied (dv_get parent "conclusion"))
-            (set confidence (dv_min confidence (dv_get parent "confidence")))
-            (set hypothetical (dv_or hypothetical (dv_get parent "hypothetical")))
-            (set i (rt_add i 1)))))
-      (let (assumptions 0 conflicts 0 local_uncertainty 0)
-        (do
-          (if (rt_eq kind "known")
-            (do
-              (dv_require (rt_eq (rt_count parents) 0) "Known premise cannot hide parents")
-              (dv_require (rt_eq (dv_truth world conclusion) "true") "Conclusion is not available in this view")
-              (set confidence (dv_premise_confidence world conclusion))
-              (set local_uncertainty (rt_sub 1 confidence)))
-            (if (rt_eq kind "assume")
-              (do
-                (dv_require (rt_eq (rt_count parents) 0) "Assumption cannot hide parents")
-                (dv_require (dv_and (dv_get policy "allow_assumptions") (rt_not (rt_eq (dv_get world "domain") "physical"))) "Assumption not permitted")
-                (set hypothetical true) (set assumptions 1) (set confidence 0)
-                (if (rt_eq (dv_truth world conclusion) "false") (set conflicts 1) false))
-              (if (rt_eq kind "axiom")
-                (let (adoption (dv_get (dv_get world "adoptions") (dv_get step "law")) law (dv_get adoption "law"))
-                  (do
-                    (dv_require (dv_get adoption "active") "Proof uses a suspended axiom")
-                    (dv_require (rt_eq (dv_get adoption "mode") "infer") "Operational effects do not prove that an event occurred")
-                    (dv_require (dv_rule_concludes law conclusion) "Axiom does not conclude this proposition")
-                    (dv_require (dv_match_premises (dv_get law "premise") supplied) "Axiom premises are not established")
-                    (set confidence (dv_min confidence (dv_get adoption "confidence")))
-                    (set local_uncertainty (rt_sub 1 (dv_get adoption "confidence")))))
-                (rt_fail "Unsupported proof step"))))
-          (dv_with (dv_with (dv_with (dv_with (dv_with (dv_clone step) "confidence" confidence) "hypothetical" hypothetical)
-            "assumptions" assumptions) "conflicts" conflicts) "local_uncertainty" local_uncertainty))))))
-(defn dv_judge_conclusion (world conclusion proof policy)
-  (do
-    (dv_require (rt_lt 0 (rt_count proof)) "Empty derivation")
-    (dv_require (rt_not (rt_lt (dv_get policy "budget") (rt_count proof))) "Derivation budget exhausted")
-    (let (checked (rt_list) i 0)
-      (do
-        (while (rt_lt i (rt_count proof))
-          (let (step (rt_at proof i) id (dv_get step "id"))
-            (do
-              (dv_require (rt_not (dv_has_key checked id)) "Repeated proof node identity")
-              (set checked (dv_with checked id (dv_check_step world step checked policy)))
-              (set i (rt_add i 1)))))
-        (let (root (dv_get checked (dv_get (rt_at proof (rt_sub (rt_count proof) 1)) "id"))
-              queue (dv_single (dv_get root "id")) visited (rt_list) cursor 0 steps 0 uncertainty 0 assumptions 0 conflicts 0)
-          (do
-            (dv_require (dv_same conclusion (dv_get root "conclusion")) "Derivation concludes another proposition")
-            (while (rt_lt cursor (rt_count queue))
-              (let (id (rt_at queue cursor))
-                (do
-                  (if (dv_has visited id) false
-                    (let (step (dv_get checked id) parents (dv_get step "parents") p 0)
-                      (do
-                        (rt_push visited id) (set steps (rt_add steps 1))
-                        (set uncertainty (rt_add uncertainty (dv_get step "local_uncertainty")))
-                        (set assumptions (rt_add assumptions (dv_get step "assumptions")))
-                        (set conflicts (rt_add conflicts (dv_get step "conflicts")))
-                        (while (rt_lt p (rt_count parents)) (do (rt_push queue (rt_at parents p)) (set p (rt_add p 1)))))))
-                  (set cursor (rt_add cursor 1)))))
-            (let (cost (rt_add (rt_add (rt_mul steps (dv_get policy "step")) (rt_mul uncertainty (dv_get policy "evidence")))
-                        (rt_add (rt_mul assumptions (dv_get policy "assumption")) (rt_mul conflicts (dv_get policy "conflict"))))
-                  components (dv_m4 "steps" steps "evidence_uncertainty" uncertainty "assumptions" assumptions "conflicts" conflicts))
-              (dv_with (dv_with (dv_with (dv_with (dv_with
-                (dv_m4 "valid" true "cost" cost "components" components "reasonable" (rt_not (rt_lt (dv_get policy "maximum") cost)))
-                "reasonableness" (rt_div 1 (rt_add 1 (rt_div cost (dv_get policy "reference")))))
-                "confidence" (dv_get root "confidence"))
-                "hypothetical" (dv_or (dv_get root "hypothetical") (rt_eq (dv_get world "domain") "prediction")))
-                "scope" (dv_m3 "world" (dv_get world "id") "subject" (dv_get world "subject") "revision" (dv_get world "revision")))
-                "basis" visited))))))))
+// Validity is checked before cost. Cost is not truth, probability or action utility.
+
+fn dv_proof_step(id, kind, conclusion, parents, law):
+    return dv_with({"id": id, "kind": kind, "conclusion": conclusion, "parents": parents}, "law", law)
+
+fn dv_cost_policy(step, evidence, assumption, conflict, reference, maximum, allow_assumptions, budget):
+    dv_require(dv_and(dv_and((not (step < 0)), (not (evidence < 0))), dv_and(dv_and((0 < assumption), (not (conflict < 0))), dv_and((0 < reference), (not (maximum < 0))))), "Invalid reasoning costs")
+    dv_require((0 < budget), "Invalid proof budget")
+    return dv_with(dv_with(dv_with(dv_with({"step": step, "evidence": evidence, "assumption": assumption, "conflict": conflict}, "reference", reference), "maximum", maximum), "allow_assumptions", allow_assumptions), "budget", budget)
+
+fn dv_rule_concludes(law, conclusion):
+    var effects = law.effects
+    var i = 0
+    var found = false
+    while (i < rt_count(effects)):
+        var effect = effects[i]
+        if (effect.op == "assign"):
+            if dv_same(conclusion, dv_fact(effect.ref, effect.value)):
+                found = true
+        i = (i + 1)
+    return found
+
+fn dv_match_premises(premise, supplied):
+    if dv_same(premise, dv_true()):
+        return (rt_count(supplied) == 0)
+    else:
+        if (premise.op == "all"):
+            var required = premise.items
+            var i = 0
+            var valid = (rt_count(supplied) == rt_count(required))
+            while (i < rt_count(required)):
+                valid = dv_and(valid, dv_has(supplied, required[i]))
+                i = (i + 1)
+            return valid
+        else:
+            return dv_same(supplied, dv_single(premise))
+
+fn dv_check_step(world, step, checked, policy):
+    var kind = step.kind
+    var conclusion = step.conclusion
+    var parents = step.parents
+    var supplied = []
+    var confidence = 1
+    var i = 0
+    var hypothetical = false
+    while (i < rt_count(parents)):
+        var parent = dv_get(checked, parents[i])
+        rt_push(supplied, parent.conclusion)
+        confidence = dv_min(confidence, parent.confidence)
+        hypothetical = dv_or(hypothetical, parent.hypothetical)
+        i = (i + 1)
+    var assumptions = 0
+    var conflicts = 0
+    var local_uncertainty = 0
+    if (kind == "known"):
+        dv_require((rt_count(parents) == 0), "Known premise cannot hide parents")
+        dv_require((dv_truth(world, conclusion) == "true"), "Conclusion is not available in this view")
+        confidence = dv_premise_confidence(world, conclusion)
+        local_uncertainty = (1 - confidence)
+    else:
+        if (kind == "assume"):
+            dv_require((rt_count(parents) == 0), "Assumption cannot hide parents")
+            dv_require(dv_and(policy.allow_assumptions, (not (world.domain == "physical"))), "Assumption not permitted")
+            hypothetical = true
+            assumptions = 1
+            confidence = 0
+            if (dv_truth(world, conclusion) == "false"):
+                conflicts = 1
+        else:
+            if (kind == "axiom"):
+                var adoption = dv_get(world.adoptions, step.law)
+                var law = adoption.law
+                dv_require(adoption.active, "Proof uses a suspended axiom")
+                dv_require((adoption.mode == "infer"), "Operational effects do not prove that an event occurred")
+                dv_require(dv_rule_concludes(law, conclusion), "Axiom does not conclude this proposition")
+                dv_require(dv_match_premises(law.premise, supplied), "Axiom premises are not established")
+                confidence = dv_min(confidence, adoption.confidence)
+                local_uncertainty = (1 - adoption.confidence)
+            else:
+                rt_fail("Unsupported proof step")
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_clone(step), "confidence", confidence), "hypothetical", hypothetical), "assumptions", assumptions), "conflicts", conflicts), "local_uncertainty", local_uncertainty)
+
+fn dv_judge_conclusion(world, conclusion, proof, policy):
+    dv_require((0 < rt_count(proof)), "Empty derivation")
+    dv_require((not (policy.budget < rt_count(proof))), "Derivation budget exhausted")
+    var checked = []
+    var i = 0
+    while (i < rt_count(proof)):
+        var step = proof[i]
+        var id = step.id
+        dv_require((not dv_has_key(checked, id)), "Repeated proof node identity")
+        checked = dv_with(checked, id, dv_check_step(world, step, checked, policy))
+        i = (i + 1)
+    var root = dv_get(checked, proof[(rt_count(proof) - 1)].id)
+    var queue = dv_single(root.id)
+    var visited = []
+    var cursor = 0
+    var steps = 0
+    var uncertainty = 0
+    var assumptions = 0
+    var conflicts = 0
+    dv_require(dv_same(conclusion, root.conclusion), "Derivation concludes another proposition")
+    while (cursor < rt_count(queue)):
+        var id = queue[cursor]
+        if dv_has(visited, id):
+            false
+        else:
+            var step = dv_get(checked, id)
+            var parents = step.parents
+            var p = 0
+            rt_push(visited, id)
+            steps = (steps + 1)
+            uncertainty = (uncertainty + step.local_uncertainty)
+            assumptions = (assumptions + step.assumptions)
+            conflicts = (conflicts + step.conflicts)
+            while (p < rt_count(parents)):
+                rt_push(queue, parents[p])
+                p = (p + 1)
+        cursor = (cursor + 1)
+    var cost = (((steps * policy.step) + (uncertainty * policy.evidence)) + ((assumptions * policy.assumption) + (conflicts * policy.conflict)))
+    var components = {"steps": steps, "evidence_uncertainty": uncertainty, "assumptions": assumptions, "conflicts": conflicts}
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"valid": true, "cost": cost, "components": components, "reasonable": (not (policy.maximum < cost))}, "reasonableness", (1 / (1 + (cost / policy.reference)))), "confidence", root.confidence), "hypothetical", dv_or(root.hypothetical, (world.domain == "prediction"))), "scope", {"world": world.id, "subject": world.subject, "revision": world.revision}), "basis", visited)

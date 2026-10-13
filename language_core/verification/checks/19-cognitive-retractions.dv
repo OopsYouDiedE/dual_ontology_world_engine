@@ -1,134 +1,266 @@
-; Pure audit replay writes only to a audit_events counterfactual log.
-(defn v_retract_add_ref (refs ref) (if (dv_has refs ref) refs (dv_append refs ref)))
-(defn v_retract_reason_cell (cell) (dv_without cell "time"))
-(defn v_retract_event (events kind actor time parents data)
-  (let (id (rt_cat "e" (rt_show (rt_count events))))
-    (do (rt_push events (dv_with (dv_with (dv_m4 "id" id "type" kind "actor" actor "time" time) "parents" parents) "data" (dv_clone data))) id)))
-(defn v_retract_replace (items index value)
-  (let (result (rt_list) i 0) (do (while (rt_lt i (rt_count items))
-    (do (rt_push result (if (rt_eq i index) (dv_clone value) (dv_clone (rt_at items i)))) (set i (rt_add i 1)))) result)))
-(defn v_retract_argument_revoke (actor events time parent)
-  (let (argument (dv_get actor "argument") world (dv_get actor "mind") changes (dv_get (dv_get actor "argument") "changes") i 0 restored (rt_list)
-    derivations (dv_find actor "inference_derivations" (rt_list)) contaminated (rt_list) remaining (dv_find (dv_get actor "policy") "reason_budget" 0) checked 0 blocked false descendants (rt_list) updated false)
-    (do (while (rt_lt i (rt_count changes))
-      (do (set contaminated (v_retract_add_ref contaminated (dv_get (rt_at changes i) "ref"))) (set i (rt_add i 1))))
-      (set i (rt_sub (rt_count derivations) 1))
-      (while (dv_and (rt_not (rt_lt i 0)) (rt_not blocked))
-        (let (derivation (rt_at derivations i) dependent false inputs (dv_get (rt_at derivations i) "inputs") j 0)
-          (do (if (rt_lt remaining 1) (set blocked true)
-            (do (set remaining (rt_sub remaining 1)) (set checked (rt_add checked 1))
-              (while (rt_lt j (rt_count inputs))
-                (do (if (dv_has contaminated (dv_get (rt_at inputs j) "ref")) (set dependent true) false) (set j (rt_add j 1)))) ))
-            (if (dv_and (rt_not blocked) (dv_and dependent (dv_find derivation "valid" true)))
-              (let (outputs (dv_get derivation "changes") k 0)
-                (do (while (rt_lt k (rt_count outputs))
-                  (let (change (rt_at outputs k) current (dv_read world (dv_get (rt_at outputs k) "ref")))
-                    (do (if (dv_same current (dv_get change "after"))
-                      (do (set world (dv_store world (dv_get change "ref") (dv_get change "before")))
-                        (set contaminated (v_retract_add_ref contaminated (dv_get change "ref"))) (rt_push restored change)) false)
-                      (set k (rt_add k 1)))))
-                  (rt_push descendants (dv_get derivation "event"))
-                  (set derivations (v_retract_replace derivations i (dv_with derivation "valid" false))))) false)
-            (set i (rt_sub i 1)))))
-      (set i 0)
-      (if blocked false
-        (while (rt_lt i (rt_count changes))
-          (let (change (rt_at changes i) cell (dv_read world (dv_get (rt_at changes i) "ref")))
-            (do (if (dv_and (rt_eq (dv_find cell "source" "") "abduction") (dv_has (dv_find cell "basis" (rt_list)) (dv_get argument "id")))
-              (do (set world (dv_store world (dv_get change "ref") (dv_get change "before"))) (rt_push restored change)) false) (set i (rt_add i 1))))))
-      (if (rt_lt 0 (rt_count restored)) (set world (dv_with world "revision" (rt_add (dv_get world "revision") 1))) false)
-      (set updated (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with actor "mind" world) "argument" (if blocked argument false)) "ready_hypothesis" false)
-        "inference_derivations" derivations) "cognition_blocked" blocked) "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)))
-      (v_retract_event events (if blocked "model_argument_revocation_pending" "model_argument_revoked") (dv_get actor "id") time
-        (dv_explanation_merge (dv_pair parent (dv_get argument "id")) descendants)
-        (dv_with (dv_with (dv_with (dv_with (dv_m4 "argument" argument "mind_before" (dv_get actor "mind") "mind_after" world "restored" restored) "checked" checked) "remaining" remaining) "actor_before" actor) "actor_after" updated))
-      updated)))
-(defn v_retract_refresh_derivations (actor events time parent)
-  (let (derivations (dv_find actor "inference_derivations" (rt_list)) world (dv_get actor "mind") i (rt_sub (rt_count (dv_find actor "inference_derivations" (rt_list))) 1)
-    contaminated (rt_list) restored (rt_list) parents (dv_single parent) remaining (dv_find (dv_get actor "policy") "reason_budget" 0) checked 0 blocked false updated false)
-    (do (while (dv_and (rt_not (rt_lt i 0)) (rt_not blocked))
-      (let (derivation (rt_at derivations i) inputs (dv_get (rt_at derivations i) "inputs") stale false j 0)
-        (do (if (dv_find derivation "valid" true)
-          (do (if (dv_same (dv_get derivation "adoption")
-            (dv_find (dv_get world "adoptions") (dv_get (dv_get (dv_get derivation "adoption") "law") "name") false)) false (set stale true))
-            (while (rt_lt j (rt_count inputs))
-            (let (input (rt_at inputs j))
-              (do (if (dv_or (dv_has contaminated (dv_get input "ref"))
-                (rt_not (dv_same (v_retract_reason_cell (dv_get input "cell")) (v_retract_reason_cell (dv_read world (dv_get input "ref"))))))
-                (set stale true) false) (set j (rt_add j 1)))))
-            (if stale
-              (if (rt_lt remaining 1) (set blocked true)
-                (let (changes (dv_get derivation "changes") k 0)
-                  (do (set remaining (rt_sub remaining 1)) (set checked (rt_add checked 1))
-                    (set parents (dv_explanation_merge parents (v_retract_support_parents (dv_get actor "mind") (v_model_sim_refs (dv_get (dv_get (dv_get derivation "adoption") "law") "premise")) events (dv_get actor "id"))))
-                    (while (rt_lt k (rt_count changes))
-                      (let (change (rt_at changes k))
-                        (do (if (dv_same (dv_read world (dv_get change "ref")) (dv_get change "after"))
-                          (do (set world (dv_store world (dv_get change "ref") (dv_get change "before")))
-                            (set contaminated (v_retract_add_ref contaminated (dv_get change "ref"))) (rt_push restored change)) false)
-                          (set k (rt_add k 1)))))
-                    (set parents (dv_explanation_merge parents (dv_single (dv_get derivation "event"))))
-                    (set derivations (v_retract_replace derivations i (dv_with derivation "valid" false)))))) false)) false)
-          (set i (rt_sub i 1)))))
-      (if (rt_lt 0 (rt_count restored)) (set world (dv_with world "revision" (rt_add (dv_get world "revision") 1))) false)
-      (set updated (dv_with (dv_with (dv_with (dv_with actor "mind" world) "inference_derivations" derivations) "cognition_blocked" blocked)
-        "policy" (dv_with (dv_get actor "policy") "reason_budget" remaining)))
-      (if (dv_or blocked (rt_lt 0 checked))
-        (set parent (v_retract_event events "inference_dependencies_invalidated" (dv_get actor "id") time parents
-          (dv_with (dv_with (dv_with (dv_with (dv_m4 "mind_before" (dv_get actor "mind") "mind_after" world "restored" restored "checked" checked) "budget_blocked" blocked) "remaining" remaining) "actor_before" actor) "actor_after" updated))) false)
-      (if (dv_and (rt_not blocked) (rt_lt 0 checked)) (v_retract_refresh_derivations updated events time parent) updated))))
+// Pure audit replay writes only to a audit_events counterfactual log.
 
+fn v_retract_add_ref(refs, ref):
+    if dv_has(refs, ref):
+        return refs
+    else:
+        return dv_append(refs, ref)
 
-(defn v_retraction_checks (trace)
-  (let (events (v_events trace) states (rt_list) prior_statuses (rt_list) findings (rt_list) i 0)
-    (do (while (rt_lt i (rt_count events))
-      (let (e (rt_at events i) kind (dv_get (rt_at events i) "type") data (dv_get (rt_at events i) "data") actor (dv_get (rt_at events i) "actor") derivations (dv_find states (dv_get (rt_at events i) "actor") (rt_list)))
-        (do
-          (if (rt_eq kind "inference")
-            (if (dv_and (dv_has_key data "mind_before") (dv_and (dv_has_key data "law") (dv_has_key data "receipt")))
-              (let (before (dv_get data "mind_before") law (dv_get data "law") receipt (dv_get data "receipt") adoption (dv_find (dv_get (dv_get data "mind_before") "adoptions") (dv_get (dv_get data "law") "name") (rt_list)) valid false)
-                (do (if (rt_lt 0 (rt_count adoption))
-                  (set valid (dv_and (dv_same law (dv_get adoption "law")) (dv_and (v_support trace before actor (dv_get law "premise") (rt_list)) (dv_same receipt (dv_infer before (dv_get law "name") (dv_get receipt "event") (dv_get e "time") (dv_get before "revision")))))) false)
-                  (set states (dv_with states actor (dv_append derivations (dv_with (dv_m4 "event" (dv_get e "id") "adoption" adoption "inputs" (v_model_sim_inputs before (dv_get law "premise")) "changes" (dv_get receipt "changes")) "valid" true))))
-                  (rt_push findings (v_finding "inference_derivation_provenance" (if valid "supported" "violated") "逐收据重算已采纳推理及真实前提源，建立可撤回派生链；不凭derivation标签作证" (dv_single (dv_get e "id")))))) false) false)
-          (if (dv_has (dv_list3 "model_argument_revoked" "model_argument_revocation_pending" "inference_dependencies_invalidated") kind)
-            (let (before (dv_find data "actor_before" (rt_list)) status "insufficient_evidence")
-              (do (if (rt_lt 0 (rt_count before))
-                (let (audit_events (v_event_prefix events i) valid (dv_same derivations (dv_find before "inference_derivations" (rt_list))) replay false parent (if (rt_lt 0 (rt_count (dv_get e "parents"))) (rt_at (dv_get e "parents") 0) ""))
-                  (do (set valid (dv_and valid (dv_and (dv_same (dv_get before "mind") (v_cognitive_before trace e)) (rt_eq (dv_find (dv_get before "policy") "reason_budget" -1) (v_reason_budget_before trace e i)))))
-                    (if (rt_eq kind "inference_dependencies_invalidated") (v_retract_refresh_derivations (dv_clone before) audit_events (dv_get e "time") parent) (v_retract_argument_revoke (dv_clone before) audit_events (dv_get e "time") parent))
-                    (if (rt_lt i (rt_count audit_events))
-                      (do (set replay (rt_at audit_events i)) (set valid (dv_and valid (dv_same replay e)))
-                        (set states (dv_with states actor (dv_get (dv_get (dv_get replay "data") "actor_after") "inference_derivations")))) (set valid false))
-                    (set status (if (rt_eq (dv_find prior_statuses actor "supported") "supported") (if valid "supported" "violated") "insufficient_evidence")))) false)
-                (set prior_statuses (dv_with prior_statuses actor status))
-                (rt_push findings (v_finding "cognitive_retraction_provenance" status "独立重演每轮真实前提失效、派生后代回退、保留新观察与reason扣费；撤回P不生成notP，预算不足保留blocked" (dv_single (dv_get e "id")))))) false)
-          (set i (rt_add i 1))))) findings)))
-(defn v_extended_provenance_id (id)
-  (let (ids (dv_list3 "model_replay_provenance" "explanation_argument_provenance" "cognitive_retraction_provenance"))
-    (do (rt_push ids "inference_derivation_provenance") (rt_push ids "factor_prune_provenance") (rt_push ids "speech_model_budget_provenance") (rt_push ids "paid_speech_prediction") (rt_push ids "run_start_game_budget") (rt_push ids "proposal_reassessment_provenance") (rt_push ids "proposal_reception_provenance") (dv_has ids id))))
+fn v_retract_reason_cell(cell):
+    return dv_without(cell, "time")
 
-(defn v_retract_support_parents (mind refs events subject)
-  (let (parents (rt_list) i 0)
-    (do (while (rt_lt i (rt_count refs))
-      (let (ref (rt_at refs i) cell (dv_read mind (rt_at refs i)) j 0)
-        (do (while (rt_lt j (rt_count events))
-          (let (event (rt_at events j) data (dv_get (rt_at events j) "data") k 0)
-            (do (if (rt_eq (dv_get event "actor") subject)
-              (do (if (dv_or (rt_eq (dv_get event "type") "observation") (rt_eq (dv_get event "type") "listener_parse"))
-                (let (observations (dv_get data "observations"))
-                  (do (while (rt_lt k (rt_count observations))
-                    (let (observation (rt_at observations k))
-                      (do (if (dv_and (dv_same (dv_get observation "ref") ref) (dv_has (dv_find cell "claims" (rt_list)) observation))
-                        (set parents (dv_explanation_merge parents (dv_single (dv_get event "id")))) false) (set k (rt_add k 1))))))) false)
-                (if (rt_eq (dv_get event "type") "inference")
-                  (let (changes (dv_get (dv_get data "receipt") "changes") n 0)
-                    (do (while (rt_lt n (rt_count changes))
-                      (let (change (rt_at changes n))
-                        (do (if (dv_and (dv_same (dv_get change "ref") ref) (dv_same (dv_get change "after") cell))
-                          (set parents (dv_explanation_merge parents (dv_single (dv_get event "id")))) false) (set n (rt_add n 1))))))) false)
-                (if (rt_eq (dv_get event "type") "model_argument_accepted")
-                  (if (dv_has (dv_find cell "basis" (rt_list)) (dv_get event "id")) (set parents (dv_explanation_merge parents (dv_single (dv_get event "id")))) false) false)) false)
-              (set j (rt_add j 1))))) (set i (rt_add i 1))))) parents)))
+fn v_retract_event(events, kind, actor, time, parents, data):
+    var id = rt_cat("e", rt_show(rt_count(events)))
+    rt_push(events, dv_with(dv_with({"id": id, "type": kind, "actor": actor, "time": time}, "parents", parents), "data", dv_clone(data)))
+    return id
 
+fn v_retract_replace(items, index, value):
+    var result = []
+    var i = 0
+    while (i < rt_count(items)):
+        var local_1 = false
+        if (i == index):
+            local_1 = dv_clone(value)
+        else:
+            local_1 = dv_clone(items[i])
+        rt_push(result, local_1)
+        i = (i + 1)
+    return result
 
+fn v_retract_argument_revoke(actor, events, time, parent):
+    var argument = actor.argument
+    var world = actor.mind
+    var changes = actor.argument.changes
+    var i = 0
+    var restored = []
+    var derivations = dv_find(actor, "inference_derivations", [])
+    var contaminated = []
+    var remaining = dv_find(actor.policy, "reason_budget", 0)
+    var checked = 0
+    var blocked = false
+    var descendants = []
+    var updated = false
+    while (i < rt_count(changes)):
+        contaminated = v_retract_add_ref(contaminated, changes[i].ref)
+        i = (i + 1)
+    i = (rt_count(derivations) - 1)
+    while dv_and((not (i < 0)), (not blocked)):
+        var derivation = derivations[i]
+        var dependent = false
+        var inputs = derivations[i].inputs
+        var j = 0
+        if (remaining < 1):
+            blocked = true
+        else:
+            remaining = (remaining - 1)
+            checked = (checked + 1)
+            while (j < rt_count(inputs)):
+                if dv_has(contaminated, inputs[j].ref):
+                    dependent = true
+                j = (j + 1)
+        if dv_and((not blocked), dv_and(dependent, dv_find(derivation, "valid", true))):
+            var outputs = derivation.changes
+            var k = 0
+            while (k < rt_count(outputs)):
+                var change = outputs[k]
+                var current = dv_read(world, outputs[k].ref)
+                if dv_same(current, change.after):
+                    world = dv_store(world, change.ref, change.before)
+                    contaminated = v_retract_add_ref(contaminated, change.ref)
+                    rt_push(restored, change)
+                k = (k + 1)
+            rt_push(descendants, derivation.event)
+            derivations = v_retract_replace(derivations, i, dv_with(derivation, "valid", false))
+        i = (i - 1)
+    i = 0
+    if blocked:
+        false
+    else:
+        while (i < rt_count(changes)):
+            var change = changes[i]
+            var cell = dv_read(world, changes[i].ref)
+            if dv_and((dv_find(cell, "source", "") == "abduction"), dv_has(dv_find(cell, "basis", []), argument.id)):
+                world = dv_store(world, change.ref, change.before)
+                rt_push(restored, change)
+            i = (i + 1)
+    if (0 < rt_count(restored)):
+        world = dv_with(world, "revision", (world.revision + 1))
+    var local_1 = false
+    if blocked:
+        local_1 = argument
+    else:
+        local_1 = false
+    updated = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "argument", local_1), "ready_hypothesis", false), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    var local_2 = false
+    if blocked:
+        local_2 = "model_argument_revocation_pending"
+    else:
+        local_2 = "model_argument_revoked"
+    v_retract_event(events, local_2, actor.id, time, dv_explanation_merge(dv_pair(parent, argument.id), descendants), dv_with(dv_with(dv_with(dv_with({"argument": argument, "mind_before": actor.mind, "mind_after": world, "restored": restored}, "checked", checked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    return updated
+
+fn v_retract_refresh_derivations(actor, events, time, parent):
+    var derivations = dv_find(actor, "inference_derivations", [])
+    var world = actor.mind
+    var i = (rt_count(dv_find(actor, "inference_derivations", [])) - 1)
+    var contaminated = []
+    var restored = []
+    var parents = dv_single(parent)
+    var remaining = dv_find(actor.policy, "reason_budget", 0)
+    var checked = 0
+    var blocked = false
+    var updated = false
+    while dv_and((not (i < 0)), (not blocked)):
+        var derivation = derivations[i]
+        var inputs = derivations[i].inputs
+        var stale = false
+        var j = 0
+        if dv_find(derivation, "valid", true):
+            if dv_same(derivation.adoption, dv_find(world.adoptions, derivation.adoption.law.name, false)):
+                false
+            else:
+                stale = true
+            while (j < rt_count(inputs)):
+                var input = inputs[j]
+                if dv_or(dv_has(contaminated, input.ref), (not dv_same(v_retract_reason_cell(input.cell), v_retract_reason_cell(dv_read(world, input.ref))))):
+                    stale = true
+                j = (j + 1)
+            if stale:
+                if (remaining < 1):
+                    blocked = true
+                else:
+                    var changes = derivation.changes
+                    var k = 0
+                    remaining = (remaining - 1)
+                    checked = (checked + 1)
+                    parents = dv_explanation_merge(parents, v_retract_support_parents(actor.mind, v_model_sim_refs(derivation.adoption.law.premise), events, actor.id))
+                    while (k < rt_count(changes)):
+                        var change = changes[k]
+                        if dv_same(dv_read(world, change.ref), change.after):
+                            world = dv_store(world, change.ref, change.before)
+                            contaminated = v_retract_add_ref(contaminated, change.ref)
+                            rt_push(restored, change)
+                        k = (k + 1)
+                    parents = dv_explanation_merge(parents, dv_single(derivation.event))
+                    derivations = v_retract_replace(derivations, i, dv_with(derivation, "valid", false))
+        i = (i - 1)
+    if (0 < rt_count(restored)):
+        world = dv_with(world, "revision", (world.revision + 1))
+    updated = dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    if dv_or(blocked, (0 < checked)):
+        parent = v_retract_event(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with(dv_with(dv_with(dv_with({"mind_before": actor.mind, "mind_after": world, "restored": restored, "checked": checked}, "budget_blocked", blocked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    if dv_and((not blocked), (0 < checked)):
+        return v_retract_refresh_derivations(updated, events, time, parent)
+    else:
+        return updated
+
+fn v_retraction_checks(trace):
+    var events = v_events(trace)
+    var states = []
+    var prior_statuses = []
+    var findings = []
+    var i = 0
+    while (i < rt_count(events)):
+        var e = events[i]
+        var kind = events[i].type
+        var data = events[i].data
+        var actor = events[i].actor
+        var derivations = dv_find(states, events[i].actor, [])
+        if (kind == "inference"):
+            if dv_and(dv_has_key(data, "mind_before"), dv_and(dv_has_key(data, "law"), dv_has_key(data, "receipt"))):
+                var before = data.mind_before
+                var law = data.law
+                var receipt = data.receipt
+                var adoption = dv_find(data.mind_before.adoptions, data.law.name, [])
+                var valid = false
+                if (0 < rt_count(adoption)):
+                    valid = dv_and(dv_same(law, adoption.law), dv_and(v_support(trace, before, actor, law.premise, []), dv_same(receipt, dv_infer(before, law.name, receipt.event, e.time, before.revision))))
+                states = dv_with(states, actor, dv_append(derivations, dv_with({"event": e.id, "adoption": adoption, "inputs": v_model_sim_inputs(before, law.premise), "changes": receipt.changes}, "valid", true)))
+                var local_1 = false
+                if valid:
+                    local_1 = "supported"
+                else:
+                    local_1 = "violated"
+                rt_push(findings, v_finding("inference_derivation_provenance", local_1, "逐收据重算已采纳推理及真实前提源，建立可撤回派生链；不凭derivation标签作证", dv_single(e.id)))
+        if dv_has(dv_list3("model_argument_revoked", "model_argument_revocation_pending", "inference_dependencies_invalidated"), kind):
+            var before = dv_find(data, "actor_before", [])
+            var status = "insufficient_evidence"
+            if (0 < rt_count(before)):
+                var audit_events = v_event_prefix(events, i)
+                var valid = dv_same(derivations, dv_find(before, "inference_derivations", []))
+                var replay = false
+                var local_2 = false
+                if (0 < rt_count(e.parents)):
+                    local_2 = e.parents[0]
+                else:
+                    local_2 = ""
+                var parent = local_2
+                valid = dv_and(valid, dv_and(dv_same(before.mind, v_cognitive_before(trace, e)), (dv_find(before.policy, "reason_budget", -1) == v_reason_budget_before(trace, e, i))))
+                if (kind == "inference_dependencies_invalidated"):
+                    v_retract_refresh_derivations(dv_clone(before), audit_events, e.time, parent)
+                else:
+                    v_retract_argument_revoke(dv_clone(before), audit_events, e.time, parent)
+                if (i < rt_count(audit_events)):
+                    replay = audit_events[i]
+                    valid = dv_and(valid, dv_same(replay, e))
+                    states = dv_with(states, actor, replay.data.actor_after.inference_derivations)
+                else:
+                    valid = false
+                var local_3 = false
+                if (dv_find(prior_statuses, actor, "supported") == "supported"):
+                    if valid:
+                        local_3 = "supported"
+                    else:
+                        local_3 = "violated"
+                else:
+                    local_3 = "insufficient_evidence"
+                status = local_3
+            prior_statuses = dv_with(prior_statuses, actor, status)
+            rt_push(findings, v_finding("cognitive_retraction_provenance", status, "独立重演每轮真实前提失效、派生后代回退、保留新观察与reason扣费；撤回P不生成notP，预算不足保留blocked", dv_single(e.id)))
+        i = (i + 1)
+    return findings
+
+fn v_extended_provenance_id(id):
+    var ids = dv_list3("model_replay_provenance", "explanation_argument_provenance", "cognitive_retraction_provenance")
+    rt_push(ids, "inference_derivation_provenance")
+    rt_push(ids, "factor_prune_provenance")
+    rt_push(ids, "speech_model_budget_provenance")
+    rt_push(ids, "paid_speech_prediction")
+    rt_push(ids, "run_start_game_budget")
+    rt_push(ids, "proposal_reassessment_provenance")
+    rt_push(ids, "proposal_reception_provenance")
+    return dv_has(ids, id)
+
+fn v_retract_support_parents(mind, refs, events, subject):
+    var parents = []
+    var i = 0
+    while (i < rt_count(refs)):
+        var ref = refs[i]
+        var cell = dv_read(mind, refs[i])
+        var j = 0
+        while (j < rt_count(events)):
+            var event = events[j]
+            var data = events[j].data
+            var k = 0
+            if (event.actor == subject):
+                if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                    var observations = data.observations
+                    while (k < rt_count(observations)):
+                        var observation = observations[k]
+                        if dv_and(dv_same(observation.ref, ref), dv_has(dv_find(cell, "claims", []), observation)):
+                            parents = dv_explanation_merge(parents, dv_single(event.id))
+                        k = (k + 1)
+                if (event.type == "inference"):
+                    var changes = data.receipt.changes
+                    var n = 0
+                    while (n < rt_count(changes)):
+                        var change = changes[n]
+                        if dv_and(dv_same(change.ref, ref), dv_same(change.after, cell)):
+                            parents = dv_explanation_merge(parents, dv_single(event.id))
+                        n = (n + 1)
+                if (event.type == "model_argument_accepted"):
+                    if dv_has(dv_find(cell, "basis", []), event.id):
+                        parents = dv_explanation_merge(parents, dv_single(event.id))
+            j = (j + 1)
+        i = (i + 1)
+    return parents

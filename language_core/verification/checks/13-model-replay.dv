@@ -1,329 +1,693 @@
-; Judge-side pure temporal/response-model replay; copies never advance the actual trace.
-; Subject-local counterfactual temporal models. No authority or other actor lookup.
-(defn v_model_sim_refs (proposition)
-  (let (op (dv_get proposition "op"))
-    (if (dv_or (rt_eq op "equals") (rt_eq op "at_least")) (dv_single (dv_get proposition "ref"))
-      (if (rt_eq op "not") (v_model_sim_refs (dv_get proposition "item"))
-        (if (rt_eq op "all")
-          (let (items (dv_get proposition "items") refs (rt_list) i 0)
-            (do (while (rt_lt i (rt_count items))
-              (let (nested (v_model_sim_refs (rt_at items i)) j 0)
-                (do (while (rt_lt j (rt_count nested))
-                  (do (if (dv_has refs (rt_at nested j)) false (rt_push refs (rt_at nested j))) (set j (rt_add j 1))))
-                  (set i (rt_add i 1))))) refs)) (rt_list))))))
-(defn v_model_sim_plan (hypothesis)
-  (let (timeline (dv_find hypothesis "timeline" (rt_list)) plan (rt_list) i 0)
-    (do (if (dv_has_key hypothesis "timeline")
-      (while (rt_lt i (rt_count timeline))
-        (let (stage (rt_at timeline i) j 0)
-          (do (if (dv_has_key stage "response")
-            (rt_push plan (dv_with (dv_with (dv_m4 "law" "" "at" (dv_get stage "at") "optional" (dv_find stage "optional" false) "stage" i) "response" (dv_get stage "response")) "available_when" (dv_find stage "available_when" (dv_true))))
-            (let (laws (if (dv_has_key stage "laws") (dv_get stage "laws") (dv_single (dv_get stage "law"))))
-              (do (dv_require (rt_lt 0 (rt_count laws)) "Empty model event stage")
-                (while (rt_lt j (rt_count laws))
-                  (do (rt_push plan (dv_m4 "law" (rt_at laws j) "at" (dv_get stage "at") "optional" (dv_find stage "optional" false) "stage" i)) (set j (rt_add j 1)))))))
-            (set i (rt_add i 1)))))
-      (let (laws (dv_find hypothesis "predict_laws" (rt_list)))
-        (while (rt_lt i (rt_count laws))
-          (do (rt_push plan (dv_m4 "law" (rt_at laws i) "at" 0 "optional" false "stage" i)) (set i (rt_add i 1)))))) plan)))
-; An undecidable conditional reaction invalidates its possible outputs, not merely its score.
-(defn v_model_sim_withhold (world effects)
-  (let (copy world refs (rt_list) i 0)
-    (do (while (rt_lt i (rt_count effects))
-      (let (ref (dv_get (rt_at effects i) "ref"))
-        (do (if (dv_has_key (dv_get copy "objects") (dv_get ref "object"))
-          (do (set copy (dv_store copy ref (dv_unknown))) (rt_push refs ref)) false) (set i (rt_add i 1)))))
-      (dv_m2 "world" copy "refs" refs))))
-(defn v_model_sim_feature (feature)
-  (if (dv_has_key feature "proposition") (dv_get feature "proposition") feature))
-; Withhold predicted output fields before replay. Repeating old observations is not prediction.
-(defn v_model_sim_mask (mind plan start)
-  (let (copy (dv_with (dv_with (dv_with mind "time" start) "seen" (rt_list)) "history" (rt_list)) i 0)
-    (do (while (rt_lt i (rt_count plan))
-      (let (name (dv_get (rt_at plan i) "law") adoptions (dv_get mind "adoptions"))
-        (do (if (dv_has_key adoptions name)
-          (let (adoption (dv_get adoptions name) j 0 effects (dv_get (dv_get (dv_get adoptions name) "law") "effects"))
-            (do (if (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "predict"))
-              (while (rt_lt j (rt_count effects))
-                (let (ref (dv_get (rt_at effects j) "ref"))
-                  (do (if (dv_has_key (dv_get copy "objects") (dv_get ref "object"))
-                    (set copy (dv_store copy ref (dv_unknown))) false) (set j (rt_add j 1))))) false))) false)
-          (set i (rt_add i 1))))) copy)))
-(defn v_model_sim_inputs (world proposition)
-  (let (refs (v_model_sim_refs proposition) i 0 inputs (rt_list))
-    (do (while (rt_lt i (rt_count refs))
-      (do (rt_push inputs (dv_m2 "ref" (rt_at refs i) "cell" (dv_read world (rt_at refs i)))) (set i (rt_add i 1)))) inputs)))
-(defn v_model_sim_snapshot (snapshots final covered feature)
-  (if (dv_has_key feature "at")
-    (let (i 0 selected (dv_m3 "world" final "coverage" (rt_list) "step" -1) found false at (dv_get feature "at"))
-      (do (dv_require (rt_not (rt_lt at 0)) "Negative model feature time")
-        (while (rt_lt i (rt_count snapshots))
-          (let (snapshot (rt_at snapshots i))
-            (do (if (rt_eq at (dv_get snapshot "at"))
-              (do (set selected snapshot) (set found true)) false) (set i (rt_add i 1)))))
-        (if found selected (dv_m3 "world" final "coverage" (rt_list) "step" -1))))
-    (dv_m3 "world" final "coverage" covered "step" (rt_sub (rt_count snapshots) 1))))
-(defn v_model_sim_prediction (feature snapshot start)
-  (let (proposition (v_model_sim_feature feature) refs (v_model_sim_refs (v_model_sim_feature feature)) world (dv_get snapshot "world")
-        coverage (dv_get snapshot "coverage") i 0 cells (rt_list) valid true confidence 1)
-    (do (if (rt_eq (rt_count refs) 0) (set valid false) false)
-      (while (rt_lt i (rt_count refs))
-        (let (ref (rt_at refs i) cell (dv_read world (rt_at refs i)))
-          (do (rt_push cells (dv_m2 "ref" ref "cell" cell))
-            (if (dv_and (dv_has coverage ref) (dv_uncontested cell))
-              (set confidence (dv_min confidence (dv_get cell "confidence"))) (set valid false)) (set i (rt_add i 1)))))
-      (dv_with (dv_with (dv_with (dv_m4 "feature" feature "proposition" proposition "prediction" (if valid (dv_truth world proposition) "unknown") "cells" cells)
-        "covered" valid) "confidence" (if valid confidence 0)) "source_step" (dv_find snapshot "step" -1)))))
-(defn v_model_sim_compare (mind prediction)
-  (let (feature (dv_get prediction "feature") proposition (dv_get prediction "proposition") refs (v_model_sim_refs (dv_find (dv_get prediction "feature") "observation" (dv_get prediction "proposition")))
-        observation (dv_truth mind (dv_find (dv_get prediction "feature") "observation" (dv_get prediction "proposition"))) certainty (dv_get prediction "confidence") available true temporal_mismatch false i 0 observed (rt_list))
-    (do (while (rt_lt i (rt_count refs))
-      (let (cell (dv_read mind (rt_at refs i)))
-        (do (rt_push observed (dv_m2 "ref" (rt_at refs i) "cell" cell))
-          (if (dv_uncontested cell) (set certainty (dv_min certainty (dv_get cell "confidence"))) (set available false)) (set i (rt_add i 1)))))
-      (if (dv_has_key feature "occurrence_ref")
-        (let (occurrence (dv_read mind (dv_get feature "occurrence_ref")))
-          (do (rt_push observed (dv_m2 "ref" (dv_get feature "occurrence_ref") "cell" occurrence))
-            (if (dv_uncontested occurrence)
-              (do (set certainty (dv_min certainty (dv_get occurrence "confidence")))
-                (if (dv_same (dv_get occurrence "value") (dv_get feature "occurrence_time")) false (set temporal_mismatch true)))
-              (set available false)))) false)
-      (let (resolved (dv_and available (dv_and (dv_get prediction "covered")
-        (dv_and (rt_lt 0 certainty) (dv_and (rt_not (rt_eq observation "unknown")) (rt_not (rt_eq (dv_get prediction "prediction") "unknown")))))))
-        (dv_with (dv_with (dv_with (dv_m4 "feature" feature "prediction" (dv_get prediction "prediction") "observation" (if available observation "unknown") "covered" (dv_get prediction "covered"))
-          "confidence" (if resolved certainty 0)) "observed_cells" observed) "result"
-          (if resolved (if (dv_and (rt_not temporal_mismatch) (rt_eq observation (dv_get prediction "prediction"))) "match" "contradiction") "unknown"))))))
-(defn v_model_sim_comparisons (mind predictions budget)
-  (let (remaining budget expanded 0 i 0 fit 0 comparisons (rt_list) contradictions (rt_list) complete true probes (rt_list))
-    (do (dv_require (rt_not (rt_lt budget 0)) "Negative simulation comparison budget")
-      (while (dv_and (rt_lt i (rt_count predictions)) (rt_not (rt_lt remaining 1)))
-        (let (prediction (rt_at predictions i) comparison (v_model_sim_compare mind (rt_at predictions i)) j 0 refs (v_model_sim_refs (dv_get (rt_at predictions i) "proposition")))
-          (do (set remaining (rt_sub remaining 1)) (set expanded (rt_add expanded 1)) (rt_push comparisons comparison)
-            (if (rt_eq (dv_get comparison "result") "match") (set fit (rt_add fit (dv_get comparison "confidence")))
-              (if (rt_eq (dv_get comparison "result") "contradiction") (rt_push contradictions comparison)
-                (do (set complete false) (while (rt_lt j (rt_count refs))
-                  (do (if (dv_has probes (rt_at refs j)) false (rt_push probes (rt_at refs j))) (set j (rt_add j 1)))))))
-            (set i (rt_add i 1)))))
-      (if (dv_or (rt_eq (rt_count predictions) 0) (rt_lt i (rt_count predictions))) (set complete false) false)
-      (dv_with (dv_with (dv_with (dv_m4 "fit" (if (rt_lt 0 (rt_count contradictions)) -1000000 fit) "comparisons" comparisons "contradictions" contradictions "remaining" remaining)
-        "expanded" expanded) "probe_refs" probes) "status" (if (rt_lt 0 (rt_count contradictions)) "inconsistent" (if complete "explained" "unknown"))))))
-(defn v_model_sim_work_budget (actor)
-  (let (policy (dv_get actor "policy") total (dv_find (dv_get actor "policy") "model_budget" 0)
-        work (dv_find (dv_get actor "policy") "model_work_remaining" (dv_find (dv_get actor "policy") "model_work_limit" (dv_find (dv_get actor "policy") "model_budget" 0))))
-    (do (dv_require (rt_not (rt_lt work 0)) "Negative method work limit")
-      (dv_require (rt_not (rt_lt total 0)) "Negative total model budget") (dv_min total work))))
-(defn v_model_model (actor hypothesis events time parent)
-  (let (mind (dv_get actor "mind") plan (v_model_sim_plan hypothesis) start (dv_find hypothesis "start_time" time)
-        predicted false assumptions (dv_find hypothesis "assumptions" (rt_list)) features (dv_find hypothesis "features" (rt_list))
-        remaining (v_model_sim_work_budget actor) total_budget (dv_find (dv_get actor "policy") "model_budget" 0) expanded 0 failures (rt_list) covered (rt_list) trace (rt_list)
-        snapshots (rt_list) predictions (rt_list) assumption_records (rt_list) confidence (dv_unit (dv_find hypothesis "prior" 0.5))
-        i 0 complete true last_at 0)
-    (do (dv_domain mind "mind") (dv_require (rt_not (rt_lt remaining 0)) "Negative simulation budget")
-      (dv_require (rt_not (rt_lt start 0)) "Negative model origin time") (set predicted (v_model_sim_mask_response actor (v_model_sim_mask mind plan start) plan))
-      (if (rt_lt 0 (rt_count assumptions)) (dv_require (rt_lt confidence 1) "Hypothetical assumption cannot have certainty") false)
-      (while (dv_and (rt_lt i (rt_count assumptions)) (rt_not (rt_lt remaining 1)))
-        (let (assumption (rt_at assumptions i))
-          (do (set remaining (rt_sub remaining 1)) (set expanded (rt_add expanded 1))
-            (if (rt_eq (dv_get assumption "op") "equals")
-              (let (ref (dv_get assumption "ref"))
-                (if (dv_has_key (dv_get predicted "objects") (dv_get ref "object"))
-                  (do (set predicted (dv_store predicted ref (dv_cell (dv_get assumption "value") confidence start (dv_get hypothesis "basis"))))
-                    (rt_push assumption_records (dv_m3 "proposition" assumption "confidence" confidence "role" "hypothetical-only")))
-                  (do (set complete false) (rt_push failures (dv_m2 "assumption" assumption "reason" "unknown-subject-local-object")))))
-              (do (set complete false) (rt_push failures (dv_m2 "assumption" assumption "reason" "unsupported-assumption"))))
-            (set i (rt_add i 1)))))
-      (if (rt_lt i (rt_count assumptions)) (set complete false) false)
-      (set i 0)
-      (while (dv_and (rt_lt i (rt_count plan)) (rt_not (rt_lt remaining 1)))
-        (let (step (rt_at plan i) name (dv_get (rt_at plan i) "law") at (dv_get (rt_at plan i) "at") adoptions (dv_get mind "adoptions"))
-          (do (dv_require (rt_not (rt_lt at last_at)) "Model time cannot move backwards")
-            (set remaining (rt_sub remaining 1)) (set expanded (rt_add expanded 1)) (set last_at at)
-            (if (dv_has_key step "response")
-              (let (response (v_model_sim_gated_response actor (dv_with predicted "domain" "mind") step (rt_add start at) remaining confidence) detail (dv_get response "detail"))
-                (do (set predicted (dv_get response "world")) (set remaining (dv_get response "remaining"))
-                  (set expanded (rt_add expanded (dv_get detail "expanded")))
-                  (set detail (dv_with detail "choice_record_changes" (dv_get response "changes")))
-                  (if (rt_eq (dv_get detail "status") "selected")
-                    (let (bridge (v_model_sim_response_bridge actor predicted detail (rt_add start at) remaining confidence))
-                      (do (set predicted (dv_get bridge "world")) (set remaining (dv_get bridge "remaining"))
-                        (set expanded (rt_add expanded (dv_get bridge "expanded")))
-                        (set detail (dv_with detail "bridge" bridge))
-                        (if (rt_eq (dv_get bridge "status") "applied")
-                          (let (changes (dv_get bridge "changes") j 0)
-                            (while (rt_lt j (rt_count changes))
-                              (do (if (dv_has covered (dv_get (rt_at changes j) "ref")) false (rt_push covered (dv_get (rt_at changes j) "ref"))) (set j (rt_add j 1)))))
-                          (do (set complete false) (rt_push failures (dv_m2 "response" (dv_get step "response") "reason" (dv_get bridge "status")))))))
-                    (if (dv_and (rt_eq (dv_get detail "status") "not-applicable") (dv_get step "optional")) false
-                      (do (set complete false) (rt_push failures (dv_m2 "response" (dv_get step "response") "reason" (dv_get detail "reason"))))))
-                  (rt_push trace (dv_m4 "step" i "at" at "stage" (dv_get step "stage") "response" detail))))
-              (if (dv_has_key adoptions name)
-              (let (adoption (dv_get adoptions name))
-                (if (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "predict"))
-                  (let (law (dv_get adoption "law") premise (dv_truth predicted (dv_get (dv_get adoption "law") "premise"))
-                        inputs (v_model_sim_inputs predicted (dv_get (dv_get adoption "law") "premise"))
-                        local_confidence (dv_min (dv_get adoption "confidence") (dv_min confidence (dv_premise_confidence predicted (dv_get (dv_get adoption "law") "premise")))) result false withheld (rt_list))
-                    (do (set predicted (dv_with predicted "adoptions" (dv_with adoptions name (dv_with adoption "confidence" local_confidence))))
-                      (set result (dv_predict (dv_with predicted "domain" "mind") name
-                        (rt_cat (rt_cat "hypothetical-" (rt_show events)) (rt_cat "-" (rt_show i))) (rt_add start at) (dv_get predicted "revision")))
-                      (if (rt_eq premise "unknown")
-                        (let (uncertain (v_model_sim_withhold predicted (dv_get law "effects")))
-                          (do (set predicted (dv_get uncertain "world")) (set withheld (dv_get uncertain "refs")))) false)
-                      (rt_push trace (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "step" i "at" at "law" name "premise" premise)
-                        "inputs" inputs) "status" (dv_get result "status")) "changes" (dv_get result "changes")) "basis" (dv_get adoption "basis"))
-                        "stage" (dv_get step "stage")) "optional" (dv_get step "optional")) "withheld" withheld) "reason"
-                        (if (rt_eq premise "false") (if (dv_get step "optional") "condition-false-not-applicable" "required-premise-false")
-                          (if (rt_eq premise "unknown") "conditional-output-unknown" (dv_get result "status")))))
-                      (if (rt_eq (dv_get result "status") "applied")
-                        (let (changes (dv_get result "changes") j 0)
-                          (do (set predicted (dv_get result "world"))
-                            (while (rt_lt j (rt_count changes))
-                              (do (if (dv_has covered (dv_get (rt_at changes j) "ref")) false (rt_push covered (dv_get (rt_at changes j) "ref"))) (set j (rt_add j 1))))))
-                        (if (dv_and (rt_eq premise "false") (dv_get step "optional")) false
-                          (do (set complete false) (rt_push failures (dv_m3 "law" name "reason" (dv_get result "status") "premise" premise)))))))
-                  (do (set complete false) (rt_push failures (dv_m2 "law" name "reason" "not-adopted-predict")))))
-              (do (set complete false) (rt_push failures (dv_m2 "law" name "reason" "unknown-law")))))
-            (rt_push snapshots (dv_m4 "world" predicted "coverage" (dv_clone covered) "step" i "at" at))
-            (set i (rt_add i 1)))))
-      (if (dv_or (rt_eq (rt_count plan) 0) (rt_lt i (rt_count plan))) (set complete false) false)
-      (set i 0)
-      (while (rt_lt i (rt_count features))
-        (do (rt_push predictions (v_model_sim_prediction (rt_at features i) (v_model_sim_snapshot snapshots predicted covered (rt_at features i)) start)) (set i (rt_add i 1))))
-      (let (comparison (v_model_sim_comparisons mind predictions remaining) result false)
-        (do (set result (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with comparison "expanded" (rt_add expanded (dv_get comparison "expanded")))
-          "failures" failures) "coverage" covered) "assumptions" assumption_records) "predictions" predictions) "trace" trace) "predicted" predicted))
-          (if (dv_and (rt_not complete) (rt_eq (dv_get result "status") "explained")) (set result (dv_with result "status" "unknown")) false)
-          (set result (dv_with (dv_with (dv_with (dv_with (dv_with result "plan_complete" complete) "source_revision" (dv_get mind "revision"))
-            "original_revision" (dv_get mind "revision")) "role" "internal-enumeration") "start_time" start))
-          (set result (dv_with (dv_with result "calculation_unit" "one-assumption-predict-rule-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison") "stop_reason" (if (rt_lt (dv_get result "remaining") 1) "budget-exhausted" "declared-plan-complete")))
-          (set result (dv_with (dv_with result "work_remaining" (dv_get result "remaining")) "remaining" (rt_sub total_budget (dv_get result "expanded"))))
-          (set result (dv_with (dv_with result "original_expanded" (dv_get result "expanded")) "total_expanded" (dv_get result "expanded")))
-          result)))))
-; A fresh observation may refute an old paid prediction without replaying its hypothetical effects.
-(defn v_model_model_recheck (actor model)
-  (let (mind (dv_get actor "mind") comparison (v_model_sim_comparisons (dv_get actor "mind") (dv_get model "predictions")
-          (v_model_sim_work_budget actor)) result (dv_clone model))
-    (do (let (keys (dv_list3 "fit" "comparisons" "contradictions") i 0)
-      (do (rt_push keys "remaining") (rt_push keys "expanded") (rt_push keys "probe_refs") (rt_push keys "status")
-        (while (rt_lt i (rt_count keys)) (do (set result (dv_with result (rt_at keys i) (dv_get comparison (rt_at keys i)))) (set i (rt_add i 1))))))
-      (if (dv_and (rt_not (dv_get model "plan_complete")) (rt_eq (dv_get result "status") "explained")) (set result (dv_with result "status" "unknown")) false)
-      (set result (dv_with (dv_with result "work_remaining" (dv_get comparison "remaining")) "remaining" (rt_sub (dv_find (dv_get actor "policy") "model_budget" 0) (dv_get comparison "expanded"))))
-      (set result (dv_with (dv_with result "total_expanded" (rt_add (dv_find model "total_expanded" (dv_get model "expanded")) (dv_get comparison "expanded"))) "stop_reason" (if (rt_lt (dv_get comparison "remaining") 1) "budget-exhausted" "observations-compared")))
-      (dv_with (dv_with (dv_with result "source_revision" (dv_get mind "revision")) "paid_model_event" (dv_find model "paid_model_event" (dv_find model "event" ""))) "role" "new-observation-recheck"))))
+// Judge-side pure temporal/response-model replay; copies never advance the actual trace.
+// Subject-local counterfactual temporal models. No authority or other actor lookup.
+// An undecidable conditional reaction invalidates its possible outputs, not merely its score.
+// Withhold predicted output fields before replay. Repeating old observations is not prediction.
+// A fresh observation may refute an old paid prediction without replaying its hypothetical effects.
 
-(defn v_model_sim_response_unknown (world remaining reason)
-  (dv_m4 "world" world "changes" (rt_list) "remaining" remaining "detail"
-    (dv_m4 "status" "unknown" "reason" reason "expanded" 0 "committed" false)))
-(defn v_model_sim_response (actor world stage time remaining confidence)
-  (let (models (dv_find actor "response_models" (rt_list)) model_id (dv_get stage "model"))
-    (if (rt_not (dv_has_key models model_id)) (v_model_sim_response_unknown world remaining "no-subject-local-response-model")
-      (let (model (dv_with (dv_get models model_id) "confidence" (dv_min confidence (dv_find (dv_get models model_id) "confidence" 0))))
-        (if (rt_not (dv_and (rt_eq (dv_find model "owner" "") (dv_get actor "id"))
-          (dv_and (rt_lt 0 (rt_count (dv_find model "basis" (rt_list)))) (rt_lt 0 (dv_unit (dv_find model "confidence" 0))))))
-          (v_model_sim_response_unknown world remaining "unavailable-response-model-basis")
-          (let (local (dv_clone (dv_get model "world")) bindings (dv_find model "context" (rt_list))
-                option_ids (dv_get stage "options") catalog (dv_get model "options") policy_id (dv_get model "policy_id")
-                request_id (dv_get stage "request") requests (dv_get model "requests")
-                required (rt_add (rt_count bindings) (rt_mul 2 (rt_count option_ids))))
-            (do (dv_domain local "mind")
-              (if (rt_lt remaining required) (v_model_sim_response_unknown world remaining "method-work-limit-before-response")
-                (if (rt_not (dv_has_key requests request_id)) (v_model_sim_response_unknown world remaining "unknown-modeled-request")
-                  (if (rt_not (dv_has_key (dv_find local "policies" (rt_list)) policy_id)) (v_model_sim_response_unknown world remaining "unknown-modeled-value-policy")
-                    (let (accepted (dv_get (dv_get local "policies") policy_id))
-                      (if (rt_not (dv_and (dv_get accepted "active") (rt_lt 0 (rt_count (dv_get accepted "basis")))))
-                        (v_model_sim_response_unknown world remaining "unadopted-modeled-value-policy")
-                        (let (request (dv_get requests request_id) options (rt_list) inputs (rt_list) option_traces (rt_list)
-                              i 0 complete true expanded 0 chosen false prediction false response false next world changes (rt_list) reason "unknown-response-basis" response_confidence (dv_get model "confidence"))
-                          (do (set local (dv_with (dv_with local "time" time) "seen" (rt_list)))
-                            (while (rt_lt i (rt_count bindings))
-                              (let (binding (rt_at bindings i) cell (dv_read world (dv_get (rt_at bindings i) "from")))
-                                (do (set expanded (rt_add expanded 1)) (set remaining (rt_sub remaining 1))
-                                  (rt_push inputs (dv_m3 "from" (dv_get binding "from") "to" (dv_get binding "to") "cell" cell))
-                                  (if (dv_and (dv_uncontested cell) (rt_lt 0 (dv_get cell "confidence")))
-                                    (set response_confidence (dv_min response_confidence (dv_get cell "confidence")))
-                                    (do (set complete false) (set reason "unknown-required-response-context")))
-                                  (if (dv_has_key (dv_get local "objects") (dv_get (dv_get binding "to") "object"))
-                                    (set local (dv_store local (dv_get binding "to") (if (dv_uncontested cell)
-                                      (dv_with cell "confidence" (dv_min (dv_get cell "confidence") (dv_get model "confidence"))) (dv_unknown))))
-                                    (set complete false)) (set i (rt_add i 1)))))
-                            (set i 0)
-                            (while (rt_lt i (rt_count option_ids))
-                              (let (option_id (rt_at option_ids i))
-                                (do (set expanded (rt_add expanded 2)) (set remaining (rt_sub remaining 2))
-                                  (if (dv_has_key catalog option_id)
-                                    (let (descriptor (dv_get catalog option_id) name (dv_find (dv_get catalog option_id) "predict_law" "") result false legal (dv_truth local (dv_get (dv_get catalog option_id) "feasible")))
-                                      (do (set prediction (dv_no_change_prediction local))
-                                        (if (rt_eq legal "unknown") (set complete false) false)
-                                        (if (rt_eq name "") false
-                                          (if (dv_has_key (dv_get local "adoptions") name)
-                                            (let (adoption (dv_get (dv_get local "adoptions") name))
-                                              (if (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "predict"))
-                                                (do (set result (dv_predict local name (rt_cat "response-option-" (rt_show i)) time (dv_get local "revision")))
-                                                  (if (rt_eq (dv_get result "status") "applied") (set prediction (dv_get result "world"))
-                                                    (if (rt_eq legal "false") false (set complete false))))
-                                                (if (rt_eq legal "false") false (set complete false))))
-                                            (if (rt_eq legal "false") false (set complete false))))
-                                        (rt_push options (dv_response_option option_id (dv_get descriptor "intent") (dv_get descriptor "feasible") prediction (dv_get descriptor "effort") (dv_get descriptor "feature_weights")))
-                                        (rt_push option_traces (dv_m4 "id" option_id "legal" legal "prediction_receipt" result "model_prediction" prediction))))
-                                    (do (set complete false) (rt_push option_traces (dv_m2 "id" option_id "legal" "unknown-option"))))
-                                  (set i (rt_add i 1)))))
-                            (set response (dv_respond_adopted local request options policy_id))
-                            (let (evaluated (dv_get response "evaluated") j 0 ties 0 best 0 found_best false)
-                              (do (while (rt_lt j (rt_count evaluated))
-                                (let (evaluation (rt_at (rt_at evaluated j) 1) score (dv_get (rt_at (rt_at evaluated j) 1) "score"))
-                                  (do (if (dv_and (dv_get (dv_get evaluation "value") "complete")
-                                    (rt_eq (rt_count (dv_get (dv_get evaluation "relationship_and_state") "unknown")) 0)) false (set complete false))
-                                    (if (if found_best (rt_lt best score) true) (do (set best score) (set ties 1) (set found_best true)) (if (rt_eq best score) (set ties (rt_add ties 1)) false))
-                                    (set j (rt_add j 1)))))
-                                (if (rt_lt 1 ties) (do (if complete (set reason "modeled-response-tie") false) (set complete false)) false)))
-                            (if (dv_and complete (rt_eq (dv_get response "status") "selected"))
-                              (let (id (dv_get (dv_get response "choice") "id") choice_ref (dv_get model "choice_ref"))
-                                (do (set chosen id) (set reason "selected-by-shared-response")
-                                  (if (dv_has_key (dv_get next "objects") (dv_get choice_ref "object"))
-                                    (let (before (dv_read next choice_ref) after (dv_cell id response_confidence time (dv_get model "basis")))
-                                      (do (set next (dv_store next choice_ref after)) (rt_push changes (dv_m3 "ref" choice_ref "before" before "after" after))))
-                                    (do (set complete false) (set reason "unknown-local-choice-record"))))) false)
-                            (dv_m4 "world" next "changes" changes "remaining" remaining "detail"
-                              (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "status" (if complete (dv_get response "status") "unknown") "reason" reason "expanded" expanded "committed" false)
-                                "model" model_id) "model_basis" (dv_get model "basis")) "context_inputs" inputs) "option_predictions" option_traces)
-                                "response" response) "selected" chosen) "bridge_law" (if (rt_eq chosen false) "" (dv_find (dv_get catalog chosen) "bridge_law" ""))))))))))))))))))
-(defn v_model_sim_mask_response_option (world model option_id)
-  (let (option (dv_find (dv_get model "options") option_id (rt_list)))
-    (if (dv_has_key option "bridge_law")
-      (let (name (dv_get option "bridge_law"))
-        (if (dv_has_key (dv_get world "adoptions") name)
-          (dv_get (v_model_sim_withhold world (dv_get (dv_get (dv_get (dv_get world "adoptions") name) "law") "effects")) "world") world)) world)))
-(defn v_model_sim_mask_response_stage (actor world stage)
-  (let (models (dv_find actor "response_models" (rt_list)) id (dv_get stage "model"))
-    (if (dv_has_key models id)
-      (let (model (dv_get models id) options (dv_get stage "options") i 0 copy world)
-        (do (if (dv_has_key model "choice_ref")
-          (if (dv_has_key (dv_get copy "objects") (dv_get (dv_get model "choice_ref") "object"))
-            (set copy (dv_store copy (dv_get model "choice_ref") (dv_unknown))) false) false)
-          (while (rt_lt i (rt_count options))
-            (do (set copy (v_model_sim_mask_response_option copy model (rt_at options i))) (set i (rt_add i 1)))) copy)) world)))
-(defn v_model_sim_mask_response (actor world plan)
-  (let (copy world i 0)
-    (do (while (rt_lt i (rt_count plan))
-      (let (step (rt_at plan i))
-        (do (if (dv_has_key step "response") (set copy (v_model_sim_mask_response_stage actor copy (dv_get step "response"))) false)
-          (set i (rt_add i 1))))) copy)))
-(defn v_model_sim_response_bridge (actor world detail time remaining confidence)
-  (let (name (dv_get detail "bridge_law") adoptions (dv_get (dv_get actor "mind") "adoptions"))
-    (if (dv_or (rt_eq name "") (rt_not (dv_has_key adoptions name)))
-      (dv_with (dv_m4 "world" world "changes" (rt_list) "remaining" remaining "status" "unknown-response-bridge") "expanded" 0)
-      (let (adoption (dv_get adoptions name) effects (dv_get (dv_get (dv_get adoptions name) "law") "effects"))
-        (if (dv_or (rt_lt remaining 1) (rt_not (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "predict"))))
-          (dv_with (dv_m4 "world" (dv_get (v_model_sim_withhold world effects) "world") "changes" (rt_list) "remaining" remaining "status" "unavailable-response-bridge") "expanded" 0)
-          (let (local (dv_with (dv_with world "domain" "mind") "adoptions" (dv_with (dv_get world "adoptions") name
-                  (dv_with adoption "confidence" (dv_min confidence (dv_min (dv_get adoption "confidence") (dv_premise_confidence world (dv_get (dv_get adoption "law") "premise")))))))
-                result false)
-            (do (set result (dv_predict local name (rt_cat "response-bridge-" (rt_show (dv_get world "revision"))) time (dv_get world "revision")))
-              (dv_with (dv_with (dv_with result "world" (if (rt_eq (dv_get result "status") "applied") (dv_get result "world")
-                (dv_get (v_model_sim_withhold world effects) "world"))) "remaining" (rt_sub remaining 1)) "expanded" 1))))))))
-(defn v_model_sim_gated_response (actor world step time remaining confidence)
-  (let (gate (dv_find step "available_when" (dv_true)) truth (dv_truth world (dv_find step "available_when" (dv_true))) result false)
-    (do (set result (if (rt_eq truth "true") (v_model_sim_response actor world (dv_get step "response") time remaining confidence)
-      (if (rt_eq truth "false")
-        (dv_m4 "world" world "changes" (rt_list) "remaining" remaining "detail" (dv_m4 "status" "not-applicable" "reason" "request-gate-false" "expanded" 0 "committed" false))
-        (v_model_sim_response_unknown (v_model_sim_mask_response_stage actor world (dv_get step "response")) remaining "request-gate-unknown"))))
-      (dv_with result "detail" (dv_with (dv_with (dv_with (dv_get result "detail") "gate" gate) "gate_truth" truth) "gate_inputs" (v_model_sim_inputs world gate))))))
+fn v_model_sim_refs(proposition):
+    var op = proposition.op
+    if dv_or((op == "equals"), (op == "at_least")):
+        return dv_single(proposition.ref)
+    else:
+        if (op == "not"):
+            return v_model_sim_refs(proposition.item)
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var refs = []
+                var i = 0
+                while (i < rt_count(items)):
+                    var nested = v_model_sim_refs(items[i])
+                    var j = 0
+                    while (j < rt_count(nested)):
+                        if dv_has(refs, nested[j]):
+                            false
+                        else:
+                            rt_push(refs, nested[j])
+                        j = (j + 1)
+                    i = (i + 1)
+                return refs
+            else:
+                return []
+
+fn v_model_sim_plan(hypothesis):
+    var timeline = dv_find(hypothesis, "timeline", [])
+    var plan = []
+    var i = 0
+    if dv_has_key(hypothesis, "timeline"):
+        while (i < rt_count(timeline)):
+            var stage = timeline[i]
+            var j = 0
+            if dv_has_key(stage, "response"):
+                rt_push(plan, dv_with(dv_with({"law": "", "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i}, "response", stage.response), "available_when", dv_find(stage, "available_when", dv_true())))
+            else:
+                var local_1 = false
+                if dv_has_key(stage, "laws"):
+                    local_1 = stage.laws
+                else:
+                    local_1 = dv_single(stage.law)
+                var laws = local_1
+                dv_require((0 < rt_count(laws)), "Empty model event stage")
+                while (j < rt_count(laws)):
+                    rt_push(plan, {"law": laws[j], "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i})
+                    j = (j + 1)
+            i = (i + 1)
+    else:
+        var laws = dv_find(hypothesis, "predict_laws", [])
+        while (i < rt_count(laws)):
+            rt_push(plan, {"law": laws[i], "at": 0, "optional": false, "stage": i})
+            i = (i + 1)
+    return plan
+
+fn v_model_sim_withhold(world, effects):
+    var copy = world
+    var refs = []
+    var i = 0
+    while (i < rt_count(effects)):
+        var ref = effects[i].ref
+        if dv_has_key(copy.objects, ref.object):
+            copy = dv_store(copy, ref, dv_unknown())
+            rt_push(refs, ref)
+        i = (i + 1)
+    return {"world": copy, "refs": refs}
+
+fn v_model_sim_feature(feature):
+    if dv_has_key(feature, "proposition"):
+        return feature.proposition
+    else:
+        return feature
+
+fn v_model_sim_mask(mind, plan, start):
+    var copy = dv_with(dv_with(dv_with(mind, "time", start), "seen", []), "history", [])
+    var i = 0
+    while (i < rt_count(plan)):
+        var name = plan[i].law
+        var adoptions = mind.adoptions
+        if dv_has_key(adoptions, name):
+            var adoption = dv_get(adoptions, name)
+            var j = 0
+            var effects = dv_get(adoptions, name).law.effects
+            if dv_and(adoption.active, (adoption.mode == "predict")):
+                while (j < rt_count(effects)):
+                    var ref = effects[j].ref
+                    if dv_has_key(copy.objects, ref.object):
+                        copy = dv_store(copy, ref, dv_unknown())
+                    j = (j + 1)
+        i = (i + 1)
+    return copy
+
+fn v_model_sim_inputs(world, proposition):
+    var refs = v_model_sim_refs(proposition)
+    var i = 0
+    var inputs = []
+    while (i < rt_count(refs)):
+        rt_push(inputs, {"ref": refs[i], "cell": dv_read(world, refs[i])})
+        i = (i + 1)
+    return inputs
+
+fn v_model_sim_snapshot(snapshots, final, covered, feature):
+    if dv_has_key(feature, "at"):
+        var i = 0
+        var selected = {"world": final, "coverage": [], "step": -1}
+        var found = false
+        var at = feature.at
+        dv_require((not (at < 0)), "Negative model feature time")
+        while (i < rt_count(snapshots)):
+            var snapshot = snapshots[i]
+            if (at == snapshot.at):
+                selected = snapshot
+                found = true
+            i = (i + 1)
+        if found:
+            return selected
+        else:
+            return {"world": final, "coverage": [], "step": -1}
+    else:
+        return {"world": final, "coverage": covered, "step": (rt_count(snapshots) - 1)}
+
+fn v_model_sim_prediction(feature, snapshot, start):
+    var proposition = v_model_sim_feature(feature)
+    var refs = v_model_sim_refs(v_model_sim_feature(feature))
+    var world = snapshot.world
+    var coverage = snapshot.coverage
+    var i = 0
+    var cells = []
+    var valid = true
+    var confidence = 1
+    if (rt_count(refs) == 0):
+        valid = false
+    while (i < rt_count(refs)):
+        var ref = refs[i]
+        var cell = dv_read(world, refs[i])
+        rt_push(cells, {"ref": ref, "cell": cell})
+        if dv_and(dv_has(coverage, ref), dv_uncontested(cell)):
+            confidence = dv_min(confidence, cell.confidence)
+        else:
+            valid = false
+        i = (i + 1)
+    var local_1 = false
+    if valid:
+        local_1 = dv_truth(world, proposition)
+    else:
+        local_1 = "unknown"
+    var local_2 = false
+    if valid:
+        local_2 = confidence
+    else:
+        local_2 = 0
+    return dv_with(dv_with(dv_with({"feature": feature, "proposition": proposition, "prediction": local_1, "cells": cells}, "covered", valid), "confidence", local_2), "source_step", dv_find(snapshot, "step", -1))
+
+fn v_model_sim_compare(mind, prediction):
+    var feature = prediction.feature
+    var proposition = prediction.proposition
+    var refs = v_model_sim_refs(dv_find(prediction.feature, "observation", prediction.proposition))
+    var observation = dv_truth(mind, dv_find(prediction.feature, "observation", prediction.proposition))
+    var certainty = prediction.confidence
+    var available = true
+    var temporal_mismatch = false
+    var i = 0
+    var observed = []
+    while (i < rt_count(refs)):
+        var cell = dv_read(mind, refs[i])
+        rt_push(observed, {"ref": refs[i], "cell": cell})
+        if dv_uncontested(cell):
+            certainty = dv_min(certainty, cell.confidence)
+        else:
+            available = false
+        i = (i + 1)
+    if dv_has_key(feature, "occurrence_ref"):
+        var occurrence = dv_read(mind, feature.occurrence_ref)
+        rt_push(observed, {"ref": feature.occurrence_ref, "cell": occurrence})
+        if dv_uncontested(occurrence):
+            certainty = dv_min(certainty, occurrence.confidence)
+            if dv_same(occurrence.value, feature.occurrence_time):
+                false
+            else:
+                temporal_mismatch = true
+        else:
+            available = false
+    var resolved = dv_and(available, dv_and(prediction.covered, dv_and((0 < certainty), dv_and((not (observation == "unknown")), (not (prediction.prediction == "unknown"))))))
+    var local_1 = false
+    if available:
+        local_1 = observation
+    else:
+        local_1 = "unknown"
+    var local_2 = false
+    if resolved:
+        local_2 = certainty
+    else:
+        local_2 = 0
+    var local_3 = false
+    if resolved:
+        if dv_and((not temporal_mismatch), (observation == prediction.prediction)):
+            local_3 = "match"
+        else:
+            local_3 = "contradiction"
+    else:
+        local_3 = "unknown"
+    return dv_with(dv_with(dv_with({"feature": feature, "prediction": prediction.prediction, "observation": local_1, "covered": prediction.covered}, "confidence", local_2), "observed_cells", observed), "result", local_3)
+
+fn v_model_sim_comparisons(mind, predictions, budget):
+    var remaining = budget
+    var expanded = 0
+    var i = 0
+    var fit = 0
+    var comparisons = []
+    var contradictions = []
+    var complete = true
+    var probes = []
+    dv_require((not (budget < 0)), "Negative simulation comparison budget")
+    while dv_and((i < rt_count(predictions)), (not (remaining < 1))):
+        var prediction = predictions[i]
+        var comparison = v_model_sim_compare(mind, predictions[i])
+        var j = 0
+        var refs = v_model_sim_refs(predictions[i].proposition)
+        remaining = (remaining - 1)
+        expanded = (expanded + 1)
+        rt_push(comparisons, comparison)
+        if (comparison.result == "match"):
+            fit = (fit + comparison.confidence)
+        else:
+            if (comparison.result == "contradiction"):
+                rt_push(contradictions, comparison)
+            else:
+                complete = false
+                while (j < rt_count(refs)):
+                    if dv_has(probes, refs[j]):
+                        false
+                    else:
+                        rt_push(probes, refs[j])
+                    j = (j + 1)
+        i = (i + 1)
+    if dv_or((rt_count(predictions) == 0), (i < rt_count(predictions))):
+        complete = false
+    var local_1 = false
+    if (0 < rt_count(contradictions)):
+        local_1 = -1000000
+    else:
+        local_1 = fit
+    var local_2 = false
+    if (0 < rt_count(contradictions)):
+        local_2 = "inconsistent"
+    else:
+        if complete:
+            local_2 = "explained"
+        else:
+            local_2 = "unknown"
+    return dv_with(dv_with(dv_with({"fit": local_1, "comparisons": comparisons, "contradictions": contradictions, "remaining": remaining}, "expanded", expanded), "probe_refs", probes), "status", local_2)
+
+fn v_model_sim_work_budget(actor):
+    var policy = actor.policy
+    var total = dv_find(actor.policy, "model_budget", 0)
+    var work = dv_find(actor.policy, "model_work_remaining", dv_find(actor.policy, "model_work_limit", dv_find(actor.policy, "model_budget", 0)))
+    dv_require((not (work < 0)), "Negative method work limit")
+    dv_require((not (total < 0)), "Negative total model budget")
+    return dv_min(total, work)
+
+fn v_model_model(actor, hypothesis, events, time, parent):
+    var mind = actor.mind
+    var plan = v_model_sim_plan(hypothesis)
+    var start = dv_find(hypothesis, "start_time", time)
+    var predicted = false
+    var assumptions = dv_find(hypothesis, "assumptions", [])
+    var features = dv_find(hypothesis, "features", [])
+    var remaining = v_model_sim_work_budget(actor)
+    var total_budget = dv_find(actor.policy, "model_budget", 0)
+    var expanded = 0
+    var failures = []
+    var covered = []
+    var trace = []
+    var snapshots = []
+    var predictions = []
+    var assumption_records = []
+    var confidence = dv_unit(dv_find(hypothesis, "prior", 0.5))
+    var i = 0
+    var complete = true
+    var last_at = 0
+    dv_domain(mind, "mind")
+    dv_require((not (remaining < 0)), "Negative simulation budget")
+    dv_require((not (start < 0)), "Negative model origin time")
+    predicted = v_model_sim_mask_response(actor, v_model_sim_mask(mind, plan, start), plan)
+    if (0 < rt_count(assumptions)):
+        dv_require((confidence < 1), "Hypothetical assumption cannot have certainty")
+    while dv_and((i < rt_count(assumptions)), (not (remaining < 1))):
+        var assumption = assumptions[i]
+        remaining = (remaining - 1)
+        expanded = (expanded + 1)
+        if (assumption.op == "equals"):
+            var ref = assumption.ref
+            if dv_has_key(predicted.objects, ref.object):
+                predicted = dv_store(predicted, ref, dv_cell(assumption.value, confidence, start, hypothesis.basis))
+                rt_push(assumption_records, {"proposition": assumption, "confidence": confidence, "role": "hypothetical-only"})
+            else:
+                complete = false
+                rt_push(failures, {"assumption": assumption, "reason": "unknown-subject-local-object"})
+        else:
+            complete = false
+            rt_push(failures, {"assumption": assumption, "reason": "unsupported-assumption"})
+        i = (i + 1)
+    if (i < rt_count(assumptions)):
+        complete = false
+    i = 0
+    while dv_and((i < rt_count(plan)), (not (remaining < 1))):
+        var step = plan[i]
+        var name = plan[i].law
+        var at = plan[i].at
+        var adoptions = mind.adoptions
+        dv_require((not (at < last_at)), "Model time cannot move backwards")
+        remaining = (remaining - 1)
+        expanded = (expanded + 1)
+        last_at = at
+        if dv_has_key(step, "response"):
+            var response = v_model_sim_gated_response(actor, dv_with(predicted, "domain", "mind"), step, (start + at), remaining, confidence)
+            var detail = response.detail
+            predicted = response.world
+            remaining = response.remaining
+            expanded = (expanded + detail.expanded)
+            detail = dv_with(detail, "choice_record_changes", response.changes)
+            if (detail.status == "selected"):
+                var bridge = v_model_sim_response_bridge(actor, predicted, detail, (start + at), remaining, confidence)
+                predicted = bridge.world
+                remaining = bridge.remaining
+                expanded = (expanded + bridge.expanded)
+                detail = dv_with(detail, "bridge", bridge)
+                if (bridge.status == "applied"):
+                    var changes = bridge.changes
+                    var j = 0
+                    while (j < rt_count(changes)):
+                        if dv_has(covered, changes[j].ref):
+                            false
+                        else:
+                            rt_push(covered, changes[j].ref)
+                        j = (j + 1)
+                else:
+                    complete = false
+                    rt_push(failures, {"response": step.response, "reason": bridge.status})
+            else:
+                if dv_and((detail.status == "not-applicable"), step.optional):
+                    false
+                else:
+                    complete = false
+                    rt_push(failures, {"response": step.response, "reason": detail.reason})
+            rt_push(trace, {"step": i, "at": at, "stage": step.stage, "response": detail})
+        else:
+            if dv_has_key(adoptions, name):
+                var adoption = dv_get(adoptions, name)
+                if dv_and(adoption.active, (adoption.mode == "predict")):
+                    var law = adoption.law
+                    var premise = dv_truth(predicted, adoption.law.premise)
+                    var inputs = v_model_sim_inputs(predicted, adoption.law.premise)
+                    var local_confidence = dv_min(adoption.confidence, dv_min(confidence, dv_premise_confidence(predicted, adoption.law.premise)))
+                    var result = false
+                    var withheld = []
+                    predicted = dv_with(predicted, "adoptions", dv_with(adoptions, name, dv_with(adoption, "confidence", local_confidence)))
+                    result = dv_predict(dv_with(predicted, "domain", "mind"), name, rt_cat(rt_cat("hypothetical-", rt_show(events)), rt_cat("-", rt_show(i))), (start + at), predicted.revision)
+                    if (premise == "unknown"):
+                        var uncertain = v_model_sim_withhold(predicted, law.effects)
+                        predicted = uncertain.world
+                        withheld = uncertain.refs
+                    var local_1 = false
+                    if (premise == "false"):
+                        if step.optional:
+                            local_1 = "condition-false-not-applicable"
+                        else:
+                            local_1 = "required-premise-false"
+                    else:
+                        if (premise == "unknown"):
+                            local_1 = "conditional-output-unknown"
+                        else:
+                            local_1 = result.status
+                    rt_push(trace, dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"step": i, "at": at, "law": name, "premise": premise}, "inputs", inputs), "status", result.status), "changes", result.changes), "basis", adoption.basis), "stage", step.stage), "optional", step.optional), "withheld", withheld), "reason", local_1))
+                    if (result.status == "applied"):
+                        var changes = result.changes
+                        var j = 0
+                        predicted = result.world
+                        while (j < rt_count(changes)):
+                            if dv_has(covered, changes[j].ref):
+                                false
+                            else:
+                                rt_push(covered, changes[j].ref)
+                            j = (j + 1)
+                    else:
+                        if dv_and((premise == "false"), step.optional):
+                            false
+                        else:
+                            complete = false
+                            rt_push(failures, {"law": name, "reason": result.status, "premise": premise})
+                else:
+                    complete = false
+                    rt_push(failures, {"law": name, "reason": "not-adopted-predict"})
+            else:
+                complete = false
+                rt_push(failures, {"law": name, "reason": "unknown-law"})
+        rt_push(snapshots, {"world": predicted, "coverage": dv_clone(covered), "step": i, "at": at})
+        i = (i + 1)
+    if dv_or((rt_count(plan) == 0), (i < rt_count(plan))):
+        complete = false
+    i = 0
+    while (i < rt_count(features)):
+        rt_push(predictions, v_model_sim_prediction(features[i], v_model_sim_snapshot(snapshots, predicted, covered, features[i]), start))
+        i = (i + 1)
+    var comparison = v_model_sim_comparisons(mind, predictions, remaining)
+    var result = false
+    result = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(comparison, "expanded", (expanded + comparison.expanded)), "failures", failures), "coverage", covered), "assumptions", assumption_records), "predictions", predictions), "trace", trace), "predicted", predicted)
+    if dv_and((not complete), (result.status == "explained")):
+        result = dv_with(result, "status", "unknown")
+    result = dv_with(dv_with(dv_with(dv_with(dv_with(result, "plan_complete", complete), "source_revision", mind.revision), "original_revision", mind.revision), "role", "internal-enumeration"), "start_time", start)
+    var local_2 = false
+    if (result.remaining < 1):
+        local_2 = "budget-exhausted"
+    else:
+        local_2 = "declared-plan-complete"
+    result = dv_with(dv_with(result, "calculation_unit", "one-assumption-predict-rule-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison"), "stop_reason", local_2)
+    result = dv_with(dv_with(result, "work_remaining", result.remaining), "remaining", (total_budget - result.expanded))
+    result = dv_with(dv_with(result, "original_expanded", result.expanded), "total_expanded", result.expanded)
+    return result
+
+fn v_model_model_recheck(actor, model):
+    var mind = actor.mind
+    var comparison = v_model_sim_comparisons(actor.mind, model.predictions, v_model_sim_work_budget(actor))
+    var result = dv_clone(model)
+    var keys = dv_list3("fit", "comparisons", "contradictions")
+    var i = 0
+    rt_push(keys, "remaining")
+    rt_push(keys, "expanded")
+    rt_push(keys, "probe_refs")
+    rt_push(keys, "status")
+    while (i < rt_count(keys)):
+        result = dv_with(result, keys[i], dv_get(comparison, keys[i]))
+        i = (i + 1)
+    if dv_and((not model.plan_complete), (result.status == "explained")):
+        result = dv_with(result, "status", "unknown")
+    result = dv_with(dv_with(result, "work_remaining", comparison.remaining), "remaining", (dv_find(actor.policy, "model_budget", 0) - comparison.expanded))
+    var local_1 = false
+    if (comparison.remaining < 1):
+        local_1 = "budget-exhausted"
+    else:
+        local_1 = "observations-compared"
+    result = dv_with(dv_with(result, "total_expanded", (dv_find(model, "total_expanded", model.expanded) + comparison.expanded)), "stop_reason", local_1)
+    return dv_with(dv_with(dv_with(result, "source_revision", mind.revision), "paid_model_event", dv_find(model, "paid_model_event", dv_find(model, "event", ""))), "role", "new-observation-recheck")
+
+fn v_model_sim_response_unknown(world, remaining, reason):
+    return {"world": world, "changes": [], "remaining": remaining, "detail": {"status": "unknown", "reason": reason, "expanded": 0, "committed": false}}
+
+fn v_model_sim_response(actor, world, stage, time, remaining, confidence):
+    var models = dv_find(actor, "response_models", [])
+    var model_id = stage.model
+    if (not dv_has_key(models, model_id)):
+        return v_model_sim_response_unknown(world, remaining, "no-subject-local-response-model")
+    else:
+        var model = dv_with(dv_get(models, model_id), "confidence", dv_min(confidence, dv_find(dv_get(models, model_id), "confidence", 0)))
+        if (not dv_and((dv_find(model, "owner", "") == actor.id), dv_and((0 < rt_count(dv_find(model, "basis", []))), (0 < dv_unit(dv_find(model, "confidence", 0)))))):
+            return v_model_sim_response_unknown(world, remaining, "unavailable-response-model-basis")
+        else:
+            var local = dv_clone(model.world)
+            var bindings = dv_find(model, "context", [])
+            var option_ids = stage.options
+            var catalog = model.options
+            var policy_id = model.policy_id
+            var request_id = stage.request
+            var requests = model.requests
+            var required = (rt_count(bindings) + (2 * rt_count(option_ids)))
+            dv_domain(local, "mind")
+            if (remaining < required):
+                return v_model_sim_response_unknown(world, remaining, "method-work-limit-before-response")
+            else:
+                if (not dv_has_key(requests, request_id)):
+                    return v_model_sim_response_unknown(world, remaining, "unknown-modeled-request")
+                else:
+                    if (not dv_has_key(dv_find(local, "policies", []), policy_id)):
+                        return v_model_sim_response_unknown(world, remaining, "unknown-modeled-value-policy")
+                    else:
+                        var accepted = dv_get(local.policies, policy_id)
+                        if (not dv_and(accepted.active, (0 < rt_count(accepted.basis)))):
+                            return v_model_sim_response_unknown(world, remaining, "unadopted-modeled-value-policy")
+                        else:
+                            var request = dv_get(requests, request_id)
+                            var options = []
+                            var inputs = []
+                            var option_traces = []
+                            var i = 0
+                            var complete = true
+                            var expanded = 0
+                            var chosen = false
+                            var prediction = false
+                            var response = false
+                            var next = world
+                            var changes = []
+                            var reason = "unknown-response-basis"
+                            var response_confidence = model.confidence
+                            local = dv_with(dv_with(local, "time", time), "seen", [])
+                            while (i < rt_count(bindings)):
+                                var binding = bindings[i]
+                                var cell = dv_read(world, bindings[i].from)
+                                expanded = (expanded + 1)
+                                remaining = (remaining - 1)
+                                rt_push(inputs, {"from": binding.from, "to": binding.to, "cell": cell})
+                                if dv_and(dv_uncontested(cell), (0 < cell.confidence)):
+                                    response_confidence = dv_min(response_confidence, cell.confidence)
+                                else:
+                                    complete = false
+                                    reason = "unknown-required-response-context"
+                                if dv_has_key(local.objects, binding.to.object):
+                                    var local_1 = false
+                                    if dv_uncontested(cell):
+                                        local_1 = dv_with(cell, "confidence", dv_min(cell.confidence, model.confidence))
+                                    else:
+                                        local_1 = dv_unknown()
+                                    local = dv_store(local, binding.to, local_1)
+                                else:
+                                    complete = false
+                                i = (i + 1)
+                            i = 0
+                            while (i < rt_count(option_ids)):
+                                var option_id = option_ids[i]
+                                expanded = (expanded + 2)
+                                remaining = (remaining - 2)
+                                if dv_has_key(catalog, option_id):
+                                    var descriptor = dv_get(catalog, option_id)
+                                    var name = dv_find(dv_get(catalog, option_id), "predict_law", "")
+                                    var result = false
+                                    var legal = dv_truth(local, dv_get(catalog, option_id).feasible)
+                                    prediction = dv_no_change_prediction(local)
+                                    if (legal == "unknown"):
+                                        complete = false
+                                    if (name == ""):
+                                        false
+                                    else:
+                                        if dv_has_key(local.adoptions, name):
+                                            var adoption = dv_get(local.adoptions, name)
+                                            if dv_and(adoption.active, (adoption.mode == "predict")):
+                                                result = dv_predict(local, name, rt_cat("response-option-", rt_show(i)), time, local.revision)
+                                                if (result.status == "applied"):
+                                                    prediction = result.world
+                                                else:
+                                                    if (legal == "false"):
+                                                        false
+                                                    else:
+                                                        complete = false
+                                            else:
+                                                if (legal == "false"):
+                                                    false
+                                                else:
+                                                    complete = false
+                                        else:
+                                            if (legal == "false"):
+                                                false
+                                            else:
+                                                complete = false
+                                    rt_push(options, dv_response_option(option_id, descriptor.intent, descriptor.feasible, prediction, descriptor.effort, descriptor.feature_weights))
+                                    rt_push(option_traces, {"id": option_id, "legal": legal, "prediction_receipt": result, "model_prediction": prediction})
+                                else:
+                                    complete = false
+                                    rt_push(option_traces, {"id": option_id, "legal": "unknown-option"})
+                                i = (i + 1)
+                            response = dv_respond_adopted(local, request, options, policy_id)
+                            var evaluated = response.evaluated
+                            var j = 0
+                            var ties = 0
+                            var best = 0
+                            var found_best = false
+                            while (j < rt_count(evaluated)):
+                                var evaluation = evaluated[j][1]
+                                var score = evaluated[j][1].score
+                                if dv_and(evaluation.value.complete, (rt_count(evaluation.relationship_and_state.unknown) == 0)):
+                                    false
+                                else:
+                                    complete = false
+                                var local_2 = false
+                                if found_best:
+                                    local_2 = (best < score)
+                                else:
+                                    local_2 = true
+                                if local_2:
+                                    best = score
+                                    ties = 1
+                                    found_best = true
+                                else:
+                                    if (best == score):
+                                        ties = (ties + 1)
+                                j = (j + 1)
+                            if (1 < ties):
+                                if complete:
+                                    reason = "modeled-response-tie"
+                                complete = false
+                            if dv_and(complete, (response.status == "selected")):
+                                var id = response.choice.id
+                                var choice_ref = model.choice_ref
+                                chosen = id
+                                reason = "selected-by-shared-response"
+                                if dv_has_key(next.objects, choice_ref.object):
+                                    var before = dv_read(next, choice_ref)
+                                    var after = dv_cell(id, response_confidence, time, model.basis)
+                                    next = dv_store(next, choice_ref, after)
+                                    rt_push(changes, {"ref": choice_ref, "before": before, "after": after})
+                                else:
+                                    complete = false
+                                    reason = "unknown-local-choice-record"
+                            var local_3 = false
+                            if complete:
+                                local_3 = response.status
+                            else:
+                                local_3 = "unknown"
+                            var local_4 = false
+                            if (chosen == false):
+                                local_4 = ""
+                            else:
+                                local_4 = dv_find(dv_get(catalog, chosen), "bridge_law", "")
+                            return {"world": next, "changes": changes, "remaining": remaining, "detail": dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"status": local_3, "reason": reason, "expanded": expanded, "committed": false}, "model", model_id), "model_basis", model.basis), "context_inputs", inputs), "option_predictions", option_traces), "response", response), "selected", chosen), "bridge_law", local_4)}
+
+fn v_model_sim_mask_response_option(world, model, option_id):
+    var option = dv_find(model.options, option_id, [])
+    if dv_has_key(option, "bridge_law"):
+        var name = option.bridge_law
+        if dv_has_key(world.adoptions, name):
+            return v_model_sim_withhold(world, dv_get(world.adoptions, name).law.effects).world
+        else:
+            return world
+    else:
+        return world
+
+fn v_model_sim_mask_response_stage(actor, world, stage):
+    var models = dv_find(actor, "response_models", [])
+    var id = stage.model
+    if dv_has_key(models, id):
+        var model = dv_get(models, id)
+        var options = stage.options
+        var i = 0
+        var copy = world
+        if dv_has_key(model, "choice_ref"):
+            if dv_has_key(copy.objects, model.choice_ref.object):
+                copy = dv_store(copy, model.choice_ref, dv_unknown())
+        while (i < rt_count(options)):
+            copy = v_model_sim_mask_response_option(copy, model, options[i])
+            i = (i + 1)
+        return copy
+    else:
+        return world
+
+fn v_model_sim_mask_response(actor, world, plan):
+    var copy = world
+    var i = 0
+    while (i < rt_count(plan)):
+        var step = plan[i]
+        if dv_has_key(step, "response"):
+            copy = v_model_sim_mask_response_stage(actor, copy, step.response)
+        i = (i + 1)
+    return copy
+
+fn v_model_sim_response_bridge(actor, world, detail, time, remaining, confidence):
+    var name = detail.bridge_law
+    var adoptions = actor.mind.adoptions
+    if dv_or((name == ""), (not dv_has_key(adoptions, name))):
+        return dv_with({"world": world, "changes": [], "remaining": remaining, "status": "unknown-response-bridge"}, "expanded", 0)
+    else:
+        var adoption = dv_get(adoptions, name)
+        var effects = dv_get(adoptions, name).law.effects
+        if dv_or((remaining < 1), (not dv_and(adoption.active, (adoption.mode == "predict")))):
+            return dv_with({"world": v_model_sim_withhold(world, effects).world, "changes": [], "remaining": remaining, "status": "unavailable-response-bridge"}, "expanded", 0)
+        else:
+            var local = dv_with(dv_with(world, "domain", "mind"), "adoptions", dv_with(world.adoptions, name, dv_with(adoption, "confidence", dv_min(confidence, dv_min(adoption.confidence, dv_premise_confidence(world, adoption.law.premise))))))
+            var result = false
+            result = dv_predict(local, name, rt_cat("response-bridge-", rt_show(world.revision)), time, world.revision)
+            var local_1 = false
+            if (result.status == "applied"):
+                local_1 = result.world
+            else:
+                local_1 = v_model_sim_withhold(world, effects).world
+            return dv_with(dv_with(dv_with(result, "world", local_1), "remaining", (remaining - 1)), "expanded", 1)
+
+fn v_model_sim_gated_response(actor, world, step, time, remaining, confidence):
+    var gate = dv_find(step, "available_when", dv_true())
+    var truth = dv_truth(world, dv_find(step, "available_when", dv_true()))
+    var result = false
+    var local_1 = false
+    if (truth == "true"):
+        local_1 = v_model_sim_response(actor, world, step.response, time, remaining, confidence)
+    else:
+        if (truth == "false"):
+            local_1 = {"world": world, "changes": [], "remaining": remaining, "detail": {"status": "not-applicable", "reason": "request-gate-false", "expanded": 0, "committed": false}}
+        else:
+            local_1 = v_model_sim_response_unknown(v_model_sim_mask_response_stage(actor, world, step.response), remaining, "request-gate-unknown")
+    result = local_1
+    return dv_with(result, "detail", dv_with(dv_with(dv_with(result.detail, "gate", gate), "gate_truth", truth), "gate_inputs", v_model_sim_inputs(world, gate)))

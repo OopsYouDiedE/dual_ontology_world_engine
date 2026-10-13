@@ -1,244 +1,433 @@
-(defn dvs_authority_speech_allowed (action physical subject)
-  (let (contracts (dv_find physical "speech_contracts" (rt_list)) i 0 registered false allowed true)
-    (do (while (rt_lt i (rt_count contracts))
-      (let (contract (rt_at contracts i))
-        (do (if (rt_eq (dv_get contract "subject") subject)
-          (do (set registered true)
-            (let (adoption (dv_find (dv_get physical "adoptions") (dv_get contract "law_id") false))
-              (if (rt_eq adoption false) (set allowed false)
-                (if (dv_and (dv_get adoption "active")
-                  (dv_and (rt_eq (dv_get adoption "mode") "enforce")
-                    (dv_and (rt_eq (dv_get (dv_get adoption "law") "version") (dv_get contract "version"))
-                      (dv_and (dv_get contract "require_literal_truth") (rt_lt 0 (rt_count (dv_get contract "basis"))))))) false (set allowed false))))
-            (if (dv_has_key action "authority_truth_gate")
-              (let (gate (dv_get action "authority_truth_gate"))
-                (if (dv_and (dv_find gate "required" false) (rt_eq (dv_find gate "contract_id" "") (dv_get contract "id"))) false (set allowed false))) false)
-            (if (dv_has_key action "speech")
-              (if (rt_eq (dv_truth physical (dv_get (dv_get action "speech") "literal_ast")) "true") false (set allowed false))
-              (set allowed false))) false) (set i (rt_add i 1)))))
-      (if (dv_and (rt_not registered) (dv_has_key action "authority_truth_gate"))
-        (if (dv_find (dv_get action "authority_truth_gate") "required" false) (set allowed false) false) false) allowed)))
-; Autonomous formal model session. Host geometry and input are outside this model.
-(defn dvs_acceptance_law_ready (physical name)
-  (if (dv_has_key (dv_get physical "adoptions") name)
-    (let (adoption (dv_get (dv_get physical "adoptions") name) law (dv_get (dv_get (dv_get physical "adoptions") name) "law"))
-      (if (dv_and (dv_get adoption "active") (dv_and (rt_eq (dv_get adoption "mode") "enforce")
-        (rt_eq (dv_truth physical (dv_get law "premise")) "true")))
-        (rt_eq (dv_get (dv_stage physical (dv_get law "effects") (dv_find physical "time" 0) (dv_get adoption "basis") (dv_get adoption "confidence")) "status") "ready") false)) false))
-(defn dvs_answer (rules action physical mind bindings events)
-  (let (i 0 found false literal "unknown" support "unknown" topic "unknown" complete "unknown" transition "" grants (rt_list) recipients (rt_list) require_arg false target_stage "")
-    (do (while (rt_lt i (rt_count rules))
-      (let (rule (rt_at rules i))
-        (do (if (rt_eq (dv_get rule "id") (dv_find action "answer_id" ""))
-          (do (set found true) (set literal (dv_truth physical (if (dv_find rule "condition_from_answer" false)
-              (dvs_physical_proposition (dv_get action "answer") bindings (dv_get mind "subject")) (dv_get rule "condition"))))
-            (set support (dv_truth mind (dv_get rule "required_support"))) (set transition (dv_find rule "accepted_law" ""))
-            (set topic (dv_truth physical (dv_find rule "question_match" (dv_m2 "op" "constant" "value" "unknown"))))
-            (set complete (dv_truth mind (dv_find rule "answer_complete" (dv_m2 "op" "constant" "value" "unknown"))))
-            (set require_arg (dv_find rule "require_argument" false))
-            (set target_stage (if (dv_has_key rule "stage") (dv_get rule "stage")
-              (if (rt_eq transition "accept.identity") "identity"
-                (if (rt_eq transition "accept.voice_source") "voice_source"
-                  (if (rt_eq transition "accept.words") "words"
-                    (if (rt_eq transition "accept.trust") "trust" (dv_find action "topic" "")))))))
-            (if require_arg (if (dvs_public_argument_valid action rule events (dv_get mind "subject")) false (set complete "unknown")) false)
-            (set grants (dv_find rule "accepted_public_grants" (rt_list))) (set recipients (dv_find rule "accepted_listeners" (rt_list)))) false) (set i (rt_add i 1)))))
-      (let (law_ready (dvs_acceptance_law_ready physical transition) accepted false reason "accepted" truth_level 0)
-        (do (set reason (if (rt_not found) "undeclared-answer"
-          (if (rt_not (rt_eq topic "true")) "unasked-topic"
-            (if (rt_not (rt_eq literal "true")) "literal-not-established"
-              (if (rt_not (rt_eq support "true")) "insufficient-source"
-                (if (rt_not (rt_eq complete "true")) "incomplete-answer"
-                  (if (rt_not law_ready) "protocol-transition-not-ready" "accepted")))))))
-          (set accepted (rt_eq reason "accepted"))
-          (set truth_level (if accepted (if (dv_has_key action "argument") 2 (if require_arg 2 1)) 0))
-          (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with (dv_m4 "accepted" accepted "literal_truth" literal "epistemic_support" support "accepted_law" transition)
-            "accepted_public_grants" grants) "accepted_listeners" recipients) "question_match" topic) "answer_complete" complete) "law_ready" law_ready) "reason" reason)
-            "truth_level" truth_level) "stage" target_stage))))))
-(defn dvs_run (story capability)
-  (do (dv_require (rt_eq (dv_get story "format") "dv-session-v1") "Unsupported story data dialect")
-    (let (physical (dv_clone (dv_get story "physical")) actors (dv_clone (dv_get story "actors"))
-          events (rt_list) bindings (dv_get story "bindings") costs (dv_get story "cost_model")
-          run_start (dv_find (dv_get story "physical") "time" 0) duration_budget (dv_find story "game_duration_budget" 0) horizon 0 duration_blocked false
-          limit (dv_get story "max_actions") cursor 0 executed 0 idle 0 status "action-window-exhausted" initial (rt_list))
-      (do (set horizon (rt_add run_start duration_budget)) (dv_require (rt_not (rt_lt duration_budget 0)) "Negative game duration budget")
-        (set initial (dv_m2 "physical" physical "actors" actors))
-        (let (i 0) (do (while (rt_lt i (rt_count actors))
-          (let (actor (rt_at actors i))
-              (do (if (dv_and (rt_eq capability "disabled") (rt_eq (dv_get actor "id") (dv_find story "capability_actor" "")))
-              (set actor (dv_with actor "policy" (dv_with (dv_get actor "policy") "model_budget" 0))) false)
-              (set actors (dvs_replace actors i (dv_with actor "ledger" (dv_action_cost_ledger (dv_get actor "id") (dv_get actor "balance")))))
-              (set i (rt_add i 1)))))))
-        (set initial (dv_m2 "physical" physical "actors" actors))
-        (dvs_event events "session_start" "" (dv_find physical "time" 0) (rt_list) (dv_with (dv_m3 "initial" initial "capability" capability "source_refs" (dv_find story "source_refs" (rt_list))) "time_origin" (dv_m4 "run_start" run_start "duration_budget" duration_budget "horizon" horizon "unit" "minute")))
-        (while (dv_and (rt_not (rt_lt horizon (dv_find physical "time" 0))) (dv_and (rt_lt executed limit) (rt_lt idle (rt_count actors))))
-          (let (index cursor actor (rt_at actors cursor) parent (dv_get (rt_at events (rt_sub (rt_count events) 1)) "id") time (dv_find physical "time" 0))
-            (do (set cursor (if (rt_lt (rt_add cursor 1) (rt_count actors)) (rt_add cursor 1) 0))
-              (if (rt_not (rt_lt 0 (dv_find (dv_get actor "policy") "budget" 0))) (set idle (rt_add idle 1))
-                (do (set actor (dv_with actor "policy" (dv_with (dv_get actor "policy") "remaining_game_time" (rt_sub horizon time))))
-                  (set actor (dvs_notice_peers actor physical actors events time parent))
-                  (set actor (dvs_ready (dvs_hypotheses (dvs_pragmatics_reconsider (dvs_reason actor events time parent) events time parent) events time parent) events time parent))
-                  (set actor (dvs_capture_public_topics actor events time parent))
-                  (set actor (dvs_materialize_arguments (dvs_arguments actor events time parent)))
-                  (set actor (dvs_prepare_speech_choices actor events time parent))
-                  (let (choice (dvs_choose actor bindings costs) action (dv_get choice "action"))
-                    (do (set actor (dv_with actor "dependency_cache" (dv_get choice "dependency_cache")))
-                      (set actor (dv_with actor "policy" (dv_with (dv_get actor "policy") "plan_budget"
-                      (rt_sub (dv_find (dv_get actor "policy") "plan_budget" 0) (dv_get choice "plan_expansions")))))
-                    (if (rt_eq action false)
-                      (do (if (rt_lt 0 (dv_find choice "time_blocked" 0)) (set duration_blocked true) false)
-                        (set idle (rt_add idle 1)) (set actors (dvs_replace actors index actor))
-                        (dvs_event events "planning_stop" (dv_get actor "id") time (dv_single parent) (dv_without choice "dependency_cache")))
-                      (let (id (dv_get actor "id") mind (dv_get actor "mind") model (dv_get costs (dv_get action "kind"))
-                            action_event (rt_cat "action" (rt_show executed)) ledger (dv_get actor "ledger"))
-                        (do
-                          (set parent (dvs_event events "action_selected" id time (dvs_selection_parents actor action choice events parent)
-                            (dv_with (dv_with (dv_m4 "action" action "mind_before" mind "score" (dv_get choice "score") "hypothesis" (dv_find actor "hypothesis" false)) "plan_expansions" (dv_get choice "plan_expansions")) "plans" (dv_get choice "plans"))))
-                          (set parent (dvs_event events "planning_choice" id time (dv_single parent) (dv_without choice "dependency_cache")))
-                          (let (bounds (dv_action_cost_bounds (dv_get model "minimum") (dv_get model "maximum")))
-                            (if (dv_or (rt_lt horizon (rt_add time (dv_get (dv_get bounds "maximum") "time")))
-                              (rt_lt horizon (rt_add time (dv_get (dv_get model "actual") "time"))))
-                              (do (set duration_blocked true) (set idle (rt_add idle 1))
-                                (dvs_event events "duration_budget_rejected" id time (dv_single parent)
-                                  (dv_m4 "action" action "bounds" bounds "actual" (dv_get model "actual") "time_origin" (dv_m4 "run_start" run_start "duration_budget" duration_budget "horizon" horizon "unit" "minute"))))
-                            (if (rt_not (dv_action_cost_le (dv_get bounds "maximum") (dv_get ledger "balances")))
-                              (do (dvs_event events "resource_rejected" id time (dv_single parent) (dv_m2 "action" action "ledger" ledger)) (set idle (rt_add idle 1)))
-                              (let (quote (dv_action_cost_quote ledger physical (dv_find action "law" (dv_get action "id")) action_event bounds)
-                                    before physical result false)
-                                (do
-                                  (set parent (dvs_event events "cost_quote" id time (dv_single parent) quote))
-                                  (set result (if (rt_not (dv_and (rt_eq (dv_truth physical (dv_find action "authority_precondition" (dv_get action "precondition"))) "true")
-                                    (if (dv_has_key action "speech") (dvs_authority_speech_allowed action physical id) true)))
-                                    (dv_action_cost_finish ledger physical quote (dv_get model "actual") "rejected")
-                                    (if (rt_eq (dv_find action "law" "") "")
-                                    (dv_action_cost_finish ledger physical quote (dv_get model "actual") "applied")
-                                    (dv_action_cost_execute ledger physical quote (dv_get model "actual")))))
-                                  (set physical (dv_get (dv_get result "execution") "world"))
-                                  (set time (dv_find physical "time" time))
-                                  (set actor (dv_with actor "ledger" (dv_get result "ledger")))
-                                  (set parent (dvs_event events "action_execution" id time (dv_single parent)
-                                    (dv_with (dv_with (dv_with (dv_with (dv_m4 "physical_before" before "physical_after" physical "receipt" result "action" action)
-                                      "ledger_before" ledger) "ledger_after" (dv_get result "ledger")) "quote" quote) "actual" (dv_get model "actual"))))
-                                  (if (rt_eq (dv_get (dv_get result "execution") "status") "applied")
-                                    (set actor (dvs_record_request (dvs_finish_reply (dv_with actor "last_action_event" parent) action) action)) false)
-                                  (rt_print (rt_json_stringify (dv_with (dv_m4 "event_id" parent "actor" id "action_id" (dv_get action "id") "game_time" time)
-                                    "status" (dv_get (dv_get result "execution") "status"))))
-                                  (let (observations (if (rt_eq (dv_get (dv_get result "execution") "status") "applied")
-                                    (dvs_observation_source (dv_perceive physical mind bindings (dv_find action "grants" (rt_list)) action_event time) action) (rt_list))
-                                        profile (dvs_observation_profile actor))
-                                    (do (set actor (dv_with actor "mind" (dv_get (dv_update_mind mind observations (dv_get mind "revision") profile) "world")))
-                                      (if (rt_lt 0 (rt_count observations))
-                                        (set parent (dvs_event events "observation" id time (dvs_cognitive_parents actor (dv_single parent))
-                                          (dv_with (dv_with (dv_with (dv_m4 "observations" observations "mind_before" mind "mind_after" (dv_get actor "mind") "action" action)
-                                            "bindings" bindings) "grants" (dv_find action "grants" (rt_list))) "execution_id" action_event))) false)
-                                      (if (rt_lt 0 (rt_count observations)) (set actor (dv_with actor "last_cognitive_event" parent)) false)))
-                                  (if (dv_and (dv_has_key action "answer") (rt_eq (dv_get (dv_get result "execution") "status") "applied"))
-                                    (let (judgment (dvs_answer (dv_find story "formal_answers" (rt_list)) action physical (dv_get actor "mind") bindings events)
-                                          stage "" new_level 0 current_level_cell false current_level 0 is_higher false)
-                                      (do (set parent (dvs_event events "answer_submitted" id time (dv_single parent)
-                                            (dv_m4 "action" action "mind" (dv_get actor "mind") "physical" physical
-                                              "personal_accepted_answers" (dv_find actor "accepted_answers" (rt_list)))))
-                                          (set stage (dv_get judgment "stage"))
-                                          (set new_level (dv_get judgment "truth_level"))
-                                          (set current_level_cell (dv_read physical (dv_ref "question" "state" (rt_cat "level_" stage))))
-                                          (set current_level (if (dv_get current_level_cell "known") (dv_get current_level_cell "value") 0))
-                                          (set is_higher (rt_lt (dv_find (dv_find actor "accepted_answers" (rt_list)) stage 0) new_level))
-                                          (if (dv_and (dv_get judgment "accepted") (rt_not is_higher))
-                                            (set judgment (dv_with (dv_with judgment "accepted" false) "reason" "already-accepted-personal-answer"))
-                                            (set judgment (dv_with judgment "accepted" (dv_and (dv_get judgment "accepted") is_higher))))
-                                          (set parent (dvs_event events (if (dv_get judgment "accepted") "answer_accepted" "answer_rejected") id time (dv_single parent) judgment))
-                                          (if (dv_and (dv_get judgment "accepted") (rt_not (rt_eq (dv_get judgment "accepted_law") "")))
-                                            (let (transition (dv_execute physical (dv_get judgment "accepted_law") (rt_cat action_event "-accepted") time (dv_get physical "revision")))
-                                              (if (rt_eq (dv_get transition "status") "applied")
-                                                (do (set physical (dv_get transition "world"))
-                                                  (set physical (dv_store physical (dv_ref "question" "state" (rt_cat "level_" stage)) (dv_field (if (rt_lt current_level new_level) new_level current_level))))
-                                                  (set physical (dv_store physical (dv_ref "question" "state" (rt_cat "solved_" stage)) (dv_field true)))
-                                                  (set actor (dv_with actor "accepted_answers" (dv_with (dv_find actor "accepted_answers" (rt_list)) stage new_level)))
-                                                  (set parent (dvs_event events "question_transition" id time (dv_single parent) transition))
-                                                  (set actors (dvs_replace actors index actor))
-                                                  (set actors (dvs_public_grants actors index
-                                                    (dv_with (dv_with (dv_with action "speech" (dv_m2 "channel" "formal-receipt" "literal_ast" (dv_true)))
-                                                      "listeners" (dv_get judgment "accepted_listeners")) "public_grants" (dv_get judgment "accepted_public_grants"))
-                                                    physical bindings events time parent (rt_cat action_event "-accepted")))
-                                                  (set actor (rt_at actors index))) false)) false))) false)
-                                  (if (dv_and (rt_eq (dv_get action "kind") "replay") (rt_eq (dv_get (dv_get result "execution") "status") "applied"))
-                                    (let (candidates (dv_find (dv_get actor "policy") "hypotheses" (rt_list)) k 0 simulations (dv_find actor "simulations" (rt_list)) coverages (rt_list) factor_rejections (rt_list))
-                                      (do (set actor (dv_with_many actor (dv_m2 "model_paid_event" parent "policy" (dv_with (dv_get actor "policy") "model_work_remaining" (dv_find model "work_limit" 0)))))
-                                        (if (rt_lt 0 (rt_count (dv_find (dv_get actor "policy") "factor_constraints" (rt_list))))
-                                          (let (prune (dvs_factor_prune actor events time parent) certificates (rt_list) c 0)
-                                            (do (while (rt_lt c (rt_count (dv_get prune "certificates")))
-                                              (do (rt_push certificates (dv_with (rt_at (dv_get prune "certificates") c) "event" (dv_get prune "event"))) (set c (rt_add c 1))))
-                                              (set actor (dv_with_many actor (dv_m4 "factor_certificates" certificates "model_previous_event" (dv_get prune "event") "last_cognitive_event" (dv_get prune "event")
-                                                "policy" (dv_with_many (dv_get actor "policy") (dv_m2 "model_budget" (dv_get prune "remaining") "model_work_remaining" (dv_get prune "work_remaining")))))))) false)
-                                        (while (rt_lt k (rt_count candidates))
-                                        (let (candidate (rt_at candidates k) coverage_key (rt_cat (dv_find (rt_at candidates k) "question" (dv_find (rt_at candidates k) "topic" "")) (dv_find (rt_at candidates k) "group" "")))
-                                          (do (if (dv_has_key coverages coverage_key) false (set coverages (dv_with coverages coverage_key (dvs_factor_coverage actor candidate events))))
-                                            (if (dv_and (dvp_topic actor candidate) (dv_and (rt_lt 0 (rt_count (dv_find candidate "basis" (rt_list))))
-                                            (rt_eq (dv_truth (dv_get actor "mind") (dv_find candidate "available_when" (dv_true))) "true")))
-                                            (if (dvs_factor_covered candidate (dv_get (dv_get coverages coverage_key) "certificates")) (rt_push factor_rejections (dv_get candidate "id"))
-                                            (if (rt_lt (dvs_sim_work_budget actor) 1) (set k (rt_count candidates))
-                                            (let (cached (dv_find simulations (dv_get candidate "id") false) simulation false)
-                                              (do (set simulation (if (rt_eq cached false) (dvs_model actor candidate events time parent)
-                                                (let (recheck (dvs_model_recheck actor cached)) (do (dvs_event events "model_recheck" id time (dvs_model_parent_ids actor parent (dv_find cached "event" "")) (dv_m4 "actor_before" actor "model_before" cached "hypothesis" candidate "result" recheck)) recheck))))
-                                              (do (set simulation (dv_with_many simulation (dv_m3 "validation_inputs" (dv_explanation_merge (dv_explanation_model_inputs (dv_get actor "mind") simulation)
-                                                (dvs_model_observed_inputs simulation)) "source_adoptions" (dv_get (dv_get actor "mind") "adoptions") "source_response_models" (dv_find actor "response_models" (rt_list)))))
-                                                (set simulations (dv_with simulations (dv_get candidate "id")
-                                                (dv_with_many simulation (dv_m2 "event" (dv_get (rt_at events (rt_sub (rt_count events) 1)) "id") "source_revision" (dv_get (dv_get actor "mind") "revision")))))
-                                            (set actor (dv_with_many actor (dv_m3 "model_previous_event" (dv_get (rt_at events (rt_sub (rt_count events) 1)) "id") "last_cognitive_event" (dv_get (rt_at events (rt_sub (rt_count events) 1)) "id")
-                                              "policy" (dv_with_many (dv_get actor "policy") (dv_m2 "model_budget" (dv_get simulation "remaining") "model_work_remaining" (dv_get simulation "work_remaining"))))))
-                                              ))))) false) (set k (rt_add k 1)))))
-                                        (set actor (dv_with_many actor (dv_m2 "simulations" simulations "factor_rejections" (dv_m2 "source_revision" (dv_get (dv_get actor "mind") "revision") "ids" factor_rejections)))))) false)
-                                  (if (dv_has_key actor "location_ref")
-                                    (let (cell (dv_read physical (dv_get actor "location_ref")))
-                                      (if (dv_get cell "known") (set actor (dv_with actor "location" (dv_get cell "value"))) false)) false)
-                                  (if (dv_has_key action "answer") (set actor (dv_with actor "answer_attempt_signatures" (dv_with (dv_find actor "answer_attempt_signatures" (rt_list)) (dv_get action "id") (dvp_input_signature actor action (dv_get choice "relevant_refs"))))) false)
-                                  (if (rt_eq (dv_get action "kind") "replay") (set actor (dv_with actor "replay_attempt_signatures" (dv_with (dv_find actor "replay_attempt_signatures" (rt_list)) (dv_get action "id") (dvp_input_signature actor action (dv_get choice "relevant_refs"))))) false)
-                                  (set actor (dv_with actor "attempts" (dv_with (dv_find actor "attempts" (rt_list)) (dv_get action "id") (dv_get (dv_get actor "mind") "revision"))))
-                                  (set actor (dv_with_many actor (dv_m2 "used" (dv_append (dv_find actor "used" (rt_list)) (dv_get action "id"))
-                                    "policy" (dv_with (dv_get actor "policy") "budget" (rt_sub (dv_get (dv_get actor "policy") "budget") 1)))))
-                                  (set actors (dvs_replace actors index actor))
-                                  (if (dv_and (dv_has_key action "public_observers") (rt_eq (dv_get (dv_get result "execution") "status") "applied"))
-                                    (set actors (dvs_visible_action_grants actors index action physical bindings events time parent action_event)) false)
-                                  (if (dv_and (dv_has_key action "speech") (rt_eq (dv_get (dv_get result "execution") "status") "applied"))
-                                    (do (set actors (dvs_speech actors index action events time parent))
-                                      (set actors (dvs_public_grants actors index action physical bindings events time parent action_event))) false)
-                                  (set actor (rt_at actors index)) (set executed (rt_add executed 1)) (set idle 0)))))))))))))
-              (set actors (dvs_replace actors index actor)))))
-        (if (rt_not (rt_lt idle (rt_count actors))) (set status (if duration_blocked "budget-exhausted" "no-admissible-action-or-budget")) false)
-        (if (rt_not (rt_lt (dv_find physical "time" 0) horizon)) (set status "budget-exhausted") false)
-        (dvs_event events "session_stopped" "" (dv_find physical "time" 0) (dv_single (dv_get (rt_at events (rt_sub (rt_count events) 1)) "id")) (dv_m2 "reason" status "actions_executed" executed))
-        (dv_with (dv_with (dv_with (dv_with (dv_m4 "events" events "initial" initial "final" (dv_m2 "physical" physical "actors" actors) "status" status)
-          "time" (dv_find physical "time" 0)) "game_time_unit" "minute") "configuration"
-          (dv_with (dv_with (dv_with (dv_m3 "cost_model" costs "formal_answers" (dv_find story "formal_answers" (rt_list)) "source_refs" (dv_find story "source_refs" (rt_list)))
-            "time_origin" (dv_m4 "run_start" run_start "duration_budget" duration_budget "horizon" horizon "unit" "minute")) "report_labels" (dv_find story "report_labels" (rt_list))) "bindings" bindings))
-          "scope" "DV formal model; no Godot host input or geometry")))))
-(defn dvs_replace (items index value)
-  (let (result (rt_list) i 0) (do (while (rt_lt i (rt_count items))
-    (do (rt_push result (if (rt_eq i index) value (rt_at items i))) (set i (rt_add i 1)))) result)))
-(defn dvs_main ()
-  (let (story (rt_json_parse (rt_read (rt_arg 0))) capability (if (rt_lt 2 (rt_arg_count)) (rt_arg 2) "enabled"))
-    (rt_write (rt_arg 1) (rt_json_stringify (dvs_run story capability)))))
-(defn dvs_public_grants (actors speaker_index action physical bindings events time parent execution_id)
-  (let (result actors speaker (rt_at actors speaker_index) listeners (dv_find action "listeners" (rt_list)) i 0)
-    (do (while (rt_lt i (rt_count actors))
-      (let (actor (rt_at result i) mind (dv_get (rt_at result i) "mind"))
-        (do (if (dv_and (dv_has listeners (dv_get actor "id")) (dvs_speech_hearing speaker actor (dv_get action "speech")))
-          (let (grants (dv_find action "public_grants" (rt_list)) observations (dv_perceive physical mind bindings (dv_find action "public_grants" (rt_list)) execution_id time))
-            (if (rt_lt 0 (rt_count observations))
-              (let (next (dv_get (dv_update_mind mind observations (dv_get mind "revision") (dvs_observation_profile actor)) "world") observation_event "")
-                (do (set observation_event (dvs_event events "observation" (dv_get actor "id") time
-                  (dvs_cognitive_parents actor (dvs_public_grant_parents events parent (dv_get actor "id")))
-                  (dv_with_many (dv_m4 "observations" observations "mind_before" mind "mind_after" next "action" action)
-                    (dv_m4 "bindings" bindings "grants" grants "execution_id" execution_id
-                      "source_event" (dvs_public_literal_source events parent (dv_get actor "id"))))))
-                  (set result (dvs_replace result i (dv_with_many actor (dv_m2 "mind" next "last_cognitive_event" observation_event)))))) false)) false)
-          (set i (rt_add i 1))))) result)))
-(defn dvs_observation_source (observations action)
-  (let (result (rt_list) i 0 source (dv_find action "observation_source" "perception") origin (dv_find action "observation_origin" "direct") trust (dv_find action "observation_trust" 1))
-    (do (dv_require (dv_has (dv_list3 "perception" "testimony" "recall") source) "Unknown observation source")
-      (dv_unit trust)
-      (while (rt_lt i (rt_count observations))
-        (do (rt_push result (dv_with (dv_with (dv_with (rt_at observations i) "source" source) "origin" origin) "trust" trust)) (set i (rt_add i 1)))) result)))
-(defn dvs_observation_profile (actor)
-  (dv_observation_profile (dv_find (dv_get actor "policy") "observation_weights" (dv_m3 "perception" 1 "testimony" 1 "recall" 1))
-    (dv_find (dv_get actor "policy") "observation_threshold" 0.5)))
+// Autonomous formal model session. Host geometry and input are outside this model.
+
+fn dvs_authority_speech_allowed(action, physical, subject):
+    var contracts = dv_find(physical, "speech_contracts", [])
+    var i = 0
+    var registered = false
+    var allowed = true
+    while (i < rt_count(contracts)):
+        var contract = contracts[i]
+        if (contract.subject == subject):
+            registered = true
+            var adoption = dv_find(physical.adoptions, contract.law_id, false)
+            if (adoption == false):
+                allowed = false
+            else:
+                if dv_and(adoption.active, dv_and((adoption.mode == "enforce"), dv_and((adoption.law.version == contract.version), dv_and(contract.require_literal_truth, (0 < rt_count(contract.basis)))))):
+                    false
+                else:
+                    allowed = false
+            if dv_has_key(action, "authority_truth_gate"):
+                var gate = action.authority_truth_gate
+                if dv_and(dv_find(gate, "required", false), (dv_find(gate, "contract_id", "") == contract.id)):
+                    false
+                else:
+                    allowed = false
+            if dv_has_key(action, "speech"):
+                if (dv_truth(physical, action.speech.literal_ast) == "true"):
+                    false
+                else:
+                    allowed = false
+            else:
+                allowed = false
+        i = (i + 1)
+    if dv_and((not registered), dv_has_key(action, "authority_truth_gate")):
+        if dv_find(action.authority_truth_gate, "required", false):
+            allowed = false
+    return allowed
+
+fn dvs_acceptance_law_ready(physical, name):
+    if dv_has_key(physical.adoptions, name):
+        var adoption = dv_get(physical.adoptions, name)
+        var law = dv_get(physical.adoptions, name).law
+        if dv_and(adoption.active, dv_and((adoption.mode == "enforce"), (dv_truth(physical, law.premise) == "true"))):
+            return (dv_stage(physical, law.effects, dv_find(physical, "time", 0), adoption.basis, adoption.confidence).status == "ready")
+        else:
+            return false
+    else:
+        return false
+
+fn dvs_answer(rules, action, physical, mind, bindings, events):
+    var i = 0
+    var found = false
+    var literal = "unknown"
+    var support = "unknown"
+    var topic = "unknown"
+    var complete = "unknown"
+    var transition = ""
+    var grants = []
+    var recipients = []
+    var require_arg = false
+    var target_stage = ""
+    while (i < rt_count(rules)):
+        var rule = rules[i]
+        if (rule.id == dv_find(action, "answer_id", "")):
+            found = true
+            var local_1 = false
+            if dv_find(rule, "condition_from_answer", false):
+                local_1 = dvs_physical_proposition(action.answer, bindings, mind.subject)
+            else:
+                local_1 = rule.condition
+            literal = dv_truth(physical, local_1)
+            support = dv_truth(mind, rule.required_support)
+            transition = dv_find(rule, "accepted_law", "")
+            topic = dv_truth(physical, dv_find(rule, "question_match", {"op": "constant", "value": "unknown"}))
+            complete = dv_truth(mind, dv_find(rule, "answer_complete", {"op": "constant", "value": "unknown"}))
+            require_arg = dv_find(rule, "require_argument", false)
+            var local_2 = false
+            if dv_has_key(rule, "stage"):
+                local_2 = rule.stage
+            else:
+                if (transition == "accept.identity"):
+                    local_2 = "identity"
+                else:
+                    if (transition == "accept.voice_source"):
+                        local_2 = "voice_source"
+                    else:
+                        if (transition == "accept.words"):
+                            local_2 = "words"
+                        else:
+                            if (transition == "accept.trust"):
+                                local_2 = "trust"
+                            else:
+                                local_2 = dv_find(action, "topic", "")
+            target_stage = local_2
+            if require_arg:
+                if dvs_public_argument_valid(action, rule, events, mind.subject):
+                    false
+                else:
+                    complete = "unknown"
+            grants = dv_find(rule, "accepted_public_grants", [])
+            recipients = dv_find(rule, "accepted_listeners", [])
+        i = (i + 1)
+    var law_ready = dvs_acceptance_law_ready(physical, transition)
+    var accepted = false
+    var reason = "accepted"
+    var truth_level = 0
+    var local_3 = false
+    if (not found):
+        local_3 = "undeclared-answer"
+    else:
+        if (not (topic == "true")):
+            local_3 = "unasked-topic"
+        else:
+            if (not (literal == "true")):
+                local_3 = "literal-not-established"
+            else:
+                if (not (support == "true")):
+                    local_3 = "insufficient-source"
+                else:
+                    if (not (complete == "true")):
+                        local_3 = "incomplete-answer"
+                    else:
+                        if (not law_ready):
+                            local_3 = "protocol-transition-not-ready"
+                        else:
+                            local_3 = "accepted"
+    reason = local_3
+    accepted = (reason == "accepted")
+    var local_4 = false
+    if accepted:
+        if dv_has_key(action, "argument"):
+            local_4 = 2
+        else:
+            if require_arg:
+                local_4 = 2
+            else:
+                local_4 = 1
+    else:
+        local_4 = 0
+    truth_level = local_4
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"accepted": accepted, "literal_truth": literal, "epistemic_support": support, "accepted_law": transition}, "accepted_public_grants", grants), "accepted_listeners", recipients), "question_match", topic), "answer_complete", complete), "law_ready", law_ready), "reason", reason), "truth_level", truth_level), "stage", target_stage)
+
+fn dvs_run(story, capability):
+    dv_require((story.format == "dv-session-v1"), "Unsupported story data dialect")
+    var physical = dv_clone(story.physical)
+    var actors = dv_clone(story.actors)
+    var events = []
+    var bindings = story.bindings
+    var costs = story.cost_model
+    var run_start = dv_find(story.physical, "time", 0)
+    var duration_budget = dv_find(story, "game_duration_budget", 0)
+    var horizon = 0
+    var duration_blocked = false
+    var limit = story.max_actions
+    var cursor = 0
+    var executed = 0
+    var idle = 0
+    var status = "action-window-exhausted"
+    var initial = []
+    horizon = (run_start + duration_budget)
+    dv_require((not (duration_budget < 0)), "Negative game duration budget")
+    initial = {"physical": physical, "actors": actors}
+    var i = 0
+    while (i < rt_count(actors)):
+        var actor = actors[i]
+        if dv_and((capability == "disabled"), (actor.id == dv_find(story, "capability_actor", ""))):
+            actor = dv_with(actor, "policy", dv_with(actor.policy, "model_budget", 0))
+        actors = dvs_replace(actors, i, dv_with(actor, "ledger", dv_action_cost_ledger(actor.id, actor.balance)))
+        i = (i + 1)
+    initial = {"physical": physical, "actors": actors}
+    dvs_event(events, "session_start", "", dv_find(physical, "time", 0), [], dv_with({"initial": initial, "capability": capability, "source_refs": dv_find(story, "source_refs", [])}, "time_origin", {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}))
+    while dv_and((not (horizon < dv_find(physical, "time", 0))), dv_and((executed < limit), (idle < rt_count(actors)))):
+        var index = cursor
+        var actor = actors[cursor]
+        var parent = events[(rt_count(events) - 1)].id
+        var time = dv_find(physical, "time", 0)
+        var local_1 = false
+        if ((cursor + 1) < rt_count(actors)):
+            local_1 = (cursor + 1)
+        else:
+            local_1 = 0
+        cursor = local_1
+        if (not (0 < dv_find(actor.policy, "budget", 0))):
+            idle = (idle + 1)
+        else:
+            actor = dv_with(actor, "policy", dv_with(actor.policy, "remaining_game_time", (horizon - time)))
+            actor = dvs_notice_peers(actor, physical, actors, events, time, parent)
+            actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+            actor = dvs_capture_public_topics(actor, events, time, parent)
+            actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
+            actor = dvs_prepare_speech_choices(actor, events, time, parent)
+            var choice = dvs_choose(actor, bindings, costs)
+            var action = choice.action
+            actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
+            actor = dv_with(actor, "policy", dv_with(actor.policy, "plan_budget", (dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)))
+            if (action == false):
+                if (0 < dv_find(choice, "time_blocked", 0)):
+                    duration_blocked = true
+                idle = (idle + 1)
+                actors = dvs_replace(actors, index, actor)
+                dvs_event(events, "planning_stop", actor.id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
+            else:
+                var id = actor.id
+                var mind = actor.mind
+                var model = dv_get(costs, action.kind)
+                var action_event = rt_cat("action", rt_show(executed))
+                var ledger = actor.ledger
+                parent = dvs_event(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with(dv_with({"action": action, "mind_before": mind, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, "plan_expansions", choice.plan_expansions), "plans", choice.plans))
+                parent = dvs_event(events, "planning_choice", id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
+                var bounds = dv_action_cost_bounds(model.minimum, model.maximum)
+                if dv_or((horizon < (time + bounds.maximum.time)), (horizon < (time + model.actual.time))):
+                    duration_blocked = true
+                    idle = (idle + 1)
+                    dvs_event(events, "duration_budget_rejected", id, time, dv_single(parent), {"action": action, "bounds": bounds, "actual": model.actual, "time_origin": {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}})
+                else:
+                    if (not dv_action_cost_le(bounds.maximum, ledger.balances)):
+                        dvs_event(events, "resource_rejected", id, time, dv_single(parent), {"action": action, "ledger": ledger})
+                        idle = (idle + 1)
+                    else:
+                        var quote = dv_action_cost_quote(ledger, physical, dv_find(action, "law", action.id), action_event, bounds)
+                        var before = physical
+                        var result = false
+                        parent = dvs_event(events, "cost_quote", id, time, dv_single(parent), quote)
+                        var local_2 = false
+                        var local_3 = false
+                        if dv_has_key(action, "speech"):
+                            local_3 = dvs_authority_speech_allowed(action, physical, id)
+                        else:
+                            local_3 = true
+                        if (not dv_and((dv_truth(physical, dv_find(action, "authority_precondition", action.precondition)) == "true"), local_3)):
+                            local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "rejected")
+                        else:
+                            if (dv_find(action, "law", "") == ""):
+                                local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "applied")
+                            else:
+                                local_2 = dv_action_cost_execute(ledger, physical, quote, model.actual)
+                        result = local_2
+                        physical = result.execution.world
+                        time = dv_find(physical, "time", time)
+                        actor = dv_with(actor, "ledger", result.ledger)
+                        parent = dvs_event(events, "action_execution", id, time, dv_single(parent), dv_with(dv_with(dv_with(dv_with({"physical_before": before, "physical_after": physical, "receipt": result, "action": action}, "ledger_before", ledger), "ledger_after", result.ledger), "quote", quote), "actual", model.actual))
+                        if (result.execution.status == "applied"):
+                            actor = dvs_record_request(dvs_finish_reply(dv_with(actor, "last_action_event", parent), action), action)
+                        rt_print(rt_json_stringify(dv_with({"event_id": parent, "actor": id, "action_id": action.id, "game_time": time}, "status", result.execution.status)))
+                        var local_4 = false
+                        if (result.execution.status == "applied"):
+                            local_4 = dvs_observation_source(dv_perceive(physical, mind, bindings, dv_find(action, "grants", []), action_event, time), action)
+                        else:
+                            local_4 = []
+                        var observations = local_4
+                        var profile = dvs_observation_profile(actor)
+                        actor = dv_with(actor, "mind", dv_update_mind(mind, observations, mind.revision, profile).world)
+                        if (0 < rt_count(observations)):
+                            parent = dvs_event(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with(dv_with(dv_with({"observations": observations, "mind_before": mind, "mind_after": actor.mind, "action": action}, "bindings", bindings), "grants", dv_find(action, "grants", [])), "execution_id", action_event))
+                        if (0 < rt_count(observations)):
+                            actor = dv_with(actor, "last_cognitive_event", parent)
+                        if dv_and(dv_has_key(action, "answer"), (result.execution.status == "applied")):
+                            var judgment = dvs_answer(dv_find(story, "formal_answers", []), action, physical, actor.mind, bindings, events)
+                            var stage = ""
+                            var new_level = 0
+                            var current_level_cell = false
+                            var current_level = 0
+                            var is_higher = false
+                            parent = dvs_event(events, "answer_submitted", id, time, dv_single(parent), {"action": action, "mind": actor.mind, "physical": physical, "personal_accepted_answers": dv_find(actor, "accepted_answers", [])})
+                            stage = judgment.stage
+                            new_level = judgment.truth_level
+                            current_level_cell = dv_read(physical, dv_ref("question", "state", rt_cat("level_", stage)))
+                            var local_5 = false
+                            if current_level_cell.known:
+                                local_5 = current_level_cell.value
+                            else:
+                                local_5 = 0
+                            current_level = local_5
+                            is_higher = (dv_find(dv_find(actor, "accepted_answers", []), stage, 0) < new_level)
+                            if dv_and(judgment.accepted, (not is_higher)):
+                                judgment = dv_with(dv_with(judgment, "accepted", false), "reason", "already-accepted-personal-answer")
+                            else:
+                                judgment = dv_with(judgment, "accepted", dv_and(judgment.accepted, is_higher))
+                            var local_6 = false
+                            if judgment.accepted:
+                                local_6 = "answer_accepted"
+                            else:
+                                local_6 = "answer_rejected"
+                            parent = dvs_event(events, local_6, id, time, dv_single(parent), judgment)
+                            if dv_and(judgment.accepted, (not (judgment.accepted_law == ""))):
+                                var transition = dv_execute(physical, judgment.accepted_law, rt_cat(action_event, "-accepted"), time, physical.revision)
+                                if (transition.status == "applied"):
+                                    physical = transition.world
+                                    var local_7 = false
+                                    if (current_level < new_level):
+                                        local_7 = new_level
+                                    else:
+                                        local_7 = current_level
+                                    physical = dv_store(physical, dv_ref("question", "state", rt_cat("level_", stage)), dv_field(local_7))
+                                    physical = dv_store(physical, dv_ref("question", "state", rt_cat("solved_", stage)), dv_field(true))
+                                    actor = dv_with(actor, "accepted_answers", dv_with(dv_find(actor, "accepted_answers", []), stage, new_level))
+                                    parent = dvs_event(events, "question_transition", id, time, dv_single(parent), transition)
+                                    actors = dvs_replace(actors, index, actor)
+                                    actors = dvs_public_grants(actors, index, dv_with(dv_with(dv_with(action, "speech", {"channel": "formal-receipt", "literal_ast": dv_true()}), "listeners", judgment.accepted_listeners), "public_grants", judgment.accepted_public_grants), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
+                                    actor = actors[index]
+                        if dv_and((action.kind == "replay"), (result.execution.status == "applied")):
+                            var candidates = dv_find(actor.policy, "hypotheses", [])
+                            var k = 0
+                            var simulations = dv_find(actor, "simulations", [])
+                            var coverages = []
+                            var factor_rejections = []
+                            actor = dv_with_many(actor, {"model_paid_event": parent, "policy": dv_with(actor.policy, "model_work_remaining", dv_find(model, "work_limit", 0))})
+                            if (0 < rt_count(dv_find(actor.policy, "factor_constraints", []))):
+                                var prune = dvs_factor_prune(actor, events, time, parent)
+                                var certificates = []
+                                var c = 0
+                                while (c < rt_count(prune.certificates)):
+                                    rt_push(certificates, dv_with(prune.certificates[c], "event", prune.event))
+                                    c = (c + 1)
+                                actor = dv_with_many(actor, {"factor_certificates": certificates, "model_previous_event": prune.event, "last_cognitive_event": prune.event, "policy": dv_with_many(actor.policy, {"model_budget": prune.remaining, "model_work_remaining": prune.work_remaining})})
+                            while (k < rt_count(candidates)):
+                                var candidate = candidates[k]
+                                var coverage_key = rt_cat(dv_find(candidates[k], "question", dv_find(candidates[k], "topic", "")), dv_find(candidates[k], "group", ""))
+                                if dv_has_key(coverages, coverage_key):
+                                    false
+                                else:
+                                    coverages = dv_with(coverages, coverage_key, dvs_factor_coverage(actor, candidate, events))
+                                if dv_and(dvp_topic(actor, candidate), dv_and((0 < rt_count(dv_find(candidate, "basis", []))), (dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true"))):
+                                    if dvs_factor_covered(candidate, dv_get(coverages, coverage_key).certificates):
+                                        rt_push(factor_rejections, candidate.id)
+                                    else:
+                                        if (dvs_sim_work_budget(actor) < 1):
+                                            k = rt_count(candidates)
+                                        else:
+                                            var cached = dv_find(simulations, candidate.id, false)
+                                            var simulation = false
+                                            var local_8 = false
+                                            if (cached == false):
+                                                local_8 = dvs_model(actor, candidate, events, time, parent)
+                                            else:
+                                                var recheck = dvs_model_recheck(actor, cached)
+                                                dvs_event(events, "model_recheck", id, time, dvs_model_parent_ids(actor, parent, dv_find(cached, "event", "")), {"actor_before": actor, "model_before": cached, "hypothesis": candidate, "result": recheck})
+                                                local_8 = recheck
+                                            simulation = local_8
+                                            simulation = dv_with_many(simulation, {"validation_inputs": dv_explanation_merge(dv_explanation_model_inputs(actor.mind, simulation), dvs_model_observed_inputs(simulation)), "source_adoptions": actor.mind.adoptions, "source_response_models": dv_find(actor, "response_models", [])})
+                                            simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
+                                            actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
+                                k = (k + 1)
+                            actor = dv_with_many(actor, {"simulations": simulations, "factor_rejections": {"source_revision": actor.mind.revision, "ids": factor_rejections}})
+                        if dv_has_key(actor, "location_ref"):
+                            var cell = dv_read(physical, actor.location_ref)
+                            if cell.known:
+                                actor = dv_with(actor, "location", cell.value)
+                        if dv_has_key(action, "answer"):
+                            actor = dv_with(actor, "answer_attempt_signatures", dv_with(dv_find(actor, "answer_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
+                        if (action.kind == "replay"):
+                            actor = dv_with(actor, "replay_attempt_signatures", dv_with(dv_find(actor, "replay_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
+                        actor = dv_with(actor, "attempts", dv_with(dv_find(actor, "attempts", []), action.id, actor.mind.revision))
+                        actor = dv_with_many(actor, {"used": dv_append(dv_find(actor, "used", []), action.id), "policy": dv_with(actor.policy, "budget", (actor.policy.budget - 1))})
+                        actors = dvs_replace(actors, index, actor)
+                        if dv_and(dv_has_key(action, "public_observers"), (result.execution.status == "applied")):
+                            actors = dvs_visible_action_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
+                        if dv_and(dv_has_key(action, "speech"), (result.execution.status == "applied")):
+                            actors = dvs_speech(actors, index, action, events, time, parent)
+                            actors = dvs_public_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
+                        actor = actors[index]
+                        executed = (executed + 1)
+                        idle = 0
+        actors = dvs_replace(actors, index, actor)
+    if (not (idle < rt_count(actors))):
+        var local_9 = false
+        if duration_blocked:
+            local_9 = "budget-exhausted"
+        else:
+            local_9 = "no-admissible-action-or-budget"
+        status = local_9
+    if (not (dv_find(physical, "time", 0) < horizon)):
+        status = "budget-exhausted"
+    dvs_event(events, "session_stopped", "", dv_find(physical, "time", 0), dv_single(events[(rt_count(events) - 1)].id), {"reason": status, "actions_executed": executed})
+    return dv_with(dv_with(dv_with(dv_with({"events": events, "initial": initial, "final": {"physical": physical, "actors": actors}, "status": status}, "time", dv_find(physical, "time", 0)), "game_time_unit", "minute"), "configuration", dv_with(dv_with(dv_with({"cost_model": costs, "formal_answers": dv_find(story, "formal_answers", []), "source_refs": dv_find(story, "source_refs", [])}, "time_origin", {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}), "report_labels", dv_find(story, "report_labels", [])), "bindings", bindings)), "scope", "DV formal model; no Godot host input or geometry")
+
+fn dvs_replace(items, index, value):
+    var result = []
+    var i = 0
+    while (i < rt_count(items)):
+        var local_1 = false
+        if (i == index):
+            local_1 = value
+        else:
+            local_1 = items[i]
+        rt_push(result, local_1)
+        i = (i + 1)
+    return result
+
+fn dvs_main():
+    var story = rt_json_parse(rt_read(rt_arg(0)))
+    var local_1 = false
+    if (2 < rt_arg_count()):
+        local_1 = rt_arg(2)
+    else:
+        local_1 = "enabled"
+    var capability = local_1
+    return rt_write(rt_arg(1), rt_json_stringify(dvs_run(story, capability)))
+
+fn dvs_public_grants(actors, speaker_index, action, physical, bindings, events, time, parent, execution_id):
+    var result = actors
+    var speaker = actors[speaker_index]
+    var listeners = dv_find(action, "listeners", [])
+    var i = 0
+    while (i < rt_count(actors)):
+        var actor = result[i]
+        var mind = result[i].mind
+        if dv_and(dv_has(listeners, actor.id), dvs_speech_hearing(speaker, actor, action.speech)):
+            var grants = dv_find(action, "public_grants", [])
+            var observations = dv_perceive(physical, mind, bindings, dv_find(action, "public_grants", []), execution_id, time)
+            if (0 < rt_count(observations)):
+                var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
+                var observation_event = ""
+                observation_event = dvs_event(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dvs_public_grant_parents(events, parent, actor.id)), dv_with_many({"observations": observations, "mind_before": mind, "mind_after": next, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id, "source_event": dvs_public_literal_source(events, parent, actor.id)}))
+                result = dvs_replace(result, i, dv_with_many(actor, {"mind": next, "last_cognitive_event": observation_event}))
+        i = (i + 1)
+    return result
+
+fn dvs_observation_source(observations, action):
+    var result = []
+    var i = 0
+    var source = dv_find(action, "observation_source", "perception")
+    var origin = dv_find(action, "observation_origin", "direct")
+    var trust = dv_find(action, "observation_trust", 1)
+    dv_require(dv_has(dv_list3("perception", "testimony", "recall"), source), "Unknown observation source")
+    dv_unit(trust)
+    while (i < rt_count(observations)):
+        rt_push(result, dv_with(dv_with(dv_with(observations[i], "source", source), "origin", origin), "trust", trust))
+        i = (i + 1)
+    return result
+
+fn dvs_observation_profile(actor):
+    return dv_observation_profile(dv_find(actor.policy, "observation_weights", {"perception": 1, "testimony": 1, "recall": 1}), dv_find(actor.policy, "observation_threshold", 0.5))

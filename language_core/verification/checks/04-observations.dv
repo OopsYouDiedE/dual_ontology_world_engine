@@ -1,57 +1,98 @@
-(defn v_execution_origin (events execution_id)
-  (let (i 0 found (rt_list))
-    (do (while (rt_lt i (rt_count events))
-      (let (e (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
-        (do (if (rt_eq (dv_get e "type") "action_execution")
-          (if (rt_eq (dv_find (dv_find data "quote" (rt_list)) "event" "") execution_id) (set found e) false) false)
-          (set i (rt_add i 1))))) found)))
-(defn v_projection_sources (items action)
-  (let (result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count items))
-      (do (rt_push result (dv_with (dv_with (dv_with (rt_at items i) "source" (dv_find action "observation_source" "perception"))
-        "origin" (dv_find action "observation_origin" "direct")) "trust" (dv_find action "observation_trust" 1))) (set i (rt_add i 1)))) result)))
-(defn v_observations_compute (trace)
-  (let (events (v_events trace) result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count events))
-      (let (e (rt_at events i) data (dv_find (rt_at events i) "data" (rt_list)))
-        (do (if (rt_eq (dv_get e "type") "observation")
-          (let (origin (v_execution_origin events (dv_find data "execution_id" "")) status "insufficient_evidence" reason "Actual execution origin, authorized grants and immutable mind snapshots required")
-            (do
-              (if (dv_and (rt_lt 0 (rt_count origin)) (dv_and (dv_has_key data "bindings") (dv_and (dv_has_key data "grants") (dv_has_key data "mind_before"))))
-                (let (execution (dv_get origin "data") action (dv_find data "action" (rt_list)) derived (rt_list))
-                  (do
-                    (set derived (dv_perceive (dv_get execution "physical_after") (dv_get data "mind_before")
-                      (dv_get data "bindings") (dv_get data "grants") (dv_get data "execution_id") (dv_get e "time")))
-                    (if (rt_eq (dv_get e "actor") (dv_get origin "actor")) (set derived (v_projection_sources derived action)) false)
-                    (set status (if (dv_and (v_ancestor events (dv_get e "id") (dv_get origin "id")) (dv_same derived (dv_find data "observations" (rt_list)))) "supported" "violated"))
-                    (if (dv_has_key data "mind_after")
-                      (let (next (dv_get (dv_update_mind (dv_get data "mind_before") derived (dv_get (dv_get data "mind_before") "revision") (v_actor_observation_profile trace (dv_get e "actor"))) "world"))
-                        (if (dv_same next (dv_get data "mind_after")) false (set status "violated")))
-                      (set status "insufficient_evidence"))
-                    (set reason "Recomputed authorized projection and source metadata, then replayed actor-profile observation update against immutable after-mind"))) false)
-              (rt_push result (v_finding "observation_provenance" status reason (dv_pair (dv_get e "id") (dv_find origin "id" false)))))) false)
-          (set i (rt_add i 1))))) result)))
-(defn v_observations (trace)
-  (if (dv_has_key trace "judge_observation_findings") (dv_get trace "judge_observation_findings") (v_observations_compute trace)))
-(defn v_observation_verified (trace id)
-  (let (findings (v_observations trace) i 0 valid false)
-    (do (while (rt_lt i (rt_count findings))
-      (let (f (rt_at findings i)) (do
-        (if (dv_and (dv_has (dv_get f "evidence_refs") id) (rt_eq (dv_get f "status") "supported")) (set valid true) false)
-        (set i (rt_add i 1))))) valid)))
+fn v_execution_origin(events, execution_id):
+    var i = 0
+    var found = []
+    while (i < rt_count(events)):
+        var e = events[i]
+        var data = dv_find(events[i], "data", [])
+        if (e.type == "action_execution"):
+            if (dv_find(dv_find(data, "quote", []), "event", "") == execution_id):
+                found = e
+        i = (i + 1)
+    return found
 
-(defn v_actor_observation_profile (trace actor_id)
-  (let (actors (dv_get (dv_get trace "initial") "actors") i 0 policy (rt_list))
-    (do (while (rt_lt i (rt_count actors))
-      (do (if (rt_eq (dv_get (rt_at actors i) "id") actor_id) (set policy (dv_get (rt_at actors i) "policy")) false) (set i (rt_add i 1))))
-      (dv_observation_profile (dv_find policy "observation_weights" (dv_m3 "perception" 1 "testimony" 1 "recall" 1)) (dv_find policy "observation_threshold" 0.5)))))
+fn v_projection_sources(items, action):
+    var result = []
+    var i = 0
+    while (i < rt_count(items)):
+        rt_push(result, dv_with(dv_with(dv_with(items[i], "source", dv_find(action, "observation_source", "perception")), "origin", dv_find(action, "observation_origin", "direct")), "trust", dv_find(action, "observation_trust", 1)))
+        i = (i + 1)
+    return result
 
-(defn v_prepare_evidence_cache (manifest trace)
-  (let (cached (rt_list) i 0)
-    (do
-      (while (rt_lt i (rt_count trace))
-        (do (if (dv_has (dv_append (dv_list3 "judge_observation_findings" "judge_reception_findings" "judge_model_findings") "judge_argument_findings") (rt_at (rt_at trace i) 0)) false (rt_push cached (rt_at trace i))) (set i (rt_add i 1))))
-      (rt_push cached (dv_pair "judge_observation_findings" (v_observations_compute cached)))
-      (rt_push cached (dv_pair "judge_reception_findings" (v_receptions_compute cached)))
-      (rt_push cached (dv_pair "judge_model_findings" (v_model_checks_compute manifest cached)))
-      (rt_push cached (dv_pair "judge_argument_findings" (v_argument_checks_compute manifest cached))) cached)))
+fn v_observations_compute(trace):
+    var events = v_events(trace)
+    var result = []
+    var i = 0
+    while (i < rt_count(events)):
+        var e = events[i]
+        var data = dv_find(events[i], "data", [])
+        if (e.type == "observation"):
+            var origin = v_execution_origin(events, dv_find(data, "execution_id", ""))
+            var status = "insufficient_evidence"
+            var reason = "Actual execution origin, authorized grants and immutable mind snapshots required"
+            if dv_and((0 < rt_count(origin)), dv_and(dv_has_key(data, "bindings"), dv_and(dv_has_key(data, "grants"), dv_has_key(data, "mind_before")))):
+                var execution = origin.data
+                var action = dv_find(data, "action", [])
+                var derived = []
+                derived = dv_perceive(execution.physical_after, data.mind_before, data.bindings, data.grants, data.execution_id, e.time)
+                if (e.actor == origin.actor):
+                    derived = v_projection_sources(derived, action)
+                var local_1 = false
+                if dv_and(v_ancestor(events, e.id, origin.id), dv_same(derived, dv_find(data, "observations", []))):
+                    local_1 = "supported"
+                else:
+                    local_1 = "violated"
+                status = local_1
+                if dv_has_key(data, "mind_after"):
+                    var next = dv_update_mind(data.mind_before, derived, data.mind_before.revision, v_actor_observation_profile(trace, e.actor)).world
+                    if dv_same(next, data.mind_after):
+                        false
+                    else:
+                        status = "violated"
+                else:
+                    status = "insufficient_evidence"
+                reason = "Recomputed authorized projection and source metadata, then replayed actor-profile observation update against immutable after-mind"
+            rt_push(result, v_finding("observation_provenance", status, reason, dv_pair(e.id, dv_find(origin, "id", false))))
+        i = (i + 1)
+    return result
+
+fn v_observations(trace):
+    if dv_has_key(trace, "judge_observation_findings"):
+        return trace.judge_observation_findings
+    else:
+        return v_observations_compute(trace)
+
+fn v_observation_verified(trace, id):
+    var findings = v_observations(trace)
+    var i = 0
+    var valid = false
+    while (i < rt_count(findings)):
+        var f = findings[i]
+        if dv_and(dv_has(f.evidence_refs, id), (f.status == "supported")):
+            valid = true
+        i = (i + 1)
+    return valid
+
+fn v_actor_observation_profile(trace, actor_id):
+    var actors = trace.initial.actors
+    var i = 0
+    var policy = []
+    while (i < rt_count(actors)):
+        if (actors[i].id == actor_id):
+            policy = actors[i].policy
+        i = (i + 1)
+    return dv_observation_profile(dv_find(policy, "observation_weights", {"perception": 1, "testimony": 1, "recall": 1}), dv_find(policy, "observation_threshold", 0.5))
+
+fn v_prepare_evidence_cache(manifest, trace):
+    var cached = []
+    var i = 0
+    while (i < rt_count(trace)):
+        if dv_has(dv_append(dv_list3("judge_observation_findings", "judge_reception_findings", "judge_model_findings"), "judge_argument_findings"), trace[i][0]):
+            false
+        else:
+            rt_push(cached, trace[i])
+        i = (i + 1)
+    rt_push(cached, dv_pair("judge_observation_findings", v_observations_compute(cached)))
+    rt_push(cached, dv_pair("judge_reception_findings", v_receptions_compute(cached)))
+    rt_push(cached, dv_pair("judge_model_findings", v_model_checks_compute(manifest, cached)))
+    rt_push(cached, dv_pair("judge_argument_findings", v_argument_checks_compute(manifest, cached)))
+    return cached

@@ -6,7 +6,9 @@
 
 SYNTAX.md维护完整书写格式，DESIGN.md说明语言与编译架构。设计和指南直接描述语法、机制、模块和命令。第一章源码需求保存在artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md。
 
-surface-v2 为当前待实现的语法设计，取代 surface-v1：缩进前端展开固定领域运算，名义数值类型承载单位、范围与约束；认知映射、门槛接纳和守恒配平分别由 DV 库实现。编译器后续以 Interpret、AcceptanceUpdate、SolveBalance、Commit 等类型化节点连接这些操作，平台 ABI 承接基础数值与容器。当前仍运行 S 表达式启动链，设计示例不登记为已可编译内容；完成新前端后再迁移正式 .dv 源码与生成物。
+surface-v2 的可执行前端位于 compiler/compiler.dv：缩进、Unicode 标识符、define 别名、函数/局部语句、记录/列表、中缀运算、mapping、acceptance 和有限域 imprint 声明展开后复用 C# 后端。Core、正式 session、checks 与 chapter1 内容已经使用新表层语法。编译器自身保留 S 表达式启动源，C0→C1→C2→C3 继续自举；通用泛型、单位推导、完整能力类型和目标无关 Typed IR 尚未实现。
+
+compiler 中 ck_* 执行名义类型、字面量范围与可变性检查；core/55-cognition.dv 提供接纳分类、有限域配平搜索及独立证书核验。Runtime.cs 只提供基础有理数、Unicode 与容器 ABI。求解器的最优声明须经 DV 核验器重新检查覆盖、可行性与成本；正式提交一起结算认知、资源和搜索/核验工作量。核心标识符和声明关键词使用英文，其他自然语言用文件头 define 映射。
 
 ## 模块
 
@@ -57,4 +59,9 @@ python language_core/tools/run_verification.py --config <process-plan.json> --ou
 
 run_verification的普通编译/会话执行持续写入当轮stdout/stderr原始文件，结束后记录进程时长与来源封存。可在会话期间查看已经实际发生的行动；完整停止轨迹与只读判定另行记录。
 
-用户2026-10-12停止独立Agent复评的裁定继续适用。新语法方案先交付，随后实现并使用第一章内容实际运行。
+用户2026-10-12停止独立Agent复评的裁定继续适用。新语法运行使用 verification/run-surface-v2.json 的单次正式会话计划；不默认执行旧多场景计划。
+
+
+当前机器缺少 .NET 8 运行时而有 .NET 9；本轮记录显式使用 DOTNET_ROLL_FORWARD=Major 运行 net8.0 产物。源码仍以 .NET 8 为目标。NuGetAudit=false 仅关闭本地构建时不可达的漏洞索引查询，不改变 DV 检查器或游戏条件。
+
+刻画的 Core 接线由 dv_imprint_prepare/apply 完成：从真实 mind 字段建立配平坐标，按证书写回认知并通过既有 90-action-cost 账本结算；工作额度单独返回，由宿主和认知、世界、账本一同发布。

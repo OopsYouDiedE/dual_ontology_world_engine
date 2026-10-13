@@ -1,0 +1,59 @@
+[
+  {
+    "label": "numeric-compile",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-run-04\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\numeric\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\numeric\\Program.cs"
+    ],
+    "exit": 0,
+    "seconds": 1.625
+  },
+  {
+    "label": "numeric-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\numeric\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0,
+    "seconds": 3.625
+  },
+  {
+    "label": "numeric-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\numeric\\bin\\Release\\net8.0\\Program.dll"
+    ],
+    "exit": 0,
+    "seconds": 0.11000000000058208
+  },
+  {
+    "label": "checker-compile",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-run-04\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\checker\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\checker\\Program.cs"
+    ],
+    "exit": 0,
+    "seconds": 4.281999999999243
+  },
+  {
+    "label": "checker-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\surface-v2-mind-build\\checker\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0,
+    "seconds": 3.7180000000007567
+  }
+]

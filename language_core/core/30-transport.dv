@@ -1,61 +1,87 @@
-; Signals are segmented by the author/host. No hidden reconstruction of lost words.
-(defn dv_segment (content strength band) (dv_m3 "content" content "strength" strength "band" band))
-(defn dv_signal (location medium segments) (dv_m3 "location" (dv_entity_ref location) "medium" medium "segments" segments))
-(defn dv_filter_signal (segments gain threshold bands)
-  (let (result (rt_list) i 0)
-    (do (while (rt_lt i (rt_count segments))
-      (let (segment (rt_at segments i) strength (rt_mul (dv_get segment "strength") gain))
-        (do
-          (if (dv_and (rt_not (rt_lt strength threshold)) (dv_or (rt_eq (rt_count bands) 0) (dv_has bands (dv_get segment "band"))))
-            (rt_push result (dv_segment (dv_get segment "content") strength (dv_get segment "band"))) false)
-          (set i (rt_add i 1))))) result)))
-(defn dv_transport (world path signal threshold)
-  (do
-    (dv_require (rt_not (rt_lt threshold 0)) "Negative perception threshold")
-    (let (i 0 location (dv_get signal "location") segments (dv_clone (dv_get signal "segments")) status "delivered" trace (rt_list))
-      (do
-        (while (dv_and (rt_eq status "delivered") (rt_lt i (rt_count path)))
-          (let (channel (rt_at path i) objects (dv_get world "objects"))
-            (do
-              (dv_require (dv_has_key objects channel) "Unknown channel")
-              (dv_require (rt_eq (dv_truth world (dv_fact (dv_ref channel "identity" "kind") "channel")) "true") "Transport object must be known as a channel")
-              (let (from (dv_read world (dv_ref channel "link" "from"))
-                    to (dv_read world (dv_ref channel "link" "to"))
-                    medium (dv_read world (dv_ref channel "link" "medium"))
-                    gate (dv_read world (dv_ref channel "link" "gate"))
-                    enabled (dv_read world (dv_ref channel "transport" "enabled"))
-                    gain (dv_read world (dv_ref channel "transport" "gain")))
-                (if (dv_and (dv_and (dv_uncontested from) (dv_uncontested to))
-                      (dv_and (dv_and (dv_uncontested medium) (dv_uncontested gate)) (dv_and (dv_uncontested enabled) (dv_uncontested gain))))
-                  (do
-                    (dv_require (dv_same location (dv_get from "value")) "Discontinuous channel path")
-                    (dv_require (rt_eq (dv_get signal "medium") (dv_get medium "value")) "Channel medium mismatch")
-                    (let (gate_truth (dv_truth world (dv_get gate "value")))
-                      (if (dv_and (dv_get enabled "value") (rt_eq gate_truth "true"))
-                        (let (bands_cell (dv_read world (dv_ref channel "transport" "bands")))
-                          (if (dv_uncontested bands_cell)
-                            (do
-                              (set segments (dv_filter_signal segments (dv_unit (dv_get gain "value")) threshold (dv_get bands_cell "value")))
-                              (set location (dv_get to "value"))
-                              (rt_push trace channel))
-                            (set status "unknown")))
-                        (set status (if (rt_eq gate_truth "unknown") "unknown" "blocked")))))
-                  (set status "unknown")))
-              (set i (rt_add i 1)))))
-        (dv_with (dv_m4 "status" status "location" location "segments" (if (rt_eq status "delivered") segments (rt_list)) "trace" trace)
-          "world_revision" (dv_get world "revision"))))))
-(defn dv_hear (delivery subject local_ref perceived_origin event_id time)
-  (do
-    (dv_require (rt_eq (dv_get delivery "status") "delivered") "No delivered signal")
-    (dv_require (rt_eq (dv_find delivery "hypothetical" true) false) "Predicted or unauthorised transmission cannot become perception")
-    (dv_observation event_id subject local_ref (dv_get delivery "segments") "perception" perceived_origin time 1 event_id)))
-(defn dv_transport_theory (law) (dv_with law "operation" "attenuate-filter"))
-(defn dv_transmit (world law_name path signal threshold)
-  (let (adoption (dv_get (dv_get world "adoptions") law_name) law (dv_get adoption "law"))
-    (do
-      (dv_require (dv_get adoption "active") "Transmission law is not active")
-      (dv_require (rt_eq (dv_get law "operation") "attenuate-filter") "Not a transport theory")
-      (dv_require (if (rt_eq (dv_get world "domain") "physical") (rt_eq (dv_get adoption "mode") "enforce")
-        (dv_and (rt_eq (dv_get world "domain") "mind") (rt_eq (dv_get adoption "mode") "predict"))) "Wrong transmission adoption")
-      (dv_require (rt_eq (dv_truth world (dv_get law "premise")) "true") "Transmission premise is not established")
-      (dv_with (dv_with (dv_transport world path signal threshold) "basis" (dv_get adoption "basis")) "hypothetical" (rt_not (rt_eq (dv_get world "domain") "physical"))))))
+// Signals are segmented by the author/host. No hidden reconstruction of lost words.
+
+fn dv_segment(content, strength, band):
+    return {"content": content, "strength": strength, "band": band}
+
+fn dv_signal(location, medium, segments):
+    return {"location": dv_entity_ref(location), "medium": medium, "segments": segments}
+
+fn dv_filter_signal(segments, gain, threshold, bands):
+    var result = []
+    var i = 0
+    while (i < rt_count(segments)):
+        var segment = segments[i]
+        var strength = (segment.strength * gain)
+        if dv_and((not (strength < threshold)), dv_or((rt_count(bands) == 0), dv_has(bands, segment.band))):
+            rt_push(result, dv_segment(segment.content, strength, segment.band))
+        i = (i + 1)
+    return result
+
+fn dv_transport(world, path, signal, threshold):
+    dv_require((not (threshold < 0)), "Negative perception threshold")
+    var i = 0
+    var location = signal.location
+    var segments = dv_clone(signal.segments)
+    var status = "delivered"
+    var trace = []
+    while dv_and((status == "delivered"), (i < rt_count(path))):
+        var channel = path[i]
+        var objects = world.objects
+        dv_require(dv_has_key(objects, channel), "Unknown channel")
+        dv_require((dv_truth(world, dv_fact(dv_ref(channel, "identity", "kind"), "channel")) == "true"), "Transport object must be known as a channel")
+        var from = dv_read(world, dv_ref(channel, "link", "from"))
+        var to = dv_read(world, dv_ref(channel, "link", "to"))
+        var medium = dv_read(world, dv_ref(channel, "link", "medium"))
+        var gate = dv_read(world, dv_ref(channel, "link", "gate"))
+        var enabled = dv_read(world, dv_ref(channel, "transport", "enabled"))
+        var gain = dv_read(world, dv_ref(channel, "transport", "gain"))
+        if dv_and(dv_and(dv_uncontested(from), dv_uncontested(to)), dv_and(dv_and(dv_uncontested(medium), dv_uncontested(gate)), dv_and(dv_uncontested(enabled), dv_uncontested(gain)))):
+            dv_require(dv_same(location, from.value), "Discontinuous channel path")
+            dv_require((signal.medium == medium.value), "Channel medium mismatch")
+            var gate_truth = dv_truth(world, gate.value)
+            if dv_and(enabled.value, (gate_truth == "true")):
+                var bands_cell = dv_read(world, dv_ref(channel, "transport", "bands"))
+                if dv_uncontested(bands_cell):
+                    segments = dv_filter_signal(segments, dv_unit(gain.value), threshold, bands_cell.value)
+                    location = to.value
+                    rt_push(trace, channel)
+                else:
+                    status = "unknown"
+            else:
+                var local_1 = false
+                if (gate_truth == "unknown"):
+                    local_1 = "unknown"
+                else:
+                    local_1 = "blocked"
+                status = local_1
+        else:
+            status = "unknown"
+        i = (i + 1)
+    var local_2 = false
+    if (status == "delivered"):
+        local_2 = segments
+    else:
+        local_2 = []
+    return dv_with({"status": status, "location": location, "segments": local_2, "trace": trace}, "world_revision", world.revision)
+
+fn dv_hear(delivery, subject, local_ref, perceived_origin, event_id, time):
+    dv_require((delivery.status == "delivered"), "No delivered signal")
+    dv_require((dv_find(delivery, "hypothetical", true) == false), "Predicted or unauthorised transmission cannot become perception")
+    return dv_observation(event_id, subject, local_ref, delivery.segments, "perception", perceived_origin, time, 1, event_id)
+
+fn dv_transport_theory(law):
+    return dv_with(law, "operation", "attenuate-filter")
+
+fn dv_transmit(world, law_name, path, signal, threshold):
+    var adoption = dv_get(world.adoptions, law_name)
+    var law = adoption.law
+    dv_require(adoption.active, "Transmission law is not active")
+    dv_require((law.operation == "attenuate-filter"), "Not a transport theory")
+    var local_1 = false
+    if (world.domain == "physical"):
+        local_1 = (adoption.mode == "enforce")
+    else:
+        local_1 = dv_and((world.domain == "mind"), (adoption.mode == "predict"))
+    dv_require(local_1, "Wrong transmission adoption")
+    dv_require((dv_truth(world, law.premise) == "true"), "Transmission premise is not established")
+    return dv_with(dv_with(dv_transport(world, path, signal, threshold), "basis", adoption.basis), "hypothetical", (not (world.domain == "physical")))

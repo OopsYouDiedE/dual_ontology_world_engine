@@ -1,125 +1,244 @@
-(defn v_formal_gate_truth (axes)
-  (let (i 0 result "true")
-    (do (while (rt_lt i (rt_count axes))
-      (let (value (rt_at (rt_at axes i) 1))
-        (do (if (rt_eq value "false") (set result "false")
-          (if (dv_and (rt_eq value "unknown") (rt_eq result "true")) (set result "unknown") false))
-          (set i (rt_add i 1))))) result)))
-(defn v_parent_submission (events e)
-  (let (parents (dv_find e "parents" (rt_list)) i 0 found (rt_list))
-    (do (while (rt_lt i (rt_count parents))
-      (let (parent (v_event events (rt_at parents i))) (do
-        (if (rt_eq (dv_find parent "type" "") "answer_submitted") (set found parent) false) (set i (rt_add i 1))))) found)))
-(defn v_transition_executable (physical rule time)
-  (let (name (dv_find rule "accepted_law" "") adoption (dv_find (dv_get physical "adoptions") (dv_find rule "accepted_law" "") (rt_list)))
-    (if (rt_eq name "") "unknown"
-      (if (rt_eq (rt_count adoption) 0) "unknown"
-        (if (dv_and (dv_get adoption "active") (rt_eq (dv_get adoption "mode") "enforce"))
-          (let (law (dv_get adoption "law") truth (dv_truth physical (dv_get (dv_get adoption "law") "premise")))
-            (if (rt_eq truth "true")
-              (if (rt_eq (dv_get (dv_stage physical (dv_get law "effects") time (dv_get adoption "basis") (dv_get adoption "confidence")) "status") "ready") "true" "false") truth)) "false")))))
-(defn v_answer_validation (manifest trace e)
-  (let (submit (v_parent_submission (v_events trace) e) status "insufficient_evidence" reason "缺少本次真实提交或完整冻结答辩规则" refs (dv_single (dv_get e "id")) axes (rt_list))
-    (do
-      (if (rt_lt 0 (rt_count submit))
-        (let (data (dv_get submit "data") rule (v_formal_rule (v_formal_rules manifest trace) (dv_find (v_submission_action submit) "answer_id" "")))
-          (do
-            (rt_push refs (dv_get submit "id"))
-            (if (rt_eq (rt_count rule) 0)
-              (if (dv_or (dv_has_key manifest "formal_answers") (dv_has_key (dv_find trace "configuration" (rt_list)) "formal_answers"))
-                (do (set status (if (rt_eq (dv_get e "type") "answer_rejected") "supported" "violated"))
-                  (set reason "提交答案未列于冻结答辩目录，正式系统应驳回")) false) false)
-            (if (dv_and (dv_and (rt_lt 0 (rt_count rule)) (dv_has_key data "mind")) (dv_has_key data "physical"))
-              (let (literal (dv_truth (dv_get data "physical") (if (dv_find rule "condition_from_answer" false) (v_physical_proposition (dv_get (v_submission_action submit) "answer") (dv_find (dv_find trace "configuration" (rt_list)) "bindings" (rt_list)) (dv_get (dv_get data "mind") "subject")) (dv_get rule "condition")))
-                    support (dv_truth (dv_get data "mind") (dv_get rule "required_support"))
-                    match (if (dv_has_key rule "question_match") (dv_truth (dv_get data "physical") (dv_get rule "question_match")) "unknown")
-                    complete (if (dv_has_key rule "answer_complete") (dv_truth (dv_get data "mind") (dv_get rule "answer_complete")) "unknown")
-                    executable (v_transition_executable (dv_get data "physical") rule (dv_get e "time")) accepted false)
-                (do
-                  (if (dv_find rule "require_argument" false)
-                    (if (v_submitted_argument_valid manifest trace submit) false (set complete "unknown")) false)
-                  (set accepted (dv_and (dv_and (rt_eq literal "true") (rt_eq support "true"))
-                    (dv_and (rt_eq match "true") (dv_and (rt_eq complete "true") (rt_eq executable "true")))))
-                  (if (dv_has_key data "personal_accepted_answers")
-                    (let (stage (dv_find (dv_get e "data") "stage" "") level (if (dv_or (dv_has_key (v_submission_action submit) "argument") (dv_find rule "require_argument" false)) 2 1)
-                          prior (dv_find (dv_get data "personal_accepted_answers") (dv_find (dv_get e "data") "stage" "") 0))
-                      (set accepted (dv_and accepted (rt_lt prior level)))) false)
-                  (set axes (dv_with (dv_m4 "literal_truth" literal "epistemic_support" support "question_match" match "answer_complete" complete) "transition_executable" executable))
-                  (if (rt_eq (v_formal_gate_truth axes) "unknown")
-                    (do (set status "insufficient_evidence") (set reason "当前问题、回答完整性或交接前提尚未确定；字面真值独立保留"))
-                    (do
-                      (set status (if (rt_eq (rt_eq (dv_get e "type") "answer_accepted") accepted) "supported" "violated"))
-                      (set reason "独立核对字面真值、本人来源、当前题目、回答完整性与可执行交接后，验证正式接受或驳回")))
-                  (if (rt_not (rt_eq (dv_get e "actor") (dv_get submit "actor"))) (set status "violated") false)
-                  (if accepted
-                    (do
-                      (if (dv_and (v_support trace (dv_get data "mind") (dv_get e "actor") (dv_get rule "required_support") (rt_list))
-                        (v_support trace (dv_get data "mind") (dv_get e "actor") (dv_get rule "answer_complete") (rt_list))) false (set status "insufficient_evidence"))
-                      (if (rt_eq (dv_find (dv_get e "data") "accepted_law" "") (dv_get rule "accepted_law")) false
-                        (do (set status "violated") (set reason "接受记录指向的交接法则与冻结答辩规则不同")))) false))) false))) false)
-      (dv_with (dv_with (v_finding "formal_answer_validity" status reason refs) "axes" axes) "question_id" (if (rt_lt 0 (rt_count submit)) (v_question submit) false)))))
-(defn v_axis_supported (axes id)
-  (let (i 0 found false) (do (while (rt_lt i (rt_count axes))
-    (do (if (rt_eq (dv_get (rt_at axes i) "id") id) (set found (rt_eq (dv_get (rt_at axes i) "status") "supported")) false) (set i (rt_add i 1)))) found)))
-(defn v_ready_deadline (manifest trace oracle)
-  (let (events (v_events trace) actor (dv_find oracle "actor" "") first_id (dv_find oracle "first_question_id" "") target_id (dv_find oracle "target_question_id" "")
-        t0 (rt_list) ready (rt_list) i 0 status "not_observed" reason "指定首题接受或目标题独立就绪事件尚未发生")
-    (do
-      (if (dv_or (dv_or (rt_not (dv_has_key (dv_find oracle "limit" (rt_list)) "maximum_game_minutes")) (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start"))) (dv_or (rt_eq actor "") (dv_or (rt_eq first_id "") (rt_eq target_id ""))))
-        (do (set status "insufficient_evidence") (set reason "验收配置须绑定本人、首题与目标题，并声明从正式运行起点计时"))
-        (do
-          (while (rt_lt i (rt_count events))
-            (let (e (rt_at events i))
-              (do
-                (if (rt_eq (dv_get e "actor") actor)
-                  (do
-                    (if (dv_and (rt_eq (rt_count t0) 0) (rt_eq (dv_get e "type") "answer_accepted"))
-                      (let (submit (v_parent_submission events e))
-                        (if (dv_and (rt_lt 0 (rt_count submit)) (rt_eq (v_question submit) first_id))
-                          (if (rt_eq (dv_get (v_answer_validation manifest trace e) "status") "supported") (set t0 e) false) false)) false)
-                    (if (dv_and (rt_eq (rt_count ready) 0) (rt_eq (dv_get e "type") "answer_ready"))
-                      (if (rt_eq (v_question e) target_id) (set ready e) false) false)) false)
-                (set i (rt_add i 1)))))
-          (if (dv_and (rt_lt 0 (rt_count t0)) (rt_lt 0 (rt_count ready)))
-            (let (data (dv_get (v_ready_context trace ready) "data") axes (v_axis_bundle manifest trace (dv_with (v_ready_context trace ready) "type" "answer_submitted") oracle) elapsed (rt_sub (dv_get ready "time") (dv_get (dv_get (dv_get trace "initial") "physical") "time")))
-              (do
-                (set status "insufficient_evidence") (set reason "就绪需要独立来源及当前题目的真值、本人证据与完整因果链；局部模型解释不能替代全题")
-                (if (dv_and (dv_and (dv_has_key data "basis_event_ids") (rt_lt 0 (rt_count (dv_find data "basis_event_ids" (rt_list)))))
-                    (dv_and (v_submitted_argument_valid manifest trace (v_ready_context trace ready)) (dv_and (v_axis_supported axes "literal_truth") (dv_and (v_axis_supported axes "epistemic_support") (v_axis_supported axes "causal_completeness")))))
-                  (let (basis (dv_get data "basis_event_ids") j 0 valid (v_ancestor events (dv_get ready "id") (dv_get t0 "id")))
-                    (do (while (rt_lt j (rt_count basis))
-                      (do (set valid (dv_and valid (v_ancestor events (dv_get ready "id") (rt_at basis j)))) (set j (rt_add j 1))))
-                      (if (dv_and valid (rt_eq (dv_find trace "game_time_unit" "") "minute"))
-                        (do (set status (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 0) elapsed))) "supported" "violated"))
-                          (set reason "本题完整来源就绪时刻按不可变的正式运行起点及冻结游戏分钟预算核验")) false))) false))) false)))
-      (dv_with (dv_with (v_finding "ready_deadline" status reason (dv_pair (dv_find t0 "id" false) (dv_find ready "id" false)))
-        "first_acceptance_game_time" (dv_find t0 "time" false)) "ready_game_time" (dv_find ready "time" false)))))
+fn v_formal_gate_truth(axes):
+    var i = 0
+    var result = "true"
+    while (i < rt_count(axes)):
+        var value = axes[i][1]
+        if (value == "false"):
+            result = "false"
+        else:
+            if dv_and((value == "unknown"), (result == "true")):
+                result = "unknown"
+        i = (i + 1)
+    return result
 
-(defn v_run_stage_times (manifest trace oracle)
-  (let (events (v_events trace) actor (dv_find oracle "actor" "") target (dv_find oracle "target_question_id" "")
-        start (dv_get (dv_get (dv_get trace "initial") "physical") "time") maximum (dv_find (dv_find oracle "limit" (rt_list)) "maximum_game_minutes" 0)
-        kinds (dv_list3 "answer_submitted" "answer_accepted" "speech_literal") result (rt_list) k 0 accepted (rt_list))
-    (do
-      (while (rt_lt k (rt_count kinds))
-        (let (kind (rt_at kinds k) chosen (rt_list) i 0)
-          (do
-            (while (dv_and (rt_eq (rt_count chosen) 0) (rt_lt i (rt_count events)))
-              (let (event (rt_at events i))
-                (do
-                  (if (dv_and (rt_eq (dv_get event "actor") actor) (rt_eq (dv_get event "type") kind))
-                    (if (rt_eq kind "speech_literal")
-                      (if (rt_lt 0 (rt_count accepted))
-                        (if (v_ancestor events (dv_get event "id") (dv_get accepted "id")) (set chosen event) false) false)
-                      (if (rt_eq (v_question (if (rt_eq kind "answer_accepted") (v_parent_submission events event) event)) target)
-                        (set chosen event) false)) false)
-                  (set i (rt_add i 1)))))
-            (if (rt_eq kind "answer_accepted") (set accepted chosen) false)
-            (let (elapsed (if (rt_eq (rt_count chosen) 0) false (rt_sub (dv_get chosen "time") start)))
-              (rt_push result (dv_with (dv_with (v_finding (rt_cat "run_start_time_" kind)
-                (if (dv_or (rt_not (dv_has_key (dv_find oracle "limit" (rt_list)) "maximum_game_minutes")) (rt_not (rt_eq (dv_find (dv_find oracle "limit" (rt_list)) "origin" "") "run_start"))) "invalid_run" (if (rt_eq (rt_count chosen) 0) "not_observed" (if (dv_and (rt_not (rt_lt elapsed 0)) (rt_not (rt_lt maximum elapsed))) "supported" "violated")))
-                "从真实运行起点记录本题实际提交、接受或后续分享时刻；这是时限记录，合法性与完整论证由独立轴核验" (dv_single (dv_find chosen "id" false)))
-                "run_start_game_time" start) "elapsed_game_minutes" elapsed)))
-            (set k (rt_add k 1))))) result)))
+fn v_parent_submission(events, e):
+    var parents = dv_find(e, "parents", [])
+    var i = 0
+    var found = []
+    while (i < rt_count(parents)):
+        var parent = v_event(events, parents[i])
+        if (dv_find(parent, "type", "") == "answer_submitted"):
+            found = parent
+        i = (i + 1)
+    return found
 
+fn v_transition_executable(physical, rule, time):
+    var name = dv_find(rule, "accepted_law", "")
+    var adoption = dv_find(physical.adoptions, dv_find(rule, "accepted_law", ""), [])
+    if (name == ""):
+        return "unknown"
+    else:
+        if (rt_count(adoption) == 0):
+            return "unknown"
+        else:
+            if dv_and(adoption.active, (adoption.mode == "enforce")):
+                var law = adoption.law
+                var truth = dv_truth(physical, adoption.law.premise)
+                if (truth == "true"):
+                    if (dv_stage(physical, law.effects, time, adoption.basis, adoption.confidence).status == "ready"):
+                        return "true"
+                    else:
+                        return "false"
+                else:
+                    return truth
+            else:
+                return "false"
 
+fn v_answer_validation(manifest, trace, e):
+    var submit = v_parent_submission(v_events(trace), e)
+    var status = "insufficient_evidence"
+    var reason = "缺少本次真实提交或完整冻结答辩规则"
+    var refs = dv_single(e.id)
+    var axes = []
+    if (0 < rt_count(submit)):
+        var data = submit.data
+        var rule = v_formal_rule(v_formal_rules(manifest, trace), dv_find(v_submission_action(submit), "answer_id", ""))
+        rt_push(refs, submit.id)
+        if (rt_count(rule) == 0):
+            if dv_or(dv_has_key(manifest, "formal_answers"), dv_has_key(dv_find(trace, "configuration", []), "formal_answers")):
+                var local_1 = false
+                if (e.type == "answer_rejected"):
+                    local_1 = "supported"
+                else:
+                    local_1 = "violated"
+                status = local_1
+                reason = "提交答案未列于冻结答辩目录，正式系统应驳回"
+        if dv_and(dv_and((0 < rt_count(rule)), dv_has_key(data, "mind")), dv_has_key(data, "physical")):
+            var local_2 = false
+            if dv_find(rule, "condition_from_answer", false):
+                local_2 = v_physical_proposition(v_submission_action(submit).answer, dv_find(dv_find(trace, "configuration", []), "bindings", []), data.mind.subject)
+            else:
+                local_2 = rule.condition
+            var literal = dv_truth(data.physical, local_2)
+            var support = dv_truth(data.mind, rule.required_support)
+            var local_3 = false
+            if dv_has_key(rule, "question_match"):
+                local_3 = dv_truth(data.physical, rule.question_match)
+            else:
+                local_3 = "unknown"
+            var match = local_3
+            var local_4 = false
+            if dv_has_key(rule, "answer_complete"):
+                local_4 = dv_truth(data.mind, rule.answer_complete)
+            else:
+                local_4 = "unknown"
+            var complete = local_4
+            var executable = v_transition_executable(data.physical, rule, e.time)
+            var accepted = false
+            if dv_find(rule, "require_argument", false):
+                if v_submitted_argument_valid(manifest, trace, submit):
+                    false
+                else:
+                    complete = "unknown"
+            accepted = dv_and(dv_and((literal == "true"), (support == "true")), dv_and((match == "true"), dv_and((complete == "true"), (executable == "true"))))
+            if dv_has_key(data, "personal_accepted_answers"):
+                var stage = dv_find(e.data, "stage", "")
+                var local_5 = false
+                if dv_or(dv_has_key(v_submission_action(submit), "argument"), dv_find(rule, "require_argument", false)):
+                    local_5 = 2
+                else:
+                    local_5 = 1
+                var level = local_5
+                var prior = dv_find(data.personal_accepted_answers, dv_find(e.data, "stage", ""), 0)
+                accepted = dv_and(accepted, (prior < level))
+            axes = dv_with({"literal_truth": literal, "epistemic_support": support, "question_match": match, "answer_complete": complete}, "transition_executable", executable)
+            if (v_formal_gate_truth(axes) == "unknown"):
+                status = "insufficient_evidence"
+                reason = "当前问题、回答完整性或交接前提尚未确定；字面真值独立保留"
+            else:
+                var local_6 = false
+                if ((e.type == "answer_accepted") == accepted):
+                    local_6 = "supported"
+                else:
+                    local_6 = "violated"
+                status = local_6
+                reason = "独立核对字面真值、本人来源、当前题目、回答完整性与可执行交接后，验证正式接受或驳回"
+            if (not (e.actor == submit.actor)):
+                status = "violated"
+            if accepted:
+                if dv_and(v_support(trace, data.mind, e.actor, rule.required_support, []), v_support(trace, data.mind, e.actor, rule.answer_complete, [])):
+                    false
+                else:
+                    status = "insufficient_evidence"
+                if (dv_find(e.data, "accepted_law", "") == rule.accepted_law):
+                    false
+                else:
+                    status = "violated"
+                    reason = "接受记录指向的交接法则与冻结答辩规则不同"
+    var local_7 = false
+    if (0 < rt_count(submit)):
+        local_7 = v_question(submit)
+    else:
+        local_7 = false
+    return dv_with(dv_with(v_finding("formal_answer_validity", status, reason, refs), "axes", axes), "question_id", local_7)
 
+fn v_axis_supported(axes, id):
+    var i = 0
+    var found = false
+    while (i < rt_count(axes)):
+        if (axes[i].id == id):
+            found = (axes[i].status == "supported")
+        i = (i + 1)
+    return found
+
+fn v_ready_deadline(manifest, trace, oracle):
+    var events = v_events(trace)
+    var actor = dv_find(oracle, "actor", "")
+    var first_id = dv_find(oracle, "first_question_id", "")
+    var target_id = dv_find(oracle, "target_question_id", "")
+    var t0 = []
+    var ready = []
+    var i = 0
+    var status = "not_observed"
+    var reason = "指定首题接受或目标题独立就绪事件尚未发生"
+    if dv_or(dv_or((not dv_has_key(dv_find(oracle, "limit", []), "maximum_game_minutes")), (not (dv_find(dv_find(oracle, "limit", []), "origin", "") == "run_start"))), dv_or((actor == ""), dv_or((first_id == ""), (target_id == "")))):
+        status = "insufficient_evidence"
+        reason = "验收配置须绑定本人、首题与目标题，并声明从正式运行起点计时"
+    else:
+        while (i < rt_count(events)):
+            var e = events[i]
+            if (e.actor == actor):
+                if dv_and((rt_count(t0) == 0), (e.type == "answer_accepted")):
+                    var submit = v_parent_submission(events, e)
+                    if dv_and((0 < rt_count(submit)), (v_question(submit) == first_id)):
+                        if (v_answer_validation(manifest, trace, e).status == "supported"):
+                            t0 = e
+                if dv_and((rt_count(ready) == 0), (e.type == "answer_ready")):
+                    if (v_question(e) == target_id):
+                        ready = e
+            i = (i + 1)
+        if dv_and((0 < rt_count(t0)), (0 < rt_count(ready))):
+            var data = v_ready_context(trace, ready).data
+            var axes = v_axis_bundle(manifest, trace, dv_with(v_ready_context(trace, ready), "type", "answer_submitted"), oracle)
+            var elapsed = (ready.time - trace.initial.physical.time)
+            status = "insufficient_evidence"
+            reason = "就绪需要独立来源及当前题目的真值、本人证据与完整因果链；局部模型解释不能替代全题"
+            if dv_and(dv_and(dv_has_key(data, "basis_event_ids"), (0 < rt_count(dv_find(data, "basis_event_ids", [])))), dv_and(v_submitted_argument_valid(manifest, trace, v_ready_context(trace, ready)), dv_and(v_axis_supported(axes, "literal_truth"), dv_and(v_axis_supported(axes, "epistemic_support"), v_axis_supported(axes, "causal_completeness"))))):
+                var basis = data.basis_event_ids
+                var j = 0
+                var valid = v_ancestor(events, ready.id, t0.id)
+                while (j < rt_count(basis)):
+                    valid = dv_and(valid, v_ancestor(events, ready.id, basis[j]))
+                    j = (j + 1)
+                if dv_and(valid, (dv_find(trace, "game_time_unit", "") == "minute")):
+                    var local_1 = false
+                    if dv_and((not (elapsed < 0)), (not (dv_find(dv_find(oracle, "limit", []), "maximum_game_minutes", 0) < elapsed))):
+                        local_1 = "supported"
+                    else:
+                        local_1 = "violated"
+                    status = local_1
+                    reason = "本题完整来源就绪时刻按不可变的正式运行起点及冻结游戏分钟预算核验"
+    return dv_with(dv_with(v_finding("ready_deadline", status, reason, dv_pair(dv_find(t0, "id", false), dv_find(ready, "id", false))), "first_acceptance_game_time", dv_find(t0, "time", false)), "ready_game_time", dv_find(ready, "time", false))
+
+fn v_run_stage_times(manifest, trace, oracle):
+    var events = v_events(trace)
+    var actor = dv_find(oracle, "actor", "")
+    var target = dv_find(oracle, "target_question_id", "")
+    var start = trace.initial.physical.time
+    var maximum = dv_find(dv_find(oracle, "limit", []), "maximum_game_minutes", 0)
+    var kinds = dv_list3("answer_submitted", "answer_accepted", "speech_literal")
+    var result = []
+    var k = 0
+    var accepted = []
+    while (k < rt_count(kinds)):
+        var kind = kinds[k]
+        var chosen = []
+        var i = 0
+        while dv_and((rt_count(chosen) == 0), (i < rt_count(events))):
+            var event = events[i]
+            if dv_and((event.actor == actor), (event.type == kind)):
+                if (kind == "speech_literal"):
+                    if (0 < rt_count(accepted)):
+                        if v_ancestor(events, event.id, accepted.id):
+                            chosen = event
+                else:
+                    var local_1 = false
+                    if (kind == "answer_accepted"):
+                        local_1 = v_parent_submission(events, event)
+                    else:
+                        local_1 = event
+                    if (v_question(local_1) == target):
+                        chosen = event
+            i = (i + 1)
+        if (kind == "answer_accepted"):
+            accepted = chosen
+        var local_2 = false
+        if (rt_count(chosen) == 0):
+            local_2 = false
+        else:
+            local_2 = (chosen.time - start)
+        var elapsed = local_2
+        var local_3 = false
+        if dv_or((not dv_has_key(dv_find(oracle, "limit", []), "maximum_game_minutes")), (not (dv_find(dv_find(oracle, "limit", []), "origin", "") == "run_start"))):
+            local_3 = "invalid_run"
+        else:
+            if (rt_count(chosen) == 0):
+                local_3 = "not_observed"
+            else:
+                if dv_and((not (elapsed < 0)), (not (maximum < elapsed))):
+                    local_3 = "supported"
+                else:
+                    local_3 = "violated"
+        rt_push(result, dv_with(dv_with(v_finding(rt_cat("run_start_time_", kind), local_3, "从真实运行起点记录本题实际提交、接受或后续分享时刻；这是时限记录，合法性与完整论证由独立轴核验", dv_single(dv_find(chosen, "id", false))), "run_start_game_time", start), "elapsed_game_minutes", elapsed))
+        k = (k + 1)
+    return result

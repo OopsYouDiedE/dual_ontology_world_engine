@@ -32,3 +32,12 @@
 事件包含身份、主体、游戏时刻、父事件、动作、前后版本与收据。个人认知链、付费模型链和公共传播链可分别追溯。manifest关联输入、规则、配置及程序来源。
 
 现役Godot/C#负责输入、碰撞和呈现；本目录为隔离DV逻辑会话。新语法接线见[SYNTAX.md](../SYNTAX.md)，具体语言需求见[第一章反推报告](../../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)。
+
+
+## Surface-v2 接线
+
+实际收闻和本人对他人的预测都使用 dvs_listener_mapping(...) × candidate，各自传入对应视界，预测不覆盖真实听者。dv_threshold_acceptance 根据既有政策门槛形成连续 degree 和离散 level。新材料触发再评价时保存前后接纳状态及来源；未采纳的解释出现反证时是拒斥，已经采纳后降级才是撤回。
+
+有限域刻画由 Core 的求解与核验组合提供。第一章现有内容未定义新的刻画行动及代价法则，因此单独内容包 cognitive-semantics.dv 实际执行该机制；没有借此修改第一章初始认识或注入通关条件。
+
+刻画适配器 dv_imprint_prepare 从实际 Core mind 读取可调字段；dv_imprint_apply 将核验后的结构变化写回这些字段，重读确认目标，并通过现有 action-cost 预留/结算返回同一批 mind、physical、ledger 和工作余额。该接口已由独立原生内容实际调用，尚未为第一章新增角色刻画行动。

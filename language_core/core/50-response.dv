@@ -1,142 +1,191 @@
-; Appraisal-inspired game mechanism, not a clinical or psychometric model.
-; Intent, instrumental value and expression are separate outputs.
-(defn dv_request (id requester self)
-  (dv_m3 "id" id "requester" requester "self" self))
-(defn dv_feature_refs (request)
-  (let (speaker (dv_get request "requester") self (dv_get request "self") id (dv_get request "id") refs (rt_list))
-    (do
-      (rt_push refs (dv_pair "trust" (dv_ref speaker "relationship" "trust")))
-      (rt_push refs (dv_pair "closeness" (dv_ref speaker "relationship" "closeness")))
-      (rt_push refs (dv_pair "respect" (dv_ref speaker "relationship" "respect")))
-      (rt_push refs (dv_pair "reciprocity" (dv_ref speaker "relationship" "reciprocity")))
-      (rt_push refs (dv_pair "valence" (dv_ref self "affect" "valence")))
-      (rt_push refs (dv_pair "arousal" (dv_ref self "affect" "arousal")))
-      (rt_push refs (dv_pair "fatigue" (dv_ref self "resources" "fatigue")))
-      (rt_push refs (dv_pair "stress" (dv_ref self "resources" "stress")))
-      (rt_push refs (dv_pair "attention" (dv_ref self "resources" "attention")))
-      (rt_push refs (dv_pair "threat" (dv_ref id "appraisal" "threat")))
-      (rt_push refs (dv_pair "fairness" (dv_ref id "appraisal" "fairness")))
-      (rt_push refs (dv_pair "control" (dv_ref id "appraisal" "control")))
-      (rt_push refs (dv_pair "certainty" (dv_ref id "appraisal" "certainty")))
-      (rt_push refs (dv_pair "importance" (dv_ref id "appraisal" "importance"))) refs)))
-(defn dv_appraise_request (mind request)
-  (do
-    (dv_domain mind "mind")
-    (let (refs (dv_feature_refs request) features (rt_list) unknown (rt_list) basis (rt_list) i 0)
-      (do
-        (while (rt_lt i (rt_count refs))
-          (let (entry (rt_at refs i) key (rt_at entry 0) cell (dv_read mind (rt_at entry 1)))
-            (do
-              (if (dv_and (dv_get cell "known") (rt_not (dv_get cell "conflicted")))
-                (do
-                  (rt_push features (dv_pair key (dv_get cell "value")))
-                  (rt_push basis (dv_m3 "feature" key "ref" (rt_at entry 1) "cell" cell)))
-                (rt_push unknown key))
-              (set i (rt_add i 1)))))
-        (dv_with (dv_with (dv_m4 "features" features "unknown" unknown "basis" basis "revision" (dv_get mind "revision")) "subject" (dv_get mind "subject")) "request" (dv_get request "id"))))))
-(defn dv_dot (features weights)
-  (let (i 0 score 0 terms (rt_list) unknown (rt_list))
-    (do
-      (while (rt_lt i (rt_count weights))
-        (let (entry (rt_at weights i) key (rt_at entry 0))
-          (do
-            (if (dv_has_key features key)
-              (let (contribution (rt_mul (dv_get features key) (rt_at entry 1)))
-                (do (set score (rt_add score contribution)) (rt_push terms (dv_pair key contribution))))
-              (rt_push unknown key))
-            (set i (rt_add i 1)))))
-      (dv_m3 "score" score "terms" terms "unknown" unknown))))
-(defn dv_clamp_signed (value) (if (rt_lt value -1) -1 (if (rt_lt 1 value) 1 value)))
-(defn dv_expression (appraisal expression_policy)
-  (let (axes (rt_list) i 0)
-    (do
-      (while (rt_lt i (rt_count expression_policy))
-        (let (axis (rt_at expression_policy i) evaluation (dv_dot (dv_get appraisal "features") (rt_at axis 1)))
-          (do (rt_push axes (dv_pair (rt_at axis 0) (dv_with (dv_with evaluation "value" (dv_clamp_signed (dv_get evaluation "score"))) "complete" (rt_eq (rt_count (dv_get evaluation "unknown")) 0)))) (set i (rt_add i 1))))) axes)))
-(defn dv_no_change_prediction (mind)
-  (do (dv_domain mind "mind") (dv_with (dv_with mind "domain" "prediction") "source_revision" (dv_get mind "revision"))))
-(defn dv_response_option (id intent feasible prediction effort feature_weights)
-  (do
-    (dv_require (rt_not (rt_lt effort 0)) "Negative effort")
-    (dv_with (dv_with (dv_m4 "id" id "intent" intent "feasible" feasible "prediction" prediction) "effort" effort) "feature_weights" feature_weights)))
-(defn dv_validate_expression_policy (expression_policy)
-  (do (dv_require (dv_record_like expression_policy) "Expression policy must be an axis-to-weight-record matrix")
-    (let (i 0)
-      (do (while (rt_lt i (rt_count expression_policy))
-        (let (axis (rt_at expression_policy i) key (rt_at (rt_at expression_policy i) 0) weights (rt_at (rt_at expression_policy i) 1) j 0)
-          (do (dv_require (rt_eq (rt_slice (rt_json_stringify key) 0 1) "\"") "Expression policy axis name must be Text")
-            (dv_require (dv_record_like weights) (rt_cat "Expression policy axis weights must be a record: " key))
-            (while (rt_lt j (rt_count weights))
-              (let (weight (rt_at weights j) feature (rt_at (rt_at weights j) 0))
-                (do (dv_require (rt_eq (rt_slice (rt_json_stringify feature) 0 1) "\"") "Expression policy feature name must be Text")
-                  (dv_require (rt_is_number (rt_json_stringify (rt_at weight 1)))
-                    (rt_cat (rt_cat (rt_cat "Expression policy weight must be a finite Number: " key) ".") feature))
-                  (set j (rt_add j 1))))) (set i (rt_add i 1))))) true))))
-(defn dv_person_policy (subject values effort_cost uncertainty_cost expression_policy)
-  (do
-    (dv_validate_expression_policy expression_policy)
-    (dv_require (dv_and (rt_not (rt_lt effort_cost 0)) (rt_not (rt_lt uncertainty_cost 0))) "Negative policy cost")
-    (dv_with (dv_m4 "subject" subject "values" values "effort_cost" effort_cost "uncertainty_cost" uncertainty_cost) "expression" expression_policy)))
-(defn dv_accept_policy (mind id policy basis)
-  (do
-    (dv_domain mind "mind")
-    (dv_require (rt_eq (dv_get mind "subject") (dv_get policy "subject")) "Foreign value policy")
-    (dv_require (rt_lt 0 (rt_count basis)) "Value policy needs an acceptance basis")
-    (let (policies (dv_find mind "policies" (rt_list)))
-      (do
-        (dv_require (rt_not (dv_has_key policies id)) "Duplicate accepted policy")
-        (dv_with (dv_with mind "policies" (dv_with policies id (dv_m3 "policy" policy "basis" basis "active" true)))
-          "revision" (rt_add (dv_get mind "revision") 1))))))
-(defn dv_respond_adopted (mind request options policy_id)
-  (let (accepted (dv_get (dv_get mind "policies") policy_id))
-    (do (dv_require (dv_get accepted "active") "Response policy is not adopted")
-      (dv_with (dv_respond mind request options (dv_get accepted "policy")) "policy_basis" (dv_get accepted "basis")))))
-(defn dv_response_score (mind option appraisal policy)
-  (let (prediction (dv_get option "prediction"))
-    (do
-      (dv_domain prediction "prediction")
-      (dv_require (rt_eq (dv_get prediction "source_revision") (dv_get mind "revision")) "Stale response prediction")
-      (let (value (dv_value_change mind prediction (dv_get policy "values"))
-            relation_and_state (dv_dot (dv_get appraisal "features") (dv_get option "feature_weights"))
-            effort (rt_mul (dv_get option "effort") (dv_get policy "effort_cost"))
-            uncertainty (rt_mul (rt_add (rt_count (dv_get relation_and_state "unknown")) (rt_count (dv_get (dv_get value "after") "unknown"))) (dv_get policy "uncertainty_cost")))
-        (dv_with
-          (dv_m4 "score" (rt_sub (rt_add (dv_get value "delta") (dv_get relation_and_state "score")) (rt_add effort uncertainty))
-            "value" value "relationship_and_state" relation_and_state "effort" effort)
-          "uncertainty_cost" uncertainty)))))
-(defn dv_respond (mind request options policy)
-  (do
-    (dv_domain mind "mind")
-    (dv_require (rt_eq (dv_get mind "subject") (dv_get policy "subject")) "Foreign person policy")
-    (let (appraisal (dv_appraise_request mind request) i 0 found false best 0 chosen false evaluated (rt_list) rejected (rt_list) ids (rt_list))
-      (do
-        (while (rt_lt i (rt_count options))
-          (let (option (rt_at options i) id (dv_get option "id") legal (dv_truth mind (dv_get option "feasible")))
-            (do
-              (dv_require (rt_not (dv_has ids id)) "Duplicate response identity") (rt_push ids id)
-              (if (rt_eq legal "true")
-                (let (evaluation (dv_response_score mind option appraisal policy))
-                  (do
-                    (rt_push evaluated (dv_pair id evaluation))
-                    (if (if found (rt_lt best (dv_get evaluation "score")) true)
-                      (do (set found true) (set best (dv_get evaluation "score")) (set chosen option)) false)))
-                (rt_push rejected (dv_pair id legal)))
-              (set i (rt_add i 1)))))
-        (dv_with (dv_with (dv_with
-          (dv_m4 "status" (if found "selected" "no-response") "choice" chosen "appraisal" appraisal "evaluated" evaluated)
-          "rejected" rejected) "expression" (dv_expression appraisal (dv_get policy "expression"))) "committed" false)))))
-(defn dv_relax (current baseline retention)
-  (rt_add baseline (rt_mul (rt_sub current baseline) (dv_unit retention))))
-(defn dv_affect_proposal (mind request policy)
-  (let (appraisal (dv_appraise_request mind request) features (dv_get appraisal "features") self (dv_get request "self")
-        valence_ref (dv_ref self "affect" "valence") arousal_ref (dv_ref self "affect" "arousal")
-        valence (dv_read mind valence_ref) arousal (dv_read mind arousal_ref))
-    (do
-      (dv_require (dv_and (dv_get valence "known") (dv_get arousal "known")) "Unknown current affect")
-      (let (v_delta (dv_dot features (dv_get policy "valence_weights")) a_delta (dv_dot features (dv_get policy "arousal_weights")))
-        (dv_m3 "source_revision" (dv_get mind "revision") "basis" appraisal
-          "effects" (dv_pair
-            (dv_assign valence_ref (dv_clamp_signed (rt_add
-              (dv_relax (dv_get valence "value") (dv_get policy "baseline_valence") (dv_get policy "retention")) (dv_get v_delta "score"))))
-            (dv_assign arousal_ref (dv_clamp_signed (rt_add
-              (dv_relax (dv_get arousal "value") (dv_get policy "baseline_arousal") (dv_get policy "retention")) (dv_get a_delta "score"))))))))))
+// Appraisal-inspired game mechanism, not a clinical or psychometric model.
+// Intent, instrumental value and expression are separate outputs.
+
+fn dv_request(id, requester, self):
+    return {"id": id, "requester": requester, "self": self}
+
+fn dv_feature_refs(request):
+    var speaker = request.requester
+    var self = request.self
+    var id = request.id
+    var refs = []
+    rt_push(refs, dv_pair("trust", dv_ref(speaker, "relationship", "trust")))
+    rt_push(refs, dv_pair("closeness", dv_ref(speaker, "relationship", "closeness")))
+    rt_push(refs, dv_pair("respect", dv_ref(speaker, "relationship", "respect")))
+    rt_push(refs, dv_pair("reciprocity", dv_ref(speaker, "relationship", "reciprocity")))
+    rt_push(refs, dv_pair("valence", dv_ref(self, "affect", "valence")))
+    rt_push(refs, dv_pair("arousal", dv_ref(self, "affect", "arousal")))
+    rt_push(refs, dv_pair("fatigue", dv_ref(self, "resources", "fatigue")))
+    rt_push(refs, dv_pair("stress", dv_ref(self, "resources", "stress")))
+    rt_push(refs, dv_pair("attention", dv_ref(self, "resources", "attention")))
+    rt_push(refs, dv_pair("threat", dv_ref(id, "appraisal", "threat")))
+    rt_push(refs, dv_pair("fairness", dv_ref(id, "appraisal", "fairness")))
+    rt_push(refs, dv_pair("control", dv_ref(id, "appraisal", "control")))
+    rt_push(refs, dv_pair("certainty", dv_ref(id, "appraisal", "certainty")))
+    rt_push(refs, dv_pair("importance", dv_ref(id, "appraisal", "importance")))
+    return refs
+
+fn dv_appraise_request(mind, request):
+    dv_domain(mind, "mind")
+    var refs = dv_feature_refs(request)
+    var features = []
+    var unknown = []
+    var basis = []
+    var i = 0
+    while (i < rt_count(refs)):
+        var entry = refs[i]
+        var key = entry[0]
+        var cell = dv_read(mind, entry[1])
+        if dv_and(cell.known, (not cell.conflicted)):
+            rt_push(features, dv_pair(key, cell.value))
+            rt_push(basis, {"feature": key, "ref": entry[1], "cell": cell})
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return dv_with(dv_with({"features": features, "unknown": unknown, "basis": basis, "revision": mind.revision}, "subject", mind.subject), "request", request.id)
+
+fn dv_dot(features, weights):
+    var i = 0
+    var score = 0
+    var terms = []
+    var unknown = []
+    while (i < rt_count(weights)):
+        var entry = weights[i]
+        var key = entry[0]
+        if dv_has_key(features, key):
+            var contribution = (dv_get(features, key) * entry[1])
+            score = (score + contribution)
+            rt_push(terms, dv_pair(key, contribution))
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return {"score": score, "terms": terms, "unknown": unknown}
+
+fn dv_clamp_signed(value):
+    if (value < -1):
+        return -1
+    else:
+        if (1 < value):
+            return 1
+        else:
+            return value
+
+fn dv_expression(appraisal, expression_policy):
+    var axes = []
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var evaluation = dv_dot(appraisal.features, axis[1])
+        rt_push(axes, dv_pair(axis[0], dv_with(dv_with(evaluation, "value", dv_clamp_signed(evaluation.score)), "complete", (rt_count(evaluation.unknown) == 0))))
+        i = (i + 1)
+    return axes
+
+fn dv_no_change_prediction(mind):
+    dv_domain(mind, "mind")
+    return dv_with(dv_with(mind, "domain", "prediction"), "source_revision", mind.revision)
+
+fn dv_response_option(id, intent, feasible, prediction, effort, feature_weights):
+    dv_require((not (effort < 0)), "Negative effort")
+    return dv_with(dv_with({"id": id, "intent": intent, "feasible": feasible, "prediction": prediction}, "effort", effort), "feature_weights", feature_weights)
+
+fn dv_validate_expression_policy(expression_policy):
+    dv_require(dv_record_like(expression_policy), "Expression policy must be an axis-to-weight-record matrix")
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var key = expression_policy[i][0]
+        var weights = expression_policy[i][1]
+        var j = 0
+        dv_require((rt_slice(rt_json_stringify(key), 0, 1) == "\""), "Expression policy axis name must be Text")
+        dv_require(dv_record_like(weights), rt_cat("Expression policy axis weights must be a record: ", key))
+        while (j < rt_count(weights)):
+            var weight = weights[j]
+            var feature = weights[j][0]
+            dv_require((rt_slice(rt_json_stringify(feature), 0, 1) == "\""), "Expression policy feature name must be Text")
+            dv_require(rt_is_number(rt_json_stringify(weight[1])), rt_cat(rt_cat(rt_cat("Expression policy weight must be a finite Number: ", key), "."), feature))
+            j = (j + 1)
+        i = (i + 1)
+    return true
+
+fn dv_person_policy(subject, values, effort_cost, uncertainty_cost, expression_policy):
+    dv_validate_expression_policy(expression_policy)
+    dv_require(dv_and((not (effort_cost < 0)), (not (uncertainty_cost < 0))), "Negative policy cost")
+    return dv_with({"subject": subject, "values": values, "effort_cost": effort_cost, "uncertainty_cost": uncertainty_cost}, "expression", expression_policy)
+
+fn dv_accept_policy(mind, id, policy, basis):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign value policy")
+    dv_require((0 < rt_count(basis)), "Value policy needs an acceptance basis")
+    var policies = dv_find(mind, "policies", [])
+    dv_require((not dv_has_key(policies, id)), "Duplicate accepted policy")
+    return dv_with(dv_with(mind, "policies", dv_with(policies, id, {"policy": policy, "basis": basis, "active": true})), "revision", (mind.revision + 1))
+
+fn dv_respond_adopted(mind, request, options, policy_id):
+    var accepted = dv_get(mind.policies, policy_id)
+    dv_require(accepted.active, "Response policy is not adopted")
+    return dv_with(dv_respond(mind, request, options, accepted.policy), "policy_basis", accepted.basis)
+
+fn dv_response_score(mind, option, appraisal, policy):
+    var prediction = option.prediction
+    dv_domain(prediction, "prediction")
+    dv_require((prediction.source_revision == mind.revision), "Stale response prediction")
+    var value = dv_value_change(mind, prediction, policy.values)
+    var relation_and_state = dv_dot(appraisal.features, option.feature_weights)
+    var effort = (option.effort * policy.effort_cost)
+    var uncertainty = ((rt_count(relation_and_state.unknown) + rt_count(value.after.unknown)) * policy.uncertainty_cost)
+    return dv_with({"score": ((value.delta + relation_and_state.score) - (effort + uncertainty)), "value": value, "relationship_and_state": relation_and_state, "effort": effort}, "uncertainty_cost", uncertainty)
+
+fn dv_respond(mind, request, options, policy):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign person policy")
+    var appraisal = dv_appraise_request(mind, request)
+    var i = 0
+    var found = false
+    var best = 0
+    var chosen = false
+    var evaluated = []
+    var rejected = []
+    var ids = []
+    while (i < rt_count(options)):
+        var option = options[i]
+        var id = option.id
+        var legal = dv_truth(mind, option.feasible)
+        dv_require((not dv_has(ids, id)), "Duplicate response identity")
+        rt_push(ids, id)
+        if (legal == "true"):
+            var evaluation = dv_response_score(mind, option, appraisal, policy)
+            rt_push(evaluated, dv_pair(id, evaluation))
+            var local_1 = false
+            if found:
+                local_1 = (best < evaluation.score)
+            else:
+                local_1 = true
+            if local_1:
+                found = true
+                best = evaluation.score
+                chosen = option
+        else:
+            rt_push(rejected, dv_pair(id, legal))
+        i = (i + 1)
+    var local_2 = false
+    if found:
+        local_2 = "selected"
+    else:
+        local_2 = "no-response"
+    return dv_with(dv_with(dv_with({"status": local_2, "choice": chosen, "appraisal": appraisal, "evaluated": evaluated}, "rejected", rejected), "expression", dv_expression(appraisal, policy.expression)), "committed", false)
+
+fn dv_relax(current, baseline, retention):
+    return (baseline + ((current - baseline) * dv_unit(retention)))
+
+fn dv_affect_proposal(mind, request, policy):
+    var appraisal = dv_appraise_request(mind, request)
+    var features = appraisal.features
+    var self = request.self
+    var valence_ref = dv_ref(self, "affect", "valence")
+    var arousal_ref = dv_ref(self, "affect", "arousal")
+    var valence = dv_read(mind, valence_ref)
+    var arousal = dv_read(mind, arousal_ref)
+    dv_require(dv_and(valence.known, arousal.known), "Unknown current affect")
+    var v_delta = dv_dot(features, policy.valence_weights)
+    var a_delta = dv_dot(features, policy.arousal_weights)
+    return {"source_revision": mind.revision, "basis": appraisal, "effects": dv_pair(dv_assign(valence_ref, dv_clamp_signed((dv_relax(valence.value, policy.baseline_valence, policy.retention) + v_delta.score))), dv_assign(arousal_ref, dv_clamp_signed((dv_relax(arousal.value, policy.baseline_arousal, policy.retention) + a_delta.score))))}

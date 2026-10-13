@@ -12,10 +12,12 @@ scenarios提供原生DV内容和配置，session组织主体演算与执行，ch
 
 动作费用使用core/90-action-cost.dv，会话持有成本目录和当前ledger。主体的推知、话语理解、付费重演、竞争论证、规划和回答协议各自保留来源。
 
-新语法的第一章样例位于scenarios/surface-v1-proposal。迁移沿用各入口的原评分、门槛、平分及费用，随机策略为另一配置。
+正式 chapter1-*.dv、session 和 checks 已迁移到 surface-v2 可执行语法，旧 surface-v1-proposal 仅为历史提案。run-surface-v2.json 只导出当前原生第一章、独立 oracle 和机制示例，然后运行一局 enabled 正式会话；搭配 --session-only，不默认启动多场景回归。scenarios/cognitive-semantics.dv 独立运行有限域刻画与配平，不注入第一章人物状态。session/20-speech 的实际收闻与预测均调用 mapping 乘法，正式认知变化通过 core/55-cognition 的门槛机制记录；未曾采纳的解释被否定时记录拒斥，不记录撤回。
 
 工程进程时限默认为240现实秒，由--process-timeout-seconds配置。--source-root指定源码，--judge-core-root指定判定Core；--rerun-frozen-session使用指定目录的既有程序和输入。游戏预算由场景配置提供。
 
 ## 输出与维护
 
 成果继续存入artifacts/partial-bootstrap-core/，模块架构和接口变动同步本文件及DESIGN.md。停止独立Agent复评的用户裁定继续适用。
+
+cognitive_mind_specimen 将刻画机制连接到真实 Core mind、主体系引用和正式 action-cost ledger，分别导出执行前后脑状态、余额、费用回执和重新读取的认知字段。
