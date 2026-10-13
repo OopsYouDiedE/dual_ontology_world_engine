@@ -207,7 +207,7 @@
           "scope" "DV formal model; no Godot host input or geometry")))))
 (defn dvs_replace (items index value)
   (let (result (rt_list) i 0) (do (while (rt_lt i (rt_count items))
-    (do (rt_push result (if (rt_eq i index) (dv_clone value) (dv_clone (rt_at items i)))) (set i (rt_add i 1)))) result)))
+    (do (rt_push result (if (rt_eq i index) value (rt_at items i))) (set i (rt_add i 1)))) result)))
 (defn dvs_main ()
   (let (story (rt_json_parse (rt_read (rt_arg 0))) capability (if (rt_lt 2 (rt_arg_count)) (rt_arg 2) "enabled"))
     (rt_write (rt_arg 1) (rt_json_stringify (dvs_run story capability)))))

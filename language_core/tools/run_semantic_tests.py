@@ -22,7 +22,7 @@ def main():
     # Bundle core + session + test
     core_modules = sorted((LANGUAGE / 'core').glob('*.dv'))
     session_modules = sorted((LANGUAGE / 'verification/session').glob('*.dv'))
-    test_module = LANGUAGE / 'verification/checks/21-semantic-counterexamples.dv'
+    test_module = LANGUAGE / 'tools/21-semantic-counterexamples.dv'
     
     bundle_files = core_modules + session_modules + [test_module]
     bundle_text = '\n'.join(p.read_text(encoding='utf-8') for p in bundle_files) + '\n(main (main))\n'
