@@ -1,6 +1,6 @@
 # DuelView（DV）语言结构与自举设计
 
-状态：2026-10-12 的目标规范。名称和 `.dv` 后缀由用户确定；下文的完整类型化语法与多后端体系仍是目标设计。已实现的自编译启动子集及其缺口见 compiler/README.md，不能将子集自举当作全规格实现。实现继续位于独立的 `language_core/`，不引用旧 Core 或 Godot。
+状态：2026-10-13 的目标规范。名称和 `.dv` 后缀由用户确定；本轮确立易读表层语法（第 12 节），尚未实现其解析器。下文的完整类型化语法与多后端体系仍是目标设计。已实现的自编译启动子集及其缺口见 compiler/README.md，不能将子集自举当作全规格实现。实现继续位于独立的 `language_core/`，不引用旧 Core 或 Godot。
 
 ## 1. 目标与完成条件
 
@@ -35,7 +35,7 @@ Bool 与 Truth 是不同类型。程序分支 `if` 只接受 Bool；主体命题
 
 ## 3. 书写语法
 
-基础书写采用 S 表达式，减少自举前端的复杂度。`.dv` 是唯一的语言源码后缀。注释使用 `;`，字符串使用双引号，`'x` 表示引用的数据。代码、引用语法数据与已经验证的 AST 分属不同类型；引用列表不会自动成为可执行程序。
+2026-10-13 起，正式源码采用面向阅读的 DV 表层语法：具名声明、普通函数调用、中缀运算和花括号代码块。完整合同见第 12 节。`.dv` 仍是唯一源码后缀；AST 是编译器内部结构，不要求作者按树节点书写程序。本节以下 S 表达式仅保留为旧设计与启动格式的迁移记录，不再作为正式书写目标。当前编译器仍只接受旧格式，新表层前端尚未实现。
 
 正式类型化语法的顶层形式：
 
@@ -87,7 +87,7 @@ Expr         = Literal | Name | Call | Lambda | Let | If | Match | Do
 ```text
 .dv 文本
   → Token（位置、原文、类别）
-  → Syntax/CST（列表、原子、引用；保留位置）
+  → Syntax/CST（声明、表达式、代码块、注释；保留位置与原文）
   → AST（函数、类型、命题、规则、效果等语言节点）
   → Bound/Typed AST（符号绑定、类型、能力、所属信息域）
   → DV IR（目标无关，闭包/分支/匹配/状态操作已明确）
@@ -182,7 +182,21 @@ TypedNode<T> = { syntax: T, symbolBindings, inferredType,
 
 ## 6. 一段源码及其 AST 解析树
 
-拟定正式语法：
+正式表层写法（设计示例，尚不能由当前编译器编译）：
+
+```dv
+module example;
+import dv.logic;
+
+tag stock: Int;
+
+defn available(v: View<Subjective>, x: Ref<Subjective>)
+    -> Judgement requires [ReadView] {
+    return evaluate(v, proposition { exists(x) and tagged(x, stock, >= 1) });
+}
+```
+
+其中 `proposition { ... }` 明确建立命题，`and` 在这个区域内是三值合取。`tagged` 显式标出比较方式；没有取得观察时仍为 Unknown。以下旧设计保留用于核对同一个 AST 的映射：
 
 ```dv
 (module example
@@ -318,3 +332,202 @@ SubjectView、WorldTheory 与 PolicySet 的可用内容受能力限制；把它�
 ## 当前领域语义实现（2026-10-12）
 
 `core/*.dv` 新增世界、公理采纳、观察、状态切片、价值、回应、论证成本和历史检查点。当前公理表层节点为 `(axiom name version (parameters...) premise effects)`；DV 前端展开为普通函数与 `dv_axiom` 数据构造。它是此规范完整 WorldLawDecl 的启动实现，尚未具备独立静态类型化 IR。语义函数和检查器均由 DV 编译成 C#，JSON ABI 不参与领域推演。接口及未完成接线见 core/README.md；内容设计以设计规范本轮补充为准。
+
+## 12. 易读表层语法（2026-10-13）
+
+本节替代第 3 节的 S 表达式书写目标；第 5 节的语义节点和第 7 节的后端边界继续有效。用户要求设计更容易阅读的源码格式。本轮只修改语言设计、维护合同和状态说明，没有迁移可执行源码或实现新解析器。以下代码块均为目标语法示例，不能作为当前编译成功的证据。
+
+### 12.1 选择与参考
+
+采用 **具名声明 + 中缀表达式 + 显式代码块 + 分型领域声明**。算法和内容使用同一语言，不另设自然语言解释器。括号只用于参数、分组与构造器，不要求手工嵌套 AST 节点。花括号标明块边界，分号标明语句结束；缩进帮助阅读，不参与语义，避免多行公理、长表达式和自动格式化改变块结构。
+
+参考范围：
+
+- [Lean 的声明与定义](https://lean-lang.org/doc/reference/latest/Definitions/Definitions/)及 [notation 展开](https://lean-lang.org/doc/reference/latest/Notations-and-Macros/Notations/)：借鉴可读外层语法进入显式内部结构的分层；不借此赋予 DV 可错信念以定理真理的效力。
+- [Rust 的模式匹配](https://doc.rust-lang.org/stable/book/ch06-02-match.html)：借鉴具名分支和构造器模式，便于分别处理 True、False、Unknown，以及 Option/Result。
+- [Racket 的 quote 边界](https://docs.racket-lang.org/guide/quote.html)：借鉴代码与语法数据分开的原则；旧解释器的引用语义须独立迁移，不将数据列表自动执行。
+
+不引入隐式主体、自动取权威状态、自然语言猜测、任意目标语言嵌入或无检查宏。首轮表层前端仅提供固定语法糖；扩展机制另行设计。
+
+### 12.2 普通算法的写法
+
+以下对照取自 `core/00-data.dv` 的 `dv_clone`，保留递归、复制、访问顺序与原 ABI；不是新增领域规则。
+
+旧写法：
+
+```dv
+(defn dv_clone (value)
+  (if (rt_is_list value)
+    (let (result (rt_list) i 0)
+      (do (while (rt_lt i (rt_count value))
+        (do (rt_push result (dv_clone (rt_at value i)))
+            (set i (rt_add i 1)))) result)) value))
+```
+
+新写法：
+
+```dv
+defn dv_clone(value: Value) -> Value {
+    if rt_is_list(value) {
+        let result = rt_list();
+        var i = 0;
+        while i < rt_count(value) {
+            rt_push(result, dv_clone(rt_at(value, i)));
+            i = i + 1;
+        }
+        return result;
+    } else {
+        return value;
+    }
+}
+```
+
+`Value` 是启动 ABI 的动态值域标记，不是完成静态领域类型化的证明。`let` 禁止重新绑定；`var` 才允许赋值。这约束绑定，不会自动冻结 `rt_list` 所引用的可变容器；上例仍沿用现有“创建新列表再写入”的合同。`return` 返回当前函数，`while` 是语句，不产生可用于计算的值。旧代码若依赖 `while` 返回 false，转换时必须显式保留 false，不能把语句返回值改成 Unit 偷换行为。
+
+常用写法：
+
+```dv
+defn dv_min(a: Value, b: Value) -> Value {
+    return if a < b { a } else { b };
+}
+
+main {
+    let result = dv_min(20, 22);
+    rt_print(result);
+}
+```
+
+块作表达式时，末尾不带分号的表达式为块值；函数不支持隐式返回，必须使用 `return`（Unit 函数可自然结束）。`if` 作表达式必须有 `else` 且两分支类型一致。条件一律为 Bool；函数调用参数和二元操作数从左到右求值。普通调用 `dv_and(a, b)` 保留参数急切求值；只有 Bool 运算符 `and` / `or` 短路，转换工具不得将急切调用机械替换成短路运算。
+
+### 12.3 词法与表达式合同
+
+| 项目 | 正式写法与规则 |
+| --- | --- |
+| 函数 | `defn name(x: Type, y: Type) -> Type { ... }`；保留 defn，减少迁移改名 |
+| 类型参数 | `defn identity<T>(x: T) -> T { return x; }`；类型应用 `List<T>` |
+| 名称 | 初版保持 ASCII 字母/下划线开头，后续可含数字；中文用于字符串/注释，Unicode 名称另行设计 |
+| 注释 | `//` 行注释、`/* ... */` 非嵌套块注释；旧 `;` 注释只在旧格式模式解析 |
+| 字符串 | 双引号，沿用现有转义及 Unicode 文本；首轮不引入插值或模板执行 |
+| 数字 | 十进制数字，负号是前缀运算；启动模式沿用有限 double，不暗中迁成 Int |
+| 集合 | `[a, b, c]` 为列表；`Type { field: value }` 为具名记录构造；不设 JSON 装载语法糖 |
+| 字段 | `record.field` 仅用于已绑定类型的记录，不替代动态 `dv_get(record, "field")` |
+| 赋值 | `name = expr;` 仅修改已声明的局部 var；`==` 才是比较 |
+| 模块 | `module dv.compiler.ast; import dv.logic; export available;`；启动迁移阶段不得假装模块已支持 |
+| 能力 | `requires [ReadView]` 是函数签名的一部分；既不创建 capability 也不授予权威句柄 |
+
+优先级从高到低：调用/字段/索引 → 前缀 `-`、`not` → `* / %` → `+ -` → `< <= > >=` → `== !=` → `and` → `or`。算术左结合；比较和相等不允许连写，`a < b < c` 必须改为显式合取。`%` 只在后端定义了同一数值合同后开放，启动迁移先拒绝。启动 `==` 映射 `rt_eq`，列表仍按身份比较；结构比较必须显式调用 `dv_same`，不能因外观变化更换含义。
+
+普通表达式中的 `and` / `or` / `not` 只接受 Bool。命题区域内同样的字面运算符创建 All/Any/Not 节点，不执行 Bool 分支，也不把 Unknown 当成 false。运算符依据语法区域和类型绑定，不依据当前世界状态解析。
+
+泛型参数只在声明和类型位置使用 `<...>`；泛型函数调用先采用类型推导，不引入含糊的 `f<T>(x)`。嵌套类型里的 `>>` 解析为两个闭合符号，初版无移位运算符。列表索引仅作为既有容器访问的语法糖，不开放通过索引赋值；越界规则沿用运行时合同。
+
+### 12.4 类型、匹配与内部树
+
+```dv
+module dv.compiler.ast;
+export Expr;
+
+type Expr {
+    Literal(value: LiteralValue),
+    Name(name: Symbol),
+    Call(callee: Expr, arguments: List<Expr>),
+    If(condition: Expr, then_branch: Expr, else_branch: Expr)
+}
+
+record SourceSpan {
+    file: String,
+    start: Int,
+    end: Int
+}
+
+defn truth_label(value: Truth) -> String {
+    return match value {
+        True => "true",
+        False => "false",
+        Unknown => "unknown"
+    };
+}
+```
+
+`type` 定义带标签的分支，`record` 定义字段。构造器通过名称解析唯一绑定；模式不得调用任意函数。`match` 要求覆盖所有分支或显式 `_`，重复或不可达分支诊断；分支可为表达式或代码块。程序 Bool 字面值为 `true/false`，Truth 构造器为 `True/False/Unknown`。冲突是 Judgement 的独立字段，不新增一个与 Unknown 混用的布尔值。
+
+作者声明 AST 类型仍使用普通语言语法；编译器持有 AST 的事实不再决定所有算法的外观。代码引用以后使用明确的 `syntax { ... }` 产生 Syntax 数据，须单独检查；初版表层前端不支持它，也不支持 `'`。旧解释器引用程序留在旧模式，禁止无损迁移声明覆盖这个缺口。
+
+### 12.5 公理与领域计算
+
+当前 `(axiom Name Version (Parameters...) Premise Effects)` 首先有一个完全显式的可读对应形式：
+
+```dv
+axiom name(x: Value) version 1 {
+    when: make_premise(x);
+    effects: make_effects(x);
+}
+```
+
+`make_premise` / `make_effects` 是占位库签名，并非新增实现或具体世界规则。此形式按原参数顺序展开为具名函数，返回 `dv_axiom("name", 1, premise, effects)`，仍执行已有名称和元数核验。声明只构造公理数据，不采纳、不执行、不证明结论；`when` 在声明内是字段标签，不是让编译器调用权威世界做判断的指令。
+
+完整类型化阶段再提供分开的声明（各表达式名仅为通用签名占位）：
+
+```dv
+worldlaw transition(x: Ref<Authority>) version 1 {
+    when: condition_of(x);
+    effects: transition_of(x);
+}
+
+rule derive(x: Ref<Subjective>) version 1 {
+    when: premise_of(x);
+    conclude: conclusion_of(x);
+}
+
+policy choose(view: View<Subjective>) version 1 {
+    score: score_candidates(view);
+}
+```
+
+`worldlaw` 绑定 WorldLawDecl，`rule` 绑定 DerivationRule，`policy` 绑定 PolicyDecl。推知规则不能写物理 effects，策略评分不能写 conclude；禁令/许可与行动偏好的完整表层声明另行补齐，不先用一个宽松节点接受所有载荷。既有 axiom 实例的运行采纳域保持不变，不能由迁移器猜测 worldlaw/rule 分类。命题用 `proposition { ... }`，效果的第一阶段仍写具名构造函数，减少过早引入新效果解释器。
+
+例如第 6 节的 `tagged(x, stock, >= 1)` 只在命题语法区域内合法，生成带比较字段的 Tagged；其中 `>= 1` 是比较参数专门形式，不是普通函数实参。对象存在写 `exists(x)`；有限量化写 `forall (x in domain) { ... }` / `exists_var (x in domain) { ... }`，避免把存在性与量化混作同一个 AST。量化域必须有限，命题合取不通过 Bool 短路跳过依据采集。
+
+`evaluate(view, proposition)`、`infer(view, model, evidence, algorithm, budget)`、`predict(view, effect, context, budget)`、`prepare(authority, effect, context)`、`commit(authority, token)` 均有显式实参和独立合同。新写法不引入“当前角色”的隐式全局读取，也不把预测提交到世界。能力、来源、主体和版本核验继续遵循第 5、7 节。
+
+### 12.6 最小文法与诊断
+
+下列 EBNF 确定首个表层解析器的结构；类型/模块/命题等完整构造属于后续阶段。`[]` 表示可选，`{}` 表示重复，带引号的符号才是源码字面量。
+
+```text
+Program  = { Function | Axiom }, Main ;
+Function = "defn", Name, "(", [Params], ")", ["->", Type], Block ;
+Params   = Param, {",", Param} ;
+Param    = Name, [":", Type] ;
+Axiom    = "axiom", Name, "(", [Params], ")", "version", Number,
+           "{", "when", ":", Expr, ";", "effects", ":", Expr, ";", "}" ;
+Main     = "main", Block ;
+Block    = "{", {Stmt}, [Expr], "}" ;
+Stmt     = ("let" | "var"), Name, [":", Type], "=", Expr, ";"
+         | Name, "=", Expr, ";"
+         | "return", Expr, ";"
+         | "while", Expr, Block
+         | "if", Expr, Block, ["else", Block]
+         | Expr, ";" ;
+Expr     = Primary | Prefix | Binary | Call | IfExpr ;
+Call     = Name, "(", [Expr, {",", Expr}], ")" ;
+IfExpr   = "if", Expr, Block, "else", Block ;
+Primary  = Number | String | "true" | "false" | Name | "(", Expr, ")" ;
+```
+
+表达式按 12.3 的固定优先级解析（递归下降加 precedence climbing），不是递归尝试 Binary 的无优先级文法。类型初期只开放 Value；省略签名等价于 Value，不悄悄声称推导了静态类型。函数允许前向引用和递归；初版沿用禁止局部重名/遮蔽的约束。`main` 必须且仅有一个，位置不限；生成文件由工具显式选择库模式时才允许无 main，不能根据文件名猜测。
+
+花括号 `if` 后若遇分号，作为表达式语句；否则作为控制语句。表层 AST 增加 Block、LocalBinding、Assign、Return、While，再明确降低到现有后端；不通过简单字符串替换生成 S 表达式。循环体和语句分支必须正常结束为 Unit 或显式 return，拒绝悄悄丢弃裸块值；Unit 属于正式类型域增量。return 的所有路径与不可达语句由控制流检查处理。
+
+诊断至少保留文件、原文 span、行列、类别、期望项和实际项；展开节点关联作者的原位置。示例：缺少分号、对 let 赋值、Bool/Truth 混用、未知构造器、未实现的语法、缺少 required capability。formatter 保留注释，不重排声明、实参、premise 或 effect；幂等格式化只改变空白。启动 Number 的有限值和运算顺序不因换语法改变。
+
+### 12.7 落地顺序与验收边界
+
+1. **表层计算子集**：在 DV 内实现词法、语句/表达式解析和独立 lowering；复用现有名称/元数检查与 ABI。显式 `--syntax surface-v1` / `--syntax sexpr-v0` 选择格式，旧脚本默认旧模式，禁止解析失败后自动换模式。上述选项是待实现合同，当前命令不可使用。
+2. **可审阅迁移**：保留旧源码指纹；提供结构化转换器，输出表层源码与位置映射，不重命名 API，不重写算法。先迁移小型通用函数，再迁移 compiler.dv；新解析器由旧 DV 编译器启动，但不是由 Python/C# 代为解析。以实际输入/输出、求值次序、副作用和错误诊断逐例核对。
+3. **新语法自举**：迁移后的同一份表层 compiler.dv 依次生成新 C1/C2/C3，封存每阶段源码/ABI/程序集，比较确定生成源码固定点并运行独立程序。旧格式自举证据不当作新前端证据。
+4. **完整声明**：随后实现模块、记录/代数类型、match、能力和命题区域，进入统一类型化 AST/IR；再迁移 core、session、内容和独立 oracle。未实现项必须明确拒绝，禁止因后端使用 object 而跳过检查。旧解释器链路与 quote 迁移另列证据。
+
+语法变更只改变书写与前端。全部公理、参数、接受条件、预算、执行与判断语义须保持；必要语义变化另立说明和基线，不混入同条件迁移。内容仍仅置于 DV 内容目录，oracle 不进入主体包；现役 Godot/旧 Core 不在本次语法设计范围内。
+
+本轮只完成设计一致性审阅，不运行流程回归，不触发一级/二级/三级游戏验收，也不将语法示例当作人物或游玩改善证据。实现后需分别记录编译器工程事实与正式会话事实。
