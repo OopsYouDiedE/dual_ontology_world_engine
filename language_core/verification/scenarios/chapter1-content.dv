@@ -13,7 +13,7 @@
   (do (while (rt_lt n (rt_count actions))
    (do (rt_push result (c1_public_method (rt_at actions n))) (set n (rt_add n 1)))) result)))
 (defn c1_public_method (action)
- (let (method (dv_with (dv_with action "purpose_refs" (dv_get action "grants")) "purpose_basis" (dv_get action "source_refs"))
+ (let (method (dv_with (dv_with action "purpose_refs" (dv_find action "purpose_refs" (dv_get action "grants"))) "purpose_basis" (dv_get action "source_refs"))
        kind (dv_get action "kind"))
   (if (rt_eq kind "answer")
    (dv_with method "topic" (c1_answer_topic (dv_get action "answer_id")))
@@ -25,7 +25,20 @@
     (if (rt_eq id "trust") "trust" "auxiliary")))))
 (defn c1_once (action) (dv_with action "once" true))
 (defn c1_observe_as (action source origin trust)
- (dv_with (dv_with (dv_with action "observation_source" source) "observation_origin" origin) "observation_trust" trust))
+ (let (result (dv_with (dv_with (dv_with action "observation_source" source) "observation_origin" origin) "observation_trust" trust))
+  (if (dv_and (rt_eq source "testimony") (rt_not (rt_eq origin "demon"))) (c1_personal_request result origin) result)))
+(defn c1_query_basis (atom)
+ (if (dv_or (rt_eq atom "slate_code") (dv_or (rt_eq atom "slate_person") (rt_eq atom "recalled_copper"))) (c1_statement "slate_marks")
+  (if (rt_eq atom "frame_hollow") (c1_statement "fork_dent")
+   (if (rt_eq atom "cups_known") (c1_statement "cups_preferences")
+    (if (dv_or (rt_eq atom "starter_kept") (rt_eq atom "recalled_names")) (c1_statement "starter_layers")
+     (if (rt_eq atom "heads_lost") (dv_fact (dv_ref "ritual" "state" "sound_trial_done") true) (dv_true)))))))
+(defn c1_personal_request (action target)
+ (let (scope (dv_get action "grants") atom (dv_get (rt_at (dv_get action "grants") 0) "field")
+       speech (dv_with (dv_with (c1_speech (dv_true) "请把你辨认出的内容说给我听。" "professional-request")
+        "utterance_type" "question") "request" (dv_m2 "target" target "topic" (dv_get (rt_at (dv_get action "grants") 0) "field"))))
+  (dv_with (dv_with (dv_with (dv_with (dv_with (dv_with action "grants" (rt_list)) "purpose_refs" scope)
+   "precondition" (c1_query_basis atom)) "authority_precondition" (dv_true)) "speech" speech) "listeners" (dv_single target))))
 (defn c1_method (name law) (dv_instance name law))
 (defn c1_vector (time) (dv_m3 "time" time "computation" 1 "stamina" 0))
 (defn c1_cost (time source) (dv_with (dv_m3 "minimum" (c1_vector time) "maximum" (c1_vector time) "actual" (c1_vector time)) "source_refs" (dv_single source)))
@@ -161,7 +174,7 @@
 (defn c1_inspect_E5 (actor)
  (c1_once (c1_action (rt_cat actor ".inspect.E5") "inspect"
   (c1_at actor "foyer") (c1_at actor "foyer") ""
-  (dv_single (c1_knowledge "fork_dent")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 73 "E5"))))
+  (if (rt_eq actor "su") (dv_pair (c1_knowledge "fork_dent") (c1_knowledge "frame_hollow")) (dv_single (c1_knowledge "fork_dent"))) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 73 "E5"))))
 
 (defn c1_visible_E5 () "地上一把纯银音叉，柄上刻着“S.L.”。\n门框齐肩高的地方，有一个很小的凹痕。")
 
@@ -175,7 +188,7 @@
 (defn c1_inspect_E7 (actor)
  (c1_once (c1_action (rt_cat actor ".inspect.E7") "inspect"
   (c1_at actor "hall") (c1_at actor "hall") ""
-  (dv_single (c1_knowledge "slate_marks")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 75 "E7"))))
+  (if (rt_eq actor "huo") (dv_list3 (c1_knowledge "slate_marks") (c1_knowledge "slate_code") (c1_knowledge "slate_person")) (dv_single (c1_knowledge "slate_marks"))) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 75 "E7"))))
 
 (defn c1_visible_E7 () "一块小石板，粉笔速记两行。\n第一行：G：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。")
 
@@ -189,14 +202,14 @@
 (defn c1_inspect_E9 (actor)
  (c1_once (c1_action (rt_cat actor ".inspect.E9") "inspect"
   (c1_at actor "pantry") (c1_at actor "pantry") ""
-  (dv_single (c1_knowledge "cups_preferences")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 77 "E9"))))
+  (if (rt_eq actor "shen") (dv_pair (c1_knowledge "cups_preferences") (c1_knowledge "cups_known")) (dv_single (c1_knowledge "cups_preferences"))) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 77 "E9"))))
 
 (defn c1_visible_E9 () "水槽里四只用过的杯子，各不相同：\n一只青瓷小杯，杯底没有糖渍；\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n一只缺口白杯；\n一只粗瓷大杯。")
 
 (defn c1_inspect_E10 (actor)
  (c1_once (c1_action (rt_cat actor ".inspect.E10") "inspect"
   (c1_at actor "pantry") (c1_at actor "pantry") ""
-  (dv_single (c1_knowledge "starter_layers")) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 78 "E10"))))
+  (if (rt_eq actor "shen") (dv_pair (c1_knowledge "starter_layers") (c1_knowledge "starter_kept")) (dv_single (c1_knowledge "starter_layers"))) (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 78 "E10"))))
 
 (defn c1_visible_E10 () "罐里的酵种还活着，冒着细泡。\n罐壁上一层摞一层干结的旧面痕，数不清。")
 
@@ -463,11 +476,14 @@
   (c1_at actor "foyer") "" (dv_pair (c1_knowledge "recalled_bolt") (c1_knowledge "recalled_trust"))
   (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 90 "recall_detective.002")) "recall" actor 0.85)))
 (defn c1_sound_action (actor)
- (c1_once (c1_action (rt_cat actor ".sound_trial") "sound_test"
+ (dv_with (dv_with (c1_once (c1_action (rt_cat actor ".sound_trial") "sound_test"
   (dv_all (dv_pair (c1_at actor "hall") (c1_statement "pipe_layout")))
   (c1_at actor "hall") (rt_cat actor ".sound_trial")
-  (dv_pair (c1_knowledge "sound_trial") (dv_ref "ritual" "state" "sound_trial_done"))
-  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 88 "sound_test.003"))))
+  (if (rt_eq actor "su") (dv_list3 (c1_knowledge "sound_trial") (dv_ref "ritual" "state" "sound_trial_done") (c1_knowledge "heads_lost"))
+   (dv_pair (c1_knowledge "sound_trial") (dv_ref "ritual" "state" "sound_trial_done")))
+  (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story" 88 "sound_test.003")))
+  "public_observers" (c1_list_4 "detective" "huo" "shen" "su"))
+  "public_grants" (dv_single (dv_ref "ritual" "state" "sound_trial_done"))))
 (defn c1_loss_testimony (actor)
  (c1_once (c1_observe_as (c1_action (rt_cat actor ".loss_testimony") "talk"
   (dv_fact (dv_ref "ritual" "state" "sound_trial_done") true)
@@ -598,16 +614,47 @@
     (c1_source "docs/design-standard.md" 674 "awake-self-literal-scope")
     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story" 28 "s3_broadcast.019"))))))
 (defn c1_raw_person_policy (id)
- (let (policy (dv_with (dv_with (c1_player_policy) "information_weight" 12) "goals" (c1_public_goals)))
+ (let (policy (dv_with (dv_with (c1_player_policy) "information_weight" 12) "goals" (if (rt_eq id "detective") (c1_public_goals) (c1_personal_goals id))))
   (if (rt_eq id "detective") (c1_pragmatic_policy (dv_with policy "plan_depth" 6) true)
-   (c1_pragmatic_policy (dv_with (dv_with policy "model_budget" 0) "plan_depth" 1) false))))
+   (c1_pragmatic_policy (dv_with (dv_with policy "model_budget" 0) "plan_depth" (if (rt_eq id "huo") 1 (if (rt_eq id "shen") 2 4))) false))))
+(defn c1_personal_goal (atom actor)
+ (dv_m4 "kind" "know" "question" "own_material" "ref" (c1_knowledge atom) "basis" (dv_single (c1_memory_source actor))))
+(defn c1_personal_goals (actor)
+ (if (rt_eq actor "huo") (dv_pair (c1_personal_goal "slate_code" actor) (c1_personal_goal "slate_person" actor))
+  (if (rt_eq actor "shen") (dv_pair (c1_personal_goal "cups_known" actor) (c1_personal_goal "starter_kept" actor))
+   (dv_list3 (c1_personal_goal "frame_hollow" actor) (c1_personal_goal "score_partial" actor) (c1_personal_goal "heads_lost" actor)))))
+(defn c1_professional_reply (actor atom surface source)
+ (dv_with (dv_with (dv_with
+  (c1_action (rt_cat (rt_cat actor ".reply.") atom) "talk" (c1_statement atom) (dv_true) "" (rt_list) source)
+  "response_topic" atom) "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
+  "speech" (dv_with (c1_speech (c1_statement atom) source "professional-observation") "surface" surface)))
+(defn c1_professional_replies (actor)
+ (if (rt_eq actor "huo")
+  (dv_pair
+   (c1_professional_reply actor "slate_code" "⊥，闩。✕，禁止。✕开，不许开。"
+    (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story" 27 "help_E7.003"))
+   (c1_professional_reply actor "slate_person" "小图代人，我习惯这样——画他手里常拿的家伙。⊥✓，闩好了。"
+    (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story" 29 "help_E7.005")))
+  (if (rt_eq actor "shen")
+   (dv_pair
+    (c1_professional_reply actor "cups_known" "给人倒茶我向来不问，看一眼就知道放几勺。"
+     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story" 36 "help_E9.003"))
+    (c1_professional_reply actor "starter_kept" "是我喂的。续种，刮壁，盖布——这手法我认得。"
+     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story" 43 "help_E10.002")))
+   (dv_pair
+    (c1_professional_reply actor "frame_hollow" "不一样。门框后面是空的。贴着一根管子。"
+     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story" 12 "help_E5.004"))
+    (c1_professional_reply actor "heads_lost" "从管子里出来的声音，跟人当面说话不一样。发闷，字头容易丢。"
+     (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story" 19 "sound_test.007"))))))
 
 (defn c1_person_policy (id)
- (dv_with (c1_raw_person_policy id) "topic_bindings"
-  (dv_single (dv_m4 "topic" "original_q2_complete"
+ (dv_with (dv_with (c1_raw_person_policy id) "notice_co_presence" true) "topic_bindings"
+  (dv_pair (dv_m4 "topic" "original_q2_complete"
    "heard_when" (dv_fact (dv_ref "question" "state" "outstanding_complete") true)
    "completed_when" (dv_fact (dv_ref "question" "state" "outstanding_complete") false)
-   "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001"))))))
+   "basis" (dv_single (c1_source "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story" 16 "answer_q2.001")))
+   (dv_m4 "topic" "own_material" "heard_when" (dv_fact (dv_ref "question" "state" "awake_scope") true)
+    "completed_when" (dv_not (dv_true)) "basis" (dv_single (c1_memory_source id))))))
 (defn c1_investigation_actions (actor)
  (let (actions (c1_move_actions actor) inspect
   (c1_list_12 (c1_inspect_E1 actor) (c1_inspect_E2 actor) (c1_inspect_E3 actor) (c1_inspect_E4 actor)
@@ -617,8 +664,12 @@
    (c1_talk_cups_known actor) (c1_talk_starter_kept actor) (c1_talk_recalled_copper actor) (c1_talk_recalled_names actor)) i 0)
   (do (while (rt_lt i (rt_count inspect)) (do (rt_push actions (rt_at inspect i)) (set i (rt_add i 1))))
    (set i 0) (while (rt_lt i (rt_count dialogue)) (do (rt_push actions (rt_at dialogue i)) (set i (rt_add i 1))))
-   (set i 0) (while (rt_lt i (rt_count (c1_answer_actions actor)))
-    (do (rt_push actions (rt_at (c1_answer_actions actor) i)) (set i (rt_add i 1))))
+   (if (rt_eq actor "detective")
+    (do (set i 0) (while (rt_lt i (rt_count (c1_answer_actions actor)))
+     (do (rt_push actions (rt_at (c1_answer_actions actor) i)) (set i (rt_add i 1))))) false)
+   (if (rt_eq actor "detective") false
+    (let (replies (c1_professional_replies actor))
+     (do (set i 0) (while (rt_lt i (rt_count replies)) (do (rt_push actions (rt_at replies i)) (set i (rt_add i 1)))))))
    (rt_push actions (c1_sound_action actor)) (rt_push actions (c1_loss_testimony actor))
    (if (rt_eq actor "detective") (rt_push actions (c1_replay_action actor)) false)
    (if (rt_eq actor "detective") (do (rt_push actions (c1_sole_test actor)) (rt_push actions (c1_touch_recall actor))) false)

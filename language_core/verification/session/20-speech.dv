@@ -394,6 +394,7 @@
                               "source_event" source) "speech" speech) "presuppositions" (dvs_speech_presuppositions before speech))
                               "audibility" (dv_m3 "speaker_location" (dv_find speaker "location" "") "listener_location" (dv_find listener "location" "")
                                 "hearing_grants" (dv_find listener "hearing_grants" (rt_list)))) "observation_profile" profile) "proposal_decision" decision)))
+                          (set listener (dvs_receive_request listener speech parse_event source (dv_get speaker "id")))
                           (while (rt_lt n (rt_count candidates_actual))
                             (let (candidate (rt_at candidates_actual n) interpretation (dvs_speech_interpret after policy (rt_at candidates_actual n) bindings)
                                   interpretations_before (dv_clone interpretations))

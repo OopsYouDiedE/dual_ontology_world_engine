@@ -33,6 +33,13 @@ public static class R
     public static object at(object a, object i) => Items(a)[Index(i)];
     public static object count(object a) => (double)Items(a).Count;
     public static object is_list(object a) => a is List<object>;
+    public static object copy_value(object value)
+    {
+        if (value is not List<object> items) return value;
+        var copy = new List<object>(items.Count);
+        foreach (var item in items) copy.Add(copy_value(item));
+        return copy;
+    }
     public static object fail(object a) => throw new Exception(Text(a));
     public static object arg(object i) => Arguments[Index(i)];
     public static object arg_count() => (double)Arguments.Length;

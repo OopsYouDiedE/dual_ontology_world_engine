@@ -1,0 +1,305 @@
+[
+  {
+    "label": "toolchain",
+    "argv": [
+      "dotnet",
+      "--version"
+    ],
+    "start_monotonic_ns": 44246796000000,
+    "start_elapsed_seconds": 0.078,
+    "exit": 0,
+    "end_monotonic_ns": 44247062000000,
+    "duration_seconds": 0.266
+  },
+  {
+    "label": "seed-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\Seed.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44247140000000,
+    "start_elapsed_seconds": 0.422,
+    "exit": 0,
+    "end_monotonic_ns": 44249093000000,
+    "duration_seconds": 1.953
+  },
+  {
+    "label": "c1-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\bin\\Release\\net8.0\\Seed.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c1\\Program.cs"
+    ],
+    "start_monotonic_ns": 44249171000000,
+    "start_elapsed_seconds": 2.453,
+    "exit": 0,
+    "end_monotonic_ns": 44249281000000,
+    "duration_seconds": 0.11
+  },
+  {
+    "label": "c1-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c1\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44249375000000,
+    "start_elapsed_seconds": 2.657,
+    "exit": 0,
+    "end_monotonic_ns": 44253031000000,
+    "duration_seconds": 3.656
+  },
+  {
+    "label": "c2-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c1\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c2\\Program.cs"
+    ],
+    "start_monotonic_ns": 44253281000000,
+    "start_elapsed_seconds": 6.563,
+    "exit": 0,
+    "end_monotonic_ns": 44253468000000,
+    "duration_seconds": 0.187
+  },
+  {
+    "label": "c2-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c2\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44253531000000,
+    "start_elapsed_seconds": 6.813,
+    "exit": 0,
+    "end_monotonic_ns": 44256906000000,
+    "duration_seconds": 3.375
+  },
+  {
+    "label": "c3-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c2\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\Program.cs"
+    ],
+    "start_monotonic_ns": 44257109000000,
+    "start_elapsed_seconds": 10.391,
+    "exit": 0,
+    "end_monotonic_ns": 44257296000000,
+    "duration_seconds": 0.187
+  },
+  {
+    "label": "c3-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44257375000000,
+    "start_elapsed_seconds": 10.657,
+    "exit": 0,
+    "end_monotonic_ns": 44260500000000,
+    "duration_seconds": 3.125
+  },
+  {
+    "label": "session-runner-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\session-runner\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\session-runner\\Program.cs"
+    ],
+    "start_monotonic_ns": 44260734000000,
+    "start_elapsed_seconds": 14.016,
+    "exit": 0,
+    "end_monotonic_ns": 44262140000000,
+    "duration_seconds": 1.406
+  },
+  {
+    "label": "session-runner-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\session-runner\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44262203000000,
+    "start_elapsed_seconds": 15.485,
+    "exit": 0,
+    "end_monotonic_ns": 44266531000000,
+    "duration_seconds": 4.328
+  },
+  {
+    "label": "export-scenario-base-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-scenario-base\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-scenario-base\\Program.cs"
+    ],
+    "start_monotonic_ns": 44266875000000,
+    "start_elapsed_seconds": 20.157,
+    "exit": 0,
+    "end_monotonic_ns": 44268687000000,
+    "duration_seconds": 1.812
+  },
+  {
+    "label": "export-scenario-base-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-scenario-base\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44268812000000,
+    "start_elapsed_seconds": 22.094,
+    "exit": 0,
+    "end_monotonic_ns": 44273156000000,
+    "duration_seconds": 4.344
+  },
+  {
+    "label": "export-scenario-base-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-scenario-base\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\inputs/scenario-base.json",
+      "dvs_scenario_base"
+    ],
+    "start_monotonic_ns": 44273500000000,
+    "start_elapsed_seconds": 26.782,
+    "exit": 0,
+    "end_monotonic_ns": 44275515000000,
+    "duration_seconds": 2.015
+  },
+  {
+    "label": "export-oracle-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-oracle\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-oracle\\Program.cs"
+    ],
+    "start_monotonic_ns": 44275671000000,
+    "start_elapsed_seconds": 28.953,
+    "exit": 0,
+    "end_monotonic_ns": 44276375000000,
+    "duration_seconds": 0.704
+  },
+  {
+    "label": "export-oracle-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-oracle\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44276484000000,
+    "start_elapsed_seconds": 29.766,
+    "exit": 0,
+    "end_monotonic_ns": 44280093000000,
+    "duration_seconds": 3.609
+  },
+  {
+    "label": "export-oracle-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-oracle\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\inputs/chapter1-oracle.json",
+      "dvs_chapter1_oracle"
+    ],
+    "start_monotonic_ns": 44280375000000,
+    "start_elapsed_seconds": 33.657,
+    "exit": 0,
+    "end_monotonic_ns": 44280500000000,
+    "duration_seconds": 0.125
+  },
+  {
+    "label": "export-manifest-enabled-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-manifest-enabled\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-manifest-enabled\\Program.cs"
+    ],
+    "start_monotonic_ns": 44280625000000,
+    "start_elapsed_seconds": 33.907,
+    "exit": 0,
+    "end_monotonic_ns": 44282703000000,
+    "duration_seconds": 2.078
+  },
+  {
+    "label": "export-manifest-enabled-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-manifest-enabled\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 44282781000000,
+    "start_elapsed_seconds": 36.063,
+    "exit": 0,
+    "end_monotonic_ns": 44286625000000,
+    "duration_seconds": 3.844
+  },
+  {
+    "label": "export-manifest-enabled-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\export-manifest-enabled\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\inputs/template-enabled.json",
+      "dvs_manifest_enabled"
+    ],
+    "start_monotonic_ns": 44286968000000,
+    "start_elapsed_seconds": 40.25,
+    "exit": 0,
+    "end_monotonic_ns": 44288750000000,
+    "duration_seconds": 1.782
+  },
+  {
+    "label": "session-enabled",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\session-runner\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5\\inputs/scenario-base.json",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-substantive-loop-r5/trace-enabled.json",
+      "enabled"
+    ],
+    "start_monotonic_ns": 44288812000000,
+    "start_elapsed_seconds": 42.094,
+    "exit": 0,
+    "end_monotonic_ns": 44473218000000,
+    "duration_seconds": 184.406
+  }
+]

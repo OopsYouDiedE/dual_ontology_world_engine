@@ -102,7 +102,7 @@
 (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
 (defn native_arity (name)
   (if (has (words "rt_list rt_arg_count") name) 0
-    (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify") name) 1
+    (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify") name) 1
       (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_cat rt_chr rt_push rt_at rt_write") name) 2
         (if (rt_eq name "rt_slice") 3 -1)))))
 (defn lookup (signatures name)
