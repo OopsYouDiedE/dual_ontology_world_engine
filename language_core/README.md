@@ -8,6 +8,8 @@
 
 同日加入文件头 `define 别名 原名` 设计，例如 `define 返回 return`、`define 输出 rt_print`，以单 token 映射支持中文编程；仅当前文件生效，保留字符串/注释和语义，首版无递归宏。完整规则与中文函数示例见 DESIGN 12.8，当前尚未实现。
 
+完整新方案现统一在 [SYNTAX.md](SYNTAX.md)，包括领域切片/理解/采纳/概率动作与算法层、完整声明/表达式文法、类型与能力、来源/阶段检查、后端/自举及第一章真实会话接线。该方案替代上述初稿目标，尚未实现；[第一章语法样例](verification/scenarios/surface-v1-proposal/chapter1-reading.dv)是设计输入，不在运行manifest中，不能当作编译或实际测试证据。
+
 ## 可编译的世界语义库
 
 新增 [core/README.md](core/README.md)：公理分域采纳、物体/门/通道与切片、观察更新、主客观价值、心理评价式回应、论证代价和历史检查器。实现采用 DV 编译子集；尚未接入现役第一章。当前已获准在隔离 DV 会话中实现并运行自动验证，具体证据范围见 verification README。
