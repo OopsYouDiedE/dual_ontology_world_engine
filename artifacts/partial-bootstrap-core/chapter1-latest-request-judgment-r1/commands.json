@@ -1,0 +1,91 @@
+[
+  {
+    "label": "main-causal-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-baseline-r4\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\main-causal\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\main-causal\\Program.cs"
+    ],
+    "start_monotonic_ns": 38315109000000,
+    "exit": 0,
+    "end_monotonic_ns": 38316859000000,
+    "duration_seconds": 1.75
+  },
+  {
+    "label": "main-causal-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\main-causal\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-m:1"
+    ],
+    "start_monotonic_ns": 38316875000000,
+    "exit": 0,
+    "end_monotonic_ns": 38321562000000,
+    "duration_seconds": 4.687
+  },
+  {
+    "label": "readable-report-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-baseline-r4\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\readable-report\\bundle.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\readable-report\\Program.cs"
+    ],
+    "start_monotonic_ns": 38321578000000,
+    "exit": 0,
+    "end_monotonic_ns": 38322234000000,
+    "duration_seconds": 0.656
+  },
+  {
+    "label": "readable-report-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\readable-report\\Program.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-m:1"
+    ],
+    "start_monotonic_ns": 38322250000000,
+    "exit": 0,
+    "end_monotonic_ns": 38325375000000,
+    "duration_seconds": 3.125
+  },
+  {
+    "label": "main-causal-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\main-causal\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\inputs/manifest-enabled.json",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1/trace-enabled.json",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\inputs/chapter1-oracle.json"
+    ],
+    "start_monotonic_ns": 38325390000000,
+    "exit": 0,
+    "end_monotonic_ns": 38341796000000,
+    "duration_seconds": 16.406
+  },
+  {
+    "label": "readable-report-execute",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\readable-report\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\main-causal-execute.stdout.txt",
+      "",
+      "",
+      "",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\inputs\\report-index.json",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-judgment-r1\\readable-report.md"
+    ],
+    "start_monotonic_ns": 38341812000000,
+    "exit": 0,
+    "end_monotonic_ns": 38357234000000,
+    "duration_seconds": 15.422
+  }
+]

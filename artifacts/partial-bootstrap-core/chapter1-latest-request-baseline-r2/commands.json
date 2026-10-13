@@ -1,0 +1,62 @@
+[
+  {
+    "label": "toolchain",
+    "argv": [
+      "dotnet",
+      "--version"
+    ],
+    "start_monotonic_ns": 37082156000000,
+    "start_elapsed_seconds": 0.078,
+    "exit": 0,
+    "end_monotonic_ns": 37082281000000,
+    "duration_seconds": 0.125
+  },
+  {
+    "label": "seed-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\Seed.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 37082359000000,
+    "start_elapsed_seconds": 0.281,
+    "exit": 0,
+    "end_monotonic_ns": 37084062000000,
+    "duration_seconds": 1.703
+  },
+  {
+    "label": "c1-generate",
+    "argv": [
+      "dotnet",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\seed\\bin\\Release\\net8.0\\Seed.dll",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-baseline-r2\\c1\\Program.cs"
+    ],
+    "start_monotonic_ns": 37084125000000,
+    "start_elapsed_seconds": 2.047,
+    "exit": 0,
+    "end_monotonic_ns": 37084250000000,
+    "duration_seconds": 0.125
+  },
+  {
+    "label": "c1-build",
+    "argv": [
+      "dotnet",
+      "build",
+      "C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\chapter1-latest-request-baseline-r2\\c1\\Program.csproj",
+      "-c",
+      "Release",
+      "-m:1",
+      "--disable-build-servers"
+    ],
+    "start_monotonic_ns": 37084328000000,
+    "start_elapsed_seconds": 2.25,
+    "exit": 1,
+    "end_monotonic_ns": 37090890000000,
+    "duration_seconds": 6.562
+  }
+]

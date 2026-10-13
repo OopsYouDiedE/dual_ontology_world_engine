@@ -1,0 +1,1862 @@
+{
+  "scope": "Field projection of original trace; no domain state updates or automatic judgment",
+  "source": "chapter1-latest-request-baseline-r4/trace-enabled.json",
+  "events": [
+    {
+      "id": "e17",
+      "type": "speech_literal",
+      "actor": "demon",
+      "time": 500,
+      "parents": [
+        "e16"
+      ],
+      "data": {
+        "speaker_truth": "true"
+      },
+      "surface": "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。"
+    },
+    {
+      "id": "e20",
+      "type": "implicature",
+      "actor": "detective",
+      "time": 500,
+      "parents": [
+        "e17",
+        "e19"
+      ],
+      "data": {
+        "status": "retained",
+        "source_event": "e17",
+        "missing_bridge": "scope-reference-bridge-not-supported",
+        "scope_check": {
+          "literal_scope": "awake_self",
+          "interpretation_scope": "body_history",
+          "bridge_truth": "unknown",
+          "check_enabled": true,
+          "gap": true
+        }
+      }
+    },
+    {
+      "id": "e23",
+      "type": "implicature",
+      "actor": "huo",
+      "time": 500,
+      "parents": [
+        "e17",
+        "e22"
+      ],
+      "data": {
+        "status": "accepted",
+        "source_event": "e17",
+        "missing_bridge": "",
+        "scope_check": {
+          "literal_scope": "awake_self",
+          "interpretation_scope": "body_history",
+          "bridge_truth": "unknown",
+          "check_enabled": false,
+          "gap": true
+        }
+      }
+    },
+    {
+      "id": "e26",
+      "type": "implicature",
+      "actor": "shen",
+      "time": 500,
+      "parents": [
+        "e17",
+        "e25"
+      ],
+      "data": {
+        "status": "accepted",
+        "source_event": "e17",
+        "missing_bridge": "",
+        "scope_check": {
+          "literal_scope": "awake_self",
+          "interpretation_scope": "body_history",
+          "bridge_truth": "unknown",
+          "check_enabled": false,
+          "gap": true
+        }
+      }
+    },
+    {
+      "id": "e29",
+      "type": "implicature",
+      "actor": "su",
+      "time": 500,
+      "parents": [
+        "e17",
+        "e28"
+      ],
+      "data": {
+        "status": "accepted",
+        "source_event": "e17",
+        "missing_bridge": "",
+        "scope_check": {
+          "literal_scope": "awake_self",
+          "interpretation_scope": "body_history",
+          "bridge_truth": "unknown",
+          "check_enabled": false,
+          "gap": true
+        }
+      }
+    },
+    {
+      "id": "e36",
+      "type": "planning_stop",
+      "actor": "detective",
+      "time": 500,
+      "parents": [
+        "e33"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e39",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 500,
+      "parents": [
+        "e36"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e42",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 500,
+      "parents": [
+        "e39"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e45",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 500,
+      "parents": [
+        "e42"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e53",
+      "type": "speech_literal",
+      "actor": "demon",
+      "time": 515,
+      "parents": [
+        "e52"
+      ],
+      "data": {
+        "speaker_truth": "true"
+      },
+      "surface": "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？ 每一问，说一句结论，再拿出一件撑得住它的东西。"
+    },
+    {
+      "id": "e96",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 515,
+      "parents": [
+        "e93"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e127",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 515,
+      "parents": [
+        "e124"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e158",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 515,
+      "parents": [
+        "e155"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e194",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 515,
+      "parents": [
+        "e191"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e225",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 589,
+      "parents": [
+        "e222"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e256",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 589,
+      "parents": [
+        "e253"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e271",
+      "type": "answer_submitted",
+      "actor": "huo",
+      "time": 599,
+      "parents": [
+        "e270"
+      ],
+      "data": {},
+      "action_id": "huo.answer.V3_0"
+    },
+    {
+      "id": "e272",
+      "type": "answer_accepted",
+      "actor": "huo",
+      "time": 599,
+      "parents": [
+        "e271"
+      ],
+      "data": {
+        "stage": "voice_source",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "accepted"
+      }
+    },
+    {
+      "id": "e282",
+      "type": "answer_submitted",
+      "actor": "shen",
+      "time": 609,
+      "parents": [
+        "e281"
+      ],
+      "data": {},
+      "action_id": "shen.answer.V3_0"
+    },
+    {
+      "id": "e283",
+      "type": "answer_rejected",
+      "actor": "shen",
+      "time": 609,
+      "parents": [
+        "e282"
+      ],
+      "data": {
+        "stage": "voice_source",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e291",
+      "type": "answer_submitted",
+      "actor": "su",
+      "time": 619,
+      "parents": [
+        "e290"
+      ],
+      "data": {},
+      "action_id": "su.answer.V3_0"
+    },
+    {
+      "id": "e292",
+      "type": "answer_rejected",
+      "actor": "su",
+      "time": 619,
+      "parents": [
+        "e291"
+      ],
+      "data": {
+        "stage": "voice_source",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e295",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 619,
+      "parents": [
+        "e292"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e308",
+      "type": "answer_submitted",
+      "actor": "huo",
+      "time": 629,
+      "parents": [
+        "e307"
+      ],
+      "data": {},
+      "action_id": "huo.answer.V4_0"
+    },
+    {
+      "id": "e309",
+      "type": "answer_accepted",
+      "actor": "huo",
+      "time": 629,
+      "parents": [
+        "e308"
+      ],
+      "data": {
+        "stage": "words",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "accepted"
+      }
+    },
+    {
+      "id": "e318",
+      "type": "answer_submitted",
+      "actor": "shen",
+      "time": 639,
+      "parents": [
+        "e317"
+      ],
+      "data": {},
+      "action_id": "shen.answer.V4_0"
+    },
+    {
+      "id": "e319",
+      "type": "answer_rejected",
+      "actor": "shen",
+      "time": 639,
+      "parents": [
+        "e318"
+      ],
+      "data": {
+        "stage": "words",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e326",
+      "type": "answer_submitted",
+      "actor": "su",
+      "time": 649,
+      "parents": [
+        "e325"
+      ],
+      "data": {},
+      "action_id": "su.answer.V4_0"
+    },
+    {
+      "id": "e327",
+      "type": "answer_rejected",
+      "actor": "su",
+      "time": 649,
+      "parents": [
+        "e326"
+      ],
+      "data": {
+        "stage": "words",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e330",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 649,
+      "parents": [
+        "e327"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e339",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 649,
+      "parents": [
+        "e336"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e342",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 649,
+      "parents": [
+        "e339"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e345",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 649,
+      "parents": [
+        "e342"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e348",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 649,
+      "parents": [
+        "e345"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e357",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 649,
+      "parents": [
+        "e354"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e360",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 649,
+      "parents": [
+        "e357"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e363",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 649,
+      "parents": [
+        "e360"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e366",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 649,
+      "parents": [
+        "e363"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e376",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 651,
+      "parents": [
+        "e373"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e379",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 651,
+      "parents": [
+        "e376"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e382",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 651,
+      "parents": [
+        "e379"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e385",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 651,
+      "parents": [
+        "e382"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e395",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 653,
+      "parents": [
+        "e392"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e398",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 653,
+      "parents": [
+        "e395"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e401",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 653,
+      "parents": [
+        "e398"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e404",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 653,
+      "parents": [
+        "e401"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e414",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 653,
+      "parents": [
+        "e411"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e417",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 653,
+      "parents": [
+        "e414"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e420",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 653,
+      "parents": [
+        "e417"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e423",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 653,
+      "parents": [
+        "e420"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e433",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 653,
+      "parents": [
+        "e430"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e436",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 653,
+      "parents": [
+        "e433"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e439",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 653,
+      "parents": [
+        "e436"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e442",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 653,
+      "parents": [
+        "e439"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e458",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 653,
+      "parents": [
+        "e455"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e461",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 653,
+      "parents": [
+        "e458"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e464",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 653,
+      "parents": [
+        "e461"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e467",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 653,
+      "parents": [
+        "e464"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e476",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 653,
+      "parents": [
+        "e473"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e479",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 653,
+      "parents": [
+        "e476"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e482",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 653,
+      "parents": [
+        "e479"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e485",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 653,
+      "parents": [
+        "e482"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e495",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 655,
+      "parents": [
+        "e492"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e498",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 655,
+      "parents": [
+        "e495"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e501",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 655,
+      "parents": [
+        "e498"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e504",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 655,
+      "parents": [
+        "e501"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e514",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 657,
+      "parents": [
+        "e511"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e517",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 657,
+      "parents": [
+        "e514"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e520",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 657,
+      "parents": [
+        "e517"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e523",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 657,
+      "parents": [
+        "e520"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e533",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 659,
+      "parents": [
+        "e530"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e536",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 659,
+      "parents": [
+        "e533"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e539",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 659,
+      "parents": [
+        "e536"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e542",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 659,
+      "parents": [
+        "e539"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e552",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 659,
+      "parents": [
+        "e549"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e555",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 659,
+      "parents": [
+        "e552"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e558",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 659,
+      "parents": [
+        "e555"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e561",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 659,
+      "parents": [
+        "e558"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e572",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 661,
+      "parents": [
+        "e569"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e575",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 661,
+      "parents": [
+        "e572"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e578",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 661,
+      "parents": [
+        "e575"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e581",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 661,
+      "parents": [
+        "e578"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e591",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 663,
+      "parents": [
+        "e588"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e594",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 663,
+      "parents": [
+        "e591"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e597",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 663,
+      "parents": [
+        "e594"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e600",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 663,
+      "parents": [
+        "e597"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e610",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 663,
+      "parents": [
+        "e607"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e613",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 663,
+      "parents": [
+        "e610"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e616",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 663,
+      "parents": [
+        "e613"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e619",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 663,
+      "parents": [
+        "e616"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e629",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 665,
+      "parents": [
+        "e626"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e632",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 665,
+      "parents": [
+        "e629"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e635",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 665,
+      "parents": [
+        "e632"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e638",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 665,
+      "parents": [
+        "e635"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e648",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 667,
+      "parents": [
+        "e645"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e651",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 667,
+      "parents": [
+        "e648"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e654",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 667,
+      "parents": [
+        "e651"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e657",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 667,
+      "parents": [
+        "e654"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e667",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 669,
+      "parents": [
+        "e664"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e670",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 669,
+      "parents": [
+        "e667"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e673",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 669,
+      "parents": [
+        "e670"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e676",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 669,
+      "parents": [
+        "e673"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e686",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 686,
+      "parents": [
+        "e683"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e689",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 686,
+      "parents": [
+        "e686"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e692",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 686,
+      "parents": [
+        "e689"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e695",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 686,
+      "parents": [
+        "e692"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e706",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 688,
+      "parents": [
+        "e703"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e709",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 688,
+      "parents": [
+        "e706"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e712",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 688,
+      "parents": [
+        "e709"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e715",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 688,
+      "parents": [
+        "e712"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e725",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 712,
+      "parents": [
+        "e722"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e728",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 712,
+      "parents": [
+        "e725"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e731",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 712,
+      "parents": [
+        "e728"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e734",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 712,
+      "parents": [
+        "e731"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e744",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 712,
+      "parents": [
+        "e741"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e747",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 712,
+      "parents": [
+        "e744"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e750",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 712,
+      "parents": [
+        "e747"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e753",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 712,
+      "parents": [
+        "e750"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e763",
+      "type": "answer_submitted",
+      "actor": "detective",
+      "time": 722,
+      "parents": [
+        "e762"
+      ],
+      "data": {},
+      "action_id": "detective.answer.me"
+    },
+    {
+      "id": "e764",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "time": 722,
+      "parents": [
+        "e763"
+      ],
+      "data": {
+        "stage": "identity",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "accepted"
+      }
+    },
+    {
+      "id": "e769",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 722,
+      "parents": [
+        "e766"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e772",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 722,
+      "parents": [
+        "e769"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e775",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 722,
+      "parents": [
+        "e772"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e778",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 722,
+      "parents": [
+        "e775"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e785",
+      "type": "answer_submitted",
+      "actor": "detective",
+      "time": 732,
+      "parents": [
+        "e784"
+      ],
+      "data": {},
+      "action_id": "detective.answer.V3_0"
+    },
+    {
+      "id": "e786",
+      "type": "answer_rejected",
+      "actor": "detective",
+      "time": 732,
+      "parents": [
+        "e785"
+      ],
+      "data": {
+        "stage": "voice_source",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e789",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 732,
+      "parents": [
+        "e786"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e792",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 732,
+      "parents": [
+        "e789"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e795",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 732,
+      "parents": [
+        "e792"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e798",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 732,
+      "parents": [
+        "e795"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e805",
+      "type": "answer_submitted",
+      "actor": "detective",
+      "time": 742,
+      "parents": [
+        "e804"
+      ],
+      "data": {},
+      "action_id": "detective.answer.V4_0"
+    },
+    {
+      "id": "e806",
+      "type": "answer_rejected",
+      "actor": "detective",
+      "time": 742,
+      "parents": [
+        "e805"
+      ],
+      "data": {
+        "stage": "words",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true",
+        "question_match": "true",
+        "answer_complete": "true",
+        "reason": "subsumed-by-higher-truth"
+      }
+    },
+    {
+      "id": "e809",
+      "type": "planning_stop",
+      "actor": "huo",
+      "time": 742,
+      "parents": [
+        "e806"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e812",
+      "type": "planning_stop",
+      "actor": "shen",
+      "time": 742,
+      "parents": [
+        "e809"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e815",
+      "type": "planning_stop",
+      "actor": "su",
+      "time": 742,
+      "parents": [
+        "e812"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e818",
+      "type": "planning_stop",
+      "actor": "demon",
+      "time": 742,
+      "parents": [
+        "e815"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": -100000
+      }
+    },
+    {
+      "id": "e821",
+      "type": "planning_stop",
+      "actor": "detective",
+      "time": 742,
+      "parents": [
+        "e818"
+      ],
+      "data": {
+        "stop": "complete-depth",
+        "score": 0
+      }
+    },
+    {
+      "id": "e822",
+      "type": "session_stopped",
+      "actor": "",
+      "time": 742,
+      "parents": [
+        "e821"
+      ],
+      "data": {
+        "reason": "no-admissible-action-or-budget"
+      }
+    }
+  ]
+}
