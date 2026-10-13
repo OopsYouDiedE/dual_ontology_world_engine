@@ -29,6 +29,8 @@ core、session及编译器的算法使用DV。平台ABI承接数值、容器、�
 
 本人推知、预测与物理执行分别使用infer、predict、enforce采纳。理解、采纳、模型、论证和实际行动保留各自来源。decision显式表达planning和admission；各旧入口的评分、门槛、平分与首步选择在对应DV库中迁移。
 
+正式答辩分别记录公共结论等级与主体自己的接受回执。主体接受记录随实际交接更新，规划依据本人回执排除同等级重复提交；只读判定使用提交前的本人记录核对，不以他人的公共结论替代本人的作答。
+
 ## 命令
 
 ```powershell
@@ -42,5 +44,7 @@ python language_core/tools/run_verification.py --config <process-plan.json> --ou
 ## 工作安排
 
 源码和目标生成物由对应DV构建链连接。架构、接口和命令变动同步本文件；内容设计合并至docs/design-standard.md。阶段成果继续使用artifacts/partial-bootstrap-core/，每轮修改按根流程提交与推送。
+
+run_verification的普通编译/会话执行持续写入当轮stdout/stderr原始文件，结束后记录进程时长与来源封存。可在会话期间查看已经实际发生的行动；完整停止轨迹与只读判定另行记录。
 
 用户2026-10-12停止独立Agent复评的裁定继续适用。新语法方案先交付，随后实现并使用第一章内容实际运行。

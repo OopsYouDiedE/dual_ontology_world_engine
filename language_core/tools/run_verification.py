@@ -104,18 +104,17 @@ def main():
         started = time.monotonic_ns()
         record = {'label': label, 'argv': argv, 'start_monotonic_ns': started,
                   'start_elapsed_seconds': (started - origin) / 1e9}
-        try:
-            process = subprocess.run(argv, cwd=ROOT, capture_output=True, timeout=args.timeout)
-            stdout, stderr = process.stdout, process.stderr
-            record['exit'] = process.returncode
-        except subprocess.TimeoutExpired as exc:
-            stdout, stderr = exc.stdout or b'', exc.stderr or b''
-            record['timeout_seconds'] = args.timeout
-            record['exit'] = None
+        with (out / (label + '.stdout.txt')).open('wb') as stdout_file, (out / (label + '.stderr.txt')).open('wb') as stderr_file:
+            process = subprocess.Popen(argv, cwd=ROOT, stdout=stdout_file, stderr=stderr_file)
+            try:
+                record['exit'] = process.wait(timeout=args.timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                record['timeout_seconds'] = args.timeout
+                record['exit'] = None
         ended = time.monotonic_ns()
         record.update(end_monotonic_ns=ended, duration_seconds=(ended - started) / 1e9)
-        (out / (label + '.stdout.txt')).write_bytes(stdout)
-        (out / (label + '.stderr.txt')).write_bytes(stderr)
         commands.append(record)
         (out / 'commands.json').write_text(json.dumps(commands, indent=2), encoding='utf-8')
         if record['exit'] != 0:

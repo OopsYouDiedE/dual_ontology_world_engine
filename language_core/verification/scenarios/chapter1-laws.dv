@@ -141,11 +141,12 @@
 ; 场面/07_答辩.story:8, answer_q1.001; dispatching four questions simultaneously.
 (axiom c1_question_emit 1 (question)
   (dv_fact (dv_ref question "state" "stage") "prompt")
-  (dv_append (dv_append (dv_append (dv_list3
+  (dv_append (dv_append (dv_append (dv_append (dv_list3
     (dv_assign (dv_ref question "state" "open_identity") true)
     (dv_assign (dv_ref question "state" "open_voice_source") true)
     (dv_assign (dv_ref question "state" "open_words") true))
     (dv_assign (dv_ref question "state" "open_trust") true))
+    (dv_assign (dv_ref question "state" "outstanding_complete") true))
     (dv_assign (dv_ref question "state" "current") "questions_open"))
     (dv_assign (dv_ref question "state" "stage") "questions_open")))
 

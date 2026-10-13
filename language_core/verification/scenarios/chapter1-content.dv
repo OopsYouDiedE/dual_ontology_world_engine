@@ -414,7 +414,7 @@
  (let (items (c1_raw_hypotheses) result (rt_list) n 0)
   (do (while (rt_lt n (rt_count items))
    (let (item (rt_at items n))
-    (do (rt_push result (dv_with item "question" (dv_get (dv_get item "available_when") "value")))
+    (do (rt_push result (dv_with item "question" (c1_answer_topic (dv_get item "id"))))
      (set n (rt_add n 1))))) result)))
 
 (defn c1_talk_slate_code (actor)
