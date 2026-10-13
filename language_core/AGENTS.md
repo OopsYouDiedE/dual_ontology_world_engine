@@ -6,6 +6,8 @@
 
 SYNTAX.md维护完整书写格式，DESIGN.md说明语言与编译架构。设计和指南直接描述语法、机制、模块和命令。第一章源码需求保存在artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md。
 
+surface-v2 为当前待实现的语法设计，取代 surface-v1：缩进前端展开固定领域运算，名义数值类型承载单位、范围与约束；认知映射、门槛接纳和守恒配平分别由 DV 库实现。编译器后续以 Interpret、AcceptanceUpdate、SolveBalance、Commit 等类型化节点连接这些操作，平台 ABI 承接基础数值与容器。当前仍运行 S 表达式启动链，设计示例不登记为已可编译内容；完成新前端后再迁移正式 .dv 源码与生成物。
+
 ## 模块
 
 | 路径 | 职责 |

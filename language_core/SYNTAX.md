@@ -1,429 +1,466 @@
-# DV v1 语法方案
+# DV 领域语法与数值类型方案
 
-当前实现采用 S 表达式；本文定义新的 surface-v1 书写格式。
+本方案名为 surface-v2，取代旧 surface-v1 设计，定义下一版语言。当前编译器尚未实现本方案，现有可执行程序仍采用 compiler/README.md 所述的 S 表达式启动语法。
 
-语言核心是有主体与来源的认知切片、个人理解、可撤销采纳、规划和动作分布。算法与领域声明使用同一编译链。
+DV 的书写单位是“谁取得什么材料、如何理解、凭什么采纳、如何选择与行动”。普通函数实现算法，切片、解释、依据、评分和动作使用专门语法。类型系统携带主体、来源、数值含义和操作阶段。
 
-以下例子展示局部语法形式，参数和名称由所在上下文绑定。
+## 1 参照与取舍
 
-## 1 源文件和中文书写
+| 参照 | 借鉴到 DV | 具体选择 |
+| --- | --- | --- |
+| MATLAB | 领域对象直接参与运算，声明参数形状与约束 | 切片、证据和动作分布可以运算；单位、形状和数值语义参与推导 |
+| Lean | 带性质的类型、展开层与小型可信检查层 | 范围、量纲、归一化与预算关系自动检查；常用性质不要求作者写证明 |
+| Rust | 名义类型、枚举匹配、只读借用与资源消费 | 区分同底层数值的含义，共享预测快照，一次性使用执行票据 |
 
-源码后缀为 `.dv`。文件依次包含 define、module、import、export、声明和程序入口；库模块只有声明。
+MATLAB 的 arguments 表达输入约束，不能据此声称它会在编译期证明所有数值关系。[官方说明](https://www.mathworks.com/help/matlab/matlab_prog/function-argument-validation-1.html)
+
+Lean 的 Subtype 将值与性质证明组合，编译后可具有与基础值相同的表示。DV 借鉴这一分层，将数学性质证明与人物信念分开。[官方说明](https://lean-lang.org/doc/reference/latest/Basic-Types/Subtypes/)
+
+Rust 的 newtype 可以区分数值的语义，普通类型别名不能做到这一点；所有权约束值的使用。[名义类型](https://doc.rust-lang.org/book/ch20-03-advanced-types.html)、[所有权](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
+
+## 2 基本外观
+
+UTF-8、中文标识符、中缀表达式、具名参数、冒号和缩进块。换行结束语句，括号内可换行；空格缩进，不使用 Tab。标识符采用 Unicode 标识符类别与下划线，按 NFC 归一化，区分大小写。
 
 ```dv
-define 函数 defn
+module example.numeric
+import dv.numeric
+export 剩余时间
+
+fn 剩余时间(总量: Duration, 已用: Duration) -> Duration
+    where 已用 <= 总量:
+    return 总量 - 已用
+
+fn 平方(x: Rat) -> Rat = x * x
+
+let 剩余 = 剩余时间(总量: 60min, 已用: 24min)
+```
+
+函数参数类型显式，局部类型推导。单表达式函数用 `=`，多语句函数用 return。`let` 不可重新绑定，`var` 为局部可变绑定；赋值 `=`，比较 `==`。默认参数写 `=`，调用支持位置参数与具名参数。同一参数不能重复提供。
+
+```dv
+record Point:
+    x: Length
+    y: Length
+
+enum Outcome<T>:
+    Done(value: T)
+    Waiting
+    Interrupted(reason: Text)
+
+fn describe<T>(outcome: Outcome<T>) -> Text:
+    match outcome:
+        case Done(value): return "完成"
+        case Waiting: return "等待"
+        case Interrupted(reason): return reason
+```
+
+`type Name = Type` 仅创建别名；record、enum 与 scalar 创建新类型。记录值写 `Point(x: 1m, y: 2m)`，更新写 `point with { x = 2m }` 并返回新值。泛型形式为 `<T, const N: Nat>`。集合包括 List、Map、Set、Vector<T,N>、Matrix<T,R,C>。向量为 `[a,b]`，矩阵为 `[[a,b],[c,d]]`，Map 为 `map { key: value }`。
+
+数值矩阵的 `*` 是矩阵乘法，`.*` 是逐元素乘法；不做隐式广播。形状进入类型。认知映射的 `*` / `×` 是第7节定义的专用映射运算，只借用乘法的书写形式，不要求矩阵乘法、外积或叉积算法。List 动态索引返回 Option，Vector 的 Index<N> 索引直接返回元素。[MATLAB 的运算区分](https://www.mathworks.com/help/matlab/matlab_prog/array-vs-matrix-operations.html)
+
+if/else、for/in、while、match/case 提供一般控制流；and/or 短路，实参从左到右求值。Option/Result 用 match 处理，`?` 在返回相容 Result 的函数中传播错误。闭包写 `fn(x: T) => expression`。注释为 `//` 与 `/* ... */`，文本用双引号，字符用单引号。
+
+模块用 import 引入，export 显式公开。模块声明依赖为有向无环图，模块内部函数可相互递归。主程序用 `fn main() -> Unit:` 入口，不另造一套执行语法。
+
+## 3 中文与 define
+
+```dv
+define 函数 fn
 define 返回 return
+define 解释 reading
+define 决策 decision
 
-module sample.math;
-import dv.numeric;
-export minimum;
-
-函数 minimum(a: Int, b: Int) -> Int requires [] {
-    返回 if a < b { a } else { b };
-}
+module example.localized
+函数 平方(x: Rat) -> Rat = x * x
 ```
 
-`define 别名 原名` 是文件内的单 token 别名，一行一条，末尾分号可选。它用于关键字、函数、参数、类型和运算符；正文按映射后的 token 解析，字符串和注释按原文保存。别名采用 ASCII 名称或常用汉字，内部名称采用 ASCII。
+保留 `define x x` 格式：一行一条，放在 module 前，左右各一个 token；恒等映射本身合法。标识符原生支持中文，不需要逐个翻译变量。
 
-模块以声明依赖组成有向无环图；`import name as alias;` 提供别名，成员用 `alias.member` 引用，export 显式列名。函数可相互递归。注释采用 `//` 和 `/* ... */`，花括号划分代码块，分号结束语句。源码为 UTF-8，位置记录使用原文 UTF-16 偏移与行列。
+别名一次映射，不递归替换，不影响字符串与注释，不允许同一 token 映射为不同内容。别名不改变运算优先级。规范名和原文名都保留在诊断中；NFC 后同名的标识符视为同名。中英文书写生成相同节点。
 
-## 2 基本类型和数据
+## 4 固定运算符
 
-| 类型 | 合同 |
+运算符对应固定操作，用户不能随意重载领域含义。Unicode 形式只是 ASCII 的等价拼写。
+
+| 写法 | 操作 | 结果 |
+| --- | --- | --- |
+| `p @ m` | 在主体视界 m 中评价命题 p | Judgement，含真值、依据和冲突 |
+| `mapping * input`，或 `mapping × input` | 用认知映射处理实际可得切片 | InterpretationSet，含主体、来源与映射过程 |
+| `input ~> Reading(memory: prior)`，或 `⇝` | 用指定解释方式与本人材料理解输入 | InterpretationSet，尚未采纳 |
+| `evidence \|- p`，或 `⊢` | 按现用规则检查材料是否支持 p | SupportResult，成功项含论证与来源 |
+| `offered >> channel` | 在本人获准通道上实际发送提供材料 | Result<Delivery, TransmissionError> |
+| `value \|> f(args)` | 将左值作为 f 的第一个实参 | f 的返回类型 |
+| `premise => conclusion` | rule 中的前提到结论 | 规则声明，不执行世界变化 |
+| `x ~ distribution` | model 中的随机变量声明 | 模型变量，不立即抽样 |
+
+`evidence |- claim` 检查领域论证的支持关系，不宣称证据客观为真。数学性质证明用 by，不能用人物采纳的领域规则证明数值类型正确。
+
+`offer >> channel` 是有效果的传递运算，左项必须是 OfferedSlice，不能是任意记忆或字符串。通道传递后，各接收者分别进行 perceive。一般理解沿采纳规则改变本人认知；外力刻画使用第9节的 imprint 约束求解操作。
+
+`score_table |> softmax(temperature: t)` 等价于 `softmax(score_table, temperature: t)`。`sample distribution using rng` 才产生选择意图，抽样不隐式执行动作。
+
+优先级从高到低：调用/字段/索引/`?`，前缀 `- not`，`* × / .* %`，`+ -`，比较，and，or，`@`，`~>`，`|-`，`>>`，`|>`。`×` 与 `*` 等价。`@`、`~>`、`|-` 不允许无括号连续结合；管道左结合。映射乘法不具有默认交换律或结合律，连续认知映射须括号或具名组合。`=>` 和 `~` 只在其声明位置解析。普通程序分支要 Bool，Judgement 不隐式转换为 Bool。
+
+```dv
+let 判断 = 命题 @ 本人视界
+match 判断.truth:
+    case True: return 已支持
+    case False: return 已否定
+    case Unknown: return 尚不清楚
+```
+
+以上返回值由调用者定义。冲突保留在 Judgement 的独立字段中；未知不以概率 0 或 0.5 代替。
+
+## 5 核心数值与单位
+
+核心采用精确 Int/Nat/Rat，十进制 0.1 是精确 1/10。Float64 是显式近似类型，写作 `0.1f64`，不能隐式流入核心领域量。后端证明范围可容纳时使用机器整数，否则使用大整数/有理数。
+
+```dv
+scalar Probability: Rat where 0 <= value and value <= 1
+scalar Confidence: Rat where 0 <= value and value <= 1
+scalar Reliability: Rat where 0 <= value and value <= 1
+scalar Acceptance: Rat where 0 <= value and value <= 1
+scalar Weight: Rat where value >= 0
+scalar Blend: Rat where 0 <= value and value <= 1
+scalar Score<Scale>: Rat
+scalar Temperature<Scale>: Score<Scale> where value > 0
+
+unit s
+unit min = 60s
+unit h = 60min
+
+let 信度: Reliability = 0.8
+let 停留: Duration = 2min + 30s
+let 截止: TimePoint<GameClock> = 15:00@GameClock
+```
+
+scalar 创建名义类型。字面量 0.8 可按所需类型构造；已有 Confidence 变量不能赋给 Probability。Score 带评分尺度，不同尺度须通过具名映射转换。Temperature 与 Score 同尺度，其商无量纲。
+
+| 数值 | 性质 |
 | --- | --- |
-| Bool | true/false，仅程序控制条件 |
-| Int | 有符号64位整数 |
-| Float | 有限IEEE-754双精度浮点数 |
-| Byte | Byte为0..255，Char为一个Unicode标量 |
-| String | Unicode 文本；标准库区分 UTF-16 索引与标量遍历 |
-| Symbol | 通过symbol("name")构造的符号值 |
-| Unit | 无结果，字面量 unit |
-| List<T> / Map<K,V> | 不可变集合，Map按声明插入顺序遍历 |
-| Option<T> / Result<T,E> | Some/None与Ok/Err分支类型 |
-| Value | 旧ABI使用的动态值域 |
+| Probability / Confidence / Reliability / Acceptance / Blend | 各在 [0,1]，含义不互换；Acceptance 专指主体对切片的接纳程度 |
+| EvidenceWeight / Weight | 非负，不要求总和为 1，二者语义类型独立 |
+| Score<S> | 可为负，只与同尺度相加和比较 |
+| Duration / TimeDelta | 前者非负，后者可为负 |
+| TimePoint<C> | 同时钟时间点相减得到 TimeDelta；加 Duration 得时间点 |
+| Budget<R> / Cost<R> | 指定资源的非负量，时间、认知步数、体力不混用 |
+| Dist<A> | 非空支持集、非负质量、质量总和为 1 |
+| Vector / Matrix | 元素类型与形状满足运算签名 |
+
+Duration 相减的一般结果是 TimeDelta，第2节 where 关系可使其结果精化为 Duration。Rat 除法要求分母非零的已知性质；无法推出时使用返回 Result 的 divide。整数截断除法写 div，`%` 为相应余数，`/` 为有理数除法。TimePoint 的时钟域与历元由类型声明；例中的 HH:MM 是 GameClock 的显示格式。
+
+加减保留数值语义尺度并推导区间：两 Probability 相加的一般结果为未归一化概率质量，不能自动回填 Probability；`1-p` 可证明仍在 [0,1]。Confidence 没有默认的相乘合证含义，凸组合使用 blend。Probability 的数值乘积虽仍在 [0,1]，也不证明事件独立；事件联合概率由模型关系计算。
 
 ```dv
-const limit: Int = 10;
-let message = "文本\n下一行";
-let initial: Char = 'a';
-let items: List<Int> = [1, 2, 3];
-let mapping: Map<String, Int> = map { "a" => 1, "b" => 2 };
+fn complement(p: Probability) -> Probability = 1 - p
+
+fn average_confidence(a: Confidence, b: Confidence, w: Blend) -> Confidence:
+    return blend(a, b, w)
+
+let 错误概率: Probability = 1.2  // 编译错误：超出范围
+let 错误赋值: Probability = 信度  // 编译错误：数值含义不同
+let 错误时间 = 3min + 0.8         // 编译错误：量纲不同
 ```
 
-十进制整数为 Int，带小数点或指数的数字为 Float；负号为前缀运算。字符是一个 Unicode 标量，字符串使用双引号及转义。Symbol 由 symbol("name") 构造。
+自动保证落在三个位置：
 
-列表、Map 允许末尾逗号；Map 按键组织值，lookup 返回 Option。正式集合为不可变值，更新返回副本。旧 Value 沿用现有 double 数字、可变容器和列表身份相等；结构比较由 equal/dv_same 表达。
+1. 常量、名义类型、单位、形状和可推导范围在编译时处理；where 前提参与调用和分支分析。
+2. 自定义函数可用 ensures 约束结果。常量求值、区间、线性关系和已登记引理自动消解。未能消解的关系提供 by 证明，或使用返回 Result 的构造操作，不把“未证明”当作“已成立”。
+3. 外部输入通过 Probability.parse 等构造一次取得有效类型，之后使用该性质，不在每次读写时重复检测。
 
-领域量使用 Score、Probability、Confidence 等具名类型，数值转换显式书写。
+函数契约写在返回类型之后：`where 参数关系 ensures 结果关系`，ensures 中 result 表示返回值。首版 by 只支持具名引理应用、代入、反身性与算术证书；不承诺自动证明任意定理。核心类型性质不能由剧情 axiom 或任意 cast 绕过。证明在代码生成后可擦除，运行时数据关系在实际构造处处理。
 
-## 3 类型声明
+这里保证范围、量纲、形状、归一化、算术与已声明的数学关系。人物权重是否合理、模型是否符合现实，是内容与模型的问题。
+
+## 6 分数到概率
 
 ```dv
-type Count = Int;
+let weights = weights { 调查: 3, 询问: 1 }
+let distribution = normalize(weights)
+// 静态非空且总量为正，直接获得 Dist，概率精确为 3/4 与 1/4。
 
-record Span {
-    file: String,
-    start: Int,
-    end: Int
-}
-
-type Choice<T> {
-    Selected(value: T),
-    Missing
-}
-
-tag amount: Int;
+let exact = distribution { 调查: 0.75, 询问: 0.25 }
+// 显式概率质量已合计为 1，不偷偷归一化错误的概率声明。
 ```
 
-`type X = T` 定义透明类型别名，record 定义具名字段，type 的分支形式定义代数数据类型。记录构造写作 `Span { file: "sample.dv", start: 0, end: 5 }`，读取用 `span.start`，更新用 `span with { end: 8 }`。
+动作值由调用者定义。按动作实例身份形成支持集，重复身份报错。多条预测路径若共享一个首步，须先聚合首步价值，不能变成多张抽签票。
 
-构造器可写 Selected(1) 或 Choice.Selected(1)。tag 声明领域字段及值类型，领域字段通过引用和视界访问。
+| 策略 | 合同 |
+| --- | --- |
+| argmax | Score 到最高分点质量，平分规则显式指定 declaration_order 或 uniform |
+| softmax | 同尺度 Score 与正 Temperature；稳定计算 exp((s-max(s))/T) 后归一化 |
+| weighted | 具名 Score→Weight 映射，再 normalize |
+| epsilon_greedy | Probability 类型 epsilon，混合最高分分布与均匀探索 |
 
-## 4 函数和控制流
+全语言不固定默认公式，每个 decision 自己选择策略。保留“先研究可选规则、不预定公式”的约定。
+
+Dist 以非负整数质量和正总量为逻辑表示，概率为精确比值；有理权重可通分，不必为每个候选反复做浮点除法。动态非空与正总量已被类型证明时 normalize 直接返回 Dist，否则返回 Result<Dist, EmptyOrZeroMass>；全零权重没有隐式均匀回退。
+
+softmax 的指数计算是近似的，标准库记录实现版本和量化方式，再构造合法质量。精确归一化不意味着 softmax 映射无近似误差。采样使用质量区间与指定随机源，不使用四舍五入后的展示百分数。
+
+## 7 视界、存储切片和提供切片
 
 ```dv
-defn identity<T>(value: T) -> T requires [] {
-    return value;
-}
+slice 表达(u: Utterance) = u.{literal, referents, scope, cues}
+slice 背景(m: MindView) = m.memory.{episodes, adopted_rules}
 
-defn count_to(limit: Int) -> Int requires [] {
-    var i = 0;
-    while i < limit {
-        i = i + 1;
-    }
-    return i;
-}
-
-let transform: fn(Int) -> Int requires [] =
-    fn(x: Int) -> Int requires [] { return x + 1; };
+fn 接收(delivery: Delivery, view: MindView) -> Result<Revision, ReceiveError>:
+    mind view:
+        let input = perceive(delivery)?
+        let prior = recall(背景(view), using: relevant(input))
+        let meanings = 本人映射(memory: prior) × input
+        return adopt(meanings, using: 本人采纳策略)
 ```
 
-```dv
-return match value {
-    Some(x) if x > 0 => x,
-    Some(_) => 0,
-    None => 0
-};
-```
+本人映射和本人采纳策略为模块中的具名声明。MindView 实际带主体与版本参数，省略参数时从调用处推导。mind 块建立 self、memory、now 与现用规则的词法上下文；获得 Agent 标识不自动取得其私有视界。
 
-函数类型为 `fn(T1, T2) -> R requires [Capability...]`。闭包捕获词法绑定，var 通过局部 cell 表达共享状态。导出签名明确参数、返回类型和能力。
-
-let 表示不可重绑定的局部值，var 表示可赋值局部值。while 为循环语句，for 按集合顺序迭代。if、match 可作为表达式，表达式块的末尾值为块值；函数返回使用 return，Unit 函数可以自然结束。
-
-模式包括字面量、绑定名、`_`、构造器和记录模式，guard 为 Bool。main 是程序入口。错误结果使用 Result。
-
-## 5 表达式
-
-优先级从高到低：调用/字段/索引，前缀 `- not`，`* / %`，`+ -`，`< <= > >=`，`== !=`，`and`，`or`。算术左结合；多项比较写成显式合取。
-
-调用及普通运算按源码从左到右求值，Bool and/or 短路，if/match 求值选中的分支。普通 dv_and(a,b) 沿用急切实参求值。
-
-Int 除法向零截断，余数与该商对应；Float 除法产生 Float。文本连接用 concat。列表索引读取元素，记录字段通过点号读取。泛型函数根据参数推导类型。
-
-## 6 领域类型与能力
+`value.{fields}` 是投影，不复制整棵状态树。slice 为投影命名。类型自动携带主体、本地引用、源版本及来源：
 
 ```text
-AuthorityWorld, MindSnapshot, MindContext, ModeledMind
-Ref<Authority>, Ref<Subjective>, LocalObject, Facet, Scope
-StoredSlice, WorkingSlice, OfferedSlice, Percept
-Proposition, Truth, Judgement, Provenance, Evidence, Assumption
-InterpretationRule, Interpretation, Adoption, Revision
-WorldLaw, DerivationRule, NormRule, ValuePolicy, ChoicePolicy
-Effect, Action, Prediction, Prepared, Intention, Receipt
-Score, ScoredCandidates, ActionDistribution, Probability
-Confidence, EvidenceWeight, Likelihood, SourceReliability, Cost, Priority
+StoredSlice<S,V> → recall → WorkingSlice<S,V>
+WorkingSlice<S,V> → offer → OfferedSlice<S>
+OfferedSlice<S> >> Channel → Delivery
+Delivery → perceive → Percept<Receiver,V>
+Percept<S,V> ~> Reading(WorkingSlice<S,V>) → InterpretationSet<S,V>
 ```
 
-认知材料携带主体、本地对象/切面、快照版本、来源事件和有效时间。ModeledMind 还包含建模者、被建模者、来源及假设。字段的未知、冲突、支持份额、来源信度与认识置信分别表达。
+offer 的 to 指定接收者；真实传递后才有 Delivery。perceive 需要属于当前接收者的传递项，没有听见或看到时返回对应结果。提供一个切片不会带走提供者的全部记忆。
 
-ReadView、ReadAuthority、Transmit、StageWrite、HostIO、Random、CognitiveWork 描述操作能力。requires 是函数效果签名，能力值由参数和宿主入口提供；Prepared 和阶段租约具有一次性消费语义。
+同一输入与不同记忆可以产生不同解释。ModeledMind<Owner,Target> 是 Owner 对 Target 的模型，其理解预测带 Forecast 类型，不能作为 Target 已实际理解的回执。
 
-## 7 视界和切片
+### 7.1 乘法外观的认知映射
 
 ```dv
-within snapshot as mind {
-    let stored = slice target facet facet_name from mind fields field_names;
-    let working = recall stored within mind by retrieval_policy budget budget;
-}
+mapping 本人映射(memory: WorkingSlice) in mind:
+    input Percept
+    output InterpretationSet
+    using 常用理解(memory: memory)
+
+let 主观解释 = 本人映射(memory: 本人记忆) × 感知切片
 ```
+
+`mapping` 是具名领域运算声明。input、output 为输入输出类型，using 绑定具备该签名的 reading 或 DV 函数；主体、源版本与实际来源由输入和上下文推导。底层可以做线索匹配、回忆检索、范围转换、规则推知或数值计算，不要求把命题、回忆、人物关系压成数值矩阵。`Reading × input` 的操作方向统一为“映射在左，材料在右”；`input ~> Reading(...)` 是直接调用理解策略的写法，两者在绑定同一策略时展开到相同 Interpret 节点。
+
+完整语义是“客观来源切片 → 实际暴露与感知 → 本人认知映射 × 感知切片 → 主观解释切片”。客观来源不等于其中所有证词客观为真，也不等于主体能读取权威世界的全部内容。ObjectiveSlice 在权威域，主体运算接收实际 Delivery 形成的 Percept。投影与遮挡由真实通道决定。
+
+同一份传递给多人时，每个接收者各自绑定自己的记忆、规则与偏好，分别运算；没有默认共享大脑。结果保留字面内容、解释作用域、桥接依据及来源，因而能表达字面相同但理解相反。映射求值本身不写入接纳状态；正式接收将映射结果交给下面的数值接纳机制。
+
+## 8 命题、推知、理解、采纳
 
 ```dv
-let offered = offer working from speaker_mind to recipients via channel;
-let receipt = transmit offered using transmit_capability budget transport_budget;
-let percepts = perceive receipt for listener_snapshot using observation_capability;
+prop 已关闭(d: Door) = d.closed == true
+
+rule 关闭推知(d: Door) in mind:
+    已看见关闭(d) => 已关闭(d)
+
+reading 常用理解(memory: WorkingSlice) in mind:
+    on input: Percept
+    when 匹配线索(input)
+    interpret 候选解释(input, memory)
+    scope input.scope -> 解释范围(memory)
+    bridge 范围依据(memory)
+    support 解释支持(input, memory)
+    revise using 本人修订策略
 ```
 
-within 将显式快照绑定为词法 MindContext。slice 取得本人存储的指定切面，recall 根据检索策略形成本次 WorkingSlice。
+例中的谓词与策略由模块提供。prop 构造 Proposition，读取领域引用不等于读取其权威值；在 prop、rule、known 等命题位置，字段比较构造命题。普通函数中只有拿到实际值才能普通比较。
 
-offer 构造提供材料，transmit 产生实际传递收据，perceive 将收据投影为接收者的 Percept。提供源区分本人表达 SubjectOffer 和授权世界暴露 AuthorityExposure，通道保留传递损失。操作结果使用 Result。
+rule 在本人有据采用后参与推知；声明不等于所有主体都知道。应用自动记录匹配前提、规则身份/版本与采用来源。`evidence |- claim` 返回 Supported(argument)、Undetermined(missing) 或 Conflicted(details)。
 
-## 8 命题和判断
+reading 的 support 为 EvidenceWeight，输出解释候选。adopt 调用本人接纳机制，按数值与门槛形成修订；`apply revision` 提交本人修订并产生新版本，不能提交到另一主体。正式 receive 在同一接收操作内完成 perceive、映射、评分与修订，不要求内容作者逐条写状态转换。
+
+retain、revise、defend、withdraw 是不同策略操作；收到反证后是否维护旧理解，由本人的目标、依据与策略决定。语言不固定为所有人自动撤回或自动维护。
+
+证据类型区分 Observation、Testimony、Recall、Derivation、Hypothesis、Estimate。组合保留同源依赖组，重复拷贝不产生独立证据；假设不能通过数值转换变成观察。
+
+### 8.1 达到门槛自动转换接纳程度
 
 ```dv
-let claim = proposition {
-    exists(target) and tagged(target, amount, >= 1)
-};
-let judgement = evaluate claim within mind;
+acceptance 本人采纳策略 in mind:
+    degree item: Acceptance = 接纳函数(item, memory, goals)
+    levels:
+        Held from 0
+        Tentative from 暂纳门槛
+        Adopted from 接纳门槛
 ```
 
-命题原子为 exists、tagged、related、at、kind、atom、believes。Truth 包含 True、False、Unknown，Judgement 还携带依据与冲突。命题区域的 and/or/not 表达三值逻辑，程序分支使用 Bool。
+degree 的具名函数将证据、来源依赖、冲突和主体已有认识转换为 Acceptance；不把动作 Score 或命题 Confidence 自动当作接纳程度。两个门槛为内容声明的 Acceptance，满足 `0 < 暂纳门槛 < 接纳门槛 <= 1`，不在语言里预定心理参数或评分公式。
 
-对象存在用 exists(ref)，有限量化用 `forall (x in domain) { ... }` 和 `exists_var (x in domain) { ... }`。tagged 显式给出比较方式；逻辑变量写 `?name`，行动角色槽位写 slot(name)。
+levels 声明有序区间：取 degree 大于等于其下界的最高一级。等于门槛即进入该级；低于门槛按相同区间自动降级。连续 degree 和离散 level 同时保留。默认更新不是每帧扫描全脑，而在正式取得材料、依赖或相关主体参数改变时，重新计算受影响切片。预测上下文只产生预测修订；实际上下文自动提交真实修订与来源。
 
-Evidence 区分观察、证词、记忆、推导、估计和假设。assume 形成假设；infer 根据本人采纳的规则、依据和工作预算产生推导。
+转移保留 before、after、触发依据和版本。曾 Adopted 后降级，生成 Withdrawn 转移回执；新的 level 仍由区间决定。Rejected 需要明确的拒斥依据或策略，不从低接纳程度自动推出反命题。接纳程度也不改变世界真值、证据来源与客观正确性。
 
-## 9 理解和采纳
+门槛分类是纯函数；接纳数值的关联更新以一次新输入事件和旧快照为基础。若内容声明切片之间同步反馈，使用具名 update 求解函数声明稳定条件与计算预算，统一产生一个修订批次；预算内未求得结果则保留 Pending，不把任意迭代中间值当作最终接纳。
+
+新 level 可成为共同动作决策的前提，例如 Adopted 切片受到质疑时出现 defend 候选。候选是否执行仍取决于本人目的、成本和动作选择，门槛不会直接强制人物说出某一句话。
+
+## 9 动作与执行
 
 ```dv
-interpretation reading(target: Ref<Subjective>, basis: Provenance) version 1 {
-    id: interpretation_id;
-    cue: cue_id;
-    when: premise;
-    conclude: conclusion;
-    available: availability;
-    withdraw: counterevidence;
-    source_scope: source_scope;
-    target_scope: target_scope;
-    bridge: scope_bridge;
-    support: support_weight;
-    basis: basis;
-}
+action 转述材料(item: WorkingSlice, receiver: LocalAgent) by self:
+    known 同处(self, receiver)
+    cost time: 0min, cognition: 1step
+    do:
+        let offered = offer(item, to: receiver)
+        let delivery = (offered >> hearing_channel)?
+        return delivery
 ```
 
-```dv
-let understood = interpret percept within mind
-    using adopted_interpretation_rules
-    memory working_slices
-    budget cognition_budget;
+action 是模板，调用产生候选，不立即执行。known 在本人视界判断；若要尝试未知条件，声明独立 attempt 动作。cost 有资源类型，可提供上下界与具名结算函数。
 
-let revision = adopt understood into snapshot by acceptance_policy;
-```
+do 只在正式执行阶段运行，错误形成 Failed/Interrupted 回执并结算已发生消耗。这里的 `?` 传播为失败回执，不撤销已经发生的言说和身体动作。单个世界修改可以声明 atomic；整段会话没有隐式回滚。
 
-interpretation 声明解释规则工厂。id 是实例身份，cue 是输入线索，when/conclude/available/withdraw/bridge 是命题，两个 scope 是语义范围，support 是 EvidenceWeight，basis 是来源。
-
-interpret 结合实际输入、本人取用的记忆切片和规则产生解释。adopt 形成采纳、保留、拒绝或撤回的 Revision，commit_revision 提交修订；reconsider 根据新材料重审已有采纳。
-
-同一内容的理解由本人材料、规则、指代、时间范围和预算共同决定。现有解释桥的 prior 参数在兼容层对应 support，概率解释使用单独的模型。
-
-## 10 法则与规则声明
-
-| 声明 | 必填字段及含义 |
-| --- | --- |
-| axiom | when:Proposition、effects:List<Effect>；兼容现具名公理工厂，不自动采纳或执行 |
-| worldlaw | when:Proposition、effects:List<Effect>、scope:Scope、basis:Provenance；世界转移模板 |
-| rule | when:Proposition、conclude:Proposition、scope:Scope、basis:Provenance；本人推知规则 |
-| norm | mode:Require/Forbid/Permit/Prefer、when:Proposition、action:ActionPattern、scope:Scope、basis:Provenance；规范规则 |
-| interpretation | 第9节固定字段；本人理解规则模板 |
-| policy | terms:List<ValueTerm>、combine:ScoreCombiner、unknown:UnknownPolicy、basis:Provenance；分项价值评价 |
-| choice | selector:Selector、basis:Provenance；评分到动作分布策略 |
-| model | variables:List<FiniteVariable>、priors:PriorSpec、factors:List<Factor>、dependencies:DependencySpec、basis:Provenance；有限概率模型 |
-| decision | candidates:List<Action>、eligible:EligibilityPolicy、score:ValuePolicy、planning:Option<PlanningPolicy>、admission:ActionAdmissionPolicy、distribution:ChoicePolicy、budget:CognitiveBudget；第12节求值入口 |
-
-```dv
-rule derive(target: Ref<Subjective>, basis: Provenance) version 1 {
-    when: premise;
-    conclude: conclusion;
-    scope: scope;
-    basis: basis;
-}
-```
-
-声明统一采用 `Kind name<T...>(params...) version Expr { field: Expr; ... }`。工厂名称、实例身份和版本分别表达。
-
-norm 的 Forbid/Permit 使用 priority，Require/Prefer 使用 utility。世界规则以 enforce 采纳，主体规则分别以 predict、infer、norm 采纳。adopt_law 根据模式、confidence 和 basis 形成修订。
-
-## 11 概率模型和评分量
-
-model 声明有限变量域、先验、因子和依赖关系。FiniteVariable 包含有序域，Assignment 是变量赋值；NormalizedPrior 使用概率，HeuristicPrior 使用权重。Factor 表达条件似然或启发式权重，DependencySpec 表达共同来源。
-
-`condition model on evidence within mind budget budget` 产生条件分布和证据轨迹。Score、Probability、Confidence、Likelihood、EvidenceWeight、SourceReliability、Cost、Priority 分别表示不同量。
-
-ValueTerm 根据动作和本人上下文产生 Known、Unknown 或 Conflicted 分项；ScoreCombiner 组合有序分项。UnknownPolicy 包含 ReportOnly、RejectIncomplete 和 PenalizeMissing。EligibilityPolicy 包含 RequireKnownTrue 和产生独立尝试动作的 AttemptUnknown。
-
-## 12 规划分布和选择
-
-```dv
-choice preserve_order() version 1 {
-    selector: Argmax { ties: DeclarationOrder };
-    basis: declared_basis;
-}
-
-choice stochastic(temperature: Temperature, basis: Provenance) version 1 {
-    selector: Boltzmann { temperature: temperature };
-    basis: basis;
-}
-```
-
-```dv
-decision choose_response(mind: MindSnapshot, policy: ValuePolicy,
-                         chooser: ChoicePolicy, budget: CognitiveBudget) version 1 {
-    candidates: personally_available_actions;
-    eligible: known_preconditions_and_capabilities;
-    score: policy;
-    planning: planning_policy;
-    admission: action_admission_policy;
-    distribution: chooser;
-    budget: budget;
-}
-```
-
-decision 返回评分、规划和动作分布。planning 为 Option<PlanningPolicy>，admission 为选择门槛，distribution 为选择策略。PlanResult 包含可执行首步、路径、即期分、回传分、来源、已比较层、耗时和停止原因。
-
-ActionAdmissionPolicy 包含 AnyEligible 和显式 ScoreGate。有候选但未达到门槛时，结果为 NoSelection；其他结果为 Ready、NoCandidate、Incomplete、BudgetStopped。
-
-Selector 包含 Argmax、Boltzmann、Weighted、EpsilonGreedy。Argmax 的平分策略是 DeclarationOrder 或 Uniform；Boltzmann 按 exp(score/T) 归一化；Weighted 使用显式非负权重转换；EpsilonGreedy 混合最高分选择与均匀探索。
-
-distribute 根据首步动作及其聚合分数形成分布；choose 根据分布和随机源产生 Intention。各现有入口分别沿用自身门槛与平分规则。
-
-## 13 预测和执行
-
-```dv
-let forecast = predict action within mind using adopted_laws
-    context action_context budget prediction_budget;
-let preparation = prepare intention against authority using execution_capability;
-let receipt = commit prepared using execution_capability;
-```
-
-Effect 的构造器为 Set、Change、Spend、Relate、RequireCondition、When、Sequence、Act、Say、Think、Wait、Lease。
-
-predict 在本人私有状态中形成 Prediction。prepare 根据当前世界、资源、行动上下文形成 Prepared；commit 消费准备结果，产生 Receipt。报价、预留、执行和结算使用 CostVector、Quote、Reservation、Settlement。
-
-model_view 形成本人持有的他人模型，forecast 根据该模型预测理解；真实听者通过自己的 Percept 和认识进行理解。
-
-## 14 宿主接口与包
-
-```dv
-extern defn read_text(path: String, io: HostIO) -> Result<String, IOError>
-    requires [HostIO] abi "dv.read_text.v1";
-```
-
-extern 将签名绑定到平台 ABI。编译器、推演器与系统库用 DV 实现，ABI 承接文件、控制台、容器和原子执行接口。
-
-包分为标准库、算法库、内容、oracle 和宿主，均使用 module/import。Speech 由字面命题、正文、指代、作用域、预设和线索组成。内容包声明人物、世界、公理实例、话语和阶段。
-
-const 在编译阶段计算纯确定表达式。v1 的扩展范围包括通用计算、有限领域模型和词法闭包。
-
-## 15 规范文法
-
-以下 EBNF 中 `{}` 表示重复、`[]` 表示可选，引号内为源码符号。
+worldlaw 以 when 声明权威前提，以 effect 包含 `set ref = value`、`change ref by delta`、`spend resource = amount`、relate 等效果。axiom 为具名领域法则实例，norm 声明 permit/forbid/prefer；均不能代替数值性质证明。
 
 ```text
-File = {DefineLine}, "module", QName, ";", {Import}, {Export}, {Decl}, [Main] ;
-DefineLine = "define", AliasName, TargetToken, [";"], LineEndOrEOF ;
-Import = "import", QName, ["as", Name], ";" ;
-Export = "export", Name, {",", Name}, ";" ;
-Decl = Function | Extern | Const | TypeAlias | Record | Union | Tag | Domain ;
-Function = "defn", Name, [Generics], Params, "->", Type, [Caps], Block ;
-Extern = "extern", "defn", Name, Params, "->", Type, Caps,
-         "abi", String, ";" ;
-Const = "const", Name, ":", Type, "=", Expr, ";" ;
-TypeAlias = "type", Name, [Generics], "=", Type, ";" ;
-Record = "record", Name, [Generics], "{", [Fields], "}" ;
-Union = "type", Name, [Generics], "{", Variant, {",", Variant}, [","], "}" ;
-Variant = Name, ["(", Fields, ")"] ;
-Tag = "tag", Name, ":", Type, ";" ;
-Generics = "<", Name, {",", Name}, ">" ;
-Params = "(", [Fields], ")" ;
-Fields = Field, {",", Field}, [","] ;
-Field = Name, ":", Type ;
-Type = QName, ["<", Type, {",", Type}, ">"]
-     | "fn", "(", [Type, {",", Type}], ")", "->", Type, Caps ;
-Caps = "requires", "[", [QName, {",", QName}], "]" ;
-Domain = DomainKind, Name, [Generics], Params, "version", Expr,
-         "{", DomainField, {DomainField}, "}" ;
-DomainKind = "axiom" | "worldlaw" | "rule" | "norm" | "interpretation"
-           | "policy" | "choice" | "model" | "decision" ;
-DomainField = FieldToken, ":", Expr, ";" ;
-Main = "main", Block ;
-Block = "{", {Stmt}, [Expr], "}" ;
-Stmt = ("let" | "var"), Name, [":", Type], "=", Expr, ";"
-     | Name, "=", Expr, ";" | "return", [Expr], ";"
-     | "while", Expr, Block | "for", Name, "in", Expr, Block
-     | "if", Expr, Block, ["else", Block]
-     | "within", Expr, "as", Name, Block | Expr, ";" ;
-Expr = operator-precedence expression over Atom, Prefix, Postfix, Special ;
-Atom = Literal | QName | "(", Expr, ")" | List | Map | Construct
-     | IfExpr | Match | Lambda | Proposition ;
-Literal = Number | String | Char | "true" | "false" | "unit" ;
-List = "[", [Expr, {",", Expr}, [","]], "]" ;
-Map = "map", "{", [Expr, "=>", Expr,
-      {",", Expr, "=>", Expr}, [","]], "}" ;
-Construct = QName, "{", [Name, ":", Expr,
-            {",", Name, ":", Expr}, [","]], "}" ;
-Postfix = call "(" [Expr {"," Expr} [","]] ")"
-        | field "." Name | index "[" Expr "]"
-        | update "with" "{" Name ":" Expr {"," Name ":" Expr} [","] "}" ;
-IfExpr = "if", Expr, Block, "else", Block ;
-Match = "match", Expr, "{", Arm, {",", Arm}, [","], "}" ;
-Arm = Pattern, ["if", Expr], "=>", (Expr | Block) ;
-Pattern = "_" | Name | Literal | "-", Number
-        | QName, "(", [Pattern, {",", Pattern}], ")"
-        | QName, "{", [Name, ":", Pattern,
-          {",", Name, ":", Pattern}], [",", ".."], "}" ;
-Lambda = "fn", Params, "->", Type, [Caps], Block ;
-Proposition = "proposition", "{", Prop, "}" ;
-Prop = fixed-precedence expression over PropAtom, "not", "and", "or" ;
-PropAtom = "True" | "False" | "Unknown" | "(", Prop, ")"
-         | PropPredicate, "(", PropArguments, ")"
-         | ("forall" | "exists_var"), "(", Name, "in", Expr, ")", "{", Prop, "}" ;
+Action → decision → Intention → prepare → Prepared → commit → Receipt
+                                     ↘ Blocked / Waiting
 ```
+
+Prepared/Reservation 为仿射类型：消费一次或 cancel 释放。MindView、Evidence、预测快照可只读共享，写入路径产生新版本，作者不写深拷贝。静态类型约束局部消费，跨进程重放由宿主事务身份控制。
+
+### 9.1 强制刻画与最小代价配平
+
+```dv
+imprint 刻画认知(target: MindTarget, idea: Interpretation, floor: Acceptance):
+    require capability 刻画能力(target)
+    achieve acceptance(target, idea) >= floor
+    vary target.cognition via 允许的认知变换
+    conserve using 代价守恒律
+    limit using 可用资源
+    minimize using 刻画代价
+```
+
+这些参数与具名法则由内容包提供；本例不规定谁拥有刻画能力或具体代价。imprint 声明产生一种行动模板，与 action 共用规划、准备、实际执行和回执。achieve 是强制达成的目标约束；vary 限定可调整的认知量与变换；conserve、limit、minimize 分别指定守恒关系、资源界限与目标函数。所有分句为必需，不存在退化为 `set mind = ...` 的执行分支。
+
+系统对“目标脑状态、实际变换和支付来源”联合求解：在满足目标、现有世界法则及资源约束的可行方案中，寻找最小代价方案。允许调整哪些旧认知、依赖、强度、资源和外部作用由 vary 与已声明法则确定。不得把范围外的事实或历史改掉以获得便宜解。守恒法则是已有世界法则的声明引用；缺少具体公式时仍是未完成的内容参数，不能自行捏造物理能量与认知成本的兑换率。
+
+achieve 在候选状态经过正常接纳函数重算后判定；求解器须改变法则允许的认知结构或施加作用，使重算结果达到目标。Acceptance 的派生字段不作为可任意覆盖的自由变量，因此不会出现刚写成已接纳、下一次正常重算又因未改变依据而立即消失的假刻画。是否允许持续施加作用由同一世界法则决定。
+
+每种守恒资源分别配平，例如 `before + supplied = after + spent + exported`；账目具有资源单位，去向互斥、不重复记账，具体项及哪些是耗散由对应法则定义。优化目标是具名 Cost<Scale>，可以采用显式换算系数形成同尺度总成本，或声明 lexicographic 优先级；不把时间、体力与认知步数直接相加，也不通过改变单位数值制造最优解。计算本身的费用与目标脑的改动费用分别入账。
+
+求解结果区分 Optimal（附最优依据）、Feasible（当前最优可行候选及搜索终止原因）、Infeasible（约束不相容依据）与 Unresolved（预算内尚无可行方案或结论）。有限候选可精确比较；连续问题由匹配其数学结构的具名求解器处理。通用非线性问题不宣称必然得到全局最优。可执行的 Feasible 方案必须符合该刻画声明绑定的执行政策，报告不称它为已证明最小代价。
+
+执行阶段核对实际源版本与可支付资源，按求得的同一方案结算资源、更新认知、触发接纳门槛转移。认知刻画和相应支付是一次状态提交；无可行方案不写入目标认知，已实际用于求解的认知费用照常发生。预测配平结果不产生真实支付或真实脑状态变化。
+
+目标脑中的新来源记录为 Imprint，并保留施加者、作用与支付事件；它不会自动成为 Observation 或证明。后续材料仍通过普通接纳机制更新它；要持续维持刻画，须在世界法则中声明持续作用及费用。
+
+## 10 决策与规划
+
+```dv
+decision 调查选择(options: ActionSet, chooser: ChoicePolicy<Investigation>) in mind:
+    candidates options
+    eligible known
+    score a: Score<Investigation> =
+        information(a) * (12score<Investigation> / 1bit)
+        - duration(a) * (0.1score<Investigation> / 1min)
+    plan depth: 6, budget: 320step
+    first_action max_return
+    admit score > 0score<Investigation>
+    choose chooser
+```
+
+系数仅说明单位语法，非第一章新增参数。information 返回信息量，duration 返回时长，乘上系数后统一为 Score<Investigation>。`12score<Investigation> / 1bit` 是每单位信息量的分值。
+
+结果是 Ready(distribution, plan)、NoCandidate、NoSelection、BudgetStopped 或 Waiting。Ready 才可抽样；未达门槛不会强制行动。无规划时省略 plan/first_action，使用即期分；有规划时两项都明确。
+
+plan 给出本次搜索深度与展开额度，累计认知资源放在主体资源账户中，不能混为一个预算。first_action 先按可执行首步分组，再用 max_return、具名期望策略等聚合。期望回传需要结果分布，不能预知未知检视内容。
+
+PlanResult 自动记录即期分、回传分、预测后继、本人来源与停止原因。不变快照共享，依赖改变后重新计算受影响部分，作者不逐处填写 revision、event_id 和复制操作。
+
+## 11 历史模型与论证
+
+```dv
+model 解释空间(options: NonEmptySet<Hypothesis>) in mind:
+    hypothesis ~ uniform(options)
+    given evidence = working_evidence
+    predict using adopted_dynamics
+    compare predicted_features with evidence
+    conclude using explanatory_policy
+```
+
+这些输入由模型上下文绑定。model 声明有限变量域和分布；概率 prior/likelihood 与启发式 Weight 分开。given 限定本人材料，预测输出独立形成，不先写入被预测的观察结论。
+
+condition 更新分布，simulate 消耗实际工作资源并返回 SimulationTrace，explain 根据比较、竞争覆盖和本人策略形成 EstimatedArgument。假设、预测和实际观察类型不同。
+
+Argument 自动追踪依赖，材料变化后为 StaleArgument，重新评价后再提交。各 ClaimSlot 分别声明命题与证据种类，不以布尔标记代替论证。置信数值合法不等于历史判断被客观证明。
+
+## 12 问题、协议与宿主
+
+```dv
+protocol 有据回答(question: Question, required: ClaimSchema):
+    submit answer: Argument by speaker
+    require answers(answer, question)
+    require supported(answer)
+    require complete(answer, required)
+    accept record personal(speaker, question)
+```
+
+协议在权威端处理问题、支持和完整性，主体只取得实际公开的问题和方法。personal 回执与 public 最高结论独立。提交、结论正确、正式接受和章节交接各有回执。
+
+QuestionRef 携带实际收闻或本人形成的来源。TimeAnchor 区分事件时刻、观察时刻与命题适用范围。PresentationReceipt 表示实际呈现；ExecutionReceipt 表示正式输入与执行，逻辑输出不能转换成显示回执。
+
+标准库承接调度、等待、取消、租约、保存恢复、词项消歧和学习。宿主负责平台I/O、空间、碰撞、输入和显示。函数效果由实现推导，公开接口列明所需效果，不反复书写空能力列表。
+
+```dv
+extern fn read_text(path: Text) -> Result<Text, IOError>
+    effects IO
+    abi "dv.read_text.v1"
+```
+
+包分 library、content、oracle、host，角色与依赖在包清单声明。内容可初始化世界与人物，主体运行函数只取得入口提供的能力；oracle 不可由主体模块导入。静态主体类型和运行时的动态主体标识共同约束访问。
+
+## 13 声明合同与解析骨架
+
+| 声明 | 核心内容 |
+| --- | --- |
+| slice | 参数化字段投影 |
+| prop / rule | 命题、可采用的前提到结论 |
+| reading | on、when、interpret、scope、bridge、support、revise |
+| mapping | input、output、using；具名认知映射及乘法调用 |
+| acceptance | degree、levels；门槛自动分类与依赖更新 |
+| imprint | require capability、achieve、vary、conserve、limit、minimize |
+| action | by、known、cost、do；attempt 变体 |
+| decision | candidates、eligible、score、admit、choose；成对可选 plan/first_action |
+| model | 随机变量、given、predict、compare、conclude |
+| protocol | submit、require、accept |
+| worldlaw / axiom / norm | 权威转移、具名实例、规范的固定字段合同 |
 
 ```text
-slice p facet p from p fields p
-recall p within p by p budget p
-offer p from p to p via p
-transmit p using p budget p
-perceive p for p using p
-evaluate p within p
-assume p within p because p
-infer p within p using p budget p
-interpret p within p using p memory p budget p
-adopt p into p by p
-commit_revision p using p
-reconsider p within p using p budget p
-adopt_law p into p as p confidence p because p
-condition p on p within p budget p
-distribute p using p
-choose p using p
-predict p within p using p context p budget p
-prepare p against p using p
-commit p using p
-model_view p within p using p budget p
-forecast p for p from p using p budget p
+File       = Define* Module Import* Export* Declaration*
+Block      = ':' NEWLINE INDENT Statement+ DEDENT
+Function   = 'fn' Name Generic? Parameters ReturnType? Contract? (Block | '=' Expr NEWLINE)
+Scalar     = 'scalar' Name Generic? ':' Type ('where' BoolExpr)? NEWLINE
+Slice      = 'slice' Name Parameters '=' Projection NEWLINE
+Prop       = 'prop' Name Parameters '=' PropExpr NEWLINE
+Context    = 'mind' Expr Block
+Domain     = DomainKind Name Parameters? ContextHeader? Version? DomainBlock
+ContextHeader = 'in' 'mind' | 'by' Name
+DomainBlock= ':' NEWLINE INDENT Clause+ DEDENT
+Clause     = a clause from the fixed contract of its declaration kind
+Projection = Expr '.' '{' Name (',' Name)* '}'
+UnitValue  = NumericLiteral UnitName Generic? | ClockLiteral '@' ClockName
+Statement  = Binding | Assignment | Return | If | For | While | Match | Context | Expr NEWLINE
 ```
 
-PropPredicate 对应第8节的命题原子。Special 产生具名领域节点，实参中的复杂表达式用括号分组。记录构造与控制块通过文法位置及括号区分。
+这是解析骨架，表达式遵循第4节优先级，领域分句按固定合同解析，不再用任意 key:value 记录冒充领域语义。prop/rule/known/literal 位置使用 PropExpr，where/if 使用 BoolExpr；两者分别是三值命题与二值计算。
 
-## 16 编译结构
+声明以模块限定名称作为稳定身份，版本默认取包版本，也可显式写 version 2。源位置由展开层生成；声明文件出处与主体实际得知的事件来源分别保存。
 
-编译链为：原文 → Token/define映射 → CST → 领域与算法AST → 名称/类型/效果 → DV IR → 目标后端。
+## 14 编译与落地
 
-源位置跟随节点进入后续阶段。formatter 保留注释、中文名称和表达顺序。旧模式为 sexpr-v0，新模式为 surface-v1；Value 桥接旧ABI，正式领域对象使用具名类型。
+```text
+原文 / define → 缩进 token / CST → 固定操作与领域声明展开
+→ 名称、名义类型、主体、单位、形状和效果推导
+→ 数值约束证书与资源消费检查
+→ Typed IR: Project / Interpret / Support / Transmit / Score / Distribute
+→ AcceptanceUpdate / SolveBalance / Commit
+→ 共享快照、增量依赖和数值表示专门化 → C# 等目标后端
+```
 
-C0启动旧子集，由旧编译器产生新前端；随后迁移 compiler.dv，依次构建 C1、C2、C3。
+后端接收已分型节点，格式转换器不猜测领域语义。常规代码不暴露键值对AST树，兼容层连接现有双精度与列表ABI。
 
-## 17 第一章接线
+实施顺序：普通语法与名义数值类型；视界/切片/认知映射运算；门槛接纳/规则/动作；守恒求解与刻画结算；分布/规划/模型/协议；编译器自身迁移。同一前端与IR逐步扩展，不新增独立剧情解析器。旧 double 权重改为精确量时明确转换方式，不把数值变化当作纯语法替换。求解、接纳与映射算法继续由 DV 库实现，平台 ABI 提供基础数值与容器操作。
 
-第一章新语法样例位于 `verification/scenarios/surface-v1-proposal/`。实际内容模块为 chapter1-laws、pragmatics、content、history、verification-config 与独立 oracle。
-
-会话调用切片、解释、重演、论证、规划、费用和回答协议。现役 Godot/C# 负责现场与呈现，隔离 DV 会话负责逻辑演算。
-
-## 18 第一章反推的协议类型
-
-[第一章源码需求](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)补充以下标准库类型：
-
-| 类型 | 作用 |
-| --- | --- |
-| ConceptState / QuestionRef | 问题的形成、收闻和本人默认认识 |
-| TemporalClaim / TimeAnchor | 事件时刻、收到时刻和命题有效范围 |
-| Hypothesis / SimulationTrace / PredictionCoverage | 历史与反事实重演、阶段状态和预测覆盖 |
-| CandidateSpace / FeatureComparison / CoverageCertificate | 候选域、预测与观察比较、竞争解释覆盖 |
-| EstimatedArgument / ClaimSlot / PublicProposal | 本人解释论证、公开命题槽位和提案 |
-| DependencyFingerprint / Invalidation | 支持输入变化与论证撤回 |
-| PlanResult / ImmediateScore / ReturnedScore | 多步路径和首步价值 |
-| ActionExperience / Outcome | 尝试、成功、失败、无推进、中断经历 |
-| Submission / AnswerJudgement / ProtocolReceipt | 回答、依据、完整性和正式接受 |
-| ActionLifecycle / Scheduler / Lease | 动作阶段、等待、取消和临时占用 |
-| PresentationReceipt / VisibleOffer / PersistenceCodec | 实际呈现、可见信息和保存恢复 |
-
-这些类型与算法由普通 DV 系统库实现，领域语法提供上下文和操作关系。
+首批迁移对象为已有的专业观察、询问回复、主动说明和个人答辩回执。旧会话记录不证明 surface-v2 已可编译。本轮是语法、类型与语义设计交付，编译实现另行推进。
