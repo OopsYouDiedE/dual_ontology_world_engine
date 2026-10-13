@@ -198,6 +198,11 @@ fn dv_ref(object_id, facet, field):
 fn dv_scoped_ref(subject, object_id, facet, field):
     return dv_with(dv_ref(object_id, facet, field), "subject", subject)
 
+fn dv_same_local_ref(subject, left, right):
+    if dv_find(left, "subject", subject) != subject or dv_find(right, "subject", subject) != subject:
+        return false
+    return left.type == right.type and left.object == right.object and left.facet == right.facet and left.field == right.field
+
 fn dv_world(id, domain, subject):
     dv_require(dv_or((domain == "physical"), (domain == "mind")), "Invalid world domain")
     var local_1 = false

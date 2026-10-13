@@ -189,7 +189,7 @@ fn dv_infer_stage(world, effects, time, basis, confidence, law_name, event_id):
                     else:
                         local_1 = (before.value + effect.value)
                     var value = local_1
-                    var claim = dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_list3(event_id, law_name, ref), "subject": stage.subject, "ref": ref, "value": dv_clone(value)}, "source", "inference"), "origin", law_name), "time", time), "trust", confidence), "dependency", dv_pair(event_id, law_name))
+                    var claim = dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_list3(event_id, law_name, ref), "subject": stage.subject, "ref": ref, "value": dv_clone(value)}, "source", "inference"), "origin", law_name), "time", time), "trust", confidence), "dependency", dv_list3("inference", law_name, ref))
                     var old_claims = before.claims
                     var local_2 = false
                     if dv_and(before.known, (rt_count(old_claims) == 0)):

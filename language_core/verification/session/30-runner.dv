@@ -59,6 +59,8 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
     var recipients = []
     var require_arg = false
     var target_stage = ""
+    var progress_ref = false
+    var completion_ref = false
     while (i < rt_count(rules)):
         var rule = rules[i]
         if (rule.id == dv_find(action, "answer_id", "")):
@@ -74,24 +76,9 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
             topic = dv_truth(physical, dv_find(rule, "question_match", {"op": "constant", "value": "unknown"}))
             complete = dv_truth(mind, dv_find(rule, "answer_complete", {"op": "constant", "value": "unknown"}))
             require_arg = dv_find(rule, "require_argument", false)
-            var local_2 = false
-            if dv_has_key(rule, "stage"):
-                local_2 = rule.stage
-            else:
-                if (transition == "accept.identity"):
-                    local_2 = "identity"
-                else:
-                    if (transition == "accept.voice_source"):
-                        local_2 = "voice_source"
-                    else:
-                        if (transition == "accept.words"):
-                            local_2 = "words"
-                        else:
-                            if (transition == "accept.trust"):
-                                local_2 = "trust"
-                            else:
-                                local_2 = dv_find(action, "topic", "")
-            target_stage = local_2
+            target_stage = rule.stage
+            progress_ref = rule.progress_ref
+            completion_ref = rule.completion_ref
             if require_arg:
                 if dvs_public_argument_valid(action, rule, events, mind.subject):
                     false
@@ -138,7 +125,8 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
     else:
         local_4 = 0
     truth_level = local_4
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"accepted": accepted, "literal_truth": literal, "epistemic_support": support, "accepted_law": transition}, "accepted_public_grants", grants), "accepted_listeners", recipients), "question_match", topic), "answer_complete", complete), "law_ready", law_ready), "reason", reason), "truth_level", truth_level), "stage", target_stage)
+    var judgment = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"accepted": accepted, "literal_truth": literal, "epistemic_support": support, "accepted_law": transition}, "accepted_public_grants", grants), "accepted_listeners", recipients), "question_match", topic), "answer_complete", complete), "law_ready", law_ready), "reason", reason), "truth_level", truth_level), "stage", target_stage)
+    return dv_with_many(judgment, {"progress_ref": progress_ref, "completion_ref": completion_ref})
 
 fn dvs_run(story, capability):
     dv_require((story.format == "dv-session-v1"), "Unsupported story data dialect")
@@ -224,7 +212,7 @@ fn dvs_run(story, capability):
                         var local_2 = false
                         var local_3 = false
                         if dv_has_key(action, "speech"):
-                            local_3 = dvs_authority_speech_allowed(action, physical, id)
+                            local_3 = dv_and(dvs_authority_speech_allowed(action, physical, id), (dvs_speech_truth(actor.mind, action.speech) == "true"))
                         else:
                             local_3 = true
                         if (not dv_and((dv_truth(physical, dv_find(action, "authority_precondition", action.precondition)) == "true"), local_3)):
@@ -264,7 +252,9 @@ fn dvs_run(story, capability):
                             parent = dvs_event(events, "answer_submitted", id, time, dv_single(parent), {"action": action, "mind": actor.mind, "physical": physical, "personal_accepted_answers": dv_find(actor, "accepted_answers", [])})
                             stage = judgment.stage
                             new_level = judgment.truth_level
-                            current_level_cell = dv_read(physical, dv_ref("question", "state", rt_cat("level_", stage)))
+                            current_level_cell = dv_unknown()
+                            if (not (judgment.progress_ref == false)):
+                                current_level_cell = dv_read(physical, judgment.progress_ref)
                             var local_5 = false
                             if current_level_cell.known:
                                 local_5 = current_level_cell.value
@@ -291,8 +281,8 @@ fn dvs_run(story, capability):
                                         local_7 = new_level
                                     else:
                                         local_7 = current_level
-                                    physical = dv_store(physical, dv_ref("question", "state", rt_cat("level_", stage)), dv_field(local_7))
-                                    physical = dv_store(physical, dv_ref("question", "state", rt_cat("solved_", stage)), dv_field(true))
+                                    physical = dv_store(physical, judgment.progress_ref, dv_field(local_7))
+                                    physical = dv_store(physical, judgment.completion_ref, dv_field(true))
                                     actor = dv_with(actor, "accepted_answers", dv_with(dv_find(actor, "accepted_answers", []), stage, new_level))
                                     parent = dvs_event(events, "question_transition", id, time, dv_single(parent), transition)
                                     actors = dvs_replace(actors, index, actor)

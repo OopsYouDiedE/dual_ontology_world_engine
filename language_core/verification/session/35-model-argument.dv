@@ -323,7 +323,7 @@ fn dvs_support_parents(mind, refs, events, subject):
                     var observations = data.observations
                     while (k < rt_count(observations)):
                         var observation = observations[k]
-                        if dv_and(dv_same(observation.ref, ref), dv_has(dv_find(cell, "claims", []), observation)):
+                        if dv_and(dv_same_local_ref(subject, observation.ref, ref), dv_has(dv_find(cell, "claims", []), observation)):
                             parents = dv_explanation_merge(parents, dv_single(event.id))
                         k = (k + 1)
                 if (event.type == "inference"):

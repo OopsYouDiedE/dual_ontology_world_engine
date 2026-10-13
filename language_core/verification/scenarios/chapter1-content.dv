@@ -1748,7 +1748,7 @@ fn c1_requested_replies(actor):
         else:
             return dv_pair(c1_professional_reply(actor, "frame_hollow", "不一样。门框后面是空的。贴着一根管子。", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/03_协助.story", 12, "help_E5.004")), c1_professional_reply(actor, "heads_lost", "从管子里出来的声音，跟人当面说话不一样。发闷，字头容易丢。", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story", 19, "sound_test.007")))
 
-fn c1_person_policy(id):
+fn c1_base_person_policy(id):
     return dv_with(dv_with(c1_raw_person_policy(id), "notice_co_presence", true), "topic_bindings", dv_pair({"topic": "original_q2_complete", "heard_when": dv_fact(dv_ref("question", "state", "outstanding_complete"), true), "completed_when": dv_fact(dv_ref("question", "state", "outstanding_complete"), false), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 16, "answer_q2.001"))}, {"topic": "own_material", "heard_when": dv_fact(dv_ref("question", "state", "awake_scope"), true), "completed_when": dv_not(dv_true()), "basis": dv_single(c1_memory_source(id))}))
 
 fn c1_investigation_actions(actor):
@@ -1894,7 +1894,7 @@ fn c1_speech(literal, surface, scope):
     return dv_with(dv_with(dv_with({"literal_ast": literal, "referents": [], "scope": scope, "time_anchor": "今晨醒来至当前发言"}, "surface_ref", surface), "presuppositions", []), "implicature_candidates", [])
 
 fn c1_raw_opening_action():
-    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", dv_list3(dv_ref("question", "state", "awake_scope"), dv_ref("question", "state", "memory_removed"), dv_ref("question", "state", "not_injury")))
+    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", [])
 
 fn c1_authorized_speech(action):
     return dv_with(action, "authority_truth_gate", {"required": true, "contract_id": "contract-8", "basis": dv_single(c1_source("docs/design-standard.md", 462, "may-not-deceive-students"))})
@@ -1905,7 +1905,7 @@ fn c1_opening_action():
 fn c1_opening_memory_fragment():
     var action = c1_opening_action()
     var speech = c1_opening_action().speech
-    return dv_with(dv_with(dv_with(action, "id", "demon.opening.memory-only"), "speech", dv_with(dv_with(dv_with(speech, "literal_ast", dv_all(dv_pair(dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true)))), "surface", "记忆有缺，并非伤病，请勿惊惶。"), "implicature_candidates", [])), "public_grants", dv_pair(dv_ref("question", "state", "memory_removed"), dv_ref("question", "state", "not_injury")))
+    return dv_with(dv_with(dv_with(action, "id", "demon.opening.memory-only"), "speech", dv_with(dv_with(dv_with(speech, "literal_ast", dv_all(dv_pair(dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true)))), "surface", "记忆有缺，并非伤病，请勿惊惶。"), "implicature_candidates", [])), "public_grants", [])
 
 fn c1_opening_illegal_fragment():
     var action = c1_opening_memory_fragment()
@@ -2028,3 +2028,14 @@ fn c1_question_text(stage):
                 return "他喊的是什么？"
             else:
                 return "闩门的人，为何不听门边那位女士的？"
+
+fn c1_person_policy(id):
+    let policy = c1_base_person_policy(id)
+    var bindings = policy.topic_bindings
+    let stages = ["identity", "voice_source", "words", "trust"]
+    var i = 0
+    while (i < rt_count(stages)):
+        let stage = stages[i]
+        rt_push(bindings, {"topic": stage, "heard_when": dv_fact(dv_ref("question", "state", rt_cat("open_", stage)), true), "completed_when": dv_not(dv_true()), "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")]})
+        i = i + 1
+    return dv_with(policy, "topic_bindings", bindings)

@@ -24,6 +24,7 @@ compiler 中 ck_* 执行名义类型、字面量范围与可变性检查；core/
 | Terms / InferenceModels | 宿主数据合同 |
 | WorldCore | 宿主身份、观察与事务适配 |
 | tools | 构建及进程编排 |
+| editors/visualstudio | Visual Studio 2022 的 DV 诊断客户端；语义检查复用 DV 编译器 |
 
 core、session及编译器的算法使用DV。平台ABI承接数值、容器、文件、控制台和最低执行适配。现役Godot仍引用csharp/，隔离DV会话有独立接线。
 
@@ -51,6 +52,8 @@ dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- demo
 python language_core/tools/build_core.py --out artifacts/partial-bootstrap-core/domain-build-<new-run>
 python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstrap-core/compiler-<new-run>
 python language_core/tools/run_verification.py --config <process-plan.json> --out artifacts/partial-bootstrap-core/<new-run>
+python language_core/tools/check_dv.py --format json <source.dv>
+python language_core/tools/dv_lsp.py
 ```
 
 ## 工作安排
@@ -65,3 +68,7 @@ run_verification的普通编译/会话执行持续写入当轮stdout/stderr原�
 当前机器缺少 .NET 8 运行时而有 .NET 9；本轮记录显式使用 DOTNET_ROLL_FORWARD=Major 运行 net8.0 产物。源码仍以 .NET 8 为目标。NuGetAudit=false 仅关闭本地构建时不可达的漏洞索引查询，不改变 DV 检查器或游戏条件。
 
 刻画的 Core 接线由 dv_imprint_prepare/apply 完成：从真实 mind 字段建立配平坐标，按证书写回认知并通过既有 90-action-cost 账本结算；工作额度单独返回，由宿主和认知、世界、账本一同发布。
+
+编辑器检查通过 dv-check.json 选择编译组，逐文件保留 define 作用域和位置，再交给 C3 编译器的 --check 模式；检查不执行内容。tools/dv_toolchain.py 按启动源指纹缓存自举编译器；tools/dv_lsp.py 处理未保存缓冲区和过期诊断。Visual Studio 和 Godot 客户端不另写语义分析器。运行封存覆盖整个 language_core，正式会话运行期间也不要修改此目录的文档或插件文件。
+
+主体内部引用通过 dv_same_local_ref 比较：省略主体的字段解析为当前主体，显式其他主体不等同。推知依赖以法则和输出字段标识，重新推知替换该来源；事件 ID 继续标识实际发生的推知。证据支持份额与来源可靠度分别保存，默认置信度不超过最强实际来源的可靠度。

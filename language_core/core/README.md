@@ -22,7 +22,9 @@ DV 前端将声明展开为返回公理数据的 DV 函数，仍检查名称和�
 
 ## 物体、状态与通道
 
-`dv_world / dv_object / dv_ref / dv_scoped_ref / dv_slice` 统一表达世界、物体、字段引用和切片。普通物体、门、通道使用同一字段存取。切片注明世界、主体、版本、物体和切面；字段保留 known/value/confidence/time/claims/conflicted/support_share/source_reliability。未知不等于 false 或零。跨主体引用带有主体所属约束，防止未经翻译的隐式指代替换。
+`dv_world / dv_object / dv_ref / dv_scoped_ref / dv_slice` 统一表达世界、物体、字段引用和切片。普通物体、门、通道使用同一字段存取。切片注明世界、主体、版本、物体和切面；字段保留 known/value/confidence/time/claims/conflicted/support_share/source_reliability。未知不等于 false 或零。`dv_same_local_ref(subject, left, right)` 将省略主体的引用解析为本人，显式属于其他主体的引用不相等。
+
+证据聚合分别计算支持份额和来源可靠度，置信度为支持份额乘以所选内容最强来源的可靠度。没有独立性模型时，重复相同证言或多个共享前提的推知不会把低可靠度累加为确定性。推知以法则和输出字段作为依赖标识，重算替换旧来源，同时保留新事件 ID。
 
 门有闭合、支撑、内外闩、自动闭合、缝隙和封缝状态；通道有端点、介质、启用、增益、门控命题及可选频段。种类属于可观察的 identity 切面。写入返回副本；调用者不能使用 `rt_push` 擅自修改库的输入记录。
 

@@ -21,3 +21,7 @@ scenarios提供原生DV内容和配置，session组织主体演算与执行，ch
 成果继续存入artifacts/partial-bootstrap-core/，模块架构和接口变动同步本文件及DESIGN.md。停止独立Agent复评的用户裁定继续适用。
 
 cognitive_mind_specimen 将刻画机制连接到真实 Core mind、主体系引用和正式 action-cost ledger，分别导出执行前后脑状态、余额、费用回执和重新读取的认知字段。
+
+回答协议由内容声明 stage、progress_ref 与 completion_ref；session 不内置章节问题名。话语执行同时读取主体本人的字面支持与已注册的世界真值合同。言语内容由聆听链产生证言，不得再以 public_grants 复制隐藏事实。
+
+推演时间线可声明 dispatch(selector, laws)。session 从本人已采纳法则的合取等值条件建立索引，按预测状态选择可能成立的法则；存在未采纳规则、未知选择值、无法提取的条件或会改写选择值的规则时照常展开全组。所有候选的输出均先遮蔽；索引输入、排除理由和实际法则执行记录在同一轨迹。分派与实际预测分别计入原有推演预算。

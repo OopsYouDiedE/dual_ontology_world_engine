@@ -4,6 +4,8 @@
 
 **同步修改规则**：本目录发生架构、模块合同、命令或排错方式调整时，必须同步修改本文件（`godot_csharp/AGENTS.md`）。
 
+`addons/dv_checker` 提供 DV 编辑与检查底部面板，通过 `language_core/tools/check_dv.py --format json` 调用实际编译器。它支持仓库外部于 Godot 项目根目录的 DV 文件；诊断保留源文件位置，不执行剧情，也不改变当前游戏宿主的 Core 引用。插件维护方式见该目录 AGENTS.md 与 README.md。
+
 ## 测评方式约束
 
 - 严格遵循根目录用户裁定：禁止执行流程回归（包括 `flow`、`flow2`、`flow_check.gd`、`check_flow.gd` 及统一回归调用）。

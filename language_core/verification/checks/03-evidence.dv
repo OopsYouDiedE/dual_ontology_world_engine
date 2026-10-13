@@ -55,7 +55,7 @@ fn v_support_atom(trace, mind, actor, proposition, visiting):
                                         local_1 = proposition.item.ref
                                     else:
                                         local_1 = proposition.ref
-                                    if dv_same(observation.ref, local_1):
+                                    if dv_same_local_ref(actor, observation.ref, local_1):
                                         var local_2 = false
                                         if (event.type == "listener_parse"):
                                             local_2 = v_reception_verified(trace, event.id)

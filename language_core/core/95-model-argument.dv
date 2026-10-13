@@ -24,7 +24,7 @@ fn dv_explanation_observation_sources(mind, comparison, sources):
         while (j < rt_count(sources)):
             var source = sources[j]
             var observation = sources[j].observation
-            if dv_and((observation.subject == mind.subject), dv_and(dv_same(observation.ref, ref), dv_same(observation.value, cell.value))):
+            if dv_and((observation.subject == mind.subject), dv_and(dv_same_local_ref(mind.subject, observation.ref, ref), dv_same(observation.value, cell.value))):
                 if dv_has(dv_find(cell, "claims", []), observation):
                     found = true
                     if dv_has(ids, source.event_id):

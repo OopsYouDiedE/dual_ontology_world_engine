@@ -55,7 +55,7 @@ fn v_prune_factor_roots(actor, mind, ref, events, cutoff, remaining, allowed):
                                 while (j < rt_count(claims)):
                                     var claim = claims[j]
                                     var source = claims[j].source
-                                    if dv_and(dv_has(observations, claim), dv_and((claim.subject == actor.id), dv_and(dv_same(claim.ref, ref), dv_and(dv_has(data.mind_after.seen, claim.id), dv_or((source == "perception"), dv_or((source == "recall"), (source == "testimony"))))))):
+                                    if dv_and(dv_has(observations, claim), dv_and((claim.subject == actor.id), dv_and(dv_same_local_ref(actor.id, claim.ref, ref), dv_and(dv_has(data.mind_after.seen, claim.id), dv_or((source == "perception"), dv_or((source == "recall"), (source == "testimony"))))))):
                                         confidence = dv_min(confidence, claim.trust)
                                     else:
                                         valid = false

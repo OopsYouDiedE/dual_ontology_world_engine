@@ -217,8 +217,9 @@ fn dv_aggregate(claims, profile, time):
     else:
         local_2 = (best / total)
     var support_share = local_2
-    var effective_rel = dv_min(1, dv_max(best_rel, dv_min(1, best)))
-    var epistemic_confidence = (support_share * effective_rel)
+    // Agreement measures support, not source independence. Repeating uncertain
+    // evidence cannot establish certainty without an independent model of it.
+    var epistemic_confidence = (support_share * best_rel)
     var cell = dv_cell(chosen, epistemic_confidence, time, claims)
     return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(cell, "known", dv_and((0 < total), (not (epistemic_confidence < profile.threshold)))), "conflicted", (1 < rt_count(alternatives))), "claims", claims), "alternatives", distribution), "support_share", support_share), "source_reliability", best_rel)
 

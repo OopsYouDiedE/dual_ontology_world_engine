@@ -19,10 +19,6 @@ fn dvp_topic(actor, item):
     var bindings = dv_find(actor.policy, "topic_bindings", [])
     var i = 0
     var active = false
-    if dv_or((topic == "identity"), dv_or((topic == "voice_source"), dv_or((topic == "words"), (topic == "trust")))):
-        var open_cell = dv_read(actor.mind, dv_ref("question", "state", rt_cat("open_", topic)))
-        if dv_and(open_cell.known, open_cell.value):
-            active = true
     if dv_and((not (question == "")), (topic == question)):
         active = true
     while (i < rt_count(bindings)):

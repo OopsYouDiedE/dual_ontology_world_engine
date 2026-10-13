@@ -39,19 +39,22 @@ fn dvs_sim_plan(hypothesis):
         while (i < rt_count(timeline)):
             var stage = timeline[i]
             var j = 0
-            if dv_has_key(stage, "response"):
-                rt_push(plan, dv_with(dv_with({"law": "", "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i}, "response", stage.response), "available_when", dv_find(stage, "available_when", dv_true())))
+            if dv_has_key(stage, "dispatch"):
+                rt_push(plan, {"law": "", "at": stage.at, "optional": true, "stage": i, "dispatch": stage.dispatch})
             else:
-                var local_1 = false
-                if dv_has_key(stage, "laws"):
-                    local_1 = stage.laws
+                if dv_has_key(stage, "response"):
+                    rt_push(plan, dv_with(dv_with({"law": "", "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i}, "response", stage.response), "available_when", dv_find(stage, "available_when", dv_true())))
                 else:
-                    local_1 = dv_single(stage.law)
-                var laws = local_1
-                dv_require((0 < rt_count(laws)), "Empty model event stage")
-                while (j < rt_count(laws)):
-                    rt_push(plan, {"law": laws[j], "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i})
-                    j = (j + 1)
+                    var local_1 = false
+                    if dv_has_key(stage, "laws"):
+                        local_1 = stage.laws
+                    else:
+                        local_1 = dv_single(stage.law)
+                    var laws = local_1
+                    dv_require((0 < rt_count(laws)), "Empty model event stage")
+                    while (j < rt_count(laws)):
+                        rt_push(plan, {"law": laws[j], "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i})
+                        j = (j + 1)
             i = (i + 1)
     else:
         var laws = dv_find(hypothesis, "predict_laws", [])
@@ -78,7 +81,23 @@ fn dvs_sim_feature(feature):
     else:
         return feature
 
-fn dvs_sim_mask(mind, plan, start):
+fn dvs_sim_mask_plan(plan):
+    var result = []
+    var i = 0
+    while (i < rt_count(plan)):
+        let step = plan[i]
+        if dv_has_key(step, "dispatch"):
+            var j = 0
+            while (j < rt_count(step.dispatch.laws)):
+                rt_push(result, {"law": step.dispatch.laws[j]})
+                j = j + 1
+        else:
+            rt_push(result, step)
+        i = i + 1
+    return result
+
+fn dvs_sim_mask(mind, source_plan, start):
+    let plan = dvs_sim_mask_plan(source_plan)
     var copy = dv_with(dv_with(dv_with(mind, "time", start), "seen", []), "history", [])
     var i = 0
     while (i < rt_count(plan)):
@@ -352,55 +371,31 @@ fn dvs_model(actor, hypothesis, events, time, parent):
                     rt_push(failures, {"response": step.response, "reason": detail.reason})
             rt_push(trace, {"step": i, "at": at, "stage": step.stage, "response": detail})
         else:
-            if dv_has_key(adoptions, name):
-                var adoption = dv_get(adoptions, name)
-                if dv_and(adoption.active, (adoption.mode == "predict")):
-                    var law = adoption.law
-                    var premise = dv_truth(predicted, adoption.law.premise)
-                    var inputs = dvs_sim_inputs(predicted, adoption.law.premise)
-                    var local_confidence = dv_min(adoption.confidence, dv_min(confidence, dv_premise_confidence(predicted, adoption.law.premise)))
-                    var result = false
-                    var withheld = []
-                    predicted = dv_with(predicted, "adoptions", dv_with(adoptions, name, dv_with(adoption, "confidence", local_confidence)))
-                    result = dv_predict(dv_with(predicted, "domain", "mind"), name, rt_cat(rt_cat("hypothetical-", rt_show(rt_count(events))), rt_cat("-", rt_show(i))), (start + at), predicted.revision)
-                    if (premise == "unknown"):
-                        var uncertain = dvs_sim_withhold(predicted, law.effects)
-                        predicted = uncertain.world
-                        withheld = uncertain.refs
-                    var local_1 = false
-                    if (premise == "false"):
-                        if step.optional:
-                            local_1 = "condition-false-not-applicable"
-                        else:
-                            local_1 = "required-premise-false"
-                    else:
-                        if (premise == "unknown"):
-                            local_1 = "conditional-output-unknown"
-                        else:
-                            local_1 = result.status
-                    rt_push(trace, dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"step": i, "at": at, "law": name, "premise": premise}, "inputs", inputs), "status", result.status), "changes", result.changes), "basis", adoption.basis), "stage", step.stage), "optional", step.optional), "withheld", withheld), "reason", local_1))
-                    if (result.status == "applied"):
-                        var changes = result.changes
-                        var j = 0
-                        predicted = result.world
-                        while (j < rt_count(changes)):
-                            if dv_has(covered, changes[j].ref):
-                                false
-                            else:
-                                rt_push(covered, changes[j].ref)
-                            j = (j + 1)
-                    else:
-                        if dv_and((premise == "false"), step.optional):
-                            false
-                        else:
-                            complete = false
-                            rt_push(failures, {"law": name, "reason": result.status, "premise": premise})
-                else:
-                    complete = false
-                    rt_push(failures, {"law": name, "reason": "not-adopted-predict"})
-            else:
+            var selected_steps = [step]
+            if dv_has_key(step, "dispatch"):
+                let dispatch = dvs_sim_dispatch(mind, predicted, step)
+                selected_steps = dispatch.steps
+                rt_push(trace, {"step": i, "at": at, "stage": step.stage, "status": "indexed-dispatch", "indexed": dispatch.indexed, "inputs": dispatch.inputs, "excluded": dispatch.excluded, "changes": []})
+            var selected_index = 0
+            while (selected_index < rt_count(selected_steps) and (not dv_has_key(step, "dispatch") or 0 < remaining)):
+                if dv_has_key(step, "dispatch"):
+                    remaining = remaining - 1
+                    expanded = expanded + 1
+                let execution = dvs_sim_rule(predicted, covered, selected_steps[selected_index], mind, confidence, start, i, rt_count(events), selected_index)
+                predicted = execution.world
+                covered = execution.coverage
+                complete = complete and execution.complete
+                var entry_index = 0
+                while (entry_index < rt_count(execution.trace)):
+                    rt_push(trace, execution.trace[entry_index])
+                    entry_index = entry_index + 1
+                entry_index = 0
+                while (entry_index < rt_count(execution.failures)):
+                    rt_push(failures, execution.failures[entry_index])
+                    entry_index = entry_index + 1
+                selected_index = selected_index + 1
+            if (selected_index < rt_count(selected_steps)):
                 complete = false
-                rt_push(failures, {"law": name, "reason": "unknown-law"})
         rt_push(snapshots, {"world": predicted, "coverage": dv_clone(covered), "step": i, "at": at})
         i = (i + 1)
     if dv_or((rt_count(plan) == 0), (i < rt_count(plan))):
@@ -420,7 +415,7 @@ fn dvs_model(actor, hypothesis, events, time, parent):
         local_2 = "budget-exhausted"
     else:
         local_2 = "declared-plan-complete"
-    result = dv_with(dv_with(result, "calculation_unit", "one-assumption-predict-rule-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison"), "stop_reason", local_2)
+    result = dv_with(dv_with(result, "calculation_unit", "one-assumption-predict-rule-indexed-dispatch-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison"), "stop_reason", local_2)
     result = dv_with(dv_with(result, "work_remaining", result.remaining), "remaining", (total_budget - result.expanded))
     result = dv_with(dv_with(result, "original_expanded", result.expanded), "total_expanded", result.expanded)
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
@@ -756,7 +751,7 @@ fn dvs_factor_roots(actor, mind, ref, events, cutoff, remaining, allowed):
                                 while (j < rt_count(claims)):
                                     var claim = claims[j]
                                     var source = claims[j].source
-                                    if dv_and(dv_has(observations, claim), dv_and((claim.subject == actor.id), dv_and(dv_same(claim.ref, ref), dv_and(dv_has(data.mind_after.seen, claim.id), dv_or((source == "perception"), dv_or((source == "recall"), (source == "testimony"))))))):
+                                    if dv_and(dv_has(observations, claim), dv_and((claim.subject == actor.id), dv_and(dv_same_local_ref(actor.id, claim.ref, ref), dv_and(dv_has(data.mind_after.seen, claim.id), dv_or((source == "perception"), dv_or((source == "recall"), (source == "testimony"))))))):
                                         confidence = dv_min(confidence, claim.trust)
                                     else:
                                         valid = false
@@ -1163,3 +1158,112 @@ fn dvs_factor_catalog_complete(domains, hypotheses):
         rt_push(keys, key)
         i = (i + 1)
     return valid
+
+fn dvs_sim_rule(predicted, covered, step, mind, confidence, start, i, event_count, selected_index):
+    var name = step.law
+    var at = step.at
+    var adoptions = mind.adoptions
+    var complete = true
+    var failures = []
+    var trace = []
+    if dv_has_key(adoptions, name):
+        var adoption = dv_get(adoptions, name)
+        if dv_and(adoption.active, (adoption.mode == "predict")):
+            var law = adoption.law
+            var premise = dv_truth(predicted, adoption.law.premise)
+            var inputs = dvs_sim_inputs(predicted, adoption.law.premise)
+            var local_confidence = dv_min(adoption.confidence, dv_min(confidence, dv_premise_confidence(predicted, adoption.law.premise)))
+            var result = false
+            var withheld = []
+            predicted = dv_with(predicted, "adoptions", dv_with(adoptions, name, dv_with(adoption, "confidence", local_confidence)))
+            let event_id = rt_cat(rt_cat(rt_cat("hypothetical-", rt_show(event_count)), rt_cat("-", rt_show(i))), rt_cat("-", rt_show(selected_index)))
+            result = dv_predict(dv_with(predicted, "domain", "mind"), name, event_id, (start + at), predicted.revision)
+            if (premise == "unknown"):
+                var uncertain = dvs_sim_withhold(predicted, law.effects)
+                predicted = uncertain.world
+                withheld = uncertain.refs
+            var local_1 = false
+            if (premise == "false"):
+                if step.optional:
+                    local_1 = "condition-false-not-applicable"
+                else:
+                    local_1 = "required-premise-false"
+            else:
+                if (premise == "unknown"):
+                    local_1 = "conditional-output-unknown"
+                else:
+                    local_1 = result.status
+            rt_push(trace, dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"step": i, "at": at, "law": name, "premise": premise}, "inputs", inputs), "status", result.status), "changes", result.changes), "basis", adoption.basis), "stage", step.stage), "optional", step.optional), "withheld", withheld), "reason", local_1))
+            if (result.status == "applied"):
+                var changes = result.changes
+                var j = 0
+                predicted = result.world
+                while (j < rt_count(changes)):
+                    if dv_has(covered, changes[j].ref):
+                        false
+                    else:
+                        rt_push(covered, changes[j].ref)
+                    j = (j + 1)
+            else:
+                if dv_and((premise == "false"), step.optional):
+                    false
+                else:
+                    complete = false
+                    rt_push(failures, {"law": name, "reason": result.status, "premise": premise})
+        else:
+            complete = false
+            rt_push(failures, {"law": name, "reason": "not-adopted-predict"})
+    else:
+        complete = false
+        rt_push(failures, {"law": name, "reason": "unknown-law"})
+    return {"world": predicted, "coverage": covered, "complete": complete, "failures": failures, "trace": trace}
+
+fn dvs_sim_equal_guard(proposition, ref):
+    if (proposition.op == "equals"):
+        if dv_same(proposition.ref, ref):
+            return {"found": true, "value": proposition.value}
+    if (proposition.op == "all"):
+        var i = 0
+        while (i < rt_count(proposition.items)):
+            let result = dvs_sim_equal_guard(proposition.items[i], ref)
+            if result.found:
+                return result
+            i = i + 1
+    return {"found": false, "value": false}
+
+fn dvs_sim_dispatch(mind, predicted, step):
+    let table = step.dispatch
+    let selector = dv_read(predicted, table.selector)
+    var indexed = dv_uncontested(selector)
+    var entries = []
+    var i = 0
+    while (i < rt_count(table.laws)):
+        let name = table.laws[i]
+        let adoption = dv_find(mind.adoptions, name, false)
+        var guard = {"found": false, "value": false}
+        if (adoption == false):
+            indexed = false
+        else:
+            if (not adoption.active or adoption.mode != "predict"):
+                indexed = false
+            guard = dvs_sim_equal_guard(adoption.law.premise, table.selector)
+            if (not guard.found):
+                indexed = false
+            var j = 0
+            while (j < rt_count(adoption.law.effects)):
+                if dv_same(adoption.law.effects[j].ref, table.selector):
+                    indexed = false
+                j = j + 1
+        rt_push(entries, {"law": name, "guard": guard})
+        i = i + 1
+    var selected = []
+    var excluded = []
+    i = 0
+    while (i < rt_count(entries)):
+        let entry = entries[i]
+        if (indexed and not dv_same(entry.guard.value, selector.value)):
+            rt_push(excluded, entry)
+        else:
+            rt_push(selected, {"law": entry.law, "at": step.at, "stage": step.stage, "optional": step.optional})
+        i = i + 1
+    return {"steps": selected, "indexed": indexed, "excluded": excluded, "inputs": [{"ref": table.selector, "cell": selector}]}
