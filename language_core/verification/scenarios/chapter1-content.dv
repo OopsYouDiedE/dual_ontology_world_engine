@@ -629,6 +629,10 @@
   "response_topic" atom) "listeners" (c1_list_4 "detective" "huo" "shen" "su"))
   "speech" (dv_with (c1_speech (c1_statement atom) source "professional-observation") "surface" surface)))
 (defn c1_professional_replies (actor)
+ (let (replies (c1_requested_replies actor) result (rt_list) i 0)
+  (do (while (rt_lt i (rt_count replies))
+   (do (rt_push result (dv_with (rt_at replies i) "offer_to" "detective")) (set i (rt_add i 1)))) result)))
+(defn c1_requested_replies (actor)
  (if (rt_eq actor "huo")
   (dv_pair
    (c1_professional_reply actor "slate_code" "⊥，闩。✕，禁止。✕开，不许开。"
