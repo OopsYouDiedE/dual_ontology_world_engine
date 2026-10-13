@@ -1,25 +1,21 @@
-# 自动验证模块工作边界
+# DV 会话模块维护
 
-本目录继承根和 `language_core/AGENTS.md`。用户随后授权实际实现与运行；会话适配器位于 `session/*.dv`，只读算法位于 `checks/*.dv`，四个独立入口见 README。当前编译 DV 逻辑会话不是 Godot 接入或旧 Core 对齐证据。
+本目录继承根AGENTS.md和language_core/AGENTS.md。SYNTAX.md定义语言格式，本目录DESIGN.md说明会话结构，README.md说明入口和命令。
 
-主程序及最多三个补充程序算法全部用 DV，C# ABI 仅平台 I/O。权威裁判、主体输入、只读证据和报告分域；checker 不回写主体或改变调度。
+## 模块职责
 
-用户本轮新裁定优先既有内容边界：人物、世界、话语、规则、参数及 oracle 使用真实 `.dv` 声明/函数，不能仅改后缀或在 JSON 中保留领域正文。独立数据导出程序由 DV 编译器生成；JSON 仅作运行交换生成物。oracle 源与主体运行器包分离，禁止编进主体可执行包。旧 `.story` 只读作迁移溯源，不再是正式输入。
+scenarios提供原生DV内容和配置，session组织主体演算与执行，checks独立读取轨迹，report产生中文报告。core+session组合为运行器；core+checks与各入口组合为判定程序。oracle单独导出。
 
-用户进一步排除旧 record 树格式化转换：因果、推知、移动法则须具名 axiom，世界、人物、策略、观察动作须命名 DV 构造函数与 core 调用。规则 body 直接生效，导出仅产生原生定义执行后的 DTO；构建不得解释旧 `.story`。
+人物、世界、话语、规则、参数和oracle使用DV声明；JSON承接执行后的交换数据。旧.story提供迁移来源，Python计划描述文件和进程。run_verification.py负责源码、构建、导出和进程I/O。
 
-后续按数据分域与 manifest、代价执行、剧本接入/调度、来源记录、只读判定、补充程序推进。架构和合同调整同步本文件及 DESIGN.md；证据保存在 `artifacts/partial-bootstrap-core/` 新目录，保留原始字节、不覆盖。
+## 运行合同
 
-`../tools/run_verification.py` 只负责冻结源码及迁移来源、复制输入、DV→C# 编译、自编译固定点、独立 DV 数据导出、进程执行、原始日志、单调计时及前后哈希；不得在 Python 或生成 C# 中实现领域判定。core+session 组合产生运行器，core+checks+单独入口分别编译四个程序；数据导出按明确模块列表独立编译。编排计划 JSON 只能描述文件、函数和进程，领域配置必须由 DV 导出。新目录不得覆盖；运行失败、输入缺口和保护源码变化均保留。
+动作费用使用core/90-action-cost.dv，会话持有成本目录和当前ledger。主体的推知、话语理解、付费重演、竞争论证、规划和回答协议各自保留来源。
 
-动作代价使用 `core/90-action-cost.dv`，正式适配器核对冻结 catalog，不由主体偏好提供报价。权威 ledger 的最新版本由会话持有；动态值协议不能冒称不可伪造能力。
+新语法的第一章样例位于scenarios/surface-v1-proposal。迁移沿用各入口的原评分、门槛、平分及费用，随机策略为另一配置。
 
-停止独立复评继续有效。工程检查不能代替机制或游戏验收，禁止流程回归及通过计数评价。
+工程进程时限默认为240现实秒，由--process-timeout-seconds配置。--source-root指定源码，--judge-core-root指定判定Core；--rerun-frozen-session使用指定目录的既有程序和输入。游戏预算由场景配置提供。
 
-用户2026-10-13要求先交付完整新语法方案，随后使用第一章内容实际测试。目标文法见 ../SYNTAX.md；scenarios/surface-v1-proposal/ 仅保存明确标注的待实现语法设计输入，不加入现有导出/运行manifest。该目录的样例仍遵守内容仅在DV源中的边界，桥接签名须实际实现/核验后才能运行。后续迁移保留原规则、来源、认知前提、候选顺序与预算；先核对原确定决策，随机选择实验另立参数基线。新编译会话与Godot/三级验收分别记录，旧会话不能替新语法执行证据。
+## 输出与维护
 
-
-只读历史重判可显式使用 `--judge-core-root` 封存判定器自身的新Core依赖；生产者源码、原始oracle与轨迹保持原封存版本。结果分别记录 producer 来源和 checker_dependency_root，新ABI不冒称旧会话运行过新机制；旧轨迹缺字段如实返回不足。
-
-
-工程进程默认外部限额240现实秒，可显式 `--process-timeout-seconds` 另开目录记录不同工程限额；它不改变任何游戏预算或代价。`--rerun-frozen-session <prior-run> --session-only --source-root <same-source>` 只重执行原封存程序和原始输入，逐字节核对程序集、编译器包与源指纹，不重编译、不重新导出领域内容。不同现实进程限额不能称同窗口性能改善；超时缺最终trace时主判定未完成。
+成果继续存入artifacts/partial-bootstrap-core/，模块架构和接口变动同步本文件及DESIGN.md。停止独立Agent复评的用户裁定继续适用。
