@@ -165,7 +165,7 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 		if point == null or actor.position.distance_to(point) > 8.0:
 			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
 			return
-	field.execute({"kind": "stage", "op": "daily_go", "who": who, "target": str(destination.room), "room": str(destination.room), "serial": serial, "action": action})
+	field.move_to_station(str(destination.room), str(destination.room), who, serial, action)
 func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:

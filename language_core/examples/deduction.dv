@@ -1,8 +1,0 @@
-(def! facts '(("source" ((exists true) (tags ((observed 1))))) ("object" ((exists true)))))
-(def! rules '((rule learned (tagged (ref "source") observed 1) infer (related (ref "object") follows (ref "source")) 1 true)))
-(def! mind (view "A" 1 facts '() '() '()))
-(def! goal '(related (ref "object") follows (ref "source")))
-(list (prove-condition rules mind '() goal '() 3 100)
-      (prove-condition '() mind '() goal (list goal) 3 100)
-      (prove-condition rules mind '() goal '() 0 100)
-      facts)

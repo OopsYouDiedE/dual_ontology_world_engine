@@ -131,7 +131,10 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
 fn dvs_run(story, capability):
     var state = dvs_session_open(story, capability)
     while dvs_session_active(state):
-        state = dvs_session_step(state)
+        state = dvs_session_prepare(state)
+        let pending = dv_find(state, "pending", false)
+        if pending != false:
+            state = dvs_session_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
     return dvs_session_close(state)
 
 fn dvs_session_open(story, capability):
@@ -167,13 +170,6 @@ fn dvs_session_open(story, capability):
 
 fn dvs_session_active(state):
     return dv_and((not (state.horizon < dv_find(state.physical, "time", 0))), dv_and((state.executed < state.limit), (state.idle < rt_count(state.actors))))
-
-fn dvs_session_step(state):
-    let prepared = dvs_session_prepare(state)
-    let pending = dv_find(prepared, "pending", false)
-    if pending == false:
-        return prepared
-    return dvs_session_complete(prepared, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
 
 fn dvs_session_prepare(state):
     if dv_has_key(state, "pending"):

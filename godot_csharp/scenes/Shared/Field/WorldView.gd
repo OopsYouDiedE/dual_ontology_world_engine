@@ -1,7 +1,6 @@
 extends Node2D
-## 通用世界现场：玩家行走（WASD / 点击 / 走近即开）、悬停与最近交互点、人物、视线、走位与镜头。
-## 地图差异由地图适配器提供（几何、房间、锚点、交互点位置、道具状态、昨夜回放）；
-## 游戏内容只来自快照与 stage 事件。现场的输入一律以 field_event 发出，由宿主转给 C#。
+## 通用世界现场：执行正式 DV 移动意图，承接人物、视线、悬停、碰撞与镜头。
+## 地图适配器提供几何、房间、锚点和道具显示；完成回执经 field_event 交回宿主。
 ## 接口与分层见设计第四部分 §2。
 
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
@@ -12,11 +11,6 @@ const SightMaskScene := preload("res://scenes/UI/Panels/Field/SightMask.tscn")
 const HintOverlayScene := preload("res://scenes/UI/Panels/Field/HintOverlay.tscn")
 const PIXEL_FRAMES := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
 const ANIME_FRAMES := "res://ShareAsset/Internal/Characters/AnimeCast/%s.tres"
-const CLICK_STOP_RADIUS := 8.0
-const HUD_BAR_HEIGHT := 60.0
-const CLICK_REPATH_DELAY := 0.15
-const CLICK_MAX_BLOCKED_REPATHS := 4
-const MAKE_WAY_COOLDOWN_MS := 1000
 const APPROACH := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]
 const NEAR_SITE_RADIUS := 85.0
 const DAYPART_TINT := {"dawn": Color(1.0, 0.96, 0.9), "morning": Color(1, 1, 1), "noon": Color(1, 1, 0.97),
@@ -50,22 +44,12 @@ var _hint_text := ""
 var _was_active := false
 var _active_since := 0
 var _closing := false
-var _court_layout := false
 var _applying_scene := false
 var _player_key := ""
 
-var click_path := PackedVector2Array()
-var click_waypoint := 0
-var click_target := ""
-var _click_last := Vector2(INF, INF)
-var _click_stall := 0.0
-var _click_repaths := 0
-var _click_anchor := Vector2(INF, INF)
 
 var _motion: Dictionary = {}         # instance id → generation
 var _daily: Dictionary = {}          # who → job
-var _paused_walks: Dictionary = {}   # who → remaining path
-var _make_way_after: Dictionary = {} # instance id → next allowed sidestep (ticks msec)
 
 # ============================================================== lifecycle ===
 
@@ -113,7 +97,6 @@ func begin_shutdown() -> void:
 		if is_instance_valid(actor):
 			_cancel_motion(actor)
 	if adapter and adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
-	_cancel_click()
 
 func _exit_tree() -> void:
 	begin_shutdown()
@@ -125,17 +108,12 @@ func apply_snapshot(value: Dictionary) -> void:
 	if is_instance_valid(tint):
 		tint.color = DAYPART_TINT.get(str(value.get("daypart", "")), Color.WHITE) if adapter.uses_daypart_tint() else Color.WHITE
 	if adapter.has_method("apply_snapshot"): adapter.apply_snapshot(value)
-	if _court_layout: _place_court()
-	elif adapter.fixed_actors().is_empty(): _spawn_people(true)
+	if adapter.fixed_actors().is_empty(): _spawn_people()
 	_build_sites()
 
 func field_active() -> bool:
 	return not _closing and bool(snapshot.get("field_enabled", false)) and not ui_busy.call() and not adapter.switching()
 
-func player_controlled() -> bool:
-	return bool(snapshot.get("player_control", true))
-
-## 随每个输入附上的几何事实。
 func context() -> Dictionary:
 	var facts := {}
 	for key in actors:
@@ -422,65 +400,7 @@ func _physics_process(delta: float) -> void:
 		camera.position = adapter.camera_point(player.position)
 	adapter.physics_update(delta)
 	_update_daily(delta)
-	_update_paused_walks()
-	_make_way()
 	_pick_nearest()
-	if bool(snapshot.get("realtime", false)):
-		field_event.emit({"kind": "tick", "delta": delta})
-	if not player_controlled():
-		_cancel_click()
-		return
-	if not field_active():
-		_cancel_click()
-		if not player.travelling:
-			player.velocity = Vector2.ZERO
-			if not player.seated: player.pose("idle")
-		return
-	var direction := Vector2(
-		float(Input.is_action_pressed("move_right")) - float(Input.is_action_pressed("move_left")),
-		float(Input.is_action_pressed("move_down")) - float(Input.is_action_pressed("move_up")))
-	var scale := 1.0
-	if direction != Vector2.ZERO:
-		_cancel_click()
-		if player.seated: _leave_seat()
-	elif click_target != "" and sites.has(click_target):
-		if player.position.distance_to(site_point(click_target)) <= float(sites[click_target].reach) + 6.0:
-			var id := click_target
-			_cancel_click()
-			player.move_input(Vector2.ZERO)
-			interact(id)
-			return
-	if direction == Vector2.ZERO and not click_path.is_empty():
-		_click_stall = _click_stall + delta if player.position.distance_to(_click_last) < 0.25 else 0.0
-		_click_last = player.position
-		if player.position.distance_to(_click_anchor) > 12.0:
-			_click_anchor = player.position
-			_click_repaths = 0
-		if _click_stall >= CLICK_REPATH_DELAY:
-			var pending := click_target
-			var destination := click_path[-1]
-			_click_stall = 0.0
-			_click_repaths += 1
-			if _click_repaths > CLICK_MAX_BLOCKED_REPATHS:
-				_cancel_click()
-				return
-			if pending == "": _route_click(destination)
-			else: _approach(pending)
-			return
-		while click_waypoint < click_path.size() and player.position.distance_to(click_path[click_waypoint]) <= (CLICK_STOP_RADIUS if click_waypoint == click_path.size() - 1 else 0.01):
-			click_waypoint += 1
-		if click_waypoint >= click_path.size():
-			var target := click_target
-			_cancel_click()
-			if target != "" and sites.has(target) and player.position.distance_to(site_point(target)) <= float(sites[target].reach) + 8.0:
-				interact(target)
-				return
-		else:
-			var remaining := click_path[click_waypoint] - player.position
-			direction = remaining.normalized()
-			scale = minf(1.0, remaining.length() / maxf(player.speed * delta, 0.00001))
-	if not player.seated:
-		player.move_input(direction.normalized() * scale)
 
 func _process(_delta: float) -> void:
 	if _closing or player == null: return
@@ -537,108 +457,6 @@ func _pick_nearest() -> void:
 
 # ================================================================== input ===
 
-func _input(event: InputEvent) -> void:
-	if not field_active() or not player_controlled(): return
-	if event is not InputEventMouseButton or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT: return
-	if event.position.y < HUD_BAR_HEIGHT:
-		get_viewport().set_input_as_handled()
-		return
-	_click_repaths = 0
-	_click_anchor = player.position
-	_cancel_click()
-	var at := get_global_mouse_position()
-	var chosen := ""
-	var best := INF
-	for id in sites:
-		if site_visible(id) and site_box(id).grow(4).has_point(at):
-			var d := site_box(id).get_center().distance_squared_to(at)
-			if d < best:
-				best = d
-				chosen = id
-	if chosen == "":
-		var hits: Dictionary = adapter.furniture_hits(at)
-		if not hits.get("nodes", []).is_empty():
-			field_event.emit({"kind": "furniture", "map": adapter.map_key(), "nodes": hits.nodes, "texts": hits.get("texts", {})})
-		_route_click(at)
-	else:
-		_approach(chosen)
-	get_viewport().set_input_as_handled()
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event is not InputEventKey and event is not InputEventMouseButton: return
-	if not event.is_pressed() or event.is_echo(): return
-	if not field_active() or not player_controlled(): return
-	if event.is_action_pressed("interact") and nearest != "":
-		# 对白刚结束时多按的一下只是在推进对白。
-		if Time.get_ticks_msec() - _active_since >= 600:
-			_cancel_click()
-			player.move_input(Vector2.ZERO)
-			interact(nearest)
-		get_viewport().set_input_as_handled()
-
-func interact(id: String) -> void:
-	if not sites.has(id) or not site_visible(id): return
-	if player.position.distance_to(site_point(id)) > float(sites[id].reach) + 8.0: return
-	var site: Dictionary = sites[id]
-	if site.has("person"):
-		var actor: CharacterBody2D = actors[site.person]
-		actor.face_point(player.position)
-		player.face_point(actor.position)
-	field_event.emit({"kind": "interact", "map": adapter.map_key(), "site": id, "target": str(site.get("person", ""))})
-
-func _cancel_click() -> void:
-	click_path = PackedVector2Array()
-	click_waypoint = 0
-	click_target = ""
-	_click_last = Vector2(INF, INF)
-	_click_stall = 0.0
-
-func _leave_seat() -> void:
-	var wake = adapter.anchor("wake")
-	if wake != null: player.position = wake
-	player.stand_up()
-
-func _route_click(destination: Vector2) -> void:
-	_cancel_click()
-	if not adapter.walkable(destination, player): return
-	if player.seated: _leave_seat()
-	if player.position.distance_to(destination) <= CLICK_STOP_RADIUS: return
-	var route := FieldNavigation.route_on_grid(player.position, destination, adapter.nav_grid(player))
-	if route.is_empty(): return
-	click_path = route
-	click_path.append(destination)
-	click_waypoint = 0
-
-## 走到够得着的地方再打开；已经够得着就直接打开。
-func _approach(id: String) -> void:
-	_cancel_click()
-	var point := site_point(id)
-	var reach := float(sites[id].reach)
-	if player.position.distance_to(point) <= reach + 6.0:
-		interact(id)
-		return
-	if player.seated: _leave_seat()
-	var grid: AStarGrid2D = adapter.nav_grid(player)
-	var best := PackedVector2Array()
-	var best_destination := Vector2.ZERO
-	var best_cost := INF
-	for fraction in [1.0, 0.55]:
-		for heading in APPROACH:
-			var candidate: Vector2 = point + heading.normalized() * (reach - CLICK_STOP_RADIUS - 2.0) * fraction
-			if not adapter.walkable(candidate, player): continue
-			var route := FieldNavigation.route_on_grid(player.position, candidate, grid)
-			if route.is_empty(): continue
-			var cost := _route_cost(player.position, route, candidate)
-			if cost < best_cost:
-				best_cost = cost
-				best = route
-				best_destination = candidate
-	if best.is_empty(): return
-	click_path = best
-	click_path.append(best_destination)
-	click_waypoint = 0
-	click_target = id
-
 func _route_cost(from: Vector2, route: PackedVector2Array, to: Vector2) -> float:
 	var cost := from.distance_to(route[0]) + route[route.size() - 1].distance_to(to)
 	for i in range(1, route.size()): cost += route[i - 1].distance_to(route[i])
@@ -664,104 +482,36 @@ func _make_actor(key: String, sprite_key: String) -> CharacterBody2D:
 	return actor
 
 ## 多地图章节：此处的人站到各自的位置。animate 时新来的从门口走进来，离开的走向门口。
-func _spawn_people(animate: bool) -> void:
+func _spawn_people() -> void:
 	var shown := {}
 	for p in snapshot.get("people", []):
 		if str(p.get("map", "")) == adapter.map_key() and bool(p.get("present", true)):
 			shown[str(p.key)] = p
 	var stands: Array = adapter.stands()
-	var door: Vector2 = adapter.door_point(player.position)
 	for key in actors.keys():
 		if key == _player_key or shown.has(key): continue
 		var leaving: CharacterBody2D = actors[key]
 		actors.erase(key)
-		if animate and is_instance_valid(leaving): _walk_off(leaving, door)
-		elif is_instance_valid(leaving): leaving.queue_free()
+		if is_instance_valid(leaving): leaving.queue_free()
 	var index := 0
 	for key in shown:
 		var p: Dictionary = shown[key]
-		var spot: Vector2 = stands[(absi(key.hash()) + index) % stands.size()] if not stands.is_empty() else player.position + Vector2(40 * index, 30)
-		for other in actors.values():
-			if other != player and other.position.distance_to(spot) < 20: spot += Vector2(26, 8)
-		index += 1
 		var actor: CharacterBody2D = actors.get(key)
 		if actor == null:
 			actor = _make_actor(key, str(p.get("sprite", "")))
 			if actor == null: return
-			if animate:
-				actor.position = door
-				_walk_on(actor, spot, str(p.get("frame", "")))
-			else:
-				actor.position = spot
-				_frame_pose(actor, str(p.get("frame", "")))
-		else:
-			_frame_pose(actor, str(p.get("frame", "")))
-
-func _walk_on(actor: CharacterBody2D, spot: Vector2, frame: String) -> void:
-	await _follow_route(actor, spot)
-	if not _closing and is_instance_valid(actor): _frame_pose(actor, frame)
-
-func _walk_off(actor: CharacterBody2D, door: Vector2) -> void:
-	await _follow_route(actor, door)
-	if is_instance_valid(actor): actor.queue_free()
+			actor.position = stands[(absi(key.hash()) + index) % stands.size()] if not stands.is_empty() else player.position + Vector2(40 * index, 30)
+		if not actor.travelling: _frame_pose(actor, str(p.get("frame", "")))
+		index += 1
 
 func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
 	actor.pose({"操作": "interact", "递物": "interact", "拉拽": "interact", "交谈": "talk", "蹲查": "inspect"}.get(frame, "idle"), "front")
 
-func _place_court() -> void:
-	var anchor_key := str(snapshot.get("gathering", {}).get("anchor", ""))
-	var point = adapter.anchor(anchor_key) if anchor_key != "" else null
-	if point == null:
-		Bindings.fail(self, "Missing gathering anchor binding: " + anchor_key)
-		return
-	var court: Vector2 = point
-	var i := 0
-	for p in snapshot.get("people", []):
-		if not bool(p.get("court_present", false)): continue
-		var actor: CharacterBody2D = actors.get(str(p.key))
-		if not is_instance_valid(actor): actor = _make_actor(str(p.key), str(p.get("sprite", "")))
-		if actor == null: return
-		actor.position = court + Vector2((i % 5) * 34 - 68, (i / 5) * 34 - 30)
-		i += 1
-	player.position = court + Vector2(0, 110)
-
-## 有人挡在侦探的路上：没有被剧情占用的同伴自己让开。
-func _make_way() -> void:
-	if player.velocity.length() < 10.0: return
-	var pinned: Array = snapshot.get("pinned", [])
-	for key in actors:
-		var actor: CharacterBody2D = actors[key]
-		if actor == player or not is_instance_valid(actor) or _daily.has(key) or key in pinned: continue
-		if actor.travelling or actor.position.distance_to(player.position) > 20.0: continue
-		var id := actor.get_instance_id()
-		if Time.get_ticks_msec() < int(_make_way_after.get(id, 0)): continue
-		var side := player.velocity.normalized().orthogonal() * 28.0
-		for spot in [actor.position + side, actor.position - side]:
-			if not adapter.walkable(spot, actor): continue
-			var route := FieldNavigation.route_on_grid(actor.position, spot, adapter.nav_grid(actor))
-			if route.is_empty(): continue
-			route.append(spot)
-			_make_way_after[id] = Time.get_ticks_msec() + MAKE_WAY_COOLDOWN_MS
-			_step_aside(actor, route)
-			break
-
-func _step_aside(actor: CharacterBody2D, route: PackedVector2Array) -> void:
-	var facing: String = actor.facing
-	var result: Dictionary = await _follow(actor, route)
-	if _closing or not is_instance_valid(actor) or str(result.reason) == "cancelled": return
-	actor.pose("idle", facing)
-	_make_way_after[actor.get_instance_id()] = Time.get_ticks_msec() + MAKE_WAY_COOLDOWN_MS
-
-# ================================================================== maps ===
-
-## 换图（多地图章节）：玩家移进新图，人物按快照重新站位；玩家自己走过去的，告诉章节到了哪里。
 func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -> void:
 	if not _applying_scene and adapter.has_method("can_enter") and not adapter.can_enter(key):
-		_cancel_click()
 		adapter.blocked_entry()
 		field_event.emit({"kind": "blocked_move", "map": key})
 		return
-	_cancel_click()
 	for actor_key in actors.keys():
 		if actor_key == _player_key: continue
 		var actor: CharacterBody2D = actors[actor_key]
@@ -770,7 +520,6 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 			actor.queue_free()
 		actors.erase(actor_key)
 	_daily.clear()
-	_make_way_after.clear()
 	player.get_parent().remove_child(player)
 	add_child(player)
 	adapter.load_map(key, spawn)
@@ -779,7 +528,7 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	player.position = at if use_at else adapter.spawn_point(spawn)
 	_after_map_load()
 	# 先按快照站好此处的人，再告诉章节到了哪里（回来的快照只让新来的人走进来）。
-	if adapter.fixed_actors().is_empty(): _spawn_people(false)
+	if adapter.fixed_actors().is_empty(): _spawn_people()
 	_build_sites()
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
@@ -795,185 +544,21 @@ func _after_map_load() -> void:
 	camera.limit_bottom = int(limits.end.y)
 	camera.reset_smoothing()
 
-func travel_to_node(node: Dictionary) -> void:
-	await _fade(func(): load_map(str(node.map), str(node.spawn)))
-
-func _fade(work: Callable) -> void:
-	if fader != null: await fader.fade_to(1.0, 0.35)
-	if _closing: return
-	work.call()
-	await get_tree().process_frame
-	if fader != null and not _closing: await fader.fade_to(0.0, 0.4)
-
 # ============================================================ stage events ===
 
-## 章节的空间指令。带 presentation_id 的在完成后回执（ok / reason）。
-func execute(ev: Dictionary) -> void:
-	match str(ev.kind):
-		"scene":
-			_court_layout = str(ev.get("mode", "")) == "court"
-			_applying_scene = true
-			await _fade(func(): load_map(str(ev.map), str(ev.get("spawn", ""))))
-			_applying_scene = false
-			if _court_layout: _place_court()
-			_ack(ev, {})
-		"replay_play":
-			follow_camera = false
-			await adapter.play_replay(ev)
-			follow_camera = true
-			_ack(ev, {})
-		"stage":
-			_stage(ev)
+## Only the prepared DV movement intent enters physical execution.
+func execute_move(destination: Dictionary, who: String, serial: int, action: String) -> void:
+	if adapter.has_method("execute_destination"):
+		adapter.execute_destination(destination, who, serial, action)
+		return
+	var target := str(destination.get("departure_station", destination.get("room", "")))
+	move_to_station(target, target, who, serial, action)
 
-func _ack(ev: Dictionary, result: Dictionary) -> void:
-	if _closing or not ev.has("presentation_id"): return
-	var reply := {"kind": "presented", "presentation_id": str(ev.presentation_id), "ok": true}
-	reply.merge(result, true)
-	field_event.emit(reply)
+func move_to_station(target: String, room: String, who: String, serial: int, action: String) -> void:
+	_daily_go({"who": who, "target": target, "room": room, "serial": serial, "action": action})
 
 func _actor(who: String) -> CharacterBody2D:
 	return actors.get(who)
-
-func _stage(ev: Dictionary) -> void:
-	var who := str(ev.get("who", ""))
-	var actor := _actor(who)
-	match str(ev.op):
-		"walk": _op_walk(ev)
-		"spawn":
-			if actor == null: actor = _make_actor(who, str(ev.sprite))
-			var point = _target_point(ev.to, actor)
-			if point == null:
-				_ack(ev, {"ok": false, "reason": "missing_anchor"})
-				return
-			_cancel_motion(actor)
-			actor.position = point
-			actor.pose("idle", "front")
-			_ack(ev, {})
-		"place":
-			if actor == null:
-				_ack(ev, {"ok": false})
-				return
-			_cancel_motion(actor)
-			var point = _target_point(ev.to, actor)
-			if point != null: actor.position = point
-			_ack(ev, {})
-		"pose":
-			if actor: actor.pose(str(ev.get("anim", "idle")), str(ev.get("facing", "")))
-			_ack(ev, {})
-		"face":
-			var toward = _target_point({"actor": str(ev.toward)} if not str(ev.toward).begins_with("site:") else {"anchor": str(ev.toward)}, actor)
-			if actor and toward != null: actor.face_point(toward)
-			_ack(ev, {})
-		"sit":
-			if actor:
-				actor.pose("idle", str(ev.get("facing", "front")))
-				actor.sit_at(str(ev.get("facing", "front")), float(ev.get("lift", 0.0)))
-			_ack(ev, {})
-		"stand":
-			if actor and actor.seated: actor.stand_up()
-			_ack(ev, {})
-		"halt":
-			if actor:
-				_cancel_motion(actor)
-				_paused_walks.erase(who)
-				actor.pose("idle")
-			_ack(ev, {})
-		"cancel_click":
-			_cancel_click()
-			player.move_input(Vector2.ZERO)
-		"camera": _op_camera(ev)
-		"prop":
-			adapter.set_prop(str(ev.id), str(ev.state))
-			_ack(ev, {})
-		"group": _group(ev)
-		"daily_go": _daily_go(ev)
-		"daily_work":
-			if _daily.has(who) and actor:
-				_daily[who].working = true
-				actor.speed = float(_daily[who].previous_speed)
-				actor.face_point(_daily[who].focus)
-				actor.pose({"check": "inspect", "work": "interact"}.get(str(ev.get("action", "rest")), "idle"))
-		"daily_release": _daily_release(who)
-		_: push_error("Unknown stage op: " + str(ev.op))
-
-# ------------------------------------------------------------------ walk ---
-
-func _target_point(to, walker: CharacterBody2D):
-	if to is Dictionary:
-		if to.has("point"): return Vector2(float(to.point[0]), float(to.point[1]))
-		if to.has("anchor"): return adapter.anchor(str(to.anchor))
-		if to.has("actor"):
-			var other := _actor(str(to.actor))
-			return other.position if other else null
-	return null
-
-func _op_walk(ev: Dictionary) -> void:
-	var who := str(ev.who)
-	var actor := _actor(who)
-	if actor == null:
-		_ack(ev, {"ok": false, "reason": "no_route"})
-		return
-	_daily_release(who)
-	_cancel_motion(actor)
-	if actor.seated: actor.stand_up()
-	var to: Dictionary = ev.to
-	var destination = null
-	var route := PackedVector2Array()
-	var grid: AStarGrid2D = adapter.nav_grid(actor)
-	if to.has("near_site") or to.has("near_actor"):
-		var base: Vector2 = site_point(str(to.near_site)) if to.has("near_site") and sites.has(str(to.near_site)) else (_actor(str(to.get("near_actor", ""))).position if to.has("near_actor") else adapter.anchor("site:" + str(to.near_site)))
-		for offset in to.get("offsets", [[0, 0]]):
-			var spot: Vector2 = base + Vector2(float(offset[0]), float(offset[1]))
-			if not adapter.walkable(spot, actor): continue
-			if bool(to.get("avoid", false)) and _taken(spot, actor): continue
-			destination = spot
-			route = FieldNavigation.route_on_grid(actor.position, spot, grid)
-			if not route.is_empty(): break
-	elif to.has("approach_site"):
-		var site_id := str(to.approach_site)
-		var point: Vector2 = site_point(site_id) if sites.has(site_id) else adapter.anchor("site:" + site_id)
-		var reach: float = float(sites[site_id].reach) if sites.has(site_id) else 46.0
-		destination = _spot_near(point, reach - float(to.get("inset", 0.0)), actor)
-	else:
-		destination = _target_point(to, actor)
-	if destination == null:
-		_ack(ev, {"ok": false, "reason": "no_route"})
-		return
-	if actor.position.distance_to(destination) <= ACTOR.ARRIVAL_RADIUS:
-		_ack(ev, {"reason": "arrived"})
-		return
-	if route.is_empty():
-		route = FieldNavigation.route_on_grid(actor.position, destination, grid)
-	if route.is_empty():
-		_ack(ev, {"ok": false, "reason": "no_route"})
-		return
-	route.append(destination)
-	var previous_speed: float = actor.speed
-	if float(ev.get("speed", 0.0)) > 0.0: actor.speed = float(ev.speed)
-	var result: Dictionary = await _follow(actor, route, who if bool(ev.get("pausable", false)) else "")
-	if is_instance_valid(actor): actor.speed = previous_speed
-	_ack(ev, result)
-
-func _taken(spot: Vector2, actor: CharacterBody2D) -> bool:
-	if player != actor and player.position.distance_to(spot) < 24.0: return true
-	for other in actors.values():
-		if other != actor and is_instance_valid(other) and other.position.distance_to(spot) < 28.0: return true
-	return false
-
-func _spot_near(point: Vector2, radius: float, walker: CharacterBody2D):
-	var best = null
-	var best_cost := INF
-	var grid: AStarGrid2D = adapter.nav_grid(walker)
-	for fraction in [1.0, 0.7]:
-		for heading in APPROACH:
-			var candidate: Vector2 = point + heading.normalized() * radius * fraction
-			if not adapter.walkable(candidate, walker): continue
-			if FieldNavigation.route_on_grid(walker.position, candidate, grid).is_empty(): continue
-			var cost := walker.position.distance_to(candidate)
-			if cost < best_cost:
-				best_cost = cost
-				best = candidate
-	return best
 
 func _next_motion(actor: CharacterBody2D) -> int:
 	var id := actor.get_instance_id()
@@ -982,34 +567,19 @@ func _next_motion(actor: CharacterBody2D) -> int:
 
 func _cancel_motion(actor: CharacterBody2D) -> void:
 	_next_motion(actor)
-	for who in _paused_walks.keys():
-		if actors.get(who) == actor: _paused_walks.erase(who)
 	actor.stop_travel()
 
-## 沿路走；受阻由角色停步并报告失败。可暂停的路线在现场不可用时停步。
-func _follow(actor: CharacterBody2D, route: PackedVector2Array, pause_key := "") -> Dictionary:
+## 沿路走；受阻由角色停步并报告失败。
+func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> Dictionary:
 	_cancel_motion(actor)
 	var generation := _next_motion(actor)
 	var id := actor.get_instance_id()
 	actor.follow_path(route)
-	while actor.travelling or _paused_walks.has(pause_key):
+	while actor.travelling:
 		await get_tree().physics_frame
 		if _closing or not is_instance_valid(actor) or int(_motion.get(id, 0)) != generation:
 			return {"ok": false, "reason": "cancelled"}
-		if not actor.travelling and not _paused_walks.has(pause_key):
-			break
-		if pause_key != "" and not field_active():
-			if actor.travelling:
-				_paused_walks[pause_key] = actor.path.slice(actor.waypoint)
-				actor.pause_travel()
-			continue
-		if _paused_walks.has(pause_key):
-			actor.resume_travel()
-			_paused_walks.erase(pause_key)
 	return actor.travel_result
-
-func _update_paused_walks() -> void:
-	pass
 
 func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 	var route := FieldNavigation.route_on_grid(actor.position, destination, adapter.nav_grid(actor))
@@ -1021,51 +591,6 @@ func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 
 # ---------------------------------------------------------------- camera ---
 
-func _op_camera(ev: Dictionary) -> void:
-	var to: Dictionary = ev.get("to", {})
-	var seconds := float(ev.get("seconds", 0.5))
-	# 设置里“减少动效”时镜头直接切过去，不平移。
-	var settings := get_node_or_null("/root/GameSettings")
-	if settings != null and bool(settings.get_value("accessibility", "reduce_motion")):
-		seconds = 0.0
-	var target: Vector2
-	if bool(to.get("follow", false)):
-		target = adapter.camera_point(player.position)
-	else:
-		follow_camera = false
-		target = _target_point(to, player)
-	if seconds <= 0.0:
-		camera.position = target
-	else:
-		var tween := create_tween()
-		tween.tween_property(camera, "position", target, seconds)
-		await tween.finished
-	if bool(to.get("follow", false)): follow_camera = true
-	_ack(ev, {})
-
-func _group(ev: Dictionary) -> void:
-	var court = adapter.anchor(str(ev.get("anchor", "")))
-	if court == null:
-		Bindings.fail(self, "Missing group anchor binding: " + str(ev.get("anchor", "")))
-		return
-	var groups := {}
-	for key in ev.stands:
-		var g: String = ev.stands[key]
-		if not groups.has(g): groups[g] = []
-		groups[g].append(key)
-	var gi := 0
-	for g in groups:
-		var base: Vector2 = court + Vector2(-240 + gi * 160, -60)
-		var j := 0
-		for key in groups[g]:
-			if actors.has(key): actors[key].walk_to(base + Vector2((j % 3) * 30, (j / 3) * 30))
-			j += 1
-		gi += 1
-	_ack(ev, {})
-
-# ----------------------------------------------------------------- daily ---
-
-## 日常：章节给出去处（房间与站点），现场找一个够得着、不与别人重叠的落脚点走过去，到了或被挡都回报。
 func _daily_go(ev: Dictionary) -> void:
 	var who := str(ev.who)
 	var actor: CharacterBody2D = actors.get(who)

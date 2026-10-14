@@ -107,3 +107,7 @@ core/55-cognition.dv 实现接纳门槛与有限域刻画：搜索枚举声明�
 ## 参考
 
 [Lean 的展开与内核分层](https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/)用于组织表层表达和核心项；[MAL](https://github.com/kanaka/mal)用于解释器结构；[GCC 多阶段自举](https://gcc.gnu.org/install/build.html)用于编译器阶段构建。认知切片和动作选择的研究见[领域语言研究](../artifacts/partial-bootstrap-core/dv-domain-language-research-2026-10-13.md)。
+
+## 2026-10-14 动作实现收敛
+
+旧 Kernel/bootstrap/WorldCore 解释执行链已退役。compiler/seed 独立保留 C0 需要的语法 Reader/Value；生成阶段只依赖 Runtime ABI。真实动作只有编译 DV session 的 prepare/complete，宿主和逻辑运行器复用它。

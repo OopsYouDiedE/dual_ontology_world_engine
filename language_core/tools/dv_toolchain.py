@@ -69,7 +69,7 @@ def build_lock(path):
 
 
 def compiler():
-    inputs = [p for folder in ("compiler", "Kernel", "bootstrap")
+    inputs = [p for folder in ("compiler",)
               for p in (LANGUAGE / folder).rglob("*")
               if p.is_file() and not {"bin", "obj"}.intersection(p.parts)]
     digest = hashlib.sha256()

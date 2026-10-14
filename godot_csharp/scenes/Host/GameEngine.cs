@@ -12,17 +12,17 @@ public partial class GameEngine : Node
     private bool closing;
     private DvSession? session;
     private bool busy;
+    private bool awaitingReceipt;
     private readonly List<string> visible = [];
     private readonly List<string> inputs = [];
     public GDict Snapshot() => session is null ? new() : Parse(session.Snapshot("detective"));
     private static GDict Parse(string json) => Json.ParseString(json).AsGodotDictionary();
-    public GArray DispatchField(GDict input) => Dispatch(input);
     public GArray Dispatch(GDict input)
     {
         var kind = input.GetValueOrDefault("kind", "").AsString();
         inputs.Add(Json.Stringify(input));
         if (kind == "start") { StartCampaign(); return new(); }
-        if (kind == "view_ready" || kind == "presented" || kind == "dv_next") Prepare();
+        if (kind == "view_ready" || kind == "dv_next") Prepare();
         if (kind == "dv_complete") Complete(input["receipt"].AsGodotDictionary());
         return new();
     }
@@ -43,13 +43,14 @@ public partial class GameEngine : Node
     }
     private async void Prepare()
     {
-        if (busy || closing || session is null) return;
+        if (busy || closing || awaitingReceipt || session is null) return;
         busy = true;
         try
         {
             var preparing = Task.Run(session.Prepare);
             work = preparing;
             var intent = Parse(await preparing);
+            awaitingReceipt = intent.GetValueOrDefault("status", "").AsString() == "prepared";
             EmitSignal(SignalName.EventsReady, new GArray { new GDict { ["kind"] = "dv_action", ["intent"] = intent } });
         }
         catch (Exception error) { Report(error); }
@@ -57,7 +58,7 @@ public partial class GameEngine : Node
     }
     private async void Complete(GDict receipt)
     {
-        if (busy || closing || session is null) return;
+        if (busy || closing || !awaitingReceipt || session is null) return;
         busy = true;
         try
         {
@@ -65,6 +66,7 @@ public partial class GameEngine : Node
             var completing = Task.Run(() => session.Complete(json, "detective"));
             work = completing;
             var presentation = Parse(await completing);
+            awaitingReceipt = false;
             EmitSignal(SignalName.EventsReady, new GArray { new GDict { ["kind"] = "state", ["snapshot"] = Snapshot() }, new GDict { ["kind"] = "dv_present", ["presentation"] = presentation } });
         }
         catch (Exception error) { Report(error); }

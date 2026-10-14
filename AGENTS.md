@@ -26,11 +26,27 @@
 - 不得把设定、剧情结论或推测写入任何 AGENTS.md。设计变更只合并到 `docs/design-standard.md`。
 - **严禁将剧情写入引擎代码**：剧情不得在 `.story` 和译文（如本地化 CSV/PO）之外的任何地方出现。引擎与 C# 项目仅负责系统机制、逻辑演算与流程调度，涉及具体剧情内容、对白或设定的查验必须通过剧本与词汇表，不得硬编码在代码中。
 
+## 单一动作实现（2026-10-14）
+
+本节覆盖本文及旧文档中的 r20、旧 Core、解释链和旧工具入口描述。用户要求清理整个项目的旧动作实现；旧源码只能从 Git 历史查阅，历史 artifacts、保护基线、`.story` 与译文保留，不重新编译成可运行旧路径。
+
+唯一正式动作链是 `verification/session/30-runner.dv` 的 prepare → 执行回执 → complete：DV 负责主体决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 只执行移动并返回现场结果；非移动使用同一 complete 的 DV 世界法则。命令行 formal-model 是同一接口的逻辑执行适配，不含 Godot 几何，不能冒称实机验收。预测与推演不发布真实行动效果。
+
+宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
+
+构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
+
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+
+只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
+
+静态引用审计使用 `python tools/audit_action_paths.py --out <新JSON路径>`；清单记录现役源码指纹、动作入口位置、本次删除导致的缺失引用与既有缺失资源。该工具不执行会话，也不代替人工源码审读或游戏验收。
+
 ## 仓库结构
 
 | 路径 | 内容 |
 | --- | --- |
-| `csharp/` | 独立 Core 类库，不依赖 Godot，见 [csharp/AGENTS.md](csharp/AGENTS.md) |
+| `csharp/` | 旧 Core 已退役，仅保留迁移说明 |
 | `godot_csharp/` | Godot 游戏宿主，单向引用 Core，见 [godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) |
 | `docs/design-standard.md` | 唯一的设计规范文件 |
 | `language_core/` | 隔离的 DuelView（DV）语言 Core；不引用旧 Core，见该目录的 AGENTS.md |
@@ -40,7 +56,7 @@
 | `artifacts/<task-name>/` | 阶段成果、验证报告与交付物 |
 | `tmp/`、`scratch/` | 仅存放一次性临时输出 |
 
-当前生产实现恢复到 `5b8c7dbe` 的 r20 时期提交，保留当前只读测量旁路、测试规则与保护工具。该提交不能冒称与历史 r20 未提交工作区完全一致；旧版行为和新会话分别记录。Core 提供主体推理与决策，宿主保留该基线的坐席候选适配；设计约束继续依据设计规范，历史架构不自动成为设计合格的证明。后续优化从此明确基线逐项审查，不重新混入封存的新版实现。
+旧 r20 源码已移除；迁移来源保存在 Git 历史，历史记录不作为 DV 正式会话证据。
 
 ## 环境
 
@@ -53,10 +69,7 @@
 ## 常用命令
 
 ```powershell
-dotnet build csharp/Core.sln
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers
-python godot_csharp/tools/compile_story.py          # 修改剧本源后重新生成
-python godot_csharp/tools/compile_story.py --check  # 检查生成物与源是否一致
 ```
 
 必要的跨进程保存排错可单独使用 `python tools/verify.py --only save`；不得混入流程回归，也不能作为 UI、人物行为或盲玩验收。

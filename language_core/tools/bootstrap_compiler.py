@@ -22,9 +22,6 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     sources = [p for p in COMPILER.rglob('*') if p.is_file() and not {'bin', 'obj'}.intersection(p.parts)]
     sources += [Path(__file__).resolve()]
-    # C0 links the seed reader/value project; freeze its complete source inputs too.
-    for folder in ('Kernel', 'bootstrap'):
-        sources += [p for p in (ROOT / 'language_core' / folder).rglob('*') if p.is_file() and not {'bin', 'obj'}.intersection(p.parts)]
     before = {str(p.relative_to(ROOT)): sha(p) for p in sources}
     (out / 'sources.json').write_text(json.dumps(before, indent=2), encoding='utf-8')
     with zipfile.ZipFile(out / 'sources.zip', 'w', zipfile.ZIP_DEFLATED) as archive:

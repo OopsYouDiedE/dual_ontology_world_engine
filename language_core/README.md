@@ -4,12 +4,9 @@ DuelView简称DV，源码后缀为`.dv`。它表达认知切片、个人理解�
 
 [SYNTAX.md](SYNTAX.md)给出 surface-v2 语法方案与当前实现范围，[DESIGN.md](DESIGN.md)说明语言和编译结构。Core 与第一章现已采用可执行的缩进语法、普通调用、记录/列表及中缀运算；mapping 的乘法形式、acceptance 的门槛转换和 imprint 的有限域最小代价配平均已接入编译链。核心代码采用英文，define 提供其他语言的 token 别名。编译器自身仍用 S 表达式启动源。
 
-## 两条执行链
+## 唯一编译执行链
 
-| 链路 | 入口和实现 |
-| --- | --- |
-| 解释链 | Kernel读取bootstrap，DV解释器载入推演模块，WorldCore提供宿主入口 |
-| 编译链 | compiler/compiler.dv生成C#，Runtime.cs提供平台ABI，core/session执行领域算法 |
+compiler/compiler.dv 生成 C#，Runtime.cs 提供平台 ABI，core/session 执行领域算法；旧 Kernel/bootstrap 解释执行链已经移除。seed 只保留 C0 的语法读取类型，不含世界执行器。
 
 编译器启动链为C0→C1→C2→C3。当前编译器具备启动子集的扫描、解析、作用域与调用处理、C#输出；已接入 surface 前端与基本名义数值检查；完整能力类型、单位推导、目标无关 IR、模块和闭包仍未完成。
 
@@ -41,22 +38,10 @@ DuelView简称DV，源码后缀为`.dv`。它表达认知切片、个人理解�
 
 现役 Godot 保留现场、输入和呈现链，生产项目已引用由原生 DV 编译生成的 Session，移除旧 Core 项目引用。两章内容与门口交接已编入 game/modules.json；完整两章游玩、离屏人物执行和最终清理仍未完成。[第一章源码反推](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)说明语言需求；运行方式见[verification/README.md](verification/README.md)。
 
-## 解释链模块
-
-bootstrap中的00-base提供数据工具，10-evaluator提供作用域与解释求值，20-world提供世界与规则，30-logic提供合一与推导，40-belief提供证据权重和模型，45-deduction提供本人推知，50-planning提供有界规划与经历。
-
-解释语法使用def!、let*、if、do、fn*和quote。编译语法使用defn、let、set、while、main及axiom，详见[compiler/README.md](compiler/README.md)。
-
 ## 运行
 
-需要.NET 8和Python 3。
-
 ```powershell
-dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers
-dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- demo
-dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- eval "(+ 20 22)"
-dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- self "(+ 20 22)"
-dotnet run --project language_core/Cli/Language.Cli.csproj -c Release -- run language_core/examples/subjective-inference.dv
+dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
 ```
 
-编译领域库与编译器使用tools/build_core.py、tools/bootstrap_compiler.py；会话使用tools/run_verification.py。成果位于[artifacts/partial-bootstrap-core](../artifacts/partial-bootstrap-core/)。
+正式动作接口见 [Session](Session/README.md)。逻辑会话与 Godot 使用同一 prepare/complete，前者不验证几何。历史源与证据不覆写。

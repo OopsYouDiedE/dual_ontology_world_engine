@@ -137,23 +137,11 @@ func perform(action: String, mirrored := false) -> void:
 	await sprite.animation_finished
 	pose("idle")
 
-func move_input(direction: Vector2) -> void:
-	velocity = direction * speed
-	if direction.length_squared() > 0:
-		face_vector(direction)
-		pose("walk")
-	else:
-		pose("idle")
-	move_and_slide()
-
 func face_vector(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
 		facing = "right" if direction.x > 0 else "left"
 	else:
 		facing = "front" if direction.y > 0 else "back"
-
-func walk_to(point: Vector2) -> Dictionary:
-	return await follow_path(PackedVector2Array([point]))
 
 func follow_path(points: PackedVector2Array) -> Dictionary:
 	stop_travel()

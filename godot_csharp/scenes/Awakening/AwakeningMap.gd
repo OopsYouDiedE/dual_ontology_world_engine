@@ -4,7 +4,6 @@ extends Node2D
 ## 地图节点由 tools/build_awakening_map.py 生成；本脚本只读生成的布局数据。
 
 const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
-const ReplayStage := preload("res://scenes/Awakening/ReplayStage.gd")
 const TraceDecals := preload("res://scenes/Awakening/TraceDecals.gd")
 const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const LAYOUT: Resource = preload("res://scenes/Awakening/map_layout.tres")
@@ -23,7 +22,6 @@ var room_names: Dictionary = {}
 var floors: Dictionary = {}
 var obstacle_rects: Array[Rect2] = []
 var decals: Node2D
-var stage_node: Node2D
 ## RoomDoor 读取稳定人物键；与现场、回放使用同一组对象引用。
 var actors: Dictionary = {}
 var player: CharacterBody2D
@@ -61,15 +59,7 @@ func setup() -> bool:
 		player.standard.set_animation_speed("walk_" + direction, 7.5)
 	player.sprite.sprite_frames = player.standard
 	if not _build_props(): return false
-	stage_node = ReplayStage.new()
-	stage_node.name = "ReplayStage"
-	stage_node.host = self
-	stage_node.z_index = 60
-	add_child(stage_node)
 	return true
-
-func begin_shutdown() -> void:
-	if is_instance_valid(stage_node): stage_node.cancel_playback()
 
 func fixed_actors() -> Dictionary:
 	return actors
@@ -323,8 +313,5 @@ func station(target: String, who: String) -> Dictionary:
 # ----------------------------------------------------------------- replay ---
 
 ## 昨夜回放在真实地图上：现场让出镜头，界面条隐藏，看完回执。
-func play_replay(ev: Dictionary) -> void:
-	await stage_node.play(ev)
-
 func set_bar_visible(value: bool) -> void:
 	if field and field.fader and field.fader.has_method("set_bar_visible"): field.fader.set_bar_visible(value)

@@ -1,12 +1,26 @@
 # Godot 游戏宿主维护与路径规范
 
-本目录为 Godot 4.6.1 .NET 游戏宿主，负责场景树、渲染、空间与碰撞、物理与输入、UI 及音效呈现。通过 ProjectReference 单向引用 Core；Godot 类型、运行时专属状态和素材完全由本目录管理。设计与验收标准详见 [统一设计规范](../docs/design-standard.md)。
+本目录为 Godot 4.6.1 .NET 游戏宿主，负责场景树、渲染、空间与碰撞、物理与输入、UI 及音效呈现。通过 ProjectReference 单向引用 language_core/Session；Godot 类型、运行时专属状态和素材完全由本目录管理。设计与验收标准详见 [统一设计规范](../docs/design-standard.md)。
 
 **同步修改规则**：本目录发生架构、模块合同、命令或排错方式调整时，必须同步修改本文件（`godot_csharp/AGENTS.md`）。
 
 `addons/dv_checker` 提供 DV 编辑与检查底部面板，通过 `language_core/tools/check_dv.py --format json` 调用实际编译器。它支持仓库外部于 Godot 项目根目录的 DV 文件；诊断保留源文件位置，不执行剧情，也不改变当前游戏宿主的 Core 引用。插件维护方式见该目录 AGENTS.md 与 README.md。
 
 `scenes/Host/DvRuntime.cs` 接入独立的 `language_core/Session` 生成类库，只负责 Godot 与 DV 会话的序列化边界。Open/Prepare/Complete/Save/Restore 使用同一份 DV 会话状态；现场须给出真实完成回执。Main/GameEngine 已调用 DvSession.OpenCampaign，正式项目移除旧 Core/GameSession 引用及旧检查工具编译入口。Prepare 在后台计算，EventsReady 把意图交回 Main；移动经 WorldView 的实际导航回执，显示只来自 DV 的本人行动/实际听闻。旧 AI pilot 接口尚未迁移，地图跨章和现场完整性待实机核对。构建通过 `-p:DvPython=<Python路径>` 指定生成器环境。
+
+## 单一动作实现（2026-10-14）
+
+本节覆盖本文及旧文档中的 r20、旧 Core、解释链和旧工具入口描述。用户要求清理整个项目的旧动作实现；旧源码只能从 Git 历史查阅，历史 artifacts、保护基线、`.story` 与译文保留，不重新编译成可运行旧路径。
+
+唯一正式动作链是 `verification/session/30-runner.dv` 的 prepare → 执行回执 → complete：DV 负责主体决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 只执行移动并返回现场结果；非移动使用同一 complete 的 DV 世界法则。命令行 formal-model 是同一接口的逻辑执行适配，不含 Godot 几何，不能冒称实机验收。预测与推演不发布真实行动效果。
+
+宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
+
+构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
+
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+
+只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
 
 ## 测评方式约束
 
@@ -121,3 +135,5 @@
 2026-10-14 的正式切换覆盖上文旧 r20 生产架构描述。旧文件仅为迁移来源；不得调用旧坐席适配冒充 DV 会话。新 ReadMilestoneProgressJson 只读 DV 快照，历史测量工具字段尚需迁移，旧基线不能与新实现作同条件性能比较。
 
 第二章 CampusMapView 从 DV 快照读取呈现绑定，不再读取旧第二章剧情 JSON。地图通路由场景出口与室外核心区域构建，实际寻路和出口触发后才返回完成；无在场身体或无法跨图执行的 NPC 返回未执行，不能据此改变 DV 地点。该离屏执行缺口仍待补齐。
+
+单一现场入口为 WorldView.execute_move：地图适配器提供目的地执行，否则使用同一站点导航。旧 stage/直接键鼠移动/快照进出场和让路移动均已移除。快照只创建视图身体，不发起未准备的行走。短启动工程排错使用 `--script res://tools/dv_host_startup_probe.gd -- --out=<新绝对证据目录>`，八秒后封存截图与快照，拒绝覆盖旧目录；不得称为完整游戏验收。

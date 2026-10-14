@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     out = (ROOT / args.out).resolve()
     out.mkdir(parents=True, exist_ok=False)
-    inputs = [p for d in ('compiler', 'core', 'Kernel', 'bootstrap') for p in (LANGUAGE / d).rglob('*')
+    inputs = [p for d in ('compiler', 'core') for p in (LANGUAGE / d).rglob('*')
               if p.is_file() and not {'bin', 'obj'}.intersection(p.parts)] + [Path(__file__).resolve()]
     hashes = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     (out / 'sources.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
