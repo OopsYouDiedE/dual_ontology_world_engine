@@ -72,11 +72,21 @@ fn dvs_speech_presuppositions(mind, speech):
         i = (i + 1)
     return result
 
-fn dvs_speech_hearing(speaker, listener, speech):
+fn dvs_emission_location(speaker, speech, physical):
+    let ref = dv_find(speech, "emission_location_ref", speaker.location_ref)
+    let cell = dv_read(physical, ref)
+    if dv_uncontested(cell):
+        return cell.value
+    return ""
+
+fn dvs_speech_hearing(speaker, listener, speech, physical):
     var source = speaker.id
     var channel = dv_find(speech, "channel", "")
-    var source_location = dv_find(speaker, "location", "")
-    var target_location = dv_find(listener, "location", "")
+    var source_location = dvs_emission_location(speaker, speech, physical)
+    let target_cell = dv_read(physical, listener.location_ref)
+    var target_location = ""
+    if dv_uncontested(target_cell):
+        target_location = target_cell.value
     var grants = dv_find(listener, "hearing_grants", [])
     var i = 0
     var heard = false
@@ -85,7 +95,17 @@ fn dvs_speech_hearing(speaker, listener, speech):
     while (i < rt_count(grants)):
         var grant = grants[i]
         if dv_and((grant.speaker == source), (grant.channel == channel)):
-            heard = true
+            let sender_locations = dv_find(grant, "sender_locations", [])
+            let listener_locations = dv_find(grant, "listener_locations", [])
+            var reception = target_location
+            if dv_has_key(grant, "reception_location_ref"):
+                let endpoint = dv_read(physical, grant.reception_location_ref)
+                reception = ""
+                if dv_uncontested(endpoint):
+                    reception = endpoint.value
+            if (dv_truth(listener.mind, dv_find(grant, "available_when", dv_true())) == "true") and dv_truth(physical, dv_find(grant, "authority_when", dv_true())) == "true":
+                if source_location != "" and reception != "" and ((rt_count(sender_locations) == 0 or dv_has(sender_locations, source_location)) and (rt_count(listener_locations) == 0 or dv_has(listener_locations, reception))):
+                    heard = true
         i = (i + 1)
     return heard
 
@@ -451,7 +471,7 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
             var action = actions[i]
             var id = actions[i].id
             if dv_and(dv_has_key(action, "speech"), dv_find(action, "argument_available", true)):
-                if dv_and((not dv_has(dv_find(actor, "used", []), id)), (dv_truth(mind, action.precondition) == "true")):
+                if dvp_eligible(actor, action, mind, []):
                     var truth = dvs_speech_truth(mind, action.speech)
                     var signature = dvs_speech_choice_signature(actor, action, goals)
                     if (not (truth == "true")):
@@ -536,12 +556,13 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
                     local_6 = dv_single(parent)
                 else:
                     local_6 = dv_pair(parent, budget_parent)
+                let prediction_index = rt_count(events)
                 var prediction_id = dvs_event(events, "speech_choice_prediction", actor.id, time, dvs_speech_cognitive_parents(local_6, choice_cognitive), data)
                 rt_push(event_ids, prediction_id)
                 if (0 < units):
                     budget_parent = prediction_id
                     choice_cognitive = prediction_id
-                rt_push(forecasts, dv_pair(listener, data))
+                rt_push(forecasts, dv_pair(listener, prediction_index))
                 j = (j + 1)
             cache = dv_with(cache, action.id, dv_with(dv_with({"status": "ready", "utility": value, "signature": entry.signature, "forecasts": forecasts}, "prediction_events", event_ids), "charged_units", entry.units))
             i = (i + 1)
@@ -646,7 +667,7 @@ fn dvs_proposal_reassess(actor, decision, events, time, parent):
                 seen = dv_append(seen, proposal_id)
     return dv_with(dv_with(dv_with(dv_with(dv_with(actor, "interpretations", interpretations), "policy", dv_with(actor.policy, "reason_budget", remaining)), "last_interpretation_event", last), "reassessed_proposals", seen), "last_cognitive_event", cognitive)
 
-fn dvs_speech(actors, speaker_index, action, events, time, parent):
+fn dvs_speech(actors, speaker_index, action, events, time, parent, physical):
     var speaker = actors[speaker_index]
     var speech = action.speech
     var speaker_mind = speaker.mind
@@ -679,7 +700,8 @@ fn dvs_speech(actors, speaker_index, action, events, time, parent):
             else:
                 local_1 = (prepared.status == "ready")
             if local_1:
-                var predicted = dv_find(prepared.forecasts, listener_id, {"status": "unknown-no-model", "prediction": []})
+                let prediction_index = dv_get(prepared.forecasts, listener_id)
+                var predicted = events[prediction_index].data
                 dvs_event(events, "speaker_prediction", speaker.id, time, dv_append(prepared.prediction_events, source), dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(predicted, "source_event", source), "paid_prediction_events", prepared.prediction_events), "paid_forecast", predicted), "charged_units", 0), "execution_charged_units", 0), "speaker_after", speaker), "preselection_source_revision", predicted.actor_before.mind.revision))
             else:
                 dvs_event(events, "speaker_prediction", speaker.id, time, dv_single(source), {"listener": listener_id, "status": "unknown-no-paid-preselection", "source_event": source})
@@ -687,7 +709,7 @@ fn dvs_speech(actors, speaker_index, action, events, time, parent):
                 dvs_event(events, "speech_unheard", listener_id, time, dv_single(source), {"reason": "unknown-listener", "source_event": source})
             else:
                 var listener = next[target_index]
-                if (not dvs_speech_hearing(speaker, listener, speech)):
+                if (not dvs_speech_hearing(speaker, listener, speech, physical)):
                     dvs_event(events, "speech_unheard", listener_id, time, dv_single(source), {"reason": "no-audibility-grant", "source_event": source})
                 else:
                     var before = listener.mind
@@ -715,8 +737,9 @@ fn dvs_speech(actors, speaker_index, action, events, time, parent):
                         local_2 = dv_single(source)
                     else:
                         local_2 = dv_pair(source, proposal_event)
-                    parse_event = dvs_event(events, "listener_parse", listener_id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, "source_event", source), "speech", speech), "presuppositions", dvs_speech_presuppositions(before, speech)), "audibility", {"speaker_location": dv_find(speaker, "location", ""), "listener_location": dv_find(listener, "location", ""), "hearing_grants": dv_find(listener, "hearing_grants", [])}), "observation_profile", profile), "proposal_decision", decision))
+                    parse_event = dvs_event(events, "listener_parse", listener_id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, "source_event", source), "speech", speech), "presuppositions", dvs_speech_presuppositions(before, speech)), "audibility", {"speaker_location": dvs_emission_location(speaker, speech, physical), "listener_location": dv_find(listener, "location", ""), "hearing_grants": dv_find(listener, "hearing_grants", [])}), "observation_profile", profile), "proposal_decision", decision))
                     listener = dvs_receive_request(listener, speech, parse_event, source, speaker.id)
+                    listener = dv_with(listener, "received_speeches", dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker.id, "action_id": action.id, "parse_event": parse_event, "source_event": source}))
                     while (n < rt_count(candidates_actual)):
                         var candidate = candidates_actual[n]
                         var interpretation = (dvs_listener_mapping(after, policy, bindings) × candidates_actual[n])

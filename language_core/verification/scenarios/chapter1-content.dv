@@ -1384,7 +1384,7 @@ fn c1_move_name(actor, origin, target):
 
 fn c1_move_action(actor, origin, target):
     var name = c1_move_name(actor, origin, target)
-    return dv_with(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), "predict_law", name)
+    return dv_with_many(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}})
 
 fn c1_add_move_methods(world, actor, mode):
     var edges = c1_edges()
@@ -1555,9 +1555,6 @@ fn c1_talk_recalled_names(actor):
 
 fn c1_sole_test(actor):
     return c1_once(c1_action(rt_cat(actor, ".compare_sole"), "experiment", dv_all(dv_pair(c1_at(actor, "foyer"), dv_fact(dv_ref(actor, "state", "identity"), "detective"))), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("boots_fit")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 81, "exp_E3.002")))
-
-fn c1_touch_recall(actor):
-    return c1_once(c1_observe_as(c1_action(rt_cat(actor, ".touch_latch"), "recall", dv_all(dv_pair(c1_at(actor, "foyer"), c1_statement("bolt_down"))), c1_at(actor, "foyer"), "", dv_pair(c1_knowledge("recalled_bolt"), c1_knowledge("recalled_trust")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 90, "recall_detective.002")), "recall", actor, 0.85))
 
 fn c1_sound_action(actor):
     var local_1 = false
@@ -1782,7 +1779,6 @@ fn c1_investigation_actions(actor):
         rt_push(actions, c1_replay_action(actor))
     if (actor == "detective"):
         rt_push(actions, c1_sole_test(actor))
-        rt_push(actions, c1_touch_recall(actor))
     rt_push(actions, c1_identify_own_lens(actor))
     rt_push(actions, c1_reask_question(actor))
     return c1_public_methods(actions)

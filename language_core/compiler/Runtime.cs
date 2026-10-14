@@ -46,6 +46,18 @@ public static class R
     public static object push(object a, object b) { Items(a).Add(b); return a; }
     public static object at(object a, object i) => Items(a)[Index(i)];
     public static object count(object a) => (double)Items(a).Count;
+    public static object record_index(object record, object key)
+    {
+        var entries = Items(record);
+        for (var i = entries.Count - 1; i >= 0; i--)
+            if (Bool(eq(Items(entries[i])[0], key))) return (double)i;
+        return -1d;
+    }
+    public static object record_find(object record, object key, object fallback)
+    {
+        var index = (double)record_index(record, key);
+        return index < 0 ? fallback : Items(Items(record)[(int)index])[1];
+    }
     public static object is_list(object a) => a is List<object>;
     public static object copy_value(object value)
     {

@@ -296,6 +296,9 @@ func furniture_hits(pos: Vector2) -> Dictionary:
 
 ## 日常的去处：热点只供几何定位。
 func station(target: String, who: String) -> Dictionary:
+	if spatial.presentation.replay_rooms.has(target):
+		var coordinates: PackedStringArray = str(spatial.presentation.replay_rooms[target]).split(",")
+		return {"point": Vector2(float(coordinates[0]), float(coordinates[1])), "radius": 24.0}
 	if not spatial.presentation.stations.has(target):
 		Bindings.fail(self, "Missing station binding: " + target)
 		return {}

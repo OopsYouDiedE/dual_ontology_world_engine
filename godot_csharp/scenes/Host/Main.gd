@@ -1,4 +1,5 @@
 extends Node
+signal shutdown_completed
 ## 单一窗口：把输入交给 C#，把输出交给视图或 GUI，不持有剧情与章节规则。
 
 const EngineScript := preload("res://scenes/Host/GameEngine.cs")
@@ -20,14 +21,20 @@ var _awaiting_ui := false
 var _closing := false
 ## 坐在玩家席位上的 AI（为空时由真人操作）。
 var pilot: Node
+var _dv_intent: Dictionary = {}
+var _dv_serial := 0
+var _view_resource := ""
 
 func _ready() -> void:
+	get_tree().auto_accept_quit = false
 	add_to_group("lifecycle_hosts")
 	TranslationServer.set_locale("zh_CN")
 	get_window().title = "安眠者有福"
 	engine = EngineScript.new()
 	engine.name = "Engine"
 	add_child(engine)
+	engine.EventsReady.connect(_dv_events)
+	engine.TraceClosed.connect(func(): shutdown_completed.emit())
 	view_trace = VIEW_TRACE.new()
 	view_trace.name = "PlayerViewTrace"
 	add_child(view_trace)
@@ -59,7 +66,8 @@ func _home() -> void:
 	title_layer.add_child(title)
 	title.ui_event.connect(dispatch)
 
-func _view(ev: Dictionary) -> void:
+func _view(ev: Dictionary, begin := true) -> void:
+	_view_resource = str(ev.resource)
 	var resource: PackedScene = load(str(ev.resource)) as PackedScene
 	if resource == null:
 		push_error("无法加载世界视图：" + str(ev.resource))
@@ -79,11 +87,19 @@ func _view(ev: Dictionary) -> void:
 	field.field_event.connect(_field_input)
 	field.hover_changed.connect(ui.show_hover)
 	field.hint_changed.connect(ui.set_hint)
-	field.setup(resource.instantiate())
+	var adapter: Node2D = resource.instantiate()
+	var initial: Dictionary = engine.Snapshot()
+	if adapter.get("presentation") != null and initial.has("presentation"):
+		adapter.presentation = initial.presentation
+	field.setup(adapter)
 	if str(ev.get("map", "")) != "": field.load_map(str(ev.map), str(ev.get("spawn", "")))
-	_apply(engine.Snapshot())
+	for placement in initial.get("initial_placements", []):
+		var actor: CharacterBody2D = field.actors.get(str(placement.actor))
+		var point = field.adapter.anchor(str(placement.anchor))
+		if actor != null and point != null: actor.position = point
+	_apply(initial)
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
-	dispatch.call_deferred({"kind": "view_ready"})
+	if begin: dispatch.call_deferred({"kind": "view_ready"})
 
 ## AI 坐上玩家席位：该角色的决定只经 token 交回引擎，界面输入不再替它做选择。
 func enable_pilot(seat: Node) -> void:
@@ -113,6 +129,10 @@ func _seat_input(input: Dictionary) -> bool:
 
 func _field_input(input: Dictionary) -> void:
 	if _closing: return
+	if str(input.get("kind", "")) == "daily" and not _dv_intent.is_empty():
+		if int(input.serial) == _dv_serial:
+			_dv_complete("applied" if str(input.status) == "arrived" else "rejected", input)
+		return
 	if is_instance_valid(pilot): pilot.take_field_reply(input)
 	_send(input, is_instance_valid(pilot))
 
@@ -156,6 +176,16 @@ func _drain() -> void:
 			if is_instance_valid(ui): ui.open_panel(str(ev.panel))
 		elif kind == "agent_stopped":
 			if is_instance_valid(pilot): pilot.stop(str(ev.reason))
+		elif kind == "dv_action":
+			_dv_execute(ev.intent)
+		elif kind == "dv_present":
+			var result: Dictionary = ev.presentation
+			var lines: Array = []
+			if bool(result.get("visible", false)):
+				if str(result.get("surface", "")) != "": lines.append({"text": result.surface, "speaker": ""})
+				for text in result.get("lines", []): lines.append({"text": str(text), "speaker": ""})
+			if not lines.is_empty(): await ui.present({"kind": "lines", "lines": lines})
+			dispatch.call_deferred({"kind": "dv_next"})
 		elif kind == "home":
 			_home()
 		elif kind == "view":
@@ -196,6 +226,9 @@ static func _visible_part(ev: Dictionary) -> Dictionary:
 	return shown
 
 func _apply(snapshot: Dictionary) -> void:
+	if _view_resource != "" and str(snapshot.resource) != _view_resource:
+		_view(snapshot, false)
+		return
 	if is_instance_valid(ui): ui.apply_snapshot(snapshot)
 	if is_instance_valid(field): field.apply_snapshot(snapshot)
 
@@ -210,3 +243,34 @@ func begin_shutdown() -> void:
 
 func _exit_tree() -> void:
 	begin_shutdown()
+
+func _dv_events(events: Array) -> void:
+	_queue.append_array(events)
+	_drain.call_deferred()
+
+func _dv_execute(intent: Dictionary) -> void:
+	if str(intent.get("status", "")) != "prepared": return
+	_dv_intent = intent
+	_dv_serial += 1
+	var action: Dictionary = intent.action
+	if str(action.kind) == "move":
+		var target := str(action.get("travel", {}).get("to", ""))
+		var destination: Dictionary = intent.get("destination", {})
+		if field.adapter.has_method("execute_destination"):
+			field.adapter.execute_destination(destination, str(intent.actor), _dv_serial, str(action.id))
+		else:
+			target = str(destination.get("departure_station", target))
+			field.execute({"kind": "stage", "op": "daily_go", "who": str(intent.actor), "target": target, "room": target, "serial": _dv_serial, "action": str(action.id)})
+	else:
+		_dv_complete("applied", {"executor": "dv-world", "context": field.context()})
+
+func _dv_complete(outcome: String, execution: Dictionary) -> void:
+	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
+	_dv_intent = {}
+	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not _closing:
+		begin_shutdown.call_deferred()
+		await shutdown_completed
+		get_tree().quit()

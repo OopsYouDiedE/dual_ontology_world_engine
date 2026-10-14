@@ -284,7 +284,7 @@ fn dvs_sim_work_budget(actor):
     dv_require((not (total < 0)), "Negative total model budget")
     return dv_min(total, work)
 
-fn dvs_model(actor, hypothesis, events, time, parent):
+fn dvs_model_execute(actor, hypothesis, events, time, parent):
     var mind = actor.mind
     var plan = dvs_sim_plan(hypothesis)
     var start = dv_find(hypothesis, "start_time", time)
@@ -307,7 +307,8 @@ fn dvs_model(actor, hypothesis, events, time, parent):
     dv_domain(mind, "mind")
     dv_require((not (remaining < 0)), "Negative simulation budget")
     dv_require((not (start < 0)), "Negative model origin time")
-    predicted = dvs_sim_mask_response(actor, dvs_sim_mask(mind, plan, start), plan)
+    let mask_plan = dv_find(hypothesis, "mask_plan", plan)
+    predicted = dvs_sim_mask_response(actor, dvs_sim_mask(mind, mask_plan, start), mask_plan)
     if (0 < rt_count(assumptions)):
         dv_require((confidence < 1), "Hypothetical assumption cannot have certainty")
     while dv_and((i < rt_count(assumptions)), (not (remaining < 1))):

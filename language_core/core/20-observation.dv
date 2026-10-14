@@ -126,7 +126,7 @@ fn dv_perceive(physical, mind, bindings, grants, event_id, time):
             var mapped = dv_project_value(cell.value, bindings, subject)
             var local_ref = dv_scoped_ref(subject, local, ref.facet, ref.field)
             if mapped.known:
-                rt_push(observations, dv_observation(dv_list3(event_id, subject, local_ref), subject, local_ref, mapped.value, "perception", "direct", time, 1, dv_pair(event_id, local_ref)))
+                rt_push(observations, dv_with(dv_observation(dv_list3(event_id, subject, local_ref), subject, local_ref, mapped.value, "perception", "direct", time, 1, dv_pair(event_id, local_ref)), "world_version", {"id": physical.id, "revision": physical.revision}))
         i = (i + 1)
     return observations
 
@@ -248,17 +248,29 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
             rt_push(dispositions, dv_pair(id, "older-than-current"))
         else:
             var is_perception = (observation.source == "perception")
+            let version = dv_find(observation, "world_version", false)
+            let previous_version = dv_find(old, "world_version", false)
+            var later_version = false
+            if (version != false and previous_version != false):
+                later_version = (version.id == previous_version.id and previous_version.revision < version.revision)
+            let replaces_current = is_perception and (old.time < time or later_version)
             var local_1 = false
-            if dv_and(is_perception, (old.time < time)):
+            if replaces_current:
                 local_1 = []
             else:
                 local_1 = old.claims
             var claims = local_1
             if dv_and(old.known, (rt_count(claims) == 0)):
-                if (not dv_and(is_perception, (old.time < time))):
+                if (not replaces_current):
                     claims = dv_single(dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_pair("initial", ref), "subject": next.subject, "ref": ref, "value": old.value}, "source", "initial"), "origin", "initial"), "time", old.time), "trust", old.confidence), "dependency", dv_pair("initial", ref)))
             var new_time = dv_max(old.time, time)
-            next = dv_store(next, ref, dv_aggregate(dv_replace_claim(claims, observation), profile, new_time))
+            var updated = dv_aggregate(dv_replace_claim(claims, observation), profile, new_time)
+            if (is_perception and version != false):
+                updated = dv_with(updated, "world_version", version)
+            else:
+                if (previous_version != false):
+                    updated = dv_with(updated, "world_version", previous_version)
+            next = dv_store(next, ref, updated)
             rt_push(dispositions, dv_pair(id, "updated"))
         next = dv_with(next, "seen", dv_append(next.seen, id))
         rt_push(accepted, dv_clone(observation))

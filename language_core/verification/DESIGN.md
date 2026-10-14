@@ -2,6 +2,8 @@
 
 第一章内容由原生DV声明，运行器由core与session模块编译而成。内容位于scenarios，oracle独立导出，JSON承接程序之间的数据交换。
 
+宿主调用 `dvs_session_open` 建立会话，`dvs_session_prepare` 推进一个人物的决策，返回待执行行动；实际执行后以 `action_event/outcome/actual` 调用 `dvs_session_complete`。世界法则、代价结算、个人观察与听闻全部在 DV 完成。序列化会话可原样恢复待执行阶段；宿主不提供答案或认识补丁。`dvs_run` 是使用同一协议的连续逻辑执行器，实际 Godot 输入与几何接线单独实现。
+
 ## 模块关系
 
 | 模块 | 职责 |

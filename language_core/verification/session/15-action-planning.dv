@@ -14,6 +14,8 @@ fn dvp_question(actor):
         return ""
 
 fn dvp_topic(actor, item):
+    if dv_find(item, "scope", "") == "personal" and 0 < rt_count(dv_find(item, "basis", [])):
+        return true
     var topic = dv_find(item, "question", dv_find(item, "topic", ""))
     var question = dvp_question(actor)
     var bindings = dv_find(actor.policy, "topic_bindings", [])
@@ -242,7 +244,7 @@ fn dvp_answer_attempt_allowed(prev_sig, cur_sig):
                     var diff = local_1
                     return (not (diff < 0.2))
 
-fn dvp_eligible(actor, action, mind, relevant):
+fn dvp_eligible_base(actor, action, mind, relevant):
     var id = action.id
     var used = dv_find(actor, "used", [])
     if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dv_truth(mind, action.precondition) == "true"))):
@@ -262,12 +264,12 @@ fn dvp_eligible(actor, action, mind, relevant):
                 if dv_has_key(action, "response_topic"):
                     var request = dvs_pending_request(actor, action)
                     if (0 < rt_count(request)):
-                        local_2 = dv_has_key(dv_find(actor, "visible_context", []), request.requester)
+                        local_2 = (dvs_request_context(actor, action, request.requester) != false)
                     else:
                         local_2 = dv_and((not dv_has(used, id)), dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")))
                 else:
                     if dv_has_key(action.speech, "request"):
-                        var context = dv_find(dv_find(actor, "visible_context", []), action.speech.request.target, false)
+                        var context = dvs_request_context(actor, action, action.speech.request.target)
                         local_2 = dv_and((not (context == false)), (not dv_same(context, dv_find(dv_find(actor, "request_contexts", []), id, false))))
                     else:
                         local_2 = (not dv_has(used, id))
@@ -284,12 +286,15 @@ fn dvp_eligible(actor, action, mind, relevant):
         return false
 
 fn dvp_source_supported(cell, source):
+    return dvp_source_supported_since(cell, source, 0)
+
+fn dvp_source_supported_since(cell, source, minimum_time):
     var claims = dv_find(cell, "claims", [])
     var i = 0
     var found = false
     while (i < rt_count(claims)):
         var claim = claims[i]
-        if dv_and((claim.source == source), dv_same(claim.value, cell.value)):
+        if dv_and((claim.source == source), dv_same(claim.value, cell.value)) and minimum_time <= dv_find(claim, "time", 0):
             found = true
         i = (i + 1)
     return found
@@ -305,7 +310,7 @@ fn dvp_needs_evidence(actor, ref):
                 if dv_has_key(goal, "ref"):
                     if dv_same(goal.ref, ref):
                         var cell = dv_read(actor.mind, ref)
-                        if dvp_source_supported(cell, dv_find(goal, "source", "perception")):
+                        if dvp_source_supported_since(cell, dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0)):
                             false
                         else:
                             needed = true
@@ -347,6 +352,8 @@ fn dvp_action_value(actor, action, bindings, relevant, probes):
             information = (information + 1)
     if dvp_communication_progress(actor, action):
         progress = 1
+    if dv_has_key(action, "personal_choice"):
+        progress = 1
     if (action.kind == "replay"):
         if (0 < dv_find(policy, "model_budget", 0)):
             if (hypothesis == false):
@@ -355,7 +362,8 @@ fn dvp_action_value(actor, action, bindings, relevant, probes):
                 if dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), (0 < rt_count(dvs_sim_plan(hypothesis))))):
                     if (dv_find(dvs_cached_model(actor, hypothesis), "status", "unknown") == "stale-or-unavailable"):
                         verification = (verification + 1)
-    return {"information": information, "verification": verification, "progress": progress, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + (progress * dv_find(policy, "progress_weight", 1)))}
+    let achievement = dvp_achievement_value(actor, action)
+    return {"information": information, "verification": verification, "progress": progress, "achievement": achievement, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
 
 fn dvp_state_key(mind):
     var objects = mind.objects
@@ -458,9 +466,10 @@ fn dvp_plan(actor, bindings, costs):
     var best = false
     var best_score = -100000
     var best_path = []
-    var init_key = dvp_state_key(actor.mind)
+    let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
+    var init_key = rt_json_stringify({"state": dvp_state_key(actor.mind), "achievements": initial_achievements})
     var plans = []
-    var frontier = dv_single(dv_with({"mind": actor.mind, "path": [], "score": 0, "seen": dv_single(init_key)}, "key", init_key))
+    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "seen": dv_single(init_key), "key": init_key, "achievements": initial_achievements})
     var depth = 0
     var time_blocked = 0
     var stop = "complete-depth"
@@ -479,6 +488,7 @@ fn dvp_plan(actor, bindings, costs):
                 var i = 0
                 var mind = frontier[n].mind
                 var node_actor = dvp_actor_view(actor, mind)
+                rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
                 expanded = (expanded + 1)
                 while (i < rt_count(actions)):
                     var action = actions[i]
@@ -505,7 +515,7 @@ fn dvp_plan(actor, bindings, costs):
                             best_score = score
                             best_path = path
                             best = dvp_find_action(actions, path[0])
-                        if dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
+                        if (depth + 1 < depth_limit) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
                             var name = action.predict_law
                             var adoptions = mind.adoptions
                             if dv_has_key(adoptions, name):
@@ -514,11 +524,12 @@ fn dvp_plan(actor, bindings, costs):
                                     var prediction = dv_predict(dv_with(mind, "domain", "mind"), name, rt_cat("plan-", rt_show(rt_count(plans))), dv_find(mind, "time", 0), mind.revision)
                                     if (prediction.status == "applied"):
                                         var predicted = prediction.world
-                                        var pred_key = dvp_state_key(predicted)
+                                        let achieved = dvp_satisfied_goals(actor, predicted, node.achievements)
+                                        var pred_key = rt_json_stringify({"state": dvp_state_key(predicted), "achievements": achieved})
                                         if dv_has(node.seen, pred_key):
                                             false
                                         else:
-                                            var candidate_node = dv_with(dv_with(dv_with({"mind": predicted, "path": path, "score": score, "seen": dv_append(node.seen, pred_key)}, "key", pred_key), "prediction_basis", adoption.basis), "elapsed", (dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time))
+                                            var candidate_node = {"mind": predicted, "path": path, "score": score, "seen": dv_append(node.seen, pred_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved}
                                             if dvp_dominated(visited, candidate_node):
                                                 false
                                             else:
@@ -584,5 +595,49 @@ fn dvp_communication_progress(actor, action):
                 if dv_and(dv_find(goal, "requires_argument", false), dv_find(action, "speech_from_argument", false)):
                     if dv_find(action, "argument_available", false):
                         value = true
+                if not dv_find(goal, "requires_argument", false):
+                    value = true
         i = (i + 1)
+    return value
+
+fn dvp_satisfied_goals(actor, mind, previous):
+    var result = []
+    let goals = dv_find(actor.policy, "goals", [])
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "achieve":
+            if (dv_truth(mind, goal.proposition) == "true" or dv_has(previous, goal.proposition)) and not dv_has(result, goal.proposition):
+                result = dv_append(result, goal.proposition)
+        i = i + 1
+    return result
+
+fn dvp_achievement_value(actor, action):
+    let goals = dv_find(actor.policy, "goals", [])
+    var pending = []
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
+            if not dv_has(dv_find(actor, "planning_achievements", []), goal.proposition):
+                if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
+                    rt_push(pending, goal)
+        i = i + 1
+    if rt_count(pending) == 0:
+        return 0
+    let name = dv_find(action, "predict_law", "")
+    let adoption = dv_find(actor.mind.adoptions, name, false)
+    if adoption == false:
+        return 0
+    if not adoption.active or adoption.mode != "predict":
+        return 0
+    let prediction = dv_predict(dv_with(actor.mind, "domain", "mind"), name, "goal-forecast", dv_find(actor.mind, "time", 0), actor.mind.revision)
+    if prediction.status != "applied":
+        return 0
+    var value = 0
+    i = 0
+    while i < rt_count(pending):
+        if dv_truth(prediction.world, pending[i].proposition) == "true":
+            value = value + dv_find(pending[i], "weight", 1)
+        i = i + 1
     return value

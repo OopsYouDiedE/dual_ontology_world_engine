@@ -73,25 +73,10 @@ fn dv_has(items, value):
     return found
 
 fn dv_find(record, key, fallback):
-    var i = rt_count(record)
-    var result = fallback
-    var found = false
-    while dv_and((not found), (0 < i)):
-        i = (i - 1)
-        var entry = record[i]
-        if (entry[0] == key):
-            result = entry[1]
-            found = true
-    return result
+    return rt_record_find(record, key, fallback)
 
 fn dv_has_key(record, key):
-    var i = 0
-    var found = false
-    while dv_and((not found), (i < rt_count(record))):
-        if (record[i][0] == key):
-            found = true
-        i = (i + 1)
-    return found
+    return 0 <= rt_record_index(record, key)
 
 fn dv_record_like(value):
     if rt_is_list(value):
@@ -111,20 +96,10 @@ fn dv_record_like(value):
         return false
 
 fn dv_get(record, key):
-    var i = rt_count(record)
-    var found = false
-    var result = false
-    while dv_and((not found), (0 < i)):
-        i = (i - 1)
-        var entry = record[i]
-        if (entry[0] == key):
-            found = true
-            result = entry[1]
-    if found:
-        false
-    else:
+    let index = rt_record_index(record, key)
+    if (index < 0):
         rt_fail(rt_cat("Missing field: ", key))
-    return result
+    return record[index][1]
 
 fn dv_with(record, key, value):
     var r = []

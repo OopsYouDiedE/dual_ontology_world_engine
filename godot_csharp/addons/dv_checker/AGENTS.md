@@ -8,6 +8,10 @@ The JSON contract is `{success: bool, diagnostics: [{path, line, column, severit
 Paths are absolute; line and column are one-based. Preserve raw tool output for engineering errors.
 The addon does not run story sessions or perform gameplay acceptance.
 
+Create the editor panel when the user opens the tool menu command. Loading the
+plugin during asset import must not construct an unused CodeEdit or load its font
+resources. The menu command still opens the same compiler-backed checker.
+
 For isolated engineering diagnosis, copy this addon to a temporary Godot 4.6 project,
 enable its plugin.cfg in that project's editor_plugins section and start the editor.
 Do not run flow/flow2 or any aggregate regression command.

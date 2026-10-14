@@ -33,13 +33,13 @@ DuelView简称DV，源码后缀为`.dv`。它表达认知切片、个人理解�
 
 `python language_core/tools/check_dv.py --format json <source.dv>` 调用真实 C3 编译器检查文件所属的 `dv-check.json` 编译组，不执行剧情。每个源文件有独立 define 作用域。错误保留文件、行、列；编译器启动产物按源码指纹缓存。
 
-[Visual Studio 2022 客户端](editors/visualstudio/README.md)通过 `tools/dv_lsp.py` 检查未保存的编辑内容。[Godot 插件](../godot_csharp/addons/dv_checker/README.md)在底部面板提供 DV 编辑、保存检查和错误定位。两者复用同一个编译器，不额外实现语言语义。当前提供编译诊断，尚无 Lean 式完整证明状态、自动补全和跨文件定义导航。
+[VS Code 客户端](editors/vscode/README.md)通过 `tools/dv_lsp.py` 检查未保存的编辑内容，打包为 `DuelView.VSCode.vsix`。[Godot 插件](../godot_csharp/addons/dv_checker/README.md)在底部面板提供 DV 编辑、保存检查和错误定位。两者复用同一个编译器，不额外实现语言语义。此前的 [Visual Studio 2022 客户端](editors/visualstudio/README.md)是另一种插件接口。当前提供编译诊断，尚无 Lean 式完整证明状态、自动补全和跨文件定义导航。
 
 ## 第一章
 
 原生内容位于verification/scenarios，会话位于verification/session。本人推知、话语理解、重演、竞争解释、论证、规划和回答协议由编译DV运行。配置、场景和oracle分别导出为交换数据。
 
-现役Godot/C#保留现场、输入和呈现链，隔离DV有自己的逻辑会话。[第一章源码反推](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)说明语言需求；运行方式见[verification/README.md](verification/README.md)。
+现役 Godot 保留现场、输入和呈现链，生产项目已引用由原生 DV 编译生成的 Session，移除旧 Core 项目引用。两章内容与门口交接已编入 game/modules.json；完整两章游玩、离屏人物执行和最终清理仍未完成。[第一章源码反推](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)说明语言需求；运行方式见[verification/README.md](verification/README.md)。
 
 ## 解释链模块
 

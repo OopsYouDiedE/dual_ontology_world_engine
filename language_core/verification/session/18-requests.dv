@@ -35,16 +35,35 @@ fn dvs_record_request(actor, action):
     if (request == false):
         return actor
     else:
-        return dv_with(actor, "request_contexts", dv_with(dv_find(actor, "request_contexts", []), action.id, dv_find(dv_find(actor, "visible_context", []), request.target, false)))
+        return dv_with(actor, "request_contexts", dv_with(dv_find(actor, "request_contexts", []), action.id, dvs_request_context(actor, action, request.target)))
+
+fn dvs_request_context(actor, action, target):
+    let visible = dv_find(dv_find(actor, "visible_context", []), target, false)
+    if (visible != false):
+        return visible
+    let transport = dv_find(action, "request_transport", false)
+    if (transport == false):
+        return false
+    let channels = dv_find(actor, "request_channels", [])
+    var i = 0
+    while (i < rt_count(channels)):
+        let channel = channels[i]
+        if (channel.target == target and channel.channel == transport.channel and 0 < rt_count(channel.basis)):
+            if (dv_truth(actor.mind, channel.available_when) == "true"):
+                return {"channel": channel.channel, "basis": channel.basis, "inputs": dvs_sim_inputs(actor.mind, channel.available_when)}
+        i = i + 1
+    return false
 
 fn dvs_visible_context(actor, physical, actors):
     var result = []
+    if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) != "true":
+        return result
     var own = dv_read(physical, actor.location_ref)
     var i = 0
     while (i < rt_count(actors)):
         var other = actors[i]
         var position = dv_read(physical, actors[i].location_ref)
-        if dv_and((not (other.id == actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
+        if dv_truth(physical, dv_find(other, "observable_presence_when", dv_true())) == "true" and dv_and((not (other.id == actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
             result = dv_with(result, other.id, {"location": position.value, "action_event": dv_find(other, "last_action_event", "")})
         i = (i + 1)
     return result
@@ -71,7 +90,7 @@ fn dvs_visible_action_grants(actors, speaker_index, action, physical, bindings, 
     while (i < rt_count(actors)):
         var actor = result[i]
         var position = dv_read(physical, result[i].location_ref)
-        if dv_and(dv_and((not (i == speaker_index)), dv_has(listeners, actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
+        if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true" and dv_and(dv_and((not (i == speaker_index)), dv_has(listeners, actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
             var mind = actor.mind
             var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
             if (0 < rt_count(observations)):

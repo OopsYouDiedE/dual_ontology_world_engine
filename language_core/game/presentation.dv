@@ -1,0 +1,67 @@
+// Authored location bindings. Geometry remains owned by the existing map assets.
+fn dvg_place(location):
+    let places = {
+        "living_hall": {"map": "living_hall", "room": "living_hall:hall", "spawn": "east_south"},
+        "central_hall": {"map": "central_hall", "room": "central_hall:central_hall"},
+        "lecture": {"map": "lecture", "room": "lecture:lecture"},
+        "logistics": {"map": "logistics", "room": "logistics:dining"},
+        "clinic": {"map": "clinic", "room": "clinic:ward"},
+        "greenhouse": {"map": "greenhouse", "room": "greenhouse:greenhouse"},
+        "archive_lock": {"map": "archive", "room": "archive:foyer"},
+        "archive_weight": {"map": "counterweight", "room": "counterweight:counterweight"},
+        "resonance": {"map": "resonance", "room": "resonance:hall"},
+        "oath_court": {"map": "campus_s", "room": "campus_s:campus_s", "anchor": "site:oath_court"},
+        "threshold.contract": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_north"},
+        "threshold.astral": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_south"},
+        "threshold.logistics": {"map": "living_hall", "room": "living_hall:hall", "anchor": "east_north"},
+        "dorm.contract": {"map": "zone_jia", "room": "zone_jia:hall"},
+        "dorm.astral": {"map": "zone_bing", "room": "zone_bing:hall"},
+        "dorm.logistics": {"map": "zone_ding", "room": "zone_ding:hall"}}
+    return dv_find(places, location, {"map": "", "room": location})
+
+fn dvg_intent(state):
+    let intent = dvs_session_intent(state)
+    if intent.status != "prepared" or intent.action.kind != "move":
+        return intent
+    let travel = dv_find(intent.action, "travel", [])
+    let target = dv_find(travel, "to", "")
+    var destination = dvg_place(target)
+    if dv_find(travel, "from", "") == "foyer" and target == "living_hall":
+        destination = dv_with(destination, "departure_station", "lounge")
+    return dv_with(intent, "destination", destination)
+
+fn dvg_clock(time):
+    let minute = rt_floor(time)
+    let hour = rt_floor(minute / 60)
+    let rest = minute - hour * 60
+    var text = rt_show(rest)
+    if rest < 10:
+        text = rt_cat("0", text)
+    return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
+
+fn dvg_people(state, viewer):
+    let sprites = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
+    var people = []
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        let position = dv_read(state.physical, c2_position_ref(actor.id))
+        if actor.id != viewer and dv_uncontested(position) and dv_has_key(sprites, actor.id):
+            let place = dvg_place(position.value)
+            if place.map != "":
+                rt_push(people, {"key": actor.id, "map": place.map, "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""})
+        i = i + 1
+    return people
+
+fn dvg_snapshot(state, viewer):
+    let position = dv_read(state.physical, c2_position_ref(viewer))
+    var place = {"map": "", "room": ""}
+    if dv_uncontested(position):
+        place = dvg_place(position.value)
+    var resource = "res://scenes/Awakening/Awakening.tscn"
+    var placements = [{"actor": "detective", "anchor": "wake"}]
+    if place.map != "":
+        resource = "res://scenes/Chapter2/Field/CampusMapView.tscn"
+        placements = []
+    let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
+    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": resource, "map": place.map, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": false, "initial_placements": placements, "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "pending": dvg_intent(state)}

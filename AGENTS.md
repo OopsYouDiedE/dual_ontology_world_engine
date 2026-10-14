@@ -164,3 +164,10 @@ python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/play
 本节只覆盖 `language_core/` 新实现的内容格式。人物、世界、话语、公理实例、验收场景与权威 oracle 均使用真实可编译的 `.dv` 内容声明，分置于 `language_core/verification/scenarios/` 或后续内容目录。通用 core、session、checks 不得硬编码专案剧情；权威 oracle 独立分包，不提供给主体。
 
 原生 DV 的具名 `axiom` 与 `defn`／领域构造函数是逻辑权威源，源 `.dv` 经 DV 编译器生成 C# 执行。不得把旧段落语法、序列化 `world` 巨树或 JSON 字符串改扩展名当作迁移完成；中间 JSON 仅为原生 DV 编译执行后导出的 DTO 数据交换生成物。旧 `.story` 不参与新执行，仅供迁移溯源及仍使用它的现役旧宿主；本次不改变旧宿主的全仓格式。此处对新 DV 内容格式的规定覆盖此前关于内容仅存 `.story` 的约束，其余机制与内容隔离要求继续适用。
+## DV 宿主接线进度
+
+language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot 的 DvRuntime 仅转发执行意图、现场回执和存档。当前生产 Main/GameEngine 仍依赖旧 GameSession；不得把新增类库引用作为替换完成。Prepare 不先写行动效果，Complete 后才执行观察与传播，呈现按指定主体的真实观察/收闻过滤。
+
+## DV 正式宿主切换（2026-10-14）
+
+正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/modules.json 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。

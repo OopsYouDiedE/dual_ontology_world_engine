@@ -1,0 +1,130 @@
+// Backward causal slicing changes the work evaluated, never the observations.
+// A matching slice is not a complete explanation; only a contradiction ends search.
+
+fn dvs_slice_intersects(left, right):
+    var i = 0
+    while (i < rt_count(left)):
+        if dv_has(right, left[i]):
+            return true
+        i = i + 1
+    return false
+
+fn dvs_slice_law_io(mind, name):
+    let adoption = dv_find(mind.adoptions, name, false)
+    if (adoption == false):
+        return {"known": false, "reads": [], "writes": []}
+    let law = adoption.law
+    var reads = dvs_sim_refs(law.premise)
+    var writes = []
+    var i = 0
+    while (i < rt_count(law.effects)):
+        let effect = law.effects[i]
+        writes = dv_explanation_merge(writes, [effect.ref])
+        if (effect.op == "increment"):
+            reads = dv_explanation_merge(reads, [effect.ref])
+        i = i + 1
+    return {"known": adoption.active and adoption.mode == "predict", "reads": reads, "writes": writes}
+
+fn dvs_slice_step_io(actor, step):
+    if dv_has_key(step, "response"):
+        let model = dv_find(dv_find(actor, "response_models", []), step.response.model, false)
+        if (model == false):
+            return {"known": false, "reads": [], "writes": []}
+        var response_reads = dvs_sim_refs(dv_find(step, "available_when", dv_true()))
+        var response_writes = []
+        let context = dv_find(model, "context", [])
+        var k = 0
+        while (k < rt_count(context)):
+            response_reads = dv_explanation_merge(response_reads, [context[k].from])
+            k = k + 1
+        if dv_has_key(model, "choice_ref"):
+            response_writes = [model.choice_ref]
+        k = 0
+        var response_known = true
+        while (k < rt_count(step.response.options)):
+            let option = dv_find(model.options, step.response.options[k], [])
+            let bridge = dvs_slice_law_io(actor.mind, dv_find(option, "bridge_law", ""))
+            response_known = response_known and bridge.known
+            response_reads = dv_explanation_merge(response_reads, bridge.reads)
+            response_writes = dv_explanation_merge(response_writes, bridge.writes)
+            k = k + 1
+        return {"known": response_known, "reads": response_reads, "writes": response_writes}
+    var names = [step.law]
+    var reads = []
+    var writes = []
+    var known = true
+    if dv_has_key(step, "dispatch"):
+        names = step.dispatch.laws
+        reads = [step.dispatch.selector]
+    var i = 0
+    while (i < rt_count(names)):
+        let io = dvs_slice_law_io(actor.mind, names[i])
+        known = known and io.known
+        reads = dv_explanation_merge(reads, io.reads)
+        writes = dv_explanation_merge(writes, io.writes)
+        i = i + 1
+    return {"known": known, "reads": reads, "writes": writes}
+
+fn dvs_slice_feature(hypothesis, feature, plan, plan_io):
+    var needed = dvs_sim_refs(dvs_sim_feature(feature))
+    var selected = []
+    var keep_prefix = false
+    var i = rt_count(plan) - 1
+    while (0 <= i):
+        let step = plan[i]
+        if (not dv_has_key(feature, "at") or step.at <= feature.at):
+            let io = plan_io[i]
+            if (keep_prefix or not io.known or dvs_slice_intersects(io.writes, needed)):
+                selected = dv_explanation_merge(selected, [i])
+                needed = dv_explanation_merge(needed, io.reads)
+                if (not io.known):
+                    keep_prefix = true
+        i = i - 1
+    var timeline = []
+    i = 0
+    while (i < rt_count(plan)):
+        if dv_has(selected, i):
+            rt_push(timeline, plan[i])
+        i = i + 1
+    var assumptions = []
+    let original = dv_find(hypothesis, "assumptions", [])
+    i = 0
+    while (i < rt_count(original)):
+        if (keep_prefix or dvs_slice_intersects(dvs_sim_refs(original[i]), needed)):
+            rt_push(assumptions, original[i])
+        i = i + 1
+    return {"timeline": timeline, "assumptions": assumptions, "feature": dv_without(feature, "at"), "original_feature": feature, "size": rt_count(timeline) + rt_count(assumptions), "mask_plan": plan}
+
+fn dvs_model(actor, hypothesis, events, time, parent):
+    let features = dv_find(hypothesis, "features", [])
+    let plan = dvs_sim_plan(hypothesis)
+    var plan_io = []
+    var p = 0
+    while (p < rt_count(plan)):
+        rt_push(plan_io, dvs_slice_step_io(actor, plan[p]))
+        p = p + 1
+    var smallest = false
+    var i = 0
+    while (i < rt_count(features)):
+        let feature = features[i]
+        let observed = dv_find(feature, "observation", dvs_sim_feature(feature))
+        if (dv_truth(actor.mind, observed) != "unknown"):
+            let slice = dvs_slice_feature(hypothesis, feature, plan, plan_io)
+            if (smallest == false):
+                smallest = slice
+            else:
+                if (slice.size < smallest.size):
+                    smallest = slice
+        i = i + 1
+    let full_size = rt_count(plan) + rt_count(dv_find(hypothesis, "assumptions", []))
+    if (smallest == false):
+        return dvs_model_execute(actor, hypothesis, events, time, parent)
+    if (not (smallest.size * 2 < full_size)):
+        return dvs_model_execute(actor, hypothesis, events, time, parent)
+    let trial = dv_with_many(hypothesis, {"timeline": smallest.timeline, "assumptions": smallest.assumptions, "features": [smallest.feature], "mask_plan": smallest.mask_plan, "evaluation_scope": {"kind": "causal-refutation", "feature": smallest.original_feature}})
+    let probe = dvs_model_execute(actor, trial, events, time, parent)
+    if (probe.status == "inconsistent"):
+        return dv_with(probe, "evaluation_scope", trial.evaluation_scope)
+    let next = dv_with_many(actor, {"model_previous_event": events[rt_count(events) - 1].id, "policy": dv_with_many(actor.policy, {"model_budget": probe.remaining, "model_work_remaining": probe.work_remaining})})
+    let result = dvs_model_execute(next, hypothesis, events, time, parent)
+    return dv_with_many(result, {"probe_expanded": probe.expanded, "expanded": probe.expanded + result.expanded, "total_expanded": probe.expanded + result.total_expanded})

@@ -1,0 +1,70 @@
+{
+  "files": [
+    "AGENTS.md",
+    "docs/design-standard.md",
+    "godot_csharp/scenes/Awakening/Script/story/剧情时长.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+    "godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story"
+  ],
+  "copies": {},
+  "exports": [
+    {
+      "id": "scenario-base",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-laws.dv",
+        "language_core/verification/scenarios/chapter1-pragmatics.dv",
+        "language_core/verification/scenarios/chapter1-content.dv",
+        "language_core/verification/scenarios/chapter1-history.dv",
+        "language_core/verification/scenarios/chapter1-other-groups.dv",
+        "language_core/verification/scenarios/chapter1-opening.dv",
+        "language_core/verification/scenarios/chapter1-campaign.dv"
+      ],
+      "function": "c1_campaign_scene",
+      "output": "{inputs}/scenario-base.json"
+    },
+    {
+      "id": "oracle",
+      "modules": [
+        "language_core/verification/scenarios/chapter1-oracle.dv"
+      ],
+      "function": "dvs_chapter1_oracle",
+      "output": "{inputs}/chapter1-oracle.json"
+    },
+    {
+      "id": "cognitive-semantics",
+      "modules": [
+        "language_core/verification/scenarios/cognitive-semantics.dv"
+      ],
+      "function": "cognitive_specimen",
+      "output": "{inputs}/cognitive-semantics.json"
+    },
+    {
+      "id": "cognitive-mind",
+      "modules": [
+        "language_core/verification/scenarios/cognitive-semantics.dv"
+      ],
+      "function": "cognitive_mind_specimen",
+      "output": "{inputs}/cognitive-mind.json"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "enabled",
+      "args": [
+        "{inputs}/scenario-base.json",
+        "{out}/trace-enabled.json",
+        "enabled"
+      ]
+    }
+  ],
+  "platform_manifests": {},
+  "path_documents": {},
+  "checks": {},
+  "archives": [
+    "{out}/trace-enabled.json"
+  ]
+}

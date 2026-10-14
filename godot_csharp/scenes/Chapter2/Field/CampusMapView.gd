@@ -25,6 +25,7 @@ var _access_shapes: Dictionary = {}
 var _last_allowed_position := Vector2.ZERO
 var presentation: Dictionary = {}
 var _player_sprite := ""
+var _routes: Dictionary = {}
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	var next: Dictionary = snapshot.get("access", {}).get("maps", {})
@@ -62,14 +63,9 @@ func _refresh_access_geometry() -> void:
 	_build_grid()
 
 func setup() -> bool:
-	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/Chapter2/Script/generated_chapter_02.json"))
-	var chapter: Dictionary = document.chapters[0]
-	presentation = chapter.design.presentation
-	for entity in chapter.entities:
-		if str(entity.id) == "person." + str(presentation.player_identity):
-			_player_sprite = str(entity.properties.get("sprite", {}).get("value", ""))
+	_player_sprite = str(presentation.get("player_sprite", ""))
 	if _player_sprite == "":
-		Bindings.fail(self, "Missing player portrait binding: " + str(presentation.player_identity))
+		Bindings.fail(self, "Missing player portrait binding")
 		return false
 	return true
 func player_key() -> String: return str(presentation.player_actor)
@@ -88,7 +84,88 @@ func seen_cells() -> Dictionary:
 	if not _seen.has(key): _seen[key] = {}
 	return _seen[key]
 func set_prop(_id: String, _state: String) -> void: pass
-func station(_target: String, _who: String) -> Dictionary: return {}
+func station(target: String, who: String) -> Dictionary:
+	var actor: CharacterBody2D = field.actors.get(who)
+	if actor == null: return {}
+	var best := INF
+	var chosen := Vector2.ZERO
+	var grid := nav_grid(actor)
+	for y in range(grid.region.size.y):
+		for x in range(grid.region.size.x):
+			var cell := Vector2i(x, y)
+			if grid.is_point_solid(cell): continue
+			var point := grid.get_point_position(cell)
+			if entered_room(point) != target: continue
+			var distance := point.distance_squared_to(actor.position)
+			if distance < best:
+				best = distance
+				chosen = point
+	return {} if best == INF else {"point": chosen, "radius": 0.0}
+
+func _map_routes() -> Dictionary:
+	if not _routes.is_empty(): return _routes
+	for file in DirAccess.get_files_at("res://scenes/Chapter2/Maps"):
+		if not file.ends_with(".tscn"): continue
+		var name := file.get_basename()
+		var layout: Node2D = (load(MAPS % name) as PackedScene).instantiate()
+		var edges: Array = []
+		for exit in layout.get_node("Exits").get_children():
+			edges.append({"to": str(exit.get_meta("target")), "point": exit.position})
+		if layout.has_meta("outdoor_core"):
+			var core: Rect2 = layout.get_meta("outdoor_core")
+			var cores: Dictionary = layout.get_meta("outdoor_cores")
+			for next in cores:
+				var other: Rect2 = cores[next]
+				var shared := core.grow(1.0).intersection(other)
+				if next == name or not shared.has_area(): continue
+				var point := shared.get_center()
+				point += (other.get_center() - point).normalized() * (SEAM + 24.0)
+				edges.append({"to": str(next), "point": point - (layout.get_meta("outdoor_origin") as Vector2)})
+		_routes[name] = edges
+		layout.free()
+	return _routes
+
+func _next_edge(destination: String) -> Dictionary:
+	var graph := _map_routes()
+	var queue: Array = [{"map": key, "first": {}}]
+	var visited := {}
+	visited[key] = true
+	while not queue.is_empty():
+		var item: Dictionary = queue.pop_front()
+		for edge in graph.get(item.map, []):
+			if visited.has(edge.to) or not can_enter(str(edge.to)): continue
+			var first: Dictionary = edge if item.map == key else item.first
+			if str(edge.to) == destination: return first
+			visited[edge.to] = true
+			queue.append({"map": edge.to, "first": first})
+	return {}
+
+## Routes execute geometry only; DV owns the selected goal and the final state change.
+func execute_destination(destination: Dictionary, who: String, serial: int, action: String) -> void:
+	var actor: CharacterBody2D = field.actors.get(who)
+	if actor == null or (actor != field.player and key != str(destination.get("map", ""))):
+		field._daily_report(who, serial, "blocked", "", action)
+		return
+	while key != str(destination.get("map", "")):
+		var edge := _next_edge(str(destination.get("map", "")))
+		if edge.is_empty():
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			return
+		var origin := key
+		await field._follow_route(actor, edge.point)
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		if key == origin:
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			return
+	var anchor_name := str(destination.get("anchor", ""))
+	if anchor_name != "":
+		var point = anchor(anchor_name)
+		if point != null: await field._follow_route(actor, point)
+		if point == null or actor.position.distance_to(point) > 8.0:
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			return
+	field.execute({"kind": "stage", "op": "daily_go", "who": who, "target": str(destination.room), "room": str(destination.room), "serial": serial, "action": action})
 func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:

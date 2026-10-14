@@ -1068,8 +1068,10 @@ func _group(ev: Dictionary) -> void:
 ## 日常：章节给出去处（房间与站点），现场找一个够得着、不与别人重叠的落脚点走过去，到了或被挡都回报。
 func _daily_go(ev: Dictionary) -> void:
 	var who := str(ev.who)
-	var actor := _actor(who)
-	if actor == null: return
+	var actor: CharacterBody2D = actors.get(who)
+	if actor == null:
+		_daily_report(who, int(ev.serial), "blocked", "")
+		return
 	var station: Dictionary = adapter.station(str(ev.target), who)
 	if station.is_empty():
 		_daily_report(who, int(ev.serial), "blocked", "")

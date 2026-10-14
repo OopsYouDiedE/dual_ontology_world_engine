@@ -109,8 +109,8 @@
 (defn native_arity (name)
   (if (has (words "rt_list rt_arg_count") name) 0
     (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
-      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_cat rt_chr rt_push rt_at rt_write") name) 2
-        (if (either (rt_eq name "rt_slice") (rt_eq name "rt_replace")) 3 -1)))))
+      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_cat rt_chr rt_push rt_at rt_write rt_record_index") name) 2
+        (if (has (words "rt_slice rt_replace rt_record_find") name) 3 -1)))))
 (defn lookup (signatures name)
   (let (i 0 found -1)
     (do (while (rt_lt i (rt_count signatures))
@@ -253,7 +253,7 @@
                 (rt_push result (sf_call "main" (sf_list1 (sf_call "main" (rt_list) offset)) offset)) false)))
             (set i (rt_add i 1))))) result)))
 (defn compile (source)
-  (let (forms (lower_declarations (compiler_parse source)) checked (ck_program forms) signatures (signatures_of forms) i 0 result "using DuelView.Compiled;\npublic static class DVProgram {\n")
+  (let (forms (lower_declarations (compiler_parse source)) checked (ck_program forms) signatures (signatures_of forms) i 0 result "using DuelView.Compiled;\npublic static partial class DVProgram {\n")
     (do
       (while (rt_lt i (rt_count forms))
         (let (n (rt_at forms i) xs (children n))
