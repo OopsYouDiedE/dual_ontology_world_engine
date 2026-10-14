@@ -144,3 +144,4 @@
 2026-10-14续测：正式UI默认人工控制，GameEngine.SetPlayerControlled仅配置DV席位，不选择行动；DV awaiting_input 提供可执行候选，UI选择回传同一Prepare，现场仍经WorldView和Complete。dv_level3_capture每200现实毫秒采集实际已绘制帧，frames.jsonl记录真实时刻；--seconds=0保持运行直到外部stop，四倍游戏时速不变。encode_dv_capture.py <目录>按原采集时间生成5fps recording.mp4，真实间隔不匀时明确保留末帧，不重跑游戏也不改游戏时间。
 正式对白沿DV呈现返回的actor与speaker_name标注说话者；宿主不填默认人物姓名。
 DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺序与输入确认，避免多段证物挤在同一矮框中。
+采集另记录input-events.jsonl的协议实际消费时刻与host-events.jsonl的宿主交付时刻；后者为私有审查数据，不向盲玩者提供。prepare交付只证明已准备，不冒充执行、推演正确、答案接受或交接时刻；真实节点仍与正式事件及可见画面核对，无法精确定位时保留采样区间/记录不足。

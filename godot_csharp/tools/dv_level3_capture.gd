@@ -32,6 +32,7 @@ func _run() -> void:
 	root.add_child(host)
 	host.engine.SetPlayerControlled(mode == "blind")
 	started = Time.get_ticks_msec()
+	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)
 	if mode == "detective":
 		await process_frame
@@ -64,6 +65,7 @@ func _process(_delta: float) -> bool:
 	return false
 
 func _input_packet(packet: Dictionary) -> void:
+	_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": packet})
 	if str(packet.get("kind", "")) == "stop":
 		_finish.call_deferred()
 	elif str(packet.get("kind", "")) == "key":
@@ -90,6 +92,17 @@ func _key(code: int, down: bool) -> void:
 	event.physical_keycode = code
 	event.pressed = down
 	Input.parse_input_event(event)
+
+func _host_events(events: Array) -> void:
+	# Host delivery times are evidence bounds, not inferred DV milestone times.
+	_append("host-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "events": events})
+
+func _append(name: String, value: Variant) -> void:
+	var path := directory.path_join(name)
+	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+	file.seek_end()
+	file.store_line(JSON.stringify(value))
+	file.close()
 
 func _capture() -> void:
 	if finishing or directory == "": return
