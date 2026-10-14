@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://bpba87elrxf24"]
+
+[ext_resource type="Script" path="res://scenes/Shared/UI/FieldUI.gd" id="field_ui_script"]
+
+[sub_resource type="Gradient" id="hud_vignette_gradient"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.42)
+
+[sub_resource type="GradientTexture2D" id="hud_vignette"]
+gradient = SubResource("hud_vignette_gradient")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.05, 1.05)
+
+[sub_resource type="Gradient" id="hud_top_gradient"]
+colors = PackedColorArray(0.03, 0.02, 0.05, 0.62, 0.03, 0.02, 0.05, 0)
+
+[sub_resource type="GradientTexture2D" id="hud_top"]
+gradient = SubResource("hud_top_gradient")
+width = 4
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="hud_bottom_gradient"]
+colors = PackedColorArray(0.03, 0.02, 0.05, 0, 0.03, 0.02, 0.05, 0.62)
+
+[sub_resource type="GradientTexture2D" id="hud_bottom"]
+gradient = SubResource("hud_bottom_gradient")
+width = 4
+fill_to = Vector2(0, 1)
+
+[node name="FieldUI" type="CanvasLayer" unique_id=614373328]
+layer = 10
+script = ExtResource("field_ui_script")
+
+[node name="Vignette" type="TextureRect" parent="." unique_id=1567930256]
+offset_right = 1280.0
+offset_bottom = 992.0
+mouse_filter = 2
+texture = SubResource("hud_vignette")
+
+[node name="TopShade" type="TextureRect" parent="." unique_id=1315426701]
+offset_right = 1280.0
+offset_bottom = 64.0
+mouse_filter = 2
+texture = SubResource("hud_top")
+
+[node name="BottomShade" type="TextureRect" parent="." unique_id=758362932]
+offset_top = 928.0
+offset_right = 1280.0
+offset_bottom = 992.0
+mouse_filter = 2
+texture = SubResource("hud_bottom")
+
+[node name="Title" type="Label" parent="." unique_id=1640223589]
+offset_left = 32.0
+offset_top = 20.0
+offset_right = 600.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+text = "当前地点"
+
+[node name="Hint" type="Label" parent="." unique_id=1994126418]
+offset_left = 32.0
+offset_top = 50.0
+offset_right = 800.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(0.72, 0.68, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "WASD 移动　E 检视　Tab 笔记本"
+
+[node name="Time" type="Label" parent="." unique_id=851541466]
+offset_left = 32.0
+offset_top = 952.0
+offset_right = 600.0
+offset_bottom = 974.0
+theme_override_colors/font_color = Color(0.72, 0.68, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "07:20"

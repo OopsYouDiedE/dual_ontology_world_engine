@@ -1,0 +1,71 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperModal.gd" id="paper_modal"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
+
+[node name="PaperModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("theme")
+script = ExtResource("paper_modal")
+
+[node name="DimRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(832, 320)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -416.0
+offset_top = -160.0
+offset_right = 416.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"PaperModalPanelContainer"
+
+[node name="Column" type="VBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+theme_type_variation = &"PaperModalColumn"
+
+[node name="TitleLabel" parent="PanelContainer/Column" instance=ExtResource("pixel")]
+layout_mode = 2
+pixel_type = &"PixelMast"
+
+[node name="TitleRule" parent="PanelContainer/Column" instance=ExtResource("rule")]
+layout_mode = 2
+style = "double"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/Column"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="VBoxContainer" parent="PanelContainer/Column/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PaperModalBody"
+
+[node name="Preview" type="RichTextLabel" parent="PanelContainer/Column/ScrollContainer/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "纸页内容预览。运行时由宿主填入。"
+fit_content = true
+scroll_active = false
+

@@ -1,0 +1,67 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
+[ext_resource type="Script" path="res://scenes/UI/Panels/Form/FormPanel.gd" id="script"]
+
+[node name="FormPanel" type="VBoxContainer"]
+offset_right = 752.0
+size_flags_horizontal = 3
+theme = ExtResource("theme")
+script = ExtResource("script")
+theme_type_variation = &"PaperModalBody"
+
+[node name="Prompt" type="RichTextLabel" parent="."]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"FormPanelPrompt"
+
+[node name="Header" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_type_variation = &"EvidenceCardTexts"
+
+[node name="Question" parent="Header" instance=ExtResource("pixel")]
+layout_mode = 2
+pixel_type = &"PixelHeadline"
+autowrap = true
+
+[node name="Dash" parent="Header" instance=ExtResource("rule")]
+layout_mode = 2
+style = "dash"
+
+[node name="Instructions" type="RichTextLabel" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"FormPanelDeck"
+
+[node name="SummaryBox" type="PanelContainer" parent="Header"]
+layout_mode = 2
+theme_type_variation = &"PaperBox"
+
+[node name="Summary" type="RichTextLabel" parent="Header/SummaryBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"FormPanelSummary"
+
+[node name="Rule" parent="Header" instance=ExtResource("rule")]
+layout_mode = 2
+style = "double"
+
+[node name="Fields" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"PaperModalBody"
