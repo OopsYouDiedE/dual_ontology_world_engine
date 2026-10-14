@@ -74,24 +74,44 @@ fn dv_axiom(name, version, premise, effects):
 fn dv_instance(id, law):
     return dv_with(dv_with(law, "schema", law.name), "name", id)
 
-fn dv_adopt(world, law, mode, confidence, basis):
+fn dv_checked_adoption(domain, adoptions, law, mode, confidence, basis):
     dv_unit(confidence)
     var local_1 = false
-    if (world.domain == "physical"):
+    if (domain == "physical"):
         local_1 = (confidence == 1)
     else:
         local_1 = true
     dv_require(local_1, "Physical laws require certainty")
     dv_require((0 < rt_count(basis)), "Adoption needs a basis")
-    dv_require((not dv_has_key(world.adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
+    dv_require((not dv_has_key(adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
     var local_2 = false
-    if (world.domain == "physical"):
+    if (domain == "physical"):
         local_2 = (mode == "enforce")
     else:
-        local_2 = dv_and((world.domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
+        local_2 = dv_and((domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
     dv_require(local_2, "Adoption mode is incompatible with world")
-    var adoption = dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
+    return dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
+
+fn dv_adopt(world, law, mode, confidence, basis):
+    let adoption = dv_checked_adoption(world.domain, world.adoptions, law, mode, confidence, basis)
     return dv_with(dv_with(world, "adoptions", dv_with(world.adoptions, law.name, adoption)), "revision", (world.revision + 1))
+
+// Initialization-only builder: owned_adoptions is a private clone, never a world field.
+fn dv_adopt_into(domain, owned_adoptions, law, mode, confidence, basis):
+    let adoption = dv_checked_adoption(domain, owned_adoptions, law, mode, confidence, basis)
+    rt_push(owned_adoptions, dv_pair(law.name, adoption))
+    return true
+
+fn dv_finish_owned_adoptions(world, owned_adoptions):
+    let previous_count = rt_count(world.adoptions)
+    dv_require(previous_count <= rt_count(owned_adoptions), "Adoption builder removed inherited entries")
+    var i = 0
+    while i < previous_count:
+        dv_require(dv_same(world.adoptions[i], owned_adoptions[i]), "Adoption builder changed inherited entries")
+        i = i + 1
+    if previous_count == rt_count(owned_adoptions):
+        return world
+    return dv_with_many(world, {"adoptions": owned_adoptions, "revision": world.revision + rt_count(owned_adoptions) - previous_count})
 
 fn dv_suspend(world, name):
     var adoptions = world.adoptions

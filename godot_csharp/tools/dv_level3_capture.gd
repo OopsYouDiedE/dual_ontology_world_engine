@@ -124,6 +124,36 @@ func _capture() -> void:
 	file.seek_end()
 	file.store_line(JSON.stringify(record))
 	file.close()
+	_capture_render_state(elapsed, filename)
+
+func _capture_render_state(elapsed: int, filename: String) -> void:
+	if not is_instance_valid(host) or not is_instance_valid(host.field): return
+	var rows: Array = []
+	for key in host.field.actors:
+		var actor = host.field.actors[key]
+		if not is_instance_valid(actor) or not actor is Node2D: continue
+		var screen: Vector2 = actor.get_global_transform_with_canvas().origin
+		var row := {"actor": str(key), "visible": actor.visible, "visible_in_tree": actor.is_visible_in_tree(),
+			"position": [actor.global_position.x, actor.global_position.y], "screen": [screen.x, screen.y],
+			"alpha": actor.modulate.a, "self_alpha": actor.self_modulate.a, "sprites": []}
+		for child in actor.find_children("*", "AnimatedSprite2D", true, false):
+			if not is_instance_valid(child): continue
+			var sprite: AnimatedSprite2D = child
+			var frames := sprite.sprite_frames
+			var texture: Texture2D = null
+			if frames != null and frames.has_animation(sprite.animation):
+				if sprite.frame >= 0 and sprite.frame < frames.get_frame_count(sprite.animation):
+					texture = frames.get_frame_texture(sprite.animation, sprite.frame)
+			row.sprites.append({"node": str(sprite.name), "visible": sprite.visible, "visible_in_tree": sprite.is_visible_in_tree(),
+				"animation": str(sprite.animation), "frame": sprite.frame, "texture": texture.resource_path if texture != null else "",
+				"alpha": sprite.modulate.a, "self_alpha": sprite.self_modulate.a})
+		rows.append(row)
+	var path := directory.path_join("render-state.jsonl")
+	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+	if file == null: return
+	file.seek_end()
+	file.store_line(JSON.stringify({"real_ms": elapsed, "file": filename, "actors": rows, "scope": "private-passive-render-diagnostic"}))
+	file.close()
 
 func _write(name: String, value: Variant) -> void:
 	var file := FileAccess.open(directory.path_join(name), FileAccess.WRITE)

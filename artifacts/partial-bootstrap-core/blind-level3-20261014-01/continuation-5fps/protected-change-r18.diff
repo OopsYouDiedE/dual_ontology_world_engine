@@ -1,0 +1,413 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index d89dd1e8..9ecbe804 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -188,3 +188,7 @@ language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot
+ 正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/modules.json 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
+ 
+ 线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
++
++2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
++证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
++Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+diff --git a/godot_csharp/AGENTS.md b/godot_csharp/AGENTS.md
+index e972e94f..2f56e480 100644
+--- a/godot_csharp/AGENTS.md
++++ b/godot_csharp/AGENTS.md
+@@ -148,3 +148,7 @@ DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺
+ 界面仅依据DV返回的实际答辩事件显示接受/未接受，提交本身不作接受，也不作章节交接。
+ 
+ 移动 destination 的 room 为逻辑呈现目标，execution_room 可声明当前地图的实际到达房间，departure_station 为站点；三者不可混用。地图适配器支持 site: 声明的现有热点站点，沿用热点既有可达范围。WorldView 同地点移动仍走原寻路/碰撞；现场事件保留站点、接近目标、实际终点、范围和原到达容差。显式 travel.station 的行动在 Main 核对同一主体/序号/行动/站点/房间及实际到达误差后才提交成功。没有手部动画或独立接触碰撞时，不将站点到达证据描述为手部动画验收。
++
++2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
++证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
++Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+diff --git a/godot_csharp/scenes/Host/GameEngine.cs b/godot_csharp/scenes/Host/GameEngine.cs
+index 9bc5003c..2a5842fb 100644
+--- a/godot_csharp/scenes/Host/GameEngine.cs
++++ b/godot_csharp/scenes/Host/GameEngine.cs
+@@ -88,14 +88,71 @@ public partial class GameEngine : Node
+     {
+         if (closing) return;
+         closing = true;
+-        try { await work; } catch (Exception error) { GD.PushError(error.ToString()); }
+-        if (session is null) { EmitSignal(SignalName.TraceClosed); return; }
+-        var path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
+-        Directory.CreateDirectory(path);
+-        File.WriteAllText(Path.Combine(path, "session.json"), session.Trace());
+-        File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
+-        File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
+-        File.WriteAllText(Path.Combine(path, "save.json"), session.Save());
+-        EmitSignal(SignalName.TraceClosed);
++        string? path = null;
++        var ownsDirectory = false;
++        var phase = "await-work";
++        var errors = new List<object>();
++        try
++        {
++            try { await work; }
++            catch (Exception error)
++            {
++                GD.PushError(error.ToString());
++                errors.Add(new { phase, error = error.ToString() });
++            }
++            if (session is null) return;
++            phase = "create-directory";
++            path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
++            if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
++            Directory.CreateDirectory(path);
++            ownsDirectory = true;
++            phase = "inputs";
++            File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
++            phase = "visible";
++            File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
++            var current = session;
++            phase = "trace";
++            var tracePath = Path.Combine(path, "session.json.partial");
++            try
++            {
++                await Task.Run(() => current.WriteTrace(tracePath));
++                File.Move(tracePath, Path.Combine(path, "session.json"));
++            }
++            catch (Exception error)
++            {
++                GD.PushError(error.ToString());
++                errors.Add(new { phase, error = error.ToString() });
++            }
++            phase = "save";
++            var savePath = Path.Combine(path, "save.json.partial");
++            try
++            {
++                await Task.Run(() => current.WriteSave(savePath));
++                File.Move(savePath, Path.Combine(path, "save.json"));
++            }
++            catch (Exception error)
++            {
++                GD.PushError(error.ToString());
++                errors.Add(new { phase, error = error.ToString() });
++            }
++        }
++        catch (Exception error)
++        {
++            GD.PushError(error.ToString());
++            errors.Add(new { phase, error = error.ToString() });
++        }
++        finally
++        {
++            try
++            {
++                if (ownsDirectory && path is not null)
++                {
++                    using var result = new FileStream(Path.Combine(path, "close-result.json"), FileMode.CreateNew, FileAccess.Write);
++                    System.Text.Json.JsonSerializer.Serialize(result, new { complete = errors.Count == 0, errors });
++                }
++            }
++            catch (Exception error) { GD.PushError(error.ToString()); }
++            EmitSignal(SignalName.TraceClosed);
++        }
+     }
+ }
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index a97dbd0e..fa1302e4 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -108,3 +108,7 @@ session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取
+ 根层存在正式可执行且净正值的非移动行动时，先完整比较一层生成的后继，再保留所有已比较路径中的最佳首步，包括移动，记录positive-current-after-successor-layer、根层与后继比较结果、实际完整层数。深度不足、没有后继与预算不能覆盖整层分别记录，不冒称完成后继比较；没有正值当前行动则继续原多步搜索。该有限理性停止策略不保证全局最优，不上调预算、不改变费用与答辩判定，另立来源基线。生产动作结果文案仅在原生game/player-content.dv按本人已获事实条件呈现；重演摘要只读本人当前有效模型，吻合不等同正式答辩。答辩回馈来自实际answer_accepted/rejected事件。重新询问观察执行时的公开题目字段及真实开放状态，不预置答案，也不冒称另一次独立话语回复。
+ 
+ 线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
++
++2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
++证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
++Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+diff --git a/language_core/Session/Session.cs b/language_core/Session/Session.cs
+index f60c2588..9941c3cb 100644
+--- a/language_core/Session/Session.cs
++++ b/language_core/Session/Session.cs
+@@ -1,5 +1,6 @@
+ using DuelView.Compiled;
+ using System.Text.Json;
++using System.Text.Json.Serialization;
+ 
+ // Serialization and ownership boundary only. The generated DV implementation
+ // decides eligibility, execution effects, observation, inference and settlement.
+@@ -31,6 +32,39 @@ public sealed class DvSession
+ 
+     public string Trace() => R.Text(R.json_stringify(DVProgram.SessionClose(state)));
+ 
++    public void WriteTrace(string path)
++    {
++        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
++        JsonSerializer.Serialize(stream, DVProgram.SessionClose(state));
++    }
++
++    public void WriteSave(string path)
++    {
++        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
++        JsonSerializer.Serialize(stream, state, SnapshotOptions);
++    }
++
++    private static readonly JsonSerializerOptions SnapshotOptions = new()
++    {
++        Converters = { new SnapshotExactConverter() }
++    };
++
++    private sealed class SnapshotExactConverter : JsonConverter<Rational>
++    {
++        public override Rational Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
++        {
++            using var value = JsonDocument.ParseValue(ref reader);
++            return Rational.From(value.RootElement.GetProperty("$dv_rational").GetString()!);
++        }
++
++        public override void Write(Utf8JsonWriter writer, Rational value, JsonSerializerOptions options)
++        {
++            writer.WriteStartObject();
++            writer.WriteString("$dv_rational", value.ToString());
++            writer.WriteEndObject();
++        }
++    }
++
+     private static object SnapshotValue(object value) => value switch
+     {
+         Rational exact => new Dictionary<string, string> { ["$dv_rational"] = exact.ToString() },
+diff --git a/language_core/core/10-laws.dv b/language_core/core/10-laws.dv
+index 58b6765e..629b2241 100644
+--- a/language_core/core/10-laws.dv
++++ b/language_core/core/10-laws.dv
+@@ -74,25 +74,45 @@ fn dv_axiom(name, version, premise, effects):
+ fn dv_instance(id, law):
+     return dv_with(dv_with(law, "schema", law.name), "name", id)
+ 
+-fn dv_adopt(world, law, mode, confidence, basis):
++fn dv_checked_adoption(domain, adoptions, law, mode, confidence, basis):
+     dv_unit(confidence)
+     var local_1 = false
+-    if (world.domain == "physical"):
++    if (domain == "physical"):
+         local_1 = (confidence == 1)
+     else:
+         local_1 = true
+     dv_require(local_1, "Physical laws require certainty")
+     dv_require((0 < rt_count(basis)), "Adoption needs a basis")
+-    dv_require((not dv_has_key(world.adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
++    dv_require((not dv_has_key(adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
+     var local_2 = false
+-    if (world.domain == "physical"):
++    if (domain == "physical"):
+         local_2 = (mode == "enforce")
+     else:
+-        local_2 = dv_and((world.domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
++        local_2 = dv_and((domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
+     dv_require(local_2, "Adoption mode is incompatible with world")
+-    var adoption = dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
++    return dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
++
++fn dv_adopt(world, law, mode, confidence, basis):
++    let adoption = dv_checked_adoption(world.domain, world.adoptions, law, mode, confidence, basis)
+     return dv_with(dv_with(world, "adoptions", dv_with(world.adoptions, law.name, adoption)), "revision", (world.revision + 1))
+ 
++// Initialization-only builder: owned_adoptions is a private clone, never a world field.
++fn dv_adopt_into(domain, owned_adoptions, law, mode, confidence, basis):
++    let adoption = dv_checked_adoption(domain, owned_adoptions, law, mode, confidence, basis)
++    rt_push(owned_adoptions, dv_pair(law.name, adoption))
++    return true
++
++fn dv_finish_owned_adoptions(world, owned_adoptions):
++    let previous_count = rt_count(world.adoptions)
++    dv_require(previous_count <= rt_count(owned_adoptions), "Adoption builder removed inherited entries")
++    var i = 0
++    while i < previous_count:
++        dv_require(dv_same(world.adoptions[i], owned_adoptions[i]), "Adoption builder changed inherited entries")
++        i = i + 1
++    if previous_count == rt_count(owned_adoptions):
++        return world
++    return dv_with_many(world, {"adoptions": owned_adoptions, "revision": world.revision + rt_count(owned_adoptions) - previous_count})
++
+ fn dv_suspend(world, name):
+     var adoptions = world.adoptions
+     return dv_with(dv_with(world, "adoptions", dv_with(adoptions, name, dv_with(dv_get(adoptions, name), "active", false))), "revision", (world.revision + 1))
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index 53ffb841..e8bfb364 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -53,3 +53,7 @@ cognitive_mind_specimen 将刻画机制连接到真实 Core mind、主体系引
+ 请求去重使用专用语义输入签名，不复用带完整来源历史的仿真输入；方法和声道前提分别保留实际真值。重演接纳检查总模型预算，不以先前方法已耗尽的工作余额拒绝可重新付费的方法。依赖身体接触的原生观察必须有对应执行法则与成功现场回执，预测接触标记不授权真实记忆；完整取回与浅瞬观察分别记录，不引入未经来源支持的价格或偏好顺序。
+ 
+ 线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
++
++2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
++证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
++Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 974fea65..9f3db153 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -57,3 +57,7 @@
+ 30-runner.dv 的 prepare/complete 是唯一真实动作机制。逻辑运行器直接依次调用这两个函数；step 入口已移除。Godot 只承接同一待执行意图和现场回执；旧 C#、旧解释器与旧坐席执行不再存在于工作树。预测/模型只读本人材料，不提交现实动作效果。
+ 
+ 线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
++
++2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
++证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
++Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+diff --git a/language_core/verification/scenarios/chapter1-departure.dv b/language_core/verification/scenarios/chapter1-departure.dv
+index e5fa84a1..65b6089a 100644
+--- a/language_core/verification/scenarios/chapter1-departure.dv
++++ b/language_core/verification/scenarios/chapter1-departure.dv
+@@ -138,7 +138,8 @@ fn c1dep_goals(actor):
+         let stages = ["identity", "voice_source", "words", "trust"]
+         i = 0
+         while i < rt_count(stages):
+-            rt_push(goals, c2_observation_goal(dv_ref("question", "state", rt_cat("solved_", stages[i])), c1_at(actor.id, "hall"), source, actor.mind.time))
++            let ref = dv_ref("question", "state", rt_cat("solved_", stages[i]))
++            rt_push(goals, dv_with(c2_observation_goal(ref, c1_at(actor.id, "hall"), source, actor.mind.time), "refresh_until", dv_fact(ref, true)))
+             i = i + 1
+         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1dep_complete(), source))
+     return goals
+diff --git a/language_core/verification/scenarios/chapter2-content.dv b/language_core/verification/scenarios/chapter2-content.dv
+index 8f0ec1ee..554b81e1 100644
+--- a/language_core/verification/scenarios/chapter2-content.dv
++++ b/language_core/verification/scenarios/chapter2-content.dv
+@@ -742,7 +742,7 @@ fn c2_self_grants(actor):
+     return grants
+ 
+ fn c2_install_actor_laws(world, actor):
+-    var result = world
++    var owned_adoptions = dv_clone(world.adoptions)
+     var mode = "enforce"
+     if world.domain == "mind":
+         mode = "predict"
+@@ -753,8 +753,8 @@ fn c2_install_actor_laws(world, actor):
+         let edge = edges[i]
+         let there = c2_move_action(actor, edge.from, edge.to, edge.gate)
+         let back = c2_move_action(actor, edge.to, edge.from, edge.gate)
+-        result = dv_adopt(result, c1_method(there.id, c2_move_law(actor, edge.from, edge.to, edge.gate)), mode, 1, source)
+-        result = dv_adopt(result, c1_method(back.id, c2_move_law(actor, edge.to, edge.from, edge.gate)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(there.id, c2_move_law(actor, edge.from, edge.to, edge.gate)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(back.id, c2_move_law(actor, edge.to, edge.from, edge.gate)), mode, 1, source)
+         i = i + 1
+     var day = 2
+     while day < 5:
+@@ -763,51 +763,51 @@ fn c2_install_actor_laws(world, actor):
+         while i < rt_count(meals):
+             let meal = meals[i]
+             let suffix = rt_cat(rt_show(day), rt_cat(".", meal.id))
+-            result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.collect.", suffix)), c2_collect_law(actor, day, meal.id, meal.start, meal.end)), mode, 1, source)
+-            result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.eat.", suffix)), c2_eat_law(actor, day, meal.id)), mode, 1, source)
++            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.collect.", suffix)), c2_collect_law(actor, day, meal.id, meal.start, meal.end)), mode, 1, source)
++            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.eat.", suffix)), c2_eat_law(actor, day, meal.id)), mode, 1, source)
+             i = i + 1
+         day = day + 1
+-    result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.open.granary"), c2_open_granary_law(actor)), mode, 1, source)
+-    result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.distribute"), c2_distribute_law(actor)), mode, 1, source)
+-    result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-real-key")])
++    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.granary"), c2_open_granary_law(actor)), mode, 1, source)
++    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.distribute"), c2_distribute_law(actor)), mode, 1, source)
++    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-real-key")])
+     if actor != "shen":
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.give_key.shen"), c2_give_key_law(actor, "shen")), mode, 1, source)
+-    result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.report.night_take"), c2_report_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.give_key.shen"), c2_give_key_law(actor, "shen")), mode, 1, source)
++    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.report.night_take"), c2_report_law(actor)), mode, 1, source)
+     if actor == "quer" or actor == "mora":
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, actor == "mora")), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, actor == "mora")), mode, 1, source)
+     if actor == "quer":
+-        result = dv_adopt(result, c1_method("quer.c2.night_eat", c2_night_eat_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method("quer.c2.night_eat", c2_night_eat_law(actor)), mode, 1, source)
+     if actor == "margaret":
+-        result = dv_adopt(result, c1_method("margaret.c2.request.repair_latch", c2_latch_request_law(actor, "quer")), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method("margaret.c2.request.repair_latch", c2_latch_request_law(actor, "quer")), mode, 1, source)
+     if actor == "quer" or actor == "huo":
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.repair.latch"), c2_repair_latch_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.repair.latch"), c2_repair_latch_law(actor)), mode, 1, source)
+     if dv_has(["mora", "selma", "shen"], actor):
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.deliver.patient_food"), c2_deliver_patient_law(actor)), mode, 1, source)
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.feed.patient"), c2_feed_patient_law(actor)), mode, 1, source)
+-        result = dv_adopt(result, c1_method(rt_cat(actor, ".c2.leave.care"), c2_leave_care_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.deliver.patient_food"), c2_deliver_patient_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.feed.patient"), c2_feed_patient_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.leave.care"), c2_leave_care_law(actor)), mode, 1, source)
+     let norms = c2_norms()
+     i = 0
+     while i < rt_count(norms):
+         let norm = norms[i]
+         if actor == norm.owner:
+-            result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.propose.", norm.id)), c2_propose_law(actor, norm)), mode, 1, [norm.source])
+-            result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.post.", norm.id)), c2_post_law(actor, norm)), mode, 1, [norm.source])
+-        result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.read.", norm.id)), c2_read_norm_law(actor, norm)), mode, 1, [norm.source])
+-        result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.accept.", norm.id)), c2_decide_norm_law(actor, norm, true)), mode, 1, [norm.source])
+-        result = dv_adopt(result, c1_method(rt_cat(actor, rt_cat(".c2.decline.", norm.id)), c2_decide_norm_law(actor, norm, false)), mode, 1, [norm.source])
++            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.propose.", norm.id)), c2_propose_law(actor, norm)), mode, 1, [norm.source])
++            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.post.", norm.id)), c2_post_law(actor, norm)), mode, 1, [norm.source])
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.read.", norm.id)), c2_read_norm_law(actor, norm)), mode, 1, [norm.source])
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.accept.", norm.id)), c2_decide_norm_law(actor, norm, true)), mode, 1, [norm.source])
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.decline.", norm.id)), c2_decide_norm_law(actor, norm, false)), mode, 1, [norm.source])
+         i = i + 1
+     let roles = c2_profile(actor).station_roles
+     i = 0
+     while i < rt_count(roles):
+         let station = roles[i]
+         let id = rt_cat(actor, rt_cat(".c2.station.", station))
+-        result = dv_adopt(result, c1_method(id, c2_station_claim_law(actor, station, false)), mode, 1, source)
+-        result = dv_adopt(result, c1_method(rt_cat(id, ".release"), c2_station_release_law(actor, station)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(id, c2_station_claim_law(actor, station, false)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(id, ".release"), c2_station_release_law(actor, station)), mode, 1, source)
+         i = i + 1
+     if actor == "ward":
+-        result = dv_adopt(result, c1_method("ward.c2.agree.guard", c2_guard_commit_law(actor)), mode, 1, source)
+-        result = dv_adopt(result, c1_method("ward.c2.guard.weight", c2_station_claim_law(actor, "weight", true)), mode, 1, source)
+-        result = dv_adopt(result, c1_method("ward.c2.guard.release", c2_station_release_law(actor, "weight")), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.agree.guard", c2_guard_commit_law(actor)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.guard.weight", c2_station_claim_law(actor, "weight", true)), mode, 1, source)
++        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.guard.release", c2_station_release_law(actor, "weight")), mode, 1, source)
+     let rooms = c2_rooms()
+     let fields = ["doors_closed", "windows_closed", "isolation_closed"]
+     i = 0
+@@ -815,10 +815,10 @@ fn c2_install_actor_laws(world, actor):
+         var j = 0
+         while j < rt_count(fields):
+             let id = rt_cat(actor, rt_cat(".c2.close.", rt_cat(rooms[i], rt_cat(".", fields[j]))))
+-            result = dv_adopt(result, c1_method(id, c2_close_room_law(actor, rooms[i], fields[j])), mode, 1, [c2_approved("real-room-sealing-action")])
++            dv_adopt_into(world.domain, owned_adoptions, c1_method(id, c2_close_room_law(actor, rooms[i], fields[j])), mode, 1, [c2_approved("real-room-sealing-action")])
+             j = j + 1
+         i = i + 1
+-    return result
++    return dv_finish_owned_adoptions(world, owned_adoptions)
+ 
+ fn c2_extend_world(world):
+     var result = c2_world_objects(world)
+diff --git a/language_core/verification/scenarios/chapter2-dialogue.dv b/language_core/verification/scenarios/chapter2-dialogue.dv
+index d340fb15..5ec2ae4e 100644
+--- a/language_core/verification/scenarios/chapter2-dialogue.dv
++++ b/language_core/verification/scenarios/chapter2-dialogue.dv
+@@ -260,7 +260,7 @@ fn c2d_refresh_actor_goals(actor):
+         rt_push(combined, carried[i])
+         i = i + 1
+     if actor.id == "detective" or actor.id == "huo" or actor.id == "shen" or actor.id == "su" or actor.id == "demon":
+-        let departure = dv_find(actor.policy, "departure_goals", [])
++        let departure = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "departure_goals", []))
+         i = 0
+         while i < rt_count(departure):
+             rt_push(combined, departure[i])
+diff --git a/language_core/verification/session/15-action-planning.dv b/language_core/verification/session/15-action-planning.dv
+index 6430ebf3..bc386f8a 100644
+--- a/language_core/verification/session/15-action-planning.dv
++++ b/language_core/verification/session/15-action-planning.dv
+@@ -740,3 +740,16 @@ fn dvp_achievement_value(actor, action):
+             value = value + dv_find(pending[i], "weight", 1)
+         i = i + 1
+     return value
++
++// Goal metadata requests a current observation until the owner's own stop fact is known.
++fn dvp_refresh_current_evidence(actor, goals):
++    var result = []
++    var i = 0
++    while i < rt_count(goals):
++        var goal = goals[i]
++        if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "refresh_until"):
++            if dv_truth(actor.mind, goal.refresh_until) != "true":
++                goal = dv_with(goal, "minimum_time", actor.mind.time)
++        rt_push(result, goal)
++        i = i + 1
++    return result

@@ -260,7 +260,7 @@ fn c2d_refresh_actor_goals(actor):
         rt_push(combined, carried[i])
         i = i + 1
     if actor.id == "detective" or actor.id == "huo" or actor.id == "shen" or actor.id == "su" or actor.id == "demon":
-        let departure = dv_find(actor.policy, "departure_goals", [])
+        let departure = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "departure_goals", []))
         i = 0
         while i < rt_count(departure):
             rt_push(combined, departure[i])

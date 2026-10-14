@@ -1,5 +1,6 @@
 using DuelView.Compiled;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 // Serialization and ownership boundary only. The generated DV implementation
 // decides eligibility, execution effects, observation, inference and settlement.
@@ -30,6 +31,39 @@ public sealed class DvSession
     }
 
     public string Trace() => R.Text(R.json_stringify(DVProgram.SessionClose(state)));
+
+    public void WriteTrace(string path)
+    {
+        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+        JsonSerializer.Serialize(stream, DVProgram.SessionClose(state));
+    }
+
+    public void WriteSave(string path)
+    {
+        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+        JsonSerializer.Serialize(stream, state, SnapshotOptions);
+    }
+
+    private static readonly JsonSerializerOptions SnapshotOptions = new()
+    {
+        Converters = { new SnapshotExactConverter() }
+    };
+
+    private sealed class SnapshotExactConverter : JsonConverter<Rational>
+    {
+        public override Rational Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+        {
+            using var value = JsonDocument.ParseValue(ref reader);
+            return Rational.From(value.RootElement.GetProperty("$dv_rational").GetString()!);
+        }
+
+        public override void Write(Utf8JsonWriter writer, Rational value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("$dv_rational", value.ToString());
+            writer.WriteEndObject();
+        }
+    }
 
     private static object SnapshotValue(object value) => value switch
     {

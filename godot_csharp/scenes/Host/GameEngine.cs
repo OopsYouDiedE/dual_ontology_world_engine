@@ -88,14 +88,71 @@ public partial class GameEngine : Node
     {
         if (closing) return;
         closing = true;
-        try { await work; } catch (Exception error) { GD.PushError(error.ToString()); }
-        if (session is null) { EmitSignal(SignalName.TraceClosed); return; }
-        var path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
-        Directory.CreateDirectory(path);
-        File.WriteAllText(Path.Combine(path, "session.json"), session.Trace());
-        File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
-        File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
-        File.WriteAllText(Path.Combine(path, "save.json"), session.Save());
-        EmitSignal(SignalName.TraceClosed);
+        string? path = null;
+        var ownsDirectory = false;
+        var phase = "await-work";
+        var errors = new List<object>();
+        try
+        {
+            try { await work; }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
+            }
+            if (session is null) return;
+            phase = "create-directory";
+            path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
+            if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
+            Directory.CreateDirectory(path);
+            ownsDirectory = true;
+            phase = "inputs";
+            File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
+            phase = "visible";
+            File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
+            var current = session;
+            phase = "trace";
+            var tracePath = Path.Combine(path, "session.json.partial");
+            try
+            {
+                await Task.Run(() => current.WriteTrace(tracePath));
+                File.Move(tracePath, Path.Combine(path, "session.json"));
+            }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
+            }
+            phase = "save";
+            var savePath = Path.Combine(path, "save.json.partial");
+            try
+            {
+                await Task.Run(() => current.WriteSave(savePath));
+                File.Move(savePath, Path.Combine(path, "save.json"));
+            }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
+            }
+        }
+        catch (Exception error)
+        {
+            GD.PushError(error.ToString());
+            errors.Add(new { phase, error = error.ToString() });
+        }
+        finally
+        {
+            try
+            {
+                if (ownsDirectory && path is not null)
+                {
+                    using var result = new FileStream(Path.Combine(path, "close-result.json"), FileMode.CreateNew, System.IO.FileAccess.Write);
+                    System.Text.Json.JsonSerializer.Serialize(result, new { complete = errors.Count == 0, errors });
+                }
+            }
+            catch (Exception error) { GD.PushError(error.ToString()); }
+            EmitSignal(SignalName.TraceClosed);
+        }
     }
 }

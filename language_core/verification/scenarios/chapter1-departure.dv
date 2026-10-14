@@ -138,7 +138,8 @@ fn c1dep_goals(actor):
         let stages = ["identity", "voice_source", "words", "trust"]
         i = 0
         while i < rt_count(stages):
-            rt_push(goals, c2_observation_goal(dv_ref("question", "state", rt_cat("solved_", stages[i])), c1_at(actor.id, "hall"), source, actor.mind.time))
+            let ref = dv_ref("question", "state", rt_cat("solved_", stages[i]))
+            rt_push(goals, dv_with(c2_observation_goal(ref, c1_at(actor.id, "hall"), source, actor.mind.time), "refresh_until", dv_fact(ref, true)))
             i = i + 1
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1dep_complete(), source))
     return goals
