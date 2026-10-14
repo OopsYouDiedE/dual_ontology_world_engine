@@ -1365,7 +1365,7 @@ fn c1_identify_own_lens(actor):
     return c1_once(c1_action(rt_cat(actor, ".identify-own-lens"), "inspect", dv_all(dv_pair(c1_at(actor, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), actor))), dv_all(dv_pair(c1_at(actor, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), actor))), "", dv_single(c1_knowledge("lens_mine")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006;E12 personal ownership")))
 
 fn c1_visible_E12():
-    return "衣架上挂着你的深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。"
+    return "一件深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。"
 
 fn c1_infer_rules():
     return c1_list_20(c1_infer_0("cognition"), c1_infer_1("cognition"), c1_infer_2("cognition"), c1_infer_3("cognition"), c1_infer_4("cognition"), c1_infer_5("cognition"), c1_infer_6("cognition"), c1_infer_7("cognition"), c1_infer_8("cognition"), c1_infer_9("cognition"), c1_infer_10("cognition"), c1_infer_11("cognition"), c1_infer_12("cognition"), c1_infer_13("cognition"), c1_infer_14("cognition"), c1_infer_15("cognition"), c1_infer_16("cognition"), c1_infer_17("cognition"), c1_infer_18("cognition"), c1_infer_19("cognition"))
@@ -1606,7 +1606,7 @@ axiom c1_original_question_accept(question):
     return dv_axiom("c1_original_question_accept", 1, dv_fact(dv_ref(question, "state", "outstanding_complete"), true), dv_single(dv_assign(dv_ref(question, "state", "outstanding_complete"), false)))
 
 fn c1_reask_question(actor):
-    return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", c1_list_5(dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "testimony", "demon", 1), "repeatable", true)
+    return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "testimony", "demon", 1), "repeatable", true)
 
 fn c1_room_objects():
     return c1_list_8(c1_local_object("hall"), c1_local_object("foyer"), c1_local_object("pantry"), c1_local_object("corridor"), c1_local_object("R05"), c1_local_object("R06"), c1_local_object("R07"), c1_local_object("R08"))

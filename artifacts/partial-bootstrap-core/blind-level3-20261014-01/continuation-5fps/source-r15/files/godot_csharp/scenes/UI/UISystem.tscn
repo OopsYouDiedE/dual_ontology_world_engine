@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/UISystem.gd" id="ui"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Panels/HUD/FieldHUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Panels/Dialogue/ChapterDialogue.tscn" id="dialogue"]
+
+[node name="UISystem" type="Node"]
+script = ExtResource("ui")
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="Dialogue" parent="." instance=ExtResource("dialogue")]
+
+[node name="ModalLayer" type="CanvasLayer" parent="."]
+layer = 15

@@ -1,0 +1,656 @@
+// Glue between paid prediction evidence, explicit abduction and real submissions.
+// Only actual personal reception may bind a later proposal to an old utterance.
+
+fn dvs_argument_sources(events, subject):
+    var result = []
+    var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if dv_and((event.actor == subject), dv_or((event.type == "observation"), (event.type == "listener_parse"))):
+            var observations = event.data.observations
+            var j = 0
+            while (j < rt_count(observations)):
+                rt_push(result, {"event_id": event.id, "observation": observations[j]})
+                j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn dvs_capture_public_topics(actor, events, time, parent):
+    var bindings = dv_find(actor.policy, "topic_bindings", [])
+    var heard = dv_find(actor, "heard_topics", [])
+    var i = 0
+    while (i < rt_count(bindings)):
+        var binding = bindings[i]
+        var topic = bindings[i].topic
+        if dv_and((not dv_has_key(heard, topic)), (dv_truth(actor.mind, binding.heard_when) == "true")):
+            var sources = dvs_support_parents(actor.mind, dvs_sim_refs(binding.heard_when), events, actor.id)
+            if (0 < rt_count(sources)):
+                var record = dv_with({"topic": topic, "source_event_ids": sources, "heard_when": binding.heard_when}, "origin_speakers", dvs_topic_origin_speakers(events, sources))
+                dvs_event(events, "public_topic_heard", actor.id, time, dv_explanation_merge(dv_single(parent), sources), record)
+                heard = dv_with(heard, topic, record)
+        i = (i + 1)
+    return dvs_capture_heard_utterances(dv_with(actor, "heard_topics", heard), events)
+
+fn dvs_topic_was_heard(actor, topic):
+    return dv_has_key(dv_find(actor, "heard_topics", []), topic)
+
+fn dvs_argument_valid(actor):
+    var argument = dv_find(actor, "argument", false)
+    if (argument == false):
+        return false
+    else:
+        return dv_and(dv_same(dv_find(argument, "adoptions", []), actor.mind.adoptions), dvs_topic_was_heard(actor, argument.question_id))
+
+fn dvs_argument_inputs_current(actor):
+    var argument = dv_find(actor, "argument", false)
+    var valid = true
+    var i = 0
+    if (argument == false):
+        return false
+    else:
+        var inputs = argument.inputs
+        while (i < rt_count(inputs)):
+            var input = inputs[i]
+            if dv_same(input.cell, dv_read(actor.mind, input.ref)):
+                false
+            else:
+                var changes = argument.changes
+                var j = 0
+                var own_transaction = false
+                var current = dv_read(actor.mind, input.ref)
+                while (j < rt_count(changes)):
+                    var change = changes[j]
+                    if dv_and(dv_same(change.ref, input.ref), dv_and((dv_find(current, "source", "") == "abduction"), dv_and(dv_has(dv_find(current, "basis", []), argument.id), dv_same(current.value, change.after.value)))):
+                        own_transaction = true
+                    j = (j + 1)
+                if own_transaction:
+                    false
+                else:
+                    valid = false
+            i = (i + 1)
+        return valid
+
+fn dvs_argument_revoke(actor, events, time, parent):
+    var argument = actor.argument
+    var world = actor.mind
+    var changes = actor.argument.changes
+    var i = 0
+    var restored = []
+    var derivations = dv_find(actor, "inference_derivations", [])
+    var contaminated = []
+    var remaining = dv_find(actor.policy, "reason_budget", 0)
+    var checked = 0
+    var blocked = false
+    var descendants = []
+    var updated = false
+    while (i < rt_count(changes)):
+        contaminated = dvp_add_ref(contaminated, changes[i].ref)
+        i = (i + 1)
+    i = (rt_count(derivations) - 1)
+    while dv_and((not (i < 0)), (not blocked)):
+        var derivation = derivations[i]
+        var dependent = false
+        var inputs = derivations[i].inputs
+        var j = 0
+        if (remaining < 1):
+            blocked = true
+        else:
+            remaining = (remaining - 1)
+            checked = (checked + 1)
+            while (j < rt_count(inputs)):
+                if dv_has(contaminated, inputs[j].ref):
+                    dependent = true
+                j = (j + 1)
+        if dv_and((not blocked), dv_and(dependent, dv_find(derivation, "valid", true))):
+            var outputs = derivation.changes
+            var k = 0
+            while (k < rt_count(outputs)):
+                var change = outputs[k]
+                var current = dv_read(world, outputs[k].ref)
+                if dv_same(current, change.after):
+                    world = dv_store(world, change.ref, change.before)
+                    contaminated = dvp_add_ref(contaminated, change.ref)
+                    rt_push(restored, change)
+                k = (k + 1)
+            rt_push(descendants, derivation.event)
+            derivations = dvs_replace(derivations, i, dv_with(derivation, "valid", false))
+        i = (i - 1)
+    i = 0
+    if blocked:
+        false
+    else:
+        while (i < rt_count(changes)):
+            var change = changes[i]
+            var cell = dv_read(world, changes[i].ref)
+            if dv_and((dv_find(cell, "source", "") == "abduction"), dv_has(dv_find(cell, "basis", []), argument.id)):
+                world = dv_store(world, change.ref, change.before)
+                rt_push(restored, change)
+            i = (i + 1)
+    if (0 < rt_count(restored)):
+        world = dv_with(world, "revision", (world.revision + 1))
+    var local_1 = false
+    if blocked:
+        local_1 = argument
+    else:
+        local_1 = false
+    updated = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "argument", local_1), "ready_hypothesis", false), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
+    var local_2 = false
+    if blocked:
+        local_2 = "model_argument_revocation_pending"
+    else:
+        local_2 = "model_argument_revoked"
+    dvs_event(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with(dv_with(dv_with(dv_with({"argument": argument, "mind_before": actor.mind, "mind_after": world, "restored": restored}, "checked", checked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    return updated
+
+fn dvs_factor_coverage(actor, hypothesis, events):
+    var candidates = dv_find(actor.policy, "hypotheses", [])
+    var catalog = []
+    var certificates = dv_find(actor, "factor_certificates", [])
+    var verified = []
+    var i = 0
+    while (i < rt_count(candidates)):
+        var candidate = candidates[i]
+        if dv_and(dvp_topic(actor, candidate), (dv_find(candidate, "group", "") == dv_find(hypothesis, "group", ""))):
+            rt_push(catalog, candidate)
+        i = (i + 1)
+    if dvs_factor_catalog_complete(dv_find(actor.policy, "factor_domains", []), catalog):
+        i = 0
+        while (i < rt_count(certificates)):
+            if dvs_factor_certificate_current(actor, certificates[i], events):
+                rt_push(verified, certificates[i])
+            i = (i + 1)
+    return {"catalog": catalog, "certificates": verified}
+
+fn dvs_factor_covered(candidate, certificates):
+    var i = 0
+    var covered = false
+    var assignments = dv_find(candidate, "variable_assignments", [])
+    while (i < rt_count(certificates)):
+        if dvs_factor_covers(certificates[i], assignments):
+            covered = true
+        i = (i + 1)
+    return covered
+
+fn dvs_factor_argument(result, coverage):
+    var argument = result.argument
+    var certificates = coverage.certificates
+    var i = 0
+    var events = []
+    var sources = []
+    var inputs = []
+    while (i < rt_count(certificates)):
+        var certificate = certificates[i]
+        var chain = certificates[i].source_chain
+        var j = 0
+        events = dv_explanation_merge(events, dv_single(certificate.event))
+        sources = dv_explanation_merge(sources, certificate.source_event_ids)
+        while (j < rt_count(chain)):
+            rt_push(inputs, {"ref": chain[j].ref, "cell": chain[j].cell})
+            j = (j + 1)
+        i = (i + 1)
+    argument = dv_with(dv_with(dv_with(dv_with(argument, "factor_coverage", coverage), "competitor_events", dv_explanation_merge(argument.competitor_events, events)), "source_event_ids", dv_explanation_merge(argument.source_event_ids, sources)), "inputs", dv_explanation_merge(argument.inputs, inputs))
+    return dv_with(result, "argument", argument)
+
+fn dvs_arguments(actor, events, time, parent):
+    if (dv_find(actor, "argument", false) == false):
+        false
+    else:
+        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+            false
+        else:
+            actor = dvs_argument_revoke(actor, events, time, parent)
+    if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+        return actor
+    else:
+        var hypothesis = dv_find(actor, "hypothesis", false)
+        var local_1 = false
+        if (hypothesis == false):
+            local_1 = true
+        else:
+            local_1 = (not dv_and((0 < rt_count(dv_find(hypothesis, "claim_slots", []))), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), dv_and((0 < rt_count(dvs_sim_plan(hypothesis))), dv_has_key(dv_find(dv_find(actor, "simulations", []), hypothesis.id, []), "event")))))
+        if local_1:
+            return actor
+        else:
+            var model = dvs_cached_model(actor, hypothesis)
+            var candidates = dv_find(actor.policy, "hypotheses", [])
+            var i = 0
+            var competitors = []
+            var coverage = dvs_factor_coverage(actor, hypothesis, events)
+            var slots = dv_find(hypothesis, "claim_slots", [])
+            var policy = dv_find(actor.policy, "abduction", [])
+            var signature = {"model": dv_find(dvs_cached_model(actor, hypothesis), "event", ""), "revision": actor.mind.revision, "slots": dv_find(hypothesis, "claim_slots", []), "policy": dv_find(actor.policy, "abduction", [])}
+            if dv_same(signature, dv_find(actor, "argument_attempt", false)):
+                return actor
+            else:
+                if dvs_factor_covered(hypothesis, coverage.certificates):
+                    model = {"status": "certificate-refuted", "fit": -1000000}
+                while (i < rt_count(candidates)):
+                    var candidate = candidates[i]
+                    if dv_and(dvp_topic(actor, candidate), dv_and((not (candidate.id == hypothesis.id)), dv_and((dv_find(candidate, "group", "") == dv_find(hypothesis, "group", "")), (dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true")))):
+                        if dvs_factor_covered(candidate, coverage.certificates):
+                            false
+                        else:
+                            rt_push(competitors, dvs_cached_model(actor, candidate))
+                    i = (i + 1)
+                var certificates = coverage.certificates
+                var c = 0
+                while (c < rt_count(certificates)):
+                    policy = dv_with(policy, "confidence_cap", dv_min(dv_find(policy, "confidence_cap", 0), certificates[c].confidence))
+                    c = (c + 1)
+                var result = dvs_factor_argument(dv_accept_explanation(actor.mind, model, competitors, slots, dvs_argument_sources(events, actor.id), policy, dv_find(actor.policy, "reason_budget", 0), time, rt_cat("e", rt_show(rt_count(events)))), coverage)
+                var parents = dvs_cognitive_parents(actor, dv_single(parent))
+                if dv_has_key(model, "event"):
+                    parents = dv_explanation_merge(parents, dv_single(model.event))
+                parents = dv_explanation_merge(parents, result.argument.source_event_ids)
+                parents = dv_explanation_merge(parents, result.argument.competitor_events)
+                var local_2 = false
+                if result.accepted:
+                    local_2 = "model_argument_accepted"
+                else:
+                    local_2 = "model_argument_unavailable"
+                actor = dv_with(actor, "last_cognitive_event", dvs_event(events, local_2, actor.id, time, parents, {"actor_before": actor, "hypothesis": hypothesis, "competitors": competitors, "result": result}))
+                actor = dv_with(dv_with(actor, "argument_attempt", signature), "policy", dv_with(actor.policy, "reason_budget", result.remaining))
+                if result.accepted:
+                    return dv_with(dv_with(actor, "mind", result.world), "argument", dv_with(dv_with(dv_with(result.argument, "adoptions", actor.mind.adoptions), "question_id", dv_find(hypothesis, "question", dv_find(hypothesis, "topic", ""))), "hypothesis_id", hypothesis.id))
+                else:
+                    return actor
+
+fn dvs_argument_action(actor, action):
+    if dv_has_key(action, "argument_slots"):
+        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+            var argument = actor.argument
+            var requested = action.argument_slots
+            var claims = actor.argument.claims
+            var i = 0
+            var propositions = []
+            var transmitted = []
+            var valid = true
+            if (dv_find(action, "argument_question", argument.question_id) == argument.question_id):
+                false
+            else:
+                valid = false
+            while (i < rt_count(requested)):
+                var slot_id = requested[i]
+                var j = 0
+                var found = false
+                while (j < rt_count(claims)):
+                    var claim = claims[j]
+                    if (slot_id == claim.slot_id):
+                        found = true
+                        rt_push(propositions, dv_fact(claim.ref, claim.value))
+                        rt_push(transmitted, claim)
+                    j = (j + 1)
+                if found:
+                    false
+                else:
+                    valid = false
+                i = (i + 1)
+            if (rt_count(requested) == 0):
+                valid = false
+            if dv_find(action, "speech_from_argument", false):
+                var proposal = dv_with(dv_with(dv_with({"argument_id": argument.id, "id": argument.id, "estimated": true, "confidence": argument.confidence}, "claims", transmitted), "source_event_ids", argument.source_event_ids), "model_event", argument.model_event)
+                return dv_with(dv_with(dv_with(dv_with(dv_without(action, "answer"), "speech", dv_with(dv_with(dv_find(action, "speech", []), "literal_ast", dv_all(propositions)), "proposal", dv_with(proposal, "reassessment_sources", dvs_argument_reassessment_sources(actor, action, argument)))), "proposal", dv_with(proposal, "reassessment_sources", dvs_argument_reassessment_sources(actor, action, argument))), "argument", argument), "argument_available", valid)
+            else:
+                return dv_with(dv_with(dv_with(action, "answer", dv_all(propositions)), "argument", argument), "argument_available", valid)
+        else:
+            return dv_with(action, "argument_available", false)
+    else:
+        return action
+
+fn dvs_materialize_arguments(actor):
+    var actions = actor.actions
+    var i = 0
+    var result = []
+    while (i < rt_count(actions)):
+        rt_push(result, dvs_argument_action(actor, actions[i]))
+        i = (i + 1)
+    return dv_with(actor, "actions", result)
+
+fn dvs_support_parents(mind, refs, events, subject):
+    var parents = []
+    var i = 0
+    while (i < rt_count(refs)):
+        var ref = refs[i]
+        var cell = dv_read(mind, refs[i])
+        var j = 0
+        while (j < rt_count(events)):
+            var event = events[j]
+            var data = events[j].data
+            var k = 0
+            if (event.actor == subject):
+                if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                    var observations = data.observations
+                    while (k < rt_count(observations)):
+                        var observation = observations[k]
+                        if dv_and(dv_same_local_ref(subject, observation.ref, ref), dv_has(dv_find(cell, "claims", []), observation)):
+                            parents = dv_explanation_merge(parents, dv_single(event.id))
+                        k = (k + 1)
+                if (event.type == "inference"):
+                    var changes = data.receipt.changes
+                    var n = 0
+                    while (n < rt_count(changes)):
+                        var change = changes[n]
+                        if dv_and(dv_same(change.ref, ref), dv_same(change.after, cell)):
+                            parents = dv_explanation_merge(parents, dv_single(event.id))
+                        n = (n + 1)
+                if (event.type == "model_argument_accepted"):
+                    if dv_has(dv_find(cell, "basis", []), event.id):
+                        parents = dv_explanation_merge(parents, dv_single(event.id))
+            j = (j + 1)
+        i = (i + 1)
+    return parents
+
+fn dvs_selection_parents(actor, action, choice, events, parent):
+    var refs = choice.relevant_refs
+    var parents = dvs_cognitive_parents(actor, dv_single(parent))
+    refs = dvp_merge_refs(refs, dvs_sim_refs(action.precondition))
+    if dv_has_key(action, "answer"):
+        refs = dvp_merge_refs(refs, dvs_sim_refs(action.answer))
+    if dv_has_key(actor, "question_ref"):
+        refs = dvp_add_ref(refs, actor.question_ref)
+    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, refs, events, actor.id))
+    if (dv_find(actor, "hypothesis_event", "") == ""):
+        false
+    else:
+        parents = dv_explanation_merge(parents, dv_single(actor.hypothesis_event))
+    if dv_has_key(action, "speech"):
+        var prediction = dv_find(dv_find(actor, "speech_choice_values", []), action.id, [])
+        parents = dv_explanation_merge(parents, dv_find(prediction, "prediction_events", []))
+    if dv_has_key(action, "argument"):
+        parents = dv_explanation_merge(parents, dv_single(action.argument.id))
+    return parents
+
+fn dvs_model_parent_ids(actor, parent, prior):
+    var result = dvs_cognitive_parents(actor, dv_single(parent))
+    if (dv_find(actor, "model_paid_event", "") == ""):
+        false
+    else:
+        result = dv_explanation_merge(result, dv_single(actor.model_paid_event))
+    if (dv_find(actor, "model_previous_event", "") == ""):
+        false
+    else:
+        result = dv_explanation_merge(result, dv_single(actor.model_previous_event))
+    if (prior == ""):
+        false
+    else:
+        result = dv_explanation_merge(result, dv_single(prior))
+    return result
+
+fn dvs_public_grant_parents(events, parent, subject):
+    var result = dv_single(parent)
+    var literal = ""
+    var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if (event.type == "speech_literal"):
+            if dv_has(event.parents, parent):
+                literal = event.id
+        i = (i + 1)
+    if (literal == ""):
+        false
+    else:
+        result = dv_explanation_merge(result, dv_single(literal))
+        i = 0
+        while (i < rt_count(events)):
+            var event = events[i]
+            if dv_and((event.type == "listener_parse"), (event.actor == subject)):
+                if (dv_find(event.data, "source_event", "") == literal):
+                    result = dv_explanation_merge(result, dv_single(event.id))
+            i = (i + 1)
+    return result
+
+fn dvs_physical_proposition(proposition, bindings, subject):
+    var op = proposition.op
+    if (op == "constant"):
+        return proposition
+    else:
+        if (op == "not"):
+            return dv_not(dvs_physical_proposition(proposition.item, bindings, subject))
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var mapped = []
+                while (i < rt_count(items)):
+                    rt_push(mapped, dvs_physical_proposition(items[i], bindings, subject))
+                    i = (i + 1)
+                return dv_all(mapped)
+            else:
+                var ref = proposition.ref
+                var i = 0
+                var physical = ""
+                while (i < rt_count(bindings)):
+                    var binding = bindings[i]
+                    if dv_and((binding.subject == subject), (binding.local == ref.object)):
+                        physical = binding.physical
+                    i = (i + 1)
+                if (physical == ""):
+                    return {"op": "constant", "value": "unknown"}
+                else:
+                    return dv_with(proposition, "ref", dv_ref(physical, ref.facet, ref.field))
+
+fn dvs_refresh_derivations(actor, events, time, parent):
+    var derivations = dv_find(actor, "inference_derivations", [])
+    var world = actor.mind
+    var i = (rt_count(dv_find(actor, "inference_derivations", [])) - 1)
+    var contaminated = []
+    var restored = []
+    var parents = dvs_cognitive_parents(actor, dv_single(parent))
+    var remaining = dv_find(actor.policy, "reason_budget", 0)
+    var checked = 0
+    var blocked = false
+    var updated = false
+    while dv_and((not (i < 0)), (not blocked)):
+        var derivation = derivations[i]
+        var inputs = derivations[i].inputs
+        var stale = false
+        var j = 0
+        if dv_find(derivation, "valid", true):
+            if dv_same(derivation.adoption, dv_find(world.adoptions, derivation.adoption.law.name, false)):
+                false
+            else:
+                stale = true
+            while (j < rt_count(inputs)):
+                var input = inputs[j]
+                if dv_or(dv_has(contaminated, input.ref), (not dv_same(dvs_reason_cell(input.cell), dvs_reason_cell(dv_read(world, input.ref))))):
+                    stale = true
+                j = (j + 1)
+            if stale:
+                if (remaining < 1):
+                    blocked = true
+                else:
+                    var changes = derivation.changes
+                    var k = 0
+                    remaining = (remaining - 1)
+                    checked = (checked + 1)
+                    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, dvs_sim_refs(derivation.adoption.law.premise), events, actor.id))
+                    while (k < rt_count(changes)):
+                        var change = changes[k]
+                        if dv_same(dv_read(world, change.ref), change.after):
+                            world = dv_store(world, change.ref, change.before)
+                            contaminated = dvp_add_ref(contaminated, change.ref)
+                            rt_push(restored, change)
+                        k = (k + 1)
+                    parents = dv_explanation_merge(parents, dv_single(derivation.event))
+                    derivations = dvs_replace(derivations, i, dv_with(derivation, "valid", false))
+        i = (i - 1)
+    if (0 < rt_count(restored)):
+        world = dv_with(world, "revision", (world.revision + 1))
+    updated = dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    if dv_or(blocked, (0 < checked)):
+        updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
+    if dv_or(blocked, (0 < checked)):
+        parent = dvs_event(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with(dv_with(dv_with(dv_with({"mind_before": actor.mind, "mind_after": world, "restored": restored, "checked": checked}, "budget_blocked", blocked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    if dv_and((not blocked), (0 < checked)):
+        return dvs_refresh_derivations(updated, events, time, parent)
+    else:
+        return updated
+
+fn dvs_model_observed_inputs(model):
+    var comparisons = dv_find(model, "comparisons", [])
+    var result = []
+    var i = 0
+    while (i < rt_count(comparisons)):
+        result = dv_explanation_merge(result, dv_find(comparisons[i], "observed_cells", []))
+        i = (i + 1)
+    return result
+
+fn dvs_public_model_paid(events, id, subject):
+    var i = 0
+    var valid = false
+    while (i < rt_count(events)):
+        var event = events[i]
+        if dv_and((event.id == id), dv_and((event.actor == subject), dv_or((event.type == "mind_simulation"), (event.type == "model_recheck")))):
+            var parents = event.parents
+            var j = 0
+            var result = event.data.result
+            while (j < rt_count(events)):
+                var paid = events[j]
+                if dv_and(dv_has(parents, paid.id), dv_and((paid.actor == subject), (paid.type == "action_execution"))):
+                    var data = paid.data
+                    if dv_and((dv_find(dv_find(data, "action", []), "kind", "") == "replay"), dv_and((data.receipt.execution.status == "applied"), dv_and((dv_find(result, "status", "") == "explained"), dv_find(result, "plan_complete", false)))):
+                        valid = true
+                j = (j + 1)
+        i = (i + 1)
+    return valid
+
+fn dvs_public_argument_valid(action, rule, events, subject):
+    var argument = dv_find(action, "argument", false)
+    var valid = false
+    var i = 0
+    if (argument == false):
+        return false
+    else:
+        if dv_has_key(argument, "id"):
+            while (i < rt_count(events)):
+                var event = events[i]
+                if dv_and((event.id == argument.id), dv_and((event.actor == subject), (event.type == "model_argument_accepted"))):
+                    var original = event.data.result.argument
+                    var public = dv_without(dv_without(dv_without(argument, "question_id"), "hypothesis_id"), "adoptions")
+                    if dv_same(original, public):
+                        valid = true
+                i = (i + 1)
+            if valid:
+                if dvs_public_model_paid(events, argument.model_event, subject):
+                    false
+                else:
+                    valid = false
+            if valid:
+                var required = dv_find(rule, "required_argument_slots", dv_find(action, "argument_slots", []))
+                var claims = argument.claims
+                var j = 0
+                var propositions = []
+                if dv_and((0 < rt_count(required)), dv_and(argument.estimated, dv_and((0 < argument.confidence), dv_and((argument.confidence < 1), dv_and((not (argument.model_event == "")), (0 < rt_count(argument.source_event_ids))))))):
+                    false
+                else:
+                    valid = false
+                while (j < rt_count(required)):
+                    var slot = required[j]
+                    var k = 0
+                    var found = false
+                    while (k < rt_count(claims)):
+                        var claim = claims[k]
+                        if (claim.slot_id == slot):
+                            found = true
+                            rt_push(propositions, dv_fact(claim.ref, claim.value))
+                        k = (k + 1)
+                    if found:
+                        false
+                    else:
+                        valid = false
+                    j = (j + 1)
+                if dv_same(dv_all(propositions), action.answer):
+                    false
+                else:
+                    valid = false
+            return valid
+        else:
+            return false
+
+fn dvs_factor_candidate_rejected(actor, candidate):
+    var rejections = dv_find(actor, "factor_rejections", {"source_revision": -1, "ids": []})
+    return dv_and((rejections.source_revision == actor.mind.revision), dv_has(rejections.ids, candidate.id))
+
+fn dvs_capture_heard_utterances(actor, events):
+    var heard = dv_find(actor, "heard_utterances", [])
+    var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
+            var data = event.data
+            var source = event.data.source_event
+            var j = 0
+            while (j < rt_count(events)):
+                var literal = events[j]
+                if dv_and(dv_has(event.parents, source), dv_and((literal.id == source), (literal.type == "speech_literal"))):
+                    if (literal.actor == actor.id):
+                        false
+                    else:
+                        heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
+                j = (j + 1)
+        i = (i + 1)
+    return dv_with(actor, "heard_utterances", heard)
+
+fn dvs_topic_origin_speakers(events, sources):
+    var pending = dv_clone(sources)
+    var visited = []
+    var result = []
+    var i = 0
+    while (i < rt_count(pending)):
+        var id = pending[i]
+        var j = 0
+        if dv_has(visited, id):
+            false
+        else:
+            rt_push(visited, id)
+            while (j < rt_count(events)):
+                var event = events[j]
+                if (event.id == id):
+                    if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                        var source = dv_find(event.data, "source_event", "")
+                        if dv_and((not (source == "")), dv_has(event.parents, source)):
+                            pending = dv_explanation_merge(pending, dv_single(source))
+                    else:
+                        if (event.type == "public_topic_heard"):
+                            pending = dv_explanation_merge(pending, dv_find(event.data, "source_event_ids", []))
+                    if (event.type == "speech_literal"):
+                        result = dv_explanation_merge(result, dv_single(event.actor))
+                j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn dvs_argument_reassessment_sources(actor, action, argument):
+    var heard = dv_find(actor, "heard_utterances", [])
+    var scope = dv_find(action, "reassessment_source_scope", "")
+    var topic = dv_find(dv_find(actor, "heard_topics", []), argument.question_id, [])
+    var result = []
+    var i = 0
+    while (i < rt_count(heard)):
+        var record = heard[i][1]
+        if dv_and((not (scope == "")), dv_and((scope == record.scope), dv_has(dv_find(topic, "origin_speakers", []), record.speaker))):
+            result = dv_explanation_merge(result, dv_single(record.source_event))
+        i = (i + 1)
+    return result
+
+fn dvs_public_literal_source(events, parent, subject):
+    var literal = ""
+    var result = ""
+    var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if (event.type == "speech_literal"):
+            if dv_has(event.parents, parent):
+                literal = event.id
+        i = (i + 1)
+    if (literal == ""):
+        false
+    else:
+        i = 0
+        while (i < rt_count(events)):
+            var event = events[i]
+            if dv_and((event.type == "listener_parse"), (event.actor == subject)):
+                if dv_and((dv_find(event.data, "source_event", "") == literal), dv_has(event.parents, literal)):
+                    result = literal
+            i = (i + 1)
+    return result

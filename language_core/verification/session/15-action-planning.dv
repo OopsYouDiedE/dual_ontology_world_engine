@@ -534,6 +534,8 @@ fn dvp_plan(actor, bindings, costs):
     var current_action = false
     var current_score = 0
     var current_value = []
+    var root_best = []
+    var best_after_successor_layer = []
     let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
     let initial_access = dvp_initial_access(actor)
     let initial_seen = dvp_state_key(actor.mind)
@@ -599,7 +601,7 @@ fn dvp_plan(actor, bindings, costs):
                             best_score = score
                             best_path = path
                             best = dvp_find_action(actions, path[0])
-                        if (depth + 1 < depth_limit) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
+                        if (depth + 1 < depth_limit) and not (depth == 1 and current_action != false) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
                             var name = action.predict_law
                             var adoptions = mind.adoptions
                             if dv_has_key(adoptions, name):
@@ -622,12 +624,18 @@ fn dvp_plan(actor, bindings, costs):
                                                 next_frontier = dvp_frontier_put(next_frontier, candidate_node)
                     i = (i + 1)
                 n = (n + 1)
-            if depth == 0 and current_action != false:
-                best = current_action
-                best_score = current_score
-                best_path = [current_action.id]
+            if depth == 0:
+                root_best = {"path": best_path, "net_score": best_score}
+                if current_action != false:
+                    if depth_limit < 2:
+                        stop = "current-affordance-depth-limit"
+                    else:
+                        if rt_count(next_frontier) == 0:
+                            stop = "current-affordance-no-successor"
+            if depth == 1 and current_action != false:
+                best_after_successor_layer = {"path": best_path, "net_score": best_score}
                 next_frontier = []
-                stop = "positive-current-affordance"
+                stop = "positive-current-after-successor-layer"
             frontier = next_frontier
             depth = (depth + 1)
     var local_2 = false
@@ -640,7 +648,7 @@ fn dvp_plan(actor, bindings, costs):
         local_3 = "duration-budget"
     else:
         local_3 = stop
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit), "current_affordance", {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"})
+    return dv_with_many(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit), "current_affordance", {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
 
 fn dvp_find_action(actions, id):
     var i = 0
