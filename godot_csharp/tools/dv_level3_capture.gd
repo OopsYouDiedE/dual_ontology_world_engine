@@ -27,9 +27,10 @@ func _run() -> void:
 		quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(directory)
-	_write("run.json", {"mode": mode, "time_scale": Engine.time_scale, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
+	_write("run.json", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
 	host = load("res://scenes/Host/Main.tscn").instantiate()
 	root.add_child(host)
+	host.engine.SetPlayerControlled(mode == "blind")
 	started = Time.get_ticks_msec()
 	RenderingServer.frame_post_draw.connect(_capture)
 	if mode == "detective":
@@ -39,7 +40,7 @@ func _run() -> void:
 
 func _process(_delta: float) -> bool:
 	if not is_instance_valid(host) or finishing: return false
-	if Time.get_ticks_msec() - started >= seconds * 1000.0:
+	if seconds > 0 and Time.get_ticks_msec() - started >= seconds * 1000.0:
 		_finish.call_deferred()
 		return false
 	var input_path := directory.path_join("input.json")
@@ -93,10 +94,16 @@ func _key(code: int, down: bool) -> void:
 func _capture() -> void:
 	if finishing or directory == "": return
 	var now := Time.get_ticks_msec()
-	if now - last_capture < 1000: return
+	if now - last_capture < 200: return
 	last_capture = now
 	var elapsed := now - started
-	root.get_texture().get_image().save_png(directory.path_join("frame-%09d.png" % elapsed))
+	var filename := "frame-%09d.png" % elapsed
+	root.get_texture().get_image().save_png(directory.path_join(filename))
+	var frames_path := directory.path_join("frames.jsonl")
+	var frames := FileAccess.open(frames_path, FileAccess.READ_WRITE if FileAccess.file_exists(frames_path) else FileAccess.WRITE)
+	frames.seek_end()
+	frames.store_line(JSON.stringify({"real_ms": elapsed, "file": filename}))
+	frames.close()
 	# This stream is for the main reviewer, never the blind player.
 	var record := {"real_ms": elapsed, "time_scale": Engine.time_scale, "snapshot": host.engine.Snapshot()}
 	var path := directory.path_join("measurement.jsonl")

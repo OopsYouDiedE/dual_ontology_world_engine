@@ -39,6 +39,19 @@ fn dvg_clock(time):
         text = rt_cat("0", text)
     return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
 
+fn dvg_presentation(state, viewer):
+    let result = dvs_session_presentation(state, viewer)
+    let actor = dv_find(result, "actor", "")
+    var display = ""
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == viewer:
+            let name = dv_read(state.actors[i].mind, c1_op_person_ref(actor, "name"))
+            if dv_uncontested(name):
+                display = name.value
+        i = i + 1
+    return dv_with(result, "speaker_name", display)
+
 fn dvg_people(state, viewer):
     let sprites = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
     var people = []
@@ -64,4 +77,4 @@ fn dvg_snapshot(state, viewer):
         resource = "res://scenes/Chapter2/Field/CampusMapView.tscn"
         placements = []
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": resource, "map": place.map, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": false, "initial_placements": placements, "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "pending": dvg_intent(state)}
+    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": resource, "map": place.map, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": placements, "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "pending": dvg_intent(state)}

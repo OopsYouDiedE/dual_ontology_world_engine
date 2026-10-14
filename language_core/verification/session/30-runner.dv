@@ -174,6 +174,8 @@ fn dvs_session_active(state):
 fn dvs_session_prepare(state):
     if dv_has_key(state, "pending"):
         return state
+    if dv_find(state, "awaiting_player", false) and dv_find(state, "player_selection", "") == "":
+        return state
     let story = state.story
     var physical = state.physical
     var actors = state.actors
@@ -203,15 +205,27 @@ fn dvs_session_prepare(state):
     if (not (0 < dv_find(actor.policy, "budget", 0))):
         idle = (idle + 1)
     else:
-        rt_print(rt_json_stringify({"phase": "subject-cognition", "actor": actor.id, "game_time": time}))
-        actor = dv_with(actor, "policy", dv_with(actor.policy, "remaining_game_time", (horizon - time)))
-        actor = dvs_notice_peers(actor, physical, actors, events, time, parent)
-        actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
-        actor = dvs_capture_public_topics(actor, events, time, parent)
-        actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
-        actor = dvs_prepare_speech_choices(actor, events, time, parent)
+        if dv_find(state, "player_selection", "") == "":
+            rt_print(rt_json_stringify({"phase": "subject-cognition", "actor": actor.id, "game_time": time}))
+            actor = dv_with(actor, "policy", dv_with(actor.policy, "remaining_game_time", (horizon - time)))
+            actor = dvs_notice_peers(actor, physical, actors, events, time, parent)
+            actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+            actor = dvs_capture_public_topics(actor, events, time, parent)
+            actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
+            actor = dvs_prepare_speech_choices(actor, events, time, parent)
         rt_print(rt_json_stringify({"phase": "subject-planning", "actor": actor.id, "game_time": time}))
-        var choice = dvs_choose(actor, bindings, costs)
+        var choice = false
+        if dv_find(state, "player_actor", "") == actor.id:
+            let selection = dv_find(state, "player_selection", "")
+            if selection == "" and 0 < rt_count(dvs_player_options(actor)):
+                actors = dvs_replace(actors, index, actor)
+                return dvs_control_state(state, actors, events, index, dv_find(state, "player_actor", ""), "", true)
+            if selection == "":
+                choice = {"action": false, "score": 0, "plan_expansions": 0, "plans": [], "dependency_cache": dv_find(actor, "dependency_cache", false)}
+            else:
+                choice = dvs_player_choice(actor, selection)
+        else:
+            choice = dvs_choose(actor, bindings, costs)
         var action = choice.action
         actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
         actor = dv_with(actor, "policy", dv_with(actor.policy, "plan_budget", (dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)))
@@ -242,9 +256,9 @@ fn dvs_session_prepare(state):
                     var quote = dv_action_cost_quote(ledger, physical, dv_find(action, "law", action.id), action_event, bounds)
                     parent = dvs_event(events, "cost_quote", id, time, dv_single(parent), quote)
                     actors = dvs_replace(actors, index, actor)
-                    return {"story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "pending": {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": id, "mind": mind, "model": model, "action_event": action_event, "ledger": ledger, "quote": quote, "choice": choice}}
+                    return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": "", "pending": {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": id, "mind": mind, "model": model, "action_event": action_event, "ledger": ledger, "quote": quote, "choice": choice}}
     actors = dvs_replace(actors, index, actor)
-    return {"story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial}
+    return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
 
 fn dvs_session_complete(state, receipt):
     let story = state.story
@@ -425,7 +439,7 @@ fn dvs_session_complete(state, receipt):
     executed = (executed + 1)
     idle = 0
     actors = dvs_replace(actors, index, actor)
-    return {"story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial}
+    return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
 
 fn dvs_session_close(state):
     let story = state.story

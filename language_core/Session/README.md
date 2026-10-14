@@ -17,3 +17,5 @@ The existing continuous logic runner uses the same prepare/complete boundary wit
 Presentation is filtered by the requested subject: its own completed action, an actually parsed utterance, or an actual observation. Remote private action text is not published to that subject.
 
 `OpenCampaign()` composes production modules from `game/modules.json`; `Snapshot(viewer)` supplies native location and visual bindings. Content availability does not count as crossing a doorway. The generated source manifest records module and generated-code hashes. Exact rational receipt values use the tagged `$dv_rational` representation.
+
+`OpenCampaign(player)` optionally assigns the named subject to human control. An empty player keeps autonomous decisions. `Prepare(selection)` accepts an action ID only while DV awaits that subject's choice, validates the same subject-local eligibility, and prepares the normal receipt. Waiting and resuming do not repeat cognition or execute a second action. Presentation names come from the native campaign binding; the host does not supply story text.

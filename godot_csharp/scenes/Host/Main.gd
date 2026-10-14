@@ -123,8 +123,10 @@ func _drain() -> void:
 				var result: Dictionary = ev.presentation
 				var lines: Array = []
 				if bool(result.get("visible", false)):
-					if str(result.get("surface", "")) != "": lines.append({"text": result.surface, "speaker": ""})
-					for text in result.get("lines", []): lines.append({"text": str(text), "speaker": ""})
+					if str(result.get("surface", "")) != "": lines.append({"text": result.surface, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
+					for text in result.get("lines", []):
+						for paragraph in str(text).split("\n", false):
+							lines.append({"text": paragraph, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
 				if not lines.is_empty(): await ui.present({"kind": "lines", "lines": lines})
 				dispatch.call_deferred({"kind": "dv_next"})
 			"view": _view(ev)
@@ -157,6 +159,9 @@ func _dv_events(events: Array) -> void:
 	_drain.call_deferred()
 
 func _dv_execute(intent: Dictionary) -> void:
+	if str(intent.get("status", "")) == "awaiting_input":
+		ui.present({"kind": "candidates", "title": "接下来做什么", "options": intent.options})
+		return
 	if str(intent.get("status", "")) != "prepared": return
 	_dv_intent = intent
 	_dv_serial += 1

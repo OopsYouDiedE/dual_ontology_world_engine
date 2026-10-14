@@ -74,6 +74,9 @@ fn dvp_owner_requirements(actor, action, mind):
 fn dvp_eligible(actor, action, mind, relevant):
     if (not dvp_eligible_base(actor, action, mind, relevant)):
         return false
+    return dvp_eligible_after_base(actor, action, mind, relevant)
+
+fn dvp_eligible_after_base(actor, action, mind, relevant):
     if not dvp_owner_requirements(actor, action, mind):
         return false
     if not dvp_normative_ready(actor, action, mind):

@@ -8,7 +8,7 @@ public sealed class DvSession
     private object state;
     private DvSession(object value) => state = value;
 
-    public static DvSession OpenCampaign() => new(DVProgram.CampaignOpen());
+    public static DvSession OpenCampaign(string player = "") => new(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player));
     public string Snapshot(string viewer) => HostJson(DVProgram.CampaignSnapshot(state, viewer));
 
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(R.json_parse(scenario)));
@@ -16,8 +16,9 @@ public sealed class DvSession
     public string Save() => JsonSerializer.Serialize(SnapshotValue(state));
     public bool Active => R.Bool(DVProgram.SessionActive(state));
 
-    public string Prepare()
+    public string Prepare(string selection = "")
     {
+        if (selection.Length > 0) state = DVProgram.SelectPlayer(state, selection);
         state = DVProgram.SessionPrepare(state);
         return HostJson(DVProgram.SessionIntent(state));
     }
@@ -73,12 +74,14 @@ public sealed class DvSession
 public static partial class DVProgram
 {
     internal static object CampaignOpen() => F_dvg_open();
+    internal static object SetPlayer(object state, object actor) => F_dvs_set_player(state, actor);
+    internal static object SelectPlayer(object state, object id) => F_dvs_select_player(state, id);
     internal static object CampaignSnapshot(object state, object viewer) => F_dvg_snapshot(state, viewer);
     internal static object SessionOpen(object scenario) => F_dvs_session_open(scenario, "enabled");
     internal static object SessionActive(object state) => F_dvs_session_active(state);
     internal static object SessionPrepare(object state) => F_dvg_prepare(state);
     internal static object SessionComplete(object state, object receipt) => F_dvg_complete(state, receipt);
     internal static object SessionIntent(object state) => F_dvg_intent(state);
-    internal static object SessionPresentation(object state, object viewer) => F_dvs_session_presentation(state, viewer);
+    internal static object SessionPresentation(object state, object viewer) => F_dvg_presentation(state, viewer);
     internal static object SessionClose(object state) => F_dvs_session_close(state);
 }

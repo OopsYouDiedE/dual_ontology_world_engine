@@ -13,6 +13,8 @@ public partial class GameEngine : Node
     private DvSession? session;
     private bool busy;
     private bool awaitingReceipt;
+    private bool playerControlled = true;
+    public void SetPlayerControlled(bool value) => playerControlled = value;
     private readonly List<string> visible = [];
     private readonly List<string> inputs = [];
     public GDict Snapshot() => session is null ? new() : Parse(session.Snapshot("detective"));
@@ -23,6 +25,7 @@ public partial class GameEngine : Node
         inputs.Add(Json.Stringify(input));
         if (kind == "start") { StartCampaign(); return new(); }
         if (kind == "view_ready" || kind == "dv_next") Prepare();
+        if (kind == "select") Prepare(input["choice_id"].AsString());
         if (kind == "dv_complete") Complete(input["receipt"].AsGodotDictionary());
         return new();
     }
@@ -32,7 +35,7 @@ public partial class GameEngine : Node
         busy = true;
         try
         {
-            var opening = Task.Run(DvSession.OpenCampaign);
+            var opening = Task.Run(() => DvSession.OpenCampaign(playerControlled ? "detective" : ""));
             work = opening;
             session = await opening;
             var snapshot = Snapshot();
@@ -41,13 +44,13 @@ public partial class GameEngine : Node
         catch (Exception error) { Report(error); }
         finally { busy = false; }
     }
-    private async void Prepare()
+    private async void Prepare(string selection = "")
     {
         if (busy || closing || awaitingReceipt || session is null) return;
         busy = true;
         try
         {
-            var preparing = Task.Run(session.Prepare);
+            var preparing = Task.Run(() => session.Prepare(selection));
             work = preparing;
             var intent = Parse(await preparing);
             awaitingReceipt = intent.GetValueOrDefault("status", "").AsString() == "prepared";

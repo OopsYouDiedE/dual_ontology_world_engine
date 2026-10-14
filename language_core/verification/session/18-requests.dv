@@ -40,7 +40,7 @@ fn dvs_record_request(actor, action):
 fn dvs_request_context(actor, action, target):
     let visible = dv_find(dv_find(actor, "visible_context", []), target, false)
     if (visible != false):
-        return visible
+        return {"location": visible.location, "inputs": dvs_sim_inputs(actor.mind, action.precondition)}
     let transport = dv_find(action, "request_transport", false)
     if (transport == false):
         return false

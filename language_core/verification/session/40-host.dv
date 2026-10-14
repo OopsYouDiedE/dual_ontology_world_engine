@@ -47,6 +47,8 @@ fn dvs_present_lines(state, viewer, presentation):
 fn dvs_session_intent(state):
     let pending = dv_find(state, "pending", false)
     if pending == false:
+        if dv_find(state, "awaiting_player", false):
+            return {"status": "awaiting_input", "active": true, "game_time": state.physical.time, "options": dvs_player_options(state.actors[state.cursor])}
         return {"status": "idle", "active": dvs_session_active(state), "game_time": state.physical.time}
     return {"status": "prepared", "actor": pending.id, "action_event": pending.action_event, "action": pending.action, "bounds": pending.quote.bounds, "execution_cost": pending.model.actual, "game_time": pending.time}
 
@@ -72,3 +74,37 @@ fn dvs_session_presentation(state, viewer):
             return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation)}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
+
+// Human choice uses the same subject-local admission and the same prepared receipt.
+fn dvs_set_player(state, actor):
+    dv_require(not dv_has_key(state, "pending"), "Cannot change controller during execution")
+    return dvs_control_state(state, state.actors, state.events, state.cursor, actor, "", false)
+
+fn dvs_control_state(state, actors, events, cursor, player, selection, waiting):
+    return {"story": state.story, "physical": state.physical, "actors": actors, "events": events, "bindings": state.bindings, "costs": state.costs, "run_start": state.run_start, "duration_budget": state.duration_budget, "horizon": state.horizon, "duration_blocked": state.duration_blocked, "limit": state.limit, "cursor": cursor, "executed": state.executed, "idle": state.idle, "status": state.status, "initial": state.initial, "player_actor": player, "player_selection": selection, "awaiting_player": waiting}
+
+fn dvs_player_options(actor):
+    var result = []
+    let refs = dvp_goal_refs(actor)
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if dvp_eligible(actor, action, actor.mind, refs):
+            let label = dv_find(action, "label", dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
+            if label != "":
+                rt_push(result, {"id": action.id, "label": label, "available": true})
+        i = i + 1
+    return result
+
+fn dvs_select_player(state, id):
+    dv_require(dv_find(state, "awaiting_player", false), "Player input is not currently requested")
+    let actor = state.actors[state.cursor]
+    let action = dvp_find_action(actor.actions, id)
+    dv_require(action != false, "Unknown player action")
+    dv_require(dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
+    return dvs_control_state(state, state.actors, state.events, state.cursor, dv_find(state, "player_actor", ""), id, false)
+
+fn dvs_player_choice(actor, id):
+    let action = dvp_find_action(actor.actions, id)
+    dv_require(action != false and dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
+    return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}

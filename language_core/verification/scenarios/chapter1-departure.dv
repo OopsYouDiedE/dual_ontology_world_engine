@@ -204,6 +204,10 @@ fn c1dep_install_scene(scene):
             rt_push(channels, {"target": "demon", "channel": "copper.living", "available_when": c1_at(actor.id, "hall"), "basis": [c1dep_source("08_终局.story", 46, "对着铜口询问")]})
             j = 0
             while j < rt_count(actions):
+                if dv_has_key(actions[j], "speech"):
+                    let listeners = dv_find(actions[j], "listeners", [])
+                    if not dv_has(listeners, "demon"):
+                        actions = dvs_replace(actions, j, dv_with(actions[j], "listeners", dv_append(listeners, "demon")))
                 let request = dv_find(dv_find(actions[j], "speech", []), "request", false)
                 if request != false:
                     if request.target == "demon":

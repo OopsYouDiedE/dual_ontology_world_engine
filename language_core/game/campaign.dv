@@ -1,7 +1,7 @@
 // Production composition. Chapter content owns its transition conditions.
 fn dvg_open():
     let scene = dv_with_many(c1dep_install_scene(c1_campaign_scene()), {"chapter": 1, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
-    return dvs_session_open(scene, "enabled")
+    return dvs_session_open(c1_player_scene(scene), "enabled")
 
 fn dvg_chapter_two_ready(state):
     let stages = ["identity", "voice_source", "words", "trust"]
@@ -35,7 +35,7 @@ fn dvg_prepare(state):
                 rt_push(actors, actor)
             i = i + 1
         current = dv_with(current, "actors", actors)
-    while dvs_session_active(current) and dv_find(current, "pending", false) == false:
+    while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
         current = dvs_session_prepare(current)
     return current
 

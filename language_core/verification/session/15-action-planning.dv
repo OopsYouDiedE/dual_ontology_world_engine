@@ -266,7 +266,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                     if (0 < rt_count(request)):
                         local_2 = (dvs_request_context(actor, action, request.requester) != false)
                     else:
-                        local_2 = dv_and((not dv_has(used, id)), dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")))
+                        local_2 = dv_and((not dv_has(used, id)), dv_or(dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")), dv_find(action, "opportunity_requirement", false) != false and dvp_communication_progress(actor, action)))
                 else:
                     if dv_has_key(action.speech, "request"):
                         var context = dvs_request_context(actor, action, action.speech.request.target)
@@ -364,6 +364,71 @@ fn dvp_action_value(actor, action, bindings, relevant, probes):
                         verification = (verification + 1)
     let achievement = dvp_achievement_value(actor, action)
     return {"information": information, "verification": verification, "progress": progress, "achievement": achievement, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
+
+// Access to an already owned communication goal is not its fulfillment.
+// Predict only the subject's adopted effect; never supply a listener or an answer.
+fn dvp_opportunities(actor, action):
+    if action.kind != "move":
+        return []
+    let goals = dv_find(actor.policy, "goals", [])
+    var pending = []
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "communicate" and dv_find(goal, "scope", "") == "personal" and dv_find(goal, "owner", "") == actor.id:
+            let method = dvp_find_action(actor.actions, dv_find(goal, "method_id", ""))
+            if method != false and 0 < rt_count(dv_find(goal, "basis", [])) and not dv_has(dv_find(actor, "used", []), method.id):
+                if not dv_has(dv_find(actor, "planning_opportunities", []), i) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) != "true":
+                    if not dv_find(goal, "requires_argument", false) or (dv_find(method, "speech_from_argument", false) and dv_find(method, "argument_available", false)):
+                        rt_push(pending, {"key": i, "goal": goal, "method": method})
+        i = i + 1
+    let adoption = dv_find(actor.mind.adoptions, dv_find(action, "predict_law", ""), false)
+    if rt_count(pending) == 0 or adoption == false:
+        return []
+    if not adoption.active or adoption.mode != "predict":
+        return []
+    i = 0
+    while i < rt_count(adoption.law.effects):
+        if not dv_same_local_ref(actor.id, adoption.law.effects[i].ref, actor.location_ref):
+            return []
+        i = i + 1
+    let prediction = dv_predict(dv_with(actor.mind, "domain", "mind"), action.predict_law, "opportunity-forecast", dv_find(actor.mind, "time", 0), actor.mind.revision)
+    if prediction.status != "applied":
+        return []
+    var result = []
+    let predicted_actor = dvp_actor_view(actor, prediction.world)
+    let before = dv_read(actor.mind, actor.location_ref)
+    let after = dv_read(prediction.world, actor.location_ref)
+    if not dv_uncontested(before) or not dv_uncontested(after) or before.value == after.value:
+        return []
+    i = 0
+    while i < rt_count(pending):
+        let item = pending[i]
+        if dv_truth(prediction.world, dv_find(item.goal, "available_when", dv_true())) == "true" and dv_truth(prediction.world, item.method.precondition) == "true":
+            let method = dv_without(item.method, "opportunity_requirement")
+            let spatial = dv_find(item.method, "opportunity_requirement", false)
+            if spatial != false:
+                if after.value == spatial.location and dvp_eligible_base(predicted_actor, item.method, prediction.world, dvp_goal_refs(predicted_actor)) and dvp_eligible_after_base(predicted_actor, method, prediction.world, dvp_goal_refs(predicted_actor)):
+                    rt_push(result, {"key": item.key, "method_id": item.method.id, "weight": dv_find(item.goal, "weight", 1), "goal_basis": item.goal.basis, "prediction_basis": adoption.basis, "position_before": before, "position_after": after, "nonspatial_eligible": true, "availability_before": dv_truth(actor.mind, dv_find(item.goal, "available_when", dv_true())), "goal_available_after": "true", "access_only": true, "based_on": "subject_prediction", "method_eligible": dvp_eligible(predicted_actor, item.method, prediction.world, dvp_goal_refs(predicted_actor)), "participants_status": "not-predicted", "unresolved_spatial_requirement": spatial, "fulfillment": false})
+        i = i + 1
+    return result
+
+fn dvp_initial_access(actor):
+    let goals = dv_find(actor.policy, "goals", [])
+    let position = dv_read(actor.mind, actor.location_ref)
+    var result = []
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "communicate" and dv_find(goal, "scope", "") == "personal" and dv_find(goal, "owner", "") == actor.id:
+            let method = dvp_find_action(actor.actions, dv_find(goal, "method_id", ""))
+            if method != false and dv_uncontested(position):
+                let spatial = dv_find(method, "opportunity_requirement", false)
+                if spatial != false:
+                    if position.value == spatial.location:
+                        rt_push(result, i)
+        i = i + 1
+    return result
 
 fn dvp_state_key(mind):
     var objects = mind.objects
@@ -467,9 +532,11 @@ fn dvp_plan(actor, bindings, costs):
     var best_score = -100000
     var best_path = []
     let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
-    var init_key = rt_json_stringify({"state": dvp_state_key(actor.mind), "achievements": initial_achievements})
+    let initial_access = dvp_initial_access(actor)
+    let initial_seen = dvp_state_key(actor.mind)
+    var init_key = rt_json_stringify({"state": dvp_state_key(actor.mind), "achievements": initial_achievements, "opportunities": initial_access})
     var plans = []
-    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "seen": dv_single(init_key), "key": init_key, "achievements": initial_achievements})
+    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
     var depth = 0
     var time_blocked = 0
     var stop = "complete-depth"
@@ -489,6 +556,7 @@ fn dvp_plan(actor, bindings, costs):
                 var mind = frontier[n].mind
                 var node_actor = dvp_actor_view(actor, mind)
                 rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
+                rt_push(node_actor, dv_pair("planning_opportunities", node.opportunities))
                 expanded = (expanded + 1)
                 while (i < rt_count(actions)):
                     var action = actions[i]
@@ -506,6 +574,15 @@ fn dvp_plan(actor, bindings, costs):
                         local_1 = false
                     if local_1:
                         var value = dvp_action_value(node_actor, action, bindings, relevant, probes)
+                        let opportunities = dvp_opportunities(node_actor, action)
+                        var opportunity_keys = node.opportunities
+                        var opportunity_value = 0
+                        var k = 0
+                        while k < rt_count(opportunities):
+                            opportunity_keys = dv_append(opportunity_keys, opportunities[k].key)
+                            opportunity_value = opportunity_value + opportunities[k].weight
+                            k = k + 1
+                        value = dv_with_many(value, {"opportunity": opportunity_value, "opportunity_evidence": opportunities, "value": value.value + opportunity_value * dv_find(actor.policy, "progress_weight", 1)})
                         var cost = dv_get(costs, action.kind).actual
                         var path = dv_append(node.path, action.id)
                         var score = 0
@@ -525,11 +602,12 @@ fn dvp_plan(actor, bindings, costs):
                                     if (prediction.status == "applied"):
                                         var predicted = prediction.world
                                         let achieved = dvp_satisfied_goals(actor, predicted, node.achievements)
-                                        var pred_key = rt_json_stringify({"state": dvp_state_key(predicted), "achievements": achieved})
-                                        if dv_has(node.seen, pred_key):
+                                        var pred_key = rt_json_stringify({"state": dvp_state_key(predicted), "achievements": achieved, "opportunities": opportunity_keys})
+                                        let seen_key = dvp_state_key(predicted)
+                                        if dv_has(node.seen, seen_key):
                                             false
                                         else:
-                                            var candidate_node = {"mind": predicted, "path": path, "score": score, "seen": dv_append(node.seen, pred_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved}
+                                            var candidate_node = {"mind": predicted, "path": path, "score": score, "seen": dv_append(node.seen, seen_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": opportunity_keys}
                                             if dvp_dominated(visited, candidate_node):
                                                 false
                                             else:

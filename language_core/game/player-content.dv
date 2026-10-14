@@ -1,0 +1,58 @@
+// Presentation migrated from the existing first-chapter authored cards and routes.
+// Labels offer an interaction, not its unobserved result. Card prose is post-execution only.
+fn c1_ui_ends(text, suffix):
+    return rt_length(suffix) <= rt_length(text) and rt_slice(text, rt_length(text) - rt_length(suffix), rt_length(suffix)) == suffix
+
+fn c1_player_scene(scene):
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        var actions = []
+        var j = 0
+        while j < rt_count(actor.actions):
+            rt_push(actions, c1_player_display(actor.actions[j]))
+            j = j + 1
+        rt_push(actors, dv_with(actor, "actions", actions))
+        i = i + 1
+    return dv_with(scene, "actors", actors)
+
+fn c1_player_display(action):
+    var result = action
+    if action.kind == "move" and dv_has_key(action, "travel"):
+        let rooms = {"R05": "自己的卧室", "R06": "霍铎的卧室", "R07": "沈鼎的卧室", "R08": "苏泠的卧室", "hall": "活动厅", "foyer": "门厅", "pantry": "茶水间", "corridor": "走廊"}
+        if dv_has_key(rooms, action.travel.to):
+            result = dv_with(result, "label", rt_cat("前往", dv_get(rooms, action.travel.to)))
+    let cards = [
+        {"id": "E1", "title": "隔离门", "text": c1_visible_E1()},
+        {"id": "E2", "title": "墙角的木楔与门底的灰", "text": c1_visible_E2()},
+        {"id": "E3", "title": "灰上的鞋印", "text": c1_visible_E3()},
+        {"id": "E4", "title": "门底的湿布", "text": c1_visible_E4()},
+        {"id": "E5", "title": "地上的音叉", "text": c1_visible_E5()},
+        {"id": "E6", "title": "书桌上的乐谱", "text": c1_visible_E6()},
+        {"id": "E7", "title": "长桌上的石板", "text": c1_visible_E7()},
+        {"id": "E8", "title": "铜口", "text": c1_visible_E8()},
+        {"id": "E9", "title": "水槽里的杯子", "text": c1_visible_E9()},
+        {"id": "E10", "title": "碗柜上的罐子", "text": c1_visible_E10()},
+        {"id": "E11", "title": "书架", "text": c1_visible_E11()},
+        {"id": "E12", "title": "衣架上的风衣", "text": c1_visible_E12()}]
+    var i = 0
+    while i < rt_count(cards):
+        let card = cards[i]
+        if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
+            result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation("detective", "visible-inspection", [card.text])})
+        i = i + 1
+    let named = {".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻"}
+    i = 0
+    while i < rt_count(named):
+        if c1_ui_ends(action.id, named[i][0]):
+            result = dv_with(result, "label", named[i][1])
+        i = i + 1
+    if action.kind == "answer":
+        let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在茶水间", "V3_0": "门外没有人，声音经铜管传来", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何不听门边的劝阻", "original_q2_complete": "提交完整推演", "original_q2_partial": "说明声音的来源"}
+        let id = dv_find(action, "answer_id", "")
+        if dv_has_key(answers, id):
+            result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
+    if c1_ui_ends(action.id, ".reask_question"):
+        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current")}]}]})
+    return result
