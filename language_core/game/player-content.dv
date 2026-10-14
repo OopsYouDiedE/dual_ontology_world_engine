@@ -42,7 +42,7 @@ fn c1_player_display(action):
         if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
             result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation("detective", "visible-inspection", [card.text])})
         i = i + 1
-    let named = {".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻"}
+    let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
     i = 0
     while i < rt_count(named):
         if c1_ui_ends(action.id, named[i][0]):
@@ -54,5 +54,26 @@ fn c1_player_display(action):
         if dv_has_key(answers, id):
             result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
     if c1_ui_ends(action.id, ".reask_question"):
-        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current")}]}]})
+        let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust"), "original_q2_complete": "闩门之时，此人可曾听见门外的呼喊？"}
+        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
+    if c1_ui_ends(action.id, ".compare_sole"):
+        result = dv_with(result, "presentation", {"lines": [{"template": "马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。", "when": c1_statement("boots_fit")} ]})
+    if c1_ui_ends(action.id, ".identify-own-lens"):
+        result = dv_with(result, "presentation", {"lines": [{"template": "我的口袋有放大镜。", "when": c1_statement("lens_mine")} ]})
+    if c1_ui_ends(action.id, ".opening.wear-coat"):
+        result = dv_with(result, "presentation", {"lines": [{"template": "你穿上了风衣。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
+    if c1_ui_ends(action.id, ".sound_trial"):
+        result = dv_with(result, "presentation", {"lines": [{"template": "声路试验已做完。", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
     return result
+
+fn c1_player_replay_summary(actor):
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    while i < rt_count(candidates):
+        let candidate = candidates[i]
+        if dvs_working_explanation(actor, candidate):
+            let model = dvs_cached_model(actor, candidate)
+            if dv_explanation_model_complete(model, "explained", actor.mind.revision):
+                return "重演结果：已有解释与现有观察相符。这仍是推演，尚不是正式答辩。"
+        i = i + 1
+    return "这次重演尚未形成能够完整说明现有观察的解释。"

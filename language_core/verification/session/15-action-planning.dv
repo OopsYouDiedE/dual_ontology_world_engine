@@ -531,6 +531,9 @@ fn dvp_plan(actor, bindings, costs):
     var best = false
     var best_score = -100000
     var best_path = []
+    var current_action = false
+    var current_score = 0
+    var current_value = []
     let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
     let initial_access = dvp_initial_access(actor)
     let initial_seen = dvp_state_key(actor.mind)
@@ -587,6 +590,10 @@ fn dvp_plan(actor, bindings, costs):
                         var path = dv_append(node.path, action.id)
                         var score = 0
                         score = (node.score + (value.value - (cost.time * dv_find(actor.policy, "time_cost", 0.01))))
+                        if depth == 0 and action.kind != "move" and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
+                            current_action = action
+                            current_score = score
+                            current_value = value
                         rt_push(plans, dv_with(dv_with(dv_with({"path": path, "score": score, "value": value, "relevant_refs": relevant}, "probe_refs", probes), "mind_revision", actor.mind.revision), "prediction_basis", dv_find(node, "prediction_basis", [])))
                         if (best_score < score):
                             best_score = score
@@ -615,6 +622,12 @@ fn dvp_plan(actor, bindings, costs):
                                                 next_frontier = dvp_frontier_put(next_frontier, candidate_node)
                     i = (i + 1)
                 n = (n + 1)
+            if depth == 0 and current_action != false:
+                best = current_action
+                best_score = current_score
+                best_path = [current_action.id]
+                next_frontier = []
+                stop = "positive-current-affordance"
             frontier = next_frontier
             depth = (depth + 1)
     var local_2 = false
@@ -627,7 +640,7 @@ fn dvp_plan(actor, bindings, costs):
         local_3 = "duration-budget"
     else:
         local_3 = stop
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit)
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit), "current_affordance", {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"})
 
 fn dvp_find_action(actions, id):
     var i = 0

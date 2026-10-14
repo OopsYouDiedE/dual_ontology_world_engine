@@ -40,15 +40,18 @@ fn dvg_clock(time):
     return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
 
 fn dvg_presentation(state, viewer):
-    let result = dvs_session_presentation(state, viewer)
+    var result = dvs_session_presentation(state, viewer)
     let actor = dv_find(result, "actor", "")
     var display = ""
     var i = 0
     while i < rt_count(state.actors):
         if state.actors[i].id == viewer:
-            let name = dv_read(state.actors[i].mind, c1_op_person_ref(actor, "name"))
+            let subject = state.actors[i]
+            let name = dv_read(subject.mind, c1_op_person_ref(actor, "name"))
             if dv_uncontested(name):
                 display = name.value
+            if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
+                result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
         i = i + 1
     return dv_with(result, "speaker_name", display)
 

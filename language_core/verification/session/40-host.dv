@@ -56,8 +56,11 @@ fn dvs_session_presentation(state, viewer):
     var i = rt_count(state.events) - 1
     var perceived = false
     var heard = false
+    var judgment = false
     while 0 <= i:
         let event = state.events[i]
+        if event.actor == viewer and (event.type == "answer_accepted" or event.type == "answer_rejected"):
+            judgment = {"status": event.type, "event_id": event.id, "game_time": event.time}
         if event.actor == viewer and (event.type == "listener_parse" or event.type == "observation"):
             perceived = true
         if event.actor == viewer and event.type == "listener_parse":
@@ -71,7 +74,7 @@ fn dvs_session_presentation(state, viewer):
             if applied and visible:
                 surface = dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", ""))
                 presentation = dv_find(action, "presentation", [])
-            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation)}
+            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
 

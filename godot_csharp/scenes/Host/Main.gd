@@ -127,6 +127,9 @@ func _drain() -> void:
 					for text in result.get("lines", []):
 						for paragraph in str(text).split("\n", false):
 							lines.append({"text": paragraph, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
+				var judgment = result.get("judgment", false)
+				if judgment is Dictionary:
+					lines.append({"text": "本次答辩已获接受。" if str(judgment.status) == "answer_accepted" else "本次答辩未获接受。", "speaker": ""})
 				if not lines.is_empty(): await ui.present({"kind": "lines", "lines": lines})
 				dispatch.call_deferred({"kind": "dv_next"})
 			"view": _view(ev)
