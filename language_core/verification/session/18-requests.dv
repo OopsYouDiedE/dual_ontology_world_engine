@@ -37,10 +37,21 @@ fn dvs_record_request(actor, action):
     else:
         return dv_with(actor, "request_contexts", dv_with(dv_find(actor, "request_contexts", []), action.id, dvs_request_context(actor, action, request.target)))
 
+fn dvs_request_inputs(mind, proposition):
+    let refs = dvs_sim_refs(proposition)
+    var inputs = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        rt_push(inputs, {"ref": refs[i], "known": dv_find(cell, "known", false), "value": dv_find(cell, "value", false), "conflicted": dv_find(cell, "conflicted", false)})
+        i = i + 1
+    return {"inputs": inputs, "truth": dv_truth(mind, proposition)}
+
 fn dvs_request_context(actor, action, target):
+    let topic = dv_find(dv_find(dv_find(action, "speech", []), "request", []), "topic", dv_find(action, "response_topic", ""))
     let visible = dv_find(dv_find(actor, "visible_context", []), target, false)
     if (visible != false):
-        return {"location": visible.location, "inputs": dvs_sim_inputs(actor.mind, action.precondition)}
+        return {"target": target, "topic": topic, "location": visible.location, "inputs": dvs_request_inputs(actor.mind, action.precondition)}
     let transport = dv_find(action, "request_transport", false)
     if (transport == false):
         return false
@@ -50,7 +61,7 @@ fn dvs_request_context(actor, action, target):
         let channel = channels[i]
         if (channel.target == target and channel.channel == transport.channel and 0 < rt_count(channel.basis)):
             if (dv_truth(actor.mind, channel.available_when) == "true"):
-                return {"channel": channel.channel, "basis": channel.basis, "inputs": dvs_sim_inputs(actor.mind, channel.available_when)}
+                return {"target": target, "topic": topic, "channel": channel.channel, "basis": channel.basis, "inputs": dvs_request_inputs(actor.mind, action.precondition), "channel_inputs": dvs_request_inputs(actor.mind, channel.available_when)}
         i = i + 1
     return false
 

@@ -110,7 +110,14 @@ func dispatch(input: Dictionary) -> void:
 func _field_input(input: Dictionary) -> void:
 	if _closing or _dv_intent.is_empty(): return
 	if str(input.get("kind", "")) == "daily" and int(input.serial) == _dv_serial:
-		_dv_complete("applied" if str(input.status) == "arrived" else "rejected", input)
+		var arrived := str(input.status) == "arrived"
+		var travel: Dictionary = _dv_intent.action.get("travel", {})
+		if travel.has("station"):
+			var destination: Dictionary = _dv_intent.get("destination", {})
+			arrived = arrived and str(input.get("who", "")) == str(_dv_intent.actor) and str(input.get("action", "")) == str(_dv_intent.action.id)
+			arrived = arrived and str(input.get("station", "")) == str(travel.station) and str(input.get("room", "")) == str(destination.get("execution_room", destination.get("room", "")))
+			arrived = arrived and input.has("arrival_error") and float(input.get("arrival_error", 5.0)) <= 4.0
+		_dv_complete("applied" if arrived else "rejected", input)
 
 func _drain() -> void:
 	if _draining or _closing: return

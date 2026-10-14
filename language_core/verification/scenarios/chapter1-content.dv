@@ -1567,6 +1567,28 @@ fn c1_sound_action(actor):
 fn c1_loss_testimony(actor):
     return c1_once(c1_observe_as(c1_action(rt_cat(actor, ".loss_testimony"), "talk", dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true), dv_all(dv_list3(c1_at(actor, "hall"), c1_at("su", "hall"), dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true))), "", dv_single(c1_knowledge("heads_lost")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 89, "sound_test.007")), "testimony", "su", 0.9))
 
+fn c1_latch_contact_ref():
+    return dv_ref("ritual", "state", "present_latch_contact.detective")
+
+fn c1_latch_contact_source():
+    return c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", 161, "recall_detective.002; bodily-flash-only")
+
+axiom c1_latch_contact_law():
+    return dv_axiom("c1_latch_contact_law", 1, dv_all(dv_pair(c1_at("detective", "foyer"), dv_fact(c1_latch_contact_ref(), false))), dv_single(dv_assign(c1_latch_contact_ref(), true)))
+
+fn c1_latch_contact_method(world, actor, mode):
+    if actor != "detective":
+        return world
+    return dv_adopt(world, c1_method("detective.touch_latch", c1_latch_contact_law()), mode, 1, dv_single(c1_latch_contact_source()))
+
+fn c1_latch_contact_action():
+    let known = dv_all([c1_at("detective", "foyer"), c1_statement("bolt_down"), dv_fact(c1_latch_contact_ref(), false)])
+    let physical = dv_all(dv_pair(c1_at("detective", "foyer"), dv_fact(c1_latch_contact_ref(), false)))
+    let grants = [c1_latch_contact_ref(), c1_knowledge("recalled_bolt"), c1_knowledge("recalled_trust")]
+    var action = c1_observe_as(c1_action("detective.touch_latch", "move", known, physical, "detective.touch_latch", grants, c1_latch_contact_source()), "recall", "detective", 0.85)
+    action = dv_with_many(action, {"travel": {"from": "foyer", "to": "foyer", "station": "site:E1"}, "predict_law": "detective.touch_latch", "grant_observation_sources": [{"ref": c1_latch_contact_ref(), "source": "perception", "origin": "own-executed-contact", "trust": 1}], "presentation": {"actor": "detective", "voice": "bodily-flash", "publish_after": "actual-applied-execution", "knowledge_effect": "none", "lines": [{"template": "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。", "bindings": []}, {"template": "霍铎说闩。我就闩了。……我信他。", "bindings": []}, {"template": "一句转述，我就去闩了门。我凭的是什么？", "bindings": []}]}})
+    return action
+
 fn c1_replay_action(actor):
     return c1_action(rt_cat(actor, ".replay"), "replay", c1_statement("bolt_down"), dv_true(), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story", 340, "replay"))
 
@@ -1628,10 +1650,12 @@ fn c1_physical_world():
     world = dv_add_object(world, c1_question_object())
     world = dv_add_object(world, dv_object("coat", "physical", {"state": [], "identity": dv_single(dv_pair("owner", dv_field("detective")))}))
     world = dv_add_object(world, c1_state_object("ritual", dv_single(dv_pair("sound_trial_done", dv_field(false)))))
+    world = dv_store(world, c1_latch_contact_ref(), dv_field(false))
     while (i < rt_count(people)):
         var actor = people[i]
         world = dv_add_object(world, c1_position(actor, "hall"))
         world = c1_add_move_methods(world, actor, "enforce")
+        world = c1_latch_contact_method(world, actor, "enforce")
         world = dv_adopt(world, c1_method(rt_cat(actor, ".sound_trial"), c1_sound_trial(actor, "ritual", "hall")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story", 13, "sound_test.003")))
         i = (i + 1)
     world = dv_adopt(world, c1_method("demon.opening", c1_opening_emit("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019")))
@@ -1647,13 +1671,15 @@ fn c1_subjective_world(actor):
     mind = dv_store(mind, dv_ref(actor, "state", "identity"), dv_field(actor))
     mind = dv_add_object(mind, c1_local_object("cognition"))
     mind = dv_add_object(mind, c1_local_object("ritual"))
+    if actor == "detective":
+        mind = dv_store(mind, c1_latch_contact_ref(), dv_with(dv_field(false), "basis", dv_single(c1_source("docs/design-standard.md", 765, "current-session-own-contact-history-initially-empty"))))
     mind = dv_add_object(mind, c1_local_object("question"))
     mind = dv_add_object(mind, c1_memory_object(actor))
     mind = dv_add_object(mind, c1_local_object("coat"))
     if (actor == "detective"):
         mind = dv_store(mind, dv_ref("coat", "identity", "owner"), dv_with(dv_field("detective"), "basis", dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006"))))
     mind = c1_adopt_inferences(mind)
-    return c1_add_move_methods(mind, actor, "predict")
+    return c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict")
 
 fn c1_player_policy():
     return dv_with(dv_with(dv_with({"budget": 48, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
@@ -1779,6 +1805,7 @@ fn c1_investigation_actions(actor):
         rt_push(actions, c1_replay_action(actor))
     if (actor == "detective"):
         rt_push(actions, c1_sole_test(actor))
+        rt_push(actions, c1_latch_contact_action())
     rt_push(actions, c1_identify_own_lens(actor))
     rt_push(actions, c1_reask_question(actor))
     return c1_public_methods(actions)

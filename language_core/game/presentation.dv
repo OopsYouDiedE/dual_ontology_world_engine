@@ -26,8 +26,10 @@ fn dvg_intent(state):
     let travel = dv_find(intent.action, "travel", [])
     let target = dv_find(travel, "to", "")
     var destination = dvg_place(target)
+    if dv_has_key(travel, "station"):
+        destination = dv_with(destination, "departure_station", travel.station)
     if dv_find(travel, "from", "") == "foyer" and target == "living_hall":
-        destination = dv_with(destination, "departure_station", "lounge")
+        destination = dv_with_many(destination, {"departure_station": "lounge", "execution_room": "lounge"})
     return dv_with(intent, "destination", destination)
 
 fn dvg_clock(time):

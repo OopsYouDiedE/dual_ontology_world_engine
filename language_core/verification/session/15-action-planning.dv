@@ -276,7 +276,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                 return dv_and((dvs_speech_truth(actor.mind, action.speech) == "true"), local_2)
             else:
                 if (action.kind == "replay"):
-                    return (not dv_same(dv_find(dv_find(actor, "replay_attempt_signatures", []), id, false), dvp_input_signature(actor, action, relevant)))
+                    return 0 < dv_find(actor.policy, "model_budget", 0) and (not dv_same(dv_find(dv_find(actor, "replay_attempt_signatures", []), id, false), dvp_input_signature(actor, action, relevant)))
                 else:
                     if dv_find(action, "repeatable", false):
                         return true

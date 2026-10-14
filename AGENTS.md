@@ -34,6 +34,8 @@
 
 宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
 
+移动目的地分别声明逻辑地点、当前地图执行房间和站点；同一逻辑地点内的移动仍须真实寻路与碰撞到达。显式站点动作的回执核对主体、序号、行动、站点及房间，并保留实际终点、站点范围与到达误差。依赖现场接触的观察只在对应成功 Complete 后产生，卡片显示与预测不能代替现场接触。
+
 构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
 
 旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。

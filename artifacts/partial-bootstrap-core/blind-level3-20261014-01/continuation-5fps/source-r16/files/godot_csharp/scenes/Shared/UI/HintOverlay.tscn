@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bqvy6hwmyad2i"]
+
+[ext_resource type="Script" path="res://scenes/Shared/UI/HintOverlay.gd" id="hint_overlay_script"]
+
+[sub_resource type="CanvasItemMaterial" id="unlit"]
+light_mode = 1
+
+[node name="HintOverlay" type="Node2D" unique_id=1167379612]
+material = SubResource("unlit")
+script = ExtResource("hint_overlay_script")

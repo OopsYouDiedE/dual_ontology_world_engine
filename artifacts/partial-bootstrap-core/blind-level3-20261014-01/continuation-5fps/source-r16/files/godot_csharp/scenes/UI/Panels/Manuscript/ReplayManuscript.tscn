@@ -1,0 +1,244 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/Panels/Manuscript/ReplayManuscript.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperCheck.gd" id="check"]
+[ext_resource type="Script" path="res://scenes/UI/Components/PaperLedger.gd" id="ledger"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperTally.tscn" id="tally"]
+
+[node name="ReplayManuscript" type="HBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("theme")
+script = ExtResource("script")
+theme_type_variation = &"ReplayManuscriptReplayManuscript"
+
+[node name="LeftPage" type="PanelContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_type_variation = &"ReplayManuscriptLeftPage"
+
+[node name="Scroll" type="ScrollContainer" parent="LeftPage"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Column" type="VBoxContainer" parent="LeftPage/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ReplayManuscriptColumn"
+
+[node name="RightPage" type="PanelContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_type_variation = &"ReplayManuscriptRightPage"
+
+[node name="Scroll" type="ScrollContainer" parent="RightPage"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Column" type="VBoxContainer" parent="RightPage/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ReplayManuscriptColumn"
+
+[node name="Title" parent="LeftPage/Scroll/Column" instance=ExtResource("pixel")]
+layout_mode = 2
+pixel_type = &"PixelTitle"
+align = "left"
+
+[node name="Hint" type="RichTextLabel" parent="LeftPage/Scroll/Column"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "设定变量后，可与现场留下的痕迹对照。"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptHint"
+
+[node name="Tally" parent="LeftPage/Scroll/Column" instance=ExtResource("tally")]
+layout_mode = 2
+
+[node name="Rule" parent="LeftPage/Scroll/Column" instance=ExtResource("rule")]
+layout_mode = 2
+
+[node name="Questions" type="VBoxContainer" parent="LeftPage/Scroll/Column"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptColumn"
+
+[node name="ActionRule" parent="LeftPage/Scroll/Column" instance=ExtResource("rule")]
+layout_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="LeftPage/Scroll/Column"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptActions"
+
+[node name="Close" type="Button" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+focus_mode = 0
+text = "合上（R）"
+
+[node name="Spacer" type="Control" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="RunSkip" type="Button" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+focus_mode = 0
+text = "重演，跳过回放"
+
+[node name="RunPlayback" type="Button" parent="LeftPage/Scroll/Column/Actions"]
+layout_mode = 2
+focus_mode = 0
+text = "重演，看回放"
+theme_type_variation = &"PaperAction"
+
+[node name="Title" parent="RightPage/Scroll/Column" instance=ExtResource("pixel")]
+layout_mode = 2
+pixel_type = &"PixelTitle"
+align = "left"
+text = "与现场对照"
+
+[node name="Stale" type="RichTextLabel" parent="RightPage/Scroll/Column"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = ""
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptStale"
+
+[node name="Rule" parent="RightPage/Scroll/Column" instance=ExtResource("rule")]
+layout_mode = 2
+
+[node name="Results" type="VBoxContainer" parent="RightPage/Scroll/Column"]
+layout_mode = 2
+theme_type_variation = &"EndingCardRows"
+
+[node name="Preview" type="RichTextLabel" parent="RightPage/Scroll/Column/Results"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "重演结果将在右侧呈现。"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptPreview"
+
+[node name="Ledger" type="Control" parent="RightPage/Scroll/Column"]
+custom_minimum_size = Vector2(0, 512)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("ledger")
+
+[node name="Templates" type="Control" parent="."]
+layout_mode = 2
+visible = false
+mouse_filter = 2
+
+[node name="Question" type="HBoxContainer" parent="Templates"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptQuestion"
+
+[node name="Numeral" type="Label" parent="Templates/Question"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"PaperLabelNumeral"
+text = "一"
+
+[node name="Body" type="VBoxContainer" parent="Templates/Question"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ReplayManuscriptFinding"
+
+[node name="Prompt" type="RichTextLabel" parent="Templates/Question/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "示例变量设定"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"PaperLabelPaperLabel"
+
+[node name="Options" type="VBoxContainer" parent="Templates/Question/Body"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptOptions"
+
+[node name="Option" type="Button" parent="Templates/Question/Body/Options"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+visible = false
+focus_mode = 0
+toggle_mode = true
+text = "选项"
+alignment = 0
+theme_type_variation = &"ReplayManuscriptOption"
+script = ExtResource("check")
+
+[node name="Finding" type="VBoxContainer" parent="Templates"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptFinding"
+
+[node name="Head" type="HBoxContainer" parent="Templates/Finding"]
+layout_mode = 2
+theme_type_variation = &"ReplayManuscriptActions"
+
+[node name="Heading" type="RichTextLabel" parent="Templates/Finding/Head"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+bbcode_enabled = true
+text = "痕迹"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptHeading"
+
+[node name="OpenCard" type="Button" parent="Templates/Finding/Head"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+focus_mode = 0
+text = "看证物卡"
+theme_type_variation = &"ReplayManuscriptOpenCard"
+
+[node name="Detail" type="RichTextLabel" parent="Templates/Finding"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "痕迹说明"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptDetail"
+
+[node name="EmptyResult" type="RichTextLabel" parent="Templates"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "按下重演后，这里逐件列出重演留下的痕迹与现场是否一致。"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptPreview"
+
+[node name="FullMatch" type="RichTextLabel" parent="Templates"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "[b]全部吻合。[/b]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+theme_type_variation = &"ReplayManuscriptFullMatch"

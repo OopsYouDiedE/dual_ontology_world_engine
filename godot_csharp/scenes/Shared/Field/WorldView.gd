@@ -552,7 +552,8 @@ func execute_move(destination: Dictionary, who: String, serial: int, action: Str
 		adapter.execute_destination(destination, who, serial, action)
 		return
 	var target := str(destination.get("departure_station", destination.get("room", "")))
-	move_to_station(target, target, who, serial, action)
+	var room := str(destination.get("execution_room", destination.get("room", target)))
+	move_to_station(target, room, who, serial, action)
 
 func move_to_station(target: String, room: String, who: String, serial: int, action: String) -> void:
 	_daily_go({"who": who, "target": target, "room": room, "serial": serial, "action": action})
@@ -595,11 +596,11 @@ func _daily_go(ev: Dictionary) -> void:
 	var who := str(ev.who)
 	var actor: CharacterBody2D = actors.get(who)
 	if actor == null:
-		_daily_report(who, int(ev.serial), "blocked", "")
+		_daily_report(who, int(ev.serial), "blocked", "", str(ev.get("action", "rest")), {"station": str(ev.target)})
 		return
 	var station: Dictionary = adapter.station(str(ev.target), who)
 	if station.is_empty():
-		_daily_report(who, int(ev.serial), "blocked", "")
+		_daily_report(who, int(ev.serial), "blocked", "", str(ev.get("action", "rest")), {"station": str(ev.target)})
 		return
 	var grid: AStarGrid2D = adapter.nav_grid(actor)
 	var destination := Vector2.ZERO
@@ -621,11 +622,12 @@ func _daily_go(ev: Dictionary) -> void:
 				destination = point
 				best_route = route
 	if best_route.is_empty():
-		_daily_report(who, int(ev.serial), "blocked", "")
+		_daily_report(who, int(ev.serial), "blocked", "", str(ev.get("action", "rest")), {"station": str(ev.target)})
 		return
 	_cancel_motion(actor)
 	if actor.seated: actor.stand_up()
 	_daily[who] = {"serial": int(ev.serial), "room": str(ev.room), "action": str(ev.get("action", "rest")), "destination": destination,
+		"station": str(ev.target), "station_point": station.point, "station_radius": float(station.radius),
 		"focus": station.get("focus", station.point), "last": actor.position, "still": 0.0, "working": false, "previous_speed": actor.speed}
 	actor.speed *= clampf(float(ev.get("speed", 1.0)), 0.5, 2.0)
 	best_route.append(destination)
@@ -656,8 +658,19 @@ func _update_daily(delta: float) -> void:
 		job.last = actor.position
 		if float(job.still) >= 1.0:
 			job.reported = true
-			_daily_report(who, int(job.serial), "blocked", adapter.entered_room(actor.position))
+			_daily_report(who, int(job.serial), "blocked", adapter.entered_room(actor.position), str(job.action))
 
-func _daily_report(who: String, serial: int, status: String, room: String, action := "rest") -> void:
+func _daily_report(who: String, serial: int, status: String, room: String, action := "rest", details: Dictionary = {}) -> void:
+	var proof := details.duplicate()
+	if _daily.has(who) and int(_daily[who].serial) == serial and str(_daily[who].action) == action:
+		var job: Dictionary = _daily[who]
+		proof.merge({"station": job.station, "approach_point": [job.destination.x, job.destination.y],
+			"station_point": [job.station_point.x, job.station_point.y], "station_radius": job.station_radius, "arrival_tolerance": 4.0}, true)
+		var actor := _actor(who)
+		if actor != null:
+			proof.merge({"actual_position": [actor.position.x, actor.position.y], "arrival_error": actor.position.distance_to(job.destination),
+				"station_distance": actor.position.distance_to(job.station_point)}, true)
 	if status != "arrived": _daily_release(who)
-	field_event.emit({"kind": "daily", "who": who, "serial": serial, "status": status, "room": room, "action": action})
+	var event := {"kind": "daily", "who": who, "serial": serial, "status": status, "room": room, "action": action}
+	event.merge(proof, true)
+	field_event.emit(event)

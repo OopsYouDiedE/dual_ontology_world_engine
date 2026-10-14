@@ -48,6 +48,8 @@ fn c1_player_display(action):
         if c1_ui_ends(action.id, named[i][0]):
             result = dv_with(result, "label", named[i][1])
         i = i + 1
+    if c1_ui_ends(action.id, ".touch_latch"):
+        result = dv_with(result, "label", "走近并触碰插闩")
     if action.kind == "answer":
         let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在茶水间", "V3_0": "门外没有人，声音经铜管传来", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何不听门边的劝阻", "original_q2_complete": "提交完整推演", "original_q2_partial": "说明声音的来源"}
         let id = dv_find(action, "answer_id", "")
@@ -76,4 +78,6 @@ fn c1_player_replay_summary(actor):
             if dv_explanation_model_complete(model, "explained", actor.mind.revision):
                 return "重演结果：已有解释与现有观察相符。这仍是推演，尚不是正式答辩。"
         i = i + 1
+    if dv_find(actor.policy, "model_budget", 0) <= 0:
+        return "这次重演尚未形成能够完整说明现有观察的解释。推演总预算已耗尽。"
     return "这次重演尚未形成能够完整说明现有观察的解释。"

@@ -1,0 +1,2197 @@
+[gd_scene format=3]
+
+
+[ext_resource type="Script" path="res://scenes/Awakening/AwakeningMap.gd" id="main"]
+[ext_resource type="Script" path="res://scenes/Awakening/LampFlicker.gd" id="details"]
+[ext_resource type="Script" path="res://scenes/Story/StoryActor.gd" id="actor"]
+[ext_resource type="Script" path="res://scenes/Awakening/RoomDoor.gd" id="room_door"]
+[ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/detective.tres" id="detective_frames"]
+[ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/engineer.tres" id="engineer_frames"]
+[ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/chef.tres" id="chef_frames"]
+[ext_resource type="SpriteFrames" path="res://ShareAsset/Internal/Characters/PixelCast/musician.tres" id="musician_frames"]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/armchair.png" id="armchair"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/barrel.png" id="barrel"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bed_0.png" id="bed_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/bed_sheeted.png" id="bed_sheeted"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_empty.png" id="bookcase_empty"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_study.png" id="bookcase_study"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/chair_back.png" id="chair_back"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/chair_front.png" id="chair_front"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand.png" id="coat_stand"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand_coat.png" id="coat_stand_coat"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/crate.png" id="crate"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter1Rewards/cylinder_player.png" id="cylinder_player"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/desk_0.png" id="desk_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/floor_lamp.png" id="floor_lamp"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/globe.png" id="globe"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" id="nightstand"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/paper_basket.png" id="paper_basket"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/paper_basket_empty.png" id="paper_basket_empty"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/range_stove.png" id="range_stove"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter1Rewards/reward_locker.png" id="reward_locker"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sack.png" id="sack"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sideboard.png" id="sideboard"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/study_table.png" id="study_table"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/transmitter.png" id="transmitter"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/wall_clock.png" id="wall_clock"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/wardrobe.png" id="wardrobe"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/washstand.png" id="washstand"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/worktable.png" id="worktable"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/life_wing_yi.png" id="life_wing_yi"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/isolation_door_side.png" id="isolation_door_side"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/isolation_door_side_open.png" id="isolation_door_side_open"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/demon_prints_side.png" id="demon_prints_side"]
+
+[sub_resource type="RectangleShape2D" id="dorm_leaf"]
+size = Vector2(64, 8)
+
+[sub_resource type="RectangleShape2D" id="actor_foot"]
+size = Vector2(16, 12)
+
+[sub_resource type="Gradient" id="light_falloff"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 0.85, 1, 1, 1, 0.3, 1, 1, 1, 0)
+
+[sub_resource type="Gradient" id="dust_fade"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.97, 0.9, 0, 1, 0.97, 0.9, 0.55, 1, 0.97, 0.9, 0)
+
+[sub_resource type="GradientTexture2D" id="light_120"]
+gradient = SubResource("light_falloff")
+width = 120
+height = 120
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_150"]
+gradient = SubResource("light_falloff")
+width = 150
+height = 150
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_190"]
+gradient = SubResource("light_falloff")
+width = 190
+height = 190
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_200"]
+gradient = SubResource("light_falloff")
+width = 200
+height = 200
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_220"]
+gradient = SubResource("light_falloff")
+width = 220
+height = 220
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_240"]
+gradient = SubResource("light_falloff")
+width = 240
+height = 240
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="GradientTexture2D" id="light_280"]
+gradient = SubResource("light_falloff")
+width = 280
+height = 280
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+
+
+
+
+
+
+[sub_resource type="AtlasTexture" id="bed_quilt"]
+atlas = ExtResource("bed_0")
+region = Rect2(0, 30, 36, 34)
+
+[sub_resource type="RectangleShape2D" id="wall_0"]
+size = Vector2(1280, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_1"]
+size = Vector2(1280, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_2"]
+size = Vector2(1280, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_3"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_4"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_5"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_6"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_7"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_8"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_9"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_10"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_11"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_12"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_13"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_14"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_15"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_16"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_17"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_18"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_19"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_20"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_21"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_22"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_23"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_24"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_25"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_26"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_27"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_28"]
+size = Vector2(64, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_29"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_30"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_31"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_32"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_33"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_34"]
+size = Vector2(64, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_35"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_36"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_37"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_38"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_39"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_40"]
+size = Vector2(64, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_41"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_42"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_43"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_44"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_45"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_46"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_47"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_48"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_49"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_50"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_51"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_52"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_53"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_54"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_55"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_56"]
+size = Vector2(128, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_57"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_58"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_59"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_60"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_61"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_62"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_63"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_64"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_65"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_66"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_67"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_68"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_69"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_70"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_71"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_72"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_73"]
+size = Vector2(192, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_74"]
+size = Vector2(64, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_75"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_76"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_77"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_78"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_79"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_80"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_81"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_82"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_83"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_84"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_85"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_86"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_87"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_88"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_89"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_90"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_91"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_92"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_93"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_94"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_95"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_96"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_97"]
+size = Vector2(160, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_98"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_99"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_100"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_101"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_102"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="wall_103"]
+size = Vector2(1280, 32)
+
+[sub_resource type="RectangleShape2D" id="foot_0"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_1"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_2"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_3"]
+size = Vector2(58, 26)
+
+[sub_resource type="RectangleShape2D" id="foot_4"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_5"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_6"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_7"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_8"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_9"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_10"]
+size = Vector2(58, 26)
+
+[sub_resource type="RectangleShape2D" id="foot_11"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_12"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_13"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_14"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_15"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_16"]
+size = Vector2(40, 16)
+
+[sub_resource type="RectangleShape2D" id="foot_17"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_18"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_19"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_20"]
+size = Vector2(58, 26)
+
+[sub_resource type="RectangleShape2D" id="foot_21"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_22"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_23"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_24"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_25"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_26"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_27"]
+size = Vector2(58, 26)
+
+[sub_resource type="RectangleShape2D" id="foot_28"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_29"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_30"]
+size = Vector2(12, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_31"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_32"]
+size = Vector2(36, 64)
+
+[sub_resource type="RectangleShape2D" id="foot_33"]
+size = Vector2(40, 16)
+
+[sub_resource type="RectangleShape2D" id="foot_34"]
+size = Vector2(40, 14)
+
+[sub_resource type="RectangleShape2D" id="foot_35"]
+size = Vector2(76, 16)
+
+[sub_resource type="RectangleShape2D" id="foot_36"]
+size = Vector2(24, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_37"]
+size = Vector2(132, 46)
+
+[sub_resource type="RectangleShape2D" id="foot_38"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_39"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_40"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_41"]
+size = Vector2(14, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_42"]
+size = Vector2(28, 16)
+
+[sub_resource type="RectangleShape2D" id="foot_43"]
+size = Vector2(10, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_44"]
+size = Vector2(16, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_45"]
+size = Vector2(48, 20)
+
+[sub_resource type="RectangleShape2D" id="foot_46"]
+size = Vector2(42, 20)
+
+[sub_resource type="RectangleShape2D" id="foot_47"]
+size = Vector2(82, 22)
+
+[sub_resource type="RectangleShape2D" id="foot_48"]
+size = Vector2(96, 30)
+
+[sub_resource type="RectangleShape2D" id="foot_49"]
+size = Vector2(10, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_50"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_51"]
+size = Vector2(22, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_52"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_53"]
+size = Vector2(10, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_54"]
+size = Vector2(48, 20)
+
+[sub_resource type="RectangleShape2D" id="foot_55"]
+size = Vector2(22, 10)
+
+[sub_resource type="RectangleShape2D" id="foot_56"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="foot_57"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="foot_58"]
+size = Vector2(22, 10)
+
+[node name="Awakening" type="Node2D"]
+texture_filter = 1
+script = ExtResource("main")
+
+[node name="WakePosition" type="Marker2D" parent="."]
+position = Vector2(982, 184)
+
+[node name="MeetingSpots" type="Node2D" parent="."]
+
+[node name="Engineer" type="Marker2D" parent="MeetingSpots"]
+position = Vector2(362, 240)
+
+[node name="Chef" type="Marker2D" parent="MeetingSpots"]
+position = Vector2(448, 318)
+
+[node name="Musician" type="Marker2D" parent="MeetingSpots"]
+position = Vector2(536, 240)
+
+[node name="Detective" type="Marker2D" parent="MeetingSpots"]
+position = Vector2(448, 200)
+
+[node name="Darkness" type="ColorRect" parent="."]
+z_index = -10
+offset_left = -640.0
+offset_top = -512.0
+offset_right = 1920.0
+offset_bottom = 1536.0
+color = Color(0.0313726, 0.0431373, 0.054902, 1)
+mouse_filter = 2
+
+[node name="Ambient" type="CanvasModulate" parent="."]
+color = Color(0.615686, 0.596078, 0.678431, 1)
+
+[node name="Lighting" type="Node2D" parent="."]
+
+[node name="Lamp0" type="PointLight2D" parent="Lighting"]
+position = Vector2(788, 90)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.85
+texture = SubResource("light_220")
+metadata/base_energy = 0.85
+
+[node name="Lamp1" type="PointLight2D" parent="Lighting"]
+position = Vector2(1012, 90)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.85
+texture = SubResource("light_220")
+metadata/base_energy = 0.85
+
+[node name="Lamp2" type="PointLight2D" parent="Lighting"]
+position = Vector2(788, 506)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.85
+texture = SubResource("light_220")
+metadata/base_energy = 0.85
+
+[node name="Lamp3" type="PointLight2D" parent="Lighting"]
+position = Vector2(1012, 506)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.85
+texture = SubResource("light_220")
+metadata/base_energy = 0.85
+
+[node name="Lamp4" type="PointLight2D" parent="Lighting"]
+position = Vector2(1152, 104)
+color = Color(0.72549, 0.803922, 0.901961, 1)
+energy = 0.55
+texture = SubResource("light_190")
+
+[node name="Lamp5" type="PointLight2D" parent="Lighting"]
+position = Vector2(928, 104)
+color = Color(0.72549, 0.803922, 0.901961, 1)
+energy = 0.55
+texture = SubResource("light_190")
+
+[node name="Lamp6" type="PointLight2D" parent="Lighting"]
+position = Vector2(704, 104)
+color = Color(0.72549, 0.803922, 0.901961, 1)
+energy = 0.55
+texture = SubResource("light_190")
+
+[node name="Lamp7" type="PointLight2D" parent="Lighting"]
+position = Vector2(448, 104)
+color = Color(0.72549, 0.803922, 0.901961, 1)
+energy = 0.55
+texture = SubResource("light_190")
+
+[node name="Lamp8" type="PointLight2D" parent="Lighting"]
+position = Vector2(360, 150)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.9
+texture = SubResource("light_280")
+metadata/base_energy = 0.9
+
+[node name="Lamp9" type="PointLight2D" parent="Lighting"]
+position = Vector2(560, 160)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.9
+texture = SubResource("light_280")
+metadata/base_energy = 0.9
+
+[node name="Lamp10" type="PointLight2D" parent="Lighting"]
+position = Vector2(394, 524)
+color = Color(1, 0.603922, 0.352941, 1)
+energy = 0.5
+texture = SubResource("light_150")
+metadata/base_energy = 0.5
+
+[node name="Lamp11" type="PointLight2D" parent="Lighting"]
+position = Vector2(562, 590)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.9
+texture = SubResource("light_280")
+metadata/base_energy = 0.9
+
+[node name="Lamp12" type="PointLight2D" parent="Lighting"]
+position = Vector2(272, 326)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.85
+texture = SubResource("light_240")
+metadata/base_energy = 0.85
+
+[node name="Lamp13" type="PointLight2D" parent="Lighting"]
+position = Vector2(152, 384)
+color = Color(0.776471, 0.721569, 0.847059, 1)
+energy = 0.4
+texture = SubResource("light_200")
+
+[node name="Lamp14" type="PointLight2D" parent="Lighting"]
+position = Vector2(224, 140)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.5
+texture = SubResource("light_150")
+metadata/base_energy = 0.5
+
+[node name="Lamp15" type="PointLight2D" parent="Lighting"]
+position = Vector2(224, 600)
+color = Color(1, 0.788235, 0.541176, 1)
+energy = 0.45
+texture = SubResource("light_150")
+metadata/base_energy = 0.45
+
+[node name="Sconce0" type="PointLight2D" parent="Lighting"]
+position = Vector2(1072, 324)
+color = Color(1, 0.760784, 0.478431, 1)
+energy = 0.55
+texture = SubResource("light_120")
+metadata/base_energy = 0.55
+
+[node name="Sconce1" type="PointLight2D" parent="Lighting"]
+position = Vector2(848, 324)
+color = Color(1, 0.760784, 0.478431, 1)
+energy = 0.55
+texture = SubResource("light_120")
+metadata/base_energy = 0.55
+
+[node name="Sconce2" type="PointLight2D" parent="Lighting"]
+position = Vector2(624, 324)
+color = Color(1, 0.760784, 0.478431, 1)
+energy = 0.55
+texture = SubResource("light_120")
+metadata/base_energy = 0.55
+
+[node name="Sconce3" type="PointLight2D" parent="Lighting"]
+position = Vector2(336, 68)
+color = Color(1, 0.760784, 0.478431, 1)
+energy = 0.55
+texture = SubResource("light_120")
+metadata/base_energy = 0.55
+
+[node name="Sconce4" type="PointLight2D" parent="Lighting"]
+position = Vector2(540, 68)
+color = Color(1, 0.760784, 0.478431, 1)
+energy = 0.55
+texture = SubResource("light_120")
+metadata/base_energy = 0.55
+
+[node name="WindowDust0" type="CPUParticles2D" parent="Lighting"]
+position = Vector2(1152, 122)
+z_index = 5
+amount = 10
+lifetime = 7.0
+preprocess = 7.0
+emission_shape = 3
+emission_rect_extents = Vector2(16.8, 24)
+direction = Vector2(0.3, -1)
+spread = 40.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 4.0
+color_ramp = SubResource("dust_fade")
+
+[node name="WindowDust1" type="CPUParticles2D" parent="Lighting"]
+position = Vector2(928, 122)
+z_index = 5
+amount = 10
+lifetime = 7.0
+preprocess = 7.0
+emission_shape = 3
+emission_rect_extents = Vector2(16.8, 24)
+direction = Vector2(0.3, -1)
+spread = 40.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 4.0
+color_ramp = SubResource("dust_fade")
+
+[node name="WindowDust2" type="CPUParticles2D" parent="Lighting"]
+position = Vector2(704, 122)
+z_index = 5
+amount = 10
+lifetime = 7.0
+preprocess = 7.0
+emission_shape = 3
+emission_rect_extents = Vector2(16.8, 24)
+direction = Vector2(0.3, -1)
+spread = 40.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 4.0
+color_ramp = SubResource("dust_fade")
+
+[node name="WindowDust3" type="CPUParticles2D" parent="Lighting"]
+position = Vector2(448, 122)
+z_index = 5
+amount = 10
+lifetime = 7.0
+preprocess = 7.0
+emission_shape = 3
+emission_rect_extents = Vector2(16.8, 24)
+direction = Vector2(0.3, -1)
+spread = 40.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 4.0
+color_ramp = SubResource("dust_fade")
+
+[node name="LifeWingArchitecture" type="Sprite2D" parent="."]
+texture = ExtResource("life_wing_yi")
+centered = false
+
+[node name="WallSolids" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D0" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(640.0, 16.0)
+shape = SubResource("wall_0")
+
+[node name="CollisionShape2D1" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(640.0, 48.0)
+shape = SubResource("wall_1")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(640.0, 80.0)
+shape = SubResource("wall_2")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 112.0)
+shape = SubResource("wall_3")
+
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 112.0)
+shape = SubResource("wall_4")
+
+[node name="CollisionShape2D5" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 112.0)
+shape = SubResource("wall_5")
+
+[node name="CollisionShape2D6" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 112.0)
+shape = SubResource("wall_6")
+
+[node name="CollisionShape2D7" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 112.0)
+shape = SubResource("wall_7")
+
+[node name="CollisionShape2D8" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 112.0)
+shape = SubResource("wall_8")
+
+[node name="CollisionShape2D9" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 144.0)
+shape = SubResource("wall_9")
+
+[node name="CollisionShape2D10" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 144.0)
+shape = SubResource("wall_10")
+
+[node name="CollisionShape2D11" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 144.0)
+shape = SubResource("wall_11")
+
+[node name="CollisionShape2D12" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 144.0)
+shape = SubResource("wall_12")
+
+[node name="CollisionShape2D13" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 144.0)
+shape = SubResource("wall_13")
+
+[node name="CollisionShape2D14" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 144.0)
+shape = SubResource("wall_14")
+
+[node name="CollisionShape2D15" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 176.0)
+shape = SubResource("wall_15")
+
+[node name="CollisionShape2D16" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 176.0)
+shape = SubResource("wall_16")
+
+[node name="CollisionShape2D17" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 176.0)
+shape = SubResource("wall_17")
+
+[node name="CollisionShape2D18" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 176.0)
+shape = SubResource("wall_18")
+
+[node name="CollisionShape2D19" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 176.0)
+shape = SubResource("wall_19")
+
+[node name="CollisionShape2D20" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 176.0)
+shape = SubResource("wall_20")
+
+[node name="CollisionShape2D21" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 208.0)
+shape = SubResource("wall_21")
+
+[node name="CollisionShape2D22" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 208.0)
+shape = SubResource("wall_22")
+
+[node name="CollisionShape2D23" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 208.0)
+shape = SubResource("wall_23")
+
+[node name="CollisionShape2D24" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 208.0)
+shape = SubResource("wall_24")
+
+[node name="CollisionShape2D25" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 208.0)
+shape = SubResource("wall_25")
+
+[node name="CollisionShape2D26" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 208.0)
+shape = SubResource("wall_26")
+
+[node name="CollisionShape2D27" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 240.0)
+shape = SubResource("wall_27")
+
+[node name="CollisionShape2D28" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(288.0, 240.0)
+shape = SubResource("wall_28")
+
+[node name="CollisionShape2D29" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 240.0)
+shape = SubResource("wall_29")
+
+[node name="CollisionShape2D30" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 240.0)
+shape = SubResource("wall_30")
+
+[node name="CollisionShape2D31" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 240.0)
+shape = SubResource("wall_31")
+
+[node name="CollisionShape2D32" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 240.0)
+shape = SubResource("wall_32")
+
+[node name="CollisionShape2D33" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 272.0)
+shape = SubResource("wall_33")
+
+[node name="CollisionShape2D34" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(288.0, 272.0)
+shape = SubResource("wall_34")
+
+[node name="CollisionShape2D35" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(624.0, 272.0)
+shape = SubResource("wall_35")
+
+[node name="CollisionShape2D36" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 272.0)
+shape = SubResource("wall_36")
+
+[node name="CollisionShape2D37" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 272.0)
+shape = SubResource("wall_37")
+
+[node name="CollisionShape2D38" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 272.0)
+shape = SubResource("wall_38")
+
+[node name="CollisionShape2D39" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 304.0)
+shape = SubResource("wall_39")
+
+[node name="CollisionShape2D40" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(288.0, 304.0)
+shape = SubResource("wall_40")
+
+[node name="CollisionShape2D41" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(624.0, 304.0)
+shape = SubResource("wall_41")
+
+[node name="CollisionShape2D42" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 304.0)
+shape = SubResource("wall_42")
+
+[node name="CollisionShape2D43" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 304.0)
+shape = SubResource("wall_43")
+
+[node name="CollisionShape2D44" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 304.0)
+shape = SubResource("wall_44")
+
+[node name="CollisionShape2D45" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 336.0)
+shape = SubResource("wall_45")
+
+[node name="CollisionShape2D46" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 336.0)
+shape = SubResource("wall_46")
+
+[node name="CollisionShape2D47" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(624.0, 336.0)
+shape = SubResource("wall_47")
+
+[node name="CollisionShape2D48" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 336.0)
+shape = SubResource("wall_48")
+
+[node name="CollisionShape2D49" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 336.0)
+shape = SubResource("wall_49")
+
+[node name="CollisionShape2D50" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 336.0)
+shape = SubResource("wall_50")
+
+[node name="CollisionShape2D51" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 368.0)
+shape = SubResource("wall_51")
+
+[node name="CollisionShape2D52" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 368.0)
+shape = SubResource("wall_52")
+
+[node name="CollisionShape2D53" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 400.0)
+shape = SubResource("wall_53")
+
+[node name="CollisionShape2D54" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 400.0)
+shape = SubResource("wall_54")
+
+[node name="CollisionShape2D55" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 432.0)
+shape = SubResource("wall_55")
+
+[node name="CollisionShape2D56" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(352.0, 432.0)
+shape = SubResource("wall_56")
+
+[node name="CollisionShape2D57" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(576.0, 432.0)
+shape = SubResource("wall_57")
+
+[node name="CollisionShape2D58" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 432.0)
+shape = SubResource("wall_58")
+
+[node name="CollisionShape2D59" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 432.0)
+shape = SubResource("wall_59")
+
+[node name="CollisionShape2D60" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 432.0)
+shape = SubResource("wall_60")
+
+[node name="CollisionShape2D61" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 464.0)
+shape = SubResource("wall_61")
+
+[node name="CollisionShape2D62" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(336.0, 464.0)
+shape = SubResource("wall_62")
+
+[node name="CollisionShape2D63" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(576.0, 464.0)
+shape = SubResource("wall_63")
+
+[node name="CollisionShape2D64" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 464.0)
+shape = SubResource("wall_64")
+
+[node name="CollisionShape2D65" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 464.0)
+shape = SubResource("wall_65")
+
+[node name="CollisionShape2D66" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 464.0)
+shape = SubResource("wall_66")
+
+[node name="CollisionShape2D67" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 496.0)
+shape = SubResource("wall_67")
+
+[node name="CollisionShape2D68" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(336.0, 496.0)
+shape = SubResource("wall_68")
+
+[node name="CollisionShape2D69" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(576.0, 496.0)
+shape = SubResource("wall_69")
+
+[node name="CollisionShape2D70" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 496.0)
+shape = SubResource("wall_70")
+
+[node name="CollisionShape2D71" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 496.0)
+shape = SubResource("wall_71")
+
+[node name="CollisionShape2D72" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1232.0, 496.0)
+shape = SubResource("wall_72")
+
+[node name="CollisionShape2D73" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(96.0, 528.0)
+shape = SubResource("wall_73")
+
+[node name="CollisionShape2D74" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(288.0, 528.0)
+shape = SubResource("wall_74")
+
+[node name="CollisionShape2D75" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 528.0)
+shape = SubResource("wall_75")
+
+[node name="CollisionShape2D76" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 528.0)
+shape = SubResource("wall_76")
+
+[node name="CollisionShape2D77" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 528.0)
+shape = SubResource("wall_77")
+
+[node name="CollisionShape2D78" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 528.0)
+shape = SubResource("wall_78")
+
+[node name="CollisionShape2D79" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 560.0)
+shape = SubResource("wall_79")
+
+[node name="CollisionShape2D80" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 560.0)
+shape = SubResource("wall_80")
+
+[node name="CollisionShape2D81" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 560.0)
+shape = SubResource("wall_81")
+
+[node name="CollisionShape2D82" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 560.0)
+shape = SubResource("wall_82")
+
+[node name="CollisionShape2D83" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 560.0)
+shape = SubResource("wall_83")
+
+[node name="CollisionShape2D84" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 560.0)
+shape = SubResource("wall_84")
+
+[node name="CollisionShape2D85" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 592.0)
+shape = SubResource("wall_85")
+
+[node name="CollisionShape2D86" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 592.0)
+shape = SubResource("wall_86")
+
+[node name="CollisionShape2D87" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 592.0)
+shape = SubResource("wall_87")
+
+[node name="CollisionShape2D88" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 592.0)
+shape = SubResource("wall_88")
+
+[node name="CollisionShape2D89" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 592.0)
+shape = SubResource("wall_89")
+
+[node name="CollisionShape2D90" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 592.0)
+shape = SubResource("wall_90")
+
+[node name="CollisionShape2D91" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 624.0)
+shape = SubResource("wall_91")
+
+[node name="CollisionShape2D92" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 624.0)
+shape = SubResource("wall_92")
+
+[node name="CollisionShape2D93" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 624.0)
+shape = SubResource("wall_93")
+
+[node name="CollisionShape2D94" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 624.0)
+shape = SubResource("wall_94")
+
+[node name="CollisionShape2D95" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 624.0)
+shape = SubResource("wall_95")
+
+[node name="CollisionShape2D96" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 624.0)
+shape = SubResource("wall_96")
+
+[node name="CollisionShape2D97" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(80.0, 656.0)
+shape = SubResource("wall_97")
+
+[node name="CollisionShape2D98" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(304.0, 656.0)
+shape = SubResource("wall_98")
+
+[node name="CollisionShape2D99" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(592.0, 656.0)
+shape = SubResource("wall_99")
+
+[node name="CollisionShape2D100" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(816.0, 656.0)
+shape = SubResource("wall_100")
+
+[node name="CollisionShape2D101" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1040.0, 656.0)
+shape = SubResource("wall_101")
+
+[node name="CollisionShape2D102" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(1264.0, 656.0)
+shape = SubResource("wall_102")
+
+[node name="CollisionShape2D103" type="CollisionShape2D" parent="WallSolids"]
+position = Vector2(640.0, 688.0)
+shape = SubResource("wall_103")
+
+[node name="FurnitureSolids" type="Node2D" parent="."]
+
+[node name="BookcaseR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(638.0, 103.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BookcaseR08"]
+shape = SubResource("foot_0")
+
+[node name="BedR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(758.0, 130.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BedR08"]
+shape = SubResource("foot_1")
+
+[node name="NightstandR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(788.0, 112.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/NightstandR08"]
+shape = SubResource("foot_2")
+
+[node name="DeskR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(648.0, 177.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskR08"]
+shape = SubResource("foot_3")
+
+[node name="DeskChairR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(648.0, 207.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskChairR08"]
+shape = SubResource("foot_4")
+
+[node name="CoatStandR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(786.0, 246.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CoatStandR08"]
+shape = SubResource("foot_5")
+
+[node name="PaperBasketR08" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(630.0, 232.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PaperBasketR08"]
+shape = SubResource("foot_6")
+
+[node name="BookcaseR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(862.0, 103.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BookcaseR05"]
+shape = SubResource("foot_7")
+
+[node name="BedR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(982.0, 130.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BedR05"]
+shape = SubResource("foot_8")
+
+[node name="NightstandR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1012.0, 112.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/NightstandR05"]
+shape = SubResource("foot_9")
+
+[node name="DeskR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(872.0, 177.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskR05"]
+shape = SubResource("foot_10")
+
+[node name="DeskChairR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(872.0, 207.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskChairR05"]
+shape = SubResource("foot_11")
+
+[node name="CoatStandR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1010.0, 246.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CoatStandR05"]
+shape = SubResource("foot_12")
+
+[node name="PaperBasketR05" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(854.0, 232.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PaperBasketR05"]
+shape = SubResource("foot_13")
+
+[node name="EmptyBookcaseEN" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1086.0, 103.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/EmptyBookcaseEN"]
+shape = SubResource("foot_14")
+
+[node name="SheetedBedEN" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1206.0, 130.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/SheetedBedEN"]
+shape = SubResource("foot_15")
+
+[node name="EmptyWardrobeEN" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1096.0, 208.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/EmptyWardrobeEN"]
+shape = SubResource("foot_16")
+
+[node name="BookcaseR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(638.0, 519.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BookcaseR07"]
+shape = SubResource("foot_17")
+
+[node name="BedR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(758.0, 546.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BedR07"]
+shape = SubResource("foot_18")
+
+[node name="NightstandR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(788.0, 528.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/NightstandR07"]
+shape = SubResource("foot_19")
+
+[node name="DeskR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(648.0, 601.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskR07"]
+shape = SubResource("foot_20")
+
+[node name="DeskChairR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(648.0, 631.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskChairR07"]
+shape = SubResource("foot_21")
+
+[node name="CoatStandR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(786.0, 662.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CoatStandR07"]
+shape = SubResource("foot_22")
+
+[node name="PaperBasketR07" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(630.0, 648.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PaperBasketR07"]
+shape = SubResource("foot_23")
+
+[node name="BookcaseR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(862.0, 519.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BookcaseR06"]
+shape = SubResource("foot_24")
+
+[node name="BedR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(982.0, 546.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/BedR06"]
+shape = SubResource("foot_25")
+
+[node name="NightstandR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1012.0, 528.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/NightstandR06"]
+shape = SubResource("foot_26")
+
+[node name="DeskR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(872.0, 601.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskR06"]
+shape = SubResource("foot_27")
+
+[node name="DeskChairR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(872.0, 631.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/DeskChairR06"]
+shape = SubResource("foot_28")
+
+[node name="CoatStandR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1010.0, 662.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CoatStandR06"]
+shape = SubResource("foot_29")
+
+[node name="PaperBasketR06" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(854.0, 648.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PaperBasketR06"]
+shape = SubResource("foot_30")
+
+[node name="EmptyBookcaseES" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1086.0, 519.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/EmptyBookcaseES"]
+shape = SubResource("foot_31")
+
+[node name="SheetedBedES" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1206.0, 546.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/SheetedBedES"]
+shape = SubResource("foot_32")
+
+[node name="EmptyWardrobeES" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(1096.0, 624.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/EmptyWardrobeES"]
+shape = SubResource("foot_33")
+
+[node name="StudyBookcase" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(350.0, 103.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyBookcase"]
+shape = SubResource("foot_34")
+
+[node name="RewardLocker" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(500.0, 110.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/RewardLocker"]
+shape = SubResource("foot_35")
+
+[node name="CylinderPlayer" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(560.0, 114.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/CylinderPlayer"]
+shape = SubResource("foot_36")
+
+[node name="StudyTable" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(448.0, 239.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyTable"]
+shape = SubResource("foot_37")
+
+[node name="StudyChairNW" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(416.0, 211.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairNW"]
+shape = SubResource("foot_38")
+
+[node name="StudyChairNE" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(480.0, 211.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairNE"]
+shape = SubResource("foot_39")
+
+[node name="StudyChairSW" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(416.0, 287.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairSW"]
+shape = SubResource("foot_40")
+
+[node name="StudyChairSE" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(480.0, 287.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyChairSE"]
+shape = SubResource("foot_41")
+
+[node name="ReadingChair" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(346.0, 166.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/ReadingChair"]
+shape = SubResource("foot_42")
+
+[node name="StudyLamp" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(560.0, 164.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StudyLamp"]
+shape = SubResource("foot_43")
+
+[node name="Globe" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(340.0, 318.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Globe"]
+shape = SubResource("foot_44")
+
+[node name="Washstand" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(352.0, 526.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Washstand"]
+shape = SubResource("foot_45")
+
+[node name="Range" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(394.0, 522.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Range"]
+shape = SubResource("foot_46")
+
+[node name="Sideboard" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(528.0, 525.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Sideboard"]
+shape = SubResource("foot_47")
+
+[node name="Worktable" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(448.0, 603.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Worktable"]
+shape = SubResource("foot_48")
+
+[node name="PantryLamp" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(562.0, 596.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryLamp"]
+shape = SubResource("foot_49")
+
+[node name="PantryBarrel" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(554.0, 658.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryBarrel"]
+shape = SubResource("foot_50")
+
+[node name="PantryCrate" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(340.0, 659.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantryCrate"]
+shape = SubResource("foot_51")
+
+[node name="PantrySack" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(364.0, 664.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/PantrySack"]
+shape = SubResource("foot_52")
+
+[node name="HallLamp" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(272.0, 330.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/HallLamp"]
+shape = SubResource("foot_53")
+
+[node name="Basin" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(224.0, 106.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/Basin"]
+shape = SubResource("foot_54")
+
+[node name="StoreCrate" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(184.0, 595.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreCrate"]
+shape = SubResource("foot_55")
+
+[node name="StoreSack" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(206.0, 604.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreSack"]
+shape = SubResource("foot_56")
+
+[node name="StoreBarrel" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(268.0, 594.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreBarrel"]
+shape = SubResource("foot_57")
+
+[node name="StoreCrateB" type="StaticBody2D" parent="FurnitureSolids"]
+position = Vector2(262.0, 655.0)
+
+[node name="Shape" type="CollisionShape2D" parent="FurnitureSolids/StoreCrateB"]
+shape = SubResource("foot_58")
+
+[node name="RoomDetails" type="Node2D" parent="."]
+script = ExtResource("details")
+
+[node name="ObjectsAndPeople" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="BookcaseR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(638, 110)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="BedR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(758, 126)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_0")
+
+[node name="NightstandR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(788, 120)
+offset = Vector2(-10, -36)
+centered = false
+texture = ExtResource("nightstand")
+
+[node name="DeskR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(648, 192)
+offset = Vector2(-29, -38)
+centered = false
+texture = ExtResource("desk_0")
+
+[node name="DeskChairR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(648, 214)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="CoatStandR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(786, 250)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("coat_stand")
+
+[node name="PaperBasketR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(630, 236)
+offset = Vector2(-7, -16)
+centered = false
+texture = ExtResource("paper_basket_empty")
+
+[node name="WallClockR08" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(758, 80)
+offset = Vector2(-9, -34)
+centered = false
+texture = ExtResource("wall_clock")
+
+[node name="BookcaseR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(862, 110)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="BedR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 126)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_0")
+
+[node name="NightstandR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1012, 120)
+offset = Vector2(-10, -36)
+centered = false
+texture = ExtResource("nightstand")
+
+[node name="DeskR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(872, 192)
+offset = Vector2(-29, -38)
+centered = false
+texture = ExtResource("desk_0")
+
+[node name="DeskChairR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(872, 214)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="CoatStandR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1010, 250)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("coat_stand_coat")
+
+[node name="PaperBasketR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(854, 236)
+offset = Vector2(-7, -16)
+centered = false
+texture = ExtResource("paper_basket")
+
+[node name="WallClockR05" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 80)
+offset = Vector2(-9, -34)
+centered = false
+texture = ExtResource("wall_clock")
+
+[node name="EmptyBookcaseEN" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1086, 110)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="SheetedBedEN" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1206, 126)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_sheeted")
+
+[node name="EmptyWardrobeEN" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1096, 216)
+offset = Vector2(-20, -64)
+centered = false
+texture = ExtResource("wardrobe")
+
+[node name="BookcaseR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(638, 526)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="BedR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(758, 542)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_0")
+
+[node name="NightstandR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(788, 536)
+offset = Vector2(-10, -36)
+centered = false
+texture = ExtResource("nightstand")
+
+[node name="DeskR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(648, 616)
+offset = Vector2(-29, -38)
+centered = false
+texture = ExtResource("desk_0")
+
+[node name="DeskChairR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(648, 638)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="CoatStandR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(786, 666)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("coat_stand")
+
+[node name="PaperBasketR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(630, 652)
+offset = Vector2(-7, -16)
+centered = false
+texture = ExtResource("paper_basket_empty")
+
+[node name="WallClockR07" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(758, 496)
+offset = Vector2(-9, -34)
+centered = false
+texture = ExtResource("wall_clock")
+
+[node name="BookcaseR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(862, 526)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="BedR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 542)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_0")
+
+[node name="NightstandR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1012, 536)
+offset = Vector2(-10, -36)
+centered = false
+texture = ExtResource("nightstand")
+
+[node name="DeskR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(872, 616)
+offset = Vector2(-29, -38)
+centered = false
+texture = ExtResource("desk_0")
+
+[node name="DeskChairR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(872, 638)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="CoatStandR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1010, 666)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("coat_stand")
+
+[node name="PaperBasketR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(854, 652)
+offset = Vector2(-7, -16)
+centered = false
+texture = ExtResource("paper_basket_empty")
+
+[node name="WallClockR06" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 496)
+offset = Vector2(-9, -34)
+centered = false
+texture = ExtResource("wall_clock")
+
+[node name="EmptyBookcaseES" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1086, 526)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_empty")
+
+[node name="SheetedBedES" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1206, 542)
+offset = Vector2(-18, -24)
+centered = false
+texture = ExtResource("bed_sheeted")
+
+[node name="EmptyWardrobeES" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(1096, 632)
+offset = Vector2(-20, -64)
+centered = false
+texture = ExtResource("wardrobe")
+
+[node name="StudyBookcase" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(350, 110)
+offset = Vector2(-20, -60)
+centered = false
+texture = ExtResource("bookcase_study")
+
+[node name="RewardLocker" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(500, 120)
+offset = Vector2(-40, -32)
+centered = false
+texture = ExtResource("reward_locker")
+
+[node name="CylinderPlayer" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(560, 122)
+offset = Vector2(-16, -40)
+centered = false
+texture = ExtResource("cylinder_player")
+
+[node name="StudyTable" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(448, 270)
+offset = Vector2(-66, -64)
+centered = false
+texture = ExtResource("study_table")
+
+[node name="StudyChairNW" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(416, 218)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_front")
+
+[node name="StudyChairNE" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(480, 218)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_front")
+
+[node name="StudyChairSW" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(416, 294)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="StudyChairSE" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(480, 294)
+offset = Vector2(-9, -28)
+centered = false
+texture = ExtResource("chair_back")
+
+[node name="ReadingChair" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(346, 176)
+offset = Vector2(-15, -32)
+centered = false
+texture = ExtResource("armchair")
+
+[node name="StudyLamp" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(560, 168)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("floor_lamp")
+
+[node name="Globe" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(340, 322)
+offset = Vector2(-10, -34)
+centered = false
+texture = ExtResource("globe")
+
+[node name="Washstand" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(352, 538)
+offset = Vector2(-25, -48)
+centered = false
+texture = ExtResource("washstand")
+
+[node name="Range" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(394, 534)
+offset = Vector2(-22, -52)
+centered = false
+texture = ExtResource("range_stove")
+
+[node name="Sideboard" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(528, 538)
+offset = Vector2(-41, -62)
+centered = false
+texture = ExtResource("sideboard")
+
+[node name="Worktable" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(448, 626)
+offset = Vector2(-48, -44)
+centered = false
+texture = ExtResource("worktable")
+
+[node name="PantryLamp" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(562, 600)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("floor_lamp")
+
+[node name="PantryBarrel" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(554, 664)
+offset = Vector2(-10, -26)
+centered = false
+texture = ExtResource("barrel")
+
+[node name="PantryCrate" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(340, 664)
+offset = Vector2(-12, -22)
+centered = false
+texture = ExtResource("crate")
+
+[node name="PantrySack" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(364, 668)
+offset = Vector2(-9, -22)
+centered = false
+texture = ExtResource("sack")
+
+[node name="HallLamp" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(272, 334)
+offset = Vector2(-9, -50)
+centered = false
+texture = ExtResource("floor_lamp")
+
+[node name="Basin" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(224, 118)
+offset = Vector2(-25, -48)
+centered = false
+texture = ExtResource("washstand")
+
+[node name="StoreCrate" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(184, 600)
+offset = Vector2(-12, -22)
+centered = false
+texture = ExtResource("crate")
+
+[node name="StoreSack" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(206, 608)
+offset = Vector2(-9, -22)
+centered = false
+texture = ExtResource("sack")
+
+[node name="StoreBarrel" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(268, 600)
+offset = Vector2(-10, -26)
+centered = false
+texture = ExtResource("barrel")
+
+[node name="StoreCrateB" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(262, 660)
+offset = Vector2(-12, -22)
+centered = false
+texture = ExtResource("crate")
+
+[node name="CopperTransmitter" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(500, 84)
+offset = Vector2(-14, -36)
+centered = false
+texture = ExtResource("transmitter")
+
+[node name="MechanicalIsolationDoor" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(72, 288)
+
+[node name="DoorFace" type="Sprite2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]
+centered = false
+texture = ExtResource("isolation_door_side")
+
+[node name="DoorGap" type="Sprite2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]
+visible = false
+centered = false
+texture = ExtResource("isolation_door_side_open")
+
+[node name="DemonPrints" type="Sprite2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]
+visible = false
+z_index = 1
+centered = false
+offset = Vector2(-64, 0)
+texture = ExtResource("demon_prints_side")
+
+[node name="LoungeCover" type="Polygon2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]
+z_index = 40
+color = Color(0.203922, 0.156863, 0.196078, 1)
+polygon = PackedVector2Array(-72, -288, 56, -288, 56, 416, -72, 416)
+
+[node name="LoungeCoverInner" type="Polygon2D" parent="ObjectsAndPeople/MechanicalIsolationDoor"]
+z_index = 40
+color = Color(0.113725, 0.0862745, 0.121569, 1)
+polygon = PackedVector2Array(-72, -288, 54, -288, 54, 414, -72, 414)
+
+[node name="侦探" type="CharacterBody2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 144)
+script = ExtResource("actor")
+standard = ExtResource("detective_frames")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ObjectsAndPeople/侦探"]
+position = Vector2(0, -6)
+shape = SubResource("actor_foot")
+
+[node name="ContactShadow" type="Polygon2D" parent="ObjectsAndPeople/侦探"]
+color = Color(0.06, 0.05, 0.04, 0.28)
+polygon = PackedVector2Array(-9, -2, -6, -4, 6, -4, 9, -2, 9, 0, 6, 2, -6, 2, -9, 0)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="ObjectsAndPeople/侦探"]
+position = Vector2(0, -23)
+texture_filter = 1
+sprite_frames = ExtResource("detective_frames")
+
+[node name="工程师" type="CharacterBody2D" parent="ObjectsAndPeople"]
+position = Vector2(930, 590)
+script = ExtResource("actor")
+standard = ExtResource("engineer_frames")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ObjectsAndPeople/工程师"]
+position = Vector2(0, -6)
+shape = SubResource("actor_foot")
+
+[node name="ContactShadow" type="Polygon2D" parent="ObjectsAndPeople/工程师"]
+color = Color(0.06, 0.05, 0.04, 0.28)
+polygon = PackedVector2Array(-9, -2, -6, -4, 6, -4, 9, -2, 9, 0, 6, 2, -6, 2, -9, 0)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="ObjectsAndPeople/工程师"]
+position = Vector2(0, -23)
+texture_filter = 1
+sprite_frames = ExtResource("engineer_frames")
+
+[node name="厨师" type="CharacterBody2D" parent="ObjectsAndPeople"]
+position = Vector2(706, 590)
+script = ExtResource("actor")
+standard = ExtResource("chef_frames")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ObjectsAndPeople/厨师"]
+position = Vector2(0, -6)
+shape = SubResource("actor_foot")
+
+[node name="ContactShadow" type="Polygon2D" parent="ObjectsAndPeople/厨师"]
+color = Color(0.06, 0.05, 0.04, 0.28)
+polygon = PackedVector2Array(-9, -2, -6, -4, 6, -4, 9, -2, 9, 0, 6, 2, -6, 2, -9, 0)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="ObjectsAndPeople/厨师"]
+position = Vector2(0, -23)
+texture_filter = 1
+sprite_frames = ExtResource("chef_frames")
+
+[node name="音乐家" type="CharacterBody2D" parent="ObjectsAndPeople"]
+position = Vector2(706, 210)
+script = ExtResource("actor")
+standard = ExtResource("musician_frames")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ObjectsAndPeople/音乐家"]
+position = Vector2(0, -6)
+shape = SubResource("actor_foot")
+
+[node name="ContactShadow" type="Polygon2D" parent="ObjectsAndPeople/音乐家"]
+color = Color(0.06, 0.05, 0.04, 0.28)
+polygon = PackedVector2Array(-9, -2, -6, -4, 6, -4, 9, -2, 9, 0, 6, 2, -6, 2, -9, 0)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="ObjectsAndPeople/音乐家"]
+position = Vector2(0, -23)
+texture_filter = 1
+sprite_frames = ExtResource("musician_frames")
+
+[node name="BedQuiltForeground" type="Sprite2D" parent="ObjectsAndPeople"]
+position = Vector2(982, 166)
+offset = Vector2(-18, -34)
+centered = false
+texture = SubResource("bed_quilt")
+
+[node name="DormitoryDoor1" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(704, 352)
+script = ExtResource("room_door")
+dorm_owner = "su"
+interior_bounds = Rect2(608, 32, 192, 224)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor1"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor1/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
+
+[node name="DormitoryDoor2" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(928, 352)
+script = ExtResource("room_door")
+dorm_owner = "detective"
+interior_bounds = Rect2(832, 32, 192, 224)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor2"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor2/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
+
+[node name="DormitoryDoor3" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(1152, 352)
+script = ExtResource("room_door")
+dorm_owner = ""
+interior_bounds = Rect2(1056, 32, 192, 224)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor3"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor3/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
+
+[node name="DormitoryDoor4" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(704, 512)
+script = ExtResource("room_door")
+dorm_owner = "shen"
+interior_bounds = Rect2(608, 512, 192, 160)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor4"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor4/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
+
+[node name="DormitoryDoor5" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(928, 512)
+script = ExtResource("room_door")
+dorm_owner = "huo"
+interior_bounds = Rect2(832, 512, 192, 160)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor5"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor5/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
+
+[node name="DormitoryDoor6" type="Node2D" parent="ObjectsAndPeople"]
+position = Vector2(1152, 512)
+script = ExtResource("room_door")
+dorm_owner = ""
+interior_bounds = Rect2(1056, 512, 192, 160)
+
+[node name="Body" type="StaticBody2D" parent="ObjectsAndPeople/DormitoryDoor6"]
+
+[node name="LeafCollision" type="CollisionShape2D" parent="ObjectsAndPeople/DormitoryDoor6/Body"]
+position = Vector2(0, -4)
+shape = SubResource("dorm_leaf")
