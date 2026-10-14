@@ -211,7 +211,7 @@ fn c1dep_install_scene(scene):
                 let request = dv_find(dv_find(actions[j], "speech", []), "request", false)
                 if request != false:
                     if request.target == "demon":
-                        actions = dvs_replace(actions, j, dv_with_many(actions[j], {"request_transport": {"channel": "copper.living"}, "speech": dv_with(actions[j].speech, "channel", "copper.living")}))
+                        actions = dvs_replace(actions, j, dv_with_many(actions[j], {"request_transport": {"channel": "copper.living"}, "speech": dv_with(actions[j].speech, "channel", "copper.living"), "opportunity_requirement": {"location": "hall", "participants": [actor.id], "mode": "all-present"}}))
                 j = j + 1
             let outsiders = ["quer", "lucian"]
             j = 0

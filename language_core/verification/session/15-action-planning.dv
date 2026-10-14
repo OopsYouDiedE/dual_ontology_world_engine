@@ -378,7 +378,7 @@ fn dvp_opportunities(actor, action):
         if dv_find(goal, "kind", "") == "communicate" and dv_find(goal, "scope", "") == "personal" and dv_find(goal, "owner", "") == actor.id:
             let method = dvp_find_action(actor.actions, dv_find(goal, "method_id", ""))
             if method != false and 0 < rt_count(dv_find(goal, "basis", [])) and not dv_has(dv_find(actor, "used", []), method.id):
-                if not dv_has(dv_find(actor, "planning_opportunities", []), i) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) != "true":
+                if not dv_has(dv_find(actor, "planning_opportunities", []), i):
                     if not dv_find(goal, "requires_argument", false) or (dv_find(method, "speech_from_argument", false) and dv_find(method, "argument_available", false)):
                         rt_push(pending, {"key": i, "goal": goal, "method": method})
         i = i + 1
@@ -408,7 +408,7 @@ fn dvp_opportunities(actor, action):
             let method = dv_without(item.method, "opportunity_requirement")
             let spatial = dv_find(item.method, "opportunity_requirement", false)
             if spatial != false:
-                if after.value == spatial.location and dvp_eligible_base(predicted_actor, item.method, prediction.world, dvp_goal_refs(predicted_actor)) and dvp_eligible_after_base(predicted_actor, method, prediction.world, dvp_goal_refs(predicted_actor)):
+                if before.value != spatial.location and after.value == spatial.location and dvp_eligible_base(predicted_actor, item.method, prediction.world, dvp_goal_refs(predicted_actor)) and dvp_eligible_after_base(predicted_actor, method, prediction.world, dvp_goal_refs(predicted_actor)):
                     rt_push(result, {"key": item.key, "method_id": item.method.id, "weight": dv_find(item.goal, "weight", 1), "goal_basis": item.goal.basis, "prediction_basis": adoption.basis, "position_before": before, "position_after": after, "nonspatial_eligible": true, "availability_before": dv_truth(actor.mind, dv_find(item.goal, "available_when", dv_true())), "goal_available_after": "true", "access_only": true, "based_on": "subject_prediction", "method_eligible": dvp_eligible(predicted_actor, item.method, prediction.world, dvp_goal_refs(predicted_actor)), "participants_status": "not-predicted", "unresolved_spatial_requirement": spatial, "fulfillment": false})
         i = i + 1
     return result
