@@ -539,3 +539,23 @@ fn dvs_observation_source(observations, action):
 
 fn dvs_observation_profile(actor):
     return dv_observation_profile(dv_find(actor.policy, "observation_weights", {"perception": 1, "testimony": 1, "recall": 1}), dv_find(actor.policy, "observation_threshold", 0.5))
+
+// Linear host-state transfer only. The caller relinquishes the previous state.
+// Keep persistent world/mind/prediction updates on their independent-copy APIs.
+fn dvs_owned_state_update(state, updates):
+    var result = []
+    var keys = []
+    var i = 0
+    while i < rt_count(state):
+        let key = state[i][0]
+        rt_push(result, dv_pair(key, dv_find(updates, key, state[i][1])))
+        rt_push(keys, key)
+        i = i + 1
+    i = 0
+    while i < rt_count(updates):
+        let key = updates[i][0]
+        if not dv_has(keys, key):
+            rt_push(result, dv_pair(key, updates[i][1]))
+            rt_push(keys, key)
+        i = i + 1
+    return result

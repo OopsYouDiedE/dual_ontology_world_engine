@@ -20,7 +20,7 @@ fn dvg_extend(state):
     var events = state.events
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": c2_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
-    return dv_with_many(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
 
 fn dvg_prepare(state):
     var current = dvg_extend(state)
@@ -34,7 +34,7 @@ fn dvg_prepare(state):
             else:
                 rt_push(actors, actor)
             i = i + 1
-        current = dv_with(current, "actors", actors)
+        current = dvs_owned_state_update(current, {"actors": actors})
     while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
         current = dvs_session_prepare(current)
     return current

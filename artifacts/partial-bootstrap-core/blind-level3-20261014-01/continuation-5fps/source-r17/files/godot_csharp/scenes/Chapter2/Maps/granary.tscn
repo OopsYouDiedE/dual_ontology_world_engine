@@ -1,0 +1,231 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/rooms/granary.png" id="arch"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/barrel.png" id="t_barrel"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/granary_bin.png" id="t_granary_bin"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sack.png" id="t_sack"]
+
+[sub_resource type="RectangleShape2D" id="s0"]
+size = Vector2(320, 32)
+
+[sub_resource type="RectangleShape2D" id="s1"]
+size = Vector2(320, 32)
+
+[sub_resource type="RectangleShape2D" id="s2"]
+size = Vector2(320, 32)
+
+[sub_resource type="RectangleShape2D" id="s3"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s4"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s5"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s6"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s7"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s8"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s9"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s10"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s11"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s12"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="s13"]
+size = Vector2(128, 32)
+
+[sub_resource type="RectangleShape2D" id="s14"]
+size = Vector2(128, 32)
+
+[sub_resource type="RectangleShape2D" id="s15"]
+size = Vector2(48, 18)
+
+[sub_resource type="RectangleShape2D" id="s16"]
+size = Vector2(48, 18)
+
+[sub_resource type="RectangleShape2D" id="s17"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="s18"]
+size = Vector2(14, 8)
+
+[sub_resource type="RectangleShape2D" id="s19"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="e0"]
+size = Vector2(64, 32)
+
+[node name="granary" type="Node2D"]
+texture_filter = 1
+metadata/title = "粮仓"
+metadata/map_size = Vector2(320, 288)
+metadata/terrain_rows = ["##########", "#WWWWWWWW#", "#wwwwwwww#", "#........#", "#........#", "#........#", "#........#", "#........#", "####DD####"]
+
+[node name="Architecture" type="Sprite2D" parent="."]
+z_index = -10
+texture = ExtResource("arch")
+centered = false
+
+[node name="Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="BinA" type="Sprite2D" parent="Objects"]
+position = Vector2(96, 118)
+texture = ExtResource("t_granary_bin")
+centered = false
+offset = Vector2(-26, -48)
+
+[node name="BinB" type="Sprite2D" parent="Objects"]
+position = Vector2(224, 118)
+texture = ExtResource("t_granary_bin")
+centered = false
+offset = Vector2(-26, -48)
+
+[node name="SackA" type="Sprite2D" parent="Objects"]
+position = Vector2(72, 202)
+texture = ExtResource("t_sack")
+centered = false
+offset = Vector2(-9, -22)
+
+[node name="SackB" type="Sprite2D" parent="Objects"]
+position = Vector2(96, 208)
+texture = ExtResource("t_sack")
+centered = false
+offset = Vector2(-9, -22)
+
+[node name="Barrel" type="Sprite2D" parent="Objects"]
+position = Vector2(232, 202)
+texture = ExtResource("t_barrel")
+centered = false
+offset = Vector2(-10, -26)
+
+[node name="Solids" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="s0" type="CollisionShape2D" parent="Solids"]
+position = Vector2(160.0, 16.0)
+shape = SubResource("s0")
+
+[node name="s1" type="CollisionShape2D" parent="Solids"]
+position = Vector2(160.0, 48.0)
+shape = SubResource("s1")
+
+[node name="s2" type="CollisionShape2D" parent="Solids"]
+position = Vector2(160.0, 80.0)
+shape = SubResource("s2")
+
+[node name="s3" type="CollisionShape2D" parent="Solids"]
+position = Vector2(16.0, 112.0)
+shape = SubResource("s3")
+
+[node name="s4" type="CollisionShape2D" parent="Solids"]
+position = Vector2(304.0, 112.0)
+shape = SubResource("s4")
+
+[node name="s5" type="CollisionShape2D" parent="Solids"]
+position = Vector2(16.0, 144.0)
+shape = SubResource("s5")
+
+[node name="s6" type="CollisionShape2D" parent="Solids"]
+position = Vector2(304.0, 144.0)
+shape = SubResource("s6")
+
+[node name="s7" type="CollisionShape2D" parent="Solids"]
+position = Vector2(16.0, 176.0)
+shape = SubResource("s7")
+
+[node name="s8" type="CollisionShape2D" parent="Solids"]
+position = Vector2(304.0, 176.0)
+shape = SubResource("s8")
+
+[node name="s9" type="CollisionShape2D" parent="Solids"]
+position = Vector2(16.0, 208.0)
+shape = SubResource("s9")
+
+[node name="s10" type="CollisionShape2D" parent="Solids"]
+position = Vector2(304.0, 208.0)
+shape = SubResource("s10")
+
+[node name="s11" type="CollisionShape2D" parent="Solids"]
+position = Vector2(16.0, 240.0)
+shape = SubResource("s11")
+
+[node name="s12" type="CollisionShape2D" parent="Solids"]
+position = Vector2(304.0, 240.0)
+shape = SubResource("s12")
+
+[node name="s13" type="CollisionShape2D" parent="Solids"]
+position = Vector2(64.0, 272.0)
+shape = SubResource("s13")
+
+[node name="s14" type="CollisionShape2D" parent="Solids"]
+position = Vector2(256.0, 272.0)
+shape = SubResource("s14")
+
+[node name="s15" type="CollisionShape2D" parent="Solids"]
+position = Vector2(96.0, 109.0)
+shape = SubResource("s15")
+
+[node name="s16" type="CollisionShape2D" parent="Solids"]
+position = Vector2(224.0, 109.0)
+shape = SubResource("s16")
+
+[node name="s17" type="CollisionShape2D" parent="Solids"]
+position = Vector2(72.0, 198.0)
+shape = SubResource("s17")
+
+[node name="s18" type="CollisionShape2D" parent="Solids"]
+position = Vector2(96.0, 204.0)
+shape = SubResource("s18")
+
+[node name="s19" type="CollisionShape2D" parent="Solids"]
+position = Vector2(232.0, 196.0)
+shape = SubResource("s19")
+
+[node name="Exits" type="Node2D" parent="."]
+
+[node name="south" type="Area2D" parent="Exits"]
+position = Vector2(160.0, 272.0)
+collision_layer = 0
+collision_mask = 2
+metadata/target = "campus_s"
+metadata/spawn = "granary_front"
+
+[node name="Shape" type="CollisionShape2D" parent="Exits/south"]
+shape = SubResource("e0")
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="south" type="Marker2D" parent="Spawns"]
+position = Vector2(160, 240)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="s00" type="Marker2D" parent="Stands"]
+position = Vector2(144, 188)
+
+[node name="s01" type="Marker2D" parent="Stands"]
+position = Vector2(176, 188)
+
+[node name="Sites" type="Node2D" parent="."]
+
+[node name="latch" type="Marker2D" parent="Sites"]
+position = Vector2(160, 232)
+metadata/label = "门闩"
+
+[node name="stock" type="Marker2D" parent="Sites"]
+position = Vector2(160, 128)
+metadata/label = "存粮"

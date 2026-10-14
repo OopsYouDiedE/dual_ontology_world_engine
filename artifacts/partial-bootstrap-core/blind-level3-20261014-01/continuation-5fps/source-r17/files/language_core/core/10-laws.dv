@@ -1,0 +1,264 @@
+// Law schema is data. Adoption in each world determines how the schema is used.
+
+fn dv_true():
+    return {"op": "constant", "value": "true"}
+
+fn dv_fact(ref, expected):
+    return {"op": "equals", "ref": ref, "value": expected}
+
+fn dv_at_least(ref, minimum):
+    return {"op": "at_least", "ref": ref, "value": minimum}
+
+fn dv_all(conditions):
+    return {"op": "all", "items": conditions}
+
+fn dv_not(condition):
+    return {"op": "not", "item": condition}
+
+fn dv_truth(world, proposition):
+    var op = proposition.op
+    if (op == "constant"):
+        return proposition.value
+    else:
+        if (op == "not"):
+            var inner = dv_truth(world, proposition.item)
+            if (inner == "unknown"):
+                return "unknown"
+            else:
+                if (inner == "true"):
+                    return "false"
+                else:
+                    return "true"
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var result = "true"
+                while (i < rt_count(items)):
+                    var truth = dv_truth(world, items[i])
+                    if (truth == "false"):
+                        result = "false"
+                    else:
+                        if dv_and((truth == "unknown"), (result == "true")):
+                            result = "unknown"
+                    i = (i + 1)
+                return result
+            else:
+                var cell = dv_read(world, proposition.ref)
+                if dv_or((not cell.known), cell.conflicted):
+                    return "unknown"
+                else:
+                    if (op == "equals"):
+                        if dv_same(cell.value, proposition.value):
+                            return "true"
+                        else:
+                            return "false"
+                    else:
+                        if (op == "at_least"):
+                            if (cell.value < proposition.value):
+                                return "false"
+                            else:
+                                return "true"
+                        else:
+                            return rt_fail("Unknown proposition operator")
+
+fn dv_assign(ref, value):
+    return {"op": "assign", "ref": ref, "value": value}
+
+fn dv_increment(ref, amount):
+    return {"op": "increment", "ref": ref, "value": amount}
+
+fn dv_axiom(name, version, premise, effects):
+    return {"name": name, "version": version, "premise": dv_clone(premise), "effects": dv_clone(effects)}
+
+fn dv_instance(id, law):
+    return dv_with(dv_with(law, "schema", law.name), "name", id)
+
+fn dv_adopt(world, law, mode, confidence, basis):
+    dv_unit(confidence)
+    var local_1 = false
+    if (world.domain == "physical"):
+        local_1 = (confidence == 1)
+    else:
+        local_1 = true
+    dv_require(local_1, "Physical laws require certainty")
+    dv_require((0 < rt_count(basis)), "Adoption needs a basis")
+    dv_require((not dv_has_key(world.adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
+    var local_2 = false
+    if (world.domain == "physical"):
+        local_2 = (mode == "enforce")
+    else:
+        local_2 = dv_and((world.domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
+    dv_require(local_2, "Adoption mode is incompatible with world")
+    var adoption = dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
+    return dv_with(dv_with(world, "adoptions", dv_with(world.adoptions, law.name, adoption)), "revision", (world.revision + 1))
+
+fn dv_suspend(world, name):
+    var adoptions = world.adoptions
+    return dv_with(dv_with(world, "adoptions", dv_with(adoptions, name, dv_with(dv_get(adoptions, name), "active", false))), "revision", (world.revision + 1))
+
+fn dv_reconsider(world, law, mode, confidence, basis):
+    var name = law.name
+    var previous = dv_get(world.adoptions, name)
+    var updated = dv_adopt(dv_with(world, "adoptions", dv_without(world.adoptions, name)), law, mode, confidence, basis)
+    return dv_with(updated, "history", dv_append(world.history, {"kind": "reconsideration", "previous": previous, "current": dv_get(updated.adoptions, name), "basis": basis}))
+
+fn dv_premise_confidence(world, proposition):
+    var op = proposition.op
+    if (op == "constant"):
+        return 1
+    else:
+        if (op == "not"):
+            return dv_premise_confidence(world, proposition.item)
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var confidence = 1
+                while (i < rt_count(items)):
+                    confidence = dv_min(confidence, dv_premise_confidence(world, items[i]))
+                    i = (i + 1)
+                return confidence
+            else:
+                return dv_read(world, proposition.ref).confidence
+
+fn dv_result(status, world, changes, basis):
+    return {"status": status, "world": dv_clone(world), "changes": changes, "basis": basis}
+
+fn dv_stage(world, effects, time, basis, confidence):
+    var stage = dv_clone(world)
+    var changes = []
+    var touched = []
+    var i = 0
+    var status = "ready"
+    while dv_and((status == "ready"), (i < rt_count(effects))):
+        var effect = effects[i]
+        var ref = effect.ref
+        var op = effect.op
+        var before = dv_read(stage, ref)
+        if (not dv_has_key(stage.objects, ref.object)):
+            status = "unknown-object"
+        else:
+            if dv_has(touched, ref):
+                status = "duplicate-write"
+            else:
+                if dv_and((op == "increment"), dv_or((not before.known), before.conflicted)):
+                    status = "conflicted-state"
+                else:
+                    dv_require(dv_or((op == "assign"), (op == "increment")), "Unknown effect operator")
+                    var local_1 = false
+                    if (op == "assign"):
+                        local_1 = effect.value
+                    else:
+                        local_1 = (before.value + effect.value)
+                    var value = local_1
+                    stage = dv_store(stage, ref, dv_cell(value, confidence, time, basis))
+                    rt_push(changes, {"ref": ref, "before": before, "after": dv_read(stage, ref)})
+                    rt_push(touched, dv_clone(ref))
+        i = (i + 1)
+    if (status == "ready"):
+        return dv_result("ready", stage, changes, basis)
+    else:
+        return dv_result(status, world, [], basis)
+
+fn dv_infer_stage(world, effects, time, basis, confidence, law_name, event_id):
+    var stage = dv_clone(world)
+    var changes = []
+    var touched = []
+    var i = 0
+    var status = "ready"
+    var profile = dv_find(world, "profile", dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1, "inference": 1}, 0.5))
+    while dv_and((status == "ready"), (i < rt_count(effects))):
+        var effect = effects[i]
+        var ref = effect.ref
+        var op = effect.op
+        var before = dv_read(stage, ref)
+        if (not dv_has_key(stage.objects, ref.object)):
+            status = "unknown-object"
+        else:
+            if dv_has(touched, ref):
+                status = "duplicate-write"
+            else:
+                if dv_and((op == "increment"), dv_or((not before.known), before.conflicted)):
+                    status = "conflicted-state"
+                else:
+                    dv_require(dv_or((op == "assign"), (op == "increment")), "Unknown effect operator")
+                    var local_1 = false
+                    if (op == "assign"):
+                        local_1 = effect.value
+                    else:
+                        local_1 = (before.value + effect.value)
+                    var value = local_1
+                    var claim = dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_list3(event_id, law_name, ref), "subject": stage.subject, "ref": ref, "value": dv_clone(value)}, "source", "inference"), "origin", law_name), "time", time), "trust", confidence), "dependency", dv_list3("inference", law_name, ref))
+                    var old_claims = before.claims
+                    var local_2 = false
+                    if dv_and(before.known, (rt_count(old_claims) == 0)):
+                        local_2 = dv_single(dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_pair("initial", ref), "subject": stage.subject, "ref": ref, "value": before.value}, "source", "initial"), "origin", "initial"), "time", before.time), "trust", before.confidence), "dependency", dv_pair("initial", ref)))
+                    else:
+                        local_2 = old_claims
+                    var claims = local_2
+                    var new_claims = dv_replace_claim(claims, claim)
+                    var new_cell = dv_aggregate(new_claims, profile, time)
+                    stage = dv_store(stage, ref, new_cell)
+                    rt_push(changes, {"ref": ref, "before": before, "after": dv_read(stage, ref)})
+                    rt_push(touched, dv_clone(ref))
+        i = (i + 1)
+    if (status == "ready"):
+        return dv_result("ready", stage, changes, basis)
+    else:
+        return dv_result(status, world, [], basis)
+
+fn dv_apply_law(world, name, mode, event_id, time, expected_revision):
+    dv_require((world.revision == expected_revision), "Stale world revision")
+    dv_require((not dv_has(world.seen, event_id)), "Repeated world event")
+    dv_require((not (time < dv_find(world, "time", 0))), "World time cannot move backwards")
+    var adoption = dv_get(world.adoptions, name)
+    var law = adoption.law
+    var basis = adoption.basis
+    if (not adoption.active):
+        return dv_result("not-adopted", world, [], basis)
+    else:
+        if (not (adoption.mode == mode)):
+            return dv_result("wrong-adoption-mode", world, [], basis)
+        else:
+            var truth = dv_truth(world, law.premise)
+            if (not (truth == "true")):
+                return dv_result(rt_cat("premise-", truth), world, [], basis)
+            else:
+                var local_1 = false
+                if (mode == "infer"):
+                    var infer_confidence = dv_min(dv_premise_confidence(world, law.premise), adoption.confidence)
+                    local_1 = dv_infer_stage(world, law.effects, time, basis, infer_confidence, name, event_id)
+                else:
+                    local_1 = dv_stage(world, law.effects, time, basis, adoption.confidence)
+                var staged = local_1
+                if (not (staged.status == "ready")):
+                    return staged
+                else:
+                    var next = staged.world
+                    var revision = (expected_revision + 1)
+                    var event = dv_with(dv_with({"id": event_id, "time": time, "law": name, "law_version": law.version}, "changes", staged.changes), "basis", basis)
+                    next = dv_with(dv_with(dv_with(dv_with(next, "revision", revision), "seen", dv_append(next.seen, event_id)), "history", dv_append(next.history, event)), "time", time)
+                    return dv_with(dv_with(dv_result("applied", next, staged.changes, basis), "event", event_id), "time", time)
+
+fn dv_execute(physical, name, event_id, time, expected_revision):
+    dv_domain(physical, "physical")
+    return dv_apply_law(physical, name, "enforce", event_id, time, expected_revision)
+
+fn dv_predict(mind, name, event_id, time, expected_revision):
+    dv_domain(mind, "mind")
+    var result = dv_apply_law(mind, name, "predict", event_id, time, expected_revision)
+    return dv_with(dv_with(result, "world", dv_with(dv_with(result.world, "domain", "prediction"), "source_revision", expected_revision)), "source_revision", expected_revision)
+
+fn dv_infer(mind, name, event_id, time, expected_revision):
+    dv_domain(mind, "mind")
+    return dv_apply_law(mind, name, "infer", event_id, time, expected_revision)
+
+fn dv_norm(mind, name):
+    dv_domain(mind, "mind")
+    var adoption = dv_get(mind.adoptions, name)
+    dv_require((adoption.mode == "norm"), "Not a normative adoption")
+    if adoption.active:
+        return dv_truth(mind, adoption.law.premise)
+    else:
+        return "unknown"

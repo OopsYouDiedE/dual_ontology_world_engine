@@ -1,0 +1,138 @@
+extends SceneTree
+## Passive rendered capture plus ordinary viewport input; never selects a world action.
+var host: Node
+var directory := ""
+var mode := "blind"
+var seconds := 90.0
+var started := 0
+var last_capture := 0
+var serial := 0
+var finishing := false
+var last_continue := 0
+var dialogue_seen := false
+
+func _initialize() -> void:
+	root.unfocusable = true
+	root.position = Vector2i(10000, 10000)
+	Engine.time_scale = 4.0
+	_run.call_deferred()
+
+func _run() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--out="): directory = argument.substr(6)
+		if argument.begins_with("--mode="): mode = argument.substr(7)
+		if argument.begins_with("--seconds="): seconds = float(argument.substr(10))
+	if directory == "" or DirAccess.dir_exists_absolute(directory):
+		push_error("Require a new --out directory")
+		quit(2)
+		return
+	DirAccess.make_dir_recursive_absolute(directory)
+	_write("run.json", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
+	host = load("res://scenes/Host/Main.tscn").instantiate()
+	root.add_child(host)
+	host.engine.SetPlayerControlled(mode == "blind")
+	started = Time.get_ticks_msec()
+	host.engine.EventsReady.connect(_host_events)
+	RenderingServer.frame_post_draw.connect(_capture)
+	if mode == "detective":
+		await process_frame
+		_key(KEY_ENTER, true)
+		_key(KEY_ENTER, false)
+
+func _process(_delta: float) -> bool:
+	if not is_instance_valid(host) or finishing: return false
+	if seconds > 0 and Time.get_ticks_msec() - started >= seconds * 1000.0:
+		_finish.call_deferred()
+		return false
+	var input_path := directory.path_join("input.json")
+	if FileAccess.file_exists(input_path):
+		var packet = JSON.parse_string(FileAccess.get_file_as_string(input_path))
+		DirAccess.rename_absolute(input_path, directory.path_join("input-%06d.json" % serial))
+		serial += 1
+		if packet is Dictionary:
+			_input_packet(packet)
+	if mode == "detective" and is_instance_valid(host.ui) and host.ui.dialogue.active:
+		if not dialogue_seen:
+			dialogue_seen = true
+			last_continue = Time.get_ticks_msec()
+		# Retain dialogue on screen across capture frames before advancing it.
+		if Time.get_ticks_msec() - last_continue >= 1500:
+			last_continue = Time.get_ticks_msec()
+			_key(KEY_SPACE, true)
+			_key(KEY_SPACE, false)
+	else:
+		dialogue_seen = false
+	return false
+
+func _input_packet(packet: Dictionary) -> void:
+	_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": packet})
+	if str(packet.get("kind", "")) == "stop":
+		_finish.call_deferred()
+	elif str(packet.get("kind", "")) == "key":
+		var code := OS.find_keycode_from_string(str(packet.get("key", "")))
+		_key(code, bool(packet.get("pressed", true)))
+		if not packet.has("pressed"): _key(code, false)
+	elif str(packet.get("kind", "")) == "click":
+		var point := Vector2(float(packet.x), float(packet.y))
+		var motion := InputEventMouseMotion.new()
+		motion.position = point
+		motion.global_position = point
+		Input.parse_input_event(motion)
+		for down in [true, false]:
+			var event := InputEventMouseButton.new()
+			event.position = point
+			event.global_position = point
+			event.button_index = MOUSE_BUTTON_LEFT
+			event.pressed = down
+			Input.parse_input_event(event)
+
+func _key(code: int, down: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	event.pressed = down
+	Input.parse_input_event(event)
+
+func _host_events(events: Array) -> void:
+	# Host delivery times are evidence bounds, not inferred DV milestone times.
+	_append("host-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "events": events})
+
+func _append(name: String, value: Variant) -> void:
+	var path := directory.path_join(name)
+	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+	file.seek_end()
+	file.store_line(JSON.stringify(value))
+	file.close()
+
+func _capture() -> void:
+	if finishing or directory == "": return
+	var now := Time.get_ticks_msec()
+	if now - last_capture < 200: return
+	last_capture = now
+	var elapsed := now - started
+	var filename := "frame-%09d.png" % elapsed
+	root.get_texture().get_image().save_png(directory.path_join(filename))
+	var frames_path := directory.path_join("frames.jsonl")
+	var frames := FileAccess.open(frames_path, FileAccess.READ_WRITE if FileAccess.file_exists(frames_path) else FileAccess.WRITE)
+	frames.seek_end()
+	frames.store_line(JSON.stringify({"real_ms": elapsed, "file": filename}))
+	frames.close()
+	# This stream is for the main reviewer, never the blind player.
+	var record := {"real_ms": elapsed, "time_scale": Engine.time_scale, "snapshot": host.engine.Snapshot()}
+	var path := directory.path_join("measurement.jsonl")
+	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+	file.seek_end()
+	file.store_line(JSON.stringify(record))
+	file.close()
+
+func _write(name: String, value: Variant) -> void:
+	var file := FileAccess.open(directory.path_join(name), FileAccess.WRITE)
+	file.store_string(JSON.stringify(value))
+	file.close()
+
+func _finish() -> void:
+	if finishing: return
+	finishing = true
+	_write("end.json", {"real_ms": Time.get_ticks_msec() - started, "snapshot": host.engine.Snapshot()})
+	host.shutdown_completed.connect(func(): quit())
+	host.begin_shutdown()

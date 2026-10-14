@@ -1,0 +1,23 @@
+using System.Reflection;
+using System.Text.Json;
+
+static List<object> Record(params (string key, object value)[] fields) => fields.Select(f => (object)new List<object> {f.key, f.value}).ToList();
+static object Read(object record, string key) => ((List<object>)record).Cast<List<object>>().First(p => (string)p[0] == key)[1];
+static object Call(string name, params object[] args) => typeof(DvSession).Assembly.GetType("DVProgram")!.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null,args)!;
+static string Json(object x) => JsonSerializer.Serialize(x);
+var physical = Record(("marker", "old"));
+var initial = Record(("physical",physical));
+var events = new List<object> {Record(("id", "event-a"))};
+var state = Record(("physical", physical), ("initial", initial), ("events",events), ("pending",false), ("player_selection",""), ("extension",Record(("preserve",true))));
+var updatedWorld = Call("F_dv_with",physical,"marker","new");
+var updates = Record(("physical", updatedWorld), ("extra",true));
+var before = Json(state);
+var result = Call("F_dvs_owned_state_update",state,updates);
+var copied = Call("F_dv_with_many",state,updates);
+if (Json(result) != Json(copied)) throw new Exception("Owned transfer changed neutral serialized values relative to the persistent update.");
+if (Json(state) != before || (string)Read(Read(result,"initial"),"physical").GetType().Name != "List`1") throw new Exception("Input state changed.");
+if (!ReferenceEquals(Read(result,"events"), events) || !ReferenceEquals(Read(result,"physical"),updatedWorld)) throw new Exception("Expected owned values were copied.");
+if (ReferenceEquals(result,state) || ReferenceEquals(((List<object>)result)[0],((List<object>)state)[0])) throw new Exception("Top-level record or pairs were reused.");
+var nextWorld = Call("F_dv_with",Read(result,"physical"),"marker","next");
+if (Json(state) != before || (string)Read(Read(Read(result,"initial"),"physical"),"marker") != "old" || (string)Read(Read(result,"physical"),"marker") != "new" || (string)Read(nextWorld,"marker") != "next") throw new Exception("Persistent world update changed inherited history.");
+Console.WriteLine("Neutral generated-DV check: serialized fields equal the persistent updater; unknown/control/initial fields retained; new top-level pairs; owned event/value references transferred; subsequent persistent world update leaves inherited initial and prior world unchanged.");

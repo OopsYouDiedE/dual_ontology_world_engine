@@ -1,0 +1,90 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 3c66bd51..d89dd1e8 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -186,3 +186,5 @@ language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot
+ ## DV 正式宿主切换（2026-10-14）
+ 
+ 正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/modules.json 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
++
++线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index 183f7fc2..a97dbd0e 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -106,3 +106,5 @@ session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取
+ 
+ 原生交互方法可声明 travel.station；呈现绑定将逻辑目的地与当前地图执行房间分开，成功现场回执之后才执行权威接触法则及本人来源观察。预测只写声明的接触状态，不预置观察结果；本轮自身交互历史的空初值不能夹带历史谜题信息。此类接线修复另立指纹，不作为旧规则同条件提速。
+ 根层存在正式可执行且净正值的非移动行动时，先完整比较一层生成的后继，再保留所有已比较路径中的最佳首步，包括移动，记录positive-current-after-successor-layer、根层与后继比较结果、实际完整层数。深度不足、没有后继与预算不能覆盖整层分别记录，不冒称完成后继比较；没有正值当前行动则继续原多步搜索。该有限理性停止策略不保证全局最优，不上调预算、不改变费用与答辩判定，另立来源基线。生产动作结果文案仅在原生game/player-content.dv按本人已获事实条件呈现；重演摘要只读本人当前有效模型，吻合不等同正式答辩。答辩回馈来自实际answer_accepted/rejected事件。重新询问观察执行时的公开题目字段及真实开放状态，不预置答案，也不冒称另一次独立话语回复。
++
++线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
+diff --git a/language_core/game/campaign.dv b/language_core/game/campaign.dv
+index a75e3503..d005b2a0 100644
+--- a/language_core/game/campaign.dv
++++ b/language_core/game/campaign.dv
+@@ -20,7 +20,7 @@ fn dvg_extend(state):
+     var events = state.events
+     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": c2_approved("chapter-state-inheritance"), "movement": false})
+     // Content availability neither relocates a resident nor grants perceptions.
+-    return dv_with_many(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
++    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+ 
+ fn dvg_prepare(state):
+     var current = dvg_extend(state)
+@@ -34,7 +34,7 @@ fn dvg_prepare(state):
+             else:
+                 rt_push(actors, actor)
+             i = i + 1
+-        current = dv_with(current, "actors", actors)
++        current = dvs_owned_state_update(current, {"actors": actors})
+     while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
+         current = dvs_session_prepare(current)
+     return current
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index c738d1f7..53ffb841 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -51,3 +51,5 @@ cognitive_mind_specimen 将刻画机制连接到真实 Core mind、主体系引
+ 15-action-planning 的有限停止只在有净正值当前非移动行动且整层后继比较完成后触发，保留已比较路径最佳首步，不覆盖成当前行动。root_best、best_after_successor_layer、completed_layers与stop记录实际比较范围；缺预算、缺深度、无可预测后继分别注明。没有正值当前行动沿原深度搜索，费用、工作扣费、资格与正确条件不变。内容中的重新询问可以观察实际公开问题状态，不能借此授予答案或隐藏历史。
+ 
+ 请求去重使用专用语义输入签名，不复用带完整来源历史的仿真输入；方法和声道前提分别保留实际真值。重演接纳检查总模型预算，不以先前方法已耗尽的工作余额拒绝可重新付费的方法。依赖身体接触的原生观察必须有对应执行法则与成功现场回执，预测接触标记不授权真实记忆；完整取回与浅瞬观察分别记录，不引入未经来源支持的价格或偏好顺序。
++
++线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 8ab4b4a4..974fea65 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -55,3 +55,5 @@
+ ## 唯一动作入口
+ 
+ 30-runner.dv 的 prepare/complete 是唯一真实动作机制。逻辑运行器直接依次调用这两个函数；step 入口已移除。Godot 只承接同一待执行意图和现场回执；旧 C#、旧解释器与旧坐席执行不再存在于工作树。预测/模型只读本人材料，不提交现实动作效果。
++
++线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
+diff --git a/language_core/verification/session/30-runner.dv b/language_core/verification/session/30-runner.dv
+index 976ef296..cf037aa9 100644
+--- a/language_core/verification/session/30-runner.dv
++++ b/language_core/verification/session/30-runner.dv
+@@ -539,3 +539,23 @@ fn dvs_observation_source(observations, action):
+ 
+ fn dvs_observation_profile(actor):
+     return dv_observation_profile(dv_find(actor.policy, "observation_weights", {"perception": 1, "testimony": 1, "recall": 1}), dv_find(actor.policy, "observation_threshold", 0.5))
++
++// Linear host-state transfer only. The caller relinquishes the previous state.
++// Keep persistent world/mind/prediction updates on their independent-copy APIs.
++fn dvs_owned_state_update(state, updates):
++    var result = []
++    var keys = []
++    var i = 0
++    while i < rt_count(state):
++        let key = state[i][0]
++        rt_push(result, dv_pair(key, dv_find(updates, key, state[i][1])))
++        rt_push(keys, key)
++        i = i + 1
++    i = 0
++    while i < rt_count(updates):
++        let key = updates[i][0]
++        if not dv_has(keys, key):
++            rt_push(result, dv_pair(key, updates[i][1]))
++            rt_push(keys, key)
++        i = i + 1
++    return result

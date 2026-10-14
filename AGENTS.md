@@ -186,3 +186,5 @@ language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot
 ## DV 正式宿主切换（2026-10-14）
 
 正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/modules.json 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
+
+线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
