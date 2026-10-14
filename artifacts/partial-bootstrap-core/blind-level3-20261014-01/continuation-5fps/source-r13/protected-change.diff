@@ -1,0 +1,170 @@
+diff --git a/godot_csharp/AGENTS.md b/godot_csharp/AGENTS.md
+index 78965aba..005b2caa 100644
+--- a/godot_csharp/AGENTS.md
++++ b/godot_csharp/AGENTS.md
+@@ -145,3 +145,4 @@
+ 正式对白沿DV呈现返回的actor与speaker_name标注说话者；宿主不填默认人物姓名。
+ DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺序与输入确认，避免多段证物挤在同一矮框中。
+ 采集另记录input-events.jsonl的协议实际消费时刻与host-events.jsonl的宿主交付时刻；后者为私有审查数据，不向盲玩者提供。prepare交付只证明已准备，不冒充执行、推演正确、答案接受或交接时刻；真实节点仍与正式事件及可见画面核对，无法精确定位时保留采样区间/记录不足。
++界面仅依据DV返回的实际答辩事件显示接受/未接受，提交本身不作接受，也不作章节交接。
+diff --git a/godot_csharp/scenes/Host/Main.gd b/godot_csharp/scenes/Host/Main.gd
+index f3043f60..1299ffaf 100644
+--- a/godot_csharp/scenes/Host/Main.gd
++++ b/godot_csharp/scenes/Host/Main.gd
+@@ -127,6 +127,9 @@ func _drain() -> void:
+ 					for text in result.get("lines", []):
+ 						for paragraph in str(text).split("\n", false):
+ 							lines.append({"text": paragraph, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
++				var judgment = result.get("judgment", false)
++				if judgment is Dictionary:
++					lines.append({"text": "本次答辩已获接受。" if str(judgment.status) == "answer_accepted" else "本次答辩未获接受。", "speaker": ""})
+ 				if not lines.is_empty(): await ui.present({"kind": "lines", "lines": lines})
+ 				dispatch.call_deferred({"kind": "dv_next"})
+ 			"view": _view(ev)
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index fe13f99e..ed18e88f 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -100,3 +100,4 @@ session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取
+ 路径循环检查使用预测state加achievements，单独的access键不使同一认知状态成为新进展；跨路径非支配key继续含access键。实际r9证明纯接近绕路曾被加分，不改权重，分开循环与历史去重后再新会话核对。
+ 循环key进一步只取预测认知state，不含位置型暂态achievements；累计字段仍仅参与跨路径非支配比较。到目标位置本身可估值，绕回相同状态不能据暂态访问继续展开。
+ 同处请求上下文采用实际看到的地点和本人行动前提输入，不再把接收者任意last_action_event当作重问依据；已发同条件请求仍保留，新的本人前提或不同现场可重问，不改实际收闻与回复资格。
++根层完整比较后，若有正式可执行且净正值的非移动行动，按本人现有价值选该类最佳并记录positive-current-affordance、净值与实际展开。没有则继续原多步搜索。该有限理性停止策略不保证全局最优，不上调预算、不改变费用与答辩判定，另立来源基线。生产动作结果文案仅在原生game/player-content.dv按本人已获事实条件呈现；重演摘要只读本人当前有效模型，吻合不等同正式答辩。答辩回馈来自实际answer_accepted/rejected事件。
+diff --git a/language_core/game/player-content.dv b/language_core/game/player-content.dv
+index dc29f6b2..905a58ef 100644
+--- a/language_core/game/player-content.dv
++++ b/language_core/game/player-content.dv
+@@ -42,7 +42,7 @@ fn c1_player_display(action):
+         if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
+             result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation("detective", "visible-inspection", [card.text])})
+         i = i + 1
+-    let named = {".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻"}
++    let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
+     i = 0
+     while i < rt_count(named):
+         if c1_ui_ends(action.id, named[i][0]):
+@@ -54,5 +54,26 @@ fn c1_player_display(action):
+         if dv_has_key(answers, id):
+             result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
+     if c1_ui_ends(action.id, ".reask_question"):
+-        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current")}]}]})
++        let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust"), "original_q2_complete": "闩门之时，此人可曾听见门外的呼喊？"}
++        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
++    if c1_ui_ends(action.id, ".compare_sole"):
++        result = dv_with(result, "presentation", {"lines": [{"template": "马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。", "when": c1_statement("boots_fit")} ]})
++    if c1_ui_ends(action.id, ".identify-own-lens"):
++        result = dv_with(result, "presentation", {"lines": [{"template": "我的口袋有放大镜。", "when": c1_statement("lens_mine")} ]})
++    if c1_ui_ends(action.id, ".opening.wear-coat"):
++        result = dv_with(result, "presentation", {"lines": [{"template": "你穿上了风衣。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
++    if c1_ui_ends(action.id, ".sound_trial"):
++        result = dv_with(result, "presentation", {"lines": [{"template": "声路试验已做完。", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
+     return result
++
++fn c1_player_replay_summary(actor):
++    let candidates = dv_find(actor.policy, "hypotheses", [])
++    var i = 0
++    while i < rt_count(candidates):
++        let candidate = candidates[i]
++        if dvs_working_explanation(actor, candidate):
++            let model = dvs_cached_model(actor, candidate)
++            if dv_explanation_model_complete(model, "explained", actor.mind.revision):
++                return "重演结果：已有解释与现有观察相符。这仍是推演，尚不是正式答辩。"
++        i = i + 1
++    return "这次重演尚未形成能够完整说明现有观察的解释。"
+diff --git a/language_core/game/presentation.dv b/language_core/game/presentation.dv
+index b2fe82b9..105e28cd 100644
+--- a/language_core/game/presentation.dv
++++ b/language_core/game/presentation.dv
+@@ -40,15 +40,18 @@ fn dvg_clock(time):
+     return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
+ 
+ fn dvg_presentation(state, viewer):
+-    let result = dvs_session_presentation(state, viewer)
++    var result = dvs_session_presentation(state, viewer)
+     let actor = dv_find(result, "actor", "")
+     var display = ""
+     var i = 0
+     while i < rt_count(state.actors):
+         if state.actors[i].id == viewer:
+-            let name = dv_read(state.actors[i].mind, c1_op_person_ref(actor, "name"))
++            let subject = state.actors[i]
++            let name = dv_read(subject.mind, c1_op_person_ref(actor, "name"))
+             if dv_uncontested(name):
+                 display = name.value
++            if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
++                result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
+         i = i + 1
+     return dv_with(result, "speaker_name", display)
+ 
+diff --git a/language_core/verification/session/15-action-planning.dv b/language_core/verification/session/15-action-planning.dv
+index a88cbd18..00e51464 100644
+--- a/language_core/verification/session/15-action-planning.dv
++++ b/language_core/verification/session/15-action-planning.dv
+@@ -531,6 +531,9 @@ fn dvp_plan(actor, bindings, costs):
+     var best = false
+     var best_score = -100000
+     var best_path = []
++    var current_action = false
++    var current_score = 0
++    var current_value = []
+     let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
+     let initial_access = dvp_initial_access(actor)
+     let initial_seen = dvp_state_key(actor.mind)
+@@ -587,6 +590,10 @@ fn dvp_plan(actor, bindings, costs):
+                         var path = dv_append(node.path, action.id)
+                         var score = 0
+                         score = (node.score + (value.value - (cost.time * dv_find(actor.policy, "time_cost", 0.01))))
++                        if depth == 0 and action.kind != "move" and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
++                            current_action = action
++                            current_score = score
++                            current_value = value
+                         rt_push(plans, dv_with(dv_with(dv_with({"path": path, "score": score, "value": value, "relevant_refs": relevant}, "probe_refs", probes), "mind_revision", actor.mind.revision), "prediction_basis", dv_find(node, "prediction_basis", [])))
+                         if (best_score < score):
+                             best_score = score
+@@ -615,6 +622,12 @@ fn dvp_plan(actor, bindings, costs):
+                                                 next_frontier = dvp_frontier_put(next_frontier, candidate_node)
+                     i = (i + 1)
+                 n = (n + 1)
++            if depth == 0 and current_action != false:
++                best = current_action
++                best_score = current_score
++                best_path = [current_action.id]
++                next_frontier = []
++                stop = "positive-current-affordance"
+             frontier = next_frontier
+             depth = (depth + 1)
+     var local_2 = false
+@@ -627,7 +640,7 @@ fn dvp_plan(actor, bindings, costs):
+         local_3 = "duration-budget"
+     else:
+         local_3 = stop
+-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit)
++    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit), "current_affordance", {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"})
+ 
+ fn dvp_find_action(actions, id):
+     var i = 0
+diff --git a/language_core/verification/session/40-host.dv b/language_core/verification/session/40-host.dv
+index f08eb412..c8af9b70 100644
+--- a/language_core/verification/session/40-host.dv
++++ b/language_core/verification/session/40-host.dv
+@@ -56,8 +56,11 @@ fn dvs_session_presentation(state, viewer):
+     var i = rt_count(state.events) - 1
+     var perceived = false
+     var heard = false
++    var judgment = false
+     while 0 <= i:
+         let event = state.events[i]
++        if event.actor == viewer and (event.type == "answer_accepted" or event.type == "answer_rejected"):
++            judgment = {"status": event.type, "event_id": event.id, "game_time": event.time}
+         if event.actor == viewer and (event.type == "listener_parse" or event.type == "observation"):
+             perceived = true
+         if event.actor == viewer and event.type == "listener_parse":
+@@ -71,7 +74,7 @@ fn dvs_session_presentation(state, viewer):
+             if applied and visible:
+                 surface = dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", ""))
+                 presentation = dv_find(action, "presentation", [])
+-            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation)}
++            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
+         i = i - 1
+     return {"status": "idle", "game_time": state.physical.time}
+ 
