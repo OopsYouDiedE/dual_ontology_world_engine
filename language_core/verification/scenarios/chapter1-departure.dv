@@ -23,7 +23,7 @@ axiom c1dep_outer_law():
     return dv_axiom("c1dep_outer_law", 1, dv_all([c1dep_complete(), c2_at("demon", "living_hall"), dv_fact(c1dep_ref("outer_released"), false)]), [dv_assign(c1dep_ref("outer_released"), true), dv_assign(c2_access("living_exit"), true)])
 
 axiom c1dep_pick_law():
-    return dv_axiom("c1dep_pick_law", 1, dv_all([c1_at("quer", "living_hall"), dv_at_least(c2_clock(), 720), dv_not(c1dep_complete()), dv_fact(c1dep_ref("outer_released"), false), dv_fact(c1dep_ref("quer_has_wire"), true)]), [dv_assign(c1dep_ref("outer_released"), true), dv_assign(c1dep_ref("picked_by_quer"), true), dv_assign(c2_access("living_exit"), true)])
+    return dv_axiom("c1dep_pick_law", 1, dv_all([c1_at("quer", "living_hall"), dv_at_least(c2_clock(), 780), dv_not(c1dep_complete()), dv_fact(c1dep_ref("outer_released"), false), dv_fact(c1dep_ref("quer_has_wire"), true)]), [dv_assign(c1dep_ref("outer_released"), true), dv_assign(c1dep_ref("picked_by_quer"), true), dv_assign(c2_access("living_exit"), true)])
 
 axiom c1dep_inner_law(actor):
     return dv_axiom("c1dep_inner_law", 1, dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)]), dv_single(dv_assign(c1dep_ref("inner_down"), false)))
@@ -77,7 +77,7 @@ fn c1dep_actions(actor):
         let call = c1dep_speech(actor, "quer.departure.call-inside", "living_hall", receipt, dv_true(), "里头有人？", c1dep_source("11_门外的人.story", 5, "door_voices.002：询问部分"))
         rt_push(actions, dv_with(call, "speech", dv_with(call.speech, "utterance_type", "question")))
         let self = dv_all([receipt, dv_fact(c2_ref("case.contract", "outer_latch_released"), true)])
-        let reply = c1dep_speech(actor, "quer.departure.answer-door", "living_hall", self, self, "甲区的。我们那道题答完了，闩自己抬起来的。你们这扇还闩着——这种闩简单，给我三下。", c1dep_source("11_门外的人.story", 8, "door_voices.005"))
+        let reply = c1dep_speech(actor, "quer.departure.answer-door", "living_hall", self, self, "甲区的。沃德还在里头死抠条文，我可不陪他耗着，门让我挑开了。你们这扇还闩着——这种闩简单，给我三下。", c1dep_source("11_门外的人.story", 8, "door_voices.005"))
         rt_push(actions, dv_with(reply, "response_topic", "door_identity"))
     if actor == "lucian":
         let receipt = c1_other_claim("contract", "receipt.lucian")

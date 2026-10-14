@@ -601,7 +601,12 @@ func advance() -> void:
 		return
 	if body.visible_characters >= 0:
 		reveal()
-	elif line.responses.is_empty():
+		return
+	var v_scroll := body.get_v_scroll_bar()
+	if v_scroll != null and v_scroll.visible and v_scroll.value + v_scroll.page < v_scroll.max_value - 4.0:
+		v_scroll.value = minf(v_scroll.max_value, v_scroll.value + maxf(v_scroll.page * 0.85, 24.0))
+		return
+	if line.responses.is_empty():
 		await show_line(line.next_id)
 
 func reveal() -> void:

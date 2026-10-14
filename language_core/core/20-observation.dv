@@ -230,6 +230,7 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
     var i = 0
     var accepted = []
     var dispositions = []
+    var latest_time = dv_find(mind, "time", 0)
     while (i < rt_count(observations)):
         var observation = observations[i]
         var id = observation.id
@@ -244,6 +245,7 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
             next = dv_add_object(next, dv_object(object_id, "perceived", []))
         var old = dv_read(next, ref)
         var time = observation.time
+        latest_time = dv_max(latest_time, time)
         if (time < old.time):
             rt_push(dispositions, dv_pair(id, "older-than-current"))
         else:
@@ -280,6 +282,7 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
         local_2 = expected_revision
     else:
         local_2 = (expected_revision + 1)
+    next = dv_with(next, "time", latest_time)
     next = dv_with(next, "revision", local_2)
     next = dv_with(next, "history", dv_append(mind.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions}))
     return {"world": next, "dispositions": dispositions, "revision": next.revision}

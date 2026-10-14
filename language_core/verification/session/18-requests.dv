@@ -86,7 +86,7 @@ fn dvs_notice_peers(actor, physical, actors, events, time, parent):
         if dv_same(context, old):
             return actor
         else:
-            var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "physical": physical, "location_ref": actor.location_ref})
+            var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref})
             return dv_with(dv_with(actor, "visible_context", context), "last_cognitive_event", event)
     else:
         return actor
@@ -106,7 +106,7 @@ fn dvs_visible_action_grants(actors, speaker_index, action, physical, bindings, 
             var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
             if (0 < rt_count(observations)):
                 var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
-                var event = dvs_event(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with(dv_with(dv_with({"observations": observations, "mind_before": mind, "mind_after": next, "action": action}, "bindings", bindings), "grants", grants), "execution_id", execution_id))
+                var event = dvs_event(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with(dv_with(dv_with({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "action": action}, "bindings", bindings), "grants", grants), "execution_id", execution_id))
                 result = dvs_replace(result, i, dv_with(dv_with(actor, "mind", next), "last_cognitive_event", event))
         i = (i + 1)
     return result

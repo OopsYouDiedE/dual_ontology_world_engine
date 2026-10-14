@@ -144,11 +144,30 @@ func present(ev: Dictionary) -> Dictionary:
 		_: push_error("Unsupported display output: " + str(ev.get("kind", "")))
 	return {}
 
+const DEFAULT_SPEAKER_NAMES := {
+	"detective": "侦探",
+	"huo": "霍铎",
+	"shen": "沈鼎",
+	"su": "苏泠",
+	"quer": "雀儿",
+	"lucian": "卢西安",
+	"ward": "沃德",
+	"gu": "顾平章",
+	"ruan": "阮清月",
+	"elena": "伊莲娜",
+	"selma": "赛尔玛",
+	"moran": "莫兰",
+	"mora": "茉拉",
+	"bertrand": "贝尔特朗",
+	"veronica": "维罗妮卡",
+	"margaret": "玛格丽特",
+	"demon": "代管者",
+	"copper": "铜口"
+}
+
 func _character(line: Dictionary) -> String:
 	# 标准说话人键供立绘与声音查找；显示名由事件提供。
-	var speaker := str(line.get("speaker", ""))
-	var name := str(line.get("speaker_name", speaker))
-	return name if RegEx.create_from_string("^[A-Z][A-Za-z]+$").search(speaker) != null else speaker
+	return str(line.get("speaker", ""))
 
 func _lines(ev: Dictionary) -> Dictionary:
 	_dialogue_generation += 1
@@ -162,7 +181,13 @@ func _lines(ev: Dictionary) -> Dictionary:
 		entry.line_index = line_index
 		line_index += 1
 		entry.speaker = _character(line)
-		_speakers[entry.speaker] = str(line.get("speaker_name", entry.speaker))
+		var custom_name := str(line.get("speaker_name", ""))
+		if custom_name != "":
+			_speakers[entry.speaker] = custom_name
+		elif DEFAULT_SPEAKER_NAMES.has(entry.speaker):
+			_speakers[entry.speaker] = DEFAULT_SPEAKER_NAMES[entry.speaker]
+		else:
+			_speakers[entry.speaker] = entry.speaker
 		lines.append(entry)
 	_presenter.lines = lines
 	_presenter.choices = ev.get("choices", [])

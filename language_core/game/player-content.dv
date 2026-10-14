@@ -59,13 +59,23 @@ fn c1_player_display(action):
         let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust"), "original_q2_complete": "闩门之时，此人可曾听见门外的呼喊？"}
         result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
     if c1_ui_ends(action.id, ".compare_sole"):
-        result = dv_with(result, "presentation", {"lines": [{"template": "马球靴的鞋底纹路，与灰上的印一模一样。纹槽里嵌着同样的灰。", "when": c1_statement("boots_fit")} ]})
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "马球靴的鞋底纹路，与门前灰上的印迹一模一样。靴齿里嵌着同样的炭灰。", "when": c1_statement("boots_fit")} ]})
     if c1_ui_ends(action.id, ".identify-own-lens"):
-        result = dv_with(result, "presentation", {"lines": [{"template": "我的口袋有放大镜。", "when": c1_statement("lens_mine")} ]})
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "风衣内袋里的铜框放大镜，把柄刻痕与石板上的图记完全吻合。", "when": c1_statement("lens_mine")} ]})
     if c1_ui_ends(action.id, ".opening.wear-coat"):
-        result = dv_with(result, "presentation", {"lines": [{"template": "你穿上了风衣。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
     if c1_ui_ends(action.id, ".sound_trial"):
-        result = dv_with(result, "presentation", {"lines": [{"template": "声路试验已做完。", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠按着门框侧耳辨听：‘只有重读的尾音震动……这不是门外有人喊，是铜管接头松动漏出来的声音。’", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
+    if c1_ui_ends(action.id, ".loss_testimony"):
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠：‘昨夜我听见的“开门”，音调和刚才松动铜管里漏出来的一模一样。门外……根本没有人。’"} ]})
+    if c1_ui_ends(action.id, ".talk.frame_hollow"):
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠用音叉轻敲门框：‘门框后面是空的，贴着走去主楼的传声铜管。松动的接头就在这里。’"} ]})
+    if c1_ui_ends(action.id, ".talk.slate_code"):
+        result = dv_with(result, "presentation", {"actor": "huo", "lines": [{"template": "霍铎摸了摸石板上的刻痕：‘⊥是落闩，✕是切勿开门，◎指研习长桌旁的传声铜口。这是我的速记习惯。’"} ]})
+    if c1_ui_ends(action.id, ".talk.cups_known"):
+        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎擦着水槽里的杯子：‘阿泠喜淡茶不加糖，老霍嗜甜必加两勺。我这双手比脑子灵光，早就习惯这么泡茶了。’"} ]})
+    if c1_ui_ends(action.id, ".talk.starter_kept"):
+        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎揭开陶罐看了看：‘这罐老酵头至少续养了几个月，一层层干结的旧面痕骗不了人。咱们几个，绝不是昨天才认识的。’"} ]})
     return result
 
 fn c1_player_replay_summary(actor):

@@ -1,0 +1,330 @@
+// Native authored recall episode. Touch causes only a flash; hold and release are
+// competing personal actions. Neither testimony nor a flash grants a full recall.
+// No numerical erosion increment is authored by these source scenes.
+
+fn c1_recall_source(line, id):
+    return c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", line, id)
+
+fn c1_recall_id(actor):
+    return rt_cat("recall.", actor)
+
+fn c1_recall_ref(actor, field):
+    return dv_ref(c1_recall_id(actor), "state", field)
+
+fn c1_recall_room(actor):
+    if actor == "huo":
+        return "hall"
+    if actor == "shen":
+        return "pantry"
+    return "foyer"
+
+fn c1_recall_material(actor):
+    if actor == "huo":
+        return "slate_marks"
+    if actor == "shen":
+        return "starter_layers"
+    if actor == "su":
+        return "fork_dent"
+    return "bolt_down"
+
+fn c1_recall_flash_source(actor):
+    if actor == "huo":
+        return c1_recall_source(66, "recall_offer_huo.001")
+    if actor == "shen":
+        return c1_recall_source(110, "recall_offer_shen.001")
+    if actor == "su":
+        return c1_recall_source(24, "recall_offer_su.001")
+    return c1_recall_source(148, "recall_ask_detective.001")
+
+fn c1_recall_flash_text(actor):
+    if actor == "huo":
+        return "手一碰，闪了一下。"
+    if actor == "shen":
+        return "端着它，脑子里闪过点什么。……我这辈子摸过的罐子比你见过的人多，没一个这样。"
+    if actor == "su":
+        return "……刚才碰到它，脑子里闪了一下。"
+    return "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。……握住它，往下想？"
+
+fn c1_recall_terms_ref(field):
+    return dv_ref("recall_terms", "state", field)
+
+fn c1_recall_terms_ast():
+    return dv_all(dv_list3(dv_fact(c1_recall_terms_ref("sealed"), true), dv_fact(c1_recall_terms_ref("requires_hold"), true), dv_fact(c1_recall_terms_ref("binds_here"), true)))
+
+fn c1_recall_price_known():
+    return dv_all(dv_pair(dv_fact(c1_recall_terms_ref("receipt"), "heard"), c1_recall_terms_ast()))
+
+fn c1_recall_price_unknown():
+    return dv_fact(c1_recall_terms_ref("receipt"), "unheard")
+
+fn c1_recall_price_text():
+    return "是你封存之物。握久了，它会回来；回来的，你便带着了，连同它连着的此地。"
+
+fn c1_recall_terms_object():
+    return c1_state_object("recall_terms", {"sealed": dv_field(true), "requires_hold": dv_field(true), "binds_here": dv_field(true), "receipt": dv_field("heard")})
+
+fn c1_recall_episode_object(actor):
+    return c1_state_object(c1_recall_id(actor), {"touched": dv_field(false), "holding": dv_field(false), "resolved": dv_field(false), "retrieved": dv_field(false), "released": dv_field(false), "price_requested": dv_field(false), "advice_requested": dv_field(false), "connected_here": dv_field(false), "erosion_settlement": dv_field("not-incurred"), "flash": dv_field(c1_recall_flash_text(actor))})
+
+fn c1_recall_unresolved(actor):
+    return dv_all(dv_list3(dv_fact(c1_recall_ref(actor, "touched"), true), dv_fact(c1_recall_ref(actor, "holding"), true), dv_fact(c1_recall_ref(actor, "resolved"), false)))
+
+fn c1_recall_ready(actor, known):
+    var price = c1_recall_price_unknown()
+    if known:
+        price = c1_recall_price_known()
+    return dv_all(dv_list3(c1_at(actor, c1_recall_room(actor)), dv_fact(c1_recall_ref(actor, "touched"), true), price))
+
+axiom c1_recall_touch_law(actor, room):
+    return dv_axiom("c1_recall_touch_law", 1, dv_all(dv_list3(c1_at(actor, room), dv_fact(c1_recall_ref(actor, "touched"), false), dv_fact(c1_recall_ref(actor, "resolved"), false))), dv_pair(dv_assign(c1_recall_ref(actor, "touched"), true), dv_assign(c1_recall_ref(actor, "holding"), true)))
+
+axiom c1_recall_hold_law(actor, room):
+    return dv_axiom("c1_recall_hold_law", 1, dv_all(dv_pair(c1_at(actor, room), c1_recall_unresolved(actor))), [dv_assign(c1_recall_ref(actor, "resolved"), true), dv_assign(c1_recall_ref(actor, "retrieved"), true), dv_assign(c1_recall_ref(actor, "decision"), "retrieve"), dv_assign(c1_recall_ref(actor, "connected_here"), true), dv_assign(c1_recall_ref(actor, "erosion_settlement"), "connected-by-retrieval-no-authored-quantity")])
+
+axiom c1_recall_release_law(actor, room):
+    return dv_axiom("c1_recall_release_law", 1, dv_all(dv_pair(c1_at(actor, room), c1_recall_unresolved(actor))), [dv_assign(c1_recall_ref(actor, "holding"), false), dv_assign(c1_recall_ref(actor, "resolved"), true), dv_assign(c1_recall_ref(actor, "released"), true), dv_assign(c1_recall_ref(actor, "decision"), "release")])
+
+axiom c1_recall_request_law(actor, field):
+    return dv_axiom("c1_recall_request_law", 1, dv_all(dv_pair(c1_at(actor, c1_recall_room(actor)), c1_recall_unresolved(actor))), dv_single(dv_assign(c1_recall_ref(actor, field), true)))
+
+fn c1_recall_choice(action, actor, promotes, sacrifices, basis):
+    return dv_with(action, "personal_choice", {"group": c1_recall_id(actor), "requires": action.precondition, "prohibits": dv_fact(c1_recall_ref(actor, "resolved"), true), "promotes": promotes, "sacrifices": sacrifices, "basis": basis})
+
+fn c1_recall_touch_action(actor):
+    let source = c1_recall_flash_source(actor)
+    let id = rt_cat(actor, ".recall.touch")
+    var action = c1_once(c1_action(id, "inspect", dv_all(dv_pair(c1_at(actor, c1_recall_room(actor)), c1_statement(c1_recall_material(actor)))), dv_all(dv_pair(c1_at(actor, c1_recall_room(actor)), dv_fact(c1_recall_ref(actor, "touched"), false))), id, [c1_recall_ref(actor, "touched"), c1_recall_ref(actor, "flash")], source))
+    return dv_with_many(action, {"surface": c1_recall_flash_text(actor), "object_contact": c1_recall_material(actor), "flash_source": "involuntary-recall"})
+
+fn c1_recall_full_grants(actor):
+    if actor == "huo":
+        return dv_single(c1_knowledge("recalled_copper"))
+    if actor == "shen":
+        return dv_single(c1_knowledge("recalled_names"))
+    if actor == "su":
+        return dv_list3(c1_recall_ref(actor, "remembered_open_call"), c1_recall_ref(actor, "remembered_open_intent"), c1_recall_ref(actor, "remembered_door_source_belief"))
+    return dv_pair(c1_knowledge("recalled_bolt"), c1_knowledge("recalled_trust"))
+
+fn c1_recall_return_source(actor):
+    if actor == "huo":
+        return c1_recall_source(12, "recall_huo.003")
+    if actor == "shen":
+        return c1_recall_source(19, "recall_shen.003")
+    if actor == "su":
+        return c1_recall_source(3, "recall_su.002")
+    return c1_recall_source(161, "recall_detective.002")
+
+fn c1_recall_return_text(actor):
+    if actor == "huo":
+        return "铜口里的声音……很清楚。“等我下一次通知。”◎，铜口。他叫我守铜口。……他再也没有来。"
+    if actor == "shen":
+        return "又该喂了。阿泠的茶不放糖。老霍的放两勺。那位——清茶，不放奶。阿泠。……这称呼怎么脱口就来了。"
+    if actor == "su":
+        return "门边……有人在喊开门。我想开门，让他进来。那个声音，我当时以为……是门外的人。"
+    return "霍铎说闩。我就闩了。……我信他。一句转述，我就去闩了门。我凭的是什么？"
+
+fn c1_recall_choice_text(actor, holding, known):
+    if holding:
+        if actor == "huo" and known:
+            return "代价我听见了。我自己担。……图纸值这个价。"
+        if known:
+            return "连着此地，我听见了。我继续握住，往下想。"
+        return "我想知道那一下是什么。继续握住。"
+    if actor == "shen":
+        return "罐子我照样喂。回想就免了。"
+    if known:
+        return "铜口说，握久了就带着此地。……我不知道那意味着什么。先放下。"
+    return "先放下。"
+
+fn c1_recall_resolution(actor, holding, known):
+    var suffix = ".release.unknown"
+    if holding:
+        suffix = ".hold.unknown"
+    if known:
+        suffix = ".release.known"
+        if holding:
+            suffix = ".hold.known"
+    let id = rt_cat(actor, rt_cat(".recall", suffix))
+    let source = c1_recall_return_source(actor)
+    var grants = [c1_recall_ref(actor, "resolved"), c1_recall_ref(actor, "released"), c1_recall_ref(actor, "decision")]
+    var law = rt_cat(actor, ".recall.release")
+    var promotes = ["caution"]
+    var sacrifices = ["pursue_desire", "self_knowledge"]
+    if known:
+        promotes = ["avoid_attachment", "caution"]
+    if holding:
+        law = rt_cat(actor, ".recall.hold")
+        grants = dv_explanation_merge(c1_recall_full_grants(actor), [c1_recall_ref(actor, "resolved"), c1_recall_ref(actor, "retrieved"), c1_recall_ref(actor, "decision"), c1_recall_ref(actor, "connected_here"), c1_recall_ref(actor, "erosion_settlement")])
+        promotes = ["pursue_desire", "self_knowledge", "solve_case"]
+        sacrifices = ["caution"]
+        if known:
+            sacrifices = ["caution", "avoid_attachment"]
+    var action = c1_once(c1_action(id, "recall", c1_recall_ready(actor, known), dv_all(dv_pair(c1_at(actor, c1_recall_room(actor)), c1_recall_unresolved(actor))), law, grants, source))
+    action = c1_recall_choice(action, actor, promotes, sacrifices, dv_pair(source, c1_recall_flash_source(actor)))
+    var text = c1_recall_choice_text(actor, holding, known)
+    if holding:
+        action = c1_observe_as(action, "recall", actor, 0.85)
+        var sources = []
+        let state_fields = ["resolved", "retrieved", "decision", "connected_here", "erosion_settlement"]
+        var i = 0
+        while i < rt_count(state_fields):
+            rt_push(sources, {"ref": c1_recall_ref(actor, state_fields[i]), "source": "perception", "origin": "own-executed-retrieval", "trust": 1})
+            i = i + 1
+        action = dv_with(action, "grant_observation_sources", sources)
+        text = rt_cat(text, rt_cat("\n", c1_recall_return_text(actor)))
+    return dv_with_many(action, {"surface": text, "purpose_refs": grants, "choice_completion": true})
+
+fn c1_recall_request_action(actor, target, topic, field, text):
+    let source = c1_recall_flash_source(actor)
+    let id = rt_cat(actor, rt_cat(".recall.ask.", topic))
+    var action = c1_action(id, "talk", c1_recall_ready(actor, false), dv_all(dv_pair(c1_at(actor, c1_recall_room(actor)), c1_recall_unresolved(actor))), id, dv_single(c1_recall_ref(actor, field)), source)
+    var channel = "copper-recall"
+    if target == "detective":
+        channel = "speech"
+    let speech = dv_with_many(c1_speech(dv_true(), source, "recall-request"), {"surface": text, "utterance_type": "question", "channel": channel, "request": {"target": target, "topic": topic}})
+    action = dv_with_many(action, {"speech": speech, "listeners": dv_single(target), "request_transport": {"channel": channel}, "purpose_refs": dv_pair(c1_recall_terms_ref("requires_hold"), c1_recall_terms_ref("binds_here"))})
+    var promotes = ["clarify_terms", "understand_cost"]
+    if target == "detective":
+        promotes = ["seek_advice"]
+    return c1_recall_choice(action, actor, promotes, [], dv_single(source))
+
+fn c1_recall_cost_request(actor):
+    return c1_recall_request_action(actor, "demon", "recall_price", "price_requested", "刚才那是什么？")
+
+fn c1_recall_advice_request():
+    return c1_recall_request_action("shen", "detective", "recall_advice", "advice_requested", "罐子是我的。可这事……你说呢？")
+
+fn c1_recall_cost_reply():
+    let source = c1_recall_source(117, "recall_shown_shen.003")
+    var action = c1_authorized_speech(c1_action("demon.reply.recall_price", "talk", c1_recall_terms_ast(), c1_recall_terms_ast(), "", [], source))
+    let speech = dv_with_many(c1_speech(c1_recall_terms_ast(), source, "retrieval-contract"), {"surface": c1_recall_price_text(), "channel": "copper-recall"})
+    return dv_with_many(action, {"speech": speech, "request_transport": {"channel": "copper-recall"}, "response_topic": "recall_price", "listeners": c1_list_4("detective", "huo", "shen", "su"), "public_grants": dv_single(c1_recall_terms_ref("receipt"))})
+
+fn c1_recall_tell_price(target):
+    let source = c1_recall_source(28, "recall_offer_su.004")
+    var action = c1_action(rt_cat("detective.tell.recall_price.", target), "talk", c1_recall_price_known(), c1_at("detective", c1_recall_room(target)), "", [], source)
+    let speech = dv_with_many(c1_speech(c1_recall_terms_ast(), source, "received-retrieval-contract"), {"surface": rt_cat("我听铜口说过：", c1_recall_price_text()), "channel": "speech"})
+    return dv_with_many(action, {"speech": speech, "listeners": dv_single(target), "offer_to": target, "response_topic": "recall_advice", "public_grants": dv_single(c1_recall_terms_ref("receipt"))})
+
+fn c1_recall_advice_reply():
+    let source = c1_recall_source(143, "recall_hesitate_shen.008")
+    let action = c1_action("detective.reply.recall_advice", "talk", dv_true(), dv_true(), "", [], source)
+    let speech = dv_with_many(c1_speech(dv_true(), source, "personal-advice"), {"surface": "这是你的东西。你自己拿主意。", "channel": "speech"})
+    return dv_with_many(action, {"speech": speech, "listeners": dv_single("shen"), "response_topic": "recall_advice"})
+
+fn c1_recall_value_order(actor):
+    if actor == "huo":
+        return ["pursue_desire", "clarify_terms", "avoid_attachment", "caution", "self_knowledge"]
+    if actor == "su":
+        return ["avoid_attachment", "pursue_desire", "clarify_terms", "caution", "self_knowledge"]
+    if actor == "shen":
+        return ["avoid_attachment", "clarify_terms", "seek_advice", "caution", "pursue_desire", "self_knowledge"]
+    return ["understand_cost", "solve_case", "avoid_attachment"]
+
+fn c1_recall_value_basis(actor):
+    if actor == "huo":
+        return dv_pair(c1_recall_flash_source(actor), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story", 134, "取舍·碰·知守则·huo"))
+    if actor == "su":
+        return dv_pair(c1_recall_source(47, "recall_refuse_su.002"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/文案与守则.story", 139, "取舍·不碰·知守则"))
+    if actor == "shen":
+        return dv_pair(c1_recall_source(129, "recall_refuse_shen.002"), c1_recall_source(134, "recall_hesitate_shen.002"))
+    return dv_pair(c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/01_侦探.story", 11, "欲望：弄清自己为何在此"), c1_source("user:current-request", 0, "main-agent-approved-understand-cost-solve-case-avoid-attachment-order"))
+
+fn c1_recall_actions(actor):
+    var result = [c1_recall_touch_action(actor), c1_recall_resolution(actor, true, false), c1_recall_resolution(actor, true, true), c1_recall_resolution(actor, false, false), c1_recall_resolution(actor, false, true), c1_recall_cost_request(actor)]
+    if actor == "shen":
+        rt_push(result, c1_recall_advice_request())
+        rt_push(result, dv_with(c1_professional_reply(actor, "recalled_names", c1_recall_return_text(actor), c1_recall_return_source(actor)), "offer_to", "detective"))
+    if actor == "huo":
+        rt_push(result, dv_with(c1_professional_reply(actor, "recalled_copper", c1_recall_return_text(actor), c1_recall_return_source(actor)), "offer_to", "detective"))
+    if actor == "detective":
+        rt_push(result, c1_recall_tell_price("huo"))
+        rt_push(result, c1_recall_tell_price("shen"))
+        rt_push(result, c1_recall_tell_price("su"))
+        rt_push(result, c1_recall_advice_reply())
+    return c1_public_methods(result)
+
+fn c1_recall_install_world(world):
+    var result = dv_add_object(world, c1_recall_terms_object())
+    let people = ["detective", "huo", "shen", "su"]
+    var i = 0
+    while i < rt_count(people):
+        let actor = people[i]
+        let room = c1_recall_room(actor)
+        let basis = dv_single(c1_recall_flash_source(actor))
+        result = dv_add_object(result, c1_recall_episode_object(actor))
+        result = dv_adopt(result, c1_method(rt_cat(actor, ".recall.touch"), c1_recall_touch_law(actor, room)), "enforce", 1, basis)
+        result = dv_adopt(result, c1_method(rt_cat(actor, ".recall.hold"), c1_recall_hold_law(actor, room)), "enforce", 1, dv_single(c1_recall_return_source(actor)))
+        result = dv_adopt(result, c1_method(rt_cat(actor, ".recall.release"), c1_recall_release_law(actor, room)), "enforce", 1, basis)
+        result = dv_adopt(result, c1_method(rt_cat(actor, ".recall.ask.recall_price"), c1_recall_request_law(actor, "price_requested")), "enforce", 1, basis)
+        if actor == "shen":
+            result = dv_adopt(result, c1_method("shen.recall.ask.recall_advice", c1_recall_request_law(actor, "advice_requested")), "enforce", 1, basis)
+        i = i + 1
+    result = dv_store(result, c1_recall_ref("su", "remembered_open_call"), dv_field(true))
+    result = dv_store(result, c1_recall_ref("su", "remembered_open_intent"), dv_field(true))
+    return dv_store(result, c1_recall_ref("su", "remembered_door_source_belief"), dv_field(true))
+
+fn c1_recall_install_actor(actor):
+    let id = actor.id
+    var result = actor
+    var mind = actor.mind
+    var actions = []
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if action.id != rt_cat(id, ".touch_latch"):
+            rt_push(actions, action)
+        i = i + 1
+    if id == "demon":
+        mind = dv_add_object(mind, c1_recall_terms_object())
+        rt_push(actions, c1_recall_cost_reply())
+        var grants = dv_find(actor, "hearing_grants", [])
+        var channels = dv_find(actor, "request_channels", [])
+        let people = ["detective", "huo", "shen", "su"]
+        i = 0
+        while i < rt_count(people):
+            let speaker = people[i]
+            let basis = dv_single(c1_recall_source(116, "recall_shown_shen.001"))
+            rt_push(grants, {"speaker": speaker, "channel": "copper-recall", "available_when": c1_at("demon", "hall"), "sender_locations": [c1_recall_room(speaker)], "listener_locations": ["hall"], "basis": basis})
+            rt_push(channels, {"target": speaker, "channel": "copper-recall", "available_when": c1_at("demon", "hall"), "basis": basis})
+            i = i + 1
+        return dv_with_many(result, {"mind": mind, "actions": c1_public_methods(actions), "hearing_grants": grants, "request_channels": channels})
+    mind = dv_add_object(mind, c1_local_object("recall_terms"))
+    mind = dv_add_object(mind, c1_local_object(c1_recall_id(id)))
+    // Own receipt history is initially empty; no retrieval contract facts enter the mind.
+    mind = dv_store(mind, c1_recall_terms_ref("receipt"), dv_field("unheard"))
+    mind = dv_store(mind, c1_recall_ref(id, "resolved"), dv_field(false))
+    let extra = c1_recall_actions(id)
+    i = 0
+    while i < rt_count(extra):
+        rt_push(actions, extra[i])
+        i = i + 1
+    var policy = actor.policy
+    let values = c1_recall_value_order(id)
+    if 0 < rt_count(values):
+        policy = dv_with_many(policy, {"value_order": values, "value_basis": c1_recall_value_basis(id)})
+    var goals = dv_find(policy, "goals", [])
+    rt_push(goals, {"kind": "know", "question": "own_material", "ref": c1_recall_ref(id, "touched"), "basis": dv_single(c1_recall_flash_source(id))})
+    rt_push(goals, {"kind": "know", "question": "own_material", "ref": c1_recall_ref(id, "decision"), "available_when": dv_fact(c1_recall_ref(id, "touched"), true), "basis": dv_single(c1_recall_flash_source(id))})
+    let unsettled = dv_all(dv_pair(dv_fact(c1_recall_ref(id, "touched"), true), dv_fact(c1_recall_ref(id, "resolved"), false)))
+    rt_push(goals, {"kind": "know", "question": "own_material", "ref": c1_recall_terms_ref("requires_hold"), "available_when": unsettled, "basis": dv_single(c1_recall_flash_source(id))})
+    rt_push(goals, {"kind": "know", "question": "own_material", "ref": c1_recall_terms_ref("binds_here"), "available_when": unsettled, "basis": dv_single(c1_recall_flash_source(id))})
+    policy = dv_with(policy, "goals", goals)
+    let channels = dv_append(dv_find(actor, "request_channels", []), {"target": "demon", "channel": "copper-recall", "available_when": c1_at(id, c1_recall_room(id)), "basis": dv_single(c1_recall_source(116, "recall_shown_shen.001"))})
+    let hearing = dv_append(dv_find(actor, "hearing_grants", []), {"speaker": "demon", "channel": "copper-recall", "available_when": c1_at(id, c1_recall_room(id)), "sender_locations": ["hall"], "listener_locations": [c1_recall_room(id)], "basis": dv_single(c1_recall_source(117, "recall_shown_shen.003"))})
+    return dv_with_many(result, {"mind": mind, "actions": c1_public_methods(actions), "policy": policy, "request_channels": channels, "hearing_grants": hearing})
+
+fn c1_recall_install_scene(scene):
+    var actors = []
+    var bindings = dv_clone(scene.bindings)
+    let world = c1_recall_install_world(scene.physical)
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        rt_push(actors, c1_recall_install_actor(actor))
+        rt_push(bindings, dv_binding("recall_terms", "recall_terms", actor.id))
+        if actor.id != "demon":
+            rt_push(bindings, dv_binding(c1_recall_id(actor.id), c1_recall_id(actor.id), actor.id))
+        i = i + 1
+    return dv_with_many(scene, {"physical": world, "actors": actors, "bindings": bindings})
+

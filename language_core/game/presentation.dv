@@ -16,7 +16,16 @@ fn dvg_place(location):
         "threshold.logistics": {"map": "living_hall", "room": "living_hall:hall", "anchor": "east_north"},
         "dorm.contract": {"map": "zone_jia", "room": "zone_jia:hall"},
         "dorm.astral": {"map": "zone_bing", "room": "zone_bing:hall"},
-        "dorm.logistics": {"map": "zone_ding", "room": "zone_ding:hall"}}
+        "dorm.logistics": {"map": "zone_ding", "room": "zone_ding:hall"},
+        "dorm.yi": {"map": "zone_yi", "room": "zone_yi:hall"},
+        "foyer": {"map": "zone_yi", "room": "zone_yi:foyer", "spawn": "door_west"},
+        "hall": {"map": "zone_yi", "room": "zone_yi:hall", "spawn": "table"},
+        "R05": {"map": "zone_yi", "room": "zone_yi:R05", "spawn": "bed"},
+        "R06": {"map": "zone_yi", "room": "zone_yi:R06"},
+        "R07": {"map": "zone_yi", "room": "zone_yi:R07"},
+        "R08": {"map": "zone_yi", "room": "zone_yi:R08"},
+        "corridor": {"map": "zone_yi", "room": "zone_yi:corridor"},
+        "pantry": {"map": "zone_yi", "room": "zone_yi:pantry"}}
     return dv_find(places, location, {"map": "", "room": location})
 
 fn dvg_intent(state):
@@ -73,13 +82,11 @@ fn dvg_people(state, viewer):
 
 fn dvg_snapshot(state, viewer):
     let position = dv_read(state.physical, c2_position_ref(viewer))
-    var place = {"map": "", "room": ""}
+    var place = {"map": "zone_yi", "room": "zone_yi:R05", "spawn": "bed"}
     if dv_uncontested(position):
-        place = dvg_place(position.value)
-    var resource = "res://scenes/Awakening/Awakening.tscn"
-    var placements = [{"actor": "detective", "anchor": "wake"}]
-    if place.map != "":
-        resource = "res://scenes/Chapter2/Field/CampusMapView.tscn"
-        placements = []
+        let located = dvg_place(position.value)
+        if located.map != "":
+            place = located
+    let cast = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "quer": "thief", "lucian": "poet", "ward": "lawyer", "gu": "archaeologist", "ruan": "chessplayer", "elena": "dancer", "selma": "naturalist", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": resource, "map": place.map, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": placements, "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "pending": dvg_intent(state)}
+    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "spawn": dv_find(place, "spawn", "bed"), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "cast": cast, "pending": dvg_intent(state)}
