@@ -24,6 +24,6 @@ fn dvs_environment(physical, story, events, parent):
                 let before = world
                 let execution = dv_execute(world, process.law, id, time, world.revision)
                 world = execution.world
-                parent = dvs_event(events, "physical_process", "", time, [parent], {"process": process, "physical_before": before, "execution": execution})
+                parent = dvs_event(events, "physical_process", "", time, [parent], {"process": process, "revision_before": before.revision, "revision_after": execution.world.revision, "execution": dv_without(execution, "world")})
         i = i + 1
     return world

@@ -741,11 +741,7 @@ fn c2_self_grants(actor):
         i = i + 1
     return grants
 
-fn c2_install_actor_laws(world, actor):
-    var owned_adoptions = dv_clone(world.adoptions)
-    var mode = "enforce"
-    if world.domain == "mind":
-        mode = "predict"
+fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
     let source = [c2_source("10_执行.story", 4, "native-operational-actions")]
     let edges = c2_edges()
     var i = 0
@@ -753,8 +749,8 @@ fn c2_install_actor_laws(world, actor):
         let edge = edges[i]
         let there = c2_move_action(actor, edge.from, edge.to, edge.gate)
         let back = c2_move_action(actor, edge.to, edge.from, edge.gate)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(there.id, c2_move_law(actor, edge.from, edge.to, edge.gate)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(back.id, c2_move_law(actor, edge.to, edge.from, edge.gate)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(there.id, c2_move_law(actor, edge.from, edge.to, edge.gate)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(back.id, c2_move_law(actor, edge.to, edge.from, edge.gate)), mode, 1, source)
         i = i + 1
     var day = 2
     while day < 5:
@@ -763,51 +759,51 @@ fn c2_install_actor_laws(world, actor):
         while i < rt_count(meals):
             let meal = meals[i]
             let suffix = rt_cat(rt_show(day), rt_cat(".", meal.id))
-            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.collect.", suffix)), c2_collect_law(actor, day, meal.id, meal.start, meal.end)), mode, 1, source)
-            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.eat.", suffix)), c2_eat_law(actor, day, meal.id)), mode, 1, source)
+            dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.collect.", suffix)), c2_collect_law(actor, day, meal.id, meal.start, meal.end)), mode, 1, source)
+            dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.eat.", suffix)), c2_eat_law(actor, day, meal.id)), mode, 1, source)
             i = i + 1
         day = day + 1
-    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.granary"), c2_open_granary_law(actor)), mode, 1, source)
-    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.distribute"), c2_distribute_law(actor)), mode, 1, source)
-    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-real-key")])
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.granary"), c2_open_granary_law(actor)), mode, 1, source)
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.distribute"), c2_distribute_law(actor)), mode, 1, source)
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-real-key")])
     if actor != "shen":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.give_key.shen"), c2_give_key_law(actor, "shen")), mode, 1, source)
-    dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.report.night_take"), c2_report_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.give_key.shen"), c2_give_key_law(actor, "shen")), mode, 1, source)
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.report.night_take"), c2_report_law(actor)), mode, 1, source)
     if actor == "quer" or actor == "mora":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, actor == "mora")), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, actor == "mora")), mode, 1, source)
     if actor == "quer":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method("quer.c2.night_eat", c2_night_eat_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method("quer.c2.night_eat", c2_night_eat_law(actor)), mode, 1, source)
     if actor == "margaret":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method("margaret.c2.request.repair_latch", c2_latch_request_law(actor, "quer")), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method("margaret.c2.request.repair_latch", c2_latch_request_law(actor, "quer")), mode, 1, source)
     if actor == "quer" or actor == "huo":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.repair.latch"), c2_repair_latch_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.repair.latch"), c2_repair_latch_law(actor)), mode, 1, source)
     if dv_has(["mora", "selma", "shen"], actor):
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.deliver.patient_food"), c2_deliver_patient_law(actor)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.feed.patient"), c2_feed_patient_law(actor)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.leave.care"), c2_leave_care_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.deliver.patient_food"), c2_deliver_patient_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.feed.patient"), c2_feed_patient_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.leave.care"), c2_leave_care_law(actor)), mode, 1, source)
     let norms = c2_norms()
     i = 0
     while i < rt_count(norms):
         let norm = norms[i]
         if actor == norm.owner:
-            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.propose.", norm.id)), c2_propose_law(actor, norm)), mode, 1, [norm.source])
-            dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.post.", norm.id)), c2_post_law(actor, norm)), mode, 1, [norm.source])
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.read.", norm.id)), c2_read_norm_law(actor, norm)), mode, 1, [norm.source])
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.accept.", norm.id)), c2_decide_norm_law(actor, norm, true)), mode, 1, [norm.source])
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.decline.", norm.id)), c2_decide_norm_law(actor, norm, false)), mode, 1, [norm.source])
+            dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.propose.", norm.id)), c2_propose_law(actor, norm)), mode, 1, [norm.source])
+            dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.post.", norm.id)), c2_post_law(actor, norm)), mode, 1, [norm.source])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.read.", norm.id)), c2_read_norm_law(actor, norm)), mode, 1, [norm.source])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.accept.", norm.id)), c2_decide_norm_law(actor, norm, true)), mode, 1, [norm.source])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.decline.", norm.id)), c2_decide_norm_law(actor, norm, false)), mode, 1, [norm.source])
         i = i + 1
     let roles = c2_profile(actor).station_roles
     i = 0
     while i < rt_count(roles):
         let station = roles[i]
         let id = rt_cat(actor, rt_cat(".c2.station.", station))
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(id, c2_station_claim_law(actor, station, false)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method(rt_cat(id, ".release"), c2_station_release_law(actor, station)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_station_claim_law(actor, station, false)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(id, ".release"), c2_station_release_law(actor, station)), mode, 1, source)
         i = i + 1
     if actor == "ward":
-        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.agree.guard", c2_guard_commit_law(actor)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.guard.weight", c2_station_claim_law(actor, "weight", true)), mode, 1, source)
-        dv_adopt_into(world.domain, owned_adoptions, c1_method("ward.c2.guard.release", c2_station_release_law(actor, "weight")), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.agree.guard", c2_guard_commit_law(actor)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.guard.weight", c2_station_claim_law(actor, "weight", true)), mode, 1, source)
+        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.guard.release", c2_station_release_law(actor, "weight")), mode, 1, source)
     let rooms = c2_rooms()
     let fields = ["doors_closed", "windows_closed", "isolation_closed"]
     i = 0
@@ -815,34 +811,44 @@ fn c2_install_actor_laws(world, actor):
         var j = 0
         while j < rt_count(fields):
             let id = rt_cat(actor, rt_cat(".c2.close.", rt_cat(rooms[i], rt_cat(".", fields[j]))))
-            dv_adopt_into(world.domain, owned_adoptions, c1_method(id, c2_close_room_law(actor, rooms[i], fields[j])), mode, 1, [c2_approved("real-room-sealing-action")])
+            dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_close_room_law(actor, rooms[i], fields[j])), mode, 1, [c2_approved("real-room-sealing-action")])
             j = j + 1
         i = i + 1
+    return true
+
+fn c2_install_actor_laws(world, actor):
+    var owned_adoptions = dv_clone(world.adoptions)
+    var mode = "enforce"
+    if world.domain == "mind":
+        mode = "predict"
+    c2_install_actor_laws_into(world.domain, owned_adoptions, actor, mode)
     return dv_finish_owned_adoptions(world, owned_adoptions)
 
 fn c2_extend_world(world):
     var result = c2_world_objects(world)
-    result = dv_adopt(result, c1_method("c2.weather.first_wind", c2_first_wind_law()), "enforce", 1, [c2_approved("second-day-morning-wind-opens-north")])
-    result = dv_adopt(result, c1_method("c2.weather.east", c2_wind_corridor_law("east", 2160)), "enforce", 1, [c2_approved("second-day-noon-east-corridor")])
-    result = dv_adopt(result, c1_method("c2.weather.archive", c2_wind_corridor_law("archive", 2280)), "enforce", 1, [c2_approved("second-day-afternoon-archive-corridor")])
-    result = c2_install_teacher_laws(result)
+    var owned_adoptions = dv_clone(result.adoptions)
+    let domain = result.domain
+    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.first_wind", c2_first_wind_law()), "enforce", 1, [c2_approved("second-day-morning-wind-opens-north")])
+    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.east", c2_wind_corridor_law("east", 2160)), "enforce", 1, [c2_approved("second-day-noon-east-corridor")])
+    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.archive", c2_wind_corridor_law("archive", 2280)), "enforce", 1, [c2_approved("second-day-afternoon-archive-corridor")])
+    c2_install_teacher_laws_into(domain, owned_adoptions, "enforce")
     var light_day = 1
     while light_day < 6:
-        result = dv_adopt(result, c1_method(rt_cat("c2.daylight.", rt_show(light_day)), c2_daylight_law(light_day, true)), "enforce", 1, [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")])
-        result = dv_adopt(result, c1_method(rt_cat("c2.nightlight.", rt_show(light_day)), c2_daylight_law(light_day, false)), "enforce", 1, [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.daylight.", rt_show(light_day)), c2_daylight_law(light_day, true)), "enforce", 1, [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.nightlight.", rt_show(light_day)), c2_daylight_law(light_day, false)), "enforce", 1, [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")])
         light_day = light_day + 1
     let people = c2_people()
     var i = 0
     while i < rt_count(people):
-        result = c2_install_actor_laws(result, people[i])
+        c2_install_actor_laws_into(domain, owned_adoptions, people[i], "enforce")
         var day = 2
         while day < 5:
             let noon = rt_cat("c2.hunger.", rt_cat(people[i], rt_cat(".", rt_cat(rt_show(day), ".noon"))))
             let evening = rt_cat("c2.hunger.", rt_cat(people[i], rt_cat(".", rt_cat(rt_show(day), ".evening"))))
-            result = dv_adopt(result, c1_method(noon, c2_missed_meal_law(people[i], day, "noon", 840)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
-            result = dv_adopt(result, c1_method(evening, c2_missed_meal_law(people[i], day, "evening", 1260)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
+            dv_adopt_into(domain, owned_adoptions, c1_method(noon, c2_missed_meal_law(people[i], day, "noon", 840)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
+            dv_adopt_into(domain, owned_adoptions, c1_method(evening, c2_missed_meal_law(people[i], day, "evening", 1260)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
             day = day + 1
-        result = dv_adopt(result, c1_method(rt_cat("c2.terminal.", people[i]), c2_terminal_exposure_law(people[i])), "enforce", 1, [c2_approved("actual-exposure-reason-and-wrong-norm-causal-conjunction")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.terminal.", people[i]), c2_terminal_exposure_law(people[i])), "enforce", 1, [c2_approved("actual-exposure-reason-and-wrong-norm-causal-conjunction")])
         i = i + 1
     let weights = ["huo", "bertrand", "margaret"]
     let locks = ["quer", "huo"]
@@ -852,16 +858,16 @@ fn c2_extend_world(world):
         while j < rt_count(locks):
             if weights[i] != locks[j]:
                 let id = rt_cat("c2.archive.open.", rt_cat(weights[i], rt_cat(".", locks[j])))
-                result = dv_adopt(result, c1_method(id, c2_archive_open_law(weights[i], locks[j], "su")), "enforce", 1, [c2_source("09_表达.story", 651, "actual-three-station-concurrency")])
+                dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_archive_open_law(weights[i], locks[j], "su")), "enforce", 1, [c2_source("09_表达.story", 651, "actual-three-station-concurrency")])
             j = j + 1
         i = i + 1
     let rooms = c2_rooms()
     i = 0
     while i < rt_count(rooms):
-        result = dv_adopt(result, c1_method(rt_cat("c2.shelter.", rooms[i]), c2_shelter_law(rooms[i])), "enforce", 1, [c2_approved("sealed-interiors-protect-in-normal-environment")])
-        result = dv_adopt(result, c1_method(rt_cat("c2.seepage.", rooms[i]), c2_seepage_law(rooms[i])), "enforce", 1, [c2_approved("recent-earthquake-severe-air-and-real-seepage")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.shelter.", rooms[i]), c2_shelter_law(rooms[i])), "enforce", 1, [c2_approved("sealed-interiors-protect-in-normal-environment")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.seepage.", rooms[i]), c2_seepage_law(rooms[i])), "enforce", 1, [c2_approved("recent-earthquake-severe-air-and-real-seepage")])
         i = i + 1
-    return result
+    return dv_finish_owned_adoptions(result, owned_adoptions)
 
 fn c2_shared_objects():
     var result = ["campaign.clock", "campaign.access", "demon.body", "case.contract", "case.astral", "case.logistics", "c2.granary", "c2.counter", "c2.ledger", "c2.bowl", "c2.kitchen", "c2.archive", "c2.weather", "c2.litter.living", "c2.litter.contract", "c2.litter.astral", "c2.litter.logistics"]
@@ -961,21 +967,25 @@ fn c2_refresh_actor_goals(actor):
         i = i + 1
     return dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
 
-fn c2_install_teacher_laws(world):
-    var mode = "enforce"
-    if world.domain == "mind":
-        mode = "predict"
-    var result = world
+fn c2_install_teacher_laws_into(domain, owned_adoptions, mode):
     let edges = c2_edges()
     var i = 0
     while i < rt_count(edges):
         let edge = edges[i]
         let there = c2_move_action("demon", edge.from, edge.to, edge.gate)
         let back = c2_move_action("demon", edge.to, edge.from, edge.gate)
-        result = dv_adopt(result, c1_method(there.id, c2_move_law("demon", edge.from, edge.to, edge.gate)), mode, 1, [c2_source("06_场面.story", 85, "讲堂中的授课者")])
-        result = dv_adopt(result, c1_method(back.id, c2_move_law("demon", edge.to, edge.from, edge.gate)), mode, 1, [c2_source("06_场面.story", 85, "讲堂中的授课者")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(there.id, c2_move_law("demon", edge.from, edge.to, edge.gate)), mode, 1, [c2_source("06_场面.story", 85, "讲堂中的授课者")])
+        dv_adopt_into(domain, owned_adoptions, c1_method(back.id, c2_move_law("demon", edge.to, edge.from, edge.gate)), mode, 1, [c2_source("06_场面.story", 85, "讲堂中的授课者")])
         i = i + 1
-    return result
+    return true
+
+fn c2_install_teacher_laws(world):
+    var owned_adoptions = dv_clone(world.adoptions)
+    var mode = "enforce"
+    if world.domain == "mind":
+        mode = "predict"
+    c2_install_teacher_laws_into(world.domain, owned_adoptions, mode)
+    return dv_finish_owned_adoptions(world, owned_adoptions)
 
 fn c2_extend_teacher(actor):
     var mind = actor.mind

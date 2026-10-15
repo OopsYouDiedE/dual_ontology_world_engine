@@ -27,14 +27,18 @@ fn dvg_prepare(state):
     if dv_find(current.story, "chapter", 1) == 2:
         var actors = []
         var i = 0
+        var any_refreshed = false
         while i < rt_count(current.actors):
             let actor = current.actors[i]
-            if dv_has(c2_people(), actor.id) or actor.id == "demon":
-                rt_push(actors, c2d_refresh_actor_goals(actor))
+            if (dv_has(c2_people(), actor.id) or actor.id == "demon") and actor.mind.revision != dv_find(actor, "chapter2_goals_mind_revision", -1):
+                let refreshed = c2d_refresh_actor_goals(actor)
+                rt_push(actors, dv_with(refreshed, "chapter2_goals_mind_revision", actor.mind.revision))
+                any_refreshed = true
             else:
                 rt_push(actors, actor)
             i = i + 1
-        current = dvs_owned_state_update(current, {"actors": actors})
+        if any_refreshed:
+            current = dvs_owned_state_update(current, {"actors": actors})
     while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
         current = dvs_session_prepare(current)
     return current

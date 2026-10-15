@@ -140,7 +140,7 @@ fn dvs_argument_revoke(actor, events, time, parent):
         local_2 = "model_argument_revocation_pending"
     else:
         local_2 = "model_argument_revoked"
-    dvs_event(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with(dv_with(dv_with(dv_with({"argument": argument, "mind_before": actor.mind, "mind_after": world, "restored": restored}, "checked", checked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    dvs_event(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with_many({"argument": argument, "mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored}, {"checked": checked, "remaining": remaining, "actor_id": actor.id}))
     return updated
 
 fn dvs_factor_coverage(actor, hypothesis, events):
@@ -249,7 +249,7 @@ fn dvs_arguments(actor, events, time, parent):
                     local_2 = "model_argument_accepted"
                 else:
                     local_2 = "model_argument_unavailable"
-                actor = dv_with(actor, "last_cognitive_event", dvs_event(events, local_2, actor.id, time, parents, {"actor_before": actor, "hypothesis": hypothesis, "competitors": competitors, "result": result}))
+                actor = dv_with(actor, "last_cognitive_event", dvs_event(events, local_2, actor.id, time, parents, {"actor_id": actor.id, "actor_revision": actor.mind.revision, "hypothesis": hypothesis, "competitors": competitors, "result": result}))
                 actor = dv_with(dv_with(actor, "argument_attempt", signature), "policy", dv_with(actor.policy, "reason_budget", result.remaining))
                 if result.accepted:
                     return dv_with(dv_with(actor, "mind", result.world), "argument", dv_with(dv_with(dv_with(result.argument, "adoptions", actor.mind.adoptions), "question_id", dv_find(hypothesis, "question", dv_find(hypothesis, "topic", ""))), "hypothesis_id", hypothesis.id))
@@ -481,7 +481,7 @@ fn dvs_refresh_derivations(actor, events, time, parent):
     if dv_or(blocked, (0 < checked)):
         updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
     if dv_or(blocked, (0 < checked)):
-        parent = dvs_event(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with(dv_with(dv_with(dv_with({"mind_before": actor.mind, "mind_after": world, "restored": restored, "checked": checked}, "budget_blocked", blocked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+        parent = dvs_event(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with_many({"mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored, "checked": checked}, {"budget_blocked": blocked, "remaining": remaining, "actor_id": actor.id}))
     if dv_and((not blocked), (0 < checked)):
         return dvs_refresh_derivations(updated, events, time, parent)
     else:

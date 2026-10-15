@@ -257,7 +257,7 @@ fn dvs_ready(actor, events, time, parent):
         if dv_same(dv_find(actor, "ready_hypothesis", false), hypothesis):
             return actor
         else:
-            actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "answer_ready", actor.id, time, parents, dv_with(dv_with({"hypothesis": hypothesis, "mind": actor.mind, "question_id": dv_find(hypothesis, "question", question.value), "actor_before": actor}, "argument", dv_find(actor, "argument", false)), "argument_question", dv_find(hypothesis, "question", question.value))))
+            actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "answer_ready", actor.id, time, parents, dv_with(dv_with({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, "argument", dv_find(actor, "argument", false)), "argument_question", dv_find(hypothesis, "question", question.value))))
             return dv_with(actor, "ready_hypothesis", hypothesis)
     else:
         dvs_event(events, "why_not_ready", actor.id, time, parents, {"reasons": reasons, "hypothesis": hypothesis})

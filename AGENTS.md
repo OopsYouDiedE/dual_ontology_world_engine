@@ -196,3 +196,12 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 ## 十六人一体化与大地图空间统一（2026-10-15）
 
 正式废除孤岛场景 `Awakening.tscn`，第一章开局直接运行在 `CampusMapView.tscn`，初始地图为 `zone_yi`；十六名学员开局在生活翼四个寝区（`zone_jia`, `zone_yi`, `zone_bing`, `zone_ding`）全员在场，抹除一二章空间与数据隔阂。甲区雀儿 10:30（630分）挑门溜出，卢西安随行；沃德坚守程序正义留内答题，14:00（840分）正规出门张贴《私取者戒》；起居厅 11:30 触发隔门相闻。AI 侦探凭 Core 驱动在 13:00 前完成答辩离开乙区大厅；雀儿 13:00（780分）挑乙区门保底。UI 对话系统修复说话人映射与长文本分页滚动，DV Core 规范推进 `mind.time` 并剥离事件深拷贝。旧孤立场景与失效回归测试脚本已彻底清理。
+
+## 两章十六人一级推演性能优化（2026-10-15）
+
+为满足 2 章 16 人全量逻辑推演在 600 秒（10分钟）内完成的性能指标，完成以下四项核心机制与架构优化：
+1. **闲置主体静止跳过（Quiescent Skip）**：在 `session/30-runner.dv` 中，若 AI 角色的 `mind.revision`、`location`、`time`、`visible_context` 均未改变且此前决策为 `action == false`，直接复用闲置决策，跳过全量认知搜索，消除同时间点 15 个闲置主体的重复规划开销。
+2. **目标集合版本缓存（Mind Revision-Gated Goal Refresh）**：在 `game/campaign.dv` 中，通过 `chapter2_goals_mind_revision` 缓存门禁，仅当主体认知版本号递增时重新计算 `c2d_refresh_actor_goals`，避免每步对全员重复构建目标清单。
+3. **全局事件深拷贝剥离**：在 `30-runner.dv`、`32-environment.dv`、`25-simulation.dv`、`35-model-argument.dv`、`10-subjective.dv` 中，将事件载荷中的全量 `world`、`mind`、`actor` 深拷贝替换为 `revision_before`/`revision_after` 与 `actor_id`，解除 GC 与内存暴涨压力。
+4. **批量采用表构建器（Batch Adoption Builder）**：在 `chapter2-content.dv` 中，将跨章扩展中 160+ 项世界与人物法则的二次幂累加深拷贝重构为 `dv_adopt_into` + `dv_finish_owned_adoptions` 单次批量写入。
+5. **实测表现**：200 步涵盖第一章全量答辩与第二章规矩确立的十六人正式推演耗时从 1037 秒缩短至 365 秒（~6分钟），内存稳定在 2 GB 内，完全达成 600 秒验收指标。
