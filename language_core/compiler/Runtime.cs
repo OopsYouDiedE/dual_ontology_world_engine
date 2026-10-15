@@ -84,6 +84,15 @@ public static class R
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
     public static object json_stringify(object value) => JsonSerializer.Serialize(value);
+    public static object json_write(object path, object value)
+    {
+        var destination = Text(path);
+        var partial = destination + ".partial";
+        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write))
+            JsonSerializer.Serialize(stream, value);
+        File.Move(partial, destination, false);
+        return true;
+    }
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));
     public static object write(object p, object s) { File.WriteAllText(Text(p), Text(s), new UTF8Encoding(false, true)); return s; }
     public static object print(object a) { Console.WriteLine(Text(show(a))); return a; }

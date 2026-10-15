@@ -12,7 +12,7 @@
 
 构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
 
-旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级现行无窗口逻辑输出入口见本文件新增规范，三级保护运行工具仍待按 DV 合同重建；本轮不以构建或短启动记录代替任何完整验收级别。
 
 只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
 
@@ -62,3 +62,6 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 
 Eligible autonomous actors execute the common cognition/choice path on each turn; the incomplete idle cache and its writes are removed. The requested execution, observation, answer, transition, recheck and simulation snapshots are retained for existing consumers; simulation results retain predicted. Evidence is independent copied data through dvs_event/dv_with, not a revision-only substitute. Other producers require their own audit.
 Campaign tracking and bounded formal-model command contracts are maintained in ../AGENTS.md. Engineering probes record concrete events and unexercised paths; they do not evaluate the entire game by assertions or substitute for any gameplay acceptance level.
+
+正式呈现返回 execution_event 与 voice，关联实际执行并区分内容声明的独白、观察、对白及默认叙述。调试导出逐段保留正文顺序，跳过没有正文及回执的呈现；空正文的行动继续保留在事件轨迹中。调试停止后输出 session_stopped，筛选游标始终指向原完整事件数组的位置。
+一级逻辑输出入口与 #include 组合方式见上级 AGENTS.md。一级无窗口，不启动Godot，不要求03。surface_voice表示主文类型，voice表示附加正文类型，单一事件可包含对白与动作叙述；未具名或无正文的状态照实保留。

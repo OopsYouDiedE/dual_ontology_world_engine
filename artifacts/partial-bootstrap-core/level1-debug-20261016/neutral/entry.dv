@@ -1,0 +1,16 @@
+#include ../../../../language_core/game/entry.dv
+#include value.dv
+#include ./value.dv
+
+fn dvg_debug_run():
+    let event = {"id": "e0", "type": "action_execution", "actor": "reader", "time": 0, "parents": ["p0"], "data": {"action": {"id": "a0", "kind": "talk", "speech": {"surface": "问句"}, "presentation": {"voice": "visible-action", "lines": [{"template": probe_text()}]}}, "receipt": {"execution": {"status": "applied"}}}}
+    let state = {"actors": [{"id": "reader", "mind": []}], "events": [event]}
+    let presentation = dvs_session_presentation(state, "reader")
+    let projected = dv_debug_events(state.events, 0, {})
+    rt_replace(projected.events[0].parents, 0, "changed-in-report")
+    dv_require(event.parents[0] == "p0", "Debug projection aliases source parents")
+    dv_require(rt_count(dv_debug_events(state.events, 1, {}).events) == 0, "Cursor repeats old events")
+    dv_require(rt_count(dv_debug_events(state.events, 0, {"actors": ["other"]}).events) == 0, "Actor filter ignored")
+    let id_only = dv_debug_event({"id": "e1", "type": "planning_choice", "actor": "reader", "time": 0, "parents": [], "data": {"action": "a1"}})
+    dv_require(id_only.action_id == "a1", "Action ID projection lost")
+    return rt_json_write(rt_arg(0), {"presentation": presentation, "exact": rt_exact("1/3"), "id_only": id_only, "source_parent": event.parents[0]})

@@ -1,0 +1,41 @@
+// Production composition and read-only diagnostic configuration.
+#include ../core/00-data.dv
+#include ../core/10-laws.dv
+#include ../core/20-observation.dv
+#include ../core/30-transport.dv
+#include ../core/40-value.dv
+#include ../core/50-response.dv
+#include ../core/55-cognition.dv
+#include ../core/60-object-laws.dv
+#include ../core/70-reasoning-cost.dv
+#include ../core/80-inspection.dv
+#include ../core/90-action-cost.dv
+#include ../core/95-model-argument.dv
+#include ../core/98-debug.dv
+#include ../verification/session/10-subjective.dv
+#include ../verification/session/15-action-planning.dv
+#include ../verification/session/16-personal-choice.dv
+#include ../verification/session/18-requests.dv
+#include ../verification/session/20-speech.dv
+#include ../verification/session/25-simulation.dv
+#include ../verification/session/26-model-slicing.dv
+#include ../verification/session/30-runner.dv
+#include ../verification/session/32-environment.dv
+#include ../verification/session/35-model-argument.dv
+#include ../verification/session/40-host.dv
+#include ../verification/scenarios/chapter1-laws.dv
+#include ../verification/scenarios/chapter1-pragmatics.dv
+#include ../verification/scenarios/chapter1-content.dv
+#include ../verification/scenarios/chapter1-history.dv
+#include ../verification/scenarios/chapter1-other-groups.dv
+#include ../verification/scenarios/chapter1-opening.dv
+#include ../verification/scenarios/chapter1-campaign.dv
+#include ../verification/scenarios/chapter2-content.dv
+#include ../verification/scenarios/chapter2-dialogue.dv
+#include ../verification/scenarios/chapter1-departure.dv
+#include player-content.dv
+#include presentation.dv
+#include campaign.dv
+
+fn dvg_debug_config():
+    return {"viewer": "detective", "actors": [], "event_types": [], "max_steps": false}

@@ -16,7 +16,7 @@ The existing continuous logic runner uses the same prepare/complete boundary wit
 
 Presentation is filtered by the requested subject: its own completed action, an actually parsed utterance, or an actual observation. Remote private action text is not published to that subject.
 
-`OpenCampaign()` composes production modules from `game/modules.json`; `Snapshot(viewer)` supplies native location and visual bindings. Content availability does not count as crossing a doorway. The generated source manifest records module and generated-code hashes. Exact rational receipt values use the tagged `$dv_rational` representation.
+`OpenCampaign()` composes production modules from `game/entry.dv`; `Snapshot(viewer)` supplies native location and visual bindings. Content availability does not count as crossing a doorway. The generated source manifest records module and generated-code hashes. Exact rational receipt values use the tagged `$dv_rational` representation.
 
 `OpenCampaign(player)` optionally assigns the named subject to human control. An empty player keeps autonomous decisions. `Prepare(selection)` accepts an action ID only while DV awaits that subject's choice, validates the same subject-local eligibility, and prepares the normal receipt. Waiting and resuming do not repeat cognition or execute a second action. Presentation names come from the native campaign binding; the host does not supply story text.
 
@@ -25,3 +25,9 @@ Presentation is filtered by the requested subject: its own completed action, an 
 Internal DVProgram.CampaignTrackedActors() and CampaignChronologicalTrace(state) call the native DV reporting functions. CampaignRun(maxSteps) returns live campaign state through the formal-model adapter, with all actors scheduled normally. Pass false for the authored action bound or zero for an unadvanced opening; this is not a Godot execution adapter.
 
 `python language_core/tools/build_session.py --out language_core/Session` generates an inspectable copy. The project excludes this root DVProgram.cs from compilation and continues generating/building obj/dv/DVProgram.cs. Both copies are generated, never hand edited.
+
+Production sources are composed by `game/entry.dv` using relative `#include` lines. The build and editor share `tools/dv_sources.py`. Diagnostic selection lives in `dvg_debug_config`; an empty actor list includes all actors without changing scheduling. `CampaignChronologicalTrace` now returns the generic read-only event projection with IDs, parents, action identity, source and selected details. Full snapshots remain in WriteTrace.
+
+Use `python language_core/tools/run_debug.py --out <new-directory>` for one formal-model output run. It preserves raw output and source fingerprints and exports readable debug/player text. It does not perform Godot execution or certify a full level-one acceptance by itself.
+
+Level-one testing is windowless DV logic only; it does not start Godot or require a UI replay. Read-only projections are independent copies, and presentation surface_voice is distinct from the supplementary voice.

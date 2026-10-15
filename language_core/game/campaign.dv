@@ -52,19 +52,10 @@ fn dvg_traces(world):
 
 // Reporting selection only; all residents retain the same decision mechanism.
 fn dvg_tracked_actors():
-    return ["quer", "detective", "ruan", "mora"]
+    return dvg_debug_config().actors
 
 fn dvg_chronological_trace(state):
-    let tracked = dvg_tracked_actors()
-    let events = state.events
-    var trace = []
-    var i = 0
-    while i < rt_count(events):
-        let e = events[i]
-        if dv_has(tracked, e.actor):
-            rt_push(trace, {"time": e.time, "actor": e.actor, "event_id": e.id, "type": e.type, "action": dv_find(e.data, "action", false)})
-        i = i + 1
-    return trace
+    return dv_debug_events(state.events, 0, dvg_debug_config()).events
 
 // Bounded formal-model adapter; false uses the authored session action limit.
 // Returns the live state without closing it or resetting at chapter expansion.

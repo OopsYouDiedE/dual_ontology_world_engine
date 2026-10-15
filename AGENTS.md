@@ -53,7 +53,7 @@
 
 构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
 
-旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级现行无窗口逻辑输出入口见本文件新增规范，三级保护运行工具仍待按 DV 合同重建；本轮不以构建或短启动记录代替任何完整验收级别。
 
 只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
 
@@ -125,37 +125,15 @@ dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-serve
 - 每轮测试由全新、独立上下文的 Agent 审查；三级测试默认由引擎自身的侦探提供玩家输入，审查 Agent 不替代其决策。子代理不得访问项目设计文件；主代理负责核对设计并作出实现取舍。
 - 工程排错、实际行为复测、三份全程记录、UI 专项验收与独立盲玩分别记录。注入状态、预写答案或按帧快进的自动化通关不得作为游玩验证。
 
-### 一级：剧情与引擎验收
+### 一级：剧情与 DV 逻辑输出验收（用户裁定 2026-10-16）
 
-产出 `artifacts/basic-ui-system/` 下的三份全程记录，三份文件的文件名固定：
+一级测试运行无窗口的正式 DV 逻辑会话，不启动或激活 Godot。按剧本来源核对实际输出轨迹、人物可见正文、行动前提、执行回执和后续结果。界面回放、截图与03记录属于另行授权的界面检查，不作为一级要求。
 
-| 文件 | 来源 | 生成方式 |
-| --- | --- | --- |
-| `01-剧本推导的正常玩家路线.txt` | 读取剧本源、编译生成物和 C# 源码后整理出的正常玩家路线；不运行游戏 | 人工或 Agent 依据源码整理，目前没有生成工具 |
-| `02-引擎输出的玩家可见动作.txt` | 用正式连续会话跑完整一局，记录玩家可见的文字、选项、物品和公开状态；只跑逻辑层，不含 Godot 的几何、碰撞与画面 | `dotnet run --project godot_csharp/tools/PlayerTranscript`（在仓库根目录执行），同时写出 `player-traces/engine-full-output.jsonl` |
-| `03-UI实际显示的内容.txt` | 把 02 那一局的原始输出交给正式 Godot 界面逐段播放，采集界面上实际画出的文字和场上物品 | 见下方命令 |
-
-03 的生成步骤（需要渲染器，不能用 `--headless`）：
-
-```powershell
-& $env:GODOT --path godot_csharp --script res://tools/capture_player_transcript.gd
-python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/player-traces/ui-full-output.jsonl
-```
-
-- 终局界面没有实际画出来时，`export_ui_transcript.py` 会拒绝覆盖 03；这种情况要如实记为未完成。
-- 一级验收不要求截图。以 01、02、03 及实际 UI 渲染记录判断对齐；截图只作辅助，不能因缺少截图而判一级失败或要求重跑。
-- 上述回放默认不截图。如另需辅助截图，先运行 `draw_player_transcript_layout.py` 查看规划图，再为回放添加 `-- --screenshots --layout-reviewed`；这不是一级必做项。
-- 多轮剧情优化时，01 必须展开所选正常路线实际会呈现的对白、叙述、关键选择与物证，不能以梗概代替正文作文学验收。源码尚不能确定的动态结果单列说明，待 02 核对，不虚构结果。
-- 先独立保存未读取 02 的源路线稿，再核对动态分支。核对后可按真实状态选择源段落、绑定模板参数并整理连续正文；保留每段源出处与绑定说明，不直接复制 02 冒充源推导。每轮源稿和实测快照使用独立文件，封存后不得覆盖；源预测与运行后绑定的结论分别注明。
-- 构建或引擎记录生成失败时，停止依赖它的回放与导出；不得把旧 02/03 当作本轮证据。修复后保留失败日志，再执行依赖步骤。
-- 文学验收单独判断人物声口、动机与关系、悬念及揭示、节奏、选择后果和结尾；每轮未通过项回到 `.story` 修订，由全新上下文 Agent 复评。技术对齐通过不是停止条件，直到主代理对照设计且独立文学审评通过才结束多轮优化。
-- 三份文件都不是盲玩证据，也不能用来评价真实游玩时长。
-
-合格标准（三项同时满足）：
-
-1. 01 → 02：从剧本输出的引擎动作正确，即 02 与 01 对照无误。
-2. 02 → 03：引擎投映到 UI 的显示正确，即 03 与 02 对照无误。
-3. 01 的剧情正确，符合人类审美。
+- 使用 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>`，沿生产 prepare/complete 与章节扩展运行，逻辑执行器标记为 formal-model。
+- 保留源码指纹、原始 stdout/stderr、完整轨迹、调试投影和玩家可见正文。源文推导与执行记录分别保存；未执行的动态分支保留未知。
+- 逐段检视正文的顺序、称谓、独白与叙述、分段、重复与缺失，并通过事件编号关联实际执行与来源。调试信息与玩家正文分别输出。
+- 剧情与机制结论依据设计规范和本轮实际轨迹。行动上限、会话停止、工程超时与剧情终局分别记录；局部窗口只能说明其实际覆盖范围。
+- 不运行流程回归，不以构建、断言数量、通过率或历史记录代替本轮验收。一级不包含 Godot 几何、碰撞、输入或画面验收。
 
 ### 二级：Godot UI 专项验收
 
@@ -200,7 +178,7 @@ language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot
 
 ## DV 正式宿主切换（2026-10-14）
 
-正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/modules.json 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
+正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/entry.dv 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
 
 线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
 
@@ -216,3 +194,7 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 
 The incomplete idle cache is removed; eligible autonomous actors execute shared cognition and choice. Requested event snapshots are restored for existing consumers. Tracking only projects events and never changes participating actors. Module interfaces and commands are maintained in language_core/AGENTS.md and verification/AGENTS.md.
 The earlier performance and completion claims are audited in artifacts/partial-bootstrap-core/single-action-path/gemini-optimization-review-20261015/REPORT.txt. A bounded action window or build does not establish two-chapter completion. This repair makes no same-condition speedup claim.
+
+## 一级逻辑输出工具（2026-10-16）
+
+一级采用无窗口 DV 逻辑输出，入口、相对 #include 与调试配置合同见 language_core/AGENTS.md。源码推导、实际轨迹与玩家正文分别核对。界面回放与03不属于一级要求。相关目录的旧三份记录要求以本轮用户裁定和本节为准。

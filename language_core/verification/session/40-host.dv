@@ -74,7 +74,12 @@ fn dvs_session_presentation(state, viewer):
             if applied and visible:
                 surface = dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", ""))
                 presentation = dv_find(action, "presentation", [])
-            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
+            var voice = "narration"
+            if dv_has_key(action, "speech"):
+                voice = "dialogue"
+            let surface_voice = voice
+            voice = dv_find(presentation, "voice", voice)
+            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
 

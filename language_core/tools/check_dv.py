@@ -7,6 +7,7 @@ import sys
 import tempfile
 
 from dv_toolchain import LANGUAGE, compiler, run
+from dv_sources import sources as resolve_sources
 
 
 def project_sources(focus, project=None):
@@ -18,6 +19,11 @@ def project_sources(focus, project=None):
     project = project.resolve()
     data = json.loads(project.read_text(encoding="utf-8"))
     for group in data["groups"]:
+        if "entry" in group:
+            selected = [p for p, _ in resolve_sources([project.parent / group["entry"]])]
+            if focus in selected:
+                return [project.parent / group["entry"]]
+            continue
         selected = [p.resolve() for pattern in group["sources"]
                     for p in sorted(project.parent.glob(pattern))]
         if focus in selected:
@@ -29,9 +35,8 @@ def check(focus, project=None, snapshot=None):
     paths = project_sources(focus, project)
     chunks, ranges, source_lines = [], [], []
     offset, line = 0, 1
-    for path in paths:
-        source = snapshot if path == focus and snapshot is not None else path.read_text(encoding="utf-8-sig")
-        source = source.replace("\r\n", "\n").replace("\r", "\n") + "\n"
+    resolved = resolve_sources(paths, {focus: snapshot} if snapshot is not None else None)
+    for path, source in resolved:
         length = len(source.encode("utf-16-le")) // 2
         chunks.append(source)
         ranges.append([offset, length])
@@ -61,7 +66,7 @@ def check(focus, project=None, snapshot=None):
                 diagnostics.append(dict(path=str(focus), line=1, column=1, severity="error",
                                         message=raw.strip().splitlines()[0] if raw.strip() else "Compiler exited without diagnostics"))
         return dict(success=result.returncode == 0, diagnostics=diagnostics,
-                    sources=[str(p) for p in paths], compiler=str(executable),
+                    sources=[str(p) for p, _ in resolved], compiler=str(executable),
                     raw=result.stderr, scope="syntax, names, calls and implemented type constraints; content is not executed")
 
 

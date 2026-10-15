@@ -12,7 +12,7 @@
 
 构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
 
-旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级现行无窗口逻辑输出入口见本文件新增规范，三级保护运行工具仍待按 DV 合同重建；本轮不以构建或短启动记录代替任何完整验收级别。
 
 只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
 
@@ -87,7 +87,7 @@ run_verification的普通编译/会话执行持续写入当轮stdout/stderr原�
 
 session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取证物相关演算；切片仍遮蔽原计划全部输出，比较消耗真实工作预算。切片吻合不能建立完整解释，矛盾必须带实际预测及本人观察来源。session/16-personal-choice.dv 将本人有来源的价值排序用于同组选择；行动前提、传播与账本仍使用共用机制。跨房间请求由本人已知声道条件取得候选资格，实际接收仍由 speech 的听觉传播判定。
 
-生产编译由 game/modules.json 显式组合 core、session、两章内容与 game/campaign.dv。Session.OpenCampaign 创建正式原生内容，Prepare/Complete 经同一章节扩展入口；章节扩展不重新调用 session_open，不清空账本和事件。
+生产编译由 game/entry.dv 的相对 #include 显式组合 core、session、内容与 game/campaign.dv。Session.OpenCampaign 创建正式原生内容，Prepare/Complete 经同一章节扩展入口；章节扩展不重新调用 session_open，不清空账本和事件。
 
 生产呈现绑定在 game/presentation.dv：身体地点映射场景、房间与素材；客观显示数据不写入人物认识。初始放置只用于创建视图，跨地图回执必须来自现场执行。departure 安装独立门状态，章节内容可用与实际过门分开记录。
 
@@ -122,3 +122,15 @@ Execution, observation, answer, transition, model-recheck and simulation events 
 The game/campaign.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
 Session.cs exposes internal CampaignTrackedActors/CampaignChronologicalTrace/CampaignRun bridges. python language_core/tools/build_session.py --out language_core/Session generates an inspectable copy; the project excludes that root DVProgram.cs and builds obj/dv instead. Never edit generated copies.
 Engineering probe evidence is saved under artifacts/partial-bootstrap-core/single-action-path in new paths. Build/tracking evidence does not certify full gameplay acceptance or performance improvement.
+
+## 一级逻辑输出与调试入口（2026-10-16）
+
+生产入口 game/entry.dv 使用 `#include 相对路径.dv`，路径以包含它的文件目录为基准。tools/dv_sources.py 为构建和编辑器共同解析文件依赖，依赖先于引用者编译，同一路径只加载一次，循环和缺失文件报告位置。每个文件保持独立 define 作用域；引用行保留空行以维护诊断位置。这是文件组合入口，直接调用旧编译器裸文件接口仍需先组合。
+
+game/entry.dv 的 dvg_debug_config 配置观察者、报告主体、事件类型和诊断行动上限。空筛选包含全部，max_steps=false 使用会话原上限。配置只选择输出与诊断停止位置，不修改调度、认知、费用或世界条件。core/98-debug.dv 按原事件顺序只读投影，保留事件与父事件编号、行动、来源、结果和已发生观察；完整快照保留在原始轨迹中。报告不可当作人物知识。
+
+`python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>` 从 game/debug-run.dv 建立一个正式逻辑会话，沿生产 prepare/complete 与章节扩展运行；生成原始 stdout/stderr、完整 trace、来源指纹、事件 JSONL、中文调试轨迹及 02 可见正文。工程时限默认600秒，可用 --timeout 指定；超时保留已输出部分并记录未完成。一级仅运行无窗口DV逻辑会话，不启动Godot；源文与实际轨迹分别核对，03不属于一级要求。停止于行动上限或短时范围不表示通关。
+
+rt_json_write(path,value) 仅为流式 JSON 文件 ABI：先创建新的 .partial，序列化成功后改为正式文件，拒绝覆盖，失败保留部分字节。保持原数组记录格式与精确数的字符串编码。编译器声明二元内置函数，内容与调试决定仍由 DV 实现。
+
+调试投影独立复制所选字段，调用者修改输出不影响原事件。可见正文中的主文与附加行分别使用 surface_voice/voice；空正文保留在format-notices.jsonl与原轨迹中，不编造台词。旧记录缺少类型时标明源记录未分型。来源指纹包含实际组合模块、编译器Runtime及入口工具。
