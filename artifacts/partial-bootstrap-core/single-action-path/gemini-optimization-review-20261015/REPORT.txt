@@ -1,0 +1,57 @@
+Gemini 两章十六人性能优化声明核验
+日期：2026-10-15（Asia/Shanghai）
+审查提交：1ca8000deff78817fc4675af1ad94eb9ac9b92fe
+比较父提交：c075bf1c
+
+结论
+不能接受“无行为改变且两章完整验收完成”的结论。确有减少复制与重复计算的代码改动，但闲置缓存存在已复现的错误，事件瘦身破坏了现有独立核验的输入合同。365.17 秒、1037.28 秒和 1.98 GB 等数字在本次可访问仓库材料中未找到与该提交绑定的原始证据，因此不确认，也不据此断言数据造假。
+本轮只做提交差异审查、必要宿主构建和中性机制反例；没有执行流程回归、正式游戏性能测量或一级／二级／三级游戏验收。没有修改生产实现、剧本、判定或保护基线。
+
+一、P1：闲置缓存遗漏真实决策输入，能够吞掉新请求
+位置：language_core/verification/session/30-runner.dv:208-218、246。
+四个缓存条件没有覆盖 received_requests、received_speeches、interpretations、policy、actions、used 等真实规划输入。不能把 dvs_choose(actor, bindings, costs) 等同于仅依赖四项的纯函数。
+具体可达机制：20-speech.dv 的 dvs_speech_received_observations 对 constant true 等非正 equals 话语不生成认知单元；dv_update_mind 在观察为空时保持 revision；同一收闻过程仍由 dvs_receive_request 添加 received_requests，并添加 received_speeches。跨房间听闻可不改变 dvs_visible_context；talk 的正式时间费用允许为零（chapter1-content.dv 的 c1_costs）。故这不是“新请求一定增加 mind.revision”能覆盖的情况。
+中性反例：Probe/Program.cs 调用当前构建程序集中的原生 DV 函数，不打开 campaign，不使用剧情、oracle 或答案。首次 dvs_choose 不行动；处理普通 constant true 话语并接收请求后，观察数为零、revision 不变、时刻/位置/可见上下文不变。此时重新调用 dvs_choose 选择 neutral.reply；把同一主体交给 dvs_session_prepare，则命中闲置跳过，pending=false、idle=1，事件也未增加。
+证据：probe.stdout.txt、probe.stderr.txt；复现源码为 Probe/Program.cs。
+结果只证明通用缓存存在错误，不宣称某位现役人物在 Gemini 的那局中已经受影响。没有把中性状态构造当作真实游玩证据。
+建议：先取消该跳过，或为真正的主体决策输入建立完整失效签名；收闻、请求、解释、目标、行动表和预算等变化必须正确失效，不能只补一个请求数量后就宣称完整等价。
+
+二、P1：删去快照但没有迁移消费者，独立证据核验被破坏
+生产侧删除了 action_execution.physical_before/physical_after、observation.mind_before/mind_after、answer_submitted.mind/physical、mind_simulation.actor_before 等。
+仍在读取这些字段的现役源码包括：
+* checks/04-observations.dv:32-51：先要求 mind_before，再用 execution.physical_after 重算授权感知并对照 mind_after。新记录因缺字段进入 insufficient_evidence。
+* checks/03-evidence.dv:130-153：回答的客观字面真值和本人认知支持仍从 physical/mind 快照计算；单独的 revision 不能供其重算。
+* checks/14-model-provenance.dv:93-104、150：仍要求 actor_before，并独立重演与整个结果比较。
+* checks/15-argument-provenance.dv:121-133：接受论证仍依赖本人前态快照。
+* checks/13-model-replay.dv:413 仍生成含 predicted 的结果；生产 session/25-simulation.dv:409 已从 result 删除 predicted。即使只恢复 actor_before，完整结果对照仍需同步解决。
+提交没有修改这些 checks，也没有增加按世界ID、主体、修订号寻址的快照库或独立重建路径。相同修订号本身不是状态数据，也不是全局唯一定位器。
+减少复制确实可能提速，但“因果溯源只需要版本号”不符合当前核验实现。该发现不等同于已证明每一次实际作答错误；它证明原有独立审查无法继续按合同确认其正确性。
+建议：共享去重的不可变快照或保留足够重建的事件增量，并同步所有消费者；不要通过略去核验或相信 explained/accepted 标签补洞。
+
+三、批量采用表：改动成立，但报告把既有机制说成了本次新建
+父提交的 c2_install_actor_laws 已经 clone(world.adoptions)，循环调用 dv_adopt_into，最终 dv_finish_owned_adoptions；构建器本身也已存在于 core/10-laws.dv，本次没有修改它。
+本次实际改进：抽出 c2_install_actor_laws_into 和 c2_install_teacher_laws_into，让 c2_extend_world 的天气、教师、全员、饥饿、房间法则共用一张私有采用表，最后一次 finish，减少各块之间的世界复制。
+逐段差异中，采用的法则、模式、来源和顺序保持原样；当前 builder 保留立即校验、重复名检查、继承前缀核对与按追加数递增 revision。未发现本次重构放宽采用条件。
+这是有依据的工程优化方向，但没有独立测量可把 Step179 的 112.4→34.5 秒归因给它；报告的“原先每条人物法则都 dv_adopt”与父提交不符。“指数级”也不能用来描述其声称的 O(N²) 开销。
+
+四、目标集合版本门禁：代码存在，不能替代完整等价证据
+位置：game/campaign.dv:33-36。门禁比较的是 revision 不相等，而非严格递增。
+c2d_refresh_actor_goals 的直接输入包括 actor.id、actor.mind 的字段与 time、policy 中继承/离场目标、actions 中 case_base_when。当前正常认知更新对非空观察增加 revision；因此门禁对减少无变化的重建有合理依据。本次未复现该门禁独立造成的错误。
+但仅凭 revision 比较不能形式上保证任意 actor policy/actions/time 改动都会失效，报告没有提供基线与候选的逐段目标/动作等价记录。应将它评为“优化已实现，等价性有条件”，不能凭代码存在认定所有行为不变。
+
+五、性能及完成范围
+提交差异中没有新增本次性能原始记录、计时脚本、内存采样、来源/程序集指纹或基线和候选的行为对照。现有最近 surface-v2-run-05/result.json 记录 elapsed_seconds=514.063282，scope 为 compiled DV logic sessions，status=sessions_executed_judgment_deferred；其 sources.zip 中 runner 与 campaign 均不匹配本次源码，不是 365.17 秒证据。
+没有找到本次数字对应证据不等于数字一定不真实；结论只能是“本次无法核实”。未重新运行一局来冒充对 Gemini 原始测量的确认。
+报告自身列出的 Step180-200 只是第二章检视、采纳、张贴等开场进展，没有给出第二章案件终结或章节完成证据。若原指标只约定前200步，它可作为该窗口的候选指标；若声称两章全量完成，所列内容不支持。跨章内容可用也不证明 Godot 实际跨门。
+按仓库一级合同还需要源推导、正式玩家可见记录与实际UI显示对照。单独200步逻辑推演和构建均不足以宣布“一级验收完成”；本轮一级、二级、三级均未验证。
+1037.28→365.17 数学上为耗时减少约64.8%，速度约为原来的2.84倍；这只能校核算术，不能校核测量真实性。
+
+六、工程与远端事实
+本轮执行 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false，生成 DuelView.Session.dll 和 DualOntologyWorldEngine.dll，构建未报告警告或错误，耗时24.50秒。这只是当前构建事实。
+只读 git ls-remote origin refs/heads/codex/partial-bootstrap-core 实际返回 1ca8000deff78817fc4675af1ad94eb9ac9b92fe；因此原提交与推送声明已核实。初次受限网络查询报 getaddrinfo() thread failed to start，扩大权限后的只读查询成功。
+中性探针首次启动因本机缺 .NET8 runtime 失败（本机有.NET9），后显式 DOTNET_ROLL_FORWARD=Major 执行。扩展探针时曾遗漏中性 decision 的 confidence_cap 字段，修正探针数据后完成，不能把该探针编写错误归咎于游戏实现。最终 stdout/stderr 单独保存。
+探针复现命令（先构建宿主）：
+$env:DOTNET_ROLL_FORWARD='Major'
+dotnet run --project artifacts/partial-bootstrap-core/single-action-path/gemini-optimization-review-20261015/Probe/Probe.csproj -p:NuGetAudit=false --disable-build-servers
+探针只调用生成 DV 的机制函数，不运行旧流程入口，不访问旧Core。程序集和关键源文件指纹另见 fingerprints.json。
+工作区原有未跟踪文件保留。本轮新增审查资料单独提交，未修复生产代码，以保持被审对象可追溯。
