@@ -70,15 +70,15 @@ fn c2d_rows():
     while i < rt_count(rooms):
         let room = rooms[i]
         let after_night = dv_true()
-        rt_push(rows, c2d_question(rt_cat("detective.c2.ask.mora.", room), room, after_night, "mora", "night_patient_food", "台账上的缺口，有一份，是谁取的？为何取？", [c2_own("mora", "night_taken")], c2d_source("00_时间与文案.story", 87, "质询问题：取用")))
+        rt_push(rows, c2d_question(rt_cat("detective.c2.ask.mora.", room), room, after_night, "mora", "night_patient_food", "台账有待核对的差额。你夜里取过口粮吗？用途是什么？", [c2_own("mora", "night_taken")], c2d_source("00_时间与文案.story", 87, "质询问题：取用")))
         rt_push(rows, c2d_question(rt_cat("detective.c2.ask.quer.", room), room, after_night, "quer", "night_self_food", "夜里取过口粮吗？", [c2_own("quer", "night_taken")], c2d_source("04_案件.story", 76, "夜取自粮的质询")))
         rt_push(rows, c2d_question(rt_cat("detective.c2.ask.latch.", room), room, after_night, "quer", "latch_repair", "粮仓的门闩修过吗？", [c2d_person_ref("quer", "repaired_latch")], c2d_source("00_时间与文案.story", 89, "质询问题：门闩")))
-        rt_push(rows, c2d_question(rt_cat("detective.c2.ask.ledger.", room), room, after_night, "ruan", "night_ledger", "那台账上，为何不见记录？", [c2_ref("c2.ledger", "night_recorded")], c2d_source("00_时间与文案.story", 90, "质询问题：台账")))
+        rt_push(rows, c2d_question(rt_cat("detective.c2.ask.ledger.", room), room, after_night, "ruan", "night_ledger", "这些取用已经记了哪些，还有哪些待核对？", [c2_ref("c2.ledger", "night_recorded")], c2d_source("00_时间与文案.story", 90, "质询问题：台账")))
         rt_push(rows, c2d_question(rt_cat("detective.c2.ask.shadow.", room), room, after_night, "bertrand", "night_shadow", "你夜巡时，看见了什么？", [c2d_person_ref("bertrand", "small_shadow_seen")], c2d_source("04_案件.story", 19, "夜巡所见")))
         let mora_fact = dv_all([dv_fact(c2_own("mora", "night_taken"), true), dv_fact(c2d_person_ref("mora", "patient_food_reason"), true)])
-        rt_push(rows, c2d_reply("mora", rt_cat("mora.c2.reply.patient_food.", room), room, mora_fact, mora_fact, "night_patient_food", "是我取的。病人等不得。我本打算次日告知。", c2d_source("04_案件.story", 73, "夜取病粮：反应（次日措辞适配）")))
+        rt_push(rows, c2d_reply("mora", rt_cat("mora.c2.reply.patient_food.", room), room, mora_fact, mora_fact, "night_patient_food", "我为病人夜里取过口粮。取用和补记可以一起核对。", c2d_source("04_案件.story", 73, "夜取病粮：反应（次日措辞适配）")))
         let quer_fact = dv_all([dv_fact(c2_own("quer", "night_taken"), true), dv_fact(c2_own("quer", "accepted.mora_night"), true)])
-        rt_push(rows, c2d_reply("quer", rt_cat("quer.c2.reply.self_food.", room), room, quer_fact, quer_fact, "night_self_food", "板上写着急需可以自取。我本打算次日告知。", c2d_source("04_案件.story", 80, "夜取自粮：反应·雀儿（次日措辞适配）")))
+        rt_push(rows, c2d_reply("quer", rt_cat("quer.c2.reply.self_food.", room), room, quer_fact, quer_fact, "night_self_food", "我夜里取过口粮，也认了急需可以自取、随后补记这条。记录可以一起核对。", c2d_source("04_案件.story", 80, "夜取自粮：反应·雀儿（次日措辞适配）")))
         let repaired = dv_fact(c2d_person_ref("quer", "repaired_latch"), true)
         rt_push(rows, c2d_reply("quer", rt_cat("quer.c2.reply.repair.", room), room, repaired, repaired, "latch_repair", "门闩松了，是我修的。", c2d_source("04_案件.story", 85, "修门闩：反应")))
         let ledger = dv_all([dv_fact(c2_ref("c2.ledger", "night_recorded"), 0), dv_at_least(c2_ref("c2.ledger", "day_recorded"), 1)])
@@ -198,12 +198,13 @@ fn c2d_objects():
     return objects
 
 fn c2d_case_gate(mind):
-    let removed = dv_read(mind, c2_ref("c2.ledger", "removed"))
+    let counted = dv_read(mind, c2_ref("c2.ledger", "counted"))
+    let remaining = dv_read(mind, c2_ref("c2.counter", "remaining"))
     let day = dv_read(mind, c2_ref("c2.ledger", "day_recorded"))
     let night = dv_read(mind, c2_ref("c2.ledger", "night_recorded"))
-    if dv_uncontested(removed) and dv_uncontested(day) and dv_uncontested(night):
-        if day.value + night.value < removed.value:
-            return dv_all([dv_fact(c2_ref("c2.ledger", "removed"), removed.value), dv_fact(c2_ref("c2.ledger", "day_recorded"), day.value), dv_fact(c2_ref("c2.ledger", "night_recorded"), night.value)])
+    if dv_uncontested(counted) and dv_uncontested(remaining) and dv_uncontested(day) and dv_uncontested(night):
+        if counted.value > 0 and remaining.value + day.value + night.value < counted.value:
+            return dv_all([dv_fact(c2_ref("c2.ledger", "counted"), counted.value), dv_fact(c2_ref("c2.counter", "remaining"), remaining.value), dv_fact(c2_ref("c2.ledger", "day_recorded"), day.value), dv_fact(c2_ref("c2.ledger", "night_recorded"), night.value)])
     return dv_not(dv_true())
 
 fn c2d_goals(actor):
@@ -224,7 +225,8 @@ fn c2d_goals(actor):
         rt_push(goals, c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]))
         rt_push(goals, c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], actor.mind.time))
     if actor.id == "detective":
-        let ledger_fields = ["removed", "day_recorded", "night_recorded"]
+        let ledger_fields = ["counted", "day_recorded", "night_recorded"]
+        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), dv_true(), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], actor.mind.time))
         i = 0
         while i < rt_count(ledger_fields):
             rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), dv_true(), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], actor.mind.time))
