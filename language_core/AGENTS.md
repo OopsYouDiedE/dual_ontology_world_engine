@@ -113,4 +113,12 @@ session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取�
 证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人已接收时刻：mind.time与本人history中observation-batch各observation.time的最大值，只有存在尚未停止的标记目标时才惰性扫描一次。收到某条信息不等同采信其内容；不读取预测历史或physical。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；没有更晚的已接收信息时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
 Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
 
-2026-10-15：两章十六人一级推演性能优化。为满足 2 章 16 人全量逻辑推演在 600 秒内完成的指标：1. 闲置主体静止跳过（Quiescent Skip）：在 session/30-runner.dv 中，若主体 mind.revision、location、time、visible_context 未变且上一决策为 action == false，直接跳过全量认知搜索；2. 目标集合版本缓存：在 game/campaign.dv 中以 chapter2_goals_mind_revision 为门禁，仅当主体 mind.revision 改变时重算 c2d_refresh_actor_goals；3. 剥离全局深拷贝事件载荷：在 30-runner.dv、32-environment.dv、25-simulation.dv、35-model-argument.dv、10-subjective.dv 中将事件载荷的完整世界/认知深拷贝替换为版本号与主体 ID；4. 批量采用表构建器：在 chapter2-content.dv 中将 160+ 法则采用重构为 dv_adopt_into + dv_finish_owned_adoptions 单次写入。实测 200 步跨章 16 人正式会话耗时从 1037 秒缩短至 365 秒，内存稳定在 2 GB 内。
+
+## Evidence and campaign tracking (2026-10-16)
+
+All eligible autonomous actors run shared cognition and dvs_choose on their turns. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
+Execution, observation, answer, transition, model-recheck and simulation events retain the requested full snapshots; simulation results include predicted. Revision metadata supplements snapshots. Other event producers remain subject to separate audit.
+
+The game/campaign.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
+Session.cs exposes internal CampaignTrackedActors/CampaignChronologicalTrace/CampaignRun bridges. python language_core/tools/build_session.py --out language_core/Session generates an inspectable copy; the project excludes that root DVProgram.cs and builds obj/dv instead. Never edit generated copies.
+Engineering probe evidence is saved under artifacts/partial-bootstrap-core/single-action-path in new paths. Build/tracking evidence does not certify full gameplay acceptance or performance improvement.

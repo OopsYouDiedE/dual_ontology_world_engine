@@ -1,0 +1,3092 @@
+[
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e25",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e26",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e27",
+    "type": "action_selected",
+    "action": {
+      "id": "detective.opening.wake",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wake.detective",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "presentation": {
+        "actor": "detective",
+        "voice": "private-monologue",
+        "lines": [
+          {
+            "template": "\u6211\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\uFF0C\u662F\u4E0A\u8239\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u8863\u67B6\u4E0A\u6302\u7740\u4E00\u4EF6\u98CE\u8863\u3002\u53F3\u624B\u8896\u53E3\u78E8\u5F97\u53D1\u4EAE\u2014\u2014\u6211\u5199\u5B57\u65F6\u603B\u62FF\u90A3\u513F\u8E6D\u684C\u6CBF\u3002\u662F\u6211\u7684\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u5148\u51FA\u53BB\uFF0C\u770B\u770B\u8FD9\u662F\u4EC0\u4E48\u5730\u65B9\u3002",
+            "bindings": []
+          }
+        ],
+        "publish_after": "actual-applied-execution",
+        "knowledge_effect": "none"
+      },
+      "personal_purpose": {
+        "subject": "detective",
+        "id": "current-self-observation",
+        "basis": [
+          {
+            "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+            "line": 5,
+            "id": "s1_wake.003"
+          }
+        ]
+      },
+      "predict_law": "opening.wake.detective",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "label": "\u56DE\u60F3\u9192\u6765\u524D\u7684\u4E8B"
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e28",
+    "type": "planning_choice",
+    "action": {
+      "id": "detective.opening.wake",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wake.detective",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "presentation": {
+        "actor": "detective",
+        "voice": "private-monologue",
+        "lines": [
+          {
+            "template": "\u6211\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\uFF0C\u662F\u4E0A\u8239\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u8863\u67B6\u4E0A\u6302\u7740\u4E00\u4EF6\u98CE\u8863\u3002\u53F3\u624B\u8896\u53E3\u78E8\u5F97\u53D1\u4EAE\u2014\u2014\u6211\u5199\u5B57\u65F6\u603B\u62FF\u90A3\u513F\u8E6D\u684C\u6CBF\u3002\u662F\u6211\u7684\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u5148\u51FA\u53BB\uFF0C\u770B\u770B\u8FD9\u662F\u4EC0\u4E48\u5730\u65B9\u3002",
+            "bindings": []
+          }
+        ],
+        "publish_after": "actual-applied-execution",
+        "knowledge_effect": "none"
+      },
+      "personal_purpose": {
+        "subject": "detective",
+        "id": "current-self-observation",
+        "basis": [
+          {
+            "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+            "line": 5,
+            "id": "s1_wake.003"
+          }
+        ]
+      },
+      "predict_law": "opening.wake.detective",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "label": "\u56DE\u60F3\u9192\u6765\u524D\u7684\u4E8B"
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e29",
+    "type": "cost_quote",
+    "action": "opening.wake.detective"
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e30",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e31",
+    "type": "action_execution",
+    "action": {
+      "id": "detective.opening.wake",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wake.detective",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "presentation": {
+        "actor": "detective",
+        "voice": "private-monologue",
+        "lines": [
+          {
+            "template": "\u6211\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\uFF0C\u662F\u4E0A\u8239\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u8863\u67B6\u4E0A\u6302\u7740\u4E00\u4EF6\u98CE\u8863\u3002\u53F3\u624B\u8896\u53E3\u78E8\u5F97\u53D1\u4EAE\u2014\u2014\u6211\u5199\u5B57\u65F6\u603B\u62FF\u90A3\u513F\u8E6D\u684C\u6CBF\u3002\u662F\u6211\u7684\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u5148\u51FA\u53BB\uFF0C\u770B\u770B\u8FD9\u662F\u4EC0\u4E48\u5730\u65B9\u3002",
+            "bindings": []
+          }
+        ],
+        "publish_after": "actual-applied-execution",
+        "knowledge_effect": "none"
+      },
+      "personal_purpose": {
+        "subject": "detective",
+        "id": "current-self-observation",
+        "basis": [
+          {
+            "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+            "line": 5,
+            "id": "s1_wake.003"
+          }
+        ]
+      },
+      "predict_law": "opening.wake.detective",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "label": "\u56DE\u60F3\u9192\u6765\u524D\u7684\u4E8B"
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e32",
+    "type": "observation",
+    "action": {
+      "id": "detective.opening.wake",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wake.detective",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "presentation": {
+        "actor": "detective",
+        "voice": "private-monologue",
+        "lines": [
+          {
+            "template": "\u6211\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\uFF0C\u662F\u4E0A\u8239\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u8863\u67B6\u4E0A\u6302\u7740\u4E00\u4EF6\u98CE\u8863\u3002\u53F3\u624B\u8896\u53E3\u78E8\u5F97\u53D1\u4EAE\u2014\u2014\u6211\u5199\u5B57\u65F6\u603B\u62FF\u90A3\u513F\u8E6D\u684C\u6CBF\u3002\u662F\u6211\u7684\u3002",
+            "bindings": []
+          },
+          {
+            "template": "\u5148\u51FA\u53BB\uFF0C\u770B\u770B\u8FD9\u662F\u4EC0\u4E48\u5730\u65B9\u3002",
+            "bindings": []
+          }
+        ],
+        "publish_after": "actual-applied-execution",
+        "knowledge_effect": "none"
+      },
+      "personal_purpose": {
+        "subject": "detective",
+        "id": "current-self-observation",
+        "basis": [
+          {
+            "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+            "line": 5,
+            "id": "s1_wake.003"
+          }
+        ]
+      },
+      "predict_law": "opening.wake.detective",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "detective",
+          "facet": "body",
+          "field": "awake"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "name"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "profession"
+        },
+        {
+          "type": "ref",
+          "object": "opening.personal.detective",
+          "facet": "state",
+          "field": "last_recall"
+        },
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "identity",
+          "field": "owner"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "label": "\u56DE\u60F3\u9192\u6765\u524D\u7684\u4E8B"
+    }
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e57",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e58",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e59",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e60",
+    "type": "action_selected",
+    "action": {
+      "id": "quer.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e61",
+    "type": "planning_choice",
+    "action": {
+      "id": "quer.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e62",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e63",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e64",
+    "type": "action_execution",
+    "action": {
+      "id": "quer.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "quer",
+    "event_id": "e65",
+    "type": "observation",
+    "action": {
+      "id": "quer.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.contract",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "contract"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 14,
+          "id": "quer.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e93",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e94",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e95",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e96",
+    "type": "action_selected",
+    "action": {
+      "id": "ruan.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e97",
+    "type": "planning_choice",
+    "action": {
+      "id": "ruan.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e98",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e99",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e100",
+    "type": "action_execution",
+    "action": {
+      "id": "ruan.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "ruan",
+    "event_id": "e101",
+    "type": "observation",
+    "action": {
+      "id": "ruan.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.astral",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "astral"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 23,
+          "id": "ruan.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e129",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e130",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e131",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e132",
+    "type": "action_selected",
+    "action": {
+      "id": "mora.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e133",
+    "type": "planning_choice",
+    "action": {
+      "id": "mora.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e134",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e135",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e136",
+    "type": "action_execution",
+    "action": {
+      "id": "mora.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "mora",
+    "event_id": "e137",
+    "type": "observation",
+    "action": {
+      "id": "mora.inspect.outer-latch",
+      "kind": "inspect",
+      "precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ],
+      "repeatable": true,
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "case.logistics",
+          "facet": "state",
+          "field": "outer_latch_released"
+        },
+        {
+          "type": "ref",
+          "object": "campaign.access",
+          "facet": "state",
+          "field": "logistics"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u51FA\u533A\u65E5\u5E38.story",
+          "line": 41,
+          "id": "mora.departure"
+        }
+      ]
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e190",
+    "type": "speech_unheard",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e197",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e198",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e199",
+    "type": "action_selected",
+    "action": {
+      "id": "detective.opening.wear-coat",
+      "kind": "inspect",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "detective",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "R05"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "coat",
+              "facet": "identity",
+              "field": "owner"
+            },
+            "value": "detective"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wear-coat",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "predict_law": "opening.wear-coat",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "label": "\u7A7F\u4E0A\u98CE\u8863",
+      "presentation": {
+        "actor": "detective",
+        "lines": [
+          {
+            "template": "\u4F60\u62AB\u4E0A\u4E86\u8FD9\u4EF6\u719F\u6089\u7684\u5462\u6599\u98CE\u8863\uFF0C\u9886\u53E3\u4E0E\u8896\u53E3\u65E9\u5DF2\u78E8\u5E73\u3002",
+            "when": {
+              "op": "equals",
+              "ref": {
+                "type": "ref",
+                "object": "coat",
+                "facet": "state",
+                "field": "worn_by"
+              },
+              "value": "detective"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e200",
+    "type": "planning_choice",
+    "action": {
+      "id": "detective.opening.wear-coat",
+      "kind": "inspect",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "detective",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "R05"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "coat",
+              "facet": "identity",
+              "field": "owner"
+            },
+            "value": "detective"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wear-coat",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "predict_law": "opening.wear-coat",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "label": "\u7A7F\u4E0A\u98CE\u8863",
+      "presentation": {
+        "actor": "detective",
+        "lines": [
+          {
+            "template": "\u4F60\u62AB\u4E0A\u4E86\u8FD9\u4EF6\u719F\u6089\u7684\u5462\u6599\u98CE\u8863\uFF0C\u9886\u53E3\u4E0E\u8896\u53E3\u65E9\u5DF2\u78E8\u5E73\u3002",
+            "when": {
+              "op": "equals",
+              "ref": {
+                "type": "ref",
+                "object": "coat",
+                "facet": "state",
+                "field": "worn_by"
+              },
+              "value": "detective"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e201",
+    "type": "cost_quote",
+    "action": "opening.wear-coat"
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e202",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e203",
+    "type": "action_execution",
+    "action": {
+      "id": "detective.opening.wear-coat",
+      "kind": "inspect",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "detective",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "R05"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "coat",
+              "facet": "identity",
+              "field": "owner"
+            },
+            "value": "detective"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wear-coat",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "predict_law": "opening.wear-coat",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "label": "\u7A7F\u4E0A\u98CE\u8863",
+      "presentation": {
+        "actor": "detective",
+        "lines": [
+          {
+            "template": "\u4F60\u62AB\u4E0A\u4E86\u8FD9\u4EF6\u719F\u6089\u7684\u5462\u6599\u98CE\u8863\uFF0C\u9886\u53E3\u4E0E\u8896\u53E3\u65E9\u5DF2\u78E8\u5E73\u3002",
+            "when": {
+              "op": "equals",
+              "ref": {
+                "type": "ref",
+                "object": "coat",
+                "facet": "state",
+                "field": "worn_by"
+              },
+              "value": "detective"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "time": 480,
+    "actor": "detective",
+    "event_id": "e204",
+    "type": "observation",
+    "action": {
+      "id": "detective.opening.wear-coat",
+      "kind": "inspect",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "detective",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "R05"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "coat",
+              "facet": "identity",
+              "field": "owner"
+            },
+            "value": "detective"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "detective",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "R05"
+      },
+      "law": "opening.wear-coat",
+      "grants": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "once": true,
+      "owner": "detective",
+      "predict_law": "opening.wear-coat",
+      "purpose_refs": [
+        {
+          "type": "ref",
+          "object": "coat",
+          "facet": "state",
+          "field": "worn_by"
+        }
+      ],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/01_\u5F00\u573A.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "label": "\u7A7F\u4E0A\u98CE\u8863",
+      "presentation": {
+        "actor": "detective",
+        "lines": [
+          {
+            "template": "\u4F60\u62AB\u4E0A\u4E86\u8FD9\u4EF6\u719F\u6089\u7684\u5462\u6599\u98CE\u8863\uFF0C\u9886\u53E3\u4E0E\u8896\u53E3\u65E9\u5DF2\u78E8\u5E73\u3002",
+            "when": {
+              "op": "equals",
+              "ref": {
+                "type": "ref",
+                "object": "coat",
+                "facet": "state",
+                "field": "worn_by"
+              },
+              "value": "detective"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e229",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e230",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e231",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e232",
+    "type": "action_selected",
+    "action": {
+      "id": "quer.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "quer",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.contract"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.quer",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.quer",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002"
+      },
+      "listeners": [
+        "lucian",
+        "ward",
+        "gu"
+      ],
+      "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e233",
+    "type": "planning_choice",
+    "action": {
+      "id": "quer.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "quer",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.contract"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.quer",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.quer",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002"
+      },
+      "listeners": [
+        "lucian",
+        "ward",
+        "gu"
+      ],
+      "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e234",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e235",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e236",
+    "type": "action_execution",
+    "action": {
+      "id": "quer.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "quer",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.contract"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.quer",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "quer",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.contract"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.quer",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002"
+      },
+      "listeners": [
+        "lucian",
+        "ward",
+        "gu"
+      ],
+      "surface": "\u95E8\u3002\u95E8\u95E9\u5728\u5916\u9762\u3002\n\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 46,
+          "id": "opening_quer.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e237",
+    "type": "speech_literal",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e238",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e240",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e242",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e254",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e269",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "quer",
+    "event_id": "e284",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e289",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e290",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e291",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e292",
+    "type": "action_selected",
+    "action": {
+      "id": "ruan.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "ruan",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.astral"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.ruan",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.ruan",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002"
+      },
+      "listeners": [
+        "elena",
+        "selma",
+        "moran"
+      ],
+      "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e293",
+    "type": "planning_choice",
+    "action": {
+      "id": "ruan.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "ruan",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.astral"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.ruan",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.ruan",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002"
+      },
+      "listeners": [
+        "elena",
+        "selma",
+        "moran"
+      ],
+      "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e294",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e295",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e296",
+    "type": "action_execution",
+    "action": {
+      "id": "ruan.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "ruan",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.astral"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.ruan",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "ruan",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.astral"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.ruan",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002"
+      },
+      "listeners": [
+        "elena",
+        "selma",
+        "moran"
+      ],
+      "surface": "\u6795\u8FB9\u4E00\u679A\u9ED1\u5B50\uFF0C\u51C9\u7684\u3002\n\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 70,
+          "id": "opening_ruan.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e297",
+    "type": "speech_literal",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e298",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e300",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e302",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e314",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e329",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "ruan",
+    "event_id": "e344",
+    "type": "listener_parse",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e349",
+    "type": "co_presence",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e350",
+    "type": "reason_stop",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e351",
+    "type": "why_not_ready",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e352",
+    "type": "action_selected",
+    "action": {
+      "id": "mora.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "mora",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.logistics"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.mora",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.mora",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002"
+      },
+      "listeners": [
+        "bertrand",
+        "veronica",
+        "margaret"
+      ],
+      "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e353",
+    "type": "planning_choice",
+    "action": {
+      "id": "mora.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "mora",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.logistics"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.mora",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.mora",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002"
+      },
+      "listeners": [
+        "bertrand",
+        "veronica",
+        "margaret"
+      ],
+      "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e354",
+    "type": "cost_quote",
+    "action": ""
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e355",
+    "type": "host_completion",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e356",
+    "type": "action_execution",
+    "action": {
+      "id": "mora.wake-and-introduce",
+      "kind": "talk",
+      "precondition": {
+        "op": "all",
+        "items": [
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "mora",
+              "facet": "state",
+              "field": "location"
+            },
+            "value": "dorm.logistics"
+          },
+          {
+            "op": "equals",
+            "ref": {
+              "type": "ref",
+              "object": "personal.mora",
+              "facet": "state",
+              "field": "initial_surface"
+            },
+            "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+          }
+        ]
+      },
+      "authority_precondition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "mora",
+          "facet": "state",
+          "field": "location"
+        },
+        "value": "dorm.logistics"
+      },
+      "law": "",
+      "grants": [],
+      "source_refs": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ],
+      "once": true,
+      "speech": {
+        "literal_ast": {
+          "op": "equals",
+          "ref": {
+            "type": "ref",
+            "object": "personal.mora",
+            "facet": "state",
+            "field": "initial_surface"
+          },
+          "value": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002"
+        },
+        "referents": [],
+        "scope": "own-current-perception",
+        "time_anchor": "\u4ECA\u6668\u9192\u6765\u81F3\u5F53\u524D\u53D1\u8A00",
+        "surface_ref": {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        },
+        "presuppositions": [],
+        "implicature_candidates": [],
+        "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002"
+      },
+      "listeners": [
+        "bertrand",
+        "veronica",
+        "margaret"
+      ],
+      "surface": "\u836F\u5305\u3002\u2026\u2026\u5728\u3002\n\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002",
+      "purpose_refs": [],
+      "purpose_basis": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/\u7B2C\u4E00\u7AE0/\u573A\u9762/10_\u5F00\u573A\u72EC\u767D.story",
+          "line": 118,
+          "id": "opening_mora.002"
+        }
+      ]
+    }
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e357",
+    "type": "speech_literal",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e358",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e360",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e362",
+    "type": "speaker_prediction",
+    "action": false
+  },
+  {
+    "time": 486,
+    "actor": "mora",
+    "event_id": "e374",
+    "type": "listener_parse",
+    "action": false
+  }
+]

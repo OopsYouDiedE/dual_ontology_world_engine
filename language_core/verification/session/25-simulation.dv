@@ -407,6 +407,7 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
         i = (i + 1)
     var comparison = dvs_sim_comparisons(mind, predictions, remaining)
     var result = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(comparison, "expanded", (expanded + comparison.expanded)), "failures", failures), "coverage", covered), "assumptions", assumption_records), "predictions", predictions), "trace", trace)
+    result = dv_with(result, "predicted", predicted)
     if dv_and((not complete), (result.status == "explained")):
         result = dv_with(result, "status", "unknown")
     result = dv_with(dv_with(dv_with(dv_with(dv_with(result, "plan_complete", complete), "source_revision", mind.revision), "original_revision", mind.revision), "role", "internal-enumeration"), "start_time", start)
@@ -425,7 +426,7 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
         rt_push(parents, paid)
     if dv_and((not (previous == "")), (not dv_has(parents, previous))):
         rt_push(parents, previous)
-    dvs_event(events, "mind_simulation", actor.id, time, parents, {"mind_revision": mind.revision, "hypothesis": hypothesis, "result": result, "actor_id": actor.id})
+    dvs_event(events, "mind_simulation", actor.id, time, parents, {"mind_revision": mind.revision, "hypothesis": hypothesis, "result": result, "actor_before": actor, "actor_id": actor.id})
     return result
 
 fn dvs_model_recheck(actor, model):

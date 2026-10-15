@@ -8,6 +8,7 @@
     <DvPython Condition="'$(DvPython)' == ''">python</DvPython>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="DVProgram.cs" />
     <Compile Include="../compiler/Runtime.cs" Link="Runtime.cs" />
     <Compile Include="obj/dv/DVProgram.cs" />
   </ItemGroup>

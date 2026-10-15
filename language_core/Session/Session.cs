@@ -107,6 +107,9 @@ public sealed class DvSession
 
 public static partial class DVProgram
 {
+    internal static object CampaignTrackedActors() => F_dvg_tracked_actors();
+    internal static object CampaignChronologicalTrace(object state) => F_dvg_chronological_trace(state);
+    internal static object CampaignRun(object maxSteps) => F_dvg_run_campaign(maxSteps);
     internal static object CampaignOpen() => F_dvg_open();
     internal static object SetPlayer(object state, object actor) => F_dvs_set_player(state, actor);
     internal static object SelectPlayer(object state, object id) => F_dvs_select_player(state, id);

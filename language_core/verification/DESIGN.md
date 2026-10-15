@@ -62,3 +62,8 @@
 证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人已接收时刻：mind.time与本人history中observation-batch各observation.time的最大值，只有存在尚未停止的标记目标时才惰性扫描一次。收到某条信息不等同采信其内容；不读取预测历史或physical。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；没有更晚的已接收信息时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
 Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
 采集可在原5Hz截图之后追加私有render-state.jsonl，只读现有actor/AnimatedSprite2D可见性、位置、动画帧与当前纹理引用，并关联原real_ms和文件名；不加载资源、触发动作或更改呈现。失效节点、空纹理、无效动画帧与诊断文件打开失败容错。该记录不给盲玩者；额外磁盘开销随新来源封存，实际采样间隙照实保留，不能以隐藏节点状态代选行动或代替PNG实视。
+
+## Snapshot evidence and campaign adapter
+
+The shared actor turn executes cognition and dvs_choose without the removed idle cache. dvs_event copies event payloads through dv_with, preserving the restored world/mind/actor snapshots for existing readers. A simulation result includes its predicted world; predictions remain separate from physical execution.
+The production game/campaign.dv adapter extends the same live session. dvg_run_campaign(max_steps) uses dvg_prepare and dvg_complete with formal-model receipts, stopping on the completed-action bound or session inactivity. false selects the authored action limit; zero returns the opening state. It returns live state, without closing or restarting at chapter extension. dvg_chronological_trace projects selected actors from append-ordered events; it neither changes scheduling nor grants knowledge. Geometry remains outside this logical adapter.

@@ -55,3 +55,36 @@ fn dvg_traces(world):
         result = dv_with(result, mapping[i][0], dv_truth(world, dv_fact(c1_knowledge(mapping[i][1]), true)) == "true")
         i = i + 1
     return result
+
+// Reporting selection only; all residents retain the same decision mechanism.
+fn dvg_tracked_actors():
+    return ["quer", "detective", "ruan", "mora"]
+
+fn dvg_chronological_trace(state):
+    let tracked = dvg_tracked_actors()
+    let events = state.events
+    var trace = []
+    var i = 0
+    while i < rt_count(events):
+        let e = events[i]
+        if dv_has(tracked, e.actor):
+            rt_push(trace, {"time": e.time, "actor": e.actor, "event_id": e.id, "type": e.type, "action": dv_find(e.data, "action", false)})
+        i = i + 1
+    return trace
+
+// Bounded formal-model adapter; false uses the authored session action limit.
+// Returns the live state without closing it or resetting at chapter expansion.
+fn dvg_run_campaign(max_steps):
+    var state = dvg_open()
+    var limit = max_steps
+    if limit == false:
+        limit = state.limit
+    dv_require(0 <= limit, "Negative campaign step limit")
+    var steps = 0
+    while dvs_session_active(state) and steps < limit:
+        state = dvg_prepare(state)
+        let pending = dv_find(state, "pending", false)
+        if pending != false:
+            state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
+            steps = steps + 1
+    return state
