@@ -33,11 +33,11 @@ fn c1_other_person(id):
 
 fn c1_other_case(group):
     if (group == "contract"):
-        return {"id": "contract", "room": "dorm.contract", "zone": "甲区", "prompt": "名录库的柜锁，是谁打开的？", "options": ["quer", "ward", "gu", "lucian"], "reason_options": ["authorized_transfer", "theft"], "reason_surfaces": ["受命转移文书", "私自行窃"], "authority_actor": "quer", "authority_reason": "authorized_transfer", "earliest_exit_minute": 630, "ward_exit_minute": 840, "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 9, "文契"), "outside_evidence_surface": "规程页的红墨批注“授钥：雀”，锁芯与钥匙齿都没有撬痕", "outside_evidence_scope": "chapter2-only-not-installed"}
+        return {"id": "contract", "room": "dorm.contract", "zone": "甲区", "prompt": "文献工房的密柜，昨夜是谁打开的？", "options": ["quer", "ward", "gu", "lucian"], "reason_options": ["authorized_transfer", "theft"], "reason_surfaces": ["受命转移文书", "私自行窃"], "authority_actor": "quer", "authority_reason": "authorized_transfer", "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 9, "文契"), "outside_evidence_surface": "无署名、无日期的《紧急转移清册》残页记着交“雀（J.C.）”用钥匙转移管网图；须与残角、柜锁及管网图去向合并核对", "outside_evidence_scope": "chapter2-only-not-installed"}
     if (group == "astral"):
-        return {"id": "astral", "room": "dorm.astral", "zone": "丙区", "prompt": "是谁让一个人留在了沉静室里？", "options": ["ruan", "selma", "moran"], "reason_options": ["self_preservation", "requested_closure"], "reason_surfaces": ["阮清月弃人自保", "伊莲娜示意关门"], "authority_actor": "ruan", "authority_reason": "requested_closure", "earliest_exit_minute": 1800, "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 28, "星仪"), "outside_evidence_surface": "莫兰撕下的那页速写：伊莲娜在门内抬手示意；沉静室门内的步位标线一道不乱", "outside_evidence_scope": "chapter2-only-not-installed"}
+        return {"id": "astral", "room": "dorm.astral", "zone": "丙区", "prompt": "是谁让一个人留在了沉静室里？", "options": ["ruan", "selma", "moran"], "reason_options": ["self_preservation", "requested_closure"], "reason_surfaces": ["阮清月弃人自保", "伊莲娜示意关门"], "authority_actor": "ruan", "authority_reason": "requested_closure", "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 28, "星仪"), "outside_evidence_surface": "莫兰撕下的那页速写：伊莲娜在门内抬手示意；沉静室门内的步位标线一道不乱", "outside_evidence_scope": "chapter2-only-not-installed"}
     if (group == "logistics"):
-        return {"id": "logistics", "room": "dorm.logistics", "zone": "丁区", "prompt": "白塔柜里那瓶试剂，是谁取走的？", "options": ["veronica", "mora", "bertrand", "margaret"], "reason_options": ["experiment", "wound_cleaning"], "reason_surfaces": ["拿人做实验", "清洗伤口"], "authority_actor": "veronica", "authority_reason": "wound_cleaning", "earliest_exit_minute": 2130, "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 45, "后勤"), "outside_evidence_surface": "贝尔特朗前臂的新疤，试剂瓶残量与清洗用量吻合", "outside_evidence_scope": "chapter2-only-not-installed"}
+        return {"id": "logistics", "room": "dorm.logistics", "zone": "丁区", "prompt": "白塔柜里那瓶试剂，是谁取走的？", "options": ["veronica", "mora", "bertrand", "margaret"], "reason_options": ["experiment", "wound_cleaning"], "reason_surfaces": ["拿人做实验", "清洗伤口"], "authority_actor": "veronica", "authority_reason": "wound_cleaning", "source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 45, "后勤"), "outside_evidence_surface": "贝尔特朗前臂的新疤，试剂瓶残量与清洗用量吻合", "outside_evidence_scope": "chapter2-only-not-installed"}
     dv_require(false, "Unknown chapter-one dormitory group")
     return false
 
@@ -104,17 +104,16 @@ axiom c1_other_question_open(group):
 axiom c1_other_accept(group, actor):
     return dv_axiom(rt_cat(rt_cat("c1_other_accept.", group), rt_cat(".", actor)), 1, c1_other_claim(group, "open"), dv_list3(dv_assign(c1_other_ref(group, rt_cat("receipt.", actor)), true), dv_assign(c1_other_ref(group, rt_cat("level.", actor)), 1), dv_assign(dv_ref(rt_cat("personal.", actor), "state", "current"), rt_cat(group, ".reason"))))
 
-// Clock is a real session-owned field, supplied by the calling integration.
-// No constructor sets it to the deadline or advances it to manufacture release.
+// A valid duty report permits a real release action at the shared living hall.
 axiom c1_other_release(group, clock_ref):
     var people = c1_other_people()
-    var required = dv_pair(dv_at_least(clock_ref, c1_other_case(group).earliest_exit_minute), dv_fact(c1_other_access_ref(group), true))
+    var reported = dv_not(dv_true())
     var i = 0
     while (i < rt_count(people)):
         if (people[i].group == group):
-            rt_push(required, c1_other_claim(group, rt_cat("receipt.", people[i].id)))
+            reported = c1_any(reported, c1_other_claim(group, rt_cat("receipt.", people[i].id)))
         i = (i + 1)
-    return dv_axiom(rt_cat("c1_other_release.", group), 1, dv_all(required), dv_single(dv_assign(c1_other_ref(group, "outer_latch_released"), true)))
+    return dv_axiom(rt_cat("c1_other_release.", group), 1, dv_all([reported, c2_at("demon", "living_hall"), dv_fact(c1_other_ref(group, "outer_latch_released"), false)]), [dv_assign(c1_other_ref(group, "outer_latch_released"), true), dv_assign(c1_other_access_ref(group), true)])
 
 fn c1_other_open_action(group, speaker):
     var spec = c1_other_case(group)
@@ -358,8 +357,7 @@ fn c1_other_personal_replies(id):
 
 fn c1_other_release_action(group, speaker, clock_ref):
     var law = c1_other_release(group, clock_ref)
-    var room = c1_other_case(group).room
-    return dv_with(c1_action(rt_cat("other.release.", group), "other_release", dv_all(dv_pair(c1_at(speaker, room), law.premise)), dv_all(dv_pair(c1_at(speaker, room), law.premise)), rt_cat("other.release.", group), dv_single(c1_other_ref(group, "outer_latch_released")), c1_other_case(group).source), "surface", "外闩抬起。")
+    return dv_with_many(c1_action(rt_cat("other.release.", group), "other_release", law.premise, law.premise, rt_cat("other.release.", group), [c1_other_ref(group, "outer_latch_released"), c1_other_access_ref(group)], c1_other_case(group).source), {"surface": "从起居厅一侧抬起寝区外闩。", "predict_law": rt_cat("other.release.", group)})
 
 fn c1_other_departure_source(id):
     if (id == "lucian"):
@@ -404,7 +402,7 @@ fn c1_other_departure_actions(id):
     var ref = c1_other_ref(person.group, "outer_latch_released")
     var inspect = dv_with(c1_action(rt_cat(id, ".inspect.outer-latch"), "inspect", c1_at(id, room), c1_at(id, room), "", dv_pair(ref, c1_other_access_ref(person.group)), source.source), "repeatable", true)
     var premise = dv_all(dv_list3(c1_at(id, room), dv_fact(ref, true), dv_fact(c1_other_access_ref(person.group), true)))
-    var depart = dv_with_many(c1_action(rt_cat(id, ".leave-dormitory"), "other_departure", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface})
+    var depart = dv_with_many(c1_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
     depart = dv_with(depart, "personal_choice", {"group": "leave-open-dormitory", "requires": premise, "prohibits": dv_not(dv_true()), "promotes": ["leave_confinement"], "sacrifices": [], "basis": dv_single(person.initial_source)})
     return dv_pair(inspect, depart)
 

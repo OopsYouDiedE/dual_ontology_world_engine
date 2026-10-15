@@ -6,7 +6,7 @@ fn c2_source(file, line, id):
     return c1_source(rt_cat("godot_csharp/scenes/Awakening/Script/story/续篇/", file), line, id)
 
 fn c2_approved(id):
-    return c1_source("user:chapter2-current-request", 0, id)
+    return c1_source("docs/design-standard.md", 0, id)
 
 fn c2_ref(object, field):
     return dv_ref(object, "state", field)
@@ -37,6 +37,9 @@ fn c2_window(day, start, end):
 
 fn c2_night(day):
     return c2_window(day, 1260, 1800)
+
+fn c2_any_night():
+    return c1_any(c2_night(1), c1_any(c2_night(2), c1_any(c2_night(3), c1_any(c2_night(4), c2_night(5)))))
 
 fn c2_people():
     return ["detective", "huo", "shen", "su", "lucian", "gu", "quer", "ward", "selma", "ruan", "elena", "moran", "veronica", "bertrand", "margaret", "mora"]
@@ -69,13 +72,13 @@ fn c2_profile(actor):
         domain = "safety"
     if actor == "huo":
         roles = ["weight", "lock"]
-        values = ["open_archive", "records", "central_cooking", "evidence", "safety"]
+        values = ["measured_work", "records", "central_cooking", "evidence", "safety"]
     if actor == "quer":
         roles = ["lock"]
-        values = ["not_targeted", "evidence", "movement_freedom", "night_exception", "open_archive"]
+        values = ["not_targeted", "evidence", "movement_freedom", "night_exception", "measured_work"]
     if actor == "su":
         roles = ["relay"]
-        values = ["open_archive", "signal", "evidence"]
+        values = ["measured_work", "signal", "evidence"]
     if actor == "bertrand":
         roles = ["weight"]
         values = ["patient_priority", "records", "safety"]
@@ -83,15 +86,15 @@ fn c2_profile(actor):
         roles = ["weight"]
         values = ["evidence", "central_cooking", "records", "safety"]
     if actor == "mora":
-        values = ["patient_priority", "seal_archive", "evidence", "night_exception"]
+        values = ["patient_priority", "cautious_travel", "evidence", "night_exception"]
     if actor == "shen":
-        values = ["central_cooking", "patient_priority", "per_person", "not_targeted", "seal_archive"]
+        values = ["central_cooking", "patient_priority", "per_person", "not_targeted", "cautious_travel"]
     if actor == "ruan":
         values = ["records", "per_person", "committee", "witnesses", "evidence"]
     if actor == "ward":
         values = ["committee", "records", "ward_authority", "restriction", "no_exception", "witnesses", "evidence"]
     if actor == "gu":
-        values = ["seal_archive", "tradition", "records", "evidence", "contract"]
+        values = ["cautious_travel", "tradition", "records", "evidence", "contract"]
     if actor == "lucian":
         values = ["not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]
     if actor == "selma":
@@ -99,9 +102,9 @@ fn c2_profile(actor):
     if actor == "veronica":
         values = ["evidence", "records", "committee", "research"]
     if actor == "elena":
-        values = ["tradition", "evidence", "contract", "safety", "seal_archive"]
+        values = ["tradition", "evidence", "contract", "safety", "cautious_travel"]
     if actor == "moran":
-        values = ["open_archive", "research"]
+        values = ["measured_work", "research"]
     return {"id": actor, "group": group, "domain": domain, "station_roles": roles, "value_order": values, "basis": [c2_person_source(actor), c2_approved("chapter-two-role-groups")]}
 
 fn c2_edges():
@@ -109,12 +112,9 @@ fn c2_edges():
         {"from": "living_hall", "to": "central_hall", "gate": "north"},
         {"from": "central_hall", "to": "lecture", "gate": "north"},
         {"from": "central_hall", "to": "oath_court", "gate": "north"},
-        {"from": "living_hall", "to": "logistics", "gate": "east"},
+        {"from": "central_hall", "to": "logistics", "gate": "east"},
         {"from": "logistics", "to": "clinic", "gate": "east"},
         {"from": "logistics", "to": "greenhouse", "gate": "east"},
-        {"from": "living_hall", "to": "archive_lock", "gate": "archive"},
-        {"from": "archive_lock", "to": "archive_weight", "gate": "archive"},
-        {"from": "archive_lock", "to": "resonance", "gate": "archive"},
         {"from": "living_hall", "to": "threshold.contract", "gate": "living"},
         {"from": "threshold.contract", "to": "dorm.contract", "gate": "contract"},
         {"from": "living_hall", "to": "threshold.astral", "gate": "living"},
@@ -130,7 +130,7 @@ fn c2_edges():
         {"from": "corridor", "to": "R08", "gate": "living"}]
 
 fn c2_rooms():
-    return ["hall", "living_hall", "central_hall", "logistics", "clinic", "lecture", "greenhouse", "archive_lock", "archive_weight", "resonance", "threshold.contract", "threshold.astral", "threshold.logistics", "dorm.contract", "dorm.astral", "dorm.logistics", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
+    return ["hall", "living_hall", "central_hall", "logistics", "clinic", "lecture", "greenhouse", "threshold.contract", "threshold.astral", "threshold.logistics", "dorm.contract", "dorm.astral", "dorm.logistics", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
 
 fn c2_locations():
     return dv_append(c2_rooms(), "oath_court")
@@ -138,15 +138,15 @@ fn c2_locations():
 fn c2_norms():
     return [
         {"id": "ward_ledger", "owner": "ward", "board": "central_hall", "surface": "凡取用公物须登记于台账；无登记取用者视为私取。", "promotes": ["records", "ward_authority", "no_exception"], "sacrifices": ["night_exception"], "mode": "forbid", "method": "unrecorded_take", "source": c2_source("03_规矩与结局.story", 6, "WardLedger")},
-        {"id": "ward_night", "owner": "ward", "board": "central_hall", "surface": "私取之人（雀儿）入夜不得入后勤院。", "promotes": ["restriction", "ward_authority"], "sacrifices": ["not_targeted", "movement_freedom"], "mode": "forbid", "method": "quer_night_logistics", "source": c2_source("03_规矩与结局.story", 25, "WardNight")},
-        {"id": "mora_night", "owner": "mora", "board": "logistics", "surface": "病者伤者优先。夜间急需可自取一份，次日告知。", "promotes": ["patient_priority", "night_exception"], "sacrifices": ["no_exception"], "mode": "permit", "method": "unrecorded_take", "source": c2_source("03_规矩与结局.story", 40, "MoraNight")},
+        {"id": "ward_night", "owner": "ward", "board": "central_hall", "surface": "夜间取用公物先登记，次日共同核对记录。", "promotes": ["restriction", "ward_authority"], "sacrifices": ["not_targeted", "movement_freedom"], "mode": "forbid", "method": "unrecorded_take", "source": c2_approved("第五部分：WardNight当前公约提案")},
+        {"id": "mora_night", "owner": "mora", "board": "logistics", "surface": "病者伤者优先。夜间照护或饥饿急需可取一份，次日告知。", "promotes": ["patient_priority", "night_exception"], "sacrifices": ["no_exception"], "mode": "permit", "method": "unrecorded_take", "source": c2_approved("第五部分：MoraNight当前公约提案")},
         {"id": "ruan_ledger", "owner": "ruan", "board": "logistics", "surface": "每日按人头分配，日末清点。", "promotes": ["per_person", "records"], "sacrifices": [], "mode": "prefer", "method": "collect_and_count", "source": c2_source("03_规矩与结局.story", 59, "RuanLedger")},
         {"id": "shen_kitchen", "owner": "shen", "board": "hall", "surface": "粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。", "promotes": ["central_cooking", "patient_priority", "records"], "sacrifices": [], "mode": "prefer", "method": "cook_and_feed", "source": c2_source("03_规矩与结局.story", 113, "ShenKitchen")},
         {"id": "veronica_evidence", "owner": "veronica", "board": "lecture", "surface": "指控须有实物为证；取用须有记录。", "promotes": ["evidence", "records"], "sacrifices": [], "mode": "forbid", "method": "unsupported_accusation", "source": c2_source("03_规矩与结局.story", 127, "VeronicaEvidence")},
         {"id": "lucian_no_brand", "owner": "lucian", "board": "lecture", "surface": "未经查验，不得以“私取”之名限制任何人行走。", "promotes": ["evidence", "not_targeted", "movement_freedom", "night_exception"], "sacrifices": ["restriction"], "mode": "forbid", "method": "unverified_restriction", "source": c2_source("03_规矩与结局.story", 141, "LucianNoBrand")},
-        {"id": "open_plan", "owner": "huo", "board": "central_hall", "surface": "名录库各取其物：各人的东西，各人取回。", "promotes": ["open_archive"], "sacrifices": ["seal_archive", "committee"], "mode": "permit", "method": "owner_retrieval", "source": c2_source("03_规矩与结局.story", 155, "OpenPlan")},
-        {"id": "seal_plan", "owner": "gu", "board": "central_hall", "surface": "名录库封闭不启：库门封着，谁也不开。", "promotes": ["seal_archive", "tradition"], "sacrifices": ["open_archive"], "mode": "forbid", "method": "open_archive", "source": c2_source("03_规矩与结局.story", 164, "SealPlan")},
-        {"id": "committee_plan", "owner": "ward", "board": "central_hall", "surface": "名录库由委员会保管：钥匙在委员会，取回须经委员会登记批准。", "promotes": ["committee", "ward_authority", "records"], "sacrifices": ["open_archive"], "mode": "require", "method": "registered_authorized_retrieval", "source": c2_source("03_规矩与结局.story", 173, "CommitteePlan")}]
+        {"id": "open_plan", "owner": "huo", "board": "central_hall", "surface": "外出前核对源质计与风向，按安全读数安排劳作，约定返程与停行条件。", "promotes": ["measured_work"], "sacrifices": ["cautious_travel", "committee"], "mode": "permit", "method": "measured_outing", "source": c2_approved("第五部分：OpenPlan当前公约提案")},
+        {"id": "seal_plan", "owner": "gu", "board": "central_hall", "surface": "读数不明、风止或地震之后，先留在安全处，复测后再定行程。", "promotes": ["cautious_travel", "tradition"], "sacrifices": ["measured_work"], "mode": "forbid", "method": "outdoor_travel", "source": c2_approved("第五部分：SealPlan当前公约提案")},
+        {"id": "committee_plan", "owner": "ward", "board": "central_hall", "surface": "公用粮水药逐项登记，列明取用、补记和结余，供众人核对。", "promotes": ["committee", "ward_authority", "records"], "sacrifices": ["measured_work"], "mode": "require", "method": "collect_and_count", "source": c2_approved("第五部分：CommitteePlan当前公约提案")}]
 
 fn c2_norm_object(id):
     return rt_cat("c2.norm.", id)
@@ -208,7 +208,9 @@ fn c2_world_objects(world):
     result = c2_add_new(result, c1_state_object("campaign.access", {"living": dv_field(true), "contract": dv_field(false), "astral": dv_field(false), "logistics": dv_field(false), "north": dv_field(false), "east": dv_field(false), "archive": dv_field(false)}))
     if not dv_read(result, c2_access("living")).known:
         result = dv_store(result, c2_access("living"), dv_field(true))
-    let corridor_gates = ["north", "east", "archive"]
+    result = c2_add_new(result, c2_object("c2.corridor.north", "living_hall", {"air_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(true)}))
+    result = c2_add_new(result, c2_object("c2.corridor.east", "central_hall", {"air_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(true)}))
+    let corridor_gates = ["north", "east"]
     var gate_index = 0
     while gate_index < rt_count(corridor_gates):
         if not dv_read(result, c2_access(corridor_gates[gate_index])).known:
@@ -219,8 +221,7 @@ fn c2_world_objects(world):
     result = c2_add_new(result, c2_object("c2.ledger", "logistics", {"removed": dv_field(0), "day_recorded": dv_field(0), "night_recorded": dv_field(0), "counted": dv_field(0)}))
     result = c2_add_new(result, c2_object("c2.bowl", "clinic", {"portions": dv_field(0), "residue": dv_field(false)}))
     result = c2_add_new(result, c2_object("c2.kitchen", "logistics", {"cooked": dv_field(false), "water": dv_unknown()}))
-    result = c2_add_new(result, c2_object("c2.archive", "archive_lock", {"open": dv_field(false), "weight_owner": dv_field(""), "weight_mode": dv_field(""), "lock_owner": dv_field(""), "relay_owner": dv_field(""), "night_entry": dv_field(false)}))
-    result = c2_add_new(result, c2_object("c2.weather", "", {"phase": dv_field("falling_ash"), "ash_falling": dv_field(true), "wind": dv_unknown(), "daylight": dv_unknown(), "daylight_phase": dv_field("unclassified"), "earthquake_recent": dv_unknown(), "severe_air": dv_unknown()}))
+    result = c2_add_new(result, c2_object("c2.weather", "", {"phase": dv_field("falling_ash"), "ash_falling": dv_field(true), "wind": dv_unknown(), "daylight": dv_unknown(), "daylight_phase": dv_field("unclassified"), "earthquake_recent": dv_field(false), "severe_air": dv_field(true)}))
     if not dv_has_key(dv_get(result.objects, "c2.weather").facets.state, "daylight_phase"):
         result = dv_store(result, c2_ref("c2.weather", "daylight_phase"), dv_field("unclassified"))
     let rooms = c2_rooms()
@@ -239,6 +240,13 @@ fn c2_world_objects(world):
     while i < rt_count(people):
         result = c2_add_new(result, c2_initial_body_from(people[i], world))
         result = c2_add_new(result, c2_object(rt_cat("c2.litter.", c2_profile(people[i]).group), rt_cat("dorm.", c2_profile(people[i]).group), {"crumbs": dv_field(0)}))
+        i = i + 1
+    let changes = c2_weather_changes()
+    i = 0
+    while i < rt_count(changes):
+        let ref = c2_ref("c2.weather", rt_cat("occurred.", changes[i].id))
+        if not dv_read(result, ref).known:
+            result = dv_store(result, ref, dv_field(false))
         i = i + 1
     return result
 
@@ -265,14 +273,16 @@ fn c2_move_action(actor, origin, target, gate):
     let id = rt_cat(actor, rt_cat(".c2.move.", rt_cat(origin, rt_cat(".", target))))
     let premise = c2_move_law(actor, origin, target, gate).premise
     var method = "travel"
-    if actor == "quer" and target == "logistics":
-        method = "quer_night_logistics"
+    if target == "oath_court" or target == "greenhouse":
+        method = "outdoor_travel"
     return dv_with_many(c2_action(id, "move", premise, premise, id, dv_single(c2_position_ref(actor)), "穿过廊门。", c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}})
 
 fn c2_norm_condition(norm, actor):
-    let night = c1_any(c2_night(2), c1_any(c2_night(3), c2_night(4)))
+    let night = c2_any_night()
     if norm.id == "ward_night":
         return night
+    if norm.id == "seal_plan":
+        return c1_any(dv_fact(c2_ref("c2.weather", "wind"), false), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true))
     if norm.id == "mora_night":
         return dv_all(dv_pair(night, c1_any(dv_fact(c2_own(actor, "hungry"), true), dv_fact(c2_own("moran", "fever"), true))))
     return dv_true()
@@ -345,8 +355,8 @@ fn c2_inspection_presentation(actor, object, fields):
             rt_push(lines, c2_visible_line(dv_true(), "传声中继前：{人}。", [c2_visible_binding("人", c2_ref(object, "relay_owner"), names)], c2_source("09_表达.story", 651, "describe.archive")))
     if object == "c2.weather":
         rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "ash_falling"), true), "主楼的灰还在落。", [], c2_source("00_时间与文案.story", 52, "开场白")))
-        rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "ash_falling"), false), "落灰停了。", [], c2_approved("second-day-morning-wind-opens-north")))
-        rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "wind"), true), "廊外起风了。", [], c2_approved("second-day-morning-wind-opens-north")))
+        rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "ash_falling"), false), "落灰停了。", [], c2_approved("second-day-morning-wind")))
+        rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "wind"), true), "廊外起风了。", [], c2_approved("second-day-morning-wind")))
     return {"actor": actor, "voice": "visible-inspection", "lines": lines}
 
 fn c2_route_inspections(actor):
@@ -371,18 +381,23 @@ axiom c2_collect_law(actor, day, meal, start, end):
     return dv_axiom("c2_collect_law", 1, dv_all([c2_at(actor, "logistics"), c2_window(day, start, end), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), dv_fact(c2_own(actor, flag), false), c2_alive(actor)]), [dv_increment(c2_ref("c2.counter", "remaining"), -1), dv_increment(c2_ref("c2.ledger", "removed"), 1), dv_increment(c2_ref("c2.ledger", "day_recorded"), 1), dv_increment(c2_own(actor, "rations"), 1), dv_assign(c2_own(actor, flag), true)])
 
 axiom c2_eat_law(actor, day, meal):
+    var start = 720
+    var end = 840
+    if meal == "evening":
+        start = 1080
+        end = 1260
     let flag = rt_cat("eaten.", rt_cat(rt_show(day), rt_cat(".", meal)))
-    return dv_axiom("c2_eat_law", 1, dv_all([dv_at_least(c2_own(actor, "rations"), 1), dv_fact(c2_own(actor, flag), false), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_assign(c2_own(actor, flag), true)])
+    return dv_axiom("c2_eat_law", 1, dv_all([c2_window(day, start, end), dv_at_least(c2_own(actor, "rations"), 1), dv_fact(c2_own(actor, flag), false), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_assign(c2_own(actor, flag), true)])
 
 axiom c2_open_granary_law(actor):
-    let access = c1_any(dv_fact(c2_ref("c2.granary", "latch_loose"), true), c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true)))
+    let access = c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true))
     return dv_axiom("c2_open_granary_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), access]), dv_single(dv_assign(c2_ref("c2.granary", "locked"), false)))
 
 axiom c2_distribute_law(actor):
     return dv_axiom("c2_distribute_law", 1, dv_all(dv_pair(c2_at(actor, "logistics"), c2_alive(actor))), dv_single(dv_assign(c2_ref("c2.counter", "open"), true)))
 
 axiom c2_total_store_open_law(actor):
-    return dv_axiom("c2_total_store_open_law", 1, dv_all([c2_at(actor, "logistics"), dv_fact(c2_ref("c2.granary", "key_owner"), actor), c2_alive(actor)]), dv_single(dv_assign(c2_ref("c2.granary", "total_store_locked"), false)))
+    return dv_axiom("c2_total_store_open_law", 1, dv_all([c2_at(actor, "logistics"), c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true)), c2_alive(actor)]), dv_single(dv_assign(c2_ref("c2.granary", "total_store_locked"), false)))
 
 axiom c2_give_key_law(actor, target):
     return dv_axiom("c2_give_key_law", 1, dv_all([c2_at(actor, "logistics"), c1_at(target, "logistics"), dv_fact(c2_ref("c2.granary", "key_owner"), actor), c2_alive(actor), c2_alive(target)]), dv_single(dv_assign(c2_ref("c2.granary", "key_owner"), target)))
@@ -391,28 +406,31 @@ axiom c2_night_take_law(actor, patient):
     var need = dv_fact(c2_own(actor, "hungry"), true)
     if patient:
         need = dv_fact(c2_own("moran", "fever"), true)
-    return dv_axiom("c2_night_take_law", 1, dv_all([c2_at(actor, "logistics"), c2_night(3), dv_fact(c2_own(actor, "accepted.mora_night"), true), dv_fact(c2_own(actor, "night_taken"), false), dv_fact(c2_ref("c2.granary", "locked"), false), dv_at_least(c2_ref("c2.counter", "remaining"), 1), c2_alive(actor), need]), [dv_increment(c2_ref("c2.counter", "remaining"), -1), dv_increment(c2_ref("c2.ledger", "removed"), 1), dv_increment(c2_own(actor, "rations"), 1), dv_increment(c2_own(actor, "owe_notes"), 1), dv_assign(c2_own(actor, "night_taken"), true), dv_assign(c2_ref("c2.granary", "locked"), true)])
+    return dv_axiom("c2_night_take_law", 1, dv_all([c2_at(actor, "logistics"), c2_any_night(), dv_fact(c2_own(actor, "night_taken"), false), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), c2_alive(actor), need]), [dv_increment(c2_ref("c2.counter", "remaining"), -1), dv_increment(c2_ref("c2.ledger", "removed"), 1), dv_increment(c2_own(actor, "rations"), 1), dv_increment(c2_own(actor, "owe_notes"), 1), dv_assign(c2_own(actor, "night_taken"), true)])
 
 axiom c2_report_law(actor):
-    return dv_axiom("c2_report_law", 1, dv_all([c2_at(actor, "logistics"), dv_at_least(c2_own(actor, "owe_notes"), 1), dv_fact(c2_own(actor, "busy_care"), false), c2_alive(actor)]), dv_pair(dv_increment(c2_own(actor, "owe_notes"), -1), dv_increment(c2_ref("c2.ledger", "night_recorded"), 1)))
+    return dv_axiom("c2_report_law", 1, dv_all([c2_at(actor, "logistics"), dv_at_least(c2_own(actor, "owe_notes"), 1), dv_fact(c2_own(actor, "busy_care"), false), c2_alive(actor)]), [dv_increment(c2_own(actor, "owe_notes"), -1), dv_increment(c2_ref("c2.ledger", "night_recorded"), 1), dv_assign(c2_own(actor, "night_taken"), false)])
 
 axiom c2_night_eat_law(actor):
-    return dv_axiom("c2_night_eat_law", 1, dv_all([c2_night(3), dv_fact(c2_own(actor, "night_taken"), true), dv_at_least(c2_own(actor, "rations"), 1), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_increment(c2_ref(rt_cat("c2.litter.", c2_profile(actor).group), "crumbs"), 1)])
+    var room = rt_cat("dorm.", c2_profile(actor).group)
+    if c2_profile(actor).group == "living":
+        room = "hall"
+    return dv_axiom("c2_night_eat_law", 1, dv_all([c2_at(actor, room), c2_any_night(), dv_fact(c2_own(actor, "hungry"), true), dv_at_least(c2_own(actor, "rations"), 1), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_increment(c2_ref(rt_cat("c2.litter.", c2_profile(actor).group), "crumbs"), 1)])
 
 axiom c2_deliver_patient_law(actor):
     return dv_axiom("c2_deliver_patient_law", 1, dv_all([c2_at(actor, "clinic"), c1_at("moran", "clinic"), dv_at_least(c2_own(actor, "rations"), 1), dv_fact(c2_own("moran", "fever"), true), c2_alive(actor)]), dv_pair(dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_ref("c2.bowl", "portions"), 1)))
 
 axiom c2_feed_patient_law(actor):
-    return dv_axiom("c2_feed_patient_law", 1, dv_all([c2_at(actor, "clinic"), c1_at("moran", "clinic"), dv_fact(c2_own("moran", "fever"), true), dv_at_least(c2_ref("c2.bowl", "portions"), 1), c2_alive(actor)]), [dv_increment(c2_ref("c2.bowl", "portions"), -1), dv_assign(c2_ref("c2.bowl", "residue"), true), dv_increment(c2_own("moran", "consumed"), 1), dv_assign(c2_own("moran", "hungry"), false), dv_assign(c2_own(actor, "busy_care"), true)])
+    return dv_axiom("c2_feed_patient_law", 1, dv_all([c2_at(actor, "clinic"), c1_at("moran", "clinic"), c2_alive("moran"), dv_fact(c2_own("moran", "hungry"), true), dv_fact(c2_own("moran", "fever"), true), dv_at_least(c2_ref("c2.bowl", "portions"), 1), c2_alive(actor)]), [dv_increment(c2_ref("c2.bowl", "portions"), -1), dv_assign(c2_ref("c2.bowl", "residue"), true), dv_increment(c2_own("moran", "consumed"), 1), dv_assign(c2_own("moran", "hungry"), false), dv_assign(c2_own(actor, "busy_care"), true)])
 
 axiom c2_leave_care_law(actor):
     return dv_axiom("c2_leave_care_law", 1, dv_fact(c2_own(actor, "busy_care"), true), dv_single(dv_assign(c2_own(actor, "busy_care"), false)))
 
 axiom c2_latch_request_law(sender, target):
-    return dv_axiom("c2_latch_request_law", 1, dv_all([c1_at(sender, "logistics"), c1_at(target, "logistics"), dv_fact(c2_ref("c2.granary", "latch_loose"), true)]), dv_single(dv_assign(c2_own(target, "repair_requested"), true)))
+    return dv_axiom("c2_latch_request_law", 1, dv_all([c1_at(sender, "logistics"), c1_at(target, "logistics"), dv_fact(c2_ref("c2.granary", "latch_loose"), true)]), dv_single(dv_assign(c2_own(sender, "repair_requested"), true)))
 
 axiom c2_repair_latch_law(actor):
-    return dv_axiom("c2_repair_latch_law", 1, dv_all([c2_at(actor, "logistics"), dv_fact(c2_own(actor, "repair_requested"), true), dv_fact(c2_own(actor, "can_lock"), true), dv_fact(c2_ref("c2.granary", "latch_loose"), true), c2_alive(actor)]), dv_pair(dv_assign(c2_ref("c2.granary", "latch_loose"), false), dv_assign(c2_ref("c2.granary", "tool_marks"), true)))
+    return dv_axiom("c2_repair_latch_law", 1, dv_all([c2_at(actor, "logistics"), dv_fact(c2_own(actor, "can_lock"), true), dv_fact(c2_ref("c2.granary", "latch_loose"), true), c2_alive(actor)]), dv_pair(dv_assign(c2_ref("c2.granary", "latch_loose"), false), dv_assign(c2_ref("c2.granary", "tool_marks"), true)))
 
 axiom c2_propose_law(actor, norm):
     return dv_axiom("c2_propose_law", 1, dv_all(dv_pair(c2_alive(actor), dv_fact(c2_ref(c2_norm_object(norm.id), "owner"), actor))), dv_single(dv_assign(c2_ref(c2_norm_object(norm.id), "proposed"), true)))
@@ -505,20 +523,36 @@ axiom c2_close_room_law(actor, room, field):
 
 axiom c2_shelter_law(room):
     let object = rt_cat("c2.room.", room)
-    return dv_axiom("c2_shelter_law", 1, dv_all([dv_fact(c2_ref(object, "doors_closed"), true), dv_fact(c2_ref(object, "windows_closed"), true), dv_fact(c2_ref(object, "isolation_closed"), true), dv_fact(c2_ref("c2.weather", "earthquake_recent"), false)]), dv_pair(dv_assign(c2_ref(object, "sheltered"), true), dv_assign(c2_ref(object, "hazard"), false)))
+    return dv_axiom("c2_shelter_law", 1, dv_all([dv_fact(c2_ref(object, "doors_closed"), true), dv_fact(c2_ref(object, "windows_closed"), true), dv_fact(c2_ref(object, "isolation_closed"), true), dv_fact(c2_ref(object, "seepage"), false), dv_fact(c2_ref("c2.weather", "severe_air"), false), dv_fact(c2_ref("c2.weather", "earthquake_recent"), false)]), dv_pair(dv_assign(c2_ref(object, "sheltered"), true), dv_assign(c2_ref(object, "hazard"), false)))
 
 axiom c2_seepage_law(room):
     let object = rt_cat("c2.room.", room)
     return dv_axiom("c2_seepage_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "earthquake_recent"), true), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref(object, "seepage"), true)]), dv_pair(dv_assign(c2_ref(object, "sheltered"), false), dv_assign(c2_ref(object, "hazard"), true)))
 
 axiom c2_terminal_exposure_law(actor):
-    return dv_axiom("c2_terminal_exposure_law", 1, dv_all([c2_alive(actor), dv_fact(c2_own(actor, "exposure_terminal"), true), dv_fact(c2_own(actor, "reason_committed"), true), dv_fact(c2_own(actor, "norm_conflict_driven"), true)]), dv_single(dv_assign(c2_own(actor, "alive"), false)))
+    return dv_axiom("c2_terminal_exposure_law", 1, dv_all([c2_alive(actor), dv_fact(c2_own(actor, "exposure_terminal"), true)]), dv_single(dv_assign(c2_own(actor, "alive"), false)))
 
 axiom c2_first_wind_law():
-    return dv_axiom("c2_first_wind_law", 1, dv_all(dv_pair(dv_at_least(c2_clock(), 1980), dv_fact(c2_ref("c2.weather", "phase"), "falling_ash"))), [dv_assign(c2_ref("c2.weather", "phase"), "wind_started"), dv_assign(c2_ref("c2.weather", "wind"), true), dv_assign(c2_ref("c2.weather", "ash_falling"), false), dv_assign(c2_access("north"), true)])
+    return dv_axiom("c2_first_wind_law", 1, dv_all(dv_pair(dv_at_least(c2_clock(), 1980), dv_fact(c2_ref("c2.weather", "phase"), "falling_ash"))), [dv_assign(c2_ref("c2.weather", "phase"), "wind_started"), dv_assign(c2_ref("c2.weather", "severe_air"), false), dv_assign(c2_ref("c2.weather", "wind"), true), dv_assign(c2_ref("c2.weather", "ash_falling"), false), dv_assign(c2_ref("c2.corridor.north", "air_safe"), true), dv_assign(c2_ref("c2.corridor.east", "air_safe"), true)])
 
-axiom c2_wind_corridor_law(gate, minute):
-    return dv_axiom("c2_wind_corridor_law", 1, dv_all([dv_at_least(c2_clock(), minute), dv_fact(c2_ref("c2.weather", "wind"), true), dv_fact(c2_access(gate), false)]), dv_single(dv_assign(c2_access(gate), true)))
+fn c2_weather_changes():
+    return [
+        {"id": "third_night", "minute": 4140, "wind": false, "quake": false, "severe": true, "recheck": false},
+        {"id": "fourth_quake", "minute": 5400, "wind": false, "quake": true, "severe": true, "recheck": true},
+        {"id": "fifth_dawn", "minute": 6120, "wind": true, "quake": false, "severe": false, "recheck": false}]
+
+axiom c2_weather_change_law(change):
+    let mark = c2_ref("c2.weather", rt_cat("occurred.", change.id))
+    var effects = [dv_assign(mark, true), dv_assign(c2_ref("c2.weather", "wind"), change.wind), dv_assign(c2_ref("c2.weather", "earthquake_recent"), change.quake), dv_assign(c2_ref("c2.weather", "severe_air"), change.severe)]
+    if change.recheck or change.id == "fifth_dawn":
+        let gates = ["north", "east"]
+        var i = 0
+        while i < rt_count(gates):
+            rt_push(effects, dv_assign(c2_ref(rt_cat("c2.corridor.", gates[i]), "air_safe"), not change.severe))
+            if change.recheck:
+                rt_push(effects, dv_assign(c2_access(gates[i]), false))
+            i = i + 1
+    return dv_axiom("c2_weather_change_law", 1, dv_all([dv_at_least(c2_clock(), change.minute), dv_fact(mark, false)]), effects)
 
 axiom c2_daylight_law(day, light):
     var phase = "night"
@@ -527,6 +561,30 @@ axiom c2_daylight_law(day, light):
         phase = "day"
         period = c2_window(day, 360, 1260)
     return dv_axiom("c2_daylight_law", 1, dv_all([period, dv_not(dv_fact(c2_ref("c2.weather", "daylight_phase"), phase))]), [dv_assign(c2_ref("c2.weather", "daylight"), light), dv_assign(c2_ref("c2.weather", "daylight_phase"), phase)])
+
+fn c2_corridor_origin(gate):
+    if gate == "east":
+        return "central_hall"
+    return "living_hall"
+
+axiom c2_open_corridor_law(actor, gate):
+    let object = rt_cat("c2.corridor.", gate)
+    return dv_axiom("c2_open_corridor_law", 1, dv_all([c2_at(actor, c2_corridor_origin(gate)), c2_alive(actor), dv_fact(c2_ref(object, "air_safe"), true), dv_fact(c2_ref(object, "seal_intact"), true), dv_fact(c2_ref(object, "ventilated"), true), dv_fact(c2_access(gate), false)]), [dv_assign(c2_access(gate), true)])
+
+fn c2_corridor_actions(actor):
+    var actions = []
+    let gates = ["north", "east"]
+    var i = 0
+    while i < rt_count(gates):
+        let gate = gates[i]
+        let object = rt_cat("c2.corridor.", gate)
+        let source = c2_approved("第五部分：封闭连廊的现场读数、密封与通风")
+        rt_push(actions, c2_inspect_action(actor, object, c2_corridor_origin(gate), ["air_safe", "seal_intact", "ventilated"], "从安全侧核对连廊读数、密封与通风。", source))
+        let law = c2_open_corridor_law(actor, gate)
+        let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gate))
+        rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2_access(gate)], "核对现场条件后，开启连廊隔离门。", source), "predict_law", id))
+        i = i + 1
+    return actions
 
 fn c2_room_actions(actor):
     var result = []
@@ -603,34 +661,37 @@ fn c2_supply_actions(actor):
             i = i + 1
         day = day + 1
     let open = rt_cat(actor, ".c2.open.granary")
-    let can_open = c1_any(dv_fact(c2_ref("c2.granary", "latch_loose"), true), c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true)))
+    let can_open = c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true))
     let open_pre = dv_all(dv_pair(c2_at(actor, "logistics"), can_open))
     rt_push(result, c2_action(open, "experiment", open_pre, open_pre, open, dv_single(c2_ref("c2.granary", "locked")), "打开粮仓的门锁。", c2_source("10_执行.story", 34, "OpenGranary")))
     let key = dv_all(dv_pair(c2_at(actor, "logistics"), dv_fact(c2_ref("c2.granary", "key_owner"), actor)))
     let distribute = rt_cat(actor, ".c2.distribute")
     rt_push(result, c2_action(distribute, "help", c2_at(actor, "logistics"), c2_at(actor, "logistics"), distribute, [c2_ref("c2.counter", "open")], "配给台开始发粮。", c2_approved("counter-99-is-independent-of-total-granary-key")))
     let total_store = rt_cat(actor, ".c2.open.total_store")
-    rt_push(result, c2_action(total_store, "experiment", key, key, total_store, [c2_ref("c2.granary", "total_store_locked")], "用钥匙打开粮仓总库。", c2_approved("total-granary-access-requires-real-key")))
+    rt_push(result, c2_action(total_store, "experiment", c2_total_store_open_law(actor).premise, c2_total_store_open_law(actor).premise, total_store, [c2_ref("c2.granary", "total_store_locked")], "操作粮仓总库的门锁。", c2_approved("total-granary-access-requires-key-or-lock-skill")))
     if actor != "shen":
         let give = rt_cat(actor, ".c2.give_key.shen")
         rt_push(result, c2_action(give, "help", key, dv_all(dv_pair(key, c1_at("shen", "logistics"))), give, dv_single(c2_ref("c2.granary", "key_owner")), "把粮仓钥匙交给沈鼎。", c2_source("10_执行.story", 15, "GiveKey")))
     let report = rt_cat(actor, ".c2.report.night_take")
     let report_pre = dv_all([c2_at(actor, "logistics"), dv_at_least(c2_own(actor, "owe_notes"), 1), dv_fact(c2_own(actor, "busy_care"), false)])
-    rt_push(result, c2_action(report, "talk", report_pre, report_pre, report, dv_pair(c2_own(actor, "owe_notes"), c2_ref("c2.ledger", "night_recorded")), "在台账上补记了夜里取的一份。", c2_source("10_执行.story", 9, "Inform")))
-    if actor == "quer" or actor == "mora":
-        var patient = actor == "mora"
+    rt_push(result, c2_action(report, "talk", report_pre, report_pre, report, [c2_own(actor, "owe_notes"), c2_ref("c2.ledger", "night_recorded"), c2_own(actor, "night_taken")], "在台账上补记了夜里取的一份。", c2_source("10_执行.story", 9, "Inform")))
+    if dv_has(c2_people(), actor):
+        var patient = false
         var need = dv_fact(c2_own(actor, "hungry"), true)
-        var text = "取了一份口粮，关上粮仓门。"
+        var text = "从配给台取了一份口粮，留待补记。"
         if patient:
             need = dv_fact(c2_own("moran", "fever"), true)
             text = "取了一份口粮，准备送去诊疗所。"
         let id = rt_cat(actor, ".c2.night_take")
-        let pre = dv_all([c2_at(actor, "logistics"), c2_night(3), dv_fact(c2_own(actor, "accepted.mora_night"), true), dv_fact(c2_own(actor, "night_taken"), false), dv_fact(c2_ref("c2.granary", "locked"), false), need])
+        let pre = dv_all([c2_at(actor, "logistics"), c2_any_night(), dv_fact(c2_own(actor, "night_taken"), false), dv_fact(c2_ref("c2.counter", "open"), true), need])
         rt_push(result, dv_with(c2_action(id, "help", pre, pre, id, [c2_own(actor, "rations"), c2_own(actor, "owe_notes"), c2_own(actor, "night_taken"), c2_ref("c2.counter", "remaining")], text, c2_source("10_执行.story", 5, "NightTakeSelf-and-NightTakeSick")), "normative_method", "unrecorded_take"))
-        if actor == "quer":
-            let eat = "quer.c2.night_eat"
-            let pre_eat = dv_all(dv_pair(dv_fact(c2_own(actor, "night_taken"), true), dv_at_least(c2_own(actor, "rations"), 1)))
-            rt_push(result, c2_action(eat, "help", pre_eat, pre_eat, eat, [c2_own(actor, "rations"), c2_own(actor, "hungry"), c2_ref("c2.litter.contract", "crumbs")], "吃了取来的那份口粮。", c2_source("10_执行.story", 295, "night-food-trace-from-actual-eating")))
+        if not patient:
+            let eat = rt_cat(actor, ".c2.night_eat")
+            let pre_eat = c2_night_eat_law(actor).premise
+            rt_push(result, c2_action(eat, "help", pre_eat, pre_eat, eat, [c2_own(actor, "rations"), c2_own(actor, "hungry"), c2_ref(rt_cat("c2.litter.", c2_profile(actor).group), "crumbs")], "吃了取来的那份口粮。", c2_source("10_执行.story", 295, "night-food-trace-from-actual-eating")))
+    if actor == "mora":
+        let pre = c2_night_take_law(actor, true).premise
+        rt_push(result, dv_with(c2_action("mora.c2.night_take.patient", "help", pre, pre, "mora.c2.night_take.patient", [c2_own(actor, "rations"), c2_own(actor, "owe_notes"), c2_own(actor, "night_taken"), c2_ref("c2.counter", "remaining")], "从配给台取一份口粮，准备送去诊疗所。", c2_approved("按本人所知的照护需要取粮")), "normative_method", "unrecorded_take"))
     return result
 
 fn c2_special_actions(actor):
@@ -639,9 +700,9 @@ fn c2_special_actions(actor):
         let source = c2_source("04_案件.story", 84, "actual-latch-repair-request")
         let pre = dv_all(dv_pair(c2_at(actor, "logistics"), dv_fact(c2_ref("c2.granary", "latch_loose"), true)))
         let speech = dv_with_many(c1_speech(dv_true(), source, "repair-request"), {"surface": "粮仓的门闩松了。雀儿，请你修一修。", "request": {"target": "quer", "topic": "repair_latch"}})
-        rt_push(result, dv_with_many(c2_action("margaret.c2.request.repair_latch", "talk", pre, pre, "margaret.c2.request.repair_latch", [], "粮仓的门闩松了。雀儿，请你修一修。", source), {"speech": speech, "listeners": ["quer"], "public_grants": [c2_own("quer", "repair_requested")]}))
+        rt_push(result, dv_with_many(c2_action("margaret.c2.request.repair_latch", "talk", pre, pre, "margaret.c2.request.repair_latch", [], "粮仓的门闩松了。雀儿，请你修一修。", source), {"speech": speech, "listeners": ["quer"]}))
     if actor == "quer" or actor == "huo":
-        let pre = dv_all([c2_at(actor, "logistics"), dv_fact(c2_own(actor, "repair_requested"), true), dv_fact(c2_ref("c2.granary", "latch_loose"), true)])
+        let pre = dv_all([c2_at(actor, "logistics"), dv_fact(c2_ref("c2.granary", "latch_loose"), true)])
         let id = rt_cat(actor, ".c2.repair.latch")
         rt_push(result, c2_action(id, "experiment", pre, pre, id, [c2_ref("c2.granary", "latch_loose"), c2_ref("c2.granary", "tool_marks")], "将松动的门闩紧固。", c2_source("10_执行.story", 17, "RepairLatch")))
     if actor == "mora" or actor == "selma" or actor == "shen":
@@ -674,9 +735,6 @@ fn c2_inspections(actor):
             room = "hall"
         rt_push(result, c2_inspect_action(actor, rt_cat("c2.litter.", groups[i]), room, ["crumbs"], "细看废纸篓。", source))
         i = i + 1
-    rt_push(result, c2_inspect_action(actor, "c2.archive", "archive_lock", ["open", "lock_owner"], "细看名录库的门和锁芯。", source))
-    rt_push(result, c2_inspect_action(actor, "c2.archive", "archive_weight", ["weight_owner", "weight_mode"], "查看配重室。", source))
-    rt_push(result, c2_inspect_action(actor, "c2.archive", "central_hall", ["relay_owner"], "查看中央传声中继。", source))
     return result
 
 fn c2_actor_actions(actor):
@@ -688,7 +746,7 @@ fn c2_actor_actions(actor):
         rt_push(result, c2_move_action(actor, edge.from, edge.to, edge.gate))
         rt_push(result, c2_move_action(actor, edge.to, edge.from, edge.gate))
         i = i + 1
-    let rows = [c2_supply_actions(actor), c2_special_actions(actor), c2_station_actions(actor), c2_room_actions(actor)]
+    let rows = [c2_supply_actions(actor), c2_special_actions(actor), c2_room_actions(actor), c2_corridor_actions(actor)]
     i = 0
     while i < rt_count(rows):
         var j = 0
@@ -719,9 +777,6 @@ fn c2_actor_actions(actor):
         let weather = c2_inspect_action(actor, "c2.weather", weather_places[i], ["ash_falling", "wind", "daylight"], "望向廊外，看看天色和风。", c2_approved("visible-actual-weather-not-other-peoples-exposure"))
         rt_push(result, dv_with(weather, "id", rt_cat(actor, rt_cat(".c2.inspect.weather.", weather_places[i]))))
         i = i + 1
-    if actor != "ward":
-        rt_push(result, c2_guard_request_action(actor, "central_hall"))
-        rt_push(result, c2_guard_request_action(actor, "archive_weight"))
     var prepared = []
     i = 0
     while i < rt_count(result):
@@ -765,14 +820,15 @@ fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
         day = day + 1
     dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.granary"), c2_open_granary_law(actor)), mode, 1, source)
     dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.distribute"), c2_distribute_law(actor)), mode, 1, source)
-    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-real-key")])
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.open.total_store"), c2_total_store_open_law(actor)), mode, 1, [c2_approved("total-granary-access-requires-key-or-lock-skill")])
     if actor != "shen":
         dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.give_key.shen"), c2_give_key_law(actor, "shen")), mode, 1, source)
     dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.report.night_take"), c2_report_law(actor)), mode, 1, source)
-    if actor == "quer" or actor == "mora":
-        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, actor == "mora")), mode, 1, source)
-    if actor == "quer":
-        dv_adopt_into(domain, owned_adoptions, c1_method("quer.c2.night_eat", c2_night_eat_law(actor)), mode, 1, source)
+    if dv_has(c2_people(), actor):
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_take"), c2_night_take_law(actor, false)), mode, 1, source)
+    dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, ".c2.night_eat"), c2_night_eat_law(actor)), mode, 1, source)
+    if actor == "mora":
+        dv_adopt_into(domain, owned_adoptions, c1_method("mora.c2.night_take.patient", c2_night_take_law(actor, true)), mode, 1, source)
     if actor == "margaret":
         dv_adopt_into(domain, owned_adoptions, c1_method("margaret.c2.request.repair_latch", c2_latch_request_law(actor, "quer")), mode, 1, source)
     if actor == "quer" or actor == "huo":
@@ -792,18 +848,12 @@ fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
         dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.accept.", norm.id)), c2_decide_norm_law(actor, norm, true)), mode, 1, [norm.source])
         dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(actor, rt_cat(".c2.decline.", norm.id)), c2_decide_norm_law(actor, norm, false)), mode, 1, [norm.source])
         i = i + 1
-    let roles = c2_profile(actor).station_roles
+    let gates = ["north", "east"]
     i = 0
-    while i < rt_count(roles):
-        let station = roles[i]
-        let id = rt_cat(actor, rt_cat(".c2.station.", station))
-        dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_station_claim_law(actor, station, false)), mode, 1, source)
-        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat(id, ".release"), c2_station_release_law(actor, station)), mode, 1, source)
+    while i < rt_count(gates):
+        let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gates[i]))
+        dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_open_corridor_law(actor, gates[i])), mode, 1, [c2_approved("封闭连廊实际开门")])
         i = i + 1
-    if actor == "ward":
-        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.agree.guard", c2_guard_commit_law(actor)), mode, 1, source)
-        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.guard.weight", c2_station_claim_law(actor, "weight", true)), mode, 1, source)
-        dv_adopt_into(domain, owned_adoptions, c1_method("ward.c2.guard.release", c2_station_release_law(actor, "weight")), mode, 1, source)
     let rooms = c2_rooms()
     let fields = ["doors_closed", "windows_closed", "isolation_closed"]
     i = 0
@@ -828,9 +878,13 @@ fn c2_extend_world(world):
     var result = c2_world_objects(world)
     var owned_adoptions = dv_clone(result.adoptions)
     let domain = result.domain
-    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.first_wind", c2_first_wind_law()), "enforce", 1, [c2_approved("second-day-morning-wind-opens-north")])
-    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.east", c2_wind_corridor_law("east", 2160)), "enforce", 1, [c2_approved("second-day-noon-east-corridor")])
-    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.archive", c2_wind_corridor_law("archive", 2280)), "enforce", 1, [c2_approved("second-day-afternoon-archive-corridor")])
+    dv_adopt_into(domain, owned_adoptions, c1_method("c2.weather.first_wind", c2_first_wind_law()), "enforce", 1, [c2_approved("second-day-morning-wind")])
+    let changes = c2_weather_changes()
+    var change_index = 0
+    while change_index < rt_count(changes):
+        let id = rt_cat("c2.weather.", changes[change_index].id)
+        dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_weather_change_law(changes[change_index])), "enforce", 1, [c2_approved("第五部分：五日环境变化")])
+        change_index = change_index + 1
     c2_install_teacher_laws_into(domain, owned_adoptions, "enforce")
     var light_day = 1
     while light_day < 6:
@@ -848,18 +902,7 @@ fn c2_extend_world(world):
             dv_adopt_into(domain, owned_adoptions, c1_method(noon, c2_missed_meal_law(people[i], day, "noon", 840)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
             dv_adopt_into(domain, owned_adoptions, c1_method(evening, c2_missed_meal_law(people[i], day, "evening", 1260)), "enforce", 1, [c2_approved("hunger-follows-actual-missed-meal")])
             day = day + 1
-        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.terminal.", people[i]), c2_terminal_exposure_law(people[i])), "enforce", 1, [c2_approved("actual-exposure-reason-and-wrong-norm-causal-conjunction")])
-        i = i + 1
-    let weights = ["huo", "bertrand", "margaret"]
-    let locks = ["quer", "huo"]
-    i = 0
-    while i < rt_count(weights):
-        var j = 0
-        while j < rt_count(locks):
-            if weights[i] != locks[j]:
-                let id = rt_cat("c2.archive.open.", rt_cat(weights[i], rt_cat(".", locks[j])))
-                dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_archive_open_law(weights[i], locks[j], "su")), "enforce", 1, [c2_source("09_表达.story", 651, "actual-three-station-concurrency")])
-            j = j + 1
+        dv_adopt_into(domain, owned_adoptions, c1_method(rt_cat("c2.terminal.", people[i]), c2_terminal_exposure_law(people[i])), "enforce", 1, [c2_approved("actual-terminal-exposure")])
         i = i + 1
     let rooms = c2_rooms()
     i = 0
@@ -870,7 +913,7 @@ fn c2_extend_world(world):
     return dv_finish_owned_adoptions(result, owned_adoptions)
 
 fn c2_shared_objects():
-    var result = ["campaign.clock", "campaign.access", "demon.body", "case.contract", "case.astral", "case.logistics", "c2.granary", "c2.counter", "c2.ledger", "c2.bowl", "c2.kitchen", "c2.archive", "c2.weather", "c2.litter.living", "c2.litter.contract", "c2.litter.astral", "c2.litter.logistics"]
+    var result = ["campaign.clock", "campaign.access", "c2.corridor.north", "c2.corridor.east", "demon.body", "case.contract", "case.astral", "case.logistics", "c2.granary", "c2.counter", "c2.ledger", "c2.bowl", "c2.kitchen", "c2.weather", "c2.litter.living", "c2.litter.contract", "c2.litter.astral", "c2.litter.logistics"]
     let norms = c2_norms()
     var i = 0
     while i < rt_count(norms):
@@ -898,7 +941,7 @@ fn c2_personal_goals(actor):
     let id = actor.id
     let source = [c2_person_source(id)]
     var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], actor.mind.time)]
-    let gates = ["living", "living_exit", "contract", "astral", "logistics", "north", "east", "archive"]
+    let gates = ["living", "living_exit", "contract", "astral", "logistics", "north", "east"]
     var gate_index = 0
     while gate_index < rt_count(gates):
         rt_push(goals, c2_observation_goal(c2_access(gates[gate_index]), dv_true(), [c2_source("00_通行.story", 9, "复查眼前通路")], actor.mind.time))
@@ -914,6 +957,17 @@ fn c2_personal_goals(actor):
         while door_index < rt_count(door_fields):
             rt_push(goals, c2_observation_goal(c2_ref("departure.door", door_fields[door_index]), dv_true(), [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story", 4, "当前隔离门")], actor.mind.time))
             door_index = door_index + 1
+    let indoor_gates = ["north", "east"]
+    var corridor_index = 0
+    while corridor_index < rt_count(indoor_gates):
+        let gate = indoor_gates[corridor_index]
+        let fields = ["air_safe", "seal_intact", "ventilated"]
+        var field_index = 0
+        while field_index < rt_count(fields):
+            rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), c2_at(id, c2_corridor_origin(gate)), [c2_approved("现场核对封闭连廊")], actor.mind.time))
+            field_index = field_index + 1
+        rt_push(goals, c2_goal(dv_fact(c2_access(gate), true), c2_at(id, c2_corridor_origin(gate)), [c2_approved("经核对后实际开启连廊")]))
+        corridor_index = corridor_index + 1
     let senses = ["alive", "rations", "hungry", "owe_notes", "station"]
     var sense_index = 0
     while sense_index < rt_count(senses):
@@ -947,15 +1001,8 @@ fn c2_personal_goals(actor):
             rt_push(goals, c2_goal(dv_fact(c2_ref("c2.counter", "open"), true), active, [c2_approved("real-counter-service-does-not-require-total-granary-key")]))
             service_day = service_day + 1
     rt_push(goals, c2_goal(dv_fact(c2_own(id, "owe_notes"), 0), dv_all(dv_pair(dv_at_least(c2_own(id, "owe_notes"), 1), dv_fact(c2_own(id, "busy_care"), false))), [c2_source("10_执行.story", 9, "Inform")]))
-    let roles = c2_profile(id).station_roles
-    i = 0
-    while i < rt_count(roles):
-        rt_push(goals, c2_goal(dv_fact(c2_own(id, "station"), roles[i]), dv_fact(c2_own(id, "accepted.open_plan"), true), source))
-        i = i + 1
     if id == "mora":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.bowl", "residue"), true), dv_fact(c2_own("moran", "fever"), true), [c2_approved("mora-does-not-refuse-a-real-patient")]))
-    if id == "ward":
-        rt_push(goals, c2_goal(dv_fact(c2_own(id, "station"), "weight"), dv_fact(c2_own(id, "guard_commitment"), true), [c2_source("10_执行.story", 19, "GuardArchive")]))
     return goals
 
 fn c2_refresh_actor_goals(actor):
@@ -1021,7 +1068,7 @@ fn c2_extend_teacher(actor):
         let weather = c2_inspect_action(actor.id, "c2.weather", weather_places[i], ["ash_falling", "wind", "daylight"], "望向廊外，看看天色和风。", c2_approved("teacher-current-weather-observation"))
         rt_push(actions, dv_with(weather, "id", rt_cat("demon.c2.inspect.weather.", weather_places[i])))
         i = i + 1
-    let result = dv_with_many(actor, {"mind": mind, "location_ref": c2_position_ref("demon"), "observable_presence_when": c2_at("demon", "lecture"), "actions": c1_public_methods(actions), "policy": dv_with_many(actor.policy, {"chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})})
+    let result = dv_with_many(actor, {"mind": mind, "location_ref": c2_position_ref("demon"), "observable_presence_when": dv_true(), "actions": c1_public_methods(actions), "policy": dv_with_many(actor.policy, {"chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})})
     return c2_refresh_actor_goals(result)
 
 fn c2_extend_actor(actor):
@@ -1100,8 +1147,7 @@ fn c2_extend_actor_from(actor, physical, previous):
     while i < rt_count(actor.actions):
         rt_push(actions, actor.actions[i])
         i = i + 1
-    if profile.group != "living":
-        policy = dv_with(policy, "chapter1_carried_goals", dv_find(actor.policy, "goals", []))
+    policy = dv_with(policy, "chapter1_carried_goals", dv_find(actor.policy, "goals", []))
     let result = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": policy})
     return c2_refresh_actor_goals(result)
 
@@ -1132,26 +1178,19 @@ fn c2_extend_scene(scene):
 
 fn c2_world_processes():
     var result = [
-        {"id": "c2.weather.first_wind", "law": "c2.weather.first_wind", "basis": [c2_approved("second-day-morning-wind-opens-north")]},
-        {"id": "c2.weather.east", "law": "c2.weather.east", "basis": [c2_approved("second-day-noon-east-corridor")]},
-        {"id": "c2.weather.archive", "law": "c2.weather.archive", "basis": [c2_approved("second-day-afternoon-archive-corridor")]}]
-    let weights = ["huo", "bertrand", "margaret"]
-    let locks = ["quer", "huo"]
-    let source = c2_source("09_表达.story", 651, "actual-three-station-concurrency")
+        {"id": "c2.weather.first_wind", "law": "c2.weather.first_wind", "basis": [c2_approved("second-day-morning-wind")]}]
+    let changes = c2_weather_changes()
+    var change_index = 0
+    while change_index < rt_count(changes):
+        let id = rt_cat("c2.weather.", changes[change_index].id)
+        rt_push(result, {"id": id, "law": id, "basis": [c2_approved("第五部分：五日环境变化")]})
+        change_index = change_index + 1
     var i = 0
     var light_day = 1
     while light_day < 6:
         rt_push(result, {"id": rt_cat("c2.daylight.", rt_show(light_day)), "law": rt_cat("c2.daylight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
         rt_push(result, {"id": rt_cat("c2.nightlight.", rt_show(light_day)), "law": rt_cat("c2.nightlight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
         light_day = light_day + 1
-    while i < rt_count(weights):
-        var j = 0
-        while j < rt_count(locks):
-            if weights[i] != locks[j]:
-                let id = rt_cat("c2.archive.open.", rt_cat(weights[i], rt_cat(".", locks[j])))
-                rt_push(result, {"id": id, "law": id, "basis": [source]})
-            j = j + 1
-        i = i + 1
     let people = c2_people()
     i = 0
     while i < rt_count(people):
@@ -1162,7 +1201,7 @@ fn c2_world_processes():
             rt_push(result, {"id": rt_cat(prefix, ".evening"), "law": rt_cat(prefix, ".evening"), "basis": [c2_approved("hunger-follows-actual-missed-meal")]})
             day = day + 1
         let terminal = rt_cat("c2.terminal.", people[i])
-        rt_push(result, {"id": terminal, "law": terminal, "basis": [c2_approved("actual-exposure-reason-and-wrong-norm-causal-conjunction")]})
+        rt_push(result, {"id": terminal, "law": terminal, "basis": [c2_approved("actual-terminal-exposure")]})
         i = i + 1
     let rooms = c2_rooms()
     i = 0
@@ -1177,11 +1216,11 @@ fn c2_world_processes():
 fn c2_runtime_contracts():
     return {
         "clock": {"ref": c2_clock(), "unit": "minute", "day_origin": "day1-at-minute-zero", "start": "retain-actual-chapter1-handoff", "end": "day5-morning", "constraint": "never-rewind-or-write-actor-choices-from-a-date"},
-        "access": {"object": "campaign.access", "fields": ["living", "contract", "astral", "logistics", "north", "east", "archive"], "source": c2_source("00_通行.story", 9, "authored-boundaries"), "constraint": "actual-opening-observation-and-movement-required"},
+        "access": {"object": "campaign.access", "fields": ["living", "contract", "astral", "logistics", "north", "east"], "source": c2_source("00_通行.story", 9, "authored-boundaries"), "constraint": "actual-opening-observation-and-movement-required"},
         "phase_services": {"counter": "real-counter-staff-action-opens-99-ration-pool-without-total-granary-key", "inventory": "each-collect-spends-one-not-32-per-day", "hunger": "derive-from-real-missed-meals-never-brand-quer-hungry-by-date", "goal_refresh": "c2_refresh_actor_goals-after-real-clock-updates-reads-only-owned-mind", "observations": "explicit-clock-self-route-and-weather-actions-not-passive-global-knowledge"},
         "norms": {"receipt": "real-proposal-post-read-events", "choice": "owner-value-order-after-personal-receipt", "execution": "policy.norm_rules-available_when-and-action.normative_method-against-owned-mind", "indifference": "do-not-treat-a-zero-value-tie-as-positive-adoption-support", "constraint": "posting-does-not-enforce-a-global-law"},
-        "stations": {"work": "persistent-owner-at-declared-location-until-release", "activation": "execute-one-ready-c2.archive.open-law-after-all-three-real-claims", "guard": "ward-response-needs-a-real-pending-archive_guard-request-and-personal-response-evaluation"},
-        "environment": {"object": "c2.weather", "inputs": ["wind", "daylight", "earthquake_recent", "severe_air"], "authored_processes": ["falling-ash-through-day2-dawn", "day2-forenoon-wind-and-north", "day2-noon-east", "day2-afternoon-archive"], "provenance": "authored-clock-conditions-and-actual-weather-control-history", "qualitative_laws": ["windy-day-high-ground-short-excursion", "calm-night-low-lane-slope-foot-water-spring-lethal-exposure", "closed-indoor-doors-windows-and-isolation-protect", "recent-earthquake-heavy-air-can-seep-through-gaps"], "constraint": "no-invented-concentration-dose-disease-or-erosion-number"},
+        "stations": {"scope": "future-chapter-declarations-not-installed"},
+        "environment": {"object": "c2.weather", "inputs": ["wind", "daylight", "earthquake_recent", "severe_air"], "authored_processes": ["falling-ash-through-day2-dawn", "day2-forenoon-wind", "day3-night-calm", "day4-evening-earthquake", "day5-dawn-wind"], "provenance": "authored-clock-conditions-and-actual-weather-control-history", "qualitative_laws": ["windy-day-high-ground-short-excursion", "calm-night-low-lane-slope-foot-water-spring-lethal-exposure", "closed-indoor-doors-windows-and-isolation-protect", "recent-earthquake-heavy-air-can-seep-through-gaps"], "constraint": "no-invented-concentration-dose-disease-or-erosion-number"},
         "physiology": {"inputs": ["actual-exposure", "observed-fever", "actual-care", "terminal-exposure"], "constraint": "never-use-third-day-illness-or-fourth-night-death-as-an-assignment"},
         "evidence": {"ledger": "derive-from-real-removals-day-records-and-night-reports", "latch": "tool-marks-only-from-real-repair", "bowl": "residue-only-from-real-patient-feeding", "crumbs": "only-from-real-night-eating", "testimony": "speaker-owned-perception-no-identity-from-a-small-shadow"},
         "handoff": {"preserve": ["accepted_norms", "trust", "hunger", "remaining_rations", "casualties", "memories", "erosion", "ownership"], "constraint": "copy-committed-state-never-reset-to-a-preset-ending"}}

@@ -4,13 +4,7 @@ fn dvg_open():
     return dvs_session_open(c1_player_scene(scene), "enabled")
 
 fn dvg_chapter_two_ready(state):
-    let stages = ["identity", "voice_source", "words", "trust"]
-    var i = 0
-    while i < rt_count(stages):
-        if dv_truth(state.physical, dv_fact(dv_ref("question", "state", rt_cat("solved_", stages[i])), true)) != "true":
-            return false
-        i = i + 1
-    return true
+    return dv_truth(state.physical, c1dep_can_cross()) == "true"
 
 fn dvg_extend(state):
     if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
