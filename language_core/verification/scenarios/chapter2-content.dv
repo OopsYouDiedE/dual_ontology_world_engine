@@ -960,25 +960,45 @@ fn c2_goal(proposition, when, basis):
 fn c2_observation_goal(ref, when, basis, time):
     return {"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time}
 
+// A route inspection concerns a door at the owner's current known location.
+fn c2_gate_visible(actor, gate):
+    let edges = c2_edges()
+    var locations = []
+    var i = 0
+    while i < rt_count(edges):
+        if edges[i].gate == gate:
+            rt_push(locations, c2_at(actor, edges[i].from))
+            rt_push(locations, c2_at(actor, edges[i].to))
+        i = i + 1
+    return dv_not(dv_all(c2_negated_conditions(locations)))
+
+fn c2_negated_conditions(conditions):
+    var result = []
+    var i = 0
+    while i < rt_count(conditions):
+        rt_push(result, dv_not(conditions[i]))
+        i = i + 1
+    return result
+
 fn c2_personal_goals(actor):
     let id = actor.id
     let source = [c2_person_source(id)]
-    var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], actor.mind.time)]
+    var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 0)]
     let gates = ["living", "living_exit", "contract", "astral", "logistics", "north", "east"]
     var gate_index = 0
     while gate_index < rt_count(gates):
-        rt_push(goals, c2_observation_goal(c2_access(gates[gate_index]), dv_true(), [c2_source("00_通行.story", 9, "复查眼前通路")], actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_access(gates[gate_index]), c2_gate_visible(id, gates[gate_index]), [c2_source("00_通行.story", 9, "复查眼前通路")], 0))
         gate_index = gate_index + 1
-    rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "daylight"), dv_true(), [c2_source("00_时间与文案.story", 35, "看天色辨昼夜")], actor.mind.time))
-    rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "wind"), dv_true(), [c2_approved("visible-current-wind")], actor.mind.time))
+    rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "daylight"), dv_true(), [c2_source("00_时间与文案.story", 35, "看天色辨昼夜")], 0))
+    rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "wind"), dv_true(), [c2_approved("visible-current-wind")], 0))
     if id == "demon":
-        rt_push(goals, c2_observation_goal(c2_position_ref(id), dv_true(), [c2_source("06_场面.story", 85, "自己的现场身体位置")], actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_position_ref(id), dv_true(), [c2_source("06_场面.story", 85, "自己的现场身体位置")], 0))
         return goals
     if dv_has(["detective", "huo", "shen", "su"], id):
         let door_fields = ["outer_released", "inner_down", "open"]
         var door_index = 0
         while door_index < rt_count(door_fields):
-            rt_push(goals, c2_observation_goal(c2_ref("departure.door", door_fields[door_index]), dv_true(), [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story", 4, "当前隔离门")], actor.mind.time))
+            rt_push(goals, c2_observation_goal(c2_ref("departure.door", door_fields[door_index]), c2_at(id, "foyer"), [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story", 4, "当前隔离门")], 0))
             door_index = door_index + 1
     let indoor_gates = ["north", "east"]
     var corridor_index = 0
@@ -987,14 +1007,14 @@ fn c2_personal_goals(actor):
         let fields = ["air_safe", "intake_safe", "seal_intact", "ventilated"]
         var field_index = 0
         while field_index < rt_count(fields):
-            rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), c2_at(id, c2_corridor_origin(gate)), [c2_approved("现场核对封闭连廊")], actor.mind.time))
+            rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), c2_at(id, c2_corridor_origin(gate)), [c2_approved("现场核对封闭连廊")], 0))
             field_index = field_index + 1
         rt_push(goals, c2_goal(dv_fact(c2_access(gate), true), c2_at(id, c2_corridor_origin(gate)), [c2_approved("经核对后实际开启连廊")]))
         corridor_index = corridor_index + 1
     let senses = ["alive", "rations", "hungry", "owe_notes", "station"]
     var sense_index = 0
     while sense_index < rt_count(senses):
-        rt_push(goals, c2_observation_goal(c2_own(id, senses[sense_index]), dv_true(), source, actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_own(id, senses[sense_index]), dv_true(), source, 0))
         sense_index = sense_index + 1
     let norms = c2_norms()
     var i = 0
@@ -1002,7 +1022,7 @@ fn c2_personal_goals(actor):
         let norm = norms[i]
         if norm.owner == id:
             rt_push(goals, c2_goal(dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), c2_alive(id), [norm.source]))
-        rt_push(goals, c2_observation_goal(c2_ref(c2_norm_object(norm.id), "posted"), dv_true(), [norm.source], actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_ref(c2_norm_object(norm.id), "posted"), c2_at(id, norm.board), [norm.source], 0))
         rt_push(goals, c2_observation_goal(c2_ref(c2_norm_object(norm.id), "text"), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), [norm.source], 0))
         rt_push(goals, c2_goal(dv_fact(c2_own(id, rt_cat("decided.", norm.id)), true), dv_fact(c2_ref(c2_norm_object(norm.id), "text"), norm.surface), [norm.source]))
         i = i + 1
@@ -1018,8 +1038,8 @@ fn c2_personal_goals(actor):
         day = day + 1
     rt_push(goals, c2_goal(dv_fact(c2_own(id, "hungry"), false), dv_fact(c2_own(id, "hungry"), true), source))
     if c2_profile(id).domain == "resources":
-        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), dv_true(), source, actor.mind.time))
-        rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", "counted"), dv_true(), source, actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), dv_true(), source, 0))
+        rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", "counted"), dv_true(), source, 0))
         var service_day = 2
         while service_day < 5:
             let active = c1_any(c2_window(service_day, 720, 840), c2_window(service_day, 1080, 1260))
@@ -1027,7 +1047,7 @@ fn c2_personal_goals(actor):
             service_day = service_day + 1
     rt_push(goals, c2_goal(dv_fact(c2_own(id, "owe_notes"), 0), dv_all(dv_pair(dv_at_least(c2_own(id, "owe_notes"), 1), dv_fact(c2_own(id, "busy_care"), false))), [c2_source("10_执行.story", 9, "Inform")]))
     if id == "huo" or id == "margaret":
-        rt_push(goals, c2_observation_goal(c2_ref("c2.granary", "structure_checked"), dv_true(), source, actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_ref("c2.granary", "structure_checked"), dv_true(), source, 0))
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "structure_checked"), true), c2_at(id, "logistics"), source))
     if id == "mora":
         rt_push(goals, c2_goal(dv_fact(c2_own("moran", "hungry"), false), dv_all([dv_fact(c2_own("moran", "fever"), true), dv_fact(c2_own("moran", "hungry"), true)]), [c2_approved("mora-does-not-refuse-a-real-patient")]))

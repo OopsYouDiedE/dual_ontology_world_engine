@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 from dv_toolchain import LANGUAGE, ROOT, PROJECT, environment
+from dv_sources import sources
 
 
 def record(value):
@@ -106,6 +107,12 @@ def main():
     build = out / 'program'
     build.mkdir()
     env = environment()
+    modules = sources([args.entry.resolve()])
+    inputs = [path for path, _ in modules]
+    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/dv_toolchain.py')]
+    hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+    normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
+    (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
     commands = [
         [sys.executable, str(LANGUAGE / 'tools/build_session.py'), '--entry', str(args.entry.resolve()), '--out', str(build), '--main', 'dvg_debug_run'],
         ['dotnet', 'build', str(build / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
@@ -115,15 +122,18 @@ def main():
         with (out / f'build-{index}.txt').open('wb') as log:
             subprocess.run(cmd, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=240)
     manifest = json.loads((build / 'source-manifest.json').read_text())
-    inputs = [Path(entry['path']) for entry in manifest['modules']]
-    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py')]
-    hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
-    (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
+    build_consistent = (
+        all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
+        and {entry['path']: entry['sha256'] for entry in manifest['modules']} == normalized
+        and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')])
+    if not build_consistent:
+        (out / 'result.json').write_text(json.dumps({'executor': 'formal-model', 'geometry': False, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'}, indent=2), encoding='utf-8')
+        return 1
     execution_env = env.copy()
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
     execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
     start = time.monotonic()
-    result = {'executor': 'formal-model', 'geometry': False, 'entry': str(args.entry.resolve()), 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
+    result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
             process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json')], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
@@ -132,7 +142,7 @@ def main():
         result['timeout_seconds'] = args.timeout
     finally:
         result['elapsed_seconds'] = time.monotonic() - start
-        result['source_unchanged'] = all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
+        result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
         result['trace_written'] = (out / 'trace.json').is_file()
         try:
             result['output_well_formed'] = export(out)

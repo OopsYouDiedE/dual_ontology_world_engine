@@ -2,7 +2,7 @@
 
 fn dvs_event(events, kind, actor, time, parents, data):
     var id = rt_cat("e", rt_show(rt_count(events)))
-    rt_push(events, dv_with_many({"id": id, "type": kind, "actor": actor, "time": time}, {"parents": parents, "data": data}))
+    rt_push(events, rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data}))
     return id
 
 fn dvs_cognitive_parents(actor, parents):
@@ -177,7 +177,11 @@ fn dvs_hypotheses(actor, events, time, parent):
     return dv_with_many(actor, {"hypothesis": best, "hypothesis_event": event})
 
 fn dvs_choose(actor, bindings, costs):
-    return dvp_plan(actor, bindings, costs)
+    let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
+    let cached = rt_memo_get(actor.mind, key)
+    if cached[0]:
+        return dv_with_many(cached[1], {"plan_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions})
+    return rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs))
 
 fn dvs_ready(actor, events, time, parent):
     var hypothesis = dv_find(actor, "hypothesis", false)
@@ -270,12 +274,6 @@ fn dvs_reason(actor, events, time, parent):
     else:
         return dvs_reason_run(refreshed, events, time, parent)
 
-// Only a fresh nonempty dv_with/dv_with_many result may be transferred here.
-// Those constructors already cloned every data branch independently.
-// The caller keeps no reference to the transferred record.
+// Fresh prepared data and borrowed data share the same immutable evidence boundary.
 fn dvs_event_prepared(events, kind, actor, time, parents, data):
-    let id = rt_cat("e", rt_show(rt_count(events)))
-    let event = dv_with_many({"id": id, "type": kind, "actor": actor, "time": time}, {"parents": parents})
-    rt_push(event, dv_pair("data", data))
-    rt_push(events, event)
-    return id
+    return dvs_event(events, kind, actor, time, parents, data)

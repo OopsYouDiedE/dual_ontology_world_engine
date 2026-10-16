@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Text;
@@ -41,14 +42,21 @@ public static class R
     public static object id_start(object c) => Text(c) == "_" || char.IsLetter(Text(c), 0);
     public static object id_part(object c) => Text(c) == "_" || char.IsLetterOrDigit(Text(c), 0) || CharUnicodeInfo.GetUnicodeCategory(Text(c), 0) == UnicodeCategory.NonSpacingMark;
     public static object normalize(object s) => Text(s).Normalize(NormalizationForm.FormC);
-    public static object replace(object list, object index, object value) { Items(list)[Index(index)] = value; return list; }
+    public static object replace(object list, object index, object value) { Invalidate(list); MutableItems(list)[Index(index)] = value; return list; }
     public static object list() => new List<object>();
-    public static object push(object a, object b) { Items(a).Add(b); return a; }
-    public static object at(object a, object i) => Items(a)[Index(i)];
+    public static object push(object a, object b) { Invalidate(a); MutableItems(a).Add(b); return a; }
+    public static object at(object a, object i) => ReadItem(a, Index(i));
     public static object count(object a) => (double)Items(a).Count;
     public static object record_index(object record, object key)
     {
         var entries = Items(record);
+        if (entries.Count >= 8 && key is string name)
+        {
+            var frozen = record as FrozenList;
+            if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
+            var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
+            if (index is not null) return index.TryGetValue(name, out var found) ? (double)found : -1d;
+        }
         for (var i = entries.Count - 1; i >= 0; i--)
             if (Bool(eq(Items(entries[i])[0], key))) return (double)i;
         return -1d;
@@ -56,15 +64,247 @@ public static class R
     public static object record_find(object record, object key, object fallback)
     {
         var index = (double)record_index(record, key);
-        return index < 0 ? fallback : Items(Items(record)[(int)index])[1];
+        return index < 0 ? fallback : ReadItem(ReadItem(record, (int)index), 1);
+    }
+    // Structural value equality reads existing branches without materializing mutable copies.
+    public static object same_value(object a, object b)
+    {
+        if (Bool(eq(a, b))) return true;
+        if (a is not List<object> left || b is not List<object> right || left.Count != right.Count) return false;
+        var leftBase = a as FrozenList;
+        var rightBase = b as FrozenList;
+        if (leftBase is null && MutableStates.TryGetValue(left, out var ls)) leftBase = ls.Backbone;
+        if (rightBase is null && MutableStates.TryGetValue(right, out var rs)) rightBase = rs.Backbone;
+        if (leftBase is not null && ReferenceEquals(leftBase, rightBase)) return true;
+        // Different structural hashes cannot reject equality: exact and floating numbers compare by value.
+        for (var i = 0; i < left.Count; i++)
+            if (!Bool(same_value(left[i], right[i]))) return false;
+        return true;
+    }
+    // Ordered independent-copy record update; unchanged branches stay immutable until read.
+    public static object record_with(object record, object key, object value)
+    {
+        var entries = Items(record);
+        var result = new List<object>(entries.Count + 1);
+        var frozen = Items(snapshot(record));
+        var found = false;
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            if (Bool(eq(Items(entry)[0], key)))
+            {
+                result.Add(new List<object> { key, copy_value(value) });
+                found = true;
+            }
+            else result.Add(frozen[i]);
+        }
+        if (!found) result.Add(new List<object> { key, copy_value(value) });
+        return result;
+    }
+    private sealed class ValueMemo
+    {
+        internal readonly Dictionary<string, MemoPartition> Partitions = new(StringComparer.Ordinal);
+        internal MemoPartition Partition(object key)
+        {
+            var name = key is List<object> parts && parts.Count > 0 && parts[0] is string tag ? tag : "";
+            if (!Partitions.TryGetValue(name, out var partition)) Partitions[name] = partition = new();
+            return partition;
+        }
+    }
+    private sealed class MemoPartition
+    {
+        internal readonly Dictionary<object, object> Values = new();
+        internal readonly Queue<object> Order = new();
+    }
+    private static readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
+    public static object memo_get(object owner, object key)
+    {
+        lock (SnapshotLock)
+        {
+            var identity = (FrozenList)SnapshotValue(Items(owner));
+            var frozenKey = SnapshotValue(key);
+            if (ValueMemos.TryGetValue(identity, out var ownerMemo) && ownerMemo.Partition(frozenKey).Values.TryGetValue(frozenKey, out var result))
+                return new List<object> { true, copy_value(result) };
+            return new List<object> { false, false };
+        }
+    }
+    public static object memo_put(object owner, object key, object value)
+    {
+        lock (SnapshotLock)
+        {
+            var identity = (FrozenList)SnapshotValue(Items(owner));
+            var frozenKey = SnapshotValue(key);
+            var memo = ValueMemos.GetOrCreateValue(identity).Partition(frozenKey);
+            if (!memo.Values.ContainsKey(frozenKey))
+            {
+                if (memo.Values.Count >= 512) memo.Values.Remove(memo.Order.Dequeue());
+                memo.Order.Enqueue(frozenKey);
+            }
+            memo.Values[frozenKey] = SnapshotValue(value);
+            return value;
+        }
     }
     public static object is_list(object a) => a is List<object>;
     public static object copy_value(object value)
     {
-        if (value is not List<object> items) return value;
-        var copy = new List<object>(items.Count);
-        foreach (var item in items) copy.Add(copy_value(item));
-        return copy;
+        if (value is not List<object>) return value;
+        // Every copy owns its root. Descendants are immutable until accessed through this owner.
+        var frozen = value is FrozenList ? value : snapshot(value);
+        return Thaw((FrozenList)frozen);
+    }
+    // Evidence values are immutable copies. Interning changes storage, never their JSON shape.
+    // Mutable copies remain independent through copy_value; only snapshot() uses this pool.
+    private sealed class FrozenList(int capacity, ulong hash) : List<object>(capacity)
+    {
+        internal readonly ulong Hash = hash;
+        internal bool IndexChecked;
+        internal Dictionary<string, int>? Index;
+    }
+    private sealed class MutableState
+    {
+        internal FrozenList? Backbone;
+        internal bool IndexChecked;
+        internal Dictionary<string, int>? Index;
+        internal readonly List<WeakReference<List<object>>> Parents = new();
+    }
+    private static readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
+    private static List<object> Thaw(FrozenList frozen)
+    {
+        var result = new List<object>(frozen);
+        MutableStates.Add(result, new MutableState { Backbone = frozen });
+        return result;
+    }
+    private static void LinkParent(List<object> child, List<object> parent)
+    {
+        if (child is FrozenList) return;
+        var state = MutableStates.GetOrCreateValue(child);
+        for (var i = state.Parents.Count - 1; i >= 0; i--)
+        {
+            if (!state.Parents[i].TryGetTarget(out var existing)) state.Parents.RemoveAt(i);
+            else if (ReferenceEquals(existing, parent)) return;
+        }
+        state.Parents.Add(new WeakReference<List<object>>(parent));
+    }
+    private static void Invalidate(object value)
+    {
+        var list = MutableItems(value);
+        if (!MutableStates.TryGetValue(list, out _)) return;
+        var visited = new HashSet<List<object>>(ReferenceEqualityComparer.Instance);
+        var pending = new Stack<List<object>>();
+        pending.Push(list);
+        while (pending.TryPop(out var current))
+        {
+            if (!visited.Add(current) || !MutableStates.TryGetValue(current, out var state)) continue;
+            state.Backbone = null;
+            state.IndexChecked = false;
+            state.Index = null;
+            for (var i = state.Parents.Count - 1; i >= 0; i--)
+                if (state.Parents[i].TryGetTarget(out var parent)) pending.Push(parent);
+                else state.Parents.RemoveAt(i);
+        }
+    }
+    private static Dictionary<string, int>? FrozenIndex(FrozenList record)
+    {
+        lock (SnapshotLock)
+        {
+            if (record.IndexChecked) return record.Index;
+            var index = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var item in record)
+                if (item is not List<object> pair || pair.Count == 0)
+                { record.IndexChecked = true; return null; }
+            for (var i = 0; i < record.Count; i++)
+                if (Items(record[i])[0] is string key) index[key] = i;
+            record.Index = index;
+            record.IndexChecked = true;
+            return index;
+        }
+    }
+    private static Dictionary<string, int>? MutableIndex(List<object> record)
+    {
+        var state = MutableStates.GetOrCreateValue(record);
+        if (state.IndexChecked) return state.Index;
+        var index = new Dictionary<string, int>(StringComparer.Ordinal);
+        // Link all key pairs so edits invalidate the owner, including irregular records.
+        var regular = true;
+        for (var i = 0; i < record.Count; i++)
+        {
+            if (record[i] is not List<object> pair) { regular = false; continue; }
+            LinkParent(pair, record);
+            if (pair.Count == 0) { regular = false; continue; }
+            if (pair[0] is string key) index[key] = i;
+        }
+        state.Index = regular ? index : null;
+        state.IndexChecked = true;
+        return state.Index;
+    }
+    private static List<object> MutableItems(object value) => value is FrozenList
+        ? throw new InvalidOperationException("Cannot mutate an evidence snapshot; copy it first")
+        : Items(value);
+    private static readonly object SnapshotLock = new();
+    private static readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
+    private static int SnapshotSweeps;
+    public static object snapshot(object value)
+    {
+        lock (SnapshotLock)
+        {
+            var result = SnapshotValue(value);
+            if (++SnapshotSweeps % 1024 == 0)
+            {
+                foreach (var key in SnapshotPool.Keys.ToArray())
+                {
+                    SnapshotPool[key].RemoveAll(reference => !reference.TryGetTarget(out _));
+                    if (SnapshotPool[key].Count == 0) SnapshotPool.Remove(key);
+                }
+            }
+            return result;
+        }
+    }
+    private static object SnapshotValue(object value)
+    {
+        if (value is FrozenList || value is not List<object> items) return value;
+        var state = MutableStates.GetOrCreateValue(items);
+        if (state.Backbone is not null) return state.Backbone;
+        var children = new object[items.Count];
+        ulong hash = 14695981039346656037UL;
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items);
+            var child = children[i] = SnapshotValue(items[i]);
+            var part = child is FrozenList list ? list.Hash : unchecked((ulong)HashCode.Combine(child.GetType(), child));
+            hash = unchecked((hash ^ part) * 1099511628211UL);
+        }
+        hash = unchecked((hash ^ (ulong)items.Count) * 1099511628211UL);
+        if (!SnapshotPool.TryGetValue(hash, out var bucket))
+            SnapshotPool[hash] = bucket = new();
+        for (var i = bucket.Count - 1; i >= 0; i--)
+        {
+            if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }
+            if (existing.Count != children.Length) continue;
+            var same = true;
+            for (var j = 0; same && j < children.Length; j++)
+                same = existing[j] is double left && children[j] is double right
+                    ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
+                    : Equals(existing[j], children[j]);
+            if (same) { state.Backbone = existing; return existing; }
+        }
+        var frozen = new FrozenList(children.Length, hash);
+        frozen.AddRange(children);
+        bucket.Add(new WeakReference<FrozenList>(frozen));
+        state.Backbone = frozen;
+        return frozen;
+    }
+    private static object ReadItem(object owner, int index)
+    {
+        var items = Items(owner);
+        var value = items[index];
+        if (owner is not FrozenList && value is FrozenList frozen)
+        {
+            // Install the branch in this mutable owner only. Sibling copies retain the frozen branch.
+            value = Thaw(frozen);
+            LinkParent((List<object>)value, items);
+            items[index] = value;
+        }
+        return value;
     }
     public static object fail(object a) => throw new Exception(Text(a));
     public static object arg(object i) => Arguments[Index(i)];

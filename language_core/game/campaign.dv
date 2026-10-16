@@ -24,7 +24,7 @@ fn dvg_prepare(state):
         var any_refreshed = false
         while i < rt_count(current.actors):
             let actor = current.actors[i]
-            if (dv_has(c2_people(), actor.id) or actor.id == "demon") and actor.mind.revision != dv_find(actor, "chapter2_goals_mind_revision", -1):
+            if dv_find(actor, "scheduled_action", false) == false and (dv_has(c2_people(), actor.id) or actor.id == "demon") and actor.mind.revision != dv_find(actor, "chapter2_goals_mind_revision", -1):
                 let refreshed = c2d_refresh_actor_goals(actor)
                 rt_push(actors, dv_with(refreshed, "chapter2_goals_mind_revision", actor.mind.revision))
                 any_refreshed = true

@@ -4,6 +4,7 @@
 fn dvg_debug_run():
     let config = dvg_debug_config()
     var state = dvg_open()
+    state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})
     var cursor = 0
     var steps = 0
     var limit = state.limit

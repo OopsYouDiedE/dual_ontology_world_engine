@@ -160,9 +160,9 @@ fn c1dep_goals(actor):
     var goals = []
     let source = [c1dep_source("08_终局.story", 24, "s10_open.003：未迈出由本人选择")]
     if dv_has(["detective", "huo", "shen", "su"], actor.id):
-        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), dv_true(), source, actor.mind.time), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
-        rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), dv_true(), source, actor.mind.time))
-        rt_push(goals, c2_observation_goal(c1dep_ref("open"), dv_true(), source, actor.mind.time))
+        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), dv_true(), source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
+        rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), dv_true(), source, 0))
+        rt_push(goals, c2_observation_goal(c1dep_ref("open"), dv_true(), source, 0))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("open"), true), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), dv_fact(c1dep_ref("outer_released"), true), source))
@@ -170,7 +170,7 @@ fn c1dep_goals(actor):
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), c1_at(actor.id, rt_cat("threshold.", c2_profile(actor.id).group)), [c1_other_departure_source(actor.id).source]))
     if actor.id == "quer":
         rt_push(goals, c2_goal(c1_other_claim("contract", "outer_latch_released"), c1_at(actor.id, "dorm.contract"), source))
-        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), c1_at(actor.id, "living_hall"), source, actor.mind.time), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
+        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), c1_at(actor.id, "living_hall"), source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1_at(actor.id, "living_hall"), [c1dep_source("12_雀儿撬门.story", 10, "quer_opens.004")]))
     let actions = c1dep_actions(actor.id)
     var i = 0
@@ -183,24 +183,41 @@ fn c1dep_goals(actor):
         i = 0
         while i < rt_count(people):
             let ref = c1_other_ref(people[i].group, rt_cat("receipt.", people[i].id))
-            rt_push(goals, dv_with(c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, actor.mind.time), "refresh_until", dv_fact(ref, true)))
+            rt_push(goals, dv_with(c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, 0), "refresh_until", dv_fact(ref, true)))
             i = i + 1
         let groups = ["contract", "astral", "logistics"]
         i = 0
         while i < rt_count(groups):
             let ref = c1_other_ref(groups[i], "outer_latch_released")
-            rt_push(goals, c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, actor.mind.time))
+            rt_push(goals, c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, 0))
             rt_push(goals, c2_goal(dv_fact(ref, true), c1_other_release(groups[i], c1_other_clock_ref()).premise, source))
             i = i + 1
-        rt_push(goals, c2_observation_goal(c2_position_ref(actor.id), dv_true(), source, actor.mind.time))
-        rt_push(goals, c2_observation_goal(c1dep_ref("outer_released"), c2_at(actor.id, "living_hall"), source, actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_position_ref(actor.id), dv_true(), source, 0))
+        rt_push(goals, c2_observation_goal(c1dep_ref("outer_released"), c2_at(actor.id, "living_hall"), source, 0))
         let stages = ["identity", "voice_source", "words", "trust"]
         i = 0
         while i < rt_count(stages):
             let ref = dv_ref("question", "state", rt_cat("solved_", stages[i]))
-            rt_push(goals, dv_with(c2_observation_goal(ref, c1_at(actor.id, "hall"), source, actor.mind.time), "refresh_until", dv_fact(ref, true)))
+            rt_push(goals, dv_with(c2_observation_goal(ref, c1_at(actor.id, "hall"), source, 0), "refresh_until", dv_fact(ref, true)))
             i = i + 1
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1dep_complete(), source))
+    var refreshed = []
+    var g = 0
+    while g < rt_count(goals):
+        var goal = goals[g]
+        if dv_has_key(goal, "refresh_until"):
+            var triggers = []
+            if dv_has(["detective", "huo", "shen", "su", "demon"], actor.id):
+                let stages = ["identity", "voice_source", "words", "trust"]
+                var stage_index = 0
+                while stage_index < rt_count(stages):
+                    rt_push(triggers, dv_ref("question", "state", rt_cat("solved_", stages[stage_index])))
+                    stage_index = stage_index + 1
+            goal = dv_with(goal, "refresh_refs", triggers)
+        rt_push(refreshed, goal)
+        g = g + 1
+    goals = refreshed
+
     return goals
 
 fn c1dep_install_scene(scene):
@@ -261,6 +278,7 @@ fn c1dep_install_scene(scene):
             while j < rt_count(four):
                 rt_push(hearing, {"speaker": four[j], "channel": "", "available_when": c1_at("demon", "hall"), "sender_locations": ["hall"], "listener_locations": ["hall"], "reception_location_ref": dv_ref("demon", "state", "location"), "basis": [c1dep_source("08_终局.story", 1, "铜口听取已认定的答复")]})
                 rt_push(hearing, {"speaker": four[j], "channel": "copper.living", "available_when": c1_at("demon", "hall"), "sender_locations": ["hall"], "listener_locations": ["hall"], "reception_location_ref": dv_ref("demon", "state", "location"), "basis": [c1dep_source("08_终局.story", 1, "铜口接收实际询问")]})
+                rt_push(hearing, {"speaker": four[j], "channel": "formal-receipt", "available_when": c1_at("demon", "hall"), "sender_locations": ["hall"], "listener_locations": ["hall"], "reception_location_ref": dv_ref("demon", "state", "location"), "basis": [c1dep_source("08_终局.story", 1, "铜口接收实际答辩回执")]})
                 rt_push(channels, {"target": four[j], "channel": "copper.living", "available_when": c1_at("demon", "hall"), "basis": [c1dep_source("08_终局.story", 1, "应已经听到的询问向端口回答")]})
                 j = j + 1
             actor = dv_with_many(actor, {"location_ref": c2_position_ref("demon"), "observable_presence_when": dv_true()})

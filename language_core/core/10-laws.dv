@@ -16,6 +16,13 @@ fn dv_not(condition):
     return {"op": "not", "item": condition}
 
 fn dv_truth(world, proposition):
+    let key = ["dv_truth", proposition]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(world, key, dv_truth_uncached(world, proposition))
+
+fn dv_truth_uncached(world, proposition):
     var op = proposition.op
     if (op == "constant"):
         return proposition.value

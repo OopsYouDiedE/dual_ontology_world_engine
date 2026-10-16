@@ -180,7 +180,7 @@ language_core/Session 从原生 DV core/session 生成独立 .NET 类库，Godot
 
 正式 Godot 项目移除旧 Core/GameSession 引用，由 Host/GameEngine 调用 language_core/Session 的生成 DV 类库；旧实现暂留供迁移溯源，收尾再清理。game/entry.dv 声明生产编译依赖，不含 oracle。game/campaign.dv 从运行状态扩展第二章，保留事件、账本、世界和认知；内容可用与实际跨门分开记录。当前接线进入集中修复，不能用构建成功宣称两章游戏验收完成。
 
-线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，仅用于 campaign 扩展后的会话重绑定与 Prepare 主体列表替换。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
+线性宿主会话转交使用 session/30-runner.dv 的 dvs_owned_state_update：只新建顶层记录与字段对，沿用已归本会话所有的字段值引用；调用者放弃前态，用于 campaign 扩展后的会话重绑定、Prepare 主体列表替换及行动队列的会话外壳更新。完整保留未知字段、pending、initial 与输入控制字段，不原地修改旧记录、事件条目或快照。不得用于 world/mind、预测、规划分支或证据快照，不改变其独立复制合同。扩章内容可用仍须与实际几何跨门分别验收。
 
 2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
 证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人已接收时刻：mind.time与本人history中observation-batch各observation.time的最大值，只有存在尚未停止的标记目标时才惰性扫描一次。收到某条信息不等同采信其内容；不读取预测历史或physical。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；没有更晚的已接收信息时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
@@ -198,3 +198,7 @@ The earlier performance and completion claims are audited in artifacts/partial-b
 ## 一级逻辑输出工具（2026-10-16）
 
 一级采用无窗口 DV 逻辑输出，入口、相对 #include 与调试配置合同见 language_core/AGENTS.md。源码推导、实际轨迹与玩家正文分别核对。界面回放与03不属于一级要求。相关目录的旧三份记录要求以本轮用户裁定和本节为准。
+
+## 行动调度维护（2026-10-16）
+
+DV 会话增加主体行动时间队列；正式接口仍为 Prepare → 宿主执行回执 → Complete。模块接口、排队状态与单次费用结算合同见 language_core/AGENTS.md。时间模型修订与同条件性能优化分别记录；一级仍仅运行无窗口逻辑会话。

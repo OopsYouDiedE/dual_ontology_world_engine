@@ -699,7 +699,10 @@ fn c1_protocol_coordinates(rules):
         var stage = c1_answer_topic(rule.id)
         if (rule.accepted_law == "accept.original_q2_complete"):
             stage = "original_q2_complete"
-        rt_push(result, dv_with_many(rule, {"stage": stage, "progress_ref": dv_ref("question", "state", rt_cat("level_", stage)), "completion_ref": dv_ref("question", "state", rt_cat("solved_", stage))}))
+        let progress_ref = dv_ref("question", "state", rt_cat("level_", stage))
+        let completion_ref = dv_ref("question", "state", rt_cat("solved_", stage))
+        let receipt_fields = dv_append(dv_append(dv_find(rule, "accepted_public_grants", []), progress_ref), completion_ref)
+        rt_push(result, dv_with_many(rule, {"stage": stage, "progress_ref": progress_ref, "completion_ref": completion_ref, "accepted_public_grants": receipt_fields, "accepted_listeners": ["demon", "detective", "huo", "shen", "su"]}))
         i = i + 1
     return result
 

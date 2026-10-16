@@ -1,3 +1,14 @@
+fn dvp_choice_groups(actions):
+    var groups = []
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        if dv_has_key(action, "personal_choice"):
+            let group = action.personal_choice.group
+            groups = dv_with(groups, group, dv_append(dv_find(groups, group, []), action))
+        i = i + 1
+    return groups
+
 // Ordinal personal values are owned by the subject, not by the proposed action.
 
 fn dvp_personal_ready(mind, choice):
@@ -104,9 +115,12 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
             value_index = value_index + 1
         if first <= 0:
             return false
+    var alternatives = actor.actions
+    if dv_has_key(actor, "planning_choice_groups"):
+        alternatives = dv_find(actor.planning_choice_groups, choice.group, [])
     var i = 0
-    while (i < rt_count(actor.actions)):
-        let other = actor.actions[i]
+    while (i < rt_count(alternatives)):
+        let other = alternatives[i]
         if (other.id != action.id and dv_has_key(other, "personal_choice")):
             if (other.personal_choice.group == choice.group and dvp_personal_ready(mind, other.personal_choice)):
                 if (dvp_eligible_base(actor, other, mind, relevant) and dvp_owner_requirements(actor, other, mind) and dvp_normative_ready(actor, other, mind) and dvp_personal_better(order, other.personal_choice, choice)):
@@ -117,6 +131,8 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
 // Norms affect this owner's choice; they never become physical prohibitions.
 fn dvp_normative_ready(actor, action, mind):
     let method = dv_find(action, "normative_method", "")
+    if method == "":
+        return true
     let rules = dv_find(actor.policy, "norm_rules", [])
     let order = dv_find(actor.policy, "value_order", [])
     let choice = dv_find(action, "personal_choice", {"promotes": [], "sacrifices": []})

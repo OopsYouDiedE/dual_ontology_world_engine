@@ -667,7 +667,90 @@ fn dvs_proposal_reassess(actor, decision, events, time, parent):
                 seen = dv_append(seen, proposal_id)
     return dv_with_many(actor, {"interpretations": interpretations, "policy": dv_with(actor.policy, "reason_budget", remaining), "last_interpretation_event": last, "reassessed_proposals": seen, "last_cognitive_event": cognitive})
 
+fn dvs_receive_scheduled_speech(listener, message, events, time):
+    let speech = message.speech
+    let literal = speech.literal_ast
+    let bindings = dv_find(speech, "referents", [])
+    let source = message.source
+    let speaker_id = message.speaker
+    let action_id = message.action_id
+    let audibility = message.audibility
+    var before = listener.mind
+    var parsed = dvs_speech_map(before, literal, bindings)
+    var policy = listener.policy
+    var trust = dv_find(dv_find(listener.policy, "speaker_trust", []), speaker_id, 0.5)
+    var decision = dvs_speech_proposal_decision(before, policy, speech, trust)
+    var observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
+    var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(listener.policy, "observation_threshold", 0.5))
+    var receipt = dv_update_mind(before, observations, before.revision, profile)
+    var after = receipt.world
+    var interpretations = dv_find(listener, "interpretations", [])
+    var last_interpretation = dv_find(listener, "last_interpretation_event", "")
+    var candidates_actual = dvs_speech_candidates(policy, speech)
+    var n = 0
+    var parse_event = false
+    var proposal_event = false
+    if (decision.status == "ordinary"):
+        false
+    else:
+        proposal_event = dvs_event_prepared(events, "proposal_receipt", listener.id, time, dvs_speech_cognitive_parents(dv_single(source), dv_find(listener, "last_cognitive_event", "")), dv_with_many(decision, {"source_event": source, "mind_before": before, "mind_after": before}))
+        proposal_event = dvs_event_prepared(events, "proposal_adoption", listener.id, time, dv_pair(source, proposal_event), dv_with_many(decision, {"source_event": source, "mind_before": before, "mind_after": after}))
+    var local_2 = false
+    if (proposal_event == false):
+        local_2 = dv_single(source)
+    else:
+        local_2 = dv_pair(source, proposal_event)
+    parse_event = dvs_event_prepared(events, "listener_parse", listener.id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with_many({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, {"source_event": source, "speech": speech, "presuppositions": dvs_speech_presuppositions(before, speech), "audibility": audibility, "observation_profile": profile, "proposal_decision": decision}))
+    listener = dvs_receive_request(listener, speech, parse_event, source, speaker_id)
+    listener = dv_with(listener, "received_speeches", dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker_id, "action_id": action_id, "parse_event": parse_event, "source_event": source}))
+    while (n < rt_count(candidates_actual)):
+        var candidate = candidates_actual[n]
+        var interpretation = (dvs_listener_mapping(after, policy, bindings) × candidates_actual[n])
+        var interpretations_before = dv_clone(interpretations)
+        interpretation = dv_with_many(interpretation, {"source_event": source, "referents": bindings})
+        var local_3 = false
+        if dv_has_key(interpretations, candidate.id):
+            local_3 = (dv_get(interpretations, candidate.id).status == "accepted")
+        else:
+            local_3 = false
+        if dv_and((interpretation.status == "withdrawn"), (not local_3)):
+            interpretation = dv_with(interpretation, "status", "rejected")
+        interpretations = dv_with(interpretations, candidate.id, interpretation)
+        var local_4 = false
+        if (interpretation.status == "withdrawn"):
+            local_4 = "implicature_withdrawn"
+        else:
+            local_4 = "implicature"
+        var local_5 = false
+        if (last_interpretation == ""):
+            local_5 = dv_pair(source, parse_event)
+        else:
+            local_5 = dv_list3(source, parse_event, last_interpretation)
+        last_interpretation = dvs_event_prepared(events, local_4, listener.id, time, local_5, dv_with_many(interpretation, {"source_event": source, "mind_before": after, "mind_after": after, "interpretations_before": interpretations_before, "interpretations_after": interpretations}))
+        n = (n + 1)
+    var local_6 = false
+    if (decision.status == "ordinary"):
+        local_6 = dv_find(listener, "proposals", [])
+    else:
+        local_6 = dv_append(dv_find(listener, "proposals", []), dv_with(decision, "source_event", source))
+    return dvs_proposal_reassess(dv_with_many(listener, {"mind": after, "interpretations": interpretations, "last_interpretation_event": last_interpretation, "proposals": local_6, "last_cognitive_event": parse_event}), decision, events, time, parse_event)
+
+fn dvs_drain_received_speech(actor, events, time):
+    let messages = dv_find(actor, "pending_heard", [])
+    var current = actor
+    if 0 < rt_count(messages):
+        current = dv_with(actor, "pending_heard", [])
+    var i = 0
+    while i < rt_count(messages):
+        current = dvs_receive_scheduled_speech(current, messages[i], events, time)
+        i = i + 1
+    return current
+
 fn dvs_speech(actors, speaker_index, action, events, time, parent, physical):
+    return dvs_speech_owned(dv_clone(actors), speaker_index, action, events, time, parent, physical)
+
+// Linear session ownership: replace changed actors; snapshots were independently frozen.
+fn dvs_speech_owned(actors, speaker_index, action, events, time, parent, physical):
     var speaker = actors[speaker_index]
     var speech = action.speech
     var speaker_mind = speaker.mind
@@ -675,7 +758,7 @@ fn dvs_speech(actors, speaker_index, action, events, time, parent, physical):
     var literal = speech.literal_ast
     var claim = dvs_speech_map(speaker_mind, literal, bindings)
     var listeners = dv_find(action, "listeners", [])
-    var next = dv_clone(actors)
+    var next = actors
     var i = 0
     var source = false
     var visited = []
@@ -712,65 +795,12 @@ fn dvs_speech(actors, speaker_index, action, events, time, parent, physical):
                 if (not dvs_speech_hearing(speaker, listener, speech, physical)):
                     dvs_event(events, "speech_unheard", listener_id, time, dv_single(source), {"reason": "no-audibility-grant", "source_event": source})
                 else:
-                    var before = listener.mind
-                    var parsed = dvs_speech_map(before, literal, bindings)
-                    var policy = listener.policy
-                    var trust = dv_find(dv_find(listener.policy, "speaker_trust", []), speaker.id, 0.5)
-                    var decision = dvs_speech_proposal_decision(before, policy, speech, trust)
-                    var observations = dvs_speech_received_observations(before, parsed, source, speaker.id, time, decision)
-                    var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(listener.policy, "observation_threshold", 0.5))
-                    var receipt = dv_update_mind(before, observations, before.revision, profile)
-                    var after = receipt.world
-                    var interpretations = dv_find(listener, "interpretations", [])
-                    var last_interpretation = dv_find(listener, "last_interpretation_event", "")
-                    var candidates_actual = dvs_speech_candidates(policy, speech)
-                    var n = 0
-                    var parse_event = false
-                    var proposal_event = false
-                    if (decision.status == "ordinary"):
-                        false
+                    let message = {"speech": speech, "source": source, "speaker": speaker.id, "action_id": action.id, "received_time": time, "audibility": {"speaker_location": dvs_emission_location(speaker, speech, physical), "listener_location": dv_find(listener, "location", ""), "hearing_grants": dv_find(listener, "hearing_grants", [])}}
+                    if dv_find(listener, "scheduled_action", false) != false:
+                        next = dvs_replace(next, target_index, dv_with(listener, "pending_heard", dv_append(dv_find(listener, "pending_heard", []), message)))
+                        dvs_event(events, "speech_received_pending", listener.id, time, [source], {"source_event": source, "audibility": message.audibility})
                     else:
-                        proposal_event = dvs_event_prepared(events, "proposal_receipt", listener_id, time, dvs_speech_cognitive_parents(dv_single(source), dv_find(listener, "last_cognitive_event", "")), dv_with_many(decision, {"source_event": source, "mind_before": before, "mind_after": before}))
-                        proposal_event = dvs_event_prepared(events, "proposal_adoption", listener_id, time, dv_pair(source, proposal_event), dv_with_many(decision, {"source_event": source, "mind_before": before, "mind_after": after}))
-                    var local_2 = false
-                    if (proposal_event == false):
-                        local_2 = dv_single(source)
-                    else:
-                        local_2 = dv_pair(source, proposal_event)
-                    parse_event = dvs_event_prepared(events, "listener_parse", listener_id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with_many({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, {"source_event": source, "speech": speech, "presuppositions": dvs_speech_presuppositions(before, speech), "audibility": {"speaker_location": dvs_emission_location(speaker, speech, physical), "listener_location": dv_find(listener, "location", ""), "hearing_grants": dv_find(listener, "hearing_grants", [])}, "observation_profile": profile, "proposal_decision": decision}))
-                    listener = dvs_receive_request(listener, speech, parse_event, source, speaker.id)
-                    listener = dv_with(listener, "received_speeches", dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker.id, "action_id": action.id, "parse_event": parse_event, "source_event": source}))
-                    while (n < rt_count(candidates_actual)):
-                        var candidate = candidates_actual[n]
-                        var interpretation = (dvs_listener_mapping(after, policy, bindings) × candidates_actual[n])
-                        var interpretations_before = dv_clone(interpretations)
-                        interpretation = dv_with_many(interpretation, {"source_event": source, "referents": bindings})
-                        var local_3 = false
-                        if dv_has_key(interpretations, candidate.id):
-                            local_3 = (dv_get(interpretations, candidate.id).status == "accepted")
-                        else:
-                            local_3 = false
-                        if dv_and((interpretation.status == "withdrawn"), (not local_3)):
-                            interpretation = dv_with(interpretation, "status", "rejected")
-                        interpretations = dv_with(interpretations, candidate.id, interpretation)
-                        var local_4 = false
-                        if (interpretation.status == "withdrawn"):
-                            local_4 = "implicature_withdrawn"
-                        else:
-                            local_4 = "implicature"
-                        var local_5 = false
-                        if (last_interpretation == ""):
-                            local_5 = dv_pair(source, parse_event)
-                        else:
-                            local_5 = dv_list3(source, parse_event, last_interpretation)
-                        last_interpretation = dvs_event_prepared(events, local_4, listener_id, time, local_5, dv_with_many(interpretation, {"source_event": source, "mind_before": after, "mind_after": after, "interpretations_before": interpretations_before, "interpretations_after": interpretations}))
-                        n = (n + 1)
-                    var local_6 = false
-                    if (decision.status == "ordinary"):
-                        local_6 = dv_find(listener, "proposals", [])
-                    else:
-                        local_6 = dv_append(dv_find(listener, "proposals", []), dv_with(decision, "source_event", source))
-                    next = dvs_replace(next, target_index, dvs_proposal_reassess(dv_with_many(listener, {"mind": after, "interpretations": interpretations, "last_interpretation_event": last_interpretation, "proposals": local_6, "last_cognitive_event": parse_event}), decision, events, time, parse_event))
+                        next = dvs_replace(next, target_index, dvs_receive_scheduled_speech(listener, message, events, time))
             i = (i + 1)
     return next
 

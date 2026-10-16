@@ -68,9 +68,19 @@ fn dv_action_cost_settle(ledger, receipt, actual, outcome):
     next = dv_with(next, "spent", dv_action_cost_add(ledger.spent, actual))
     return dv_with(next, "receipts", dv_with(ledger.receipts, event, settled))
 
+// A queued action has already waited on the shared world clock.
+// Its ledger still pays the full duration once; immediate callers retain elapsed-time settlement.
+fn dv_action_cost_completion_time(physical, receipt, actual):
+    let now = dv_find(physical, "time", 0)
+    if dv_has_key(receipt, "scheduled_start"):
+        let due = receipt.scheduled_start + actual.time
+        dv_require(due <= now, "Scheduled action has not finished waiting")
+        return now
+    return now + actual.time
+
 fn dv_action_cost_clock_commit(physical, receipt, actual, status):
     var event = receipt.event
-    var time = (dv_find(physical, "time", 0) + actual.time)
+    var time = dv_action_cost_completion_time(physical, receipt, actual)
     var history = dv_with_many({"id": event, "time": time, "kind": "action-cost", "status": status}, {"receipt": receipt, "actual": actual})
     return dv_with_many(physical, {"time": time, "revision": (physical.revision + 1), "seen": dv_append(physical.seen, event), "history": dv_append(physical.history, history)})
 
@@ -81,7 +91,7 @@ fn dv_action_cost_execute(ledger, physical, quote, actual):
     var admitted = dv_action_cost_admit(ledger, physical, quote)
     var receipt = admitted.receipt
     dv_action_cost_actual(receipt, actual)
-    var execution = dv_execute(physical, receipt.action, receipt.event, (dv_find(physical, "time", 0) + actual.time), receipt.world_revision)
+    var execution = dv_execute(physical, receipt.action, receipt.event, dv_action_cost_completion_time(physical, receipt, actual), receipt.world_revision)
     if (execution.status == "applied"):
         false
     else:

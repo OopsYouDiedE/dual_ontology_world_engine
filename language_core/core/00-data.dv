@@ -39,24 +39,7 @@ fn dv_clone(value):
     return rt_copy_value(value)
 
 fn dv_same(a, b):
-    if (a == b):
-        return true
-    else:
-        if rt_is_list(a):
-            if rt_is_list(b):
-                if (rt_count(a) == rt_count(b)):
-                    var i = 0
-                    var same = true
-                    while dv_and(same, (i < rt_count(a))):
-                        same = dv_same(a[i], b[i])
-                        i = (i + 1)
-                    return same
-                else:
-                    return false
-            else:
-                return false
-        else:
-            return (a == b)
+    return rt_same_value(a, b)
 
 fn dv_append(items, value):
     var r = dv_clone(items)
@@ -102,22 +85,7 @@ fn dv_get(record, key):
     return record[index][1]
 
 fn dv_with(record, key, value):
-    var r = []
-    var i = 0
-    var found = false
-    while (i < rt_count(record)):
-        var entry = record[i]
-        if (entry[0] == key):
-            rt_push(r, dv_pair(key, dv_clone(value)))
-            found = true
-        else:
-            rt_push(r, dv_clone(entry))
-        i = (i + 1)
-    if found:
-        false
-    else:
-        rt_push(r, dv_pair(key, dv_clone(value)))
-    return r
+    return rt_record_with(record, key, value)
 
 fn dv_m2(k1, v1, k2, v2):
     return dv_pair(dv_pair(k1, v1), dv_pair(k2, v2))

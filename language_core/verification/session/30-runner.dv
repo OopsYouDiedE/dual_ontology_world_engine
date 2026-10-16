@@ -162,19 +162,91 @@ fn dvs_session_open(story, capability):
         var actor = actors[i]
         if dv_and((capability == "disabled"), (actor.id == dv_find(story, "capability_actor", ""))):
             actor = dv_with(actor, "policy", dv_with(actor.policy, "model_budget", 0))
-        actors = dvs_replace(actors, i, dv_with(actor, "ledger", dv_action_cost_ledger(actor.id, actor.balance)))
+        actors = dvs_replace(actors, i, dv_with_many(actor, {"ledger": dv_action_cost_ledger(actor.id, actor.balance), "planning_limit": dv_find(actor.policy, "plan_budget", 0)}))
         i = (i + 1)
     initial = {"physical": physical, "actors": actors}
     dvs_event_prepared(events, "session_start", "", dv_find(physical, "time", 0), [], dv_with({"initial": initial, "capability": capability, "source_refs": dv_find(story, "source_refs", [])}, "time_origin", {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}))
     return {"story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial}
 
 fn dvs_session_active(state):
-    return dv_and((not (state.horizon < dv_find(state.physical, "time", 0))), dv_and((state.executed < state.limit), (state.idle < rt_count(state.actors))))
+    return dv_and((not (state.horizon < dv_find(state.physical, "time", 0))), dv_and((state.executed < state.limit), (state.idle < rt_count(state.actors) or 0 < dvs_scheduled_count(state.actors))))
+
+// Each owner keeps one chosen action while its declared duration elapses.
+fn dvs_scheduled_count(actors):
+    var count = 0
+    var i = 0
+    while i < rt_count(actors):
+        if dv_find(actors[i], "scheduled_action", false) != false:
+            count = count + 1
+        i = i + 1
+    return count
+
+fn dvs_dispatch_due(state, index):
+    let queued = state.actors[index].scheduled_action
+    let time = state.physical.time
+    let actor = dvs_drain_received_speech(dv_with(state.actors[index], "scheduled_action", false), state.events, time)
+    let action = queued.action
+    let bounds = dv_action_cost_bounds(queued.model.minimum, queued.model.maximum)
+    let event = rt_cat("action", rt_show(state.executed))
+    let quote = dv_with(dv_action_cost_quote(actor.ledger, state.physical, dv_find(action, "law", action.id), event, bounds), "scheduled_start", queued.start)
+    var events = state.events
+    let parent = dvs_event(events, "cost_quote", actor.id, time, [queued.parent], quote)
+    let pending = {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": actor.id, "mind": actor.mind, "model": queued.model, "action_event": event, "ledger": actor.ledger, "quote": quote, "choice": queued.choice}
+    return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, actor), "events": events, "pending": pending, "idle": 0})
+
+// Scan eligibility without running cognition. Ties preserve cyclic actor order.
+fn dvs_schedule(state):
+    var current = state
+    var due_index = -1
+    var due_time = state.horizon + 1
+    var ready_index = -1
+    var offset = 0
+    var index = state.cursor
+    while offset < rt_count(state.actors):
+        let actor = state.actors[index]
+        let queued = dv_find(actor, "scheduled_action", false)
+        if queued != false:
+            if queued.due < due_time:
+                due_time = queued.due
+                due_index = index
+        else:
+            if ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
+                ready_index = index
+        index = index + 1
+        if index == rt_count(state.actors):
+            index = 0
+        offset = offset + 1
+    if due_index >= 0 and due_time <= state.physical.time:
+        return dvs_dispatch_due(state, due_index)
+    if ready_index >= 0:
+        return dvs_owned_state_update(state, {"cursor": ready_index})
+    if due_index >= 0:
+        var physical = state.physical
+        var events = state.events
+        let parent = dvs_event(events, "action_wait", "", physical.time, [], {"until": due_time, "waiting": dvs_scheduled_count(state.actors)})
+        // Visit every minute boundary so interval-based environment laws are not skipped.
+        while physical.time < due_time:
+            var next_time = physical.time + 1
+            if due_time < next_time:
+                next_time = due_time
+            physical = dvs_environment(dv_with(physical, "time", next_time), state.story, events, parent)
+        current = dvs_owned_state_update(state, {"physical": physical, "events": events, "idle": 0})
+        return dvs_dispatch_due(current, due_index)
+    return dvs_owned_state_update(state, {"idle": rt_count(state.actors)})
+
+fn dvs_debug_phase(story, actor, time, phase):
+    if dv_find(story, "debug_phase_progress", false):
+        rt_print(rt_json_stringify({"type": "engine_phase", "actor": actor, "game_time": time, "phase": phase}))
+    return true
 
 fn dvs_session_prepare(state):
     if dv_has_key(state, "pending"):
         return state
     if dv_find(state, "awaiting_player", false) and dv_find(state, "player_selection", "") == "":
+        return state
+    if dv_find(state, "player_selection", "") == "":
+        state = dvs_schedule(state)
+    if dv_has_key(state, "pending") or not dvs_session_active(state):
         return state
     let story = state.story
     var physical = state.physical
@@ -193,7 +265,7 @@ fn dvs_session_prepare(state):
     var status = state.status
     var initial = state.initial
     var index = cursor
-    var actor = actors[cursor]
+    var actor = dv_with(actors[cursor], "decision_time", physical.time)
     var parent = events[(rt_count(events) - 1)].id
     var time = dv_find(physical, "time", 0)
     var local_1 = false
@@ -206,12 +278,15 @@ fn dvs_session_prepare(state):
         idle = (idle + 1)
     else:
         if dv_find(state, "player_selection", "") == "":
-            actor = dv_with(actor, "policy", dv_with(actor.policy, "remaining_game_time", (horizon - time)))
+            actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"remaining_game_time": horizon - time, "plan_budget": dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))}))
+            dvs_debug_phase(story, actor.id, time, "cognition-start")
+            actor = dvs_drain_received_speech(actor, events, time)
             actor = dvs_notice_peers(actor, physical, actors, events, time, parent)
             actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
             actor = dvs_capture_public_topics(actor, events, time, parent)
             actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
             actor = dvs_prepare_speech_choices(actor, events, time, parent)
+            dvs_debug_phase(story, actor.id, time, "cognition-end")
         var choice = false
         if dv_find(state, "player_actor", "") == actor.id:
             let selection = dv_find(state, "player_selection", "")
@@ -223,10 +298,13 @@ fn dvs_session_prepare(state):
             else:
                 choice = dvs_player_choice(actor, selection)
         else:
+            dvs_debug_phase(story, actor.id, time, "choice-start")
             choice = dvs_choose(actor, bindings, costs)
+            dvs_debug_phase(story, actor.id, time, "choice-end")
+        actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
         actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
-        actor = dv_with(actor, "policy", dv_with(actor.policy, "plan_budget", (dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)))
+        actor = dv_with_many(actor, {"planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
         if (action == false):
             if (0 < dv_find(choice, "time_blocked", 0)):
                 duration_blocked = true
@@ -251,10 +329,11 @@ fn dvs_session_prepare(state):
                     dvs_event(events, "resource_rejected", id, time, dv_single(parent), {"action": action, "ledger": ledger})
                     idle = (idle + 1)
                 else:
-                    var quote = dv_action_cost_quote(ledger, physical, dv_find(action, "law", action.id), action_event, bounds)
-                    parent = dvs_event(events, "cost_quote", id, time, dv_single(parent), quote)
-                    actors = dvs_replace(actors, index, actor)
-                    return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": "", "pending": {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": id, "mind": mind, "model": model, "action_event": action_event, "ledger": ledger, "quote": quote, "choice": choice}}
+                    let queued = {"action": action, "choice": {"relevant_refs": choice.relevant_refs}, "model": model, "start": time, "due": time + model.actual.time, "parent": parent}
+                    actor = dv_with(actor, "scheduled_action", queued)
+                    dvs_event(events, "action_scheduled", id, time, [parent], {"action_id": action.id, "due": queued.due, "duration": model.actual.time})
+                    idle = 0
+
     actors = dvs_replace(actors, index, actor)
     return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
 
@@ -291,6 +370,7 @@ fn dvs_session_complete(state, receipt):
     dv_require(receipt.action_event == action_event, "Completion belongs to another action")
     var before = physical
     var result = false
+    dv_require(receipt.actual.time == pending.model.actual.time, "Scheduled receipt duration differs from declared duration")
     model = dv_with(model, "actual", receipt.actual)
     parent = dvs_event(events, "host_completion", id, time, dv_single(parent), receipt)
     var local_2 = false
@@ -425,13 +505,15 @@ fn dvs_session_complete(state, receipt):
         actor = dv_with(actor, "answer_attempt_signatures", dv_with(dv_find(actor, "answer_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
     if (action.kind == "replay"):
         actor = dv_with(actor, "replay_attempt_signatures", dv_with(dv_find(actor, "replay_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
+    if action.kind == "inspect" and result.execution.status == "applied":
+        actor = dv_with(actor, "inspection_attempt_signatures", dv_with(dv_find(actor, "inspection_attempt_signatures", []), action.id, dvp_inspection_signature(actor, action, actor.mind)))
     actor = dv_with(actor, "attempts", dv_with(dv_find(actor, "attempts", []), action.id, actor.mind.revision))
     actor = dv_with_many(actor, {"used": dv_append(dv_find(actor, "used", []), action.id), "policy": dv_with(actor.policy, "budget", (actor.policy.budget - 1))})
     actors = dvs_replace(actors, index, actor)
     if dv_and(dv_has_key(action, "public_observers"), (result.execution.status == "applied")):
         actors = dvs_visible_action_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
     if dv_and(dv_has_key(action, "speech"), (result.execution.status == "applied")):
-        actors = dvs_speech(actors, index, action, events, time, parent, physical)
+        actors = dvs_speech_owned(actors, index, action, events, time, parent, physical)
         actors = dvs_public_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
     actor = actors[index]
     executed = (executed + 1)
