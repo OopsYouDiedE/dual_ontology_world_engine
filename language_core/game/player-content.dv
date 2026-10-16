@@ -51,12 +51,12 @@ fn c1_player_display(action):
     if c1_ui_ends(action.id, ".touch_latch"):
         result = dv_with(result, "label", "走近并触碰插闩")
     if action.kind == "answer":
-        let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在茶水间", "V3_0": "门外没有人，声音经铜管传来", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何不听门边的劝阻", "original_q2_complete": "提交完整推演", "original_q2_partial": "说明声音的来源"}
+        let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在备餐间", "V3_0": "声音来自铜口在墙内与门框处的管道漏音", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何信任霍铎的速记并闩门"}
         let id = dv_find(action, "answer_id", "")
         if dv_has_key(answers, id):
             result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
     if c1_ui_ends(action.id, ".reask_question"):
-        let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust"), "original_q2_complete": "闩门之时，此人可曾听见门外的呼喊？"}
+        let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust")}
         result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
     if c1_ui_ends(action.id, ".compare_sole"):
         result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "马球靴的鞋底纹路，与门前灰上的印迹一模一样。靴齿里嵌着同样的炭灰。", "when": c1_statement("boots_fit")} ]})

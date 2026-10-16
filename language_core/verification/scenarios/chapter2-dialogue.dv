@@ -48,8 +48,37 @@ fn c2d_rows():
     var rows = []
     let contract_ref = c2d_ref("contract_full_text")
     let contract_source = c1_source("docs/design-standard.md", 0, "主动询问契约全文")
-    rt_push(rows, dv_with(c2d_question("detective.c2.ask-contract", "living_hall", dv_true(), "demon", "contract.full-text", "请把约束你的契约全文告诉我们。", [contract_ref], contract_source), "category", "contract"))
-    rt_push(rows, c2d_reply("demon", "demon.c2.contract-full-text", "living_hall", dv_true(), dv_fact(contract_ref, c1_op_contract_text()), "contract.full-text", c1_op_contract_text(), contract_source))
+    let trace = dv_all([dv_fact(c1_knowledge("shelf_old"), true), dv_fact(c1_knowledge("hand_not_mine"), true), dv_fact(dv_ref("demon.body", "state", "hand_shape"), "long-narrow-hand"), dv_fact(dv_ref("demon.body", "state", "shelf_print_owner"), "demon")])
+    let rule4 = dv_fact(c2d_ref("school_rule4"), "我所立之规，皆张贴于此。")
+    var authority = c2d_question("detective.c2.ask-seal-authority", "living_hall", trace, "demon", "contract.seal-authority", "架沿的窄手印与你的手形相合。你说封存之物是你取走的；谁授权你封存？", [], contract_source)
+    authority = dv_with_many(authority, {"category": "contract", "received_speech_requirement": {"speaker": "demon", "action_id": "demon.departure.answer-print"}})
+    rt_push(rows, authority)
+    let sealed = dv_fact(c2d_ref("seal_authority"), "契约")
+    rt_push(rows, c2d_reply("demon", "demon.c2.seal-authority", "living_hall", dv_true(), sealed, "contract.seal-authority", "封存的权限来自契约。", contract_source))
+    var other_rules = c2d_question("detective.c2.ask-other-rules", "lecture", dv_all([rule4, sealed]), "demon", "contract.other-rules", "第四条说“我所立之规，皆张贴于此”。是否意味着尚有非你所立之规？", [], contract_source)
+    other_rules = dv_with_many(other_rules, {"category": "contract", "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.school-rule4"}})
+    rt_push(rows, other_rules)
+    rt_push(rows, c2d_reply("demon", "demon.c2.other-rules", "lecture", dv_true(), dv_fact(c2d_ref("authority_bounded"), true), "contract.other-rules", "是。还有我也须遵守的契约。", contract_source))
+    var origin = c2d_question("detective.c2.ask-rule-authority", "lecture", rule4, "demon", "contract.rule-authority", "你既须遵守契约，又由契约取得封存权限，那么契约是谁立的？权限究竟从哪里来？", [], contract_source)
+    origin = dv_with_many(origin, {"category": "contract", "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.other-rules"}})
+    rt_push(rows, origin)
+    let bounded = dv_fact(c2d_ref("authority_bounded"), true)
+    rt_push(rows, c2d_reply("demon", "demon.c2.rule-authority", "lecture", dv_true(), bounded, "contract.rule-authority", "我也受契约约束。", contract_source))
+    var full = c2d_question("detective.c2.ask-contract", "lecture", dv_all([trace, rule4, sealed, bounded]), "demon", "contract.full-text", "那么请把约束你、也规定你权限来源的契约全文告诉我们。", [contract_ref], contract_source)
+    full = dv_with_many(full, {"category": "contract", "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.rule-authority"}})
+    rt_push(rows, full)
+    rt_push(rows, c2d_reply("demon", "demon.c2.contract-full-text", "lecture", dv_true(), dv_fact(contract_ref, c1_op_contract_text()), "contract.full-text", c1_op_contract_text(), contract_source))
+    let people = c2_people()
+    var p = 0
+    while p < rt_count(people):
+        let known_contract = dv_fact(contract_ref, c1_op_contract_text())
+        rt_push(rows, c2d_row(people[p], rt_cat(people[p], ".c2.share-contract"), "living_hall", known_contract, known_contract, c1_op_contract_text(), contract_source))
+        p = p + 1
+    let daily = c2daily_rows()
+    var d = 0
+    while d < rt_count(daily):
+        rt_push(rows, daily[d])
+        d = d + 1
     let intros = c2d_introductions()
     var i = 0
     while i < rt_count(intros):
@@ -111,7 +140,7 @@ fn c2d_rows():
     return rows
 
 fn c2d_council_when():
-    return dv_all([c2_window(5, 360, 540), dv_fact(c2_ref("c2.weather", "daylight"), true)])
+    return dv_all([c2_window(5, 450, 570), dv_fact(c2_ref("c2.weather", "daylight"), true)])
 
 fn c2d_stance(actor, norm):
     let accepted = dv_fact(c2_own(actor, rt_cat("accepted.", norm)), true)
@@ -122,6 +151,15 @@ fn c2d_stance(actor, norm):
             return c1_any(accepted, dv_fact(c2_ref(c2_norm_object(norm), "proposed"), true))
         i = i + 1
     return accepted
+
+axiom c2d_row_law(row):
+    var effects = dv_single(dv_assign(c2d_mark(row.actor, row.id), true))
+    let extra = dv_find(row, "effects", [])
+    var i = 0
+    while i < rt_count(extra):
+        rt_push(effects, extra[i])
+        i = i + 1
+    return dv_axiom("c2d_row_law", 1, dv_all([c2_at(row.actor, row.room), row.when]), effects)
 
 axiom c2d_spoke_law(actor, method, room):
     return dv_axiom("c2d_spoke_law", 1, c2_at(actor, room), dv_single(dv_assign(c2d_mark(actor, method), true)))
@@ -134,7 +172,13 @@ fn c2d_action(row):
     var speech = dv_with_many(c1_speech(row.literal, row.source, "chapter2-owned-statement"), {"surface": row.text, "channel": "local"})
     if dv_has_key(row, "request"):
         speech = dv_with_many(speech, {"request": row.request, "utterance_type": "question"})
-    var action = dv_with_many(c2_action(row.id, "talk", known, c2_at(row.actor, row.room), row.id, dv_single(c2d_mark(row.actor, row.id)), row.text, row.source), {"speech": speech, "listeners": c2d_people(), "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
+    var grants = dv_single(c2d_mark(row.actor, row.id))
+    let effects = dv_find(row, "effects", [])
+    var e = 0
+    while e < rt_count(effects):
+        rt_push(grants, effects[e].ref)
+        e = e + 1
+    var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": c2d_people(), "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
     if row.actor == "demon":
         action = c1_authorized_speech(action)
     if dv_has_key(row, "response_topic"):
@@ -175,7 +219,7 @@ axiom c2d_patient_take_record_law():
     return dv_axiom("c2d_patient_take_record_law", 1, original.premise, dv_append(original.effects, dv_assign(c2d_person_ref("mora", "patient_food_reason"), true)))
 
 fn c2d_objects():
-    var objects = [c2_object("c2.dialogue", "lecture", {"indoor_rule": dv_field("入夜之后，诸位留于室内。"), "indoor_definition_given": dv_field(false), "contract_full_text": dv_field(c1_op_contract_text())})]
+    var objects = [c2_object("c2.dialogue", "lecture", {"indoor_rule": dv_field("入夜之后，诸位留于室内。"), "indoor_definition_given": dv_field(false), "contract_full_text": dv_field(c1_op_contract_text()), "school_rule4": dv_field("我所立之规，皆张贴于此。"), "seal_authority": dv_field("契约"), "authority_bounded": dv_field(true)})]
     let courses = c2d_curriculum()
     var i = 0
     while i < rt_count(courses):
@@ -202,18 +246,35 @@ fn c2d_objects():
     return objects
 
 fn c2d_case_gate(mind):
-    let counted = dv_read(mind, c2_ref("c2.ledger", "counted"))
-    let remaining = dv_read(mind, c2_ref("c2.counter", "remaining"))
-    let day = dv_read(mind, c2_ref("c2.ledger", "day_recorded"))
-    let night = dv_read(mind, c2_ref("c2.ledger", "night_recorded"))
-    if dv_uncontested(counted) and dv_uncontested(remaining) and dv_uncontested(day) and dv_uncontested(night):
-        if counted.value > 0 and remaining.value + day.value + night.value < counted.value:
-            return dv_all([dv_fact(c2_ref("c2.ledger", "counted"), counted.value), dv_fact(c2_ref("c2.counter", "remaining"), remaining.value), dv_fact(c2_ref("c2.ledger", "day_recorded"), day.value), dv_fact(c2_ref("c2.ledger", "night_recorded"), night.value)])
+    let refs = [c2_ref("c2.ledger", "counted"), c2_ref("c2.ledger", "reserve_received"), c2_ref("c2.counter", "remaining"), c2_ref("c2.ledger", "day_recorded"), c2_ref("c2.ledger", "night_recorded"), c2_ref("c2.ledger", "pending_registered")]
+    var values = []
+    var premises = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        if not dv_uncontested(cell):
+            return dv_not(dv_true())
+        rt_push(values, cell.value)
+        rt_push(premises, dv_fact(refs[i], cell.value))
+        i = i + 1
+    if values[0] > 0 and values[2] + values[3] + values[4] + values[5] < values[0] + values[1]:
+        return dv_all(premises)
     return dv_not(dv_true())
 
 fn c2d_goals(actor):
     var goals = []
     let rows = c2d_rows()
+    let tasks = c2daily_tasks()
+    var t = 0
+    while t < rt_count(tasks):
+        if tasks[t].actor == actor.id:
+            rt_push(goals, c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]))
+        t = t + 1
+    rt_push(goals, c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], actor.mind.time))
+    if actor.id == "shen":
+        rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
+    if actor.id == "ruan":
+        rt_push(goals, c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]))
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
@@ -229,7 +290,7 @@ fn c2d_goals(actor):
         rt_push(goals, c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]))
         rt_push(goals, c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], actor.mind.time))
     if actor.id == "detective":
-        let ledger_fields = ["counted", "day_recorded", "night_recorded"]
+        let ledger_fields = ["counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]
         rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), dv_true(), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], actor.mind.time))
         i = 0
         while i < rt_count(ledger_fields):
@@ -282,7 +343,7 @@ fn c2d_install_scene(scene):
     let rows = c2d_rows()
     i = 0
     while i < rt_count(rows):
-        physical = dv_adopt(physical, c1_method(rows[i].id, c2d_spoke_law(rows[i].actor, rows[i].id, rows[i].room)), "enforce", 1, rows[i].source)
+        physical = dv_adopt(physical, c1_method(rows[i].id, c2d_row_law(rows[i])), "enforce", 1, rows[i].source)
         i = i + 1
     physical = dv_adopt(physical, c1_method("bertrand.c2.watch.start", c2d_start_watch_law()), "enforce", 1, c2d_source("04_案件.story", 25, "有限巡夜"))
     var processes = dv_clone(dv_find(scene, "world_processes", []))
@@ -331,7 +392,7 @@ fn c2d_install_scene(scene):
         while j < rt_count(rows):
             if rows[j].actor == actor.id:
                 rt_push(actions, c2d_action(rows[j]))
-                mind = dv_adopt(mind, c1_method(rows[j].id, c2d_spoke_law(actor.id, rows[j].id, rows[j].room)), "predict", 1, rows[j].source)
+                mind = dv_adopt(mind, c1_method(rows[j].id, c2d_row_law(rows[j])), "predict", 1, rows[j].source)
             j = j + 1
         let watch = c2d_watch_actions(actor.id)
         j = 0

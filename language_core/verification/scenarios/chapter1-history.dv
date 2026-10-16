@@ -595,18 +595,6 @@ fn c1_hist_policy(policy):
 fn c1_hist_expected_answer():
     return dv_all(dv_list3(dv_fact(c1_hist_claim_ref("actual_heard"), "Huo-relay-and-Su-report"), dv_fact(c1_hist_claim_ref("voice_source"), "Tube"), dv_fact(c1_hist_claim_ref("transmission_loss"), "stressed-tail-without-leading-qualification")))
 
-fn c1_hist_complete_action(actor):
-    return dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.original_q2_complete"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "outstanding_complete"), true))), c1_at(actor, "hall"), "", [], c1_source("docs/design-standard.md", 1509, "original-second-question-three-causal-axes")), "answer", c1_hist_expected_answer()), "answer_id", "original_q2_complete"), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss"))
-
-fn c1_hist_partial_action(actor):
-    return dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.original_q2_partial"), "answer", dv_all(dv_list3(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "outstanding_complete"), true), dv_fact(c1_knowledge("remote_voice"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/推演变量与陈述.story", 66, "V3_0")), "answer", dv_fact(c1_knowledge("remote_voice"), true)), "answer_id", "original_q2_partial"), "topic", "original_q2_complete"), "argument_question", "original_q2_complete"), "surface", "门外没有人。那声音是从主楼对着铜口说的，从管接头漏到了门边。")
-
-fn c1_hist_partial_formal():
-    return dv_with(dv_with(dv_with(dv_with(c1_complete_reply("original_q2_partial", dv_fact(c1_knowledge("remote_voice"), true), dv_fact(c1_knowledge("remote_voice"), true), dv_fact(dv_ref("question", "state", "outstanding_complete"), true), c1_hist_expected_answer(), "accept.original_q2_complete", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")), "require_argument", true), "required_argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "accepted_public_grants", dv_single(dv_ref("question", "state", "outstanding_complete"))), "incomplete_reason", "The source statement does not supply the original question's three causal argument slots.")
-
-fn c1_hist_formal_answer():
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": "original_q2_complete", "condition": c1_hist_expected_answer(), "required_support": c1_hist_expected_answer(), "question_match": dv_fact(dv_ref("question", "state", "outstanding_complete"), true)}, "answer_complete", c1_hist_expected_answer()), "require_argument", true), "condition_from_answer", true), "required_argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "accepted_law", "accept.original_q2_complete"), "accepted_public_grants", dv_single(dv_ref("question", "state", "outstanding_complete"))), "accepted_listeners", c1_list_5("demon", "detective", "huo", "shen", "su"))
-
 fn c1_hist_claim_ref(field):
     return dv_ref("history_claims", "state", field)
 
@@ -640,9 +628,6 @@ fn c1_hist_install_character(actor):
     while (index < rt_count(actions)):
         rt_push(new_actions, actions[index])
         index = (index + 1)
-    if (actor.id == "detective"):
-        rt_push(new_actions, c1_hist_complete_action(actor.id))
-        rt_push(new_actions, c1_hist_partial_action(actor.id))
     rt_push(new_actions, c1_hist_share_action(actor.id))
     result = dv_with(result, "actions", new_actions)
     result = dv_with(result, "policy", c1_hist_proposal_policy(result.policy))
@@ -686,8 +671,7 @@ fn c1_hist_install_scene(scene):
     while (index < rt_count(formal)):
         rt_push(new_formal, formal[index])
         index = (index + 1)
-    rt_push(new_formal, c1_hist_formal_answer())
-    rt_push(new_formal, c1_hist_partial_formal())
+    // Original question remains a modeling source, not a fifth submission stage.
     world = dv_add_object(world, c1_hist_author_truth())
     return dv_with(dv_with(dv_with(scene, "actors", result), "physical", world), "formal_answers", c1_protocol_coordinates(new_formal))
 
@@ -697,12 +681,13 @@ fn c1_protocol_coordinates(rules):
     while (i < rt_count(rules)):
         let rule = rules[i]
         var stage = c1_answer_topic(rule.id)
-        if (rule.accepted_law == "accept.original_q2_complete"):
-            stage = "original_q2_complete"
-        let progress_ref = dv_ref("question", "state", rt_cat("level_", stage))
-        let completion_ref = dv_ref("question", "state", rt_cat("solved_", stage))
-        let receipt_fields = dv_append(dv_append(dv_find(rule, "accepted_public_grants", []), progress_ref), completion_ref)
-        rt_push(result, dv_with_many(rule, {"stage": stage, "progress_ref": progress_ref, "completion_ref": completion_ref, "accepted_public_grants": receipt_fields, "accepted_listeners": ["demon", "detective", "huo", "shen", "su"]}))
+        if stage == "auxiliary":
+            rt_push(result, rule)
+        else:
+            let progress_ref = dv_ref("question", "state", rt_cat("level_", stage))
+            let completion_ref = dv_ref("question", "state", rt_cat("solved_", stage))
+            let receipt_fields = dv_append(dv_append(dv_find(rule, "accepted_public_grants", []), progress_ref), completion_ref)
+            rt_push(result, dv_with_many(rule, {"stage": stage, "progress_ref": progress_ref, "completion_ref": completion_ref, "accepted_public_grants": receipt_fields, "accepted_listeners": ["demon", "detective", "huo", "shen", "su"]}))
         i = i + 1
     return result
 

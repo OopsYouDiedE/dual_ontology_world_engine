@@ -303,6 +303,12 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
     var confidence = dv_unit(dv_find(hypothesis, "prior", 0.5))
     var i = 0
     var complete = true
+    // Replay depth bounds ordered causal stages, independently of action-plan depth.
+    let replay_limit = dv_find(actor.policy, "Replay_Depth", rt_count(plan))
+    dv_require(0 <= replay_limit and rt_floor(replay_limit) == replay_limit, "Replay depth must be a nonnegative integer")
+    var replay_stages = 0
+    var replay_stage = -1
+    var replay_limited = false
     var last_at = 0
     dv_domain(mind, "mind")
     dv_require((not (remaining < 0)), "Negative simulation budget")
@@ -330,8 +336,11 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
     if (i < rt_count(assumptions)):
         complete = false
     i = 0
-    while dv_and((i < rt_count(plan)), (not (remaining < 1))):
+    while i < rt_count(plan) and 0 < remaining and (plan[i].stage == replay_stage or replay_stages < replay_limit):
         var step = plan[i]
+        if step.stage != replay_stage:
+            replay_stage = step.stage
+            replay_stages = replay_stages + 1
         var name = plan[i].law
         var at = plan[i].at
         var adoptions = mind.adoptions
@@ -399,6 +408,8 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
                 complete = false
         rt_push(snapshots, {"world": predicted, "coverage": dv_clone(covered), "step": i, "at": at})
         i = (i + 1)
+    if i < rt_count(plan):
+        replay_limited = plan[i].stage != replay_stage and replay_limit <= replay_stages
     if dv_or((rt_count(plan) == 0), (i < rt_count(plan))):
         complete = false
     i = 0
@@ -417,6 +428,9 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
     else:
         local_2 = "declared-plan-complete"
     result = dv_with_many(result, {"calculation_unit": "one-assumption-predict-rule-indexed-dispatch-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison", "stop_reason": local_2})
+    if replay_limited:
+        result = dv_with(result, "stop_reason", "replay-depth-exhausted")
+    result = dv_with_many(result, {"replay_depth_limit": replay_limit, "replay_stages_expanded": replay_stages, "replay_depth_exhausted": replay_limited})
     result = dv_with_many(result, {"work_remaining": result.remaining, "remaining": (total_budget - result.expanded)})
     result = dv_with_many(result, {"original_expanded": result.expanded, "total_expanded": result.expanded})
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
@@ -451,6 +465,8 @@ fn dvs_model_recheck(actor, model):
     else:
         local_1 = "observations-compared"
     result = dv_with_many(result, {"total_expanded": (dv_find(model, "total_expanded", model.expanded) + comparison.expanded), "stop_reason": local_1})
+    if dv_find(model, "replay_depth_exhausted", false):
+        result = dv_with(result, "stop_reason", "replay-depth-exhausted")
     return dv_with_many(result, {"source_revision": mind.revision, "paid_model_event": dv_find(model, "paid_model_event", dv_find(model, "event", "")), "role": "new-observation-recheck"})
 
 fn dvs_sim_response_unknown(world, remaining, reason):

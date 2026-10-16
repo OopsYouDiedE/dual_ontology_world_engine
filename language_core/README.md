@@ -19,12 +19,16 @@ compiler/compiler.dv 生成 C#，Runtime.cs 提供平台 ABI，core/session 执�
 | core/20-observation | 投影、来源、证据聚合和本人更新 |
 | core/30-transport | 通道传播与保留片段 |
 | core/40-value、50-response | 本人价值、关系、状态、回应意图和表达 |
+| core/55-cognition | 接纳门槛、有限域配平、证书核验和刻画提交 |
+| core/60-object-laws | 通用门与通道规律构造 |
 | core/70-reasoning-cost | 论证代价与合理度 |
 | core/80-inspection | 历史检查点和切片查询 |
 | core/90-action-cost | 多维报价、预留、执行和结算 |
 | core/95-model-argument | 模型论证、动态槽位与可撤回采纳 |
+| core/98-debug | 只读事件调试投影 |
+| verification/session | 本人认知、话语、模型、规划、调度和正式 prepare/complete |
 
-接口说明见[core/README.md](core/README.md)。
+完整现行参考见 **[Core README：语法、全部领域接口与正式会话](core/README.md)**，包含可执行表层与启动语法、平台 ABI、世界/知识边界、prepare/complete、模块声明索引和未实现范围。SYNTAX.md 中的完整语言方案与该参考中的现行实现分别阅读。
 
 ## 编辑器检查
 
@@ -43,5 +47,7 @@ compiler/compiler.dv 生成 C#，Runtime.cs 提供平台 ABI，core/session 执�
 ```powershell
 dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
 ```
+
+生产开局可用 `dvg_open_config({seed: 1, profile: "Standard_Detective", detective_zone: "zone_yi"})`；低配档为 `Foolish_Detective`，跨区配置可用 `zone_jia`、`zone_bing`、`zone_ding`。两档当前重演因果深度初值为64/2，行动规划深度为6/2，两种深度独立。开局采样、抗语用、侵蚀与成功结算、夜间正式等待及五日时域边界见 [Core参考](core/README.md#生产认知配置与有据等待)，均为当前工程实现，尚须本轮实际轨迹验收。
 
 正式动作接口见 [Session](Session/README.md)。逻辑会话与 Godot 使用同一 prepare/complete，前者不验证几何。历史源与证据不覆写。

@@ -5,7 +5,7 @@
 // Truth, personally supported claim, topic relevance and actual shown evidence are independent axes.
 // In particular a true location or a bare trust/familiarity claim does not answer the current question.
 // Preserve both original lawful showings: E8 plus executed trial, or the E5 hollow-frame evidence.
-// E9/E10/E11/E7 remain alternative showings; the reason must still be personally supported.
+// E2 or E9/E10 may show the motive; the full reason remains personally supported.
 // Speech candidates share the one actual opening transition. Every fragment uses original words.
 
 fn c1_source(path, line, id):
@@ -38,7 +38,7 @@ fn c1_public_method(action):
     var method = dv_with(dv_with(action, "purpose_refs", dv_find(action, "purpose_refs", action.grants)), "purpose_basis", action.source_refs)
     var kind = action.kind
     if (kind == "answer"):
-        return dv_with(method, "topic", c1_answer_topic(action.answer_id))
+        return c1_public_answer_speech(dv_with(method, "topic", c1_answer_topic(action.answer_id)))
     else:
         if dv_or((kind == "move"), (kind == "replay")):
             return dv_with(method, "repeatable", true)
@@ -1279,7 +1279,7 @@ fn c1_visible_E1():
     return "门内侧的插闩落在闩槽里。\n门外侧另有一道横闩，从这一侧拉不动。\n门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\n门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。\n旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\n末行另写：急病者可经铜口呼叫转移。"
 
 fn c1_inspect_E2(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E2"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("ash_wedge")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 70, "E2")))
+    return c1_once(c1_action(rt_cat(actor, ".inspect.E2"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 70, "E2")))
 
 fn c1_visible_E2():
     return "门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n门底边有一道擦痕。"
@@ -1322,7 +1322,7 @@ fn c1_inspect_E7(actor):
     return c1_once(c1_action(rt_cat(actor, ".inspect.E7"), "inspect", c1_at(actor, "hall"), c1_at(actor, "hall"), "", local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 75, "E7")))
 
 fn c1_visible_E7():
-    return "一块小石板，粉笔速记两行。\n第一行：G：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。"
+    return "一块小石板，粉笔速记两行。\n第一行：主楼：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。"
 
 fn c1_inspect_E8(actor):
     return c1_once(c1_action(rt_cat(actor, ".inspect.E8"), "inspect", c1_at(actor, "hall"), c1_at(actor, "hall"), "", dv_single(c1_knowledge("pipe_layout")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 76, "E8")))
@@ -1586,7 +1586,7 @@ fn c1_latch_contact_action():
     let physical = dv_all(dv_pair(c1_at("detective", "foyer"), dv_fact(c1_latch_contact_ref(), false)))
     let grants = [c1_latch_contact_ref(), c1_knowledge("recalled_bolt"), c1_knowledge("recalled_trust")]
     var action = c1_observe_as(c1_action("detective.touch_latch", "move", known, physical, "detective.touch_latch", grants, c1_latch_contact_source()), "recall", "detective", 0.85)
-    action = dv_with_many(action, {"travel": {"from": "foyer", "to": "foyer", "station": "site:E1"}, "predict_law": "detective.touch_latch", "grant_observation_sources": [{"ref": c1_latch_contact_ref(), "source": "perception", "origin": "own-executed-contact", "trust": 1}], "presentation": {"actor": "detective", "voice": "bodily-flash", "publish_after": "actual-applied-execution", "knowledge_effect": "none", "lines": [{"template": "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。", "bindings": []}, {"template": "霍铎说闩。我就闩了。……我信他。", "bindings": []}, {"template": "一句转述，我就去闩了门。我凭的是什么？", "bindings": []}]}})
+    action = dv_with_many(action, {"resonance": {"passive": true, "basis": [c1_latch_contact_source()]}, "travel": {"from": "foyer", "to": "foyer", "station": "site:E1"}, "predict_law": "detective.touch_latch", "grant_observation_sources": [{"ref": c1_latch_contact_ref(), "source": "perception", "origin": "own-executed-contact", "trust": 1}], "presentation": {"actor": "detective", "voice": "bodily-flash", "publish_after": "actual-applied-execution", "knowledge_effect": "none", "lines": [{"template": "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。", "bindings": []}, {"template": "霍铎说闩。我就闩了。……我信他。", "bindings": []}, {"template": "一句转述，我就去闩了门。我凭的是什么？", "bindings": []}]}})
     return action
 
 fn c1_replay_action(actor):
@@ -1624,9 +1624,6 @@ fn c1_question_object():
 axiom c1_original_question_open(question):
     return dv_axiom("c1_original_question_open", 1, dv_fact(dv_ref(question, "state", "stage"), "voice_source"), dv_single(dv_assign(dv_ref(question, "state", "outstanding_complete"), true)))
 
-axiom c1_original_question_accept(question):
-    return dv_axiom("c1_original_question_accept", 1, dv_fact(dv_ref(question, "state", "outstanding_complete"), true), dv_single(dv_assign(dv_ref(question, "state", "outstanding_complete"), false)))
-
 fn c1_reask_question(actor):
     return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "testimony", "demon", 1), "repeatable", true)
 
@@ -1655,13 +1652,12 @@ fn c1_physical_world():
         var actor = people[i]
         world = dv_add_object(world, c1_position(actor, "hall"))
         world = c1_add_move_methods(world, actor, "enforce")
-        world = c1_latch_contact_method(world, actor, "enforce")
+        world = c1_evidence_contact_methods(c1_latch_contact_method(world, actor, "enforce"), actor, "enforce")
         world = dv_adopt(world, c1_method(rt_cat(actor, ".sound_trial"), c1_sound_trial(actor, "ritual", "hall")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story", 13, "sound_test.003")))
         i = (i + 1)
     world = dv_adopt(world, c1_method("demon.opening", c1_opening_emit("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019")))
     world = dv_adopt(world, c1_method("demon.question", c1_question_emit("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 46, "s5_question.004")))
     world = dv_adopt(world, c1_method("demon.original_question", c1_original_question_open("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 16, "answer_q2.001")))
-    world = dv_adopt(world, c1_method("accept.original_q2_complete", c1_original_question_accept("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")))
     world = c1_adopt_protocol(world)
     return c1_register_speech_contract(world)
 
@@ -1679,7 +1675,7 @@ fn c1_subjective_world(actor):
     if (actor == "detective"):
         mind = dv_store(mind, dv_ref("coat", "identity", "owner"), dv_with(dv_field("detective"), "basis", dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006"))))
     mind = c1_adopt_inferences(mind)
-    return c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict")
+    return c1_evidence_contact_methods(c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict"), actor, "predict")
 
 fn c1_player_policy():
     return dv_with(dv_with(dv_with({"budget": 48, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
@@ -1808,6 +1804,21 @@ fn c1_investigation_actions(actor):
         rt_push(actions, c1_latch_contact_action())
     rt_push(actions, c1_identify_own_lens(actor))
     rt_push(actions, c1_reask_question(actor))
+    rt_push(actions, c1_compare_wedge_action(actor))
+    rt_push(actions, c1_compare_palms_action(actor))
+    if actor == "detective":
+        let rooms = ["hall", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
+        var invitation_room = 0
+        while invitation_room < rt_count(rooms):
+            rt_push(actions, c1_palm_invitation_action(rooms[invitation_room]))
+            invitation_room = invitation_room + 1
+    if actor != "detective":
+        rt_push(actions, c1_deep_resonance_action(actor))
+        let keys = ["voice-source", "original-words", "familiarity"]
+        var key_index = 0
+        while key_index < rt_count(keys):
+            rt_push(actions, c1_answer_conflict_response(actor, keys[key_index]))
+            key_index = key_index + 1
     return c1_public_methods(actions)
 
 fn c1_character(id, dossier):
@@ -1838,10 +1849,10 @@ fn c1_voice_complete():
     return c1_any(dv_all(dv_pair(c1_statement("pipe_layout"), c1_statement("sound_trial"))), dv_all(dv_pair(c1_statement("fork_dent"), c1_statement("frame_hollow"))))
 
 fn c1_words_complete():
-    return c1_any(c1_statement("slate_marks"), c1_statement("score_partial"))
+    return dv_all([c1_statement("slate_marks"), c1_statement("slate_code"), c1_statement("score_partial")])
 
 fn c1_trust_complete():
-    return dv_all(dv_pair(c1_statement("trust_reason"), c1_any(c1_statement("cups_preferences"), c1_any(c1_statement("starter_layers"), c1_any(c1_statement("shelf_old"), c1_statement("slate_marks"))))))
+    return dv_all([c1_statement("trust_reason"), c1_statement("heed_huo"), c1_any(c1_statement("ash_wedge"), c1_any(c1_statement("cups_preferences"), c1_statement("starter_layers")))])
 
 fn c1_complete_reply(id, literal, support, topic, complete, law, source):
     return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": id, "condition": literal, "required_support": support}, "question_match", topic), "answer_complete", complete), "accepted_law", law), "accepted_public_grants", dv_pair(dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"))), "accepted_listeners", dv_single("demon")), "source_refs", dv_single(source))
@@ -1917,7 +1928,7 @@ fn c1_speech(literal, surface, scope):
     return dv_with(dv_with(dv_with({"literal_ast": literal, "referents": [], "scope": scope, "time_anchor": "今晨醒来至当前发言"}, "surface_ref", surface), "presuppositions", []), "implicature_candidates", [])
 
 fn c1_raw_opening_action():
-    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", [])
+    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", [])
 
 fn c1_authorized_speech(action):
     return dv_with(action, "authority_truth_gate", {"required": true, "contract_id": "contract-8", "basis": dv_single(c1_source("docs/design-standard.md", 462, "may-not-deceive-students"))})
@@ -2044,15 +2055,15 @@ fn dvs_scenario_base():
 
 fn c1_question_text(stage):
     if (stage == "prompt"):
-        return "门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"
+        return "门是谁闩上的？"
     else:
         if (stage == "voice_source"):
-            return "门外，有人呼喊吗？"
+            return "苏泠听见的呼喊来自哪里？"
         else:
             if (stage == "words"):
-                return "他喊的是什么？"
+                return "原话是什么？"
             else:
-                return "闩门的人，为何不听门边那位女士的？"
+                return "既听同伴说门外有人，为何仍闩门？"
 
 fn c1_person_policy(id):
     let policy = c1_base_person_policy(id)
@@ -2063,4 +2074,143 @@ fn c1_person_policy(id):
         let stage = stages[i]
         rt_push(bindings, {"topic": stage, "heard_when": dv_fact(dv_ref("question", "state", rt_cat("open_", stage)), true), "completed_when": dv_not(dv_true()), "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")]})
         i = i + 1
-    return dv_with(policy, "topic_bindings", bindings)
+    var updated = dv_with(policy, "topic_bindings", bindings)
+    var palm_goals = dv_find(updated, "goals", [])
+    rt_push(palm_goals, {"kind": "achieve", "proposition": c1_at(id, "R05"), "available_when": dv_fact(c1_palm_invitation_ref(), true), "basis": [c1_source("user", 0, "实际听闻邀请后可自行走到书架旁比对")]})
+    if id == "detective":
+        rt_push(palm_goals, {"kind": "know", "ref": c1_knowledge("hand_not_mine"), "available_when": c1_statement("shelf_old"), "basis": [c1_source("user", 0, "亲见书架手印后本人需要真实掌宽比对")]})
+        let rooms = ["hall", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
+        var invitation_room = 0
+        while invitation_room < rt_count(rooms):
+            rt_push(palm_goals, {"kind": "communicate", "method_id": rt_cat("detective.invite-palms.", rooms[invitation_room]), "available_when": c1_statement("shelf_old"), "basis": [c1_source("user", 0, "亲见书架后请同伴一同比对")]})
+            invitation_room = invitation_room + 1
+    updated = dv_with(updated, "goals", palm_goals)
+    if id != "detective":
+        var goals = dv_find(updated, "goals", [])
+        rt_push(goals, {"kind": "know", "ref": c1_deep_resonance_ref(id), "available_when": c1_statement(c1_deep_resonance_site(id).evidence), "basis": c1_op_desire(id).basis})
+        let keys = ["voice-source", "original-words", "familiarity"]
+        var key_index = 0
+        while key_index < rt_count(keys):
+            rt_push(goals, {"kind": "communicate", "method_id": rt_cat(rt_cat(id, ".respond-defense-conflict."), keys[key_index]), "available_when": c1_at(id, "hall"), "basis": c1_op_desire(id).basis})
+            key_index = key_index + 1
+        updated = dv_with(updated, "goals", goals)
+    return updated
+
+
+// These actions publish evidence only after successful execution at the site.
+fn c1_evidence_contact_ref(actor, evidence):
+    return dv_ref("ritual", "state", rt_cat(rt_cat("compared.", actor), rt_cat(".", evidence)))
+
+fn c1_evidence_contact_premise(actor, evidence):
+    if evidence == "E2":
+        return c1_at(actor, "foyer")
+    return dv_all([c1_at(actor, "R05"), c1_at("detective", "R05"), c1_at("huo", "R05"), c1_at("shen", "R05"), c1_at("su", "R05")])
+
+axiom c1_evidence_contact(actor, evidence):
+    return dv_axiom("c1_evidence_contact", 1, c1_evidence_contact_premise(actor, evidence), [dv_assign(c1_evidence_contact_ref(actor, evidence), true)])
+
+fn c1_evidence_contact_methods(world, actor, mode):
+    var result = world
+    let evidence = ["E2", "E11"]
+    var i = 0
+    while i < rt_count(evidence):
+        let name = rt_cat(rt_cat(actor, ".compare."), evidence[i])
+        result = dv_adopt(result, c1_method(name, c1_evidence_contact(actor, evidence[i])), mode, 1, [c1_source("user", 0, "现场比对；成功Complete后形成证据")])
+        i = i + 1
+    if actor == "detective":
+        let rooms = ["hall", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
+        var invitation_room = 0
+        while invitation_room < rt_count(rooms):
+            result = dv_adopt(result, c1_method(rt_cat("detective.invite-palms.", rooms[invitation_room]), c1_palm_invitation_law(rooms[invitation_room])), mode, 1, [c1_source("user", 0, "亲见手印后实际邀请同行比对")])
+            invitation_room = invitation_room + 1
+    if actor != "detective":
+        result = dv_adopt(result, c1_method(rt_cat(actor, ".deep-resonance"), c1_deep_resonance_law(actor)), mode, 1, [c1_deep_resonance_source(actor)])
+    return result
+
+fn c1_compare_wedge_action(actor):
+    let name = rt_cat(actor, ".compare.E2")
+    var action = c1_once(c1_action(name, "move", c1_at(actor, "foyer"), c1_at(actor, "foyer"), name, [c1_evidence_contact_ref(actor, "E2"), c1_knowledge("ash_wedge")], c1_source("user", 0, "E2厚度、擦痕和灰扇现场比对")))
+    return dv_with_many(action, {"predict_law": name, "travel": {"from": "foyer", "to": "foyer", "station": "site:E2"}, "surface": "把木楔的厚度贴着门底擦痕比过，再对照门缝向内散开的灰扇。木楔曾撑起门缝，烟灰从门缝进入。", "sensory_mode": "executed-physical-comparison"})
+
+fn c1_compare_palms_action(actor):
+    let name = rt_cat(actor, ".compare.E11")
+    let premise = c1_evidence_contact_premise(actor, "E11")
+    var action = c1_once(c1_action(name, "move", premise, premise, name, [c1_evidence_contact_ref(actor, "E11"), c1_knowledge("hand_not_mine")], c1_source("user", 0, "E11四人在场逐一比对掌宽")))
+    return dv_with_many(action, {"predict_law": name, "travel": {"from": "R05", "to": "R05", "station": "site:E11"}, "surface": "四个人都在书架旁，依次将手掌靠近灰上的半枚手印，比过掌宽。侦探、霍铎、沈鼎、苏泠，都与它不合。", "sensory_mode": "executed-four-person-palm-comparison"})
+
+
+fn c1_deep_resonance_site(actor):
+    if actor == "huo":
+        return {"room": "hall", "station": "site:E7", "evidence": "slate_marks"}
+    if actor == "shen":
+        return {"room": "pantry", "station": "site:E10", "evidence": "starter_layers"}
+    return {"room": "R08", "station": "site:E6", "evidence": "score_partial"}
+
+fn c1_deep_resonance_source(actor):
+    return c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", 1, rt_cat("recall_", actor))
+
+fn c1_deep_resonance_ref(actor):
+    return dv_ref("ritual", "state", rt_cat("deep-retrieved.", actor))
+
+axiom c1_deep_resonance_law(actor):
+    return dv_axiom("c1_deep_resonance_law", 1, c1_at(actor, c1_deep_resonance_site(actor).room), [dv_assign(c1_deep_resonance_ref(actor), true)])
+
+fn c1_deep_resonance_action(actor):
+    let site = c1_deep_resonance_site(actor)
+    let source = c1_deep_resonance_source(actor)
+    var grants = [c1_deep_resonance_ref(actor)]
+    var surface = "苏泠闭上眼，沿着乐谱里缺失的声音继续追索。门边有人喊开门；她想让那人进来。她睁开眼，脸色发白。"
+    if actor == "huo":
+        rt_push(grants, c1_knowledge("recalled_copper"))
+        surface = "粉笔灰沾了霍铎一手。他没有松开石板，继续追索那声音：铜口里很清楚，‘等我下一次通知。’他叫我守铜口。……他再也没有来。"
+    if actor == "shen":
+        rt_push(grants, c1_knowledge("recalled_names"))
+        surface = "沈鼎的拇指沿着罐壁上一层层干面痕继续摸索。阿泠的茶不放糖，老霍的放两勺，那位清茶不放奶。阿泠……这称呼怎么脱口就来了。"
+    let prerequisite = dv_all([c1_at(actor, site.room), c1_statement(site.evidence)])
+    var action = c1_once(c1_action(rt_cat(actor, ".deep-resonance"), "move", prerequisite, c1_at(actor, site.room), rt_cat(actor, ".deep-resonance"), grants, source))
+    var requires = c1_statement(site.evidence)
+    if actor == "huo":
+        requires = dv_all([requires, c1_op_property("opening.facilities", "drawing_exists", true)])
+    return dv_with_many(action, {"predict_law": rt_cat(actor, ".deep-resonance"), "travel": {"from": site.room, "to": site.room, "station": site.station}, "received_speech_requirement": {"speaker": "demon", "action_id": "demon.opening.desire-offer", "receipt_kind": "actual-listener-parse"}, "desire_requirement": {"subject": actor, "desire_id": c1_op_desire(actor).id, "basis": c1_op_desire(actor).basis}, "resonance": {"basis": [source], "requires": requires, "drive": {"policy_key": "drive"}, "relevance": {"policy_key": "resonance_relevance"}, "truth_bonus": {"policy_key": "truth_bonus"}, "caution": {"policy_key": "caution"}, "perceived_risk": {"policy_key": "perceived_risk"}, "retrieved_when": dv_fact(c1_deep_resonance_ref(actor), true), "coupling": 1, "night_call": true, "night_when": dv_fact(c1_deep_resonance_ref(actor), true)}, "surface": surface, "sensory_mode": "active-deep-resonance"})
+
+
+fn c1_public_answer_speech(action):
+    let pairs = [["V3_0", "V3_1", "voice-source", "声音来自铜口，经管道传来。", "声音就在门外。"], ["V4_0", "V4_1", "original-words", "原话是闩门禁开。", "原话是开门救人。"], ["V6_1", "V6_0", "familiarity", "我们原本相熟。", "我们原本不相熟。"]]
+    var i = 0
+    while i < rt_count(pairs):
+        let pair = pairs[i]
+        if action.answer_id == pair[0] or action.answer_id == pair[1]:
+            var opposite = pair[0]
+            var surface = pair[4]
+            if action.answer_id == pair[0]:
+                opposite = pair[1]
+                surface = pair[3]
+            let speech = dv_with_many(c1_speech(action.answer, surface, "actual-public-defense"), {"surface": surface, "public_claim": {"key": pair[2], "value": action.answer_id, "conflicts_with": [opposite], "basis": action.source_refs}})
+            return dv_with_many(action, {"speech": speech, "listeners": ["demon", "huo", "shen", "su"]})
+        i = i + 1
+    return action
+
+fn c1_answer_conflict_response(actor, key):
+    var surface = "你刚才的答辩和现在说的互相矛盾。我不能只因你说得笃定就跟着你。"
+    if actor == "su":
+        surface = "你刚才明明那样说，现在又换了说法。别把我们当作可以随你推论摆弄的人。那是同伴的呼喊，也是人的性命。"
+    if actor == "huo":
+        surface = "你前后的答辩对不上。哪一处证物让你改了判断？我要看根据。"
+    if actor == "shen":
+        surface = "你前后说得不一样。我得先弄清你改口的根据，才敢让身边的人跟着做。"
+    var action = c1_once(c1_action(rt_cat(rt_cat(actor, ".respond-defense-conflict."), key), "talk", c1_at(actor, "hall"), c1_at(actor, "hall"), "", [], c1_source("user", 0, "实际前后矛盾答辩引起的道德谴责与疑虑")))
+    return dv_with_many(action, {"received_claim_conflict": {"speaker": "detective", "key": key}, "speech": dv_with(c1_speech(dv_true(), surface, "own-moral-appraisal-of-actually-heard-defense"), "surface", surface), "listeners": ["detective", "huo", "shen", "su"], "personal_purpose": {"subject": actor, "id": "question-contradictory-defense", "basis": c1_op_desire(actor).basis}})
+
+
+fn c1_palm_invitation_ref():
+    return dv_ref("ritual", "state", "palm_comparison_invited")
+
+axiom c1_palm_invitation_law(room):
+    return dv_axiom("c1_palm_invitation_law", 1, c1_at("detective", room), [dv_assign(c1_palm_invitation_ref(), true)])
+
+fn c1_palm_invitation_action(room):
+    let name = rt_cat("detective.invite-palms.", room)
+    let claim = dv_fact(c1_palm_invitation_ref(), true)
+    let surface = "我在R-05书架的灰上看见半枚手印。请一起到书架旁，逐一比过我们四人的掌宽。"
+    var action = c1_once(c1_action(name, "talk", dv_all([c1_at("detective", room), c1_statement("shelf_old")]), c1_at("detective", room), name, [c1_palm_invitation_ref()], c1_source("user", 0, "E11亲见后正式邀请与实际收闻同行机会")))
+    return dv_with_many(action, {"predict_law": name, "speech": dv_with(c1_speech(claim, surface, "own-comparison-invitation"), "surface", surface), "listeners": ["huo", "shen", "su"], "surface": surface})

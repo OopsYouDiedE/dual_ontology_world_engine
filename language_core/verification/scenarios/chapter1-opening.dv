@@ -230,7 +230,7 @@ fn c1_op_tea_candidates(detective_name):
 fn c1_op_broadcast_candidates():
     var action = c1_opening_action()
     var roles = dv_all(dv_pair(c1_op_property("opening.roles", "custodian", "demon"), c1_op_property("opening.roles", "teacher", "demon")))
-    action = dv_with(action, "speech", dv_with_many(action.speech, {"literal_ast": dv_all(dv_pair(roles, action.speech.literal_ast)), "surface": "诸位晨安。我是此地的代管者，也是诸位的教师。诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。"}))
+    action = dv_with(action, "speech", dv_with_many(action.speech, {"literal_ast": dv_all(dv_pair(roles, action.speech.literal_ast)), "surface": "诸位晨安。我是此地的代管者，也是诸位的教师。诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"}))
     action = dv_with_many(action, {"presentation": c1_op_presentation("demon", "visible-action", ["墙上的铜口里咳了一声。"]), "source_narration": "墙上的铜口里咳了一声。屋里四个人一齐扭过头去。", "source_narration_limit": "peer-head-turns-require-real-peer-reaction; never-publish-unperformed-reactions"})
     return [dv_with(action, "owner", "demon")]
 
@@ -615,18 +615,5 @@ fn c1_op_contract_text():
     return "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。"
 
 fn c1_op_contract_candidates():
-    let source = c1_source("docs/design-standard.md", 0, "契约全文可被主动询问")
-    let ref = dv_ref("opening.contracts", "state", "full_text")
-    var actions = []
-    let people = c1_op_people()
-    var i = 0
-    while i < rt_count(people):
-        let id = people[i]
-        var ask = c1_op_question(id, rt_cat(id, ".opening.ask-contract"), "约束你的契约，全文是什么？", source, ["demon"])
-        ask = c1_op_request(ask, "demon", "contract.full-text")
-        ask = dv_with_many(ask, {"precondition": dv_all([ask.precondition, c1_op_property("opening.roles", "custodian", "demon")]), "purpose_refs": [ref], "purpose_basis": [source]})
-        rt_push(actions, ask)
-        i = i + 1
-    var reply = c1_op_dialogue("demon", "demon.opening.contract-full-text", dv_fact(ref, c1_op_contract_text()), c1_op_contract_text(), source, people)
-    rt_push(actions, dv_with_many(reply, {"response_topic": "contract.full-text", "requires_actual_request": true}))
-    return actions
+    // Full-contract questions belong to the second-day permission dialogue.
+    return []

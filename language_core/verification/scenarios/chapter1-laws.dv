@@ -32,7 +32,7 @@
 // This marker does not simulate acoustic bands or infer unheard sound contents.
 
 axiom c1_infer_0(knowledge):
-    return dv_axiom("c1_infer_0", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "recalled_bolt"), true), dv_fact(dv_ref(knowledge, "state", "boots_toward_bolt"), true), dv_fact(dv_ref(knowledge, "state", "boots_fit"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
+    return dv_axiom("c1_infer_0", 1, dv_all([dv_fact(dv_ref(knowledge, "state", "boots_toward_bolt"), true), dv_fact(dv_ref(knowledge, "state", "boots_fit"), true)]), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
 
 axiom c1_infer_1(knowledge):
     return dv_axiom("c1_infer_1", 1, dv_all(dv_append(dv_list3(dv_fact(dv_ref(knowledge, "state", "slate_marks"), true), dv_fact(dv_ref(knowledge, "state", "slate_code"), true), dv_fact(dv_ref(knowledge, "state", "slate_person"), true)), dv_fact(dv_ref(knowledge, "state", "lens_mine"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
@@ -98,10 +98,24 @@ axiom c1_opening_emit(question):
     return dv_axiom("c1_opening_emit", 1, dv_fact(dv_ref(question, "state", "stage"), "opening"), dv_single(dv_assign(dv_ref(question, "state", "stage"), "prompt")))
 
 axiom c1_question_emit(question):
-    return dv_axiom("c1_question_emit", 1, dv_fact(dv_ref(question, "state", "stage"), "prompt"), dv_append(dv_append(dv_append(dv_append(dv_list3(dv_assign(dv_ref(question, "state", "open_identity"), true), dv_assign(dv_ref(question, "state", "open_voice_source"), true), dv_assign(dv_ref(question, "state", "open_words"), true)), dv_assign(dv_ref(question, "state", "open_trust"), true)), dv_assign(dv_ref(question, "state", "outstanding_complete"), true)), dv_assign(dv_ref(question, "state", "current"), "questions_open")), dv_assign(dv_ref(question, "state", "stage"), "questions_open")))
+    return dv_axiom("c1_question_emit", 1, dv_fact(dv_ref(question, "state", "stage"), "prompt"), [dv_assign(dv_ref(question, "state", "open_identity"), true), dv_assign(dv_ref(question, "state", "outstanding_complete"), true), dv_assign(dv_ref(question, "state", "current"), "identity"), dv_assign(dv_ref(question, "state", "stage"), "identity")])
 
 axiom c1_question_accept(question, stage):
-    return dv_axiom("c1_question_accept", 1, dv_fact(dv_ref(question, "state", rt_cat("open_", stage)), true), dv_pair(dv_assign(dv_ref(question, "state", rt_cat("solved_", stage)), true), dv_assign(dv_ref(question, "state", "last_accepted"), stage)))
+    var effects = [dv_assign(dv_ref(question, "state", rt_cat("solved_", stage)), true), dv_assign(dv_ref(question, "state", rt_cat("open_", stage)), false), dv_assign(dv_ref(question, "state", "last_accepted"), stage)]
+    var next = "complete"
+    if stage == "identity":
+        next = "voice_source"
+    if stage == "voice_source":
+        next = "words"
+    if stage == "words":
+        next = "trust"
+    if next != "complete":
+        rt_push(effects, dv_assign(dv_ref(question, "state", rt_cat("open_", next)), true))
+    else:
+        rt_push(effects, dv_assign(dv_ref(question, "state", "outstanding_complete"), false))
+    rt_push(effects, dv_assign(dv_ref(question, "state", "current"), next))
+    rt_push(effects, dv_assign(dv_ref(question, "state", "stage"), next))
+    return dv_axiom("c1_question_accept", 1, dv_fact(dv_ref(question, "state", rt_cat("open_", stage)), true), effects)
 
 axiom c1_meeting(requester, speaker, room):
     return dv_axiom("c1_meeting", 1, dv_all(dv_pair(dv_fact(dv_ref(requester, "state", "location"), room), dv_fact(dv_ref(speaker, "state", "location"), room))), [])

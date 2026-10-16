@@ -1,0 +1,63 @@
+// Content-owned configuration. Callers supply approved numeric budgets and value lists.
+fn Standard_Detective(replay_depth, resistance, empirical_values, mediation_rules, basis):
+    dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
+    return {"cognitive_profile": "Standard_Detective", "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
+
+fn Foolish_Detective(replay_depth, resistance, values, norm_rules, class_bias, basis):
+    dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
+    return {"cognitive_profile": "Foolish_Detective", "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
+
+fn cognitive_sample(key, options, basis):
+    dv_require(0 < rt_count(options) and 0 < rt_count(basis), "Cognitive sampling needs options and provenance")
+    return {"key": key, "options": options, "basis": basis}
+
+fn cognitive_initialization(profile, samples, basis):
+    return {"profile": profile, "samples": samples, "basis": basis}
+
+// Narrow engineering initial ranges, not narrative facts or acceptance targets.
+fn c1c_install_scene(scene, seed, profile):
+    dv_require(profile == "Standard_Detective" or profile == "Foolish_Detective", "Unknown detective cognitive profile")
+    let basis = [{"path": "user:current-request", "line": 0, "id": "declared-engineering-cognitive-initial-ranges"}]
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        if actor.id != "demon":
+            var low_trust = []
+            var middle_trust = []
+            var high_trust = []
+            var j = 0
+            while j < rt_count(scene.actors):
+                let peer = scene.actors[j].id
+                let current = dv_find(dv_find(actor.policy, "speaker_trust", []), peer, 0.5)
+                low_trust = dv_with(low_trust, peer, dv_max(0, current - 0.05))
+                middle_trust = dv_with(middle_trust, peer, current)
+                high_trust = dv_with(high_trust, peer, dv_min(1, current + 0.05))
+                j = j + 1
+            let old = actor.policy
+            let drive = dv_find(old, "drive", 1)
+            let caution = dv_find(old, "caution", 0.5)
+            let information = dv_find(old, "information_weight", 1)
+            var samples = [cognitive_sample("drive", [dv_max(0, drive - 0.1), drive, drive + 0.1], basis), cognitive_sample("caution", [dv_max(0, caution - 0.05), caution, caution + 0.05], basis), cognitive_sample("speaker_trust", [low_trust, middle_trust, high_trust], basis), cognitive_sample("information_weight", [information * 0.95, information, information * 1.05], basis), cognitive_sample("implicature_threshold", [0.45, 0.5, 0.55], basis)]
+            samples = dv_append(samples, cognitive_sample("resonance_relevance", [0.9, 1, 1.1], basis))
+            samples = dv_append(samples, cognitive_sample("truth_bonus", [0.05, 0.1, 0.15], basis))
+            // This is a subjective risk prior, never an observation of all actual costs.
+            samples = dv_append(samples, cognitive_sample("perceived_risk", [0.45, 0.5, 0.55], basis))
+            var selected_profile = []
+            if actor.id == "detective":
+                let norms = dv_find(old, "norm_rules", [])
+                if profile == "Standard_Detective":
+                    selected_profile = Standard_Detective(64, 0.75, ["understand_cost", "solve_case", "evidence", "safety", "night_exception", "records", "measured_work", "clarify_terms", "seek_advice", "avoid_attachment"], norms, basis)
+                else:
+                    selected_profile = Foolish_Detective(2, 0.25, ["pursue_desire", "avoid_attachment", "solve_case", "understand_cost"], [], dv_find(old, "class_bias", []), basis)
+            if actor.id == "detective":
+                let threshold = selected_profile.Implicature_Resistance
+                samples = dv_append(samples, cognitive_sample("implicature_threshold", [dv_max(0, threshold - 0.05), threshold, dv_min(1, threshold + 0.05)], basis))
+            actor = dv_with(actor, "cognitive_initialization", cognitive_initialization(selected_profile, samples, basis))
+        rt_push(actors, actor)
+        i = i + 1
+    return dv_with_many(scene, {"actors": actors, "opening_seed": seed, "detective_profile": profile})
+
+fn cognitive_erosion(exposure_ref, thresholds, coupling_factor, basis):
+    dv_require(0 < rt_count(basis), "Erosion needs declared provenance")
+    return {"physical_ref": exposure_ref, "thresholds": thresholds, "coupling_factor": coupling_factor, "basis": basis}

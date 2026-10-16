@@ -61,6 +61,12 @@
 
 ## 仓库结构
 
+### Core 语法与特性参考
+
+- [language_core/core/README.md](language_core/core/README.md) 是现行 DV Core 的完整语法、特性、接口与实现边界说明入口；[language_core/README.md](language_core/README.md) 保留导航。
+- 修改语言语法、内置操作、Core/session 接口、声明字段、宿主合同或现行实现边界时，必须在同一轮同步更新该参考中的说明、示例与源码索引；仅新增名称而未接入生产链的能力须明确标注。
+- 工程参考依据现行源码维护，内容设计仍以 `docs/design-standard.md` 为准。文档、源码实现与本轮实际执行证据分别记录，不以参考文档宣称验收完成。
+
 | 路径 | 内容 |
 | --- | --- |
 | `csharp/` | 旧 Core 已退役，仅保留迁移说明 |
@@ -89,7 +95,7 @@
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers
 ```
 
-必要的跨进程保存排错可单独使用 `python tools/verify.py --only save`；不得混入流程回归，也不能作为 UI、人物行为或盲玩验收。
+旧 `tools/verify.py` 已退役；必要的保存排错使用现行 Session 序列化接口，不恢复旧运行路径。
 
 素材迁移或重建后重新导入：
 

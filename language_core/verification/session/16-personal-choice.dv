@@ -33,6 +33,27 @@ fn dvp_personal_better(order, left, right):
     return false
 
 fn dvp_owner_requirements(actor, action, mind):
+    if not dvs_actor_can_act(actor):
+        return false
+    if dv_has_key(action, "resonance") and not dv_find(action.resonance, "passive", false):
+        if not (0 < dvp_resonance_utility(actor, action, mind)):
+            return false
+    let night_call = dv_find(action, "night_call_requirement", false)
+    if night_call != false:
+        if not dv_find(actor, "night_call_eligible", false) or rt_count(dv_find(night_call, "basis", [])) == 0 or dv_truth(mind, night_call.night_when) != "true":
+            return false
+    let conflict = dv_find(action, "received_claim_conflict", false)
+    if conflict != false:
+        let conflicts = dv_find(actor, "observed_claim_conflicts", [])
+        var found_conflict = false
+        var conflict_index = 0
+        while conflict_index < rt_count(conflicts):
+            let evidence = conflicts[conflict_index]
+            if evidence.key == conflict.key and evidence.speaker == conflict.speaker:
+                found_conflict = true
+            conflict_index = conflict_index + 1
+        if not found_conflict:
+            return false
     let opportunity = dv_find(action, "opportunity_requirement", false)
     if opportunity != false:
         let own = dv_read(mind, actor.location_ref)
@@ -130,6 +151,13 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
 
 // Norms affect this owner's choice; they never become physical prohibitions.
 fn dvp_normative_ready(actor, action, mind):
+    // An unsupervised act is valued by its owner, independently of a public pledge.
+    let private = dv_find(action, "private_execution", false)
+    if private != false:
+        if rt_count(dv_find(private, "basis", [])) == 0 or dv_truth(mind, private.requires) != "true":
+            return false
+        if dvp_owned_quantity(actor, mind, private.benefit) <= dvp_owned_quantity(actor, mind, private.resource_cost):
+            return false
     let method = dv_find(action, "normative_method", "")
     if method == "":
         return true
@@ -163,3 +191,176 @@ fn dvp_normative_ready(actor, action, mind):
             return 0 < impact
         i = i + 1
     return true
+
+// All numeric inputs are explicit owner declarations or uncontested owner knowledge.
+fn dvp_owned_quantity(actor, mind, declaration):
+    if rt_is_number(declaration):
+        return declaration
+    if dv_has_key(declaration, "policy_key"):
+        return dv_find(actor.policy, declaration.policy_key, 0)
+    let cell = dv_read(mind, declaration.ref)
+    if dv_uncontested(cell) and rt_is_number(cell.value):
+        return cell.value
+    return 0
+
+fn dvp_resonance_utility(actor, action, mind):
+    let r = action.resonance
+    if rt_count(dv_find(r, "basis", [])) == 0 or dv_truth(mind, dv_find(r, "requires", dv_true())) != "true":
+        return 0
+    let drive = dvp_owned_quantity(actor, mind, r.drive)
+    let relevance = dvp_owned_quantity(actor, mind, r.relevance)
+    let bonus = dvp_owned_quantity(actor, mind, r.truth_bonus)
+    let caution = dvp_owned_quantity(actor, mind, r.caution)
+    let risk = dvp_owned_quantity(actor, mind, r.perceived_risk)
+    return drive * relevance + bonus - caution - risk
+
+fn dvs_actor_can_act(actor):
+    let stage = dv_find(actor, "erosion_stage", "early")
+    return stage != "terminal" and stage != "death"
+
+// A reproducible integer stream; samples are selected only from declared options.
+fn dvs_cognitive_seed_next(seed):
+    let n = seed * 48271 + 1
+    return n - rt_floor(n / 2147483647) * 2147483647
+
+fn dvs_initialize_cognition(actor, seed, ordinal):
+    dv_require(0 <= seed and rt_floor(seed) == seed, "Opening seed must be a nonnegative integer")
+    let declaration = dv_find(actor, "cognitive_initialization", false)
+    if declaration == false:
+        if dv_has_key(actor, "erosion"):
+            return dv_with(actor, "first_day_mind", actor.mind)
+        return actor
+    dv_require(rt_count(dv_find(declaration, "basis", [])) > 0, "Cognitive initialization needs declared provenance")
+    var stream = dvs_cognitive_seed_next(seed + ordinal)
+    var policy = actor.policy
+    let samples = dv_find(declaration, "samples", [])
+    var selected = []
+    var i = 0
+    while i < rt_count(samples):
+        let sample = samples[i]
+        dv_require(0 < rt_count(dv_find(sample, "basis", [])), "Cognitive sample needs provenance")
+        let options = sample.options
+        dv_require(0 < rt_count(options), "Empty cognitive sample domain")
+        stream = dvs_cognitive_seed_next(stream)
+        let index = stream - rt_floor(stream / rt_count(options)) * rt_count(options)
+        policy = dv_with(policy, sample.key, options[index])
+        selected = dv_with(selected, sample.key, options[index])
+        i = i + 1
+    policy = dv_with_many(policy, dv_find(declaration, "profile", []))
+    return dv_with_many(actor, {"policy": policy, "cognitive_seed": seed, "cognitive_samples": selected, "first_day_mind": actor.mind})
+
+// Erosion is content-defined exposure/threshold data, with an explicit first-day snapshot.
+fn dvs_erosion_update(actor, physical, time):
+    let erosion = dv_find(actor, "erosion", false)
+    if erosion == false:
+        return actor
+    let exposure_cell = dv_read(physical, erosion.physical_ref)
+    var exposure = 0
+    if dv_uncontested(exposure_cell) and rt_is_number(exposure_cell.value):
+        exposure = exposure_cell.value
+    exposure = exposure * (1 + dv_find(actor, "resonance_coupling", 0) * dv_find(erosion, "coupling_factor", 0))
+    let stages = ["early", "middle", "late", "terminal", "death"]
+    var rank = dv_find(actor, "erosion_rank", 0)
+    var i = 0
+    while i < rt_count(erosion.thresholds):
+        let threshold = erosion.thresholds[i]
+        if threshold.at <= exposure and rank < threshold.rank:
+            rank = threshold.rank
+        i = i + 1
+    dv_require(0 <= rank and rank < rt_count(stages), "Invalid erosion stage")
+    var result = dv_with_many(actor, {"erosion_rank": rank, "erosion_stage": stages[rank]})
+    let memory_period = dv_find(erosion, "memory_period", 1440)
+    dv_require(0 < memory_period, "Erosion memory period must be positive")
+    let memory_epoch = rt_floor(time / memory_period)
+    if 2 <= rank and (not dv_find(actor, "erosion_memory_truncated", false) or dv_find(actor, "erosion_memory_epoch", -1) != memory_epoch):
+        dv_require(dv_has_key(actor, "first_day_mind"), "Late erosion needs declared first-day memory snapshot")
+        let old = actor.mind
+        let memory = dv_with_many(actor.first_day_mind, {"time": time, "revision": old.revision + 1})
+        result = dv_with_many(result, {"mind": memory, "erosion_memory_truncated": true, "erosion_memory_epoch": memory_epoch, "simulations": [], "interpretations": [], "response_models": [], "proposals": [], "received_speeches": [], "pending_heard": [], "observed_public_claims": [], "observed_claim_conflicts": [], "pending_player_influences": [], "dependency_cache": false})
+    return result
+
+// Only the actual audible reception path invokes this, never speaker forecasts.
+fn dvs_receive_public_claim(listener, speech, speaker, source, parse_event):
+    let claim = dv_find(speech, "public_claim", false)
+    if claim == false:
+        return listener
+    dv_require(0 < rt_count(dv_find(claim, "basis", [])), "Public claim needs content provenance")
+    let history = dv_find(listener, "observed_public_claims", [])
+    var conflicts = dv_find(listener, "observed_claim_conflicts", [])
+    var i = 0
+    while i < rt_count(history):
+        let prior = history[i]
+        if prior.speaker == speaker and prior.key == claim.key and dv_has(dv_find(claim, "conflicts_with", []), prior.value):
+            conflicts = dv_append(conflicts, {"speaker": speaker, "key": claim.key, "previous_source": prior.source_event, "source_event": source, "parse_event": parse_event, "basis": claim.basis})
+        i = i + 1
+    let received = {"speaker": speaker, "key": claim.key, "value": claim.value, "source_event": source, "parse_event": parse_event}
+    return dv_with_many(listener, {"observed_public_claims": dv_append(history, received), "observed_claim_conflicts": conflicts})
+
+// Called only by actual Complete. Passive flashbacks do not acquire paid coupling.
+fn dvs_complete_cognitive_effects(actor, action, success, event, time):
+    if not success:
+        return actor
+    var result = actor
+    let r = dv_find(action, "resonance", false)
+    if r != false and not dv_find(r, "passive", false):
+        let retrieved = dv_find(r, "retrieved_when", {"op": "constant", "value": "false"})
+        if dv_truth(actor.mind, retrieved) == "true":
+            let coupling = dv_find(actor, "resonance_coupling", 0) + dv_find(r, "coupling", 0)
+            var policy = actor.policy
+            var trust = dv_find(policy, "speaker_trust", [])
+            let changes = dv_find(r, "trust_changes", [])
+            var i = 0
+            while i < rt_count(changes):
+                let change = changes[i]
+                trust = dv_with(trust, change.subject, dv_unit(dv_min(1, dv_max(0, dv_find(trust, change.subject, 0.5) + change.delta))))
+                i = i + 1
+            policy = dv_with(policy, "speaker_trust", trust)
+            result = dv_with_many(result, {"resonance_coupling": coupling, "night_call_eligible": dv_find(actor, "night_call_eligible", false) or dv_find(r, "night_call", false), "policy": policy, "resonance_receipts": dv_append(dv_find(actor, "resonance_receipts", []), {"event": event, "time": time, "action": action.id, "coupling": coupling})})
+    let influence = dv_find(action, "influence_consequence", false)
+    if influence != false:
+        if 0 < rt_count(dv_find(influence, "basis", [])) and dv_truth(actor.mind, influence.consequence_when) == "true":
+            let heard = dv_find(actor, "received_speeches", [])
+            var i = 0
+            while i < rt_count(heard):
+                let speech = heard[i]
+                if speech.speaker == influence.speaker and speech.action_id == influence.action_id:
+                    result = dv_with(result, "influence_consequences", dv_append(dv_find(result, "influence_consequences", []), {"speech_event": speech.source_event, "parse_event": speech.parse_event, "execution_event": event, "action": action.id, "time": time, "basis": influence.basis}))
+                i = i + 1
+    return result
+
+// An explicit speech declaration records intent only after actual player emission
+// and audible parsing. No forecast enters this provenance ledger.
+fn dvs_receive_player_influence(listener, speech, speaker, source, parse_event):
+    let manipulation = dv_find(speech, "manipulation", false)
+    if manipulation == false or dv_find(speech, "actual_player_actor", "") != speaker or dv_find(speech, "actual_literal_truth", "unknown") != "true":
+        return listener
+    if not dv_has(dv_find(manipulation, "targets", []), listener.id) or rt_count(dv_find(manipulation, "basis", [])) == 0:
+        return listener
+    let receipt = {"player": speaker, "target": listener.id, "method": manipulation.method, "speech_event": source, "parse_event": parse_event, "declaration": manipulation}
+    return dv_with(listener, "pending_player_influences", dv_append(dv_find(listener, "pending_player_influences", []), receipt))
+
+// A declared behavioral effect must actually execute and its physical consequence
+// must become true. Intent, interpretation and prediction do not count as outcome.
+fn dvs_complete_player_influences(actor, action, before, after, success, event, time):
+    if not success:
+        return actor
+    let pending = dv_find(actor, "pending_player_influences", [])
+    if rt_count(pending) == 0:
+        return actor
+    var retained = []
+    var history = dv_find(actor, "player_influence_history", [])
+    var i = 0
+    while i < rt_count(pending):
+        let influence = pending[i]
+        let declaration = influence.declaration
+        var completed = false
+        if dv_has(dv_find(declaration, "action_ids", []), action.id):
+            let prior = dv_truth(before, declaration.consequence_when)
+            let actual = dv_truth(after, declaration.consequence_when)
+            if prior != "true" and actual == "true":
+                history = dv_append(history, {"player": influence.player, "target": actor.id, "method": influence.method, "speech_event": influence.speech_event, "parse_event": influence.parse_event, "execution_event": event, "action": action.id, "time": time, "consequence": declaration.consequence_when, "before": prior, "after": actual, "basis": declaration.basis})
+                completed = true
+        if not completed:
+            rt_push(retained, influence)
+        i = i + 1
+    return dv_with_many(actor, {"pending_player_influences": retained, "player_influence_history": history})

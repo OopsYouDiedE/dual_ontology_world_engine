@@ -1,0 +1,239 @@
+// Cognitive acceptance is a derived value. Levels are ordered lower bounds.
+fn dv_acceptance_classify(degree, levels):
+    dv_unit(degree)
+    dv_require(rt_count(levels) > 0, "Acceptance requires levels")
+    dv_require(levels[0][1] == 0, "Acceptance levels must start at zero")
+    var previous = -1
+    var selected = ""
+    var i = 0
+    while i < rt_count(levels):
+        let threshold = dv_unit(levels[i][1])
+        dv_require(previous < threshold, "Acceptance thresholds must increase")
+        if degree >= threshold:
+            selected = levels[i][0]
+        previous = threshold
+        i = i + 1
+    return {degree: degree, level: selected}
+
+acceptance dv_threshold_acceptance(value, threshold):
+    degree item: Acceptance = value
+    levels:
+        held from 0
+        accepted from threshold
+
+fn dv_acceptance_transition(previous, current, source):
+    var transition = "unchanged"
+    if previous.level != current.level:
+        transition = "changed"
+        if previous.level == "accepted" and current.level != "accepted":
+            transition = "withdrawn"
+    return {before: previous, after: current, transition: transition, source: source}
+
+// Finite balance kernel. Values and charges use exact rational arithmetic.
+// The model declares each allowed structural change, its resource charges and laws.
+fn dv_balance_dot(a, b):
+    dv_require(rt_count(a) == rt_count(b), "Balance dimensions differ")
+    var result = rt_exact("0")
+    var i = 0
+    while i < rt_count(a):
+        result = result + rt_exact(a[i]) * rt_exact(b[i])
+        i = i + 1
+    return result
+
+fn dv_balance_extent(variables):
+    var total = 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        dv_require(count > 0, "Balance variable has an empty domain")
+        total = total * count
+        dv_require(total <= 9007199254740991, "Finite domain index exceeds exact integer range")
+        i = i + 1
+    return total
+
+fn dv_balance_candidate(index, goal, variables, laws, limits, prices):
+    var cursor = index
+    var values = []
+    var costs = []
+    var choices = []
+    var j = 0
+    while j < rt_count(limits.balances):
+        rt_push(costs, rt_exact("0"))
+        dv_require(rt_exact(limits.balances[j]) >= 0, "Negative resource balance")
+        dv_require(rt_exact(prices[j]) >= 0, "Negative resource price")
+        j = j + 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        let quotient = rt_floor(cursor / count)
+        let choice = cursor - quotient * count
+        cursor = quotient
+        let option = variables[i].options[choice]
+        rt_push(choices, choice)
+        rt_push(values, rt_exact(option.value))
+        dv_require(rt_count(option.cost) == rt_count(costs), "Resource cost dimensions differ")
+        j = 0
+        while j < rt_count(costs):
+            let charge = rt_exact(option.cost[j])
+            dv_require(charge >= 0, "Negative imprint charge")
+            rt_replace(costs, j, costs[j] + charge)
+            j = j + 1
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, values)
+    var feasible = degree >= rt_exact(goal.minimum) and degree >= 0 and degree <= 1
+    i = 0
+    while i < rt_count(laws):
+        if dv_balance_dot(laws[i].coefficients, values) != rt_exact(laws[i].total):
+            feasible = false
+        i = i + 1
+    j = 0
+    while j < rt_count(costs):
+        if costs[j] > rt_exact(limits.balances[j]):
+            feasible = false
+        j = j + 1
+    return {index: index, choices: choices, values: values, degree: degree, charges: costs, cost: dv_balance_dot(costs, prices), feasible: feasible}
+
+// Search produces a witness; it does not certify its own optimality.
+fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
+    dv_require(capability, "Imprint capability is required")
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    dv_require(limits.search_budget >= 0 and rt_floor(limits.search_budget) == limits.search_budget, "Invalid search budget")
+    let total = dv_balance_extent(variables)
+    var visited = 0
+    var best = false
+    while visited < total and visited < limits.search_budget and (visited + 1) * 2 <= limits.work_remaining:
+        let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+        if candidate.feasible:
+            if best == false:
+                best = candidate
+            else:
+                if candidate.cost < best.cost:
+                    best = candidate
+        visited = visited + 1
+    var status = "Unresolved"
+    if best != false:
+        status = "Feasible"
+        if visited == total:
+            status = "Optimal"
+    else:
+        if visited == total:
+            status = "Infeasible"
+    return {status: status, best: best, visited: visited, total: total, revision: limits.revision, subject: limits.subject}
+
+// Numeric witnesses retain meaning after the JSON exchange representation is read back.
+fn dv_balance_same_numbers(left, right):
+    if rt_count(left) != rt_count(right):
+        return false
+    var i = 0
+    while i < rt_count(left):
+        if rt_exact(left[i]) != rt_exact(right[i]):
+            return false
+        i = i + 1
+    return true
+
+fn dv_balance_same_witness(left, right):
+    return left.index == right.index and left.feasible == right.feasible and dv_same(left.choices, right.choices) and dv_balance_same_numbers(left.values, right.values) and dv_balance_same_numbers(left.charges, right.charges) and rt_exact(left.degree) == right.degree and rt_exact(left.cost) == right.cost
+
+// Trusted finite proof kernel: reconstruct the witness and independently check coverage.
+// The caller supplies the original model; certificates cannot replace its constraints.
+fn dv_imprint_check(result, goal, variables, laws, limits, prices):
+    let total = dv_balance_extent(variables)
+    if result.total != total or result.revision != limits.revision or result.subject != limits.subject:
+        return false
+    if result.visited < 0 or result.visited > total or result.visited > limits.search_budget or result.visited * 2 > limits.work_remaining or rt_floor(result.visited) != result.visited:
+        return false
+    var best = result.best
+    var verified = false
+    if best != false:
+        if best.index < 0 or best.index >= result.visited or rt_floor(best.index) != best.index:
+            return false
+        verified = dv_balance_candidate(best.index, goal, variables, laws, limits, prices)
+        if not verified.feasible or not dv_balance_same_witness(best, verified):
+            return false
+    var i = 0
+    while i < result.visited:
+        var alternative = verified
+        if best == false:
+            alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+        else:
+            if i != best.index:
+                alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+        if alternative.feasible:
+            if best == false:
+                return false
+            if alternative.cost < best.cost:
+                return false
+        i = i + 1
+    if result.visited == total:
+        if best == false:
+            return result.status == "Infeasible"
+        return result.status == "Optimal"
+    if best == false:
+        return result.status == "Unresolved"
+    return result.status == "Feasible"
+
+fn dv_imprint_commit(state, result, goal, variables, laws, limits, prices, source):
+    dv_require(state.subject == limits.subject and state.revision == limits.revision, "Imprint source state changed")
+    dv_require(dv_same(state.balances, limits.balances), "Imprint resource snapshot changed")
+    dv_require(dv_imprint_check(result, goal, variables, laws, limits, prices), "Invalid balance certificate")
+    dv_require(state.work_remaining == limits.work_remaining, "Imprint work snapshot changed")
+    let work_spent = result.visited * 2
+    let paid = dv_with_many(state, [["work_remaining", state.work_remaining - work_spent], ["revision", state.revision + 1]])
+    if result.status != "Optimal":
+        return {applied: false, state: paid, result: result, work_spent: work_spent}
+    let best = result.best
+    var balances = []
+    var i = 0
+    while i < rt_count(state.balances):
+        let before = rt_exact(state.balances[i])
+        let after = before - best.charges[i]
+        dv_require(before == after + best.charges[i], "Resource conservation failed")
+        rt_push(balances, after)
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, best.values)
+    let accepted = dv_acceptance_classify(degree, state.levels)
+    let previous = dv_acceptance_classify(dv_balance_dot(goal.coefficients, state.values), state.levels)
+    let transition = dv_acceptance_transition(previous, accepted, source)
+    let receipt = {kind: "Imprint", source: source, before: state.values, after: best.values, charges: best.charges, proof: result, transition: transition}
+    let next = dv_with_many(paid, [["values", best.values], ["balances", balances], ["revision", state.revision + 1], ["acceptance", accepted], ["imprint_receipt", receipt]])
+    return {applied: true, state: next, result: result, work_spent: work_spent}
+
+// Adapter to authoritative Core mind cells and the existing action-cost ledger.
+fn dv_imprint_prepare(mind, refs, ledger, work_remaining, levels, search_budget, capability):
+    dv_domain(mind, "mind")
+    var values = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        dv_require(cell.known and not cell.conflicted, "Imprint structural coordinate is not established")
+        rt_push(values, rt_exact(cell.value))
+        i = i + 1
+    return {subject: mind.subject, revision: mind.revision, mind_id: mind.id, refs: refs, values: values, balances: [ledger.balances.time, ledger.balances.computation, ledger.balances.stamina], ledger_id: ledger.id, ledger_revision: ledger.revision, work_remaining: work_remaining, levels: levels, search_budget: search_budget, imprint_allowed: capability}
+
+fn dv_imprint_apply(mind, physical, ledger, state, result, goal, variables, laws, prices, event):
+    dv_domain(mind, "mind")
+    dv_require(state.imprint_allowed, "Imprint capability is required")
+    dv_require(mind.id == state.mind_id and mind.subject == state.subject and mind.revision == state.revision, "Imprint target snapshot changed")
+    dv_require(ledger.id == state.ledger_id and ledger.revision == state.ledger_revision, "Imprint ledger snapshot changed")
+    let current = dv_imprint_prepare(mind, state.refs, ledger, state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+    dv_require(dv_balance_same_numbers(current.values, state.values), "Imprint structural input changed")
+    let committed = dv_imprint_commit(current, result, goal, variables, laws, state, prices, event)
+    var next_mind = mind
+    var actual = dv_action_cost_vector(0, 0, 0)
+    var outcome = "rejected"
+    if committed.applied:
+        let charges = committed.state.imprint_receipt.charges
+        actual = dv_action_cost_vector(charges[0], charges[1], charges[2])
+        outcome = "applied"
+        let origin = {kind: "Imprint", event: event, subject: mind.subject, proof: result}
+        var i = 0
+        while i < rt_count(state.refs):
+            next_mind = dv_store(next_mind, state.refs[i], dv_cell(committed.state.values[i], 1, dv_find(physical, "time", 0) + actual.time, [origin]))
+            i = i + 1
+        next_mind = dv_with_many(next_mind, [["revision", committed.state.revision], ["history", dv_append(mind.history, committed.state.imprint_receipt)], ["imprint_acceptance", committed.state.acceptance]])
+        let observed = dv_imprint_prepare(next_mind, state.refs, ledger, committed.state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+        dv_require(dv_balance_dot(goal.coefficients, observed.values) >= rt_exact(goal.minimum), "Stored cognition did not achieve imprint goal")
+    let bounds = dv_action_cost_bounds(actual, actual)
+    let quote = dv_action_cost_quote(ledger, physical, "cognitive-imprint", event, bounds)
+    let settlement = dv_action_cost_finish(ledger, physical, quote, actual, outcome)
+    return {applied: committed.applied, mind: next_mind, physical: settlement.execution.world, ledger: settlement.ledger, work_remaining: committed.state.work_remaining, work_spent: committed.work_spent, proof: result, cost_receipt: dv_get(settlement.ledger.receipts, event)}

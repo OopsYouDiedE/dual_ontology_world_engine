@@ -21,4 +21,4 @@ python language_core/tools/check_dv.py --format json <source.dv>
 
 通过环境变量 GODOT 指定 Godot 4.6.1 .NET，正常启动使用 `--path godot_csharp`。构建时可用 `-p:DvPython=<Python路径>` 指定生成器。
 
-工作约束见 [AGENTS.md](AGENTS.md)，机制接口见 [DV Session](language_core/Session/README.md)。禁止流程回归，不以构建结果证明游戏验收。旧一级回放与三级保护测量工具已退役，尚未提供 DV 替代入口；本次清理证据见 [报告](artifacts/partial-bootstrap-core/single-action-path/report.md)。
+工作约束见 [AGENTS.md](AGENTS.md)，完整语法与特性见 [DV Core 参考](language_core/core/README.md)，宿主接口见 [DV Session](language_core/Session/README.md)。禁止流程回归，不以构建结果证明游戏验收。一级使用 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>` 运行无窗口正式逻辑会话；三级保护测量工具仍待重建。旧路径清理证据见 [报告](artifacts/partial-bootstrap-core/single-action-path/report.md)。
