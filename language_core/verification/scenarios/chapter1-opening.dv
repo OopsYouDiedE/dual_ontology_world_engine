@@ -480,13 +480,17 @@ fn c1_op_appropriate_candidate(action):
         action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": targets, "mode": "at-least-one-present"})
     if name == "shen.opening.welcome" or name == "shen.opening.introduce" or name == "huo.opening.introduce" or name == "su.opening.introduce" or name == "shen.opening.memory-report":
         action = dv_with_many(action, {"response_topic": "opening.meeting", "offer_to": "detective", "opportunity_requirement": {"location": "hall", "participants": ["detective"], "mode": "all-present"}})
+    if name == "shen.opening.introduce":
+        action = dv_with(action, "completed_action_requirement", {"action_id": "shen.opening.welcome"})
     if name == "shen.opening.ask-name":
         action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(dv_ref("coat", "state", "worn_by"), "detective"))))
         action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(dv_ref("coat", "state", "worn_by"), "detective")]))
         action = c1_op_request(action, "detective", "opening.self-introduction")
         action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": ["detective"], "mode": "all-present"})
+        action = dv_with_many(action, {"completed_action_requirement": {"action_id": "shen.opening.introduce"}, "suppress_after_received_speech": {"speaker": "detective", "action_id": "detective.opening.introduce"}})
     if name == "detective.opening.introduce":
-        action = dv_with(action, "response_topic", "opening.self-introduction")
+        // An actually completed self-introduction also answers a later-arriving name request.
+        action = dv_with_many(action, {"response_topic": "opening.self-introduction", "response_once": true, "received_speech_requirement": {"any_of": [{"speaker": "shen", "action_id": "shen.opening.welcome"}, {"speaker": "shen", "action_id": "shen.opening.introduce"}]}})
     if name == "su.opening.ask-sugar":
         action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true))))
         action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true), c1_op_property("opening.cup.su", "sugar_added", false)]))
@@ -501,7 +505,7 @@ fn c1_op_appropriate_candidate(action):
         action = dv_with_many(action, {"precondition": dv_all(dv_pair(action.precondition, c1_op_property("opening.tea", "prepared", true))), "authority_precondition": dv_all([action.authority_precondition, c1_at("detective", "hall"), c1_at("huo", "hall"), c1_at("su", "hall")]), "opportunity_requirement": {"location": "hall", "participants": ["detective", "huo", "su"], "mode": "all-present"}})
     if name == "demon.opening" or name == "demon.question.prompt":
         action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": c1_op_people(), "mode": "all-present"})
-    let broadcasts = ["demon.opening", "demon.opening.reward-invitation", "demon.opening.desire-offer", "demon.opening.public-alarm", "demon.opening.public-latch", "demon.question.prompt"]
+    let broadcasts = ["demon.opening", "demon.opening.reward-invitation", "demon.opening.desire-offer", "demon.opening.public-alarm", "demon.opening.public-latch", "demon.question.prompt", "demon.opening.investigate-invitation"]
     var broadcast_index = 1
     while broadcast_index < rt_count(broadcasts):
         if name == broadcasts[broadcast_index]:

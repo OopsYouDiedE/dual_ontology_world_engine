@@ -1,0 +1,629 @@
+// Executable native opening content. Old .story is provenance, never a runtime input.
+// Installation authors the starting scene. It does not execute it, publish observations,
+// deliver speech, choose a candidate, adopt short_stay or manufacture an acceptance.
+// All candidates use the same real action/law/cost/observation/speech pipeline as play.
+// File/catalog order is not a route, a command queue or a choice priority.
+// Narrative and private monologue are presentation after an applied action, not testimony.
+
+fn c1_op_source(line, id):
+    return c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", line, id)
+
+fn c1_op_people():
+    return ["detective", "huo", "shen", "su"]
+
+fn c1_op_wake_room(id):
+    if id == "detective":
+        return "R05"
+    if id == "huo":
+        return "R06"
+    if id == "shen":
+        return "R07"
+    return "R08"
+
+fn c1_op_name(id, detective_name):
+    if id == "detective":
+        return detective_name
+    if id == "huo":
+        return "霍铎"
+    if id == "shen":
+        return "沈鼎"
+    return "苏泠"
+
+fn c1_op_profession(id):
+    if id == "detective":
+        return "侦探"
+    if id == "huo":
+        return "钳工"
+    if id == "shen":
+        return "烧菜"
+    return "弹琴"
+
+fn c1_op_person_ref(id, field):
+    return dv_ref(rt_cat("opening.personal.", id), "state", field)
+
+fn c1_op_property(object, field, value):
+    return dv_fact(dv_ref(object, "state", field), value)
+
+fn c1_op_wake_lines(id):
+    if id == "detective":
+        return ["我记得的最后一件事，是上船。", "衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。", "先出去，看看这是什么地方。"]
+    if id == "huo":
+        return ["……", "手先去摸床沿。床板是榫接的，没用一颗钉子。", "上船以后的事，没了。", "挂钩上缠着机油布。顺时针，三圈半。我缠的。", "起来。"]
+    if id == "shen":
+        return ["……", "哎哟，这胳膊。酸得跟揉了半宿面似的。", "昨儿……昨儿干啥了？就记得上了条船。", "桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。", "先找口水喝。"]
+    return ["……", "墙里有一个很低的音，一直没断。", "最后记得的，是船上的汽笛。", "手指在被面上敲。四四拍。不知道敲了多久。", "……那个音还在。"]
+
+fn c1_op_person_object(id, detective_name):
+    var recall = "boarding"
+    if id == "su":
+        recall = "ship-whistle"
+    var fields = {"name": dv_field(c1_op_name(id, detective_name)), "profession": dv_field(c1_op_profession(id)), "last_recall": dv_field(recall)}
+    if id == "su":
+        fields = dv_with(fields, "prefers_unsweetened", dv_field(true))
+    return c1_state_object(rt_cat("opening.personal.", id), fields)
+
+fn c1_op_objects(detective_name):
+    var result = [c1_state_object("opening.roles", {"custodian": dv_field("demon"), "teacher": dv_field("demon")}), c1_state_object("opening.facilities", {"grain_store": dv_field(true), "water_supply": dv_field(true), "fire": dv_field(true), "drawing_exists": dv_field(true), "unheard_sounds_available": dv_field(true)}), c1_state_object("opening.contracts", {"detective_party_not_custodian": dv_field(true), "full_text": dv_field(c1_op_contract_text())}), c1_state_object("opening.cabinet", {"location": dv_field("hall"), "position_description": dv_field("铜口下方"), "labels": dv_field([detective_name, "霍铎", "沈鼎", "苏泠"])}), c1_state_object("opening.slot.detective", {"label": dv_field(detective_name), "door_open": dv_field(true), "contents": dv_field("empty")}), c1_state_object("opening.slot.huo", {"label": dv_field("霍铎"), "contents": dv_field("test-piece")}), c1_state_object("opening.slot.shen", {"label": dv_field("沈鼎"), "contents": dv_field("silver")}), c1_state_object("opening.slot.su", {"label": dv_field("苏泠"), "contents": dv_field("audition-access")}), c1_state_object("opening.silver", {"location": dv_field("opening.cabinet"), "authenticity": dv_field("genuine")}), c1_state_object("opening.testpiece", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.audition", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.tea", {"location": dv_field("hall"), "prepared": dv_field(false)}), c1_state_object("opening.public_history", {"alarm_last_night": dv_field(true), "main_building_call": dv_field(true), "door_latched_this_side": dv_field(true), "caller_not_returned": dv_field(true)})]
+    var people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        var id = people[i]
+        rt_push(result, c1_op_person_object(id, detective_name))
+        rt_push(result, c1_state_object(rt_cat("opening.cup.", id), {"recipient": dv_field(id), "contents": dv_field("empty")}))
+        i = i + 1
+    rt_push(result, c1_state_object("opening.wake.huo", {"bed_join": dv_field("mortise-without-nails"), "oilcloth_wrap": dv_field("clockwise-three-and-a-half"), "own_wrap_recognized": dv_field(true)}))
+    rt_push(result, c1_state_object("opening.wake.shen", {"arms_aching": dv_field(true), "whetstone_grooved": dv_field(true)}))
+    rt_push(result, c1_state_object("opening.wake.su", {"low_wall_tone": dv_field(true), "finger_meter": dv_field("4/4")}))
+    return result
+
+axiom c1_op_wake(id):
+    return dv_axiom(rt_cat("c1_op_wake.", id), 1, c1_at(id, c1_op_wake_room(id)), dv_single(dv_assign(dv_ref(id, "body", "awake"), true)))
+
+axiom c1_op_wear_coat():
+    return dv_axiom("c1_op_wear_coat", 1, dv_all(dv_pair(c1_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), dv_single(dv_assign(dv_ref("coat", "state", "worn_by"), "detective")))
+
+axiom c1_op_prepare_tea():
+    return dv_axiom("c1_op_prepare_tea", 1, c1_at("shen", "hall"), dv_pair(dv_assign(dv_ref("opening.tea", "state", "prepared"), true), dv_assign(dv_ref("opening.tea", "state", "prepared_by"), "shen")))
+
+axiom c1_op_serve_tea():
+    var effects = []
+    var people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(effects, dv_assign(dv_ref(rt_cat("opening.cup.", people[i]), "state", "contents"), "tea"))
+        rt_push(effects, dv_assign(dv_ref(rt_cat("opening.cup.", people[i]), "state", "served_by"), "shen"))
+        i = i + 1
+    rt_push(effects, dv_assign(dv_ref("opening.cup.su", "state", "sugar_added"), false))
+    return dv_axiom("c1_op_serve_tea", 1, dv_all(dv_pair(c1_at("shen", "hall"), c1_op_property("opening.tea", "prepared", true))), effects)
+
+axiom c1_op_bite_silver():
+    return dv_axiom("c1_op_bite_silver", 1, dv_all(dv_pair(c1_at("shen", "hall"), c1_op_property("opening.silver", "location", "opening.cabinet"))), dv_pair(dv_assign(dv_ref("opening.silver", "state", "last_bite_by"), "shen"), dv_assign(dv_ref("opening.silver", "state", "last_test"), "bite")))
+
+axiom c1_op_scrape_testpiece():
+    return dv_axiom("c1_op_scrape_testpiece", 1, dv_all(dv_pair(c1_at("huo", "hall"), c1_op_property("opening.testpiece", "location", "opening.cabinet"))), dv_single(dv_assign(dv_ref("opening.testpiece", "state", "last_scraped_by"), "huo")))
+
+axiom c1_op_play_audition():
+    return dv_axiom("c1_op_play_audition", 1, dv_all(dv_pair(c1_at("su", "hall"), c1_op_property("opening.audition", "location", "opening.cabinet"))), dv_pair(dv_assign(dv_ref("opening.audition", "state", "last_operator"), "su"), dv_assign(dv_ref("opening.audition", "state", "last_output"), "audible")))
+
+fn c1_op_rules():
+    var result = []
+    var people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(result, {"name": rt_cat("opening.wake.", people[i]), "law": c1_op_wake(people[i]), "source": c1_memory_source(people[i])})
+        i = i + 1
+    rt_push(result, {"name": "opening.wear-coat", "law": c1_op_wear_coat(), "source": c1_op_source(6, "s1_wake.006; s2_meet.008")})
+    rt_push(result, {"name": "opening.prepare-tea", "law": c1_op_prepare_tea(), "source": c1_op_source(11, "s2_meet.009")})
+    rt_push(result, {"name": "opening.serve-tea", "law": c1_op_serve_tea(), "source": c1_op_source(21, "s2_tea.011")})
+    rt_push(result, {"name": "opening.bite-silver", "law": c1_op_bite_silver(), "source": c1_op_source(30, "s3_broadcast.020")})
+    rt_push(result, {"name": "opening.scrape-testpiece", "law": c1_op_scrape_testpiece(), "source": c1_op_source(30, "s3_broadcast.020")})
+    rt_push(result, {"name": "opening.play-audition", "law": c1_op_play_audition(), "source": c1_op_source(30, "s3_broadcast.020")})
+    return result
+
+fn c1_op_presentation(id, voice, lines):
+    var rendered = []
+    var i = 0
+    while i < rt_count(lines):
+        rt_push(rendered, {"template": lines[i], "bindings": []})
+        i = i + 1
+    return {"actor": id, "voice": voice, "lines": rendered, "publish_after": "actual-applied-execution", "knowledge_effect": "none"}
+
+fn c1_op_wake_action(id):
+    var known = c1_at(id, c1_op_wake_room(id))
+    var grants = [dv_ref(id, "body", "awake"), c1_op_person_ref(id, "name"), c1_op_person_ref(id, "profession"), c1_op_person_ref(id, "last_recall")]
+    if id == "detective":
+        rt_push(grants, dv_ref("coat", "identity", "owner"))
+    if id == "huo":
+        rt_push(grants, dv_ref("opening.wake.huo", "state", "bed_join"))
+        rt_push(grants, dv_ref("opening.wake.huo", "state", "oilcloth_wrap"))
+        rt_push(grants, dv_ref("opening.wake.huo", "state", "own_wrap_recognized"))
+    if id == "shen":
+        rt_push(grants, dv_ref("opening.wake.shen", "state", "arms_aching"))
+        rt_push(grants, dv_ref("opening.wake.shen", "state", "whetstone_grooved"))
+    if id == "su":
+        rt_push(grants, dv_ref("opening.wake.su", "state", "low_wall_tone"))
+        rt_push(grants, dv_ref("opening.wake.su", "state", "finger_meter"))
+    var kind = "inspect"
+    return dv_with(dv_with(c1_once(c1_action(rt_cat(id, ".opening.wake"), kind, known, known, rt_cat("opening.wake.", id), grants, c1_memory_source(id))), "owner", id), "presentation", c1_op_presentation(id, "private-monologue", c1_op_wake_lines(id)))
+
+fn c1_op_physical_action(id, name, law, grants, source, surface):
+    return dv_with(dv_with(c1_once(c1_action(name, "inspect", c1_at(id, "hall"), c1_at(id, "hall"), law, grants, source)), "owner", id), "presentation", c1_op_presentation(id, "visible-action", dv_single(surface)))
+
+fn c1_op_reward_actions():
+    return [dv_with(c1_op_physical_action("shen", "shen.opening.bite-silver", "opening.bite-silver", [dv_ref("opening.silver", "state", "authenticity"), dv_ref("opening.silver", "state", "last_bite_by")], c1_op_source(30, "s3_broadcast.020"), "沈鼎走到柜前，咬了一枚银元。"), "sensory_mode", "tactile-inspection"), c1_op_physical_action("huo", "huo.opening.scrape-testpiece", "opening.scrape-testpiece", [dv_ref("opening.testpiece", "state", "last_scraped_by")], c1_op_source(30, "s3_broadcast.020"), "霍铎把试件举到灯下，刮配合面。"), dv_with(c1_op_physical_action("su", "su.opening.play-audition", "opening.play-audition", [dv_ref("opening.audition", "state", "last_operator"), dv_ref("opening.audition", "state", "last_output")], c1_op_source(30, "s3_broadcast.020"), "苏泠摇响了柜旁的试听机。"), "sensory_mode", "auditory-playback")]
+
+fn c1_op_dialogue(id, name, literal, surface, source, listeners):
+    var known = dv_all(dv_pair(c1_at(id, "hall"), literal))
+    var speech = dv_with(c1_speech(literal, source, "present-opening-scene"), "surface", surface)
+    var result = c1_once(dv_with_many(c1_action(name, "talk", known, known, "", [], source), {"speech": speech, "listeners": listeners, "owner": id}))
+    if id == "demon":
+        return c1_authorized_speech(result)
+    return result
+
+fn c1_op_question(id, name, surface, source, listeners):
+    var action = c1_op_dialogue(id, name, dv_true(), surface, source, listeners)
+    return dv_with(action, "speech", dv_with(action.speech, "utterance_type", "question"))
+
+fn c1_op_reward_refs(id):
+    if id == "shen":
+        return [dv_ref("opening.silver", "state", "authenticity"), dv_ref("opening.silver", "state", "last_bite_by")]
+    if id == "huo":
+        return [dv_ref("opening.testpiece", "state", "last_scraped_by")]
+    return [dv_ref("opening.audition", "state", "last_operator"), dv_ref("opening.audition", "state", "last_output")]
+
+fn c1_op_reward_requirement(id):
+    if id == "shen":
+        return dv_all(dv_pair(c1_op_property("opening.silver", "authenticity", "genuine"), c1_op_property("opening.silver", "last_bite_by", "shen")))
+    if id == "huo":
+        return c1_op_property("opening.testpiece", "last_scraped_by", "huo")
+    return dv_all(dv_pair(c1_op_property("opening.audition", "last_operator", "su"), c1_op_property("opening.audition", "last_output", "audible")))
+
+// Uses the existing person's rule, confidence and withdrawal; only a concrete personal
+// material premise is added. No reward property implies bodily residence in the world.
+fn c1_op_pragmatic_policy(id, policy):
+    if id == "detective":
+        return policy
+    var bridges = dv_find(policy, "implicature_bridges", [])
+    var result = []
+    var i = 0
+    while i < rt_count(bridges):
+        var bridge = bridges[i]
+        if bridge.id == "short_stay":
+            bridge = dv_with_many(bridge, {"premise": dv_all(dv_pair(bridge.premise, c1_op_reward_requirement(id))), "basis": dv_append(bridge.basis, c1_op_source(30, "s3_broadcast.020")), "material_scope": "reward-corroboration", "duration_support": "none", "actual_material_refs": c1_op_reward_refs(id)})
+        rt_push(result, bridge)
+        i = i + 1
+    return dv_with(policy, "implicature_bridges", result)
+
+fn c1_op_morning_candidates():
+    var result = []
+    var people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(result, dv_with(c1_op_wake_action(people[i]), "personal_purpose", {"subject": people[i], "id": "current-self-observation", "basis": dv_single(c1_memory_source(people[i]))}))
+        i = i + 1
+    var wear = c1_once(c1_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(c1_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), c1_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by")], c1_op_source(6, "s1_wake.006; s2_meet.008")))
+    rt_push(result, dv_with(wear, "owner", "detective"))
+    rt_push(result, c1_op_physical_action("shen", "shen.opening.prepare-tea", "opening.prepare-tea", [dv_ref("opening.tea", "state", "prepared"), dv_ref("opening.tea", "state", "prepared_by")], c1_op_source(11, "s2_meet.009"), "沈鼎把茶泡上。"))
+    return result
+
+fn c1_op_meet_candidates():
+    var listeners = c1_op_people()
+    var welcome = c1_op_dialogue("shen", "shen.opening.welcome", c1_op_property("opening.tea", "prepared", true), "哟，又醒一个。进来坐，茶刚泡上。", c1_op_source(11, "s2_meet.009"), listeners)
+    var shen_name = c1_op_dialogue("shen", "shen.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("shen", "name"), "沈鼎"), dv_fact(c1_op_person_ref("shen", "profession"), "烧菜"))), "我姓沈，沈鼎，烧菜的。", c1_op_source(12, "s2_meet.010"), listeners)
+    var huo_name = c1_op_dialogue("huo", "huo.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("huo", "name"), "霍铎"), dv_fact(c1_op_person_ref("huo", "profession"), "钳工"))), "……霍铎。钳工。", c1_op_source(13, "s2_meet.011"), listeners)
+    var su_name = c1_op_dialogue("su", "su.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("su", "name"), "苏泠"), dv_fact(c1_op_person_ref("su", "profession"), "弹琴"))), "苏泠。弹琴的。", c1_op_source(14, "s2_meet.006"), listeners)
+    var ask_name = c1_op_question("shen", "shen.opening.ask-name", "你呢？穿这么一身风衣，不像跑船的。", c1_op_source(15, "s2_meet.008"), dv_single("detective"))
+    return [welcome, shen_name, huo_name, su_name, ask_name]
+
+fn c1_op_tea_candidates(detective_name):
+    var listeners = c1_op_people()
+    var introduce = c1_op_dialogue("detective", "detective.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("detective", "name"), detective_name), dv_fact(c1_op_person_ref("detective", "profession"), "侦探"))), rt_cat(detective_name, "。……做侦探的。"), c1_op_source(19, "s2_tea.001"), listeners)
+    var memory = c1_op_dialogue("shen", "shen.opening.memory-report", dv_fact(c1_op_person_ref("shen", "last_recall"), "boarding"), "都还记得啥？我就记得上船。下了跳板往后，脑子里白茫茫一片。", c1_op_source(20, "s2_tea.016"), listeners)
+    var serve = c1_op_physical_action("shen", "shen.opening.serve-tea", "opening.serve-tea", [dv_ref("opening.cup.su", "state", "contents"), dv_ref("opening.cup.su", "state", "sugar_added"), dv_ref("opening.cup.su", "state", "served_by")], c1_op_source(21, "s2_tea.011"), "他把茶一杯一杯推过来。推到苏泠面前的那杯，他没有放糖。")
+    serve = dv_with_many(serve, {"public_observers": listeners, "public_grants": [dv_ref("opening.cup.su", "state", "contents"), dv_ref("opening.cup.su", "state", "sugar_added"), dv_ref("opening.cup.su", "state", "served_by")]})
+    var su_ask = c1_op_question("su", "su.opening.ask-sugar", "……你怎么知道我喝茶不放糖？", c1_op_source(22, "s2_tea.012"), listeners)
+    su_ask = dv_with_many(su_ask, {"precondition": dv_all(dv_pair(c1_at("su", "hall"), c1_op_property("opening.cup.su", "sugar_added", false))), "authority_precondition": dv_all(dv_pair(c1_at("su", "hall"), c1_op_property("opening.cup.su", "sugar_added", false)))})
+    var shen_reply = c1_op_dialogue("shen", "shen.opening.body-habit", c1_op_property("opening.cup.su", "served_by", "shen"), "嗯？……顺手吧。", c1_op_source(23, "s2_tea.013"), listeners)
+    shen_reply = dv_with(shen_reply, "speech", dv_with(shen_reply.speech, "scope", "own-bodily-action-appraisal-not-recovered-familiarity"))
+    return [introduce, memory, serve, su_ask, shen_reply]
+
+fn c1_op_broadcast_candidates():
+    var action = c1_opening_action()
+    var roles = dv_all(dv_pair(c1_op_property("opening.roles", "custodian", "demon"), c1_op_property("opening.roles", "teacher", "demon")))
+    action = dv_with(action, "speech", dv_with_many(action.speech, {"literal_ast": dv_all(dv_pair(roles, action.speech.literal_ast)), "surface": "诸位晨安。我是此地的代管者，也是诸位的教师。诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"}))
+    action = dv_with_many(action, {"presentation": c1_op_presentation("demon", "visible-action", ["墙上的铜口里咳了一声。"]), "source_narration": "墙上的铜口里咳了一声。屋里四个人一齐扭过头去。", "source_narration_limit": "peer-head-turns-require-real-peer-reaction; never-publish-unperformed-reactions"})
+    return [dv_with(action, "owner", "demon")]
+
+fn c1_op_reward_candidates(detective_name):
+    var cabinet_claim = dv_all(dv_pair(c1_op_property("opening.cabinet", "position_description", "铜口下方"), c1_op_property("opening.cabinet", "labels", [detective_name, "霍铎", "沈鼎", "苏泠"])))
+    var invitation = c1_op_dialogue("demon", "demon.opening.reward-invitation", cabinet_claim, "诸位的报偿，就在铜口下方的领取柜里，各有名签。请亲手核验。", c1_op_source(29, "s4_rewards.004"), c1_op_people())
+    invitation = dv_with(invitation, "speech", dv_with(invitation.speech, "shown_material_refs", [dv_ref("opening.cabinet", "state", "position_description"), dv_ref("opening.cabinet", "state", "labels")]))
+    var candidates = [invitation]
+    var rewards = c1_op_reward_actions()
+    var ids = ["shen", "huo", "su"]
+    var i = 0
+    while i < rt_count(rewards):
+        rt_push(candidates, rewards[i])
+        i = i + 1
+    return candidates
+
+fn c1_op_desire_candidates(detective_name):
+    var material_claim = dv_all([c1_op_property("opening.silver", "location", "opening.cabinet"), c1_op_property("opening.facilities", "grain_store", true), c1_op_property("opening.facilities", "water_supply", true), c1_op_property("opening.facilities", "fire", true), c1_op_property("opening.facilities", "drawing_exists", true), c1_op_property("opening.facilities", "unheard_sounds_available", true)])
+    var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。那张减少不可逆损失的闭式热机图纸，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
+    offer = dv_with(offer, "speech", dv_with(offer.speech, "shown_material_refs", [dv_ref("opening.silver", "state", "location"), dv_ref("opening.testpiece", "state", "location"), dv_ref("opening.audition", "state", "location")]))
+    var empty_slot = c1_once(c1_action("detective.opening.empty-slot", "inspect", c1_at("detective", "hall"), c1_at("detective", "hall"), "", [dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], c1_op_source(35, "s4_rewards.020")))
+    empty_slot = dv_with(dv_with(empty_slot, "owner", "detective"), "presentation", c1_op_presentation("detective", "private-monologue", ["柜上有一格贴着我的名字。小门开着，里面什么也没有。"]))
+    var ask_reward = c1_op_question("detective", "detective.opening.ask-reward", "那我的呢？", c1_op_source(36, "s4_rewards.016"), dv_single("demon"))
+    ask_reward = dv_with(ask_reward, "precondition", dv_all(dv_pair(c1_at("detective", "hall"), c1_op_property("opening.slot.detective", "contents", "empty"))))
+    var contract = c1_op_dialogue("demon", "demon.opening.other-contract", c1_op_property("opening.contracts", "detective_party_not_custodian", true), "与你立约的，不是我。", c1_op_source(37, "s4_rewards.017"), c1_op_people())
+    var shen_keep = c1_op_dialogue("shen", "shen.opening.accept-work", c1_op_reward_requirement("shen"), "……钱是真的。这活我接着干。", c1_op_source(39, "s3_broadcast.022"), c1_op_people())
+    shen_keep = dv_with(shen_keep, "speech", dv_with(shen_keep.speech, "intention_report", {"subject": "shen", "purpose": "keep-working", "basis": c1_op_reward_refs("shen"), "automatic_world_effect": "none"}))
+    var huo_stay = c1_op_dialogue("huo", "huo.opening.seek-drawing", c1_op_reward_requirement("huo"), "我留下。那张图，我得找。", c1_op_source(40, "s4_rewards.023"), c1_op_people())
+    huo_stay = dv_with(huo_stay, "speech", dv_with(huo_stay.speech, "intention_report", {"subject": "huo", "purpose": "seek-offered-drawing", "basis": c1_op_reward_refs("huo"), "automatic_world_effect": "none"}))
+    return [offer, empty_slot, ask_reward, contract, shen_keep, huo_stay]
+
+fn c1_op_investigation_candidates():
+    var first = c1_op_dialogue("demon", "demon.opening.public-alarm", dv_all(dv_pair(c1_op_property("opening.public_history", "alarm_last_night", true), c1_op_property("opening.public_history", "main_building_call", true))), "昨夜警铃骤起。主楼曾有人向诸位呼喊。", c1_op_source(44, "s5_question.002"), c1_op_people())
+    var second = c1_op_dialogue("demon", "demon.opening.public-latch", dv_all(dv_pair(c1_op_property("opening.public_history", "door_latched_this_side", true), c1_op_property("opening.public_history", "caller_not_returned", true))), "通往主楼之门，在诸位这一侧闩上了。那人再没有回来。", c1_op_source(45, "s5_question.003"), c1_op_people())
+    var question = c1_question_action("prompt", c1_op_source(46, "s5_question.004"), true)
+    question = dv_with(question, "speech", dv_with(question.speech, "surface", "此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"))
+    var invitation = c1_op_dialogue("demon", "demon.opening.investigate-invitation", dv_true(), "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。", c1_op_source(47, "s5_question.017"), c1_op_people())
+    invitation = dv_with(invitation, "speech", dv_with(invitation.speech, "utterance_type", "invitation"))
+    return [first, second, dv_with(question, "owner", "demon"), invitation]
+
+// Conditional stance reports require the existing owner interpretations receipt.
+// They remain ordinary optional candidates and must not be projected as facts
+// about bodily residence. Generic eligibility checks the actual owner receipt.
+fn c1_op_maintenance_actions():
+    var ids = ["huo", "shen", "su"]
+    var surfaces = ["试件，我刮过。初涉……我先按刚来这里办。", "钱是真的，我咬过。茶么，是顺手。……我还是按咱们才刚来想。", "……试听机里的声音，我听见了。初涉，我先按刚到这里听着。"]
+    var result = []
+    var i = 0
+    while i < rt_count(ids):
+        var id = ids[i]
+        var action = c1_op_dialogue(id, rt_cat(id, ".opening.maintain-interpretation"), c1_op_reward_requirement(id), surfaces[i], c1_op_source(30, "s3_broadcast.020; authoring-attitude-report"), c1_op_people())
+        var attitude = {"subject": id, "interpretation_id": "short_stay", "required_status": "accepted", "basis": c1_op_reward_refs(id), "source_event_requirement": "owner-existing-interpretation-receipt"}
+        action = dv_with_many(action, {"owner_interpretation_requirement": attitude, "speech": dv_with_many(action.speech, {"utterance_type": "attitude-report", "attitude_report": attitude, "asserted_body_duration": "none"})})
+        rt_push(result, action)
+        i = i + 1
+    return result
+
+fn c1_op_scene(detective_name):
+    return {"id": "chapter1-opening", "selection": "flat-owner-candidates", "input_slot": {"key": "detective_name", "value": detective_name, "source": c1_op_source(19, "s2_tea.001")}, "source_refs": [c1_op_source(4, "s1_wake"), c1_op_source(10, "s2_meet"), c1_op_source(18, "s2_tea"), c1_op_source(26, "s3_broadcast"), c1_op_source(43, "s5_question")], "candidate_contract": {"choice": "owner-policy-desires-purpose-and-actual-knowledge", "execution": "same-real-law-observation-speech-path-as-other-actions", "opportunity_requirement": "check-actual-owner-visible-context; never-place-a-peer", "received_speech_requirement": "check-owner-existing-hearing-parse-receipts", "desire_requirement": "check-owner-declared-desire-and-source", "request": "questions-create-requests-only-by-actual-hearing; replies-use-response_topic", "attitude_requirement": "check-owner-existing-interpretation-receipt", "presentation": "publish-only-after-applied-action; no-extra-knowledge", "not_happened": "leave-unselected-unheard-unperformed-interactions-unhappened", "time": "retain-initial-480-and-caller-360-minute-budget", "initial_state": "already-awake-at-current-origin; self-observations-occur-now"}}
+
+fn c1_op_install_world(world, detective_name):
+    var result = c1_add_objects(world, c1_op_objects(detective_name))
+    var people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        result = dv_store(result, dv_ref(people[i], "state", "location"), dv_field(c1_op_wake_room(people[i])))
+        result = dv_store(result, dv_ref(people[i], "body", "awake"), dv_with(dv_field(true), "basis", dv_single(c1_memory_source(people[i]))))
+        i = i + 1
+    var rules = c1_op_rules()
+    i = 0
+    while i < rt_count(rules):
+        result = dv_adopt(result, c1_method(rules[i].name, rules[i].law), "enforce", 1, dv_single(rules[i].source))
+        i = i + 1
+    return result
+
+fn c1_op_install_actor(actor, detective_name):
+    var id = actor.id
+    var mind = actor.mind
+    var objects = c1_op_objects(detective_name)
+    var i = 0
+    while i < rt_count(objects):
+        mind = dv_add_object(mind, c1_local_object(objects[i].id))
+        i = i + 1
+    if dv_has(c1_op_people(), id):
+        mind = dv_store(mind, dv_ref(id, "state", "location"), dv_field(c1_op_wake_room(id)))
+        actor = dv_with(actor, "location", c1_op_wake_room(id))
+        var own = c1_op_person_object(id, detective_name)
+        var fields = own.facets.state
+        var self_source = c1_op_source(19, "s2_tea.001;self-name-and-profession")
+        if id == "huo":
+            self_source = c1_op_source(13, "s2_meet.011")
+        if id == "shen":
+            self_source = c1_op_source(12, "s2_meet.010")
+        if id == "su":
+            self_source = c1_op_source(14, "s2_meet.006")
+        var k = 0
+        while k < rt_count(fields):
+            var basis = dv_single(self_source)
+            if fields[k][0] == "last_recall":
+                basis = dv_single(c1_memory_source(id))
+            if fields[k][0] == "prefers_unsweetened":
+                basis = [c1_op_source(22, "s2_tea.012; own-taste")]
+            mind = dv_store(mind, c1_op_person_ref(id, fields[k][0]), dv_with(fields[k][1], "basis", basis))
+            k = k + 1
+        if id == "detective":
+            mind = dv_store(mind, dv_ref("coat", "identity", "owner"), dv_unknown())
+        actor = dv_with(actor, "policy", c1_op_pragmatic_policy(id, actor.policy))
+    if id == "demon":
+        var whitelist = ["opening.roles", "opening.facilities", "opening.contracts", "opening.cabinet", "opening.silver", "opening.testpiece", "opening.audition", "opening.public_history"]
+        i = 0
+        while i < rt_count(objects):
+            if dv_has(whitelist, objects[i].id):
+                var fields = objects[i].facets.state
+                var j = 0
+                while j < rt_count(fields):
+                    var ref = dv_ref(objects[i].id, "state", fields[j][0])
+                    mind = dv_store(mind, ref, dv_with(fields[j][1], "basis", [c1_op_source(28, "s3_broadcast.019"), c1_op_source(31, "s3_broadcast.021;custodian-owned-inventory")]))
+                    j = j + 1
+            i = i + 1
+    var rules = c1_op_rules()
+    i = 0
+    while i < rt_count(rules):
+        if c1_op_rule_owner(rules[i].name) == id:
+            mind = dv_adopt(mind, c1_method(rules[i].name, rules[i].law), "predict", 1, dv_single(rules[i].source))
+        i = i + 1
+    if dv_has(c1_op_people(), id):
+        mind = dv_store(mind, dv_ref(id, "body", "awake"), dv_with(dv_field(true), "basis", dv_single(c1_memory_source(id))))
+    var pool = c1_op_flat_candidates(detective_name)
+    var replacements = []
+    i = 0
+    while i < rt_count(pool):
+        if pool[i].owner == id:
+            rt_push(replacements, pool[i])
+        i = i + 1
+    var actions = []
+    i = 0
+    while i < rt_count(actor.actions):
+        var old = actor.actions[i]
+        var replace = dv_has(["demon.opening.memory-only", "demon.opening.contrary"], old.id)
+        var j = 0
+        while j < rt_count(replacements):
+            if old.id == replacements[j].id:
+                replace = true
+            j = j + 1
+        if not replace:
+            rt_push(actions, old)
+        i = i + 1
+    i = 0
+    while i < rt_count(replacements):
+        rt_push(actions, replacements[i])
+        i = i + 1
+    actor = dv_with_many(actor, {"mind": mind, "actions": actions})
+    return c1_op_install_purposes(actor)
+
+fn c1_op_bindings(detective_name):
+    var result = []
+    var people = ["detective", "huo", "shen", "su", "demon"]
+    var objects = c1_op_objects(detective_name)
+    var i = 0
+    while i < rt_count(people):
+        var j = 0
+        while j < rt_count(objects):
+            rt_push(result, dv_binding(objects[j].id, objects[j].id, people[i]))
+            j = j + 1
+        i = i + 1
+    return result
+
+fn c1_opening_install_scene(scenario, detective_name):
+    dv_require(not (detective_name == ""), "Opening requires an actual detective name")
+    var result = dv_with(scenario, "physical", c1_op_install_world(scenario.physical, detective_name))
+    var actors = []
+    var i = 0
+    while i < rt_count(scenario.actors):
+        rt_push(actors, c1_op_install_actor(scenario.actors[i], detective_name))
+        i = i + 1
+    var bindings = scenario.bindings
+    var new_bindings = c1_op_bindings(detective_name)
+    i = 0
+    while i < rt_count(new_bindings):
+        rt_push(bindings, new_bindings[i])
+        i = i + 1
+    return dv_with_many(result, {"actors": actors, "bindings": bindings, "opening_scene": c1_op_scene(detective_name)})
+
+// Declarations below describe each person's reasons, never the author's next step.
+fn c1_op_desire(id):
+    if id == "detective":
+        return {"id": "understand-own-presence", "surface": "弄清自己为何在此", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/01_侦探.story", 11, "detective.desire")]}
+    if id == "huo":
+        return {"id": "seek-power-drawing", "surface": "减少不可逆损失的闭式热机图纸", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/02_霍铎.story", 10, "huo.desire")]}
+    if id == "shen":
+        return {"id": "protect-companions", "surface": "安稳，护住身边的人", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/03_沈鼎.story", 10, "shen.desire")]}
+    return {"id": "seek-unheard-sounds", "surface": "从未听过的声音", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/04_苏泠.story", 10, "su.desire")]}
+
+fn c1_op_rule_owner(name):
+    if name == "opening.wake.detective" or name == "opening.wear-coat":
+        return "detective"
+    if name == "opening.wake.huo" or name == "opening.scrape-testpiece":
+        return "huo"
+    if name == "opening.wake.shen" or name == "opening.prepare-tea" or name == "opening.serve-tea" or name == "opening.bite-silver":
+        return "shen"
+    return "su"
+
+fn c1_op_reward_object(id):
+    if id == "shen":
+        return "opening.silver"
+    if id == "huo":
+        return "opening.testpiece"
+    return "opening.audition"
+
+fn c1_op_invitation_requirement():
+    return {"speaker": "demon", "action_id": "demon.opening.reward-invitation", "receipt_kind": "actual-listener-parse"}
+
+fn c1_op_slot_inspections():
+    var ids = ["huo", "shen", "su", "detective"]
+    var result = []
+    var i = 0
+    while i < rt_count(ids):
+        var id = ids[i]
+        var known = dv_all(dv_pair(c1_at(id, "hall"), c1_op_property("opening.cabinet", "position_description", "铜口下方")))
+        var slot = rt_cat("opening.slot.", id)
+        var refs = [dv_ref(slot, "state", "label"), dv_ref(slot, "state", "contents")]
+        if id != "detective":
+            rt_push(refs, dv_ref(c1_op_reward_object(id), "state", "location"))
+        var action = c1_once(c1_action(rt_cat(id, ".opening.inspect-reward-slot"), "inspect", known, c1_at(id, "hall"), "", refs, c1_op_source(29, "s4_rewards.004")))
+        rt_push(result, dv_with_many(action, {"owner": id, "received_speech_requirement": c1_op_invitation_requirement(), "personal_purpose": {"subject": id, "id": "verify-personally-addressed-offer", "basis": [c1_op_source(29, "s4_rewards.004")]}}))
+        i = i + 1
+    var look = c1_once(c1_action("shen.opening.look-arrival", "inspect", c1_at("shen", "hall"), dv_all(dv_pair(c1_at("shen", "hall"), c1_at("detective", "hall"))), "", [dv_ref("coat", "state", "worn_by")], c1_op_source(15, "s2_meet.008")))
+    rt_push(result, dv_with_many(look, {"owner": "shen", "opportunity_requirement": {"location": "hall", "participants": ["detective"], "mode": "all-present"}}))
+    return result
+
+fn c1_op_request(action, target, topic):
+    return dv_with(action, "speech", dv_with(action.speech, "request", {"target": target, "topic": topic}))
+
+fn c1_op_appropriate_candidate(action):
+    var id = action.owner
+    var name = action.id
+    if action.law != "":
+        action = dv_with(action, "predict_law", action.law)
+    if dv_has_key(action, "speech"):
+        var targets = []
+        var listeners = dv_find(action, "listeners", [])
+        var i = 0
+        while i < rt_count(listeners):
+            if listeners[i] != id:
+                rt_push(targets, listeners[i])
+            i = i + 1
+        action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": targets, "mode": "at-least-one-present"})
+    if name == "shen.opening.welcome" or name == "shen.opening.introduce" or name == "huo.opening.introduce" or name == "su.opening.introduce" or name == "shen.opening.memory-report":
+        action = dv_with_many(action, {"response_topic": "opening.meeting", "offer_to": "detective", "opportunity_requirement": {"location": "hall", "participants": ["detective"], "mode": "all-present"}})
+    if name == "shen.opening.introduce":
+        action = dv_with(action, "completed_action_requirement", {"action_id": "shen.opening.welcome"})
+    if name == "shen.opening.ask-name":
+        action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(dv_ref("coat", "state", "worn_by"), "detective"))))
+        action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(dv_ref("coat", "state", "worn_by"), "detective")]))
+        action = c1_op_request(action, "detective", "opening.self-introduction")
+        action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": ["detective"], "mode": "all-present"})
+        action = dv_with_many(action, {"completed_action_requirement": {"action_id": "shen.opening.introduce"}, "suppress_after_received_speech": {"speaker": "detective", "action_id": "detective.opening.introduce"}})
+    if name == "detective.opening.introduce":
+        // An actually completed self-introduction also answers a later-arriving name request.
+        action = dv_with_many(action, {"response_topic": "opening.self-introduction", "response_once": true, "received_speech_requirement": {"any_of": [{"speaker": "shen", "action_id": "shen.opening.welcome"}, {"speaker": "shen", "action_id": "shen.opening.introduce"}]}})
+    if name == "su.opening.ask-sugar":
+        action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true))))
+        action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true), c1_op_property("opening.cup.su", "sugar_added", false)]))
+        action = c1_op_request(action, "shen", "opening.sugar-habit")
+    if name == "shen.opening.body-habit":
+        action = dv_with(action, "response_topic", "opening.sugar-habit")
+    if name == "detective.opening.ask-reward":
+        action = c1_op_request(action, "demon", "opening.detective-reward")
+    if name == "demon.opening.other-contract":
+        action = dv_with(action, "response_topic", "opening.detective-reward")
+    if name == "shen.opening.serve-tea":
+        action = dv_with_many(action, {"precondition": dv_all(dv_pair(action.precondition, c1_op_property("opening.tea", "prepared", true))), "authority_precondition": dv_all([action.authority_precondition, c1_at("detective", "hall"), c1_at("huo", "hall"), c1_at("su", "hall")]), "opportunity_requirement": {"location": "hall", "participants": ["detective", "huo", "su"], "mode": "all-present"}})
+    if name == "demon.opening" or name == "demon.question.prompt":
+        action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": c1_op_people(), "mode": "all-present"})
+    let broadcasts = ["demon.opening", "demon.opening.reward-invitation", "demon.opening.desire-offer", "demon.opening.public-alarm", "demon.opening.public-latch", "demon.question.prompt", "demon.opening.investigate-invitation"]
+    var broadcast_index = 1
+    while broadcast_index < rt_count(broadcasts):
+        if name == broadcasts[broadcast_index]:
+            action = dv_with(action, "completed_action_requirement", {"action_id": broadcasts[broadcast_index - 1]})
+        broadcast_index = broadcast_index + 1
+    if name == "shen.opening.bite-silver" or name == "huo.opening.scrape-testpiece" or name == "su.opening.play-audition":
+        action = dv_with_many(action, {"precondition": dv_all([action.precondition, c1_op_property("opening.cabinet", "position_description", "铜口下方"), c1_op_property(c1_op_reward_object(id), "location", "opening.cabinet")]), "received_speech_requirement": c1_op_invitation_requirement(), "desire_requirement": {"subject": id, "desire_id": c1_op_desire(id).id, "basis": c1_op_desire(id).basis}, "personal_purpose": {"subject": id, "id": "inspect-relevant-offered-material", "basis": c1_op_desire(id).basis}})
+    if name == "shen.opening.accept-work" or name == "huo.opening.seek-drawing":
+        action = dv_with(action, "desire_requirement", {"subject": id, "desire_id": c1_op_desire(id).id, "basis": c1_op_desire(id).basis})
+    if name == "huo.opening.seek-drawing":
+        action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, c1_op_property("opening.facilities", "drawing_exists", true))))
+    if name == "shen.opening.maintain-interpretation":
+        action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, c1_op_property("opening.cup.su", "served_by", "shen"))))
+    return action
+
+fn c1_op_flat_candidates(detective_name):
+    var catalogs = [c1_op_morning_candidates(), c1_op_meet_candidates(), c1_op_tea_candidates(detective_name), c1_op_broadcast_candidates(), c1_op_reward_candidates(detective_name), c1_op_desire_candidates(detective_name), c1_op_investigation_candidates(), c1_op_slot_inspections(), c1_op_maintenance_actions(), c1_op_contract_candidates()]
+    var result = []
+    var i = 0
+    while i < rt_count(catalogs):
+        var rows = catalogs[i]
+        var j = 0
+        while j < rt_count(rows):
+            rt_push(result, c1_op_appropriate_candidate(rows[j]))
+            j = j + 1
+        i = i + 1
+    rt_push(result, dv_with(dv_with(c1_inspect_E11("detective"), "owner", "detective"), "presentation", c1_op_presentation("detective", "visible-inspection", dv_single(c1_visible_E11()))))
+    rt_push(result, dv_with(dv_with(c1_inspect_E12("detective"), "owner", "detective"), "presentation", c1_op_presentation("detective", "visible-inspection", dv_single(c1_visible_E12()))))
+    return result
+
+fn c1_op_know_goal(id, ref, basis, available):
+    return {"kind": "know", "scope": "personal", "question": "opening_own", "ref": ref, "available_when": available, "basis": basis, "owner": id}
+
+fn c1_op_achieve_goal(id, proposition, basis, available):
+    return {"kind": "achieve", "scope": "personal", "question": "opening_own", "proposition": proposition, "available_when": available, "basis": basis, "owner": id}
+
+fn c1_op_communicate_goal(id, method, basis, available):
+    return {"kind": "communicate", "scope": "personal", "method_id": method, "available_when": available, "basis": basis, "requires_argument": false, "owner": id}
+
+fn c1_op_owned_goals(id):
+    var result = []
+    if dv_has(c1_op_people(), id):
+        var awake = dv_fact(dv_ref(id, "body", "awake"), true)
+        var basis = dv_single(c1_memory_source(id))
+        rt_push(result, c1_op_achieve_goal(id, dv_not(c1_at(id, c1_op_wake_room(id))), basis, awake))
+        rt_push(result, c1_op_achieve_goal(id, c1_at(id, "hall"), basis, c1_at(id, "corridor")))
+        if id == "detective":
+            rt_push(result, c1_op_know_goal(id, dv_ref("coat", "identity", "owner"), [c1_op_source(6, "s1_wake.006")], c1_at(id, "R05")))
+            rt_push(result, c1_op_achieve_goal(id, dv_fact(dv_ref("coat", "state", "worn_by"), "detective"), [c1_op_source(6, "s1_wake.006; s2_meet.008")], c1_at(id, "R05")))
+            rt_push(result, c1_op_know_goal(id, dv_ref("opening.slot.detective", "state", "contents"), [c1_op_source(35, "s4_rewards.020")], c1_op_property("opening.cabinet", "position_description", "铜口下方")))
+            rt_push(result, c1_op_communicate_goal(id, "detective.opening.introduce", [c1_op_source(19, "s2_tea.001")], c1_at(id, "hall")))
+            rt_push(result, c1_op_communicate_goal(id, "detective.opening.ask-reward", [c1_op_source(36, "s4_rewards.016")], c1_op_property("opening.slot.detective", "contents", "empty")))
+        if id == "huo":
+            rt_push(result, c1_op_know_goal(id, dv_ref("opening.wake.huo", "state", "oilcloth_wrap"), basis, c1_at(id, "R06")))
+            rt_push(result, c1_op_communicate_goal(id, "huo.opening.seek-drawing", c1_op_desire(id).basis, c1_op_reward_requirement(id)))
+        if id == "shen":
+            rt_push(result, c1_op_know_goal(id, dv_ref("opening.wake.shen", "state", "whetstone_grooved"), basis, c1_at(id, "R07")))
+            rt_push(result, c1_op_achieve_goal(id, c1_op_property("opening.tea", "prepared", true), [c1_op_source(11, "s2_meet.009")], c1_at(id, "hall")))
+            rt_push(result, c1_op_achieve_goal(id, c1_op_property("opening.cup.su", "contents", "tea"), [c1_op_source(21, "s2_tea.011")], c1_op_property("opening.tea", "prepared", true)))
+            rt_push(result, c1_op_communicate_goal(id, "shen.opening.welcome", [c1_op_source(11, "s2_meet.009")], c1_op_property("opening.tea", "prepared", true)))
+            rt_push(result, c1_op_know_goal(id, dv_ref("coat", "state", "worn_by"), [c1_op_source(15, "s2_meet.008")], c1_at(id, "hall")))
+            rt_push(result, c1_op_communicate_goal(id, "shen.opening.ask-name", [c1_op_source(15, "s2_meet.008")], c1_at(id, "hall")))
+            rt_push(result, c1_op_communicate_goal(id, "shen.opening.memory-report", [c1_op_source(20, "s2_tea.016")], c1_at(id, "hall")))
+            rt_push(result, c1_op_communicate_goal(id, "shen.opening.accept-work", c1_op_desire(id).basis, c1_op_reward_requirement(id)))
+            rt_push(result, c1_op_communicate_goal(id, "shen.opening.body-habit", [c1_op_source(23, "s2_tea.013")], c1_op_property("opening.cup.su", "served_by", "shen")))
+        if id == "su":
+            rt_push(result, c1_op_know_goal(id, dv_ref("opening.wake.su", "state", "low_wall_tone"), basis, c1_at(id, "R08")))
+            rt_push(result, c1_op_communicate_goal(id, "su.opening.ask-sugar", [c1_op_source(22, "s2_tea.012")], c1_op_property("opening.cup.su", "sugar_added", false)))
+        if id != "detective":
+            var invitation_known = c1_op_property("opening.cabinet", "position_description", "铜口下方")
+            var desire = c1_op_desire(id)
+            var introduction_source = c1_op_source(12, "s2_meet.010")
+            if id == "huo":
+                introduction_source = c1_op_source(13, "s2_meet.011")
+            if id == "su":
+                introduction_source = c1_op_source(14, "s2_meet.006")
+            rt_push(result, c1_op_communicate_goal(id, rt_cat(id, ".opening.introduce"), [introduction_source], c1_at(id, "hall")))
+            rt_push(result, c1_op_know_goal(id, dv_ref(rt_cat("opening.slot.", id), "state", "contents"), desire.basis, invitation_known))
+            var refs = c1_op_reward_refs(id)
+            var i = 0
+            while i < rt_count(refs):
+                rt_push(result, c1_op_know_goal(id, refs[i], desire.basis, invitation_known))
+                i = i + 1
+            rt_push(result, c1_op_communicate_goal(id, rt_cat(id, ".opening.maintain-interpretation"), desire.basis, c1_op_reward_requirement(id)))
+    if id == "demon":
+        var methods = ["demon.opening", "demon.opening.reward-invitation", "demon.opening.desire-offer", "demon.opening.public-alarm", "demon.opening.public-latch", "demon.question.prompt", "demon.opening.investigate-invitation", "demon.opening.other-contract"]
+        var i = 0
+        while i < rt_count(methods):
+            rt_push(result, c1_op_communicate_goal(id, methods[i], [c1_op_source(28, "s3_broadcast.019"), c1_op_source(46, "s5_question.004")], c1_at(id, "hall")))
+            i = i + 1
+    return result
+
+fn c1_op_install_purposes(actor):
+    var policy = dv_with(actor.policy, "notice_co_presence", true)
+    var goals = []
+    var existing = dv_find(policy, "goals", [])
+    var n = 0
+    while n < rt_count(existing):
+        var goal = existing[n]
+        if dv_has(c1_op_people(), actor.id) and actor.id != "detective" and dv_find(goal, "question", "") == "own_material":
+            // The old bare-session own-material strategy followed s5_question.
+            // Only this person's actual public-question receipt activates that motive.
+            goal = dv_with(goal, "available_when", dv_all(dv_pair(dv_find(goal, "available_when", dv_true()), dv_fact(dv_ref("question", "state", "current"), "questions_open"))))
+        rt_push(goals, goal)
+        n = n + 1
+    var added = c1_op_owned_goals(actor.id)
+    var i = 0
+    while i < rt_count(added):
+        rt_push(goals, added[i])
+        i = i + 1
+    policy = dv_with(policy, "goals", goals)
+    if dv_has(c1_op_people(), actor.id):
+        policy = dv_with(policy, "desires", dv_append(dv_find(policy, "desires", []), c1_op_desire(actor.id)))
+    return dv_with(actor, "policy", policy)
+
+fn c1_op_contract_text():
+    return "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。"
+
+fn c1_op_contract_candidates():
+    // Full-contract questions belong to the second-day permission dialogue.
+    return []

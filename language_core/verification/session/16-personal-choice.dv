@@ -110,6 +110,13 @@ fn dvp_owner_requirements(actor, action, mind):
             found = dvp_received_speech_matches(receipts, heard)
         if not found:
             return false
+    if dv_find(action, "response_once", false) and dv_has(dv_find(actor, "completed_actions", []), action.id):
+        return false
+    let superseded = dv_find(action, "suppress_after_received_speech", false)
+    if superseded != false:
+        dv_require(dv_record_like(superseded), "Suppressing speech requirement must be a record")
+        if dvp_received_speech_matches(dv_find(actor, "received_speeches", []), superseded):
+            return false
     let completed = dv_find(action, "completed_action_requirement", false)
     if completed != false:
         dv_require(dv_record_like(completed), "Completed action requirement must be a record")

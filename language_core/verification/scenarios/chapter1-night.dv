@@ -114,7 +114,13 @@ fn c1n_goals(actor):
         let action = inspections[i]
         var j = 0
         while j < rt_count(action.grants):
-            rt_push(goals, dv_with(c2_observation_goal(action.grants[j], action.precondition, action.source_refs, 0), "refresh_until", dv_fact(action.grants[j], true)))
+            var goal = c2_observation_goal(action.grants[j], action.precondition, action.source_refs, 0)
+            if action.id == rt_cat("night.inspect-room.", actor.id):
+                // Recheck only after related received activity, never after the
+                // inspection's own timestamp or an unrelated observation.
+                let triggers = [c1n_mark("night.watch-agree"), c1n_mark("night.cook"), dv_ref("night.provisions", "state", "consumed")]
+                goal = dv_with_many(goal, {"refresh_until": dv_not(dv_true()), "refresh_refs": triggers})
+            rt_push(goals, goal)
             j = j + 1
         i = i + 1
     return goals
@@ -127,16 +133,7 @@ fn c1n_refresh_actor_goals(actor):
         rt_push(combined, goals[i])
         i = i + 1
     actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"goals": combined, "first_night_goals": goals}))
-    var next_time = 1800
-    let rows = c1n_rows()
-    var row_index = 0
-    while row_index < rt_count(rows):
-        if rows[row_index].actor == actor.id and actor.mind.time < rows[row_index].start and rows[row_index].start < next_time:
-            next_time = rows[row_index].start
-        row_index = row_index + 1
-    if actor.mind.time < next_time and dv_has(c2_people(), actor.id):
-        actor = c1n_known_wait_actor(actor, next_time, [c1n_source("personal-evening-routine")])
-    return actor
+    return c1n_known_future_wait_actor(actor)
 
 fn c1n_morning_ready(world):
     return world.time >= 1800
@@ -313,6 +310,31 @@ fn c1n_positive_clock_bounds(condition):
             i = i + 1
     return result
 
+// Time alone may open a known opportunity. All remaining conditions must
+// already hold in the owner's mind, including being at its execution site.
+fn c1n_without_clock(condition):
+    let op = dv_find(condition, "op", "")
+    if op == "at_least" and dv_same(condition.ref, c1_other_clock_ref()):
+        return dv_true()
+    if op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, c1n_without_clock(condition.items[i]))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+fn c1n_future_goal_pending(actor, goal):
+    let kind = dv_find(goal, "kind", "")
+    if kind == "achieve":
+        return dv_truth(actor.mind, goal.proposition) != "true"
+    if kind == "communicate":
+        return not dv_has(dv_find(actor, "completed_actions", []), dv_find(goal, "method_id", ""))
+    if kind == "know" or kind == "evidence":
+        return not dv_uncontested(dv_read(actor.mind, goal.ref))
+    return false
+
 fn c1n_known_future_wait_actor(actor):
     var target = -1
     var basis = []
@@ -321,7 +343,7 @@ fn c1n_known_future_wait_actor(actor):
     while i < rt_count(goals):
         let goal = goals[i]
         let own_basis = dv_find(goal, "basis", [])
-        if not dv_find(goal, "known_opportunity_wait", false) and 0 < rt_count(own_basis):
+        if not dv_find(goal, "known_opportunity_wait", false) and 0 < rt_count(own_basis) and c1n_future_goal_pending(actor, goal) and dv_truth(actor.mind, c1n_without_clock(dv_find(goal, "available_when", dv_true()))) == "true":
             let bounds = c1n_positive_clock_bounds(dv_find(goal, "available_when", dv_true()))
             var j = 0
             while j < rt_count(bounds):

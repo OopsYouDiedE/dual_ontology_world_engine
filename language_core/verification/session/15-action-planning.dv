@@ -291,6 +291,10 @@ fn dvp_eligible_base(actor, action, mind, relevant):
     var id = action.id
     var used = dv_find(actor, "used", [])
     if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dv_truth(mind, action.precondition) == "true"))):
+        if action.kind == "inspect":
+            let inspection_actor = dvp_actor_view(actor, mind)
+            if dv_same(dv_find(dv_find(actor, "inspection_attempt_signatures", []), id, false), dvp_inspection_signature(inspection_actor, action, mind)):
+                return false
         if dv_has_key(action, "answer"):
             var local_1 = false
             if dv_has_key(action, "argument"):
@@ -678,8 +682,6 @@ fn dvp_plan(actor, bindings, costs):
                             local_1 = true
                     else:
                         local_1 = false
-                    if local_1 and action.kind == "inspect":
-                        local_1 = not dv_same(dv_find(dv_find(actor, "inspection_attempt_signatures", []), action.id, false), dvp_inspection_signature(node_actor, action, mind))
                     if local_1:
                         var value = dvp_action_value_context(node_actor, action, bindings, relevant, probes, value_context)
                         let opportunities = dvp_opportunities(node_actor, action)
@@ -848,27 +850,9 @@ fn dvp_achievement_pending(actor, action, pending):
         i = i + 1
     return value
 
-// Received timestamps establish freshness, without treating the received claims as true.
-fn dvp_latest_received_time(mind):
-    var time = dv_find(mind, "time", 0)
-    let history = dv_find(mind, "history", [])
-    var i = 0
-    while i < rt_count(history):
-        let entry = history[i]
-        if dv_find(entry, "kind", "") == "observation-batch":
-            let observations = dv_find(entry, "observations", [])
-            var j = 0
-            while j < rt_count(observations):
-                time = dv_max(time, observations[j].time)
-                j = j + 1
-        i = i + 1
-    return time
-
-// Goal metadata requests a current observation until the owner's own stop fact is known.
+// Only declared relevant received references can refresh an evidence requirement.
 fn dvp_refresh_current_evidence(actor, goals):
     var result = []
-    var received_time = dv_find(actor.mind, "time", 0)
-    var scanned = false
     var i = 0
     while i < rt_count(goals):
         var goal = goals[i]
@@ -883,11 +867,6 @@ fn dvp_refresh_current_evidence(actor, goals):
                             relevant_time = dv_max(relevant_time, dv_find(cell, "time", 0))
                         r = r + 1
                     goal = dv_with(goal, "minimum_time", relevant_time)
-                else:
-                    if not scanned:
-                        received_time = dvp_latest_received_time(actor.mind)
-                        scanned = true
-                    goal = dv_with(goal, "minimum_time", received_time)
         rt_push(result, goal)
         i = i + 1
     return result

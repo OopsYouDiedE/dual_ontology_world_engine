@@ -266,7 +266,7 @@ speech.manipulation = {
 
 规划对预测状态去循环，跨路径保留分数/耗时非支配路径；机会 access 键只用于去重，不把返回相同认知状态当作新进展。有来源的未完成沟通目标可得到接近机会分；该分是当前叶节点预期机会，不累积到无关后继，不预测他人实际接受。根层存在净正值正式非移动行动时，完成可覆盖的一层后继比较再选最佳首步；深度、预算或后继不足分别记录，有限理性搜索不保证全局最优。
 
-每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际 plan_expansions 扣减并累入 planning_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用本人实际接收或已知的相关字段时间。
+每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际 plan_expansions 扣减并累入 planning_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
 
 ### 报价与账本
 
@@ -697,7 +697,6 @@ fn dvp_communication_progress(actor, action)
 fn dvp_satisfied_goals(actor, mind, previous)
 fn dvp_achievement_value(actor, action)
 fn dvp_achievement_pending(actor, action, pending)
-fn dvp_latest_received_time(mind)
 fn dvp_refresh_current_evidence(actor, goals)
 ```
 
@@ -932,3 +931,9 @@ fn dvs_player_choice(actor, id)
 构建/编译只能说明必要工程事实；formal-model 不含 Godot 碰撞、输入和画面。停止于行动上限、时间域、工程超时与实际剧情终局分别报告，未覆盖分支保留未知。项目禁止流程回归与以断言数、通过率或汇总计数代替实际验收。本文为源码参考，未声称完整两章完成、同条件提速或全部语言设计已经实现。
 
 调试入口的 `debug_end.stop_evidence` 只读记录诊断行动窗口、会话动作上限、世界时域、时间不足拒绝、无排队/可执行动作及各主体剩余行动/认知额度。多个条件可以同时成立；narrative_completion 固定标为 not-inferred，须用实际关键节点证据另行判断。超时或初始化异常未产生 debug_end 时，不能补造停止状态。debug 投影只在 dv_record_like 成立时查询 action 字段，普通列表或原子动作保留可打印标识。
+
+### 会话上下文与未来机会维护（2026-10-16）
+
+动作可声明 `suppress_after_received_speech: {speaker, action_id}`，仅在本人已有非空来源与理解事件的匹配实际收闻后排除该动作；`response_once: true` 在本人成功 Complete 该动作后排除后续同动作回复。默认请求与专业回复仍保留原重问合同。这些门槛由共同主体资格入口核验，预测和候选不会制造完成或收闻。
+
+未来等待仅从有来源、未完成且除正向时钟下界外其他条件在本人当前认识中成立的目标产生。否定时钟分支与其他前提保留原判定；等待保留原费用和估值，不能预置未来成功。静态证物不因会话时间或无关信息刷新。源码：`verification/session/15-action-planning.dv`、`16-personal-choice.dv`、`verification/scenarios/chapter1-night.dv`。
