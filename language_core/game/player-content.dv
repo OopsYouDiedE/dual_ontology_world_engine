@@ -65,9 +65,9 @@ fn c1_player_display(action):
     if c1_ui_ends(action.id, ".opening.wear-coat"):
         result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
     if c1_ui_ends(action.id, ".sound_trial"):
-        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠按着门框侧耳辨听：‘只有重读的尾音震动……这不是门外有人喊，是铜管接头松动漏出来的声音。’", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
+        result = dv_with(result, "presentation", {"voice": "visible-action", "lines": [{"template": "声路试验完成。各处听见了什么，还需分别询问实际在场的人。", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
     if c1_ui_ends(action.id, ".loss_testimony"):
-        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠：‘昨夜我听见的“开门”，音调和刚才松动铜管里漏出来的一模一样。门外……根本没有人。’"} ]})
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠：‘昨夜我听见的“开门”，和刚才铜管漏出的那半句很像。我当时把声音当成了门外的人……可我并没有看见他。’"} ]})
     if c1_ui_ends(action.id, ".talk.frame_hollow"):
         result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠用音叉轻敲门框：‘门框后面是空的，贴着走去主楼的传声铜管。松动的接头就在这里。’"} ]})
     if c1_ui_ends(action.id, ".talk.slate_code"):
@@ -75,7 +75,7 @@ fn c1_player_display(action):
     if c1_ui_ends(action.id, ".talk.cups_known"):
         result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎擦着水槽里的杯子：‘阿泠喜淡茶不加糖，老霍嗜甜必加两勺。我这双手比脑子灵光，早就习惯这么泡茶了。’"} ]})
     if c1_ui_ends(action.id, ".talk.starter_kept"):
-        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎揭开陶罐看了看：‘这罐老酵头至少续养了几个月，一层层干结的旧面痕骗不了人。咱们几个，绝不是昨天才认识的。’"} ]})
+        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎揭开陶罐看了看：‘罐壁上留着好几层旧面痕。我喂它的动作这么顺手……可这罐子从哪儿来，谁在这里养过，我想不起来。’"} ]})
     return result
 
 fn c1_player_replay_summary(actor):

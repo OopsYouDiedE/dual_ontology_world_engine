@@ -507,10 +507,10 @@ fn dvp_cached_dependencies(actor, seeds, budget):
             local_1 = {"signature": signature, "result": result}
         else:
             local_1 = false
-        return dv_with(dv_with(result, "cache_hit", false), "cache", local_1)
+        return dv_with_many(result, {"cache_hit": false, "cache": local_1})
     else:
         if dv_same(cache.signature, signature):
-            return dv_with(dv_with(dv_with(cache.result, "expanded", 0), "cache_hit", true), "cache", cache)
+            return dv_with_many(cache.result, {"expanded": 0, "cache_hit": true, "cache": cache})
         else:
             var result = dvp_dependencies(actor.mind, seeds, budget, methods)
             var local_2 = false
@@ -518,9 +518,22 @@ fn dvp_cached_dependencies(actor, seeds, budget):
                 local_2 = {"signature": signature, "result": result}
             else:
                 local_2 = false
-            return dv_with(dv_with(result, "cache_hit", false), "cache", local_2)
+            return dv_with_many(result, {"cache_hit": false, "cache": local_2})
 
 fn dvp_plan(actor, bindings, costs):
+    // Refresh declared evidence goals for every chapter in the read-only planning view.
+    let owned_goals = dv_find(actor.policy, "goals", [])
+    var refresh = false
+    var goal_index = 0
+    while goal_index < rt_count(owned_goals):
+        if dv_find(owned_goals[goal_index], "kind", "") == "evidence" and dv_has_key(owned_goals[goal_index], "refresh_until"):
+            refresh = true
+        goal_index = goal_index + 1
+    if refresh:
+        let view = dvp_actor_view(actor, actor.mind)
+        let policy = dv_with(actor.policy, "goals", dvp_refresh_current_evidence(actor, owned_goals))
+        rt_replace(view, rt_record_index(view, "policy"), dv_pair("policy", policy))
+        actor = view
     var budget = dv_find(actor.policy, "plan_budget", 0)
     var depth_limit = dv_find(actor.policy, "plan_depth", 2)
     var goals = dvp_goal_refs(actor)
@@ -596,7 +609,7 @@ fn dvp_plan(actor, bindings, costs):
                             current_action = action
                             current_score = score
                             current_value = value
-                        rt_push(plans, dv_with(dv_with(dv_with({"path": path, "score": score, "value": value, "relevant_refs": relevant}, "probe_refs", probes), "mind_revision", actor.mind.revision), "prediction_basis", dv_find(node, "prediction_basis", [])))
+                        rt_push(plans, dv_with_many({"path": path, "score": score, "value": value, "relevant_refs": relevant}, {"probe_refs": probes, "mind_revision": actor.mind.revision, "prediction_basis": dv_find(node, "prediction_basis", [])}))
                         if (best_score < score):
                             best_score = score
                             best_path = path
@@ -648,7 +661,7 @@ fn dvp_plan(actor, bindings, costs):
         local_3 = "duration-budget"
     else:
         local_3 = stop
-    return dv_with_many(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, "selected_path", best_path), "relevant_refs", relevant), "stop", local_3), "time_blocked", time_blocked), "dependency_cache", dependencies.cache), "dependency_cache_hit", dependencies.cache_hit), "current_affordance", {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
+    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
 
 fn dvp_find_action(actions, id):
     var i = 0

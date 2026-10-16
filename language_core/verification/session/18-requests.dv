@@ -19,7 +19,7 @@ fn dvs_receive_request(actor, speech, parse_event, source, speaker):
         return actor
     else:
         if (request.target == actor.id):
-            return dv_with(actor, "received_requests", dv_append(dv_find(actor, "received_requests", []), dv_with(dv_with({"topic": request.topic, "parse_event": parse_event, "source_event": source}, "requester", speaker), "request", request)))
+            return dv_with(actor, "received_requests", dv_append(dv_find(actor, "received_requests", []), dv_with_many({"topic": request.topic, "parse_event": parse_event, "source_event": source}, {"requester": speaker, "request": request})))
         else:
             return actor
 
@@ -87,7 +87,7 @@ fn dvs_notice_peers(actor, physical, actors, events, time, parent):
             return actor
         else:
             var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref})
-            return dv_with(dv_with(actor, "visible_context", context), "last_cognitive_event", event)
+            return dv_with_many(actor, {"visible_context": context, "last_cognitive_event": event})
     else:
         return actor
 
@@ -106,7 +106,7 @@ fn dvs_visible_action_grants(actors, speaker_index, action, physical, bindings, 
             var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
             if (0 < rt_count(observations)):
                 var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
-                var event = dvs_event(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with(dv_with(dv_with({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "action": action}, "bindings", bindings), "grants", grants), "execution_id", execution_id))
-                result = dvs_replace(result, i, dv_with(dv_with(actor, "mind", next), "last_cognitive_event", event))
+                var event = dvs_event_prepared(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id}))
+                result = dvs_replace(result, i, dv_with_many(actor, {"mind": next, "last_cognitive_event": event}))
         i = (i + 1)
     return result

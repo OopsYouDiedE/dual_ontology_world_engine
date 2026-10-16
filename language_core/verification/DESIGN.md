@@ -67,3 +67,10 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 
 The shared actor turn executes cognition and dvs_choose without the removed idle cache. dvs_event copies event payloads through dv_with, preserving the restored world/mind/actor snapshots for existing readers. A simulation result includes its predicted world; predictions remain separate from physical execution.
 The production game/campaign.dv adapter extends the same live session. dvg_run_campaign(max_steps) uses dvg_prepare and dvg_complete with formal-model receipts, stopping on the completed-action bound or session inactivity. false selects the authored action limit; zero returns the opening state. It returns live state, without closing or restarting at chapter extension. dvg_chronological_trace projects selected actors from append-ordered events; it neither changes scheduling nor grants knowledge. Geometry remains outside this logical adapter.
+
+
+## 独立事件与证据新鲜度
+
+dvs_event_prepared 接收调用表达式中非空 dv_with/dv_with_many 的独立结果，父事件列表继续复制；普通输入经 dvs_event 独立复制。所有消费者继续读取完整事件数据。
+
+dvp_plan 在临时只读主体视图中刷新显式 refresh_until 目标的 minimum_time，采用本人实际已接收时间。它只替换新视图的 policy 字段对；人物知识、预算、原始策略与预测分支的独立性保持。刷新适用于全部章节，章节扩展仅负责内容组合。

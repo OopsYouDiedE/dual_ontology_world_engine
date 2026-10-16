@@ -1,0 +1,29 @@
+#include ../../../language_core/game/entry.dv
+
+fn dvg_debug_run():
+    let original = dv_add_object(dv_world("neutral", "physical", ""), dv_object("box", "physical", {"state": {"value": dv_field(1)}}))
+    let ref = dv_ref("box", "state", "value")
+    let cell = dv_field([2])
+    var changed = dv_store(original, ref, cell)
+    rt_replace(dv_get(dv_get(dv_get(changed.objects, "box").facets, "state"), "value").value, 0, 3)
+    dv_require(dv_read(original, ref).value == 1, "store changed input")
+    dv_require(cell.value[0] == 2, "store retained cell alias")
+    let failed = dv_stage(original, [dv_assign(ref, 9), dv_assign(dv_ref("missing", "state", "x"), 1)], 1, [], 1)
+    dv_require(failed.status == "unknown-object" and dv_read(failed.world, ref).value == 1, "failed transaction published partial write")
+    let duplicate = dv_stage(original, [dv_assign(ref, 9), dv_assign(ref, 10)], 1, [], 1)
+    dv_require(duplicate.status == "duplicate-write" and dv_read(duplicate.world, ref).value == 1, "duplicate transaction changed behavior")
+    let ready = dv_stage(original, [dv_assign(ref, [4])], 1, [], 1)
+    rt_replace(dv_get(dv_get(dv_get(ready.world.objects, "box").facets, "state"), "value").value, 0, 5)
+    dv_require(ready.changes[0].after.value[0] == 4, "change snapshot aliases returned world")
+    var events = []
+    let source = {"value": [6]}
+    dvs_event_prepared(events, "neutral", "", 0, [], dv_with(source, "other", [7]))
+    rt_replace(source.value, 0, 8)
+    dv_require(events[0].data.value[0] == 6, "event retained input alias")
+    let mind = dv_add_object(dv_world("mind", "mind", "subject"), dv_object("box", "perceived", {"state": {"value": dv_unknown()}}))
+    let observation = dv_observation("obs", "subject", ref, [9], "perception", "direct", 2, 1, [])
+    let observed = dv_update_mind(mind, [observation], mind.revision, dv_observation_profile({"perception": 1}, 0.5))
+    rt_replace(observation.value, 0, 10)
+    dv_require(not dv_read(mind, ref).known and dv_read(observed.world, ref).value[0] == 9, "observation retained input alias")
+    dv_require(observed.world.time == 2, "received time changed")
+    return rt_json_write(rt_arg(0), {"scope": "neutral-copy-and-transaction-semantics", "original": original, "failed": failed, "duplicate": duplicate, "event": events[0]})

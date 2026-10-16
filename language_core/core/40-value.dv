@@ -50,7 +50,7 @@ fn dv_value(world, criteria, subjective):
         else:
             rt_push(unknown, id)
         i = (i + 1)
-    return dv_with(dv_with(dv_with({"score": score, "details": details, "unknown": unknown, "complete": (rt_count(unknown) == 0)}, "world", world.id), "revision", world.revision), "subject", world.subject)
+    return dv_with_many({"score": score, "details": details, "unknown": unknown, "complete": (rt_count(unknown) == 0)}, {"world": world.id, "revision": world.revision, "subject": world.subject})
 
 fn dv_value_subjective(mind, criteria):
     dv_require(dv_or((mind.domain == "mind"), (mind.domain == "prediction")), "Subjective value requires a mind or prediction")

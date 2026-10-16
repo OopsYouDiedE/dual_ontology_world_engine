@@ -125,7 +125,7 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
     else:
         local_4 = 0
     truth_level = local_4
-    var judgment = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"accepted": accepted, "literal_truth": literal, "epistemic_support": support, "accepted_law": transition}, "accepted_public_grants", grants), "accepted_listeners", recipients), "question_match", topic), "answer_complete", complete), "law_ready", law_ready), "reason", reason), "truth_level", truth_level), "stage", target_stage)
+    var judgment = dv_with_many({"accepted": accepted, "literal_truth": literal, "epistemic_support": support, "accepted_law": transition}, {"accepted_public_grants": grants, "accepted_listeners": recipients, "question_match": topic, "answer_complete": complete, "law_ready": law_ready, "reason": reason, "truth_level": truth_level, "stage": target_stage})
     return dv_with_many(judgment, {"progress_ref": progress_ref, "completion_ref": completion_ref})
 
 fn dvs_run(story, capability):
@@ -165,7 +165,7 @@ fn dvs_session_open(story, capability):
         actors = dvs_replace(actors, i, dv_with(actor, "ledger", dv_action_cost_ledger(actor.id, actor.balance)))
         i = (i + 1)
     initial = {"physical": physical, "actors": actors}
-    dvs_event(events, "session_start", "", dv_find(physical, "time", 0), [], dv_with({"initial": initial, "capability": capability, "source_refs": dv_find(story, "source_refs", [])}, "time_origin", {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}))
+    dvs_event_prepared(events, "session_start", "", dv_find(physical, "time", 0), [], dv_with({"initial": initial, "capability": capability, "source_refs": dv_find(story, "source_refs", [])}, "time_origin", {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}))
     return {"story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial}
 
 fn dvs_session_active(state):
@@ -239,7 +239,7 @@ fn dvs_session_prepare(state):
             var model = dv_get(costs, action.kind)
             var action_event = rt_cat("action", rt_show(executed))
             var ledger = actor.ledger
-            parent = dvs_event(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with(dv_with({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, "plan_expansions", choice.plan_expansions), "plans", choice.plans))
+            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans}))
             parent = dvs_event(events, "planning_choice", id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
             var bounds = dv_action_cost_bounds(model.minimum, model.maximum)
             if dv_or((horizon < (time + bounds.maximum.time)), (horizon < (time + model.actual.time))):
@@ -310,7 +310,7 @@ fn dvs_session_complete(state, receipt):
     physical = result.execution.world
     time = dv_find(physical, "time", time)
     actor = dv_with(actor, "ledger", result.ledger)
-    parent = dvs_event(events, "action_execution", id, time, dv_single(parent), dv_with(dv_with(dv_with(dv_with({"revision_before": before.revision, "revision_after": physical.revision, "physical_before": before, "physical_after": physical, "receipt": result, "action": action}, "ledger_before", ledger), "ledger_after", result.ledger), "quote", quote), "actual", model.actual))
+    parent = dvs_event_prepared(events, "action_execution", id, time, dv_single(parent), dv_with_many({"revision_before": before.revision, "revision_after": physical.revision, "physical_before": before, "physical_after": physical, "receipt": result, "action": action}, {"ledger_before": ledger, "ledger_after": result.ledger, "quote": quote, "actual": model.actual}))
     physical = dvs_environment(physical, story, events, parent)
     if (result.execution.status == "applied"):
         actor = dvs_record_request(dvs_finish_reply(dv_with(actor, "last_action_event", parent), action), action)
@@ -324,7 +324,7 @@ fn dvs_session_complete(state, receipt):
     var profile = dvs_observation_profile(actor)
     actor = dv_with(actor, "mind", dv_update_mind(mind, observations, mind.revision, profile).world)
     if (0 < rt_count(observations)):
-        parent = dvs_event(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with(dv_with(dv_with({"observations": observations, "revision_before": mind.revision, "revision_after": actor.mind.revision, "mind_before": mind, "mind_after": actor.mind, "action": action}, "bindings", bindings), "grants", dv_find(action, "grants", [])), "execution_id", action_event))
+        parent = dvs_event_prepared(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": actor.mind.revision, "mind_before": mind, "mind_after": actor.mind, "action": action}, {"bindings": bindings, "grants": dv_find(action, "grants", []), "execution_id": action_event}))
     if (0 < rt_count(observations)):
         actor = dv_with(actor, "last_cognitive_event", parent)
     if dv_and(dv_has_key(action, "answer"), (result.execution.status == "applied")):
@@ -348,7 +348,7 @@ fn dvs_session_complete(state, receipt):
         current_level = local_5
         is_higher = (dv_find(dv_find(actor, "accepted_answers", []), stage, 0) < new_level)
         if dv_and(judgment.accepted, (not is_higher)):
-            judgment = dv_with(dv_with(judgment, "accepted", false), "reason", "already-accepted-personal-answer")
+            judgment = dv_with_many(judgment, {"accepted": false, "reason": "already-accepted-personal-answer"})
         else:
             judgment = dv_with(judgment, "accepted", dv_and(judgment.accepted, is_higher))
         var local_6 = false
@@ -371,7 +371,7 @@ fn dvs_session_complete(state, receipt):
                 actor = dv_with(actor, "accepted_answers", dv_with(dv_find(actor, "accepted_answers", []), stage, new_level))
                 parent = dvs_event(events, "question_transition", id, time, dv_single(parent), transition)
                 actors = dvs_replace(actors, index, actor)
-                actors = dvs_public_grants(actors, index, dv_with(dv_with(dv_with(action, "speech", {"channel": "formal-receipt", "literal_ast": dv_true()}), "listeners", judgment.accepted_listeners), "public_grants", judgment.accepted_public_grants), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
+                actors = dvs_public_grants(actors, index, dv_with_many(action, {"speech": {"channel": "formal-receipt", "literal_ast": dv_true()}, "listeners": judgment.accepted_listeners, "public_grants": judgment.accepted_public_grants}), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
                 actor = actors[index]
     if dv_and((action.kind == "replay"), (result.execution.status == "applied")):
         var candidates = dv_find(actor.policy, "hypotheses", [])
@@ -508,7 +508,7 @@ fn dvs_public_grants(actors, speaker_index, action, physical, bindings, events, 
             if (0 < rt_count(observations)):
                 var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
                 var observation_event = ""
-                observation_event = dvs_event(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dvs_public_grant_parents(events, parent, actor.id)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "mind_before": mind, "mind_after": next, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id, "source_event": dvs_public_literal_source(events, parent, actor.id)}))
+                observation_event = dvs_event_prepared(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dvs_public_grant_parents(events, parent, actor.id)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "mind_before": mind, "mind_after": next, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id, "source_event": dvs_public_literal_source(events, parent, actor.id)}))
                 result = dvs_replace(result, i, dv_with_many(actor, {"mind": next, "last_cognitive_event": observation_event}))
         i = (i + 1)
     return result

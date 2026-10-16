@@ -235,17 +235,17 @@ fn dv_accept_explanation(mind, model, competitors, slots, sources, policy, budge
             changes = stage.changes
             while (j < rt_count(changes)):
                 var ref = changes[j].ref
-                world = dv_store(world, ref, dv_with(dv_with(dv_read(world, ref), "source", "abduction"), "estimated", true))
+                world = dv_store(world, ref, dv_with_many(dv_read(world, ref), {"source": "abduction", "estimated": true}))
                 j = (j + 1)
             if (0 < rt_count(changes)):
                 world = dv_with(world, "revision", (mind.revision + 1))
         else:
             valid = false
             reason = stage.status
-    var argument = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": id, "estimated": true, "confidence": confidence, "claims": claims}, "model_event", dv_find(model, "event", "")), "source_event_ids", source_ids), "competitor_events", competitor_ids), "source_revision", mind.revision), "mind_revision_after", world.revision), "inputs", inputs), "changes", changes), "basis", basis)
+    var argument = dv_with_many({"id": id, "estimated": true, "confidence": confidence, "claims": claims}, {"model_event": dv_find(model, "event", ""), "source_event_ids": source_ids, "competitor_events": competitor_ids, "source_revision": mind.revision, "mind_revision_after": world.revision, "inputs": inputs, "changes": changes, "basis": basis})
     if valid:
         world = dv_with(world, "history", dv_append(world.history, {"kind": "estimated-model-argument", "argument": argument, "time": time}))
-    return dv_with(dv_with({"accepted": valid, "reason": reason, "world": world, "argument": argument}, "remaining", remaining), "expanded", (budget - remaining))
+    return dv_with_many({"accepted": valid, "reason": reason, "world": world, "argument": argument}, {"remaining": remaining, "expanded": (budget - remaining)})
 
 fn dv_explanation_merge(a, b):
     var result = a

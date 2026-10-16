@@ -84,4 +84,4 @@ fn dv_transmit(world, law_name, path, signal, threshold):
         local_1 = dv_and((world.domain == "mind"), (adoption.mode == "predict"))
     dv_require(local_1, "Wrong transmission adoption")
     dv_require((dv_truth(world, law.premise) == "true"), "Transmission premise is not established")
-    return dv_with(dv_with(dv_transport(world, path, signal, threshold), "basis", adoption.basis), "hypothetical", (not (world.domain == "physical")))
+    return dv_with_many(dv_transport(world, path, signal, threshold), {"basis": adoption.basis, "hypothetical": (not (world.domain == "physical"))})

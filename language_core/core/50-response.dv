@@ -42,7 +42,7 @@ fn dv_appraise_request(mind, request):
         else:
             rt_push(unknown, key)
         i = (i + 1)
-    return dv_with(dv_with({"features": features, "unknown": unknown, "basis": basis, "revision": mind.revision}, "subject", mind.subject), "request", request.id)
+    return dv_with_many({"features": features, "unknown": unknown, "basis": basis, "revision": mind.revision}, {"subject": mind.subject, "request": request.id})
 
 fn dv_dot(features, weights):
     var i = 0
@@ -76,17 +76,17 @@ fn dv_expression(appraisal, expression_policy):
     while (i < rt_count(expression_policy)):
         var axis = expression_policy[i]
         var evaluation = dv_dot(appraisal.features, axis[1])
-        rt_push(axes, dv_pair(axis[0], dv_with(dv_with(evaluation, "value", dv_clamp_signed(evaluation.score)), "complete", (rt_count(evaluation.unknown) == 0))))
+        rt_push(axes, dv_pair(axis[0], dv_with_many(evaluation, {"value": dv_clamp_signed(evaluation.score), "complete": (rt_count(evaluation.unknown) == 0)})))
         i = (i + 1)
     return axes
 
 fn dv_no_change_prediction(mind):
     dv_domain(mind, "mind")
-    return dv_with(dv_with(mind, "domain", "prediction"), "source_revision", mind.revision)
+    return dv_with_many(mind, {"domain": "prediction", "source_revision": mind.revision})
 
 fn dv_response_option(id, intent, feasible, prediction, effort, feature_weights):
     dv_require((not (effort < 0)), "Negative effort")
-    return dv_with(dv_with({"id": id, "intent": intent, "feasible": feasible, "prediction": prediction}, "effort", effort), "feature_weights", feature_weights)
+    return dv_with_many({"id": id, "intent": intent, "feasible": feasible, "prediction": prediction}, {"effort": effort, "feature_weights": feature_weights})
 
 fn dv_validate_expression_policy(expression_policy):
     dv_require(dv_record_like(expression_policy), "Expression policy must be an axis-to-weight-record matrix")
@@ -118,7 +118,7 @@ fn dv_accept_policy(mind, id, policy, basis):
     dv_require((0 < rt_count(basis)), "Value policy needs an acceptance basis")
     var policies = dv_find(mind, "policies", [])
     dv_require((not dv_has_key(policies, id)), "Duplicate accepted policy")
-    return dv_with(dv_with(mind, "policies", dv_with(policies, id, {"policy": policy, "basis": basis, "active": true})), "revision", (mind.revision + 1))
+    return dv_with_many(mind, {"policies": dv_with(policies, id, {"policy": policy, "basis": basis, "active": true}), "revision": (mind.revision + 1)})
 
 fn dv_respond_adopted(mind, request, options, policy_id):
     var accepted = dv_get(mind.policies, policy_id)
@@ -172,7 +172,7 @@ fn dv_respond(mind, request, options, policy):
         local_2 = "selected"
     else:
         local_2 = "no-response"
-    return dv_with(dv_with(dv_with({"status": local_2, "choice": chosen, "appraisal": appraisal, "evaluated": evaluated}, "rejected", rejected), "expression", dv_expression(appraisal, policy.expression)), "committed", false)
+    return dv_with_many({"status": local_2, "choice": chosen, "appraisal": appraisal, "evaluated": evaluated}, {"rejected": rejected, "expression": dv_expression(appraisal, policy.expression), "committed": false})
 
 fn dv_relax(current, baseline, retention):
     return (baseline + ((current - baseline) * dv_unit(retention)))

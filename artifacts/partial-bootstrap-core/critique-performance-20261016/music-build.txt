@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\build_soundtrack.py", line 252, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\build_soundtrack.py", line 226, in main
+    export_score(musescore, base + '.mscz')
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\build_soundtrack.py", line 68, in export_score
+    subprocess.run([musescore, *extra, '-o', out, mscz], check=True, capture_output=True, timeout=300)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 1219, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 1640, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['C:/Program Files/MuseScore 4/bin/MuseScore4.exe', '-o', 'C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\music\\Blessed Sleepers - Noon.pdf', 'C:\\Users\\zznZZ\\Desktop\\dual_ontology_world_engine\\music\\Blessed Sleepers - Noon.mscz']' timed out after 300 seconds

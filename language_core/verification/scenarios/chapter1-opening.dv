@@ -63,7 +63,7 @@ fn c1_op_person_object(id, detective_name):
     return c1_state_object(rt_cat("opening.personal.", id), fields)
 
 fn c1_op_objects(detective_name):
-    var result = [c1_state_object("opening.roles", {"custodian": dv_field("demon"), "teacher": dv_field("demon")}), c1_state_object("opening.facilities", {"grain_store": dv_field(true), "water_supply": dv_field(true), "fire": dv_field(true), "drawing_exists": dv_field(true), "unheard_sounds_available": dv_field(true)}), c1_state_object("opening.contracts", {"detective_party_not_custodian": dv_field(true)}), c1_state_object("opening.cabinet", {"location": dv_field("hall"), "position_description": dv_field("铜口下方"), "labels": dv_field([detective_name, "霍铎", "沈鼎", "苏泠"])}), c1_state_object("opening.slot.detective", {"label": dv_field(detective_name), "door_open": dv_field(true), "contents": dv_field("empty")}), c1_state_object("opening.slot.huo", {"label": dv_field("霍铎"), "contents": dv_field("test-piece")}), c1_state_object("opening.slot.shen", {"label": dv_field("沈鼎"), "contents": dv_field("silver")}), c1_state_object("opening.slot.su", {"label": dv_field("苏泠"), "contents": dv_field("audition-access")}), c1_state_object("opening.silver", {"location": dv_field("opening.cabinet"), "authenticity": dv_field("genuine")}), c1_state_object("opening.testpiece", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.audition", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.tea", {"location": dv_field("hall"), "prepared": dv_field(false)}), c1_state_object("opening.public_history", {"alarm_last_night": dv_field(true), "main_building_call": dv_field(true), "door_latched_this_side": dv_field(true), "caller_not_returned": dv_field(true)})]
+    var result = [c1_state_object("opening.roles", {"custodian": dv_field("demon"), "teacher": dv_field("demon")}), c1_state_object("opening.facilities", {"grain_store": dv_field(true), "water_supply": dv_field(true), "fire": dv_field(true), "drawing_exists": dv_field(true), "unheard_sounds_available": dv_field(true)}), c1_state_object("opening.contracts", {"detective_party_not_custodian": dv_field(true), "full_text": dv_field(c1_op_contract_text())}), c1_state_object("opening.cabinet", {"location": dv_field("hall"), "position_description": dv_field("铜口下方"), "labels": dv_field([detective_name, "霍铎", "沈鼎", "苏泠"])}), c1_state_object("opening.slot.detective", {"label": dv_field(detective_name), "door_open": dv_field(true), "contents": dv_field("empty")}), c1_state_object("opening.slot.huo", {"label": dv_field("霍铎"), "contents": dv_field("test-piece")}), c1_state_object("opening.slot.shen", {"label": dv_field("沈鼎"), "contents": dv_field("silver")}), c1_state_object("opening.slot.su", {"label": dv_field("苏泠"), "contents": dv_field("audition-access")}), c1_state_object("opening.silver", {"location": dv_field("opening.cabinet"), "authenticity": dv_field("genuine")}), c1_state_object("opening.testpiece", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.audition", {"location": dv_field("opening.cabinet")}), c1_state_object("opening.tea", {"location": dv_field("hall"), "prepared": dv_field(false)}), c1_state_object("opening.public_history", {"alarm_last_night": dv_field(true), "main_building_call": dv_field(true), "door_latched_this_side": dv_field(true), "caller_not_returned": dv_field(true)})]
     var people = c1_op_people()
     var i = 0
     while i < rt_count(people):
@@ -249,7 +249,7 @@ fn c1_op_reward_candidates(detective_name):
 
 fn c1_op_desire_candidates(detective_name):
     var material_claim = dv_all([c1_op_property("opening.silver", "location", "opening.cabinet"), c1_op_property("opening.facilities", "grain_store", true), c1_op_property("opening.facilities", "water_supply", true), c1_op_property("opening.facilities", "fire", true), c1_op_property("opening.facilities", "drawing_exists", true), c1_op_property("opening.facilities", "unheard_sounds_available", true)])
-    var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。超越卡诺循环的那一张，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
+    var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。那张减少不可逆损失的闭式热机图纸，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
     offer = dv_with(offer, "speech", dv_with(offer.speech, "shown_material_refs", [dv_ref("opening.silver", "state", "location"), dv_ref("opening.testpiece", "state", "location"), dv_ref("opening.audition", "state", "location")]))
     var empty_slot = c1_once(c1_action("detective.opening.empty-slot", "inspect", c1_at("detective", "hall"), c1_at("detective", "hall"), "", [dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], c1_op_source(35, "s4_rewards.020")))
     empty_slot = dv_with(dv_with(empty_slot, "owner", "detective"), "presentation", c1_op_presentation("detective", "private-monologue", ["柜上有一格贴着我的名字。小门开着，里面什么也没有。"]))
@@ -419,7 +419,7 @@ fn c1_op_desire(id):
     if id == "detective":
         return {"id": "understand-own-presence", "surface": "弄清自己为何在此", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/01_侦探.story", 11, "detective.desire")]}
     if id == "huo":
-        return {"id": "seek-power-drawing", "surface": "超越卡诺循环的动力图纸", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/02_霍铎.story", 10, "huo.desire")]}
+        return {"id": "seek-power-drawing", "surface": "减少不可逆损失的闭式热机图纸", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/02_霍铎.story", 10, "huo.desire")]}
     if id == "shen":
         return {"id": "protect-companions", "surface": "安稳，护住身边的人", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/03_沈鼎.story", 10, "shen.desire")]}
     return {"id": "seek-unheard-sounds", "surface": "从未听过的声音", "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/04_苏泠.story", 10, "su.desire")]}
@@ -512,7 +512,7 @@ fn c1_op_appropriate_candidate(action):
     return action
 
 fn c1_op_flat_candidates(detective_name):
-    var catalogs = [c1_op_morning_candidates(), c1_op_meet_candidates(), c1_op_tea_candidates(detective_name), c1_op_broadcast_candidates(), c1_op_reward_candidates(detective_name), c1_op_desire_candidates(detective_name), c1_op_investigation_candidates(), c1_op_slot_inspections(), c1_op_maintenance_actions()]
+    var catalogs = [c1_op_morning_candidates(), c1_op_meet_candidates(), c1_op_tea_candidates(detective_name), c1_op_broadcast_candidates(), c1_op_reward_candidates(detective_name), c1_op_desire_candidates(detective_name), c1_op_investigation_candidates(), c1_op_slot_inspections(), c1_op_maintenance_actions(), c1_op_contract_candidates()]
     var result = []
     var i = 0
     while i < rt_count(catalogs):
@@ -610,3 +610,23 @@ fn c1_op_install_purposes(actor):
     if dv_has(c1_op_people(), actor.id):
         policy = dv_with(policy, "desires", dv_append(dv_find(policy, "desires", []), c1_op_desire(actor.id)))
     return dv_with(actor, "policy", policy)
+
+fn c1_op_contract_text():
+    return "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。"
+
+fn c1_op_contract_candidates():
+    let source = c1_source("docs/design-standard.md", 0, "契约全文可被主动询问")
+    let ref = dv_ref("opening.contracts", "state", "full_text")
+    var actions = []
+    let people = c1_op_people()
+    var i = 0
+    while i < rt_count(people):
+        let id = people[i]
+        var ask = c1_op_question(id, rt_cat(id, ".opening.ask-contract"), "约束你的契约，全文是什么？", source, ["demon"])
+        ask = c1_op_request(ask, "demon", "contract.full-text")
+        ask = dv_with_many(ask, {"precondition": dv_all([ask.precondition, c1_op_property("opening.roles", "custodian", "demon")]), "purpose_refs": [ref], "purpose_basis": [source]})
+        rt_push(actions, ask)
+        i = i + 1
+    var reply = c1_op_dialogue("demon", "demon.opening.contract-full-text", dv_fact(ref, c1_op_contract_text()), c1_op_contract_text(), source, people)
+    rt_push(actions, dv_with_many(reply, {"response_topic": "contract.full-text", "requires_actual_request": true}))
+    return actions

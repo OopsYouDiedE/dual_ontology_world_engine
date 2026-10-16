@@ -24,14 +24,14 @@ fn dv_action_cost_bounds(minimum, maximum):
 
 fn dv_action_cost_ledger(id, balances):
     dv_action_cost_validate(balances)
-    return dv_with(dv_with(dv_with({"id": id, "revision": 0, "balances": balances, "reserved": dv_action_cost_vector(0, 0, 0)}, "receipts", []), "events", []), "spent", dv_action_cost_vector(0, 0, 0))
+    return dv_with_many({"id": id, "revision": 0, "balances": balances, "reserved": dv_action_cost_vector(0, 0, 0)}, {"receipts": [], "events": [], "spent": dv_action_cost_vector(0, 0, 0)})
 
 fn dv_action_cost_quote(ledger, world, action, event, bounds):
     dv_domain(world, "physical")
     dv_action_cost_bounds(bounds.minimum, bounds.maximum)
     dv_require((not dv_has(ledger.events, event)), "Repeated cost event")
     dv_require((not dv_has(world.seen, event)), "Repeated world event")
-    return dv_with(dv_with(dv_with({"ledger": ledger.id, "revision": ledger.revision, "world": world.id, "world_revision": world.revision}, "action", action), "event", event), "bounds", bounds)
+    return dv_with_many({"ledger": ledger.id, "revision": ledger.revision, "world": world.id, "world_revision": world.revision}, {"action": action, "event": event, "bounds": bounds})
 
 fn dv_action_cost_admit(ledger, world, quote):
     var maximum = quote.bounds.maximum
@@ -62,7 +62,7 @@ fn dv_action_cost_settle(ledger, receipt, actual, outcome):
     dv_require(dv_or((outcome == "applied"), (outcome == "rejected")), "Unknown settlement outcome")
     dv_action_cost_actual(receipt, actual)
     var next = dv_with(ledger, "revision", (ledger.revision + 1))
-    var settled = dv_with(dv_with(dv_with(receipt, "state", "settled"), "actual", actual), "outcome", outcome)
+    var settled = dv_with_many(receipt, {"state": "settled", "actual": actual, "outcome": outcome})
     next = dv_with(next, "balances", dv_action_cost_add(ledger.balances, dv_action_cost_sub(maximum, actual)))
     next = dv_with(next, "reserved", dv_action_cost_sub(ledger.reserved, maximum))
     next = dv_with(next, "spent", dv_action_cost_add(ledger.spent, actual))
@@ -71,11 +71,11 @@ fn dv_action_cost_settle(ledger, receipt, actual, outcome):
 fn dv_action_cost_clock_commit(physical, receipt, actual, status):
     var event = receipt.event
     var time = (dv_find(physical, "time", 0) + actual.time)
-    var history = dv_with(dv_with({"id": event, "time": time, "kind": "action-cost", "status": status}, "receipt", receipt), "actual", actual)
-    return dv_with(dv_with(dv_with(dv_with(physical, "time", time), "revision", (physical.revision + 1)), "seen", dv_append(physical.seen, event)), "history", dv_append(physical.history, history))
+    var history = dv_with_many({"id": event, "time": time, "kind": "action-cost", "status": status}, {"receipt": receipt, "actual": actual})
+    return dv_with_many(physical, {"time": time, "revision": (physical.revision + 1), "seen": dv_append(physical.seen, event), "history": dv_append(physical.history, history)})
 
 fn dv_action_cost_execution_metadata(execution, receipt, actual):
-    return dv_with(dv_with(dv_with(execution, "event", receipt.event), "time", execution.world.time), "actual_cost", actual)
+    return dv_with_many(execution, {"event": receipt.event, "time": execution.world.time, "actual_cost": actual})
 
 fn dv_action_cost_execute(ledger, physical, quote, actual):
     var admitted = dv_action_cost_admit(ledger, physical, quote)

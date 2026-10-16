@@ -448,16 +448,16 @@ def day():
 
 
 # 4/4 的五声化大调主题（宫调式）：句尾避开导音，半终止停在羽音 B 上
-THEME_GONG = ['F#5:e E5:e D5:q A5:q G5:e A5:e', 'B5:q. A5:e G5:q F#5:q', 'E5:q F#5:e G5:e A5:q D5:q',
-              'E5:h D5:q B4:q', 'F#5:e E5:e D5:q A5:q G5:e A5:e', 'B5:q. A5:e F#5:q E5:q',
+THEME_GONG = ['F#5:e E5:e D5:q A5:q F#5:e A5:e', 'B5:q. A5:e F#5:q F#5:q', 'E5:q F#5:e F#5:e A5:q D5:q',
+              'E5:h D5:q B4:q', 'F#5:e E5:e D5:q A5:q F#5:e A5:e', 'B5:q. A5:e F#5:q E5:q',
               'F#5:q E5:e D5:e E5:q A4:q', 'D5:w']
 # 笛子加花（放慢加花）：骨干音不变，拍内填入邻音与回音
 THEME_GONG_ORNATE = [
-    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e G5:s A5:s B5:s A5:s',
-    'B5:e. D6:s B5:e A5:e G5:s A5:s G5:s E5:s F#5:q',
-    'E5:s F#5:s E5:s D5:s F#5:e G5:e A5:e. B5:s A5:s F#5:s E5:s D5:s',
+    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e F#5:s A5:s B5:s A5:s',
+    'B5:e. D6:s B5:e A5:e F#5:s A5:s F#5:s E5:s F#5:q',
+    'E5:s F#5:s E5:s D5:s F#5:e F#5:e A5:e. B5:s A5:s F#5:s E5:s D5:s',
     'E5:q. F#5:e D5:e. E5:s B4:s A4:s B4:e',
-    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e G5:s A5:s B5:s A5:s',
+    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e F#5:s A5:s B5:s A5:s',
     'B5:e. D6:s B5:e A5:e F#5:s A5:s F#5:s E5:s E5:q',
     'F#5:s A5:s F#5:s E5:s D5:e E5:e E5:e. D5:s A4:q',
     'D5:h. E5:s D5:s B4:s D5:s',

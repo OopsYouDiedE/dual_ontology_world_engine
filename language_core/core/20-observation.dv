@@ -55,7 +55,7 @@ fn dv_project_value(value, bindings, subject):
                                 var p_ref = dv_project_value(value.ref, bindings, subject)
                                 var p_val = dv_project_value(value.value, bindings, subject)
                                 if dv_and(p_ref.known, p_val.known):
-                                    return {"known": true, "value": dv_with(dv_with(value, "ref", p_ref.value), "value", p_val.value)}
+                                    return {"known": true, "value": dv_with_many(value, {"ref": p_ref.value, "value": p_val.value})}
                                 else:
                                     return {"known": false, "value": false}
                             else:
@@ -109,7 +109,7 @@ fn dv_observation(id, subject, ref, value, source, origin, time, trust, dependen
     dv_unit(trust)
     dv_require((not (time < 0)), "Negative observation time")
     dv_require(dv_has(dv_append(dv_list3("perception", "testimony", "recall"), dv_pair("inference", "initial")), source), "Observations use perception, testimony, recall, inference or initial")
-    return dv_with(dv_with(dv_with(dv_with(dv_with({"id": id, "subject": subject, "ref": ref, "value": dv_clone(value)}, "source", source), "origin", origin), "time", time), "trust", trust), "dependency", dependency)
+    return dv_with_many({"id": id, "subject": subject, "ref": ref, "value": dv_clone(value)}, {"source": source, "origin": origin, "time": time, "trust": trust, "dependency": dependency})
 
 fn dv_perceive(physical, mind, bindings, grants, event_id, time):
     dv_domain(physical, "physical")
@@ -221,7 +221,7 @@ fn dv_aggregate(claims, profile, time):
     // evidence cannot establish certainty without an independent model of it.
     var epistemic_confidence = (support_share * best_rel)
     var cell = dv_cell(chosen, epistemic_confidence, time, claims)
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(cell, "known", dv_and((0 < total), (not (epistemic_confidence < profile.threshold)))), "conflicted", (1 < rt_count(alternatives))), "claims", claims), "alternatives", distribution), "support_share", support_share), "source_reliability", best_rel)
+    return dv_with_many(cell, {"known": dv_and((0 < total), (not (epistemic_confidence < profile.threshold))), "conflicted": (1 < rt_count(alternatives)), "claims": claims, "alternatives": distribution, "support_share": support_share, "source_reliability": best_rel})
 
 fn dv_update_mind(mind, observations, expected_revision, profile):
     dv_domain(mind, "mind")
@@ -264,7 +264,7 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
             var claims = local_1
             if dv_and(old.known, (rt_count(claims) == 0)):
                 if (not replaces_current):
-                    claims = dv_single(dv_with(dv_with(dv_with(dv_with(dv_with({"id": dv_pair("initial", ref), "subject": next.subject, "ref": ref, "value": old.value}, "source", "initial"), "origin", "initial"), "time", old.time), "trust", old.confidence), "dependency", dv_pair("initial", ref)))
+                    claims = dv_single(dv_with_many({"id": dv_pair("initial", ref), "subject": next.subject, "ref": ref, "value": old.value}, {"source": "initial", "origin": "initial", "time": old.time, "trust": old.confidence, "dependency": dv_pair("initial", ref)}))
             var new_time = dv_max(old.time, time)
             var updated = dv_aggregate(dv_replace_claim(claims, observation), profile, new_time)
             if (is_perception and version != false):
@@ -272,9 +272,9 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
             else:
                 if (previous_version != false):
                     updated = dv_with(updated, "world_version", previous_version)
-            next = dv_store(next, ref, updated)
+            next = dv_stage_store_owned(next, ref, updated)
             rt_push(dispositions, dv_pair(id, "updated"))
-        next = dv_with(next, "seen", dv_append(next.seen, id))
+        rt_push(next.seen, dv_clone(id))
         rt_push(accepted, dv_clone(observation))
         i = (i + 1)
     var local_2 = false
@@ -282,7 +282,5 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
         local_2 = expected_revision
     else:
         local_2 = (expected_revision + 1)
-    next = dv_with(next, "time", latest_time)
-    next = dv_with(next, "revision", local_2)
-    next = dv_with(next, "history", dv_append(mind.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions}))
+    next = dv_with_many(next, {"time": latest_time, "revision": local_2, "history": dv_append(mind.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions})})
     return {"world": next, "dispositions": dispositions, "revision": next.revision}

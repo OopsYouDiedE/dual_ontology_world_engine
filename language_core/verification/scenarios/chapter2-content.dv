@@ -164,6 +164,7 @@ fn c2_initial_body(actor):
     let norms = c2_norms()
     var i = 0
     while i < rt_count(norms):
+        fields = dv_with(fields, rt_cat("read.", norms[i].id), dv_field(false))
         fields = dv_with(fields, rt_cat("accepted.", norms[i].id), dv_field(false))
         fields = dv_with(fields, rt_cat("decided.", norms[i].id), dv_field(false))
         i = i + 1
@@ -209,8 +210,8 @@ fn c2_world_objects(world):
     result = c2_add_new(result, c1_state_object("campaign.access", {"living": dv_field(true), "contract": dv_field(false), "astral": dv_field(false), "logistics": dv_field(false), "north": dv_field(false), "east": dv_field(false), "archive": dv_field(false)}))
     if not dv_read(result, c2_access("living")).known:
         result = dv_store(result, c2_access("living"), dv_field(true))
-    result = c2_add_new(result, c2_object("c2.corridor.north", "living_hall", {"air_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(true)}))
-    result = c2_add_new(result, c2_object("c2.corridor.east", "central_hall", {"air_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(true)}))
+    result = c2_add_new(result, c2_object("c2.corridor.north", "living_hall", {"air_safe": dv_field(false), "intake_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(false)}))
+    result = c2_add_new(result, c2_object("c2.corridor.east", "central_hall", {"air_safe": dv_field(false), "intake_safe": dv_field(false), "seal_intact": dv_field(true), "ventilated": dv_field(false)}))
     let corridor_gates = ["north", "east"]
     var gate_index = 0
     while gate_index < rt_count(corridor_gates):
@@ -447,7 +448,7 @@ axiom c2_post_law(actor, norm):
     return dv_axiom("c2_post_law", 1, dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(c2_norm_object(norm.id), "owner"), actor), dv_fact(c2_ref(c2_norm_object(norm.id), "proposed"), true), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), false)]), dv_single(dv_assign(c2_ref(c2_norm_object(norm.id), "posted"), true)))
 
 axiom c2_read_norm_law(actor, norm):
-    return dv_axiom("c2_read_norm_law", 1, dv_all(dv_pair(c2_at(actor, norm.board), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true))), dv_single(dv_assign(c2_own(actor, rt_cat("read.", norm.id)), true)))
+    return dv_axiom("c2_read_norm_law", 1, dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), dv_fact(c2_own(actor, rt_cat("read.", norm.id)), false)]), dv_single(dv_assign(c2_own(actor, rt_cat("read.", norm.id)), true)))
 
 axiom c2_decide_norm_law(actor, norm, accepted):
     return dv_axiom("c2_decide_norm_law", 1, dv_all([dv_fact(c2_own(actor, rt_cat("decided.", norm.id)), false), c2_alive(actor)]), dv_pair(dv_assign(c2_own(actor, rt_cat("decided.", norm.id)), true), dv_assign(c2_own(actor, rt_cat("accepted.", norm.id)), accepted)))
@@ -465,8 +466,8 @@ fn c2_norm_actions(actor, norm):
     let peek = rt_cat(actor, rt_cat(".c2.inspect.board.", norm.id))
     rt_push(result, dv_with(c2_action(peek, "inspect", c2_at(actor, norm.board), c2_at(actor, norm.board), "", dv_single(c2_ref(object, "posted")), "查看公告板。", norm.source), "repeatable", true))
     let read_id = rt_cat(actor, rt_cat(".c2.read.", norm.id))
-    let read_pre = dv_all(dv_pair(c2_at(actor, norm.board), dv_fact(c2_ref(object, "posted"), true)))
-    rt_push(result, dv_with(c2_action(read_id, "inspect", read_pre, read_pre, read_id, dv_pair(c2_ref(object, "text"), c2_own(actor, rt_cat("read.", norm.id))), norm.surface, norm.source), "repeatable", true))
+    let read_pre = dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(object, "posted"), true), dv_fact(c2_own(actor, rt_cat("read.", norm.id)), false)])
+    rt_push(result, c2_action(read_id, "read", read_pre, read_pre, read_id, dv_pair(c2_ref(object, "text"), c2_own(actor, rt_cat("read.", norm.id))), norm.surface, norm.source))
     let known = dv_fact(c2_ref(object, "text"), norm.surface)
     var accepted = true
     var n = 0
@@ -541,7 +542,7 @@ axiom c2_terminal_exposure_law(actor):
     return dv_axiom("c2_terminal_exposure_law", 1, dv_all([c2_alive(actor), dv_fact(c2_own(actor, "exposure_terminal"), true)]), dv_single(dv_assign(c2_own(actor, "alive"), false)))
 
 axiom c2_first_wind_law():
-    return dv_axiom("c2_first_wind_law", 1, dv_all(dv_pair(dv_at_least(c2_clock(), 1980), dv_fact(c2_ref("c2.weather", "phase"), "falling_ash"))), [dv_assign(c2_ref("c2.weather", "phase"), "wind_started"), dv_assign(c2_ref("c2.weather", "severe_air"), false), dv_assign(c2_ref("c2.weather", "wind"), true), dv_assign(c2_ref("c2.weather", "ash_falling"), false), dv_assign(c2_ref("c2.corridor.north", "air_safe"), true), dv_assign(c2_ref("c2.corridor.east", "air_safe"), true)])
+    return dv_axiom("c2_first_wind_law", 1, dv_all(dv_pair(dv_at_least(c2_clock(), 1980), dv_fact(c2_ref("c2.weather", "phase"), "falling_ash"))), [dv_assign(c2_ref("c2.weather", "phase"), "wind_started"), dv_assign(c2_ref("c2.weather", "severe_air"), false), dv_assign(c2_ref("c2.weather", "wind"), true), dv_assign(c2_ref("c2.weather", "ash_falling"), false), dv_assign(c2_ref("c2.corridor.north", "intake_safe"), true), dv_assign(c2_ref("c2.corridor.east", "intake_safe"), true)])
 
 fn c2_weather_changes():
     return [
@@ -552,12 +553,14 @@ fn c2_weather_changes():
 axiom c2_weather_change_law(change):
     let mark = c2_ref("c2.weather", rt_cat("occurred.", change.id))
     var effects = [dv_assign(mark, true), dv_assign(c2_ref("c2.weather", "wind"), change.wind), dv_assign(c2_ref("c2.weather", "earthquake_recent"), change.quake), dv_assign(c2_ref("c2.weather", "severe_air"), change.severe)]
-    if change.recheck or change.id == "fifth_dawn":
+    if change.severe or change.recheck or change.id == "fifth_dawn":
         let gates = ["north", "east"]
         var i = 0
         while i < rt_count(gates):
-            rt_push(effects, dv_assign(c2_ref(rt_cat("c2.corridor.", gates[i]), "air_safe"), not change.severe))
+            rt_push(effects, dv_assign(c2_ref(rt_cat("c2.corridor.", gates[i]), "intake_safe"), not change.severe))
             if change.recheck:
+                rt_push(effects, dv_assign(c2_ref(rt_cat("c2.corridor.", gates[i]), "air_safe"), false))
+                rt_push(effects, dv_assign(c2_ref(rt_cat("c2.corridor.", gates[i]), "ventilated"), false))
                 rt_push(effects, dv_assign(c2_access(gates[i]), false))
             i = i + 1
     return dv_axiom("c2_weather_change_law", 1, dv_all([dv_at_least(c2_clock(), change.minute), dv_fact(mark, false)]), effects)
@@ -575,6 +578,11 @@ fn c2_corridor_origin(gate):
         return "central_hall"
     return "living_hall"
 
+// Ventilated records a completed purge under measured safe intake conditions.
+axiom c2_purge_corridor_law(actor, gate):
+    let object = rt_cat("c2.corridor.", gate)
+    return dv_axiom("c2_purge_corridor_law", 1, dv_all([c2_at(actor, c2_corridor_origin(gate)), c2_alive(actor), dv_fact(c2_ref(object, "intake_safe"), true), dv_fact(c2_ref(object, "seal_intact"), true), dv_fact(c2_ref("c2.weather", "severe_air"), false), dv_fact(c2_ref(object, "ventilated"), false)]), [dv_assign(c2_ref(object, "ventilated"), true), dv_assign(c2_ref(object, "air_safe"), true)])
+
 axiom c2_open_corridor_law(actor, gate):
     let object = rt_cat("c2.corridor.", gate)
     return dv_axiom("c2_open_corridor_law", 1, dv_all([c2_at(actor, c2_corridor_origin(gate)), c2_alive(actor), dv_fact(c2_ref(object, "air_safe"), true), dv_fact(c2_ref(object, "seal_intact"), true), dv_fact(c2_ref(object, "ventilated"), true), dv_fact(c2_access(gate), false)]), [dv_assign(c2_access(gate), true)])
@@ -587,7 +595,10 @@ fn c2_corridor_actions(actor):
         let gate = gates[i]
         let object = rt_cat("c2.corridor.", gate)
         let source = c2_approved("第五部分：封闭连廊的现场读数、密封与通风")
-        rt_push(actions, c2_inspect_action(actor, object, c2_corridor_origin(gate), ["air_safe", "seal_intact", "ventilated"], "从安全侧核对连廊读数、密封与通风。", source))
+        rt_push(actions, c2_inspect_action(actor, object, c2_corridor_origin(gate), ["air_safe", "intake_safe", "seal_intact", "ventilated"], "从安全侧核对补风处读数、密封与已完成的换气记录。", source))
+        let purge = c2_purge_corridor_law(actor, gate)
+        let purge_id = rt_cat(actor, rt_cat(".c2.purge.corridor.", gate))
+        rt_push(actions, dv_with(c2_action(purge_id, "help", purge.premise, purge.premise, purge_id, [c2_ref(object, "ventilated"), c2_ref(object, "air_safe")], "核对补风处读数与排烟路径，完成连廊换气后收拢风门。", source), "predict_law", purge_id))
         let law = c2_open_corridor_law(actor, gate)
         let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gate))
         rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2_access(gate)], "核对现场条件后，开启连廊隔离门。", source), "predict_law", id))
@@ -861,6 +872,8 @@ fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
     let gates = ["north", "east"]
     i = 0
     while i < rt_count(gates):
+        let purge_id = rt_cat(actor, rt_cat(".c2.purge.corridor.", gates[i]))
+        dv_adopt_into(domain, owned_adoptions, c1_method(purge_id, c2_purge_corridor_law(actor, gates[i])), mode, 1, [c2_approved("补风安全后实际完成换气")])
         let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gates[i]))
         dv_adopt_into(domain, owned_adoptions, c1_method(id, c2_open_corridor_law(actor, gates[i])), mode, 1, [c2_approved("封闭连廊实际开门")])
         i = i + 1
@@ -971,7 +984,7 @@ fn c2_personal_goals(actor):
     var corridor_index = 0
     while corridor_index < rt_count(indoor_gates):
         let gate = indoor_gates[corridor_index]
-        let fields = ["air_safe", "seal_intact", "ventilated"]
+        let fields = ["air_safe", "intake_safe", "seal_intact", "ventilated"]
         var field_index = 0
         while field_index < rt_count(fields):
             rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), c2_at(id, c2_corridor_origin(gate)), [c2_approved("现场核对封闭连廊")], actor.mind.time))

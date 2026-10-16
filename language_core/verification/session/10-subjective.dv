@@ -2,7 +2,7 @@
 
 fn dvs_event(events, kind, actor, time, parents, data):
     var id = rt_cat("e", rt_show(rt_count(events)))
-    rt_push(events, dv_with(dv_with({"id": id, "type": kind, "actor": actor, "time": time}, "parents", parents), "data", data))
+    rt_push(events, dv_with_many({"id": id, "type": kind, "actor": actor, "time": time}, {"parents": parents, "data": data}))
     return id
 
 fn dvs_cognitive_parents(actor, parents):
@@ -100,7 +100,7 @@ fn dvs_reason_run(actor, events, time, parent):
     else:
         local_1 = "budget-exhausted"
     actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"steps": count, "remaining": (budget - count), "stop": local_1, "mind_revision": mind.revision}))
-    return dv_with(dv_with(dv_with(dv_with(actor, "mind", mind), "inference_derivations", derivations), "inference_signatures", signatures), "policy", dv_with(policy, "reason_budget", (budget - count)))
+    return dv_with_many(actor, {"mind": mind, "inference_derivations": derivations, "inference_signatures": signatures, "policy": dv_with(policy, "reason_budget", (budget - count))})
 
 fn dvs_cached_model(actor, hypothesis):
     var model = dv_find(dv_find(actor, "simulations", []), hypothesis.id, {"fit": 0, "status": "not-simulated"})
@@ -174,7 +174,7 @@ fn dvs_hypotheses(actor, events, time, parent):
         false
     else:
         actor = dv_with(actor, "last_cognitive_event", event)
-    return dv_with(dv_with(actor, "hypothesis", best), "hypothesis_event", event)
+    return dv_with_many(actor, {"hypothesis": best, "hypothesis_event": event})
 
 fn dvs_choose(actor, bindings, costs):
     return dvp_plan(actor, bindings, costs)
@@ -257,7 +257,7 @@ fn dvs_ready(actor, events, time, parent):
         if dv_same(dv_find(actor, "ready_hypothesis", false), hypothesis):
             return actor
         else:
-            actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "answer_ready", actor.id, time, parents, dv_with(dv_with({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, "argument", dv_find(actor, "argument", false)), "argument_question", dv_find(hypothesis, "question", question.value))))
+            actor = dv_with(actor, "last_cognitive_event", dvs_event_prepared(events, "answer_ready", actor.id, time, parents, dv_with_many({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, {"argument": dv_find(actor, "argument", false), "argument_question": dv_find(hypothesis, "question", question.value)})))
             return dv_with(actor, "ready_hypothesis", hypothesis)
     else:
         dvs_event(events, "why_not_ready", actor.id, time, parents, {"reasons": reasons, "hypothesis": hypothesis})
@@ -269,3 +269,13 @@ fn dvs_reason(actor, events, time, parent):
         return refreshed
     else:
         return dvs_reason_run(refreshed, events, time, parent)
+
+// Only a fresh nonempty dv_with/dv_with_many result may be transferred here.
+// Those constructors already cloned every data branch independently.
+// The caller keeps no reference to the transferred record.
+fn dvs_event_prepared(events, kind, actor, time, parents, data):
+    let id = rt_cat("e", rt_show(rt_count(events)))
+    let event = dv_with_many({"id": id, "type": kind, "actor": actor, "time": time}, {"parents": parents})
+    rt_push(event, dv_pair("data", data))
+    rt_push(events, event)
+    return id

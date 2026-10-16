@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<stdin>", line 10, in <module>
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\build_soundtrack.py", line 139, in render
+    audio = note_font.note(regions[region_key], pitch, ev.velocity, ev.length) * 10 ** (trim / 20)
+            ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\sf2.py", line 232, in note
+    parts = [self._voice(g, pitch, vel, length, release_scale, sr) for g in hits]
+             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\sf2.py", line 252, in _voice
+    audio, rate, root, corr, ls, le = self.sample(g['sampleID'])
+                                      ~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\zznZZ\Desktop\dual_ontology_world_engine\music\sf2.py", line 214, in sample
+    import soundfile as sf
+ModuleNotFoundError: No module named 'soundfile'

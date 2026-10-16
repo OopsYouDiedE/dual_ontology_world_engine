@@ -40,12 +40,16 @@ fn c2d_introductions():
 fn c2d_curriculum():
     return [
         {"id": "lesson11", "title": "守则读法", "text": "入夜之后，诸位留于室内。已开放的封闭连廊也须核对密封、通风和现场读数。源质计在户外仪器阵入口，先在安全侧学会读数，再定路线。低洼、夜间与无风时易积灰，风止或地震后停行复测。读数不明时，留在已确认安全处，呼叫协助。", "source": c1_source("docs/design-standard.md", 0, "最低限度安全教学")},
-        {"id": "lesson12", "title": "传声与机械", "text": "传声网图纸与信号规程：中继站须按三拍规程转发，否则信号被管道吃掉一半。", "source": c2d_source("07_家具与文本.story", 86, "第十二课.内容")},
+        {"id": "lesson12", "title": "传声与机械", "text": "传声管两端都能传声。先核对通路与盖片，发话、复述分开进行；同时说话会互相遮盖。管口附近的话也可能传到另一端。", "source": c2d_source("07_家具与文本.story", 86, "第十二课.内容")},
         {"id": "lesson13", "title": "言灵初阶", "text": "十个词、基本语法：名词居首、条件居中、动词收尾。练习：两盏灯只灭一盏。", "source": c2d_source("07_家具与文本.story", 88, "第十三课.内容")},
         {"id": "lesson14", "title": "异象与记忆", "text": "辨别自己看见的、别人告诉你的，和自己盼着是真的。熟悉感只是一条线索，地点、时长与缘由仍需各自查证。", "source": c1_source("docs/design-standard.md", 0, "前两章的信息边界")}]
 
 fn c2d_rows():
     var rows = []
+    let contract_ref = c2d_ref("contract_full_text")
+    let contract_source = c1_source("docs/design-standard.md", 0, "主动询问契约全文")
+    rt_push(rows, dv_with(c2d_question("detective.c2.ask-contract", "living_hall", dv_true(), "demon", "contract.full-text", "请把约束你的契约全文告诉我们。", [contract_ref], contract_source), "category", "contract"))
+    rt_push(rows, c2d_reply("demon", "demon.c2.contract-full-text", "living_hall", dv_true(), dv_fact(contract_ref, c1_op_contract_text()), "contract.full-text", c1_op_contract_text(), contract_source))
     let intros = c2d_introductions()
     var i = 0
     while i < rt_count(intros):
@@ -171,7 +175,7 @@ axiom c2d_patient_take_record_law():
     return dv_axiom("c2d_patient_take_record_law", 1, original.premise, dv_append(original.effects, dv_assign(c2d_person_ref("mora", "patient_food_reason"), true)))
 
 fn c2d_objects():
-    var objects = [c2_object("c2.dialogue", "lecture", {"indoor_rule": dv_field("入夜之后，诸位留于室内。"), "indoor_definition_given": dv_field(false)})]
+    var objects = [c2_object("c2.dialogue", "lecture", {"indoor_rule": dv_field("入夜之后，诸位留于室内。"), "indoor_definition_given": dv_field(false), "contract_full_text": dv_field(c1_op_contract_text())})]
     let courses = c2d_curriculum()
     var i = 0
     while i < rt_count(courses):

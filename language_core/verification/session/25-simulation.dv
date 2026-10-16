@@ -43,7 +43,7 @@ fn dvs_sim_plan(hypothesis):
                 rt_push(plan, {"law": "", "at": stage.at, "optional": true, "stage": i, "dispatch": stage.dispatch})
             else:
                 if dv_has_key(stage, "response"):
-                    rt_push(plan, dv_with(dv_with({"law": "", "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i}, "response", stage.response), "available_when", dv_find(stage, "available_when", dv_true())))
+                    rt_push(plan, dv_with_many({"law": "", "at": stage.at, "optional": dv_find(stage, "optional", false), "stage": i}, {"response": stage.response, "available_when": dv_find(stage, "available_when", dv_true())}))
                 else:
                     var local_1 = false
                     if dv_has_key(stage, "laws"):
@@ -98,7 +98,7 @@ fn dvs_sim_mask_plan(plan):
 
 fn dvs_sim_mask(mind, source_plan, start):
     let plan = dvs_sim_mask_plan(source_plan)
-    var copy = dv_with(dv_with(dv_with(mind, "time", start), "seen", []), "history", [])
+    var copy = dv_with_many(mind, {"time": start, "seen": [], "history": []})
     var i = 0
     while (i < rt_count(plan)):
         var name = plan[i].law
@@ -175,7 +175,7 @@ fn dvs_sim_prediction(feature, snapshot, start):
         local_2 = confidence
     else:
         local_2 = 0
-    return dv_with(dv_with(dv_with({"feature": feature, "proposition": proposition, "prediction": local_1, "cells": cells}, "covered", valid), "confidence", local_2), "source_step", dv_find(snapshot, "step", -1))
+    return dv_with_many({"feature": feature, "proposition": proposition, "prediction": local_1, "cells": cells}, {"covered": valid, "confidence": local_2, "source_step": dv_find(snapshot, "step", -1)})
 
 fn dvs_sim_compare(mind, prediction):
     var feature = prediction.feature
@@ -225,7 +225,7 @@ fn dvs_sim_compare(mind, prediction):
             local_3 = "contradiction"
     else:
         local_3 = "unknown"
-    return dv_with(dv_with(dv_with({"feature": feature, "prediction": prediction.prediction, "observation": local_1, "covered": prediction.covered}, "confidence", local_2), "observed_cells", observed), "result", local_3)
+    return dv_with_many({"feature": feature, "prediction": prediction.prediction, "observation": local_1, "covered": prediction.covered}, {"confidence": local_2, "observed_cells": observed, "result": local_3})
 
 fn dvs_sim_comparisons(mind, predictions, budget):
     var remaining = budget
@@ -274,7 +274,7 @@ fn dvs_sim_comparisons(mind, predictions, budget):
             local_2 = "explained"
         else:
             local_2 = "unknown"
-    return dv_with(dv_with(dv_with({"fit": local_1, "comparisons": comparisons, "contradictions": contradictions, "remaining": remaining}, "expanded", expanded), "probe_refs", probes), "status", local_2)
+    return dv_with_many({"fit": local_1, "comparisons": comparisons, "contradictions": contradictions, "remaining": remaining}, {"expanded": expanded, "probe_refs": probes, "status": local_2})
 
 fn dvs_sim_work_budget(actor):
     var policy = actor.policy
@@ -406,19 +406,19 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
         rt_push(predictions, dvs_sim_prediction(features[i], dvs_sim_snapshot(snapshots, predicted, covered, features[i]), start))
         i = (i + 1)
     var comparison = dvs_sim_comparisons(mind, predictions, remaining)
-    var result = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(comparison, "expanded", (expanded + comparison.expanded)), "failures", failures), "coverage", covered), "assumptions", assumption_records), "predictions", predictions), "trace", trace)
+    var result = dv_with_many(comparison, {"expanded": (expanded + comparison.expanded), "failures": failures, "coverage": covered, "assumptions": assumption_records, "predictions": predictions, "trace": trace})
     result = dv_with(result, "predicted", predicted)
     if dv_and((not complete), (result.status == "explained")):
         result = dv_with(result, "status", "unknown")
-    result = dv_with(dv_with(dv_with(dv_with(dv_with(result, "plan_complete", complete), "source_revision", mind.revision), "original_revision", mind.revision), "role", "internal-enumeration"), "start_time", start)
+    result = dv_with_many(result, {"plan_complete": complete, "source_revision": mind.revision, "original_revision": mind.revision, "role": "internal-enumeration", "start_time": start})
     var local_2 = false
     if (result.remaining < 1):
         local_2 = "budget-exhausted"
     else:
         local_2 = "declared-plan-complete"
-    result = dv_with(dv_with(result, "calculation_unit", "one-assumption-predict-rule-indexed-dispatch-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison"), "stop_reason", local_2)
-    result = dv_with(dv_with(result, "work_remaining", result.remaining), "remaining", (total_budget - result.expanded))
-    result = dv_with(dv_with(result, "original_expanded", result.expanded), "total_expanded", result.expanded)
+    result = dv_with_many(result, {"calculation_unit": "one-assumption-predict-rule-indexed-dispatch-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison", "stop_reason": local_2})
+    result = dv_with_many(result, {"work_remaining": result.remaining, "remaining": (total_budget - result.expanded)})
+    result = dv_with_many(result, {"original_expanded": result.expanded, "total_expanded": result.expanded})
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
     var paid = dv_find(actor, "model_paid_event", "")
     var previous = dv_find(actor, "model_previous_event", "")
@@ -444,14 +444,14 @@ fn dvs_model_recheck(actor, model):
         i = (i + 1)
     if dv_and((not model.plan_complete), (result.status == "explained")):
         result = dv_with(result, "status", "unknown")
-    result = dv_with(dv_with(result, "work_remaining", comparison.remaining), "remaining", (dv_find(actor.policy, "model_budget", 0) - comparison.expanded))
+    result = dv_with_many(result, {"work_remaining": comparison.remaining, "remaining": (dv_find(actor.policy, "model_budget", 0) - comparison.expanded)})
     var local_1 = false
     if (comparison.remaining < 1):
         local_1 = "budget-exhausted"
     else:
         local_1 = "observations-compared"
-    result = dv_with(dv_with(result, "total_expanded", (dv_find(model, "total_expanded", model.expanded) + comparison.expanded)), "stop_reason", local_1)
-    return dv_with(dv_with(dv_with(result, "source_revision", mind.revision), "paid_model_event", dv_find(model, "paid_model_event", dv_find(model, "event", ""))), "role", "new-observation-recheck")
+    result = dv_with_many(result, {"total_expanded": (dv_find(model, "total_expanded", model.expanded) + comparison.expanded), "stop_reason": local_1})
+    return dv_with_many(result, {"source_revision": mind.revision, "paid_model_event": dv_find(model, "paid_model_event", dv_find(model, "event", "")), "role": "new-observation-recheck"})
 
 fn dvs_sim_response_unknown(world, remaining, reason):
     return {"world": world, "changes": [], "remaining": remaining, "detail": {"status": "unknown", "reason": reason, "expanded": 0, "committed": false}}
@@ -502,7 +502,7 @@ fn dvs_sim_response(actor, world, stage, time, remaining, confidence):
                             var changes = []
                             var reason = "unknown-response-basis"
                             var response_confidence = model.confidence
-                            local = dv_with(dv_with(local, "time", time), "seen", [])
+                            local = dv_with_many(local, {"time": time, "seen": []})
                             while (i < rt_count(bindings)):
                                 var binding = bindings[i]
                                 var cell = dv_read(world, bindings[i].from)
@@ -620,7 +620,7 @@ fn dvs_sim_response(actor, world, stage, time, remaining, confidence):
                                 local_4 = ""
                             else:
                                 local_4 = dv_find(dv_get(catalog, chosen), "bridge_law", "")
-                            return {"world": next, "changes": changes, "remaining": remaining, "detail": dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"status": local_3, "reason": reason, "expanded": expanded, "committed": false}, "model", model_id), "model_basis", model.basis), "context_inputs", inputs), "option_predictions", option_traces), "response", response), "selected", chosen), "bridge_law", local_4)}
+                            return {"world": next, "changes": changes, "remaining": remaining, "detail": dv_with_many({"status": local_3, "reason": reason, "expanded": expanded, "committed": false}, {"model": model_id, "model_basis": model.basis, "context_inputs": inputs, "option_predictions": option_traces, "response": response, "selected": chosen, "bridge_law": local_4})}
 
 fn dvs_sim_mask_response_option(world, model, option_id):
     var option = dv_find(model.options, option_id, [])
@@ -672,7 +672,7 @@ fn dvs_sim_response_bridge(actor, world, detail, time, remaining, confidence):
         if dv_or((remaining < 1), (not dv_and(adoption.active, (adoption.mode == "predict")))):
             return dv_with({"world": dvs_sim_withhold(world, effects).world, "changes": [], "remaining": remaining, "status": "unavailable-response-bridge"}, "expanded", 0)
         else:
-            var local = dv_with(dv_with(world, "domain", "mind"), "adoptions", dv_with(world.adoptions, name, dv_with(adoption, "confidence", dv_min(confidence, dv_min(adoption.confidence, dv_premise_confidence(world, adoption.law.premise))))))
+            var local = dv_with_many(world, {"domain": "mind", "adoptions": dv_with(world.adoptions, name, dv_with(adoption, "confidence", dv_min(confidence, dv_min(adoption.confidence, dv_premise_confidence(world, adoption.law.premise)))))})
             var result = false
             result = dv_predict(local, name, rt_cat("response-bridge-", rt_show(world.revision)), time, world.revision)
             var local_1 = false
@@ -680,7 +680,7 @@ fn dvs_sim_response_bridge(actor, world, detail, time, remaining, confidence):
                 local_1 = result.world
             else:
                 local_1 = dvs_sim_withhold(world, effects).world
-            return dv_with(dv_with(dv_with(result, "world", local_1), "remaining", (remaining - 1)), "expanded", 1)
+            return dv_with_many(result, {"world": local_1, "remaining": (remaining - 1), "expanded": 1})
 
 fn dvs_sim_gated_response(actor, world, step, time, remaining, confidence):
     var gate = dv_find(step, "available_when", dv_true())
@@ -695,7 +695,7 @@ fn dvs_sim_gated_response(actor, world, step, time, remaining, confidence):
         else:
             local_1 = dvs_sim_response_unknown(dvs_sim_mask_response_stage(actor, world, step.response), remaining, "request-gate-unknown")
     result = local_1
-    return dv_with(result, "detail", dv_with(dv_with(dv_with(result.detail, "gate", gate), "gate_truth", truth), "gate_inputs", dvs_sim_inputs(world, gate)))
+    return dv_with(result, "detail", dv_with_many(result.detail, {"gate": gate, "gate_truth": truth, "gate_inputs": dvs_sim_inputs(world, gate)}))
 
 fn dvs_factor_proof_result(valid, remaining, confidence, steps, roots):
     return dv_with({"valid": valid, "remaining": remaining, "confidence": confidence, "steps": steps}, "source_events", roots)
@@ -800,7 +800,7 @@ fn dvs_factor_inference(actor, mind, ref, cell, events, index, data, event, rema
                     var sources = dvs_factor_refs_proof(actor, before, dvs_sim_refs(law.premise), events, index, result.remaining, allowed)
                     result = sources
                     if dv_and(sources.valid, (0 < rt_count(sources.source_events))):
-                        result = dv_with(dv_with(dv_with(sources, "source_events", dv_append(sources.source_events, event.id)), "confidence", dv_min(cell.confidence, dv_min(adoption.confidence, sources.confidence))), "steps", dv_append(sources.steps, dv_with({"kind": "infer", "event": event.id, "ref": ref, "cell": cell}, "adoption", adoption)))
+                        result = dv_with_many(sources, {"source_events": dv_append(sources.source_events, event.id), "confidence": dv_min(cell.confidence, dv_min(adoption.confidence, sources.confidence)), "steps": dv_append(sources.steps, dv_with({"kind": "infer", "event": event.id, "ref": ref, "cell": cell}, "adoption", adoption))})
                     else:
                         result = dv_with(sources, "valid", false)
     return result
@@ -981,7 +981,7 @@ fn dvs_factor_prune(actor, events, time, parent):
                         remaining = proof.remaining
                         reason = "unproven-or-inadmissible-source"
                         if dv_and(proof.valid, dv_and((0 < rt_count(proof.source_events)), dvs_factor_scope_proof(domains, schema.fixed, proof))):
-                            var certificate = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"constraint": constraint, "domains": domains, "current_revision": mind.revision, "source_chain": proof.steps}, "source_event_ids", proof.source_events), "covered_assignments", {"fixed": schema.fixed, "free_domains": schema.free_domains}), "confidence", dv_min(cap, proof.confidence)), "estimated", true), "paid_model_event", dv_find(actor, "model_paid_event", "")), "paid_units", (start - remaining)), "results", {"condition": condition, "support": support})
+                            var certificate = dv_with_many({"constraint": constraint, "domains": domains, "current_revision": mind.revision, "source_chain": proof.steps}, {"source_event_ids": proof.source_events, "covered_assignments": {"fixed": schema.fixed, "free_domains": schema.free_domains}, "confidence": dv_min(cap, proof.confidence), "estimated": true, "paid_model_event": dv_find(actor, "model_paid_event", ""), "paid_units": (start - remaining), "results": {"condition": condition, "support": support}})
                             rt_push(certificates, certificate)
                             reason = "certified"
         else:
@@ -991,7 +991,7 @@ fn dvs_factor_prune(actor, events, time, parent):
         else:
             rt_push(rejections, {"constraint": constraint.id, "reason": reason, "paid_units": (start - remaining)})
         i = (i + 1)
-    result = dv_with(dv_with(dv_with({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, "work_remaining", remaining), "current_revision", mind.revision), "actor_before", actor)
+    result = dv_with_many({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, {"work_remaining": remaining, "current_revision": mind.revision, "actor_before": actor})
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
     var j = 0
     if (dv_find(actor, "model_paid_event", "") == ""):
@@ -1194,7 +1194,7 @@ fn dvs_sim_rule(predicted, covered, step, mind, confidence, start, i, event_coun
                     local_1 = "conditional-output-unknown"
                 else:
                     local_1 = result.status
-            rt_push(trace, dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"step": i, "at": at, "law": name, "premise": premise}, "inputs", inputs), "status", result.status), "changes", result.changes), "basis", adoption.basis), "stage", step.stage), "optional", step.optional), "withheld", withheld), "reason", local_1))
+            rt_push(trace, dv_with_many({"step": i, "at": at, "law": name, "premise": premise}, {"inputs": inputs, "status": result.status, "changes": result.changes, "basis": adoption.basis, "stage": step.stage, "optional": step.optional, "withheld": withheld, "reason": local_1}))
             if (result.status == "applied"):
                 var changes = result.changes
                 var j = 0

@@ -111,3 +111,8 @@ core/55-cognition.dv 实现接纳门槛与有限域刻画：搜索枚举声明�
 ## 2026-10-14 动作实现收敛
 
 旧 Kernel/bootstrap/WorldCore 解释执行链已退役。compiler/seed 独立保留 C0 需要的语法 Reader/Value；生成阶段只依赖 Runtime ABI。真实动作只有编译 DV session 的 prepare/complete，宿主和逻辑运行器复用它。
+
+
+## 独立值的构建优化
+
+dv_with_many 合并连续字段构造；dv_with_path 按更新路径构造并独立复制其余分支。法则与观察批次在首次独立复制后使用私有暂存构建器，按原顺序验证，成功后转交，失败保留原输入。session 的 prepared 事件入口仅转交调用现场刚独立构造的数据；既有事件仍保留完整快照。调用限制与等价测量方法见本目录 AGENTS.md 的“等价复制优化”。

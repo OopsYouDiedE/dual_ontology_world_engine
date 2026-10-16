@@ -113,6 +113,21 @@ fn c1dep_actions(actor):
         rt_push(actions, dv_with(c2_action("demon.departure.inspect-outer", "inspect", c2_at(actor, "living_hall"), c2_at(actor, "living_hall"), "", dv_single(c1dep_ref("outer_released")), "查看隔离门外侧的横闩。", source), "repeatable", true))
         let pre = c1dep_outer_law().premise
         rt_push(actions, dv_with(c2_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), c2_access("living_exit")], "外侧的横闩，被一只手抬了起来。", source), "predict_law", "demon.departure.release-outer"))
+    let hand_ref = dv_ref("demon.body", "state", "hand_shape")
+    let owner_ref = dv_ref("demon.body", "state", "shelf_print_owner")
+    let hand_source = c1_source("docs/design-standard.md", 0, "架沿手印的观察与询问")
+    if dv_has(four, actor):
+        let present = dv_all([c1_at(actor, "living_hall"), c2_at("demon", "living_hall")])
+        rt_push(actions, c2_action(rt_cat(actor, ".departure.inspect-hand"), "inspect", c1_at(actor, "living_hall"), present, "", [hand_ref], "他手形修长，掌面窄薄。仅凭外形，还不能断定架沿的半枚手印属于他。", hand_source))
+        let seen_print = dv_fact(c1_knowledge("shelf_old"), true)
+        var ask = c1dep_speech(actor, rt_cat(actor, ".departure.ask-print"), "living_hall", seen_print, dv_true(), "架上的手印，是你的吗？", hand_source)
+        ask = dv_with_many(ask, {"speech": dv_with_many(ask.speech, {"channel": "local", "request": {"target": "demon", "topic": "shelf.print-owner"}}), "purpose_refs": [owner_ref]})
+        rt_push(actions, ask)
+    if actor == "demon":
+        let claim = dv_fact(owner_ref, "demon")
+        var reply = c1dep_speech(actor, "demon.departure.answer-print", "living_hall", claim, claim, "是。诸位封存之物，是我取走的。", hand_source)
+        reply = dv_with_many(reply, {"precondition": dv_all([c2_at(actor, "living_hall"), claim]), "authority_precondition": c2_at(actor, "living_hall"), "speech": dv_with(reply.speech, "channel", "local"), "response_topic": "shelf.print-owner", "requires_actual_request": true})
+        rt_push(actions, c1_authorized_speech(reply))
     return c1_public_methods(actions)
 
 fn c1dep_laws(world, actor):
@@ -145,15 +160,17 @@ fn c1dep_goals(actor):
     var goals = []
     let source = [c1dep_source("08_终局.story", 24, "s10_open.003：未迈出由本人选择")]
     if dv_has(["detective", "huo", "shen", "su"], actor.id):
-        rt_push(goals, c2_observation_goal(c1dep_ref("outer_released"), dv_true(), source, actor.mind.time))
+        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), dv_true(), source, actor.mind.time), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
         rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), dv_true(), source, actor.mind.time))
         rt_push(goals, c2_observation_goal(c1dep_ref("open"), dv_true(), source, actor.mind.time))
+        rt_push(goals, c2_goal(dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("outer_released"), true), source))
+        rt_push(goals, c2_goal(dv_fact(c1dep_ref("open"), true), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), dv_fact(c1dep_ref("outer_released"), true), source))
     if actor.id != "demon" and c2_profile(actor.id).group != "living":
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), c1_at(actor.id, rt_cat("threshold.", c2_profile(actor.id).group)), [c1_other_departure_source(actor.id).source]))
     if actor.id == "quer":
         rt_push(goals, c2_goal(c1_other_claim("contract", "outer_latch_released"), c1_at(actor.id, "dorm.contract"), source))
-        rt_push(goals, c2_observation_goal(c1dep_ref("outer_released"), c1_at(actor.id, "living_hall"), source, actor.mind.time))
+        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), c1_at(actor.id, "living_hall"), source, actor.mind.time), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1_at(actor.id, "living_hall"), [c1dep_source("12_雀儿撬门.story", 10, "quer_opens.004")]))
     let actions = c1dep_actions(actor.id)
     var i = 0
@@ -191,6 +208,8 @@ fn c1dep_install_scene(scene):
         return scene
     var physical = c2_add_new(scene.physical, c1_state_object("departure.door", {"outer_released": dv_field(false), "inner_down": dv_field(true), "open": dv_field(false), "quer_has_wire": dv_field(true), "picked_by_quer": dv_field(false), "contract_picked_by_quer": dv_field(false)}))
     physical = c2_add_new(physical, c1_state_object("demon.body", {"location": dv_with(dv_field("living_hall"), "basis", [c1_source("docs/design-standard.md", 0, "demon-initial-body-2026-10-14")])}))
+    physical = dv_store(physical, dv_ref("demon.body", "state", "hand_shape"), dv_field("long-narrow-hand"))
+    physical = dv_store(physical, dv_ref("demon.body", "state", "shelf_print_owner"), dv_field("demon"))
     if not dv_read(physical, c2_access("living_exit")).known:
         physical = dv_store(physical, c2_access("living_exit"), dv_field(false))
     var objects = ["departure.door", "demon.body", "case.contract", "case.astral", "case.logistics"]
@@ -215,6 +234,8 @@ fn c1dep_install_scene(scene):
                 rt_push(bindings, dv_binding(objects[j], objects[j], actor.id))
             j = j + 1
         mind = c1dep_laws(mind, actor.id)
+        if actor.id == "demon":
+            mind = dv_store(mind, dv_ref("demon.body", "state", "shelf_print_owner"), dv_with(dv_field("demon"), "basis", [c1_source("docs/design-standard.md", 0, "本人移物行动")]))
         if actor.id == "quer" and not dv_read(mind, c1dep_ref("quer_has_wire")).known:
             mind = dv_store(mind, c1dep_ref("quer_has_wire"), dv_with(dv_field(true), "basis", [c1dep_source("12_雀儿撬门.story", 9, "quer_opens.003：手里的铁丝")]))
         var actions = dv_clone(actor.actions)

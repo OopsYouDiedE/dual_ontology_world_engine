@@ -31,7 +31,7 @@ fn dv_session_commit(session, expected_revision, world, time):
     dv_require((expected_revision < world.revision), "Commit needs a newer world revision")
     dv_require(dv_and((old.domain == world.domain), (old.subject == world.subject)), "World identity changed")
     dv_require((not (time < session.time)), "Session time cannot move backwards")
-    return dv_with(dv_with(dv_with(session, "worlds", dv_with(catalog, id, world)), "history", dv_append(session.history, dv_checkpoint(world, time))), "time", time)
+    return dv_with_many(session, {"worlds": dv_with(catalog, id, world), "history": dv_append(session.history, dv_checkpoint(world, time)), "time": time})
 
 fn dv_session_advance(session, time):
     dv_require((not (time < session.time)), "Session time cannot move backwards")
@@ -92,7 +92,7 @@ fn dv_inspect_at(session, subject, time, command, object_id, facet):
         i = (i + 1)
     if found:
         var world = chosen.world
-        return dv_with(dv_with(dv_with({"status": "snapshot", "subject": subject, "requested_time": time, "checkpoint_time": chosen.time}, "time_unit", session.time_unit), "revision", world.revision), "content", dv_inspect_content(world, command, object_id, facet))
+        return dv_with_many({"status": "snapshot", "subject": subject, "requested_time": time, "checkpoint_time": chosen.time}, {"time_unit": session.time_unit, "revision": world.revision, "content": dv_inspect_content(world, command, object_id, facet)})
     else:
         return {"status": "no-checkpoint", "subject": subject, "requested_time": time}
 

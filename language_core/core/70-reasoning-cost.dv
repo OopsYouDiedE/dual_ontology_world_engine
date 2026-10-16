@@ -6,7 +6,7 @@ fn dv_proof_step(id, kind, conclusion, parents, law):
 fn dv_cost_policy(step, evidence, assumption, conflict, reference, maximum, allow_assumptions, budget):
     dv_require(dv_and(dv_and((not (step < 0)), (not (evidence < 0))), dv_and(dv_and((0 < assumption), (not (conflict < 0))), dv_and((0 < reference), (not (maximum < 0))))), "Invalid reasoning costs")
     dv_require((0 < budget), "Invalid proof budget")
-    return dv_with(dv_with(dv_with(dv_with({"step": step, "evidence": evidence, "assumption": assumption, "conflict": conflict}, "reference", reference), "maximum", maximum), "allow_assumptions", allow_assumptions), "budget", budget)
+    return dv_with_many({"step": step, "evidence": evidence, "assumption": assumption, "conflict": conflict}, {"reference": reference, "maximum": maximum, "allow_assumptions": allow_assumptions, "budget": budget})
 
 fn dv_rule_concludes(law, conclusion):
     var effects = law.effects
@@ -78,7 +78,7 @@ fn dv_check_step(world, step, checked, policy):
                 local_uncertainty = (1 - adoption.confidence)
             else:
                 rt_fail("Unsupported proof step")
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_clone(step), "confidence", confidence), "hypothetical", hypothetical), "assumptions", assumptions), "conflicts", conflicts), "local_uncertainty", local_uncertainty)
+    return dv_with_many(dv_clone(step), {"confidence": confidence, "hypothetical": hypothetical, "assumptions": assumptions, "conflicts": conflicts, "local_uncertainty": local_uncertainty})
 
 fn dv_judge_conclusion(world, conclusion, proof, policy):
     dv_require((0 < rt_count(proof)), "Empty derivation")
@@ -119,4 +119,4 @@ fn dv_judge_conclusion(world, conclusion, proof, policy):
         cursor = (cursor + 1)
     var cost = (((steps * policy.step) + (uncertainty * policy.evidence)) + ((assumptions * policy.assumption) + (conflicts * policy.conflict)))
     var components = {"steps": steps, "evidence_uncertainty": uncertainty, "assumptions": assumptions, "conflicts": conflicts}
-    return dv_with(dv_with(dv_with(dv_with(dv_with({"valid": true, "cost": cost, "components": components, "reasonable": (not (policy.maximum < cost))}, "reasonableness", (1 / (1 + (cost / policy.reference)))), "confidence", root.confidence), "hypothetical", dv_or(root.hypothetical, (world.domain == "prediction"))), "scope", {"world": world.id, "subject": world.subject, "revision": world.revision}), "basis", visited)
+    return dv_with_many({"valid": true, "cost": cost, "components": components, "reasonable": (not (policy.maximum < cost))}, {"reasonableness": (1 / (1 + (cost / policy.reference))), "confidence": root.confidence, "hypothetical": dv_or(root.hypothetical, (world.domain == "prediction")), "scope": {"world": world.id, "subject": world.subject, "revision": world.revision}, "basis": visited})

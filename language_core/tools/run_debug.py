@@ -3,6 +3,7 @@ import argparse
 from fractions import Fraction
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -95,7 +96,11 @@ def main():
     parser.add_argument('--entry', type=Path, default=LANGUAGE / 'game/debug-run.dv')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--timeout', type=int, default=600)
+    parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
+    parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
     args = parser.parse_args()
+    if args.gc_heaps < 1:
+        parser.error('--gc-heaps must be positive')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     build = out / 'program'
@@ -114,11 +119,14 @@ def main():
     inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py')]
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
+    execution_env = env.copy()
+    execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
+    execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
     start = time.monotonic()
-    result = {'executor': 'formal-model', 'geometry': False, 'entry': str(args.entry.resolve())}
+    result = {'executor': 'formal-model', 'geometry': False, 'entry': str(args.entry.resolve()), 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json')], cwd=ROOT, env=env, stdout=stdout, stderr=stderr, timeout=args.timeout)
+            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json')], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:
         result['timeout_seconds'] = args.timeout
