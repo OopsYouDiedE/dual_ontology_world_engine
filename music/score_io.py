@@ -615,13 +615,13 @@ def build_mscx(piece, preserved_parts_xml=None):
 
 
 def apply_expression_playback(root, piece):
-    """补充散板引子（木卡姆散板与拉格阿拉普）的平滑呼吸速度曲线。"""
+    """补充散板引子（拉格阿拉普）的平滑呼吸速度曲线。"""
     score = root.find('Score')
     lengths = {'32nd': .125, '16th': .25, 'eighth': .5, 'quarter': 1., 'half': 2., 'whole': 4.}
-    if piece.slug in ('day_afternoon', 'day_evening'):
+    if piece.slug == 'day_evening':
         from interpret import Style, tempo_curve
         qgrid, tgrid = tempo_curve(piece, Style(**(piece.style or {})))
-        count = 4 if piece.slug == 'day_afternoon' else 8
+        count = 8
         measures = score.find('Staff').findall('Measure')
         for bi, measure in enumerate(measures[:count]):
             voice = measure.find('voice')
