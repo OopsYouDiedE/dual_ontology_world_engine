@@ -11,6 +11,7 @@ import sys
 import time
 from dv_toolchain import LANGUAGE, ROOT, PROJECT, environment
 from dv_sources import sources
+from core_profile import summarize as summarize_profile
 
 
 def record(value):
@@ -99,6 +100,7 @@ def main():
     parser.add_argument('--timeout', type=int, default=600)
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
     parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
+    parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
     args = parser.parse_args()
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
@@ -110,11 +112,13 @@ def main():
     modules = sources([args.entry.resolve()])
     inputs = [path for path, _ in modules]
     inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/dv_toolchain.py')]
+    if args.profile:
+        inputs += [LANGUAGE / p for p in ('tools/DvProfiler.cs', 'tools/core_profile.py')]
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
     commands = [
-        [sys.executable, str(LANGUAGE / 'tools/build_session.py'), '--entry', str(args.entry.resolve()), '--out', str(build), '--main', 'dvg_debug_run'],
+        [sys.executable, str(LANGUAGE / 'tools/build_session.py'), '--entry', str(args.entry.resolve()), '--out', str(build), '--main', 'dvg_debug_run'] + (['--profile'] if args.profile else []),
         ['dotnet', 'build', str(build / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
     shutil.copyfile(LANGUAGE / 'compiler/Runtime.cs', build / 'Runtime.cs')
     (build / 'Program.csproj').write_text(PROJECT, encoding='utf-8')
@@ -132,6 +136,8 @@ def main():
     execution_env = env.copy()
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
     execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
+    if args.profile:
+        execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     start = time.monotonic()
     result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
@@ -144,6 +150,12 @@ def main():
         result['elapsed_seconds'] = time.monotonic() - start
         result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
         result['trace_written'] = (out / 'trace.json').is_file()
+        if args.profile and (out / 'profile-raw.json').is_file():
+            try:
+                summarize_profile(out / 'profile-raw.json', modules, out / 'profile-summary.json')
+                result['profile_written'] = True
+            except Exception as error:
+                result['profile_error'] = str(error)
         try:
             result['output_well_formed'] = export(out)
             result['text_exported'] = True

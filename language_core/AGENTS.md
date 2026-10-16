@@ -45,6 +45,8 @@ core、session及编译器的算法使用DV。平台ABI承接数值、容器、�
 
 容器深拷贝由平台ABI的rt_copy_value执行；DV负责记录更新、推理与规划。记录查找使用rt_record_index/rt_record_find从末项查找，重复键保留末项优先。性能修改通过第一章新会话记录具体推进与实际进程耗时，出错直接修正对应实现，不运行回归套件。
 
+可选性能诊断使用 `python language_core/tools/run_debug.py --profile --out artifacts/partial-bootstrap-core/<新目录>`。`build_session.py --profile` 只在生成的诊断程序集内插入 DV 函数计时，生产类库不计时。原始计数在 `profile-raw.json`，`profile-summary.json` 按工作类型和函数列出调用、独占/包含耗时、平均耗时及独占占比；平台 ABI 费用归属直接调用它的 DV 函数。插桩耗时和 formal-model 范围必须与原生运行区分，不能据此推断实机帧率或游戏验收。
+
 规划评分对每个预测节点建立一个只读人物视图，复用静态动作与政策；评分不写入该视图，正式人物状态仍由会话更新。
 
 专业回复可以声明offer_to；本人支持话语且看到该接收者时，可主动说明一次。已经实际收到的询问仍沿请求回复处理。

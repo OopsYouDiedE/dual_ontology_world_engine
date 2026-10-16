@@ -930,7 +930,11 @@ fn dvs_select_player(state, id)
 fn dvs_player_choice(actor, id)
 ```
 
+收闻投影 `dvs_capture_heard_utterances` 每次调用先索引当前事件中的 `speech_literal`，再按事件顺序处理 `listener_parse`，保留实际父链、来源和主体过滤；不在人物认知中预置话语。
+
 ## 10. 运行与验收范围
+
+`dv_with_many` 和 `dv_with_path` 在返回可变记录时只复制更新路径；未变化的兄弟分支先保存为不可变快照，后续从该可变输出访问时由 Runtime 建立独立可变分支。`rt_snapshot` 的弱引用池按桶渐进清理，结构相等仍逐项核对。可选 `run_debug.py --profile` 对诊断生成程序的 DV 函数作嵌套计时，按函数及工作类型报告调用、独占/包含总耗时与平均耗时；平台 ABI 时间计入直接 DV 调用者。该诊断不测 Godot 画面、碰撞或输入。
 
 构建和编辑器入口见 [语言总览](../README.md)、[编译器说明](../compiler/README.md) 与 [Session](../Session/README.md)。生成 C# 由相应工具产生，不手工修改生成物。一级逻辑输出入口为 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>`，输出 formal-model 正式会话的原始轨迹、调试投影与玩家可见正文；是否执行及次数遵循本轮用户授权。
 

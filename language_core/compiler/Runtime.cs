@@ -244,19 +244,20 @@ public static class R
         : Items(value);
     private static readonly object SnapshotLock = new();
     private static readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
+    private static readonly Queue<ulong> SnapshotBucketOrder = new();
     private static int SnapshotSweeps;
     public static object snapshot(object value)
     {
         lock (SnapshotLock)
         {
             var result = SnapshotValue(value);
-            if (++SnapshotSweeps % 1024 == 0)
+            if (++SnapshotSweeps % 1024 == 0 && SnapshotBucketOrder.Count != 0)
             {
-                foreach (var key in SnapshotPool.Keys.ToArray())
-                {
-                    SnapshotPool[key].RemoveAll(reference => !reference.TryGetTarget(out _));
-                    if (SnapshotPool[key].Count == 0) SnapshotPool.Remove(key);
-                }
+                var key = SnapshotBucketOrder.Dequeue();
+                var bucket = SnapshotPool[key];
+                bucket.RemoveAll(reference => !reference.TryGetTarget(out _));
+                if (bucket.Count == 0) SnapshotPool.Remove(key);
+                else SnapshotBucketOrder.Enqueue(key);
             }
             return result;
         }
@@ -277,7 +278,10 @@ public static class R
         }
         hash = unchecked((hash ^ (ulong)items.Count) * 1099511628211UL);
         if (!SnapshotPool.TryGetValue(hash, out var bucket))
+        {
             SnapshotPool[hash] = bucket = new();
+            SnapshotBucketOrder.Enqueue(hash);
+        }
         for (var i = bucket.Count - 1; i >= 0; i--)
         {
             if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }

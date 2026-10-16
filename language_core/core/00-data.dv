@@ -1,5 +1,5 @@
-// Persistent-by-copy data operations. Runtime lists are never mutated in place here.
-// Ordered multi-field copy update. Inputs and all output branches stay independent.
+// Persistent-by-copy data operations. Unchanged branches are frozen and thawed
+// only when accessed through an output owner, so output mutations stay independent.
 
 fn dv_pair(a, b):
     var r = []
@@ -240,7 +240,7 @@ fn dv_with_many(record, updates):
             if dv_has_key(updates, key):
                 rt_push(result, dv_pair(key, dv_clone(dv_get(updates, key))))
             else:
-                rt_push(result, dv_clone(entry))
+                rt_push(result, rt_snapshot(entry))
             rt_push(keys, key)
             i = (i + 1)
         i = 0
@@ -254,7 +254,7 @@ fn dv_with_many(record, updates):
             i = (i + 1)
         return result
 
-// Copy every output branch independently, traversing the updated spine once.
+// Copy the updated spine; unchanged branches use immutable snapshots.
 // Validation of the world/ref remains in dv_store before this data operation.
 fn dv_with_path(record, keys, depth, value):
     let key = keys[depth]
@@ -272,7 +272,7 @@ fn dv_with_path(record, keys, depth, value):
             rt_push(result, dv_pair(dv_clone(entry[0]), next))
             found = true
         else:
-            rt_push(result, dv_clone(entry))
+            rt_push(result, rt_snapshot(entry))
         i = i + 1
     if not found:
         var next = false

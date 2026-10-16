@@ -574,21 +574,24 @@ fn dvs_factor_candidate_rejected(actor, candidate):
 
 fn dvs_capture_heard_utterances(actor, events):
     var heard = dv_find(actor, "heard_utterances", [])
+    // Event snapshots are append-only within a session. Index literal IDs once,
+    // then consume listener parses in their original event order.
+    var literals = []
     var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if event.type == "speech_literal":
+            rt_push(literals, dv_pair(event.id, event))
+        i = (i + 1)
+    i = 0
     while (i < rt_count(events)):
         var event = events[i]
         if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
             var data = event.data
             var source = event.data.source_event
-            var j = 0
-            while (j < rt_count(events)):
-                var literal = events[j]
-                if dv_and(dv_has(event.parents, source), dv_and((literal.id == source), (literal.type == "speech_literal"))):
-                    if (literal.actor == actor.id):
-                        false
-                    else:
-                        heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
-                j = (j + 1)
+            let literal = dv_find(literals, source, false)
+            if literal != false and dv_has(event.parents, source) and literal.actor != actor.id:
+                heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
         i = (i + 1)
     return dv_with(actor, "heard_utterances", heard)
 
