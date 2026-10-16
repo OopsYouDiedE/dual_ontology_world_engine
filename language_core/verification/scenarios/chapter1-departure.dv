@@ -284,8 +284,8 @@ fn c1dep_install_scene(scene):
                 if dv_has_key(actions[j], "speech"):
                     var action = dv_with(actions[j], "speech", dv_with(actions[j].speech, "emission_location_ref", dv_ref("demon", "state", "location")))
                     action = dv_without(action, "opportunity_requirement")
-                    if action.id == "demon.opening" or action.id == "demon.opening.reward-invitation" or action.id == "demon.opening.desire-offer" or action.id == "demon.opening.public-alarm" or action.id == "demon.opening.public-latch" or action.id == "demon.question.prompt":
-                        action = dv_with(action, "received_speech_requirement", {"speaker": "detective", "action_id": "detective.opening.introduce"})
+                    if action.id == "demon.opening":
+                        action = dv_with(action, "received_speech_requirement", {"speaker": "shen", "action_id": "shen.opening.body-habit", "receipt_kind": "actual-listener-parse"})
                     if dv_has_key(action, "response_topic"):
                         action = dv_with(action, "request_transport", {"channel": "copper.living"})
                     actions = dvs_replace(actions, j, action)
@@ -334,7 +334,7 @@ fn c1dep_install_scene(scene):
         while j < rt_count(extra):
             rt_push(actions, extra[j])
             j = j + 1
-        actor = dv_with_many(actor, {"mind": c1dep_unify_demon_position(mind), "actions": c1_public_methods(actions), "hearing_grants": hearing, "request_channels": channels})
+        actor = dv_with_many(actor, {"mind": c1dep_unify_demon_position(mind), "policy": c1dep_unify_demon_position(actor.policy), "actions": c1_public_methods(actions), "hearing_grants": hearing, "request_channels": channels})
         let goals = c1dep_goals(actor)
         var combined = dv_clone(dv_find(actor.policy, "goals", []))
         j = 0
@@ -376,11 +376,18 @@ axiom c1dep_manifest_law():
 fn c1dep_unify_demon_position(value):
     if not rt_is_list(value):
         return value
-    if dv_has_key(value, "op"):
-        if value.op == "equals" and dv_has_key(value, "ref"):
+    if dv_record_like(value):
+        if dv_find(value, "op", "") == "equals" and dv_has_key(value, "ref") and dv_has_key(value, "value"):
             let ref = value.ref
-            if ref.object == "demon" and ref.facet == "state" and ref.field == "location" and value.value == "hall":
-                return dv_with(value, "value", "living_hall")
+            if dv_record_like(ref):
+                if dv_find(ref, "object", "") == "demon" and dv_find(ref, "facet", "") == "state" and dv_find(ref, "field", "") == "location" and value.value == "hall":
+                    return dv_with(value, "value", "living_hall")
+        var fields = []
+        var field_index = 0
+        while field_index < rt_count(value):
+            rt_push(fields, [value[field_index][0], c1dep_unify_demon_position(value[field_index][1])])
+            field_index = field_index + 1
+        return fields
     var result = []
     var i = 0
     while i < rt_count(value):

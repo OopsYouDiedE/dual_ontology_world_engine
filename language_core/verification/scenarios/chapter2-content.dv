@@ -482,7 +482,7 @@ fn c2_norm_actions(actor, norm):
     rt_push(result, dv_with(c2_action(peek, "inspect", c2_at(actor, norm.board), c2_at(actor, norm.board), "", dv_single(c2_ref(object, "posted")), "查看公告板。", norm.source), "repeatable", true))
     let read_id = rt_cat(actor, rt_cat(".c2.read.", norm.id))
     let read_pre = dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(object, "posted"), true), dv_fact(c2_own(actor, rt_cat("read.", norm.id)), false)])
-    rt_push(result, c2_action(read_id, "read", read_pre, read_pre, read_id, dv_pair(c2_ref(object, "text"), c2_own(actor, rt_cat("read.", norm.id))), norm.surface, norm.source))
+    rt_push(result, dv_with(c2_action(read_id, "read", read_pre, read_pre, read_id, dv_pair(c2_ref(object, "text"), c2_own(actor, rt_cat("read.", norm.id))), norm.surface, norm.source), "norm_receipt", {"norm": norm, "content": dv_fact(c2_ref(object, "text"), norm.surface)}))
     let known = dv_fact(c2_ref(object, "text"), norm.surface)
     var accepted = true
     var n = 0
@@ -1274,7 +1274,7 @@ fn c2i_rows():
     rt_push(rows, c2i_row("moran", "moran.c2.astral.draft", "quiet_room", resonance, "case.astral", "complete_draft", [dv_fact(c2_ref("case.astral", "moran_reassured"), true)], "翻开画夹暗层，展出完整底稿：两指向下，作劈切之势。"))
     rt_push(rows, c2i_row("elena", "elena.c2.astral.identify", "quiet_room", resonance, "case.astral", "abandoned_child_misunderstanding_resolved", [dv_fact(c2_ref("case.astral", "complete_draft"), true)], "是双指向下的劈切，不是弃子的手势。此前的误会应当撤回。"))
     let assembled = dv_all([c2_at("mora", "white_tower_safe"), c2_at("bertrand", "white_tower_safe"), c2_at("veronica", "white_tower_safe")])
-    rt_push(rows, c2i_row("bertrand", "bertrand.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [assembled, dv_fact(c2_ref("case.logistics", "r07_skin_test"), true)], "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
+    rt_push(rows, c2i_row("veronica", "veronica.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [assembled, dv_fact(c2_ref("case.logistics", "r07_skin_test"), true)], "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
     rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [assembled, dv_fact(c2_ref("case.logistics", "three_old_scars"), true)], "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
     rt_push(rows, c2i_row("veronica", "veronica.c2.safety.mix", "white_tower_safe", safety, "case.logistics", "anti_erosion_mixed", [assembled, dv_fact(c2_ref("case.logistics", "medicine_key_given"), true)], "依皮试记录核对材料与用量，配成抗侵蚀剂，贴妥标签。"))
     rt_push(rows, c2i_row("moran", "moran.c2.sketch.day", "outdoor_high", c2_window(3, 720, 1020), c2_body("moran"), "day_sketch_exposed", [dv_fact(c2_ref("c2.weather", "daylight"), true)], "在高地对着光写生，返程前察觉灰尘刺激，身体发热。"))

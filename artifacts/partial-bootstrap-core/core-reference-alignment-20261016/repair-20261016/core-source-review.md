@@ -1,0 +1,15 @@
+# Core owner gates: static source review — 2026-10-16
+
+Scope: `verification/session/15-action-planning.dv` and `16-personal-choice.dv`. No design documents were read. No build, compiler, session or tests were run; this record describes source review and implementation only.
+
+The existing active resonance gate already required positive owner utility through `dvp_owner_requirements`, which is shared by ordinary eligibility, planning eligibility and same-group personal comparisons. Active utility now contributes to candidate progress value; passive declarations retain their existing eligibility and gain no active utility score. The formula reads declared owner policy quantities or uncontested owner knowledge. Invalid quantity shapes fail explicitly before record access; optional `false` quantities contribute zero, and policy quantities must be numeric.
+
+Received claim conflicts now require the owner's matching speaker/key receipt with previous source, current source, actual parse event and provenance basis. Night calls retain owner `night_call_eligible`, declared basis and owner `night_when` truth. Optional record boundaries have explicit shape checks rather than attempting record lookup on arbitrary lists/scalars. Required declaration fields remain required.
+
+Planning dependency method records now include owner gate references: active resonance prerequisites and referenced numeric quantities, and night-call predicates. These references join dependency closure and its existing signature, so the cache cannot reuse a result formed from older gate declarations. The full actor plan memo already includes policy, action declarations, actual received speech/conflicts and eligibility fields; no additional exclusion was introduced.
+
+Added opening sequence contracts: `received_speech_requirement.any_of` accepts any matching actual receipt (speaker/action ID, nonempty parse and source event). `completed_action_requirement: {action_id: ...}` reads `actor.completed_actions`, not `used`; static review found `used` is written regardless of execution status. The runner owner is implementing the new ledger only for applied Complete results. Predictions do not append completion or receive records.
+
+`norm_decision` eligibility additionally requires a matching `actor.norm_proposals[id]` receipt, actual source/parse event IDs and an identical received norm declaration. This is in the shared normative gate, including same-group comparison. The speech/runner agent owns receipt creation and actual adoption; candidate choice never manufactures adoption.
+
+Documentation follow-up for the parent: describe active utility in progress scoring, the owner-ref dependency/cache input, optional quantity/record errors, actual conflict provenance, any_of receipt alternatives and the successful Complete ledger. The runner ledger and normative speech reception/decision consumers are owned by the separate runner agent. This source change alone establishes no runtime behavior or acceptance result.

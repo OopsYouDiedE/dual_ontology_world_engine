@@ -1517,7 +1517,13 @@ fn c1_hypothesis_V6_1():
     return dv_with(dv_with(dv_with({"id": "V6_1", "proposition": dv_fact(c1_knowledge("familiar"), true), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), true))), "group", "trust")
 
 fn c1_answer_actions(actor):
-    return c1_list_17(c1_answer_me(actor), c1_answer_V1_0(actor), c1_answer_V1_1(actor), c1_answer_V1_2(actor), c1_answer_V2_0(actor), c1_answer_V2_1(actor), c1_answer_V2_2(actor), c1_answer_V3_0(actor), c1_answer_V3_1(actor), c1_answer_V4_0(actor), c1_answer_V4_1(actor), c1_answer_V5_0(actor), c1_answer_V5_1(actor), c1_answer_V5_2(actor), c1_answer_trust(actor), c1_answer_V6_0(actor), c1_answer_V6_1(actor))
+    let actions = c1_list_17(c1_answer_me(actor), c1_answer_V1_0(actor), c1_answer_V1_1(actor), c1_answer_V1_2(actor), c1_answer_V2_0(actor), c1_answer_V2_1(actor), c1_answer_V2_2(actor), c1_answer_V3_0(actor), c1_answer_V3_1(actor), c1_answer_V4_0(actor), c1_answer_V4_1(actor), c1_answer_V5_0(actor), c1_answer_V5_1(actor), c1_answer_V5_2(actor), c1_answer_trust(actor), c1_answer_V6_0(actor), c1_answer_V6_1(actor))
+    var result = []
+    var i = 0
+    while i < rt_count(actions):
+        rt_push(result, c1_public_answer_speech(actions[i]))
+        i = i + 1
+    return result
 
 fn c1_raw_hypotheses():
     return c1_list_17(c1_hypothesis_me(), c1_hypothesis_V1_0(), c1_hypothesis_V1_1(), c1_hypothesis_V1_2(), c1_hypothesis_V2_0(), c1_hypothesis_V2_1(), c1_hypothesis_V2_2(), c1_hypothesis_V3_0(), c1_hypothesis_V3_1(), c1_hypothesis_V4_0(), c1_hypothesis_V4_1(), c1_hypothesis_V5_0(), c1_hypothesis_V5_1(), c1_hypothesis_V5_2(), c1_hypothesis_trust(), c1_hypothesis_V6_0(), c1_hypothesis_V6_1())

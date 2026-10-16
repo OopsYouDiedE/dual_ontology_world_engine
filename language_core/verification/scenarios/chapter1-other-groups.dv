@@ -752,6 +752,21 @@ fn c1_other_place_detective(scene, zone):
     var i = 0
     while i < rt_count(scene.actors):
         var actor = scene.actors[i]
+        // The remaining residents may greet one another and actually serve tea.
+        // Moving the detective does not fabricate a fourth participant or a reply.
+        if dv_has(["huo", "shen", "su"], actor.id):
+            var opening_actions = []
+            var opening_index = 0
+            while opening_index < rt_count(actor.actions):
+                var opening_action = actor.actions[opening_index]
+                if dv_has(["shen.opening.welcome", "shen.opening.introduce", "huo.opening.introduce", "su.opening.introduce", "shen.opening.memory-report"], opening_action.id):
+                    opening_action = dv_without(opening_action, "offer_to")
+                    opening_action = dv_with(opening_action, "opportunity_requirement", {"location": "hall", "participants": ["huo", "shen", "su"], "mode": "all-present"})
+                if opening_action.id == "shen.opening.serve-tea":
+                    opening_action = dv_with_many(opening_action, {"authority_precondition": dv_all([c1_at("shen", "hall"), c1_op_property("opening.tea", "prepared", true), c1_at("huo", "hall"), c1_at("su", "hall")]), "opportunity_requirement": {"location": "hall", "participants": ["huo", "shen", "su"], "mode": "all-present"}})
+                rt_push(opening_actions, opening_action)
+                opening_index = opening_index + 1
+            actor = dv_with(actor, "actions", opening_actions)
         if actor.id == "detective":
             var mind = dv_store(actor.mind, dv_ref("detective", "state", "location"), dv_with(dv_field(c1_other_case(group).room), "basis", [c1_other_case(group).source]))
             mind = c2_add_new(mind, c1_local_object(rt_cat("case.", group)))

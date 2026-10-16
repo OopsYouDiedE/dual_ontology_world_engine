@@ -501,6 +501,12 @@ fn c1_op_appropriate_candidate(action):
         action = dv_with_many(action, {"precondition": dv_all(dv_pair(action.precondition, c1_op_property("opening.tea", "prepared", true))), "authority_precondition": dv_all([action.authority_precondition, c1_at("detective", "hall"), c1_at("huo", "hall"), c1_at("su", "hall")]), "opportunity_requirement": {"location": "hall", "participants": ["detective", "huo", "su"], "mode": "all-present"}})
     if name == "demon.opening" or name == "demon.question.prompt":
         action = dv_with(action, "opportunity_requirement", {"location": "hall", "participants": c1_op_people(), "mode": "all-present"})
+    let broadcasts = ["demon.opening", "demon.opening.reward-invitation", "demon.opening.desire-offer", "demon.opening.public-alarm", "demon.opening.public-latch", "demon.question.prompt"]
+    var broadcast_index = 1
+    while broadcast_index < rt_count(broadcasts):
+        if name == broadcasts[broadcast_index]:
+            action = dv_with(action, "completed_action_requirement", {"action_id": broadcasts[broadcast_index - 1]})
+        broadcast_index = broadcast_index + 1
     if name == "shen.opening.bite-silver" or name == "huo.opening.scrape-testpiece" or name == "su.opening.play-audition":
         action = dv_with_many(action, {"precondition": dv_all([action.precondition, c1_op_property("opening.cabinet", "position_description", "铜口下方"), c1_op_property(c1_op_reward_object(id), "location", "opening.cabinet")]), "received_speech_requirement": c1_op_invitation_requirement(), "desire_requirement": {"subject": id, "desire_id": c1_op_desire(id).id, "basis": c1_op_desire(id).basis}, "personal_purpose": {"subject": id, "id": "inspect-relevant-offered-material", "basis": c1_op_desire(id).basis}})
     if name == "shen.opening.accept-work" or name == "huo.opening.seek-drawing":

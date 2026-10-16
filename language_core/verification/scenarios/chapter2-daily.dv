@@ -63,31 +63,36 @@ fn c2daily_rows():
     var v = 0
     while v < rt_count(venues):
         let room = venues[v]
-        var present = [c2d_council_when()]
+        var weather = dv_fact(c2_ref("c2.weather", "wind"), true)
+        if room == "central_hall":
+            weather = dv_fact(c2_ref("c2.weather", "wind"), false)
+        let present = [c2d_council_when(), weather]
         var i = 0
         while i < rt_count(people):
-            rt_push(present, c2_at(people[i], room))
-            rt_push(present, c2_alive(people[i]))
-            i = i + 1
-        i = 0
-        while i < rt_count(people):
             let actor = people[i]
-            let stance = c1_any(c2d_stance(actor, "open_plan"), c1_any(c2d_stance(actor, "seal_plan"), c2d_stance(actor, "committee_plan")))
+            let stance = c1_any(dv_fact(c2_own(actor, "accepted.open_plan"), true), c1_any(dv_fact(c2_own(actor, "accepted.seal_plan"), true), dv_fact(c2_own(actor, "accepted.committee_plan"), true)))
             let options = ["open_plan", "seal_plan", "committee_plan"]
             let labels = ["核对读数后组织外出劳作", "风止震后先留安全处复测", "公用物资逐项登记共同核对"]
             var n = 0
             while n < rt_count(options):
-                var ballot = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.vote.", rt_cat(room, options[n]))), room, dv_all([dv_all(present), c2d_stance(actor, options[n]), dv_fact(c2daily_ref(rt_cat("voted.", actor)), false)]), rt_cat("我的票投给：", labels[n]), people)
+                var ballot = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.vote.", rt_cat(room, options[n]))), room, dv_all([dv_all(present), c2_alive(actor), dv_fact(c2_own(actor, rt_cat("accepted.", options[n])), true), dv_fact(c2daily_ref(rt_cat("voted.", actor)), false)]), rt_cat("我的票投给：", labels[n]), [])
                 ballot = dv_with(ballot, "effects", [dv_assign(c2daily_ref(rt_cat("voted.", actor)), true), dv_assign(c2daily_ref(rt_cat("ballot.", actor)), options[n]), dv_increment(c2daily_ref(rt_cat("votes.", options[n])), 1)])
+                let norms = c2_norms()
+                var q = 0
+                while q < rt_count(norms):
+                    let norm = norms[q]
+                    if norm.id == options[n]:
+                        ballot = dv_with(ballot, "personal_choice", {"group": "council-ballot", "requires": dv_fact(c2_own(actor, rt_cat("accepted.", norm.id)), true), "prohibits": dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), "promotes": norm.promotes, "sacrifices": norm.sacrifices, "basis": [norm.source]})
+                    q = q + 1
                 rt_push(rows, ballot)
                 n = n + 1
-            var vote = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.sign.", room)), room, dv_all([dv_all(present), stance, dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), dv_fact(c2daily_ref(rt_cat("signed.", actor)), false)]), "我把本人赞成的提案与保留意见写入公约，签名交众人核对。", people)
+            var vote = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.sign.", room)), room, dv_all([dv_all(present), c2_alive(actor), stance, dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), dv_fact(c2daily_ref(rt_cat("signed.", actor)), false)]), "我把本人赞成的提案与保留意见写入公约，签名交众人核对。", [])
             vote = dv_with(vote, "effects", [dv_assign(c2daily_ref(rt_cat("signed.", actor)), true)])
             rt_push(rows, vote)
             i = i + 1
         v = v + 1
     let tremor = dv_fact(c2daily_ref("underground_tremor"), true)
-    rt_push(rows, dv_with(c2d_row("detective", "detective.c2.ending-tremor", "central_hall", dv_fact(c2daily_ref("council_ended"), true), tremor, "公约上的签名已经收齐。脚下忽然传来地下的震颤。", c2_approved("tremor-only-after-actual-council-end")), "opportunity", {"location": "central_hall", "participants": c2_people(), "mode": "all-present"}))
+    rt_push(rows, dv_with(c2d_row("detective", "detective.c2.ending-tremor", "central_hall", dv_fact(c2daily_ref("council_ended"), true), tremor, "公约上的签名已经收齐。脚下忽然传来地下的震颤。", c2_approved("tremor-only-after-actual-council-end")), "opportunity", {"location": "central_hall", "participants": [], "mode": "all-present"}))
     return rows
 
 axiom c2daily_cook_law():

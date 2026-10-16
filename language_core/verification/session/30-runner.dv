@@ -409,6 +409,7 @@ fn dvs_session_complete(state, receipt):
     time = dv_find(physical, "time", time)
     actor = dv_with(actor, "ledger", result.ledger)
     parent = dvs_event_prepared(events, "action_execution", id, time, dv_single(parent), dv_with_many({"revision_before": before.revision, "revision_after": physical.revision, "physical_before": before, "physical_after": physical, "receipt": result, "action": action}, {"ledger_before": ledger, "ledger_after": result.ledger, "quote": quote, "actual": model.actual}))
+    let execution_event = parent
     physical = dvs_environment(physical, story, events, parent)
     if (result.execution.status == "applied"):
         actor = dvs_record_request(dvs_finish_reply(dv_with(actor, "last_action_event", parent), action), action)
@@ -425,8 +426,9 @@ fn dvs_session_complete(state, receipt):
         parent = dvs_event_prepared(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": actor.mind.revision, "mind_before": mind, "mind_after": actor.mind, "action": action}, {"bindings": bindings, "grants": dv_find(action, "grants", []), "execution_id": action_event}))
     if (0 < rt_count(observations)):
         actor = dv_with(actor, "last_cognitive_event", parent)
-    actor = dvs_complete_cognitive_effects(actor, action, result.execution.status == "applied", parent, time)
-    actor = dvs_complete_player_influences(actor, action, before, physical, result.execution.status == "applied", parent, time)
+    actor = dvs_complete_cognitive_effects(actor, action, result.execution.status == "applied", execution_event, time)
+    actor = dvs_complete_norm(actor, action, result.execution.status == "applied", events, time, execution_event, parent)
+    actor = dvs_complete_player_influences(actor, action, before, physical, result.execution.status == "applied", execution_event, time)
     if dv_and(dv_has_key(action, "answer"), (result.execution.status == "applied")):
         var judgment = dvs_answer(dv_find(story, "formal_answers", []), action, physical, actor.mind, bindings, events)
         var stage = ""
@@ -528,6 +530,8 @@ fn dvs_session_complete(state, receipt):
     if action.kind == "inspect" and result.execution.status == "applied":
         actor = dv_with(actor, "inspection_attempt_signatures", dv_with(dv_find(actor, "inspection_attempt_signatures", []), action.id, dvp_inspection_signature(actor, action, actor.mind)))
     actor = dv_with(actor, "attempts", dv_with(dv_find(actor, "attempts", []), action.id, actor.mind.revision))
+    if result.execution.status == "applied":
+        actor = dv_with(actor, "completed_actions", dv_append(dv_find(actor, "completed_actions", []), action.id))
     actor = dv_with_many(actor, {"used": dv_append(dv_find(actor, "used", []), action.id), "policy": dv_with(actor.policy, "budget", (actor.policy.budget - 1))})
     actors = dvs_replace(actors, index, actor)
     if dv_and(dv_has_key(action, "public_observers"), (result.execution.status == "applied")):

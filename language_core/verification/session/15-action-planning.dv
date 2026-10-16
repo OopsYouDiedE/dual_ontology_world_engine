@@ -126,7 +126,7 @@ fn dvp_dependencies(mind, seeds, budget, methods):
         while (i < rt_count(methods)):
             var method = methods[i]
             if dv_has(method.scope, ref):
-                var premises = dvp_unmet_refs(mind, method.premise, true)
+                var premises = dvp_merge_refs(dvp_unmet_refs(mind, method.premise, true), dv_find(method, "owner_refs", []))
                 var k = 0
                 while (k < rt_count(premises)):
                     var premise = premises[k]
@@ -433,6 +433,11 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
         progress = 1
     if dv_has_key(action, "personal_choice"):
         progress = 1
+    let resonance = dv_find(action, "resonance", false)
+    if resonance != false:
+        dv_require(dv_record_like(resonance), "Resonance must be a record")
+        if not dv_find(resonance, "passive", false):
+            progress = progress + dvp_resonance_utility(actor, action, mind)
     if (action.kind == "replay"):
         if (0 < dv_find(policy, "model_budget", 0)):
             if (hypothesis == false):
@@ -571,7 +576,7 @@ fn dvp_dependency_methods(actor):
     var methods = []
     var i = 0
     while (i < rt_count(actions)):
-        rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition})
+        rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition, "owner_refs": dvp_owner_requirement_refs(actions[i])})
         i = (i + 1)
     return methods
 

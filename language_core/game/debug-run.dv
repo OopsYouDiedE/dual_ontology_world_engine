@@ -1,5 +1,26 @@
 #include entry.dv
 
+// Read-only stopping evidence; these limits never mean narrative completion.
+fn dvg_debug_stop_evidence(state, steps, limit):
+    var actors = []
+    var reasons = []
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        rt_push(actors, {"actor": actor.id, "action_quota": dv_find(actor.policy, "budget", 0), "reason_budget": dv_find(actor.policy, "reason_budget", 0), "model_budget": dv_find(actor.policy, "model_budget", 0), "planning_limit": dv_find(actor, "planning_limit", 0), "scheduled_action": dv_find(actor, "scheduled_action", false), "can_act": dvs_actor_can_act(actor)})
+        i = i + 1
+    if limit <= steps:
+        rt_push(reasons, "diagnostic-action-window")
+    if state.limit <= state.executed:
+        rt_push(reasons, "session-action-limit")
+    if state.horizon < state.physical.time:
+        rt_push(reasons, "world-horizon")
+    if state.duration_blocked:
+        rt_push(reasons, "action-exceeds-remaining-time")
+    if rt_count(state.actors) <= state.idle and dvs_scheduled_count(state.actors) == 0:
+        rt_push(reasons, "no-scheduled-or-admissible-action")
+    return {"reasons": reasons, "actors": actors, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "not-inferred"}
+
 // A formal-model run uses production decisions and explicit logical receipts.
 fn dvg_debug_run():
     let config = dvg_debug_config()
@@ -23,7 +44,7 @@ fn dvg_debug_run():
         rt_print(rt_json_stringify({"type": "debug_events", "batch": batch}))
         cursor = batch.next
     let active = dvs_session_active(state)
-    rt_print(rt_json_stringify({"type": "debug_end", "steps": steps, "active": active, "game_time": state.physical.time, "action_bound_reached": steps == limit}))
+    rt_print(rt_json_stringify({"type": "debug_end", "steps": steps, "active": active, "game_time": state.physical.time, "action_bound_reached": steps == limit, "stop_evidence": dvg_debug_stop_evidence(state, steps, limit)}))
     let trace = dvs_session_close(state)
     rt_print(rt_json_stringify({"type": "debug_events", "batch": dv_debug_events(trace.events, cursor, config)}))
     return rt_json_write(rt_arg(0), trace)

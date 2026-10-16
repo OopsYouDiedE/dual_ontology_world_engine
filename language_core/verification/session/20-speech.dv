@@ -678,6 +678,43 @@ fn dvs_proposal_reassess(actor, decision, events, time, parent):
                 seen = dv_append(seen, proposal_id)
     return dv_with_many(actor, {"interpretations": interpretations, "policy": dv_with(actor.policy, "reason_budget", remaining), "last_interpretation_event": last, "reassessed_proposals": seen, "last_cognitive_event": cognitive})
 
+// A norm receipt records understood content and provenance, never personal assent.
+fn dvs_receive_norm(actor, norm, source, parse_event, events, time):
+    let receipt = {"norm": norm, "source_event": source, "parse_event": parse_event, "received_time": time}
+    let before = dv_find(actor, "norm_proposals", [])
+    let after = dv_with(before, norm.id, receipt)
+    let event = dvs_event_prepared(events, "norm_receipt", actor.id, time, dv_pair(source, parse_event), {"receipt": receipt, "proposals_before": before, "proposals_after": after})
+    return dv_with_many(actor, {"norm_proposals": after, "last_cognitive_event": event})
+
+// Only the actual owner's successfully completed decision changes personal rules.
+fn dvs_complete_norm(actor, action, applied, events, time, execution_event, observation_event):
+    if not applied:
+        return actor
+    let read_receipt = dv_find(action, "norm_receipt", false)
+    if read_receipt != false:
+        if observation_event != execution_event and dv_truth(actor.mind, read_receipt.content) == "true":
+            actor = dvs_receive_norm(actor, read_receipt.norm, execution_event, observation_event, events, time)
+    let decision = dv_find(action, "norm_decision", false)
+    if decision == false:
+        return actor
+    let receipt = dv_find(dv_find(actor, "norm_proposals", []), decision.id, false)
+    dv_require(receipt != false, "Norm decision needs an owner's actual content receipt")
+    dv_require(dv_same(receipt.norm, decision.norm) and receipt.source_event != "" and receipt.parse_event != "", "Norm decision receipt must match understood content")
+    let before = dv_find(actor.policy, "norm_rules", [])
+    var rules = []
+    var i = 0
+    while i < rt_count(before):
+        if before[i].id != decision.id:
+            rt_push(rules, before[i])
+        i = i + 1
+    if decision.accepted:
+        let norm = receipt.norm
+        rt_push(rules, {"id": norm.id, "method": norm.method, "mode": norm.mode, "promotes": norm.promotes, "sacrifices": norm.sacrifices, "basis": [norm.source, receipt.source_event, receipt.parse_event, execution_event], "available_when": dv_true()})
+    let stance = {"accepted": decision.accepted, "norm": receipt.norm, "source_event": receipt.source_event, "parse_event": receipt.parse_event, "execution_event": execution_event, "observation_event": observation_event}
+    let stances = dv_with(dv_find(actor, "norm_stances", []), decision.id, stance)
+    let event = dvs_event_prepared(events, "norm_decision", actor.id, time, [execution_event, observation_event, receipt.source_event, receipt.parse_event], {"decision": stance, "value_order": dv_find(actor.policy, "value_order", []), "personal_choice": dv_find(action, "personal_choice", []), "rules_before": before, "rules_after": rules})
+    return dv_with_many(actor, {"policy": dv_with(actor.policy, "norm_rules", rules), "norm_stances": stances, "last_cognitive_event": event})
+
 fn dvs_receive_scheduled_speech(listener, message, events, time):
     let speech = message.speech
     let literal = speech.literal_ast
@@ -746,7 +783,11 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
         local_6 = dv_find(listener, "proposals", [])
     else:
         local_6 = dv_append(dv_find(listener, "proposals", []), dv_with(decision, "source_event", source))
-    return dvs_proposal_reassess(dv_with_many(listener, {"mind": after, "interpretations": interpretations, "last_interpretation_event": last_interpretation, "proposals": local_6, "last_cognitive_event": parse_event}), decision, events, time, parse_event)
+    listener = dvs_proposal_reassess(dv_with_many(listener, {"mind": after, "interpretations": interpretations, "last_interpretation_event": last_interpretation, "proposals": local_6, "last_cognitive_event": parse_event}), decision, events, time, parse_event)
+    let norm = dv_find(speech, "norm_proposal", false)
+    if norm != false and dv_same(parsed, literal) and dv_truth(after, parsed) == "true":
+        listener = dvs_receive_norm(listener, norm, source, parse_event, events, time)
+    return listener
 
 fn dvs_drain_received_speech(actor, events, time):
     let messages = dv_find(actor, "pending_heard", [])

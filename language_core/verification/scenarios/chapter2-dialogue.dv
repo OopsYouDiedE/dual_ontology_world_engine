@@ -133,14 +133,32 @@ fn c2d_rows():
             weather = dv_fact(c2_ref("c2.weather", "wind"), false)
         let when = dv_all([council, weather])
         let source = c1_source("docs/design-standard.md", 0, "第五日物资与安全公约")
-        rt_push(rows, c2d_row("ward", rt_cat("ward.c2.council.records.", room), room, dv_all([when, c2d_stance("ward", "committee_plan")]), c2d_stance("ward", "committee_plan"), "先把粮、水、药的结余摊开。谁取了什么、哪笔还待核对，都写出来。", source))
-        rt_push(rows, c2d_row("huo", rt_cat("huo.c2.council.work.", room), room, dv_all([when, c2d_stance("huo", "open_plan")]), c2d_stance("huo", "open_plan"), "出去干活，得把读数、路线和返程条件定下来。工具与口粮也得给够。", source))
-        rt_push(rows, c2d_row("gu", rt_cat("gu.c2.council.caution.", room), room, dv_all([when, c2d_stance("gu", "seal_plan")]), c2d_stance("gu", "seal_plan"), "风停了，或地又震过，便停行复测。缺的那一笔，先空着，莫凭想当然填满。", source))
+        let proposals = c2_norms()
+        var n = 0
+        while n < rt_count(proposals):
+            let norm = proposals[n]
+            if dv_has(["open_plan", "seal_plan", "committee_plan"], norm.id):
+                let literal = dv_fact(c2_ref(c2_norm_object(norm.id), "text"), norm.surface)
+                let row = c2d_row(norm.owner, rt_cat(norm.owner, rt_cat(".c2.council.proposal.", rt_cat(room, norm.id))), room, dv_all([when, c2d_stance(norm.owner, norm.id)]), literal, norm.surface, source)
+                rt_push(rows, dv_with(row, "norm_proposal", norm))
+            n = n + 1
         i = i + 1
     return rows
 
 fn c2d_council_when():
     return dv_all([c2_window(5, 450, 570), dv_fact(c2_ref("c2.weather", "daylight"), true)])
+
+// The actor must actually receive a proposal before treating council as an opportunity.
+fn c2d_known_council_proposal():
+    let norms = c2_norms()
+    var known = dv_not(dv_true())
+    var i = 0
+    while i < rt_count(norms):
+        let norm = norms[i]
+        if dv_has(["open_plan", "seal_plan", "committee_plan"], norm.id):
+            known = c1_any(known, dv_fact(c2_ref(c2_norm_object(norm.id), "text"), norm.surface))
+        i = i + 1
+    return known
 
 fn c2d_stance(actor, norm):
     let accepted = dv_fact(c2_own(actor, rt_cat("accepted.", norm)), true)
@@ -179,6 +197,10 @@ fn c2d_action(row):
         rt_push(grants, effects[e].ref)
         e = e + 1
     var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": c2d_people(), "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
+    if dv_has_key(row, "norm_proposal"):
+        action = dv_with(action, "speech", dv_with_many(speech, {"utterance_type": "proposal", "norm_proposal": row.norm_proposal}))
+    if dv_has_key(row, "personal_choice"):
+        action = dv_with(action, "personal_choice", row.personal_choice)
     if row.actor == "demon":
         action = c1_authorized_speech(action)
     if dv_has_key(row, "response_topic"):
@@ -298,9 +320,9 @@ fn c2d_goals(actor):
             i = i + 1
     if actor.id == "quer" or actor.id == "huo":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_fact(c2_ref("c2.granary", "latch_loose"), true), [c2d_source("10_执行.story", 17, "RepairLatch")]))
-    let stance = c1_any(c2d_stance(actor.id, "open_plan"), c1_any(c2d_stance(actor.id, "seal_plan"), c2d_stance(actor.id, "committee_plan")))
-    rt_push(goals, c2_goal(c2_at(actor.id, "oath_court"), dv_all([c2d_council_when(), stance, dv_fact(c2_ref("c2.weather", "wind"), true)]), [c2d_source("06_场面.story", 340, "章二议事机会")]))
-    rt_push(goals, c2_goal(c2_at(actor.id, "central_hall"), dv_all([c2d_council_when(), stance, dv_fact(c2_ref("c2.weather", "wind"), false)]), [c1_source("docs/design-standard.md", 0, "无风时在中央厅议事")]))
+    let opportunity = c2d_known_council_proposal()
+    rt_push(goals, c2_goal(c2_at(actor.id, "oath_court"), dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), true)]), [c2d_source("06_场面.story", 340, "章二议事机会")]))
+    rt_push(goals, c2_goal(c2_at(actor.id, "central_hall"), dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), false)]), [c1_source("docs/design-standard.md", 0, "无风时在中央厅议事")]))
     return goals
 
 fn c2d_refresh_actor_goals(actor):

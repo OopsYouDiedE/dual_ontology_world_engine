@@ -32,30 +32,48 @@ fn dvp_personal_better(order, left, right):
         i = i + 1
     return false
 
+fn dvp_received_speech_matches(receipts, requirement):
+    dv_require(dv_record_like(requirement), "Received speech requirement must be a record")
+    var i = 0
+    while i < rt_count(receipts):
+        let receipt = receipts[i]
+        if receipt.speaker == requirement.speaker and receipt.action_id == requirement.action_id and receipt.parse_event != "" and receipt.source_event != "":
+            return true
+        i = i + 1
+    return false
+
 fn dvp_owner_requirements(actor, action, mind):
     if not dvs_actor_can_act(actor):
         return false
-    if dv_has_key(action, "resonance") and not dv_find(action.resonance, "passive", false):
-        if not (0 < dvp_resonance_utility(actor, action, mind)):
-            return false
+    let resonance = dv_find(action, "resonance", false)
+    if resonance != false:
+        dv_require(dv_record_like(resonance), "Resonance must be a record")
+        if not dv_find(resonance, "passive", false):
+            if not (0 < dvp_resonance_utility(actor, action, mind)):
+                return false
     let night_call = dv_find(action, "night_call_requirement", false)
     if night_call != false:
+        dv_require(dv_record_like(night_call), "Night call requirement must be a record")
         if not dv_find(actor, "night_call_eligible", false) or rt_count(dv_find(night_call, "basis", [])) == 0 or dv_truth(mind, night_call.night_when) != "true":
             return false
     let conflict = dv_find(action, "received_claim_conflict", false)
     if conflict != false:
+        dv_require(dv_record_like(conflict), "Received claim conflict must be a record")
         let conflicts = dv_find(actor, "observed_claim_conflicts", [])
         var found_conflict = false
         var conflict_index = 0
         while conflict_index < rt_count(conflicts):
             let evidence = conflicts[conflict_index]
+            dv_require(dv_record_like(evidence), "Observed claim conflict must be a record")
             if evidence.key == conflict.key and evidence.speaker == conflict.speaker:
-                found_conflict = true
+                if dv_find(evidence, "source_event", "") != "" and dv_find(evidence, "previous_source", "") != "" and dv_find(evidence, "parse_event", "") != "" and 0 < rt_count(dv_find(evidence, "basis", [])):
+                    found_conflict = true
             conflict_index = conflict_index + 1
         if not found_conflict:
             return false
     let opportunity = dv_find(action, "opportunity_requirement", false)
     if opportunity != false:
+        dv_require(dv_record_like(opportunity), "Opportunity requirement must be a record")
         let own = dv_read(mind, actor.location_ref)
         if not dv_uncontested(own) or own.value != opportunity.location:
             return false
@@ -78,18 +96,28 @@ fn dvp_owner_requirements(actor, action, mind):
             return false
     let heard = dv_find(action, "received_speech_requirement", false)
     if heard != false:
+        dv_require(dv_record_like(heard), "Received speech requirement must be a record")
         let receipts = dv_find(actor, "received_speeches", [])
         var found = false
-        var i = 0
-        while i < rt_count(receipts):
-            let receipt = receipts[i]
-            if receipt.speaker == heard.speaker and receipt.action_id == heard.action_id and receipt.parse_event != "":
-                found = true
-            i = i + 1
+        if dv_has_key(heard, "any_of"):
+            dv_require(rt_is_list(heard.any_of), "Received speech any_of must be a list")
+            var i = 0
+            while i < rt_count(heard.any_of):
+                if dvp_received_speech_matches(receipts, heard.any_of[i]):
+                    found = true
+                i = i + 1
+        else:
+            found = dvp_received_speech_matches(receipts, heard)
         if not found:
+            return false
+    let completed = dv_find(action, "completed_action_requirement", false)
+    if completed != false:
+        dv_require(dv_record_like(completed), "Completed action requirement must be a record")
+        if not dv_has(dv_find(actor, "completed_actions", []), completed.action_id):
             return false
     let desire = dv_find(action, "desire_requirement", false)
     if desire != false:
+        dv_require(dv_record_like(desire), "Desire requirement must be a record")
         if desire.subject != actor.id:
             return false
         let desires = dv_find(actor.policy, "desires", [])
@@ -115,9 +143,11 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
         return false
     let attitude = dv_find(action, "owner_interpretation_requirement", false)
     if attitude != false:
+        dv_require(dv_record_like(attitude), "Owner interpretation requirement must be a record")
         let interpretation = dv_find(dv_find(actor, "interpretations", []), attitude.interpretation_id, false)
         if interpretation == false:
             return false
+        dv_require(dv_record_like(interpretation), "Owner interpretation must be a record")
         if attitude.subject != actor.id or interpretation.status != attitude.required_status or dv_find(interpretation, "source_event", "") == "":
             return false
     if (not dv_has_key(action, "personal_choice")):
@@ -151,9 +181,19 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
 
 // Norms affect this owner's choice; they never become physical prohibitions.
 fn dvp_normative_ready(actor, action, mind):
+    let decision = dv_find(action, "norm_decision", false)
+    if decision != false:
+        dv_require(dv_record_like(decision), "Norm decision must be a record")
+        let proposal = dv_find(dv_find(actor, "norm_proposals", []), decision.id, false)
+        if proposal == false:
+            return false
+        dv_require(dv_record_like(proposal), "Received norm proposal must be a record")
+        if dv_find(proposal, "source_event", "") == "" or dv_find(proposal, "parse_event", "") == "" or not dv_same(proposal.norm, decision.norm):
+            return false
     // An unsupervised act is valued by its owner, independently of a public pledge.
     let private = dv_find(action, "private_execution", false)
     if private != false:
+        dv_require(dv_record_like(private), "Private execution must be a record")
         if rt_count(dv_find(private, "basis", [])) == 0 or dv_truth(mind, private.requires) != "true":
             return false
         if dvp_owned_quantity(actor, mind, private.benefit) <= dvp_owned_quantity(actor, mind, private.resource_cost):
@@ -196,8 +236,15 @@ fn dvp_normative_ready(actor, action, mind):
 fn dvp_owned_quantity(actor, mind, declaration):
     if rt_is_number(declaration):
         return declaration
+    if declaration == false:
+        return 0
+    dv_require(dv_record_like(declaration), "Owned quantity must be a number or record")
     if dv_has_key(declaration, "policy_key"):
-        return dv_find(actor.policy, declaration.policy_key, 0)
+        let quantity = dv_find(actor.policy, declaration.policy_key, 0)
+        dv_require(rt_is_number(quantity), "Owned policy quantity must be numeric")
+        return quantity
+    dv_require(dv_has_key(declaration, "ref"), "Owned quantity needs policy_key or ref")
+    dv_require(dv_record_like(declaration.ref), "Owned quantity ref must be a record")
     let cell = dv_read(mind, declaration.ref)
     if dv_uncontested(cell) and rt_is_number(cell.value):
         return cell.value
@@ -205,6 +252,7 @@ fn dvp_owned_quantity(actor, mind, declaration):
 
 fn dvp_resonance_utility(actor, action, mind):
     let r = action.resonance
+    dv_require(dv_record_like(r), "Resonance must be a record")
     if rt_count(dv_find(r, "basis", [])) == 0 or dv_truth(mind, dv_find(r, "requires", dv_true())) != "true":
         return 0
     let drive = dvp_owned_quantity(actor, mind, r.drive)
@@ -213,6 +261,31 @@ fn dvp_resonance_utility(actor, action, mind):
     let caution = dvp_owned_quantity(actor, mind, r.caution)
     let risk = dvp_owned_quantity(actor, mind, r.perceived_risk)
     return drive * relevance + bonus - caution - risk
+
+// Keep owner-only utility inputs in the planning dependency signature and slice.
+fn dvp_owner_requirement_refs(action):
+    var refs = []
+    let r = dv_find(action, "resonance", false)
+    if r != false:
+        dv_require(dv_record_like(r), "Resonance must be a record")
+        if not dv_find(r, "passive", false):
+            refs = dvp_merge_refs(refs, dvs_sim_refs(dv_find(r, "requires", dv_true())))
+            let quantities = [r.drive, r.relevance, r.truth_bonus, r.caution, r.perceived_risk]
+            var i = 0
+            while i < rt_count(quantities):
+                let quantity = quantities[i]
+                if quantity != false and not rt_is_number(quantity):
+                    dv_require(dv_record_like(quantity), "Owned quantity must be a number or record")
+                    if not dv_has_key(quantity, "policy_key"):
+                        dv_require(dv_has_key(quantity, "ref"), "Owned quantity needs policy_key or ref")
+                        dv_require(dv_record_like(quantity.ref), "Owned quantity ref must be a record")
+                        refs = dvp_add_ref(refs, quantity.ref)
+                i = i + 1
+    let night = dv_find(action, "night_call_requirement", false)
+    if night != false:
+        dv_require(dv_record_like(night), "Night call requirement must be a record")
+        refs = dvp_merge_refs(refs, dvs_sim_refs(night.night_when))
+    return refs
 
 fn dvs_actor_can_act(actor):
     let stage = dv_find(actor, "erosion_stage", "early")
@@ -302,6 +375,8 @@ fn dvs_complete_cognitive_effects(actor, action, success, event, time):
         return actor
     var result = actor
     let r = dv_find(action, "resonance", false)
+    if r != false:
+        dv_require(dv_record_like(r), "Resonance must be a record")
     if r != false and not dv_find(r, "passive", false):
         let retrieved = dv_find(r, "retrieved_when", {"op": "constant", "value": "false"})
         if dv_truth(actor.mind, retrieved) == "true":

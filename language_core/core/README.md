@@ -220,6 +220,12 @@ imprint neutral_imprint(capability, goal, variables, laws, limits, prices):
 
 `dvs_receive_public_claim` 仅由实际可听接收路径调用，记录发言者、公开立场键值及 source/parse 事件；同一发言者的历史已收闻立场与新声明 conflicts_with 匹配时形成 observed_claim_conflicts。没有实际接收不生成冲突证据。动作可声明 received_claim_conflict、received_speech_requirement、opportunity_requirement、desire_requirement、owner_interpretation_requirement 等本人资格；它们检查已获来源、现场和本人记录，不代替真实行动。
 
+`dvp_owner_requirements` 同时用于正式候选、预测搜索和个人同组比较。主动 resonance 的正效用加入候选 progress；passive 不使用该项。数量声明接受数值、本人 policy_key 或本人 ref，optional false 为零，错误记录形状与非数政策值明确报错。resonance.requires、引用数值与 night_call_requirement.night_when 纳入规划依赖及签名；完整主体备忘包含实际资格账本，不能复用遗漏这些输入的结果。
+
+`received_claim_conflict` 核对本人冲突的 speaker/key、previous_source、source_event、parse_event 与 basis。`received_speech_requirement` 接受单个 `{speaker, action_id}` 或 `{any_of: [...]}`，每个匹配项需要实际收闻的来源与理解回执。`completed_action_requirement: {action_id}` 只读取本人 completed_actions；该列表仅在真实 Complete 的 execution.status 为 applied 时追加。used 仍记录包含失败的已尝试动作，不能代替成功。预测不会新增真实完成记录。
+
+规范的内容收据、本人采纳和实际执行分别保存。话语的 norm_proposal 只在实际可听传播、字面映射一致且本人已获得该内容时进入 norm_proposals；读板 `norm_receipt: {norm, content}` 也须成功现场执行、有实际观察且本人认识支持 content。该收据不自动同意提案。norm_decision 候选须匹配本人实际收到的完整规范，再由 personal_choice/value_order 比较；成功 Complete 后才写本人 norm_stances 与 policy.norm_rules，并保留内容、理解/观察、执行事件来源。拒绝移除本人对应规范，公开承诺仍不替代后续实际行动。工程实现与自然模拟达成情况分别报告。
+
 私下行为的 private_execution 要求有来源、本人 requires 成立，并比较本人所知 benefit 与 resource_cost，只有 benefit>resource_cost 才具备资格。normative_method 再按本人有来源、当前适用的 norm_rules 与 value_order 判断；公开承诺不会直接写成物理禁令，私下规范也不等于必然执行。实际机会与共同动作选择仍须成立。
 
 ### 实际玩家影响的静默后果链
@@ -700,12 +706,14 @@ fn dvp_choice_groups(actions)
 fn dvp_personal_ready(mind, choice)
 fn dvp_personal_impact(choice, value)
 fn dvp_personal_better(order, left, right)
+fn dvp_received_speech_matches(receipts, requirement)
 fn dvp_owner_requirements(actor, action, mind)
 fn dvp_eligible(actor, action, mind, relevant)
 fn dvp_eligible_after_base(actor, action, mind, relevant)
 fn dvp_normative_ready(actor, action, mind)
 fn dvp_owned_quantity(actor, mind, declaration)
 fn dvp_resonance_utility(actor, action, mind)
+fn dvp_owner_requirement_refs(action)
 fn dvs_actor_can_act(actor)
 fn dvs_cognitive_seed_next(seed)
 fn dvs_initialize_cognition(actor, seed, ordinal)
@@ -760,6 +768,8 @@ fn dvs_speech_choice_signature(actor, action, goals)
 fn dvs_speech_goal_value(goals, listener, prediction)
 fn dvs_prepare_speech_choices(actor, events, time, parent)
 fn dvs_proposal_reassess(actor, decision, events, time, parent)
+fn dvs_receive_norm(actor, norm, source, parse_event, events, time)
+fn dvs_complete_norm(actor, action, applied, events, time, execution_event, observation_event)
 fn dvs_receive_scheduled_speech(listener, message, events, time)
 fn dvs_drain_received_speech(actor, events, time)
 fn dvs_speech(actors, speaker_index, action, events, time, parent, physical)
@@ -916,3 +926,5 @@ fn dvs_player_choice(actor, id)
 构建和编辑器入口见 [语言总览](../README.md)、[编译器说明](../compiler/README.md) 与 [Session](../Session/README.md)。生成 C# 由相应工具产生，不手工修改生成物。一级逻辑输出入口为 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>`，输出 formal-model 正式会话的原始轨迹、调试投影与玩家可见正文；是否执行及次数遵循本轮用户授权。
 
 构建/编译只能说明必要工程事实；formal-model 不含 Godot 碰撞、输入和画面。停止于行动上限、时间域、工程超时与实际剧情终局分别报告，未覆盖分支保留未知。项目禁止流程回归与以断言数、通过率或汇总计数代替实际验收。本文为源码参考，未声称完整两章完成、同条件提速或全部语言设计已经实现。
+
+调试入口的 `debug_end.stop_evidence` 只读记录诊断行动窗口、会话动作上限、世界时域、时间不足拒绝、无排队/可执行动作及各主体剩余行动/认知额度。多个条件可以同时成立；narrative_completion 固定标为 not-inferred，须用实际关键节点证据另行判断。超时或初始化异常未产生 debug_end 时，不能补造停止状态。debug 投影只在 dv_record_like 成立时查询 action 字段，普通列表或原子动作保留可打印标识。

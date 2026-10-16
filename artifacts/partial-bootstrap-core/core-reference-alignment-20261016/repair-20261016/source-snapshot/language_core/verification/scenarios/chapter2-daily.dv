@@ -1,0 +1,230 @@
+// Optional daily opportunities. Speech marks record execution, never scheduled outcomes.
+fn c2daily_ref(field):
+    return c2_ref("c2.daily", field)
+
+fn c2daily_say(actor, id, room, when, text, people):
+    let source = c2_approved(rt_cat("authorized-second-chapter-daily.", id))
+    let row = c2d_row(actor, id, room, when, dv_true(), text, source)
+    return dv_with(row, "opportunity", {"location": room, "participants": people, "mode": "all-present"})
+
+fn c2daily_after(row, speaker, action):
+    return dv_with(row, "received_speech_requirement", {"speaker": speaker, "action_id": action})
+
+fn c2daily_notes_window():
+    return dv_all([dv_at_least(c2_clock(), 1440 + 810), dv_not(dv_at_least(c2_clock(), 3 * 1440))])
+
+fn c2daily_rows():
+    var rows = []
+    let morning = c2_window(2, 480, 570)
+    rt_push(rows, c2daily_say("lucian", "lucian.c2.gray-violet", "washroom", morning, "莫兰，窗外那层灰带一点紫；若要画下来，该怎样调？", ["moran"]))
+    rt_push(rows, c2daily_after(c2daily_say("moran", "moran.c2.gray-violet", "washroom", morning, "铅白里掺一点紫，别急着压黑。光变了，灰也变。", ["lucian"]), "lucian", "lucian.c2.gray-violet"))
+    rt_push(rows, c2daily_say("quer", "quer.c2.hurry-ward", "washroom", morning, "沃德，别对着镜子念规矩了，水龙头还等人用呢。", ["ward"]))
+    let ding = c2_window(2, 570, 600)
+    rt_push(rows, c2daily_say("mora", "mora.c2.ankle-offer", "living_hall", ding, "伊莲娜，让我看一下你的脚踝。疼的位置和能不能负重，得当面查。", ["elena"]))
+    rt_push(rows, c2daily_say("su", "su.c2.stethoscope-ask", "living_hall", ding, "茉拉，听诊器可以让我试试吗？", ["mora"]))
+    rt_push(rows, c2daily_after(c2daily_say("mora", "mora.c2.stethoscope-consent", "living_hall", ding, "可以，先擦净耳件；我在旁边教你听，听到什么再说什么。", ["su"]), "su", "su.c2.stethoscope-ask"))
+    rt_push(rows, c2daily_say("margaret", "margaret.c2.arch", "living_hall", ding, "霍铎，石拱把力往两边送；上面的桁架还得看节点。你修东西时先查哪里？", ["huo"]))
+    rt_push(rows, c2daily_after(c2daily_say("huo", "huo.c2.truss", "living_hall", ding, "先查接头，再看承重。光看外形漂亮，顶不住用。", ["margaret"]), "margaret", "margaret.c2.arch"))
+    let lesson = c2_window(2, 600, 690)
+    rt_push(rows, c2daily_say("veronica", "veronica.c2.molecular-weight", "lecture", lesson, "源质有分子量吗？怎样称量、怎样分离，误差从哪里来？", ["demon"]))
+    rt_push(rows, c2daily_say("selma", "selma.c2.refractive-index", "lecture", lesson, "它的折射率随浓度怎么变？看见颜色，能推到哪一步？", ["demon"]))
+    rt_push(rows, c2daily_say("ward", "ward.c2.rule-two", "lecture", lesson, "守则第二条的权限边界，应当逐项说清。执行规则的权限从哪里来？", ["demon"]))
+    rt_push(rows, c2daily_after(c2daily_say("ruan", "ruan.c2.rule-four", "lecture", lesson, "第四条说“我所立之规，皆张贴于此”。是否意味着尚有非你所立之规？", ["demon"]), "demon", "demon.c2.school-rule4"))
+    let rule = dv_fact(c2d_ref("school_rule4"), "我所立之规，皆张贴于此。")
+    rt_push(rows, c2d_row("demon", "demon.c2.school-rule4", "lecture", lesson, rule, "第四条：我所立之规，皆张贴于此。", c2_approved("school-rule-four-actual-teaching")))
+    let noon = dv_all([c2_window(2, 720, 810), dv_fact(c2daily_ref("meal_prepared"), true)])
+    let table1 = ["detective", "huo", "shen", "quer"]
+    let table2 = ["ward", "gu", "bertrand", "mora"]
+    let table3 = ["lucian", "moran", "elena", "margaret"]
+    let table4 = ["ruan", "selma", "veronica", "su"]
+    rt_push(rows, c2daily_say("huo", "huo.c2.lunch-frame", "living_hall", noon, "门框松的地方得重钉，别只把门板刨薄。", table1))
+    rt_push(rows, c2daily_say("shen", "shen.c2.lunch-egg", "living_hall", noon, "荷包蛋要护着边儿下锅。今天先把烩菜、热汤和面饼吃热乎。", table1))
+    rt_push(rows, c2daily_say("gu", "gu.c2.lunch-order", "living_hall", noon, "秩序二字，旧籍各有用法。先辨时代与出处，再议今日怎样用。", table2))
+    rt_push(rows, c2daily_say("lucian", "lucian.c2.lunch-portrait", "living_hall", noon, "这四桌若写进诗里，不能只写十六张脸；莫兰，你会先画谁的手？", table3))
+    rt_push(rows, c2daily_say("ruan", "ruan.c2.lunch-rations", "living_hall", noon, "九十九份，每日十六人两餐，九十九除以三十二，是三天余三份。账要跟着真正拿走的份数走。", table4))
+    let notes_window = c2daily_notes_window()
+    rt_push(rows, c2daily_say("ruan", "ruan.c2.discuss-supplement", "central_hall", dv_all([notes_window, dv_fact(c2daily_ref("draft_notes"), true)]), "我起草的补记栏在这里：夜间急需记下取用者、份数、用途，次日一起核对。请逐条议。", ["ward"]))
+    rt_push(rows, c2daily_after(c2daily_say("ward", "ward.c2.discuss-forbid", "central_hall", notes_window, "若补记没有监督，夜间的账靠什么核实？我的提案是严禁夜取；请各人自己表明是否赞成。", ["ruan"]), "ruan", "ruan.c2.discuss-supplement"))
+    let quake = dv_all([c2_window(4, 1050, 1260), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)])
+    let color = dv_fact(c2daily_ref("rare_color_layer"), "夹道罕见紫金以太色层")
+    rt_push(rows, dv_with(c2d_row("demon", "demon.c2.truth-color", "living_hall", quake, color, "夹道有罕见的紫金以太色层。", c2_approved("actual-truthful-color-temptation-after-quake")), "opportunity", {"location": "living_hall", "participants": ["moran"], "mode": "all-present"}))
+    let guards = ["detective", "bertrand", "huo"]
+    var g = 0
+    while g < rt_count(guards):
+        let actor = guards[g]
+        let id = rt_cat(actor, ".c2.caution-moran")
+        var caution = c2daily_say(actor, id, "living_hall", dv_all([c2_night(4), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)]), "莫兰，震后夜里的读数和路线没有确认。先停在门内，我们一起复测，再谈出去。", ["moran"])
+        caution = c2daily_after(caution, "demon", "demon.c2.truth-color")
+        caution = dv_with(caution, "effects", [dv_assign(c2daily_ref(rt_cat("guarding.", actor)), true)])
+        rt_push(rows, caution)
+        g = g + 1
+    let people = c2_people()
+    let venues = ["oath_court", "central_hall"]
+    var v = 0
+    while v < rt_count(venues):
+        let room = venues[v]
+        var weather = dv_fact(c2_ref("c2.weather", "wind"), true)
+        if room == "central_hall":
+            weather = dv_fact(c2_ref("c2.weather", "wind"), false)
+        let present = [c2d_council_when(), weather]
+        var i = 0
+        while i < rt_count(people):
+            let actor = people[i]
+            let stance = c1_any(dv_fact(c2_own(actor, "accepted.open_plan"), true), c1_any(dv_fact(c2_own(actor, "accepted.seal_plan"), true), dv_fact(c2_own(actor, "accepted.committee_plan"), true)))
+            let options = ["open_plan", "seal_plan", "committee_plan"]
+            let labels = ["核对读数后组织外出劳作", "风止震后先留安全处复测", "公用物资逐项登记共同核对"]
+            var n = 0
+            while n < rt_count(options):
+                var ballot = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.vote.", rt_cat(room, options[n]))), room, dv_all([dv_all(present), c2_alive(actor), dv_fact(c2_own(actor, rt_cat("accepted.", options[n])), true), dv_fact(c2daily_ref(rt_cat("voted.", actor)), false)]), rt_cat("我的票投给：", labels[n]), [])
+                ballot = dv_with(ballot, "effects", [dv_assign(c2daily_ref(rt_cat("voted.", actor)), true), dv_assign(c2daily_ref(rt_cat("ballot.", actor)), options[n]), dv_increment(c2daily_ref(rt_cat("votes.", options[n])), 1)])
+                let norms = c2_norms()
+                var q = 0
+                while q < rt_count(norms):
+                    let norm = norms[q]
+                    if norm.id == options[n]:
+                        ballot = dv_with(ballot, "personal_choice", {"group": "council-ballot", "requires": dv_fact(c2_own(actor, rt_cat("accepted.", norm.id)), true), "prohibits": dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), "promotes": norm.promotes, "sacrifices": norm.sacrifices, "basis": [norm.source]})
+                    q = q + 1
+                rt_push(rows, ballot)
+                n = n + 1
+            var vote = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.sign.", room)), room, dv_all([dv_all(present), c2_alive(actor), stance, dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), dv_fact(c2daily_ref(rt_cat("signed.", actor)), false)]), "我把本人赞成的提案与保留意见写入公约，签名交众人核对。", [])
+            vote = dv_with(vote, "effects", [dv_assign(c2daily_ref(rt_cat("signed.", actor)), true)])
+            rt_push(rows, vote)
+            i = i + 1
+        v = v + 1
+    let tremor = dv_fact(c2daily_ref("underground_tremor"), true)
+    rt_push(rows, dv_with(c2d_row("detective", "detective.c2.ending-tremor", "central_hall", dv_fact(c2daily_ref("council_ended"), true), tremor, "公约上的签名已经收齐。脚下忽然传来地下的震颤。", c2_approved("tremor-only-after-actual-council-end")), "opportunity", {"location": "central_hall", "participants": [], "mode": "all-present"}))
+    return rows
+
+axiom c2daily_cook_law():
+    let pre = dv_all([c2_at("shen", "logistics"), c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false), dv_at_least(c2_ref("c2.counter", "remaining"), 16)])
+    return dv_axiom("c2daily_cook_law", 1, pre, [dv_increment(c2_ref("c2.counter", "remaining"), -16), dv_increment(c2_ref("c2.ledger", "removed"), 16), dv_increment(c2_ref("c2.ledger", "day_recorded"), 16), dv_assign(c2daily_ref("portions"), 16), dv_assign(c2daily_ref("meal_cooked"), true)])
+
+axiom c2daily_deliver_law():
+    let pre = dv_all([c2_at("shen", "living_hall"), c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true), dv_fact(c2daily_ref("meal_prepared"), false)])
+    return dv_axiom("c2daily_deliver_law", 1, pre, [dv_assign(c2daily_ref("meal_prepared"), true)])
+
+axiom c2daily_serve_law(actor):
+    let pre = dv_all([c2_at(actor, "living_hall"), c2_window(2, 720, 810), dv_fact(c2daily_ref("meal_prepared"), true), dv_at_least(c2daily_ref("portions"), 1), dv_fact(c2_own(actor, "collected.2.noon"), false), c2_alive(actor)])
+    return dv_axiom("c2daily_serve_law", 1, pre, [dv_increment(c2daily_ref("portions"), -1), dv_increment(c2_own(actor, "rations"), 1), dv_assign(c2_own(actor, "collected.2.noon"), true)])
+
+axiom c2daily_draft_law():
+    let pre = dv_all([c2_at("ruan", "central_hall"), c2daily_notes_window(), dv_fact(c2daily_ref("draft_notes"), false)])
+    return dv_axiom("c2daily_draft_law", 1, pre, [dv_assign(c2daily_ref("draft_notes"), true)])
+
+axiom c2daily_council_end_law():
+    var pre = [dv_fact(c2daily_ref("council_ended"), false)]
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(pre, dv_fact(c2daily_ref(rt_cat("signed.", people[i])), true))
+        i = i + 1
+    return dv_axiom("c2daily_council_end_law", 1, dv_all(pre), [dv_assign(c2daily_ref("council_ended"), true), dv_assign(c2daily_ref("underground_tremor"), true)])
+
+axiom c2daily_watch_law(watched):
+    let guards = ["detective", "bertrand", "huo"]
+    var present = []
+    var i = 0
+    while i < rt_count(guards):
+        rt_push(present, dv_all([dv_fact(c2daily_ref(rt_cat("guarding.", guards[i])), true), c2_at(guards[i], "living_hall"), c2_alive(guards[i]), c2_at("moran", "living_hall")]))
+        i = i + 1
+    var premise = c1_any(present[0], c1_any(present[1], present[2]))
+    if not watched:
+        premise = dv_not(premise)
+    return dv_axiom("c2daily_watch_law", 1, premise, [dv_assign(c2_own("moran", "watched"), watched)])
+
+fn c2daily_tasks():
+    return [
+        {"actor": "huo", "id": "huo.c2.repair-faucet", "room": "washroom", "field": "faucet_repaired", "when": c2_window(2, 480, 570), "text": "霍铎关水拆下接头，重新拧紧盥洗室的水龙头。"},
+        {"actor": "mora", "id": "mora.c2.examine-ankle", "room": "living_hall", "field": "ankle_examined", "when": dv_all([c2_window(2, 570, 600), c2_at("elena", "living_hall"), c2_alive("elena")]), "text": "茉拉当面检查伊莲娜的脚踝、绷带和负重反应。"},
+        {"actor": "su", "id": "su.c2.try-stethoscope", "room": "living_hall", "field": "stethoscope_tried", "when": dv_all([c2_window(2, 570, 600), c2_at("mora", "living_hall")]), "text": "苏泠擦净耳件，在茉拉指导下试用听诊器。", "received_speech_requirement": {"speaker": "mora", "action_id": "mora.c2.stethoscope-consent"}}]
+
+axiom c2daily_task_law(task):
+    let pre = dv_all([c2_at(task.actor, task.room), task.when, dv_fact(c2daily_ref(task.field), false)])
+    return dv_axiom("c2daily_task_law", 1, pre, [dv_assign(c2daily_ref(task.field), true)])
+
+fn c2daily_install_scene(scene):
+    if dv_find(scene, "chapter2_daily_installed", false):
+        return scene
+    let source = c2_approved("real-sixteen-portion-lunch-deduct-stock-once")
+    var fields = {"meal_cooked": dv_field(false), "meal_prepared": dv_field(false), "portions": dv_field(0), "draft_notes": dv_field(false), "rare_color_layer": dv_field("夹道罕见紫金以太色层"), "council_ended": dv_field(false), "underground_tremor": dv_field(false), "votes.open_plan": dv_field(0), "votes.seal_plan": dv_field(0), "votes.committee_plan": dv_field(0)}
+    let tasks = c2daily_tasks()
+    var t = 0
+    while t < rt_count(tasks):
+        fields = dv_with(fields, tasks[t].field, dv_field(false))
+        t = t + 1
+    let people = c2_people()
+    var f = 0
+    while f < rt_count(people):
+        fields = dv_with(fields, rt_cat("signed.", people[f]), dv_field(false))
+        fields = dv_with(fields, rt_cat("voted.", people[f]), dv_field(false))
+        fields = dv_with(fields, rt_cat("ballot.", people[f]), dv_unknown())
+        fields = dv_with(fields, rt_cat("guarding.", people[f]), dv_field(false))
+        f = f + 1
+    var physical = c2_add_new(scene.physical, c2_object("c2.daily", "living_hall", fields))
+    physical = dv_adopt(physical, c1_method("c2.daily.council-end", c2daily_council_end_law()), "enforce", 1, source)
+    var processes = dv_clone(dv_find(scene, "world_processes", []))
+    rt_push(processes, {"id": "c2.daily.council-end", "law": "c2.daily.council-end", "basis": [source]})
+    let watch_states = [true, false]
+    var w = 0
+    while w < rt_count(watch_states):
+        let id = rt_cat("c2.daily.watch.", rt_show(watch_states[w]))
+        physical = dv_adopt(physical, c1_method(id, c2daily_watch_law(watch_states[w])), "enforce", 1, source)
+        rt_push(processes, {"id": id, "law": id, "basis": [source]})
+        w = w + 1
+    var bindings = dv_clone(scene.bindings)
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        var mind = c2_add_new(actor.mind, c1_local_object("c2.daily"))
+        rt_push(bindings, dv_binding("c2.daily", "c2.daily", actor.id))
+        mind = dv_store(mind, c2daily_ref(rt_cat("signed.", actor.id)), dv_field(false))
+        mind = dv_store(mind, c2daily_ref(rt_cat("voted.", actor.id)), dv_field(false))
+        if actor.id == "demon":
+            mind = dv_store(mind, c2daily_ref("rare_color_layer"), dv_field("夹道罕见紫金以太色层"))
+        var actions = dv_clone(actor.actions)
+        t = 0
+        while t < rt_count(tasks):
+            let task = tasks[t]
+            if actor.id == task.actor:
+                let law = c2daily_task_law(task)
+                physical = dv_adopt(physical, c1_method(task.id, law), "enforce", 1, source)
+                mind = dv_adopt(mind, c1_method(task.id, law), "predict", 1, source)
+                mind = dv_store(mind, c2daily_ref(task.field), dv_field(false))
+                var action = dv_with(c2_action(task.id, "help", law.premise, law.premise, task.id, [c2daily_ref(task.field)], task.text, source), "predict_law", task.id)
+                if dv_has_key(task, "received_speech_requirement"):
+                    action = dv_with(action, "received_speech_requirement", task.received_speech_requirement)
+                rt_push(actions, action)
+            t = t + 1
+        if actor.id == "ruan":
+            let id = "ruan.c2.draft-notes"
+            let law = c2daily_draft_law()
+            physical = dv_adopt(physical, c1_method(id, law), "enforce", 1, source)
+            mind = dv_adopt(mind, c1_method(id, law), "predict", 1, source)
+            mind = dv_store(mind, c2daily_ref("draft_notes"), dv_field(false))
+            rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2daily_ref("draft_notes")], "阮清月留出补记栏，写下夜间取用者、份数、用途和次日核对的草案。", source), "predict_law", id))
+        if actor.id == "shen":
+            let id = "shen.c2.daily.cook-sixteen"
+            let law = c2daily_cook_law()
+            physical = dv_adopt(physical, c1_method(id, law), "enforce", 1, source)
+            mind = dv_adopt(mind, c1_method(id, law), "predict", 1, source)
+            mind = dv_store(mind, c2daily_ref("meal_prepared"), dv_field(false))
+            mind = dv_store(mind, c2daily_ref("meal_cooked"), dv_field(false))
+            rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2daily_ref("meal_cooked"), c2daily_ref("portions"), c2_ref("c2.counter", "remaining")], "沈鼎把十六份口粮做成烩菜、热汤和面饼。", source), "predict_law", id))
+            let delivery = "shen.c2.daily.deliver-sixteen"
+            let delivery_law = c2daily_deliver_law()
+            physical = dv_adopt(physical, c1_method(delivery, delivery_law), "enforce", 1, source)
+            mind = dv_adopt(mind, c1_method(delivery, delivery_law), "predict", 1, source)
+            rt_push(actions, dv_with(c2_action(delivery, "help", delivery_law.premise, delivery_law.premise, delivery, [c2daily_ref("meal_prepared")], "沈鼎把热饭摆上起居厅的四张桌子。", source), "predict_law", delivery))
+        if dv_has(c2_people(), actor.id):
+            let id = rt_cat(actor.id, ".c2.daily.serve")
+            let law = c2daily_serve_law(actor.id)
+            physical = dv_adopt(physical, c1_method(id, law), "enforce", 1, source)
+            mind = dv_adopt(mind, c1_method(id, law), "predict", 1, source)
+            rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2daily_ref("portions"), c2_own(actor.id, "rations"), c2_own(actor.id, "collected.2.noon")], "从热饭中领自己的一份。", source), "predict_law", id))
+        rt_push(actions, c2_inspect_action(actor.id, "c2.daily", "living_hall", ["meal_prepared", "portions", "draft_notes", "council_ended", "underground_tremor"], "查看饭桌、补记草案与公约签署进展。", source))
+        rt_push(actions, dv_with(c2_inspect_action(actor.id, "c2.daily", "central_hall", ["draft_notes", "council_ended", "underground_tremor"], "查看补记草案、公约签署进展，留意脚下。", source), "id", rt_cat(actor.id, ".c2.daily.inspect-central")))
+        actor = dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions)})
+        rt_push(actors, actor)
+        i = i + 1
+    return dv_with_many(scene, {"physical": physical, "bindings": bindings, "actors": actors, "chapter2_daily_installed": true, "world_processes": processes})

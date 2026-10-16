@@ -1,0 +1,103 @@
+Viewed REPORT.md:1-36
+Viewed source-review.md:1-38
+Viewed independent-review.md:1-30
+Viewed stderr.txt:1-13
+Viewed chapter1-departure.dv:320-390
+Viewed entry.dv:1-45
+Viewed campaign.dv:1-95
+Viewed cognitive-profiles.dv:1-64
+Viewed chapter1-departure.dv:1-320
+Viewed chapter1-night.dv:1-350
+Viewed chapter2-daily.dv:1-226
+Viewed 25-simulation.dv:1-350
+Viewed 30-runner.dv:1-450
+Viewed 30-runner.dv:450-667
+Viewed 20-speech.dv:580-841
+Viewed 16-personal-choice.dv:160-350
+Viewed chapter1-other-groups.dv:1-450
+Viewed chapter1-other-groups.dv:450-870
+Viewed chapter2-content.dv:200-650
+Viewed chapter2-content.dv:1150-1482
+Viewed chapter2-dialogue.dv:1-426
+Viewed chapter2-content.dv:1-200
+Viewed chapter2-content.dv:650-1150
+Viewed chapter1-content.dv:1450-2135
+Viewed chapter1-opening.dv:200-620
+Viewed chapter1-content.dv:1950-2217
+Viewed 00-data.dv:1-200
+Viewed 15-action-planning.dv:1-450
+Viewed 15-action-planning.dv:450-800
+Viewed transcript.jsonl:70-88
+
+基于 [REPORT.md](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/partial-bootstrap-core/core-reference-alignment-20261016/REPORT.md)、[independent-review.md](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/artifacts/partial-bootstrap-core/core-reference-alignment-20261016/independent-review.md) 及对 `3c09ede7` 提交源码的逐行审读，除了一级测试初始化时的 `Expected List` 崩溃外，本轮新合入的机制与章节代码中还潜伏着几处**已定义但未接入主决策循环的门控断路**及**剧情/调度死锁隐患**。
+
+以下是按优先级排列的**下一步修复计划**：
+
+---
+
+### 第一阶段：修复初始化崩溃（P0 阻断性异常）
+
+1. **修复 [`c1dep_unify_demon_position`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-departure.dv#L376-L389) 的 Record/List 类型混淆**
+   - **根因**：在 DV Runtime 中，Record 是二元组列表 `[[k, v], ...]`，而普通数组（如 `listeners: ["detective", "huo", "shen", "su"]`）同样满足 `rt_is_list(value) == true`。`c1dep_unify_demon_position` 在第 377 行仅检查 `rt_is_list(value)` 后，第 379 行直接调用 `dv_has_key(value, "op")` → `rt_record_index` → `R.Items(entries[i])`。当递归遍历到普通字符串数组时，`R.Items("detective")` 立即抛出 `System.Exception: Expected List`。
+   - **修复方案**：
+     - 在 [`chapter1-departure.dv:379`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-departure.dv#L379) 调用 `dv_has_key` 前，先用 [`dv_record_like(value)`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/core/00-data.dv#L64-L80) 判断是否为合法 Record。
+     - 当 `dv_record_like(value)` 为真时，若匹配 `op == "equals"` 且引用为 `demon.state.location == "hall"` 则替换为 `"living_hall"`；否则按 Record 键值对 `[entry[0], c1dep_unify_demon_position(entry[1])]` 递归其值，避免将键名字符串拆散。当为普通列表时，再按元素递归。
+2. **排查全库同类 `dv_has_key` 裸调隐患**
+   - 检查 [`dvp_owned_quantity`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L196-L204) 等本轮新增函数，在调用 `dv_has_key` 前统一增加 `dv_record_like` 守卫，防止传入布尔值 `false` 或普通列表时再次触发 `Expected List`。
+
+---
+
+### 第二阶段：接通已定义但未生效的核心认知门控（P1 机制断路修复）
+
+审读 `3c09ede7` 源码发现，以下三项核心机制已写好辅助函数或动作字段，但**未接入 `16-personal-choice.dv` 与 `15-action-planning.dv` 的资格检查/价值评估链**，修复 P0 后会立即引发行为失真：
+
+1. **接入自主共鸣不等式 [`dvp_resonance_utility`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L206-L215)**
+   - **问题**：`dvp_resonance_utility(actor, action, mind)` 在 [`16-personal-choice.dv:206`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L206-L215) 定义后，全库**没有任何地方调用它**。
+   - **修复方案**：
+     - 在 [`dvp_owner_requirements`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L35-L83) 中增加对 `action.resonance`（非 `passive`）的门控：要求 `dvp_resonance_utility(actor, action, mind) > 0` 方可执行主动深层共鸣。
+     - 在 [`dvp_action_value_context`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/15-action-planning.dv#L399-L445) 中将正的共鸣效用纳入候选动作的 `progress` 评估。
+2. **接入答辩前后矛盾谴责门控 `received_claim_conflict` 与公开答辩声明 [`c1_public_answer_speech`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-content.dv#L2177-L2191)**
+   - **问题**：
+     - [`chapter1-content.dv:2202`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-content.dv#L2202) 为苏泠、霍铎、沈鼎生成了 `.respond-defense-conflict` 动作并挂了 `received_claim_conflict` 字段，但 [`dvp_owner_requirements`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L35-L83) **未检查 `received_claim_conflict`**，导致开局只要四人在 `hall` 就会无条件触发谴责台词。
+     - [`c1_answer_actions`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-content.dv#L1519-L1520) 本身未用 `c1_public_answer_speech` 包装（仅 [`player-content.dv`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/game/player-content.dv) 包装了玩家动作），需在 `c1_answer_actions` 中统一包装。
+   - **修复方案**：在 [`dvp_owner_requirements`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L35-L83) 中校验 `actor.observed_claim_conflicts` 是否存在匹配的 `speaker` 与 `key`；未实际听到前后矛盾的答辩时严禁触发谴责。
+3. **接入夜半铜口唤名门控 `night_call_requirement`**
+   - **问题**：[`chapter1-night.dv:95`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-night.dv#L95) 为 `.night.hear-private-call` 声明了 `night_call_requirement`，但 [`dvp_owner_requirements`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/session/16-personal-choice.dv#L35-L83) **未检查 `actor.night_call_eligible`**，导致白天未取回深层记忆的角色半夜也会听见铜口唤名。
+   - **修复方案**：在 `dvp_owner_requirements` 中检查 `dv_find(action, "night_call_requirement", false)`，要求 `dv_find(actor, "night_call_eligible", false) == true` 且当前时刻满足 `night_when`。
+
+---
+
+### 第三阶段：修复剧情错位、跨区死锁与五日预算瓶颈（P1 内容与调度修复）
+
+1. **修正第二章白塔院《左臂的标定疤痕》人物归属错误**
+   - **问题**：[`chapter2-content.dv:1277`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter2-content.dv#L1277) 将“卷起左袖，露出三道旧疤”错写成了 `"bertrand"`（`bertrand.c2.safety.scars`）。
+   - **修复方案**：按 [设计规范 第五部分 §2 第四站](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/docs/design-standard.md#L562-L570)，将该动作主体修正为 `"veronica"`（`veronica.c2.safety.scars`），由维罗妮卡展示自己左臂上的三道 `R-07` 强酸自体耐受标定旧疤。
+2. **修复恶魔开场广播顺序与跨区投放（`detective_zone != "zone_yi"`）时的死锁**
+   - **问题**：[`chapter1-departure.dv:286-288`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-departure.dv#L286-L288) 移除了恶魔广播原有的 `opportunity_requirement`，并将 6 条广播全部绑死在 `detective.opening.introduce` 上。这不仅导致恶魔在侦探一自我介绍完就抢在茶叙前连发所有广播，而且当侦探被跨区投放到甲/丙/丁区时，侦探不在乙区 `hall`，导致乙区恶魔永远无法广播开场与始业之问。
+   - **修复方案**：
+     - 当侦探在乙区时，以茶叙完成（或 `detective.opening.introduce`）作为首条广播前提；当侦探跨区投放到甲/丙/丁区时，以乙区在场三人（沈鼎、霍铎、苏泠）完成开场问候作为首条广播前提。
+     - 保持恶魔广播链内部的先后顺序（`demon.opening` → `reward-invitation` → `desire-offer` → `public-alarm` → `public-latch` → `question.prompt`），防止乱序抢发。
+3. **消除第二章第五日誓约庭 16 人投票的死锁条件**
+   - **问题**：[`chapter2-daily.dv:68-87`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter2-daily.dv#L68-L87) 要求全部 16 名存活角色同时在 `oath_court`（或 `central_hall`）且每人均已提前采纳三项规范之一才能投票；而 [`chapter2-dialogue.dv:301-303`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter2-dialogue.dv#L301-L303) 仅在角色已持有 `stance` 时才生成去议事厅的目标。只要有 1 人此前未去中央厅读板表态，全员集结与投票就会永久死锁。
+   - **修复方案**：
+     - 在 `c2d_goals` 中，第五日议事窗口（`c2d_council_when()`）开启时，所有存活角色均生成前往议事地点（有风去 `oath_court`、无风去 `central_hall`）的目标。
+     - 到达议事现场但尚未表态的角色，可现场听取提案并依据个人 `value_order` 形成立场与完成投票，确保第五日公约签署与终局震颤（`c2daily_council_end_law`）可靠闭环。
+4. **匹配五日连续会话的行动配额与预算**
+   - **问题**：[`c1_player_policy`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-content.dv#L1680-L1681) 单人 `budget` 仅为 `48`，[`c1_campaign_scene`](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/verification/scenarios/chapter1-campaign.dv#L18) 的全局 `max_actions` 为 `768`，不足以支撑 16 人跑完第一章白天、第一夜（分餐、公堂对峙、守夜）及第二章第 2–5 日（四桌午饭、四大案件、16 人投票）。
+   - **修复方案**：在 `campaign.dv` 生产初始化与第二章扩展 `dvg_extend` 中，按五日连续会话规模扩充各角色 `budget` 与会话总步数上限 `limit` / `max_actions`，避免角色在第二章中途因配额耗尽而静默。
+
+---
+
+### 第四阶段：格式清理、文档同步与一级正式会话验证
+
+1. **清理 Git 格式警告与同步参考文档**
+   - 清理 `git diff --check` 报告的尾随空白问题。
+   - 同步更新 [language_core/core/README.md](file:///c:/Users/iii/Desktop/dual_ontology_world_engine/language_core/core/README.md) 中关于 `dvp_owner_requirements` 新增门控字段（`resonance`、`received_claim_conflict`、`night_call_requirement`）的说明与源码索引。
+2. **编译与一级正式会话验收**
+   - 重新编译 `DualOntologyWorldEngine.sln`，确认零错误。
+   - 运行 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout 600`，保存源码指纹、完整轨迹与玩家可见正文。
+   - 启动全新独立上下文的子代理（不读取设计文档）对新会话输出进行独立审查，主代理对照设计规范核验第一章四区、第一夜及第二章关键节点的实际达成情况，完成后提交并推送。
+
+---
+
+是否按上述四个阶段立即开始执行修复与一级验收？
