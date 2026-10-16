@@ -180,8 +180,24 @@ fn dvs_choose(actor, bindings, costs):
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
     if cached[0]:
-        return dv_with_many(cached[1], {"plan_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions})
-    return rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs))
+        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions}))
+    return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
+
+// Keep the actor's own predicted next step after a successful move, provided
+// the fresh plan still finds that action directly eligible and valuable.
+fn dvs_honor_planned_followup(actor, choice):
+    let followup = dv_find(actor, "planned_followup", "")
+    if followup == "":
+        return choice
+    var i = 0
+    while i < rt_count(choice.plans):
+        let plan = choice.plans[i]
+        if rt_count(plan.path) == 1 and plan.path[0] == followup and 0 < plan.score:
+            let action = dvp_find_action(actor.actions, followup)
+            if action != false:
+                return dv_with_many(choice, {"action": action, "score": plan.score, "selected_path": plan.path, "planned_followup_honored": true, "superseded_path": choice.selected_path})
+        i = i + 1
+    return dv_with(choice, "planned_followup_honored", false)
 
 fn dvs_ready(actor, events, time, parent):
     var hypothesis = dv_find(actor, "hypothesis", false)

@@ -322,6 +322,7 @@ fn dvs_session_prepare(state):
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
         actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
+        actor = dv_with(actor, "planned_followup", "")
         actor = dv_with_many(actor, {"planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
         if (action == false):
             if (0 < dv_find(choice, "time_blocked", 0)):
@@ -347,7 +348,7 @@ fn dvs_session_prepare(state):
                     dvs_event(events, "resource_rejected", id, time, dv_single(parent), {"action": action, "ledger": ledger})
                     idle = (idle + 1)
                 else:
-                    let queued = {"action": action, "choice": {"relevant_refs": choice.relevant_refs}, "model": model, "start": time, "due": time + model.actual.time, "parent": parent}
+                    let queued = {"action": action, "choice": {"relevant_refs": choice.relevant_refs, "selected_path": dv_find(choice, "selected_path", [])}, "model": model, "start": time, "due": time + model.actual.time, "parent": parent}
                     actor = dv_with(actor, "scheduled_action", queued)
                     dvs_event(events, "action_scheduled", id, time, [parent], {"action_id": action.id, "due": queued.due, "duration": model.actual.time})
                     idle = 0
@@ -413,6 +414,12 @@ fn dvs_session_complete(state, receipt):
     physical = dvs_environment(physical, story, events, parent)
     if (result.execution.status == "applied"):
         actor = dvs_record_request(dvs_finish_reply(dv_with(actor, "last_action_event", parent), action), action)
+        if action.kind == "move":
+            let selected_path = dv_find(choice, "selected_path", [])
+            if 1 < rt_count(selected_path):
+                let followup = dvp_find_action(actor.actions, selected_path[1])
+                if followup != false and followup.kind != "move":
+                    actor = dv_with(actor, "planned_followup", followup.id)
     rt_print(rt_json_stringify(dv_with({"event_id": parent, "actor": id, "action_id": action.id, "game_time": time}, "status", result.execution.status)))
     var local_4 = false
     if (result.execution.status == "applied"):

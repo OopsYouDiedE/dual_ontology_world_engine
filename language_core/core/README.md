@@ -266,6 +266,12 @@ speech.manipulation = {
 
 规划对预测状态去循环，跨路径保留分数/耗时非支配路径；机会 access 键只用于去重，不把返回相同认知状态当作新进展。有来源的未完成沟通目标可得到接近机会分；该分是当前叶节点预期机会，不累积到无关后继，不预测他人实际接受。根层存在净正值正式非移动行动时，完成可覆盖的一层后继比较再选最佳首步；深度、预算或后继不足分别记录，有限理性搜索不保证全局最优。
 
+若最佳首步是移动，成功 Complete 后在主体中暂存规划路径的下一非移动行动。再次决策重新运行规划，仅在它仍是直接可执行且净正值的候选时兑现；否则丢弃。`planned_followup_honored` 与 `superseded_path` 记录兑现的实际选择，不改变推演、费用和权威答辩条件。相关源码：`verification/session/10-subjective.dv`、`30-runner.dv`。
+
+内容可为阶段交接声明 `evidence` 目标，并以本人已收的阶段字段作为 `refresh_refs`。错过公开问话后，既有旧开放字段观察不足以满足刷新下界；现场重新核对经正式行动取得 perception/direct 回执。话语是否听见仍由声学资格判定，目标刷新不生成听闻或答案。例见 `verification/scenarios/chapter1-content.dv` 的公开题目收据目标。
+
+章节开场的 own_material 目标可依持续公开信息的本人收据激活，后续题目阶段不撤销该资格。专业请求清空直接观察授权，答复仍需另一主体的本人依据和实际发言。带 speech 的答辩候选在规划资格与 Complete 均以 `dvs_speech_truth` 检查本人话语，避免将未知陈述排队成注定拒绝的行动；见 `verification/scenarios/chapter1-opening.dv` 和 `verification/session/15-action-planning.dv`。
+
 每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际 plan_expansions 扣减并累入 planning_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
 
 ### 报价与账本

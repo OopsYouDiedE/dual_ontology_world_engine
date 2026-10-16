@@ -606,9 +606,9 @@ fn c1_op_install_purposes(actor):
     while n < rt_count(existing):
         var goal = existing[n]
         if dv_has(c1_op_people(), actor.id) and actor.id != "detective" and dv_find(goal, "question", "") == "own_material":
-            // The old bare-session own-material strategy followed s5_question.
-            // Only this person's actual public-question receipt activates that motive.
-            goal = dv_with(goal, "available_when", dv_all(dv_pair(dv_find(goal, "available_when", dv_true()), dv_fact(dv_ref("question", "state", "current"), "questions_open"))))
+            // The public opening receipt establishes the own-material motive across
+            // later question stages; its activation does not expire with a stage name.
+            goal = dv_with(goal, "available_when", dv_all(dv_pair(dv_find(goal, "available_when", dv_true()), dv_fact(dv_ref("question", "state", "awake_scope"), true))))
         rt_push(goals, goal)
         n = n + 1
     var added = c1_op_owned_goals(actor.id)

@@ -1631,7 +1631,7 @@ axiom c1_original_question_open(question):
     return dv_axiom("c1_original_question_open", 1, dv_fact(dv_ref(question, "state", "stage"), "voice_source"), dv_single(dv_assign(dv_ref(question, "state", "outstanding_complete"), true)))
 
 fn c1_reask_question(actor):
-    return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "testimony", "demon", 1), "repeatable", true)
+    return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "perception", "direct", 1), "repeatable", true)
 
 fn c1_room_objects():
     return c1_list_8(c1_local_object("hall"), c1_local_object("foyer"), c1_local_object("pantry"), c1_local_object("corridor"), c1_local_object("R05"), c1_local_object("R06"), c1_local_object("R07"), c1_local_object("R08"))
@@ -1689,8 +1689,19 @@ fn c1_player_policy():
 fn c1_public_goal(question, atom, kind):
     return dv_with(dv_with({"kind": kind, "question": question, "ref": c1_knowledge(atom), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002"))}, "available_when", dv_all(dv_pair(dv_fact(dv_ref("question", "state", rt_cat("open_", question)), true), dv_fact(dv_ref("question", "state", "requires_evidence"), true)))), "source", "perception")
 
+// A transition receipt names the new stage, but only a heard question or an
+// actual recheck establishes the current public opening in the person's mind.
+fn c1_public_question_receipt_goal(stage, line, source_id):
+    let opening = dv_ref("question", "state", rt_cat("open_", stage))
+    let stage_ref = dv_ref("question", "state", "stage")
+    return {"kind": "evidence", "scope": "personal", "owner": "detective", "ref": opening, "source": "perception", "minimum_time": 0, "refresh_until": dv_fact(opening, true), "refresh_refs": [stage_ref], "available_when": dv_fact(stage_ref, stage), "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", line, source_id)]}
+
 fn c1_public_goals():
-    return c1_list_4(c1_public_goal("identity", "me", "evidence"), c1_public_goal("voice_source", "remote_voice", "know"), c1_public_goal("words", "words_bolt", "know"), c1_public_goal("trust", "trust_reason", "know"))
+    let goals = c1_list_4(c1_public_goal("identity", "me", "evidence"), c1_public_goal("voice_source", "remote_voice", "know"), c1_public_goal("words", "words_bolt", "know"), c1_public_goal("trust", "trust_reason", "know"))
+    rt_push(goals, c1_public_question_receipt_goal("voice_source", 16, "answer_q2.001"))
+    rt_push(goals, c1_public_question_receipt_goal("words", 30, "answer_q3.001"))
+    rt_push(goals, c1_public_question_receipt_goal("trust", 39, "answer_q4.001"))
+    return goals
 
 fn c1_memory_source(actor):
     if (actor == "detective"):

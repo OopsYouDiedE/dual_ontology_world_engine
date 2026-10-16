@@ -302,7 +302,10 @@ fn dvp_eligible_base(actor, action, mind, relevant):
             else:
                 local_1 = 1
             if dv_and(dvp_answer_relevant(actor, action), (dv_find(dv_find(actor, "accepted_answers", []), dv_find(action, "topic", ""), 0) < local_1)):
-                return dv_and((not (dv_truth(actor.mind, action.answer) == "false")), dvp_answer_attempt_allowed(dv_find(dv_find(actor, "answer_attempt_signatures", []), id, false), dvp_input_signature(actor, action, relevant)))
+                var speech_ready = true
+                if dv_has_key(action, "speech"):
+                    speech_ready = (dvs_speech_truth(actor.mind, action.speech) == "true")
+                return dv_and(speech_ready, dv_and((not (dv_truth(actor.mind, action.answer) == "false")), dvp_answer_attempt_allowed(dv_find(dv_find(actor, "answer_attempt_signatures", []), id, false), dvp_input_signature(actor, action, relevant))))
             else:
                 return false
         else:
