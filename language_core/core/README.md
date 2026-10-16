@@ -336,7 +336,7 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 
 | 类别 | 入口（括号内为参数） | 语义 |
 | --- | --- | --- |
-| 数值 | rt_number(text), rt_is_number(text), rt_exact(value), rt_floor(number) | 有限 double 解析/检查、精确有理数转换、double 向下取整 |
+| 数值 | rt_number(text), rt_is_number(text), rt_is_numeric_value(value), rt_exact(value), rt_floor(number) | 文本解析/可解析检查；运行值数值类型检查；精确有理数转换、double 向下取整 |
 | 算术 | rt_add(a,b), rt_sub(a,b), rt_mul(a,b), rt_div(a,b), rt_lt(a,b) | 带 Rational 操作数走精确算术；除零/非有限值拒绝 |
 | 相等与布尔 | rt_eq(a,b), rt_same_value(a,b), rt_not(value) | 基本/身份相等、递归结构相等、Bool 否定 |
 | 文本 | rt_cat(a,b), rt_length(text), rt_slice(text,start,count), rt_chr(text,index), rt_code(text), rt_show(value) | 连接、UTF-16 长度/子串/单元、码值、基本值格式化；show 不格式化任意列表 |
@@ -349,6 +349,10 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 文件 | rt_read(path), rt_write(path,text), rt_json_write(path,value) | 严格 UTF-8 读取、文本写入、流式新 JSON 文件 |
 | JSON | rt_json_parse(text), rt_json_stringify(value) | 数据交换解析与序列化 |
 | 控制台/失败 | rt_print(value), rt_fail(message) | 基本值打印并返回原值、抛出明确错误 |
+
+`rt_is_number(text)` 检查文本是否可解析为有限浮点数，传非文本会报 Expected Text；它不承担运行值类型判断。`rt_is_numeric_value(value)` 无隐式转换：有限 double 和有效 Rational 返回 true，数字文本、普通文本、Bool、列表/记录、非有限 double 返回 false。主体数量、依赖收集、侵蚀暴露以及表达策略权重使用后者。精确有理数权重直接按数值检查，不经 JSON 文本重解析。
+
+调试投影对记录形状的 action 查询字段；普通列表用 rt_json_stringify 作为标识，原子值用 rt_show，false 保留空标识。投影只读，不能产生行动或改变人物资格。
 
 rt_memo 的输入底本在修改时失效，结果返回独立副本，弱输入表不延长输入生命；以完整 key 首个文本项分区，各分区按插入顺序保留至多 512 键。它仅用于完整输入确定的纯计算，不能缓存事件发布、结算、采信或执行过程。rt_same_value 直接读取既有子项，保持列表顺序与精确数/浮点数相等规则，不以不同哈希否定值相等。记录索引只是查找优化，重复键、不规则记录和错误行为保持原合同。
 

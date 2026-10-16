@@ -234,19 +234,19 @@ fn dvp_normative_ready(actor, action, mind):
 
 // All numeric inputs are explicit owner declarations or uncontested owner knowledge.
 fn dvp_owned_quantity(actor, mind, declaration):
-    if rt_is_number(declaration):
+    if rt_is_numeric_value(declaration):
         return declaration
     if declaration == false:
         return 0
     dv_require(dv_record_like(declaration), "Owned quantity must be a number or record")
     if dv_has_key(declaration, "policy_key"):
         let quantity = dv_find(actor.policy, declaration.policy_key, 0)
-        dv_require(rt_is_number(quantity), "Owned policy quantity must be numeric")
+        dv_require(rt_is_numeric_value(quantity), "Owned policy quantity must be numeric")
         return quantity
     dv_require(dv_has_key(declaration, "ref"), "Owned quantity needs policy_key or ref")
     dv_require(dv_record_like(declaration.ref), "Owned quantity ref must be a record")
     let cell = dv_read(mind, declaration.ref)
-    if dv_uncontested(cell) and rt_is_number(cell.value):
+    if dv_uncontested(cell) and rt_is_numeric_value(cell.value):
         return cell.value
     return 0
 
@@ -274,7 +274,7 @@ fn dvp_owner_requirement_refs(action):
             var i = 0
             while i < rt_count(quantities):
                 let quantity = quantities[i]
-                if quantity != false and not rt_is_number(quantity):
+                if quantity != false and not rt_is_numeric_value(quantity):
                     dv_require(dv_record_like(quantity), "Owned quantity must be a number or record")
                     if not dv_has_key(quantity, "policy_key"):
                         dv_require(dv_has_key(quantity, "ref"), "Owned quantity needs policy_key or ref")
@@ -329,7 +329,7 @@ fn dvs_erosion_update(actor, physical, time):
         return actor
     let exposure_cell = dv_read(physical, erosion.physical_ref)
     var exposure = 0
-    if dv_uncontested(exposure_cell) and rt_is_number(exposure_cell.value):
+    if dv_uncontested(exposure_cell) and rt_is_numeric_value(exposure_cell.value):
         exposure = exposure_cell.value
     exposure = exposure * (1 + dv_find(actor, "resonance_coupling", 0) * dv_find(erosion, "coupling_factor", 0))
     let stages = ["early", "middle", "late", "terminal", "death"]

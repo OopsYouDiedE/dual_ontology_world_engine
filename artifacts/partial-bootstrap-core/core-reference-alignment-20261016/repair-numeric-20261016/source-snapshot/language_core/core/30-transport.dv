@@ -1,0 +1,87 @@
+// Signals are segmented by the author/host. No hidden reconstruction of lost words.
+
+fn dv_segment(content, strength, band):
+    return {"content": content, "strength": strength, "band": band}
+
+fn dv_signal(location, medium, segments):
+    return {"location": dv_entity_ref(location), "medium": medium, "segments": segments}
+
+fn dv_filter_signal(segments, gain, threshold, bands):
+    var result = []
+    var i = 0
+    while (i < rt_count(segments)):
+        var segment = segments[i]
+        var strength = (segment.strength * gain)
+        if dv_and((not (strength < threshold)), dv_or((rt_count(bands) == 0), dv_has(bands, segment.band))):
+            rt_push(result, dv_segment(segment.content, strength, segment.band))
+        i = (i + 1)
+    return result
+
+fn dv_transport(world, path, signal, threshold):
+    dv_require((not (threshold < 0)), "Negative perception threshold")
+    var i = 0
+    var location = signal.location
+    var segments = dv_clone(signal.segments)
+    var status = "delivered"
+    var trace = []
+    while dv_and((status == "delivered"), (i < rt_count(path))):
+        var channel = path[i]
+        var objects = world.objects
+        dv_require(dv_has_key(objects, channel), "Unknown channel")
+        dv_require((dv_truth(world, dv_fact(dv_ref(channel, "identity", "kind"), "channel")) == "true"), "Transport object must be known as a channel")
+        var from = dv_read(world, dv_ref(channel, "link", "from"))
+        var to = dv_read(world, dv_ref(channel, "link", "to"))
+        var medium = dv_read(world, dv_ref(channel, "link", "medium"))
+        var gate = dv_read(world, dv_ref(channel, "link", "gate"))
+        var enabled = dv_read(world, dv_ref(channel, "transport", "enabled"))
+        var gain = dv_read(world, dv_ref(channel, "transport", "gain"))
+        if dv_and(dv_and(dv_uncontested(from), dv_uncontested(to)), dv_and(dv_and(dv_uncontested(medium), dv_uncontested(gate)), dv_and(dv_uncontested(enabled), dv_uncontested(gain)))):
+            dv_require(dv_same(location, from.value), "Discontinuous channel path")
+            dv_require((signal.medium == medium.value), "Channel medium mismatch")
+            var gate_truth = dv_truth(world, gate.value)
+            if dv_and(enabled.value, (gate_truth == "true")):
+                var bands_cell = dv_read(world, dv_ref(channel, "transport", "bands"))
+                if dv_uncontested(bands_cell):
+                    segments = dv_filter_signal(segments, dv_unit(gain.value), threshold, bands_cell.value)
+                    location = to.value
+                    rt_push(trace, channel)
+                else:
+                    status = "unknown"
+            else:
+                var local_1 = false
+                if (gate_truth == "unknown"):
+                    local_1 = "unknown"
+                else:
+                    local_1 = "blocked"
+                status = local_1
+        else:
+            status = "unknown"
+        i = (i + 1)
+    var local_2 = false
+    if (status == "delivered"):
+        local_2 = segments
+    else:
+        local_2 = []
+    return dv_with({"status": status, "location": location, "segments": local_2, "trace": trace}, "world_revision", world.revision)
+
+fn dv_hear(delivery, subject, local_ref, perceived_origin, event_id, time):
+    dv_require((delivery.status == "delivered"), "No delivered signal")
+    dv_require((dv_find(delivery, "hypothetical", true) == false), "Predicted or unauthorised transmission cannot become perception")
+    return dv_observation(event_id, subject, local_ref, delivery.segments, "perception", perceived_origin, time, 1, event_id)
+
+fn dv_transport_theory(law):
+    return dv_with(law, "operation", "attenuate-filter")
+
+fn dv_transmit(world, law_name, path, signal, threshold):
+    var adoption = dv_get(world.adoptions, law_name)
+    var law = adoption.law
+    dv_require(adoption.active, "Transmission law is not active")
+    dv_require((law.operation == "attenuate-filter"), "Not a transport theory")
+    var local_1 = false
+    if (world.domain == "physical"):
+        local_1 = (adoption.mode == "enforce")
+    else:
+        local_1 = dv_and((world.domain == "mind"), (adoption.mode == "predict"))
+    dv_require(local_1, "Wrong transmission adoption")
+    dv_require((dv_truth(world, law.premise) == "true"), "Transmission premise is not established")
+    return dv_with_many(dv_transport(world, path, signal, threshold), {"basis": adoption.basis, "hypothetical": (not (world.domain == "physical"))})

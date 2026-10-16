@@ -17,6 +17,8 @@ public static class R
     public static List<object> Items(object x) => x as List<object> ?? throw new Exception("Expected List");
     public static object number(object s) => Num(double.Parse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture));
     public static object is_number(object s) => double.TryParse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n);
+    // Runtime value predicate; unlike is_number, this never parses or requires Text.
+    public static object is_numeric_value(object value) => value is double n && double.IsFinite(n) || value is Rational q && q.Denominator.Sign > 0;
     public static object add(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Add(Rational.From(b)) : Num(Num(a) + Num(b));
     public static object sub(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Subtract(Rational.From(b)) : Num(Num(a) - Num(b));
     public static object mul(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Multiply(Rational.From(b)) : Num(Num(a) * Num(b));

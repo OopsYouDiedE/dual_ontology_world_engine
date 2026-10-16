@@ -9,7 +9,10 @@ fn dv_debug_event(event):
         action_id = dv_find(action, "id", action_id)
     else:
         if raw_action != false:
-            action_id = rt_show(raw_action)
+            if rt_is_list(raw_action):
+                action_id = rt_json_stringify(raw_action)
+            else:
+                action_id = rt_show(raw_action)
     var detail = []
     let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement"]
     var i = 0

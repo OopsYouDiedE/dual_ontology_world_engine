@@ -102,7 +102,7 @@ fn dv_validate_expression_policy(expression_policy):
             var weight = weights[j]
             var feature = weights[j][0]
             dv_require((rt_slice(rt_json_stringify(feature), 0, 1) == "\""), "Expression policy feature name must be Text")
-            dv_require(rt_is_number(rt_json_stringify(weight[1])), rt_cat(rt_cat(rt_cat("Expression policy weight must be a finite Number: ", key), "."), feature))
+            dv_require(rt_is_numeric_value(weight[1]), rt_cat(rt_cat(rt_cat("Expression policy weight must be a finite Number: ", key), "."), feature))
             j = (j + 1)
         i = (i + 1)
     return true

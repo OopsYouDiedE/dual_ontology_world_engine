@@ -1,0 +1,94 @@
+// Production composition. Chapter content owns its transition conditions.
+fn dvg_open():
+    return dvg_open_config({"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"})
+
+// Initial configuration changes the declared cognition and starting room only.
+// Budgets and receipts retain their production contracts; no result is seeded.
+fn dvg_open_config(config):
+    var scene = c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))
+    let zone = dv_find(config, "detective_zone", "zone_yi")
+    if zone != "zone_yi":
+        scene = c1_other_place_detective(scene, zone)
+    scene = c1c_install_scene(scene, dv_find(config, "seed", 1), dv_find(config, "profile", "Standard_Detective"))
+    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
+    return dvs_session_open(c1_player_scene(scene), "enabled")
+
+fn dvg_chapter_two_ready(state):
+    return c1n_morning_ready(state.physical)
+
+fn dvg_extend(state):
+    if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
+        return state
+    let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
+    let expanded = dv_with(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live))), "chapter", 2)
+    var events = state.events
+    dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": c2_approved("chapter-state-inheritance"), "movement": false})
+    // Content availability neither relocates a resident nor grants perceptions.
+    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+
+fn dvg_refresh_goals(current):
+    var actors = []
+    var i = 0
+    var changed = false
+    let chapter = dv_find(current.story, "chapter", 1)
+    while i < rt_count(current.actors):
+        let actor = current.actors[i]
+        if dv_find(actor, "scheduled_action", false) == false and (dv_has(c2_people(), actor.id) or actor.id == "demon") and (actor.mind.revision != dv_find(actor, "campaign_goals_revision", -1) or actor.mind.time != dv_find(actor, "campaign_goals_time", -1) or chapter != dv_find(actor, "campaign_goals_chapter", 0)):
+            var refreshed = actor
+            if chapter == 1:
+                refreshed = c1n_refresh_actor_goals(actor)
+            else:
+                refreshed = c1n_known_future_wait_actor(c2d_refresh_actor_goals(actor))
+            rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
+            changed = true
+        else:
+            rt_push(actors, actor)
+        i = i + 1
+    if changed:
+        return dvs_owned_state_update(current, {"actors": actors})
+    return current
+
+fn dvg_prepare(state):
+    var current = dvg_refresh_goals(dvg_extend(state))
+    while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
+        current = dvs_session_prepare(current)
+        if dv_find(current, "pending", false) == false:
+            current = dvg_refresh_goals(dvg_extend(current))
+    return current
+
+fn dvg_complete(state, receipt):
+    return dvg_extend(dvs_session_complete(state, receipt))
+
+// Geometry identifiers bind to native authored material facts, never an oracle.
+fn dvg_traces(world):
+    let mapping = {"ash": "ash_wedge", "boots": "boots_toward_bolt", "cloth": "cloth_after_boots", "dent": "fork_dent", "joint_west": "pipe_layout", "joint_east": "pipe_layout", "shelf_R05": "shelf_old", "shelf_R06": "shelf_old", "shelf_R07": "shelf_old", "shelf_R08": "shelf_old", "shelf_EN": "shelf_old", "shelf_ES": "shelf_old"}
+    var result = []
+    var i = 0
+    while i < rt_count(mapping):
+        result = dv_with(result, mapping[i][0], dv_truth(world, dv_fact(c1_knowledge(mapping[i][1]), true)) == "true")
+        i = i + 1
+    return result
+
+// Reporting selection only; all residents retain the same decision mechanism.
+fn dvg_tracked_actors():
+    return dvg_debug_config().actors
+
+fn dvg_chronological_trace(state):
+    return dv_debug_events(state.events, 0, dvg_debug_config()).events
+
+// Bounded formal-model adapter; false uses the authored session action limit.
+// Returns the live state without closing it or resetting at chapter expansion.
+fn dvg_run_campaign(max_steps):
+    var state = dvg_open()
+    var limit = max_steps
+    if limit == false:
+        limit = state.limit
+    dv_require(0 <= limit, "Negative campaign step limit")
+    var steps = 0
+    while dvs_session_active(state) and steps < limit:
+        state = dvg_prepare(state)
+        let pending = dv_find(state, "pending", false)
+        if pending != false:
+            state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
+            steps = steps + 1
+    return state

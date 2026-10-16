@@ -108,7 +108,7 @@
 (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
 (defn native_arity (name)
   (if (has (words "rt_list rt_arg_count") name) 0
-    (if (has (words "rt_number rt_is_number rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
+    (if (has (words "rt_number rt_is_number rt_is_numeric_value rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
       (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_record_index") name) 2
         (if (has (words "rt_slice rt_replace rt_record_find rt_record_with rt_memo_put") name) 3 -1)))))
 (defn lookup (signatures name)
@@ -512,7 +512,7 @@
       (if (rt_eq tag "list")
        (let (xs (children n) name (sym (rt_at xs 0)) sig (lookup defs name))
         (if (rt_eq sig -1)
-         (if (has (words "rt_lt rt_eq rt_not rt_is_list rt_is_number") name) "Bool"
+         (if (has (words "rt_lt rt_eq rt_not rt_is_list rt_is_number rt_is_numeric_value") name) "Bool"
           (if (has (words "rt_add rt_sub rt_mul rt_div rt_number rt_count rt_length rt_code") name) "Number" "Value"))
          (rt_at sig 1))) "Value")))))))
 (defn ck_expect (n expected env defs)
