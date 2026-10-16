@@ -4,6 +4,8 @@
 
 核对用户粘贴的 Gemini 建议、当前 `language_core` 源码和本轮两次全新无窗口 formal-model 会话。两次均使用 `run_debug.py --profile`，同一入口、GC 配置和剧情源码；第二次只改变 `dvs_capture_heard_utterances` 的事件查找算法及分析器工作类型标签。第一次运行前已实施记录兄弟分支共享和快照池渐进清理，因此两轮比较只隔离收闻扫描这一项。原始源码指纹、构建日志、stdout/stderr、完整 trace、事件投影和玩家可见正文分别保留在 `level1-profile-01/` 与 `level1-profile-02/`，不覆盖。
 
+两轮运行都包含开始本任务前已有的未提交工作区改动，尤其是 `Runtime.cs` 的 JSON 深度设置及第一章开场内容；`Session.cs` 与音乐文件的既有修改也未纳入本次提交。确切运行源码以各轮 `source-hashes.json` 为准，单独检出本次提交不等同于这两轮的完整工作区指纹。
+
 分析器在诊断生成的每个 DV 函数入口计时，用调用栈扣除子函数时间。`profile-raw.json` 保留计数器；`profile-summary.json` 保留各函数和工作类型的调用次数、独占与包含总耗时、每次调用均值和独占占比。工作类型是函数名分类，平台 ABI 时间归属直接调用它的 DV 函数。该插桩增加大量微函数调用开销，分布和总时长仅适用于诊断构建；不是未插桩 CPU 采样、Godot 帧耗时或实机性能。`level1-profile-01/profile-summary-worktypes-v2.json` 用同一分类规则重算第一轮原始计数，原始文件未改。
 
 `EVIDENCE.sha256` 记录两轮关键原始输出的逐字节指纹；完整 trace 各约 1.29 GB，保留在本地证据目录。版本库仅提交紧凑计时数据、结果、指纹与后一轮 stdout，避免把两份巨型 trace 当作源码提交。
