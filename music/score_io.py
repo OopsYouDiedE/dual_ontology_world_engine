@@ -20,6 +20,7 @@
     ^   延长记号（Fermata）
 """
 import json
+import math
 import os
 import re
 import struct
@@ -748,6 +749,71 @@ def default_audiosettings(piece):
     }
 
 
+INST_MIX_TRIMS = {
+    'xylophone': -10.0,
+    'frame-drum': -10.0,
+    'tablas': -11.0,
+    'c-alto-ocarina': -8.0,
+    'shakuhachi': -5.0,
+    'flute': -4.0,
+    'd-dizi': -4.0,
+    'bb-clarinet': -3.0,
+    'dagu': -6.0,
+    'temple-blocks': -5.0,
+    'alto-sheng': -3.0,
+    'violin': -2.5,
+    'erhu': -2.5,
+    'dulcimer': -3.0,
+    'shamisen': -2.5,
+    'koto': -2.0,
+    'strings': -2.5,
+    'violoncellos': -3.0,
+    'contrabasses': -4.0,
+    'harmonium': -3.0,
+    'tubular-bells': -3.0,
+    'celesta': 0.0,
+    'piano': -2.0,
+    'sitar': -2.5,
+}
+
+
+def update_audiosettings(piece, raw_bytes=None):
+    if raw_bytes is None:
+        cfg = default_audiosettings(piece)
+    else:
+        try:
+            cfg = json.loads(raw_bytes.decode('utf-8'))
+        except Exception:
+            cfg = default_audiosettings(piece)
+
+    staff_parts = piece.staff_parts()
+    part_staves = {}
+    for si, (part, _) in enumerate(staff_parts):
+        pid = str(part.part_id or (piece.parts.index(part) + 1))
+        part_staves.setdefault(pid, []).append(si)
+
+    part_by_id = {}
+    for i, part in enumerate(piece.parts):
+        pid = str(part.part_id or (i + 1))
+        part_by_id[pid] = part
+
+    for track in cfg.get('tracks', []):
+        pid = str(track.get('partId', ''))
+        if pid in part_by_id:
+            part = part_by_id[pid]
+            inst_key = part.template_id or part.key
+            trim = INST_MIX_TRIMS.get(inst_key, 0.0)
+            gain_db = 20.0 * math.log10(max(part.gain, 1e-4))
+            staves = part_staves.get(pid, [])
+            mix_db = (sum(piece.mix.get(si, 0.0) for si in staves) / len(staves)) if staves else 0.0
+            total_vol = max(-30.0, min(6.0, trim + gain_db + mix_db))
+            track.setdefault('out', {})['volumeDb'] = round(total_vol, 2)
+            track['out']['balance'] = round(max(-1.0, min(1.0, part.pan)), 2)
+
+    cfg.setdefault('master', {})['volumeDb'] = -3.0
+    return json.dumps(cfg, ensure_ascii=False, indent=2).encode('utf-8')
+
+
 def _extract_existing_mscz_assets(path):
     """读取现有 .mscz 中的 <Part> 定义与 audiosettings.json 等工程设置，严格保持乐器名称与音色绑定不变。"""
     if not os.path.exists(path):
@@ -777,9 +843,8 @@ def write_mscz(piece, path):
     if view is None:
         with open(os.path.join(HERE, 'viewsettings.json'), 'rb') as f:
             view = f.read()
-    audiosettings = extra_files.get('audiosettings.json')
-    if audiosettings is None:
-        audiosettings = json.dumps(default_audiosettings(piece), ensure_ascii=False, indent=2).encode('utf-8')
+    audiosettings_bytes = extra_files.get('audiosettings.json')
+    audiosettings = update_audiosettings(piece, audiosettings_bytes)
     automation = extra_files.get('automation.json', b'[]\n')
     thumbnail = extra_files.get('Thumbnails/thumbnail.png')
 

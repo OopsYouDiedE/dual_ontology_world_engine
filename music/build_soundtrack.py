@@ -88,6 +88,19 @@ def export_score(musescore, mscz):
         _run_musescore_export(musescore, mscz, out_path, extra)
 
 
+CUE_TARGET_RMS = {
+    'night': -24.0,
+    'door_side': -23.5,
+    'confrontation': -22.5,
+    'day': -22.0,
+    'day_noon': -22.0,
+    'day_afternoon': -22.0,
+    'day_evening': -22.5,
+    'rite': -22.0,
+    'main_theme': -21.0,
+}
+
+
 def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
     """对 MuseScore 4 导出的立体声波形（shape=(2, N)）执行切空白、余音回叠无缝循环、总线压缩与响度对齐。"""
     t_score, has_fermata_last = mscz_musical_duration(mscz_path)
@@ -147,8 +160,10 @@ def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
             out[:, :fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[None, :]
         final_dur = out.shape[1] / sr
 
-    # 3) 总线动态收拢与响度统一（-19.0 dBFS RMS，-1.2 dBFS 峰值上限）
-    processed = synth.master(synth.compress(out.astype(np.float64), ratio=piece.squeeze)).astype(np.float32)
+    # 3) 总线动态收拢与各曲目背景响度对齐（保持克制、呼吸感与低听觉疲劳）
+    target_rms = CUE_TARGET_RMS.get(piece.slug, -22.0)
+    compressed = synth.compress(out.astype(np.float64), ratio=min(float(piece.squeeze), 1.35))
+    processed = synth.master(compressed, target_rms_db=target_rms, ceiling_db=-1.8).astype(np.float32)
     return processed, final_dur
 
 
