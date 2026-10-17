@@ -75,11 +75,11 @@ fn dvs_visible_context(actor, physical, actors):
         var other = actors[i]
         var position = dv_read(physical, actors[i].location_ref)
         if dv_truth(physical, dv_find(other, "observable_presence_when", dv_true())) == "true" and dv_and((not (other.id == actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
-            result = dv_with(result, other.id, {"location": position.value, "action_event": dv_find(other, "last_action_event", "")})
+            result = dv_with(result, other.id, {"location": position.value})
         i = (i + 1)
     return result
 
-fn dvs_notice_peers(actor, physical, actors, events, time, parent):
+fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
     if dv_find(actor.policy, "notice_co_presence", false):
         var context = dvs_visible_context(actor, physical, actors)
         var old = dv_find(actor, "visible_context", [])
@@ -87,21 +87,41 @@ fn dvs_notice_peers(actor, physical, actors, events, time, parent):
             return actor
         else:
             var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref})
-            return dv_with_many(actor, {"visible_context": context, "last_cognitive_event": event})
+            var grants = []
+            var i = 0
+            while i < rt_count(actors):
+                let peer = actors[i]
+                let now = dv_find(context, peer.id, false)
+                let previous = dv_find(old, peer.id, false)
+                if now != false and (previous == false or previous.location != now.location):
+                    rt_push(grants, peer.location_ref)
+                i = i + 1
+            var mind = actor.mind
+            if 0 < rt_count(grants):
+                let observations = dv_perceive(physical, actor.mind, bindings, grants, event, time)
+                if 0 < rt_count(observations):
+                    let next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
+                    event = dvs_event_prepared(events, "observation", actor.id, time, dv_single(event), {"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "bindings": bindings, "grants": grants, "execution_id": event})
+                    mind = next
+            return dv_with_many(actor, {"visible_context": context, "mind": mind, "last_cognitive_event": event})
     else:
         return actor
 
-fn dvs_visible_action_grants(actors, speaker_index, action, physical, bindings, events, time, parent, execution_id):
+fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bindings, events, time, parent, execution_id):
     var speaker = actors[speaker_index]
     var listeners = dv_find(action, "public_observers", [])
     var grants = dv_find(action, "public_grants", [])
     var result = actors
     var i = 0
     var own = dv_read(physical, actors[speaker_index].location_ref)
+    var origin = dv_read(before, actors[speaker_index].location_ref)
     while (i < rt_count(actors)):
         var actor = result[i]
         var position = dv_read(physical, result[i].location_ref)
-        if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true" and dv_and(dv_and((not (i == speaker_index)), dv_has(listeners, actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
+        var position_before = dv_read(before, result[i].location_ref)
+        var present_after = dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))
+        var present_at_departure = action.kind == "move" and dv_and(dv_uncontested(origin), dv_and(dv_uncontested(position_before), dv_same(origin.value, position_before.value)))
+        if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true" and dv_and(dv_and((not (i == speaker_index)), dv_has(listeners, actor.id)), dv_or(present_after, present_at_departure)):
             var mind = actor.mind
             var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
             if (0 < rt_count(observations)):

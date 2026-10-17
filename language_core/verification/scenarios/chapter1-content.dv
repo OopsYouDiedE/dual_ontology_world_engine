@@ -38,10 +38,12 @@ fn c1_public_method(action):
     var method = dv_with(dv_with(action, "purpose_refs", dv_find(action, "purpose_refs", action.grants)), "purpose_basis", action.source_refs)
     var kind = action.kind
     if (kind == "answer"):
-        return c1_public_answer_speech(dv_with(method, "topic", c1_answer_topic(action.answer_id)))
+        return c1_public_answer_speech(dv_with(method, "topic", dv_find(action, "topic", c1_answer_topic(action.answer_id))))
     else:
         if dv_or((kind == "move"), (kind == "replay")):
-            return dv_with(method, "repeatable", true)
+            if (not dv_find(action, "once", false)):
+                return dv_with(method, "repeatable", true)
+            return method
         else:
             return method
 
@@ -1469,13 +1471,13 @@ fn c1_hypothesis_V3_1():
     return dv_with(dv_with(dv_with({"id": "V3_1", "proposition": dv_fact(c1_knowledge("remote_voice"), false), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 108, "V3_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_voice_source"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("remote_voice"), false))), "group", "voice_source")
 
 fn c1_answer_V4_0(actor):
-    return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V4_0"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0")), "answer", dv_fact(c1_knowledge("words_bolt"), true)), "answer_id", "V4_0"), "topic", "words")
+    return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V4_0"), "answer", dv_all([c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), c1_statement("words_bolt"), c1_statement("score_partial")]), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0")), "answer", dv_fact(c1_knowledge("words_bolt"), true)), "answer_id", "V4_0"), "topic", "words")
 
 fn c1_hypothesis_V4_0():
     return dv_with(dv_with(dv_with({"id": "V4_0", "proposition": dv_fact(c1_knowledge("words_bolt"), true), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_words"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("words_bolt"), true))), "group", "words")
 
 fn c1_answer_V4_1(actor):
-    return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V4_1"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1")), "answer", dv_fact(c1_knowledge("words_bolt"), false)), "answer_id", "V4_1"), "topic", "words")
+    return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V4_1"), "answer", dv_all([c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), dv_not(c1_statement("words_bolt")), c1_statement("score_partial")]), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1")), "answer", dv_fact(c1_knowledge("words_bolt"), false)), "answer_id", "V4_1"), "topic", "words")
 
 fn c1_hypothesis_V4_1():
     return dv_with(dv_with(dv_with({"id": "V4_1", "proposition": dv_fact(c1_knowledge("words_bolt"), false), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_words"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("words_bolt"), false))), "group", "words")
@@ -1557,7 +1559,7 @@ fn c1_talk_recalled_copper(actor):
     return c1_once(c1_observe_as(c1_action(rt_cat(actor, ".talk.recalled_copper"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("huo", "hall"))), "", dv_single(c1_knowledge("recalled_copper")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 91, "recall_huo.003")), "testimony", "huo", 0.85))
 
 fn c1_talk_recalled_names(actor):
-    return c1_once(c1_observe_as(c1_action(rt_cat(actor, ".talk.recalled_names"), "talk", c1_at(actor, "pantry"), dv_all(dv_pair(c1_at(actor, "pantry"), c1_at("shen", "pantry"))), "", dv_single(c1_knowledge("recalled_names")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 92, "recall_shen.003")), "testimony", "shen", 0.85))
+    return dv_with(c1_once(c1_observe_as(c1_action(rt_cat(actor, ".talk.recalled_names"), "talk", c1_at(actor, "pantry"), dv_all(dv_pair(c1_at(actor, "pantry"), c1_at("shen", "pantry"))), "", dv_single(c1_knowledge("recalled_names")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 92, "recall_shen.003")), "testimony", "shen", 0.85)), "surface", "沈鼎回想起：阿泠的茶不放糖，老霍的放两勺，那位喝清茶不放奶。‘阿泠’这称呼，他自己也不知怎么脱口而出。")
 
 fn c1_sole_test(actor):
     return c1_once(c1_action(rt_cat(actor, ".compare_sole"), "experiment", dv_all(dv_pair(c1_at(actor, "foyer"), dv_fact(dv_ref(actor, "state", "identity"), "detective"))), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("boots_fit")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 81, "exp_E3.002")))
@@ -1684,7 +1686,7 @@ fn c1_subjective_world(actor):
     return c1_evidence_contact_methods(c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict"), actor, "predict")
 
 fn c1_player_policy():
-    return dv_with(dv_with(dv_with({"budget": 48, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
+    return dv_with(dv_with(dv_with({"budget": 80, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
 
 fn c1_public_goal(question, atom, kind):
     return dv_with(dv_with({"kind": kind, "question": question, "ref": c1_knowledge(atom), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002"))}, "available_when", dv_all(dv_pair(dv_fact(dv_ref("question", "state", rt_cat("open_", question)), true), dv_fact(dv_ref("question", "state", "requires_evidence"), true)))), "source", "perception")
@@ -1698,6 +1700,7 @@ fn c1_public_question_receipt_goal(stage, line, source_id):
 
 fn c1_public_goals():
     let goals = c1_list_4(c1_public_goal("identity", "me", "evidence"), c1_public_goal("voice_source", "remote_voice", "know"), c1_public_goal("words", "words_bolt", "know"), c1_public_goal("trust", "trust_reason", "know"))
+    rt_push(goals, c1_public_goal("words", "score_partial", "know"))
     rt_push(goals, c1_public_question_receipt_goal("voice_source", 16, "answer_q2.001"))
     rt_push(goals, c1_public_question_receipt_goal("words", 30, "answer_q3.001"))
     rt_push(goals, c1_public_question_receipt_goal("trust", 39, "answer_q4.001"))
@@ -1743,7 +1746,7 @@ fn c1_raw_person_policy(id):
     else:
         var local_2 = false
         if (id == "huo"):
-            local_2 = 1
+            local_2 = 2
         else:
             if (id == "shen"):
                 local_2 = 2
@@ -2025,7 +2028,7 @@ fn c1_binding_gaps():
     return c1_list_5("No quantified >=3-day evidence; withdraw insufficient adoption without asserting its negation", "Historical wake latency is unknown; representative model coordinates are not a measured wake timestamp", "Original Q2 is distinct from literal V3; only actual paid model argument and its real support may satisfy it", "Historical route coordinates use existing edge/speed values; reaction/propagation real durations remain uncalibrated", "Demon listener models are independent provisional estimates; actual listener understanding may differ")
 
 fn c1_scenario_native():
-    return dv_with(dv_with(dv_with(dv_with({"format": "dv-session-v1", "id": "chapter1-native-authoring", "physical": c1_physical_world(), "actors": c1_list_5(c1_character_demon(), c1_character_detective(), c1_character_huo(), c1_character_shen(), c1_character_su())}, "bindings", c1_bindings()), "cost_model", c1_costs()), "formal_answers", c1_formal_answers()), "max_actions", 240)
+    return dv_with(dv_with(dv_with(dv_with({"format": "dv-session-v1", "id": "chapter1-native-authoring", "physical": c1_physical_world(), "actors": c1_list_5(c1_character_demon(), c1_character_detective(), c1_character_huo(), c1_character_shen(), c1_character_su())}, "bindings", c1_bindings()), "cost_model", c1_costs()), "formal_answers", c1_formal_answers()), "max_actions", 1200)
 
 fn c1_variant_weight(weight, id):
     var data = dvs_scenario_base()
@@ -2065,7 +2068,7 @@ fn c1_report_labels():
     return {"actors": c1_list_5(dv_pair("detective", "侦探"), dv_pair("huo", "霍铎"), dv_pair("shen", "沈鼎"), dv_pair("su", "苏泠"), dv_pair("demon", "铜口代管者")), "objects": c1_list_12(dv_pair("E1", "内闩"), dv_pair("E2", "木楔"), dv_pair("E3", "灰上的靴印"), dv_pair("E4", "湿布"), dv_pair("E5", "音叉与门框"), dv_pair("E6", "苏泠的乐谱"), dv_pair("E7", "霍铎的石板"), dv_pair("E8", "铜口与传声管"), dv_pair("E9", "四只茶杯"), dv_pair("E10", "酵种罐"), dv_pair("E11", "积灰书架"), dv_pair("E12", "风衣与放大镜")), "action_kinds": c1_list_12(dv_pair("opening", "开场广播"), dv_pair("question", "提出始业之问"), dv_pair("receive_question", "听取问题"), dv_pair("inspect", "检视"), dv_pair("experiment", "实验"), dv_pair("help", "请人辨认"), dv_pair("talk", "询问证言"), dv_pair("sound_test", "声路试验"), dv_pair("replay", "重演昨夜"), dv_pair("answer", "提交答辩"), dv_pair("move", "走动"), dv_pair("recall", "触物回想"))}
 
 fn c1_active_configuration(data):
-    return dv_with(dv_with(dv_with(dv_with(dv_with(data, "report_labels", c1_report_labels()), "game_duration_budget", 360), "capability_actor", "detective"), "binding_gaps", c1_binding_gaps()), "budget_scope", "Detective cap48 from source; NPC cap48 engineering termination only; global cap240 sums actual caps, no cost or clock relaxation")
+    return dv_with(dv_with(dv_with(dv_with(dv_with(data, "report_labels", c1_report_labels()), "game_duration_budget", 360), "capability_actor", "detective"), "binding_gaps", c1_binding_gaps()), "budget_scope", "Per-actor action cap240 across inherited campaign state; campaign max_actions is the sum of actor caps; reason/model/plan budgets and action costs are separate")
 
 fn dvs_scenario_base():
     return c1_active_configuration(c1_hist_install_scene(c1_scenario_native()))
@@ -2192,6 +2195,18 @@ fn c1_deep_resonance_action(actor):
 
 
 fn c1_public_answer_speech(action):
+    if action.answer_id == "me" or action.answer_id == "trust":
+        var surface = "是我闩的门。"
+        if action.answer_id == "trust":
+            surface = "我因早已相熟而信霍铎。"
+        return dv_with_many(action, {"speech": dv_with(c1_speech(action.answer, surface, "actual-public-defense"), "surface", surface), "listeners": ["demon", "huo", "shen", "su"]})
+    if action.answer_id == "V5_0" or action.answer_id == "V5_1" or action.answer_id == "V5_2":
+        var surface = "我决定先听霍铎的。"
+        if action.answer_id == "V5_1":
+            surface = "我决定先听苏泠的。"
+        if action.answer_id == "V5_2":
+            surface = "我决定暂不听从任何一方。"
+        return dv_with_many(action, {"speech": dv_with(c1_speech(action.answer, surface, "actual-public-defense"), "surface", surface), "listeners": ["demon", "huo", "shen", "su"]})
     let pairs = [["V3_0", "V3_1", "voice-source", "声音来自铜口，经管道传来。", "声音就在门外。"], ["V4_0", "V4_1", "original-words", "原话是闩门禁开。", "原话是开门救人。"], ["V6_1", "V6_0", "familiarity", "我们原本相熟。", "我们原本不相熟。"]]
     var i = 0
     while i < rt_count(pairs):

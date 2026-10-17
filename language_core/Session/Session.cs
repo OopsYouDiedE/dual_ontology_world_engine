@@ -32,10 +32,15 @@ public sealed class DvSession
 
     public string Trace() => R.Text(R.json_stringify(DVProgram.SessionClose(state)));
 
+    private static readonly JsonSerializerOptions TraceOptions = new()
+    {
+        MaxDepth = 512
+    };
+
     public void WriteTrace(string path)
     {
         using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
-        JsonSerializer.Serialize(stream, DVProgram.SessionClose(state));
+        JsonSerializer.Serialize(stream, DVProgram.SessionClose(state), TraceOptions);
     }
 
     public void WriteSave(string path)

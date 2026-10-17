@@ -60,16 +60,19 @@ fn c1dep_actions(actor):
     let four = ["detective", "huo", "shen", "su"]
     if dv_has(four, actor):
         let fields = [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), c2_access("living_exit")]
-        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.inspect-door"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", fields, "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
-        let inner = dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)])
-        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内的插闩。", source), "predict_law", rt_cat(actor, ".departure.draw-inner")))
-        let open = dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), false)])
-        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.open-door"), "help", open, open, rt_cat(actor, ".departure.open-door"), dv_single(c1dep_ref("open")), "拉开隔离门。", c1dep_source("08_终局.story", 8, "s10_open")), "predict_law", rt_cat(actor, ".departure.open-door")))
+        let question_opened = dv_not(dv_all([dv_not(dv_fact(dv_ref("question", "state", "open_identity"), true)), dv_not(dv_fact(dv_ref("question", "state", "solved_identity"), true))]))
+        let investigating = dv_all([c1_at(actor, "foyer"), question_opened])
+        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.inspect-door"), "inspect", investigating, c1_at(actor, "foyer"), "", fields, "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
+        if actor == "detective":
+            let inner = dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)])
+            rt_push(actions, dv_with_many(c2_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内的插闩。", source), {"predict_law": rt_cat(actor, ".departure.draw-inner"), "public_observers": four, "public_grants": [c1dep_ref("inner_down")]}))
+            let open = dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), false)])
+            rt_push(actions, dv_with_many(c2_action(rt_cat(actor, ".departure.open-door"), "help", open, open, rt_cat(actor, ".departure.open-door"), dv_single(c1dep_ref("open")), "拉开隔离门。", c1dep_source("08_终局.story", 8, "s10_open")), {"predict_law": rt_cat(actor, ".departure.open-door"), "speech": dv_with_many(c1_speech(dv_true(), c1dep_source("08_终局.story", 8, "s10_open"), "actual-door-open"), {"surface": "拉开隔离门。", "channel": "door.living"}), "listeners": ["huo", "shen", "su"], "public_grants": [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), c2_access("living_exit")]}))
         let out = dv_all([c1_at(actor, "foyer"), c1dep_can_cross()])
         let back = dv_all([c1_at(actor, "living_hall"), c1dep_can_cross()])
         let out_id = rt_cat(actor, ".departure.cross-out")
         let in_id = rt_cat(actor, ".departure.cross-in")
-        rt_push(actions, dv_with_many(c2_action(out_id, "move", out, out, out_id, [dv_ref(actor, "state", "location"), c1dep_cross_ref(actor)], "跨过门槛，走进起居厅。", c1dep_source("08_终局.story", 24, "s10_open.003：是否迈出由本人选择")), {"predict_law": out_id, "repeatable": true, "travel": {"from": "foyer", "to": "living_hall", "gate": "living_exit"}}))
+        rt_push(actions, dv_with_many(c2_action(out_id, "move", out, out, out_id, [dv_ref(actor, "state", "location"), c1dep_cross_ref(actor), c1_other_clock_ref()], "跨过门槛，走进起居厅。", c1dep_source("08_终局.story", 24, "s10_open.003：是否迈出由本人选择")), {"predict_law": out_id, "repeatable": true, "travel": {"from": "foyer", "to": "living_hall", "gate": "living_exit"}}))
         rt_push(actions, dv_with_many(c2_action(in_id, "move", back, back, in_id, dv_single(dv_ref(actor, "state", "location")), "穿过隔离门，回到门厅。", source), {"predict_law": in_id, "repeatable": true, "travel": {"from": "living_hall", "to": "foyer", "gate": "living_exit"}}))
     if actor != "demon" and c2_profile(actor).group != "living":
         let group = c2_profile(actor).group
@@ -79,7 +82,7 @@ fn c1dep_actions(actor):
     if actor == "quer":
         rt_push(actions, dv_with(c2_action("quer.departure.inspect-yi-outer", "inspect", c1_at(actor, "living_hall"), c1_at(actor, "living_hall"), "", [c1dep_ref("outer_released")], "查看乙区门外的横闩。", source), "repeatable", true))
         let own_pre = c1dep_pick_contract_law().premise
-        rt_push(actions, dv_with(c2_action("quer.departure.pick-contract", "experiment", own_pre, own_pre, "quer.departure.pick-contract", [c1_other_ref("contract", "outer_latch_released"), c1_other_access_ref("contract"), c1dep_ref("contract_picked_by_quer")], "雀儿受够了盘问，从袖口拉出精钢丝，探过门缝挑起甲区外闩。卢西安收起手稿，跟上她。", c1_source("docs/design-standard.md", 0, "甲区开锁机会")), "predict_law", "quer.departure.pick-contract"))
+        rt_push(actions, dv_with_many(c2_action("quer.departure.pick-contract", "experiment", own_pre, own_pre, "quer.departure.pick-contract", [c1_other_ref("contract", "outer_latch_released"), c1_other_access_ref("contract"), c1dep_ref("contract_picked_by_quer")], "雀儿受够了盘问，从袖口拉出精钢丝，探过门缝挑起甲区外闩。卢西安收起手稿，跟上她。", c1_source("docs/design-standard.md", 0, "甲区开锁机会")), {"predict_law": "quer.departure.pick-contract", "public_observers": ["lucian", "ward", "gu"], "public_grants": [c1_other_ref("contract", "outer_latch_released"), c1_other_access_ref("contract")]}))
         let pre = c1dep_pick_law().premise
         rt_push(actions, dv_with(c2_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), c2_access("living_exit")], "细铁丝拨了四下，外侧的横闩抬了起来。", c1dep_source("12_雀儿撬门.story", 7, "quer_opens.001-002")), "predict_law", "quer.departure.pick-outer"))
         let receipt = dv_at_least(c1_other_clock_ref(), 690)
@@ -97,12 +100,12 @@ fn c1dep_actions(actor):
         rt_push(actions, ask)
     if actor == "demon":
         let manifestation = c1dep_manifest_law()
-        rt_push(actions, dv_with(c2_action("demon.departure.manifest", "help", manifestation.premise, manifestation.premise, "demon.departure.manifest", [dv_ref("demon.body", "state", "manifested")], "虚影在门闩前凝实，修长窄薄的手掌获得了可以碰触物体的重量。", source), "predict_law", "demon.departure.manifest"))
+        rt_push(actions, dv_with_many(c2_action("demon.departure.manifest", "help", manifestation.premise, manifestation.premise, "demon.departure.manifest", [dv_ref("demon.body", "state", "manifested")], "虚影在门闩前凝实，修长窄薄的手掌获得了可以碰触物体的重量。", source), {"predict_law": "demon.departure.manifest", "repeatable": true}))
         let groups = ["contract", "astral", "logistics"]
         var g = 0
         while g < rt_count(groups):
             let group = groups[g]
-            var refs = [c1_other_ref(group, "outer_latch_released"), c1_other_ref(group, "evidence_complete"), c1_other_ref(group, "care_given"), c1_other_ref(group, "west_passage_checked"), c1_other_ref(group, "observation_complete"), c1_other_clock_ref()]
+            var refs = [c1_other_ref(group, "outer_latch_released"), c1_other_ref(group, "formal_release"), c1_other_ref(group, "evidence_complete"), c1_other_ref(group, "care_given"), c1_other_ref(group, "west_passage_checked"), c1_other_ref(group, "observation_complete"), c1_other_clock_ref()]
             let people = c1_other_people()
             var p = 0
             while p < rt_count(people):
@@ -113,11 +116,14 @@ fn c1dep_actions(actor):
             rt_push(actions, c1_other_release_action(group, actor, c1_other_clock_ref()))
             g = g + 1
         let solved_refs = [dv_ref("question", "state", "solved_identity"), dv_ref("question", "state", "solved_voice_source"), dv_ref("question", "state", "solved_words"), dv_ref("question", "state", "solved_trust")]
-        rt_push(actions, dv_with(c2_action("demon.departure.inspect-accepted", "inspect", c1_at(actor, "hall"), c1_at(actor, "hall"), "", solved_refs, "查看已认定的答复。", source), "repeatable", true))
+        rt_push(actions, dv_with(c2_action("demon.departure.inspect-accepted", "inspect", c2_at(actor, "living_hall"), c2_at(actor, "living_hall"), "", solved_refs, "查看已认定的答复。", source), "repeatable", true))
         rt_push(actions, dv_with(c2_action("demon.departure.inspect-body", "inspect", dv_true(), dv_true(), "", dv_single(c2_position_ref(actor)), "看了看周围。", source), "repeatable", true))
         rt_push(actions, dv_with(c2_action("demon.departure.inspect-outer", "inspect", c2_at(actor, "living_hall"), c2_at(actor, "living_hall"), "", dv_single(c1dep_ref("outer_released")), "查看隔离门外侧的横闩。", source), "repeatable", true))
+        let after_answer = dv_all([c2_at(actor, "living_hall"), c1dep_complete()])
+        rt_push(actions, dv_with(c2_action("demon.departure.inspect-clock", "inspect", after_answer, after_answer, "", [c1_other_clock_ref()], "查看起居厅钟面。", source), "repeatable", true))
         let pre = c1dep_outer_law().premise
-        rt_push(actions, dv_with(c2_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), c2_access("living_exit")], "外侧的横闩，被一只手抬了起来。", source), "predict_law", "demon.departure.release-outer"))
+        let lifted = c2_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), c2_access("living_exit"), dv_ref("demon.body", "state", "manifested")], "外侧的横闩，被一只手抬了起来。", source)
+        rt_push(actions, dv_with_many(lifted, {"predict_law": "demon.departure.release-outer", "speech": dv_with_many(c1_speech(dv_true(), source, "actual-latch-sound"), {"surface": "门外传来横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), c2_access("living_exit")]}))
     let hand_ref = dv_ref("demon.body", "state", "hand_shape")
     let owner_ref = dv_ref("demon.body", "state", "shelf_print_owner")
     let hand_source = c1_source("docs/design-standard.md", 0, "架沿手印的观察与询问")
@@ -141,9 +147,10 @@ fn c1dep_laws(world, actor):
         mode = "predict"
     var result = world
     let source = c1dep_source("08_终局.story", 4, "s10_steps.003")
-    if dv_has(["detective", "huo", "shen", "su"], actor):
+    if actor == "detective":
         result = dv_adopt(result, c1_method(rt_cat(actor, ".departure.draw-inner"), c1dep_inner_law(actor)), mode, 1, [source])
         result = dv_adopt(result, c1_method(rt_cat(actor, ".departure.open-door"), c1dep_open_law(actor)), mode, 1, [source])
+    if dv_has(["detective", "huo", "shen", "su"], actor):
         result = dv_adopt(result, c1_method(rt_cat(actor, ".departure.cross-out"), c1dep_cross_law(actor, true)), mode, 1, [source])
         result = dv_adopt(result, c1_method(rt_cat(actor, ".departure.cross-in"), c1dep_cross_law(actor, false)), mode, 1, [source])
     if actor != "demon" and c2_profile(actor).group != "living":
@@ -166,16 +173,22 @@ fn c1dep_goals(actor):
     var goals = []
     let source = [c1dep_source("08_终局.story", 24, "s10_open.003：未迈出由本人选择")]
     if dv_has(["detective", "huo", "shen", "su"], actor.id):
-        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), dv_true(), source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
-        rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), dv_true(), source, 0))
-        rt_push(goals, c2_observation_goal(c1dep_ref("open"), dv_true(), source, 0))
+        let after_trust = dv_fact(dv_ref("question", "state", "solved_trust"), true)
+        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), after_trust, source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
+        rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), after_trust, source, 0))
+        rt_push(goals, c2_observation_goal(c1dep_ref("open"), after_trust, source, 0))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("open"), true), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), dv_fact(c1dep_ref("outer_released"), true), source))
     if actor.id != "demon" and c2_profile(actor.id).group != "living":
-        rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), c1_at(actor.id, rt_cat("threshold.", c2_profile(actor.id).group)), [c1_other_departure_source(actor.id).source]))
+        let leave = c1_other_depart(actor.id)
+        rt_push(goals, c2_goal(c1_at(actor.id, rt_cat("threshold.", c2_profile(actor.id).group)), leave.premise, [c1_other_departure_source(actor.id).source]))
+        var join_available = c1_at(actor.id, rt_cat("threshold.", c2_profile(actor.id).group))
+        if actor.id == "quer" or actor.id == "lucian":
+            join_available = c1dep_join_law(actor.id, c2_profile(actor.id).group).premise
+        rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), join_available, [c1_other_departure_source(actor.id).source]))
     if actor.id == "quer":
-        rt_push(goals, c2_goal(c1_other_claim("contract", "outer_latch_released"), c1_at(actor.id, "dorm.contract"), source))
+        rt_push(goals, c2_goal(c1_other_claim("contract", "outer_latch_released"), c1dep_pick_contract_law().premise, source))
         rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), c1_at(actor.id, "living_hall"), source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1_at(actor.id, "living_hall"), [c1dep_source("12_雀儿撬门.story", 10, "quer_opens.004")]))
     let actions = c1dep_actions(actor.id)
@@ -185,41 +198,56 @@ fn c1dep_goals(actor):
             rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": actions[i].id, "available_when": actions[i].precondition, "requires_argument": false, "basis": actions[i].source_refs})
         i = i + 1
     if actor.id == "demon":
+        rt_push(goals, c2_observation_goal(c1_other_clock_ref(), dv_all([c2_at(actor.id, "living_hall"), c1dep_complete()]), source, 0))
         let people = c1_other_people()
         i = 0
         while i < rt_count(people):
             let ref = c1_other_ref(people[i].group, rt_cat("receipt.", people[i].id))
-            rt_push(goals, dv_with(c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, 0), "refresh_until", dv_fact(ref, true)))
+            rt_push(goals, c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, 0))
             i = i + 1
         let groups = ["contract", "astral", "logistics"]
         i = 0
         while i < rt_count(groups):
-            let ref = c1_other_ref(groups[i], "outer_latch_released")
+            let ref = c1_other_ref(groups[i], "formal_release")
+            var receipt_refs = []
+            var receipt_index = 0
+            while receipt_index < rt_count(people):
+                if people[receipt_index].group == groups[i]:
+                    rt_push(receipt_refs, c1_other_ref(groups[i], rt_cat("receipt.", people[receipt_index].id)))
+                receipt_index = receipt_index + 1
+            let evidence_ref = c1_other_ref(groups[i], "evidence_complete")
+            rt_push(goals, dv_with_many(c2_observation_goal(evidence_ref, c2_at(actor.id, "living_hall"), source, 0), {"refresh_until": dv_fact(evidence_ref, true), "refresh_refs": receipt_refs}))
+            var reported = dv_not(dv_true())
+            var safe_time = 840
+            var safety = c1_other_claim(groups[i], "evidence_complete")
+            if groups[i] == "astral":
+                safe_time = 1890
+                safety = dv_all([c1_other_claim(groups[i], "care_given"), c1_other_claim(groups[i], "west_passage_checked")])
+            if groups[i] == "logistics":
+                safe_time = 2010
+                safety = dv_all([c1_other_claim(groups[i], "care_given"), c1_other_claim(groups[i], "observation_complete")])
+            var person_index = 0
+            while person_index < rt_count(people):
+                if people[person_index].group == groups[i]:
+                    reported = c1_any(reported, c1_other_claim(groups[i], rt_cat("receipt.", people[person_index].id)))
+                person_index = person_index + 1
+            let manifest_ready = dv_all([reported, safety, dv_at_least(c1_other_clock_ref(), safe_time), c2_at(actor.id, "living_hall"), dv_fact(dv_ref("demon.body", "state", "manifested"), false)])
+            rt_push(goals, c2_goal(dv_fact(dv_ref("demon.body", "state", "manifested"), true), manifest_ready, source))
             rt_push(goals, c2_observation_goal(ref, c2_at(actor.id, "living_hall"), source, 0))
             rt_push(goals, c2_goal(dv_fact(ref, true), c1_other_release(groups[i], c1_other_clock_ref()).premise, source))
             i = i + 1
         rt_push(goals, c2_goal(dv_fact(dv_ref("demon.body", "state", "manifested"), true), c1dep_manifest_law().premise, source))
         rt_push(goals, c2_observation_goal(c2_position_ref(actor.id), dv_true(), source, 0))
         rt_push(goals, c2_observation_goal(c1dep_ref("outer_released"), c2_at(actor.id, "living_hall"), source, 0))
-        let stages = ["identity", "voice_source", "words", "trust"]
-        i = 0
-        while i < rt_count(stages):
-            let ref = dv_ref("question", "state", rt_cat("solved_", stages[i]))
-            rt_push(goals, dv_with(c2_observation_goal(ref, c1_at(actor.id, "hall"), source, 0), "refresh_until", dv_fact(ref, true)))
-            i = i + 1
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("outer_released"), true), c1dep_complete(), source))
     var refreshed = []
     var g = 0
     while g < rt_count(goals):
         var goal = goals[g]
-        if dv_has_key(goal, "refresh_until"):
+        if dv_has_key(goal, "refresh_until") and not dv_has_key(goal, "refresh_refs"):
             var triggers = []
-            if dv_has(["detective", "huo", "shen", "su", "demon"], actor.id):
-                let stages = ["identity", "voice_source", "words", "trust"]
-                var stage_index = 0
-                while stage_index < rt_count(stages):
-                    rt_push(triggers, dv_ref("question", "state", rt_cat("solved_", stages[stage_index])))
-                    stage_index = stage_index + 1
+            if dv_has(["detective", "huo", "shen", "su"], actor.id):
+                rt_push(triggers, dv_ref("question", "state", "solved_trust"))
             goal = dv_with(goal, "refresh_refs", triggers)
         rt_push(refreshed, goal)
         g = g + 1
@@ -237,7 +265,7 @@ fn c1dep_install_scene(scene):
     physical = dv_store(physical, dv_ref("demon.body", "state", "shelf_print_owner"), dv_field("demon"))
     if not dv_read(physical, c2_access("living_exit")).known:
         physical = dv_store(physical, c2_access("living_exit"), dv_field(false))
-    var objects = ["departure.door", "demon.body", "case.contract", "case.astral", "case.logistics"]
+    var objects = ["departure.door", "demon.body", "campaign.access", "campaign.clock", "case.contract", "case.astral", "case.logistics"]
     let four = ["detective", "huo", "shen", "su"]
     var i = 0
     while i < rt_count(four):
@@ -261,6 +289,8 @@ fn c1dep_install_scene(scene):
                 rt_push(bindings, dv_binding(objects[j], objects[j], actor.id))
             j = j + 1
         mind = c1dep_laws(mind, actor.id)
+        if dv_has(four, actor.id):
+            mind = dv_store(mind, c1dep_ref("outer_released"), dv_with(dv_field(false), "basis", [c1dep_source("08_终局.story", 4, "s10_steps.003")]))
         if actor.id == "demon":
             mind = dv_store(mind, dv_ref("demon.body", "state", "manifested"), dv_with(dv_field(false), "basis", [c1dep_source("08_终局.story", 4, "自身虚实体状态")]))
             mind = dv_store(mind, dv_ref("demon.body", "state", "shelf_print_owner"), dv_with(dv_field("demon"), "basis", [c1_source("docs/design-standard.md", 0, "本人移物行动")]))
@@ -303,8 +333,16 @@ fn c1dep_install_scene(scene):
                 j = j + 1
             actor = dv_with_many(actor, {"location_ref": c2_position_ref("demon"), "observable_presence_when": dv_fact(dv_ref("demon.body", "state", "manifested"), true)})
         if dv_has(four, actor.id):
+            j = 0
+            while j < rt_count(four):
+                if four[j] != actor.id:
+                    rt_push(hearing, {"speaker": four[j], "channel": "formal-receipt", "available_when": dv_true(), "sender_locations": ["hall"], "listener_locations": ["hall", "foyer", "pantry", "corridor"], "basis": [c1dep_source("08_终局.story", 1, "乙区实际公开答辩回执") ]})
+                j = j + 1
             rt_push(hearing, {"speaker": "demon", "channel": "", "available_when": c1_at(actor.id, "hall"), "sender_locations": ["living_hall"], "listener_locations": ["hall"], "basis": [c1dep_source("08_终局.story", 1, "铜管实际传声")]})
             rt_push(hearing, {"speaker": "demon", "channel": "copper.living", "available_when": c1_at(actor.id, "hall"), "sender_locations": ["living_hall"], "listener_locations": ["hall"], "basis": [c1dep_source("08_终局.story", 1, "铜管实际回复")]})
+            rt_push(hearing, {"speaker": "demon", "channel": "door.living", "available_when": c1_any(c1_at(actor.id, "foyer"), c1_at(actor.id, "hall")), "sender_locations": ["living_hall"], "listener_locations": ["foyer", "hall"], "basis": [c1dep_source("08_终局.story", 4, "门外抬闩的实际声响")]})
+            if actor.id != "detective":
+                rt_push(hearing, {"speaker": "detective", "channel": "door.living", "available_when": c1_any(c1_at(actor.id, "foyer"), c1_at(actor.id, "hall")), "sender_locations": ["foyer"], "listener_locations": ["foyer", "hall"], "basis": [c1dep_source("08_终局.story", 8, "s10_open")]})
             rt_push(channels, {"target": "demon", "channel": "copper.living", "available_when": c1_at(actor.id, "hall"), "basis": [c1dep_source("08_终局.story", 46, "对着铜口询问")]})
             j = 0
             while j < rt_count(actions):
@@ -335,6 +373,8 @@ fn c1dep_install_scene(scene):
             rt_push(actions, extra[j])
             j = j + 1
         actor = dv_with_many(actor, {"mind": c1dep_unify_demon_position(mind), "policy": c1dep_unify_demon_position(actor.policy), "actions": c1_public_methods(actions), "hearing_grants": hearing, "request_channels": channels})
+        if actor.id == "demon":
+            actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"wait_chunk_limit": 15, "plan_depth": 1}))
         let goals = c1dep_goals(actor)
         var combined = dv_clone(dv_find(actor.policy, "goals", []))
         j = 0
@@ -365,7 +405,7 @@ axiom c1dep_manifest_law():
                 if group == "logistics":
                     safe_time = 2010
                     safety = dv_all([c1_other_claim(group, "care_given"), c1_other_claim(group, "observation_complete")])
-                ready = c1_any(ready, dv_all([c1_other_claim(group, rt_cat("receipt.", people[j].id)), dv_fact(c1_other_ref(group, "outer_latch_released"), false), safety, dv_at_least(c1_other_clock_ref(), safe_time)]))
+                ready = c1_any(ready, dv_all([c1_other_claim(group, rt_cat("receipt.", people[j].id)), dv_fact(c1_other_ref(group, "formal_release"), false), safety, dv_at_least(c1_other_clock_ref(), safe_time)]))
             j = j + 1
         i = i + 1
     return dv_axiom("c1dep_manifest_law", 1, dv_all([c1_at("demon", "living_hall"), ready, dv_fact(dv_ref("demon.body", "state", "manifested"), false)]), [dv_assign(dv_ref("demon.body", "state", "manifested"), true)])

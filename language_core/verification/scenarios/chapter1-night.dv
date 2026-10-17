@@ -18,7 +18,7 @@ fn c1n_rows():
     rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))
     rt_push(rows, c1n_row("shen", "apron", 750, 810, c1_at("quer", "living_hall"), "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。"))
     var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(c1_other_ref("contract", "evidence_complete"), true), dv_fact(c1_other_ref("contract", "keys_found"), true), dv_fact(c1_other_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒：先限制雀儿的自由，待事情查明。")
-    show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")]})
+    show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.evidence", "state", "displayed")]})
     rt_push(rows, show)
     let inspected = dv_all([dv_fact(dv_ref("night.evidence", "state", "wax_seal_intact"), true), dv_fact(dv_ref("night.evidence", "state", "fresh_torn_edge"), true)])
     rt_push(rows, c1n_row("detective", "defer-judgment", 840, 930, inspected, "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。"))
@@ -30,7 +30,7 @@ fn c1n_rows():
     count = dv_with_many(count, {"kind": "inspect", "effects": [dv_assign(dv_ref("night.provisions", "state", "counted"), true)], "grants": [dv_ref("night.provisions", "state", "counted"), dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat")]})
     rt_push(rows, count)
     var cook = c1n_row("shen", "cook", 1110, 1230, dv_all([dv_fact(dv_ref("night.provisions", "state", "counted"), true), dv_at_least(dv_ref("night.provisions", "state", "bread"), 8), dv_at_least(dv_ref("night.provisions", "state", "onion"), 8), dv_at_least(dv_ref("night.provisions", "state", "meat"), 8)]), "沈鼎用甲乙两区清点出的余粮，烤面包，煮洋葱碎肉汤，备出八人份。")
-    cook = dv_with_many(cook, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "bread"), -8), dv_increment(dv_ref("night.provisions", "state", "onion"), -8), dv_increment(dv_ref("night.provisions", "state", "meat"), -8), dv_assign(dv_ref("night.provisions", "state", "evening_servings"), 8)], "grants": [dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat"), dv_ref("night.provisions", "state", "evening_servings")]})
+    cook = dv_with_many(cook, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "bread"), -8), dv_increment(dv_ref("night.provisions", "state", "onion"), -8), dv_increment(dv_ref("night.provisions", "state", "meat"), -8), dv_assign(dv_ref("night.provisions", "state", "evening_servings"), 8)], "grants": [dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat"), dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")]})
     rt_push(rows, cook)
     rt_push(rows, c1n_row("quer", "cold-hand", 1260, 1440, c1_at("detective", "living_hall"), "壁炉边，雀儿压低声音：递钥匙的那只手，很凉。那人说，‘别让它落进下面那东西手里。’我只知道自己听到了这句话。"))
     var partner = c1n_row("quer", "partner", 1260, 1440, c1_at("detective", "living_hall"), "明日一起去文献工房。我替你开学园里的锁，咱们搭档，怎么样？")
@@ -41,14 +41,14 @@ fn c1n_rows():
     rt_push(rows, accept)
     rt_push(rows, c1n_row("huo", "watch-offer", 1260, 1440, c1_at("detective", "living_hall"), "夜里总得有人醒着。我跟你分班，先把这一夜守过去。"))
     var watch = c1n_row("detective", "watch-agree", 1260, 1440, c1_at("huo", "living_hall"), "我们分班守夜。交班时把听见、看见的事情说清楚。")
-    watch = dv_with_many(watch, {"received": {"speaker": "huo", "action_id": "night.watch-offer"}, "effects": [dv_assign(c1n_ref("watch_agreed"), true)], "grants": [c1n_ref("watch_agreed")]})
+    watch = dv_with_many(watch, {"received": {"speaker": "huo", "action_id": "night.watch-offer"}, "effects": [dv_assign(c1n_ref("watch_agreed"), true)], "grants": [c1n_ref("watch_agreed")], "public_grants": [c1n_ref("watch_agreed")]})
     rt_push(rows, watch)
     let diners = ["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"]
     var diner_index = 0
     while diner_index < rt_count(diners):
         let diner = diners[diner_index]
         var meal = c1n_row(diner, rt_cat("eat.", diner), 1110, 1260, dv_at_least(dv_ref("night.provisions", "state", "evening_servings"), 1), "取一份烤面包和洋葱碎肉汤，用过晚餐。")
-        meal = dv_with_many(meal, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "evening_servings"), -1), dv_increment(dv_ref("night.provisions", "state", "consumed"), 1)], "grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")]})
+        meal = dv_with_many(meal, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "evening_servings"), -1), dv_increment(dv_ref("night.provisions", "state", "consumed"), 1)], "grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")], "public_observers": c2_people(), "public_grants": [c1n_mark(meal.id)]})
         rt_push(rows, meal)
         diner_index = diner_index + 1
     var first_watch = c1n_row("huo", "first-watch", 1320, 1440, dv_fact(c1n_ref("watch_agreed"), true), "霍铎留在壁炉旁守前半夜，留意门口和走廊里的实际动静。")
@@ -69,18 +69,31 @@ fn c1n_action(row):
     var action = c2_action(row.id, row.kind, c1n_pre(row), c1n_pre(row), row.id, dv_append(row.grants, c1n_mark(row.id)), row.text, c1n_source(row.id))
     action = dv_with(action, "predict_law", row.id)
     if row.kind == "talk":
-        action = dv_with_many(action, {"speech": dv_with_many(c1_speech(row.literal, c1n_source(row.id), "personally-owned-evening-statement"), {"surface": row.text, "channel": "local"}), "listeners": c2_people()})
+        var listeners = []
+        let people = c2_people()
+        var listener_index = 0
+        while listener_index < rt_count(people):
+            if people[listener_index] != row.actor:
+                rt_push(listeners, people[listener_index])
+            listener_index = listener_index + 1
+        action = dv_with_many(action, {"speech": dv_with_many(c1_speech(row.literal, c1n_source(row.id), "personally-owned-evening-statement"), {"surface": row.text, "channel": "local"}), "listeners": listeners})
+    if dv_has_key(row, "public_grants"):
+        action = dv_with(action, "public_grants", row.public_grants)
+    if dv_has_key(row, "public_observers"):
+        action = dv_with(action, "public_observers", row.public_observers)
     if dv_has_key(row, "received"):
         action = dv_with(action, "received_speech_requirement", row.received)
     return action
 
 fn c1n_inspections(actor):
+    if actor == "demon":
+        return []
     let here = c1_at(actor, "living_hall")
     var actions = []
     rt_push(actions, dv_with(c2_action(rt_cat("night.inspect-room.", actor), "inspect", here, here, "", [c1n_ref("watch_agreed"), dv_ref("night.provisions", "state", "evening_servings")], "查看公共备餐和守夜交班的实际情况。", c1n_source("room-status")), "repeatable", true))
     if actor == "detective":
         let pre = dv_all([here, dv_fact(dv_ref("night.evidence", "state", "displayed"), true)])
-        rt_push(actions, c2_action("night.inspect-evidence", "inspect", here, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence")))
+        rt_push(actions, c2_action("night.inspect-evidence", "inspect", pre, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence")))
     if actor == "detective":
         rt_push(actions, c2_action("night.inspect-displayed", "inspect", here, here, "", [dv_ref("night.evidence", "state", "displayed")], "查看沃德是否已把证物摆在面前。", c1n_source("displayed")))
     let call_source = c1n_source("personally-heard-midnight-copper-call")
@@ -97,6 +110,8 @@ fn c1n_inspections(actor):
     return actions
 
 fn c1n_goals(actor):
+    if actor.id == "demon":
+        return []
     var goals = []
     let rows = c1n_rows()
     var i = 0
@@ -118,7 +133,7 @@ fn c1n_goals(actor):
             if action.id == rt_cat("night.inspect-room.", actor.id):
                 // Recheck only after related received activity, never after the
                 // inspection's own timestamp or an unrelated observation.
-                let triggers = [c1n_mark("night.watch-agree"), c1n_mark("night.cook"), dv_ref("night.provisions", "state", "consumed")]
+                let triggers = [c1n_mark("night.watch-agree"), c1n_mark("night.cook")]
                 goal = dv_with_many(goal, {"refresh_until": dv_not(dv_true()), "refresh_refs": triggers})
             rt_push(goals, goal)
             j = j + 1
@@ -126,13 +141,14 @@ fn c1n_goals(actor):
     return goals
 
 fn c1n_refresh_actor_goals(actor):
-    var combined = dv_clone(dv_find(actor.policy, "first_night_base_goals", actor.policy.goals))
-    let goals = c1n_goals(actor)
-    var i = 0
-    while i < rt_count(goals):
-        rt_push(combined, goals[i])
-        i = i + 1
-    actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"goals": combined, "first_night_goals": goals}))
+    if not dv_has_key(actor.policy, "first_night_goals"):
+        var combined = dv_clone(dv_find(actor.policy, "first_night_base_goals", actor.policy.goals))
+        let goals = c1n_goals(actor)
+        var i = 0
+        while i < rt_count(goals):
+            rt_push(combined, goals[i])
+            i = i + 1
+        actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"goals": combined, "first_night_goals": goals}))
     return c1n_known_future_wait_actor(actor)
 
 fn c1n_morning_ready(world):
@@ -207,6 +223,9 @@ fn c1n_install_scene(scene):
         j = 0
         while j < rt_count(people):
             if people[j] != actor.id:
+                mind = c2_add_new(mind, c1_local_object(people[j]))
+                if dv_local(bindings, people[j], actor.id) == "":
+                    rt_push(bindings, dv_binding(people[j], people[j], actor.id))
                 rt_push(hearing, {"speaker": people[j], "channel": "local", "available_when": c1_at(actor.id, "living_hall"), "sender_locations": ["living_hall"], "listener_locations": ["living_hall"], "basis": [c1n_source("actual-co-present-evening-speech")]})
             j = j + 1
         j = 0
@@ -229,7 +248,7 @@ fn c1n_install_scene(scene):
 
 // These are finite costed action lengths, not speed multipliers or world-clock writes.
 fn c1n_wait_durations():
-    return [180, 60, 15, 5, 1]
+    return [180, 60, 30, 15, 5, 1]
 
 fn c1n_wait_kind(minutes):
     return rt_cat("wait.first_night.", rt_show(minutes))
@@ -263,32 +282,52 @@ fn c1n_known_wait_actor(actor, target, basis):
     let elapsed = dv_read(actor.mind, c1n_wait_ref(actor.id))
     let progress_weight = dv_find(actor.policy, "progress_weight", 1)
     let time_cost = dv_find(actor.policy, "time_cost", 0.01)
-    if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight:
+    var current_night_action = false
+    let rows = c1n_rows()
+    i = 0
+    while i < rt_count(rows):
+        if rows[i].actor == actor.id and dv_truth(actor.mind, c1n_pre(rows[i])) == "true":
+            current_night_action = true
+        i = i + 1
+    if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight and not current_night_action:
         let durations = c1n_wait_durations()
         var minutes = 0
         i = 0
+        var wait_chunk_limit = dv_find(actor.policy, "wait_chunk_limit", 180)
+        if actor.mind.time < 900 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, c1_at(actor.id, "living_hall")) == "true":
+            wait_chunk_limit = 60
+            if actor.mind.time >= 810 and actor.mind.time < 900:
+                wait_chunk_limit = 30
         while i < rt_count(durations):
-            if minutes == 0 and actor.mind.time + durations[i] <= target:
+            if minutes == 0 and durations[i] >= 15 and durations[i] <= wait_chunk_limit and actor.mind.time + durations[i] <= target + 14:
                 minutes = durations[i]
             i = i + 1
-        // A sub-minute remainder still uses the ordinary one-minute wait;
+        // Arrive within fourteen minutes after the known opportunity starts;
         // completion does not claim an exact appointment arrival.
         if minutes == 0:
-            minutes = 1
+            minutes = 15
         if 0 < minutes:
             let id = c1n_wait_id(actor.id, minutes)
-            let known = dv_not(dv_at_least(c1_other_clock_ref(), target))
+            let known = dv_true()
             let result = dv_at_least(c1n_wait_ref(actor.id), elapsed.value + minutes)
             let text = rt_cat(rt_cat("留在原处，等候本人已知的下一次作息机会（", rt_show(minutes)), "分钟）。")
-            let action = c2_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id)], text, c1n_source("own-bounded-wait"))
-            rt_push(actions, dv_with_many(action, {"predict_law": id, "repeatable": true, "known_opportunity_wait": true, "wait_until": target, "wait_basis": basis}))
+            let action = c2_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), c1_other_clock_ref()], text, c1n_source("own-bounded-wait"))
+            rt_push(actions, c1_public_method(dv_with_many(action, {"predict_law": id, "repeatable": true, "known_opportunity_wait": true, "wait_until": target, "wait_basis": basis})))
             // Engineering preference: knowingly spend this time for the next
             // personally declared opportunity. Reimburse its ordinary time score
             // and retain only .01 net utility; other actions compete unchanged.
             let net_utility = 0.01
             let wait_value = (minutes * time_cost + net_utility) / progress_weight
             rt_push(goals, dv_with_many(c2_goal(result, known, basis), {"weight": wait_value, "known_opportunity_wait": true, "wait_valuation": {"role": "engineering-personal-willingness-to-wait", "time_opportunity_cost": minutes * time_cost, "net_utility": net_utility, "progress_weight": progress_weight, "future_outcome": "unknown"}}))
-    return dv_with_many(actor, {"actions": c1_public_methods(actions), "policy": dv_with(actor.policy, "goals", goals)})
+    var policy = dv_with(actor.policy, "goals", goals)
+    if actor.mind.time < 1440 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, c1_at(actor.id, "living_hall")) == "true":
+        if not dv_has_key(policy, "first_night_plan_depth"):
+            policy = dv_with(policy, "first_night_plan_depth", dv_find(policy, "plan_depth", 2))
+        policy = dv_with_many(policy, {"plan_depth": 1, "first_night_plan_active": true})
+    else:
+        if dv_find(policy, "first_night_plan_active", false):
+            policy = dv_with_many(policy, {"plan_depth": policy.first_night_plan_depth, "first_night_plan_active": false})
+    return dv_with_many(actor, {"actions": actions, "policy": policy})
 
 // Only positive lower bounds in the actor's declared goal conditions qualify.
 // A negated bound denotes an upper limit, so its subtree is deliberately opaque.
@@ -316,6 +355,10 @@ fn c1n_without_clock(condition):
     let op = dv_find(condition, "op", "")
     if op == "at_least" and dv_same(condition.ref, c1_other_clock_ref()):
         return dv_true()
+    if op == "not":
+        let inner = dv_find(condition, "item", false)
+        if inner != false and dv_find(inner, "op", "") == "at_least" and dv_same(inner.ref, c1_other_clock_ref()):
+            return dv_true()
     if op == "all":
         var items = []
         var i = 0
@@ -336,6 +379,8 @@ fn c1n_future_goal_pending(actor, goal):
     return false
 
 fn c1n_known_future_wait_actor(actor):
+    if actor.id == "demon":
+        return actor
     var target = -1
     var basis = []
     let goals = dv_find(actor.policy, "goals", [])

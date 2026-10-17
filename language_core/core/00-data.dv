@@ -79,10 +79,11 @@ fn dv_record_like(value):
         return false
 
 fn dv_get(record, key):
-    let index = rt_record_index(record, key)
-    if (index < 0):
-        rt_fail(rt_cat("Missing field: ", key))
-    return record[index][1]
+    let val = rt_record_find(record, key, "__dv_missing_field_sentinel__")
+    if (val == "__dv_missing_field_sentinel__"):
+        if (rt_record_index(record, key) < 0):
+            rt_fail(rt_cat("Missing field: ", key))
+    return val
 
 fn dv_with(record, key, value):
     return rt_record_with(record, key, value)

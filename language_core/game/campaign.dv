@@ -36,10 +36,20 @@ fn dvg_refresh_goals(current):
         if dv_find(actor, "scheduled_action", false) == false and (dv_has(c2_people(), actor.id) or actor.id == "demon") and (actor.mind.revision != dv_find(actor, "campaign_goals_revision", -1) or actor.mind.time != dv_find(actor, "campaign_goals_time", -1) or chapter != dv_find(actor, "campaign_goals_chapter", 0)):
             var refreshed = actor
             if chapter == 1:
-                refreshed = c1n_refresh_actor_goals(actor)
+                if actor.id != "demon":
+                    refreshed = c1n_refresh_actor_goals(actor)
+                rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
             else:
-                refreshed = c1n_known_future_wait_actor(c2d_refresh_actor_goals(actor))
-            rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
+                let needs_c1_wait = (actor.id == "selma" and dv_truth(actor.mind, c1_other_claim("astral", "west_passage_checked")) != "true") or (actor.id == "mora" and dv_truth(actor.mind, c1_other_claim("logistics", "observation_complete")) != "true")
+                let in_living = (dv_truth(actor.mind, c2_at(actor.id, "living_hall")) == "true")
+                let case_open = (dv_truth(actor.mind, c2d_case_gate(actor.mind)) == "true")
+                if needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
+                    refreshed = c2d_refresh_actor_goals(actor)
+                    if needs_c1_wait:
+                        refreshed = c1n_known_future_wait_actor(refreshed)
+                    else:
+                        refreshed = c1n_known_wait_actor(refreshed, actor.mind.time, [])
+                rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
             changed = true
         else:
             rt_push(actors, actor)

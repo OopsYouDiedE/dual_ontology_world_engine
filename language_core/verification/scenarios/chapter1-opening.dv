@@ -41,6 +41,11 @@ fn c1_op_profession(id):
 fn c1_op_person_ref(id, field):
     return dv_ref(rt_cat("opening.personal.", id), "state", field)
 
+fn c1_op_known_speaker_label(mind, id):
+    if id == "demon" and dv_truth(mind, c1_op_property("opening.roles", "custodian", "demon")) == "true":
+        return "铜口代管者"
+    return ""
+
 fn c1_op_property(object, field, value):
     return dv_fact(dv_ref(object, "state", field), value)
 
@@ -482,6 +487,8 @@ fn c1_op_appropriate_candidate(action):
         action = dv_with_many(action, {"response_topic": "opening.meeting", "offer_to": "detective", "opportunity_requirement": {"location": "hall", "participants": ["detective"], "mode": "all-present"}})
     if name == "shen.opening.introduce":
         action = dv_with(action, "completed_action_requirement", {"action_id": "shen.opening.welcome"})
+    if name == "shen.opening.serve-tea":
+        action = dv_with(action, "completed_action_requirement", {"action_id": "shen.opening.introduce"})
     if name == "shen.opening.ask-name":
         action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(dv_ref("coat", "state", "worn_by"), "detective"))))
         action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(dv_ref("coat", "state", "worn_by"), "detective")]))
@@ -490,7 +497,7 @@ fn c1_op_appropriate_candidate(action):
         action = dv_with_many(action, {"completed_action_requirement": {"action_id": "shen.opening.introduce"}, "suppress_after_received_speech": {"speaker": "detective", "action_id": "detective.opening.introduce"}})
     if name == "detective.opening.introduce":
         // An actually completed self-introduction also answers a later-arriving name request.
-        action = dv_with_many(action, {"response_topic": "opening.self-introduction", "response_once": true, "received_speech_requirement": {"any_of": [{"speaker": "shen", "action_id": "shen.opening.welcome"}, {"speaker": "shen", "action_id": "shen.opening.introduce"}]}})
+        action = dv_with_many(action, {"response_topic": "opening.self-introduction", "response_once": true, "received_speech_requirement": {"any_of": [{"speaker": "shen", "action_id": "shen.opening.welcome"}, {"speaker": "shen", "action_id": "shen.opening.introduce"}, {"speaker": "shen", "action_id": "shen.opening.ask-name"}]}})
     if name == "su.opening.ask-sugar":
         action = dv_with(action, "precondition", dv_all(dv_pair(action.precondition, dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true))))
         action = dv_with(action, "speech", dv_with(action.speech, "presuppositions", [dv_fact(c1_op_person_ref("su", "prefers_unsweetened"), true), c1_op_property("opening.cup.su", "sugar_added", false)]))
@@ -551,7 +558,7 @@ fn c1_op_owned_goals(id):
         var awake = dv_fact(dv_ref(id, "body", "awake"), true)
         var basis = dv_single(c1_memory_source(id))
         rt_push(result, c1_op_achieve_goal(id, dv_not(c1_at(id, c1_op_wake_room(id))), basis, awake))
-        rt_push(result, c1_op_achieve_goal(id, c1_at(id, "hall"), basis, c1_at(id, "corridor")))
+        rt_push(result, c1_op_achieve_goal(id, c1_at(id, "hall"), basis, dv_all([dv_not(c1_at(id, c1_op_wake_room(id))), dv_fact(dv_ref("departure.door", "state", "outer_released"), false)])))
         if id == "detective":
             rt_push(result, c1_op_know_goal(id, dv_ref("coat", "identity", "owner"), [c1_op_source(6, "s1_wake.006")], c1_at(id, "R05")))
             rt_push(result, c1_op_achieve_goal(id, dv_fact(dv_ref("coat", "state", "worn_by"), "detective"), [c1_op_source(6, "s1_wake.006; s2_meet.008")], c1_at(id, "R05")))

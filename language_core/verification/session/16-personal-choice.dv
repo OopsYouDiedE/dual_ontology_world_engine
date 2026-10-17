@@ -262,6 +262,9 @@ fn dvp_resonance_utility(actor, action, mind):
     dv_require(dv_record_like(r), "Resonance must be a record")
     if rt_count(dv_find(r, "basis", [])) == 0 or dv_truth(mind, dv_find(r, "requires", dv_true())) != "true":
         return 0
+    let retrieved = dv_find(r, "retrieved_when", false)
+    if retrieved != false and dv_truth(mind, retrieved) == "true":
+        return 0
     let drive = dvp_owned_quantity(actor, mind, r.drive)
     let relevance = dvp_owned_quantity(actor, mind, r.relevance)
     let bonus = dvp_owned_quantity(actor, mind, r.truth_bonus)
@@ -277,6 +280,9 @@ fn dvp_owner_requirement_refs(action):
         dv_require(dv_record_like(r), "Resonance must be a record")
         if not dv_find(r, "passive", false):
             refs = dvp_merge_refs(refs, dvs_sim_refs(dv_find(r, "requires", dv_true())))
+            let retrieved = dv_find(r, "retrieved_when", false)
+            if retrieved != false:
+                refs = dvp_merge_refs(refs, dvs_sim_refs(retrieved))
             let quantities = [r.drive, r.relevance, r.truth_bonus, r.caution, r.perceived_risk]
             var i = 0
             while i < rt_count(quantities):

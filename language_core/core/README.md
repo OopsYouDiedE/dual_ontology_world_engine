@@ -294,6 +294,10 @@ pending 存在时不重新分派行动。scheduled_action 优先于修订唤醒�
 
 `dvs_answer` 分别核对题目匹配、字面真值、本人支持、论证完整性与权威接受规律。公共结论等级、本人正式接受、实际章节交接分别记录；他人的公共结论不替代本人回执。正文与呈现仍只展示该主体真正观察/收闻后获准显示的材料。
 
+同寝区活动的内容声明在主体成功执行后，经 `public_observers` / `public_grants` 向实际同室且可见的旁观者传播对应字段；行动前没有已发生事实的检视。`inspection_attempt_signatures` 仅在 applied 检视后保存，失败执行不写观察或完成记录。开场的欢迎、自我介绍、奉茶按 `completed_action_requirement` 检查实际完成顺序；第四问完成后，开场返回活动厅目标停止提供折返收益。第一问与第四问答辩、沈鼎回想姓名的可见正文由原生内容 action 的 `speech.surface` 或 `surface` 提供，正式答辩回执另记。
+正式第一问开放后，乙区门闩检视持续进入本人调查候选；执行仍核对真实门厅位置。甲区挑闩目标使用自身权威动作的时间和非时间前提，未来机会等待仅读本人已获得的前提，不预置挑闩结果。成功等待动作从现场时钟取得当前值，时间资格读取这次实际观察。
+`game/presentation.dv` 在本人已知姓名之外调用开场内容的 `c1_op_known_speaker_label`，根据观看者实际取得的角色信息显示代管者称谓；未获得身份信息时保持未具名。
+
 ### 生产认知配置与有据等待
 
 生产 `game/campaign.dv` 提供以下开局入口；配置值为文本，示例为当前默认配置：
@@ -745,9 +749,26 @@ fn dvs_record_request(actor, action)
 fn dvs_request_inputs(mind, proposition)
 fn dvs_request_context(actor, action, target)
 fn dvs_visible_context(actor, physical, actors)
-fn dvs_notice_peers(actor, physical, actors, events, time, parent)
-fn dvs_visible_action_grants(actors, speaker_index, action, physical, bindings, events, time, parent, execution_id)
+fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
+fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bindings, events, time, parent, execution_id)
 ```
+
+成功移动的具名在场观察者可依据 `before` 中与行动者同处的出发位置，看见其实际离开；普通行动仍核对执行后的同处位置。授予字段从成功 Complete 后的 `physical` 读取，并记录执行事件来源。答辩接受回执的 `accepted_public_grants` 只在真实接受后传播，`accepted_listeners` 还需通过实际收闻范围核对。
+
+具备可见身份条件的主体在轮到本人认知时重新核对同处者；已声明本人视图绑定的新到场或位置改变人物生成其位置的直接感知观察，并将观察事件接在 `co_presence` 后。同处名单本身仍是现场上下文，离场不生成对未知去向的观察。
+会话呈现按听者的真实可听回执即时显示对白：`speech_received_pending` 足以显示发生时的原声，后续 `listener_parse` 才记录本人理解和采信；等待队列中的听者也能在玩家正文看到当时听见的话。
+第一夜对白的听者名单不含发言者本人；自身 Complete 取得直接观察，其他实际可听者按公开字段获得结果。正式答辩对发言者的接受字段保留原传播合同。
+
+内容动作经 `c1_public_method` 整理时，已声明 `topic` 的答辩沿用其声明；未声明者才按第一章答辩编号推导。`accepted_public_grants` 的阶段完成字段由 `c1_protocol_coordinates` 添加一次，原始回复规则不重复添加。同室或声明的铜管、隔门收闻只在成功 Complete 后传达现场字段；定时机会不直接发布完成结果。
+
+`dvs_answer` 对未定义正式阶段的辅助回复以可选字段读取 `stage`、`progress_ref` 和 `completion_ref`；缺失字段不会跳过已有的题目匹配、字面真值和支持判定。仅实际接受且具备正式阶段与法则的回复写入阶段进度。
+
+目标生成的普通等待可由主体 `policy.wait_chunk_limit` 限制单次等待时长；未声明时上限为 180 游戏分钟。此字段只影响候选等待片段，仍由主体比较后选择，并按原行动成本与队列结算。成功开门、拔闩与正式放行向实际同处或既定铜管听者传播执行后的现场字段；`formal_release` 与物理闩状态分别保存。
+
+未来时窗的等待资格只用本人当前条件和已声明的起点，时钟上界不要求先经现场检视取得；候选行动的真实前提仍包含完整时窗。本人等待候选按自身时间限制长度，执行资格不以公共钟面读数为前提；成功等待才取得新的公共时钟观察。第一夜的等待不注入预期结果，也不替人物预选行动。
+
+主体实际跨乙区门进入起居厅时读取厅内时钟；已知的第一夜行动若处于当前有效窗口，不生成指向后来窗口的等待候选。首夜八人在厅内至午夜前的等待片段至多 15 游戏分钟，使在途同室行动完成后能重新判断。重复显形仍须重新满足世界法则和本人规划前提，已完成的一扇门不替另一扇门放行。第一夜证物展示、备餐完成与守夜同意的可见结果只在对应成功 Complete 后授予实际同处者；辅助 V5 回复有玩家正文。
+同一首夜厅内窗口按单步比较当前行动与等待，午夜后恢复各人原规划深度；入厅前规划不受影响。备餐向同处者传播初始八份和消费基数；取餐的本人回执核对真实余量并递增总消费，同处者观察各人独立的取餐完成标记。房间检视可重读当前余量。同一分钟多个取餐结果不作为同一数值的同时直接观察，以免产生无法用于本人预测的争议单元。证物近看在本人计划与真实执行两侧都要求先知展示已发生。
 
 ### [20-speech.dv](../verification/session/20-speech.dv)
 
@@ -947,3 +968,6 @@ fn dvs_player_choice(actor, id)
 动作可声明 `suppress_after_received_speech: {speaker, action_id}`，仅在本人已有非空来源与理解事件的匹配实际收闻后排除该动作；`response_once: true` 在本人成功 Complete 该动作后排除后续同动作回复。默认请求与专业回复仍保留原重问合同。这些门槛由共同主体资格入口核验，预测和候选不会制造完成或收闻。
 
 未来等待仅从有来源、未完成且除正向时钟下界外其他条件在本人当前认识中成立的目标产生。否定时钟分支与其他前提保留原判定；等待保留原费用和估值，不能预置未来成功。静态证物不因会话时间或无关信息刷新。源码：`verification/session/15-action-planning.dv`、`16-personal-choice.dv`、`verification/scenarios/chapter1-night.dv`。
+
+已知机会等待不参与依赖图构建，只在无其它当前可执行动作时于根层评估，不作为预测后继再次展开；根层已存在正向可执行动作时以 `current-affordance-root` 收束。首夜起居厅八人在 900 分钟前等待候选采用 30/60 分钟上界并收短到下一活动起点；第二章仅对尚未完成首夜跨章观测的 `selma`/`mora` 保留首夜等待候选，其余主体仅在章节切换、入厅状态或案件开启状态变化时刷新第二章目标。同场可见上下文仅记录同伴位置，仅在新增到场或位置变化时触发感知；主体在上一轮决策停止且收闻与同场检查后 `mind.revision`、`mind.time` 与 `chapter` 均未变化时跳过重复准备。第二章天气检视包含实际 `severe_air`，连廊换气与开启目标归属 `quer` 并核对本人获知的补风、密封和空气条件。相关生产内容见 `verification/scenarios/chapter2-content.dv`、`chapter2-dialogue.dv`、`chapter1-night.dv` 与 `game/campaign.dv`。这些是现行工程规则，实际章节达成须另据新会话记录判断。
+

@@ -76,9 +76,9 @@ fn dvs_answer(rules, action, physical, mind, bindings, events):
             topic = dv_truth(physical, dv_find(rule, "question_match", {"op": "constant", "value": "unknown"}))
             complete = dv_truth(mind, dv_find(rule, "answer_complete", {"op": "constant", "value": "unknown"}))
             require_arg = dv_find(rule, "require_argument", false)
-            target_stage = rule.stage
-            progress_ref = rule.progress_ref
-            completion_ref = rule.completion_ref
+            target_stage = dv_find(rule, "stage", dv_find(action, "topic", "auxiliary"))
+            progress_ref = dv_find(rule, "progress_ref", false)
+            completion_ref = dv_find(rule, "completion_ref", false)
             if require_arg:
                 if dvs_public_argument_valid(action, rule, events, mind.subject):
                     false
@@ -299,7 +299,11 @@ fn dvs_session_prepare(state):
             actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"remaining_game_time": horizon - time, "plan_budget": dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))}))
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
-            actor = dvs_notice_peers(actor, physical, actors, events, time, parent)
+            actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
+            if dv_find(state, "player_actor", "") != actor.id and dv_find(actor, "last_decision_stopped", false) == true and actor.mind.revision == dv_find(actor, "decision_revision", -1) and actor.mind.time == dv_find(actor, "decision_mind_time", -1) and dv_find(actor, "decision_chapter", 0) == dv_find(story, "chapter", 1):
+                idle = idle + 1
+                actors = dvs_replace(actors, index, actor)
+                return dvs_owned_state_update(state, {"actors": actors, "cursor": cursor, "idle": idle})
             actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
             actor = dvs_capture_public_topics(actor, events, time, parent)
             actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
@@ -321,6 +325,7 @@ fn dvs_session_prepare(state):
             dvs_debug_phase(story, actor.id, time, "choice-end")
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
+        actor = dv_with_many(actor, {"decision_mind_time": actor.mind.time, "decision_chapter": dv_find(story, "chapter", 1), "last_decision_stopped": action == false})
         actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
         actor = dv_with(actor, "planned_followup", "")
         actor = dv_with_many(actor, {"planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
@@ -542,7 +547,7 @@ fn dvs_session_complete(state, receipt):
     actor = dv_with_many(actor, {"used": dv_append(dv_find(actor, "used", []), action.id), "policy": dv_with(actor.policy, "budget", (actor.policy.budget - 1))})
     actors = dvs_replace(actors, index, actor)
     if dv_and(dv_has_key(action, "public_observers"), (result.execution.status == "applied")):
-        actors = dvs_visible_action_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
+        actors = dvs_visible_action_grants(actors, index, action, before, physical, bindings, events, time, parent, action_event)
     if dv_and(dv_has_key(action, "speech"), (result.execution.status == "applied")):
         // This actual execution boundary supplies player identity, never a forecast.
         var actual_player = ""

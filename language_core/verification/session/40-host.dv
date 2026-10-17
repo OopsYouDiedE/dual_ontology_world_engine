@@ -63,7 +63,7 @@ fn dvs_session_presentation(state, viewer):
             judgment = {"status": event.type, "event_id": event.id, "game_time": event.time}
         if event.actor == viewer and (event.type == "listener_parse" or event.type == "observation"):
             perceived = true
-        if event.actor == viewer and event.type == "listener_parse":
+        if event.actor == viewer and (event.type == "listener_parse" or event.type == "speech_received_pending"):
             heard = true
         if event.type == "action_execution":
             let action = event.data.action

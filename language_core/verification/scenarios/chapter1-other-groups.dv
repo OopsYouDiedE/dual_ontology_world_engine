@@ -121,7 +121,7 @@ axiom c1_other_release(group, clock_ref):
     if group == "logistics":
         safe_time = 2010
         safety = dv_all([c1_other_claim(group, "care_given"), c1_other_claim(group, "observation_complete")])
-    return dv_axiom(rt_cat("c1_other_release.", group), 1, dv_all([reported, safety, dv_at_least(clock_ref, safe_time), c2_at("demon", "living_hall"), dv_fact(dv_ref("demon.body", "state", "manifested"), true), dv_fact(c1_other_ref(group, "outer_latch_released"), false)]), [dv_assign(c1_other_ref(group, "outer_latch_released"), true), dv_assign(c1_other_access_ref(group), true), dv_assign(dv_ref("demon.body", "state", "manifested"), false), dv_assign(dv_ref("demon.body", "state", "latch_hand_trace"), "long-narrow-hand")])
+    return dv_axiom(rt_cat("c1_other_release.", group), 1, dv_all([reported, safety, dv_at_least(clock_ref, safe_time), c2_at("demon", "living_hall"), dv_fact(dv_ref("demon.body", "state", "manifested"), true), dv_fact(c1_other_ref(group, "formal_release"), false)]), [dv_assign(c1_other_ref(group, "outer_latch_released"), true), dv_assign(c1_other_ref(group, "formal_release"), true), dv_assign(c1_other_access_ref(group), true), dv_assign(dv_ref("demon.body", "state", "manifested"), false), dv_assign(dv_ref("demon.body", "state", "latch_hand_trace"), "long-narrow-hand")])
 
 fn c1_other_open_action(group, speaker):
     var spec = c1_other_case(group)
@@ -151,7 +151,8 @@ fn c1_other_inspections(id):
         rt_push(result, dv_with(action, "surface", row.surface))
         i = (i + 1)
     if id == "lucian":
-        rt_push(result, dv_with(c1_action("lucian.inspect.quer-departure", "inspect", c1_at(id, spec.room), dv_all([c1_at(id, spec.room), c1_any(c1_at("quer", "threshold.contract"), c1_at("quer", "living_hall"))]), "", [dv_ref("quer", "state", "location")], spec.source), "surface", "卢西安从门边确认雀儿已经走出甲区。"))
+        let departed = c1_any(c1_at("quer", "threshold.contract"), c1_at("quer", "living_hall"))
+        rt_push(result, dv_with(c1_action("lucian.inspect.quer-departure", "inspect", dv_all([c1_at(id, spec.room), departed]), dv_all([c1_at(id, spec.room), departed]), "", [dv_ref("quer", "state", "location")], spec.source), "surface", "卢西安从门边确认雀儿已经走出甲区。"))
     var own_ref = dv_ref(rt_cat("personal.", id), "state", "material_detail")
     rt_push(result, dv_with(c1_once(c1_action(rt_cat(id, ".inspect.own-material"), "inspect", c1_at(id, spec.room), c1_at(id, spec.room), "", dv_single(own_ref), person.material_source)), "surface", person.material_surface))
     return result
@@ -184,7 +185,7 @@ fn c1_other_formal_answers():
             var option = spec.options[j]
             var literal = c1_other_submission(person.group, option)
             var id = rt_cat(rt_cat(rt_cat(person.id, ".answer."), person.group), rt_cat(".", option))
-            rt_push(result, {"id": id, "stage": rt_cat(person.group, ".identity"), "condition": literal, "required_support": literal, "question_match": c1_other_claim(person.group, "open"), "answer_complete": literal, "require_argument": false, "accepted_law": rt_cat(rt_cat("other.accept.", person.group), rt_cat(".", person.id)), "progress_ref": c1_other_ref(person.group, rt_cat("level.", person.id)), "completion_ref": c1_other_ref(person.group, rt_cat("receipt.", person.id)), "accepted_listeners": dv_single(person.id), "accepted_public_grants": dv_list3(c1_other_ref(person.group, rt_cat("receipt.", person.id)), c1_other_ref(person.group, rt_cat("level.", person.id)), dv_ref(rt_cat("personal.", person.id), "state", "current")), "source_refs": dv_single(spec.source)})
+            rt_push(result, {"id": id, "stage": rt_cat(person.group, ".identity"), "condition": literal, "required_support": literal, "question_match": c1_other_claim(person.group, "open"), "answer_complete": literal, "require_argument": false, "accepted_law": rt_cat(rt_cat("other.accept.", person.group), rt_cat(".", person.id)), "progress_ref": c1_other_ref(person.group, rt_cat("level.", person.id)), "completion_ref": c1_other_ref(person.group, rt_cat("receipt.", person.id)), "accepted_listeners": [person.id, "demon"], "accepted_public_grants": [c1_other_ref(person.group, rt_cat("receipt.", person.id)), c1_other_ref(person.group, rt_cat("level.", person.id)), dv_ref(rt_cat("personal.", person.id), "state", "current"), c1_other_clock_ref()], "source_refs": dv_single(spec.source)})
             j = (j + 1)
         i = (i + 1)
     return result
@@ -258,7 +259,7 @@ fn c1_other_policy(id):
     while (i < rt_count(spec.options)):
         rt_push(goals, {"kind": "know", "question": rt_cat(person.group, ".identity"), "ref": c1_other_ref(person.group, rt_cat("answer.", spec.options[i])), "available_when": c1_other_claim(person.group, "open"), "basis": dv_single(spec.source)})
         i = (i + 1)
-    rt_push(goals, {"kind": "know", "question": rt_cat(person.group, ".identity"), "ref": c1_other_ref(person.group, rt_cat("receipt.", id)), "available_when": c1_other_claim(person.group, "open"), "basis": dv_single(spec.source)})
+    rt_push(goals, {"kind": "know", "question": rt_cat(person.group, ".identity"), "ref": c1_other_ref(person.group, rt_cat("receipt.", id)), "available_when": dv_all([c1_other_claim(person.group, "open"), dv_at_least(c1_other_clock_ref(), c1_other_report_time(person.group))]), "basis": dv_single(spec.source)})
     rt_push(goals, {"kind": "know", "question": "own_material", "ref": dv_ref(rt_cat("personal.", id), "state", "material_detail"), "basis": dv_pair(person.material_source, person.desire_source)})
     if id == "lucian":
         rt_push(goals, c2_observation_goal(dv_ref("quer", "state", "location"), c1_other_claim("contract", "outer_latch_released"), [spec.source], 0))
@@ -297,7 +298,7 @@ fn c1_other_groups_actors():
 // Real physical authored traces and literal history; invisible answer fields are never grants.
 fn c1_other_group_extend(world, group):
     var spec = c1_other_case(group)
-    var fields = {"open": dv_field(false), "current": dv_field(""), "outer_latch_released": dv_field(false)}
+    var fields = {"open": dv_field(false), "current": dv_field(""), "outer_latch_released": dv_field(false), "formal_release": dv_field(false)}
     var i = 0
     while (i < rt_count(spec.options)):
         fields = dv_with(fields, rt_cat("answer.", spec.options[i]), dv_field((spec.options[i] == spec.authority_actor)))
@@ -374,7 +375,11 @@ fn c1_other_personal_replies(id):
 
 fn c1_other_release_action(group, speaker, clock_ref):
     var law = c1_other_release(group, clock_ref)
-    return dv_with_many(c1_action(rt_cat("other.release.", group), "other_release", law.premise, law.premise, rt_cat("other.release.", group), [c1_other_ref(group, "outer_latch_released"), c1_other_access_ref(group)], c1_other_case(group).source), {"surface": "从起居厅一侧抬起寝区外闩。", "predict_law": rt_cat("other.release.", group)})
+    var surface = "从起居厅一侧抬起寝区外闩，正式宣告放行。"
+    if group == "contract":
+        surface = "代管者复核已被挑开的甲区门闩，正式宣告沃德等人可以离开。"
+    let action = c1_action(rt_cat("other.release.", group), "help", law.premise, law.premise, rt_cat("other.release.", group), [c1_other_ref(group, "outer_latch_released"), c1_other_ref(group, "formal_release"), c1_other_access_ref(group), dv_ref("demon.body", "state", "manifested")], c1_other_case(group).source)
+    return dv_with_many(action, {"surface": surface, "predict_law": rt_cat("other.release.", group), "speech": dv_with_many(c1_speech(dv_true(), c1_other_case(group).source, "actual-formal-release"), {"surface": surface, "channel": rt_cat("copper.", group)}), "listeners": c1_other_group_listeners(group, ""), "public_grants": [c1_other_ref(group, "outer_latch_released"), c1_other_ref(group, "formal_release"), c1_other_access_ref(group), c1_other_clock_ref()]})
 
 fn c1_other_departure_source(id):
     if (id == "lucian"):
@@ -411,7 +416,9 @@ axiom c1_other_depart(id):
     var source = c1_other_departure_source(id)
     var premise = dv_all(dv_list3(c1_at(id, c1_other_case(person.group).room), c1_other_claim(person.group, "outer_latch_released"), dv_fact(c1_other_access_ref(person.group), true)))
     if id == "ward" or id == "gu":
-        premise = dv_all([premise, c1_other_claim("contract", rt_cat("receipt.", id)), dv_at_least(c1_other_clock_ref(), 840)])
+        premise = dv_all([premise, c1_other_claim("contract", rt_cat("receipt.", id)), c1_other_claim("contract", "formal_release"), dv_at_least(c1_other_clock_ref(), 840)])
+    if id != "quer" and id != "lucian" and id != "ward" and id != "gu":
+        premise = dv_all([premise, c1_other_claim(person.group, "formal_release")])
     if id == "lucian":
         premise = dv_all([premise, c1_any(c1_at("quer", "threshold.contract"), c1_at("quer", "living_hall"))])
     return dv_axiom(rt_cat("c1_other_depart.", id), 1, premise, dv_single(dv_assign(dv_ref(id, "state", "location"), c1_other_threshold(person.group))))
@@ -424,6 +431,8 @@ fn c1_other_departure_actions(id):
     var inspect = dv_with(c1_action(rt_cat(id, ".inspect.outer-latch"), "inspect", c1_at(id, room), c1_at(id, room), "", dv_pair(ref, c1_other_access_ref(person.group)), source.source), "repeatable", true)
     var premise = c1_other_depart(id).premise
     var depart = dv_with_many(c1_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
+    if id == "quer":
+        depart = dv_with_many(depart, {"public_observers": ["lucian", "ward", "gu"], "public_grants": [dv_ref("quer", "state", "location")]})
     depart = dv_with(depart, "personal_choice", {"group": "leave-open-dormitory", "requires": premise, "prohibits": dv_not(dv_true()), "promotes": ["leave_confinement"], "sacrifices": [], "basis": dv_single(person.initial_source)})
     return dv_pair(inspect, depart)
 
@@ -564,6 +573,7 @@ fn c1_other_groups_install_scene(scene):
                 var k = 0
                 while k < rt_count(listeners):
                     rt_push(hearing, {"speaker": listeners[k], "channel": rt_cat("copper.", group), "available_when": c1_at("demon", "living_hall"), "sender_locations": [spec.room], "listener_locations": ["living_hall"], "basis": [spec.source]})
+                    rt_push(hearing, {"speaker": listeners[k], "channel": "formal-receipt", "available_when": c1_at("demon", "living_hall"), "sender_locations": [spec.room], "listener_locations": ["living_hall"], "basis": [spec.source]})
                     mind = dv_add_object(mind, c1_local_object(rt_cat("personal.", listeners[k])))
                     k = k + 1
                 rt_push(actions, c1_other_open_action(group, "demon"))
@@ -713,19 +723,28 @@ fn c1_other_activity_actor(actor, group):
     rt_push(actions, dv_with(c2_action(rt_cat(actor.id, ".other.inspect-clock"), "inspect", dv_true(), dv_true(), "", [c1_other_clock_ref()], "查看寝区钟面。", source), "repeatable", true))
     rt_push(goals, dv_with(c2_observation_goal(c1_other_clock_ref(), dv_true(), [source], 0), "refresh_refs", [c1_other_clock_ref()]))
     let rows = c1_other_activity_rows(group)
+    var witnesses = []
+    let people = c1_other_people()
+    var witness_index = 0
+    while witness_index < rt_count(people):
+        if people[witness_index].group == group:
+            rt_push(witnesses, people[witness_index].id)
+        witness_index = witness_index + 1
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
         let ref = c1_other_ref(group, row.id)
         let pre = c1_at(actor.id, c1_other_case(group).room)
-        rt_push(actions, c2_action(rt_cat(rt_cat(actor.id, ".inspect.activity."), row.id), "inspect", pre, dv_all([pre, dv_fact(ref, true)]), "", [ref], row.text, source))
-        rt_push(goals, dv_with(c2_observation_goal(ref, pre, [source], 0), "refresh_until", dv_fact(ref, true)))
+        rt_push(goals, c2_observation_goal(ref, pre, [source], 0))
         if row.actor == actor.id:
             let method = rt_cat(rt_cat("other.activity.", group), rt_cat(".", row.id))
             let law = c1_other_activity_law(group, row)
             mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [source])
-            rt_push(actions, dv_with(c2_action(rt_cat(actor.id, rt_cat(".activity.", row.id)), "help", law.premise, law.premise, method, [ref], row.text, source), "predict_law", method))
-            rt_push(goals, c2_goal(dv_fact(ref, true), pre, [source]))
+            var activity = dv_with_many(c2_action(rt_cat(actor.id, rt_cat(".activity.", row.id)), "help", law.premise, law.premise, method, [ref], row.text, source), {"predict_law": method, "public_observers": witnesses, "public_grants": [ref]})
+            if row.id == "west_passage_checked" or row.id == "observation_complete":
+                activity = dv_with_many(activity, {"speech": dv_with_many(c1_speech(dv_true(), source, "actual-safety-report"), {"surface": row.text, "channel": rt_cat("copper.", group)}), "listeners": ["demon"], "public_grants": [c1_other_ref(group, "care_given"), ref, c1_other_clock_ref()]})
+            rt_push(actions, activity)
+            rt_push(goals, c2_goal(dv_fact(ref, true), law.premise, [source]))
         i = i + 1
     let inferred = dv_axiom(rt_cat("other.material-identity.", group), 1, dv_all([c1_other_claim(group, "evidence_complete"), c1_other_claim(group, "report_basis")]), [dv_assign(c1_other_ref(group, rt_cat("answer.", c1_other_case(group).authority_actor)), true)])
     mind = dv_adopt(mind, c1_method(rt_cat("other.material-identity.", group), inferred), "infer", 1, [source])

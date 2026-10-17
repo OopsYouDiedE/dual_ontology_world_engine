@@ -52,12 +52,22 @@ public static class R
     public static object record_index(object record, object key)
     {
         var entries = Items(record);
-        if (entries.Count >= 8 && key is string name)
+        if (key is string name)
         {
-            var frozen = record as FrozenList;
-            if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
-            var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
-            if (index is not null) return index.TryGetValue(name, out var found) ? (double)found : -1d;
+            if (entries.Count >= 8)
+            {
+                var frozen = record as FrozenList;
+                if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
+                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
+                if (index is not null) return index.TryGetValue(name, out var found) ? (double)found : -1d;
+            }
+            for (var i = entries.Count - 1; i >= 0; i--)
+            {
+                var k = Items(entries[i])[0];
+                if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
+                    return (double)i;
+            }
+            return -1d;
         }
         for (var i = entries.Count - 1; i >= 0; i--)
             if (Bool(eq(Items(entries[i])[0], key))) return (double)i;
@@ -65,8 +75,57 @@ public static class R
     }
     public static object record_find(object record, object key, object fallback)
     {
-        var index = (double)record_index(record, key);
-        return index < 0 ? fallback : ReadItem(ReadItem(record, (int)index), 1);
+        var entries = Items(record);
+        int foundIndex = -1;
+        if (key is string name)
+        {
+            if (entries.Count >= 8)
+            {
+                var frozen = record as FrozenList;
+                if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
+                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
+                if (index is not null)
+                {
+                    if (index.TryGetValue(name, out foundIndex))
+                    {
+                        var pair = entries[foundIndex];
+                        var pairItems = Items(pair);
+                        var val = pairItems[1];
+                        if (record is not FrozenList && val is FrozenList)
+                            return ReadItem(ReadItem(record, foundIndex), 1);
+                        return val;
+                    }
+                    return fallback;
+                }
+            }
+            for (var i = entries.Count - 1; i >= 0; i--)
+            {
+                var k = Items(entries[i])[0];
+                if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
+                {
+                    foundIndex = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (var i = entries.Count - 1; i >= 0; i--)
+            {
+                if (Bool(eq(Items(entries[i])[0], key)))
+                {
+                    foundIndex = i;
+                    break;
+                }
+            }
+        }
+        if (foundIndex < 0) return fallback;
+        var p = entries[foundIndex];
+        var pItems = Items(p);
+        var v = pItems[1];
+        if (record is not FrozenList && v is FrozenList)
+            return ReadItem(ReadItem(record, foundIndex), 1);
+        return v;
     }
     // Structural value equality reads existing branches without materializing mutable copies.
     public static object same_value(object a, object b)
@@ -329,14 +388,18 @@ public static class R
         JsonValueKind.False => false,
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
-    public static object json_stringify(object value) => JsonSerializer.Serialize(value);
+    private static readonly JsonSerializerOptions JsonWriteOptions = new()
+    {
+        MaxDepth = 512
+    };
+    public static object json_stringify(object value) => JsonSerializer.Serialize(value, JsonWriteOptions);
     public static object json_write(object path, object value)
     {
         var destination = Text(path);
         var partial = destination + ".partial";
-        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write))
-            JsonSerializer.Serialize(stream, value);
-        File.Move(partial, destination, false);
+        using (var stream = new FileStream(partial, FileMode.Create, FileAccess.Write))
+            JsonSerializer.Serialize(stream, value, JsonWriteOptions);
+        File.Move(partial, destination, true);
         return true;
     }
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));

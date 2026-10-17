@@ -64,6 +64,8 @@ fn dvg_presentation(state, viewer):
             let name = dv_read(subject.mind, c1_op_person_ref(actor, "name"))
             if dv_uncontested(name):
                 display = name.value
+            if display == "":
+                display = c1_op_known_speaker_label(subject.mind, actor)
             if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
                 result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
         i = i + 1

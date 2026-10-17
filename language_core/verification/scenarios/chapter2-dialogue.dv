@@ -196,7 +196,18 @@ fn c2d_action(row):
     while e < rt_count(effects):
         rt_push(grants, effects[e].ref)
         e = e + 1
-    var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": c2d_people(), "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
+    var raw_listeners = c2d_people()
+    if dv_has_key(row, "opportunity"):
+        let parts = dv_find(row.opportunity, "participants", [])
+        if 0 < rt_count(parts) and rt_count(parts) <= 4:
+            raw_listeners = dvp_merge_refs(parts, ["detective"])
+    var listeners = []
+    var l = 0
+    while l < rt_count(raw_listeners):
+        if raw_listeners[l] != row.actor:
+            rt_push(listeners, raw_listeners[l])
+        l = l + 1
+    var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": listeners, "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
     if dv_has_key(row, "norm_proposal"):
         action = dv_with(action, "speech", dv_with_many(speech, {"utterance_type": "proposal", "norm_proposal": row.norm_proposal}))
     if dv_has_key(row, "personal_choice"):
@@ -292,7 +303,7 @@ fn c2d_goals(actor):
         if tasks[t].actor == actor.id:
             rt_push(goals, c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]))
         t = t + 1
-    rt_push(goals, c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], actor.mind.time))
+    rt_push(goals, c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 0))
     if actor.id == "shen":
         rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
     if actor.id == "ruan":
@@ -306,17 +317,17 @@ fn c2d_goals(actor):
                 when = dv_all([when, c2d_case_gate(actor.mind)])
             rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false})
         i = i + 1
-    let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 540, 720)])
+    let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 600, 690)])
     rt_push(goals, c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]))
     if actor.id == "bertrand":
         rt_push(goals, c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]))
-        rt_push(goals, c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0))
     if actor.id == "detective":
         let ledger_fields = ["counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]
-        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), dv_true(), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], actor.mind.time))
+        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), c2_at(actor.id, "logistics"), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], 0))
         i = 0
         while i < rt_count(ledger_fields):
-            rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), dv_true(), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], actor.mind.time))
+            rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), c2_at(actor.id, "logistics"), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], 0))
             i = i + 1
     if actor.id == "quer" or actor.id == "huo":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_fact(c2_ref("c2.granary", "latch_loose"), true), [c2d_source("10_执行.story", 17, "RepairLatch")]))
@@ -329,17 +340,18 @@ fn c2d_refresh_actor_goals(actor):
     let goals = c2d_goals(actor)
     var policy = dv_with(actor.policy, "chapter2_dialogue_goals", goals)
     var combined = c2_personal_goals(actor)
-    let carried = dv_find(actor.policy, "chapter1_carried_goals", [])
     var i = 0
-    while i < rt_count(carried):
-        rt_push(combined, carried[i])
-        i = i + 1
-    if dv_has_key(actor.policy, "departure_goals"):
-        let departure = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "departure_goals", []))
-        i = 0
-        while i < rt_count(departure):
-            rt_push(combined, departure[i])
+    if actor.id == "demon" or dv_truth(actor.mind, c2_at(actor.id, "living_hall")) != "true":
+        let carried = dv_find(actor.policy, "chapter1_carried_goals", [])
+        while i < rt_count(carried):
+            rt_push(combined, carried[i])
             i = i + 1
+        if dv_has_key(actor.policy, "departure_goals"):
+            let departure = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "departure_goals", []))
+            i = 0
+            while i < rt_count(departure):
+                rt_push(combined, departure[i])
+                i = i + 1
     i = 0
     while i < rt_count(goals):
         rt_push(combined, goals[i])

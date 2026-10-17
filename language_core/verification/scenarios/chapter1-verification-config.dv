@@ -10,7 +10,7 @@ fn dvs_manifest(scenario, capability, initial_scope):
         rt_push(minds, dv_pair(actor.id, actor.mind))
         rt_push(laws, dv_pair(actor.id, actor.mind.adoptions))
         i = (i + 1)
-    return dv_with(dv_with(dv_with({"initial": {"physical": scenario.physical, "minds": minds}, "axioms": {"physical": scenario.physical.adoptions, "minds": laws}, "cost_model": scenario.cost_model, "capability": capability}, "source_ref", "language_core/verification/scenarios/chapter1-content.dv"), "initial_scope", initial_scope), "declared_action_budget_scope", "Detective 48 source action_budget; NPC 48 engineering cap only; total is sum, no time/cost relaxation")
+    return dv_with(dv_with(dv_with({"initial": {"physical": scenario.physical, "minds": minds}, "axioms": {"physical": scenario.physical.adoptions, "minds": laws}, "cost_model": scenario.cost_model, "capability": capability}, "source_ref", "language_core/verification/scenarios/chapter1-content.dv"), "initial_scope", initial_scope), "declared_action_budget_scope", "Each actor starts with 240 actual actions; session limit sums actor caps; chapter inheritance preserves remaining caps and executed count")
 
 fn dvs_manifest_enabled():
     return dvs_manifest(dvs_scenario_base(), {"actor": "detective", "model_budget": 320, "mode": "enabled"}, "canonical")

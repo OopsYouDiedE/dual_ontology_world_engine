@@ -307,25 +307,40 @@ fn dvs_materialize_arguments(actor):
         i = (i + 1)
     return dv_with(actor, "actions", result)
 
+fn dvs_subject_support_events(events, subject):
+    var result = []
+    var j = 0
+    while (j < rt_count(events)):
+        let event = events[j]
+        if (event.actor == subject):
+            let type = event.type
+            if dv_or((type == "observation"), dv_or((type == "listener_parse"), dv_or((type == "inference"), (type == "model_argument_accepted")))):
+                rt_push(result, event)
+        j = j + 1
+    return result
+
 fn dvs_support_parents(mind, refs, events, subject):
     var parents = []
+    let cand_events = dvs_subject_support_events(events, subject)
     var i = 0
     while (i < rt_count(refs)):
         var ref = refs[i]
-        var cell = dv_read(mind, refs[i])
+        var cell = dv_read(mind, ref)
+        let claims = dv_find(cell, "claims", [])
+        let basis = dv_find(cell, "basis", [])
         var j = 0
-        while (j < rt_count(events)):
-            var event = events[j]
-            var data = events[j].data
+        while (j < rt_count(cand_events)):
+            var event = cand_events[j]
+            var data = event.data
             var k = 0
-            if (event.actor == subject):
-                if dv_or((event.type == "observation"), (event.type == "listener_parse")):
-                    var observations = data.observations
-                    while (k < rt_count(observations)):
-                        var observation = observations[k]
-                        if dv_and(dv_same_local_ref(subject, observation.ref, ref), dv_has(dv_find(cell, "claims", []), observation)):
-                            parents = dv_explanation_merge(parents, dv_single(event.id))
-                        k = (k + 1)
+            if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                var observations = data.observations
+                while (k < rt_count(observations)):
+                    var observation = observations[k]
+                    if dv_and(dv_same_local_ref(subject, observation.ref, ref), dv_has(claims, observation)):
+                        parents = dv_explanation_merge(parents, dv_single(event.id))
+                    k = (k + 1)
+            else:
                 if (event.type == "inference"):
                     var changes = data.receipt.changes
                     var n = 0
@@ -334,9 +349,10 @@ fn dvs_support_parents(mind, refs, events, subject):
                         if dv_and(dv_same(change.ref, ref), dv_same(change.after, cell)):
                             parents = dv_explanation_merge(parents, dv_single(event.id))
                         n = (n + 1)
-                if (event.type == "model_argument_accepted"):
-                    if dv_has(dv_find(cell, "basis", []), event.id):
-                        parents = dv_explanation_merge(parents, dv_single(event.id))
+                else:
+                    if (event.type == "model_argument_accepted"):
+                        if dv_has(basis, event.id):
+                            parents = dv_explanation_merge(parents, dv_single(event.id))
             j = (j + 1)
         i = (i + 1)
     return parents
@@ -497,76 +513,55 @@ fn dvs_model_observed_inputs(model):
     return result
 
 fn dvs_public_model_paid(events, id, subject):
-    var i = 0
-    var valid = false
-    while (i < rt_count(events)):
-        var event = events[i]
-        if dv_and((event.id == id), dv_and((event.actor == subject), dv_or((event.type == "mind_simulation"), (event.type == "model_recheck")))):
-            var parents = event.parents
-            var j = 0
-            var result = event.data.result
-            while (j < rt_count(events)):
-                var paid = events[j]
-                if dv_and(dv_has(parents, paid.id), dv_and((paid.actor == subject), (paid.type == "action_execution"))):
-                    var data = paid.data
-                    if dv_and((dv_find(dv_find(data, "action", []), "kind", "") == "replay"), dv_and((data.receipt.execution.status == "applied"), dv_and((dv_find(result, "status", "") == "explained"), dv_find(result, "plan_complete", false)))):
-                        valid = true
-                j = (j + 1)
-        i = (i + 1)
-    return valid
+    let event = dvs_find_event_by_id(events, id)
+    if (event != false and event.actor == subject and dv_or((event.type == "mind_simulation"), (event.type == "model_recheck"))):
+        let parents = event.parents
+        let result = event.data.result
+        var j = 0
+        while (j < rt_count(parents)):
+            let paid = dvs_find_event_by_id(events, parents[j])
+            if (paid != false and paid.actor == subject and paid.type == "action_execution"):
+                let data = paid.data
+                if dv_and((dv_find(dv_find(data, "action", []), "kind", "") == "replay"), dv_and((data.receipt.execution.status == "applied"), dv_and((dv_find(result, "status", "") == "explained"), dv_find(result, "plan_complete", false)))):
+                    return true
+            j = j + 1
+    return false
 
 fn dvs_public_argument_valid(action, rule, events, subject):
     var argument = dv_find(action, "argument", false)
-    var valid = false
-    var i = 0
     if (argument == false):
         return false
-    else:
-        if dv_has_key(argument, "id"):
-            while (i < rt_count(events)):
-                var event = events[i]
-                if dv_and((event.id == argument.id), dv_and((event.actor == subject), (event.type == "model_argument_accepted"))):
-                    var original = event.data.result.argument
-                    var public = dv_without(dv_without(dv_without(argument, "question_id"), "hypothesis_id"), "adoptions")
-                    if dv_same(original, public):
-                        valid = true
-                i = (i + 1)
-            if valid:
-                if dvs_public_model_paid(events, argument.model_event, subject):
-                    false
-                else:
-                    valid = false
-            if valid:
-                var required = dv_find(rule, "required_argument_slots", dv_find(action, "argument_slots", []))
-                var claims = argument.claims
-                var j = 0
-                var propositions = []
-                if dv_and((0 < rt_count(required)), dv_and(argument.estimated, dv_and((0 < argument.confidence), dv_and((argument.confidence < 1), dv_and((not (argument.model_event == "")), (0 < rt_count(argument.source_event_ids))))))):
-                    false
-                else:
-                    valid = false
-                while (j < rt_count(required)):
-                    var slot = required[j]
-                    var k = 0
-                    var found = false
-                    while (k < rt_count(claims)):
-                        var claim = claims[k]
-                        if (claim.slot_id == slot):
-                            found = true
-                            rt_push(propositions, dv_fact(claim.ref, claim.value))
-                        k = (k + 1)
-                    if found:
-                        false
-                    else:
-                        valid = false
-                    j = (j + 1)
-                if dv_same(dv_all(propositions), action.answer):
-                    false
-                else:
-                    valid = false
-            return valid
-        else:
+    if (not dv_has_key(argument, "id")):
+        return false
+    let event = dvs_find_event_by_id(events, argument.id)
+    if (event == false or event.actor != subject or event.type != "model_argument_accepted"):
+        return false
+    var original = event.data.result.argument
+    var public = dv_without(dv_without(dv_without(argument, "question_id"), "hypothesis_id"), "adoptions")
+    if (not dv_same(original, public)):
+        return false
+    if (not dvs_public_model_paid(events, argument.model_event, subject)):
+        return false
+    var required = dv_find(rule, "required_argument_slots", dv_find(action, "argument_slots", []))
+    var claims = argument.claims
+    var j = 0
+    var propositions = []
+    if (not dv_and((0 < rt_count(required)), dv_and(argument.estimated, dv_and((0 < argument.confidence), dv_and((argument.confidence < 1), dv_and((not (argument.model_event == "")), (0 < rt_count(argument.source_event_ids)))))))):
+        return false
+    while (j < rt_count(required)):
+        var slot = required[j]
+        var k = 0
+        var found = false
+        while (k < rt_count(claims)):
+            var claim = claims[k]
+            if (claim.slot_id == slot):
+                found = true
+                rt_push(propositions, dv_fact(claim.ref, claim.value))
+            k = (k + 1)
+        if (not found):
             return false
+        j = (j + 1)
+    return dv_same(dv_all(propositions), action.answer)
 
 fn dvs_factor_candidate_rejected(actor, candidate):
     var rejections = dv_find(actor, "factor_rejections", {"source_revision": -1, "ids": []})
@@ -574,24 +569,17 @@ fn dvs_factor_candidate_rejected(actor, candidate):
 
 fn dvs_capture_heard_utterances(actor, events):
     var heard = dv_find(actor, "heard_utterances", [])
-    // Event snapshots are append-only within a session. Index literal IDs once,
-    // then consume listener parses in their original event order.
-    var literals = []
     var i = 0
-    while (i < rt_count(events)):
-        var event = events[i]
-        if event.type == "speech_literal":
-            rt_push(literals, dv_pair(event.id, event))
-        i = (i + 1)
-    i = 0
     while (i < rt_count(events)):
         var event = events[i]
         if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
             var data = event.data
-            var source = event.data.source_event
-            let literal = dv_find(literals, source, false)
-            if literal != false and dv_has(event.parents, source) and literal.actor != actor.id:
-                heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
+            var source = data.source_event
+            var existing = dv_find(heard, source, false)
+            if existing == false or existing.parse_event != event.id:
+                let literal = dvs_find_event_by_id(events, source)
+                if literal != false and dv_has(event.parents, source) and literal.actor != actor.id:
+                    heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
         i = (i + 1)
     return dv_with(actor, "heard_utterances", heard)
 
@@ -602,24 +590,21 @@ fn dvs_topic_origin_speakers(events, sources):
     var i = 0
     while (i < rt_count(pending)):
         var id = pending[i]
-        var j = 0
         if dv_has(visited, id):
             false
         else:
             rt_push(visited, id)
-            while (j < rt_count(events)):
-                var event = events[j]
-                if (event.id == id):
-                    if dv_or((event.type == "observation"), (event.type == "listener_parse")):
-                        var source = dv_find(event.data, "source_event", "")
-                        if dv_and((not (source == "")), dv_has(event.parents, source)):
-                            pending = dv_explanation_merge(pending, dv_single(source))
-                    else:
-                        if (event.type == "public_topic_heard"):
-                            pending = dv_explanation_merge(pending, dv_find(event.data, "source_event_ids", []))
-                    if (event.type == "speech_literal"):
-                        result = dv_explanation_merge(result, dv_single(event.actor))
-                j = (j + 1)
+            let event = dvs_find_event_by_id(events, id)
+            if (event != false):
+                if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                    var source = dv_find(event.data, "source_event", "")
+                    if dv_and((not (source == "")), dv_has(event.parents, source)):
+                        pending = dv_explanation_merge(pending, dv_single(source))
+                else:
+                    if (event.type == "public_topic_heard"):
+                        pending = dv_explanation_merge(pending, dv_find(event.data, "source_event_ids", []))
+                if (event.type == "speech_literal"):
+                    result = dv_explanation_merge(result, dv_single(event.actor))
         i = (i + 1)
     return result
 
