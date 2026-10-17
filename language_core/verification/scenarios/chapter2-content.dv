@@ -942,11 +942,7 @@ fn c2_personal_goals(actor):
         var corridor_index = 0
         while corridor_index < rt_count(indoor_gates):
             let gate = indoor_gates[corridor_index]
-            let fields = ["air_safe", "intake_safe", "seal_intact", "ventilated"]
-            var field_index = 0
-            while field_index < rt_count(fields):
-                rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("现场核对封闭连廊")], 1980))
-                field_index = field_index + 1
+            rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("现场核对封闭连廊")], 1980))
             rt_push(goals, c2_goal(dv_fact(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际换气")]))
             rt_push(goals, c2_goal(dv_fact(c2_access(gate), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际开启连廊")]))
             corridor_index = corridor_index + 1
@@ -1175,8 +1171,8 @@ fn c2_world_processes():
     var i = 0
     var light_day = 1
     while light_day < 6:
-        rt_push(result, {"id": rt_cat("c2.daylight.", rt_show(light_day)), "law": rt_cat("c2.daylight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
-        rt_push(result, {"id": rt_cat("c2.nightlight.", rt_show(light_day)), "law": rt_cat("c2.nightlight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
+        rt_push(result, {"id": rt_cat("c2.daylight.", rt_show(light_day)), "law": rt_cat("c2.daylight.", rt_show(light_day)), "once": true, "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
+        rt_push(result, {"id": rt_cat("c2.nightlight.", rt_show(light_day)), "law": rt_cat("c2.nightlight.", rt_show(light_day)), "once": true, "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
         light_day = light_day + 1
     let people = c2_people()
     i = 0

@@ -248,7 +248,7 @@ fn c1n_install_scene(scene):
 
 // These are finite costed action lengths, not speed multipliers or world-clock writes.
 fn c1n_wait_durations():
-    return [180, 60, 30, 15, 5, 1]
+    return [180, 120, 60, 30, 15, 5, 1]
 
 fn c1n_wait_kind(minutes):
     return rt_cat("wait.first_night.", rt_show(minutes))
@@ -385,7 +385,14 @@ fn c1n_future_goal_pending(actor, goal):
 // Static syntax metadata is built with the goal, never from physical future state.
 fn c1n_index_goal_window(goal):
     let condition = dv_find(goal, "available_when", dv_true())
-    return dv_with_many(goal, {"future_clock_condition": condition, "future_clock_bounds": c1n_positive_clock_bounds(condition), "future_nonclock": c1n_without_clock(condition)})
+    let key = ["c1n_goal_window"]
+    let cached = rt_memo_get(condition, key)
+    var window = []
+    if cached[0]:
+        window = cached[1]
+    else:
+        window = rt_memo_put(condition, key, {"future_clock_condition": condition, "future_clock_bounds": c1n_positive_clock_bounds(condition), "future_nonclock": c1n_without_clock(condition)})
+    return dv_with_many(goal, window)
 
 fn c1n_known_future_wait_actor(actor):
     if actor.id == "demon" and not dv_has_key(actor.policy, "chapter2_profile"):

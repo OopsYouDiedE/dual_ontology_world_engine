@@ -1,0 +1,2563 @@
+{
+  "last_phase": {
+    "type": "engine_phase",
+    "actor": "detective",
+    "game_time": 4689,
+    "phase": "cognition-start"
+  },
+  "last_execution": {
+    "event_id": "e11766",
+    "type": "action_execution",
+    "actor": "lucian",
+    "game_time": 4689,
+    "parents": [
+      "e11765"
+    ],
+    "action_id": "lucian.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 180,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 3694,
+      "revision_after": 3695,
+      "status": "applied"
+    }
+  },
+  "last_applied": {
+    "event_id": "e11766",
+    "type": "action_execution",
+    "actor": "lucian",
+    "game_time": 4689,
+    "parents": [
+      "e11765"
+    ],
+    "action_id": "lucian.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 180,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 3694,
+      "revision_after": 3695,
+      "status": "applied"
+    }
+  },
+  "last_debug_event": {
+    "event_id": "e11767",
+    "type": "observation",
+    "actor": "lucian",
+    "game_time": 4689,
+    "parents": [
+      "e11766",
+      "e11610"
+    ],
+    "action_id": "lucian.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "observations": [
+        {
+          "id": [
+            "action984",
+            "lucian",
+            {
+              "type": "ref",
+              "object": "night.wait.lucian",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "lucian"
+            }
+          ],
+          "subject": "lucian",
+          "ref": {
+            "type": "ref",
+            "object": "night.wait.lucian",
+            "facet": "state",
+            "field": "elapsed",
+            "subject": "lucian"
+          },
+          "value": 3810,
+          "source": "perception",
+          "origin": "direct",
+          "time": 4689,
+          "trust": 1,
+          "dependency": [
+            "action984",
+            {
+              "type": "ref",
+              "object": "night.wait.lucian",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "lucian"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3695
+          }
+        },
+        {
+          "id": [
+            "action984",
+            "lucian",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "lucian"
+            }
+          ],
+          "subject": "lucian",
+          "ref": {
+            "type": "ref",
+            "object": "campaign.clock",
+            "facet": "state",
+            "field": "minute",
+            "subject": "lucian"
+          },
+          "value": 4689,
+          "source": "perception",
+          "origin": "direct",
+          "time": 4689,
+          "trust": 1,
+          "dependency": [
+            "action984",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "lucian"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3695
+          }
+        }
+      ],
+      "execution_id": "action984",
+      "revision_before": 317,
+      "revision_after": 318
+    }
+  },
+  "debug_end": [],
+  "reached_7200": false,
+  "all_frozen_source_unchanged": true,
+  "key_events": [
+    {
+      "event_id": "e2644",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 612,
+      "parents": [
+        "e2643"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3385",
+      "type": "answer_accepted",
+      "actor": "ward",
+      "game_time": 855,
+      "parents": [
+        "e3384"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3396",
+      "type": "answer_accepted",
+      "actor": "gu",
+      "game_time": 855,
+      "parents": [
+        "e3395"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3847",
+      "type": "answer_accepted",
+      "actor": "moran",
+      "game_time": 1080,
+      "parents": [
+        "e3846"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3858",
+      "type": "answer_accepted",
+      "actor": "ruan",
+      "game_time": 1080,
+      "parents": [
+        "e3857"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3869",
+      "type": "answer_accepted",
+      "actor": "elena",
+      "game_time": 1080,
+      "parents": [
+        "e3868"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3921",
+      "type": "answer_accepted",
+      "actor": "selma",
+      "game_time": 1085,
+      "parents": [
+        "e3920"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4012",
+      "type": "answer_accepted",
+      "actor": "bertrand",
+      "game_time": 1110,
+      "parents": [
+        "e4011"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4023",
+      "type": "answer_accepted",
+      "actor": "margaret",
+      "game_time": 1110,
+      "parents": [
+        "e4022"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4050",
+      "type": "answer_accepted",
+      "actor": "mora",
+      "game_time": 1111,
+      "parents": [
+        "e4049"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4077",
+      "type": "answer_accepted",
+      "actor": "veronica",
+      "game_time": 1113,
+      "parents": [
+        "e4076"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4260",
+      "type": "chapter_content_available",
+      "actor": "",
+      "game_time": 1805,
+      "parents": [],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "chapter": 2,
+        "movement": false
+      }
+    }
+  ],
+  "environment_processes": [
+    {
+      "event_id": "e4358",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1806,
+      "parents": [
+        "e4357"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.daylight.2",
+          "law": "c2.daylight.2",
+          "once": true,
+          "basis": [
+            {
+              "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+              "line": 35,
+              "id": "明示昼夜时段边界"
+            }
+          ]
+        },
+        "revision_before": 2892,
+        "revision_after": 2894,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e4498",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1980,
+      "parents": [
+        "e4497"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.weather.first_wind",
+          "law": "c2.weather.first_wind",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "second-day-morning-wind"
+            }
+          ]
+        },
+        "revision_before": 2908,
+        "revision_after": 2910,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e4499",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1981,
+      "parents": [
+        "e4497"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.meter.safe",
+          "law": "c2.meter.safe",
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "current-instrument-qualitative-safe-reading"
+            }
+          ]
+        },
+        "revision_before": 2910,
+        "revision_after": 2911,
+        "suspended": false
+      }
+    },
+    {
+      "event_id": "e8698",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8697"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.detective.2.noon",
+          "law": "c2.hunger.detective.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3260,
+        "revision_after": 3262,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8699",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8698"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.huo.2.noon",
+          "law": "c2.hunger.huo.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3262,
+        "revision_after": 3264,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8700",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8699"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.shen.2.noon",
+          "law": "c2.hunger.shen.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3264,
+        "revision_after": 3266,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8701",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8700"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.su.2.noon",
+          "law": "c2.hunger.su.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3266,
+        "revision_after": 3268,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8702",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8701"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.lucian.2.noon",
+          "law": "c2.hunger.lucian.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3268,
+        "revision_after": 3270,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8703",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8702"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.gu.2.noon",
+          "law": "c2.hunger.gu.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3270,
+        "revision_after": 3272,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8704",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8703"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.quer.2.noon",
+          "law": "c2.hunger.quer.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3272,
+        "revision_after": 3274,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8705",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8704"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ward.2.noon",
+          "law": "c2.hunger.ward.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3274,
+        "revision_after": 3276,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8706",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8705"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.selma.2.noon",
+          "law": "c2.hunger.selma.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3276,
+        "revision_after": 3278,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8707",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8706"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ruan.2.noon",
+          "law": "c2.hunger.ruan.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3278,
+        "revision_after": 3280,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8708",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8707"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.elena.2.noon",
+          "law": "c2.hunger.elena.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3280,
+        "revision_after": 3282,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8709",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8708"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.moran.2.noon",
+          "law": "c2.hunger.moran.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3282,
+        "revision_after": 3284,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8710",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8709"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.veronica.2.noon",
+          "law": "c2.hunger.veronica.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3284,
+        "revision_after": 3286,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8711",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8710"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.bertrand.2.noon",
+          "law": "c2.hunger.bertrand.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3286,
+        "revision_after": 3288,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8712",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8711"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.margaret.2.noon",
+          "law": "c2.hunger.margaret.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3288,
+        "revision_after": 3290,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e8713",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e8712"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.mora.2.noon",
+          "law": "c2.hunger.mora.2.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3290,
+        "revision_after": 3292,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9604",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9603"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.nightlight.2",
+          "law": "c2.nightlight.2",
+          "once": true,
+          "basis": [
+            {
+              "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+              "line": 35,
+              "id": "明示昼夜时段边界"
+            }
+          ]
+        },
+        "revision_before": 3374,
+        "revision_after": 3376,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9605",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9604"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.detective.2.evening",
+          "law": "c2.hunger.detective.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3376,
+        "revision_after": 3378,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9606",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9605"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.huo.2.evening",
+          "law": "c2.hunger.huo.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3378,
+        "revision_after": 3380,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9607",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9606"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.shen.2.evening",
+          "law": "c2.hunger.shen.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3380,
+        "revision_after": 3382,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9608",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9607"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.su.2.evening",
+          "law": "c2.hunger.su.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3382,
+        "revision_after": 3384,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9609",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9608"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.lucian.2.evening",
+          "law": "c2.hunger.lucian.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3384,
+        "revision_after": 3386,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9610",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9609"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.gu.2.evening",
+          "law": "c2.hunger.gu.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3386,
+        "revision_after": 3388,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9611",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9610"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.quer.2.evening",
+          "law": "c2.hunger.quer.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3388,
+        "revision_after": 3390,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9612",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9611"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ward.2.evening",
+          "law": "c2.hunger.ward.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3390,
+        "revision_after": 3392,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9613",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9612"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.selma.2.evening",
+          "law": "c2.hunger.selma.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3392,
+        "revision_after": 3394,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9614",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9613"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ruan.2.evening",
+          "law": "c2.hunger.ruan.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3394,
+        "revision_after": 3396,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9615",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9614"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.elena.2.evening",
+          "law": "c2.hunger.elena.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3396,
+        "revision_after": 3398,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9616",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9615"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.moran.2.evening",
+          "law": "c2.hunger.moran.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3398,
+        "revision_after": 3400,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9617",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9616"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.veronica.2.evening",
+          "law": "c2.hunger.veronica.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3400,
+        "revision_after": 3402,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9618",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9617"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.bertrand.2.evening",
+          "law": "c2.hunger.bertrand.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3402,
+        "revision_after": 3404,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9619",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9618"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.margaret.2.evening",
+          "law": "c2.hunger.margaret.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3404,
+        "revision_after": 3406,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e9620",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9619"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.mora.2.evening",
+          "law": "c2.hunger.mora.2.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3406,
+        "revision_after": 3408,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10122",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3240,
+      "parents": [
+        "e10121"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.daylight.3",
+          "law": "c2.daylight.3",
+          "once": true,
+          "basis": [
+            {
+              "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+              "line": 35,
+              "id": "明示昼夜时段边界"
+            }
+          ]
+        },
+        "revision_before": 3459,
+        "revision_after": 3461,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10779",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10778"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.detective.3.noon",
+          "law": "c2.hunger.detective.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3526,
+        "revision_after": 3528,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10780",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10779"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.huo.3.noon",
+          "law": "c2.hunger.huo.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3528,
+        "revision_after": 3530,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10781",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10780"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.shen.3.noon",
+          "law": "c2.hunger.shen.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3530,
+        "revision_after": 3532,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10782",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10781"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.su.3.noon",
+          "law": "c2.hunger.su.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3532,
+        "revision_after": 3534,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10783",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10782"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.lucian.3.noon",
+          "law": "c2.hunger.lucian.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3534,
+        "revision_after": 3536,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10784",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10783"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.gu.3.noon",
+          "law": "c2.hunger.gu.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3536,
+        "revision_after": 3538,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10785",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10784"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.quer.3.noon",
+          "law": "c2.hunger.quer.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3538,
+        "revision_after": 3540,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10786",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10785"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ward.3.noon",
+          "law": "c2.hunger.ward.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3540,
+        "revision_after": 3542,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10787",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10786"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.selma.3.noon",
+          "law": "c2.hunger.selma.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3542,
+        "revision_after": 3544,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10788",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10787"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ruan.3.noon",
+          "law": "c2.hunger.ruan.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3544,
+        "revision_after": 3546,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10789",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10788"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.elena.3.noon",
+          "law": "c2.hunger.elena.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3546,
+        "revision_after": 3548,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10790",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10789"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.moran.3.noon",
+          "law": "c2.hunger.moran.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3548,
+        "revision_after": 3550,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10791",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10790"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.veronica.3.noon",
+          "law": "c2.hunger.veronica.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3550,
+        "revision_after": 3552,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10792",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10791"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.bertrand.3.noon",
+          "law": "c2.hunger.bertrand.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3552,
+        "revision_after": 3554,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10793",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10792"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.margaret.3.noon",
+          "law": "c2.hunger.margaret.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3554,
+        "revision_after": 3556,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e10794",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3720,
+      "parents": [
+        "e10793"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.mora.3.noon",
+          "law": "c2.hunger.mora.3.noon",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3556,
+        "revision_after": 3558,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11183",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11182"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.weather.third_night",
+          "law": "c2.weather.third_night",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "第五部分：五日环境变化"
+            }
+          ]
+        },
+        "revision_before": 3598,
+        "revision_after": 3600,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11184",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11183"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.nightlight.3",
+          "law": "c2.nightlight.3",
+          "once": true,
+          "basis": [
+            {
+              "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+              "line": 35,
+              "id": "明示昼夜时段边界"
+            }
+          ]
+        },
+        "revision_before": 3600,
+        "revision_after": 3602,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11185",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11184"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.detective.3.evening",
+          "law": "c2.hunger.detective.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3602,
+        "revision_after": 3604,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11186",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11185"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.huo.3.evening",
+          "law": "c2.hunger.huo.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3604,
+        "revision_after": 3606,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11187",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11186"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.shen.3.evening",
+          "law": "c2.hunger.shen.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3606,
+        "revision_after": 3608,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11188",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11187"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.su.3.evening",
+          "law": "c2.hunger.su.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3608,
+        "revision_after": 3610,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11189",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11188"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.lucian.3.evening",
+          "law": "c2.hunger.lucian.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3610,
+        "revision_after": 3612,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11190",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11189"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.gu.3.evening",
+          "law": "c2.hunger.gu.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3612,
+        "revision_after": 3614,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11191",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11190"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.quer.3.evening",
+          "law": "c2.hunger.quer.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3614,
+        "revision_after": 3616,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11192",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11191"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ward.3.evening",
+          "law": "c2.hunger.ward.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3616,
+        "revision_after": 3618,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11193",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11192"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.selma.3.evening",
+          "law": "c2.hunger.selma.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3618,
+        "revision_after": 3620,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11194",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11193"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.ruan.3.evening",
+          "law": "c2.hunger.ruan.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3620,
+        "revision_after": 3622,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11195",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11194"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.elena.3.evening",
+          "law": "c2.hunger.elena.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3622,
+        "revision_after": 3624,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11196",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11195"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.moran.3.evening",
+          "law": "c2.hunger.moran.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3624,
+        "revision_after": 3626,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11197",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11196"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.veronica.3.evening",
+          "law": "c2.hunger.veronica.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3626,
+        "revision_after": 3628,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11198",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11197"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.bertrand.3.evening",
+          "law": "c2.hunger.bertrand.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3628,
+        "revision_after": 3630,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11199",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11198"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.margaret.3.evening",
+          "law": "c2.hunger.margaret.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3630,
+        "revision_after": 3632,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11200",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4140,
+      "parents": [
+        "e11199"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.hunger.mora.3.evening",
+          "law": "c2.hunger.mora.3.evening",
+          "once": true,
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ]
+        },
+        "revision_before": 3632,
+        "revision_after": 3634,
+        "suspended": true
+      }
+    },
+    {
+      "event_id": "e11702",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 4680,
+      "parents": [
+        "e11701"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "process": {
+          "id": "c2.daylight.4",
+          "law": "c2.daylight.4",
+          "once": true,
+          "basis": [
+            {
+              "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_时间与文案.story",
+              "line": 35,
+              "id": "明示昼夜时段边界"
+            }
+          ]
+        },
+        "revision_before": 3685,
+        "revision_after": 3687,
+        "suspended": true
+      }
+    }
+  ]
+}

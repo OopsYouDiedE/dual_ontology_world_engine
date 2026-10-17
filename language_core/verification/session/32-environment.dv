@@ -48,6 +48,9 @@ fn dvs_environment_boundary(condition, clock, now, due):
         return due
     if op != "at_least" or not rt_is_numeric_value(condition.value):
         return dv_min(due, now + 1)
+    // A distant bound cannot be crossed in this wait: do not count toward it.
+    if due < condition.value:
+        return due
     if now < condition.value:
         let delta = condition.value - now
         var steps = 1

@@ -280,13 +280,15 @@ fn dvp_inspection_signature(actor, action, mind):
         let cell = dv_read(mind, refs[i])
         rt_push(inputs, {"ref": refs[i], "known": cell.known, "value": cell.value, "conflicted": cell.conflicted})
         i = i + 1
-    let goals = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "goals", []))
+    let evidence = dvp_inspection_freshness(actor, mind)
     var freshness = []
     i = 0
-    while i < rt_count(goals):
-        let goal = goals[i]
-        if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref") and dv_has(refs, goal.ref):
-            rt_push(freshness, {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
+    while i < rt_count(refs):
+        let entries = dv_find(evidence, rt_json_stringify(refs[i]), [])
+        var j = 0
+        while j < rt_count(entries):
+            rt_push(freshness, entries[j])
+            j = j + 1
         i = i + 1
     return {"inputs": inputs, "freshness": freshness}
 
@@ -392,7 +394,7 @@ fn dvp_value_context(actor):
         if kind == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
             if not dv_has(dv_find(actor, "planning_achievements", []), i):
                 if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
-                    rt_push(achievements, goal)
+                    rt_push(achievements, dv_with(goal, "planning_refs", dvs_sim_refs(goal.proposition)))
         if kind == "communicate" and 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
             rt_push(communications, goal)
         i = i + 1
@@ -644,7 +646,7 @@ fn dvp_cached_dependencies(actor, seeds, budget):
             return dv_with_many(result, {"cache_hit": false, "cache": local_2})
 
 fn dvp_plan(actor, bindings, costs):
-    let indexed = dvp_actor_view(actor, actor.mind)
+    let indexed = dvp_actor_view(actor, dv_with_many(actor.mind, {"history": [], "seen": []}))
     rt_push(indexed, dv_pair("planning_choice_groups", dvp_choice_groups(actor.actions)))
     actor = indexed
     // Refresh declared evidence goals for every chapter in the read-only planning view.
@@ -680,7 +682,7 @@ fn dvp_plan(actor, bindings, costs):
     var root_room = ""
     if dv_has_key(actor, "location_ref"):
         let cur_loc = dv_read(actor.mind, actor.location_ref)
-        if cur_loc.known:
+        if dv_uncontested(cur_loc):
             root_room = rt_show(cur_loc.value)
     let initial_seen = dvp_state_key(root_room, [])
     var init_key = rt_cat(initial_seen, rt_cat("#", rt_cat(dvp_join_items(initial_achievements), rt_cat("@", dvp_join_items(initial_access)))))
@@ -690,15 +692,6 @@ fn dvp_plan(actor, bindings, costs):
     var time_blocked = 0
     var stop = "complete-depth"
     var actions = actor.actions
-    var a_idx = 0
-    let a_cnt = rt_count(actions)
-    while a_idx < a_cnt:
-        var act = actions[a_idx]
-        if not dv_has_key(act, "required_room") and dv_has_key(actor, "location_ref"):
-            let r = dvp_extract_required_room(act.precondition, actor.location_ref)
-            if r != "":
-                actions = dvs_replace(actions, a_idx, dv_with(act, "required_room", r))
-        a_idx = a_idx + 1
     var visited = []
     visited = dv_single({"key": init_key, "score": 0, "elapsed": 0})
     while dv_and((depth < depth_limit), (0 < rt_count(frontier))):
@@ -715,10 +708,11 @@ fn dvp_plan(actor, bindings, costs):
                 var node_actor = dvp_actor_view(actor, mind)
                 rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
                 rt_push(node_actor, dv_pair("planning_opportunities", node.opportunities))
+                let node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
                 let value_context = dvp_value_context(node_actor)
                 expanded = (expanded + 1)
-                while (i < rt_count(actions)):
-                    var action = actions[i]
+                while (i < rt_count(node_actions)):
+                    var action = node_actions[i]
                     var local_1 = false
                     var spatially_possible = true
                     if node.room != "":
@@ -904,7 +898,11 @@ fn dvp_achievement_pending(actor, action, pending):
     var relevant = false
     i = 0
     while i < rt_count(pending) and not relevant:
-        let refs = dvs_sim_refs(pending[i].proposition)
+        var refs = []
+        if dv_has_key(pending[i], "planning_refs"):
+            refs = pending[i].planning_refs
+        else:
+            refs = dvs_sim_refs(pending[i].proposition)
         var j = 0
         while j < rt_count(adoption.law.effects) and not relevant:
             var r = 0
@@ -954,5 +952,47 @@ fn dvp_forecast(mind, name):
     let cached = rt_memo_get(mind, key)
     if cached[0]:
         return cached[1]
-    let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
+    let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": [], "seen": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
     return rt_memo_put(mind, key, result)
+
+// Catalog-only filtering; dynamic eligibility is still checked on the node mind.
+fn dvp_room_actions(actions, room, location_ref):
+    if room == "" or location_ref == false:
+        return actions
+    let key = ["dvp_room_actions", room, location_ref]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        var required = dv_find(action, "required_room", "")
+        if dv_has_key(action, "travel"):
+            required = action.travel.from
+        else:
+            if required == "":
+                required = dvp_extract_required_room(action.precondition, location_ref)
+        if required == "" or required == room:
+            rt_push(result, action)
+        i = i + 1
+    return rt_memo_put(actions, key, result)
+
+// Every inspection in the same mind reuses the evidence refresh and availability reads.
+fn dvp_inspection_freshness(actor, mind):
+    let declared = dv_find(actor.policy, "goals", [])
+    let key = ["dvp_inspection_freshness", declared]
+    let cached = rt_memo_get(mind, key)
+    if cached[0]:
+        return cached[1]
+    let goals = dvp_refresh_current_evidence(dvp_actor_view(actor, mind), declared)
+    var index = []
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref"):
+            let name = rt_json_stringify(goal.ref)
+            let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
+            index = dv_with(index, name, entries)
+        i = i + 1
+    return rt_memo_put(mind, key, index)

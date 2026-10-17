@@ -271,6 +271,11 @@ fn dvs_session_prepare(state):
         state = dvs_schedule(state)
     if dv_has_key(state, "pending") or not dvs_session_active(state):
         return state
+    return dvs_prepare_actor(state)
+
+// The caller has selected the actor; content may refresh its own declarations first.
+// This remains the same prepare phase, not a second dispatch or execution path.
+fn dvs_prepare_actor(state):
     let story = state.story
     var physical = state.physical
     var actors = state.actors

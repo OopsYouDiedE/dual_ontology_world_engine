@@ -14,7 +14,7 @@ fn dv_debug_event(event):
             else:
                 action_id = rt_show(raw_action)
     var detail = []
-    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement"]
+    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended"]
     var i = 0
     while i < rt_count(fields):
         if dv_has_key(data, fields[i]):

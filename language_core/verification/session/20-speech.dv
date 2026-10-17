@@ -383,7 +383,7 @@ fn dvs_speech_model_interpretations(mind, policy, speech, bindings):
     return result
 
 fn dvs_speech_model_prediction(model, speech, speaker, source, time):
-    var before = dv_clone(model.mind)
+    var before = dv_with_many(model.mind, {"history": [], "seen": []})
     var policy = model.policy
     var bindings = dv_find(speech, "referents", [])
     var parsed = dvs_speech_map(model.mind, speech.literal_ast, dv_find(speech, "referents", []))
@@ -441,8 +441,25 @@ fn dvs_speech_goals(actor):
         i = (i + 1)
     return active
 
-fn dvs_speech_choice_signature(actor, action, goals):
-    return {"mind": actor.mind, "speech": action.speech, "goals": goals, "listeners": dv_find(action, "listeners", [])}
+fn dvs_speech_choice_signature(actor, action, goals, time):
+    let listeners = dv_find(action, "listeners", [])
+    let models = dv_find(actor.mind, "listener_models", [])
+    var selected = []
+    var i = 0
+    while i < rt_count(listeners):
+        let listener = listeners[i]
+        let model = dv_find(models, listener, false)
+        var gates = []
+        if model != false:
+            let parsed = dvs_speech_map(model.mind, action.speech.literal_ast, dv_find(action.speech, "referents", []))
+            let refs = dvs_sim_refs(parsed)
+            var j = 0
+            while j < rt_count(refs):
+                rt_push(gates, time < dv_read(model.mind, refs[j]).time)
+                j = j + 1
+        rt_push(selected, {"listener": listener, "model": model, "older_observation": gates})
+        i = i + 1
+    return {"speaker": actor.id, "literal_truth": dvs_speech_truth(actor.mind, action.speech), "speech": action.speech, "goals": goals, "models": selected}
 
 fn dvs_speech_goal_value(goals, listener, prediction):
     var value = 0
@@ -486,7 +503,7 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
             if dv_and(dv_has_key(action, "speech"), dv_find(action, "argument_available", true)):
                 if dvp_eligible(actor, action, mind, []):
                     var truth = dvs_speech_truth(mind, action.speech)
-                    var signature = dvs_speech_choice_signature(actor, action, goals)
+                    var signature = dvs_speech_choice_signature(actor, action, goals, time)
                     if (not (truth == "true")):
                         cache = dv_with(cache, id, {"status": "illegal-literal", "utility": 0, "signature": signature})
                         dvs_event(events, "speech_choice_rejected", actor.id, time, dv_single(parent), {"action": action, "actor_before": before, "truth": truth, "charged_units": 0})

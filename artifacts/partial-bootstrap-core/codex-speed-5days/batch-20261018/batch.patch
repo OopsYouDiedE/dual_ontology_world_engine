@@ -1,0 +1,460 @@
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index 1381d471..b50bc697 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -234,6 +234,15 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 
+ 等待队列由 `dvs_environment_next_time` 读取已采纳环境 premise 的时钟边界，保留一分钟采样格与实际到期点；尚可变化的进程、增量及级联继续逐分钟结算。不可分析时钟条件回退一分钟。`world_processes.once` 仅在 applied 后挂起；不按规则名称猜测一次性身份。新增时钟运算或环境写入机制时须同步边界分析及 core/README.md。
+ 
+-`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history，保留 seen 与单元来源；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
++`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history/seen，保留单元来源及路径去重；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
+ 
+ 目标时间元数据由内容构造器预计算，使用时核对 available_when 未变；目标刷新仍逐次检查本人时刻与认知，不按粗粒度时段推迟资格。声明合并与角色目标范围变化属于新行为条件，不能据本轮结果宣称与旧版本同条件加速。集中修改、静态审读和文档更新完成后，只运行本轮授权的一次 `run_debug.py --timeout 180` 一级会话；游戏时域达到 7200 与剧情关键节点达成分别记录。测试不启动 Godot，不运行流程回归。
++
++
++## 整批动作准备维护（2026-10-18）
++
++`dvs_session_prepare`仍为正式会话入口；`dvs_prepare_actor`是同一prepare中已选主体后的认知/报价/排队阶段。campaign先调度，再只刷新该主体的内容，随后进入该共用阶段；不为内容刷新扫描全员，不在人工已有选择时重排主体，不重复分派pending。改动须同时核对人工控制、无候选、排队到期、章节扩展和宿主入口。
++
++动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
++
++同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
+diff --git a/language_core/core/98-debug.dv b/language_core/core/98-debug.dv
+index 0d000865..8e707b9a 100644
+--- a/language_core/core/98-debug.dv
++++ b/language_core/core/98-debug.dv
+@@ -14,7 +14,7 @@ fn dv_debug_event(event):
+             else:
+                 action_id = rt_show(raw_action)
+     var detail = []
+-    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement"]
++    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended"]
+     var i = 0
+     while i < rt_count(fields):
+         if dv_has_key(data, fields[i]):
+diff --git a/language_core/core/README.md b/language_core/core/README.md
+index 9b1854cc..116c9ff8 100644
+--- a/language_core/core/README.md
++++ b/language_core/core/README.md
+@@ -671,6 +671,8 @@ fn dvs_event_prepared(events, kind, actor, time, parents, data)
+ ```text
+ fn dvp_memo_input(actor, costs)
+ fn dvp_forecast(mind, name)
++fn dvp_room_actions(actions, room, location_ref)
++fn dvp_inspection_freshness(actor, mind)
+ fn dvp_question(actor)
+ fn dvp_topic(actor, item)
+ fn dvp_add_ref(refs, ref)
+@@ -795,7 +797,7 @@ fn dvs_speech_model_prediction(model, speech, speaker, source, time)
+ fn dvs_speech_rule_units(rule)
+ fn dvs_speech_prediction_units(model, speech)
+ fn dvs_speech_goals(actor)
+-fn dvs_speech_choice_signature(actor, action, goals)
++fn dvs_speech_choice_signature(actor, action, goals, time)
+ fn dvs_speech_goal_value(goals, listener, prediction)
+ fn dvs_prepare_speech_choices(actor, events, time, parent)
+ fn dvs_proposal_reassess(actor, decision, events, time, parent)
+@@ -885,6 +887,7 @@ fn dvs_dispatch_due(state, index)
+ fn dvs_schedule(state)
+ fn dvs_debug_phase(story, actor, time, phase)
+ fn dvs_session_prepare(state)
++fn dvs_prepare_actor(state)
+ fn dvs_session_complete(state, receipt)
+ fn dvs_session_close(state)
+ fn dvs_replace(items, index, value)
+@@ -979,6 +982,13 @@ fn dvs_player_choice(actor, id)
+ 
+ 2026-10-18 会话计算维护：`32-environment.dv` 的 `dvs_environment_boundary` 递归读取原 premise 中的时钟 `at_least`（含 not/all），保留原一分钟采样格及最终到期点。时钟相等或不可分析的时钟谓词回退一分钟；当前可产生新变化、重复增量或过程级联时继续一分钟，不跳过这些效果。`dvs_environment_next_time` 只调度 physical，不生成主体认识。内容进程可声明 `once: true`，仅在实际 applied 后 suspend；可重复进程保持活动。未接入开关输入的房间规律保留定义与采纳，暂不注册为周期进程。
+ 
+-`dvp_achievement_pending` 以本人采纳法则的实际写引用与待达成命题引用相交后才预测；无交集不能直接改变该命题。`dvp_forecast` 按完整节点 mind 和法则缓存纯预测，供目标评分、接近机会和后继展开复用。仅内部规划预测省略继承的 history，保留 seen 重复校验、单元来源及实际公共 dv_predict 合同。真实 dv_apply_law/dv_update_mind 在独立 stage 上追加完整 seen/history；不修改原态。规划备忘的 mind 省略 history/seen，保留 revision、objects、adoptions 和其余主体输入。
++`dvp_achievement_pending` 以本人采纳法则的实际写引用与待达成命题引用相交后才预测；无交集不能直接改变该命题。`dvp_forecast` 按完整节点 mind 和法则缓存纯预测，供目标评分、接近机会和后继展开复用。内部规划预测省略继承的 history/seen，保留单元来源及实际公共 dv_predict 合同；私有分支通过路径循环与状态去重控制重复展开。真实 dv_apply_law/dv_update_mind 在独立 stage 上追加完整 seen/history；不修改原态。规划备忘的 mind 省略 history/seen，保留 revision、objects、adoptions 和其余主体输入。
+ 
+-无活动话语目标时 `dvs_prepare_speech_choices` 原样返回主体；话语预选签名继续包含完整输入，尚未证明安全的无关字段裁剪不启用。`dvs_argument_sources(events, actor)` 先增量补齐 support_events，再从其中展开本人 observation/listener_parse，保留顺序和来源。`c1n_index_goal_window` 缓存目标条件的正向时间下界和非时钟条件，使用时核对原条件未变化；不降低刷新时刻精度。章节检视范围与角色调查目标由内容声明，合并天气候选后保留原地点可见条件。
++无活动话语目标时 `dvs_prepare_speech_choices` 原样返回主体；话语预选签名包含选中听者的完整模型、话语、目标、说话者字面真值及预测观察相对模型旧字段的时间门；说话者无关认知不入键。`dvs_argument_sources(events, actor)` 先增量补齐 support_events，再从其中展开本人 observation/listener_parse，保留顺序和来源。`c1n_index_goal_window` 缓存目标条件的正向时间下界和非时钟条件，使用时核对原条件未变化；不降低刷新时刻精度。章节检视范围与角色调查目标由内容声明，合并天气候选后保留原地点可见条件。
++
++
++2026-10-18 集中补齐：正式prepare先用唯一调度器选主体，`dvs_prepare_actor`承接原prepare的本人认知、报价及排队实现；campaign只在此阶段刷新当前主体内容。宿主人工选择已有主体时不重新调度，pending与等待回执不重复决策。普通session入口仍按原prepare→complete调用。静态动作切片`dvp_room_actions`按动作目录/地点/位置引用缓存，保留源顺序，动态资格逐项重查；未知或争议地点不裁剪。私有规划与话语预测不继承审计日志，真实世界和公共预测仍保留完整来源及去重。
++
++环境边界超过当前动作due时直接返回due，不向遥远阈值逐分钟计步。每日昼夜声明各标记once，实际执行后休眠；流式调试投影保留process、revision_before/after与suspended。目标时间元数据按原条件纯值缓存，当前主体刷新保留精确本人时刻。等待时长清单增加120分钟，费用、物理和预测规律均从同一清单安装。连廊单字段观察目标驱动原四字段实际检视；完整换气前提不删减。上述内容与搜索条件属于本轮实现，运行效果由新会话另证。
++
++检视签名在同一mind节点及完整目标声明下共用`dvp_inspection_freshness`索引，证据下界刷新与可用性只计算一次；每个动作仍读取自己的完整grants与前提输入。索引不改变本人来源或证据新鲜度规则。
+diff --git a/language_core/game/campaign.dv b/language_core/game/campaign.dv
+index e83214f3..ac62b926 100644
+--- a/language_core/game/campaign.dv
++++ b/language_core/game/campaign.dv
+@@ -27,18 +27,19 @@ fn dvg_extend(state):
+     return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+ 
+ fn dvg_refresh_goals(current):
+-    var actors = []
+-    var i = 0
++    var actors = current.actors
++    var i = current.cursor
+     var changed = false
+     let chapter = dv_find(current.story, "chapter", 1)
+-    while i < rt_count(current.actors):
++    // The production scheduler selects the actor before content preparation.
++    while i < current.cursor + 1:
+         let actor = current.actors[i]
+         if dv_find(actor, "scheduled_action", false) == false and (dv_has(c2_people(), actor.id) or actor.id == "demon") and (actor.mind.revision != dv_find(actor, "campaign_goals_revision", -1) or actor.mind.time != dv_find(actor, "campaign_goals_time", -1) or chapter != dv_find(actor, "campaign_goals_chapter", 0)):
+             var refreshed = actor
+             if chapter == 1:
+                 if actor.id != "demon":
+                     refreshed = c1n_refresh_actor_goals(actor)
+-                rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
++                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
+             else:
+                 let needs_c1_wait = (actor.id == "selma" and dv_truth(actor.mind, c1_other_claim("astral", "west_passage_checked")) != "true") or (actor.id == "mora" and dv_truth(actor.mind, c1_other_claim("logistics", "observation_complete")) != "true")
+                 let in_living = (dv_truth(actor.mind, c2_at(actor.id, "living_hall")) == "true")
+@@ -46,21 +47,22 @@ fn dvg_refresh_goals(current):
+                 if needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
+                     refreshed = c2d_refresh_actor_goals(actor)
+                 refreshed = c1n_known_future_wait_actor(refreshed)
+-                rt_push(actors, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
++                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
+             changed = true
+-        else:
+-            rt_push(actors, actor)
+         i = i + 1
+     if changed:
+         return dvs_owned_state_update(current, {"actors": actors})
+     return current
+ 
+ fn dvg_prepare(state):
+-    var current = dvg_refresh_goals(dvg_extend(state))
++    var current = dvg_extend(state)
+     while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
+-        current = dvs_session_prepare(current)
++        if dv_find(current, "player_selection", "") == "":
++            current = dvs_schedule(current)
++        if dv_find(current, "pending", false) == false and dvs_session_active(current):
++            current = dvs_prepare_actor(dvg_refresh_goals(current))
+         if dv_find(current, "pending", false) == false:
+-            current = dvg_refresh_goals(dvg_extend(current))
++            current = dvg_extend(current)
+     return current
+ 
+ fn dvg_complete(state, receipt):
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index 90fb176f..d82b2572 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -174,6 +174,15 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 
+ 等待队列由 `dvs_environment_next_time` 读取已采纳环境 premise 的时钟边界，保留一分钟采样格与实际到期点；尚可变化的进程、增量及级联继续逐分钟结算。不可分析时钟条件回退一分钟。`world_processes.once` 仅在 applied 后挂起；不按规则名称猜测一次性身份。新增时钟运算或环境写入机制时须同步边界分析及 core/README.md。
+ 
+-`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history，保留 seen 与单元来源；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
++`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history/seen，保留单元来源及路径去重；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
+ 
+ 目标时间元数据由内容构造器预计算，使用时核对 available_when 未变；目标刷新仍逐次检查本人时刻与认知，不按粗粒度时段推迟资格。声明合并与角色目标范围变化属于新行为条件，不能据本轮结果宣称与旧版本同条件加速。集中修改、静态审读和文档更新完成后，只运行本轮授权的一次 `run_debug.py --timeout 180` 一级会话；游戏时域达到 7200 与剧情关键节点达成分别记录。测试不启动 Godot，不运行流程回归。
++
++
++## 整批动作准备维护（2026-10-18）
++
++`dvs_session_prepare`仍为正式会话入口；`dvs_prepare_actor`是同一prepare中已选主体后的认知/报价/排队阶段。campaign先调度，再只刷新该主体的内容，随后进入该共用阶段；不为内容刷新扫描全员，不在人工已有选择时重排主体，不重复分派pending。改动须同时核对人工控制、无候选、排队到期、章节扩展和宿主入口。
++
++动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
++
++同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 99d683a4..89f1c9ff 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -131,6 +131,15 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 
+ 等待队列由 `dvs_environment_next_time` 读取已采纳环境 premise 的时钟边界，保留一分钟采样格与实际到期点；尚可变化的进程、增量及级联继续逐分钟结算。不可分析时钟条件回退一分钟。`world_processes.once` 仅在 applied 后挂起；不按规则名称猜测一次性身份。新增时钟运算或环境写入机制时须同步边界分析及 core/README.md。
+ 
+-`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history，保留 seen 与单元来源；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
++`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history/seen，保留单元来源及路径去重；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
+ 
+ 目标时间元数据由内容构造器预计算，使用时核对 available_when 未变；目标刷新仍逐次检查本人时刻与认知，不按粗粒度时段推迟资格。声明合并与角色目标范围变化属于新行为条件，不能据本轮结果宣称与旧版本同条件加速。集中修改、静态审读和文档更新完成后，只运行本轮授权的一次 `run_debug.py --timeout 180` 一级会话；游戏时域达到 7200 与剧情关键节点达成分别记录。测试不启动 Godot，不运行流程回归。
++
++
++## 整批动作准备维护（2026-10-18）
++
++`dvs_session_prepare`仍为正式会话入口；`dvs_prepare_actor`是同一prepare中已选主体后的认知/报价/排队阶段。campaign先调度，再只刷新该主体的内容，随后进入该共用阶段；不为内容刷新扫描全员，不在人工已有选择时重排主体，不重复分派pending。改动须同时核对人工控制、无候选、排队到期、章节扩展和宿主入口。
++
++动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
++
++同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
+diff --git a/language_core/verification/scenarios/chapter1-night.dv b/language_core/verification/scenarios/chapter1-night.dv
+index 94f5e640..ffadb035 100644
+--- a/language_core/verification/scenarios/chapter1-night.dv
++++ b/language_core/verification/scenarios/chapter1-night.dv
+@@ -248,7 +248,7 @@ fn c1n_install_scene(scene):
+ 
+ // These are finite costed action lengths, not speed multipliers or world-clock writes.
+ fn c1n_wait_durations():
+-    return [180, 60, 30, 15, 5, 1]
++    return [180, 120, 60, 30, 15, 5, 1]
+ 
+ fn c1n_wait_kind(minutes):
+     return rt_cat("wait.first_night.", rt_show(minutes))
+@@ -385,7 +385,14 @@ fn c1n_future_goal_pending(actor, goal):
+ // Static syntax metadata is built with the goal, never from physical future state.
+ fn c1n_index_goal_window(goal):
+     let condition = dv_find(goal, "available_when", dv_true())
+-    return dv_with_many(goal, {"future_clock_condition": condition, "future_clock_bounds": c1n_positive_clock_bounds(condition), "future_nonclock": c1n_without_clock(condition)})
++    let key = ["c1n_goal_window"]
++    let cached = rt_memo_get(condition, key)
++    var window = []
++    if cached[0]:
++        window = cached[1]
++    else:
++        window = rt_memo_put(condition, key, {"future_clock_condition": condition, "future_clock_bounds": c1n_positive_clock_bounds(condition), "future_nonclock": c1n_without_clock(condition)})
++    return dv_with_many(goal, window)
+ 
+ fn c1n_known_future_wait_actor(actor):
+     if actor.id == "demon" and not dv_has_key(actor.policy, "chapter2_profile"):
+diff --git a/language_core/verification/scenarios/chapter2-content.dv b/language_core/verification/scenarios/chapter2-content.dv
+index c4a278ba..753be2df 100644
+--- a/language_core/verification/scenarios/chapter2-content.dv
++++ b/language_core/verification/scenarios/chapter2-content.dv
+@@ -942,11 +942,7 @@ fn c2_personal_goals(actor):
+         var corridor_index = 0
+         while corridor_index < rt_count(indoor_gates):
+             let gate = indoor_gates[corridor_index]
+-            let fields = ["air_safe", "intake_safe", "seal_intact", "ventilated"]
+-            var field_index = 0
+-            while field_index < rt_count(fields):
+-                rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), fields[field_index]), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("现场核对封闭连廊")], 1980))
+-                field_index = field_index + 1
++            rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("现场核对封闭连廊")], 1980))
+             rt_push(goals, c2_goal(dv_fact(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际换气")]))
+             rt_push(goals, c2_goal(dv_fact(c2_access(gate), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际开启连廊")]))
+             corridor_index = corridor_index + 1
+@@ -1175,8 +1171,8 @@ fn c2_world_processes():
+     var i = 0
+     var light_day = 1
+     while light_day < 6:
+-        rt_push(result, {"id": rt_cat("c2.daylight.", rt_show(light_day)), "law": rt_cat("c2.daylight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
+-        rt_push(result, {"id": rt_cat("c2.nightlight.", rt_show(light_day)), "law": rt_cat("c2.nightlight.", rt_show(light_day)), "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
++        rt_push(result, {"id": rt_cat("c2.daylight.", rt_show(light_day)), "law": rt_cat("c2.daylight.", rt_show(light_day)), "once": true, "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
++        rt_push(result, {"id": rt_cat("c2.nightlight.", rt_show(light_day)), "law": rt_cat("c2.nightlight.", rt_show(light_day)), "once": true, "basis": [c2_source("00_时间与文案.story", 35, "明示昼夜时段边界")]})
+         light_day = light_day + 1
+     let people = c2_people()
+     i = 0
+diff --git a/language_core/verification/session/15-action-planning.dv b/language_core/verification/session/15-action-planning.dv
+index 9fdbdfbb..c2354027 100644
+--- a/language_core/verification/session/15-action-planning.dv
++++ b/language_core/verification/session/15-action-planning.dv
+@@ -280,13 +280,15 @@ fn dvp_inspection_signature(actor, action, mind):
+         let cell = dv_read(mind, refs[i])
+         rt_push(inputs, {"ref": refs[i], "known": cell.known, "value": cell.value, "conflicted": cell.conflicted})
+         i = i + 1
+-    let goals = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "goals", []))
++    let evidence = dvp_inspection_freshness(actor, mind)
+     var freshness = []
+     i = 0
+-    while i < rt_count(goals):
+-        let goal = goals[i]
+-        if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref") and dv_has(refs, goal.ref):
+-            rt_push(freshness, {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
++    while i < rt_count(refs):
++        let entries = dv_find(evidence, rt_json_stringify(refs[i]), [])
++        var j = 0
++        while j < rt_count(entries):
++            rt_push(freshness, entries[j])
++            j = j + 1
+         i = i + 1
+     return {"inputs": inputs, "freshness": freshness}
+ 
+@@ -392,7 +394,7 @@ fn dvp_value_context(actor):
+         if kind == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
+             if not dv_has(dv_find(actor, "planning_achievements", []), i):
+                 if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
+-                    rt_push(achievements, goal)
++                    rt_push(achievements, dv_with(goal, "planning_refs", dvs_sim_refs(goal.proposition)))
+         if kind == "communicate" and 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
+             rt_push(communications, goal)
+         i = i + 1
+@@ -644,7 +646,7 @@ fn dvp_cached_dependencies(actor, seeds, budget):
+             return dv_with_many(result, {"cache_hit": false, "cache": local_2})
+ 
+ fn dvp_plan(actor, bindings, costs):
+-    let indexed = dvp_actor_view(actor, actor.mind)
++    let indexed = dvp_actor_view(actor, dv_with_many(actor.mind, {"history": [], "seen": []}))
+     rt_push(indexed, dv_pair("planning_choice_groups", dvp_choice_groups(actor.actions)))
+     actor = indexed
+     // Refresh declared evidence goals for every chapter in the read-only planning view.
+@@ -680,7 +682,7 @@ fn dvp_plan(actor, bindings, costs):
+     var root_room = ""
+     if dv_has_key(actor, "location_ref"):
+         let cur_loc = dv_read(actor.mind, actor.location_ref)
+-        if cur_loc.known:
++        if dv_uncontested(cur_loc):
+             root_room = rt_show(cur_loc.value)
+     let initial_seen = dvp_state_key(root_room, [])
+     var init_key = rt_cat(initial_seen, rt_cat("#", rt_cat(dvp_join_items(initial_achievements), rt_cat("@", dvp_join_items(initial_access)))))
+@@ -690,15 +692,6 @@ fn dvp_plan(actor, bindings, costs):
+     var time_blocked = 0
+     var stop = "complete-depth"
+     var actions = actor.actions
+-    var a_idx = 0
+-    let a_cnt = rt_count(actions)
+-    while a_idx < a_cnt:
+-        var act = actions[a_idx]
+-        if not dv_has_key(act, "required_room") and dv_has_key(actor, "location_ref"):
+-            let r = dvp_extract_required_room(act.precondition, actor.location_ref)
+-            if r != "":
+-                actions = dvs_replace(actions, a_idx, dv_with(act, "required_room", r))
+-        a_idx = a_idx + 1
+     var visited = []
+     visited = dv_single({"key": init_key, "score": 0, "elapsed": 0})
+     while dv_and((depth < depth_limit), (0 < rt_count(frontier))):
+@@ -715,10 +708,11 @@ fn dvp_plan(actor, bindings, costs):
+                 var node_actor = dvp_actor_view(actor, mind)
+                 rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
+                 rt_push(node_actor, dv_pair("planning_opportunities", node.opportunities))
++                let node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
+                 let value_context = dvp_value_context(node_actor)
+                 expanded = (expanded + 1)
+-                while (i < rt_count(actions)):
+-                    var action = actions[i]
++                while (i < rt_count(node_actions)):
++                    var action = node_actions[i]
+                     var local_1 = false
+                     var spatially_possible = true
+                     if node.room != "":
+@@ -904,7 +898,11 @@ fn dvp_achievement_pending(actor, action, pending):
+     var relevant = false
+     i = 0
+     while i < rt_count(pending) and not relevant:
+-        let refs = dvs_sim_refs(pending[i].proposition)
++        var refs = []
++        if dv_has_key(pending[i], "planning_refs"):
++            refs = pending[i].planning_refs
++        else:
++            refs = dvs_sim_refs(pending[i].proposition)
+         var j = 0
+         while j < rt_count(adoption.law.effects) and not relevant:
+             var r = 0
+@@ -954,5 +952,47 @@ fn dvp_forecast(mind, name):
+     let cached = rt_memo_get(mind, key)
+     if cached[0]:
+         return cached[1]
+-    let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
++    let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": [], "seen": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
+     return rt_memo_put(mind, key, result)
++
++// Catalog-only filtering; dynamic eligibility is still checked on the node mind.
++fn dvp_room_actions(actions, room, location_ref):
++    if room == "" or location_ref == false:
++        return actions
++    let key = ["dvp_room_actions", room, location_ref]
++    let cached = rt_memo_get(actions, key)
++    if cached[0]:
++        return cached[1]
++    var result = []
++    var i = 0
++    while i < rt_count(actions):
++        let action = actions[i]
++        var required = dv_find(action, "required_room", "")
++        if dv_has_key(action, "travel"):
++            required = action.travel.from
++        else:
++            if required == "":
++                required = dvp_extract_required_room(action.precondition, location_ref)
++        if required == "" or required == room:
++            rt_push(result, action)
++        i = i + 1
++    return rt_memo_put(actions, key, result)
++
++// Every inspection in the same mind reuses the evidence refresh and availability reads.
++fn dvp_inspection_freshness(actor, mind):
++    let declared = dv_find(actor.policy, "goals", [])
++    let key = ["dvp_inspection_freshness", declared]
++    let cached = rt_memo_get(mind, key)
++    if cached[0]:
++        return cached[1]
++    let goals = dvp_refresh_current_evidence(dvp_actor_view(actor, mind), declared)
++    var index = []
++    var i = 0
++    while i < rt_count(goals):
++        let goal = goals[i]
++        if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref"):
++            let name = rt_json_stringify(goal.ref)
++            let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
++            index = dv_with(index, name, entries)
++        i = i + 1
++    return rt_memo_put(mind, key, index)
+diff --git a/language_core/verification/session/20-speech.dv b/language_core/verification/session/20-speech.dv
+index 499d2470..bc639266 100644
+--- a/language_core/verification/session/20-speech.dv
++++ b/language_core/verification/session/20-speech.dv
+@@ -383,7 +383,7 @@ fn dvs_speech_model_interpretations(mind, policy, speech, bindings):
+     return result
+ 
+ fn dvs_speech_model_prediction(model, speech, speaker, source, time):
+-    var before = dv_clone(model.mind)
++    var before = dv_with_many(model.mind, {"history": [], "seen": []})
+     var policy = model.policy
+     var bindings = dv_find(speech, "referents", [])
+     var parsed = dvs_speech_map(model.mind, speech.literal_ast, dv_find(speech, "referents", []))
+@@ -441,8 +441,25 @@ fn dvs_speech_goals(actor):
+         i = (i + 1)
+     return active
+ 
+-fn dvs_speech_choice_signature(actor, action, goals):
+-    return {"mind": actor.mind, "speech": action.speech, "goals": goals, "listeners": dv_find(action, "listeners", [])}
++fn dvs_speech_choice_signature(actor, action, goals, time):
++    let listeners = dv_find(action, "listeners", [])
++    let models = dv_find(actor.mind, "listener_models", [])
++    var selected = []
++    var i = 0
++    while i < rt_count(listeners):
++        let listener = listeners[i]
++        let model = dv_find(models, listener, false)
++        var gates = []
++        if model != false:
++            let parsed = dvs_speech_map(model.mind, action.speech.literal_ast, dv_find(action.speech, "referents", []))
++            let refs = dvs_sim_refs(parsed)
++            var j = 0
++            while j < rt_count(refs):
++                rt_push(gates, time < dv_read(model.mind, refs[j]).time)
++                j = j + 1
++        rt_push(selected, {"listener": listener, "model": model, "older_observation": gates})
++        i = i + 1
++    return {"speaker": actor.id, "literal_truth": dvs_speech_truth(actor.mind, action.speech), "speech": action.speech, "goals": goals, "models": selected}
+ 
+ fn dvs_speech_goal_value(goals, listener, prediction):
+     var value = 0
+@@ -486,7 +503,7 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
+             if dv_and(dv_has_key(action, "speech"), dv_find(action, "argument_available", true)):
+                 if dvp_eligible(actor, action, mind, []):
+                     var truth = dvs_speech_truth(mind, action.speech)
+-                    var signature = dvs_speech_choice_signature(actor, action, goals)
++                    var signature = dvs_speech_choice_signature(actor, action, goals, time)
+                     if (not (truth == "true")):
+                         cache = dv_with(cache, id, {"status": "illegal-literal", "utility": 0, "signature": signature})
+                         dvs_event(events, "speech_choice_rejected", actor.id, time, dv_single(parent), {"action": action, "actor_before": before, "truth": truth, "charged_units": 0})
+diff --git a/language_core/verification/session/30-runner.dv b/language_core/verification/session/30-runner.dv
+index 0f1e6a66..01a1ec17 100644
+--- a/language_core/verification/session/30-runner.dv
++++ b/language_core/verification/session/30-runner.dv
+@@ -271,6 +271,11 @@ fn dvs_session_prepare(state):
+         state = dvs_schedule(state)
+     if dv_has_key(state, "pending") or not dvs_session_active(state):
+         return state
++    return dvs_prepare_actor(state)
++
++// The caller has selected the actor; content may refresh its own declarations first.
++// This remains the same prepare phase, not a second dispatch or execution path.
++fn dvs_prepare_actor(state):
+     let story = state.story
+     var physical = state.physical
+     var actors = state.actors
+diff --git a/language_core/verification/session/32-environment.dv b/language_core/verification/session/32-environment.dv
+index 454ad069..0ebc3a99 100644
+--- a/language_core/verification/session/32-environment.dv
++++ b/language_core/verification/session/32-environment.dv
+@@ -48,6 +48,9 @@ fn dvs_environment_boundary(condition, clock, now, due):
+         return due
+     if op != "at_least" or not rt_is_numeric_value(condition.value):
+         return dv_min(due, now + 1)
++    // A distant bound cannot be crossed in this wait: do not count toward it.
++    if due < condition.value:
++        return due
+     if now < condition.value:
+         let delta = condition.value - now
+         var steps = 1

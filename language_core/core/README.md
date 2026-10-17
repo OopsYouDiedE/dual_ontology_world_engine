@@ -671,6 +671,8 @@ fn dvs_event_prepared(events, kind, actor, time, parents, data)
 ```text
 fn dvp_memo_input(actor, costs)
 fn dvp_forecast(mind, name)
+fn dvp_room_actions(actions, room, location_ref)
+fn dvp_inspection_freshness(actor, mind)
 fn dvp_question(actor)
 fn dvp_topic(actor, item)
 fn dvp_add_ref(refs, ref)
@@ -795,7 +797,7 @@ fn dvs_speech_model_prediction(model, speech, speaker, source, time)
 fn dvs_speech_rule_units(rule)
 fn dvs_speech_prediction_units(model, speech)
 fn dvs_speech_goals(actor)
-fn dvs_speech_choice_signature(actor, action, goals)
+fn dvs_speech_choice_signature(actor, action, goals, time)
 fn dvs_speech_goal_value(goals, listener, prediction)
 fn dvs_prepare_speech_choices(actor, events, time, parent)
 fn dvs_proposal_reassess(actor, decision, events, time, parent)
@@ -885,6 +887,7 @@ fn dvs_dispatch_due(state, index)
 fn dvs_schedule(state)
 fn dvs_debug_phase(story, actor, time, phase)
 fn dvs_session_prepare(state)
+fn dvs_prepare_actor(state)
 fn dvs_session_complete(state, receipt)
 fn dvs_session_close(state)
 fn dvs_replace(items, index, value)
@@ -979,6 +982,13 @@ fn dvs_player_choice(actor, id)
 
 2026-10-18 会话计算维护：`32-environment.dv` 的 `dvs_environment_boundary` 递归读取原 premise 中的时钟 `at_least`（含 not/all），保留原一分钟采样格及最终到期点。时钟相等或不可分析的时钟谓词回退一分钟；当前可产生新变化、重复增量或过程级联时继续一分钟，不跳过这些效果。`dvs_environment_next_time` 只调度 physical，不生成主体认识。内容进程可声明 `once: true`，仅在实际 applied 后 suspend；可重复进程保持活动。未接入开关输入的房间规律保留定义与采纳，暂不注册为周期进程。
 
-`dvp_achievement_pending` 以本人采纳法则的实际写引用与待达成命题引用相交后才预测；无交集不能直接改变该命题。`dvp_forecast` 按完整节点 mind 和法则缓存纯预测，供目标评分、接近机会和后继展开复用。仅内部规划预测省略继承的 history，保留 seen 重复校验、单元来源及实际公共 dv_predict 合同。真实 dv_apply_law/dv_update_mind 在独立 stage 上追加完整 seen/history；不修改原态。规划备忘的 mind 省略 history/seen，保留 revision、objects、adoptions 和其余主体输入。
+`dvp_achievement_pending` 以本人采纳法则的实际写引用与待达成命题引用相交后才预测；无交集不能直接改变该命题。`dvp_forecast` 按完整节点 mind 和法则缓存纯预测，供目标评分、接近机会和后继展开复用。内部规划预测省略继承的 history/seen，保留单元来源及实际公共 dv_predict 合同；私有分支通过路径循环与状态去重控制重复展开。真实 dv_apply_law/dv_update_mind 在独立 stage 上追加完整 seen/history；不修改原态。规划备忘的 mind 省略 history/seen，保留 revision、objects、adoptions 和其余主体输入。
 
-无活动话语目标时 `dvs_prepare_speech_choices` 原样返回主体；话语预选签名继续包含完整输入，尚未证明安全的无关字段裁剪不启用。`dvs_argument_sources(events, actor)` 先增量补齐 support_events，再从其中展开本人 observation/listener_parse，保留顺序和来源。`c1n_index_goal_window` 缓存目标条件的正向时间下界和非时钟条件，使用时核对原条件未变化；不降低刷新时刻精度。章节检视范围与角色调查目标由内容声明，合并天气候选后保留原地点可见条件。
+无活动话语目标时 `dvs_prepare_speech_choices` 原样返回主体；话语预选签名包含选中听者的完整模型、话语、目标、说话者字面真值及预测观察相对模型旧字段的时间门；说话者无关认知不入键。`dvs_argument_sources(events, actor)` 先增量补齐 support_events，再从其中展开本人 observation/listener_parse，保留顺序和来源。`c1n_index_goal_window` 缓存目标条件的正向时间下界和非时钟条件，使用时核对原条件未变化；不降低刷新时刻精度。章节检视范围与角色调查目标由内容声明，合并天气候选后保留原地点可见条件。
+
+
+2026-10-18 集中补齐：正式prepare先用唯一调度器选主体，`dvs_prepare_actor`承接原prepare的本人认知、报价及排队实现；campaign只在此阶段刷新当前主体内容。宿主人工选择已有主体时不重新调度，pending与等待回执不重复决策。普通session入口仍按原prepare→complete调用。静态动作切片`dvp_room_actions`按动作目录/地点/位置引用缓存，保留源顺序，动态资格逐项重查；未知或争议地点不裁剪。私有规划与话语预测不继承审计日志，真实世界和公共预测仍保留完整来源及去重。
+
+环境边界超过当前动作due时直接返回due，不向遥远阈值逐分钟计步。每日昼夜声明各标记once，实际执行后休眠；流式调试投影保留process、revision_before/after与suspended。目标时间元数据按原条件纯值缓存，当前主体刷新保留精确本人时刻。等待时长清单增加120分钟，费用、物理和预测规律均从同一清单安装。连廊单字段观察目标驱动原四字段实际检视；完整换气前提不删减。上述内容与搜索条件属于本轮实现，运行效果由新会话另证。
+
+检视签名在同一mind节点及完整目标声明下共用`dvp_inspection_freshness`索引，证据下界刷新与可用性只计算一次；每个动作仍读取自己的完整grants与前提输入。索引不改变本人来源或证据新鲜度规则。
