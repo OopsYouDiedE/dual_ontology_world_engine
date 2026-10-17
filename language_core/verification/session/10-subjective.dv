@@ -77,6 +77,19 @@ fn dvs_reason_changes(changes):
         i = (i + 1)
     return changed
 
+fn dvs_reason_monotone_satisfied(mind, effects):
+    var e = 0
+    let n = rt_count(effects)
+    while e < n:
+        let eff = effects[e]
+        if dv_find(eff, "op", "") != "assign":
+            return false
+        let cell = dv_read(mind, eff.ref)
+        if not cell.known or cell.value != eff.value or cell.confidence < 1:
+            return false
+        e = e + 1
+    return true
+
 fn dvs_reason_run(actor, events, time, parent):
     var mind = actor.mind
     var policy = actor.policy
@@ -93,23 +106,28 @@ fn dvs_reason_run(actor, events, time, parent):
             var entry = adoptions[i]
             var law = entry[1].law
             if dv_and(entry[1].active, (entry[1].mode == "infer")):
-                if dv_and((dv_truth(mind, law.premise) == "true"), (not dv_same(dv_find(signatures, entry[0], false), dvs_reason_signature(mind, entry[1])))):
-                    var stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
-                    if dv_and((stage.status == "ready"), dvs_reason_changes(stage.changes)):
-                        var before = mind
-                        var result = dv_infer(mind, entry[0], rt_cat("infer", rt_show(rt_count(events))), time, mind.revision)
-                        mind = result.world
-                        changed = true
-                        count = (count + 1)
-                        signatures = dv_with(signatures, entry[0], dvs_reason_signature(mind, entry[1]))
-                        var event = dvs_event(events, "inference", actor.id, time, dv_explanation_merge(dvs_cognitive_parents(actor, dv_single(parent)), dvs_support_parents(before, dvs_sim_refs(law.premise), events, actor.id)), {"mind_before": before, "mind_after": mind, "law": law, "receipt": result})
-                        actor = dv_with(actor, "last_cognitive_event", event)
-                        rt_push(derivations, dv_with({"event": event, "adoption": entry[1], "inputs": dvs_sim_inputs(before, law.premise), "changes": result.changes}, "valid", true))
-                    else:
-                        if (stage.status == "ready"):
+                var skip = false
+                if dv_find(signatures, entry[0], false) != false and dvs_reason_monotone_satisfied(mind, law.effects):
+                    skip = true
+                if not skip and (dv_truth(mind, law.premise) == "true"):
+                    let sig = dvs_reason_signature(mind, entry[1])
+                    if not dv_same(dv_find(signatures, entry[0], false), sig):
+                        var stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
+                        if dv_and((stage.status == "ready"), dvs_reason_changes(stage.changes)):
+                            var before = mind
+                            var result = dv_infer(mind, entry[0], rt_cat("infer", rt_show(rt_count(events))), time, mind.revision)
+                            mind = result.world
+                            changed = true
                             count = (count + 1)
-                            signatures = dv_with(signatures, entry[0], dvs_reason_signature(mind, entry[1]))
-                            dvs_event(events, "inference_alternative_basis", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"law": law, "basis": entry[1].basis, "premises": dvs_reason_premises(mind, law.premise), "mind_revision": mind.revision})
+                            signatures = dv_with(signatures, entry[0], sig)
+                            var event = dvs_event(events, "inference", actor.id, time, dv_explanation_merge(dvs_cognitive_parents(actor, dv_single(parent)), dvs_support_parents(before, dvs_sim_refs(law.premise), events, actor)), {"mind_before": before, "mind_after": mind, "law": law, "receipt": result})
+                            actor = dv_with(actor, "last_cognitive_event", event)
+                            rt_push(derivations, dv_with({"event": event, "adoption": entry[1], "inputs": dvs_sim_inputs(before, law.premise), "changes": result.changes}, "valid", true))
+                        else:
+                            if (stage.status == "ready"):
+                                count = (count + 1)
+                                signatures = dv_with(signatures, entry[0], sig)
+                                dvs_event(events, "inference_alternative_basis", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"law": law, "basis": entry[1].basis, "premises": dvs_reason_premises(mind, law.premise), "mind_revision": mind.revision})
             i = (i + 1)
     var local_1 = false
     if (count < budget):
@@ -134,7 +152,9 @@ fn dvs_cached_model(actor, hypothesis):
             return {"fit": 0, "status": "stale-or-unavailable", "source_revision": dv_find(model, "source_revision", -1)}
 
 fn dvs_working_explanation(actor, hypothesis):
-    return dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), dv_and((0 < rt_count(dvs_sim_plan(hypothesis))), dv_and((0 < rt_count(dv_find(hypothesis, "basis", []))), dv_and((dv_truth(actor.mind, dv_find(hypothesis, "available_when", dv_true())) == "true"), dv_and((not (dv_truth(actor.mind, hypothesis.proposition) == "false")), (not dvs_factor_candidate_rejected(actor, hypothesis))))))))
+    if dvs_factor_candidate_rejected(actor, hypothesis):
+        return false
+    return dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), dv_and((0 < rt_count(dvs_sim_plan(hypothesis))), dv_and((0 < rt_count(dv_find(hypothesis, "basis", []))), dv_and((dv_truth(actor.mind, dv_find(hypothesis, "available_when", dv_true())) == "true"), (not (dv_truth(actor.mind, hypothesis.proposition) == "false")))))))
 
 fn dvs_hypotheses(actor, events, time, parent):
     var mind = actor.mind
@@ -150,31 +170,32 @@ fn dvs_hypotheses(actor, events, time, parent):
     i = 0
     while (i < rt_count(candidates)):
         var h = candidates[i]
-        var available = dv_find(h, "available_when", dv_true())
-        var local_1 = false
-        if working:
-            local_1 = dvs_working_explanation(actor, h)
-        else:
-            local_1 = true
-        if dv_and(local_1, dv_and(dvp_topic(actor, h), dv_and((0 < rt_count(dv_find(h, "basis", []))), (dv_truth(mind, available) == "true")))):
-            var truth = dv_truth(mind, h.proposition)
-            var local_2 = false
-            if (truth == "false"):
-                local_2 = -1
+        if not dvs_factor_candidate_rejected(actor, h):
+            var available = dv_find(h, "available_when", dv_true())
+            var local_1 = false
+            if working:
+                local_1 = dvs_working_explanation(actor, h)
             else:
-                if (truth == "true"):
-                    local_2 = 1
+                local_1 = true
+            if dv_and(local_1, dv_and(dvp_topic(actor, h), dv_and((0 < rt_count(dv_find(h, "basis", []))), (dv_truth(mind, available) == "true")))):
+                var truth = dv_truth(mind, h.proposition)
+                var local_2 = false
+                if (truth == "false"):
+                    local_2 = -1
                 else:
-                    local_2 = dv_find(h, "prior", 0.5)
-            var weight = local_2
-            var model = dvs_cached_model(actor, h)
-            weight = (weight + model.fit)
-            if dv_or(dvs_factor_candidate_rejected(actor, h), dv_or((truth == "false"), (dv_find(model, "status", "unknown") == "inconsistent"))):
-                false
-            else:
-                if (score < weight):
-                    best = dv_with(h, "simulation", model)
-                    score = weight
+                    if (truth == "true"):
+                        local_2 = 1
+                    else:
+                        local_2 = dv_find(h, "prior", 0.5)
+                var weight = local_2
+                var model = dvs_cached_model(actor, h)
+                weight = (weight + model.fit)
+                if dv_or((truth == "false"), (dv_find(model, "status", "unknown") == "inconsistent")):
+                    false
+                else:
+                    if (score < weight):
+                        best = dv_with(h, "simulation", model)
+                        score = weight
         i = (i + 1)
     var previous = dv_find(actor, "hypothesis", false)
     var event = dv_find(actor, "hypothesis_event", "")

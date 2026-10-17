@@ -282,5 +282,6 @@ fn dv_update_mind(mind, observations, expected_revision, profile):
         local_2 = expected_revision
     else:
         local_2 = (expected_revision + 1)
-    next = dv_with_many(next, {"time": latest_time, "revision": local_2, "history": dv_append(mind.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions})})
+    rt_push(next.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions})
+    next = dv_with_many(next, {"time": latest_time, "revision": local_2})
     return {"world": next, "dispositions": dispositions, "revision": next.revision}

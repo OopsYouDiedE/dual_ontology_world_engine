@@ -203,12 +203,16 @@ fn dvs_dispatch_due(state, index):
 fn dvs_schedule(state):
     var updated = state.actors
     var erosion_index = 0
+    var any_eroded = false
     while erosion_index < rt_count(updated):
         let original = updated[erosion_index]
         let eroded = dvs_erosion_update(original, state.physical, state.physical.time)
-        updated = dvs_replace(updated, erosion_index, eroded)
+        if not dv_same(eroded, original):
+            updated = dvs_replace(updated, erosion_index, eroded)
+            any_eroded = true
         erosion_index = erosion_index + 1
-    state = dvs_owned_state_update(state, {"actors": updated})
+    if any_eroded:
+        state = dvs_owned_state_update(state, {"actors": updated})
     var current = state
     var due_index = -1
     var due_time = state.horizon + 1
@@ -228,7 +232,8 @@ fn dvs_schedule(state):
                     due_time = queued.due
                     due_index = index
             else:
-                if ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
+                let stopped = dv_find(state, "player_actor", "") != actor.id and dv_find(actor, "last_decision_stopped", false) == true and actor.mind.revision == dv_find(actor, "decision_revision", -1) and actor.mind.time == dv_find(actor, "decision_mind_time", -1) and dv_find(actor, "decision_chapter", 0) == dv_find(state.story, "chapter", 1) and rt_count(dv_find(actor, "pending_heard", [])) == 0
+                if ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and not stopped and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
                     ready_index = index
         index = index + 1
         if index == rt_count(state.actors):
@@ -242,9 +247,9 @@ fn dvs_schedule(state):
         var physical = state.physical
         var events = state.events
         let parent = dvs_event(events, "action_wait", "", physical.time, [], {"until": due_time, "waiting": dvs_scheduled_count(state.actors)})
-        // Visit every minute boundary so interval-based environment laws are not skipped.
+        // Visit authored clock boundaries and any unsettled process cascade.
         while physical.time < due_time:
-            var next_time = physical.time + 1
+            var next_time = dvs_environment_next_time(physical, state.story, due_time)
             if due_time < next_time:
                 next_time = due_time
             physical = dvs_environment(dv_with(physical, "time", next_time), state.story, events, parent)
@@ -297,6 +302,7 @@ fn dvs_session_prepare(state):
     else:
         if dv_find(state, "player_selection", "") == "":
             actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"remaining_game_time": horizon - time, "plan_budget": dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))}))
+            actor = dvs_update_support_events(actor, events)
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
             actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
@@ -305,6 +311,7 @@ fn dvs_session_prepare(state):
                 actors = dvs_replace(actors, index, actor)
                 return dvs_owned_state_update(state, {"actors": actors, "cursor": cursor, "idle": idle})
             actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+            actor = dvs_update_support_events(actor, events)
             actor = dvs_capture_public_topics(actor, events, time, parent)
             actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
             actor = dvs_prepare_speech_choices(actor, events, time, parent)
@@ -621,6 +628,9 @@ fn dvs_public_grants(actors, speaker_index, action, physical, bindings, events, 
     var result = actors
     var speaker = actors[speaker_index]
     var listeners = dv_find(action, "listeners", [])
+    var grants = dv_find(action, "public_grants", [])
+    if rt_count(listeners) == 0 or rt_count(grants) == 0:
+        return actors
     var i = 0
     while (i < rt_count(actors)):
         var actor = result[i]

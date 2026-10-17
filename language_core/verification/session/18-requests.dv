@@ -74,8 +74,9 @@ fn dvs_visible_context(actor, physical, actors):
     while (i < rt_count(actors)):
         var other = actors[i]
         var position = dv_read(physical, actors[i].location_ref)
-        if dv_truth(physical, dv_find(other, "observable_presence_when", dv_true())) == "true" and dv_and((not (other.id == actor.id)), dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))):
-            result = dv_with(result, other.id, {"location": position.value})
+        if (other.id != actor.id) and dv_uncontested(own) and dv_uncontested(position) and dv_same(own.value, position.value):
+            if dv_truth(physical, dv_find(other, "observable_presence_when", dv_true())) == "true":
+                result = dv_with(result, other.id, {"location": position.value})
         i = (i + 1)
     return result
 
@@ -108,25 +109,28 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
         return actor
 
 fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bindings, events, time, parent, execution_id):
-    var speaker = actors[speaker_index]
     var listeners = dv_find(action, "public_observers", [])
     var grants = dv_find(action, "public_grants", [])
+    if rt_count(listeners) == 0 or rt_count(grants) == 0:
+        return actors
+    var speaker = actors[speaker_index]
     var result = actors
     var i = 0
     var own = dv_read(physical, actors[speaker_index].location_ref)
     var origin = dv_read(before, actors[speaker_index].location_ref)
     while (i < rt_count(actors)):
         var actor = result[i]
-        var position = dv_read(physical, result[i].location_ref)
-        var position_before = dv_read(before, result[i].location_ref)
-        var present_after = dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))
-        var present_at_departure = action.kind == "move" and dv_and(dv_uncontested(origin), dv_and(dv_uncontested(position_before), dv_same(origin.value, position_before.value)))
-        if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true" and dv_and(dv_and((not (i == speaker_index)), dv_has(listeners, actor.id)), dv_or(present_after, present_at_departure)):
-            var mind = actor.mind
-            var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
-            if (0 < rt_count(observations)):
-                var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
-                var event = dvs_event_prepared(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id}))
-                result = dvs_replace(result, i, dv_with_many(actor, {"mind": next, "last_cognitive_event": event}))
+        if (i != speaker_index) and dv_has(listeners, actor.id):
+            var position = dv_read(physical, actor.location_ref)
+            var position_before = dv_read(before, actor.location_ref)
+            var present_after = dv_and(dv_uncontested(own), dv_and(dv_uncontested(position), dv_same(own.value, position.value)))
+            var present_at_departure = action.kind == "move" and dv_and(dv_uncontested(origin), dv_and(dv_uncontested(position_before), dv_same(origin.value, position_before.value)))
+            if dv_or(present_after, present_at_departure) and (dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true"):
+                var mind = actor.mind
+                var observations = dv_perceive(physical, actor.mind, bindings, grants, execution_id, time)
+                if (0 < rt_count(observations)):
+                    var next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
+                    var event = dvs_event_prepared(events, "observation", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "action": action}, {"bindings": bindings, "grants": grants, "execution_id": execution_id}))
+                    result = dvs_replace(result, i, dv_with_many(actor, {"mind": next, "last_cognitive_event": event}))
         i = (i + 1)
     return result

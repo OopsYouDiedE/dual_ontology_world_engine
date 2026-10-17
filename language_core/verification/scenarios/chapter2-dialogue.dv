@@ -197,17 +197,24 @@ fn c2d_action(row):
         rt_push(grants, effects[e].ref)
         e = e + 1
     var raw_listeners = c2d_people()
-    if dv_has_key(row, "opportunity"):
-        let parts = dv_find(row.opportunity, "participants", [])
-        if 0 < rt_count(parts) and rt_count(parts) <= 4:
-            raw_listeners = dvp_merge_refs(parts, ["detective"])
+    if not dv_has_key(row, "norm_proposal"):
+        if dv_has_key(row, "opportunity"):
+            let parts = dv_find(row.opportunity, "participants", [])
+            if 0 < rt_count(parts):
+                raw_listeners = dvp_merge_refs(parts, ["detective"])
+        else:
+            if dv_has_key(row, "request"):
+                raw_listeners = [row.request.target, "detective"]
+            else:
+                if dv_has_key(row, "response_topic"):
+                    raw_listeners = ["detective"]
     var listeners = []
     var l = 0
     while l < rt_count(raw_listeners):
         if raw_listeners[l] != row.actor:
             rt_push(listeners, raw_listeners[l])
         l = l + 1
-    var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": listeners, "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", [])})
+    var action = dv_with_many(c2_action(row.id, "talk", known, dv_all([c2_at(row.actor, row.room), row.when]), row.id, grants, row.text, row.source), {"speech": speech, "listeners": listeners, "predict_law": row.id, "owner": row.actor, "purpose_refs": dv_find(row, "purpose_refs", []), "required_room": row.room})
     if dv_has_key(row, "norm_proposal"):
         action = dv_with(action, "speech", dv_with_many(speech, {"utterance_type": "proposal", "norm_proposal": row.norm_proposal}))
     if dv_has_key(row, "personal_choice"):
@@ -305,6 +312,11 @@ fn c2d_goals(actor):
         t = t + 1
     rt_push(goals, c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 0))
     if actor.id == "shen":
+        rt_push(goals, c2_goal(c2_at("shen", "central_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false), dv_not(c2_at("shen", "logistics"))]), [c2_approved("cook-real-lunch")]))
+        rt_push(goals, c2_goal(c2_at("shen", "logistics"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false)]), [c2_approved("cook-real-lunch")]))
+        rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_cooked"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
+        rt_push(goals, c2_goal(c2_at("shen", "central_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true), dv_not(c2_at("shen", "living_hall")), dv_fact(c2daily_ref("meal_prepared"), false)]), [c2_approved("deliver-real-lunch")]))
+        rt_push(goals, c2_goal(c2_at("shen", "living_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true), dv_fact(c2daily_ref("meal_prepared"), false)]), [c2_approved("deliver-real-lunch")]))
         rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
     if actor.id == "ruan":
         rt_push(goals, c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]))
@@ -315,9 +327,11 @@ fn c2d_goals(actor):
             var when = dv_all([row.when, row.literal, dv_fact(c2d_mark(actor.id, row.id), false)])
             if dv_find(row, "category", "") == "case":
                 when = dv_all([when, c2d_case_gate(actor.mind)])
-            rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false})
+            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false}))
         i = i + 1
     let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 600, 690)])
+    if actor.id == "demon":
+        rt_push(goals, c2_goal(c2_at("demon", "central_hall"), dv_all([study, dv_not(c2_at("demon", "lecture"))]), [c2d_source("06_场面.story", 79, "请到讲堂")]))
     rt_push(goals, c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]))
     if actor.id == "bertrand":
         rt_push(goals, c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]))
@@ -341,17 +355,11 @@ fn c2d_refresh_actor_goals(actor):
     var policy = dv_with(actor.policy, "chapter2_dialogue_goals", goals)
     var combined = c2_personal_goals(actor)
     var i = 0
-    if actor.id == "demon" or dv_truth(actor.mind, c2_at(actor.id, "living_hall")) != "true":
+    if actor.id == "demon":
         let carried = dv_find(actor.policy, "chapter1_carried_goals", [])
         while i < rt_count(carried):
             rt_push(combined, carried[i])
             i = i + 1
-        if dv_has_key(actor.policy, "departure_goals"):
-            let departure = dvp_refresh_current_evidence(actor, dv_find(actor.policy, "departure_goals", []))
-            i = 0
-            while i < rt_count(departure):
-                rt_push(combined, departure[i])
-                i = i + 1
     i = 0
     while i < rt_count(goals):
         rt_push(combined, goals[i])

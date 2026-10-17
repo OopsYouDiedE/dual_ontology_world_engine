@@ -1,7 +1,10 @@
 // Glue between paid prediction evidence, explicit abduction and real submissions.
 // Only actual personal reception may bind a later proposal to an old utterance.
 
-fn dvs_argument_sources(events, subject):
+fn dvs_argument_sources(events, actor):
+    actor = dvs_update_support_events(actor, events)
+    let subject = actor.id
+    events = actor.support_events
     var result = []
     var i = 0
     while (i < rt_count(events)):
@@ -23,7 +26,7 @@ fn dvs_capture_public_topics(actor, events, time, parent):
         var binding = bindings[i]
         var topic = bindings[i].topic
         if dv_and((not dv_has_key(heard, topic)), (dv_truth(actor.mind, binding.heard_when) == "true")):
-            var sources = dvs_support_parents(actor.mind, dvs_sim_refs(binding.heard_when), events, actor.id)
+            var sources = dvs_support_parents(actor.mind, dvs_sim_refs(binding.heard_when), events, actor)
             if (0 < rt_count(sources)):
                 var record = dv_with({"topic": topic, "source_event_ids": sources, "heard_when": binding.heard_when}, "origin_speakers", dvs_topic_origin_speakers(events, sources))
                 dvs_event(events, "public_topic_heard", actor.id, time, dv_explanation_merge(dv_single(parent), sources), record)
@@ -238,7 +241,7 @@ fn dvs_arguments(actor, events, time, parent):
                 while (c < rt_count(certificates)):
                     policy = dv_with(policy, "confidence_cap", dv_min(dv_find(policy, "confidence_cap", 0), certificates[c].confidence))
                     c = (c + 1)
-                var result = dvs_factor_argument(dv_accept_explanation(actor.mind, model, competitors, slots, dvs_argument_sources(events, actor.id), policy, dv_find(actor.policy, "reason_budget", 0), time, rt_cat("e", rt_show(rt_count(events)))), coverage)
+                var result = dvs_factor_argument(dv_accept_explanation(actor.mind, model, competitors, slots, dvs_argument_sources(events, actor), policy, dv_find(actor.policy, "reason_budget", 0), time, rt_cat("e", rt_show(rt_count(events)))), coverage)
                 var parents = dvs_cognitive_parents(actor, dv_single(parent))
                 if dv_has_key(model, "event"):
                     parents = dv_explanation_merge(parents, dv_single(model.event))
@@ -307,10 +310,25 @@ fn dvs_materialize_arguments(actor):
         i = (i + 1)
     return dv_with(actor, "actions", result)
 
+fn dvs_update_support_events(actor, events):
+    var support = dv_find(actor, "support_events", [])
+    var cursor = dv_find(actor, "support_events_cursor", 0)
+    let total = rt_count(events)
+    let subject = actor.id
+    while cursor < total:
+        let event = events[cursor]
+        if event.actor == subject:
+            let type = event.type
+            if type == "observation" or type == "listener_parse" or type == "inference" or type == "model_argument_accepted":
+                rt_push(support, event)
+        cursor = cursor + 1
+    return dv_with_many(actor, {"support_events": support, "support_events_cursor": total})
+
 fn dvs_subject_support_events(events, subject):
     var result = []
     var j = 0
-    while (j < rt_count(events)):
+    let total = rt_count(events)
+    while (j < total):
         let event = events[j]
         if (event.actor == subject):
             let type = event.type
@@ -319,9 +337,17 @@ fn dvs_subject_support_events(events, subject):
         j = j + 1
     return result
 
-fn dvs_support_parents(mind, refs, events, subject):
+fn dvs_support_parents(mind, refs, events, subject_or_actor):
+    var subject = subject_or_actor
+    var cand_events = []
+    if dv_record_like(subject_or_actor):
+        subject = subject_or_actor.id
+        cand_events = dv_find(subject_or_actor, "support_events", [])
+        if rt_count(cand_events) == 0:
+            cand_events = dvs_subject_support_events(events, subject)
+    else:
+        cand_events = dvs_subject_support_events(events, subject)
     var parents = []
-    let cand_events = dvs_subject_support_events(events, subject)
     var i = 0
     while (i < rt_count(refs)):
         var ref = refs[i]
@@ -365,7 +391,7 @@ fn dvs_selection_parents(actor, action, choice, events, parent):
         refs = dvp_merge_refs(refs, dvs_sim_refs(action.answer))
     if dv_has_key(actor, "question_ref"):
         refs = dvp_add_ref(refs, actor.question_ref)
-    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, refs, events, actor.id))
+    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, refs, events, actor))
     if (dv_find(actor, "hypothesis_event", "") == ""):
         false
     else:
@@ -396,24 +422,26 @@ fn dvs_model_parent_ids(actor, parent, prior):
 fn dvs_public_grant_parents(events, parent, subject):
     var result = dv_single(parent)
     var literal = ""
-    var i = 0
-    while (i < rt_count(events)):
+    var i = rt_count(events) - 1
+    while (i >= 0 and literal == ""):
         var event = events[i]
         if (event.type == "speech_literal"):
             if dv_has(event.parents, parent):
                 literal = event.id
-        i = (i + 1)
+        i = i - 1
     if (literal == ""):
         false
     else:
         result = dv_explanation_merge(result, dv_single(literal))
-        i = 0
-        while (i < rt_count(events)):
+        i = rt_count(events) - 1
+        var found_parse = false
+        while (i >= 0 and not found_parse):
             var event = events[i]
             if dv_and((event.type == "listener_parse"), (event.actor == subject)):
                 if (dv_find(event.data, "source_event", "") == literal):
                     result = dv_explanation_merge(result, dv_single(event.id))
-            i = (i + 1)
+                    found_parse = true
+            i = i - 1
     return result
 
 fn dvs_physical_proposition(proposition, bindings, subject):
@@ -480,7 +508,7 @@ fn dvs_refresh_derivations(actor, events, time, parent):
                     var k = 0
                     remaining = (remaining - 1)
                     checked = (checked + 1)
-                    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, dvs_sim_refs(derivation.adoption.law.premise), events, actor.id))
+                    parents = dv_explanation_merge(parents, dvs_support_parents(actor.mind, dvs_sim_refs(derivation.adoption.law.premise), events, actor))
                     while (k < rt_count(changes)):
                         var change = changes[k]
                         if dv_same(dv_read(world, change.ref), change.after):
@@ -569,8 +597,9 @@ fn dvs_factor_candidate_rejected(actor, candidate):
 
 fn dvs_capture_heard_utterances(actor, events):
     var heard = dv_find(actor, "heard_utterances", [])
-    var i = 0
-    while (i < rt_count(events)):
+    var i = dv_find(actor, "heard_utterances_cursor", 0)
+    let total = rt_count(events)
+    while (i < total):
         var event = events[i]
         if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
             var data = event.data
@@ -581,7 +610,7 @@ fn dvs_capture_heard_utterances(actor, events):
                 if literal != false and dv_has(event.parents, source) and literal.actor != actor.id:
                     heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
         i = (i + 1)
-    return dv_with(actor, "heard_utterances", heard)
+    return dv_with_many(actor, {"heard_utterances": heard, "heard_utterances_cursor": total})
 
 fn dvs_topic_origin_speakers(events, sources):
     var pending = dv_clone(sources)
@@ -623,22 +652,21 @@ fn dvs_argument_reassessment_sources(actor, action, argument):
 
 fn dvs_public_literal_source(events, parent, subject):
     var literal = ""
-    var result = ""
-    var i = 0
-    while (i < rt_count(events)):
+    var i = rt_count(events) - 1
+    while (i >= 0 and literal == ""):
         var event = events[i]
         if (event.type == "speech_literal"):
             if dv_has(event.parents, parent):
                 literal = event.id
-        i = (i + 1)
+        i = i - 1
     if (literal == ""):
-        false
-    else:
-        i = 0
-        while (i < rt_count(events)):
-            var event = events[i]
-            if dv_and((event.type == "listener_parse"), (event.actor == subject)):
-                if dv_and((dv_find(event.data, "source_event", "") == literal), dv_has(event.parents, literal)):
-                    result = literal
-            i = (i + 1)
+        return ""
+    var result = ""
+    i = rt_count(events) - 1
+    while (i >= 0 and result == ""):
+        var event = events[i]
+        if dv_and((event.type == "listener_parse"), (event.actor == subject)):
+            if dv_and((dv_find(event.data, "source_event", "") == literal), dv_has(event.parents, literal)):
+                result = literal
+        i = i - 1
     return result

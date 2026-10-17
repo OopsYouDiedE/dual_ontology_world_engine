@@ -88,10 +88,10 @@ fn dvs_speech_hearing(speaker, listener, speech, physical):
     if dv_uncontested(target_cell):
         target_location = target_cell.value
     var grants = dv_find(listener, "hearing_grants", [])
-    var i = 0
+    if (source_location != "") and dv_same(source_location, target_location):
+        return true
     var heard = false
-    if dv_and((not (source_location == "")), dv_same(source_location, target_location)):
-        heard = true
+    var i = 0
     while (i < rt_count(grants)):
         var grant = grants[i]
         if dv_and((grant.speaker == source), (grant.channel == channel)):
@@ -463,6 +463,8 @@ fn dvs_speech_goal_value(goals, listener, prediction):
 
 fn dvs_prepare_speech_choices(actor, events, time, parent):
     var goals = dvs_speech_goals(actor)
+    if rt_count(goals) == 0:
+        return actor
     var actions = actor.actions
     var mind = actor.mind
     var models = dv_find(actor.mind, "listener_models", [])
@@ -715,6 +717,26 @@ fn dvs_complete_norm(actor, action, applied, events, time, execution_event, obse
     let event = dvs_event_prepared(events, "norm_decision", actor.id, time, [execution_event, observation_event, receipt.source_event, receipt.parse_event], {"decision": stance, "value_order": dv_find(actor.policy, "value_order", []), "personal_choice": dv_find(action, "personal_choice", []), "rules_before": before, "rules_after": rules})
     return dv_with_many(actor, {"policy": dv_with(actor.policy, "norm_rules", rules), "norm_stances": stances, "last_cognitive_event": event})
 
+fn dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
+    let actions = listener.actions
+    var i = 0
+    let count = rt_count(actions)
+    while i < count:
+        let req = dv_find(actions[i], "received_speech_requirement", false)
+        if req != false:
+            if dv_has_key(req, "any_of"):
+                var j = 0
+                let any_list = req.any_of
+                while j < rt_count(any_list):
+                    if dv_find(any_list[j], "speaker", "") == speaker_id and dv_find(any_list[j], "action_id", "") == action_id:
+                        return true
+                    j = j + 1
+            else:
+                if dv_find(req, "speaker", "") == speaker_id and dv_find(req, "action_id", "") == action_id:
+                    return true
+        i = i + 1
+    return false
+
 fn dvs_receive_scheduled_speech(listener, message, events, time):
     let speech = message.speech
     let literal = speech.literal_ast
@@ -728,13 +750,20 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
     var policy = listener.policy
     var trust = dvs_speaker_trust(listener.policy, speaker_id)
     var decision = dvs_speech_proposal_decision(before, policy, speech, trust)
-    var observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
+    var candidates_actual = dvs_speech_candidates(policy, speech)
+    var is_ordinary_chat = false
+    if decision.status == "ordinary" and dv_find(speech, "norm_proposal", false) == false and dv_find(speech, "request", false) == false and rt_count(candidates_actual) == 0:
+        if not dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
+            is_ordinary_chat = true
+    var after = before
     var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(listener.policy, "observation_threshold", 0.5))
-    var receipt = dv_update_mind(before, observations, before.revision, profile)
-    var after = receipt.world
+    var observations = []
+    if not is_ordinary_chat:
+        observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
+        var receipt = dv_update_mind(before, observations, before.revision, profile)
+        after = receipt.world
     var interpretations = dv_find(listener, "interpretations", [])
     var last_interpretation = dv_find(listener, "last_interpretation_event", "")
-    var candidates_actual = dvs_speech_candidates(policy, speech)
     var n = 0
     var parse_event = false
     var proposal_event = false

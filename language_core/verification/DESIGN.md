@@ -87,7 +87,7 @@ dvp_plan 在临时只读主体视图中刷新显式 refresh_until 目标的 mini
 
 正式会话在主体 scheduled_action 中保存 action、start、due、成本模型、选择所需引用及来源事件。Prepare 先扫描队列与可决策主体；等待者不进入认知和选择链。到期行动重新按当前物理世界报价，由宿主回执进入同一 Complete。scheduled_start 使 action-cost 只结算一次费用；世界时钟已经等待的部分不再累加。当前执行回执的时间必须等于排队时声明的时间，变化时明确报错，不能默默重排或倒拨时间。无排队起点的 Core 调用保持原即时结算合同。
 
-等待推进逐分钟执行环境法则，实际效果继续在 Complete 后产生。相同时刻按循环主体顺序处理到期项。空闲主体同一时刻至多尝试一次；零可用行动与仍有排队行动分开判断。队列和延后收闻随主体保存、扩章与恢复。pending_heard 只存实际听到的话语及当时声道证据，到期后理解；不重新检查已经结束的声道，也不让等待者执行话语理解模型。
+等待推进按可分析时钟边界执行环境法则，变化尚未稳定时逐分钟结算，实际效果继续在 Complete 后产生。相同时刻按循环主体顺序处理到期项。空闲主体同一时刻至多尝试一次；零可用行动与仍有排队行动分开判断。队列和延后收闻随主体保存、扩章与恢复。pending_heard 只存实际听到的话语及当时声道证据，到期后理解；不重新检查已经结束的声道，也不让等待者执行话语理解模型。
 
 dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、physical、events、idle、actors、pending 更新；它仍不修改既有字段对象。队列只存 Complete 所需 relevant_refs 与 selected_path，不嵌入整个规划搜索结果。事件保留原独立快照合同。refresh_refs 将复查目标限定到本人已知的相关字段时间；内容列表重建不自动刷新所有观察目标。
 
@@ -110,7 +110,7 @@ dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、ph
 
 个人选择的比较在每次规划开始时按本人的 choice.group 建立动作索引，同组候选保持原动作顺序，全部原资格与价值比较仍执行；该索引只属于当前只读规划视图，后继节点复用同一未变动作目录。没有 normative_method 的动作直接返回原本的无匹配规范结果。
 
-规划备忘保留完整主体输入、bindings 与 costs，仅省略由 runner 使用的 decision_time、decision_revision、planning_work_total，以及仅用于真实事件连边的 last_cognitive_event。选择后的事件连边仍读取主体当前 last_cognitive_event；该字段不参与规划资格与评分。剩余时间覆盖 plan_depth×最大单步上界时，键内归一到该界限：该区间所有搜索路径均满足原时间门槛；低于界限时保留精确余额。其他字段，包括认识、采纳、目标、动作、实际收闻、同处上下文、已用动作、资格与依赖缓存均入键。主体认知链照常执行后才查询规划备忘；实际等待者仍由调度器跳过。命中保留原候选证据与决定，实际 plan_expansions 记录0，并单列 plan_cache_hit/reused_plan_expansions；实际动作费用与每次搜索上限不变。此键依赖关系须随规划读取字段的变更维护。
+规划备忘保留主体输入、bindings 与 costs；mind 的审计 history/seen 不入键，revision 与其余认识字段保留；另省略由 runner 使用的 decision_time、decision_revision、planning_work_total，以及仅用于真实事件连边的 last_cognitive_event。选择后的事件连边仍读取主体当前 last_cognitive_event；该字段不参与规划资格与评分。剩余时间覆盖 plan_depth×最大单步上界时，键内归一到该界限：该区间所有搜索路径均满足原时间门槛；低于界限时保留精确余额。其他字段，包括认识、采纳、目标、动作、实际收闻、同处上下文、已用动作、资格与依赖缓存均入键。主体认知链照常执行后才查询规划备忘；实际等待者仍由调度器跳过。命中保留原候选证据与决定，实际 plan_expansions 记录0，并单列 plan_cache_hit/reused_plan_expansions；实际动作费用与每次搜索上限不变。此键依赖关系须随规划读取字段的变更维护。
 
 ## 实际资格与规范回执维护（2026-10-16）
 
@@ -125,3 +125,12 @@ norm_proposals 记录已实际获得的规范内容，norm_stances 与 policy.no
 rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译器词法扫描使用。运行值检查使用一元 Bool ABI rt_is_numeric_value(value)：有限double与有效精确Rational为真，文本（包括数字文本）、布尔、列表与记录为假，不进行隐式解析。新增平台谓词须同步compiler.dv的arity/返回类型与Core参考；seed沿既有rt_通用发射映射，不增加解释器。
 
 主体数量、规划依赖、物理暴露与表达权重的数值边界遵循同一类型合同。公式、认识来源、成本和成功条件不因类型修复改变。工程值域检查与正式一级会话分列，全部源码修改冻结后统一执行；不以值域结果替代人物或剧情验收。
+
+
+## 环境边界与规划复用维护（2026-10-18）
+
+等待队列由 `dvs_environment_next_time` 读取已采纳环境 premise 的时钟边界，保留一分钟采样格与实际到期点；尚可变化的进程、增量及级联继续逐分钟结算。不可分析时钟条件回退一分钟。`world_processes.once` 仅在 applied 后挂起；不按规则名称猜测一次性身份。新增时钟运算或环境写入机制时须同步边界分析及 core/README.md。
+
+`dvp_forecast` 只缓存完整 mind 节点上的纯预测，供评分与后继复用。内部规划省略继承 history，保留 seen 与单元来源；真实历史、公共 predict 与重复事件校验不删除。真实更新只在独立 stage 追加日志。规划备忘省略 mind 的审计 history/seen，保留 revision 与所有其他规划输入；新增日志读取依赖须恢复对应键。论证来源先补齐主体增量索引，再遍历本人支持事件。
+
+目标时间元数据由内容构造器预计算，使用时核对 available_when 未变；目标刷新仍逐次检查本人时刻与认知，不按粗粒度时段推迟资格。声明合并与角色目标范围变化属于新行为条件，不能据本轮结果宣称与旧版本同条件加速。集中修改、静态审读和文档更新完成后，只运行本轮授权的一次 `run_debug.py --timeout 180` 一级会话；游戏时域达到 7200 与剧情关键节点达成分别记录。测试不启动 Godot，不运行流程回归。

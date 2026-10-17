@@ -1,4 +1,4 @@
-// The whole planning input is retained. Only runner bookkeeping is omitted.
+// Planning retains cognition and revision; append-only audit logs are not decision inputs.
 fn dvp_memo_input(actor, costs):
     var policy = actor.policy
     if dv_has_key(policy, "remaining_game_time"):
@@ -19,7 +19,10 @@ fn dvp_memo_input(actor, costs):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
-                rt_push(result, entry)
+                if key == "mind":
+                    rt_push(result, dv_pair(key, dv_without(dv_without(entry[1], "history"), "seen")))
+                else:
+                    rt_push(result, entry)
         i = i + 1
     return result
 
@@ -387,7 +390,7 @@ fn dvp_value_context(actor):
                 if not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0)):
                     rt_push(evidence, goal.ref)
         if kind == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
-            if not dv_has(dv_find(actor, "planning_achievements", []), goal.proposition):
+            if not dv_has(dv_find(actor, "planning_achievements", []), i):
                 if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
                     rt_push(achievements, goal)
         if kind == "communicate" and 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
@@ -500,7 +503,7 @@ fn dvp_opportunities(actor, action):
         if not dv_same_local_ref(actor.id, adoption.law.effects[i].ref, actor.location_ref):
             return []
         i = i + 1
-    let prediction = dv_predict(dv_with(actor.mind, "domain", "mind"), action.predict_law, "opportunity-forecast", dv_find(actor.mind, "time", 0), actor.mind.revision)
+    let prediction = dvp_forecast(actor.mind, action.predict_law)
     if prediction.status != "applied":
         return []
     var result = []
@@ -538,32 +541,43 @@ fn dvp_initial_access(actor):
         i = i + 1
     return result
 
-fn dvp_state_key(mind):
-    var objects = mind.objects
-    var result = []
+fn dvp_join_items(list):
+    var s = ""
     var i = 0
-    while (i < rt_count(objects)):
-        var entry = objects[i]
-        var object = objects[i][1]
-        var facets = objects[i][1].facets
-        var j = 0
-        while (j < rt_count(facets)):
-            var facet = facets[j]
-            var fields = facets[j][1]
-            var k = 0
-            while (k < rt_count(fields)):
-                var field = fields[k]
-                rt_push(result, {"ref": dv_ref(entry[0], facet[0], field[0]), "cell": dvs_reason_value(field[1])})
-                k = (k + 1)
-            j = (j + 1)
-        i = (i + 1)
-    return rt_json_stringify(result)
+    let n = rt_count(list)
+    while i < n:
+        if i > 0:
+            s = rt_cat(s, ",")
+        s = rt_cat(s, rt_show(list[i]))
+        i = i + 1
+    return s
+
+fn dvp_state_key(room, tasks):
+    return rt_cat(room, rt_cat("|", dvp_join_items(tasks)))
+
+fn dvp_extract_required_room(prop, loc_ref):
+    if not dv_record_like(prop):
+        return ""
+    let op = dv_find(prop, "op", "")
+    if op == "equals":
+        let ref = dv_find(prop, "ref", false)
+        if ref != false and dv_same(ref, loc_ref):
+            let val = dv_find(prop, "value", "")
+            if not dv_record_like(val):
+                return val
+    if op == "all":
+        let items = dv_find(prop, "items", [])
+        var i = 0
+        let n = rt_count(items)
+        while i < n:
+            let r = dvp_extract_required_room(items[i], loc_ref)
+            if r != "":
+                return r
+            i = i + 1
+    return ""
 
 fn dvp_node_key(node):
-    if dv_has_key(node, "key"):
-        return node.key
-    else:
-        return dvp_state_key(node.mind)
+    return node.key
 
 fn dvp_frontier_put(frontier, node):
     var key = dvp_node_key(node)
@@ -663,14 +677,28 @@ fn dvp_plan(actor, bindings, costs):
     var best_after_successor_layer = []
     let initial_achievements = dvp_satisfied_goals(actor, actor.mind, [])
     let initial_access = dvp_initial_access(actor)
-    let initial_seen = dvp_state_key(actor.mind)
-    var init_key = rt_json_stringify({"state": initial_seen, "achievements": initial_achievements, "opportunities": initial_access})
+    var root_room = ""
+    if dv_has_key(actor, "location_ref"):
+        let cur_loc = dv_read(actor.mind, actor.location_ref)
+        if cur_loc.known:
+            root_room = rt_show(cur_loc.value)
+    let initial_seen = dvp_state_key(root_room, [])
+    var init_key = rt_cat(initial_seen, rt_cat("#", rt_cat(dvp_join_items(initial_achievements), rt_cat("@", dvp_join_items(initial_access)))))
     var plans = []
-    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
+    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "room": root_room, "tasks": [], "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
     var depth = 0
     var time_blocked = 0
     var stop = "complete-depth"
     var actions = actor.actions
+    var a_idx = 0
+    let a_cnt = rt_count(actions)
+    while a_idx < a_cnt:
+        var act = actions[a_idx]
+        if not dv_has_key(act, "required_room") and dv_has_key(actor, "location_ref"):
+            let r = dvp_extract_required_room(act.precondition, actor.location_ref)
+            if r != "":
+                actions = dvs_replace(actions, a_idx, dv_with(act, "required_room", r))
+        a_idx = a_idx + 1
     var visited = []
     visited = dv_single({"key": init_key, "score": 0, "elapsed": 0})
     while dv_and((depth < depth_limit), (0 < rt_count(frontier))):
@@ -692,7 +720,16 @@ fn dvp_plan(actor, bindings, costs):
                 while (i < rt_count(actions)):
                     var action = actions[i]
                     var local_1 = false
-                    if (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(actor, action, mind, relevant):
+                    var spatially_possible = true
+                    if node.room != "":
+                        if dv_has_key(action, "travel"):
+                            if action.travel.from != node.room:
+                                spatially_possible = false
+                        else:
+                            let req_room = dv_find(action, "required_room", "")
+                            if req_room != "" and req_room != node.room:
+                                spatially_possible = false
+                    if spatially_possible and (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(actor, action, mind, relevant):
                         if dv_has_key(actor.policy, "remaining_game_time"):
                             if (actor.policy.remaining_game_time < (dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time)):
                                 time_blocked = (time_blocked + 1)
@@ -733,16 +770,26 @@ fn dvp_plan(actor, bindings, costs):
                             if dv_has_key(adoptions, name):
                                 var adoption = dv_get(adoptions, name)
                                 if dv_and(adoption.active, (adoption.mode == "predict")):
-                                    var prediction = dv_predict(dv_with(mind, "domain", "mind"), name, rt_cat("plan-", rt_show(rt_count(plans))), dv_find(mind, "time", 0), mind.revision)
+                                    var prediction = dvp_forecast(mind, name)
                                     if (prediction.status == "applied"):
                                         var predicted = prediction.world
                                         let achieved = dvp_satisfied_goals(actor, predicted, node.achievements)
-                                        let seen_key = dvp_state_key(predicted)
-                                        var pred_key = rt_json_stringify({"state": seen_key, "achievements": achieved, "opportunities": opportunity_keys})
-                                        if dv_has(node.seen, seen_key):
+                                        var is_transit = false
+                                        var room = node.room
+                                        if dv_has_key(action, "travel"):
+                                            let tr = action.travel
+                                            if tr.from != tr.to:
+                                                is_transit = true
+                                                room = tr.to
+                                        var next_tasks = node.tasks
+                                        if not is_transit:
+                                            next_tasks = dv_append(node.tasks, action.id)
+                                        let seen_key = dvp_state_key(room, next_tasks)
+                                        var pred_key = rt_cat(seen_key, rt_cat("#", rt_cat(dvp_join_items(achieved), rt_cat("@", dvp_join_items(opportunity_keys)))))
+                                        if dv_has(node.seen, seen_key) or (not is_transit and dv_has(node.tasks, action.id)):
                                             false
                                         else:
-                                            var candidate_node = {"mind": predicted, "path": path, "score": score - opportunity_value * dv_find(actor.policy, "progress_weight", 1), "seen": dv_append(node.seen, seen_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": opportunity_keys}
+                                            var candidate_node = {"mind": predicted, "path": path, "score": score - opportunity_value * dv_find(actor.policy, "progress_weight", 1), "room": room, "tasks": next_tasks, "seen": dv_append(node.seen, seen_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": opportunity_keys}
                                             if dvp_dominated(visited, candidate_node):
                                                 false
                                             else:
@@ -826,8 +873,8 @@ fn dvp_satisfied_goals(actor, mind, previous):
     while i < rt_count(goals):
         let goal = goals[i]
         if dv_find(goal, "kind", "") == "achieve":
-            if (dv_truth(mind, goal.proposition) == "true" or dv_has(previous, goal.proposition)) and not dv_has(result, goal.proposition):
-                result = dv_append(result, goal.proposition)
+            if (dv_truth(mind, goal.proposition) == "true" or dv_has(previous, i)) and not dv_has(result, i):
+                result = dv_append(result, i)
         i = i + 1
     return result
 
@@ -838,7 +885,7 @@ fn dvp_achievement_value(actor, action):
     while i < rt_count(goals):
         let goal = goals[i]
         if dv_find(goal, "kind", "") == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
-            if not dv_has(dv_find(actor, "planning_achievements", []), goal.proposition):
+            if not dv_has(dv_find(actor, "planning_achievements", []), i):
                 if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
                     rt_push(pending, goal)
         i = i + 1
@@ -854,7 +901,22 @@ fn dvp_achievement_pending(actor, action, pending):
         return 0
     if not adoption.active or adoption.mode != "predict":
         return 0
-    let prediction = dv_predict(dv_with(actor.mind, "domain", "mind"), name, "goal-forecast", dv_find(actor.mind, "time", 0), actor.mind.revision)
+    var relevant = false
+    i = 0
+    while i < rt_count(pending) and not relevant:
+        let refs = dvs_sim_refs(pending[i].proposition)
+        var j = 0
+        while j < rt_count(adoption.law.effects) and not relevant:
+            var r = 0
+            while r < rt_count(refs):
+                if dv_same_local_ref(actor.id, adoption.law.effects[j].ref, refs[r]):
+                    relevant = true
+                r = r + 1
+            j = j + 1
+        i = i + 1
+    if not relevant:
+        return 0
+    let prediction = dvp_forecast(actor.mind, name)
     if prediction.status != "applied":
         return 0
     var value = 0
@@ -885,3 +947,12 @@ fn dvp_refresh_current_evidence(actor, goals):
         rt_push(result, goal)
         i = i + 1
     return result
+
+// Pure prediction only; this cache never writes actual action or evidence events.
+fn dvp_forecast(mind, name):
+    let key = ["dvp_forecast", name]
+    let cached = rt_memo_get(mind, key)
+    if cached[0]:
+        return cached[1]
+    let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
+    return rt_memo_put(mind, key, result)

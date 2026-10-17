@@ -1,0 +1,915 @@
+{
+  "last_phase": {
+    "type": "engine_phase",
+    "actor": "moran",
+    "game_time": 3430,
+    "phase": "choice-start"
+  },
+  "last_execution": {
+    "event_id": "e10766",
+    "type": "action_execution",
+    "actor": "su",
+    "game_time": 3430,
+    "parents": [
+      "e10765"
+    ],
+    "action_id": "su.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 180,
+        "computation": 1,
+        "stamina": 0
+      },
+      "status": "applied"
+    }
+  },
+  "last_applied": {
+    "event_id": "e10766",
+    "type": "action_execution",
+    "actor": "su",
+    "game_time": 3430,
+    "parents": [
+      "e10765"
+    ],
+    "action_id": "su.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 180,
+        "computation": 1,
+        "stamina": 0
+      },
+      "status": "applied"
+    }
+  },
+  "last_debug_event": {
+    "event_id": "e10767",
+    "type": "observation",
+    "actor": "su",
+    "game_time": 3430,
+    "parents": [
+      "e10766",
+      "e10622"
+    ],
+    "action_id": "su.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "observations": [
+        {
+          "id": [
+            "action873",
+            "su",
+            {
+              "type": "ref",
+              "object": "night.wait.su",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "su"
+            }
+          ],
+          "subject": "su",
+          "ref": {
+            "type": "ref",
+            "object": "night.wait.su",
+            "facet": "state",
+            "field": "elapsed",
+            "subject": "su"
+          },
+          "value": 1620,
+          "source": "perception",
+          "origin": "direct",
+          "time": 3430,
+          "trust": 1,
+          "dependency": [
+            "action873",
+            {
+              "type": "ref",
+              "object": "night.wait.su",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "su"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3494
+          }
+        },
+        {
+          "id": [
+            "action873",
+            "su",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "su"
+            }
+          ],
+          "subject": "su",
+          "ref": {
+            "type": "ref",
+            "object": "campaign.clock",
+            "facet": "state",
+            "field": "minute",
+            "subject": "su"
+          },
+          "value": 3430,
+          "source": "perception",
+          "origin": "direct",
+          "time": 3430,
+          "trust": 1,
+          "dependency": [
+            "action873",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "su"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3494
+          }
+        }
+      ],
+      "execution_id": "action873"
+    }
+  },
+  "debug_end_present": false,
+  "reached_7200": false,
+  "elapsed_seconds": 180.125,
+  "scope": "bounded formal-model; no Godot geometry; no complete trace",
+  "key_events": [
+    {
+      "event_id": "e2765",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 612,
+      "parents": [
+        "e2764"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3535",
+      "type": "answer_accepted",
+      "actor": "ward",
+      "game_time": 855,
+      "parents": [
+        "e3534"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3546",
+      "type": "answer_accepted",
+      "actor": "gu",
+      "game_time": 855,
+      "parents": [
+        "e3545"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4007",
+      "type": "answer_accepted",
+      "actor": "moran",
+      "game_time": 1080,
+      "parents": [
+        "e4006"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4018",
+      "type": "answer_accepted",
+      "actor": "ruan",
+      "game_time": 1080,
+      "parents": [
+        "e4017"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4029",
+      "type": "answer_accepted",
+      "actor": "elena",
+      "game_time": 1080,
+      "parents": [
+        "e4028"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4081",
+      "type": "answer_accepted",
+      "actor": "selma",
+      "game_time": 1085,
+      "parents": [
+        "e4080"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4172",
+      "type": "answer_accepted",
+      "actor": "bertrand",
+      "game_time": 1110,
+      "parents": [
+        "e4171"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4183",
+      "type": "answer_accepted",
+      "actor": "margaret",
+      "game_time": 1110,
+      "parents": [
+        "e4182"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4210",
+      "type": "answer_accepted",
+      "actor": "mora",
+      "game_time": 1111,
+      "parents": [
+        "e4209"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4237",
+      "type": "answer_accepted",
+      "actor": "veronica",
+      "game_time": 1113,
+      "parents": [
+        "e4236"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e4430",
+      "type": "chapter_content_available",
+      "actor": "",
+      "game_time": 1805,
+      "parents": [],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "chapter": 2,
+        "movement": false
+      }
+    },
+    {
+      "event_id": "e4528",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1806,
+      "parents": [
+        "e4527"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e4688",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1980,
+      "parents": [
+        "e4687"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e4689",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 1981,
+      "parents": [
+        "e4687"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9036",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9035"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9037",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9036"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9038",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9037"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9039",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9038"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9040",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9039"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9041",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9040"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9042",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9041"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9043",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9042"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9044",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9043"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9045",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9044"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9046",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9045"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9047",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9046"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9048",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9047"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9049",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9048"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9050",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9049"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9051",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2280,
+      "parents": [
+        "e9050"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9964",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9963"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9965",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9964"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9966",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9965"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9967",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9966"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9968",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9967"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9969",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9968"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9970",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9969"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9971",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9970"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9972",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9971"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9973",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9972"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9974",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9973"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9975",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9974"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9976",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9975"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9977",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9976"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9978",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9977"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9979",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9978"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e9980",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 2700,
+      "parents": [
+        "e9979"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    },
+    {
+      "event_id": "e10481",
+      "type": "physical_process",
+      "actor": "",
+      "game_time": 3240,
+      "parents": [
+        "e10480"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": []
+    }
+  ]
+}

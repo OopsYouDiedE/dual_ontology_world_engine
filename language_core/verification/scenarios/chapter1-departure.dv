@@ -374,7 +374,7 @@ fn c1dep_install_scene(scene):
             j = j + 1
         actor = dv_with_many(actor, {"mind": c1dep_unify_demon_position(mind), "policy": c1dep_unify_demon_position(actor.policy), "actions": c1_public_methods(actions), "hearing_grants": hearing, "request_channels": channels})
         if actor.id == "demon":
-            actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"wait_chunk_limit": 15, "plan_depth": 1}))
+            actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"wait_chunk_limit": 60, "plan_depth": 1}))
         let goals = c1dep_goals(actor)
         var combined = dv_clone(dv_find(actor.policy, "goals", []))
         j = 0

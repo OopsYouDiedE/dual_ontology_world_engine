@@ -156,6 +156,8 @@ fn c2_object(id, room, fields):
 
 fn c2_initial_body(actor):
     var fields = {"alive": dv_field(true), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "erosion_exposure": dv_field(0)}
+    if actor == "moran":
+        fields = dv_with(fields, "fever", dv_field(false))
     let norms = c2_norms()
     var i = 0
     while i < rt_count(norms):
@@ -272,7 +274,7 @@ fn c2_move_action(actor, origin, target, gate):
     var method = "travel"
     if dv_has(["oath_court", "greenhouse", "outdoor_meter", "outdoor_high", "outdoor_alley"], target):
         method = "outdoor_travel"
-    return dv_with_many(c2_action(id, "move", premise, premise, id, dv_single(c2_position_ref(actor)), "穿过廊门。", c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}})
+    return dv_with_many(c2_action(id, "move", premise, premise, id, dv_single(c2_position_ref(actor)), "穿过廊门。", c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id})
 
 fn c2_norm_condition(norm, actor):
     let night = c2_any_night()
@@ -302,7 +304,7 @@ fn c2_inspect_action(actor, object, room, fields, text, source):
     while i < rt_count(fields):
         rt_push(grants, c2_ref(object, fields[i]))
         i = i + 1
-    return dv_with_many(c2_action(rt_cat(actor, rt_cat(".c2.inspect.", object)), "inspect", c2_at(actor, room), c2_at(actor, room), "", grants, text, source), {"repeatable": true, "presentation": c2_inspection_presentation(actor, object, fields)})
+    return dv_with_many(c2_action(rt_cat(actor, rt_cat(".c2.inspect.", object)), "inspect", c2_at(actor, room), c2_at(actor, room), "", grants, text, source), {"repeatable": true, "presentation": c2_inspection_presentation(actor, object, fields), "required_room": room})
 
 fn c2_visible_line(when, template, bindings, source):
     return {"when": when, "template": template, "bindings": bindings, "source": source}
@@ -574,7 +576,9 @@ fn c2_corridor_actions(actor):
         rt_push(actions, dv_with(c2_action(purge_id, "help", purge.premise, purge.premise, purge_id, [c2_ref(object, "ventilated"), c2_ref(object, "air_safe")], "核对补风处读数与排烟路径，完成连廊换气后收拢风门。", source), "predict_law", purge_id))
         let law = c2_open_corridor_law(actor, gate)
         let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gate))
-        rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2_access(gate)], "核对现场条件后，开启连廊隔离门。", source), "predict_law", id))
+        var action = c2_action(id, "help", law.premise, law.premise, id, [c2_access(gate)], "核对现场条件后，开启连廊隔离门。", source)
+        action = dv_with_many(action, {"predict_law": id, "public_observers": dv_append(c2_people(), "demon"), "public_grants": [c2_access(gate)]})
+        rt_push(actions, action)
         i = i + 1
     return actions
 
@@ -647,7 +651,8 @@ fn c2_special_actions(actor):
         rt_push(result, c2_action(id, "experiment", pre, pre, id, [c2_ref("c2.granary", "latch_loose"), c2_ref("c2.granary", "tool_marks")], "趁门框抬起四毫米，双钩同时挑开两根门栓，再紧固门闩。", c2_source("10_执行.story", 17, "RepairLatch")))
     if actor == "mora" or actor == "selma" or actor == "shen":
         let inspection = c2_inspect_action(actor, c2_body("moran"), "clinic", ["fever", "hungry", "alive"], "走近莫兰，查看他的状况。", c2_approved("moran-illness-requires-actual-exposure-and-observation"))
-        rt_push(result, dv_with(inspection, "authority_precondition", dv_all(dv_pair(c2_at(actor, "clinic"), c1_at("moran", "clinic")))))
+        let patient_present = dv_all(dv_pair(c2_at(actor, "clinic"), c1_at("moran", "clinic")))
+        rt_push(result, dv_with_many(inspection, {"precondition": patient_present, "authority_precondition": patient_present}))
         let deliver = rt_cat(actor, ".c2.deliver.patient_food")
         let carry = c2_deliver_patient_law(actor).premise
         rt_push(result, c2_action(deliver, "help", carry, carry, deliver, [c2_own(actor, "rations"), c2_ref("c2.bowl", "portions")], "将实际取来的一份粮煮成粥，盛到莫兰床边的碗里。", c2_source("10_执行.story", 7, "NightTakeSick-delivery")))
@@ -702,20 +707,12 @@ fn c2_actor_actions(actor):
             rt_push(result, actions[j])
             j = j + 1
         i = i + 1
-    let rooms = c2_locations()
+    let observations = c2_compact_observations(actor)
     i = 0
-    while i < rt_count(rooms):
-        rt_push(result, c2_inspect_action(actor, "campaign.clock", rooms[i], ["minute"], "看了一眼时间。", c2_approved("campaign-clock-is-actually-observed")))
-        // Distinct locations must retain distinct action identities.
-        result = dvs_replace(result, rt_count(result) - 1, dv_with(result[rt_count(result) - 1], "id", rt_cat(actor, rt_cat(".c2.inspect.clock.", rooms[i]))))
+    while i < rt_count(observations):
+        rt_push(result, observations[i])
         i = i + 1
     rt_push(result, dv_with(c2_action(rt_cat(actor, ".c2.inspect.self"), "inspect", dv_true(), c2_alive(actor), "", c2_self_grants(actor), "看看手里的口粮，想想还有什么事没办。", c2_person_source(actor)), "repeatable", true))
-    let weather_places = ["hall", "living_hall", "central_hall", "logistics", "oath_court"]
-    i = 0
-    while i < rt_count(weather_places):
-        let weather = c2_inspect_action(actor, "c2.weather", weather_places[i], ["ash_falling", "wind", "daylight", "severe_air"], "望向廊外，看看天色和风。", c2_approved("visible-actual-weather-not-other-peoples-exposure"))
-        rt_push(result, dv_with(weather, "id", rt_cat(actor, rt_cat(".c2.inspect.weather.", weather_places[i]))))
-        i = i + 1
     var prepared = []
     i = 0
     while i < rt_count(result):
@@ -725,6 +722,20 @@ fn c2_actor_actions(actor):
         rt_push(prepared, action)
         i = i + 1
     return c1_public_methods(prepared)
+
+// One observation identity per scope. Weather retains the original sight locations.
+fn c2_compact_observations(actor):
+    let clock = c2_action(rt_cat(actor, ".c2.inspect.clock"), "inspect", dv_true(), dv_true(), "", [c2_clock()], "看了一眼时间。", c2_approved("campaign-clock-is-actually-observed"))
+    let places = ["hall", "living_hall", "central_hall", "logistics", "oath_court"]
+    var conditions = []
+    var i = 0
+    while i < rt_count(places):
+        rt_push(conditions, c2_at(actor, places[i]))
+        i = i + 1
+    let visible = dv_not(dv_all(c2_negated_conditions(conditions)))
+    let fields = ["ash_falling", "wind", "daylight", "severe_air"]
+    let weather = c2_action(rt_cat(actor, ".c2.inspect.weather"), "inspect", visible, visible, "", [c2_ref("c2.weather", "ash_falling"), c2_ref("c2.weather", "wind"), c2_ref("c2.weather", "daylight"), c2_ref("c2.weather", "severe_air")], "望向廊外，看看天色和风。", c2_approved("visible-actual-weather-not-other-peoples-exposure"))
+    return [dv_with(clock, "repeatable", true), dv_with_many(weather, {"repeatable": true, "presentation": c2_inspection_presentation(actor, "c2.weather", fields)})]
 
 fn c2_self_grants(actor):
     let fields = c2_initial_body(actor).facets.state
@@ -874,10 +885,10 @@ fn c2_shared_objects():
     return result
 
 fn c2_goal(proposition, when, basis):
-    return {"kind": "achieve", "scope": "personal", "proposition": proposition, "available_when": when, "basis": basis}
+    return c1n_index_goal_window({"kind": "achieve", "scope": "personal", "proposition": proposition, "available_when": when, "basis": basis})
 
 fn c2_observation_goal(ref, when, basis, time):
-    return {"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time}
+    return c1n_index_goal_window({"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time})
 
 // A route inspection concerns a door at the owner's current known location.
 fn c2_gate_visible(actor, gate):
@@ -903,20 +914,22 @@ fn c2_personal_goals(actor):
     let id = actor.id
     let source = [c2_person_source(id)]
     var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 0)]
-    var gates = ["living"]
+    var gates = ["living", "north", "east"]
     if id == "quer":
-        gates = ["living", "north"]
         rt_push(goals, dv_with_many(c2_observation_goal(c2_clock(), c2_at(id, "living_hall"), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 1980), {"refresh_until": dv_at_least(c2_clock(), 1980), "refresh_refs": [c2_position_ref("margaret"), c2_position_ref("mora")]}))
     var gate_index = 0
     while gate_index < rt_count(gates):
-        rt_push(goals, c2_observation_goal(c2_access(gates[gate_index]), c2_gate_visible(id, gates[gate_index]), [c2_source("00_通行.story", 9, "复查眼前通路")], 0))
+        rt_push(goals, dv_with(c2_observation_goal(c2_access(gates[gate_index]), c2_gate_visible(id, gates[gate_index]), [c2_source("00_通行.story", 9, "复查眼前通路")], 0), "refresh_until", dv_fact(c2_access(gates[gate_index]), true)))
         gate_index = gate_index + 1
     if id == "quer":
         rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "daylight"), dv_all([c2_at(id, "living_hall"), dv_at_least(c2_clock(), 1980)]), [c2_source("00_时间与文案.story", 35, "看天色辨昼夜")], 1980))
         rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "wind"), dv_all([c2_at(id, "living_hall"), dv_at_least(c2_clock(), 1980)]), [c2_approved("visible-current-wind")], 1980))
         rt_push(goals, c2_observation_goal(c2_ref("c2.weather", "severe_air"), dv_all([c2_at(id, "living_hall"), dv_at_least(c2_clock(), 1980)]), [c2_approved("visible-current-air")], 1980))
     if id == "demon":
+        rt_push(goals, dv_with_many(c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 1980), {"refresh_until": dv_at_least(c2_clock(), 1980)}))
         rt_push(goals, c2_observation_goal(c2_position_ref(id), dv_true(), [c2_source("06_场面.story", 85, "自己的现场身体位置")], 0))
+        rt_push(goals, dv_with(c2_observation_goal(c2_access("north"), c2_gate_visible(id, "north"), [c2_source("00_通行.story", 9, "复查眼前通路")], 0), "refresh_until", dv_fact(c2_access("north"), true)))
+        rt_push(goals, dv_with(c2_observation_goal(c2_access("east"), c2_gate_visible(id, "east"), [c2_source("00_通行.story", 9, "复查眼前通路")], 0), "refresh_until", dv_fact(c2_access("east"), true)))
         return goals
     if dv_has(["detective", "huo", "shen", "su"], id):
         let door_fields = ["outer_released", "inner_down", "open"]
@@ -924,7 +937,7 @@ fn c2_personal_goals(actor):
         while door_index < rt_count(door_fields):
             rt_push(goals, c2_observation_goal(c2_ref("departure.door", door_fields[door_index]), c2_at(id, "foyer"), [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story", 4, "当前隔离门")], 0))
             door_index = door_index + 1
-    if id == "quer":
+    if dv_has(["quer", "shen", "huo", "margaret", "bertrand"], id):
         let indoor_gates = ["north", "east"]
         var corridor_index = 0
         while corridor_index < rt_count(indoor_gates):
@@ -1029,20 +1042,12 @@ fn c2_extend_teacher(actor):
         rt_push(actions, c2_move_action(actor.id, edges[i].from, edges[i].to, edges[i].gate))
         rt_push(actions, c2_move_action(actor.id, edges[i].to, edges[i].from, edges[i].gate))
         i = i + 1
-    let places = c2_locations()
+    let observations = c2_compact_observations(actor.id)
     i = 0
-    while i < rt_count(places):
-        var clock = c2_inspect_action(actor.id, "campaign.clock", places[i], ["minute"], "看了一眼时间。", c2_approved("teacher-observes-current-clock"))
-        clock = dv_with(clock, "id", rt_cat("demon.c2.inspect.clock.", places[i]))
-        rt_push(actions, clock)
+    while i < rt_count(observations):
+        rt_push(actions, observations[i])
         i = i + 1
-    let weather_places = ["hall", "living_hall", "central_hall", "logistics", "oath_court"]
-    i = 0
-    while i < rt_count(weather_places):
-        let weather = c2_inspect_action(actor.id, "c2.weather", weather_places[i], ["ash_falling", "wind", "daylight", "severe_air"], "望向廊外，看看天色和风。", c2_approved("teacher-current-weather-observation"))
-        rt_push(actions, dv_with(weather, "id", rt_cat("demon.c2.inspect.weather.", weather_places[i])))
-        i = i + 1
-    let result = dv_with_many(actor, {"mind": mind, "location_ref": c2_position_ref("demon"), "observable_presence_when": dv_fact(c2_ref("demon.body", "manifested"), true), "actions": c1_public_methods(actions), "policy": dv_with_many(actor.policy, {"chapter1_carried_goals": dv_find(actor.policy, "goals", []), "chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})})
+    let result = dv_with_many(actor, {"mind": mind, "location_ref": c2_position_ref("demon"), "observable_presence_when": dv_fact(c2_ref("demon.body", "manifested"), true), "actions": c1_public_methods(actions), "policy": dv_with_many(actor.policy, {"wait_chunk_limit": 180, "chapter1_carried_goals": dv_find(actor.policy, "goals", []), "chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})})
     return c2_refresh_actor_goals(result)
 
 fn c2_extend_actor(actor):
@@ -1160,12 +1165,12 @@ fn c2_world_processes():
     var result = [
         {"id": "c2.meter.safe", "law": "c2.meter.safe", "basis": [c2_approved("current-instrument-qualitative-safe-reading")]},
         {"id": "c2.meter.stale", "law": "c2.meter.stale", "basis": [c2_approved("quake-invalidates-prior-reading")]},
-        {"id": "c2.weather.first_wind", "law": "c2.weather.first_wind", "basis": [c2_approved("second-day-morning-wind")]}]
+        {"id": "c2.weather.first_wind", "law": "c2.weather.first_wind", "once": true, "basis": [c2_approved("second-day-morning-wind")]}]
     let changes = c2_weather_changes()
     var change_index = 0
     while change_index < rt_count(changes):
         let id = rt_cat("c2.weather.", changes[change_index].id)
-        rt_push(result, {"id": id, "law": id, "basis": [c2_approved("第五部分：五日环境变化")]})
+        rt_push(result, {"id": id, "law": id, "once": true, "basis": [c2_approved("第五部分：五日环境变化")]})
         change_index = change_index + 1
     var i = 0
     var light_day = 1
@@ -1179,22 +1184,16 @@ fn c2_world_processes():
         var day = 2
         while day < 5:
             let prefix = rt_cat("c2.hunger.", rt_cat(people[i], rt_cat(".", rt_show(day))))
-            rt_push(result, {"id": rt_cat(prefix, ".noon"), "law": rt_cat(prefix, ".noon"), "basis": [c2_approved("hunger-follows-actual-missed-meal")]})
-            rt_push(result, {"id": rt_cat(prefix, ".evening"), "law": rt_cat(prefix, ".evening"), "basis": [c2_approved("hunger-follows-actual-missed-meal")]})
+            rt_push(result, {"id": rt_cat(prefix, ".noon"), "law": rt_cat(prefix, ".noon"), "once": true, "basis": [c2_approved("hunger-follows-actual-missed-meal")]})
+            rt_push(result, {"id": rt_cat(prefix, ".evening"), "law": rt_cat(prefix, ".evening"), "once": true, "basis": [c2_approved("hunger-follows-actual-missed-meal")]})
             day = day + 1
         let danger = rt_cat("c2.outdoor-danger.", people[i])
         rt_push(result, {"id": danger, "law": danger, "basis": [c2_approved("actual-quake-air-exposure-engineering-dose")]})
         let terminal = rt_cat("c2.terminal.", people[i])
         rt_push(result, {"id": terminal, "law": terminal, "basis": [c2_approved("actual-terminal-exposure")]})
         i = i + 1
-    let rooms = c2_rooms()
-    i = 0
-    while i < rt_count(rooms):
-        let shelter = rt_cat("c2.shelter.", rooms[i])
-        let seepage = rt_cat("c2.seepage.", rooms[i])
-        rt_push(result, {"id": shelter, "law": shelter, "basis": [c2_approved("sealed-interiors-protect-in-normal-environment")]})
-        rt_push(result, {"id": seepage, "law": seepage, "basis": [c2_approved("recent-earthquake-severe-air-and-real-seepage")]})
-        i = i + 1
+    // Room closure/seepage inputs are unknown and no production action writes them.
+    // Register their processes when operational room controls provide those inputs.
     return result
 
 fn c2_runtime_contracts():
@@ -1331,6 +1330,9 @@ fn c2i_goals(actor):
     while i < rt_count(rows):
         let row = rows[i]
         if row.actor == actor:
+            let transit_goal = c2_goal(c2_at(actor, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
+            if not dv_has(goals, transit_goal):
+                rt_push(goals, transit_goal)
             rt_push(goals, c2_goal(dv_fact(c2_ref(row.object, row.field), c2i_value(row)), row.when, [c2_approved("chapter-two-investigation-opportunity")]))
         i = i + 1
     if actor == "ruan":
@@ -1345,10 +1347,11 @@ fn c2i_goals(actor):
     var place_index = 0
     while place_index < rt_count(evidence_places):
         let place = evidence_places[place_index]
-        var field_index = 0
-        while field_index < rt_count(place.fields):
-            rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(actor, place.room), [c2_approved("actual-local-case-inspection")], 0))
-            field_index = field_index + 1
+        if actor == "detective" or actor == "quer" or place.object == rt_cat("case.", c2_profile(actor).group):
+            var field_index = 0
+            while field_index < rt_count(place.fields):
+                rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(actor, place.room), [c2_approved("actual-local-case-inspection")], 0))
+                field_index = field_index + 1
         place_index = place_index + 1
     if dv_has(["margaret", "huo", "quer"], actor):
         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]

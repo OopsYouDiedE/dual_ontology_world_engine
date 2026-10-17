@@ -353,10 +353,14 @@ fn c1n_positive_clock_bounds(condition):
 // already hold in the owner's mind, including being at its execution site.
 fn c1n_without_clock(condition):
     let op = dv_find(condition, "op", "")
+    if dv_record_like(condition) and dv_has_key(condition, "ref") and dv_find(condition.ref, "object", "") == "c2.weather":
+        return dv_true()
     if op == "at_least" and dv_same(condition.ref, c1_other_clock_ref()):
         return dv_true()
     if op == "not":
         let inner = dv_find(condition, "item", false)
+        if inner != false and dv_record_like(inner) and dv_has_key(inner, "ref") and dv_find(inner.ref, "object", "") == "c2.weather":
+            return dv_true()
         if inner != false and dv_find(inner, "op", "") == "at_least" and dv_same(inner.ref, c1_other_clock_ref()):
             return dv_true()
     if op == "all":
@@ -378,8 +382,13 @@ fn c1n_future_goal_pending(actor, goal):
         return not dv_uncontested(dv_read(actor.mind, goal.ref))
     return false
 
+// Static syntax metadata is built with the goal, never from physical future state.
+fn c1n_index_goal_window(goal):
+    let condition = dv_find(goal, "available_when", dv_true())
+    return dv_with_many(goal, {"future_clock_condition": condition, "future_clock_bounds": c1n_positive_clock_bounds(condition), "future_nonclock": c1n_without_clock(condition)})
+
 fn c1n_known_future_wait_actor(actor):
-    if actor.id == "demon":
+    if actor.id == "demon" and not dv_has_key(actor.policy, "chapter2_profile"):
         return actor
     var target = -1
     var basis = []
@@ -388,15 +397,20 @@ fn c1n_known_future_wait_actor(actor):
     while i < rt_count(goals):
         let goal = goals[i]
         let own_basis = dv_find(goal, "basis", [])
-        if not dv_find(goal, "known_opportunity_wait", false) and 0 < rt_count(own_basis) and c1n_future_goal_pending(actor, goal) and dv_truth(actor.mind, c1n_without_clock(dv_find(goal, "available_when", dv_true()))) == "true":
-            let bounds = c1n_positive_clock_bounds(dv_find(goal, "available_when", dv_true()))
+        if not dv_find(goal, "known_opportunity_wait", false) and 0 < rt_count(own_basis):
+            var indexed = goal
+            if not dv_has_key(goal, "future_clock_bounds") or not dv_same(dv_find(goal, "future_clock_condition", false), dv_find(goal, "available_when", dv_true())):
+                indexed = c1n_index_goal_window(goal)
+            let bounds = indexed.future_clock_bounds
+            var candidate = -1
             var j = 0
             while j < rt_count(bounds):
-                if actor.mind.time < bounds[j]:
-                    if target < 0 or bounds[j] < target:
-                        target = bounds[j]
-                        basis = dv_append(own_basis, {"kind": "own-declared-future-opportunity", "condition": goal.available_when, "scope": "time-opportunity-only-not-future-success"})
+                if actor.mind.time < bounds[j] and (candidate < 0 or bounds[j] < candidate):
+                    candidate = bounds[j]
                 j = j + 1
+            if candidate >= 0 and (target < 0 or candidate < target) and c1n_future_goal_pending(actor, goal) and dv_truth(actor.mind, indexed.future_nonclock) == "true":
+                target = candidate
+                basis = dv_append(own_basis, {"kind": "own-declared-future-opportunity", "condition": goal.available_when, "scope": "time-opportunity-only-not-future-success"})
         i = i + 1
     if 0 <= target:
         return c1n_known_wait_actor(actor, target, basis)

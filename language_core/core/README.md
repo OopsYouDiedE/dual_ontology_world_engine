@@ -283,7 +283,7 @@ speech.manipulation = {
 ### prepare → 现场回执 → complete
 
 1. `dvs_session_open(story, capability)` 从正式内容创建 physical、actors、账本、事件、控制状态和时域；`dvs_session_active` 判断行动上限、时间域及活动/排队状态。
-2. `dvs_session_prepare(state)` 选择可决策主体，执行本人认知与选择，把行动排入到期队列。未到期时保留 scheduled_action。调度等待逐分钟执行环境规律，相同时刻按循环主体顺序处理到期项；到期形成唯一 pending、报价和意图。
+2. `dvs_session_prepare(state)` 选择可决策主体，执行本人认知与选择，把行动排入到期队列。未到期时保留 scheduled_action。调度等待按环境时钟边界执行规律；尚可改变世界的进程逐分钟结算，相同时刻按循环主体顺序处理到期项；到期形成唯一 pending、报价和意图。
 3. 宿主读取 `dvs_session_intent`。Godot 执行真实移动并返回现场结果；formal-model 适配只产生逻辑回执。移动区分逻辑地点、当前地图执行房间与显式站点，宿主还需核对主体、序号、动作、站点、房间、实际终点和到达误差。
 4. `dvs_session_complete(state, receipt)` 核对 pending/action_event、实际时长及成功条件，再执行权威规律、观察、传播、答辩和费用结算。现场接触观察只在相应成功完成后形成。预测、卡片呈现或准备完成不能产生这些事实。
 5. `dvs_session_close(state)` 关闭并返回会话结果。`dvs_run` 是沿同一 prepare/complete 的 formal-model 便利运行入口，不含 Godot 几何。章节扩展由 game/campaign.dv 在此链外层衔接，不重建开局或清空既有事件/账本。
@@ -670,6 +670,7 @@ fn dvs_event_prepared(events, kind, actor, time, parents, data)
 
 ```text
 fn dvp_memo_input(actor, costs)
+fn dvp_forecast(mind, name)
 fn dvp_question(actor)
 fn dvp_topic(actor, item)
 fn dvp_add_ref(refs, ref)
@@ -900,6 +901,8 @@ fn dvs_owned_state_update(state, updates)
 
 ```text
 fn dvs_environment(physical, story, events, parent)
+fn dvs_environment_boundary(condition, clock, now, due)
+fn dvs_environment_next_time(world, story, due)
 ```
 
 ### [35-model-argument.dv](../verification/session/35-model-argument.dv)
@@ -907,7 +910,7 @@ fn dvs_environment(physical, story, events, parent)
 公开材料与模型论证、当前性重评、来源父链及公开判答。
 
 ```text
-fn dvs_argument_sources(events, subject)
+fn dvs_argument_sources(events, actor)
 fn dvs_capture_public_topics(actor, events, time, parent)
 fn dvs_topic_was_heard(actor, topic)
 fn dvs_argument_valid(actor)
@@ -967,7 +970,15 @@ fn dvs_player_choice(actor, id)
 
 动作可声明 `suppress_after_received_speech: {speaker, action_id}`，仅在本人已有非空来源与理解事件的匹配实际收闻后排除该动作；`response_once: true` 在本人成功 Complete 该动作后排除后续同动作回复。默认请求与专业回复仍保留原重问合同。这些门槛由共同主体资格入口核验，预测和候选不会制造完成或收闻。
 
-未来等待仅从有来源、未完成且除正向时钟下界外其他条件在本人当前认识中成立的目标产生。否定时钟分支与其他前提保留原判定；等待保留原费用和估值，不能预置未来成功。静态证物不因会话时间或无关信息刷新。源码：`verification/session/15-action-planning.dv`、`16-personal-choice.dv`、`verification/scenarios/chapter1-night.dv`。
+未来等待仅从有来源、未完成且除正向时钟下界外其他条件在本人当前认识中成立的目标产生。第二章天气引用及其直接否定项在这一非时钟筛选中视为可随时间变化，不阻止夜间等待未来白天机会；实际行动仍核对当时天气。其他否定时钟分支与前提保留原判定；等待保留原费用和估值，不能预置未来成功。静态证物不因会话时间或无关信息刷新。源码：`verification/session/15-action-planning.dv`、`16-personal-choice.dv`、`verification/scenarios/chapter1-night.dv`。
 
 已知机会等待不参与依赖图构建，只在无其它当前可执行动作时于根层评估，不作为预测后继再次展开；根层已存在正向可执行动作时以 `current-affordance-root` 收束。首夜起居厅八人在 900 分钟前等待候选采用 30/60 分钟上界并收短到下一活动起点；第二章仅对尚未完成首夜跨章观测的 `selma`/`mora` 保留首夜等待候选，其余主体仅在章节切换、入厅状态或案件开启状态变化时刷新第二章目标。同场可见上下文仅记录同伴位置，仅在新增到场或位置变化时触发感知；主体在上一轮决策停止且收闻与同场检查后 `mind.revision`、`mind.time` 与 `chapter` 均未变化时跳过重复准备。第二章天气检视包含实际 `severe_air`，连廊换气与开启目标归属 `quer` 并核对本人获知的补风、密封和空气条件。相关生产内容见 `verification/scenarios/chapter2-content.dv`、`chapter2-dialogue.dv`、`chapter1-night.dv` 与 `game/campaign.dv`。这些是现行工程规则，实际章节达成须另据新会话记录判断。
 
+病人现场检视的本人前提与执行前提均要求莫兰在诊所，避免已知其离开后继续发起注定被拒的检视。
+
+
+2026-10-18 会话计算维护：`32-environment.dv` 的 `dvs_environment_boundary` 递归读取原 premise 中的时钟 `at_least`（含 not/all），保留原一分钟采样格及最终到期点。时钟相等或不可分析的时钟谓词回退一分钟；当前可产生新变化、重复增量或过程级联时继续一分钟，不跳过这些效果。`dvs_environment_next_time` 只调度 physical，不生成主体认识。内容进程可声明 `once: true`，仅在实际 applied 后 suspend；可重复进程保持活动。未接入开关输入的房间规律保留定义与采纳，暂不注册为周期进程。
+
+`dvp_achievement_pending` 以本人采纳法则的实际写引用与待达成命题引用相交后才预测；无交集不能直接改变该命题。`dvp_forecast` 按完整节点 mind 和法则缓存纯预测，供目标评分、接近机会和后继展开复用。仅内部规划预测省略继承的 history，保留 seen 重复校验、单元来源及实际公共 dv_predict 合同。真实 dv_apply_law/dv_update_mind 在独立 stage 上追加完整 seen/history；不修改原态。规划备忘的 mind 省略 history/seen，保留 revision、objects、adoptions 和其余主体输入。
+
+无活动话语目标时 `dvs_prepare_speech_choices` 原样返回主体；话语预选签名继续包含完整输入，尚未证明安全的无关字段裁剪不启用。`dvs_argument_sources(events, actor)` 先增量补齐 support_events，再从其中展开本人 observation/listener_parse，保留顺序和来源。`c1n_index_goal_window` 缓存目标条件的正向时间下界和非时钟条件，使用时核对原条件未变化；不降低刷新时刻精度。章节检视范围与角色调查目标由内容声明，合并天气候选后保留原地点可见条件。

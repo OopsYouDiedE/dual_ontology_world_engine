@@ -21,4 +21,4 @@ fn c1_campaign_scene():
         rt_push(actors, actor)
         limit = limit + actor.policy.budget
         i = i + 1
-    return dv_with_many(c1_active_configuration(scene), {"physical": physical, "actors": actors, "max_actions": 550, "clock_ref": c1_other_clock_ref()})
+    return dv_with_many(c1_active_configuration(scene), {"physical": physical, "actors": actors, "max_actions": limit, "clock_ref": c1_other_clock_ref()})

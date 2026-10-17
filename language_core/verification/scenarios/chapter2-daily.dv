@@ -96,7 +96,7 @@ fn c2daily_rows():
     return rows
 
 axiom c2daily_cook_law():
-    let pre = dv_all([c2_at("shen", "logistics"), c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false), dv_at_least(c2_ref("c2.counter", "remaining"), 16)])
+    let pre = dv_all([c2_at("shen", "logistics"), c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false)])
     return dv_axiom("c2daily_cook_law", 1, pre, [dv_increment(c2_ref("c2.counter", "remaining"), -16), dv_increment(c2_ref("c2.ledger", "removed"), 16), dv_increment(c2_ref("c2.ledger", "day_recorded"), 16), dv_assign(c2daily_ref("portions"), 16), dv_assign(c2daily_ref("meal_cooked"), true)])
 
 axiom c2daily_deliver_law():

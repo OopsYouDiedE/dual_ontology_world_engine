@@ -40,7 +40,18 @@ public static class R
     public static object slice(object a, object start, object count) => Text(a).Substring(Index(start), Index(count));
     public static object chr(object a, object i) => Text(a)[Index(i)].ToString();
     public static object code(object a) => Text(a).Length == 1 ? (double)Text(a)[0] : throw new Exception("Expected one UTF-16 unit");
-    public static object show(object a) => a switch { string s => s, Rational q => q.ToString(), double n => n.ToString("R", CultureInfo.InvariantCulture), bool b => b ? "true" : "false", _ => throw new Exception("Cannot format value") };
+    public static object show(object a) => a switch { string s => s, Rational q => q.ToString(), double n => n.ToString("R", CultureInfo.InvariantCulture), bool b => b ? "true" : "false", List<object> list => FormatList(list), _ => throw new Exception("Cannot format value") };
+    private static string FormatList(List<object> list)
+    {
+        var sb = new StringBuilder("[");
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append(show(list[i]));
+        }
+        sb.Append(']');
+        return sb.ToString();
+    }
     public static object id_start(object c) => Text(c) == "_" || char.IsLetter(Text(c), 0);
     public static object id_part(object c) => Text(c) == "_" || char.IsLetterOrDigit(Text(c), 0) || CharUnicodeInfo.GetUnicodeCategory(Text(c), 0) == UnicodeCategory.NonSpacingMark;
     public static object normalize(object s) => Text(s).Normalize(NormalizationForm.FormC);
@@ -218,7 +229,7 @@ public static class R
     private sealed class FrozenList(int capacity, ulong hash) : List<object>(capacity)
     {
         internal readonly ulong Hash = hash;
-        internal bool IndexChecked;
+        internal volatile bool IndexChecked;
         internal Dictionary<string, int>? Index;
     }
     private sealed class MutableState
@@ -266,6 +277,7 @@ public static class R
     }
     private static Dictionary<string, int>? FrozenIndex(FrozenList record)
     {
+        if (record.IndexChecked) return record.Index;
         lock (SnapshotLock)
         {
             if (record.IndexChecked) return record.Index;
