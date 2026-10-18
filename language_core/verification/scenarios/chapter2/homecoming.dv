@@ -76,12 +76,31 @@ fn c2h_rows():
             rt_push(rows, row)
             n = n + 1
         i = i + 1
+    let depart_id = "demon.c2.homecoming.depart"
+    var depart = c2d_row("demon", depart_id, "living_hall", dv_all([dv_fact(c2h_ref("proposed"), true), dv_at_least(c2_clock(), 7140)]), dv_true(), "契约第十一条与第十二条生效：代管者依约解除学园担保，遣返全体幸存者；外显记忆依约封存，留存潜意识创伤印记。", source)
+    depart = dv_with_many(depart, {"effects": [dv_assign(c2h_ref("departed"), true), dv_assign(c2h_ref("trauma_imprints_sealed"), true)]})
+    rt_push(rows, depart)
+    let ruan_dead_stone_id = "ruan.c2.exile.dead_stone"
+    let ruan_ds_text = "十九场死活推演与口粮余量冰冷对账：零证据产出且纯消耗口粮者，在生存棋盘上唯有作为死子断然割舍。"
+    var ruan_ds = c2d_row("ruan", ruan_dead_stone_id, "central_hall", dv_fact(c2_ref("c2.casualty", "casualty_occurred"), true), dv_fact(c2h_person("ruan", "dead_stone_declared"), true), ruan_ds_text, source)
+    ruan_ds = dv_with(ruan_ds, "effects", [dv_assign(c2h_person("ruan", "dead_stone_declared"), true)])
+    rt_push(rows, ruan_ds)
+    let ward_exile_id = "ward.c2.exile.motion"
+    let ward_ex_text = "基于连环伤亡与断粮事实，依紧急自保公约起草《剥夺配给与放逐动议》，不再承担非必要消耗。"
+    var ward_ex = c2d_row("ward", ward_exile_id, "central_hall", dv_fact(c2h_person("ruan", "dead_stone_declared"), true), dv_fact(c2h_ref("exile_motion_passed"), true), ward_ex_text, source)
+    ward_ex = dv_with(ward_ex, "effects", [dv_assign(c2h_ref("exile_motion_passed"), true), dv_assign(c2_own("detective", "exiled"), true)])
+    rt_push(rows, ward_ex)
+    let veronica_refuse_id = "veronica.c2.exile.refuse"
+    let veronica_ref_text = "化学滴定与配给效率表明，为拖累全体生存概率的冗余个体浪费任何防护资源，是对幸存者的集体自杀。"
+    var veronica_ref = c2d_row("veronica", veronica_refuse_id, "central_hall", dv_fact(c2h_ref("exile_motion_passed"), true), dv_fact(c2h_person("veronica", "protection_refused"), true), veronica_ref_text, source)
+    veronica_ref = dv_with(veronica_ref, "effects", [dv_assign(c2h_person("veronica", "protection_refused"), true)])
+    rt_push(rows, veronica_ref)
     return rows
 
 fn c2h_install_scene(scene):
     if dv_find(scene, "chapter2_homecoming_installed", false):
         return scene
-    var fields = {"proposed": dv_field(false), "safety_verified": dv_unknown(), "outside_promise.quer": dv_unknown(), "outside_promise.elena": dv_unknown(), "care_continuity_verified": dv_unknown()}
+    var fields = {"proposed": dv_field(false), "departed": dv_field(false), "trauma_imprints_sealed": dv_field(false), "exile_motion_passed": dv_field(false), "safety_verified": dv_unknown(), "outside_promise.quer": dv_unknown(), "outside_promise.elena": dv_unknown(), "care_continuity_verified": dv_unknown()}
     let people = c2_people()
     var i = 0
     while i < rt_count(people):
@@ -176,7 +195,37 @@ fn c2h_refresh_actor(actor):
     let view = dv_with_many(actor, {"actions": actions, "policy": dv_with(actor.policy, "goals", substantive)})
     return dv_with(view, "policy", dv_with(view.policy, "goals", c2_navigation_goals(view, substantive)))
 
-// This read-only report is not an action and never executes a departure.
+fn c2h_guardian_balance(physical):
+    let guardians = ["shen", "mora", "huo", "quer", "bertrand", "margaret"]
+    let calculators = ["ruan", "ward", "veronica"]
+    var g_alive = 0
+    var c_alive = 0
+    var i = 0
+    while i < rt_count(guardians):
+        let st = dv_read(physical, c2_own(guardians[i], "alive"))
+        if dv_uncontested(st) and st.value == true:
+            g_alive = g_alive + 1
+        i = i + 1
+    i = 0
+    while i < rt_count(calculators):
+        let st = dv_read(physical, c2_own(calculators[i], "alive"))
+        if dv_uncontested(st) and st.value == true:
+            c_alive = c_alive + 1
+        i = i + 1
+    let majority = c_alive <= g_alive
+    var fate = "hollow_homecoming_protected"
+    if not majority:
+        fate = "cold_calculator_elimination"
+    return {"guardians_alive": g_alive, "calculators_alive": c_alive, "humanity_barrier": majority, "fate": fate}
+
+fn c2h_trauma_imprints():
+    return [
+        {"id": "imprint_avoid_doors", "description": "日常下意识避开所有紧闭门扉"},
+        {"id": "imprint_wind_flinch", "description": "听到走廊铜管风鸣会瞬间惊醒并摸向腰间"},
+        {"id": "imprint_empty_table_tears", "description": "面对空置的餐桌长久伫立、潸然泪下"},
+        {"id": "imprint_ring_rubbing", "description": "手指反复摩挲早已空缺的指环"}
+    ]
+
 fn c2h_summary(physical):
     var others = []
     var unanimous = true
@@ -191,4 +240,5 @@ fn c2h_summary(physical):
             if not dv_uncontested(alive) or (alive.value == true and (not dv_uncontested(willing) or willing.value != true)):
                 unanimous = false
         i = i + 1
-    return {"scope": "negotiation-only-no-departure", "proposed": dv_read(physical, c2h_ref("proposed")), "own_willing": dv_read(physical, c2h_person("detective", "willing")), "others": others, "all_other_living_consent": unanimous, "safety_verification": dv_read(physical, c2h_ref("safety_verified")), "seed_specific_homecoming_utility": "declared-shared-owner-utility", "departure": "not-implemented"}
+    let balance = c2h_guardian_balance(physical)
+    return {"scope": "negotiation-and-departure", "proposed": dv_read(physical, c2h_ref("proposed")), "own_willing": dv_read(physical, c2h_person("detective", "willing")), "others": others, "all_other_living_consent": unanimous, "safety_verification": dv_read(physical, c2h_ref("safety_verified")), "seed_specific_homecoming_utility": "declared-shared-owner-utility", "departure": dv_read(physical, c2h_ref("departed")), "guardian_balance": balance, "trauma_imprints": c2h_trauma_imprints()}

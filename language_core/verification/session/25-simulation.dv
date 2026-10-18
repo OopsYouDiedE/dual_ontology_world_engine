@@ -1918,6 +1918,7 @@ fn dvs_selection_parents(actor, action, choice, events, parent):
     var refs = choice.relevant_refs
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
     refs = dvp_merge_refs(refs, dvs_sim_refs(action.precondition))
+    refs = dvp_merge_refs(refs, dvp_owner_requirement_refs(action))
     if dv_has_key(action, "answer"):
         refs = dvp_merge_refs(refs, dvs_sim_refs(action.answer))
     if dv_has_key(actor, "question_ref"):

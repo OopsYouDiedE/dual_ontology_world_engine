@@ -1033,7 +1033,7 @@ fn c1n_install_scene(scene):
 
 // These are finite costed action lengths, not speed multipliers or world-clock writes.
 fn c1n_wait_durations():
-    return [180, 120, 60, 30, 15, 5, 1]
+    return [180, 120, 60, 30, 20, 15, 10, 5, 4, 3, 2, 1]
 
 fn c1n_wait_kind(minutes):
     return rt_cat("wait.first_night.", rt_show(minutes))

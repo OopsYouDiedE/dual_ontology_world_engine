@@ -705,9 +705,14 @@ public static class R
         JsonValueKind.False => false,
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
+    private sealed class JsonContext
+    {
+        public bool InEvents;
+        public string? CurrentEventType;
+    }
     // Serialization preserves the supplied DV value. Evidence projection belongs
     // to explicit DV reporting APIs, never to implicit field-name filtering.
-    private static void WriteJsonFast(Utf8JsonWriter writer, object value)
+    private static void WriteJsonFast(Utf8JsonWriter writer, object value, JsonContext? ctx = null)
     {
         switch (value)
         {
@@ -721,15 +726,93 @@ public static class R
                 writer.WriteBooleanValue(b);
                 break;
             case Rational q:
+                Span<char> qBuf = stackalloc char[128];
+                if (q.Denominator.IsOne)
+                {
+                    if (q.Numerator.TryFormat(qBuf, out int written, provider: CultureInfo.InvariantCulture))
+                    {
+                        writer.WriteStringValue(qBuf[..written]);
+                        break;
+                    }
+                }
+                else
+                {
+                    if (q.Numerator.TryFormat(qBuf, out int nWritten, provider: CultureInfo.InvariantCulture))
+                    {
+                        qBuf[nWritten] = '/';
+                        if (q.Denominator.TryFormat(qBuf[(nWritten + 1)..], out int dWritten, provider: CultureInfo.InvariantCulture))
+                        {
+                            writer.WriteStringValue(qBuf[..(nWritten + 1 + dWritten)]);
+                            break;
+                        }
+                    }
+                }
                 writer.WriteStringValue(q.ToString());
                 break;
             case List<object> list:
+                if (list.Count == 2 && list[0] is string key)
+                {
+                    if (key is "history" or "simulations")
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType != "inference" && key is "adoptions" or "source_adoptions")
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (ctx != null && ctx.InEvents && (key is "world" or "simulation" or "predicted" or "trace" or "catalog" || (ctx.CurrentEventType == "model_argument_unavailable" && key is "competitors" or "factor_coverage")))
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (key == "events" && list[1] is List<object> eventsList)
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue("events");
+                        writer.WriteStartArray();
+                        var eventCtx = new JsonContext { InEvents = true };
+                        for (var i = 0; i < eventsList.Count; i++)
+                        {
+                            var evt = eventsList[i];
+                            eventCtx.CurrentEventType = null;
+                            if (evt is List<object> evtPairs)
+                            {
+                                for (var p = 0; p < evtPairs.Count; p++)
+                                {
+                                    if (evtPairs[p] is List<object> pair && pair.Count == 2 && pair[0] is "type" && pair[1] is string t)
+                                    {
+                                        eventCtx.CurrentEventType = t;
+                                        break;
+                                    }
+                                }
+                            }
+                            WriteJsonFast(writer, evt, eventCtx);
+                            if (writer.BytesPending >= 16 * 1024 * 1024)
+                                writer.Flush();
+                        }
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                }
                 writer.WriteStartArray();
                 for (var i = 0; i < list.Count; i++)
                 {
-                    WriteJsonFast(writer, list[i]);
-                    if (writer.BytesPending >= 16 * 1024 * 1024)
-                        writer.Flush();
+                    WriteJsonFast(writer, list[i], ctx);
                 }
                 writer.WriteEndArray();
                 break;
@@ -755,23 +838,23 @@ public static class R
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
         {
-            WriteJsonFast(writer, value);
+            WriteJsonFast(writer, value, new JsonContext());
             writer.Flush();
         }
         return Encoding.UTF8.GetString(stream.GetBuffer().AsSpan(0, checked((int)stream.Length)));
     }
     private static readonly object OutputLock = new();
     private static readonly Stream StandardOutput = Console.OpenStandardOutput();
+    private static readonly byte[] NewLineBytes = Encoding.UTF8.GetBytes(Environment.NewLine);
     // Same value encoding as json_stringify, without a whole-packet UTF-16 copy.
     public static object json_print(object value)
     {
         lock (OutputLock)
         {
-            Console.Out.Flush();
             using var writer = new Utf8JsonWriter(StandardOutput, new JsonWriterOptions { SkipValidation = true });
-            WriteJsonFast(writer, value);
+            WriteJsonFast(writer, value, new JsonContext());
             writer.Flush();
-            StandardOutput.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+            StandardOutput.Write(NewLineBytes);
             StandardOutput.Flush();
         }
         return true;
@@ -1040,7 +1123,7 @@ public static class R
         var destination = Text(path);
         var partial = destination + ".partial";
         if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
-        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 16 * 1024 * 1024))
+        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 64 * 1024 * 1024))
         {
             // Optional lossless storage encoding; the JSON value is unchanged.
             // Dispose compression before publishing the final filename.

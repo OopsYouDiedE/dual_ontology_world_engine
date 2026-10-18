@@ -162,6 +162,107 @@ fn c2d_rows_build():
                 rt_push(rows, dv_with(row, "norm_proposal", norm))
             n = n + 1
         i = i + 1
+    let comforts = c2d_companion_comfort_rows()
+    var c = 0
+    while c < rt_count(comforts):
+        rt_push(rows, comforts[c])
+        c = c + 1
+    let rebukes = c2d_demon_rebuke_rows()
+    c = 0
+    while c < rt_count(rebukes):
+        rt_push(rows, rebukes[c])
+        c = c + 1
+    let shura_rows = c2d_shura_rows()
+    c = 0
+    while c < rt_count(shura_rows):
+        rt_push(rows, shura_rows[c])
+        c = c + 1
+    return rows
+
+fn c2d_companion_comfort_rows():
+    var rows = []
+    let source = c1_source("docs/design-standard.md", 0, "愚蠢侦探路线：群像温厚包容")
+    let after_night = dv_at_least(c2_clock(), 1440)
+    let shen_text = "推不出昨夜的事就别死抠了。后厨灶膛还欠一把硬柴，你来帮我看着火候，先把这碗热姜汤喝了——肚里有食，天塌不下来。"
+    let shen_lit = dv_fact(c2d_person_ref("shen", "comfort_soup"), true)
+    var shen_row = c2d_row("shen", "shen.c2.dialogue.comfort_soup", "living_hall", after_night, shen_lit, shen_text, source)
+    shen_row = dv_with(shen_row, "opportunity", {"location": "living_hall", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, shen_row)
+    let quer_text = "大侦探，动脑子破案那是酸秀才们的事。你跟紧我搬运箱笼，别在夹道乱窜被震落的碎石砸着。"
+    let quer_lit = dv_fact(c2d_person_ref("quer", "comfort_boxes"), true)
+    var quer_row = c2d_row("quer", "quer.c2.dialogue.comfort_boxes", "living_hall", after_night, quer_lit, quer_text, source)
+    quer_row = dv_with(quer_row, "opportunity", {"location": "living_hall", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, quer_row)
+    let huo_text = "齿轮卡死时硬撬会崩齿。想不明白先放着。你力气匀称，替我扶稳千斤顶立柱即可。"
+    let huo_lit = dv_fact(c2d_person_ref("huo", "comfort_jack"), true)
+    var huo_row = c2d_row("huo", "huo.c2.dialogue.comfort_jack", "logistics", after_night, huo_lit, huo_text, source)
+    huo_row = dv_with(huo_row, "opportunity", {"location": "logistics", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, huo_row)
+    let ward_text = "虽然你的陈述因证据链缺陷无法被采纳为定案依据，但在契约法理与生存公约下，你依然享有平等的安全保障权与口粮配给权。"
+    let ward_lit = dv_fact(c2d_person_ref("ward", "comfort_rights"), true)
+    var ward_row = c2d_row("ward", "ward.c2.dialogue.comfort_rights", "living_hall", after_night, ward_lit, ward_text, source)
+    ward_row = dv_with(ward_row, "opportunity", {"location": "living_hall", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, ward_row)
+    let mora_text = "坐下，把额头的冷汗擦了。破不了案不是罪过，在这座岛上拼尽全力活着才是。"
+    let mora_lit = dv_fact(c2d_person_ref("mora", "comfort_care"), true)
+    var mora_row = c2d_row("mora", "mora.c2.dialogue.comfort_care", "clinic", after_night, mora_lit, mora_text, source)
+    mora_row = dv_with(mora_row, "opportunity", {"location": "clinic", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, mora_row)
+    return rows
+
+fn c2d_demon_rebuke_rows():
+    var rows = []
+    let source = c1_source("docs/design-standard.md", 0, "非常规手段：驱使恶魔后的同伴严厉谴责")
+    let after_demon = dv_fact(c2_ref("c2.demon", "intervened"), true)
+    let mora_text = "你竟然敢让它替我们决定谁生谁死？！生命不是你跟深渊谈判的筹码，用恶魔之手换来的苟活，是对死者最下作的侮辱！"
+    let mora_lit = dv_fact(c2d_person_ref("mora", "demon_rebuked"), true)
+    var mora_row = c2d_row("mora", "mora.c2.dialogue.demon_rebuke", "clinic", after_demon, mora_lit, mora_text, source)
+    mora_row = dv_with(mora_row, "opportunity", {"location": "clinic", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, mora_row)
+    let elena_text = "你在走钢丝，侦探。深渊代管者的每一次施舍，都在你的灵魂深处打上了索命的烙印。真以为自己能操纵不可名状的存在吗？"
+    let elena_lit = dv_fact(c2d_person_ref("elena", "demon_rebuked"), true)
+    var elena_row = c2d_row("elena", "elena.c2.dialogue.demon_rebuke", "quiet_room", after_demon, elena_lit, elena_text, source)
+    elena_row = dv_with(elena_row, "opportunity", {"location": "quiet_room", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, elena_row)
+    let ruan_text = "愚蠢至极的劫争。在棋盘上引狼入室，自以为借力打力，实则将所有人的命门拱手交给了算力碾压一切的怪物。"
+    let ruan_lit = dv_fact(c2d_person_ref("ruan", "demon_rebuked"), true)
+    var ruan_row = c2d_row("ruan", "ruan.c2.dialogue.demon_rebuke", "central_hall", after_demon, ruan_lit, ruan_text, source)
+    ruan_row = dv_with(ruan_row, "opportunity", {"location": "central_hall", "participants": ["detective"], "mode": "all-present"})
+    rt_push(rows, ruan_row)
+    return rows
+
+fn c2d_shura_rows():
+    var rows = []
+    let source = c1_source("docs/design-standard.md", 0, "修罗侦探路线：恶魔背刺、公审与监禁挑拨")
+    let demon_text = "契约第八条：代管者应如实答辩，不作虚言。既然诸位当面质询莫兰与霍铎涉险的原委——那夜在走廊，正是你们敬重的大侦探，私下告知莫兰色层波长绝无危险，亦是他亲口劝诱霍铎徒手支撑滑轮。"
+    let betrayal_pre = dv_fact(c2_ref("c2.casualty", "casualty_occurred"), true)
+    let demon_lit = dv_fact(c2d_ref("demon_truth_betrayal"), true)
+    var demon_row = c2d_row("demon", "demon.c2.truth_betrayal", "central_hall", betrayal_pre, demon_lit, demon_text, source)
+    demon_row = dv_with(demon_row, "opportunity", {"location": "central_hall", "participants": ["ruan", "ward", "mora"], "mode": "at-least-one-present"})
+    rt_push(rows, demon_row)
+    let ruan_trial_text = "十九场死活推演，死子概率全集中在侦探私聊之后。这不是巧合，是精心计算的借刀杀人弃子局。"
+    let trial_pre = dv_fact(c2d_ref("demon_truth_betrayal"), true)
+    let ruan_lit = dv_fact(c2d_person_ref("ruan", "trial_indicted"), true)
+    var ruan_row = c2d_row("ruan", "ruan.c2.trial.indict", "central_hall", trial_pre, ruan_lit, ruan_trial_text, source)
+    rt_push(rows, ruan_row)
+    let ward_trial_text = "动线、言论记录与死因闭环确凿。依公约紧急法案，即刻剥夺侦探行动自由与配给权，押入隔离密室监禁！"
+    let ward_lit = dv_fact(c2_ref("c2.trial", "detective_imprisoned"), true)
+    var ward_row = c2d_row("ward", "ward.c2.trial.verdict", "central_hall", dv_fact(c2d_person_ref("ruan", "trial_indicted"), true), ward_lit, ward_trial_text, source)
+    ward_row = dv_with(ward_row, "effects", [dv_assign(c2_ref("c2.trial", "detective_imprisoned"), true)])
+    rt_push(rows, ward_row)
+    let imprisoned = dv_fact(c2_ref("c2.trial", "detective_imprisoned"), true)
+    let shen_intercom_text = "沈大哥，后厨的火若是断了，断粮的不仅是我。公审那群人真懂得一口热饭的份量吗？你亲手熬的汤，如今要看棋盘和法条脸色分发了吗？"
+    var shen_intercom = c2d_row("detective", "detective.c2.intercom.shen", "living_hall", imprisoned, dv_fact(c2d_person_ref("detective", "intercom_shen"), true), shen_intercom_text, source)
+    shen_intercom = dv_with(shen_intercom, "effects", [dv_assign(c2d_person_ref("shen", "wavering"), true)])
+    rt_push(rows, shen_intercom)
+    let lucian_intercom_text = "高贵的骑士阁下，将一个手无寸铁之人反锁在铁门之后任其自生自灭，这就是你们古老家族奉为信条的骑士道吗？"
+    var lucian_intercom = c2d_row("detective", "detective.c2.intercom.lucian", "living_hall", imprisoned, dv_fact(c2d_person_ref("detective", "intercom_lucian"), true), lucian_intercom_text, source)
+    lucian_intercom = dv_with(lucian_intercom, "effects", [dv_assign(c2d_person_ref("lucian", "wavering"), true)])
+    rt_push(rows, lucian_intercom)
+    let ward_intercom_text = "弗雷德里克，你的公审缺了被告答辩与回避程序，卷宗里全是间接证言。带着这种致命瑕疵的判决书，你走出这座岛还能面对法庭的徽章吗？"
+    var ward_intercom = c2d_row("detective", "detective.c2.intercom.ward", "living_hall", imprisoned, dv_fact(c2d_person_ref("detective", "intercom_ward"), true), ward_intercom_text, source)
+    ward_intercom = dv_with(ward_intercom, "effects", [dv_assign(c2d_person_ref("ward", "wavering"), true)])
+    rt_push(rows, ward_intercom)
     return rows
 
 fn c2d_council_when():
@@ -469,6 +570,34 @@ fn c2d_goals(actor):
             if dv_has_key(row, "advice_decision"):
                 let candidate = dvp_find_action(actor.actions, row.id)
                 if candidate == false or not dvs_advice_decision_ready(actor, candidate, actor.mind):
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "opportunity"):
+                let opp = row.opportunity
+                var opp_present = true
+                if opp.mode == "all-present":
+                    var p = 0
+                    while p < rt_count(opp.participants):
+                        if opp.participants[p] != actor.id and dv_truth(actor.mind, c2_at(opp.participants[p], opp.location)) != "true":
+                            opp_present = false
+                        p = p + 1
+                else:
+                    if opp.mode == "at-least-one-present":
+                        var p = 0
+                        var any_present = false
+                        while p < rt_count(opp.participants):
+                            if opp.participants[p] == actor.id or dv_truth(actor.mind, c2_at(opp.participants[p], opp.location)) == "true":
+                                any_present = true
+                            p = p + 1
+                        if not any_present:
+                            opp_present = false
+                    else:
+                        if opp.mode == "none-present":
+                            var p = 0
+                            while p < rt_count(opp.participants):
+                                if opp.participants[p] != actor.id and dv_truth(actor.mind, c2_at(opp.participants[p], opp.location)) == "true":
+                                    opp_present = false
+                                p = p + 1
+                if not opp_present:
                     when = dv_not(dv_true())
             rt_push(goals, c2d_row_goal(row, actor.id, when))
         i = i + 1

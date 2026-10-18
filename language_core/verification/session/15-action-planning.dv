@@ -197,11 +197,12 @@ fn dvp_scope(actor, action, bindings):
     var i = 0
     while (i < rt_count(grants)):
         var ref = grants[i]
-        var local = dv_local(bindings, grants[i].object, actor.id)
-        if (local == ""):
-            false
-        else:
-            refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
+        if dv_has_key(ref, "object"):
+            var local = dv_local(bindings, ref.object, actor.id)
+            if (local == ""):
+                false
+            else:
+                refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
         i = (i + 1)
     return refs
 
