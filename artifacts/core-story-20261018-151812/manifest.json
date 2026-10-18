@@ -1,0 +1,329 @@
+{
+  "format": "dv-source-review-package-v1",
+  "purpose": "七份按目录组合的源码审阅包，不是可直接联编程序；每个来源文件边界仍由标记保留。",
+  "root_relative": ".",
+  "modules": [
+    {
+      "key": "compiler",
+      "output": "01_dv_compiler.dv",
+      "input": "language_core/compiler",
+      "recursive": false,
+      "sources": [
+        {
+          "path": "language_core/compiler/compiler.dv",
+          "sha256": "2af0b58468b0e4fa170f5c755815446a5c20c82962fec747c9f971646f2fe640",
+          "source_lines": 671,
+          "package_line_start": 4,
+          "package_line_end": 674
+        }
+      ]
+    },
+    {
+      "key": "core",
+      "output": "02_dv_core_runtime.dv",
+      "input": "language_core/core",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/core/00-data.dv",
+          "sha256": "efb19959b00f646f93f5cd7205f57c154d26b5d5718b156bafacf2cbd9382aba",
+          "source_lines": 602,
+          "package_line_start": 4,
+          "package_line_end": 605
+        },
+        {
+          "path": "language_core/core/20-observation.dv",
+          "sha256": "23fa7a82236249cd6790c794dc77c3cce6e6a2f5174099ae3701aa75d305db89",
+          "source_lines": 401,
+          "package_line_start": 608,
+          "package_line_end": 1008
+        },
+        {
+          "path": "language_core/core/40-value.dv",
+          "sha256": "2e3eedf0109c5a6370d87b942a08e48cb39ef5d86d9ef6fdfd19499d49057678",
+          "source_lines": 510,
+          "package_line_start": 1011,
+          "package_line_end": 1520
+        },
+        {
+          "path": "language_core/core/70-reasoning-cost.dv",
+          "sha256": "622054382317305cdeb6a34622308014aa4c37db9c5c749762ca0683b8cd7fd2",
+          "source_lines": 358,
+          "package_line_start": 1523,
+          "package_line_end": 1880
+        },
+        {
+          "path": "language_core/core/95-model-argument.dv",
+          "sha256": "f06b5c8fb8a19e3fc07128746914adfa89f821f06f47cafe9c21a1f897cf0159",
+          "source_lines": 361,
+          "package_line_start": 1883,
+          "package_line_end": 2243
+        }
+      ]
+    },
+    {
+      "key": "session",
+      "output": "03_dv_session_simulation.dv",
+      "input": "language_core/verification/session",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/verification/session/10-subjective.dv",
+          "sha256": "c228a75a4347899959dd1467a803df216fd65e2a4ea4c327aeb3bf285a7e7c20",
+          "source_lines": 1300,
+          "package_line_start": 4,
+          "package_line_end": 1303
+        },
+        {
+          "path": "language_core/verification/session/15-action-planning.dv",
+          "sha256": "f0745af05e4d4e339cd758c9e5e6ef0bfc3e0ce237cb49f9602966138fa0456a",
+          "source_lines": 1095,
+          "package_line_start": 1306,
+          "package_line_end": 2400
+        },
+        {
+          "path": "language_core/verification/session/20-speech.dv",
+          "sha256": "52436c00db27fc0a8ad53a488756ed1f03631246f020bcb0a8440c700f7d1ec3",
+          "source_lines": 965,
+          "package_line_start": 2403,
+          "package_line_end": 3367
+        },
+        {
+          "path": "language_core/verification/session/25-simulation.dv",
+          "sha256": "3b23e90a98e9b3b7acefde3bf251a7ce3ba47169542169a600c42a242f8b4b2d",
+          "source_lines": 2204,
+          "package_line_start": 3370,
+          "package_line_end": 5573
+        },
+        {
+          "path": "language_core/verification/session/30-runner.dv",
+          "sha256": "5b36990db1516c718f1c03f7a1e5167c275fa9064a545b6e37cf401f5b9a1eea",
+          "source_lines": 1014,
+          "package_line_start": 5576,
+          "package_line_end": 6589
+        }
+      ]
+    },
+    {
+      "key": "chapter1",
+      "output": "04_dv_story_chapter1.dv",
+      "input": "language_core/verification/scenarios/chapter1",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1/campaign.dv",
+          "sha256": "b19968a8c16999a5e5af7faff3b04054b5af83058aa84761b0bae1ddbfd0b593",
+          "source_lines": 1554,
+          "package_line_start": 4,
+          "package_line_end": 1557
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter1/cognitive-profiles.dv",
+          "sha256": "8c681726931a90e9907605ad4e987342ad3909c0bab74197116fbb60b2853a27",
+          "source_lines": 65,
+          "package_line_start": 1560,
+          "package_line_end": 1624
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter1/content.dv",
+          "sha256": "39c1ab4b9755f725ee5e2f54bb14a50d4aa6b4c56ff20bcee0d2700174d8929b",
+          "source_lines": 1362,
+          "package_line_start": 1627,
+          "package_line_end": 2988
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter1/history.dv",
+          "sha256": "c1a0dc1526ae3cedaf5a37a44a6b76edff58fbf7174e814bcf86fc5614c2959d",
+          "source_lines": 706,
+          "package_line_start": 2991,
+          "package_line_end": 3696
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter1/opening.dv",
+          "sha256": "4d3ff3208447808ac9252a0421462da2165f85ce1d60bd1858bcb3267db3eb4e",
+          "source_lines": 1307,
+          "package_line_start": 3699,
+          "package_line_end": 5005
+        }
+      ]
+    },
+    {
+      "key": "chapter2",
+      "output": "05_dv_story_chapter2.dv",
+      "input": "language_core/verification/scenarios/chapter2",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter2/content.dv",
+          "sha256": "7df1d94f3060ed5966c5bf07e0eabeae21718e8fd6545f6cbd11be34191a5e2c",
+          "source_lines": 2533,
+          "package_line_start": 4,
+          "package_line_end": 2536
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter2/daily.dv",
+          "sha256": "99477aaeb33300c6ec9f102a7e40dba5d45b2c7c1c6ba71800a71085d4961464",
+          "source_lines": 304,
+          "package_line_start": 2539,
+          "package_line_end": 2842
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter2/dialogue.dv",
+          "sha256": "0c547fe5183ac7e8267d79586dc39c9f7e75d8e01f0777e916470b941087b1d7",
+          "source_lines": 615,
+          "package_line_start": 2845,
+          "package_line_end": 3459
+        },
+        {
+          "path": "language_core/verification/scenarios/chapter2/homecoming.dv",
+          "sha256": "2b224032d439cbe88bd9690c18ce74489302f55c5e2b18463f2a917fee153e8d",
+          "source_lines": 194,
+          "package_line_start": 3462,
+          "package_line_end": 3655
+        }
+      ]
+    },
+    {
+      "key": "game",
+      "output": "06_dv_game_integration.dv",
+      "input": "language_core/game",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/game/debug-run.dv",
+          "sha256": "a41ba791a695e41aafa2100b688b873febac6c277058f831bc76cb09484edf26",
+          "source_lines": 77,
+          "package_line_start": 4,
+          "package_line_end": 80
+        },
+        {
+          "path": "language_core/game/entry.dv",
+          "sha256": "b626a94838193271dc8ab6d3244c36359bf1dc7396803cc571406a09c9541d46",
+          "source_lines": 389,
+          "package_line_start": 83,
+          "package_line_end": 471
+        }
+      ]
+    },
+    {
+      "key": "verification_checks",
+      "output": "07_dv_verification_checks.dv",
+      "input": "language_core/verification/checks",
+      "recursive": true,
+      "sources": [
+        {
+          "path": "language_core/verification/checks/00-read-only.dv",
+          "sha256": "9d218e1c0030ff93912d91fc33740b8d67d4e50476255c1a4c18c4d835333187",
+          "source_lines": 349,
+          "package_line_start": 4,
+          "package_line_end": 352
+        },
+        {
+          "path": "language_core/verification/checks/03-evidence.dv",
+          "sha256": "b3302e9b65a6e66c930ab5fe12e5fadfc356210673d5ff464bcaaac73d9332a3",
+          "source_lines": 1259,
+          "package_line_start": 355,
+          "package_line_end": 1613
+        },
+        {
+          "path": "language_core/verification/checks/05-cost.dv",
+          "sha256": "1acb5796bd755f43cc522525d1119804d078e22775be800eeb64d8943f128c67",
+          "source_lines": 816,
+          "package_line_start": 1616,
+          "package_line_end": 2431
+        },
+        {
+          "path": "language_core/verification/checks/06-language-boundary.dv",
+          "sha256": "cdc2effe85929388bc64d9ee66f2e6f6936e5446c45b0852540fa87c1aa17773",
+          "source_lines": 838,
+          "package_line_start": 2434,
+          "package_line_end": 3271
+        },
+        {
+          "path": "language_core/verification/checks/07-social.dv",
+          "sha256": "7a3a7577d5c0a1e7c3be4cbbb95751a4052f67ab3f2c4a1d57dfe54057bb0aea",
+          "source_lines": 619,
+          "package_line_start": 3274,
+          "package_line_end": 3892
+        },
+        {
+          "path": "language_core/verification/checks/08-formal.dv",
+          "sha256": "64fb8d2ab2703ff34d1a697071e38703dd4b462d239cb6b8046f7517d4127afe",
+          "source_lines": 1876,
+          "package_line_start": 3895,
+          "package_line_end": 5770
+        },
+        {
+          "path": "language_core/verification/checks/authority/chapter1-oracle.dv",
+          "sha256": "5e047f82e83c15594cd2ae5817f4c2701775ae213f3d8fddcfbe9a2c99849542",
+          "source_lines": 57,
+          "package_line_start": 5773,
+          "package_line_end": 5829
+        },
+        {
+          "path": "language_core/verification/checks/fixtures/chapter1-recall.dv",
+          "sha256": "688cf5ab1702cae35fc45fed3c383e954aef8e8086d0d2fdd944bea620bf92a7",
+          "source_lines": 330,
+          "package_line_start": 5832,
+          "package_line_end": 6161
+        },
+        {
+          "path": "language_core/verification/checks/fixtures/chapter1-verification-config.dv",
+          "sha256": "bebe9091f6aabddd4a7a24329527f371ac9cd9958d18deaea98f9b4657b2aa72",
+          "source_lines": 52,
+          "package_line_start": 6164,
+          "package_line_end": 6215
+        },
+        {
+          "path": "language_core/verification/checks/fixtures/cognitive-semantics.dv",
+          "sha256": "a72f48248d2e28644fd772d52a1dbcac931e2114c0476c39d539fc150856e6b9",
+          "source_lines": 46,
+          "package_line_start": 6218,
+          "package_line_end": 6263
+        },
+        {
+          "path": "language_core/verification/checks/fixtures/room-safety-draft.dv",
+          "sha256": "3cdb2f064104d40b56a5d1132f4632eb822e944aafa0bf90b2d2a673ff0beab9",
+          "source_lines": 26,
+          "package_line_start": 6266,
+          "package_line_end": 6291
+        },
+        {
+          "path": "language_core/verification/checks/report/10-readable.dv",
+          "sha256": "0d4249271fe5fcd30f2d3dcb9300881cd9d781e5764e4adb27aac97399177adc",
+          "source_lines": 237,
+          "package_line_start": 6294,
+          "package_line_end": 6530
+        }
+      ]
+    }
+  ],
+  "scope": {
+    "included": [
+      "language_core/compiler/*.dv（仅直接子文件；不含 examples 或其他子目录）",
+      "language_core/core/**/*.dv",
+      "language_core/verification/session/**/*.dv",
+      "language_core/verification/scenarios/chapter1/**/*.dv",
+      "language_core/verification/scenarios/chapter2/**/*.dv",
+      "language_core/game/**/*.dv",
+      "language_core/verification/checks/**/*.dv（包括 report、fixtures、authority 子目录）"
+    ],
+    "excluded": [
+      "compiler 下的子目录文件（包括 examples）",
+      "上述七个输入范围以外的仓库文件及非 .dv 文件",
+      "verification/scenarios 下不属于 chapter1、chapter2 的其他内容",
+      "验证目录中 checks 以外的内容（除明确纳入的 session/scenario 范围）"
+    ]
+  },
+  "generated_files": [
+    "01_dv_compiler.dv",
+    "02_dv_core_runtime.dv",
+    "03_dv_session_simulation.dv",
+    "04_dv_story_chapter1.dv",
+    "05_dv_story_chapter2.dv",
+    "06_dv_game_integration.dv",
+    "07_dv_verification_checks.dv",
+    "manifest.json",
+    "README.md"
+  ]
+}
