@@ -1302,7 +1302,7 @@ fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bi
         i = (i + 1)
     return result
 
-// ----- SOURCE: language_core/verification/session/15-action-planning.dv | SHA256: f0745af05e4d4e339cd758c9e5e6ef0bfc3e0ce237cb49f9602966138fa0456a -----
+// ----- SOURCE: language_core/verification/session/15-action-planning.dv | SHA256: 667474dfd78d42eeb04df25bc367027a0a5ffef29473f0435ef768087cd82eab -----
 // Planning retains cognition and revision; append-only audit logs are not decision inputs.
 fn dvp_memo_input(actor, costs):
     var policy = actor.policy
@@ -1412,11 +1412,11 @@ fn dvp_unmet_refs(mind, proposition, include_known):
                     return []
 
 fn dvp_dependency_add(graph, ref, inputs):
-    let key = rt_json_stringify(ref)
+    let key = dv_ref_lookup_key(ref)
     return dv_with(graph, key, dvp_merge_refs(dv_find(graph, key, []), inputs))
 
 fn dvp_dependency_topology(mind, methods):
-    let key = ["dvp_dependency_topology", methods]
+    let key = ["dvp_dependency_topology-ref-key-v1", methods]
     let cached = rt_memo_get(mind.adoptions, key)
     if cached[0]:
         return cached[1]
@@ -1447,7 +1447,7 @@ fn dvp_dependencies(mind, seeds, budget, methods):
     var refs = dv_clone(seeds)
     var cursor = 0
     while cursor < rt_count(refs) and cursor < budget:
-        let inputs = dv_find(graph, rt_json_stringify(refs[cursor]), [])
+        let inputs = dv_find(graph, dv_ref_lookup_key(refs[cursor]), [])
         var i = 0
         while i < rt_count(inputs):
             if not dv_has(refs, inputs[i]):
@@ -1502,11 +1502,12 @@ fn dvp_scope(actor, action, bindings):
     var i = 0
     while (i < rt_count(grants)):
         var ref = grants[i]
-        var local = dv_local(bindings, grants[i].object, actor.id)
-        if (local == ""):
-            false
-        else:
-            refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
+        if dv_has_key(ref, "object"):
+            var local = dv_local(bindings, ref.object, actor.id)
+            if (local == ""):
+                false
+            else:
+                refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
         i = (i + 1)
     return refs
 
@@ -1597,7 +1598,7 @@ fn dvp_inspection_signature(actor, action, mind):
     var freshness = []
     i = 0
     while i < rt_count(refs):
-        let entries = dv_find(evidence, rt_json_stringify(refs[i]), [])
+        let entries = dv_find(evidence, dv_ref_lookup_key(refs[i]), [])
         var j = 0
         while j < rt_count(entries):
             rt_push(freshness, entries[j])
@@ -2376,7 +2377,7 @@ fn dvp_room_actions(actions, room, location_ref):
 // Every inspection in the same mind reuses the evidence refresh and availability reads.
 fn dvp_inspection_freshness(actor, mind):
     let declared = dv_find(actor.policy, "goals", [])
-    let key = ["dvp_inspection_freshness", declared]
+    let key = ["dvp_inspection_freshness-ref-key-v1", declared]
     let cached = rt_memo_get(mind, key)
     if cached[0]:
         return cached[1]
@@ -2386,7 +2387,7 @@ fn dvp_inspection_freshness(actor, mind):
     while i < rt_count(goals):
         let goal = goals[i]
         if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref"):
-            let name = rt_json_stringify(goal.ref)
+            let name = dv_ref_lookup_key(goal.ref)
             let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
             // Private construction; publish only the complete independent index.
             let owned_entries = dv_clone(entries)
@@ -5572,7 +5573,7 @@ fn dvs_public_literal_source(events, parent, subject):
         i = i - 1
     return result
 
-// ----- SOURCE: language_core/verification/session/30-runner.dv | SHA256: 5b36990db1516c718f1c03f7a1e5167c275fa9064a545b6e37cf401f5b9a1eea -----
+// ----- SOURCE: language_core/verification/session/30-runner.dv | SHA256: 2c9a5ab8ec7fb07950ed19c882838b36e32413180435ddc130e42afcd2ef2890 -----
 // Autonomous formal model session. Host geometry and input are outside this model.
 
 fn dvs_authority_speech_allowed(action, physical, subject):
@@ -5791,6 +5792,171 @@ fn dvs_dispatch_due(state, index):
     return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, actor), "events": events, "pending": pending, "idle": 0})
 
 // Scan eligibility without running cognition. Ties preserve cyclic actor order.
+// Pure declaration analysis only. `now` must describe this clock's own domain;
+// it does not synchronize a mind clock or establish cognition's full dependency set.
+// Non-clock reads are stable only while the caller separately retains their inputs.
+fn dvs_known_clock_boundary(condition, clock, now, limit):
+    let fallback = {"complete": false, "next": dv_min(limit, now + 1)}
+    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
+        return fallback
+    let op = condition.op
+    if op == "constant":
+        if not dv_has_key(condition, "value"):
+            return fallback
+        return {"complete": true, "next": limit}
+    if op == "not":
+        if not dv_has_key(condition, "item"):
+            return fallback
+        return dvs_known_clock_boundary(condition.item, clock, now, limit)
+    if op == "all":
+        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
+            return fallback
+        var next = limit
+        var i = 0
+        while i < rt_count(condition.items):
+            let part = dvs_known_clock_boundary(condition.items[i], clock, now, limit)
+            if not part.complete:
+                return fallback
+            next = dv_min(next, part.next)
+            i = i + 1
+        return {"complete": true, "next": next}
+    if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
+        return fallback
+    if not dv_record_like(condition.ref) or dv_find(condition.ref, "type", "") != "ref" or not dv_has_key(condition.ref, "object") or not dv_has_key(condition.ref, "facet") or not dv_has_key(condition.ref, "field"):
+        return fallback
+    if clock == false:
+        return fallback
+    if not dv_same(condition.ref, clock):
+        return {"complete": true, "next": limit}
+    if not rt_is_numeric_value(condition.value):
+        return fallback
+    if now < condition.value:
+        // Invalidation may precede an ordinary tick; it never advances time.
+        return {"complete": true, "next": dv_min(condition.value, limit)}
+    if op == "equals" and now == condition.value:
+        return {"complete": true, "next": dv_min(now, limit)}
+    return {"complete": true, "next": limit}
+
+// Complete owned state except administrative scan/dispatch cursors. Their
+// append-only event inputs are checked separately; no mind or budget is removed.
+fn dvs_idle_subject_input(actor, costs):
+    var policy = actor.policy
+    var maximum = 0
+    var i = 0
+    while i < rt_count(costs):
+        maximum = dv_max(maximum, costs[i][1].maximum.time)
+        i = i + 1
+    let bound = dv_find(policy, "plan_depth", 2) * maximum
+    if dv_has_key(policy, "remaining_game_time") and bound <= policy.remaining_game_time:
+        policy = dv_with(policy, "remaining_game_time", bound)
+    var result = []
+    i = 0
+    while i < rt_count(actor):
+        let entry = actor[i]
+        let key = entry[0]
+        if not dv_has(["idle_guard", "decision_time", "decision_revision", "support_events_cursor", "heard_utterances_cursor"], key):
+            if key == "policy":
+                rt_push(result, dv_pair(key, policy))
+            else:
+                rt_push(result, entry)
+        i = i + 1
+    return result
+
+// The environment clock advances independently. Preserve every other physical
+// field, including unknown extension fields; only clock bookkeeping is projected.
+fn dvs_idle_physical_input(physical, story):
+    var result = dv_without(dv_without(dv_without(dv_without(physical, "time"), "revision"), "history"), "seen")
+    let clock = dv_find(story, "clock_ref", false)
+    if clock != false:
+        let objects = physical.objects
+        if dv_has_key(objects, clock.object):
+            let object = dv_get(objects, clock.object)
+            if dv_has_key(object.facets, clock.facet):
+                let fields = dv_get(object.facets, clock.facet)
+                if dv_has_key(fields, clock.field):
+                    let cell = dv_get(fields, clock.field)
+                    let status = dv_without(dv_without(dv_without(cell, "value"), "time"), "basis")
+                    let changed = dv_with(object, "facets", dv_with(object.facets, clock.facet, dv_with(fields, clock.field, status)))
+                    result = dv_with(result, "objects", dv_with(objects, clock.object, changed))
+    return result
+
+fn dvs_idle_contact_input(actor, physical, actors):
+    if not dv_find(actor.policy, "notice_co_presence", false):
+        return false
+    return {"context": dvs_visible_context(actor, physical, actors), "position": dv_read(physical, actor.location_ref), "visible": dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true()))}
+
+// No paid speech forecast or active explanation may use this narrow proof.
+// All topic bindings already true must have actually been captured beforehand.
+fn dvs_idle_proof_supported(actor):
+    if rt_count(dv_find(actor.policy, "communication_goals", [])) != 0 or dv_find(actor, "hypothesis", false) != false or dv_find(actor, "argument", false) != false:
+        return false
+    if 0 < rt_count(dv_find(actor, "pending_heard", [])) or dv_find(actor, "cognition_blocked", false):
+        return false
+    let topics = dv_find(actor.policy, "topic_bindings", [])
+    var i = 0
+    while i < rt_count(topics):
+        if dv_truth(actor.mind, topics[i].heard_when) == "true" and not dv_has_key(dv_find(actor, "heard_topics", []), topics[i].topic):
+            return false
+        i = i + 1
+    return true
+
+// Known remote bookkeeping cannot supply a subject's support/utterance source.
+// Anything not explicitly audited here wakes the subject, including new types.
+fn dvs_idle_events_stable(events, actor, guard):
+    if rt_count(events) < guard.event_cursor or guard.event_cursor <= 0:
+        return false
+    if not dv_same(events[guard.event_cursor - 1], guard.event_anchor):
+        return false
+    let remote_only = ["action_selected", "planning_choice", "action_scheduled", "cost_quote", "host_completion", "action_execution", "duration_budget_rejected", "resource_rejected"]
+    var i = guard.event_cursor
+    while i < rt_count(events):
+        let event = events[i]
+        if event.type != "planning_stop" and event.type != "planning_stop_reused" and event.type != "action_wait":
+            if event.actor == actor.id or not dv_has(remote_only, event.type):
+                return false
+        i = i + 1
+    return true
+
+fn dvs_idle_guard_matches(actor, state):
+    let guard = dv_find(actor, "idle_guard", false)
+    if guard == false or not (state.physical.time < guard.until) or not (guard.time < state.physical.time):
+        return false
+    if not dvs_idle_proof_supported(actor) or not dvs_idle_events_stable(state.events, actor, guard):
+        return false
+    if not dv_same(dvs_idle_subject_input(actor, state.costs), guard.subject):
+        return false
+    if not dv_same(state.bindings, guard.bindings) or not dv_same(state.costs, guard.costs) or not dv_same(state.story, guard.story):
+        return false
+    if not dv_same(dvs_idle_physical_input(state.physical, state.story), guard.physical):
+        return false
+    return dv_same(dvs_idle_contact_input(actor, state.physical, state.actors), guard.contact)
+
+fn dvs_idle_inputs_changed(actor, state):
+    let guard = dv_find(actor, "idle_guard", false)
+    if guard == false:
+        return false
+    if not dv_same(dvs_idle_subject_input(actor, state.costs), guard.subject) or not dvs_idle_events_stable(state.events, actor, guard):
+        return true
+    if not dv_same(state.bindings, guard.bindings) or not dv_same(state.costs, guard.costs) or not dv_same(state.story, guard.story):
+        return true
+    if not dv_same(dvs_idle_physical_input(state.physical, state.story), guard.physical):
+        return true
+    return not dv_same(dvs_idle_contact_input(actor, state.physical, state.actors), guard.contact)
+
+fn dvs_idle_window_boundary(actor, story, now, limit):
+    let clock = dv_find(story, "clock_ref", false)
+    var conditions = []
+    let goals = dv_find(actor.policy, "goals", [])
+    var i = 0
+    while i < rt_count(goals):
+        rt_push(conditions, dv_find(goals[i], "available_when", dv_true()))
+        i = i + 1
+    i = 0
+    while i < rt_count(actor.actions):
+        rt_push(conditions, dv_find(actor.actions[i], "precondition", dv_true()))
+        i = i + 1
+    return dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
+
 fn dvs_schedule(state):
     var updated = state.actors
     var erosion_index = 0
@@ -5825,8 +5991,17 @@ fn dvs_schedule(state):
             else:
                 // No-action is not a permanent property of a mind revision:
                 // time, local arrivals and content goals can create a new opportunity.
-                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
-                    ready_index = index
+                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state)):
+                    if dvs_idle_guard_matches(actor, state):
+                        let guard = actor.idle_guard
+                        var events = state.events
+                        dvs_event(events, "planning_stop_reused", actor.id, state.physical.time, [guard.source_stop], {"source_stop": guard.source_stop, "proof_time": guard.time, "until": guard.until, "reason": "unchanged-owned-fixed-point; no-new-cognition-or-choice", "subject_snapshot": guard.subject})
+                        let advanced = dv_with_many(guard, {"event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]})
+                        let sleeping = dv_with_many(actor, {"decision_time": state.physical.time, "decision_revision": actor.mind.revision, "idle_guard": advanced})
+                        updated = dvs_replace(updated, index, sleeping)
+                        state = dvs_owned_state_update(state, {"actors": updated, "events": events, "idle": state.idle + 1})
+                    else:
+                        ready_index = index
         index = index + 1
         if index == rt_count(state.actors):
             index = 0
@@ -5885,7 +6060,9 @@ fn dvs_prepare_actor(state):
     var status = state.status
     var initial = state.initial
     var index = cursor
-    var actor = dv_with(actors[cursor], "decision_time", physical.time)
+    var actor = dv_with(dv_without(actors[cursor], "idle_guard"), "decision_time", physical.time)
+    var idle_before = false
+    var idle_events_before = -1
     var parent = events[(rt_count(events) - 1)].id
     var time = dv_find(physical, "time", 0)
     var local_1 = false
@@ -5899,6 +6076,9 @@ fn dvs_prepare_actor(state):
     else:
         if dv_find(state, "player_selection", "") == "":
             actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"remaining_game_time": horizon - time, "plan_budget": dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))}))
+            if dv_find(state, "player_actor", "") != actor.id and dvs_idle_proof_supported(actor):
+                idle_before = rt_snapshot(dvs_idle_subject_input(actor, costs))
+                idle_events_before = rt_count(events)
             actor = dvs_update_support_events(actor, events)
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
@@ -5930,8 +6110,20 @@ fn dvs_prepare_actor(state):
             if (0 < dv_find(choice, "time_blocked", 0)):
                 duration_blocked = true
             idle = (idle + 1)
+            let unchanged = idle_before != false and dv_same(idle_before, dvs_idle_subject_input(actor, costs)) and idle_events_before == rt_count(events)
+            let stop = dvs_event(events, "planning_stop", actor.id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
+            if unchanged and dv_find(state, "player_actor", "") != actor.id and choice.plan_expansions == 0 and dv_find(choice, "dependency_expansions", 0) == 0 and dv_find(choice, "time_blocked", 0) == 0 and dvs_idle_proof_supported(actor):
+                var maximum = 0
+                var cost_index = 0
+                while cost_index < rt_count(costs):
+                    maximum = dv_max(maximum, costs[cost_index][1].maximum.time)
+                    cost_index = cost_index + 1
+                let horizon_boundary = horizon - dv_find(actor.policy, "plan_depth", 2) * maximum
+                let boundary = dvs_idle_window_boundary(actor, story, time, dv_min(time + 60, horizon_boundary))
+                if boundary.complete and time < boundary.next:
+                    let guard = {"time": time, "until": boundary.next, "source_stop": stop, "subject": dvs_idle_subject_input(actor, costs), "physical": dvs_idle_physical_input(physical, story), "contact": dvs_idle_contact_input(actor, physical, actors), "bindings": bindings, "costs": costs, "story": story, "event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]}
+                    actor = dv_with(actor, "idle_guard", rt_snapshot(guard))
             actors = dvs_replace(actors, index, actor)
-            dvs_event(events, "planning_stop", actor.id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
         else:
             var id = actor.id
             var mind = actor.mind

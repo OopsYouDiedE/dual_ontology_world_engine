@@ -3695,7 +3695,7 @@ fn c1_hist_hearing_stages(stages, at, source, words):
         i = i + 1
     return stages
 
-// ----- SOURCE: language_core/verification/scenarios/chapter1/opening.dv | SHA256: 4d3ff3208447808ac9252a0421462da2165f85ce1d60bd1858bcb3267db3eb4e -----
+// ----- SOURCE: language_core/verification/scenarios/chapter1/opening.dv | SHA256: f8af6df8873aae00520c059f72d78997bc2d8992004e984699b246d73399aaae -----
 // Executable native opening content. Old .story is provenance, never a runtime input.
 // Installation authors the starting scene. It does not execute it, publish observations,
 // deliver speech, choose a candidate, adopt short_stay or manufacture an acceptance.
@@ -4731,7 +4731,7 @@ fn c1n_install_scene(scene):
 
 // These are finite costed action lengths, not speed multipliers or world-clock writes.
 fn c1n_wait_durations():
-    return [180, 120, 60, 30, 15, 5, 1]
+    return [180, 120, 60, 30, 20, 15, 10, 5, 4, 3, 2, 1]
 
 fn c1n_wait_kind(minutes):
     return rt_cat("wait.first_night.", rt_show(minutes))
